@@ -39,12 +39,13 @@
     - [ecutwfc](#ecutwfc)
     - [ecutrho](#ecutrho)
     - [nx, ny, nz](#nx-ny-nz)
-    - [nsx, nsy, nsz](#nsx-nsy-nsz)
+    - [ndx, ndy, ndz](#ndx-ndy-ndz)
     - [pw\_seed](#pw_seed)
     - [pw\_diag\_thr](#pw_diag_thr)
     - [pw\_diag\_nmax](#pw_diag_nmax)
     - [pw\_diag\_ndim](#pw_diag_ndim)
     - [erf\_ecut](#erf_ecut)
+    - [fft\_mode](#fft_mode)
     - [erf\_height](#erf_height)
     - [erf\_sigma](#erf_sigma)
   - [Numerical atomic orbitals related variables](#numerical-atomic-orbitals-related-variables)
@@ -88,6 +89,7 @@
     - [emin\_sto](#emin_sto)
     - [emax\_sto](#emax_sto)
     - [seed\_sto](#seed_sto)
+    - [initsto\_ecut](#initsto_ecut)
     - [initsto\_freq](#initsto_freq)
     - [npart\_sto](#npart_sto)
   - [Geometry relaxation](#geometry-relaxation)
@@ -338,7 +340,7 @@
     - [test\_skip\_ewald](#test_skip_ewald)
   - [Electronic conductivities](#electronic-conductivities)
     - [cal\_cond](#cal_cond)
-    - [cond\_nche](#cond_nche)
+    - [cond\_che\_thr](#cond_che_thr)
     - [cond\_dw](#cond_dw)
     - [cond\_wcut](#cond_wcut)
     - [cond\_dt](#cond_dt)
@@ -351,6 +353,15 @@
     - [tau](#tau)
     - [sigma\_k](#sigma_k)
     - [nc\_k](#nc_k)
+  - [Deltaspin](#deltaspin)
+    - [sc\_mag\_switch](#sc_mag_switch)
+    - [decay\_grad\_switch](#decay_grad_switch)
+    - [sc\_thr](#sc_thr)
+    - [nsc](#nsc)
+    - [nsc\_min](#nsc_min)
+    - [alpha\_trial](#alpha_trial)
+    - [sccut](#sccut)
+    - [sc\_file](#sc_file)
 
 [back to top](#full-list-of-input-keywords)
 
@@ -417,7 +428,7 @@ These variables are used to control general system parameters.
 - **Type**: Real
 - **Description**: The accuracy for symmetry judgment. Usually the default value is good enough, but if the lattice parameters or atom positions in STRU file is not accurate enough, this value should be enlarged. 
   > Note: if *[calculation](#calculation)==cell_relax*, this value can be dynamically changed corresponding to the variation of accuracy of the lattice parameters and atom positions during the relaxation. The new value will be printed in `OUT.${suffix}/running_cell-relax.log` in that case.
-- **Default**: 1.0e-5
+- **Default**: 1.0e-6
 - **Unit**:  Bohr
 
 ### symmetry_autoclose
@@ -608,12 +619,12 @@ If only one value is set (such as `kspacing 0.5`), then kspacing values of a/b/c
   Available options are:
 
   - cpu: for CPUs via Intel, AMD, or Other supported CPU devices
-  - gpu: for GPUs via CUDA.
+  - gpu: for GPUs via CUDA or ROCm.
 
   Known limitations:
 
   - pw basis: required by the `gpu` acceleration options
-  - cg ks_solver: required by the `gpu` acceleration options
+  - cg/bpcg/dav ks_solver: required by the `gpu` acceleration options
 - **Default**: cpu
 
 [back to top](#full-list-of-input-keywords)
@@ -690,13 +701,19 @@ These variables are used to control the plane wave related parameters.
 ### nx, ny, nz
 
 - **Type**: Integer
-- **Description**: If set to a positive number, then the three variables specify the numbers of FFT grid points in x, y, z directions, respectively. If set to 0, the number will be calculated from ecutrho. Note: you must specify all three dimensions for this setting to be used.
+- **Description**: If set to a positive number, then the three variables specify the numbers of FFT grid points in x, y, z directions, respectively. If set to 0, the number will be calculated from ecutrho. 
+
+    Note: You must specify all three dimensions for this setting to be used.
 - **Default**: 0
 
-### nsx, nsy, nsz
+### ndx, ndy, ndz
 
 - **Type**: Integer
-- **Description**: If set to a positive number, then the three variables specify the numbers of FFT grid (for the smooth part of charge density in ultrasoft pseudopotential) points in x, y, z directions, respectively. If set to 0, the number will be calculated from ecutwfc. Note: you must specify all three dimensions for this setting to be used.
+- **Description**: If set to a positive number, then the three variables specify the numbers of FFT grid (for the dense part of charge density in ultrasoft pseudopotential) points in x, y, z directions, respectively. If set to 0, the number will be calculated from ecutwfc. 
+
+    Note: You must specify all three dimensions for this setting to be used.
+
+    Note: These parameters must be used combined with [nx,ny,nz](#nx-ny-nz). If [nx,ny,nz](#nx-ny-nz) are unset, ndx,ndy,ndz are used as [nx,ny,nz](#nx-ny-nz).
 - **Default**: 0
 
 ### pw_seed
@@ -729,6 +746,16 @@ These variables are used to control the plane wave related parameters.
 - **Description**: Used in variable-cell molecular dynamics (or in stress calculation). See [erf_sigma](#erf_sigma) in detail.
 - **Default**: 0.0
 - **Unit**: Ry
+
+### fft_mode
+
+- **Type**: Integer
+- **Description**: Set the mode of FFTW.
+  - 0: FFTW_ESTIMATE
+  - 1: FFTW_MEASURE
+  - 2: FFTW_PATIENT
+  - 3: FFTW_EXHAUSTIVE
+- **Default**: 0
 
 ### erf_height
 
@@ -835,6 +862,7 @@ calculations.
   For plane-wave basis,
 
   - **cg**: cg method.
+  - **bpcg**: bpcg method, which is a block-parallel Conjugate Gradient (CG) method, typically exhibits higher acceleration in a GPU environment.
   - **dav**: the Davidson algorithm.
 
   For atomic orbitals basis,
@@ -881,7 +909,7 @@ calculations.
 
 - **Type**: String
 - **Description**: It indicates which occupation and smearing method is used in the calculation.
-  - **fixed**: fixed occupations.
+  - **fixed**: fixed occupations (available for non-coductors only)
   - **gauss** or **gaussian**: Gaussian smearing method.
   - **mp**: methfessel-paxton smearing method; recommended for metals.
   - **fd**: Fermi-Dirac smearing method: $f=1/\{1+\exp[(E-\mu)/kT]\}$ and smearing_sigma below is the temperature $T$ (in Ry).
@@ -909,16 +937,18 @@ calculations.
   - **plain**: Just simple mixing.
   - **pulay**: Standard Pulay method. [P. Pulay Chemical Physics Letters, (1980)](https://www.sciencedirect.com/science/article/abs/pii/0009261480803964)
   - **broyden**: Simplified modified Broyden method. [D.D. Johnson Physical Review B (1988)](https://journals.aps.org/prb/abstract/10.1103/PhysRevB.38.12807)
+  
+  In general, the convergence of the Broyden method is slightly faster than that of the Pulay method.
 - **Default**: broyden
 
 ### mixing_beta
 
 - **Type**: Real
-- **Description**: mixing parameter. We recommend the following options:
+- **Description**: In general, the formula of charge mixing can be written as $\rho_{new} = \rho_{old} + \beta * \rho_{update}$, where $\rho_{new}$ represents the new charge density after charge mixing, $\rho_{old}$ represents the charge density in previous step, $\rho_{update}$ is obtained through various mixing methods, and $\beta$ is set by the parameter `mixing_beta`. A lower value of 'mixing_beta' results in less influence of $\rho_{update}$ on $\rho_{new}$, making the self-consistent field (SCF) calculation more stable. However, it may require more steps to achieve convergence.
+We recommend the following options:
   - **-10.0**: Program will auto set `mixing_beta` and `mixing_gg0` before charge mixing method starts.
-    - Default values of transition metal system are `mixing_beta=0.2` and `mixing_gg0=1.5`;
-    - Default values of metal system (bandgap <= 1.0 eV) are `mixing_beta=0.2` and `mixing_gg0=0.0`;
-    - Default values of other systems (bandgap > 1.0eV) are `mixing_beta=0.7` and `mixing_gg0=0.0`.
+    - Default values of metal system (bandgap <= 1.0 eV) are `mixing_beta=0.2` and `mixing_gg0=1.0`;
+    - Default values of other systems (bandgap > 1.0eV) are `mixing_beta=0.7` and `mixing_gg0=1.0`.
   - **0**: keep charge density unchanged, usually used for restarting with `init_chg=file` or testing.
   - **0.1 or less**: if convergence of SCF calculation is difficult to reach, please try `0 < mixing_beta < 0.1`.
   
@@ -930,14 +960,18 @@ calculations.
 
 - **Type**: Integer
 - **Description**: It indicates the mixing dimensions in Pulay or Broyden. Pulay and Broyden method use the density from previous mixing_ndim steps and do a charge mixing based on this density.
+  
+  For systems that are difficult to converge, one could try increasing the value of 'mixing_ndim' to enhance the stability of the self-consistent field (SCF) calculation.
 - **Default**: 8
 
 ### mixing_gg0
 
 - **Type**: Real
 - **Description**: Whether to perfom Kerker scaling.
-  -  **>0**: The high frequency wave vectors will be suppressed by multiplying a scaling factor $\frac{k^2}{k^2+gg0^2}$. Setting `mixing_gg0 = 1.5` is normally a good starting point.
+  -  **>0**: The high frequency wave vectors will be suppressed by multiplying a scaling factor $\frac{k^2}{k^2+gg0^2}$. Setting `mixing_gg0 = 1.0` is normally a good starting point. Kerker preconditioner will be automatically turned off if `mixing_beta <= 0.1`.
   -  **0**: No Kerker scaling is performed.
+  
+  For systems that are difficult to converge, particularly metallic systems, enabling Kerker scaling may aid in achieving convergence.
 - **Default**: 0.0
 
 ### mixing_tau
@@ -1097,6 +1131,14 @@ These variables are used to control the parameters of stochastic DFT (SDFT),  mi
   - -1: the seed is decided by time(NULL).
 - **Default**: 0
 
+### initsto_ecut
+
+- **Type**: Real
+- **Availability**: [esolver_type](#esolver_type) = `sdft`
+- **Description**: Stochastic wave functions are initialized in a large box generated by "4*`initsto_ecut`". `initsto_ecut` should be larger than [ecutwfc](#ecutwfc). In this method, SDFT results are the same when using different cores. Besides, coefficients of the same G are the same when ecutwfc is rising to initsto_ecut. If it is smaller than [ecutwfc](#ecutwfc), it will be turned off.
+- **Default**: 0.0
+- **Unit**: Ry
+
 ### initsto_freq
 
 - **Type**: Integer
@@ -1109,8 +1151,8 @@ These variables are used to control the parameters of stochastic DFT (SDFT),  mi
 ### npart_sto
 
 - **Type**: Integer
-- **Availability**: [method_sto](#method_sto) = `2` and [out_dos](#out_dos) = `True`
-- **Description**: Make memory cost to 1/npart_sto times of the previous one when running the post process of SDFT like DOS.
+- **Availability**: [method_sto](#method_sto) = `2` and [out_dos](#out_dos) = `True` or [cal_cond](#cal_cond) = `True`
+- **Description**: Make memory cost to 1/npart_sto times of the previous one when running the post process of SDFT like DOS or conductivities.
 - **Default**: 1
 
 [back to top](#full-list-of-input-keywords)
@@ -3108,12 +3150,12 @@ Thermal conductivities: $\kappa = \lim_{\omega\to 0}\kappa(\omega)$.
 - **Description**: Whether to calculate electronic conductivities.
 - **Default**: False
 
-### cond_nche
+### cond_che_thr
 
-- **Type**: Integer
+- **Type**: Real
 - **Availability**: [esolver_type](#esolver_type) = `sdft`
-- **Description**: Chebyshev expansion orders for stochastic Kubo Greenwood.
-- **Default**: 20
+- **Description**: Control the error of Chebyshev expansions for conductivities.
+- **Default**: 1e-8
 
 ### cond_dw
 
@@ -3201,5 +3243,89 @@ These variables are used to control the usage of implicit solvation model. This 
 - **Description**: the value of the electron density at which the dielectric cavity forms
 - **Default**: 0.00037
 - **Unit**: $Bohr^{-3}$
+
+## Deltaspin
+
+These variables are used to control the usage of deltaspin functionality.
+
+### sc_mag_switch
+
+- **Type**: boolean
+- **Description**: the switch of deltaspin functionality
+  - 0: no deltaspin
+  - 1: use the deltaspin method to constrain atomic magnetic moments
+- **Default**: 0
+
+### decay_grad_switch
+
+- **Type**: boolean
+- **Description**: the switch of decay gradient method
+  - 0: no decay gradient method
+  - 1: use the decay gradient method and set ScDecayGrad in the file specified by `sc_file`. ScDecayGrad is an element dependent parameter, which is used to control the decay rate of the gradient of the magnetic moment.
+- **Default**: 0
+
+### sc_thr
+
+- **Type**: Real
+- **Description**: the threshold of the spin constraint atomic magnetic moment
+- **Default**: 1e-6
+- **Unit**: Bohr Mag (\muB)
+
+### nsc
+
+- **Type**: Integer
+- **Description**: the maximum number of steps in the inner lambda loop
+- **Default**: 100
+
+### nsc_min
+
+- **Type**: Integer
+- **Description**: the minimum number of steps in the inner lambda loop
+- **Default**: 2
+
+### alpha_trial
+
+- **Type**: Real
+- **Description**: initial trial step size for lambda in eV/uB^2
+- **Default**: 0.01
+- **Unit**: eV/uB^2
+
+### sccut
+
+- **Type**: Real
+- **Description**: restriction of step size in eV/uB
+- **Default**: 3
+- **Unit**: eV/uB
+
+### sc_file
+
+- **Type**: String
+- **Description**: the file in json format to specify atomic constraining parameters. An example of the sc_file json file is shown below:
+```json
+[
+    {
+        "element": "Fe",
+        "itype": 0,
+        "ScDecayGrad": 0.9,
+        "ScAtomData": [
+            {
+                "index": 0,
+                "lambda": [0, 0, 0],
+                "target_mag": [2.0, 0.0, 0.0],
+                "constrain": [1,1,1]
+            },
+            {
+                "index": 1,
+                "lambda": [0, 0, 0],
+                "target_mag_val": 2.0,
+                "target_mag_angle1": 80.0,
+                "target_mag_angle2": 0.0,
+                "constrain": [1,1,1]
+            }
+        ]
+    }
+]
+```
+- **Default**: none
 
 [back to top](#full-list-of-input-keywords)

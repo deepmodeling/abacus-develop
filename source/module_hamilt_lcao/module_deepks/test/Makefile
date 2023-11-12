@@ -41,7 +41,7 @@ INCLUDES = -I. -Icommands -I${FFTW_INCLUDE_DIR} ${LIBTORCH_INCLUDE_DIR} -I${CNPY
 
 # -pedantic turns off more extensions and generates more warnings
 # -xHost generates instructions for the highest instruction set available on the compilation host processor
-OPTS = ${INCLUDES} -Ofast -std=c++14 -simd -march=native -xHost -m64 -qopenmp -Werror -Wall -pedantic -g
+OPTS = ${INCLUDES} -Ofast -std=c++14 -march=native -xHost -m64 -qopenmp -Werror -Wall -pedantic -g
 
 include Makefile.Objects
 

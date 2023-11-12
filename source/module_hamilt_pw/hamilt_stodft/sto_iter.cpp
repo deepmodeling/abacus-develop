@@ -36,10 +36,10 @@ Stochastic_Iter::~Stochastic_Iter()
     delete[] chiallorder;
 }
 
-void Stochastic_Iter::init(int* nchip_in, const int method_in, K_Vectors* pkv_in, ModulePW::PW_Basis_K* wfc_basis, Stochastic_WF& stowf)
+void Stochastic_Iter::init(const int method_in, K_Vectors* pkv_in, ModulePW::PW_Basis_K* wfc_basis, Stochastic_WF& stowf)
 {
     p_che = new ModuleBase::Chebyshev<double>(INPUT.nche_sto);
-    nchip = nchip_in;
+    nchip = stowf.nchip;
     targetne = GlobalV::nelec;
     this->pkv = pkv_in;
     stohchi.init(wfc_basis, pkv);
@@ -54,22 +54,11 @@ void Stochastic_Iter::init(int* nchip_in, const int method_in, K_Vectors* pkv_in
     
     if(this->method == 2)
     {
-        double tot = 0;
-        for (int ik = 0; ik < nks; ++ik)
-        {
-            tot += stowf.chi0[ik].nr * stowf.chi0[ik].nc * norder * 4; // each complex cost 4B memory
-        }
-#ifdef __MPI
-        MPI_Allreduce(MPI_IN_PLACE, &tot, 1, MPI_DOUBLE, MPI_SUM, POOL_WORLD);
-#endif
-        tot /= double(1073741824); //convert B to GB
-        if(tot > 64)    std::cout<<" WARNING: POOL 0 uses memories of over "<<tot<<" GB."<<std::endl;
         this->chiallorder = new ModuleBase::ComplexMatrix[stowf.nks];
         for (int ik = 0; ik < nks; ++ik)
         {
-            const int nchip = stowf.chi0[ik].nr;
-            const int npwx = stowf.chi0[ik].nc;
-            chiallorder[ik].create(nchip * npwx, norder,true);
+            const int npwx = stowf.npwx;
+            chiallorder[ik].create(nchip[ik] * npwx, norder,true);
         }
     }
 }
@@ -83,7 +72,9 @@ void Stochastic_Iter::orthog(const int& ik, psi::Psi<std::complex<double>>& psi,
 	    const int nchipk=stowf.nchip[ik];
 	    const int npw = psi.get_current_nbas();
 	    const int npwx = psi.get_nbasis();
-        std::complex<double> *wfgin = stowf.chi0[ik].c, *wfgout = stowf.chiortho[ik].c;
+        stowf.chi0->fix_k(ik);
+        stowf.chiortho->fix_k(ik);
+        std::complex<double> *wfgin = stowf.chi0->get_pointer(), *wfgout = stowf.chiortho->get_pointer();
 	    for(int ig = 0 ; ig < npwx * nchipk; ++ig)
 	    {
 		    wfgout[ig] = wfgin[ig];
@@ -97,7 +88,7 @@ void Stochastic_Iter::orthog(const int& ik, psi::Psi<std::complex<double>>& psi,
 	    //sum(b<NBANDS, a<nchi) = < psi_b | chi_a >
 	    zgemm_(&transC, &transN, &GlobalV::NBANDS, &nchipk, &npw, &ModuleBase::ONE, 
                 &psi(ik,0,0), &npwx, wfgout, &npwx, &ModuleBase::ZERO, sum, &GlobalV::NBANDS);
-	    Parallel_Reduce::reduce_complex_double_pool(sum, GlobalV::NBANDS * nchipk);
+        Parallel_Reduce::reduce_pool(sum, GlobalV::NBANDS * nchipk);
     
 	    //psi -= psi * sum
 	    zgemm_(&transN, &transN, &npw, &nchipk, &GlobalV::NBANDS, &ModuleBase::NEG_ONE, 
@@ -135,11 +126,11 @@ void Stochastic_Iter::checkemm(const int& ik, const int istep, const int iter, S
     {
         if (GlobalV::NBANDS > 0)
         {
-            pchi = &stowf.chiortho[ik](ichi, 0);
+            pchi = &stowf.chiortho->operator()(ik, ichi, 0);
         }
         else
         {
-            pchi = &stowf.chi0[ik](ichi, 0);
+            pchi = &stowf.chi0->operator()(ik, ichi, 0);
         }
         while (1)
         {
@@ -163,16 +154,13 @@ void Stochastic_Iter::checkemm(const int& ik, const int istep, const int iter, S
     }
     if (ik == nks - 1)
     {
-        stofunc.Emax = stohchi.Emax;
-        stofunc.Emin = stohchi.Emin;
-
 #ifdef __MPI
-        MPI_Allreduce(MPI_IN_PLACE, &stofunc.Emax, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-        MPI_Allreduce(MPI_IN_PLACE, &stofunc.Emin, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+        MPI_Allreduce(MPI_IN_PLACE, &stohchi.Emax, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+        MPI_Allreduce(MPI_IN_PLACE, &stohchi.Emin, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
         MPI_Allreduce(MPI_IN_PLACE, &change, 1, MPI_CHAR, MPI_LOR, MPI_COMM_WORLD);
 #endif
-        stohchi.Emin = stofunc.Emin;
-        stohchi.Emax = stofunc.Emax;
+        stofunc.Emax = stohchi.Emax;
+        stofunc.Emin = stohchi.Emin;
         if (change)
         {
             GlobalV::ofs_running << "New Emax " << stohchi.Emax << " ; new Emin " << stohchi.Emin << std::endl;
@@ -321,7 +309,7 @@ void Stochastic_Iter::calPn(const int& ik, Stochastic_WF& stowf)
     const int nchip_ik = nchip[ik];
     const int npw = stowf.ngk[ik];
     const int npwx = stowf.npwx;
-    if(ik==0)   
+    if(ik==0)
     {
         if(this->method == 1)
             ModuleBase::GlobalFunc::ZEROS(spolyv, norder);
@@ -329,8 +317,16 @@ void Stochastic_Iter::calPn(const int& ik, Stochastic_WF& stowf)
             ModuleBase::GlobalFunc::ZEROS(spolyv, norder*norder);
     }
     std::complex<double> * pchi;
-    if(GlobalV::NBANDS > 0)  pchi = stowf.chiortho[ik].c; 
-    else            pchi = stowf.chi0[ik].c;
+    if(GlobalV::NBANDS > 0)  
+    {
+        stowf.chiortho->fix_k(ik);
+        pchi = stowf.chiortho->get_pointer();
+    } 
+    else
+    {   
+        stowf.chi0->fix_k(ik);
+        pchi = stowf.chi0->get_pointer();
+    }
     
     if(this->method == 1)
     {
@@ -482,12 +478,13 @@ void Stochastic_Iter::sum_stoband(Stochastic_WF& stowf, elecstate::ElecState* pe
             if(this->pkv->nks > 1) 
             {
                 pHamilt->updateHk(ik);
+                stowf.shchi->fix_k(ik);
             }
             stohchi.current_ik = ik;
             const int npw = this->pkv->ngk[ik];
             const double kweight = this->pkv->wk[ik];
             std::complex<double> *hshchi = new std::complex<double> [nchip_ik * npwx];
-            std::complex<double>* tmpin = stowf.shchi[ik].c;
+            std::complex<double>* tmpin = stowf.shchi->get_pointer();
             std::complex<double> *tmpout = hshchi;
             stohchi.hchi(tmpin,tmpout,nchip_ik);
             for(int ichi = 0; ichi < nchip_ik ; ++ichi)
@@ -526,7 +523,8 @@ void Stochastic_Iter::sum_stoband(Stochastic_WF& stowf, elecstate::ElecState* pe
     for (int ik = 0; ik < this->pkv->nks; ++ik)
     {
         const int nchip_ik = nchip[ik];
-        std::complex<double> *tmpout = stowf.shchi[ik].c;
+        stowf.shchi->fix_k(ik);
+        std::complex<double> *tmpout = stowf.shchi->get_pointer();
         for(int ichi = 0; ichi < nchip_ik ; ++ichi)
         {
             wfc_basis->recip2real(tmpout, porter, ik);
@@ -593,12 +591,19 @@ void Stochastic_Iter::calTnchi_ik(const int& ik, Stochastic_WF& stowf)
 {
     const int npw = stowf.ngk[ik];
     const int npwx = stowf.npwx;
-    std::complex<double>* out = stowf.shchi[ik].c;
+    stowf.shchi->fix_k(ik);
+    std::complex<double>* out = stowf.shchi->get_pointer();
     std::complex<double>* pchi;
     if (GlobalV::NBANDS > 0)
-        pchi = stowf.chiortho[ik].c;
+    {
+        stowf.chiortho->fix_k(ik);
+        pchi = stowf.chiortho->get_pointer();
+    }
     else
-        pchi = stowf.chi0[ik].c;
+    {
+        stowf.chi0->fix_k(ik);
+        pchi = stowf.chi0->get_pointer();
+    }
     if(this->method==2)
     {
         char transa = 'N';

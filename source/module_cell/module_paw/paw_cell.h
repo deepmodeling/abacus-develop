@@ -36,6 +36,9 @@ class Paw_Cell
         const std::complex<double> * eigts2_in,
         const std::complex<double> * eigts3_in);
 
+    void set_isk(const int nk, const int * isk_in);
+    void set_currentk(const int ik);
+
     // Given a list of k points, calculate the structure factors
     // exp(-i(k+G)R_I) = exp(-ikR_I) exp(-iG_xR_Ix) exp(-iG_yR_Iy) exp(-iG_zR_Iz)
     // as well as the spherical harmonics Ylm(k+G), and gnorm
@@ -51,8 +54,10 @@ class Paw_Cell
     void accumulate_rhoij(const std::complex<double> * psi, const double weight);
     void reset_rhoij();
 
+    void init_rhoij(); // set rhoij according to occupation number in xml file
+
     // returns rhoij for each atom
-    std::vector<std::vector<double>> get_rhoij();
+    //std::vector<std::vector<double>> get_rhoij();
     // returns rhoijp and related info for each atom
     void get_rhoijp(std::vector<std::vector<double>> & rhoijp,
         std::vector<std::vector<int>> & rhoijselect, std::vector<int> & nrhoijsel);
@@ -159,6 +164,10 @@ class Paw_Cell
 
     void set_ylm(const int npw_in, const double ** kpg);
 
+    std::vector<int> isk;
+
+    int current_k, current_spin;
+
 // Part II. Operations in ABACUS: V_{NL}|psi> and S|psi>
 
     public:
@@ -167,10 +176,14 @@ class Paw_Cell
     // mode = 0 : V_{NL}|psi>, mode = 1 : (S+I)|psi>
     void paw_nl_psi(const int mode, const std::complex<double> * psi, std::complex<double> * vnlpsi);
 
-    void set_dij(const int iat, double* dij_in){paw_atom_list[iat].set_dij(dij_in);}
+    // set by providing dij explicitly
+    void set_dij(const int iat, double** dij_in){paw_atom_list[iat].set_dij(dij_in);}
+    // set by extracting dij from libpaw_interface
     void set_dij();
 
+    // set by providing sij explicitly
     void set_sij(const int iat, double* sij_in){paw_atom_list[iat].set_sij(sij_in);}
+    // set by extracting sij from libpaw_interface
     void set_sij();
 
 // Part III. Passing info for the initialization of PAW
@@ -212,11 +225,15 @@ class Paw_Cell
     int get_libpaw_ixc() {return ixc;}
     int get_libpaw_xclevel() {return xclevel;}
     int get_nspin() {return nspden;}
+
+    double get_epawdc() {return epawdc * 2.0;}
     
     int get_nfft() {return nfft;}
     int get_nrxx() {return nx*ny*num_z[GlobalV::RANK_IN_POOL];}
     int get_val(const int it) {return paw_element_list[it].get_zval();}
     int get_zat(const int it) {return paw_element_list[it].get_zat();}
+
+    double calculate_ecore();
 
     private:
 // Info to be passed to libpaw_interface:
@@ -235,6 +252,7 @@ class Paw_Cell
 
     double ecut, ecutpaw;
     std::vector<double> rprimd, gprimd, gmet;
+    std::vector<double> epsatm;
     double ucvol;
     std::vector<int> ngfft, ngfftdg;
     int nfft;
@@ -244,6 +262,7 @@ class Paw_Cell
     char* filename_list;
     int xclevel, ixc;
     int nspden, nsppol;
+    double epawdc;
 
 // Part IV. Calling Fortran subroutines from libpaw_interface
     public:
@@ -253,8 +272,8 @@ class Paw_Cell
     void set_rhoij(int iat, int nrhoijsel, int size_rhoij, int* rhoijselect, double* rhoijp);
     void get_nhat(double** nhat, double* nhatgr);
     void calculate_dij(double* vks, double* vxc);
-    void get_dij(int iat, int size_dij, double* dij);
-    void get_sij(int iat, int size_sij, double* sij);
+    void extract_dij(int iat, int size_dij, double* dij);
+    void extract_sij(int iat, int size_sij, double* sij);
 
 // Part V. Relevant for parallel computing
 // Note about the parallelization of PAW: ABINIT supports the parallelization based on

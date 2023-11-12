@@ -7,7 +7,6 @@
 #include "module_cell/module_symmetry/symmetry.h"
 #include "module_elecstate/elecstate.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
-#include "module_psi/psi.h"
 // #include "hamilt.h"
 namespace ModuleESolver
 {
@@ -15,7 +14,13 @@ namespace ModuleESolver
     {
     public:
         ModulePW::PW_Basis* pw_rho;
-        ModulePW::PW_Basis* pw_rhos;    ///< smooth grid for smooth part of the charge density (for uspp)
+        /**
+         * same as pw_rho for ncpp.
+         * dense grid for for uspp, used for ultrasoft augmented charge density.
+         * charge density and potential are defined on dense grids,
+         * but effective potential needs to be interpolated on smooth grids in order to compute Veff|psi>
+         */
+        ModulePW::PW_Basis* pw_rhod;
         ModulePW::PW_Basis_Big* pw_big; ///< [temp] pw_basis_big class
         ESolver_FP();
         virtual ~ESolver_FP();
@@ -30,9 +35,6 @@ namespace ModuleESolver
         // this is the interface of non-self-consistant calculation
         virtual void nscf(){};
 
-        // wavefunction coefficients
-        psi::Psi<std::complex<double>>* psi = nullptr;
-        psi::Psi<double>* psid = nullptr;
         Structure_Factor sf;
         K_Vectors kv;
 

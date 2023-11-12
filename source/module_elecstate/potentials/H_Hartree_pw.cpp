@@ -57,7 +57,7 @@ ModuleBase::matrix H_Hartree_pw::v_hartree(const UnitCell &cell,
         }
     }
 
-    Parallel_Reduce::reduce_double_pool(ehart);
+    Parallel_Reduce::reduce_pool(ehart);
     ehart *= 0.5 * cell.omega;
     // std::cout << " ehart=" << ehart << std::endl;
     H_Hartree_pw::hartree_energy = ehart;

@@ -331,6 +331,28 @@ TEST_F(TestPsi, band_first)
     EXPECT_EQ(std::get<0>(psi_band_32->to_range(illegal_range1)), nullptr);
     EXPECT_EQ(std::get<1>(psi_band_32->to_range(illegal_range2)), 0);
 
+    // pointer constructor
+    // band-first to k-first
+    psi::Psi<float> psi_band_32_k(psi_band_32->get_pointer(), psi_band_32->get_nk(), psi_band_32->get_nbands(), psi_band_32->get_nbasis(), psi_band_32->get_ngk_pointer(), true);
+    // k-first to band-first
+    psi::Psi<float> psi_band_32_b(psi_band_32_k.get_pointer(), psi_band_32_k.get_nk(), psi_band_32_k.get_nbands(), psi_band_32_k.get_nbasis(), psi_band_32_k.get_ngk_pointer(), false);
+    EXPECT_EQ(psi_band_32_k.get_nk(), ink);
+    EXPECT_EQ(psi_band_32_k.get_nbands(), inbands);
+    EXPECT_EQ(psi_band_32_k.get_nbasis(), inbasis);
+    EXPECT_EQ(psi_band_32_b.get_nk(), ink);
+    EXPECT_EQ(psi_band_32_b.get_nbands(), inbands);
+    EXPECT_EQ(psi_band_32_b.get_nbasis(), inbasis);
+    for (int ik = 0;ik < ink;++ik)
+        for (int ib = 0;ib < inbands;++ib)
+        {
+            psi_band_32->fix_kb(ik, ib);
+            psi_band_32_k.fix_kb(ik, ib);
+            psi_band_32_b.fix_kb(ik, ib);
+            EXPECT_EQ(psi_band_32->get_psi_bias(), (ib * ink + ik) * inbasis);
+            EXPECT_EQ(psi_band_32_k.get_psi_bias(), (ik * inbands + ib) * inbasis);
+            EXPECT_EQ(psi_band_32_b.get_psi_bias(), (ib * ink + ik) * inbasis);
+        }
+
     delete psi_band_c64;
     delete psi_band_64;
     delete psi_band_c32;

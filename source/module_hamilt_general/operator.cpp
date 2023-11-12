@@ -38,7 +38,6 @@ Operator<T, Device>::~Operator()
 template<typename T, typename Device>
 typename Operator<T, Device>::hpsi_info Operator<T, Device>::hPsi(hpsi_info& input) const
 {
-    ModuleBase::timer::tick("Operator", "hPsi");
     using syncmem_op = psi::memory::synchronize_memory_op<T, Device, Device>;
     auto psi_input = std::get<0>(input);
     std::tuple<const T*, int> psi_info = psi_input->to_range(std::get<1>(input));
@@ -51,17 +50,6 @@ typename Operator<T, Device>::hpsi_info Operator<T, Device>::hPsi(hpsi_info& inp
     {
         ModuleBase::WARNING_QUIT("Operator", "please choose correct range of psi for hPsi()!");
     }
-
-    this->act(nbands, psi_input->get_nbasis(), psi_input->npol, tmpsi_in, tmhpsi, psi_input->get_ngk(this->ik));
-    Operator* node((Operator*)this->next_op);
-    while (node != nullptr)
-    {
-        node->act(nbands, psi_input->get_nbasis(), psi_input->npol, tmpsi_in, tmhpsi, psi_input->get_ngk(node->ik));
-        node = (Operator*)(node->next_op);
-    }
-
-    ModuleBase::timer::tick("Operator", "hPsi");
-
     //if in_place, copy temporary hpsi to target hpsi_pointer, then delete hpsi and new a wrapper for return
     T* hpsi_pointer = std::get<2>(input);
     if (this->in_place)
@@ -71,8 +59,34 @@ typename Operator<T, Device>::hpsi_info Operator<T, Device>::hPsi(hpsi_info& inp
         delete this->hpsi;
         this->hpsi = new psi::Psi<T, Device>(hpsi_pointer, *psi_input, 1, nbands / psi_input->npol);
     }
+
+    auto call_act = [&, this](const Operator* op) -> void {
+        // a "psi" with the bands of needed range
+        psi::Psi<T, Device> psi_wrapper(const_cast<T*>(tmpsi_in), 1, nbands, psi_input->get_nbasis());
+        switch (op->get_act_type())
+        {
+        case 2:
+            op->act(psi_wrapper, *this->hpsi, nbands);
+            break;
+        default:
+            op->act(nbands, psi_input->get_nbasis(), psi_input->npol, tmpsi_in, this->hpsi->get_pointer(), psi_input->get_ngk(op->ik));
+            break;
+        }
+        };
+
+    ModuleBase::timer::tick("Operator", "hPsi");
+    call_act(this);
+    Operator* node((Operator*)this->next_op);
+    while (node != nullptr)
+    {
+        call_act(node);
+        node = (Operator*)(node->next_op);
+    }
+    ModuleBase::timer::tick("Operator", "hPsi");
+
     return hpsi_info(this->hpsi, psi::Range(1, 0, 0, nbands / psi_input->npol), hpsi_pointer);
 }
+
 
 template<typename T, typename Device>
 void Operator<T, Device>::init(const int ik_in) 

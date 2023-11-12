@@ -95,6 +95,7 @@ void Input::Print(const std::string &fn) const
                                  erf_height,
                                  "#the height of the energy step for reciprocal vectors");
     ModuleBase::GlobalFunc::OUTP(ofs, "erf_sigma", erf_sigma, "#the width of the energy step for reciprocal vectors");
+    ModuleBase::GlobalFunc::OUTP(ofs, "fft_mode", fft_mode, "#mode of FFTW");
     if (ks_solver == "cg")
     {
         ModuleBase::GlobalFunc::OUTP(ofs, "pw_diag_nmax", pw_diag_nmax, "max iteration number for cg");
@@ -129,9 +130,9 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "nx", nx, "number of points along x axis for FFT grid");
     ModuleBase::GlobalFunc::OUTP(ofs, "ny", ny, "number of points along y axis for FFT grid");
     ModuleBase::GlobalFunc::OUTP(ofs, "nz", nz, "number of points along z axis for FFT grid");
-    ModuleBase::GlobalFunc::OUTP(ofs, "nsx", nsx, "number of points along x axis for FFT smooth grid");
-    ModuleBase::GlobalFunc::OUTP(ofs, "nsy", nsy, "number of points along y axis for FFT smooth grid");
-    ModuleBase::GlobalFunc::OUTP(ofs, "nsz", nsz, "number of points along z axis for FFT smooth grid");
+    ModuleBase::GlobalFunc::OUTP(ofs, "ndx", ndx, "number of points along x axis for FFT smooth grid");
+    ModuleBase::GlobalFunc::OUTP(ofs, "ndy", ndy, "number of points along y axis for FFT smooth grid");
+    ModuleBase::GlobalFunc::OUTP(ofs, "ndz", ndz, "number of points along z axis for FFT smooth grid");
     ModuleBase::GlobalFunc::OUTP(ofs,
                                  "cell_factor",
                                  cell_factor,
@@ -146,9 +147,10 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "emin_sto", emin_sto, "trial energy to guess the lower bound of eigen energies of the Hamitonian operator");
     ModuleBase::GlobalFunc::OUTP(ofs, "emax_sto", emax_sto, "trial energy to guess the upper bound of eigen energies of the Hamitonian operator");
     ModuleBase::GlobalFunc::OUTP(ofs, "seed_sto", seed_sto, "the random seed to generate stochastic orbitals");
+    ModuleBase::GlobalFunc::OUTP(ofs, "initsto_ecut", initsto_ecut, "maximum ecut to init stochastic bands");
     ModuleBase::GlobalFunc::OUTP(ofs, "initsto_freq", initsto_freq, "frequency to generate new stochastic orbitals when running md");
     ModuleBase::GlobalFunc::OUTP(ofs, "cal_cond", cal_cond, "calculate electronic conductivities");
-    ModuleBase::GlobalFunc::OUTP(ofs, "cond_nche", cond_nche, "orders of Chebyshev expansions for conductivities");
+    ModuleBase::GlobalFunc::OUTP(ofs, "cond_che_thr", cond_che_thr, "control the error of Chebyshev expansions for conductivities");
     ModuleBase::GlobalFunc::OUTP(ofs, "cond_dw", cond_dw, "frequency interval for conductivities");
     ModuleBase::GlobalFunc::OUTP(ofs, "cond_wcut", cond_wcut, "cutoff frequency (omega) for conductivities");
     ModuleBase::GlobalFunc::OUTP(ofs, "cond_dt", cond_dt, "t interval to integrate Onsager coefficiencies");
@@ -436,7 +438,7 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "of_read_kernel", of_read_kernel, "If set to 1, the kernel of WT KEDF will be filled from file of_kernel_file, not from formula. Only usable for WT KEDF");
     ModuleBase::GlobalFunc::OUTP(ofs, "of_kernel_file", of_kernel_file, "The name of WT kernel file.");
 
-    ofs << "\n#Parameters (19.dft+u)" << std::endl;
+    ofs << "\n#Parameters (20.dft+u)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs, "dft_plus_u", dft_plus_u, "true:DFT+U correction; false: standard DFT calcullation(default)");
     ModuleBase::GlobalFunc::OUTP(ofs, "yukawa_lambda", yukawa_lambda, "default:0.0");
     ModuleBase::GlobalFunc::OUTP(ofs, "yukawa_potential", yukawa_potential, "default: false");
@@ -467,6 +469,16 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
    ModuleBase::GlobalFunc::OUTP(ofs, "bessel_descriptor_rcut",		bessel_descriptor_rcut, "radial cutoff for spherical bessel functions(a.u.)");
    ModuleBase::GlobalFunc::OUTP(ofs, "bessel_descriptor_smooth",	bessel_descriptor_smooth, "spherical bessel smooth or not");
    ModuleBase::GlobalFunc::OUTP(ofs, "bessel_descriptor_sigma",		bessel_descriptor_sigma, "spherical bessel smearing_sigma");
+   /// deltaspin variables
+   ofs << "\n#Parameters (22.non-collinear spin-constrained DFT)" << std::endl;
+   ModuleBase::GlobalFunc::OUTP(ofs, "sc_mag_switch", sc_mag_switch, "0: no spin-constrained DFT; 1: constrain atomic magnetization");
+   ModuleBase::GlobalFunc::OUTP(ofs, "decay_grad_switch", decay_grad_switch, "switch to control gradient break condition");
+   ModuleBase::GlobalFunc::OUTP(ofs, "sc_thr", sc_thr, "Convergence criterion of spin-constrained iteration (RMS) in uB");
+   ModuleBase::GlobalFunc::OUTP(ofs, "nsc", nsc, "Maximal number of spin-constrained iteration");
+   ModuleBase::GlobalFunc::OUTP(ofs, "nsc_min", nsc_min, "Minimum number of spin-constrained iteration");
+   ModuleBase::GlobalFunc::OUTP(ofs, "alpha_trial", alpha_trial, "Initial trial step size for lambda in eV/uB^2");
+   ModuleBase::GlobalFunc::OUTP(ofs, "sccut", sccut, "Maximal step size for lambda in eV/uB");
+   ModuleBase::GlobalFunc::OUTP(ofs, "sc_file", sc_file, "file name for parameters used in non-collinear spin-constrained DFT (json format)");
 
     ofs.close();
     return;

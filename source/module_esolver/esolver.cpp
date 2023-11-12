@@ -1,5 +1,5 @@
 #include "esolver.h"
-
+#include "module_psi/kernels/device.h"
 #include "esolver_ks_pw.h"
 #include "esolver_sdft_pw.h"
 #ifdef __LCAO
@@ -81,6 +81,18 @@ namespace ModuleESolver
         }
 
         GlobalV::ofs_running << " The esolver type has been set to : " << esolver_type << std::endl;
+        auto device_info = GlobalV::device_flag;
+        for (char &c : device_info) {
+            if (std::islower(c)) {
+                c = std::toupper(c);
+            }
+        }
+        if (GlobalV::MY_RANK == 0) {
+            std::cout << " RUNNING WITH DEVICE     : " << device_info << " / "
+                      << psi::device::get_device_info(GlobalV::device_flag) << std::endl;
+        }
+        GlobalV::ofs_running << "\n RUNNING WITH DEVICE     : " << device_info << " / "
+                  << psi::device::get_device_info(GlobalV::device_flag) << std::endl;
         return esolver_type;
     }
 
@@ -114,7 +126,12 @@ namespace ModuleESolver
 #ifdef __LCAO
         else if (esolver_type == "ksdft_lcao")
         {
-            p_esolver = new ESolver_KS_LCAO();
+            if (GlobalV::GAMMA_ONLY_LOCAL)
+                p_esolver = new ESolver_KS_LCAO<double, double>();
+            else if (GlobalV::NSPIN < 4)
+                p_esolver = new ESolver_KS_LCAO<std::complex<double>, double>();
+            else
+                p_esolver = new ESolver_KS_LCAO<std::complex<double>, std::complex<double>>();
         }
         else if (esolver_type == "ksdft_lcao_tddft")
         {

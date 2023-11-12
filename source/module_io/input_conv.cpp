@@ -294,7 +294,8 @@ void Input_Conv::Convert(void)
     GlobalV::PRESS3 = INPUT.press3;
     GlobalV::out_element_info = INPUT.out_element_info;
 #ifdef __LCAO
-    Force_Stress_LCAO::force_invalid_threshold_ev = INPUT.force_thr_ev2;
+    Force_Stress_LCAO<double>::force_invalid_threshold_ev = INPUT.force_thr_ev2;
+    Force_Stress_LCAO<std::complex<double>>::force_invalid_threshold_ev = INPUT.force_thr_ev2;
 #endif
 
     BFGS_Basic::relax_bfgs_w1 = INPUT.relax_bfgs_w1;
@@ -622,10 +623,14 @@ void Input_Conv::Convert(void)
 #ifdef __LCAO
     Local_Orbital_Charge::out_dm = INPUT.out_dm;
     Local_Orbital_Charge::out_dm1 = INPUT.out_dm1;
-    hsolver::HSolverLCAO::out_mat_hs = INPUT.out_mat_hs;
-    hsolver::HSolverLCAO::out_mat_hsR = INPUT.out_mat_hs2; // LiuXh add 2019-07-16
-    hsolver::HSolverLCAO::out_mat_t = INPUT.out_mat_t;
-    hsolver::HSolverLCAO::out_mat_dh = INPUT.out_mat_dh;
+    hsolver::HSolverLCAO<double>::out_mat_hs = INPUT.out_mat_hs;
+    hsolver::HSolverLCAO<double>::out_mat_hsR = INPUT.out_mat_hs2; // LiuXh add 2019-07-16
+    hsolver::HSolverLCAO<double>::out_mat_t = INPUT.out_mat_t;
+    hsolver::HSolverLCAO<double>::out_mat_dh = INPUT.out_mat_dh;
+    hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs = INPUT.out_mat_hs;
+    hsolver::HSolverLCAO<std::complex<double>>::out_mat_hsR = INPUT.out_mat_hs2; // LiuXh add 2019-07-16
+    hsolver::HSolverLCAO<std::complex<double>>::out_mat_t = INPUT.out_mat_t;
+    hsolver::HSolverLCAO<std::complex<double>>::out_mat_dh = INPUT.out_mat_dh;
     if (GlobalV::GAMMA_ONLY_LOCAL)
     {
         elecstate::ElecStateLCAO<double>::out_wfc_lcao = INPUT.out_wfc_lcao;
@@ -718,6 +723,18 @@ void Input_Conv::Convert(void)
     GlobalV::of_full_pw_dim = INPUT.of_full_pw_dim;
     GlobalV::of_read_kernel = INPUT.of_read_kernel;
     GlobalV::of_kernel_file = INPUT.of_kernel_file;
+
+    //-----------------------------------------------
+    // Deltaspin related parameters
+    //-----------------------------------------------
+    GlobalV::sc_mag_switch = INPUT.sc_mag_switch;
+    GlobalV::decay_grad_switch = INPUT.decay_grad_switch;
+    GlobalV::sc_thr = INPUT.sc_thr;
+    GlobalV::nsc = INPUT.nsc;
+    GlobalV::nsc_min = INPUT.nsc_min;
+    GlobalV::alpha_trial = INPUT.alpha_trial;
+    GlobalV::sccut = INPUT.sccut;
+    GlobalV::sc_file = INPUT.sc_file;
 
     // mixing parameters
     GlobalV::MIXING_MODE = INPUT.mixing_mode;

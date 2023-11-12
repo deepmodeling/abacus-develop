@@ -1,0 +1,45 @@
+INPUT_PARAMETERS
+suffix    autotest
+pseudo_dir	../../PP_ORB
+orbital_dir	../../PP_ORB
+
+calculation   scf
+#ecutwfc       200
+ecutwfc       10
+scf_thr           1.0e-5
+scf_nmax         2
+out_chg    0
+
+#init_chg    file
+#out_dos         1
+#dos_sigma       0.05
+#out_band        1
+
+smearing_method  gaussian
+smearing_sigma     0.07
+
+#cal_force             1
+#force_thr_ev      0.01
+#relax_method       cg
+#relax_bfgs_init  0.5
+
+mixing_type    pulay
+mixing_beta    0.3
+
+ks_solver    genelpa
+basis_type   lcao
+symmetry     0
+noncolin     true
+nspin        4
+#lspinorb	true
+out_mul		1
+
+#deltaspin
+sc_mag_switch 	1
+decay_grad_switch 1
+sc_thr		1e-4
+nsc		10
+nsc_min		2
+sc_file		sc.json
+alpha_trial     0.01
+sccut   	3

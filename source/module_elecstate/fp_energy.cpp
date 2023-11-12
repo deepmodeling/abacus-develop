@@ -1,4 +1,8 @@
 #include "fp_energy.h"
+#include "module_base/global_variable.h"
+#ifdef USE_PAW
+#include "module_cell/module_paw/paw_cell.h"
+#endif
 
 #include <iomanip>
 #include <iostream>
@@ -10,16 +14,49 @@ namespace elecstate
 /// @brief calculate etot
 double fenergy::calculate_etot()
 {
-    etot = eband + deband + (etxc - etxcc) + ewald_energy + hartree_energy + demet + descf + exx + efield + gatefield
-           + evdw + esol_el + esol_cav + edftu + edeepks_scf;
+    if(GlobalV::use_paw)
+    {
+        etot = eband + deband + etxc + ewald_energy - hartree_energy + demet + descf + exx + efield + gatefield
+               + evdw + esol_el + esol_cav + edftu + edeepks_scf;
+    }
+    else
+    {
+        etot = eband + deband + (etxc - etxcc) + ewald_energy + hartree_energy + demet + descf + exx + efield + gatefield
+               + evdw + esol_el + esol_cav + edftu + edeepks_scf + escon;
+    }
+
+#ifdef USE_PAW
+    if(GlobalV::use_paw)
+    {
+        double ecore = GlobalC::paw_cell.calculate_ecore();
+        double epawdc = GlobalC::paw_cell.get_epawdc();
+        etot += ( ecore + epawdc );
+    }
+#endif
     return etot;
 }
 
 /// @brief calculate etot_harris
 double fenergy::calculate_harris()
 {
-    etot_harris = eband + deband_harris + (etxc - etxcc) + ewald_energy + hartree_energy + demet + descf + exx + efield
+    if(GlobalV::use_paw)
+    {
+        etot_harris = eband + deband_harris + etxc + ewald_energy - hartree_energy + demet + descf + exx + efield
                   + gatefield + evdw + esol_el + esol_cav + edftu + edeepks_scf;
+    }
+    else
+    {
+        etot_harris = eband + deband_harris + (etxc - etxcc) + ewald_energy + hartree_energy + demet + descf + exx + efield
+                  + gatefield + evdw + esol_el + esol_cav + edftu + edeepks_scf + escon;
+    }
+#ifdef USE_PAW
+    if(GlobalV::use_paw)
+    {
+        double ecore = GlobalC::paw_cell.calculate_ecore();
+        double epawdc = GlobalC::paw_cell.get_epawdc();
+        etot_harris += ( ecore + epawdc );
+    }
+#endif
     return etot_harris;
 }
 
@@ -27,7 +64,7 @@ double fenergy::calculate_harris()
 void fenergy::clear_all()
 {
     etot = etot_old = eband = deband = etxc = etxcc = vtxc = ewald_energy = hartree_energy = demet = descf = exx
-        = efield = gatefield = evdw = etot_harris = deband_harris = esol_el = esol_cav = edftu = edeepks_scf = 0.0;
+        = efield = gatefield = evdw = etot_harris = deband_harris = esol_el = esol_cav = edftu = edeepks_scf = escon = 0.0;
 }
 
 /// @brief print all energies
@@ -50,6 +87,7 @@ void fenergy::print_all() const
     std::cout << " esol_cav=" << esol_cav << std::endl;
     std::cout << " edftu=" << edftu << std::endl;
     std::cout << " edeepks_scf=" << edeepks_scf << std::endl;
+    std::cout << " escon=" << escon << std::endl;
     std::cout << std::endl;
     std::cout << " total= " << etot << std::endl;
 }

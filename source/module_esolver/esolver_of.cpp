@@ -107,10 +107,8 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     //======================================
     // Initalize non local pseudopotential
     //======================================
-    GlobalC::ppcell.init_vnl(GlobalC::ucell);
+    GlobalC::ppcell.init_vnl(GlobalC::ucell, pw_rho);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
-
-    GlobalC::ppcell.cal_effective_D();
 
     if(this->pelec == nullptr)
     {
@@ -120,7 +118,8 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     this->pelec->charge->allocate(GlobalV::NSPIN);
     this->pelec->omega = GlobalC::ucell.omega;
 
-    this->pelec->pot = new elecstate::Potential(pw_rho,
+    this->pelec->pot = new elecstate::Potential(pw_rhod,
+                                                pw_rho,
                                                 &GlobalC::ucell,
                                                 &GlobalC::ppcell.vloc,
                                                 &sf,
@@ -161,6 +160,12 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     // calculate the total local pseudopotential in real space
     //=========================================================
     this->pelec->init_scf(0, sf.strucFac); // atomic_rho, v_of_rho, set_vrs
+
+    // liuyu move here 2023-10-09
+    // D in uspp need vloc, thus behind init_scf()
+    // calculate the effective coefficient matrix for non-local pseudopotential projectors
+    ModuleBase::matrix veff = this->pelec->pot->get_effective_v();
+    GlobalC::ppcell.cal_effective_D(veff, this->pw_rho, GlobalC::ucell);
 
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT POTENTIAL");
 
@@ -275,7 +280,8 @@ void ESolver_OF::init_after_vc(Input &inp, UnitCell &ucell)
     this->pelec->omega = GlobalC::ucell.omega;
 
     delete this->pelec->pot;
-    this->pelec->pot = new elecstate::Potential(this->pw_rho,
+    this->pelec->pot = new elecstate::Potential(this->pw_rhod,
+                                                this->pw_rho,
                                                 &GlobalC::ucell,
                                                 &(GlobalC::ppcell.vloc),
                                                 &(this->sf),
@@ -332,7 +338,7 @@ void ESolver_OF::init_after_vc(Input &inp, UnitCell &ucell)
         return;
     }
 
-    GlobalC::ppcell.init_vnl(GlobalC::ucell);
+    GlobalC::ppcell.init_vnl(GlobalC::ucell, pw_rho);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"NON-LOCAL POTENTIAL");
 
     for (int is = 0; is < GlobalV::NSPIN; ++is)
@@ -510,7 +516,7 @@ void ESolver_OF::updateV()
     {
        this->normdLdphi += this->inner_product(this->pdLdphi[is], this->pdLdphi[is], this->nrxx, 1);
     }
-    Parallel_Reduce::reduce_double_all(this->normdLdphi);
+    Parallel_Reduce::reduce_all(this->normdLdphi);
     this->normdLdphi = sqrt(this->normdLdphi/this->pw_rho->nxyz/GlobalV::NSPIN);
 }
 
@@ -618,7 +624,7 @@ void ESolver_OF::solveV()
     //             eKE = this->kineticEnergy();
     //             ePP = this->inner_product(this->pelec->pot->get_fixed_v(), ptempRho->rho[0], this->nrxx, this->dV);
     //             // ePP = this->inner_product(GlobalC::pot.vltot, ptempRho[0], this->nrxx, this->dV);
-    //             Parallel_Reduce::reduce_double_all(ePP);
+    //             Parallel_Reduce::reduce_all(ePP);
     //             E += eKE + ePP;
     //             GlobalV::ofs_warning << i << "    " << dEdtheta[0] << "    " << E << endl;
     //             if (this->theta[0] == 0) cout << "dEdtheta    " << dEdtheta[0]<< endl;
@@ -641,7 +647,7 @@ void ESolver_OF::solveV()
             E = this->pelec->f_en.etot;
             eKE = this->kineticEnergy();
             ePP = this->inner_product(this->pelec->pot->get_fixed_v(), this->ptempRho->rho[0], this->nrxx, this->dV);
-            Parallel_Reduce::reduce_double_all(ePP);
+            Parallel_Reduce::reduce_all(ePP);
             E += eKE + ePP;
 
             // line search to update theta[0]
@@ -732,7 +738,7 @@ void ESolver_OF::solveV()
         //             for (int is = 0; is < GlobalV::NSPIN; ++is) {
         //                 ePP += this->inner_product(GlobalC::pot.vltot, ptempRho[is], this->nrxx, this->dV);
         //             }
-        //             Parallel_Reduce::reduce_double_all(ePP);
+        //             Parallel_Reduce::reduce_all(ePP);
         //             E += eKE + ePP;
         //             this->opt_dcsrch.dcSrch(E, dEdalpha, thetaAlpha, this->task);
         //             numDC++;
@@ -815,19 +821,19 @@ void ESolver_OF::getNextDirect()
         // (1) make direction orthogonal to phi
         // |d'> = |d0> - |phi><phi|d0>/nelec
         double innerPhiDir = this->inner_product(this->pdirect[0], this->pphi[0], this->nrxx, this->dV);
-        Parallel_Reduce::reduce_double_all(innerPhiDir);
+        Parallel_Reduce::reduce_all(innerPhiDir);
         for (int i = 0; i < this->nrxx; ++i)
         {
             tempTheta += pow(this->pdirect[0][i] + this->pphi[0][i], 2);
             this->pdirect[0][i] = this->pdirect[0][i] - this->pphi[0][i] * innerPhiDir / this->nelec[0];
         }
-        Parallel_Reduce::reduce_double_all(tempTheta);
+        Parallel_Reduce::reduce_all(tempTheta);
         tempTheta = sqrt(tempTheta);
 
         // (2) renormalize direction
         // |d> = |d'> * \sqrt(nelec) / <d'|d'>
         double normDir = this->inner_product(this->pdirect[0], this->pdirect[0], this->nrxx, this->dV);
-        Parallel_Reduce::reduce_double_all(normDir);
+        Parallel_Reduce::reduce_all(normDir);
         normDir = sqrt(normDir);
         for (int i = 0; i < this->nrxx; ++i)
         {
@@ -844,7 +850,7 @@ void ESolver_OF::getNextDirect()
             // (1) make direction orthogonal to phi
             // |d'> = |d0> - |phi><phi|d0>/nelec
             double innerPhiDir = this->inner_product(this->pdirect[is], this->pphi[is], this->nrxx, this->dV);
-            Parallel_Reduce::reduce_double_all(innerPhiDir);
+            Parallel_Reduce::reduce_all(innerPhiDir);
             for (int i = 0; i < this->nrxx; ++i)
             {
                 this->pdirect[is][i] = this->pdirect[is][i] - this->pphi[is][i] * innerPhiDir / this->nelec[is];
@@ -853,7 +859,7 @@ void ESolver_OF::getNextDirect()
             // (2) renormalize direction
             // |d> = |d'> * \sqrt(nelec) / <d'|d'>
             double normDir = this->inner_product(this->pdirect[is], this->pdirect[is], this->nrxx, this->dV);
-            Parallel_Reduce::reduce_double_all(normDir);
+            Parallel_Reduce::reduce_all(normDir);
             normDir = sqrt(normDir);
             for (int i = 0; i < this->nrxx; ++i)
             {
@@ -911,8 +917,8 @@ void ESolver_OF::updateRho()
     //     this->pw_rho->recip2real(this->precipDir[is], this->pdeltaRhoHar);
     //     this->deltaRhoG = this->inner_product(this->pdeltaRho[is], this->pdeltaRhoHar, this->nrxx, this->dV);
     // }
-    // Parallel_Reduce::reduce_double_all(this->deltaRhoR);
-    // Parallel_Reduce::reduce_double_all(this->deltaRhoG);
+    // Parallel_Reduce::reduce_all(this->deltaRhoR);
+    // Parallel_Reduce::reduce_all(this->deltaRhoG);
     // this->deltaRhoR *= this->dV;
     // this->deltaRhoG /= 2.;
 }
@@ -1193,7 +1199,7 @@ void ESolver_OF::caldEdtheta(double **ptempPhi, Charge* tempRho, double *ptheta,
             pdPhidTheta[ir] = - this->pphi[is][ir] * sin(ptheta[is]) + this->pdirect[is][ir] * cos(ptheta[is]);
         }
         rdEdtheta[is] = this->inner_product(this->pdEdphi[is], pdPhidTheta, this->nrxx, this->dV);
-        Parallel_Reduce::reduce_double_all(rdEdtheta[is]);
+        Parallel_Reduce::reduce_all(rdEdtheta[is]);
     }
     delete[] pdPhidTheta;
 }
@@ -1205,7 +1211,7 @@ void ESolver_OF::caldEdtheta(double **ptempPhi, Charge* tempRho, double *ptheta,
 double ESolver_OF::cal_mu(double *pphi, double *pdEdphi, double nelec)
 {
     double mu = this->inner_product(pphi, pdEdphi, this->nrxx, this->dV);
-    Parallel_Reduce::reduce_double_all(mu);
+    Parallel_Reduce::reduce_all(mu);
     mu = mu / (2.0*nelec);
     return mu;
 }
@@ -1223,7 +1229,7 @@ double ESolver_OF::cal_Energy()
     {
         ePP += this->inner_product(this->pelec->pot->get_fixed_v(), pelec->charge->rho[is], this->nrxx, this->dV);
     }
-    Parallel_Reduce::reduce_double_all(ePP);
+    Parallel_Reduce::reduce_all(ePP);
     this->pelec->f_en.etot += eKE + ePP;
     return this->pelec->f_en.etot;
 }

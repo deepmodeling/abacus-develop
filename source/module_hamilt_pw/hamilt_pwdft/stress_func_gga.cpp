@@ -42,7 +42,7 @@ void Stress_Func<FPTYPE, Device>::stress_gga(ModuleBase::matrix& sigma,
 	{
 		for(int m = 0;m<3;m++)
 		{
-			Parallel_Reduce::reduce_double_pool( sigma_gradcorr[l][m] );
+            Parallel_Reduce::reduce_pool(sigma_gradcorr[l][m]);
 		}
 	}
 		

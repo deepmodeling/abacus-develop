@@ -15,7 +15,7 @@ body:
       required: true
 - type: checkboxes
   attributes:
-    label: Task list for Issue attackers
+    label: Task list for Issue attackers (only for developers)
     options:
       - label: Reproduce the performance issue on a similar system or environment.
       - label: Identify the specific section of the code causing the performance issue.

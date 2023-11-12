@@ -4,8 +4,8 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
 
-template<typename Tdata>
-void Exx_LRI_Interface<Tdata>::write_Hexxs(const std::string &file_name) const
+template<typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::write_Hexxs(const std::string& file_name) const
 {
 	ModuleBase::TITLE("Exx_LRI","write_Hexxs");
 	ModuleBase::timer::tick("Exx_LRI", "write_Hexxs");
@@ -15,8 +15,8 @@ void Exx_LRI_Interface<Tdata>::write_Hexxs(const std::string &file_name) const
 	ModuleBase::timer::tick("Exx_LRI", "write_Hexxs");
 }
 
-template<typename Tdata>
-void Exx_LRI_Interface<Tdata>::read_Hexxs(const std::string &file_name)
+template<typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::read_Hexxs(const std::string& file_name)
 {
 	ModuleBase::TITLE("Exx_LRI","read_Hexxs");
 	ModuleBase::timer::tick("Exx_LRI", "read_Hexxs");
@@ -25,8 +25,8 @@ void Exx_LRI_Interface<Tdata>::read_Hexxs(const std::string &file_name)
 	iar(exx_lri->Hexxs);
 	ModuleBase::timer::tick("Exx_LRI", "read_Hexxs");
 }
-template<typename Tdata>
-void Exx_LRI_Interface<Tdata>::exx_beforescf(const K_Vectors& kv, const Charge_Mixing& chgmix)
+template<typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const K_Vectors& kv, const Charge_Mixing& chgmix)
 {
 #ifdef __MPI
 		if ( GlobalC::exx_info.info_global.cal_exx )
@@ -70,26 +70,22 @@ void Exx_LRI_Interface<Tdata>::exx_beforescf(const K_Vectors& kv, const Charge_M
 #endif // __MPI
 }
 
-template<typename Tdata>
-void Exx_LRI_Interface<Tdata>::exx_eachiterinit(const Local_Orbital_Charge& loc, const Charge_Mixing& chgmix, const int& iter)
+template<typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const elecstate::DensityMatrix<T, double>& dm, const Charge_Mixing& chgmix, const int& iter)
 {
     if (GlobalC::exx_info.info_global.cal_exx)
     {
         if (!GlobalC::exx_info.info_global.separate_loop && exx_lri->two_level_step)
         {
 			const bool flag_restart = (iter==1) ? true : false;
-			if(GlobalV::GAMMA_ONLY_LOCAL)
-				exx_lri->mix_DMk_2D.mix(loc.dm_gamma, flag_restart);
-			else
-				exx_lri->mix_DMk_2D.mix(loc.dm_k, flag_restart);
-
-            exx_lri->cal_exx_elec(*loc.LOWF->ParaV);
+            exx_lri->mix_DMk_2D.mix(dm.get_DMK_vector(), flag_restart);
+            exx_lri->cal_exx_elec(*dm.get_paraV_pointer());
         }
     }
 }
 
-template<typename Tdata>
-void Exx_LRI_Interface<Tdata>::exx_hamilt2density(elecstate::ElecState& elec, const Parallel_Orbitals& pv)
+template<typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::exx_hamilt2density(elecstate::ElecState& elec, const Parallel_Orbitals& pv)
 {
     // Peize Lin add 2020.04.04
     if (XC_Functional::get_func_type() == 4 || XC_Functional::get_func_type() == 5)
@@ -113,11 +109,11 @@ void Exx_LRI_Interface<Tdata>::exx_hamilt2density(elecstate::ElecState& elec, co
     }
 }
 
-template<typename Tdata>
-bool Exx_LRI_Interface<Tdata>::exx_after_converge(
-    hamilt::Hamilt<std::complex<double>>& hamilt,
+template<typename T, typename Tdata>
+bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
+    hamilt::Hamilt<T>& hamilt,
     LCAO_Matrix& lm,
-    const Local_Orbital_Charge& loc,
+    const elecstate::DensityMatrix<T, double>& dm,
     const K_Vectors& kv,
     int& iter)
 {
@@ -203,14 +199,11 @@ bool Exx_LRI_Interface<Tdata>::exx_after_converge(
                 XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
             }
 
-			const bool flag_restart = (exx_lri->two_level_step==0) ? true : false;
-			if (GlobalV::GAMMA_ONLY_LOCAL)
-				exx_lri->mix_DMk_2D.mix(loc.dm_gamma, flag_restart);
-			else
-				exx_lri->mix_DMk_2D.mix(loc.dm_k, flag_restart);
+            const bool flag_restart = (exx_lri->two_level_step == 0) ? true : false;
+            exx_lri->mix_DMk_2D.mix(dm.get_DMK_vector(), flag_restart);
 
             // GlobalC::exx_lcao.cal_exx_elec(p_esolver->LOC, p_esolver->LOWF.wfc_k_grid);
-            exx_lri->cal_exx_elec(*loc.LOWF->ParaV);
+            exx_lri->cal_exx_elec(*dm.get_paraV_pointer());
             iter = 0;
             std::cout << " Updating EXX and rerun SCF" << std::endl;
             exx_lri->two_level_step++;

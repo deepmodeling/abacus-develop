@@ -1,0 +1,31 @@
+INPUT_PARAMETERS
+#Parameters (1.General)
+calculation             scf
+nbands                  10
+symmetry                0
+latname                 bcc
+nspin                   2
+pseudo_dir              ../../../tests/PP_ORB
+
+#Parameters (2.Iteration)
+ecutwfc                 40
+ecutrho                 240
+scf_thr                 1e-7
+scf_nmax                100
+
+#Parameters (3.Basis)
+basis_type             pw
+
+#Parameters (4.Smearing)
+smearing_method        gaussian
+smearing_sigma         0.02
+
+#parameters (5.Mixing)
+mixing_type            pulay
+mixing_beta            0.4
+
+pseudo_mesh            1
+pseudo_rcut            10
+
+cal_force              1
+cal_stress             1

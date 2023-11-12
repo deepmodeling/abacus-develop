@@ -22,6 +22,7 @@ VPATH=./src_global:\
 ./module_base/module_container/base/core:\
 ./module_base/module_container/ATen/core:\
 ./module_base/module_container/ATen/kernels:\
+./module_base/module_container/ATen/ops:\
 ./module_base/module_mixing:\
 ./module_md:\
 ./module_basis/module_pw:\
@@ -50,6 +51,7 @@ VPATH=./src_global:\
 ./module_hamilt_lcao/module_tddft:\
 ./module_hamilt_lcao/module_deepks:\
 ./module_hamilt_lcao/module_dftu:\
+./module_hamilt_lcao/module_deltaspin:\
 ./module_hamilt_lcao/hamilt_lcaodft/operator_lcao:\
 ./module_hamilt_lcao/module_gint:\
 ./module_relax:\
@@ -96,6 +98,7 @@ ${OBJS_LCAO}\
 ${OBJS_PARALLEL_LCAO}\
 ${OBJS_VDW}\
 ${OBJS_DFTU}\
+${OBJS_DELTASPIN}\
 ${OBJS_TENSOR}\
 
 OBJS_MAIN=main.o\
@@ -105,6 +108,7 @@ OBJS_MAIN=main.o\
 OBJS_BASE=abfs-vector3_order.o\
     complexarray.o\
     complexmatrix.o\
+    clebsch_gordan_coeff.o\
     element_basis_index.o\
     export.o\
     inverse_matrix.o\
@@ -171,8 +175,8 @@ OBJS_DEEPKS=LCAO_deepks.o\
         LCAO_deepks_interface.o\
 
 OBJS_ELECSTAT=elecstate.o\
-    elecstate_energy.o\
     elecstate_energy_terms.o\
+    elecstate_energy.o\
     elecstate_exx.o\
     elecstate_print.o\
     elecstate_pw.o\
@@ -207,6 +211,7 @@ OBJS_ESOLVER=esolver.o\
 OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
       esolver_ks_lcao_elec.o\
       esolver_ks_lcao_tddft.o\
+      esolver_ks_lcao_tmpfunc.o\
 
 OBJS_GINT=gint.o\
       gint_gamma.o\
@@ -256,6 +261,7 @@ OBJS_HAMILT_LCAO=hamilt_lcao.o\
     op_dftu_lcao.o\
     deepks_lcao.o\
     op_exx_lcao.o\
+    sc_lambda_lcao.o\
 
 OBJS_HCONTAINER=base_matrix.o\
     atom_pair.o\
@@ -335,6 +341,7 @@ OBJS_PSI_INITIALIZER=psi_initializer.o\
 OBJS_PW=fft.o\
     pw_basis.o\
     pw_basis_k.o\
+    pw_basis_sup.o\
     pw_distributeg.o\
     pw_distributeg_method1.o\
     pw_distributeg_method2.o\
@@ -502,6 +509,7 @@ OBJS_SRCPW=H_Ewald_pw.o\
     charge_mixing.o\
     fp_energy.o\
     forces.o\
+    forces_us.o\
     force_op.o\
     stress_op.o\
     wf_op.o\
@@ -527,7 +535,7 @@ OBJS_SRCPW=H_Ewald_pw.o\
     stress_func_kin.o\
     stress_func_loc.o\
     stress_func_nl.o\
-    stress_func_print.o\
+    stress_func_us.o\
     stress_pw.o\
     of_stress_pw.o\
     symmetry_rho.o\
@@ -551,15 +559,28 @@ OBJS_DFTU=dftu.o\
       dftu_occup.o\
       dftu_hamilt.o
 
+OBJS_DELTASPIN=basic_funcs.o\
+      cal_h_lambda.o\
+      cal_mw_from_lambda.o\
+      cal_mw_helper.o\
+      cal_mw.o\
+      init_sc.o\
+      lambda_loop_helper.o\
+      lambda_loop.o\
+      sc_parse_json.o\
+      spin_constrain.o\
+      template_helpers.o\
+
 OBJS_TENSOR=tensor.o\
     tensor_buffer.o\
     tensor_map.o\
     tensor_shape.o\
     tensor_types.o\
+    blas.o\
+    lapack.o\
+    linalg.o\
+    memory_impl.o\
     einsum_op.o\
-    blas_op.o\
-    lapack_op.o\
     linalg_op.o\
-    memory_op_impl.o\
     cpu_allocator.o\
     refcount.o

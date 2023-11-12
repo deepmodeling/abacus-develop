@@ -74,6 +74,38 @@ void Paw_Cell::init_paw_cell(
         int nproj = paw_element_list[it].get_mstates();
         paw_atom_list[iat].init_paw_atom(nproj);
     }
+
+    this -> init_rhoij();
+}
+
+void Paw_Cell::init_rhoij()
+{
+    ModuleBase::TITLE("Paw_Cell","init_rhoij");
+
+    for(int iat = 0; iat < nat; iat ++)
+    {
+        const int it = atom_type[iat];
+        const int nproj = paw_element_list[it].get_mstates();
+
+        const int size_rhoij = nproj * (nproj + 1) / 2;
+
+        std::vector<double> mstate_occ = paw_element_list[it].get_mstate_occ();
+
+        std::vector<double> rhoij_in;
+        rhoij_in.resize(size_rhoij);
+        for(int i = 0; i < size_rhoij; i ++)
+        {
+            rhoij_in[i] = 0.0;
+        }
+
+        for(int iproj = 0; iproj < nproj; iproj ++)
+        {
+            int i0 = iproj * (iproj + 1) / 2;
+            rhoij_in[i0 + iproj] = mstate_occ[iproj] / GlobalV::NSPIN;
+        }
+
+        paw_atom_list[iat].set_rhoij(rhoij_in);
+    }
 }
 
 void Paw_Cell::set_eigts(const int nx_in, const int ny_in, const int nz_in,
@@ -155,6 +187,21 @@ void Paw_Cell::set_paw_k(
     {
         gnorm[ipw] = std::sqrt(kpg[ipw][0]*kpg[ipw][0] + kpg[ipw][1]*kpg[ipw][1] + kpg[ipw][2]*kpg[ipw][2]) * tpiba;
     }
+}
+
+void Paw_Cell::set_isk(const int nk, const int * isk_in)
+{
+    isk.resize(nk);
+    for(int ik = 0; ik < nk; ik ++)
+    {
+        isk[ik] = isk_in[ik];
+    }
+}
+
+void Paw_Cell::set_currentk(const int ik)
+{
+    current_k = ik;
+    current_spin = isk[ik];
 }
 
 void Paw_Cell::map_paw_proj()
@@ -473,17 +520,24 @@ void Paw_Cell::accumulate_rhoij(const std::complex<double> * psi, const double w
         }
 
 #ifdef __MPI
-         Parallel_Reduce::reduce_complex_double_pool(ca.data(), nproj);
-#endif
+        Parallel_Reduce::reduce_pool(ca.data(), nproj);
 
+        if(GlobalV::RANK_IN_POOL == 0)
+        {
+            paw_atom_list[iat].set_ca(ca, weight);
+            paw_atom_list[iat].accumulate_rhoij(current_spin);
+        }
+#else
         paw_atom_list[iat].set_ca(ca, weight);
-        paw_atom_list[iat].accumulate_rhoij();
+        paw_atom_list[iat].accumulate_rhoij(current_spin);
+#endif
     }
 }
 
-std::vector<std::vector<double>> Paw_Cell::get_rhoij()
+/*
+std::vector<std::vector<std::vector<double>>> Paw_Cell::get_rhoij()
 {
-    std::vector<std::vector<double>> rhoij_all;
+    std::vector<std::vector<std::vector<double>>> rhoij_all;
     rhoij_all.resize(nat);
     for(int iat = 0; iat < nat; iat ++)
     {
@@ -492,6 +546,7 @@ std::vector<std::vector<double>> Paw_Cell::get_rhoij()
 
     return rhoij_all;
 }
+*/
 
 void Paw_Cell::get_rhoijp(std::vector<std::vector<double>> & rhoijp,
         std::vector<std::vector<int>> & rhoijselect, std::vector<int> & nrhoijsel)
@@ -555,7 +610,7 @@ void Paw_Cell::paw_nl_psi(const int mode, const std::complex<double> * psi, std:
         }
 
 #ifdef __MPI
-        Parallel_Reduce::reduce_complex_double_pool(ca.data(), nproj);
+        Parallel_Reduce::reduce_pool(ca.data(), nproj);
 #endif
 
         // sum_ij D_ij ca_j
@@ -569,7 +624,7 @@ void Paw_Cell::paw_nl_psi(const int mode, const std::complex<double> * psi, std:
             {
                 if(mode == 0) // V_{NL}|psi>
                 {
-                    v_ca[iproj] += paw_atom_list[iat].get_dij()[iproj*nproj+jproj] * ca[jproj];
+                    v_ca[iproj] += paw_atom_list[iat].get_dij()[current_spin][iproj*nproj+jproj] * ca[jproj];
                 }
                 else if(mode == 1) // (S+I)|psi>
                 {

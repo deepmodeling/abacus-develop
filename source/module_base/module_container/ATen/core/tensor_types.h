@@ -20,6 +20,12 @@
 
 #include <module_psi/kernels/types.h>
 
+#if defined(__CUDACC__)
+#include <base/macros/cuda.h>
+#elif defined(__HIPCC__)
+#include <base/macros/rocm.h>
+#endif // defined(__CUDACC__) || defined(__HIPCC__)
+
 namespace container {
 
 template <typename T, int Accuracy>
@@ -195,6 +201,18 @@ template <>
 struct DataTypeToEnum<std::complex<double>> {
     static constexpr DataType value = DataType::DT_COMPLEX_DOUBLE;
 };
+
+#if defined(__CUDACC__) || defined(__HIPCC__)
+template <>
+struct DataTypeToEnum<thrust::complex<float>> {
+    static constexpr DataType value = DataType::DT_COMPLEX;
+};
+
+template <>
+struct DataTypeToEnum<thrust::complex<double>> {
+    static constexpr DataType value = DataType::DT_COMPLEX_DOUBLE;
+};
+#endif // defined(__CUDACC__) || defined(__HIPCC__)
 
 /**
  * @brief Overloaded operator<< for the Tensor class.

@@ -28,11 +28,13 @@ namespace device {
 
 template<typename Device> AbacusDevice_t get_device_type (const Device* dev);
 
-template<typename FPTYPE> std::string get_current_precision (const std::complex<FPTYPE>* var);
+template<typename T> std::string get_current_precision(const T* var);
 
 template<typename Device> void print_device_info (const Device* dev, std::ofstream& ofs_device) {return;}
 
 template<typename Device> void record_device_memory (const Device* dev, std::ofstream& ofs_device, std::string str, size_t size) {return;}
+
+std::string get_device_info(std::string device_flag);
 
 int get_device_kpar(const int& kpar);
 std::string get_device_flag(const std::string& device, const std::string& ks_solver, const std::string& basis_type);

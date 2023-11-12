@@ -44,7 +44,7 @@ void Gint::gint_kernel_rho(
 					block_index, cal_flag,
 					psir_ylm.ptr_2D,
 					psir_DM.ptr_2D,
-					inout->DM[is], 1);	
+                    inout->DM[is], inout->if_symm);
 			}
 			else
 			{
@@ -54,7 +54,7 @@ void Gint::gint_kernel_rho(
 					block_index, cal_flag,
 					psir_ylm.ptr_2D,
 					psir_DM.ptr_2D,
-					this->DMRGint[is], 1);
+                    this->DMRGint[is], inout->if_symm);
 			}	
 			
 		}
@@ -69,7 +69,7 @@ void Gint::gint_kernel_rho(
 				psir_DM.ptr_2D,
 				inout->DM_R[is],
 				this->DMRGint[is],
-				1);
+                inout->if_symm);
 		}
 
 		//do sum_mu g_mu(r)psi_mu(r) to get electron density on grid

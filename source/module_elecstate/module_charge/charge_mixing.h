@@ -14,6 +14,7 @@ class Charge_Mixing
     Base_Mixing::Mixing* mixing = nullptr;
     Base_Mixing::Mixing_Data rho_mdata;
     Base_Mixing::Mixing_Data tau_mdata;
+    Base_Mixing::Mixing_Data nhat_mdata;
 
     /**
      * @brief reset mixing
@@ -138,6 +139,8 @@ class Charge_Mixing
   private:
     double rhog_dot_product(const std::complex<double>* const* const rhog1,
                             const std::complex<double>* const* const rhog2) const;
+
+    void high_freq_mix(std::complex<double>* data, const std::complex<double>* data_save, const int& number) const;
 };
 
 #endif

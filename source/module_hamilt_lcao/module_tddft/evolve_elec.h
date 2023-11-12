@@ -22,7 +22,7 @@ class Evolve_elec
 {
 
     friend class ELEC_scf;
-    friend class ModuleESolver::ESolver_KS_LCAO;
+    friend class ModuleESolver::ESolver_KS_LCAO<std::complex<double>, double>;
     friend class ModuleESolver::ESolver_KS_LCAO_TDDFT;
 
   public:

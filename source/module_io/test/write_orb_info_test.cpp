@@ -54,7 +54,7 @@ TEST(OrbInfo,WriteOrbInfo)
     std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
     EXPECT_THAT(str, testing::HasSubstr("#io    spec    l    m    z  sym"));
     EXPECT_THAT(str, testing::HasSubstr("0      Si    0    0    1              s"));
-    EXPECT_THAT(str, testing::HasSubstr("1      Si    2    4    1            dyz"));
+    EXPECT_THAT(str, testing::HasSubstr("0      Si    2    4    1            dxy"));
     EXPECT_THAT(str, testing::HasSubstr("#sym =Symmetry name of real orbital"));
     ifs.close();
     delete ucell;

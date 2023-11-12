@@ -225,7 +225,7 @@ TEST_F(OccupyTest, IweightsWarning)
   ekb(0, 0) = 0.1;
 
   testing::internal::CaptureStdout();
-  EXPECT_EXIT(occupy.iweights(1, wk, 1, 1.0, ekb, ef, wg, 0, isk);, ::testing::ExitedWithCode(0), "");
+  EXPECT_EXIT(occupy.iweights(1, wk, 1, 1.0, ekb, ef, wg, -1, isk);, ::testing::ExitedWithCode(0), "");
   output = testing::internal::GetCapturedStdout();
   EXPECT_THAT(output, testing::HasSubstr("It is not a semiconductor or insulator. Change 'smearing_method'."));
 }

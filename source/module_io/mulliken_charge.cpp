@@ -20,9 +20,9 @@
 #include "write_orb_info.h"
 #include "module_elecstate/elecstate_lcao.h"
 
-
+template<>
 ModuleBase::matrix ModuleIO::cal_mulliken(const std::vector<std::vector<double>> &dm,
-    LCAO_Matrix *LM
+    LCAO_Matrix* LM, const K_Vectors& kv, hamilt::Hamilt<double>* ham_in
 )
 {
     ModuleBase::TITLE("Mulliken_Charge", "cal_mulliken");
@@ -120,7 +120,8 @@ ModuleBase::matrix ModuleIO::cal_mulliken(const std::vector<std::vector<double>>
     return orbMulP;
 }
 
-ModuleBase::matrix ModuleIO::cal_mulliken_k(const std::vector<std::vector<std::complex<double>>> &dm,
+template<>
+ModuleBase::matrix ModuleIO::cal_mulliken(const std::vector<std::vector<std::complex<double>>>& dm,
     LCAO_Matrix* LM, const K_Vectors& kv, hamilt::Hamilt<std::complex<double>>* ham_in
 )
 {
@@ -131,8 +132,8 @@ ModuleBase::matrix ModuleIO::cal_mulliken_k(const std::vector<std::vector<std::c
     // std::vector<std::vector<double>> MecMulP(GlobalV::NSPIN, std::vector<double>(nlocal, 0));
     // std::vector<std::vector<double>> orbMulP(GlobalV::NSPIN, std::vector<double>(nlocal, 0));
     ModuleBase::matrix MecMulP, orbMulP;
-    MecMulP.create(GlobalV::NSPIN, nlocal);
-    orbMulP.create(GlobalV::NSPIN, nlocal);
+    MecMulP.create(GlobalV::NSPIN, nlocal, true);
+    orbMulP.create(GlobalV::NSPIN, nlocal, true);
 
     for(size_t ik = 0; ik != kv.nks; ++ik)
     {
@@ -148,7 +149,7 @@ ModuleBase::matrix ModuleIO::cal_mulliken_k(const std::vector<std::vector<std::c
         }
 
         ModuleBase::ComplexMatrix mud;
-        mud.create(LM->ParaV->ncol, LM->ParaV->nrow);
+        mud.create(LM->ParaV->ncol, LM->ParaV->nrow, true);
 
 #ifdef __MPI
         const char T_char = 'T';
@@ -260,23 +261,15 @@ std::vector<std::vector<std::vector<double>>> ModuleIO::convert(const ModuleBase
     return AorbMulP;
 }
 
-void ModuleIO::out_mulliken(const int& step, LCAO_Matrix *LM, const elecstate::ElecState* pelec, const K_Vectors& kv, hamilt::Hamilt<std::complex<double>>* ham_in)
+template<typename T>
+void ModuleIO::out_mulliken(const int& step, LCAO_Matrix* LM, const elecstate::ElecState* pelec, const K_Vectors& kv, hamilt::Hamilt<T>* ham_in)
 {
     ModuleBase::TITLE("Mulliken_Charge", "out_mulliken");
 
     ModuleBase::matrix orbMulP;
-    if(GlobalV::GAMMA_ONLY_LOCAL)
-    {
-        const std::vector<std::vector<double>>& dm_gamma = 
-                dynamic_cast<const elecstate::ElecStateLCAO<double>*> (pelec)->get_DM()->get_DMK_vector();
-        orbMulP = ModuleIO::cal_mulliken(dm_gamma, LM);
-    }
-    else
-    {
-        const std::vector<std::vector<std::complex<double>>>& dm_k = 
-                dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*> (pelec)->get_DM()->get_DMK_vector();
-        orbMulP = ModuleIO::cal_mulliken_k(dm_k, LM, kv, ham_in);
-    }
+    const std::vector<std::vector<T>>& dm =
+        dynamic_cast<const elecstate::ElecStateLCAO<T>*> (pelec)->get_DM()->get_DMK_vector();
+    orbMulP = ModuleIO::cal_mulliken(dm, LM, kv, ham_in);
 
     std::vector<std::vector<std::vector<double>>> AorbMulP = ModuleIO::convert(orbMulP);
 
@@ -450,3 +443,5 @@ void ModuleIO::out_mulliken(const int& step, LCAO_Matrix *LM, const elecstate::E
         ModuleIO::write_orb_info(&(GlobalC::ucell));
     }
 }
+template void ModuleIO::out_mulliken(const int& step, LCAO_Matrix* LM, const elecstate::ElecState* pelec, const K_Vectors& kv, hamilt::Hamilt<double>* ham_in);
+template void ModuleIO::out_mulliken(const int& step, LCAO_Matrix* LM, const elecstate::ElecState* pelec, const K_Vectors& kv, hamilt::Hamilt<std::complex<double>>* ham_in);

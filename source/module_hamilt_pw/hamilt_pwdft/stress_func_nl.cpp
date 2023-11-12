@@ -7,13 +7,14 @@
 
 //calculate the nonlocal pseudopotential stress in PW
 template <typename FPTYPE, typename Device>
-void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix &sigma,
-                                            const ModuleBase::matrix &wg,
-                                            Structure_Factor *p_sf,
-                                            K_Vectors *p_kv,
-                                            ModuleSymmetry::Symmetry *p_symm,
-                                            ModulePW::PW_Basis_K *wfc_basis,
-                                            const psi::Psi<complex<FPTYPE>, Device> *psi_in)
+void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
+                                            const ModuleBase::matrix& wg,
+                                            const ModuleBase::matrix& ekb,
+                                            Structure_Factor* p_sf,
+                                            K_Vectors* p_kv,
+                                            ModuleSymmetry::Symmetry* p_symm,
+                                            ModulePW::PW_Basis_K* wfc_basis,
+                                            const psi::Psi<complex<FPTYPE>, Device>* psi_in)
 {
     ModuleBase::TITLE("Stress_Func", "stress_nl");
     ModuleBase::timer::tick("Stress_Func", "stress_nl");
@@ -26,6 +27,10 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix &sigma,
     }
 
     this->device = psi::device::get_device_type<Device>(this->ctx);
+
+    // There is a contribution for jh<>ih in US case or multi projectors case
+    // Actually, the judge of nondiagonal should be done on every atom type
+    const bool nondiagonal = (GlobalV::use_uspp || GlobalC::ppcell.multi_proj) ? true : false;
 
     // FPTYPE sigmanlc[3][3];
     // for(int l=0;l<3;l++)
@@ -64,9 +69,9 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix &sigma,
         h_atom_nh[ii] = GlobalC::ucell.atoms[ii].ncpp.nh;
         h_atom_na[ii] = GlobalC::ucell.atoms[ii].na;
     }
-    FPTYPE *stress = nullptr, *sigmanlc = nullptr, *d_wg = nullptr, *gcar = nullptr,
+    FPTYPE *stress = nullptr, *sigmanlc = nullptr, *d_wg = nullptr, *d_ekb = nullptr, *gcar = nullptr,
            *deeq = GlobalC::ppcell.get_deeq_data<FPTYPE>(), *kvec_c = wfc_basis->get_kvec_c_data<FPTYPE>(),
-           *qvec = nullptr;
+           *qq_nt = GlobalC::ppcell.get_qq_nt_data<FPTYPE>(), *qvec = nullptr;
     resmem_var_op()(this->ctx, qvec, 3);
     resmem_var_op()(this->ctx, stress, 9);
     setmem_var_op()(this->ctx, stress, 0, 9);
@@ -74,8 +79,10 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix &sigma,
     if (this->device == psi::GpuDevice)
     {
         resmem_var_op()(this->ctx, d_wg, wg.nr * wg.nc);
+        resmem_var_op()(this->ctx, d_ekb, ekb.nr * ekb.nc);
         resmem_var_op()(this->ctx, gcar, 3 * p_kv->nks * wfc_basis->npwk_max);
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_wg, wg.c, wg.nr * wg.nc);
+        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_ekb, ekb.c, ekb.nr * ekb.nc);
         syncmem_var_h2d_op()(this->ctx,
                              this->cpu_ctx,
                              gcar,
@@ -95,6 +102,7 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix &sigma,
     else
     {
         d_wg = wg.c;
+        d_ekb = ekb.c;
         gcar = &wfc_basis->gcar[0][0];
         atom_nh = h_atom_nh;
         atom_na = h_atom_na;
@@ -159,13 +167,13 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix &sigma,
             std::complex<FPTYPE> *h_becp = nullptr;
             resmem_complex_h_op()(this->cpu_ctx, h_becp, GlobalV::NBANDS * nkb);
             syncmem_complex_d2h_op()(this->cpu_ctx, this->ctx, h_becp, becp, GlobalV::NBANDS * nkb);
-            Parallel_Reduce::reduce_complex_double_pool(h_becp, GlobalV::NBANDS * nkb);
+            Parallel_Reduce::reduce_pool(h_becp, GlobalV::NBANDS * nkb);
             syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, becp, h_becp, GlobalV::NBANDS * nkb);
             delmem_complex_h_op()(this->cpu_ctx, h_becp);
         }
         else
         {
-            Parallel_Reduce::reduce_complex_double_pool(becp, GlobalV::NBANDS * nkb);
+            Parallel_Reduce::reduce_pool(becp, GlobalV::NBANDS * nkb);
         }
         for (int i = 0; i < 3; i++)
         {
@@ -232,27 +240,28 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix &sigma,
                 //              FPTYPE[GlobalC::ucell.nat*3];
                 //              ModuleBase::GlobalFunc::ZEROS(cf,
                 //              GlobalC::ucell.nat);
-                cal_stress_nl_op()(
-                    this->ctx,
-                    GlobalC::ppcell.multi_proj,
-                    ipol,
-                    jpol,
-                    nkb,
-                    nbands_occ,
-                    GlobalC::ucell.ntype,
-                    GlobalV::CURRENT_SPIN,
-                    wg_nc,
-                    ik,
-                    GlobalC::ppcell.deeq.getBound2(),
-                    GlobalC::ppcell.deeq.getBound3(),
-                    GlobalC::ppcell.deeq.getBound4(),
-                    atom_nh,
-                    atom_na,
-                    d_wg,
-                    deeq,
-                    becp,
-                    dbecp,
-                    stress);
+                cal_stress_nl_op()(this->ctx,
+                                   nondiagonal,
+                                   ipol,
+                                   jpol,
+                                   nkb,
+                                   nbands_occ,
+                                   GlobalC::ucell.ntype,
+                                   GlobalV::CURRENT_SPIN,
+                                   wg_nc,
+                                   ik,
+                                   GlobalC::ppcell.deeq.getBound2(),
+                                   GlobalC::ppcell.deeq.getBound3(),
+                                   GlobalC::ppcell.deeq.getBound4(),
+                                   atom_nh,
+                                   atom_na,
+                                   d_wg,
+                                   d_ekb,
+                                   qq_nt,
+                                   deeq,
+                                   becp,
+                                   dbecp,
+                                   stress);
 
             }//end jpol
 		}//end ipol
@@ -268,11 +277,11 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix &sigma,
 			{
 				sigmanlc[l * 3 + m] = sigmanlc[m * 3 + l];
 			}
-			Parallel_Reduce::reduce_double_all( sigmanlc[l * 3 + m] ); //qianrui fix a bug for kpar > 1
+            Parallel_Reduce::reduce_all(sigmanlc[l * 3 + m]); //qianrui fix a bug for kpar > 1
 		}
 	}
 
-//        Parallel_Reduce::reduce_double_all(sigmanl.c, sigmanl.nr * sigmanl.nc);
+    //        Parallel_Reduce::reduce_all(sigmanl.c, sigmanl.nr * sigmanl.nc);
         
 	for (int ipol = 0; ipol<3; ipol++)
 	{
@@ -307,6 +316,7 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix &sigma,
 	delmem_var_h_op()(this->cpu_ctx, sigmanlc);
     if (this->device == psi::GpuDevice) {
         delmem_var_op()(this->ctx, d_wg);
+        delmem_var_op()(this->ctx, d_ekb);
         delmem_var_op()(this->ctx, gcar);
         delmem_int_op()(this->ctx, atom_nh);
         delmem_int_op()(this->ctx, atom_na);
@@ -563,6 +573,33 @@ FPTYPE Stress_Func<FPTYPE, Device>::Polynomial_Interpolation_nl
 
 
 	return y;
+}
+
+template <typename FPTYPE, typename Device>
+FPTYPE Stress_Func<FPTYPE, Device>::Polynomial_Interpolation_nl(const ModuleBase::realArray& table,
+                                                                const int& dim1,
+                                                                const int& dim2,
+                                                                const int& dim3,
+                                                                const FPTYPE& table_interval,
+                                                                const FPTYPE& x // input value
+)
+{
+
+    assert(table_interval > 0.0);
+    const FPTYPE position = x / table_interval;
+    const int iq = static_cast<int>(position);
+
+    const FPTYPE x0 = position - static_cast<FPTYPE>(iq);
+    const FPTYPE x1 = 1.0 - x0;
+    const FPTYPE x2 = 2.0 - x0;
+    const FPTYPE x3 = 3.0 - x0;
+    const FPTYPE y = (table(dim1, dim2, dim3, iq) * (-x2 * x3 - x1 * x3 - x1 * x2) / 6.0
+                      + table(dim1, dim2, dim3, iq + 1) * (+x2 * x3 - x0 * x3 - x0 * x2) / 2.0
+                      - table(dim1, dim2, dim3, iq + 2) * (+x1 * x3 - x0 * x3 - x0 * x1) / 2.0
+                      + table(dim1, dim2, dim3, iq + 3) * (+x1 * x2 - x0 * x2 - x0 * x1) / 6.0)
+                     / table_interval;
+
+    return y;
 }
 
 template <typename FPTYPE, typename Device>

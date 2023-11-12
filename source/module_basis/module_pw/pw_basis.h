@@ -294,3 +294,4 @@ protected:
 #endif // PWBASIS_H
 
 #include "./pw_basis_big.h" //temporary it will be removed
+#include "pw_basis_sup.h"

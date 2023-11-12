@@ -62,7 +62,7 @@ ifeq ($(INTEL), ON)
 ##==========================
     LIBS += -L${MKLROOT}/lib/intel64 -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core
     INCLUDES += -I${MKLROOT}/include/fftw
-    OPTS += -simd -qopenmp
+    OPTS +=  -qopenmp
 else
 ##==========================
 ## fftw 
@@ -123,6 +123,7 @@ pw_distributeg_method1.o\
 pw_distributeg_method2.o\
 fft.o\
 pw_basis_k.o\
+pw_basis_sup.o\
 pw_transform_k.o\
 memory.o\
 psi_memory_op.o\

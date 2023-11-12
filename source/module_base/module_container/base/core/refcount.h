@@ -5,8 +5,8 @@
 #include <memory>
 #include <iostream>
 
-namespace container {
 namespace base {
+namespace core {
 
 /**
  * @brief The base class for reference-counted objects.
@@ -114,7 +114,7 @@ class ref_count_ptr : public std::unique_ptr<T, ref_count_deleter> {
     }
 };
 
+} // namespace core
 } // namespace base
-} // namespace container
 
 #endif // BASE_CORE_REFCOUNT_H_

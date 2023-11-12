@@ -59,7 +59,7 @@ void Velocity::act
     {
         for (int ig = 0; ig < npw; ++ig)
         {
-            ModuleBase::Vector3<double> tmpg = wfcpw->getgpluskcar(this->ik, ig);
+            const ModuleBase::Vector3<double>& tmpg = wfcpw->getgpluskcar(this->ik, ig);
             if(add)
             {
                 tmhpsi[ig]                       += tmpsi_in[ig] * tmpg.x * tpiba;
@@ -115,8 +115,8 @@ void Velocity::act
                &ModuleBase::ONE, this->ppcell->gradvkb.ptr, &max_npw, psi0, &max_npw,
                &ModuleBase::ZERO, becp2.c, &nkb3);
     }
-    Parallel_Reduce::reduce_complex_double_pool(becp1.c, nkb * n_npwx);
-    Parallel_Reduce::reduce_complex_double_pool(becp2.c, nkb3 * n_npwx);
+    Parallel_Reduce::reduce_pool(becp1.c, nkb * n_npwx);
+    Parallel_Reduce::reduce_pool(becp2.c, nkb3 * n_npwx);
 
     //2. <\beta \psi><psi|
     ModuleBase::ComplexMatrix ps1(nkb, n_npwx, true);

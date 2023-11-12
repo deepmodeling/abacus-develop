@@ -48,6 +48,14 @@ class Nonlocal<OperatorPW<T, Device>> : public OperatorPW<T, Device>
     const int *get_isk() const {return this->isk;}
     const pseudopot_cell_vnl *get_ppcell() const {return this->ppcell;}
     const UnitCell *get_ucell() const {return this->ucell;}
+    T* get_vkb() const
+    {
+        return this->vkb;
+    }
+    T* get_becp() const
+    {
+        return this->becp;
+    }
 
   private:
     void add_nonlocal_pp(T *hpsi_in, const T *becp, const int m) const;
@@ -76,8 +84,8 @@ class Nonlocal<OperatorPW<T, Device>> : public OperatorPW<T, Device>
     Real * deeq = nullptr;
     T * deeq_nc = nullptr;
     // using nonlocal_op = nonlocal_pw_op<Real, Device>;
-    using gemv_op = hsolver::gemv_op<Real, Device>;
-    using gemm_op = hsolver::gemm_op<Real, Device>;
+    using gemv_op = hsolver::gemv_op<T, Device>;
+    using gemm_op = hsolver::gemm_op<T, Device>;
     using nonlocal_op = nonlocal_pw_op<Real, Device>;
     using setmem_complex_op = psi::memory::set_memory_op<T, Device>;
     using resmem_complex_op = psi::memory::resize_memory_op<T, Device>;

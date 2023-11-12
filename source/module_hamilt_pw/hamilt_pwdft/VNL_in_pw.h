@@ -4,7 +4,10 @@
 #include "VL_in_pw.h"
 #include "module_base/complexarray.h"
 #include "module_base/complexmatrix.h"
+#include "module_base/intarray.h"
+#include "module_base/realarray.h"
 #include "module_cell/unitcell.h"
+#include "module_hamilt_pw/hamilt_pwdft/soc.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 #include "module_psi/psi.h"
 #ifdef __LCAO
@@ -33,7 +36,7 @@ public:
 
 	int lmaxkb; // max angular momentum for non-local projectors
 
-	void init_vnl(UnitCell &cell);
+    void init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_basis);
 
     template <typename FPTYPE, typename Device>
     void getvnl(Device * ctx, const int &ik, std::complex<FPTYPE>* vkb_in)const;
@@ -48,18 +51,17 @@ public:
 
 	void getgradq_vnl(const int ik);
 
-//===============================================================
-// MEMBER VARIABLES :
-// NAME : nqx(number of interpolation points)
-// NAME : nqxq(size of interpolation table)
-// NAME : nhm(max number of different beta functions per atom)
-// NAME : lmaxq
-// NAME : dq(space between points in the pseudopotential tab)
-//===============================================================
-// private:
-	int calculate_nqx(const double &ecutwfc,const double &dq);
+    //===============================================================
+    // MEMBER VARIABLES :
+    // NAME : nqx(number of interpolation points)
+    // NAME : nqxq(size of interpolation table)
+    // NAME : nhm(max number of different beta functions per atom)
+    // NAME : lmaxq
+    // NAME : dq(space between points in the pseudopotential tab)
+    //===============================================================
+    // private:
 
-	int nhm;
+    int nhm;
     int nbetam; // max number of beta functions
 
     int lmaxq;
@@ -83,45 +85,149 @@ public:
     double *d_deeq = nullptr;
 	ModuleBase::ComplexArray deeq_nc;	//(:,:,:,:), the spin-orbit case
     std::complex<float> *c_deeq_nc = nullptr; // GPU array of deeq_nc
-    std::complex<double> *z_deeq_nc = nullptr; // GPU array of deeq_nc
-	ModuleBase::realArray becsum;	//(:,:,:,:), \sum_i  f(i) <psi(i)/beta_1><beta_m/psi(i)> //used in charge
+    std::complex<double>* z_deeq_nc = nullptr; // GPU array of deeq_nc
 
+    // liuyu add 2023-10-03
+    // uspp
+    int* indv_ijkb0 = nullptr;      // first beta (index in the solid) for each atom
+    ModuleBase::IntArray ijtoh;     // correspondence beta indexes ih,jh -> composite index ijh
+    ModuleBase::realArray qq_at;    // the integral of q functions in the solid (ONE PER ATOM)
+    ModuleBase::realArray qq_nt;    // the integral of q functions in the solid (ONE PER NTYP) used to be the qq array
+    ModuleBase::ComplexArray qq_so; // Q_{nm} for spin-orbit case
+    ModuleBase::realArray ap;       // the expansion coefficients
+    ModuleBase::IntArray lpx;       // for each input limi,ljmj is the number of LM in the sum
+    ModuleBase::IntArray lpl;       // for each input limi,ljmj points to the allowed LM
+    ModuleBase::realArray qrad;     // radial FT of Q functions
 
-	mutable ModuleBase::ComplexMatrix vkb;	// all beta functions in reciprocal space
-	mutable ModuleBase::ComplexArray gradvkb; // gradient of beta functions
-	std::complex<double> ***vkb1_alpha;
-	std::complex<double> ***vkb_alpha;
+    float* s_qq_nt = nullptr;
+    double* d_qq_nt = nullptr;
+    std::complex<float>* c_qq_so = nullptr;  // GPU array of qq_so
+    std::complex<double>* z_qq_so = nullptr; // GPU array of qq_so
 
-	// other variables
-	std::complex<double> Cal_C(int alpha, int lu, int mu, int L, int M);
+    mutable ModuleBase::ComplexMatrix vkb;    // all beta functions in reciprocal space
+    mutable ModuleBase::ComplexArray gradvkb; // gradient of beta functions
+    std::complex<double>*** vkb1_alpha;
+    std::complex<double>*** vkb_alpha;
+    Structure_Factor* psf = nullptr;
 
-	double CG(int l1, int m1, int l2, int m2, int L, int M);
+    // other variables
+    std::complex<double> Cal_C(int alpha, int lu, int mu, int L, int M);
 
-	void print_vnl(std::ofstream &ofs);
+    double CG(int l1, int m1, int l2, int m2, int L, int M);
 
-	//calculate the effective coefficient matrix for non-local pseudopotential projectors
-	void cal_effective_D();
-	#ifdef __LCAO
-	ORB_gaunt_table MGT;
-    #endif
+    void print_vnl(std::ofstream& ofs);
 
-    template <typename FPTYPE> FPTYPE * get_nhtol_data() const;
-    template <typename FPTYPE> FPTYPE * get_nhtolm_data() const;
-    template <typename FPTYPE> FPTYPE * get_indv_data() const;
-    template <typename FPTYPE> FPTYPE * get_tab_data() const;
-    template <typename FPTYPE> FPTYPE * get_deeq_data() const;
-    template <typename FPTYPE> std::complex<FPTYPE> * get_vkb_data() const;
-    template <typename FPTYPE> std::complex<FPTYPE> * get_deeq_nc_data() const;
+    /**
+     * @brief Compute the radial Fourier transform of the Q functions
+     *
+     * The interpolation table for the radial Fourier transform is stored in qrad.
+     *
+     * The formula implemented here is:
+     *   \[ q(g,i,j) = \sum_\text{lm} (-i)^l \text{ap}(\text{lm},i,j)
+     *   \text{yr}_\text{lm}(g) \text{qrad}(g,l,i,j) \]
+     *
+     * @param ng [in] the number of G vectors
+     * @param ih [in] the first index of Q
+     * @param jh [in] the second index of Q
+     * @param itype [in] the atomic type
+     * @param qnorm [in] the norm of q+g vectors
+     * @param ylm [in] the real spherical harmonics
+     * @param qg [out] the Fourier transform of interest
+     */
+    void radial_fft_q(const int ng,
+                      const int ih,
+                      const int jh,
+                      const int itype,
+                      const double* qnorm,
+                      const ModuleBase::matrix ylm,
+                      std::complex<double>* qg) const;
+    template <typename FPTYPE, typename Device>
+    void radial_fft_q(Device* ctx,
+                      const int ng,
+                      const int ih,
+                      const int jh,
+                      const int itype,
+                      const FPTYPE* qnorm,
+                      const FPTYPE* ylm,
+                      std::complex<FPTYPE>* qg) const;
 
-private:
-    float * s_nhtol = nullptr, * s_nhtolm = nullptr, * s_indv = nullptr, * s_tab = nullptr;
-    std::complex<float> * c_vkb = nullptr;
+    /**
+     * @brief calculate the effective coefficient matrix for non-local pseudopotential projectors
+     *
+     * @param veff effective potential
+     * @param rho_basis potential FFT grids
+     * @param cell UnitCell
+     */
+    void cal_effective_D(const ModuleBase::matrix& veff, const ModulePW::PW_Basis* rho_basis, UnitCell& cell);
+#ifdef __LCAO
+    ORB_gaunt_table MGT;
+#endif
 
-    double * d_nhtol = nullptr, * d_nhtolm = nullptr, * d_indv = nullptr, * d_tab = nullptr;
-    std::complex<double> * z_vkb = nullptr;
+    template <typename FPTYPE>
+    FPTYPE* get_nhtol_data() const;
+    template <typename FPTYPE>
+    FPTYPE* get_nhtolm_data() const;
+    template <typename FPTYPE>
+    FPTYPE* get_indv_data() const;
+    template <typename FPTYPE>
+    FPTYPE* get_tab_data() const;
+    template <typename FPTYPE>
+    FPTYPE* get_deeq_data() const;
+    template <typename FPTYPE>
+    FPTYPE* get_qq_nt_data() const;
+    template <typename FPTYPE>
+    std::complex<FPTYPE>* get_qq_so_data() const;
+    template <typename FPTYPE>
+    std::complex<FPTYPE>* get_vkb_data() const;
+    template <typename FPTYPE>
+    std::complex<FPTYPE>* get_deeq_nc_data() const;
+
+  private:
+    float *s_nhtol = nullptr, *s_nhtolm = nullptr, *s_indv = nullptr, *s_tab = nullptr;
+    std::complex<float>* c_vkb = nullptr;
+
+    double *d_nhtol = nullptr, *d_nhtolm = nullptr, *d_indv = nullptr, *d_tab = nullptr;
+    std::complex<double>* z_vkb = nullptr;
 
     const ModulePW::PW_Basis_K* wfcpw = nullptr;
-    Structure_Factor *psf = nullptr;
+
+    Soc soc;
+
+    /**
+     * @brief Compute interpolation table qrad
+     *
+     * Compute interpolation table qrad(i,nm,l,nt) = Q^{(L)}_{nm,nt}(q_i)
+     * of angular momentum L, for atom of type nt, on grid q_i, where
+     * nm = combined index for n,m=1,nh(nt)
+     *
+     * @param cell UnitCell
+     */
+    void compute_qrad(UnitCell& cell);
+
+    /**
+     * @brief computes the integral of the effective potential with the Q function
+     *
+     * @param veff effective potential
+     * @param rho_basis potential FFT grids
+     * @param cell UnitCell
+     */
+    void newq(const ModuleBase::matrix& veff, const ModulePW::PW_Basis* rho_basis, UnitCell& cell);
+
+    /**
+     * @brief calculate D functions in the soc case when tvanp is true
+     *
+     * @param iat the index of atom
+     * @param cell UnitCell
+     */
+    void newd_so(const int& iat, UnitCell& cell);
+
+    /**
+     * @brief calculate D functions in the noncolin case when tvanp is true
+     *
+     * @param iat the index of atom
+     * @param cell UnitCell
+     */
+    void newd_nc(const int& iat, UnitCell& cell);
 };
 
 #endif // VNL_IN_PW
