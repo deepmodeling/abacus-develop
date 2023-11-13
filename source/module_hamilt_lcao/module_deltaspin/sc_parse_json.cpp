@@ -34,8 +34,8 @@ void SpinConstrain<FPTYPE, Device>::Set_ScData_From_Json(const std::string& file
     std::regex element_regex("\"element\": \"([A-Za-z]+)\"");
     std::regex ScDecayGrad_regex("\"ScDecayGrad\": (\\d+(?:\\.\\d+)?)");
     std::regex index_regex("\"index\": (\\d+)");
-    std::regex lambda_regex("\"lambda\"\\s*:\\s*(?:\\[\\s*([0-9.]+)\\s*,\\s*([0-9.]+)\\s*,\\s*([0-9.]+)\\s*\\])|(\\s*([0-9.]+))");
-    std::regex target_mag_regex("\"target_mag\": \\[(.+?)\\]");
+    std::regex lambda_regex("\"lambda\"\\s*:\\s*(?:\\[\\s*(\\d+(?:\\.\\d+)?)\\s*,\\s*(\\d+(?:\\.\\d+)?)\\s*,\\s*(\\d+(?:\\.\\d+)?)\\s*\\]|(\\d+(?:\\.\\d+)?))");
+    std::regex target_mag_regex("\"target_mag\"\\s*:\\s*(?:\\[\\s*(\\d+(?:\\.\\d+)?)\\s*,\\s*(\\d+(?:\\.\\d+)?)\\s*,\\s*(\\d+(?:\\.\\d+)?)\\s*\\]|(\\d+(?:\\.\\d+)?))");
     std::regex target_mag_val_regex("\"target_mag_val\": ([0-9.]+)");
     std::regex target_mag_angle1_regex("\"target_mag_angle1\": ([0-9.]+)");
     std::regex target_mag_angle2_regex("\"target_mag_angle2\": ([0-9.]+)");
@@ -74,13 +74,17 @@ void SpinConstrain<FPTYPE, Device>::Set_ScData_From_Json(const std::string& file
             getline(file, line); // Read the following line
 
             if (std::regex_search(line, match, target_mag_regex)) {
-                std::stringstream ss(match[1]);
-                double value;
-                while (ss >> value) {
-                    element_data.target_mag.push_back(value);
-                    if (ss.peek() == ',') {
-                        ss.ignore();
-                    }
+                if(match[1].matched)
+                {
+                    element_data.target_mag.push_back(std::stod(match[1].str()));
+                    element_data.target_mag.push_back(std::stod(match[2].str()));
+                    element_data.target_mag.push_back(std::stod(match[3].str()));
+                }
+                else
+                {
+                    element_data.target_mag.push_back(0.0);
+                    element_data.target_mag.push_back(0.0);
+                    element_data.target_mag.push_back(std::stod(match[4].str()));
                 }
                 element_data.mag_type = 0;
             }
