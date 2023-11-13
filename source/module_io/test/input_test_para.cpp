@@ -95,7 +95,7 @@ TEST_F(InputParaTest,Bcast)
         EXPECT_EQ(INPUT.symmetry,"default");
         EXPECT_FALSE(INPUT.init_vel);
         EXPECT_DOUBLE_EQ(INPUT.symmetry_prec, 1.0e-6);
-        EXPECT_FALSE(INPUT.symmetry_autoclose);
+        EXPECT_TRUE(INPUT.symmetry_autoclose);
         EXPECT_EQ(INPUT.cal_force, 0);
         EXPECT_DOUBLE_EQ(INPUT.force_thr,1.0e-3);
         EXPECT_DOUBLE_EQ(INPUT.force_thr_ev2,0);
