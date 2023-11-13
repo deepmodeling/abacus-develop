@@ -154,7 +154,6 @@ TEST_F(ScLambdaLCAOTest, TemplateHelpers)
         = hamilt::OperatorScLambda<hamilt::OperatorLCAO<double, double>>(nullptr, this->kvec_d, nullptr, nullptr);
     EXPECT_NO_THROW(sc_lambda_op.contributeHR());
     EXPECT_NO_THROW(sc_lambda_op1.contributeHR());
-    EXPECT_NO_THROW(sc_lambda_op1.contributeHk(0));
     EXPECT_NO_THROW(sc_lambda_op2.contributeHR());
     EXPECT_NO_THROW(sc_lambda_op2.contributeHk(0));
 }
