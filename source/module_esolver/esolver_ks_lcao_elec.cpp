@@ -353,11 +353,11 @@ void ESolver_KS_LCAO<TK, TR>::othercalculation(const int istep)
     if (GlobalV::CALCULATION == "test_neighbour")
     {
         // test_search_neighbor();
-        GlobalV::SEARCH_RADIUS = atom_arrange::set_sr_NL(GlobalV::ofs_running,
-                                                         GlobalV::OUT_LEVEL,
-                                                         GlobalC::ORB.get_rcutmax_Phi(),
-                                                         GlobalC::ucell.infoNL.get_rcutmax_Beta(),
-                                                         GlobalV::GAMMA_ONLY_LOCAL);
+        if (GlobalV::SEARCH_RADIUS < 0)
+        {
+            std::cout << " SEARCH_RADIUS : " << GlobalV::SEARCH_RADIUS << std::endl;
+            std::cout << " please make sure search_radius > 0" << std::endl;
+        }
 
         atom_arrange::search(GlobalV::SEARCH_PBC,
                              GlobalV::ofs_running,

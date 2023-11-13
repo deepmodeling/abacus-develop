@@ -116,28 +116,33 @@ void atom_arrange::search(
 	if(test_only)
 	{
 		ofs_in << " " << std::setw(5) << "Type" << std::setw(5) << "Atom" << std::setw(8) << "AdjNum" << std::endl;
-		for (int it = 0;it < ucell.ntype;it++)
-		{
-			for (int ia = 0;ia < ucell.atoms[it].na;ia++)
-			{
-				grid_d.Find_atom(ucell, ucell.atoms[it].tau[ia], it, ia);
-				
-				ofs_in << " " << std::setw(5) << it << std::setw(5) << ia << std::setw(8) << grid_d.getAdjacentNum()+1 << std::endl;
-				
-				for(int ad=0; ad < grid_d.getAdjacentNum()+1; ad++)
-				{
-					ModuleBase::Vector3<double> tau = grid_d.getAdjacentTau(ad);
-					ModuleBase::Vector3<int> box = grid_d.getBox(ad);
-					std::cout << std::setw(15) << tau.x << " " << std::setw(15) << tau.y << " " << std::setw(15) << tau.z << " " 
-					<< std::setw(8) << box.x << std::setw(8) << box.y << std::setw(8) << box.z << std::endl;
-				}
-			}
-		}
-		ofs_in << "search neighboring atoms done." << std::endl;
-	}
-	
-	ModuleBase::timer::tick("atom_arrange","search");
-	return;
+        std::cout << std::setw(8) << "Labels" << std::setw(15) << "tau.x" << std::setw(15) << "tau.y" << std::setw(15)
+                  << "tau.z" << std::setw(8) << "box.x" << std::setw(8) << "box.y" << std::setw(8) << "box.z"
+                  << std::endl;
+        for (int it = 0; it < ucell.ntype; it++)
+        {
+            for (int ia = 0; ia < ucell.atoms[it].na; ia++)
+            {
+                grid_d.Find_atom(ucell, ucell.atoms[it].tau[ia], it, ia);
+
+                ofs_in << " " << std::setw(5) << it << std::setw(5) << ia << std::setw(8) << grid_d.getAdjacentNum() + 1
+                       << std::endl;
+
+                for (int ad = 0; ad < grid_d.getAdjacentNum() + 1; ad++)
+                {
+                    ModuleBase::Vector3<double> tau = grid_d.getAdjacentTau(ad);
+                    ModuleBase::Vector3<int> box = grid_d.getBox(ad);
+                    std::cout << std::setw(8) << ucell.atoms[it].label + std::to_string(ia + 1) << std::setw(15)
+                              << tau.x << " " << std::setw(15) << tau.y << " " << std::setw(15) << tau.z << " "
+                              << std::setw(8) << box.x << std::setw(8) << box.y << std::setw(8) << box.z << std::endl;
+                }
+            }
+        }
+        ofs_in << "search neighboring atoms done." << std::endl;
+    }
+
+    ModuleBase::timer::tick("atom_arrange", "search");
+    return;
 }
 
 
