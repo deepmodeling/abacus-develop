@@ -88,10 +88,36 @@ TYPED_TEST(SpinConstrainTest, ScDataFormat2)
     EXPECT_DOUBLE_EQ(this->sc.get_decay_grad(1), 0.9);
 }
 
+TYPED_TEST(SpinConstrainTest, ScDataFormat3)
+{
+    this->sc.Set_ScData_From_Json("./support/sc_f3.json");
+    EXPECT_EQ(this->sc.get_ScData().size(), 1);
+    for (const auto& sc_elem: this->sc.get_ScData())
+    {
+        const int& it = sc_elem.first;
+        const std::vector<ScAtomData>& sc_atoms = sc_elem.second;
+		EXPECT_EQ(sc_atoms.size(), 2);
+		EXPECT_EQ(it, 1);
+        for (const ScAtomData& sc_data : sc_atoms) {
+			if (it == 1 & sc_data.index == 4)
+			{
+				EXPECT_DOUBLE_EQ(sc_data.lambda[0],0.0);
+				EXPECT_DOUBLE_EQ(sc_data.lambda[1],0.0);
+				EXPECT_DOUBLE_EQ(sc_data.lambda[2],0.2);
+				EXPECT_DOUBLE_EQ(sc_data.target_mag[0],0.0);
+                EXPECT_DOUBLE_EQ(sc_data.target_mag[1],0.0);
+                EXPECT_DOUBLE_EQ(sc_data.target_mag[2],10.0);
+                EXPECT_EQ(sc_data.mag_type, 0);
+            }
+        }
+	}
+    EXPECT_DOUBLE_EQ(this->sc.get_decay_grad(1), 0.0);
+}
+
 TYPED_TEST(SpinConstrainTest, ScDataWarning)
 {
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(this->sc.Set_ScData_From_Json("./support/sc_f3.json"), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(this->sc.Set_ScData_From_Json("./support/sc_f4.json"), ::testing::ExitedWithCode(0), "");
     std::string output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("Error opening sc_file"));
 }
