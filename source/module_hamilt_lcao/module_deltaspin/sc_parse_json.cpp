@@ -34,7 +34,8 @@ void SpinConstrain<FPTYPE, Device>::Set_ScData_From_Json(const std::string& file
     std::regex element_regex("\"element\": \"([A-Za-z]+)\"");
     std::regex ScDecayGrad_regex("\"ScDecayGrad\": (\\d+(?:\\.\\d+)?)");
     std::regex index_regex("\"index\": (\\d+)");
-    std::regex lambda_regex("\"lambda\": \\[(.+?)\\]");
+    //std::regex lambda_regex("\"lambda\": \\[(.+?)\\]");
+    std::regex lambda_regex("\"lambda\":(?:\\s*\\[([0-9.]+),\\s*([0-9.]+),\\s*([0-9.]+)\\])|(\\s*([0-9.]+))");
     std::regex target_mag_regex("\"target_mag\": \\[(.+?)\\]");
     std::regex target_mag_val_regex("\"target_mag_val\": ([0-9.]+)");
     std::regex target_mag_angle1_regex("\"target_mag_angle1\": ([0-9.]+)");
@@ -57,13 +58,17 @@ void SpinConstrain<FPTYPE, Device>::Set_ScData_From_Json(const std::string& file
             getline(file, line); // Read the following line
 
             if (std::regex_search(line, match, lambda_regex)) {
-                std::stringstream ss(match[1]);
-                double value;
-                while (ss >> value) {
-                    element_data.lambda.push_back(value);
-                    if (ss.peek() == ',') {
-                        ss.ignore();
-                    }
+                if(match[1].matched)
+                {
+                    element_data.lambda.push_back(std::stod(match[1].str()));
+                    element_data.lambda.push_back(std::stod(match[2].str()));
+                    element_data.lambda.push_back(std::stod(match[3].str()));
+                }
+                else
+                {
+                    element_data.lambda.push_back(0.0);
+                    element_data.lambda.push_back(0.0);
+                    element_data.lambda.push_back(std::stod(match[4].str()));
                 }
             }
 
