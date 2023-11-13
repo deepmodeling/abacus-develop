@@ -39,7 +39,7 @@ void SpinConstrain<FPTYPE, Device>::Set_ScData_From_Json(const std::string& file
     std::regex target_mag_val_regex("\"target_mag_val\": (\\d+(?:\\.\\d+)?)");
     std::regex target_mag_angle1_regex("\"target_mag_angle1\": (\\d+(?:\\.\\d+)?)");
     std::regex target_mag_angle2_regex("\"target_mag_angle2\": (\\d+(?:\\.\\d+)?)");
-    std::regex constrain_regex("\"constrain\": \\[(.+?)\\]");
+    std::regex constrain_regex("\"constrain\"\\s*:\\s*(?:\\[\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)\\s*\\]|(\\d+))");
 
     while (getline(file, line)) {
         std::smatch match;
@@ -107,13 +107,17 @@ void SpinConstrain<FPTYPE, Device>::Set_ScData_From_Json(const std::string& file
             getline(file, line); // Read the following line
 
             if (std::regex_search(line, match, constrain_regex)) {
-                std::stringstream ss(match[1]);
-                int value;
-                while (ss >> value) {
-                    element_data.constrain.push_back(value);
-                    if (ss.peek() == ',') {
-                        ss.ignore();
-                    }
+                if(match[1].matched)
+                {
+                    element_data.constrain.push_back(std::stoi(match[1].str()));
+                    element_data.constrain.push_back(std::stoi(match[2].str()));
+                    element_data.constrain.push_back(std::stoi(match[3].str()));
+                }
+                else
+                {
+                    element_data.constrain.push_back(0);
+                    element_data.constrain.push_back(0);
+                    element_data.constrain.push_back(std::stoi(match[4].str()));
                 }
             }
 
