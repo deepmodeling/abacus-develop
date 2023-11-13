@@ -76,7 +76,7 @@ void Paw_Cell::init_paw_cell(
     }
 
     this -> init_rhoij();
-    this -> init_mix_dij();
+    //this -> init_mix_dij();
 }
 
 void Paw_Cell::init_mix_dij()
