@@ -44,7 +44,7 @@ TEST_F(SpinConstrainTest, TemplatHelpers)
     EXPECT_NO_THROW(sc.calculate_MW(AorbMulP));
     ModuleBase::ComplexMatrix mud;
     ModuleBase::matrix MecMulP;
-    EXPECT_NO_THROW(sc.collect_MW(MecMulP, mud, 0));
+    EXPECT_NO_THROW(sc.collect_MW(MecMulP, mud, 0, 0));
     EXPECT_FALSE(sc.check_rms_stop(0, 0, 0.0));
     EXPECT_NO_THROW(sc.print_termination());
     EXPECT_NO_THROW(sc.print_header());

@@ -88,7 +88,7 @@ public:
   void print_Mi(bool print = false);
 
   /// collect_mw from matrix multiplication result
-  void collect_MW(ModuleBase::matrix& MecMulP, const ModuleBase::ComplexMatrix& mud, int nw);
+  void collect_MW(ModuleBase::matrix& MecMulP, const ModuleBase::ComplexMatrix& mud, int nw, int isk);
 
 public:
     /**

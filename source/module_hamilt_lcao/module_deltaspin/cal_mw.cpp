@@ -15,12 +15,18 @@ ModuleBase::matrix SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_MW_
 {
     ModuleBase::TITLE("module_deltaspin", "cal_MW_k");
     int nw = this->get_nw();
-    const int nlocal = nw / 2;
+    const int nlocal = (this->nspin_ == 4) ? nw / 2 : nw;
     ModuleBase::matrix MecMulP(this->nspin_, nlocal, true), orbMulP(this->nspin_, nlocal, true);
     for(size_t ik = 0; ik != this->kv_.nks; ++ik)
     {
-        dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(this->p_hamilt)
-            ->updateSk(ik, LM, 1);
+        if (this->nspin_ == 4)
+        {
+            dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(this->p_hamilt)->updateSk(ik, LM, 1);
+        }
+        else
+        {
+            dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(this->p_hamilt)->updateSk(ik, LM, 1);
+        }
         ModuleBase::ComplexMatrix mud(this->ParaV->ncol, this->ParaV->nrow, true);
 #ifdef __MPI
         const char T_char = 'T';
@@ -46,7 +52,7 @@ ModuleBase::matrix SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_MW_
                 &one_int,
                 &one_int,
                 this->ParaV->desc);
-        this->collect_MW(MecMulP, mud, nw);
+        this->collect_MW(MecMulP, mud, nw, this->kv_.isk[ik]);
 #endif
     }
 #ifdef __MPI

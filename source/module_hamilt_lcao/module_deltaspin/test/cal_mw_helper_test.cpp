@@ -89,7 +89,7 @@ TEST_F(SpinConstrainTest, CollectMW)
     mud(1, 0) = std::complex<double>(4.0, -3.0);
     mud(1, 1) = std::complex<double>(5.0, 0.0);
     // call the function
-    sc.collect_MW(MecMulP, mud, nw);
+    sc.collect_MW(MecMulP, mud, nw, 0);
     // Check the expected results
     ModuleBase::matrix expected_MecMulP(4, 1);
     expected_MecMulP(0, 0) = 7.0;

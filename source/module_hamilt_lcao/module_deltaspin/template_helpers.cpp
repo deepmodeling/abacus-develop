@@ -77,7 +77,8 @@ void SpinConstrain<double, psi::DEVICE_CPU>::print_header()
 template <>
 void SpinConstrain<double, psi::DEVICE_CPU>::collect_MW(ModuleBase::matrix& MecMulP,
                                                         const ModuleBase::ComplexMatrix& mud,
-                                                        int nw)
+                                                        int nw,
+                                                        int isk)
 {
 }
 

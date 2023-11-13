@@ -41,7 +41,7 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::calculate_MW(
 
     this->zero_Mi();
 
-    const int nlocal = nw / 2;
+    const int nlocal = (this->nspin_ == 4) ? nw / 2 : nw;
     for (const auto& sc_elem: this->get_atomCounts())
     {
         int it = sc_elem.first;
@@ -50,6 +50,7 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::calculate_MW(
         {
             int num = 0;
             int iat = this->get_iat(it, ia);
+            double atom_mag = 0.0;
             std::vector<double> total_charge_soc(this->nspin_, 0.0);
             for (const auto& lnchi: this->get_lnchiCounts().at(it))
             {
@@ -61,25 +62,41 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::calculate_MW(
                     std::vector<double> sum_m(this->nspin_, 0.0);
                     for (int M = 0; M < (2 * L + 1); ++M)
                     {
-                        for (int j = 0; j < 4; j++)
+                        for (int j = 0; j < this->nspin_; j++)
                         {
                             sum_m[j] += AorbMulP[j][iat][num];
                         }
                         num++;
                     }
-                    for (int j = 0; j < 4; j++)
+                    for (int j = 0; j < this->nspin_; j++)
                     {
                         sum_l[j] += sum_m[j];
                     }
                 }
-                for (int j = 0; j < 4; j++)
+                if (this->nspin_ == 2)
                 {
-                    total_charge_soc[j] += sum_l[j];
+                    atom_mag += sum_l[0] - sum_l[1];
+                }
+                else if (this->nspin_ == 4)
+                {
+                    for (int j = 0; j < this->nspin_; j++)
+                    {
+                        total_charge_soc[j] += sum_l[j];
+                    }
                 }
             }
-            this->Mi_[iat].x = total_charge_soc[1];
-            this->Mi_[iat].y = total_charge_soc[2];
-            this->Mi_[iat].z = total_charge_soc[3];
+            if (this->nspin_ == 2)
+            {
+                this->Mi_[iat].x = 0.0;
+                this->Mi_[iat].y = 0.0;
+                this->Mi_[iat].z = atom_mag;
+            }
+            else if (this->nspin_ == 4)
+            {
+                this->Mi_[iat].x = total_charge_soc[1];
+                this->Mi_[iat].y = total_charge_soc[2];
+                this->Mi_[iat].z = total_charge_soc[3];
+            }
             if (std::abs(this->Mi_[iat].x) < 1e-12)
                 this->Mi_[iat].x = 0.0;
             if (std::abs(this->Mi_[iat].y) < 1e-12)
@@ -93,44 +110,60 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::calculate_MW(
 template <>
 void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::collect_MW(ModuleBase::matrix& MecMulP,
                                                                       const ModuleBase::ComplexMatrix& mud,
-                                                                      int nw)
+                                                                      int nw,
+                                                                      int isk)
 {
-    for (size_t i = 0; i < nw; ++i)
+    if (this->nspin_ == 2)
     {
-        const int index = i % 2;
-        if (!index)
+        for (size_t i=0; i < nw; ++i)
         {
-            const int j = i / 2;
-            const int k1 = 2 * j;
-            const int k2 = 2 * j + 1;
-            if (this->ParaV->in_this_processor(k1, k1))
+            if (this->ParaV->in_this_processor(i, i))
             {
-                const int ir = this->ParaV->global2local_row(k1);
-                const int ic = this->ParaV->global2local_col(k1);
-                MecMulP(0, j) += mud(ic, ir).real();
-                MecMulP(3, j) += mud(ic, ir).real();
+                const int ir = this->ParaV->global2local_row(i);
+                const int ic = this->ParaV->global2local_col(i);
+                MecMulP(isk, i) += mud(ic, ir).real();
             }
-            if (this->ParaV->in_this_processor(k1, k2))
+        }
+    }
+    else if (this->nspin_ == 4)
+    {
+        for (size_t i = 0; i < nw; ++i)
+        {
+            const int index = i % 2;
+            if (!index)
             {
-                const int ir = this->ParaV->global2local_row(k1);
-                const int ic = this->ParaV->global2local_col(k2);
-                // note that mud is column major
-                MecMulP(1, j) += mud(ic, ir).real();
-                MecMulP(2, j) += mud(ic, ir).imag();
-            }
-            if (this->ParaV->in_this_processor(k2, k1))
-            {
-                const int ir = this->ParaV->global2local_row(k2);
-                const int ic = this->ParaV->global2local_col(k1);
-                MecMulP(1, j) += mud(ic, ir).real();
-                MecMulP(2, j) -= mud(ic, ir).imag();
-            }
-            if (this->ParaV->in_this_processor(k2, k2))
-            {
-                const int ir = this->ParaV->global2local_row(k2);
-                const int ic = this->ParaV->global2local_col(k2);
-                MecMulP(0, j) += mud(ic, ir).real();
-                MecMulP(3, j) -= mud(ic, ir).real();
+                const int j = i / 2;
+                const int k1 = 2 * j;
+                const int k2 = 2 * j + 1;
+                if (this->ParaV->in_this_processor(k1, k1))
+                {
+                    const int ir = this->ParaV->global2local_row(k1);
+                    const int ic = this->ParaV->global2local_col(k1);
+                    MecMulP(0, j) += mud(ic, ir).real();
+                    MecMulP(3, j) += mud(ic, ir).real();
+                }
+                if (this->ParaV->in_this_processor(k1, k2))
+                {
+                    const int ir = this->ParaV->global2local_row(k1);
+                    const int ic = this->ParaV->global2local_col(k2);
+                    // note that mud is column major
+                    MecMulP(1, j) += mud(ic, ir).real();
+                    MecMulP(2, j) += mud(ic, ir).imag();
+                }
+                if (this->ParaV->in_this_processor(k2, k1))
+                {
+                    const int ir = this->ParaV->global2local_row(k2);
+                    const int ic = this->ParaV->global2local_col(k1);
+                    MecMulP(1, j) += mud(ic, ir).real();
+                    MecMulP(2, j) -= mud(ic, ir).imag();
+                }
+                if (this->ParaV->in_this_processor(k2, k2))
+                {
+                    const int ir = this->ParaV->global2local_row(k2);
+                    const int ic = this->ParaV->global2local_col(k2);
+                    MecMulP(0, j) += mud(ic, ir).real();
+                    MecMulP(3, j) -= mud(ic, ir).real();
+                }
             }
         }
     }
