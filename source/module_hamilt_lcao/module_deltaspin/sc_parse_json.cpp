@@ -36,9 +36,9 @@ void SpinConstrain<FPTYPE, Device>::Set_ScData_From_Json(const std::string& file
     std::regex index_regex("\"index\": (\\d+)");
     std::regex lambda_regex("\"lambda\"\\s*:\\s*(?:\\[\\s*(\\d+(?:\\.\\d+)?)\\s*,\\s*(\\d+(?:\\.\\d+)?)\\s*,\\s*(\\d+(?:\\.\\d+)?)\\s*\\]|(\\d+(?:\\.\\d+)?))");
     std::regex target_mag_regex("\"target_mag\"\\s*:\\s*(?:\\[\\s*(\\d+(?:\\.\\d+)?)\\s*,\\s*(\\d+(?:\\.\\d+)?)\\s*,\\s*(\\d+(?:\\.\\d+)?)\\s*\\]|(\\d+(?:\\.\\d+)?))");
-    std::regex target_mag_val_regex("\"target_mag_val\": ([0-9.]+)");
-    std::regex target_mag_angle1_regex("\"target_mag_angle1\": ([0-9.]+)");
-    std::regex target_mag_angle2_regex("\"target_mag_angle2\": ([0-9.]+)");
+    std::regex target_mag_val_regex("\"target_mag_val\": (\\d+(?:\\.\\d+)?)");
+    std::regex target_mag_angle1_regex("\"target_mag_angle1\": (\\d+(?:\\.\\d+)?)");
+    std::regex target_mag_angle2_regex("\"target_mag_angle2\": (\\d+(?:\\.\\d+)?)");
     std::regex constrain_regex("\"constrain\": \\[(.+?)\\]");
 
     while (getline(file, line)) {
