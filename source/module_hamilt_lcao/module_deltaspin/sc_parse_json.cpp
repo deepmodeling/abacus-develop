@@ -34,8 +34,7 @@ void SpinConstrain<FPTYPE, Device>::Set_ScData_From_Json(const std::string& file
     std::regex element_regex("\"element\": \"([A-Za-z]+)\"");
     std::regex ScDecayGrad_regex("\"ScDecayGrad\": (\\d+(?:\\.\\d+)?)");
     std::regex index_regex("\"index\": (\\d+)");
-    //std::regex lambda_regex("\"lambda\": \\[(.+?)\\]");
-    std::regex lambda_regex("\"lambda\":(?:\\s*\\[([0-9.]+),\\s*([0-9.]+),\\s*([0-9.]+)\\])|(\\s*([0-9.]+))");
+    std::regex lambda_regex("\"lambda\"\\s*:\\s*(?:\\[\\s*([0-9.]+)\\s*,\\s*([0-9.]+)\\s*,\\s*([0-9.]+)\\s*\\])|(\\s*([0-9.]+))");
     std::regex target_mag_regex("\"target_mag\": \\[(.+?)\\]");
     std::regex target_mag_val_regex("\"target_mag_val\": ([0-9.]+)");
     std::regex target_mag_angle1_regex("\"target_mag_angle1\": ([0-9.]+)");
