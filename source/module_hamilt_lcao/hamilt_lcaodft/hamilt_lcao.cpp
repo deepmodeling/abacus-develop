@@ -334,8 +334,8 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
                 LM_in,
                 kv->kvec_d,
                 this->hR,// no explicit call yet
-                &(this->getHk(LM_in))
-            );
+                &(this->getHk(LM_in)),
+                this->kv->isk);
             this->getOperator()->add(sc_lambda);
         }
     }

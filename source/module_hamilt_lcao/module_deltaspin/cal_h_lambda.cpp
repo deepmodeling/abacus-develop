@@ -7,7 +7,7 @@
 template <>
 void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_h_lambda(
     std::complex<double>* h_lambda,
-    const std::vector<std::complex<double>>& Sloc2, bool column_major)
+    const std::vector<std::complex<double>>& Sloc2, bool column_major, int isk)
 {
     ModuleBase::TITLE("SpinConstrain","cal_h_lambda");
     ModuleBase::timer::tick("SpinConstrain", "cal_h_lambda");
@@ -44,7 +44,9 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_h_lambda(
                                 icc = mu + nu * pv->nrow;
                                 if (this->nspin_ == 2)
                                 {
-                                    h_lambda[icc] = -Sloc2[icc]*this->lambda_[iat2][2];
+                                    h_lambda[icc] = (isk == 0)
+                                        ? -Sloc2[icc] * this->lambda_[iat2][2]
+                                        : -Sloc2[icc] * (-this->lambda_[iat2][2]);
                                 }
                                 else if (this->nspin_ == 4)
                                 {
@@ -71,7 +73,9 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_h_lambda(
                                 icc = mu * pv->ncol + nu;
                                 if (this->nspin_ == 2)
                                 {
-                                    h_lambda[icc] = -Sloc2[icc]*this->lambda_[iat1][2];
+                                    h_lambda[icc] = (isk == 0)
+                                        ? -Sloc2[icc] * this->lambda_[iat1][2]
+                                        : -Sloc2[icc] * (-this->lambda_[iat1][2]);
                                 }
                                 else if (this->nspin_ == 4)
                                 {

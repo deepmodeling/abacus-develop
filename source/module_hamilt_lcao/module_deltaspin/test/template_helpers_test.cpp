@@ -33,7 +33,7 @@ TEST_F(SpinConstrainTest, TemplatHelpers)
 {
     // this is a trivial test as the double version is not used
     std::vector<std::complex<double>> Sloc2;
-    EXPECT_NO_THROW(sc.cal_h_lambda(nullptr, Sloc2, true));
+    EXPECT_NO_THROW(sc.cal_h_lambda(nullptr, Sloc2, true, 0));
     EXPECT_NO_THROW(sc.cal_mw_from_lambda(0));
     EXPECT_NO_THROW(sc.cal_MW_k(nullptr, std::vector<std::vector<std::complex<double>>>(0)));
     EXPECT_NO_THROW(sc.cal_MW(0, nullptr, false));

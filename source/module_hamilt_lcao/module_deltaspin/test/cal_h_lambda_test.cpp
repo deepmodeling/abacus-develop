@@ -55,7 +55,7 @@ TEST_F(SpinConstrainTest, CalHLambda)
     sc_lambda[0][2] = 1.0;
     sc.set_sc_lambda(sc_lambda, 1);
     // column_major = true
-    sc.cal_h_lambda(&h_lambda[0], Sloc2, true);
+    sc.cal_h_lambda(&h_lambda[0], Sloc2, true, 0);
     // h_lambda = - [lambda_x * sigma_x + lambda_y * sigma_y + lambda_z * sigma_z] * Sloc2
     std::vector<std::complex<double>> columnMajor_h_lambda = {
         std::complex<double>{-1.0, 0.0 },
@@ -73,7 +73,7 @@ TEST_F(SpinConstrainTest, CalHLambda)
     EXPECT_DOUBLE_EQ(h_lambda[3].imag(), columnMajor_h_lambda[3].imag());
     // column_major = false
     delete[] sc_lambda;
-    sc.cal_h_lambda(&h_lambda[0], Sloc2, false);
+    sc.cal_h_lambda(&h_lambda[0], Sloc2, false, 0);
     std::vector<std::complex<double>> rowMajor_h_lambda = {
         std::complex<double>{-1.0, 0.0 },
         std::complex<double>{-1.0, -1.0},
