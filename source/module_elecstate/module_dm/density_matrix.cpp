@@ -130,7 +130,7 @@ void DensityMatrix<TK, TR>::init_DMR(Grid_Driver* GridD_in, const UnitCell* ucel
     {
         tmp_DMR->fix_gamma();
     }
-    tmp_DMR->allocate(true);
+    tmp_DMR->allocate(nullptr, true);
     this->_DMR.push_back(tmp_DMR);
     // add another DMR if nspin==2
     if (this->_nspin == 2)
@@ -180,7 +180,7 @@ void DensityMatrix<TK, TR>::init_DMR(Record_adj& ra, const UnitCell* ucell)
     {
         tmp_DMR->fix_gamma();
     }
-    tmp_DMR->allocate(true);
+    tmp_DMR->allocate(nullptr, true);
     this->_DMR.push_back(tmp_DMR);
     // add another DMR if nspin==2
     if (this->_nspin == 2)
@@ -242,7 +242,7 @@ void DensityMatrix<TK, TR>::init_DMR(const hamilt::HContainer<TRShift>& DMR_in)
                 tmp_DMR->insert_pair(tmp_ap);
             }
         }
-        tmp_DMR->allocate(true);
+        tmp_DMR->allocate(nullptr, true);
         this->_DMR.push_back(tmp_DMR);
         if(this->_nspin == 2)
         {

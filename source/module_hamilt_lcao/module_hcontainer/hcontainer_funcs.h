@@ -65,6 +65,18 @@ template<typename TR>
 void transferParallels2Serials(const hamilt::HContainer<TR>& hR_p,
                              hamilt::HContainer<TR>* hR_s);
 
+/**
+ * @brief gather the HContainer from all parallel objects to target serial object
+ * the serial object should be empty before gather
+ * @param hR_p the HContainer of <I,J,R> atom pairs in parallel object
+ * @param hR_s the empty HContainer of <I,J,R> atom pairs in serial object
+ * @param serial_rank the rank of target serial object
+*/
+template<typename TR>
+void gatherParallels(const hamilt::HContainer<TR>& hR_p,
+                     hamilt::HContainer<TR>* hR_s,
+                     const int serial_rank);
+
 #endif // __MPI
 
 } // namespace hamilt
