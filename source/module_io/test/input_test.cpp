@@ -1025,13 +1025,14 @@ TEST_F(InputTest, Check)
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("ecutrho/ecutwfc must >= 4"));
-
+    INPUT.ecutrho = 100.0;
     INPUT.nx = INPUT.ny = INPUT.nz = 10;
     INPUT.ndx = INPUT.ndy = INPUT.ndz = 8;
     testing::internal::CaptureStdout();
-    INPUT.Check();
+    EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("smooth grids is denser than dense grids"));
+    INPUT.ndx = INPUT.ndy = INPUT.ndz = 11;
     //
     INPUT.nbands = -1;
     testing::internal::CaptureStdout();
