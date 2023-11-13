@@ -28,6 +28,7 @@ TEST_F(SpinConstrainTest, CalHLambda)
     std::ofstream ofs("test.log");
     int nrow = 2;
     int ncol = 2;
+    sc.set_nspin(4);
     paraV.set_global2local(nrow, ncol, false, ofs);
     sc.set_ParaV(&paraV);
     EXPECT_EQ(sc.ParaV->nloc, 4);
