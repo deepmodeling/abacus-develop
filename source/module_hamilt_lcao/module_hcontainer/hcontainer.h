@@ -165,8 +165,11 @@ class HContainer
     // Destructor of class HContainer
     ~HContainer();
 
-    // copy constructor
-    HContainer(const HContainer<T>& HR_in);
+    /**
+     * @brief copy constructor
+     * when data_array is not nullptr, new HContainer will be wrapper for data_array
+    */
+    HContainer(const HContainer<T>& HR_in, T* data_array = nullptr);
 
     // move constructor
     HContainer(HContainer<T>&& HR_in);
@@ -183,13 +186,21 @@ class HContainer
      * it will not allocate memory for atom_pairs
      * this case will forbit inserting empty atom_pair
     */
-    HContainer(const Parallel_Orbitals* paraV, T* data_pointer = nullptr);
+    HContainer(
+      const Parallel_Orbitals* paraV, 
+      T* data_pointer = nullptr, 
+      const std::vector<int>* ijr_info = nullptr);
 
     /**
      * @brief allocate memory for all <IJR> matrix
+     * if data_array is not nullptr, 
+     *     use memory after data_array for each BaseMatrix;
+     *     if BaseMatrix has memory allocated before, it will be freed first. 
+     * if data_array is nullptr, allocate memory for each BaseMatrix
+     * @param data_array pointer of data array
      * @param if_zero if true, set all values to zero
     */
-    void allocate(bool if_zero = false);
+    void allocate(T* data_array = nullptr, bool if_zero = false);
 
     /**
      * @brief set values of all <IJR> matrix to zero
@@ -356,6 +367,32 @@ class HContainer
      * @brief get total memory bites of HContainer
     */
     size_t get_memory_size() const;
+
+    /**
+     * @brief calculate total size of data in HContainer, 
+     * named nnr inherited from history
+     * all AtomPairs and BaseMatrixs are counted
+    */
+    size_t get_nnr() const;
+
+    /**
+     * @brief get infomation of IJR pairs in HContainer
+     * the return vector format is {size_I, I1, size_J, J1, size_R, R1x, R1y, R1z, ..., J2, ...}
+    */
+    std::vector<int> get_ijr_info() const;
+
+    /**
+     * @brief use infomation of IJ pairs to expand HContainer
+     * the input vector format is {size_IJ_pairs, I1, J1, size_R, R1x, R1y, R1z, ..., I2, J2, ...}
+     * HContainer has not been allocated after this function, 
+     * user should call allocate(...) to allocate memory.
+    */
+    void insert_ijrs(const std::vector<int>* ijrs);
+
+    /**
+     * @brief return the wrapper_pointer
+    */
+    T* get_wrapper() const;
 
     /**
      * @brief synchronization of atom-pairs for read-in HContainer

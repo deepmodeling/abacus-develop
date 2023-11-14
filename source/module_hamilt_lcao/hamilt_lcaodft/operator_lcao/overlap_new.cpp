@@ -70,7 +70,7 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::initialize_SR(Grid_Driver
         }
     }
     // allocate the memory of BaseMatrix in SR, and set the new values to zero
-    SR->allocate(true);
+    SR->allocate(nullptr, true);
     ModuleBase::timer::tick("OverlapNew", "initialize_SR");
 }
 

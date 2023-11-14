@@ -496,7 +496,7 @@ void Gint::initialize_pvpR(
 	}// end T1
 	if(npol == 1)
 	{
-		this->hRGint->allocate(0);
+		this->hRGint->allocate(nullptr, 0);
 		ModuleBase::Memory::record("Gint::hRGint",this->hRGint->get_memory_size());
 		// initialize DMRGint with hRGint when NSPIN != 4
 		for (int is = 0; is < this->DMRGint.size(); is++)
@@ -511,15 +511,15 @@ void Gint::initialize_pvpR(
 	}
 	else
 	{
-		this->hRGintCd->allocate(0);
+		this->hRGintCd->allocate(nullptr, 0);
 		ModuleBase::Memory::record("Gint::hRGintCd",this->hRGintCd->get_memory_size());
 		for (int is = 0; is < this->DMRGint.size(); is++)
 		{
-			this->DMRGint[is]->allocate(0);
+			this->DMRGint[is]->allocate(nullptr, 0);
 		}
 		ModuleBase::Memory::record("Gint::DMRGint",this->DMRGint[0]->get_memory_size() * this->DMRGint.size());
 #ifdef __MPI	
-		this->DMRGint_full->allocate(0);
+		this->DMRGint_full->allocate(nullptr, 0);
 		ModuleBase::Memory::record("Gint::DMRGint_full",this->DMRGint_full->get_memory_size());
 #endif
 	}

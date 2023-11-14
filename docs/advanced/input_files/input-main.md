@@ -438,7 +438,7 @@ These variables are used to control general system parameters.
 - **Description**: Control how to deal with error in symmetry analysis due to inaccurate lattice parameters or atom positions in STRU file, especially useful when *[calculation](#calculation)==cell-relax*
   - False: quit with an error message
   - True: automatically set symmetry to 0 and continue running without symmetry analysis
-- **Default**: False
+- **Default**: True
 
 ### kpar
 
@@ -868,7 +868,7 @@ calculations.
   For atomic orbitals basis,
 
   - **genelpa**: This method should be used if you choose localized orbitals.
-  - **scalapack-gvx**: Scalapack can also be used for localized orbitals.
+  - **scalapack_gvx**: Scalapack can also be used for localized orbitals.
   - **cusolver**: (Unavailable currently, it will be fixed in future versions) This method needs building with the cusolver component for lcao and at least one gpu is available.
 
   If you set ks_solver=`genelpa` for basis_type=`pw`, the program will be stopped with an error message:
