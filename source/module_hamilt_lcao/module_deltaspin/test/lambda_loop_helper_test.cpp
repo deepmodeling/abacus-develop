@@ -56,9 +56,9 @@ TEST_F(SpinConstrainTest, CheckRmsStop)
     EXPECT_TRUE(sc.check_rms_stop(0, 12, 1e-7));
     EXPECT_TRUE(sc.check_rms_stop(0, 99, 1e-5));
     std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("Step (Outer -- Inner) =  0 -- 1           RMS =1e-05"));
-    EXPECT_THAT(output, testing::HasSubstr("Step (Outer -- Inner) =  0 -- 12          RMS =1e-05"));
-    EXPECT_THAT(output, testing::HasSubstr("Step (Outer -- Inner) =  0 -- 13          RMS =1e-07"));
+    EXPECT_THAT(output, testing::HasSubstr("Step (Outer -- Inner) =  0 -- 1           RMS = 1e-05"));
+    EXPECT_THAT(output, testing::HasSubstr("Step (Outer -- Inner) =  0 -- 12          RMS = 1e-05"));
+    EXPECT_THAT(output, testing::HasSubstr("Step (Outer -- Inner) =  0 -- 13          RMS = 1e-07"));
     EXPECT_THAT(output, testing::HasSubstr("Meet convergence criterion ( < 1e-06 ), exit."));
     EXPECT_THAT(output, testing::HasSubstr("Reach maximum number of steps ( 100 ), exit."));
 }

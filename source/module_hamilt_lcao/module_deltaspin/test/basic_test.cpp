@@ -178,7 +178,7 @@ TEST_F(BasicFuncsTest, Prin2d)
 {
     std::string info = "initial spin";
     testing::internal::CaptureStdout();
-    print_2d(info, array);
+    print_2d(info, array, 4);
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output,testing::HasSubstr("initial spin"));
     EXPECT_THAT(output,testing::HasSubstr("1 2 3"));
