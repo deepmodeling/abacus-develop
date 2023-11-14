@@ -324,11 +324,11 @@ void Gint::cal_gint(Gint_inout *inout)
 			}
 #endif
 		} // end of #pragma omp parallel
+		#ifdef __MKL
+			mkl_set_num_threads(mkl_threads);
+		#endif
 		}
 
-#ifdef __MKL
-    mkl_set_num_threads(mkl_threads);
-#endif
     } // end of if (max_size)
 
 	ModuleBase::timer::tick("Gint_interface", "cal_gint");
