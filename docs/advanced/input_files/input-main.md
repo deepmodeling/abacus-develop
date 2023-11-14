@@ -3300,7 +3300,7 @@ These variables are used to control the usage of deltaspin functionality.
 ### sc_file
 
 - **Type**: String
-- **Description**: the file in json format to specify atomic constraining parameters. An example of the sc_file json file is shown below:
+- **Description**: the file in json format to specify atomic constraining parameters. An example of the sc_file json file is shown below for the `nspin 4` case:
 ```json
 [
     {
@@ -3326,6 +3326,32 @@ These variables are used to control the usage of deltaspin functionality.
     }
 ]
 ```
+and
+```json
+[
+    {
+        "element": "Fe",
+        "itype": 0,
+        "ScDecayGrad": 0.9,
+        "ScAtomData": [
+            {
+                "index": 0,
+                "lambda": 0.0,
+                "target_mag": 2.0,
+                "constrain": 1
+            },
+            {
+                "index": 1,
+                "lambda": 0,
+                "target_mag": 2.0,
+                "constrain": 1
+            }
+        ]
+    }
+]
+```
+for `nspin 2` case. The difference is that `lambda`, `target_mag`, and `constrain` are scalars in `nspin 2` case, and are vectors in `nspin 4` case.
+
 - **Default**: none
 
 [back to top](#full-list-of-input-keywords)
