@@ -67,10 +67,13 @@ class ScLambdaLCAOTest : public ::testing::Test
 {
   protected:
     std::vector<ModuleBase::Vector3<double>> kvec_d;
+    std::vector<int> isk;
     void SetUp()
     {
         kvec_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
         kvec_d.push_back(ModuleBase::Vector3<double>(0.5, 0.5, 0.5));
+        isk.push_back(0);
+        isk.push_back(1);
     }
 };
 
@@ -107,6 +110,7 @@ TEST_F(ScLambdaLCAOTest, ContributeHk)
     };
     sc.set_atomCounts(atomCounts);
     sc.set_orbitalCounts(orbitalCounts);
+    sc.set_nspin(4);
     sc.set_npol(2);
     ModuleBase::Vector3<double>* sc_lambda = new ModuleBase::Vector3<double>[1];
     sc_lambda[0][0] = 1.0;
@@ -121,7 +125,8 @@ TEST_F(ScLambdaLCAOTest, ContributeHk)
         = hamilt::OperatorScLambda<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>(&LM,
                                                                                                      this->kvec_d,
                                                                                                      nullptr,
-                                                                                                     nullptr);
+                                                                                                     nullptr,
+                                                                                                     isk);
     sc_lambda_op.contributeHk(0);
     std::vector<std::complex<double>> columnMajor_h_lambda = {
         std::complex<double>{-1.0, 0.0 },
@@ -145,13 +150,15 @@ TEST_F(ScLambdaLCAOTest, TemplateHelpers)
         = hamilt::OperatorScLambda<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>(nullptr,
                                                                                                      this->kvec_d,
                                                                                                      nullptr,
-                                                                                                     nullptr);
+                                                                                                     nullptr,
+                                                                                                     isk);
     auto sc_lambda_op1 = hamilt::OperatorScLambda<hamilt::OperatorLCAO<std::complex<double>, double>>(nullptr,
                                                                                                       this->kvec_d,
                                                                                                       nullptr,
-                                                                                                      nullptr);
+                                                                                                      nullptr,
+                                                                                                      isk);
     auto sc_lambda_op2
-        = hamilt::OperatorScLambda<hamilt::OperatorLCAO<double, double>>(nullptr, this->kvec_d, nullptr, nullptr);
+        = hamilt::OperatorScLambda<hamilt::OperatorLCAO<double, double>>(nullptr, this->kvec_d, nullptr, nullptr, isk);
     EXPECT_NO_THROW(sc_lambda_op.contributeHR());
     EXPECT_NO_THROW(sc_lambda_op1.contributeHR());
     EXPECT_NO_THROW(sc_lambda_op2.contributeHR());
