@@ -18,13 +18,13 @@ source $INSTALL_DIR/setup
 cd $ABACUS_DIR
 ABACUS_DIR=$(pwd)
 
-BUILD_DIR=build_abacus
+BUILD_DIR=build_abacus_gnu
 rm -rf $BUILD_DIR
 
 PREFIX=$ABACUS_DIR
-LAPACK=$INSTALL_DIR/openblas-0.3.23/lib
+LAPACK=$INSTALL_DIR/openblas-0.3.24/lib
 SCALAPACK=$INSTALL_DIR/scalapalack-2.2.1/lib
-ELPA=$INSTALL_DIR/elpa-2021.11.002/cpu
+ELPA=$INSTALL_DIR/elpa-2023.05.001/cpu
 FFTW3=$INSTALL_DIR/fftw-3.3.10
 CEREAL=$INSTALL_DIR/cereal-1.3.2/include/cereal
 LIBXC=$INSTALL_DIR/libxc-6.2.2
@@ -46,7 +46,6 @@ cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
         -DENABLE_LCAO=ON \
         -DENABLE_LIBXC=ON \
         -DUSE_OPENMP=ON \
-        -DENABLE_ASAN=OFF \
         -DUSE_ELPA=ON \
 #         -DENABLE_DEEPKS=1 \
 #         -DTorch_DIR=$LIBTORCH \
@@ -58,12 +57,14 @@ cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
 # 	      -DTensorFlow_DIR=$DEEPMD \
 
 # # add mkl env for libtorch to link
-# # gnu-toolchain will lack of -lmkl when load libtorch
-# # need to fix -- zhaoqing in 2023-09-02
+# if one want to install libtorch, mkl should be load in build process
+# for -lmkl when load libtorch
 # module load mkl
 
+# if one want's to include deepmd, your gcc version should be >= 11.3.0
+
 cmake --build $BUILD_DIR -j `nproc` 
-cmake --install $BUILD_DIR 
+cmake --install $BUILD_DIR 2>/dev/null
 
 # generate abacus_env.sh
 cat << EOF > "${TOOL}/abacus_env.sh"

@@ -72,7 +72,7 @@ TEST_F(write_input, General1)
     EXPECT_THAT(output, testing::HasSubstr("init_vel                       0 #read velocity from STRU or not"));
     EXPECT_THAT(output, testing::HasSubstr("symmetry_prec                  1e-05 #accuracy for symmetry"));
     EXPECT_THAT(output,
-                testing::HasSubstr("symmetry_autoclose             0 #whether to close symmetry automatically when "
+                testing::HasSubstr("symmetry_autoclose             1 #whether to close symmetry automatically when "
                                    "error occurs in symmetry analysis"));
     EXPECT_THAT(output, testing::HasSubstr("nelec                          0 #input number of electrons"));
     EXPECT_THAT(output, testing::HasSubstr("out_mul                        0 # mulliken  charge or not"));

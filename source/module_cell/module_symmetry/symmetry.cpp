@@ -1154,7 +1154,6 @@ void Symmetry::pricell(double* pos)
         //the current test is successful
         if (no_diff)    ptrans.push_back(ModuleBase::Vector3<double>
             (tmp_ptrans[0], tmp_ptrans[1], tmp_ptrans[2]));
-
         //restore the original rotated coordinates by subtracting "ptrans"
         for (int it = 0; it < ntype; it++)
         {
@@ -1325,9 +1324,15 @@ void Symmetry::pricell(double* pos)
     this->ncell=floor(ncell_double+0.5);
     if(this->ncell != ntrans)
     {
-        std::cout << " ERROR: PRICELL: NCELL != NTRANS !" << std::endl;
+        std::cout << " WARNING: PRICELL: NCELL != NTRANS !" << std::endl;
         std::cout << " NCELL=" << ncell << ", NTRANS=" << ntrans << std::endl;
-		ModuleBase::QUIT();
+        std::cout << " Suggest solution: Use a larger `symmetry_prec`. " << std::endl;
+        std::cout << " Now regard the structure as a primitive cell." << std::endl;
+        this->ncell = 1;
+        this->ptrans = std::vector<ModuleBase::Vector3<double> >(1, ModuleBase::Vector3<double>(0, 0, 0));
+        GlobalV::ofs_running << "WARNING: Original cell may have more than one primitive cells, \
+        but we have to treat it as a primitive cell. Use a larger `symmetry_prec`to avoid this warning." << std::endl;
+        return;
     }
     if(std::abs(ncell_double-double(this->ncell)) > this->epsilon*100)
     {

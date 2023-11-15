@@ -6,7 +6,7 @@
 #SBATCH -e compile.err
 
 # JamesMisaka in 2023-08-31
-# install abacus by intel-toolchain
+# install abacus dependency by intel-toolchain
 # use mkl and intelmpi
 # but mpich and openmpi can also be tried
 # libtorch and libnpy are for deepks support, which can be =no
@@ -22,9 +22,10 @@
 --with-fftw=no \
 --with-elpa=install \
 --with-cereal=install \
---with-libtorch=install \
---with-libnpy=install \
+--with-libtorch=no \
+--with-libnpy=no \
 --with-libri=no \
 --with-libcomm=no \
---with-intel-classic=yes \
+--with-intel-classic=no \
 | tee compile.log
+# if you are using AMD server: set --with-intel-classic=yes
