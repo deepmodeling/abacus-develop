@@ -13,6 +13,7 @@
 // parallel communication
 #ifdef __MPI
 #include "module_base/parallel_common.h"
+#include "module_base/parallel_reduce.h"
 #endif
 
 template <typename T, typename Device>
@@ -444,6 +445,10 @@ psi::Psi<T, Device>* psi_initializer_nao<T, Device>::cal_psig(int ik)
                                     }
                                     for(int i = 0; i < 4; i++)
                                     {
+                                        #ifdef __MPI
+                                        // if MPI, gather the norm2 over all processes
+                                        Parallel_Reduce::reduce_all(normalization_factors[i]);
+                                        #endif
                                         normalization_factors[i] = sqrt(normalization_factors[i]);
                                     }
                                     for(int ig = 0; ig < npw; ig++)
@@ -477,7 +482,7 @@ psi::Psi<T, Device>* psi_initializer_nao<T, Device>::cal_psig(int ik)
                         for(int m = 0; m < 2*L+1; m++)
                         {
                             const int lm = L*L+m;
-                            double normalization_factor = 0.0;
+                            Real normalization_factor = 0.0;
                             for(int ig=0; ig<npw; ig++)
                             {
                                 (*(this->psig))(ibasis, ig) = 
@@ -486,10 +491,14 @@ psi::Psi<T, Device>* psi_initializer_nao<T, Device>::cal_psig(int ik)
                                     );
                                 normalization_factor += this->norm2((*(this->psig))(ibasis, ig));
                             }
+                            #ifdef __MPI
+                            // if MPI, gather the norm2 over all processes
+                            Parallel_Reduce::reduce_all(normalization_factor);
+                            #endif
                             normalization_factor = sqrt(normalization_factor);
                             for(int ig=0; ig<npw; ig++)
                             {
-                                (*(this->psig))(ibasis, ig) /= normalization_factor;
+                                if(normalization_factor != 0.0) (*(this->psig))(ibasis, ig) /= normalization_factor;
                             }
                             ++ibasis;
                         }

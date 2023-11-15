@@ -569,7 +569,7 @@ TEST_F(PsiIntializerUnitTest, CalPsigNaoRandom) {
     EXPECT_NEAR(0, psi->operator()(0,0,0).real(), 1e-12);
     delete psi;
 }
-/*
+
 TEST_F(PsiIntializerUnitTest, CalPsigNaoSoc) {
     GlobalV::init_wfc = "nao";
     GlobalV::NSPIN = 4;
@@ -632,7 +632,7 @@ TEST_F(PsiIntializerUnitTest, CalPsigNaoSocHasSoDOMAG) {
     EXPECT_NEAR(0, psi->operator()(0,0,0).real(), 1e-12);
     delete psi;
 }
-*/
+
 int main(int argc, char** argv)
 {
 
