@@ -222,8 +222,6 @@ void Pseudopot_upf::read_pseudo_upf201_header(std::ifstream& ifs)
         else if (name[ip] == "pseudo_type")
         {
             pp_type = val[ip];
-            if (pp_type == "1/r")
-                this->coulomb_potential = true;
             if (pp_type == "SL")
             {
                 ModuleBase::WARNING_QUIT("Pseudopot_upf::read_pseudo_upf201_header",
@@ -256,8 +254,7 @@ void Pseudopot_upf::read_pseudo_upf201_header(std::ifstream& ifs)
         {
             if (val[ip] == "T" || val[ip] == "TRUE" || val[ip] == "True" || val[ip] == "true")
             {
-                ModuleBase::WARNING_QUIT("Pseudopot_upf::read_pseudo_upf201_header",
-                                         "COULOMB POTENTIAL IS NOT SUPPORTED");
+                this->coulomb_potential = true;
             }
         }
         else if (name[ip] == "has_so")

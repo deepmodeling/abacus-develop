@@ -80,7 +80,7 @@ void Stress_Func<FPTYPE, Device>::stress_loc(ModuleBase::matrix& sigma,
     for (int it = 0; it < GlobalC::ucell.ntype; ++it)
     {
         const Atom* atom = &GlobalC::ucell.atoms[it];
-		if(atom[it].coulomb_potential)
+		if(atom->coulomb_potential)
 		{
 		//
 		// special case: pseudopotential is coulomb 1/r potential

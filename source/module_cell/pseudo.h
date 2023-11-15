@@ -15,23 +15,23 @@ class pseudo
     ~pseudo();
 
     //<PP_HEADER>
-    bool has_so = false;         // if .true. includes spin-orbit
-    int nv = 0;          // UPF file version number
-    std::string psd;     // Element label
-    std::string pp_type; // Pseudo type ( NC or US )
-    bool tvanp = false;          // .true. if Ultrasoft
-    bool nlcc = false;           // Non linear core corrections(bool)
-    std::string xc_func; // Exch-Corr type
-    int zv = 0;          // z valence
-    double etotps = 0.0;       // total energy
-    double ecutwfc = 0.0;      // suggested cut-off for wfc
-    double ecutrho = 0.0;      // suggested cut-off for rho
-    int lmax = 0;        // maximum angular momentum component
-    int mesh = 0;        // number of point in the radial mesh
-    int nchi = 0;        // nwfc,number of wavefunctions
-    int nbeta = 0;       // number of projectors
-    int nqlc = 0;        // number of angular momenta in Q
-    int kkbeta = 0;      // kkbeta, point where the beta are zero
+    bool has_so = false;  // if .true. includes spin-orbit
+    int nv = 0;           // UPF file version number
+    std::string psd;      // Element label
+    std::string pp_type;  // Pseudo type ( NC or US )
+    bool tvanp = false;   // .true. if Ultrasoft
+    bool nlcc = false;    // Non linear core corrections(bool)
+    std::string xc_func;  // Exch-Corr type
+    int zv = 0;           // z valence
+    double etotps = 0.0;  // total energy
+    double ecutwfc = 0.0; // suggested cut-off for wfc
+    double ecutrho = 0.0; // suggested cut-off for rho
+    int lmax = 0;         // maximum angular momentum component
+    int mesh = 0;         // number of point in the radial mesh
+    int nchi = 0;         // nwfc,number of wavefunctions
+    int nbeta = 0;        // number of projectors
+    int nqlc = 0;         // number of angular momenta in Q
+    int kkbeta = 0;       // kkbeta, point where the beta are zero
 
     std::string* els = nullptr; // els[nchi]
     int* lchi = nullptr;        // lchi[nchi]

@@ -39,7 +39,7 @@ void pseudopot_cell_vl::init_vloc(ModuleBase::matrix& vloc_in, const ModulePW::P
 
 		this->zp[it] = atom->ncpp.zv;
 		// compute V_loc(G) for a given type of atom
-		if(atom[it].coulomb_potential)
+		if(atom->coulomb_potential)
 		{
 			this->vloc_coulomb(this->zp[it], vloc1d, rho_basis);
 		}
