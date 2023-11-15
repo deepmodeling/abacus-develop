@@ -35,7 +35,7 @@ public:
     double etotps;            // total energy
     double ecutwfc;           // suggested cut-off for wfc
     double ecutrho;           // suggested cut-off for rho
-    int nv;                   // UPF file version number
+    int nv = 0;               // UPF file version number
     int lmax;                 // maximum angular momentum component in beta
     int lmax_rho;             // maximum angular momentum component in rho (should be 2*lmax)
     int nwfc;                 // number of wavefunctions

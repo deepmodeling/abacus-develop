@@ -219,7 +219,6 @@ void pseudo::set_pseudo_atom(const Pseudopot_upf &upf)
 	delete[] rho_atc;
 	rho_atc = new double[mesh];
 	assert(rho_atc != 0);
-	ModuleBase::GlobalFunc::ZEROS(rho_atc, mesh);
 
 	for (int i = 0;i < nchi;i++)
 	{

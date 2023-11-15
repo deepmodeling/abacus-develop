@@ -72,6 +72,20 @@ protected:
 	std::unique_ptr<Pseudopot_upf> upf{new Pseudopot_upf};
 };
 
+TEST_F(ReadPPTest, ReadUPF100_Coulomb)
+{
+	std::ifstream ifs;
+	ifs.open("./support/Te.pbe-coulomb.UPF");
+	upf->read_pseudo_upf(ifs);
+	EXPECT_EQ(upf->vloc, nullptr);
+	EXPECT_EQ(upf->coulomb_potential, true);
+	EXPECT_EQ(upf->tvanp, false);
+	EXPECT_EQ(upf->nbeta, 0);
+	EXPECT_EQ(upf->lmax, 0);
+	EXPECT_EQ(upf->lloc, 0);
+	ifs.close();
+}
+
 TEST_F(ReadPPTest, ReadUPF100)
 {
 	std::ifstream ifs;
@@ -137,7 +151,7 @@ TEST_F(ReadPPTest, ReadUPF100)
 	EXPECT_EQ(upf->nn[2],3);
 	EXPECT_DOUBLE_EQ(upf->jchi[0],0.0); // jchi
 	EXPECT_DOUBLE_EQ(upf->jchi[1],0.0);
-	EXPECT_NEAR(upf->jchi[3],0.0,1e-20);
+	EXPECT_DOUBLE_EQ(upf->jchi[2],0.0);
 	EXPECT_DOUBLE_EQ(upf->jjj[0],0.0); // jjj
 	EXPECT_DOUBLE_EQ(upf->jjj[1],0.0);
 	EXPECT_DOUBLE_EQ(upf->jjj[2],0.0);
@@ -165,6 +179,19 @@ TEST_F(ReadPPTest, ReadUSppErr100)
 	// test output on screening
 	// EXPECT_THAT(output,testing::HasSubstr("this function is called")); // read_pseudo_nlcc
 	EXPECT_THAT(output,testing::HasSubstr("Ultra Soft Pseudopotential not available yet."));
+	ifs.close();
+}
+
+TEST_F(ReadPPTest, ReadUPF201_Coulomb)
+{
+	std::ifstream ifs;
+	ifs.open("./support/Al.pbe-coulomb.UPF");
+	upf->read_pseudo_upf201(ifs);
+	EXPECT_EQ(upf->vloc, nullptr);
+	EXPECT_EQ(upf->coulomb_potential, true);
+	EXPECT_EQ(upf->nbeta, 0);
+	EXPECT_EQ(upf->lmax, 0);
+	EXPECT_EQ(upf->lloc, 0);
 	ifs.close();
 }
 
