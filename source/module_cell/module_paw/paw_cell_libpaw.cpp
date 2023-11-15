@@ -192,6 +192,28 @@ void Paw_Cell::set_libpaw_atom(const int natom_in, const int ntypat_in, const in
     }
 }
 
+void Paw_Cell::mix_dij(const int iat, double*dij_paw)
+{
+    double mixing_beta = 0.1;
+
+    std::cout << "mixing_beta : " << mixing_beta << std::endl;
+
+    const int it = atom_type[iat];
+    const int nproj = paw_element_list[it].get_mstates();
+    const int size_dij = nproj * (nproj+1) / 2;
+    for(int i = 0; i < size_dij * nspden; i ++)
+    {  
+        if(!first_iter) dij_paw[i] = dij_save[iat][i] * (1.0 - mixing_beta) + dij_paw[i] * mixing_beta;
+
+        if(count > 30) dij_paw[i] = dij_save[iat][i];
+
+        dij_save[iat][i] = dij_paw[i];
+    }
+
+    first_iter = false;
+    count ++;
+}
+
 // Sets filename_list
 // I'm going to read directly from STRU file
 void Paw_Cell::set_libpaw_files()
@@ -609,13 +631,16 @@ void Paw_Cell::set_dij()
            dij[is] = new double[nproj * nproj];
         }
 
-        
-
 #ifdef __MPI
-        if(GlobalV::RANK_IN_POOL == 0) extract_dij(iat,size_dij,dij_libpaw);
+        if(GlobalV::RANK_IN_POOL == 0)
+        {
+            extract_dij(iat,size_dij,dij_libpaw);
+            //mix_dij(iat,dij_libpaw);
+        }
         Parallel_Common::bcast_double(dij_libpaw,size_dij*nspden);
 #else
         extract_dij(iat,size_dij,dij_libpaw);
+        //mix_dij(iat,dij_libpaw);
 #endif
 
         for(int is = 0; is < nspden; is ++)
