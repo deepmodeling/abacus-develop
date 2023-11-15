@@ -40,22 +40,25 @@ int Pseudopot_upf::read_pseudo_upf201(std::ifstream &ifs)
     //--------------------------------------
     //-              PP_LOCAL              -
     //--------------------------------------
-    if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_LOCAL", true, false))
+    if (!this->coulomb_potential)
     {
-        ifs.ignore(150, '>'); // skip type, size, columns and so on.
+        if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_LOCAL", true, false))
+        {
+            ifs.ignore(150, '>'); // skip type, size, columns and so on.
+        }
+        else
+        {
+            ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_LOCAL>");
+        }
+        delete[] vloc;
+        this->vloc = new double[mesh];
+        ModuleBase::GlobalFunc::ZEROS(vloc, mesh);
+        for (int ir = 0; ir < mesh; ir++)
+        {
+            ifs >> this->vloc[ir];
+        }
+        ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_LOCAL>");
     }
-    else
-    {
-        ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_LOCAL>");
-    }
-    delete[] vloc;
-    this->vloc = new double[mesh];
-    ModuleBase::GlobalFunc::ZEROS(vloc, mesh);
-    for (int ir = 0; ir < mesh; ir++)
-    {
-        ifs >> this->vloc[ir];
-    }
-    ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_LOCAL>");
 
     //--------------------------------------
     //-            PP_NONLOCAL             -
@@ -219,6 +222,8 @@ void Pseudopot_upf::read_pseudo_upf201_header(std::ifstream& ifs)
         else if (name[ip] == "pseudo_type")
         {
             pp_type = val[ip];
+            if (pp_type == "1/r")
+                this->coulomb_potential = true;
             if (pp_type == "SL")
             {
                 ModuleBase::WARNING_QUIT("Pseudopot_upf::read_pseudo_upf201_header",
@@ -337,6 +342,12 @@ void Pseudopot_upf::read_pseudo_upf201_header(std::ifstream& ifs)
             ModuleBase::WARNING("PP_HEADRER reading", warningstr);
         }
     }
+    if (this->coulomb_potential)
+    {
+        this->nbeta = 0;
+        this->lmax = 0;
+        this->lloc = 0;
+    }
 }
 
 void Pseudopot_upf::read_pseudo_upf201_mesh(std::ifstream& ifs)
@@ -422,6 +433,10 @@ void Pseudopot_upf::read_pseudo_upf201_mesh(std::ifstream& ifs)
 void Pseudopot_upf::read_pseudo_upf201_nonlocal(std::ifstream& ifs)
 {
     ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_NONLOCAL>");
+    if (nbeta == 0)
+    {
+        return;
+    }
     std::string word;
     std::string name[50];
     std::string val[50];

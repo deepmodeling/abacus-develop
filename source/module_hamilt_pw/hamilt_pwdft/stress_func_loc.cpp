@@ -76,18 +76,16 @@ void Stress_Func<FPTYPE, Device>::stress_loc(ModuleBase::matrix& sigma,
                              * (p_sf->strucFac(it, ig) * conj(aux[ig]) * fact).real();
             }
 		}
-	}
-	for(int nt = 0;nt< GlobalC::ucell.ntype; nt++)
-	{
-		const Atom* atom = &GlobalC::ucell.atoms[nt];
-		//mark by zhengdy for check
-		// if ( GlobalC::ppcell.vloc == NULL ){
-		if(0)
+    }
+    for (int it = 0; it < GlobalC::ucell.ntype; ++it)
+    {
+        const Atom* atom = &GlobalC::ucell.atoms[it];
+		if(atom[it].coulomb_potential)
 		{
 		//
 		// special case: pseudopotential is coulomb 1/r potential
 		//
-			this->dvloc_coul (atom->ncpp.zv, dvloc, rho_basis);
+			this->dvloc_coulomb (atom->ncpp.zv, dvloc, rho_basis);
 		//
 		}
 		else
@@ -114,7 +112,7 @@ void Stress_Func<FPTYPE, Device>::stress_loc(ModuleBase::matrix& sigma,
 				for (int m = 0; m<l+1;m++)
 				{
                     local_sigma(l, m) = local_sigma(l, m)
-                                        + (conj(aux[ig]) * p_sf->strucFac(nt, ig)).real() * 2.0
+                                        + (conj(aux[ig]) * p_sf->strucFac(it, ig)).real() * 2.0
                                               * dvloc[rho_basis->ig2igg[ig]] * GlobalC::ucell.tpiba2
                                               * rho_basis->gcar[ig][l] * rho_basis->gcar[ig][m] * fact;
                 }
@@ -264,45 +262,30 @@ ModulePW::PW_Basis* rho_basis
 	return;
 }
 
-template<typename FPTYPE, typename Device>
-void Stress_Func<FPTYPE, Device>::dvloc_coul
-(
-const FPTYPE& zp,
-FPTYPE* dvloc,
-ModulePW::PW_Basis* rho_basis
-)
+template <typename FPTYPE, typename Device>
+void Stress_Func<FPTYPE, Device>::dvloc_coulomb(const FPTYPE& zp, FPTYPE* dvloc, ModulePW::PW_Basis* rho_basis)
 {
-	//----------------------------------------------------------------------
-	//
-	//    Fourier transform of the Coulomb potential - For all-electron
-	//    calculations, in specific cases only, for testing purposes
-	//
-
-
-	// fourier transform: dvloc = D Vloc (g^2) / D g^2 = 4pi e^2/omegai /G^4
-
-	int  igl0;
-	// first shell with g != 0
-
-	// the  G=0 component is 0
-	if (rho_basis->gg_uniq[0] < 1.0e-8)
-	{
-		dvloc[0] = 0.0;
-		igl0 = 1;
-	}
-	else
-	{
-		igl0 = 0;
-	}
+    int igl0;
+	// start from |G|=0 or not.
+    if (rho_basis->gg_uniq[0] < 1.0e-8)
+    {
+        dvloc[0] = 0.0;
+        igl0 = 1;
+    }
+    else
+    {
+        igl0 = 0;
+    }
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-	for(int i=igl0;i<rho_basis->ngg;i++)
-	{
-		dvloc[i] = ModuleBase::FOUR_PI * zp * ModuleBase::e2 / GlobalC::ucell.omega / pow(( GlobalC::ucell.tpiba2 * rho_basis->gg_uniq[i] ),2);
-	}
+    for (int i = igl0; i < rho_basis->ngg; i++)
+    {
+        dvloc[i] = ModuleBase::FOUR_PI * zp * ModuleBase::e2 / GlobalC::ucell.omega
+                   / pow((GlobalC::ucell.tpiba2 * rho_basis->gg_uniq[i]), 2);
+    }
 
-	return;
+    return;
 }
 
 template class Stress_Func<double, psi::DEVICE_CPU>;

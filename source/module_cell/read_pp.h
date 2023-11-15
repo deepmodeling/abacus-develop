@@ -61,6 +61,7 @@ public:
     double* rab = nullptr;           // rab(mesh) dr(x)/dx (x=linear grid)
     double* rho_atc = nullptr;       // rho_atc(mesh) atomic core charge "Nonlinear Core Correction"
     double* vloc = nullptr;          // vloc(mesh) local atomic potential
+    bool coulomb_potential = false;  // coulomb potentail : z/r
     ModuleBase::matrix chi;          // chi(nwfc,mesh) atomic wavefcts
     double* rho_at = nullptr;        // rho_at(mesh) atomic charge
     int* lll = nullptr;              // lll(nbeta):angular momentum of projector i
