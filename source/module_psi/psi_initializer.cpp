@@ -135,14 +135,15 @@ psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate()
                     this->pw_wfc->npwk);
     GlobalV::ofs_running << "Allocate memory for psi and psig done.\n"
                          << "Print detailed information of dimension of psi and psig:\n"
+                         << "psi: (" << nkpts_actual << ", " << GlobalV::NBANDS << ", " << nbasis_actual << ")\n"
+                         << "psig: (" << nkpts_actual << ", " << nbands_actual << ", " << nbasis_actual << ")\n"
                          << "nkpts_actual = " << nkpts_actual << "\n"
                          << "GlobalV::NBANDS = " << GlobalV::NBANDS << "\n"
-                         << "nbasis_actual = " << nbasis_actual << "\n"
-                         << "this->pw_wfc->npwk = " << this->pw_wfc->npwk << "\n"
                          << "nbands_actual = " << nbands_actual << "\n"
-                         << "this->pw_wfc->npwk_max = " << this->pw_wfc->npwk_max << "\n"
-                         << "GlobalV::NPOL = " << GlobalV::NPOL << "\n"
-                         << "this->nbands_complem = " << this->nbands_complem << "\n";
+                         << "nbands_complem = " << this->nbands_complem << "\n"
+                         << "nbasis_actual = " << nbasis_actual << "\n"
+                         << "npwk_max = " << this->pw_wfc->npwk_max << "\n"
+                         << "npol = " << GlobalV::NPOL << "\n";
     
     const size_t memory_cost_psi = 
             nkpts_actual*

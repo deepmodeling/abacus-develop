@@ -198,7 +198,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(
     Real *en)
 {
     ModuleBase::TITLE("DiagoIterAssist", "diagH_subspace_init");
-    ModuleBase::timer::tick("DiagoIterAssist", "diagH_subspace");
+    ModuleBase::timer::tick("DiagoIterAssist", "diagH_subspace_init");
 
     // two case:
     // 1. pw base: nstart = n_band, psi(nbands * npwx)
@@ -382,7 +382,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(
     delmem_complex_op()(ctx, hcc);
     delmem_complex_op()(ctx, scc);
     delmem_complex_op()(ctx, vcc);
-    ModuleBase::timer::tick("DiagoIterAssist", "diagH_subspace");
+    ModuleBase::timer::tick("DiagoIterAssist", "diagH_subspace_init");
 }
 
 template<typename T, typename Device>
@@ -395,8 +395,8 @@ void DiagoIterAssist<T, Device>::diagH_LAPACK(
     Real *e, // always in CPU
     T* vcc)
 {
-    ModuleBase::TITLE("DiagoIterAssist", "LAPACK_subspace");
-    ModuleBase::timer::tick("DiagoIterAssist", "LAPACK_subspace");
+    ModuleBase::TITLE("DiagoIterAssist", "diagH_LAPACK");
+    ModuleBase::timer::tick("DiagoIterAssist", "diagH_LAPACK");
 
     Real* eigenvalues = nullptr;
     resmem_var_op()(ctx, eigenvalues, nstart);
@@ -434,7 +434,7 @@ void DiagoIterAssist<T, Device>::diagH_LAPACK(
     //     dngvx_op<Real, Device>()(ctx, nstart, ldh, hcc, scc, nbands, res, vcc);
     // }
 
-    ModuleBase::timer::tick("DiagoIterAssist", "LAPACK_subspace");
+    ModuleBase::timer::tick("DiagoIterAssist", "diagH_LAPACK");
 }
 
 template<typename T, typename Device>

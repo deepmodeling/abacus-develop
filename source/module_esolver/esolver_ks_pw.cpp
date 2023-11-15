@@ -620,8 +620,11 @@ void ESolver_KS_PW<T, Device>::initialize_psi()
             if (this->psi_init->get_method() != "random")
             {
                 if (
+                    (
                     (GlobalV::KS_SOLVER == "cg")
                   ||(GlobalV::KS_SOLVER == "lapack")
+                    )&&
+                    (GlobalV::BASIS_TYPE == "pw") // presently lcao_in_pw and pw share the same esolver. In the future, we will have different esolver
                     )
                 {
                     hsolver::DiagoIterAssist<T, Device>::diagH_subspace_init(
@@ -629,6 +632,13 @@ void ESolver_KS_PW<T, Device>::initialize_psi()
                         psig->get_pointer(), psig->get_nbands(), psig->get_nbasis(),
                         *(this->kspw_psi), etatom.data()
                     );
+                    continue;
+                }
+                else if (
+                    (GlobalV::KS_SOLVER == "lapack") && (GlobalV::BASIS_TYPE == "lcao_in_pw")
+                    )
+                {
+                    if(ik == 0) GlobalV::ofs_running << " START WAVEFUNCTION: LCAO_IN_PW, psi initialization skipped " << std::endl;
                     continue;
                 }
                 // else the case is davidson

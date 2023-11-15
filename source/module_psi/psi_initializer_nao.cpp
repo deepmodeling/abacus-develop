@@ -411,6 +411,7 @@ psi::Psi<T, Device>* psi_initializer_nao<T, Device>::cal_psig(int ik)
                                     {
                                         aux[ig] = sk[ig] * ylm(lm,ig) * ovlp_flzjlg[ig];
                                     }
+                                    std::vector<Real> normalization_factors = {0, 0, 0, 0};
                                     for(int ig = 0;ig<npw;ig++)
                                     {
                                         fup = cos(0.5 * alpha) * aux[ig];
@@ -421,10 +422,12 @@ psi::Psi<T, Device>* psi_initializer_nao<T, Device>::cal_psig(int ik)
                                             this->template cast_to_T<T>(
                                                 (cos(0.5 * gamma) + ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fup
                                             );
+                                        normalization_factors[0] += this->norm2((*(this->psig))(ibasis, ig));
                                         (*(this->psig))(ibasis, ig + this->pw_wfc->npwk_max) =
                                             this->template cast_to_T<T>(
                                                 (cos(0.5 * gamma) - ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fdown
                                             );
+                                        normalization_factors[1] += this->norm2((*(this->psig))(ibasis, ig + this->pw_wfc->npwk_max));
                                         // second rotation with angle gamma around(OZ)
                                         fup = cos(0.5 * (alpha + ModuleBase::PI)) * aux[ig];
                                         fdown = ModuleBase::IMAG_UNIT * sin(0.5 * (alpha + ModuleBase::PI))*aux[ig];
@@ -432,10 +435,36 @@ psi::Psi<T, Device>* psi_initializer_nao<T, Device>::cal_psig(int ik)
                                             this->template cast_to_T<T>(
                                                 (cos(0.5 * gamma) + ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fup
                                             );
+                                        normalization_factors[2] += this->norm2((*(this->psig))(ibasis+2*L+1, ig));
                                         (*(this->psig))(ibasis+2*L+1, ig + this->pw_wfc->npwk_max) =
                                             this->template cast_to_T<T>(
                                                 (cos(0.5 * gamma) - ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fdown
                                             );
+                                        normalization_factors[3] += this->norm2((*(this->psig))(ibasis+2*L+1, ig + this->pw_wfc->npwk_max));
+                                    }
+                                    for(int i = 0; i < 4; i++)
+                                    {
+                                        normalization_factors[i] = sqrt(normalization_factors[i]);
+                                    }
+                                    for(int ig = 0; ig < npw; ig++)
+                                    {
+                                        // normalize except the 0/0 case, this indeed happens sometimes when nspin=4, cause diagonalization failure
+                                        if(normalization_factors[0] != 0.0)
+                                        {
+                                            (*(this->psig))(ibasis, ig) /= normalization_factors[0];
+                                        }
+                                        if(normalization_factors[1] != 0.0)
+                                        {
+                                            (*(this->psig))(ibasis, ig + this->pw_wfc->npwk_max) /= normalization_factors[1];
+                                        }
+                                        if(normalization_factors[2] != 0.0)
+                                        {
+                                            (*(this->psig))(ibasis+2*L+1, ig) /= normalization_factors[2];
+                                        }
+                                        if(normalization_factors[3] != 0.0)
+                                        {
+                                            (*(this->psig))(ibasis+2*L+1, ig + this->pw_wfc->npwk_max) /= normalization_factors[3];
+                                        }
                                     }
                                     ibasis++;
                                 }
@@ -448,12 +477,19 @@ psi::Psi<T, Device>* psi_initializer_nao<T, Device>::cal_psig(int ik)
                         for(int m = 0; m < 2*L+1; m++)
                         {
                             const int lm = L*L+m;
+                            double normalization_factor = 0.0;
                             for(int ig=0; ig<npw; ig++)
                             {
                                 (*(this->psig))(ibasis, ig) = 
                                     this->template cast_to_T<T>(
                                         lphase * sk[ig] * ylm(lm, ig) * ovlp_flzjlg[ig]
                                     );
+                                normalization_factor += this->norm2((*(this->psig))(ibasis, ig));
+                            }
+                            normalization_factor = sqrt(normalization_factor);
+                            for(int ig=0; ig<npw; ig++)
+                            {
+                                (*(this->psig))(ibasis, ig) /= normalization_factor;
                             }
                             ++ibasis;
                         }

@@ -241,6 +241,14 @@ class psi_initializer
         {
             return std::complex<double>(in.real(), in.imag());
         }
+        Real norm2(const std::complex<Real> in)
+        {
+            return in.real()*in.real() + in.imag()*in.imag();
+        }
+        Real norm2(const Real in)
+        {
+            return in*in;
+        }
         /*
         template <typename U>
         void cast_right_to_left(U& left, const std::complex<double> right)
