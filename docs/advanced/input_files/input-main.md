@@ -28,6 +28,7 @@
     - [kspacing](#kspacing)
     - [min\_dist\_coef](#min_dist_coef)
     - [device](#device)
+    - [precision](#precision)
   - [Variables related to input files](#variables-related-to-input-files)
     - [stru\_file](#stru_file)
     - [kpoint\_file](#kpoint_file)
@@ -626,6 +627,22 @@ If only one value is set (such as `kspacing 0.5`), then kspacing values of a/b/c
   - pw basis: required by the `gpu` acceleration options
   - cg/bpcg/dav ks_solver: required by the `gpu` acceleration options
 - **Default**: cpu
+
+### precision
+
+- **Type**: String
+- **Description**: Specifies the precision of the PW_SCF calculation.
+
+  Available options are:
+
+  - single: single precision
+  - double: double precision
+
+  Known limitations:
+
+  - pw basis: required by the `single` precision options
+  - cg/bpcg/dav ks_solver: required by the `single` precision options
+- **Default**: double
 
 [back to top](#full-list-of-input-keywords)
 

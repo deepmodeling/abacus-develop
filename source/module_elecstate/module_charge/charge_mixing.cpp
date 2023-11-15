@@ -99,6 +99,7 @@ void Charge_Mixing::auto_set(const double& bandgap_in, const UnitCell& ucell_)
     {
         this->mixing->mixing_beta = this->mixing_beta = 0.7;
     }
+    GlobalV::MIXING_BETA = mixing_beta;
     GlobalV::ofs_running << "      Autoset mixing_beta to " << this->mixing_beta << std::endl;
 
     bool has_trans_metal = false;
