@@ -38,6 +38,8 @@ class Charge
 
     double *rho_mag = nullptr; // for magnetic density
     double *rho_mag_save = nullptr; 
+    std::complex<double> *rhog_mag = nullptr;
+    std::complex<double> *rhog_mag_save = nullptr;
 
     std::complex<double> **rhog = nullptr;
     std::complex<double> **rhog_save = nullptr;
@@ -86,11 +88,15 @@ class Charge
 
     void renormalize_rho(void);
 
-    //
-    void allocate_rho_mag(void); // allocate rho_mag[nnrx] and rho_mag_save[nnrx]
-    void destroy_rho_mag(void); // destroy rho_mag[nnrx] and rho_mag_save[nnrx]
-    void get_rho_mag(void); // get rho_tot[nnrx]
-    void get_rho_from_mag(void); // get rho[is][nnrx] from rho_tot[nnrx] and rho_mag[nnrx]
+    // for magnetic density
+    void allocate_rho_mag(void); // allocate rho_mag[is*nnrx] and rho_mag_save[is*nnrx]
+    void destroy_rho_mag(void); // destroy rho_mag[is*nnrx] and rho_mag_save[is*nnrx]
+    void get_rho_mag(void); // get rho_mag[is*nnrx]
+    void get_rho_from_mag(void); // get rho[is][nnrx] from rhog_mag[is*nnrx]
+    void allocate_rhog_mag(void); // allocate rhog_mag[is*ngmc] and rhog_mag_save[is*ngmc]
+    void destroy_rhog_mag(void); // destroy rhog_mag[is*ngmc] and rhog_mag_save[is*ngmc]
+    void get_rhog_mag(void); // get rhog_tot[is*ngmc]
+    void get_rhog_from_mag(void); // get rhog[is][nnrx] from rhog_mag[is*ngmc]
 
     double sum_rho(void) const;
 

@@ -32,6 +32,7 @@ class Charge_Mixing
      *
      */
     void mix_rho_recip(Charge* chr);
+    void mix_rho_recip_new(Charge* chr);
 
     /**
      * @brief charge mixing for real space
@@ -44,6 +45,7 @@ class Charge_Mixing
      *
      */
     void Kerker_screen_recip(std::complex<double>* rhog);
+    void Kerker_screen_recip_new(std::complex<double>* rhog);
 
     /**
      * @brief Kerker screen method for real space
@@ -57,6 +59,8 @@ class Charge_Mixing
      *
      */
     double inner_product_recip(std::complex<double>* rho1, std::complex<double>* rho2);
+    double inner_product_recip_new1(std::complex<double>* rho1, std::complex<double>* rho2);
+    double inner_product_recip_new2(std::complex<double>* rho1, std::complex<double>* rho2);
 
     /**
      * @brief Inner product of two double vectors
