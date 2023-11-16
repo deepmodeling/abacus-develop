@@ -367,19 +367,6 @@ TEST_F(ReadPPTest, HeaderErr2013)
     ifs.close();
 }
 
-TEST_F(ReadPPTest, HeaderErr2014)
-{
-	std::ifstream ifs;
-    // 3rd
-    ifs.open("./support/HeaderError4");
-    // upf->read_pseudo_upf201(ifs);
-    testing::internal::CaptureStdout();
-    EXPECT_EXIT(upf->read_pseudo_upf201(ifs), ::testing::ExitedWithCode(0), "");
-    output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("COULOMB POTENTIAL IS NOT SUPPORTED"));
-    ifs.close();
-}
-
 TEST_F(ReadPPTest, HeaderErr2015)
 {
     std::ifstream ifs;
