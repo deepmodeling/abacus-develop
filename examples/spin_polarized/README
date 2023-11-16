@@ -1,0 +1,14 @@
+/*******************************************************************************/
+/
+/ These are the examples of ABACUS program.
+/
+/*******************************************************************************/
+
+This example show how to perform spin polarized calculations in numerical atomic
+orbital basis
+
+ground_state: calculates the ground state energy of Body Centered Cubic iron
+deltaspin_ground_state: use the deltaspin method to constrain atomic magnetic moments to the ground state energy of BCC Fe
+deltaspin_constrain_value: use the deltaspin method to constrain atomic magnetic moments to a different value than the ground state of BCC Fe
+
+Please also note that the provided examples are only shown for the functionality of the DeltaSpin method. Further carefull convergence of parameters (such as ecut, size of KPT, smearing method, etc.) should be tested before running the provided examples in research.

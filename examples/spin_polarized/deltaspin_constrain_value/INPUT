@@ -1,0 +1,29 @@
+INPUT_PARAMETERS
+pseudo_dir                      ../../../tests/PP_ORB
+orbital_dir                     ../../../tests/PP_ORB
+suffix                          ABACUS
+calculation                     scf
+ecutwfc                         100
+scf_thr                         1.0e-5
+scf_nmax                        200
+out_chg                         0
+smearing_method                 gaussian
+smearing_sigma                  0.07
+mixing_type                     pulay
+mixing_ndim                     10
+mixing_beta                     0.1
+ks_solver                       genelpa
+basis_type                      lcao
+symmetry                        0
+nspin                           2
+out_mul                         true
+
+#deltaspin
+sc_mag_switch                   1
+decay_grad_switch               0
+sc_thr                          1e-7
+nsc                             10
+nsc_min                         2
+sc_file                         sc.json
+alpha_trial                     0.01
+sccut                           3
