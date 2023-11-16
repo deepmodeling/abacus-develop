@@ -12,7 +12,7 @@ namespace ModuleESolver
 
         if (GlobalV::double_grid)
         {
-            pw_rhod = new ModulePW::PW_Basis_Sup(GlobalV::device_flag, GlobalV::precision_flag);
+            pw_rhod = new ModulePW::PW_Basis_Big(GlobalV::device_flag, GlobalV::precision_flag);
         }
         else
         {
@@ -20,7 +20,7 @@ namespace ModuleESolver
         }
 
         //temporary, it will be removed
-        pw_big = static_cast<ModulePW::PW_Basis_Big*>(pw_rho);
+        pw_big = static_cast<ModulePW::PW_Basis_Big*>(pw_rhod);
         pw_big->setbxyz(INPUT.bx, INPUT.by, INPUT.bz);
         sf.set(pw_rhod, INPUT.nbspline);
 
