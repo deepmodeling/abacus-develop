@@ -41,6 +41,9 @@ ModulePW::PW_Basis::PW_Basis()
 ModulePW::PW_Basis::~PW_Basis()
 {
 }
+ModulePW::PW_Basis_Sup::~PW_Basis_Sup()
+{
+}
 ModulePW::FFT::FFT()
 {
 }
