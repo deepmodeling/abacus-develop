@@ -35,7 +35,7 @@ public:
     double etotps;            // total energy
     double ecutwfc;           // suggested cut-off for wfc
     double ecutrho;           // suggested cut-off for rho
-    int nv;                   // UPF file version number
+    int nv = 0;               // UPF file version number
     int lmax;                 // maximum angular momentum component in beta
     int lmax_rho;             // maximum angular momentum component in rho (should be 2*lmax)
     int nwfc;                 // number of wavefunctions
@@ -61,6 +61,7 @@ public:
     double* rab = nullptr;           // rab(mesh) dr(x)/dx (x=linear grid)
     double* rho_atc = nullptr;       // rho_atc(mesh) atomic core charge "Nonlinear Core Correction"
     double* vloc = nullptr;          // vloc(mesh) local atomic potential
+    bool coulomb_potential = false;  // coulomb potentail : z/r
     ModuleBase::matrix chi;          // chi(nwfc,mesh) atomic wavefcts
     double* rho_at = nullptr;        // rho_at(mesh) atomic charge
     int* lll = nullptr;              // lll(nbeta):angular momentum of projector i
