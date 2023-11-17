@@ -261,7 +261,7 @@ namespace ModuleESolver
                 }  
             }
 #else
-            this->get_rhoijp(rhoijp, rhoijselect, nrhoijsel);
+            GlobalC::paw_cell.get_rhoijp(rhoijp, rhoijselect, nrhoijsel);
 
             for(int iat = 0; iat < GlobalC::ucell.nat; iat ++)
             {
