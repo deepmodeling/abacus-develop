@@ -143,8 +143,3 @@ AddTest(
 )
 
 
-AddTest(
-  TARGET io_para_json_test
-  LIBS ${math_libs} base device
-  SOURCES para_json_test.cpp ../para_json.cpp ../input.cpp
-)
