@@ -557,8 +557,14 @@ void Charge_Mixing::mix_rho(Charge* chr)
     // --------------------Mixing Body--------------------
     if (GlobalV::SCF_THR_TYPE == 1)
     {
-        //mix_rho_recip(chr);
-        mix_rho_recip_new(chr);
+        if (GlobalV::double_grid)
+        {
+            mix_rho_recip(chr);
+        }
+        else // new mixing method do not support double_grid yet
+        {
+            mix_rho_recip_new(chr);
+        }
     }
     else
     {
