@@ -131,6 +131,7 @@ class Broyden_Mixing : public Mixing
             screen(F_tmp.data());
         // container::Tensor data = data_in + mixing_beta * F;
         std::vector<FPTYPE> data(length);
+        // mix density and magnetic density sperately
         if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
         {
             // rho_tot

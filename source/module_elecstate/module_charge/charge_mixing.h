@@ -130,7 +130,7 @@ class Charge_Mixing
     // General parameters
     //======================================
     std::string mixing_mode = "broyden";
-    double mixing_beta = 0.7;
+    double mixing_beta = 0.8;
     int mixing_ndim = 8;
     double mixing_gg0 = 0.0; // mohan add 2014-09-27
     bool mixing_tau = false;

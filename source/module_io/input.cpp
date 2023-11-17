@@ -297,11 +297,11 @@ void Input::Default(void)
     //  charge mixing
     //----------------------------------------------------------
     mixing_mode = "broyden";
-    mixing_beta = -10.0;
+    mixing_beta = -10;
     mixing_ndim = 8;
-    mixing_gg0 = 1.00; // used in kerker method. mohan add 2014-09-27
-    mixing_beta_mag = 1.6;
-    mixing_gg0_mag = 1.00;
+    mixing_gg0 = 1.00; // use Kerker defaultly
+    mixing_beta_mag = 0.0; // only set when nspin == 2
+    mixing_gg0_mag = 0.0; // defaultly exclude Kerker from mixing magnetic density
     mixing_tau = false;
     mixing_dftu = false;
     //----------------------------------------------------------
@@ -2955,6 +2955,31 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         else if (basis_type == "pw")
         {
             scf_thr_type = 1;
+        }
+    }
+    // mixing parameters
+    if (mixing_beta < 0.0)
+    {
+        if (nspin == 1)
+        {
+            mixing_beta = 0.8;
+        }
+        else if (nspin == 2)
+        {
+            mixing_beta = 0.4;
+            mixing_beta_mag = 1.6;
+            mixing_gg0_mag = 0.0;
+        }
+        else if (nspin == 4) // I will add this 
+        {
+            mixing_beta = 0.2;
+        }     
+    }
+    else
+    {
+        if (nspin == 2)
+        {
+            mixing_beta_mag = 4 * mixing_beta;
         }
     }
 }

@@ -27,8 +27,20 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
     this->mixing_mode = mixing_mode_in;
     this->mixing_beta = mixing_beta_in;
     this->mixing_ndim = mixing_ndim_in;
-    this->mixing_gg0 = mixing_gg0_in; // mohan add 2014-09-27
+    this->mixing_gg0 = mixing_gg0_in;
     this->mixing_tau = mixing_tau_in;
+
+    GlobalV::ofs_running<<"\n----------- Double Check Mixing Parameters Begin ------------"<<std::endl;
+    GlobalV::ofs_running<<"mixing_type: "<< this->mixing_mode <<std::endl;
+    GlobalV::ofs_running<<"mixing_beta: "<< this->mixing_beta <<std::endl;
+    GlobalV::ofs_running<<"mixing_gg0: "<< this->mixing_gg0 <<std::endl;
+    if (GlobalV::NSPIN==2)
+    {
+        GlobalV::ofs_running<<"mixing_beta_mag: "<< GlobalV::MIXING_BETA_MAG <<std::endl;
+        GlobalV::ofs_running<<"mixing_gg0_mag: "<< GlobalV::MIXING_GG0_MAG <<std::endl;
+    }
+    GlobalV::ofs_running<<"mixing_ndim: "<< this->mixing_ndim <<std::endl;
+    GlobalV::ofs_running<<"----------- Double Check Mixing Parameters End ------------"<<std::endl;
 
     if (this->mixing_mode == "broyden")
     {
@@ -304,12 +316,8 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
 
 void Charge_Mixing::mix_rho_recip_new(Charge* chr)
 {
-    // electronic density
-    // rhog and rhog_save are calculated in get_drho() function
-
-    // ONLY smooth part of charge density is mixed by specific mixing method
-    // The high_frequency part is mixed by plain mixing method.
-    // NOTE: chr->rhopw is dense, while this->rhopw is smooth
+    // not support nspin=4 yet 2023/11/17
+    // old support see mix_rho_recip()
     if (GlobalV::double_grid)
     {
         ModuleBase::WARNING_QUIT("Charge_Mixing", "double_grid is not supported for new mixing method yet.");
@@ -335,7 +343,7 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
     this->mixing->push_data(this->rho_mdata, rhog_in, rhog_out, screen, true);
     //  can choose inner_product_recip_new1 or inner_product_recip_new2
     auto inner_product_new
-        = std::bind(&Charge_Mixing::inner_product_recip_new2, this, std::placeholders::_1, std::placeholders::_2);
+        = std::bind(&Charge_Mixing::inner_product_recip_new1, this, std::placeholders::_1, std::placeholders::_2);
     auto inner_product_old
         = std::bind(&Charge_Mixing::inner_product_recip, this, std::placeholders::_1, std::placeholders::_2);
     if (GlobalV::NSPIN == 2)
@@ -581,6 +589,7 @@ void Charge_Mixing::Kerker_screen_recip_new(std::complex<double>* drhog)
         return;
     double fac, gg0, amin;
 
+    // implement Kerker for density and magnetization separately
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
         // new mixing method only support nspin=2 not nspin=4
@@ -629,7 +638,7 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
         // Thus we cannot use Kerker_screen_recip(drhog.data()) directly after it.
         this->rhopw->real2recip(drhor + is * this->rhopw->nrxx, drhog.data() + is * this->rhopw->npw);
     }
-    // kerker
+    // implement Kerker for density and magnetization separately
     double fac, gg0, amin;
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
@@ -685,6 +694,7 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
     }
 }
 
+// this test will be removed once new mixing method is finished
 void Charge_Mixing::Kerker_screen_real_test(double* drhor)
 {
     // for total charge density
@@ -766,6 +776,7 @@ double Charge_Mixing::inner_product_recip(std::complex<double>* rho1, std::compl
     return result;
 }
 
+// a simple inner product
 double Charge_Mixing::inner_product_recip_new1(std::complex<double>* rho1, std::complex<double>* rho2)
 {
     double rnorm = 0.0;
@@ -782,6 +793,7 @@ double Charge_Mixing::inner_product_recip_new1(std::complex<double>* rho1, std::
     return rnorm;
 }
 
+// a Hartree-like inner product
 double Charge_Mixing::inner_product_recip_new2(std::complex<double>* rhog1, std::complex<double>* rhog2)
 {
     static const double fac = ModuleBase::e2 * ModuleBase::FOUR_PI / GlobalC::ucell.tpiba2;
