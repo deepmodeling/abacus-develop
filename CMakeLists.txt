@@ -325,8 +325,8 @@ if(USE_ROCM)
 endif()
 
 if(ENABLE_ASAN)
-  if (CMAKE_CXX_COMPILER_ID MATCHES Intel)
-    message(FATAL_ERROR "Address Sanitizer is not supported on Intel compiler.")
+  if (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+    message(FATAL_ERROR "Address Sanitizer is not supported on Intel Classic compiler. Use Intel oneAPI compiler (icpx) instead.")
   endif()
   add_compile_options(
     -fsanitize=address
