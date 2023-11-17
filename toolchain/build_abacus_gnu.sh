@@ -28,10 +28,10 @@ ELPA=$INSTALL_DIR/elpa-2023.05.001/cpu
 FFTW3=$INSTALL_DIR/fftw-3.3.10
 CEREAL=$INSTALL_DIR/cereal-1.3.2/include/cereal
 LIBXC=$INSTALL_DIR/libxc-6.2.2
-# LIBRI=$INSTALL_DIR/LibRI-0.1.0
+# LIBRI=$INSTALL_DIR/LibRI-0.1.1
 # LIBCOMM=$INSTALL_DIR/LibComm-0.1.0
 # LIBTORCH=$INSTALL_DIR/libtorch-2.0.1/share/cmake/Torch
-# LIBNPY=$INSTALL_DIR/libnpy-0.1.0/include
+# LIBNPY=$INSTALL_DIR/libnpy-1.0.1/include
 # DEEPMD=$HOME/apps/anaconda3/envs/deepmd
 
 cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \

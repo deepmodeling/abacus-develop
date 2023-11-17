@@ -4,12 +4,13 @@
 # shellcheck disable=all
 # libnpy is not need any complex setting
 # Only problem is the installation from github.com
+# Libnpy is under active development, you can check the latest version in github yourself
 
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
-libnpy_ver="0.1.0"
-libnpy_sha256="2fae61694df5acbd750a1fe1bf106e9df705873258aaa5bc6aa49b30b3a21f98"
+libnpy_ver="1.0.1"
+libnpy_sha256="43452a4db1e8c1df606c64376ea1e32789124051d7640e7e4e8518ab4f0fba44"
 source "${SCRIPT_DIR}"/common_vars.sh
 source "${SCRIPT_DIR}"/tool_kit.sh
 source "${SCRIPT_DIR}"/signal_trap.sh
@@ -38,6 +39,7 @@ case "$with_libnpy" in
         echo "$filename is found"
         else
         # download from github.com and checksum
+            echo "===> Notice: This version Libnpy is downloaded in GitHub Release, which will always be out-of-date version <==="
             echo "wget --quiet $url -O $filename"
             if ! wget --quiet $url -O $filename; then
             report_error "failed to download $url"

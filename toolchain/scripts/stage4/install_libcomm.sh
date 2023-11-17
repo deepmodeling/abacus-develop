@@ -4,6 +4,7 @@
 # shellcheck disable=all
 # libcomm is not need any complex setting
 # Only problem is the installation from github.com
+# LibComm is under highly-active development, the git submodule installation is more recommended
 
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
@@ -38,6 +39,7 @@ case "$with_libcomm" in
         echo "$filename is found"
         else
         # download from github.com and checksum
+            echo "===> Notice: This version LibComm is downloaded in GitHub Release, which will always be out-of-date version <==="
             echo "wget --quiet $url -O $filename"
             if ! wget --quiet $url -O $filename; then
             report_error "failed to download $url"
