@@ -209,3 +209,9 @@ AddTest(
   ../memory.cpp ../libm/branred.cpp ../libm/sincos.cpp ../inverse_matrix.cpp ../lapack_connector.h
   LIBS ${math_libs} formatter device
 )
+
+AddTest(
+  TARGET assoc_laguerre_test
+  SOURCES assoc_laguerre_test.cpp ../assoc_laguerre.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp
+  LIBS ${math_libs} formatter
+)

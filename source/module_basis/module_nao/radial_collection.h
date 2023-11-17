@@ -29,6 +29,9 @@ class RadialCollection
     /// Builds the collection from Numerical_Nonlocal objects.
     void build(const int ntype, Numerical_Nonlocal* const nls);
 
+    /// builds the collection from quasi hydrogen radial functions
+    void build(const int ntype, const double* const charges, const int* const nmax);
+
     /**
      * @name Getters
      */
