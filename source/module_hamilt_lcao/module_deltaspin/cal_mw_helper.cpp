@@ -28,7 +28,6 @@ std::vector<std::vector<std::vector<double>>> SpinConstrain<std::complex<double>
             }
         }
     }
-
     return AorbMulP;
 }
 

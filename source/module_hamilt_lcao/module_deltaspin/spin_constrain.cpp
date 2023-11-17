@@ -539,11 +539,11 @@ void SpinConstrain<FPTYPE, Device>::print_Mi(bool print)
         {
             if (this->nspin_ == 2)
             {
-                std::cout << "Total Magnetism on atom: " << iat << " " << std::setprecision(16) << " (" << Mi_[iat].z << ")" << std::endl;
+                std::cout << "Total Magnetism on atom: " << iat << " " << std::setprecision(10) << " (" << Mi_[iat].z << ")" << std::endl;
             }
             else if (this->nspin_ ==4)
             {
-                std::cout << "Total Magnetism on atom: " << iat << " " << std::setprecision(16) << " (" << Mi_[iat].x
+                std::cout << "Total Magnetism on atom: " << iat << " " << std::setprecision(10) << " (" << Mi_[iat].x
                         << ", " << Mi_[iat].y << ", " << Mi_[iat].z << ")" << std::endl;
             }
         }
