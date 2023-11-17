@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - develop
+      - container_test
 
 jobs:
   build_container_and_push:
