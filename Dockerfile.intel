@@ -21,17 +21,16 @@ RUN apt-get update && \
 
 RUN echo "source /opt/intel/oneapi/setvars.sh \nsource /opt/intel/oneapi/compiler/2024.0/env/vars.sh" >> ${HOME}/.bashrc
 SHELL ["/bin/bash", "-c"]
+ENV CC=mpiicx CXX=mpiicpx FC=mpiifx
 
-# Install ELPA with `icx` compiler fails for AVX instruction checks. Fall back to `icc`.
 RUN source /opt/intel/oneapi/setvars.sh && \
     source /opt/intel/oneapi/compiler/2024.0/env/vars.sh && \
-    export CC=mpiicc CXX=mpiicpc FC=mpiifort && \
     cd /tmp && \
-    ELPA_VER=2021.11.001 && \
+    ELPA_VER=2022.11.001 && \
     wget -q https://elpa.mpcdf.mpg.de/software/tarball-archive/Releases/$ELPA_VER/elpa-$ELPA_VER.tar.gz && \
     tar xzf elpa-$ELPA_VER.tar.gz  && rm elpa-$ELPA_VER.tar.gz && \
     cd elpa-$ELPA_VER && mkdir build && cd build && \
-    ../configure FCFLAGS="-qmkl=cluster" --enable-openmp && \
+    ../configure CFLAGS="-O3 -march=native" FCFLAGS="-O3 -qmkl=cluster" --enable-openmp && \
     make -j`nproc` && \
     make PREFIX=/usr/local install && \
     ln -s /usr/local/include/elpa_openmp-$ELPA_VER/elpa /usr/local/include/ && \
@@ -41,8 +40,7 @@ RUN wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-wit
         --no-check-certificate --quiet -O libtorch.zip && \
     unzip -q libtorch.zip -d /opt  && rm libtorch.zip
 
-ENV CMAKE_PREFIX_PATH=/opt/libtorch/share/cmake \
-    CC=mpiicx CXX=mpiicpx FC=mpiifx
+ENV CMAKE_PREFIX_PATH=/opt/libtorch/share/cmake
 
 ADD https://api.github.com/repos/deepmodeling/abacus-develop/git/refs/heads/develop /dev/null
 
