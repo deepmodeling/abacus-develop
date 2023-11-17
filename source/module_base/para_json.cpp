@@ -1,6 +1,6 @@
 
-#include "module_io/para_json.h"
-
+#include "module_base/para_json.h"
+#include "module_base/global_variable.h"
 
 
 namespace Para_Json
@@ -9,7 +9,7 @@ namespace Para_Json
     // @param doc: the output json file
     rapidjson::Document doc;
     rapidjson::Value abacus(rapidjson::kObjectType);
-
+  
     // @param general_info ：
     rapidjson::Value general_info(rapidjson::kObjectType);
     rapidjson::Value version;
@@ -972,7 +972,10 @@ namespace Para_Json
         doc.Accept(writer);
 
         // Output the json string to a file
-        std::ofstream ofs(GlobalV::global_out_dir.c_str()+"out_para.json");
+        std::string json_path;
+        json_path.append(GlobalV::global_out_dir +"out_para.json");
+
+        std::ofstream ofs(json_path);
         ofs << buffer.GetString() << std::endl;
         ofs.close();
     }
