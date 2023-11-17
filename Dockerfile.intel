@@ -13,18 +13,18 @@ RUN wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRO
 # To save disk space, only install the essential components, but not the whole toolkit.
 RUN apt-get update && \
     apt-get install -y \
-        intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic \
+        intel-oneapi-compiler-dpcpp-cpp \
         intel-oneapi-compiler-fortran \
         intel-oneapi-mkl-devel \
         intel-oneapi-mpi-devel \
         intel-oneapi-vtune
 
-RUN echo "source /opt/intel/oneapi/setvars.sh \nsource /opt/intel/oneapi/compiler/2024.0/env/vars.sh" >> ${HOME}/.bashrc
+RUN echo "source /opt/intel/oneapi/setvars.sh" >> ${HOME}/.bashrc
 SHELL ["/bin/bash", "-c"]
 ENV CC=mpiicx CXX=mpiicpx FC=mpiifx
 
+# https://elpa.mpcdf.mpg.de/software/tarball-archive/ELPA_TARBALL_ARCHIVE.html
 RUN source /opt/intel/oneapi/setvars.sh && \
-    source /opt/intel/oneapi/compiler/2024.0/env/vars.sh && \
     cd /tmp && \
     ELPA_VER=2022.11.001 && \
     wget -q https://elpa.mpcdf.mpg.de/software/tarball-archive/Releases/$ELPA_VER/elpa-$ELPA_VER.tar.gz && \
@@ -45,7 +45,6 @@ ENV CMAKE_PREFIX_PATH=/opt/libtorch/share/cmake
 ADD https://api.github.com/repos/deepmodeling/abacus-develop/git/refs/heads/develop /dev/null
 
 RUN source /opt/intel/oneapi/setvars.sh && \
-    source /opt/intel/oneapi/compiler/2024.0/env/vars.sh && \
     git clone https://github.com/deepmodeling/abacus-develop.git --depth 1 && \
     cd abacus-develop && \
     cmake -B build -DENABLE_DEEPKS=ON -DENABLE_LIBXC=ON -DENABLE_LIBRI=ON && \
