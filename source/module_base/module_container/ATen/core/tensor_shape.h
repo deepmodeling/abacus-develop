@@ -48,6 +48,8 @@ public:
      */
     const std::vector<int64_t>& dims() const;
 
+    const std::vector<int64_t>& strides() const;
+
     /**
      * @brief Get the ndim of the tensor.
      * @return The number of dimensions in the tensor.
@@ -95,7 +97,20 @@ public:
     bool operator!=(const TensorShape& other) const;
 
 private:
-    std::vector<int64_t> dims_ = {};  // Save dimension sizes of the tensor
+    std::vector<int64_t> dims_ = {};     // Save dimension sizes of the tensor
+    // Note: strides are not always equals to the dimension sizes.
+    // The strides specifies the number of elements to step in each dimension when traversing a tensor.
+    // There could be some sparse region in the tensor, and the strides will be larger than the dimension sizes.
+    // For example, given a 2D tensor with shape [3, 4], 
+    // and the strides could be [6, 1] if the actual data is stored in a 1D array with size 18 [3, 6].
+    // The strides could also be [12, 3] if the actual data is stored in a 1D array with size 36 [3, 12].
+    // strides can only be modified by the TensorMap object.
+    std::vector<int64_t> strides_ = {};  // Save dimension strides of the tensor
+
+    /**
+     * @brief Compute the strides of the tensor.
+     */
+    std::vector<int64_t> get_strides_(const std::vector<int64_t>& dim);
 };
 
 /**

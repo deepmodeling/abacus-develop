@@ -1,10 +1,11 @@
-#include <ATen/core/tensor_types.h>
-#include <ATen/kernels/einsum_op.h>
-#include <ATen/kernels/linalg_op.h>
-#include <ATen/kernels/blas_op.h>
+#include <ATen/ops/einsum_op.h>
 
 #include <array>
 #include <algorithm>
+
+#include <ATen/ops/linalg_op.h>
+#include <ATen/core/tensor_types.h>
+#include <ATen/kernels/blas.h>
 
 namespace container {
 namespace einsum_utils {
@@ -210,7 +211,7 @@ static inline bool CopyFrom(const Tensor& input, const TensorShape& shape, Tenso
 // Note: This method will allocate memory with the given shape for output tensor,
 // also keep the data_type, device_type consistant with the input tensor.
 static inline bool CopyFromWithAllocate(const Tensor& input, const TensorShape& shape, Tensor* output) {
-    return output->CopyFromWithAllocate(input, shape);
+    return output->AllocateFrom(input, shape);
 }
 
 // Reshapes a Tensor of shape [b0,b1...bk,N,M] to [prod(b0,b1...bk),N,M].
@@ -262,8 +263,8 @@ static bool StrideOrInflateOperand(
     std::vector<int64_t> inflated_shape = {};
     for (int label : labels) {
         const int count = label_counts[label];
-        const int current_axis =
-            should_inflate ? strided_shape.size() : inflated_shape.size();
+        const int current_axis = static_cast<int>(
+            should_inflate ? strided_shape.size() : inflated_shape.size());
         const int64_t dim = input.shape().dim_size(current_axis);
         strided_shape.push_back(dim);
         inflated_shape.insert(inflated_shape.end(), count, dim);
@@ -284,12 +285,10 @@ static bool StrideOrInflateOperand(
  
     if (should_inflate) {
         Tensor output_reshaped = output.shaped(reshape);
-        TEMPLATE_ALL_2(input.data_type(), input.device_type(),
-                   op::inflate_op<T_, DEVICE_>()(input.shaped(strided_shape), strides, output_reshaped))
+        op::inflate_op()(input.shaped(strided_shape), strides.dims(), output_reshaped);
     }
     else {
-        TEMPLATE_ALL_2(input.data_type(), input.device_type(),
-                   op::stride_op<T_, DEVICE_>()(input.shaped(reshape), strides, output))
+        op::stride_op()(input.shaped(reshape), strides.dims(), output);
     }
 
     return true;     
@@ -300,7 +299,7 @@ static void PermuteLabels(
         const std::vector<int>& permutation,
         std::vector<int>& labels)
 {
-    const int num_labels = labels.size();
+    auto num_labels = labels.size();
     std::vector<int> permuted_labels(num_labels, 0);
     for (int ii = 0; ii < num_labels; ii++) {
         permuted_labels[ii] = labels[permutation[ii]];
@@ -343,8 +342,8 @@ static bool TransposeOperand(
 
     // Note: Allocate memory for the output tensor first.
     CopyFromWithAllocate(input, transposed_shape, &output);
-    TEMPLATE_ALL_2(input.data_type(), input.device_type(),
-                   op::transpose_op<T_, DEVICE_, false>()(input, permutation, output))
+    // Then transpose the input tensor.
+    op::transpose_op<false>()(input, permutation, output);
 
     return true;
 }
@@ -768,10 +767,10 @@ bool ReduceOperand(
     // This command will actually allocate memory for the output tensor
     CopyFromWithAllocate(input_deduped, output_shape, &output);
     Tensor output_shaped = output.shaped({-1});
-    TEMPLATE_ALL_2(input_deduped.data_type(), input_deduped.device_type(),
-                   op::reduce_op<T_, DEVICE_>()(
-                        input_deduped.shaped({-1, reshape[EinsumDimensionType::kReduce]}), 
-                        reshape[EinsumDimensionType::kReduce], output_shaped))
+
+    op::reduce_op()(
+         input_deduped.shaped({-1, reshape[EinsumDimensionType::kReduce]}),
+         reshape[EinsumDimensionType::kReduce], output_shaped);
 
     return true;
 }
@@ -853,7 +852,7 @@ static void DoContract(
         if (m == 1 && n == 1 && option.conj_x != true && option.conj_y != true) {
             // Dot product
             // TODO: implement the Conjugate version of Dot product.
-            op::blas_dot<T, Device>()(k, x_device_memory_ptrs[0], 1, y_device_memory_ptrs[0], 1, z_device_memory_ptrs[0]);
+            kernels::blas_dot<T, Device>()(k, x_device_memory_ptrs[0], 1, y_device_memory_ptrs[0], 1, z_device_memory_ptrs[0]);
         }
         // Gemv
         else if (n == 1 && option.conj_x != true) {
@@ -862,7 +861,7 @@ static void DoContract(
             // the transposition flag to compensate for the tensor being stored
             // row-major. Since GEMV doesn't provide a way to just conjugate an
             // argument, we have to defer those cases to GEMM below.
-            op::blas_gemv<T, Device>()(
+            kernels::blas_gemv<T, Device>()(
                 trans_x ? 'N' : 'T',
                 trans_x ? m : k,
                 trans_x ? k : m,
@@ -875,7 +874,7 @@ static void DoContract(
         // Gemm
         else {
             // Call the column-major Blas library
-            op::blas_gemm<T, Device>()(
+            kernels::blas_gemm<T, Device>()(
                 option.conj_y ? 'C' : trans_y ? 'T' : 'N', 
                 option.conj_x ? 'C' : trans_x ? 'T' : 'N', 
                 n, m, k, 
@@ -888,7 +887,7 @@ static void DoContract(
         return;
     }
     else if (use_strided_batched) {
-        op::blas_gemm_batched_strided<T, Device>()(
+        kernels::blas_gemm_batched_strided<T, Device>()(
             option.conj_y ? 'C' : trans_y ? 'T' : 'N', 
             option.conj_x ? 'C' : trans_x ? 'T' : 'N', 
             n, m, k, 
@@ -900,7 +899,7 @@ static void DoContract(
             batch_size);
     }
     else {
-        op::blas_gemm_batched<T, Device>()(
+        kernels::blas_gemm_batched<T, Device>()(
             option.conj_y ? 'C' : trans_y ? 'T' : 'N', 
             option.conj_x ? 'C' : trans_x ? 'T' : 'N', 
             n, m, k, 

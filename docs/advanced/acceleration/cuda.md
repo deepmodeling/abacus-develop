@@ -40,11 +40,7 @@ We provides [examples](https://github.com/deepmodeling/abacus-develop/tree/devel
 - CG, BPCG and Davidson methods are supported, so the input keyword `ks_solver` can take the values `cg`, `bpcg` or `dav`,
 - Only PW basis is supported, so the input keyword `basis_type` can only take the value `pw`,
 - Only k point parallelization is supported, so the input keyword `kpar` will be set to match the number of MPI tasks automatically.
-- Supported CUDA architectures:
-  - 60 # P100, 1080ti
-  - 70 # V100
-  - 75 # T4
-  - 80 # A100, 3090
+- By default, CUDA architectures 60, 70, 75, 80, 86, and 89 are compiled (if supported). It can be overriden using the CMake variable [`CMAKE_CUDA_ARCHITECTURES`](https://cmake.org/cmake/help/latest/variable/CMAKE_CUDA_ARCHITECTURES.html) or the environmental variable [`CUDAARCHS`](https://cmake.org/cmake/help/latest/envvar/CUDAARCHS.html).
 
 ## FAQ
 ```

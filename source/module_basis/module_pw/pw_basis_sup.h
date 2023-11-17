@@ -2,7 +2,6 @@
 #define PWBASIS_SUP_H
 
 #include "module_base/complexmatrix.h"
-#include "pw_basis.h"
 
 namespace ModulePW
 {

@@ -1,4 +1,5 @@
 #include <ATen/core/tensor.h>
+#include <ATen/core/tensor_map.h>
 #include <ATen/core/tensor_utils.h>
 #include <base/core/cpu_allocator.h>
 #if defined(__CUDA) || defined(__ROCM)
@@ -18,7 +19,7 @@ Tensor::Tensor(DataType data_type, const TensorShape& shape)
 Tensor::Tensor(DataType data_type, DeviceType device, const TensorShape& shape)
         : Tensor(GetAllocator(device), data_type, device, shape) {}
 
-Tensor::Tensor(base::Allocator* a, DataType data_type, DeviceType device, const TensorShape& shape)
+Tensor::Tensor(base::core::Allocator* a, DataType data_type, DeviceType device, const TensorShape& shape)
         : data_type_(data_type),
           device_(device),
           shape_(shape),
@@ -32,7 +33,7 @@ Tensor::Tensor(const Tensor& other)
           buffer_(new TensorBuffer(GetAllocator(device_), shape_.NumElements() * SizeOfType(data_type_)))
 {
     TEMPLATE_ALL_2(data_type_, device_,
-            op::synchronize_memory_op<T_, DEVICE_, DEVICE_>()(
+            kernels::synchronize_memory<T_, DEVICE_, DEVICE_>()(
                     this->data<T_>(), other.data<T_>(), this->NumElements()))
 }
 
@@ -40,7 +41,7 @@ Tensor::Tensor(const Tensor& other)
 Tensor::Tensor(Tensor&& other) noexcept
         : data_type_(other.data_type_),
           device_(other.device_),
-          shape_(std::move(other.shape_)),
+          shape_(other.shape_),
           buffer_(other.buffer_)
 {
     // Reset the other object.
@@ -74,14 +75,14 @@ void* Tensor::data() const { return buffer_->data(); }
 const TensorBuffer& Tensor::buffer() const { return *buffer_; }
 
 // Get the Allocator object according to the given device type.
-base::Allocator* Tensor::GetAllocator(DeviceType device) {
-    base::Allocator * allocator;
+base::core::Allocator* Tensor::GetAllocator(DeviceType device) {
+    base::core::Allocator * allocator;
     if (device == DeviceType::CpuDevice) {
-        allocator = new base::CPUAllocator();
+        allocator = new base::core::CPUAllocator();
     }
 #if defined(__CUDA) || defined(__ROCM)
     else if (device == DeviceType::GpuDevice) {
-        allocator = new base::GPUAllocator();
+        allocator = new base::core::GPUAllocator();
     }
 #endif // __CUDA || __ROCM
     else {
@@ -94,15 +95,16 @@ base::Allocator* Tensor::GetAllocator(DeviceType device) {
 // Set the tensor to zero
 void Tensor::zero() {
     TEMPLATE_ALL_2(this->data_type_, this->device_,
-            op::set_memory_op<T_, DEVICE_>()(this->data<T_>(), 0, this->NumElements()))
+            kernels::set_memory<T_, DEVICE_>()(this->data<T_>(), 0, this->NumElements()))
 }
 
 // Reshape the current tensor
 void Tensor::reshape(TensorShape shape) {
     // check the -1 dimension
-    int num = 1, auto_shape = 0, dim_count = -1, dim_idx = -1;
+    int64_t num = 1;
+    int auto_shape = 0, dim_count = -1, dim_idx = -1;
 
-    for (int dim : shape.dims()) {
+    for (auto dim : shape.dims()) {
         dim_count++;
         if (dim < 1 && dim != -1) {
             throw std::invalid_argument("Invalid shape, dim of tensor must >= 1 or equal to -1(auto shape).");
@@ -119,7 +121,7 @@ void Tensor::reshape(TensorShape shape) {
     }
     // auto reshape
     if (auto_shape == 1) {
-        int dim_ = static_cast<int>(this->NumElements()) / (-num);
+        int dim_ = static_cast<int>(this->NumElements() / (-num));
         if (dim_ < 1 || -dim_ * num != this->NumElements()) {
             throw std::invalid_argument("Invalid shape, total number of elements does not match!");
         }
@@ -133,11 +135,9 @@ void Tensor::reshape(TensorShape shape) {
     this->shape_ = shape;
 }
 
-Tensor Tensor::shaped(TensorShape shape) {
+Tensor Tensor::shaped(const TensorShape& shape) const {
     Tensor output;
-    if (output.CopyFrom(*this, this->shape()) != true) {
-        throw std::runtime_error("Invalid shaped operation.");
-    }
+    REQUIRES_OK(output.CopyFrom(*this, this->shape()), "Invalid shaped operation.")
     output.reshape(shape);
     return std::move(output);
 }
@@ -175,26 +175,26 @@ Tensor Tensor::slice(const std::vector<int> &start, const std::vector<int> &size
     unsigned int ndim = shape_.ndim();
     if (ndim == 1) {
         TEMPLATE_ALL_2(this->data_type_, this->device_,
-                       op::synchronize_memory_op<T_, DEVICE_, DEVICE_>()(
+                       kernels::synchronize_memory<T_, DEVICE_, DEVICE_>()(
                                output.data<T_>(), this->data<T_>() + start[0], size[0]))
     }
     else if (ndim == 2) {
         for (int i = 0; i < size[0]; i++) {
-            int offset = (start[0] + i) * shape_.dim_size(1) + start[1];
+            int offset = static_cast<int>((start[0] + i) * shape_.dim_size(1) + start[1]);
             int offset_out = i * size[1];
             TEMPLATE_ALL_2(this->data_type_, this->device_,
-                           op::synchronize_memory_op<T_, DEVICE_, DEVICE_>()(
+                           kernels::synchronize_memory<T_, DEVICE_, DEVICE_>()(
                                    output.data<T_>() + offset_out, this->data<T_>() + offset, size[1]))
         }
     }
     else if (ndim == 3) {
         for (int i = 0; i < size[0]; i++) {
             for (int j = 0; j < size[1]; j++) {
-                int offset = (i + start[0]) * shape_.dim_size(1) * shape_.dim_size(2) +
-                        (j + start[1]) * shape_.dim_size(2) + start[2];
+                int offset = static_cast<int>((i + start[0]) * shape_.dim_size(1) * shape_.dim_size(2) +
+                        (j + start[1]) * shape_.dim_size(2) + start[2]);
                 int offset_out = i * size[1] * size[2] + j * size[2];
                 TEMPLATE_ALL_2(this->data_type_, this->device_,
-                               op::synchronize_memory_op<T_, DEVICE_, DEVICE_>()(
+                               kernels::synchronize_memory<T_, DEVICE_, DEVICE_>()(
                                        output.data<T_>() + offset_out, this->data<T_>() + offset, size[1]))
             }
         }
@@ -207,12 +207,13 @@ void Tensor::resize(const TensorShape& new_shape) {
     if (shape_ == new_shape) {
         return;
     }
+    REQUIRES_OK(buffer_->OwnsMemory() || this->NumElements() == 0,
+        "Cannot resize a tensor that mapped from a given data buffer")
+    if (buffer_ && buffer_->GetAllocatedBytes() < new_shape.NumElements() * SizeOfType(data_type_)) {
+        buffer_->unref();
+        this->buffer_ = new TensorBuffer(GetAllocator(device_), new_shape.NumElements() * SizeOfType(data_type_));
+    }
     shape_ = new_shape;
-
-    if (buffer_) buffer_->unref();
-    this->buffer_ = new TensorBuffer(GetAllocator(device_), shape_.NumElements() * SizeOfType(data_type_));
-
-    this->zero();
 }
 
 Tensor& Tensor::operator=(const Tensor& other) {
@@ -227,7 +228,7 @@ Tensor& Tensor::operator=(const Tensor& other) {
     this->buffer_ = new TensorBuffer(GetAllocator(device_), shape_.NumElements() * SizeOfType(data_type_));
 
     TEMPLATE_ALL_2(this->data_type_, this->device_,
-                   container::op::synchronize_memory_op<T_, DEVICE_, DEVICE_>()(
+                   kernels::synchronize_memory<T_, DEVICE_, DEVICE_>()(
                    this->data<T_>(), other.data<T_>(), this->NumElements()))
     return *this;
 }
@@ -238,7 +239,7 @@ Tensor& Tensor::operator=(Tensor&& other) noexcept {
     }
     this->device_ = other.device_;
     this->data_type_ = other.data_type_;
-    this->shape_ = std::move(other.shape_);
+    this->shape_ = other.shape_;
    
     if (buffer_) buffer_->unref();  // Release current resource
     this->buffer_ = other.buffer_;
@@ -266,6 +267,11 @@ bool Tensor::operator==(const Tensor& other) const {
     return result;
 }
 
+bool Tensor::CopyFrom(const Tensor& other) {
+    CopyFromInternal(other, other.shape());
+    return true;
+}
+
 bool Tensor::CopyFrom(const Tensor& other, const TensorShape& shape) {
     if (other.NumElements() == shape.NumElements()) {
         CopyFromInternal(other, shape);
@@ -274,13 +280,35 @@ bool Tensor::CopyFrom(const Tensor& other, const TensorShape& shape) {
     return false;
 }
 
-bool Tensor::CopyFromWithAllocate(const Tensor& other, const TensorShape& shape) {
+bool Tensor::AllocateFrom(const Tensor& other, const TensorShape& shape) {
     data_type_ = other.data_type_;
     device_ = other.device_;
     shape_ = shape;
     if (buffer_) buffer_->unref();
     buffer_ = new TensorBuffer(GetAllocator(device_), shape_.NumElements() * SizeOfType(data_type_));
     return true;
+}
+
+void Tensor::sync(const Tensor& rhs) {
+    REQUIRES_OK(this->data_type_ == rhs.data_type_ 
+        && this->device_ == rhs.device_
+        && this->shape_ == rhs.shape_)
+
+    TEMPLATE_ALL_2(data_type_, device_,
+            kernels::synchronize_memory<T_, DEVICE_, DEVICE_>()(
+                    this->data<T_>(), rhs.data<T_>(), this->NumElements()))
+}
+
+Tensor Tensor::operator[](const int& index) const {
+    REQUIRES_OK(
+        index > 0 && index < shape_.dim_size(0),
+        "Tensor index is out of bounds.")
+
+    TensorShape output_shape = this->shape_;
+    output_shape.remove_dim(0);
+    auto data_ = reinterpret_cast<char*>(this->data()) + index * shape_.strides()[0] * SizeOfType(this->data_type_);
+    
+    return TensorMap(data_, this->data_type_, this->device_, output_shape);
 }
 
 // Overloaded operator<< for the Tensor class.
@@ -298,7 +326,7 @@ std::ostream& operator<<(std::ostream& os, const Tensor& tensor) {
         data_ = malloc(num_elements * Tensor::SizeOfType(data_type));
         // Copy data to a specified device
         TEMPLATE_ALL_2(data_type, device_type,
-                       container::op::synchronize_memory_op<T_, DEVICE_CPU, DEVICE_>()(
+                       kernels::synchronize_memory<T_, DEVICE_CPU, DEVICE_>()(
                                reinterpret_cast<T_ *>(data_), tensor.data<T_>(), num_elements))
     }
 #endif

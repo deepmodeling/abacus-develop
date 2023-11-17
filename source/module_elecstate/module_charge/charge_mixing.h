@@ -14,6 +14,7 @@ class Charge_Mixing
     Base_Mixing::Mixing* mixing = nullptr;
     Base_Mixing::Mixing_Data rho_mdata;
     Base_Mixing::Mixing_Data tau_mdata;
+    Base_Mixing::Mixing_Data nhat_mdata;
 
     /**
      * @brief reset mixing

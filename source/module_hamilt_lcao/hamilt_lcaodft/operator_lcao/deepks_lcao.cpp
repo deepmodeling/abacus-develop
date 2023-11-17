@@ -117,7 +117,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* Gr
     // allocate the memory of BaseMatrix in HR, and set the new values to zero
     if(std::is_same<TK, double>::value)
     {
-        this->H_V_delta->allocate(true);
+        this->H_V_delta->allocate(nullptr, true);
     }
 
     ModuleBase::timer::tick("DeePKS", "initialize_HR");

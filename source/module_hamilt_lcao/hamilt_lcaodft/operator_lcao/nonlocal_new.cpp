@@ -105,7 +105,7 @@ void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Drive
         }
     }
     // allocate the memory of BaseMatrix in HR, and set the new values to zero
-    this->hR->allocate(true);
+    this->hR->allocate(nullptr, true);
 
     ModuleBase::timer::tick("NonlocalNew", "initialize_HR");
 }

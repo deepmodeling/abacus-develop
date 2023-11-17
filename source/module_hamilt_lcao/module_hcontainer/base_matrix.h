@@ -12,11 +12,6 @@ namespace hamilt
  * It has two ways to arrange data:
  * 1. allocate data itself
  * 2. only access data but be arranged by other class
- * It has four ways to access data:
- * 1. whole matrix
- * 2. 2d-block
- * 3. submatrix in whole matrix
- * 4. sparse matrix in whole matrix , not implemented yet
  */
 template <typename T>
 class BaseMatrix
@@ -36,12 +31,10 @@ class BaseMatrix
      * if this->value_begin is not nullptr, it will be neglected
      * if this->value_begin is nullptr, it will allocate memory with size nrow_local * ncol_local
     */
-    void allocate(bool if_zero = false);
+    void allocate(T* data_array = nullptr, bool if_zero = false);
 
     /**
      * @brief set value in the matrix to zero
-     * if memory_type == 1 , it will set all value in the matrix to zero
-     * if memory_type == 2 , it will set all value in the submatrix to zero
     */
     void set_zero();
 
@@ -62,8 +55,6 @@ class BaseMatrix
     // for inside matrix
     /**
      * @brief get value from a whole matrix
-     * for memory_type = 0 or 1, ncol_local will be used to calculate the index
-     * for memory_type = 2, ldc will be used to calculate the index
      *
      * @param i_row row index
      * @param j_col column index
@@ -74,8 +65,6 @@ class BaseMatrix
      * @brief get pointer of value from a submatrix
      */
     T* get_pointer() const;
-
-    void set_ldc(const int& ldc_in);
 
     // operator= for copy assignment
     BaseMatrix& operator=(const BaseMatrix& other);
@@ -102,15 +91,6 @@ class BaseMatrix
     // number of rows and columns
     int nrow_local = 0;
     int ncol_local = 0;
-
-    // memory type, choose how to access value via pointer of array
-    // 1 is dense matrix
-    // 2 is submatrix in whole matrix
-    // 3 is sparse matrix in whole matrix , not implemented yet
-    int memory_type = 1;
-
-    // leading dimension of matrix, used with memory_type = 2
-    int ldc = 0;
 };
 
 } // namespace hamilt

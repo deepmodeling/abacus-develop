@@ -20,8 +20,11 @@ class Paw_Atom
     //pass <psi|ptilde> from outside and saves it
     void set_ca(std::vector<std::complex<double>> & ca_in, const double weight_in);
 
+    void init_rhoij(); //set rhoij according to occupation number in xml file
+
     void reset_rhoij(); //set rhoij = 0
     void accumulate_rhoij(const int current_spin); //calculate and accumulate <psi|ptilde><ptilde|psi> from <psi|ptilde>
+    void set_rhoij(std::vector<double> & rhoij_in);
 
     void set_dij(double** dij_in); //sets dij from input
     void reset_dij(); //set dij = 0

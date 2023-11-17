@@ -1,8 +1,9 @@
 #include "module_hsolver/diago_bpcg.h"
 
-#include <ATen/kernels/blas_op.h>
-#include <ATen/kernels/einsum_op.h>
-#include <ATen/kernels/lapack_op.h>
+#include <ATen/kernels/blas.h>
+#include <ATen/kernels/lapack.h>
+
+#include <ATen/ops/einsum_op.h>
 
 #include "diago_iter_assist.h"
 #include "module_base/blas_connector.h"
@@ -90,12 +91,12 @@ void DiagoBPCG<T, Device>::orth_cholesky(ct::Tensor& workspace_in, ct::Tensor& p
     hsub_out = ct::op::einsum("ij,kj->ik", psi_out, psi_out, option);
 
     // set hsub matrix to lower format;
-    ct::op::set_matrix<T, ct_Device>()(
+    ct::kernels::set_matrix<T, ct_Device>()(
         'L', hsub_out.data<T>(), this->n_band);
 
-    ct::op::lapack_potrf<T, ct_Device>()(
+    ct::kernels::lapack_potrf<T, ct_Device>()(
         'U', this->n_band, hsub_out.data<T>(), this->n_band);
-    ct::op::lapack_trtri<T, ct_Device>()(
+    ct::kernels::lapack_trtri<T, ct_Device>()(
         'U', 'N', this->n_band, hsub_out.data<T>(), this->n_band);
 
     this->rotate_wf(hsub_out, psi_out, workspace_in);
@@ -176,7 +177,7 @@ void DiagoBPCG<T, Device>::diag_hsub(
         /*conj_x=*/false, /*conj_y=*/true, /*alpha=*/1.0, /*beta=*/0.0, /*Tensor out=*/&hsub_out);
     hsub_out = ct::op::einsum("ij,kj->ik", psi_in, hpsi_in, option);
 
-    ct::op::lapack_dnevd<T, ct_Device>()('V', 'U', hsub_out.data<T>(), this->n_band, eigenvalue_out.data<Real>());
+    ct::kernels::lapack_dnevd<T, ct_Device>()('V', 'U', hsub_out.data<T>(), this->n_band, eigenvalue_out.data<Real>());
 }
 
 template<typename T, typename Device>

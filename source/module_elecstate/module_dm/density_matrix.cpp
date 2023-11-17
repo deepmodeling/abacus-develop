@@ -130,7 +130,7 @@ void DensityMatrix<TK, TR>::init_DMR(Grid_Driver* GridD_in, const UnitCell* ucel
     {
         tmp_DMR->fix_gamma();
     }
-    tmp_DMR->allocate(true);
+    tmp_DMR->allocate(nullptr, true);
     this->_DMR.push_back(tmp_DMR);
     // add another DMR if nspin==2
     if (this->_nspin == 2)
@@ -180,7 +180,7 @@ void DensityMatrix<TK, TR>::init_DMR(Record_adj& ra, const UnitCell* ucell)
     {
         tmp_DMR->fix_gamma();
     }
-    tmp_DMR->allocate(true);
+    tmp_DMR->allocate(nullptr, true);
     this->_DMR.push_back(tmp_DMR);
     // add another DMR if nspin==2
     if (this->_nspin == 2)
@@ -242,7 +242,7 @@ void DensityMatrix<TK, TR>::init_DMR(const hamilt::HContainer<TRShift>& DMR_in)
                 tmp_DMR->insert_pair(tmp_ap);
             }
         }
-        tmp_DMR->allocate(true);
+        tmp_DMR->allocate(nullptr, true);
         this->_DMR.push_back(tmp_DMR);
         if(this->_nspin == 2)
         {
@@ -585,7 +585,7 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR()
                             // save them back to the tmp_matrix
                             target_DMR[icol + step_trace[0]] = tmp[0].real() + tmp[3].real();
                             target_DMR[icol + step_trace[1]] = tmp[1].real() + tmp[2].real();
-                            target_DMR[icol + step_trace[2]] = tmp[1].imag() - tmp[2].imag();
+                            target_DMR[icol + step_trace[2]] = - tmp[1].imag() + tmp[2].imag();// (i * (rho_updown - rho_downup)).real()
                             target_DMR[icol + step_trace[3]] = tmp[0].real() - tmp[3].real();
                         }
                         tmp_DMR_pointer += this->_paraV->get_col_size(iat2) * 2;

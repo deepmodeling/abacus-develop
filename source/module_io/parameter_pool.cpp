@@ -46,7 +46,7 @@ int count_ntype(const std::string& fn)
         while (true)
         {
             ModuleBase::GlobalFunc::READ_VALUE(ifa, temp);
-            if (temp == "LATTICE_CONSTANT" || temp == "NUMERICAL_ORBITAL" || temp == "NUMERICAL_DESCRIPTOR"
+            if (temp == "LATTICE_CONSTANT" || temp == "NUMERICAL_ORBITAL" || temp == "NUMERICAL_DESCRIPTOR" || temp == "PAW_FILES"
                 || ifa.eof())
             {
                 break;
@@ -658,6 +658,10 @@ bool input_parameters_set(std::map<std::string, InputParameter> input_parameters
     else if (input_parameters.count("gamma_only_local") != 0)
     {
         INPUT.gamma_only_local = *static_cast<bool*>(input_parameters["gamma_only_local"].get());
+    }
+    else if (input_parameters.count("fft_mode") != 0)
+    {
+        INPUT.fft_mode = *static_cast<int*>(input_parameters["fft_mode"].get());
     }
     else if (input_parameters.count("ecutwfc") != 0)
     {

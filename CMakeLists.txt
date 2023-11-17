@@ -232,14 +232,36 @@ if(USE_CUDA OR USE_CUSOLVER_LCAO)
   set(CMAKE_CUDA_STANDARD ${CMAKE_CXX_STANDARD})
   set(CMAKE_CUDA_STANDARD_REQUIRED ON)
   set(CMAKE_CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
+  if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
+    find_package(CUDAToolkit REQUIRED)
+    # check https://gitlab.kitware.com/cmake/cmake/-/blob/master/Modules/Internal/CMakeCUDAArchitecturesAll.cmake
+    # for available architechures in different CUDA versions
+    set(CMAKE_CUDA_ARCHITECTURES
+      60 # P100
+      70 # V100
+      # Add your CUDA arch here
+      # Check the Compute Capability version of your GPU at:
+      # https://en.wikipedia.org/wiki/CUDA#GPUs_supported
+    )
+    if (CUDAToolkit_VERSION VERSION_GREATER_EQUAL 10.0)
+      list(APPEND CMAKE_CUDA_ARCHITECTURES 75) # T4
+    endif()
+    if (CUDAToolkit_VERSION VERSION_GREATER_EQUAL 11.0)
+      list(APPEND CMAKE_CUDA_ARCHITECTURES 80) # A100
+    endif()
+    if (CUDAToolkit_VERSION VERSION_GREATER_EQUAL 11.1)
+      list(APPEND CMAKE_CUDA_ARCHITECTURES 86)
+    endif()
+    if (CUDAToolkit_VERSION VERSION_GREATER_EQUAL 11.8)
+      list(APPEND CMAKE_CUDA_ARCHITECTURES 89 90)
+    endif()
+  endif()
   enable_language(CUDA)
+  # ${ABACUS_BIN_NAME} is added before CUDA is enabled
   set_property(
     TARGET ${ABACUS_BIN_NAME}
     PROPERTY CUDA_ARCHITECTURES
-    60 # P100
-    70 # V100
-    75 # T4
-    80 # A100
+    ${CMAKE_CUDA_ARCHITECTURES}
   )
   target_link_libraries(${ABACUS_BIN_NAME}
     -lcudart
@@ -303,8 +325,8 @@ if(USE_ROCM)
 endif()
 
 if(ENABLE_ASAN)
-  if (CMAKE_CXX_COMPILER_ID MATCHES Intel)
-    message(FATAL_ERROR "Address Sanitizer is not supported on Intel compiler.")
+  if (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+    message(FATAL_ERROR "Address Sanitizer is not supported on Intel Classic compiler. Use Intel oneAPI compiler (icpx) instead.")
   endif()
   add_compile_options(
     -fsanitize=address
@@ -368,6 +390,9 @@ endif()
 
 if(ENABLE_DEEPKS)
   set(CMAKE_CXX_STANDARD 14)
+  # Torch uses outdated components to detech CUDA arch, causing failure on latest CUDA kits.
+  # See above for setting CMAKE_CUDA_ARCHITECTURES
+  set(TORCH_CUDA_ARCH_LIST CMAKE_CUDA_ARCHITECTURES)
   find_package(Torch REQUIRED)
   include_directories(${TORCH_INCLUDE_DIRS})
   target_link_libraries(${ABACUS_BIN_NAME} deepks)

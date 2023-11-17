@@ -74,6 +74,61 @@ void Paw_Cell::init_paw_cell(
         int nproj = paw_element_list[it].get_mstates();
         paw_atom_list[iat].init_paw_atom(nproj);
     }
+
+    this -> init_rhoij();
+    //this -> init_mix_dij();
+}
+
+void Paw_Cell::init_mix_dij()
+{
+    first_iter = true;
+    count = 0;
+
+    if(GlobalV::RANK_IN_POOL == 0)
+    {
+        dij_save.resize(natom);
+        for(int iat = 0; iat < natom; iat ++)
+        {
+            const int it = atom_type[iat];
+            const int nproj = paw_element_list[it].get_mstates();
+            const int size_dij = nproj * (nproj+1) / 2;
+            dij_save[iat].resize(size_dij * nspden);
+            for(int i = 0; i < size_dij * nspden; i ++)
+            {
+                dij_save[iat][i] = 0.0;
+            }
+        }
+    }
+}
+
+void Paw_Cell::init_rhoij()
+{
+    ModuleBase::TITLE("Paw_Cell","init_rhoij");
+
+    for(int iat = 0; iat < nat; iat ++)
+    {
+        const int it = atom_type[iat];
+        const int nproj = paw_element_list[it].get_mstates();
+
+        const int size_rhoij = nproj * (nproj + 1) / 2;
+
+        std::vector<double> mstate_occ = paw_element_list[it].get_mstate_occ();
+
+        std::vector<double> rhoij_in;
+        rhoij_in.resize(size_rhoij);
+        for(int i = 0; i < size_rhoij; i ++)
+        {
+            rhoij_in[i] = 0.0;
+        }
+
+        for(int iproj = 0; iproj < nproj; iproj ++)
+        {
+            int i0 = iproj * (iproj + 1) / 2;
+            rhoij_in[i0 + iproj] = mstate_occ[iproj] / GlobalV::NSPIN;
+        }
+
+        paw_atom_list[iat].set_rhoij(rhoij_in);
+    }
 }
 
 void Paw_Cell::set_eigts(const int nx_in, const int ny_in, const int nz_in,
@@ -489,10 +544,16 @@ void Paw_Cell::accumulate_rhoij(const std::complex<double> * psi, const double w
 
 #ifdef __MPI
         Parallel_Reduce::reduce_pool(ca.data(), nproj);
-#endif
 
+        if(GlobalV::RANK_IN_POOL == 0)
+        {
+            paw_atom_list[iat].set_ca(ca, weight);
+            paw_atom_list[iat].accumulate_rhoij(current_spin);
+        }
+#else
         paw_atom_list[iat].set_ca(ca, weight);
         paw_atom_list[iat].accumulate_rhoij(current_spin);
+#endif
     }
 }
 

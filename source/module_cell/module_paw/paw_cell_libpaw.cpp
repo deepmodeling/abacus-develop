@@ -192,6 +192,28 @@ void Paw_Cell::set_libpaw_atom(const int natom_in, const int ntypat_in, const in
     }
 }
 
+void Paw_Cell::mix_dij(const int iat, double*dij_paw)
+{
+    double mixing_beta = 0.1;
+
+    std::cout << "mixing_beta : " << mixing_beta << std::endl;
+
+    const int it = atom_type[iat];
+    const int nproj = paw_element_list[it].get_mstates();
+    const int size_dij = nproj * (nproj+1) / 2;
+    for(int i = 0; i < size_dij * nspden; i ++)
+    {  
+        if(!first_iter) dij_paw[i] = dij_save[iat][i] * (1.0 - mixing_beta) + dij_paw[i] * mixing_beta;
+
+        if(count > 30) dij_paw[i] = dij_save[iat][i];
+
+        dij_save[iat][i] = dij_paw[i];
+    }
+
+    first_iter = false;
+    count ++;
+}
+
 // Sets filename_list
 // I'm going to read directly from STRU file
 void Paw_Cell::set_libpaw_files()
@@ -287,9 +309,19 @@ void Paw_Cell::get_vloc_ncoret(double* vloc, double* ncoret)
     double * vloc_tmp, * ncoret_tmp;
     vloc_tmp = new double[nfft];
     ncoret_tmp = new double[nfft];
-    
+
+#ifdef __MPI
+    if(GlobalV::RANK_IN_POOL == 0)
+    {
+        get_vloc_ncoret_(ngfftdg.data(), nfft, natom, ntypat, rprimd.data(), gprimd.data(),
+                gmet.data(), ucvol, xred.data(), ncoret_tmp, vloc_tmp);
+    }
+    Parallel_Common::bcast_double(vloc_tmp,nfft);
+    Parallel_Common::bcast_double(ncoret_tmp,nfft);
+#else
     get_vloc_ncoret_(ngfftdg.data(), nfft, natom, ntypat, rprimd.data(), gprimd.data(),
             gmet.data(), ucvol, xred.data(), ncoret_tmp, vloc_tmp);
+#endif
 
     for(int ix = 0; ix < nx; ix ++)
     {
@@ -316,6 +348,9 @@ void Paw_Cell::get_vloc_ncoret(double* vloc, double* ncoret)
 #endif
         }
     }
+
+    delete[] vloc_tmp;
+    delete[] ncoret_tmp;
 }
 
 void Paw_Cell::set_rhoij(int iat, int nrhoijsel, int size_rhoij, int* rhoijselect, double* rhoijp)
@@ -328,6 +363,7 @@ void Paw_Cell::get_nhat(double** nhat, double* nhatgr)
 {
     ModuleBase::TITLE("Paw_Cell", "get_nhat");
 
+    nhatgr = new double[3*nfft];
     double* nhat_tmp;
     nhat_tmp = new double[nfft*nspden];
 
@@ -387,6 +423,7 @@ void Paw_Cell::get_nhat(double** nhat, double* nhatgr)
         }
     }
     delete[] nhat_tmp;
+    delete[] nhatgr;
 }
 
 void Paw_Cell::calculate_dij(double* vks, double* vxc)
@@ -496,13 +533,13 @@ void Paw_Cell::calculate_dij(double* vks, double* vxc)
 #endif
 }
 
-void Paw_Cell::get_dij(int iat, int size_dij, double* dij)
+void Paw_Cell::extract_dij(int iat, int size_dij, double* dij)
 {
     int iat_fortran = iat + 1;
     get_dij_(iat_fortran,size_dij,nspden,dij);
 }
 
-void Paw_Cell::get_sij(int it, int size_sij, double* sij)
+void Paw_Cell::extract_sij(int it, int size_sij, double* sij)
 {
     int it_fortran = it + 1;
     get_sij_(it_fortran,size_sij,sij);
@@ -513,8 +550,17 @@ void Paw_Cell::init_rho(double ** rho)
     double* rho_tmp;
     rho_tmp = new double[nfft*nspden];
 
+#ifdef __MPI
+    if(GlobalV::RANK_IN_POOL == 0)
+    {
+        init_rho_(nspden, ngfftdg.data(), nfft, natom, ntypat, rprimd.data(), gprimd.data(),
+                gmet.data(), ucvol, xred.data(), rho_tmp);      
+    }
+    Parallel_Common::bcast_double(rho_tmp,nfft*nspden);
+#else
     init_rho_(nspden, ngfftdg.data(), nfft, natom, ntypat, rprimd.data(), gprimd.data(),
             gmet.data(), ucvol, xred.data(), rho_tmp);
+#endif
 
 #ifdef __MPI
     // I'm not sure about this yet !!!
@@ -585,10 +631,16 @@ void Paw_Cell::set_dij()
            dij[is] = new double[nproj * nproj];
         }
 
-        get_dij(iat,size_dij,dij_libpaw);
-
 #ifdef __MPI
+        if(GlobalV::RANK_IN_POOL == 0)
+        {
+            extract_dij(iat,size_dij,dij_libpaw);
+            //mix_dij(iat,dij_libpaw);
+        }
         Parallel_Common::bcast_double(dij_libpaw,size_dij*nspden);
+#else
+        extract_dij(iat,size_dij,dij_libpaw);
+        //mix_dij(iat,dij_libpaw);
 #endif
 
         for(int is = 0; is < nspden; is ++)
@@ -624,7 +676,12 @@ void Paw_Cell::set_sij()
         double* sij_libpaw = new double[size_sij];
         double* sij = new double[nproj * nproj];
 
-        get_sij(it,size_sij,sij_libpaw);
+#ifdef __MPI
+        if(GlobalV::RANK_IN_POOL == 0) extract_sij(it,size_sij,sij_libpaw);
+        Parallel_Common::bcast_double(sij_libpaw,size_sij*nspden);
+#else
+        extract_sij(it,size_sij,sij_libpaw);
+#endif
 
         for(int jproj = 0; jproj < nproj; jproj ++)
         {

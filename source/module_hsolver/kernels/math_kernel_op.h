@@ -217,8 +217,9 @@ template <typename T, typename Device> struct vector_div_vector_op
 };
 
 // vector operator: result[i] = vector1[i] * constant1 + vector2[i] * constant2
-template <typename FPTYPE, typename Device> struct constantvector_addORsub_constantVector_op
+template <typename T, typename Device> struct constantvector_addORsub_constantVector_op
 {
+    using Real = typename GetTypeReal<T>::type;
     /// @brief result[i] = vector1[i] * constant1 + vector2[i] * constant2
     ///
     /// Input Parameters
@@ -232,16 +233,16 @@ template <typename FPTYPE, typename Device> struct constantvector_addORsub_const
     /// Output Parameters
     /// \param result : output array
     void operator()(const Device* d,
-                    const int& dim,
-                    std::complex<FPTYPE>* result,
-                    const std::complex<FPTYPE>* vector1,
-                    const FPTYPE constant1,
-                    const std::complex<FPTYPE>* vector2,
-                    const FPTYPE constant2);
+        const int& dim,
+        T* result,
+        const T* vector1,
+        const Real constant1,
+        const T* vector2,
+        const Real constant2);
 };
 
 //  compute Y = alpha * X + Y
-template <typename FPTYPE, typename Device> struct axpy_op
+template <typename T, typename Device> struct axpy_op
 {
     /// @brief Y = alpha * X + Y
     ///
@@ -257,12 +258,12 @@ template <typename FPTYPE, typename Device> struct axpy_op
     /// Output Parameters
     /// \param Y : output array Y
     void operator()(const Device* d,
-                    const int& N,
-                    const std::complex<FPTYPE>* alpha,
-                    const std::complex<FPTYPE>* X,
-                    const int& incX,
-                    std::complex<FPTYPE>* Y,
-                    const int& incY);
+        const int& N,
+        const T* alpha,
+        const T* X,
+        const int& incX,
+        T* Y,
+        const int& incY);
 };
 
 // compute y = alpha * op(A) * x + beta * y
@@ -457,15 +458,16 @@ template <typename T> struct vector_div_vector_op<T, psi::DEVICE_GPU>
 };
 
 // vector operator: result[i] = vector1[i] * constant1 + vector2[i] * constant2
-template <typename FPTYPE> struct constantvector_addORsub_constantVector_op<FPTYPE, psi::DEVICE_GPU>
+template <typename T> struct constantvector_addORsub_constantVector_op<T, psi::DEVICE_GPU>
 {
+    using Real = typename GetTypeReal<T>::type;
     void operator()(const psi::DEVICE_GPU* d,
-                    const int& dim,
-                    std::complex<FPTYPE>* result,
-                    const std::complex<FPTYPE>* vector1,
-                    const FPTYPE constant1,
-                    const std::complex<FPTYPE>* vector2,
-                    const FPTYPE constant2);
+        const int& dim,
+        T* result,
+        const T* vector1,
+        const Real constant1,
+        const T* vector2,
+        const Real constant2);
 };
 
 template <typename T> struct matrixSetToAnother<T, psi::DEVICE_GPU>

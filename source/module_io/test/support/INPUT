@@ -22,7 +22,7 @@ nbands_sto                     256 #number of stochastic bands
 nbands_istate                  5 #number of bands around Fermi level for get_pchg calulation
 symmetry                       1 #the control of symmetry
 init_vel                       False #read velocity from STRU or not
-symmetry_prec                  1e-05 #accuracy for symmetry
+symmetry_prec                  1e-06 #accuracy for symmetry
 nelec                          0 #input number of electrons
 out_mul                        0 # mulliken  charge or not
 noncolin                       0 #using non-collinear-spin
@@ -47,6 +47,7 @@ ecutwfc                        20 ##energy cutoff for wave functions
 erf_ecut                       20 #the value of the constant energy cutoff
 erf_height                     20 #the height of the energy step for reciprocal vectors
 erf_sigma                      4 #the width of the energy step for reciprocal vectors
+fft_mode                       0 #mode of FFTW
 pw_diag_thr                    0.01 #threshold for eigenvalues is cg electron iterations
 scf_thr                        1e-08 #charge density error
 scf_thr_type                   2 #type of the criterion of scf_thr, 1: reci drho for pw, 2: real drho for lcao

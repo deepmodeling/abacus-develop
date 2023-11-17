@@ -218,6 +218,7 @@ class Test_Ptilde : public testing::Test
 
 TEST_F(Test_Ptilde, test_paw)
 {
+    paw_element.init_paw_element(50,1.2);
     paw_element.read_paw_xml("Si_test.xml");
 
     const int npw = 411;

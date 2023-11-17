@@ -6,7 +6,7 @@
 // Test the GetAllocatedBytes() method.
 TEST(TensorBuffer, GetAllocatedBytes) {
     // Create an allocator and allocate memory for a TensorBuffer.
-    container::base::Allocator* alloc = new container::base::CPUAllocator();
+    base::core::Allocator* alloc = new base::core::CPUAllocator();
     const size_t buffer_size = 100;
 
     // Create a TensorBuffer.
@@ -25,7 +25,7 @@ TEST(TensorBuffer, GetAllocatedBytes) {
 // Test the resize() method.
 TEST(TensorBuffer, resize) {
     // Create an allocator and allocate memory for a TensorBuffer.
-    container::base::Allocator* alloc = new container::base::CPUAllocator();
+    base::core::Allocator* alloc = new base::core::CPUAllocator();
     const size_t initial_buffer_size = 100;
 
     // Create a TensorBuffer.
@@ -49,7 +49,7 @@ TEST(TensorBuffer, resize) {
 // Test the root_buffer() method.
 TEST(TensorBuffer, root_buffer) {
     // Create an allocator and allocate memory for a TensorBuffer.
-    container::base::Allocator* alloc = new container::base::CPUAllocator();
+    base::core::Allocator* alloc = new base::core::CPUAllocator();
     const size_t buffer_size = 100;
 
     // Create a root TensorBuffer.
@@ -70,7 +70,7 @@ TEST(TensorBuffer, root_buffer) {
 
 TEST(TensorBuffer, empty_allocator) {
     // Create an allocator and allocate memory for a TensorBuffer.
-    container::base::CPUAllocator alloc;
+    base::core::CPUAllocator alloc;
     const size_t buffer_size = 100;
     void* buffer = alloc.allocate(buffer_size);
 

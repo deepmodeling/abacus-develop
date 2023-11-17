@@ -1,8 +1,8 @@
 #ifndef ATEN_KERNELS_TEST_OP_TEST_UTILS_H_
 #define ATEN_KERNELS_TEST_OP_TEST_UTILS_H_
 #include <gtest/gtest.h>
-#include <ATen/kernels/blas_op.h>
-#include <ATen/kernels/lapack_op.h>
+#include "module_base/module_container/ATen/kernels/blas.h"
+#include "module_base/module_container/ATen/kernels/lapack.h"
 
 namespace container {
 namespace test_utils {
@@ -29,25 +29,25 @@ using Types = ::testing::Types<
 
 static inline void init_blas_handle() {
     #if __CUDA || __ROCM
-        op::createGpuBlasHandle();
+        kernels::createGpuBlasHandle();
     #endif
 }
 
 static inline void delete_blas_handle() {
     #if __CUDA || __ROCM
-        op::destroyGpuBlasHandle();
+        kernels::destroyGpuBlasHandle();
     #endif
 }
 
 static inline void init_cusolver_handle() {
     #if __CUDA || __ROCM
-        op::createGpuSolverHandle();
+        kernels::createGpuSolverHandle();
     #endif
 }
 
 static inline void delete_cusolver_handle() {
     #if __CUDA || __ROCM
-        op::destroyGpuSolverHandle();
+        kernels::destroyGpuSolverHandle();
     #endif
 }
 
