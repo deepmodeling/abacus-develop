@@ -22,6 +22,7 @@ ENV CC=mpiicx CXX=mpiicpx FC=mpiifx CFLAGS="-mavx512f -mavx512dq -mavx512cd -mav
 RUN source /opt/intel/oneapi/setvars.sh && \
     cd /tmp && \
     ELPA_VER=2022.11.001 && \
+    FCFLAGS="-mavx512f -mavx512dq -mavx512cd -mavx512bw -mavx512vl" && \
     wget -q https://elpa.mpcdf.mpg.de/software/tarball-archive/Releases/$ELPA_VER/elpa-$ELPA_VER.tar.gz && \
     tar xzf elpa-$ELPA_VER.tar.gz  && rm elpa-$ELPA_VER.tar.gz && \
     cd elpa-$ELPA_VER && mkdir build && cd build && \
