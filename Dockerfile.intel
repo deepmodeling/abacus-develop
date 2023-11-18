@@ -16,7 +16,7 @@ RUN apt-get update && \
 
 RUN echo "source /opt/intel/oneapi/setvars.sh" >> ${HOME}/.bashrc
 SHELL ["/bin/bash", "-c"]
-ENV CC=mpiicx CXX=mpiicpx FC=mpiifx
+ENV CC=mpiicx CXX=mpiicpx FC=mpiifx CFLAGS="-mavx512f -mavx512dq -mavx512cd -mavx512bw -mavx512vl"
 
 # https://elpa.mpcdf.mpg.de/software/tarball-archive/ELPA_TARBALL_ARCHIVE.html
 RUN source /opt/intel/oneapi/setvars.sh && \
