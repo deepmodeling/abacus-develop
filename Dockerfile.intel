@@ -16,13 +16,12 @@ RUN apt-get update && \
 
 RUN echo "source /opt/intel/oneapi/setvars.sh" >> ${HOME}/.bashrc
 SHELL ["/bin/bash", "-c"]
-ENV CC=mpiicx CXX=mpiicpx FC=mpiifx CFLAGS="-mavx512f -mavx512dq -mavx512cd -mavx512bw -mavx512vl"
+ENV CC=mpiicx CXX=mpiicpx FC=mpiifx CFLAGS="-mmmx -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -msse4a -msha -maes -mavx -mfma -mavx2"
 
 # https://elpa.mpcdf.mpg.de/software/tarball-archive/ELPA_TARBALL_ARCHIVE.html
 RUN source /opt/intel/oneapi/setvars.sh && \
     cd /tmp && \
     ELPA_VER=2022.11.001 && \
-    FCFLAGS="-mavx512f -mavx512dq -mavx512cd -mavx512bw -mavx512vl" && \
     wget -q https://elpa.mpcdf.mpg.de/software/tarball-archive/Releases/$ELPA_VER/elpa-$ELPA_VER.tar.gz && \
     tar xzf elpa-$ELPA_VER.tar.gz  && rm elpa-$ELPA_VER.tar.gz && \
     cd elpa-$ELPA_VER && mkdir build && cd build && \
