@@ -12,29 +12,24 @@ RUN wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRO
 
 # To save disk space, only install the essential components, but not the whole toolkit.
 RUN apt-get update && \
-    apt-get install -y \
-        intel-oneapi-compiler-dpcpp-cpp \
-        intel-oneapi-compiler-fortran \
-        intel-oneapi-mkl-devel \
-        intel-oneapi-mpi-devel \
-        intel-oneapi-vtune
+    sudo apt -y install intel-basekit intel-hpckit
 
 RUN echo "source /opt/intel/oneapi/setvars.sh" >> ${HOME}/.bashrc
 SHELL ["/bin/bash", "-c"]
 ENV CC=mpiicx CXX=mpiicpx FC=mpiifx
 
 # https://elpa.mpcdf.mpg.de/software/tarball-archive/ELPA_TARBALL_ARCHIVE.html
-#RUN source /opt/intel/oneapi/setvars.sh && \
-#    cd /tmp && \
-#    ELPA_VER=2022.11.001 && \
-#    wget -q https://elpa.mpcdf.mpg.de/software/tarball-archive/Releases/$ELPA_VER/elpa-$ELPA_VER.tar.gz && \
-#    tar xzf elpa-$ELPA_VER.tar.gz  && rm elpa-$ELPA_VER.tar.gz && \
-#    cd elpa-$ELPA_VER && mkdir build && cd build && \
-#    ../configure CFLAGS="-O3 -march=native" FCFLAGS="-O3 -qmkl=cluster" --enable-openmp && \
-#    make -j`nproc` && \
-#    make PREFIX=/usr/local install && \
-#    ln -s /usr/local/include/elpa_openmp-$ELPA_VER/elpa /usr/local/include/ && \
-#    cd /tmp && rm -rf elpa-$ELPA_VER
+RUN source /opt/intel/oneapi/setvars.sh && \
+    cd /tmp && \
+    ELPA_VER=2022.11.001 && \
+    wget -q https://elpa.mpcdf.mpg.de/software/tarball-archive/Releases/$ELPA_VER/elpa-$ELPA_VER.tar.gz && \
+    tar xzf elpa-$ELPA_VER.tar.gz  && rm elpa-$ELPA_VER.tar.gz && \
+    cd elpa-$ELPA_VER && mkdir build && cd build && \
+    ../configure CFLAGS="-O3 -march=native" FCFLAGS="-O3 -qmkl=cluster" --enable-openmp && \
+    make -j`nproc` && \
+    make PREFIX=/usr/local install && \
+    cp -r /usr/local/include/elpa_openmp-$ELPA_VER/elpa /usr/local/include/ && \
+    cd /tmp && rm -rf elpa-$ELPA_VER
 
 RUN wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-2.0.0%2Bcpu.zip \
         --no-check-certificate --quiet -O libtorch.zip && \
@@ -47,7 +42,7 @@ ADD https://api.github.com/repos/deepmodeling/abacus-develop/git/refs/heads/deve
 RUN source /opt/intel/oneapi/setvars.sh && \
     git clone https://github.com/deepmodeling/abacus-develop.git --depth 1 && \
     cd abacus-develop && \
-    cmake -B build -DENABLE_DEEPKS=ON -DENABLE_LIBXC=ON -DENABLE_LIBRI=ON -DUSE_ELPA=0 && \
+    cmake -B build -DENABLE_DEEPKS=ON -DENABLE_LIBXC=ON -DENABLE_LIBRI=ON && \
     cmake --build build -j`nproc` && \
     cmake --install build && \
     rm -rf build && \
