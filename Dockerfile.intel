@@ -30,7 +30,7 @@ RUN source /opt/intel/oneapi/setvars.sh && \
     wget -q https://elpa.mpcdf.mpg.de/software/tarball-archive/Releases/$ELPA_VER/elpa-$ELPA_VER.tar.gz && \
     tar xzf elpa-$ELPA_VER.tar.gz  && rm elpa-$ELPA_VER.tar.gz && \
     cd elpa-$ELPA_VER && mkdir build && cd build && \
-    ../configure CFLAGS="-O3 -march=skylake-avx512 -mfma  -funsafe-loop-optimizations -funsafe-math-optimizations -ftree-vect-loop-version -ftree-vectorize" FCFLAGS="-O3 -qmkl=cluster -march=skylake-avx512 -mfma" --enable-openmp --enable-option-checking=fatal  --enable-avx2 --enable-avx512 && \
+    ../configure FCFLAGS="-O3 -xCORE-AVX512" CFLAGS="-O3 -xCORE-AVX512" --enable-option-checking=fatal SCALAPACK_LDFLAGS="-L$MKLROOT/lib/intel64 -lmkl_scalapack_lp64 -lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lmkl_blacs_intelmpi_lp64 -lpthread " SCALAPACK_FCFLAGS="-I$MKL_HOME/include/intel64/lp64" --enable-avx2 --enable-avx512 && \
     make -j`nproc` && \
     make PREFIX=/usr/local install && \
     ln -s /usr/local/include/elpa_openmp-$ELPA_VER/elpa /usr/local/include/ && \
