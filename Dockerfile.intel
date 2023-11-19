@@ -21,15 +21,14 @@ ENV CC=mpiicx CXX=mpiicpx FC=mpiifx
 # https://elpa.mpcdf.mpg.de/software/tarball-archive/ELPA_TARBALL_ARCHIVE.html
 RUN source /opt/intel/oneapi/setvars.sh && \
     cd /tmp && \
-    ELPA_VER=2022.11.001 && \
+    ELPA_VER=2021.05.002 && \
     wget -q https://elpa.mpcdf.mpg.de/software/tarball-archive/Releases/$ELPA_VER/elpa-$ELPA_VER.tar.gz && \
     tar xzf elpa-$ELPA_VER.tar.gz  && rm elpa-$ELPA_VER.tar.gz && \
     cd elpa-$ELPA_VER && mkdir build && cd build && \
-    CFLAGS="-mmmx -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -msse4a -msha -maes -mavx -mfma -mavx2" && \
-    ../configure CFLAGS="-O3 -march=native" FCFLAGS="-O3 -qmkl=cluster" --enable-openmp --without-threading-support-check-during-build && \
+    ../configure FCFLAGS="-qmkl=cluster" --enable-openmp && \
     make -j`nproc` && \
     make PREFIX=/usr/local install && \
-    cp -r /usr/local/include/elpa_openmp-$ELPA_VER/elpa /usr/local/include/ && \
+    ln -s /usr/local/include/elpa_openmp-$ELPA_VER/elpa /usr/local/include/ && \
     cd /tmp && rm -rf elpa-$ELPA_VER
 
 RUN wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-2.0.0%2Bcpu.zip \
