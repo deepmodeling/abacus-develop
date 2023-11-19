@@ -28,7 +28,7 @@ RUN source /opt/intel/oneapi/setvars.sh && \
     ../configure FCFLAGS="-qmkl=cluster" --enable-openmp && \
     make -j`nproc` && \
     make PREFIX=/usr/local install && \
-    ln -s /usr/local/include/elpa_openmp-$ELPA_VER/elpa /usr/local/include/ && \
+    cp -r /usr/local/include/elpa_openmp-$ELPA_VER/elpa /usr/local/include/ && \
     cd /tmp && rm -rf elpa-$ELPA_VER
 
 RUN wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-2.0.0%2Bcpu.zip \
