@@ -8,6 +8,7 @@
 
 #include "module_base/vector3.h"
 #include "module_md/md_para.h"
+#include "module_base/para_json.h"
 
 class Input
 {

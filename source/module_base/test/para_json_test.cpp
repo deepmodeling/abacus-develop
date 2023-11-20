@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "module_base/global_variable.h"
-#include "module_io/para_json.h"
+#include "module_base/para_json.h"
 #ifdef __MPI
 #include "mpi.h"
 #endif
@@ -28,7 +28,7 @@ protected:
 
 TEST_F(ParaJsonTest,Init)
 {
-	std::string input_file = "./support/INPUT";
+	std::string input_file = "./data/INPUT";
 	Input input_tmp;
 	EXPECT_NO_THROW(input_tmp.Init(input_file));
 
