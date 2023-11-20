@@ -38,17 +38,17 @@ class KEDF_WT
 
     double get_energy(const double *const *prho, ModulePW::PW_Basis *pw_rho);
     double get_energy_density(const double *const *prho, int is, int ir, ModulePW::PW_Basis *pw_rho);
-    void WT_potential(const double *const *prho, ModulePW::PW_Basis *pw_rho, ModuleBase::matrix &rpotential);
+    void wt_potential(const double *const *prho, ModulePW::PW_Basis *pw_rho, ModuleBase::matrix &rpotential);
     void get_stress(double cellVol, const double *const *prho, ModulePW::PW_Basis *pw_rho, double vw_weight);
-    double WTenergy = 0.;
+    double wt_energy = 0.;
     ModuleBase::matrix stress;
 
   private:
-    double WTkernel(double eta, double tf_weight, double vw_weight);
-    double diffLinhard(double eta, double vw_weight);
-    void multiKernel(const double *const *prho, double **rkernelRho, double exponent, ModulePW::PW_Basis *pw_rho);
-    void readKernel(std::string fileName, ModulePW::PW_Basis *pw_rho);
-    void fillKernel(double tf_weight, double vw_weight, ModulePW::PW_Basis *pw_rho);
+    double wt_kernel(double eta, double tf_weight, double vw_weight);
+    double diff_linhard(double eta, double vw_weight);
+    void multi_kernel(const double *const *prho, double **rkernelRho, double exponent, ModulePW::PW_Basis *pw_rho);
+    void read_kernel(std::string fileName, ModulePW::PW_Basis *pw_rho);
+    void fill_kernel(double tf_weight, double vw_weight, ModulePW::PW_Basis *pw_rho);
 
     double dV_ = 0.;
     double rho0_ = 0.; // average rho

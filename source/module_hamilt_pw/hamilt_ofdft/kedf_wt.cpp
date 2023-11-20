@@ -29,9 +29,9 @@ void KEDF_WT::set_para(double dV, double alpha, double beta, double nelec, doubl
     this->kernel_ = new double[pw_rho->npw];
 
     if (read_kernel)
-        this->readKernel(kernel_file, pw_rho);
+        this->read_kernel(kernel_file, pw_rho);
     else
-        this->fillKernel(tf_weight, vw_weight, pw_rho);
+        this->fill_kernel(tf_weight, vw_weight, pw_rho);
 }
 
 //
@@ -41,7 +41,7 @@ double KEDF_WT::get_energy(const double * const * prho, ModulePW::PW_Basis *pw_r
 {
     double **kernelRhoBeta = new double* [GlobalV::NSPIN];
     for (int is = 0; is < GlobalV::NSPIN; ++is) kernelRhoBeta[is] = new double[pw_rho->nrxx];
-    this->multiKernel(prho, kernelRhoBeta, this->beta_, pw_rho);
+    this->multi_kernel(prho, kernelRhoBeta, this->beta_, pw_rho);
 
     double energy = 0.; // in Ry
     if (GlobalV::NSPIN == 1)
@@ -63,8 +63,8 @@ double KEDF_WT::get_energy(const double * const * prho, ModulePW::PW_Basis *pw_r
         // }
         // energy *= 0.5 * this->dV_ * 0.5;
     }
-    this->WTenergy = energy;
-    Parallel_Reduce::reduce_all(this->WTenergy);
+    this->wt_energy = energy;
+    Parallel_Reduce::reduce_all(this->wt_energy);
 
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
@@ -79,7 +79,7 @@ double KEDF_WT::get_energy_density(const double * const *prho, int is, int ir, M
 {
     double **kernelRhoBeta = new double* [GlobalV::NSPIN];
     for (int is = 0; is < GlobalV::NSPIN; ++is) kernelRhoBeta[is] = new double[pw_rho->nrxx];
-    this->multiKernel(prho, kernelRhoBeta, this->beta_, pw_rho);
+    this->multi_kernel(prho, kernelRhoBeta, this->beta_, pw_rho);
 
     double result = this->c_tf_ * std::pow(prho[is][ir], this->alpha_) * kernelRhoBeta[is][ir];
 
@@ -95,17 +95,17 @@ double KEDF_WT::get_energy_density(const double * const *prho, int is, int ir, M
 //
 // Vwt = cTF * [alpha rho^{alpha-1} \int{W(r - r')rho^{beta}(r') dr'} + beta rho^{beta-1} \int{W(r' - r)rho^{alpha}(r') dr'}]
 //
-void KEDF_WT::WT_potential(const double * const *prho, ModulePW::PW_Basis *pw_rho, ModuleBase::matrix &rpotential)
+void KEDF_WT::wt_potential(const double * const *prho, ModulePW::PW_Basis *pw_rho, ModuleBase::matrix &rpotential)
 {
     ModuleBase::timer::tick("KEDF_WT", "wt_potential");
 
     double **kernelRhoBeta = new double* [GlobalV::NSPIN];
     for (int is = 0; is < GlobalV::NSPIN; ++is) kernelRhoBeta[is] = new double[pw_rho->nrxx];
-    this->multiKernel(prho, kernelRhoBeta, this->beta_, pw_rho);
+    this->multi_kernel(prho, kernelRhoBeta, this->beta_, pw_rho);
 
     double **kernelRhoAlpha = new double* [GlobalV::NSPIN];
     for (int is = 0; is < GlobalV::NSPIN; ++is) kernelRhoAlpha[is] = new double[pw_rho->nrxx];
-    this->multiKernel(prho, kernelRhoAlpha, this->alpha_, pw_rho);
+    this->multi_kernel(prho, kernelRhoAlpha, this->alpha_, pw_rho);
 
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
@@ -138,8 +138,8 @@ void KEDF_WT::WT_potential(const double * const *prho, ModulePW::PW_Basis *pw_rh
         // }
         // energy *= 0.5 * this->dV_ * 0.5;
     }
-    this->WTenergy = energy;
-    Parallel_Reduce::reduce_all(this->WTenergy);
+    this->wt_energy = energy;
+    Parallel_Reduce::reduce_all(this->wt_energy);
 
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
@@ -195,7 +195,7 @@ void KEDF_WT::get_stress(double cellVol, const double * const * prho, ModulePW::
         for (int ip = 0; ip < pw_rho->npw; ++ip)
         {
             eta = sqrt(pw_rho->gg[ip]) * pw_rho->tpiba / this->tkf_;
-            diff = this->diffLinhard(eta, vw_weight);
+            diff = this->diff_linhard(eta, vw_weight);
             diff *= eta * (recipRhoAlpha[is][ip] * std::conj(recipRhoBeta[is][ip])).real();
             // cout << "diff    " << diff << endl;
             for (int a = 0; a < 3; ++a)
@@ -235,7 +235,7 @@ void KEDF_WT::get_stress(double cellVol, const double * const * prho, ModulePW::
 
     for (int a = 0; a < 3; ++a)
     {
-        this->stress(a,a) += mult * this->WTenergy / cellVol;
+        this->stress(a,a) += mult * this->wt_energy / cellVol;
         for (int b = 0; b < a; ++b)
         {
             this->stress(a,b) = this->stress(b,a);
@@ -253,7 +253,7 @@ void KEDF_WT::get_stress(double cellVol, const double * const * prho, ModulePW::
 }
 
 // Calculate WT kernel according to Lindhard response function
-double KEDF_WT::WTkernel(double eta, double tf_weight, double vw_weight)
+double KEDF_WT::wt_kernel(double eta, double tf_weight, double vw_weight)
 {
     if (eta < 0.)
     {
@@ -300,7 +300,7 @@ double KEDF_WT::WTkernel(double eta, double tf_weight, double vw_weight)
     }
 }
 
-double KEDF_WT::diffLinhard(double eta, double vw_weight)
+double KEDF_WT::diff_linhard(double eta, double vw_weight)
 {
     if (eta < 0.)
     {
@@ -324,7 +324,7 @@ double KEDF_WT::diffLinhard(double eta, double vw_weight)
 }
 
 // Calculate \int{W(r-r')rho^{exponent}(r') dr'}
-void KEDF_WT::multiKernel(const double * const * prho, double **rkernelRho, double exponent, ModulePW::PW_Basis *pw_rho)
+void KEDF_WT::multi_kernel(const double * const * prho, double **rkernelRho, double exponent, ModulePW::PW_Basis *pw_rho)
 {
     std::complex<double> **recipkernelRho = new std::complex<double> *[GlobalV::NSPIN];
     for (int is = 0; is < GlobalV::NSPIN; ++is)
@@ -349,18 +349,18 @@ void KEDF_WT::multiKernel(const double * const * prho, double **rkernelRho, doub
     delete[] recipkernelRho;
 }
 
-void KEDF_WT::fillKernel(double tf_weight, double vw_weight, ModulePW::PW_Basis *pw_rho)
+void KEDF_WT::fill_kernel(double tf_weight, double vw_weight, ModulePW::PW_Basis *pw_rho)
 {
     double eta = 0.;
     for (int ig = 0; ig < pw_rho->npw; ++ig)
     {
         eta = sqrt(pw_rho->gg[ig]) * pw_rho->tpiba / this->tkf_;
-        this->kernel_[ig] = this->WTkernel(eta, tf_weight, vw_weight) * this->wt_coef_;
+        this->kernel_[ig] = this->wt_kernel(eta, tf_weight, vw_weight) * this->wt_coef_;
     }
 }
 
 // Read kernel from file
-void KEDF_WT::readKernel(std::string fileName, ModulePW::PW_Basis *pw_rho)
+void KEDF_WT::read_kernel(std::string fileName, ModulePW::PW_Basis *pw_rho)
 {
     std::ifstream ifs(fileName.c_str(), std::ios::in);
 

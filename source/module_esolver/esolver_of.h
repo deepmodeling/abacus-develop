@@ -37,18 +37,18 @@ public:
             delete[] this->pdirect_[i];
             delete[] this->pdLdphi_[i];
             delete[] this->pdEdphi_[i];
-            delete[] this->precipDir_[i];
+            delete[] this->precip_dir_[i];
         }
         delete[] this->pdirect_;
         delete[] this->pdLdphi_;
         delete[] this->pdEdphi_;
-        delete[] this->precipDir_;
+        delete[] this->precip_dir_;
 
         delete[] this->nelec_;
         delete[] this->theta_;
         delete[] this->mu_;
         delete[] this->task_;
-        delete this->ptempRho_;
+        delete this->ptemp_rho_;
 
         delete this->tf_;
         delete this->vw_;
@@ -82,7 +82,7 @@ private:
     KEDF_LKT* lkt_ = nullptr;
 
     // charge extrapolation liuyu add 2022-11-07
-    Charge_Extra CE;
+    Charge_Extra CE_;
     psi::Psi<double>* psi_=nullptr;
 
     // optimization methods
@@ -97,7 +97,7 @@ private:
     std::string of_conv_ = "energy";  // select the convergence criterion, potential, energy (default), or both
     double of_tole_ = 2e-6;      // tolerance of the energy change (in Ry) for determining the convergence, default=2e-6 Ry
     double of_tolp_ = 1e-5;      // tolerance of potential for determining the convergence, default=1e-5 in a.u.
-    int max_iter_ = 50;           // scf_nmax
+    int max_iter_ = 50;          // scf_nmax
 
     // parameters from other module
     double dV_ = 0; // CELL
@@ -106,18 +106,18 @@ private:
     // used in density optimization
     int iter_ = 0;                               // iteration number
     double **pdirect_ = nullptr;                    // optimization direction of phi, which is sqrt(rho)
-    std::complex<double> **precipDir_ = nullptr;    // direction in reciprocal space, used when of_full_pw=false.
+    std::complex<double> **precip_dir_ = nullptr;    // direction in reciprocal space, used when of_full_pw=false.
     double *theta_ = nullptr;                       // step length
     double **pdEdphi_ = nullptr;                    // dE/dphi
     double **pdLdphi_ = nullptr;                    // dL/dphi
     double **pphi_ = nullptr;                       // pphi[i] = ppsi.get_pointer(i), which will be freed in ~Psi().
     char *task_ = nullptr;                          // used in line search
     double *mu_ = nullptr;                          // chemical potential
-    int tnSpinFlag_ = -1;                        // spin flag used in calV, which will be called by opt_tn
-    int maxDCsrch_ = 200;                        // max no. of line search
+    int tn_spin_flag_ = -1;                        // spin flag used in calV, which will be called by opt_tn
+    int max_dcsrch_ = 200;                        // max no. of line search
     int flag_ = -1;                              // flag of TN
 
-    Charge* ptempRho_ = nullptr;                 // used in line search
+    Charge* ptemp_rho_ = nullptr;                 // used in line search
 
     // // test rho convergence criterion
     // double *pdeltaRhoHar = nullptr; // 4pi*rhog/k^2
@@ -134,14 +134,14 @@ private:
     double normdLdphi_ = 100.;
 
     // main process of OFDFT
-    void beforeOpt(const int istep);
-    void updateV();
-    void solveV();
-    void getNextDirect();
-    void updateRho();
-    bool checkExit();
-    void printInfo();
-    void afterOpt(const int istep);
+    void before_opt(const int istep);
+    void update_potential();
+    void optimize();
+    void adjust_direction();
+    void update_rho();
+    bool check_exit();
+    void print_info();
+    void after_opt(const int istep);
 
     // tools
     void calV(double *ptempPhi, double *rdLdphi);
@@ -157,8 +157,8 @@ private:
 
     // interfaces to KEDF
     void init_kedf();
-    void kineticPotential(double **prho, double **pphi, ModuleBase::matrix &rpot);
-    double kineticEnergy();
+    void kinetic_potential(double **prho, double **pphi, ModuleBase::matrix &rpot);
+    double kinetic_energy();
     void kinetic_stress(ModuleBase::matrix &kinetic_stress);
 
     // interfaces to optimization methods

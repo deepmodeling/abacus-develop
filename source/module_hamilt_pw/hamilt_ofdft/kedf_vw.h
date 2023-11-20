@@ -29,14 +29,14 @@ class KEDF_vW
 
     double get_energy(double **pphi, ModulePW::PW_Basis *pw_rho);
     double get_energy_density(double **pphi, int is, int ir, ModulePW::PW_Basis *pw_rho);
-    void vW_potential(const double *const *pphi, ModulePW::PW_Basis *pw_rho, ModuleBase::matrix &rpotential);
+    void vw_potential(const double *const *pphi, ModulePW::PW_Basis *pw_rho, ModuleBase::matrix &rpotential);
     void get_stress(const double *const *pphi, ModulePW::PW_Basis *pw_rho, double inpt_vWenergy = -1);
 
-    double vWenergy = 0.;
+    double vw_energy = 0.;
     ModuleBase::matrix stress;
 
   private:
-    void laplacianPhi(const double *const *pphi, double **rLapPhi, ModulePW::PW_Basis *pw_rho);
+    void laplacian_phi(const double *const *pphi, double **rLapPhi, ModulePW::PW_Basis *pw_rho);
 
     double dV_ = 0.;
     double vw_weight_ = 1.;

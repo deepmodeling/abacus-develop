@@ -43,7 +43,7 @@ void ESolver_OF::init_kedf()
 }
 
 // Calculated this->of_kinetic_ potential and plus it to &rpot, return (rpot + kietic potential) * 2 * pphiInpt
-void ESolver_OF::kineticPotential(double** prho, double** pphiInpt, ModuleBase::matrix& rpot)
+void ESolver_OF::kinetic_potential(double** prho, double** pphiInpt, ModuleBase::matrix& rpot)
 {
     if (this->of_kinetic_ == "tf" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt")
     {
@@ -51,7 +51,7 @@ void ESolver_OF::kineticPotential(double** prho, double** pphiInpt, ModuleBase::
     }
     if (this->of_kinetic_ == "wt")
     {
-        this->wt_->WT_potential(prho, this->pw_rho, rpot);
+        this->wt_->wt_potential(prho, this->pw_rho, rpot);
     }
     if (this->of_kinetic_ == "lkt")
     {
@@ -70,31 +70,31 @@ void ESolver_OF::kineticPotential(double** prho, double** pphiInpt, ModuleBase::
     if (this->of_kinetic_ == "vw" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt"
         || this->of_kinetic_ == "lkt")
     {
-        this->vw_->vW_potential(pphiInpt, this->pw_rho, rpot);
+        this->vw_->vw_potential(pphiInpt, this->pw_rho, rpot);
     }
 }
 
 // Return the this->of_kinetic_ energy
-double ESolver_OF::kineticEnergy()
+double ESolver_OF::kinetic_energy()
 {
     double kinetic_energy = 0.;
 
     if (this->of_kinetic_ == "tf" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt")
     {
-        kinetic_energy += this->tf_->TFenergy;
+        kinetic_energy += this->tf_->tf_energy;
     }
     if (this->of_kinetic_ == "vw" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt"
         || this->of_kinetic_ == "lkt")
     {
-        kinetic_energy += this->vw_->vWenergy;
+        kinetic_energy += this->vw_->vw_energy;
     }
     if (this->of_kinetic_ == "wt")
     {
-        kinetic_energy += this->wt_->WTenergy;
+        kinetic_energy += this->wt_->wt_energy;
     }
     if (this->of_kinetic_ == "lkt")
     {
-        kinetic_energy += this->lkt_->LKTenergy;
+        kinetic_energy += this->lkt_->lkt_energy;
     }
 
     return kinetic_energy;
@@ -141,13 +141,13 @@ void ESolver_OF::init_opt()
     {
         if (this->opt_tn_ == nullptr) this->opt_tn_ = new ModuleBase::Opt_TN();
         this->opt_tn_->allocate(this->pw_rho->nrxx);
-        this->opt_tn_->setPara(this->dV_);
+        this->opt_tn_->set_para(this->dV_);
     }
     else if (this->of_method_ == "cg1" || this->of_method_ == "cg2")
     {
         if (this->opt_cg_ == nullptr) this->opt_cg_ = new ModuleBase::Opt_CG();
         this->opt_cg_->allocate(this->pw_rho->nrxx);
-        this->opt_cg_->setPara(this->dV_);
+        this->opt_cg_->set_para(this->dV_);
         this->opt_dcsrch_->set_paras(1e-4,1e-2);
     }
     else if (this->of_method_ == "bfgs")
@@ -163,7 +163,7 @@ void ESolver_OF::get_direction()
     {
         if (this->of_method_ == "tn")
         {
-            this->tnSpinFlag_ = is;
+            this->tn_spin_flag_ = is;
             opt_tn_->next_direct(this->pphi_[is], this->pdLdphi_[is], this->flag_, this->pdirect_[is], this, &ESolver_OF::calV);
         }
         else if (this->of_method_ == "cg1")

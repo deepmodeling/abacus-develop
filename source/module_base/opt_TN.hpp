@@ -23,7 +23,7 @@ class Opt_TN
 public:
     Opt_TN() 
     {
-        this->machPrec_ = std::numeric_limits<double>::epsilon(); // get machine precise
+        this->mach_prec_ = std::numeric_limits<double>::epsilon(); // get machine precise
     }
     ~Opt_TN() {};
 
@@ -38,12 +38,12 @@ public:
         this->cg_.allocate(this->nx_);
     }
     
-    void setPara(
+    void set_para(
         double dV
     )
     {
         this->dV_ = dV;
-        this->cg_.setPara(this->dV_);
+        this->cg_.set_para(this->dV_);
     }
 
     // 
@@ -81,7 +81,7 @@ private:
     
     int nx_ = 0; // length of the solution array x
     int iter_ = 0; // number of the iteration
-    double machPrec_ = 0.; // machine precise
+    double mach_prec_ = 0.; // machine precision
 
     double inner_product(double *pa, double *pb, int length)
     {
@@ -93,7 +93,7 @@ private:
 
     // 
     // Get epsilon used in interpolation.
-    // epsilon = 2*sqrt(machPrec_) * (1+|x|) / |d|.
+    // epsilon = 2*sqrt(mach_prec_) * (1+|x|) / |d|.
     // || means modulu.
     // 
     double get_epsilon(double *px, double *pcgDirect) 
@@ -103,8 +103,8 @@ private:
         Parallel_Reduce::reduce_all(xx);
         double dd = this->inner_product(pcgDirect, pcgDirect, this->nx_);
         Parallel_Reduce::reduce_all(dd);
-        epsilon = 2 * sqrt(this->machPrec_) * (1 + sqrt(xx)) / sqrt(dd);
-        // epsilon = 2 * sqrt(this->machPrec_) * (1 + sqrt(this->inner_product(px, px, this->nx_))) 
+        epsilon = 2 * sqrt(this->mach_prec_) * (1 + sqrt(xx)) / sqrt(dd);
+        // epsilon = 2 * sqrt(this->mach_prec_) * (1 + sqrt(this->inner_product(px, px, this->nx_))) 
         //         / sqrt(this->inner_product(pcgDirect, pcgDirect, this->nx_));
         return epsilon;
     }

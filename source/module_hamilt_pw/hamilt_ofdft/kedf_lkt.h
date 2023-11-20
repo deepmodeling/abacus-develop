@@ -30,7 +30,7 @@ class KEDF_LKT
     void lkt_potential(const double *const *prho, ModulePW::PW_Basis *pw_rho, ModuleBase::matrix &rpotential);
     void get_stress(const double cellVol, const double *const *prho, ModulePW::PW_Basis *pw_rho);
 
-    double LKTenergy = 0.; // LKT energy
+    double lkt_energy = 0.; // LKT energy
     ModuleBase::matrix stress;
 
   private:

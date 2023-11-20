@@ -37,8 +37,8 @@ double KEDF_LKT::get_energy(const double *const *prho, ModulePW::PW_Basis *pw_rh
     {
         // Waiting for update
     }
-    this->LKTenergy = energy;
-    Parallel_Reduce::reduce_all(this->LKTenergy);
+    this->lkt_energy = energy;
+    Parallel_Reduce::reduce_all(this->lkt_energy);
 
     delete[] as;
     for (int i = 0; i < 3; ++i)
@@ -77,7 +77,7 @@ double KEDF_LKT::get_energy_density(const double *const *prho, int is, int ir, M
 void KEDF_LKT::lkt_potential(const double *const *prho, ModulePW::PW_Basis *pw_rho, ModuleBase::matrix &rpotential)
 {
     ModuleBase::timer::tick("KEDF_LKT", "LKT_potential");
-    this->LKTenergy = 0.;
+    this->lkt_energy = 0.;
     double *as = new double[pw_rho->nrxx]; // a*s
     double **nabla_rho = new double *[3];
     for (int i = 0; i < 3; ++i)
@@ -96,7 +96,7 @@ void KEDF_LKT::lkt_potential(const double *const *prho, ModulePW::PW_Basis *pw_r
             double coshas = std::cosh(as[ir]);
             double tanhas = std::tanh(as[ir]);
 
-            this->LKTenergy += std::pow(prho[0][ir], 5. / 3.) / coshas;
+            this->lkt_energy += std::pow(prho[0][ir], 5. / 3.) / coshas;
             // add the first term
             rpotential(0, ir)
                 += 5.0 / 3.0 * this->c_tf_ * std::pow(prho[0][ir], 2. / 3.) / coshas * (1. + 4.0 / 5.0 * as[ir] * tanhas);
@@ -122,8 +122,8 @@ void KEDF_LKT::lkt_potential(const double *const *prho, ModulePW::PW_Basis *pw_r
             rpotential(0, ir) += nabla_term[ir];
         }
 
-        this->LKTenergy *= this->c_tf_ * this->dV_;
-        Parallel_Reduce::reduce_all(this->LKTenergy);
+        this->lkt_energy *= this->c_tf_ * this->dV_;
+        Parallel_Reduce::reduce_all(this->lkt_energy);
     }
     else if (GlobalV::NSPIN == 2)
     {
@@ -162,7 +162,7 @@ void KEDF_LKT::get_stress(const double cell_vol, const double *const *prho, Modu
 
                 if (alpha == beta)
                 {
-                    this->stress(alpha, beta) = 2.0 / 3.0 / cell_vol * this->LKTenergy;
+                    this->stress(alpha, beta) = 2.0 / 3.0 / cell_vol * this->lkt_energy;
                 }
 
                 double integral_term = 0.;

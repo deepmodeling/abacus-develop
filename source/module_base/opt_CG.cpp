@@ -39,7 +39,7 @@ void Opt_CG::allocate(
     ModuleBase::GlobalFunc::ZEROS(this->pgradient_old_, this->nx_);
 }
 
-void Opt_CG::setPara(
+void Opt_CG::set_para(
     double dV
 )
 {

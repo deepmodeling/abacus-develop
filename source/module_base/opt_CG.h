@@ -30,7 +30,7 @@ public:
     void allocate(
         int nx // length of the solution array x
     );
-    void setPara(
+    void set_para(
         double dV
     );
     void refresh(

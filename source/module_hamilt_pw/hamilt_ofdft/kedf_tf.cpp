@@ -36,8 +36,8 @@ double KEDF_TF::get_energy(const double *const *prho)
         }
         energy *= 0.5 * this->dV_ * this->c_tf_ * this->tf_weight_;
     }
-    this->TFenergy = energy;
-    Parallel_Reduce::reduce_all(this->TFenergy);
+    this->tf_energy = energy;
+    Parallel_Reduce::reduce_all(this->tf_energy);
     return energy;
 }
 
@@ -80,7 +80,7 @@ void KEDF_TF::tf_potential(const double *const *prho, ModuleBase::matrix &rpoten
 void KEDF_TF::get_stress(double cellVol)
 {
     double temp = 0.;
-    temp = 2. * this->TFenergy / (3. * cellVol);
+    temp = 2. * this->tf_energy / (3. * cellVol);
 
     for (int i = 0; i < 3; ++i)
     {

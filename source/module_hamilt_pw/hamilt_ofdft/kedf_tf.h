@@ -30,7 +30,7 @@ class KEDF_TF
     void tf_potential(const double *const *prho, ModuleBase::matrix &rpotential);
     void get_stress(double cellVol);
 
-    double TFenergy = 0.; // TF energy
+    double tf_energy = 0.; // TF energy
     ModuleBase::matrix stress;
 
   private:
