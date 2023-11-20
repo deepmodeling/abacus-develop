@@ -11,7 +11,7 @@ gamma_only      0
 
 #Parameters (2.Iteration)
 ecutwfc			10
-scf_thr				1e-4
+scf_thr				1e-10
 scf_nmax			100
 
 out_chg      1

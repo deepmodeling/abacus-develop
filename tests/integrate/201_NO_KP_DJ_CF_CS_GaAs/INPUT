@@ -20,7 +20,7 @@ smearing_method            gaussian
 smearing_sigma               0.001
 #Parameters (3.PW)
 ecutwfc             20
-scf_thr                 1e-6
+scf_thr                 1e-10
 scf_nmax               100
 
 #Parameters (LCAO)

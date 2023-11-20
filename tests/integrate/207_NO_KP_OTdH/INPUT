@@ -9,7 +9,7 @@ orbital_dir	../../PP_ORB
 
 #Parameters (2.Iteration)
 ecutwfc			20
-scf_thr				1e-4
+scf_thr				1e-8
 scf_nmax			100
 
 #Parameters (3.Basis)

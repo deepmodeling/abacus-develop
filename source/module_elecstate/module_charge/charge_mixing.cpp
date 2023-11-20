@@ -566,7 +566,7 @@ void Charge_Mixing::mix_rho(Charge* chr)
             mix_rho_recip_new(chr);
         }
     }
-    else
+    else if (GlobalV::SCF_THR_TYPE == 2)
     {
         mix_rho_real(chr);
     }
@@ -906,7 +906,6 @@ double Charge_Mixing::inner_product_recip_new2(std::complex<double>* rhog1, std:
 #ifdef __MPI
     Parallel_Reduce::reduce_pool(sum);
 #endif
-    ModuleBase::timer::tick("Charge_Mixing", "rhog_dot_product");
 
     sum *= GlobalC::ucell.omega * 0.5;
 

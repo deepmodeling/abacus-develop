@@ -11,7 +11,7 @@ dft_functional  scan
 #Parameters (2.Iteration)
 ecutwfc			20
 scf_thr				1e-9
-scf_nmax			2
+scf_nmax			100
 
 
 #Parameters (3.Basis)

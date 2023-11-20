@@ -5,7 +5,7 @@ nbands    40
 calculation    scf
 ecutwfc    50
 scf_thr    1.0e-4
-scf_nmax    3
+scf_nmax    100
 out_chg    0
 
 #init_chg    file
@@ -23,8 +23,8 @@ cal_stress    0
 #relax_bfgs_init    0.5
 
 mixing_type    broyden
-mixing_beta    0.4
-#mixing_gg0    1.5
+mixing_beta    0.2
+mixing_gg0    1.0
 
 ks_solver    scalapack_gvx
 basis_type    lcao

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ABACUS executable path
-abacus=abacus
+abacus=/root/software/abacus-latest/build/abacus
 # number of MPI processes
 np=4
 # threshold with unit: eV
@@ -11,7 +11,9 @@ stress_threshold=0.001
 # check accuracy
 ca=8
 # regex of case name
-case="^[^#].*_.*$"
+#case="^[^#].*NO_.*$"
+#case="186_.*$"
+case="186_PW_SKG_ALL"
 # enable AddressSanitizer
 sanitize=false
 

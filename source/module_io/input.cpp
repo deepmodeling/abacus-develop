@@ -300,7 +300,7 @@ void Input::Default(void)
     mixing_beta = -10;
     mixing_ndim = 8;
     mixing_gg0 = 1.00; // use Kerker defaultly
-    mixing_beta_mag = 0.0; // only set when nspin == 2
+    mixing_beta_mag = -10.0; // only set when nspin == 2
     mixing_gg0_mag = 0.0; // defaultly exclude Kerker from mixing magnetic density
     mixing_tau = false;
     mixing_dftu = false;
@@ -2981,9 +2981,16 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     }
     else
     {
-        if (nspin == 2)
+        if (nspin == 2 && mixing_beta_mag < 0.0)
         {
-            mixing_beta_mag = 4 * mixing_beta;
+            if (mixing_beta <= 0.4)
+            {
+                mixing_beta_mag = 4 * mixing_beta;
+            }
+            else
+            {
+                mixing_beta_mag = 1.6;
+            }
         }
     }
 }
