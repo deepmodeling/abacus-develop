@@ -209,3 +209,9 @@ AddTest(
   ../memory.cpp ../libm/branred.cpp ../libm/sincos.cpp ../inverse_matrix.cpp ../lapack_connector.h
   LIBS ${math_libs} formatter device
 )
+
+AddTest(
+  TARGET io_para_json_test
+  LIBS ${math_libs} base device
+  SOURCES para_json_test.cpp ../input.cpp
+)
