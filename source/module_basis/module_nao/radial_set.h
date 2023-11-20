@@ -72,7 +72,9 @@ class RadialSet
                        const int nmax = 0,
                        const double rcut = 10.0,
                        const double dr = 0.01,
+                       const double conv_thr = 1e-6,
                        const int rank = 0,
+                       const std::string strategy = "minimal",
                        std::ofstream* const ptr_log = nullptr
     ) {}
 

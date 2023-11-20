@@ -188,7 +188,7 @@ void RadialCollection::build(const int nfile, const std::string* const file, con
     set_rcut_max();
 }
 
-void RadialCollection::build(const int ntype, const double* const charges, const int* const nmax)
+void RadialCollection::build(const int ntype, const double* const charges, const int* const nmax, const std::string strategy)
 {
     cleanup();
     ntype_ = ntype;
@@ -197,7 +197,13 @@ void RadialCollection::build(const int ntype, const double* const charges, const
     for (int itype = 0; itype < ntype_; ++itype)
     {
         radset_[itype] = new HydrogenRadials;
-        radset_[itype]->build(itype, charges[itype], nmax[itype]);
+        radset_[itype]->build(itype, 
+                              charges[itype], 
+                              nmax[itype], 
+                              10.0,             // rcut should be determined automatically, in principle...
+                              0.01,
+                              0,
+                              strategy);
 
         lmax_ = std::max(lmax_, radset_[itype]->lmax());
         nchi_ += radset_[itype]->nchi();

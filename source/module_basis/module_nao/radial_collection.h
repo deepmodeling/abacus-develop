@@ -30,7 +30,7 @@ class RadialCollection
     void build(const int ntype, Numerical_Nonlocal* const nls);
 
     /// builds the collection from quasi hydrogen radial functions
-    void build(const int ntype, const double* const charges, const int* const nmax);
+    void build(const int ntype, const double* const charges, const int* const nmax, const std::string strategy = "minimal");
 
     /**
      * @name Getters
