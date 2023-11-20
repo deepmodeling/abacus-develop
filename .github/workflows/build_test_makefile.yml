@@ -19,7 +19,6 @@ jobs:
         uses: actions/checkout@v4
       - name: Build
         run: |
-          source /opt/intel/oneapi/setvars.sh
           export I_MPI_CXX=icpx
           cd source
           make -j2 ${{ matrix.build_args }}

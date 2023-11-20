@@ -46,7 +46,6 @@ jobs:
 
       - name: Build
         run: |
-          source /root/.bashrc
           git config --global --add safe.directory `pwd`
           cmake -B build ${{ matrix.build_args }}
           cmake --build build -j2
