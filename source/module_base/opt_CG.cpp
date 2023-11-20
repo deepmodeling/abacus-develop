@@ -6,9 +6,9 @@ Opt_CG::Opt_CG(){}
 
 Opt_CG::~Opt_CG()
 {
-    delete[] this->pb;
-    delete[] this->pdirect_old;
-    delete[] this->pgradient_old;
+    delete[] this->pb_;
+    delete[] this->pdirect_old_;
+    delete[] this->pgradient_old_;
 }
 
 // 
@@ -18,9 +18,9 @@ void Opt_CG::init_b(
     double *pinp_b // b in the linear equation Ax = b
 )
 {
-    if (this->pb != nullptr) delete[] this->pb;
-    this->pb = new double[this->nx];
-    for (int i = 0; i < nx; ++i) this->pb[i] = pinp_b[i];
+    if (this->pb_ != nullptr) delete[] this->pb_;
+    this->pb_ = new double[this->nx_];
+    for (int i = 0; i < this->nx_; ++i) this->pb_[i] = pinp_b[i];
 }
 
 // 
@@ -30,20 +30,20 @@ void Opt_CG::allocate(
     int nx // length of the solution array x
 )
 {
-    this->nx = nx;
-    delete[] this->pdirect_old;
-    delete[] this->pgradient_old;
-    this->pdirect_old = new double[this->nx];
-    this->pgradient_old = new double[this->nx];
-    ModuleBase::GlobalFunc::ZEROS(this->pdirect_old, this->nx);
-    ModuleBase::GlobalFunc::ZEROS(this->pgradient_old, this->nx);
+    this->nx_ = nx;
+    delete[] this->pdirect_old_;
+    delete[] this->pgradient_old_;
+    this->pdirect_old_ = new double[this->nx_];
+    this->pgradient_old_ = new double[this->nx_];
+    ModuleBase::GlobalFunc::ZEROS(this->pdirect_old_, this->nx_);
+    ModuleBase::GlobalFunc::ZEROS(this->pgradient_old_, this->nx_);
 }
 
 void Opt_CG::setPara(
     double dV
 )
 {
-    this->dV = dV;
+    this->dV_ = dV;
 }
 
 // 
@@ -55,17 +55,17 @@ void Opt_CG::refresh(
     double *pinp_b // new b in Ax = b, default nullptr means we are dealing with general case
 )
 {
-    this->iter = 0;
-    this->alpha = 0.;
-    this->beta = 0.;
+    this->iter_ = 0;
+    this->alpha_ = 0.;
+    this->beta_ = 0.;
     if (nx_new!=0)
     {
         this->allocate(nx_new);
     }
     else
     {
-        ModuleBase::GlobalFunc::ZEROS(this->pdirect_old, this->nx);
-        ModuleBase::GlobalFunc::ZEROS(this->pgradient_old, this->nx);
+        ModuleBase::GlobalFunc::ZEROS(this->pdirect_old_, this->nx_);
+        ModuleBase::GlobalFunc::ZEROS(this->pgradient_old_, this->nx_);
     }
     if (pinp_b != nullptr) this->init_b(pinp_b);
 }
@@ -88,13 +88,13 @@ void Opt_CG::next_direct(
     }
     else if (label == 1 or label == 2) // FR formula or HZ form
     {
-        if (this->iter == 0) // if iter == 0, d = -g
+        if (this->iter_ == 0) // if iter == 0, d = -g
         {
-            for (int i = 0; i < this->nx; ++i)
+            for (int i = 0; i < this->nx_; ++i)
             {
                 rdirect[i] = - pgradient[i];
-                this->pgradient_old[i] = pgradient[i];
-                this->pdirect_old[i] = rdirect[i];
+                this->pgradient_old_[i] = pgradient[i];
+                this->pdirect_old_[i] = rdirect[i];
             }
         }
         else // d = -g + beta * d
@@ -107,14 +107,14 @@ void Opt_CG::next_direct(
             {
                 this->HZ_beta(pgradient);
             }
-            for (int i = 0; i < this->nx; ++i)
+            for (int i = 0; i < this->nx_; ++i)
             {
-                rdirect[i] = -pgradient[i] + this->beta * this->pdirect_old[i];
-                this->pgradient_old[i] = pgradient[i];
-                this->pdirect_old[i] = rdirect[i];
+                rdirect[i] = -pgradient[i] + this->beta_ * this->pdirect_old_[i];
+                this->pgradient_old_[i] = pgradient[i];
+                this->pdirect_old_[i] = rdirect[i];
             }
         }
-        this->iter++;
+        this->iter_++;
     }
 }
 
@@ -128,18 +128,18 @@ double Opt_CG::step_length(
     int &ifPD // 0 if positive definite, -1, -2 when not
 )
 {
-    double dAd = this->inner_product(pdirect, pAd, this->nx);
+    double dAd = this->inner_product(pdirect, pAd, this->nx_);
     Parallel_Reduce::reduce_all(dAd);
     ifPD = 0;
     // check for positive-definiteness, very important for convergence
     if (dAd == 0)
     {
-        this->alpha = 0;
+        this->alpha_ = 0;
         return 0;
     }
     else if (dAd < 0)
     {
-        if (this->iter == 1)
+        if (this->iter_ == 1)
         {
             ifPD = -1;
         }
@@ -148,8 +148,8 @@ double Opt_CG::step_length(
             ifPD = -2;
         }
     }
-    this->alpha = this->gg / dAd;
-    return this->alpha;
+    this->alpha_ = this->gg_ / dAd;
+    return this->alpha_;
 }
 
 //
@@ -161,35 +161,35 @@ void Opt_CG::stantard_CGdirect(
     double *rdirect // next direct
 )
 {
-    if (this->iter == 0)
+    if (this->iter_ == 0)
     {
-        for (int i = 0; i < this->nx; ++i)
+        for (int i = 0; i < this->nx_; ++i)
         {   
-            this->pgradient_old[i] = - this->pb[i];
-            rdirect[i] = this->pb[i];
-            this->pdirect_old[i] = this->pb[i];
+            this->pgradient_old_[i] = - this->pb_[i];
+            rdirect[i] = this->pb_[i];
+            this->pdirect_old_[i] = this->pb_[i];
         }
     }
     else
     {
-        double *temp_gradient = new double[this->nx];
-        for (int i = 0; i < this->nx; ++i)
+        double *temp_gradient = new double[this->nx_];
+        for (int i = 0; i < this->nx_; ++i)
         {
-            temp_gradient[i] = this->pgradient_old[i] + this->alpha * pAd[i];
+            temp_gradient[i] = this->pgradient_old_[i] + this->alpha_ * pAd[i];
         }
-        this->beta = this->inner_product(temp_gradient, temp_gradient, this->nx) / this->gg;
-        Parallel_Reduce::reduce_all(this->beta);
-        for (int i = 0; i < this->nx; ++i)
+        this->beta_ = this->inner_product(temp_gradient, temp_gradient, this->nx_) / this->gg_;
+        Parallel_Reduce::reduce_all(this->beta_);
+        for (int i = 0; i < this->nx_; ++i)
         {
-            this->pgradient_old[i] = temp_gradient[i];
-            rdirect[i] =  - this->pgradient_old[i] + this->beta * this->pdirect_old[i];
-            this->pdirect_old[i] = rdirect[i];
+            this->pgradient_old_[i] = temp_gradient[i];
+            rdirect[i] =  - this->pgradient_old_[i] + this->beta_ * this->pdirect_old_[i];
+            this->pdirect_old_[i] = rdirect[i];
         }
         delete[] temp_gradient;
     }
-    this->gg = this->inner_product(this->pgradient_old, this->pgradient_old, this->nx);
-    Parallel_Reduce::reduce_all(this->gg);
-    this->iter++;
+    this->gg_ = this->inner_product(this->pgradient_old_, this->pgradient_old_, this->nx_);
+    Parallel_Reduce::reduce_all(this->gg_);
+    this->iter_++;
 }
 
 // 
@@ -202,14 +202,14 @@ void Opt_CG::PR_beta(
 )
 {
     double temp_beta = 0.;
-    temp_beta = this->inner_product(pgradient, pgradient, this->nx);
-    temp_beta -= this->inner_product(pgradient, this->pgradient_old, this->nx);
+    temp_beta = this->inner_product(pgradient, pgradient, this->nx_);
+    temp_beta -= this->inner_product(pgradient, this->pgradient_old_, this->nx_);
     Parallel_Reduce::reduce_all(temp_beta);
-    double gg_old = this->inner_product(this->pgradient_old, this->pgradient_old, this->nx);
+    double gg_old = this->inner_product(this->pgradient_old_, this->pgradient_old_, this->nx_);
     Parallel_Reduce::reduce_all(gg_old);
-    // temp_beta /= this->inner_product(this->pgradient_old, this->pgradient_old, this->nx);
+    // temp_beta /= this->inner_product(this->pgradient_old_, this->pgradient_old_, this->nx_);
     temp_beta /= gg_old;
-    this->beta = std::max(0., temp_beta);
+    this->beta_ = std::max(0., temp_beta);
 }
 
 // 
@@ -221,26 +221,26 @@ void Opt_CG::HZ_beta(
     double *pgradient // df(x)/dx
 )
 {
-    double *y = new double[this->nx];
-    for (int i = 0; i < this->nx; ++i) y[i] = pgradient[i] - this->pgradient_old[i];
+    double *y = new double[this->nx_];
+    for (int i = 0; i < this->nx_; ++i) y[i] = pgradient[i] - this->pgradient_old_[i];
     
-    double py = this->inner_product(this->pdirect_old, y, this->nx);
+    double py = this->inner_product(this->pdirect_old_, y, this->nx_);
     Parallel_Reduce::reduce_all(py);
-    double yy = this->inner_product(y, y, this->nx);
+    double yy = this->inner_product(y, y, this->nx_);
     Parallel_Reduce::reduce_all(yy);
-    double pg = this->inner_product(this->pdirect_old, pgradient, this->nx);
+    double pg = this->inner_product(this->pdirect_old_, pgradient, this->nx_);
     Parallel_Reduce::reduce_all(pg);
-    double yg = this->inner_product(y, pgradient, this->nx);
+    double yg = this->inner_product(y, pgradient, this->nx_);
     Parallel_Reduce::reduce_all(yg);
     double temp_beta = (yg - 2 * pg * yy / py) /py;
 
-    double pp = this->inner_product(this->pdirect_old, this->pdirect_old, this->nx);
+    double pp = this->inner_product(this->pdirect_old_, this->pdirect_old_, this->nx_);
     Parallel_Reduce::reduce_all(pp);
-    double gg = this->inner_product(this->pgradient_old, this->pgradient_old, this->nx);
+    double gg = this->inner_product(this->pgradient_old_, this->pgradient_old_, this->nx_);
     Parallel_Reduce::reduce_all(gg);
-    double temp_eta = -1 / (sqrt(pp) * std::min(this->eta, sqrt(gg)));
+    double temp_eta = -1 / (sqrt(pp) * std::min(this->eta_, sqrt(gg)));
 
-    this->beta = std::max(temp_beta, temp_eta);
+    this->beta_ = std::max(temp_beta, temp_eta);
 
     delete[] y;
 }

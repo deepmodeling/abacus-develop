@@ -21,9 +21,7 @@ class KEDF_TF
     {
         this->stress.create(3, 3);
     }
-    ~KEDF_TF()
-    {
-    }
+    ~KEDF_TF(){}
 
     void set_para(int nx, double dV, double tf_weight);
 
@@ -36,10 +34,10 @@ class KEDF_TF
     ModuleBase::matrix stress;
 
   private:
-    int nx = 0;            // number of real space points in current core
-    double dV = 0.;        // volume element = V/nxyz
-    double tf_weight = 1.; // weight of TF KEDF
-    const double cTF
+    int nx_ = 0;            // number of real space points in current core
+    double dV_ = 0.;        // volume element = V/nxyz
+    double tf_weight_ = 1.; // weight of TF KEDF
+    const double c_tf_
         = 3.0 / 10.0 * std::pow(3 * std::pow(M_PI, 2.0), 2.0 / 3.0)
           * 2; // 10/3*(3*pi^2)^{2/3}, multiply by 2 to convert unit from Hartree to Ry, finally in Ry*Bohr^(-2)
 };

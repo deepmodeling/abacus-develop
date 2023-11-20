@@ -23,11 +23,10 @@ class KEDF_WT
     }
     ~KEDF_WT()
     {
-        delete[] this->kernel;
+        delete[] this->kernel_;
     }
 
-    void set_para(int nx,
-                  double dV,
+    void set_para(double dV,
                   double alpha,
                   double beta,
                   double nelec,
@@ -51,18 +50,17 @@ class KEDF_WT
     void readKernel(std::string fileName, ModulePW::PW_Basis *pw_rho);
     void fillKernel(double tf_weight, double vw_weight, ModulePW::PW_Basis *pw_rho);
 
-    int nx = 0;
-    double dV = 0.;
-    double rho0 = 0.; // average rho
-    double kF = 0.;   // Fermi vector kF = (3 pi^2 rho)^(1/3)
-    double tkF = 0.;  // 2 * kF
-    double alpha = 5. / 6.;
-    double beta = 5. / 6.;
+    double dV_ = 0.;
+    double rho0_ = 0.; // average rho
+    double kf_ = 0.;   // Fermi vector kF = (3 pi^2 rho)^(1/3)
+    double tkf_ = 0.;  // 2 * kF
+    double alpha_ = 5. / 6.;
+    double beta_ = 5. / 6.;
     // double weightWT = 1.;
-    const double cTF
+    const double c_tf_
         = 3.0 / 10.0 * std::pow(3 * std::pow(M_PI, 2.0), 2.0 / 3.0)
           * 2; // 10/3*(3*pi^2)^{2/3}, multiply by 2 to convert unit from Hartree to Ry, finally in Ry*Bohr^(-2)
-    double WTcoef = 0.; // coefficient of WT kernel
-    double *kernel = nullptr;
+    double wt_coef_ = 0.; // coefficient of WT kernel
+    double *kernel_ = nullptr;
 };
 #endif

@@ -15,13 +15,13 @@ class Opt_DCsrch
 public:
 	Opt_DCsrch()
 	{
-		this->isave = new int[3];
-    	this->dsave = new double[14];
+		this->isave_ = new int[3];
+    	this->dsave_ = new double[14];
 	}
 	~Opt_DCsrch()
 	{
-		delete[] this->isave; 
-		delete[] this->dsave; 
+		delete[] this->isave_; 
+		delete[] this->dsave_; 
 	}
 
 	// 
@@ -46,11 +46,11 @@ public:
 		double stpmax=ModuleBase::PI
 	)
 	{
-		this->ftol = ftol;
-		this->gtol = gtol;
-		this->xtol = xtol;
-		this->stpmin = stpmin;
-		this->stpmax = stpmax;
+		this->ftol_ = ftol;
+		this->gtol_ = gtol;
+		this->xtol_ = xtol;
+		this->stpmin_ = stpmin;
+		this->stpmax_ = stpmax;
 	}
 
 	// 
@@ -79,13 +79,13 @@ public:
 	);
 
 private:
-	double ftol = 1e-4; // nonnegative tolerance for the sufficient decrease condition.
-	double gtol = 2e-1; // nonnegative tolerance for the curvature condition.
-	double xtol = 1e-12; // nonnegative relative tolerance for an acceptable step. The subroutine exits with a warning if the relative difference between sty and stx is less than xtol.
-	double stpmin = 0.; // nonnegative lower bound for the step.
-	double stpmax = ModuleBase::PI; // nonnegative upper bound for the step.
-	int *isave = nullptr; // an integer work array of dimension 2.
-    double *dsave = nullptr; // a double precision work array of dimension 13.
+	double ftol_ = 1e-4; // nonnegative tolerance for the sufficient decrease condition.
+	double gtol_ = 2e-1; // nonnegative tolerance for the curvature condition.
+	double xtol_ = 1e-12; // nonnegative relative tolerance for an acceptable step. The subroutine exits with a warning if the relative difference between sty and stx is less than xtol.
+	double stpmin_ = 0.; // nonnegative lower bound for the step.
+	double stpmax_ = ModuleBase::PI; // nonnegative upper bound for the step.
+	int *isave_ = nullptr; // an integer work array of dimension 2.
+    double *dsave_ = nullptr; // a double precision work array of dimension 13.
 };
 }
 

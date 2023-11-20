@@ -4,30 +4,29 @@
 #include "module_base/tool_quit.h"
 #include "module_base/global_variable.h"
 
-void KEDF_WT::set_para(int nx, double dV, double alpha, double beta, double nelec, double tf_weight, double vw_weight, bool read_kernel, std::string kernel_file, ModulePW::PW_Basis *pw_rho)
+void KEDF_WT::set_para(double dV, double alpha, double beta, double nelec, double tf_weight, double vw_weight, bool read_kernel, std::string kernel_file, ModulePW::PW_Basis *pw_rho)
 {
-    this->nx = nx;
-    this->dV = dV;
+    this->dV_ = dV;
     // this->weightWT = weightWT;
-    this->alpha = alpha;
-    this->beta = beta;
+    this->alpha_ = alpha;
+    this->beta_ = beta;
 
     if (GlobalV::of_wt_rho0 != 0)
     {
-        this->rho0 = GlobalV::of_wt_rho0;
+        this->rho0_ = GlobalV::of_wt_rho0;
     }
     else
     {
-        this->rho0 = 1./(pw_rho->nxyz * dV) * nelec;
+        this->rho0_ = 1./(pw_rho->nxyz * dV) * nelec;
     }
 
-    this->kF = std::pow(3. * std::pow(ModuleBase::PI, 2) * this->rho0, 1./3.);
-    this->tkF = 2. * this->kF;
+    this->kf_ = std::pow(3. * std::pow(ModuleBase::PI, 2) * this->rho0_, 1./3.);
+    this->tkf_ = 2. * this->kf_;
 
-    this->WTcoef = 5./(9. * this->alpha * this->beta * std::pow(this->rho0, this->alpha + this->beta - 5./3.));
+    this->wt_coef_ = 5./(9. * this->alpha_ * this->beta_ * std::pow(this->rho0_, this->alpha_ + this->beta_ - 5./3.));
 
-    delete[] this->kernel;
-    this->kernel = new double[pw_rho->npw];
+    delete[] this->kernel_;
+    this->kernel_ = new double[pw_rho->npw];
 
     if (read_kernel)
         this->readKernel(kernel_file, pw_rho);
@@ -42,27 +41,27 @@ double KEDF_WT::get_energy(const double * const * prho, ModulePW::PW_Basis *pw_r
 {
     double **kernelRhoBeta = new double* [GlobalV::NSPIN];
     for (int is = 0; is < GlobalV::NSPIN; ++is) kernelRhoBeta[is] = new double[pw_rho->nrxx];
-    this->multiKernel(prho, kernelRhoBeta, this->beta, pw_rho);
+    this->multiKernel(prho, kernelRhoBeta, this->beta_, pw_rho);
 
     double energy = 0.; // in Ry
     if (GlobalV::NSPIN == 1)
     {
-        for (int ir = 0; ir < this->nx; ++ir)
+        for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         {
-            energy += std::pow(prho[0][ir], this->alpha) * kernelRhoBeta[0][ir];
+            energy += std::pow(prho[0][ir], this->alpha_) * kernelRhoBeta[0][ir];
         }
-        energy *= this->dV * this->cTF;
+        energy *= this->dV_ * this->c_tf_;
     }
     else if (GlobalV::NSPIN == 2)
     {
         // for (int is = 0; is < GlobalV::NSPIN; ++is)
         // {
-        //     for (int ir = 0; ir < this->nx; ++ir)
+        //     for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         //     {
         //         energy += 2 * pphi[is][ir] * LapPhi[is][ir];
         //     }
         // }
-        // energy *= 0.5 * this->dV * 0.5;
+        // energy *= 0.5 * this->dV_ * 0.5;
     }
     this->WTenergy = energy;
     Parallel_Reduce::reduce_all(this->WTenergy);
@@ -80,9 +79,9 @@ double KEDF_WT::get_energy_density(const double * const *prho, int is, int ir, M
 {
     double **kernelRhoBeta = new double* [GlobalV::NSPIN];
     for (int is = 0; is < GlobalV::NSPIN; ++is) kernelRhoBeta[is] = new double[pw_rho->nrxx];
-    this->multiKernel(prho, kernelRhoBeta, this->beta, pw_rho);
+    this->multiKernel(prho, kernelRhoBeta, this->beta_, pw_rho);
 
-    double result = this->cTF * std::pow(prho[is][ir], this->alpha) * kernelRhoBeta[is][ir];
+    double result = this->c_tf_ * std::pow(prho[is][ir], this->alpha_) * kernelRhoBeta[is][ir];
 
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
@@ -102,19 +101,19 @@ void KEDF_WT::WT_potential(const double * const *prho, ModulePW::PW_Basis *pw_rh
 
     double **kernelRhoBeta = new double* [GlobalV::NSPIN];
     for (int is = 0; is < GlobalV::NSPIN; ++is) kernelRhoBeta[is] = new double[pw_rho->nrxx];
-    this->multiKernel(prho, kernelRhoBeta, this->beta, pw_rho);
+    this->multiKernel(prho, kernelRhoBeta, this->beta_, pw_rho);
 
     double **kernelRhoAlpha = new double* [GlobalV::NSPIN];
     for (int is = 0; is < GlobalV::NSPIN; ++is) kernelRhoAlpha[is] = new double[pw_rho->nrxx];
-    this->multiKernel(prho, kernelRhoAlpha, this->alpha, pw_rho);
+    this->multiKernel(prho, kernelRhoAlpha, this->alpha_, pw_rho);
 
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
-        for (int ir = 0; ir < this->nx; ++ir)
+        for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         {
-            rpotential(is, ir) += this->cTF *
-                                    (this->alpha * std::pow(prho[is][ir], this->alpha-1.) * kernelRhoBeta[is][ir]
-                                    + this->beta * std::pow(prho[is][ir], this->beta-1.) * kernelRhoAlpha[is][ir]);
+            rpotential(is, ir) += this->c_tf_ *
+                                    (this->alpha_ * std::pow(prho[is][ir], this->alpha_-1.) * kernelRhoBeta[is][ir]
+                                    + this->beta_ * std::pow(prho[is][ir], this->beta_-1.) * kernelRhoAlpha[is][ir]);
         }
     }
 
@@ -122,22 +121,22 @@ void KEDF_WT::WT_potential(const double * const *prho, ModulePW::PW_Basis *pw_rh
     double energy = 0.; // in Ry
     if (GlobalV::NSPIN == 1)
     {
-        for (int ir = 0; ir < this->nx; ++ir)
+        for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         {
-            energy += std::pow(prho[0][ir], this->alpha) * kernelRhoBeta[0][ir];
+            energy += std::pow(prho[0][ir], this->alpha_) * kernelRhoBeta[0][ir];
         }
-        energy *= this->dV * this->cTF;
+        energy *= this->dV_ * this->c_tf_;
     }
     else if (GlobalV::NSPIN == 2)
     {
         // for (int is = 0; is < GlobalV::NSPIN; ++is)
         // {
-        //     for (int ir = 0; ir < this->nx; ++ir)
+        //     for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         //     {
         //         energy += 2 * pphi[is][ir] * LapPhi[is][ir];
         //     }
         // }
-        // energy *= 0.5 * this->dV * 0.5;
+        // energy *= 0.5 * this->dV_ * 0.5;
     }
     this->WTenergy = energy;
     Parallel_Reduce::reduce_all(this->WTenergy);
@@ -159,7 +158,7 @@ void KEDF_WT::get_stress(double cellVol, const double * const * prho, ModulePW::
     if (GlobalV::of_hold_rho0)
     {
         coef = 0.;
-        mult = -1. + this->alpha + this->beta;
+        mult = -1. + this->alpha_ + this->beta_;
     }
     else
     {
@@ -169,21 +168,21 @@ void KEDF_WT::get_stress(double cellVol, const double * const * prho, ModulePW::
 
     std::complex<double> **recipRhoAlpha = new std::complex<double> *[GlobalV::NSPIN];
     std::complex<double> **recipRhoBeta = new std::complex<double> *[GlobalV::NSPIN];
-    double *tempRho = new double[this->nx];
+    double *tempRho = new double[pw_rho->nrxx];
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
         recipRhoAlpha[is] = new std::complex<double>[pw_rho->npw];
         recipRhoBeta[is] = new std::complex<double>[pw_rho->npw];
 
-        for (int ir = 0; ir < this->nx; ++ir)
+        for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         {
-            tempRho[ir] = std::pow(prho[is][ir], this->alpha);
+            tempRho[ir] = std::pow(prho[is][ir], this->alpha_);
         }
         pw_rho->real2recip(tempRho, recipRhoAlpha[is]);
 
-        for (int ir = 0; ir < this->nx; ++ir)
+        for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         {
-            tempRho[ir] = std::pow(prho[is][ir], this->beta);
+            tempRho[ir] = std::pow(prho[is][ir], this->beta_);
         }
         pw_rho->real2recip(tempRho, recipRhoBeta[is]);
     }
@@ -195,7 +194,7 @@ void KEDF_WT::get_stress(double cellVol, const double * const * prho, ModulePW::
     {
         for (int ip = 0; ip < pw_rho->npw; ++ip)
         {
-            eta = sqrt(pw_rho->gg[ip]) * pw_rho->tpiba / this->tkF;
+            eta = sqrt(pw_rho->gg[ip]) * pw_rho->tpiba / this->tkf_;
             diff = this->diffLinhard(eta, vw_weight);
             diff *= eta * (recipRhoAlpha[is][ip] * std::conj(recipRhoBeta[is][ip])).real();
             // cout << "diff    " << diff << endl;
@@ -225,11 +224,11 @@ void KEDF_WT::get_stress(double cellVol, const double * const * prho, ModulePW::
 
             if (GlobalV::GAMMA_ONLY_PW)
             {
-                this->stress(a,b) *= - std::pow(ModuleBase::PI,2) / (this->alpha * this->beta * this->kF * std::pow(this->rho0, this->alpha + this->beta - 2.)) * 2.; // multiply by 2 to convert Hartree to Ry
+                this->stress(a,b) *= - std::pow(ModuleBase::PI,2) / (this->alpha_ * this->beta_ * this->kf_ * std::pow(this->rho0_, this->alpha_ + this->beta_ - 2.)) * 2.; // multiply by 2 to convert Hartree to Ry
             }
             else
             {
-                this->stress(a,b) *= - std::pow(ModuleBase::PI,2) / (2. * this->alpha * this->beta * this->kF * std::pow(this->rho0, this->alpha + this->beta - 2.)) * 2.; // multiply by 2 to convert Hartree to Ry
+                this->stress(a,b) *= - std::pow(ModuleBase::PI,2) / (2. * this->alpha_ * this->beta_ * this->kf_ * std::pow(this->rho0_, this->alpha_ + this->beta_ - 2.)) * 2.; // multiply by 2 to convert Hartree to Ry
             }
         }
     }
@@ -331,14 +330,14 @@ void KEDF_WT::multiKernel(const double * const * prho, double **rkernelRho, doub
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
         recipkernelRho[is] = new std::complex<double>[pw_rho->npw];
-        for (int ir = 0; ir < this->nx; ++ir)
+        for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         {
             rkernelRho[is][ir] = std::pow(prho[is][ir], exponent);
         }
         pw_rho->real2recip(rkernelRho[is], recipkernelRho[is]);
         for (int ip = 0; ip < pw_rho->npw; ++ip)
         {
-            recipkernelRho[is][ip] *= this->kernel[ip];
+            recipkernelRho[is][ip] *= this->kernel_[ip];
         }
         pw_rho->recip2real(recipkernelRho[is], rkernelRho[is]);
     }
@@ -355,8 +354,8 @@ void KEDF_WT::fillKernel(double tf_weight, double vw_weight, ModulePW::PW_Basis 
     double eta = 0.;
     for (int ig = 0; ig < pw_rho->npw; ++ig)
     {
-        eta = sqrt(pw_rho->gg[ig]) * pw_rho->tpiba / this->tkF;
-        this->kernel[ig] = this->WTkernel(eta, tf_weight, vw_weight) * this->WTcoef;
+        eta = sqrt(pw_rho->gg[ig]) * pw_rho->tpiba / this->tkf_;
+        this->kernel_[ig] = this->WTkernel(eta, tf_weight, vw_weight) * this->wt_coef_;
     }
 }
 
@@ -398,13 +397,13 @@ void KEDF_WT::readKernel(std::string fileName, ModulePW::PW_Basis *pw_rho)
     double fac2 = 0.;
     for (int ig = 0; ig < pw_rho->npw; ++ig)
     {
-        eta = sqrt(pw_rho->gg[ig]) * pw_rho->tpiba / this->tkF;
+        eta = sqrt(pw_rho->gg[ig]) * pw_rho->tpiba / this->tkf_;
         maxEta = std::max(eta, maxEta);
 
         if (eta <= eta_in[0])
-            this->kernel[ig] = w0_in[0];
+            this->kernel_[ig] = w0_in[0];
         else if (eta > maxEta_in)
-            this->kernel[ig] = w0_in[nq_in-1];
+            this->kernel_[ig] = w0_in[nq_in-1];
         else
         {
             ind1 = 1;
@@ -423,8 +422,8 @@ void KEDF_WT::readKernel(std::string fileName, ModulePW::PW_Basis *pw_rho)
             }
             fac1 = (eta_in[ind2] - eta)/(eta_in[ind2] - eta_in[ind1]);
             fac2 = (eta - eta_in[ind1])/(eta_in[ind2] - eta_in[ind1]);
-            this->kernel[ig] = fac1 * w0_in[ind1] + fac2 * w0_in[ind2];
-            this->kernel[ig] *= this->WTcoef;
+            this->kernel_[ig] = fac1 * w0_in[ind1] + fac2 * w0_in[ind2];
+            this->kernel_[ig] *= this->wt_coef_;
         }
     }
 

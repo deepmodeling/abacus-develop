@@ -639,6 +639,8 @@ void Opt_DCsrch::dcSrch(
 	char *rtask
 )
 {
-	dcsrch(rstp, f, g, ftol, gtol, xtol, rtask, stpmin, stpmax, this->isave, this->dsave);
+	dcsrch(rstp, f, g, this->ftol_, this->gtol_,
+		   this->xtol_, rtask, this->stpmin_, this->stpmax_,
+		   this->isave_, this->dsave_);
 }
 }

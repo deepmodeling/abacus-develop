@@ -25,7 +25,7 @@ class KEDF_vW
     {
     }
 
-    void set_para(int nx, double dV, double vw_weight);
+    void set_para(double dV, double vw_weight);
 
     double get_energy(double **pphi, ModulePW::PW_Basis *pw_rho);
     double get_energy_density(double **pphi, int is, int ir, ModulePW::PW_Basis *pw_rho);
@@ -38,8 +38,7 @@ class KEDF_vW
   private:
     void laplacianPhi(const double *const *pphi, double **rLapPhi, ModulePW::PW_Basis *pw_rho);
 
-    int nx = 0;
-    double dV = 0.;
-    double vw_weight = 1.;
+    double dV_ = 0.;
+    double vw_weight_ = 1.;
 };
 #endif

@@ -235,9 +235,9 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     // Initialize KEDF
     // ===================================
     this->tf.set_para(this->nrxx, this->dV, GlobalV::of_tf_weight);
-    this->vw.set_para(this->nrxx, this->dV, GlobalV::of_vw_weight);
-    this->wt.set_para(this->nrxx, this->dV, GlobalV::of_wt_alpha, GlobalV::of_wt_beta, this->nelec[0], GlobalV::of_tf_weight, GlobalV::of_vw_weight, GlobalV::of_read_kernel, GlobalV::of_kernel_file, this->pw_rho);
-    this->lkt.set_para(this->nrxx, this->dV, GlobalV::of_lkt_a);
+    this->vw.set_para(this->dV, GlobalV::of_vw_weight);
+    this->wt.set_para(this->dV, GlobalV::of_wt_alpha, GlobalV::of_wt_beta, this->nelec[0], GlobalV::of_tf_weight, GlobalV::of_vw_weight, GlobalV::of_read_kernel, GlobalV::of_kernel_file, this->pw_rho);
+    this->lkt.set_para(this->dV, GlobalV::of_lkt_a);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT KEDF");
 
     // Initialize charge extrapolation
@@ -357,9 +357,8 @@ void ESolver_OF::init_after_vc(Input &inp, UnitCell &ucell)
     // Initialize KEDF
     // ===================================
     this->tf.set_para(this->nrxx, this->dV, GlobalV::of_tf_weight);
-    this->vw.set_para(this->nrxx, this->dV, GlobalV::of_vw_weight);
-    this->wt.set_para(this->nrxx,
-                      this->dV,
+    this->vw.set_para(this->dV, GlobalV::of_vw_weight);
+    this->wt.set_para(this->dV,
                       GlobalV::of_wt_alpha,
                       GlobalV::of_wt_beta,
                       this->nelec[0],
@@ -368,7 +367,7 @@ void ESolver_OF::init_after_vc(Input &inp, UnitCell &ucell)
                       GlobalV::of_read_kernel,
                       GlobalV::of_kernel_file,
                       this->pw_rho);
-    this->lkt.set_para(this->nrxx, this->dV, GlobalV::of_lkt_a);
+    this->lkt.set_para(this->dV, GlobalV::of_lkt_a);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT KEDF");
 
     delete this->ptempRho;

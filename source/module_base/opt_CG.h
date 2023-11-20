@@ -49,8 +49,8 @@ public:
         int &ifPD // if postive definit
     );
 
-    double get_residual() {return sqrt(this->gg);};
-    int get_iter() {return this->iter;}
+    double get_residual() {return sqrt(this->gg_);};
+    int get_iter() {return this->iter_;}
 
     // void ZEROS(double *x, int n)
     // {
@@ -58,18 +58,18 @@ public:
     // }
 
 private:
-    double dV = 1.;
-    int nx = 0; // length of the sulotion array x
-    int iter = 0; // number of iteration
-    double gg = 1000; // gradient dot gradient
-    double beta = 0.; // d = -g + beta * d
-    double eta = 0.01; // a constand used in HZ form
-    double *pdirect_old = nullptr; // direction of last step
-    double *pgradient_old = nullptr; // gradient, for meth=0, gradient is minus residual r.
+    double dV_ = 1.;
+    int nx_ = 0; // length of the sulotion array x
+    int iter_ = 0; // number of iteration
+    double gg_ = 1000; // gradient dot gradient
+    double beta_ = 0.; // d = -g + beta * d
+    double eta_ = 0.01; // a constand used in HZ form
+    double *pdirect_old_ = nullptr; // direction of last step
+    double *pgradient_old_ = nullptr; // gradient, for meth=0, gradient is minus residual r.
 
     // only for standard CG
-    double alpha = 0.; // step length in standard CG
-    double *pb = nullptr; // b in Ax=b, only for standard CG
+    double alpha_ = 0.; // step length in standard CG
+    double *pb_ = nullptr; // b in Ax=b, only for standard CG
 
     void stantard_CGdirect(
         double *pAd, // Ad for Ax=b
@@ -85,7 +85,7 @@ private:
     {
         double innerproduct = 0.;
         for (int i = 0; i < length; ++i) innerproduct += pa[i] * pb[i];
-        innerproduct *= this->dV;
+        innerproduct *= this->dV_;
         return innerproduct;
     }
 };
