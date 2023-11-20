@@ -2,18 +2,13 @@
 
 namespace ModuleBase
 {
-Opt_CG::Opt_CG()
-{
-    this->pb = NULL;
-    this->pdirect_old = NULL;
-    this->pgradient_old = NULL;
-}
+Opt_CG::Opt_CG(){}
 
 Opt_CG::~Opt_CG()
 {
-    if (this->pb != NULL) delete[] this->pb;
-    if (this->pdirect_old != NULL) delete[] this->pdirect_old;
-    if (this->pgradient_old != NULL) delete[] this->pgradient_old;
+    delete[] this->pb;
+    delete[] this->pdirect_old;
+    delete[] this->pgradient_old;
 }
 
 // 
@@ -23,7 +18,7 @@ void Opt_CG::init_b(
     double *pinp_b // b in the linear equation Ax = b
 )
 {
-    if (this->pb != NULL) delete[] this->pb;
+    if (this->pb != nullptr) delete[] this->pb;
     this->pb = new double[this->nx];
     for (int i = 0; i < nx; ++i) this->pb[i] = pinp_b[i];
 }
@@ -36,8 +31,8 @@ void Opt_CG::allocate(
 )
 {
     this->nx = nx;
-    if (this->pdirect_old != NULL) delete[] this->pdirect_old;
-    if (this->pgradient_old != NULL) delete[] this->pgradient_old;
+    delete[] this->pdirect_old;
+    delete[] this->pgradient_old;
     this->pdirect_old = new double[this->nx];
     this->pgradient_old = new double[this->nx];
     ModuleBase::GlobalFunc::ZEROS(this->pdirect_old, this->nx);
@@ -57,7 +52,7 @@ void Opt_CG::setPara(
 // 
 void Opt_CG::refresh(
     int nx_new, // length of new x, default 0 means the length doesn't change
-    double *pinp_b // new b in Ax = b, default NULL means we are dealing with general case
+    double *pinp_b // new b in Ax = b, default nullptr means we are dealing with general case
 )
 {
     this->iter = 0;
@@ -72,7 +67,7 @@ void Opt_CG::refresh(
         ModuleBase::GlobalFunc::ZEROS(this->pdirect_old, this->nx);
         ModuleBase::GlobalFunc::ZEROS(this->pgradient_old, this->nx);
     }
-    if (pinp_b != NULL) this->init_b(pinp_b);
+    if (pinp_b != nullptr) this->init_b(pinp_b);
 }
 
 // 

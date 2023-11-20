@@ -26,7 +26,7 @@ void KEDF_WT::set_para(int nx, double dV, double alpha, double beta, double nele
 
     this->WTcoef = 5./(9. * this->alpha * this->beta * std::pow(this->rho0, this->alpha + this->beta - 5./3.));
 
-    if (this->kernel != NULL) delete[] this->kernel;
+    delete[] this->kernel;
     this->kernel = new double[pw_rho->npw];
 
     if (read_kernel)

@@ -20,8 +20,8 @@ public:
 	}
 	~Opt_DCsrch()
 	{
-		if (this->isave != NULL) delete[] this->isave; 
-		if (this->dsave != NULL) delete[] this->dsave; 
+		delete[] this->isave; 
+		delete[] this->dsave; 
 	}
 
 	// 
@@ -84,8 +84,8 @@ private:
 	double xtol = 1e-12; // nonnegative relative tolerance for an acceptable step. The subroutine exits with a warning if the relative difference between sty and stx is less than xtol.
 	double stpmin = 0.; // nonnegative lower bound for the step.
 	double stpmax = ModuleBase::PI; // nonnegative upper bound for the step.
-	int *isave = NULL; // an integer work array of dimension 2.
-    double *dsave = NULL; // a double precision work array of dimension 13.
+	int *isave = nullptr; // an integer work array of dimension 2.
+    double *dsave = nullptr; // a double precision work array of dimension 13.
 };
 }
 

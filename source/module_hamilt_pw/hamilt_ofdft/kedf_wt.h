@@ -19,13 +19,11 @@ class KEDF_WT
   public:
     KEDF_WT()
     {
-        this->kernel = NULL;
         this->stress.create(3, 3);
     }
     ~KEDF_WT()
     {
-        if (this->kernel != NULL)
-            delete[] this->kernel;
+        delete[] this->kernel;
     }
 
     void set_para(int nx,
@@ -65,6 +63,6 @@ class KEDF_WT
         = 3.0 / 10.0 * std::pow(3 * std::pow(M_PI, 2.0), 2.0 / 3.0)
           * 2; // 10/3*(3*pi^2)^{2/3}, multiply by 2 to convert unit from Hartree to Ry, finally in Ry*Bohr^(-2)
     double WTcoef = 0.; // coefficient of WT kernel
-    double *kernel;
+    double *kernel = nullptr;
 };
 #endif

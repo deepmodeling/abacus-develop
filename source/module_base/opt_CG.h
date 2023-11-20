@@ -35,7 +35,7 @@ public:
     );
     void refresh(
         int nx_new=0, // length of new x, default 0 means the length doesn't change
-        double *pinp_b=NULL // new b in Ax = b, default NULL means we are dealing with general case
+        double *pinp_b=nullptr // new b in Ax = b, default nullptr means we are dealing with general case
     );
 
     void next_direct(
@@ -64,12 +64,12 @@ private:
     double gg = 1000; // gradient dot gradient
     double beta = 0.; // d = -g + beta * d
     double eta = 0.01; // a constand used in HZ form
-    double *pdirect_old; // direction of last step
-    double *pgradient_old; // gradient, for meth=0, gradient is minus residual r.
+    double *pdirect_old = nullptr; // direction of last step
+    double *pgradient_old = nullptr; // gradient, for meth=0, gradient is minus residual r.
 
     // only for standard CG
     double alpha = 0.; // step length in standard CG
-    double *pb; // b in Ax=b, only for standard CG
+    double *pb = nullptr; // b in Ax=b, only for standard CG
 
     void stantard_CGdirect(
         double *pAd, // Ad for Ax=b
