@@ -210,8 +210,3 @@ AddTest(
   LIBS ${math_libs} formatter device
 )
 
-AddTest(
-  TARGET io_para_json_test
-  LIBS ${math_libs} base device
-  SOURCES para_json_test.cpp ../input.cpp
-)

@@ -142,3 +142,8 @@ AddTest(
   SOURCES csr_reader_test.cpp ../csr_reader.cpp ../file_reader.cpp ../sparse_matrix.cpp
 )
 
+AddTest(
+  TARGET io_para_json_test
+  LIBS ${math_libs} base device
+  SOURCES para_json_test.cpp ../input.cpp
+)
