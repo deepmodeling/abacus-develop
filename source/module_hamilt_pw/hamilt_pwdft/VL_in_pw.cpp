@@ -38,9 +38,12 @@ void pseudopot_cell_vl::init_vloc(ModuleBase::matrix& vloc_in, const ModulePW::P
 		ModuleBase::GlobalFunc::ZEROS(vloc1d, rho_basis->ngg);
 
 		this->zp[it] = atom->ncpp.zv;
-
 		// compute V_loc(G) for a given type of atom
-		if(numeric[it]==true)
+		if(atom->coulomb_potential)
+		{
+			this->vloc_coulomb(this->zp[it], vloc1d, rho_basis);
+		}
+		else if(numeric[it]==true)
 		{
 			this->vloc_of_g(
 					atom->ncpp.msh, // after cutoff 
@@ -96,6 +99,32 @@ void pseudopot_cell_vl::allocate(const int ngg)
 	ModuleBase::GlobalFunc::ZEROS(zp, npsx);
 
 	return;
+}
+
+void pseudopot_cell_vl::vloc_coulomb(const double& zp_in, double* vloc_1d, const ModulePW::PW_Basis* rho_basis) const
+{
+    int igl0 = 0;
+    // start from |G|=0 or not.
+	if (rho_basis->gg_uniq[0] < 1.0e-8)
+    {
+        igl0 = 1;
+		vloc_1d[0] = 0.0;
+    }
+    else
+    {
+        igl0 = 0;
+    }
+    const double d_fpi_omega = ModuleBase::FOUR_PI / GlobalC::ucell.omega; // mohan add 2008-06-04
+    double fac = -zp_in * ModuleBase::e2 * d_fpi_omega;
+#ifdef _OPENMP
+#pragma omp for
+#endif
+    for (int ig = igl0; ig < rho_basis->ngg; ig++)
+    {
+        double gx2 = rho_basis->gg_uniq[ig] * GlobalC::ucell.tpiba2;
+        vloc_1d[ig] = fac / gx2;
+    }
+    return;
 }
 
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
