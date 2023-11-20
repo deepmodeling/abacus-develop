@@ -50,6 +50,11 @@ public:
         delete[] this->task_;
         delete this->opt_cg_mag;
         delete this->ptempRho_;
+
+        delete this->tf_;
+        delete this->vw_;
+        delete this->wt_;
+        delete this->lkt_;
     }
 
     virtual void Init(Input &inp, UnitCell &ucell) override;
@@ -67,10 +72,10 @@ public:
 
 private:
     // kinetic energy density functionals
-    KEDF_TF tf;
-    KEDF_vW vw;
-    KEDF_WT wt;
-    KEDF_LKT lkt;
+    KEDF_TF* tf_ = nullptr;
+    KEDF_vW* vw_ = nullptr;
+    KEDF_WT* wt_ = nullptr;
+    KEDF_LKT* lkt_ = nullptr;
 
     // charge extrapolation liuyu add 2022-11-07
     Charge_Extra CE;
@@ -147,8 +152,10 @@ private:
     }
 
     // interfaces to KEDF
+    void init_kedf();
     void kineticPotential(double **prho, double **pphi, ModuleBase::matrix &rpot);
     double kineticEnergy();
+    void kinetic_stress(ModuleBase::matrix &kinetic_stress);
 };
 }
 

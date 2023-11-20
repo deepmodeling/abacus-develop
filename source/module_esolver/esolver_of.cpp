@@ -233,11 +233,7 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     // ===================================
     // Initialize KEDF
     // ===================================
-    this->tf.set_para(this->pw_rho->nrxx, this->dV_, GlobalV::of_tf_weight);
-    this->vw.set_para(this->dV_, GlobalV::of_vw_weight);
-    this->wt.set_para(this->dV_, GlobalV::of_wt_alpha, GlobalV::of_wt_beta, this->nelec_[0], GlobalV::of_tf_weight, GlobalV::of_vw_weight, GlobalV::of_read_kernel, GlobalV::of_kernel_file, this->pw_rho);
-    this->lkt.set_para(this->dV_, GlobalV::of_lkt_a);
-    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT KEDF");
+    this->init_kedf();
 
     // Initialize charge extrapolation
     CE.Init_CE(GlobalC::ucell.nat);
@@ -355,19 +351,7 @@ void ESolver_OF::init_after_vc(Input &inp, UnitCell &ucell)
     // ===================================
     // Initialize KEDF
     // ===================================
-    this->tf.set_para(this->pw_rho->nrxx, this->dV_, GlobalV::of_tf_weight);
-    this->vw.set_para(this->dV_, GlobalV::of_vw_weight);
-    this->wt.set_para(this->dV_,
-                      GlobalV::of_wt_alpha,
-                      GlobalV::of_wt_beta,
-                      this->nelec_[0],
-                      GlobalV::of_tf_weight,
-                      GlobalV::of_vw_weight,
-                      GlobalV::of_read_kernel,
-                      GlobalV::of_kernel_file,
-                      this->pw_rho);
-    this->lkt.set_para(this->dV_, GlobalV::of_lkt_a);
-    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT KEDF");
+    this->init_kedf();
 
     delete this->ptempRho_;
     this->ptempRho_ = new Charge();
@@ -1241,138 +1225,11 @@ void ESolver_OF::cal_Force(ModuleBase::matrix& force)
 
 void ESolver_OF::cal_Stress(ModuleBase::matrix& stress)
 {
-    ModuleBase::matrix kinetic_stress;
-    kinetic_stress.create(3,3);
-    for (int i = 0; i < 3; ++i)
-    {
-        for (int j = 0; j < 3; ++j)
-        {
-            kinetic_stress(i,j) = 0.0;
-        }
-    }
-
-    if (this->of_kinetic_ == "tf")
-    {
-        this->tf.get_stress(GlobalC::ucell.omega);
-        kinetic_stress += this->tf.stress;
-    }
-    else if (this->of_kinetic_ == "vw")
-    {
-        this->vw.get_stress(this->pphi_, this->pw_rho);
-        kinetic_stress += this->vw.stress;
-    }
-    else if (this->of_kinetic_ == "wt")
-    {
-        this->tf.get_stress(GlobalC::ucell.omega);
-        this->vw.get_stress(this->pphi_, this->pw_rho);
-        this->wt.get_stress(GlobalC::ucell.omega, pelec->charge->rho, this->pw_rho, GlobalV::of_vw_weight);
-        kinetic_stress += this->tf.stress + this->vw.stress + this->wt.stress;
-    }
-    else if (this->of_kinetic_ == "tf+")
-    {
-        this->tf.get_stress(GlobalC::ucell.omega);
-        this->vw.get_stress(this->pphi_, this->pw_rho);
-        kinetic_stress += this->tf.stress + this->vw.stress;
-    }
-    else if (this->of_kinetic_ == "lkt")
-    {
-        this->lkt.get_stress(GlobalC::ucell.omega, pelec->charge->rho, this->pw_rho);
-        this->vw.get_stress(pelec->charge->rho, this->pw_rho);
-        kinetic_stress += this->lkt.stress + this->vw.stress;
-    }
+    ModuleBase::matrix kinetic_stress_;
+    kinetic_stress_.create(3,3);
+    this->kinetic_stress(kinetic_stress_);
 
     OF_Stress_PW ss(this->pelec, this->pw_rho);
-    ss.cal_stress(stress, kinetic_stress, GlobalC::ucell, &this->symm, &sf, &kv);
-}
-
-// Calculated kinetic potential and plus it to &rpot, return (rpot + kietic potential) * 2 * pphiInpt
-void ESolver_OF::kineticPotential(double **prho, double **pphiInpt, ModuleBase::matrix &rpot)
-{
-    if (this->of_kinetic_ == "tf")
-    {
-        this->tf.tf_potential(prho, rpot);
-        for (int is = 0; is < GlobalV::NSPIN; ++is)
-        {
-            for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
-            {
-                rpot(is,ir) *= 2.0 * pphiInpt[is][ir];
-            }
-        }
-    }
-    else if (this->of_kinetic_ == "vw")
-    {
-        for (int is = 0; is < GlobalV::NSPIN; ++is)
-        {
-            for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
-            {
-                rpot(is,ir) *= 2.0 * pphiInpt[is][ir];
-            }
-        }
-        this->vw.vW_potential(pphiInpt, this->pw_rho, rpot);
-    }
-    else if (this->of_kinetic_ == "wt")
-    {
-        this->tf.tf_potential(prho, rpot);
-        this->wt.WT_potential(prho, this->pw_rho, rpot);
-        for (int is = 0; is < GlobalV::NSPIN; ++is)
-        {
-            for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
-            {
-                rpot(is,ir) *= 2.0 * pphiInpt[is][ir];
-            }
-        }
-        this->vw.vW_potential(pphiInpt, this->pw_rho, rpot);
-    }
-    else if (this->of_kinetic_ == "tf+")
-    {
-        this->tf.tf_potential(prho, rpot);
-        for (int is = 0; is < GlobalV::NSPIN; ++is)
-        {
-            for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
-            {
-                rpot(is,ir) *= 2.0 * pphiInpt[is][ir];
-            }
-        }
-        this->vw.vW_potential(pphiInpt, this->pw_rho, rpot);
-    }
-    else if (this->of_kinetic_ == "lkt")
-    {
-        this->lkt.lkt_potential(prho, this->pw_rho, rpot);
-        for (int is = 0; is < GlobalV::NSPIN; ++is)
-        {
-            for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
-            {
-                rpot(is,ir) *= 2.0 * pphiInpt[is][ir];
-            }
-        }
-        this->vw.vW_potential(pphiInpt, this->pw_rho, rpot);
-    }
-}
-
-// Return the kinetic energy
-double ESolver_OF::kineticEnergy()
-{
-    double kinetic = 0.;
-    if (this->of_kinetic_ == "tf")
-    {
-        kinetic += this->tf.TFenergy;
-    }
-    else if (this->of_kinetic_ == "vw")
-    {
-        kinetic += this->vw.vWenergy;
-    }
-    else if (this->of_kinetic_ == "wt")
-    {
-        kinetic += this->tf.TFenergy + this->vw.vWenergy + this->wt.WTenergy;
-    }
-    else if (this->of_kinetic_ == "tf+")
-    {
-        kinetic += this->tf.TFenergy + this->vw.vWenergy;
-    }
-    else if (this->of_kinetic_ == "lkt")
-    {
-        kinetic += this->lkt.LKTenergy + this->vw.vWenergy;
-    }
-    return kinetic;
+    ss.cal_stress(stress, kinetic_stress_, GlobalC::ucell, &this->symm, &sf, &kv);
 }
 }
