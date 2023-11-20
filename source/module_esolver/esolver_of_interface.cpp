@@ -132,4 +132,56 @@ void ESolver_OF::kinetic_stress(ModuleBase::matrix& kinetic_stress_)
         kinetic_stress_ += this->lkt_->stress;
     }
 }
+
+void ESolver_OF::init_opt()
+{
+    if (this->opt_dcsrch_ == nullptr) this->opt_dcsrch_ = new ModuleBase::Opt_DCsrch();
+
+    if (this->of_method_ == "tn")
+    {
+        if (this->opt_tn_ == nullptr) this->opt_tn_ = new ModuleBase::Opt_TN();
+        this->opt_tn_->allocate(this->pw_rho->nrxx);
+        this->opt_tn_->setPara(this->dV_);
+    }
+    else if (this->of_method_ == "cg1" || this->of_method_ == "cg2")
+    {
+        if (this->opt_cg_ == nullptr) this->opt_cg_ = new ModuleBase::Opt_CG();
+        this->opt_cg_->allocate(this->pw_rho->nrxx);
+        this->opt_cg_->setPara(this->dV_);
+        this->opt_dcsrch_->set_paras(1e-4,1e-2);
+    }
+    else if (this->of_method_ == "bfgs")
+    {
+        ModuleBase::WARNING_QUIT("esolver_of", "BFGS is not supported now.");
+        return;
+    }
+}
+
+void ESolver_OF::get_direction()
+{
+    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    {
+        if (this->of_method_ == "tn")
+        {
+            this->tnSpinFlag_ = is;
+            opt_tn_->next_direct(this->pphi_[is], this->pdLdphi_[is], this->flag_, this->pdirect_[is], this, &ESolver_OF::calV);
+        }
+        else if (this->of_method_ == "cg1")
+        {
+            opt_cg_->next_direct(this->pdLdphi_[is], 1, this->pdirect_[is]);
+        }
+        else if (this->of_method_ == "cg2")
+        {
+            opt_cg_->next_direct(this->pdLdphi_[is], 2, this->pdirect_[is]);
+        }
+        else if (this->of_method_ == "bfgs")
+        {
+            return;
+        }
+        else
+        {
+            ModuleBase::WARNING_QUIT("ESolver_OF", "of_method must be one of CG, TN, or BFGS.");
+        }
+    }
+}
 } // namespace ModuleESolver

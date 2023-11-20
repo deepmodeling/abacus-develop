@@ -9,7 +9,7 @@ list(APPEND objects
     esolver_lj.cpp
     esolver_dp.cpp
     esolver_of.cpp
-    esolver_of_tool.cpp
+    esolver_of_interface.cpp
 )
 if(ENABLE_LCAO)
   list(APPEND objects

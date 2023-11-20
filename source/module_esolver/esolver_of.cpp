@@ -185,28 +185,13 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     // ================================
     // Initialize optimization methods
     // ================================
-    if (this->of_method_ == "tn")
-    {
-        this->opt_tn.allocate(this->pw_rho->nrxx);
-        this->opt_tn.setPara(this->dV_);
-    }
-    else if (this->of_method_ == "cg1" || this->of_method_ == "cg2")
-    {
-        this->opt_cg.allocate(this->pw_rho->nrxx);
-        this->opt_cg.setPara(this->dV_);
-        this->opt_dcsrch.set_paras(1e-4,1e-2);
-    }
-    else if (this->of_method_ == "bfgs")
-    {
-        ModuleBase::WARNING_QUIT("esolver_of", "BFGS is not supported now.");
-        return;
-    }
+    this->init_opt();
 
     // optimize theta if nspin=2
     if (GlobalV::NSPIN == 2)
     {
-        this->opt_cg_mag = new ModuleBase::Opt_CG;
-        this->opt_cg_mag->allocate(GlobalV::NSPIN);
+        this->opt_cg_mag_ = new ModuleBase::Opt_CG;
+        this->opt_cg_mag_->allocate(GlobalV::NSPIN);
     }
 
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT OPTIMIZATION");
@@ -316,22 +301,7 @@ void ESolver_OF::init_after_vc(Input &inp, UnitCell &ucell)
     // ================================
     // Initialize optimization methods
     // ================================
-    if (this->of_method_ == "tn")
-    {
-        this->opt_tn.allocate(this->pw_rho->nrxx);
-        this->opt_tn.setPara(this->dV_);
-    }
-    else if (this->of_method_ == "cg1" || this->of_method_ == "cg2")
-    {
-        this->opt_cg.allocate(this->pw_rho->nrxx);
-        this->opt_cg.setPara(this->dV_);
-        this->opt_dcsrch.set_paras(1e-4,1e-2);
-    }
-    else if (this->of_method_ == "bfgs")
-    {
-        ModuleBase::WARNING_QUIT("esolver_of", "BFGS is not supported now.");
-        return;
-    }
+    this->init_opt();
 
     GlobalC::ppcell.init_vnl(GlobalC::ucell, pw_rho);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"NON-LOCAL POTENTIAL");
@@ -508,30 +478,7 @@ void ESolver_OF::updateV()
 void ESolver_OF::solveV()
 {
     // (1) get |d0> with optimization algorithm
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
-    {
-        if (this->of_method_ == "tn")
-        {
-            this->tnSpinFlag_ = is;
-            opt_tn.next_direct(this->pphi_[is], this->pdLdphi_[is], this->flag_, this->pdirect_[is], this, &ESolver_OF::calV);
-        }
-        else if (this->of_method_ == "cg1")
-        {
-            opt_cg.next_direct(this->pdLdphi_[is], 1, this->pdirect_[is]);
-        }
-        else if (this->of_method_ == "cg2")
-        {
-            opt_cg.next_direct(this->pdLdphi_[is], 2, this->pdirect_[is]);
-        }
-        else if (this->of_method_ == "bfgs")
-        {
-            return;
-        }
-        else
-        {
-            ModuleBase::WARNING_QUIT("ESolver_OF", "of_method must be one of CG, TN, or BFGS.");
-        }
-    }
+    this->get_direction();
     // initialize tempPhi and tempRho used in line search
     double **ptempPhi = new double*[GlobalV::NSPIN];
     for (int is = 0; is < GlobalV::NSPIN; ++is)
@@ -633,7 +580,7 @@ void ESolver_OF::solveV()
             E += eKE + ePP;
 
             // line search to update theta[0]
-            this->opt_dcsrch.dcSrch(E, dEdtheta[0], this->theta_[0], this->task_);
+            this->opt_dcsrch_->dcSrch(E, dEdtheta[0], this->theta_[0], this->task_);
             numDC++;
 
             // decide what to do next according to the output of line search
@@ -676,7 +623,7 @@ void ESolver_OF::solveV()
     {
         ModuleBase::WARNING_QUIT("esolver_of", "Sorry, SPIN2 case is not supported by OFDFT for now.");
     // ========================== Under testing ==========================
-    //     this->opt_cg_mag->refresh();
+    //     this->opt_cg_mag_->refresh();
 
     //     double *pthetaDir = new double[GlobalV::NSPIN];
     //     double *tempTheta = new double[GlobalV::NSPIN];
@@ -691,7 +638,7 @@ void ESolver_OF::solveV()
 
     //     while (true)
     //     {
-    //         this->opt_cg_mag->next_direct(dEdtheta, 1, pthetaDir);
+    //         this->opt_cg_mag_->next_direct(dEdtheta, 1, pthetaDir);
 
     //         dEdalpha = this->inner_product(dEdtheta, pthetaDir, 2, 1.);
 
@@ -708,7 +655,7 @@ void ESolver_OF::solveV()
     //         thetaAlpha = min(0.1, 0.1*ModuleBase::PI/maxThetaDir);
 
         //         // line search along thetaDir to find thetaAlpha
-        //         this->opt_dcsrch.set_paras(1e-4, 1e-2, 1e-12, 0., ModuleBase::PI/maxThetaDir);
+        //         this->opt_dcsrch_->set_paras(1e-4, 1e-2, 1e-12, 0., ModuleBase::PI/maxThetaDir);
         //         strcpy(this->task_, "START");
         //         numDC = 0;
         //         while(true)
@@ -722,7 +669,7 @@ void ESolver_OF::solveV()
         //             }
         //             Parallel_Reduce::reduce_all(ePP);
         //             E += eKE + ePP;
-        //             this->opt_dcsrch.dcSrch(E, dEdalpha, thetaAlpha, this->task_);
+        //             this->opt_dcsrch_->dcSrch(E, dEdalpha, thetaAlpha, this->task_);
         //             numDC++;
 
         //             if (strncmp(this->task_, "FG", 2) == 0)
@@ -1198,7 +1145,6 @@ double ESolver_OF::cal_mu(double *pphi, double *pdEdphi, double nelec)
     return mu;
 }
 
-
 // =====================================================================
 // NOTE THIS FUNCTION SHOULD BE CALLEDD AFTER POTENTIAL HAS BEEN UPDATED
 // =====================================================================
@@ -1215,7 +1161,6 @@ double ESolver_OF::cal_Energy()
     this->pelec->f_en.etot += eKE + ePP;
     return this->pelec->f_en.etot;
 }
-
 
 void ESolver_OF::cal_Force(ModuleBase::matrix& force)
 {

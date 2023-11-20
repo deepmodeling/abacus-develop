@@ -48,13 +48,17 @@ public:
         delete[] this->theta_;
         delete[] this->mu_;
         delete[] this->task_;
-        delete this->opt_cg_mag;
         delete this->ptempRho_;
 
         delete this->tf_;
         delete this->vw_;
         delete this->wt_;
         delete this->lkt_;
+
+        delete this->opt_cg_;
+        delete this->opt_tn_;
+        delete this->opt_dcsrch_;
+        delete this->opt_cg_mag_;
     }
 
     virtual void Init(Input &inp, UnitCell &ucell) override;
@@ -82,10 +86,10 @@ private:
     psi::Psi<double>* psi_=nullptr;
 
     // optimization methods
-    ModuleBase::Opt_CG opt_cg;
-    ModuleBase::Opt_TN opt_tn;
-    ModuleBase::Opt_DCsrch opt_dcsrch;
-    ModuleBase::Opt_CG *opt_cg_mag = nullptr; // for spin2 case, under testing
+    ModuleBase::Opt_CG *opt_cg_ = nullptr;
+    ModuleBase::Opt_TN *opt_tn_ = nullptr;
+    ModuleBase::Opt_DCsrch *opt_dcsrch_ = nullptr;
+    ModuleBase::Opt_CG *opt_cg_mag_ = nullptr; // for spin2 case, under testing
 
     // from Input
     std::string of_kinetic_ = "wt";   // Kinetic energy functional, such as TF, VW, WT
@@ -156,6 +160,10 @@ private:
     void kineticPotential(double **prho, double **pphi, ModuleBase::matrix &rpot);
     double kineticEnergy();
     void kinetic_stress(ModuleBase::matrix &kinetic_stress);
+
+    // interfaces to optimization methods
+    void init_opt();
+    void get_direction();
 };
 }
 
