@@ -25,12 +25,12 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     ESolver_FP::Init(inp, ucell);
 
     // save necessary parameters
-    this->of_kinetic = inp.of_kinetic;
-    this->of_method = inp.of_method;
-    this->of_conv = inp.of_conv;
-    this->of_tole = inp.of_tole;
-    this->of_tolp = inp.of_tolp;
-    this->maxIter = inp.scf_nmax;
+    this->of_kinetic_ = inp.of_kinetic;
+    this->of_method_ = inp.of_method;
+    this->of_conv_ = inp.of_conv;
+    this->of_tole_ = inp.of_tole;
+    this->of_tolp_ = inp.of_tolp;
+    this->max_iter_ = inp.scf_nmax;
 
     ucell.cal_nelec(GlobalV::nelec);
 
@@ -74,8 +74,7 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     sf.setup_structure_factor(&GlobalC::ucell, pw_rho);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT BASIS");
 
-    this->nrxx = this->pw_rho->nrxx;
-    this->dV = ucell.omega / this->pw_rho->nxyz; // volume of one point in real space
+    this->dV_ = ucell.omega / this->pw_rho->nxyz; // volume of one point in real space
 
     //----------------------------------------------------------
     // 1 read in initial data:
@@ -88,12 +87,12 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     //----------------------------------------------------------
 
     // Initialize the "wavefunction", which is sqrt(rho)
-    this->psi = new psi::Psi<double>(1, GlobalV::NSPIN, this->nrxx);
-    ModuleBase::Memory::record("OFDFT::Psi", sizeof(double) * GlobalV::NSPIN * this->nrxx);
-    this->pphi = new double*[GlobalV::NSPIN];
+    this->psi_ = new psi::Psi<double>(1, GlobalV::NSPIN, this->pw_rho->nrxx);
+    ModuleBase::Memory::record("OFDFT::Psi", sizeof(double) * GlobalV::NSPIN * this->pw_rho->nrxx);
+    this->pphi_ = new double*[GlobalV::NSPIN];
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
-        this->pphi[is] = this->psi->get_pointer(is);
+        this->pphi_[is] = this->psi_->get_pointer(is);
     }
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT PHI");
 
@@ -170,34 +169,34 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT POTENTIAL");
 
     // Calculate electron numbers
-    this->nelec = new double[GlobalV::NSPIN];
+    this->nelec_ = new double[GlobalV::NSPIN];
     if (GlobalV::NSPIN == 1)
     {
-        this->nelec[0] = GlobalV::nelec;
+        this->nelec_[0] = GlobalV::nelec;
     }
     else if (GlobalV::NSPIN == 2)
     {
         //in fact, nelec_spin will not be used anymore
         this->pelec->init_nelec_spin();
-        this->nelec[0] = this->pelec->nelec_spin[0];
-        this->nelec[1] = this->pelec->nelec_spin[1];
+        this->nelec_[0] = this->pelec->nelec_spin[0];
+        this->nelec_[1] = this->pelec->nelec_spin[1];
     }
 
     // ================================
     // Initialize optimization methods
     // ================================
-    if (this->of_method == "tn")
+    if (this->of_method_ == "tn")
     {
-        this->opt_tn.allocate(this->nrxx);
-        this->opt_tn.setPara(this->dV);
+        this->opt_tn.allocate(this->pw_rho->nrxx);
+        this->opt_tn.setPara(this->dV_);
     }
-    else if (this->of_method == "cg1" || this->of_method == "cg2")
+    else if (this->of_method_ == "cg1" || this->of_method_ == "cg2")
     {
-        this->opt_cg.allocate(this->nrxx);
-        this->opt_cg.setPara(this->dV);
+        this->opt_cg.allocate(this->pw_rho->nrxx);
+        this->opt_cg.setPara(this->dV_);
         this->opt_dcsrch.set_paras(1e-4,1e-2);
     }
-    else if (this->of_method == "bfgs")
+    else if (this->of_method_ == "bfgs")
     {
         ModuleBase::WARNING_QUIT("esolver_of", "BFGS is not supported now.");
         return;
@@ -215,37 +214,37 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     // =============================================
     // Initalize chemical potential, step length, ...
     // =============================================
-    this->mu = new double[GlobalV::NSPIN];
-    this->theta = new double[GlobalV::NSPIN];
-    this->pdLdphi = new double*[GlobalV::NSPIN];
-    this->pdEdphi = new double*[GlobalV::NSPIN];
-    this->pdirect = new double*[GlobalV::NSPIN];
-    this->precipDir = new std::complex<double> *[GlobalV::NSPIN];
+    this->mu_ = new double[GlobalV::NSPIN];
+    this->theta_ = new double[GlobalV::NSPIN];
+    this->pdLdphi_ = new double*[GlobalV::NSPIN];
+    this->pdEdphi_ = new double*[GlobalV::NSPIN];
+    this->pdirect_ = new double*[GlobalV::NSPIN];
+    this->precipDir_ = new std::complex<double> *[GlobalV::NSPIN];
     // this->pdeltaRhoHar = new double[this->pw_rho->nrxx];
 
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
-        this->pdLdphi[is] = new double[this->nrxx];
-        this->pdEdphi[is] = new double[this->nrxx];
-        this->pdirect[is] = new double[this->nrxx];
-        this->precipDir[is] = new std::complex<double>[pw_rho->npw];
+        this->pdLdphi_[is] = new double[this->pw_rho->nrxx];
+        this->pdEdphi_[is] = new double[this->pw_rho->nrxx];
+        this->pdirect_[is] = new double[this->pw_rho->nrxx];
+        this->precipDir_[is] = new std::complex<double>[pw_rho->npw];
     }
 
     // ===================================
     // Initialize KEDF
     // ===================================
-    this->tf.set_para(this->nrxx, this->dV, GlobalV::of_tf_weight);
-    this->vw.set_para(this->dV, GlobalV::of_vw_weight);
-    this->wt.set_para(this->dV, GlobalV::of_wt_alpha, GlobalV::of_wt_beta, this->nelec[0], GlobalV::of_tf_weight, GlobalV::of_vw_weight, GlobalV::of_read_kernel, GlobalV::of_kernel_file, this->pw_rho);
-    this->lkt.set_para(this->dV, GlobalV::of_lkt_a);
+    this->tf.set_para(this->pw_rho->nrxx, this->dV_, GlobalV::of_tf_weight);
+    this->vw.set_para(this->dV_, GlobalV::of_vw_weight);
+    this->wt.set_para(this->dV_, GlobalV::of_wt_alpha, GlobalV::of_wt_beta, this->nelec_[0], GlobalV::of_tf_weight, GlobalV::of_vw_weight, GlobalV::of_read_kernel, GlobalV::of_kernel_file, this->pw_rho);
+    this->lkt.set_para(this->dV_, GlobalV::of_lkt_a);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT KEDF");
 
     // Initialize charge extrapolation
     CE.Init_CE(GlobalC::ucell.nat);
-    delete this->ptempRho;
-    this->ptempRho = new Charge();
-    this->ptempRho->set_rhopw(this->pw_rho);
-    this->ptempRho->allocate(GlobalV::NSPIN);
+    delete this->ptempRho_;
+    this->ptempRho_ = new Charge();
+    this->ptempRho_->set_rhopw(this->pw_rho);
+    this->ptempRho_->allocate(GlobalV::NSPIN);
 }
 
 void ESolver_OF::init_after_vc(Input &inp, UnitCell &ucell)
@@ -254,8 +253,8 @@ void ESolver_OF::init_after_vc(Input &inp, UnitCell &ucell)
 
     ESolver_FP::init_after_vc(inp,ucell);
 
-    this->nrxx = this->pw_rho->nrxx;
-    this->dV = ucell.omega / this->pw_rho->nxyz; // volume of one point in real space
+    this->pw_rho->nrxx = this->pw_rho->nrxx;
+    this->dV_ = ucell.omega / this->pw_rho->nxyz; // volume of one point in real space
 
     if (GlobalV::md_prec_level == 2)
     {
@@ -321,18 +320,18 @@ void ESolver_OF::init_after_vc(Input &inp, UnitCell &ucell)
     // ================================
     // Initialize optimization methods
     // ================================
-    if (this->of_method == "tn")
+    if (this->of_method_ == "tn")
     {
-        this->opt_tn.allocate(this->nrxx);
-        this->opt_tn.setPara(this->dV);
+        this->opt_tn.allocate(this->pw_rho->nrxx);
+        this->opt_tn.setPara(this->dV_);
     }
-    else if (this->of_method == "cg1" || this->of_method == "cg2")
+    else if (this->of_method_ == "cg1" || this->of_method_ == "cg2")
     {
-        this->opt_cg.allocate(this->nrxx);
-        this->opt_cg.setPara(this->dV);
+        this->opt_cg.allocate(this->pw_rho->nrxx);
+        this->opt_cg.setPara(this->dV_);
         this->opt_dcsrch.set_paras(1e-4,1e-2);
     }
-    else if (this->of_method == "bfgs")
+    else if (this->of_method_ == "bfgs")
     {
         ModuleBase::WARNING_QUIT("esolver_of", "BFGS is not supported now.");
         return;
@@ -343,37 +342,37 @@ void ESolver_OF::init_after_vc(Input &inp, UnitCell &ucell)
 
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
-        delete[] this->pdLdphi[is];
-        delete[] this->pdEdphi[is];
-        delete[] this->pdirect[is];
-        delete[] this->precipDir[is];
-        this->pdLdphi[is] = new double[this->nrxx];
-        this->pdEdphi[is] = new double[this->nrxx];
-        this->pdirect[is] = new double[this->nrxx];
-        this->precipDir[is] = new std::complex<double>[pw_rho->npw];
+        delete[] this->pdLdphi_[is];
+        delete[] this->pdEdphi_[is];
+        delete[] this->pdirect_[is];
+        delete[] this->precipDir_[is];
+        this->pdLdphi_[is] = new double[this->pw_rho->nrxx];
+        this->pdEdphi_[is] = new double[this->pw_rho->nrxx];
+        this->pdirect_[is] = new double[this->pw_rho->nrxx];
+        this->precipDir_[is] = new std::complex<double>[pw_rho->npw];
     }
 
     // ===================================
     // Initialize KEDF
     // ===================================
-    this->tf.set_para(this->nrxx, this->dV, GlobalV::of_tf_weight);
-    this->vw.set_para(this->dV, GlobalV::of_vw_weight);
-    this->wt.set_para(this->dV,
+    this->tf.set_para(this->pw_rho->nrxx, this->dV_, GlobalV::of_tf_weight);
+    this->vw.set_para(this->dV_, GlobalV::of_vw_weight);
+    this->wt.set_para(this->dV_,
                       GlobalV::of_wt_alpha,
                       GlobalV::of_wt_beta,
-                      this->nelec[0],
+                      this->nelec_[0],
                       GlobalV::of_tf_weight,
                       GlobalV::of_vw_weight,
                       GlobalV::of_read_kernel,
                       GlobalV::of_kernel_file,
                       this->pw_rho);
-    this->lkt.set_para(this->dV, GlobalV::of_lkt_a);
+    this->lkt.set_para(this->dV_, GlobalV::of_lkt_a);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT KEDF");
 
-    delete this->ptempRho;
-    this->ptempRho = new Charge();
-    this->ptempRho->set_rhopw(this->pw_rho);
-    this->ptempRho->allocate(GlobalV::NSPIN);
+    delete this->ptempRho_;
+    this->ptempRho_ = new Charge();
+    this->ptempRho_->set_rhopw(this->pw_rho);
+    this->ptempRho_->allocate(GlobalV::NSPIN);
 }
 
 void ESolver_OF::Run(int istep, UnitCell& ucell)
@@ -381,7 +380,7 @@ void ESolver_OF::Run(int istep, UnitCell& ucell)
     ModuleBase::timer::tick("ESolver_OF", "Run");
     // get Ewald energy, initial rho and phi if necessary
     this->beforeOpt(istep);
-    this->iter = 0;
+    this->iter_ = 0;
 
     while(true)
     {
@@ -389,9 +388,9 @@ void ESolver_OF::Run(int istep, UnitCell& ucell)
         this->updateV();
 
         // calculate the energy of new rho and phi
-        this->energy_llast = this->energy_last;
-        this->energy_last = this->energy_current;
-        this->energy_current = this->cal_Energy();
+        this->energy_llast_ = this->energy_last_;
+        this->energy_last_ = this->energy_current_;
+        this->energy_current_ = this->cal_Energy();
 
         // print neccesary information
         this->printInfo();
@@ -405,7 +404,7 @@ void ESolver_OF::Run(int istep, UnitCell& ucell)
         // update the rho and phi based on the direction and theta
         this->updateRho();
 
-        this->iter++;
+        this->iter_++;
     }
 
     this->afterOpt(istep);
@@ -449,34 +448,34 @@ void ESolver_OF::beforeOpt(const int istep)
     {
         if (GlobalV::init_chg != "file")
         {
-            for (int ibs = 0; ibs < this->nrxx; ++ibs)
+            for (int ibs = 0; ibs < this->pw_rho->nrxx; ++ibs)
             {
                 // Here we initialize rho to be uniform,
                 // because the rho got by pot.init_pot -> Charge::atomic_rho may contain minus elements.
-                pelec->charge->rho[is][ibs] = this->nelec[is]/GlobalC::ucell.omega;
-                this->pphi[is][ibs] = sqrt(pelec->charge->rho[is][ibs]);
+                pelec->charge->rho[is][ibs] = this->nelec_[is]/GlobalC::ucell.omega;
+                this->pphi_[is][ibs] = sqrt(pelec->charge->rho[is][ibs]);
             }
         }
         else
         {
-            for (int ibs = 0; ibs < this->nrxx; ++ibs)
+            for (int ibs = 0; ibs < this->pw_rho->nrxx; ++ibs)
             {
-                this->pphi[is][ibs] = sqrt(pelec->charge->rho[is][ibs]);
+                this->pphi_[is][ibs] = sqrt(pelec->charge->rho[is][ibs]);
             }
         }
     }
 
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
-        this->mu[is] = 0;
-        this->theta[is] = 0.;
-        ModuleBase::GlobalFunc::ZEROS(this->pdLdphi[is], this->nrxx);
-        ModuleBase::GlobalFunc::ZEROS(this->pdEdphi[is], this->nrxx);
-        ModuleBase::GlobalFunc::ZEROS(this->pdirect[is], this->nrxx);
+        this->mu_[is] = 0;
+        this->theta_[is] = 0.;
+        ModuleBase::GlobalFunc::ZEROS(this->pdLdphi_[is], this->pw_rho->nrxx);
+        ModuleBase::GlobalFunc::ZEROS(this->pdEdphi_[is], this->pw_rho->nrxx);
+        ModuleBase::GlobalFunc::ZEROS(this->pdirect_[is], this->pw_rho->nrxx);
     }
     if (GlobalV::NSPIN == 1)
     {
-        this->theta[0] = 0.2;
+        this->theta_[0] = 0.2;
     }
 }
 
@@ -488,35 +487,35 @@ void ESolver_OF::updateV()
     // (1) get dL/dphi
     if(GlobalV::NSPIN==4) GlobalC::ucell.cal_ux();
     this->pelec->pot->update_from_charge(pelec->charge, &GlobalC::ucell); // Hartree + XC + external
-    this->kineticPotential(pelec->charge->rho, this->pphi, this->pelec->pot->get_effective_v()); // (kinetic + Hartree + XC + external) * 2 * phi
+    this->kineticPotential(pelec->charge->rho, this->pphi_, this->pelec->pot->get_effective_v()); // (kinetic + Hartree + XC + external) * 2 * phi
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
         const double* vr_eff = this->pelec->pot->get_effective_v(is);
-        for (int ir = 0; ir < this->nrxx; ++ir)
+        for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
         {
-            this->pdEdphi[is][ir] = vr_eff[ir];
+            this->pdEdphi_[is][ir] = vr_eff[ir];
         }
-        this->mu[is] = this->cal_mu(this->pphi[is], this->pdEdphi[is], this->nelec[is]);
+        this->mu_[is] = this->cal_mu(this->pphi_[is], this->pdEdphi_[is], this->nelec_[is]);
 
-        for (int ir = 0; ir < this->nrxx; ++ir)
+        for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
         {
-            this->pdLdphi[is][ir] = this->pdEdphi[is][ir] - 2. * this->mu[is] * this->pphi[is][ir];
+            this->pdLdphi_[is][ir] = this->pdEdphi_[is][ir] - 2. * this->mu_[is] * this->pphi_[is][ir];
         }
     }
 
     // (2) get the norm of dLdphi
     // ===== temporary solution of potential convergence when of_full_pw = 0 =====
-    this->normdLdphi_llast = this->normdLdphi_last;
-    this->normdLdphi_last = this->normdLdphi;
+    this->normdLdphi_llast_ = this->normdLdphi_last_;
+    this->normdLdphi_last_ = this->normdLdphi_;
     // ===========================================================================
-    this->normdLdphi = 0.;
+    this->normdLdphi_ = 0.;
 
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
-       this->normdLdphi += this->inner_product(this->pdLdphi[is], this->pdLdphi[is], this->nrxx, 1);
+       this->normdLdphi_ += this->inner_product(this->pdLdphi_[is], this->pdLdphi_[is], this->pw_rho->nrxx, 1);
     }
-    Parallel_Reduce::reduce_all(this->normdLdphi);
-    this->normdLdphi = sqrt(this->normdLdphi/this->pw_rho->nxyz/GlobalV::NSPIN);
+    Parallel_Reduce::reduce_all(this->normdLdphi_);
+    this->normdLdphi_ = sqrt(this->normdLdphi_/this->pw_rho->nxyz/GlobalV::NSPIN);
 }
 
 //
@@ -527,20 +526,20 @@ void ESolver_OF::solveV()
     // (1) get |d0> with optimization algorithm
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
-        if (this->of_method == "tn")
+        if (this->of_method_ == "tn")
         {
-            this->tnSpinFlag = is;
-            opt_tn.next_direct(this->pphi[is], this->pdLdphi[is], flag, this->pdirect[is], this, &ESolver_OF::calV);
+            this->tnSpinFlag_ = is;
+            opt_tn.next_direct(this->pphi_[is], this->pdLdphi_[is], this->flag_, this->pdirect_[is], this, &ESolver_OF::calV);
         }
-        else if (this->of_method == "cg1")
+        else if (this->of_method_ == "cg1")
         {
-            opt_cg.next_direct(this->pdLdphi[is], 1, this->pdirect[is]);
+            opt_cg.next_direct(this->pdLdphi_[is], 1, this->pdirect_[is]);
         }
-        else if (this->of_method == "cg2")
+        else if (this->of_method_ == "cg2")
         {
-            opt_cg.next_direct(this->pdLdphi[is], 2, this->pdirect[is]);
+            opt_cg.next_direct(this->pdLdphi_[is], 2, this->pdirect_[is]);
         }
-        else if (this->of_method == "bfgs")
+        else if (this->of_method_ == "bfgs")
         {
             return;
         }
@@ -553,11 +552,11 @@ void ESolver_OF::solveV()
     double **ptempPhi = new double*[GlobalV::NSPIN];
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
-        ptempPhi[is] = new double[this->nrxx];
-        for (int ir = 0; ir < this->nrxx; ++ir)
+        ptempPhi[is] = new double[this->pw_rho->nrxx];
+        for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
         {
-            ptempPhi[is][ir] = this->pphi[is][ir];
-            this->ptempRho->rho[is][ir] = ptempPhi[is][ir] * ptempPhi[is][ir];
+            ptempPhi[is][ir] = this->pphi_[is][ir];
+            this->ptempRho_->rho[is][ir] = ptempPhi[is][ir] * ptempPhi[is][ir];
         }
     }
 
@@ -572,7 +571,7 @@ void ESolver_OF::solveV()
     ModuleBase::GlobalFunc::ZEROS(tempTheta, GlobalV::NSPIN);
 
     double dEdthetaThre = 1e5; // threshould of dEdtheta, avoid the unstable optimization
-    this->caldEdtheta(ptempPhi, this->ptempRho, tempTheta, dEdtheta);
+    this->caldEdtheta(ptempPhi, this->ptempRho_, tempTheta, dEdtheta);
 
     // Assert dEdtheta(theta = 0) < 0, otherwise line search will not work.
     for (int is = 0; is < GlobalV::NSPIN; ++is)
@@ -585,12 +584,12 @@ void ESolver_OF::solveV()
         else if (dEdtheta[is] > 0)
         {
             GlobalV::ofs_warning << "ESolver_OF: WARNING " << "dEdphi > 0, replace direct with steepest descent method." << std::endl;
-            for (int ir = 0; ir < this->nrxx; ++ir)
+            for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
             {
-                this->pdirect[is][ir] = - this->pdLdphi[is][ir];
+                this->pdirect_[is][ir] = - this->pdLdphi_[is][ir];
             }
             this->getNextDirect();
-            this->caldEdtheta(ptempPhi, this->ptempRho, tempTheta, dEdtheta);
+            this->caldEdtheta(ptempPhi, this->ptempRho_, tempTheta, dEdtheta);
             if (dEdtheta[is] > dEdthetaThre)
             {
                 std::cout << "dEdtheta    " << dEdtheta[is] << std::endl;
@@ -605,28 +604,28 @@ void ESolver_OF::solveV()
     delete[] tempTheta;
 
     // // ======================== for test ============================
-    //     if (this->iter == 0)
+    //     if (this->iter_ == 0)
     //     {
     //         for (int i = -100; i < 100; ++i)
     //         {
-    //             this->theta[0] = 0.001 * i;
-    //             for (int ir = 0; ir < this->nrxx; ++ir)
+    //             this->theta_[0] = 0.001 * i;
+    //             for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
     //             {
-    //                 ptempPhi[0][ir] = this->pphi[0][ir] * cos(this->theta[0]) + this->pdirect[0][ir] *
-    //                 sin(this->theta[0]); ptempRho->rho[0][ir] = ptempPhi[0][ir] * ptempPhi[0][ir];
+    //                 ptempPhi[0][ir] = this->pphi_[0][ir] * cos(this->theta_[0]) + this->pdirect_[0][ir] *
+    //                 sin(this->theta_[0]); ptempRho->rho[0][ir] = ptempPhi[0][ir] * ptempPhi[0][ir];
     //             }
-    //             this->caldEdtheta(ptempPhi, ptempRho, this->theta, dEdtheta);
+    //             this->caldEdtheta(ptempPhi, ptempRho, this->theta_, dEdtheta);
     //             this->pelec->f_en.calculate_etot(this->pw_rho->nrxx, this->pw_rho->nxyz);
     //             E = this->pelec->f_en.etot;
     //             double eKE = 0.;
     //             double ePP = 0.;
     //             eKE = this->kineticEnergy();
-    //             ePP = this->inner_product(this->pelec->pot->get_fixed_v(), ptempRho->rho[0], this->nrxx, this->dV);
-    //             // ePP = this->inner_product(GlobalC::pot.vltot, ptempRho[0], this->nrxx, this->dV);
+    //             ePP = this->inner_product(this->pelec->pot->get_fixed_v(), ptempRho->rho[0], this->pw_rho->nrxx, this->dV_);
+    //             // ePP = this->inner_product(GlobalC::pot.vltot, ptempRho[0], this->pw_rho->nrxx, this->dV_);
     //             Parallel_Reduce::reduce_all(ePP);
     //             E += eKE + ePP;
     //             GlobalV::ofs_warning << i << "    " << dEdtheta[0] << "    " << E << endl;
-    //             if (this->theta[0] == 0) cout << "dEdtheta    " << dEdtheta[0]<< endl;
+    //             if (this->theta_[0] == 0) cout << "dEdtheta    " << dEdtheta[0]<< endl;
     //         }
     //         exit(0);
     //     }
@@ -638,53 +637,53 @@ void ESolver_OF::solveV()
     if (GlobalV::NSPIN == 1)
     {
         int numDC = 0; // iteration number of line search
-        strcpy(this->task, "START");
+        strcpy(this->task_, "START");
         while (true)
         {
             // update energy
             this->pelec->cal_energies(2);
             E = this->pelec->f_en.etot;
             eKE = this->kineticEnergy();
-            ePP = this->inner_product(this->pelec->pot->get_fixed_v(), this->ptempRho->rho[0], this->nrxx, this->dV);
+            ePP = this->inner_product(this->pelec->pot->get_fixed_v(), this->ptempRho_->rho[0], this->pw_rho->nrxx, this->dV_);
             Parallel_Reduce::reduce_all(ePP);
             E += eKE + ePP;
 
             // line search to update theta[0]
-            this->opt_dcsrch.dcSrch(E, dEdtheta[0], this->theta[0], this->task);
+            this->opt_dcsrch.dcSrch(E, dEdtheta[0], this->theta_[0], this->task_);
             numDC++;
 
             // decide what to do next according to the output of line search
-            if (strncmp(this->task, "FG", 2) == 0) // continue line search
+            if (strncmp(this->task_, "FG", 2) == 0) // continue line search
             {
                 // update tempPhi and tempRho
-                for (int i = 0; i < this->nrxx; ++i)
+                for (int i = 0; i < this->pw_rho->nrxx; ++i)
                 {
-                    ptempPhi[0][i] = this->pphi[0][i] * cos(this->theta[0]) + this->pdirect[0][i] * sin(this->theta[0]);
-                    this->ptempRho->rho[0][i] = ptempPhi[0][i] * ptempPhi[0][i];
+                    ptempPhi[0][i] = this->pphi_[0][i] * cos(this->theta_[0]) + this->pdirect_[0][i] * sin(this->theta_[0]);
+                    this->ptempRho_->rho[0][i] = ptempPhi[0][i] * ptempPhi[0][i];
                 }
                 // get dEdtheta of new tempPhi and tempRho
-                this->caldEdtheta(ptempPhi, this->ptempRho, this->theta, dEdtheta);
+                this->caldEdtheta(ptempPhi, this->ptempRho_, this->theta_, dEdtheta);
 
-                if (numDC > this->maxDCsrch)
+                if (numDC > this->maxDCsrch_)
                 {
                     GlobalV::ofs_warning << "ESolver_OF linesearch: WARNING " << "excedd the max iter number." << std::endl;
                     break;
                 }
             }
-            else if (strncmp(this->task, "CO", 2) == 0) // convergence achieved
+            else if (strncmp(this->task_, "CO", 2) == 0) // convergence achieved
             {
                 break;
             }
-            else if (strncmp(this->task, "WA", 2) == 0) // warning of line search
+            else if (strncmp(this->task_, "WA", 2) == 0) // warning of line search
             {
-                GlobalV::ofs_warning << "ESolver_OF linesearch: WARNING " << this->task << std::endl;
-                std::cout << this->task << std::endl;
+                GlobalV::ofs_warning << "ESolver_OF linesearch: WARNING " << this->task_ << std::endl;
+                std::cout << this->task_ << std::endl;
                 break;
             }
-            else if (strncmp(this->task, "ER", 2) == 0) // ERROR in line search
+            else if (strncmp(this->task_, "ER", 2) == 0) // ERROR in line search
             {
-                GlobalV::ofs_warning << "ESolver_OF linesearch: ERROR " << this->task << std::endl;
-                std::cout << this->task << std::endl;
+                GlobalV::ofs_warning << "ESolver_OF linesearch: ERROR " << this->task_ << std::endl;
+                std::cout << this->task_ << std::endl;
                 break;
             }
         }
@@ -726,7 +725,7 @@ void ESolver_OF::solveV()
 
         //         // line search along thetaDir to find thetaAlpha
         //         this->opt_dcsrch.set_paras(1e-4, 1e-2, 1e-12, 0., ModuleBase::PI/maxThetaDir);
-        //         strcpy(this->task, "START");
+        //         strcpy(this->task_, "START");
         //         numDC = 0;
         //         while(true)
         //         {
@@ -735,21 +734,21 @@ void ESolver_OF::solveV()
         //             eKE = this->kineticEnergy();
         //             ePP = 0.;
         //             for (int is = 0; is < GlobalV::NSPIN; ++is) {
-        //                 ePP += this->inner_product(GlobalC::pot.vltot, ptempRho[is], this->nrxx, this->dV);
+        //                 ePP += this->inner_product(GlobalC::pot.vltot, ptempRho[is], this->pw_rho->nrxx, this->dV_);
         //             }
         //             Parallel_Reduce::reduce_all(ePP);
         //             E += eKE + ePP;
-        //             this->opt_dcsrch.dcSrch(E, dEdalpha, thetaAlpha, this->task);
+        //             this->opt_dcsrch.dcSrch(E, dEdalpha, thetaAlpha, this->task_);
         //             numDC++;
 
-        //             if (strncmp(this->task, "FG", 2) == 0)
+        //             if (strncmp(this->task_, "FG", 2) == 0)
         //             {
         //                 for (int is = 0; is < GlobalV::NSPIN; ++is)
         //                 {
-        //                     tempTheta[is] = this->theta[is] + thetaAlpha * pthetaDir[is];
-        //                     for (int ir = 0; ir < this->nrxx; ++ir)
+        //                     tempTheta[is] = this->theta_[is] + thetaAlpha * pthetaDir[is];
+        //                     for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
         //                     {
-        //                         ptempPhi[is][ir] = this->pphi[is][ir] * cos(tempTheta[is]) + this->pdirect[is][ir] *
+        //                         ptempPhi[is][ir] = this->pphi_[is][ir] * cos(tempTheta[is]) + this->pdirect_[is][ir] *
         //                         sin(tempTheta[is]); ptempRho[is][ir] = ptempPhi[is][ir] * ptempPhi[is][ir];
         //                     }
         //                 }
@@ -762,25 +761,25 @@ void ESolver_OF::solveV()
         //                     number." << endl; break;
         //                 }
         //             }
-        //             else if (strncmp(this->task, "CO", 2) == 0)
+        //             else if (strncmp(this->task_, "CO", 2) == 0)
         //             {
         //                 break;
         //             }
-        //             else if (strncmp(this->task, "WA", 2) == 0)
+        //             else if (strncmp(this->task_, "WA", 2) == 0)
         //             {
-        //                 GlobalV::ofs_warning << "ESolver_OF linesearch: WARNING " << this->task << std::endl;
-        //                 cout << this->task << endl;
+        //                 GlobalV::ofs_warning << "ESolver_OF linesearch: WARNING " << this->task_ << std::endl;
+        //                 cout << this->task_ << endl;
         //                 break;
         //             }
-        //             else if (strncmp(this->task, "ER", 2) == 0)
+        //             else if (strncmp(this->task_, "ER", 2) == 0)
         //             {
-        //                 GlobalV::ofs_warning << "ESolver_OF linesearch: ERROR " << this->task << std::endl;
-        //                 cout << this->task << endl;
+        //                 GlobalV::ofs_warning << "ESolver_OF linesearch: ERROR " << this->task_ << std::endl;
+        //                 cout << this->task_ << endl;
         //                 break;
         //             }
         //         }
 
-        //         for (int is = 0; is < GlobalV::NSPIN; ++is) this->theta[is] += thetaAlpha * pthetaDir[is];
+        //         for (int is = 0; is < GlobalV::NSPIN; ++is) this->theta_[is] += thetaAlpha * pthetaDir[is];
         //         if (sqrt(dEdtheta[0] * dEdtheta[0] + dEdtheta[1] * dEdtheta[1]) < alphaTol) break;
         //         thetaIter++;
         //         if (thetaIter > 2) break;
@@ -808,8 +807,8 @@ void ESolver_OF::getNextDirect()
     {
         for (int is = 0; is < GlobalV::NSPIN; ++is)
         {
-            pw_rho->real2recip(this->pdirect[is], this->precipDir[is]);
-            pw_rho->recip2real(this->precipDir[is], this->pdirect[is]);
+            pw_rho->real2recip(this->pdirect_[is], this->precipDir_[is]);
+            pw_rho->recip2real(this->precipDir_[is], this->pdirect_[is]);
         }
     }
 
@@ -819,28 +818,28 @@ void ESolver_OF::getNextDirect()
 
         // (1) make direction orthogonal to phi
         // |d'> = |d0> - |phi><phi|d0>/nelec
-        double innerPhiDir = this->inner_product(this->pdirect[0], this->pphi[0], this->nrxx, this->dV);
+        double innerPhiDir = this->inner_product(this->pdirect_[0], this->pphi_[0], this->pw_rho->nrxx, this->dV_);
         Parallel_Reduce::reduce_all(innerPhiDir);
-        for (int i = 0; i < this->nrxx; ++i)
+        for (int i = 0; i < this->pw_rho->nrxx; ++i)
         {
-            tempTheta += pow(this->pdirect[0][i] + this->pphi[0][i], 2);
-            this->pdirect[0][i] = this->pdirect[0][i] - this->pphi[0][i] * innerPhiDir / this->nelec[0];
+            tempTheta += pow(this->pdirect_[0][i] + this->pphi_[0][i], 2);
+            this->pdirect_[0][i] = this->pdirect_[0][i] - this->pphi_[0][i] * innerPhiDir / this->nelec_[0];
         }
         Parallel_Reduce::reduce_all(tempTheta);
         tempTheta = sqrt(tempTheta);
 
         // (2) renormalize direction
         // |d> = |d'> * \sqrt(nelec) / <d'|d'>
-        double normDir = this->inner_product(this->pdirect[0], this->pdirect[0], this->nrxx, this->dV);
+        double normDir = this->inner_product(this->pdirect_[0], this->pdirect_[0], this->pw_rho->nrxx, this->dV_);
         Parallel_Reduce::reduce_all(normDir);
         normDir = sqrt(normDir);
-        for (int i = 0; i < this->nrxx; ++i)
+        for (int i = 0; i < this->pw_rho->nrxx; ++i)
         {
-            this->pdirect[0][i] = sqrt(this->nelec[0]) * this->pdirect[0][i] / normDir;
+            this->pdirect_[0][i] = sqrt(this->nelec_[0]) * this->pdirect_[0][i] / normDir;
         }
 
         tempTheta = normDir/tempTheta;
-        this->theta[0] = std::min(this->theta[0], tempTheta);
+        this->theta_[0] = std::min(this->theta_[0], tempTheta);
     }
     else if (GlobalV::NSPIN == 2) // theta = 0
     {
@@ -848,23 +847,23 @@ void ESolver_OF::getNextDirect()
         {
             // (1) make direction orthogonal to phi
             // |d'> = |d0> - |phi><phi|d0>/nelec
-            double innerPhiDir = this->inner_product(this->pdirect[is], this->pphi[is], this->nrxx, this->dV);
+            double innerPhiDir = this->inner_product(this->pdirect_[is], this->pphi_[is], this->pw_rho->nrxx, this->dV_);
             Parallel_Reduce::reduce_all(innerPhiDir);
-            for (int i = 0; i < this->nrxx; ++i)
+            for (int i = 0; i < this->pw_rho->nrxx; ++i)
             {
-                this->pdirect[is][i] = this->pdirect[is][i] - this->pphi[is][i] * innerPhiDir / this->nelec[is];
+                this->pdirect_[is][i] = this->pdirect_[is][i] - this->pphi_[is][i] * innerPhiDir / this->nelec_[is];
             }
 
             // (2) renormalize direction
             // |d> = |d'> * \sqrt(nelec) / <d'|d'>
-            double normDir = this->inner_product(this->pdirect[is], this->pdirect[is], this->nrxx, this->dV);
+            double normDir = this->inner_product(this->pdirect_[is], this->pdirect_[is], this->pw_rho->nrxx, this->dV_);
             Parallel_Reduce::reduce_all(normDir);
             normDir = sqrt(normDir);
-            for (int i = 0; i < this->nrxx; ++i)
+            for (int i = 0; i < this->pw_rho->nrxx; ++i)
             {
-                this->pdirect[is][i] = sqrt(this->nelec[is]) * this->pdirect[is][i] / normDir;
+                this->pdirect_[is][i] = sqrt(this->nelec_[is]) * this->pdirect_[is][i] / normDir;
             }
-            this->theta[is] = 0.;
+            this->theta_[is] = 0.;
         }
     }
 }
@@ -876,10 +875,10 @@ void ESolver_OF::updateRho()
 {
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
-        for (int ir = 0; ir < this->nrxx; ++ir)
+        for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
         {
-            this->pphi[is][ir] = this->pphi[is][ir] * cos(this->theta[is]) + this->pdirect[is][ir] * sin(this->theta[is]);
-            pelec->charge->rho[is][ir] = this->pphi[is][ir] * this->pphi[is][ir];
+            this->pphi_[is][ir] = this->pphi_[is][ir] * cos(this->theta_[is]) + this->pdirect_[is][ir] * sin(this->theta_[is]);
+            pelec->charge->rho[is][ir] = this->pphi_[is][ir] * this->pphi_[is][ir];
         }
     }
     // ============================ for test ===========================
@@ -889,36 +888,36 @@ void ESolver_OF::updateRho()
     //     for (int is = 0; is < GlobalV::NSPIN; is++)
     //     {
     //         srho.begin(is, pelec->charge, this->pw_rho, GlobalC::Pgrid, this->symm);
-    //         for (int ibs = 0; ibs < this->nrxx; ++ibs)
+    //         for (int ibs = 0; ibs < this->pw_rho->nrxx; ++ibs)
     //         {
-    //             this->pphi[is][ibs] = sqrt(pelec->charge->rho[is][ibs]);
+    //             this->pphi_[is][ibs] = sqrt(pelec->charge->rho[is][ibs]);
     //         }
     //     }
     // }
     // =============test for rho convergence criterion =================
     // for (int is = 0; is < GlobalV::NSPIN; ++is)
     // {
-    //     for (int ir = 0; ir < this->nrxx; ++ir)
+    //     for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
     //     {
     //         pelec->charge->rho_save[is][ir] = pelec->charge->rho[is][ir];
     //         this->pdeltaRho[is][ir] = pelec->charge->rho[is][ir] - pelec->charge->rho_save[is][ir];
     //         this->deltaRhoR += abs(this->pdeltaRho[is][ir]);
 
     //     }
-    //     this->pw_rho->real2recip(this->pdeltaRho[is], this->precipDir[is]);
+    //     this->pw_rho->real2recip(this->pdeltaRho[is], this->precipDir_[is]);
     //     for (int ig = 0; ig < this->pw_rho->npw; ++ig)
     //     {
     //         if (this->pw_rho->gg[ig] != 0.)
-    //             this->precipDir[is][ig] = this->precipDir[is][ig] / this->pw_rho->gg[ig] / this->pw_rho->tpiba2 * 4. * M_PI;
+    //             this->precipDir_[is][ig] = this->precipDir_[is][ig] / this->pw_rho->gg[ig] / this->pw_rho->tpiba2 * 4. * M_PI;
     //         else
-    //             this->precipDir[is][ig] = 0.;
+    //             this->precipDir_[is][ig] = 0.;
     //     }
-    //     this->pw_rho->recip2real(this->precipDir[is], this->pdeltaRhoHar);
-    //     this->deltaRhoG = this->inner_product(this->pdeltaRho[is], this->pdeltaRhoHar, this->nrxx, this->dV);
+    //     this->pw_rho->recip2real(this->precipDir_[is], this->pdeltaRhoHar);
+    //     this->deltaRhoG = this->inner_product(this->pdeltaRho[is], this->pdeltaRhoHar, this->pw_rho->nrxx, this->dV_);
     // }
     // Parallel_Reduce::reduce_all(this->deltaRhoR);
     // Parallel_Reduce::reduce_all(this->deltaRhoG);
-    // this->deltaRhoR *= this->dV;
+    // this->deltaRhoR *= this->dV_;
     // this->deltaRhoG /= 2.;
 }
 
@@ -927,47 +926,47 @@ void ESolver_OF::updateRho()
 //
 bool ESolver_OF::checkExit()
 {
-    this->conv = false;
+    this->conv_ = false;
     bool potConv = false;
     bool potHold = false; // if normdLdphi nearly remains unchanged
     bool energyConv = false;
 
-    if (this->normdLdphi < this->of_tolp)
+    if (this->normdLdphi_ < this->of_tolp_)
         potConv = true;
-    if (this->iter >= 3
-        && std::abs(this->normdLdphi - this->normdLdphi_last) < 1e-10
-        && std::abs(this->normdLdphi - this->normdLdphi_llast) < 1e-10)
+    if (this->iter_ >= 3
+        && std::abs(this->normdLdphi_ - this->normdLdphi_last_) < 1e-10
+        && std::abs(this->normdLdphi_ - this->normdLdphi_llast_) < 1e-10)
         potHold = true;
 
-    if (this->iter >= 3
-        && std::abs(this->energy_current - this->energy_last) < this->of_tole
-        && std::abs(this->energy_current - this->energy_llast) < this->of_tole)
+    if (this->iter_ >= 3
+        && std::abs(this->energy_current_ - this->energy_last_) < this->of_tole_
+        && std::abs(this->energy_current_ - this->energy_llast_) < this->of_tole_)
         energyConv = true;
 
-    if (this->of_conv == "energy" && energyConv)
+    if (this->of_conv_ == "energy" && energyConv)
     {
-        this->conv = true;
+        this->conv_ = true;
         return true;
     }
-    else if (this->of_conv == "potential" && potConv)
+    else if (this->of_conv_ == "potential" && potConv)
     {
-        this->conv = true;
+        this->conv_ = true;
         return true;
     // ============ temporary solution of potential convergence ===========
     }
-    else if (this->of_conv == "potential" && potHold)
+    else if (this->of_conv_ == "potential" && potHold)
     {
         GlobalV::ofs_warning << "ESolver_OF WARNING: " <<
         "The convergence of potential has not been reached, but the norm of potential nearly remains unchanged, set of_full_pw = 1 may work." << std::endl;
         return true;
     }
     // ====================================================================
-    else if (this->of_conv == "both" && potConv && energyConv)
+    else if (this->of_conv_ == "both" && potConv && energyConv)
     {
-        this->conv = true;
+        this->conv_ = true;
         return true;
     }
-    else if (this->iter >= this->maxIter)
+    else if (this->iter_ >= this->max_iter_)
     {
         return true;
     }
@@ -982,7 +981,7 @@ bool ESolver_OF::checkExit()
 //
 void ESolver_OF::printInfo()
 {
-    if (this->iter == 0){
+    if (this->iter_ == 0){
         std::cout << "======================== Running OFDFT ========================" <<  std::endl;
         std::cout << "Iter        Etot(Ha)          Theta      PotNorm     deltaE(Ha)" << std::endl;
         // cout << "======================================== Running OFDFT ========================================" <<  endl;
@@ -993,24 +992,24 @@ void ESolver_OF::printInfo()
     // ============ used to compare with PROFESS3.0 ================
     // double minDen = pelec->charge->rho[0][0];
     // double maxDen = pelec->charge->rho[0][0];
-    // double minPot = this->pdEdphi[0][0];
-    // double maxPot = this->pdEdphi[0][0];
-    // for (int i = 0; i < this->nrxx; ++i)
+    // double minPot = this->pdEdphi_[0][0];
+    // double maxPot = this->pdEdphi_[0][0];
+    // for (int i = 0; i < this->pw_rho->nrxx; ++i)
     // {
     //     if (pelec->charge->rho[0][i] < minDen) minDen = pelec->charge->rho[0][i];
     //     if (pelec->charge->rho[0][i] > maxDen) maxDen = pelec->charge->rho[0][i];
-    //     if (this->pdEdphi[0][i] < minPot) minPot = this->pdEdphi[0][i];
-    //     if (this->pdEdphi[0][i] > maxPot) maxPot = this->pdEdphi[0][i];
+    //     if (this->pdEdphi_[0][i] < minPot) minPot = this->pdEdphi_[0][i];
+    //     if (this->pdEdphi_[0][i] > maxPot) maxPot = this->pdEdphi_[0][i];
     // }
-    std::cout << std::setw(6) << this->iter
-    << std::setw(22) << std::setiosflags(std::ios::scientific) << std::setprecision(12) << this->energy_current/2.
-    << std::setw(12) << std::setprecision(3) << this->theta[0]
-    << std::setw(12) << this->normdLdphi
-    << std::setw(12) << (this->energy_current - this->energy_last)/2. << std::endl;
+    std::cout << std::setw(6) << this->iter_
+    << std::setw(22) << std::setiosflags(std::ios::scientific) << std::setprecision(12) << this->energy_current_/2.
+    << std::setw(12) << std::setprecision(3) << this->theta_[0]
+    << std::setw(12) << this->normdLdphi_
+    << std::setw(12) << (this->energy_current_ - this->energy_last_)/2. << std::endl;
     // ============ test new convergence criterion =================
     // << setw(12) << this->deltaRhoG
     // << setw(12) << this->deltaRhoR
-    // << setw(12) << this->energy_current - this->energy_last << endl;
+    // << setw(12) << this->energy_current_ - this->energy_last_ << endl;
     // ============ used to compare with PROFESS3.0 ================
     // << setw(10) << minDen << "/ " << setw(12) << maxDen
     // << setw(10) << minPot << "/ " << setw(10) << maxPot << endl;
@@ -1019,7 +1018,7 @@ void ESolver_OF::printInfo()
 
 void ESolver_OF::afterOpt(const int istep)
 {
-    ModuleIO::output_convergence_after_scf(this->conv, this->pelec->f_en.etot);
+    ModuleIO::output_convergence_after_scf(this->conv_, this->pelec->f_en.etot);
 
     // save charge difference into files for charge extrapolation
     if (GlobalV::CALCULATION != "scf")
@@ -1050,7 +1049,7 @@ void ESolver_OF::afterOpt(const int istep)
                 pelec->charge->rho[is],
                 is,
                 GlobalV::NSPIN,
-                iter,
+                this->iter_,
                 ssc.str(),
                 pw_rho->nx,
                 pw_rho->ny,
@@ -1139,34 +1138,34 @@ void ESolver_OF::calV(double *ptempPhi, double *rdLdphi)
 
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
-        dEdtempPhi[is] = new double[this->nrxx];
-        if (is == this->tnSpinFlag)
+        dEdtempPhi[is] = new double[this->pw_rho->nrxx];
+        if (is == this->tnSpinFlag_)
         {
             tempPhi[is] = ptempPhi;
         }
         else
         {
-            tempPhi[is] = this->pphi[is];
+            tempPhi[is] = this->pphi_[is];
         }
-        for (int ir = 0; ir < this->nrxx; ++ir)
+        for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
         {
-            this->ptempRho->rho[is][ir] = tempPhi[is][ir] * tempPhi[is][ir];
+            this->ptempRho_->rho[is][ir] = tempPhi[is][ir] * tempPhi[is][ir];
         }
     }
 
     if(GlobalV::NSPIN==4) GlobalC::ucell.cal_ux();
-    this->pelec->pot->update_from_charge(this->ptempRho, &GlobalC::ucell);
+    this->pelec->pot->update_from_charge(this->ptempRho_, &GlobalC::ucell);
     ModuleBase::matrix& vr_eff = this->pelec->pot->get_effective_v();
 
-    this->kineticPotential(this->ptempRho->rho, tempPhi, vr_eff);
-    for (int i = 0; i < this->nrxx; ++i)
+    this->kineticPotential(this->ptempRho_->rho, tempPhi, vr_eff);
+    for (int i = 0; i < this->pw_rho->nrxx; ++i)
     {
-        dEdtempPhi[this->tnSpinFlag][i] = vr_eff(this->tnSpinFlag,i);
+        dEdtempPhi[this->tnSpinFlag_][i] = vr_eff(this->tnSpinFlag_,i);
     }
-    double tempMu = this->cal_mu(ptempPhi, dEdtempPhi[this->tnSpinFlag], this->nelec[this->tnSpinFlag]);
-    for (int i = 0; i < this->nrxx; ++i)
+    double tempMu = this->cal_mu(ptempPhi, dEdtempPhi[this->tnSpinFlag_], this->nelec_[this->tnSpinFlag_]);
+    for (int i = 0; i < this->pw_rho->nrxx; ++i)
     {
-        rdLdphi[i] = dEdtempPhi[this->tnSpinFlag][i] - 2. * tempMu * ptempPhi[i];
+        rdLdphi[i] = dEdtempPhi[this->tnSpinFlag_][i] - 2. * tempMu * ptempPhi[i];
     }
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
@@ -1183,7 +1182,7 @@ void ESolver_OF::calV(double *ptempPhi, double *rdLdphi)
 //
 void ESolver_OF::caldEdtheta(double **ptempPhi, Charge* tempRho, double *ptheta, double *rdEdtheta)
 {
-    double *pdPhidTheta = new double[this->nrxx];
+    double *pdPhidTheta = new double[this->pw_rho->nrxx];
 
     if(GlobalV::NSPIN==4) GlobalC::ucell.cal_ux();
     this->pelec->pot->update_from_charge(tempRho, &GlobalC::ucell);
@@ -1192,12 +1191,12 @@ void ESolver_OF::caldEdtheta(double **ptempPhi, Charge* tempRho, double *ptheta,
     this->kineticPotential(tempRho->rho, ptempPhi, vr_eff);
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
-        for (int ir = 0; ir < this->nrxx; ++ir)
+        for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
         {
-            this->pdEdphi[is][ir] = vr_eff(is,ir);
-            pdPhidTheta[ir] = - this->pphi[is][ir] * sin(ptheta[is]) + this->pdirect[is][ir] * cos(ptheta[is]);
+            this->pdEdphi_[is][ir] = vr_eff(is,ir);
+            pdPhidTheta[ir] = - this->pphi_[is][ir] * sin(ptheta[is]) + this->pdirect_[is][ir] * cos(ptheta[is]);
         }
-        rdEdtheta[is] = this->inner_product(this->pdEdphi[is], pdPhidTheta, this->nrxx, this->dV);
+        rdEdtheta[is] = this->inner_product(this->pdEdphi_[is], pdPhidTheta, this->pw_rho->nrxx, this->dV_);
         Parallel_Reduce::reduce_all(rdEdtheta[is]);
     }
     delete[] pdPhidTheta;
@@ -1209,7 +1208,7 @@ void ESolver_OF::caldEdtheta(double **ptempPhi, Charge* tempRho, double *ptheta,
 //
 double ESolver_OF::cal_mu(double *pphi, double *pdEdphi, double nelec)
 {
-    double mu = this->inner_product(pphi, pdEdphi, this->nrxx, this->dV);
+    double mu = this->inner_product(pphi, pdEdphi, this->pw_rho->nrxx, this->dV_);
     Parallel_Reduce::reduce_all(mu);
     mu = mu / (2.0*nelec);
     return mu;
@@ -1226,7 +1225,7 @@ double ESolver_OF::cal_Energy()
     double ePP = 0.;                    // electron-ion interaction energy
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
-        ePP += this->inner_product(this->pelec->pot->get_fixed_v(), pelec->charge->rho[is], this->nrxx, this->dV);
+        ePP += this->inner_product(this->pelec->pot->get_fixed_v(), pelec->charge->rho[is], this->pw_rho->nrxx, this->dV_);
     }
     Parallel_Reduce::reduce_all(ePP);
     this->pelec->f_en.etot += eKE + ePP;
@@ -1252,30 +1251,30 @@ void ESolver_OF::cal_Stress(ModuleBase::matrix& stress)
         }
     }
 
-    if (this->of_kinetic == "tf")
+    if (this->of_kinetic_ == "tf")
     {
         this->tf.get_stress(GlobalC::ucell.omega);
         kinetic_stress += this->tf.stress;
     }
-    else if (this->of_kinetic == "vw")
+    else if (this->of_kinetic_ == "vw")
     {
-        this->vw.get_stress(this->pphi, this->pw_rho);
+        this->vw.get_stress(this->pphi_, this->pw_rho);
         kinetic_stress += this->vw.stress;
     }
-    else if (this->of_kinetic == "wt")
+    else if (this->of_kinetic_ == "wt")
     {
         this->tf.get_stress(GlobalC::ucell.omega);
-        this->vw.get_stress(this->pphi, this->pw_rho);
+        this->vw.get_stress(this->pphi_, this->pw_rho);
         this->wt.get_stress(GlobalC::ucell.omega, pelec->charge->rho, this->pw_rho, GlobalV::of_vw_weight);
         kinetic_stress += this->tf.stress + this->vw.stress + this->wt.stress;
     }
-    else if (this->of_kinetic == "tf+")
+    else if (this->of_kinetic_ == "tf+")
     {
         this->tf.get_stress(GlobalC::ucell.omega);
-        this->vw.get_stress(this->pphi, this->pw_rho);
+        this->vw.get_stress(this->pphi_, this->pw_rho);
         kinetic_stress += this->tf.stress + this->vw.stress;
     }
-    else if (this->of_kinetic == "lkt")
+    else if (this->of_kinetic_ == "lkt")
     {
         this->lkt.get_stress(GlobalC::ucell.omega, pelec->charge->rho, this->pw_rho);
         this->vw.get_stress(pelec->charge->rho, this->pw_rho);
@@ -1289,59 +1288,59 @@ void ESolver_OF::cal_Stress(ModuleBase::matrix& stress)
 // Calculated kinetic potential and plus it to &rpot, return (rpot + kietic potential) * 2 * pphiInpt
 void ESolver_OF::kineticPotential(double **prho, double **pphiInpt, ModuleBase::matrix &rpot)
 {
-    if (this->of_kinetic == "tf")
+    if (this->of_kinetic_ == "tf")
     {
         this->tf.tf_potential(prho, rpot);
         for (int is = 0; is < GlobalV::NSPIN; ++is)
         {
-            for (int ir = 0; ir < this->nrxx; ++ir)
+            for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
             {
                 rpot(is,ir) *= 2.0 * pphiInpt[is][ir];
             }
         }
     }
-    else if (this->of_kinetic == "vw")
+    else if (this->of_kinetic_ == "vw")
     {
         for (int is = 0; is < GlobalV::NSPIN; ++is)
         {
-            for (int ir = 0; ir < this->nrxx; ++ir)
+            for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
             {
                 rpot(is,ir) *= 2.0 * pphiInpt[is][ir];
             }
         }
         this->vw.vW_potential(pphiInpt, this->pw_rho, rpot);
     }
-    else if (this->of_kinetic == "wt")
+    else if (this->of_kinetic_ == "wt")
     {
         this->tf.tf_potential(prho, rpot);
         this->wt.WT_potential(prho, this->pw_rho, rpot);
         for (int is = 0; is < GlobalV::NSPIN; ++is)
         {
-            for (int ir = 0; ir < this->nrxx; ++ir)
+            for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
             {
                 rpot(is,ir) *= 2.0 * pphiInpt[is][ir];
             }
         }
         this->vw.vW_potential(pphiInpt, this->pw_rho, rpot);
     }
-    else if (this->of_kinetic == "tf+")
+    else if (this->of_kinetic_ == "tf+")
     {
         this->tf.tf_potential(prho, rpot);
         for (int is = 0; is < GlobalV::NSPIN; ++is)
         {
-            for (int ir = 0; ir < this->nrxx; ++ir)
+            for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
             {
                 rpot(is,ir) *= 2.0 * pphiInpt[is][ir];
             }
         }
         this->vw.vW_potential(pphiInpt, this->pw_rho, rpot);
     }
-    else if (this->of_kinetic == "lkt")
+    else if (this->of_kinetic_ == "lkt")
     {
         this->lkt.lkt_potential(prho, this->pw_rho, rpot);
         for (int is = 0; is < GlobalV::NSPIN; ++is)
         {
-            for (int ir = 0; ir < this->nrxx; ++ir)
+            for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
             {
                 rpot(is,ir) *= 2.0 * pphiInpt[is][ir];
             }
@@ -1354,23 +1353,23 @@ void ESolver_OF::kineticPotential(double **prho, double **pphiInpt, ModuleBase::
 double ESolver_OF::kineticEnergy()
 {
     double kinetic = 0.;
-    if (this->of_kinetic == "tf")
+    if (this->of_kinetic_ == "tf")
     {
         kinetic += this->tf.TFenergy;
     }
-    else if (this->of_kinetic == "vw")
+    else if (this->of_kinetic_ == "vw")
     {
         kinetic += this->vw.vWenergy;
     }
-    else if (this->of_kinetic == "wt")
+    else if (this->of_kinetic_ == "wt")
     {
         kinetic += this->tf.TFenergy + this->vw.vWenergy + this->wt.WTenergy;
     }
-    else if (this->of_kinetic == "tf+")
+    else if (this->of_kinetic_ == "tf+")
     {
         kinetic += this->tf.TFenergy + this->vw.vWenergy;
     }
-    else if (this->of_kinetic == "lkt")
+    else if (this->of_kinetic_ == "lkt")
     {
         kinetic += this->lkt.LKTenergy + this->vw.vWenergy;
     }
