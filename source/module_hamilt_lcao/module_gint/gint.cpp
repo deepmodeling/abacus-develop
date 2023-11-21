@@ -50,7 +50,7 @@ void Gint::cal_gint(Gint_inout *inout)
     {
 		if (inout->job == Gint_Tools::job_type::vlocal && GlobalV::GAMMA_ONLY_LOCAL && lgd > 0)
 		{
-			double* ylmcoef = new double[100];
+			double ylmcoef[100];
 			ModuleBase::GlobalFunc::ZEROS(ylmcoef, 100);
 			for (int i = 0; i < 100; i++)
 			{
@@ -62,16 +62,9 @@ void Gint::cal_gint(Gint_inout *inout)
 							GlobalC::ucell.omega / this->ncxyz,
 							inout->vl,
 							ylmcoef,
-							this->bx,
-							this->by,
-							this->bz,
-							this->bxyz,
-							this->gridt->ncx,
-							this->gridt->ncy,
 							this->nplane,
 							GlobalV::NLOCAL,
 							this->nbxx,
-							this->gridt->start_ind,
 							*this->gridt);
 			ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
 			return;

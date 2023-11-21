@@ -230,8 +230,6 @@ __global__ void psi_multiple(double ** atom_pair_left_g_v2,
     #pragma unroll
     for (int atom_pair_index = start_index; atom_pair_index < end_index; atom_pair_index += step)
     {
-        //int atomnow1 = atom_pair_input_info_g[atom_pair_index];
-        //int atomnow2 = atom_pair_input_info_g[atom_pair_index + 1];
         int info_index = atom_pair_index * 4;
         int nw_mul = atom_pair_input_info_g[info_index];
         int atom_nw2 = atom_pair_input_info_g[info_index + 1];
@@ -244,12 +242,12 @@ __global__ void psi_multiple(double ** atom_pair_left_g_v2,
             int iw1 = iw_index / atom_nw2;
             int iw2 = iw_index % atom_nw2;
             double v2 = 0.0;
-
+            double * left = &atom_pair_left_g_v2[atom_pair_index][iw1 * bxyz_g[0]];
+            double * right = &atom_pair_right_g_v2[atom_pair_index][iw2 * bxyz_g[0]];
             #pragma unroll
             for (int ib = 0; ib < bxyz_g[0]; ++ib)
             {
-                v2 += atom_pair_left_g_v2[atom_pair_index][iw1 * bxyz_g[0] + ib]
-                    * atom_pair_right_g_v2[atom_pair_index][iw2 * bxyz_g[0] + ib];
+                v2 += left[ib] * right[ib];
             }
             atomicAdd(&(GridVlocal[(lo1 + iw1) * lgd + (lo2 + iw2)]), v2);
         }

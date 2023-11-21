@@ -7,20 +7,17 @@
 void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint, int lgd_now,
                        const int max_size, double vfactor,
                        const double *vlocal, const double *ylmcoef_now,
-                       int pwbx, int pwby, int pwbz, int pwbxyz, int pwncx,
-                       int pwncy, int pwnczp, int NLOCAL_now, int nbxx,
-                       int *start_ind, const Grid_Technique &GridT);
+                       int pwnczp, int NLOCAL_now, int nbxx, const Grid_Technique &GridT);
 
 
 
 
 void gpu_task_generate_vlocal(const Grid_Technique &GridT, 
                               const int i, const int j,
-                              const int bx, const int by, const int bz, const int bxyz,
                               const int atom_pair_size_of_meshcell_v2,
                               const int psi_size_max, const int max_size,
-                              const int ncx, const int ncy, const int nczp,
-                              const double vfactor, const int *start_ind,
+                              const int nczp,
+                              const double vfactor,
                               const double *vlocal_global_value,
                               double *psir_ylm_left,
                               double *psir_ylm_right,

@@ -12,16 +12,9 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
                        const double vfactor,
                        const double *vlocal,
                        const double *ylmcoef_now,
-                       const int bx,
-                       const int by,
-                       const int bz,
-                       const int bxyz,
-                       const int ncx,
-                       const int ncy,
                        const int nczp,
                        const int NLOCAL_now,
                        const int nbxx,
-                       int *start_ind,
                        const Grid_Technique &GridT)
 {
     const Numerical_Orbital_Lm *pointer;
@@ -30,7 +23,7 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
     const int nbz = GridT.nbzp;
     const int nwmax = GlobalC::ucell.nwmax;
     const int ntype = GlobalC::ucell.ntype;
-    gint_gamma_vl_upload_const(max_size, ylmcoef_now, bxyz);
+    gint_gamma_vl_upload_const(max_size, ylmcoef_now, GridT.bxyz);
     double max_cut = 0;
     for (int i = 0; i < ntype; i++)
     {
@@ -113,7 +106,7 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
     }
 
     const int nStreams = 4;
-    const int psir_size = nbz * max_size * bxyz * nwmax;
+    const int psir_size = nbz * max_size * GridT.bxyz * nwmax;
     double *psir_ylm_left_global;
     double *psir_ylm_right_global;
     checkCuda(cudaMalloc((void **)&psir_ylm_left_global, psir_size * nStreams * sizeof(double)));
@@ -157,8 +150,8 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
     int *num_atom_pair_g_global;
     checkCuda(cudaMalloc((void **)&num_atom_pair_g_global, nbz * nStreams * sizeof(int)));
 
-    const int psi_size_max = max_size * bxyz * nbz;
-    const int psi_size_max_per_z = max_size * bxyz;
+    const int psi_size_max = max_size * GridT.bxyz * nbz;
+    const int psi_size_max_per_z = max_size * GridT.bxyz;
     double *psi_input_double_global;
     checkCuda(cudaMallocHost((void **)&psi_input_double_global, psi_size_max * nStreams * 5 * sizeof(double)));
     double *psi_input_double_g_global;
@@ -221,12 +214,10 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
             double ** atom_pair_output_g_v2 = &atom_pair_output_global_g_v2[atom_pair_size_over_nbz_v2 * stream_num];
 
             gpu_task_generate_vlocal(GridT, i, j,
-                                     bx, by, bz, bxyz,
                                      atom_pair_size_of_meshcell_v2,
                                      psi_size_max_per_z,
-                                     max_size, ncx, ncy, nczp,
+                                     max_size, nczp,
                                      vfactor,
-                                     start_ind,
                                      vlocal,
                                      psir_ylm_left_g,
                                      psir_ylm_right_g,
@@ -234,7 +225,7 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
                                      psi_input_int,
                                      num_psir,
                                      atom_pair_input_info,
-                                     num_atom_pair, GridVlocal_v2_g,     
+                                     num_atom_pair, GridVlocal_v2_g,
                                      atom_pair_left_v2,
                                      atom_pair_right_v2,
                                      atom_pair_output_v2);
