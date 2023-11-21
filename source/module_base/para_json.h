@@ -50,7 +50,7 @@ namespace Para_Json
 
     // @param reading_information -- input_para -- system_variables：
     extern rapidjson::Value system_variables;
-    extern rapidjson::Value suffix;
+    extern rapidjson::Value input_suffix;
     extern rapidjson::Value ntype;
     extern rapidjson::Value calculation;
     extern rapidjson::Value esolver_type;

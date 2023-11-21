@@ -681,7 +681,7 @@ bool Input::Read(const std::string &fn)
         if (strcmp("suffix", word) == 0) // out dir
         {
             read_value(ifs, suffix);
-            Para_Json::set_json_value(Para_Json::suffix,&suffix);
+            Para_Json::set_json_value(Para_Json::input_suffix,&suffix);
             //Para_Json::set_json_value(Para_Json::suffix,&suffix); 
         }
         else if (strcmp("stru_file", word) == 0) // xiaohui modify 2015-02-01
@@ -1133,7 +1133,6 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, ecutwfc);
             Para_Json::set_json_value(Para_Json::ecutwfc,&ecutwfc); 
-            ecutrho = 4.0 * ecutwfc;
         }
         else if (strcmp("ecutrho", word) == 0)
         {

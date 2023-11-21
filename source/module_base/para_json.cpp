@@ -36,7 +36,7 @@ namespace Para_Json
 
     // @param reading_information -- input_para -- system_variables：
     rapidjson::Value system_variables(rapidjson::kObjectType);
-    rapidjson::Value suffix;
+    rapidjson::Value input_suffix;
     rapidjson::Value ntype;
     rapidjson::Value calculation;
     rapidjson::Value esolver_type;
@@ -561,7 +561,7 @@ namespace Para_Json
      */
     void Init_json_abacus_readinInfo(){
         //add Third stage：parameter in system_variables:
-        system_variables.AddMember("suffix", suffix, doc.GetAllocator());
+        system_variables.AddMember("suffix", input_suffix, doc.GetAllocator());
         system_variables.AddMember("ntype", ntype, doc.GetAllocator());
         system_variables.AddMember("calculation", calculation, doc.GetAllocator());
         system_variables.AddMember("esolver_type", esolver_type, doc.GetAllocator());
@@ -973,7 +973,7 @@ namespace Para_Json
 
         // Output the json string to a file
         std::string json_path;
-        json_path.append(GlobalV::global_out_dir +"out_para.json");
+        json_path.append(GlobalV::global_out_dir +"abacus.json");
 
         std::ofstream ofs(json_path);
         ofs << buffer.GetString() << std::endl;
