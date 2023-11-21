@@ -541,7 +541,7 @@ namespace Para_Json
 
         general_info.AddMember("begin_date", begin_date, doc.GetAllocator());     
 
-        general_info.AddMember("device_g", device_g, doc.GetAllocator());                
+        general_info.AddMember("device", device_g, doc.GetAllocator());                
 
         // add Third stage：parameter in parallel:
         general_info.AddMember("parallel", parallel, doc.GetAllocator());
