@@ -7,6 +7,7 @@
 #include "module_basis/module_nao/two_center_integrator.h"
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_base/atom_in.h"
+#include "module_base/vector3.h"
 /*
     Quasiatomic Orbital (QO) transformation and analysis
 
@@ -32,7 +33,7 @@ class toQO
         using Matrix = std::vector<std::vector<std::complex<double>>>;
 
     public:
-        toQO(std::string qo_basis, std::string strategy = "");
+        toQO(std::string qo_basis, std::string strategy = "minimal");
         ~toQO();
         // ----
         // main functions, implemented in to_qo.cpp
@@ -41,7 +42,6 @@ class toQO
         /// @param p_ucell interface (raw pointer) to the unitcell
         /// @param nkpts number of kpoints
         void initialize(UnitCell *p_ucell,
-                        ModulePW::PW_Basis_K* p_pw_wfc,
                         int nkpts);
         /// @brief calculate the overlap between atomic orbitals and numerical atomic orbitals, in real space
         void cal_ovlp_ao_nao_R(const int iR);
@@ -105,21 +105,47 @@ class toQO
         /// @return a vector of (n1n2n3)
         void scan_supercell();
 
-        Matrix folding_matrixR(ModuleBase::Vector3<double> kvec_c);
+        void allocate_ovlps();
+
+        void zero_out_ovlps(const bool is_R);
+
+        Matrix folding_ovlp_R(ModuleBase::Vector3<double> kvec_c);
+
+        void eliminate_duplicate_vector3(std::vector<ModuleBase::Vector3<int>>& vector3s);
+
+        // getters
+        /// @brief get the number of kpoints
+        /// @return number of kpoints
+        int nkpts() const { return nkpts_; }
+        /// @brief get qo basis type
+        /// @return qo basis type
+        std::string qo_basis() const { return qo_basis_; }
+        /// @brief get strategy type
+        /// @return strategy type
+        std::string strategy() const { return strategy_; }
+        /// @brief get the interface to the unitcell
+        /// @return interface to the unitcell
+        UnitCell* p_ucell() const { return p_ucell_; }
 
     private:
 
         /// @brief interface to the unitcell
         UnitCell *p_ucell_ = nullptr;
-        /// @brief interface to the pw wavefunction
-        ModulePW::PW_Basis_K *p_pw_wfc_ = nullptr;
-        /// @brief number of kpoints
-        int nkpts_ = 0;
+
 
         std::vector<ModuleBase::Vector3<int>> supercells_;
 
         std::vector<Matrix> ovlp_ao_nao_R_;
         std::vector<Matrix> ovlp_ao_nao_k_;
+
+        /// @brief number of kpoints, for S(k)
+        int nkpts_ = 0;
+        /// @brief number of supercell vectors, for S(R)
+        int nR_ = 0;
+        /// @brief number of atomic orbitals, chi in \mathbf{S}^{\chi\phi}(\mathbf{k})
+        int nchi_ = 0;
+        /// @brief number of numerical atomic orbitals, phi in \mathbf{S}^{\chi\phi}(\mathbf{k})
+        int nphi_ = 0;
 
         /// @brief current atomic orbital basis for generating QO
         /// @details hydrogen_minimal: 1s, 2p, 3d, ... 
@@ -130,6 +156,8 @@ class toQO
 
         std::unique_ptr<RadialCollection> nao_;
         std::unique_ptr<RadialCollection> ao_;
+
+        std::unique_ptr<TwoCenterIntegrator> overlap_calculator_;
 
         atom_in atom_database_;
 };

@@ -1,5 +1,112 @@
 #include "module_io/to_qo.h"
-#include "module_base/vector3.h"
+
+void toQO::eliminate_duplicate_vector3(std::vector<ModuleBase::Vector3<int>> &v)
+{
+    std::vector<std::vector<int>> v_;
+    for(int i = 0; i < v.size(); i++)
+    {
+        v_.push_back(std::vector<int>{v[i].x, v[i].y, v[i].z});
+    }
+    std::sort(v_.begin(), v_.end());
+    v_.erase(std::unique(v_.begin(), v_.end()), v_.end());
+    v.clear();
+    v.resize(v_.size());
+    for(int i = 0; i < v_.size(); i++)
+    {
+        v[i] = ModuleBase::Vector3<int>(v_[i][0], v_[i][1], v_[i][2]);
+    }
+}
+
+void toQO::allocate_ovlps()
+{
+    if(nchi_ == 0 || nphi_ == 0)
+    {
+        ModuleBase::WARNING_QUIT("toQO::allocate_ovlps", "nchi_ or nphi_ is zero, which means not properly initialized.");
+    }
+    // deallocate memory for ovlp_ao_nao_R_ and ovlp_ao_nao_k_
+    for(int iR = 0; iR < ovlp_ao_nao_R_.size(); iR++)
+    {
+        for(int i = 0; i < ovlp_ao_nao_R_[iR].size(); i++)
+        {
+            ovlp_ao_nao_R_[iR][i].clear();
+        }
+        ovlp_ao_nao_R_[iR].clear();
+    }
+    ovlp_ao_nao_R_.clear();
+    for(int ik = 0; ik < ovlp_ao_nao_k_.size(); ik++)
+    {
+        for(int i = 0; i < ovlp_ao_nao_k_[ik].size(); i++)
+        {
+            ovlp_ao_nao_k_[ik][i].clear();
+        }
+        ovlp_ao_nao_k_[ik].clear();
+    }
+    ovlp_ao_nao_k_.clear();
+    // allocate memory for ovlp_ao_nao_R_
+    for(int iR = 0; iR < nR_; iR++)
+    {
+        std::vector<std::vector<std::complex<double>>> matrix;
+        for(int i = 0; i < nchi_; i++)
+        {
+            std::vector<std::complex<double>> row;
+            for(int j = 0; j < nphi_; j++)
+            {
+                row.push_back(std::complex<double>(0.0, 0.0));
+            }
+            matrix.push_back(row);
+        }
+        ovlp_ao_nao_R_.push_back(matrix);
+    }
+    // allocate memory for ovlp_ao_nao_k_
+    for(int ik = 0; ik < nkpts_; ik++)
+    {
+        std::vector<std::vector<std::complex<double>>> matrix;
+        for(int i = 0; i < nchi_; i++)
+        {
+            std::vector<std::complex<double>> row;
+            for(int j = 0; j < nphi_; j++)
+            {
+                row.push_back(std::complex<double>(0.0, 0.0));
+            }
+            matrix.push_back(row);
+        }
+        ovlp_ao_nao_k_.push_back(matrix);
+    }
+}
+
+void toQO::zero_out_ovlps(const bool is_R)
+{
+    if(nchi_ == 0 || nphi_ == 0)
+    {
+        ModuleBase::WARNING_QUIT("toQO::zero_out_ovlps", "nchi_ or nphi_ is zero, which means not properly initialized.");
+    }
+    if(is_R)
+    {
+        for(int iR = 0; iR < supercells_.size(); iR++)
+        {
+            for(int i = 0; i < nchi_; i++)
+            {
+                for(int j = 0; j < nphi_; j++)
+                {
+                    ovlp_ao_nao_R_[iR][i][j] = std::complex<double>(0.0, 0.0);
+                }
+            }
+        }
+    }
+    else
+    {
+        for(int ik = 0; ik < nkpts_; ik++)
+        {
+            for(int i = 0; i < nchi_; i++)
+            {
+                for(int j = 0; j < nphi_; j++)
+                {
+                    ovlp_ao_nao_k_[ik][i][j] = std::complex<double>(0.0, 0.0);
+                }
+            }
+        }
+    }
+}
 
 std::vector<ModuleBase::Vector3<int>> toQO::scan_supercell_for_atom(int it, int ia, int start_it, int start_ia)
 {
@@ -35,6 +142,8 @@ std::vector<ModuleBase::Vector3<int>> toQO::scan_supercell_for_atom(int it, int 
             }
         }
     }
+    eliminate_duplicate_vector3(n1n2n3);
+    return n1n2n3;
 }
 
 double toQO::norm2_rij_supercell(ModuleBase::Vector3<double> rij, int n1, int n2, int n3)
@@ -65,12 +174,11 @@ void toQO::scan_supercell()
         }
     }
     // delete duplicates
-    std::sort(n1n2n3_overall.begin(), n1n2n3_overall.end());
-    n1n2n3_overall.erase(std::unique(n1n2n3_overall.begin(), n1n2n3_overall.end()), n1n2n3_overall.end());
+    eliminate_duplicate_vector3(n1n2n3_overall);
     supercells_ = n1n2n3_overall;
 }
 
-Matrix toQO::folding_matrixR(ModuleBase::Vector3<double> kvec_c)
+std::vector<std::vector<std::complex<double>>> toQO::folding_ovlp_R(ModuleBase::Vector3<double> kvec_c)
 {
     std::vector<std::vector<std::complex<double>>> matrices_k;
     int nrow = ovlp_ao_nao_R_[0].size();
@@ -100,5 +208,3 @@ Matrix toQO::folding_matrixR(ModuleBase::Vector3<double> kvec_c)
     }
     return matrices_k;
 }
-
-using Matrix = std::vector<std::vector<std::complex<double>>>;

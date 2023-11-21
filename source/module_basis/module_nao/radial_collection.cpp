@@ -202,6 +202,7 @@ void RadialCollection::build(const int ntype, const double* const charges, const
                               nmax[itype], 
                               10.0,             // rcut should be determined automatically, in principle...
                               0.01,
+                              1e-6,
                               0,
                               strategy);
 
