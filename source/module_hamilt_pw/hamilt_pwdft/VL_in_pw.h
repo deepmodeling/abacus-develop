@@ -23,7 +23,11 @@ private:
 	double *zp;   // (npsx),the charge of the pseudopotential
 
 	void allocate(const int ngg);
-
+    /**
+     * @brief compute the coulomb potential in reciprocal space
+     *        v(g) = -\frac{4pi}{V} * zp*e^2 / G^2
+     */
+    void vloc_coulomb(const double& zp, double* vloc_1d, const ModulePW::PW_Basis* rho_basis) const;
 	// generate vloc for a particular atom type.
     void vloc_of_g(const int& msh,
                    const double* rab,

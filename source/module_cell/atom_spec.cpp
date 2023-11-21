@@ -130,6 +130,7 @@ void Atom::bcast_atom(void)
     Parallel_Common::bcast_int( nw );
     Parallel_Common::bcast_int( stapos_wf );
     Parallel_Common::bcast_string( label );
+    Parallel_Common::bcast_bool(coulomb_potential);
     if(GlobalV::MY_RANK!=0)
     {
         delete[] l_nchi;
