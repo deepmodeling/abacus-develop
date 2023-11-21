@@ -11,7 +11,7 @@ dft_functional  scan
 #Parameters (2.Iteration)
 ecutwfc			20
 scf_thr				1e-9
-scf_nmax			100
+scf_nmax			2
 
 
 #Parameters (3.Basis)
@@ -24,6 +24,7 @@ smearing_sigma		0.1
 #Parameters (5.Mixing)
 mixing_type		broyden
 mixing_beta		0.7
+mixing_gg0      0.0
 
 nx                      24
 ny                      24
