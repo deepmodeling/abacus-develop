@@ -295,6 +295,9 @@ extern "C"
 
     void init_rho_(int&,  int*,   int&,int&, int&,  double*,double*,double*,double&,double*,double*);
     //             nspden,ngfftdg,nfft,natom,ntypat,rprimd, gprimd, gmet,   ucvol,  xred,   rho
+
+    void paw_force_(int&, int&,  int*, int*,   int&,double*,double*,double*,double*,double&,double*,double*,int&);
+    //              natom,ntypat,typat,ngfftdg,nfft,nhat,   xred,   rprimd, gmet,   ucvol,  vtrial, vxc,    nspden
 }
 
 void Paw_Cell::prepare_paw()
@@ -716,4 +719,137 @@ double Paw_Cell::calculate_ecore()
         charge += paw_element_list[it].get_zval();
     }
     return esum * charge / ucvol * 2.0;
+}
+
+void Paw_Cell::calculate_force(double* vks, double* vxc)
+{
+    ModuleBase::TITLE("Paw_Cell", "calculate_force");
+    double * vks_hartree, * vxc_hartree;
+
+#ifdef __MPI
+    double * vks_collected, * vxc_collected;
+    if(GlobalV::RANK_IN_POOL == 0)
+    {
+        vks_hartree = new double[nspden * nfft];
+        vxc_hartree = new double[nspden * nfft];
+        vks_collected = new double[nspden * nfft];
+        vxc_collected = new double[nspden * nfft];
+    }
+
+    // Collecting vks and vxc from all processes; I hope there could be a better way
+    // but this is what I can think of right now.
+    const int nxy = nx * ny;
+    const int nrxx = nxy * num_z[GlobalV::RANK_IN_POOL];
+
+    for(int is = 0; is < nspden; is ++)
+    {
+        double * vks_send = new double[num_z[GlobalV::RANK_IN_POOL]];
+        double * vxc_send = new double[num_z[GlobalV::RANK_IN_POOL]];
+        double * vks_receive = new double[nz];
+        double * vxc_receive = new double[nz];
+        for(int ixy = 0; ixy < nxy; ixy ++)
+        {
+            for(int iz = 0; iz < num_z[GlobalV::RANK_IN_POOL]; iz++)
+            {
+                vks_send[iz] = vks[(ixy*num_z[GlobalV::RANK_IN_POOL] + iz) + is*nrxx];
+                vxc_send[iz] = vxc[(ixy*num_z[GlobalV::RANK_IN_POOL] + iz) + is*nrxx];
+            }
+
+            MPI_Gatherv(vks_send,num_z[GlobalV::RANK_IN_POOL],MPI_DOUBLE,vks_receive,num_z.data(),start_z.data(),MPI_DOUBLE,0,MPI_COMM_WORLD);
+            MPI_Gatherv(vxc_send,num_z[GlobalV::RANK_IN_POOL],MPI_DOUBLE,vxc_receive,num_z.data(),start_z.data(),MPI_DOUBLE,0,MPI_COMM_WORLD);
+
+            if(GlobalV::RANK_IN_POOL == 0)
+            {
+                for(int iz = 0; iz < nz; iz ++)
+                {
+                    vks_collected[(ixy*nz + iz) + is*nfft] = vks_receive[iz];
+                    vxc_collected[(ixy*nz + iz) + is*nfft] = vxc_receive[iz];
+                }
+            }
+        }
+        delete[] vks_send;
+        delete[] vxc_send;
+        delete[] vks_receive;
+        delete[] vxc_receive;
+    
+        if(GlobalV::RANK_IN_POOL == 0)
+        {
+            for(int ix = 0; ix < nx; ix ++)
+            {
+                for(int iy = 0; iy < ny; iy ++)
+                {
+                    for(int iz = 0; iz < nz; iz ++)
+                    {
+                        int ind_c = (ix*ny*nz + iy*nz + iz) + is * nfft;
+                        int ind_fortran = iz*ny*nx + iy*nx + ix + is*nfft;
+                        vks_hartree[ind_fortran] = vks_collected[ind_c] / 2.0;
+                        vxc_hartree[ind_fortran] = vxc_collected[ind_c] / 2.0;
+                    }
+                }
+            }        
+        }
+    }
+
+    if(GlobalV::RANK_IN_POOL == 0)
+    {
+        double* nhatgr;
+        nhatgr = new double[3*nfft];
+        double* nhat_tmp;
+        nhat_tmp = new double[nfft*nspden];
+
+        get_nhat_(natom,ntypat,xred.data(),ngfft.data(),nfft,nspden,gprimd.data(),rprimd.data(),
+                ucvol,nhat_tmp,nhatgr);
+
+        paw_force_(natom,ntypat,typat.data(),ngfft.data(),nfft,nhat_tmp,xred.data(),
+                rprimd.data(),gmet.data(),ucvol,vks_hartree,vxc_hartree,nspden);
+
+        delete[] nhatgr;
+        delete[] nhat_tmp;
+    }
+
+    if(GlobalV::RANK_IN_POOL == 0)
+    {
+        delete[] vks_hartree;
+        delete[] vxc_hartree;
+        delete[] vks_collected;
+        delete[] vxc_collected;
+    }
+
+#else
+    vks_hartree = new double[nspden * nfft];
+    vxc_hartree = new double[nspden * nfft];
+    for(int is = 0; is < nspden; is ++)
+    {
+        for(int ix = 0; ix < nx; ix ++)
+        {
+            for(int iy = 0; iy < ny; iy ++)
+            {
+                for(int iz = 0; iz < nz; iz ++)
+                {
+                    int ind_c = ix*ny*nz + iy*nz + iz + is*nfft;
+                    int ind_fortran = is*nfft + iz*ny*nx + iy*nx + ix;
+                    vks_hartree[ind_fortran] = vks[ind_c] / 2.0;
+                    vxc_hartree[ind_fortran] = vxc[ind_c] / 2.0;
+                }
+            }
+        }
+    }
+
+    double* nhatgr;
+    nhatgr = new double[3*nfft];
+    double* nhat_tmp;
+    nhat_tmp = new double[nfft*nspden];
+
+    get_nhat_(natom,ntypat,xred.data(),ngfft.data(),nfft,nspden,gprimd.data(),rprimd.data(),
+            ucvol,nhat_tmp,nhatgr);
+
+    paw_force_(natom,ntypat,typat.data(),ngfft.data(),nfft,nhat_tmp,xred.data(),
+            rprimd.data(),gmet.data(),ucvol,vks_hartree,vxc_hartree,nspden);
+
+    delete[] nhatgr;
+    delete[] nhat_tmp;
+
+    delete[] vks_hartree;
+    delete[] vxc_hartree;
+#endif
 }
