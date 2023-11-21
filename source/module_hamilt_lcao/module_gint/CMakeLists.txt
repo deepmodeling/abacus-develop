@@ -21,7 +21,9 @@ list(APPEND objects
     grid_meshk.cpp
     grid_technique.cpp
     gint_gpu/gint_vl.cu
+    gint_gpu/vbatch_matrix_multiple/cuda_tools.cu
     gint_gpu/gpu_task_generator.cpp
+    gint_gpu/gint_vl_gpu.cu
 )
 
 add_library(

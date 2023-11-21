@@ -6,17 +6,22 @@
 #include "module_hamilt_lcao/module_gint/gint_tools.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
-void gpu_task_generate_vlocal(const Grid_Technique &GridT, const int i,
-                              const int j, const int bx, const int by,
-                              const int bz, const int bxyz,
-                              const int atom_pair_size_of_meshcell,
+void gpu_task_generate_vlocal(const Grid_Technique &GridT, 
+                              const int i, const int j,
+                              const int bx, const int by, const int bz, const int bxyz,
+                              const int atom_pair_size_of_meshcell_v2,
                               const int psi_size_max, const int max_size,
                               const int ncx, const int ncy, const int nczp,
                               const double vfactor, const int *start_ind,
                               const double *vlocal_global_value,
+                              double *psir_ylm_left,
+                              double *psir_ylm_right,
                               double *psi_input_double, int *psi_input_int,
                               int *num_psir, int *atom_pair_input_info,
-                              int *num_atom_pair) {
+                              int *num_atom_pair, double* GridVlocal_v2_g[],     
+                              double ** atom_pair_left_v2,
+                              double ** atom_pair_right_v2,
+                              double ** atom_pair_output_v2) {
 
   const int grid_index_ij = i * GridT.nby * GridT.nbzp + j * GridT.nbzp;
   const int nwmax = GlobalC::ucell.nwmax;
@@ -79,9 +84,11 @@ void gpu_task_generate_vlocal(const Grid_Technique &GridT, const int i,
     }
     num_psir[z_index] = num_get_psi;
 
-    int atom_pair_index_in_nbz = atom_pair_size_of_meshcell * z_index;
+    int atom_pair_index_in_nbz_v2 = atom_pair_size_of_meshcell_v2 * z_index;
     int atom_pair_index_in_meshcell = 0;
     int atom_num = GridT.how_many_atoms[grid_index];
+    int vldr3_index = z_index * max_size * nwmax * bxyz;
+
     for (int atom1 = 0; atom1 < atom_num; atom1++) {
 
       int iat1 = GridT.which_atom[bcell_start_index + atom1];
@@ -95,15 +102,28 @@ void gpu_task_generate_vlocal(const Grid_Technique &GridT, const int i,
         int lo2 = GridT.trace_lo[GlobalC::ucell.itiaiw2iwt(
             it2, GlobalC::ucell.iat2ia[iat2], 0)];
         if (lo1 <= lo2) {
-          int atom_pair_index =
-              atom_pair_index_in_nbz + atom_pair_index_in_meshcell;
-          atom_pair_input_info[atom_pair_index] = atom1 * nwmax;
-          atom_pair_input_info[atom_pair_index + 1] = atom2 * nwmax;
-          atom_pair_input_info[atom_pair_index + 2] = GlobalC::ucell.atoms[it1].nw * GlobalC::ucell.atoms[it2].nw;
-          atom_pair_input_info[atom_pair_index + 3] = GlobalC::ucell.atoms[it2].nw;
-          atom_pair_input_info[atom_pair_index + 4] = lo1;
-          atom_pair_input_info[atom_pair_index + 5] = lo2;
-          atom_pair_index_in_meshcell += 6;
+
+          int atom_pair_nw = GlobalC::ucell.atoms[it1].nw * GlobalC::ucell.atoms[it2].nw;
+          if (GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2] == nullptr)
+          {
+             checkCuda(cudaMalloc((void **)&GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2], atom_pair_nw * sizeof(double)));
+          }
+          const int atom_pair_index_v2 =
+              atom_pair_index_in_nbz_v2 + atom_pair_index_in_meshcell;
+          
+          int calc_index1 = vldr3_index + atom1 * nwmax * bxyz;
+          int calc_index2 = vldr3_index + atom2 * nwmax * bxyz;
+          atom_pair_left_v2[atom_pair_index_v2] = psir_ylm_left + calc_index1;
+          atom_pair_right_v2[atom_pair_index_v2] = psir_ylm_right + calc_index2;
+          atom_pair_output_v2[atom_pair_index_v2] = GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2];
+
+          const int atom_pair_index = atom_pair_index_v2 * 4;
+
+          atom_pair_input_info[atom_pair_index] = atom_pair_nw;
+          atom_pair_input_info[atom_pair_index + 1] = GlobalC::ucell.atoms[it2].nw;
+          atom_pair_input_info[atom_pair_index + 2] = lo1;
+          atom_pair_input_info[atom_pair_index + 3] = lo2;
+          atom_pair_index_in_meshcell++;
         }
       }
     }
