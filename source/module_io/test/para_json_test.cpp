@@ -28,7 +28,7 @@ protected:
 
 TEST_F(ParaJsonTest,Init)
 {
-	std::string input_file = "./data/INPUT";
+	std::string input_file = "./support/INPUT";
 	Input input_tmp;
 	EXPECT_NO_THROW(input_tmp.Init(input_file));
 
