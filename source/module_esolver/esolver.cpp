@@ -88,11 +88,11 @@ namespace ModuleESolver
             }
         }
         if (GlobalV::MY_RANK == 0) {
-            std::cout << " RUNNING WITH DEVICE     : " << device_info << " / "
+            std::cout << " RUNNING WITH DEVICE  : " << device_info << " / "
                       << psi::device::get_device_info(GlobalV::device_flag) << std::endl;
         }
-        GlobalV::ofs_running << "\n RUNNING WITH DEVICE     : " << device_info << " / "
-                  << psi::device::get_device_info(GlobalV::device_flag) << std::endl;
+        GlobalV::ofs_running << "\n RUNNING WITH DEVICE  : " << device_info << " / "
+                             << psi::device::get_device_info(GlobalV::device_flag) << std::endl;
         return esolver_type;
     }
 

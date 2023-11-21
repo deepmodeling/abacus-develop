@@ -240,6 +240,9 @@ void Atom_pseudo::bcast_atom_pseudo(void)
 // == end of pseudo_vl ==
 
 // == pseudo ==
+	if(nbeta == 0)
+		return;
+	
 	if(GlobalV::MY_RANK != 0)
 	{
 		delete[] lll;

@@ -12,7 +12,7 @@
 namespace ModulePW
 {
 
-class PW_Basis_Big: public PW_Basis
+class PW_Basis_Big : public PW_Basis_Sup
 {
 public:
   // combine [bx,by,bz] FFT grids into a big one
@@ -21,7 +21,9 @@ public:
   PW_Basis_Big()
   {
   }
-    PW_Basis_Big(std::string device_, std::string precision_) : PW_Basis(device_, precision_) {}
+  PW_Basis_Big(std::string device_, std::string precision_) : PW_Basis_Sup(device_, precision_)
+  {
+  }
 
     ~PW_Basis_Big(){};
     void setbxyz(const int bx_in, const int by_in, const int bz_in)

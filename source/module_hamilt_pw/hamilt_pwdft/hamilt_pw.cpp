@@ -10,6 +10,10 @@
 #include "operator_pw/meta_pw.h"
 #include "operator_pw/nonlocal_pw.h"
 
+#ifdef USE_PAW
+#include "module_cell/module_paw/paw_cell.h"
+#endif
+
 namespace hamilt
 {
 
@@ -206,6 +210,21 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
 
     const T one{1, 0};
     const T zero{0, 0};
+
+    if(GlobalV::use_paw)
+    {
+#ifdef USE_PAW
+#ifdef __DEBUG
+        assert(psi.get_k_first());
+#endif
+        for(int m = 0; m < nbands; m ++)
+        {
+            GlobalC::paw_cell.paw_nl_psi(1, reinterpret_cast<const std::complex<double>*> (&psi_in[m * npw]),
+                reinterpret_cast<std::complex<double>*>(&spsi[m * nrow]));
+        }
+#endif
+        return;
+    }
 
     syncmem_op()(this->ctx, this->ctx, spsi, psi_in, static_cast<size_t>(nbands * nrow));
     if (GlobalV::use_uspp)
