@@ -85,8 +85,7 @@ private:
 
     double inner_product(double *pa, double *pb, int length)
     {
-        double innerproduct = 0.;
-        for (int i = 0; i < length; ++i) innerproduct += pa[i] * pb[i];
+        double innerproduct = BlasConnector::dot(length, pa, 1, pb, 1);
         innerproduct *= this->dV_;
         return innerproduct;
     }
