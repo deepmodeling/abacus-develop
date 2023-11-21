@@ -4,16 +4,17 @@
 #include "module_base/tool_quit.h"
 #include "module_base/global_variable.h"
 
-void KEDF_WT::set_para(double dV, double alpha, double beta, double nelec, double tf_weight, double vw_weight, bool read_kernel, std::string kernel_file, ModulePW::PW_Basis *pw_rho)
+void KEDF_WT::set_para(double dV, double alpha, double beta, double nelec, double tf_weight, double vw_weight, double of_wt_rho0, bool of_hold_rho0, bool read_kernel, std::string kernel_file, ModulePW::PW_Basis *pw_rho)
 {
     this->dV_ = dV;
     // this->weightWT = weightWT;
     this->alpha_ = alpha;
     this->beta_ = beta;
+    this->hold_rho0_ = of_hold_rho0;
 
-    if (GlobalV::of_wt_rho0 != 0)
+    if (of_wt_rho0 != 0)
     {
-        this->rho0_ = GlobalV::of_wt_rho0;
+        this->rho0_ = of_wt_rho0;
     }
     else
     {
@@ -155,7 +156,7 @@ void KEDF_WT::get_stress(double cellVol, const double * const * prho, ModulePW::
 {
     double coef = 0.;
     double mult = 0.;
-    if (GlobalV::of_hold_rho0)
+    if (this->hold_rho0_)
     {
         coef = 0.;
         mult = -1. + this->alpha_ + this->beta_;

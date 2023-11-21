@@ -21,45 +21,8 @@ class ESolver_OF: public ESolver_FP
 // GAMMA ONLY
 // SPIN POLARISE
 public:
-    ESolver_OF()
-    {
-        this->classname = "ESolver_OF";
-        this->task_ = new char[60];
-    }
-
-    ~ESolver_OF()
-    {
-        delete psi_;
-        delete[] this->pphi_;
-
-        for (int i = 0; i < GlobalV::NSPIN; ++i)
-        {
-            delete[] this->pdirect_[i];
-            delete[] this->pdLdphi_[i];
-            delete[] this->pdEdphi_[i];
-            delete[] this->precip_dir_[i];
-        }
-        delete[] this->pdirect_;
-        delete[] this->pdLdphi_;
-        delete[] this->pdEdphi_;
-        delete[] this->precip_dir_;
-
-        delete[] this->nelec_;
-        delete[] this->theta_;
-        delete[] this->mu_;
-        delete[] this->task_;
-        delete this->ptemp_rho_;
-
-        delete this->tf_;
-        delete this->vw_;
-        delete this->wt_;
-        delete this->lkt_;
-
-        delete this->opt_cg_;
-        delete this->opt_tn_;
-        delete this->opt_dcsrch_;
-        delete this->opt_cg_mag_;
-    }
+    ESolver_OF();
+    ~ESolver_OF();
 
     virtual void Init(Input &inp, UnitCell &ucell) override;
     virtual void init_after_vc(Input &inp, UnitCell &ucell) override;
@@ -139,7 +102,7 @@ private:
 
     // tools
     // initialize
-    void init_elecstate();
+    void init_elecstate(UnitCell &ucell);
     // calculate physical qualities
     void cal_potential(double *ptempPhi, double *rdLdphi);
     void cal_dEdtheta(double **ptempPhi, Charge* ptempRho, double *ptheta, double *rdEdtheta);

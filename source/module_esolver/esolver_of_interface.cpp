@@ -28,6 +28,8 @@ void ESolver_OF::init_kedf()
                             this->nelec_[0],
                             GlobalV::of_tf_weight,
                             GlobalV::of_vw_weight,
+                            GlobalV::of_wt_rho0,
+                            GlobalV::of_hold_rho0,
                             GlobalV::of_read_kernel,
                             GlobalV::of_kernel_file,
                             this->pw_rho);
@@ -110,7 +112,7 @@ void ESolver_OF::kinetic_stress(ModuleBase::matrix& kinetic_stress_)
 
     if (this->of_kinetic_ == "tf" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt")
     {
-        this->tf_->get_stress(GlobalC::ucell.omega);
+        this->tf_->get_stress(this->pelec->omega);
         kinetic_stress_ += this->tf_->stress;
     }
     if (this->of_kinetic_ == "vw" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt"
@@ -121,12 +123,12 @@ void ESolver_OF::kinetic_stress(ModuleBase::matrix& kinetic_stress_)
     }
     if (this->of_kinetic_ == "wt")
     {
-        this->wt_->get_stress(GlobalC::ucell.omega, pelec->charge->rho, this->pw_rho, GlobalV::of_vw_weight);
+        this->wt_->get_stress(this->pelec->omega, pelec->charge->rho, this->pw_rho, GlobalV::of_vw_weight);
         kinetic_stress_ += this->wt_->stress;
     }
     if (this->of_kinetic_ == "lkt")
     {
-        this->lkt_->get_stress(GlobalC::ucell.omega, pelec->charge->rho, this->pw_rho);
+        this->lkt_->get_stress(this->pelec->omega, pelec->charge->rho, this->pw_rho);
         kinetic_stress_ += this->lkt_->stress;
     }
 }

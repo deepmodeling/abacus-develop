@@ -14,11 +14,49 @@
 #include "module_hamilt_pw/hamilt_pwdft/forces.h"
 //-----stress------------------
 #include "module_hamilt_pw/hamilt_ofdft/of_stress_pw.h"
-//---------------------------------------------------
-#include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
 
 namespace ModuleESolver
 {
+
+ESolver_OF::ESolver_OF()
+{
+    this->classname = "ESolver_OF";
+    this->task_ = new char[60];
+}
+
+ESolver_OF::~ESolver_OF()
+{
+    delete psi_;
+    delete[] this->pphi_;
+
+    for (int i = 0; i < GlobalV::NSPIN; ++i)
+    {
+        delete[] this->pdirect_[i];
+        delete[] this->pdLdphi_[i];
+        delete[] this->pdEdphi_[i];
+        delete[] this->precip_dir_[i];
+    }
+    delete[] this->pdirect_;
+    delete[] this->pdLdphi_;
+    delete[] this->pdEdphi_;
+    delete[] this->precip_dir_;
+
+    delete[] this->nelec_;
+    delete[] this->theta_;
+    delete[] this->mu_;
+    delete[] this->task_;
+    delete this->ptemp_rho_;
+
+    delete this->tf_;
+    delete this->vw_;
+    delete this->wt_;
+    delete this->lkt_;
+
+    delete this->opt_cg_;
+    delete this->opt_tn_;
+    delete this->opt_dcsrch_;
+    delete this->opt_cg_mag_;
+}
 
 void ESolver_OF::Init(Input &inp, UnitCell &ucell)
 {
@@ -69,7 +107,7 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
                         pw_big->nbz,
                         pw_big->bz); // mohan add 2010-07-22, update 2011-05-04
     // Calculate Structure factor
-    sf.setup_structure_factor(&GlobalC::ucell, pw_rho);
+    sf.setup_structure_factor(&ucell, pw_rho);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT BASIS");
 
     //----------------------------------------------------------
@@ -87,11 +125,11 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
 
     // initialize non local pseudopotential
-    GlobalC::ppcell.init_vnl(GlobalC::ucell, pw_rho);
+    GlobalC::ppcell.init_vnl(ucell, pw_rho);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
 
     // initialize elecstate, including potential
-    this->init_elecstate();
+    this->init_elecstate(ucell);
 
     // calculate the total local pseudopotential in real space
     this->pelec->init_scf(0, sf.strucFac); // atomic_rho, v_of_rho, set_vrs
@@ -100,7 +138,7 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     // D in uspp need vloc, thus behind init_scf()
     // calculate the effective coefficient matrix for non-local pseudopotential projectors
     ModuleBase::matrix veff = this->pelec->pot->get_effective_v();
-    GlobalC::ppcell.cal_effective_D(veff, this->pw_rho, GlobalC::ucell);
+    GlobalC::ppcell.cal_effective_D(veff, this->pw_rho, ucell);
 
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT POTENTIAL");
 
@@ -185,8 +223,8 @@ void ESolver_OF::init_after_vc(Input &inp, UnitCell &ucell)
     }
 
     // initialize elecstate, including potential
-    this->init_elecstate();
-    GlobalC::ppcell.init_vnl(GlobalC::ucell, pw_rho);
+    this->init_elecstate(ucell);
+    GlobalC::ppcell.init_vnl(ucell, pw_rho);
 
     // Initialize KEDF
     this->init_kedf();

@@ -4,18 +4,18 @@
 namespace ModuleESolver
 {
 
-void ESolver_OF::init_elecstate()
+void ESolver_OF::init_elecstate(UnitCell &ucell)
 {
     delete this->pelec;
     this->pelec = new elecstate::ElecState((Charge*)(&chr), this->pw_rho, pw_big);
 
     this->pelec->charge->allocate(GlobalV::NSPIN);
-    this->pelec->omega = GlobalC::ucell.omega;
+    this->pelec->omega = ucell.omega;
 
     delete this->pelec->pot;
     this->pelec->pot = new elecstate::Potential(this->pw_rhod,
                                                 this->pw_rho,
-                                                &GlobalC::ucell,
+                                                &ucell,
                                                 &(GlobalC::ppcell.vloc),
                                                 &(this->sf),
                                                 &(this->pelec->f_en.etxc),

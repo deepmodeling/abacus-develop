@@ -32,6 +32,8 @@ class KEDF_WT
                   double nelec,
                   double tf_weight,
                   double vw_weight,
+                  double of_wt_rho0,
+                  bool of_hold_rho0,
                   bool read_kernel,
                   std::string kernel_file,
                   ModulePW::PW_Basis *pw_rho);
@@ -52,6 +54,7 @@ class KEDF_WT
 
     double dV_ = 0.;
     double rho0_ = 0.; // average rho
+    bool hold_rho0_ = false;
     double kf_ = 0.;   // Fermi vector kF = (3 pi^2 rho)^(1/3)
     double tkf_ = 0.;  // 2 * kF
     double alpha_ = 5. / 6.;
