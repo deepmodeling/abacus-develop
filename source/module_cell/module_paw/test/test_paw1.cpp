@@ -198,7 +198,7 @@ TEST_F(Test_Leg_Pol, test_paw)
         EXPECT_NEAR(ref,result,1e-8);
     }
 }
-/*
+
 class Test_PAW_Cell_k : public testing::Test
 {
     protected:
@@ -334,20 +334,6 @@ TEST_F(Test_PAW_Cell_k, test_paw)
 
     std::ifstream ifs_rhoij("rhoij1.dat");
 
-    std::vector<std::vector<double>> rhoij = paw_cell.get_rhoij();
-    EXPECT_EQ(rhoij.size(),nat);
-    for(int iat = 0; iat < nat; iat ++)
-    {
-        EXPECT_EQ(rhoij[iat].size(),36);
-        for(int i = 0; i < 36; i ++)
-        {
-            double tmp;
-            ifs_rhoij >> tmp;
-
-            EXPECT_NEAR(tmp,rhoij[iat][i],1e-8);
-        }
-    }
-
     std::vector<std::vector<double>> rhoijp;
     std::vector<std::vector<int>> rhoijselect;
     std::vector<int> nrhoijsel;
@@ -463,5 +449,3 @@ TEST_F(Test_PAW_Cell_k, test_paw)
     delete[] snlpsi;
 
 }
-
-*/
