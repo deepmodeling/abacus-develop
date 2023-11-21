@@ -113,16 +113,11 @@ private:
     double **pphi_ = nullptr;                       // pphi[i] = ppsi.get_pointer(i), which will be freed in ~Psi().
     char *task_ = nullptr;                          // used in line search
     double *mu_ = nullptr;                          // chemical potential
-    int tn_spin_flag_ = -1;                        // spin flag used in calV, which will be called by opt_tn
+    int tn_spin_flag_ = -1;                        // spin flag used in cal_potential, which will be called by opt_tn
     int max_dcsrch_ = 200;                        // max no. of line search
     int flag_ = -1;                              // flag of TN
 
     Charge* ptemp_rho_ = nullptr;                 // used in line search
-
-    // // test rho convergence criterion
-    // double *pdeltaRhoHar = nullptr; // 4pi*rhog/k^2
-    // double deltaRhoG = 0.; // 1/2\iint{deltaRho(r)deltaRho(r')/|r-r'|drdr'}
-    // double deltaRhoR = 0.; // \int{|deltaRho(r)|dr}
 
     // used in convergence check
     bool conv_ = false;
@@ -137,16 +132,22 @@ private:
     void before_opt(const int istep);
     void update_potential();
     void optimize();
-    void adjust_direction();
     void update_rho();
     bool check_exit();
     void print_info();
     void after_opt(const int istep);
 
     // tools
-    void calV(double *ptempPhi, double *rdLdphi);
-    void caldEdtheta(double **ptempPhi, Charge* ptempRho, double *ptheta, double *rdEdtheta);
+    // initialize
+    void init_elecstate();
+    // calculate physical qualities
+    void cal_potential(double *ptempPhi, double *rdLdphi);
+    void cal_dEdtheta(double **ptempPhi, Charge* ptempRho, double *ptheta, double *rdEdtheta);
     double cal_mu(double *pphi, double *pdEdphi, double nelec);
+    // determine the optimization direction
+    void adjust_direction();
+    void check_direction(double *dEdtheta, double **ptemp_phi);
+    void test_direction(double *dEdtheta, double **ptemp_phi);
     double inner_product(double *pa, double *pb, int length, double dV=1)
     {
         double innerproduct = 0.;
@@ -164,6 +165,7 @@ private:
     // interfaces to optimization methods
     void init_opt();
     void get_direction();
+    void get_step_length(double *dEdtheta, double **ptemp_phi);
 };
 }
 
