@@ -5,7 +5,6 @@
 #include "module_io/output_log.h"
 //-----------temporary-------------------------
 #include "module_base/global_function.h"
-#include "module_base/memory.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
@@ -110,16 +109,6 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
     sf.setup_structure_factor(&ucell, pw_rho);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT BASIS");
 
-    //----------------------------------------------------------
-    // 1 read in initial data:
-    //   a lattice structure:atom_species,atom_positions,lattice vector
-    //   b k_points
-    //   c pseudopotential
-    // 2 setup planeware basis, FFT,structure factor, ...
-    // 3 initialize local pseudopotential in G_space
-    // 4 initialize charge desity and warefunctios in real space
-    //----------------------------------------------------------
-
     // initialize local pseudopotential
     GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, pw_rho);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
@@ -156,43 +145,14 @@ void ESolver_OF::Init(Input &inp, UnitCell &ucell)
         this->nelec_[0] = this->pelec->nelec_spin[0];
         this->nelec_[1] = this->pelec->nelec_spin[1];
     }
-    this->init_kedf();
+    this->init_kedf(inp);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT KEDF");
 
     // Initialize optimization methods
     this->init_opt();
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT OPTIMIZATION");
 
-    // Initialize the "wavefunction", which is sqrt(rho)
-    this->psi_ = new psi::Psi<double>(1, GlobalV::NSPIN, this->pw_rho->nrxx);
-    ModuleBase::Memory::record("OFDFT::Psi", sizeof(double) * GlobalV::NSPIN * this->pw_rho->nrxx);
-    this->pphi_ = new double*[GlobalV::NSPIN];
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
-    {
-        this->pphi_[is] = this->psi_->get_pointer(is);
-    }
-    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT PHI");
-
-    // initialize chemical potential, step length, ...
-    delete this->ptemp_rho_;
-    this->ptemp_rho_ = new Charge();
-    this->ptemp_rho_->set_rhopw(this->pw_rho);
-    this->ptemp_rho_->allocate(GlobalV::NSPIN);
-
-    this->mu_ = new double[GlobalV::NSPIN];
-    this->theta_ = new double[GlobalV::NSPIN];
-    this->pdLdphi_ = new double*[GlobalV::NSPIN];
-    this->pdEdphi_ = new double*[GlobalV::NSPIN];
-    this->pdirect_ = new double*[GlobalV::NSPIN];
-    this->precip_dir_ = new std::complex<double> *[GlobalV::NSPIN];
-
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
-    {
-        this->pdLdphi_[is] = new double[this->pw_rho->nrxx];
-        this->pdEdphi_[is] = new double[this->pw_rho->nrxx];
-        this->pdirect_[is] = new double[this->pw_rho->nrxx];
-        this->precip_dir_[is] = new std::complex<double>[pw_rho->npw];
-    }
+    this->allocate_array();
 
     // Initialize charge extrapolation
     CE_.Init_CE(ucell.nat);
@@ -227,14 +187,13 @@ void ESolver_OF::init_after_vc(Input &inp, UnitCell &ucell)
     GlobalC::ppcell.init_vnl(ucell, pw_rho);
 
     // Initialize KEDF
-    this->init_kedf();
+    this->init_kedf(inp);
 
     // Initialize optimization methods
     this->init_opt();
 
     delete this->psi_;
     this->psi_ = new psi::Psi<double>(1, GlobalV::NSPIN, this->pw_rho->nrxx);
-    ModuleBase::Memory::record("OFDFT::Psi", sizeof(double) * GlobalV::NSPIN * this->pw_rho->nrxx);
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
         this->pphi_[is] = this->psi_->get_pointer(is);
@@ -244,7 +203,6 @@ void ESolver_OF::init_after_vc(Input &inp, UnitCell &ucell)
     this->ptemp_rho_ = new Charge();
     this->ptemp_rho_->set_rhopw(this->pw_rho);
     this->ptemp_rho_->allocate(GlobalV::NSPIN);
-
 
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
@@ -275,9 +233,6 @@ void ESolver_OF::Run(int istep, UnitCell& ucell)
         this->energy_llast_ = this->energy_last_;
         this->energy_last_ = this->energy_current_;
         this->energy_current_ = this->cal_Energy();
-
-        // print neccesary information
-        this->print_info();
 
         // check if the job is done
         if (this->check_exit()) break;
@@ -493,17 +448,17 @@ bool ESolver_OF::check_exit()
         && std::abs(this->energy_current_ - this->energy_llast_) < this->of_tole_)
         energyConv = true;
 
-    if (this->of_conv_ == "energy" && energyConv)
+    this->conv_ = (this->of_conv_ == "energy" && energyConv)
+                  || (this->of_conv_ == "potential" && potConv)
+                  || (this->of_conv_ == "both" && potConv && energyConv);
+
+    this->print_info();
+
+    if (this->conv_ || this->iter_ >= this->max_iter_)
     {
-        this->conv_ = true;
         return true;
     }
-    else if (this->of_conv_ == "potential" && potConv)
-    {
-        this->conv_ = true;
-        return true;
     // ============ temporary solution of potential convergence ===========
-    }
     else if (this->of_conv_ == "potential" && potHold)
     {
         GlobalV::ofs_warning << "ESolver_OF WARNING: " <<
@@ -511,54 +466,12 @@ bool ESolver_OF::check_exit()
         return true;
     }
     // ====================================================================
-    else if (this->of_conv_ == "both" && potConv && energyConv)
-    {
-        this->conv_ = true;
-        return true;
-    }
-    else if (this->iter_ >= this->max_iter_)
-    {
-        return true;
-    }
     else
     {
         return false;
     }
 }
 
-//
-// Print nessecary information
-//
-void ESolver_OF::print_info()
-{
-    if (this->iter_ == 0){
-        std::cout << "======================== Running OFDFT ========================" <<  std::endl;
-        std::cout << "Iter        Etot(Ha)          Theta      PotNorm     deltaE(Ha)" << std::endl;
-        // cout << "======================================== Running OFDFT ========================================" <<  endl;
-        // cout << "Iter        Etot(Ha)          Theta       PotNorm        min/max(den)          min/max(dE/dPhi)" << endl;
-    }
-    // ============ used to compare with PROFESS3.0 ================
-    // double minDen = pelec->charge->rho[0][0];
-    // double maxDen = pelec->charge->rho[0][0];
-    // double minPot = this->pdEdphi_[0][0];
-    // double maxPot = this->pdEdphi_[0][0];
-    // for (int i = 0; i < this->pw_rho->nrxx; ++i)
-    // {
-    //     if (pelec->charge->rho[0][i] < minDen) minDen = pelec->charge->rho[0][i];
-    //     if (pelec->charge->rho[0][i] > maxDen) maxDen = pelec->charge->rho[0][i];
-    //     if (this->pdEdphi_[0][i] < minPot) minPot = this->pdEdphi_[0][i];
-    //     if (this->pdEdphi_[0][i] > maxPot) maxPot = this->pdEdphi_[0][i];
-    // }
-    std::cout << std::setw(6) << this->iter_
-    << std::setw(22) << std::setiosflags(std::ios::scientific) << std::setprecision(12) << this->energy_current_/2.
-    << std::setw(12) << std::setprecision(3) << this->theta_[0]
-    << std::setw(12) << this->normdLdphi_
-    << std::setw(12) << (this->energy_current_ - this->energy_last_)/2. << std::endl;
-    // ============ used to compare with PROFESS3.0 ================
-    // << setw(10) << minDen << "/ " << setw(12) << maxDen
-    // << setw(10) << minPot << "/ " << setw(10) << maxPot << endl;
-    // =============================================================
-}
 
 void ESolver_OF::after_opt(const int istep)
 {
@@ -582,7 +495,6 @@ void ESolver_OF::after_opt(const int istep)
         {
             std::stringstream ssc;
             ssc << GlobalV::global_out_dir << "SPIN" << is + 1 << "_CHG.cube";
-            const double ef_tmp = this->pelec->eferm.get_efval(is);
             ModuleIO::write_rho(
 #ifdef __MPI
                 this->pw_big->bz,
@@ -598,7 +510,7 @@ void ESolver_OF::after_opt(const int istep)
                 this->pw_rho->nx,
                 this->pw_rho->ny,
                 this->pw_rho->nz,
-                ef_tmp,
+                this->mu_[is],
                 &(GlobalC::ucell),
                 3);
         }
@@ -666,6 +578,8 @@ double ESolver_OF::cal_Energy()
         pseudopot_energy += this->inner_product(this->pelec->pot->get_fixed_v(), pelec->charge->rho[is], this->pw_rho->nrxx, this->dV_);
     }
     Parallel_Reduce::reduce_all(pseudopot_energy);
+    this->pelec->f_en.ekinetic = kinetic_energy;
+    this->pelec->f_en.eion_elec = pseudopot_energy;
     this->pelec->f_en.etot += kinetic_energy + pseudopot_energy;
     return this->pelec->f_en.etot;
 }

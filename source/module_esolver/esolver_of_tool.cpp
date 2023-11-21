@@ -1,4 +1,8 @@
 #include "esolver_of.h"
+#include "module_base/memory.h"
+#include "module_base/formatter.h"
+#include "module_elecstate/potentials/efield.h"
+#include "module_elecstate/potentials/gatefield.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 namespace ModuleESolver
@@ -50,6 +54,44 @@ void ESolver_OF::init_elecstate(UnitCell &ucell)
         //register Potential by gathered operator
         this->pelec->pot->pot_register(pot_register_in);
     }
+}
+
+void ESolver_OF::allocate_array()
+{
+    // Initialize the "wavefunction", which is sqrt(rho)
+    this->psi_ = new psi::Psi<double>(1, GlobalV::NSPIN, this->pw_rho->nrxx);
+    ModuleBase::Memory::record("OFDFT::Psi", sizeof(double) * GlobalV::NSPIN * this->pw_rho->nrxx);
+    this->pphi_ = new double*[GlobalV::NSPIN];
+    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    {
+        this->pphi_[is] = this->psi_->get_pointer(is);
+    }
+    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT PHI");
+
+    // initialize chemical potential, step length, ...
+    delete this->ptemp_rho_;
+    this->ptemp_rho_ = new Charge();
+    this->ptemp_rho_->set_rhopw(this->pw_rho);
+    this->ptemp_rho_->allocate(GlobalV::NSPIN);
+
+    this->mu_ = new double[GlobalV::NSPIN];
+    this->theta_ = new double[GlobalV::NSPIN];
+    this->pdLdphi_ = new double*[GlobalV::NSPIN];
+    this->pdEdphi_ = new double*[GlobalV::NSPIN];
+    this->pdirect_ = new double*[GlobalV::NSPIN];
+    this->precip_dir_ = new std::complex<double> *[GlobalV::NSPIN];
+
+    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    {
+        this->pdLdphi_[is] = new double[this->pw_rho->nrxx];
+        this->pdEdphi_[is] = new double[this->pw_rho->nrxx];
+        this->pdirect_[is] = new double[this->pw_rho->nrxx];
+        this->precip_dir_[is] = new std::complex<double>[pw_rho->npw];
+    }
+    ModuleBase::Memory::record("OFDFT::pdLdphi_", sizeof(double) * GlobalV::NSPIN * this->pw_rho->nrxx);
+    ModuleBase::Memory::record("OFDFT::pdEdphi_", sizeof(double) * GlobalV::NSPIN * this->pw_rho->nrxx);
+    ModuleBase::Memory::record("OFDFT::pdirect_", sizeof(double) * GlobalV::NSPIN * this->pw_rho->nrxx);
+    ModuleBase::Memory::record("OFDFT::precip_dir_", sizeof(std::complex<double>) * GlobalV::NSPIN * this->pw_rho->npw);
 }
 
 //
@@ -275,5 +317,120 @@ void ESolver_OF::test_direction(double *dEdtheta, double **ptemp_phi)
         }
         exit(0);
     }
+}
+
+//
+// Print nessecary information
+//
+void ESolver_OF::print_info()
+{
+    if (this->iter_ == 0){
+        std::cout << "============================== Running OFDFT ==============================" <<  std::endl;
+        std::cout << "Iter        Etot(Ha)          Mu(Ha)      Theta      PotNorm     deltaE(Ha)" << std::endl;
+        // cout << "======================================== Running OFDFT ========================================" <<  endl;
+        // cout << "Iter        Etot(Ha)          Theta       PotNorm        min/max(den)          min/max(dE/dPhi)" << endl;
+    }
+    // ============ used to compare with PROFESS3.0 ================
+    // double minDen = pelec->charge->rho[0][0];
+    // double maxDen = pelec->charge->rho[0][0];
+    // double minPot = this->pdEdphi_[0][0];
+    // double maxPot = this->pdEdphi_[0][0];
+    // for (int i = 0; i < this->pw_rho->nrxx; ++i)
+    // {
+    //     if (pelec->charge->rho[0][i] < minDen) minDen = pelec->charge->rho[0][i];
+    //     if (pelec->charge->rho[0][i] > maxDen) maxDen = pelec->charge->rho[0][i];
+    //     if (this->pdEdphi_[0][i] < minPot) minPot = this->pdEdphi_[0][i];
+    //     if (this->pdEdphi_[0][i] > maxPot) maxPot = this->pdEdphi_[0][i];
+    // }
+    std::cout << std::setw(6) << this->iter_
+    << std::setw(22) << std::setiosflags(std::ios::scientific) << std::setprecision(12) << this->energy_current_/2.
+    << std::setw(12) << std::setprecision(3) << this->mu_[0]/2.
+    << std::setw(12) << this->theta_[0]
+    << std::setw(12) << this->normdLdphi_
+    << std::setw(12) << (this->energy_current_ - this->energy_last_)/2. << std::endl;
+    // ============ used to compare with PROFESS3.0 ================
+    // << setw(10) << minDen << "/ " << setw(12) << maxDen
+    // << setw(10) << minPot << "/ " << setw(10) << maxPot << endl;
+    // =============================================================
+
+    GlobalV::ofs_running << std::setprecision(12);
+    GlobalV::ofs_running << std::setiosflags(std::ios::right);
+
+    GlobalV::ofs_running << "\nIter" << this->iter_ << ": the norm of potential is " << this->normdLdphi_ << std::endl;
+
+    std::vector<std::string> titles;
+    std::vector<double> energies_Ry;
+    std::vector<double> energies_eV;
+    context.set_context({"title", "energy", "energy"});
+    if (INPUT.printe > 0 && ((this->iter_ + 1) % INPUT.printe == 0 || this->conv_ || this->iter_ == GlobalV::SCF_NMAX))
+    {
+        titles.push_back("E_Total");        energies_Ry.push_back(this->pelec->f_en.etot);
+        titles.push_back("E_Kinetic");      energies_Ry.push_back(this->pelec->f_en.ekinetic);
+        titles.push_back("E_Hartree");      energies_Ry.push_back(this->pelec->f_en.hartree_energy);
+        titles.push_back("E_xc");           energies_Ry.push_back(this->pelec->f_en.etxc - this->pelec->f_en.etxcc);
+        titles.push_back("E_IonElec");      energies_Ry.push_back(this->pelec->f_en.eion_elec);
+        titles.push_back("E_Ewald");        energies_Ry.push_back(this->pelec->f_en.ewald_energy);
+        if (this->of_kinetic_ == "tf" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt")
+        {
+            titles.push_back("TF KEDF"); energies_Ry.push_back(this->tf_->tf_energy);
+        }
+        if (this->of_kinetic_ == "vw" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt"
+            || this->of_kinetic_ == "lkt")
+        {
+            titles.push_back("vW KEDF"); energies_Ry.push_back(this->vw_->vw_energy);
+        }
+        if (this->of_kinetic_ == "wt")
+        {
+            titles.push_back("WT KEDF"); energies_Ry.push_back(this->wt_->wt_energy);
+        }
+        if (this->of_kinetic_ == "lkt")
+        {
+            titles.push_back("LKT KEDF"); energies_Ry.push_back(this->lkt_->lkt_energy);
+        }
+        std::string vdw_method = INPUT.vdw_method;
+        if (vdw_method == "d2") // Peize Lin add 2014-04, update 2021-03-09
+        {
+            titles.push_back("E_vdwD2"); energies_Ry.push_back(this->pelec->f_en.evdw);
+        }
+        else if (vdw_method == "d3_0" || vdw_method == "d3_bj") // jiyy add 2019-05, update 2021-05-02
+        {
+            titles.push_back("E_vdwD3"); energies_Ry.push_back(this->pelec->f_en.evdw);
+        }
+        if (GlobalV::imp_sol)
+        {
+            titles.push_back("E_sol_el"); energies_Ry.push_back(this->pelec->f_en.esol_el);
+            titles.push_back("E_sol_cav"); energies_Ry.push_back(this->pelec->f_en.esol_cav);
+        }
+        if (GlobalV::EFIELD_FLAG)
+        {
+            titles.push_back("E_efield"); energies_Ry.push_back(elecstate::Efield::etotefield);
+        }
+        if (GlobalV::GATE_FLAG)
+        {
+            titles.push_back("E_gatefield"); energies_Ry.push_back(elecstate::Gatefield::etotgatefield);
+        }
+    }
+    else
+    {
+        titles.push_back("E_Total"); energies_Ry.push_back(this->pelec->f_en.etot);
+    }
+
+    if (GlobalV::TWO_EFERMI)
+    {
+        titles.push_back("E_Fermi_up"); energies_Ry.push_back(this->mu_[0]);
+        titles.push_back("E_Fermi_dw"); energies_Ry.push_back(this->mu_[1]);
+    }
+    else
+    {
+        titles.push_back("E_Fermi"); energies_Ry.push_back(this->mu_[0]);
+    }
+    for (int i = 0; i < titles.size(); ++i)
+    {
+        energies_eV.push_back(energies_Ry[i] * ModuleBase::Ry_to_eV);
+    }
+    context.enable_title();
+    context << "Energy" << titles << "Rydberg" << energies_Ry << "eV" << energies_eV;
+    context.center_title();
+    GlobalV::ofs_running << context.str() << std::endl;
 }
 }

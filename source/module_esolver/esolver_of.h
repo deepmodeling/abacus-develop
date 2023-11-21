@@ -97,12 +97,12 @@ private:
     void optimize();
     void update_rho();
     bool check_exit();
-    void print_info();
     void after_opt(const int istep);
 
     // tools
     // initialize
     void init_elecstate(UnitCell &ucell);
+    void allocate_array();
     // calculate physical qualities
     void cal_potential(double *ptempPhi, double *rdLdphi);
     void cal_dEdtheta(double **ptempPhi, Charge* ptempRho, double *ptheta, double *rdEdtheta);
@@ -111,6 +111,9 @@ private:
     void adjust_direction();
     void check_direction(double *dEdtheta, double **ptemp_phi);
     void test_direction(double *dEdtheta, double **ptemp_phi);
+    // output the necessary information
+    void print_info();
+
     double inner_product(double *pa, double *pb, int length, double dV=1)
     {
         double innerproduct = 0.;
@@ -120,7 +123,7 @@ private:
     }
 
     // interfaces to KEDF
-    void init_kedf();
+    void init_kedf(Input &inp);
     void kinetic_potential(double **prho, double **pphi, ModuleBase::matrix &rpot);
     double kinetic_energy();
     void kinetic_stress(ModuleBase::matrix &kinetic_stress);

@@ -3,42 +3,42 @@
 
 namespace ModuleESolver
 {
-void ESolver_OF::init_kedf()
+void ESolver_OF::init_kedf(Input &inp)
 {
     if (this->of_kinetic_ == "tf" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt")
     {
         if (this->tf_ == nullptr)
             this->tf_ = new KEDF_TF();
-        this->tf_->set_para(this->pw_rho->nrxx, this->dV_, GlobalV::of_tf_weight);
+        this->tf_->set_para(this->pw_rho->nrxx, this->dV_, inp.of_tf_weight);
     }
     if (this->of_kinetic_ == "vw" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt"
         || this->of_kinetic_ == "lkt")
     {
         if (this->vw_ == nullptr)
             this->vw_ = new KEDF_vW();
-        this->vw_->set_para(this->dV_, GlobalV::of_vw_weight);
+        this->vw_->set_para(this->dV_, inp.of_vw_weight);
     }
     if (this->of_kinetic_ == "wt")
     {
         if (this->wt_ == nullptr)
             this->wt_ = new KEDF_WT();
         this->wt_->set_para(this->dV_,
-                            GlobalV::of_wt_alpha,
-                            GlobalV::of_wt_beta,
+                            inp.of_wt_alpha,
+                            inp.of_wt_beta,
                             this->nelec_[0],
-                            GlobalV::of_tf_weight,
-                            GlobalV::of_vw_weight,
-                            GlobalV::of_wt_rho0,
-                            GlobalV::of_hold_rho0,
-                            GlobalV::of_read_kernel,
-                            GlobalV::of_kernel_file,
+                            inp.of_tf_weight,
+                            inp.of_vw_weight,
+                            inp.of_wt_rho0,
+                            inp.of_hold_rho0,
+                            inp.of_read_kernel,
+                            inp.of_kernel_file,
                             this->pw_rho);
     }
     if (this->of_kinetic_ == "lkt")
     {
         if (this->lkt_ == nullptr)
             this->lkt_ = new KEDF_LKT();
-        this->lkt_->set_para(this->dV_, GlobalV::of_lkt_a);
+        this->lkt_->set_para(this->dV_, inp.of_lkt_a);
     }
 }
 
