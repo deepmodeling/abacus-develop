@@ -147,6 +147,7 @@ OBJS_BASE=abfs-vector3_order.o\
 	cubic_spline.o\
 	spherical_bessel_transformer.o\
     mixing_data.o\
+    para_json.o\
 
 
 OBJS_CELL=atom_pseudo.o\
