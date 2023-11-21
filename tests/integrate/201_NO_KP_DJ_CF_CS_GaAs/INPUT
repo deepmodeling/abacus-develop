@@ -20,7 +20,7 @@ smearing_method            gaussian
 smearing_sigma               0.001
 #Parameters (3.PW)
 ecutwfc             20
-scf_thr                 1e-10
+scf_thr                 1e-6
 scf_nmax               100
 
 #Parameters (LCAO)
@@ -32,6 +32,7 @@ pw_diag_thr                0.00001
 
 mixing_type         broyden 
 mixing_beta         0.4
+mixing_gg0          0.0
 mixing_ndim         5
 
 cal_force 1
