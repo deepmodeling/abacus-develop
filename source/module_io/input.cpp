@@ -22,6 +22,7 @@
 #include "module_base/global_variable.h"
 #include "module_base/parallel_common.h"
 #include "module_base/timer.h"
+#include "module_base/para_json.h"
 
 #include "version.h"
 Input INPUT;
