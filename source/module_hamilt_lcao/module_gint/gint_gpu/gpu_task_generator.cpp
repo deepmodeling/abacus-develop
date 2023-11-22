@@ -58,7 +58,7 @@ int num_get_psi = 0;
             if (distance <= GlobalC::ORB.Phi[it_temp].getRcut()) {
               int pos_temp_double = num_psi_pos + num_get_psi;
               int pos_temp_int = pos_temp_double * 2;
-pos_temp_double *= 5;
+              pos_temp_double *= 5;
               if (distance < 1.0E-9)
                 distance += 1.0E-9;
               psi_input_double[pos_temp_double] = dr_temp[0] / distance;
