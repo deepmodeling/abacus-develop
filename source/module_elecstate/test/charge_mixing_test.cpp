@@ -396,6 +396,66 @@ TEST_F(ChargeMixingTest, KerkerScreenRecipTest)
     delete[] drhor_ref;
 }
 
+TEST_F(ChargeMixingTest, KerkerScreenRecipNewTest)
+{
+    Charge_Mixing CMtest;
+    CMtest.set_rhopw(&pw_basis);
+    GlobalC::ucell.tpiba = 1.0;
+
+    // for new kerker
+    GlobalV::NSPIN = 2;
+    CMtest.mixing_gg0 = 0.0;
+    GlobalV::MIXING_GG0_MAG = 0.0;
+    std::complex<double>* drhog = new std::complex<double>[GlobalV::NSPIN*pw_basis.npw];
+    std::complex<double>* drhog_old = new std::complex<double>[GlobalV::NSPIN*pw_basis.npw];
+    double* drhor = new double[GlobalV::NSPIN*pw_basis.nrxx];
+    double* drhor_ref = new double[GlobalV::NSPIN*pw_basis.nrxx];
+    for (int i = 0; i < GlobalV::NSPIN*pw_basis.npw; ++i)
+    {
+        drhog_old[i] = drhog[i] = std::complex<double>(1.0, 1.0);
+    }
+    CMtest.Kerker_screen_recip_new(drhog);
+    for (int i = 0; i < GlobalV::NSPIN*pw_basis.npw; ++i)
+    {
+        EXPECT_EQ(drhog[i], drhog_old[i]);
+    }
+
+    // RECIPROCAL
+    CMtest.mixing_gg0 = 1.0;
+    GlobalV::MIXING_GG0_MAG = 0.0;
+    CMtest.Kerker_screen_recip_new(drhog);
+    const double gg0 = std::pow(0.529177, 2);
+    for (int i = 0; i < pw_basis.npw; ++i)
+    {
+        std::complex<double> ration = drhog[i] / drhog[i+pw_basis.npw];
+        double gg = this->pw_basis.gg[i];
+        double ration_ref = std::max(gg / (gg + gg0), 0.1 / CMtest.mixing_beta);
+        EXPECT_NEAR(ration.real(), ration_ref, 1e-10);
+        EXPECT_NEAR(ration.imag(), 0, 1e-10);
+    }
+
+    // REAL
+    pw_basis.recip2real(drhog, drhor_ref);
+    pw_basis.recip2real(drhog_old, drhor);
+
+    CMtest.mixing_gg0 = 0.0;
+    GlobalV::MIXING_GG0_MAG = 0.0;
+    // nothing happens
+    CMtest.Kerker_screen_real(drhor);
+
+    CMtest.mixing_gg0 = 1.0;
+    CMtest.Kerker_screen_real(drhor);
+    for (int i = 0; i < pw_basis.nrxx; ++i)
+    {
+        EXPECT_NEAR(drhor[i], drhor_ref[i], 1e-8);
+    }
+
+    delete[] drhog;
+    delete[] drhog_old;
+    delete[] drhor;
+    delete[] drhor_ref;
+}
+
 TEST_F(ChargeMixingTest, InnerDotTest)
 {
     // REAL
@@ -463,6 +523,50 @@ TEST_F(ChargeMixingTest, InnerDotTest)
     GlobalV::DOMAG_Z = true;
     inner = CMtest.inner_product_recip(drhog1.data(), drhog2.data());
     EXPECT_NEAR(inner, 110668.61166927818, 1e-8);
+}
+
+TEST_F(ChargeMixingTest, InnerDotNewTest)
+{
+    Charge_Mixing CMtest;
+    CMtest.set_rhopw(&pw_basis);
+    GlobalV::NSPIN = 1;
+
+    // inner_product_recip_new1
+    std::vector<std::complex<double>> drhog1(pw_basis.npw);
+    std::vector<std::complex<double>> drhog2(pw_basis.npw);
+    for (int i = 0; i < pw_basis.npw; ++i)
+    {
+        drhog1[i] = 1.0;
+        drhog2[i] = double(i);
+    }
+    double inner = CMtest.inner_product_recip_new1(drhog1.data(), drhog2.data());
+    EXPECT_NEAR(inner, 0.5 * pw_basis.npw * (pw_basis.npw - 1), 1e-8);
+
+    // inner_product_recip_new2
+    GlobalV::NSPIN = 2;
+    drhog1.resize(pw_basis.npw * GlobalV::NSPIN);
+    drhog2.resize(pw_basis.npw * GlobalV::NSPIN);
+    std::vector<std::complex<double>> drhog1_mag(pw_basis.npw * GlobalV::NSPIN);
+    std::vector<std::complex<double>> drhog2_mag(pw_basis.npw * GlobalV::NSPIN);
+    for (int i = 0; i < pw_basis.npw * GlobalV::NSPIN; ++i)
+    {
+        drhog1[i] = std::complex<double>(1.0, double(i));
+        drhog2[i] = std::complex<double>(1.0, 1.0);
+    }
+    // set mag
+    for (int i = 0; i < pw_basis.npw; ++i)
+    {
+        drhog1_mag[i] = drhog1[i] + drhog1[i+pw_basis.npw];
+        drhog1_mag[i+pw_basis.npw] = drhog1[i] - drhog1[i+pw_basis.npw];
+        drhog2_mag[i] = drhog2[i] + drhog2[i+pw_basis.npw];
+        drhog2_mag[i+pw_basis.npw] = drhog2[i] - drhog2[i+pw_basis.npw];
+    }
+    GlobalV::GAMMA_ONLY_PW = false;
+    inner = CMtest.inner_product_recip_new2(drhog1_mag.data(), drhog2_mag.data());
+    EXPECT_NEAR(inner, 236763.82650318215, 1e-8);
+    GlobalV::GAMMA_ONLY_PW = true;
+    inner = CMtest.inner_product_recip_new2(drhog1_mag.data(), drhog2_mag.data());
+    EXPECT_NEAR(inner, 236763.82650318215 * 2, 1e-8);
 }
 
 TEST_F(ChargeMixingTest, MixRhoTest)
