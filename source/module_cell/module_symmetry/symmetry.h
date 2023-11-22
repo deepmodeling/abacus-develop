@@ -80,7 +80,9 @@ public:
 
 	int tab;
 
-	int standard_lat(ModuleBase::Vector3<double> &a,ModuleBase::Vector3<double> &b,ModuleBase::Vector3<double> &c,double *celconst )const;
+    bool all_mbl = true;    ///< whether all the atoms are movable in all the directions
+
+    int standard_lat(ModuleBase::Vector3<double>& a, ModuleBase::Vector3<double>& b, ModuleBase::Vector3<double>& c, double* celconst)const;
 
 	void lattice_type(ModuleBase::Vector3<double> &v1,ModuleBase::Vector3<double> &v2,ModuleBase::Vector3<double> &v3, 
         ModuleBase::Vector3<double>& v01, ModuleBase::Vector3<double>& v02, ModuleBase::Vector3<double>& v03,
@@ -138,6 +140,10 @@ public:
 
     /// @brief  set atom map for each symmetry operation
     void set_atom_map(const Atom* atoms);
+    /// @brief check if all the atoms are movable
+    ///  delta_pos symmetrization in relax is only meaningful when all the atoms are movable in all the directions.
+    bool is_all_movable(const Atom* atoms, const Statistics& st)const;
+
     // to be called in lattice_type
 	void get_shortest_latvec(ModuleBase::Vector3<double> &a1, 
 			ModuleBase::Vector3<double> &a2, ModuleBase::Vector3<double> &a3)const;

@@ -233,7 +233,9 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
 
     if (GlobalV::NSPIN > 1) pricell_loop = this->magmom_same_check(atoms);
 
-	delete[] newpos;
+    if (GlobalV::CALCULATION == "relax") this->all_mbl = this->is_all_movable(atoms, st);
+
+    delete[] newpos;
     delete[] na;
     delete[] rotpos;
     delete[] index;
@@ -2096,4 +2098,19 @@ bool Symmetry::magmom_same_check(const Atom* atoms)const
     return pricell_loop;
 }
 
+bool Symmetry::is_all_movable(const Atom* atoms, const Statistics& st)const
+{
+    bool all_mbl = true;
+    for (int iat = 0;iat < st.nat;++iat)
+    {
+        int it = st.iat2it[iat];
+        int ia = st.iat2ia[iat];
+        if (!atoms[it].mbl[ia].x || !atoms[it].mbl[ia].y || !atoms[it].mbl[ia].z)
+        {
+            all_mbl = false;
+            break;
+        }
+    }
+    return all_mbl;
+}
 }

@@ -558,6 +558,8 @@ void Relax::move_cell_ions(const bool is_new_dir)
         }
     }
 
+    if (ModuleSymmetry::Symmetry::symm_flag && GlobalC::ucell.symm.all_mbl)GlobalC::ucell.symm.symmetrize_vec3_nat(move_ion);
+
 	GlobalC::ucell.update_pos_taud(move_ion);
 
 	// Print the structure file.
