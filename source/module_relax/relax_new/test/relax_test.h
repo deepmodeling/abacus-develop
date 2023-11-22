@@ -43,8 +43,9 @@ Atom_pseudo::Atom_pseudo(){};
 Atom_pseudo::~Atom_pseudo(){};
 pseudo::pseudo(){};
 pseudo::~pseudo(){};
-
-Structure_Factor::Structure_Factor(){};
+int ModuleSymmetry::Symmetry::symm_flag = 0;
+void ModuleSymmetry::Symmetry::symmetrize_mat3(ModuleBase::matrix& sigma, const Lattice& lat)const {};
+Structure_Factor::Structure_Factor() {};
 Structure_Factor::~Structure_Factor(){};
 void Structure_Factor::setup_structure_factor(UnitCell* Ucell, const ModulePW::PW_Basis* rho_basis){};
 
