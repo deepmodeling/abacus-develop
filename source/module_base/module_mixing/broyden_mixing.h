@@ -37,6 +37,14 @@ class Broyden_Mixing : public Mixing
         this->mixing_beta = mixing_beta;
         this->coef = std::vector<double>(mixing_ndim + 1);
         this->beta = ModuleBase::matrix(mixing_ndim, mixing_ndim, true);
+        if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
+        {
+            this->two_beta = 0;
+        }
+        else if (GlobalV::NSPIN == 2)
+        {
+            this->two_beta = 1;
+        }
     }
     virtual ~Broyden_Mixing() override
     {
@@ -132,7 +140,7 @@ class Broyden_Mixing : public Mixing
         // container::Tensor data = data_in + mixing_beta * F;
         std::vector<FPTYPE> data(length);
         // mix density and magnetic density sperately
-        if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
+        if (this->two_beta == 0)
         {
             // rho_tot
 #ifdef _OPENMP
@@ -143,7 +151,7 @@ class Broyden_Mixing : public Mixing
                 data[i] = data_in[i] + this->mixing_beta * F_tmp[i];
             }
         }
-        else if (GlobalV::NSPIN == 2)
+        else if (this->two_beta == 1)
         {
             // rho_tot
 #ifdef _OPENMP
@@ -335,6 +343,8 @@ class Broyden_Mixing : public Mixing
     }
     // the number of calculated dF
     int ndim_cal_dF = 0;
+    // if we should considere two beta
+    int two_beta = 0;
 };
 } // namespace Base_Mixing
 #endif
