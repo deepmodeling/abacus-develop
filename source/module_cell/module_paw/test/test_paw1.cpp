@@ -340,6 +340,11 @@ TEST_F(Test_PAW_Cell_k, test_paw)
 
     paw_cell.get_rhoijp(rhoijp, rhoijselect, nrhoijsel);
 
+    int* isk_in = new int[1];
+    isk_in[0] = 0;
+    paw_cell.set_isk(1,isk_in);
+    paw_cell.set_currentk(0);
+
     EXPECT_EQ(rhoijp.size(),nat);
     EXPECT_EQ(rhoijselect.size(),nat);
     EXPECT_EQ(nrhoijsel.size(),nat);
