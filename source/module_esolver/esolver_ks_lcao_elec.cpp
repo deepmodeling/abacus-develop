@@ -299,7 +299,7 @@ void ESolver_KS_LCAO<TK, TR>::beforescf(int istep)
     Symmetry_rho srho;
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        srho.begin(is, *(this->pelec->charge), this->pw_rho, GlobalC::Pgrid, this->symm);
+        srho.begin(is, *(this->pelec->charge), this->pw_rho, GlobalC::Pgrid, GlobalC::ucell.symm);
     }
 // Peize Lin add 2016-12-03
 #ifdef __EXX

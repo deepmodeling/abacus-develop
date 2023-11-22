@@ -30,7 +30,6 @@ namespace ModuleESolver
 
         elecstate::ElecState* pelec = nullptr;
         Charge chr;
-        ModuleSymmetry::Symmetry symm;
         //--------------temporary----------------------------
         // this is the interface of non-self-consistant calculation
         virtual void nscf(){};

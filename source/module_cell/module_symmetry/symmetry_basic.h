@@ -14,8 +14,8 @@ class Symmetry_Basic
 {
 	public:
 
-	 Symmetry_Basic();
-	~Symmetry_Basic();
+        Symmetry_Basic() {};
+        ~Symmetry_Basic() {};
 
     double epsilon;
     double epsilon_input;   ///< the input value of symmetry_prec, should not  be changed

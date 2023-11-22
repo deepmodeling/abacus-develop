@@ -1,7 +1,8 @@
 #ifndef SYMMETRY_H
 #define SYMMETRY_H
 
-#include "module_cell/unitcell.h"
+#include "module_cell/unitcell_data.h"
+#include "module_cell/atom_spec.h"
 #include "symmetry_basic.h"
 
 namespace ModuleSymmetry
@@ -9,9 +10,12 @@ namespace ModuleSymmetry
 class Symmetry : public Symmetry_Basic
 {
 public:
-
-	 Symmetry();
-	~Symmetry();
+    Symmetry() {
+        this->epsilon = 1e-6;
+        this->tab = 12;
+        this->available = true;
+    };
+    ~Symmetry() {};
 
 	//symmetry flag for levels
 	//-1 : no symmetry at all, k points would be total nks in KPT
@@ -21,7 +25,7 @@ public:
     static bool symm_autoclose;
     static bool pricell_loop;   ///< whether to loop primitive cell in rhog_symmetry
 
-	void analy_sys(const UnitCell &ucell, std::ofstream &ofs_running);
+    void analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, std::ofstream& ofs_running);
 	bool available;
 
 	ModuleBase::Vector3<double> s1, s2, s3;
@@ -79,9 +83,9 @@ public:
 	int standard_lat(ModuleBase::Vector3<double> &a,ModuleBase::Vector3<double> &b,ModuleBase::Vector3<double> &c,double *celconst )const;
 
 	void lattice_type(ModuleBase::Vector3<double> &v1,ModuleBase::Vector3<double> &v2,ModuleBase::Vector3<double> &v3, 
-	    	ModuleBase::Vector3<double> &v01, ModuleBase::Vector3<double> &v02, ModuleBase::Vector3<double> &v03,
-			double *cel_const, double* pre_const, int& real_brav, std::string &bravname, const UnitCell &ucell, 
-			bool convert_atoms, double* newpos=nullptr)const;
+        ModuleBase::Vector3<double>& v01, ModuleBase::Vector3<double>& v02, ModuleBase::Vector3<double>& v03,
+        double* cel_const, double* pre_const, int& real_brav, std::string& bravname, const Atom* atoms,
+        bool convert_atoms, double* newpos = nullptr)const;
 
 	void recip(
 			const double a,
@@ -95,11 +99,10 @@ public:
 	
 	void change_lattice(void);
 
-	// check if the input cell is a primitive cell.
-	//void pricell(const UnitCell &ucell);
 	void getgroup(int &nrot, int &nrotk, std::ofstream &ofs_running);
-	void checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtrans, double *pos);
-	void pricell(double* pos);
+    void checksym(ModuleBase::Matrix3& s, ModuleBase::Vector3<double>& gtrans, double* pos);
+    /// @brief  primitive cell analysis
+    void pricell(double* pos, const Atom* atoms);
 	void rho_symmetry(double *rho, const int &nr1, const int &nr2, const int &nr3);
 	void rhog_symmetry(std::complex<double> *rhogtot, int* ixyz2ipw, const int &nx, 
 			const int &ny, const int &nz, const int & fftnx, const int &fftny, const int &fftnz);
@@ -107,7 +110,7 @@ public:
     /// symmetrize a vector3 with nat elements, which can be forces or variation of atom positions in relax
     void symmetrize_vec3_nat(double* v)const;
     /// symmetrize a 3*3 tensor, which can be stress or variation of unitcell in cell-relax
-    void symmetrize_mat3(ModuleBase::matrix& sigma, const UnitCell& ucell)const;
+    void symmetrize_mat3(ModuleBase::matrix& sigma, const Lattice& lat)const;
 
     void write();
 
@@ -134,7 +137,7 @@ public:
 
 
     /// @brief  set atom map for each symmetry operation
-    void set_atom_map(const UnitCell& ucell);
+    void set_atom_map(const Atom* atoms);
     // to be called in lattice_type
 	void get_shortest_latvec(ModuleBase::Vector3<double> &a1, 
 			ModuleBase::Vector3<double> &a2, ModuleBase::Vector3<double> &a3)const;
@@ -144,7 +147,7 @@ public:
         int& real_brav, double* cel_const, double* tmp_const)const;
 
     /// Loop the magmom of each atoms in its type when NSPIN>1. If not all the same, primitive cells should not be looped in rhog_symmetry.
-    bool magmom_same_check(const UnitCell& ucell)const;
+    bool magmom_same_check(const Atom* atoms)const;
 };
 }
 
