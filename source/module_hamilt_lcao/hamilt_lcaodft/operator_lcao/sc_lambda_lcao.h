@@ -37,7 +37,6 @@ class OperatorScLambda<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     virtual void contributeHk(int ik) override;
   private:
 
-    bool HR_fixed_done = false;
     const std::vector<int>& isk;
 };
 
