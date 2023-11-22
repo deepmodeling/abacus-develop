@@ -25,7 +25,6 @@ __global__ void psi_multiple(double ** atom_pair_left_g_v2,
                              int *atom_pair_input_info_g,
                              int *num_atom_pair_g,
                              int atom_pair_size_of_meshcell_v2,
-                             double *GridVlocal,
                              int lgd);
 
 #endif // GINT_VL_CUH

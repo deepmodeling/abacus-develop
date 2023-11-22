@@ -115,12 +115,10 @@ void gpu_task_generate_vlocal(const Grid_Technique &GridT,
           atom_pair_right_v2[atom_pair_index_v2] = psir_ylm_right + calc_index2;
           atom_pair_output_v2[atom_pair_index_v2] = GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2];
 
-          const int atom_pair_index = atom_pair_index_v2 * 4;
+          const int atom_pair_index = atom_pair_index_v2 * 2;
 
           atom_pair_input_info[atom_pair_index] = atom_pair_nw;
           atom_pair_input_info[atom_pair_index + 1] = GlobalC::ucell.atoms[it2].nw;
-          atom_pair_input_info[atom_pair_index + 2] = lo1;
-          atom_pair_input_info[atom_pair_index + 3] = lo2;
           atom_pair_index_in_meshcell++;
         }
       }

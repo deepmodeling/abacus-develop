@@ -218,7 +218,6 @@ __global__ void psi_multiple(double ** atom_pair_left_g_v2,
                              int *atom_pair_input_info_g,
                              int *num_atom_pair_g,
                              int atom_pair_size_of_meshcell_v2,
-                             double *GridVlocal,
                              int lgd)
 {
     // int k = blockIdx.x;
@@ -230,11 +229,9 @@ __global__ void psi_multiple(double ** atom_pair_left_g_v2,
     #pragma unroll
     for (int atom_pair_index = start_index; atom_pair_index < end_index; atom_pair_index += step)
     {
-        int info_index = atom_pair_index * 4;
+        int info_index = atom_pair_index * 2;
         int nw_mul = atom_pair_input_info_g[info_index];
         int atom_nw2 = atom_pair_input_info_g[info_index + 1];
-        int lo1 = atom_pair_input_info_g[info_index + 2];
-        int lo2 = atom_pair_input_info_g[info_index + 3];
 
         #pragma unroll
         for (int iw_index = threadIdx.x; iw_index < nw_mul; iw_index += blockDim.x)
@@ -249,7 +246,7 @@ __global__ void psi_multiple(double ** atom_pair_left_g_v2,
             {
                 v2 += left[ib] * right[ib];
             }
-            atomicAdd(&(GridVlocal[(lo1 + iw1) * lgd + (lo2 + iw2)]), v2);
+            atomicAdd(&(atom_pair_output[atom_pair_index][iw1 * bxyz_g[0] + iw2]), v2);
         }
     }
 }
