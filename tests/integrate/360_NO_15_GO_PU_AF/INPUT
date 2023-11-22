@@ -5,7 +5,7 @@ nbands    40
 calculation    scf
 ecutwfc    50
 scf_thr    1.0e-4
-scf_nmax    100
+scf_nmax    3
 out_chg    0
 
 #init_chg    file
