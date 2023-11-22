@@ -20,7 +20,8 @@ void gpu_task_generate_vlocal(const Grid_Technique &GridT,
                               int *num_atom_pair, double* GridVlocal_v2_g[],     
                               double ** atom_pair_left_v2,
                               double ** atom_pair_right_v2,
-                              double ** atom_pair_output_v2) {
+                              double ** atom_pair_output_v2,
+                              int & atom_pair_num) {
 
   const int grid_index_ij = i * GridT.nby * GridT.nbzp + j * GridT.nbzp;
   const int nwmax = GlobalC::ucell.nwmax;
@@ -81,12 +82,16 @@ void gpu_task_generate_vlocal(const Grid_Technique &GridT,
       }
     }
     num_psir[z_index] = num_get_psi;
+  }
 
-    int atom_pair_index_in_nbz_v2 = atom_pair_size_of_meshcell_v2 * z_index;
-    int atom_pair_index_in_meshcell = 0;
+
+  atom_pair_num = 0;
+  for (int z_index = 0; z_index < GridT.nbzp; z_index++)
+  {
+    int grid_index = grid_index_ij + z_index;
     int atom_num = GridT.how_many_atoms[grid_index];
     int vldr3_index = z_index * max_size * nwmax * GridT.bxyz;
-
+    int bcell_start_index = GridT.bcell_start[grid_index];
     for (int atom1 = 0; atom1 < atom_num; atom1++) {
 
       int iat1 = GridT.which_atom[bcell_start_index + atom1];
@@ -106,23 +111,20 @@ void gpu_task_generate_vlocal(const Grid_Technique &GridT,
           {
              checkCuda(cudaMalloc((void **)&GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2], atom_pair_nw * sizeof(double)));
           }
-          const int atom_pair_index_v2 =
-              atom_pair_index_in_nbz_v2 + atom_pair_index_in_meshcell;
-          
+
           int calc_index1 = vldr3_index + atom1 * nwmax * GridT.bxyz;
           int calc_index2 = vldr3_index + atom2 * nwmax * GridT.bxyz;
-          atom_pair_left_v2[atom_pair_index_v2] = psir_ylm_left + calc_index1;
-          atom_pair_right_v2[atom_pair_index_v2] = psir_ylm_right + calc_index2;
-          atom_pair_output_v2[atom_pair_index_v2] = GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2];
+          atom_pair_left_v2[atom_pair_num] = psir_ylm_left + calc_index1;
+          atom_pair_right_v2[atom_pair_num] = psir_ylm_right + calc_index2;
+          atom_pair_output_v2[atom_pair_num] = GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2];
 
-          const int atom_pair_index = atom_pair_index_v2 * 2;
+          const int atom_pair_info_index = atom_pair_num * 2;
 
-          atom_pair_input_info[atom_pair_index] = atom_pair_nw;
-          atom_pair_input_info[atom_pair_index + 1] = GlobalC::ucell.atoms[it2].nw;
-          atom_pair_index_in_meshcell++;
+          atom_pair_input_info[atom_pair_info_index] = atom_pair_nw;
+          atom_pair_input_info[atom_pair_info_index + 1] = GlobalC::ucell.atoms[it2].nw;
+          atom_pair_num++;
         }
       }
     }
-    num_atom_pair[z_index] = atom_pair_index_in_meshcell;
   }
 }

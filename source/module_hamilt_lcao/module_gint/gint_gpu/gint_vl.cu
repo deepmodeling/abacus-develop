@@ -220,33 +220,24 @@ __global__ void psi_multiple(double ** atom_pair_left_g_v2,
                              int atom_pair_size_of_meshcell_v2,
                              int lgd)
 {
-    // int k = blockIdx.x;
-    int start_index = atom_pair_size_of_meshcell_v2 * blockIdx.x;
-    int end_index = start_index + num_atom_pair_g[blockIdx.x];
-    start_index += blockIdx.y;
-    int step = gridDim.y;
+    int atom_pair_index = blockIdx.x;
+    int info_index = atom_pair_index * 2;
+    int nw_mul = atom_pair_input_info_g[info_index];
+    int atom_nw2 = atom_pair_input_info_g[info_index + 1];
 
     #pragma unroll
-    for (int atom_pair_index = start_index; atom_pair_index < end_index; atom_pair_index += step)
+    for (int iw_index = threadIdx.x; iw_index < nw_mul; iw_index += blockDim.x)
     {
-        int info_index = atom_pair_index * 2;
-        int nw_mul = atom_pair_input_info_g[info_index];
-        int atom_nw2 = atom_pair_input_info_g[info_index + 1];
-
+        int iw1 = iw_index / atom_nw2;
+        int iw2 = iw_index % atom_nw2;
+        double v2 = 0.0;
+        double * left = &atom_pair_left_g_v2[atom_pair_index][iw1 * bxyz_g[0]];
+        double * right = &atom_pair_right_g_v2[atom_pair_index][iw2 * bxyz_g[0]];
         #pragma unroll
-        for (int iw_index = threadIdx.x; iw_index < nw_mul; iw_index += blockDim.x)
+        for (int ib = 0; ib < bxyz_g[0]; ++ib)
         {
-            int iw1 = iw_index / atom_nw2;
-            int iw2 = iw_index % atom_nw2;
-            double v2 = 0.0;
-            double * left = &atom_pair_left_g_v2[atom_pair_index][iw1 * bxyz_g[0]];
-            double * right = &atom_pair_right_g_v2[atom_pair_index][iw2 * bxyz_g[0]];
-            #pragma unroll
-            for (int ib = 0; ib < bxyz_g[0]; ++ib)
-            {
-                v2 += left[ib] * right[ib];
-            }
-            atomicAdd(&(atom_pair_output[atom_pair_index][iw1 * bxyz_g[0] + iw2]), v2);
+            v2 += left[ib] * right[ib];
         }
+        atomicAdd(&(atom_pair_output[atom_pair_index][iw1 * bxyz_g[0] + iw2]), v2);
     }
 }

@@ -198,7 +198,7 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
             double ** atom_pair_left_g = &atom_pair_left_global_g[atom_pair_size_over_nbz_v2 * stream_num];
             double ** atom_pair_right_g = &atom_pair_right_global_g[atom_pair_size_over_nbz_v2 * stream_num];
             double ** atom_pair_output_g = &atom_pair_output_global_g[atom_pair_size_over_nbz_v2 * stream_num];
-
+            int atom_pair_num = 0;
             gpu_task_generate_vlocal(GridT, i, j,
                                      atom_pair_size_of_meshcell_v2,
                                      psi_size_max_per_z,
@@ -214,7 +214,8 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
                                      num_atom_pair, GridVlocal_v2_g,
                                      atom_pair_left,
                                      atom_pair_right,
-                                     atom_pair_output);
+                                     atom_pair_output,
+                                     atom_pair_num);
 
             checkCuda(cudaStreamSynchronize(stream[stream_num]));
 
@@ -233,7 +234,7 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
 
             dim3 grid_psi(nbz, 8);
             dim3 block_psi(64);
-            dim3 grid_multiple(nbz, 512);
+            dim3 grid_multiple(atom_pair_num);
             dim3 block_multiple(128);
 
             get_psi_and_vldr3<<<grid_psi, block_psi, 0, stream[stream_num]>>>(psi_input_double_g,
