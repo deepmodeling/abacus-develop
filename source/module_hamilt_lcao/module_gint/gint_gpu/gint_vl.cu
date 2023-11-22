@@ -2,6 +2,7 @@
 #include "module_hamilt_lcao/module_gint/gint_gpu/gint_vl.h"
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_hamilt_lcao/module_gint/gint_gpu/vbatch_matrix_multiple/cuda_tools.cuh"
 
 __constant__ double ylmcoef[36];
 __constant__ int bxyz_g[1];

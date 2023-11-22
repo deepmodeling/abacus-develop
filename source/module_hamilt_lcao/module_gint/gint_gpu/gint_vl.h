@@ -2,15 +2,17 @@
 #define GINT_VL_H
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
 #include "module_hamilt_lcao/module_gint/gint.h"
-#include "module_hamilt_lcao/module_gint/gint_gpu/vbatch_matrix_multiple/cuda_tools.cuh"
+#include <cuda.h>    // for CUDA_VERSION
+#include <cublas_v2.h>
+#include <cuda_runtime.h>
+
+cudaError_t checkCuda(cudaError_t result);
+
 
 void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint, int lgd_now,
                        const int max_size, double vfactor,
                        const double *vlocal, const double *ylmcoef_now,
                        int pwnczp, int NLOCAL_now, int nbxx, const Grid_Technique &GridT);
-
-
-
 
 void gpu_task_generate_vlocal(const Grid_Technique &GridT, 
                               const int i, const int j,
