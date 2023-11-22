@@ -10,7 +10,7 @@
 #include "module_basis/module_pw/pw_basis.h"
 
 /**
- * @brief A class which calculates kinetic energy, potential, and stress with Wang-Teter (WT) KEDF.
+ * @brief A class which calculates the kinetic energy, potential, and stress with Wang-Teter (WT) KEDF.
  * See Wang L W, Teter M P. Physical Review B, 1992, 45(23): 13196.
  * @author sunliang on 2022-06
  */
@@ -41,15 +41,15 @@ class KEDF_WT
     double get_energy(const double *const *prho, ModulePW::PW_Basis *pw_rho);
     double get_energy_density(const double *const *prho, int is, int ir, ModulePW::PW_Basis *pw_rho);
     void wt_potential(const double *const *prho, ModulePW::PW_Basis *pw_rho, ModuleBase::matrix &rpotential);
-    void get_stress(double cellVol, const double *const *prho, ModulePW::PW_Basis *pw_rho, double vw_weight);
+    void get_stress(const double *const *prho, ModulePW::PW_Basis *pw_rho, double vw_weight);
     double wt_energy = 0.;
     ModuleBase::matrix stress;
 
   private:
     double wt_kernel(double eta, double tf_weight, double vw_weight);
     double diff_linhard(double eta, double vw_weight);
-    void multi_kernel(const double *const *prho, double **rkernelRho, double exponent, ModulePW::PW_Basis *pw_rho);
-    void read_kernel(std::string fileName, ModulePW::PW_Basis *pw_rho);
+    void multi_kernel(const double *const *prho, double **rkernel_rho, double exponent, ModulePW::PW_Basis *pw_rho);
+    void read_kernel(std::string file_name, ModulePW::PW_Basis *pw_rho);
     void fill_kernel(double tf_weight, double vw_weight, ModulePW::PW_Basis *pw_rho);
 
     double dV_ = 0.;

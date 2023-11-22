@@ -9,7 +9,7 @@
 #include "module_base/timer.h"
 
 /**
- * @brief A class which calculates kinetic energy, potential, and stress with Thomas-Fermi (TF) KEDF.
+ * @brief A class which calculates the kinetic energy, potential, and stress with Thomas-Fermi (TF) KEDF.
  * See Fermi E. Rend. Accad. Naz. Lincei, 1927, 6(602-607): 5.
  *     Thomas L H. Cambridge University Press, 1927, 23(5): 542-548.
  * @author sunliang on 2022-05
@@ -28,7 +28,7 @@ class KEDF_TF
     double get_energy(const double *const *prho);
     double get_energy_density(const double *const *prho, int is, int ir);
     void tf_potential(const double *const *prho, ModuleBase::matrix &rpotential);
-    void get_stress(double cellVol);
+    void get_stress(double cell_vol);
 
     double tf_energy = 0.; // TF energy
     ModuleBase::matrix stress;

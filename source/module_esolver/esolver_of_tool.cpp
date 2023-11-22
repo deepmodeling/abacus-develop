@@ -8,6 +8,11 @@
 namespace ModuleESolver
 {
 
+/**
+ * @brief Initialize this->pelec, as well as this->pelec->pot
+ * 
+ * @param ucell 
+ */
 void ESolver_OF::init_elecstate(UnitCell &ucell)
 {
     delete this->pelec;
@@ -56,6 +61,9 @@ void ESolver_OF::init_elecstate(UnitCell &ucell)
     }
 }
 
+/**
+ * @brief Allocate the arrays, as well as this->psi_ and this->ptemp_rho_.
+ */
 void ESolver_OF::allocate_array()
 {
     // Initialize the "wavefunction", which is sqrt(rho)
@@ -94,9 +102,12 @@ void ESolver_OF::allocate_array()
     ModuleBase::Memory::record("OFDFT::precip_dir_", sizeof(std::complex<double>) * GlobalV::NSPIN * this->pw_rho->npw);
 }
 
-//
-// Get dL/dphi = dL/drho * drho/dphi = (dE/drho - mu) * 2 * ptemp_phi and store it in rdLdphi
-//
+/**
+ * @brief Get dL/dphi = dL/drho * drho/dphi = (dE/drho - mu) * 2 * ptemp_phi and store it in rdLdphi
+ * 
+ * @param [in] ptemp_phi phi
+ * @param [out] rdLdphi dL/dphi
+ */
 void ESolver_OF::cal_potential(double *ptemp_phi, double *rdLdphi)
 {
     double **dEdtemp_phi = new double*[GlobalV::NSPIN];
@@ -141,20 +152,26 @@ void ESolver_OF::cal_potential(double *ptemp_phi, double *rdLdphi)
     delete[] temp_phi;
 }
 
-//
-// Calculate dE/dTheta
-// dE/dTheta = <dE/dtempPhi|dtempPhi/dTheta>
-//           = <dE/dtempPhi|-phi*sin(theta)+d*cos(theta)>
-//
-void ESolver_OF::cal_dEdtheta(double **ptemp_phi, Charge* tempRho, double *ptheta, double *rdEdtheta)
+/**
+ * @brief Calculate dE/dTheta and store it in rdEdtheta.
+ * dE/dTheta = <dE / dtemp_phi | dtemp_phi / dTheta>
+ *           = <dE / dtemp_phi | - sin(theta) * phi + cos(theta) * direction>
+ * 
+ * @param [in] ptemp_phi 
+ * @param [in] temp_rho 
+ * @param [in] ucell 
+ * @param [in] ptheta 
+ * @param [out] rdEdtheta dE/dTheta
+ */
+void ESolver_OF::cal_dEdtheta(double **ptemp_phi, Charge* temp_rho, UnitCell& ucell, double *ptheta, double *rdEdtheta)
 {
     double *dphi_dtheta = new double[this->pw_rho->nrxx];
 
-    if(GlobalV::NSPIN==4) GlobalC::ucell.cal_ux();
-    this->pelec->pot->update_from_charge(tempRho, &GlobalC::ucell);
+    if(GlobalV::NSPIN==4) ucell.cal_ux();
+    this->pelec->pot->update_from_charge(temp_rho, &ucell);
     ModuleBase::matrix& vr_eff = this->pelec->pot->get_effective_v();
 
-    this->kinetic_potential(tempRho->rho, ptemp_phi, vr_eff);
+    this->kinetic_potential(temp_rho->rho, ptemp_phi, vr_eff);
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
         for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
@@ -168,10 +185,15 @@ void ESolver_OF::cal_dEdtheta(double **ptemp_phi, Charge* tempRho, double *pthet
     delete[] dphi_dtheta;
 }
 
-//
-// Calculate chemical potential mu.
-// mu = <dE/dphi|phi> / 2nelec.
-//
+/**
+ * @brief Calculate the chemical potential mu.
+ * mu = <dE/dphi|phi> / (2 * nelec)
+ * 
+ * @param pphi 
+ * @param pdEdphi 
+ * @param nelec 
+ * @return mu
+ */
 double ESolver_OF::cal_mu(double *pphi, double *pdEdphi, double nelec)
 {
     double mu = this->inner_product(pphi, pdEdphi, this->pw_rho->nrxx, this->dV_);
@@ -180,9 +202,10 @@ double ESolver_OF::cal_mu(double *pphi, double *pdEdphi, double nelec)
     return mu;
 }
 
-//
-// Rotate and renormalize the direction |d>, make it orthogonal to phi, and <d|d> = nelec
-//
+/**
+ * @brief Rotate and renormalize the direction |d>, 
+ * make it orthogonal to phi (<d|phi> = 0), and <d|d> = nelec
+ */
 void ESolver_OF::adjust_direction()
 {
     // filter the high frequency term in direction if of_full_pw = false
@@ -251,13 +274,21 @@ void ESolver_OF::adjust_direction()
     }
 }
 
-void ESolver_OF::check_direction(double *dEdtheta, double **ptemp_phi)
+/**
+ * @brief Make sure that dEdtheta<0 at theta = 0,
+ * preparing to call the line search
+ * 
+ * @param dEdtheta 
+ * @param ptemp_phi 
+ * @param ucell 
+ */
+void ESolver_OF::check_direction(double *dEdtheta, double **ptemp_phi, UnitCell& ucell)
 {
     double *temp_theta = new double[GlobalV::NSPIN];
     ModuleBase::GlobalFunc::ZEROS(temp_theta, GlobalV::NSPIN);
 
     double max_dEdtheta = 1e5; // threshould of dEdtheta, avoid the unstable optimization
-    this->cal_dEdtheta(ptemp_phi, this->ptemp_rho_, temp_theta, dEdtheta);
+    this->cal_dEdtheta(ptemp_phi, this->ptemp_rho_, ucell, temp_theta, dEdtheta);
 
     // Assert dEdtheta(theta = 0) < 0, otherwise line search will not work.
     for (int is = 0; is < GlobalV::NSPIN; ++is)
@@ -275,7 +306,7 @@ void ESolver_OF::check_direction(double *dEdtheta, double **ptemp_phi)
                 this->pdirect_[is][ir] = - this->pdLdphi_[is][ir];
             }
             this->adjust_direction();
-            this->cal_dEdtheta(ptemp_phi, this->ptemp_rho_, temp_theta, dEdtheta);
+            this->cal_dEdtheta(ptemp_phi, this->ptemp_rho_, ucell, temp_theta, dEdtheta);
             if (dEdtheta[is] > max_dEdtheta)
             {
                 std::cout << "dEdtheta    " << dEdtheta[is] << std::endl;
@@ -290,7 +321,15 @@ void ESolver_OF::check_direction(double *dEdtheta, double **ptemp_phi)
     delete[] temp_theta;
 }
 
-void ESolver_OF::test_direction(double *dEdtheta, double **ptemp_phi)
+/**
+ * @brief ONLY used for test.
+ * Check the validity of KEDF
+ * 
+ * @param dEdtheta 
+ * @param ptemp_phi 
+ * @param ucell 
+ */
+void ESolver_OF::test_direction(double *dEdtheta, double **ptemp_phi, UnitCell& ucell)
 {
     double temp_energy = 0.;
     if (this->iter_ == 0)
@@ -303,7 +342,7 @@ void ESolver_OF::test_direction(double *dEdtheta, double **ptemp_phi)
                 ptemp_phi[0][ir] = this->pphi_[0][ir] * cos(this->theta_[0]) + this->pdirect_[0][ir] *
                 sin(this->theta_[0]); ptemp_rho_->rho[0][ir] = ptemp_phi[0][ir] * ptemp_phi[0][ir];
             }
-            this->cal_dEdtheta(ptemp_phi, ptemp_rho_, this->theta_, dEdtheta);
+            this->cal_dEdtheta(ptemp_phi, ptemp_rho_, ucell, this->theta_, dEdtheta);
             this->pelec->cal_energies(2);
             temp_energy = this->pelec->f_en.etot;
             double kinetic_energy = 0.;
@@ -319,9 +358,10 @@ void ESolver_OF::test_direction(double *dEdtheta, double **ptemp_phi)
     }
 }
 
-//
-// Print nessecary information
-//
+/**
+ * @brief Print nessecary information to the screen,
+ * and write the components of the total energy into running_log.
+ */
 void ESolver_OF::print_info()
 {
     if (this->iter_ == 0){

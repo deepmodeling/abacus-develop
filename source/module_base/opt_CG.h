@@ -8,16 +8,17 @@
 
 namespace ModuleBase
 {
-// 
-// A class designed to deal with optimization problems with CG method.
-// Three forms of CG methods have been implemented, including standard flow to solve 
-// the linear equation Ax = b, Polak-Ribire (PR) form and Hager-Zhang (HZ) form to
-// solve general optimization problems min{f(x)}.
-// We adopt following abbreviation
-// x -> solution
-// d -> direction
-// g -> gradient
-// 
+/**
+ * @brief A class designed to deal with optimization problems with CG method.
+ * Three forms of CG methods have been implemented, including standard flow to solve 
+ * the linear equation Ax = b, Polak-Ribire (PR) form and Hager-Zhang (HZ) form to
+ * solve general optimization problems min{f(x)}.
+ * We adopt following abbreviation
+ * x -> solution
+ * d -> direction
+ * g -> gradient
+ * @author sunliang
+ */
 class Opt_CG
 {
 public:

@@ -10,9 +10,14 @@ void KEDF_vW::set_para(double dV, double vw_weight)
     this->vw_weight_ = vw_weight;
 }
 
-//
-// EvW = -1/2 \int{sqrt(rho) nabla^2 sqrt(rho)}
-//
+/**
+ * @brief Get the energy of vW KEDF
+ * \f[ E_{vW} = -1/2 \int{\sqrt(\rho) \nabla^2 \sqrt(\rho)} \f]
+ * 
+ * @param pphi pphi^2 = rho
+ * @param pw_rho pw basis
+ * @return the energy of vW KEDF
+ */
 double KEDF_vW::get_energy(double **pphi, ModulePW::PW_Basis *pw_rho)
 {
     // since pphi may contain minus element, we define tempPhi = std::abs(phi), which is true sqrt(rho)
@@ -65,6 +70,16 @@ double KEDF_vW::get_energy(double **pphi, ModulePW::PW_Basis *pw_rho)
     return energy;
 }
 
+/**
+ * @brief Get the energy density of vW KEDF
+ * \f[ \tau_{vW} = -1/2 \sqrt(\rho) \nabla^2 \sqrt(\rho) \f]
+ * 
+ * @param pphi pphi^2 = rho
+ * @param is the index of spin
+ * @param ir the index of real space grid
+ * @param pw_rho pw basis
+ * @return the energy density of vW KEDF
+ */
 double KEDF_vW::get_energy_density(double **pphi, int is, int ir, ModulePW::PW_Basis *pw_rho)
 {
     // since pphi may contain minus element, we define tempPhi = std::abs(phi), which is true sqrt(rho)
@@ -96,10 +111,17 @@ double KEDF_vW::get_energy_density(double **pphi, int is, int ir, ModulePW::PW_B
     return energyDen;
 }
 
-//
-// Vvw(r)=-1/2 * [\nabla^2 sqrt(rho(r))]/sqrt(rho(r))
-// Here we calculate Vvw * 2 * phi = - sign(phi) * \nabla^2 sqrt(rho(r))
-//
+/**
+ * @brief Get the potential of vW KEDF, and add it into rpotential, 
+ * and the vW energy will be calculated and stored in this->vw_energy
+ * V_{vW}(r)=-1/2 * nabla^2 sqrt(rho(r))]/sqrt(rho(r))
+ * NOTE that actually we calculate V_{vW} * 2 * phi = - sign(phi) * nabla^2 sqrt(rho(r) here,
+ * as a result, we need rpotential = potential * 2 * phi
+ * 
+ * @param pphi pphi^2 = rho
+ * @param pw_rho pw basis
+ * @param rpotential potential * 2 * phi => potential * 2 * phi + V_{vW} * 2 * phi
+ */
 void KEDF_vW::vw_potential(const double *const *pphi, ModulePW::PW_Basis *pw_rho, ModuleBase::matrix &rpotential)
 {
     ModuleBase::timer::tick("KEDF_vW", "vw_potential");
@@ -172,7 +194,13 @@ void KEDF_vW::vw_potential(const double *const *pphi, ModulePW::PW_Basis *pw_rho
     ModuleBase::timer::tick("KEDF_vW", "vw_potential");
 }
 
-void KEDF_vW::get_stress(const double *const *pphi, ModulePW::PW_Basis *pw_rho, double inpt_vWenergy)
+/**
+ * @brief Get the stress of vW KEDF, and store it into this->stress
+ * 
+ * @param pphi pphi^2 = rho
+ * @param pw_rho pw_basis
+ */
+void KEDF_vW::get_stress(const double *const *pphi, ModulePW::PW_Basis *pw_rho)
 {
     // since pphi may contain minus element, we define tempPhi = std::abs(phi), which is true sqrt(rho)
     double **tempPhi = new double *[GlobalV::NSPIN];
@@ -239,7 +267,13 @@ void KEDF_vW::get_stress(const double *const *pphi, ModulePW::PW_Basis *pw_rho, 
     delete[] ggPhi;
 }
 
-// get minus Laplacian phi
+/**
+ * @brief Get minus Laplacian phi
+ * 
+ * @param [in] pphi 
+ * @param [out] rLapPhi - Laplacian phi
+ * @param [in] pw_rho pw basis
+ */
 void KEDF_vW::laplacian_phi(const double *const *pphi, double **rLapPhi, ModulePW::PW_Basis *pw_rho)
 {
     std::complex<double> **recipPhi = new std::complex<double> *[GlobalV::NSPIN];

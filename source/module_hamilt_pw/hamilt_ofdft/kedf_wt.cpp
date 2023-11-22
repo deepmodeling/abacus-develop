@@ -4,6 +4,21 @@
 #include "module_base/tool_quit.h"
 #include "module_base/global_variable.h"
 
+/**
+ * @brief Set the parameters of WT KEDF, and initialize kernel
+ * 
+ * @param dV the volume of one grid point in real space, omega/nxyz
+ * @param alpha 
+ * @param beta 
+ * @param nelec the number of electron
+ * @param tf_weight 
+ * @param vw_weight 
+ * @param of_wt_rho0 
+ * @param of_hold_rho0 
+ * @param read_kernel 
+ * @param kernel_file 
+ * @param pw_rho pw_basis
+ */
 void KEDF_WT::set_para(double dV, double alpha, double beta, double nelec, double tf_weight, double vw_weight, double of_wt_rho0, bool of_hold_rho0, bool read_kernel, std::string kernel_file, ModulePW::PW_Basis *pw_rho)
 {
     this->dV_ = dV;
@@ -35,9 +50,14 @@ void KEDF_WT::set_para(double dV, double alpha, double beta, double nelec, doubl
         this->fill_kernel(tf_weight, vw_weight, pw_rho);
 }
 
-//
-// Ewt = Ctf * \int{rho^alpha * W(r - r') * rho^beta drdr'} + T_vW + T_TF, T_vW and T_TF will be added in ESolver_OF
-//
+/**
+ * @brief Get the energy of WT KEDF
+ * \f[ E_{WT} = c_{TF} * \int{\rho^\alpha * W(r - r') * \rho^\beta drdr'} \f]
+ * 
+ * @param prho charge density
+ * @param pw_rho pw basis
+ * @return the energy of WT KEDF
+ */
 double KEDF_WT::get_energy(const double * const * prho, ModulePW::PW_Basis *pw_rho)
 {
     double **kernelRhoBeta = new double* [GlobalV::NSPIN];
@@ -76,6 +96,16 @@ double KEDF_WT::get_energy(const double * const * prho, ModulePW::PW_Basis *pw_r
     return energy;
 }
 
+/**
+ * @brief Get the energy density of LKT KEDF
+ * \f[ \tau_{WT} = c_{TF} * \rho^\alpha * \int{W(r - r') * \rho^\beta dr'} \f]
+ * 
+ * @param prho charge density
+ * @param is the index of spin 
+ * @param ir the index of real space grid 
+ * @param pw_rho pw basis 
+ * @return the energy density of WT KEDF
+ */
 double KEDF_WT::get_energy_density(const double * const *prho, int is, int ir, ModulePW::PW_Basis *pw_rho)
 {
     double **kernelRhoBeta = new double* [GlobalV::NSPIN];
@@ -92,10 +122,15 @@ double KEDF_WT::get_energy_density(const double * const *prho, int is, int ir, M
     return result;
 }
 
-
-//
-// Vwt = cTF * [alpha rho^{alpha-1} \int{W(r - r')rho^{beta}(r') dr'} + beta rho^{beta-1} \int{W(r' - r)rho^{alpha}(r') dr'}]
-//
+/**
+ * @brief Get the potential of WT KEDF, and add it into rpotential, 
+ * and the WT energy will be calculated and stored in this->wt_energy
+ * \f[ V_{WT} = c_{TF} * [\alpha \rho^{\alpha-1} \int{W(r - r')\rho^{\beta}(r') dr'} + \beta \rho^{\beta-1} \int{W(r' - r)\rho^{\alpha}(r') dr'}] \f]
+ * 
+ * @param prho charge density
+ * @param pw_rho pw basis
+ * @param rpotential rpotential => rpotential + V_{WT}
+ */
 void KEDF_WT::wt_potential(const double * const *prho, ModulePW::PW_Basis *pw_rho, ModuleBase::matrix &rpotential)
 {
     ModuleBase::timer::tick("KEDF_WT", "wt_potential");
@@ -152,7 +187,14 @@ void KEDF_WT::wt_potential(const double * const *prho, ModulePW::PW_Basis *pw_rh
     ModuleBase::timer::tick("KEDF_WT", "wt_potential");
 }
 
-void KEDF_WT::get_stress(double cellVol, const double * const * prho, ModulePW::PW_Basis *pw_rho, double vw_weight)
+/**
+ * @brief Get the stress of WT KEDF, and store it into this->stress
+ * 
+ * @param prho charge density
+ * @param pw_rho pw basis
+ * @param vw_weight the weight of vW KEDF
+ */
+void KEDF_WT::get_stress(const double * const * prho, ModulePW::PW_Basis *pw_rho, double vw_weight)
 {
     double coef = 0.;
     double mult = 0.;
@@ -236,7 +278,7 @@ void KEDF_WT::get_stress(double cellVol, const double * const * prho, ModulePW::
 
     for (int a = 0; a < 3; ++a)
     {
-        this->stress(a,a) += mult * this->wt_energy / cellVol;
+        this->stress(a,a) += mult * this->wt_energy / pw_rho->omega;
         for (int b = 0; b < a; ++b)
         {
             this->stress(a,b) = this->stress(b,a);
@@ -253,7 +295,14 @@ void KEDF_WT::get_stress(double cellVol, const double * const * prho, ModulePW::
     delete[] tempRho;
 }
 
-// Calculate WT kernel according to Lindhard response function
+/**
+ * @brief Calculate the WT kernel according to Lindhard response function
+ * 
+ * @param eta k / (2 * kF)
+ * @param tf_weight 
+ * @param vw_weight 
+ * @return W(eta)
+ */
 double KEDF_WT::wt_kernel(double eta, double tf_weight, double vw_weight)
 {
     if (eta < 0.)
@@ -301,6 +350,13 @@ double KEDF_WT::wt_kernel(double eta, double tf_weight, double vw_weight)
     }
 }
 
+/**
+ * @brief The derivative of the WT kernel
+ * 
+ * @param eta k / (2 * kF)
+ * @param vw_weight 
+ * @return d W(eta)/d eta
+ */
 double KEDF_WT::diff_linhard(double eta, double vw_weight)
 {
     if (eta < 0.)
@@ -324,8 +380,15 @@ double KEDF_WT::diff_linhard(double eta, double vw_weight)
     }
 }
 
-// Calculate \int{W(r-r')rho^{exponent}(r') dr'}
-void KEDF_WT::multi_kernel(const double * const * prho, double **rkernelRho, double exponent, ModulePW::PW_Basis *pw_rho)
+/**
+ * @brief Calculate \int{W(r-r')rho^{exponent}(r') dr'}
+ * 
+ * @param [in] prho charge density
+ * @param [out] rkernel_rho \int{W(r-r')rho^{exponent}(r') dr'}
+ * @param [in] exponent the exponent of rho
+ * @param [in] pw_rho pw_basis
+ */
+void KEDF_WT::multi_kernel(const double * const * prho, double **rkernel_rho, double exponent, ModulePW::PW_Basis *pw_rho)
 {
     std::complex<double> **recipkernelRho = new std::complex<double> *[GlobalV::NSPIN];
     for (int is = 0; is < GlobalV::NSPIN; ++is)
@@ -333,14 +396,14 @@ void KEDF_WT::multi_kernel(const double * const * prho, double **rkernelRho, dou
         recipkernelRho[is] = new std::complex<double>[pw_rho->npw];
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         {
-            rkernelRho[is][ir] = std::pow(prho[is][ir], exponent);
+            rkernel_rho[is][ir] = std::pow(prho[is][ir], exponent);
         }
-        pw_rho->real2recip(rkernelRho[is], recipkernelRho[is]);
+        pw_rho->real2recip(rkernel_rho[is], recipkernelRho[is]);
         for (int ip = 0; ip < pw_rho->npw; ++ip)
         {
             recipkernelRho[is][ip] *= this->kernel_[ip];
         }
-        pw_rho->recip2real(recipkernelRho[is], rkernelRho[is]);
+        pw_rho->recip2real(recipkernelRho[is], rkernel_rho[is]);
     }
 
     for (int is = 0; is < GlobalV::NSPIN; ++is)
@@ -350,6 +413,13 @@ void KEDF_WT::multi_kernel(const double * const * prho, double **rkernelRho, dou
     delete[] recipkernelRho;
 }
 
+/**
+ * @brief Fill the kernel (this->kernel_)
+ * 
+ * @param tf_weight 
+ * @param vw_weight 
+ * @param pw_rho pw_basis
+ */
 void KEDF_WT::fill_kernel(double tf_weight, double vw_weight, ModulePW::PW_Basis *pw_rho)
 {
     double eta = 0.;
@@ -360,12 +430,18 @@ void KEDF_WT::fill_kernel(double tf_weight, double vw_weight, ModulePW::PW_Basis
     }
 }
 
-// Read kernel from file
-void KEDF_WT::read_kernel(std::string fileName, ModulePW::PW_Basis *pw_rho)
+// 
+/**
+ * @brief Read the kernel from file
+ * 
+ * @param file_name the name of the kernel file
+ * @param pw_rho pw basis
+ */
+void KEDF_WT::read_kernel(std::string file_name, ModulePW::PW_Basis *pw_rho)
 {
-    std::ifstream ifs(fileName.c_str(), std::ios::in);
+    std::ifstream ifs(file_name.c_str(), std::ios::in);
 
-    GlobalV::ofs_running << "Read WT kernel from " << fileName << std::endl;
+    GlobalV::ofs_running << "Read WT kernel from " << file_name << std::endl;
     if (!ifs) ModuleBase::WARNING_QUIT("kedf_wt.cpp", "The kernel file of WT KEDF not found");
 
     int kineType = 0;

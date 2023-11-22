@@ -10,9 +10,14 @@ void KEDF_LKT::set_para(double dV, double lkt_a)
     this->lkt_a_ = lkt_a;
 }
 
-//
-// ELKT = \int{tau_TF/cosh(a * s)}
-//
+/**
+ * @brief Get the energy of LKT KEDF
+ * \f[ E_{LKT} = \int{tau_{TF}/\cosh(a * s)}, s = c_s * |\nabla \rho|/\rho^{4/3} \f]
+ * 
+ * @param prho charge density
+ * @param pw_rho pw basis
+ * @return the energy of LKT KEDF
+ */
 double KEDF_LKT::get_energy(const double *const *prho, ModulePW::PW_Basis *pw_rho)
 {
     double energy = 0.;                // in Ry
@@ -48,6 +53,16 @@ double KEDF_LKT::get_energy(const double *const *prho, ModulePW::PW_Basis *pw_rh
     return energy;
 }
 
+/**
+ * @brief Get the energy density of LKT KEDF
+ * \f[ \tau_{LKT} = tau_{TF}/\cosh(a * s) \f]
+ * 
+ * @param prho charge density
+ * @param is the index of spin
+ * @param ir the index of real space grid
+ * @param pw_rho pw basis
+ * @return the energy density of LKT KEDF
+ */
 double KEDF_LKT::get_energy_density(const double *const *prho, int is, int ir, ModulePW::PW_Basis *pw_rho)
 {
     double energy_den = 0.;            // in Ry
@@ -70,10 +85,16 @@ double KEDF_LKT::get_energy_density(const double *const *prho, int is, int ir, M
     return energy_den;
 }
 
-//
-// V_LKT =5/3 *tau_TF/rho * [1/cosh(as)+5/4 * as * tanh(as)/cosh(as)]
-// +\nabla\cdot(tau_TF * a*tanh(as)/cosh(as) * s/|\nabla\rho|^2 * \nabla\rho).
-//
+/**
+ * @brief Get the potential of LKT KEDF, and add it into rpotential, 
+ * and the LKT energy will be calculated and stored in this->lkt_energy
+ * \f[ V_{LKT} =5/3 *\tau_{TF}/\rho * [1/\cosh(as)+5/4 * as * \tanh(as)/\cosh(as)] \f]
+ * \f[ +\nabla\cdot(\tau_{TF} * a*\tanh(as)/\cosh(as) * s/|\nabla\rho|^2 * \nabla\rho). \f]
+ * 
+ * @param prho charge density
+ * @param pw_rho pw basis
+ * @param rpotential rpotential => rpotential + V_{LKT}
+ */
 void KEDF_LKT::lkt_potential(const double *const *prho, ModulePW::PW_Basis *pw_rho, ModuleBase::matrix &rpotential)
 {
     ModuleBase::timer::tick("KEDF_LKT", "LKT_potential");
@@ -139,7 +160,13 @@ void KEDF_LKT::lkt_potential(const double *const *prho, ModulePW::PW_Basis *pw_r
     ModuleBase::timer::tick("KEDF_LKT", "LKT_potential");
 }
 
-void KEDF_LKT::get_stress(const double cell_vol, const double *const *prho, ModulePW::PW_Basis *pw_rho)
+/**
+ * @brief Get the stress of LKT KEDF, and store it into this->stress
+ * 
+ * @param prho charge density
+ * @param pw_rho pw basis
+ */
+void KEDF_LKT::get_stress(const double *const *prho, ModulePW::PW_Basis *pw_rho)
 {
     double *as = new double[pw_rho->nrxx]; // a*s
     double **nabla_rho = new double *[3];
@@ -162,7 +189,7 @@ void KEDF_LKT::get_stress(const double cell_vol, const double *const *prho, Modu
 
                 if (alpha == beta)
                 {
-                    this->stress(alpha, beta) = 2.0 / 3.0 / cell_vol * this->lkt_energy;
+                    this->stress(alpha, beta) = 2.0 / 3.0 / pw_rho->omega * this->lkt_energy;
                 }
 
                 double integral_term = 0.;
@@ -180,7 +207,7 @@ void KEDF_LKT::get_stress(const double cell_vol, const double *const *prho, Modu
                     }
                 }
                 Parallel_Reduce::reduce_all(integral_term);
-                integral_term *= this->c_tf_ * this->dV_ / cell_vol;
+                integral_term *= this->c_tf_ * this->dV_ / pw_rho->omega;
 
                 this->stress(alpha, beta) += integral_term;
             }
@@ -205,7 +232,13 @@ void KEDF_LKT::get_stress(const double cell_vol, const double *const *prho, Modu
     delete[] nabla_term;
 }
 
-// output = nabla input
+/**
+ * @brief Caculate routput = nabla(pinput)
+ * 
+ * @param [in] pinput 
+ * @param [in] pw_rho pw basis
+ * @param [out] routput 
+ */
 void KEDF_LKT::nabla(const double *pinput, ModulePW::PW_Basis *pw_rho, double **routput)
 {
     std::complex<double> *recip_data = new std::complex<double>[pw_rho->npw];
@@ -226,7 +259,13 @@ void KEDF_LKT::nabla(const double *pinput, ModulePW::PW_Basis *pw_rho, double **
     delete[] recip_nabla;
 }
 
-// output = nabla dot input
+/**
+ * @brief Caculate routput = nabla dot pinput
+ * 
+ * @param [in] pinput 
+ * @param [in] pw_rho pw basis
+ * @param [out] routput 
+ */
 void KEDF_LKT::divergence(const double *const *pinput, ModulePW::PW_Basis *pw_rho, double *routput)
 {
     std::complex<double> *recip_container = new std::complex<double>[pw_rho->npw];
@@ -245,7 +284,14 @@ void KEDF_LKT::divergence(const double *const *pinput, ModulePW::PW_Basis *pw_rh
     delete[] recip_container;
 }
 
-// lkt_a * s, s = c_s * |nabla rho|/rho^{4/3}
+/**
+ * @brief Caculate as = lkt_a * s, s = c_s * |\nabla \rho|/\rho^{4/3}
+ * 
+ * @param [in] prho charge density
+ * @param [in] pnabla_rho nabla rho
+ * @param [in] nrxx the number of real space grid
+ * @param [out] as lkt_a * s
+ */
 void KEDF_LKT::get_as(const double *prho, const double *const *pnabla_rho, const int nrxx, double *as)
 {
     for (int ir = 0; ir < nrxx; ++ir)

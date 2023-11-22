@@ -10,7 +10,7 @@
 #include "module_basis/module_pw/pw_basis.h"
 
 /**
- * @brief A class which calculates kinetic energy, potential, and stress with Luo-Karasiev-Trickey (LKT) KEDF.
+ * @brief A class which calculates the kinetic energy, potential, and stress with Luo-Karasiev-Trickey (LKT) KEDF.
  * See Luo K, Karasiev V V, Trickey S B. Physical Review B, 2018, 98(4): 041111.
  * @author sunliang on 2023-04-28
  */
@@ -28,7 +28,7 @@ class KEDF_LKT
     double get_energy(const double *const *prho, ModulePW::PW_Basis *pw_rho);
     double get_energy_density(const double *const *prho, int is, int ir, ModulePW::PW_Basis *pw_rho);
     void lkt_potential(const double *const *prho, ModulePW::PW_Basis *pw_rho, ModuleBase::matrix &rpotential);
-    void get_stress(const double cellVol, const double *const *prho, ModulePW::PW_Basis *pw_rho);
+    void get_stress(const double *const *prho, ModulePW::PW_Basis *pw_rho);
 
     double lkt_energy = 0.; // LKT energy
     ModuleBase::matrix stress;

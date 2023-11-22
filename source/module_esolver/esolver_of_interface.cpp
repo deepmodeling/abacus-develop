@@ -3,6 +3,12 @@
 
 namespace ModuleESolver
 {
+/**
+ * @brief [Interface to kedf]
+ * Initialize the KEDFs.
+ * 
+ * @param inp 
+ */
 void ESolver_OF::init_kedf(Input &inp)
 {
     if (this->of_kinetic_ == "tf" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt")
@@ -42,8 +48,15 @@ void ESolver_OF::init_kedf(Input &inp)
     }
 }
 
-// Calculated this->of_kinetic_ potential and plus it to &rpot, return (rpot + kietic potential) * 2 * pphiInpt
-void ESolver_OF::kinetic_potential(double** prho, double** pphiInpt, ModuleBase::matrix& rpot)
+/**
+ * @brief [Interface to kedf]
+ * Calculated the kinetic potential and plus it to rpot, 
+ *
+ * @param [in] prho charge density
+ * @param [in] pphi phi^2 = rho
+ * @param [out] rpot rpot => (rpot + kietic potential) * 2 * pphi
+ */
+void ESolver_OF::kinetic_potential(double** prho, double** pphi, ModuleBase::matrix& rpot)
 {
     if (this->of_kinetic_ == "tf" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt")
     {
@@ -58,23 +71,28 @@ void ESolver_OF::kinetic_potential(double** prho, double** pphiInpt, ModuleBase:
         this->lkt_->lkt_potential(prho, this->pw_rho, rpot);
     }
 
-    // Before call vw_potential, change rpot to rpot * 2 * pphiInpt
+    // Before call vw_potential, change rpot to rpot * 2 * pphi
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
         for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
         {
-            rpot(is, ir) *= 2.0 * pphiInpt[is][ir];
+            rpot(is, ir) *= 2.0 * pphi[is][ir];
         }
     }
 
     if (this->of_kinetic_ == "vw" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt"
         || this->of_kinetic_ == "lkt")
     {
-        this->vw_->vw_potential(pphiInpt, this->pw_rho, rpot);
+        this->vw_->vw_potential(pphi, this->pw_rho, rpot);
     }
 }
 
-// Return the this->of_kinetic_ energy
+/**
+ * @brief [Interface to kedf]
+ * Return the kinetic energy
+ * 
+ * @return kinetic energy
+ */
 double ESolver_OF::kinetic_energy()
 {
     double kinetic_energy = 0.;
@@ -100,6 +118,12 @@ double ESolver_OF::kinetic_energy()
     return kinetic_energy;
 }
 
+/**
+ * @brief [Interface to kedf]
+ * Calculate the stress of kedf
+ * 
+ * @param [out] kinetic_stress_ 
+ */
 void ESolver_OF::kinetic_stress(ModuleBase::matrix& kinetic_stress_)
 {
     for (int i = 0; i < 3; ++i)
@@ -123,16 +147,20 @@ void ESolver_OF::kinetic_stress(ModuleBase::matrix& kinetic_stress_)
     }
     if (this->of_kinetic_ == "wt")
     {
-        this->wt_->get_stress(this->pelec->omega, pelec->charge->rho, this->pw_rho, GlobalV::of_vw_weight);
+        this->wt_->get_stress(pelec->charge->rho, this->pw_rho, GlobalV::of_vw_weight);
         kinetic_stress_ += this->wt_->stress;
     }
     if (this->of_kinetic_ == "lkt")
     {
-        this->lkt_->get_stress(this->pelec->omega, pelec->charge->rho, this->pw_rho);
+        this->lkt_->get_stress(pelec->charge->rho, this->pw_rho);
         kinetic_stress_ += this->lkt_->stress;
     }
 }
 
+/**
+ * @brief [Interface to opt]
+ * Initialize the opts
+ */
 void ESolver_OF::init_opt()
 {
     if (this->opt_dcsrch_ == nullptr) this->opt_dcsrch_ = new ModuleBase::Opt_DCsrch();
@@ -164,6 +192,10 @@ void ESolver_OF::init_opt()
     }
 }
 
+/**
+ * @brief [Interface to opt]
+ * Call optimization methods to get the optimization direction
+ */
 void ESolver_OF::get_direction()
 {
     for (int is = 0; is < GlobalV::NSPIN; ++is)
@@ -192,11 +224,19 @@ void ESolver_OF::get_direction()
     }
 }
 
-void ESolver_OF::get_step_length(double *dEdtheta, double **ptemp_phi)
+/**
+ * @brief [Interface to opt]
+ * Call line search to find the best step length
+ * 
+ * @param dEdtheta d E / d theta
+ * @param ptemp_phi
+ * @param ucell 
+ */
+void ESolver_OF::get_step_length(double *dEdtheta, double **ptemp_phi, UnitCell& ucell)
 {
-    double temp_energy = 0.; // energy of temp_phi and temp_rho
-    double kinetic_energy = 0.;    // kinetic energy
-    double pseudopot_energy = 0.;    // electron-ion interaction energy
+    double temp_energy = 0.;        // energy of temp_phi and temp_rho
+    double kinetic_energy = 0.;     // kinetic energy
+    double pseudopot_energy = 0.;   // electron-ion interaction energy
     if (GlobalV::NSPIN == 1)
     {
         int numDC = 0; // iteration number of line search
@@ -226,7 +266,7 @@ void ESolver_OF::get_step_length(double *dEdtheta, double **ptemp_phi)
                 }
 
                 // get dEdtheta of new tempPhi and tempRho
-                this->cal_dEdtheta(ptemp_phi, this->ptemp_rho_, this->theta_, dEdtheta);
+                this->cal_dEdtheta(ptemp_phi, this->ptemp_rho_, ucell, this->theta_, dEdtheta);
 
                 if (numDC > this->max_dcsrch_)
                 {
