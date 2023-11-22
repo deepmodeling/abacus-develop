@@ -22,9 +22,6 @@ __global__ void get_psi_and_vldr3(double *input_double,
 __global__ void psi_multiple(double ** atom_pair_left_g_v2,
                              double ** atom_pair_right_g_v2,
                              double ** atom_pair_output,
-                             int *atom_pair_input_info_g,
-                             int *num_atom_pair_g,
-                             int atom_pair_size_of_meshcell_v2,
-                             int lgd);
+                             int *atom_pair_input_info_g);
 
 #endif // GINT_VL_CUH

@@ -15,9 +15,9 @@ void gpu_task_generate_vlocal(const Grid_Technique &GridT,
                               const double *vlocal_global_value,
                               double *psir_ylm_left,
                               double *psir_ylm_right,
-                              double *psi_input_double, int *psi_input_int,
+                                                            double *psi_input_double, int *psi_input_int,
                               int *num_psir, int *atom_pair_input_info,
-                              int *num_atom_pair, double* GridVlocal_v2_g[],     
+                              double* GridVlocal_v2_g[],     
                               double ** atom_pair_left_v2,
                               double ** atom_pair_right_v2,
                               double ** atom_pair_output_v2,
@@ -26,7 +26,7 @@ void gpu_task_generate_vlocal(const Grid_Technique &GridT,
   const int grid_index_ij = i * GridT.nby * GridT.nbzp + j * GridT.nbzp;
   const int nwmax = GlobalC::ucell.nwmax;
   for (int z_index = 0; z_index < GridT.nbzp; z_index++) {
-    int num_get_psi = 0;
+int num_get_psi = 0;
     int grid_index = grid_index_ij + z_index;
     int num_psi_pos = psi_size_max * z_index;
     int bcell_start_index = GridT.bcell_start[grid_index];
@@ -58,7 +58,7 @@ void gpu_task_generate_vlocal(const Grid_Technique &GridT,
             if (distance <= GlobalC::ORB.Phi[it_temp].getRcut()) {
               int pos_temp_double = num_psi_pos + num_get_psi;
               int pos_temp_int = pos_temp_double * 2;
-              pos_temp_double *= 5;
+pos_temp_double *= 5;
               if (distance < 1.0E-9)
                 distance += 1.0E-9;
               psi_input_double[pos_temp_double] = dr_temp[0] / distance;
