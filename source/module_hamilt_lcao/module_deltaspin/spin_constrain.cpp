@@ -275,6 +275,21 @@ void SpinConstrain<FPTYPE, Device>::set_constrain()
     this->check_atomCounts();
     int nat = this->get_nat();
     this->constrain_.resize(nat);
+    for (int iat = 0; iat < nat; iat++)
+    {
+        if (this->nspin_ == 2)
+        {
+            this->constrain_[iat].x = 0;
+            this->constrain_[iat].y = 0;
+            this->constrain_[iat].z = 1;
+        }
+        else if (this->nspin_ == 4)
+        {
+            this->constrain_[iat].x = 1;
+            this->constrain_[iat].y = 1;
+            this->constrain_[iat].z = 1;
+        }
+    }
     for (auto& itype_data : this->ScData) {
         int itype = itype_data.first;
         for (auto& element_data : itype_data.second) {
