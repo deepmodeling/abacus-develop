@@ -387,7 +387,7 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
     {
         chr->rhopw->recip2real(chr->rhog[is], chr->rho[is]);
     }
-    chr->renormalize_rho();
+    //chr->renormalize_rho();
 
     // For kinetic energy density
     if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
