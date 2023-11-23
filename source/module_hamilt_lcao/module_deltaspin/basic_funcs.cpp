@@ -133,11 +133,20 @@ void where_fill_scalar_else_2d(const std::vector<ModuleBase::Vector3<int>>& arra
     }
 }
 
-void print_2d(std::string info, const std::vector<ModuleBase::Vector3<double>> &array, std::ostream& ofs)
+void print_2d(std::string info, const std::vector<ModuleBase::Vector3<double>> &array, int nspin, std::ostream& ofs)
 {
     ofs << info << std::endl;
+    int iat = 0;
     for (const auto &row : array)
     {
-        ofs << std::setprecision(16) << row.x << " " << row.y << " " << row.z << std::endl;
+        iat += 1;
+        if (nspin == 2)
+        {
+            ofs << "ATOM " << std::left << std::setw(4) << iat << std::setprecision(10) << row.z << std::endl;
+        }
+        else if (nspin == 4)
+        {
+            ofs << "ATOM " << std::left << std::setw(4) << iat << std::setprecision(10) << row.x << " " << row.y << " " << row.z << std::endl;
+        }
     }
 }
