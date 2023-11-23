@@ -7,7 +7,7 @@
 template <>
 void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_h_lambda(
     std::complex<double>* h_lambda,
-    const std::vector<std::complex<double>>& Sloc2, bool column_major)
+    const std::vector<std::complex<double>>& Sloc2, bool column_major, int isk)
 {
     ModuleBase::TITLE("SpinConstrain","cal_h_lambda");
     ModuleBase::timer::tick("SpinConstrain", "cal_h_lambda");
@@ -42,41 +42,59 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_h_lambda(
                             if (column_major)
 						    {
                                 icc = mu + nu * pv->nrow;
-                                if (iwt1 % 2 == 0)
+                                if (this->nspin_ == 2)
                                 {
-                                    h_lambda[icc] = (iwt2 % 2 == 0)
-                                                        ? -Sloc2[icc] * this->lambda_[iat2][2]
-                                                        : -Sloc2[icc + 1]
-                                                              * (this->lambda_[iat2][0]
-                                                                 + this->lambda_[iat2][1] * std::complex<double>(0, 1));
+                                    h_lambda[icc] = (isk == 0)
+                                        ? -Sloc2[icc] * this->lambda_[iat2][2]
+                                        : -Sloc2[icc] * (-this->lambda_[iat2][2]);
                                 }
-                                else
+                                else if (this->nspin_ == 4)
                                 {
-                                    h_lambda[icc]
-                                        = (iwt2 % 2 == 0)
-                                              ? -Sloc2[icc - 1]
-                                                    * (this->lambda_[iat2][0] - this->lambda_[iat2][1] * std::complex<double>(0, 1))
-                                              : -Sloc2[icc] * (-this->lambda_[iat2][2]);
+                                    if (iwt1 % 2 == 0)
+                                    {
+                                        h_lambda[icc] = (iwt2 % 2 == 0)
+                                                            ? -Sloc2[icc] * this->lambda_[iat2][2]
+                                                            : -Sloc2[icc + 1]
+                                                                  * (this->lambda_[iat2][0]
+                                                                     + this->lambda_[iat2][1] * std::complex<double>(0, 1));
+                                    }
+                                    else
+                                    {
+                                        h_lambda[icc]
+                                            = (iwt2 % 2 == 0)
+                                                  ? -Sloc2[icc - 1]
+                                                        * (this->lambda_[iat2][0] - this->lambda_[iat2][1] * std::complex<double>(0, 1))
+                                                  : -Sloc2[icc] * (-this->lambda_[iat2][2]);
+                                    }
                                 }
                             }
                             else
                             {
                                 icc = mu * pv->ncol + nu;
-                                if (iwt1 % 2 == 0)
+                                if (this->nspin_ == 2)
                                 {
-                                    h_lambda[icc] = (iwt2 % 2 == 0)
-                                                        ? -Sloc2[icc] * this->lambda_[iat1][2]
-                                                        : -Sloc2[icc - 1]
-                                                              * (this->lambda_[iat1][0]
-                                                                 + this->lambda_[iat1][1] * std::complex<double>(0, 1));
+                                    h_lambda[icc] = (isk == 0)
+                                        ? -Sloc2[icc] * this->lambda_[iat1][2]
+                                        : -Sloc2[icc] * (-this->lambda_[iat1][2]);
                                 }
-                                else
+                                else if (this->nspin_ == 4)
                                 {
-                                    h_lambda[icc]
-                                        = (iwt2 % 2 == 0)
-                                              ? -Sloc2[icc + 1]
-                                                    * (this->lambda_[iat1][0] - this->lambda_[iat1][1] * std::complex<double>(0, 1))
-                                              : -Sloc2[icc] * (-this->lambda_[iat1][2]);
+                                    if (iwt1 % 2 == 0)
+                                    {
+                                        h_lambda[icc] = (iwt2 % 2 == 0)
+                                                            ? -Sloc2[icc] * this->lambda_[iat1][2]
+                                                            : -Sloc2[icc - 1]
+                                                                  * (this->lambda_[iat1][0]
+                                                                     + this->lambda_[iat1][1] * std::complex<double>(0, 1));
+                                    }
+                                    else
+                                    {
+                                        h_lambda[icc]
+                                            = (iwt2 % 2 == 0)
+                                                  ? -Sloc2[icc + 1]
+                                                        * (this->lambda_[iat1][0] - this->lambda_[iat1][1] * std::complex<double>(0, 1))
+                                                  : -Sloc2[icc] * (-this->lambda_[iat1][2]);
+                                    }
                                 }
                             }
                         }
