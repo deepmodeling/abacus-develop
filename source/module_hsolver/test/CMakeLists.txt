@@ -94,7 +94,16 @@ if(ENABLE_LCAO)
     )
   endif()
 endif()
-
+if (USE_CUDA AND USE_CUSOLVER_LCAO)
+AddTest(
+  TARGET HSolver_LCAO_cusolver
+  LIBS ${math_libs}  base psi device 
+  SOURCES diago_lcao_cusolver_test.cpp ../diago_cusolver.cpp ../diago_blas.cpp 
+  ../kernels/math_kernel_op.cpp
+  ../kernels/dngvd_op.cpp
+  ../kernels/cuda/diag_cusolver.cu
+)
+endif()
 install(FILES H-KPoints-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES H-GammaOnly-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES S-KPoints-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

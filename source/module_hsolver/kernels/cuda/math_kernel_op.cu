@@ -5,7 +5,7 @@
 #include <thrust/complex.h>
 #include <thrust/inner_product.h>
 #include <thrust/execution_policy.h>
-
+#include "cublas_v2.h"
 #include <cuda_runtime.h>
 
 #define WARP_SIZE 32

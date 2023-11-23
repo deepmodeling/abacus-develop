@@ -3,7 +3,9 @@
 #include "diago_blas.h"
 #include "module_base/timer.h"
 #include "module_io/write_HS.h"
-
+#ifdef __CUSOLVER_LCAO
+#include "diago_cusolver.h"
+#endif
 #ifdef __ELPA
 #include "diago_elpa.h"
 #endif
@@ -56,6 +58,24 @@ void HSolverLCAO<T>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
         }
     }
 #endif
+#ifdef __CUSOLVER_LCAO
+    else if (this->method == "cusolver")
+    {
+        if (this->pdiagh != nullptr)
+        {
+            if (this->pdiagh->method != this->method)
+            {
+                delete[] this->pdiagh;
+                this->pdiagh = nullptr;
+            }
+        }
+        if (this->pdiagh == nullptr)
+        {
+            this->pdiagh = new DiagoCusolver<T>();
+            this->pdiagh->method = this->method;
+        }
+    }
+#endif
     else if (this->method == "lapack")
     {
         ModuleBase::WARNING_QUIT("hsolver_lcao", "please fix lapack solver!!!");
@@ -104,7 +124,11 @@ void HSolverLCAO<T>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
         }
     }
 
-    if (this->method != "genelpa" && this->method != "scalapack_gvx" && this->method != "lapack")
+    if (this->method != "genelpa" && this->method != "scalapack_gvx" && this->method != "lapack"
+#ifdef __CUSOLVER_LCAO
+        && this->method != "cusolver"
+#endif
+    )
     {
         delete this->pdiagh;
         this->pdiagh = nullptr;
