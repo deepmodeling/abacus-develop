@@ -36,7 +36,6 @@ namespace Para_Json
     // @param reading_information -- input_file：
     rapidjson::Value input_file(rapidjson::kObjectType);
 
-    std::map<std::string,int> input_file_map;
 
     // @param reading_information -- input_file -- system_variables：
     rapidjson::Value input_suffix;
@@ -471,12 +470,6 @@ namespace Para_Json
     rapidjson::Value coordinate;
 
 
-    void Add_notNull_value(rapidjson::Value father,std::string name, rapidjson::Value son,rapidjson::Document doc){
-
-        if(son.IsNull() || son == "" || son.Empty()) return ;
-        father.AddMember(name.c_str(), son, doc.GetAllocator());
-        return;
-    }
 
     /**
      *  The functions below initialize the json output parameter 
