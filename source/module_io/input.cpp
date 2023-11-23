@@ -1437,27 +1437,27 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("deepks_out_labels", word) == 0) // caoyu added 2020-11-24, mohan modified 2021-01-03
         {
             read_bool(ifs, deepks_out_labels);
-            Para_Json::set_json_value(Para_Json::deepks_out_labels,&deepks_out_labels); 
+            //Para_Json::set_json_value(Para_Json::deepks_out_labels,&deepks_out_labels); 
         }
         else if (strcmp("deepks_scf", word) == 0) // caoyu added 2020-11-24, mohan modified 2021-01-03
         {
             read_bool(ifs, deepks_scf);
-            Para_Json::set_json_value(Para_Json::deepks_scf,&deepks_scf); 
+            //Para_Json::set_json_value(Para_Json::deepks_scf,&deepks_scf); 
         }
         else if (strcmp("deepks_bandgap", word) == 0) // caoyu added 2020-11-24, mohan modified 2021-01-03
         {
             read_bool(ifs, deepks_bandgap);
-            Para_Json::set_json_value(Para_Json::deepks_bandgap,&deepks_bandgap); 
+            //Para_Json::set_json_value(Para_Json::deepks_bandgap,&deepks_bandgap); 
         }
         else if (strcmp("deepks_out_unittest", word) == 0) // mohan added 2021-01-03
         {
             read_bool(ifs, deepks_out_unittest);
-            Para_Json::set_json_value(Para_Json::deepks_out_unittest,&deepks_out_unittest); 
+            //Para_Json::set_json_value(Para_Json::deepks_out_unittest,&deepks_out_unittest); 
         }
         else if (strcmp("deepks_model", word) == 0) // caoyu added 2021-06-03
         {
             read_value(ifs, deepks_model);
-            Para_Json::set_json_value(Para_Json::deepks_model,&deepks_model); 
+            //Para_Json::set_json_value(Para_Json::deepks_model,&deepks_model); 
         }
         else if (strcmp("out_pot", word) == 0)
         {
