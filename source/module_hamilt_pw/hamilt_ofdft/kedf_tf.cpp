@@ -14,11 +14,11 @@ void KEDF_TF::set_para(int nx, double dV, double tf_weight)
 /**
  * @brief Get the energy of TF KEDF,
  * \f[ E_{TF} = c_{TF} * \int{\rho^{5/3} dr} \f]
- * 
+ *
  * @param prho charge density
  * @return the energy of TF KEDF
  */
-double KEDF_TF::get_energy(const double *const *prho)
+double KEDF_TF::get_energy(const double* const* prho)
 {
     double energy = 0.; // in Ry
     if (GlobalV::NSPIN == 1)
@@ -48,13 +48,13 @@ double KEDF_TF::get_energy(const double *const *prho)
 /**
  * @brief Get the energy density of TF KEDF
  * \f[ \tau_{TF} = c_{TF} * \rho^{5/3} \f]
- * 
+ *
  * @param prho charge density
  * @param is the index of spin
  * @param ir the index of real space grid
  * @return the energy density of TF KEDF
  */
-double KEDF_TF::get_energy_density(const double *const *prho, int is, int ir)
+double KEDF_TF::get_energy_density(const double* const* prho, int is, int ir)
 {
     double energyDen = 0.; // in Ry
     energyDen = this->c_tf_ * std::pow(prho[is][ir], 5. / 3.) * this->tf_weight_;
@@ -62,14 +62,14 @@ double KEDF_TF::get_energy_density(const double *const *prho, int is, int ir)
 }
 
 /**
- * @brief Get the potential of TF KEDF, and add it into rpotential, 
+ * @brief Get the potential of TF KEDF, and add it into rpotential,
  * and the TF energy will be calculated and stored in this->tf_energy
  * \f[ V_{TF} = \delta E_{TF}/\delta \rho = 5/3 * c_{TF} * \rho^{2/3} \f]
- * 
+ *
  * @param prho charge density
  * @param rpotential rpotential => rpotential + V_{TF}
  */
-void KEDF_TF::tf_potential(const double *const *prho, ModuleBase::matrix &rpotential)
+void KEDF_TF::tf_potential(const double* const* prho, ModuleBase::matrix& rpotential)
 {
     ModuleBase::timer::tick("KEDF_TF", "tf_potential");
     if (GlobalV::NSPIN == 1)
@@ -97,7 +97,7 @@ void KEDF_TF::tf_potential(const double *const *prho, ModuleBase::matrix &rpoten
 
 /**
  * @brief Get the stress of TF KEDF, and store it into this->stress
- * 
+ *
  * @param cell_vol the volume of cell
  */
 void KEDF_TF::get_stress(double cell_vol)

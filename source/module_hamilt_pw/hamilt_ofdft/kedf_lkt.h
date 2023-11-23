@@ -21,22 +21,24 @@ class KEDF_LKT
     {
         this->stress.create(3, 3);
     }
-    ~KEDF_LKT(){}
+    ~KEDF_LKT()
+    {
+    }
 
     void set_para(double dV, double lkt_a);
 
-    double get_energy(const double *const *prho, ModulePW::PW_Basis *pw_rho);
-    double get_energy_density(const double *const *prho, int is, int ir, ModulePW::PW_Basis *pw_rho);
-    void lkt_potential(const double *const *prho, ModulePW::PW_Basis *pw_rho, ModuleBase::matrix &rpotential);
-    void get_stress(const double *const *prho, ModulePW::PW_Basis *pw_rho);
+    double get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rho);
+    double get_energy_density(const double* const* prho, int is, int ir, ModulePW::PW_Basis* pw_rho);
+    void lkt_potential(const double* const* prho, ModulePW::PW_Basis* pw_rho, ModuleBase::matrix& rpotential);
+    void get_stress(const double* const* prho, ModulePW::PW_Basis* pw_rho);
 
     double lkt_energy = 0.; // LKT energy
     ModuleBase::matrix stress;
 
   private:
-    void nabla(const double *pinput, ModulePW::PW_Basis *pw_rho, double **routput);
-    void divergence(const double *const *pinput, ModulePW::PW_Basis *pw_rho, double *routput);
-    void get_as(const double *prho, const double *const *pnabla_rho, const int nrxx, double *as);
+    void nabla(const double* pinput, ModulePW::PW_Basis* pw_rho, double** routput);
+    void divergence(const double* const* pinput, ModulePW::PW_Basis* pw_rho, double* routput);
+    void get_as(const double* prho, const double* const* pnabla_rho, const int nrxx, double* as);
 
     double dV_ = 0.; // volume element = V/nxyz
     const double c_tf_

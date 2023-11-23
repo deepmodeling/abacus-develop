@@ -6,10 +6,10 @@ namespace ModuleESolver
 /**
  * @brief [Interface to kedf]
  * Initialize the KEDFs.
- * 
- * @param inp 
+ *
+ * @param inp
  */
-void ESolver_OF::init_kedf(Input &inp)
+void ESolver_OF::init_kedf(Input& inp)
 {
     if (this->of_kinetic_ == "tf" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt")
     {
@@ -50,7 +50,7 @@ void ESolver_OF::init_kedf(Input &inp)
 
 /**
  * @brief [Interface to kedf]
- * Calculated the kinetic potential and plus it to rpot, 
+ * Calculated the kinetic potential and plus it to rpot,
  *
  * @param [in] prho charge density
  * @param [in] pphi phi^2 = rho
@@ -90,7 +90,7 @@ void ESolver_OF::kinetic_potential(double** prho, double** pphi, ModuleBase::mat
 /**
  * @brief [Interface to kedf]
  * Return the kinetic energy
- * 
+ *
  * @return kinetic energy
  */
 double ESolver_OF::kinetic_energy()
@@ -121,8 +121,8 @@ double ESolver_OF::kinetic_energy()
 /**
  * @brief [Interface to kedf]
  * Calculate the stress of kedf
- * 
- * @param [out] kinetic_stress_ 
+ *
+ * @param [out] kinetic_stress_
  */
 void ESolver_OF::kinetic_stress(ModuleBase::matrix& kinetic_stress_)
 {
@@ -163,20 +163,23 @@ void ESolver_OF::kinetic_stress(ModuleBase::matrix& kinetic_stress_)
  */
 void ESolver_OF::init_opt()
 {
-    if (this->opt_dcsrch_ == nullptr) this->opt_dcsrch_ = new ModuleBase::Opt_DCsrch();
+    if (this->opt_dcsrch_ == nullptr)
+        this->opt_dcsrch_ = new ModuleBase::Opt_DCsrch();
 
     if (this->of_method_ == "tn")
     {
-        if (this->opt_tn_ == nullptr) this->opt_tn_ = new ModuleBase::Opt_TN();
+        if (this->opt_tn_ == nullptr)
+            this->opt_tn_ = new ModuleBase::Opt_TN();
         this->opt_tn_->allocate(this->pw_rho->nrxx);
         this->opt_tn_->set_para(this->dV_);
     }
     else if (this->of_method_ == "cg1" || this->of_method_ == "cg2")
     {
-        if (this->opt_cg_ == nullptr) this->opt_cg_ = new ModuleBase::Opt_CG();
+        if (this->opt_cg_ == nullptr)
+            this->opt_cg_ = new ModuleBase::Opt_CG();
         this->opt_cg_->allocate(this->pw_rho->nrxx);
         this->opt_cg_->set_para(this->dV_);
-        this->opt_dcsrch_->set_paras(1e-4,1e-2);
+        this->opt_dcsrch_->set_paras(1e-4, 1e-2);
     }
     else if (this->of_method_ == "bfgs")
     {
@@ -203,7 +206,12 @@ void ESolver_OF::get_direction()
         if (this->of_method_ == "tn")
         {
             this->tn_spin_flag_ = is;
-            opt_tn_->next_direct(this->pphi_[is], this->pdLdphi_[is], this->flag_, this->pdirect_[is], this, &ESolver_OF::cal_potential);
+            opt_tn_->next_direct(this->pphi_[is],
+                                 this->pdLdphi_[is],
+                                 this->flag_,
+                                 this->pdirect_[is],
+                                 this,
+                                 &ESolver_OF::cal_potential);
         }
         else if (this->of_method_ == "cg1")
         {
@@ -227,16 +235,16 @@ void ESolver_OF::get_direction()
 /**
  * @brief [Interface to opt]
  * Call line search to find the best step length
- * 
+ *
  * @param dEdtheta d E / d theta
  * @param ptemp_phi
- * @param ucell 
+ * @param ucell
  */
-void ESolver_OF::get_step_length(double *dEdtheta, double **ptemp_phi, UnitCell& ucell)
+void ESolver_OF::get_step_length(double* dEdtheta, double** ptemp_phi, UnitCell& ucell)
 {
-    double temp_energy = 0.;        // energy of temp_phi and temp_rho
-    double kinetic_energy = 0.;     // kinetic energy
-    double pseudopot_energy = 0.;   // electron-ion interaction energy
+    double temp_energy = 0.;      // energy of temp_phi and temp_rho
+    double kinetic_energy = 0.;   // kinetic energy
+    double pseudopot_energy = 0.; // electron-ion interaction energy
     if (GlobalV::NSPIN == 1)
     {
         int numDC = 0; // iteration number of line search
@@ -247,7 +255,10 @@ void ESolver_OF::get_step_length(double *dEdtheta, double **ptemp_phi, UnitCell&
             this->pelec->cal_energies(2);
             temp_energy = this->pelec->f_en.etot;
             kinetic_energy = this->kinetic_energy();
-            pseudopot_energy = this->inner_product(this->pelec->pot->get_fixed_v(), this->ptemp_rho_->rho[0], this->pw_rho->nrxx, this->dV_);
+            pseudopot_energy = this->inner_product(this->pelec->pot->get_fixed_v(),
+                                                   this->ptemp_rho_->rho[0],
+                                                   this->pw_rho->nrxx,
+                                                   this->dV_);
             Parallel_Reduce::reduce_all(pseudopot_energy);
             temp_energy += kinetic_energy + pseudopot_energy;
 
@@ -261,7 +272,8 @@ void ESolver_OF::get_step_length(double *dEdtheta, double **ptemp_phi, UnitCell&
                 // update tempPhi and tempRho
                 for (int i = 0; i < this->pw_rho->nrxx; ++i)
                 {
-                    ptemp_phi[0][i] = this->pphi_[0][i] * cos(this->theta_[0]) + this->pdirect_[0][i] * sin(this->theta_[0]);
+                    ptemp_phi[0][i]
+                        = this->pphi_[0][i] * cos(this->theta_[0]) + this->pdirect_[0][i] * sin(this->theta_[0]);
                     this->ptemp_rho_->rho[0][i] = ptemp_phi[0][i] * ptemp_phi[0][i];
                 }
 
@@ -270,7 +282,8 @@ void ESolver_OF::get_step_length(double *dEdtheta, double **ptemp_phi, UnitCell&
 
                 if (numDC > this->max_dcsrch_)
                 {
-                    GlobalV::ofs_warning << "ESolver_OF linesearch: WARNING " << "excedd the max iter number." << std::endl;
+                    GlobalV::ofs_warning << "ESolver_OF linesearch: WARNING "
+                                         << "excedd the max iter number." << std::endl;
                     break;
                 }
             }
@@ -295,37 +308,37 @@ void ESolver_OF::get_step_length(double *dEdtheta, double **ptemp_phi, UnitCell&
     else if (GlobalV::NSPIN == 2)
     {
         ModuleBase::WARNING_QUIT("esolver_of", "Sorry, SPIN2 case is not supported by OFDFT for now.");
-    // ========================== Under testing ==========================
-    //     this->opt_cg_mag_->refresh();
+        // ========================== Under testing ==========================
+        //     this->opt_cg_mag_->refresh();
 
-    //     double *pthetaDir = new double[GlobalV::NSPIN];
-    //     double *temp_theta = new double[GlobalV::NSPIN];
-    //     ModuleBase::GlobalFunc::ZEROS(pthetaDir, GlobalV::NSPIN);
-    //     ModuleBase::GlobalFunc::ZEROS(temp_theta, GlobalV::NSPIN);
-    //     double thetaAlpha = 0.;
-    //     double alphaTol = 1e-4;
-    //     double maxThetaDir = 0.;
-    //     double dEdalpha = 0.;
-    //     int thetaIter = 0;
-    //     int numDC = 0;
+        //     double *pthetaDir = new double[GlobalV::NSPIN];
+        //     double *temp_theta = new double[GlobalV::NSPIN];
+        //     ModuleBase::GlobalFunc::ZEROS(pthetaDir, GlobalV::NSPIN);
+        //     ModuleBase::GlobalFunc::ZEROS(temp_theta, GlobalV::NSPIN);
+        //     double thetaAlpha = 0.;
+        //     double alphaTol = 1e-4;
+        //     double maxThetaDir = 0.;
+        //     double dEdalpha = 0.;
+        //     int thetaIter = 0;
+        //     int numDC = 0;
 
-    //     while (true)
-    //     {
-    //         this->opt_cg_mag_->next_direct(dEdtheta, 1, pthetaDir);
+        //     while (true)
+        //     {
+        //         this->opt_cg_mag_->next_direct(dEdtheta, 1, pthetaDir);
 
-    //         dEdalpha = this->inner_product(dEdtheta, pthetaDir, 2, 1.);
+        //         dEdalpha = this->inner_product(dEdtheta, pthetaDir, 2, 1.);
 
-    //         if (dEdalpha >= 0.)
-    //         {
-    //             for (int is = 0; is < GlobalV::NSPIN; ++is)
-    //             {
-    //                 pthetaDir[is] = -dEdtheta[is];
-    //             }
-    //             dEdalpha = this->inner_product(dEdtheta, pthetaDir, 2, 1);
-    //         }
+        //         if (dEdalpha >= 0.)
+        //         {
+        //             for (int is = 0; is < GlobalV::NSPIN; ++is)
+        //             {
+        //                 pthetaDir[is] = -dEdtheta[is];
+        //             }
+        //             dEdalpha = this->inner_product(dEdtheta, pthetaDir, 2, 1);
+        //         }
 
-    //         maxThetaDir = max(abs(pthetaDir[0]), abs(pthetaDir[1]));
-    //         thetaAlpha = min(0.1, 0.1*ModuleBase::PI/maxThetaDir);
+        //         maxThetaDir = max(abs(pthetaDir[0]), abs(pthetaDir[1]));
+        //         thetaAlpha = min(0.1, 0.1*ModuleBase::PI/maxThetaDir);
 
         //         // line search along thetaDir to find thetaAlpha
         //         this->opt_dcsrch_->set_paras(1e-4, 1e-2, 1e-12, 0., ModuleBase::PI/maxThetaDir);
@@ -338,7 +351,8 @@ void ESolver_OF::get_step_length(double *dEdtheta, double **ptemp_phi, UnitCell&
         //             kinetic_energy = this->kinetic_energy();
         //             pseudopot_energy = 0.;
         //             for (int is = 0; is < GlobalV::NSPIN; ++is) {
-        //                 pseudopot_energy += this->inner_product(GlobalC::pot.vltot, ptemp_rho_[is], this->pw_rho->nrxx, this->dV_);
+        //                 pseudopot_energy += this->inner_product(GlobalC::pot.vltot, ptemp_rho_[is],
+        //                 this->pw_rho->nrxx, this->dV_);
         //             }
         //             Parallel_Reduce::reduce_all(pseudopot_energy);
         //             temp_energy += kinetic_energy + pseudopot_energy;
@@ -352,8 +366,9 @@ void ESolver_OF::get_step_length(double *dEdtheta, double **ptemp_phi, UnitCell&
         //                     temp_theta[is] = this->theta_[is] + thetaAlpha * pthetaDir[is];
         //                     for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
         //                     {
-        //                         ptemp_phi[is][ir] = this->pphi_[is][ir] * cos(temp_theta[is]) + this->pdirect_[is][ir] *
-        //                         sin(temp_theta[is]); ptemp_rho_[is][ir] = ptemp_phi[is][ir] * ptemp_phi[is][ir];
+        //                         ptemp_phi[is][ir] = this->pphi_[is][ir] * cos(temp_theta[is]) +
+        //                         this->pdirect_[is][ir] * sin(temp_theta[is]); ptemp_rho_[is][ir] = ptemp_phi[is][ir]
+        //                         * ptemp_phi[is][ir];
         //                     }
         //                 }
         //                 this->cal_dEdtheta(ptemp_phi, ptemp_rho_, temp_theta, dEdtheta);

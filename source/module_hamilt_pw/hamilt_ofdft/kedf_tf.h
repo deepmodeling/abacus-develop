@@ -21,13 +21,15 @@ class KEDF_TF
     {
         this->stress.create(3, 3);
     }
-    ~KEDF_TF(){}
+    ~KEDF_TF()
+    {
+    }
 
     void set_para(int nx, double dV, double tf_weight);
 
-    double get_energy(const double *const *prho);
-    double get_energy_density(const double *const *prho, int is, int ir);
-    void tf_potential(const double *const *prho, ModuleBase::matrix &rpotential);
+    double get_energy(const double* const* prho);
+    double get_energy_density(const double* const* prho, int is, int ir);
+    void tf_potential(const double* const* prho, ModuleBase::matrix& rpotential);
     void get_stress(double cell_vol);
 
     double tf_energy = 0.; // TF energy
