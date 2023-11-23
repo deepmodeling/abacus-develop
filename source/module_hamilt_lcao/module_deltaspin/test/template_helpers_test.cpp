@@ -33,7 +33,7 @@ TEST_F(SpinConstrainTest, TemplatHelpers)
 {
     // this is a trivial test as the double version is not used
     std::vector<std::complex<double>> Sloc2;
-    EXPECT_NO_THROW(sc.cal_h_lambda(nullptr, Sloc2, true));
+    EXPECT_NO_THROW(sc.cal_h_lambda(nullptr, Sloc2, true, 0));
     EXPECT_NO_THROW(sc.cal_mw_from_lambda(0));
     EXPECT_NO_THROW(sc.cal_MW_k(nullptr, std::vector<std::vector<std::complex<double>>>(0)));
     EXPECT_NO_THROW(sc.cal_MW(0, nullptr, false));
@@ -44,7 +44,7 @@ TEST_F(SpinConstrainTest, TemplatHelpers)
     EXPECT_NO_THROW(sc.calculate_MW(AorbMulP));
     ModuleBase::ComplexMatrix mud;
     ModuleBase::matrix MecMulP;
-    EXPECT_NO_THROW(sc.collect_MW(MecMulP, mud, 0));
+    EXPECT_NO_THROW(sc.collect_MW(MecMulP, mud, 0, 0));
     EXPECT_FALSE(sc.check_rms_stop(0, 0, 0.0));
     EXPECT_NO_THROW(sc.print_termination());
     EXPECT_NO_THROW(sc.print_header());

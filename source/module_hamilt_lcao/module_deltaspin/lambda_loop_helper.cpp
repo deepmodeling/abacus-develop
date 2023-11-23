@@ -4,7 +4,7 @@
 template <>
 void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::print_termination()
 {
-    print_2d("after-optimization spin: (print in the inner loop): ", this->Mi_);
+    print_2d("after-optimization spin: (print in the inner loop): ", this->Mi_, this->nspin_);
     std::cout << "Inner optimization for lambda ends." << std::endl;
     std::cout << "===============================================================================" << std::endl;
 }
@@ -13,7 +13,7 @@ template <>
 bool SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::check_rms_stop(int outer_step, int i_step, double rms_error)
 {
     std::cout << "Step (Outer -- Inner) =  " << outer_step << " -- " << std::left << std::setw(5) << i_step + 1
-              << "       RMS =" << rms_error << std::endl;
+              << "       RMS = " << rms_error << std::endl;
     if (rms_error < this->sc_thr_ || i_step == this->nsc_ - 1)
     {
         if (rms_error < this->sc_thr_)
@@ -150,7 +150,7 @@ bool SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::check_gradient_decay(
     }
     if (print)
     {
-        print_2d("diagonal gradient: ", spin_nu_gradient_diag);
+        print_2d("diagonal gradient: ", spin_nu_gradient_diag, this->nspin_);
         std::cout << "maximum gradient appears at: " << std::endl;
         for (int it = 0; it < ntype; it++)
         {

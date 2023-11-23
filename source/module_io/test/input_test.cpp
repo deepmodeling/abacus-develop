@@ -1571,7 +1571,7 @@ TEST_F(InputTest, Check)
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
 	output = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output,testing::HasSubstr("nspin must be 4 when sc_mag_switch > 0"));
+	EXPECT_THAT(output,testing::HasSubstr("nspin must be 2 or 4 when sc_mag_switch > 0"));
 	INPUT.nspin = 4;
 	// warning 4 of Deltaspin
 	INPUT.calculation = "nscf";
