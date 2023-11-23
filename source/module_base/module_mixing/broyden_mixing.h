@@ -6,6 +6,7 @@
 #include "module_base/memory.h"
 #include "module_base/timer.h"
 #include "module_base/tool_title.h"
+#include "module_base/global_variable.h"
 
 namespace Base_Mixing
 {
@@ -36,6 +37,14 @@ class Broyden_Mixing : public Mixing
         this->mixing_beta = mixing_beta;
         this->coef = std::vector<double>(mixing_ndim + 1);
         this->beta = ModuleBase::matrix(mixing_ndim, mixing_ndim, true);
+        if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
+        {
+            this->two_beta = 0;
+        }
+        else if (GlobalV::NSPIN == 2)
+        {
+            this->two_beta = 1;
+        }
     }
     virtual ~Broyden_Mixing() override
     {
@@ -125,21 +134,43 @@ class Broyden_Mixing : public Mixing
         {
             F_tmp[i] = data_out[i] - data_in[i];
         }
-
         // get screened F
         if (screen != nullptr)
             screen(F_tmp.data());
-
         // container::Tensor data = data_in + mixing_beta * F;
         std::vector<FPTYPE> data(length);
+        // mix density and magnetic density sperately
+        if (this->two_beta == 0)
+        {
+            // rho_tot
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
 #endif
-        for (int i = 0; i < length; ++i)
-        {
-            data[i] = data_in[i] + this->mixing_beta * F_tmp[i];
+            for (int i = 0; i < length; ++i)
+            {
+                data[i] = data_in[i] + this->mixing_beta * F_tmp[i];
+            }
         }
+        else if (this->two_beta == 1)
+        {
+            // rho_tot
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#endif
+            for (int i = 0; i < length / 2; ++i)
+            {
+                data[i] = data_in[i] + this->mixing_beta * F_tmp[i];
+            }
+            // magnetism
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
+#endif
+            for (int i = length / 2; i < length; ++i)
+            {
+                data[i] = data_in[i] + GlobalV::MIXING_BETA_MAG * F_tmp[i];
+            }
 
+        }
         mdata.push(data.data());
 
         if (!need_calcoef)
@@ -312,6 +343,8 @@ class Broyden_Mixing : public Mixing
     }
     // the number of calculated dF
     int ndim_cal_dF = 0;
+    // if we should considere two beta
+    int two_beta = 0;
 };
 } // namespace Base_Mixing
 #endif
