@@ -282,7 +282,8 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
                                const double& mixing_beta_in,
                                const int& mixing_ndim_in,
                                const double& mixing_gg0_in,
-                               const bool& mixing_tau_in)
+                               const bool& mixing_tau_in,
+                               const double& mixing_beta_mag_in)
 {
     return;
 }
