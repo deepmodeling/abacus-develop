@@ -33,6 +33,7 @@ class Charge_Mixing
      *
      */
     void mix_rho_recip(Charge* chr);
+    void mix_rho_recip_new(Charge* chr);
 
     /**
      * @brief charge mixing for real space
@@ -45,18 +46,22 @@ class Charge_Mixing
      *
      */
     void Kerker_screen_recip(std::complex<double>* rhog);
+    void Kerker_screen_recip_new(std::complex<double>* rhog);
 
     /**
      * @brief Kerker screen method for real space
      *
      */
     void Kerker_screen_real(double* rho);
+    void Kerker_screen_real_test(double* rho);
 
     /**
      * @brief Inner product of two complex vectors
      *
      */
     double inner_product_recip(std::complex<double>* rho1, std::complex<double>* rho2);
+    double inner_product_recip_new1(std::complex<double>* rho1, std::complex<double>* rho2);
+    double inner_product_recip_new2(std::complex<double>* rho1, std::complex<double>* rho2);
 
     /**
      * @brief Inner product of two double vectors
@@ -126,7 +131,7 @@ class Charge_Mixing
     // General parameters
     //======================================
     std::string mixing_mode = "broyden";
-    double mixing_beta = 0.7;
+    double mixing_beta = 0.8;
     int mixing_ndim = 8;
     double mixing_gg0 = 0.0; // mohan add 2014-09-27
     bool mixing_tau = false;

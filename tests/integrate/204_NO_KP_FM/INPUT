@@ -24,5 +24,8 @@ smearing_sigma			0.002
 
 #Parameters (5.Mixing)
 mixing_type		broyden
-mixing_beta		0.7
+mixing_beta		0.4
+mixing_gg0      0.0
+mixing_beta_mag 1.6
+mixing_gg0_mag  0.0
 

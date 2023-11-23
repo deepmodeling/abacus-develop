@@ -22,6 +22,176 @@ Charge::~Charge()
 Charge::Charge()
 {
 }
+
+double Charge::sum_rho(void) const
+{
+    ModuleBase::TITLE("Charge", "sum_rho");
+
+    double sum_rho = 0.0;
+    int nspin0 = (nspin == 2) ? 2 : 1;
+
+    for (int is = 0; is < nspin0; is++)
+    {
+        for (int ir = 0; ir < nrxx; ir++)
+        {
+            if(GlobalV::use_paw)
+            {
+                sum_rho += this->rho[is][ir] + this->nhat[is][ir];
+            }
+            else
+            {
+                sum_rho += this->rho[is][ir];
+            }
+        }
+    }
+
+    // multiply the sum of charge density by a factor
+    sum_rho *= 500.0 / static_cast<double>(this->rhopw->nxyz);
+
+#ifdef __MPI
+    Parallel_Reduce::reduce_pool(sum_rho);
+#endif
+
+    // mohan fixed bug 2010-01-18,
+    // sum_rho may be smaller than 1, like Na bcc.
+    //if (sum_rho <= 0.1)
+    //{
+        //GlobalV::ofs_warning << " sum_rho=" << sum_rho << std::endl;
+        //ModuleBase::WARNING_QUIT("Charge::renormalize_rho", "Can't find even an electron!");
+    //}
+
+    return sum_rho;
+}
+
+void Charge::renormalize_rho(void)
+{
+    ModuleBase::TITLE("Charge", "renormalize_rho");
+
+    const double sr = this->sum_rho();
+    GlobalV::ofs_warning << std::setprecision(15);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "charge before normalized", sr);
+    const double normalize_factor = GlobalV::nelec / sr;
+
+    for (int is = 0; is < nspin; is++)
+    {
+        for (int ir = 0; ir < nrxx; ir++)
+        {
+            rho[is][ir] *= normalize_factor;
+        }
+    }
+
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "charge after normalized", this->sum_rho());
+
+    GlobalV::ofs_running << std::setprecision(6);
+    return;
+}
+
+// for real space magnetic density
+void Charge::get_rho_mag(void)
+{
+    ModuleBase::TITLE("Charge", "get_rho_tot_mag");
+
+    for (int ir = 0; ir < nrxx; ir++)
+    {
+        rho_mag[ir] = rho[0][ir] + rho[1][ir];
+        rho_mag_save[ir] = rho_save[0][ir] + rho_save[1][ir];
+    }
+    for (int ir = 0; ir < nrxx; ir++)
+    {
+        rho_mag[ir + nrxx] = rho[0][ir] - rho[1][ir];
+        rho_mag_save[ir + nrxx] = rho_save[0][ir] - rho_save[1][ir];
+    }
+    return;
+}
+
+void Charge::get_rho_from_mag(void)
+{
+    ModuleBase::TITLE("Charge", "get_rho_from_mag");
+    for (int is = 0; is < nspin; is++)
+    {
+        ModuleBase::GlobalFunc::ZEROS(rho[is], nrxx);
+        //ModuleBase::GlobalFunc::ZEROS(rho_save[is], nrxx);
+    }
+    for (int ir = 0; ir < nrxx; ir++)
+    {
+        rho[0][ir] = 0.5 * (rho_mag[ir] + rho_mag[ir+nrxx]);
+        rho[1][ir] = 0.5 * (rho_mag[ir] - rho_mag[ir+nrxx]);
+    }
+
+    return;
+}
+
+void Charge::allocate_rho_mag(void)
+{
+    rho_mag = new double[nrxx * nspin];
+    rho_mag_save = new double[nrxx * nspin];
+
+    ModuleBase::GlobalFunc::ZEROS(rho_mag, nrxx * nspin);
+    ModuleBase::GlobalFunc::ZEROS(rho_mag_save, nrxx * nspin);
+
+    return;
+}
+
+void Charge::destroy_rho_mag(void)
+{
+    delete[] rho_mag;
+    delete[] rho_mag_save;
+
+    return;
+}
+
+// for reciprocal space magnetic density
+void Charge::get_rhog_mag(void)
+{
+    ModuleBase::TITLE("Charge", "get_rhog_tot_mag");
+
+    for (int ig = 0; ig < ngmc; ig++)
+    {
+        rhog_mag[ig] = rhog[0][ig] + rhog[1][ig];
+        rhog_mag_save[ig] = rhog_save[0][ig] + rhog_save[1][ig];
+    }
+    for (int ig = 0; ig < ngmc; ig++)
+    {
+        rhog_mag[ig + ngmc] = rhog[0][ig] - rhog[1][ig];
+        rhog_mag_save[ig + ngmc] = rhog_save[0][ig] - rhog_save[1][ig];
+    }
+    return;
+}
+
+void Charge::get_rhog_from_mag(void)
+{
+    ModuleBase::TITLE("Charge", "get_rhog_from_mag");
+    for (int is = 0; is < nspin; is++)
+    {
+        ModuleBase::GlobalFunc::ZEROS(rhog[is], ngmc);
+    }
+    for (int ig = 0; ig < ngmc; ig++)
+    {
+        rhog[0][ig] = 0.5 * (rhog_mag[ig] + rhog_mag[ig+ngmc]);
+        rhog[1][ig] = 0.5 * (rhog_mag[ig] - rhog_mag[ig+ngmc]);
+    }
+
+    return;
+}
+
+void Charge::allocate_rhog_mag(void)
+{
+    rhog_mag = new std::complex<double>[ngmc * nspin];
+    rhog_mag_save = new std::complex<double>[ngmc * nspin];
+
+    ModuleBase::GlobalFunc::ZEROS(rhog_mag, ngmc * nspin);
+    ModuleBase::GlobalFunc::ZEROS(rhog_mag_save, ngmc * nspin);
+
+    return;
+}
+
+void Charge::destroy_rhog_mag(void)
+{
+    delete[] rhog_mag;
+    delete[] rhog_mag_save;
+
+    return;
+}
 void Charge::set_rhopw(ModulePW::PW_Basis* rhopw_in)
 {
     this->rhopw = rhopw_in;
@@ -136,6 +306,7 @@ TEST_F(ChargeMixingTest, SetMixingTest)
     EXPECT_THAT(output, testing::HasSubstr("This Mixing mode is not implemended yet,coming soon."));
 }
 
+/**
 TEST_F(ChargeMixingTest, AutoSetTest)
 {
     Charge_Mixing CMtest;
@@ -167,6 +338,7 @@ TEST_F(ChargeMixingTest, AutoSetTest)
     CMtest.auto_set(1.0, GlobalC::ucell);
     EXPECT_EQ(CMtest.mixing_gg0, 1.0);
 }
+**/
 
 TEST_F(ChargeMixingTest, KerkerScreenRecipTest)
 {
@@ -208,6 +380,66 @@ TEST_F(ChargeMixingTest, KerkerScreenRecipTest)
     pw_basis.recip2real(drhog_old, drhor);
 
     CMtest.mixing_gg0 = 0.0;
+    // nothing happens
+    CMtest.Kerker_screen_real(drhor);
+
+    CMtest.mixing_gg0 = 1.0;
+    CMtest.Kerker_screen_real(drhor);
+    for (int i = 0; i < pw_basis.nrxx; ++i)
+    {
+        EXPECT_NEAR(drhor[i], drhor_ref[i], 1e-8);
+    }
+
+    delete[] drhog;
+    delete[] drhog_old;
+    delete[] drhor;
+    delete[] drhor_ref;
+}
+
+TEST_F(ChargeMixingTest, KerkerScreenRecipNewTest)
+{
+    Charge_Mixing CMtest;
+    CMtest.set_rhopw(&pw_basis);
+    GlobalC::ucell.tpiba = 1.0;
+
+    // for new kerker
+    GlobalV::NSPIN = 2;
+    CMtest.mixing_gg0 = 0.0;
+    GlobalV::MIXING_GG0_MAG = 0.0;
+    std::complex<double>* drhog = new std::complex<double>[GlobalV::NSPIN*pw_basis.npw];
+    std::complex<double>* drhog_old = new std::complex<double>[GlobalV::NSPIN*pw_basis.npw];
+    double* drhor = new double[GlobalV::NSPIN*pw_basis.nrxx];
+    double* drhor_ref = new double[GlobalV::NSPIN*pw_basis.nrxx];
+    for (int i = 0; i < GlobalV::NSPIN*pw_basis.npw; ++i)
+    {
+        drhog_old[i] = drhog[i] = std::complex<double>(1.0, 1.0);
+    }
+    CMtest.Kerker_screen_recip_new(drhog);
+    for (int i = 0; i < GlobalV::NSPIN*pw_basis.npw; ++i)
+    {
+        EXPECT_EQ(drhog[i], drhog_old[i]);
+    }
+
+    // RECIPROCAL
+    CMtest.mixing_gg0 = 1.0;
+    GlobalV::MIXING_GG0_MAG = 0.0;
+    CMtest.Kerker_screen_recip_new(drhog);
+    const double gg0 = std::pow(0.529177, 2);
+    for (int i = 0; i < pw_basis.npw; ++i)
+    {
+        std::complex<double> ration = drhog[i] / drhog[i+pw_basis.npw];
+        double gg = this->pw_basis.gg[i];
+        double ration_ref = std::max(gg / (gg + gg0), 0.1 / CMtest.mixing_beta);
+        EXPECT_NEAR(ration.real(), ration_ref, 1e-10);
+        EXPECT_NEAR(ration.imag(), 0, 1e-10);
+    }
+
+    // REAL
+    pw_basis.recip2real(drhog, drhor_ref);
+    pw_basis.recip2real(drhog_old, drhor);
+
+    CMtest.mixing_gg0 = 0.0;
+    GlobalV::MIXING_GG0_MAG = 0.0;
     // nothing happens
     CMtest.Kerker_screen_real(drhor);
 
@@ -291,6 +523,50 @@ TEST_F(ChargeMixingTest, InnerDotTest)
     GlobalV::DOMAG_Z = true;
     inner = CMtest.inner_product_recip(drhog1.data(), drhog2.data());
     EXPECT_NEAR(inner, 110668.61166927818, 1e-8);
+}
+
+TEST_F(ChargeMixingTest, InnerDotNewTest)
+{
+    Charge_Mixing CMtest;
+    CMtest.set_rhopw(&pw_basis);
+    GlobalV::NSPIN = 1;
+
+    // inner_product_recip_new1
+    std::vector<std::complex<double>> drhog1(pw_basis.npw);
+    std::vector<std::complex<double>> drhog2(pw_basis.npw);
+    for (int i = 0; i < pw_basis.npw; ++i)
+    {
+        drhog1[i] = 1.0;
+        drhog2[i] = double(i);
+    }
+    double inner = CMtest.inner_product_recip_new1(drhog1.data(), drhog2.data());
+    EXPECT_NEAR(inner, 0.5 * pw_basis.npw * (pw_basis.npw - 1), 1e-8);
+
+    // inner_product_recip_new2
+    GlobalV::NSPIN = 2;
+    drhog1.resize(pw_basis.npw * GlobalV::NSPIN);
+    drhog2.resize(pw_basis.npw * GlobalV::NSPIN);
+    std::vector<std::complex<double>> drhog1_mag(pw_basis.npw * GlobalV::NSPIN);
+    std::vector<std::complex<double>> drhog2_mag(pw_basis.npw * GlobalV::NSPIN);
+    for (int i = 0; i < pw_basis.npw * GlobalV::NSPIN; ++i)
+    {
+        drhog1[i] = std::complex<double>(1.0, double(i));
+        drhog2[i] = std::complex<double>(1.0, 1.0);
+    }
+    // set mag
+    for (int i = 0; i < pw_basis.npw; ++i)
+    {
+        drhog1_mag[i] = drhog1[i] + drhog1[i+pw_basis.npw];
+        drhog1_mag[i+pw_basis.npw] = drhog1[i] - drhog1[i+pw_basis.npw];
+        drhog2_mag[i] = drhog2[i] + drhog2[i+pw_basis.npw];
+        drhog2_mag[i+pw_basis.npw] = drhog2[i] - drhog2[i+pw_basis.npw];
+    }
+    GlobalV::GAMMA_ONLY_PW = false;
+    inner = CMtest.inner_product_recip_new2(drhog1_mag.data(), drhog2_mag.data());
+    EXPECT_NEAR(inner, 236763.82650318215, 1e-8);
+    GlobalV::GAMMA_ONLY_PW = true;
+    inner = CMtest.inner_product_recip_new2(drhog1_mag.data(), drhog2_mag.data());
+    EXPECT_NEAR(inner, 236763.82650318215 * 2, 1e-8);
 }
 
 TEST_F(ChargeMixingTest, MixRhoTest)

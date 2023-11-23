@@ -23,6 +23,7 @@ force_thr_ev    1.0e-3
 ks_solver       scalapack_gvx
 mixing_type     broyden
 mixing_beta     0.7
+mixing_gg0      0.0
 
 out_wfc_lcao	1
 out_interval	2
