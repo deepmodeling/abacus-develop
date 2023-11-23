@@ -296,8 +296,8 @@ extern "C"
     void init_rho_(int&,  int*,   int&,int&, int&,  double*,double*,double*,double&,double*,double*);
     //             nspden,ngfftdg,nfft,natom,ntypat,rprimd, gprimd, gmet,   ucvol,  xred,   rho
 
-    void paw_force_(int&, int&,  int*, int*,   int&,double*,double*,double*,double*,double&,double*,double*,int&);
-    //              natom,ntypat,typat,ngfftdg,nfft,nhat,   xred,   rprimd, gmet,   ucvol,  vtrial, vxc,    nspden
+    void paw_force_(int&, int&,  int*, int*,   int&,double*,double*,double*,double*,double&,double*,double*,int&,  double*,double*);
+    //              natom,ntypat,typat,ngfftdg,nfft,nhat,   xred,   rprimd, gmet,   ucvol,  vtrial, vxc,    nspden,grnl,   nlstr
 }
 
 void Paw_Cell::prepare_paw()
@@ -721,10 +721,23 @@ double Paw_Cell::calculate_ecore()
     return esum * charge / ucvol * 2.0;
 }
 
-void Paw_Cell::calculate_force(double* vks, double* vxc)
+void Paw_Cell::calculate_force(double* vks, double* vxc, double* force)
 {
     ModuleBase::TITLE("Paw_Cell", "calculate_force");
     double * vks_hartree, * vxc_hartree;
+    double * grnl, * nlstr;
+
+    grnl = new double[3*natom];
+    nlstr = new double[6];
+
+    for(int i = 0; i < 3*natom; i ++)
+    {
+        grnl[i] = 0.0;
+    }
+    for(int i = 0; i < 6; i ++)
+    {
+        nlstr[i] = 0.0;
+    }
 
 #ifdef __MPI
     double * vks_collected, * vxc_collected;
@@ -801,11 +814,14 @@ void Paw_Cell::calculate_force(double* vks, double* vxc)
                 ucvol,nhat_tmp,nhatgr);
 
         paw_force_(natom,ntypat,typat.data(),ngfft.data(),nfft,nhat_tmp,xred.data(),
-                rprimd.data(),gmet.data(),ucvol,vks_hartree,vxc_hartree,nspden);
+                rprimd.data(),gmet.data(),ucvol,vks_hartree,vxc_hartree,nspden,grnl,nlstr);
 
         delete[] nhatgr;
         delete[] nhat_tmp;
     }
+
+    Parallel_Common::bcast_double(grnl,3*natom);
+    Parallel_Common::bcast_double(nlstr,6);
 
     if(GlobalV::RANK_IN_POOL == 0)
     {
@@ -844,7 +860,7 @@ void Paw_Cell::calculate_force(double* vks, double* vxc)
             ucvol,nhat_tmp,nhatgr);
 
     paw_force_(natom,ntypat,typat.data(),ngfft.data(),nfft,nhat_tmp,xred.data(),
-            rprimd.data(),gmet.data(),ucvol,vks_hartree,vxc_hartree,nspden);
+            rprimd.data(),gmet.data(),ucvol,vks_hartree,vxc_hartree,nspden,grnl,nlstr);
 
     delete[] nhatgr;
     delete[] nhat_tmp;
@@ -852,4 +868,22 @@ void Paw_Cell::calculate_force(double* vks, double* vxc)
     delete[] vks_hartree;
     delete[] vxc_hartree;
 #endif
+
+    for(int i = 0; i < 3*natom; i++)
+    {
+        force[i] = 0.0;
+    }
+
+    for(int iat = 0; iat < natom; iat ++)
+    {
+        for(int mu = 0; mu < 3; mu ++)
+        {
+            force[3*iat+mu] -= (grnl[3*iat] * gprimd[mu] +
+                grnl[3*iat+1] * gprimd[mu+3] + grnl[3*iat+2] * gprimd[mu+6]);
+        }
+    }
+
+    delete[] grnl;
+    delete[] nlstr;
+
 }
