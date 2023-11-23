@@ -5,6 +5,7 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/module_mixing/mixing.h"
+#include "module_base/module_mixing/plain_mixing.h"
 #include "module_cell/unitcell.h"
 class Charge_Mixing
 {
@@ -15,6 +16,8 @@ class Charge_Mixing
     Base_Mixing::Mixing_Data rho_mdata;
     Base_Mixing::Mixing_Data tau_mdata;
     Base_Mixing::Mixing_Data nhat_mdata;
+
+    Base_Mixing::Plain_Mixing* mixing_highf = nullptr; ///< The high_frequency part is mixed by plain mixing method.
 
     /**
      * @brief reset mixing
@@ -82,19 +85,20 @@ class Charge_Mixing
                     const double& mixing_beta_in,
                     const int& mixing_ndim_in,
                     const double& mixing_gg0_in,
-                    const bool& mixing_tau_in); // mohan add mixing_gg0_in 2014-09-27
+                    const bool& mixing_tau_in,
+                    const double& mixing_beta_mag_in = 1.6); // mohan add mixing_gg0_in 2014-09-27
 
-    /**
-     * @brief use auto set
-     *
-     */
-    void need_auto_set();
+    // /**
+    //  * @brief use auto set
+    //  *
+    //  */
+    // void need_auto_set();
 
-    /**
-     * @brief auto set mixing gg0 and mixing_beta
-     *
-     */
-    void auto_set(const double& bandgap_in, const UnitCell& ucell_);
+    // /**
+    //  * @brief auto set mixing gg0 and mixing_beta
+    //  *
+    //  */
+    // void auto_set(const double& bandgap_in, const UnitCell& ucell_);
 
     /**
      * @brief Get the drho
@@ -102,8 +106,8 @@ class Charge_Mixing
      */
     double get_drho(Charge* chr, const double nelec);
 
-    // init pwrho, sunliang add 2023-05-08
-    void set_rhopw(ModulePW::PW_Basis* rhopw_in);
+    // init pwrho and rhodpw
+    void set_rhopw(ModulePW::PW_Basis* rhopw_in, ModulePW::PW_Basis* rhodpw_in);
 
     // extracting parameters
     // normally these parameters will not be used
@@ -132,20 +136,36 @@ class Charge_Mixing
     //======================================
     std::string mixing_mode = "broyden";
     double mixing_beta = 0.8;
+    double mixing_beta_mag = 1.6;
     int mixing_ndim = 8;
     double mixing_gg0 = 0.0; // mohan add 2014-09-27
     bool mixing_tau = false;
 
     bool new_e_iteration = true;
 
-    ModulePW::PW_Basis* rhopw = nullptr;
+    ModulePW::PW_Basis* rhopw = nullptr;  ///< smooth grid
+    ModulePW::PW_Basis* rhodpw = nullptr; ///< dense grid, same as rhopw for ncpp.
     bool autoset = false;
 
   private:
     double rhog_dot_product(const std::complex<double>* const* const rhog1,
                             const std::complex<double>* const* const rhog2) const;
 
-    void high_freq_mix(std::complex<double>* data, const std::complex<double>* data_save, const int& number) const;
+    /**
+     * @brief divide rho/tau to smooth and high frequency parts
+     *
+     */
+    void divide_data(std::complex<double>* data_d, std::complex<double>*& data_s, std::complex<double>*& data_hf);
+    /**
+     * @brief gather smooth and high frequency parts to rho/tau
+     *
+     */
+    void combine_data(std::complex<double>* data_d, std::complex<double>*& data_s, std::complex<double>*& data_hf);
+    /**
+     * @brief clean smooth and high frequency parts
+     *
+     */
+    void clean_data(std::complex<double>*& data_s, std::complex<double>*& data_hf);
 };
 
 #endif

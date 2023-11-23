@@ -178,7 +178,7 @@ class Charge
     int nxyz; // total nuber of r vectors
     int ngmc; // number of g vectors in this processor
     int nspin; // number of spins
-    ModulePW::PW_Basis* rhopw = nullptr;
+    ModulePW::PW_Basis* rhopw = nullptr;// When double_grid is used, rhopw = rhodpw (dense grid)
   private:
 
     void destroy();    // free arrays  liuyu 2023-03-12

@@ -1,10 +1,6 @@
 #ifndef PLAIN_MIXING_H_
 #define PLAIN_MIXING_H_
 #include "mixing.h"
-#include "module_base/memory.h"
-#include "module_base/timer.h"
-#include "module_base/tool_title.h"
-#include "module_base/global_variable.h"
 
 namespace Base_Mixing
 {
@@ -15,19 +11,13 @@ namespace Base_Mixing
 class Plain_Mixing : public Mixing
 {
   public:
-    Plain_Mixing(const double& mixing_beta)
+    Plain_Mixing()
+    {
+        this->coef = std::vector<double>(1, 1.0);
+    }
+    Plain_Mixing(const double& mixing_beta) : Plain_Mixing()
     {
         this->mixing_beta = mixing_beta;
-        this->data_ndim = 1;
-        this->coef = std::vector<double>(1, 1.0);
-        if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
-        {
-            this->two_beta = 0;
-        }
-        else if (GlobalV::NSPIN == 2)
-        {
-            this->two_beta = 1;
-        }
     }
     virtual ~Plain_Mixing() override{};
 
@@ -47,6 +37,7 @@ class Plain_Mixing : public Mixing
      * @param data_in x_in
      * @param data_out x_out = f(x_in)
      * @param screen pointer to the screen function for Ker-Ker mixing
+     * @param mix (double* out, const double* in, const double* residual) calculate 'out' with 'in' and residual
      * @param need_calcoef whether need to calculate the coef
      *
      */
@@ -54,17 +45,20 @@ class Plain_Mixing : public Mixing
                            const double* data_in,
                            const double* data_out,
                            std::function<void(double*)> screen,
+                           std::function<void(double*, const double*, const double*)> mix,
                            const bool& need_calcoef) override
     {
-        this->tem_push_data(mdata, data_in, data_out, screen, need_calcoef);
+        this->tem_push_data(mdata, data_in, data_out, screen, mix, need_calcoef);
     };
-    virtual void push_data(Mixing_Data& mdata,
-                           const std::complex<double>* data_in,
-                           const std::complex<double>* data_out,
-                           std::function<void(std::complex<double>*)> screen,
-                           const bool& need_calcoef) override
+    virtual void push_data(
+        Mixing_Data& mdata,
+        const std::complex<double>* data_in,
+        const std::complex<double>* data_out,
+        std::function<void(std::complex<double>*)> screen,
+        std::function<void(std::complex<double>*, const std::complex<double>*, const std::complex<double>*)> mix,
+        const bool& need_calcoef) override
     {
-        this->tem_push_data(mdata, data_in, data_out, screen, need_calcoef);
+        this->tem_push_data(mdata, data_in, data_out, screen, mix, need_calcoef);
     };
 
     /**
@@ -83,6 +77,29 @@ class Plain_Mixing : public Mixing
         return;
     }
 
+    /**
+     * @brief Simple plain mixing
+     *        data_new = data_in + mixing_beta * (data_out - data_in)
+     *
+     * @param data_new can be the same as data_in or data_out
+     */
+    void plain_mix(double* data_new,
+                  const double* data_in,
+                  const double* data_out,
+                  const int& length,
+                  std::function<void(double*)> screen)
+    {
+        this->simple_mix(data_new, data_in, data_out, length, screen);
+    }
+    void plain_mix(std::complex<double>* data_new,
+                  const std::complex<double>* data_in,
+                  const std::complex<double>* data_out,
+                  const int& length,
+                  std::function<void(std::complex<double>*)> screen)
+    {
+        this->simple_mix(data_new, data_in, data_out, length, screen);
+    }
+
   private:
     /**
      * @brief
@@ -91,6 +108,7 @@ class Plain_Mixing : public Mixing
      * @param data_in x_in
      * @param data_out x_out = f(x_in)
      * @param screen pointer to the screen function for Ker-Ker mixing
+     * @param mix (double* out, const double* in, const double* residual) calculate 'out' with 'in' and residual
      * @param need_calcoef whether need to calculate the coef
      *
      */
@@ -99,61 +117,21 @@ class Plain_Mixing : public Mixing
                        const FPTYPE* data_in,
                        const FPTYPE* data_out,
                        std::function<void(FPTYPE*)> screen,
-                       const bool& need_calcoef)
-    {
-        const size_t length = mdata.length;
-        std::vector<FPTYPE> F_tmp(length);
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
-#endif
-        for (int i = 0; i < length; ++i)
-        {
-            F_tmp[i] = data_out[i] - data_in[i];
-        }
+                       std::function<void(FPTYPE*, const FPTYPE*, const FPTYPE*)> mix,
+                       const bool& need_calcoef);
 
-        // get screened F
-        if (screen != nullptr)
-            screen(F_tmp.data());
-
-        // container::Tensor data = data_in + mixing_beta * F;
-        std::vector<FPTYPE> data(length);
-        if (this->two_beta == 0)
-        {
-            // rho_tot
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
-#endif
-            for (int i = 0; i < length; ++i)
-            {
-                data[i] = data_in[i] + this->mixing_beta * F_tmp[i];
-            }
-        }
-        else if (this->two_beta == 1)
-        {
-            // rho_tot
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
-#endif
-            for (int i = 0; i < length / 2; ++i)
-            {
-                data[i] = data_in[i] + this->mixing_beta * F_tmp[i];
-            }
-            // magnetism
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
-#endif
-            for (int i = length / 2; i < length; ++i)
-            {
-                data[i] = data_in[i] + GlobalV::MIXING_BETA_MAG * F_tmp[i];
-            }
-
-        }
-
-        mdata.push(data.data());
-    };
-
-    // if we should considere two beta
-    int two_beta = 0;
+    /**
+     * @brief Simple plain mixing
+     *        data_new = data_in + mixing_beta * (data_out - data_in)
+     *
+     * @param data_new can be the same as data_in or data_out
+     */
+    template <class FPTYPE>
+    void simple_mix(FPTYPE* data_new,
+                    const FPTYPE* data_in,
+                    const FPTYPE* data_out,
+                    const int& length,
+                    std::function<void(FPTYPE*)> screen);
 };
 } // namespace Base_Mixing
 #endif

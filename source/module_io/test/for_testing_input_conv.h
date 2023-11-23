@@ -286,11 +286,10 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
 {
     return;
 }
-// void Charge_Mixing::need_auto_set(){}
-void Charge_Mixing::need_auto_set()
-{
-    this->autoset = true;
-}
+// void Charge_Mixing::need_auto_set()
+// {
+//     this->autoset = true;
+// }
 void Occupy::decision(const std::string& name, const std::string& smearing_method, const double& smearing_sigma)
 {
     return;
