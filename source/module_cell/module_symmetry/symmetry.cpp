@@ -1622,7 +1622,7 @@ for (int g_index = 0; g_index < group_index; g_index++)
 void Symmetry::set_atom_map(const Atom* atoms)
 {
     ModuleBase::TITLE("Symmetry", "set_atom_map");
-    if (this->isym_rotiat_.size() > 0) return;
+    if (this->isym_rotiat_.size() == this->nrotk) return;
     this->isym_rotiat_.resize(this->nrotk);
     for (int i = 0; i < this->nrotk; ++i)this->isym_rotiat_[i].resize(this->nat, -1);
 
