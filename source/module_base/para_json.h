@@ -47,7 +47,7 @@ namespace Para_Json
     // @param reading_information：
     extern rapidjson::Value readin_info;
     // @param reading_information -- input_para：
-    extern std::map<std::string,int> input_file_map;
+    
     // @param reading_information -- input_para -- system_variables：
     extern rapidjson::Value system_variables;
 
