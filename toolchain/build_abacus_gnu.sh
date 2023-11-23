@@ -23,7 +23,7 @@ rm -rf $BUILD_DIR
 
 PREFIX=$ABACUS_DIR
 LAPACK=$INSTALL_DIR/openblas-0.3.24/lib
-SCALAPACK=$INSTALL_DIR/scalapalack-2.2.1/lib
+SCALAPACK=$INSTALL_DIR/scalapack-2.2.1/lib
 ELPA=$INSTALL_DIR/elpa-2023.05.001/cpu
 FFTW3=$INSTALL_DIR/fftw-3.3.10
 CEREAL=$INSTALL_DIR/cereal-1.3.2/include/cereal
