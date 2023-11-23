@@ -47,9 +47,11 @@ namespace Para_Json
     // @param reading_information：
     extern rapidjson::Value readin_info;
     // @param reading_information -- input_para：
-
+    extern std::map<std::string,int> input_file_map;
     // @param reading_information -- input_para -- system_variables：
     extern rapidjson::Value system_variables;
+
+    extern rapidjson::Value input_file;
     extern rapidjson::Value input_suffix;
     extern rapidjson::Value ntype;
     extern rapidjson::Value calculation;
@@ -76,7 +78,7 @@ namespace Para_Json
     extern rapidjson::Value min_dist_coef;
     extern rapidjson::Value device;
     // @param reading_information -- input_para -- files_related
-    extern rapidjson::Value files_related;
+
     extern rapidjson::Value stru_file;
     extern rapidjson::Value kpoint_file;
     extern rapidjson::Value pseudo_dir;
@@ -84,7 +86,7 @@ namespace Para_Json
     extern rapidjson::Value read_file_dir;
     extern rapidjson::Value wannier_card;
     // @param reading_information -- input_para -- planewave_related
-    extern rapidjson::Value planewave_related;
+
     extern rapidjson::Value ecutwfc;
     extern rapidjson::Value nx;
     extern rapidjson::Value ny;
@@ -94,7 +96,7 @@ namespace Para_Json
     extern rapidjson::Value pw_diag_nmax;
     extern rapidjson::Value pw_diag_ndim;
     // @param reading_information -- input_para -- numerical_atomic_orbitals_related
-    extern rapidjson::Value numerical_atomic_orbitals_related;
+    
     extern rapidjson::Value nb2d;
     extern rapidjson::Value lmaxmax;
     extern rapidjson::Value lcao_ecut;
@@ -107,7 +109,7 @@ namespace Para_Json
     extern rapidjson::Value by;
     extern rapidjson::Value bz;
     // @param reading_information -- input_para -- electronic_structure
-    extern rapidjson::Value electronic_structure;
+    
     extern rapidjson::Value basis_type;
     extern rapidjson::Value ks_solver;
     extern rapidjson::Value nbands;
@@ -132,7 +134,7 @@ namespace Para_Json
     extern rapidjson::Value noncolin;
     extern rapidjson::Value soc_lambda;
     // @param reading_information -- input_para -- electronic_structure_SDFT
-    extern rapidjson::Value electronic_structure_SDFT;
+
     extern rapidjson::Value method_sto;
     extern rapidjson::Value nbands_sto;
     extern rapidjson::Value nche_sto;
@@ -142,7 +144,7 @@ namespace Para_Json
     extern rapidjson::Value initsto_freq;
     extern rapidjson::Value npart_sto;
     // @param reading_information -- input_para -- geometry_relaxation
-    extern rapidjson::Value geometry_relaxation;
+
     extern rapidjson::Value relax_method;
     extern rapidjson::Value relax_new;
     extern rapidjson::Value relax_scale_force;
@@ -168,7 +170,7 @@ namespace Para_Json
     extern rapidjson::Value cell_factor;
 
     // @param reading_information -- input_para -- output_information_related
-    extern rapidjson::Value output_information_related;
+
     extern rapidjson::Value out_mul;
     extern rapidjson::Value out_freq_elec;
     extern rapidjson::Value out_freq_ion;
@@ -199,7 +201,7 @@ namespace Para_Json
     extern rapidjson::Value rpa;
 
     // @param reading_information -- input_para -- density_of_states
-    extern rapidjson::Value density_of_states;
+
     extern rapidjson::Value dos_edelta_ev;
     extern rapidjson::Value dos_sigma;
     extern rapidjson::Value dos_scale;
@@ -207,14 +209,13 @@ namespace Para_Json
     extern rapidjson::Value dos_emax_ev;
     extern rapidjson::Value dos_nche;
     // @param reading_information -- input_para -- naos
-    extern rapidjson::Value naos;
     extern rapidjson::Value bessel_nao_ecut;
     extern rapidjson::Value bessel_nao_tolerence;
     extern rapidjson::Value bessel_nao_rcut;
     extern rapidjson::Value bessel_nao_smooth;
     extern rapidjson::Value bessel_nao_sigma;
     // @param reading_information -- input_para -- deepks
-    extern rapidjson::Value deepks;
+
     extern rapidjson::Value deepks_out_labels;
     extern rapidjson::Value deepks_scf;
     extern rapidjson::Value deepks_model;
@@ -227,7 +228,6 @@ namespace Para_Json
     extern rapidjson::Value deepks_bandgap;
     extern rapidjson::Value deepks_out_unittest;
     // @param reading_information -- input_para -- ofdft
-    extern rapidjson::Value ofdft;
     extern rapidjson::Value of_kinetic;
     extern rapidjson::Value of_method;
     extern rapidjson::Value of_conv;
@@ -246,7 +246,7 @@ namespace Para_Json
     extern rapidjson::Value of_full_pw_dim;
 
     // @param reading_information -- input_para -- electric_field_and_dipole_correction
-    extern rapidjson::Value electric_field_and_dipole_correction;
+    
     extern rapidjson::Value efield_flag;
     extern rapidjson::Value dip_cor_flag;
     extern rapidjson::Value efield_dir;
@@ -254,7 +254,7 @@ namespace Para_Json
     extern rapidjson::Value efield_pos_dec;
     extern rapidjson::Value efield_amp;
     // @param reading_information -- input_para -- gate_field 
-    extern rapidjson::Value gate_field;
+    
     extern rapidjson::Value gate_flag;
     extern rapidjson::Value zgate;
     extern rapidjson::Value block;
@@ -262,7 +262,6 @@ namespace Para_Json
     extern rapidjson::Value block_up;
     extern rapidjson::Value block_height;
     // @param reading_information -- input_para -- exact_exchange
-    extern rapidjson::Value exact_exchange;
     extern rapidjson::Value exx_hybrid_alpha;
     extern rapidjson::Value exx_hse_omega;
     extern rapidjson::Value exx_separate_loop;
@@ -288,7 +287,6 @@ namespace Para_Json
     extern rapidjson::Value exx_real_number;
 
     // @param reading_information -- input_para -- molecular_dynamics
-    extern rapidjson::Value molecular_dynamics;
     extern rapidjson::Value md_type;
     extern rapidjson::Value md_nstep;
     extern rapidjson::Value md_dt;
@@ -328,7 +326,6 @@ namespace Para_Json
     extern rapidjson::Value dmax;
 
     // @param reading_information -- input_para -- dft_plus_u
-    extern rapidjson::Value dft_plus_u;
     extern rapidjson::Value orbital_corr;
     extern rapidjson::Value hubbard_u;
     extern rapidjson::Value yukawa_potential;
@@ -336,7 +333,6 @@ namespace Para_Json
     extern rapidjson::Value omc;
 
     // @param reading_information -- input_para -- vdw_correction
-    extern rapidjson::Value vdw_correction;
     extern rapidjson::Value vdw_method;
     extern rapidjson::Value vdw_s6;
     extern rapidjson::Value vdw_s8;
@@ -356,7 +352,6 @@ namespace Para_Json
     extern rapidjson::Value vdw_cn_thr_unit;
 
     // @param reading_information -- input_para -- berry_phase_and_wannier90_interface
-    extern rapidjson::Value berry_phase_and_wannier90_interface;
     extern rapidjson::Value berry_phase;
     extern rapidjson::Value gdir;
     extern rapidjson::Value towannier90;
@@ -364,7 +359,6 @@ namespace Para_Json
     extern rapidjson::Value wannier_spin;
 
     // @param reading_information -- input_para -- tddft
-    extern rapidjson::Value tddft;
     extern rapidjson::Value td_edm;
     extern rapidjson::Value td_print_eij;
     extern rapidjson::Value td_propagator;
@@ -400,7 +394,6 @@ namespace Para_Json
     extern rapidjson::Value ocp_set;
 
     // @param reading_information -- input_para -- debuging_related
-    extern rapidjson::Value debuging_related;
     extern rapidjson::Value t_in_h;
     extern rapidjson::Value vl_in_h;
     extern rapidjson::Value vnl_in_h;
@@ -412,7 +405,6 @@ namespace Para_Json
     extern rapidjson::Value test_skip_ewald;
 
     // @param reading_information -- input_para -- electronic_conductivities
-    extern rapidjson::Value electronic_conductivities;
     extern rapidjson::Value cal_cond;
     extern rapidjson::Value cond_nche;
     extern rapidjson::Value cond_dw;
@@ -423,7 +415,6 @@ namespace Para_Json
     extern rapidjson::Value cond_nonlocal;
 
     // @param reading_information -- input_para -- implicit_solvation_model
-    extern rapidjson::Value implicit_solvation_model;
     extern rapidjson::Value imp_sol;
     extern rapidjson::Value eb_k;
     extern rapidjson::Value tau;
@@ -559,8 +550,6 @@ namespace Para_Json
             // json_v.SetString(rapidjson::StringRef((*reinterpret_cast<std::string*>(para)).c_str()));
 
             json_v.SetString((*reinterpret_cast<std::string*>(para)).c_str(), std::strlen((*reinterpret_cast<std::string*>(para)).c_str()), doc.GetAllocator());
-
-
             //printf("exx_real_number = %s\n",(*reinterpret_cast<std::string*>(para)).c_str());
         }
     }

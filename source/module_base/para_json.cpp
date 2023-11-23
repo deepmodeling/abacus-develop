@@ -13,6 +13,7 @@ namespace Para_Json
     // @param general_info ：
     rapidjson::Value general_info(rapidjson::kObjectType);
     rapidjson::Value version;
+     
     rapidjson::Value commit;
     rapidjson::Value begin_time;
     rapidjson::Value begin_date;
@@ -32,10 +33,12 @@ namespace Para_Json
     
     // @param reading_information：
     rapidjson::Value readin_info(rapidjson::kObjectType);
-    // @param reading_information -- input_para：
+    // @param reading_information -- input_file：
+    rapidjson::Value input_file(rapidjson::kObjectType);
 
-    // @param reading_information -- input_para -- system_variables：
-    rapidjson::Value system_variables(rapidjson::kObjectType);
+    std::map<std::string,int> input_file_map;
+
+    // @param reading_information -- input_file -- system_variables：
     rapidjson::Value input_suffix;
     rapidjson::Value ntype;
     rapidjson::Value calculation;
@@ -61,16 +64,15 @@ namespace Para_Json
     rapidjson::Value kspacing(rapidjson::kArrayType);
     rapidjson::Value min_dist_coef(rapidjson::kNumberType);
     rapidjson::Value device;
-    // @param reading_information -- input_para -- files_related
-    rapidjson::Value files_related(rapidjson::kObjectType);
+    // @param reading_information -- input_file -- files_related
     rapidjson::Value stru_file;
     rapidjson::Value kpoint_file;
     rapidjson::Value pseudo_dir;
     rapidjson::Value orbital_dir;
     rapidjson::Value read_file_dir;
     rapidjson::Value wannier_card;
-    // @param reading_information -- input_para -- planewave_related
-    rapidjson::Value planewave_related(rapidjson::kObjectType);
+
+    // @param reading_information -- input_file -- planewave_related
     rapidjson::Value ecutwfc;
     rapidjson::Value nx;
     rapidjson::Value ny;
@@ -79,8 +81,7 @@ namespace Para_Json
     rapidjson::Value pw_diag_thr;
     rapidjson::Value pw_diag_nmax;
     rapidjson::Value pw_diag_ndim;
-    // @param reading_information -- input_para -- numerical_atomic_orbitals_related
-    rapidjson::Value numerical_atomic_orbitals_related(rapidjson::kObjectType);
+    // @param reading_information -- input_file -- numerical_atomic_orbitals_related
     rapidjson::Value nb2d;
     rapidjson::Value lmaxmax;
     rapidjson::Value lcao_ecut;
@@ -92,8 +93,7 @@ namespace Para_Json
     rapidjson::Value bx;
     rapidjson::Value by;
     rapidjson::Value bz;
-    // @param reading_information -- input_para -- electronic_structure
-    rapidjson::Value electronic_structure(rapidjson::kObjectType);
+    // @param reading_information -- input_file -- electronic_structure
     rapidjson::Value basis_type;
     rapidjson::Value ks_solver;
     rapidjson::Value nbands;
@@ -117,8 +117,7 @@ namespace Para_Json
     rapidjson::Value lspinorb;
     rapidjson::Value noncolin;
     rapidjson::Value soc_lambda;
-    // @param reading_information -- input_para -- electronic_structure_SDFT
-    rapidjson::Value electronic_structure_SDFT(rapidjson::kObjectType);
+    // @param reading_information -- input_file -- electronic_structure_SDFT
     rapidjson::Value method_sto;
     rapidjson::Value nbands_sto;
     rapidjson::Value nche_sto(rapidjson::kNumberType);
@@ -127,8 +126,7 @@ namespace Para_Json
     rapidjson::Value seed_sto;
     rapidjson::Value initsto_freq;
     rapidjson::Value npart_sto;
-    // @param reading_information -- input_para -- geometry_relaxation
-    rapidjson::Value geometry_relaxation(rapidjson::kObjectType);
+    // @param reading_information -- input_file -- geometry_relaxation
     rapidjson::Value relax_method;
     rapidjson::Value relax_new;
     rapidjson::Value relax_scale_force;
@@ -153,8 +151,7 @@ namespace Para_Json
     rapidjson::Value fixed_atoms;
     rapidjson::Value cell_factor;
 
-    // @param reading_information -- input_para -- output_information_related
-    rapidjson::Value output_information_related(rapidjson::kObjectType);
+    // @param reading_information -- input_file -- output_information_related
     rapidjson::Value out_mul;
     rapidjson::Value out_freq_elec;
     rapidjson::Value out_freq_ion;
@@ -184,36 +181,32 @@ namespace Para_Json
     rapidjson::Value restart_load;
     rapidjson::Value rpa;
 
-    // @param reading_information -- input_para -- density_of_states
-    rapidjson::Value density_of_states(rapidjson::kObjectType);
+    // @param reading_information -- input_file -- density_of_states
     rapidjson::Value dos_edelta_ev;
     rapidjson::Value dos_sigma;
     rapidjson::Value dos_scale;
     rapidjson::Value dos_emin_ev;
     rapidjson::Value dos_emax_ev;
     rapidjson::Value dos_nche;
-    // @param reading_information -- input_para -- naos
-    rapidjson::Value naos(rapidjson::kObjectType);
+    // @param reading_information -- input_file -- naos
     rapidjson::Value bessel_nao_ecut;
     rapidjson::Value bessel_nao_tolerence;
     rapidjson::Value bessel_nao_rcut;
     rapidjson::Value bessel_nao_smooth;
     rapidjson::Value bessel_nao_sigma;
-    // @param reading_information -- input_para -- deepks
-    rapidjson::Value deepks(rapidjson::kObjectType);
-    rapidjson::Value deepks_out_labels;
-    rapidjson::Value deepks_scf;
-    rapidjson::Value deepks_model;
+    // @param reading_information -- input_file -- deepks
+    rapidjson::Value input_file_out_labels;
+    rapidjson::Value input_file_scf;
+    rapidjson::Value input_file_model;
     rapidjson::Value bessel_descriptor_lmax;
     rapidjson::Value bessel_descriptor_ecut;
     rapidjson::Value bessel_descriptor_tolerence;
     rapidjson::Value bessel_descriptor_rcut;
     rapidjson::Value bessel_descriptor_smooth;
     rapidjson::Value bessel_descriptor_sigma;
-    rapidjson::Value deepks_bandgap;
-    rapidjson::Value deepks_out_unittest;
-    // @param reading_information -- input_para -- ofdft
-    rapidjson::Value ofdft(rapidjson::kObjectType);
+    rapidjson::Value input_file_bandgap;
+    rapidjson::Value input_file_out_unittest;
+    // @param reading_information -- input_file -- ofdft
     rapidjson::Value of_kinetic;
     rapidjson::Value of_method;
     rapidjson::Value of_conv;
@@ -231,24 +224,21 @@ namespace Para_Json
     rapidjson::Value of_full_pw;
     rapidjson::Value of_full_pw_dim;
 
-    // @param reading_information -- input_para -- electric_field_and_dipole_correction
-    rapidjson::Value electric_field_and_dipole_correction(rapidjson::kObjectType);
+    // @param reading_information -- input_file -- electric_field_and_dipole_correction
     rapidjson::Value efield_flag;
     rapidjson::Value dip_cor_flag;
     rapidjson::Value efield_dir;
     rapidjson::Value efield_pos_max;
     rapidjson::Value efield_pos_dec;
     rapidjson::Value efield_amp;
-    // @param reading_information -- input_para -- gate_field 
-    rapidjson::Value gate_field(rapidjson::kObjectType);
+    // @param reading_information -- input_file -- gate_field 
     rapidjson::Value gate_flag;
     rapidjson::Value zgate;
     rapidjson::Value block;
     rapidjson::Value block_down;
     rapidjson::Value block_up;
     rapidjson::Value block_height;
-    // @param reading_information -- input_para -- exact_exchange
-    rapidjson::Value exact_exchange(rapidjson::kObjectType);
+    // @param reading_information -- input_file -- exact_exchange
     rapidjson::Value exx_hybrid_alpha;
     rapidjson::Value exx_hse_omega;
     rapidjson::Value exx_separate_loop;
@@ -273,8 +263,7 @@ namespace Para_Json
     rapidjson::Value exx_opt_orb_tolerence;
     rapidjson::Value exx_real_number;
 
-    // @param reading_information -- input_para -- molecular_dynamics
-    rapidjson::Value molecular_dynamics(rapidjson::kObjectType);
+    // @param reading_information -- input_file -- molecular_dynamics
     rapidjson::Value md_type;
     rapidjson::Value md_nstep;
     rapidjson::Value md_dt;
@@ -313,16 +302,14 @@ namespace Para_Json
     rapidjson::Value cal_syns;
     rapidjson::Value dmax;
 
-    // @param reading_information -- input_para -- dft_plus_u
-    rapidjson::Value dft_plus_u(rapidjson::kObjectType);
+    // @param reading_information -- input_file -- dft_plus_u
     rapidjson::Value orbital_corr(rapidjson::kArrayType);
     rapidjson::Value hubbard_u(rapidjson::kArrayType);
     rapidjson::Value yukawa_potential;
     rapidjson::Value yukawa_lambda;
     rapidjson::Value omc;
 
-    // @param reading_information -- input_para -- vdw_correction
-    rapidjson::Value vdw_correction(rapidjson::kObjectType);
+    // @param reading_information -- input_file -- vdw_correction
     rapidjson::Value vdw_method;
     rapidjson::Value vdw_s6;
     rapidjson::Value vdw_s8;
@@ -341,16 +328,14 @@ namespace Para_Json
     rapidjson::Value vdw_cn_thr;
     rapidjson::Value vdw_cn_thr_unit;
 
-    // @param reading_information -- input_para -- berry_phase_and_wannier90_interface
-    rapidjson::Value berry_phase_and_wannier90_interface(rapidjson::kObjectType);
+    // @param reading_information -- input_file -- berry_phase_and_wannier90_interface
     rapidjson::Value berry_phase;
     rapidjson::Value gdir;
     rapidjson::Value towannier90;
     rapidjson::Value nnkpfile;
     rapidjson::Value wannier_spin;
 
-    // @param reading_information -- input_para -- tddft
-    rapidjson::Value tddft(rapidjson::kObjectType);
+    // @param reading_information -- input_file -- tddft
     rapidjson::Value td_edm;
     rapidjson::Value td_print_eij;
     rapidjson::Value td_propagator;
@@ -385,8 +370,7 @@ namespace Para_Json
     rapidjson::Value ocp;
     rapidjson::Value ocp_set;
 
-    // @param reading_information -- input_para -- debuging_related
-    rapidjson::Value debuging_related(rapidjson::kObjectType);
+    // @param reading_information -- input_file -- debuging_related
     rapidjson::Value t_in_h;
     rapidjson::Value vl_in_h;
     rapidjson::Value vnl_in_h;
@@ -397,8 +381,7 @@ namespace Para_Json
     rapidjson::Value colour;
     rapidjson::Value test_skip_ewald;
 
-    // @param reading_information -- input_para -- electronic_conductivities
-    rapidjson::Value electronic_conductivities(rapidjson::kObjectType);
+    // @param reading_information -- input_file -- electronic_conductivities
     rapidjson::Value cal_cond;
     rapidjson::Value cond_nche;
     rapidjson::Value cond_dw;
@@ -407,9 +390,7 @@ namespace Para_Json
     rapidjson::Value cond_dtbatch;
     rapidjson::Value cond_fwhm;
     rapidjson::Value cond_nonlocal;
-
-    // @param reading_information -- input_para -- implicit_solvation_model
-    rapidjson::Value implicit_solvation_model(rapidjson::kObjectType);
+    // @param reading_information -- input_file -- implicit_solvation_model
     rapidjson::Value imp_sol;
     rapidjson::Value eb_k;
     rapidjson::Value tau;
@@ -490,7 +471,12 @@ namespace Para_Json
     rapidjson::Value coordinate;
 
 
+    void Add_notNull_value(rapidjson::Value father,std::string name, rapidjson::Value son,rapidjson::Document doc){
 
+        if(son.IsNull() || son == "" || son.Empty()) return ;
+        father.AddMember(name.c_str(), son, doc.GetAllocator());
+        return;
+    }
 
     /**
      *  The functions below initialize the json output parameter 
@@ -553,415 +539,421 @@ namespace Para_Json
         parallel.AddMember("dcolor", dcolor, doc.GetAllocator());
                 
     }
-
-
+    /**
+     * @brief   delete null node 
+     */
+    void RemoveNullValues(rapidjson::Value& parent) {
+        if (parent.IsObject()) {
+            for (rapidjson::Value::MemberIterator itr = parent.MemberBegin(); itr != parent.MemberEnd(); ) {
+                if (itr->value.IsNull()) {
+                    itr = parent.EraseMember(itr);
+                } else {
+                    // delet son null node
+                    RemoveNullValues(itr->value);
+                    ++itr;
+                }
+            }
+        } else if (parent.IsArray()) {
+            for (int i = 0; i < parent.Size(); ) {
+                if (parent[i].IsNull()) {
+                    parent.Erase(parent.Begin() + i);
+                } else {
+                    // delet son null node
+                    RemoveNullValues(parent[i]);
+                    ++i;
+                }
+            }
+        }
+    }
 
     /**
      * @brief   add Second stage：parameter in Abacus - readin_info:
      */
     void Init_json_abacus_readinInfo(){
         //add Third stage：parameter in system_variables:
-        system_variables.AddMember("suffix", input_suffix, doc.GetAllocator());
-        system_variables.AddMember("ntype", ntype, doc.GetAllocator());
-        system_variables.AddMember("calculation", calculation, doc.GetAllocator());
-        system_variables.AddMember("esolver_type", esolver_type, doc.GetAllocator());
-        system_variables.AddMember("symmetry", symmetry, doc.GetAllocator());
-        system_variables.AddMember("symmetry_precfield", symmetry_precfield, doc.GetAllocator());
-        system_variables.AddMember("symmetry_autoclose", symmetry_autoclose, doc.GetAllocator());
-        system_variables.AddMember("kpar", kpar, doc.GetAllocator());
-        system_variables.AddMember("bndpar", bndpar, doc.GetAllocator());
-        system_variables.AddMember("latname", latname, doc.GetAllocator());
-        system_variables.AddMember("init_wfc", init_wfc, doc.GetAllocator());
-        system_variables.AddMember("init_chg", init_chg, doc.GetAllocator());
-        system_variables.AddMember("init_vel", init_vel, doc.GetAllocator());
-        system_variables.AddMember("nelec", nelec, doc.GetAllocator());
-        system_variables.AddMember("nupdown", nupdown, doc.GetAllocator());
-        system_variables.AddMember("dft_functional", dft_functional, doc.GetAllocator());
-        system_variables.AddMember("xc_temperature", xc_temperature, doc.GetAllocator());
-        system_variables.AddMember("pseudo_rcut", pseudo_rcut, doc.GetAllocator());
-        system_variables.AddMember("pseudo_mesh", pseudo_mesh, doc.GetAllocator());
-        system_variables.AddMember("mem_saver", mem_saver, doc.GetAllocator());
-        system_variables.AddMember("diago_proc", diago_proc, doc.GetAllocator());
-        system_variables.AddMember("nbspline", nbspline, doc.GetAllocator());
-        system_variables.AddMember("kspacing", kspacing, doc.GetAllocator());
-        system_variables.AddMember("min_dist_coef", min_dist_coef, doc.GetAllocator());
-        system_variables.AddMember("device", device, doc.GetAllocator());
+        input_file.AddMember("suffix", input_suffix, doc.GetAllocator());
+        input_file.AddMember("ntype", ntype, doc.GetAllocator());
+        input_file.AddMember("calculation", calculation, doc.GetAllocator());
+        input_file.AddMember("esolver_type", esolver_type, doc.GetAllocator());
+        input_file.AddMember("symmetry", symmetry, doc.GetAllocator());
+        input_file.AddMember("symmetry_precfield", symmetry_precfield, doc.GetAllocator());
+        input_file.AddMember("symmetry_autoclose", symmetry_autoclose, doc.GetAllocator());
+        input_file.AddMember("kpar", kpar, doc.GetAllocator());
+        input_file.AddMember("bndpar", bndpar, doc.GetAllocator());
+        input_file.AddMember("latname", latname, doc.GetAllocator());
+        input_file.AddMember("init_wfc", init_wfc, doc.GetAllocator());
+        input_file.AddMember("init_chg", init_chg, doc.GetAllocator());
+        input_file.AddMember("init_vel", init_vel, doc.GetAllocator());
+        input_file.AddMember("nelec", nelec, doc.GetAllocator());
+        input_file.AddMember("nupdown", nupdown, doc.GetAllocator());
+        input_file.AddMember("dft_functional", dft_functional, doc.GetAllocator());
+        input_file.AddMember("xc_temperature", xc_temperature, doc.GetAllocator());
+        input_file.AddMember("pseudo_rcut", pseudo_rcut, doc.GetAllocator());
+        input_file.AddMember("pseudo_mesh", pseudo_mesh, doc.GetAllocator());
+        input_file.AddMember("mem_saver", mem_saver, doc.GetAllocator());
+        input_file.AddMember("diago_proc", diago_proc, doc.GetAllocator());
+        input_file.AddMember("nbspline", nbspline, doc.GetAllocator());
+        input_file.AddMember("kspacing", kspacing, doc.GetAllocator());
+        input_file.AddMember("min_dist_coef", min_dist_coef, doc.GetAllocator());
+        input_file.AddMember("device", device, doc.GetAllocator());
 
         //add Third stage：parameter in files_related:
-        files_related.AddMember("stru_file", stru_file, doc.GetAllocator());
-        files_related.AddMember("kpoint_file", kpoint_file, doc.GetAllocator());
-        files_related.AddMember("pseudo_dir", pseudo_dir, doc.GetAllocator());
-        files_related.AddMember("orbital_dir", orbital_dir, doc.GetAllocator());
-        files_related.AddMember("read_file_dir", read_file_dir, doc.GetAllocator());
-        files_related.AddMember("wannier_card", wannier_card, doc.GetAllocator());
+        input_file.AddMember("stru_file", stru_file, doc.GetAllocator());
+        input_file.AddMember("kpoint_file", kpoint_file, doc.GetAllocator());
+        input_file.AddMember("pseudo_dir", pseudo_dir, doc.GetAllocator());
+        input_file.AddMember("orbital_dir", orbital_dir, doc.GetAllocator());
+        input_file.AddMember("read_file_dir", read_file_dir, doc.GetAllocator());
+        input_file.AddMember("wannier_card", wannier_card, doc.GetAllocator());
     
         //add Third stage：parameter in planewave_related:
-        planewave_related.AddMember("ecutwfc", ecutwfc, doc.GetAllocator());
-        planewave_related.AddMember("nx", nx, doc.GetAllocator());
-        planewave_related.AddMember("ny", ny, doc.GetAllocator());
-        planewave_related.AddMember("nz", nz, doc.GetAllocator());
-        planewave_related.AddMember("pw_seed", pw_seed, doc.GetAllocator());
-        planewave_related.AddMember("pw_diag_thr", pw_diag_thr, doc.GetAllocator());
-        planewave_related.AddMember("pw_diag_nmax", pw_diag_nmax, doc.GetAllocator());
-        planewave_related.AddMember("pw_diag_ndim", pw_diag_ndim, doc.GetAllocator());    
+        input_file.AddMember("ecutwfc", ecutwfc, doc.GetAllocator());
+        input_file.AddMember("nx", nx, doc.GetAllocator());
+        input_file.AddMember("ny", ny, doc.GetAllocator());
+        input_file.AddMember("nz", nz, doc.GetAllocator());
+        input_file.AddMember("pw_seed", pw_seed, doc.GetAllocator());
+        input_file.AddMember("pw_diag_thr", pw_diag_thr, doc.GetAllocator());
+        input_file.AddMember("pw_diag_nmax", pw_diag_nmax, doc.GetAllocator());
+        input_file.AddMember("pw_diag_ndim", pw_diag_ndim, doc.GetAllocator());    
     
     
         //add Third stage：parameter in numerical_atomic_orbitals_related:
-        numerical_atomic_orbitals_related.AddMember("nb2d", nb2d, doc.GetAllocator());
-        numerical_atomic_orbitals_related.AddMember("lmaxmax", lmaxmax, doc.GetAllocator());
-        numerical_atomic_orbitals_related.AddMember("lcao_ecut", lcao_ecut, doc.GetAllocator());
-        numerical_atomic_orbitals_related.AddMember("lcao_dk", lcao_dk, doc.GetAllocator());
-        numerical_atomic_orbitals_related.AddMember("lcao_dr", lcao_dr, doc.GetAllocator());
-        numerical_atomic_orbitals_related.AddMember("lcao_rmax", lcao_rmax, doc.GetAllocator());
-        numerical_atomic_orbitals_related.AddMember("search_radius", search_radius, doc.GetAllocator());
-        numerical_atomic_orbitals_related.AddMember("search_pbc", search_pbc, doc.GetAllocator());
-        numerical_atomic_orbitals_related.AddMember("bx", bx, doc.GetAllocator());
-        numerical_atomic_orbitals_related.AddMember("by", by, doc.GetAllocator());
-        numerical_atomic_orbitals_related.AddMember("bz", bz, doc.GetAllocator());        
+        input_file.AddMember("nb2d", nb2d, doc.GetAllocator());
+        input_file.AddMember("lmaxmax", lmaxmax, doc.GetAllocator());
+        input_file.AddMember("lcao_ecut", lcao_ecut, doc.GetAllocator());
+        input_file.AddMember("lcao_dk", lcao_dk, doc.GetAllocator());
+        input_file.AddMember("lcao_dr", lcao_dr, doc.GetAllocator());
+        input_file.AddMember("lcao_rmax", lcao_rmax, doc.GetAllocator());
+        input_file.AddMember("search_radius", search_radius, doc.GetAllocator());
+        input_file.AddMember("search_pbc", search_pbc, doc.GetAllocator());
+        input_file.AddMember("bx", bx, doc.GetAllocator());
+        input_file.AddMember("by", by, doc.GetAllocator());
+        input_file.AddMember("bz", bz, doc.GetAllocator());        
     
         //add Third stage：parameter in electronic_structure:
-        electronic_structure.AddMember("basis_type", basis_type, doc.GetAllocator());
-        electronic_structure.AddMember("ks_solver", ks_solver, doc.GetAllocator());
-        electronic_structure.AddMember("nbands", nbands, doc.GetAllocator());
-        electronic_structure.AddMember("nbands_istate", nbands_istate, doc.GetAllocator());
-        electronic_structure.AddMember("nspin", nspin, doc.GetAllocator());
-        electronic_structure.AddMember("smearing_method", smearing_method, doc.GetAllocator());
-        electronic_structure.AddMember("smearing_sigma", smearing_sigma, doc.GetAllocator());
-        electronic_structure.AddMember("smearing_sigma_temp", smearing_sigma_temp, doc.GetAllocator());
-        electronic_structure.AddMember("mixing_type", mixing_type, doc.GetAllocator());
-        electronic_structure.AddMember("mixing_beta", mixing_beta, doc.GetAllocator());
-        electronic_structure.AddMember("mixing_ndim", mixing_ndim, doc.GetAllocator());
-        electronic_structure.AddMember("mixing_gg0", mixing_gg0, doc.GetAllocator());
-        electronic_structure.AddMember("mixing_tau", mixing_tau, doc.GetAllocator());
-        electronic_structure.AddMember("mixing_dftu", mixing_dftu, doc.GetAllocator());
-        electronic_structure.AddMember("gamma_only", gamma_only, doc.GetAllocator());
-        electronic_structure.AddMember("printe", printe, doc.GetAllocator());
-        electronic_structure.AddMember("scf_nmax", scf_nmax, doc.GetAllocator());
-        electronic_structure.AddMember("scf_thr", scf_thr, doc.GetAllocator());
-        electronic_structure.AddMember("scf_thr_type", scf_thr_type, doc.GetAllocator());
-        electronic_structure.AddMember("chg_extrap", chg_extrap, doc.GetAllocator());
-        electronic_structure.AddMember("lspinorb", lspinorb, doc.GetAllocator());
-        electronic_structure.AddMember("noncolin", noncolin, doc.GetAllocator());
-        electronic_structure.AddMember("soc_lambda", soc_lambda, doc.GetAllocator());    
+        input_file.AddMember("basis_type", basis_type, doc.GetAllocator());
+        input_file.AddMember("ks_solver", ks_solver, doc.GetAllocator());
+        input_file.AddMember("nbands", nbands, doc.GetAllocator());
+        input_file.AddMember("nbands_istate", nbands_istate, doc.GetAllocator());
+        input_file.AddMember("nspin", nspin, doc.GetAllocator());
+        input_file.AddMember("smearing_method", smearing_method, doc.GetAllocator());
+        input_file.AddMember("smearing_sigma", smearing_sigma, doc.GetAllocator());
+        input_file.AddMember("smearing_sigma_temp", smearing_sigma_temp, doc.GetAllocator());
+        input_file.AddMember("mixing_type", mixing_type, doc.GetAllocator());
+        input_file.AddMember("mixing_beta", mixing_beta, doc.GetAllocator());
+        input_file.AddMember("mixing_ndim", mixing_ndim, doc.GetAllocator());
+        input_file.AddMember("mixing_gg0", mixing_gg0, doc.GetAllocator());
+        input_file.AddMember("mixing_tau", mixing_tau, doc.GetAllocator());
+        input_file.AddMember("mixing_dftu", mixing_dftu, doc.GetAllocator());
+        input_file.AddMember("gamma_only", gamma_only, doc.GetAllocator());
+        input_file.AddMember("printe", printe, doc.GetAllocator());
+        input_file.AddMember("scf_nmax", scf_nmax, doc.GetAllocator());
+        input_file.AddMember("scf_thr", scf_thr, doc.GetAllocator());
+        input_file.AddMember("scf_thr_type", scf_thr_type, doc.GetAllocator());
+        input_file.AddMember("chg_extrap", chg_extrap, doc.GetAllocator());
+        input_file.AddMember("lspinorb", lspinorb, doc.GetAllocator());
+        input_file.AddMember("noncolin", noncolin, doc.GetAllocator());
+        input_file.AddMember("soc_lambda", soc_lambda, doc.GetAllocator());    
 
 
         //add Third stage：parameter in electronic_structure_SDFT:
-        electronic_structure_SDFT.AddMember("method_sto", method_sto, doc.GetAllocator());
-        electronic_structure_SDFT.AddMember("nbands_sto", nbands_sto, doc.GetAllocator());
-        electronic_structure_SDFT.AddMember("nche_sto", nche_sto, doc.GetAllocator());
-        electronic_structure_SDFT.AddMember("emin_sto", emin_sto, doc.GetAllocator());
-        electronic_structure_SDFT.AddMember("emax_sto", emax_sto, doc.GetAllocator());
-        electronic_structure_SDFT.AddMember("seed_sto", seed_sto, doc.GetAllocator());
-        electronic_structure_SDFT.AddMember("initsto_freq", initsto_freq, doc.GetAllocator());
-        electronic_structure_SDFT.AddMember("npart_sto", npart_sto, doc.GetAllocator());
+        input_file.AddMember("method_sto", method_sto, doc.GetAllocator());
+        input_file.AddMember("nbands_sto", nbands_sto, doc.GetAllocator());
+        input_file.AddMember("nche_sto", nche_sto, doc.GetAllocator());
+        input_file.AddMember("emin_sto", emin_sto, doc.GetAllocator());
+        input_file.AddMember("emax_sto", emax_sto, doc.GetAllocator());
+        input_file.AddMember("seed_sto", seed_sto, doc.GetAllocator());
+        input_file.AddMember("initsto_freq", initsto_freq, doc.GetAllocator());
+        input_file.AddMember("npart_sto", npart_sto, doc.GetAllocator());
         
         
         //add Third stage：parameter in geometry_relaxation:
-        geometry_relaxation.AddMember("relax_method", relax_method, doc.GetAllocator());
-        geometry_relaxation.AddMember("relax_new", relax_new, doc.GetAllocator());
-        geometry_relaxation.AddMember("relax_scale_force", relax_scale_force, doc.GetAllocator());
-        geometry_relaxation.AddMember("relax_nmax", relax_nmax, doc.GetAllocator());
-        geometry_relaxation.AddMember("relax_cg_thr", relax_cg_thr, doc.GetAllocator());
-        geometry_relaxation.AddMember("cal_force", cal_force, doc.GetAllocator());
-        geometry_relaxation.AddMember("force_thr", force_thr, doc.GetAllocator());
-        geometry_relaxation.AddMember("force_thr_ev", force_thr_ev, doc.GetAllocator());
-        geometry_relaxation.AddMember("force_thr_ev2", force_thr_ev2, doc.GetAllocator());
-        geometry_relaxation.AddMember("relax_bfgs_w1", relax_bfgs_w1, doc.GetAllocator());
-        geometry_relaxation.AddMember("relax_bfgs_w2", relax_bfgs_w2, doc.GetAllocator());
-        geometry_relaxation.AddMember("relax_bfgs_rmax", relax_bfgs_rmax, doc.GetAllocator());
-        geometry_relaxation.AddMember("relax_bfgs_rmin", relax_bfgs_rmin, doc.GetAllocator());
-        geometry_relaxation.AddMember("relax_bfgs_init", relax_bfgs_init, doc.GetAllocator());
-        geometry_relaxation.AddMember("cal_stress", cal_stress, doc.GetAllocator());
-        geometry_relaxation.AddMember("stress_thr", stress_thr, doc.GetAllocator());
-        geometry_relaxation.AddMember("press1", press1, doc.GetAllocator());
-        geometry_relaxation.AddMember("press2", press2, doc.GetAllocator());
-        geometry_relaxation.AddMember("press3", press3, doc.GetAllocator());
-        geometry_relaxation.AddMember("fixed_axes", fixed_axes, doc.GetAllocator());
-        geometry_relaxation.AddMember("fixed_ibrav", fixed_ibrav, doc.GetAllocator());
-        geometry_relaxation.AddMember("fixed_atoms", fixed_atoms, doc.GetAllocator());
-        geometry_relaxation.AddMember("cell_factor", cell_factor, doc.GetAllocator());
+        input_file.AddMember("relax_method", relax_method, doc.GetAllocator());
+        input_file.AddMember("relax_new", relax_new, doc.GetAllocator());
+        input_file.AddMember("relax_scale_force", relax_scale_force, doc.GetAllocator());
+        input_file.AddMember("relax_nmax", relax_nmax, doc.GetAllocator());
+        input_file.AddMember("relax_cg_thr", relax_cg_thr, doc.GetAllocator());
+        input_file.AddMember("cal_force", cal_force, doc.GetAllocator());
+        input_file.AddMember("force_thr", force_thr, doc.GetAllocator());
+        input_file.AddMember("force_thr_ev", force_thr_ev, doc.GetAllocator());
+        input_file.AddMember("force_thr_ev2", force_thr_ev2, doc.GetAllocator());
+        input_file.AddMember("relax_bfgs_w1", relax_bfgs_w1, doc.GetAllocator());
+        input_file.AddMember("relax_bfgs_w2", relax_bfgs_w2, doc.GetAllocator());
+        input_file.AddMember("relax_bfgs_rmax", relax_bfgs_rmax, doc.GetAllocator());
+        input_file.AddMember("relax_bfgs_rmin", relax_bfgs_rmin, doc.GetAllocator());
+        input_file.AddMember("relax_bfgs_init", relax_bfgs_init, doc.GetAllocator());
+        input_file.AddMember("cal_stress", cal_stress, doc.GetAllocator());
+        input_file.AddMember("stress_thr", stress_thr, doc.GetAllocator());
+        input_file.AddMember("press1", press1, doc.GetAllocator());
+        input_file.AddMember("press2", press2, doc.GetAllocator());
+        input_file.AddMember("press3", press3, doc.GetAllocator());
+        input_file.AddMember("fixed_axes", fixed_axes, doc.GetAllocator());
+        input_file.AddMember("fixed_ibrav", fixed_ibrav, doc.GetAllocator());
+        input_file.AddMember("fixed_atoms", fixed_atoms, doc.GetAllocator());
+        input_file.AddMember("cell_factor", cell_factor, doc.GetAllocator());
         
         
         //add Third stage：parameter in output_information_related:
-        output_information_related.AddMember("out_mul", out_mul, doc.GetAllocator());
-        output_information_related.AddMember("out_freq_elec", out_freq_elec, doc.GetAllocator());
-        output_information_related.AddMember("out_freq_ion", out_freq_ion, doc.GetAllocator());        
-        output_information_related.AddMember("out_chg", out_chg, doc.GetAllocator());
-        output_information_related.AddMember("out_pot", out_pot, doc.GetAllocator());
-        output_information_related.AddMember("out_dm", out_dm, doc.GetAllocator());
-        output_information_related.AddMember("out_dm1", out_dm1, doc.GetAllocator());
-        output_information_related.AddMember("out_wfc_pw", out_wfc_pw, doc.GetAllocator());
-        output_information_related.AddMember("out_wfc_r", out_wfc_r, doc.GetAllocator());
-        output_information_related.AddMember("out_wfc_lcao", out_wfc_lcao, doc.GetAllocator());
-        output_information_related.AddMember("out_dos", out_dos, doc.GetAllocator());
-        output_information_related.AddMember("out_band", out_band, doc.GetAllocator());
-        output_information_related.AddMember("out_proj_band", out_proj_band, doc.GetAllocator());
-        output_information_related.AddMember("out_stru", out_stru, doc.GetAllocator());
-        output_information_related.AddMember("out_bandgap", out_bandgap, doc.GetAllocator());
-        output_information_related.AddMember("out_level", out_level, doc.GetAllocator());
-        output_information_related.AddMember("out_alllog", out_alllog, doc.GetAllocator());
-        output_information_related.AddMember("out_mat_hs", out_mat_hs, doc.GetAllocator());
-        output_information_related.AddMember("out_mat_r", out_mat_r, doc.GetAllocator());
-        output_information_related.AddMember("out_mat_hs2", out_mat_hs2, doc.GetAllocator());
-        output_information_related.AddMember("out_mat_t", out_mat_t, doc.GetAllocator());
-        output_information_related.AddMember("out_mat_dh", out_mat_dh, doc.GetAllocator());
-        output_information_related.AddMember("out_app_flag", out_app_flag, doc.GetAllocator());
-        output_information_related.AddMember("out_interval", out_interval, doc.GetAllocator());
-        output_information_related.AddMember("out_element_info", out_element_info, doc.GetAllocator());
-        output_information_related.AddMember("restart_save", restart_save, doc.GetAllocator());
-        output_information_related.AddMember("restart_load", restart_load, doc.GetAllocator());
-        output_information_related.AddMember("rpa", rpa, doc.GetAllocator());
+        input_file.AddMember("out_mul", out_mul, doc.GetAllocator());
+        input_file.AddMember("out_freq_elec", out_freq_elec, doc.GetAllocator());
+        input_file.AddMember("out_freq_ion", out_freq_ion, doc.GetAllocator());        
+        input_file.AddMember("out_chg", out_chg, doc.GetAllocator());
+        input_file.AddMember("out_pot", out_pot, doc.GetAllocator());
+        input_file.AddMember("out_dm", out_dm, doc.GetAllocator());
+        input_file.AddMember("out_dm1", out_dm1, doc.GetAllocator());
+        input_file.AddMember("out_wfc_pw", out_wfc_pw, doc.GetAllocator());
+        input_file.AddMember("out_wfc_r", out_wfc_r, doc.GetAllocator());
+        input_file.AddMember("out_wfc_lcao", out_wfc_lcao, doc.GetAllocator());
+        input_file.AddMember("out_dos", out_dos, doc.GetAllocator());
+        input_file.AddMember("out_band", out_band, doc.GetAllocator());
+        input_file.AddMember("out_proj_band", out_proj_band, doc.GetAllocator());
+        input_file.AddMember("out_stru", out_stru, doc.GetAllocator());
+        input_file.AddMember("out_bandgap", out_bandgap, doc.GetAllocator());
+        input_file.AddMember("out_level", out_level, doc.GetAllocator());
+        input_file.AddMember("out_alllog", out_alllog, doc.GetAllocator());
+        input_file.AddMember("out_mat_hs", out_mat_hs, doc.GetAllocator());
+        input_file.AddMember("out_mat_r", out_mat_r, doc.GetAllocator());
+        input_file.AddMember("out_mat_hs2", out_mat_hs2, doc.GetAllocator());
+        input_file.AddMember("out_mat_t", out_mat_t, doc.GetAllocator());
+        input_file.AddMember("out_mat_dh", out_mat_dh, doc.GetAllocator());
+        input_file.AddMember("out_app_flag", out_app_flag, doc.GetAllocator());
+        input_file.AddMember("out_interval", out_interval, doc.GetAllocator());
+        input_file.AddMember("out_element_info", out_element_info, doc.GetAllocator());
+        input_file.AddMember("restart_save", restart_save, doc.GetAllocator());
+        input_file.AddMember("restart_load", restart_load, doc.GetAllocator());
+        input_file.AddMember("rpa", rpa, doc.GetAllocator());
 
         //add Third stage：parameter in density_of_states:
-        density_of_states.AddMember("dos_edelta_ev", dos_edelta_ev, doc.GetAllocator());
-        density_of_states.AddMember("dos_sigma", dos_sigma, doc.GetAllocator());
-        density_of_states.AddMember("dos_scale", dos_scale, doc.GetAllocator());
-        density_of_states.AddMember("dos_emin_ev", dos_emin_ev, doc.GetAllocator());
-        density_of_states.AddMember("dos_emax_ev", dos_emax_ev, doc.GetAllocator());
-        density_of_states.AddMember("dos_nche", dos_nche, doc.GetAllocator());
+        input_file.AddMember("dos_edelta_ev", dos_edelta_ev, doc.GetAllocator());
+        input_file.AddMember("dos_sigma", dos_sigma, doc.GetAllocator());
+        input_file.AddMember("dos_scale", dos_scale, doc.GetAllocator());
+        input_file.AddMember("dos_emin_ev", dos_emin_ev, doc.GetAllocator());
+        input_file.AddMember("dos_emax_ev", dos_emax_ev, doc.GetAllocator());
+        input_file.AddMember("dos_nche", dos_nche, doc.GetAllocator());
         
         //add Third stage：parameter in naos:
-        naos.AddMember("bessel_nao_ecut", bessel_nao_ecut, doc.GetAllocator());
-        naos.AddMember("bessel_nao_tolerence", bessel_nao_tolerence, doc.GetAllocator());
-        naos.AddMember("bessel_nao_rcut", bessel_nao_rcut, doc.GetAllocator());
-        naos.AddMember("bessel_nao_smooth", bessel_nao_smooth, doc.GetAllocator());
-        naos.AddMember("bessel_nao_sigma", bessel_nao_sigma, doc.GetAllocator());
+        input_file.AddMember("bessel_nao_ecut", bessel_nao_ecut, doc.GetAllocator());
+        input_file.AddMember("bessel_nao_tolerence", bessel_nao_tolerence, doc.GetAllocator());
+        input_file.AddMember("bessel_nao_rcut", bessel_nao_rcut, doc.GetAllocator());
+        input_file.AddMember("bessel_nao_smooth", bessel_nao_smooth, doc.GetAllocator());
+        input_file.AddMember("bessel_nao_sigma", bessel_nao_sigma, doc.GetAllocator());
         
         //add Third stage：parameter in deepks:
-        deepks.AddMember("deepks_out_labels", deepks_out_labels, doc.GetAllocator());
-        deepks.AddMember("deepks_scf", deepks_scf, doc.GetAllocator());
-        deepks.AddMember("deepks_model", deepks_model, doc.GetAllocator());
-        deepks.AddMember("bessel_descriptor_lmax", bessel_descriptor_lmax, doc.GetAllocator());
-        deepks.AddMember("bessel_descriptor_ecut", bessel_descriptor_ecut, doc.GetAllocator());
-        deepks.AddMember("bessel_descriptor_tolerence", bessel_descriptor_tolerence, doc.GetAllocator());
-        deepks.AddMember("bessel_descriptor_rcut", bessel_descriptor_rcut, doc.GetAllocator());
-        deepks.AddMember("bessel_descriptor_smooth", bessel_descriptor_smooth, doc.GetAllocator());
-        deepks.AddMember("bessel_descriptor_sigma", bessel_descriptor_sigma, doc.GetAllocator());
-        deepks.AddMember("deepks_bandgap", deepks_bandgap, doc.GetAllocator());
-        deepks.AddMember("deepks_out_unittest", deepks_out_unittest, doc.GetAllocator());
+        input_file.AddMember("input_file_out_labels", input_file_out_labels, doc.GetAllocator());
+        input_file.AddMember("input_file_scf", input_file_scf, doc.GetAllocator());
+        input_file.AddMember("input_file_model", input_file_model, doc.GetAllocator());
+        input_file.AddMember("bessel_descriptor_lmax", bessel_descriptor_lmax, doc.GetAllocator());
+        input_file.AddMember("bessel_descriptor_ecut", bessel_descriptor_ecut, doc.GetAllocator());
+        input_file.AddMember("bessel_descriptor_tolerence", bessel_descriptor_tolerence, doc.GetAllocator());
+        input_file.AddMember("bessel_descriptor_rcut", bessel_descriptor_rcut, doc.GetAllocator());
+        input_file.AddMember("bessel_descriptor_smooth", bessel_descriptor_smooth, doc.GetAllocator());
+        input_file.AddMember("bessel_descriptor_sigma", bessel_descriptor_sigma, doc.GetAllocator());
+        input_file.AddMember("input_file_bandgap", input_file_bandgap, doc.GetAllocator());
+        input_file.AddMember("input_file_out_unittest", input_file_out_unittest, doc.GetAllocator());
         
         //add Third stage：parameter in ofdft:
-        ofdft.AddMember("of_kinetic", of_kinetic, doc.GetAllocator());
-        ofdft.AddMember("of_method", of_method, doc.GetAllocator());
-        ofdft.AddMember("of_conv", of_conv, doc.GetAllocator());
-        ofdft.AddMember("of_tole", of_tole, doc.GetAllocator());
-        ofdft.AddMember("of_tolp", of_tolp, doc.GetAllocator());
-        ofdft.AddMember("of_tf_weight", of_tf_weight, doc.GetAllocator());
-        ofdft.AddMember("of_vw_weight", of_vw_weight, doc.GetAllocator());
-        ofdft.AddMember("of_wt_alpha", of_wt_alpha, doc.GetAllocator());
-        ofdft.AddMember("of_wt_beta", of_wt_beta, doc.GetAllocator());
-        ofdft.AddMember("of_wt_rho0", of_wt_rho0, doc.GetAllocator());
-        ofdft.AddMember("of_hold_rho0", of_hold_rho0, doc.GetAllocator());
-        ofdft.AddMember("of_lkt_a", of_lkt_a, doc.GetAllocator());
-        ofdft.AddMember("of_read_kernel", of_read_kernel, doc.GetAllocator());
-        ofdft.AddMember("of_kernel_file", of_kernel_file, doc.GetAllocator());
-        ofdft.AddMember("of_full_pw", of_full_pw, doc.GetAllocator());
-        ofdft.AddMember("of_full_pw_dim", of_full_pw_dim, doc.GetAllocator());
+        input_file.AddMember("of_kinetic", of_kinetic, doc.GetAllocator());
+        input_file.AddMember("of_method", of_method, doc.GetAllocator());
+        input_file.AddMember("of_conv", of_conv, doc.GetAllocator());
+        input_file.AddMember("of_tole", of_tole, doc.GetAllocator());
+        input_file.AddMember("of_tolp", of_tolp, doc.GetAllocator());
+        input_file.AddMember("of_tf_weight", of_tf_weight, doc.GetAllocator());
+        input_file.AddMember("of_vw_weight", of_vw_weight, doc.GetAllocator());
+        input_file.AddMember("of_wt_alpha", of_wt_alpha, doc.GetAllocator());
+        input_file.AddMember("of_wt_beta", of_wt_beta, doc.GetAllocator());
+        input_file.AddMember("of_wt_rho0", of_wt_rho0, doc.GetAllocator());
+        input_file.AddMember("of_hold_rho0", of_hold_rho0, doc.GetAllocator());
+        input_file.AddMember("of_lkt_a", of_lkt_a, doc.GetAllocator());
+        input_file.AddMember("of_read_kernel", of_read_kernel, doc.GetAllocator());
+        input_file.AddMember("of_kernel_file", of_kernel_file, doc.GetAllocator());
+        input_file.AddMember("of_full_pw", of_full_pw, doc.GetAllocator());
+        input_file.AddMember("of_full_pw_dim", of_full_pw_dim, doc.GetAllocator());
         
         
         //add Third stage：parameter in electric_field_and_dipole_correction:
-        electric_field_and_dipole_correction.AddMember("efield_flag", efield_flag, doc.GetAllocator());
-        electric_field_and_dipole_correction.AddMember("dip_cor_flag", dip_cor_flag, doc.GetAllocator());
-        electric_field_and_dipole_correction.AddMember("efield_dir", efield_dir, doc.GetAllocator());
-        electric_field_and_dipole_correction.AddMember("efield_pos_max", efield_pos_max, doc.GetAllocator());
-        electric_field_and_dipole_correction.AddMember("efield_pos_dec", efield_pos_dec, doc.GetAllocator());
-        electric_field_and_dipole_correction.AddMember("efield_amp", efield_amp, doc.GetAllocator());
+        input_file.AddMember("efield_flag", efield_flag, doc.GetAllocator());
+        input_file.AddMember("dip_cor_flag", dip_cor_flag, doc.GetAllocator());
+        input_file.AddMember("efield_dir", efield_dir, doc.GetAllocator());
+        input_file.AddMember("efield_pos_max", efield_pos_max, doc.GetAllocator());
+        input_file.AddMember("efield_pos_dec", efield_pos_dec, doc.GetAllocator());
+        input_file.AddMember("efield_amp", efield_amp, doc.GetAllocator());
         
         //add Third stage：parameter in gate_field:
-        gate_field.AddMember("gate_flag", gate_flag, doc.GetAllocator());
-        gate_field.AddMember("zgate", zgate, doc.GetAllocator());
-        gate_field.AddMember("block", block, doc.GetAllocator());
-        gate_field.AddMember("block_down", block_down, doc.GetAllocator());
-        gate_field.AddMember("block_up", block_up, doc.GetAllocator());
-        gate_field.AddMember("block_height", block_height, doc.GetAllocator());
+        input_file.AddMember("gate_flag", gate_flag, doc.GetAllocator());
+        input_file.AddMember("zgate", zgate, doc.GetAllocator());
+        input_file.AddMember("block", block, doc.GetAllocator());
+        input_file.AddMember("block_down", block_down, doc.GetAllocator());
+        input_file.AddMember("block_up", block_up, doc.GetAllocator());
+        input_file.AddMember("block_height", block_height, doc.GetAllocator());
     
         //add Third stage：parameter in exact_exchange:
-        exact_exchange.AddMember("exx_hybrid_alpha", exx_hybrid_alpha, doc.GetAllocator());
-        exact_exchange.AddMember("exx_hse_omega", exx_hse_omega, doc.GetAllocator());
-        exact_exchange.AddMember("exx_separate_loop", exx_separate_loop, doc.GetAllocator());
-        exact_exchange.AddMember("exx_hybrid_step", exx_hybrid_step, doc.GetAllocator());
-        exact_exchange.AddMember("exx_mixing_beta", exx_mixing_beta, doc.GetAllocator());
-        exact_exchange.AddMember("exx_lambda", exx_lambda, doc.GetAllocator());
-        exact_exchange.AddMember("exx_pca_threshold", exx_pca_threshold, doc.GetAllocator());
-        exact_exchange.AddMember("exx_c_threshold", exx_c_threshold, doc.GetAllocator());
-        exact_exchange.AddMember("exx_v_threshold", exx_v_threshold, doc.GetAllocator());
-        exact_exchange.AddMember("exx_dm_threshold", exx_dm_threshold, doc.GetAllocator());
-        exact_exchange.AddMember("exx_c_grad_threshold", exx_c_grad_threshold, doc.GetAllocator());
-        exact_exchange.AddMember("exx_v_grad_threshold", exx_v_grad_threshold, doc.GetAllocator());
-        exact_exchange.AddMember("exx_schwarz_threshold", exx_schwarz_threshold, doc.GetAllocator());
-        exact_exchange.AddMember("exx_cauchy_threshold", exx_cauchy_threshold, doc.GetAllocator());
-        exact_exchange.AddMember("exx_cauchy_force_threshold", exx_cauchy_force_threshold, doc.GetAllocator());
-        exact_exchange.AddMember("exx_cauchy_stress_threshold", exx_cauchy_stress_threshold, doc.GetAllocator());
-        exact_exchange.AddMember("exx_ccp_threshold", exx_ccp_threshold, doc.GetAllocator());
-        exact_exchange.AddMember("exx_ccp_rmesh_times", exx_ccp_rmesh_times, doc.GetAllocator());
-        exact_exchange.AddMember("exx_distribute_type", exx_distribute_type, doc.GetAllocator());
-        exact_exchange.AddMember("exx_opt_orb_lmax", exx_opt_orb_lmax, doc.GetAllocator());
-        exact_exchange.AddMember("exx_opt_orb_ecut", exx_opt_orb_ecut, doc.GetAllocator());
-        exact_exchange.AddMember("exx_opt_orb_tolerence", exx_opt_orb_tolerence, doc.GetAllocator());
-        exact_exchange.AddMember("exx_real_number", exx_real_number, doc.GetAllocator());
+        input_file.AddMember("exx_hybrid_alpha", exx_hybrid_alpha, doc.GetAllocator());
+        input_file.AddMember("exx_hse_omega", exx_hse_omega, doc.GetAllocator());
+        input_file.AddMember("exx_separate_loop", exx_separate_loop, doc.GetAllocator());
+        input_file.AddMember("exx_hybrid_step", exx_hybrid_step, doc.GetAllocator());
+        input_file.AddMember("exx_mixing_beta", exx_mixing_beta, doc.GetAllocator());
+        input_file.AddMember("exx_lambda", exx_lambda, doc.GetAllocator());
+        input_file.AddMember("exx_pca_threshold", exx_pca_threshold, doc.GetAllocator());
+        input_file.AddMember("exx_c_threshold", exx_c_threshold, doc.GetAllocator());
+        input_file.AddMember("exx_v_threshold", exx_v_threshold, doc.GetAllocator());
+        input_file.AddMember("exx_dm_threshold", exx_dm_threshold, doc.GetAllocator());
+        input_file.AddMember("exx_c_grad_threshold", exx_c_grad_threshold, doc.GetAllocator());
+        input_file.AddMember("exx_v_grad_threshold", exx_v_grad_threshold, doc.GetAllocator());
+        input_file.AddMember("exx_schwarz_threshold", exx_schwarz_threshold, doc.GetAllocator());
+        input_file.AddMember("exx_cauchy_threshold", exx_cauchy_threshold, doc.GetAllocator());
+        input_file.AddMember("exx_cauchy_force_threshold", exx_cauchy_force_threshold, doc.GetAllocator());
+        input_file.AddMember("exx_cauchy_stress_threshold", exx_cauchy_stress_threshold, doc.GetAllocator());
+        input_file.AddMember("exx_ccp_threshold", exx_ccp_threshold, doc.GetAllocator());
+        input_file.AddMember("exx_ccp_rmesh_times", exx_ccp_rmesh_times, doc.GetAllocator());
+        input_file.AddMember("exx_distribute_type", exx_distribute_type, doc.GetAllocator());
+        input_file.AddMember("exx_opt_orb_lmax", exx_opt_orb_lmax, doc.GetAllocator());
+        input_file.AddMember("exx_opt_orb_ecut", exx_opt_orb_ecut, doc.GetAllocator());
+        input_file.AddMember("exx_opt_orb_tolerence", exx_opt_orb_tolerence, doc.GetAllocator());
+        input_file.AddMember("exx_real_number", exx_real_number, doc.GetAllocator());
         
         
         //add Third stage：parameter in molecular_dynamics:
-        molecular_dynamics.AddMember("md_type", md_type, doc.GetAllocator());
-        molecular_dynamics.AddMember("md_nstep", md_nstep, doc.GetAllocator());
-        molecular_dynamics.AddMember("md_dt", md_dt, doc.GetAllocator());
-        molecular_dynamics.AddMember("md_thermostat", md_thermostat, doc.GetAllocator());
-        molecular_dynamics.AddMember("md_tlast", md_tlast, doc.GetAllocator());
-        molecular_dynamics.AddMember("md_tfirst", md_tfirst, doc.GetAllocator());
-        molecular_dynamics.AddMember("md_restart", md_restart, doc.GetAllocator());
-        molecular_dynamics.AddMember("md_restartfreq", md_restartfreq, doc.GetAllocator());
-        molecular_dynamics.AddMember("md_dumpfreq", md_dumpfreq, doc.GetAllocator());
-        molecular_dynamics.AddMember("dump_force", dump_force, doc.GetAllocator());
-        molecular_dynamics.AddMember("dump_vel", dump_vel, doc.GetAllocator());
-        molecular_dynamics.AddMember("dump_virial", dump_virial, doc.GetAllocator());
-        molecular_dynamics.AddMember("md_seed", md_seed, doc.GetAllocator());
-        molecular_dynamics.AddMember("md_tfreq", md_tfreq, doc.GetAllocator());
-        molecular_dynamics.AddMember("md_tchain", md_tchain, doc.GetAllocator());
-        molecular_dynamics.AddMember("md_pmode", md_pmode, doc.GetAllocator());
-        molecular_dynamics.AddMember("md_prec_level", md_prec_level, doc.GetAllocator());
-        molecular_dynamics.AddMember("ref_cell_factor", ref_cell_factor, doc.GetAllocator());
-        molecular_dynamics.AddMember("md_pcouple", md_pcouple, doc.GetAllocator());
-        molecular_dynamics.AddMember("md_pfirst", md_pfirst, doc.GetAllocator());
-        molecular_dynamics.AddMember("md_plast", md_plast, doc.GetAllocator());
-        molecular_dynamics.AddMember("md_pfreq", md_pfreq, doc.GetAllocator());
-        molecular_dynamics.AddMember("md_pchain", md_pchain, doc.GetAllocator());
-        molecular_dynamics.AddMember("lj_rcut", lj_rcut, doc.GetAllocator());
-        molecular_dynamics.AddMember("lj_epsilon", lj_epsilon, doc.GetAllocator());
-        molecular_dynamics.AddMember("lj_sigma", lj_sigma, doc.GetAllocator());
-        molecular_dynamics.AddMember("pot_file", pot_file, doc.GetAllocator());
-        molecular_dynamics.AddMember("msst_direction", msst_direction, doc.GetAllocator());
-        molecular_dynamics.AddMember("msst_vel", msst_vel, doc.GetAllocator());
-        molecular_dynamics.AddMember("msst_vis", msst_vis, doc.GetAllocator());
-        molecular_dynamics.AddMember("msst_tscale", msst_tscale, doc.GetAllocator());
-        molecular_dynamics.AddMember("msst_qmass", msst_qmass, doc.GetAllocator());
-        molecular_dynamics.AddMember("md_damp", md_damp, doc.GetAllocator());
-        molecular_dynamics.AddMember("md_tolerance", md_tolerance, doc.GetAllocator());
-        molecular_dynamics.AddMember("md_nraise", md_nraise, doc.GetAllocator());
-        molecular_dynamics.AddMember("cal_syns", cal_syns, doc.GetAllocator());
-        molecular_dynamics.AddMember("dmax", dmax, doc.GetAllocator());
+        input_file.AddMember("md_type", md_type, doc.GetAllocator());
+        input_file.AddMember("md_nstep", md_nstep, doc.GetAllocator());
+        input_file.AddMember("md_dt", md_dt, doc.GetAllocator());
+        input_file.AddMember("md_thermostat", md_thermostat, doc.GetAllocator());
+        input_file.AddMember("md_tlast", md_tlast, doc.GetAllocator());
+        input_file.AddMember("md_tfirst", md_tfirst, doc.GetAllocator());
+        input_file.AddMember("md_restart", md_restart, doc.GetAllocator());
+        input_file.AddMember("md_restartfreq", md_restartfreq, doc.GetAllocator());
+        input_file.AddMember("md_dumpfreq", md_dumpfreq, doc.GetAllocator());
+        input_file.AddMember("dump_force", dump_force, doc.GetAllocator());
+        input_file.AddMember("dump_vel", dump_vel, doc.GetAllocator());
+        input_file.AddMember("dump_virial", dump_virial, doc.GetAllocator());
+        input_file.AddMember("md_seed", md_seed, doc.GetAllocator());
+        input_file.AddMember("md_tfreq", md_tfreq, doc.GetAllocator());
+        input_file.AddMember("md_tchain", md_tchain, doc.GetAllocator());
+        input_file.AddMember("md_pmode", md_pmode, doc.GetAllocator());
+        input_file.AddMember("md_prec_level", md_prec_level, doc.GetAllocator());
+        input_file.AddMember("ref_cell_factor", ref_cell_factor, doc.GetAllocator());
+        input_file.AddMember("md_pcouple", md_pcouple, doc.GetAllocator());
+        input_file.AddMember("md_pfirst", md_pfirst, doc.GetAllocator());
+        input_file.AddMember("md_plast", md_plast, doc.GetAllocator());
+        input_file.AddMember("md_pfreq", md_pfreq, doc.GetAllocator());
+        input_file.AddMember("md_pchain", md_pchain, doc.GetAllocator());
+        input_file.AddMember("lj_rcut", lj_rcut, doc.GetAllocator());
+        input_file.AddMember("lj_epsilon", lj_epsilon, doc.GetAllocator());
+        input_file.AddMember("lj_sigma", lj_sigma, doc.GetAllocator());
+        input_file.AddMember("pot_file", pot_file, doc.GetAllocator());
+        input_file.AddMember("msst_direction", msst_direction, doc.GetAllocator());
+        input_file.AddMember("msst_vel", msst_vel, doc.GetAllocator());
+        input_file.AddMember("msst_vis", msst_vis, doc.GetAllocator());
+        input_file.AddMember("msst_tscale", msst_tscale, doc.GetAllocator());
+        input_file.AddMember("msst_qmass", msst_qmass, doc.GetAllocator());
+        input_file.AddMember("md_damp", md_damp, doc.GetAllocator());
+        input_file.AddMember("md_tolerance", md_tolerance, doc.GetAllocator());
+        input_file.AddMember("md_nraise", md_nraise, doc.GetAllocator());
+        input_file.AddMember("cal_syns", cal_syns, doc.GetAllocator());
+        input_file.AddMember("dmax", dmax, doc.GetAllocator());
 
         //add Third stage：parameter in dft_plus_u:
-        dft_plus_u.AddMember("orbital_corr", orbital_corr, doc.GetAllocator());
-        dft_plus_u.AddMember("hubbard_u", hubbard_u, doc.GetAllocator());
-        dft_plus_u.AddMember("yukawa_potential", yukawa_potential, doc.GetAllocator());
-        dft_plus_u.AddMember("yukawa_lambda", yukawa_lambda, doc.GetAllocator());
-        dft_plus_u.AddMember("omc", omc, doc.GetAllocator());
+        input_file.AddMember("orbital_corr", orbital_corr, doc.GetAllocator());
+        input_file.AddMember("hubbard_u", hubbard_u, doc.GetAllocator());
+        input_file.AddMember("yukawa_potential", yukawa_potential, doc.GetAllocator());
+        input_file.AddMember("yukawa_lambda", yukawa_lambda, doc.GetAllocator());
+        input_file.AddMember("omc", omc, doc.GetAllocator());
 
         //add Third stage：parameter in vdw_correction:
-        vdw_correction.AddMember("vdw_method", vdw_method, doc.GetAllocator());
-        vdw_correction.AddMember("vdw_s6", vdw_s6, doc.GetAllocator());
-        vdw_correction.AddMember("vdw_s8", vdw_s8, doc.GetAllocator());
-        vdw_correction.AddMember("vdw_a1", vdw_a1, doc.GetAllocator());
-        vdw_correction.AddMember("vdw_a2", vdw_a2, doc.GetAllocator());
-        vdw_correction.AddMember("vdw_d", vdw_d, doc.GetAllocator());
-        vdw_correction.AddMember("vdw_abc", vdw_abc, doc.GetAllocator());
-        vdw_correction.AddMember("vdw_C6_file", vdw_C6_file, doc.GetAllocator());
-        vdw_correction.AddMember("vdw_C6_unit", vdw_C6_unit, doc.GetAllocator());
-        vdw_correction.AddMember("vdw_R0_file", vdw_R0_file, doc.GetAllocator());
-        vdw_correction.AddMember("vdw_R0_unit", vdw_R0_unit, doc.GetAllocator());
-        vdw_correction.AddMember("vdw_cutoff_type", vdw_cutoff_type, doc.GetAllocator());
-        vdw_correction.AddMember("vdw_cutoff_radius", vdw_cutoff_radius, doc.GetAllocator());
-        vdw_correction.AddMember("vdw_radius_unit", vdw_radius_unit, doc.GetAllocator());
-        vdw_correction.AddMember("vdw_cutoff_period", vdw_cutoff_period, doc.GetAllocator());
-        vdw_correction.AddMember("vdw_cn_thr", vdw_cn_thr, doc.GetAllocator());
-        vdw_correction.AddMember("vdw_cn_thr_unit", vdw_cn_thr_unit, doc.GetAllocator());
+        input_file.AddMember("vdw_method", vdw_method, doc.GetAllocator());
+        input_file.AddMember("vdw_s6", vdw_s6, doc.GetAllocator());
+        input_file.AddMember("vdw_s8", vdw_s8, doc.GetAllocator());
+        input_file.AddMember("vdw_a1", vdw_a1, doc.GetAllocator());
+        input_file.AddMember("vdw_a2", vdw_a2, doc.GetAllocator());
+        input_file.AddMember("vdw_d", vdw_d, doc.GetAllocator());
+        input_file.AddMember("vdw_abc", vdw_abc, doc.GetAllocator());
+        input_file.AddMember("vdw_C6_file", vdw_C6_file, doc.GetAllocator());
+        input_file.AddMember("vdw_C6_unit", vdw_C6_unit, doc.GetAllocator());
+        input_file.AddMember("vdw_R0_file", vdw_R0_file, doc.GetAllocator());
+        input_file.AddMember("vdw_R0_unit", vdw_R0_unit, doc.GetAllocator());
+        input_file.AddMember("vdw_cutoff_type", vdw_cutoff_type, doc.GetAllocator());
+        input_file.AddMember("vdw_cutoff_radius", vdw_cutoff_radius, doc.GetAllocator());
+        input_file.AddMember("vdw_radius_unit", vdw_radius_unit, doc.GetAllocator());
+        input_file.AddMember("vdw_cutoff_period", vdw_cutoff_period, doc.GetAllocator());
+        input_file.AddMember("vdw_cn_thr", vdw_cn_thr, doc.GetAllocator());
+        input_file.AddMember("vdw_cn_thr_unit", vdw_cn_thr_unit, doc.GetAllocator());
 
         //add Third stage：parameter in berry_phase_and_wannier90_interface:
-        berry_phase_and_wannier90_interface.AddMember("berry_phase", berry_phase, doc.GetAllocator());
-        berry_phase_and_wannier90_interface.AddMember("gdir", gdir, doc.GetAllocator());
-        berry_phase_and_wannier90_interface.AddMember("towannier90", towannier90, doc.GetAllocator());
-        berry_phase_and_wannier90_interface.AddMember("nnkpfile", nnkpfile, doc.GetAllocator());
-        berry_phase_and_wannier90_interface.AddMember("wannier_spin", wannier_spin, doc.GetAllocator());    
+        input_file.AddMember("berry_phase", berry_phase, doc.GetAllocator());
+        input_file.AddMember("gdir", gdir, doc.GetAllocator());
+        input_file.AddMember("towannier90", towannier90, doc.GetAllocator());
+        input_file.AddMember("nnkpfile", nnkpfile, doc.GetAllocator());
+        input_file.AddMember("wannier_spin", wannier_spin, doc.GetAllocator());    
     
         //add Third stage：parameter in tddft:
-        tddft.AddMember("td_edm", td_edm, doc.GetAllocator());
-        tddft.AddMember("td_print_eij", td_print_eij, doc.GetAllocator());
-        tddft.AddMember("td_propagator", td_propagator, doc.GetAllocator());
-        tddft.AddMember("td_vext", td_vext, doc.GetAllocator());
-        tddft.AddMember("td_vext_dire", td_vext_dire, doc.GetAllocator());
-        tddft.AddMember("td_stype", td_stype, doc.GetAllocator());
-        tddft.AddMember("td_ttype", td_ttype, doc.GetAllocator());
-        tddft.AddMember("td_tstart", td_tstart, doc.GetAllocator());
-        tddft.AddMember("td_tend", td_tend, doc.GetAllocator());
-        tddft.AddMember("td_lcut1", td_lcut1, doc.GetAllocator());
-        tddft.AddMember("td_lcut2", td_lcut2, doc.GetAllocator());
-        tddft.AddMember("td_gauss_freq", td_gauss_freq, doc.GetAllocator());
-        tddft.AddMember("td_gauss_phase", td_gauss_phase, doc.GetAllocator());
-        tddft.AddMember("td_gauss_sigma", td_gauss_sigma, doc.GetAllocator());
-        tddft.AddMember("td_gauss_t0", td_gauss_t0, doc.GetAllocator());
-        tddft.AddMember("td_gauss_amp", td_gauss_amp, doc.GetAllocator());
-        tddft.AddMember("td_trape_freq", td_trape_freq, doc.GetAllocator());
-        tddft.AddMember("td_trape_phase", td_trape_phase, doc.GetAllocator());
-        tddft.AddMember("td_trape_t1", td_trape_t1, doc.GetAllocator());
-        tddft.AddMember("td_trape_t2", td_trape_t2, doc.GetAllocator());
-        tddft.AddMember("td_trape_t3", td_trape_t3, doc.GetAllocator());
-        tddft.AddMember("td_trape_amp", td_trape_amp, doc.GetAllocator());
-        tddft.AddMember("td_trigo_freq1", td_trigo_freq1, doc.GetAllocator());
-        tddft.AddMember("td_trigo_freq2", td_trigo_freq2, doc.GetAllocator());
-        tddft.AddMember("td_trigo_phase1", td_trigo_phase1, doc.GetAllocator());
-        tddft.AddMember("td_trigo_phase2", td_trigo_phase2, doc.GetAllocator());
-        tddft.AddMember("td_trigo_amp", td_trigo_amp, doc.GetAllocator());
-        tddft.AddMember("td_heavi_t0", td_heavi_t0, doc.GetAllocator());
-        tddft.AddMember("td_heavi_amp", td_heavi_amp, doc.GetAllocator());
-        tddft.AddMember("td_out_dipole", td_out_dipole, doc.GetAllocator());
-        tddft.AddMember("td_out_efield", td_out_efield, doc.GetAllocator());
-        tddft.AddMember("ocp", ocp, doc.GetAllocator());
-        tddft.AddMember("ocp_set", ocp_set, doc.GetAllocator());
+        input_file.AddMember("td_edm", td_edm, doc.GetAllocator());
+        input_file.AddMember("td_print_eij", td_print_eij, doc.GetAllocator());
+        input_file.AddMember("td_propagator", td_propagator, doc.GetAllocator());
+        input_file.AddMember("td_vext", td_vext, doc.GetAllocator());
+        input_file.AddMember("td_vext_dire", td_vext_dire, doc.GetAllocator());
+        input_file.AddMember("td_stype", td_stype, doc.GetAllocator());
+        input_file.AddMember("td_ttype", td_ttype, doc.GetAllocator());
+        input_file.AddMember("td_tstart", td_tstart, doc.GetAllocator());
+        input_file.AddMember("td_tend", td_tend, doc.GetAllocator());
+        input_file.AddMember("td_lcut1", td_lcut1, doc.GetAllocator());
+        input_file.AddMember("td_lcut2", td_lcut2, doc.GetAllocator());
+        input_file.AddMember("td_gauss_freq", td_gauss_freq, doc.GetAllocator());
+        input_file.AddMember("td_gauss_phase", td_gauss_phase, doc.GetAllocator());
+        input_file.AddMember("td_gauss_sigma", td_gauss_sigma, doc.GetAllocator());
+        input_file.AddMember("td_gauss_t0", td_gauss_t0, doc.GetAllocator());
+        input_file.AddMember("td_gauss_amp", td_gauss_amp, doc.GetAllocator());
+        input_file.AddMember("td_trape_freq", td_trape_freq, doc.GetAllocator());
+        input_file.AddMember("td_trape_phase", td_trape_phase, doc.GetAllocator());
+        input_file.AddMember("td_trape_t1", td_trape_t1, doc.GetAllocator());
+        input_file.AddMember("td_trape_t2", td_trape_t2, doc.GetAllocator());
+        input_file.AddMember("td_trape_t3", td_trape_t3, doc.GetAllocator());
+        input_file.AddMember("td_trape_amp", td_trape_amp, doc.GetAllocator());
+        input_file.AddMember("td_trigo_freq1", td_trigo_freq1, doc.GetAllocator());
+        input_file.AddMember("td_trigo_freq2", td_trigo_freq2, doc.GetAllocator());
+        input_file.AddMember("td_trigo_phase1", td_trigo_phase1, doc.GetAllocator());
+        input_file.AddMember("td_trigo_phase2", td_trigo_phase2, doc.GetAllocator());
+        input_file.AddMember("td_trigo_amp", td_trigo_amp, doc.GetAllocator());
+        input_file.AddMember("td_heavi_t0", td_heavi_t0, doc.GetAllocator());
+        input_file.AddMember("td_heavi_amp", td_heavi_amp, doc.GetAllocator());
+        input_file.AddMember("td_out_dipole", td_out_dipole, doc.GetAllocator());
+        input_file.AddMember("td_out_efield", td_out_efield, doc.GetAllocator());
+        input_file.AddMember("ocp", ocp, doc.GetAllocator());
+        input_file.AddMember("ocp_set", ocp_set, doc.GetAllocator());
 
         //add Third stage：parameter in debuging_related:
-        debuging_related.AddMember("t_in_h", t_in_h, doc.GetAllocator());
-        debuging_related.AddMember("vl_in_h", vl_in_h, doc.GetAllocator());
-        debuging_related.AddMember("vnl_in_h", vnl_in_h, doc.GetAllocator());
-        debuging_related.AddMember("vh_in_h", vh_in_h, doc.GetAllocator());
-        debuging_related.AddMember("vion_in_h", vion_in_h, doc.GetAllocator());
-        debuging_related.AddMember("test_force", test_force, doc.GetAllocator());
-        debuging_related.AddMember("test_stress", test_stress, doc.GetAllocator());
-        debuging_related.AddMember("colour", colour, doc.GetAllocator());
-        debuging_related.AddMember("test_skip_ewald", test_skip_ewald, doc.GetAllocator());
+        input_file.AddMember("t_in_h", t_in_h, doc.GetAllocator());
+        input_file.AddMember("vl_in_h", vl_in_h, doc.GetAllocator());
+        input_file.AddMember("vnl_in_h", vnl_in_h, doc.GetAllocator());
+        input_file.AddMember("vh_in_h", vh_in_h, doc.GetAllocator());
+        input_file.AddMember("vion_in_h", vion_in_h, doc.GetAllocator());
+        input_file.AddMember("test_force", test_force, doc.GetAllocator());
+        input_file.AddMember("test_stress", test_stress, doc.GetAllocator());
+        input_file.AddMember("colour", colour, doc.GetAllocator());
+        input_file.AddMember("test_skip_ewald", test_skip_ewald, doc.GetAllocator());
 
         //add Third stage：parameter in electronic_conductivities:
-        electronic_conductivities.AddMember("cal_cond", cal_cond, doc.GetAllocator());
-        electronic_conductivities.AddMember("cond_nche", cond_nche, doc.GetAllocator());
-        electronic_conductivities.AddMember("cond_dw", cond_dw, doc.GetAllocator());
-        electronic_conductivities.AddMember("cond_wcut", cond_wcut, doc.GetAllocator());
-        electronic_conductivities.AddMember("cond_dt", cond_dt, doc.GetAllocator());
-        electronic_conductivities.AddMember("cond_dtbatch", cond_dtbatch, doc.GetAllocator());
-        electronic_conductivities.AddMember("cond_fwhm", cond_fwhm, doc.GetAllocator());
-        electronic_conductivities.AddMember("cond_nonlocal", cond_nonlocal, doc.GetAllocator());
+        input_file.AddMember("cal_cond", cal_cond, doc.GetAllocator());
+        input_file.AddMember("cond_nche", cond_nche, doc.GetAllocator());
+        input_file.AddMember("cond_dw", cond_dw, doc.GetAllocator());
+        input_file.AddMember("cond_wcut", cond_wcut, doc.GetAllocator());
+        input_file.AddMember("cond_dt", cond_dt, doc.GetAllocator());
+        input_file.AddMember("cond_dtbatch", cond_dtbatch, doc.GetAllocator());
+        input_file.AddMember("cond_fwhm", cond_fwhm, doc.GetAllocator());
+        input_file.AddMember("cond_nonlocal", cond_nonlocal, doc.GetAllocator());
 
         //add Third stage：parameter in implicit_solvation_model:
-        implicit_solvation_model.AddMember("imp_sol", imp_sol, doc.GetAllocator());
-        implicit_solvation_model.AddMember("eb_k", eb_k, doc.GetAllocator());
-        implicit_solvation_model.AddMember("tau", tau, doc.GetAllocator());
-        implicit_solvation_model.AddMember("sigma_k", sigma_k, doc.GetAllocator());
-        implicit_solvation_model.AddMember("nc_k", nc_k, doc.GetAllocator());
+        input_file.AddMember("imp_sol", imp_sol, doc.GetAllocator());
+        input_file.AddMember("eb_k", eb_k, doc.GetAllocator());
+        input_file.AddMember("tau", tau, doc.GetAllocator());
+        input_file.AddMember("sigma_k", sigma_k, doc.GetAllocator());
+        input_file.AddMember("nc_k", nc_k, doc.GetAllocator());
+
+
+        RemoveNullValues(input_file);
 
 
         // after add child_node's node in readin_info, add child node
         // add parameters in readin_info:
-        readin_info.AddMember("system_variables", system_variables, doc.GetAllocator());
-        readin_info.AddMember("files_related", files_related, doc.GetAllocator());
-        readin_info.AddMember("planewave_related", planewave_related, doc.GetAllocator()); 
-        readin_info.AddMember("numerical_atomic_orbitals_related", numerical_atomic_orbitals_related, doc.GetAllocator());
-        readin_info.AddMember("electronic_structure", electronic_structure, doc.GetAllocator());
-        readin_info.AddMember("electronic_structure_SDFT", electronic_structure_SDFT, doc.GetAllocator());
-        readin_info.AddMember("geometry_relaxation", geometry_relaxation, doc.GetAllocator()); 
-        readin_info.AddMember("output_information_related", output_information_related, doc.GetAllocator());
-        readin_info.AddMember("density_of_states", density_of_states, doc.GetAllocator());
-        readin_info.AddMember("naos", naos, doc.GetAllocator());
-        readin_info.AddMember("deepks", deepks, doc.GetAllocator());
-        readin_info.AddMember("ofdft", ofdft, doc.GetAllocator());
-        readin_info.AddMember("electric_field_and_dipole_correction", electric_field_and_dipole_correction, doc.GetAllocator());
-        readin_info.AddMember("gate_field", gate_field, doc.GetAllocator());
-        readin_info.AddMember("exact_exchange", exact_exchange, doc.GetAllocator());
-        readin_info.AddMember("molecular_dynamics", molecular_dynamics, doc.GetAllocator());
-        readin_info.AddMember("dft_plus_u", dft_plus_u, doc.GetAllocator());
-        readin_info.AddMember("vdw_correction", vdw_correction, doc.GetAllocator());
-        readin_info.AddMember("berry_phase_and_wannier90_interface", berry_phase_and_wannier90_interface, doc.GetAllocator());
-        readin_info.AddMember("tddft", tddft, doc.GetAllocator());
-        readin_info.AddMember("debuging_related", debuging_related, doc.GetAllocator());
-        readin_info.AddMember("electronic_conductivities", electronic_conductivities, doc.GetAllocator());
-        readin_info.AddMember("implicit_solvation_model", implicit_solvation_model, doc.GetAllocator());
+        readin_info.AddMember("input_file", input_file, doc.GetAllocator());
+
     }
 
 
@@ -973,7 +965,7 @@ namespace Para_Json
 
         // Output the json string to a file
         std::string json_path;
-        json_path.append(GlobalV::global_out_dir +"abacus.json");
+        json_path.append("abacus.json");
 
         std::ofstream ofs(json_path);
         ofs << buffer.GetString() << std::endl;
