@@ -290,6 +290,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 		{
 			if(use_libxc)
 			{
+#ifdef USE_LIBXC
 				double sxc, v1xcup, v1xcdw, v2xcup, v2xcdw, v2xcud;
 				if(func_type == 3 || func_type == 5) //the gradcorr part to stress of mGGA
 				{
@@ -304,7 +305,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 					XC_Functional::gcxc_spin_libxc(rhotmp1[ir], rhotmp2[ir], gdr1[ir], gdr2[ir], 
 						sxc, v1xcup, v1xcdw, v2xcup, v2xcdw, v2xcud);
 				}
-
+#endif
 				if(is_stress)
 				{
 					double tt1[3],tt2[3];
