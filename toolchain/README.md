@@ -60,9 +60,9 @@ Notice: These packages will be downloaded by `wget` from `github.com`, which is 
 
 Instead of github.com, we offer other package station, you can use it by:
 ```shell
-wget https://bohrium-api.dp.tech/ds-dl/abacus-deps-93wi-v1 -O abacus-deps-v1.zip
+wget https://bohrium-api.dp.tech/ds-dl/abacus-deps-93wi-v2 -O abacus-deps-v1.zip
 ```
-`unzip` it ,and you can do offline installation of these packages above
+`unzip` it ,and you can do offline installation of these packages above after rename. The above station will be updated handly but one should notice that the version will always lower than github repo.
 
 If one want to install ABACUS by toolchain OFFLINE, 
 one can manually download all the packages from [cp2k-static/download](https://www.cp2k.org/static/downloads) or official website
@@ -96,10 +96,11 @@ And Intel-oneAPI need user or server manager to manually install from Intel.
 
 Dependencies below are optional， which is NOT installed by default:
 - `LibTorch` 2.0.1
-- `Libnpy` 0.1.0
-- `LibRI` 0.1.0
+- `Libnpy` 1.0.1
+- `LibRI` 0.1.1
 - `LibComm` 0.1.0
 Users can install them by using `--with-*=install` in toolchain*.sh, which is `no` in default.
+> Notice: LibRI, LibComm and Libnpy is on actively development, you should check-out the package version when using this toolchain. Also, LibRI and LibComm can be installed by github submodule, which is also work for libnpy, which is more recommended.
 
 Notice: for `CEREAL`, `Libnpy`, `LibRI` and `LibComm`, 
 you need to download them from github.com, 
@@ -174,6 +175,7 @@ cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
         -DCMAKE_CUDA_COMPILER=${path to cuda toolkit}/bin/nvcc \
         ......
 ```
+Notice: You CANNOT use `icpx` compiler for GPU version of ABACUS
 
 ### shell problem
 If you encounter problem like:
