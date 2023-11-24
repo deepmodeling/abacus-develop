@@ -1,0 +1,20 @@
+[
+    {
+        "element": "Si",
+        "itype": 1,
+        "ScAtomData": [
+            {
+                "index": 0,
+                "lambda": 0.1,
+                "target_mag": 1.0,
+                "constrain": 1
+            },
+            {
+                "index": 4,
+                "lambda": 0.2,
+                "target_mag": 10,
+                "constrain": 1
+            }
+        ]
+    }
+]
