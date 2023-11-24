@@ -486,7 +486,7 @@ namespace ModuleESolver
     // first need to calculate the weight according to
     // electrons number.
 
-    if (this->wf.init_wfc == "file")
+    if (istep == 0 && this->wf.init_wfc == "file" && this->LOWF.error == 0)
     {
         if (iter == 1)
         {

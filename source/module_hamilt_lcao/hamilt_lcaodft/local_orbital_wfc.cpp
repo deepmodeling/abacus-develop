@@ -31,6 +31,64 @@ Local_Orbital_wfc::~Local_Orbital_wfc()
 	}
 }
 
+void Local_Orbital_wfc::gamma_file(psi::Psi<double>* psid, elecstate::ElecState* pelec)
+{
+    ModuleBase::TITLE("Local_Orbital_Charge", "gamma_file");
+    std::cout << " Read in gamma point wave function files " << std::endl;
+
+    double** ctot;
+
+    //allocate psi
+    int ncol = this->ParaV->ncol_bands;
+    if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "lapack_gvx" || GlobalV::KS_SOLVER == "scalapack_gvx"
+#ifdef __CUSOLVER_LCAO
+        || GlobalV::KS_SOLVER == "cusolver"
+#endif
+        )
+    {
+        ncol = this->ParaV->ncol;
+    }
+    if (psid == nullptr)
+    {
+        ModuleBase::WARNING_QUIT("gamma_file", "psid should be allocated first!");
+    }
+    else
+    {
+        psid->resize(GlobalV::NSPIN, ncol, this->ParaV->nrow);
+    }
+    ModuleBase::GlobalFunc::ZEROS(psid->get_pointer(), psid->size());
+
+    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    {
+        this->error = ModuleIO::read_wfc_nao(ctot, is, this->ParaV, psid, pelec);
+#ifdef __MPI
+        Parallel_Common::bcast_int(this->error);
+#endif
+        switch (this->error)
+        {
+        case 1:
+            std::cout << "Can't find the wave function file: LOWF_GAMMA_S" << is + 1 << ".txt" << std::endl;
+            break;
+        case 2:
+            std::cout << "In wave function file, band number doesn't match" << std::endl;
+            break;
+        case 3:
+            std::cout << "In wave function file, nlocal doesn't match" << std::endl;
+            break;
+        case 4:
+            std::cout << "In k-dependent wave function file, k point is not correct" << std::endl;
+            break;
+        default:
+            std::cout << " Successfully read in wave functions " << is << std::endl;
+        }
+        if (this->error)
+        {
+            std::cout << "WARNING: Failed to read in wavefunction, use default initialization instead." << std::endl;
+            break;
+        }
+    }//loop ispin
+}
+
 void Local_Orbital_wfc::allocate_k(const int& lgd,
     psi::Psi<std::complex<double>>* psi,
     elecstate::ElecState* pelec,
@@ -94,40 +152,43 @@ void Local_Orbital_wfc::allocate_k(const int& lgd,
     else if (INPUT.init_wfc == "file")
     {
         if (istep > 0)return;
-        int error;
         std::cout << " Read in wave functions files: " << nkstot << std::endl;
-        if(psi == nullptr)
+        if (psi == nullptr)
         {
-            ModuleBase::WARNING_QUIT("allocate_k","psi should be allocated first!");
+            ModuleBase::WARNING_QUIT("allocate_k", "psi should be allocated first!");
         }
         else
         {
             psi->resize(nkstot, this->ParaV->ncol_bands, this->ParaV->nrow);
         }
-		for(int ik=0; ik<nkstot; ++ik)
-		{
-            GlobalV::ofs_running << " Read in wave functions " << ik + 1 << std::endl;
+        for (int ik = 0; ik < nkstot; ++ik)
+        {
             std::complex<double>** ctot;
-            error = ModuleIO::read_wfc_nao_complex(ctot, ik, kvec_c[ik], this->ParaV, psi, pelec);
+            this->error = ModuleIO::read_wfc_nao_complex(ctot, ik, kvec_c[ik], this->ParaV, psi, pelec);
 #ifdef __MPI
-            Parallel_Common::bcast_int(error);
+            Parallel_Common::bcast_int(this->error);
 #endif
-            GlobalV::ofs_running << " Error=" << error << std::endl;
-            if(error==1)
+            switch (this->error)
             {
-                ModuleBase::WARNING_QUIT("Local_Orbital_wfc", "Can't find the wave function file: LOWF.txt");
+            case 1:
+                std::cout << "Can't find the wave function file: LOWF_K_" << ik + 1 << ".txt" << std::endl;
+                break;
+            case 2:
+                std::cout << "In wave function file, band number doesn't match" << std::endl;
+                break;
+            case 3:
+                std::cout << "In wave function file, nlocal doesn't match" << std::endl;
+                break;
+            case 4:
+                std::cout << "In k-dependent wave function file, k point is not correct" << std::endl;
+                break;
+            default:
+                std::cout << " Successfully read in wave functions " << ik + 1 << std::endl;
             }
-            else if(error==2)
+            if (this->error)
             {
-                ModuleBase::WARNING_QUIT("Local_Orbital_wfc","In wave function file, band number doesn't match");
-            }
-            else if(error==3)
-            {
-                ModuleBase::WARNING_QUIT("Local_Orbital_wfc","In wave function file, nlocal doesn't match");
-            }
-            else if(error==4)
-            {
-                ModuleBase::WARNING_QUIT("Local_Orbital_wfc","In k-dependent wave function file, k point is not correct");
+                std::cout << "WARNING: Failed to read in wavefunction, use default initialization instead." << std::endl;
+                break;
             }
         }
     }
