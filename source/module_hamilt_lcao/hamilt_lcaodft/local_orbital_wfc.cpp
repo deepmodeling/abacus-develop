@@ -36,7 +36,8 @@ void Local_Orbital_wfc::allocate_k(const int& lgd,
     elecstate::ElecState* pelec,
     const int& nks,
     const int& nkstot,
-    const std::vector<ModuleBase::Vector3<double>>& kvec_c)
+    const std::vector<ModuleBase::Vector3<double>>& kvec_c,
+    const int& istep)
 {
     this->nks = nks;
 
@@ -92,6 +93,7 @@ void Local_Orbital_wfc::allocate_k(const int& lgd,
     }
     else if (INPUT.init_wfc == "file")
     {
+        if (istep > 0)return;
         int error;
         std::cout << " Read in wave functions files: " << nkstot << std::endl;
         if(psi == nullptr)

@@ -29,11 +29,12 @@ public:
     const Grid_Technique* gridt;
 
     void allocate_k(const int& lgd,
-                    psi::Psi<std::complex<double>>* psi,
-                    elecstate::ElecState* pelec,
-                    const int& nks,
-                    const int& nkstot,
-                    const std::vector<ModuleBase::Vector3<double>>& kvec_c);
+        psi::Psi<std::complex<double>>* psi,
+        elecstate::ElecState* pelec,
+        const int& nks,
+        const int& nkstot,
+        const std::vector<ModuleBase::Vector3<double>>& kvec_c,
+        const int& istep);
 
     //=========================================
     // Init Cij, make it satisfy 2 conditions:

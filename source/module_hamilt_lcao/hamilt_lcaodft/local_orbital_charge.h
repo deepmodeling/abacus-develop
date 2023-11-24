@@ -25,16 +25,18 @@ class Local_Orbital_Charge
         elecstate::ElecState* pelec,
         Local_Orbital_wfc &lowf,
         psi::Psi<double>* psi,
-        const K_Vectors& kv);
+        const K_Vectors& kv,
+        const int& istep);
     void allocate_dm_wfc(const Grid_Technique& gt,
         elecstate::ElecState* pelec,
         Local_Orbital_wfc& lowf,
         psi::Psi<std::complex<double>>* psi,
-        const K_Vectors& kv);
-	//-----------------
+        const K_Vectors& kv,
+        const int& istep);
+    //-----------------
 	// in DM_gamma.cpp
 	//-----------------
-	void allocate_gamma(const int &lgd, psi::Psi<double>* psid, elecstate::ElecState* pelec, const int& nks);
+    void allocate_gamma(const int& lgd, psi::Psi<double>* psid, elecstate::ElecState* pelec, const int& nks, const int& istep);
 
     void gamma_file(psi::Psi<double>* psid, Local_Orbital_wfc &lowf, elecstate::ElecState* pelec);
     void cal_dk_gamma_from_2D_pub(void);
