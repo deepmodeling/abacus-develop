@@ -305,7 +305,6 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 					XC_Functional::gcxc_spin_libxc(rhotmp1[ir], rhotmp2[ir], gdr1[ir], gdr2[ir], 
 						sxc, v1xcup, v1xcdw, v2xcup, v2xcdw, v2xcud);
 				}
-#endif
 				if(is_stress)
 				{
 					double tt1[3],tt2[3];
@@ -343,6 +342,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 					local_vtxcgc = local_vtxcgc + ModuleBase::e2 * v1xcdw * ( rhotmp2[ir] - chr->rho_core[ir] * fac );
 					local_etxcgc = local_etxcgc + ModuleBase::e2 * sxc;
 				}
+#endif
 			}
 			else
 			{
