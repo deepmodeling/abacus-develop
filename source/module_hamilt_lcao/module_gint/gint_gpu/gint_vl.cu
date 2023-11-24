@@ -222,20 +222,22 @@ __global__ void psi_multiple(double ** atom_pair_left,
     int info_index = atom_pair_index * 2;
     int nw_mul = atom_pair_input_info[info_index];
     int atom_nw2 = atom_pair_input_info[info_index + 1];
-
+    double * atom_left = atom_pair_left[atom_pair_index];
+    double * atom_right = atom_pair_right[atom_pair_index];
+    double * output = atom_pair_output[atom_pair_index];
     #pragma unroll
     for (int iw_index = threadIdx.x; iw_index < nw_mul; iw_index += blockDim.x)
     {
-        int iw1 = iw_index / atom_nw2;
+        int iw1 = iw_index / atom_nw2 * bxyz_g[0];
         int iw2 = iw_index % atom_nw2;
         double v2 = 0.0;
-        double * left = &atom_pair_left[atom_pair_index][iw1 * bxyz_g[0]];
-        double * right = &atom_pair_right[atom_pair_index][iw2 * bxyz_g[0]];
+        double * left = &atom_left[iw1];
+        double * right = &atom_right[iw2 * bxyz_g[0]];
         #pragma unroll
         for (int ib = 0; ib < bxyz_g[0]; ++ib)
         {
             v2 += left[ib] * right[ib];
         }
-        atomicAdd(&(atom_pair_output[atom_pair_index][iw1 * bxyz_g[0] + iw2]), v2);
+        atomicAdd(&(output[iw1 + iw2]), v2);
     }
 }
