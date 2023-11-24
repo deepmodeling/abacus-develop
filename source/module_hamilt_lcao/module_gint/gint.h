@@ -230,8 +230,6 @@ class Gint
     double** pvdpRx_reduced = nullptr;
     double** pvdpRy_reduced = nullptr;
     double** pvdpRz_reduced = nullptr;
-
-	double* pvpR_grid = nullptr; //stores Hamiltonian in grid format, for gamma-point
 };
 
 #endif

@@ -186,7 +186,7 @@ void Gint::cal_gint(Gint_inout *inout)
 					#else
 						if(GlobalV::GAMMA_ONLY_LOCAL && lgd>0)
 						{
-							this->gint_kernel_vlocal(na_grid, grid_index, delta_r, vldr3, LD_pool, pvpR_grid);
+							this->gint_kernel_vlocal(na_grid, grid_index, delta_r, vldr3, LD_pool, nullptr);
 						}
 						if(!GlobalV::GAMMA_ONLY_LOCAL)
 						{
@@ -224,7 +224,7 @@ void Gint::cal_gint(Gint_inout *inout)
 					#else
 						if(GlobalV::GAMMA_ONLY_LOCAL && lgd>0)
 						{
-							this->gint_kernel_vlocal_meta(na_grid, grid_index, delta_r, vldr3, vkdr3, LD_pool, pvpR_grid);
+							this->gint_kernel_vlocal_meta(na_grid, grid_index, delta_r, vldr3, vkdr3, LD_pool, nullptr);
 						}
 						if(!GlobalV::GAMMA_ONLY_LOCAL)
 						{
@@ -265,17 +265,16 @@ void Gint::cal_gint(Gint_inout *inout)
                 {
                     #pragma omp critical(gint_gamma)
                     {
-						this->hRGint->add(*hRGint_thread);
-					}
+                        BlasConnector::axpy(this->hRGint->get_nnr(), 1.0, hRGint_thread->get_wrapper(), 1, this->hRGint->get_wrapper(), 1);
+                    }
                     delete hRGint_thread;
                 }
                 if(!GlobalV::GAMMA_ONLY_LOCAL)
                 {
                     #pragma omp critical(gint_k)
-                    for(int innrg=0; innrg<nnrg; innrg++)
-                    {
-                        pvpR_reduced[inout->ispin][innrg] += pvpR_thread[innrg];
-                    }
+					{
+						BlasConnector::axpy(nnrg, 1.0, pvpR_thread, 1, pvpR_reduced[inout->ispin], 1);
+					}
                     delete[] pvpR_thread;
                 }
 			}
