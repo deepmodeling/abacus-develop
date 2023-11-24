@@ -31,7 +31,6 @@ TEST_F(Test_Paw_Atom, test_paw)
     std::vector<std::complex<double>> ca;
     ca.resize(nproj);
     std::ifstream ifs_ca("ca.dat");
-    std::ifstream ifs_rhoij("rhoij.dat");
 
     // there are altogether 4 bands
     const int nband = 4;
@@ -48,15 +47,7 @@ TEST_F(Test_Paw_Atom, test_paw)
         paw_atom.accumulate_rhoij(0); //accumulate the contribution of current band
     }
 
-/*
-    std::vector<std::vector<double>> rhoij = paw_atom.get_rhoij();
-
-    for(int i=0; i<rhoij[0].size();i++)
-    {
-        double tmp;
-        ifs_rhoij >> tmp;
-        EXPECT_NEAR(tmp,rhoij[0][i],1e-8);        
-    }
+    std::ifstream ifs_rhoij("rhoij.dat");
 
     paw_atom.convert_rhoij();
 
@@ -78,5 +69,4 @@ TEST_F(Test_Paw_Atom, test_paw)
         ifs_rhoij >> tmp;
         EXPECT_NEAR(tmp,rhoijp[i],1e-8);        
     }
-*/
 }
