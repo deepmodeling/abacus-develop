@@ -445,7 +445,9 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
     if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
     {
         rhor_in = chr->rho_save[0];
-        rhor_out = chr->rho[0];    
+        rhor_out = chr->rho[0];
+        auto screen = std::bind(&Charge_Mixing::Kerker_screen_real, this, std::placeholders::_1);
+        this->mixing->push_data(this->rho_mdata, rhor_in, rhor_out, screen, true);    
     }
     else if (GlobalV::NSPIN == 2)
     {
@@ -453,9 +455,29 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
         chr->get_rho_mag();
         rhor_in = chr->rho_mag_save;
         rhor_out = chr->rho_mag;
+        const int nrxx = this->rhopw->nrxx;
+        auto screen = std::bind(&Charge_Mixing::Kerker_screen_real, this, std::placeholders::_1);
+        auto twobeta_mix
+            = [this, nrxx](double* out, const double* in, const double* sres) {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 256)
+#endif
+                  for (int i = 0; i < nrxx; ++i)
+                  {
+                      out[i] = in[i] + this->mixing_beta * sres[i];
+                  }
+            // magnetism
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 256)
+#endif
+                  for (int i = nrxx; i < 2 * nrxx; ++i)
+                  {
+                      out[i] = in[i] + this->mixing_beta_mag * sres[i];
+                  }
+              };
+        this->mixing->push_data(this->rho_mdata, rhor_in, rhor_out, screen, twobeta_mix, true);
     }
-    auto screen = std::bind(&Charge_Mixing::Kerker_screen_real, this, std::placeholders::_1);
-    this->mixing->push_data(this->rho_mdata, rhor_in, rhor_out, screen, true);
+    
     auto inner_product
         = std::bind(&Charge_Mixing::inner_product_real, this, std::placeholders::_1, std::placeholders::_2);
     this->mixing->cal_coef(this->rho_mdata, inner_product);
