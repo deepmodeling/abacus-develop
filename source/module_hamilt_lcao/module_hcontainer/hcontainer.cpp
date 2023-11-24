@@ -10,7 +10,10 @@ namespace hamilt
 template <typename T>
 HContainer<T>::~HContainer()
 {
-    // do nothing
+    if(this->allocated)
+    {
+        delete[] this->wrapper_pointer;
+    }
 }
 
 // copy constructor
@@ -23,21 +26,10 @@ HContainer<T>::HContainer(const HContainer<T>& HR_in, T* data_array)
     this->paraV = HR_in.paraV;
     this->current_R = -1;
     this->wrapper_pointer = data_array;
-    if(data_array == nullptr)
-    {
-        this->atom_pairs = HR_in.atom_pairs;
-    }
-    else
-    {
-        this->atom_pairs.reserve(HR_in.atom_pairs.size());
-        for(int iap=0;iap<HR_in.atom_pairs.size();iap++)
-        {
-            hamilt::AtomPair<T>& target = HR_in.get_atom_pair(iap);
-            hamilt::AtomPair<T> tmp(target, data_array);
-            data_array += target.get_R_size() * target.get_size();
-            this->atom_pairs.push_back(tmp);
-        }
-    }
+    this->allocated = false;
+    this->atom_pairs = HR_in.atom_pairs;
+    // data of HR_in will not be copied, please call add() after this constructor to copy data.
+    this->allocate(this->wrapper_pointer, true);
     // tmp terms not copied
 }
 
@@ -156,24 +148,34 @@ HContainer<T>::HContainer(const Parallel_Orbitals* paraV_in, T* data_pointer, co
 template <typename T>
 void HContainer<T>::allocate(T* data_array, bool is_zero)
 {
+    size_t nnr = this->get_nnr();
+    if(this->allocated)
+    {// delete existed memory of this->wrapper_pointer
+        delete[] this->wrapper_pointer;
+        this->allocated = false;
+    }
     if(data_array == nullptr)
     {
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
-        for(int it=0;it<this->atom_pairs.size();it++)
-        {
-            this->atom_pairs[it].allocate(nullptr, is_zero);
-        }
+        // use this->wrapper_pointer as data_array
+        this->allocated = true;
+        this->wrapper_pointer = new T[nnr];
+        ModuleBase::GlobalFunc::ZEROS(this->wrapper_pointer, nnr);
+        data_array = this->wrapper_pointer;
     }
     else
     {
-        for(int it=0;it<this->atom_pairs.size();it++)
+        // use data_array to replace this->wrapper_pointer
+        this->wrapper_pointer = data_array;
+        if(is_zero)
         {
-            this->atom_pairs[it].allocate(data_array, is_zero);
-            // move data_array pointer for the next AtomPair
-            data_array += this->atom_pairs[it].get_R_size() * this->atom_pairs[it].get_size();
+            ModuleBase::GlobalFunc::ZEROS(this->wrapper_pointer, nnr);
         }
+    }
+    for(int it=0;it<this->atom_pairs.size();it++)
+    {
+        this->atom_pairs[it].allocate(data_array, false);
+        // move data_array pointer for the next AtomPair
+        data_array += this->atom_pairs[it].get_R_size() * this->atom_pairs[it].get_size();
     }
 }
 
