@@ -115,7 +115,7 @@ void Local_Orbital_wfc::allocate_k(const int& lgd,
             GlobalV::ofs_running << " Error=" << error << std::endl;
             if(error==1)
             {
-                ModuleBase::WARNING_QUIT("Local_Orbital_wfc","Can't find the wave function file: LOWF.dat");
+                ModuleBase::WARNING_QUIT("Local_Orbital_wfc", "Can't find the wave function file: LOWF.txt");
             }
             else if(error==2)
             {
