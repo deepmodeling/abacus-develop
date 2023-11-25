@@ -43,7 +43,7 @@ TEST_F(ParaJsonTest,Init)
 	Input input_tmp;
 	EXPECT_NO_THROW(input_tmp.Init(input_file));
 
-    
+     
 	if(GlobalV::MY_RANK==0)
 	{
 
