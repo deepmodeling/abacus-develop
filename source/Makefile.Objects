@@ -147,6 +147,10 @@ OBJS_BASE=abfs-vector3_order.o\
 	cubic_spline.o\
 	spherical_bessel_transformer.o\
     mixing_data.o\
+    mixing.o\
+    plain_mixing.o\
+    pulay_mixing.o\
+    broyden_mixing.o\
 
 
 OBJS_CELL=atom_pseudo.o\
@@ -207,6 +211,8 @@ OBJS_ESOLVER=esolver.o\
     esolver_lj.o\
     esolver_dp.o\
     esolver_of.o\
+    esolver_of_tool.o\
+    esolver_of_interface.o\
 
 OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
       esolver_ks_lcao_elec.o\

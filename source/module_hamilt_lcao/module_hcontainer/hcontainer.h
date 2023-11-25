@@ -168,6 +168,7 @@ class HContainer
     /**
      * @brief copy constructor
      * when data_array is not nullptr, new HContainer will be wrapper for data_array
+     * data of HR_in will not be copied, please call add() after this constructor to copy data.
     */
     HContainer(const HContainer<T>& HR_in, T* data_array = nullptr);
 
@@ -448,8 +449,12 @@ class HContainer
 
     /**
      * @brief if wrapper_pointer is not nullptr, this HContainer is a wrapper
+     * there is only one case that "wrapper_pointer == nullptr": 
+     *     HContainer is constructed by allocated AtomPairs by insert_pair()
+     * in other cases, wrapper_pointer is not nullptr and is memory pool of AtomPairs
     */
     T* wrapper_pointer = nullptr;
+    bool allocated = false;
 
     /**
      * @brief pointer of Parallel_Orbitals, which is used to get atom-pair information

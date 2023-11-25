@@ -41,6 +41,9 @@ struct fenergy
 
     double escon = 0.0; ///< spin constraint energy
 
+    double ekinetic = 0.0;      /// kinetic energy, used in OFDFT
+    double eion_elec = 0.0;     /// ion-electron interaction energy, used in OFDFT
+
     double calculate_etot();
     double calculate_harris();
     void clear_all();

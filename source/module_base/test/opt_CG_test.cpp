@@ -25,7 +25,7 @@ protected:
 
     void SetUp()
     {
-        cg.setPara(1.);
+        cg.set_para(1.);
         cg.allocate(tools.nx);
         cg.init_b(tools.le.b);
         task = new char[60];
