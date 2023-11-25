@@ -12,10 +12,10 @@ class Charge_Mixing
   public:
     Charge_Mixing();
     ~Charge_Mixing();
-    Base_Mixing::Mixing* mixing = nullptr;
-    Base_Mixing::Mixing_Data rho_mdata;
-    Base_Mixing::Mixing_Data tau_mdata;
-    Base_Mixing::Mixing_Data nhat_mdata;
+    Base_Mixing::Mixing* mixing = nullptr; ///< Mixing object to mix charge density, kinetic energy density and compensation density
+    Base_Mixing::Mixing_Data rho_mdata;    ///< Mixing data for charge density
+    Base_Mixing::Mixing_Data tau_mdata;    ///< Mixing data for kinetic energy density
+    Base_Mixing::Mixing_Data nhat_mdata;   ///< Mixing data for compensation density
 
     Base_Mixing::Plain_Mixing* mixing_highf = nullptr; ///< The high_frequency part is mixed by plain mixing method.
 
@@ -80,6 +80,7 @@ class Charge_Mixing
      * @param mixing_ndim_in mixing ndim
      * @param mixing_gg0_in mixing gg0 for Kerker screen
      * @param mixing_tau_in whether to use tau mixing
+     * @param mixing_beta_mag_in mixing beta for magnetism
      */
     void set_mixing(const std::string& mixing_mode_in,
                     const double& mixing_beta_in,
@@ -107,6 +108,13 @@ class Charge_Mixing
     double get_drho(Charge* chr, const double nelec);
 
     // init pwrho and rhodpw
+    
+    /**
+     * @brief Set the smooth and dense grids
+     * 
+     * @param rhopw_in smooth grid
+     * @param rhodpw_in dense grid when double grid is used, otherwise same as rhopw
+     */
     void set_rhopw(ModulePW::PW_Basis* rhopw_in, ModulePW::PW_Basis* rhodpw_in);
 
     // extracting parameters
@@ -134,18 +142,18 @@ class Charge_Mixing
     //======================================
     // General parameters
     //======================================
-    std::string mixing_mode = "broyden";
-    double mixing_beta = 0.8;
-    double mixing_beta_mag = 1.6;
-    int mixing_ndim = 8;
-    double mixing_gg0 = 0.0; // mohan add 2014-09-27
-    bool mixing_tau = false;
+    std::string mixing_mode = "broyden"; ///< mixing mode: "plain", "broyden", "pulay"
+    double mixing_beta = 0.8;            ///< mixing beta for density
+    double mixing_beta_mag = 1.6;        ///< mixing beta for magnetism
+    int mixing_ndim = 8;                 ///< mixing ndim for broyden and pulay
+    double mixing_gg0 = 0.0;             ///< mixing gg0 for Kerker screen
+    bool mixing_tau = false;             ///< whether to use tau mixing
 
     bool new_e_iteration = true;
 
     ModulePW::PW_Basis* rhopw = nullptr;  ///< smooth grid
     ModulePW::PW_Basis* rhodpw = nullptr; ///< dense grid, same as rhopw for ncpp.
-    bool autoset = false;
+    // bool autoset = false;
 
   private:
     double rhog_dot_product(const std::complex<double>* const* const rhog1,
@@ -153,16 +161,25 @@ class Charge_Mixing
 
     /**
      * @brief divide rho/tau to smooth and high frequency parts
+     * @param data_d dense data
+     * @param data_s smooth data
+     * @param data_hf high frequency data = dense data - smooth data
      *
      */
     void divide_data(std::complex<double>* data_d, std::complex<double>*& data_s, std::complex<double>*& data_hf);
     /**
      * @brief gather smooth and high frequency parts to rho/tau
-     *
+     * @param data_d dense data
+     * @param data_s smooth data
+     * @param data_hf high frequency data = dense data - smooth data
+     *  
      */
     void combine_data(std::complex<double>* data_d, std::complex<double>*& data_s, std::complex<double>*& data_hf);
     /**
      * @brief clean smooth and high frequency parts
+     * @param data_d dense data
+     * @param data_s smooth data
+     * @param data_hf high frequency data = dense data - smooth data
      *
      */
     void clean_data(std::complex<double>*& data_s, std::complex<double>*& data_hf);
