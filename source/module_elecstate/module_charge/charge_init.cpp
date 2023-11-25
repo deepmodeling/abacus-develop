@@ -23,26 +23,8 @@ void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMa
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "init_chg", GlobalV::init_chg);
 
     std::cout << " START CHARGE      : " << GlobalV::init_chg << std::endl;
-    if (GlobalV::init_chg == "atomic") // mohan add 2007-10-17
-    {
-        this->atomic_rho(GlobalV::NSPIN, GlobalC::ucell.omega, rho, strucFac, GlobalC::ucell);
-
-        // liuyu 2023-06-29 : move here from atomic_rho(), which will be called several times in charge extrapolation
-        // wenfei 2021-7-29 : initial tau = 3/5 rho^2/3, Thomas-Fermi
-        if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
-        {
-            const double pi = 3.141592653589790;
-            const double fact = (3.0 / 5.0) * pow(3.0 * pi * pi, 2.0 / 3.0);
-            for (int is = 0; is < GlobalV::NSPIN; ++is)
-            {
-                for (int ir = 0; ir < this->rhopw->nrxx; ++ir)
-                {
-                    kin_r[is][ir] = fact * pow(std::abs(rho[is][ir]) * GlobalV::NSPIN, 5.0 / 3.0) / GlobalV::NSPIN;
-                }
-            }
-        }
-    }
-    else if (GlobalV::init_chg == "file")
+    bool read_error = false;
+    if (GlobalV::init_chg == "file")
     {
         GlobalV::ofs_running << " try to read charge from file : ";
         for (int is = 0; is < GlobalV::NSPIN; ++is)
@@ -84,7 +66,9 @@ void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMa
                 { // read up and down , then rearrange them.
                     if (is == 1)
                     {
-                        ModuleBase::WARNING_QUIT("Charge::init_rho", "Incomplete charge density file!");
+                        std::cout << "Incomplete charge density file!" << std::endl;
+                        read_error = true;
+                        break;
                     }
                     else if (is == 2)
                     {
@@ -106,10 +90,10 @@ void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMa
             }
             else
             {
-                ModuleBase::WARNING_QUIT(
-                    "init_rho",
-                    "!!! Couldn't find the charge file !!! The default directory \n of SPIN1_CHG.cube is OUT.suffix, "
-                    "or you must set read_file_dir \n to a specific directory. ");
+                std::cout << "!!! Couldn't find the charge file !!! The default directory \n of SPIN1_CHG.cube is OUT.suffix, "
+                    "or you must set read_file_dir \n to a specific directory. " << std::endl;
+                read_error = true;
+                break;
             }
         }
 
@@ -141,9 +125,25 @@ void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMa
             }
         }
     }
-    else
+    if (read_error) std::cout << "WARNING: Failed to read charge density from file, use atomic initialization instead." << std::endl;
+    if (GlobalV::init_chg != "file" || read_error) // mohan add 2007-10-17
     {
-        ModuleBase::WARNING_QUIT("Charge::init_rho", "init_chg is wrong!");
+        this->atomic_rho(GlobalV::NSPIN, GlobalC::ucell.omega, rho, strucFac, GlobalC::ucell);
+
+        // liuyu 2023-06-29 : move here from atomic_rho(), which will be called several times in charge extrapolation
+        // wenfei 2021-7-29 : initial tau = 3/5 rho^2/3, Thomas-Fermi
+        if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+        {
+            const double pi = 3.141592653589790;
+            const double fact = (3.0 / 5.0) * pow(3.0 * pi * pi, 2.0 / 3.0);
+            for (int is = 0; is < GlobalV::NSPIN; ++is)
+            {
+                for (int ir = 0; ir < this->rhopw->nrxx; ++ir)
+                {
+                    kin_r[is][ir] = fact * pow(std::abs(rho[is][ir]) * GlobalV::NSPIN, 5.0 / 3.0) / GlobalV::NSPIN;
+                }
+            }
+        }
     }
 
     // Peize Lin add 2020.04.04
