@@ -25,4 +25,4 @@ jobs:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          cmake --build build --target test ARGS="-V"
+          cmake --build build --target test ARGS="-V --timeout 1600"
