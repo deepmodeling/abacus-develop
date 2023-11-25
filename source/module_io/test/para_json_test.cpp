@@ -5,7 +5,7 @@
 #include "mpi.h"
 #endif
 #include <stdlib.h>
-
+#include "rapidjson/document.h"
 /************************************************
  *  unit test of Input::bcast
  ***********************************************/
@@ -22,9 +22,20 @@
 class ParaJsonTest : public ::testing::Test
 {
 protected:
+	std::string testString;
 };
 
 #ifdef __MPI
+
+// 在这里提供 isValidJSON 函数的定义
+bool isValidJSON(const std::string& jsonString) {
+    rapidjson::Document document;
+    document.Parse(jsonString.c_str());
+
+    return !document.HasParseError();
+}
+
+
 
 TEST_F(ParaJsonTest,Init)
 {
@@ -39,6 +50,7 @@ TEST_F(ParaJsonTest,Init)
 		// int status = system("rm -r ./OUT.autotest/");
 		// EXPECT_EQ(status,0);
         Para_Json::Init_json_abacus_readinInfo();
+		Para_Json::Init_json_abacus_generalInfo();
         Para_Json::Init_json_abacus();
         Para_Json::Finish_json_tree();
 
@@ -47,11 +59,14 @@ TEST_F(ParaJsonTest,Init)
         rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
         Para_Json::doc.Accept(writer);
 
-        printf("%s\n",buffer.GetString());
+
+		std::string json = buffer.GetString(); 
+        printf("%s\n",json.c_str());
+
+		EXPECT_EQ(isValidJSON(json),true);
 
 	}
 }
-
 
 
 

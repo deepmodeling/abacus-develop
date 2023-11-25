@@ -129,6 +129,24 @@ void Input::Init(const std::string &fn)
     //     pseudo_type); // mohan add 2013-05-20 (xiaohui add 2013-06-23, GlobalV::global_pseudo_type -> pseudo_type)
 
     ModuleBase::timer::tick("Input", "Init");
+
+    std::string begin_time = ctime(&time_now);
+    if (!begin_time.empty() && begin_time.back() == '\n') {
+        begin_time.erase(begin_time.length() - 1);
+    }
+    std::string version_json = version;
+    std::string commit_json = commit;
+    std::string device_json = device;
+    printf("version = %s\n",device_json.c_str());
+    Para_Json::set_json_value(Para_Json::version,&version_json); 
+    Para_Json::set_json_value(Para_Json::commit,&commit_json); 
+    Para_Json::set_json_value(Para_Json::device_g,&device_json);
+    Para_Json::set_json_value(Para_Json::begin_time,&begin_time);  
+    
+    Para_Json::set_json_value(Para_Json::global_out_dir,&GlobalV::global_out_dir); 
+    Para_Json::set_json_value(Para_Json::global_in_card,&GlobalV::global_in_card);
+    Para_Json::set_json_value(Para_Json::pseudo_dir_path,&GlobalV::global_pseudo_dir);  
+    Para_Json::set_json_value(Para_Json::orbital_dir_path,&GlobalV::global_orbital_dir);  
     return;
 }
 
