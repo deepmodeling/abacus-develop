@@ -87,7 +87,7 @@ class Charge_Mixing
                     const int& mixing_ndim_in,
                     const double& mixing_gg0_in,
                     const bool& mixing_tau_in,
-                    const double& mixing_beta_mag_in = 1.6); // mohan add mixing_gg0_in 2014-09-27
+                    const double& mixing_beta_mag_in); // mohan add mixing_gg0_in 2014-09-27
 
     // /**
     //  * @brief use auto set

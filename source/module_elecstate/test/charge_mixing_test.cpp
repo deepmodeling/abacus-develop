@@ -282,12 +282,12 @@ TEST_F(ChargeMixingTest, SetMixingTest)
     bool mixingtau = false;
     GlobalV::SCF_THR_TYPE = 1;
     std::string mode = "broyden";
-    CMtest.set_mixing(mode, beta, dim, gg0, mixingtau);
+    CMtest.set_mixing(mode, beta, dim, gg0, mixingtau, 1.6);
     EXPECT_EQ(CMtest.rho_mdata.length, pw_basis.npw);
 
     GlobalV::SCF_THR_TYPE = 2;
     mode = "broyden";
-    CMtest.set_mixing(mode, beta, dim, gg0, mixingtau);
+    CMtest.set_mixing(mode, beta, dim, gg0, mixingtau, 1.6);
     EXPECT_EQ(CMtest.rho_mdata.length, pw_basis.nrxx);
     EXPECT_EQ(CMtest.get_mixing_mode(), "broyden");
     EXPECT_EQ(CMtest.get_mixing_beta(), 1.0);
@@ -298,19 +298,19 @@ TEST_F(ChargeMixingTest, SetMixingTest)
     mixingtau = true;
     mode = "plain";
     GlobalV::SCF_THR_TYPE = 1;
-    CMtest.set_mixing(mode, beta, dim, gg0, mixingtau);
+    CMtest.set_mixing(mode, beta, dim, gg0, mixingtau, 1.6);
     CMtest.mix_reset();
     EXPECT_EQ(CMtest.tau_mdata.length, pw_basis.npw);
 
     GlobalV::SCF_THR_TYPE = 2;
-    CMtest.set_mixing(mode, beta, dim, gg0, mixingtau);
+    CMtest.set_mixing(mode, beta, dim, gg0, mixingtau, 1.6);
     CMtest.mix_reset();
     EXPECT_EQ(CMtest.tau_mdata.length, pw_basis.nrxx);
 
     mode = "nothing";
     std::string output;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(CMtest.set_mixing(mode, beta, dim, gg0, mixingtau);, ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(CMtest.set_mixing(mode, beta, dim, gg0, mixingtau, 1.6);, ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("This Mixing mode is not implemended yet,coming soon."));
 }
@@ -632,7 +632,7 @@ TEST_F(ChargeMixingTest, MixRhoTest)
     Charge_Mixing CMtest_recip;
     CMtest_recip.set_rhopw(&pw_basis, &pw_basis);
     GlobalV::SCF_THR_TYPE = 1;
-    CMtest_recip.set_mixing(mode, beta, dim, gg0, mixingtau);
+    CMtest_recip.set_mixing(mode, beta, dim, gg0, mixingtau, 1.6);
     CMtest_recip.mix_reset();
     for(int i = 0 ; i < nspin * npw; ++i)
     {
@@ -662,7 +662,7 @@ TEST_F(ChargeMixingTest, MixRhoTest)
     Charge_Mixing CMtest_real;
     GlobalV::SCF_THR_TYPE = 2;
     CMtest_real.set_rhopw(&pw_basis, &pw_basis);
-    CMtest_real.set_mixing(mode, beta, dim, gg0, mixingtau);
+    CMtest_real.set_mixing(mode, beta, dim, gg0, mixingtau, 1.6);
     CMtest_real.mix_reset();
     for(int i = 0 ; i < nspin * nrxx; ++i)
     {
@@ -748,7 +748,7 @@ TEST_F(ChargeMixingTest, MixDoubleGridRhoTest)
     Charge_Mixing CMtest_recip;
     CMtest_recip.set_rhopw(&pw_basis, &pw_dbasis);
     GlobalV::SCF_THR_TYPE = 1;
-    CMtest_recip.set_mixing(mode, beta, dim, gg0, mixingtau);
+    CMtest_recip.set_mixing(mode, beta, dim, gg0, mixingtau, 1.6);
     CMtest_recip.mix_reset();
     for (int i = 0; i < nspin * npw; ++i)
     {
