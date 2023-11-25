@@ -47,7 +47,7 @@ namespace ModuleESolver
         /// charge mixing
         ///----------------------------------------------------------
         p_chgmix = new Charge_Mixing();
-        p_chgmix->set_rhopw(this->pw_rho);
+        p_chgmix->set_rhopw(this->pw_rho, this->pw_rhod);
 
         ///----------------------------------------------------------
         /// wavefunc
@@ -78,7 +78,8 @@ namespace ModuleESolver
                              GlobalV::MIXING_BETA,
                              GlobalV::MIXING_NDIM,
                              GlobalV::MIXING_GG0,
-                             GlobalV::MIXING_TAU);
+                             GlobalV::MIXING_TAU,
+                             GlobalV::MIXING_BETA_MAG);
         // I use default value to replace autoset                     
         // using bandgap to auto set mixing_beta
         // if (std::abs(GlobalV::MIXING_BETA + 10.0) < 1e-6)
@@ -420,21 +421,21 @@ namespace ModuleESolver
                     {
                         //----------charge mixing---------------
                         //before first calling mix_rho(), bandgap and cell structure can be analyzed to get better default parameters
-                        if(iter == 1)
-                        {
-                            double bandgap_for_autoset = 0.0;
-                            if (!GlobalV::TWO_EFERMI)
-                            {
-                                this->pelec->cal_bandgap();
-                                bandgap_for_autoset = this->pelec->bandgap;
-                            }
-                            else
-                            {
-                                this->pelec->cal_bandgap_updw();
-                                bandgap_for_autoset = std::min(this->pelec->bandgap_up, this->pelec->bandgap_dw);
-                            }
-                            p_chgmix->auto_set(bandgap_for_autoset, GlobalC::ucell);
-                        }
+                        // if(iter == 1)
+                        // {
+                        //     double bandgap_for_autoset = 0.0;
+                        //     if (!GlobalV::TWO_EFERMI)
+                        //     {
+                        //         this->pelec->cal_bandgap();
+                        //         bandgap_for_autoset = this->pelec->bandgap;
+                        //     }
+                        //     else
+                        //     {
+                        //         this->pelec->cal_bandgap_updw();
+                        //         bandgap_for_autoset = std::min(this->pelec->bandgap_up, this->pelec->bandgap_dw);
+                        //     }
+                        //     p_chgmix->auto_set(bandgap_for_autoset, GlobalC::ucell);
+                        // }
                         
                         p_chgmix->mix_rho(pelec->charge);
                         //----------charge mixing done-----------
