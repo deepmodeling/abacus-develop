@@ -241,6 +241,10 @@ UnitCell ucell;
  *                 Charge_Mixing::mix_rho_recip(chr)
  *                 Charge_Mixing::mix_rho_real(chr)
  *      - mix rho with different methods
+ *   - MixDivCombTest: Charge_Mixing::divide_data
+ *                     Charge_Mixing::combine_data
+ *                     Charge_Mixing::clean_data
+ *    - divide and combine data
  *
  */
 
@@ -254,8 +258,13 @@ class ChargeMixingTest : public ::testing::Test
         pw_basis.initparameters(false, 20);
         pw_basis.setuptransform();
         pw_basis.collect_local_pw();
+        pw_dbasis.initgrids(4, ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1), 40);
+        pw_dbasis.initparameters(false, 40);
+        pw_dbasis.setuptransform(&pw_basis);
+        pw_dbasis.collect_local_pw();
     }
     ModulePW::PW_Basis pw_basis;
+    ModulePW::PW_Basis_Sup pw_dbasis;
     Charge charge;
 };
 
@@ -264,7 +273,7 @@ TEST_F(ChargeMixingTest, SetMixingTest)
     omp_set_num_threads(1);
     GlobalV::NSPIN = 1;
     Charge_Mixing CMtest;
-    CMtest.set_rhopw(&pw_basis);
+    CMtest.set_rhopw(&pw_basis, &pw_basis);
     double beta = 1.0;
     int dim = 1;
     double gg0 = 1;
@@ -273,12 +282,12 @@ TEST_F(ChargeMixingTest, SetMixingTest)
     bool mixingtau = false;
     GlobalV::SCF_THR_TYPE = 1;
     std::string mode = "broyden";
-    CMtest.set_mixing(mode, beta, dim, gg0, mixingtau);
+    CMtest.set_mixing(mode, beta, dim, gg0, mixingtau, 1.6);
     EXPECT_EQ(CMtest.rho_mdata.length, pw_basis.npw);
 
     GlobalV::SCF_THR_TYPE = 2;
     mode = "broyden";
-    CMtest.set_mixing(mode, beta, dim, gg0, mixingtau);
+    CMtest.set_mixing(mode, beta, dim, gg0, mixingtau, 1.6);
     EXPECT_EQ(CMtest.rho_mdata.length, pw_basis.nrxx);
     EXPECT_EQ(CMtest.get_mixing_mode(), "broyden");
     EXPECT_EQ(CMtest.get_mixing_beta(), 1.0);
@@ -289,19 +298,19 @@ TEST_F(ChargeMixingTest, SetMixingTest)
     mixingtau = true;
     mode = "plain";
     GlobalV::SCF_THR_TYPE = 1;
-    CMtest.set_mixing(mode, beta, dim, gg0, mixingtau);
+    CMtest.set_mixing(mode, beta, dim, gg0, mixingtau, 1.6);
     CMtest.mix_reset();
     EXPECT_EQ(CMtest.tau_mdata.length, pw_basis.npw);
 
     GlobalV::SCF_THR_TYPE = 2;
-    CMtest.set_mixing(mode, beta, dim, gg0, mixingtau);
+    CMtest.set_mixing(mode, beta, dim, gg0, mixingtau, 1.6);
     CMtest.mix_reset();
     EXPECT_EQ(CMtest.tau_mdata.length, pw_basis.nrxx);
 
     mode = "nothing";
     std::string output;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(CMtest.set_mixing(mode, beta, dim, gg0, mixingtau);, ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(CMtest.set_mixing(mode, beta, dim, gg0, mixingtau, 1.6);, ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("This Mixing mode is not implemended yet,coming soon."));
 }
@@ -310,7 +319,7 @@ TEST_F(ChargeMixingTest, SetMixingTest)
 TEST_F(ChargeMixingTest, AutoSetTest)
 {
     Charge_Mixing CMtest;
-    CMtest.set_rhopw(&pw_basis);
+    CMtest.set_rhopw(&pw_basis, &pw_basis);
     GlobalV::SCF_THR_TYPE = 1;
     GlobalV::NSPIN = 1;
 
@@ -343,7 +352,7 @@ TEST_F(ChargeMixingTest, AutoSetTest)
 TEST_F(ChargeMixingTest, KerkerScreenRecipTest)
 {
     Charge_Mixing CMtest;
-    CMtest.set_rhopw(&pw_basis);
+    CMtest.set_rhopw(&pw_basis, &pw_basis);
     GlobalV::NSPIN = 1;
     GlobalC::ucell.tpiba = 1.0;
 
@@ -399,7 +408,7 @@ TEST_F(ChargeMixingTest, KerkerScreenRecipTest)
 TEST_F(ChargeMixingTest, KerkerScreenRecipNewTest)
 {
     Charge_Mixing CMtest;
-    CMtest.set_rhopw(&pw_basis);
+    CMtest.set_rhopw(&pw_basis, &pw_basis);
     GlobalC::ucell.tpiba = 1.0;
 
     // for new kerker
@@ -460,7 +469,7 @@ TEST_F(ChargeMixingTest, InnerDotTest)
 {
     // REAL
     Charge_Mixing CMtest;
-    CMtest.set_rhopw(&pw_basis);
+    CMtest.set_rhopw(&pw_basis, &pw_basis);
     GlobalV::NSPIN = 1;
     std::vector<double> drhor1(pw_basis.nrxx);
     std::vector<double> drhor2(pw_basis.nrxx);
@@ -528,7 +537,7 @@ TEST_F(ChargeMixingTest, InnerDotTest)
 TEST_F(ChargeMixingTest, InnerDotNewTest)
 {
     Charge_Mixing CMtest;
-    CMtest.set_rhopw(&pw_basis);
+    CMtest.set_rhopw(&pw_basis, &pw_basis);
     GlobalV::NSPIN = 1;
 
     // inner_product_recip_new1
@@ -621,9 +630,9 @@ TEST_F(ChargeMixingTest, MixRhoTest)
     //--------------------------------MAIN BODY--------------------------------
     // RECIPROCAL
     Charge_Mixing CMtest_recip;
-    CMtest_recip.set_rhopw(&pw_basis);
+    CMtest_recip.set_rhopw(&pw_basis, &pw_basis);
     GlobalV::SCF_THR_TYPE = 1;
-    CMtest_recip.set_mixing(mode, beta, dim, gg0, mixingtau);
+    CMtest_recip.set_mixing(mode, beta, dim, gg0, mixingtau, 1.6);
     CMtest_recip.mix_reset();
     for(int i = 0 ; i < nspin * npw; ++i)
     {
@@ -652,8 +661,8 @@ TEST_F(ChargeMixingTest, MixRhoTest)
     // REAL
     Charge_Mixing CMtest_real;
     GlobalV::SCF_THR_TYPE = 2;
-    CMtest_real.set_rhopw(&pw_basis);
-    CMtest_real.set_mixing(mode, beta, dim, gg0, mixingtau);
+    CMtest_real.set_rhopw(&pw_basis, &pw_basis);
+    CMtest_real.set_mixing(mode, beta, dim, gg0, mixingtau, 1.6);
     CMtest_real.mix_reset();
     for(int i = 0 ; i < nspin * nrxx; ++i)
     {
@@ -685,33 +694,139 @@ TEST_F(ChargeMixingTest, MixRhoTest)
     delete[] charge.kin_r_save;
 }
 
-TEST_F(ChargeMixingTest, HighFreqMixTest)
+TEST_F(ChargeMixingTest, MixDoubleGridRhoTest)
 {
-    const int number = 10;
-    std::complex<double>* data = new std::complex<double>[number];
-    std::complex<double>* data_save = new std::complex<double>[number];
-
-    // initialize 
-    for (int i = 0; i < number; i++)
+    GlobalV::double_grid = true;
+    charge.set_rhopw(&pw_dbasis);
+    const int nspin = GlobalV::NSPIN = 1;
+    GlobalV::DOMAG_Z = false;
+    FUNC_TYPE = 3;
+    double beta = 0.7;
+    int dim = 1;
+    double gg0 = 0.0;
+    bool mixingtau = true;
+    std::string mode = "plain";
+    const int nrxx = pw_dbasis.nrxx;
+    const int npw = pw_dbasis.npw;
+    charge._space_rho = new double[nspin * nrxx];
+    charge._space_rho_save = new double[nspin * nrxx];
+    charge._space_rhog = new std::complex<double>[nspin * npw];
+    charge._space_rhog_save = new std::complex<double>[nspin * npw];
+    charge._space_kin_r = new double[nspin * nrxx];
+    charge._space_kin_r_save = new double[nspin * nrxx];
+    charge.rho = new double*[nspin];
+    charge.rhog = new std::complex<double>*[nspin];
+    charge.rho_save = new double*[nspin];
+    charge.rhog_save = new std::complex<double>*[nspin];
+    charge.kin_r = new double*[nspin];
+    charge.kin_r_save = new double*[nspin];
+    for (int is = 0; is < nspin; is++)
     {
-        data[i] = {1.0, 1.0};  
-        data_save[i] = {2.0, 2.0};  
+        charge.rho[is] = charge._space_rho + is * nrxx;
+        charge.rhog[is] = charge._space_rhog + is * npw;
+        charge.rho_save[is] = charge._space_rho_save + is * nrxx;
+        charge.rhog_save[is] = charge._space_rhog_save + is * npw;
+        charge.kin_r[is] = charge._space_kin_r + is * nrxx;
+        charge.kin_r_save[is] = charge._space_kin_r_save + is * nrxx;
+    }
+    std::vector<double> real_ref(nspin * nrxx);
+    std::vector<double> real_save_ref(nspin * nrxx);
+    std::vector<std::complex<double>> recip_ref(nspin * npw);
+    std::vector<std::complex<double>> recip_save_ref(nspin * npw);
+    for (int i = 0; i < nspin * npw; ++i)
+    {
+        recip_ref[i] = std::complex<double>(double(i), 1.0);
+        recip_save_ref[i] = std::complex<double>(double(i), 0.0);
+    }
+    for (int i = 0; i < nspin; ++i)
+    {
+        pw_dbasis.recip2real(recip_ref.data() + i * npw, real_ref.data() + i * nrxx);
+        pw_dbasis.recip2real(recip_save_ref.data() + i * npw, real_save_ref.data() + i * nrxx);
+    }
+    //--------------------------------MAIN BODY--------------------------------
+    // RECIPROCAL
+    Charge_Mixing CMtest_recip;
+    CMtest_recip.set_rhopw(&pw_basis, &pw_dbasis);
+    GlobalV::SCF_THR_TYPE = 1;
+    CMtest_recip.set_mixing(mode, beta, dim, gg0, mixingtau, 1.6);
+    CMtest_recip.mix_reset();
+    for (int i = 0; i < nspin * npw; ++i)
+    {
+        charge._space_rhog[i] = recip_ref[i];
+        charge._space_rhog_save[i] = recip_save_ref[i];
+    }
+    for (int i = 0; i < nspin * nrxx; ++i)
+    {
+        charge._space_rho[i] = real_ref[i];
+        charge._space_rho_save[i] = real_save_ref[i];
+    }
+    CMtest_recip.mix_rho(&charge);
+    for (int is = 0; is < nspin; ++is)
+    {
+        for (int ir = 0; ir < nrxx; ++ir)
+        {
+            EXPECT_NEAR(charge.rho_save[is][ir], real_ref[is * nrxx + ir], 1e-8);
+        }
+        for (int ig = 0; ig < npw; ++ig)
+        {
+            EXPECT_NEAR(charge.rhog[is][ig].real(), recip_save_ref[is * npw + ig].real(), 1e-8);
+            EXPECT_NEAR(charge.rhog[is][ig].imag(), recip_save_ref[is * npw + ig].imag() + 0.7, 1e-8);
+        }
     }
 
-    Charge_Mixing mixer;
-    mixer.set_rhopw(&pw_basis);
-    mixer.set_mixing("broyden", 1.0, 1, 0.2, false);
-    mixer.high_freq_mix(data, data_save, number);
+    //-------------------------------------------------------------------------
+    delete[] charge._space_rho;
+    delete[] charge._space_rho_save;
+    delete[] charge._space_rhog;
+    delete[] charge._space_rhog_save;
+    delete[] charge._space_kin_r;
+    delete[] charge._space_kin_r_save;
+    delete[] charge.rho;
+    delete[] charge.rhog;
+    delete[] charge.rho_save;
+    delete[] charge.rhog_save;
+    delete[] charge.kin_r;
+    delete[] charge.kin_r_save;
+}
 
-    for (int i = 0; i < number; i++)
+TEST_F(ChargeMixingTest, MixDivCombTest)
+{
+    // NSPIN = 1
+    GlobalV::NSPIN = 1;
+    Charge_Mixing CMtest;
+    CMtest.set_rhopw(&pw_basis, &pw_dbasis);
+    std::vector<std::complex<double>> data(pw_dbasis.npw, 1.0);
+    std::complex<double>*datas, *datahf;
+    std::complex<double>*datas2, *datahf2;
+    CMtest.divide_data(data.data(), datas, datahf);
+    EXPECT_EQ(datas, data.data());
+    EXPECT_EQ(datahf, data.data() + pw_basis.npw);
+    CMtest.combine_data(data.data(), datas, datahf);
+    EXPECT_EQ(datas, nullptr);
+    EXPECT_EQ(datahf, nullptr);
+
+    CMtest.divide_data(data.data(), datas2, datahf2);
+    CMtest.clean_data(datas2, datahf2);
+    EXPECT_EQ(datas2, nullptr);
+    EXPECT_EQ(datahf2, nullptr);
+
+    // NSPIN = 2
+    GlobalV::NSPIN = 2;
+    data.resize(pw_dbasis.npw * 2, 1.0);
+    std::vector<std::complex<double>> dataout(pw_dbasis.npw * 2, 1.0);
+    CMtest.divide_data(data.data(), datas, datahf);
+    CMtest.combine_data(dataout.data(), datas, datahf);
+    EXPECT_EQ(datas, nullptr);
+    EXPECT_EQ(datahf, nullptr);
+    for (int i = 0; i < pw_dbasis.npw * 2; ++i)
     {
-        std::complex<double> expected = data_save[i] + mixer.mixing_beta * (data[i] - data_save[i]);
-        EXPECT_DOUBLE_EQ(data[i].real(), expected.real());
-        EXPECT_DOUBLE_EQ(data[i].imag(), expected.imag());
+        EXPECT_EQ(dataout[i], data[i]);
     }
 
-    delete[] data;
-    delete[] data_save;
+    CMtest.divide_data(data.data(), datas2, datahf2);
+    CMtest.clean_data(datas2, datahf2);
+    EXPECT_EQ(datas2, nullptr);
+    EXPECT_EQ(datahf2, nullptr);
 }
 
 #undef private
