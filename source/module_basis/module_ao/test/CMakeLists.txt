@@ -45,7 +45,7 @@ AddTest(
   TARGET orbital_equal_test
   LIBS ${math_libs} device numerical_atomic_orbitals container formatter 
   SOURCES 1_snap_equal_test.cpp ORB_unittest.cpp
-  ../../../module_base/parallel_reduce.cpp ../../../module_base/parallel_global.cpp ../../../module_base/parallel_common.cpp
+  ../../../module_base/parallel_reduce.cpp ../../../module_base/para_json.cpp ../../../module_base/parallel_global.cpp ../../../module_base/parallel_common.cpp
   ${depend_files}
 )
 install(DIRECTORY GaAs DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../../../tests)

@@ -86,6 +86,7 @@ AddTest(
   	../../module_base/global_variable.cpp
 	../../module_base/parallel_reduce.cpp
 	../../module_base/parallel_common.cpp
+  ../../module_base/para_json.cpp
 	../../module_base/parallel_global.cpp
 )
 
