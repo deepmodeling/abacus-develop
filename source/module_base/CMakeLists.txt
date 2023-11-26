@@ -55,6 +55,10 @@ add_library(
     formatter_contextfmt.cpp
     module_mixing/mixing_data.cpp
     para_json.cpp
+    module_mixing/mixing.cpp
+    module_mixing/plain_mixing.cpp
+    module_mixing/pulay_mixing.cpp
+    module_mixing/broyden_mixing.cpp
     ${LIBM_SRC}
 )
 
