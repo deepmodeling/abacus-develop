@@ -200,10 +200,10 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
     {
         ModuleBase::WARNING_QUIT("set_xc_type","meta-GGA has not been implemented for nspin = 4 yet");
     }
-    if((func_type == 3 || func_type == 5) && GlobalV::CAL_STRESS == 1 && GlobalV::NSPIN!=1)
-    {
-        ModuleBase::WARNING_QUIT("set_xc_type","mgga stress not implemented for polarized case yet");
-    }
+    //if((func_type == 3 || func_type == 5) && GlobalV::CAL_STRESS == 1 && GlobalV::NSPIN!=1)
+    //{
+    //    ModuleBase::WARNING_QUIT("set_xc_type","mgga stress not implemented for polarized case yet");
+    //}
 
 #ifndef __EXX
     if(func_type == 4 || func_type == 5)
