@@ -62,6 +62,7 @@ namespace hsolver
     }
 
     // Diagonalization function for real numbers
+    template <>
     void DiagoCusolver<double>::diag(hamilt::Hamilt<double>* phm_in, psi::Psi<double>& psi, Real* eigenvalue_in)
     {
         // Output the title for the current operation
