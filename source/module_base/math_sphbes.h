@@ -1,6 +1,8 @@
 #ifndef MATH_SPHBES_H
 #define MATH_SPHBES_H
 
+#include <functional>
+
 //========================================================
 // Spherical Bessel functions, mohan 2021-05-06
 //========================================================
@@ -118,6 +120,21 @@ class Sphbes
                         double* const djl      //!< [out] results
     );
 
+    /** 
+     * @brief Zeros of spherical Bessel functions.
+     *
+     * This function computes the first n positive zeros of the l-th order
+     * spherical Bessel function of the first kind. 
+     *
+     * @param[in]   l       order of the spherical Bessel function
+     * @param[in]   n       number of zeros to be computed
+     * @param[out]  zeros   on exit, contains the first n positive zeros in ascending order
+     */
+    static void sphbes_zeros(const int l,
+                             const int n,
+                             double* const zeros
+    );
+
 private:
 
     static double Spherical_Bessel_7(const int n, const double &x);
@@ -134,6 +151,13 @@ private:
     // utility functions for sphbesj
     static double _sphbesj_ascending_recurrence(int l, double x);
     static double _sphbesj_series(int l, double x);
+
+    // Regula falsi with Illinois anti-stalling variation
+    static double illinois(std::function<double(double)> func,
+                           double x0,
+                           double x1,
+                           const double tol = 1e-12,
+                           const int max_iter = 50);
 };
 
 }
