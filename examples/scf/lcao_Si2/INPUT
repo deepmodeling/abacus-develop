@@ -7,3 +7,5 @@ ecutwfc			50
 scf_nmax		100
 scf_thr                 1e-6
 basis_type		lcao
+
+out_mat_hs2 1

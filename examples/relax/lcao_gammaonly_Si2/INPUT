@@ -8,11 +8,11 @@ ecutwfc			50
 scf_nmax			20
 
 basis_type		lcao
-gamma_only		1
+#gamma_only		1
 
 smearing_method		gauss
 smearing_sigma			0.01
 
 calculation		relax
 relax_nmax			50
-force_thr_ev		1.0e-3
+force_thr_ev		1.0e-10

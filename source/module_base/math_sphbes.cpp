@@ -837,7 +837,7 @@ void Sphbes::sphbes_zeros(const int l, const int n, double* const zeros)
     {
         for (int i = 0; i < nz-1; i++)
         {
-            buffer[i] = illinois(jl, buffer[i], buffer[i+1], 1e-15, 10);
+            buffer[i] = illinois(jl, buffer[i], buffer[i+1], 1e-15, 50);
         }
         --nz;
     }
@@ -846,7 +846,7 @@ void Sphbes::sphbes_zeros(const int l, const int n, double* const zeros)
     {
         for (int i = 0; i < nz-1; i++)
         {
-            buffer[i] = illinois(jl, buffer[i], buffer[i+1], 1e-15, 10);
+            buffer[i] = illinois(jl, buffer[i], buffer[i+1], 1e-15, 50);
         }
     }
 
