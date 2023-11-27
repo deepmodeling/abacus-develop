@@ -34,6 +34,9 @@ option(DEBUG_INFO "Print message for developers to debug." OFF)
 option(ENABLE_NATIVE_OPTIMIZATION "Enable compilation optimization for the native machine's CPU type" OFF)
 option(COMMIT_INFO "Print commit information in log" ON)
 option(ENABLE_FFT_TWO_CENTER "Enable FFT-based two-center integral method." ON)
+if (USE_CUDA)
+  set(USE_CUSOLVER_LCAO ON)
+endif()
 
 # get commit info
 if(COMMIT_INFO)
