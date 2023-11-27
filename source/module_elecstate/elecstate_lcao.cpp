@@ -102,8 +102,8 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
     // this part for calculating DMK in 2d-block format, not used for charge now
     //    psi::Psi<std::complex<double>> dm_k_2d();
 
-    if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "scalapack_gvx"
-        || GlobalV::KS_SOLVER == "lapack") // Peize Lin test 2019-05-15
+    if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "scalapack_gvx" || GlobalV::KS_SOLVER == "lapack"
+        || GlobalV::KS_SOLVER == "cusolver") // Peize Lin test 2019-05-15
     {
         //cal_dm(this->loc->ParaV, this->wg, psi, this->loc->dm_k);
         elecstate::cal_dm_psi(this->DM->get_paraV_pointer(), this->wg, psi, *(this->DM));
@@ -123,7 +123,8 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
 #endif
 
     }
-    if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "scalapack_gvx" || GlobalV::KS_SOLVER == "lapack")
+    if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "scalapack_gvx" || GlobalV::KS_SOLVER == "lapack"
+        || GlobalV::KS_SOLVER == "cusolver")
     {
         for (int ik = 0; ik < psi.get_nk(); ik++)
         {
@@ -170,7 +171,8 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
     this->calculate_weights();
     this->calEBand();
 
-    if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "scalapack_gvx" || GlobalV::KS_SOLVER == "lapack")
+    if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "scalapack_gvx" || GlobalV::KS_SOLVER == "lapack"
+        || GlobalV::KS_SOLVER == "cusolver")
     {
         ModuleBase::timer::tick("ElecStateLCAO", "cal_dm_2d");
         // get DMK in 2d-block format
@@ -190,7 +192,8 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
         for (int ik = 0; ik < psi.get_nk(); ++ik)
         {
             // for gamma_only case, no convertion occured, just for print.
-            if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "scalapack_gvx")
+            if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "scalapack_gvx"
+                || GlobalV::KS_SOLVER == "cusolver")
             {
                 psi.fix_k(ik);
                 this->print_psi(psi);
