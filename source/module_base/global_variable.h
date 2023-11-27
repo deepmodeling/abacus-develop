@@ -278,6 +278,8 @@ extern double MIXING_BETA;
 extern int MIXING_NDIM;
 extern double MIXING_GG0;
 extern bool MIXING_TAU;
+extern double MIXING_BETA_MAG;
+extern double MIXING_GG0_MAG;
 
 //==========================================================
 // device flags added by denghui

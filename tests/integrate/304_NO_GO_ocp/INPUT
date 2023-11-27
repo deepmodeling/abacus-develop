@@ -23,7 +23,7 @@ smearing_method		gauss
 smearing_sigma			0.002
 
 #Parameters (5.Mixing)
-mixing_type		plain
+mixing_type		broyden
 mixing_beta		0.7
 
 ocp                           1

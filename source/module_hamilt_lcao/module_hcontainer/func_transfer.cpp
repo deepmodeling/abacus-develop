@@ -586,6 +586,49 @@ void transferParallels2Serials(const hamilt::HContainer<TR>& hR_p, hamilt::HCont
 
 }
 
+template<typename TR>
+void gatherParallels(const hamilt::HContainer<TR>& hR_p,
+                     hamilt::HContainer<TR>* hR_s,
+                     const int serial_rank)
+{
+    // gather <IJR>s from all ranks to serial_rank
+    int my_rank, size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    std::vector<int> para_ijrs = hR_p.get_ijr_info();
+    if (my_rank == serial_rank)
+    {
+        hR_s->insert_ijrs(&para_ijrs);
+        for (int i = 0; i < size; ++i)
+        {
+            if (i == serial_rank)
+                continue;
+            std::vector<int> tmp_ijrs;
+            MPI_Status status;
+            int tmp_size = 0;
+            MPI_Recv(&tmp_size, 1, MPI_INT, i, 0, MPI_COMM_WORLD, &status);
+            tmp_ijrs.resize(tmp_size);
+            MPI_Recv(tmp_ijrs.data(),
+                     tmp_ijrs.size(),
+                     MPI_INT,
+                     i,
+                     0,
+                     MPI_COMM_WORLD,
+                     &status);
+            hR_s->insert_ijrs(&tmp_ijrs);
+        }
+        hR_s->allocate();
+    }
+    else
+    {
+        int tmp_size = para_ijrs.size();
+        MPI_Send(&tmp_size, 1, MPI_INT, serial_rank, 0, MPI_COMM_WORLD);
+        MPI_Send(para_ijrs.data(), para_ijrs.size(), MPI_INT, serial_rank, 0, MPI_COMM_WORLD);
+    }
+    // gather values from Parallels to target serial_rank
+    transferParallels2Serial(hR_p, hR_s, serial_rank);
+}
+
 // specialize for double and std::complex<double>
 template void transferSerial2Parallels(const hamilt::HContainer<double>& hR_s,
                                       hamilt::HContainer<double>* hR_p,
@@ -608,6 +651,12 @@ template void transferParallels2Serials(const hamilt::HContainer<double>& hR_p,
                                         hamilt::HContainer<double>* hR_s);
 template void transferParallels2Serials(const hamilt::HContainer<std::complex<double>>& hR_p,
                                         hamilt::HContainer<std::complex<double>>* hR_s);
+template void gatherParallels(const hamilt::HContainer<double>& hR_p,
+                              hamilt::HContainer<double>* hR_s,
+                              const int serial_rank);
+template void gatherParallels(const hamilt::HContainer<std::complex<double>>& hR_p,
+                                hamilt::HContainer<std::complex<double>>* hR_s,
+                                const int serial_rank);
 
 } // namespace hamilt
 

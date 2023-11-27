@@ -81,13 +81,16 @@ int Pseudopot_upf::read_pseudo_upf(std::ifstream &ifs)
 		ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_NLCC>");
 	}
 
-	// Search for Local potential
-	ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_LOCAL>");
-	//---------------------
-	// call member function
-	//---------------------
-	read_pseudo_local(ifs);
-	ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_LOCAL>");
+    if (!this->coulomb_potential)
+    {
+        // Search for Local potential
+        ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_LOCAL>");
+        //---------------------
+        // call member function
+        //---------------------
+        read_pseudo_local(ifs);
+        ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_LOCAL>");
+    }
 
 	// Search for Nonlocal potential
 	ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_NONLOCAL>");
@@ -150,6 +153,11 @@ void Pseudopot_upf::read_pseudo_header(std::ifstream &ifs)
 	{
 		this->tvanp = false;
 	}
+	else if(pp_type == "1/r")
+	{
+		this->tvanp = false;
+		this->coulomb_potential = true;
+	}
 	else
 	{
 		// A bug here!!! can't quit together.
@@ -201,6 +209,12 @@ void Pseudopot_upf::read_pseudo_header(std::ifstream &ifs)
 	for(int i=0;i<nwfc;i++)
 	{
 		ifs >> els[i] >> this->lchi[i] >> this->oc[i];
+	}
+	if (this->coulomb_potential)
+	{
+		this->nbeta = 0;
+        this->lmax = 0;
+        this->lloc = 0;
 	}
 	return;
 }

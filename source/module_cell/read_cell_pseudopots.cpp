@@ -19,6 +19,7 @@ void UnitCell::read_cell_pseudopots(const std::string &pp_dir, std::ofstream &lo
 	for (int i = 0;i < ntype;i++)
 	{
 		Pseudopot_upf upf;
+        upf.coulomb_potential=this->atoms[i].coulomb_potential;
 	
 		// mohan update 2010-09-12	
 		int error = 0;
@@ -39,11 +40,13 @@ void UnitCell::read_cell_pseudopots(const std::string &pp_dir, std::ofstream &lo
                 // average pseudopotential if needed
                 error_ap = upf.average_p(GlobalV::soc_lambda); // added by zhengdy 2020-10-20
             }
+            this->atoms[i].coulomb_potential = upf.coulomb_potential;
         }
 
 #ifdef __MPI
 		Parallel_Common::bcast_int(error);
 		Parallel_Common::bcast_int(error_ap);
+        Parallel_Common::bcast_bool(atoms[i].coulomb_potential);
 #endif
 
 		if(error_ap) 

@@ -28,6 +28,47 @@ If **"ocp=1"** and **"ocp_set"** is set in INPUT file, the occupations of states
 2. **"nupdown"**
 If **"nupdown"** is set to non-zero, number of spin-up and spin-down electrons will be fixed, and Fermi energy level will split to E_Fermi_up and E_Fermi_down. By the way, total magnetization will also be fixed, and will be the value of **"nupdown"**.
 
+3. DeltaSpin
+The `DeltaSpin` function as proposed by Zefeng Cai and Ben Xu, et al. [arXiv:2208.04551v6](https://arxiv.org/abs/2208.04551) has been implemented in ABACUS in the LCAO basis for the `nspin 2` case. In order to use this function, the following parameters are needed to be set in the input file, for example:
+```
+#deltaspin
+sc_mag_switch                   1
+decay_grad_switch               0
+sc_thr                          1e-7
+nsc                             150
+nsc_min                         2
+sc_file                         sc.json
+alpha_trial                     0.01
+sccut                           3
+```
+The explanation of each input paramters has been explained in the [Noncollinear Spin Polarized Calculations](#noncollinear-spin-polarized-calculations) section.
+
+An example of the sc_file json file is shown below:
+```json
+[
+    {
+        "element": "Fe",
+        "itype": 0,
+        "ScDecayGrad": 0.9,
+        "ScAtomData": [
+            {
+                "index": 0,
+                "lambda": 0.0,
+                "target_mag": 2.0,
+                "constrain": 1
+            },
+            {
+                "index": 1,
+                "lambda": 0,
+                "target_mag": 2.0,
+                "constrain": 1
+            }
+        ]
+    }
+]
+```
+Please refer the [Noncollinear Spin Polarized Calculations](#noncollinear-spin-polarized-calculations) section for the explanation of each input paramters. The difference is that `lambda`, `target_mag`, and `constrain` are scalars instead of vectors. Simple examples are provided in the `abacus-develop/examples/spin_polarized` directory.
+
 ## Noncollinear Spin Polarized Calculations
 The spin non-collinear polarization calculation corresponds to setting **"noncolin 1"**, in which case the coupling between spin up and spin down will be taken into account. 
 In this case, nspin is automatically set to 4, which is usually not required to be specified manually.
@@ -49,7 +90,7 @@ The SOC effect and non-collinear magnetic moment are both calculated.
 
 ### Constraint Spin functionality for noncollinear spin polarized calculations
 
-The `DeltaSpin` function as proposed by Zefeng Cai and Ben Xu, et al. [arXiv:2208.04551v6](https://arxiv.org/abs/2208.04551) has been implemented in ABACUS in the LCAO basis. In order to use this function, the following parameters are needed to be set in the input file:
+The `DeltaSpin` function as proposed by Zefeng Cai and Ben Xu, et al. [arXiv:2208.04551v6](https://arxiv.org/abs/2208.04551) has been implemented in ABACUS in the LCAO basis. In order to use this function, the following parameters are needed to be set in the input file, for example:
 ```
 #deltaspin
 sc_mag_switch                   1

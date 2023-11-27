@@ -60,9 +60,9 @@ int SpinConstrain<FPTYPE, Device>::get_npol()
 template<typename FPTYPE, typename Device>
 void SpinConstrain<FPTYPE, Device>::set_nspin(int nspin_in)
 {
-    if (nspin_in != 4)
+    if (nspin_in != 4 && nspin_in != 2)
     {
-        ModuleBase::WARNING_QUIT("SpinConstrain::set_nspin","nspin must be 4 now");
+        ModuleBase::WARNING_QUIT("SpinConstrain::set_nspin","nspin must be 2 or 4");
     }
     this->nspin_ = nspin_in;
 }
@@ -275,6 +275,21 @@ void SpinConstrain<FPTYPE, Device>::set_constrain()
     this->check_atomCounts();
     int nat = this->get_nat();
     this->constrain_.resize(nat);
+    for (int iat = 0; iat < nat; iat++)
+    {
+        if (this->nspin_ == 2)
+        {
+            this->constrain_[iat].x = 0;
+            this->constrain_[iat].y = 0;
+            this->constrain_[iat].z = 1;
+        }
+        else if (this->nspin_ == 4)
+        {
+            this->constrain_[iat].x = 1;
+            this->constrain_[iat].y = 1;
+            this->constrain_[iat].z = 1;
+        }
+    }
     for (auto& itype_data : this->ScData) {
         int itype = itype_data.first;
         for (auto& element_data : itype_data.second) {
@@ -495,8 +510,7 @@ bool SpinConstrain<FPTYPE, Device>::get_decay_grad_switch()
 }
 
 template <typename FPTYPE, typename Device>
-void SpinConstrain<FPTYPE, Device>::set_solver_parameters(int nspin_in,
-                                                          K_Vectors kv_in,
+void SpinConstrain<FPTYPE, Device>::set_solver_parameters(K_Vectors kv_in,
                                                           hsolver::HSolver<FPTYPE, Device>* phsol_in,
                                                           hamilt::Hamilt<FPTYPE, Device>* p_hamilt_in,
                                                           psi::Psi<FPTYPE>* psi_in,
@@ -504,8 +518,6 @@ void SpinConstrain<FPTYPE, Device>::set_solver_parameters(int nspin_in,
                                                           std::string KS_SOLVER_in,
                                                           LCAO_Matrix* LM_in)
 {
-    /// set nspin
-    this->set_nspin(nspin_in);
     this->kv_ = kv_in;
     this->phsol = phsol_in;
     this->p_hamilt = p_hamilt_in;
@@ -537,8 +549,15 @@ void SpinConstrain<FPTYPE, Device>::print_Mi(bool print)
     {
         for (int iat = 0; iat < nat; ++iat)
         {
-            std::cout << "Total Magnetism on atom: " << iat << " " << std::setprecision(16) << " (" << Mi_[iat].x
-                      << ", " << Mi_[iat].y << ", " << Mi_[iat].z << ")" << std::endl;
+            if (this->nspin_ == 2)
+            {
+                std::cout << "Total Magnetism on atom: " << iat << " " << std::setprecision(10) << " (" << Mi_[iat].z << ")" << std::endl;
+            }
+            else if (this->nspin_ ==4)
+            {
+                std::cout << "Total Magnetism on atom: " << iat << " " << std::setprecision(10) << " (" << Mi_[iat].x
+                        << ", " << Mi_[iat].y << ", " << Mi_[iat].z << ")" << std::endl;
+            }
         }
     }
 }

@@ -235,6 +235,7 @@ TEST(TestSrcPWStressMultiDevice, cal_stress_nl_op_gpu)
     std::vector<double> stress(expected_stress.size(), 0);
     std::complex<double> * d_becp = nullptr, * d_dbecp = nullptr;
     double * d_wg = nullptr, * d_deeq = nullptr, * d_stress = nullptr;
+    double * d_ekb = nullptr, * d_qq_nt = nullptr;
     int * d_atom_nh = nullptr, * d_atom_na = nullptr;
     resmem_zd_op()(gpu_ctx, d_becp, becp.size());
     resmem_zd_op()(gpu_ctx, d_dbecp, dbecp.size());
@@ -244,9 +245,13 @@ TEST(TestSrcPWStressMultiDevice, cal_stress_nl_op_gpu)
     resmem_dd_op()(gpu_ctx, d_wg, wg.size());
     resmem_dd_op()(gpu_ctx, d_deeq, deeq.size());
     resmem_dd_op()(gpu_ctx, d_stress, stress.size());
+    resmem_dd_op()(gpu_ctx, d_ekb, ekb.size());
+    resmem_dd_op()(gpu_ctx, d_qq_nt, qq_nt.size());
     syncmem_d2d_h2d_op()(gpu_ctx, cpu_ctx, d_wg, wg.data(), wg.size());
     syncmem_d2d_h2d_op()(gpu_ctx, cpu_ctx, d_deeq, deeq.data(), deeq.size());
     syncmem_d2d_h2d_op()(gpu_ctx, cpu_ctx, d_stress, stress.data(), stress.size());
+    syncmem_d2d_h2d_op()(gpu_ctx, cpu_ctx, d_ekb, ekb.data(), ekb.size());
+    syncmem_d2d_h2d_op()(gpu_ctx, cpu_ctx, d_qq_nt, qq_nt.data(), qq_nt.size());
 
     using delmem_int_op = psi::memory::delete_memory_op<int, psi::DEVICE_GPU>;
     using resmem_int_op = psi::memory::resize_memory_op<int, psi::DEVICE_GPU>;
@@ -274,6 +279,8 @@ TEST(TestSrcPWStressMultiDevice, cal_stress_nl_op_gpu)
             d_atom_nh,
             d_atom_na,
             d_wg,
+            d_ekb,
+            d_qq_nt,
             d_deeq,
             d_becp,
             d_dbecp,
@@ -291,6 +298,8 @@ TEST(TestSrcPWStressMultiDevice, cal_stress_nl_op_gpu)
     delmem_dd_op()(gpu_ctx, d_wg);
     delmem_dd_op()(gpu_ctx, d_deeq);
     delmem_dd_op()(gpu_ctx, d_stress);
+    delmem_dd_op()(gpu_ctx, d_ekb);
+    delmem_dd_op()(gpu_ctx, d_qq_nt);
 
     delmem_int_op()(gpu_ctx, d_atom_nh);
     delmem_int_op()(gpu_ctx, d_atom_na);

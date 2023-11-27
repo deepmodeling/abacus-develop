@@ -22,6 +22,7 @@ md_nstep		2
 
 mixing_type		broyden
 mixing_beta		0.7
+mixing_gg0      0.0
 scf_thr			1.0e-6
 
 cal_stress          1

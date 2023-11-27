@@ -1,5 +1,5 @@
                                                                                      
-                              ABACUS v3.4.1
+                              ABACUS v3.4.2
 
                Atomic-orbital Based Ab-initio Computation at UStc                    
 
@@ -7,10 +7,11 @@
                Documentation: https://abacus.deepmodeling.com/                       
                   Repository: https://github.com/abacusmodeling/abacus-develop       
                               https://github.com/deepmodeling/abacus-develop         
-                      Commit: unknown
+                      Commit: 7461b0f47 (Thu Nov 16 16:48:37 2023 +0800)
 
- Mon Oct 30 06:50:35 2023
+ Thu Nov 16 17:36:58 2023
  MAKE THE DIR         : OUT.ABACUS/
+ RUNNING WITH DEVICE     : CPU / Intel(R) Xeon(R) Platinum 8269CY CPU @ 2.50GHz
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  Warning: the number of valence electrons in pseudopotential > 8 for Fe: [Ar] 3d6 4s2
@@ -20,13 +21,13 @@
 
  UNIFORM GRID DIM        : 36 * 36 * 36
  UNIFORM GRID DIM(BIG)   : 12 * 12 * 12
- DONE(0.341012   SEC) : SETUP UNITCELL
- DONE(0.354875   SEC) : INIT K-POINTS
+ DONE(0.120758   SEC) : SETUP UNITCELL
+ DONE(0.133816   SEC) : INIT K-POINTS
  ---------------------------------------------------------
  Self-consistent calculations for electrons
  ---------------------------------------------------------
  SPIN    KPOINTS         PROCESSORS  NBASE       
- 4       8               8           108         
+ 4       8               16          108         
  ---------------------------------------------------------
  Use Systematically Improvable Atomic bases
  ---------------------------------------------------------
@@ -35,664 +36,676 @@
  ---------------------------------------------------------
  Initial plane wave basis and FFT box
  ---------------------------------------------------------
- DONE(0.402153   SEC) : INIT PLANEWAVE
+ DONE(0.137521   SEC) : INIT PLANEWAVE
  -------------------------------------------
  SELF-CONSISTENT : 
  -------------------------------------------
  START CHARGE      : atomic
- DONE(0.942085   SEC) : INIT SCF
+ DONE(0.527041   SEC) : INIT SCF
  ITER   ETOT(eV)       EDIFF(eV)      DRHO       TIME(s)    
- GE1    -6.817397e+03  0.000000e+00   1.055e-01  1.244e+01  
+ GE1    -6.817397e+03  0.000000e+00   1.055e-01  5.923e+00  
 ===============================================================================
 Inner optimization for lambda begins ...
 Covergence criterion for the iteration: 1.000e-07
 initial lambda: 
-0.0000000000000000e+00 0.0000000000000000e+00 0.0000000000000000e+00
-0.0000000000000000e+00 0.0000000000000000e+00 0.0000000000000000e+00
+ATOM 1   0.0000000000e+00 0.0000000000e+00 0.0000000000e+00
+ATOM 2   0.0000000000e+00 0.0000000000e+00 0.0000000000e+00
 initial spin: 
-3.5660901073956150e+00 0.0000000000000000e+00 0.0000000000000000e+00
-3.5660901073957927e+00 0.0000000000000000e+00 0.0000000000000000e+00
+ATOM 1   3.5660901074e+00 0.0000000000e+00 0.0000000000e+00
+ATOM 2   3.5660901074e+00 0.0000000000e+00 0.0000000000e+00
 target spin: 
-2.3860000000000001e+00 0.0000000000000000e+00 0.0000000000000000e+00
-2.3860000000000001e+00 0.0000000000000000e+00 0.0000000000000000e+00
-Step (Outer -- Inner) =  1 -- 1           RMS =6.8132534117292398e-01
-Reach limitation of current step ( maximum gradient < 1.2245128200000000e+01 in atom type 0 ), exit.
-Step (Outer -- Inner) =  1 -- 2           RMS =7.1504652744928943e-01
-alpha after restrict = -2.4222910552747043e+00
-boundary after = 3.0000000000000000e+00
-Step (Outer -- Inner) =  1 -- 3           RMS =1.2105626372679750e+00
-Step (Outer -- Inner) =  1 -- 4           RMS =6.3356009234300625e-02
-Step (Outer -- Inner) =  1 -- 5           RMS =5.9329864089561102e-04
-Step (Outer -- Inner) =  1 -- 6           RMS =5.8084629375433606e-04
-Step (Outer -- Inner) =  1 -- 7           RMS =5.7236256978632628e-04
-Step (Outer -- Inner) =  1 -- 8           RMS =5.2973153649336739e-04
-Step (Outer -- Inner) =  1 -- 9           RMS =5.3784875801109151e-05
-Step (Outer -- Inner) =  1 -- 10          RMS =2.9679421131691222e-06
-Step (Outer -- Inner) =  1 -- 11          RMS =2.9377740234516667e-06
-Step (Outer -- Inner) =  1 -- 12          RMS =2.7501327467717645e-06
-Step (Outer -- Inner) =  1 -- 13          RMS =2.5513763650881096e-06
-Step (Outer -- Inner) =  1 -- 14          RMS =1.0816809854661389e-06
-Step (Outer -- Inner) =  1 -- 15          RMS =5.9113716965638043e-07
-Step (Outer -- Inner) =  1 -- 16          RMS =5.9100243343000196e-07
-Step (Outer -- Inner) =  1 -- 17          RMS =5.9078679570957324e-07
-Step (Outer -- Inner) =  1 -- 18          RMS =5.9026718444602474e-07
-Step (Outer -- Inner) =  1 -- 19          RMS =5.8742846791868729e-07
-Step (Outer -- Inner) =  1 -- 20          RMS =1.3753718192215542e-07
-Step (Outer -- Inner) =  1 -- 21          RMS =2.1626891610938195e-09
-Meet convergence criterion ( < 9.9999999999999995e-08 ), exit.
+ATOM 1   2.3860000000e+00 0.0000000000e+00 0.0000000000e+00
+ATOM 2   2.3860000000e+00 0.0000000000e+00 0.0000000000e+00
+Step (Outer -- Inner) =  1 -- 1           RMS = 6.8132534117e-01
+Reach limitation of current step ( maximum gradient < 1.2245128200e+01 in atom type 0 ), exit.
+Step (Outer -- Inner) =  1 -- 2           RMS = 7.1504627361e-01
+alpha after restrict = -2.4222919152e+00
+boundary after = 3.0000000000e+00
+Step (Outer -- Inner) =  1 -- 3           RMS = 1.2106843930e+00
+Step (Outer -- Inner) =  1 -- 4           RMS = 6.3372369060e-02
+Step (Outer -- Inner) =  1 -- 5           RMS = 5.8762147769e-04
+Step (Outer -- Inner) =  1 -- 6           RMS = 3.9499424720e-05
+Step (Outer -- Inner) =  1 -- 7           RMS = 2.7899417709e-06
+Step (Outer -- Inner) =  1 -- 8           RMS = 2.7696100716e-06
+Step (Outer -- Inner) =  1 -- 9           RMS = 2.4713545236e-06
+Step (Outer -- Inner) =  1 -- 10          RMS = 2.2509450937e-06
+Step (Outer -- Inner) =  1 -- 11          RMS = 2.2447640819e-06
+Step (Outer -- Inner) =  1 -- 12          RMS = 1.9087037652e-06
+Step (Outer -- Inner) =  1 -- 13          RMS = 1.3674476700e-06
+Step (Outer -- Inner) =  1 -- 14          RMS = 1.3666057513e-06
+Step (Outer -- Inner) =  1 -- 15          RMS = 1.3633028372e-06
+Step (Outer -- Inner) =  1 -- 16          RMS = 1.2817160162e-06
+Step (Outer -- Inner) =  1 -- 17          RMS = 1.0127201652e-06
+Step (Outer -- Inner) =  1 -- 18          RMS = 1.0013525851e-06
+Step (Outer -- Inner) =  1 -- 19          RMS = 6.7985379358e-07
+Step (Outer -- Inner) =  1 -- 20          RMS = 5.4298212366e-07
+Step (Outer -- Inner) =  1 -- 21          RMS = 5.4091408178e-07
+Step (Outer -- Inner) =  1 -- 22          RMS = 3.9348319987e-07
+Step (Outer -- Inner) =  1 -- 23          RMS = 2.0733712311e-07
+Step (Outer -- Inner) =  1 -- 24          RMS = 2.0721279613e-07
+Step (Outer -- Inner) =  1 -- 25          RMS = 2.0674161329e-07
+Step (Outer -- Inner) =  1 -- 26          RMS = 1.9560826137e-07
+Step (Outer -- Inner) =  1 -- 27          RMS = 1.5767569877e-07
+Step (Outer -- Inner) =  1 -- 28          RMS = 1.5564896333e-07
+Step (Outer -- Inner) =  1 -- 29          RMS = 1.1450315910e-07
+Step (Outer -- Inner) =  1 -- 30          RMS = 9.4701135730e-08
+Meet convergence criterion ( < 1.0000000000e-07 ), exit.
 after-optimization spin: (print in the inner loop): 
-2.3860000036774061e+00 3.2726813930018642e-11 -5.7968437353833354e-11
-2.3860000038119797e+00 -3.2504032269853728e-11 5.7926729432827767e-11
+ATOM 1   2.3859998128e+00 5.6901835054e-10 -8.3784039044e-10
+ATOM 2   2.3859998630e+00 -5.6134179380e-10 8.3512900001e-10
 Inner optimization for lambda ends.
 ===============================================================================
- GE2    -6.815228e+03  2.168998e+00   1.713e-01  1.340e+01  
+ GE2    -6.815228e+03  2.168993e+00   1.713e-01  8.155e+00  
 ===============================================================================
 Inner optimization for lambda begins ...
 Covergence criterion for the iteration: 1.000e-07
 initial lambda: 
--6.7408583437794281e-02 4.7605456841525005e-12 -1.0202148486430193e-11
--6.7408583600618535e-02 -4.7857929134114492e-12 1.0178448832552566e-11
+ATOM 1   -6.7408611652e-02 -2.3038462371e-13 3.2123998072e-13
+ATOM 2   -6.7408611711e-02 2.2705476286e-13 -3.3100026707e-13
 initial spin: 
-2.3860002432719369e+00 1.3831361007738770e-08 -2.9581754227434650e-08
-2.3859997715514170e+00 -1.3841573750553575e-08 2.9510882412331987e-08
+ATOM 1   2.3859999060e+00 -6.8587177452e-10 9.6449155857e-10
+ATOM 2   2.3859997358e+00 6.6486845079e-10 -9.6335896424e-10
 target spin: 
-2.3860000000000001e+00 0.0000000000000000e+00 0.0000000000000000e+00
-2.3860000000000001e+00 0.0000000000000000e+00 0.0000000000000000e+00
-Step (Outer -- Inner) =  2 -- 1           RMS =1.3753718192215542e-07
-Step (Outer -- Inner) =  2 -- 2           RMS =1.5231696946496107e-01
-Step (Outer -- Inner) =  2 -- 3           RMS =5.6332445569961479e-03
-Step (Outer -- Inner) =  2 -- 4           RMS =1.8729538201114500e-03
-Step (Outer -- Inner) =  2 -- 5           RMS =6.2517411104576453e-04
-Step (Outer -- Inner) =  2 -- 6           RMS =6.2492948087297380e-04
-Step (Outer -- Inner) =  2 -- 7           RMS =6.2455096388252499e-04
-Step (Outer -- Inner) =  2 -- 8           RMS =6.2337137943177762e-04
-Step (Outer -- Inner) =  2 -- 9           RMS =6.0010782448303881e-04
-Step (Outer -- Inner) =  2 -- 10          RMS =5.1381123609511739e-04
-Step (Outer -- Inner) =  2 -- 11          RMS =5.0212372839502219e-04
-Step (Outer -- Inner) =  2 -- 12          RMS =4.1995582410856786e-04
-Step (Outer -- Inner) =  2 -- 13          RMS =1.4203089365025142e-04
-Step (Outer -- Inner) =  2 -- 14          RMS =7.3698998742581460e-05
-Step (Outer -- Inner) =  2 -- 15          RMS =7.3679663173881760e-05
-Step (Outer -- Inner) =  2 -- 16          RMS =7.3645297768917735e-05
-Step (Outer -- Inner) =  2 -- 17          RMS =7.3544383434777526e-05
-Step (Outer -- Inner) =  2 -- 18          RMS =7.2568352616978368e-05
-Step (Outer -- Inner) =  2 -- 19          RMS =5.7154842213626892e-05
-Step (Outer -- Inner) =  2 -- 20          RMS =4.8254951714699984e-05
-Step (Outer -- Inner) =  2 -- 21          RMS =2.5846627678775871e-05
-Step (Outer -- Inner) =  2 -- 22          RMS =8.5208548506582762e-06
-Step (Outer -- Inner) =  2 -- 23          RMS =8.5150997132702494e-06
-Step (Outer -- Inner) =  2 -- 24          RMS =8.4944628179194295e-06
-Step (Outer -- Inner) =  2 -- 25          RMS =7.6288577302198259e-06
-Step (Outer -- Inner) =  2 -- 26          RMS =5.9765464238953535e-06
-Step (Outer -- Inner) =  2 -- 27          RMS =5.9710185440447094e-06
-Step (Outer -- Inner) =  2 -- 28          RMS =5.9392557752794804e-06
-Step (Outer -- Inner) =  2 -- 29          RMS =7.4403104153876869e-07
-Step (Outer -- Inner) =  2 -- 30          RMS =4.7336085238414534e-08
-Meet convergence criterion ( < 9.9999999999999995e-08 ), exit.
+ATOM 1   2.3860000000e+00 0.0000000000e+00 0.0000000000e+00
+ATOM 2   2.3860000000e+00 0.0000000000e+00 0.0000000000e+00
+Step (Outer -- Inner) =  2 -- 1           RMS = 1.1450315910e-07
+Step (Outer -- Inner) =  2 -- 2           RMS = 1.5231641915e-01
+Step (Outer -- Inner) =  2 -- 3           RMS = 5.6331838653e-03
+Step (Outer -- Inner) =  2 -- 4           RMS = 7.0553451248e-04
+Step (Outer -- Inner) =  2 -- 5           RMS = 9.4227488715e-05
+Step (Outer -- Inner) =  2 -- 6           RMS = 9.4027339546e-05
+Step (Outer -- Inner) =  2 -- 7           RMS = 9.2410716207e-05
+Step (Outer -- Inner) =  2 -- 8           RMS = 8.5317406602e-05
+Step (Outer -- Inner) =  2 -- 9           RMS = 5.9077713511e-05
+Step (Outer -- Inner) =  2 -- 10          RMS = 3.2842870347e-05
+Step (Outer -- Inner) =  2 -- 11          RMS = 3.2833672323e-05
+Step (Outer -- Inner) =  2 -- 12          RMS = 3.2815616174e-05
+Step (Outer -- Inner) =  2 -- 13          RMS = 3.2753439422e-05
+Step (Outer -- Inner) =  2 -- 14          RMS = 3.1758337494e-05
+Step (Outer -- Inner) =  2 -- 15          RMS = 2.6155960695e-05
+Step (Outer -- Inner) =  2 -- 16          RMS = 1.3821073208e-05
+Step (Outer -- Inner) =  2 -- 17          RMS = 4.3404766311e-06
+Step (Outer -- Inner) =  2 -- 18          RMS = 4.3374330850e-06
+Step (Outer -- Inner) =  2 -- 19          RMS = 4.3266298079e-06
+Step (Outer -- Inner) =  2 -- 20          RMS = 3.8568000190e-06
+Step (Outer -- Inner) =  2 -- 21          RMS = 2.9827483315e-06
+Step (Outer -- Inner) =  2 -- 22          RMS = 2.9800085412e-06
+Step (Outer -- Inner) =  2 -- 23          RMS = 2.9639915155e-06
+Step (Outer -- Inner) =  2 -- 24          RMS = 9.4599983399e-08
+Meet convergence criterion ( < 1.0000000000e-07 ), exit.
 after-optimization spin: (print in the inner loop): 
-2.3860000809269057e+00 -1.8360506635510544e-11 2.9595978519348075e-10
-2.3860000830354799e+00 1.8300308062907358e-11 -2.9422225100219154e-10
+ATOM 1   2.3860001459e+00 5.3836175656e-08 -9.3827455241e-08
+ATOM 2   2.3859999046e+00 -5.3581078896e-08 9.3388991103e-08
 Inner optimization for lambda ends.
 ===============================================================================
- GE3    -6.818388e+03  -3.159772e+00  2.063e-01  1.496e+01  
+ GE3    -6.818388e+03  -3.159748e+00  2.063e-01  7.428e+00  
 ===============================================================================
 Inner optimization for lambda begins ...
 Covergence criterion for the iteration: 1.000e-07
 initial lambda: 
--7.8203116896005440e-02 8.6612539714527490e-11 -2.1765981144745787e-10
--7.8203116142797055e-02 -8.6110958047094466e-11 2.1641344124091961e-10
+ATOM 1   -7.8203276657e-02 2.5397913681e-11 -4.9710406057e-11
+ATOM 2   -7.8203277433e-02 -2.5481472231e-11 4.9486444328e-11
 initial spin: 
-2.3859989777023891e+00 2.5195091144400726e-07 -6.3278897422032293e-07
-2.3860011628676729e+00 -2.5064328638721659e-07 6.3040963665638695e-07
+ATOM 1   2.3859961190e+00 7.3950029993e-08 -1.4435218880e-07
+ATOM 2   2.3859938684e+00 -7.3807314331e-08 1.4374367494e-07
 target spin: 
-2.3860000000000001e+00 0.0000000000000000e+00 0.0000000000000000e+00
-2.3860000000000001e+00 0.0000000000000000e+00 0.0000000000000000e+00
-Step (Outer -- Inner) =  3 -- 1           RMS =7.4403104153876869e-07
-Step (Outer -- Inner) =  3 -- 2           RMS =1.0080406012230858e+00
-Step (Outer -- Inner) =  3 -- 3           RMS =7.3046210727743158e-02
-Step (Outer -- Inner) =  3 -- 4           RMS =7.2941228688762107e-03
-Step (Outer -- Inner) =  3 -- 5           RMS =1.4826306775606120e-03
-Step (Outer -- Inner) =  3 -- 6           RMS =1.4812919289575140e-03
-Step (Outer -- Inner) =  3 -- 7           RMS =1.4776684038424720e-03
-Step (Outer -- Inner) =  3 -- 8           RMS =1.2488448362672560e-03
-Step (Outer -- Inner) =  3 -- 9           RMS =9.4039163494409757e-04
-Step (Outer -- Inner) =  3 -- 10          RMS =9.4010082410825183e-04
-Step (Outer -- Inner) =  3 -- 11          RMS =9.3942281921068223e-04
-Step (Outer -- Inner) =  3 -- 12          RMS =9.3622983941051236e-04
-Step (Outer -- Inner) =  3 -- 13          RMS =7.3506983300289125e-04
-Step (Outer -- Inner) =  3 -- 14          RMS =4.4411931921254391e-04
-Step (Outer -- Inner) =  3 -- 15          RMS =4.4385761179391981e-04
-Step (Outer -- Inner) =  3 -- 16          RMS =4.4281552624585819e-04
-Step (Outer -- Inner) =  3 -- 17          RMS =4.1641514318065587e-04
-Step (Outer -- Inner) =  3 -- 18          RMS =3.3088438674127885e-04
-Step (Outer -- Inner) =  3 -- 19          RMS =3.2778749223163171e-04
-Step (Outer -- Inner) =  3 -- 20          RMS =2.0342760945514944e-04
-Step (Outer -- Inner) =  3 -- 21          RMS =1.5409421150515193e-04
-Step (Outer -- Inner) =  3 -- 22          RMS =1.5394613381402165e-04
-Step (Outer -- Inner) =  3 -- 23          RMS =1.5302004909675771e-04
-Step (Outer -- Inner) =  3 -- 24          RMS =3.8374066073976554e-05
-Step (Outer -- Inner) =  3 -- 25          RMS =1.4153533514518217e-05
-Step (Outer -- Inner) =  3 -- 26          RMS =1.4148447812330479e-05
-Step (Outer -- Inner) =  3 -- 27          RMS =1.4138676856916289e-05
-Step (Outer -- Inner) =  3 -- 28          RMS =1.4098157700205689e-05
-Step (Outer -- Inner) =  3 -- 29          RMS =1.1698818198928527e-05
-Step (Outer -- Inner) =  3 -- 30          RMS =8.1947603183525090e-06
-Step (Outer -- Inner) =  3 -- 31          RMS =8.1907096227219759e-06
-Step (Outer -- Inner) =  3 -- 32          RMS =8.1770233890758525e-06
-Step (Outer -- Inner) =  3 -- 33          RMS =7.9984477009929100e-06
-Step (Outer -- Inner) =  3 -- 34          RMS =6.5315670762242391e-06
-Step (Outer -- Inner) =  3 -- 35          RMS =4.3132454069457710e-06
-Step (Outer -- Inner) =  3 -- 36          RMS =3.3329888477277728e-06
-Step (Outer -- Inner) =  3 -- 37          RMS =3.3293157937460404e-06
-Step (Outer -- Inner) =  3 -- 38          RMS =3.3025883254396493e-06
-Step (Outer -- Inner) =  3 -- 39          RMS =1.9593075199877343e-06
-Step (Outer -- Inner) =  3 -- 40          RMS =1.4051310374165305e-06
-Step (Outer -- Inner) =  3 -- 41          RMS =1.4043283721326198e-06
-Step (Outer -- Inner) =  3 -- 42          RMS =1.4013063509266888e-06
-Step (Outer -- Inner) =  3 -- 43          RMS =1.3415965799575381e-06
-Step (Outer -- Inner) =  3 -- 44          RMS =1.0881022726850353e-06
-Step (Outer -- Inner) =  3 -- 45          RMS =1.0325007205101861e-06
-Step (Outer -- Inner) =  3 -- 46          RMS =8.2372378494968300e-07
-Step (Outer -- Inner) =  3 -- 47          RMS =8.0328373092428538e-07
-Step (Outer -- Inner) =  3 -- 48          RMS =6.4701155430521942e-07
-Step (Outer -- Inner) =  3 -- 49          RMS =3.7391154055410568e-07
-Step (Outer -- Inner) =  3 -- 50          RMS =2.6426125295109677e-07
-Step (Outer -- Inner) =  3 -- 51          RMS =2.6413123731009014e-07
-Step (Outer -- Inner) =  3 -- 52          RMS =2.6368216915004217e-07
-Step (Outer -- Inner) =  3 -- 53          RMS =2.5799728284299275e-07
-Step (Outer -- Inner) =  3 -- 54          RMS =2.0911119667555620e-07
-Step (Outer -- Inner) =  3 -- 55          RMS =1.4807637528841797e-07
-Step (Outer -- Inner) =  3 -- 56          RMS =1.1951040295712943e-07
-Step (Outer -- Inner) =  3 -- 57          RMS =1.1911075136885297e-07
-Step (Outer -- Inner) =  3 -- 58          RMS =9.6213874614691132e-08
-Meet convergence criterion ( < 9.9999999999999995e-08 ), exit.
+ATOM 1   2.3860000000e+00 0.0000000000e+00 0.0000000000e+00
+ATOM 2   2.3860000000e+00 0.0000000000e+00 0.0000000000e+00
+Step (Outer -- Inner) =  3 -- 1           RMS = 2.9639915155e-06
+Step (Outer -- Inner) =  3 -- 2           RMS = 1.0080182742e+00
+Step (Outer -- Inner) =  3 -- 3           RMS = 7.3052745314e-02
+Step (Outer -- Inner) =  3 -- 4           RMS = 6.7556236584e-03
+Step (Outer -- Inner) =  3 -- 5           RMS = 1.4203231470e-03
+Step (Outer -- Inner) =  3 -- 6           RMS = 1.4192050758e-03
+Step (Outer -- Inner) =  3 -- 7           RMS = 1.4167087083e-03
+Step (Outer -- Inner) =  3 -- 8           RMS = 1.3699846508e-03
+Step (Outer -- Inner) =  3 -- 9           RMS = 1.2209048211e-03
+Step (Outer -- Inner) =  3 -- 10          RMS = 1.2080007867e-03
+Step (Outer -- Inner) =  3 -- 11          RMS = 9.8975690833e-04
+Step (Outer -- Inner) =  3 -- 12          RMS = 8.5391390209e-04
+Step (Outer -- Inner) =  3 -- 13          RMS = 6.1595452669e-04
+Step (Outer -- Inner) =  3 -- 14          RMS = 3.3836806606e-04
+Step (Outer -- Inner) =  3 -- 15          RMS = 3.3824674686e-04
+Step (Outer -- Inner) =  3 -- 16          RMS = 3.3793538880e-04
+Step (Outer -- Inner) =  3 -- 17          RMS = 3.3603554391e-04
+Step (Outer -- Inner) =  3 -- 18          RMS = 6.1222304131e-05
+Step (Outer -- Inner) =  3 -- 19          RMS = 2.2024498558e-05
+Step (Outer -- Inner) =  3 -- 20          RMS = 2.2017029635e-05
+Step (Outer -- Inner) =  3 -- 21          RMS = 2.2004316961e-05
+Step (Outer -- Inner) =  3 -- 22          RMS = 2.1961778676e-05
+Step (Outer -- Inner) =  3 -- 23          RMS = 2.1020575694e-05
+Step (Outer -- Inner) =  3 -- 24          RMS = 1.7859045574e-05
+Step (Outer -- Inner) =  3 -- 25          RMS = 1.7644521550e-05
+Step (Outer -- Inner) =  3 -- 26          RMS = 1.3914413205e-05
+Step (Outer -- Inner) =  3 -- 27          RMS = 1.1784118321e-05
+Step (Outer -- Inner) =  3 -- 28          RMS = 9.4516834184e-06
+Step (Outer -- Inner) =  3 -- 29          RMS = 6.0318017396e-06
+Step (Outer -- Inner) =  3 -- 30          RMS = 6.0286563804e-06
+Step (Outer -- Inner) =  3 -- 31          RMS = 6.0176448518e-06
+Step (Outer -- Inner) =  3 -- 32          RMS = 5.8568012755e-06
+Step (Outer -- Inner) =  3 -- 33          RMS = 4.7639791028e-06
+Step (Outer -- Inner) =  3 -- 34          RMS = 1.7397391898e-06
+Step (Outer -- Inner) =  3 -- 35          RMS = 8.4914136797e-07
+Step (Outer -- Inner) =  3 -- 36          RMS = 8.4889394935e-07
+Step (Outer -- Inner) =  3 -- 37          RMS = 8.4840760743e-07
+Step (Outer -- Inner) =  3 -- 38          RMS = 8.4663235925e-07
+Step (Outer -- Inner) =  3 -- 39          RMS = 8.0845348058e-07
+Step (Outer -- Inner) =  3 -- 40          RMS = 6.7169059910e-07
+Step (Outer -- Inner) =  3 -- 41          RMS = 6.5994962322e-07
+Step (Outer -- Inner) =  3 -- 42          RMS = 5.3324696974e-07
+Step (Outer -- Inner) =  3 -- 43          RMS = 4.3048519113e-07
+Step (Outer -- Inner) =  3 -- 44          RMS = 3.6059057445e-07
+Step (Outer -- Inner) =  3 -- 45          RMS = 2.5608441779e-07
+Step (Outer -- Inner) =  3 -- 46          RMS = 2.0556849020e-07
+Step (Outer -- Inner) =  3 -- 47          RMS = 2.0521270555e-07
+Step (Outer -- Inner) =  3 -- 48          RMS = 2.0041687791e-07
+Step (Outer -- Inner) =  3 -- 49          RMS = 1.6421077595e-07
+Step (Outer -- Inner) =  3 -- 50          RMS = 9.8191512515e-08
+Meet convergence criterion ( < 1.0000000000e-07 ), exit.
 after-optimization spin: (print in the inner loop): 
-2.3859999753699199e+00 4.8215425043063339e-08 -6.4448225360628676e-08
-2.3859997949403993e+00 -4.7913269969886795e-08 6.4129516241667801e-08
+ATOM 1   2.3859997672e+00 -3.3200579123e-08 -1.9916093153e-08
+ATOM 2   2.3859999743e+00 3.3035756003e-08 1.9795563941e-08
 Inner optimization for lambda ends.
 ===============================================================================
- GE4    -6.818643e+03  -2.550473e-01  4.596e-02  1.981e+01  
+ GE4    -6.818643e+03  -2.551167e-01  4.588e-02  1.060e+01  
 ===============================================================================
 Inner optimization for lambda begins ...
 Covergence criterion for the iteration: 1.000e-07
 initial lambda: 
--1.1276885998933561e-02 -1.1936326005408059e-10 -4.7999161078301630e-11
--1.1276885925086702e-02 -9.9850074876801472e-11 8.3543838975575841e-12
+ATOM 1   -1.1278289515e-02 8.6633288200e-11 -3.1398670477e-11
+ATOM 2   -1.1278289595e-02 5.2958466435e-11 -4.0988562783e-11
 initial spin: 
-2.3859998335392505e+00 9.7935600012833313e-09 -1.2331197735490976e-08
-2.3859997614169006e+00 -9.7319779549212411e-09 1.2266473268531236e-08
+ATOM 1   2.3859997694e+00 4.0018568662e-08 3.6148267796e-08
+ATOM 2   2.3859996794e+00 -3.9778823075e-08 -3.5968361862e-08
 target spin: 
-2.3860000000000001e+00 0.0000000000000000e+00 0.0000000000000000e+00
-2.3860000000000001e+00 0.0000000000000000e+00 0.0000000000000000e+00
-Step (Outer -- Inner) =  4 -- 1           RMS =1.1911075136885297e-07
-Step (Outer -- Inner) =  4 -- 2           RMS =1.6631382731038014e-01
-Step (Outer -- Inner) =  4 -- 3           RMS =2.5507017296811743e-03
-Step (Outer -- Inner) =  4 -- 4           RMS =7.0361798393547110e-04
-Step (Outer -- Inner) =  4 -- 5           RMS =1.9174358117300224e-04
-Step (Outer -- Inner) =  4 -- 6           RMS =1.9163165019130680e-04
-Step (Outer -- Inner) =  4 -- 7           RMS =1.9141157727510928e-04
-Step (Outer -- Inner) =  4 -- 8           RMS =1.8983461483736659e-04
-Step (Outer -- Inner) =  4 -- 9           RMS =1.5878229640071758e-04
-Step (Outer -- Inner) =  4 -- 10          RMS =1.3935777764762549e-04
-Step (Outer -- Inner) =  4 -- 11          RMS =1.3566087321262266e-04
-Step (Outer -- Inner) =  4 -- 12          RMS =1.1532144988097757e-04
-Step (Outer -- Inner) =  4 -- 13          RMS =7.5033268798268079e-05
-Step (Outer -- Inner) =  4 -- 14          RMS =3.4637115481347813e-05
-Step (Outer -- Inner) =  4 -- 15          RMS =3.4620737126476791e-05
-Step (Outer -- Inner) =  4 -- 16          RMS =3.4572852179899665e-05
-Step (Outer -- Inner) =  4 -- 17          RMS =3.4084153254903045e-05
-Step (Outer -- Inner) =  4 -- 18          RMS =2.7921523761437347e-05
-Step (Outer -- Inner) =  4 -- 19          RMS =2.3393220796417385e-05
-Step (Outer -- Inner) =  4 -- 20          RMS =1.7882893057011554e-05
-Step (Outer -- Inner) =  4 -- 21          RMS =1.5019401889844718e-05
-Step (Outer -- Inner) =  4 -- 22          RMS =1.4836740379280448e-05
-Step (Outer -- Inner) =  4 -- 23          RMS =1.1427441571411517e-05
-Step (Outer -- Inner) =  4 -- 24          RMS =9.5995048294490120e-06
-Step (Outer -- Inner) =  4 -- 25          RMS =8.9263663133835847e-06
-Step (Outer -- Inner) =  4 -- 26          RMS =7.0277787960701907e-06
-Step (Outer -- Inner) =  4 -- 27          RMS =6.9895473853361035e-06
-Step (Outer -- Inner) =  4 -- 28          RMS =2.0937774325698580e-06
-Step (Outer -- Inner) =  4 -- 29          RMS =3.6234330198553312e-07
-Step (Outer -- Inner) =  4 -- 30          RMS =3.6156152989705692e-07
-Step (Outer -- Inner) =  4 -- 31          RMS =3.5306745622251165e-07
-Step (Outer -- Inner) =  4 -- 32          RMS =3.2307043914125275e-07
-Step (Outer -- Inner) =  4 -- 33          RMS =3.0607749065135462e-07
-Step (Outer -- Inner) =  4 -- 34          RMS =2.5941210346169693e-07
-Step (Outer -- Inner) =  4 -- 35          RMS =2.5793064858472564e-07
-Step (Outer -- Inner) =  4 -- 36          RMS =1.0437488832503526e-07
-Step (Outer -- Inner) =  4 -- 37          RMS =5.0303776301541711e-08
-Meet convergence criterion ( < 9.9999999999999995e-08 ), exit.
+ATOM 1   2.3860000000e+00 0.0000000000e+00 0.0000000000e+00
+ATOM 2   2.3860000000e+00 0.0000000000e+00 0.0000000000e+00
+Step (Outer -- Inner) =  4 -- 1           RMS = 1.6421077595e-07
+Step (Outer -- Inner) =  4 -- 2           RMS = 1.6632140058e-01
+Step (Outer -- Inner) =  4 -- 3           RMS = 2.5509220033e-03
+Step (Outer -- Inner) =  4 -- 4           RMS = 6.7557120512e-04
+Step (Outer -- Inner) =  4 -- 5           RMS = 1.7961101400e-04
+Step (Outer -- Inner) =  4 -- 6           RMS = 1.7950630123e-04
+Step (Outer -- Inner) =  4 -- 7           RMS = 1.7931428813e-04
+Step (Outer -- Inner) =  4 -- 8           RMS = 1.7813747427e-04
+Step (Outer -- Inner) =  4 -- 9           RMS = 1.3519289831e-04
+Step (Outer -- Inner) =  4 -- 10          RMS = 1.1249553746e-04
+Step (Outer -- Inner) =  4 -- 11          RMS = 1.1236111892e-04
+Step (Outer -- Inner) =  4 -- 12          RMS = 1.1128446952e-04
+Step (Outer -- Inner) =  4 -- 13          RMS = 7.8418319740e-05
+Step (Outer -- Inner) =  4 -- 14          RMS = 6.3465760378e-05
+Step (Outer -- Inner) =  4 -- 15          RMS = 6.3293299878e-05
+Step (Outer -- Inner) =  4 -- 16          RMS = 5.7764767718e-05
+Step (Outer -- Inner) =  4 -- 17          RMS = 4.3742252509e-05
+Step (Outer -- Inner) =  4 -- 18          RMS = 4.3587167300e-05
+Step (Outer -- Inner) =  4 -- 19          RMS = 3.5148775201e-05
+Step (Outer -- Inner) =  4 -- 20          RMS = 2.1666411816e-05
+Step (Outer -- Inner) =  4 -- 21          RMS = 2.1648817666e-05
+Step (Outer -- Inner) =  4 -- 22          RMS = 2.1561012572e-05
+Step (Outer -- Inner) =  4 -- 23          RMS = 1.4730105973e-05
+Step (Outer -- Inner) =  4 -- 24          RMS = 7.0110345235e-06
+Step (Outer -- Inner) =  4 -- 25          RMS = 7.0068472746e-06
+Step (Outer -- Inner) =  4 -- 26          RMS = 6.9912723962e-06
+Step (Outer -- Inner) =  4 -- 27          RMS = 6.6217879599e-06
+Step (Outer -- Inner) =  4 -- 28          RMS = 5.4037661280e-06
+Step (Outer -- Inner) =  4 -- 29          RMS = 5.3452812786e-06
+Step (Outer -- Inner) =  4 -- 30          RMS = 3.7516335602e-06
+Step (Outer -- Inner) =  4 -- 31          RMS = 3.0354599478e-06
+Step (Outer -- Inner) =  4 -- 32          RMS = 3.0220360860e-06
+Step (Outer -- Inner) =  4 -- 33          RMS = 1.6498996704e-06
+Step (Outer -- Inner) =  4 -- 34          RMS = 5.6684027506e-07
+Step (Outer -- Inner) =  4 -- 35          RMS = 5.6644579138e-07
+Step (Outer -- Inner) =  4 -- 36          RMS = 5.6495736482e-07
+Step (Outer -- Inner) =  4 -- 37          RMS = 4.9627220919e-07
+Step (Outer -- Inner) =  4 -- 38          RMS = 3.7691260142e-07
+Step (Outer -- Inner) =  4 -- 39          RMS = 3.7663003324e-07
+Step (Outer -- Inner) =  4 -- 40          RMS = 3.7532058187e-07
+Step (Outer -- Inner) =  4 -- 41          RMS = 3.0346496900e-07
+Step (Outer -- Inner) =  4 -- 42          RMS = 1.9039570225e-07
+Step (Outer -- Inner) =  4 -- 43          RMS = 1.9024127434e-07
+Step (Outer -- Inner) =  4 -- 44          RMS = 1.8947304081e-07
+Step (Outer -- Inner) =  4 -- 45          RMS = 1.2479492067e-07
+Step (Outer -- Inner) =  4 -- 46          RMS = 5.6571031441e-08
+Meet convergence criterion ( < 1.0000000000e-07 ), exit.
 after-optimization spin: (print in the inner loop): 
-2.3859999135779888e+00 9.2344836777352523e-10 2.7287406348920863e-09
-2.3859999122644346e+00 -9.1791336601777811e-10 -2.7174661798481396e-09
+ATOM 1   2.3859998981e+00 2.0340768380e-09 1.2058324897e-09
+ATOM 2   2.3859999061e+00 -2.0223358513e-09 -1.2008846828e-09
 Inner optimization for lambda ends.
 ===============================================================================
- GE5    -6.818751e+03  -1.081825e-01  1.259e-02  1.614e+01  
+ GE5    -6.818751e+03  -1.081741e-01  1.257e-02  1.012e+01  
 ===============================================================================
 Inner optimization for lambda begins ...
 Covergence criterion for the iteration: 1.000e-07
 initial lambda: 
-5.3670196607444320e-07 -1.6428441353565906e-11 -5.4692875398145590e-11
-5.3679181191007563e-07 2.1365273050398232e-11 3.3549214847244972e-11
+ATOM 1   -7.9812375993e-08 -2.4316189281e-11 -2.7494760534e-11
+ATOM 2   -7.9944126624e-08 3.8621119410e-11 1.0713747056e-11
 initial spin: 
-2.3859998185106672e+00 -5.5146121451181442e-08 -1.1505917160300352e-07
-2.3859999974386099e+00 5.4838291107810878e-08 1.1459851373295910e-07
+ATOM 1   2.3860000479e+00 -9.3063659128e-08 -5.1577805466e-08
+ATOM 2   2.3859997380e+00 9.2541539359e-08 5.1355494769e-08
 target spin: 
-2.3860000000000001e+00 0.0000000000000000e+00 0.0000000000000000e+00
-2.3860000000000001e+00 0.0000000000000000e+00 0.0000000000000000e+00
-Step (Outer -- Inner) =  5 -- 1           RMS =1.0437488832503526e-07
-Step (Outer -- Inner) =  5 -- 2           RMS =6.3770657393457915e-04
-Step (Outer -- Inner) =  5 -- 3           RMS =1.2466423916988632e-05
-Step (Outer -- Inner) =  5 -- 4           RMS =3.3054805198538321e-07
-Step (Outer -- Inner) =  5 -- 5           RMS =3.2451159344786888e-07
-Step (Outer -- Inner) =  5 -- 6           RMS =3.0716481140368996e-07
-Step (Outer -- Inner) =  5 -- 7           RMS =2.7746961732383424e-07
-Step (Outer -- Inner) =  5 -- 8           RMS =2.5178952532009600e-07
-Step (Outer -- Inner) =  5 -- 9           RMS =5.5199337840526022e-08
-Meet convergence criterion ( < 9.9999999999999995e-08 ), exit.
+ATOM 1   2.3860000000e+00 0.0000000000e+00 0.0000000000e+00
+ATOM 2   2.3860000000e+00 0.0000000000e+00 0.0000000000e+00
+Step (Outer -- Inner) =  5 -- 1           RMS = 1.2479492067e-07
+Step (Outer -- Inner) =  5 -- 2           RMS = 6.4145149488e-04
+Step (Outer -- Inner) =  5 -- 3           RMS = 1.5816508676e-05
+Step (Outer -- Inner) =  5 -- 4           RMS = 4.1169134506e-07
+Step (Outer -- Inner) =  5 -- 5           RMS = 4.0267074272e-07
+Step (Outer -- Inner) =  5 -- 6           RMS = 3.8398804486e-07
+Step (Outer -- Inner) =  5 -- 7           RMS = 1.8409458260e-07
+Step (Outer -- Inner) =  5 -- 8           RMS = 1.0211504298e-07
+Step (Outer -- Inner) =  5 -- 9           RMS = 1.0209448928e-07
+Step (Outer -- Inner) =  5 -- 10          RMS = 1.0206027094e-07
+Step (Outer -- Inner) =  5 -- 11          RMS = 1.0198239682e-07
+Step (Outer -- Inner) =  5 -- 12          RMS = 1.0162640112e-07
+Step (Outer -- Inner) =  5 -- 13          RMS = 7.7543430120e-08
+Meet convergence criterion ( < 1.0000000000e-07 ), exit.
 after-optimization spin: (print in the inner loop): 
-2.3860000239482155e+00 -9.6327908584747396e-09 -8.4210396613201354e-08
-2.3859999416471229e+00 9.5441510298295931e-09 8.3832891595854481e-08
+ATOM 1   2.3859998121e+00 1.2589301131e-08 8.3395640921e-09
+ATOM 2   2.3860000181e+00 -1.2478957510e-08 -8.3136212214e-09
 Inner optimization for lambda ends.
 ===============================================================================
- GE6    -6.818761e+03  -9.703441e-03  8.850e-03  1.132e+01  
+ GE6    -6.818761e+03  -9.696748e-03  8.807e-03  6.135e+00  
 ===============================================================================
 Inner optimization for lambda begins ...
 Covergence criterion for the iteration: 1.000e-07
 initial lambda: 
-4.4940955552167340e-05 1.5085156700787433e-11 -8.8698324690501918e-12
-4.4940900828434938e-05 2.3957932635865636e-12 -5.9686194951194738e-12
+ATOM 1   4.4596340737e-05 2.1131210311e-11 -1.2477825988e-11
+ATOM 2   4.4596377204e-05 1.3826026469e-11 -1.2647768729e-11
 initial spin: 
-2.3859996401541803e+00 1.8959824477214553e-08 1.1424087377060819e-08
-2.3859995000743091e+00 -1.8808571699782257e-08 -1.1372451698019441e-08
+ATOM 1   2.3859997959e+00 8.5347399211e-09 4.8228237225e-09
+ATOM 2   2.3859998582e+00 -8.4668533627e-09 -4.8082112878e-09
 target spin: 
-2.3860000000000001e+00 0.0000000000000000e+00 0.0000000000000000e+00
-2.3860000000000001e+00 0.0000000000000000e+00 0.0000000000000000e+00
-Step (Outer -- Inner) =  6 -- 1           RMS =2.5178952532009600e-07
-Step (Outer -- Inner) =  6 -- 2           RMS =6.6242403515152383e-04
-Step (Outer -- Inner) =  6 -- 3           RMS =2.5842006652101871e-05
-Step (Outer -- Inner) =  6 -- 4           RMS =9.9820574291883689e-07
-Step (Outer -- Inner) =  6 -- 5           RMS =9.7630474036399855e-07
-Step (Outer -- Inner) =  6 -- 6           RMS =9.2935669671083416e-07
-Step (Outer -- Inner) =  6 -- 7           RMS =8.8297229873300341e-07
-Step (Outer -- Inner) =  6 -- 8           RMS =7.7231562454973786e-07
-Step (Outer -- Inner) =  6 -- 9           RMS =7.7041728654709507e-07
-Step (Outer -- Inner) =  6 -- 10          RMS =7.0846170644322405e-07
-Step (Outer -- Inner) =  6 -- 11          RMS =5.5761057752094475e-07
-Step (Outer -- Inner) =  6 -- 12          RMS =5.5612043595025987e-07
-Step (Outer -- Inner) =  6 -- 13          RMS =5.1022775396156545e-07
-Step (Outer -- Inner) =  6 -- 14          RMS =3.8865799962120420e-07
-Step (Outer -- Inner) =  6 -- 15          RMS =3.8712853794757045e-07
-Step (Outer -- Inner) =  6 -- 16          RMS =2.8278506968699006e-07
-Step (Outer -- Inner) =  6 -- 17          RMS =1.4738491444351614e-07
-Step (Outer -- Inner) =  6 -- 18          RMS =1.4728788657389465e-07
-Step (Outer -- Inner) =  6 -- 19          RMS =1.4687246852275077e-07
-Step (Outer -- Inner) =  6 -- 20          RMS =1.3056262523308175e-07
-Step (Outer -- Inner) =  6 -- 21          RMS =9.5959533645442117e-08
-Meet convergence criterion ( < 9.9999999999999995e-08 ), exit.
+ATOM 1   2.3860000000e+00 0.0000000000e+00 0.0000000000e+00
+ATOM 2   2.3860000000e+00 0.0000000000e+00 0.0000000000e+00
+Step (Outer -- Inner) =  6 -- 1           RMS = 1.0162640112e-07
+Step (Outer -- Inner) =  6 -- 2           RMS = 6.5278634698e-04
+Step (Outer -- Inner) =  6 -- 3           RMS = 2.7669176818e-05
+Step (Outer -- Inner) =  6 -- 4           RMS = 1.0253971487e-06
+Step (Outer -- Inner) =  6 -- 5           RMS = 9.9448910434e-07
+Step (Outer -- Inner) =  6 -- 6           RMS = 9.4269800022e-07
+Step (Outer -- Inner) =  6 -- 7           RMS = 9.3642114009e-07
+Step (Outer -- Inner) =  6 -- 8           RMS = 7.4629422248e-07
+Step (Outer -- Inner) =  6 -- 9           RMS = 6.3957961988e-07
+Step (Outer -- Inner) =  6 -- 10          RMS = 6.3828517179e-07
+Step (Outer -- Inner) =  6 -- 11          RMS = 6.1285332060e-07
+Step (Outer -- Inner) =  6 -- 12          RMS = 5.0785033860e-07
+Step (Outer -- Inner) =  6 -- 13          RMS = 4.8584026451e-07
+Step (Outer -- Inner) =  6 -- 14          RMS = 3.9499565599e-07
+Step (Outer -- Inner) =  6 -- 15          RMS = 3.7955703302e-07
+Step (Outer -- Inner) =  6 -- 16          RMS = 3.0572578145e-07
+Step (Outer -- Inner) =  6 -- 17          RMS = 2.6608222681e-07
+Step (Outer -- Inner) =  6 -- 18          RMS = 1.8571294510e-07
+Step (Outer -- Inner) =  6 -- 19          RMS = 1.8544294402e-07
+Step (Outer -- Inner) =  6 -- 20          RMS = 1.8283183442e-07
+Step (Outer -- Inner) =  6 -- 21          RMS = 1.3443785470e-07
+Step (Outer -- Inner) =  6 -- 22          RMS = 1.1093556343e-07
+Step (Outer -- Inner) =  6 -- 23          RMS = 1.0345172973e-07
+Step (Outer -- Inner) =  6 -- 24          RMS = 8.0756055805e-08
+Meet convergence criterion ( < 1.0000000000e-07 ), exit.
 after-optimization spin: (print in the inner loop): 
-2.3860001808666147e+00 7.3966002605977410e-10 -9.1691258612020069e-10
-2.3860001501129742e+00 -7.3079225225710097e-10 9.1293798063415807e-10
+ATOM 1   2.3860001199e+00 -2.4444940564e-09 -5.7274692726e-10
+ATOM 2   2.3860001573e+00 2.4354599749e-09 5.7094101981e-10
 Inner optimization for lambda ends.
 ===============================================================================
- GE7    -6.818770e+03  -8.822363e-03  3.119e-03  1.355e+01  
+ GE7    -6.818770e+03  -8.810612e-03  3.094e-03  7.459e+00  
 ===============================================================================
 Inner optimization for lambda begins ...
 Covergence criterion for the iteration: 1.000e-07
 initial lambda: 
--9.8161088789484484e-07 5.2191425018455147e-11 -2.5911588348325564e-12
--9.8130245423708710e-07 5.6549500257945408e-11 -6.4489852442755338e-12
+ATOM 1   -6.5963401396e-07 -1.6540653271e-11 1.4323595270e-11
+ATOM 2   -6.5994863279e-07 -2.5575305290e-11 1.2646603308e-11
 initial spin: 
-2.3860000428355206e+00 -6.4974259907617536e-09 8.1370506347186115e-09
-2.3860003165896111e+00 6.4578643492350668e-09 -8.0993153174660690e-09
+ATOM 1   2.3860002449e+00 1.2366851942e-08 2.8916945869e-09
+ATOM 2   2.3860000625e+00 -1.2340436565e-08 -2.8701596619e-09
 target spin: 
-2.3860000000000001e+00 0.0000000000000000e+00 0.0000000000000000e+00
-2.3860000000000001e+00 0.0000000000000000e+00 0.0000000000000000e+00
-Step (Outer -- Inner) =  7 -- 1           RMS =1.3056262523308175e-07
-Step (Outer -- Inner) =  7 -- 2           RMS =1.8348021348927427e-04
-Step (Outer -- Inner) =  7 -- 3           RMS =4.8002643473590396e-05
-Step (Outer -- Inner) =  7 -- 4           RMS =1.2572304740621242e-05
-Step (Outer -- Inner) =  7 -- 5           RMS =1.2564846192206944e-05
-Step (Outer -- Inner) =  7 -- 6           RMS =1.2551057895352521e-05
-Step (Outer -- Inner) =  7 -- 7           RMS =1.2462724806591297e-05
-Step (Outer -- Inner) =  7 -- 8           RMS =9.8395463510491394e-06
-Step (Outer -- Inner) =  7 -- 9           RMS =8.3993421455291805e-06
-Step (Outer -- Inner) =  7 -- 10          RMS =8.3795202994256434e-06
-Step (Outer -- Inner) =  7 -- 11          RMS =7.8407191122342267e-06
-Step (Outer -- Inner) =  7 -- 12          RMS =6.2694457381814736e-06
-Step (Outer -- Inner) =  7 -- 13          RMS =6.2307515408236715e-06
-Step (Outer -- Inner) =  7 -- 14          RMS =1.2127096645203926e-06
-Step (Outer -- Inner) =  7 -- 15          RMS =4.8673855155906855e-07
-Step (Outer -- Inner) =  7 -- 16          RMS =4.8657466349481962e-07
-Step (Outer -- Inner) =  7 -- 17          RMS =4.8627406331448506e-07
-Step (Outer -- Inner) =  7 -- 18          RMS =4.8518026979201215e-07
-Step (Outer -- Inner) =  7 -- 19          RMS =4.5213735083447054e-07
-Step (Outer -- Inner) =  7 -- 20          RMS =3.6795602733130572e-07
-Step (Outer -- Inner) =  7 -- 21          RMS =3.6689183375654267e-07
-Step (Outer -- Inner) =  7 -- 22          RMS =3.2679623073659623e-07
-Step (Outer -- Inner) =  7 -- 23          RMS =2.3858783004882900e-07
-Step (Outer -- Inner) =  7 -- 24          RMS =2.3811105297274728e-07
-Step (Outer -- Inner) =  7 -- 25          RMS =2.3043023536602897e-07
-Step (Outer -- Inner) =  7 -- 26          RMS =1.8547522510637287e-07
-Step (Outer -- Inner) =  7 -- 27          RMS =8.6225328370087533e-08
-Meet convergence criterion ( < 9.9999999999999995e-08 ), exit.
+ATOM 1   2.3860000000e+00 0.0000000000e+00 0.0000000000e+00
+ATOM 2   2.3860000000e+00 0.0000000000e+00 0.0000000000e+00
+Step (Outer -- Inner) =  7 -- 1           RMS = 1.0345172973e-07
+Step (Outer -- Inner) =  7 -- 2           RMS = 1.7954219973e-04
+Step (Outer -- Inner) =  7 -- 3           RMS = 5.1577212972e-05
+Step (Outer -- Inner) =  7 -- 4           RMS = 1.4563389193e-05
+Step (Outer -- Inner) =  7 -- 5           RMS = 1.4555462604e-05
+Step (Outer -- Inner) =  7 -- 6           RMS = 1.4540228139e-05
+Step (Outer -- Inner) =  7 -- 7           RMS = 1.4443817403e-05
+Step (Outer -- Inner) =  7 -- 8           RMS = 1.1152877807e-05
+Step (Outer -- Inner) =  7 -- 9           RMS = 9.3698122689e-06
+Step (Outer -- Inner) =  7 -- 10          RMS = 9.3533538571e-06
+Step (Outer -- Inner) =  7 -- 11          RMS = 9.1031235298e-06
+Step (Outer -- Inner) =  7 -- 12          RMS = 7.6063258453e-06
+Step (Outer -- Inner) =  7 -- 13          RMS = 2.8338088945e-06
+Step (Outer -- Inner) =  7 -- 14          RMS = 4.3522020054e-07
+Step (Outer -- Inner) =  7 -- 15          RMS = 4.3408894172e-07
+Step (Outer -- Inner) =  7 -- 16          RMS = 3.8077209652e-07
+Step (Outer -- Inner) =  7 -- 17          RMS = 3.0535346950e-07
+Step (Outer -- Inner) =  7 -- 18          RMS = 3.0523862488e-07
+Step (Outer -- Inner) =  7 -- 19          RMS = 3.0493902915e-07
+Step (Outer -- Inner) =  7 -- 20          RMS = 3.0308462651e-07
+Step (Outer -- Inner) =  7 -- 21          RMS = 8.1105602709e-08
+Meet convergence criterion ( < 1.0000000000e-07 ), exit.
 after-optimization spin: (print in the inner loop): 
-2.3859998165441652e+00 -8.1546375440449848e-09 4.8518175305413263e-09
-2.3860001037988141e+00 8.0857184718081346e-09 -4.8155224009380334e-09
+ATOM 1   2.3860000566e+00 7.5572868507e-09 6.0475915243e-10
+ATOM 2   2.3859998099e+00 -7.5697090936e-09 -6.0869264376e-10
 Inner optimization for lambda ends.
 ===============================================================================
- GE8    -6.818770e+03  -3.195476e-04  3.608e-03  1.472e+01  
+ GE8    -6.818770e+03  -2.984864e-04  3.593e-03  7.110e+00  
 ===============================================================================
 Inner optimization for lambda begins ...
 Covergence criterion for the iteration: 1.000e-07
 initial lambda: 
-1.1744630741821297e-05 -1.1652109990374270e-11 6.6857933743267718e-12
-1.1744468674906189e-05 -1.2600288436754018e-11 8.2569209258291690e-12
+ATOM 1   1.1785131786e-05 2.8502842082e-13 -3.6550388392e-12
+ATOM 2   1.1785456945e-05 1.6680909161e-11 -2.1106306661e-12
 initial spin: 
-2.3859996177136158e+00 2.2942416117144320e-09 -5.8145236409130103e-10
-2.3859997545364084e+00 -2.2715352081540345e-09 5.8205399297196943e-10
+ATOM 1   2.3859993729e+00 -2.3430447994e-08 -2.0271092961e-09
+ATOM 2   2.3859996040e+00 2.3338021071e-08 2.0268788689e-09
 target spin: 
-2.3860000000000001e+00 0.0000000000000000e+00 0.0000000000000000e+00
-2.3860000000000001e+00 0.0000000000000000e+00 0.0000000000000000e+00
-Step (Outer -- Inner) =  8 -- 1           RMS =1.8547522510637287e-07
-Step (Outer -- Inner) =  8 -- 2           RMS =8.5797381730783502e-03
-Step (Outer -- Inner) =  8 -- 3           RMS =3.4418832554457642e-04
-Step (Outer -- Inner) =  8 -- 4           RMS =2.4017177199724506e-05
-Step (Outer -- Inner) =  8 -- 5           RMS =2.3814873570916348e-05
-Step (Outer -- Inner) =  8 -- 6           RMS =2.2110930586015920e-05
-Step (Outer -- Inner) =  8 -- 7           RMS =2.0513247736151578e-05
-Step (Outer -- Inner) =  8 -- 8           RMS =1.6889935685449010e-05
-Step (Outer -- Inner) =  8 -- 9           RMS =1.1939983059079861e-05
-Step (Outer -- Inner) =  8 -- 10          RMS =1.1935731543692500e-05
-Step (Outer -- Inner) =  8 -- 11          RMS =1.1925163456320019e-05
-Step (Outer -- Inner) =  8 -- 12          RMS =1.1866940307785372e-05
-Step (Outer -- Inner) =  8 -- 13          RMS =3.6006638268108536e-06
-Step (Outer -- Inner) =  8 -- 14          RMS =2.6428673260892627e-07
-Step (Outer -- Inner) =  8 -- 15          RMS =2.6049900502654397e-07
-Step (Outer -- Inner) =  8 -- 16          RMS =2.4727454179997230e-07
-Step (Outer -- Inner) =  8 -- 17          RMS =4.0005138251611002e-08
-Meet convergence criterion ( < 9.9999999999999995e-08 ), exit.
+ATOM 1   2.3860000000e+00 0.0000000000e+00 0.0000000000e+00
+ATOM 2   2.3860000000e+00 0.0000000000e+00 0.0000000000e+00
+Step (Outer -- Inner) =  8 -- 1           RMS = 3.0308462651e-07
+Step (Outer -- Inner) =  8 -- 2           RMS = 8.6098045739e-03
+Step (Outer -- Inner) =  8 -- 3           RMS = 4.2189260479e-04
+Step (Outer -- Inner) =  8 -- 4           RMS = 3.2866931272e-05
+Step (Outer -- Inner) =  8 -- 5           RMS = 3.2673606765e-05
+Step (Outer -- Inner) =  8 -- 6           RMS = 2.5796556766e-05
+Step (Outer -- Inner) =  8 -- 7           RMS = 2.1384662638e-05
+Step (Outer -- Inner) =  8 -- 8           RMS = 2.1376925716e-05
+Step (Outer -- Inner) =  8 -- 9           RMS = 2.1358535868e-05
+Step (Outer -- Inner) =  8 -- 10          RMS = 2.1259514740e-05
+Step (Outer -- Inner) =  8 -- 11          RMS = 5.6755851575e-06
+Step (Outer -- Inner) =  8 -- 12          RMS = 2.9807075568e-07
+Step (Outer -- Inner) =  8 -- 13          RMS = 2.8988018644e-07
+Step (Outer -- Inner) =  8 -- 14          RMS = 2.7439124229e-07
+Step (Outer -- Inner) =  8 -- 15          RMS = 2.7206483068e-07
+Step (Outer -- Inner) =  8 -- 16          RMS = 2.3183089461e-07
+Step (Outer -- Inner) =  8 -- 17          RMS = 2.0551085271e-07
+Step (Outer -- Inner) =  8 -- 18          RMS = 1.9513884869e-07
+Step (Outer -- Inner) =  8 -- 19          RMS = 1.6218272988e-07
+Step (Outer -- Inner) =  8 -- 20          RMS = 1.6068574286e-07
+Step (Outer -- Inner) =  8 -- 21          RMS = 1.0905838713e-07
+Step (Outer -- Inner) =  8 -- 22          RMS = 8.6347889217e-08
+Meet convergence criterion ( < 1.0000000000e-07 ), exit.
 after-optimization spin: (print in the inner loop): 
-2.3859999384895105e+00 -3.2395905903757891e-08 1.8980989337960967e-08
-2.3860000549145068e+00 3.2200358696598399e-08 -1.8886168628608715e-08
+ATOM 1   2.3859998654e+00 2.9461296672e-09 -2.6921380112e-10
+ATOM 2   2.3859998369e+00 -2.9027488046e-09 2.3998613396e-10
 Inner optimization for lambda ends.
 ===============================================================================
- GE9    -6.818772e+03  -1.283530e-03  7.739e-04  1.289e+01  
+ GE9    -6.818772e+03  -1.304987e-03  7.456e-04  7.230e+00  
 ===============================================================================
 Inner optimization for lambda begins ...
 Covergence criterion for the iteration: 1.000e-07
 initial lambda: 
-6.0554684198694045e-04 2.3066594967008576e-11 -8.8773481243542281e-13
-6.0555033454478505e-04 2.6901263956583621e-11 -6.4790989309113420e-12
+ATOM 1   6.0768275755e-04 -1.1857066396e-10 9.0512462839e-11
+ATOM 2   6.0767871742e-04 -1.0276313507e-10 8.9815434145e-11
 initial spin: 
-2.3859995199658646e+00 -4.1189878366495545e-09 2.5624409701456124e-09
-2.3859996306910731e+00 4.0486375066712313e-09 -2.5329133510046497e-09
+ATOM 1   2.3859997421e+00 -2.1944304499e-08 1.8706985252e-09
+ATOM 2   2.3859999378e+00 2.1926050738e-08 -1.8917643305e-09
 target spin: 
-2.3860000000000001e+00 0.0000000000000000e+00 0.0000000000000000e+00
-2.3860000000000001e+00 0.0000000000000000e+00 0.0000000000000000e+00
-Step (Outer -- Inner) =  9 -- 1           RMS =2.4727454179997230e-07
-Step (Outer -- Inner) =  9 -- 2           RMS =6.5073077460400754e-04
-Step (Outer -- Inner) =  9 -- 3           RMS =5.5596802272549336e-04
-Step (Outer -- Inner) =  9 -- 4           RMS =4.7133360121800674e-04
-Step (Outer -- Inner) =  9 -- 5           RMS =4.7119714575713181e-04
-Step (Outer -- Inner) =  9 -- 6           RMS =4.7093562544281084e-04
-Step (Outer -- Inner) =  9 -- 7           RMS =4.7003758553962950e-04
-Step (Outer -- Inner) =  9 -- 8           RMS =4.5463486667785078e-04
-Step (Outer -- Inner) =  9 -- 9           RMS =3.7795792162958027e-04
-Step (Outer -- Inner) =  9 -- 10          RMS =3.1309444546266283e-04
-Step (Outer -- Inner) =  9 -- 11          RMS =2.0582237538451176e-04
-Step (Outer -- Inner) =  9 -- 12          RMS =2.0566790929168866e-04
-Step (Outer -- Inner) =  9 -- 13          RMS =2.0495062015439631e-04
-Step (Outer -- Inner) =  9 -- 14          RMS =1.6664593902698764e-04
-Step (Outer -- Inner) =  9 -- 15          RMS =1.0402893677479561e-04
-Step (Outer -- Inner) =  9 -- 16          RMS =1.0393581777281874e-04
-Step (Outer -- Inner) =  9 -- 17          RMS =1.0340976532334025e-04
-Step (Outer -- Inner) =  9 -- 18          RMS =2.6389185139408528e-05
-Step (Outer -- Inner) =  9 -- 19          RMS =6.1482097403098551e-07
-Step (Outer -- Inner) =  9 -- 20          RMS =5.5304472473060273e-07
-Step (Outer -- Inner) =  9 -- 21          RMS =4.8886429401829058e-07
-Step (Outer -- Inner) =  9 -- 22          RMS =4.8863228245495545e-07
-Step (Outer -- Inner) =  9 -- 23          RMS =4.8798400518588702e-07
-Step (Outer -- Inner) =  9 -- 24          RMS =4.8148976110641326e-07
-Step (Outer -- Inner) =  9 -- 25          RMS =3.9834756102892645e-07
-Step (Outer -- Inner) =  9 -- 26          RMS =3.3668460845297761e-07
-Step (Outer -- Inner) =  9 -- 27          RMS =2.5082229271350744e-07
-Step (Outer -- Inner) =  9 -- 28          RMS =2.0830137219630405e-07
-Step (Outer -- Inner) =  9 -- 29          RMS =2.0731069700118133e-07
-Step (Outer -- Inner) =  9 -- 30          RMS =4.9579145932520204e-08
-Meet convergence criterion ( < 9.9999999999999995e-08 ), exit.
+ATOM 1   2.3860000000e+00 0.0000000000e+00 0.0000000000e+00
+ATOM 2   2.3860000000e+00 0.0000000000e+00 0.0000000000e+00
+Step (Outer -- Inner) =  9 -- 1           RMS = 1.0905838713e-07
+Step (Outer -- Inner) =  9 -- 2           RMS = 6.1980520717e-04
+Step (Outer -- Inner) =  9 -- 3           RMS = 5.5960642402e-04
+Step (Outer -- Inner) =  9 -- 4           RMS = 4.9953908273e-04
+Step (Outer -- Inner) =  9 -- 5           RMS = 4.9926784101e-04
+Step (Outer -- Inner) =  9 -- 6           RMS = 4.9840162191e-04
+Step (Outer -- Inner) =  9 -- 7           RMS = 4.8414490919e-04
+Step (Outer -- Inner) =  9 -- 8           RMS = 4.1413729338e-04
+Step (Outer -- Inner) =  9 -- 9           RMS = 3.5850280364e-04
+Step (Outer -- Inner) =  9 -- 10          RMS = 2.5497702650e-04
+Step (Outer -- Inner) =  9 -- 11          RMS = 2.5471010565e-04
+Step (Outer -- Inner) =  9 -- 12          RMS = 2.5292407856e-04
+Step (Outer -- Inner) =  9 -- 13          RMS = 9.1770949041e-05
+Step (Outer -- Inner) =  9 -- 14          RMS = 5.0598261845e-05
+Step (Outer -- Inner) =  9 -- 15          RMS = 5.0583394777e-05
+Step (Outer -- Inner) =  9 -- 16          RMS = 5.0552584385e-05
+Step (Outer -- Inner) =  9 -- 17          RMS = 5.0433281933e-05
+Step (Outer -- Inner) =  9 -- 18          RMS = 4.7218695870e-05
+Step (Outer -- Inner) =  9 -- 19          RMS = 3.7689709422e-05
+Step (Outer -- Inner) =  9 -- 20          RMS = 3.7457874627e-05
+Step (Outer -- Inner) =  9 -- 21          RMS = 4.9929763568e-06
+Step (Outer -- Inner) =  9 -- 22          RMS = 1.7201776394e-06
+Step (Outer -- Inner) =  9 -- 23          RMS = 1.7195039729e-06
+Step (Outer -- Inner) =  9 -- 24          RMS = 1.7183471124e-06
+Step (Outer -- Inner) =  9 -- 25          RMS = 1.7141223942e-06
+Step (Outer -- Inner) =  9 -- 26          RMS = 1.5495087126e-06
+Step (Outer -- Inner) =  9 -- 27          RMS = 1.2141891571e-06
+Step (Outer -- Inner) =  9 -- 28          RMS = 1.2126334900e-06
+Step (Outer -- Inner) =  9 -- 29          RMS = 1.1990399689e-06
+Step (Outer -- Inner) =  9 -- 30          RMS = 8.7567651245e-07
+Step (Outer -- Inner) =  9 -- 31          RMS = 7.2097374253e-07
+Step (Outer -- Inner) =  9 -- 32          RMS = 7.1231730654e-07
+Step (Outer -- Inner) =  9 -- 33          RMS = 5.3509893394e-07
+Step (Outer -- Inner) =  9 -- 34          RMS = 4.4537168373e-07
+Step (Outer -- Inner) =  9 -- 35          RMS = 4.2932650629e-07
+Step (Outer -- Inner) =  9 -- 36          RMS = 3.5241132423e-07
+Step (Outer -- Inner) =  9 -- 37          RMS = 3.1304796131e-07
+Step (Outer -- Inner) =  9 -- 38          RMS = 2.2666397723e-07
+Step (Outer -- Inner) =  9 -- 39          RMS = 2.2619616038e-07
+Step (Outer -- Inner) =  9 -- 40          RMS = 2.1836322812e-07
+Step (Outer -- Inner) =  9 -- 41          RMS = 1.7533944713e-07
+Step (Outer -- Inner) =  9 -- 42          RMS = 1.1697816384e-07
+Step (Outer -- Inner) =  9 -- 43          RMS = 5.3454710448e-08
+Meet convergence criterion ( < 1.0000000000e-07 ), exit.
 after-optimization spin: (print in the inner loop): 
-2.3859999558518079e+00 -6.9972624596257541e-08 1.7197486642980220e-08
-2.3860000495172056e+00 6.9747668587951241e-08 -1.7055050402576471e-08
+ATOM 1   2.3860000875e+00 1.2079525192e-09 1.7010966280e-10
+ATOM 2   2.3860000974e+00 -1.2010683989e-09 -1.6931871554e-10
 Inner optimization for lambda ends.
 ===============================================================================
- GE10   -6.818772e+03  -1.274486e-04  1.162e-03  1.520e+01  
+ GE10   -6.818772e+03  -1.374696e-04  1.138e-03  9.772e+00  
 ===============================================================================
 Inner optimization for lambda begins ...
 Covergence criterion for the iteration: 1.000e-07
 initial lambda: 
-5.6044741394318230e-04 -3.8744355997154633e-10 -7.9702552868933504e-11
-5.6046239742638983e-04 -3.4027222337234383e-10 -8.9604527121093841e-11
+ATOM 1   5.6472875829e-04 -1.2266707050e-11 4.7418514671e-11
+ATOM 2   5.6471056788e-04 -8.9344956426e-13 4.5164437557e-11
 initial spin: 
-2.3860003119034543e+00 -6.2636519933092470e-08 1.4115480006678749e-08
-2.3860003903988232e+00 6.2053736898629565e-08 -1.4074733229444094e-08
+ATOM 1   2.3860002763e+00 -1.7999138987e-08 -2.4493701871e-09
+ATOM 2   2.3859999284e+00 1.7833724495e-08 2.4570128134e-09
 target spin: 
-2.3860000000000001e+00 0.0000000000000000e+00 0.0000000000000000e+00
-2.3860000000000001e+00 0.0000000000000000e+00 0.0000000000000000e+00
-Step (Outer -- Inner) =  10 -- 1           RMS =2.0731069700118133e-07
-Step (Outer -- Inner) =  10 -- 2           RMS =1.0929842119997391e-03
-Step (Outer -- Inner) =  10 -- 3           RMS =9.8640122896945996e-04
-Step (Outer -- Inner) =  10 -- 4           RMS =8.8016830679850605e-04
-Step (Outer -- Inner) =  10 -- 5           RMS =8.7969323245130752e-04
-Step (Outer -- Inner) =  10 -- 6           RMS =8.7818668694719247e-04
-Step (Outer -- Inner) =  10 -- 7           RMS =8.5409379685375637e-04
-Step (Outer -- Inner) =  10 -- 8           RMS =7.3087307773616261e-04
-Step (Outer -- Inner) =  10 -- 9           RMS =5.9322821184636706e-04
-Step (Outer -- Inner) =  10 -- 10          RMS =3.8313392214069802e-04
-Step (Outer -- Inner) =  10 -- 11          RMS =3.8289198288376971e-04
-Step (Outer -- Inner) =  10 -- 12          RMS =3.8191365449841716e-04
-Step (Outer -- Inner) =  10 -- 13          RMS =3.5472089636320636e-04
-Step (Outer -- Inner) =  10 -- 14          RMS =2.7505612738820440e-04
-Step (Outer -- Inner) =  10 -- 15          RMS =2.7334551298991957e-04
-Step (Outer -- Inner) =  10 -- 16          RMS =2.0964646113250800e-05
-Step (Outer -- Inner) =  10 -- 17          RMS =6.3494554754754289e-06
-Step (Outer -- Inner) =  10 -- 18          RMS =6.3464622688570729e-06
-Step (Outer -- Inner) =  10 -- 19          RMS =6.3412540694308728e-06
-Step (Outer -- Inner) =  10 -- 20          RMS =6.3183238742775406e-06
-Step (Outer -- Inner) =  10 -- 21          RMS =2.4549236663634335e-06
-Step (Outer -- Inner) =  10 -- 22          RMS =5.4625979355950487e-07
-Step (Outer -- Inner) =  10 -- 23          RMS =5.4568991516054416e-07
-Step (Outer -- Inner) =  10 -- 24          RMS =5.4319522740457988e-07
-Step (Outer -- Inner) =  10 -- 25          RMS =3.2417387667916658e-07
-Step (Outer -- Inner) =  10 -- 26          RMS =2.2350338280464940e-07
-Step (Outer -- Inner) =  10 -- 27          RMS =2.2344388829093691e-07
-Step (Outer -- Inner) =  10 -- 28          RMS =2.2332748181044845e-07
-Step (Outer -- Inner) =  10 -- 29          RMS =2.2292833294195909e-07
-Step (Outer -- Inner) =  10 -- 30          RMS =2.1705718782355113e-07
-Step (Outer -- Inner) =  10 -- 31          RMS =1.7851046363675123e-07
-Step (Outer -- Inner) =  10 -- 32          RMS =1.4138545618714022e-08
-Meet convergence criterion ( < 9.9999999999999995e-08 ), exit.
+ATOM 1   2.3860000000e+00 0.0000000000e+00 0.0000000000e+00
+ATOM 2   2.3860000000e+00 0.0000000000e+00 0.0000000000e+00
+Step (Outer -- Inner) =  10 -- 1           RMS = 1.1697816384e-07
+Step (Outer -- Inner) =  10 -- 2           RMS = 6.3337067503e-04
+Step (Outer -- Inner) =  10 -- 3           RMS = 5.8488832434e-04
+Step (Outer -- Inner) =  10 -- 4           RMS = 5.3508204183e-04
+Step (Outer -- Inner) =  10 -- 5           RMS = 5.3466345515e-04
+Step (Outer -- Inner) =  10 -- 6           RMS = 5.3277492238e-04
+Step (Outer -- Inner) =  10 -- 7           RMS = 2.9234421735e-04
+Step (Outer -- Inner) =  10 -- 8           RMS = 1.0906937129e-04
+Step (Outer -- Inner) =  10 -- 9           RMS = 1.0901752780e-04
+Step (Outer -- Inner) =  10 -- 10          RMS = 1.0888392384e-04
+Step (Outer -- Inner) =  10 -- 11          RMS = 1.0769030100e-04
+Step (Outer -- Inner) =  10 -- 12          RMS = 8.9235287344e-05
+Step (Outer -- Inner) =  10 -- 13          RMS = 7.7020308255e-05
+Step (Outer -- Inner) =  10 -- 14          RMS = 1.8279249307e-05
+Step (Outer -- Inner) =  10 -- 15          RMS = 6.8963847410e-07
+Step (Outer -- Inner) =  10 -- 16          RMS = 6.6136323109e-07
+Step (Outer -- Inner) =  10 -- 17          RMS = 6.1861101026e-07
+Step (Outer -- Inner) =  10 -- 18          RMS = 6.1700428529e-07
+Step (Outer -- Inner) =  10 -- 19          RMS = 5.1964490004e-07
+Step (Outer -- Inner) =  10 -- 20          RMS = 3.7610017944e-07
+Step (Outer -- Inner) =  10 -- 21          RMS = 3.7594161407e-07
+Step (Outer -- Inner) =  10 -- 22          RMS = 3.7548523625e-07
+Step (Outer -- Inner) =  10 -- 23          RMS = 3.7187732451e-07
+Step (Outer -- Inner) =  10 -- 24          RMS = 2.4285811464e-07
+Step (Outer -- Inner) =  10 -- 25          RMS = 1.8925542931e-07
+Step (Outer -- Inner) =  10 -- 26          RMS = 1.8897475579e-07
+Step (Outer -- Inner) =  10 -- 27          RMS = 1.8605090825e-07
+Step (Outer -- Inner) =  10 -- 28          RMS = 1.4448163437e-07
+Step (Outer -- Inner) =  10 -- 29          RMS = 1.1995195335e-07
+Step (Outer -- Inner) =  10 -- 30          RMS = 3.9775672891e-08
+Meet convergence criterion ( < 1.0000000000e-07 ), exit.
 after-optimization spin: (print in the inner loop): 
-2.3860000080458885e+00 -1.7016070598439551e-08 1.0247958223710143e-08
-2.3859999813000932e+00 1.6920578370997368e-08 -1.0202681715248130e-08
+ATOM 1   2.3860000159e+00 2.4090171721e-08 2.9044056785e-09
+ATOM 2   2.3859999102e+00 -2.4009021873e-08 -2.8726171147e-09
 Inner optimization for lambda ends.
 ===============================================================================
- GE11   -6.818772e+03  -1.250561e-04  5.561e-04  1.564e+01  
+ GE11   -6.818772e+03  -2.272269e-05  7.873e-04  8.187e+00  
 ===============================================================================
 Inner optimization for lambda begins ...
 Covergence criterion for the iteration: 1.000e-07
 initial lambda: 
-6.3614009477575180e-04 5.8617734063329979e-10 -1.7416736941675278e-10
-6.3617987295405275e-04 5.8904286041596409e-10 -1.7010259560655360e-10
+ATOM 1   6.0860882022e-04 4.5491177858e-10 -1.2848544286e-10
+ATOM 2   6.0857373747e-04 4.5809737578e-10 -1.2495960662e-10
 initial spin: 
-2.3859996302531794e+00 3.8103286386050912e-09 -1.7709943039176614e-09
-2.3859997666602979e+00 -3.8697043956614304e-09 1.7765315372921061e-09
+ATOM 1   2.3859997537e+00 -1.6641527043e-08 -2.0504100747e-09
+ATOM 2   2.3859998416e+00 1.6625107633e-08 2.0139031386e-09
 target spin: 
-2.3860000000000001e+00 0.0000000000000000e+00 0.0000000000000000e+00
-2.3860000000000001e+00 0.0000000000000000e+00 0.0000000000000000e+00
-Step (Outer -- Inner) =  11 -- 1           RMS =1.7851046363675123e-07
-Step (Outer -- Inner) =  11 -- 2           RMS =2.0575074096231992e-04
-Step (Outer -- Inner) =  11 -- 3           RMS =2.0078132798201945e-04
-Step (Outer -- Inner) =  11 -- 4           RMS =1.9968903412149832e-04
-Step (Outer -- Inner) =  11 -- 5           RMS =1.6219823833808184e-04
-Step (Outer -- Inner) =  11 -- 6           RMS =1.3940953666148967e-04
-Step (Outer -- Inner) =  11 -- 7           RMS =1.3924582387443010e-04
-Step (Outer -- Inner) =  11 -- 8           RMS =1.3789935833609816e-04
-Step (Outer -- Inner) =  11 -- 9           RMS =1.0417118080258702e-04
-Step (Outer -- Inner) =  11 -- 10          RMS =8.7088845123881308e-05
-Step (Outer -- Inner) =  11 -- 11          RMS =8.6351326065875093e-05
-Step (Outer -- Inner) =  11 -- 12          RMS =5.5606930956465077e-05
-Step (Outer -- Inner) =  11 -- 13          RMS =4.2642530389876742e-05
-Step (Outer -- Inner) =  11 -- 14          RMS =4.2596957135311163e-05
-Step (Outer -- Inner) =  11 -- 15          RMS =4.2280279961683232e-05
-Step (Outer -- Inner) =  11 -- 16          RMS =2.0532843855190818e-05
-Step (Outer -- Inner) =  11 -- 17          RMS =1.3328943572876109e-05
-Step (Outer -- Inner) =  11 -- 18          RMS =1.3323995429731708e-05
-Step (Outer -- Inner) =  11 -- 19          RMS =1.3311132336344547e-05
-Step (Outer -- Inner) =  11 -- 20          RMS =1.3231262801672865e-05
-Step (Outer -- Inner) =  11 -- 21          RMS =2.7518444640802327e-06
-Step (Outer -- Inner) =  11 -- 22          RMS =1.1212910663280944e-06
-Step (Outer -- Inner) =  11 -- 23          RMS =1.1209190607087335e-06
-Step (Outer -- Inner) =  11 -- 24          RMS =1.1202371571218672e-06
-Step (Outer -- Inner) =  11 -- 25          RMS =1.1177984714484755e-06
-Step (Outer -- Inner) =  11 -- 26          RMS =1.0511789008087457e-06
-Step (Outer -- Inner) =  11 -- 27          RMS =8.6541288270306693e-07
-Step (Outer -- Inner) =  11 -- 28          RMS =8.6161746987892891e-07
-Step (Outer -- Inner) =  11 -- 29          RMS =4.1135371593047709e-07
-Step (Outer -- Inner) =  11 -- 30          RMS =1.0702520812843774e-07
-Step (Outer -- Inner) =  11 -- 31          RMS =1.0691702769199968e-07
-Step (Outer -- Inner) =  11 -- 32          RMS =1.0634756576101915e-07
-Step (Outer -- Inner) =  11 -- 33          RMS =7.2138435694874897e-08
-Meet convergence criterion ( < 9.9999999999999995e-08 ), exit.
+ATOM 1   2.3860000000e+00 0.0000000000e+00 0.0000000000e+00
+ATOM 2   2.3860000000e+00 0.0000000000e+00 0.0000000000e+00
+Step (Outer -- Inner) =  11 -- 1           RMS = 1.1995195335e-07
+Step (Outer -- Inner) =  11 -- 2           RMS = 1.1504506276e-03
+Step (Outer -- Inner) =  11 -- 3           RMS = 1.0823054592e-03
+Step (Outer -- Inner) =  11 -- 4           RMS = 1.0055863594e-03
+Step (Outer -- Inner) =  11 -- 5           RMS = 1.0040080532e-03
+Step (Outer -- Inner) =  11 -- 6           RMS = 9.8161302338e-04
+Step (Outer -- Inner) =  11 -- 7           RMS = 8.6251719078e-04
+Step (Outer -- Inner) =  11 -- 8           RMS = 5.8956928393e-04
+Step (Outer -- Inner) =  11 -- 9           RMS = 3.0136683363e-04
+Step (Outer -- Inner) =  11 -- 10          RMS = 3.0124765758e-04
+Step (Outer -- Inner) =  11 -- 11          RMS = 3.0093689283e-04
+Step (Outer -- Inner) =  11 -- 12          RMS = 2.9880936299e-04
+Step (Outer -- Inner) =  11 -- 13          RMS = 1.6459217726e-04
+Step (Outer -- Inner) =  11 -- 14          RMS = 1.1396481224e-04
+Step (Outer -- Inner) =  11 -- 15          RMS = 1.1391641770e-04
+Step (Outer -- Inner) =  11 -- 16          RMS = 1.1377631096e-04
+Step (Outer -- Inner) =  11 -- 17          RMS = 1.1261427816e-04
+Step (Outer -- Inner) =  11 -- 18          RMS = 7.8544116131e-05
+Step (Outer -- Inner) =  11 -- 19          RMS = 6.3251230404e-05
+Step (Outer -- Inner) =  11 -- 20          RMS = 6.3003555404e-05
+Step (Outer -- Inner) =  11 -- 21          RMS = 4.1406795592e-05
+Step (Outer -- Inner) =  11 -- 22          RMS = 1.8779822698e-05
+Step (Outer -- Inner) =  11 -- 23          RMS = 1.8770462514e-05
+Step (Outer -- Inner) =  11 -- 24          RMS = 1.8741893499e-05
+Step (Outer -- Inner) =  11 -- 25          RMS = 1.8406421697e-05
+Step (Outer -- Inner) =  11 -- 26          RMS = 1.5265388659e-05
+Step (Outer -- Inner) =  11 -- 27          RMS = 1.1756345330e-05
+Step (Outer -- Inner) =  11 -- 28          RMS = 9.9046024095e-06
+Step (Outer -- Inner) =  11 -- 29          RMS = 9.6430054607e-06
+Step (Outer -- Inner) =  11 -- 30          RMS = 8.0008619481e-06
+Step (Outer -- Inner) =  11 -- 31          RMS = 1.3393258465e-06
+Step (Outer -- Inner) =  11 -- 32          RMS = 4.2776521590e-08
+Meet convergence criterion ( < 1.0000000000e-07 ), exit.
 after-optimization spin: (print in the inner loop): 
-2.3859998259584398e+00 1.0862119634743703e-08 -5.5679883900985507e-09
-2.3859999747516838e+00 -1.0775217753341010e-08 5.5396562663534541e-09
+ATOM 1   2.3860000737e+00 -1.2805943144e-09 -7.2600361534e-11
+ATOM 2   2.3860000745e+00 1.2716290524e-09 7.1797526398e-11
 Inner optimization for lambda ends.
 ===============================================================================
- GE12   -6.818772e+03  -4.762904e-06  4.239e-04  1.559e+01  
+ GE12   -6.818772e+03  -1.267175e-04  1.329e-04  8.441e+00  
 ===============================================================================
 Inner optimization for lambda begins ...
 Covergence criterion for the iteration: 1.000e-07
 initial lambda: 
-6.5020659900150678e-04 -1.5059996071468300e-09 1.3640550117666784e-10
-6.5020559492305196e-04 -1.5048941213586217e-09 1.7264252205314070e-10
+ATOM 1   6.8826297998e-04 -1.3760760198e-11 -1.5854020959e-10
+ATOM 2   6.8826494537e-04 5.9773021486e-10 -1.5435561073e-10
 initial spin: 
-2.3859998518145833e+00 7.7525428235852542e-10 -6.9594255137177582e-10
-2.3859997857624093e+00 -7.7336585817849034e-10 6.9422413378636042e-10
+ATOM 1   2.3859979052e+00 -8.8959316739e-07 -5.8757692567e-09
+ATOM 2   2.3860021907e+00 8.8559711407e-07 5.7119626771e-09
 target spin: 
-2.3860000000000001e+00 0.0000000000000000e+00 0.0000000000000000e+00
-2.3860000000000001e+00 0.0000000000000000e+00 0.0000000000000000e+00
-Step (Outer -- Inner) =  12 -- 1           RMS =1.0634756576101915e-07
-Step (Outer -- Inner) =  12 -- 2           RMS =5.6749623756830023e-04
-Step (Outer -- Inner) =  12 -- 3           RMS =1.6877482428754307e-04
-Step (Outer -- Inner) =  12 -- 4           RMS =4.9390138085210760e-05
-Step (Outer -- Inner) =  12 -- 5           RMS =4.9364856049289408e-05
-Step (Outer -- Inner) =  12 -- 6           RMS =4.9317854221866679e-05
-Step (Outer -- Inner) =  12 -- 7           RMS =4.9059218233097133e-05
-Step (Outer -- Inner) =  12 -- 8           RMS =2.9201944881354576e-05
-Step (Outer -- Inner) =  12 -- 9           RMS =2.0518042636875837e-05
-Step (Outer -- Inner) =  12 -- 10          RMS =2.0511593430527964e-05
-Step (Outer -- Inner) =  12 -- 11          RMS =2.0496849960621936e-05
-Step (Outer -- Inner) =  12 -- 12          RMS =2.0429595120854032e-05
-Step (Outer -- Inner) =  12 -- 13          RMS =1.6690325379379762e-05
-Step (Outer -- Inner) =  12 -- 14          RMS =1.0712598256224274e-05
-Step (Outer -- Inner) =  12 -- 15          RMS =1.0705025701602271e-05
-Step (Outer -- Inner) =  12 -- 16          RMS =1.0671733384061235e-05
-Step (Outer -- Inner) =  12 -- 17          RMS =9.3252845674514880e-06
-Step (Outer -- Inner) =  12 -- 18          RMS =6.5303302655195954e-06
-Step (Outer -- Inner) =  12 -- 19          RMS =6.5190250705614815e-06
-Step (Outer -- Inner) =  12 -- 20          RMS =6.3759156391209664e-06
-Step (Outer -- Inner) =  12 -- 21          RMS =5.0638466153725784e-06
-Step (Outer -- Inner) =  12 -- 22          RMS =3.5984435583711130e-06
-Step (Outer -- Inner) =  12 -- 23          RMS =2.9350695313295295e-06
-Step (Outer -- Inner) =  12 -- 24          RMS =2.9169138697808405e-06
-Step (Outer -- Inner) =  12 -- 25          RMS =6.0375129961154147e-07
-Step (Outer -- Inner) =  12 -- 26          RMS =2.4869561907238732e-07
-Step (Outer -- Inner) =  12 -- 27          RMS =2.4861702727438015e-07
-Step (Outer -- Inner) =  12 -- 28          RMS =2.4848670961026241e-07
-Step (Outer -- Inner) =  12 -- 29          RMS =2.4808650487744102e-07
-Step (Outer -- Inner) =  12 -- 30          RMS =2.4266785721536644e-07
-Step (Outer -- Inner) =  12 -- 31          RMS =2.0612337653748548e-07
-Step (Outer -- Inner) =  12 -- 32          RMS =6.6778823158426778e-08
-Meet convergence criterion ( < 9.9999999999999995e-08 ), exit.
+ATOM 1   2.3860000000e+00 0.0000000000e+00 0.0000000000e+00
+ATOM 2   2.3860000000e+00 0.0000000000e+00 0.0000000000e+00
+Step (Outer -- Inner) =  12 -- 1           RMS = 1.3393258465e-06
+Step (Outer -- Inner) =  12 -- 2           RMS = 1.5032266536e-04
+Step (Outer -- Inner) =  12 -- 3           RMS = 1.2135333366e-04
+Step (Outer -- Inner) =  12 -- 4           RMS = 9.7252771526e-05
+Step (Outer -- Inner) =  12 -- 5           RMS = 9.7231216429e-05
+Step (Outer -- Inner) =  12 -- 6           RMS = 9.7195953316e-05
+Step (Outer -- Inner) =  12 -- 7           RMS = 9.7109429827e-05
+Step (Outer -- Inner) =  12 -- 8           RMS = 9.6626563394e-05
+Step (Outer -- Inner) =  12 -- 9           RMS = 1.6930167249e-05
+Step (Outer -- Inner) =  12 -- 10          RMS = 7.9707634950e-07
+Step (Outer -- Inner) =  12 -- 11          RMS = 7.8838692406e-07
+Step (Outer -- Inner) =  12 -- 12          RMS = 7.4019902555e-07
+Step (Outer -- Inner) =  12 -- 13          RMS = 6.8702203968e-07
+Step (Outer -- Inner) =  12 -- 14          RMS = 4.1658887286e-07
+Step (Outer -- Inner) =  12 -- 15          RMS = 2.9338815712e-07
+Step (Outer -- Inner) =  12 -- 16          RMS = 2.9331074363e-07
+Step (Outer -- Inner) =  12 -- 17          RMS = 2.9316000500e-07
+Step (Outer -- Inner) =  12 -- 18          RMS = 2.9265351460e-07
+Step (Outer -- Inner) =  12 -- 19          RMS = 2.8596691942e-07
+Step (Outer -- Inner) =  12 -- 20          RMS = 2.3215755851e-07
+Step (Outer -- Inner) =  12 -- 21          RMS = 1.4613031075e-07
+Step (Outer -- Inner) =  12 -- 22          RMS = 1.1080117409e-07
+Step (Outer -- Inner) =  12 -- 23          RMS = 1.1069099322e-07
+Step (Outer -- Inner) =  12 -- 24          RMS = 1.0998411721e-07
+Step (Outer -- Inner) =  12 -- 25          RMS = 3.0690680914e-08
+Meet convergence criterion ( < 1.0000000000e-07 ), exit.
 after-optimization spin: (print in the inner loop): 
-2.3859998459853791e+00 2.8298225232296432e-08 -1.1788436258306988e-08
-2.3860000341884522e+00 -2.8099833109402722e-08 1.1736957823736356e-08
+ATOM 1   2.3860000658e+00 2.3937233590e-08 -4.6371790979e-10
+ATOM 2   2.3859999867e+00 -2.3811695810e-08 4.5859389282e-10
 Inner optimization for lambda ends.
 ===============================================================================
- GE13   -6.818772e+03  -2.844434e-05  7.324e-05  1.549e+01  
+ GE13   -6.818772e+03  -2.550551e-06  4.363e-05  7.583e+00  
 ===============================================================================
 Inner optimization for lambda begins ...
 Covergence criterion for the iteration: 1.000e-07
 initial lambda: 
-6.8950169135835763e-04 -2.3688474127035670e-09 -3.4774714753945763e-10
-6.8950247608478817e-04 -2.3611974379586496e-09 -3.5344495415085999e-10
+ATOM 1   6.9868406200e-04 2.4508535660e-10 -1.2696357856e-10
+ATOM 2   6.9868395794e-04 2.5591727357e-10 -1.2684750730e-10
 initial spin: 
-2.3859997278719134e+00 -9.5124846899967345e-09 2.9532276067665713e-09
-2.3859995749480780e+00 9.5215430709875821e-09 -2.8943666594100356e-09
+ATOM 1   2.3860001431e+00 -1.5943725873e-08 2.0737787215e-11
+ATOM 2   2.3860002271e+00 1.5860391148e-08 -1.3958462401e-11
 target spin: 
-2.3860000000000001e+00 0.0000000000000000e+00 0.0000000000000000e+00
-2.3860000000000001e+00 0.0000000000000000e+00 0.0000000000000000e+00
-Step (Outer -- Inner) =  13 -- 1           RMS =2.0612337653748548e-07
-Step (Outer -- Inner) =  13 -- 2           RMS =1.5962766258035221e-04
-Step (Outer -- Inner) =  13 -- 3           RMS =6.8492721832111520e-05
-Step (Outer -- Inner) =  13 -- 4           RMS =2.9289708586569022e-05
-Step (Outer -- Inner) =  13 -- 5           RMS =2.9282029334255120e-05
-Step (Outer -- Inner) =  13 -- 6           RMS =2.9271241159184492e-05
-Step (Outer -- Inner) =  13 -- 7           RMS =2.9247682995959024e-05
-Step (Outer -- Inner) =  13 -- 8           RMS =2.9131363427382849e-05
-Step (Outer -- Inner) =  13 -- 9           RMS =1.3141904396093700e-05
-Step (Outer -- Inner) =  13 -- 10          RMS =3.3300772289207863e-06
-Step (Outer -- Inner) =  13 -- 11          RMS =3.3269931828558596e-06
-Step (Outer -- Inner) =  13 -- 12          RMS =3.3133934812588286e-06
-Step (Outer -- Inner) =  13 -- 13          RMS =9.3427080320638441e-07
-Step (Outer -- Inner) =  13 -- 14          RMS =3.8830882458641312e-07
-Step (Outer -- Inner) =  13 -- 15          RMS =3.8818956854830434e-07
-Step (Outer -- Inner) =  13 -- 16          RMS =3.8798647773044188e-07
-Step (Outer -- Inner) =  13 -- 17          RMS =3.8736305609592375e-07
-Step (Outer -- Inner) =  13 -- 18          RMS =3.7853389450089080e-07
-Step (Outer -- Inner) =  13 -- 19          RMS =3.2394954813606916e-07
-Step (Outer -- Inner) =  13 -- 20          RMS =5.1841244163857252e-08
-Meet convergence criterion ( < 9.9999999999999995e-08 ), exit.
+ATOM 1   2.3860000000e+00 0.0000000000e+00 0.0000000000e+00
+ATOM 2   2.3860000000e+00 0.0000000000e+00 0.0000000000e+00
+Step (Outer -- Inner) =  13 -- 1           RMS = 1.0998411721e-07
+Step (Outer -- Inner) =  13 -- 2           RMS = 3.2971539649e-05
+Step (Outer -- Inner) =  13 -- 3           RMS = 8.7335487659e-06
+Step (Outer -- Inner) =  13 -- 4           RMS = 2.2723279417e-06
+Step (Outer -- Inner) =  13 -- 5           RMS = 2.2708856584e-06
+Step (Outer -- Inner) =  13 -- 6           RMS = 2.2678760917e-06
+Step (Outer -- Inner) =  13 -- 7           RMS = 2.2395793803e-06
+Step (Outer -- Inner) =  13 -- 8           RMS = 1.9795780364e-06
+Step (Outer -- Inner) =  13 -- 9           RMS = 1.6345262120e-06
+Step (Outer -- Inner) =  13 -- 10          RMS = 1.4256662338e-06
+Step (Outer -- Inner) =  13 -- 11          RMS = 1.3622131887e-06
+Step (Outer -- Inner) =  13 -- 12          RMS = 1.1306225342e-06
+Step (Outer -- Inner) =  13 -- 13          RMS = 1.1080234683e-06
+Step (Outer -- Inner) =  13 -- 14          RMS = 9.0363398682e-07
+Step (Outer -- Inner) =  13 -- 15          RMS = 6.4972427889e-07
+Step (Outer -- Inner) =  13 -- 16          RMS = 5.3211262787e-07
+Step (Outer -- Inner) =  13 -- 17          RMS = 5.2964710357e-07
+Step (Outer -- Inner) =  13 -- 18          RMS = 2.0564344883e-07
+Step (Outer -- Inner) =  13 -- 19          RMS = 3.4317713695e-08
+Meet convergence criterion ( < 1.0000000000e-07 ), exit.
 after-optimization spin: (print in the inner loop): 
-2.3859999150683047e+00 -1.2545655277568572e-08 1.4839009401479696e-08
-2.3860000903334719e+00 1.2472850164485517e-08 -1.4778257626079155e-08
+ATOM 1   2.3859999421e+00 -4.4731710358e-10 -2.7924748704e-11
+ATOM 2   2.3859999391e+00 6.5214557460e-10 -8.2265850584e-11
 Inner optimization for lambda ends.
 ===============================================================================
- GE14   -6.818772e+03  -1.227892e-06  5.826e-06  1.346e+01  
-Total Magnetism on atom: 0  (2.3859993392113101e+00, 5.1942779152838709e-09, -6.8880420153674246e-09)
-Total Magnetism on atom: 1  (2.3859995608306797e+00, -5.1936912776393676e-09, 6.8610127973752130e-09)
+ GE14   -6.818772e+03  -1.101283e-07  7.187e-06  6.885e+00  
+Total Magnetism on atom: 0  (2.3859995824116140e+00, 1.9673367030670525e-08, -1.1896212657916807e-09)
+Total Magnetism on atom: 1  (2.3860002803510341e+00, -1.9210368384834967e-08, 1.0540576315571542e-09)
 TIME STATISTICS
 ------------------------------------------------------------------------------------
      CLASS_NAME                 NAME            TIME(Sec)  CALLS   AVG(Sec) PER(%)
 ------------------------------------------------------------------------------------
-                     total                      205.58           9  22.84   100.00
-Driver               reading                      0.01           1   0.01     0.01
-Input                Init                         0.01           1   0.01     0.00
+                     total                      111.61           9  12.40   100.00
+Driver               reading                      0.04           1   0.04     0.04
+Input                Init                         0.03           1   0.03     0.03
 Input_Conv           Convert                      0.00           1   0.00     0.00
-Driver               driver_line                205.57           1 205.57    99.99
+Driver               driver_line                111.56           1 111.56    99.96
 UnitCell             check_tau                    0.00           1   0.00     0.00
-PW_Basis             setuptransform               0.21           1   0.21     0.10
+PW_Basis             setuptransform               0.00           1   0.00     0.00
 PW_Basis             distributeg                  0.00           1   0.00     0.00
 mymath               heapsort                     0.00           3   0.00     0.00
-PW_Basis_K           setuptransform               0.05           1   0.05     0.02
+PW_Basis_K           setuptransform               0.00           1   0.00     0.00
 PW_Basis_K           distributeg                  0.00           1   0.00     0.00
 PW_Basis             setup_struc_factor           0.00           1   0.00     0.00
-ORB_control          read_orb_first               0.25           1   0.25     0.12
-LCAO_Orbitals        Read_Orbitals                0.25           1   0.25     0.12
+ORB_control          read_orb_first               0.09           1   0.09     0.08
+LCAO_Orbitals        Read_Orbitals                0.09           1   0.09     0.08
 NOrbital_Lm          extra_uniform                0.01           9   0.00     0.01
 Mathzone_Add1        SplineD2                     0.00           9   0.00     0.00
 Mathzone_Add1        Cubic_Spline_Interpolation   0.01           9   0.00     0.00
-Sphbes               Spherical_Bessel             0.04       10284   0.00     0.02
-ppcell_vl            init_vloc                    0.01           1   0.01     0.00
-Ions                 opt_ions                   204.78           1 204.78    99.61
-ESolver_KS_LCAO      Run                        204.78           1 204.78    99.61
-ESolver_KS_LCAO      beforescf                    0.14           1   0.14     0.07
-ESolver_KS_LCAO      beforesolver                 0.11           1   0.11     0.05
-ESolver_KS_LCAO      set_matrix_grid              0.03           1   0.03     0.02
+Sphbes               Spherical_Bessel             0.04       10252   0.00     0.03
+ppcell_vl            init_vloc                    0.00           1   0.00     0.00
+Ions                 opt_ions                   111.18           1 111.18    99.62
+ESolver_KS_LCAO      Run                        111.18           1 111.18    99.62
+ESolver_KS_LCAO      beforescf                    0.12           1   0.12     0.10
+ESolver_KS_LCAO      beforesolver                 0.10           1   0.10     0.09
+ESolver_KS_LCAO      set_matrix_grid              0.04           1   0.04     0.03
 atom_arrange         search                       0.00           1   0.00     0.00
-Grid_Technique       init                         0.03           1   0.03     0.01
-Grid_BigCell         grid_expansion_index         0.01           2   0.00     0.00
+Grid_Technique       init                         0.03           1   0.03     0.03
+Grid_BigCell         grid_expansion_index         0.01           2   0.00     0.01
 Record_adj           for_2d                       0.00           1   0.00     0.00
 Grid_Driver          Find_atom                    0.00          48   0.00     0.00
 LCAO_Hamilt          grid_prepare                 0.00           1   0.00     0.00
@@ -701,55 +714,58 @@ OverlapNew           initialize_SR                0.00           1   0.00     0.
 EkineticNew          initialize_HR                0.00           1   0.00     0.00
 NonlocalNew          initialize_HR                0.00           1   0.00     0.00
 Charge               set_rho_core                 0.01           1   0.01     0.00
-PW_Basis             recip2real                   0.03         186   0.00     0.02
+PW_Basis             recip2real                   0.02         186   0.00     0.02
 PW_Basis             gathers_scatterp             0.01         186   0.00     0.01
-Charge               atomic_rho                   0.01           1   0.01     0.00
+Charge               atomic_rho                   0.01           1   0.01     0.01
 Potential            init_pot                     0.01           1   0.01     0.01
-Potential            update_from_charge           0.18          15   0.01     0.09
+Potential            update_from_charge           0.10          15   0.01     0.09
 Potential            cal_fixed_v                  0.00           1   0.00     0.00
 PotLocal             cal_fixed_v                  0.00           1   0.00     0.00
-Potential            cal_v_eff                    0.18          15   0.01     0.09
+Potential            cal_v_eff                    0.10          15   0.01     0.09
 H_Hartree_pw         v_hartree                    0.01          15   0.00     0.00
-PW_Basis             real2recip                   0.03         165   0.00     0.01
-PW_Basis             gatherp_scatters             0.01         165   0.00     0.00
-PotXC                cal_v_eff                    0.17          15   0.01     0.08
-XC_Functional        v_xc                         0.17          15   0.01     0.08
+PW_Basis             real2recip                   0.02         165   0.00     0.02
+PW_Basis             gatherp_scatters             0.01         165   0.00     0.01
+PotXC                cal_v_eff                    0.09          15   0.01     0.08
+XC_Functional        v_xc                         0.09          15   0.01     0.08
+Potential            interpolate_vrs              0.00          15   0.00     0.00
 H_Ewald_pw           compute_ewald                0.00           1   0.00     0.00
-HSolverLCAO          solve                      193.62         722   0.27    94.18
-HamiltLCAO           updateHk                    96.40        5776   0.02    46.89
-OperatorLCAO         init                        81.67       23104   0.00    39.73
-Veff                 contributeHR                79.54          14   5.68    38.69
-Gint_interface       cal_gint                   133.86          70   1.91    65.11
-Gint_interface       cal_gint_vlocal             75.40          56   1.35    36.67
-Gint_Tools           cal_psir_ylm                 7.21       20160   0.00     3.51
-Gint_k               transfer_pvpR                4.15          14   0.30     2.02
-OverlapNew           calculate_SR                 0.30           1   0.30     0.15
-OverlapNew           contributeHk                 6.63        5776   0.00     3.22
-EkineticNew          contributeHR                 0.28          14   0.02     0.14
-EkineticNew          calculate_HR                 0.28           1   0.28     0.14
-NonlocalNew          contributeHR                 1.78          14   0.13     0.87
-NonlocalNew          calculate_HR                 1.75           1   1.75     0.85
-OperatorScLambda     contributeHk                 1.16        5776   0.00     0.57
-SpinConstrain        cal_h_lambda                 1.12        5776   0.00     0.54
-OperatorLCAO         contributeHk                 6.60        5776   0.00     3.21
-HSolverLCAO          hamiltSolvePsiK             34.21        5776   0.01    16.64
-DiagoElpa            elpa_solve                  31.33        5776   0.01    15.24
-ElecStateLCAO        psiToRho                    61.94          14   4.42    30.13
-elecstate            cal_dm                       0.85         722   0.00     0.41
-psiMulPsiMpi         pdgemm                       0.82        5776   0.00     0.40
-DensityMatrix        cal_DMR                      0.12          14   0.01     0.06
- Local_Orbital_wfc   wfc_2d_to_grid               0.99        5784   0.00     0.48
-Gint                 transfer_DMR                 1.02          14   0.07     0.50
-Gint_interface       cal_gint_rho                58.47          14   4.18    28.44
-HamiltLCAO           updateSk                     6.65        5904   0.00     3.24
+HSolverLCAO          solve                      104.65         746   0.14    93.76
+HamiltLCAO           updateHk                    45.35        5968   0.01    40.63
+OperatorLCAO         init                        37.80       23872   0.00    33.87
+Veff                 contributeHR                36.84          14   2.63    33.01
+Gint_interface       cal_gint                    60.95          70   0.87    54.61
+Gint_interface       cal_gint_vlocal             34.47          56   0.62    30.88
+Gint_Tools           cal_psir_ylm                 3.20       10080   0.00     2.86
+Gint_k               transfer_pvpR                2.37          14   0.17     2.13
+OverlapNew           calculate_SR                 0.13           1   0.13     0.11
+OverlapNew           contributeHk                 3.56        5968   0.00     3.19
+EkineticNew          contributeHR                 0.13          14   0.01     0.12
+EkineticNew          calculate_HR                 0.13           1   0.13     0.12
+NonlocalNew          contributeHR                 0.79          14   0.06     0.71
+NonlocalNew          calculate_HR                 0.78           1   0.78     0.70
+OperatorScLambda     contributeHk                 0.55        5968   0.00     0.49
+SpinConstrain        cal_h_lambda                 0.52        5968   0.00     0.47
+OperatorLCAO         contributeHk                 3.28        5968   0.00     2.94
+HSolverLCAO          hamiltSolvePsiK             29.88        5968   0.01    26.77
+DiagoElpa            elpa_solve                  27.72        5968   0.00    24.84
+ElecStateLCAO        psiToRho                    27.80          14   1.99    24.91
+elecstate            cal_dm                       0.63         746   0.00     0.57
+psiMulPsiMpi         pdgemm                       0.61        5968   0.00     0.55
+DensityMatrix        cal_DMR                      0.06          14   0.00     0.06
+ Local_Orbital_wfc   wfc_2d_to_grid               1.55        5976   0.00     1.39
+Gint                 transfer_DMR                 0.79          14   0.06     0.71
+Gint_interface       cal_gint_rho                26.48          14   1.89    23.73
+HamiltLCAO           updateSk                     3.56        6096   0.00     3.19
 Charge_Mixing        get_drho                     0.00          14   0.00     0.00
-Charge               mix_rho                      0.02          13   0.00     0.01
-Charge               Pulay_mixing                 0.01          13   0.00     0.00
-SpinConstrain        cal_mw_from_lambda         133.00         708   0.19    64.70
-ModuleIO             write_istate_info            0.00           1   0.00     0.00
+Charge               mix_rho                      0.01          13   0.00     0.01
+Charge               Pulay_mixing                 0.00          13   0.00     0.00
+SpinConstrain        cal_mw_from_lambda          78.31         732   0.11    70.16
+ModuleIO             write_istate_info            0.01           1   0.01     0.01
 ------------------------------------------------------------------------------------
 
- START  Time  : Mon Oct 30 06:50:35 2023
- FINISH Time  : Mon Oct 30 06:54:01 2023
- TOTAL  Time  : 206
+ ----------------------------------------------------------
+
+ START  Time  : Thu Nov 16 17:36:58 2023
+ FINISH Time  : Thu Nov 16 17:38:49 2023
+ TOTAL  Time  : 111
  SEE INFORMATION IN : OUT.ABACUS/

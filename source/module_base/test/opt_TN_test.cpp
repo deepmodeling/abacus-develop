@@ -23,7 +23,7 @@ protected:
 
     void SetUp()
     {
-        tn.setPara(1.);
+        tn.set_para(1.);
         tn.allocate(tools.nx);
         task = new char[60];
         p = new double[tools.nx];

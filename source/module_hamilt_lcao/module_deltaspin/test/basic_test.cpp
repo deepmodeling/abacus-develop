@@ -178,10 +178,17 @@ TEST_F(BasicFuncsTest, Prin2d)
 {
     std::string info = "initial spin";
     testing::internal::CaptureStdout();
-    print_2d(info, array);
+    print_2d(info, array, 4);
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output,testing::HasSubstr("initial spin"));
-    EXPECT_THAT(output,testing::HasSubstr("1 2 3"));
-    EXPECT_THAT(output,testing::HasSubstr("4 5 6"));
-    EXPECT_THAT(output,testing::HasSubstr("7 8 9"));
+    EXPECT_THAT(output,testing::HasSubstr("ATOM 1   1 2 3"));
+    EXPECT_THAT(output,testing::HasSubstr("ATOM 2   4 5 6"));
+    EXPECT_THAT(output,testing::HasSubstr("ATOM 3   7 8 9"));
+    testing::internal::CaptureStdout();
+    print_2d(info, array, 2);
+    output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output,testing::HasSubstr("initial spin"));
+    EXPECT_THAT(output,testing::HasSubstr("ATOM 1   3"));
+    EXPECT_THAT(output,testing::HasSubstr("ATOM 2   6"));
+    EXPECT_THAT(output,testing::HasSubstr("ATOM 3   9"));
 }

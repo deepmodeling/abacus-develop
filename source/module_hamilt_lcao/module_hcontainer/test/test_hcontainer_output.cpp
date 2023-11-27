@@ -91,11 +91,11 @@ TEST_F(OutputHContainerTest, Write)
     // 5 0 7 0
     // 3 0 5 6
     // 7 8 0 10
-    hamilt::AtomPair<double> ap1(0, 1, 0, 1, 1, &ParaV, correct_array);
-    hamilt::AtomPair<double> ap2(1, 1, 0, 0, 0, &ParaV, correct_array1);
+    double test_data[8] = {0, 4, 7, 0, 5, 6, 0, 10};
+    hamilt::AtomPair<double> ap1(0, 1, 0, 1, 1, &ParaV, &test_data[0]);
+    hamilt::AtomPair<double> ap2(1, 1, 0, 0, 0, &ParaV, &test_data[4]);
     HR.insert_pair(ap1);
     HR.insert_pair(ap2);
-    HR.allocate(true);
     for (int ir = 0; ir < HR.size_R_loop(); ++ir)
     {
         int rx, ry, rz;
@@ -111,10 +111,10 @@ TEST_F(OutputHContainerTest, Write)
                 EXPECT_DOUBLE_EQ(tmp_ap.get_value(0, 1), 4);
                 EXPECT_DOUBLE_EQ(tmp_ap.get_value(1, 0), 7);
                 EXPECT_DOUBLE_EQ(tmp_ap.get_value(1, 1), 0);
-                EXPECT_DOUBLE_EQ(tmp_ap.get_matrix_value(0, 2), 0);
-                EXPECT_DOUBLE_EQ(tmp_ap.get_matrix_value(0, 3), 4);
-                EXPECT_DOUBLE_EQ(tmp_ap.get_matrix_value(1, 2), 7);
-                EXPECT_DOUBLE_EQ(tmp_ap.get_matrix_value(1, 3), 0);
+                EXPECT_DOUBLE_EQ(std::get<0>(tmp_ap.get_matrix_values())[0], 0);
+                EXPECT_DOUBLE_EQ(std::get<0>(tmp_ap.get_matrix_values())[1], 2);
+                EXPECT_DOUBLE_EQ(std::get<0>(tmp_ap.get_matrix_values())[2], 2);
+                EXPECT_DOUBLE_EQ(std::get<0>(tmp_ap.get_matrix_values())[3], 2);
             }
             else if (rx == 0 && ry == 0 && rz == 0)
             {
@@ -122,10 +122,10 @@ TEST_F(OutputHContainerTest, Write)
                 EXPECT_DOUBLE_EQ(tmp_ap.get_value(0, 1), 6);
                 EXPECT_DOUBLE_EQ(tmp_ap.get_value(1, 0), 0);
                 EXPECT_DOUBLE_EQ(tmp_ap.get_value(1, 1), 10);
-                EXPECT_DOUBLE_EQ(tmp_ap.get_matrix_value(2, 2), 5);
-                EXPECT_DOUBLE_EQ(tmp_ap.get_matrix_value(2, 3), 6);
-                EXPECT_DOUBLE_EQ(tmp_ap.get_matrix_value(3, 2), 0);
-                EXPECT_DOUBLE_EQ(tmp_ap.get_matrix_value(3, 3), 10);
+                EXPECT_DOUBLE_EQ(std::get<0>(tmp_ap.get_matrix_values())[0], 2);
+                EXPECT_DOUBLE_EQ(std::get<0>(tmp_ap.get_matrix_values())[1], 2);
+                EXPECT_DOUBLE_EQ(std::get<0>(tmp_ap.get_matrix_values())[2], 2);
+                EXPECT_DOUBLE_EQ(std::get<0>(tmp_ap.get_matrix_values())[3], 2);
             }
         }
         HR.unfix_R();

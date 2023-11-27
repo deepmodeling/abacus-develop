@@ -15,7 +15,7 @@ option(ENABLE_DEEPKS "Enable DeePKS functionality" OFF)
 option(ENABLE_LIBXC "Enable LibXC functionality" OFF)
 option(USE_CUDA "Enable support to CUDA for PW." OFF)
 option(ENABLE_FLOAT_FFTW "Enable support to single precision FFTW library." OFF)
-# option(USE_CUSOLVER_LCAO "Enable support to CUSOLVER for LCAO." OFF) # broken
+#option(USE_CUSOLVER_LCAO "Enable support to CUSOLVER for LCAO." OFF)
 option(USE_ROCM "Enable support to ROCm." OFF)
 option(USE_OPENMP "Enable OpenMP in ABACUS." ON)
 option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
@@ -34,7 +34,11 @@ option(DEBUG_INFO "Print message for developers to debug." OFF)
 option(ENABLE_NATIVE_OPTIMIZATION "Enable compilation optimization for the native machine's CPU type" OFF)
 option(COMMIT_INFO "Print commit information in log" ON)
 option(ENABLE_FFT_TWO_CENTER "Enable FFT-based two-center integral method." ON)
-
+if (USE_CUDA)
+  set(USE_CUSOLVER_LCAO ON)
+else()
+  set(USE_CUSOLVER_LCAO OFF)
+endif()
 # get commit info
 if(COMMIT_INFO)
   find_package(Git)
@@ -213,8 +217,6 @@ if(CMAKE_CUDA_COMPILER)
   else()
     if(NOT USE_CUDA AND NOT USE_CUSOLVER_LCAO)
       message(STATUS "CUDA components detected, but both USE_CUDA and USE_CUSOLVER_LCAO set to OFF. NOT building CUDA version of ABACUS.")
-    elseif (USE_CUDA AND USE_CUSOLVER_LCAO)
-      message(FATAL_ERROR "USE_CUDA and USE_CUSOLVER_LCAO set, but now they not allowed to coexist.")
     endif()
   endif()
 else() # CUDA not found
@@ -239,6 +241,9 @@ if(USE_CUDA OR USE_CUSOLVER_LCAO)
     set(CMAKE_CUDA_ARCHITECTURES
       60 # P100
       70 # V100
+      # Add your CUDA arch here
+      # Check the Compute Capability version of your GPU at:
+      # https://en.wikipedia.org/wiki/CUDA#GPUs_supported
     )
     if (CUDAToolkit_VERSION VERSION_GREATER_EQUAL 10.0)
       list(APPEND CMAKE_CUDA_ARCHITECTURES 75) # T4
@@ -250,7 +255,7 @@ if(USE_CUDA OR USE_CUSOLVER_LCAO)
       list(APPEND CMAKE_CUDA_ARCHITECTURES 86)
     endif()
     if (CUDAToolkit_VERSION VERSION_GREATER_EQUAL 11.8)
-      list(APPEND CMAKE_CUDA_ARCHITECTURES 89)
+      list(APPEND CMAKE_CUDA_ARCHITECTURES 89 90)
     endif()
   endif()
   enable_language(CUDA)
@@ -322,8 +327,8 @@ if(USE_ROCM)
 endif()
 
 if(ENABLE_ASAN)
-  if (CMAKE_CXX_COMPILER_ID MATCHES Intel)
-    message(FATAL_ERROR "Address Sanitizer is not supported on Intel compiler.")
+  if (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+    message(FATAL_ERROR "Address Sanitizer is not supported on Intel Classic compiler. Use Intel oneAPI compiler (icpx) instead.")
   endif()
   add_compile_options(
     -fsanitize=address
@@ -387,6 +392,9 @@ endif()
 
 if(ENABLE_DEEPKS)
   set(CMAKE_CXX_STANDARD 14)
+  # Torch uses outdated components to detech CUDA arch, causing failure on latest CUDA kits.
+  # See above for setting CMAKE_CUDA_ARCHITECTURES
+  set(TORCH_CUDA_ARCH_LIST CMAKE_CUDA_ARCHITECTURES)
   find_package(Torch REQUIRED)
   include_directories(${TORCH_INCLUDE_DIRS})
   target_link_libraries(${ABACUS_BIN_NAME} deepks)

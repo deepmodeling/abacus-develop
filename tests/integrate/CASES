@@ -15,6 +15,7 @@
 101_PW_upf201_uspp_Fe
 101_PW_upf201_uspp_NaCl
 101_PW_VW_pseudopots
+101_PW_Coulomb
 102_PW_DA_davidson
 102_PW_BPCG
 102_PW_PINT_RKS
@@ -132,6 +133,7 @@
 204_NO_KP_NC
 204_NO_NC_magnetic
 204_NO_KP_NC_deltaspin
+204_NO_KP_S2_deltaspin
 205_NO_FD_smearing
 205_NO_FX_smearing
 205_NO_GA_smearing

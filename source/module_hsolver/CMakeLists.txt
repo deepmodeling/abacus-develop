@@ -1,10 +1,12 @@
 list(APPEND objects
+    diagh_consts.cpp
     diago_cg.cpp
     diago_david.cpp
     diago_bpcg.cpp
     hsolver_pw.cpp
     hsolver_pw_sdft.cpp
     diago_iter_assist.cpp
+    
 )
 
 if(ENABLE_LCAO)
@@ -18,11 +20,14 @@ if(ENABLE_LCAO)
     )
   endif ()
 
-  if(USE_CUSOLVER_LCAO)
+  if(USE_CUSOLVER_LCAO AND USE_CUDA)
       list(APPEND objects
-          diag_cusolver.cu
+          ./kernels/math_kernel_op.cpp
+          ./kernels/dngvd_op.cpp
+          ./kernels/cuda/diag_cusolver.cu
+          diago_cusolver.cpp
+          diago_cusolver.h
       )
-
     add_library(
         diag_cusolver
         OBJECT

@@ -53,7 +53,7 @@ TEST_F(PWTEST,test_big)
     pwktest.initgrids(lat0,latvec, pwtest.nx, pwtest.ny, pwtest.nz);
     pwtest.initparameters(gamma_only,wfcecut,distribution_type,xprime);
     pwktest.initparameters(gamma_only,wfcecut,nks,kvec_d,distribution_type, xprime);
-    pwtest.setuptransform();
+    static_cast<ModulePW::PW_Basis>(pwtest).setuptransform();
     pwktest.setuptransform();
     EXPECT_EQ(pwtest.nx%2, 0);
     EXPECT_EQ(pwtest.ny%2, 0);

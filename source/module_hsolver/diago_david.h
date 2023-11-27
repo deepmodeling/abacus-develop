@@ -16,13 +16,6 @@
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 #include "module_psi/kernels/device.h"
 
-template<typename T> struct consts
-{
-    consts();
-    T zero;
-    T one;
-    T neg_one;
-};
 namespace hsolver
 {
 
