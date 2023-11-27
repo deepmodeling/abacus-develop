@@ -3,7 +3,7 @@
 #include <functional>
 
 #include "mixing_data.h"
-#include "module_base/module_container/base/third_party/blas.h"
+
 namespace Base_Mixing
 {
 
@@ -41,6 +41,7 @@ class Mixing
      * @param data_in x_in
      * @param data_out x_out = f(x_in)
      * @param screen pointer to the screen function for Ker-Ker mixing
+     * @param mix (double* out, const double* in, const double* residual) calculate 'out' with 'in' and residual
      * @param need_calcoef whether need to calculate the coef
      *
      */
@@ -48,15 +49,39 @@ class Mixing
                            const double* data_in,
                            const double* data_out,
                            std::function<void(double*)> screen,
+                           std::function<void(double*, const double*, const double*)> mix,
                            const bool& need_calcoef)
         = 0;
+    virtual void push_data(
+        Mixing_Data& mdata,
+        const std::complex<double>* data_in,
+        const std::complex<double>* data_out,
+        std::function<void(std::complex<double>*)> screen,
+        std::function<void(std::complex<double>*, const std::complex<double>*, const std::complex<double>*)> mix,
+        const bool& need_calcoef)
+        = 0;
+
+    /**
+     * @brief
+     *
+     * @param mdata store information of this iterative step
+     * @param data_in x_in
+     * @param data_out x_out = f(x_in)
+     * @param screen pointer to the screen function for Ker-Ker mixing
+     * @param need_calcoef whether need to calculate the coef
+     *
+     */
+    virtual void push_data(Mixing_Data& mdata,
+                           const double* data_in,
+                           const double* data_out,
+                           std::function<void(double*)> screen,
+                           const bool& need_calcoef);
     virtual void push_data(Mixing_Data& mdata,
                            const std::complex<double>* data_in,
                            const std::complex<double>* data_out,
                            std::function<void(std::complex<double>*)> screen,
-                           const bool& need_calcoef)
-        = 0;
-    
+                           const bool& need_calcoef);
+
     /**
      * @brief calculate coeficients for mixing
      *
@@ -74,62 +99,8 @@ class Mixing
      * @param mdata Mixing_Data
      * @param data_mix output data
      */
-    void mix_data(const Mixing_Data& mdata, double* data_mix)
-    {
-        if (mdata.length <= 0)
-            return;
-        double* FP_data = static_cast<double*>(mdata.data);
-        if (mdata.ndim_use == 1)
-        {
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 512)
-#endif
-            for (int i = 0; i < mdata.length; ++i)
-                data_mix[i] = FP_data[i];
-            return;
-        }
-        container::BlasConnector::gemv('N',
-                                       mdata.length,
-                                       mdata.ndim_use,
-                                       1.0,
-                                       FP_data,
-                                       mdata.length,
-                                       coef.data(),
-                                       1,
-                                       0.0,
-                                       data_mix,
-                                       1);
-    }
-    void mix_data(const Mixing_Data& mdata, std::complex<double>* data_mix)
-    {
-        if (mdata.length <= 0)
-            return;
-        std::complex<double>* FP_data = static_cast<std::complex<double>*>(mdata.data);
-        if (mdata.ndim_use == 1)
-        {
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 256)
-#endif
-            for (int i = 0; i < mdata.length; ++i)
-                data_mix[i] = FP_data[i];
-            return;
-        }
-        // conver coef to complex
-        std::vector<std::complex<double>> coef_complex(coef.size());
-        for (int i = 0; i < coef.size(); ++i)
-            coef_complex[i] = coef[i];
-        container::BlasConnector::gemv('N',
-                                       mdata.length,
-                                       mdata.ndim_use,
-                                       1.0,
-                                       FP_data,
-                                       mdata.length,
-                                       coef_complex.data(),
-                                       1,
-                                       0.0,
-                                       data_mix,
-                                       1);
-    }
+    void mix_data(const Mixing_Data& mdata, double* data_mix);
+    void mix_data(const Mixing_Data& mdata, std::complex<double>* data_mix);
 
     /**
      * @brief reset mixing
