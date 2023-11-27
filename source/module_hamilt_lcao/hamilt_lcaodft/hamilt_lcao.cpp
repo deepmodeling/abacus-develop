@@ -159,7 +159,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
         }
 
         // Effective potential term (\sum_r <psi(r)|Veff(r)|psi(r)>)
-        // in general case, target HR is Gint::pvpR_grid, while target HK is LCAO_Matrix::Hloc
+        // in general case, target HR is Gint::hRGint, while target HK is LCAO_Matrix::Hloc
         if(GlobalV::VL_IN_H)
         {
             //only Potential is not empty, Veff and Meta are available
@@ -334,8 +334,8 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
                 LM_in,
                 kv->kvec_d,
                 this->hR,// no explicit call yet
-                &(this->getHk(LM_in))
-            );
+                &(this->getHk(LM_in)),
+                this->kv->isk);
             this->getOperator()->add(sc_lambda);
         }
     }

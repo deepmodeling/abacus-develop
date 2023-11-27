@@ -25,6 +25,7 @@ smearing_sigma			0.02
 #Parameters (5.Mixing)
 mixing_type		broyden
 mixing_beta		0.4
+mixing_gg0      0.0
 
 #Parameters (6.File)
 deepks_out_labels          0 

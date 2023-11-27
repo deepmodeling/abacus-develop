@@ -171,6 +171,7 @@ class XC_Functional
 // This file contains wrapper for the mGGA functionals
 // it includes 1 subroutine:
 // 1. tau_xc
+// 2. tau_xc_spin
 
 // NOTE : mGGA is realized through LIBXC
 
@@ -178,6 +179,12 @@ class XC_Functional
 	// mGGA
 	static void tau_xc(const double &rho, const double &grho, const double &atau, double &sxc,
           double &v1xc, double &v2xc, double &v3xc);
+
+	static void tau_xc_spin(double rhoup, double rhodw, 
+			ModuleBase::Vector3<double> gdr1, ModuleBase::Vector3<double> gdr2,
+			double tauup, double taudw,
+			double &sxc, double &v1xcup, double &v1xcdw, double &v2xcup, double &v2xcdw, double &v2xcud,
+			double &v3xcup, double &v3xcdw);
 #endif 
 
 //-------------------

@@ -24,7 +24,7 @@ smearing_sigma    0.07
 
 mixing_type    broyden
 mixing_beta    0.4
-#mixing_gg0    1.5
+#mixing_gg0    1.0
 
 ks_solver    scalapack_gvx
 basis_type    lcao

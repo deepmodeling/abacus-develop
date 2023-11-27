@@ -964,15 +964,21 @@ calculations.
 - **Type**: Real
 - **Description**: In general, the formula of charge mixing can be written as $\rho_{new} = \rho_{old} + \beta * \rho_{update}$, where $\rho_{new}$ represents the new charge density after charge mixing, $\rho_{old}$ represents the charge density in previous step, $\rho_{update}$ is obtained through various mixing methods, and $\beta$ is set by the parameter `mixing_beta`. A lower value of 'mixing_beta' results in less influence of $\rho_{update}$ on $\rho_{new}$, making the self-consistent field (SCF) calculation more stable. However, it may require more steps to achieve convergence.
 We recommend the following options:
-  - **-10.0**: Program will auto set `mixing_beta` and `mixing_gg0` before charge mixing method starts.
-    - Default values of metal system (bandgap <= 1.0 eV) are `mixing_beta=0.2` and `mixing_gg0=1.0`;
-    - Default values of other systems (bandgap > 1.0eV) are `mixing_beta=0.7` and `mixing_gg0=1.0`.
+  - **0.8**: `nspin=1`
+  - **0.4**: `nspin=2`
+  - **0.2**: `nspin=4`
   - **0**: keep charge density unchanged, usually used for restarting with `init_chg=file` or testing.
   - **0.1 or less**: if convergence of SCF calculation is difficult to reach, please try `0 < mixing_beta < 0.1`.
   
-  Note: For low-dimensional large systems, the setup of `mixing_beta=0.1`, `mixing_ndim=20`, and `mixing_gg0=1.5` usually works well.
+  Note: For low-dimensional large systems, the setup of `mixing_beta=0.1`, `mixing_ndim=20`, and `mixing_gg0=1.0` usually works well.
 
-- **Default**: -10.0
+- **Default**: 0.8 for `nspin=1`, 0.4 for `nspin=2`, 0.2 for `nspin=4`.
+
+### mixing_beta_mag
+
+- **Type**: Real
+- **Description**: Mixing parameter of magnetic density.
+- **Default**: `4*mixing_beta`
 
 ### mixing_ndim
 
@@ -985,11 +991,18 @@ We recommend the following options:
 ### mixing_gg0
 
 - **Type**: Real
-- **Description**: Whether to perfom Kerker scaling.
+- **Description**: Whether to perfom Kerker scaling for charge density.
   -  **>0**: The high frequency wave vectors will be suppressed by multiplying a scaling factor $\frac{k^2}{k^2+gg0^2}$. Setting `mixing_gg0 = 1.0` is normally a good starting point. Kerker preconditioner will be automatically turned off if `mixing_beta <= 0.1`.
   -  **0**: No Kerker scaling is performed.
   
   For systems that are difficult to converge, particularly metallic systems, enabling Kerker scaling may aid in achieving convergence.
+- **Default**: 1.0
+
+### mixing_gg0_mag
+
+- **Type**: Real
+- **Description**: Whether to perfom Kerker preconditioner of magnetic density. 
+  Note: we do not recommand to open Kerker preconditioner of magnetic density unless the system is too hard to converge.
 - **Default**: 0.0
 
 ### mixing_tau
@@ -3318,7 +3331,7 @@ These variables are used to control the usage of deltaspin functionality.
 ### sc_file
 
 - **Type**: String
-- **Description**: the file in json format to specify atomic constraining parameters. An example of the sc_file json file is shown below:
+- **Description**: the file in json format to specify atomic constraining parameters. An example of the sc_file json file is shown below for the `nspin 4` case:
 ```json
 [
     {
@@ -3344,6 +3357,32 @@ These variables are used to control the usage of deltaspin functionality.
     }
 ]
 ```
+and
+```json
+[
+    {
+        "element": "Fe",
+        "itype": 0,
+        "ScDecayGrad": 0.9,
+        "ScAtomData": [
+            {
+                "index": 0,
+                "lambda": 0.0,
+                "target_mag": 2.0,
+                "constrain": 1
+            },
+            {
+                "index": 1,
+                "lambda": 0,
+                "target_mag": 2.0,
+                "constrain": 1
+            }
+        ]
+    }
+]
+```
+for `nspin 2` case. The difference is that `lambda`, `target_mag`, and `constrain` are scalars in `nspin 2` case, and are vectors in `nspin 4` case.
+
 - **Default**: none
 
 [back to top](#full-list-of-input-keywords)

@@ -297,9 +297,11 @@ void Input::Default(void)
     //  charge mixing
     //----------------------------------------------------------
     mixing_mode = "broyden";
-    mixing_beta = -10.0;
+    mixing_beta = -10;
     mixing_ndim = 8;
-    mixing_gg0 = 0.00; // used in kerker method. mohan add 2014-09-27
+    mixing_gg0 = 1.00; // use Kerker defaultly
+    mixing_beta_mag = -10.0; // only set when nspin == 2
+    mixing_gg0_mag = 0.0; // defaultly exclude Kerker from mixing magnetic density
     mixing_tau = false;
     mixing_dftu = false;
     //----------------------------------------------------------
@@ -1229,6 +1231,14 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("mixing_gg0", word) == 0) // mohan add 2014-09-27
         {
             read_value(ifs, mixing_gg0);
+        }
+        else if (strcmp("mixing_beta_mag", word) == 0)
+        {
+            read_value(ifs, mixing_beta_mag);
+        }
+        else if (strcmp("mixing_gg0_mag", word) == 0)
+        {
+            read_value(ifs, mixing_gg0_mag);
         }
         else if (strcmp("mixing_tau", word) == 0)
         {
@@ -2979,6 +2989,38 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             scf_thr_type = 1;
         }
     }
+    // mixing parameters
+    if (mixing_beta < 0.0)
+    {
+        if (nspin == 1)
+        {
+            mixing_beta = 0.8;
+        }
+        else if (nspin == 2)
+        {
+            mixing_beta = 0.4;
+            mixing_beta_mag = 1.6;
+            mixing_gg0_mag = 0.0;
+        }
+        else if (nspin == 4) // I will add this 
+        {
+            mixing_beta = 0.2;
+        }     
+    }
+    else
+    {
+        if (nspin == 2 && mixing_beta_mag < 0.0)
+        {
+            if (mixing_beta <= 0.4)
+            {
+                mixing_beta_mag = 4 * mixing_beta;
+            }
+            else
+            {
+                mixing_beta_mag = 1.6;
+            }
+        }
+    }
 }
 #ifdef __MPI
 void Input::Bcast()
@@ -3134,6 +3176,8 @@ void Input::Bcast()
     Parallel_Common::bcast_double(mixing_beta);
     Parallel_Common::bcast_int(mixing_ndim);
     Parallel_Common::bcast_double(mixing_gg0); // mohan add 2014-09-27
+    Parallel_Common::bcast_double(mixing_beta_mag);
+    Parallel_Common::bcast_double(mixing_gg0_mag);
     Parallel_Common::bcast_bool(mixing_tau);
     Parallel_Common::bcast_bool(mixing_dftu);
 
@@ -3940,9 +3984,9 @@ void Input::Check(void)
                 ModuleBase::WARNING_QUIT("INPUT", "sc_file does not exist");
             }
         }
-        if (nspin != 4)
+        if (nspin != 4 && nspin != 2)
         {
-            ModuleBase::WARNING_QUIT("INPUT", "nspin must be 4 when sc_mag_switch > 0");
+            ModuleBase::WARNING_QUIT("INPUT", "nspin must be 2 or 4 when sc_mag_switch > 0");
         }
         if (calculation != "scf")
         {

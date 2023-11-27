@@ -3,7 +3,8 @@
 template <>
 void SpinConstrain<double, psi::DEVICE_CPU>::cal_h_lambda(std::complex<double>* h_lambda,
                                                           const std::vector<std::complex<double>>& Sloc2,
-                                                          bool column_major)
+                                                          bool column_major,
+                                                          int isk)
 {
 }
 
@@ -77,7 +78,8 @@ void SpinConstrain<double, psi::DEVICE_CPU>::print_header()
 template <>
 void SpinConstrain<double, psi::DEVICE_CPU>::collect_MW(ModuleBase::matrix& MecMulP,
                                                         const ModuleBase::ComplexMatrix& mud,
-                                                        int nw)
+                                                        int nw,
+                                                        int isk)
 {
 }
 

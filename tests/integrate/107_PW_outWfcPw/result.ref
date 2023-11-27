@@ -1,12 +1,12 @@
-etotref -197.1405644408571
-etotperatomref -98.5702822204
-Max_wfc_1 0.7386
-Max_wfc_2 0.3996
-Max_wfc_3 0.3811
-Max_wfc_4 0.3619
-Max_wfc_5 0.4156
-Max_wfc_6 0.3917
+etotref -197.1405644417894
+etotperatomref -98.5702822209
+Max_wfc_1 0.8113
+Max_wfc_2 0.4031
+Max_wfc_3 0.4073
+Max_wfc_4 0.3141
+Max_wfc_5 0.4158
+Max_wfc_6 0.4405
 pointgroupref T_d
 spacegroupref O_h
 nksibzref 1
-totaltimeref 
+totaltimeref 0.37
