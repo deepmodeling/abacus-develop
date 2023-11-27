@@ -37,16 +37,10 @@ void Gint_Gamma::cal_vlocal(Gint_inout* inout, LCAO_Matrix* lm, bool new_e_itera
 	{
         if (max_size >0 && lgd > 0)
         {
-            this->hRGint->set_zero();
-            //pvpR_grid = new double[lgd*lgd];
-            //ModuleBase::GlobalFunc::ZEROS(pvpR_grid, lgd*lgd);            
+            this->hRGint->set_zero();           
         }
 
         this->cal_gint(inout);
-        //this->vl_grid_to_2D(pvpR_grid, *lm->ParaV, lgd, new_e_iteration, lm->Hloc.data(),
-        //    std::bind(&LCAO_Matrix::set_HSgamma, lm, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4));
-
-        //if (max_size > 0 && lgd > 0) delete[] pvpR_grid;
 	}
 }
 

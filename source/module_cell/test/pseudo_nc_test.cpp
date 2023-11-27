@@ -96,6 +96,7 @@ TEST_F(NCPPTest, SetPseudoAtom)
 	GlobalV::PSEUDORCUT = 15.0;
 	upf->read_pseudo_upf201(ifs);
 	//set_pseudo_atom
+	ncpp->set_pseudo_h(*upf);
 	ncpp->set_pseudo_atom(*upf);
 	EXPECT_EQ(ncpp->rcut,GlobalV::PSEUDORCUT);
 	for(int i=0;i<ncpp->nchi;i++)
@@ -135,8 +136,13 @@ TEST_F(NCPPTest, SetPseudoNC)
 	//set
 	ifs.open("./support/C.upf");
 	GlobalV::PSEUDORCUT = 15.0;
+	// set pseudo nbeta = 0
 	upf->read_pseudo_upf201(ifs);
-    // set_pseudo
+	ncpp->nbeta = 0;
+	ncpp->set_pseudo(*upf);
+	EXPECT_EQ(ncpp->nh,14);
+    // set_pseudo nbeta > 0
+	upf->read_pseudo_upf201(ifs);
     ncpp->set_pseudo(*upf);
     for(int i=0;i<ncpp->nbeta;i++)
 	{
@@ -145,6 +151,7 @@ TEST_F(NCPPTest, SetPseudoNC)
 	EXPECT_EQ(ncpp->nh,14);
 	EXPECT_EQ(ncpp->kkbeta,132);
 	ifs.close();
+	
 }
 
 TEST_F(NCPPTest, PrintNC)

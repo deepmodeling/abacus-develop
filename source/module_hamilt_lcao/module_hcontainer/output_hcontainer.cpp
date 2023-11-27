@@ -70,24 +70,15 @@ void Output_HContainer<T>::write_single_R(int rx, int ry, int rz)
     for (int iap = 0; iap < this->_hcontainer->size_atom_pairs(); ++iap)
     {
         auto atom_pair = this->_hcontainer->get_atom_pair(iap);
-        int iat1 = atom_pair.get_atom_i();
-        int iat2 = atom_pair.get_atom_j();
-        int T1 = _ucell.iat2it[iat1];
-        int T2 = _ucell.iat2it[iat2];
-        int I1 = _ucell.iat2ia[iat1];
-        int I2 = _ucell.iat2ia[iat2];
-        const int start1 = _ucell.itiaiw2iwt(T1, I1, 0);
-        const int start2 = _ucell.itiaiw2iwt(T2, I2, 0);
-        int size1 = _ucell.atoms[T1].nw;
-        int size2 = _ucell.atoms[T2].nw;
-        for (int iw1 = 0; iw1 < size1; ++iw1)
+        auto tmp_matrix_info = atom_pair.get_matrix_values();
+        int* tmp_index = std::get<0>(tmp_matrix_info).data();
+        T* tmp_data = std::get<1>(tmp_matrix_info);
+        for (int irow = tmp_index[0]; irow < tmp_index[0] + tmp_index[1]; ++irow)
         {
-            const int global_index1 = start1 + iw1;
-            for (int iw2 = 0; iw2 < size2; ++iw2)
+            for (int icol = tmp_index[2]; icol < tmp_index[2] + tmp_index[3]; ++icol)
             {
-                const int global_index2 = start2 + iw2;
-                T tmp_matrix_value = atom_pair.get_matrix_value(global_index1, global_index2);
-                sparse_matrix.insert(global_index1, global_index2, tmp_matrix_value);
+                sparse_matrix.insert(irow, icol, *tmp_data);
+                tmp_data++;
                 // to do: consider 2D block-cyclic distribution
             }
         }

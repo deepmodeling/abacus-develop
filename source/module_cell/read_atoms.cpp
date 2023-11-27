@@ -65,6 +65,10 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
 					{
 						pseudo_type[i] = one_string;
 					}
+					else if (one_string == "1/r")
+					{
+						atoms[i].coulomb_potential = true;
+					}
 					else
 					{
 						GlobalV::ofs_warning << "unrecongnized pseudopotential type: " << one_string << ", check your STRU file." << std::endl;

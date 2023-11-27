@@ -236,6 +236,15 @@ class Paw_Cell
     double calculate_ecore();
 
     private:
+
+    bool first_iter;
+    int count;
+
+    void init_mix_dij();
+    void mix_dij(const int iat, double*dij_libpaw);
+
+    std::vector<std::vector<double>> dij_save;
+
 // Info to be passed to libpaw_interface:
 // 1. ecut, ecutpaw : kinetic energy cutoff of the planewave basis set
 // there will be one coarse grid for density/potential, and a fine grid for PAW
@@ -274,6 +283,7 @@ class Paw_Cell
     void calculate_dij(double* vks, double* vxc);
     void extract_dij(int iat, int size_dij, double* dij);
     void extract_sij(int iat, int size_sij, double* sij);
+    void calculate_force(double* vks, double* vxc, double* force);
 
 // Part V. Relevant for parallel computing
 // Note about the parallelization of PAW: ABINIT supports the parallelization based on

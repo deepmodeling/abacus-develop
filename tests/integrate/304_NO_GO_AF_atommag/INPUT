@@ -24,6 +24,7 @@ smearing_sigma          0.02
 
 mixing_type    broyden
 mixing_beta    0.4
+mixing_gg0     0.0
 
 
 ks_solver     scalapack_gvx

@@ -17,8 +17,8 @@ class Output_DM : public Output_Interface
     Output_DM(const Grid_Technique& GridT,
               int is,
               int iter,
-              const int& precision,
-              const int& out_dm,
+              int precision,
+              int out_dm,
               double*** DM,
               const double& ef,
               const UnitCell* ucell,
@@ -31,8 +31,8 @@ class Output_DM : public Output_Interface
     int _is;
     int _iter;
     std::string _fn;
-    const int& _precision;
-    const int& _out_dm;
+    int _precision;
+    int _out_dm;
     double*** _DM;
     const double& _ef;
     const UnitCell* _ucell;

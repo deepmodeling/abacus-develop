@@ -26,8 +26,8 @@ void write_dm(
 	const int &is,
 	const int &iter,
 	const std::string &fn,
-	const int &precision,
-	const int &out_dm,
+	int precision,
+	int out_dm,
 	double*** DM,
 	const double& ef,
 	const UnitCell* ucell);

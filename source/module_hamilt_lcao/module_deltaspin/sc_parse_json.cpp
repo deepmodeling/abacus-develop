@@ -32,14 +32,14 @@ void SpinConstrain<FPTYPE, Device>::Set_ScData_From_Json(const std::string& file
 
     std::regex itype_regex("\"itype\": (\\d+)");
     std::regex element_regex("\"element\": \"([A-Za-z]+)\"");
-    std::regex ScDecayGrad_regex("\"ScDecayGrad\": (\\d+(?:\\.\\d+)?)");
+    std::regex ScDecayGrad_regex("\"ScDecayGrad\": [+]?(\\d+(?:\\.\\d+)?)");
     std::regex index_regex("\"index\": (\\d+)");
-    std::regex lambda_regex("\"lambda\": \\[(.+?)\\]");
-    std::regex target_mag_regex("\"target_mag\": \\[(.+?)\\]");
-    std::regex target_mag_val_regex("\"target_mag_val\": ([0-9.]+)");
-    std::regex target_mag_angle1_regex("\"target_mag_angle1\": ([0-9.]+)");
-    std::regex target_mag_angle2_regex("\"target_mag_angle2\": ([0-9.]+)");
-    std::regex constrain_regex("\"constrain\": \\[(.+?)\\]");
+    std::regex lambda_regex("\"lambda\"\\s*:\\s*(?:\\[\\s*([+-]?\\d+(?:\\.\\d+)?)\\s*,\\s*([+-]?\\d+(?:\\.\\d+)?)\\s*,\\s*([+-]?\\d+(?:\\.\\d+)?)\\s*\\]|([+-]?\\d+(?:\\.\\d+)?))");
+    std::regex target_mag_regex("\"target_mag\"\\s*:\\s*(?:\\[\\s*([+-]?\\d+(?:\\.\\d+)?)\\s*,\\s*([+-]?\\d+(?:\\.\\d+)?)\\s*,\\s*([+-]?\\d+(?:\\.\\d+)?)\\s*\\]|([+-]?\\d+(?:\\.\\d+)?))");
+    std::regex target_mag_val_regex("\"target_mag_val\": ([+-]?\\d+(?:\\.\\d+)?)");
+    std::regex target_mag_angle1_regex("\"target_mag_angle1\": ([+-]?\\d+(?:\\.\\d+)?)");
+    std::regex target_mag_angle2_regex("\"target_mag_angle2\": ([+-]?\\d+(?:\\.\\d+)?)");
+    std::regex constrain_regex("\"constrain\"\\s*:\\s*(?:\\[\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)\\s*\\]|(\\d+))");
 
     while (getline(file, line)) {
         std::smatch match;
@@ -57,26 +57,34 @@ void SpinConstrain<FPTYPE, Device>::Set_ScData_From_Json(const std::string& file
             getline(file, line); // Read the following line
 
             if (std::regex_search(line, match, lambda_regex)) {
-                std::stringstream ss(match[1]);
-                double value;
-                while (ss >> value) {
-                    element_data.lambda.push_back(value);
-                    if (ss.peek() == ',') {
-                        ss.ignore();
-                    }
+                if(match[1].matched)
+                {
+                    element_data.lambda.push_back(std::stod(match[1].str()));
+                    element_data.lambda.push_back(std::stod(match[2].str()));
+                    element_data.lambda.push_back(std::stod(match[3].str()));
+                }
+                else
+                {
+                    element_data.lambda.push_back(0.0);
+                    element_data.lambda.push_back(0.0);
+                    element_data.lambda.push_back(std::stod(match[4].str()));
                 }
             }
 
             getline(file, line); // Read the following line
 
             if (std::regex_search(line, match, target_mag_regex)) {
-                std::stringstream ss(match[1]);
-                double value;
-                while (ss >> value) {
-                    element_data.target_mag.push_back(value);
-                    if (ss.peek() == ',') {
-                        ss.ignore();
-                    }
+                if(match[1].matched)
+                {
+                    element_data.target_mag.push_back(std::stod(match[1].str()));
+                    element_data.target_mag.push_back(std::stod(match[2].str()));
+                    element_data.target_mag.push_back(std::stod(match[3].str()));
+                }
+                else
+                {
+                    element_data.target_mag.push_back(0.0);
+                    element_data.target_mag.push_back(0.0);
+                    element_data.target_mag.push_back(std::stod(match[4].str()));
                 }
                 element_data.mag_type = 0;
             }
@@ -99,13 +107,17 @@ void SpinConstrain<FPTYPE, Device>::Set_ScData_From_Json(const std::string& file
             getline(file, line); // Read the following line
 
             if (std::regex_search(line, match, constrain_regex)) {
-                std::stringstream ss(match[1]);
-                int value;
-                while (ss >> value) {
-                    element_data.constrain.push_back(value);
-                    if (ss.peek() == ',') {
-                        ss.ignore();
-                    }
+                if(match[1].matched)
+                {
+                    element_data.constrain.push_back(std::stoi(match[1].str()));
+                    element_data.constrain.push_back(std::stoi(match[2].str()));
+                    element_data.constrain.push_back(std::stoi(match[3].str()));
+                }
+                else
+                {
+                    element_data.constrain.push_back(0);
+                    element_data.constrain.push_back(0);
+                    element_data.constrain.push_back(std::stoi(match[4].str()));
                 }
             }
 

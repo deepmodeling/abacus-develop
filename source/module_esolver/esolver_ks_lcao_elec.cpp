@@ -107,10 +107,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
             nsk = GlobalV::NSPIN;
             ncol = this->LOWF.ParaV->ncol_bands;
             if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "lapack_gvx"
-#ifdef __CUSOLVER_LCAO
-                || GlobalV::KS_SOLVER == "cusolver"
-#endif
-            )
+                || GlobalV::KS_SOLVER == "cusolver")
             {
                 ncol = this->LOWF.ParaV->ncol;
             }
@@ -122,12 +119,6 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
             ncol = this->LOWF.ParaV->ncol_bands;
 #else
             ncol = GlobalV::NBANDS;
-#endif
-#ifdef __CUSOLVER_LCAO
-            if (GlobalV::KS_SOLVER == "cusolver")
-            {
-                ncol = this->LOWF.paraV->ncol;
-            }
 #endif
         }
         this->psi = new psi::Psi<TK>(nsk, ncol, this->LOWF.ParaV->nrow, nullptr);
@@ -353,11 +344,11 @@ void ESolver_KS_LCAO<TK, TR>::othercalculation(const int istep)
     if (GlobalV::CALCULATION == "test_neighbour")
     {
         // test_search_neighbor();
-        GlobalV::SEARCH_RADIUS = atom_arrange::set_sr_NL(GlobalV::ofs_running,
-                                                         GlobalV::OUT_LEVEL,
-                                                         GlobalC::ORB.get_rcutmax_Phi(),
-                                                         GlobalC::ucell.infoNL.get_rcutmax_Beta(),
-                                                         GlobalV::GAMMA_ONLY_LOCAL);
+        if (GlobalV::SEARCH_RADIUS < 0)
+        {
+            std::cout << " SEARCH_RADIUS : " << GlobalV::SEARCH_RADIUS << std::endl;
+            std::cout << " please make sure search_radius > 0" << std::endl;
+        }
 
         atom_arrange::search(GlobalV::SEARCH_PBC,
                              GlobalV::ofs_running,

@@ -22,7 +22,7 @@ nbands_sto                     256 #number of stochastic bands
 nbands_istate                  5 #number of bands around Fermi level for get_pchg calulation
 symmetry                       1 #the control of symmetry
 init_vel                       False #read velocity from STRU or not
-symmetry_prec                  1e-05 #accuracy for symmetry
+symmetry_prec                  1e-06 #accuracy for symmetry
 nelec                          0 #input number of electrons
 out_mul                        0 # mulliken  charge or not
 noncolin                       0 #using non-collinear-spin
