@@ -1,12 +1,7 @@
 #ifndef BROYDEN_MIXING_H_
 #define BROYDEN_MIXING_H_
 #include "mixing.h"
-#include "module_base/lapack_connector.h"
 #include "module_base/matrix.h"
-#include "module_base/memory.h"
-#include "module_base/timer.h"
-#include "module_base/tool_title.h"
-#include "module_base/global_variable.h"
 
 namespace Base_Mixing
 {
@@ -30,21 +25,16 @@ namespace Base_Mixing
 class Broyden_Mixing : public Mixing
 {
   public:
-    Broyden_Mixing(const int& mixing_ndim, const double& mixing_beta)
+    Broyden_Mixing(const int& mixing_ndim)
     {
         this->mixing_ndim = mixing_ndim;
         this->data_ndim = mixing_ndim + 1;
-        this->mixing_beta = mixing_beta;
         this->coef = std::vector<double>(mixing_ndim + 1);
         this->beta = ModuleBase::matrix(mixing_ndim, mixing_ndim, true);
-        if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
-        {
-            this->two_beta = 0;
-        }
-        else if (GlobalV::NSPIN == 2)
-        {
-            this->two_beta = 1;
-        }
+    }
+    Broyden_Mixing(const int& mixing_ndim, const double& mixing_beta) : Broyden_Mixing(mixing_ndim)
+    {
+        this->mixing_beta = mixing_beta;
     }
     virtual ~Broyden_Mixing() override
     {
@@ -71,6 +61,7 @@ class Broyden_Mixing : public Mixing
      * @param data_in x_in
      * @param data_out x_out = f(x_in)
      * @param screen pointer to the screen function for Ker-Ker mixing
+     * @param mix (double* out, const double* in, const double* residual) calculate 'out' with 'in' and residual
      * @param need_calcoef whether need to calculate the coef
      *
      */
@@ -78,17 +69,20 @@ class Broyden_Mixing : public Mixing
                            const double* data_in,
                            const double* data_out,
                            std::function<void(double*)> screen,
+                           std::function<void(double*, const double*, const double*)> mix,
                            const bool& need_calcoef) override
     {
-        this->tem_push_data(mdata, data_in, data_out, screen, need_calcoef);
+        this->tem_push_data(mdata, data_in, data_out, screen, mix, need_calcoef);
     };
-    virtual void push_data(Mixing_Data& mdata,
-                           const std::complex<double>* data_in,
-                           const std::complex<double>* data_out,
-                           std::function<void(std::complex<double>*)> screen,
-                           const bool& need_calcoef) override
+    virtual void push_data(
+        Mixing_Data& mdata,
+        const std::complex<double>* data_in,
+        const std::complex<double>* data_out,
+        std::function<void(std::complex<double>*)> screen,
+        std::function<void(std::complex<double>*, const std::complex<double>*, const std::complex<double>*)> mix,
+        const bool& need_calcoef) override
     {
-        this->tem_push_data(mdata, data_in, data_out, screen, need_calcoef);
+        this->tem_push_data(mdata, data_in, data_out, screen, mix, need_calcoef);
     };
 
     /**
@@ -115,6 +109,7 @@ class Broyden_Mixing : public Mixing
      * @param data_in x_in
      * @param data_out x_out = f(x_in)
      * @param screen pointer to the screen function for Ker-Ker mixing
+     * @param mix (double* out, const double* in, const double* residual) calculate 'out' with 'in' and residual
      * @param need_calcoef whether need to calculate the coef
      *
      */
@@ -123,101 +118,8 @@ class Broyden_Mixing : public Mixing
                        const FPTYPE* data_in,
                        const FPTYPE* data_out,
                        std::function<void(FPTYPE*)> screen,
-                       const bool& need_calcoef)
-    {
-        const size_t length = mdata.length;
-        std::vector<FPTYPE> F_tmp(length);
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
-#endif
-        for (int i = 0; i < length; ++i)
-        {
-            F_tmp[i] = data_out[i] - data_in[i];
-        }
-        // get screened F
-        if (screen != nullptr)
-            screen(F_tmp.data());
-        // container::Tensor data = data_in + mixing_beta * F;
-        std::vector<FPTYPE> data(length);
-        // mix density and magnetic density sperately
-        if (this->two_beta == 0)
-        {
-            // rho_tot
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
-#endif
-            for (int i = 0; i < length; ++i)
-            {
-                data[i] = data_in[i] + this->mixing_beta * F_tmp[i];
-            }
-        }
-        else if (this->two_beta == 1)
-        {
-            // rho_tot
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
-#endif
-            for (int i = 0; i < length / 2; ++i)
-            {
-                data[i] = data_in[i] + this->mixing_beta * F_tmp[i];
-            }
-            // magnetism
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
-#endif
-            for (int i = length / 2; i < length; ++i)
-            {
-                data[i] = data_in[i] + GlobalV::MIXING_BETA_MAG * F_tmp[i];
-            }
-
-        }
-        mdata.push(data.data());
-
-        if (!need_calcoef)
-            return;
-
-        if (address != &mdata && address != nullptr)
-            ModuleBase::WARNING_QUIT(
-                "Broyden_Mixing",
-                "One Broyden_Mixing object can only bind one Mixing_Data object to calculate coefficients");
-
-        FPTYPE* FP_dF = static_cast<FPTYPE*>(dF);
-        FPTYPE* FP_F = static_cast<FPTYPE*>(F);
-        if (mdata.ndim_use == 1)
-        {
-            address = &mdata;
-            // allocate
-            if (F != nullptr)
-                free(F);
-            F = malloc(sizeof(FPTYPE) * length);
-            FP_F = static_cast<FPTYPE*>(F);
-            if (dF != nullptr)
-                free(dF);
-            dF = malloc(sizeof(FPTYPE) * length * mixing_ndim);
-            FP_dF = static_cast<FPTYPE*>(dF);
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
-#endif
-            for (int i = 0; i < length; ++i)
-            {
-                FP_F[i] = F_tmp[i];
-            }
-        }
-        else
-        {
-            this->ndim_cal_dF = std::min(this->ndim_cal_dF + 1, this->mixing_ndim);
-            start_dF = (this->start_dF + 1) % this->mixing_ndim;
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
-#endif
-            for (int i = 0; i < length; ++i)
-            {
-                FP_F[i] = F_tmp[i];
-                // dF{n} = F{n-1} - F{n} = -(F{n} - F{n-1})
-                FP_dF[start_dF * length + i] -= FP_F[i];
-            }
-        }
-    };
+                       std::function<void(FPTYPE*, const FPTYPE*, const FPTYPE*)> mix,
+                       const bool& need_calcoef);
 
     /**
      * @brief calculate coeficients for mixing
@@ -226,101 +128,7 @@ class Broyden_Mixing : public Mixing
      * @param inner_product pointer to the inner dot function
      */
     template <class FPTYPE>
-    void tem_cal_coef(const Mixing_Data& mdata, std::function<double(FPTYPE*, FPTYPE*)> inner_product)
-    {
-        ModuleBase::TITLE("Charge_Mixing", "Simplified_Broyden_mixing");
-        ModuleBase::timer::tick("Charge", "Broyden_mixing");
-        if (address != &mdata && address != nullptr)
-            ModuleBase::WARNING_QUIT(
-                "Broyden_mixing",
-                "One Broyden_Mixing object can only bind one Mixing_Data object to calculate coefficients");
-        const int length = mdata.length;
-        FPTYPE* FP_dF = static_cast<FPTYPE*>(dF);
-        FPTYPE* FP_F = static_cast<FPTYPE*>(F);
-        if (ndim_cal_dF > 0)
-        {
-            ModuleBase::matrix beta_tmp(ndim_cal_dF, ndim_cal_dF);
-            // beta(i, j) = <dF_i, dF_j>
-            for (int i = 0; i < ndim_cal_dF; ++i)
-            {
-                FPTYPE* dFi = FP_dF + i * length;
-                for (int j = i; j < ndim_cal_dF; ++j)
-                {
-                    if (i != start_dF && j != start_dF)
-                    {
-                        beta_tmp(i, j) = beta(i, j);
-                    }
-                    else
-                    {
-                        FPTYPE* dFj = FP_dF + j * length;
-                        beta(i, j) = beta_tmp(i, j) = inner_product(dFi, dFj);
-                    }
-                    if (j != i)
-                    {
-                        beta_tmp(j, i) = beta_tmp(i, j);
-                    }
-                }
-            }
-            double* work = new double[ndim_cal_dF];
-            int* iwork = new int[ndim_cal_dF];
-            char uu = 'U';
-            int info;
-            dsytrf_(&uu, &ndim_cal_dF, beta_tmp.c, &ndim_cal_dF, iwork, work, &ndim_cal_dF, &info);
-            if (info != 0)
-                ModuleBase::WARNING_QUIT("Charge_Mixing", "Error when factorizing beta.");
-            dsytri_(&uu, &ndim_cal_dF, beta_tmp.c, &ndim_cal_dF, iwork, work, &info);
-            if (info != 0)
-                ModuleBase::WARNING_QUIT("Charge_Mixing", "Error when DSYTRI beta.");
-            for (int i = 0; i < ndim_cal_dF; ++i)
-            {
-                for (int j = i + 1; j < ndim_cal_dF; ++j)
-                {
-                    beta_tmp(i, j) = beta_tmp(j, i);
-                }
-            }
-            for (int i = 0; i < ndim_cal_dF; ++i)
-            {
-                FPTYPE* dFi = FP_dF + i * length;
-                work[i] = inner_product(dFi, FP_F);
-            }
-            // gamma[i] = \sum_j beta_tmp(i,j) * work[j]
-            std::vector<double> gamma(ndim_cal_dF);
-            container::BlasConnector::gemv('N',
-                                           ndim_cal_dF,
-                                           ndim_cal_dF,
-                                           1.0,
-                                           beta_tmp.c,
-                                           ndim_cal_dF,
-                                           work,
-                                           1,
-                                           0.0,
-                                           gamma.data(),
-                                           1);
-            coef[mdata.start] = 1 + gamma[dFindex_move(0)];
-            for (int i = 1; i < ndim_cal_dF; ++i)
-            {
-                coef[mdata.index_move(-i)] = gamma[dFindex_move(-i)] - gamma[dFindex_move(-i + 1)];
-            }
-            coef[mdata.index_move(-ndim_cal_dF)] = -gamma[dFindex_move(-ndim_cal_dF + 1)];
-
-            delete[] work;
-            delete[] iwork;
-        }
-        else
-        {
-            coef[0] = 1.0;
-        }
-
-        FPTYPE* dFnext = FP_dF + dFindex_move(1) * length;
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
-#endif
-        for (int i = 0; i < length; ++i)
-        {
-            dFnext[i] = FP_F[i];
-        }
-        ModuleBase::timer::tick("Charge", "Broyden_mixing");
-    };
+    void tem_cal_coef(const Mixing_Data& mdata, std::function<double(FPTYPE*, FPTYPE*)> inner_product);
 
   private:
     // F = data_out - data_in
@@ -343,8 +151,6 @@ class Broyden_Mixing : public Mixing
     }
     // the number of calculated dF
     int ndim_cal_dF = 0;
-    // if we should considere two beta
-    int two_beta = 0;
 };
 } // namespace Base_Mixing
 #endif

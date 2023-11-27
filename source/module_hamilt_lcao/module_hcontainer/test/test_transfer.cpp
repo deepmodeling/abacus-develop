@@ -105,7 +105,7 @@ TEST_F(TransferTest, serialToPara)
             int atom_i = atom_pair.get_atom_i();
             int atom_j = atom_pair.get_atom_j();
             //lambda function to calculate value of array: (atom_i*test_size+atom_j+k)*test_nw + l
-            auto value = [&](int k, int l) -> double {return (((atom_i*test_nw+k)*test_size+atom_j)*test_nw + l);};
+            auto value = [&](int k, int l) -> double {return ((double(atom_i*test_nw+k)*test_size+atom_j)*test_nw + l);};
             double* data = atom_pair.get_pointer(0);
             for(int k = 0; k < test_nw; k++)
             {
@@ -135,7 +135,7 @@ TEST_F(TransferTest, serialToPara)
         int atom_i = atom_pair.get_atom_i();
         int atom_j = atom_pair.get_atom_j();
         //lambda function to calculate value of array: (atom_i*test_size+atom_j+k)*test_nw + l
-        auto value = [&](int k, int l) -> double {return (((atom_i*test_nw+k)*test_size+atom_j)*test_nw + l);};
+        auto value = [&](int k, int l) -> double {return ((double(atom_i*test_nw+k)*test_size+atom_j)*test_nw + l);};
         double* data = atom_pair.get_pointer(0);
         auto row_indexes = paraV->get_indexes_row(atom_i);
         auto col_indexes = paraV->get_indexes_col(atom_j);
@@ -290,7 +290,7 @@ TEST_F(TransferTest, serialAllToParaAll)
         int atom_i = atom_pair.get_atom_i();
         int atom_j = atom_pair.get_atom_j();
         //lambda function to calculate value of array: (atom_i*test_size+atom_j+k)*test_nw + l
-        auto value = [&](int k, int l) -> double {return (((atom_i*test_nw+k)*test_size+atom_j)*test_nw + l);};
+        auto value = [&](int k, int l) -> double {return ((double(atom_i*test_nw+k)*test_size+atom_j)*test_nw + l);};
         double* data = atom_pair.get_pointer(0);
         for(int k = 0; k < test_nw; k++)
         {
@@ -319,7 +319,7 @@ TEST_F(TransferTest, serialAllToParaAll)
         int atom_i = atom_pair.get_atom_i();
         int atom_j = atom_pair.get_atom_j();
         //lambda function to calculate value of array: (atom_i*test_size+atom_j+k)*test_nw + l
-        auto value = [&](int k, int l) -> double {return (((atom_i*test_nw+k)*test_size+atom_j)*test_nw + l)*dsize;};
+        auto value = [&](int k, int l) -> double {return ((double(atom_i*test_nw+k)*test_size+atom_j)*test_nw + l)*dsize;};
         double* data = atom_pair.get_pointer(0);
         auto row_indexes = paraV->get_indexes_row(atom_i);
         auto col_indexes = paraV->get_indexes_col(atom_j);
@@ -355,7 +355,7 @@ TEST_F(TransferTest, paraAllToserialAll)
         int atom_i = atom_pair.get_atom_i();
         int atom_j = atom_pair.get_atom_j();
         //lambda function to calculate value of array: (atom_i*test_size+atom_j+k)*test_nw + l
-        auto value = [&](int k, int l) -> double {return (((atom_i*test_nw+k)*test_size+atom_j)*test_nw + l);};
+        auto value = [&](int k, int l) -> double {return ((double(atom_i*test_nw+k)*test_size+atom_j)*test_nw + l);};
         double* data = atom_pair.get_pointer(0);
         auto row_indexes = paraV->get_indexes_row(atom_i);
         auto col_indexes = paraV->get_indexes_col(atom_j);
@@ -389,7 +389,7 @@ TEST_F(TransferTest, paraAllToserialAll)
         int atom_i = atom_pair.get_atom_i();
         int atom_j = atom_pair.get_atom_j();
         //lambda function to calculate value of array: (atom_i*test_size+atom_j+k)*test_nw + l
-        auto value = [&](int k, int l) -> double {return (((atom_i*test_nw+k)*test_size+atom_j)*test_nw + l);};
+        auto value = [&](int k, int l) -> double {return ((double(atom_i*test_nw+k)*test_size+atom_j)*test_nw + l);};
         double* data = atom_pair.get_pointer(0);
         for(int k = 0; k < test_nw; k++)
         {
