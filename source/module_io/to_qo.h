@@ -26,11 +26,23 @@
       (2) pseudowavefunction (pswfc): only avaiable for pseudpotentials with pswfc, unlike SG15.
     2. output overlap between the given projectors and nao, so make it easy to calculate QO and Hamiltonian in
       QO representation.
+
+    Workflow:
+    1. create an instance of toQO: toQO()
+    2. initialize the class: initialize()
+        2.1. import information from unitcell: unwrap_unitcell()
+        2.2. build orbitals, nao and ao: build_nao() and build_ao()
+        2.3. scan neighboring list: scan_supercell()
+        2.4. allocate memory for ovlp_ao_nao_R_ and ovlp_ao_nao_k_: clean_up(), deallocate_ovlp() and allocate_ovlp()
+    3. calculate overlap S(k): calculate()
+        3.1. calculate S(R) for all R: calculate_ovlp_k(), calculate_ovlp_R()
+        3.2. fold S(R) to S(k): fold_ovlp_R()
 */
 class toQO
 {
     private:
-        using Matrix = std::vector<std::vector<std::complex<double>>>;
+        using CplxMatrix = std::vector<std::vector<std::complex<double>>>;
+        using RealMatrix = std::vector<std::vector<double>>;
 
     public:
         toQO(std::string qo_basis, std::string strategy = "minimal");
@@ -42,19 +54,42 @@ class toQO
         /// @param p_ucell interface (raw pointer) to the unitcell
         /// @param nkpts number of kpoints
         void initialize(UnitCell *p_ucell,
-                        int nkpts);
-        /// @brief calculate the overlap between atomic orbitals and numerical atomic orbitals, in real space
-        void cal_ovlp_ao_nao_R(const int iR);
+                        const std::vector<ModuleBase::Vector3<double>> kvecs_c);
+        /// @brief build RadialCollection for numerical atomic orbitals
+        /// @param ntype number of atom types
+        /// @param orbital_fn filenames of numerical atomic orbitals
+        void build_nao(const int ntype, const std::string* const orbital_fn);
+        /// @brief build RadialCollection for atomic orbitals
+        /// @param ntype number of atom types
+        /// @param charges charges of atoms
+        /// @param nmax maximum principle quantum number of atoms
+        void build_ao(const int ntype, const double* const charges, const int* const nmax);
+        /// @brief calculate the overlap between atomic orbitals and numerical atomic orbitals, in real space, at R[iR]
+        /// @param iR index of supercell vector
+        /// @note to save memory, the workflow can be organized as, once one S(R) is calculated, fold it to S(k), then clean up S(R)...
+        void calculate_ovlp_R(const int iR);
         /// @brief calculate the overlap between atomic orbitals and numerical atomic orbitals, in k space
-        void cal_ovlp_ao_nao_k(const int ik);
-        /// @brief write the overlap to file
-        void write_ovlp_ao_nao();
+        /// @param kvec_c vector3 specifying a kpoint
+        void calculate_ovlp_k(ModuleBase::Vector3<double> kvec_c);
 
+        void calculate(std::vector<ModuleBase::Vector3<double>> kvecs_c);
+        /// @brief write two dimensional matrix to file
+        /// @tparam T type of matrix
+        /// @param matrix matrix to write
+        /// @param filename filename to write
+        template <typename T>
+        void write_ovlp(const std::vector<std::vector<T>>& matrix, std::string filename);
+
+        /// @brief to get rid of direct use of UnitCell
+        /// @param p_ucell 
+        void unwrap_unitcell(UnitCell* p_ucell);
         // ----
         // tool functions, implemented in to_qo_tools.cpp
         // ----
+
         /// @brief calculate vectors connecting all atom pairs that needed to calculate their overlap
-        void cal_two_center_vectors();
+        ModuleBase::Vector3<double> cal_two_center_vector(ModuleBase::Vector3<double> rij,
+                                                          ModuleBase::Vector3<int> R);
 
         /*
             Neighboring list searching algorithm (not implemented yet)
@@ -105,39 +140,67 @@ class toQO
         /// @return a vector of (n1n2n3)
         void scan_supercell();
 
-        void allocate_ovlps();
+        void deallocate_ovlp(bool is_R = false);
+        void allocate_ovlp(bool is_R = false);
+        void clean_up();
 
+        /// @brief zero out ovlp_ao_nao_R_ or ovlp_ao_nao_k_
+        /// @param is_R true for ovlp_ao_nao_R_, false for ovlp_ao_nao_k_
         void zero_out_ovlps(const bool is_R);
 
-        Matrix folding_ovlp_R(ModuleBase::Vector3<double> kvec_c);
+        /// @brief given a vector3 specifying a kpoint, fold ovlp_ao_nao_R_ (series of S(R), memory consuming)
+        /// @param kvec_c vector3 specifying a kpoint
+        void fold_ovlp_R(ModuleBase::Vector3<double> kvec_c);
 
-        void eliminate_duplicate_vector3(std::vector<ModuleBase::Vector3<int>>& vector3s);
+        /// @brief given a vector3 specifying a kpoint, append one single S(R), multiply by exp(-i*k*R) and add to ovlp_ao_nao_k_
+        /// @param kvec_c vector3 specifying a kpoint
+        /// @param iR index of supercell vector
+        void append_ovlp_R_eiRk(ModuleBase::Vector3<double> kvec_c, int iR);
 
+        /// @brief eliminate duplicate vectors in a vector of vector3
+        /// @tparam T type of vector3
+        /// @param vector3s vector of vector3, both input and output
+        template <typename T>
+        void eliminate_duplicate_vector3(std::vector<ModuleBase::Vector3<T>>& vector3s);
+
+        // setters
+        void set_qo_basis(const std::string qo_basis) { qo_basis_ = qo_basis; }
+        void set_strategy(const std::string strategy) { strategy_ = strategy; }
+        void set_save_mem(const bool save_mem) { save_mem_ = save_mem; }
+        
         // getters
-        /// @brief get the number of kpoints
-        /// @return number of kpoints
         int nkpts() const { return nkpts_; }
-        /// @brief get qo basis type
-        /// @return qo basis type
         std::string qo_basis() const { return qo_basis_; }
-        /// @brief get strategy type
-        /// @return strategy type
         std::string strategy() const { return strategy_; }
-        /// @brief get the interface to the unitcell
-        /// @return interface to the unitcell
         UnitCell* p_ucell() const { return p_ucell_; }
+        int nR() const { return nR_; }
+        int nchi() const { return nchi_; }
+        int nphi() const { return nphi_; }
+        std::vector<ModuleBase::Vector3<int>> supercells() const { return supercells_; }
+        std::vector<RealMatrix> ovlp_ao_nao_R() const { return ovlp_R_; }
+        CplxMatrix ovlp_ao_nao_k() const { return ovlp_k_; }
+        bool save_mem() const { return save_mem_; }
 
     private:
-
+        //
+        // interface to deprecated
+        //
         /// @brief interface to the unitcell
         UnitCell *p_ucell_ = nullptr;
 
-
+        //
+        // high dimensional data
+        //
+        /// @brief supercell vectors
         std::vector<ModuleBase::Vector3<int>> supercells_;
+        /// @brief overlaps between atomic orbitals and numerical atomic orbitals, in real space
+        std::vector<RealMatrix> ovlp_R_;
+        /// @brief overlap between atomic orbitals and numerical atomic orbitals, in k space
+        CplxMatrix ovlp_k_;
 
-        std::vector<Matrix> ovlp_ao_nao_R_;
-        std::vector<Matrix> ovlp_ao_nao_k_;
-
+        //
+        // basic data member
+        //
         /// @brief number of kpoints, for S(k)
         int nkpts_ = 0;
         /// @brief number of supercell vectors, for S(R)
@@ -147,18 +210,38 @@ class toQO
         /// @brief number of numerical atomic orbitals, phi in \mathbf{S}^{\chi\phi}(\mathbf{k})
         int nphi_ = 0;
 
+        int ntype_ = 0;
+        std::vector<std::string> symbols_;
+        std::vector<double> charges_;
+        std::vector<ModuleBase::Vector3<double>> kvecs_c_;
+        //
+        // attributes
+        //
         /// @brief current atomic orbital basis for generating QO
         /// @details hydrogen_minimal: 1s, 2p, 3d, ... 
         ///          hydrogen_double: 1s, 2s, 2p, 3p, 3d, ...
         ///          hydrogen: 1s, 2s, 2p, 3s, 3p, 3d, ... 
         std::string qo_basis_ = "hydrogen";
+        /// @brief strategy for generating QO
         std::string strategy_ = "minimal";
 
+        //
+        // memory control
+        //
+        /// @brief whether to save memory
+        bool save_mem_ = true;
+
+        // 
+        // advanced data structures
+        //
+        // orbitals data carriers
+        /// @brief numerical atomic orbitals
         std::unique_ptr<RadialCollection> nao_;
+        /// @brief atomic orbitals
         std::unique_ptr<RadialCollection> ao_;
-
+        /// @brief two center integrator
         std::unique_ptr<TwoCenterIntegrator> overlap_calculator_;
-
+        /// @brief atom database
         atom_in atom_database_;
 };
 #endif // TOQO_H

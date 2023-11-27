@@ -26,8 +26,6 @@ list(APPEND objects
     output_rho.cpp
     output_potential.cpp
     parameter_pool.cpp
-    to_qo.cpp
-    to_qo_tools.cpp
 )
 
 list(APPEND objects_advanced
@@ -56,6 +54,8 @@ if(ENABLE_LCAO)
       sparse_matrix.cpp
       file_reader.cpp
       csr_reader.cpp
+      to_qo.cpp
+      to_qo_tools.cpp
   )
   list(APPEND objects_advanced
       unk_overlap_lcao.cpp
