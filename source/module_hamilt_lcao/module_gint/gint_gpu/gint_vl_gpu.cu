@@ -313,10 +313,10 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
                     continue;
                 int stream_num = iter_num % nStreams;
 
-                checkCuda(cudaMemcpyAsync(tmp_ap->get_pointer(0),
+                checkCuda(cudaMemcpy(tmp_ap->get_pointer(0),
                                      GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2],
                                      tmp_ap->get_row_size() * tmp_ap->get_col_size() * sizeof(double),
-                                     cudaMemcpyDeviceToHost, stream[stream_num]));
+                                     cudaMemcpyDeviceToHost));
                 iter_num++;
             }
         }
