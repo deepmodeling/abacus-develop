@@ -5,13 +5,6 @@
 #define sB(i,j)    sB[(j)*sldb + (i)]
 #define fetch(A, m, n, bound)  offs_d##A[min(n*LD##A+m, bound)]
 
-#define shared_A(i,j)    shared_A[(j)*shared_lda + (i)]
-#define shared_B(i,j)    shared_B[(j)*shared_ldb + (i)]
-/*template<typename T>
-inline __device__ T fetch(const T* offs_d,const int  m,const int  n, const int bound, const int global_ld)
-{
-    return offs_d[min(n*global_ld+m, bound)];
-}*/
 __device__ inline double atomic_add(double* address, double val)
 {
     return atomicAdd(address, val);
@@ -223,9 +216,8 @@ void vbatched_gemm_kernel(
     T const * const * global_B_array, const int* global_ldb,
     T              ** global_C_array, const int* global_ldc)
 {
-    //extern __shared__ __align__(sizeof(T)) unsigned char smem[];
-    //T *shared_mem = reinterpret_cast<T *>(smem);
-    extern __shared__ T* shared_mem[];
+    extern __shared__ __align__(sizeof(T)) unsigned char smem[];
+    T *shared_mem = reinterpret_cast<T *>(smem);
 
     const int batchid = blockIdx.z;
     int local_M = (int)M[batchid];
@@ -283,7 +275,7 @@ void vbatched_gemm_impl(const int max_m, const int max_n,
                          global_B_array, global_ldb,
                          global_C_array, global_ldc);
 }
-/*
+
 template <>
 void vbatch_gemm<float>(const int max_m, const int max_n,
                  const int* m, int* n, const int k,
@@ -299,7 +291,7 @@ void vbatch_gemm<float>(const int max_m, const int max_n,
                     global_C_array, global_ldc,
                     batchCount, stream);
 }
-*/
+
 template <>
 void vbatch_gemm<double>(const int max_m, const int max_n,
                  const int* m, int* n, const int k,
