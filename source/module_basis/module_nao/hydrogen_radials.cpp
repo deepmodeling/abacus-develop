@@ -26,8 +26,9 @@ void HydrogenRadials::build(const int itype,
     // rcut should be determined as soon as possible...
     //generate_hydrogen_radials(charge, nmax, 10.0, dr, rank, ptr_log);
     hydrogen(charge, nmax, dr, conv_thr, rank, strategy, ptr_log);
+    set_rcut_max();
 }
-
+/*
 void HydrogenRadials::generate_hydrogen_radials(const double charge,
                                                 const int nmax,
                                                 const double rcut,
@@ -41,11 +42,9 @@ void HydrogenRadials::generate_hydrogen_radials(const double charge,
     lmax_ = nmax - 1;
     // count orbitals
     nchi_ = nmax * (nmax + 1) / 2;
-    /*
-    1 1s
-    2 2s 2p
-    3 3s 3p 3d
-    */
+    // 1 1s
+    // 2 2s 2p
+    // 3 3s 3p 3d
     nzeta_ = new int[nmax];
     for(int i = 0; i != nmax; ++i)
     {
@@ -100,7 +99,7 @@ void HydrogenRadials::generate_hydrogen_radials(const double charge,
     delete[] rvalue;
     delete[] rgrid;
 }
-
+*/
 std::vector<double> HydrogenRadials::generate_hydrogen_radial_segment(const double charge,
                                                                       const int n,
                                                                       const int l,
@@ -176,7 +175,11 @@ double HydrogenRadials::generate_hydrogen_radial_toconv(const double charge,
     {
         dr = delta_r;
     }
-    while((std::fabs(norm - 1.0) > conv_thr))
+    //printf("Searching for the cutoff radius for n = %d, l = %d, conv_thr = %6.4e\n", n, l, conv_thr);
+    //printf("%10s%12s%14s%14s", "Step Nr.", "Rmax (a.u.)", "Norm", "Delta Norm\n");
+    //int istep = 1;
+    double delta_norm = 1.0;
+    while((std::fabs(delta_norm) > conv_thr))
     {
         rmin_ = rmax_;
         rmax_ += delta_r;
@@ -196,7 +199,11 @@ double HydrogenRadials::generate_hydrogen_radial_toconv(const double charge,
         }
         rgrid.insert(rgrid.end(), rgrid_segment.begin(), rgrid_segment.end());
         rvalue.insert(rvalue.end(), rvalue_segment.begin(), rvalue_segment.end());
+        delta_norm = norm;
         norm = radial_norm(rgrid, rvalue);
+        delta_norm = norm - delta_norm;
+        //printf("%10d%12.2f%14.10f%14.10f\n", istep, rmax_, norm, delta_norm);
+        //++istep;
     }
     return rmax_;
 }

@@ -1,20 +1,21 @@
 #include "module_io/to_qo.h"
+#include "module_base/libm/libm.h"
 
 void toQO::unwrap_unitcell(UnitCell* p_ucell)
 {
     p_ucell_ = p_ucell;
     ntype_ = p_ucell->ntype;
-    for(int itype = 0; itype < ntype_; itype++)
-    {
-        symbols_.push_back(p_ucell->atoms[itype].label);
-        charges_.push_back(p_ucell->atoms[itype].ncpp.zv);
-    }
+    std::for_each(p_ucell->atoms, p_ucell->atoms + p_ucell->ntype, [this](Atom& atom){
+        symbols_.push_back(atom.label);
+        charges_.push_back(atom.ncpp.zv);
+    });
 }
 
 template <typename T>
 void toQO::eliminate_duplicate_vector3(std::vector<ModuleBase::Vector3<T>> &v)
 {
     std::vector<std::vector<T>> v_;
+    // convert vector3 to vector
     for(int i = 0; i < v.size(); i++)
     {
         v_.push_back(std::vector<T>{v[i].x, v[i].y, v[i].z});
@@ -28,6 +29,7 @@ void toQO::eliminate_duplicate_vector3(std::vector<ModuleBase::Vector3<T>> &v)
         v[i] = ModuleBase::Vector3<T>(v_[i][0], v_[i][1], v_[i][2]);
     }
 }
+template void toQO::eliminate_duplicate_vector3<int>(std::vector<ModuleBase::Vector3<int>> &v);
 
 void toQO::deallocate_ovlp(const bool is_R)
 {
@@ -60,14 +62,16 @@ void toQO::deallocate_ovlp(const bool is_R)
 
 void toQO::allocate_ovlp(const bool is_R)
 {
+
     if(nchi_ == 0 || nphi_ == 0)
     {
         ModuleBase::WARNING_QUIT("toQO::allocate_ovlp", "nchi_ or nphi_ is zero, which means not properly initialized.");
     }
     if(is_R)
     {
+        int nR = save_mem_? 1 : nR_;
         // allocate memory for ovlp_R_
-        for(int iR = 0; iR < nR_; iR++)
+        for(int iR = 0; iR < nR; iR++)
         {
             RealMatrix matrix;
             for(int i = 0; i < nchi_; i++)
@@ -145,13 +149,13 @@ std::vector<ModuleBase::Vector3<int>> toQO::scan_supercell_for_atom(int it, int 
 {
     std::vector<ModuleBase::Vector3<int>> n1n2n3;
     // cutoff radius of numerical atomic orbital of atom itia
-    double rcut_i = 10.0; //WARNING! one should get rcut_i of AO here
+    double rcut_i = ao_->rcut_max(); //WARNING! one should get rcut_i of AO here
     // lattice vectors
     for(int itype = start_it; itype < p_ucell_->ntype; itype++)
     {
         for(int iatom = start_ia; iatom < p_ucell_->atoms[itype].na; iatom++)
         {
-            double rcut_j = 10.0; //WARNING! one should get rcut_j of NAO here
+            double rcut_j = nao_->rcut_max(); //WARNING! one should get rcut_j of NAO here
             ModuleBase::Vector3<double> rij = p_ucell_->atoms[itype].tau[iatom] - p_ucell_->atoms[it].tau[ia];
             int n1 = 0; int n2 = 0; int n3 = 0;
             // calculate the sup of n1, n2, n3
@@ -175,7 +179,7 @@ std::vector<ModuleBase::Vector3<int>> toQO::scan_supercell_for_atom(int it, int 
             }
         }
     }
-    eliminate_duplicate_vector3(n1n2n3);
+    eliminate_duplicate_vector3<int>(n1n2n3);
     return n1n2n3;
 }
 
@@ -207,7 +211,7 @@ void toQO::scan_supercell()
         }
     }
     // delete duplicates
-    eliminate_duplicate_vector3(n1n2n3_overall);
+    eliminate_duplicate_vector3<int>(n1n2n3_overall);
 
     supercells_ = n1n2n3_overall;
     nR_ = supercells_.size();
@@ -229,7 +233,7 @@ ModuleBase::Vector3<double> toQO::cal_two_center_vector(ModuleBase::Vector3<doub
     return Rij;
 }
 
-void toQO::fold_ovlp_R(ModuleBase::Vector3<double> kvec_c)
+void toQO::fold_ovlp_R(int ik)
 {
     if(save_mem_) // exception handling
     {
@@ -242,9 +246,11 @@ void toQO::fold_ovlp_R(ModuleBase::Vector3<double> kvec_c)
     // calculate
     for(int iR = 0; iR < supercells_.size(); iR++)
     {
-        ModuleBase::Vector3<double> R = p_ucell_->a1 * double(supercells_[iR][0]) + p_ucell_->a2 * double(supercells_[iR][1]) + p_ucell_->a3 * double(supercells_[iR][2]);
-        double arg = kvec_c * R;
-        std::complex<double> phase = std::exp(std::complex<double>(0.0, 1.0) * arg);
+        ModuleBase::Vector3<double> R(double(supercells_[iR].x), double(supercells_[iR].y), double(supercells_[iR].z));
+        double arg = (kvecs_c_[ik] * R) * ModuleBase::TWO_PI;
+        double sinp, cosp;
+        ModuleBase::libm::sincos(arg, &sinp, &cosp);
+        std::complex<double> phase = std::complex<double>(cosp, sinp);
         for(int i = 0; i < nrow; i++)
         {
             for(int j = 0; j < ncol; j++)
@@ -255,7 +261,7 @@ void toQO::fold_ovlp_R(ModuleBase::Vector3<double> kvec_c)
     }
 }
 
-void toQO::append_ovlp_R_eiRk(ModuleBase::Vector3<double> kvec_c, int iR)
+void toQO::append_ovlp_R_eiRk(int ik, int iR)
 {
     // save memory mode, so ovlp_R_ has only one S(R)
     if(ovlp_R_.size() > 1)
@@ -266,9 +272,11 @@ void toQO::append_ovlp_R_eiRk(ModuleBase::Vector3<double> kvec_c, int iR)
     int ncol = ovlp_R_[0][0].size();
 
     // calculate
-    ModuleBase::Vector3<double> R = p_ucell_->a1 * double(supercells_[iR][0]) + p_ucell_->a2 * double(supercells_[iR][1]) + p_ucell_->a3 * double(supercells_[iR][2]);
-    double arg = kvec_c * R;
-    std::complex<double> phase = std::exp(std::complex<double>(0.0, 1.0) * arg);
+    ModuleBase::Vector3<double> R(double(supercells_[iR].x), double(supercells_[iR].y), double(supercells_[iR].z));
+    double arg = (kvecs_c_[ik] * R) * ModuleBase::TWO_PI;
+    double sinp, cosp;
+    ModuleBase::libm::sincos(arg, &sinp, &cosp);
+    std::complex<double> phase = std::complex<double>(cosp, sinp);
     for(int i = 0; i < nrow; i++)
     {
         for(int j = 0; j < ncol; j++)
@@ -281,7 +289,7 @@ void toQO::append_ovlp_R_eiRk(ModuleBase::Vector3<double> kvec_c, int iR)
 template <typename T>
 void toQO::write_ovlp(const std::vector<std::vector<T>> &ovlp, std::string filename)
 {
-    std::ofstream ofs(filename);
+    std::ofstream ofs(GlobalV::global_out_dir + filename);
     if(!ofs.is_open())
     {
         ModuleBase::WARNING_QUIT("toQO::write_ovlp", "can not open file: " + filename);
@@ -296,9 +304,5 @@ void toQO::write_ovlp(const std::vector<std::vector<T>> &ovlp, std::string filen
     }
     ofs.close();
 }
-
-
-template<> void toQO::write_ovlp<double>(const RealMatrix& ovlp, std::string filename);
-template<> void toQO::write_ovlp<std::complex<double>>(const CplxMatrix& ovlp, std::string filename);
-using CplxMatrix = std::vector<std::vector<std::complex<double>>>;
-using RealMatrix = std::vector<std::vector<double>>;
+template void toQO::write_ovlp<double>(const std::vector<std::vector<double>>& ovlp, std::string filename);
+template void toQO::write_ovlp<std::complex<double>>(const std::vector<std::vector<std::complex<double>>>& ovlp, std::string filename);

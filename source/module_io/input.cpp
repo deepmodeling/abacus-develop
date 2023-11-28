@@ -614,6 +614,12 @@ void Input::Default(void)
     alpha_trial = 0.01;
     sccut = 3.0;
     sc_file = "none";
+    //==========================================================
+    // variables for Quasiatomic Orbital analysis
+    //==========================================================
+    qo_switch = false;
+    qo_basis = "hydrogen";
+    qo_thr = 1e-6;
     return;
 }
 
@@ -2220,6 +2226,15 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("sc_file", word) == 0){
             read_value(ifs, sc_file);
         }
+        else if (strcmp("qo_switch", word) == 0){
+            read_bool(ifs, qo_switch);
+        }
+        else if (strcmp("qo_basis", word) == 0){
+            read_value(ifs, qo_basis);
+        }
+        else if (strcmp("qo_thr", word) == 0){
+            read_value(ifs, qo_thr);
+        }
         else
         {
             // xiaohui add 2015-09-15
@@ -2950,6 +2965,11 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         {
             scf_thr_type = 1;
         }
+    }
+    if(qo_switch)
+    {
+        out_mat_hs = true; // print H(k) and S(k)
+        out_wfc_lcao = 1; // print wave function in lcao basis in kspace
     }
 }
 #ifdef __MPI

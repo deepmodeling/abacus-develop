@@ -290,6 +290,6 @@ std::string sc_file = "none";
 //==========================================================
 bool qo_switch = false;
 std::string qo_basis = "hydrogen";
-double qo_rcut = 10.0;
+double qo_thr = 1.0e-6;
 
 } // namespace GlobalV

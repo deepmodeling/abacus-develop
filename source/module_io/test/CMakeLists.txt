@@ -142,6 +142,7 @@ AddTest(
   SOURCES csr_reader_test.cpp ../csr_reader.cpp ../file_reader.cpp ../sparse_matrix.cpp
 )
 
+if(ENABLE_LCAO)
 AddTest(
   TARGET to_qo_test
   LIBS base ${math_libs} device numerical_atomic_orbitals container orb
@@ -153,3 +154,4 @@ AddTest(
   ../../module_cell/parallel_kpoints.cpp
   ../../module_cell/test/support/mock_unitcell.cpp
 )
+endif()

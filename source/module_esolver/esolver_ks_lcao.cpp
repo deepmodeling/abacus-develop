@@ -7,6 +7,7 @@
 #include "module_io/write_istate_info.h"
 #include "module_io/write_proj_band_lcao.h"
 #include "module_io/output_log.h"
+#include "module_io/to_qo.h"
 
 //--------------temporary----------------------------
 #include "module_base/global_function.h"
@@ -696,7 +697,7 @@ namespace ModuleESolver
             }
         }
     }
-
+    // print wavefunctions
     if (this->conv_elec)
     {
         if (elecstate::ElecStateLCAO<TK>::out_wfc_lcao)
@@ -713,7 +714,6 @@ namespace ModuleESolver
         if (elecstate::ElecStateLCAO<TK>::out_wfc_lcao)
             elecstate::ElecStateLCAO<TK>::out_wfc_flag = 0;
     }
-
     // (9) Calculate new potential according to new Charge Density.
 
     if (this->conv_elec || iter == GlobalV::SCF_NMAX)
@@ -896,6 +896,12 @@ namespace ModuleESolver
     if (!GlobalV::CAL_FORCE && !GlobalV::CAL_STRESS)
     {
         RA.delete_grid();
+    }
+    if(GlobalV::qo_switch)
+    {
+        toQO tqo(GlobalV::qo_basis);
+        tqo.initialize(&GlobalC::ucell, this->kv.kvec_c);
+        tqo.calculate();
     }
 }
 

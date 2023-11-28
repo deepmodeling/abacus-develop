@@ -53,8 +53,8 @@ class toQO
         /// @brief initialize the QO class
         /// @param p_ucell interface (raw pointer) to the unitcell
         /// @param nkpts number of kpoints
-        void initialize(UnitCell *p_ucell,
-                        const std::vector<ModuleBase::Vector3<double>> kvecs_c);
+        void initialize(UnitCell* p_ucell,
+                        const std::vector<ModuleBase::Vector3<double>>& kvecs_c);
         /// @brief build RadialCollection for numerical atomic orbitals
         /// @param ntype number of atom types
         /// @param orbital_fn filenames of numerical atomic orbitals
@@ -70,9 +70,9 @@ class toQO
         void calculate_ovlp_R(const int iR);
         /// @brief calculate the overlap between atomic orbitals and numerical atomic orbitals, in k space
         /// @param kvec_c vector3 specifying a kpoint
-        void calculate_ovlp_k(ModuleBase::Vector3<double> kvec_c);
-
-        void calculate(std::vector<ModuleBase::Vector3<double>> kvecs_c);
+        void calculate_ovlp_k(int ik);
+        /// @brief calculate the overlap between atomic orbitals and numerical atomic orbitals, in k space and write to file
+        void calculate();
         /// @brief write two dimensional matrix to file
         /// @tparam T type of matrix
         /// @param matrix matrix to write
@@ -149,13 +149,13 @@ class toQO
         void zero_out_ovlps(const bool is_R);
 
         /// @brief given a vector3 specifying a kpoint, fold ovlp_ao_nao_R_ (series of S(R), memory consuming)
-        /// @param kvec_c vector3 specifying a kpoint
-        void fold_ovlp_R(ModuleBase::Vector3<double> kvec_c);
+        /// @param ik index of vector3 specifying a kpoint
+        void fold_ovlp_R(int ik);
 
         /// @brief given a vector3 specifying a kpoint, append one single S(R), multiply by exp(-i*k*R) and add to ovlp_ao_nao_k_
-        /// @param kvec_c vector3 specifying a kpoint
+        /// @param ik index of  vector3 specifying a kpoint
         /// @param iR index of supercell vector
-        void append_ovlp_R_eiRk(ModuleBase::Vector3<double> kvec_c, int iR);
+        void append_ovlp_R_eiRk(int ik, int iR);
 
         /// @brief eliminate duplicate vectors in a vector of vector3
         /// @tparam T type of vector3
@@ -169,24 +169,32 @@ class toQO
         void set_save_mem(const bool save_mem) { save_mem_ = save_mem; }
         
         // getters
+        int ntype() const { return ntype_; }
         int nkpts() const { return nkpts_; }
         std::string qo_basis() const { return qo_basis_; }
         std::string strategy() const { return strategy_; }
         UnitCell* p_ucell() const { return p_ucell_; }
+        RadialCollection* p_nao() const { return nao_.get(); }
+        RadialCollection* p_ao() const { return ao_.get(); }
         int nR() const { return nR_; }
         int nchi() const { return nchi_; }
         int nphi() const { return nphi_; }
         std::vector<ModuleBase::Vector3<int>> supercells() const { return supercells_; }
-        std::vector<RealMatrix> ovlp_ao_nao_R() const { return ovlp_R_; }
-        CplxMatrix ovlp_ao_nao_k() const { return ovlp_k_; }
+        std::vector<RealMatrix> ovlp_R() const { return ovlp_R_; }
+        CplxMatrix ovlp_k() const { return ovlp_k_; }
         bool save_mem() const { return save_mem_; }
+        std::vector<std::string> symbols() const { return symbols_; }
+        std::vector<double> charges() const { return charges_; }
+        atom_in atom_database() const { return atom_database_; }
+        std::vector<ModuleBase::Vector3<double>> kvecs_c() const { return kvecs_c_; }
+
 
     private:
         //
         // interface to deprecated
         //
         /// @brief interface to the unitcell
-        UnitCell *p_ucell_ = nullptr;
+        UnitCell* p_ucell_ = nullptr;
 
         //
         // high dimensional data

@@ -575,10 +575,16 @@ class Input
     double alpha_trial; // initial trial step size for lambda in eV/uB^2
     double sccut; // restriction of step size in eV/uB
     std::string sc_file; // file name for Deltaspin (json format)
-
-    // whether to use PAW
+    //==========================================================
+    // variables for PAW
     //==========================================================
     bool use_paw = false;
+    //==========================================================
+    // variables for Quasiatomic Orbital analysis
+    //==========================================================
+    bool qo_switch = false;
+    std::string qo_basis = "hydrogen";
+    double qo_thr = 1e-6;
 
   private:
     //==========================================================

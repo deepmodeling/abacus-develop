@@ -743,6 +743,13 @@ void Input_Conv::Convert(void)
     GlobalV::MIXING_GG0 = INPUT.mixing_gg0;
     GlobalV::MIXING_TAU = INPUT.mixing_tau;
     
+    //-----------------------------------------------
+    // Quasiatomic Orbital analysis
+    //-----------------------------------------------
+    GlobalV::qo_switch = INPUT.qo_switch;
+    GlobalV::qo_basis = INPUT.qo_basis;
+    GlobalV::qo_thr = INPUT.qo_thr;
+    
     ModuleBase::timer::tick("Input_Conv", "Convert");
     return;
 }

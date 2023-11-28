@@ -317,7 +317,7 @@ extern std::string sc_file;
 // Quasiatomic orbital related
 extern bool qo_switch;
 extern std::string qo_basis;
-extern double qo_rcut;
+extern double qo_thr;
 
 } // namespace GlobalV
 #endif

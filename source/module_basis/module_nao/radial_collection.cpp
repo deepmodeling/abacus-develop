@@ -188,7 +188,11 @@ void RadialCollection::build(const int nfile, const std::string* const file, con
     set_rcut_max();
 }
 
-void RadialCollection::build(const int ntype, const double* const charges, const int* const nmax, const std::string strategy)
+void RadialCollection::build(const int ntype, 
+                             const double* const charges, 
+                             const int* const nmax, 
+                             const double conv_thr,
+                             const std::string strategy)
 {
     cleanup();
     ntype_ = ntype;
@@ -202,7 +206,7 @@ void RadialCollection::build(const int ntype, const double* const charges, const
                               nmax[itype], 
                               10.0,             // rcut should be determined automatically, in principle...
                               0.01,
-                              1e-6,
+                              conv_thr,
                               0,
                               strategy);
 
