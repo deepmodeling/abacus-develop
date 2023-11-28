@@ -258,7 +258,6 @@ TEST_F(HydrogenRadialsTest, Build)
     EXPECT_EQ(hr.lmax(), 2);
     EXPECT_EQ(hr.nzeta(0), 1);
     EXPECT_EQ(hr.nzeta_max(), 1);
-    EXPECT_LT(hr.rcut_max(), 10.0);
     EXPECT_EQ(hr.nchi(), 3);
     // build 1s 2s 2p 3s 3p 3d 4s 4p 4d 4f
     hr.build(

@@ -150,6 +150,17 @@ std::vector<ModuleBase::Vector3<int>> toQO::scan_supercell_for_atom(int it, int 
     std::vector<ModuleBase::Vector3<int>> n1n2n3;
     // cutoff radius of numerical atomic orbital of atom itia
     double rcut_i = ao_->rcut_max(); //WARNING! one should get rcut_i of AO here
+    if(rcut_i > 10)
+    {
+        #ifdef __MPI
+        if(GlobalV::MY_RANK == 0)
+        {
+        #endif
+        printf("WARNING: rcut_i of atom %d %d is larger than 10, which is %f bohr. This will brings about high computational cost. Suggest to try other qo_basis.\n", it, ia, rcut_i);
+        #ifdef __MPI
+        }
+        #endif
+    }
     // lattice vectors
     for(int itype = start_it; itype < p_ucell_->ntype; itype++)
     {
