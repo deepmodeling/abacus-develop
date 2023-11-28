@@ -361,7 +361,7 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
 
     //  can choose inner_product_recip_new1 or inner_product_recip_new2
     auto inner_product_new
-        = std::bind(&Charge_Mixing::inner_product_recip_new1, this, std::placeholders::_1, std::placeholders::_2);
+        = std::bind(&Charge_Mixing::inner_product_recip_new2, this, std::placeholders::_1, std::placeholders::_2);
     auto inner_product_old
         = std::bind(&Charge_Mixing::inner_product_recip, this, std::placeholders::_1, std::placeholders::_2);
     if (GlobalV::NSPIN == 2)
