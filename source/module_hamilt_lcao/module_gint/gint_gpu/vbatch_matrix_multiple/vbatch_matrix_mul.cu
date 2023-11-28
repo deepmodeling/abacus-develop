@@ -1,6 +1,40 @@
 
 #include "vbatch_matrix_mul.cuh"
 #include "cuda_tools.cuh"
+#define sA(i,j)    sA[(j)*slda + (i)]
+#define sB(i,j)    sB[(j)*sldb + (i)]
+#define fetch(A, m, n, bound)  offs_d##A[min(n*LD##A+m, bound)]
+
+#define shared_A(i,j)    shared_A[(j)*shared_lda + (i)]
+#define shared_B(i,j)    shared_B[(j)*shared_ldb + (i)]
+/*template<typename T>
+inline __device__ T fetch(const T* offs_d,const int  m,const int  n, const int bound, const int global_ld)
+{
+    return offs_d[min(n*global_ld+m, bound)];
+}*/
+__device__ inline double atomic_add(double* address, double val)
+{
+    return atomicAdd(address, val);
+}
+
+__device__ inline float atomic_add(float* address, float val)
+{
+    return atomicAdd(address, val);
+}
+__device__ inline cuFloatComplex atomic_add(cuFloatComplex* address, cuFloatComplex val)
+{
+    float re = atomicAdd( (float*) (&(*address).x) ,val.x);
+    float im = atomicAdd( (float*) (&(*address).y) ,val.y);
+    return make_cuFloatComplex(re, im);
+}
+
+__device__ inline cuDoubleComplex atomic_add(cuDoubleComplex* address, cuDoubleComplex val)
+{
+    double re = atomicAdd( (double*) (&(*address).x) ,val.x);
+    double im = atomicAdd( (double*) (&(*address).y) ,val.y);
+    return make_cuDoubleComplex(re, im);
+}
+
 
 
 template<typename T, const int DIM_X, const int DIM_Y, const int BLK_M, const int BLK_N, const int BLK_K,
@@ -8,7 +42,7 @@ template<typename T, const int DIM_X, const int DIM_Y, const int BLK_M, const in
          const int THR_M, const int THR_N>
 static __device__
 void vbatched_gemm_device(
-    int M, int N, int K,
+    const int M, const int N, const int K,
     const T* __restrict__ A, int LDA,
     const T* __restrict__ B, int LDB,
     T*       __restrict__ C, int LDC,
@@ -34,59 +68,61 @@ void vbatched_gemm_device(
     T rA[THR_M];
     T rB[THR_N];
 
-    T ra[BLK_K/DIM_YA][BLK_M/DIM_XA];
-    T rb[BLK_K/DIM_YB][BLK_N/DIM_XB];
+    // Registers for the dev->shmem copy
+    T ra[BLK_M/DIM_YA][BLK_K/DIM_XA];
+    T rb[BLK_N/DIM_YB][BLK_K/DIM_XB];
 
-    const T *offs_dA = A + blx*BLK_M     + idyA*LDA + idxA;
-    int boundA = (LDA*(K-1) + M) - ( blx*BLK_M  + idyA*LDA + idxA ) -1;
+    // bound is the correction to offs_d in order to not get out of memory bound
+    // so bound could be negative value since offs_d could be out of bound
+    const T *offs_dA = A + blx*BLK_M*LDA + idyA*LDA + idxA;
+    int boundA = (LDA*(M-1) + K) - ( blx*BLK_M*LDA + idyA*LDA + idxA ) -1;
 
-    const T *offs_dB = B + bly*BLK_N     + idyB*LDB + idxB;
-    int boundB = (LDB*(K-1) + N) - ( bly*BLK_N     + idyB*LDB + idxB ) -1;
+    const T *offs_dB = B + bly*BLK_N*LDB + idyB*LDB + idxB;
+    int boundB = (LDB*(N-1) + K) - ( bly*BLK_N*LDB + idyB*LDB + idxB ) -1;
 
     int m, n, k, kk;
-
 
     // Zero C
     #pragma unroll
     for (n = 0; n < THR_N; n++)
         #pragma unroll
         for (m = 0; m < THR_M; m++)
-            rC[n][m] = make_FloatingPoint(0.0, 0.0);
+            rC[n][m] = 0.0;
+
+    // Load A dev->shmem
+    #pragma unroll
+    for (n = 0; n < BLK_M; n += DIM_YA)
+        #pragma unroll
+        for (m = 0; m < BLK_K; m += DIM_XA)
+            sA(n+idyA, m+idxA) = fetch(A, m, n, boundA);
 
     #pragma unroll
-    for (n = 0; n < BLK_K; n += DIM_YA)
+    for (n = 0; n < BLK_N; n += DIM_YB)
         #pragma unroll
-        for (m = 0; m < BLK_M; m += DIM_XA)
-            sA(m+idxA, n+idyA) = fetch(A, m, n, boundA);
-
-    // Load B dev->shmem
-    #pragma unroll
-    for (n = 0; n < BLK_K; n += DIM_YB)
-        #pragma unroll
-        for (m = 0; m < BLK_N; m += DIM_XB)
-            sB(n+idyB, m+idxB) = fetch(B, m, n, boundB);
+        for (m = 0; m < BLK_K; m += DIM_XB)
+            sB(m+idxB, n+idyB) = fetch(B, m, n, boundB);
 
     __syncthreads();
 
     for (kk = 0; kk < K-BLK_K; kk += BLK_K) {
-        offs_dA += BLK_K*LDA;
-        boundA  -= BLK_K*LDA;
+        offs_dA += BLK_K;
+        boundA  -= BLK_K;
 
-        offs_dB += BLK_K*LDB;
-        boundB  -= BLK_K*LDB;
+        offs_dB += BLK_K;
+        boundB  -= BLK_K;
 
         // Load A dev->regs
         #pragma unroll
-        for (n = 0; n < BLK_K/DIM_YA; n++)
+        for (n = 0; n < BLK_M/DIM_YA; n++)
             #pragma unroll
-            for (m = 0; m < BLK_M/DIM_XA; m++)
+            for (m = 0; m < BLK_K/DIM_XA; m++)
                 ra[n][m] = fetch(A, m*DIM_XA, n*DIM_YA, boundA);
 
         // Load B dev->regs
         #pragma unroll
-        for (n = 0; n < BLK_K/DIM_YB; n++)
+        for (n = 0; n < BLK_N/DIM_YB; n++)
             #pragma unroll
-            for (m = 0; m < BLK_N/DIM_XB; m++)
+            for (m = 0; m < BLK_K/DIM_XB; m++)
                 rb[n][m] = fetch(B, m*DIM_XB, n*DIM_YB, boundB);
 
         // Multiply
@@ -107,7 +143,7 @@ void vbatched_gemm_device(
             for (n = 0; n < THR_N; n++) {
                 #pragma unroll
                 for (m = 0; m < THR_M; m++) {
-                    fma(rA[m], rB[n], rC[n][m]);
+                    rC[n][m] += rA[m] * rB[n];
                 }
             }
         }
@@ -116,17 +152,18 @@ void vbatched_gemm_device(
 
         // Load A regs->shmem
         #pragma unroll
-        for (n = 0; n < BLK_K/DIM_YA; n++)
+        for (n = 0; n < BLK_M/DIM_YA; n++)
             #pragma unroll
-            for (m = 0; m < BLK_M/DIM_XA; m++)
-                sA(m*DIM_XA+idxA, n*DIM_YA+idyA) = ra[n][m];
+            for (m = 0; m < BLK_K/DIM_XA; m++)
+                sA(n*DIM_YA+idyA, m*DIM_XA+idxA) = ra[n][m];
 
         // Load B regs->shmem
         #pragma unroll
-        for (n = 0; n < BLK_K/DIM_YB; n++)
+        for (n = 0; n < BLK_N/DIM_YB; n++)
             #pragma unroll
-            for (m = 0; m < BLK_N/DIM_XB; m++)
-                sB(n*DIM_YB+idyB, m*DIM_XB+idxB) = rb[n][m];
+            for (m = 0; m < BLK_K/DIM_XB; m++)
+                sB(m*DIM_XB+idxB, n*DIM_YB+idyB) = rb[n][m];
+
         __syncthreads();
     }
 
@@ -153,7 +190,7 @@ void vbatched_gemm_device(
         for (n = 0; n < THR_N; n++) {
             #pragma unroll
             for (m = 0; m < THR_M; m++) {
-                fma(rA[m], rB[n], rC[n][m]);
+                rC[n][m] += rA[m] * rB[n];
             }
         }
     }
@@ -167,9 +204,7 @@ void vbatched_gemm_device(
             int coord_dCm = blx*BLK_M + m*DIM_X + idx;
             if (coord_dCm < M && coord_dCn < N) {
                 int offsC = coord_dCn*LDC + coord_dCm;
-
-                T &regC = rC[n][m];
-                atomic_add(C+offsC, regC);
+                atomic_add(C + offsC, rC[n][m]);
             }
         }
     }
@@ -177,35 +212,43 @@ void vbatched_gemm_device(
 
 
 /******************************************************************************/
-template <typename T, const int DIM_X, const int DIM_Y, const int BLK_M, const int BLK_N, const int BLK_K,
-         const int DIM_XA, const int DIM_YA, const int DIM_XB, const int DIM_YB>
+template <typename T, const int DIM_X, const int DIM_Y,
+         const int BLK_M, const int BLK_N, const int BLK_K,
+         const int DIM_XA, const int DIM_YA,
+         const int DIM_XB, const int DIM_YB>
 static __global__
 void vbatched_gemm_kernel(
-    int* M, int* N, int K,
-    T const * const * Aarray, int* LDA,
-    T const * const * Barray, int* LDB,
-    T              ** Carray, int* LDC)
+    const int* M, const int* N, const int K,
+    T const * const * global_A_array, const int* global_lda,
+    T const * const * global_B_array, const int* global_ldb,
+    T              ** global_C_array, const int* global_ldc)
 {
-    extern __shared__ T* sdata_nt[];
+    //extern __shared__ __align__(sizeof(T)) unsigned char smem[];
+    //T *shared_mem = reinterpret_cast<T *>(smem);
+    extern __shared__ T* shared_mem[];
 
     const int batchid = blockIdx.z;
-    int my_M = (int)M[batchid];
-    int my_N = (int)N[batchid];
+    int local_M = (int)M[batchid];
+    int local_N = (int)N[batchid];
 
-    if( blockIdx.x >= (my_M+BLK_M-1)/BLK_M ) return;
-    if( blockIdx.y >= (my_N+BLK_N-1)/BLK_N ) return;
+    if( blockIdx.x >= (local_M+BLK_M-1)/BLK_M ) return;
+    if( blockIdx.y >= (local_N+BLK_N-1)/BLK_N ) return;
 
-    const int slda = BLK_M+1;    // +1 only required if A is transposed
-    const int sldb = BLK_K+1;    // +1 always required
-    T* sA = (T*)sdata_nt;        // sA is (BLK_M+1) x (BLK_K)
-    T* sB = sA + slda * BLK_K;   // sB is (BLK_K+1) x (BLK_N)
+    const int shared_lda = BLK_M+1;
+    const int shared_ldb = BLK_K+1;
+    T* shared_A = (T*)shared_mem;
+    T* shared_B = shared_A + shared_lda * BLK_K;
 
-    vbatched_gemm_device<T, DIM_X, DIM_Y, BLK_M, BLK_N, BLK_K, DIM_XA, DIM_YA, DIM_XB, DIM_YB, (BLK_M/DIM_X), (BLK_N/DIM_Y)>
-    ( my_M, my_N, K,
-      Aarray[batchid], (int)LDA[batchid],
-      Barray[batchid], (int)LDB[batchid],
-      Carray[batchid], (int)LDC[batchid],
-      sA, slda, sB, sldb);
+    vbatched_gemm_device<T, DIM_X, DIM_Y, 
+                         BLK_M, BLK_N, BLK_K,
+                         DIM_XA, DIM_YA,
+                         DIM_XB, DIM_YB, 
+                         (BLK_M/DIM_X), (BLK_N/DIM_Y)>
+                        (local_M, local_N, K,
+                        global_A_array[batchid], (int)global_lda[batchid],
+                        global_B_array[batchid], (int)global_ldb[batchid],
+                        global_C_array[batchid], (int)global_ldc[batchid],
+                        shared_A, shared_lda, shared_B, shared_ldb);
 }
 
 static inline int ceildiv( int x, int y )
@@ -213,23 +256,70 @@ static inline int ceildiv( int x, int y )
     return (x + y - 1)/y;
 }
 
-template <typename T, const int DIM_X, const int DIM_Y, const int BLK_M, const int BLK_N, const int BLK_K, const int dim_vec,
-         const int DIM_XA, const int DIM_YA, const int DIM_XB, const int DIM_YB>
-void vbatched_gemm(
-    int max_m, int max_n,
-    int* m, int* n, int k,
-    T const * const * dA_array, int* ldda,
-    T const * const * dB_array, int* lddb,
-    T ** dC_array, int* lddc,
-    int batchCount, cudaStream_t stream)
+template <typename T, const int DIM_X, const int DIM_Y,
+         const int BLK_M, const int BLK_N, const int BLK_K,
+         const int DIM_XA, const int DIM_YA,
+         const int DIM_XB, const int DIM_YB>
+void vbatched_gemm_impl(const int max_m, const int max_n,
+    const int* m, const int* n, const int k,
+    T const * const * global_A_array, const int* global_lda,
+    T const * const * global_B_array, const int* global_ldb,
+    T ** global_C_array, const int* global_ldc,
+    const int batchCount, cudaStream_t stream)
 {
-    size_t shmem = 0;
-    shmem += (BLK_M+1) * BLK_K * sizeof(T);  // sA
-    shmem += (BLK_K+1) * BLK_N * sizeof(T);  // sB
+    size_t shared_mem_size = 0;
+    shared_mem_size += (BLK_M+1) * BLK_K * sizeof(T);
+    shared_mem_size += (BLK_K+1) * BLK_N * sizeof(T);
     dim3 dimBlock(DIM_X, DIM_Y);
-    dim3 dimGrid( ceildiv( max_m, BLK_M ), ceildiv( max_n, BLK_N ), batchCount );
+    dim3 dimGrid(ceildiv( max_m, BLK_M ), ceildiv( max_n, BLK_N ), batchCount);
 
-    vbatched_gemm_kernel<T, DIM_X, DIM_Y, BLK_M, BLK_N, BLK_K, DIM_XA, DIM_YA, DIM_XB, DIM_YB>
-    <<<dimGrid, dimBlock, shmem, stream>>>
-    (m, n, k, dA_array, ldda, dB_array, lddb, dC_array, lddc);
+    vbatched_gemm_kernel<T, DIM_X, DIM_Y,
+                         BLK_M, BLK_N, BLK_K,
+                         DIM_XA, DIM_YA,
+                         DIM_XB, DIM_YB>
+                         <<<dimGrid, dimBlock, shared_mem_size, stream>>>
+                         (m, n, k,
+                         global_A_array, global_lda,
+                         global_B_array, global_ldb,
+                         global_C_array, global_ldc);
 }
+/*
+template <>
+void vbatch_gemm<float>(const int max_m, const int max_n,
+                 const int* m, int* n, const int k,
+                 float const * const * global_A_array, const int* global_lda,
+                 float const * const * global_B_array, const int* global_ldb,
+                 float ** global_C_array, const int* global_ldc,
+                 const int batchCount, cudaStream_t stream)
+{
+    vbatched_gemm_impl<float, 4, 8, 8, 24, 8, 4, 8, 4, 8>
+                    (max_m, max_n, m, n, k,
+                    global_A_array, global_lda,
+                    global_B_array, global_ldb,
+                    global_C_array, global_ldc,
+                    batchCount, stream);
+}
+*/
+template <>
+void vbatch_gemm<double>(const int max_m, const int max_n,
+                 const int* m, int* n, const int k,
+                 double  const * const * global_A_array, const int* global_lda,
+                 double const * const * global_B_array, const int* global_ldb,
+                 double ** global_C_array, const int* global_ldc,
+                 const int batchCount, cudaStream_t stream)
+{
+    // The positions of A and B have been swapped here.
+    // This is because the original code is for column-major matrices.
+    // We use row-major matrices, so we need to swap A and B.
+    // The vbatched_gemm_impl is for C = trans(A) * B + C, but we need trans(C).
+    // Which means: trans(C) = trans(trans(A)*B + C) = trans(B) * A + trans(C)
+    // Then, ldc should be N, lda and ldb should be K
+
+    vbatched_gemm_impl<double, 16, 16, 48, 32, 16, 16, 16, 16, 16>
+                    (max_n, max_m, n, m, k,
+                    global_B_array, global_ldb,
+                    global_A_array, global_lda,
+                    global_C_array, global_ldc,
+                    batchCount, stream);
+}
+

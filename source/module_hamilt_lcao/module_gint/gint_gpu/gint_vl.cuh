@@ -19,9 +19,9 @@ __global__ void get_psi_and_vldr3(double *input_double,
                                   double *psir_ylm_left,
                                   double *psir_ylm_right);
 
-__global__ void psi_multiple(double ** atom_pair_left_g_v2,
-                             double ** atom_pair_right_g_v2,
-                             double ** atom_pair_output,
-                             int *atom_pair_input_info_g);
+__global__ void psi_multiple(const int* m, int* n,
+                                double  const * const * global_A_array,
+                                double const * const * global_B_array,
+                                double ** global_C_array);
 
 #endif // GINT_VL_CUH

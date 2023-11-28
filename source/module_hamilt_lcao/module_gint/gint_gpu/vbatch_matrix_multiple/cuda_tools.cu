@@ -20,3 +20,5 @@ void dump_cuda_array_to_file(double *cuda_array, int width, int hight, const std
     outFile.close();
     delete[] h_data;
 }
+
+
