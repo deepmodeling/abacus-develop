@@ -369,7 +369,7 @@ void Sphbes::Spherical_Bessel_Roots
     Sphbes::Spherical_Bessel(msh, r, 1, l, jl);
 
     int n=0;
-    for (int i=0; i<msh && n<num; i++)
+    for (int i=0; i<msh-1 && n<num; i++)
     {
         if (jl[i]*jl[i+1] < 0.0)
         {
@@ -377,22 +377,23 @@ void Sphbes::Spherical_Bessel_Roots
             double y_2 = jl[i+1];
             double x_1 = r[i];
             double x_2 = r[i+1];
-            double acc = std::fabs( y_2 - y_1 );
+            double acc = std::fabs(y_2 - y_1);
+
+            const int grid=100;
+            double *rad = new double[grid];
+            double *jl_new = new double[grid];
             while (acc > epsilon)
             {
-                double *rad = new double[100];
-                double *jl_new = new double[100];
-
                 // if not enough accurate, divide again.
-                const double delta2 = (x_2 - x_1)/99.0;
-                for (int j=0;j<100;j++)
+                const double delta2 = (x_2 - x_1)/(grid-1);
+                for (int j=0;j<grid;j++)
                 {
                     rad[j] = x_1 + j*delta2;
                 }
-                Sphbes::Spherical_Bessel(100,rad,1,l,jl_new);
+                Sphbes::Spherical_Bessel(grid,rad,1,l,jl_new);
 
                 int j=0;
-                for (;j<100;j++)
+                for (;j<grid-1;j++)
                 {
                     if (jl_new[j]*jl_new[j+1]<0)break;
                 }
@@ -402,9 +403,9 @@ void Sphbes::Spherical_Bessel_Roots
                 y_1 = jl_new[j];
                 y_2 = jl_new[j+1];
                 acc = std::fabs( y_2 - y_1 );
-                delete[] rad;
-                delete[] jl_new;
             }
+            delete[] rad;
+            delete[] jl_new;
             eigenvalue[n]=(x_2 + x_1)*0.5/rcut;
             n++;
         }
@@ -638,13 +639,13 @@ void Sphbes::dSpherical_Bessel_dx
 		std::cout << "We temporarily only calculate derivative of l >= 0." << std::endl;
 		exit(0);
     }
-    
+
     double djl0 = 0;
     if(l == 1)
     {
         djl0 = 1.0/3.0;
     }
-    
+
     if(l == 0 )
     {
         for (int ir = 0;ir < msh; ir++)
@@ -658,7 +659,7 @@ void Sphbes::dSpherical_Bessel_dx
             {
                 djl[ir] = (x1 * std::cos(x1) - std::sin(x1)) / (x1*x1);
             }
-            
+
         }
     }
     else
@@ -669,7 +670,7 @@ void Sphbes::dSpherical_Bessel_dx
         for (int ir = 0;ir < msh; ir++)
         {
             double x1 = q * r[ir];
-            if(x1 < 1e-8) 
+            if(x1 < 1e-8)
             {
                 djl[ir] = djl0;
             }
@@ -687,7 +688,7 @@ void Sphbes::dSpherical_Bessel_dx
 double Sphbes::_sphbesj_ascending_recurrence(int l, double x) {
 
     // should be used when x > l && l > 0
-    
+
     double invx = 1.0 / x;
     double j0 = std::sin(x) * invx;
     double j1 = ( j0 - std::cos(x) ) * invx;
@@ -753,21 +754,21 @@ double Sphbes::sphbesj(const int l, const double x)
           case 0:
             return std::sin(x) * invx;
           case 1:
-            return ( std::sin(x) * invx - std::cos(x) ) * invx; 
+            return ( std::sin(x) * invx - std::cos(x) ) * invx;
             // NOTE: the following explicit expressions are not necessarily faster than ascending recurrence,
             // but we keep them just in case we need them in the future.
           //case 2:
           //  return ( (3.0 * invx  - x) * std::sin(x) - 3.0 * std::cos(x) ) * (invx * invx);
           //case 3:
-          //  return ( std::sin(x) * (15.0 * invx - 6.0 * x) + std::cos(x) * (x * x - 15.0) ) * std::pow(invx, 3); 
+          //  return ( std::sin(x) * (15.0 * invx - 6.0 * x) + std::cos(x) * (x * x - 15.0) ) * std::pow(invx, 3);
           //case 4:
-          //  return ( std::sin(x) * (std::pow(x,3) - 45.0 * x + 105.0 * invx) 
+          //  return ( std::sin(x) * (std::pow(x,3) - 45.0 * x + 105.0 * invx)
           //          + std::cos(x) * (10.0 * x * x - 105.0) ) * std::pow(invx, 4);
           //case 5:
-          //  return ( std::sin(x) * (15.0 * std::pow(x,3) - 420.0 * x + 945.0 * invx) 
+          //  return ( std::sin(x) * (15.0 * std::pow(x,3) - 420.0 * x + 945.0 * invx)
           //          + std::cos(x) * (-std::pow(x, 4) + 105.0 * x * x - 945.0) ) * std::pow(invx, 5);
           //case 6:
-          //  return ( std::sin(x) * (-std::pow(x, 5) + 210.0 * std::pow(x, 3) - 4725.0 * x + 10395.0 * invx) 
+          //  return ( std::sin(x) * (-std::pow(x, 5) + 210.0 * std::pow(x, 3) - 4725.0 * x + 10395.0 * invx)
           //          + std::cos(x) * (-21.0 * std::pow(x, 4) + 1260.0 * x * x - 10395.0) ) * std::pow(invx, 6);
           default:
             return _sphbesj_ascending_recurrence(l, x);

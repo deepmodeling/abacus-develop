@@ -34,6 +34,7 @@ smearing_sigma			0.6
 #Parameters (5.Mixing)
 mixing_type		broyden
 mixing_beta		0.4
+mixing_gg0      0.0
 
 cal_cond      1
 cond_fwhm   8

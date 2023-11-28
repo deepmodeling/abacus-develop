@@ -128,7 +128,7 @@ Here, 'build' is the path for building ABACUS; and '-D' is used for setting up s
   - `BUILD_TESTING=OFF`: [Build unit tests](../advanced/install.md#build-unit-tests).
   - `ENABLE_MPI=ON`: Enable MPI parallel compilation. If set to `OFF`, a serial version of ABACUS with PW basis only will be compiled. Currently serial version of ABACUS with LCAO basis is not supported yet, so `ENABLE_LCAO` will be automatically set to `OFF`.
   - `ENABLE_COVERAGE=OFF`: Build ABACUS executable supporting [coverage analysis](../CONTRIBUTING.md#generating-code-coverage-report). This feature has a drastic impact on performance.
-  - `ENABLE_ASAN=OFF`: Build with Address Sanitizer. This feature would help detecting memory problems. Only supports GCC.
+  - `ENABLE_ASAN=OFF`: Build with Address Sanitizer. This feature would help detecting memory problems.
   - `USE_ELPA=ON`: Use ELPA library in LCAO calculations. If this value is set to OFF, ABACUS can be compiled without ELPA library.
 
 Here is an example:

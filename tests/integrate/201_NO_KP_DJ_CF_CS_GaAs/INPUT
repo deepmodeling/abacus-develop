@@ -32,6 +32,7 @@ pw_diag_thr                0.00001
 
 mixing_type         broyden 
 mixing_beta         0.4
+mixing_gg0          0.0
 mixing_ndim         5
 
 cal_force 1

@@ -46,7 +46,7 @@ int count_ntype(const std::string& fn)
         while (true)
         {
             ModuleBase::GlobalFunc::READ_VALUE(ifa, temp);
-            if (temp == "LATTICE_CONSTANT" || temp == "NUMERICAL_ORBITAL" || temp == "NUMERICAL_DESCRIPTOR"
+            if (temp == "LATTICE_CONSTANT" || temp == "NUMERICAL_ORBITAL" || temp == "NUMERICAL_DESCRIPTOR" || temp == "PAW_FILES"
                 || ifa.eof())
             {
                 break;
@@ -826,6 +826,14 @@ bool input_parameters_set(std::map<std::string, InputParameter> input_parameters
     else if (input_parameters.count("mixing_gg0") != 0)
     {
         INPUT.mixing_gg0 = *static_cast<double*>(input_parameters["mixing_gg0"].get());
+    }
+    else if (input_parameters.count("mixing_beta_mag") != 0)
+    {
+        INPUT.mixing_beta_mag = *static_cast<double*>(input_parameters["mixing_beta_mag"].get());
+    }
+    else if (input_parameters.count("mixing_gg0_mag") != 0)
+    {
+        INPUT.mixing_gg0_mag = *static_cast<double*>(input_parameters["mixing_gg0_mag"].get());
     }
     else if (input_parameters.count("mixing_tau") != 0)
     {

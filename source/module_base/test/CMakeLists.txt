@@ -143,11 +143,13 @@ AddTest(
 
 AddTest(
   TARGET base_opt_CG
+  LIBS ${math_libs}
   SOURCES opt_CG_test.cpp opt_test_tools.cpp ../opt_CG.cpp ../opt_DCsrch.cpp ../global_variable.cpp ../parallel_reduce.cpp
 )
 
 AddTest(
   TARGET base_opt_TN
+  LIBS ${math_libs}
   SOURCES opt_TN_test.cpp opt_test_tools.cpp ../opt_CG.cpp ../opt_DCsrch.cpp ../global_variable.cpp ../parallel_reduce.cpp
 )
 

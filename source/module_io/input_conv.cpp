@@ -741,6 +741,8 @@ void Input_Conv::Convert(void)
     GlobalV::MIXING_BETA = INPUT.mixing_beta;
     GlobalV::MIXING_NDIM = INPUT.mixing_ndim;
     GlobalV::MIXING_GG0 = INPUT.mixing_gg0;
+    GlobalV::MIXING_BETA_MAG = INPUT.mixing_beta_mag;
+    GlobalV::MIXING_GG0_MAG = INPUT.mixing_gg0_mag;
     GlobalV::MIXING_TAU = INPUT.mixing_tau;
     
     //-----------------------------------------------
