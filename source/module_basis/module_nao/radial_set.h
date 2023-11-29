@@ -74,9 +74,12 @@ class RadialSet
                        const double dr = 0.01,
                        const double conv_thr = 1e-6,
                        const int rank = 0,
+                       const std::string symbol = "",
                        const std::string strategy = "minimal",
                        std::ofstream* const ptr_log = nullptr
     ) {}
+
+    void to_file(const std::string& file_name, const int rank = 0) const;
 
     ///@}
 

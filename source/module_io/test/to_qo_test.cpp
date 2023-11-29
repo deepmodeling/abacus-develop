@@ -109,6 +109,7 @@ TEST_F(toQOTest, BuildAo)
     tqo.build_ao(ucell.ntype, tqo.charges().data(), nmax.data());
     EXPECT_EQ(tqo.p_ao()->nchi(), 5); // Si: 1s, 2p, 3d, C: 1s, 2p
     EXPECT_EQ(tqo.nchi(), 13); // Si: 1s, 2px, 2py, 2pz, 3dz2, 3dxz, 3dyz, 3dx2-y2, 3dxy, C: 1s, 2px, 2py, 2pz
+    tqo.p_ao()->to_file("special_use_unittest");
 }
 // the scan_supercell_for_atom() calls
 TEST_F(toQOTest, Norm2RijSupercell)
@@ -243,6 +244,23 @@ TEST_F(toQOTest, CalculateOvlpR)
         }
     }
     EXPECT_EQ(all_zero, false);
+}
+
+TEST_F(toQOTest, CalculateSelfOvlpR)
+{
+    toQO tqo("hydrogen");
+    std::vector<ModuleBase::Vector3<double>> kvecs_c;
+    kvecs_c.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
+    ucell.orbital_fn[0] = "Si_special_use_unittest.orb"; // generated in unittest BuildAo
+    ucell.orbital_fn[1] = "C_special_use_unittest.orb"; // generated in unittest BuildAo
+    tqo.initialize(&ucell, kvecs_c);
+    tqo.calculate_ovlp_R(12);
+    for(int i = 0; i < tqo.nphi(); i++)
+    {
+        EXPECT_NEAR(tqo.ovlp_R()[0][i][i], 1.0, 1e-4);
+    }
+    std::remove("Si_special_use_unittest.orb");
+    std::remove("C_special_use_unittest.orb");
 }
 
 TEST_F(toQOTest, CalculateOvlpK)

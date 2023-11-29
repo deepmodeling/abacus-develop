@@ -18,11 +18,13 @@ void HydrogenRadials::build(const int itype,
                             const double dr,
                             const double conv_thr,
                             const int rank,
+                            const std::string symbol,
                             const std::string strategy,
                             std::ofstream* ptr_log)
 {
     cleanup();
     itype_ = itype;
+    symbol_ = symbol;
     // rcut should be determined as soon as possible...
     //generate_hydrogen_radials(charge, nmax, 10.0, dr, rank, ptr_log);
     hydrogen(charge, nmax, dr, conv_thr, rank, strategy, ptr_log);
@@ -175,9 +177,9 @@ double HydrogenRadials::generate_hydrogen_radial_toconv(const double charge,
     {
         dr = delta_r;
     }
-    //printf("Searching for the cutoff radius for n = %d, l = %d, conv_thr = %6.4e\n", n, l, conv_thr);
-    //printf("%10s%12s%14s%14s", "Step Nr.", "Rmax (a.u.)", "Norm", "Delta Norm\n");
-    //int istep = 1;
+    printf("Searching for the cutoff radius for n = %d, l = %d, conv_thr = %6.4e\n", n, l, conv_thr);
+    printf("%10s%12s%14s%14s", "Step Nr.", "Rmax (a.u.)", "Norm", "Delta Norm\n");
+    int istep = 1;
     double delta_norm = 1.0;
     while((std::fabs(delta_norm) > conv_thr))
     {
@@ -202,8 +204,8 @@ double HydrogenRadials::generate_hydrogen_radial_toconv(const double charge,
         delta_norm = norm;
         norm = radial_norm(rgrid, rvalue);
         delta_norm = norm - delta_norm;
-        //printf("%10d%12.2f%14.10f%14.10f\n", istep, rmax_, norm, delta_norm);
-        //++istep;
+        printf("%10d%12.2f%14.10f%14.10f\n", istep, rmax_, norm, delta_norm);
+        ++istep;
     }
     return rmax_;
 }
@@ -353,7 +355,7 @@ void HydrogenRadials::hydrogen(const double charge,
         std::vector<double>& rgrid = orbital.second.first;
         std::vector<double>& rvalue = orbital.second.second;
         int lzeta = nl_lzeta[nl_pair].second;
-        chi_[ichi].build(l, true, rgrid.size(), rgrid.data(), rvalue.data(), 0, lzeta, "", itype_, false);
+        chi_[ichi].build(l, true, rgrid.size(), rgrid.data(), rvalue.data(), 0, lzeta, symbol_, itype_, false);
         chi_[ichi].normalize();
         ++ichi;
     }

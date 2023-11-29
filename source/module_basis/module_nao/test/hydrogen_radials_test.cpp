@@ -251,6 +251,7 @@ TEST_F(HydrogenRadialsTest, Build)
         dr_,
         1e-6,
         rank_,
+        "H",
         "minimal",
         ptr_log_
     );
@@ -268,6 +269,7 @@ TEST_F(HydrogenRadialsTest, Build)
         dr_,
         1e-6,
         rank_,
+        "H",
         "full",
         ptr_log_
     );

@@ -309,7 +309,7 @@ void toQO::write_ovlp(const std::vector<std::vector<T>> &ovlp, std::string filen
     {
         for(int j = 0; j < ovlp[i].size(); j++)
         {
-            ofs << ovlp[i][j] << " ";
+            ofs << std::setw(22) << std::setprecision(14) << std::right << std::scientific << ovlp[i][j] << " ";
         }
         ofs << std::endl;
     }

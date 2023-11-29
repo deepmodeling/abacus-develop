@@ -3484,6 +3484,9 @@ void Input::Bcast()
     Parallel_Common::bcast_double(alpha_trial);
     Parallel_Common::bcast_double(sccut);
 
+    Parallel_Common::bcast_bool(qo_switch);
+    Parallel_Common::bcast_string(qo_basis);
+    Parallel_Common::bcast_double(qo_thr);
     return;
 }
 #endif

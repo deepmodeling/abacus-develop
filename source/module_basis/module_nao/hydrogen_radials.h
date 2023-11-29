@@ -68,6 +68,7 @@ class HydrogenRadials : public RadialSet
         /// @param rcut cutoff radius of the radial function (not used anymore)
         /// @param dr step size of the radial grid
         /// @param rank MPI rank
+        /// @param symbol element symbol, seems only useful when storing orbital information to file
         /// @param strategy strategy string
         /// @param ptr_log pointer to the log ofstream
         void build(const int itype = 0,
@@ -77,6 +78,7 @@ class HydrogenRadials : public RadialSet
                    const double dr = 0.01,
                    const double conv_thr = 1e-6,
                    const int rank = 0,
+                   const std::string symbol = "",
                    const std::string strategy = "minimal",
                    std::ofstream* ptr_log = nullptr        
         );

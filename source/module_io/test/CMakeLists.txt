@@ -153,5 +153,12 @@ AddTest(
   ../../module_cell/atom_spec.cpp
   ../../module_cell/parallel_kpoints.cpp
   ../../module_cell/test/support/mock_unitcell.cpp
+  ../output_radial.cpp
 )
 endif()
+
+AddTest(
+  TARGET output_radial_test
+  LIBS base ${math_libs} device
+  SOURCES output_radial_test.cpp ../output_radial.cpp
+)

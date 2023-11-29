@@ -8,6 +8,7 @@ AddTest(
   ../../../module_hcontainer/base_matrix.cpp ../../../module_hcontainer/hcontainer.cpp ../../../module_hcontainer/atom_pair.cpp  
   ../../../../module_basis/module_ao/parallel_2d.cpp ../../../../module_basis/module_ao/parallel_orbitals.cpp 
   tmp_mocks.cpp ../../../../module_hamilt_general/operator.cpp
+  ../../../../module_io/output_radial.cpp
 )
 
 AddTest(
@@ -17,6 +18,7 @@ AddTest(
   ../../../module_hcontainer/base_matrix.cpp ../../../module_hcontainer/hcontainer.cpp ../../../module_hcontainer/atom_pair.cpp  
   ../../../../module_basis/module_ao/parallel_2d.cpp ../../../../module_basis/module_ao/parallel_orbitals.cpp 
   tmp_mocks.cpp ../../../../module_hamilt_general/operator.cpp
+  ../../../../module_io/output_radial.cpp
 )
 
 AddTest(
@@ -26,6 +28,7 @@ AddTest(
   ../../../module_hcontainer/base_matrix.cpp ../../../module_hcontainer/hcontainer.cpp ../../../module_hcontainer/atom_pair.cpp  
   ../../../../module_basis/module_ao/parallel_2d.cpp ../../../../module_basis/module_ao/parallel_orbitals.cpp 
   tmp_mocks.cpp ../../../../module_hamilt_general/operator.cpp
+  ../../../../module_io/output_radial.cpp
 )
 
 AddTest(
@@ -35,6 +38,7 @@ AddTest(
   ../../../module_hcontainer/base_matrix.cpp ../../../module_hcontainer/hcontainer.cpp ../../../module_hcontainer/atom_pair.cpp  
   ../../../../module_basis/module_ao/parallel_2d.cpp ../../../../module_basis/module_ao/parallel_orbitals.cpp 
   tmp_mocks.cpp ../../../../module_hamilt_general/operator.cpp
+  ../../../../module_io/output_radial.cpp
 )
 
 AddTest(
@@ -44,6 +48,7 @@ AddTest(
   ../../../module_hcontainer/base_matrix.cpp ../../../module_hcontainer/hcontainer.cpp ../../../module_hcontainer/atom_pair.cpp  
   ../../../../module_basis/module_ao/parallel_2d.cpp ../../../../module_basis/module_ao/parallel_orbitals.cpp 
   tmp_mocks.cpp ../../../../module_hamilt_general/operator.cpp
+  ../../../../module_io/output_radial.cpp
 )
 
 install(FILES parallel_operator_tests.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

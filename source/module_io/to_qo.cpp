@@ -1,6 +1,7 @@
 #include "module_io/to_qo.h"
 #include "module_basis/module_nao/two_center_integrator.h"
 #include "module_base/ylm.h"
+#include "module_base/parallel_common.h"
 
 toQO::toQO(std::string qo_basis, std::string strategy)
 {
@@ -40,8 +41,14 @@ void toQO::initialize(UnitCell* p_ucell,
        Then the overlap integral is calculated.
      */
     // build the numerical atomic orbital basis
+    // PARALLELIZATION STRATEGY: use RANK-0 to read in the files, then broadcast
     build_nao(p_ucell_->ntype, p_ucell_->orbital_fn);
     // build another atomic orbital
+    // PARALLELIZATION STRATEGY: only RANK-0 works
+    #ifdef __MPI
+    if(GlobalV::MY_RANK == 0)
+    {
+    #endif
     std::vector<int> nmax = std::vector<int>(p_ucell_->ntype);
     for(int itype = 0; itype < ntype_; itype++)
     {
@@ -63,10 +70,6 @@ void toQO::initialize(UnitCell* p_ucell,
     
     // allocate memory for ovlp_ao_nao_R_ and ovlp_ao_nao_k_
     allocate_ovlp(true); allocate_ovlp(false);
-    #ifdef __MPI
-    if(GlobalV::MY_RANK == 0)
-    {
-    #endif
     printf("---- Quasiatomic Orbital (QO) Analysis Initialization Done ----\n");
     #ifdef __MPI
     }
@@ -79,14 +82,25 @@ void toQO::build_nao(const int ntype, const std::string* const orbital_fn)
     ModuleBase::SphericalBesselTransformer sbt;
     nao_ = std::unique_ptr<RadialCollection>(new RadialCollection);
     // add GlobalV::global_orbital_dir ahead of orbital_fn
-    std::string* orbital_fn_ = new std::string[ntype];
-    for(int it = 0; it < ntype; it++)
+    int ntype_ = ntype;
+#ifdef __MPI
+    Parallel_Common::bcast_int(ntype_);
+#endif
+    std::string* orbital_fn_ = new std::string[ntype_];
+    if(GlobalV::MY_RANK == 0)
     {
-        orbital_fn_[it] = GlobalV::global_orbital_dir + orbital_fn[it];
+        for(int it = 0; it < ntype_; it++)
+        {
+            orbital_fn_[it] = GlobalV::global_orbital_dir + orbital_fn[it];
+        }
     }
-    nao_->build(ntype, orbital_fn_, 'o');
+#ifdef __MPI
+    Parallel_Common::bcast_string(orbital_fn_, ntype_);
+#endif
+
+    nao_->build(ntype_, orbital_fn_, 'o');
     nao_->set_transformer(sbt);
-    for(int it = 0; it < ntype; it++)
+    for(int it = 0; it < ntype_; it++)
     {
         for(int l = 0; l <= nao_->lmax(it); l++)
         {
@@ -112,7 +126,7 @@ void toQO::build_ao(const int ntype, const double* const charges, const int* con
     if(qo_basis_ == "hydrogen")
     {
         ao_ = std::unique_ptr<RadialCollection>(new RadialCollection);
-        ao_->build(ntype, charges, nmax, GlobalV::qo_thr, strategy_);
+        ao_->build(ntype, charges, nmax, symbols_.data(), GlobalV::qo_thr, strategy_);
         ModuleBase::SphericalBesselTransformer sbt;
         ao_->set_transformer(sbt);
         for(int it = 0; it < ntype; it++)
@@ -242,28 +256,13 @@ void toQO::calculate()
     if(GlobalV::MY_RANK == 0)
     {
     #endif
-    printf("Calculating overlap integrals for kpoint: \n");
-    #ifdef __MPI
-    }
-    #endif
+    printf("Calculating overlap integrals for kpoints.\n");
     for(int ik = 0; ik < nkpts_; ik++)
     {
         calculate_ovlp_k(ik);
-        #ifdef __MPI
-        if(GlobalV::MY_RANK == 0)
-        {
-        #endif
         write_ovlp<std::complex<double>>(ovlp_k_, "QO_ovlp_" + std::to_string(ik) + ".dat"  );
-        printf("%d ", ik);
-        #ifdef __MPI
-        }
-        #endif
     }
-    #ifdef __MPI
-    if(GlobalV::MY_RANK == 0)
-    {
-    #endif
-    printf("\n");
+    printf("Calculating overlap integrals for kpoints done.\n\n");
     #ifdef __MPI
     }
     #endif

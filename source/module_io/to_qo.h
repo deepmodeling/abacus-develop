@@ -163,6 +163,7 @@ class toQO
         template <typename T>
         void eliminate_duplicate_vector3(std::vector<ModuleBase::Vector3<T>>& vector3s);
 
+        
         // setters
         void set_qo_basis(const std::string qo_basis) { qo_basis_ = qo_basis; }
         void set_strategy(const std::string strategy) { strategy_ = strategy; }

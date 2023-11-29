@@ -191,6 +191,7 @@ void RadialCollection::build(const int nfile, const std::string* const file, con
 void RadialCollection::build(const int ntype, 
                              const double* const charges, 
                              const int* const nmax, 
+                             const std::string* symbols,
                              const double conv_thr,
                              const std::string strategy)
 {
@@ -208,6 +209,7 @@ void RadialCollection::build(const int ntype,
                               0.01,
                               conv_thr,
                               0,
+                              symbols[itype],
                               strategy);
 
         lmax_ = std::max(lmax_, radset_[itype]->lmax());
@@ -248,4 +250,13 @@ void RadialCollection::set_uniform_grid(const bool for_r_space,
         radset_[itype]->set_uniform_grid(for_r_space, ngrid, cutoff, mode, enable_fft);
     }
     rcut_max_ = cutoff;
+}
+
+void RadialCollection::to_file(const std::string& appendix)
+{
+    for (int itype = 0; itype < ntype_; ++itype)
+    {
+        std::string fname = radset_[itype]->symbol() + "_" + appendix + ".orb";
+        radset_[itype]->to_file(fname);
+    }
 }
