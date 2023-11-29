@@ -178,7 +178,7 @@ double HydrogenRadials::generate_hydrogen_radial_toconv(const double charge,
         dr = delta_r;
     }
     printf("Searching for the cutoff radius for n = %d, l = %d, conv_thr = %6.4e\n", n, l, conv_thr);
-    printf("%10s%12s%14s%14s", "Step Nr.", "Rmax (a.u.)", "Norm", "Delta Norm\n");
+    printf("%10s%12s%14s%18s", "Step Nr.", "Rmax (a.u.)", "Norm", "Delta Norm\n");
     int istep = 1;
     double delta_norm = 1.0;
     while((std::fabs(delta_norm) > conv_thr))
@@ -204,7 +204,7 @@ double HydrogenRadials::generate_hydrogen_radial_toconv(const double charge,
         delta_norm = norm;
         norm = radial_norm(rgrid, rvalue);
         delta_norm = norm - delta_norm;
-        printf("%10d%12.2f%14.10f%14.10f\n", istep, rmax_, norm, delta_norm);
+        printf("%10d%12.2f%14.10f%18.10e\n", istep, rmax_, norm, delta_norm);
         ++istep;
     }
     return rmax_;
@@ -234,6 +234,20 @@ std::vector<std::pair<int, int>> HydrogenRadials::unzip_strategy(const int nmax,
         }
     }
     return nl_pairs;
+}
+
+void HydrogenRadials::smooth(std::vector<double>& rgrid,
+                             std::vector<double>& rvalue,
+                             const double sigma)
+{
+    double prefactor = 1.0 / sqrt(2.0 * M_PI) / sigma;
+    double rmax = rgrid.back();
+    for(int ir = 0; ir != rgrid.size(); ++ir)
+    {
+        double delta_r = rgrid[ir] - rmax;
+        double smooth = prefactor * exp(-delta_r * delta_r / 2.0 / sigma / sigma);
+        rvalue[ir] *= (1 - smooth);
+    }
 }
 
 std::map<std::pair<int, int>, std::pair<std::vector<double>, std::vector<double>>> 
@@ -292,6 +306,8 @@ HydrogenRadials::generate_orb(const double charge,
                 rvalue.push_back(0.0);
             }
         }
+        // smooth the tail
+        smooth(rgrid, rvalue, 0.1);
     }
     return radials;
 }

@@ -1,7 +1,6 @@
 #include "module_base/assoc_laguerre.h"
 #include "module_base/global_function.h"
-
-// use cmath the factorial function
+//#include <tr1/cmath> // use cmath the factorial function
 #include <cmath>
 Assoc_Laguerre::Assoc_Laguerre()
 {
@@ -133,5 +132,6 @@ double Assoc_Laguerre::value(const int &n, const int &l, const double &s)
         static_cast<double>(this->factorial(k_ + iq)) / 
         static_cast<double>(this->factorial(iq));
     }
+    //L = std::tr1::assoc_laguerre(n_, k_, s); // use standard library
     return L;
 }

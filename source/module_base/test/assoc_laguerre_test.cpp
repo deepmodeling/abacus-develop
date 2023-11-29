@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <vector>
 #include "module_base/assoc_laguerre.h"
-
+#include <tr1/cmath> // use standard library version for reference value
 /*
     Unittest for associated Laguerre polynomials
 */
@@ -210,7 +210,32 @@ TEST_F(AssocLaguerreTest, ValueTest)
 {
     Assoc_Laguerre al;
     //test n = 1, 2, ..., 4, from 1s to 4f
-    std::vector<double> xs = {0.0, 1.0, 2.0, 3.0};
+    std::vector<double> xs;
+    // segment1: 0-0.25, 0.01
+    for(double x = 0.0; x < 0.25; x += 0.01)
+    {
+        xs.push_back(x);
+    }
+    // segment2: 0.25-1.0, 0.05
+    for(double x = 0.25; x < 1.0; x += 0.05)
+    {
+        xs.push_back(x);
+    }
+    // segment3: 1.0-2.0, 0.1
+    for(double x = 1.0; x < 2.0; x += 0.1)
+    {
+        xs.push_back(x);
+    }
+    // segment4: 2.0-5.0, 0.2
+    for(double x = 2.0; x < 5.0; x += 0.2)
+    {
+        xs.push_back(x);
+    }
+    // segment5: 5.0-10.0, 0.5
+    for(double x = 5.0; x < 10.0; x += 0.5)
+    {
+        xs.push_back(x);
+    }
     int nmax = 4;
     for(int n = 1; n < nmax; n++)
     {
@@ -219,11 +244,12 @@ TEST_F(AssocLaguerreTest, ValueTest)
             std::vector<double> ref_ys;
             for(int i = 0; i < xs.size(); i++)
             {
-                ref_ys.push_back(al.associate_laguerre(n-l-1, xs[i], 2*l+1));
+                ref_ys.push_back(std::tr1::assoc_laguerre(n-l-1, 2*l+1, xs[i]));
+                //ref_ys.push_back(al.associate_laguerre(n-l-1, xs[i], 2*l+1));
             }
             for(int i = 0; i < xs.size(); i++)
             {
-                EXPECT_DOUBLE_EQ(al.value(n, l, xs[i]), ref_ys[i]);
+                EXPECT_NEAR(al.value(n, l, xs[i]), ref_ys[i], 1e-10);
             }
         }
     }

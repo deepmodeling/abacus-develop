@@ -20,7 +20,7 @@ void toQO::initialize(UnitCell* p_ucell,
     if(GlobalV::MY_RANK == 0)
     {
     #endif
-    printf("---- Quasiatomic Orbital (QO) Analysis Initialization ----\n");
+    printf("\n---- Quasiatomic Orbital (QO) Analysis Initialization ----\n");
     #ifdef __MPI
     }
     #endif

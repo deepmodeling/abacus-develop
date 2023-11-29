@@ -261,6 +261,7 @@ TEST_F(toQOTest, CalculateSelfOvlpR)
     }
     std::remove("Si_special_use_unittest.orb");
     std::remove("C_special_use_unittest.orb");
+    //tqo.write_ovlp(tqo.ovlp_R()[0], "QO_self_ovlp.dat");
 }
 
 TEST_F(toQOTest, CalculateOvlpK)

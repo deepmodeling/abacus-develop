@@ -23,14 +23,14 @@ class Assoc_Laguerre
         /// @param y y-coordinates in std::vector
         void generate(const int &n, const int &l, std::vector<double> &x, std::vector<double> &y);
         /// @brief Laguerre polynomial
-        /// @param n order of the polynomial
+        /// @param n degree of the polynomial
         /// @param x radial coordinate
         /// @return L_n(x)
         double laguerre(const int &n, const double x);
         /// @brief recursive relationship to find the associated Laguerre polynomial
-        /// @param n order of the polynomial
+        /// @param n degree of the polynomial
         /// @param x radial coordinate
-        /// @param a parameter
+        /// @param a order of the polynomial
         /// @return L^(a)_n(x)
         double associate_laguerre(const int &n, const double x, const int &a);
         /// @brief wrapper for associate_laguerre

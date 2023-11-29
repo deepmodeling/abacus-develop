@@ -89,6 +89,13 @@ class HydrogenRadials : public RadialSet
         /// @return a vector of n, l pairs
         std::vector<std::pair<int, int>> unzip_strategy(const int nmax = 0,
                                                         const std::string strategy = "minimal");
+        /// @brief smooth the radial function to avoid high frequency noise in FFT-spherical bessel transform
+        /// @param rgrid radial grid
+        /// @param rvalue radial function
+        /// @param sigma sigma of the Gaussian kernel
+        void smooth(std::vector<double>& rgrid,
+                    std::vector<double>& rvalue,
+                    const double sigma = 0.1);
         /// @brief generate hydrogen-like radial functions for a given n, l, from 0.0 to a radius where the norm of radial function is converged
         /// @param charge charge of the nucleus
         /// @param n principal quantum number
@@ -153,6 +160,7 @@ class HydrogenRadials : public RadialSet
                       std::ofstream* ptr_log = nullptr);
 
     private:
+    /*
         /// @brief [DEPRECATED IN ACTUAL USE!!!] generate hydrogen-like radial functions for a given charge, nmax, dr, rank, strategy
         /// @param charge charge of the nucleus
         /// @param nmax maxmium principal quantum number
@@ -166,6 +174,7 @@ class HydrogenRadials : public RadialSet
                                        const double dr = 0.01,
                                        const int rank = 0,
                                        std::ofstream* ptr_log = nullptr);
+    */
         /// @brief generate hydrogen-like radial functions for a given n, l, in a given range [rmin, rmax]
         /// @param charge charge of the nucleus
         /// @param n principal quantum number
