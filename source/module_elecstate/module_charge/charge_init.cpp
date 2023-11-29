@@ -90,8 +90,6 @@ void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMa
             }
             else
             {
-                std::cout << "!!! Couldn't find the charge file !!! The default directory \n of SPIN1_CHG.cube is OUT.suffix, "
-                    "or you must set read_file_dir \n to a specific directory. " << std::endl;
                 read_error = true;
                 break;
             }
@@ -125,7 +123,15 @@ void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMa
             }
         }
     }
-    if (read_error) std::cout << "WARNING: Failed to read charge density from file, use atomic initialization instead." << std::endl;
+    if (read_error)
+    {
+        std::cout << " WARNING: Failed to read charge density from file. Possible reasons: " << std::endl;
+        std::cout << " - not found: The default directory of SPIN1_CHG.cube is OUT.suffix, \n"
+            "or you must set read_file_dir to a specific directory. " << std::endl;
+        std::cout << " - parameter mismatch: check the previous warning." << std::endl;
+        std::cout << " Use atomic initialization instead." << std::endl;
+    }
+
     if (GlobalV::init_chg != "file" || read_error) // mohan add 2007-10-17
     {
         this->atomic_rho(GlobalV::NSPIN, GlobalC::ucell.omega, rho, strucFac, GlobalC::ucell);
