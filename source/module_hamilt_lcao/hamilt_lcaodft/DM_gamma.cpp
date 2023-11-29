@@ -78,7 +78,7 @@ void Local_Orbital_Charge::allocate_gamma(
 	// Peize Lin test 2019-01-16
     this->init_dm_2d(nks);
 
-    if (istep == 0 & INPUT.init_wfc == "file")
+    if (istep == 0 && INPUT.init_wfc == "file")
     {
         this->LOWF->gamma_file(psid, pelec);
     }
