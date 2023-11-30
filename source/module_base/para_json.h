@@ -423,16 +423,16 @@ namespace Para_Json
 
     // @param reading_information -- stru_infos：
     extern rapidjson::Value stru_infos;
-    extern rapidjson::Value ATOMIC_SPECIES;
-    extern rapidjson::Value NUMERICAL_ORBITAL;
-    extern rapidjson::Value LATTICE_CONSTANT;
-    extern rapidjson::Value ATOMIC_POSITIONS;
+    // extern rapidjson::Value ATOMIC_SPECIES;
+    // extern rapidjson::Value NUMERICAL_ORBITAL;
+    // extern rapidjson::Value LATTICE_CONSTANT;
+    // extern rapidjson::Value ATOMIC_POSITIONS;
 
     // @param reading_information -- KPT_infos
     extern rapidjson::Value KPT_infos;
-    extern rapidjson::Value total_number;
-    extern rapidjson::Value mode;
-    extern rapidjson::Value vectors;
+    // extern rapidjson::Value total_number;
+    // extern rapidjson::Value mode;
+    // extern rapidjson::Value vectors;
 
     // @param reading_information -- orb_infos
     extern rapidjson::Value orb_infos;

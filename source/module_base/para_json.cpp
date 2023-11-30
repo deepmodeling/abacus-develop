@@ -398,16 +398,16 @@ namespace Para_Json
 
     // @param reading_information -- stru_infos：
     rapidjson::Value stru_infos(rapidjson::kObjectType);
-    rapidjson::Value ATOMIC_SPECIES(rapidjson::kArrayType);
-    rapidjson::Value NUMERICAL_ORBITAL;
-    rapidjson::Value LATTICE_CONSTANT(rapidjson::kArrayType);
-    rapidjson::Value ATOMIC_POSITIONS(rapidjson::kArrayType);
+    // rapidjson::Value ATOMIC_SPECIES(rapidjson::kArrayType);
+    // rapidjson::Value NUMERICAL_ORBITAL;
+    // rapidjson::Value LATTICE_CONSTANT(rapidjson::kArrayType);
+    // rapidjson::Value ATOMIC_POSITIONS(rapidjson::kArrayType);
 
     // @param reading_information -- KPT_infos
     rapidjson::Value KPT_infos(rapidjson::kObjectType);
-    rapidjson::Value total_number;
-    rapidjson::Value mode;
-    rapidjson::Value vectors(rapidjson::kArrayType);
+    // rapidjson::Value total_number;
+    // rapidjson::Value mode;
+    // rapidjson::Value vectors(rapidjson::kArrayType);
 
     // @param reading_information -- orb_infos
     rapidjson::Value orb_infos(rapidjson::kObjectType);

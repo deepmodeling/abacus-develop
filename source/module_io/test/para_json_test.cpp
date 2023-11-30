@@ -7,13 +7,13 @@
 #include <stdlib.h>
 #include "rapidjson/document.h"
 /************************************************
- *  unit test of Input::bcast
+ *  unit test of Input::ParaJson
  ***********************************************/
 
 /**
  * - Tested Functions:
- *   - bcast()
- *     - bcast input parameters to all processes
+ *   - Init()
+ *     - init json tree from input::Init and check if the json string is valid
  */
 
 #define private public
@@ -27,7 +27,7 @@ protected:
 
 #ifdef __MPI
 
-// 在这里提供 isValidJSON 函数的定义
+// check if a string is a valid JSON string
 bool isValidJSON(const std::string& jsonString) {
     rapidjson::Document document;
     document.Parse(jsonString.c_str());
