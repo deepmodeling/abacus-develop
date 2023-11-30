@@ -93,6 +93,7 @@ class Input
     int npart_sto; //for method_sto = 2, reduce memory
     bool cal_cond; //calculate electronic conductivities
     double cond_che_thr; //control the error of Chebyshev expansions for conductivities
+    int cond_smear; //smearing method for conductivities 1: Gaussian 2: Lorentzian
     double cond_dw; //d\omega for conductivities
     double cond_wcut; //cutoff \omega for conductivities
     double cond_dt;  //dt to integrate conductivities

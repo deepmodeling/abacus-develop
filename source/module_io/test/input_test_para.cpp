@@ -67,6 +67,7 @@ TEST_F(InputParaTest,Bcast)
         EXPECT_DOUBLE_EQ(INPUT.cond_wcut,10);
         EXPECT_EQ(INPUT.cond_dt,0.02);
 	    EXPECT_EQ(INPUT.cond_dtbatch,4);
+        EXPECT_EQ(INPUT.cond_smear,1);
         EXPECT_DOUBLE_EQ(INPUT.cond_fwhm,0.4);
         EXPECT_TRUE(INPUT.cond_nonlocal);
         EXPECT_FALSE(INPUT.berry_phase);

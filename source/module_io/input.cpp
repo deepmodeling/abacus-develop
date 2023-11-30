@@ -175,6 +175,7 @@ void Input::Default(void)
     cond_wcut = 10;
     cond_dt = 0.02;
     cond_dtbatch = 4;
+    cond_smear = 1;
     cond_fwhm = 0.4;
     cond_nonlocal = true;
     berry_phase = false;
@@ -811,6 +812,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("cond_dtbatch", word) == 0)
         {
             read_value(ifs, cond_dtbatch);
+        }
+        else if (strcmp("cond_smear", word) == 0)
+        {
+            read_value(ifs, cond_smear);
         }
         else if (strcmp("cond_fwhm", word) == 0)
         {
@@ -3037,6 +3042,7 @@ void Input::Bcast()
     Parallel_Common::bcast_double(cond_wcut);
     Parallel_Common::bcast_double(cond_dt);
     Parallel_Common::bcast_int(cond_dtbatch);
+    Parallel_Common::bcast_int(cond_smear);
     Parallel_Common::bcast_double(cond_fwhm);
     Parallel_Common::bcast_bool(cond_nonlocal);
     Parallel_Common::bcast_int(bndpar);

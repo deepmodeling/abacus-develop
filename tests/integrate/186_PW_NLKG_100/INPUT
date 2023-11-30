@@ -27,6 +27,7 @@ mixing_beta		0.4
 mixing_gg0      0.0
 
 cal_cond      1
+cond_smear  2
 cond_fwhm   8
 cond_wcut        20
 cond_dw          0.02

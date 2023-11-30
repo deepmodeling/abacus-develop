@@ -155,6 +155,7 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "cond_wcut", cond_wcut, "cutoff frequency (omega) for conductivities");
     ModuleBase::GlobalFunc::OUTP(ofs, "cond_dt", cond_dt, "t interval to integrate Onsager coefficiencies");
     ModuleBase::GlobalFunc::OUTP(ofs, "cond_dtbatch", cond_dtbatch, "exp(iH*dt*cond_dtbatch) is expanded with Chebyshev expansion.");
+    ModuleBase::GlobalFunc::OUTP(ofs, "cond_smear", cond_smear, "Smearing method for conductivities");
     ModuleBase::GlobalFunc::OUTP(ofs, "cond_fwhm", cond_fwhm, "FWHM for conductivities");
     ModuleBase::GlobalFunc::OUTP(ofs, "cond_nonlocal", cond_nonlocal, "Nonlocal effects for conductivities");
     
