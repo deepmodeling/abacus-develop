@@ -15,6 +15,7 @@
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
+#include "module_elecstate/module_dm/density_matrix.h"
 #include "module_base/intarray.h"
 #include "module_base/complexmatrix.h"
 #include "module_io/winput.h"
@@ -277,13 +278,13 @@ public:
 
     ///calculate projected density matrix:
     ///pdm = sum_i,occ <phi_i|alpha1><alpha2|phi_k>
-    void cal_projected_DM(//const std::vector<ModuleBase::matrix>& dm/**< [in] density matrix*/,
-        const std::vector<std::vector<double>>& dm,
+    void cal_projected_DM(
+        const elecstate::DensityMatrix<double, double>* dm,
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver& GridD);
-    void cal_projected_DM_k(//const std::vector<ModuleBase::ComplexMatrix>& dm,
-        const std::vector<std::vector<std::complex<double>>>& dm,
+    void cal_projected_DM_k(
+        const elecstate::DensityMatrix<std::complex<double>, double>* dm,
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver& GridD,
