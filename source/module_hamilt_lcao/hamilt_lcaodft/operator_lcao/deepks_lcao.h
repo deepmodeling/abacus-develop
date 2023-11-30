@@ -71,17 +71,13 @@ class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     /**
      * @brief calculate the HR local matrix of <I,J,R> atom pair
      */
-    void cal_HR_IJR(const int& iat1,
-                    const int& iat2,
-                    const int& T0,
-                    const Parallel_Orbitals* paraV,
-                    const std::unordered_map<int, std::vector<double>>& nlm1_all,
-                    const std::unordered_map<int, std::vector<double>>& nlm2_all,
-                    const int* L0s,
-                    const double** gedms,
-                    const int size_gedms,
-                    TR* data_pointer);
+    void cal_HR_IJR(const double* hr_in,
+        const int& row_size,
+        const int& col_size,
+        TR* data_pointer);
 
+    void pre_calculate_nlm(const int iat0, std::vector<std::unordered_map<int, std::vector<double>>>& nlm_in);
+    std::vector<std::vector<std::unordered_map<int, std::vector<double>>>> nlm_tot;
     /**
      * @brief initialize H_V_delta, search the nearest neighbor atoms
      * used for calculate the DeePKS real space Hamiltonian correction with specific <I,J,R> atom-pairs

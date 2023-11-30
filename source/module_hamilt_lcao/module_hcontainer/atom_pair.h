@@ -229,6 +229,13 @@ class AtomPair
      */
     void add_to_matrix(T* hk, const int ld_hk, const T& kphase, const int hk_type = 0) const;
 
+    void add_from_matrix(const std::complex<T>* hk,
+                       const int ld_hk,
+                       const std::complex<T>& kphase,
+                       const int hk_type = 0);
+    
+    void add_from_matrix(const T* hk, const int ld_hk, const T& kphase, const int hk_type = 0);
+
     /**
      * @brief Add this->value[current_R] * kphase to an array.
      * T = double or float

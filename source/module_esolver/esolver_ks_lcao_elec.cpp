@@ -602,8 +602,8 @@ void ESolver_KS_LCAO<TK, TR>::nscf()
     const Parallel_Orbitals* pv = this->LOWF.ParaV;
     if (GlobalV::deepks_out_labels || GlobalV::deepks_scf)
     {
-        const std::vector<std::vector<TK>>& dm
-            = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMK_vector();
+        const elecstate::DensityMatrix<TK, double>* dm
+            = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
         this->dpks_cal_projected_DM(dm);
         GlobalC::ld.cal_descriptor(); // final descriptor
         GlobalC::ld.cal_gedm(GlobalC::ucell.nat);

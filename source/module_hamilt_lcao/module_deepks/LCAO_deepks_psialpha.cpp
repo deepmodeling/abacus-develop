@@ -53,12 +53,11 @@ void LCAO_Deepks::build_psialpha(const bool& calc_deri,
             {
                 const int T1 = GridD.getType(ad);
                 const int I1 = GridD.getNatom(ad);
-                const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
+                const int ibt=ucell.itia2iat(T1, I1);
 				const double Rcut_AO1 = orb.Phi[T1].getRcut();
 
                 const ModuleBase::Vector3<double> tau1 = GridD.getAdjacentTau(ad);
 				const Atom* atom1 = &ucell.atoms[T1];
-				const int nw1_tot = atom1->nw*GlobalV::NPOL;
 
                 std::unordered_map<int,std::vector<std::vector<double>>> nlm_cur;
                 if(GlobalV::GAMMA_ONLY_LOCAL)
@@ -77,14 +76,17 @@ void LCAO_Deepks::build_psialpha(const bool& calc_deri,
 					continue;
 				}
 
+                auto all_indexes = pv->get_indexes_row(ibt);
+                auto col_indexes = pv->get_indexes_col(ibt);
+                // insert col_indexes into all_indexes to get universal set with no repeat elements
+                all_indexes.insert(all_indexes.end(), col_indexes.begin(), col_indexes.end());
+                std::sort(all_indexes.begin(), all_indexes.end());
+                all_indexes.erase(std::unique(all_indexes.begin(), all_indexes.end()), all_indexes.end());
+
                 //middle loop : all atomic basis on the adjacent atom ad
-				for (int iw1=0; iw1<nw1_tot; ++iw1)
+				for (int iw1l=0; iw1l<all_indexes.size(); iw1l+=GlobalV::NPOL)
 				{
-					const int iw1_all = start1 + iw1;
-                    const int iw1_local = pv->global2local_row(iw1_all);
-                    const int iw2_local = pv->global2local_col(iw1_all);
-					if(iw1_local < 0 && iw2_local < 0)continue;
-					const int iw1_0 = iw1/GlobalV::NPOL;
+                    const int iw1 = all_indexes[iw1l] / GlobalV::NPOL;
 					std::vector<std::vector<double>> nlm;
 					//2D, dim 0 contains the overlap <psi|alpha>
                     //dim 1-3 contains the gradient of overlap
@@ -93,9 +95,9 @@ void LCAO_Deepks::build_psialpha(const bool& calc_deri,
                     //=================================================================
                     //          new two-center integral (temporary)
                     //=================================================================
-                    int L1 = atom1->iw2l[ iw1_0 ];
-                    int N1 = atom1->iw2n[ iw1_0 ];
-                    int m1 = atom1->iw2m[ iw1_0 ];
+                    int L1 = atom1->iw2l[ iw1 ];
+                    int N1 = atom1->iw2n[ iw1 ];
+                    int m1 = atom1->iw2m[ iw1 ];
 
                     // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
                     int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
@@ -108,9 +110,9 @@ void LCAO_Deepks::build_psialpha(const bool& calc_deri,
 					UOT.snap_psialpha_half(
                         orb,
 						nlm, job, tau1, T1,
-						atom1->iw2l[ iw1_0 ], // L1
-						atom1->iw2m[ iw1_0 ], // m1
-						atom1->iw2n[ iw1_0 ], // N1
+						atom1->iw2l[ iw1 ], // L1
+						atom1->iw2m[ iw1 ], // m1
+						atom1->iw2n[ iw1 ], // N1
 						ucell.atoms[T0].tau[I0], T0, I0); //R0,T0
 #endif
                     //=================================================================
@@ -119,17 +121,17 @@ void LCAO_Deepks::build_psialpha(const bool& calc_deri,
 
                     if(GlobalV::GAMMA_ONLY_LOCAL)
                     {
-                        this->nlm_save[iat][ad].insert({iw1_all,nlm});
+                        this->nlm_save[iat][ad].insert({all_indexes[iw1l],nlm});
                     }
                     else
                     {
-                        nlm_cur.insert({iw1_all,nlm});
+                        nlm_cur.insert({all_indexes[iw1l],nlm});
+                        if(GlobalV::NPOL==2) nlm_cur.insert({all_indexes[iw1l+1],nlm});
                     }
 				}//end iw
 
                 if(!GlobalV::GAMMA_ONLY_LOCAL)
                 {
-                    const int ibt=ucell.itia2iat(T1, I1);
                     const int rx=GridD.getBox(ad).x;
                     const int ry=GridD.getBox(ad).y;
                     const int rz=GridD.getBox(ad).z;
@@ -250,12 +252,12 @@ void LCAO_Deepks::check_psialpha(const bool& calc_deri,
 
                     if(GlobalV::GAMMA_ONLY_LOCAL)
                     {
-                        nlm = this->nlm_save[iat][ad][iw1_all];
+                        nlm = this->nlm_save[iat][ad][iw1];
                     }
                     else
                     {
                         key_tuple key_1(ibt,rx,ry,rz);
-                        nlm = this->nlm_save_k[iat][key_1][iw1_all];
+                        nlm = this->nlm_save_k[iat][key_1][iw1];
                     }
                     
                     for(int ind=0;ind<nlm[0].size();ind++)
