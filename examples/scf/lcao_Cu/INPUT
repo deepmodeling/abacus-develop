@@ -16,5 +16,3 @@ mixing_beta	0.4
 
 basis_type	lcao
 gamma_only	0
-
-qo_switch 1
