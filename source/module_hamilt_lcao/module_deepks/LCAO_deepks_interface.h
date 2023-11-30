@@ -38,7 +38,7 @@ class LCAO_Deepks_Interface
                            Grid_Driver& GridD,
                            const Parallel_Orbitals* ParaV,
                            const psi::Psi<double>& psid,
-                           const std::vector<std::vector<double>>& dm_gamma);
+                           const elecstate::DensityMatrix<double, double>* dm);
   // for multi-k
   void out_deepks_labels(double etot,
                            int nks,
@@ -50,7 +50,7 @@ class LCAO_Deepks_Interface
                            Grid_Driver& GridD,
                            const Parallel_Orbitals* ParaV,
                            const psi::Psi<std::complex<double>>& psi,
-                           const std::vector<std::vector<std::complex<double>>>& dm_k);
+                           const elecstate::DensityMatrix<std::complex<double>, double>* dm);
 
   private:
     std::shared_ptr<LCAO_Deepks> ld;

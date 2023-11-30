@@ -13,6 +13,8 @@
 #include "module_base/vector3.h"
 #include "module_base/timer.h"
 #include "module_base/constants.h"
+#include "module_hamilt_lcao/module_hcontainer/atom_pair.h"
+#include "module_base/libm/libm.h"
 
 void stress_fill( 
     const double& lat0_, 
@@ -58,7 +60,7 @@ void LCAO_Deepks::cal_f_delta_gamma(const std::vector<std::vector<double>>& dm,
             {
                 const int T1 = GridD.getType(ad1);
                 const int I1 = GridD.getNatom(ad1);
-                const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
+                const int ibt1 = ucell.itia2iat(T1,I1);
                 const ModuleBase::Vector3<double> tau1 = GridD.getAdjacentTau(ad1);
                 const Atom* atom1 = &ucell.atoms[T1];
                 const int nw1_tot = atom1->nw*GlobalV::NPOL;
@@ -68,8 +70,7 @@ void LCAO_Deepks::cal_f_delta_gamma(const std::vector<std::vector<double>>& dm,
                 {
                     const int T2 = GridD.getType(ad2);
                     const int I2 = GridD.getNatom(ad2);
-                    const int ibt = ucell.itia2iat(T2,I2);
-                    const int start2 = ucell.itiaiw2iwt(T2, I2, 0);
+                    const int ibt2 = ucell.itia2iat(T2,I2);
                     const ModuleBase::Vector3<double> tau2 = GridD.getAdjacentTau(ad2);
                     const Atom* atom2 = &ucell.atoms[T2];
                     const int nw2_tot = atom2->nw*GlobalV::NPOL;
@@ -96,27 +97,38 @@ void LCAO_Deepks::cal_f_delta_gamma(const std::vector<std::vector<double>>& dm,
                         r0[2] = ( tau2.z - tau0.z) ;
                     }
 
-                    for (int iw1=0; iw1<nw1_tot; ++iw1)
+                    auto row_indexes = pv->get_indexes_row(ibt1);
+                    auto col_indexes = pv->get_indexes_col(ibt2);
+                    if(row_indexes.size() * col_indexes.size() == 0) continue;
+
+                    hamilt::AtomPair<double> dm_pair(ibt1, ibt2, 0, 0, 0, pv);
+                    dm_pair.allocate(nullptr, 1);
+                    for(int is=0;is<dm.size();is++)
                     {
-                        const int iw1_all = start1 + iw1;
-                        const int iw1_local = pv->global2local_col(iw1_all);
-                        if(iw1_local < 0)continue;
-
-                        for (int iw2=0; iw2<nw2_tot; ++iw2)
+                        if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
                         {
-                            const int iw2_all = start2 + iw2;
-                            const int iw2_local = pv->global2local_row(iw2_all);
-                            if(iw2_local < 0)continue;
+                            dm_pair.add_from_matrix(dm[is].data(), pv->get_row_size(), 1.0, 1);
+                        }
+                        else
+                        {
+                            dm_pair.add_from_matrix(dm[is].data(), pv->get_col_size(), 1.0, 0);
+                        }
+                    }
+                    const double* dm_current = dm_pair.get_pointer();
 
+                    for (int iw1=0; iw1<row_indexes.size(); ++iw1)
+                    {
+                        for (int iw2=0; iw2<col_indexes.size(); ++iw2)
+                        {
                             double nlm[3]={0,0,0};
                             double nlm_t[3] = {0,0,0}; //for stress
-                            std::vector<double> nlm1 = this->nlm_save[iat][ad1][iw1_all][0];
+                            std::vector<double> nlm1 = this->nlm_save[iat][ad1][row_indexes[iw1]][0];
                             std::vector<std::vector<double>> nlm2;
                             nlm2.resize(3);
 
                             for(int dim=0;dim<3;dim++)
                             {
-                                nlm2[dim] = this->nlm_save[iat][ad2][iw2_all][dim+1];
+                                nlm2[dim] = this->nlm_save[iat][ad2][col_indexes[iw2]][dim+1];
                             }
 
                             assert(nlm1.size()==nlm2[0].size());
@@ -143,25 +155,22 @@ void LCAO_Deepks::cal_f_delta_gamma(const std::vector<std::vector<double>>& dm,
                             }
                             assert(ib==nlm1.size());
 
-                            for(int is = 0; is < GlobalV::NSPIN; is ++)
-                            {
-                                // HF term is minus, only one projector for each atom force.
-                                this->F_delta(iat, 0) -= 2 * dm[is][iw1_local * nrow + iw2_local] * nlm[0];
-                                this->F_delta(iat, 1) -= 2 * dm[is][iw1_local * nrow + iw2_local] * nlm[1];
-                                this->F_delta(iat, 2) -= 2 * dm[is][iw1_local * nrow + iw2_local] * nlm[2];
+                            // HF term is minus, only one projector for each atom force.
+                            this->F_delta(iat, 0) -= 2 * *dm_current * nlm[0];
+                            this->F_delta(iat, 1) -= 2 * *dm_current * nlm[1];
+                            this->F_delta(iat, 2) -= 2 * *dm_current * nlm[2];
 
-                                // Pulay term is plus, only one projector for each atom force.
-                                this->F_delta(ibt, 0) += 2 * dm[is][iw1_local * nrow + iw2_local] * nlm[0];
-                                this->F_delta(ibt, 1) += 2 * dm[is][iw1_local * nrow + iw2_local] * nlm[1];
-                                this->F_delta(ibt, 2) += 2 * dm[is][iw1_local * nrow + iw2_local] * nlm[2];
-                            }
+                            // Pulay term is plus, only one projector for each atom force.
+                            this->F_delta(ibt2, 0) += 2 * *dm_current * nlm[0];
+                            this->F_delta(ibt2, 1) += 2 * *dm_current * nlm[1];
+                            this->F_delta(ibt2, 2) += 2 * *dm_current * nlm[2];
 
                             if(isstress)
                             {
-                                nlm1 = this->nlm_save[iat][ad2][iw2_all][0];
+                                nlm1 = this->nlm_save[iat][ad2][col_indexes[iw2]][0];
                                 for(int i=0;i<3;i++)
                                 {
-                                    nlm2[i] = this->nlm_save[iat][ad1][iw1_all][i+1];
+                                    nlm2[i] = this->nlm_save[iat][ad1][row_indexes[iw1]][i+1];
                                 }
 
                                 assert(nlm1.size()==nlm2[0].size());                                
@@ -192,14 +201,12 @@ void LCAO_Deepks::cal_f_delta_gamma(const std::vector<std::vector<double>>& dm,
                                 {
                                     for(int jpol=ipol;jpol<3;jpol++)
                                     {
-                                        for(int is = 0; is < GlobalV::NSPIN; is ++)
-                                        {
-                                            //svnl_dalpha(ipol, jpol) += dm[is](iw1_local, iw2_local) * (nlm[jpol] * r0[ipol] + nlm_t[jpol] * r1[ipol]);
-                                            svnl_dalpha(ipol, jpol) += dm[is][iw1_local * nrow + iw2_local] * (nlm[jpol] * r0[ipol] + nlm_t[jpol] * r1[ipol]);
-                                        }
+                                        //svnl_dalpha(ipol, jpol) += dm[is](iw1_local, iw2_local) * (nlm[jpol] * r0[ipol] + nlm_t[jpol] * r1[ipol]);
+                                        svnl_dalpha(ipol, jpol) += *dm_current * (nlm[jpol] * r0[ipol] + nlm_t[jpol] * r1[ipol]);
                                     }
                                 }
                             }
+                            dm_current++;
                         }//iw2
                     }//iw1
                 }//ad2
@@ -288,38 +295,43 @@ void LCAO_Deepks::cal_f_delta_k(const std::vector<std::vector<std::complex<doubl
                         r0[2] = ( tau2.z - tau0.z) ;
                     }
 
-                    for (int iw1=0; iw1<nw1_tot; ++iw1)
+                    auto row_indexes = pv->get_indexes_row(ibt1);
+                    auto col_indexes = pv->get_indexes_col(ibt2);
+                    if(row_indexes.size() * col_indexes.size() == 0) continue;
+
+                    hamilt::AtomPair<double> dm_pair(ibt1, ibt2, (dR2-dR1).x, (dR2-dR1).y, (dR2-dR1).z, pv);
+                    dm_pair.allocate(nullptr, 1);
+                    for(int ik=0;ik<nks;ik++)
                     {
-                        const int iw1_all = start1 + iw1;
-                        const int iw1_local = pv->global2local_col(iw1_all);
-                        if(iw1_local < 0)continue;
-
-                        for (int iw2=0; iw2<nw2_tot; ++iw2)
+                        const double arg = - (kvec_d[ik] * (dR2-dR1) ) * ModuleBase::TWO_PI;
+                        double sinp, cosp;
+                        ModuleBase::libm::sincos(arg, &sinp, &cosp);
+                        const std::complex<double> kphase = std::complex<double>(cosp, sinp);
+                        if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
                         {
-                            const int iw2_all = start2 + iw2;
-                            const int iw2_local = pv->global2local_row(iw2_all);
-                            if(iw2_local < 0)continue;
-                            double dm_current;
-                            std::complex<double> tmp = 0.0;
-                            for(int ik=0;ik<nks;ik++)
-                            {
-                                const double arg = - ( kvec_d[ik] * (dR2-dR1) ) * ModuleBase::TWO_PI;
-                                const std::complex<double> kphase = std::complex <double> ( cos(arg),  sin(arg) );
-                                //tmp += dm[ik](iw1_local, iw2_local) * kphase;
-                                tmp += dm[ik][iw1_local * nrow + iw2_local] * kphase;
-                            }
-                            dm_current=tmp.real();
+                            dm_pair.add_from_matrix(dm[ik].data(), pv->get_row_size(), kphase, 1);
+                        }
+                        else
+                        {
+                            dm_pair.add_from_matrix(dm[ik].data(), pv->get_col_size(), kphase, 0);
+                        }
+                    }
+                    const double* dm_current = dm_pair.get_pointer();
 
+                    for (int iw1=0; iw1<row_indexes.size(); ++iw1)
+                    {
+                        for (int iw2=0; iw2<col_indexes.size(); ++iw2)
+                        {
                             double nlm[3]={0,0,0};
                             double nlm_t[3] = {0,0,0}; //for stress
                             key_tuple key_1(ibt1,dR1.x,dR1.y,dR1.z);
                             key_tuple key_2(ibt2,dR2.x,dR2.y,dR2.z);
-                            std::vector<double> nlm1 = this->nlm_save_k[iat][key_1][iw1_all][0];
+                            std::vector<double> nlm1 = this->nlm_save_k[iat][key_1][row_indexes[iw1]][0];
                             std::vector<std::vector<double>> nlm2;
                             nlm2.resize(3);
                             for(int dim=0;dim<3;dim++)
                             {
-                                nlm2[dim] = this->nlm_save_k[iat][key_2][iw2_all][dim+1];
+                                nlm2[dim] = this->nlm_save_k[iat][key_2][col_indexes[iw2]][dim+1];
                             }
 
                             assert(nlm1.size()==nlm2[0].size());
@@ -347,21 +359,21 @@ void LCAO_Deepks::cal_f_delta_k(const std::vector<std::vector<std::complex<doubl
                             assert(ib==nlm1.size());
 
                             // Pulay term is plus
-                            this->F_delta(ibt2, 0) += 2.0 * dm_current * nlm[0];
-                            this->F_delta(ibt2, 1) += 2.0 * dm_current * nlm[1];
-                            this->F_delta(ibt2, 2) += 2.0 * dm_current * nlm[2];
+                            this->F_delta(ibt2, 0) += 2.0 * *dm_current * nlm[0];
+                            this->F_delta(ibt2, 1) += 2.0 * *dm_current * nlm[1];
+                            this->F_delta(ibt2, 2) += 2.0 * *dm_current * nlm[2];
 
                             // HF term is minus, only one projector for each atom force.
-                            this->F_delta(iat, 0) -= 2.0 * dm_current * nlm[0];
-                            this->F_delta(iat, 1) -= 2.0 * dm_current * nlm[1];
-                            this->F_delta(iat, 2) -= 2.0 * dm_current * nlm[2];
+                            this->F_delta(iat, 0) -= 2.0 * *dm_current * nlm[0];
+                            this->F_delta(iat, 1) -= 2.0 * *dm_current * nlm[1];
+                            this->F_delta(iat, 2) -= 2.0 * *dm_current * nlm[2];
 
                             if(isstress)
                             {
-                                nlm1 = this->nlm_save_k[iat][key_2][iw2_all][0];
+                                nlm1 = this->nlm_save_k[iat][key_2][col_indexes[iw2]][0];
                                 for(int i=0;i<3;i++)
                                 {
-                                    nlm2[i] = this->nlm_save_k[iat][key_1][iw1_all][i+1];
+                                    nlm2[i] = this->nlm_save_k[iat][key_1][row_indexes[iw1]][i+1];
                                 }
 
                                 assert(nlm1.size()==nlm2[0].size());                                
@@ -390,12 +402,13 @@ void LCAO_Deepks::cal_f_delta_k(const std::vector<std::vector<std::complex<doubl
                                    
                                 for(int ipol=0;ipol<3;ipol++)
                                 {
-                                    svnl_dalpha(0,ipol) -= dm_current * (nlm[0] * r0[ipol] + nlm_t[0] * r1[ipol])* -1.0;
-                                    svnl_dalpha(1,ipol) -= dm_current * (nlm[1] * r0[ipol] + nlm_t[1] * r1[ipol])* -1.0;
-                                    svnl_dalpha(2,ipol) -= dm_current * (nlm[2] * r0[ipol] + nlm_t[2] * r1[ipol])* -1.0;
+                                    svnl_dalpha(0,ipol) -= *dm_current * (nlm[0] * r0[ipol] + nlm_t[0] * r1[ipol])* -1.0;
+                                    svnl_dalpha(1,ipol) -= *dm_current * (nlm[1] * r0[ipol] + nlm_t[1] * r1[ipol])* -1.0;
+                                    svnl_dalpha(2,ipol) -= *dm_current * (nlm[2] * r0[ipol] + nlm_t[2] * r1[ipol])* -1.0;
                                 }
 
                             }
+                            dm_current++;
                         }//iw2
                     }//iw1
                 }//ad2

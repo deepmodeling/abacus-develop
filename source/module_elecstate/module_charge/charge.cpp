@@ -258,6 +258,113 @@ void Charge::renormalize_rho(void)
     return;
 }
 
+// for real space magnetic density
+void Charge::get_rho_mag(void)
+{
+    ModuleBase::TITLE("Charge", "get_rho_tot_mag");
+
+    for (int ir = 0; ir < nrxx; ir++)
+    {
+        rho_mag[ir] = rho[0][ir] + rho[1][ir];
+        rho_mag_save[ir] = rho_save[0][ir] + rho_save[1][ir];
+    }
+    for (int ir = 0; ir < nrxx; ir++)
+    {
+        rho_mag[ir + nrxx] = rho[0][ir] - rho[1][ir];
+        rho_mag_save[ir + nrxx] = rho_save[0][ir] - rho_save[1][ir];
+    }
+    return;
+}
+
+void Charge::get_rho_from_mag(void)
+{
+    ModuleBase::TITLE("Charge", "get_rho_from_mag");
+    for (int is = 0; is < nspin; is++)
+    {
+        ModuleBase::GlobalFunc::ZEROS(rho[is], nrxx);
+        //ModuleBase::GlobalFunc::ZEROS(rho_save[is], nrxx);
+    }
+    for (int ir = 0; ir < nrxx; ir++)
+    {
+        rho[0][ir] = 0.5 * (rho_mag[ir] + rho_mag[ir+nrxx]);
+        rho[1][ir] = 0.5 * (rho_mag[ir] - rho_mag[ir+nrxx]);
+    }
+
+    return;
+}
+
+void Charge::allocate_rho_mag(void)
+{
+    rho_mag = new double[nrxx * nspin];
+    rho_mag_save = new double[nrxx * nspin];
+
+    ModuleBase::GlobalFunc::ZEROS(rho_mag, nrxx * nspin);
+    ModuleBase::GlobalFunc::ZEROS(rho_mag_save, nrxx * nspin);
+
+    return;
+}
+
+void Charge::destroy_rho_mag(void)
+{
+    delete[] rho_mag;
+    delete[] rho_mag_save;
+
+    return;
+}
+
+// for reciprocal space magnetic density
+void Charge::get_rhog_mag(void)
+{
+    ModuleBase::TITLE("Charge", "get_rhog_tot_mag");
+
+    for (int ig = 0; ig < ngmc; ig++)
+    {
+        rhog_mag[ig] = rhog[0][ig] + rhog[1][ig];
+        rhog_mag_save[ig] = rhog_save[0][ig] + rhog_save[1][ig];
+    }
+    for (int ig = 0; ig < ngmc; ig++)
+    {
+        rhog_mag[ig + ngmc] = rhog[0][ig] - rhog[1][ig];
+        rhog_mag_save[ig + ngmc] = rhog_save[0][ig] - rhog_save[1][ig];
+    }
+    return;
+}
+
+void Charge::get_rhog_from_mag(void)
+{
+    ModuleBase::TITLE("Charge", "get_rhog_from_mag");
+    for (int is = 0; is < nspin; is++)
+    {
+        ModuleBase::GlobalFunc::ZEROS(rhog[is], ngmc);
+    }
+    for (int ig = 0; ig < ngmc; ig++)
+    {
+        rhog[0][ig] = 0.5 * (rhog_mag[ig] + rhog_mag[ig+ngmc]);
+        rhog[1][ig] = 0.5 * (rhog_mag[ig] - rhog_mag[ig+ngmc]);
+    }
+
+    return;
+}
+
+void Charge::allocate_rhog_mag(void)
+{
+    rhog_mag = new std::complex<double>[ngmc * nspin];
+    rhog_mag_save = new std::complex<double>[ngmc * nspin];
+
+    ModuleBase::GlobalFunc::ZEROS(rhog_mag, ngmc * nspin);
+    ModuleBase::GlobalFunc::ZEROS(rhog_mag_save, ngmc * nspin);
+
+    return;
+}
+
+void Charge::destroy_rhog_mag(void)
+{
+    delete[] rhog_mag;
+    delete[] rhog_mag_save;
+
+    return;
+}
+
 //-------------------------------------------------------
 // superposition of atomic charges contained in the array
 // rho_at (read from pseudopotential files)

@@ -5,7 +5,7 @@ suffix    autotest
 
 calculation   scf
 ecutwfc       20
-scf_thr           1.0e-6
+scf_thr           1.0e-10
 scf_nmax         50
 out_chg    0
 
@@ -23,7 +23,7 @@ smearing_sigma     0.07
 #relax_bfgs_init  0.5
 
 mixing_type    broyden
-mixing_beta    0.3
+mixing_beta    0.4
 
 ks_solver    cg
 basis_type   pw

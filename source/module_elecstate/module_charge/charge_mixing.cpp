@@ -8,6 +8,7 @@
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+
 Charge_Mixing::Charge_Mixing()
 {
 }
@@ -15,19 +16,34 @@ Charge_Mixing::Charge_Mixing()
 Charge_Mixing::~Charge_Mixing()
 {
     delete this->mixing;
+    delete this->mixing_highf;
 }
 
 void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
                                const double& mixing_beta_in,
                                const int& mixing_ndim_in,
                                const double& mixing_gg0_in,
-                               const bool& mixing_tau_in)
+                               const bool& mixing_tau_in,
+                               const double& mixing_beta_mag_in)
 {
     this->mixing_mode = mixing_mode_in;
     this->mixing_beta = mixing_beta_in;
+    this->mixing_beta_mag = mixing_beta_mag_in;
     this->mixing_ndim = mixing_ndim_in;
-    this->mixing_gg0 = mixing_gg0_in; // mohan add 2014-09-27
+    this->mixing_gg0 = mixing_gg0_in;
     this->mixing_tau = mixing_tau_in;
+
+    GlobalV::ofs_running<<"\n----------- Double Check Mixing Parameters Begin ------------"<<std::endl;
+    GlobalV::ofs_running<<"mixing_type: "<< this->mixing_mode <<std::endl;
+    GlobalV::ofs_running<<"mixing_beta: "<< this->mixing_beta <<std::endl;
+    GlobalV::ofs_running<<"mixing_gg0: "<< this->mixing_gg0 <<std::endl;
+    if (GlobalV::NSPIN==2)
+    {
+        GlobalV::ofs_running<<"mixing_beta_mag: "<< GlobalV::MIXING_BETA_MAG <<std::endl;
+        GlobalV::ofs_running<<"mixing_gg0_mag: "<< GlobalV::MIXING_GG0_MAG <<std::endl;
+    }
+    GlobalV::ofs_running<<"mixing_ndim: "<< this->mixing_ndim <<std::endl;
+    GlobalV::ofs_running<<"----------- Double Check Mixing Parameters End ------------"<<std::endl;
 
     if (this->mixing_mode == "broyden")
     {
@@ -41,11 +57,19 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
     }
     else if (this->mixing_mode == "pulay")
     {
+        delete this->mixing;
         this->mixing = new Base_Mixing::Pulay_Mixing(this->mixing_ndim, this->mixing_beta);
     }
     else
     {
         ModuleBase::WARNING_QUIT("Charge_Mixing", "This Mixing mode is not implemended yet,coming soon.");
+    }
+    if (GlobalV::double_grid)
+    {
+        // ONLY smooth part of charge density is mixed by specific mixing method
+        // The high_frequency part is mixed by plain mixing method.
+        delete this->mixing_highf;
+        this->mixing_highf = new Base_Mixing::Plain_Mixing(this->mixing_beta);
     }
 
     if (GlobalV::SCF_THR_TYPE == 1)
@@ -68,59 +92,55 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
     return;
 }
 
-void Charge_Mixing::set_rhopw(ModulePW::PW_Basis* rhopw_in)
+void Charge_Mixing::set_rhopw(ModulePW::PW_Basis* rhopw_in, ModulePW::PW_Basis* rhodpw_in)
 {
     this->rhopw = rhopw_in;
+    this->rhodpw = rhodpw_in;
 }
 
-void Charge_Mixing::need_auto_set()
-{
-    this->autoset = true;
-}
+// void Charge_Mixing::need_auto_set()
+// {
+//     this->autoset = true;
+// }
 
-void Charge_Mixing::auto_set(const double& bandgap_in, const UnitCell& ucell_)
-{
-    // auto set parameters once
-    if (!this->autoset)
-    {
-        return;
-    }
-    else
-    {
-        this->autoset = false;
-    }
-    GlobalV::ofs_running << "--------------AUTO-SET---------------" << std::endl;
-    // 0.2 for metal and 0.7 for others
-    if (bandgap_in * ModuleBase::Ry_to_eV < 1.0)
-    {
-        this->mixing->mixing_beta = this->mixing_beta = 0.2;
-    }
-    else
-    {
-        this->mixing->mixing_beta = this->mixing_beta = 0.7;
-    }
-    GlobalV::MIXING_BETA = mixing_beta;
-    GlobalV::ofs_running << "      Autoset mixing_beta to " << this->mixing_beta << std::endl;
+// void Charge_Mixing::auto_set(const double& bandgap_in, const UnitCell& ucell_)
+// {
+//     // auto set parameters once
+//     if (!this->autoset)
+//     {
+//         return;
+//     }
+//     else
+//     {
+//         this->autoset = false;
+//     }
+//     GlobalV::ofs_running << "--------------AUTO-SET---------------" << std::endl;
+//     // 0.8 for nspin=1 and 0.4 for others
+//     if (GlobalV::NSPIN == 1)
+//     {
+//         this->mixing->mixing_beta = this->mixing_beta = 0.8;
+//         GlobalV::ofs_running << "      Autoset mixing_beta to " << this->mixing_beta << std::endl;
+//     }
+//     else
+//     {
+//         this->mixing->mixing_beta = this->mixing_beta = 0.4;
+//         GlobalV::MIXING_BETA_MAG = 4 * this->mixing_beta;
+//         GlobalV::ofs_running << "      Autoset mixing_beta to " << this->mixing_beta << std::endl;
+//         GlobalV::ofs_running << "      Autoset mixing_beta_mag to " << GlobalV::MIXING_BETA_MAG << std::endl;
+//     }
+//     GlobalV::MIXING_BETA = mixing_beta;
 
-    bool has_trans_metal = false;
-    // find elements of cell
-    for (int it = 0; it < ucell_.ntype; it++)
-    {
-        if (ModuleBase::IsTransMetal.find(ucell_.atoms[it].ncpp.psd) != ModuleBase::IsTransMetal.end())
-        {
-            if (ModuleBase::IsTransMetal.at(ucell_.atoms[it].ncpp.psd))
-            {
-                has_trans_metal = true;
-            }
-        }
-    }
-    // auto set kerker mixing_gg0 = 1.0 as default
-    this->mixing_gg0 = 1.0;
+//     // auto set kerker mixing_gg0 = 1.0 as default
+//     this->mixing_gg0 = 1.0;
+//     GlobalV::ofs_running << "      Autoset mixing_gg0 to " << this->mixing_gg0 << std::endl;
+//     if (GlobalV::NSPIN == 1)
+//     {
+//         GlobalV::MIXING_GG0_MAG = 0.0;
+//         GlobalV::ofs_running << "      Autoset mixing_gg0_mag to " << GlobalV::MIXING_GG0_MAG << std::endl;
+//     }
 
-    GlobalV::ofs_running << "      Autoset mixing_gg0 to " << this->mixing_gg0 << std::endl;
-    GlobalV::ofs_running << "-------------------------------------" << std::endl;
-    // auto set for inhomogeneous system
-}
+//     GlobalV::ofs_running << "-------------------------------------" << std::endl;
+// }
 
 double Charge_Mixing::get_drho(Charge* chr, const double nelec)
 {
@@ -195,46 +215,170 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
     // ONLY smooth part of charge density is mixed by specific mixing method
     // The high_frequency part is mixed by plain mixing method.
     // NOTE: chr->rhopw is dense, while this->rhopw is smooth
-    std::complex<double>* rhog_in = nullptr;
-    std::complex<double>* rhog_out = nullptr;
+    std::complex<double>*rhogs_in = chr->rhog_save[0], *rhogs_out = chr->rhog[0];
+    std::complex<double>*rhoghf_in = nullptr, *rhoghf_out = nullptr;
+
     if (GlobalV::double_grid)
     {
-        rhog_in = new std::complex<double>[GlobalV::NSPIN * this->rhopw->npw];
-        rhog_out = new std::complex<double>[GlobalV::NSPIN * this->rhopw->npw];
-        for (int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            std::memcpy(&rhog_in[is * rhopw->npw], chr->rhog_save[is], rhopw->npw * sizeof(std::complex<double>));
-            std::memcpy(&rhog_out[is * rhopw->npw], chr->rhog[is], rhopw->npw * sizeof(std::complex<double>));
-        }
-    }
-    else
-    {
-        rhog_in = chr->rhog_save[0];
-        rhog_out = chr->rhog[0];
+        // divide into smooth part and high_frequency part
+        divide_data(chr->rhog_save[0], rhogs_in, rhoghf_in);
+        divide_data(chr->rhog[0], rhogs_out, rhoghf_out);
     }
 
     auto screen = std::bind(&Charge_Mixing::Kerker_screen_recip, this, std::placeholders::_1);
-    this->mixing->push_data(this->rho_mdata, rhog_in, rhog_out, screen, true);
+    this->mixing->push_data(this->rho_mdata, rhogs_in, rhogs_out, screen, true);
 
     auto inner_product
         = std::bind(&Charge_Mixing::inner_product_recip, this, std::placeholders::_1, std::placeholders::_2);
     this->mixing->cal_coef(this->rho_mdata, inner_product);
 
-    this->mixing->mix_data(this->rho_mdata, rhog_out);
+    this->mixing->mix_data(this->rho_mdata, rhogs_out);
 
     if (GlobalV::double_grid)
     {
-        // simple mixing for high_frequencies
-        this->high_freq_mix(chr->rhog[0], chr->rhog_save[0], GlobalV::NSPIN * chr->rhopw->npw);
+        // plain mixing for high_frequencies
+        const int ndimhf = (this->rhodpw->npw - this->rhopw->npw) * GlobalV::NSPIN;
+        this->mixing_highf->plain_mix(rhoghf_out, rhoghf_in, rhoghf_out, ndimhf, nullptr);
 
         // combine smooth part and high_frequency part
-        for (int is = 0; is < GlobalV::NSPIN; is++)
+        combine_data(chr->rhog[0], rhogs_out, rhoghf_out);
+        clean_data(rhogs_in, rhoghf_in);
+    }
+
+    // rhog to rho
+    for (int is = 0; is < GlobalV::NSPIN; is++)
+    {
+        rhodpw->recip2real(chr->rhog[is], chr->rho[is]);
+    }
+
+    // For kinetic energy density
+    if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
+    {
+        std::vector<std::complex<double>> kin_g(GlobalV::NSPIN * rhodpw->npw);
+        std::vector<std::complex<double>> kin_g_save(GlobalV::NSPIN * rhodpw->npw);
+
+        for (int is = 0; is < GlobalV::NSPIN; ++is)
         {
-            std::memcpy(chr->rhog[is], &rhog_out[is * rhopw->npw], rhopw->npw * sizeof(std::complex<double>));
+            rhodpw->real2recip(chr->kin_r[is], &kin_g[is * rhodpw->npw]);
+            rhodpw->real2recip(chr->kin_r_save[is], &kin_g_save[is * rhodpw->npw]);
+        }
+        std::complex<double>*taugs_in = kin_g_save.data(), *taugs_out = kin_g.data();
+        std::complex<double>*taughf_in = nullptr, *taughf_out = nullptr;
+        if (GlobalV::double_grid)
+        {
+            // divide into smooth part and high_frequency part
+            divide_data(kin_g_save.data(), taugs_in, taughf_in);
+            divide_data(kin_g.data(), taugs_out, taughf_out);
         }
 
-        delete[] rhog_in;
-        delete[] rhog_out;
+        // Note: there is no kerker modification for tau because I'm not sure
+        // if we should have it. If necessary we can try it in the future.
+        this->mixing->push_data(this->tau_mdata, taugs_in, taugs_out, nullptr, false);
+
+        this->mixing->mix_data(this->tau_mdata, taugs_out);
+
+        if (GlobalV::double_grid)
+        {
+            // simple mixing for high_frequencies
+            const int ndimhf = (this->rhodpw->npw - this->rhopw->npw) * GlobalV::NSPIN;
+            this->mixing_highf->plain_mix(taughf_out, taughf_in, taughf_out, ndimhf, nullptr);
+
+            // combine smooth part and high_frequency part
+            combine_data(kin_g.data(), taugs_out, taughf_out);
+            clean_data(taugs_in, taughf_in);
+        }
+
+        // kin_g to kin_r
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            rhodpw->recip2real(&kin_g[is * rhodpw->npw], chr->kin_r[is]);
+        }
+    }
+
+#ifdef USE_PAW
+    if(GlobalV::use_paw)
+    {
+        double *nhat_out, *nhat_in;
+        nhat_in = chr->nhat_save[0];
+        nhat_out = chr->nhat[0];
+        // Note: there is no kerker modification for tau because I'm not sure
+        // if we should have it. If necessary we can try it in the future.
+        this->mixing->push_data(this->nhat_mdata, nhat_in, nhat_out, nullptr, false);
+
+        this->mixing->mix_data(this->nhat_mdata, nhat_out);
+    }
+#endif
+    return;
+}
+
+void Charge_Mixing::mix_rho_recip_new(Charge* chr)
+{
+    // not support nspin=4 yet 2023/11/17
+    // old support see mix_rho_recip()
+    if (GlobalV::double_grid)
+    {
+        ModuleBase::WARNING_QUIT("Charge_Mixing", "double_grid is not supported for new mixing method yet.");
+    }
+
+    std::complex<double>* rhog_in = nullptr;
+    std::complex<double>* rhog_out = nullptr;
+    
+    if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
+    {
+        rhog_in = chr->rhog_save[0];
+        rhog_out = chr->rhog[0];    
+        auto screen = std::bind(&Charge_Mixing::Kerker_screen_recip_new, this, std::placeholders::_1);
+        this->mixing->push_data(this->rho_mdata, rhog_in, rhog_out, screen, true);
+    }
+    else if (GlobalV::NSPIN == 2)
+    {
+        chr->allocate_rhog_mag();
+        chr->get_rhog_mag();
+        rhog_in = chr->rhog_mag_save;
+        rhog_out = chr->rhog_mag;
+        const int npw = this->rhopw->npw;
+        auto screen = std::bind(&Charge_Mixing::Kerker_screen_recip_new, this, std::placeholders::_1);
+        auto twobeta_mix
+            = [this, npw](std::complex<double>* out, const std::complex<double>* in, const std::complex<double>* sres) {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 256)
+#endif
+                  for (int i = 0; i < npw; ++i)
+                  {
+                      out[i] = in[i] + this->mixing_beta * sres[i];
+                  }
+            // magnetism
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 256)
+#endif
+                  for (int i = npw; i < 2 * npw; ++i)
+                  {
+                      out[i] = in[i] + this->mixing_beta_mag * sres[i];
+                  }
+              };
+        this->mixing->push_data(this->rho_mdata, rhog_in, rhog_out, screen, twobeta_mix, true);
+    }
+
+    //  can choose inner_product_recip_new1 or inner_product_recip_new2
+    auto inner_product_new
+        = std::bind(&Charge_Mixing::inner_product_recip_new2, this, std::placeholders::_1, std::placeholders::_2);
+    auto inner_product_old
+        = std::bind(&Charge_Mixing::inner_product_recip, this, std::placeholders::_1, std::placeholders::_2);
+    if (GlobalV::NSPIN == 2)
+    {
+        this->mixing->cal_coef(this->rho_mdata, inner_product_new);
+    }
+    else if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
+    {
+        this->mixing->cal_coef(this->rho_mdata, inner_product_old);
+    }
+
+    this->mixing->mix_data(this->rho_mdata, rhog_out);
+
+    if (GlobalV::NSPIN == 2)
+    {
+        chr->get_rhog_from_mag();
+        chr->destroy_rhog_mag();
     }
 
     // rhog to rho
@@ -242,6 +386,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
     {
         chr->rhopw->recip2real(chr->rhog[is], chr->rho[is]);
     }
+    //chr->renormalize_rho();
 
     // For kinetic energy density
     if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
@@ -283,23 +428,6 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
 
         this->mixing->mix_data(this->tau_mdata, taug_out);
 
-        if (GlobalV::double_grid)
-        {
-            // simple mixing for high_frequencies
-            this->high_freq_mix(kin_g.data(), kin_g_save.data(), GlobalV::NSPIN * chr->rhopw->npw);
-
-            // combine smooth part and high_frequency part
-            for (int is = 0; is < GlobalV::NSPIN; is++)
-            {
-                std::memcpy(&kin_g[is * chr->rhopw->npw],
-                            &taug_out[is * rhopw->npw],
-                            rhopw->npw * sizeof(std::complex<double>));
-            }
-
-            delete[] taug_in;
-            delete[] taug_out;
-        }
-
         // kin_g to kin_r
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
@@ -307,37 +435,59 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         }
     }
 
-#ifdef USE_PAW
-    if(GlobalV::use_paw)
-    {
-        double *nhat_out, *nhat_in;
-        nhat_in = chr->nhat_save[0];
-        nhat_out = chr->nhat[0];
-        // Note: there is no kerker modification for tau because I'm not sure
-        // if we should have it. If necessary we can try it in the future.
-        this->mixing->push_data(this->nhat_mdata, nhat_in, nhat_out, nullptr, false);
-
-        this->mixing->mix_data(this->nhat_mdata, nhat_out);
-    }
-#endif
     return;
 }
 
 void Charge_Mixing::mix_rho_real(Charge* chr)
 {
-    // electronic density
-    double* rhor_in = chr->rho_save[0];
-    double* rhor_out = chr->rho[0];
-
-    auto screen = std::bind(&Charge_Mixing::Kerker_screen_real, this, std::placeholders::_1);
-    this->mixing->push_data(this->rho_mdata, rhor_in, rhor_out, screen, true);
-
+    double* rhor_in;
+    double* rhor_out;
+    if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
+    {
+        rhor_in = chr->rho_save[0];
+        rhor_out = chr->rho[0];
+        auto screen = std::bind(&Charge_Mixing::Kerker_screen_real, this, std::placeholders::_1);
+        this->mixing->push_data(this->rho_mdata, rhor_in, rhor_out, screen, true);    
+    }
+    else if (GlobalV::NSPIN == 2)
+    {
+        chr->allocate_rho_mag();
+        chr->get_rho_mag();
+        rhor_in = chr->rho_mag_save;
+        rhor_out = chr->rho_mag;
+        const int nrxx = this->rhopw->nrxx;
+        auto screen = std::bind(&Charge_Mixing::Kerker_screen_real, this, std::placeholders::_1);
+        auto twobeta_mix
+            = [this, nrxx](double* out, const double* in, const double* sres) {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 256)
+#endif
+                  for (int i = 0; i < nrxx; ++i)
+                  {
+                      out[i] = in[i] + this->mixing_beta * sres[i];
+                  }
+            // magnetism
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 256)
+#endif
+                  for (int i = nrxx; i < 2 * nrxx; ++i)
+                  {
+                      out[i] = in[i] + this->mixing_beta_mag * sres[i];
+                  }
+              };
+        this->mixing->push_data(this->rho_mdata, rhor_in, rhor_out, screen, twobeta_mix, true);
+    }
+    
     auto inner_product
         = std::bind(&Charge_Mixing::inner_product_real, this, std::placeholders::_1, std::placeholders::_2);
     this->mixing->cal_coef(this->rho_mdata, inner_product);
-
     this->mixing->mix_data(this->rho_mdata, rhor_out);
-
+    if (GlobalV::NSPIN == 2)
+    {
+        chr->get_rho_from_mag();
+        chr->destroy_rho_mag();
+    }
+    chr->renormalize_rho();
     double *taur_out, *taur_in;
     if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
     {
@@ -349,6 +499,7 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
 
         this->mixing->mix_data(this->tau_mdata, taur_out);
     }
+
 }
 
 void Charge_Mixing::mix_reset()
@@ -427,9 +578,16 @@ void Charge_Mixing::mix_rho(Charge* chr)
     // --------------------Mixing Body--------------------
     if (GlobalV::SCF_THR_TYPE == 1)
     {
-        mix_rho_recip(chr);
+        if (GlobalV::double_grid || GlobalV::use_paw)
+        {
+            mix_rho_recip(chr);
+        }
+        else // new mixing method do not support double_grid or paw yet
+        {
+            mix_rho_recip_new(chr);
+        }
     }
-    else
+    else if (GlobalV::SCF_THR_TYPE == 2)
     {
         mix_rho_real(chr);
     }
@@ -506,9 +664,52 @@ void Charge_Mixing::Kerker_screen_recip(std::complex<double>* drhog)
     return;
 }
 
-void Charge_Mixing::Kerker_screen_real(double* drhor)
+void Charge_Mixing::Kerker_screen_recip_new(std::complex<double>* drhog)
 {
     if (this->mixing_gg0 <= 0.0 || this->mixing_beta <= 0.1)
+        return;
+    double fac, gg0, amin;
+
+    // implement Kerker for density and magnetization separately
+    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    {
+        // new mixing method only support nspin=2 not nspin=4
+        if (is == 1 && GlobalV::NSPIN == 2)
+        {
+            if (GlobalV::MIXING_GG0_MAG <= 0.0001 || GlobalV::MIXING_BETA_MAG <= 0.1)
+            {
+                for (int ig = 0; ig < this->rhopw->npw; ig++)
+                {
+                    drhog[is * this->rhopw->npw + ig] *= 1;
+                }
+                break;
+            }
+            fac = GlobalV::MIXING_GG0_MAG;
+            amin = GlobalV::MIXING_BETA_MAG;
+        }
+        else
+        {
+            fac = this->mixing_gg0;
+            amin = this->mixing_beta;
+        }
+
+        gg0 = std::pow(fac * 0.529177 / GlobalC::ucell.tpiba, 2);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 512)
+#endif
+        for (int ig = 0; ig < this->rhopw->npw; ++ig)
+        {
+            double gg = this->rhopw->gg[ig];
+            double filter_g = std::max(gg / (gg + gg0), 0.1 / amin);
+            drhog[is * this->rhopw->npw + ig] *= filter_g;
+        }
+    }
+    return;
+}
+
+void Charge_Mixing::Kerker_screen_real(double* drhor)
+{
+    if (this->mixing_gg0 <= 0.0001 || this->mixing_beta <= 0.1)
         return;
     std::vector<std::complex<double>> drhog(this->rhopw->npw * GlobalV::NSPIN);
     std::vector<double> drhor_filter(this->rhopw->nrxx * GlobalV::NSPIN);
@@ -518,23 +719,48 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
         // Thus we cannot use Kerker_screen_recip(drhog.data()) directly after it.
         this->rhopw->real2recip(drhor + is * this->rhopw->nrxx, drhog.data() + is * this->rhopw->npw);
     }
-    // Kerker_screen_recip(drhog.data()); Note that we can not use it.
-    // However, we should rewrite it:
-    const double fac = this->mixing_gg0;
-    const double gg0 = std::pow(fac * 0.529177 / GlobalC::ucell.tpiba, 2);
-#ifdef _OPENMP
-#pragma omp parallel for collapse(2) schedule(static, 512)
-#endif
+    // implement Kerker for density and magnetization separately
+    double fac, gg0, amin;
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
+
+        if (is == 1 && GlobalV::NSPIN == 2)
+        {
+            if (GlobalV::MIXING_GG0_MAG <= 0.0001 || GlobalV::MIXING_BETA_MAG <= 0.1)
+            {
+                for (int ig = 0; ig < this->rhopw->npw; ig++)
+                {
+                    drhog[is * this->rhopw->npw + ig] *= 0;
+                }
+                break;
+            }
+            fac = GlobalV::MIXING_GG0_MAG;
+            amin = GlobalV::MIXING_BETA_MAG;
+        }
+        else
+        {
+            fac = this->mixing_gg0;
+            amin = this->mixing_beta;
+        }
+        
+        gg0 = std::pow(fac * 0.529177 / GlobalC::ucell.tpiba, 2);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 512)
+#endif
         for (int ig = 0; ig < this->rhopw->npw; ig++)
         {
             double gg = this->rhopw->gg[ig];
-            double filter_g = std::max(gg / (gg + gg0), 0.1 / this->mixing_beta);
+            // I have not decided how to handle gg=0 part, will be changed in future
+            //if (gg == 0)
+            //{
+            //    drhog[is * this->rhopw->npw + ig] *= 0;
+            //    continue;
+            //}
+            double filter_g = std::max(gg / (gg + gg0), 0.1 / amin);
             drhog[is * this->rhopw->npw + ig] *= (1 - filter_g);
         }
     }
-
+    // inverse FT
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
         this->rhopw->recip2real(drhog.data() + is * this->rhopw->npw, drhor_filter.data() + is * this->rhopw->nrxx);
@@ -546,6 +772,73 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
     for (int ir = 0; ir < this->rhopw->nrxx * GlobalV::NSPIN; ir++)
     {
         drhor[ir] -= drhor_filter[ir];
+    }
+}
+
+// this test will be removed once new mixing method is finished
+void Charge_Mixing::Kerker_screen_real_test(double* drhor)
+{
+    // for total charge density
+    if (this->mixing_gg0 <= 0.0001 || this->mixing_beta <= 0.1)
+        return;
+    std::vector<double> drhor_filter(this->rhopw->nrxx);
+    std::vector<std::complex<double>> drhog(this->rhopw->npw);
+    // Note after this process some G which is higher than Gmax will be filtered.
+    // FT
+    this->rhopw->real2recip(drhor, drhog.data());
+    const double fac = this->mixing_gg0;
+    const double gg0 = std::pow(fac * 0.529177 / GlobalC::ucell.tpiba, 2);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 512)
+#endif
+    for (int ig = 0; ig < this->rhopw->npw; ig++)
+    {
+        double gg = this->rhopw->gg[ig];
+        double filter_g = std::max(gg / (gg + gg0), 0.1 / this->mixing_beta);
+        drhog[ig] *= (1 - filter_g);
+    }
+    // inverse FT
+    this->rhopw->recip2real(drhog.data(), drhor_filter.data());
+
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 512)
+#endif
+    for (int ir = 0; ir < this->rhopw->nrxx; ir++)
+    {
+        drhor[ir] -= drhor_filter[ir];
+    }
+
+    // for magnetic density
+    if (GlobalV::NSPIN == 2)
+    {
+        if (GlobalV::MIXING_GG0_MAG <= 0.0001 || GlobalV::MIXING_BETA_MAG <= 0.1)
+            return;
+        std::vector<double> drhor_mag_filter(this->rhopw->nrxx);
+        std::vector<std::complex<double>> drhog_mag(this->rhopw->npw);
+        // Note after this process some G which is higher than Gmax will be filtered.
+        // FT
+        this->rhopw->real2recip(drhor + this->rhopw->nrxx, drhog_mag.data());
+        const double fac_mag = GlobalV::MIXING_GG0_MAG;
+        const double gg0_mag = std::pow(fac_mag * 0.529177 / GlobalC::ucell.tpiba, 2);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 512)
+#endif
+        for (int ig = 0; ig < this->rhopw->npw; ig++)
+        {
+            double gg = this->rhopw->gg[ig];
+            double filter_g = std::max(gg / (gg + gg0_mag), 0.1 / GlobalV::MIXING_BETA_MAG);
+            drhog_mag[ig] *= (1 - filter_g);
+        }
+        // inverse FT
+        this->rhopw->recip2real(drhog_mag.data(), drhor_mag_filter.data());
+        // value magnetism
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 512)
+#endif
+        for (int ir = 0; ir < this->rhopw->nrxx; ir++)
+        {
+            drhor[ir + this->rhopw->nrxx] -= drhor_mag_filter[ir];
+        }
     }
 }
 
@@ -562,6 +855,82 @@ double Charge_Mixing::inner_product_recip(std::complex<double>* rho1, std::compl
     delete[] rho1_2d;
     delete[] rho2_2d;
     return result;
+}
+
+// a simple inner product
+double Charge_Mixing::inner_product_recip_new1(std::complex<double>* rho1, std::complex<double>* rho2)
+{
+    double rnorm = 0.0;
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+ : rnorm)
+#endif
+    for (int ig = 0; ig < this->rhopw->npw * GlobalV::NSPIN; ++ig)
+    {
+        rnorm += (conj(rho1[ig]) * rho2[ig]).real();
+    }
+#ifdef __MPI
+    Parallel_Reduce::reduce_pool(rnorm);
+#endif
+    return rnorm;
+}
+
+// a Hartree-like inner product
+double Charge_Mixing::inner_product_recip_new2(std::complex<double>* rhog1, std::complex<double>* rhog2)
+{
+    static const double fac = ModuleBase::e2 * ModuleBase::FOUR_PI / GlobalC::ucell.tpiba2;
+    static const double fac2 = ModuleBase::e2 * ModuleBase::FOUR_PI / (ModuleBase::TWO_PI * ModuleBase::TWO_PI);
+
+    double sum = 0.0;
+
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+ : sum)
+#endif
+        for (int ig = 0; ig < this->rhopw->npw; ++ig)
+        {
+            if (this->rhopw->gg[ig] < 1e-8)
+                continue;
+            sum += (conj(rhog1[ig]) * (rhog2[ig])).real() / this->rhopw->gg[ig];
+        }
+        sum *= fac;
+
+        if (GlobalV::GAMMA_ONLY_PW)
+        {
+            sum *= 2.0;
+        }
+
+        // (2) Second part of density error.
+        // including |G|=0 term.
+        double sum2 = 0.0;
+
+        sum2 += fac2 * (conj(rhog1[0 + this->rhopw->npw]) * rhog2[0 + this->rhopw->npw]).real();
+
+        double mag = 0.0;
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+ : mag)
+#endif
+        for (int ig = 0; ig < this->rhopw->npw; ig++)
+        {
+            mag += (conj(rhog1[ig + this->rhopw->npw]) * rhog2[ig + this->rhopw->npw]).real();
+        }
+        mag *= fac2;
+
+        // if(GlobalV::GAMMA_ONLY_PW);
+        if (GlobalV::GAMMA_ONLY_PW) // Peize Lin delete ; 2020.01.31
+        {
+            mag *= 2.0;
+        }
+
+        // std::cout << " sum=" << sum << " mag=" << mag << std::endl;
+        sum2 += mag;
+        sum += sum2;
+
+#ifdef __MPI
+    Parallel_Reduce::reduce_pool(sum);
+#endif
+
+    sum *= GlobalC::ucell.omega * 0.5;
+
+    return sum;
 }
 
 double Charge_Mixing::inner_product_real(double* rho1, double* rho2)
@@ -710,20 +1079,76 @@ double Charge_Mixing::rhog_dot_product(const std::complex<double>* const* const 
     return sum;
 }
 
-void Charge_Mixing::high_freq_mix(std::complex<double>* data,
-                                  const std::complex<double>* data_save,
-                                  const int& number) const
+void Charge_Mixing::divide_data(std::complex<double>* data_d,
+                                std::complex<double>*& data_s,
+                                std::complex<double>*& data_hf)
 {
-    ModuleBase::TITLE("Charge_Mixing", "high_freq_mix");
-    ModuleBase::timer::tick("Charge_Mixing", "high_freq_mix");
-
-    if (GlobalV::double_grid)
+    ModuleBase::TITLE("Charge_Mixing", "divide_data");
+    if (GlobalV::NSPIN == 1)
     {
-        for (int ig = 0; ig < number; ig++)
+        data_s = data_d;
+        data_hf = data_d + this->rhopw->npw;
+    }
+    else
+    {
+        const int ndimd = this->rhodpw->npw;
+        const int ndims = this->rhopw->npw;
+        const int ndimhf = ndimd - ndims;
+        data_s = new std::complex<double>[GlobalV::NSPIN * ndims];
+        data_hf = nullptr;
+        if (ndimhf > 0)
         {
-            data[ig] = data_save[ig] + mixing_beta * (data[ig] - data_save[ig]);
+            data_hf = new std::complex<double>[GlobalV::NSPIN * ndimhf];
+        }
+        for (int is = 0; is < GlobalV::NSPIN; ++is)
+        {
+            std::memcpy(data_s + is * ndims, data_d + is * ndimd, ndims * sizeof(std::complex<double>));
+            std::memcpy(data_hf + is * ndimhf, data_d + is * ndimd + ndims, ndimhf * sizeof(std::complex<double>));
         }
     }
+}
+void Charge_Mixing::combine_data(std::complex<double>* data_d,
+                                 std::complex<double>*& data_s,
+                                 std::complex<double>*& data_hf)
+{
+    ModuleBase::TITLE("Charge_Mixing", "combine_data");
+    if (GlobalV::NSPIN == 1)
+    {
+        data_s = nullptr;
+        data_hf = nullptr;
+        return;
+    }
+    else
+    {
+        const int ndimd = this->rhodpw->npw;
+        const int ndims = this->rhopw->npw;
+        const int ndimhf = ndimd - ndims;
+        for (int is = 0; is < GlobalV::NSPIN; ++is)
+        {
+            std::memcpy(data_d + is * ndimd, data_s + is * ndims, ndims * sizeof(std::complex<double>));
+            std::memcpy(data_d + is * ndimd + ndims, data_hf + is * ndimhf, ndimhf * sizeof(std::complex<double>));
+        }
+        delete[] data_s;
+        delete[] data_hf;
+        data_s = nullptr;
+        data_hf = nullptr;
+    }
+}
 
-    ModuleBase::timer::tick("Charge_Mixing", "high_freq_mix");
+void Charge_Mixing::clean_data(std::complex<double>*& data_s, std::complex<double>*& data_hf)
+{
+    ModuleBase::TITLE("Charge_Mixing", "clean_data");
+    if (GlobalV::NSPIN == 1)
+    {
+        data_s = nullptr;
+        data_hf = nullptr;
+        return;
+    }
+    else
+    {
+        delete[] data_s;
+        delete[] data_hf;
+        data_s = nullptr;
+        data_hf = nullptr;
+    }
 }

@@ -155,7 +155,7 @@ TEST_F(InputTest, Default)
         EXPECT_EQ(INPUT.mixing_mode,"broyden");
         EXPECT_DOUBLE_EQ(INPUT.mixing_beta,-10.0);
         EXPECT_EQ(INPUT.mixing_ndim,8);
-        EXPECT_DOUBLE_EQ(INPUT.mixing_gg0,0.00);
+        EXPECT_DOUBLE_EQ(INPUT.mixing_gg0,1.00);
         EXPECT_EQ(INPUT.init_wfc,"atomic");
         EXPECT_EQ(INPUT.mem_saver,0);
         EXPECT_EQ(INPUT.printe,100);
@@ -1571,7 +1571,7 @@ TEST_F(InputTest, Check)
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
 	output = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output,testing::HasSubstr("nspin must be 4 when sc_mag_switch > 0"));
+	EXPECT_THAT(output,testing::HasSubstr("nspin must be 2 or 4 when sc_mag_switch > 0"));
 	INPUT.nspin = 4;
 	// warning 4 of Deltaspin
 	INPUT.calculation = "nscf";

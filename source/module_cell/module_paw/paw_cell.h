@@ -283,6 +283,7 @@ class Paw_Cell
     void calculate_dij(double* vks, double* vxc);
     void extract_dij(int iat, int size_dij, double* dij);
     void extract_sij(int iat, int size_sij, double* sij);
+    void calculate_force(double* vks, double* vxc, double* force);
 
 // Part V. Relevant for parallel computing
 // Note about the parallelization of PAW: ABINIT supports the parallelization based on
