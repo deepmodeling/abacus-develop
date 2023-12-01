@@ -563,7 +563,7 @@ namespace ModuleESolver
     }
 
     // run the inner lambda loop to contrain atomic moments with the DeltaSpin method
-    if (GlobalV::sc_mag_switch && iter > 1)
+    if (GlobalV::sc_mag_switch && iter > GlobalV::sc_scf_nmin)
     {
         SpinConstrain<TK, psi::DEVICE_CPU>& sc = SpinConstrain<TK, psi::DEVICE_CPU>::getScInstance();
         sc.run_lambda_loop(iter-1);

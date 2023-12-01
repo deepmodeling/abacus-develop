@@ -478,6 +478,7 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
    ModuleBase::GlobalFunc::OUTP(ofs, "sc_thr", sc_thr, "Convergence criterion of spin-constrained iteration (RMS) in uB");
    ModuleBase::GlobalFunc::OUTP(ofs, "nsc", nsc, "Maximal number of spin-constrained iteration");
    ModuleBase::GlobalFunc::OUTP(ofs, "nsc_min", nsc_min, "Minimum number of spin-constrained iteration");
+    ModuleBase::GlobalFunc::OUTP(ofs, "sc_scf_nmin", sc_scf_nmin, "Minimum number of outer scf loop before initializing lambda loop");
    ModuleBase::GlobalFunc::OUTP(ofs, "alpha_trial", alpha_trial, "Initial trial step size for lambda in eV/uB^2");
    ModuleBase::GlobalFunc::OUTP(ofs, "sccut", sccut, "Maximal step size for lambda in eV/uB");
    ModuleBase::GlobalFunc::OUTP(ofs, "sc_file", sc_file, "file name for parameters used in non-collinear spin-constrained DFT (json format)");
