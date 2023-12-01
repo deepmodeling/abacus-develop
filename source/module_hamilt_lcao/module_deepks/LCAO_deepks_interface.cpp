@@ -19,7 +19,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
                                               Grid_Driver& GridD,
                                               const Parallel_Orbitals* ParaV,
                                               const psi::Psi<double>& psid,
-                                              const std::vector<std::vector<double>>& dm_gamma)
+                                              const elecstate::DensityMatrix<double, double>* dm)
 {
     ModuleBase::TITLE("LCAO_Deepks_Interface", "out_deepks_labels");
     // calculating deepks correction to bandgap
@@ -86,7 +86,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
     if (GlobalV::deepks_out_labels || GlobalV::deepks_scf)
     {
         // this part is for integrated test of deepks
-        ld->cal_projected_DM(dm_gamma, ucell, orb, GridD);
+        ld->cal_projected_DM(dm, ucell, orb, GridD);
         ld->check_projected_dm(); // print out the projected dm for NSCF calculaiton
         ld->cal_descriptor();     // final descriptor
         ld->check_descriptor(ucell);
@@ -98,7 +98,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
     if (GlobalV::deepks_scf)
     {
 
-        ld->cal_e_delta_band(dm_gamma);
+        ld->cal_e_delta_band(dm->get_DMK_vector());
         std::cout << "E_delta_band = " << std::setprecision(8) << ld->e_delta_band << " Ry"
                   << " = " << std::setprecision(8) << ld->e_delta_band * ModuleBase::Ry_to_eV << " eV"
                   << std::endl;
@@ -118,9 +118,10 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
                                               Grid_Driver& GridD,
                                               const Parallel_Orbitals* ParaV,
                                               const psi::Psi<std::complex<double>>& psi,
-                                              const std::vector<std::vector<std::complex<double>>>& dm_k)
+                                              const elecstate::DensityMatrix<std::complex<double>, double>* dm)
 {
     ModuleBase::TITLE("LCAO_Deepks_Interface", "out_deepks_labels");
+    ModuleBase::timer::tick("LCAO_Deepks_Interface", "out_deepks_labels");
     // calculating deepks correction to bandgap
     // and save the results
     if (GlobalV::deepks_out_labels) // caoyu add 2021-06-04
@@ -187,7 +188,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
     {
         // this part is for integrated test of deepks
         // so it is printed no matter even if deepks_out_labels is not used
-        ld->cal_projected_DM_k(dm_k, ucell, orb, GridD, nks, kvec_d);
+        ld->cal_projected_DM_k(dm, ucell, orb, GridD, nks, kvec_d);
         ld->check_projected_dm(); // print out the projected dm for NSCF calculaiton
         ld->cal_descriptor();     // final descriptor
         ld->check_descriptor(ucell);
@@ -198,13 +199,14 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
     //
     if (GlobalV::deepks_scf)
     {
-        ld->cal_e_delta_band_k(dm_k, nks);
+        ld->cal_e_delta_band_k(dm->get_DMK_vector(), nks);
         std::cout << "E_delta_band = " << std::setprecision(8) << ld->e_delta_band << " Ry"
                   << " = " << std::setprecision(8) << ld->e_delta_band * ModuleBase::Ry_to_eV << " eV"
                   << std::endl;
         std::cout << "E_delta_NN= " << std::setprecision(8) << ld->E_delta << " Ry"
                   << " = " << std::setprecision(8) << ld->E_delta * ModuleBase::Ry_to_eV << " eV" << std::endl;
     }
+    ModuleBase::timer::tick("LCAO_Deepks_Interface", "out_deepks_labels");
 }
 
 #endif
