@@ -248,7 +248,9 @@ std::string of_kernel_file = "WTkernel.txt";
 std::string MIXING_MODE = "broyden";
 double MIXING_BETA = 0.7;
 int MIXING_NDIM = 8;
-double MIXING_GG0 = 0.0;
+double MIXING_GG0 = 1.00;
+double MIXING_BETA_MAG = 1.6;
+double MIXING_GG0_MAG = 1.00;
 bool MIXING_TAU = 0;
 
 //==========================================================
@@ -281,6 +283,7 @@ bool decay_grad_switch = 0;
 double sc_thr = 1.0e-6;
 int nsc = 100;
 int nsc_min = 2;
+int sc_scf_nmin = 2;
 double alpha_trial = 0.01; // eV/uB^2
 double sccut = 3;          // eV/uB
 std::string sc_file = "none";

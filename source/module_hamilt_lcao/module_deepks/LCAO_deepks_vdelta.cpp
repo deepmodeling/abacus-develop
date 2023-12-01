@@ -406,6 +406,7 @@ void LCAO_Deepks::cal_e_delta_band_k(const std::vector<std::vector<std::complex<
     const int nks)
 {
     ModuleBase::TITLE("LCAO_Deepks", "cal_e_delta_band");
+	ModuleBase::timer::tick("LCAO_Deepks","cal_e_delta_band_k");
     std::complex<double> e_delta_band_k=std::complex<double>(0.0,0.0);
     for (int i = 0; i < GlobalV::NLOCAL; ++i)
     {
@@ -438,6 +439,7 @@ void LCAO_Deepks::cal_e_delta_band_k(const std::vector<std::vector<std::complex<
 #ifdef __MPI
     Parallel_Reduce::reduce_all(this->e_delta_band);
 #endif
+	ModuleBase::timer::tick("LCAO_Deepks","cal_e_delta_band_k");
     return;
 }
 

@@ -8,23 +8,11 @@
 
 namespace ModuleSymmetry
 {
-Symmetry::Symmetry()
-{
-    this->epsilon = 1e-6;
-    this->tab = 12;
-    this->available = true;
-}
-
-Symmetry::~Symmetry()
-{
-}
-
-
 int Symmetry::symm_flag = 0;
 bool Symmetry::symm_autoclose = false;
 bool Symmetry::pricell_loop = true;
 
-void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
+void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, std::ofstream& ofs_running)
 {
     const double MAX_EPS = std::max(1e-3, epsilon_input * 1.001);
     const double MULT_EPS = 2.0;
@@ -47,9 +35,9 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
 
 
     // number of total atoms
-    this->nat = ucell.nat;
+    this->nat = st.nat;
     // number of atom species
-    this->ntype = ucell.ntype;
+    this->ntype = st.ntype;
     this->na = new int[ntype];
     this->istart = new int[ntype];
     this->index = new int [nat + 2];
@@ -64,9 +52,9 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
 	ModuleBase::GlobalFunc::ZEROS(newpos, 3*nat);
     ModuleBase::GlobalFunc::ZEROS(rotpos, 3*nat);
 
-    this->a1 = ucell.a1;
-    this->a2 = ucell.a2;
-    this->a3 = ucell.a3;
+    this->a1 = lat.a1;
+    this->a2 = lat.a2;
+    this->a3 = lat.a3;
 
 	ModuleBase::Matrix3 latvec1;
 	latvec1.e11 = a1.x; latvec1.e12 = a1.y; latvec1.e13 = a1.z;
@@ -83,7 +71,7 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
     this->itmin_start = 0;
     for (int it = 0; it < ntype; ++it)
     {
-		Atom* atom = &ucell.atoms[it];
+        Atom* atom = &atoms[it];
         this->na[it] = atom->na;
         if (it > 0) {
             istart[it] = istart[it-1] + na[it-1];
@@ -104,7 +92,7 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
         //a: optimized config
         // find the lattice type accordiing to lattice vectors.
         this->lattice_type(this->a1, this->a2, this->a3, this->s1, this->s2, this->s3,
-            this->cel_const, this->pre_const, this->real_brav, ilattname, ucell, true, this->newpos);
+            this->cel_const, this->pre_const, this->real_brav, ilattname, atoms, true, this->newpos);
 
         ofs_running << "(for optimal symmetric configuration:)" << std::endl;
         ModuleBase::GlobalFunc::OUT(ofs_running, "BRAVAIS TYPE", real_brav);
@@ -118,9 +106,8 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
         optlat.e21 = a2.x; optlat.e22 = a2.y; optlat.e23 = a2.z;
         optlat.e31 = a3.x; optlat.e32 = a3.y; optlat.e33 = a3.z;
 
-        this->pricell(this->newpos);         // pengfei Li 2018-05-14 
-        //for( iat =0 ; iat < ucell.nat ; iat++)   
-//         std::cout << " newpos_now = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
+        this->pricell(this->newpos, atoms);         // pengfei Li 2018-05-14 
+
         test_brav = true; // output the real ibrav and point group
         this->setgroup(this->symop, this->nop, this->real_brav);
         this->getgroup(nrot_out, nrotk_out, ofs_running);
@@ -235,18 +222,20 @@ void Symmetry::analy_sys(const UnitCell &ucell, std::ofstream &ofs_running)
     }
 
     //convert gmatrix to reciprocal space
-    this->gmatrix_convert_int(gmatrix, kgmatrix, nrotk, optlat, ucell.G);
+    this->gmatrix_convert_int(gmatrix, kgmatrix, nrotk, optlat, lat.G);
     
 // convert the symmetry operations from the basis of optimal symmetric configuration 
 // to the basis of input configuration
     this->gmatrix_convert_int(gmatrix, gmatrix, nrotk, optlat, latvec1);
     this->gtrans_convert(gtrans, gtrans, nrotk, optlat, latvec1);
 
-    this->set_atom_map(ucell);
+    this->set_atom_map(atoms);
 
-    if (GlobalV::NSPIN > 1) pricell_loop = this->magmom_same_check(ucell);
+    if (GlobalV::NSPIN > 1) pricell_loop = this->magmom_same_check(atoms);
 
-	delete[] newpos;
+    if (GlobalV::CALCULATION == "relax") this->all_mbl = this->is_all_movable(atoms, st);
+
+    delete[] newpos;
     delete[] na;
     delete[] rotpos;
     delete[] index;
@@ -546,9 +535,9 @@ void Symmetry::lattice_type(
     double *cel_const,
     double *pre_const,
     int& real_brav,
-    std::string &bravname,
-    const UnitCell &ucell, 
-    bool convert_atoms, 
+    std::string& bravname,
+    const Atom* atoms,
+    bool convert_atoms,
     double* newpos)const
 {
     ModuleBase::TITLE("Symmetry","lattice_type");
@@ -657,13 +646,13 @@ void Symmetry::lattice_type(
             GlobalV::ofs_running <<" The lattice vectors have been changed (STRU_SIMPLE.cif)"<<std::endl;
             GlobalV::ofs_running <<std::endl;
             int at=0;
-            for(int it=0; it<ucell.ntype; ++it)
+            for (int it = 0; it < this->ntype; ++it)
             {
-                    for(int ia=0; ia<ucell.atoms[it].na; ++ia)
+                for (int ia = 0; ia < this->na[it]; ++ia)
                     {
-                            ModuleBase::Mathzone::Cartesian_to_Direct(ucell.atoms[it].tau[ia].x,
-                                            ucell.atoms[it].tau[ia].y,
-                                            ucell.atoms[it].tau[ia].z,
+                    ModuleBase::Mathzone::Cartesian_to_Direct(atoms[it].tau[ia].x,
+                        atoms[it].tau[ia].y,
+                        atoms[it].tau[ia].z,
                                             q1.x, q1.y, q1.z,
                                             q2.x, q2.y, q2.z,
                                             q3.x, q3.y, q3.z,
@@ -695,11 +684,11 @@ void Symmetry::lattice_type(
             ofs << std::endl;
             at =0;
             
-            for (int it=0; it<ucell.ntype; it++)
+            for (int it = 0; it < this->ntype; it++)
             {
-                for (int ia=0; ia<ucell.atoms[it].na; ia++)
+                for (int ia = 0; ia < this->na[it]; ia++)
                 {
-                    ofs << ucell.atoms[it].label
+                    ofs << atoms[it].label
                     << " " << newpos[3*at]
                     << " " << newpos[3*at+1]
                     << " " << newpos[3*at+2] << std::endl;
@@ -724,13 +713,13 @@ void Symmetry::lattice_type(
         if(convert_atoms)
         {
             int at=0;
-            for(int it=0; it<ucell.ntype; ++it)
+            for (int it = 0; it < this->ntype; ++it)
             {
-                for(int ia=0; ia<ucell.atoms[it].na; ++ia)
+                for (int ia = 0; ia < this->na[it]; ++ia)
                 {
-                    ModuleBase::Mathzone::Cartesian_to_Direct(ucell.atoms[it].tau[ia].x,
-                                    ucell.atoms[it].tau[ia].y,
-                                    ucell.atoms[it].tau[ia].z,
+                    ModuleBase::Mathzone::Cartesian_to_Direct(atoms[it].tau[ia].x,
+                        atoms[it].tau[ia].y,
+                        atoms[it].tau[ia].z,
                                     v1.x, v1.y, v1.z,
                                     v2.x, v2.y, v2.z,
                                     v3.x, v3.y, v3.z,
@@ -903,13 +892,8 @@ void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtr
             this->check_boundary(pos[j*3+1]);
             this->check_boundary(pos[j*3+2]);
         }
-         //for( int iat =0 ; iat < ucell.nat ; iat++)
-         //std::cout << " newpos_now1 = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
-
         //order original atomic positions for current species
         this->atom_ordering_new(pos + istart[it] * 3, na[it], index + istart[it]);
-         //for( int iat =0 ; iat < ucell.nat ; iat++)
-         //std::cout << " newpos_now2 = " << newpos[3*iat] << " " << newpos[3*iat+1] << " " << newpos[3*iat+2] << std::endl;
 
         //Rotate atoms of current species
         for (int j = istart[it]; j < istart[it] + na[it]; ++j)
@@ -1063,7 +1047,7 @@ void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtr
     return;
 }
 
-void Symmetry::pricell(double* pos)
+void Symmetry::pricell(double* pos, const Atom* atoms)
 {
     bool no_diff = 0;
     s_flag = 0;
@@ -1290,12 +1274,11 @@ void Symmetry::pricell(double* pos)
 #endif
 
     // get the optimized primitive cell
-    UnitCell tmp_ucell;
     std::string pbravname;
     ModuleBase::Vector3<double> p01=p1, p02=p2, p03=p3;
     double pcel_pre_const[6];
     for(int i=0;i<6;++i) pcel_pre_const[i]=pcel_const[i];
-    this->lattice_type(p1, p2, p3, p01, p02, p03, pcel_const, pcel_pre_const, pbrav, pbravname,tmp_ucell, false, nullptr);
+    this->lattice_type(p1, p2, p3, p01, p02, p03, pcel_const, pcel_pre_const, pbrav, pbravname, atoms, false, nullptr);
 
     this->plat.e11=p1.x;
     this->plat.e12=p1.y;
@@ -1636,24 +1619,24 @@ for (int g_index = 0; g_index < group_index; g_index++)
     ModuleBase::timer::tick("Symmetry","rhog_symmetry");
 }
 
-void Symmetry::set_atom_map(const UnitCell& ucell)
+void Symmetry::set_atom_map(const Atom* atoms)
 {
     ModuleBase::TITLE("Symmetry", "set_atom_map");
-    if (this->isym_rotiat_.size() > 0) return;
+    if (this->isym_rotiat_.size() == this->nrotk) return;
     this->isym_rotiat_.resize(this->nrotk);
     for (int i = 0; i < this->nrotk; ++i)this->isym_rotiat_[i].resize(this->nat, -1);
 
     double* pos = this->newpos;
     double* rotpos = this->rotpos;
-    ModuleBase::GlobalFunc::ZEROS(pos, ucell.nat * 3);
+    ModuleBase::GlobalFunc::ZEROS(pos, this->nat * 3);
     int iat = 0;
-    for (int it = 0; it < ucell.ntype; it++)
+    for (int it = 0; it < this->ntype; it++)
     {
-        for (int ia = 0; ia < ucell.atoms[it].na; ia++)
+        for (int ia = 0; ia < this->na[it]; ia++)
         {
-            pos[3 * iat] = ucell.atoms[it].taud[ia].x;
-            pos[3 * iat + 1] = ucell.atoms[it].taud[ia].y;
-            pos[3 * iat + 2] = ucell.atoms[it].taud[ia].z;
+            pos[3 * iat] = atoms[it].taud[ia].x;
+            pos[3 * iat + 1] = atoms[it].taud[ia].y;
+            pos[3 * iat + 2] = atoms[it].taud[ia].z;
             for (int k = 0; k < 3; ++k)
             {
                 this->check_translation(pos[iat * 3 + k], -floor(pos[iat * 3 + k]));
@@ -1662,7 +1645,7 @@ void Symmetry::set_atom_map(const UnitCell& ucell)
             iat++;
         }
     }
-    for (int it = 0; it < ntype; it++)
+    for (int it = 0; it < this->ntype; it++)
     {
         for (int ia = istart[it]; ia < istart[it] + na[it]; ++ia)
         {
@@ -1729,12 +1712,12 @@ void Symmetry::symmetrize_vec3_nat(double* v)const   // pengfei 2016-12-20
 	return;
 }
 
-void Symmetry::symmetrize_mat3(ModuleBase::matrix& sigma, const UnitCell& ucell)const   //zhengdy added 2017
+void Symmetry::symmetrize_mat3(ModuleBase::matrix& sigma, const Lattice& lat)const   //zhengdy added 2017
 {
-    ModuleBase::matrix A = ucell.latvec.to_matrix();
-    ModuleBase::matrix AT = ucell.latvec.Transpose().to_matrix();
-    ModuleBase::matrix invA = ucell.GT.to_matrix();
-    ModuleBase::matrix invAT = ucell.G.to_matrix();
+    ModuleBase::matrix A = lat.latvec.to_matrix();
+    ModuleBase::matrix AT = lat.latvec.Transpose().to_matrix();
+    ModuleBase::matrix invA = lat.GT.to_matrix();
+    ModuleBase::matrix invAT = lat.G.to_matrix();
     ModuleBase::matrix tot_sigma(3, 3, true);
     sigma = A * sigma * AT;
     for (int k = 0; k < nrotk; ++k)
@@ -2094,18 +2077,18 @@ void Symmetry::hermite_normal_form(const ModuleBase::Matrix3 &s3, ModuleBase::Ma
     return;
 }
 
-bool Symmetry::magmom_same_check(const UnitCell& ucell) const
+bool Symmetry::magmom_same_check(const Atom* atoms)const
 {
     ModuleBase::TITLE("Symmetry", "magmom_same_check");
     bool pricell_loop = true;
     for (int it = 0;it < ntype;++it)
     {
         if (pricell_loop)
-            for (int ia = 1;ia < ucell.atoms[it].na;++ia)
+            for (int ia = 1;ia < atoms[it].na;++ia)
             {
-                if (!equal(ucell.atoms[it].m_loc_[ia].x, ucell.atoms[it].m_loc_[0].x) ||
-                    !equal(ucell.atoms[it].m_loc_[ia].y, ucell.atoms[it].m_loc_[0].y) ||
-                    !equal(ucell.atoms[it].m_loc_[ia].z, ucell.atoms[it].m_loc_[0].z))
+                if (!equal(atoms[it].m_loc_[ia].x, atoms[it].m_loc_[0].x) ||
+                    !equal(atoms[it].m_loc_[ia].y, atoms[it].m_loc_[0].y) ||
+                    !equal(atoms[it].m_loc_[ia].z, atoms[it].m_loc_[0].z))
                 {
                     pricell_loop = false;
                     break;
@@ -2115,4 +2098,19 @@ bool Symmetry::magmom_same_check(const UnitCell& ucell) const
     return pricell_loop;
 }
 
+bool Symmetry::is_all_movable(const Atom* atoms, const Statistics& st)const
+{
+    bool all_mbl = true;
+    for (int iat = 0;iat < st.nat;++iat)
+    {
+        int it = st.iat2it[iat];
+        int ia = st.iat2ia[iat];
+        if (!atoms[it].mbl[ia].x || !atoms[it].mbl[ia].y || !atoms[it].mbl[ia].z)
+        {
+            all_mbl = false;
+            break;
+        }
+    }
+    return all_mbl;
+}
 }

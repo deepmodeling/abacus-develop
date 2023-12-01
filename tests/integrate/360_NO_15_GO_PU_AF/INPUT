@@ -23,8 +23,8 @@ cal_stress    0
 #relax_bfgs_init    0.5
 
 mixing_type    broyden
-mixing_beta    0.4
-#mixing_gg0    1.5
+mixing_beta    0.2
+mixing_gg0    1.0
 
 ks_solver    scalapack_gvx
 basis_type    lcao

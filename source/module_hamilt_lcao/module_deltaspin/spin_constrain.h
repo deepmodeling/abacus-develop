@@ -44,7 +44,7 @@ public:
                elecstate::ElecState* pelec_in);
 
   /// calculate h_lambda operator for spin-constrained DFT
-  void cal_h_lambda(std::complex<double>* h_lambda, const std::vector<std::complex<double>>& Sloc2, bool column_major);
+  void cal_h_lambda(std::complex<double>* h_lambda, const std::vector<std::complex<double>>& Sloc2, bool column_major, int isk);
 
   void cal_MW(const int& step, LCAO_Matrix* LM, bool print = false);
 
@@ -88,7 +88,7 @@ public:
   void print_Mi(bool print = false);
 
   /// collect_mw from matrix multiplication result
-  void collect_MW(ModuleBase::matrix& MecMulP, const ModuleBase::ComplexMatrix& mud, int nw);
+  void collect_MW(ModuleBase::matrix& MecMulP, const ModuleBase::ComplexMatrix& mud, int nw, int isk);
 
 public:
     /**
@@ -201,8 +201,7 @@ public:
     /// @brief set orbital parallel info
     void set_ParaV(Parallel_Orbitals* ParaV_in);
     /// @brief set parameters for solver
-    void set_solver_parameters(int nspin_in,
-                               K_Vectors kv_in,
+    void set_solver_parameters(K_Vectors kv_in,
                                hsolver::HSolver<FPTYPE, Device>* phsol_in,
                                hamilt::Hamilt<FPTYPE, Device>* p_hamilt_in,
                                psi::Psi<FPTYPE>* psi_in,

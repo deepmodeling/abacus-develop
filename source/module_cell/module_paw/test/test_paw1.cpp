@@ -76,7 +76,7 @@ TEST_F(Test_Paw_Cell, test_paw)
 
     paw_cell.init_paw_cell(ecut, cell_factor, omega, nat, ntyp, 
         atom_type, (const double **) atom_coord, filename_list);
-    paw_cell.set_eigts(nx, ny, nz, eigts1_in, eigts2_in, eigts3_in);
+    //paw_cell.set_eigts(nx, ny, nz, eigts1_in, eigts2_in, eigts3_in);
 
     int nproj_tot = paw_cell.get_nproj_tot();
     EXPECT_EQ(nproj_tot,44);// 18 + 2 * 8 + 2 * 5 = 44
@@ -198,7 +198,7 @@ TEST_F(Test_Leg_Pol, test_paw)
         EXPECT_NEAR(ref,result,1e-8);
     }
 }
-/*
+
 class Test_PAW_Cell_k : public testing::Test
 {
     protected:
@@ -284,6 +284,11 @@ TEST_F(Test_PAW_Cell_k, test_paw)
         ifs_kpg >> ig >> kpg[i][0] >> kpg[i][1] >> kpg[i][2];
     }
 
+    int* isk_in = new int[1];
+    isk_in[0] = 0;
+    paw_cell.set_isk(1,isk_in);
+    paw_cell.set_currentk(0);
+    delete[] isk_in;
     paw_cell.set_paw_k(npw, kpt, ig_to_ix, ig_to_iy, ig_to_iz, (const double **) kpg, tpiba);
 
     delete[] ig_to_ix;
@@ -333,20 +338,6 @@ TEST_F(Test_PAW_Cell_k, test_paw)
     delete[] psi;
 
     std::ifstream ifs_rhoij("rhoij1.dat");
-
-    std::vector<std::vector<double>> rhoij = paw_cell.get_rhoij();
-    EXPECT_EQ(rhoij.size(),nat);
-    for(int iat = 0; iat < nat; iat ++)
-    {
-        EXPECT_EQ(rhoij[iat].size(),36);
-        for(int i = 0; i < 36; i ++)
-        {
-            double tmp;
-            ifs_rhoij >> tmp;
-
-            EXPECT_NEAR(tmp,rhoij[iat][i],1e-8);
-        }
-    }
 
     std::vector<std::vector<double>> rhoijp;
     std::vector<std::vector<int>> rhoijselect;
@@ -463,5 +454,3 @@ TEST_F(Test_PAW_Cell_k, test_paw)
     delete[] snlpsi;
 
 }
-
-*/

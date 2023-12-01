@@ -28,12 +28,15 @@ public:
     const Parallel_Orbitals* ParaV;
     const Grid_Technique* gridt;
 
+    /// read wavefunction coefficients: LOWF_*.txt
+    void gamma_file(psi::Psi<double>* psid, elecstate::ElecState* pelec);
     void allocate_k(const int& lgd,
-                    psi::Psi<std::complex<double>>* psi,
-                    elecstate::ElecState* pelec,
-                    const int& nks,
-                    const int& nkstot,
-                    const std::vector<ModuleBase::Vector3<double>>& kvec_c);
+        psi::Psi<std::complex<double>>* psi,
+        elecstate::ElecState* pelec,
+        const int& nks,
+        const int& nkstot,
+        const std::vector<ModuleBase::Vector3<double>>& kvec_c,
+        const int& istep);
 
     //=========================================
     // Init Cij, make it satisfy 2 conditions:
@@ -77,6 +80,7 @@ public:
                         const std::vector<ModuleBase::Vector3<double>>& kvec_c);
 #endif
 
+    int error = 0;
   private:
     template <typename T>
     int set_wfc_grid(int naroc[2],

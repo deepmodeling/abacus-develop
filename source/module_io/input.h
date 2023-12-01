@@ -230,6 +230,9 @@ class Input
     double mixing_beta; // 0 : no_mixing
     int mixing_ndim; // used in Broyden method
     double mixing_gg0; // used in kerker method. mohan add 2014-09-27
+    double mixing_beta_mag;
+    double mixing_gg0_mag;
+
     bool mixing_tau; // whether to mix tau in mgga
     bool mixing_dftu; //whether to mix locale in DFT+U
 
@@ -572,6 +575,7 @@ class Input
     double sc_thr; // threshold for spin-constrained DFT in uB
     int nsc; // maximum number of inner lambda loop
     int nsc_min; // minimum number of inner lambda loop
+    int sc_scf_nmin; // minimum number of outer scf loop before initial lambda loop
     double alpha_trial; // initial trial step size for lambda in eV/uB^2
     double sccut; // restriction of step size in eV/uB
     std::string sc_file; // file name for Deltaspin (json format)

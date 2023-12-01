@@ -732,6 +732,7 @@ void Input_Conv::Convert(void)
     GlobalV::sc_thr = INPUT.sc_thr;
     GlobalV::nsc = INPUT.nsc;
     GlobalV::nsc_min = INPUT.nsc_min;
+    GlobalV::sc_scf_nmin = INPUT.sc_scf_nmin;
     GlobalV::alpha_trial = INPUT.alpha_trial;
     GlobalV::sccut = INPUT.sccut;
     GlobalV::sc_file = INPUT.sc_file;
@@ -741,6 +742,8 @@ void Input_Conv::Convert(void)
     GlobalV::MIXING_BETA = INPUT.mixing_beta;
     GlobalV::MIXING_NDIM = INPUT.mixing_ndim;
     GlobalV::MIXING_GG0 = INPUT.mixing_gg0;
+    GlobalV::MIXING_BETA_MAG = INPUT.mixing_beta_mag;
+    GlobalV::MIXING_GG0_MAG = INPUT.mixing_gg0_mag;
     GlobalV::MIXING_TAU = INPUT.mixing_tau;
     
     ModuleBase::timer::tick("Input_Conv", "Convert");

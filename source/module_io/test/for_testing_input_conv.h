@@ -187,18 +187,6 @@ Structure_Factor::Structure_Factor()
 Structure_Factor::~Structure_Factor()
 {
 }
-ModuleSymmetry::Symmetry::Symmetry()
-{
-}
-ModuleSymmetry::Symmetry::~Symmetry()
-{
-}
-ModuleSymmetry::Symmetry_Basic::Symmetry_Basic()
-{
-}
-ModuleSymmetry::Symmetry_Basic::~Symmetry_Basic()
-{
-}
 WF_atomic::WF_atomic()
 {
 }
@@ -282,15 +270,15 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
                                const double& mixing_beta_in,
                                const int& mixing_ndim_in,
                                const double& mixing_gg0_in,
-                               const bool& mixing_tau_in)
+                               const bool& mixing_tau_in,
+                               const double& mixing_beta_mag_in)
 {
     return;
 }
-// void Charge_Mixing::need_auto_set(){}
-void Charge_Mixing::need_auto_set()
-{
-    this->autoset = true;
-}
+// void Charge_Mixing::need_auto_set()
+// {
+//     this->autoset = true;
+// }
 void Occupy::decision(const std::string& name, const std::string& smearing_method, const double& smearing_sigma)
 {
     return;

@@ -85,6 +85,14 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma,
 
     delete[] gradwfc;
 
+    for(int ix = 0; ix < 3; ix++)
+    {
+        for(int iy = 0; iy < 3; iy++)
+        {
+            sigma_mgga[ix][iy] = 0.0;
+        }
+    }
+
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
         for (int ix = 0; ix < 3; ix++)
@@ -94,7 +102,6 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma,
                 FPTYPE delta = 0.0;
                 if (ix == iy)
                     delta = 1.0;
-                sigma_mgga[ix][iy] = 0.0;
                 for (int ir = 0; ir < nrxx; ir++)
                 {
                     FPTYPE x

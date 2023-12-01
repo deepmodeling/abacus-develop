@@ -245,9 +245,9 @@ TYPED_TEST(SpinConstrainTest, NSPIN)
 TYPED_TEST(SpinConstrainTest, NSPINwarning)
 {
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(this->sc.set_nspin(2), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(this->sc.set_nspin(1), ::testing::ExitedWithCode(0), "");
     std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("nspin must be 4 now"));
+    EXPECT_THAT(output, testing::HasSubstr("nspin must be 2 or 4"));
 }
 
 TYPED_TEST(SpinConstrainTest, SetScDecayGrad)
@@ -362,7 +362,8 @@ TYPED_TEST(SpinConstrainTest, SetInputParameters)
 TYPED_TEST(SpinConstrainTest, SetSolverParameters)
 {
     K_Vectors kv;
-    this->sc.set_solver_parameters(4, kv, nullptr, nullptr, nullptr, nullptr, "genelpa", nullptr);
+    this->sc.set_nspin(4);
+    this->sc.set_solver_parameters(kv, nullptr, nullptr, nullptr, nullptr, "genelpa", nullptr);
     EXPECT_EQ(this->sc.get_nspin(), 4);
     EXPECT_EQ(this->sc.phsol, nullptr);
     EXPECT_EQ(this->sc.p_hamilt, nullptr);
@@ -398,4 +399,9 @@ TYPED_TEST(SpinConstrainTest, PrintMi)
     this->sc.print_Mi(true);
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Total Magnetism on atom: 0  (0, 0, 0)"));
+    this->sc.set_nspin(2);
+     testing::internal::CaptureStdout();
+    this->sc.print_Mi(true);
+    output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr("Total Magnetism on atom: 0  (0)"));
 }

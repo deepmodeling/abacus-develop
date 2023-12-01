@@ -278,6 +278,8 @@ extern double MIXING_BETA;
 extern int MIXING_NDIM;
 extern double MIXING_GG0;
 extern bool MIXING_TAU;
+extern double MIXING_BETA_MAG;
+extern double MIXING_GG0_MAG;
 
 //==========================================================
 // device flags added by denghui
@@ -310,6 +312,7 @@ extern bool decay_grad_switch; // 0: decay grad will be set to zero; 1: with dec
 extern double sc_thr;
 extern int nsc;
 extern int nsc_min;
+extern int sc_scf_nmin;
 extern double alpha_trial;
 extern double sccut;
 extern std::string sc_file;
