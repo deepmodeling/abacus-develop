@@ -198,13 +198,39 @@ void ESolver_SDFT_PW::check_che(const int nche_in)
     }
 }
 
-int ESolver_SDFT_PW::set_cond_nche(const double dt, const int nbatch, const double cond_thr)
+int ESolver_SDFT_PW::set_cond_nche(const double dt, int& nbatch, const double cond_thr)
 {
     int nche_guess = 1000;
     ModuleBase::Chebyshev<double> chet(nche_guess);
     Stochastic_Iter& stoiter = ((hsolver::HSolverPW_SDFT*)phsol)->stoiter;
     const double mu = this->pelec->eferm.ef;
     stoiter.stofunc.mu = mu;
+    if(nbatch == 0)
+    {
+        for (int test_nbatch = 128; test_nbatch >= 1; test_nbatch /= 2)
+        {
+            nbatch = test_nbatch;
+            stoiter.stofunc.t = 0.5 * dt * nbatch;
+            chet.calcoef_pair(&stoiter.stofunc, &Sto_Func<double>::ncos, &Sto_Func<double>::n_sin);
+            double minerror = std::abs(chet.coef_complex[nche_guess - 1] / chet.coef_complex[0]);
+            if (minerror < cond_thr)
+            {
+                for (int i = 1; i < nche_guess; ++i)
+                {
+                    double error = std::abs(chet.coef_complex[i] / chet.coef_complex[0]);
+                    if (error < cond_thr)
+                    {
+                        //To make nche to around 100
+                        nbatch = ceil(double(test_nbatch) / i * 100.0);
+                        std::cout << "set cond_dtbatch to " << nbatch << std::endl;
+                        break;
+                    }
+                }
+                break;
+            }
+        }
+    }
+    
     stoiter.stofunc.t = 0.5 * dt * nbatch;
     chet.calcoef_pair(&stoiter.stofunc, &Sto_Func<double>::ncos, &Sto_Func<double>::n_sin);
 
@@ -714,14 +740,14 @@ void ESolver_SDFT_PW::sKG(const int nche_KG,
             double dE = stoiter.stofunc.Emax - Emin_KS + wcut / ModuleBase::Ry_to_eV;
             std::cout << "Emin_KS(" << cutib0+1 << "): " << Emin_KS * ModuleBase::Ry_to_eV
                       << " eV; Emax: " << stoiter.stofunc.Emax * ModuleBase::Ry_to_eV
-                      << " eV; Recommended dt: " << 2 * M_PI / dE << " a.u." << std::endl;
+                      << " eV; Recommended max dt: " << 2 * M_PI / dE << " a.u." << std::endl;
         }
         else
         {
             double dE = stoiter.stofunc.Emax - stoiter.stofunc.Emin + wcut / ModuleBase::Ry_to_eV;
             std::cout << "Emin: " << stoiter.stofunc.Emin * ModuleBase::Ry_to_eV
                   << " eV; Emax: " << stoiter.stofunc.Emax * ModuleBase::Ry_to_eV
-                  << " eV; Recommended dt: " << 2 * M_PI / dE << " a.u." << std::endl;
+                  << " eV; Recommended max dt: " << 2 * M_PI / dE << " a.u." << std::endl;
         }
         // Parallel for bands
         int allbands_ks = GlobalV::NBANDS - cutib0;

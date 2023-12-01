@@ -3222,7 +3222,8 @@ Thermal conductivities: $\kappa = \lim_{\omega\to 0}\kappa(\omega)$.
 - **Type**: Integer
 - **Availability**: [esolver_type](#esolver_type) = `sdft`
 - **Description**: exp(iH\*dt\*cond_dtbatch) is expanded with Chebyshev expansion to calculate conductivities. It is faster but costs more memory.
-- **Default**: 4
+  - If `cond_dtbatch = 0`: Autoset this parameter to make expansion orders larger than 100.
+- **Default**: 0
 
 ### cond_smear
 - **Type**: Integer

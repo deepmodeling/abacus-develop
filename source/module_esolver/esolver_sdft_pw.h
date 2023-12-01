@@ -81,7 +81,7 @@ class ESolver_SDFT_PW : public ESolver_KS_PW<std::complex<double>>
      * @param cond_thr threshold of errors for conductivities
      * @return N order of Chebyshev
      */
-    int set_cond_nche(const double dt, const int nbatch, const double cond_thr);
+    int set_cond_nche(const double dt, int& nbatch, const double cond_thr);
 
     /**
      * @brief calculate Jmatrix  <leftv|J|rightv>
