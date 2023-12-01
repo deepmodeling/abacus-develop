@@ -8,16 +8,6 @@ bool ModuleSymmetry::test_brav = 0;
 
 namespace ModuleSymmetry
 {
-Symmetry_Basic::Symmetry_Basic()
-{
-	this->epsilon = 1e-6;
-}
-
-Symmetry_Basic::~Symmetry_Basic()
-{
-}
-
-
 // Find the type of bravais lattice.
 std::string Symmetry_Basic::get_brav_name(const int ibrav) const
 {
