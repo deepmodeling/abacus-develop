@@ -17,7 +17,7 @@ bool ModuleIO::read_rho(
 		const UnitCell* ucell,
 		int &prenspin)
 {
-	ModuleIO::read_cube(
+    return ModuleIO::read_cube(
 #ifdef __MPI
 		Pgrid,
 #endif
@@ -30,7 +30,5 @@ bool ModuleIO::read_rho(
 		nz,
 		ef,
 		ucell,
-		prenspin);
-		
-	return true;
+        prenspin);
 }

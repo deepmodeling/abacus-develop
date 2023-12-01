@@ -10,10 +10,11 @@
 // allocate density kernel may change once the ion
 // positions change
 void Local_Orbital_Charge::allocate_gamma(
-                const int& lgd, 
-                psi::Psi<double>* psid, 
-                elecstate::ElecState* pelec,
-                const int& nks)
+    const int& lgd,
+    psi::Psi<double>* psid,
+    elecstate::ElecState* pelec,
+    const int& nks,
+    const int& istep)
 {
      ModuleBase::TITLE("Local_Orbital_Charge","allocate_gamma");
 
@@ -77,69 +78,11 @@ void Local_Orbital_Charge::allocate_gamma(
 	// Peize Lin test 2019-01-16
     this->init_dm_2d(nks);
 
-    if (INPUT.init_wfc == "file")
+    if (istep == 0 && INPUT.init_wfc == "file")
     {
-        this->gamma_file(psid, this->LOWF[0], pelec);
+        this->LOWF->gamma_file(psid, pelec);
     }
     return;
-}
-
-void Local_Orbital_Charge::gamma_file(psi::Psi<double>* psid, Local_Orbital_wfc &lowf, elecstate::ElecState* pelec)
-{
-	ModuleBase::TITLE("Local_Orbital_Charge","gamma_file");
-
-	int error;
-	std::cout << " Read in gamma point wave function files " << std::endl;
-
-	double **ctot;
-
-    //allocate psi
-    int ncol = this->ParaV->ncol_bands;
-    if(GlobalV::KS_SOLVER=="genelpa" || GlobalV::KS_SOLVER=="lapack_gvx" || GlobalV::KS_SOLVER == "scalapack_gvx"
-#ifdef __CUSOLVER_LCAO
-    ||GlobalV::KS_SOLVER=="cusolver"
-#endif
-    )
-    {
-        ncol = this->ParaV->ncol;
-    }
-    if(psid == nullptr)
-    {
-        ModuleBase::WARNING_QUIT("gamma_file", "psid should be allocated first!");
-    }
-    else
-    {
-        psid->resize(GlobalV::NSPIN, ncol, this->ParaV->nrow);
-    }
-    ModuleBase::GlobalFunc::ZEROS( psid->get_pointer(), psid->size() );
-
-	for(int is=0; is<GlobalV::NSPIN; ++is)
-	{
-
-		GlobalV::ofs_running << " Read in wave functions " << is << std::endl;
-		error = ModuleIO::read_wfc_nao( ctot , is, this->ParaV, psid, pelec);
-#ifdef __MPI
-		Parallel_Common::bcast_int(error);
-#endif
-		GlobalV::ofs_running << " Error=" << error << std::endl;
-		if(error==1)
-		{
-			ModuleBase::WARNING_QUIT("Local_Orbital_wfc","Can't find the wave function file: LOWF.dat");
-		}
-		else if(error==2)
-		{
-			ModuleBase::WARNING_QUIT("Local_Orbital_wfc","In wave function file, band number doesn't match");
-		}
-		else if(error==3)
-		{
-			ModuleBase::WARNING_QUIT("Local_Orbital_wfc","In wave function file, nlocal doesn't match");
-		}
-		else if(error==4)
-		{
-			ModuleBase::WARNING_QUIT("Local_Orbital_wfc","In k-dependent wave function file, k point is not correct");
-		}
-
-	}//loop ispin
 }
 
 void Local_Orbital_Charge::cal_dk_gamma_from_2D_pub(void)
