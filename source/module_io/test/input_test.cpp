@@ -376,6 +376,7 @@ TEST_F(InputTest, Default)
     EXPECT_DOUBLE_EQ(INPUT.sc_thr, 1e-6);
     EXPECT_EQ(INPUT.nsc, 100);
     EXPECT_EQ(INPUT.nsc_min, 2);
+	EXPECT_EQ(INPUT.sc_scf_nmin, 2);
     EXPECT_DOUBLE_EQ(INPUT.alpha_trial, 0.01);
     EXPECT_DOUBLE_EQ(INPUT.sccut, 3.0);
     EXPECT_EQ(INPUT.sc_file, "none");
@@ -738,6 +739,7 @@ TEST_F(InputTest, Read)
     EXPECT_DOUBLE_EQ(INPUT.sc_thr, 1e-4);
     EXPECT_EQ(INPUT.nsc, 50);
 	EXPECT_EQ(INPUT.nsc_min, 4);
+	EXPECT_EQ(INPUT.sc_scf_nmin, 4);
     EXPECT_DOUBLE_EQ(INPUT.alpha_trial, 0.02);
 	EXPECT_DOUBLE_EQ(INPUT.sccut, 4.0);
     EXPECT_EQ(INPUT.sc_file, "sc.json");
@@ -1616,6 +1618,13 @@ TEST_F(InputTest, Check)
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("sccut must > 0"));
 	INPUT.sccut = 3.0;
+	// warning 10 of Deltaspin
+	INPUT.sc_scf_nmin = -1;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("sc_scf_nmin must >= 2"));
+	INPUT.sc_scf_nmin = 2;
     // restore to default values
     INPUT.nspin = 1;
 	INPUT.sc_file = "none";

@@ -40,7 +40,7 @@ void calculate()
 	"STRU", 
 	ofs_running);
 	std::cout << "set up cell classic done." << std::endl;
-	symm.analy_sys(ucell, out, ofs_running);
+    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, ofs_running);
 	ofs_running.close();
 //	ooo.set_orb_tables();
 

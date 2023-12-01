@@ -95,7 +95,7 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
 
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
-        p_symm->symmetrize_mat3(sigmatot, ucell);
+        p_symm->symmetrize_mat3(sigmatot, ucell.lat);
     }
 
     bool ry = false;

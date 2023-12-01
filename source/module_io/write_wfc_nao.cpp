@@ -39,12 +39,12 @@ void ModuleIO::write_wfc_nao(const std::string &name, double **ctot, const Modul
         else
         {
             std::ofstream ofs;
-            if (GlobalV::out_app_flag)
-            {
-                ofs.open(name.c_str(), std::ofstream::app);
-            }
-            else
-            {
+            // if (GlobalV::out_app_flag)
+            // {
+            //     ofs.open(name.c_str(), std::ofstream::app);
+            // }
+            // else
+            {   // the default value of `out_app_flag`is true, but usually there's no use to save each step's LCAO wave function.
                 ofs.open(name.c_str());
             }
             if (!ofs)
@@ -116,12 +116,12 @@ void ModuleIO::write_wfc_nao_complex(const std::string &name, std::complex<doubl
         else
         {
             std::ofstream ofs;
-            if (GlobalV::out_app_flag)
-            {
-                ofs.open(name.c_str(), std::ofstream::app);
-            }
-            else
-            {
+            // if (GlobalV::out_app_flag)
+            // {
+            //     ofs.open(name.c_str(), std::ofstream::app);
+            // }
+            // else
+            {   // the default value of `out_app_flag`is true, but usually there's no use to save each step's LCAO wave function.
                 ofs.open(name.c_str());
             }
             if (!ofs)

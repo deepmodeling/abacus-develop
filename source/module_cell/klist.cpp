@@ -621,7 +621,7 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
         ModuleBase::Vector3<double> gb01(b_optlat.e11, b_optlat.e12, b_optlat.e13);
         ModuleBase::Vector3<double> gb02(b_optlat.e21, b_optlat.e22, b_optlat.e23);
         ModuleBase::Vector3<double> gb03(b_optlat.e31, b_optlat.e32, b_optlat.e33);
-        symm.lattice_type(gb1, gb2, gb3, gb01, gb02, gb03, b_const, b0_const, bbrav, bbrav_name, ucell, false, nullptr);
+        symm.lattice_type(gb1, gb2, gb3, gb01, gb02, gb03, b_const, b0_const, bbrav, bbrav_name, ucell.atoms, false, nullptr);
         GlobalV::ofs_running<<"(for reciprocal lattice: )"<<std::endl;
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS TYPE", bbrav);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS LATTICE NAME", bbrav_name);
@@ -646,7 +646,7 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
             return;
         }
 
-        symm.lattice_type(gk1, gk2, gk3, gk01, gk02, gk03, bk_const, bk0_const, bkbrav, bkbrav_name, ucell, false, nullptr);
+        symm.lattice_type(gk1, gk2, gk3, gk01, gk02, gk03, bk_const, bk0_const, bkbrav, bkbrav_name, ucell.atoms, false, nullptr);
         GlobalV::ofs_running<<"(for k-lattice: )"<<std::endl;
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS TYPE", bkbrav);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS LATTICE NAME", bkbrav_name);
@@ -656,7 +656,7 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
         ModuleBase::Matrix3 bsymop[48];
         int bnop = 0;
         // search again
-        symm.lattice_type(gb1, gb2, gb3, gb1, gb2, gb3, b_const, b0_const, bbrav, bbrav_name, ucell, false, nullptr);
+        symm.lattice_type(gb1, gb2, gb3, gb1, gb2, gb3, b_const, b0_const, bbrav, bbrav_name, ucell.atoms, false, nullptr);
         ModuleBase::Matrix3 b_optlat_new(gb1.x, gb1.y, gb1.z, gb2.x, gb2.y, gb2.z, gb3.x, gb3.y, gb3.z);
         symm.setgroup(bsymop, bnop, bbrav);
         symm.gmatrix_convert(bsymop, bsymop, bnop, b_optlat_new, ucell.G);

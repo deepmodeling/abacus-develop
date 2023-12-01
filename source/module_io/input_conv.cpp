@@ -732,6 +732,7 @@ void Input_Conv::Convert(void)
     GlobalV::sc_thr = INPUT.sc_thr;
     GlobalV::nsc = INPUT.nsc;
     GlobalV::nsc_min = INPUT.nsc_min;
+    GlobalV::sc_scf_nmin = INPUT.sc_scf_nmin;
     GlobalV::alpha_trial = INPUT.alpha_trial;
     GlobalV::sccut = INPUT.sccut;
     GlobalV::sc_file = INPUT.sc_file;

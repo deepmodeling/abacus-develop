@@ -363,6 +363,7 @@
     - [sc\_thr](#sc_thr)
     - [nsc](#nsc)
     - [nsc\_min](#nsc_min)
+    - [sc\_scf\_nmin](#sc_scf_nmin)
     - [alpha\_trial](#alpha_trial)
     - [sccut](#sccut)
     - [sc\_file](#sc_file)
@@ -3325,6 +3326,12 @@ These variables are used to control the usage of deltaspin functionality.
 
 - **Type**: Integer
 - **Description**: the minimum number of steps in the inner lambda loop
+- **Default**: 2
+
+### sc_scf_nmin
+
+- **Type**: Integer
+- **Description**: the minimum number of outer scf loop before initializing lambda loop
 - **Default**: 2
 
 ### alpha_trial

@@ -41,7 +41,7 @@ TEST_F(SymmetryTest, AnalySys)
     {
         ModuleSymmetry::Symmetry symm;
         construct_ucell(stru_lib[stru]);
-        symm.analy_sys(ucell, ofs_running);
+        symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, ofs_running);
 
         //1. ibrav
         std::string ref_point_group = stru_lib[stru].point_group;
@@ -244,7 +244,7 @@ TEST_F(SymmetryTest, SG_Pricell)
         ModuleSymmetry::Symmetry symm;
         symm.epsilon = 1e-5;
         construct_ucell(supercell_lib[stru]);
-        symm.analy_sys(ucell, ofs_running);
+        symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, ofs_running);
 
         std::string ref_point_group = supercell_lib[stru].point_group;
         std::string cal_point_group = symm.pgname;

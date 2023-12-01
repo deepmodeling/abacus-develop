@@ -83,13 +83,13 @@ void ESolver_OF::Init(Input& inp, UnitCell& ucell)
     // symmetry analysis should be performed every time the cell is changed
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
-        this->symm.analy_sys(ucell, GlobalV::ofs_running);
+        ucell.symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
     }
 
     // Setup the k points according to symmetry.
-    kv.set(this->symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, ucell.G, ucell.latvec);
-    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
+    kv.set(ucell.symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, ucell.G, ucell.latvec);
+    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"INIT K-POINTS");
 
     // print information
     // mohan add 2021-01-30
@@ -286,7 +286,7 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
     Symmetry_rho srho;
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        srho.begin(is, *(pelec->charge), this->pw_rho, GlobalC::Pgrid, this->symm);
+        srho.begin(is, *(pelec->charge), this->pw_rho, GlobalC::Pgrid, GlobalC::ucell.symm);
     }
 
     for (int is = 0; is < GlobalV::NSPIN; ++is)
@@ -433,7 +433,7 @@ void ESolver_OF::update_rho()
     //     Symmetry_rho srho;
     //     for (int is = 0; is < GlobalV::NSPIN; is++)
     //     {
-    //         srho.begin(is, *(pelec->charge), this->pw_rho, GlobalC::Pgrid, this->symm);
+    //         srho.begin(is, *(pelec->charge), this->pw_rho, GlobalC::Pgrid, GlobalC::ucell.symm);
     //         for (int ibs = 0; ibs < this->pw_rho->nrxx; ++ibs)
     //         {
     //             this->pphi_[is][ibs] = sqrt(pelec->charge->rho[is][ibs]);
@@ -624,7 +624,7 @@ double ESolver_OF::cal_Energy()
 void ESolver_OF::cal_Force(ModuleBase::matrix& force)
 {
     Forces<double> ff(GlobalC::ucell.nat);
-    ff.cal_force(force, *pelec, this->pw_rho, &this->symm, &sf);
+    ff.cal_force(force, *pelec, this->pw_rho, &GlobalC::ucell.symm, &sf);
 }
 
 /**
@@ -639,6 +639,6 @@ void ESolver_OF::cal_Stress(ModuleBase::matrix& stress)
     this->kinetic_stress(kinetic_stress_);
 
     OF_Stress_PW ss(this->pelec, this->pw_rho);
-    ss.cal_stress(stress, kinetic_stress_, GlobalC::ucell, &this->symm, &sf, &kv);
+    ss.cal_stress(stress, kinetic_stress_, GlobalC::ucell, &GlobalC::ucell.symm, &sf, &kv);
 }
 } // namespace ModuleESolver
