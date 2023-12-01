@@ -19,7 +19,8 @@ void ModuleIO::OutputRadial::write_header()
         // left aligned
         file_to_ << std::left << std::setw(28) << "Element" << symbol_ << "\n";
         file_to_ << std::left << std::setw(28) << "Energy Cutoff(Ry)" << std::to_string(int(ecut_)) << "\n";
-        file_to_ << std::left << std::setw(28) << "Radius Cutoff(a.u.)" << std::to_string(int(rcut_)) << "\n";
+        // rcut .1f, not scientific
+        file_to_ << std::left << std::setw(28) << "Radius Cutoff(a.u.)" << std::fixed << std::setprecision(1) << rcut_ << "\n";
         file_to_ << std::left << std::setw(28) << "Lmax" << lmax_ << "\n";
         for(int i = 0; i < lmax_ + 1; ++i)
         {

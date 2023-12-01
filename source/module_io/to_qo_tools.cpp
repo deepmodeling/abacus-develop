@@ -156,7 +156,7 @@ std::vector<ModuleBase::Vector3<int>> toQO::scan_supercell_for_atom(int it, int 
         if(GlobalV::MY_RANK == 0)
         {
         #endif
-        printf("WARNING: rcut_i of atom %d %d is larger than 10, which is %f bohr. This will brings about high computational cost. Suggest to try other qo_basis.\n", it, ia, rcut_i);
+        printf("WARNING: rcut_i of atom %d %d is larger than 10: %f bohr. \nThis value has been larger than maximal cutoff radius of numerical atomic orbitals, \nwill brings about high computational cost. Suggest to try other qo_basis.\n", it, ia, rcut_i);
         #ifdef __MPI
         }
         #endif

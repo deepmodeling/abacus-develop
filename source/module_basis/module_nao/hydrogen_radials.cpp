@@ -371,8 +371,8 @@ void HydrogenRadials::hydrogen(const double charge,
         std::vector<double>& rgrid = orbital.second.first;
         std::vector<double>& rvalue = orbital.second.second;
         int lzeta = nl_lzeta[nl_pair].second;
-        chi_[ichi].build(l, true, rgrid.size(), rgrid.data(), rvalue.data(), 0, lzeta, symbol_, itype_, false);
-        chi_[ichi].normalize();
-        ++ichi;
+        chi_[index(l, lzeta)].build(l, true, rgrid.size(), rgrid.data(), rvalue.data(), 0, lzeta, symbol_, itype_, false);
+        chi_[index(l, lzeta)].normalize();
+        //++ichi;
     }
 }
