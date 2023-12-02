@@ -1,5 +1,5 @@
 #include <vector>
-#include <ATen/kernels/lapack_op.h>
+#include <ATen/kernels/lapack.h>
 #include <base/third_party/lapack.h>
 
 #include <hip/hip_runtime.h>
@@ -7,7 +7,7 @@
 #include <hipsolver/hipsolver.h>
 
 namespace container {
-namespace op {
+namespace kernels {
 
 
 static hipsolverHandle_t hipsolver_handle = nullptr;
@@ -155,5 +155,5 @@ template struct lapack_dngvd<double, DEVICE_GPU>;
 template struct lapack_dngvd<std::complex<float>,  DEVICE_GPU>;
 template struct lapack_dngvd<std::complex<double>, DEVICE_GPU>;
 
-} // namespace op
+} // namespace kernels
 } // namespace container

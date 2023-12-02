@@ -12,6 +12,7 @@ void destroyGpuSolverHandle() {
     return;
 }
 
+#ifdef __LCAO
 template <>
 void dngvd_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* ctx,
     const int nstart,
@@ -32,6 +33,7 @@ void dngvd_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* ctx,
     hipMemcpy(_vcc, vcc.data(), sizeof(double) * vcc.size(), hipMemcpyHostToDevice);
     hipMemcpy(_eigenvalue, eigenvalue.data(), sizeof(double) * eigenvalue.size(), hipMemcpyHostToDevice);
 }
+#endif // __LCAO
 
 template <>
 void dngvd_op<std::complex<float>, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* ctx,
@@ -75,6 +77,7 @@ void dngvd_op<std::complex<double>, psi::DEVICE_GPU>::operator()(const psi::DEVI
     hipMemcpy(_eigenvalue, eigenvalue.data(), sizeof(double) * eigenvalue.size(), hipMemcpyHostToDevice);
 }
 
+#ifdef __LCAO
 template <>
 void dnevx_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* ctx,
     const int nstart,
@@ -93,6 +96,7 @@ void dnevx_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* ctx,
     hipMemcpy(_vcc, vcc.data(), sizeof(double) * vcc.size(), hipMemcpyHostToDevice);
     hipMemcpy(_eigenvalue, eigenvalue.data(), sizeof(double) * eigenvalue.size(), hipMemcpyHostToDevice);
 }
+#endif // __LCAO
 
 template <>
 void dnevx_op<std::complex<float>, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* ctx,

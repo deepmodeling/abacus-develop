@@ -31,7 +31,7 @@ __global__ void cal_vkb1_nl(
 
 template <typename FPTYPE>
 __global__ void cal_force_nl(
-        const bool multi_proj,
+        const bool nondiagonal,
         const int wg_nc,
         const int ntype,
         const int spin,
@@ -46,6 +46,8 @@ __global__ void cal_force_nl(
         const int *atom_na,
         const FPTYPE tpiba,
         const FPTYPE *d_wg,
+        const FPTYPE* d_ekb,
+        const FPTYPE* qq_nt,
         const FPTYPE *deeq,
         const thrust::complex<FPTYPE> *becp,
         const thrust::complex<FPTYPE> *dbecp,
@@ -61,30 +63,33 @@ __global__ void cal_force_nl(
     }
 
     int Nprojs = atom_nh[it];
-    double fac = d_wg[ik * wg_nc + ib] * 2.0 * tpiba;
+    FPTYPE fac = d_wg[ik * wg_nc + ib] * 2.0 * tpiba;
+    FPTYPE ekb_now = d_ekb[ik * wg_nc + ib];
     for (int ia = 0; ia < atom_na[it]; ia++) {
         for (int ip = threadIdx.x; ip < Nprojs; ip += blockDim.x) {
-            // double ps = GlobalC::ppcell.deeq[GlobalV::CURRENT_SPIN, iat, ip, ip];
-            double ps = deeq[((spin * deeq_2 + iat) * deeq_3 + ip) * deeq_4 + ip];
+            // FPTYPE ps = GlobalC::ppcell.deeq[GlobalV::CURRENT_SPIN, iat, ip, ip];
+            FPTYPE ps = deeq[((spin * deeq_2 + iat) * deeq_3 + ip) * deeq_4 + ip]
+                        - ekb_now * qq_nt[it * deeq_3 * deeq_4 + ip * deeq_4 + ip];
             const int inkb = sum + ip;
             //out<<"\n ps = "<<ps;
 
             for (int ipol = 0; ipol < 3; ipol++) {
-                const double dbb = (conj(dbecp[ipol * nbands * nkb + ib * nkb + inkb]) *
+                const FPTYPE dbb = (conj(dbecp[ipol * nbands * nkb + ib * nkb + inkb]) *
                                     becp[ib * nkb + inkb]).real();
                 // force[iat * forcenl_nc + ipol] -= ps * fac * dbb;
                 atomicAdd(force + iat * forcenl_nc + ipol, -ps * fac * dbb);
                 //cf[iat*3+ipol] += ps * fac * dbb;
             }
 
-            if (multi_proj) {
+            if (nondiagonal) {
                 //for (int ip2=0; ip2<Nprojs; ip2++)
                 for (int ip2 = 0; ip2 < Nprojs; ip2++) {
                     if (ip != ip2) {
                         const int jnkb = sum + ip2;
-                        ps = deeq[((spin * deeq_2 + iat) * deeq_3 + ip) * deeq_4 + ip2];
+                        ps = deeq[((spin * deeq_2 + iat) * deeq_3 + ip) * deeq_4 + ip2]
+                             - ekb_now * qq_nt[it * deeq_3 * deeq_4 + ip * deeq_4 + ip2];
                         for (int ipol = 0; ipol < 3; ipol++) {
-                            const double dbb = (conj(dbecp[ipol * nbands * nkb + ib * nkb + inkb]) *
+                            const FPTYPE dbb = (conj(dbecp[ipol * nbands * nkb + ib * nkb + inkb]) *
                                                 becp[ib * nkb + jnkb]).real();
                             atomicAdd(force + iat * forcenl_nc + ipol, -ps * fac * dbb);
                         }
@@ -128,7 +133,7 @@ void cal_vkb1_nl_op<FPTYPE, psi::DEVICE_GPU>::operator() (
 template <typename FPTYPE>
 void cal_force_nl_op<FPTYPE, psi::DEVICE_GPU>::operator() (
         const psi::DEVICE_GPU *ctx,
-        const bool &multi_proj,
+        const bool &nondiagonal,
         const int &nbands_occ,
         const int &wg_nc,
         const int &ntype,
@@ -144,19 +149,21 @@ void cal_force_nl_op<FPTYPE, psi::DEVICE_GPU>::operator() (
         const int *atom_na,
         const FPTYPE &tpiba,
         const FPTYPE *d_wg,
+        const FPTYPE* d_ekb,
+        const FPTYPE* qq_nt,
         const FPTYPE *deeq,
         const std::complex<FPTYPE> *becp,
         const std::complex<FPTYPE> *dbecp,
         FPTYPE *force)
 {
     hipLaunchKernelGGL(HIP_KERNEL_NAME(cal_force_nl<FPTYPE>), dim3(nbands_occ * ntype), dim3(THREADS_PER_BLOCK), 0, 0, 
-            multi_proj,
+            nondiagonal,
             wg_nc, ntype, spin,
             deeq_2, deeq_3, deeq_4,
             forcenl_nc, nbands, ik, nkb,
             atom_nh, atom_na,
             tpiba,
-            d_wg, deeq,
+            d_wg, d_ekb, qq_nt, deeq,
             reinterpret_cast<const thrust::complex<FPTYPE>*>(becp),
             reinterpret_cast<const thrust::complex<FPTYPE>*>(dbecp),
             force);// array of data
