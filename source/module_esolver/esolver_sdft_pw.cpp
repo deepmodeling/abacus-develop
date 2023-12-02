@@ -255,6 +255,7 @@ void ESolver_SDFT_PW::postprocess()
     if (INPUT.cal_cond)
     {
         this->sKG(cond_nche,
+                  INPUT.cond_smear,
                   INPUT.cond_fwhm,
                   INPUT.cond_wcut,
                   INPUT.cond_dw,

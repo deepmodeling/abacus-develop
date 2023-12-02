@@ -223,6 +223,7 @@ TEST_F(write_input, STO3)
     EXPECT_THAT(output,
                 testing::HasSubstr(
                     "cond_dtbatch                   2 #exp(iH*dt*cond_dtbatch) is expanded with Chebyshev expansion."));
+    EXPECT_THAT(output, testing::HasSubstr("cond_smear                     1 #Smearing method for conductivities"));
     EXPECT_THAT(output, testing::HasSubstr("cond_fwhm                      0.3 #FWHM for conductivities"));
     EXPECT_THAT(output, testing::HasSubstr("cond_nonlocal                  1 #Nonlocal effects for conductivities"));
     EXPECT_THAT(output, testing::HasSubstr(""));

@@ -70,8 +70,10 @@
     - [smearing\_sigma\_temp](#smearing_sigma_temp)
     - [mixing\_type](#mixing_type)
     - [mixing\_beta](#mixing_beta)
+    - [mixing\_beta\_mag](#mixing_beta_mag)
     - [mixing\_ndim](#mixing_ndim)
     - [mixing\_gg0](#mixing_gg0)
+    - [mixing\_gg0\_mag](#mixing_gg0_mag)
     - [mixing\_tau](#mixing_tau)
     - [mixing\_dftu](#mixing_dftu)
     - [gamma\_only](#gamma_only)
@@ -346,6 +348,7 @@
     - [cond\_wcut](#cond_wcut)
     - [cond\_dt](#cond_dt)
     - [cond\_dtbatch](#cond_dtbatch)
+    - [cond\_smear](#cond_smear)
     - [cond\_fwhm](#cond_fwhm)
     - [cond\_nonlocal](#cond_nonlocal)
   - [Implicit solvation model](#implicit-solvation-model)
@@ -3160,8 +3163,10 @@ $\times[f(\epsilon_{i\mathbf{k}})-f(\epsilon_{j\mathbf{k}})]\delta(\epsilon_{j\m
 They can also be computed by $j$-$j$ correlation function.
 
 $L_{mn}=\frac{2e^{m+n-2}}{3\Omega\hbar\omega}\Im[\tilde{C}_{mn}(\omega)]$
-
-$\tilde{C}_{mn}=\int_0^\infty C_{mn}(t)e^{-i\omega t}e^{-\frac{1}{2}(\Delta E)^2t^2}dt$
+Guassian smearing:
+$\tilde{C}_{mn}=\int_0^\infty C_{mn}(t)e^{-i\omega t}e^{-\frac{1}{2}s^2t^2}dt$
+Lorentzian smearing:
+$\tilde{C}_{mn}=\int_0^\infty C_{mn}(t)e^{-i\omega t}e^{-\gamma t}dt$
 
 $C_{mn}(t)=-2\theta(t)\Im\left\{Tr\left[\sqrt{\hat f}\hat{j}_m(1-\hat{f})e^{i\frac{\hat{H}}{\hbar}t}\hat{j}_ne^{-i\frac{\hat{H}}{\hbar}t}\sqrt{\hat f}\right]\right\}$,
 
@@ -3218,13 +3223,21 @@ Thermal conductivities: $\kappa = \lim_{\omega\to 0}\kappa(\omega)$.
 - **Type**: Integer
 - **Availability**: [esolver_type](#esolver_type) = `sdft`
 - **Description**: exp(iH\*dt\*cond_dtbatch) is expanded with Chebyshev expansion to calculate conductivities. It is faster but costs more memory.
-- **Default**: 4
+  - If `cond_dtbatch = 0`: Autoset this parameter to make expansion orders larger than 100.
+- **Default**: 0
+
+### cond_smear
+- **Type**: Integer
+- **Description**: Smearing method for conductivities
+  - 1: Gaussian smearing
+  - 2: Lorentzian smearing
+- **Default**: 1
 
 ### cond_fwhm
 
 - **Type**: Real
 - **Availability**: [basis_type](#basis_type) = `pw`
-- **Description**: FWHM for conductivities, $\mathrm{FWHM}=2*\sqrt{2\ln2}\cdot \Delta E$. Here, we use gaussian functions to approximate $\delta(E)\approx \frac{1}{\sqrt{2\pi}\Delta E}e^{-\frac{E^2}{2{\Delta E}^2}}$. 
+- **Description**: FWHM for conductivities. For Gaussian smearing, $\mathrm{FWHM}=2\sqrt{2\ln2}s$; for Lorentzian smearing, $\mathrm{FWHM}=2\gamma$.
 - **Default**: 0.4
 - **Unit**: eV
 

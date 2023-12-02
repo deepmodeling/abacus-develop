@@ -39,6 +39,7 @@ class ESolver_SDFT_PW : public ESolver_KS_PW<std::complex<double>>
      *
      * @param nche_KG Number Chebyshev orders
      * @param fwhmin FWHM
+     * @param smear_type 1: Gaussian, 2: Lorentzian
      * @param wcut cutoff omega
      * @param dw_in omega step
      * @param dt_in t step
@@ -46,6 +47,7 @@ class ESolver_SDFT_PW : public ESolver_KS_PW<std::complex<double>>
      * @param npart_sto number stochastic wavefunctions parts to evalution simultaneously
      */
     void sKG(const int nche_KG,
+             const int& smear_type,
              const double fwhmin,
              const double wcut,
              const double dw_in,
@@ -79,7 +81,7 @@ class ESolver_SDFT_PW : public ESolver_KS_PW<std::complex<double>>
      * @param cond_thr threshold of errors for conductivities
      * @return N order of Chebyshev
      */
-    int set_cond_nche(const double dt, const int nbatch, const double cond_thr);
+    int set_cond_nche(const double dt, int& nbatch, const double cond_thr);
 
     /**
      * @brief calculate Jmatrix  <leftv|J|rightv>

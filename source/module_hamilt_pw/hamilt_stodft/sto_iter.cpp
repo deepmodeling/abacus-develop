@@ -163,7 +163,7 @@ void Stochastic_Iter::checkemm(const int& ik, const int istep, const int iter, S
         stofunc.Emin = stohchi.Emin;
         if (change)
         {
-            GlobalV::ofs_running << "New Emax " << stohchi.Emax << " ; new Emin " << stohchi.Emin << std::endl;
+            GlobalV::ofs_running << "New Emax Ry" << stohchi.Emax << " ; new Emin " << stohchi.Emin <<" Ry" << std::endl;
         }
         change = false;
     }
