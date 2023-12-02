@@ -85,7 +85,7 @@ void Force_LCAO_k::ftable_k(const bool isforce,
     if (GlobalV::deepks_scf)
     {
         const std::vector<std::vector<std::complex<double>>>& dm_k = DM->get_DMK_vector();
-        GlobalC::ld.cal_projected_DM_k(dm_k, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD, kv.nks, kv.kvec_d);
+        GlobalC::ld.cal_projected_DM_k(DM, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD, kv.nks, kv.kvec_d);
         GlobalC::ld.cal_descriptor();
         GlobalC::ld.cal_gedm(GlobalC::ucell.nat);
 
@@ -104,7 +104,7 @@ void Force_LCAO_k::ftable_k(const bool isforce,
             Parallel_Reduce::reduce_pool(svnl_dalpha.c, svnl_dalpha.nr * svnl_dalpha.nc);
         }
 #endif
-        if (GlobalV::deepks_out_unittest)
+        /*if (GlobalV::deepks_out_unittest)
         {
             GlobalC::ld.print_dm_k(kv.nks, dm_k);
             GlobalC::ld.check_projected_dm();
@@ -122,7 +122,7 @@ void Force_LCAO_k::ftable_k(const bool isforce,
             std::ofstream ofs1("E_delta.dat");
             ofs1 << std::setprecision(10) << GlobalC::ld.E_delta;
             GlobalC::ld.check_f_delta(GlobalC::ucell.nat, svnl_dalpha);
-        }
+        }*/
     }
 #endif
 

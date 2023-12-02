@@ -39,7 +39,7 @@ namespace ModuleESolver
         GlobalC::ld.cal_e_delta_band_k(dm, this->kv.nks);
     }
     template<>
-    void ESolver_KS_LCAO<double, double>::dpks_cal_projected_DM(const std::vector<std::vector<double>>& dm)const
+    void ESolver_KS_LCAO<double, double>::dpks_cal_projected_DM(const elecstate::DensityMatrix<double, double>* dm)const
     {
         GlobalC::ld.cal_projected_DM(dm, //this->LOC.dm_gamma,
             GlobalC::ucell,
@@ -47,7 +47,7 @@ namespace ModuleESolver
             GlobalC::GridD);
     }
     template<>
-    void ESolver_KS_LCAO<std::complex<double>, double>::dpks_cal_projected_DM(const std::vector<std::vector<std::complex<double>>>& dm)const
+    void ESolver_KS_LCAO<std::complex<double>, double>::dpks_cal_projected_DM(const elecstate::DensityMatrix<std::complex<double>, double>* dm)const
     {
         GlobalC::ld.cal_projected_DM_k(dm, //this->LOC.dm_k,
             GlobalC::ucell,
@@ -57,7 +57,7 @@ namespace ModuleESolver
             this->kv.kvec_d);
     }
     template<>
-    void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::dpks_cal_projected_DM(const std::vector<std::vector<std::complex<double>>>& dm)const
+    void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::dpks_cal_projected_DM(const elecstate::DensityMatrix<std::complex<double>, double>* dm)const
     {
         GlobalC::ld.cal_projected_DM_k(dm, //this->LOC.dm_k,
             GlobalC::ucell,

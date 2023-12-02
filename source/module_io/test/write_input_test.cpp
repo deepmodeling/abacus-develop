@@ -223,6 +223,7 @@ TEST_F(write_input, STO3)
     EXPECT_THAT(output,
                 testing::HasSubstr(
                     "cond_dtbatch                   2 #exp(iH*dt*cond_dtbatch) is expanded with Chebyshev expansion."));
+    EXPECT_THAT(output, testing::HasSubstr("cond_smear                     1 #Smearing method for conductivities"));
     EXPECT_THAT(output, testing::HasSubstr("cond_fwhm                      0.3 #FWHM for conductivities"));
     EXPECT_THAT(output, testing::HasSubstr("cond_nonlocal                  1 #Nonlocal effects for conductivities"));
     EXPECT_THAT(output, testing::HasSubstr(""));
@@ -905,6 +906,8 @@ TEST_F(write_input, Deltaspin22)
                 testing::HasSubstr("nsc                            100 #Maximal number of spin-constrained iteration"));
     EXPECT_THAT(output,
                 testing::HasSubstr("nsc_min                        2 #Minimum number of spin-constrained iteration"));
+    EXPECT_THAT(output,
+                testing::HasSubstr("sc_scf_nmin                    2 #Minimum number of outer scf loop before initializing lambda loop"));
     EXPECT_THAT(output,
                 testing::HasSubstr("sc_file                        none #file name for parameters used in "
                                    "non-collinear spin-constrained DFT (json format)"));

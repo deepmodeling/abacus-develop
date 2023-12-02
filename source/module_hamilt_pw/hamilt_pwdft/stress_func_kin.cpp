@@ -149,7 +149,7 @@ void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma,
 	//do symmetry
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
-        p_symm->symmetrize_mat3(sigma, GlobalC::ucell);
+        p_symm->symmetrize_mat3(sigma, GlobalC::ucell.lat);
     } // end symmetry
 
     delete[] gk[0];
