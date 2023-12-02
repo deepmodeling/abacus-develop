@@ -396,11 +396,15 @@ if (ENABLE_FLOAT_FFTW)
 endif()
 
 if(ENABLE_DEEPKS)
-  set_if_higher(CMAKE_CXX_STANDARD 14)
   # Torch uses outdated components to detech CUDA arch, causing failure on latest CUDA kits.
   # See above for setting CMAKE_CUDA_ARCHITECTURES
   set(TORCH_CUDA_ARCH_LIST CMAKE_CUDA_ARCHITECTURES)
   find_package(Torch REQUIRED)
+  if(NOT Torch_VERSION VERSION_LESS "2.1.0")
+    set_if_higher(CMAKE_CXX_STANDARD 17)
+  elseif(NOT Torch_VERSION VERSION_LESS "1.5.0")
+    set_if_higher(CMAKE_CXX_STANDARD 14)
+  endif()
   include_directories(${TORCH_INCLUDE_DIRS})
   target_link_libraries(${ABACUS_BIN_NAME} deepks)
   list(APPEND math_libs ${TORCH_LIBRARIES})
