@@ -274,6 +274,13 @@ void Input_Conv::Convert(void)
         GlobalV::NSTOGROUP = INPUT.bndpar;
     }
     GlobalV::precision_flag = INPUT.precision;
+    if (GlobalV::device_flag == "cpu" and GlobalV::precision_flag == "single") {
+        // cpu single precision is not supported while float_fftw lib is not available
+        #ifndef __ENABLE_FLOAT_FFTW
+            ModuleBase::WARNING_QUIT("Input_Conv", "Single precision with cpu is not supported while float_fftw lib is not available; \
+            \n Please recompile with cmake flag \"-DENABLE_FLOAT_FFTW=ON\".\n");
+        #endif // __ENABLE_FLOAT_FFTW
+    }
     GlobalV::CALCULATION = INPUT.calculation;
     GlobalV::ESOLVER_TYPE = INPUT.esolver_type;
 
