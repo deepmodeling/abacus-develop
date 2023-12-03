@@ -2,7 +2,11 @@ name: Integration Test and Unit Test
 
 on:
   pull_request:
-
+  
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+  
 jobs:
   test:
     name: Test
