@@ -65,7 +65,7 @@ void Sto_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
 
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
-        p_symm->symmetrize_mat3(sigmatot, GlobalC::ucell);
+        p_symm->symmetrize_mat3(sigmatot, GlobalC::ucell.lat);
     }
 
     bool ry = false;
@@ -196,7 +196,7 @@ void Sto_Stress_PW::sto_stress_kin(ModuleBase::matrix& sigma,
     // do symmetry
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
-        p_symm->symmetrize_mat3(sigma, GlobalC::ucell);
+        p_symm->symmetrize_mat3(sigma, GlobalC::ucell.lat);
     }
     delete[] gk[0];
     delete[] gk[1];
@@ -461,7 +461,7 @@ void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma,
     // do symmetry
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
-        p_symm->symmetrize_mat3(sigma, GlobalC::ucell);
+        p_symm->symmetrize_mat3(sigma, GlobalC::ucell.lat);
     }
 
     //  this->print(ofs_running, "nonlocal stress", stresnl);

@@ -612,6 +612,87 @@ void AtomPair<T>::add_to_matrix(T* hk, const int ld_hk, const T& kphase, const i
     }
 }
 
+template <typename T>
+void AtomPair<T>::add_from_matrix(const std::complex<T>* hk,
+                                const int ld_hk,
+                                const std::complex<T>& kphase,
+                                const int hk_type)
+{
+    const BaseMatrix<T>& matrix = values[current_R];
+    T* hr_tmp = matrix.get_pointer();
+    const std::complex<T>* hk_tmp = hk;
+    const T* hk_real_pointer = nullptr;
+    const T* hk_imag_pointer = nullptr;
+    const int ld_hk_2 = ld_hk * 2;
+    // row major
+    if (hk_type == 0)
+    {
+        hk_tmp += this->row_ap * ld_hk + this->col_ap;
+        for (int mu = 0; mu < this->row_size; mu++)
+        {
+            hk_real_pointer = (T*)hk_tmp;
+            hk_imag_pointer = hk_real_pointer+1;
+            BlasConnector::axpy(this->col_size, kphase.real(), hk_real_pointer, 2, hr_tmp, 1);
+            BlasConnector::axpy(this->col_size, kphase.imag(), hk_imag_pointer, 2, hr_tmp, 1);
+            hk_tmp += ld_hk;
+            hr_tmp += this->col_size;
+        }
+    }
+    // column major
+    else if (hk_type == 1)
+    {
+        hk_tmp += this->col_ap * ld_hk + this->row_ap;
+        for (int mu = 0; mu < this->row_size; mu++)
+        {
+            hk_real_pointer = (T*)hk_tmp;
+            hk_imag_pointer = hk_real_pointer+1;
+            BlasConnector::axpy(this->col_size, kphase.real(), hk_real_pointer, ld_hk_2, hr_tmp, 1);
+            BlasConnector::axpy(this->col_size, kphase.imag(), hk_imag_pointer, ld_hk_2, hr_tmp, 1);
+            hk_tmp ++;
+            hr_tmp += this->col_size;
+        }
+    }
+}
+
+// add_to_matrix
+template <typename T>
+void AtomPair<T>::add_from_matrix(const T* hk, const int ld_hk, const T& kphase, const int hk_type)
+{
+    const BaseMatrix<T>& matrix = values[current_R];
+    T* hr_tmp = matrix.get_pointer();
+    const T* hk_tmp = hk;
+    // row major
+    if (hk_type == 0)
+    {
+        hk_tmp += this->row_ap * ld_hk + this->col_ap;
+        for (int mu = 0; mu < this->row_size; mu++)
+        {
+            BlasConnector::axpy(this->col_size, kphase, hk_tmp, 1, hr_tmp, 1);
+            /*for (int nu = 0; nu < this->col_size; nu++)
+            {
+                hk_tmp[nu] += matrix.get_value(mu, nu) * kphase;
+            }*/
+            hk_tmp += ld_hk;
+            hr_tmp += this->col_size;
+        }
+    }
+    // column major
+    else if (hk_type == 1)
+    {
+        hk_tmp += this->col_ap * ld_hk + this->row_ap;
+        for (int mu = 0; mu < this->row_size; mu++)
+        {
+            BlasConnector::axpy(this->col_size, kphase, hk_tmp, ld_hk, hr_tmp, 1);
+            /*for (int mu = 0; mu < this->row_size; mu++)
+            {
+                hk_tmp[mu] += matrix.get_value(mu, nu) * kphase;
+            }*/
+            ++hk_tmp;
+            hr_tmp += this->col_size;
+        }
+    }
+}
+
 // add_to_array
 template <typename T>
 void AtomPair<T>::add_to_array(T* array, const T& kphase) const
