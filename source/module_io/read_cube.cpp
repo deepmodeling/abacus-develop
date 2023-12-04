@@ -37,8 +37,14 @@ bool ModuleIO::read_cube(
 
 	if(nspin != 4)
 	{
-		ModuleBase::CHECK_INT(ifs, nspin);
-	}
+        int v_in;
+        ifs >> v_in;
+        if (v_in != nspin)
+        {
+            std::cout << " WARNING: nspin mismatch:  " << nspin << " in INPUT parameters but " << v_in << " in " << fn << std::endl;
+            return false;
+        }
+    }
 	else
 	{
 		ifs >> prenspin;

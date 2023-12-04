@@ -59,7 +59,7 @@ out_chg=`grep out_chg INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 #echo $running_path
 base=`grep -En '(^|[[:space:]])basis_type($|[[:space:]])' INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 word="driver_line"
-symmetry=`grep "symmetry" INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
+symmetry=`grep -w "symmetry" INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 test -e $1 && rm $1
 #--------------------------------------------
 # if NOT non-self-consistent calculations

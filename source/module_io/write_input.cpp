@@ -155,6 +155,7 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "cond_wcut", cond_wcut, "cutoff frequency (omega) for conductivities");
     ModuleBase::GlobalFunc::OUTP(ofs, "cond_dt", cond_dt, "t interval to integrate Onsager coefficiencies");
     ModuleBase::GlobalFunc::OUTP(ofs, "cond_dtbatch", cond_dtbatch, "exp(iH*dt*cond_dtbatch) is expanded with Chebyshev expansion.");
+    ModuleBase::GlobalFunc::OUTP(ofs, "cond_smear", cond_smear, "Smearing method for conductivities");
     ModuleBase::GlobalFunc::OUTP(ofs, "cond_fwhm", cond_fwhm, "FWHM for conductivities");
     ModuleBase::GlobalFunc::OUTP(ofs, "cond_nonlocal", cond_nonlocal, "Nonlocal effects for conductivities");
     
@@ -460,32 +461,35 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
 
 
     ofs << "\n#Parameters (21.spherical bessel)" << std::endl;
-    ModuleBase::GlobalFunc::OUTP(ofs, "bessel_nao_ecut",		bessel_nao_ecut, "energy cutoff for spherical bessel functions(Ry)");
-    ModuleBase::GlobalFunc::OUTP(ofs, "bessel_nao_tolerence",bessel_nao_tolerence, "tolerence for spherical bessel root");
-    ModuleBase::GlobalFunc::OUTP(ofs, "bessel_nao_rcut",		bessel_nao_rcut, "radial cutoff for spherical bessel functions(a.u.)");
-    ModuleBase::GlobalFunc::OUTP(ofs, "bessel_nao_smooth",	bessel_nao_smooth, "spherical bessel smooth or not");
-    ModuleBase::GlobalFunc::OUTP(ofs, "bessel_nao_sigma",	bessel_nao_sigma, "spherical bessel smearing_sigma");
-    ModuleBase::GlobalFunc::OUTP(ofs, "bessel_descriptor_lmax",		bessel_descriptor_lmax, "lmax used in generating spherical bessel functions");
-    ModuleBase::GlobalFunc::OUTP(ofs, "bessel_descriptor_ecut",		bessel_descriptor_ecut, "energy cutoff for spherical bessel functions(Ry)");
-    ModuleBase::GlobalFunc::OUTP(ofs, "bessel_descriptor_tolerence",	bessel_descriptor_tolerence, "tolerence for spherical bessel root");
-    ModuleBase::GlobalFunc::OUTP(ofs, "bessel_descriptor_rcut",		bessel_descriptor_rcut, "radial cutoff for spherical bessel functions(a.u.)");
-    ModuleBase::GlobalFunc::OUTP(ofs, "bessel_descriptor_smooth",	bessel_descriptor_smooth, "spherical bessel smooth or not");
-    ModuleBase::GlobalFunc::OUTP(ofs, "bessel_descriptor_sigma",		bessel_descriptor_sigma, "spherical bessel smearing_sigma");
-    /// deltaspin variables
-    ofs << "\n#Parameters (22.non-collinear spin-constrained DFT)" << std::endl;
-    ModuleBase::GlobalFunc::OUTP(ofs, "sc_mag_switch", sc_mag_switch, "0: no spin-constrained DFT; 1: constrain atomic magnetization");
-    ModuleBase::GlobalFunc::OUTP(ofs, "decay_grad_switch", decay_grad_switch, "switch to control gradient break condition");
-    ModuleBase::GlobalFunc::OUTP(ofs, "sc_thr", sc_thr, "Convergence criterion of spin-constrained iteration (RMS) in uB");
-    ModuleBase::GlobalFunc::OUTP(ofs, "nsc", nsc, "Maximal number of spin-constrained iteration");
-    ModuleBase::GlobalFunc::OUTP(ofs, "nsc_min", nsc_min, "Minimum number of spin-constrained iteration");
-    ModuleBase::GlobalFunc::OUTP(ofs, "alpha_trial", alpha_trial, "Initial trial step size for lambda in eV/uB^2");
-    ModuleBase::GlobalFunc::OUTP(ofs, "sccut", sccut, "Maximal step size for lambda in eV/uB");
-    ModuleBase::GlobalFunc::OUTP(ofs, "sc_file", sc_file, "file name for parameters used in non-collinear spin-constrained DFT (json format)");
+
+   ModuleBase::GlobalFunc::OUTP(ofs, "bessel_nao_ecut",		bessel_nao_ecut, "energy cutoff for spherical bessel functions(Ry)");
+   ModuleBase::GlobalFunc::OUTP(ofs, "bessel_nao_tolerence",bessel_nao_tolerence, "tolerence for spherical bessel root");
+   ModuleBase::GlobalFunc::OUTP(ofs, "bessel_nao_rcut",		bessel_nao_rcut, "radial cutoff for spherical bessel functions(a.u.)");
+   ModuleBase::GlobalFunc::OUTP(ofs, "bessel_nao_smooth",	bessel_nao_smooth, "spherical bessel smooth or not");
+   ModuleBase::GlobalFunc::OUTP(ofs, "bessel_nao_sigma",	bessel_nao_sigma, "spherical bessel smearing_sigma");
+   ModuleBase::GlobalFunc::OUTP(ofs, "bessel_descriptor_lmax",		bessel_descriptor_lmax, "lmax used in generating spherical bessel functions");
+   ModuleBase::GlobalFunc::OUTP(ofs, "bessel_descriptor_ecut",		bessel_descriptor_ecut, "energy cutoff for spherical bessel functions(Ry)");
+   ModuleBase::GlobalFunc::OUTP(ofs, "bessel_descriptor_tolerence",	bessel_descriptor_tolerence, "tolerence for spherical bessel root");
+   ModuleBase::GlobalFunc::OUTP(ofs, "bessel_descriptor_rcut",		bessel_descriptor_rcut, "radial cutoff for spherical bessel functions(a.u.)");
+   ModuleBase::GlobalFunc::OUTP(ofs, "bessel_descriptor_smooth",	bessel_descriptor_smooth, "spherical bessel smooth or not");
+   ModuleBase::GlobalFunc::OUTP(ofs, "bessel_descriptor_sigma",		bessel_descriptor_sigma, "spherical bessel smearing_sigma");
+   /// deltaspin variables
+   ofs << "\n#Parameters (22.non-collinear spin-constrained DFT)" << std::endl;
+   ModuleBase::GlobalFunc::OUTP(ofs, "sc_mag_switch", sc_mag_switch, "0: no spin-constrained DFT; 1: constrain atomic magnetization");
+   ModuleBase::GlobalFunc::OUTP(ofs, "decay_grad_switch", decay_grad_switch, "switch to control gradient break condition");
+   ModuleBase::GlobalFunc::OUTP(ofs, "sc_thr", sc_thr, "Convergence criterion of spin-constrained iteration (RMS) in uB");
+   ModuleBase::GlobalFunc::OUTP(ofs, "nsc", nsc, "Maximal number of spin-constrained iteration");
+   ModuleBase::GlobalFunc::OUTP(ofs, "nsc_min", nsc_min, "Minimum number of spin-constrained iteration");
+    ModuleBase::GlobalFunc::OUTP(ofs, "sc_scf_nmin", sc_scf_nmin, "Minimum number of outer scf loop before initializing lambda loop");
+   ModuleBase::GlobalFunc::OUTP(ofs, "alpha_trial", alpha_trial, "Initial trial step size for lambda in eV/uB^2");
+   ModuleBase::GlobalFunc::OUTP(ofs, "sccut", sccut, "Maximal step size for lambda in eV/uB");
+   ModuleBase::GlobalFunc::OUTP(ofs, "sc_file", sc_file, "file name for parameters used in non-collinear spin-constrained DFT (json format)");
     
     ofs << "\n#Parameters (23.Quasiatomic Orbital analysis)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs, "qo_switch", qo_switch, "0: no QO analysis; 1: QO analysis");
     ModuleBase::GlobalFunc::OUTP(ofs, "qo_basis", qo_basis, "type of QO basis function: hydrogen: hydrogen-like basis, pswfc: read basis from pseudopotential");
     ModuleBase::GlobalFunc::OUTP(ofs, "qo_thr", qo_thr, "accuracy for evaluating cutoff radius of QO basis function");
+  
     ofs.close();
     return;
 }
