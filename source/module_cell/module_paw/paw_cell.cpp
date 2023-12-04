@@ -210,6 +210,21 @@ void Paw_Cell::set_paw_k(
     {
         gnorm[ipw] = std::sqrt(kpg[ipw][0]*kpg[ipw][0] + kpg[ipw][1]*kpg[ipw][1] + kpg[ipw][2]*kpg[ipw][2]) * tpiba;
     }
+
+    std::complex<double> i_cplx = (0.0,1.0);
+    // ikpg : i (k+G)
+    //if(GlobalV::CAL_FORCE || GlobalV::CAL_STRESS)
+    {
+        ikpg.resize(npw);
+        for(int ipw = 0; ipw < npw; ipw ++)
+        {
+            ikpg[ipw].resize(3);
+            for(int i = 0; i < 3; i ++)
+            {
+                ikpg[ipw][i] = kpg[ipw][i] * tpiba * i_cplx;
+            }
+        }
+    }
 }
 
 void Paw_Cell::set_isk(const int nk, const int * isk_in)
@@ -662,6 +677,83 @@ void Paw_Cell::paw_nl_psi(const int mode, const std::complex<double> * psi, std:
             for(int iproj = 0; iproj < nproj; iproj ++)
             {
                 vnlpsi[ipw] += vkb[iproj+proj_start][ipw] * v_ca[iproj];
+            }
+        }
+    }
+}
+
+void Paw_Cell::paw_nl_force(const std::complex<double> * psi, const double * epsilon, const double * weight, const int nbands , double * force)
+{
+    ModuleBase::TITLE("Paw_Cell","paw_nl_force");
+
+    for(int iband = 0; iband < nbands; iband ++)
+    {
+        for(int iat = 0; iat < nat; iat ++)
+        {
+            // ca : <ptilde(G)|psi(G)>
+            // = \sum_G [\int f(r)r^2j_l(r)dr] * [(-i)^l] * [ylm(\hat{G})] * [exp(-GR_I)] *psi(G)
+            // = \sum_ipw ptilde * fact * ylm * sk * psi (in the code below)
+            // This is what is called 'becp' in nonlocal pp
+            std::vector<std::complex<double>> ca;
+            std::vector<std::vector<std::complex<double>>> dca;
+
+            const int it = atom_type[iat];
+            const int nproj = paw_element_list[it].get_mstates();
+            const int proj_start = start_iprj_ia[iat];
+
+            ca.resize(nproj);
+            dca.resize(3);
+            for(int i = 0; i < 3; i ++)
+            {
+                dca[i].resize(nproj);
+            }
+
+            for(int iproj = 0; iproj < nproj; iproj ++)
+            {
+                ca[iproj] = 0.0;
+                dca[0][iproj] = 0.0;
+                dca[1][iproj] = 0.0;
+                dca[2][iproj] = 0.0;
+                
+                // consider use blas subroutine for this part later
+                for(int ipw = 0; ipw < npw; ipw ++)
+                {
+                    std::complex<double> overlp = psi[ipw] * std::conj(vkb[iproj+proj_start][ipw]);
+                    ca[iproj] += overlp;
+                    dca[0][iproj] += overlp * ikpg[ipw][0];
+                    dca[1][iproj] += overlp * ikpg[ipw][1];
+                    dca[2][iproj] += overlp * ikpg[ipw][2];
+                }
+            }
+
+#ifdef __MPI
+            Parallel_Reduce::reduce_pool(ca.data(), nproj);
+            Parallel_Reduce::reduce_pool(dca[0].data(), nproj);
+            Parallel_Reduce::reduce_pool(dca[1].data(), nproj);
+            Parallel_Reduce::reduce_pool(dca[2].data(), nproj);
+#endif
+            // sum_ij (D_ij - epsilon_n O_ij) ca_j
+            std::vector<std::complex<double>> v_ca;
+            v_ca.resize(nproj);
+
+            for(int iproj = 0; iproj < nproj; iproj ++)
+            {
+                v_ca[iproj] = 0.0;
+                for(int jproj = 0; jproj < nproj; jproj ++)
+                {
+                    double coeff = paw_atom_list[iat].get_dij()[current_spin][iproj*nproj+jproj] -
+                        paw_atom_list[iat].get_sij()[iproj*nproj+jproj] * epsilon[iband];
+                    v_ca[iproj] += coeff * ca[jproj];
+                }
+            }
+
+            // force += conjg(v_ca[iproj]) * d_ca[iproj]
+            // \sum_i ptilde_{iproj}(G) v_ca[iproj]
+            for(int iproj = 0; iproj < nproj; iproj ++)
+            {
+                force[iat*3] += (std::conj(v_ca[iproj]) * dca[0][iproj]).real();
+                force[iat*3+1] += (std::conj(v_ca[iproj]) * dca[1][iproj]).real();
+                force[iat*3+2] += (std::conj(v_ca[iproj]) * dca[2][iproj]).real();
             }
         }
     }
