@@ -24,7 +24,7 @@ namespace ModuleESolver
         pw_big->setbxyz(INPUT.bx, INPUT.by, INPUT.bz);
         sf.set(pw_rhod, INPUT.nbspline);
 
-        this->symm.epsilon = this->symm.epsilon_input = INPUT.symmetry_prec;
+        GlobalC::ucell.symm.epsilon = GlobalC::ucell.symm.epsilon_input = INPUT.symmetry_prec;
 }
     ESolver_FP::~ESolver_FP()
     {
@@ -131,11 +131,11 @@ namespace ModuleESolver
 
         if(ModuleSymmetry::Symmetry::symm_flag == 1)
         {
-            symm.analy_sys(cell, GlobalV::ofs_running);
+            cell.symm.analy_sys(cell.lat, cell.st, cell.atoms, GlobalV::ofs_running);
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
         }
 
-        kv.set_after_vc(symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, cell.G, cell.latvec);
+        kv.set_after_vc(cell.symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, cell.G, cell.latvec);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
     }
 

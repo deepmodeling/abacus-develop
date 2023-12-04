@@ -3,16 +3,15 @@
 
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
-#include "module_base/matrix3.h"
-#include "module_base/intarray.h"
 #include "module_io/output.h"
 #include "module_elecstate/magnetism.h"
-#include "atom_spec.h"
+#include "module_symmetry/symmetry.h"
 
 #ifdef __LCAO
 #include "module_basis/module_ao/ORB_read.h"
 #include "setup_nonlocal.h"
 #endif
+
 
 // provide the basic information about unitcell.
 class UnitCell
@@ -27,46 +26,37 @@ public:
 	double *atom_mag;
 	int n_mag_at;
 
-    int ntype;// number of atom species in UnitCell
-    int nat; // total number of atoms of all species in unitcell
-    std::string Coordinate; // "Direct" or "Cartesian" or "Cartesian_angstrom"
-    std::string latName; // Lattice name
-    double lat0; // Lattice constant(bohr)(a.u.)
-    double lat0_angstrom;// Lattice constant(angstrom)
-    double tpiba;// 2*pi / lat0;
-    double tpiba2; // tpiba ^ 2
-    double omega;// the volume of the unit cell
+    std::string& Coordinate = lat.Coordinate;
+    std::string& latName = lat.latName;
+    double& lat0 = lat.lat0;
+    double& lat0_angstrom = lat.lat0_angstrom;
+    double& tpiba = lat.tpiba;
+    double& tpiba2 = lat.tpiba2;
+    double& omega = lat.omega;
+    int*& lc = lat.lc;
 
-    ModuleBase::Matrix3 latvec; // Unitcell lattice vectors
-	int *lc;  // Change the lattice vectors or not
-	ModuleBase::Vector3<double> a1,a2,a3; // Same as latvec, just at another form.
-	ModuleBase::Vector3<double> latcenter; // (a1+a2+a3)/2 the center of vector
-    ModuleBase::Matrix3 latvec_supercell; // Supercell lattice vectors
-    ModuleBase::Matrix3 G; // reciprocal lattice vector (2pi*inv(R) )
-    ModuleBase::Matrix3 GT; // traspose of G
-    ModuleBase::Matrix3 GGT; // GGT = G*GT
-    ModuleBase::Matrix3 invGGT; // inverse G
+    Lattice lat;
+    ModuleBase::Matrix3& latvec = lat.latvec;
+    ModuleBase::Vector3<double>& a1 = lat.a1, & a2 = lat.a2, & a3 = lat.a3;
+    ModuleBase::Vector3<double>& latcenter = lat.latcenter;
+    ModuleBase::Matrix3& latvec_supercell = lat.latvec_supercell;
+    ModuleBase::Matrix3& G = lat.G;
+    ModuleBase::Matrix3& GT = lat.GT;
+    ModuleBase::Matrix3& GGT = lat.GGT;
+    ModuleBase::Matrix3& invGGT = lat.invGGT;
 
-    //========================================================
-    // relationship between:
-    // ntype, it
-    // nat, iat
-    // atoms[it].na, ia,
-    // atoms[it].nw, iw
-    //
-    // if know it ==> atoms[it].na; atoms[it].nw
-    // if know iat ==> it; ia;
-    // if know ia, mush have known it ==> iat
-    // if know iwt, must have known it, ia ==> iwt
-    //========================================================
-    int namax;// the max na among all atom species
-    int nwmax;// the max nw among all atom species
+    Statistics st;
+    int& ntype = st.ntype;
+    int& nat = st.nat;
+    int*& iat2it = st.iat2it;
+    int*& iat2ia = st.iat2ia;
+    int*& iwt2iat = st.iwt2iat;
+    int*& iwt2iw = st.iwt2iw;
+    ModuleBase::IntArray& itia2iat = st.itia2iat;
+    int& namax = st.namax;
+    int& nwmax = st.nwmax;
 
-    int *iat2it; //iat==>it, distinguish a atom belong to which type
-    int *iat2ia; //iat==>ia
-	int *iwt2iat; // iwt ==> iat.
-	int *iwt2iw; // iwt ==> iw, Peize Lin add 2018-07-02
-    ModuleBase::IntArray itia2iat;//(it, ia)==>iat, the index in nat, add 2009-3-2 by mohan
+    ModuleSymmetry::Symmetry symm;
 
     // ========================================================
     // iat2iwt is the atom index iat to the first global index for orbital of this atom
