@@ -202,7 +202,6 @@ void SphbesRadials::build_radset()
         int l = p.first.first;
         int izeta = p.first.second;
         auto& coeff_q = p.second;
-        std::cout << "l = " << l << ", izeta = " << izeta << std::endl;
 
         // find wave numbers such that j_l(q * rcut) = 0
         std::vector<double> q(coeff_q.size());
