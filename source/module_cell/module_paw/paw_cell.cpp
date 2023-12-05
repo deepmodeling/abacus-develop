@@ -686,8 +686,14 @@ void Paw_Cell::paw_nl_force(const std::complex<double> * psi, const double * eps
 {
     ModuleBase::TITLE("Paw_Cell","paw_nl_force");
 
+    for(int i = 0; i < nat * 3; i ++)
+    {
+        force[i] = 0.0;
+    }
+
     for(int iband = 0; iband < nbands; iband ++)
     {
+        if(weight[iband] < 1e-8) continue;
         for(int iat = 0; iat < nat; iat ++)
         {
             // ca : <ptilde(G)|psi(G)>
@@ -718,7 +724,7 @@ void Paw_Cell::paw_nl_force(const std::complex<double> * psi, const double * eps
                 // consider use blas subroutine for this part later
                 for(int ipw = 0; ipw < npw; ipw ++)
                 {
-                    std::complex<double> overlp = psi[ipw] * std::conj(vkb[iproj+proj_start][ipw]);
+                    std::complex<double> overlp = psi[iband*npw+ipw] * std::conj(vkb[iproj+proj_start][ipw]);
                     ca[iproj] += overlp;
                     dca[0][iproj] += overlp * ikpg[ipw][0];
                     dca[1][iproj] += overlp * ikpg[ipw][1];
@@ -751,9 +757,9 @@ void Paw_Cell::paw_nl_force(const std::complex<double> * psi, const double * eps
             // \sum_i ptilde_{iproj}(G) v_ca[iproj]
             for(int iproj = 0; iproj < nproj; iproj ++)
             {
-                force[iat*3] += (std::conj(v_ca[iproj]) * dca[0][iproj]).real();
-                force[iat*3+1] += (std::conj(v_ca[iproj]) * dca[1][iproj]).real();
-                force[iat*3+2] += (std::conj(v_ca[iproj]) * dca[2][iproj]).real();
+                force[iat*3] += (std::conj(v_ca[iproj]) * dca[0][iproj]).real() * weight[iband];
+                force[iat*3+1] += (std::conj(v_ca[iproj]) * dca[1][iproj]).real() * weight[iband];
+                force[iat*3+2] += (std::conj(v_ca[iproj]) * dca[2][iproj]).real() * weight[iband];
             }
         }
     }

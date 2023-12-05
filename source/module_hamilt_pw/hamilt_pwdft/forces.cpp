@@ -18,6 +18,9 @@
 #ifdef _OPENMP
 #include <omp.h>
 #endif
+#ifdef USE_PAW
+#include "module_cell/module_paw/paw_cell.h"
+#endif
 
 template <typename FPTYPE, typename Device>
 void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
@@ -41,19 +44,40 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
     ModuleBase::matrix forcecc(nat, 3);
     ModuleBase::matrix forcenl(nat, 3);
     ModuleBase::matrix forcescc(nat, 3);
-    this->cal_force_loc(forcelc, rho_basis, chr);
+    if(GlobalV::use_paw)
+    {
+
+    }
+    else
+    {
+        this->cal_force_loc(forcelc, rho_basis, chr);
+    }
     this->cal_force_ew(forceion, rho_basis, p_sf);
     if(wfc_basis != nullptr)
     {
-        this->npwx = wfc_basis->npwk_max;
-        this->cal_force_nl(forcenl, wg, ekb, pkv, wfc_basis, psi_in);
-        if (GlobalV::use_uspp)
+        if(!GlobalV::use_paw)
         {
-            this->cal_force_us(forcenl, rho_basis, &GlobalC::ppcell, elec, GlobalC::ucell);
+            this->npwx = wfc_basis->npwk_max;
+            this->cal_force_nl(forcenl, wg, ekb, pkv, wfc_basis, psi_in);
+            if (GlobalV::use_uspp)
+            {
+                this->cal_force_us(forcenl, rho_basis, &GlobalC::ppcell, elec, GlobalC::ucell);
+            }
+        }
+        else
+        {
+
         }
     }
     this->cal_force_cc(forcecc, rho_basis, chr);
-    this->cal_force_scc(forcescc, rho_basis, elec.vnew, elec.vnew_exist);
+    if(!GlobalV::use_paw)
+    {
+        this->cal_force_scc(forcescc, rho_basis, elec.vnew, elec.vnew_exist);
+    }
+    else
+    {
+
+    }
 
     ModuleBase::matrix stress_vdw_pw; //.create(3,3);
     ModuleBase::matrix force_vdw;
@@ -106,6 +130,28 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
             ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "IMP_SOL      FORCE (Ry/Bohr)", forcesol);
         }
     }
+
+#ifdef USE_PAW
+    if(GlobalV::use_paw)
+    {
+        double * force_paw;
+        force_paw = new double[3 * this->nat];
+        ModuleBase::matrix v_xc, v_effective;
+        v_effective.create(GlobalV::NSPIN, rho_basis->nrxx);
+        v_effective.zero_out();
+        elec.pot->update_from_charge(elec.charge, &GlobalC::ucell);
+        v_effective = elec.pot->get_effective_v();
+
+        v_xc.create(GlobalV::NSPIN, rho_basis->nrxx);
+        v_xc.zero_out();
+        const std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v
+            = XC_Functional::v_xc(rho_basis->nrxx, elec.charge, &GlobalC::ucell);
+        v_xc = std::get<2>(etxc_vtxc_v);
+
+        GlobalC::paw_cell.calculate_force(v_effective.c, v_xc.c, force_paw);
+        delete[] force_paw;
+    }
+#endif
 
     // impose total force = 0
     int iat = 0;
