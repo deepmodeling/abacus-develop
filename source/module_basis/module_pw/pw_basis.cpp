@@ -22,7 +22,6 @@ PW_Basis::PW_Basis(std::string device_, std::string precision_) : device(std::mo
 PW_Basis:: ~PW_Basis()
 {
     delete[] ig2isz;
-    delete[] fftixyz2ig;
     delete[] istot2ixy;
     delete[] is2fftixy;
     delete[] fftixy2ip;

@@ -102,7 +102,6 @@ public:
 #endif
     
     int *ig2isz=nullptr; // map ig to (is, iz).
-    int* fftixyz2ig = nullptr; // map (ix, iy, iz) to ig
     int *istot2ixy=nullptr; // istot2ixy[is]: iy + ix * ny of is^th stick among all sticks.
     int *is2fftixy=nullptr, * d_is2fftixy = nullptr; // is2fftixy[is]: iy + ix * ny of is^th stick among sticks on current proc.
     int *fftixy2ip=nullptr; // fftixy2ip[iy + ix * fftny]: ip of proc which contains stick on (ix, iy). if no stick: -1
@@ -202,7 +201,7 @@ protected:
         int* st_bottom2D  // the z-coordinate of the bottom of stick on (x, y).
     );
 
-    // get ig2isz, fftixyz2ig and is2fftixy
+    //get ig2isz and is2fftixy
     void get_ig2isz_is2fftixy(
         int* st_bottom,     // minimum z of stick, stored in 1d array with tot_nst elements.
         int* st_length     // the stick on (x, y) consists of st_length[x*fftny+y] planewaves.

@@ -9,17 +9,16 @@ namespace ModulePW
 /// Distribute planewaves in reciprocal space to cores.
 /// Firstly, divide the sphere in reciprocal space into sticks, which are vertical to x-y plane.
 /// Secondly, distribute these sticks to coreors.
-///
+/// 
 /// Example
 ///                |  ---- ixy increasing ---> |   ---- ixy increasing --->   |...
 /// index of sticks 0, 1, 2, ..., nst_per[0]-1, nst_per[0], ..., nst_per[1]-1, ...
 ///                |___________________________|______________________________|___
 /// ip                           0                            1              ...
 ///                             npw    approximate equal to  npw   approximate equal to...
-///
+/// 
 /// Known: G, GT, GGT, fftny, fftnx, nz, poolnproc, poolrank, ggecut
-/// output: ig2isz[ig], fftixyz2ig[isz], istot2ixy[is], is2fftixy[is], fftixy2ip[ixy], startnsz_per[ip], nst_per[ip],
-/// nst
+/// output: ig2isz[ig], istot2ixy[is], is2fftixy[is], fftixy2ip[ixy], startnsz_per[ip], nst_per[ip], nst
 ///
 void PW_Basis::distribution_method1()
 {
@@ -104,7 +103,7 @@ void PW_Basis::distribution_method1()
     this->nst = this->nst_per[this->poolrank];
     this->nstnz = this->nst * this->nz;
 
-    // (5) Construct ig2isz, fftixyz2ig and is2fftixy.
+    // (5) Construct ig2isz and is2fftixy. 
     this->get_ig2isz_is2fftixy(st_bottom2D, st_length2D);
 
     delete[] st_bottom2D;
