@@ -86,6 +86,7 @@ AddTest(
   	../../module_base/global_variable.cpp
 	../../module_base/parallel_reduce.cpp
 	../../module_base/parallel_common.cpp
+  ../../module_base/para_json.cpp
 	../../module_base/parallel_global.cpp
 )
 
@@ -140,4 +141,10 @@ AddTest(
   TARGET io_csr_reader_test
   LIBS base ${math_libs} device
   SOURCES csr_reader_test.cpp ../csr_reader.cpp ../file_reader.cpp ../sparse_matrix.cpp
+)
+
+AddTest(
+  TARGET io_para_json_test
+  LIBS ${math_libs} base device
+  SOURCES para_json_test.cpp ../input.cpp
 )
