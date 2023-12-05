@@ -141,3 +141,14 @@ AddTest(
   LIBS base ${math_libs} device
   SOURCES csr_reader_test.cpp ../csr_reader.cpp ../file_reader.cpp ../sparse_matrix.cpp
 )
+
+AddTest(
+  TARGET read_rhog_test
+  LIBS ${math_libs} base device planewave
+  SOURCES read_rhog_test.cpp ../read_rhog.cpp ../binstream.cpp ../../module_basis/module_pw/test/test_tool.cpp
+)
+
+add_test(NAME read_rhog_test_parallel
+      COMMAND mpirun -np 4 ./read_rhog_test
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)

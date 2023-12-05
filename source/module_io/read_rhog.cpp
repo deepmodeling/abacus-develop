@@ -104,6 +104,22 @@ bool ModuleIO::read_rhog(const std::string& filename, const ModulePW::PW_Basis* 
         ModuleBase::GlobalFunc::ZEROS(rhog[is], pw_rhod->npw);
     }
 
+    // maps ixyz tp ig
+    int* fftixyz2ig = new int[pw_rhod->nxyz]; // map isz to ig.
+    for (int i = 0; i < pw_rhod->nxyz; ++i)
+    {
+        fftixyz2ig[i] = -1;
+    }
+    for (int ig = 0; ig < pw_rhod->npw; ++ig)
+    {
+        int isz = pw_rhod->ig2isz[ig];
+        int iz = isz % nz;
+        int is = isz / nz;
+        int ixy = pw_rhod->is2fftixy[is];
+        int ixyz = iz + nz * ixy;
+        fftixyz2ig[ixyz] = ig;
+    }
+
     std::complex<double>* rhog_in = new std::complex<double>[npwtot_in];
     for (int is = 0; is < nspin_in; ++is)
     {
@@ -143,7 +159,7 @@ bool ModuleIO::read_rhog(const std::string& filename, const ModulePW::PW_Basis* 
             if (GlobalV::RANK_IN_POOL == pw_rhod->fftixy2ip[fftixy])
             {
                 int fftixyz = iz + nz * fftixy;
-                int ig = pw_rhod->fftixyz2ig[fftixyz];
+                int ig = fftixyz2ig[fftixyz];
                 rhog[is][ig] = rhog_in[i];
             }
         }
@@ -159,6 +175,7 @@ bool ModuleIO::read_rhog(const std::string& filename, const ModulePW::PW_Basis* 
         }
     }
 
+    delete[] fftixyz2ig;
     delete[] miller;
     delete[] rhog_in;
 
