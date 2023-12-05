@@ -147,11 +147,11 @@ OBJS_BASE=abfs-vector3_order.o\
 	cubic_spline.o\
 	spherical_bessel_transformer.o\
     mixing_data.o\
+    para_json.o\
     mixing.o\
     plain_mixing.o\
     pulay_mixing.o\
     broyden_mixing.o\
-
 
 OBJS_CELL=atom_pseudo.o\
     atom_spec.o\
