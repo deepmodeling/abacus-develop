@@ -86,6 +86,7 @@ AddTest(
   	../../module_base/global_variable.cpp
 	../../module_base/parallel_reduce.cpp
 	../../module_base/parallel_common.cpp
+  ../../module_base/para_json.cpp
 	../../module_base/parallel_global.cpp
 )
 
@@ -143,12 +144,13 @@ AddTest(
 )
 
 AddTest(
+  TARGET io_para_json_test
+  LIBS ${math_libs} base device
+  SOURCES para_json_test.cpp ../input.cpp
+)
+
+AddTest(
   TARGET read_rhog_test
   LIBS ${math_libs} base device planewave
   SOURCES read_rhog_test.cpp ../read_rhog.cpp ../binstream.cpp ../../module_basis/module_pw/test/test_tool.cpp
-)
-
-add_test(NAME read_rhog_test_parallel
-      COMMAND mpirun -np 4 ./read_rhog_test
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )

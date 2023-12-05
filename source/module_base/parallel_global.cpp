@@ -17,6 +17,7 @@
 #include "module_base/global_function.h"
 #include "module_base/parallel_common.h"
 #include "module_base/parallel_reduce.h"
+#include "module_base/para_json.h"
 #include "version.h"
 
 #if defined __MPI
@@ -95,6 +96,11 @@ void Parallel_Global::split_diag_world(const int &diag_np)
 	GlobalV::DRANK=0;
 	GlobalV::DSIZE=1;
 #endif
+
+    Para_Json::set_json_value(Para_Json::drank,&GlobalV::DRANK); 
+    Para_Json::set_json_value(Para_Json::dsize,&GlobalV::DSIZE); 
+    Para_Json::set_json_value(Para_Json::dcolor,&GlobalV::DCOLOR); 
+
 	return;
 }
 
