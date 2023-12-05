@@ -86,6 +86,11 @@ class HamiltLCAO : public Hamilt<TK>
     HContainer<TR>* hR = nullptr;
     HContainer<TR>* sR = nullptr;
 
+    // special case for NSPIN=2 , data of HR should be separated into two parts
+    // save them in this->hRS2;
+    std::vector<TR> hRS2;
+    int refresh_times = 0;
+
     // sk and hk will be refactored to HamiltLCAO later
     //std::vector<TK> sk;
     //std::vector<TK> hk;
