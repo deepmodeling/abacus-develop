@@ -49,7 +49,8 @@ void PW_Basis_Sup::setuptransform(const ModulePW::PW_Basis* pw_rho)
 ///
 /// distribute plane waves to different cores
 /// Known: G, GT, GGT, fftnx, fftny, nz, poolnproc, poolrank, ggecut
-/// output: ig2isz[ig], istot2ixy[is], is2fftixy[is], fftixy2ip[ixy], gg[ig], gcar[ig], gdirect[ig], nst, nstot
+/// output: ig2isz[ig], fftixyz2ig[isz], istot2ixy[is], is2fftixy[is], fftixy2ip[ixy], gg[ig], gcar[ig], gdirect[ig],
+/// nst, nstot
 ///
 void PW_Basis_Sup::distribute_g(const ModulePW::PW_Basis* pw_rho)
 {
@@ -82,7 +83,8 @@ void PW_Basis_Sup::distribute_g(const ModulePW::PW_Basis* pw_rho)
 ///
 /// Known: smooth grids
 /// Known: G, GT, GGT, fftny, fftnx, nz, poolnproc, poolrank, ggecut
-/// output: ig2isz[ig], istot2ixy[is], is2fftixy[is], fftixy2ip[ixy], startnsz_per[ip], nst_per[ip], nst
+/// output: ig2isz[ig], fftixyz2ig[isz], istot2ixy[is], is2fftixy[is], fftixy2ip[ixy], startnsz_per[ip], nst_per[ip],
+/// nst
 ///
 void PW_Basis_Sup::distribution_method3(const ModulePW::PW_Basis* pw_rho)
 {
@@ -171,7 +173,7 @@ void PW_Basis_Sup::distribution_method3(const ModulePW::PW_Basis* pw_rho)
     this->nst = this->nst_per[this->poolrank];
     this->nstnz = this->nst * this->nz;
 
-    // (5) Construct ig2isz and is2fftixy.
+    // (5) Construct ig2isz, fftixyz2ig and is2fftixy.
     this->get_ig2isz_is2fftixy(st_bottom2D, st_length2D, pw_rho);
 
     delete[] st_bottom2D;
@@ -285,13 +287,14 @@ void PW_Basis_Sup::divide_sticks_3(
 }
 
 ///
-/// (5) Construct ig2isz, and is2fftixy.
+/// (5) Construct ig2isz, fftixyz2ig and is2fftixy.
 /// is2fftixy contains the x-coordinate and y-coordinate of sticks on current core.
 /// ig2isz contains the z-coordinate of planewaves on current core.
+/// fftixyz2ig maps ixyz to local index of planewaves.
 /// We will scan all the sticks and find the planewaves on them, then store the information into ig2isz and is2fftixy.
 /// known: smooth grids
 /// known: this->nstot, st_bottom2D, st_length2D
-/// output: ig2isz, is2fftixy
+/// output: ig2isz, fftixyz2ig, is2fftixy
 ///
 void PW_Basis_Sup::get_ig2isz_is2fftixy(
     int* st_bottom2D, // minimum z of stick, stored in 1d array with this->nstot elements.
@@ -302,6 +305,8 @@ void PW_Basis_Sup::get_ig2isz_is2fftixy(
     {
         delete[] this->ig2isz;
         this->ig2isz = nullptr; // map ig to the z coordinate of this planewave.
+        delete[] this->fftixyz2ig;
+        this->fftixyz2ig = nullptr; // map isz to ig.
         delete[] this->is2fftixy;
         this->is2fftixy = nullptr; // map is (index of sticks) to ixy (iy + ix * fftny).
 #if defined(__CUDA) || defined(__ROCM)
@@ -317,6 +322,12 @@ void PW_Basis_Sup::get_ig2isz_is2fftixy(
     delete[] this->ig2isz;
     this->ig2isz = new int[this->npw]; // map ig to the z coordinate of this planewave.
     ModuleBase::GlobalFunc::ZEROS(this->ig2isz, this->npw);
+    delete[] this->fftixyz2ig;
+    this->fftixyz2ig = new int[this->nxyz]; // map isz to ig.
+    for (int isz = 0; isz < this->nxyz; ++isz)
+    {
+        this->fftixyz2ig[isz] = -1;
+    }
     delete[] this->is2fftixy;
     this->is2fftixy = new int[this->nst]; // map is (index of sticks) to ixy (iy + ix * fftny).
     for (int is = 0; is < this->nst; ++is)
@@ -376,6 +387,7 @@ void PW_Basis_Sup::get_ig2isz_is2fftixy(
         int is_now = fftixy2is[ixy_now];
         int isz_now = is_now * this->nz + iz;
         this->ig2isz[ig] = isz_now;
+        this->fftixyz2ig[ixy_now * this->nz + iz] = ig;
         pw_filled++;
         found[index] = true;
         if (xprime && ix == 0)
@@ -399,6 +411,7 @@ void PW_Basis_Sup::get_ig2isz_is2fftixy(
                     found[ixy * this->nz + z] = true;
                     int is = fftixy2is[ixy];
                     this->ig2isz[pw_filled] = is * this->nz + z;
+                    this->fftixyz2ig[ixy * this->nz + z] = pw_filled;
                     pw_filled++;
                     if (xprime && ixy / fftny == 0)
                         ng_xeq0++;

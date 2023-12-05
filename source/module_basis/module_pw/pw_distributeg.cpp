@@ -5,11 +5,12 @@
 
 namespace ModulePW
 {
-/// 
+///
 /// distribute plane waves to different cores
 /// Known: G, GT, GGT, fftnx, fftny, nz, poolnproc, poolrank, ggecut
-/// output: ig2isz[ig], istot2ixy[is], is2fftixy[is], fftixy2ip[ixy], gg[ig], gcar[ig], gdirect[ig], nst, nstot
-/// 
+/// output: ig2isz[ig], fftixyz2ig[isz], istot2ixy[is], is2fftixy[is], fftixy2ip[ixy], gg[ig], gcar[ig], gdirect[ig],
+/// nst, nstot
+///
 void PW_Basis::distribute_g()
 {
     ModuleBase::timer::tick(this->classname, "distributeg");
@@ -132,13 +133,13 @@ void PW_Basis::count_pw_st(
 }
 
 ///
-/// (5) Construct ig2isz, and is2fftixy.
+/// (5) Construct ig2isz, fftixyz2ig, and is2fftixy.
 /// is2fftixy contains the x-coordinate and y-coordinate of sticks on current core.
 /// ig2isz contains the z-coordinate of planewaves on current core.
-/// We will scan all the sticks and find the planewaves on them, then store the information into ig2isz and is2fftixy.
-/// known: this->nstot, st_bottom2D, st_length2D
-/// output: ig2isz, is2fftixy
-/// 
+/// fftixyz2ig maps ixyz to local index of planewaves.
+/// scan all the sticks and find the planewaves on them, then store the information into ig2isz, fftixyz2ig and
+/// is2fftixy. known: this->nstot, st_bottom2D, st_length2D output: ig2isz, fftixyz2ig, is2fftixy
+///
 void PW_Basis::get_ig2isz_is2fftixy(
     int* st_bottom2D,     // minimum z of stick, stored in 1d array with this->nstot elements.
     int* st_length2D     // the stick on (x, y) consists of st_length[x*fftny+y] planewaves.
@@ -147,6 +148,8 @@ void PW_Basis::get_ig2isz_is2fftixy(
     if (this->npw == 0)
     {
         delete[] this->ig2isz; this->ig2isz = nullptr; // map ig to the z coordinate of this planewave.
+        delete[] this->fftixyz2ig;
+        this->fftixyz2ig = nullptr;                          // map isz to ig.
         delete[] this->is2fftixy; this->is2fftixy = nullptr; // map is (index of sticks) to ixy (iy + ix * fftny).
 #if defined(__CUDA) || defined(__ROCM)
         if (this->device == "gpu") {
@@ -159,6 +162,12 @@ void PW_Basis::get_ig2isz_is2fftixy(
 
     delete[] this->ig2isz; this->ig2isz = new int[this->npw]; // map ig to the z coordinate of this planewave.
     ModuleBase::GlobalFunc::ZEROS(this->ig2isz, this->npw);
+    delete[] this->fftixyz2ig;
+    this->fftixyz2ig = new int[this->nxyz]; // map isz to ig.
+    for (int isz = 0; isz < this->nxyz; ++isz)
+    {
+        this->fftixyz2ig[isz] = -1;
+    }
     delete[] this->is2fftixy; this->is2fftixy = new int[this->nst]; // map is (index of sticks) to ixy (iy + ix * fftny).
     for (int is = 0; is < this->nst; ++is) 
     {
@@ -177,6 +186,7 @@ void PW_Basis::get_ig2isz_is2fftixy(
                 int z = iz;
                 if (z < 0) z += this->nz;
                 this->ig2isz[pw_filled] = st_move * this->nz + z;
+                this->fftixyz2ig[ixy * this->nz + z] = pw_filled;
                 pw_filled++;
             }
             this->is2fftixy[st_move] = ixy;

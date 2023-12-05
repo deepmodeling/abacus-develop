@@ -413,6 +413,7 @@ OBJS_IO=input.o\
     print_info.o\
     read_cube.o\
     read_rho.o\
+    read_rhog.o\
     restart.o\
     binstream.o\
     to_wannier90.o\
