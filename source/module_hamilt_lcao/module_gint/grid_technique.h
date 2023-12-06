@@ -4,6 +4,9 @@
 #include "grid_meshball.h"
 #include "grid_index.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
+#if ((defined __CUDA) /* || (defined __ROCM) */)
+#include <cuda_runtime.h>
+#endif
 
 // Author: mohan
 // Date: 2009-10-17
@@ -122,5 +125,65 @@ private:
 	void cal_trace_lo(void);
 	void check_bigcell(int* &ind_bigcell, bool* &bigcell_on_processor);
 	void get_startind(const int& ny, const int& nplane, const int& startz_current);
+
+#if ((defined __CUDA) /* || (defined __ROCM) */)
+public:
+	double* ylmcoef_g;
+
+	int *atom_nw_g;
+	int *ucell_atom_nwl_g;
+	double *psi_u_g;
+	bool *atom_iw2_new_g;
+	int *atom_iw2_ylm_g;
+	double **GridVlocal_v2_g;
+	const int nstreams = 4;
+	int nr_max;
+	int psi_size_max;
+	int psi_size_max_per_z;
+	int psir_size;
+	int atom_pair_size_of_meshcell;
+	int atom_pair_size_over_nbz;
+
+	cudaStream_t streams[4];
+	// streams[nstreams]
+	// TODO it needs to be implemented through configuration files
+
+	double *psir_ylm_left_global_g;
+	double *psir_ylm_right_global_g;
+
+	int *atom_pair_left_info_global;
+	int *atom_pair_left_info_global_g;
+	int *atom_pair_right_info_global;
+	int *atom_pair_right_info_global_g;
+
+	int *atom_pair_lda_global;
+	int *atom_pair_lda_global_g;
+	int *atom_pair_ldb_global;
+	int *atom_pair_ldb_global_g;
+	int *atom_pair_ldc_global;
+	int *atom_pair_ldc_global_g;
+
+	double **atom_pair_left_global;
+	double **atom_pair_right_global;
+	double **atom_pair_output_global;
+
+	double **atom_pair_left_global_g;
+	double **atom_pair_right_global_g;
+	double **atom_pair_output_global_g;
+
+	double *psi_input_double_global;
+	double *psi_input_double_global_g;
+
+	int *psi_input_int_global;
+	int *psi_input_int_global_g;
+
+	int *num_psir_global;
+	int *num_psir_global_g;
+
+private:
+	void init_gpu_gint_variables();
+	
+#endif
+
 };
 #endif

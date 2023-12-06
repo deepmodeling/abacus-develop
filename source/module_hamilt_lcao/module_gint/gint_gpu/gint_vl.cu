@@ -4,26 +4,11 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_lcao/module_gint/gint_gpu/vbatch_matrix_multiple/cuda_tools.cuh"
 
-__constant__ double ylmcoef[36];
-__constant__ int bxyz_g[1];
-__constant__ int max_size_g[1];
-__constant__ int nwmax_g[1];
-__constant__ double delta_r_g[1];
-
-void gint_gamma_vl_upload_const(const int max_size,
-                       const double *ylmcoef_now,
-                       const int bxyz)
-{
-    const int nwmax = GlobalC::ucell.nwmax;
-
-    checkCuda(cudaMemcpyToSymbol(ylmcoef, ylmcoef_now, 36 * sizeof(double)));
-    checkCuda(cudaMemcpyToSymbol(bxyz_g, &bxyz, sizeof(int)));
-    checkCuda(cudaMemcpyToSymbol(max_size_g, &max_size, sizeof(int)));
-    checkCuda(cudaMemcpyToSymbol(nwmax_g, &nwmax, sizeof(int)));
-    checkCuda(cudaMemcpyToSymbol(delta_r_g, &GlobalC::ORB.dr_uniform, sizeof(double)));
-}
-
-__global__ void get_psi_and_vldr3(double *input_double,
+__global__ void get_psi_and_vldr3(double *ylmcoef,
+                                  double delta_r_g,
+                                  double bxyz_g,
+                                  double nwmax_g,
+                                  double *input_double,
                                   int *input_int,
                                   int *num_psir,
                                   int psi_size_max,
@@ -180,7 +165,7 @@ __global__ void get_psi_and_vldr3(double *input_double,
             ylma[istart + 2 * il] = (bl3 * ylma[istart + 2 * il - 4] - bl2 * ylma[istart2 + 2 * il - 4] - 2.0 * dr[0] * ylma[istart1 + 2 * il - 2]) / bl1;
         }*/
     YLM_END:
-        distance /= delta_r_g[0];
+        distance /= delta_r_g;
 
         int ip = (int)(distance);
         double dx = distance - ip;
@@ -189,11 +174,11 @@ __global__ void get_psi_and_vldr3(double *input_double,
 
         double c3 = 3.0 * dx2 - 2.0 * dx3;
         double c1 = 1.0 - c3;
-        double c2 = (dx - 2.0 * dx2 + dx3) * delta_r_g[0];
-        double c4 = (dx3 - dx2) * delta_r_g[0];
+        double c2 = (dx - 2.0 * dx2 + dx3) * delta_r_g;
+        double c4 = (dx3 - dx2) * delta_r_g;
 
         double phi = 0.0;
-        int it_nw = it * nwmax_g[0];
+        int it_nw = it * nwmax_g;
         int iw_nr = (it_nw * nr_max + ip) * 2;
         int it_nw_iw = it_nw;
         for (int iw = 0; iw < atom_nw[it]; ++iw)
@@ -205,7 +190,7 @@ __global__ void get_psi_and_vldr3(double *input_double,
             double temp = phi * ylma[atom_iw2_ylm[it_nw_iw]];
             psir_ylm_right[dist_tmp] = temp;
             psir_ylm_left[dist_tmp] = temp * vlbr3_value;
-            dist_tmp += bxyz_g[0];
+            dist_tmp += bxyz_g;
             iw_nr += nr_max;
             iw_nr += nr_max;
             it_nw_iw++;
@@ -213,7 +198,7 @@ __global__ void get_psi_and_vldr3(double *input_double,
     }
 }
 
-__global__ void psi_multiple(const int* m, int* n,
+__global__ void psi_multiple(int bxyz_g, const int* m, int* n,
                                 double  const * const * global_A_array,
                                 double const * const * global_B_array,
                                 double ** global_C_array)
@@ -227,13 +212,13 @@ __global__ void psi_multiple(const int* m, int* n,
     #pragma unroll
     for (int iw_index = threadIdx.x; iw_index < nw_mul; iw_index += blockDim.x)
     {
-        int iw1 = iw_index / atom_nw2 * bxyz_g[0];
+        int iw1 = iw_index / atom_nw2 * bxyz_g;
         int iw2 = iw_index % atom_nw2;
         double v2 = 0.0;
         const double * left = &atom_left[iw1];
-        const double * right = &atom_right[iw2 *   bxyz_g[0]];
+        const double * right = &atom_right[iw2 * bxyz_g];
         #pragma unroll
-        for (int ib = 0; ib <  bxyz_g[0]; ++ib)
+        for (int ib = 0; ib <  bxyz_g; ++ib)
         {
             v2 += left[ib] * right[ib];
         }

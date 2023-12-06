@@ -2,11 +2,12 @@
 #define GINT_VL_CUH
 
 #include <cuda_runtime.h>
-void gint_gamma_vl_upload_const(const int max_size,
-                       const double *ylmcoef_now,
-                       const int bxyz);
 
-__global__ void get_psi_and_vldr3(double *input_double,
+__global__ void get_psi_and_vldr3(double *ylmcoef,
+                                  double delta_r_g,
+                                  double bxyz_g,
+                                  double nwmax_g,
+                                  double *input_double,
                                   int *input_int,
                                   int *num_psir,
                                   int psi_size_max,
