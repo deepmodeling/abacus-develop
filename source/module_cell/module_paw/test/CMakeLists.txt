@@ -7,7 +7,7 @@ install(FILES sphbes_ref.dat func.dat qlist.dat fq_ref.dat
   Si_test.xml gnorm.dat ptilde_ref.dat psi.dat rhoij1.dat vnlpsi_ref.dat
   H.LDA_PW-JTH.xml Fe.GGA_PBE-JTH.xml O.GGA_PBE-JTH.xml Si.GGA_PBE-JTH.xml
   STRU snlpsi_ref.dat vloc.dat ncoret.dat rhoij nhat.dat dij_ref C.xml H.xml rho0.dat
-  veff rhoij1 vks.dat vxc.dat dij_in.dat
+  veff rhoij1 vks.dat vxc.dat dij_in.dat rhor.dat
   DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 install(FILES C.xml H.xml 

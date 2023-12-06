@@ -44,15 +44,23 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
     ModuleBase::matrix forcecc(nat, 3);
     ModuleBase::matrix forcenl(nat, 3);
     ModuleBase::matrix forcescc(nat, 3);
-    if(GlobalV::use_paw)
-    {
+    ModuleBase::matrix forcepaw(nat,3);
 
-    }
-    else
+    // Force due to local ionic potential
+    // For PAW, calculated together in paw_cell.calculate_force
+    if(!GlobalV::use_paw)
     {
         this->cal_force_loc(forcelc, rho_basis, chr);
     }
+    else
+    {
+        forcelc.zero_out();
+    }
+
+    // Ewald
     this->cal_force_ew(forceion, rho_basis, p_sf);
+
+    // Force due to nonlocal part of pseudopotential
     if(wfc_basis != nullptr)
     {
         if(!GlobalV::use_paw)
@@ -69,14 +77,27 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
 
         }
     }
-    this->cal_force_cc(forcecc, rho_basis, chr);
+
+    // non-linear core correction
+    // not relevant for PAW
+    if(!GlobalV::use_paw)
+    {
+        this->cal_force_cc(forcecc, rho_basis, chr);
+    }
+    else
+    {
+        forcecc.zero_out();
+    }
+
+    // force due to core charge
+    // For PAW, calculated together in paw_cell.calculate_force
     if(!GlobalV::use_paw)
     {
         this->cal_force_scc(forcescc, rho_basis, elec.vnew, elec.vnew_exist);
     }
     else
     {
-
+        forcescc.zero_out();
     }
 
     ModuleBase::matrix stress_vdw_pw; //.create(3,3);
@@ -135,6 +156,20 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
     if(GlobalV::use_paw)
     {
         double * force_paw;
+        double * rhor;
+        rhor = new double[rho_basis->nrxx];
+        for(int ir = 0; ir < rho_basis->nrxx; ir++)
+        {
+            rhor[ir] = 0.0;
+        }
+        for(int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            for(int ir = 0; ir < rho_basis->nrxx; ir++)
+            {
+                rhor[ir] += chr->rho[is][ir] + chr->nhat[is][ir];
+            }
+        }
+
         force_paw = new double[3 * this->nat];
         ModuleBase::matrix v_xc, v_effective;
         v_effective.create(GlobalV::NSPIN, rho_basis->nrxx);
@@ -148,8 +183,18 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
             = XC_Functional::v_xc(rho_basis->nrxx, elec.charge, &GlobalC::ucell);
         v_xc = std::get<2>(etxc_vtxc_v);
 
-        GlobalC::paw_cell.calculate_force(v_effective.c, v_xc.c, force_paw);
+        GlobalC::paw_cell.calculate_force(v_effective.c, v_xc.c, rhor, force_paw);
+
+        for(int iat = 0; iat < this->nat; iat++)
+        {
+            // need to convert the unit
+            //forcepaw(iat, 0) = force_paw[3 * iat];
+            //forcepaw(iat, 1) = force_paw[3 * iat + 1];
+            //forcepaw(iat, 2) = force_paw[3 * iat + 2];
+        }
+
         delete[] force_paw;
+        delete[] rhor;
     }
 #endif
 
@@ -166,6 +211,11 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
             {
                 force(iat, ipol) = forcelc(iat, ipol) + forceion(iat, ipol) + forcenl(iat, ipol) + forcecc(iat, ipol)
                                    + forcescc(iat, ipol);
+
+                if(GlobalV::use_paw)
+                {
+                    force(iat, ipol) += forcepaw(iat, ipol);
+                }
 
                 if (vdw_solver != nullptr) // linpz and jiyy added vdw force, modified by zhengdy
                 {
