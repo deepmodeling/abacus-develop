@@ -404,6 +404,7 @@ void HamiltLCAO<TK, TR>::refresh()
             // operator has changed, resize hRS2
             this->hRS2.resize(this->hR->get_nnr() * 2); 
         }
+        this->hR->allocate(this->hRS2.data(), 0);
     }
 }
 
