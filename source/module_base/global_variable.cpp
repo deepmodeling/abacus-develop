@@ -251,6 +251,7 @@ int MIXING_NDIM = 8;
 double MIXING_GG0 = 1.00;
 double MIXING_BETA_MAG = 1.6;
 double MIXING_GG0_MAG = 1.00;
+double MIXING_GG0_MIN = 0.1;
 bool MIXING_TAU = 0;
 
 //==========================================================

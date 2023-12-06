@@ -839,6 +839,10 @@ bool input_parameters_set(std::map<std::string, InputParameter> input_parameters
     {
         INPUT.mixing_gg0_mag = *static_cast<double*>(input_parameters["mixing_gg0_mag"].get());
     }
+    else if (input_parameters.count("mixing_gg0_min") != 0)
+    {
+        INPUT.mixing_gg0_min = *static_cast<double*>(input_parameters["mixing_gg0_min"].get());
+    }
     else if (input_parameters.count("mixing_tau") != 0)
     {
         INPUT.mixing_tau = *static_cast<bool*>(input_parameters["mixing_tau"].get());
