@@ -144,21 +144,32 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
             iter_num++;
         }
     }
+    for (int i = 0; i < GridT.nstreams; i++)
+    {
+        checkCuda(cudaStreamSynchronize(GridT.streams[i]));
+    }
+
     for (int iat1 = 0; iat1 < GlobalC::ucell.nat; iat1++)
     {
         for (int iat2 = 0; iat2 < GlobalC::ucell.nat; iat2++)
         {
+            int stream_num = iter_num % GridT.nstreams;
             hamilt::AtomPair<double> *tmp_ap = hRGint->find_pair(iat1, iat2);
             if (tmp_ap == nullptr)
                 continue;
-            checkCuda(cudaMemcpy(tmp_ap->get_pointer(0),
+
+            checkCuda(cudaMemcpyAsync(tmp_ap->get_pointer(0),
                                     GridT.GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2],
                                     tmp_ap->get_row_size() * tmp_ap->get_col_size() * sizeof(double),
-                                    cudaMemcpyDeviceToHost));
-            checkCuda(cudaMemset(GridT.GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2],
+                                    cudaMemcpyDeviceToHost, GridT.streams[stream_num]));
+            checkCuda(cudaMemsetAsync(GridT.GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2],
                                     0,
-                                    tmp_ap->get_row_size() * tmp_ap->get_col_size() * sizeof(double)));
+                                    tmp_ap->get_row_size() * tmp_ap->get_col_size() * sizeof(double), GridT.streams[stream_num]));
         }
+    }
+    for (int i = 0; i < GridT.nstreams; i++)
+    {
+        checkCuda(cudaStreamSynchronize(GridT.streams[i]));
     }
 }
 
