@@ -306,7 +306,7 @@ void vbatch_gemm<double>(const int max_m, const int max_n,
     // The vbatched_gemm_impl is for C = trans(A) * B + C, but we need trans(C).
     // Which means: trans(C) = trans(trans(A)*B + C) = trans(B) * A + trans(C)
     // Then, ldc should be N, lda and ldb should be K
-    vbatched_gemm_impl<double, 16, 4, 32, 16, 16, 16, 4, 16, 4>
+    vbatched_gemm_impl<double, 8, 4, 16, 28, 8, 8, 4, 8, 4>
                     (max_n, max_m, n, m, k,
                     global_B_array, global_ldb,
                     global_A_array, global_lda,
