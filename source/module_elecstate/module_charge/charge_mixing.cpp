@@ -40,7 +40,7 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
     GlobalV::ofs_running<<"mixing_gg0_min: "<< GlobalV::MIXING_GG0_MIN <<std::endl;
     if (GlobalV::NSPIN==2)
     {
-        GlobalV::ofs_running<<"mixing_beta_mag: "<< GlobalV::MIXING_BETA_MAG <<std::endl;
+        GlobalV::ofs_running<<"mixing_beta_mag: "<< this->mixing_beta_mag <<std::endl;
         GlobalV::ofs_running<<"mixing_gg0_mag: "<< GlobalV::MIXING_GG0_MAG <<std::endl;
     }
     GlobalV::ofs_running<<"mixing_ndim: "<< this->mixing_ndim <<std::endl;
@@ -448,13 +448,73 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
     double *taur_out, *taur_in;
     if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
     {
-        taur_in = chr->kin_r_save[0];
-        taur_out = chr->kin_r[0];
-        // Note: there is no kerker modification for tau because I'm not sure
-        // if we should have it. If necessary we can try it in the future.
-        this->mixing->push_data(this->tau_mdata, taur_in, taur_out, nullptr, false);
-
-        this->mixing->mix_data(this->tau_mdata, taur_out);
+        if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
+        {
+            taur_in = chr->kin_r_save[0];
+            taur_out = chr->kin_r[0];
+            // no kerker yet
+            auto screen = std::bind(&Charge_Mixing::Kerker_screen_real, this, std::placeholders::_1);
+            this->mixing->push_data(this->tau_mdata, taur_in, taur_out, nullptr, false);    
+            // do not update coeff and mix tau
+            this->mixing->mix_data(this->tau_mdata, taur_out);
+        }
+        else if (GlobalV::NSPIN == 2)
+        {
+            // kin_up + kin_down & kin_up - kin_down
+            double* kin_r_mag = nullptr;
+            double* kin_r_mag_save = nullptr;
+            kin_r_mag = new double[this->rhopw->nrxx * GlobalV::NSPIN];
+            kin_r_mag_save = new double[this->rhopw->nrxx * GlobalV::NSPIN];
+            for (int ir = 0; ir < this->rhopw->nrxx; ir++)
+            {
+                kin_r_mag[ir] = chr->kin_r[0][ir] + chr->kin_r[1][ir];
+                kin_r_mag_save[ir] = chr->kin_r_save[0][ir] + chr->kin_r_save[1][ir];
+            }
+            for (int ir = 0; ir < this->rhopw->nrxx; ir++)
+            {
+                kin_r_mag[ir + this->rhopw->nrxx] = chr->kin_r[0][ir] - chr->kin_r[1][ir];
+                kin_r_mag_save[ir + this->rhopw->nrxx] = chr->kin_r_save[0][ir] - chr->kin_r_save[1][ir];
+            }
+            taur_in = kin_r_mag_save;
+            taur_out = kin_r_mag;
+            const int nrxx = this->rhopw->nrxx;
+            auto screen = std::bind(&Charge_Mixing::Kerker_screen_real, this, std::placeholders::_1);
+            auto twobeta_mix
+                = [this, nrxx](double* out, const double* in, const double* sres) {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 256)
+#endif
+                    for (int i = 0; i < nrxx; ++i)
+                    {
+                        out[i] = in[i] + this->mixing_beta * sres[i];
+                    }
+                // magnetism
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 256)
+#endif
+                    for (int i = nrxx; i < 2 * nrxx; ++i)
+                    {
+                        out[i] = in[i] + this->mixing_beta_mag * sres[i];
+                    }
+                };
+            // no kerker yet
+            this->mixing->push_data(this->tau_mdata, taur_in, taur_out, nullptr, twobeta_mix, false);
+            // do not update coeff and mix tau
+            this->mixing->mix_data(this->tau_mdata, taur_out);
+            // convert back to chr->kin_r
+            for (int is = 0; is < GlobalV::NSPIN; is++)
+            {
+                ModuleBase::GlobalFunc::ZEROS(chr->kin_r[is], this->rhopw->nrxx);
+            }
+            for (int ir = 0; ir < this->rhopw->nrxx; ir++)
+            {
+                chr->kin_r[0][ir] = 0.5 * (taur_out[ir] + taur_out[ir+this->rhopw->nrxx]);
+                chr->kin_r[1][ir] = 0.5 * (taur_out[ir] - taur_out[ir+this->rhopw->nrxx]);
+            }
+            // delete
+            delete[] kin_r_mag;
+            delete[] kin_r_mag_save;
+        }
     }
 
 }
