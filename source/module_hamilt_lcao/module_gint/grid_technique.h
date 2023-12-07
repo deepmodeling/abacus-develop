@@ -7,6 +7,7 @@
 #if ((defined __CUDA) /* || (defined __ROCM) */)
 #include <cuda_runtime.h>
 #endif
+#include "gint_gpu/vbatch_matrix_multiple/vbatch_matrix_mul.cuh"
 
 // Author: mohan
 // Date: 2009-10-17
@@ -179,7 +180,7 @@ public:
 
 	int *num_psir_global;
 	int *num_psir_global_g;
-
+	func_type fastest_matrix_mul;
 private:
 	void init_gpu_gint_variables();
 	

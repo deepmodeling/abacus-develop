@@ -594,7 +594,6 @@ void Grid_Technique::cal_trace_lo(void)
 
 	void Grid_Technique::init_gpu_gint_variables()
 	{
-
 		double ylmcoef[100];
 		ModuleBase::GlobalFunc::ZEROS(ylmcoef, 100);
 		for (int i = 0; i < 100; i++)
@@ -670,7 +669,6 @@ void Grid_Technique::cal_trace_lo(void)
 
 		const int max_atom_pair_number = GlobalC::ucell.nat * GlobalC::ucell.nat;
 		checkCudaErrors(cudaMallocHost((void **)&GridVlocal_v2_g, max_atom_pair_number * sizeof(double *)));  // the points to gpu memory, but gpu memory address save on host
-		memset(GridVlocal_v2_g, 0, max_atom_pair_number * sizeof(double));
 
 		for (int iat1 = 0; iat1 < GlobalC::ucell.nat; iat1++)
 		{
@@ -689,10 +687,6 @@ void Grid_Technique::cal_trace_lo(void)
 				}
 			}
 		}
-		//for (int i = 0; i < max_atom_pair_number; i++)
-		//{
-		//	GridVlocal_v2_g[i] = nullptr; // malloc when use
-		//}
 
 		psir_size = nbzp * max_atom * bxyz * GlobalC::ucell.nwmax;
 		checkCudaErrors(cudaMalloc((void **)&psir_ylm_left_global_g, psir_size * nstreams * sizeof(double)));
@@ -705,28 +699,18 @@ void Grid_Technique::cal_trace_lo(void)
 
 		checkCudaErrors(cudaMallocHost((void **)&atom_pair_left_info_global, atom_pair_size_over_nbz * nstreams * sizeof(int)));
 		checkCudaErrors(cudaMalloc((void **)&atom_pair_left_info_global_g, atom_pair_size_over_nbz * nstreams * sizeof(int)));
-		memset(atom_pair_left_info_global, 0, atom_pair_size_over_nbz * nstreams * sizeof(int));
-
-
 
 		checkCudaErrors(cudaMallocHost((void **)&atom_pair_right_info_global, atom_pair_size_over_nbz * nstreams * sizeof(int)));
 		checkCudaErrors(cudaMalloc((void **)&atom_pair_right_info_global_g, atom_pair_size_over_nbz * nstreams * sizeof(int)));
 
-		memset(atom_pair_right_info_global, 0, atom_pair_size_over_nbz * nstreams * sizeof(int));
-
 		checkCudaErrors(cudaMallocHost((void **)&atom_pair_lda_global, atom_pair_size_over_nbz * nstreams * sizeof(int)));
 		checkCudaErrors(cudaMalloc((void **)&atom_pair_lda_global_g, atom_pair_size_over_nbz * nstreams * sizeof(int)));
 
-		memset(atom_pair_lda_global, 0, atom_pair_size_over_nbz * nstreams * sizeof(int));
-
-
 		checkCudaErrors(cudaMallocHost((void **)&atom_pair_ldb_global, atom_pair_size_over_nbz * nstreams * sizeof(int)));
 		checkCudaErrors(cudaMalloc((void **)&atom_pair_ldb_global_g, atom_pair_size_over_nbz * nstreams * sizeof(int)));
-		memset(atom_pair_ldb_global, 0, atom_pair_size_over_nbz * nstreams * sizeof(int));
 
 		checkCudaErrors(cudaMallocHost((void **)&atom_pair_ldc_global, atom_pair_size_over_nbz * nstreams * sizeof(int)));
 		checkCudaErrors(cudaMalloc((void **)&atom_pair_ldc_global_g, atom_pair_size_over_nbz * nstreams * sizeof(int)));
-		memset(atom_pair_ldc_global, 0, atom_pair_size_over_nbz * nstreams * sizeof(int));
 
 		checkCudaErrors(cudaMallocHost((void **)&atom_pair_left_global, atom_pair_size_over_nbz * nstreams * sizeof(double *)));
 		checkCudaErrors(cudaMallocHost((void **)&atom_pair_right_global, atom_pair_size_over_nbz * nstreams * sizeof(double *)));
@@ -735,28 +719,23 @@ void Grid_Technique::cal_trace_lo(void)
 		checkCudaErrors(cudaMalloc((void **)&atom_pair_left_global_g, atom_pair_size_over_nbz * nstreams * sizeof(double *)));
 		checkCudaErrors(cudaMalloc((void **)&atom_pair_right_global_g, atom_pair_size_over_nbz * nstreams * sizeof(double *)));
 		checkCudaErrors(cudaMalloc((void **)&atom_pair_output_global_g, atom_pair_size_over_nbz * nstreams * sizeof(double *)));
-		memset(atom_pair_left_global, 0, atom_pair_size_over_nbz * nstreams * sizeof(double *));
-		memset(atom_pair_left_global, 0, atom_pair_size_over_nbz * nstreams * sizeof(double *));
-		memset(atom_pair_left_global, 0, atom_pair_size_over_nbz * nstreams * sizeof(double *));
 
 		psi_size_max = max_atom * bxyz * nbzp;
 		psi_size_max_per_z = max_atom * bxyz;
 		checkCudaErrors(cudaMallocHost((void **)&psi_input_double_global, psi_size_max * nstreams * 5 * sizeof(double)));
 		checkCudaErrors(cudaMalloc((void **)&psi_input_double_global_g, psi_size_max * nstreams * 5 * sizeof(double)));
-		memset(psi_input_double_global, 0, psi_size_max * nstreams * 5 * sizeof(double));
 
 		checkCudaErrors(cudaMallocHost((void **)&psi_input_int_global, psi_size_max * nstreams * 2 * sizeof(int)));
 		checkCudaErrors(cudaMalloc((void **)&psi_input_int_global_g, psi_size_max * nstreams * 2 * sizeof(int)));
-		memset(psi_input_int_global, 0, psi_size_max * nstreams * 2 * sizeof(int));
 
 		checkCudaErrors(cudaMallocHost((void **)&num_psir_global, nbzp * nstreams * sizeof(int)));
 		checkCudaErrors(cudaMalloc((void **)&num_psir_global_g, nbzp * nstreams * sizeof(int)));
-		memset(num_psir_global, 0, nbzp * nstreams * sizeof(int));
 
-		checkCudaErrors(cudaSetDevice(0));
 		for (int i = 0; i < nstreams; ++i)
 		{
 			checkCudaErrors(cudaStreamCreate(&streams[i]));
 		}
+		fastest_matrix_mul = vbatched_gemm_impl<double, 16, 4, 32, 16, 16, 16, 4, 16, 4>;
+		gemm_algo_selector(GlobalC::ucell.nwmax,GlobalC::ucell.nwmax, bxyz, fastest_matrix_mul);
 	}
 #endif
