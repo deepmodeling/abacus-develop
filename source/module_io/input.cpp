@@ -3378,7 +3378,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         }
     }
     // set nspin with noncolin
-    if (noncolin)
+    if (noncolin || lspinorb)
     {
         nspin = 4;
     }
