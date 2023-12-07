@@ -178,7 +178,8 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
     // if ucell is odd, it's correct,
     // if ucell is even, it's also correct.
     // +1.0e-8 in case like (2.999999999+1)/2
-    int fermi_band = static_cast<int>((GlobalV::nelec + 1) / 2 + 1.0e-8);
+    // if NSPIN=4, each band only one electron, fermi_band should be nelec
+    int fermi_band = GlobalV::NSPIN<4 ? static_cast<int>((GlobalV::nelec + 1) / 2 + 1.0e-8) : GlobalV::nelec;
     int bands_below = GlobalV::NBANDS_ISTATE;
     int bands_above = GlobalV::NBANDS_ISTATE;
 
