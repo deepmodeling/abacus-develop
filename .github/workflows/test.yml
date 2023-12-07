@@ -2,7 +2,11 @@ name: Integration Test and Unit Test
 
 on:
   pull_request:
-
+  
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+  
 jobs:
   test:
     name: Test
@@ -13,7 +17,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: "refs/pull/${{ github.event.number }}/merge"
           submodules: recursive
       - name: Build
         run: |
