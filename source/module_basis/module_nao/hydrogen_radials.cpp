@@ -134,7 +134,7 @@ std::vector<double> HydrogenRadials::generate_hydrogen_radial_segment(const doub
     {
         // Bohr radius is 1.0
         double rho = 2.0 * rgrid[ir] * charge / n / a0;
-        rvalue[ir] = norm_factor * pow(rho, l) * exp(-rho/2.0) * this->assoc_laguerre_.value(
+        rvalue[ir] = norm_factor * std::pow(rho, l) * exp(-rho/2.0) * this->assoc_laguerre_.value(
             n, l, rho
         );
     }
@@ -213,6 +213,10 @@ double HydrogenRadials::generate_hydrogen_radial_toconv(const double charge,
 std::vector<std::pair<int, int>> HydrogenRadials::unzip_strategy(const int nmax,
                                                                  const std::string strategy)
 {
+    if(strategy != "energy")
+    {
+        assert(nmax < 8);
+    }
     std::vector<std::pair<int, int>> nl_pairs;
     if(strategy == "minimal")
     {
@@ -220,6 +224,36 @@ std::vector<std::pair<int, int>> HydrogenRadials::unzip_strategy(const int nmax,
         {
             std::pair<int, int> nl_pair = std::make_pair(n, n - 1);
             nl_pairs.push_back(nl_pair);
+        }
+    }
+    else if(strategy == "energy")
+    {
+        // 1s, -(n+1)-> 2s, -(l+1)-> 2p, 3s, -(n+1)-> 3p, 4s, -(l+1)-> 3d, 4p, 5s, -(n+1)-> 4d, 5p, 6s
+        int starting_n = 1;
+        int starting_l = 0;
+        int nelec = 0;
+        int nl_switch = 0;
+        while(nelec < nmax) // now nmax is the full number of electrons of certain atom
+        {
+            int n = starting_n;
+            int l = starting_l;
+            do
+            {
+                nl_pairs.push_back(std::make_pair(n, l));
+                nelec += (2*l + 1)*2;
+                n++;
+                l--;
+            } while (l >= 0);
+            
+            if(nl_switch%2 == 1)
+            {
+                starting_l++;
+            }
+            else
+            {
+                starting_n++;
+            }
+            nl_switch++;
         }
     }
     else
@@ -319,7 +353,13 @@ HydrogenRadials::mapping_nl_lzeta(const int nmax,
     std::map<std::pair<int, int>, std::pair<int, int>> nl_lzeta;
     std::vector<std::pair<int, int>> nl_pairs = unzip_strategy(nmax, strategy);
     // initialize nzetas by all zeros
-    std::vector<int> nzetas(nmax, 0);
+    // get lmax
+    int lmax = 0;
+    for(auto nl_pair: nl_pairs)
+    {
+        lmax = lmax>nl_pair.second?lmax:nl_pair.second;
+    }
+    std::vector<int> nzetas(lmax + 1, 0);
     for(auto nl_pair : nl_pairs)
     {
         int n = nl_pair.first;
@@ -327,6 +367,16 @@ HydrogenRadials::mapping_nl_lzeta(const int nmax,
         nl_lzeta[nl_pair] = std::make_pair(l, nzetas[l]);
         nzetas[l] += 1;
     }
+    // import to standard RadialSet data structure
+    lmax_ = lmax;
+    nzeta_ = new int[lmax_ + 1];
+    for(int l = 0; l <= lmax_; ++l)
+    {
+        nzeta_[l] = nzetas[l];
+        nzeta_max_ = nzeta_max_>nzeta_[l]?nzeta_max_:nzeta_[l];
+    }
+    indexing();
+
     return nl_lzeta;
 }
 
@@ -341,25 +391,8 @@ void HydrogenRadials::hydrogen(const double charge,
     std::map<std::pair<int, int>, std::pair<std::vector<double>, std::vector<double>>> orbitals = 
         generate_orb(charge, nmax, dr, conv_thr, rank, strategy, ptr_log);
     std::map<std::pair<int, int>, std::pair<int, int>> nl_lzeta = mapping_nl_lzeta(nmax, strategy);
-    
-    lmax_ = nmax - 1;
-    // count orbitals
-    nchi_ = orbitals.size();
-    nzeta_ = new int[nmax];
-    for(int i = 0; i != nmax; ++i)
-    {
-        nzeta_[i] = 0;
-    }
-    for(auto map: nl_lzeta)
-    {
-        int n = map.first.first;
-        int l = map.first.second;
-        int lzeta = map.second.second;
-        nzeta_[l] = std::max(lzeta + 1, nzeta_[l]);
-    }
-    nzeta_max_ = *std::max_element(nzeta_, nzeta_ + nmax);
-    indexing();
 
+    nchi_ = orbitals.size();
     chi_ = new NumericalRadial[nchi_];
 
     int ichi = 0;

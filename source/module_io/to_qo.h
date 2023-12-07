@@ -232,7 +232,7 @@ class toQO
         /// @brief strategy for generating QO
         /// @details full: 1s, 2s, 2p, 3s, 3p, 3d, ...
         ///          minimal: 1s, 2p, 3d, 4f, ...
-        ///          equal: according to 
+        ///          energy: according to Hund's rule
         std::string strategy_ = "minimal";
 
         //

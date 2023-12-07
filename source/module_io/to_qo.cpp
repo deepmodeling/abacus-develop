@@ -52,7 +52,14 @@ void toQO::initialize(UnitCell* p_ucell,
     std::vector<int> nmax = std::vector<int>(p_ucell_->ntype);
     for(int itype = 0; itype < ntype_; itype++)
     {
-        nmax[itype] = atom_database_.principle_quantum_number[symbols_[itype]];
+        if(strategy_ != "energy")
+        {
+            nmax[itype] = atom_database_.principle_quantum_number[symbols_[itype]];
+        }
+        else
+        {
+            nmax[itype] = atom_database_.atom_Z[symbols_[itype]];
+        }
     }
     build_ao(p_ucell_->ntype, charges_.data(), nmax.data());
     // neighbor list search
@@ -129,20 +136,14 @@ void toQO::build_ao(const int ntype, const double* const charges, const int* con
         ao_->build(ntype, charges, nmax, symbols_.data(), GlobalV::qo_thr, strategy_);
         ModuleBase::SphericalBesselTransformer sbt;
         ao_->set_transformer(sbt);
-        for(int it = 0; it < ntype; it++)
+        
+        for(int itype = 0; itype < ntype; itype++)
         {
-            for(int n = 1; n <= nmax[it]; n++)
+            for(int l = 0; l <= ao_->lmax(itype); l++)
             {
-                if(strategy_ == "minimal")
-                {
-                    nchi_ += 2*n - 1;
-                }
-                else
-                {
-                    nchi_ += n*n;
-                }
+                nchi_ += (2*l+1)*ao_->nzeta(itype, l);
             }
-        } // nchi_ is (l, m)-resoluted
+        }
     }
     else
     {

@@ -40,6 +40,17 @@ AddTest(
 )
 
 AddTest(
+  TARGET pswfc_radials
+  SOURCES
+  pswfc_radials_test.cpp
+    ../pswfc_radials.cpp
+    ../radial_set.cpp
+    ../numerical_radial.cpp
+    ../../../module_io/output_radial.cpp
+  LIBS ${math_libs} device base
+)
+
+AddTest(
   TARGET radial_collection
   SOURCES
     radial_collection_test.cpp
@@ -47,6 +58,7 @@ AddTest(
     ../atomic_radials.cpp
     ../beta_radials.cpp
     ../hydrogen_radials.cpp
+    ../pswfc_radials.cpp
     ../radial_set.cpp
     ../numerical_radial.cpp
     ../../../module_io/output_radial.cpp
@@ -62,6 +74,7 @@ AddTest(
     ../atomic_radials.cpp
     ../beta_radials.cpp
     ../hydrogen_radials.cpp
+    ../pswfc_radials.cpp
     ../radial_set.cpp
     ../numerical_radial.cpp
     ../two_center_bundle.cpp
@@ -91,6 +104,7 @@ AddTest(
     ../atomic_radials.cpp
     ../beta_radials.cpp
     ../hydrogen_radials.cpp
+    ../pswfc_radials.cpp
     ../radial_set.cpp
     ../numerical_radial.cpp
     ../two_center_bundle.cpp
@@ -110,6 +124,7 @@ AddTest(
     ../atomic_radials.cpp
     ../beta_radials.cpp
     ../hydrogen_radials.cpp
+    ../pswfc_radials.cpp
     ../radial_set.cpp
     ../numerical_radial.cpp
     ../../../module_io/output_radial.cpp
