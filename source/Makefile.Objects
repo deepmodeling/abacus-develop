@@ -327,6 +327,7 @@ OBJS_ORBITAL=ORB_atomic.o\
       parallel_orbitals.o\
 	  atomic_radials.o\
       hydrogen_radials.o\
+      pswfc_radials.o\
 	  beta_radials.o\
 	  numerical_radial.o\
 	  radial_collection.o\
