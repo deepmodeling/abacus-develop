@@ -645,7 +645,7 @@ void Input::Default(void)
     qo_switch = false;
     qo_basis = "hydrogen";
     qo_thr = 1e-6;
-    qo_screening_coeff = 0.0;
+    qo_screening_coeff = 0.1;
 
     return;
 }
@@ -4405,6 +4405,23 @@ void Input::Check(void)
         if (sccut <= 0)
         {
             ModuleBase::WARNING_QUIT("INPUT", "sccut must > 0");
+        }
+    }
+    if(qo_switch)
+    {
+        if(qo_basis == "pswfc")
+        {
+            if(qo_screening_coeff < 1e-6)
+            {
+                ModuleBase::WARNING_QUIT("INPUT", "screening coefficient of pswfc must be larger than 0");
+            }
+        }
+        else if(qo_basis == "hydrogen")
+        {
+            if(qo_thr > 1e-6)
+            {
+                ModuleBase::WARNING("INPUT", "too high the convergence threshold might yield unacceptable result");
+            }
         }
     }
 

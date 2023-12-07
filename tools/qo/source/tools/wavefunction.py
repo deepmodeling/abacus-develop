@@ -8,11 +8,13 @@ def parse(nkpts: int, path = "./"):
     """
     wfc = []
     kpoints = []
+    energies = []
     if path[-1] != "/":
         path += "/"
     for ik in range(1, nkpts+1):
         fname = path + f"LOWF_K_{ik}.txt"
         wfc_k = []
+        energies_k = []
         wfc_k_b = []
         with open(fname, "r") as f:
             lines = f.readlines()
@@ -31,7 +33,7 @@ def parse(nkpts: int, path = "./"):
                 #print("band index:", line)
                 pass
             elif line.endswith("(Ry)"):
-                #print("energy eigenvalue:", line)
+                energies_k.append(float(line.split()[0]))
                 pass
             elif line.endswith("(Occupations)"):
                 if len(wfc_k_b) > 0:
@@ -48,11 +50,18 @@ def parse(nkpts: int, path = "./"):
                 else:
                     for coeff in line.strip().split(): # remove leading and trailing whitespaces
                         wfc_k_b.append(float(coeff))
+        # last band
+        wfc_k_b = np.array(wfc_k_b)
+        wfc_k_b = wfc_k_b[::2] + 1j * wfc_k_b[1::2]
+        wfc_k.append(wfc_k_b)
 
         wfc.append(wfc_k)
+        energies.append(energies_k)
+
     kpoints = np.array(kpoints)
     wfc = np.array(wfc)
-    return wfc, kpoints
+    energies = np.array(energies)
+    return wfc, kpoints, energies
 
 if __name__ == "__main__":
-    print(parse(8))
+    print(parse(8, path = "./examples/input/"))

@@ -12,7 +12,7 @@ def recover_from_upper_triangle(matrix: list) -> np.ndarray:
         np.ndarray: full matrix
     """
     matrix = np.array(matrix)
-    matrix = matrix + matrix.T
+    matrix = matrix + matrix.conj().T
     for i in range(len(matrix)):
         matrix[i][i] = matrix[i][i] / 2
     return matrix
