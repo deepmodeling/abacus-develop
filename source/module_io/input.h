@@ -93,6 +93,7 @@ class Input
     int npart_sto; //for method_sto = 2, reduce memory
     bool cal_cond; //calculate electronic conductivities
     double cond_che_thr; //control the error of Chebyshev expansions for conductivities
+    int cond_smear; //smearing method for conductivities 1: Gaussian 2: Lorentzian
     double cond_dw; //d\omega for conductivities
     double cond_wcut; //cutoff \omega for conductivities
     double cond_dt;  //dt to integrate conductivities
@@ -575,6 +576,7 @@ class Input
     double sc_thr; // threshold for spin-constrained DFT in uB
     int nsc; // maximum number of inner lambda loop
     int nsc_min; // minimum number of inner lambda loop
+    int sc_scf_nmin; // minimum number of outer scf loop before initial lambda loop
     double alpha_trial; // initial trial step size for lambda in eV/uB^2
     double sccut; // restriction of step size in eV/uB
     std::string sc_file; // file name for Deltaspin (json format)

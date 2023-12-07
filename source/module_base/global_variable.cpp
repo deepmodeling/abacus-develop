@@ -283,6 +283,7 @@ bool decay_grad_switch = 0;
 double sc_thr = 1.0e-6;
 int nsc = 100;
 int nsc_min = 2;
+int sc_scf_nmin = 2;
 double alpha_trial = 0.01; // eV/uB^2
 double sccut = 3;          // eV/uB
 std::string sc_file = "none";

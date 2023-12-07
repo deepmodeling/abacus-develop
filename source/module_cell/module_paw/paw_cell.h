@@ -162,6 +162,9 @@ class Paw_Cell
     // I'd rather also calculate it once and save it
     std::vector<double> gnorm;
 
+    // i(k+G), used in force calculation
+    std::vector<std::vector<std::complex<double>>> ikpg;
+
     void set_ylm(const int npw_in, const double ** kpg);
 
     std::vector<int> isk;
@@ -175,6 +178,9 @@ class Paw_Cell
     // This function calculates the nonlocal potential V_{NL}|psi> or (S+I)|psi>
     // mode = 0 : V_{NL}|psi>, mode = 1 : (S+I)|psi>
     void paw_nl_psi(const int mode, const std::complex<double> * psi, std::complex<double> * vnlpsi);
+
+    
+    void paw_nl_force(const std::complex<double> * psi, const double * epsilon, const double * weight, const int nbands , double * force);
 
     // set by providing dij explicitly
     void set_dij(const int iat, double** dij_in){paw_atom_list[iat].set_dij(dij_in);}

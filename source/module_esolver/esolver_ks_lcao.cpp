@@ -83,12 +83,12 @@ namespace ModuleESolver
 
         if (ModuleSymmetry::Symmetry::symm_flag == 1)
         {
-            this->symm.analy_sys(ucell, GlobalV::ofs_running);
+            ucell.symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running);
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
         }
 
         // Setup the k points according to symmetry.
-        this->kv.set(this->symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, ucell.G, ucell.latvec);
+        this->kv.set(ucell.symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, ucell.G, ucell.latvec);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
         Print_Info::setup_parameters(ucell, this->kv);
@@ -281,7 +281,7 @@ namespace ModuleESolver
         * this->exx_lri_double,
         * this->exx_lri_complex,
 #endif  
-        & this->symm);
+        & GlobalC::ucell.symm);
     // delete RA after cal_Force
     this->RA.delete_grid();
     this->have_force = true;
@@ -487,7 +487,7 @@ namespace ModuleESolver
     // first need to calculate the weight according to
     // electrons number.
 
-    if (this->wf.init_wfc == "file")
+    if (istep == 0 && this->wf.init_wfc == "file" && this->LOWF.error == 0)
     {
         if (iter == 1)
         {
@@ -564,7 +564,7 @@ namespace ModuleESolver
     }
 
     // run the inner lambda loop to contrain atomic moments with the DeltaSpin method
-    if (GlobalV::sc_mag_switch && iter > 1)
+    if (GlobalV::sc_mag_switch && iter > GlobalV::sc_scf_nmin)
     {
         SpinConstrain<TK, psi::DEVICE_CPU>& sc = SpinConstrain<TK, psi::DEVICE_CPU>::getScInstance();
         sc.run_lambda_loop(iter-1);
@@ -651,7 +651,7 @@ namespace ModuleESolver
     Symmetry_rho srho;
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        srho.begin(is, *(this->pelec->charge), this->pw_rho, GlobalC::Pgrid, this->symm);
+        srho.begin(is, *(this->pelec->charge), this->pw_rho, GlobalC::Pgrid, GlobalC::ucell.symm);
     }
 
     // (6) compute magnetization, only for spin==2

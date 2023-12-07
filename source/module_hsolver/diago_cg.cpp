@@ -19,9 +19,9 @@ DiagoCG<T, Device>::DiagoCG(const Real* precondition_in)
     this->precondition = precondition_in;
     test_cg = 0;
     reorder = false;
-    this->one = &this->cs.one;
-    this->zero = &this->cs.zero;
-    this->neg_one = &this->cs.neg_one;
+    this->one = new T(static_cast<T>(1.0));
+    this->zero = new T(static_cast<T>(0.0));
+    this->neg_one = new T(static_cast<T>(-1.0));
 }
 
 template<typename T, typename Device>
@@ -35,6 +35,10 @@ DiagoCG<T, Device>::~DiagoCG() {
     delmem_complex_op()(this->ctx, this->gradient);
     delmem_complex_op()(this->ctx, this->g0);
     delmem_complex_op()(this->ctx, this->lagrange);
+
+    delete this->one;
+    delete this->zero;
+    delete this->neg_one;
 }
 
 template<typename T, typename Device>
@@ -531,7 +535,7 @@ void DiagoCG<T, Device>::schmit_orth(
     // be careful , here reduce m+1
     Parallel_Reduce::reduce_pool(lagrange_so, m + 1);
 
-    T var = cs.zero;
+    T var = {};
     syncmem_complex_d2h_op()(this->cpu_ctx, this->ctx, &var, lagrange_so + m, 1);
     Real psi_norm = get_real(var);
 

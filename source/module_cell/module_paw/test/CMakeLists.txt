@@ -45,3 +45,8 @@ AddTest(
 )
 add_dependencies(Test_Paw4 libpaw_interface)
 
+AddTest(
+  TARGET Test_Paw5
+  LIBS ${math_libs} base device
+  SOURCES test_paw5.cpp ../paw_element.cpp ../paw_sphbes.cpp ../paw_cell.cpp ../paw_atom.cpp
+)
