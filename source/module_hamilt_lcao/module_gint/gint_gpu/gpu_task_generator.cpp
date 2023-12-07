@@ -113,8 +113,7 @@ int num_get_psi = 0;
           int atom_pair_nw = GlobalC::ucell.atoms[it1].nw * GlobalC::ucell.atoms[it2].nw;
           if (GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2] == nullptr)
           {
-             checkCuda(cudaMalloc((void **)&GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2], atom_pair_nw * sizeof(double)));
-             checkCuda(cudaMemset(GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2], 0, atom_pair_nw * sizeof(double)));
+            std::cout << "Error: GridVlocal did not malloc" << std::endl;
           }
 
           int calc_index1 = vldr3_index + atom1 * nwmax * GridT.bxyz;

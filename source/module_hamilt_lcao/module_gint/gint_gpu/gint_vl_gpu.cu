@@ -158,13 +158,22 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
             if (tmp_ap == nullptr)
                 continue;
 
-            checkCuda(cudaMemcpyAsync(tmp_ap->get_pointer(0),
+             checkCuda(cudaMemcpyAsync(tmp_ap->get_pointer(0),
                                     GridT.GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2],
                                     tmp_ap->get_row_size() * tmp_ap->get_col_size() * sizeof(double),
                                     cudaMemcpyDeviceToHost, GridT.streams[stream_num]));
             checkCuda(cudaMemsetAsync(GridT.GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2],
                                     0,
                                     tmp_ap->get_row_size() * tmp_ap->get_col_size() * sizeof(double), GridT.streams[stream_num]));
+      /*
+            checkCuda(cudaMemcpy(tmp_ap->get_pointer(0),
+                                    GridT.GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2],
+                                    tmp_ap->get_row_size() * tmp_ap->get_col_size() * sizeof(double),
+                                    cudaMemcpyDeviceToHost));
+            checkCuda(cudaMemset(GridT.GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2],
+                                    0,
+                                    tmp_ap->get_row_size() * tmp_ap->get_col_size() * sizeof(double)));*/
+
         }
     }
     for (int i = 0; i < GridT.nstreams; i++)
