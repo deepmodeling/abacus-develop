@@ -3404,6 +3404,11 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             }
         }
     }
+    // set nspin with noncolin
+    if (noncolin || lspinorb)
+    {
+        nspin = 4;
+    }
 }
 #ifdef __MPI
 void Input::Bcast()
