@@ -9,6 +9,20 @@ void toQO::unwrap_unitcell(UnitCell* p_ucell)
         symbols_.push_back(atom.label);
         charges_.push_back(atom.ncpp.zv);
     });
+    nmax_.resize(ntype_);
+    na_.resize(ntype_);
+    for(int itype = 0; itype < ntype_; itype++)
+    {
+        if(strategy_ != "energy")
+        {
+            nmax_[itype] = atom_database_.principle_quantum_number[symbols_[itype]];
+        }
+        else
+        {
+            nmax_[itype] = atom_database_.atom_Z[symbols_[itype]];
+        }
+        na_[itype] = p_ucell_->atoms[itype].na;
+    }
 }
 
 template <typename T>
@@ -149,7 +163,7 @@ std::vector<ModuleBase::Vector3<int>> toQO::scan_supercell_for_atom(int it, int 
 {
     std::vector<ModuleBase::Vector3<int>> n1n2n3;
     // cutoff radius of numerical atomic orbital of atom itia
-    double rcut_i = ao_->rcut_max(); //WARNING! one should get rcut_i of AO here
+    double rcut_i = ao_->rcut_max();
     if(rcut_i > 10)
     {
         #ifdef __MPI
@@ -166,13 +180,14 @@ std::vector<ModuleBase::Vector3<int>> toQO::scan_supercell_for_atom(int it, int 
     {
         for(int iatom = start_ia; iatom < p_ucell_->atoms[itype].na; iatom++)
         {
-            double rcut_j = nao_->rcut_max(); //WARNING! one should get rcut_j of NAO here
-            ModuleBase::Vector3<double> rij = p_ucell_->atoms[itype].tau[iatom] - p_ucell_->atoms[it].tau[ia];
+            double rcut_j = nao_->rcut_max();
+            ModuleBase::Vector3<double> rij = p_ucell_->atoms[itype].tau[iatom] - p_ucell_->atoms[it].tau[ia]; // in unit lat0?
             int n1 = 0; int n2 = 0; int n3 = 0;
             // calculate the sup of n1, n2, n3
-            int n1max = (rcut_i + rcut_j)/p_ucell_->a1.norm();
-            int n2max = (rcut_i + rcut_j)/p_ucell_->a2.norm();
-            int n3max = (rcut_i + rcut_j)/p_ucell_->a3.norm();
+            // rcut_i, j in bohr! a1, a2 and a3 are in lat0, so multiply with lat0
+            int n1max = (rcut_i + rcut_j)/p_ucell_->a1.norm()/p_ucell_->lat0;
+            int n2max = (rcut_i + rcut_j)/p_ucell_->a2.norm()/p_ucell_->lat0;
+            int n3max = (rcut_i + rcut_j)/p_ucell_->a3.norm()/p_ucell_->lat0;
             // scan n1, n2, n3
             for(int n1 = -n1max; n1 <= n1max; n1++)
             {

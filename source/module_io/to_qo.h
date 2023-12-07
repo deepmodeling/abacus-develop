@@ -63,7 +63,9 @@ class toQO
         /// @param ntype number of atom types
         /// @param charges charges of atoms
         /// @param nmax maximum principle quantum number of atoms
-        void build_ao(const int ntype, const double* const charges, const int* const nmax);
+        void build_hydrogen(const int ntype, const double* const charges, const int* const nmax);
+        void build_pswfc(const int ntype, const std::string* const pspot_fn, const double* const screening_coeffs);
+        void build_ao(const int ntype, const std::string* const pspot_fn = nullptr);
         /// @brief calculate the overlap between atomic orbitals and numerical atomic orbitals, in real space, at R[iR]
         /// @param iR index of supercell vector
         /// @note to save memory, the workflow can be organized as, once one S(R) is calculated, fold it to S(k), then clean up S(R)...
@@ -218,10 +220,22 @@ class toQO
         int nchi_ = 0;
         /// @brief number of numerical atomic orbitals, phi in \mathbf{S}^{\chi\phi}(\mathbf{k})
         int nphi_ = 0;
-
+        //
+        // data unwrapped from unitcell
+        //
+        /// @brief number of atom types
         int ntype_ = 0;
+        /// @brief number of atoms for each type
+        std::vector<int> na_;
+        //
+        // qo_basis = strategy
+        //
         std::vector<std::string> symbols_;
         std::vector<double> charges_;
+        std::vector<int> nmax_;
+        //
+        //
+        //
         std::vector<ModuleBase::Vector3<double>> kvecs_c_;
         //
         // attributes

@@ -645,6 +645,8 @@ void Input::Default(void)
     qo_switch = false;
     qo_basis = "hydrogen";
     qo_thr = 1e-6;
+    qo_screening_coeff = 0.0;
+
     return;
 }
 
@@ -2622,6 +2624,9 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("qo_thr", word) == 0){
             read_value(ifs, qo_thr);
         }
+        else if (strcmp("qo_screening_coeff", word) == 0){
+            read_value(ifs, qo_screening_coeff);
+        }
         else
         {
             // xiaohui add 2015-09-15
@@ -3874,6 +3879,7 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(qo_switch);
     Parallel_Common::bcast_string(qo_basis);
     Parallel_Common::bcast_double(qo_thr);
+    Parallel_Common::bcast_double(qo_screening_coeff);
     return;
 }
 #endif

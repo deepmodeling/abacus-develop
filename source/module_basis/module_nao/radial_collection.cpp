@@ -5,6 +5,7 @@
 #include "module_basis/module_nao/atomic_radials.h"
 #include "module_basis/module_nao/beta_radials.h"
 #include "module_basis/module_nao/hydrogen_radials.h"
+#include "module_basis/module_nao/pswfc_radials.h"
 
 RadialCollection::RadialCollection(const RadialCollection& other) :
     ntype_(other.ntype_),
@@ -218,6 +219,28 @@ void RadialCollection::build(const int ntype,
     }
 
     // what are these two functions for? Do I need them?
+    iter_build();
+    set_rcut_max();
+}
+
+void RadialCollection::build(const int ntype,
+                             const std::string* const file,
+                             const double* const screening_coeffs)
+{
+    cleanup();
+    ntype_ = ntype;
+    radset_ = new RadialSet*[ntype_];
+
+    for (int itype = 0; itype < ntype_; ++itype)
+    {
+        radset_[itype] = new PswfcRadials;
+        radset_[itype]->build(file[itype], itype, screening_coeffs[itype]);
+
+        lmax_ = std::max(lmax_, radset_[itype]->lmax());
+        nchi_ += radset_[itype]->nchi();
+        nzeta_max_ = std::max(nzeta_max_, radset_[itype]->nzeta_max());
+    }
+
     iter_build();
     set_rcut_max();
 }

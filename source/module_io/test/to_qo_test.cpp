@@ -56,8 +56,12 @@ class toQOTest : public testing::Test
         ucell.orbital_fn = new std::string[2];
         ucell.orbital_fn[0] = "../../../../tests/PP_ORB/Si_gga_8au_100Ry_2s2p1d.orb";
         ucell.orbital_fn[1] = "../../../../tests/PP_ORB/C_gga_8au_100Ry_2s2p1d.orb";
+        ucell.pseudo_fn = new std::string[2];
+        ucell.pseudo_fn[0] = "../../../../tests/PP_ORB/Si_dojo_soc.upf";
+        ucell.pseudo_fn[1] = "../../../../tests/PP_ORB/C.LDA.UPF";
 
         GlobalV::global_out_dir = "./";
+        GlobalV::qo_screening_coeff = {0.1, 0.1};
     }
 
     void TearDown() override
@@ -90,28 +94,22 @@ TEST_F(toQOTest, UnwrapUnitcell)
 
 TEST_F(toQOTest, BuildNao)
 {
-    toQO tqo("hydrogen");
+    toQO tqo("hydrogen", "minimal");
     tqo.unwrap_unitcell(&ucell);
     tqo.build_nao(ucell.ntype, ucell.orbital_fn);
     EXPECT_EQ(tqo.p_nao()->nchi(), 10); // not (l, m)-resoluted
     EXPECT_EQ(tqo.nphi(), 26); // (l, m)-resoluted
 }
 
-TEST_F(toQOTest, BuildAoMinimal)
+TEST_F(toQOTest, BuildHydrogenMinimal)
 {
-    toQO tqo("hydrogen");
+    toQO tqo("hydrogen", "minimal");
     tqo.unwrap_unitcell(&ucell);
-    std::vector<int> nmax = std::vector<int>(ucell.ntype);
-    for(int itype = 0; itype < ucell.ntype; itype++)
-    {
-        nmax[itype] = tqo.atom_database().principle_quantum_number[tqo.symbols()[itype]];
-    }
-    tqo.build_ao(ucell.ntype, tqo.charges().data(), nmax.data());
+    tqo.build_ao(ucell.ntype);
     EXPECT_EQ(tqo.p_ao()->nchi(), 5); // Si: 1s, 2p, 3d, C: 1s, 2p
     EXPECT_EQ(tqo.nchi(), 13); // Si: 1s, 2px, 2py, 2pz, 3dz2, 3dxz, 3dyz, 3dx2-y2, 3dxy, C: 1s, 2px, 2py, 2pz
     tqo.p_ao()->to_file("special_use_unittest");
 }
-
 // the scan_supercell_for_atom() calls
 TEST_F(toQOTest, Norm2RijSupercell)
 {
@@ -131,6 +129,7 @@ TEST_F(toQOTest, Norm2RijSupercell)
 TEST_F(toQOTest, ScanSupercellForAtom)
 {
     toQO tqo("hydrogen");
+    tqo.set_strategy("minimal");
     tqo.unwrap_unitcell(&ucell);
     tqo.build_nao(ucell.ntype, ucell.orbital_fn);
     std::vector<int> nmax = std::vector<int>(ucell.ntype);
@@ -138,7 +137,7 @@ TEST_F(toQOTest, ScanSupercellForAtom)
     {
         nmax[itype] = tqo.atom_database().principle_quantum_number[tqo.symbols()[itype]];
     }
-    tqo.build_ao(ucell.ntype, tqo.charges().data(), nmax.data());
+    tqo.build_ao(ucell.ntype);
     std::vector<ModuleBase::Vector3<int>> n1n2n3 = tqo.scan_supercell_for_atom(0, 0);
     EXPECT_EQ(n1n2n3.size(), 22);
 }
@@ -166,6 +165,7 @@ TEST_F(toQOTest, EliminateDuplicateVector3)
 TEST_F(toQOTest, ScanSupercell)
 {
     toQO tqo("hydrogen");
+    tqo.set_strategy("minimal");
     tqo.unwrap_unitcell(&ucell);
     tqo.build_nao(ucell.ntype, ucell.orbital_fn);
     std::vector<int> nmax = std::vector<int>(ucell.ntype);
@@ -173,7 +173,7 @@ TEST_F(toQOTest, ScanSupercell)
     {
         nmax[itype] = tqo.atom_database().principle_quantum_number[tqo.symbols()[itype]];
     }
-    tqo.build_ao(ucell.ntype, tqo.charges().data(), nmax.data());
+    tqo.build_ao(ucell.ntype);
     tqo.scan_supercell();
     EXPECT_EQ(tqo.nR(), 25);
 }
@@ -181,6 +181,7 @@ TEST_F(toQOTest, ScanSupercell)
 TEST_F(toQOTest, AllocateOvlpMinimal)
 {
     toQO tqo("hydrogen");
+    tqo.set_strategy("minimal");
     tqo.unwrap_unitcell(&ucell);
     tqo.build_nao(ucell.ntype, ucell.orbital_fn);
     std::vector<int> nmax = std::vector<int>(ucell.ntype);
@@ -188,7 +189,7 @@ TEST_F(toQOTest, AllocateOvlpMinimal)
     {
         nmax[itype] = tqo.atom_database().principle_quantum_number[tqo.symbols()[itype]];
     }
-    tqo.build_ao(ucell.ntype, tqo.charges().data(), nmax.data());
+    tqo.build_ao(ucell.ntype);
     tqo.scan_supercell();
     tqo.allocate_ovlp(true);
     tqo.allocate_ovlp(false);
@@ -250,6 +251,7 @@ TEST_F(toQOTest, CalculateOvlpR)
 TEST_F(toQOTest, CalculateSelfOvlpRMinimal)
 {
     toQO tqo("hydrogen");
+    tqo.set_strategy("minimal");
     std::vector<ModuleBase::Vector3<double>> kvecs_c;
     kvecs_c.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
     ucell.orbital_fn[0] = "Si_special_use_unittest.orb"; // generated in unittest BuildAo
@@ -266,19 +268,14 @@ TEST_F(toQOTest, CalculateSelfOvlpRMinimal)
     //tqo.write_ovlp(tqo.ovlp_R()[0], "QO_self_ovlp.dat");
 }
 
-TEST_F(toQOTest, BuildAoFull)
+TEST_F(toQOTest, BuildHydrogenFull)
 {
     toQO tqo("hydrogen", "full");
     tqo.unwrap_unitcell(&ucell);
-    std::vector<int> nmax = std::vector<int>(ucell.ntype);
-    for(int itype = 0; itype < ucell.ntype; itype++)
-    {
-        nmax[itype] = tqo.atom_database().principle_quantum_number[tqo.symbols()[itype]];
-    }
     GlobalV::qo_thr = 1e-10;
-    tqo.build_ao(ucell.ntype, tqo.charges().data(), nmax.data());
-    EXPECT_EQ(tqo.p_ao()->nchi(), 9); // Si: 1s, 2p, 3d, C: 1s, 2p
-    EXPECT_EQ(tqo.nchi(), 19); // Si: 1s, 2px, 2py, 2pz, 3dz2, 3dxz, 3dyz, 3dx2-y2, 3dxy, C: 1s, 2px, 2py, 2pz
+    tqo.build_ao(ucell.ntype);
+    EXPECT_EQ(tqo.p_ao()->nchi(), 9); // Si: 1s, 2s, 2p, 3s, 3p, 3d, C: 1s, 2s, 2p
+    EXPECT_EQ(tqo.nchi(), 19); 
     tqo.p_ao()->to_file("special_use_unittest");
 }
 
@@ -316,7 +313,54 @@ TEST_F(toQOTest, CalculateSelfOvlpRFull)
     }
     std::remove("Si_special_use_unittest.orb");
     std::remove("C_special_use_unittest.orb");
-    tqo.write_ovlp(tqo.ovlp_R()[0], "QO_self_ovlp.dat");
+    //tqo.write_ovlp(tqo.ovlp_R()[0], "QO_self_ovlp.dat");
+}
+
+TEST_F(toQOTest, BuildPswfc)
+{
+    toQO tqo("pswfc");
+    tqo.unwrap_unitcell(&ucell);
+    tqo.build_ao(ucell.ntype, ucell.pseudo_fn);
+    EXPECT_EQ(tqo.p_ao()->nchi(), 5); 
+    EXPECT_EQ(tqo.nchi(), 11);
+    tqo.p_ao()->to_file("special_use_unittest");
+}
+
+TEST_F(toQOTest, CalculateSelfOvlpRPswfc)
+{
+    toQO tqo("pswfc");
+    std::vector<ModuleBase::Vector3<double>> kvecs_c;
+    kvecs_c.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
+    ucell.orbital_fn[0] = "Si_special_use_unittest.orb"; // generated in unittest BuildAo
+    ucell.orbital_fn[1] = "C_special_use_unittest.orb"; // generated in unittest BuildAo
+    ucell.atoms[1].nwl = 1; // only s and p for C
+    //GlobalV::qo_thr = 1e-10;
+    tqo.initialize(&ucell, kvecs_c);
+    // find the R = 0,0,0
+    for(int iR = 0; iR < tqo.nR(); iR++)
+    {
+        if(tqo.supercells()[iR].x == 0 && tqo.supercells()[iR].y == 0 && tqo.supercells()[iR].z == 0)
+        {
+            tqo.calculate_ovlp_R(iR);
+            break;
+        }
+    }
+    // check if diagonal elements are 1
+    for(int i = 0; i < tqo.nphi(); i++)
+    {
+        EXPECT_NEAR(tqo.ovlp_R()[0][i][i], 1.0, 1e-4);
+    }
+    // check if symmetrical
+    for(int i = 0; i < tqo.nchi(); i++)
+    {
+        for(int j = 0; j < tqo.nphi(); j++)
+        {
+            EXPECT_NEAR(tqo.ovlp_R()[0][i][j], tqo.ovlp_R()[0][j][i], 1e-4);
+        }
+    }
+    std::remove("Si_special_use_unittest.orb");
+    std::remove("C_special_use_unittest.orb");
+    //tqo.write_ovlp(tqo.ovlp_R()[0], "QO_self_ovlp.dat");
 }
 
 TEST_F(toQOTest, CalculateOvlpK)
@@ -365,7 +409,6 @@ TEST_F(toQOTest, Calculate)
     std::remove("QO_ovlp_0.dat");
     std::remove("QO_ovlp_1.dat");
 }
-
 
 int main(int argc, char** argv)
 {

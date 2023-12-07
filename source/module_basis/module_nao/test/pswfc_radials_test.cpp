@@ -86,7 +86,7 @@ TEST_F(PswfcRadialsTest, ReadUpfPswfc) {
     if(!is_open) {std::cout<<"File path WRONG.\n"; }
     ASSERT_TRUE(is_open);
 
-    pswfc_radials.read_upf_pswfc(ifs);
+    pswfc_radials.read_upf_pswfc(ifs, 0.0);
     EXPECT_EQ(pswfc_radials.lmax(), 2);
     EXPECT_EQ(pswfc_radials.nzeta(0), 1);
     EXPECT_EQ(pswfc_radials.nzeta(1), 1);
@@ -116,7 +116,7 @@ TEST_F(PswfcRadialsTest, Build)
 {
     PswfcRadials pswfc_radials;
     std::string pspot = "../../../../../tests/PP_ORB/As_dojo.upf";
-    pswfc_radials.build(pspot);
+    pswfc_radials.build(pspot, 0, 0.0);
     
     EXPECT_EQ(pswfc_radials.lmax(), 2);
     EXPECT_EQ(pswfc_radials.nzeta(0), 1);

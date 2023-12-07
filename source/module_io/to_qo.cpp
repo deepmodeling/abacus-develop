@@ -49,19 +49,7 @@ void toQO::initialize(UnitCell* p_ucell,
     if(GlobalV::MY_RANK == 0)
     {
     #endif
-    std::vector<int> nmax = std::vector<int>(p_ucell_->ntype);
-    for(int itype = 0; itype < ntype_; itype++)
-    {
-        if(strategy_ != "energy")
-        {
-            nmax[itype] = atom_database_.principle_quantum_number[symbols_[itype]];
-        }
-        else
-        {
-            nmax[itype] = atom_database_.atom_Z[symbols_[itype]];
-        }
-    }
-    build_ao(p_ucell_->ntype, charges_.data(), nmax.data());
+    build_ao(ntype_, p_ucell_->pseudo_fn);
     // neighbor list search
     scan_supercell();
     // build grids
@@ -109,13 +97,15 @@ void toQO::build_nao(const int ntype, const std::string* const orbital_fn)
     nao_->set_transformer(sbt);
     for(int it = 0; it < ntype_; it++)
     {
+        int _nphi_it = 0;
         for(int l = 0; l <= nao_->lmax(it); l++)
         {
             for(int izeta = 0; izeta < nao_->nzeta(it, l); izeta++)
             {
-                nphi_ += 2*l + 1;
+                _nphi_it += 2*l + 1;
             }
         }
+        nphi_ += _nphi_it*na_[it];
     }
     #ifdef __MPI
     if(GlobalV::MY_RANK == 0)
@@ -125,25 +115,78 @@ void toQO::build_nao(const int ntype, const std::string* const orbital_fn)
     #ifdef __MPI
     }
     #endif
+    delete[] orbital_fn_;
 }
 
-void toQO::build_ao(const int ntype, const double* const charges, const int* const nmax)
+void toQO::build_hydrogen(const int ntype, const double* const charges, const int* const nmax)
 {
-    // build another atomic orbital
+    ao_ = std::unique_ptr<RadialCollection>(new RadialCollection);
+    ao_->build(ntype, charges, nmax, symbols_.data(), GlobalV::qo_thr, strategy_);
+    ModuleBase::SphericalBesselTransformer sbt;
+    ao_->set_transformer(sbt);
+    
+    for(int itype = 0; itype < ntype; itype++)
+    {
+        int _nchi_it = 0;
+        for(int l = 0; l <= ao_->lmax(itype); l++)
+        {
+            _nchi_it += (2*l+1)*ao_->nzeta(itype, l);
+        }
+        nchi_ += _nchi_it * na_[itype];
+    }
+
+    #ifdef __MPI
+    if(GlobalV::MY_RANK == 0)
+    {
+    #endif
+    printf("Build arbitrary atomic orbital basis done.\n");
+    #ifdef __MPI
+    }
+    #endif
+}
+
+void toQO::build_pswfc(const int ntype, const std::string* const pspot_fn, const double* const screening_coeffs)
+{
+    ao_ = std::unique_ptr<RadialCollection>(new RadialCollection);
+    std::string* pspot_fn_ = new std::string[ntype_];
+    for(int it = 0; it < ntype; it++)
+    {
+        pspot_fn_[it] = GlobalV::global_orbital_dir + pspot_fn[it];
+    }
+    ao_->build(ntype, pspot_fn_, screening_coeffs);
+    ModuleBase::SphericalBesselTransformer sbt;
+    ao_->set_transformer(sbt);
+    
+    for(int itype = 0; itype < ntype; itype++)
+    {
+        int _nchi_it = 0;
+        for(int l = 0; l <= ao_->lmax(itype); l++)
+        {
+            _nchi_it += (2*l+1)*ao_->nzeta(itype, l);
+        }
+        nchi_ += _nchi_it * na_[itype];
+    }
+
+    #ifdef __MPI
+    if(GlobalV::MY_RANK == 0)
+    {
+    #endif
+    printf("Build arbitrary atomic orbital basis done.\n");
+    #ifdef __MPI
+    }
+    #endif
+    delete[] pspot_fn_;
+}
+
+void toQO::build_ao(const int ntype, const std::string* const pspot_fn)
+{
     if(qo_basis_ == "hydrogen")
     {
-        ao_ = std::unique_ptr<RadialCollection>(new RadialCollection);
-        ao_->build(ntype, charges, nmax, symbols_.data(), GlobalV::qo_thr, strategy_);
-        ModuleBase::SphericalBesselTransformer sbt;
-        ao_->set_transformer(sbt);
-        
-        for(int itype = 0; itype < ntype; itype++)
-        {
-            for(int l = 0; l <= ao_->lmax(itype); l++)
-            {
-                nchi_ += (2*l+1)*ao_->nzeta(itype, l);
-            }
-        }
+        build_hydrogen(ntype_, charges_.data(), nmax_.data());
+    }
+    else if(qo_basis_ == "pswfc")
+    {
+        build_pswfc(ntype_, pspot_fn, GlobalV::qo_screening_coeff.data());
     }
     else
     {
@@ -158,14 +201,6 @@ void toQO::build_ao(const int ntype, const double* const charges, const int* con
         }
         #endif
     } // radial functions generation completed
-    #ifdef __MPI
-    if(GlobalV::MY_RANK == 0)
-    {
-    #endif
-    printf("Build arbitrary atomic orbital basis done.\n");
-    #ifdef __MPI
-    }
-    #endif
 }
 
 void toQO::calculate_ovlp_R(const int iR)
@@ -221,7 +256,7 @@ void toQO::calculate_ovlp_R(const int iR)
                                             Rij.z = rij.z + R.x * p_ucell_->a1.z 
                                                           + R.y * p_ucell_->a2.z 
                                                           + R.z * p_ucell_->a3.z;
-                                            Rij *= p_ucell_->lat0;
+                                            Rij *= p_ucell_->lat0; // convert to Bohr
                                             overlap_calculator_->calculate(
                                                 it, li, izetai, mi,
                                                 jt, lj, izetaj, mj,

@@ -1,8 +1,19 @@
 #include "module_basis/module_nao/pswfc_radials.h"
 #include "module_base/tool_quit.h"
 #include <algorithm>
+#include <cmath>
 
-void PswfcRadials::build(const std::string& file, const int itype, std::ofstream* ptr_log, const int rank)
+PswfcRadials& PswfcRadials::operator=(const PswfcRadials& rhs)
+{
+    RadialSet::operator=(rhs);
+    return *this;
+}
+
+void PswfcRadials::build(const std::string& file, 
+                         const int itype, 
+                         const double screening_coeff,
+                         std::ofstream* ptr_log,
+                         const int rank)
 {
     // deallocates all arrays and reset variables (excluding sbt_)
     cleanup();
@@ -21,7 +32,7 @@ void PswfcRadials::build(const std::string& file, const int itype, std::ofstream
     }
 
     itype_ = itype;
-    read_upf_pswfc(ifs, ptr_log, rank);
+    read_upf_pswfc(ifs, screening_coeff, ptr_log, rank);
     set_rcut_max();
     
     if (rank == 0)
@@ -110,7 +121,10 @@ std::string PswfcRadials::read_keyword_value(std::ifstream& ifs, std::string wor
     else return steal_from_quotes(word);
 }
 
-void PswfcRadials::read_upf_pswfc(std::ifstream& ifs, std::ofstream* ptr_log, const int rank)
+void PswfcRadials::read_upf_pswfc(std::ifstream& ifs, 
+                                  const double screening_coeff, 
+                                  std::ofstream* ptr_log, 
+                                  const int rank)
 {
     int ngrid = 0;
     int nzeta = 0;
@@ -152,13 +166,19 @@ void PswfcRadials::read_upf_pswfc(std::ifstream& ifs, std::ofstream* ptr_log, co
         for(int ir=0; ir < ngrid; ir++)
         {
             ifs >> line;
-            rvalue[ir] = std::stod(line);
+            double screening = std::exp(-screening_coeff * ir * dr);
+            rvalue[ir] = std::stod(line) * screening;
         }
         result[std::make_pair(l, nzeta_[l] - 1)] = rvalue;
         ifs >> line;
         assert(startswith(line, "</PP_CHI."));
     }
     
+    if(result.size() == 0)
+    {
+        ModuleBase::WARNING_QUIT("AtomicRadials::read", "pseudowavefunction information is absent in pseudopotential.");
+    }
+
     nzeta_max_ = *std::max_element(nzeta_, nzeta_ + lmax_ + 1);
     indexing(); // build index_map_
 
@@ -175,6 +195,9 @@ void PswfcRadials::read_upf_pswfc(std::ifstream& ifs, std::ofstream* ptr_log, co
         int l = it->first.first;
         int iz = it->first.second;
         chi_[index(l, iz)].build(l, true, ngrid, rgrid.data(), it->second.data(), 0, iz, symbol_, itype_, false);       
-        //chi_[index(l, iz)].normalize();
+        if(std::fabs(screening_coeff - 0.0) > 1e-6) // PHYSICAL REVIEW B 78, 245112 2008
+        {
+            chi_[index(l, iz)].normalize();
+        }
     }
 }

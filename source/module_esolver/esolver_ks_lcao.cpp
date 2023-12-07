@@ -899,7 +899,7 @@ namespace ModuleESolver
     }
     if(GlobalV::qo_switch)
     {
-        toQO tqo(GlobalV::qo_basis, "energy");
+        toQO tqo(GlobalV::qo_basis, GlobalV::qo_strategy);
         tqo.initialize(&GlobalC::ucell, this->kv.kvec_c);
         tqo.calculate();
     }

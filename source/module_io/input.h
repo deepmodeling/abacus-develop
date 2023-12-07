@@ -591,7 +591,8 @@ class Input
     bool qo_switch = false;
     std::string qo_basis = "hydrogen";
     double qo_thr = 1e-6;
-
+    double qo_screening_coeff = 0.0;
+    
   private:
     //==========================================================
     // MEMBER FUNCTIONS :

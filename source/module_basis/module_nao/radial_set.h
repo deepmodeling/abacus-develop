@@ -79,6 +79,19 @@ class RadialSet
                        std::ofstream* const ptr_log = nullptr
     ) {}
 
+    /**
+     * @brief Builds the object from pseudopotential file
+     *
+     * Currently only AtomicRadials objects are supposed to used this
+     * interface.
+     */
+    virtual void build(const std::string&,             ///< file name
+                       const int,                      ///< the element index in calculation
+                       const double,                   ///< radial screening coefficient, sometimes to be 0.1
+                       std::ofstream* const = nullptr, ///< output file stream for logging
+                       const int = 0                   ///< MPI rank
+                       ) {}
+
     void to_file(const std::string& file_name, const int rank = 0) const;
 
     ///@}

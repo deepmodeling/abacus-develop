@@ -13,11 +13,13 @@ class PswfcRadials : public RadialSet {
         ~PswfcRadials() {};
 
         void build(const std::string& file = "", 
-                   const int itype = 0, 
+                   const int itype = 0,
+                   const double screening_coeff = 0.1,
                    std::ofstream* ptr_log = nullptr, 
                    const int rank = 0);
 
         void read_upf_pswfc(std::ifstream& ifs,               //!< input file stream from orbital file
+                            const double screening_coeff,     //!< screening coefficient
                             std::ofstream* ptr_log = nullptr, //!< output file stream for logging
                             const int rank = 0                //!< MPI rank
         );
