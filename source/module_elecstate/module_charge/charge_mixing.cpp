@@ -37,6 +37,7 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
     GlobalV::ofs_running<<"mixing_type: "<< this->mixing_mode <<std::endl;
     GlobalV::ofs_running<<"mixing_beta: "<< this->mixing_beta <<std::endl;
     GlobalV::ofs_running<<"mixing_gg0: "<< this->mixing_gg0 <<std::endl;
+    GlobalV::ofs_running<<"mixing_gg0_min: "<< GlobalV::MIXING_GG0_MIN <<std::endl;
     if (GlobalV::NSPIN==2)
     {
         GlobalV::ofs_running<<"mixing_beta_mag: "<< GlobalV::MIXING_BETA_MAG <<std::endl;
@@ -97,50 +98,6 @@ void Charge_Mixing::set_rhopw(ModulePW::PW_Basis* rhopw_in, ModulePW::PW_Basis* 
     this->rhopw = rhopw_in;
     this->rhodpw = rhodpw_in;
 }
-
-// void Charge_Mixing::need_auto_set()
-// {
-//     this->autoset = true;
-// }
-
-// void Charge_Mixing::auto_set(const double& bandgap_in, const UnitCell& ucell_)
-// {
-//     // auto set parameters once
-//     if (!this->autoset)
-//     {
-//         return;
-//     }
-//     else
-//     {
-//         this->autoset = false;
-//     }
-//     GlobalV::ofs_running << "--------------AUTO-SET---------------" << std::endl;
-//     // 0.8 for nspin=1 and 0.4 for others
-//     if (GlobalV::NSPIN == 1)
-//     {
-//         this->mixing->mixing_beta = this->mixing_beta = 0.8;
-//         GlobalV::ofs_running << "      Autoset mixing_beta to " << this->mixing_beta << std::endl;
-//     }
-//     else
-//     {
-//         this->mixing->mixing_beta = this->mixing_beta = 0.4;
-//         GlobalV::MIXING_BETA_MAG = 4 * this->mixing_beta;
-//         GlobalV::ofs_running << "      Autoset mixing_beta to " << this->mixing_beta << std::endl;
-//         GlobalV::ofs_running << "      Autoset mixing_beta_mag to " << GlobalV::MIXING_BETA_MAG << std::endl;
-//     }
-//     GlobalV::MIXING_BETA = mixing_beta;
-
-//     // auto set kerker mixing_gg0 = 1.0 as default
-//     this->mixing_gg0 = 1.0;
-//     GlobalV::ofs_running << "      Autoset mixing_gg0 to " << this->mixing_gg0 << std::endl;
-//     if (GlobalV::NSPIN == 1)
-//     {
-//         GlobalV::MIXING_GG0_MAG = 0.0;
-//         GlobalV::ofs_running << "      Autoset mixing_gg0_mag to " << GlobalV::MIXING_GG0_MAG << std::endl;
-//     }
-
-//     GlobalV::ofs_running << "-------------------------------------" << std::endl;
-// }
 
 double Charge_Mixing::get_drho(Charge* chr, const double nelec)
 {
@@ -657,7 +614,7 @@ void Charge_Mixing::Kerker_screen_recip(std::complex<double>* drhog)
         for (int ig = 0; ig < this->rhopw->npw; ++ig)
         {
             double gg = this->rhopw->gg[ig];
-            double filter_g = std::max(gg / (gg + gg0), 0.1 / this->mixing_beta);
+            double filter_g = std::max(gg / (gg + gg0), GlobalV::MIXING_GG0_MIN / this->mixing_beta);
             drhog[is * this->rhopw->npw + ig] *= filter_g;
         }
     }
@@ -700,7 +657,7 @@ void Charge_Mixing::Kerker_screen_recip_new(std::complex<double>* drhog)
         for (int ig = 0; ig < this->rhopw->npw; ++ig)
         {
             double gg = this->rhopw->gg[ig];
-            double filter_g = std::max(gg / (gg + gg0), 0.1 / amin);
+            double filter_g = std::max(gg / (gg + gg0), GlobalV::MIXING_GG0_MIN / amin);
             drhog[is * this->rhopw->npw + ig] *= filter_g;
         }
     }
@@ -756,7 +713,7 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
             //    drhog[is * this->rhopw->npw + ig] *= 0;
             //    continue;
             //}
-            double filter_g = std::max(gg / (gg + gg0), 0.1 / amin);
+            double filter_g = std::max(gg / (gg + gg0), GlobalV::MIXING_GG0_MIN / amin);
             drhog[is * this->rhopw->npw + ig] *= (1 - filter_g);
         }
     }
@@ -794,7 +751,7 @@ void Charge_Mixing::Kerker_screen_real_test(double* drhor)
     for (int ig = 0; ig < this->rhopw->npw; ig++)
     {
         double gg = this->rhopw->gg[ig];
-        double filter_g = std::max(gg / (gg + gg0), 0.1 / this->mixing_beta);
+        double filter_g = std::max(gg / (gg + gg0), GlobalV::MIXING_GG0_MIN / this->mixing_beta);
         drhog[ig] *= (1 - filter_g);
     }
     // inverse FT
@@ -826,7 +783,7 @@ void Charge_Mixing::Kerker_screen_real_test(double* drhor)
         for (int ig = 0; ig < this->rhopw->npw; ig++)
         {
             double gg = this->rhopw->gg[ig];
-            double filter_g = std::max(gg / (gg + gg0_mag), 0.1 / GlobalV::MIXING_BETA_MAG);
+            double filter_g = std::max(gg / (gg + gg0_mag), GlobalV::MIXING_GG0_MIN / GlobalV::MIXING_BETA_MAG);
             drhog_mag[ig] *= (1 - filter_g);
         }
         // inverse FT

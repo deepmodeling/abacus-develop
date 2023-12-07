@@ -249,6 +249,7 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_gg0", mixing_gg0, "mixing parameter in kerker");
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_beta_mag", mixing_beta_mag, "mixing parameter for magnetic density");
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_gg0_mag", mixing_gg0_mag, "mixing parameter in kerker");
+    ModuleBase::GlobalFunc::OUTP(ofs, "mixing_gg0_min", mixing_gg0_min, "the minimum kerker coefficient");
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_tau", mixing_tau, "whether to mix tau in mGGA calculation");
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_dftu", mixing_dftu, "whether to mix locale in DFT+U calculation");
 

@@ -233,6 +233,7 @@ class Input
     double mixing_gg0; // used in kerker method. mohan add 2014-09-27
     double mixing_beta_mag;
     double mixing_gg0_mag;
+    double mixing_gg0_min;
 
     bool mixing_tau; // whether to mix tau in mgga
     bool mixing_dftu; //whether to mix locale in DFT+U
