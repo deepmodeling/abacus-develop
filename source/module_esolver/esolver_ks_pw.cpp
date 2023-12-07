@@ -402,7 +402,7 @@ void ESolver_KS_PW<T, Device>::beforescf(int istep)
     // cal_ux should be called before init_scf because
     // the direction of ux is used in noncoline_rho
     //=========================================================
-    if(GlobalV::NSPIN == 4) GlobalC::ucell.cal_ux();
+    if(GlobalV::NSPIN == 4 && GlobalV::DOMAG) GlobalC::ucell.cal_ux();
 
     //=========================================================
     // calculate the total local pseudopotential in real space
