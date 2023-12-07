@@ -256,7 +256,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
     // cal_ux should be called before init_scf because
     // the direction of ux is used in noncoline_rho
     //=========================================================
-    GlobalC::ucell.cal_ux();
+    if(GlobalV::NSPIN == 4) GlobalC::ucell.cal_ux();
     ModuleBase::timer::tick("ESolver_KS_LCAO", "beforesolver");
 }
 
