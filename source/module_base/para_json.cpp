@@ -16,7 +16,7 @@ namespace Para_Json
      
     rapidjson::Value commit;
     rapidjson::Value begin_time;
-    rapidjson::Value begin_date;
+    rapidjson::Value begin_time_epoch;
     rapidjson::Value device_g;
     // @param general_info -- parallel：
     rapidjson::Value parallel(rapidjson::kObjectType);
