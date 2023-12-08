@@ -18,7 +18,7 @@
 */
 namespace Para_Json
 {
-
+ 
     extern int test;
     // @param doc: the output json file
     extern rapidjson::Document doc;
