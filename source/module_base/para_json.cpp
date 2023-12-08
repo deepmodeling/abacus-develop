@@ -518,7 +518,7 @@ namespace Para_Json
 
         general_info.AddMember("begin_time", begin_time, doc.GetAllocator());      
 
-        general_info.AddMember("begin_date", begin_date, doc.GetAllocator());     
+        general_info.AddMember("begin_time_epoch", begin_time_epoch, doc.GetAllocator());     
 
         general_info.AddMember("device", device_g, doc.GetAllocator());                
 
