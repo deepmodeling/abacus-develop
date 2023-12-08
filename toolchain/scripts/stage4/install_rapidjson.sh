@@ -2,35 +2,35 @@
 
 # TODO: Review and if possible fix shellcheck errors.
 # shellcheck disable=all
-# CEREAL is not need any complex setting
+# RAPIDJSON is not need any complex setting
 # Only problem is the installation from github.com
 
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
-cereal_ver="1.3.2"
-cereal_sha256="16a7ad9b31ba5880dac55d62b5d6f243c3ebc8d46a3514149e56b5e7ea81f85f"
+rapidjson_ver="1.1.0"
+rapidjson_sha256="bf7ced29704a1e696fbccf2a2b4ea068e7774fa37f6d7dd4039d0787f8bed98e"
 source "${SCRIPT_DIR}"/common_vars.sh
 source "${SCRIPT_DIR}"/tool_kit.sh
 source "${SCRIPT_DIR}"/signal_trap.sh
 source "${INSTALLDIR}"/toolchain.conf
 source "${INSTALLDIR}"/toolchain.env
 
-[ -f "${BUILDDIR}/setup_cereal" ] && rm "${BUILDDIR}/setup_cereal"
+[ -f "${BUILDDIR}/setup_rapidjson" ] && rm "${BUILDDIR}/setup_rapidjson"
 
-CEREAL_CFLAGS=""
+RAPIDJSON_CFLAGS=""
 ! [ -d "${BUILDDIR}" ] && mkdir -p "${BUILDDIR}"
 cd "${BUILDDIR}"
 
-case "$with_cereal" in
+case "$with_rapidjson" in
   __INSTALL__)
-    echo "==================== Installing CEREAL ===================="
-    dirname="cereal-${cereal_ver}"
+    echo "==================== Installing RAPIDJSON ===================="
+    dirname="rapidjson-${rapidjson_ver}"
     pkg_install_dir="${INSTALLDIR}/$dirname"
-    #pkg_install_dir="${HOME}/lib/cereal/${cereal_ver}"
+    #pkg_install_dir="${HOME}/lib/rapidjson/${rapidjson_ver}"
     install_lock_file="$pkg_install_dir/install_successful"
-    url="https://github.com/USCiLab/cereal/archive/refs/tags/v${cereal_ver}.tar.gz"
-    filename="cereal-${cereal_ver}.tar.gz"
+    url="https://github.com/Tencent/rapidjson/archive/refs/tags/v${rapidjson_ver}.tar.gz"
+    filename="rapidjson-${rapidjson_ver}.tar.gz"
     if verify_checksums "${install_lock_file}"; then
         echo "$dirname is already installed, skipping it."
     else
@@ -44,7 +44,7 @@ case "$with_cereal" in
             recommend_offline_installation $filename $url
             fi
         # checksum
-        checksum "$filename" "$cereal_sha256"
+        checksum "$filename" "$rapidjson_sha256"
         fi
         echo "Installing from scratch into ${pkg_install_dir}"
         [ -d $dirname ] && rm -rf $dirname
@@ -55,9 +55,9 @@ case "$with_cereal" in
     fi
         ;;
     __SYSTEM__)
-        echo "==================== CANNOT Finding CEREAL from system paths NOW ===================="
+        echo "==================== CANNOT Finding RAPIDJSON from system paths NOW ===================="
         recommend_offline_installation $filename $url
-        # How to do it in cereal? -- Zhaoqing in 2023/08/23
+        # How to do it in rapidjson? -- Zhaoqing in 2023/08/23
         # check_lib -lxcf03 "libxc"
         # check_lib -lxc "libxc"
         # add_include_from_paths LIBXC_CFLAGS "xc.h" $INCLUDE_PATHS
@@ -66,30 +66,30 @@ case "$with_cereal" in
     __DONTUSE__) ;;
     
     *)
-    echo "==================== Linking CEREAL to user paths ===================="
+    echo "==================== Linking RAPIDJSON to user paths ===================="
     check_dir "${pkg_install_dir}"
-    CEREAL_CFLAGS="-I'${pkg_install_dir}'"
+    RAPIDJSON_CFLAGS="-I'${pkg_install_dir}'"
     ;;
 esac
-if [ "$with_cereal" != "__DONTUSE__" ]; then
-    if [ "$with_cereal" != "__SYSTEM__" ]; then
-    # LibRI deps should find cereal include in CPATH
-        cat << EOF > "${BUILDDIR}/setup_cereal"
+if [ "$with_rapidjson" != "__DONTUSE__" ]; then
+    if [ "$with_rapidjson" != "__SYSTEM__" ]; then
+    # LibRI deps should find rapidjson include in CPATH
+        cat << EOF > "${BUILDDIR}/setup_rapidjson"
 prepend_path CPATH "$pkg_install_dir/include"
-prepend_path CPATH "$pkg_install_dir/include/cereal"
+prepend_path CPATH "${pkg_install_dir}/include/rapidjson"
 export CPATH="${pkg_install_dir}/include:"${CPATH}
-export CPATH="${pkg_install_dir}/include/cereal:"${CPATH}
+export CPATH="${pkg_install_dir}/include/rapidjson:"${CPATH}
 EOF
-        cat "${BUILDDIR}/setup_cereal" >> $SETUPFILE
+        cat "${BUILDDIR}/setup_rapidjson" >> $SETUPFILE
     fi
-    cat << EOF >> "${BUILDDIR}/setup_cereal"
-export CEREAL_CFLAGS="${CEREAL_CFLAGS}"
-export CEREAL_ROOT="$pkg_install_dir"
+    cat << EOF >> "${BUILDDIR}/setup_rapidjson"
+export RAPIDJSON_CFLAGS="${RAPIDJSON_CFLAGS}"
+export RAPIDJSON_ROOT="$pkg_install_dir"
 EOF
 fi
 
-load "${BUILDDIR}/setup_cereal"
+load "${BUILDDIR}/setup_rapidjson"
 write_toolchain_env "${INSTALLDIR}"
 
 cd "${ROOTDIR}"
-report_timing "cereal"
+report_timing "rapidjson"
