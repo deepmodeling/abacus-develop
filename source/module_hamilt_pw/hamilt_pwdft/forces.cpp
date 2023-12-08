@@ -469,16 +469,24 @@ void Forces<FPTYPE, Device>::cal_force_ew(ModuleBase::matrix& forceion,
         // calculate the actual task length of this block
         int ig_end = std::min(igb + block_ig, rho_basis->npw);
 
-        { // it = 0
-            const double dzv = static_cast<double>(GlobalC::ucell.atoms[0].ncpp.zv);
-            for (int ig = igb; ig < ig_end; ++ig)
-            { // initialize aux
-                aux[ig] = dzv * conj(p_sf->strucFac(0, ig));
-            }
-        }
-        for (int it = 1; it < GlobalC::ucell.ntype; it++)
+        for (int ig = igb; ig < ig_end; ++ig)
         {
-            const double dzv = static_cast<double>(GlobalC::ucell.atoms[it].ncpp.zv);
+            aux[ig] = 0.0;
+        }
+        for (int it = 0; it < GlobalC::ucell.ntype; it++)
+        {
+            double dzv;
+            if(GlobalV::use_paw)
+            {
+#ifdef USE_PAW
+                dzv = GlobalC::paw_cell.get_val(it);
+#endif
+            }
+            else
+            {
+                dzv = GlobalC::ucell.atoms[it].ncpp.zv;
+            }
+
             for (int ig = igb; ig < ig_end; ++ig)
             { // accumulate aux
                 aux[ig] += dzv * conj(p_sf->strucFac(it, ig));
@@ -490,7 +498,16 @@ void Forces<FPTYPE, Device>::cal_force_ew(ModuleBase::matrix& forceion,
     double charge = 0.0;
     for (int it = 0; it < GlobalC::ucell.ntype; it++)
     {
-        charge += GlobalC::ucell.atoms[it].na * GlobalC::ucell.atoms[it].ncpp.zv; // mohan modify 2007-11-7
+        if(GlobalV::use_paw)
+        {
+#ifdef USE_PAW
+            charge += GlobalC::ucell.atoms[it].na * GlobalC::paw_cell.get_val(it);
+#endif
+        }
+        else
+        {
+            charge += GlobalC::ucell.atoms[it].na * GlobalC::ucell.atoms[it].ncpp.zv;//mohan modify 2007-11-7
+        }
     }
 
     double alpha = 1.1;
@@ -562,7 +579,18 @@ void Forces<FPTYPE, Device>::cal_force_ew(ModuleBase::matrix& forceion,
         {
             if (it != last_it)
             { // calculate it_tact when it is changed
-                it_fact = GlobalC::ucell.atoms[it].ncpp.zv * ModuleBase::e2 * GlobalC::ucell.tpiba * ModuleBase::TWO_PI
+                double zv;
+                if(GlobalV::use_paw)
+                {
+#ifdef USE_PAW
+                    zv = GlobalC::paw_cell.get_val(it);
+#endif
+                }
+                else
+                {
+                    zv = GlobalC::ucell.atoms[it].ncpp.zv;
+                }
+                it_fact = zv * ModuleBase::e2 * GlobalC::ucell.tpiba * ModuleBase::TWO_PI
                           / GlobalC::ucell.omega * fact;
                 last_it = it;
             }
@@ -634,10 +662,23 @@ void Forces<FPTYPE, Device>::cal_force_ew(ModuleBase::matrix& forceion,
                         {
                             const double rr = sqrt(r2[n]) * GlobalC::ucell.lat0;
 
-                            double factor = GlobalC::ucell.atoms[T1].ncpp.zv * GlobalC::ucell.atoms[T2].ncpp.zv
+                            double factor;
+                            if(GlobalV::use_paw)
+                            {
+#ifdef USE_PAW
+                                factor = GlobalC::paw_cell.get_val(T1) * GlobalC::paw_cell.get_val(T2)
                                             * ModuleBase::e2 / (rr * rr)
                                             * (erfc(sqa * rr) / rr + sq8a_2pi * ModuleBase::libm::exp(-alpha * rr * rr))
                                             * GlobalC::ucell.lat0;
+#endif
+                            }
+                            else
+                            {
+                                factor = GlobalC::ucell.atoms[T1].ncpp.zv * GlobalC::ucell.atoms[T2].ncpp.zv
+                                            * ModuleBase::e2 / (rr * rr)
+                                            * (erfc(sqa * rr) / rr + sq8a_2pi * ModuleBase::libm::exp(-alpha * rr * rr))
+                                            * GlobalC::ucell.lat0;
+                            }
 
                             forceion(iat1, 0) -= factor * r[n].x;
                             forceion(iat1, 1) -= factor * r[n].y;
