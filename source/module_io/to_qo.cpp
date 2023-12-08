@@ -14,7 +14,7 @@ toQO::~toQO()
 }
 
 void toQO::initialize(UnitCell* p_ucell,
-                      const std::vector<ModuleBase::Vector3<double>>& kvecs_c)
+                      const std::vector<ModuleBase::Vector3<double>>& kvecs_d)
 {
     #ifdef __MPI
     if(GlobalV::MY_RANK == 0)
@@ -24,8 +24,8 @@ void toQO::initialize(UnitCell* p_ucell,
     #ifdef __MPI
     }
     #endif
-    kvecs_c_ = kvecs_c;
-    nkpts_ = kvecs_c.size();
+    kvecs_d_ = kvecs_d;
+    nkpts_ = kvecs_d.size();
 
     // BEGIN: "Two-center bundle build"
     unwrap_unitcell(p_ucell);
@@ -151,7 +151,7 @@ void toQO::build_pswfc(const int ntype, const std::string* const pspot_fn, const
     std::string* pspot_fn_ = new std::string[ntype_];
     for(int it = 0; it < ntype; it++)
     {
-        pspot_fn_[it] = GlobalV::global_orbital_dir + pspot_fn[it];
+        pspot_fn_[it] = GlobalV::global_pseudo_dir + pspot_fn[it];
     }
     ao_->build(ntype, pspot_fn_, screening_coeffs);
     ModuleBase::SphericalBesselTransformer sbt;

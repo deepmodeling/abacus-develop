@@ -273,7 +273,7 @@ void toQO::fold_ovlp_R(int ik)
     for(int iR = 0; iR < supercells_.size(); iR++)
     {
         ModuleBase::Vector3<double> R(double(supercells_[iR].x), double(supercells_[iR].y), double(supercells_[iR].z));
-        double arg = (kvecs_c_[ik] * R) * ModuleBase::TWO_PI;
+        double arg = (kvecs_d_[ik] * R) * ModuleBase::TWO_PI;
         double sinp, cosp;
         ModuleBase::libm::sincos(arg, &sinp, &cosp);
         std::complex<double> phase = std::complex<double>(cosp, sinp);
@@ -299,7 +299,7 @@ void toQO::append_ovlp_R_eiRk(int ik, int iR)
 
     // calculate
     ModuleBase::Vector3<double> R(double(supercells_[iR].x), double(supercells_[iR].y), double(supercells_[iR].z));
-    double arg = (kvecs_c_[ik] * R) * ModuleBase::TWO_PI;
+    double arg = (kvecs_d_[ik] * R) * ModuleBase::TWO_PI;
     double sinp, cosp;
     ModuleBase::libm::sincos(arg, &sinp, &cosp);
     std::complex<double> phase = std::complex<double>(cosp, sinp);

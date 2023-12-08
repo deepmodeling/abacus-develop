@@ -54,7 +54,7 @@ class toQO
         /// @param p_ucell interface (raw pointer) to the unitcell
         /// @param nkpts number of kpoints
         void initialize(UnitCell* p_ucell,
-                        const std::vector<ModuleBase::Vector3<double>>& kvecs_c);
+                        const std::vector<ModuleBase::Vector3<double>>& kvecs_d);
         /// @brief build RadialCollection for numerical atomic orbitals
         /// @param ntype number of atom types
         /// @param orbital_fn filenames of numerical atomic orbitals
@@ -189,7 +189,7 @@ class toQO
         std::vector<std::string> symbols() const { return symbols_; }
         std::vector<double> charges() const { return charges_; }
         atom_in atom_database() const { return atom_database_; }
-        std::vector<ModuleBase::Vector3<double>> kvecs_c() const { return kvecs_c_; }
+        std::vector<ModuleBase::Vector3<double>> kvecs_d() const { return kvecs_d_; }
 
 
     private:
@@ -236,7 +236,7 @@ class toQO
         //
         //
         //
-        std::vector<ModuleBase::Vector3<double>> kvecs_c_;
+        std::vector<ModuleBase::Vector3<double>> kvecs_d_;
         //
         // attributes
         //
