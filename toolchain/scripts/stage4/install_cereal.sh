@@ -76,9 +76,7 @@ if [ "$with_cereal" != "__DONTUSE__" ]; then
     # LibRI deps should find cereal include in CPATH
         cat << EOF > "${BUILDDIR}/setup_cereal"
 prepend_path CPATH "$pkg_install_dir/include"
-prepend_path CPATH "$pkg_install_dir/include/cereal"
 export CPATH="${pkg_install_dir}/include:"${CPATH}
-export CPATH="${pkg_install_dir}/include/cereal:"${CPATH}
 EOF
         cat "${BUILDDIR}/setup_cereal" >> $SETUPFILE
     fi
