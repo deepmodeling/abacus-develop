@@ -499,6 +499,12 @@ class Tensor {
         return this->NumElements() > 0;
     }
 
+    template<typename T>
+    void set_value(T value) {
+        TEMPLATE_ALL_2(this->data_type_, this->device_,
+            kernels::set_memory<T, DEVICE_>()(this->data<T>(), value, this->NumElements()))
+    }
+
 protected:
 
     /**
