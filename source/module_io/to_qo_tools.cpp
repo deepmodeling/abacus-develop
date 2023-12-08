@@ -185,9 +185,9 @@ std::vector<ModuleBase::Vector3<int>> toQO::scan_supercell_for_atom(int it, int 
             int n1 = 0; int n2 = 0; int n3 = 0;
             // calculate the sup of n1, n2, n3
             // rcut_i, j in bohr! a1, a2 and a3 are in lat0, so multiply with lat0
-            int n1max = (rcut_i + rcut_j)/p_ucell_->a1.norm()/p_ucell_->lat0;
-            int n2max = (rcut_i + rcut_j)/p_ucell_->a2.norm()/p_ucell_->lat0;
-            int n3max = (rcut_i + rcut_j)/p_ucell_->a3.norm()/p_ucell_->lat0;
+            int n1max = int(std::ceil((rcut_i + rcut_j)/p_ucell_->a1.norm()/p_ucell_->lat0));
+            int n2max = int(std::ceil((rcut_i + rcut_j)/p_ucell_->a2.norm()/p_ucell_->lat0));
+            int n3max = int(std::ceil((rcut_i + rcut_j)/p_ucell_->a3.norm()/p_ucell_->lat0));
             // scan n1, n2, n3
             for(int n1 = -n1max; n1 <= n1max; n1++)
             {
