@@ -25,6 +25,7 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
     const int nbands = psi.get_nbands();
     const int nks = psi.get_nk();
 
+	this->hamilt_ = pHamilt;
     // prepare for the precondition of diagonalization
     this->precondition.resize(psi.get_nbasis());
 

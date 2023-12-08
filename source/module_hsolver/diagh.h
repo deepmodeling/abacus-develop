@@ -28,7 +28,9 @@ class DiagH
     // virtual void init()=0;
     std::string method = "none";
 
-    virtual void diag(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Device> &psi, Real *eigenvalue_in) = 0;
+    virtual void diag(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Device> &psi, Real *eigenvalue_in) {
+      ModuleBase::WARNING_QUIT("diagh", "diag method not implemented for the base class!");
+    };
 
 };
 
