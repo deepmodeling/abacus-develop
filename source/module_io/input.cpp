@@ -137,16 +137,23 @@ void Input::Init(const std::string &fn)
     std::string version_json = version;
     std::string commit_json = commit;
     std::string device_json = device;
-    printf("version = %s\n",device_json.c_str());
+    std::string time_epoch = std::to_string(time_now);
+
     Para_Json::set_json_value(Para_Json::version,&version_json); 
     Para_Json::set_json_value(Para_Json::commit,&commit_json); 
     Para_Json::set_json_value(Para_Json::device_g,&device_json);
     Para_Json::set_json_value(Para_Json::begin_time,&begin_time);  
     
+    Para_Json::set_json_value(Para_Json::begin_time_epoch,&time_epoch);  
+
     Para_Json::set_json_value(Para_Json::global_out_dir,&GlobalV::global_out_dir); 
     Para_Json::set_json_value(Para_Json::global_in_card,&GlobalV::global_in_card);
     Para_Json::set_json_value(Para_Json::pseudo_dir_path,&GlobalV::global_pseudo_dir);  
     Para_Json::set_json_value(Para_Json::orbital_dir_path,&GlobalV::global_orbital_dir);  
+    
+
+
+
     return;
 }
 
@@ -786,6 +793,7 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("kspacing", word) == 0)
         {
+            Para_Json::kspacing.SetArray();
             read_kspacing(ifs);
             for(int i=0;i<3;i++){
                 Para_Json::kspacing.PushBack(kspacing[i],Para_Json::doc.GetAllocator());
@@ -2180,7 +2188,7 @@ bool Input::Read(const std::string &fn)
         {
             ifs >> vdw_cutoff_period.x >> vdw_cutoff_period.y;
             read_value(ifs, vdw_cutoff_period.z);
-
+            Para_Json::vdw_cutoff_period.SetArray();
             Para_Json::vdw_cutoff_period.PushBack(vdw_cutoff_period.x,Para_Json::doc.GetAllocator());
             Para_Json::vdw_cutoff_period.PushBack(vdw_cutoff_period.y,Para_Json::doc.GetAllocator());
             Para_Json::vdw_cutoff_period.PushBack(vdw_cutoff_period.z,Para_Json::doc.GetAllocator());
@@ -2710,6 +2718,7 @@ bool Input::Read(const std::string &fn)
             }
             else if (strcmp("hubbard_u", word) == 0)
             {
+                Para_Json::hubbard_u.SetArray();
                 for (int i = 0; i < ntype; i++)
                 {
                     ifs >> hubbard_u[i];
@@ -2719,6 +2728,7 @@ bool Input::Read(const std::string &fn)
             }
             else if (strcmp("orbital_corr", word) == 0)
             {
+                Para_Json::orbital_corr.SetArray();
                 for (int i = 0; i < ntype; i++)
                 {
                     ifs >> orbital_corr[i];
@@ -2794,6 +2804,7 @@ bool Input::Read(const std::string &fn)
 
             if (strcmp("hubbard_u", word) == 0)
             {
+                Para_Json::hubbard_u.SetArray();
                 for (int i = 0; i < ntype; i++)
                 {
                     ifs >> hubbard_u[i];
@@ -2803,6 +2814,7 @@ bool Input::Read(const std::string &fn)
             }
             else if (strcmp("orbital_corr", word) == 0)
             {
+                Para_Json::orbital_corr.SetArray();
                 for (int i = 0; i < ntype; i++)
                 {
                     ifs >> orbital_corr[i];

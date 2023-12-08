@@ -5,7 +5,7 @@
 
 namespace Para_Json
 {
-    int test=4;
+
     // @param doc: the output json file
     rapidjson::Document doc;
     rapidjson::Value abacus(rapidjson::kObjectType);
@@ -55,13 +55,13 @@ namespace Para_Json
     rapidjson::Value nupdown;
     rapidjson::Value dft_functional;
     rapidjson::Value xc_temperature;
-    rapidjson::Value pseudo_rcut(rapidjson::kNumberType );
+    rapidjson::Value pseudo_rcut;
     rapidjson::Value pseudo_mesh;
     rapidjson::Value mem_saver;
     rapidjson::Value diago_proc;
     rapidjson::Value nbspline;
-    rapidjson::Value kspacing(rapidjson::kArrayType);
-    rapidjson::Value min_dist_coef(rapidjson::kNumberType);
+    rapidjson::Value kspacing;
+    rapidjson::Value min_dist_coef;
     rapidjson::Value device;
     // @param reading_information -- input_file -- files_related
     rapidjson::Value stru_file;
@@ -119,7 +119,7 @@ namespace Para_Json
     // @param reading_information -- input_file -- electronic_structure_SDFT
     rapidjson::Value method_sto;
     rapidjson::Value nbands_sto;
-    rapidjson::Value nche_sto(rapidjson::kNumberType);
+    rapidjson::Value nche_sto;
     rapidjson::Value emin_sto;
     rapidjson::Value emax_sto;
     rapidjson::Value seed_sto;
@@ -302,8 +302,8 @@ namespace Para_Json
     rapidjson::Value dmax;
 
     // @param reading_information -- input_file -- dft_plus_u
-    rapidjson::Value orbital_corr(rapidjson::kArrayType);
-    rapidjson::Value hubbard_u(rapidjson::kArrayType);
+    rapidjson::Value orbital_corr;
+    rapidjson::Value hubbard_u;
     rapidjson::Value yukawa_potential;
     rapidjson::Value yukawa_lambda;
     rapidjson::Value omc;
@@ -323,7 +323,7 @@ namespace Para_Json
     rapidjson::Value vdw_cutoff_type;
     rapidjson::Value vdw_cutoff_radius;
     rapidjson::Value vdw_radius_unit;
-    rapidjson::Value vdw_cutoff_period(rapidjson::kArrayType);
+    rapidjson::Value vdw_cutoff_period;
     rapidjson::Value vdw_cn_thr;
     rapidjson::Value vdw_cn_thr_unit;
 
@@ -951,9 +951,69 @@ namespace Para_Json
         readin_info.AddMember("input_file", input_file, doc.GetAllocator());
 
     }
+    std::string getLevelStr(int level)
+    {
+        std::string levelStr = "";
+        for (int i = 0; i < level; i++)
+        {
+            levelStr += "\t"; 
+        }
+        return levelStr;
+
+    }
+
+    // format a json string
+    std::string formatJson(std::string json)
+    {
+        std::string result = "";
+        int level = 0;
+        for (std::string::size_type index = 0; index < json.size(); index++)
+        {
+            char c = json[index];
+
+            if (level > 0 && '\n' == json[json.size() - 1])
+            {
+                result += getLevelStr(level);
+            }
+
+            switch (c)
+            {
+            case '{':
+            case '[':
+                result = result + c + "\n";
+                level++;
+                result += getLevelStr(level);
+                break;
+            case ',':
+                result = result + c + "\n";
+                result += getLevelStr(level);
+                break;
+            case '}':
+            case ']':
+                result += "\n";
+                level--;
+                result += getLevelStr(level);
+                result += c;
+                break;
+            default:
+                result += c;
+                break;
+            }
+
+        }
+        return result;
+    }
 
 
+    // @brief   finish json tree and output to json file
     void Finish_json_tree(){
+
+        // init json tree
+        Init_json_abacus_readinInfo();
+        Init_json_abacus_generalInfo();
+        Init_json_abacus();
+
+        
         // Converts a json object to a string
         rapidjson::StringBuffer buffer;
         rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
@@ -963,8 +1023,12 @@ namespace Para_Json
         std::string json_path;
         json_path.append("abacus.json");
 
+        // format json
+        std::string strJson= buffer.GetString();
+        std::string beauterJson = formatJson(strJson);
+
         std::ofstream ofs(json_path);
-        ofs << buffer.GetString() << std::endl;
+        ofs << beauterJson << std::endl;
         ofs.close();
     }
 

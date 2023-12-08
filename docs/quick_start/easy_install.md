@@ -28,7 +28,7 @@ These requirements support the calculation of plane-wave basis in ABACUS. For LC
 Some of these packages can be installed with popular package management system, such as `apt` and `yum`:
 
 ```bash
-sudo apt update && sudo apt install -y libopenblas-openmp-dev liblapack-dev libscalapack-mpi-dev libelpa-dev libfftw3-dev libcereal-dev libxc-dev g++ make cmake bc git
+sudo apt update && sudo apt install -y libopenblas-openmp-dev liblapack-dev libscalapack-mpi-dev libelpa-dev libfftw3-dev libcereal-dev libxc-dev g++ make cmake bc git rapidjson-dev
 ```
 
 > Installing ELPA by apt only matches requirements on Ubuntu 22.04. For earlier linux distributions, you should build ELPA from source.
