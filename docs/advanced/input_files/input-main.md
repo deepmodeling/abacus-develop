@@ -368,6 +368,11 @@
     - [alpha\_trial](#alpha_trial)
     - [sccut](#sccut)
     - [sc\_file](#sc_file)
+  - [Quasiatomic Orbital (QO) analysis](#quasiatomic-orbital-qo-analysis)
+    - [qo\_switch](#qo_switch)
+    - [qo\_basis](#qo_basis)
+    - [qo\_screening\_coeff](#qo_screening_coeff)
+    - [qo\_thr](#qo_thr)
 
 [back to top](#full-list-of-input-keywords)
 
@@ -3296,6 +3301,8 @@ These variables are used to control the usage of implicit solvation model. This 
 - **Default**: 0.00037
 - **Unit**: $Bohr^{-3}$
 
+[back to top](#full-list-of-input-keywords)
+
 ## Deltaspin
 
 These variables are used to control the usage of deltaspin functionality.
@@ -3411,5 +3418,38 @@ and
 for `nspin 2` case. The difference is that `lambda`, `target_mag`, and `constrain` are scalars in `nspin 2` case, and are vectors in `nspin 4` case.
 
 - **Default**: none
+
+[back to top](#full-list-of-input-keywords)
+
+## Quasiatomic Orbital (QO) analysis
+
+These variables are used to control the usage of QO analysis.
+
+### qo_switch
+
+- **Type**: Boolean
+- **Description**: whether to let ABACUS output QO analysis required files
+- **Default**: 0
+
+### qo_basis
+
+- **Type**: String
+- **Description**: specify the type of atomic basis
+  - `pswfc`: use the pseudowavefunction in pseudopotential files as atomic basis. To use this option, please make sure in pseudopotential file there is pswfc in it.
+  - `hydrogen`: generate hydrogen-like atomic basis, whose charge is read from pseudopotential files presently.
+- **Default**: `hydrogen`
+
+### qo_screening_coeff
+
+- **Type**: Real
+- **Description**: a screening factor $e^{-\eta|\mathbf{r}|}$ is multiplied to the pswfc to mimic the behavior of some kind of electron. $\eta$ is the screening coefficient.
+- **Default**: 0.1
+
+### qo_thr
+
+- **Type**: Real
+- **Description**: the convergence threshold determining the cutoff of generated hydrogen-like orbital. Lower threshold will yield orbital with larger cutoff radius.
+- **Default**: 1.0e-6
+
 
 [back to top](#full-list-of-input-keywords)
