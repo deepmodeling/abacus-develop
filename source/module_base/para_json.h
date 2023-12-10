@@ -18,7 +18,7 @@
 */
 namespace Para_Json
 {
-
+   
     extern int test;
     // @param doc: the output json file
     extern rapidjson::Document doc;
@@ -29,7 +29,7 @@ namespace Para_Json
     extern rapidjson::Value version;
     extern rapidjson::Value commit;
     extern rapidjson::Value begin_time;
-    extern rapidjson::Value begin_date;
+    extern rapidjson::Value begin_time_epoch;
     extern rapidjson::Value device_g;
     // @param general_info -- parallel：
     extern rapidjson::Value parallel;

@@ -49,9 +49,7 @@ TEST_F(ParaJsonTest,Init)
 
 		// int status = system("rm -r ./OUT.autotest/");
 		// EXPECT_EQ(status,0);
-        Para_Json::Init_json_abacus_readinInfo();
-		Para_Json::Init_json_abacus_generalInfo();
-        Para_Json::Init_json_abacus();
+
         Para_Json::Finish_json_tree();
 
 
