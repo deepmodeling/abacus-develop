@@ -137,7 +137,6 @@ public:
 	bool *atom_iw2_new_g;
 	int *atom_iw2_ylm_g;
 	double **GridVlocal_v2_g;
-	const int nstreams = 4;
 	int nr_max;
 	int psi_size_max;
 	int psi_size_max_per_z;
@@ -145,6 +144,7 @@ public:
 	int atom_pair_size_of_meshcell;
 	int atom_pair_size_over_nbz;
 
+	const int nstreams = 4;
 	cudaStream_t streams[4];
 	// streams[nstreams]
 	// TODO it needs to be implemented through configuration files

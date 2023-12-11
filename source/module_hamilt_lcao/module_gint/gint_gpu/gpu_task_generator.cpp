@@ -26,7 +26,9 @@ void gpu_task_generate_vlocal(const Grid_Technique &GridT,
                               double ** atom_pair_mat_A,
                               double ** atom_pair_mat_B,
                               double ** atom_pair_mat_C,
-                              int & atom_pair_num) {
+                              int & atom_pair_num,
+                              int & max_m,
+                              int & max_n) {
 
   const int grid_index_ij = i * GridT.nby * GridT.nbzp + j * GridT.nbzp;
   const int nwmax = GlobalC::ucell.nwmax;
@@ -91,6 +93,8 @@ int num_get_psi = 0;
 
 
   atom_pair_num = 0;
+  max_m = 0;
+  max_n = 0;
   for (int z_index = 0; z_index < GridT.nbzp; z_index++)
   {
     int grid_index = grid_index_ij + z_index;
@@ -129,6 +133,14 @@ int num_get_psi = 0;
 
           atom_pair_A_m[atom_pair_num] = GlobalC::ucell.atoms[it1].nw;
           atom_pair_B_n[atom_pair_num] = GlobalC::ucell.atoms[it2].nw;
+          if (atom_pair_A_m[atom_pair_num] > max_m)
+          {
+             max_m = atom_pair_A_m[atom_pair_num];
+          } 
+          if (atom_pair_B_n[atom_pair_num] > max_n)
+          {
+             max_n = atom_pair_B_n[atom_pair_num];
+          }
           atom_pair_num++;
         }
       }

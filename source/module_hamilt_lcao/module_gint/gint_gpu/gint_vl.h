@@ -34,6 +34,8 @@ void gpu_task_generate_vlocal(const Grid_Technique &GridT,
                               double ** atom_pair_left_v2,
                               double ** atom_pair_right_v2,
                               double ** atom_pair_output_v2,
-                              int & atom_pair_num);
+                              int & atom_pair_num,
+                              int & max_m,
+                              int & max_n);
 
 #endif

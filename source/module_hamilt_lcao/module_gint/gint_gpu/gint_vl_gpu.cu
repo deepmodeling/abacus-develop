@@ -31,6 +31,29 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
     const int nbz = GridT.nbzp;
 
     int iter_num = 0;
+    for (int iat1 = 0; iat1 < GlobalC::ucell.nat; iat1++)
+    {
+        for (int iat2 = 0; iat2 < GlobalC::ucell.nat; iat2++)
+        {
+            int stream_num = iter_num % GridT.nstreams;
+            int it1 = GlobalC::ucell.iat2it[iat1];
+            int lo1 = GridT.trace_lo[GlobalC::ucell.itiaiw2iwt(
+                it1, GlobalC::ucell.iat2ia[iat1], 0)];
+
+            int it2 = GlobalC::ucell.iat2it[iat2];
+            int lo2 = GridT.trace_lo[GlobalC::ucell.itiaiw2iwt(
+                it2, GlobalC::ucell.iat2ia[iat2], 0)];
+            if (lo1 <= lo2) {
+                    int atom_pair_nw = GlobalC::ucell.atoms[it1].nw * GlobalC::ucell.atoms[it2].nw;
+                    hamilt::AtomPair<double> *tmp_ap = hRGint->find_pair(iat1, iat2);
+                    checkCuda(cudaMemsetAsync(GridT.GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2],
+                                            0,
+                                            atom_pair_nw * sizeof(double), GridT.streams[stream_num]));
+                    iter_num++;
+            }
+        }
+    }
+    iter_num = 0;
     for (int i = 0; i < GridT.nbx; i++)
     {
         for (int j = 0; j < GridT.nby; j++)
@@ -65,28 +88,32 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
             double **atom_pair_mat_B_array_g = &GridT.atom_pair_right_global_g[GridT.atom_pair_size_over_nbz * stream_num];
             double **atom_pair_mat_C_array_g = &GridT.atom_pair_output_global_g[GridT.atom_pair_size_over_nbz * stream_num];
             int atom_pair_num = 0;
+            int max_m = 0;
+            int max_n = 0;
 
             gpu_task_generate_vlocal(GridT, i, j,
-                        GridT.atom_pair_size_of_meshcell,
-                        GridT.psi_size_max_per_z,
-                        max_size, nczp,
-                        vfactor,
-                        vlocal,
-                        psir_ylm_left_g,
-                        psir_ylm_right_g,
-                        psi_input_double,
-                        psi_input_int,
-                        num_psir,
-                        atom_pair_A_m,
-                        atom_pair_B_n,
-                        atom_pair_lda,
-                        atom_pair_ldb,
-                        atom_pair_ldc,
-                        GridT.GridVlocal_v2_g,
-                        atom_pair_mat_A_array,
-                        atom_pair_mat_B_array,
-                        atom_pair_mat_C_array,
-                        atom_pair_num);
+                                     GridT.atom_pair_size_of_meshcell,
+                                     GridT.psi_size_max_per_z,
+                                     max_size, nczp,
+                                     vfactor,
+                                     vlocal,
+                                     psir_ylm_left_g,
+                                     psir_ylm_right_g,
+                                     psi_input_double,
+                                     psi_input_int,
+                                     num_psir,
+                                     atom_pair_A_m,
+                                     atom_pair_B_n,
+                                     atom_pair_lda,
+                                     atom_pair_ldb,
+                                     atom_pair_ldc,
+                                     GridT.GridVlocal_v2_g,
+                                     atom_pair_mat_A_array,
+                                     atom_pair_mat_B_array,
+                                     atom_pair_mat_C_array,
+                                     atom_pair_num,
+                                     max_m,
+                                     max_n);
 
             checkCuda(cudaStreamSynchronize(GridT.streams[stream_num]));
 
@@ -128,12 +155,12 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
                                                                                 psir_ylm_left_g,
                                                                                 psir_ylm_right_g);
 
-            GridT.fastest_matrix_mul(GlobalC::ucell.nwmax, GlobalC::ucell.nwmax,
-                                atom_pair_A_m_g, atom_pair_B_n_g, GridT.bxyz,
-                                atom_pair_mat_A_array_g, atom_pair_lda_g,
-                                atom_pair_mat_B_array_g, atom_pair_ldb_g,
-                                atom_pair_mat_C_array_g, atom_pair_ldc_g,
-                                atom_pair_num, GridT.streams[stream_num]);
+            GridT.fastest_matrix_mul(max_m, max_n,
+                                     atom_pair_A_m_g, atom_pair_B_n_g, GridT.bxyz,
+                                     atom_pair_mat_A_array_g, atom_pair_lda_g,
+                                     atom_pair_mat_B_array_g, atom_pair_ldb_g,
+                                     atom_pair_mat_C_array_g, atom_pair_ldc_g,
+                                     atom_pair_num, GridT.streams[stream_num]);
             iter_num++;
         }
     }
@@ -141,23 +168,28 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
     {
         checkCuda(cudaStreamSynchronize(GridT.streams[i]));
     }
-
+    iter_num = 0;
     for (int iat1 = 0; iat1 < GlobalC::ucell.nat; iat1++)
     {
         for (int iat2 = 0; iat2 < GlobalC::ucell.nat; iat2++)
         {
             int stream_num = iter_num % GridT.nstreams;
-            hamilt::AtomPair<double> *tmp_ap = hRGint->find_pair(iat1, iat2);
-            if (tmp_ap == nullptr)
-                continue;
+            int it1 = GlobalC::ucell.iat2it[iat1];
+            int lo1 = GridT.trace_lo[GlobalC::ucell.itiaiw2iwt(
+                it1, GlobalC::ucell.iat2ia[iat1], 0)];
 
-             checkCuda(cudaMemcpyAsync(tmp_ap->get_pointer(0),
-                                    GridT.GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2],
-                                    tmp_ap->get_row_size() * tmp_ap->get_col_size() * sizeof(double),
-                                    cudaMemcpyDeviceToHost, GridT.streams[stream_num]));
-            checkCuda(cudaMemsetAsync(GridT.GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2],
-                                    0,
-                                    tmp_ap->get_row_size() * tmp_ap->get_col_size() * sizeof(double), GridT.streams[stream_num]));
+            int it2 = GlobalC::ucell.iat2it[iat2];
+            int lo2 = GridT.trace_lo[GlobalC::ucell.itiaiw2iwt(
+                it2, GlobalC::ucell.iat2ia[iat2], 0)];
+            if (lo1 <= lo2) {
+                    int atom_pair_nw = GlobalC::ucell.atoms[it1].nw * GlobalC::ucell.atoms[it2].nw;
+                    hamilt::AtomPair<double> *tmp_ap = hRGint->find_pair(iat1, iat2);
+                    checkCuda(cudaMemcpyAsync(tmp_ap->get_pointer(0),
+                                            GridT.GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2],
+                                            atom_pair_nw * sizeof(double),
+                                            cudaMemcpyDeviceToHost, GridT.streams[stream_num]));
+                    iter_num++;
+            }
         }
     }
     for (int i = 0; i < GridT.nstreams; i++)

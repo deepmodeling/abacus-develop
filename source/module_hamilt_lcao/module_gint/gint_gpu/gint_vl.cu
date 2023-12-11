@@ -188,8 +188,8 @@ __global__ void get_psi_and_vldr3(double *ylmcoef,
                 phi = c1 * psi_u[iw_nr] + c2 * psi_u[iw_nr + 1] + c3 * psi_u[iw_nr + 2] + c4 * psi_u[iw_nr + 3];
             }
             double temp = phi * ylma[atom_iw2_ylm[it_nw_iw]];
-            psir_ylm_right[dist_tmp] = temp;
-            psir_ylm_left[dist_tmp] = temp * vlbr3_value;
+            psir_ylm_right[dist_tmp] = temp * vlbr3_value;
+            psir_ylm_left[dist_tmp] = temp;
             dist_tmp += bxyz_g;
             iw_nr += nr_max;
             iw_nr += nr_max;
