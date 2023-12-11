@@ -53,6 +53,11 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
             }
         }
     }
+    for (int i = 0; i < GridT.nstreams; i++)
+    {
+        checkCuda(cudaStreamSynchronize(GridT.streams[i]));
+    }
+
     iter_num = 0;
     for (int i = 0; i < GridT.nbx; i++)
     {
@@ -128,9 +133,9 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
             checkCuda(cudaMemcpyAsync(atom_pair_ldb_g, atom_pair_ldb, GridT.atom_pair_size_over_nbz * sizeof(int), cudaMemcpyHostToDevice, GridT.streams[stream_num]));
             checkCuda(cudaMemcpyAsync(atom_pair_ldc_g, atom_pair_ldc, GridT.atom_pair_size_over_nbz * sizeof(int), cudaMemcpyHostToDevice, GridT.streams[stream_num]));
 
-            checkCuda(cudaMemcpyAsync(atom_pair_mat_A_array_g, atom_pair_mat_A_array, GridT.atom_pair_size_over_nbz * sizeof(double *), cudaMemcpyHostToDevice, GridT.streams[stream_num]));
-            checkCuda(cudaMemcpyAsync(atom_pair_mat_B_array_g, atom_pair_mat_B_array, GridT.atom_pair_size_over_nbz * sizeof(double *), cudaMemcpyHostToDevice, GridT.streams[stream_num]));
-            checkCuda(cudaMemcpyAsync(atom_pair_mat_C_array_g, atom_pair_mat_C_array, GridT.atom_pair_size_over_nbz * sizeof(double *), cudaMemcpyHostToDevice, GridT.streams[stream_num]));
+            checkCuda(cudaMemcpy(atom_pair_mat_A_array_g, atom_pair_mat_A_array, GridT.atom_pair_size_over_nbz * sizeof(double *), cudaMemcpyHostToDevice));
+            checkCuda(cudaMemcpy(atom_pair_mat_B_array_g, atom_pair_mat_B_array, GridT.atom_pair_size_over_nbz * sizeof(double *), cudaMemcpyHostToDevice));
+            checkCuda(cudaMemcpy(atom_pair_mat_C_array_g, atom_pair_mat_C_array, GridT.atom_pair_size_over_nbz * sizeof(double *), cudaMemcpyHostToDevice));
 
             checkCuda(cudaMemsetAsync(psir_ylm_left_g, 0, GridT.psir_size * sizeof(double), GridT.streams[stream_num]));
             checkCuda(cudaMemsetAsync(psir_ylm_right_g, 0, GridT.psir_size * sizeof(double), GridT.streams[stream_num]));
@@ -182,13 +187,13 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
             int lo2 = GridT.trace_lo[GlobalC::ucell.itiaiw2iwt(
                 it2, GlobalC::ucell.iat2ia[iat2], 0)];
             if (lo1 <= lo2) {
-                    int atom_pair_nw = GlobalC::ucell.atoms[it1].nw * GlobalC::ucell.atoms[it2].nw;
-                    hamilt::AtomPair<double> *tmp_ap = hRGint->find_pair(iat1, iat2);
-                    checkCuda(cudaMemcpyAsync(tmp_ap->get_pointer(0),
-                                            GridT.GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2],
-                                            atom_pair_nw * sizeof(double),
-                                            cudaMemcpyDeviceToHost, GridT.streams[stream_num]));
-                    iter_num++;
+                int atom_pair_nw = GlobalC::ucell.atoms[it1].nw * GlobalC::ucell.atoms[it2].nw;
+                hamilt::AtomPair<double> *tmp_ap = hRGint->find_pair(iat1, iat2);
+                checkCuda(cudaMemcpyAsync(tmp_ap->get_pointer(0),
+                                        GridT.GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2],
+                                        atom_pair_nw * sizeof(double),
+                                        cudaMemcpyDeviceToHost, GridT.streams[stream_num]));
+                iter_num++;
             }
         }
     }
