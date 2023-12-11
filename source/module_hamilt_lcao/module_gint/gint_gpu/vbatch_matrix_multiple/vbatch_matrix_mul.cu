@@ -2121,6 +2121,8 @@ void gemm_algo_selector(int m, int n, int k, func_type & fastest_algo)
     delete[] h_global_B;
     delete[] h_global_C;
 
+    delete[] cpu_result;
+
     // Cleanup
     cudaFree(d_global_A_array);
     cudaFree(d_global_B_array);
