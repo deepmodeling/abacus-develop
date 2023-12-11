@@ -243,7 +243,7 @@ std::vector<std::pair<int, int>> HydrogenRadials::unzip_strategy(const int nmax,
                 nelec += (2*l + 1)*2;
                 n++;
                 l--;
-            } while (l >= 0);
+            } while ((l >= 0)&&(nelec < nmax));
             
             if(nl_switch%2 == 1)
             {
