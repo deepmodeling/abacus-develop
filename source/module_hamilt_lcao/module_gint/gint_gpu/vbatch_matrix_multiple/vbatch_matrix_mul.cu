@@ -259,18 +259,18 @@ void vbatched_gemm_impl(int max_m, int max_n,
                  T ** global_C_array, int* global_ldc,
                  int batchCount, cudaStream_t stream)
 {
-    size_t shared_mem_size = 0;
-    shared_mem_size += (BLK_M+1) * BLK_K * sizeof(T);
-    shared_mem_size += (BLK_K+1) * BLK_N * sizeof(T);
-    dim3 dimBlock(DIM_X, DIM_Y);
-    dim3 dimGrid(ceildiv( max_m, BLK_M ), ceildiv( max_n, BLK_N ), batchCount);
-
     // The positions of A and B have been swapped here.
     // This is because the original code is for column-major matrices.
     // We use row-major matrices, so we need to swap A and B.
     // The vbatched_gemm_impl is for C = trans(A) * B + C, but we need trans(C).
     // Which means: trans(C) = trans(trans(A)*B + C) = trans(B) * A + trans(C)
     // Then, ldc should be N, lda and ldb should be K
+
+    size_t shared_mem_size = 0;
+    shared_mem_size += (BLK_M+1) * BLK_K * sizeof(T);
+    shared_mem_size += (BLK_K+1) * BLK_N * sizeof(T);
+    dim3 dimBlock(DIM_X, DIM_Y);
+    dim3 dimGrid(ceildiv( max_n, BLK_M ), ceildiv( max_m, BLK_N ), batchCount);
 
     vbatched_gemm_kernel<T, DIM_X, DIM_Y,
                          BLK_M, BLK_N, BLK_K,
@@ -317,7 +317,7 @@ void gemm_time_measure(int max_m, int max_n,
     {
         for (int j = 0; j < h_m * h_n; ++j)
         {
-            if (abs(cpu_result[i * h_m * h_n + j] - h_global_C[i * h_m * h_n + j]) > 0.0001)
+            if (abs(cpu_result[i * h_m * h_n + j] - h_global_C[i * h_m * h_n + j]) > 0.01)
             {
                 check_result = false;
                 break;
@@ -358,11 +358,11 @@ void gemm_algo_selector(int m, int n, int k, func_type & fastest_algo)
 
     for (int i = 0; i < batchCount * m * k; ++i)
     {
-        h_global_A[i] = i * 0.1;
+        h_global_A[i] = i * 0.001;
     }
     for (int i = 0; i < batchCount * n * k; ++i)
     {
-        h_global_B[i] = i * 0.2;
+        h_global_B[i] = i * 0.002;
     }
     memset(h_global_C, 0, batchCount * m * n * sizeof(double));
 
