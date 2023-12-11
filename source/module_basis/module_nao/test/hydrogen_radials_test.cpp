@@ -88,18 +88,16 @@ TEST_F(HydrogenRadialsTest, UnzipStrategy)
     EXPECT_EQ(nl_pairs.size(), 1);
     EXPECT_EQ(nl_pairs[0].first, 1);
     EXPECT_EQ(nl_pairs[0].second, 0);
-    nl_pairs = hr.unzip_strategy(6, "energy"); // C, 1s1 2s2 2p2 -> 1s2s2p -> [1s][2s][2p3s]
-    EXPECT_EQ(nl_pairs.size(), 4);
+    nl_pairs = hr.unzip_strategy(6, "energy"); // C, 1s1 2s2 2p2 -> 1s2s2p -> [1s][2s][2p]
+    EXPECT_EQ(nl_pairs.size(), 3);
     EXPECT_EQ(nl_pairs[0].first, 1); // 1s
     EXPECT_EQ(nl_pairs[0].second, 0);
     EXPECT_EQ(nl_pairs[1].first, 2); // 2s
     EXPECT_EQ(nl_pairs[1].second, 0);
     EXPECT_EQ(nl_pairs[2].first, 2); // 2p
     EXPECT_EQ(nl_pairs[2].second, 1);
-    EXPECT_EQ(nl_pairs[3].first, 3); // 3s
-    EXPECT_EQ(nl_pairs[3].second, 0);
-    nl_pairs = hr.unzip_strategy(29, "energy"); // Cu, 1s1 2s2 2p6 3s2 3p6 3d10 4s1 -> 1s2s2p3s3p4s3d -> [1s][2s][2p3s][3p4s][3d4p5s]
-    EXPECT_EQ(nl_pairs.size(), 9);
+    nl_pairs = hr.unzip_strategy(29, "energy"); // Cu, 1s1 2s2 2p6 3s2 3p6 3d10 4s1 -> 1s2s2p3s3p4s3d -> [1s][2s][2p3s][3p4s][3d]
+    EXPECT_EQ(nl_pairs.size(), 7);
     EXPECT_EQ(nl_pairs[0].first, 1); // 1s
     EXPECT_EQ(nl_pairs[0].second, 0);
     EXPECT_EQ(nl_pairs[1].first, 2); // 2s
@@ -114,10 +112,6 @@ TEST_F(HydrogenRadialsTest, UnzipStrategy)
     EXPECT_EQ(nl_pairs[5].second, 0);
     EXPECT_EQ(nl_pairs[6].first, 3); // 3d
     EXPECT_EQ(nl_pairs[6].second, 2);
-    EXPECT_EQ(nl_pairs[7].first, 4); // 4p
-    EXPECT_EQ(nl_pairs[7].second, 1);
-    EXPECT_EQ(nl_pairs[8].first, 5); // 5s
-    EXPECT_EQ(nl_pairs[8].second, 0);
 }
 
 TEST_F(HydrogenRadialsTest, RadialNorm)
