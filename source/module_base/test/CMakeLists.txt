@@ -82,7 +82,7 @@ AddTest(
   TARGET base_ylmreal
   LIBS ${math_libs} device formatter
   SOURCES math_ylmreal_test.cpp ../math_ylmreal.cpp ../complexmatrix.cpp ../global_variable.cpp ../ylm.cpp ../realarray.cpp ../timer.cpp  ../matrix.cpp ../vector3.h
-          ../parallel_reduce.cpp ../para_json.cpp ../parallel_global.cpp ../parallel_common.cpp
+          ../parallel_reduce.cpp ../parallel_global.cpp ../parallel_common.cpp
           ../memory.cpp ../libm/branred.cpp ../libm/sincos.cpp
 )
 AddTest(
@@ -207,7 +207,7 @@ AddTest(
 AddTest(
   TARGET clebsch_gordan_coeff_test
   SOURCES clebsch_gordan_coeff_test.cpp ../clebsch_gordan_coeff.cpp ../intarray.cpp ../realarray.cpp ../complexmatrix.cpp ../matrix.cpp ../timer.cpp  
-  ../math_ylmreal.cpp  ../global_variable.cpp ../ylm.cpp  ../timer.cpp  ../vector3.h ../parallel_reduce.cpp ../para_json.cpp ../parallel_global.cpp  ../parallel_common.cpp
+  ../math_ylmreal.cpp  ../global_variable.cpp ../ylm.cpp  ../timer.cpp  ../vector3.h ../parallel_reduce.cpp ../parallel_global.cpp ../parallel_common.cpp
   ../memory.cpp ../libm/branred.cpp ../libm/sincos.cpp ../inverse_matrix.cpp ../lapack_connector.h
   LIBS ${math_libs} formatter device
 )
@@ -217,4 +217,3 @@ AddTest(
   SOURCES assoc_laguerre_test.cpp ../assoc_laguerre.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp
   LIBS ${math_libs} formatter
 )
-

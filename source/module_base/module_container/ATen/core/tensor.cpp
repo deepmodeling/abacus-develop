@@ -9,7 +9,7 @@ namespace container {
 
 Tensor::Tensor() : Tensor(DataType::DT_FLOAT) {}
 
-Tensor::Tensor(DataType data_type) : Tensor(data_type, TensorShape({})) {}
+Tensor::Tensor(DataType data_type) : Tensor(data_type, TensorShape({1})) {}
 
 // Constructor that creates a tensor with the given data type and shape using the default allocator.
 Tensor::Tensor(DataType data_type, const TensorShape& shape)
@@ -291,21 +291,31 @@ bool Tensor::AllocateFrom(const Tensor& other, const TensorShape& shape) {
 
 void Tensor::sync(const Tensor& rhs) {
     REQUIRES_OK(this->data_type_ == rhs.data_type_ 
-        && this->device_ == rhs.device_
-        && this->shape_ == rhs.shape_)
+        && this->device_ == rhs.device_)
 
-    TEMPLATE_ALL_2(data_type_, device_,
-            kernels::synchronize_memory<T_, DEVICE_, DEVICE_>()(
-                    this->data<T_>(), rhs.data<T_>(), this->NumElements()))
+    if (this->shape_ == rhs.shape_) {
+        TEMPLATE_ALL_2(data_type_, device_,
+                kernels::synchronize_memory<T_, DEVICE_, DEVICE_>()(
+                        this->data<T_>(), rhs.data<T_>(), this->NumElements()))
+    }
+    else {
+        TEMPLATE_ALL_2(data_type_, device_,
+                kernels::synchronize_memory_stride<T_, DEVICE_, DEVICE_>()(
+                        this->data<T_>(), rhs.data<T_>(), this->shape().dims(), rhs.shape().dims()))
+    }
 }
 
 Tensor Tensor::operator[](const int& index) const {
     REQUIRES_OK(
-        index > 0 && index < shape_.dim_size(0),
+        index >= 0 && index < shape_.dim_size(0),
         "Tensor index is out of bounds.")
 
     TensorShape output_shape = this->shape_;
     output_shape.remove_dim(0);
+    if (output_shape.ndim() == 0) {
+        // If the output shape is empty, we need to add a dimension of size 1
+        output_shape.add_dim(1);
+    }
     auto data_ = reinterpret_cast<char*>(this->data()) + index * shape_.strides()[0] * SizeOfType(this->data_type_);
     
     return TensorMap(data_, this->data_type_, this->device_, output_shape);
