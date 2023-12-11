@@ -1,0 +1,12 @@
+INPUT_PARAMETERS
+pseudo_dir ../../PP_ORB
+orbital_dir ../../PP_ORB
+
+ecutwfc 50
+scf_nmax 100
+scf_thr 1e-6
+basis_type lcao
+
+qo_switch 1
+qo_basis pswfc
+qo_screening_coeff 0.1

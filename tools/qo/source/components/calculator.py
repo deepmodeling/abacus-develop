@@ -90,29 +90,27 @@ class toQO_Calculator:
         """
         print("Calculate QO.")
         qo = sqok.conj() @ psi_exten.conj().T @ psi_exten
-
+             # this sqok is overlap between AO and NAO, line is AO, column is NAO
         # then normalize qo
         for i in range(qo.shape[0]):
             qo[i, :] = qo[i, :] / np.sqrt(qo[i, :] @ sk @ qo[i, :].conj().T)
-            print("QO Normalization: after, norm of QO ", i, " is: ", qo[i, :] @ sk @ qo[i, :].conj().T)
+            #print("QO Normalization: after, norm of QO ", i, " is: ", qo[i, :] @ sk @ qo[i, :].conj().T)
         return qo
 
     def calculate_hqok(self, qo: np.ndarray, hk: np.ndarray, sk: np.ndarray) -> np.ndarray:
         """calculate hqok
         """
         print("Calculate hamiltonian matrix in QO basis in k-space.")
-        self.sg_.check_rank(sk)
-        self.sg_.check_hermiticity(hk)
-        self.sg_.check_rank(qo)
         hqok = qo.conj() @ hk @ qo.T
-        sqok = qo.conj() @ sk @ qo.T
-        self.sg_.check_rank(hqok)
-        self.sg_.check_rank(sqok)
+        sqok = qo.conj() @ sk @ qo.T # this is overlap matrix in QO basis
 
+        eigval_s, eigvec_s = la.eigh(sqok)
+        print("Eigenvalues of overlap of in basis Sqo(k) are: \n", eigval_s)
         eigvals_qo, eigvecs_qo = la.eigh(hqok, sqok)
-        print("Eigenvalues of Hqo(k) are: \n", eigvals_qo)
+        print("Eigenvalues of Hamiltonian in QO basis Hqo(k) are: \n", eigvals_qo)
+        
         eigvals_nao, eigvecs_nao = la.eigh(hk, sk)
-        print("Eigenvalues of H(k) are: \n", eigvals_nao)
+        print("Eigenvalues of Hamiltonian in NAO basis H(k) are: \n", eigvals_nao)
         return hqok
 
     def unfolding_hk(self, hqoks: list, kpoints: list, supercell: np.ndarray) -> np.ndarray:
@@ -123,4 +121,7 @@ class toQO_Calculator:
         for ik in range(len(kpoints)):
             arg = np.exp(1j * kpoints[ik] @ supercell * 2 * np.pi)
             hqoR += arg * hqoks[ik]
+        
+        hqoR_fname = "hqoR_" + "_".join([str(i) for i in supercell]) + ".txt"
+        np.savetxt(hqoR_fname, hqoR)
         return hqoR

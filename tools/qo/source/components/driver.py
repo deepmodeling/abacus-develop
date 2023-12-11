@@ -79,10 +79,12 @@ class toQO_Driver:
                                                                 self.dm_.data.hk[ik],
                                                                 self.dm_.data.sk[ik])
 
-    def reproduce_hamiltonian(self):
+    def reproduce_hamiltonian(self, Rs: list):
         """get QO, reproduce selected pieces of energy spectrum
         """
         for ik in range(self.dm_.data.nkpts):
             self.dm_.data.psi_qo[ik] = self.cal_.calculate_qo(self.dm_.data.sqok[ik], self.dm_.data.psi_exten[ik], self.dm_.data.sk[ik])
             self.dm_.data.hqok[ik] = self.cal_.calculate_hqok(self.dm_.data.psi_qo[ik], self.dm_.data.hk[ik], self.dm_.data.sk[ik])
-    
+
+        for R in Rs:
+            self.cal_.unfolding_hk(self.dm_.data.hqok, self.dm_.data.kpoints, R)
