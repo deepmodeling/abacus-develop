@@ -735,7 +735,7 @@ void Grid_Technique::cal_trace_lo(void)
 		{
 			checkCudaErrors(cudaStreamCreate(&streams[i]));
 		}
-		fastest_matrix_mul = vbatched_gemm_impl<double, 16, 4, 32, 16, 16, 16, 4, 16, 4>;
+
 		gemm_algo_selector(GlobalC::ucell.nwmax,GlobalC::ucell.nwmax, bxyz, fastest_matrix_mul);
 	}
 #endif
