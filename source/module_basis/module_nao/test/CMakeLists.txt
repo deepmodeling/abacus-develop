@@ -57,6 +57,7 @@ AddTest(
         ../sphbes_radials.cpp
         ../radial_set.cpp
         ../numerical_radial.cpp
+        ../../../module_io/output_radial.cpp
     LIBS ${math_libs} device base
 )
 
