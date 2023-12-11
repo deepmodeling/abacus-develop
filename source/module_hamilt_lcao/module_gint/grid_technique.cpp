@@ -622,11 +622,12 @@ void Grid_Technique::cal_trace_lo(void)
 		}
 
 		nr_max = static_cast<int>(1000 * max_cut) + 10;
-		double psi_u_now[GlobalC::ucell.ntype * GlobalC::ucell.nwmax * nr_max * 2];
+		// double psi_u_now[GlobalC::ucell.ntype * GlobalC::ucell.nwmax * nr_max * 2];
+		double* psi_u_now = (double *)malloc(GlobalC::ucell.ntype * GlobalC::ucell.nwmax * nr_max * 2 * sizeof(double));
 		memset(psi_u_now, 0, GlobalC::ucell.ntype * GlobalC::ucell.nwmax * nr_max * 2 * sizeof(double));
-		bool atom_iw2_new_now[GlobalC::ucell.ntype * GlobalC::ucell.nwmax];
+		bool *atom_iw2_new_now = (bool *)malloc(GlobalC::ucell.ntype * GlobalC::ucell.nwmax * sizeof(bool));
 		memset(atom_iw2_new_now, 0, GlobalC::ucell.ntype * GlobalC::ucell.nwmax * sizeof(bool));
-		int atom_iw2_ylm_now[GlobalC::ucell.ntype * GlobalC::ucell.nwmax];
+		int *atom_iw2_ylm_now = (int *)malloc(GlobalC::ucell.ntype * GlobalC::ucell.nwmax * sizeof(int));
 		memset(atom_iw2_ylm_now, 0, GlobalC::ucell.ntype * GlobalC::ucell.nwmax * sizeof(int));
 
 		Atom *atomx;
@@ -737,5 +738,9 @@ void Grid_Technique::cal_trace_lo(void)
 		}
 
 		gemm_algo_selector(GlobalC::ucell.nwmax,GlobalC::ucell.nwmax, bxyz, fastest_matrix_mul);
+
+		free(psi_u_now);
+		free(atom_iw2_new_now);
+		free(atom_iw2_ylm_now);
 	}
 #endif
