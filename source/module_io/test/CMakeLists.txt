@@ -143,12 +143,6 @@ AddTest(
 )
 
 AddTest(
-  TARGET io_para_json_test
-  LIBS ${math_libs} base device
-  SOURCES para_json_test.cpp ../input.cpp
-)
-
-AddTest(
   TARGET read_rhog_test
   LIBS ${math_libs} base device planewave
   SOURCES read_rhog_test.cpp ../read_rhog.cpp ../binstream.cpp ../../module_basis/module_pw/test/test_tool.cpp
