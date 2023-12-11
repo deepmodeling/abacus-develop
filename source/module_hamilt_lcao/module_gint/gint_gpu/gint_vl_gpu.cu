@@ -133,12 +133,14 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
             checkCuda(cudaMemcpyAsync(atom_pair_ldb_g, atom_pair_ldb, GridT.atom_pair_size_over_nbz * sizeof(int), cudaMemcpyHostToDevice, GridT.streams[stream_num]));
             checkCuda(cudaMemcpyAsync(atom_pair_ldc_g, atom_pair_ldc, GridT.atom_pair_size_over_nbz * sizeof(int), cudaMemcpyHostToDevice, GridT.streams[stream_num]));
 
-            checkCuda(cudaMemcpy(atom_pair_mat_A_array_g, atom_pair_mat_A_array, GridT.atom_pair_size_over_nbz * sizeof(double *), cudaMemcpyHostToDevice));
-            checkCuda(cudaMemcpy(atom_pair_mat_B_array_g, atom_pair_mat_B_array, GridT.atom_pair_size_over_nbz * sizeof(double *), cudaMemcpyHostToDevice));
-            checkCuda(cudaMemcpy(atom_pair_mat_C_array_g, atom_pair_mat_C_array, GridT.atom_pair_size_over_nbz * sizeof(double *), cudaMemcpyHostToDevice));
+            checkCuda(cudaMemcpyAsync(atom_pair_mat_A_array_g, atom_pair_mat_A_array, GridT.atom_pair_size_over_nbz * sizeof(double *), cudaMemcpyHostToDevice, GridT.streams[stream_num]));
+            checkCuda(cudaMemcpyAsync(atom_pair_mat_B_array_g, atom_pair_mat_B_array, GridT.atom_pair_size_over_nbz * sizeof(double *), cudaMemcpyHostToDevice, GridT.streams[stream_num]));
+
+            checkCuda(cudaMemcpyAsync(atom_pair_mat_C_array_g, atom_pair_mat_C_array, GridT.atom_pair_size_over_nbz * sizeof(double *), cudaMemcpyHostToDevice, GridT.streams[stream_num]));
 
             checkCuda(cudaMemsetAsync(psir_ylm_left_g, 0, GridT.psir_size * sizeof(double), GridT.streams[stream_num]));
             checkCuda(cudaMemsetAsync(psir_ylm_right_g, 0, GridT.psir_size * sizeof(double), GridT.streams[stream_num]));
+            checkCuda(cudaStreamSynchronize(GridT.streams[stream_num]));
 
             dim3 grid_psi(nbz, 8);
             dim3 block_psi(64);
