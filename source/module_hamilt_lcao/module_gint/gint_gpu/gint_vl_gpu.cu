@@ -120,8 +120,6 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
                                      max_m,
                                      max_n);
 
-            checkCuda(cudaStreamSynchronize(GridT.streams[stream_num]));
-
             checkCuda(cudaMemcpyAsync(psi_input_double_g, psi_input_double, GridT.psi_size_max * 5 * sizeof(double), cudaMemcpyHostToDevice, GridT.streams[stream_num]));
             checkCuda(cudaMemcpyAsync(psi_input_int_g, psi_input_int, GridT.psi_size_max * 2 * sizeof(int), cudaMemcpyHostToDevice, GridT.streams[stream_num]));
             checkCuda(cudaMemcpyAsync(num_psir_g, num_psir, nbz * sizeof(int), cudaMemcpyHostToDevice, GridT.streams[stream_num]));
