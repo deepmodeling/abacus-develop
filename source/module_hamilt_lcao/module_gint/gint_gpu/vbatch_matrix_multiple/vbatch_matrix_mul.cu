@@ -2104,7 +2104,7 @@ void gemm_algo_selector(int m, int n, int k, func_type & fastest_algo)
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
                                                               batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
-    std::cout << "Fastest time: " << fastest_time << " ms" << std::endl;
+    std::cout << " gemm_algo_selector::Fastest time: " << fastest_time << " ms" << std::endl;
 
     delete[] h_global_A_array;
     delete[] h_global_B_array;
