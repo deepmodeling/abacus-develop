@@ -40,5 +40,5 @@ typedef std::function<void(int, int,
                     double **, int *,
                     double **, int *,
                     int, cudaStream_t)> func_type;
-void gemm_algo_selector(int m, int n, int k, func_type &func);
+void gemm_algo_selector(int k, func_type &func);
 #endif // VBATCH_MATRIX_MUL_H

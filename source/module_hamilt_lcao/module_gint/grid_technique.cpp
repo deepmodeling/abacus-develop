@@ -737,7 +737,7 @@ void Grid_Technique::cal_trace_lo(void)
 			checkCudaErrors(cudaStreamCreate(&streams[i]));
 		}
 
-		gemm_algo_selector(GlobalC::ucell.nwmax,GlobalC::ucell.nwmax, bxyz, fastest_matrix_mul);
+		gemm_algo_selector(bxyz, fastest_matrix_mul);
 
 		free(psi_u_now);
 		free(atom_iw2_new_now);

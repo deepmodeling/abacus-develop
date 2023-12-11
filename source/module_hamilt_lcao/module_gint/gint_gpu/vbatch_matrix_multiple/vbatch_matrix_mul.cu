@@ -2,6 +2,7 @@
 #include "vbatch_matrix_mul.cuh"
 #include "cuda_tools.cuh"
 #include "module_base/blas_connector.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 #define sA(i,j)    sA[(j)*slda + (i)]
 #define sB(i,j)    sB[(j)*sldb + (i)]
@@ -294,6 +295,7 @@ void gemm_time_measure(int max_m, int max_n,
                  double *cpu_result, double * h_global_C, double *d_global_C, int h_m, int h_n)
 {
     cudaEvent_t start, stop;
+    cudaMemset(d_global_C, 0, batchCount * max_m * max_n * sizeof(double));
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
     cudaEventRecord(start, stream);
@@ -310,21 +312,13 @@ void gemm_time_measure(int max_m, int max_n,
     cudaEventElapsedTime(&milliseconds, start, stop);
 
     // WARNING !!!!! Here we assume that all m and n are the same
-    cudaMemcpy(h_global_C, d_global_C, batchCount * h_m * h_n * sizeof(double), cudaMemcpyDeviceToHost);  
-    cudaMemset(d_global_C, 0, batchCount * h_m * h_n * sizeof(double));
+    cudaMemcpy(h_global_C, d_global_C, batchCount * max_m * max_n * sizeof(double), cudaMemcpyDeviceToHost);  
     bool check_result = true;
-    for (int i = 0; i < batchCount; ++i)
+    for (int i = 0; i < batchCount * max_m * max_n; ++i)
     {
-        for (int j = 0; j < h_m * h_n; ++j)
+        if (abs(cpu_result[i] - h_global_C[i]) > 0.01)
         {
-            if (abs(cpu_result[i * h_m * h_n + j] - h_global_C[i * h_m * h_n + j]) > 0.01)
-            {
-                check_result = false;
-                break;
-            }
-        }
-        if (!check_result)
-        {
+            check_result = false;
             break;
         }
     }
@@ -339,32 +333,34 @@ void gemm_time_measure(int max_m, int max_n,
     }
 }
 
-void gemm_algo_selector(int m, int n, int k, func_type & fastest_algo)
+void gemm_algo_selector(int matrix_k, func_type & fastest_algo)
 {
-    int batchCount = 2048;
+
+    int batchCount_per_type = 32;
+    int batchCount = batchCount_per_type * GlobalC::ucell.ntype * GlobalC::ucell.ntype;
     int *h_m = new int[batchCount];
     int *h_n = new int[batchCount];
     int *h_global_lda = new int[batchCount];
     int *h_global_ldb = new int[batchCount];
     int *h_global_ldc = new int[batchCount];
-
+    int max_m = GlobalC::ucell.nwmax, max_n = GlobalC::ucell.nwmax;
     double **h_global_A_array = new double *[batchCount];
     double **h_global_B_array = new double *[batchCount];
     double **h_global_C_array = new double *[batchCount];
 
-    double *h_global_A = new double[batchCount * m * k];
-    double *h_global_B = new double[batchCount * n * k];
-    double *h_global_C = new double[batchCount * m * n];
+    double *h_global_A = new double[batchCount * max_m * matrix_k];
+    double *h_global_B = new double[batchCount * max_n * matrix_k];
+    double *h_global_C = new double[batchCount * max_m * max_n];
 
-    for (int i = 0; i < batchCount * m * k; ++i)
+    for (int i = 0; i < batchCount * max_m * matrix_k; ++i)
     {
         h_global_A[i] = i * 0.001;
     }
-    for (int i = 0; i < batchCount * n * k; ++i)
+    for (int i = 0; i < batchCount * max_n * matrix_k; ++i)
     {
         h_global_B[i] = i * 0.002;
     }
-    memset(h_global_C, 0, batchCount * m * n * sizeof(double));
+    memset(h_global_C, 0, batchCount * max_m * max_n * sizeof(double));
 
     // Allocate device memory
     int *d_m;
@@ -381,8 +377,8 @@ void gemm_algo_selector(int m, int n, int k, func_type & fastest_algo)
     double *d_global_B;
     double *d_global_C;
 
-    double *cpu_result = new double[batchCount * m * n];
-    memset(cpu_result, 0, batchCount * m * n * sizeof(double));
+    double *cpu_result = new double[batchCount * max_m * max_n];
+    memset(cpu_result, 0, batchCount * max_m * max_n * sizeof(double));
 
     cudaMalloc(&d_m, batchCount * sizeof(int));
     cudaMalloc(&d_n, batchCount * sizeof(int));
@@ -393,23 +389,31 @@ void gemm_algo_selector(int m, int n, int k, func_type & fastest_algo)
     cudaMalloc(&d_global_B_array, batchCount * sizeof(double *));
     cudaMalloc(&d_global_C_array, batchCount * sizeof(double *));
 
-    cudaMalloc(&d_global_A, batchCount * m * k * sizeof(double));
-    cudaMalloc(&d_global_B, batchCount * n * k * sizeof(double));
-    cudaMalloc(&d_global_C, batchCount * m * n * sizeof(double));
+    cudaMalloc(&d_global_A, batchCount * max_m * matrix_k * sizeof(double));
+    cudaMalloc(&d_global_B, batchCount * max_n * matrix_k * sizeof(double));
+    cudaMalloc(&d_global_C, batchCount * max_m * max_n * sizeof(double));
      
-    cudaMemset(d_global_C, 0, batchCount * m * n * sizeof(double));
-    for (int i = 0; i < batchCount; ++i)
+    cudaMemset(d_global_C, 0, batchCount * max_m * max_n * sizeof(double));
+    int index = 0;
+    for (int i = 0; i < batchCount_per_type; ++i)
     {
-        h_m[i] = m;
-        h_n[i] = n;
-        h_global_lda[i] = k;
-        h_global_ldb[i] = k;
-        h_global_ldc[i] = n;
+        for (int j = 0; j < GlobalC::ucell.ntype; j++)
+        {
+            for (int k = 0; k < GlobalC::ucell.ntype; k++)
+            {
+                h_m[index] = GlobalC::ucell.atoms[j].nw;
+                h_n[index] = GlobalC::ucell.atoms[k].nw;
+                h_global_lda[index] = matrix_k;
+                h_global_ldb[index] = matrix_k;
+                h_global_ldc[index] = GlobalC::ucell.atoms[k].nw;
 
-        h_global_A_array[i] = &d_global_A[i * m * k];
-        h_global_B_array[i] = &d_global_B[i * n * k];
-        h_global_C_array[i] = &d_global_C[i * n * m]; // test atom add
-        BlasConnector::gemm('N', 'T', m, n, k, 1.0, &h_global_A[i * m * k], k, &h_global_B[i * n * k], k, 1.0, &cpu_result[i * m * n], n);
+                h_global_A_array[index] = &d_global_A[index * max_m * matrix_k];
+                h_global_B_array[index] = &d_global_B[index * max_n * matrix_k];
+                h_global_C_array[index] = &d_global_C[index * max_n * max_m]; // test atom add
+                BlasConnector::gemm('N', 'T', h_m[index], h_n[index], matrix_k, 1.0, &h_global_A[index * max_m * matrix_k], matrix_k, &h_global_B[index * max_n * matrix_k], matrix_k, 1.0, &cpu_result[index * max_m * max_n], h_n[index]);
+                index++;
+            }
+        }
     }
 
     cudaMemcpy(d_m, h_m, batchCount * sizeof(int), cudaMemcpyHostToDevice);
@@ -423,1689 +427,1689 @@ void gemm_algo_selector(int m, int n, int k, func_type & fastest_algo)
     cudaMemcpy(d_global_B_array, h_global_B_array, batchCount * sizeof(double *), cudaMemcpyHostToDevice);
     cudaMemcpy(d_global_C_array, h_global_C_array, batchCount * sizeof(double *), cudaMemcpyHostToDevice);
 
-    cudaMemcpy(d_global_A, h_global_A, batchCount * m * k * sizeof(double), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_global_B, h_global_B, batchCount * n * k * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_global_A, h_global_A, batchCount * max_m * matrix_k * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_global_B, h_global_B, batchCount * max_n * matrix_k * sizeof(double), cudaMemcpyHostToDevice);
 
     cudaStream_t stream;
     cudaStreamCreate(&stream);
 
     float fastest_time = 1000000;
     fastest_algo = vbatched_gemm_impl<double, 16, 4, 32, 16, 16, 16, 4, 16, 4>;
-        gemm_time_measure<double, 2,16,16,32,2,2,16,2,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 2,16,16,32,2,2,16,2,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 2,16,16,32,4,2,16,2,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 2,16,16,32,4,2,16,2,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 2,16,16,32,6,2,16,2,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 2,16,16,32,6,2,16,2,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 2,16,16,32,8,2,16,2,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 2,16,16,32,8,2,16,2,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 2,16,16,48,2,2,16,2,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 2,16,16,48,2,2,16,2,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 2,16,16,48,4,2,16,2,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 2,16,16,48,4,2,16,2,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 2,16,16,48,6,2,16,2,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 2,16,16,48,6,2,16,2,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,8,24,4,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,8,24,4,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,8,24,8,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,8,24,8,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,8,24,12,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,8,24,12,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,8,32,4,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,8,32,4,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,8,32,8,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,8,32,8,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,8,40,4,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,8,40,4,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,8,40,8,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,8,40,8,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,8,48,4,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,8,48,4,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,8,56,4,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,8,56,4,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,8,64,4,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,8,64,4,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,16,16,4,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,16,16,4,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,16,16,8,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,16,16,8,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,16,16,12,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,16,16,12,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,16,24,4,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,16,24,4,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,16,24,8,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,16,24,8,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,16,32,4,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,16,32,4,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,16,32,8,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,16,32,8,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,16,40,4,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,16,40,4,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,16,48,4,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,16,48,4,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,16,56,4,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,16,56,4,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,24,16,4,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,24,16,4,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,24,16,8,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,24,16,8,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,24,24,4,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,24,24,4,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,24,24,8,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,24,24,8,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,24,32,4,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,24,32,4,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,24,40,4,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,24,40,4,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,32,16,4,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,32,16,4,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,32,16,8,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,32,16,8,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,32,24,4,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,32,24,4,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,40,16,4,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,40,16,4,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,40,24,4,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,40,24,4,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,48,16,4,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,48,16,4,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,56,16,4,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,56,16,4,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,16,16,32,4,4,16,4,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,16,16,32,4,4,16,4,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,16,16,32,8,4,16,4,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,16,16,32,8,4,16,4,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,16,16,32,12,4,16,4,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,16,16,32,12,4,16,4,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,16,16,32,16,4,16,4,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,16,16,32,16,4,16,4,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,16,16,48,4,4,16,4,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,16,16,48,4,4,16,4,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,16,16,48,8,4,16,4,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,16,16,48,8,4,16,4,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,16,16,48,12,4,16,4,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,16,16,48,12,4,16,4,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,16,16,64,4,4,16,4,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,16,16,64,4,4,16,4,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,16,16,64,8,4,16,4,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,16,16,64,8,4,16,4,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,16,32,32,4,4,16,4,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,16,32,32,4,4,16,4,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,16,32,32,8,4,16,4,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,16,32,32,8,4,16,4,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,16,32,32,12,4,16,4,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,16,32,32,12,4,16,4,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,16,32,48,4,4,16,4,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,16,32,48,4,4,16,4,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,16,32,48,8,4,16,4,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,16,32,48,8,4,16,4,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,16,48,32,4,4,16,4,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,16,48,32,4,4,16,4,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,16,48,32,8,4,16,4,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,16,48,32,8,4,16,4,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,24,24,48,4,4,24,4,24>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,24,24,48,4,4,24,4,24>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,24,24,48,8,4,24,4,24>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,24,24,48,8,4,24,4,24>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,24,24,48,12,4,24,4,24>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,24,24,48,12,4,24,4,24>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,24,48,48,4,4,24,4,24>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,24,48,48,4,4,24,4,24>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,24,48,48,8,4,24,4,24>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,24,48,48,8,4,24,4,24>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,32,32,64,4,4,32,4,32>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,32,32,64,4,4,32,4,32>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,32,32,64,8,4,32,4,32>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,32,32,64,8,4,32,4,32>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,32,32,64,12,4,32,4,32>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,32,32,64,12,4,32,4,32>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,32,32,64,16,4,32,4,32>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,32,32,64,16,4,32,4,32>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 6,16,48,32,6,6,16,6,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 6,16,48,32,6,6,16,6,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 6,16,48,32,12,6,16,6,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 6,16,48,32,12,6,16,6,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 6,16,48,48,6,6,16,6,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 6,16,48,48,6,6,16,6,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,4,16,12,8,8,4,8,4>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,4,16,12,8,8,4,8,4>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,4,16,16,8,8,4,8,4>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,4,16,16,8,8,4,8,4>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,4,16,20,8,8,4,8,4>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,4,16,20,8,8,4,8,4>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,4,16,24,8,8,4,8,4>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,4,16,24,8,8,4,8,4>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,4,16,28,8,8,4,8,4>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,4,16,28,8,8,4,8,4>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,4,16,32,8,8,4,8,4>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,4,16,32,8,8,4,8,4>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,4,24,8,8,8,4,8,4>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,4,24,8,8,8,4,8,4>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,4,24,12,8,8,4,8,4>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,4,24,12,8,8,4,8,4>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,4,24,16,8,8,4,8,4>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,4,24,16,8,8,4,8,4>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,4,24,20,8,8,4,8,4>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,4,24,20,8,8,4,8,4>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,4,24,24,8,8,4,8,4>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,4,24,24,8,8,4,8,4>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,4,32,8,8,8,4,8,4>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,4,32,8,8,8,4,8,4>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,4,32,12,8,8,4,8,4>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,4,32,12,8,8,4,8,4>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,4,32,16,8,8,4,8,4>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,4,32,16,8,8,4,8,4>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,4,40,8,8,8,4,8,4>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,4,40,8,8,8,4,8,4>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,16,24,8,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,16,24,8,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,16,24,16,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,16,24,16,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,16,32,8,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,16,32,8,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,16,32,16,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,16,32,16,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,16,40,8,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,16,40,8,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,16,48,8,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,16,48,8,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,16,56,8,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,16,56,8,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,16,64,8,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,16,64,8,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,24,16,8,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,24,16,8,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,24,16,16,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,24,16,16,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,24,24,8,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,24,24,8,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,24,24,16,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,24,24,16,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,24,32,8,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,24,32,8,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,24,40,8,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,24,40,8,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,24,48,8,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,24,48,8,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,24,56,8,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,24,56,8,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,24,64,8,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,24,64,8,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,32,16,8,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,32,16,8,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,32,16,16,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,32,16,16,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,32,24,8,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,32,24,8,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,32,32,8,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,32,32,8,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,32,40,8,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,32,40,8,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,32,48,8,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,32,48,8,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,32,56,8,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,32,56,8,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,40,16,8,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,40,16,8,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,40,24,8,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,40,24,8,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,40,32,8,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,40,32,8,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,40,40,8,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,40,40,8,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,40,48,8,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,40,48,8,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,48,16,8,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,48,16,8,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,48,24,8,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,48,24,8,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,48,32,8,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,48,32,8,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,48,40,8,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,48,40,8,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,56,16,8,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,56,16,8,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,56,24,8,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,56,24,8,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,56,32,8,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,56,32,8,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,64,16,8,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,64,16,8,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,64,24,8,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,64,24,8,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,12,24,24,8,8,12,8,12>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,12,24,24,8,8,12,8,12>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,12,24,24,16,8,12,8,12>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,12,24,24,16,8,12,8,12>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,12,24,36,8,8,12,8,12>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,12,24,36,8,8,12,8,12>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,12,24,36,16,8,12,8,12>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,12,24,36,16,8,12,8,12>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,12,24,48,8,8,12,8,12>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,12,24,48,8,8,12,8,12>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,12,24,60,8,8,12,8,12>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,12,24,60,8,8,12,8,12>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,12,48,24,8,8,12,8,12>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,12,48,24,8,8,12,8,12>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,12,48,36,8,8,12,8,12>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,12,48,36,8,8,12,8,12>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,12,48,48,8,8,12,8,12>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,12,48,48,8,8,12,8,12>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,12,48,60,8,8,12,8,12>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,12,48,60,8,8,12,8,12>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,16,16,48,8,8,16,8,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,16,16,48,8,8,16,8,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,16,16,48,16,8,16,8,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,16,16,48,16,8,16,8,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,16,16,48,24,8,16,8,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,16,16,48,24,8,16,8,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,16,16,64,8,8,16,8,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,16,16,64,8,8,16,8,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,16,16,64,16,8,16,8,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,16,16,64,16,8,16,8,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,16,32,32,8,8,16,8,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,16,32,32,8,8,16,8,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,16,32,32,16,8,16,8,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,16,32,32,16,8,16,8,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,16,32,32,24,8,16,8,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,16,32,32,24,8,16,8,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,16,32,48,8,8,16,8,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,16,32,48,8,8,16,8,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,16,32,48,16,8,16,8,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,16,32,48,16,8,16,8,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,16,32,64,8,8,16,8,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,16,32,64,8,8,16,8,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,16,32,64,16,8,16,8,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,16,32,64,16,8,16,8,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,16,48,32,8,8,16,8,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,16,48,32,8,8,16,8,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,16,48,32,16,8,16,8,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,16,48,32,16,8,16,8,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,16,48,48,8,8,16,8,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,16,48,48,8,8,16,8,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,16,48,48,16,8,16,8,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,16,48,48,16,8,16,8,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,16,48,64,8,8,16,8,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,16,48,64,8,8,16,8,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,16,64,32,8,8,16,8,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,16,64,32,8,8,16,8,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,16,64,32,16,8,16,8,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,16,64,32,16,8,16,8,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,16,64,48,8,8,16,8,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,16,64,48,8,8,16,8,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,20,40,40,8,8,20,8,20>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,20,40,40,8,8,20,8,20>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,20,40,40,16,8,20,8,20>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,20,40,40,16,8,20,8,20>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,20,40,60,8,8,20,8,20>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,20,40,60,8,8,20,8,20>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,24,24,48,8,8,24,8,24>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,24,24,48,8,8,24,8,24>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,24,24,48,16,8,24,8,24>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,24,24,48,16,8,24,8,24>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,24,24,48,24,8,24,8,24>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,24,24,48,24,8,24,8,24>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,24,48,48,8,8,24,8,24>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,24,48,48,8,8,24,8,24>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,24,48,48,16,8,24,8,24>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,24,48,48,16,8,24,8,24>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,28,56,56,8,8,28,8,28>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,28,56,56,8,8,28,8,28>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,28,56,56,16,8,28,8,28>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,28,56,56,16,8,28,8,28>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,32,32,64,8,8,32,8,32>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,32,32,64,8,8,32,8,32>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,32,32,64,16,8,32,8,32>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,32,32,64,16,8,32,8,32>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,32,32,64,24,8,32,8,32>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,32,32,64,24,8,32,8,32>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,32,32,64,32,8,32,8,32>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,32,32,64,32,8,32,8,32>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,32,64,64,8,8,32,8,32>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,32,64,64,8,8,32,8,32>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,32,64,64,16,8,32,8,32>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,32,64,64,16,8,32,8,32>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,32,64,64,24,8,32,8,32>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,32,64,64,24,8,32,8,32>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 12,8,24,24,12,12,8,12,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 12,8,24,24,12,12,8,12,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 12,8,24,32,12,12,8,12,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 12,8,24,32,12,12,8,12,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 12,8,24,40,12,12,8,12,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 12,8,24,40,12,12,8,12,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 12,8,24,48,12,12,8,12,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 12,8,24,48,12,12,8,12,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 12,8,24,56,12,12,8,12,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 12,8,24,56,12,12,8,12,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 12,8,48,16,12,12,8,12,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 12,8,48,16,12,12,8,12,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 12,8,48,24,12,12,8,12,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 12,8,48,24,12,12,8,12,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 12,8,48,32,12,12,8,12,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 12,8,48,32,12,12,8,12,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 12,16,48,32,12,12,16,12,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 12,16,48,32,12,12,16,12,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 12,16,48,32,24,12,16,12,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 12,16,48,32,24,12,16,12,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 12,16,48,48,12,12,16,12,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 12,16,48,48,12,12,16,12,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 12,16,48,64,12,12,16,12,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 12,16,48,64,12,12,16,12,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 12,24,48,48,12,12,24,12,24>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 12,24,48,48,12,12,24,12,24>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 12,24,48,48,24,12,24,12,24>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 12,24,48,48,24,12,24,12,24>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,4,32,12,16,16,4,16,4>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,4,32,12,16,16,4,16,4>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,4,32,16,16,16,4,16,4>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,4,32,16,16,16,4,16,4>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,6,48,12,16,16,6,16,6>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,6,48,12,16,16,6,16,6>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,8,32,24,16,16,8,16,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,8,32,24,16,16,8,16,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,8,32,32,16,16,8,16,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,8,32,32,16,16,8,16,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,8,32,40,16,16,8,16,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,8,32,40,16,16,8,16,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,8,32,48,16,16,8,16,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,8,32,48,16,16,8,16,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,8,32,56,16,16,8,16,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,8,32,56,16,16,8,16,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,8,32,64,16,16,8,16,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,8,32,64,16,16,8,16,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,8,48,16,16,16,8,16,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,8,48,16,16,16,8,16,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,8,48,24,16,16,8,16,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,8,48,24,16,16,8,16,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,8,48,32,16,16,8,16,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,8,48,32,16,16,8,16,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,8,48,40,16,16,8,16,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,8,48,40,16,16,8,16,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,8,48,48,16,16,8,16,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,8,48,48,16,16,8,16,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,8,64,16,16,16,8,16,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,8,64,16,16,16,8,16,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,8,64,24,16,16,8,16,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,8,64,24,16,16,8,16,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,8,64,32,16,16,8,16,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,8,64,32,16,16,8,16,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,12,48,24,16,16,12,16,12>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,12,48,24,16,16,12,16,12>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,12,48,36,16,16,12,16,12>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,12,48,36,16,16,12,16,12>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,12,48,48,16,16,12,16,12>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,12,48,48,16,16,12,16,12>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,12,48,60,16,16,12,16,12>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,12,48,60,16,16,12,16,12>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,16,32,48,16,16,16,16,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,16,32,48,16,16,16,16,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,16,32,48,32,16,16,16,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,16,32,48,32,16,16,16,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,16,32,64,16,16,16,16,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,16,32,64,16,16,16,16,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,16,32,64,32,16,16,16,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,16,32,64,32,16,16,16,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,16,48,32,16,16,16,16,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,16,48,32,16,16,16,16,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,16,48,32,32,16,16,16,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,16,48,32,32,16,16,16,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,16,48,48,16,16,16,16,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,16,48,48,16,16,16,16,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,16,48,48,32,16,16,16,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,16,48,48,32,16,16,16,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,16,48,64,16,16,16,16,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,16,48,64,16,16,16,16,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,16,64,32,16,16,16,16,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,16,64,32,16,16,16,16,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,16,64,32,32,16,16,16,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,16,64,32,32,16,16,16,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,16,64,48,16,16,16,16,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,16,64,48,16,16,16,16,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,16,64,64,16,16,16,16,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,16,64,64,16,16,16,16,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,24,48,48,16,16,24,16,24>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,24,48,48,16,16,24,16,24>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,24,48,48,32,16,24,16,24>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,24,48,48,32,16,24,16,24>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,32,64,64,16,16,32,16,32>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,32,64,64,16,16,32,16,32>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,32,64,64,32,16,32,16,32>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,32,64,64,32,16,32,16,32>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,32,64,64,32,16,32,16,32>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,32,64,64,32,16,32,16,32>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 20,8,40,24,20,20,8,20,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 20,8,40,24,20,20,8,20,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 20,8,40,32,20,20,8,20,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 20,8,40,32,20,20,8,20,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 24,8,48,24,24,24,8,24,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 24,8,48,24,24,24,8,24,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 24,8,48,32,24,24,8,24,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 24,8,48,32,24,24,8,24,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 24,12,48,36,24,24,12,24,12>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 24,12,48,36,24,24,12,24,12>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 24,12,48,48,24,24,12,24,12>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 24,12,48,48,24,24,12,24,12>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 24,12,48,60,24,24,12,24,12>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 24,12,48,60,24,24,12,24,12>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 24,16,48,48,24,24,16,24,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 24,16,48,48,24,24,16,24,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 24,16,48,64,24,24,16,24,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 24,16,48,64,24,24,16,24,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 32,8,64,24,32,32,8,32,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 32,8,64,24,32,32,8,32,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 32,8,64,32,32,32,8,32,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 32,8,64,32,32,32,8,32,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 32,16,64,48,32,32,16,32,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 32,16,64,48,32,32,16,32,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 32,16,64,64,32,32,16,32,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 32,16,64,64,32,32,16,32,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 2,16,16,32,4,2,16,2,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 2,16,16,32,4,2,16,2,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 2,16,16,32,8,2,16,2,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 2,16,16,32,8,2,16,2,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 2,16,16,48,4,2,16,2,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 2,16,16,48,4,2,16,2,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,8,24,8,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,8,24,8,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,8,32,8,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,8,32,8,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,8,40,8,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,8,40,8,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,16,16,8,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,16,16,8,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,16,24,8,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,16,24,8,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,16,32,8,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,16,32,8,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,24,16,8,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,24,16,8,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,24,24,8,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,24,24,8,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,8,32,16,8,4,8,4,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,8,32,16,8,4,8,4,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,16,16,32,8,4,16,4,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,16,16,32,8,4,16,4,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,16,16,32,16,4,16,4,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,16,16,32,16,4,16,4,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,16,16,48,8,4,16,4,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,16,16,48,8,4,16,4,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,16,16,64,8,4,16,4,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,16,16,64,8,4,16,4,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,16,32,32,8,4,16,4,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,16,32,32,8,4,16,4,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,16,32,48,8,4,16,4,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,16,32,48,8,4,16,4,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,16,48,32,8,4,16,4,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,16,48,32,8,4,16,4,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,24,24,48,8,4,24,4,24>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,24,24,48,8,4,24,4,24>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,24,48,48,8,4,24,4,24>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,24,48,48,8,4,24,4,24>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,32,32,64,8,4,32,4,32>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,32,32,64,8,4,32,4,32>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 4,32,32,64,16,4,32,4,32>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 4,32,32,64,16,4,32,4,32>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 6,16,48,32,12,6,16,6,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 6,16,48,32,12,6,16,6,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,16,24,16,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,16,24,16,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,16,32,16,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,16,32,16,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,8,32,16,16,8,8,8,8>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,8,32,16,16,8,8,8,8>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,16,16,48,16,8,16,8,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,16,16,48,16,8,16,8,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,16,16,64,16,8,16,8,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,16,16,64,16,8,16,8,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,16,32,32,16,8,16,8,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,16,32,32,16,8,16,8,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,16,32,48,16,8,16,8,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,16,32,48,16,8,16,8,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,16,32,64,16,8,16,8,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,16,32,64,16,8,16,8,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,16,48,32,16,8,16,8,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,16,48,32,16,8,16,8,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,16,48,48,16,8,16,8,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,16,48,48,16,8,16,8,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,16,64,32,16,8,16,8,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,16,64,32,16,8,16,8,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,24,48,48,16,8,24,8,24>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,24,48,48,16,8,24,8,24>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,32,32,64,16,8,32,8,32>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,32,32,64,16,8,32,8,32>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,32,32,64,32,8,32,8,32>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,32,32,64,32,8,32,8,32>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 8,32,64,64,16,8,32,8,32>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 8,32,64,64,16,8,32,8,32>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 12,16,48,32,24,12,16,12,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 12,16,48,32,24,12,16,12,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 12,24,48,48,24,12,24,12,24>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 12,24,48,48,24,12,24,12,24>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,16,32,48,32,16,16,16,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,16,32,48,32,16,16,16,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,16,32,64,32,16,16,16,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,16,32,64,32,16,16,16,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,16,64,32,32,16,16,16,16>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,16,64,32,32,16,16,16,16>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
 
-        gemm_time_measure<double, 16,32,64,64,32,16,32,16,32>(m, n, d_m, d_n, k,
+        gemm_time_measure<double, 16,32,64,64,32,16,32,16,32>(max_m, max_n, d_m, d_n, matrix_k,
                                                               d_global_A_array, d_global_lda,
                                                               d_global_B_array, d_global_ldb,
                                                               d_global_C_array, d_global_ldc,
-                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, m, n);
+                                                              batchCount, stream, fastest_time, fastest_algo, cpu_result, h_global_C, d_global_C, max_m, max_n);
     std::cout << " gemm_algo_selector::Fastest time: " << fastest_time << " ms" << std::endl;
-
+    // fastest_algo = vbatched_gemm_impl<double, 16, 4, 32, 16, 16, 16, 4, 16, 4>;
     delete[] h_global_A_array;
     delete[] h_global_B_array;
     delete[] h_global_C_array;
