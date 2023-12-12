@@ -142,17 +142,17 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
             {
                 continue;
             }
-            double drho_tmp = 0;
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+ : drho)
+#endif
             for (int ir = 0; ir < this->rhopw->nrxx; ir++)
             {
-                drho_tmp += std::abs(chr->rho[is][ir] - chr->rho_save[is][ir]);
+                drho += std::abs(chr->rho[is][ir] - chr->rho_save[is][ir]);
             }
-#ifdef __MPI
-        Parallel_Reduce::reduce_pool(drho_tmp);
-#endif
-            std::cout<<" "<<is<<" "<<drho_tmp<<std::endl;
-            drho += drho_tmp;
         }
+#ifdef __MPI
+        Parallel_Reduce::reduce_pool(drho);
+#endif
         assert(nelec != 0);
         assert(GlobalC::ucell.omega > 0);
         assert(this->rhopw->nxyz > 0);
