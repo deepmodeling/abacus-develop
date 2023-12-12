@@ -247,7 +247,7 @@ namespace formatter
                 {"vector3d_i", std::make_pair(1,
                 std::vector<std::string>{"constraint", "constraint", "constraint"})}, // vector3d will be position, vectors and for this, it is constraint, kmesh, ...
                 {"vector3d_short", std::make_pair(1,
-                std::vector<std::string>{"double_w6_f4", "double_w6_f4", "double_w6_f4"})},
+                std::vector<std::string>{"double_w7_f4", "double_w7_f4", "double_w7_f4"})},
                 {"scf", std::make_pair(0,
                 std::vector<std::string>{"str_w4", "int_w4", "energy", "energy", "energy", "time"})}, // but for scf it is really a special case
                 {"time_statistics", std::make_pair(0,

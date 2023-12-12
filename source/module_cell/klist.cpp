@@ -834,7 +834,7 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
             _kvec_d_ibz_table.push_back(std::vector<std::string>(
                 {"("+_title+")"}
             ));
-            _table_titles.push_back(_title);
+            _table_titles.push_back("("+_title+")");
         }
 		else //mohan fix bug 2010-1-30
 		{
@@ -939,10 +939,11 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
 	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nkstot_ibz",nkstot_ibz);
     
     formatter::ContextFmt fmt;
-    fmt.set_context({"int_w8", "double_w6_f4", "double_w6_f4", "double_w6_f4", "double_w6_f4", "int_w4"});
+    fmt.set_context({"int_w8", "double_w12_f8", "double_w12_f8", "double_w12_f8", "double_w6_f4", "int_w4"});
     fmt.set_titles({"IBZ", "DIRECT_X", "DIRECT_Y", "DIRECT_Z", "WEIGHT", "ibz2bz"});
     fmt.set_overall_title("K-POINTS REDUCTION ACCORDING TO SYMMETRY");
     fmt.enable_title(); fmt.disable_down_frame(); fmt.disable_up_frame(); fmt.disable_mid_frame();
+    fmt.right_title();
 /* 	GlobalV::ofs_running << " " << std::setw(8) << "IBZ" << std::setw(20) << "DirectX"
 	<< std::setw(20) << "DirectY" << std::setw(20) << "DirectZ"
 	<< std::setw(20) << "Weight" << std::setw(10) << "ibz2bz" << std::endl; */
@@ -1042,11 +1043,11 @@ void K_Vectors::set_both_kvec(const ModuleBase::Matrix3 &G, const ModuleBase::Ma
         kd_done = true;
     }
     formatter::ContextFmt fmt;
-    fmt.set_context({"int_w8", "double_w6_f4", "double_w6_f4", "double_w6_f4", "double_w6_f4"});
+    fmt.set_context({"int_w8", "double_w12_f8", "double_w12_f8", "double_w12_f8", "double_w6_f4"});
     fmt.set_titles({"KPOINTS", "DIRECT_X", "DIRECT_Y", "DIRECT_Z", "WEIGHT"});
     fmt.set_overall_title("K-POINTS DIRECT COORDINATES");
     fmt.enable_title(); fmt.disable_down_frame(); fmt.disable_up_frame(); fmt.disable_mid_frame();
-
+    fmt.right_title();
 	// GlobalV::ofs_running << "\n " << std::setw(8) << "KPOINTS"
 	// << std::setw(20) << "DIRECT_X"
 	// << std::setw(20) << "DIRECT_Y"
@@ -1271,11 +1272,11 @@ void K_Vectors::print_klists(std::ofstream &ofs)
         ModuleBase::WARNING_QUIT("print_klists","nkstot < nks");
     }
     formatter::ContextFmt fmt;
-    fmt.set_context({"int_w8", "double_w6_f4", "double_w6_f4", "double_w6_f4", "double_w6_f4"});
+    fmt.set_context({"int_w8", "double_w12_f8", "double_w12_f8", "double_w12_f8", "double_w6_f4"});
     fmt.set_titles({"KPOINTS", "CARTESIAN_X", "CARTESIAN_Y", "CARTESIAN_Z", "WEIGHT"});
     fmt.set_overall_title("K-POINTS CARTESIAN COORDINATES");
     fmt.enable_title(); fmt.disable_down_frame(); fmt.disable_up_frame(); fmt.disable_mid_frame();
-
+    fmt.right_title();
 	// GlobalV::ofs_running << "\n " << std::setw(8) << "KPOINTS"
 	// << std::setw(20) << "CARTESIAN_X"
 	// << std::setw(20) << "CARTESIAN_Y"
@@ -1301,10 +1302,11 @@ void K_Vectors::print_klists(std::ofstream &ofs)
     fmt << _kpoints << _cartesian_x << _cartesian_y << _cartesian_z << _weights;
     GlobalV::ofs_running << "\n" << fmt.str() << std::endl;
 
-    fmt.set_context({"int_w8", "double_w6_f4", "double_w6_f4", "double_w6_f4", "double_w6_f4"});
+    fmt.set_context({"int_w8", "double_w12_f8", "double_w12_f8", "double_w12_f8", "double_w6_f4"});
     fmt.set_titles({"KPOINTS", "DIRECT_X", "DIRECT_Y", "DIRECT_Z", "WEIGHT"});
     fmt.set_overall_title("K-POINTS DIRECT COORDINATES");
     fmt.enable_title(); fmt.disable_down_frame(); fmt.disable_up_frame(); fmt.disable_mid_frame();
+    fmt.right_title();
 	// GlobalV::ofs_running << "\n " << std::setw(8) << "KPOINTS"
 	// << std::setw(20) << "DIRECT_X"
 	// << std::setw(20) << "DIRECT_Y"
@@ -1468,11 +1470,11 @@ void K_Vectors::set_both_kvec_after_vc(const ModuleBase::Matrix3 &G, const Modul
         kd_done = true;
     }
     formatter::ContextFmt fmt;
-    fmt.set_context({"int_w8", "double_w6_f4", "double_w6_f4", "double_w6_f4", "double_w6_f4"});
+    fmt.set_context({"int_w8", "double_w12_f8", "double_w12_f8", "double_w12_f8", "double_w6_f4"});
     fmt.set_titles({"KPOINTS", "DIRECT_X", "DIRECT_Y", "DIRECT_Z", "WEIGHT"});
     fmt.set_overall_title("K-POINTS DIRECT COORDINATES");
     fmt.enable_title(); fmt.disable_down_frame(); fmt.disable_up_frame(); fmt.disable_mid_frame();
-
+    fmt.right_title();
 	// GlobalV::ofs_running << "\n " << std::setw(8) << "KPOINTS"
 	// << std::setw(20) << "DIRECT_X"
 	// << std::setw(20) << "DIRECT_Y"

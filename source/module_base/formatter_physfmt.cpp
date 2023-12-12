@@ -70,8 +70,15 @@ void formatter::PhysicalFmt::adjust_formatter(bool left) {
     }
     else if (
         (strcmp(context, "double_w6_f4") == 0)
-    ) {
+    ) {// 0.0000
         this->p_formatter_->set_width(6); this->p_formatter_->set_precision(4);
+        this->p_formatter_->set_fillChar(' '); this->p_formatter_->set_fixed(true);
+        this->p_formatter_->set_right(!left);
+    }
+    else if (
+        (strcmp(context, "double_w7_f4") == 0)
+    ) {// vector3d_short
+        this->p_formatter_->set_width(7); this->p_formatter_->set_precision(4);
         this->p_formatter_->set_fillChar(' '); this->p_formatter_->set_fixed(true);
         this->p_formatter_->set_right(!left);
     }
@@ -95,6 +102,13 @@ void formatter::PhysicalFmt::adjust_formatter(bool left) {
         (strcmp(context, "double_w10_f2") == 0)
     ) {
         this->p_formatter_->set_width(10); this->p_formatter_->set_precision(2);
+        this->p_formatter_->set_fillChar(' '); this->p_formatter_->set_fixed(true);
+        this->p_formatter_->set_right(!left);
+    }
+    else if (
+        (strcmp(context, "double_w12_f8") == 0)
+    ) {
+        this->p_formatter_->set_width(12); this->p_formatter_->set_precision(8);
         this->p_formatter_->set_fillChar(' '); this->p_formatter_->set_fixed(true);
         this->p_formatter_->set_right(!left);
     }
