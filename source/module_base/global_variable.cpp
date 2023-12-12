@@ -288,9 +288,4 @@ int sc_scf_nmin = 2;
 double alpha_trial = 0.01; // eV/uB^2
 double sccut = 3;          // eV/uB
 std::string sc_file = "none";
-
-//==========================================================
-// Quasiatomic orbitals related
-//==========================================================
-bool out_kpt_reduction = false;
 } // namespace GlobalV

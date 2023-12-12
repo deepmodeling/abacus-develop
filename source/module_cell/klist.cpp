@@ -751,8 +751,6 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
     };
     // for output in kpoints file
     int ibz_index[nkstot];
-    std::vector<std::vector<std::string>> _kvec_d_ibz_table;
-    std::vector<std::string> _table_titles;
 	// search in all k-poins.
     for (int i = 0; i < nkstot; ++i)
     {
@@ -801,10 +799,6 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
 						// find another ibz k point,
 						// but is already in the ibz_kpoint list.
 						// so the weight need to +1;
-                        formatter::ContextFmt fmt;
-                        fmt.set_context("vector3d_short");
-                        fmt << kvec_d[i].x << kvec_d[i].y << kvec_d[i].z;
-                        _kvec_d_ibz_table[k].push_back("("+fmt.str()+")");
                         this->wk_ibz[k] += weight;
 						exist_number = k;
                         break;
@@ -827,14 +821,6 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
 			//ibz2bz records the index of origin k points.
             this->ibz2bz[nkstot_ibz] = i;
             ++nkstot_ibz;
-            formatter::ContextFmt fmt;
-            fmt.set_context("vector3d_short");
-            fmt << kvec_rot.x << kvec_rot.y << kvec_rot.z;
-            std::string _title = fmt.str();
-            _kvec_d_ibz_table.push_back(std::vector<std::string>(
-                {"("+_title+")"}
-            ));
-            _table_titles.push_back("("+_title+")");
         }
 		else //mohan fix bug 2010-1-30
 		{
@@ -864,48 +850,9 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
 			if(kmol_new > kmol_old)
 			{
 				kvec_d_ibz[exist_number] = kvec_d[i];
-                formatter::ContextFmt fmt;
-                fmt.set_context("vector3d_short");
-                fmt << kvec_d[i].x << kvec_d[i].y << kvec_d[i].z;
-                _table_titles[exist_number] = "(" + fmt.str() + ")";
             }
 		}
 //		BLOCK_HERE("check k point");
-    }
-    if(GlobalV::out_kpt_reduction)
-    {
-        GlobalV::ofs_running << "\nEQUIVALENT K-POINTS IN IRRUDUCIBLE BZ" << std::endl;
-        formatter::ContextFmt fmt;
-        int _ncol = 4; // number of columns for printing equivalent k-points
-        int _nequiv_kpts = _kvec_d_ibz_table.size();
-        int _start_kpt_ind = 0;
-        while(_start_kpt_ind < _nequiv_kpts)
-        {
-            int __ncol = std::min(_ncol, _nequiv_kpts - _start_kpt_ind);
-            // set context
-            std::vector<std::string> _context;
-            for(int i=0; i < __ncol; i++)
-            {
-                _context.push_back("str_w20");
-            }
-            fmt.set_context(_context);
-            fmt.enable_title(); fmt.set_col_delimiter('|');
-            // set titles
-            std::vector<std::string> _titles;
-            for(int i=0; i < __ncol; i++)
-            {
-                _titles.push_back(_table_titles[_start_kpt_ind + i]);
-            }
-            fmt.set_titles(_titles);
-            // push-in data
-            for(int i=0; i < __ncol; i++)
-            {
-                fmt << _kvec_d_ibz_table[_start_kpt_ind + i];
-            }
-            // print
-            GlobalV::ofs_running << fmt.str() << std::endl << std::endl;
-            _start_kpt_ind += _ncol;
-        }
     }
 
     delete[] kkmatrix;
@@ -913,32 +860,55 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
     std::stringstream ss;
     ss << " " << std::setw(40) <<"nkstot" << " = " << nkstot
         << std::setw(66) << "ibzkpt" << std::endl;
-    ss << " " << std::setw(8) << "KPT"
-        << std::setw(20) << "DirectX"
-	    << std::setw(20) << "DirectY"
-        << std::setw(20) << "DirectZ"
-         << std::setw(8) << "IBZ"
-        << std::setw(20) << "DirectX"
-	    << std::setw(20) << "DirectY"
-        << std::setw(20) << "DirectZ" << std::endl;
+    formatter::ContextFmt fmt;
+    fmt.set_context({"int_w8", "double_w12_f8", "double_w12_f8", "double_w12_f8", "int_w8", "double_w12_f8", "double_w12_f8", "double_w12_f8"});
+    fmt.set_titles({"KPT", "DIRECT_X", "DIRECT_Y", "DIRECT_Z", "IBZ", "DIRECT_X", "DIRECT_Y", "DIRECT_Z"});
+    fmt.set_overall_title("K-POINTS REDUCTION ACCORDING TO SYMMETRY");
+    fmt.enable_title(); fmt.disable_down_frame(); fmt.disable_up_frame(); fmt.disable_mid_frame();
+    fmt.right_title();
+
+    std::vector<int> _kpt;
+    std::vector<double> _direct_x;
+    std::vector<double> _direct_y;
+    std::vector<double> _direct_z;
+    std::vector<int> _ibz;
+    std::vector<double> _direct_x_ibz;
+    std::vector<double> _direct_y_ibz;
+    std::vector<double> _direct_z_ibz;
+    // ss << " " << std::setw(8) << "KPT"
+    //     << std::setw(20) << "DirectX"
+	//     << std::setw(20) << "DirectY"
+    //     << std::setw(20) << "DirectZ"
+    //      << std::setw(8) << "IBZ"
+    //     << std::setw(20) << "DirectX"
+	//     << std::setw(20) << "DirectY"
+    //     << std::setw(20) << "DirectZ" << std::endl;
     for (int i = 0; i < nkstot; ++i)
     {
-        ss << " "
-            << std::setw(8) << i+1
-            << std::setw(20) << this->kvec_d[i].x
-            << std::setw(20) << this->kvec_d[i].y
-            << std::setw(20) << this->kvec_d[i].z;
-        ss << std::setw(8) << ibz_index[i]+1
-                << std::setw(20) << this->kvec_d_ibz[ibz_index[i]].x
-                << std::setw(20) << this->kvec_d_ibz[ibz_index[i]].y
-                << std::setw(20) << this->kvec_d_ibz[ibz_index[i]].z << std::endl;
+        // ss << " "
+        //     << std::setw(8) << i+1
+        //     << std::setw(20) << this->kvec_d[i].x
+        //     << std::setw(20) << this->kvec_d[i].y
+        //     << std::setw(20) << this->kvec_d[i].z;
+        // ss << std::setw(8) << ibz_index[i]+1
+        //         << std::setw(20) << this->kvec_d_ibz[ibz_index[i]].x
+        //         << std::setw(20) << this->kvec_d_ibz[ibz_index[i]].y
+        //         << std::setw(20) << this->kvec_d_ibz[ibz_index[i]].z << std::endl;
+        _kpt.push_back(i+1);
+        _direct_x.push_back(this->kvec_d[i].x);
+        _direct_y.push_back(this->kvec_d[i].y);
+        _direct_z.push_back(this->kvec_d[i].z);
+        _ibz.push_back(ibz_index[i]+1);
+        _direct_x_ibz.push_back(this->kvec_d_ibz[ibz_index[i]].x);
+        _direct_y_ibz.push_back(this->kvec_d_ibz[ibz_index[i]].y);
+        _direct_z_ibz.push_back(this->kvec_d_ibz[ibz_index[i]].z);
     }
-
+    fmt << _kpt << _direct_x << _direct_y << _direct_z << _ibz << _direct_x_ibz << _direct_y_ibz << _direct_z_ibz;
+    ss << fmt.str() << std::endl;
     skpt = ss.str();
 
 	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nkstot_ibz",nkstot_ibz);
     
-    formatter::ContextFmt fmt;
     fmt.set_context({"int_w8", "double_w12_f8", "double_w12_f8", "double_w12_f8", "double_w6_f4", "int_w4"});
     fmt.set_titles({"IBZ", "DIRECT_X", "DIRECT_Y", "DIRECT_Z", "WEIGHT", "ibz2bz"});
     fmt.set_overall_title("K-POINTS REDUCTION ACCORDING TO SYMMETRY");
@@ -947,10 +917,10 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
 /* 	GlobalV::ofs_running << " " << std::setw(8) << "IBZ" << std::setw(20) << "DirectX"
 	<< std::setw(20) << "DirectY" << std::setw(20) << "DirectZ"
 	<< std::setw(20) << "Weight" << std::setw(10) << "ibz2bz" << std::endl; */
-    std::vector<int> _ibz;
-    std::vector<double> _direct_x;
-    std::vector<double> _direct_y;
-    std::vector<double> _direct_z;
+    _ibz.clear();
+    _direct_x.clear();
+    _direct_y.clear();
+    _direct_z.clear();
     std::vector<double> _weights;
     std::vector<int> _ibz2bz;
     for (int ik=0; ik<nkstot_ibz; ik++)
@@ -1079,18 +1049,25 @@ void K_Vectors::set_both_kvec(const ModuleBase::Matrix3 &G, const ModuleBase::Ma
 	{
         std::stringstream ss;
         ss << " " << std::setw(40) <<"nkstot now" << " = " << nkstot << std::endl;
-        ss << " " << std::setw(8) << "KPT" << std::setw(20) << "DirectX"
-	        << std::setw(20) << "DirectY" << std::setw(20) << "DirectZ"
-	        << std::setw(20) << "Weight" << std::endl;
-        for (int ik=0; ik<nkstot; ik++)
-        {
-            ss << " " << std::setw(8) << ik+1
-                << std::setw(20) << this->kvec_d[ik].x
-                << std::setw(20) << this->kvec_d[ik].y
-                << std::setw(20) << this->kvec_d[ik].z
-                << std::setw(20) << this->wk[ik] << std::endl;
-              //  << std::setw(10) << this->ibz2bz[ik] << std::endl;
-        }
+        fmt.set_context({"int_w8", "double_w12_f8", "double_w12_f8", "double_w12_f8", "double_w6_f4"});
+        fmt.set_titles({"KPOINTS", "DIRECT_X", "DIRECT_Y", "DIRECT_Z", "WEIGHT"});
+        fmt.set_overall_title("K-POINTS DIRECT COORDINATES");
+        fmt.enable_title(); fmt.disable_down_frame(); fmt.disable_up_frame(); fmt.disable_mid_frame();
+        fmt.right_title();
+        fmt << _kpoints << _direct_x << _direct_y << _direct_z << _weights;
+        ss << fmt.str() << std::endl;
+        // ss << " " << std::setw(8) << "KPT" << std::setw(20) << "DirectX"
+	    //     << std::setw(20) << "DirectY" << std::setw(20) << "DirectZ"
+	    //     << std::setw(20) << "Weight" << std::endl;
+        // for (int ik=0; ik<nkstot; ik++)
+        // {
+        //     ss << " " << std::setw(8) << ik+1
+        //         << std::setw(20) << this->kvec_d[ik].x
+        //         << std::setw(20) << this->kvec_d[ik].y
+        //         << std::setw(20) << this->kvec_d[ik].z
+        //         << std::setw(20) << this->wk[ik] << std::endl;
+        //       //  << std::setw(10) << this->ibz2bz[ik] << std::endl;
+        // }
         skpt = ss.str();
 	}
 

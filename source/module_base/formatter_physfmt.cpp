@@ -76,13 +76,6 @@ void formatter::PhysicalFmt::adjust_formatter(bool left) {
         this->p_formatter_->set_right(!left);
     }
     else if (
-        (strcmp(context, "double_w7_f4") == 0)
-    ) {// vector3d_short
-        this->p_formatter_->set_width(7); this->p_formatter_->set_precision(4);
-        this->p_formatter_->set_fillChar(' '); this->p_formatter_->set_fixed(true);
-        this->p_formatter_->set_right(!left);
-    }
-    else if (
         (strcmp(context, "double_w8_f4_scientific") == 0)
       ||(strcmp(context, "threshold") == 0)
     ) {

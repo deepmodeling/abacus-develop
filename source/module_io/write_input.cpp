@@ -485,7 +485,6 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
    ModuleBase::GlobalFunc::OUTP(ofs, "sccut", sccut, "Maximal step size for lambda in eV/uB");
    ModuleBase::GlobalFunc::OUTP(ofs, "sc_file", sc_file, "file name for parameters used in non-collinear spin-constrained DFT (json format)");
 
-    ModuleBase::GlobalFunc::OUTP(ofs, "out_kpt_reduction", out_kpt_reduction, "output information about kpoints reduction according to symmetry");
     ofs.close();
     return;
 }
