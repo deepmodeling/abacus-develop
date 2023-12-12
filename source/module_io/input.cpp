@@ -22,8 +22,6 @@
 #include "module_base/global_variable.h"
 #include "module_base/parallel_common.h"
 #include "module_base/timer.h"
-#include "module_base/para_json.h"
-
 #include "version.h"
 Input INPUT;
 
@@ -129,24 +127,6 @@ void Input::Init(const std::string &fn)
     //     pseudo_type); // mohan add 2013-05-20 (xiaohui add 2013-06-23, GlobalV::global_pseudo_type -> pseudo_type)
 
     ModuleBase::timer::tick("Input", "Init");
-
-    std::string begin_time = ctime(&time_now);
-    if (!begin_time.empty() && begin_time.back() == '\n') {
-        begin_time.erase(begin_time.length() - 1);
-    }
-    std::string version_json = version;
-    std::string commit_json = commit;
-    std::string device_json = device;
-    printf("version = %s\n",device_json.c_str());
-    Para_Json::set_json_value(Para_Json::version,&version_json); 
-    Para_Json::set_json_value(Para_Json::commit,&commit_json); 
-    Para_Json::set_json_value(Para_Json::device_g,&device_json);
-    Para_Json::set_json_value(Para_Json::begin_time,&begin_time);  
-    
-    Para_Json::set_json_value(Para_Json::global_out_dir,&GlobalV::global_out_dir); 
-    Para_Json::set_json_value(Para_Json::global_in_card,&GlobalV::global_in_card);
-    Para_Json::set_json_value(Para_Json::pseudo_dir_path,&GlobalV::global_pseudo_dir);  
-    Para_Json::set_json_value(Para_Json::orbital_dir_path,&GlobalV::global_orbital_dir);  
     return;
 }
 
@@ -647,12 +627,6 @@ void Input::Default(void)
     return;
 }
 
-
-
-/**
-*   guhongyaoxing modify 2023-11-16
-*   Added code to convert the data read from the input file into a json object
-*/
 bool Input::Read(const std::string &fn)
 {
     ModuleBase::TITLE("Input", "Read");
@@ -709,18 +683,14 @@ bool Input::Read(const std::string &fn)
         if (strcmp("suffix", word) == 0) // out dir
         {
             read_value(ifs, suffix);
-            Para_Json::set_json_value(Para_Json::input_suffix,&suffix);
-            //Para_Json::set_json_value(Para_Json::suffix,&suffix); 
         }
         else if (strcmp("stru_file", word) == 0) // xiaohui modify 2015-02-01
         {
             read_value(ifs, stru_file); // xiaohui modify 2015-02-01
-            Para_Json::set_json_value(Para_Json::stru_file,&stru_file); 
         }
         else if (strcmp("pseudo_dir", word) == 0)
         {
             read_value(ifs, pseudo_dir);
-            Para_Json::set_json_value(Para_Json::pseudo_dir,&pseudo_dir); 
         }
         // else if (strcmp("pseudo_type", word) == 0) // mohan add 2013-05-20 (xiaohui add 2013-06-23)
         // {
@@ -729,82 +699,63 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("orbital_dir", word) == 0) // liuyu add 2021-08-14
         {
             read_value(ifs, orbital_dir);
-            Para_Json::set_json_value(Para_Json::orbital_dir,&orbital_dir); 
         }
         else if (strcmp("kpoint_file", word) == 0) // xiaohui modify 2015-02-01
         {
             read_value(ifs, kpoint_file); // xiaohui modify 2015-02-01
-            Para_Json::set_json_value(Para_Json::kpoint_file,&kpoint_file); 
         }
         else if (strcmp("wannier_card", word) == 0) // mohan add 2009-12-25
         {
             read_value(ifs, wannier_card);
-            Para_Json::set_json_value(Para_Json::kpoint_file,&kpoint_file); 
         }
         else if (strcmp("latname", word) == 0) // which material
         {
             read_value(ifs, latname);
-            Para_Json::set_json_value(Para_Json::latname,&latname); 
         }
         else if (strcmp("pseudo_rcut", word) == 0) //
         {
             read_value(ifs, pseudo_rcut);
-
-            Para_Json::set_json_value(Para_Json::pseudo_rcut,&pseudo_rcut);
         }
         else if (strcmp("pseudo_mesh", word) == 0) //
         {
             read_bool(ifs, pseudo_mesh);
-            Para_Json::set_json_value(Para_Json::pseudo_mesh,&pseudo_mesh);
         }
         else if (strcmp("calculation", word) == 0) // which type calculation
         {
             read_value(ifs, calculation);
-            Para_Json::set_json_value(Para_Json::calculation,&calculation); 
         }
         else if (strcmp("esolver_type", word) == 0)
         {
             read_value(ifs, esolver_type);
-            Para_Json::set_json_value(Para_Json::esolver_type,&esolver_type); 
         }
         else if (strcmp("ntype", word) == 0) // number of atom types
         {
             read_value(ifs, ntype);
-            Para_Json::set_json_value(Para_Json::ntype,&ntype); 
         }
         else if (strcmp("nbands", word) == 0) // number of atom bands
         {
             read_value(ifs, nbands);
-            Para_Json::set_json_value(Para_Json::nbands,&nbands); 
         }
         else if (strcmp("nbands_sto", word) == 0) // number of stochastic bands
         {
             std::string nbsto_str;
             read_value(ifs, nbndsto_str);
-            
-
             if (nbndsto_str != "all")
             {
                 nbands_sto = std::stoi(nbndsto_str);
             }
-            Para_Json::set_json_value(Para_Json::nbands_sto,&nbands_sto); 
         }
         else if (strcmp("kspacing", word) == 0)
         {
             read_kspacing(ifs);
-            for(int i=0;i<3;i++){
-                Para_Json::kspacing.PushBack(kspacing[i],Para_Json::doc.GetAllocator());
-            }
         }
         else if (strcmp("min_dist_coef", word) == 0)
         {
             read_value(ifs, min_dist_coef);
-            Para_Json::set_json_value(Para_Json::min_dist_coef,&min_dist_coef); 
         }
         else if (strcmp("nbands_istate", word) == 0) // number of atom bands
         {
             read_value(ifs, nbands_istate);
-            Para_Json::set_json_value(Para_Json::nbands_istate,&nbands_istate); 
             // Originally disabled in line 2401.
             // if (nbands_istate < 0)
             // 	ModuleBase::WARNING_QUIT("Input", "NBANDS_ISTATE must > 0");
@@ -812,12 +763,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("nche_sto", word) == 0) // Chebyshev expansion order
         {
             read_value(ifs, nche_sto);
-            Para_Json::set_json_value(Para_Json::nche_sto,&nche_sto); 
         }
         else if (strcmp("seed_sto", word) == 0)
         {
             read_value(ifs, seed_sto);
-            Para_Json::set_json_value(Para_Json::seed_sto,&seed_sto); 
         }
         else if (strcmp("initsto_ecut", word) == 0)
         {
@@ -826,62 +775,50 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("pw_seed", word) == 0)
         {
             read_value(ifs, pw_seed);
-            Para_Json::set_json_value(Para_Json::pw_seed,&pw_seed); 
         }
         else if (strcmp("emax_sto", word) == 0)
         {
             read_value(ifs, emax_sto);
-            Para_Json::set_json_value(Para_Json::emax_sto,&emax_sto); 
         }
         else if (strcmp("emin_sto", word) == 0)
         {
             read_value(ifs, emin_sto);
-            Para_Json::set_json_value(Para_Json::emin_sto,&emin_sto); 
         }
         else if (strcmp("initsto_freq", word) == 0)
         {
             read_value(ifs, initsto_freq);
-            Para_Json::set_json_value(Para_Json::initsto_freq,&initsto_freq); 
         }
         else if (strcmp("method_sto", word) == 0)
         {
             read_value(ifs, method_sto);
-            Para_Json::set_json_value(Para_Json::method_sto,&method_sto); 
         }
         else if (strcmp("npart_sto", word) == 0)
         {
             read_value(ifs, npart_sto);
-            Para_Json::set_json_value(Para_Json::npart_sto,&npart_sto); 
         }
         else if (strcmp("cal_cond", word) == 0)
         {
             read_bool(ifs, cal_cond);
-            Para_Json::set_json_value(Para_Json::cal_cond,&cal_cond);
         }
         else if (strcmp("cond_che_thr", word) == 0)
         {
             read_value(ifs, cond_che_thr);
-            Para_Json::set_json_value(Para_Json::cond_nche,&cond_che_thr); 
         }
         else if (strcmp("cond_dw", word) == 0)
         {
             read_value(ifs, cond_dw);
-            Para_Json::set_json_value(Para_Json::cond_dw,&cond_dw); 
         }
         else if (strcmp("cond_wcut", word) == 0)
         {
             read_value(ifs, cond_wcut);
-            Para_Json::set_json_value(Para_Json::cond_wcut,&cond_wcut); 
         }
         else if (strcmp("cond_dt", word) == 0)
         {
             read_value(ifs, cond_dt);
-            Para_Json::set_json_value(Para_Json::cond_dt,&cond_dt); 
         }
         else if (strcmp("cond_dtbatch", word) == 0)
         {
             read_value(ifs, cond_dtbatch);
-            Para_Json::set_json_value(Para_Json::cond_dtbatch,&cond_dtbatch); 
         }
         else if (strcmp("cond_smear", word) == 0)
         {
@@ -890,49 +827,40 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("cond_fwhm", word) == 0)
         {
             read_value(ifs, cond_fwhm);
-            Para_Json::set_json_value(Para_Json::cond_fwhm,&cond_fwhm); 
         }
         else if (strcmp("cond_nonlocal", word) == 0)
         {
             read_bool(ifs, cond_nonlocal);
-            Para_Json::set_json_value(Para_Json::cond_nonlocal,&cond_nonlocal);
         }
         else if (strcmp("bndpar", word) == 0)
         {
             read_value(ifs, bndpar);
-            Para_Json::set_json_value(Para_Json::bndpar,&bndpar); 
         }
         else if (strcmp("kpar", word) == 0) // number of pools
         {
             read_value(ifs, kpar);
-            Para_Json::set_json_value(Para_Json::kpar,&kpar); 
         }
         else if (strcmp("berry_phase", word) == 0) // berry phase calculation
         {
             read_bool(ifs, berry_phase);
-            Para_Json::set_json_value(Para_Json::berry_phase,&berry_phase);
         }
         else if (strcmp("gdir", word) == 0) // berry phase calculation
         {
             read_value(ifs, gdir);
-            Para_Json::set_json_value(Para_Json::gdir,&gdir); 
         }
         else if (strcmp("towannier90", word) == 0) // add by jingan for wannier90
         {
             read_bool(ifs, towannier90);
-            Para_Json::set_json_value(Para_Json::towannier90,&towannier90);
         }
         else if (strcmp("nnkpfile", word) == 0) // add by jingan for wannier90
         {
             read_value(ifs, nnkpfile);
-            Para_Json::set_json_value(Para_Json::nnkpfile,&nnkpfile); 
         }
         else if (strcmp("wannier_spin", word) == 0) // add by jingan for wannier90
         {
             read_value(ifs, wannier_spin);
-            Para_Json::set_json_value(Para_Json::wannier_spin,&wannier_spin); 
         }
-            else if (strcmp("out_wannier_mmn", word) == 0) // add by renxi for wannier90
+        else if (strcmp("out_wannier_mmn", word) == 0) // add by renxi for wannier90
         {
             read_bool(ifs, out_wannier_mmn);
         }
@@ -958,32 +886,26 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("dft_functional", word) == 0)
         {
             read_value(ifs, dft_functional);
-            Para_Json::set_json_value(Para_Json::dft_functional,&dft_functional); 
         }
         else if (strcmp("xc_temperature", word) == 0)
         {
             read_value(ifs, xc_temperature);
-            Para_Json::set_json_value(Para_Json::xc_temperature,&xc_temperature); 
         }
         else if (strcmp("nspin", word) == 0)
         {
             read_value(ifs, nspin);
-            Para_Json::set_json_value(Para_Json::nspin,&nspin); 
         }
         else if (strcmp("nelec", word) == 0)
         {
             read_value(ifs, nelec);
-            Para_Json::set_json_value(Para_Json::nelec,&nelec); 
         }
         else if (strcmp("nupdown", word) == 0)
         {
             read_value(ifs, nupdown);
-            Para_Json::set_json_value(Para_Json::nupdown,&nupdown); 
         }
         else if (strcmp("lmaxmax", word) == 0)
         {
             read_value(ifs, lmaxmax);
-            Para_Json::set_json_value(Para_Json::lmaxmax,&lmaxmax); 
         }
         //----------------------------------------------------------
         // new function
@@ -991,42 +913,34 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("basis_type", word) == 0)
         {
             read_value(ifs, basis_type);
-            Para_Json::set_json_value(Para_Json::basis_type,&basis_type); 
         } // xiaohui add 2013-09-01
         else if (strcmp("ks_solver", word) == 0)
         {
             read_value(ifs, ks_solver);
-            Para_Json::set_json_value(Para_Json::ks_solver,&ks_solver); 
         } // xiaohui add 2013-09-01
         else if (strcmp("search_radius", word) == 0)
         {
             read_value(ifs, search_radius);
-            Para_Json::set_json_value(Para_Json::search_radius,&search_radius); 
         }
         else if (strcmp("search_pbc", word) == 0)
         {
             read_bool(ifs, search_pbc);
-            Para_Json::set_json_value(Para_Json::search_pbc,&search_pbc);
         }
         else if (strcmp("symmetry", word) == 0)
         {
             read_value(ifs, symmetry);
-            Para_Json::set_json_value(Para_Json::symmetry,&symmetry); 
         }
         else if (strcmp("init_vel", word) == 0)
         {
             read_bool(ifs, init_vel);
-            Para_Json::set_json_value(Para_Json::init_vel,&init_vel);
         }
         else if (strcmp("ref_cell_factor", word) == 0)
         {
             read_value(ifs, ref_cell_factor);
-            Para_Json::set_json_value(Para_Json::ref_cell_factor,&ref_cell_factor); 
         }
         else if (strcmp("symmetry_prec", word) == 0) // LiuXh add 2021-08-12, accuracy for symmetry
         {
             read_value(ifs, symmetry_prec);
-            Para_Json::set_json_value(Para_Json::symmetry_precfield,&symmetry_prec); 
         }
         else if (strcmp("symmetry_autoclose", word) == 0)
         {
@@ -1035,114 +949,92 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("cal_force", word) == 0)
         {
             read_bool(ifs, cal_force);
-            Para_Json::set_json_value(Para_Json::cal_force,&cal_force); 
         }
         else if (strcmp("force_thr", word) == 0)
         {
             read_value(ifs, force_thr);
-            Para_Json::set_json_value(Para_Json::force_thr,&force_thr); 
         }
         else if (strcmp("force_thr_ev", word) == 0)
         {
             read_value(ifs, force_thr);
-            Para_Json::set_json_value(Para_Json::force_thr_ev,&force_thr); 
             force_thr = force_thr / 13.6058 * 0.529177;
         }
         else if (strcmp("force_thr_ev2", word) == 0)
         {
             read_value(ifs, force_thr_ev2);
-            Para_Json::set_json_value(Para_Json::force_thr_ev2,&force_thr_ev2); 
         }
         else if (strcmp("stress_thr", word) == 0)
         {
             read_value(ifs, stress_thr);
-            Para_Json::set_json_value(Para_Json::stress_thr,&stress_thr); 
         }
         else if (strcmp("press1", word) == 0)
         {
             read_value(ifs, press1);
-            Para_Json::set_json_value(Para_Json::press1,&press1); 
         }
         else if (strcmp("press2", word) == 0)
         {
             read_value(ifs, press2);
-            Para_Json::set_json_value(Para_Json::press2,&press2); 
         }
         else if (strcmp("press3", word) == 0)
         {
             read_value(ifs, press3);
-            Para_Json::set_json_value(Para_Json::press3,&press3); 
         }
         else if (strcmp("cal_stress", word) == 0)
         {
             read_bool(ifs, cal_stress);
-            Para_Json::set_json_value(Para_Json::cal_stress,&cal_stress); 
         }
         else if (strcmp("fixed_axes", word) == 0)
         {
             read_value(ifs, fixed_axes);
-            Para_Json::set_json_value(Para_Json::fixed_axes,&fixed_axes); 
         }
         else if (strcmp("fixed_ibrav", word) == 0)
         {
             read_bool(ifs, fixed_ibrav);
-            Para_Json::set_json_value(Para_Json::fixed_ibrav,&fixed_ibrav); 
         }
         else if (strcmp("fixed_atoms", word) == 0)
         {
             read_bool(ifs, fixed_atoms);
-            Para_Json::set_json_value(Para_Json::fixed_atoms,&fixed_atoms); 
         }
         else if (strcmp("relax_method", word) == 0)
         {
             read_value(ifs, relax_method);
-            Para_Json::set_json_value(Para_Json::relax_method,&relax_method); 
         }
         else if (strcmp("relax_cg_thr", word) == 0) // pengfei add 2013-08-15
         {
             read_value(ifs, relax_cg_thr);
-            Para_Json::set_json_value(Para_Json::relax_cg_thr,&relax_cg_thr); 
         }
         else if (strcmp("out_level", word) == 0)
         {
             read_value(ifs, out_level);
             out_md_control = true;
-            Para_Json::set_json_value(Para_Json::out_level,&out_level); 
         }
         else if (strcmp("relax_bfgs_w1", word) == 0)
         {
             read_value(ifs, relax_bfgs_w1);
-            Para_Json::set_json_value(Para_Json::relax_bfgs_w1,&relax_bfgs_w1); 
         }
         else if (strcmp("relax_bfgs_w2", word) == 0)
         {
             read_value(ifs, relax_bfgs_w2);
-            Para_Json::set_json_value(Para_Json::relax_bfgs_w2,&relax_bfgs_w2); 
         }
         else if (strcmp("relax_bfgs_rmax", word) == 0)
         {
             read_value(ifs, relax_bfgs_rmax);
-            Para_Json::set_json_value(Para_Json::relax_bfgs_rmax,&relax_bfgs_rmax); 
         }
         else if (strcmp("relax_bfgs_rmin", word) == 0)
         {
             read_value(ifs, relax_bfgs_rmin);
-            Para_Json::set_json_value(Para_Json::relax_bfgs_rmin,&relax_bfgs_rmin); 
         }
         else if (strcmp("relax_bfgs_init", word) == 0)
         {
             read_value(ifs, relax_bfgs_init);
-            Para_Json::set_json_value(Para_Json::relax_bfgs_init,&relax_bfgs_init); 
         }
         else if (strcmp("relax_scale_force", word) == 0)
         {
             read_value(ifs, relax_scale_force);
-            Para_Json::set_json_value(Para_Json::relax_scale_force,&relax_scale_force); 
         }
         else if (strcmp("relax_new", word) == 0)
         {
             read_bool(ifs, relax_new);
-            Para_Json::set_json_value(Para_Json::relax_new,&relax_new); 
         }
         else if (strcmp("use_paw", word) == 0)
         {
@@ -1154,8 +1046,6 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("gamma_only", word) == 0)
         {
             read_bool(ifs, gamma_only);
-            
-            Para_Json::set_json_value(Para_Json::gamma_only,&gamma_only); 
         }
         else if (strcmp("fft_mode", word) == 0)
         {
@@ -1164,7 +1054,6 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("ecutwfc", word) == 0)
         {
             read_value(ifs, ecutwfc);
-            Para_Json::set_json_value(Para_Json::ecutwfc,&ecutwfc); 
         }
         else if (strcmp("ecutrho", word) == 0)
         {
@@ -1173,36 +1062,29 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("nx", word) == 0)
         {
             read_value(ifs, nx);
-            Para_Json::set_json_value(Para_Json::nx,&nx); 
-
             ncx = nx;
         }
         else if (strcmp("ny", word) == 0)
         {
             read_value(ifs, ny);
-            Para_Json::set_json_value(Para_Json::ny,&ny); 
             ncy = ny;
         }
         else if (strcmp("nz", word) == 0)
         {
             read_value(ifs, nz);
-            Para_Json::set_json_value(Para_Json::nz,&nz); 
             ncz = nz;
         }
         else if (strcmp("bx", word) == 0)
         {
             read_value(ifs, bx);
-            Para_Json::set_json_value(Para_Json::bx,&bx); 
         }
         else if (strcmp("by", word) == 0)
         {
             read_value(ifs, by);
-            Para_Json::set_json_value(Para_Json::by,&by); 
         }
         else if (strcmp("bz", word) == 0)
         {
             read_value(ifs, bz);
-            Para_Json::set_json_value(Para_Json::bz,&bz); 
         }
         else if (strcmp("ndx", word) == 0)
         {
@@ -1238,82 +1120,66 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("diago_proc", word) == 0)
         {
             read_value(ifs, diago_proc);
-            Para_Json::set_json_value(Para_Json::diago_proc,&diago_proc); 
         }
         else if (strcmp("pw_diag_nmax", word) == 0)
         {
             read_value(ifs, pw_diag_nmax);
-            Para_Json::set_json_value(Para_Json::pw_diag_nmax,&pw_diag_nmax); 
         }
         else if (strcmp("diago_cg_prec", word) == 0) // mohan add 2012-03-31
         {
             read_value(ifs, diago_cg_prec);
-            //Para_Json::set_json_value(Para_Json::diago_cg_prec,&diago_cg_prec); 
         }
         else if (strcmp("pw_diag_ndim", word) == 0)
         {
             read_value(ifs, pw_diag_ndim);
-            Para_Json::set_json_value(Para_Json::pw_diag_ndim,&pw_diag_ndim); 
         }
         else if (strcmp("pw_diag_thr", word) == 0)
         {
             read_value(ifs, pw_diag_thr);
-            Para_Json::set_json_value(Para_Json::pw_diag_thr,&pw_diag_thr); 
         }
         else if (strcmp("nb2d", word) == 0)
         {
             read_value(ifs, nb2d);
-            Para_Json::set_json_value(Para_Json::nb2d,&nb2d); 
         }
         else if (strcmp("nurse", word) == 0)
         {
             read_value(ifs, nurse);
-            //Para_Json::set_json_value(Para_Json::nurse,&nurse); 
         }
         else if (strcmp("colour", word) == 0)
         {
             read_bool(ifs, colour);
-            Para_Json::set_json_value(Para_Json::colour,&colour); 
         }
         else if (strcmp("nbspline", word) == 0)
         {
             read_value(ifs, nbspline);
-            Para_Json::set_json_value(Para_Json::nbspline,&nbspline); 
         }
         else if (strcmp("t_in_h", word) == 0)
         {
             read_bool(ifs, t_in_h);
-            Para_Json::set_json_value(Para_Json::t_in_h,&t_in_h); 
         }
         else if (strcmp("vl_in_h", word) == 0)
         {
             read_bool(ifs, vl_in_h);
-            Para_Json::set_json_value(Para_Json::vl_in_h,&vl_in_h); 
         }
         else if (strcmp("vnl_in_h", word) == 0)
         {
             read_bool(ifs, vnl_in_h);
-            Para_Json::set_json_value(Para_Json::vnl_in_h,&vnl_in_h); 
         }
         else if (strcmp("vh_in_h", word) == 0)
         {
             read_bool(ifs, vh_in_h);
-            Para_Json::set_json_value(Para_Json::vh_in_h,&vh_in_h); 
         }
         else if (strcmp("vion_in_h", word) == 0)
         {
             read_bool(ifs, vion_in_h);
-            Para_Json::set_json_value(Para_Json::vion_in_h,&vion_in_h); 
         }
         else if (strcmp("test_force", word) == 0)
         {
             read_bool(ifs, test_force);
-            Para_Json::set_json_value(Para_Json::test_force,&test_force); 
         }
         else if (strcmp("test_stress", word) == 0)
         {
             read_bool(ifs, test_stress);
-            Para_Json::set_json_value(Para_Json::test_stress,&test_stress); 
         }
         //----------------------------------------------------------
         // iteration
@@ -1321,27 +1187,22 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("scf_thr", word) == 0)
         {
             read_value(ifs, scf_thr);
-            Para_Json::set_json_value(Para_Json::scf_thr,&scf_thr); 
         }
         else if (strcmp("scf_thr_type", word) == 0)
         {
             read_value(ifs, scf_thr_type);
-            Para_Json::set_json_value(Para_Json::scf_thr_type,&scf_thr_type); 
         }
         else if (strcmp("scf_nmax", word) == 0)
         {
             read_value(ifs, scf_nmax);
-            Para_Json::set_json_value(Para_Json::scf_nmax,&scf_nmax); 
         }
         else if (strcmp("relax_nmax", word) == 0)
         {
             read_value(ifs, this->relax_nmax);
-            Para_Json::set_json_value(Para_Json::relax_nmax,&relax_nmax); 
         }
         else if (strcmp("out_stru", word) == 0)
         {
             read_bool(ifs, out_stru);
-            Para_Json::set_json_value(Para_Json::out_stru,&out_stru); 
         }
         //----------------------------------------------------------
         // occupation
@@ -1353,12 +1214,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("smearing_method", word) == 0)
         {
             read_value(ifs, smearing_method);
-            Para_Json::set_json_value(Para_Json::smearing_method,&smearing_method); 
         }
         else if (strcmp("smearing_sigma", word) == 0)
         {
             read_value(ifs, smearing_sigma);
-            Para_Json::set_json_value(Para_Json::smearing_sigma,&smearing_sigma); 
         }
         else if (strcmp("smearing_sigma_temp", word) == 0)
         {
@@ -1372,22 +1231,18 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("mixing_type", word) == 0)
         {
             read_value(ifs, mixing_mode);
-            Para_Json::set_json_value(Para_Json::mixing_type,&mixing_mode); 
         }
         else if (strcmp("mixing_beta", word) == 0)
         {
             read_value(ifs, mixing_beta);
-            Para_Json::set_json_value(Para_Json::mixing_beta,&mixing_beta); 
         }
         else if (strcmp("mixing_ndim", word) == 0)
         {
             read_value(ifs, mixing_ndim);
-            Para_Json::set_json_value(Para_Json::mixing_ndim,&mixing_ndim); 
         }
         else if (strcmp("mixing_gg0", word) == 0) // mohan add 2014-09-27
         {
             read_value(ifs, mixing_gg0);
-            Para_Json::set_json_value(Para_Json::mixing_gg0,&mixing_gg0); 
         }
         else if (strcmp("mixing_beta_mag", word) == 0)
         {
@@ -1404,12 +1259,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("mixing_tau", word) == 0)
         {
             read_bool(ifs, mixing_tau);
-            Para_Json::set_json_value(Para_Json::mixing_tau,&mixing_tau); 
         }
         else if (strcmp("mixing_dftu", word) == 0)
         {
             read_bool(ifs, mixing_dftu);
-            Para_Json::set_json_value(Para_Json::mixing_dftu,&mixing_dftu); 
         }
         //----------------------------------------------------------
         // charge / potential / wavefunction
@@ -1417,12 +1270,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("read_file_dir", word) == 0)
         {
             read_value(ifs, read_file_dir);
-            Para_Json::set_json_value(Para_Json::read_file_dir,&read_file_dir); 
         }
         else if (strcmp("init_wfc", word) == 0)
         {
             read_value(ifs, init_wfc);
-            Para_Json::set_json_value(Para_Json::init_wfc,&init_wfc); 
         }
         else if (strcmp("psi_initializer", word) == 0)
         {
@@ -1431,192 +1282,155 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("mem_saver", word) == 0)
         {
             read_value(ifs, mem_saver);
-            Para_Json::set_json_value(Para_Json::mem_saver,&mem_saver); 
         }
         else if (strcmp("printe", word) == 0)
         {
             read_value(ifs, printe);
-            Para_Json::set_json_value(Para_Json::printe,&printe); 
         }
         else if (strcmp("init_chg", word) == 0)
         {
             read_value(ifs, init_chg);
-            Para_Json::set_json_value(Para_Json::init_chg,&init_chg); 
         }
         else if (strcmp("chg_extrap", word) == 0) // xiaohui modify 2015-02-01
         {
             read_value(ifs, chg_extrap); // xiaohui modify 2015-02-01
-            Para_Json::set_json_value(Para_Json::chg_extrap,&chg_extrap); 
         }
         else if (strcmp("out_freq_elec", word) == 0)
         {
             read_value(ifs, out_freq_elec);
-            Para_Json::set_json_value(Para_Json::out_freq_elec,&out_freq_elec); 
         }
         else if (strcmp("out_freq_ion", word) == 0)
         {
             read_value(ifs, out_freq_ion);
-            Para_Json::set_json_value(Para_Json::out_freq_ion,&out_freq_ion); 
         }
         else if (strcmp("out_chg", word) == 0)
         {
             read_bool(ifs, out_chg);
-            Para_Json::set_json_value(Para_Json::out_chg,&out_chg); 
         }
         else if (strcmp("out_dm", word) == 0)
         {
             read_bool(ifs, out_dm);
-            Para_Json::set_json_value(Para_Json::out_dm,&out_dm); 
         }
         else if (strcmp("out_dm1", word) == 0)
         {
             read_bool(ifs, out_dm1);
-            Para_Json::set_json_value(Para_Json::out_dm1,&out_dm1); 
         }
         else if (strcmp("out_bandgap", word) == 0) // for bandgap printing
         {
             read_bool(ifs, out_bandgap);
-            Para_Json::set_json_value(Para_Json::out_bandgap,&out_bandgap); 
         }
         else if (strcmp("deepks_out_labels", word) == 0) // caoyu added 2020-11-24, mohan modified 2021-01-03
         {
             read_bool(ifs, deepks_out_labels);
-            //Para_Json::set_json_value(Para_Json::deepks_out_labels,&deepks_out_labels); 
         }
         else if (strcmp("deepks_scf", word) == 0) // caoyu added 2020-11-24, mohan modified 2021-01-03
         {
             read_bool(ifs, deepks_scf);
-            //Para_Json::set_json_value(Para_Json::deepks_scf,&deepks_scf); 
         }
         else if (strcmp("deepks_bandgap", word) == 0) // caoyu added 2020-11-24, mohan modified 2021-01-03
         {
             read_bool(ifs, deepks_bandgap);
-            //Para_Json::set_json_value(Para_Json::deepks_bandgap,&deepks_bandgap); 
         }
         else if (strcmp("deepks_out_unittest", word) == 0) // mohan added 2021-01-03
         {
             read_bool(ifs, deepks_out_unittest);
-            //Para_Json::set_json_value(Para_Json::deepks_out_unittest,&deepks_out_unittest); 
         }
         else if (strcmp("deepks_model", word) == 0) // caoyu added 2021-06-03
         {
             read_value(ifs, deepks_model);
-            //Para_Json::set_json_value(Para_Json::deepks_model,&deepks_model); 
         }
         else if (strcmp("out_pot", word) == 0)
         {
             read_value(ifs, out_pot);
-            Para_Json::set_json_value(Para_Json::out_pot,&out_pot); 
         }
         else if (strcmp("out_wfc_pw", word) == 0)
         {
             read_value(ifs, out_wfc_pw);
-            Para_Json::set_json_value(Para_Json::out_wfc_pw,&out_wfc_pw); 
         }
         else if (strcmp("out_wfc_r", word) == 0)
         {
             read_bool(ifs, out_wfc_r);
-            Para_Json::set_json_value(Para_Json::out_wfc_r,&out_wfc_r); 
         }
         // mohan add 20090909
         else if (strcmp("out_dos", word) == 0)
         {
             read_value(ifs, out_dos);
-            Para_Json::set_json_value(Para_Json::out_dos,&out_dos); 
         }
         else if (strcmp("out_band", word) == 0)
         {
             read_bool(ifs, out_band);
-            Para_Json::set_json_value(Para_Json::out_band,&out_band); 
         }
         else if (strcmp("out_proj_band", word) == 0)
         {
             read_bool(ifs, out_proj_band);
-            Para_Json::set_json_value(Para_Json::out_proj_band,&out_proj_band);
         }
 
         else if (strcmp("out_mat_hs", word) == 0)
         {
             read_bool(ifs, out_mat_hs);
-            Para_Json::set_json_value(Para_Json::out_mat_hs,&out_mat_hs);
         }
         // LiuXh add 2019-07-15
         else if (strcmp("out_mat_hs2", word) == 0)
         {
             read_bool(ifs, out_mat_hs2);
-            Para_Json::set_json_value(Para_Json::out_mat_hs2,&out_mat_hs2);
         }
         else if (strcmp("out_mat_t", word) == 0)
         {
             read_bool(ifs, out_mat_t);
-            Para_Json::set_json_value(Para_Json::out_mat_t,&out_mat_t);
         }
         else if (strcmp("out_mat_dh", word) == 0)
         {
             read_bool(ifs, out_mat_dh);
-            Para_Json::set_json_value(Para_Json::out_mat_dh,&out_mat_dh);
         }
         else if (strcmp("out_interval", word) == 0)
         {
             read_value(ifs, out_interval);
-            Para_Json::set_json_value(Para_Json::out_interval,&out_interval); 
         }
         else if (strcmp("out_app_flag", word) == 0)
         {
             read_bool(ifs, out_app_flag);
-            Para_Json::set_json_value(Para_Json::out_app_flag,&out_app_flag);
         }
         else if (strcmp("out_mat_r", word) == 0)
         {
             read_bool(ifs, out_mat_r);
-            Para_Json::set_json_value(Para_Json::out_mat_r,&out_mat_r);
         }
         else if (strcmp("out_wfc_lcao", word) == 0)
         {
             read_value(ifs, out_wfc_lcao);
-            Para_Json::set_json_value(Para_Json::out_wfc_lcao,&out_wfc_lcao);
         }
         else if (strcmp("out_alllog", word) == 0)
         {
             read_bool(ifs, out_alllog);
-            Para_Json::set_json_value(Para_Json::out_alllog,&out_alllog);
         }
         else if (strcmp("out_element_info", word) == 0)
         {
             read_bool(ifs, out_element_info);
-            Para_Json::set_json_value(Para_Json::out_element_info,&out_element_info);
         }
         else if (strcmp("dos_emin_ev", word) == 0)
         {
             read_value(ifs, dos_emin_ev);
             dos_setemin = true;
-            Para_Json::set_json_value(Para_Json::dos_emin_ev,&dos_emin_ev); 
         }
         else if (strcmp("dos_emax_ev", word) == 0)
         {
             read_value(ifs, dos_emax_ev);
-            Para_Json::set_json_value(Para_Json::dos_emax_ev,&dos_emax_ev); 
             dos_setemax = true;
         }
         else if (strcmp("dos_edelta_ev", word) == 0)
         {
             read_value(ifs, dos_edelta_ev);
-            Para_Json::set_json_value(Para_Json::dos_edelta_ev,&dos_edelta_ev); 
         }
         else if (strcmp("dos_scale", word) == 0)
         {
             read_value(ifs, dos_scale);
-            Para_Json::set_json_value(Para_Json::dos_scale,&dos_scale); 
         }
         else if (strcmp("dos_sigma", word) == 0)
         {
             read_value(ifs, dos_sigma);
-            Para_Json::set_json_value(Para_Json::dos_sigma,&dos_sigma); 
         }
         else if (strcmp("dos_nche", word) == 0)
         {
             read_value(ifs, dos_nche);
-            Para_Json::set_json_value(Para_Json::dos_nche,&dos_nche); 
         }
 
         //----------------------------------------------------------
@@ -1626,22 +1440,18 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("lcao_ecut", word) == 0)
         {
             read_value(ifs, lcao_ecut);
-            Para_Json::set_json_value(Para_Json::lcao_ecut,&lcao_ecut); 
         }
         else if (strcmp("lcao_dk", word) == 0)
         {
             read_value(ifs, lcao_dk);
-            Para_Json::set_json_value(Para_Json::lcao_dk,&lcao_dk); 
         }
         else if (strcmp("lcao_dr", word) == 0)
         {
             read_value(ifs, lcao_dr);
-            Para_Json::set_json_value(Para_Json::lcao_dr,&lcao_dr); 
         }
         else if (strcmp("lcao_rmax", word) == 0)
         {
             read_value(ifs, lcao_rmax);
-            Para_Json::set_json_value(Para_Json::lcao_rmax,&lcao_rmax); 
         }
         //----------------------------------------------------------
         // Molecule Dynamics
@@ -1650,183 +1460,146 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("md_type", word) == 0)
         {
             read_value(ifs, mdp.md_type);
-            Para_Json::set_json_value(Para_Json::md_type,&mdp.md_type); 
-
         }
         else if (strcmp("md_thermostat", word) == 0)
         {
             read_value(ifs, mdp.md_thermostat);
-            Para_Json::set_json_value(Para_Json::md_thermostat,&mdp.md_thermostat); 
         }
         else if (strcmp("md_nraise", word) == 0)
         {
             read_value(ifs, mdp.md_nraise);
-            Para_Json::set_json_value(Para_Json::md_nraise,&mdp.md_nraise); 
         }
         else if (strcmp("cal_syns", word) == 0)
         {
             read_value(ifs, cal_syns);
-            Para_Json::set_json_value(Para_Json::cal_syns,&cal_syns);
         }
         else if (strcmp("dmax", word) == 0)
         {
             read_value(ifs, dmax);
-            Para_Json::set_json_value(Para_Json::dmax,&dmax); 
         }
         else if (strcmp("md_tolerance", word) == 0)
         {
             read_value(ifs, mdp.md_tolerance);
-            Para_Json::set_json_value(Para_Json::md_tolerance,&mdp.md_tolerance); 
         }
         else if (strcmp("md_nstep", word) == 0)
         {
             read_value(ifs, mdp.md_nstep);
-            Para_Json::set_json_value(Para_Json::md_nstep,&mdp.md_nstep); 
         }
         else if (strcmp("md_dt", word) == 0)
         {
             read_value(ifs, mdp.md_dt);
-            Para_Json::set_json_value(Para_Json::md_dt,&mdp.md_dt); 
         }
         else if (strcmp("md_tchain", word) == 0)
         {
             read_value(ifs, mdp.md_tchain);
-            Para_Json::set_json_value(Para_Json::md_tchain,&mdp.md_tchain); 
         }
         else if (strcmp("md_tfirst", word) == 0)
         {
             read_value(ifs, mdp.md_tfirst);
-            Para_Json::set_json_value(Para_Json::md_tfirst,&mdp.md_tfirst); 
         }
         else if (strcmp("md_tlast", word) == 0)
         {
             read_value(ifs, mdp.md_tlast);
-            Para_Json::set_json_value(Para_Json::md_tlast,&mdp.md_tlast); 
         }
         else if (strcmp("md_dumpfreq", word) == 0)
         {
             read_value(ifs, mdp.md_dumpfreq);
-            Para_Json::set_json_value(Para_Json::md_dumpfreq,&mdp.md_dumpfreq); 
         }
         else if (strcmp("md_restartfreq", word) == 0)
         {
             read_value(ifs, mdp.md_restartfreq);
-            Para_Json::set_json_value(Para_Json::md_restartfreq,&mdp.md_restartfreq); 
         }
         else if (strcmp("md_seed", word) == 0)
         {
             read_value(ifs, mdp.md_seed);
-            Para_Json::set_json_value(Para_Json::md_seed,&mdp.md_seed); 
         }
         else if (strcmp("md_prec_level", word) == 0)
         {
             read_value(ifs, mdp.md_prec_level);
-            Para_Json::set_json_value(Para_Json::md_prec_level,&mdp.md_prec_level); 
         }
         else if (strcmp("md_restart", word) == 0)
         {
             read_bool(ifs, mdp.md_restart);
-            Para_Json::set_json_value(Para_Json::md_restart,&mdp.md_restart);
         }
         else if (strcmp("md_pmode", word) == 0)
         {
             read_value(ifs, mdp.md_pmode);
-            Para_Json::set_json_value(Para_Json::md_pmode,&mdp.md_pmode); 
         }
         else if (strcmp("md_pcouple", word) == 0)
         {
             read_value(ifs, mdp.md_pcouple);
-            Para_Json::set_json_value(Para_Json::md_pcouple,&mdp.md_pcouple); 
         }
         else if (strcmp("md_pchain", word) == 0)
         {
             read_value(ifs, mdp.md_pchain);
-            Para_Json::set_json_value(Para_Json::md_pchain,&mdp.md_pchain); 
         }
         else if (strcmp("md_pfirst", word) == 0)
         {
             read_value(ifs, mdp.md_pfirst);
-            Para_Json::set_json_value(Para_Json::md_pfirst,&mdp.md_pfirst); 
         }
         else if (strcmp("md_plast", word) == 0)
         {
             read_value(ifs, mdp.md_plast);
-            Para_Json::set_json_value(Para_Json::md_plast,&mdp.md_plast); 
         }
         else if (strcmp("md_pfreq", word) == 0)
         {
             read_value(ifs, mdp.md_pfreq);
-            Para_Json::set_json_value(Para_Json::md_pfreq,&mdp.md_pfreq); 
         }
         else if (strcmp("lj_rcut", word) == 0)
         {
             read_value(ifs, mdp.lj_rcut);
-            Para_Json::set_json_value(Para_Json::lj_rcut,&mdp.lj_rcut); 
         }
         else if (strcmp("lj_epsilon", word) == 0)
         {
             read_value(ifs, mdp.lj_epsilon);
-            Para_Json::set_json_value(Para_Json::lj_epsilon,&mdp.lj_epsilon); 
         }
         else if (strcmp("lj_sigma", word) == 0)
         {
             read_value(ifs, mdp.lj_sigma);
-            Para_Json::set_json_value(Para_Json::lj_sigma,&mdp.lj_sigma); 
         }
         else if (strcmp("msst_direction", word) == 0)
         {
             read_value(ifs, mdp.msst_direction);
-            Para_Json::set_json_value(Para_Json::msst_direction,&mdp.msst_direction); 
         }
         else if (strcmp("msst_vel", word) == 0)
         {
             read_value(ifs, mdp.msst_vel);
-            Para_Json::set_json_value(Para_Json::msst_vel,&mdp.msst_vel); 
         }
         else if (strcmp("msst_vis", word) == 0)
         {
             read_value(ifs, mdp.msst_vis);
-            Para_Json::set_json_value(Para_Json::msst_vis,&mdp.msst_vis); 
         }
         else if (strcmp("msst_tscale", word) == 0)
         {
             read_value(ifs, mdp.msst_tscale);
-            Para_Json::set_json_value(Para_Json::msst_tscale,&mdp.msst_tscale); 
         }
         else if (strcmp("msst_qmass", word) == 0)
         {
             read_value(ifs, mdp.msst_qmass);
-            Para_Json::set_json_value(Para_Json::msst_qmass,&mdp.msst_qmass); 
         }
         else if (strcmp("md_tfreq", word) == 0)
         {
             read_value(ifs, mdp.md_tfreq);
-            Para_Json::set_json_value(Para_Json::md_tfreq,&mdp.md_tfreq); 
         }
         else if (strcmp("md_damp", word) == 0)
         {
             read_value(ifs, mdp.md_damp);
-            Para_Json::set_json_value(Para_Json::md_damp,&mdp.md_damp); 
         }
         else if (strcmp("pot_file", word) == 0)
         {
             read_value(ifs, mdp.pot_file);
-            Para_Json::set_json_value(Para_Json::pot_file,&mdp.pot_file); 
         }
         else if (strcmp("dump_force", word) == 0)
         {
             read_bool(ifs, mdp.dump_force);
-            Para_Json::set_json_value(Para_Json::dump_force,&mdp.dump_force); 
         }
         else if (strcmp("dump_vel", word) == 0)
         {
             read_bool(ifs, mdp.dump_vel);
-            Para_Json::set_json_value(Para_Json::dump_vel,&mdp.dump_vel); 
         }
         else if (strcmp("dump_virial", word) == 0)
         {
             read_bool(ifs, mdp.dump_virial);
-            Para_Json::set_json_value(Para_Json::dump_virial,&mdp.dump_virial); 
         }
         //----------------------------------------------------------
         // efield and dipole correction
@@ -1835,32 +1608,26 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("efield_flag", word) == 0)
         {
             read_bool(ifs, efield_flag);
-            Para_Json::set_json_value(Para_Json::efield_flag,&efield_flag); 
         }
         else if (strcmp("dip_cor_flag", word) == 0)
         {
             read_bool(ifs, dip_cor_flag);
-            Para_Json::set_json_value(Para_Json::dip_cor_flag,&dip_cor_flag); 
         }
         else if (strcmp("efield_dir", word) == 0)
         {
             read_value(ifs, efield_dir);
-            Para_Json::set_json_value(Para_Json::efield_dir,&efield_dir); 
         }
         else if (strcmp("efield_pos_max", word) == 0)
         {
             read_value(ifs, efield_pos_max);
-            Para_Json::set_json_value(Para_Json::efield_pos_max,&efield_pos_max); 
         }
         else if (strcmp("efield_pos_dec", word) == 0)
         {
             read_value(ifs, efield_pos_dec);
-            Para_Json::set_json_value(Para_Json::efield_pos_dec,&efield_pos_dec); 
         }
         else if (strcmp("efield_amp", word) == 0)
         {
             read_value(ifs, efield_amp);
-            Para_Json::set_json_value(Para_Json::efield_amp,&efield_amp); 
         }
         //----------------------------------------------------------
         // gatefield (compensating charge)
@@ -1869,37 +1636,30 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("gate_flag", word) == 0)
         {
             read_bool(ifs, gate_flag);
-            Para_Json::set_json_value(Para_Json::gate_flag,&gate_flag); 
         }
         else if (strcmp("zgate", word) == 0)
         {
             read_value(ifs, zgate);
-            Para_Json::set_json_value(Para_Json::zgate,&zgate); 
         }
         else if (strcmp("relax", word) == 0)
         {
             read_bool(ifs, relax);
-            //Para_Json::set_json_value(Para_Json::relax,&relax); 
         }
         else if (strcmp("block", word) == 0)
         {
             read_bool(ifs, block);
-            Para_Json::set_json_value(Para_Json::block,&block); 
         }
         else if (strcmp("block_down", word) == 0)
         {
             read_value(ifs, block_down);
-            Para_Json::set_json_value(Para_Json::block_down,&block_down); 
         }
         else if (strcmp("block_up", word) == 0)
         {
             read_value(ifs, block_up);
-            Para_Json::set_json_value(Para_Json::block_up,&block_up); 
         }
         else if (strcmp("block_height", word) == 0)
         {
             read_value(ifs, block_height);
-            Para_Json::set_json_value(Para_Json::block_height,&block_height); 
         }
         //----------------------------------------------------------
         // tddft
@@ -1908,162 +1668,130 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("td_force_dt", word) == 0)
         {
             read_value(ifs, td_force_dt);
-            //Para_Json::set_json_value(Para_Json::td_force_dt,&td_force_dt); 
         }
         else if (strcmp("td_vext", word) == 0)
         {
             read_value(ifs, td_vext);
-            Para_Json::set_json_value(Para_Json::td_vext,&td_vext); 
         }
         else if (strcmp("td_vext_dire", word) == 0)
         {
             getline(ifs, td_vext_dire);
-            Para_Json::set_json_value(Para_Json::td_vext_dire,&td_vext_dire); 
         }
         else if (strcmp("out_dipole", word) == 0)
         {
             read_value(ifs, out_dipole);
-            Para_Json::set_json_value(Para_Json::td_out_dipole,&out_dipole); 
         }
         else if (strcmp("out_efield", word) == 0)
         {
             read_value(ifs, out_efield);
-            Para_Json::set_json_value(Para_Json::td_out_efield,&out_efield); 
         }
         else if (strcmp("td_print_eij", word) == 0)
         {
             read_value(ifs, td_print_eij);
-            Para_Json::set_json_value(Para_Json::td_print_eij,&td_print_eij); 
         }
         else if (strcmp("td_edm", word) == 0)
         {
             read_value(ifs, td_edm);
-            Para_Json::set_json_value(Para_Json::td_edm,&td_edm); 
         }
         else if (strcmp("td_propagator", word) == 0)
         {
             read_value(ifs, propagator);
-            Para_Json::set_json_value(Para_Json::td_propagator,&propagator); 
         }
         else if (strcmp("td_stype", word) == 0)
         {
             read_value(ifs, td_stype);
-            Para_Json::set_json_value(Para_Json::td_stype,&td_stype); 
         }
         else if (strcmp("td_ttype", word) == 0)
         {
             getline(ifs, td_ttype);
-            Para_Json::set_json_value(Para_Json::td_ttype,&td_ttype); 
         }
         else if (strcmp("td_tstart", word) == 0)
         {
             read_value(ifs, td_tstart);
-            Para_Json::set_json_value(Para_Json::td_tstart,&td_tstart); 
         }
         else if (strcmp("td_tend", word) == 0)
         {
             read_value(ifs, td_tend);
-            Para_Json::set_json_value(Para_Json::td_tend,&td_tend); 
         }
         else if (strcmp("td_lcut1", word) == 0)
         {
             read_value(ifs, td_lcut1);
-            Para_Json::set_json_value(Para_Json::td_lcut1,&td_lcut1); 
         }
         else if (strcmp("td_lcut2", word) == 0)
         {
             read_value(ifs, td_lcut2);
-            Para_Json::set_json_value(Para_Json::td_lcut2,&td_lcut2); 
         }
         else if (strcmp("td_gauss_freq", word) == 0)
         {
             getline(ifs, td_gauss_freq);
-            Para_Json::set_json_value(Para_Json::td_gauss_freq,&td_gauss_freq); 
         }
         else if (strcmp("td_gauss_phase", word) == 0)
         {
             getline(ifs, td_gauss_phase);
-            Para_Json::set_json_value(Para_Json::td_gauss_phase,&td_gauss_phase); 
         }
         else if (strcmp("td_gauss_sigma", word) == 0)
         {
             getline(ifs, td_gauss_sigma);
-            Para_Json::set_json_value(Para_Json::td_gauss_sigma,&td_gauss_sigma); 
         }
         else if (strcmp("td_gauss_t0", word) == 0)
         {
             getline(ifs, td_gauss_t0);
-            Para_Json::set_json_value(Para_Json::td_gauss_t0,&td_gauss_t0); 
         }
         else if (strcmp("td_gauss_amp", word) == 0)
         {
             getline(ifs, td_gauss_amp);
-            Para_Json::set_json_value(Para_Json::td_gauss_amp,&td_gauss_amp); 
         }
         else if (strcmp("td_trape_freq", word) == 0)
         {
             getline(ifs, td_trape_freq);
-            Para_Json::set_json_value(Para_Json::td_trape_freq,&td_gauss_freq); 
         }
         else if (strcmp("td_trape_phase", word) == 0)
         {
             getline(ifs, td_trape_phase);
-            Para_Json::set_json_value(Para_Json::td_trape_phase,&td_trape_phase); 
         }
         else if (strcmp("td_trape_t1", word) == 0)
         {
             getline(ifs, td_trape_t1);
-            Para_Json::set_json_value(Para_Json::td_trape_t1,&td_trape_t1); 
         }
         else if (strcmp("td_trape_t2", word) == 0)
         {
             getline(ifs, td_trape_t2);
-            Para_Json::set_json_value(Para_Json::td_trape_t2,&td_trape_t2); 
         }
         else if (strcmp("td_trape_t3", word) == 0)
         {
             getline(ifs, td_trape_t3);
-            Para_Json::set_json_value(Para_Json::td_trape_t3,&td_trape_t3); 
         }
         else if (strcmp("td_trape_amp", word) == 0)
         {
             getline(ifs, td_trape_amp);
-            Para_Json::set_json_value(Para_Json::td_trape_amp,&td_trape_amp); 
         }
         else if (strcmp("td_trigo_freq1", word) == 0)
         {
             getline(ifs, td_trigo_freq1);
-            Para_Json::set_json_value(Para_Json::td_trigo_freq1,&td_trigo_freq1);
         }
         else if (strcmp("td_trigo_freq2", word) == 0)
         {
             getline(ifs, td_trigo_freq2);
-            Para_Json::set_json_value(Para_Json::td_trigo_freq2,&td_trigo_freq2);
         }
         else if (strcmp("td_trigo_phase1", word) == 0)
         {
             getline(ifs, td_trigo_phase1);
-            Para_Json::set_json_value(Para_Json::td_trigo_phase1,&td_trigo_phase1);
         }
         else if (strcmp("td_trigo_phase2", word) == 0)
         {
             getline(ifs, td_trigo_phase2);
-            Para_Json::set_json_value(Para_Json::td_trigo_phase2,&td_trigo_phase2);
         }
         else if (strcmp("td_trigo_amp", word) == 0)
         {
             getline(ifs, td_trigo_amp);
-            Para_Json::set_json_value(Para_Json::td_trigo_amp,&td_trigo_amp);
         }
         else if (strcmp("td_heavi_t0", word) == 0)
         {
             getline(ifs, td_heavi_t0);
-            Para_Json::set_json_value(Para_Json::td_heavi_t0,&td_heavi_t0);
         }
         else if (strcmp("td_heavi_amp", word) == 0)
         {
             getline(ifs, td_heavi_amp);
-            Para_Json::set_json_value(Para_Json::td_heavi_amp,&td_heavi_amp);
         }
         // else if (strcmp("td_hhg_amp1", word) == 0)
         // {
@@ -2104,91 +1832,71 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("vdw_method", word) == 0)
         {
             read_value(ifs, vdw_method);
-            Para_Json::set_json_value(Para_Json::vdw_method,&vdw_method);
         }
         else if (strcmp("vdw_s6", word) == 0)
         {
             read_value(ifs, vdw_s6);
-            Para_Json::set_json_value(Para_Json::vdw_s6,&vdw_s6);
         }
         else if (strcmp("vdw_s8", word) == 0)
         {
             read_value(ifs, vdw_s8);
-            Para_Json::set_json_value(Para_Json::vdw_s8,&vdw_s8);
         }
         else if (strcmp("vdw_a1", word) == 0)
         {
             read_value(ifs, vdw_a1);
-            Para_Json::set_json_value(Para_Json::vdw_a1,&vdw_a1);
         }
         else if (strcmp("vdw_a2", word) == 0)
         {
             read_value(ifs, vdw_a2);
-            Para_Json::set_json_value(Para_Json::vdw_a2,&vdw_a2);
         }
         else if (strcmp("vdw_d", word) == 0)
         {
             read_value(ifs, vdw_d);
-            Para_Json::set_json_value(Para_Json::vdw_d,&vdw_d);
         }
         else if (strcmp("vdw_abc", word) == 0)
         {
             read_bool(ifs, vdw_abc);
-            Para_Json::set_json_value(Para_Json::vdw_abc,&vdw_abc);
         }
         else if (strcmp("vdw_cutoff_radius", word) == 0)
         {
             read_value(ifs, vdw_cutoff_radius);
-            Para_Json::set_json_value(Para_Json::vdw_cutoff_radius,&vdw_cutoff_radius);
         }
         else if (strcmp("vdw_radius_unit", word) == 0)
         {
             read_value(ifs, vdw_radius_unit);
-            Para_Json::set_json_value(Para_Json::vdw_radius_unit,&vdw_radius_unit);
         }
         else if (strcmp("vdw_cn_thr", word) == 0)
         {
             read_value(ifs, vdw_cn_thr);
-            Para_Json::set_json_value(Para_Json::vdw_cn_thr,&vdw_cn_thr);
         }
         else if (strcmp("vdw_cn_thr_unit", word) == 0)
         {
             read_value(ifs, vdw_cn_thr_unit);
-            Para_Json::set_json_value(Para_Json::vdw_cn_thr_unit,&vdw_cn_thr_unit);
         }
         else if (strcmp("vdw_c6_file", word) == 0)
         {
             read_value(ifs, vdw_C6_file);
-            Para_Json::set_json_value(Para_Json::vdw_C6_file,&vdw_C6_file);
         }
         else if (strcmp("vdw_c6_unit", word) == 0)
         {
             read_value(ifs, vdw_C6_unit);
-            Para_Json::set_json_value(Para_Json::vdw_C6_unit,&vdw_C6_unit);
         }
         else if (strcmp("vdw_r0_file", word) == 0)
         {
             read_value(ifs, vdw_R0_file);
-            Para_Json::set_json_value(Para_Json::vdw_R0_file,&vdw_R0_file);
         }
         else if (strcmp("vdw_r0_unit", word) == 0)
         {
             read_value(ifs, vdw_R0_unit);
-            Para_Json::set_json_value(Para_Json::vdw_R0_unit,&vdw_R0_unit);
         }
         else if (strcmp("vdw_cutoff_type", word) == 0)
         {
             read_value(ifs, vdw_cutoff_type);
-            Para_Json::set_json_value(Para_Json::vdw_cutoff_type,&vdw_cutoff_type);
         }
         else if (strcmp("vdw_cutoff_period", word) == 0)
         {
             ifs >> vdw_cutoff_period.x >> vdw_cutoff_period.y;
             read_value(ifs, vdw_cutoff_period.z);
-
-            Para_Json::vdw_cutoff_period.PushBack(vdw_cutoff_period.x,Para_Json::doc.GetAllocator());
-            Para_Json::vdw_cutoff_period.PushBack(vdw_cutoff_period.y,Para_Json::doc.GetAllocator());
-            Para_Json::vdw_cutoff_period.PushBack(vdw_cutoff_period.z,Para_Json::doc.GetAllocator());
         }
         //--------------------------------------------------------
         // restart           Peize Lin 2020-04-04
@@ -2196,28 +1904,23 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("restart_save", word) == 0)
         {
             read_bool(ifs, restart_save);
-            Para_Json::set_json_value(Para_Json::vdw_cutoff_type,&vdw_cutoff_type);
         }
         else if (strcmp("restart_load", word) == 0)
         {
             read_bool(ifs, restart_load);
-            Para_Json::set_json_value(Para_Json::vdw_cutoff_type,&vdw_cutoff_type);
         }
         else if (strcmp("ocp", word) == 0)
         {
             read_bool(ifs, ocp);
-            Para_Json::set_json_value(Para_Json::vdw_cutoff_type,&vdw_cutoff_type);
         }
         else if (strcmp("ocp_set", word) == 0)
         {
             getline(ifs, ocp_set);
-            Para_Json::set_json_value(Para_Json::vdw_cutoff_type,&vdw_cutoff_type);
             //			ifs.ignore(150, '\n');
         }
         else if (strcmp("out_mul", word) == 0)
         {
             read_bool(ifs, out_mul);
-            Para_Json::set_json_value(Para_Json::vdw_cutoff_type,&vdw_cutoff_type);
         } // qifeng add 2019/9/10
         //----------------------------------------------------------
         // exx
@@ -2226,143 +1929,114 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("exx_hybrid_alpha", word) == 0)
         {
             read_value(ifs, exx_hybrid_alpha);
-            Para_Json::set_json_value(Para_Json::exx_hybrid_alpha,&exx_hybrid_alpha);
         }
         else if (strcmp("exx_hse_omega", word) == 0)
         {
             read_value(ifs, exx_hse_omega);
-            Para_Json::set_json_value(Para_Json::exx_hse_omega,&exx_hse_omega);
         }
         else if (strcmp("exx_separate_loop", word) == 0)
         {
             read_bool(ifs, exx_separate_loop);
-            Para_Json::set_json_value(Para_Json::exx_separate_loop,&exx_separate_loop);
         }
         else if (strcmp("exx_hybrid_step", word) == 0)
         {
             read_value(ifs, exx_hybrid_step);
-            Para_Json::set_json_value(Para_Json::exx_hybrid_step,&exx_hybrid_step);
         }
         else if (strcmp("exx_mixing_beta", word) == 0)
         {
             read_value(ifs, exx_mixing_beta);
-            Para_Json::set_json_value(Para_Json::vdw_cutoff_type,&vdw_cutoff_type);
         }
         else if (strcmp("exx_lambda", word) == 0)
         {
             read_value(ifs, exx_lambda);
-            Para_Json::set_json_value(Para_Json::vdw_cutoff_type,&vdw_cutoff_type);
         }
         else if (strcmp("exx_real_number", word) == 0)
         {
             read_value(ifs, exx_real_number);
-            // printf("exx_real_number = %s\n",exx_real_number.c_str());
-            Para_Json::set_json_value(Para_Json::exx_real_number,&exx_real_number);
         }
         else if (strcmp("exx_pca_threshold", word) == 0)
         {
             read_value(ifs, exx_pca_threshold);
-            Para_Json::set_json_value(Para_Json::exx_pca_threshold,&exx_pca_threshold);
         }
         else if (strcmp("exx_c_threshold", word) == 0)
         {
             read_value(ifs, exx_c_threshold);
-            Para_Json::set_json_value(Para_Json::exx_c_threshold,&exx_c_threshold);
         }
         else if (strcmp("exx_v_threshold", word) == 0)
         {
             read_value(ifs, exx_v_threshold);
-            Para_Json::set_json_value(Para_Json::exx_v_threshold,&exx_v_threshold);
         }
         else if (strcmp("exx_dm_threshold", word) == 0)
         {
             read_value(ifs, exx_dm_threshold);
-            Para_Json::set_json_value(Para_Json::exx_dm_threshold,&exx_dm_threshold);
         }
         else if (strcmp("exx_schwarz_threshold", word) == 0)
         {
             read_value(ifs, exx_schwarz_threshold);
-            Para_Json::set_json_value(Para_Json::exx_schwarz_threshold,&exx_schwarz_threshold);
         }
         else if (strcmp("exx_cauchy_threshold", word) == 0)
         {
             read_value(ifs, exx_cauchy_threshold);
-            Para_Json::set_json_value(Para_Json::exx_cauchy_threshold,&exx_cauchy_threshold);
         }
         else if (strcmp("exx_c_grad_threshold", word) == 0)
         {
             read_value(ifs, exx_c_grad_threshold);
-            Para_Json::set_json_value(Para_Json::exx_c_grad_threshold,&exx_c_grad_threshold);
         }
         else if (strcmp("exx_v_grad_threshold", word) == 0)
         {
             read_value(ifs, exx_v_grad_threshold);
-            Para_Json::set_json_value(Para_Json::exx_v_grad_threshold,&exx_v_grad_threshold);
         }
         else if (strcmp("exx_cauchy_force_threshold", word) == 0)
         {
             read_value(ifs, exx_cauchy_force_threshold);
-            Para_Json::set_json_value(Para_Json::exx_cauchy_force_threshold,&exx_cauchy_force_threshold);
         }
         else if (strcmp("exx_cauchy_stress_threshold", word) == 0)
         {
             read_value(ifs, exx_cauchy_stress_threshold);
-            Para_Json::set_json_value(Para_Json::exx_cauchy_stress_threshold,&exx_cauchy_stress_threshold);
         }
         else if (strcmp("exx_ccp_threshold", word) == 0)
         {
             read_value(ifs, exx_ccp_threshold);
-            Para_Json::set_json_value(Para_Json::exx_ccp_threshold,&exx_ccp_threshold);
         }
         else if (strcmp("exx_ccp_rmesh_times", word) == 0)
         {
             read_value(ifs, exx_ccp_rmesh_times);
-            Para_Json::set_json_value(Para_Json::exx_ccp_rmesh_times,&exx_ccp_rmesh_times);
         }
         else if (strcmp("exx_distribute_type", word) == 0)
         {
             read_value(ifs, exx_distribute_type);
-            Para_Json::set_json_value(Para_Json::exx_distribute_type,&exx_distribute_type);
         }
         else if (strcmp("exx_opt_orb_lmax", word) == 0)
         {
             read_value(ifs, exx_opt_orb_lmax);
-            Para_Json::set_json_value(Para_Json::exx_opt_orb_lmax,&exx_opt_orb_lmax);
         }
         else if (strcmp("exx_opt_orb_ecut", word) == 0)
         {
             read_value(ifs, exx_opt_orb_ecut);
-            Para_Json::set_json_value(Para_Json::exx_opt_orb_ecut,&exx_opt_orb_ecut);
         }
         else if (strcmp("exx_opt_orb_tolerence", word) == 0)
         {
             read_value(ifs, exx_opt_orb_tolerence);
-            Para_Json::set_json_value(Para_Json::exx_opt_orb_tolerence,&exx_opt_orb_tolerence);
         }
         else if (strcmp("noncolin", word) == 0)
         {
             read_bool(ifs, noncolin);
-            Para_Json::set_json_value(Para_Json::noncolin,&noncolin);
         }
         else if (strcmp("lspinorb", word) == 0)
         {
             read_bool(ifs, lspinorb);
-            Para_Json::set_json_value(Para_Json::lspinorb,&lspinorb);
         }
         else if (strcmp("soc_lambda", word) == 0)
         {
             read_value(ifs, soc_lambda);
-            Para_Json::set_json_value(Para_Json::soc_lambda,&soc_lambda);
         }
         else if (strcmp("cell_factor", word) == 0)
         {
             read_value(ifs, cell_factor);
-            Para_Json::set_json_value(Para_Json::cell_factor,&cell_factor);
         }
         else if (strcmp("test_skip_ewald", word) == 0)
         {
             read_bool(ifs, test_skip_ewald);
-            Para_Json::set_json_value(Para_Json::test_skip_ewald,&test_skip_ewald);
         }
         //--------------
         //----------------------------------------------------------------------------------
@@ -2371,7 +2045,6 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("dft_plus_u", word) == 0)
         {
             read_bool(ifs, dft_plus_u);
-            //Para_Json::set_json_value(Para_Json::dft_plus_u,&dft_plus_u);
         }
         else if (strcmp("yukawa_potential", word) == 0)
             ifs.ignore(150, '\n');
@@ -2389,7 +2062,6 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("dft_plus_dmft", word) == 0)
         {
             read_bool(ifs, dft_plus_dmft);
-            //Para_Json::set_json_value(Para_Json::dft_plus_dmft,&dft_plus_dmft);
         }
         //----------------------------------------------------------------------------------
         //         Rong Shi added for RPA
@@ -2397,7 +2069,6 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("rpa", word) == 0)
         {
             read_bool(ifs, rpa);
-            Para_Json::set_json_value(Para_Json::rpa,&rpa);
             if (rpa)
                 GlobalV::rpa_setorb = true;
         }
@@ -2407,27 +2078,22 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("imp_sol", word) == 0)
         {
             read_bool(ifs, imp_sol);
-            Para_Json::set_json_value(Para_Json::imp_sol,&imp_sol);
         }
         else if (strcmp("eb_k", word) == 0)
         {
             read_value(ifs, eb_k);
-            Para_Json::set_json_value(Para_Json::eb_k,&eb_k);
         }
         else if (strcmp("tau", word) == 0)
         {
             read_value(ifs, tau);
-            Para_Json::set_json_value(Para_Json::tau,&tau);
         }
         else if (strcmp("sigma_k", word) == 0)
         {
             read_value(ifs, sigma_k);
-            Para_Json::set_json_value(Para_Json::sigma_k,&sigma_k);
         }
         else if (strcmp("nc_k", word) == 0)
         {
             read_value(ifs, nc_k);
-            Para_Json::set_json_value(Para_Json::nc_k,&nc_k);
         }
         //----------------------------------------------------------------------------------
         //    OFDFT sunliang added on 2022-05-05
@@ -2435,137 +2101,110 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("of_kinetic", word) == 0)
         {
             read_value(ifs, of_kinetic);
-            Para_Json::set_json_value(Para_Json::of_kinetic,&of_kinetic);
         }
         else if (strcmp("of_method", word) == 0)
         {
             read_value(ifs, of_method);
-            Para_Json::set_json_value(Para_Json::of_method,&of_method);
         }
         else if (strcmp("of_conv", word) == 0)
         {
             read_value(ifs, of_conv);
-            Para_Json::set_json_value(Para_Json::of_conv,&of_conv);
         }
         else if (strcmp("of_tole", word) == 0)
         {
             read_value(ifs, of_tole);
-            Para_Json::set_json_value(Para_Json::of_tole,&of_tole);
         }
         else if (strcmp("of_tolp", word) == 0)
         {
             read_value(ifs, of_tolp);
-            Para_Json::set_json_value(Para_Json::of_tolp,&of_tolp);
         }
         else if (strcmp("of_tf_weight", word) == 0)
         {
             read_value(ifs, of_tf_weight);
-            Para_Json::set_json_value(Para_Json::of_tf_weight,&of_tf_weight);
         }
         else if (strcmp("of_vw_weight", word) == 0)
         {
             read_value(ifs, of_vw_weight);
-            Para_Json::set_json_value(Para_Json::of_vw_weight,&of_vw_weight);
         }
         else if (strcmp("of_wt_alpha", word) == 0)
         {
             read_value(ifs, of_wt_alpha);
-            Para_Json::set_json_value(Para_Json::of_wt_alpha,&of_wt_alpha);
         }
         else if (strcmp("of_wt_beta", word) == 0)
         {
             read_value(ifs, of_wt_beta);
-            Para_Json::set_json_value(Para_Json::of_wt_beta,&of_wt_beta);
         }
         else if (strcmp("of_wt_rho0", word) == 0)
         {
             read_value(ifs, of_wt_rho0);
-            Para_Json::set_json_value(Para_Json::of_wt_rho0,&of_wt_rho0);
         }
         else if (strcmp("of_hold_rho0", word) == 0)
         {
             read_bool(ifs, of_hold_rho0);
-            Para_Json::set_json_value(Para_Json::of_hold_rho0,&of_hold_rho0);
         }
         else if (strcmp("of_lkt_a", word) == 0)
         {
             read_value(ifs, of_lkt_a);
-            Para_Json::set_json_value(Para_Json::of_lkt_a,&of_lkt_a);
         }
         else if (strcmp("of_full_pw", word) == 0)
         {
             read_bool(ifs, of_full_pw);
-            Para_Json::set_json_value(Para_Json::of_full_pw,&of_full_pw);
         }
         else if (strcmp("of_full_pw_dim", word) == 0)
         {
             read_value(ifs, of_full_pw_dim);
-            Para_Json::set_json_value(Para_Json::of_full_pw_dim,&of_full_pw_dim);
         }
         else if (strcmp("of_read_kernel", word) == 0)
         {
             read_bool(ifs, of_read_kernel);
-            Para_Json::set_json_value(Para_Json::of_read_kernel,&of_read_kernel);
         }
         else if (strcmp("of_kernel_file", word) == 0)
         {
             read_value(ifs, of_kernel_file);
-            Para_Json::set_json_value(Para_Json::of_kernel_file,&of_kernel_file);
         }
         else if (strcmp("bessel_nao_smooth", word) == 0)
         {
             read_value(ifs, bessel_nao_smooth);
-            Para_Json::set_json_value(Para_Json::bessel_nao_smooth,&bessel_nao_smooth);
         }
         else if (strcmp("bessel_nao_sigma", word) == 0)
         {
             read_value(ifs, bessel_nao_sigma);
-            Para_Json::set_json_value(Para_Json::bessel_nao_sigma,&bessel_nao_sigma);
         }
         else if (strcmp("bessel_nao_ecut", word) == 0)
         {
             read_value(ifs, bessel_nao_ecut);
-            Para_Json::set_json_value(Para_Json::bessel_nao_ecut,&bessel_nao_ecut);
         }
         else if (strcmp("bessel_nao_rcut", word) == 0)
         {
             read_value(ifs, bessel_nao_rcut);
-            Para_Json::set_json_value(Para_Json::bessel_nao_rcut,&bessel_nao_rcut);
         }
         else if (strcmp("bessel_nao_tolerence", word) == 0)
         {
             read_value(ifs, bessel_nao_tolerence);
-            Para_Json::set_json_value(Para_Json::bessel_nao_tolerence,&bessel_nao_tolerence);
         }
         else if (strcmp("bessel_descriptor_lmax", word) == 0)
         {
             read_value(ifs, bessel_descriptor_lmax);
-            Para_Json::set_json_value(Para_Json::bessel_descriptor_lmax,&bessel_descriptor_lmax);
         }
         else if (strcmp("bessel_descriptor_smooth", word) == 0)
         {
             read_value(ifs, bessel_descriptor_smooth);
-            Para_Json::set_json_value(Para_Json::bessel_descriptor_smooth,&bessel_descriptor_smooth);
         }
         else if (strcmp("bessel_descriptor_sigma", word) == 0)
         {
             read_value(ifs, bessel_descriptor_sigma);
-            Para_Json::set_json_value(Para_Json::bessel_descriptor_sigma,&bessel_descriptor_sigma);
         }
         else if (strcmp("bessel_descriptor_ecut", word) == 0)
         {
             read_value(ifs, bessel_descriptor_ecut);
-            Para_Json::set_json_value(Para_Json::bessel_descriptor_ecut,&bessel_descriptor_ecut);
         }
         else if (strcmp("bessel_descriptor_rcut", word) == 0)
         {
             read_value(ifs, bessel_descriptor_rcut);
-            Para_Json::set_json_value(Para_Json::bessel_descriptor_rcut,&bessel_descriptor_rcut);
         }
         else if (strcmp("bessel_descriptor_tolerence", word) == 0)
         {
             read_value(ifs, bessel_descriptor_tolerence);
-            Para_Json::set_json_value(Para_Json::bessel_descriptor_tolerence,&bessel_descriptor_tolerence);
         }
         //----------------------------------------------------------------------------------
         //    device control denghui added on 2022-11-05
@@ -2573,16 +2212,14 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("device", word) == 0)
         {
             read_value(ifs, device);
-            Para_Json::set_json_value(Para_Json::device,&device);
         }
         //----------------------------------------------------------------------------------
         //    precision control denghui added on 2023-01-01
         //----------------------------------------------------------------------------------
         else if (strcmp("precision", word) == 0) {
             read_value(ifs, precision);
-            //Para_Json::set_json_value(Para_Json::precision,&precision);
         }
-          //----------------------------------------------------------------------------------
+        //----------------------------------------------------------------------------------
         //    Deltaspin
         //----------------------------------------------------------------------------------
         else if (strcmp("sc_mag_switch", word) == 0){
@@ -2709,19 +2346,16 @@ bool Input::Read(const std::string &fn)
             if (strcmp("yukawa_potential", word) == 0)
             {
                 read_bool(ifs, yukawa_potential);
-                Para_Json::set_json_value(Para_Json::yukawa_potential,&yukawa_potential);
             }
             else if (strcmp("yukawa_lambda", word) == 0)
             {
                 ifs >> yukawa_lambda;
-                Para_Json::set_json_value(Para_Json::yukawa_lambda,&yukawa_lambda);
             }
             else if (strcmp("hubbard_u", word) == 0)
             {
                 for (int i = 0; i < ntype; i++)
                 {
                     ifs >> hubbard_u[i];
-                    Para_Json::hubbard_u.PushBack(hubbard_u[i],Para_Json::doc.GetAllocator());
                     hubbard_u[i] /= ModuleBase::Ry_to_eV;
                 }
             }
@@ -2730,7 +2364,6 @@ bool Input::Read(const std::string &fn)
                 for (int i = 0; i < ntype; i++)
                 {
                     ifs >> orbital_corr[i];
-                    Para_Json::orbital_corr.PushBack(orbital_corr[i],Para_Json::doc.GetAllocator());
                 }
             }
             else if (strcmp("omc", word) == 0)
@@ -2805,7 +2438,6 @@ bool Input::Read(const std::string &fn)
                 for (int i = 0; i < ntype; i++)
                 {
                     ifs >> hubbard_u[i];
-                    Para_Json::hubbard_u.PushBack(hubbard_u[i],Para_Json::doc.GetAllocator());
                     hubbard_u[i] /= ModuleBase::Ry_to_eV;
                 }
             }
@@ -2814,7 +2446,6 @@ bool Input::Read(const std::string &fn)
                 for (int i = 0; i < ntype; i++)
                 {
                     ifs >> orbital_corr[i];
-                    Para_Json::orbital_corr.PushBack(orbital_corr[i],Para_Json::doc.GetAllocator());
                 }
             }
             else
@@ -2910,7 +2541,6 @@ bool Input::Read(const std::string &fn)
 
     return true;
 } // end read_parameters
-
 
 void Input::Default_2(void) // jiyy add 2019-08-04
 {
