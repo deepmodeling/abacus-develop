@@ -241,6 +241,8 @@ if(USE_CUDA OR USE_CUSOLVER_LCAO)
     set(CMAKE_CUDA_ARCHITECTURES
       60 # P100
       70 # V100
+      80
+      89
       # Add your CUDA arch here
       # Check the Compute Capability version of your GPU at:
       # https://en.wikipedia.org/wiki/CUDA#GPUs_supported
