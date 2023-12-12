@@ -507,12 +507,16 @@ void Charge_Mixing::mix_rho(Charge* chr)
     if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
     {
         kin_r123.resize(GlobalV::NSPIN * nrxx);
+        for (int is = 0; is < GlobalV::NSPIN; ++is)
+        {
+            double* kin_r123_is = kin_r123.data() + is * nrxx;
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
-        for(int ir = 0 ; ir < GlobalV::NSPIN * nrxx ; ++ir)
-        {
-            kin_r123[ir] = chr->kin_r[0][ir];
+            for(int ir = 0 ; ir < nrxx ; ++ir)
+            {
+                kin_r123_is[ir] = chr->kin_r[is][ir];
+            }
         }
     }
 #ifdef USE_PAW
@@ -569,12 +573,16 @@ void Charge_Mixing::mix_rho(Charge* chr)
 
     if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
     {
+        for (int is = 0; is < GlobalV::NSPIN; ++is)
+        {
+            double* kin_r123_is = kin_r123.data() + is * nrxx;
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
-        for(int ir = 0 ; ir < GlobalV::NSPIN * nrxx ; ++ir)
-        {
-            chr->kin_r_save[0][ir] = kin_r123[ir];
+            for(int ir = 0 ; ir < nrxx ; ++ir)
+            {
+                chr->kin_r_save[is][ir] = kin_r123_is[ir];
+            }
         }
     }
 
