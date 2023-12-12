@@ -6,14 +6,15 @@ class toQO_DataContainer:
     # hamiltonians
     hk: np.ndarray # hamiltonian matrix in k-space
     hqok: np.ndarray # hamiltonian matrix in QO basis in k-space
-    hqoR: np.ndarray # hamiltonian matrix in QO basis in R-space
+    sqok: np.ndarray # overlap matrix in QO basis in k-space
     # homogeneous overlaps
     sk: np.ndarray # overlap matrix in k-space
     wk: list # overlap matrix in QO basis in k-space, list of np.ndarray
     # heterogeneous overlaps/transformations
-    sqok: list # AO-NAO overlap matrix in k-space, list of np.ndarray
+    saok: list # AO-NAO overlap matrix in k-space, list of np.ndarray
     # data
     kpoints: np.ndarray # kpoints direct coordinates
+    equivalent_kpoints: list # weights of kpoints
     energies: np.ndarray # energies of wavefunctions
     # dimensions
     nkpts: int # number of kpoints

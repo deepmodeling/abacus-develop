@@ -51,13 +51,16 @@ class toQO_SafeGuard:
         print("Error of matrix being diagonal is: %14.10e"%error)
         return error
 
-    def check_rank(self, mat: np.ndarray) -> int:
+    def check_rank(self, mat: np.ndarray, tol = -1) -> int:
         """check rank of a matrix
 
         Args:
             mat (np.ndarray): matrix to be checked
         """
-        rank = np.linalg.matrix_rank(mat)
+        if tol < 0:
+            rank = np.linalg.matrix_rank(mat)
+        else:
+            rank = np.linalg.matrix_rank(mat, tol = tol)
         print("Rank of matrix is: ", rank)
         return rank
 

@@ -1,8 +1,9 @@
 import numpy as np
-import components.data_container as dc
-import tools.hamiltonian as ham
-import tools.wavefunction as wf
-import tools.qo_ovlp as qov
+import source.components.data_container as dc
+import source.tools.hamiltonian as ham
+import source.tools.wavefunction as wf
+import source.tools.qo_ovlp as qov
+import source.tools.kpoints as kpt
 
 class toQO_DataManager:
     """Manage memory storing the data
@@ -11,7 +12,7 @@ class toQO_DataManager:
     def __init__(self) -> None:
         self.data = dc.toQO_DataContainer() # Data manager borns with its data
 
-    def read(self, nkpts: int, path: str, band_range: tuple) -> None:
+    def read(self, nkpts: int, calculation: str, path: str, band_range: tuple) -> None:
         """read data from files without any changes
         
         Args:
@@ -26,8 +27,10 @@ class toQO_DataManager:
         """
         self.data.nkpts = nkpts
         self.data.hk, self.data.sk, self.data.nphi = ham.parse(self.data.nkpts, path)
-        self.data.sqok = qov.parse(self.data.nkpts, path)
+        self.data.saok = qov.parse(self.data.nkpts, path)
         self.data.psi_lcao, self.data.kpoints, self.data.energies = wf.parse(self.data.nkpts, path)
+        self.data.kpoints, self.data.equivalent_kpoints = kpt.parse(path)
+
         # band range selection operation
         self.data.psi_lcao = self.data.psi_lcao[:, band_range[0]:band_range[1], :]
         self.data.energies = self.data.energies[:, band_range[0]:band_range[1]]
@@ -40,7 +43,7 @@ class toQO_DataManager:
             ValueError: if AO filtered set cannot span larger space than the eigenvectors of the Hamiltonian
         """
         self.data.nbands = self.data.psi_lcao.shape[1]
-        self.data.nchi = [self.data.sqok[ik].shape[0] for ik in range(self.data.nkpts)]
+        self.data.nchi = [self.data.saok[ik].shape[0] for ik in range(self.data.nkpts)]
         self.data.nphi = self.data.hk[0].shape[0]
 
         _m = [self.data.nchi[ik] - self.data.nbands for ik in range(self.data.nkpts)]
@@ -62,9 +65,8 @@ class toQO_DataManager:
             (_m[ik], self.data.nphi)) for ik in range(self.data.nkpts)]
         self.data.psi_exten = [np.zeros(
             (self.data.nchi[ik], self.data.nphi)) for ik in range(self.data.nkpts)]
-        self.data.omega = [np.zeros(
-            (self.data.nchi[ik], self.data.nchi[ik])) for ik in range(self.data.nkpts)]
         self.data.hqok = [np.zeros(
             (self.data.nchi[ik], self.data.nchi[ik])) for ik in range(self.data.nkpts)]
-        self.data.hqoR = [np.zeros(
+        self.data.sqok = [np.zeros(
             (self.data.nchi[ik], self.data.nchi[ik])) for ik in range(self.data.nkpts)]
+        

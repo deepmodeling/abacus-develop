@@ -1,6 +1,6 @@
 INPUT_PARAMETERS
-pseudo_dir              .
-orbital_dir                 ../../../tests/PP_ORB
+pseudo_dir .
+orbital_dir .
 nbands		15
 
 calculation	scf

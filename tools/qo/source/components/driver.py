@@ -1,7 +1,8 @@
-import components.data_manager as dm
-import components.basis_filter as bf
-import components.calculator as cal
-
+import source.components.data_manager as dm
+import source.components.basis_filter as bf
+import source.components.calculator as cal
+import matplotlib.pyplot as plt
+import numpy as np
 """
 1. filter out all irrelevant AOs from overlap matrix of AO in NAO representation
 ? maybe AO can also be normalized here?
@@ -27,12 +28,14 @@ class toQO_Driver:
     def initialize(self,
                    path,
                    nkpts,
+                   calculation,
                    band_range,
                    overlap_matrix_filter_threshold = 0.0):
 
         self.dm_ = dm.toQO_DataManager()
-        self.dm_.read(nkpts, path, band_range)
+        self.dm_.read(nkpts, calculation, path, band_range)
 
+        
         self.bf_ = bf.toQO_BasisFilter()
         self.bf_.set_overlap_filter(overlap_matrix_filter_threshold)
 
@@ -46,17 +49,17 @@ class toQO_Driver:
         Returns:
             selected_basis_indices (list): list of list, each list contains indices of selected basis for each kpoint
         """
-        filtered_sqok = []
+        filtered_saok = []
         selected_basis_indices = []
         for ik in range(self.dm_.data.nkpts):
             sk = self.dm_.data.sk[ik]
-            sqok = self.dm_.data.sqok[ik]
-            _selected_basis_indices, _sqok = self.bf_.filter_via_overlap_matrix(sk, sqok)
+            saok = self.dm_.data.saok[ik]
+            _selected_basis_indices, _saok = self.bf_.filter_via_overlap_matrix(sk, saok)
             selected_basis_indices.append(_selected_basis_indices)
-            filtered_sqok.append(_sqok)
+            filtered_saok.append(_saok)
             # update data
             
-        self.dm_.data.sqok = filtered_sqok
+        self.dm_.data.saok = filtered_saok
         self.dm_.resize()
         return selected_basis_indices
     
@@ -64,8 +67,8 @@ class toQO_Driver:
         """should make sure still have number of AO larger than number of bands
         """
         for ik in range(self.dm_.data.nkpts):
-            self.dm_.data.psi_chi[ik] = self.cal_.projto_nao(self.dm_.data.sk[ik], self.dm_.data.sqok[ik])
-            self.dm_.data.psi_chi_para[ik] = self.cal_.projto_eigstate(self.dm_.data.psi_lcao[ik], self.dm_.data.sqok[ik])
+            self.dm_.data.psi_chi[ik] = self.cal_.projto_nao(self.dm_.data.sk[ik], self.dm_.data.saok[ik])
+            self.dm_.data.psi_chi_para[ik] = self.cal_.projto_eigstate(self.dm_.data.psi_lcao[ik], self.dm_.data.saok[ik])
             self.dm_.data.psi_chi_orth[ik] = self.dm_.data.psi_chi[ik] - self.dm_.data.psi_chi_para[ik]
             m = self.dm_.data.nchi[ik] - self.dm_.data.nbands
             print("Number of empty states is: ", m)
@@ -83,8 +86,12 @@ class toQO_Driver:
         """get QO, reproduce selected pieces of energy spectrum
         """
         for ik in range(self.dm_.data.nkpts):
-            self.dm_.data.psi_qo[ik] = self.cal_.calculate_qo(self.dm_.data.sqok[ik], self.dm_.data.psi_exten[ik], self.dm_.data.sk[ik])
-            self.dm_.data.hqok[ik] = self.cal_.calculate_hqok(self.dm_.data.psi_qo[ik], self.dm_.data.hk[ik], self.dm_.data.sk[ik])
+            self.dm_.data.psi_qo[ik] = self.cal_.calculate_qo(self.dm_.data.saok[ik], self.dm_.data.psi_exten[ik], self.dm_.data.sk[ik])
+            self.dm_.data.hqok[ik], self.dm_.data.sqok[ik] = self.cal_.calculate_hqok(self.dm_.data.psi_qo[ik], self.dm_.data.hk[ik], self.dm_.data.sk[ik])
+
+        # the following function is not implemented correctly yet, Hqo(R) and Sqo(R) is not correct
 
         for R in Rs:
-            self.cal_.unfolding_hk(self.dm_.data.hqok, self.dm_.data.kpoints, R)
+            hqoR = self.cal_.unfolding_Hk(self.dm_.data.hqok, self.dm_.data.equivalent_kpoints, R) 
+            sqoR = self.cal_.unfolding_Hk(self.dm_.data.sqok, self.dm_.data.equivalent_kpoints, R)
+            print(sqoR)
