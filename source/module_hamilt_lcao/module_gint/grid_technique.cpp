@@ -673,19 +673,9 @@ void Grid_Technique::cal_trace_lo(void)
 
 		for (int iat1 = 0; iat1 < GlobalC::ucell.nat; iat1++)
 		{
-			int it1 = GlobalC::ucell.iat2it[iat1];
-			int lo1 = trace_lo[GlobalC::ucell.itiaiw2iwt(it1, GlobalC::ucell.iat2ia[iat1], 0)];
 			for (int iat2 = 0; iat2 < GlobalC::ucell.nat; iat2++)
 			{
-				int it2 = GlobalC::ucell.iat2it[iat2];
-				int lo2 = trace_lo[GlobalC::ucell.itiaiw2iwt(it2, GlobalC::ucell.iat2ia[iat2], 0)];
-				if (lo1 <= lo2) {
-					int atom_pair_nw = GlobalC::ucell.atoms[it1].nw * GlobalC::ucell.atoms[it2].nw;
-					checkCudaErrors(cudaMalloc((void **)&GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2], atom_pair_nw * sizeof(double)));
-					checkCudaErrors(cudaMemset(GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2], 0, atom_pair_nw * sizeof(double)));
-				} else {
-					GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2] = nullptr;
-				}
+				GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2] = nullptr;
 			}
 		}
 

@@ -32,13 +32,23 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
             int it2 = GlobalC::ucell.iat2it[iat2];
             int lo2 = GridT.trace_lo[GlobalC::ucell.itiaiw2iwt(
                 it2, GlobalC::ucell.iat2ia[iat2], 0)];
+
             if (lo1 <= lo2) {
-                    int atom_pair_nw = GlobalC::ucell.atoms[it1].nw * GlobalC::ucell.atoms[it2].nw;
-                    hamilt::AtomPair<double> *tmp_ap = hRGint->find_pair(iat1, iat2);
-                    checkCuda(cudaMemsetAsync(GridT.GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2],
-                                            0,
-                                            atom_pair_nw * sizeof(double), GridT.streams[stream_num]));
-                    iter_num++;
+                hamilt::AtomPair<double> *tmp_ap = hRGint->find_pair(iat1, iat2);
+                if (tmp_ap == nullptr)
+                {
+                    continue;
+                }
+                int atom_pair_nw = GlobalC::ucell.atoms[it1].nw * GlobalC::ucell.atoms[it2].nw;
+                if (GridT.GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2] == nullptr)
+                {
+                    checkCuda(cudaMallocAsync((void **)&GridT.GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2],
+                                         atom_pair_nw * sizeof(double), GridT.streams[stream_num]));
+                }
+                checkCuda(cudaMemsetAsync(GridT.GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2],
+                                        0,
+                                        atom_pair_nw * sizeof(double), GridT.streams[stream_num]));
+                iter_num++;
             }
         }
     }
@@ -178,6 +188,10 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
             if (lo1 <= lo2) {
                 int atom_pair_nw = GlobalC::ucell.atoms[it1].nw * GlobalC::ucell.atoms[it2].nw;
                 hamilt::AtomPair<double> *tmp_ap = hRGint->find_pair(iat1, iat2);
+                if (tmp_ap == nullptr)
+                {
+                    continue;
+                }
                 checkCuda(cudaMemcpyAsync(tmp_ap->get_pointer(0),
                                         GridT.GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2],
                                         atom_pair_nw * sizeof(double),
