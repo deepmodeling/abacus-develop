@@ -96,6 +96,7 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
             int max_m = 0;
             int max_n = 0;
 
+            checkCuda(cudaStreamSynchronize(GridT.streams[stream_num]));
             gpu_task_generate_vlocal(GridT, i, j,
                                      GridT.atom_pair_size_of_meshcell,
                                      GridT.psi_size_max_per_z,
@@ -138,7 +139,6 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
 
             checkCuda(cudaMemsetAsync(psir_ylm_left_g, 0, GridT.psir_size * sizeof(double), GridT.streams[stream_num]));
             checkCuda(cudaMemsetAsync(psir_ylm_right_g, 0, GridT.psir_size * sizeof(double), GridT.streams[stream_num]));
-            checkCuda(cudaStreamSynchronize(GridT.streams[stream_num]));
 
             dim3 grid_psi(nbz, 8);
             dim3 block_psi(64);

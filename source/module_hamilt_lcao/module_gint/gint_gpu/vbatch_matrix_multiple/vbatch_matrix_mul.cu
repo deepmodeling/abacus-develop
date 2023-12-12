@@ -326,7 +326,6 @@ void gemm_time_measure(int max_m, int max_n,
     {
         fast_time = milliseconds;
         fastest_algo = vbatched_gemm_impl<T, DIM_X, DIM_Y, BLK_M, BLK_N, BLK_K, DIM_XA, DIM_YA, DIM_XB, DIM_YB>;
-        #define __DEBUG
         #ifdef __DEBUG
         std::cout << "found! fastest time: " << fast_time << std::endl;
         std::cout << DIM_X << ","<< DIM_Y<< ","<< BLK_M<< ","<< BLK_N<< ","<< BLK_K<< ","<< DIM_XA<< ","<< DIM_YA<< ","<< DIM_XB<< ","<< DIM_YB << std::endl;
