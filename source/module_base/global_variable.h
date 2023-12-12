@@ -317,5 +317,8 @@ extern int sc_scf_nmin;
 extern double alpha_trial;
 extern double sccut;
 extern std::string sc_file;
+
+// Quasiatomic orbitals related
+extern bool out_kpt_reduction;
 } // namespace GlobalV
 #endif

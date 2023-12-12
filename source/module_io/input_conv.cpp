@@ -754,6 +754,8 @@ void Input_Conv::Convert(void)
     GlobalV::MIXING_GG0_MIN = INPUT.mixing_gg0_min;
     GlobalV::MIXING_TAU = INPUT.mixing_tau;
     
+    // Quasiatomic orbitals
+    GlobalV::out_kpt_reduction = INPUT.out_kpt_reduction;
     ModuleBase::timer::tick("Input_Conv", "Convert");
     return;
 }

@@ -639,6 +639,11 @@ void Input::Default(void)
     alpha_trial = 0.01;
     sccut = 3.0;
     sc_file = "none";
+    //==========================================================
+    // variables for Quasiatomic Orbital
+    //==========================================================
+    out_kpt_reduction = false;
+
     return;
 }
 
@@ -2606,6 +2611,9 @@ bool Input::Read(const std::string &fn)
         }
         else if (strcmp("sc_file", word) == 0){
             read_value(ifs, sc_file);
+        }
+        else if (strcmp("out_kpt_reduction", word) == 0){
+            read_value(ifs, out_kpt_reduction);
         }
         else
         {

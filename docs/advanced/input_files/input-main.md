@@ -128,6 +128,7 @@
     - [out\_wfc\_pw](#out_wfc_pw)
     - [out\_wfc\_r](#out_wfc_r)
     - [out\_wfc\_lcao](#out_wfc_lcao)
+    - [out\_kpt\_reduction](#out_kpt_reduction)
     - [out\_dos](#out_dos)
     - [out\_band](#out_band)
     - [out\_proj\_band](#out_proj_band)
@@ -1466,6 +1467,13 @@ These variables are used to control the output of properties.
   
   Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
 - **Default**: Flase
+
+### out_kpt_reduction
+
+- **Type**: Boolean
+- **Availability**: 
+- **Description**: Whether to output the kpoints reduction into file `OUT.${suffix}/running_${calculation}.log`.
+- **Default**: False
 
 ### out_dos
 
