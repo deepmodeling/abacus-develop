@@ -7,28 +7,16 @@
 #define sA(i,j)    sA[(j)*slda + (i)]
 #define sB(i,j)    sB[(j)*sldb + (i)]
 #define fetch(A, m, n, bound)  offs_d##A[min(n*LD##A+m, bound)]
-
-__device__ inline double atomic_add(double* address, double val)
+cudaError_t checkCuda(cudaError_t result)
 {
-    return atomicAdd(address, val);
-}
-
-__device__ inline float atomic_add(float* address, float val)
-{
-    return atomicAdd(address, val);
-}
-__device__ inline cuFloatComplex atomic_add(cuFloatComplex* address, cuFloatComplex val)
-{
-    float re = atomicAdd( (float*) (&(*address).x) ,val.x);
-    float im = atomicAdd( (float*) (&(*address).y) ,val.y);
-    return make_cuFloatComplex(re, im);
-}
-
-__device__ inline cuDoubleComplex atomic_add(cuDoubleComplex* address, cuDoubleComplex val)
-{
-    double re = atomicAdd( (double*) (&(*address).x) ,val.x);
-    double im = atomicAdd( (double*) (&(*address).y) ,val.y);
-    return make_cuDoubleComplex(re, im);
+#if defined(DEBUG) || defined(__DEBUG)
+    if (result != cudaSuccess)
+    {
+        fprintf(stderr, "CUDA Runtime Error: %s\n", cudaGetErrorString(result));
+        assert(result == cudaSuccess);
+    }
+#endif
+    return result;
 }
 
 template<typename T, int DIM_X, int DIM_Y, int BLK_M, int BLK_N, int BLK_K,
@@ -198,7 +186,7 @@ void vbatched_gemm_device(
             int coord_dCm = blx*BLK_M + m*DIM_X + idx;
             if (coord_dCm < M && coord_dCn < N) {
                 int offsC = coord_dCn*LDC + coord_dCm;
-                atomic_add(C + offsC, rC[n][m]);
+                atomicAdd(C + offsC, rC[n][m]);
             }
         }
     }
@@ -295,24 +283,24 @@ void gemm_time_measure(int max_m, int max_n,
                  double *cpu_result, double * h_global_C, double *d_global_C)
 {
     cudaEvent_t start, stop;
-    cudaMemset(d_global_C, 0, batchCount * max_m * max_n * sizeof(double));
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
-    cudaEventRecord(start, stream);
+    checkCuda(cudaMemset(d_global_C, 0, batchCount * max_m * max_n * sizeof(double)));
+    checkCuda(cudaEventCreate(&start));
+    checkCuda(cudaEventCreate(&stop));
+    checkCuda(cudaEventRecord(start, stream));
     vbatched_gemm_impl<T, DIM_X, DIM_Y, BLK_M, BLK_N, BLK_K, DIM_XA, DIM_YA, DIM_XB, DIM_YB>
                     (max_m, max_n, m, n, k,
                     global_A_array, global_lda,
                     global_B_array, global_ldb,
                     global_C_array, global_ldc,
                     batchCount, stream);
-    cudaEventRecord(stop, stream);
+    checkCuda(cudaEventRecord(stop, stream));
     cudaError_t cuda_status = cudaGetLastError();
-    cudaStreamSynchronize(stream);
+    checkCuda(cudaStreamSynchronize(stream));
     float milliseconds = 0;
-    cudaEventElapsedTime(&milliseconds, start, stop);
+    checkCuda(cudaEventElapsedTime(&milliseconds, start, stop));
 
     // WARNING !!!!! Here we assume that all m and n are the same
-    cudaMemcpy(h_global_C, d_global_C, batchCount * max_m * max_n * sizeof(double), cudaMemcpyDeviceToHost);  
+    checkCuda(cudaMemcpy(h_global_C, d_global_C, batchCount * max_m * max_n * sizeof(double), cudaMemcpyDeviceToHost));  
     bool check_result = true;
     for (int i = 0; i < batchCount * max_m * max_n; ++i)
     {
@@ -380,20 +368,20 @@ void gemm_algo_selector(int matrix_k, func_type & fastest_algo)
     double *cpu_result = new double[batchCount * max_m * max_n];
     memset(cpu_result, 0, batchCount * max_m * max_n * sizeof(double));
 
-    cudaMalloc(&d_m, batchCount * sizeof(int));
-    cudaMalloc(&d_n, batchCount * sizeof(int));
-    cudaMalloc(&d_global_lda, batchCount * sizeof(int));
-    cudaMalloc(&d_global_ldb, batchCount * sizeof(int));
-    cudaMalloc(&d_global_ldc, batchCount * sizeof(int));
-    cudaMalloc(&d_global_A_array, batchCount * sizeof(double *));
-    cudaMalloc(&d_global_B_array, batchCount * sizeof(double *));
-    cudaMalloc(&d_global_C_array, batchCount * sizeof(double *));
+    checkCuda(cudaMalloc(&d_m, batchCount * sizeof(int)));
+    checkCuda(cudaMalloc(&d_n, batchCount * sizeof(int)));
+    checkCuda(cudaMalloc(&d_global_lda, batchCount * sizeof(int)));
+    checkCuda(cudaMalloc(&d_global_ldb, batchCount * sizeof(int)));
+    checkCuda(cudaMalloc(&d_global_ldc, batchCount * sizeof(int)));
+    checkCuda(cudaMalloc(&d_global_A_array, batchCount * sizeof(double *)));
+    checkCuda(cudaMalloc(&d_global_B_array, batchCount * sizeof(double *)));
+    checkCuda(cudaMalloc(&d_global_C_array, batchCount * sizeof(double *)));
 
-    cudaMalloc(&d_global_A, batchCount * max_m * matrix_k * sizeof(double));
-    cudaMalloc(&d_global_B, batchCount * max_n * matrix_k * sizeof(double));
-    cudaMalloc(&d_global_C, batchCount * max_m * max_n * sizeof(double));
+    checkCuda(cudaMalloc(&d_global_A, batchCount * max_m * matrix_k * sizeof(double)));
+    checkCuda(cudaMalloc(&d_global_B, batchCount * max_n * matrix_k * sizeof(double)));
+    checkCuda(cudaMalloc(&d_global_C, batchCount * max_m * max_n * sizeof(double)));
      
-    cudaMemset(d_global_C, 0, batchCount * max_m * max_n * sizeof(double));
+    checkCuda(cudaMemset(d_global_C, 0, batchCount * max_m * max_n * sizeof(double)));
     int index = 0;
     for (int i = 0; i < batchCount_per_type; ++i)
     {
@@ -416,27 +404,27 @@ void gemm_algo_selector(int matrix_k, func_type & fastest_algo)
         }
     }
 
-    cudaMemcpy(d_m, h_m, batchCount * sizeof(int), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_n, h_n, batchCount * sizeof(int), cudaMemcpyHostToDevice);
+    checkCuda(cudaMemcpy(d_m, h_m, batchCount * sizeof(int), cudaMemcpyHostToDevice));
+    checkCuda(cudaMemcpy(d_n, h_n, batchCount * sizeof(int), cudaMemcpyHostToDevice));
 
-    cudaMemcpy(d_global_lda, h_global_lda, batchCount * sizeof(int), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_global_ldb, h_global_ldb, batchCount * sizeof(int), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_global_ldc, h_global_ldc, batchCount * sizeof(int), cudaMemcpyHostToDevice);
+    checkCuda(cudaMemcpy(d_global_lda, h_global_lda, batchCount * sizeof(int), cudaMemcpyHostToDevice));
+    checkCuda(cudaMemcpy(d_global_ldb, h_global_ldb, batchCount * sizeof(int), cudaMemcpyHostToDevice));
+    checkCuda(cudaMemcpy(d_global_ldc, h_global_ldc, batchCount * sizeof(int), cudaMemcpyHostToDevice));
 
-    cudaMemcpy(d_global_A_array, h_global_A_array, batchCount * sizeof(double *), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_global_B_array, h_global_B_array, batchCount * sizeof(double *), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_global_C_array, h_global_C_array, batchCount * sizeof(double *), cudaMemcpyHostToDevice);
+    checkCuda(cudaMemcpy(d_global_A_array, h_global_A_array, batchCount * sizeof(double *), cudaMemcpyHostToDevice));
+    checkCuda(cudaMemcpy(d_global_B_array, h_global_B_array, batchCount * sizeof(double *), cudaMemcpyHostToDevice));
+    checkCuda(cudaMemcpy(d_global_C_array, h_global_C_array, batchCount * sizeof(double *), cudaMemcpyHostToDevice));
 
-    cudaMemcpy(d_global_A, h_global_A, batchCount * max_m * matrix_k * sizeof(double), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_global_B, h_global_B, batchCount * max_n * matrix_k * sizeof(double), cudaMemcpyHostToDevice);
+    checkCuda(cudaMemcpy(d_global_A, h_global_A, batchCount * max_m * matrix_k * sizeof(double), cudaMemcpyHostToDevice));
+    checkCuda(cudaMemcpy(d_global_B, h_global_B, batchCount * max_n * matrix_k * sizeof(double), cudaMemcpyHostToDevice));
 
     cudaStream_t temp_stream;
-    cudaStreamCreate(&temp_stream);
+    checkCuda(cudaStreamCreate(&temp_stream));
 
     float fastest_time = 1000000;
     fastest_algo = vbatched_gemm_impl<double, 16, 4, 32, 16, 16, 16, 4, 16, 4>;
     #include"code_gen.cpp"
-    cudaStreamDestroy(temp_stream);
+    checkCuda(cudaStreamDestroy(temp_stream));
     std::cout << " gemm_algo_selector::Fastest time: " << fastest_time << " ms" << std::endl;
     // fastest_algo = vbatched_gemm_impl<double, 16, 4, 32, 16, 16, 16, 4, 16, 4>;
     delete[] h_global_A_array;
@@ -457,23 +445,20 @@ void gemm_algo_selector(int matrix_k, func_type & fastest_algo)
     delete[] cpu_result;
 
     // Cleanup
-    cudaFree(d_global_A_array);
-    cudaFree(d_global_B_array);
-    cudaFree(d_global_C_array);
+    checkCuda(cudaFree(d_global_A_array));
+    checkCuda(cudaFree(d_global_B_array));
+    checkCuda(cudaFree(d_global_C_array));
 
-    cudaFree(d_m);
-    cudaFree(d_n);
+    checkCuda(cudaFree(d_m));
+    checkCuda(cudaFree(d_n));
 
-    cudaFree(d_global_lda);
-    cudaFree(d_global_ldb);
-    cudaFree(d_global_ldc);
+    checkCuda(cudaFree(d_global_lda));
+    checkCuda(cudaFree(d_global_ldb));
+    checkCuda(cudaFree(d_global_ldc));
 
-    cudaFree(d_global_A_array);
-    cudaFree(d_global_B_array);
-    cudaFree(d_global_C_array);
 
-    cudaFree(d_global_A);
-    cudaFree(d_global_B);
-    cudaFree(d_global_C);
+    checkCuda(cudaFree(d_global_A));
+    checkCuda(cudaFree(d_global_B));
+    checkCuda(cudaFree(d_global_C));
 
 }

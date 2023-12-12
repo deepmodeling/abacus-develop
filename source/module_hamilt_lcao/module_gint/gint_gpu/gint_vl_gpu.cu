@@ -5,17 +5,6 @@
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "vbatch_matrix_multiple/vbatch_matrix_mul.cuh"
-cudaError_t checkCuda(cudaError_t result)
-{
-#if defined(DEBUG) || defined(__DEBUG)
-    if (result != cudaSuccess)
-    {
-        fprintf(stderr, "CUDA Runtime Error: %s\n", cudaGetErrorString(result));
-        assert(result == cudaSuccess);
-    }
-#endif
-    return result;
-}
 
 void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
                        const int lgd,
