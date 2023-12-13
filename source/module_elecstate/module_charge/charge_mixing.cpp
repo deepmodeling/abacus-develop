@@ -270,7 +270,6 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
 
 void Charge_Mixing::mix_rho_recip_new(Charge* chr)
 {
-    // not support nspin=4 yet 2023/11/17
     // old support see mix_rho_recip()
     if (GlobalV::double_grid)
     {
@@ -280,7 +279,7 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
     std::complex<double>* rhog_in = nullptr;
     std::complex<double>* rhog_out = nullptr;
     
-    if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
+    if (GlobalV::NSPIN == 1)
     {
         rhog_in = chr->rhog_save[0];
         rhog_out = chr->rhog[0];    
@@ -315,8 +314,38 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
               };
         this->mixing->push_data(this->rho_mdata, rhog_in, rhog_out, screen, twobeta_mix, true);
     }
+    else if (GlobalV::NSPIN == 4)
+    {
+        // I do not merge this part with nspin=2 because the method of nspin=2 is almost done,
+        // while nspin=4 is not finished yet. I will try more methods for nspin=4 in the future. 
+        rhog_in = chr->rhog_save[0];
+        rhog_out = chr->rhog[0];
+        const int npw = this->rhopw->npw;
+        auto screen = std::bind(&Charge_Mixing::Kerker_screen_recip_new, this, std::placeholders::_1); // use old one
+        auto twobeta_mix
+            = [this, npw](std::complex<double>* out, const std::complex<double>* in, const std::complex<double>* sres) {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 256)
+#endif
+                  for (int i = 0; i < npw; ++i)
+                  {
+                      out[i] = in[i] + this->mixing_beta * sres[i];
+                  }
+            // magnetism, mx, my, mz
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 256)
+#endif
+                  for (int i = npw; i < 4 * npw; ++i)
+                  {
+                      out[i] = in[i] + this->mixing_beta_mag * sres[i];
+                  }
+              };
+        this->mixing->push_data(this->rho_mdata, rhog_in, rhog_out, screen, twobeta_mix, true);
+    }
 
     //  can choose inner_product_recip_new1 or inner_product_recip_new2
+    //  inner_product_recip_new1 is a simple sum
+    //  inner_product_recip_new2 is a hartree-like sum, unit is Ry
     auto inner_product_new
         = std::bind(&Charge_Mixing::inner_product_recip_new2, this, std::placeholders::_1, std::placeholders::_2);
     auto inner_product_old
@@ -325,7 +354,7 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
     {
         this->mixing->cal_coef(this->rho_mdata, inner_product_new);
     }
-    else if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
+    else if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4) // nspin=4 can use old inner_product
     {
         this->mixing->cal_coef(this->rho_mdata, inner_product_old);
     }
@@ -343,6 +372,8 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
     {
         chr->rhopw->recip2real(chr->rhog[is], chr->rho[is]);
     }
+
+    // renormalize rho in R-space would induce a error in K-space
     //chr->renormalize_rho();
 
     // For kinetic energy density
@@ -659,14 +690,18 @@ void Charge_Mixing::Kerker_screen_recip_new(std::complex<double>* drhog)
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
         // new mixing method only support nspin=2 not nspin=4
-        if (is == 1 && GlobalV::NSPIN == 2)
+        if (is >= 1)
         {
             if (GlobalV::MIXING_GG0_MAG <= 0.0001 || GlobalV::MIXING_BETA_MAG <= 0.1)
             {
-                for (int ig = 0; ig < this->rhopw->npw; ig++)
-                {
-                    drhog[is * this->rhopw->npw + ig] *= 1;
-                }
+#ifdef __DEBUG
+                assert(is == 1); // make sure break works
+#endif
+                double is_mag = GlobalV::NSPIN - 1;
+                //for (int ig = 0; ig < this->rhopw->npw * is_mag; ig++)
+                //{
+                //    drhog[is * this->rhopw->npw + ig] *= 1;
+                //}
                 break;
             }
             fac = GlobalV::MIXING_GG0_MAG;
@@ -713,6 +748,9 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
         {
             if (GlobalV::MIXING_GG0_MAG <= 0.0001 || GlobalV::MIXING_BETA_MAG <= 0.1)
             {
+#ifdef __DEBUG
+                assert(is == 1); // make sure break works
+#endif
                 double is_mag = GlobalV::NSPIN - 1;
                 for (int ig = 0; ig < this->rhopw->npw * is_mag; ig++)
                 {
