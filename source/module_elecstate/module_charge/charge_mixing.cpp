@@ -419,23 +419,25 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 256)
 #endif
-                  for (int i = 0; i < nrxx; ++i)
-                  {
-                      out[i] = in[i] + this->mixing_beta * sres[i];
-                  }
+            for (int i = 0; i < nrxx; ++i)
+            {
+                out[i] = in[i] + this->mixing_beta * sres[i];
+            }
             // magnetism
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 256)
 #endif
-                  for (int i = nrxx; i < 2 * nrxx; ++i)
-                  {
-                      out[i] = in[i] + this->mixing_beta_mag * sres[i];
-                  }
-              };
+            for (int i = nrxx; i < 2 * nrxx; ++i)
+            {
+                out[i] = in[i] + this->mixing_beta_mag * sres[i];
+            }
+        };
         this->mixing->push_data(this->rho_mdata, rhor_in, rhor_out, screen, twobeta_mix, true);
     }
     else if (GlobalV::NSPIN == 4)
     {
+        // I do not merge this part with nspin=2 because the method of nspin=2 is almost done,
+        // while nspin=4 is not finished yet. I will try more methods for nspin=4 in the future. 
         rhor_in = chr->rho_save[0];
         rhor_out = chr->rho[0];
         const int nrxx = this->rhopw->nrxx;
@@ -445,19 +447,19 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 256)
 #endif
-                  for (int i = 0; i < nrxx; ++i)
-                  {
-                      out[i] = in[i] + this->mixing_beta * sres[i];
-                  }
-            // magnetism
+            for (int i = 0; i < nrxx; ++i)
+            {
+                out[i] = in[i] + this->mixing_beta * sres[i];
+            }
+            // magnetism, mx, my, mz
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 256)
 #endif
-                  for (int i = nrxx; i < 4 * nrxx; ++i)
-                  {
-                      out[i] = in[i] + this->mixing_beta_mag * sres[i];
-                  }
-              };
+            for (int i = nrxx; i < 4 * nrxx; ++i)
+            {
+                out[i] = in[i] + this->mixing_beta_mag * sres[i];
+            }
+        };
         this->mixing->push_data(this->rho_mdata, rhor_in, rhor_out, screen, twobeta_mix, true);
     }
     
