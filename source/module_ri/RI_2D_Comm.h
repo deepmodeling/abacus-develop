@@ -36,13 +36,14 @@ namespace RI_2D_Comm
 	extern std::vector<std::tuple<std::set<TA>, std::set<TA>>>
 	get_2D_judge(const Parallel_Orbitals &pv);
 
-	template<typename Tdata>
-	extern void add_Hexx(
-		const K_Vectors &kv,
-		const int ik,
-		const double alpha,
-		const std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>> &Hs,
-		LCAO_Matrix &lm);
+    template<typename Tdata, typename TK>
+    extern void add_Hexx(
+        const K_Vectors& kv,
+        const int ik,
+        const double alpha,
+        const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Hs,
+        const Parallel_Orbitals& pv,
+        std::vector<TK>& Hloc);
 
 	template<typename Tdata>
 	extern std::vector<std::vector<Tdata>> Hexxs_to_Hk(

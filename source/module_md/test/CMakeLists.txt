@@ -44,9 +44,7 @@ list(APPEND depend_files
   ../../module_io/print_info.cpp
   ../../module_esolver/esolver_lj.cpp
   ../../module_base/parallel_reduce.cpp
-  ../../module_base/para_json.cpp
   ../../module_base/parallel_global.cpp
-  ../../module_base/para_json.cpp
 )
 
 AddTest(

@@ -89,6 +89,7 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
 #endif
 
     // Note: we can not init tau_mdata here temporarily, since set_xc_type() is after it.
+    // you can find initalize tau_mdata in mix_reset();
     // this->mixing->init_mixing_data(this->tau_mdata, this->rhopw->nrxx * GlobalV::NSPIN, sizeof(double));
     return;
 }
@@ -522,6 +523,7 @@ void Charge_Mixing::mix_reset()
 {
     this->mixing->reset();
     this->rho_mdata.reset();
+    // initailize tau_mdata
     if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
     {
         if (GlobalV::SCF_THR_TYPE == 1)
@@ -535,8 +537,9 @@ void Charge_Mixing::mix_reset()
             this->mixing->init_mixing_data(this->tau_mdata, this->rhopw->nrxx * GlobalV::NSPIN, sizeof(double));
         }
     }
+    // reset for paw
 #ifdef USE_PAW
-    if(GlobalV::use_paw) this->mixing->init_mixing_data(this->nhat_mdata, this->rhopw->nrxx * GlobalV::NSPIN, sizeof(double));
+    this->nhat_mdata.reset();
 #endif
 }
 
@@ -566,12 +569,16 @@ void Charge_Mixing::mix_rho(Charge* chr)
     if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
     {
         kin_r123.resize(GlobalV::NSPIN * nrxx);
+        for (int is = 0; is < GlobalV::NSPIN; ++is)
+        {
+            double* kin_r123_is = kin_r123.data() + is * nrxx;
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
-        for(int ir = 0 ; ir < GlobalV::NSPIN * nrxx ; ++ir)
-        {
-            kin_r123[ir] = chr->kin_r[0][ir];
+            for(int ir = 0 ; ir < nrxx ; ++ir)
+            {
+                kin_r123_is[ir] = chr->kin_r[is][ir];
+            }
         }
     }
 #ifdef USE_PAW
@@ -628,12 +635,16 @@ void Charge_Mixing::mix_rho(Charge* chr)
 
     if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
     {
+        for (int is = 0; is < GlobalV::NSPIN; ++is)
+        {
+            double* kin_r123_is = kin_r123.data() + is * nrxx;
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
-        for(int ir = 0 ; ir < GlobalV::NSPIN * nrxx ; ++ir)
-        {
-            chr->kin_r_save[0][ir] = kin_r123[ir];
+            for(int ir = 0 ; ir < nrxx ; ++ir)
+            {
+                chr->kin_r_save[is][ir] = kin_r123_is[ir];
+            }
         }
     }
 

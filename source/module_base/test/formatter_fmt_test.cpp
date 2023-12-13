@@ -80,3 +80,12 @@ TEST_F(FmtTest, Format) {
 
     EXPECT_EQ(fmt.format((std::string)"hello"), "hello");
 }
+
+TEST_F(FmtTest, SpecialFormats) {
+    formatter::Fmt fmt;
+    fmt.set_width(8); fmt.set_precision(4); fmt.set_fillChar(' '); fmt.set_fixed(true); fmt.set_right(true); fmt.set_error(false);
+    EXPECT_EQ(fmt.format(1), "  1.0000");
+    fmt.set_error(true);
+    EXPECT_EQ(fmt.format(1), " +1.0000");
+    EXPECT_EQ(fmt.format(-1), " -1.0000");
+}
