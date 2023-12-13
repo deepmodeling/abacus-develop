@@ -308,6 +308,7 @@ void ModuleIO::out_mulliken(const int& step, LCAO_Matrix* LM, const elecstate::E
         }
 		os << " Total charge:\t" << sch << std::endl;
 		os << "Decomposed Mulliken populations" << std::endl;
+        GlobalV::ofs_running << std::endl <<std::endl;
 
         for (size_t i = 0; i != GlobalC::ucell.nat; ++i)
         {
@@ -424,6 +425,7 @@ void ModuleIO::out_mulliken(const int& step, LCAO_Matrix* LM, const elecstate::E
             {
                 os << "Total Charge on atom:  " << GlobalC::ucell.atoms[t].label <<  std::setw(20) << total_charge <<std::endl;
                 os << "Total Magnetism on atom:  " << GlobalC::ucell.atoms[t].label <<  std::setw(20) << ModuleIO::output_cut(atom_mag) <<std::endl;
+                GlobalV::ofs_running << "Total Magnetism on atom:  " << GlobalC::ucell.atoms[t].label <<  std::setw(20) << std::setprecision(10) << atom_mag <<std::endl;
             }
             else if (GlobalV::NSPIN==4)
             {
@@ -436,9 +438,13 @@ void ModuleIO::out_mulliken(const int& step, LCAO_Matrix* LM, const elecstate::E
                 os << "Total Magnetism on atom:  " << GlobalC::ucell.atoms[t].label <<  std::setw(20) 
                 << "("  << spin2 << ", " << spin3 << ", " << spin4 << ")" 
                 <<std::endl;
+                GlobalV::ofs_running << "Total Magnetism on atom:  " << GlobalC::ucell.atoms[t].label <<  std::setw(10)
+                << "("  << std::setprecision(10) << spin2 << ", " << std::setprecision(10) << spin3 << ", " << std::setprecision(10) << spin4 << ")"
+                <<std::endl;
             }
             os << std::endl <<std::endl;
         }
+        GlobalV::ofs_running << std::endl <<std::endl;
         os.close();
         ModuleIO::write_orb_info(&(GlobalC::ucell));
     }

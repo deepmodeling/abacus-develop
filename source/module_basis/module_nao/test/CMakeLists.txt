@@ -27,6 +27,16 @@ AddTest(
 )
 
 AddTest(
+    TARGET sphbes_radials
+    SOURCES
+        sphbes_radials_test.cpp
+        ../sphbes_radials.cpp
+        ../radial_set.cpp
+        ../numerical_radial.cpp
+    LIBS ${math_libs} device base
+)
+
+AddTest(
   TARGET radial_collection
   SOURCES
     radial_collection_test.cpp
@@ -94,3 +104,4 @@ AddTest(
     ../numerical_radial.cpp
   LIBS ${math_libs} device base container orb
 )
+

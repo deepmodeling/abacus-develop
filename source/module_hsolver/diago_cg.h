@@ -1,118 +1,127 @@
-#ifndef DIAGCG_H
-#define DIAGCG_H
+#ifndef MODULE_HSOLVER_DIAGO_CG_H_
+#define MODULE_HSOLVER_DIAGO_CG_H_
 
-#include "diagh.h"
-#include "module_base/complexmatrix.h"
-#include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
+#include <functional>
 
-#include "module_psi/kernels/types.h"
-#include "module_psi/kernels/device.h"
-#include "module_psi/kernels/memory_op.h"
-
-#include "module_hsolver/kernels/math_kernel_op.h"
 #include <module_base/macros.h>
+#include <module_hsolver/diagh.h>
+#include <module_hsolver/kernels/math_kernel_op.h>
+
+#include <ATen/core/tensor.h>
+#include <ATen/core/tensor_types.h>
 
 namespace hsolver {
 
-template<typename T = std::complex<double>, typename Device = psi::DEVICE_CPU>
-class DiagoCG : public DiagH<T, Device>
+template<typename T, typename Device = psi::DEVICE_CPU>
+class DiagoCG final : public DiagH<T, Device>
 {
-  private:
-    // Note GetTypeReal<T>::type will 
-    // return T if T is real type(float, double), 
+    // private: accessibility within class is private by default
+    // Note GetTypeReal<T>::type will
+    // return T if T is real type(float, double),
     // otherwise return the real type of T(complex<float>, complex<double>)
     using Real = typename GetTypeReal<T>::type;
+    using ct_Device = typename ct::PsiToContainer<Device>::type;
   public:
+    using Func = std::function<void(const ct::Tensor&, ct::Tensor&)>;
     // Constructor need:
     // 1. temporary mock of Hamiltonian "Hamilt_PW"
     // 2. precondition pointer should point to place of precondition array.
-    DiagoCG(const Real *precondition_in);
-    ~DiagoCG();
+    DiagoCG(const std::string& basis_type, const std::string& calculation);
+    DiagoCG(
+        const std::string& basis_type,
+        const std::string& calculation,
+        const bool& need_subspace,
+        const Func& subspace_func,
+        const Real& pw_diag_thr,
+        const int& pw_diag_nmax,
+        const int& nproc_in_pool);
+    
+    ~DiagoCG() override;
 
     // virtual void init(){};
     // refactor hpsi_info
     // this is the override function diag() for CG method
-    void diag(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Device> &psi, Real *eigenvalue_in) override;
+    void diag(const Func& hpsi_func, const Func& spsi_func, ct::Tensor& psi, ct::Tensor& eigen, const ct::Tensor& prec = {});
 
   private:
+    Device * ctx_ = {};
     /// static variables, used for passing control variables
-    /// if eigenvalue and eigenvectors should be reordered after diagonalization, it is always be true.
-    bool reorder = false;
     /// record for how many bands not have convergence eigenvalues
-    int notconv = 0;
-
-    int test_cg = 0;
-
+    int notconv_ = 0;
     /// inside variables and vectors, used by inside functions.
     /// row size for input psi matrix
-    int n_band = 0;
+    int n_band_ = 0;
     /// col size for input psi matrix
-    int dmx = 0;
-    /// non-zero col size for inputted psi matrix
-    int dim = 0;
-    /// precondition for cg diag
-    const Real *precondition = nullptr;
-    /// eigenvalue results
-    Real *eigenvalue = nullptr;
-    Real *d_precondition = nullptr;
+    int n_basis_ = 0;
+    /// average iteration steps for cg diagonalization
+    int avg_iter_ = 0;
+    /// threshold for cg diagonalization
+    Real pw_diag_thr_ = 1e-5;
+    /// maximum iteration steps for cg diagonalization
+    int pw_diag_nmax_ = 0;
+    /// number of processors in a node
+    int nproc_in_pool_ = 0;
+    /// basis_type of psi
+    std::string basis_type_ = {};
+    /// calculation type of ABACUS
+    std::string calculation_ = {};
 
-    /// temp vector for new psi for one band, size dim
-    psi::Psi<T, Device>* phi_m = nullptr;
-    // psi::Psi<T, Device>* phi_m = nullptr;
-    /// temp vector for S|psi> for one band, size dim
-    T* sphi = nullptr;
-    /// temp vector for H|psi> for one band, size dim
-    T* hphi = nullptr;
+    bool need_subspace_ = false;
+    /// A function object that performs the hPsi calculation.
+    std::function<void(const ct::Tensor&, ct::Tensor&)> hpsi_func_ = nullptr;
+    /// A function object that performs the sPsi calculation.
+    std::function<void(const ct::Tensor&, ct::Tensor&)> spsi_func_ = nullptr;
+    /// A function object that performs the subspace calculation.
+    std::function<void(const ct::Tensor&, ct::Tensor&)> subspace_func_ = nullptr;
 
-    /// temp vector for , size dim
-    psi::Psi<T, Device>* cg = nullptr;
-    // psi::Psi<T, Device>* cg = nullptr;
-    /// temp vector for , size dim
-    T* scg = nullptr;
-    /// temp vector for store psi in sorting with eigenvalues, size dim
-    T* pphi = nullptr;
+    void calc_grad(
+        const ct::Tensor& prec,
+        ct::Tensor& grad,
+        ct::Tensor& hphi,
+        ct::Tensor& sphi,
+        ct::Tensor& pphi);
 
-    /// temp vector for , size dim
-    T* gradient = nullptr;
-    /// temp vector for , size dim
-    T* g0 = nullptr;
-    /// temp vector for matrix eigenvector * vector S|psi> , size m_band
-    T* lagrange = nullptr;
+    void orth_grad(
+        const ct::Tensor& psi, 
+        const int& m, 
+        ct::Tensor& grad, 
+        ct::Tensor& scg,
+        ct::Tensor& lagrange);
 
-    /// device type of psi
-    psi::AbacusDevice_t device = {};
-    Device * ctx = {};
-    psi::DEVICE_CPU *cpu_ctx = {};
+    void calc_gamma_cg(
+        const int& iter,
+        const Real& cg_norm, 
+        const Real& theta,
+        const ct::Tensor& prec,
+        const ct::Tensor& scg,
+        const ct::Tensor& grad,
+        const ct::Tensor& phi_m,
+        Real& gg_last,
+        ct::Tensor& g0,
+        ct::Tensor& cg);
 
-    void calculate_gradient();
+    bool update_psi(
+        const ct::Tensor& pphi,
+        const ct::Tensor& cg,
+        const ct::Tensor& scg,
+        Real &cg_norm, 
+        Real &theta, 
+        Real &eigen,
+        ct::Tensor& phi_m,
+        ct::Tensor& sphi,
+        ct::Tensor& hphi);
 
-    void orthogonal_gradient(hamilt::Hamilt<T, Device> *phm_in, const psi::Psi<T, Device> &eigenfunction, const int m);
-
-    void calculate_gamma_cg(const int iter, Real &gg_last, const Real &cg0, const Real &theta);
-
-    bool update_psi(Real &cg_norm, Real &theta, Real &eigenvalue);
-
-    void schmit_orth(const int &m, const psi::Psi<T, Device> &psi);
+    void schmit_orth(const int& m, const ct::Tensor& psi, const ct::Tensor& sphi, ct::Tensor& phi_m);
 
     // used in diag() for template replace Hamilt with Hamilt_PW
-    void diag_mock(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Device> &phi, Real *eigenvalue_in);
+    void diag_mock(const ct::Tensor& prec, ct::Tensor& psi, ct::Tensor& eigen);
 
-    using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
+    bool test_exit_cond(const int& ntry, const int& notconv) const;
+
     using dot_real_op = hsolver::dot_real_op<T, Device>;
-
-    using setmem_complex_op = psi::memory::set_memory_op<T, Device>;
-    using delmem_complex_op = psi::memory::delete_memory_op<T, Device>;
-    using resmem_complex_op = psi::memory::resize_memory_op<T, Device>;
-    using syncmem_complex_op = psi::memory::synchronize_memory_op<T, Device, Device>;
-    using syncmem_complex_d2h_op = psi::memory::synchronize_memory_op<T, psi::DEVICE_CPU, Device>;
-    using castmem_complex_d2h_op = psi::memory::cast_memory_op<T, T, psi::DEVICE_CPU, Device>;
-
-    using resmem_var_op = psi::memory::resize_memory_op<Real, Device>;
-    using setmem_var_h_op = psi::memory::set_memory_op<Real, psi::DEVICE_CPU>;
-    using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<Real, Device, psi::DEVICE_CPU>;
-
-    const T * one = nullptr, * zero = nullptr, * neg_one = nullptr;
+    const T * one_ = nullptr, * zero_ = nullptr, * neg_one_ = nullptr;
 };
 
 } // namespace hsolver
-#endif
+
+#endif // MODULE_HSOLVER_DIAGO_CG_H_
