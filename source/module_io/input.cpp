@@ -3345,6 +3345,13 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             scf_thr_type = 1;
         }
     }
+
+    // set nspin with noncolin
+    if (noncolin || lspinorb)
+    {
+        nspin = 4;
+    }
+
     // mixing parameters
     if (mixing_beta < 0.0)
     {
@@ -3360,8 +3367,8 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         }
         else if (nspin == 4) // I will add this 
         {
-            mixing_beta = 0.2;
-            mixing_beta_mag = 0.8;
+            mixing_beta = 0.4;
+            mixing_beta_mag = 1.6;
             mixing_gg0_mag = 0.0;
         }     
     }
@@ -3378,11 +3385,6 @@ void Input::Default_2(void) // jiyy add 2019-08-04
                 mixing_beta_mag = 1.6; // 1.6 can be discussed
             }
         }
-    }
-    // set nspin with noncolin
-    if (noncolin || lspinorb)
-    {
-        nspin = 4;
     }
 }
 #ifdef __MPI
