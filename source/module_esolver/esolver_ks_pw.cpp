@@ -132,7 +132,7 @@ void ESolver_KS_PW<T, Device>::Init_GlobalC(Input& inp, UnitCell& cell)
     }
     else // old method
     {
-        this->psi = this->wf.allocate(this->kv.nks, this->kv.ngk.data(), this->pw_wfc->npwk_max);
+        this->psi = this->wf.allocate(this->kv.nkstot, this->kv.nks, this->kv.ngk.data(), this->pw_wfc->npwk_max);
     }
     //=======================
     // init pseudopotential
