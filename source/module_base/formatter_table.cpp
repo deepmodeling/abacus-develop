@@ -92,7 +92,7 @@ void formatter::Table::reset() {
     this->col_max_width_ = 0;
     this->total_width_ = 0;
 
-    this->title_centered_ = false;
+    this->title_position_ = 0;
     this->clean();
 }
 
@@ -105,7 +105,7 @@ void formatter::Table::clean() {
 std::string formatter::Table::print_table() {
 
     this->adjust_col_width();
-    if (this->title_centered_) {
+    if (this->title_position_ == 0) {
         this->centerize_title();
     }
     std::stringstream ss;
@@ -138,9 +138,14 @@ std::string formatter::Table::print_table() {
         }
         for (int icol = 0; icol < ncol; ++icol) {
             ss << std::setw(this->col_widths_[icol]) 
-            << std::setfill(' ') 
-            << std::left 
-            << this->titles_[icol];
+            << std::setfill(' ');
+            if(this->title_position_ <= 0) {
+                ss << std::left;
+            }
+            else {
+                ss << std::right;
+            }
+            ss << this->titles_[icol];
             if (icol != ncol-1) {
                 ss << this->col_delimiter_;
             }
