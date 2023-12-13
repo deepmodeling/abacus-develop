@@ -117,7 +117,13 @@ int num_get_psi = 0;
           int atom_pair_nw = GlobalC::ucell.atoms[it1].nw * GlobalC::ucell.atoms[it2].nw;
           if (GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2] == nullptr)
           {
-            std::cout << "Error: GridVlocal did not malloc" << std::endl;
+            //Note that this situation occurs here because the logic in hcontainer and 
+            // grid integration is different. 
+            // In hcontainer, it is iat1<=iat2, and in grid integral, it is lo1<=lo2. 
+            // This is not entirely equivalent in practice. We need to investigate what's going on later.
+            // TODO
+            continue;
+            // std::cout << "Error: GridVlocal did not malloc" << std::endl;
           }
 
           int calc_index1 = vldr3_index + atom1 * nwmax * GridT.bxyz;
