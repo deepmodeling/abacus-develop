@@ -174,7 +174,8 @@ void Input::Default(void)
     cond_dw = 0.1;
     cond_wcut = 10;
     cond_dt = 0.02;
-    cond_dtbatch = 4;
+    cond_dtbatch = 0;
+    cond_smear = 1;
     cond_fwhm = 0.4;
     cond_nonlocal = true;
     berry_phase = false;
@@ -300,8 +301,9 @@ void Input::Default(void)
     mixing_beta = -10;
     mixing_ndim = 8;
     mixing_gg0 = 1.00; // use Kerker defaultly
-    mixing_beta_mag = -10.0; // only set when nspin == 2
+    mixing_beta_mag = -10.0; // only set when nspin == 2 || nspin == 4
     mixing_gg0_mag = 0.0; // defaultly exclude Kerker from mixing magnetic density
+    mixing_gg0_min = 0.1; // defaultly minimum kerker coefficient
     mixing_tau = false;
     mixing_dftu = false;
     //----------------------------------------------------------
@@ -613,6 +615,7 @@ void Input::Default(void)
     sc_thr = 1e-6;
     nsc = 100;
     nsc_min = 2;
+    sc_scf_nmin = 2;
     alpha_trial = 0.01;
     sccut = 3.0;
     sc_file = "none";
@@ -811,6 +814,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("cond_dtbatch", word) == 0)
         {
             read_value(ifs, cond_dtbatch);
+        }
+        else if (strcmp("cond_smear", word) == 0)
+        {
+            read_value(ifs, cond_smear);
         }
         else if (strcmp("cond_fwhm", word) == 0)
         {
@@ -1239,6 +1246,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("mixing_gg0_mag", word) == 0)
         {
             read_value(ifs, mixing_gg0_mag);
+        }
+        else if (strcmp("mixing_gg0_min", word) == 0)
+        {
+            read_value(ifs, mixing_gg0_min);
         }
         else if (strcmp("mixing_tau", word) == 0)
         {
@@ -2221,6 +2232,9 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("nsc_min", word) == 0){
             read_value(ifs, nsc_min);
         }
+        else if (strcmp("sc_scf_nmin", word) == 0){
+            read_value(ifs, sc_scf_nmin);
+        }
         else if (strcmp("alpha_trial", word) == 0){
             read_value(ifs, alpha_trial);
         }
@@ -2961,6 +2975,13 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             scf_thr_type = 1;
         }
     }
+
+    // set nspin with noncolin
+    if (noncolin || lspinorb)
+    {
+        nspin = 4;
+    }
+
     // mixing parameters
     if (mixing_beta < 0.0)
     {
@@ -2976,12 +2997,14 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         }
         else if (nspin == 4) // I will add this 
         {
-            mixing_beta = 0.2;
+            mixing_beta = 0.4;
+            mixing_beta_mag = 1.6;
+            mixing_gg0_mag = 0.0;
         }     
     }
     else
     {
-        if (nspin == 2 && mixing_beta_mag < 0.0)
+        if ((nspin == 2 || nspin == 4) && mixing_beta_mag < 0.0)
         {
             if (mixing_beta <= 0.4)
             {
@@ -2989,7 +3012,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             }
             else
             {
-                mixing_beta_mag = 1.6;
+                mixing_beta_mag = 1.6; // 1.6 can be discussed
             }
         }
     }
@@ -3037,6 +3060,7 @@ void Input::Bcast()
     Parallel_Common::bcast_double(cond_wcut);
     Parallel_Common::bcast_double(cond_dt);
     Parallel_Common::bcast_int(cond_dtbatch);
+    Parallel_Common::bcast_int(cond_smear);
     Parallel_Common::bcast_double(cond_fwhm);
     Parallel_Common::bcast_bool(cond_nonlocal);
     Parallel_Common::bcast_int(bndpar);
@@ -3150,6 +3174,7 @@ void Input::Bcast()
     Parallel_Common::bcast_double(mixing_gg0); // mohan add 2014-09-27
     Parallel_Common::bcast_double(mixing_beta_mag);
     Parallel_Common::bcast_double(mixing_gg0_mag);
+    Parallel_Common::bcast_double(mixing_gg0_min);
     Parallel_Common::bcast_bool(mixing_tau);
     Parallel_Common::bcast_bool(mixing_dftu);
 
@@ -3458,6 +3483,7 @@ void Input::Bcast()
     Parallel_Common::bcast_double(sc_thr);
     Parallel_Common::bcast_int(nsc);
     Parallel_Common::bcast_int(nsc_min);
+    Parallel_Common::bcast_int(sc_scf_nmin);
     Parallel_Common::bcast_string(sc_file);
     Parallel_Common::bcast_double(alpha_trial);
     Parallel_Common::bcast_double(sccut);
@@ -3975,6 +4001,10 @@ void Input::Check(void)
         if (nsc_min <= 0)
         {
             ModuleBase::WARNING_QUIT("INPUT", "nsc_min must > 0");
+        }
+        if (sc_scf_nmin < 2)
+        {
+            ModuleBase::WARNING_QUIT("INPUT", "sc_scf_nmin must >= 2");
         }
         if (alpha_trial <= 0)
         {

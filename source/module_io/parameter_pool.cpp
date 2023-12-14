@@ -531,6 +531,10 @@ bool input_parameters_set(std::map<std::string, InputParameter> input_parameters
     {
         INPUT.cond_dtbatch = *static_cast<int*>(input_parameters["cond_dtbatch"].get());
     }
+    else if (input_parameters.count("cond_smear") != 0)
+    {
+        INPUT.cond_smear = *static_cast<int*>(input_parameters["cond_smear"].get());
+    }
     else if (input_parameters.count("cond_fwhm") != 0)
     {
         INPUT.cond_fwhm = *static_cast<double*>(input_parameters["cond_fwhm"].get());
@@ -834,6 +838,10 @@ bool input_parameters_set(std::map<std::string, InputParameter> input_parameters
     else if (input_parameters.count("mixing_gg0_mag") != 0)
     {
         INPUT.mixing_gg0_mag = *static_cast<double*>(input_parameters["mixing_gg0_mag"].get());
+    }
+    else if (input_parameters.count("mixing_gg0_min") != 0)
+    {
+        INPUT.mixing_gg0_min = *static_cast<double*>(input_parameters["mixing_gg0_min"].get());
     }
     else if (input_parameters.count("mixing_tau") != 0)
     {

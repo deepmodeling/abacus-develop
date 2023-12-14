@@ -162,7 +162,6 @@ TEST_F(Test_Libpaw_Cell, test_paw)
     }
 
     std::ifstream ifs_ncoret("ncoret.dat");
-    std::cout << "ncoret" << std::endl;
     for(int i = 0; i < nfft; i++)
     {
         double tmp;

@@ -33,12 +33,17 @@ TEST_F(SpinConstrainTest, PrintTermination)
     std::map<int, int> atomCounts = {
         {0, 1}
     };
+    sc.set_nspin(4);
     sc.set_atomCounts(atomCounts);
     sc.zero_Mi();
+    std::vector<ModuleBase::Vector3<double>> sc_lambda = std::vector<ModuleBase::Vector3<double>>(1, {1.0, 2.0, 3.0});
+    sc.set_sc_lambda(sc_lambda.data(), 1);
     testing::internal::CaptureStdout();
     sc.print_termination();
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Inner optimization for lambda ends."));
+    EXPECT_THAT(output, testing::HasSubstr("ATOM 1   0 0 0"));
+    EXPECT_THAT(output, testing::HasSubstr("ATOM 1   1 2 3"));
 }
 
 TEST_F(SpinConstrainTest, CheckRmsStop)

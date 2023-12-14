@@ -14,6 +14,8 @@
 #include "gtest/gtest.h"
 #include <random>
 
+#include <ATen/core/tensor_map.h>
+
 /************************************************
  *  unit test of functions in Diago_CG
  ***********************************************/
@@ -129,11 +131,73 @@ public:
         precondition_local = new double[DIAGOTEST::npw];
         for (int i = 0;i < DIAGOTEST::npw;i++) precondition_local[i] = precondition[i];
 #endif
-        hsolver::DiagoCG<double> cg(precondition_local);
+        // hsolver::DiagoCG<double> cg(precondition_local);
+        psi_local.fix_k(0);
+        // double start, end;
+        // start = MPI_Wtime();
+        // cg.diag(ha, psi_local, en);
+
+
+        /**************************************************************/
+        //  New interface of cg method
+        /**************************************************************/
+        // this->pdiagh = new DiagoCG<double, Device>(precondition.data());
+        // warp the subspace_func into a lambda function
+        auto subspace_func = [ha](const ct::Tensor& psi_in, ct::Tensor& psi_out) { /*do nothing*/ };
+        hsolver::DiagoCG<double> cg(
+            GlobalV::BASIS_TYPE,
+            GlobalV::CALCULATION,
+            hsolver::DiagoIterAssist<double>::need_subspace,
+            subspace_func,
+            hsolver::DiagoIterAssist<double>::PW_DIAG_THR,
+            hsolver::DiagoIterAssist<double>::PW_DIAG_NMAX,
+            GlobalV::NPROC_IN_POOL);
+        // hsolver::DiagoCG<double> cg(precondition_local);
         psi_local.fix_k(0);
         double start, end;
         start = MPI_Wtime();
-        cg.diag(ha, psi_local, en);
+
+        auto hpsi_func = [ha](const ct::Tensor& psi_in, ct::Tensor& hpsi_out) {
+            const auto ndim = psi_in.shape().ndim();
+            REQUIRES_OK(ndim <= 2, "dims of psi_in should be less than or equal to 2");
+            auto psi_wrapper = psi::Psi<double>(
+                psi_in.data<double>(), 1, 
+                ndim == 1 ? 1 : psi_in.shape().dim_size(0), 
+                ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1));
+            psi::Range all_bands_range(true, psi_wrapper.get_current_k(), 0, psi_wrapper.get_nbands() - 1);
+            using hpsi_info = typename hamilt::Operator<double>::hpsi_info;
+            hpsi_info info(&psi_wrapper, all_bands_range, hpsi_out.data<double>());
+            ha->ops->hPsi(info);
+        };
+        auto spsi_func = [ha](const ct::Tensor& psi_in, ct::Tensor& spsi_out) {
+            const auto ndim = psi_in.shape().ndim();
+            REQUIRES_OK(ndim <= 2, "dims of psi_in should be less than or equal to 2");
+            ha->sPsi(psi_in.data<double>(), spsi_out.data<double>(), 
+                ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1), 
+                ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1), 
+                ndim == 1 ? 1 : psi_in.shape().dim_size(0));
+        };
+        auto psi_tensor = ct::TensorMap(
+            psi_local.get_pointer(), 
+            ct::DataType::DT_DOUBLE, 
+            ct::DeviceType::CpuDevice,
+            ct::TensorShape({psi_local.get_nbands(), psi_local.get_nbasis()})).slice({0, 0}, {psi_local.get_nbands(), psi_local.get_current_nbas()});
+        auto eigen_tensor = ct::TensorMap(
+            en,
+            ct::DataType::DT_DOUBLE,
+            ct::DeviceType::CpuDevice,
+            ct::TensorShape({psi_local.get_nbands()}));
+        auto prec_tensor = ct::TensorMap(
+            precondition_local,
+            ct::DataType::DT_DOUBLE, 
+            ct::DeviceType::CpuDevice,
+            ct::TensorShape({static_cast<int>(psi_local.get_current_nbas())})).slice({0}, {psi_local.get_current_nbas()});
+    
+        cg.diag(hpsi_func, spsi_func, psi_tensor, eigen_tensor, prec_tensor);
+        // TODO: Double check tensormap's potential problem
+        ct::TensorMap(psi_local.get_pointer(), psi_tensor, {psi_local.get_nbands(), psi_local.get_nbasis()}).sync(psi_tensor);
+        /**************************************************************/
+
         end = MPI_Wtime();
         //if(mypnum == 0) printf("diago time:%7.3f\n",end-start);
         delete[] DIAGOTEST::npw_local;

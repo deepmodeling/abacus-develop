@@ -189,7 +189,8 @@ private:
     double* DHloc_fixed_23;
     double* DHloc_fixed_33;
 
-
+    template <typename T>
+    static void set_mat2d(const int& global_ir, const int& global_ic, const T& v, const Parallel_Orbitals& pv, T* mat);
     void set_HSgamma(const int& iw1_all, const int& iw2_all, const double& v, double* HSloc);
     void set_HSk(const int &iw1_all, const int &iw2_all, const std::complex<double> &v, const char &dtype, const int spin = 0);
 

@@ -291,7 +291,10 @@ endif()
 # Warning: CMake add support to HIP in version 3.21. This is rather a new version.
 # Use cmake with AMD-ROCm: https://rocmdocs.amd.com/en/latest/Installation_Guide/Using-CMake-with-AMD-ROCm.html
 if(USE_ROCM)
-  if (NOT DEFINED ROCM_PATH )
+  if(COMMIT_INFO)
+    message(FATAL_ERROR "Commit info is not supported on ROCm.")
+  endif()
+  if(NOT DEFINED ROCM_PATH )
     set (ROCM_PATH "/opt/rocm"  CACHE STRING "Default ROCM installation directory." )
   endif ()
   if(NOT DEFINED HIP_PATH)
