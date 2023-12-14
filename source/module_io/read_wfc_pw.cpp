@@ -194,9 +194,9 @@ bool ModuleIO::read_wfc_pw(const std::string& filename,
         std::cout << "G_in[0] = " << G_in[0].x << " " << G_in[0].y << " " << G_in[0].z << std::endl;
         std::cout << "G_in[1] = " << G_in[1].x << " " << G_in[1].y << " " << G_in[1].z << std::endl;
         std::cout << "G_in[2] = " << G_in[2].x << " " << G_in[2].y << " " << G_in[2].z << std::endl;
-        std::cout << "G = " << pw_wfc->G.e11 << " " << pw_wfc->G.e12 << " " << pw_wfc->G.e13 << std::endl;
-        std::cout << "G = " << pw_wfc->G.e21 << " " << pw_wfc->G.e22 << " " << pw_wfc->G.e23 << std::endl;
-        std::cout << "G = " << pw_wfc->G.e31 << " " << pw_wfc->G.e32 << " " << pw_wfc->G.e33 << std::endl;
+        std::cout << "G[0] = " << pw_wfc->G.e11 << " " << pw_wfc->G.e12 << " " << pw_wfc->G.e13 << std::endl;
+        std::cout << "G[1] = " << pw_wfc->G.e21 << " " << pw_wfc->G.e22 << " " << pw_wfc->G.e23 << std::endl;
+        std::cout << "G[2] = " << pw_wfc->G.e31 << " " << pw_wfc->G.e32 << " " << pw_wfc->G.e33 << std::endl;
         ModuleBase::WARNING_QUIT("ModuleIO::read_wfc_pw", "G_in != G");
     }
 
