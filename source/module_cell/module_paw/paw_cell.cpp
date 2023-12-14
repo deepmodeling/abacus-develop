@@ -171,7 +171,7 @@ void Paw_Cell::set_eigts(const int nx_in, const int ny_in, const int nz_in,
 void Paw_Cell::set_paw_k(
     const int npw_in, const double * kpt,
     const int * ig_to_ix, const int * ig_to_iy, const int * ig_to_iz,
-    const double ** kpg, const double tpiba)
+    const double ** kpg, const double tpiba, const double ** gcar)
 {
     ModuleBase::TITLE("Paw_Element","set_paw_k");
 
@@ -211,17 +211,17 @@ void Paw_Cell::set_paw_k(
         gnorm[ipw] = std::sqrt(kpg[ipw][0]*kpg[ipw][0] + kpg[ipw][1]*kpg[ipw][1] + kpg[ipw][2]*kpg[ipw][2]) * tpiba;
     }
 
-    std::complex<double> i_cplx = (0.0,1.0);
-    // ikpg : i (k+G)
-    //if(GlobalV::CAL_FORCE || GlobalV::CAL_STRESS)
+    std::complex<double> i_cplx(0.0,1.0);
+    // ig : i(G)
+    if(GlobalV::CAL_FORCE || GlobalV::CAL_STRESS)
     {
-        ikpg.resize(npw);
+        ig.resize(npw);
         for(int ipw = 0; ipw < npw; ipw ++)
         {
-            ikpg[ipw].resize(3);
+            ig[ipw].resize(3);
             for(int i = 0; i < 3; i ++)
             {
-                ikpg[ipw][i] = kpg[ipw][i] * tpiba * i_cplx;
+                ig[ipw][i] = gcar[ipw][i] * tpiba * i_cplx;
             }
         }
     }
@@ -700,6 +700,7 @@ void Paw_Cell::paw_nl_force(const std::complex<double> * psi, const double * eps
             // = \sum_G [\int f(r)r^2j_l(r)dr] * [(-i)^l] * [ylm(\hat{G})] * [exp(-GR_I)] *psi(G)
             // = \sum_ipw ptilde * fact * ylm * sk * psi (in the code below)
             // This is what is called 'becp' in nonlocal pp
+            // (but complex conjugate)
             std::vector<std::complex<double>> ca;
             std::vector<std::vector<std::complex<double>>> dca;
 
@@ -726,9 +727,9 @@ void Paw_Cell::paw_nl_force(const std::complex<double> * psi, const double * eps
                 {
                     std::complex<double> overlp = psi[iband*npw+ipw] * std::conj(vkb[iproj+proj_start][ipw]);
                     ca[iproj] += overlp;
-                    dca[0][iproj] += overlp * ikpg[ipw][0];
-                    dca[1][iproj] += overlp * ikpg[ipw][1];
-                    dca[2][iproj] += overlp * ikpg[ipw][2];
+                    dca[0][iproj] += overlp * ig[ipw][0];
+                    dca[1][iproj] += overlp * ig[ipw][1];
+                    dca[2][iproj] += overlp * ig[ipw][2];
                 }
             }
 
@@ -757,10 +758,12 @@ void Paw_Cell::paw_nl_force(const std::complex<double> * psi, const double * eps
             // \sum_i ptilde_{iproj}(G) v_ca[iproj]
             for(int iproj = 0; iproj < nproj; iproj ++)
             {
-                force[iat*3] += (std::conj(v_ca[iproj]) * dca[0][iproj]).real() * weight[iband];
-                force[iat*3+1] += (std::conj(v_ca[iproj]) * dca[1][iproj]).real() * weight[iband];
-                force[iat*3+2] += (std::conj(v_ca[iproj]) * dca[2][iproj]).real() * weight[iband];
+                force[iat*3] -= (v_ca[iproj] * std::conj(dca[0][iproj])).real() * weight[iband];
+                force[iat*3+1] -= (v_ca[iproj] * std::conj(dca[1][iproj])).real() * weight[iband];
+                force[iat*3+2] -= (v_ca[iproj] * std::conj(dca[2][iproj])).real() * weight[iband];
             }
         }
     }
+
+    for(int i = 0; i < nat*3; i ++) force[i] = force[i] * 2.0;
 }

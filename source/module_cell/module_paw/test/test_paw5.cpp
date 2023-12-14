@@ -14,6 +14,8 @@ class Test_PAW_Cell_k : public testing::Test
 TEST_F(Test_PAW_Cell_k, test_paw)
 {
 
+    GlobalV::CAL_FORCE = 1;
+
     int natom = 5;
     int ntypat = 2;
 
@@ -118,7 +120,8 @@ TEST_F(Test_PAW_Cell_k, test_paw)
     paw_cell.set_currentk(0);
     delete[] isk_in;
 
-    paw_cell.set_paw_k(npw, kpt, ig_to_ix, ig_to_iy, ig_to_iz, (const double **) kpg, tpiba);
+    // this is gamma point so gcar = kpg
+    paw_cell.set_paw_k(npw, kpt, ig_to_ix, ig_to_iy, ig_to_iz, (const double **) kpg, tpiba, (const double**) kpg);
 
     delete[] ig_to_ix;
     delete[] ig_to_iy;
@@ -214,6 +217,7 @@ TEST_F(Test_PAW_Cell_k, test_paw)
     sij[30] = -0.483805550235;
     sij[36] = 0.0699425732126;
     sij[39] = -0.483805550235;
+    sij[42] = -0.483805550235;
     sij[45] = 3.20343380497;
     sij[51] = -0.483805550235;
     sij[54] = 3.20343380497;
@@ -233,7 +237,6 @@ TEST_F(Test_PAW_Cell_k, test_paw)
     sij[1] = 0.0123172347802;
     sij[5] = 0.0123172347802;
     sij[6] = 0.0196386056473;
-    sij[8] = 0.726604973599628;
     sij[12] = 0.000908274554872;
     sij[18] = 0.000908274554872;
     sij[24] = 0.000908274554872;
@@ -274,5 +277,18 @@ TEST_F(Test_PAW_Cell_k, test_paw)
         -6.1185767211855080e-01,-8.1899553911957745e-02,1.7727505277597955e-01};
     
     paw_cell.paw_nl_force(psi,epsilon,weight.data(),6,force);
+
+    double force_ref[15] = {
+        0.00585756099172754,0.00503158883480039,2.0116281335185e-08,
+        -0.0154573057564919,0.0441062361839232,7.31842461588338e-11,
+        -0.0154715252567464,-0.0219321805387927,-0.0380705126948971,
+        -0.0154715261725948,-0.021932181037128,0.0380705141839775,
+        0.0467646730276522,4.17425941637841e-05,6.61390458383683e-11
+    };
+    
+    for(int i = 0; i < 15; i ++)
+    {
+        EXPECT_NEAR(force[i],force_ref[i],1e-8);
+    }
     delete[] psi;
 }

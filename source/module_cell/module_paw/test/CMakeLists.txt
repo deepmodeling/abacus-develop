@@ -50,3 +50,9 @@ AddTest(
   LIBS ${math_libs} base device
   SOURCES test_paw5.cpp ../paw_element.cpp ../paw_sphbes.cpp ../paw_cell.cpp ../paw_atom.cpp
 )
+
+AddTest(
+  TARGET Test_Paw6
+  LIBS ${math_libs} base device
+  SOURCES test_paw6.cpp ../paw_element.cpp ../paw_sphbes.cpp ../paw_cell.cpp ../paw_atom.cpp
+)

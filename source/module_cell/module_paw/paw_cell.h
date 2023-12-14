@@ -45,7 +45,7 @@ class Paw_Cell
     void set_paw_k(
         const int npw_in, const double * kpt,
         const int * ig_to_ix, const int * ig_to_iy, const int * ig_to_iz,
-        const double ** kpg, const double tpiba);
+        const double ** kpg, const double tpiba, const double ** gcar);
 
     // This is one of the core functionalities of this class, which reads a wavefunction
     // psi(G), calculates its overlap with all projectors <psi(G)|ptilde(G)>,
@@ -162,8 +162,8 @@ class Paw_Cell
     // I'd rather also calculate it once and save it
     std::vector<double> gnorm;
 
-    // i(k+G), used in force calculation
-    std::vector<std::vector<std::complex<double>>> ikpg;
+    // i(G), used in force calculation
+    std::vector<std::vector<std::complex<double>>> ig;
 
     void set_ylm(const int npw_in, const double ** kpg);
 
