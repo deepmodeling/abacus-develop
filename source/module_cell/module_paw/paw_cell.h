@@ -43,7 +43,7 @@ class Paw_Cell
     // exp(-i(k+G)R_I) = exp(-ikR_I) exp(-iG_xR_Ix) exp(-iG_yR_Iy) exp(-iG_zR_Iz)
     // as well as the spherical harmonics Ylm(k+G), and gnorm
     void set_paw_k(
-        const int npw_in, const double * kpt,
+        const int npw_in, const int npwx_in, const double * kpt,
         const int * ig_to_ix, const int * ig_to_iy, const int * ig_to_iz,
         const double ** kpg, const double tpiba, const double ** gcar);
 
@@ -132,7 +132,7 @@ class Paw_Cell
 
     // FFT grid
     int nx, ny, nz;
-    int npw;
+    int npw, npwx; // #. of pw for current k point, max #. of pw for all k points
 
     // The reciprocal space projectors; it is called vkb
     // to be consistent with non-local PP

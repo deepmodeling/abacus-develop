@@ -74,7 +74,74 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
         }
         else
         {
+#ifdef USE_PAW
+            for(int ik = 0; ik < wfc_basis->nks; ik++)
+            {
+                const int npw = wfc_basis->npwk[ik];
+                ModuleBase::Vector3<double> *_gk = new ModuleBase::Vector3<double>[npw];
+                for (int ig = 0;ig < npw; ig++)
+                {
+                    _gk[ig] = wfc_basis->getgpluskcar(ik,ig);
+                }
 
+                double* kpt;
+                kpt = new double[3];
+                kpt[0] = wfc_basis->kvec_c[ik].x;
+                kpt[1] = wfc_basis->kvec_c[ik].y;
+                kpt[2] = wfc_basis->kvec_c[ik].z;
+
+                double ** kpg;
+                double ** gcar;
+                kpg = new double*[npw];
+                gcar = new double*[npw];
+                for(int ipw=0;ipw<npw;ipw++)
+                {
+                    kpg[ipw] = new double[3];
+                    kpg[ipw][0] = _gk[ipw].x;
+                    kpg[ipw][1] = _gk[ipw].y;
+                    kpg[ipw][2] = _gk[ipw].z;
+
+                    gcar[ipw] = new double[3];
+                    gcar[ipw][0] = wfc_basis->getgcar(ik,ipw).x;
+                    gcar[ipw][1] = wfc_basis->getgcar(ik,ipw).y;
+                    gcar[ipw][2] = wfc_basis->getgcar(ik,ipw).z;
+                }
+
+                GlobalC::paw_cell.set_paw_k(npw,wfc_basis->npwk_max,kpt,
+                    wfc_basis->get_ig2ix(ik).data(),
+                    wfc_basis->get_ig2iy(ik).data(),
+                    wfc_basis->get_ig2iz(ik).data(),
+                    (const double **) kpg,GlobalC::ucell.tpiba,(const double **) gcar);
+
+                delete[] kpt;
+                for(int ipw = 0; ipw < npw; ipw++)
+                {
+                    delete[] kpg[ipw];
+                    delete[] gcar[ipw];
+                }
+                delete[] kpg;
+                delete[] gcar;
+
+                GlobalC::paw_cell.get_vkb();
+
+                GlobalC::paw_cell.set_currentk(ik);
+
+                psi_in[0].fix_k(ik);
+                double * weight, * epsilon;
+                weight = new double [GlobalV::NBANDS];
+                epsilon = new double [GlobalV::NBANDS];
+                for(int ib = 0; ib < GlobalV::NBANDS; ib++)
+                {
+                    weight[ib] = wg(ik,ib);
+                    epsilon[ib] = ekb(ik,ib);
+                }
+                GlobalC::paw_cell.paw_nl_force(reinterpret_cast<std::complex<double>*> (psi_in[0].get_pointer()),
+                    epsilon, weight, GlobalV::NBANDS, forcenl.c);
+
+                delete[] weight;
+                delete[] epsilon;
+            }
+#endif
         }
     }
 
@@ -187,10 +254,10 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
 
         for(int iat = 0; iat < this->nat; iat++)
         {
-            // need to convert the unit
-            //forcepaw(iat, 0) = force_paw[3 * iat];
-            //forcepaw(iat, 1) = force_paw[3 * iat + 1];
-            //forcepaw(iat, 2) = force_paw[3 * iat + 2];
+            // Ha to Ry
+            forcepaw(iat, 0) = force_paw[3 * iat] * 2.0;
+            forcepaw(iat, 1) = force_paw[3 * iat + 1] * 2.0;
+            forcepaw(iat, 2) = force_paw[3 * iat + 2] * 2.0;
         }
 
         delete[] force_paw;
@@ -349,6 +416,10 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
         ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "NLCC     FORCE (eV/Angstrom)", forcecc, 0);
         ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "ION      FORCE (eV/Angstrom)", forceion, 0);
         ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "SCC      FORCE (eV/Angstrom)", forcescc, 0);
+        if(GlobalV::use_paw)
+        {
+            ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "PAW      FORCE (eV/Angstrom)", forcepaw, 0);
+        }
         if (GlobalV::EFIELD_FLAG)
             ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "EFIELD   FORCE (eV/Angstrom)", force_e, 0);
         if (GlobalV::GATE_FLAG)

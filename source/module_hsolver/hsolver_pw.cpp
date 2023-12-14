@@ -150,7 +150,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                 gcar[ipw][2] = this->wfc_basis->getgcar(ik,ipw).z;
             }
 
-            GlobalC::paw_cell.set_paw_k(npw,kpt,
+            GlobalC::paw_cell.set_paw_k(npw,wfc_basis->npwk_max,kpt,
                 this->wfc_basis->get_ig2ix(ik).data(),
                 this->wfc_basis->get_ig2iy(ik).data(),
                 this->wfc_basis->get_ig2iz(ik).data(),
@@ -242,7 +242,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                 gcar[ipw][2] = this->wfc_basis->getgcar(ik,ipw).z;
             }
 
-            GlobalC::paw_cell.set_paw_k(npw,kpt,
+            GlobalC::paw_cell.set_paw_k(npw,wfc_basis->npwk_max,kpt,
                 this->wfc_basis->get_ig2ix(ik).data(),
                 this->wfc_basis->get_ig2iy(ik).data(),
                 this->wfc_basis->get_ig2iz(ik).data(),

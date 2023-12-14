@@ -169,7 +169,7 @@ void Paw_Cell::set_eigts(const int nx_in, const int ny_in, const int nz_in,
 
 // exp(-i(k+G)R_I) = exp(-ikR_I) exp(-iG_xR_Ix) exp(-iG_yR_Iy) exp(-iG_zR_Iz)
 void Paw_Cell::set_paw_k(
-    const int npw_in, const double * kpt,
+    const int npw_in, const int npwx_in, const double * kpt,
     const int * ig_to_ix, const int * ig_to_iy, const int * ig_to_iz,
     const double ** kpg, const double tpiba, const double ** gcar)
 {
@@ -179,6 +179,7 @@ void Paw_Cell::set_paw_k(
     const double twopi = 2.0 * pi;
 
     this -> npw = npw_in;
+    this -> npwx = npwx_in;
 
     struc_fact.resize(nat);
     for(int iat = 0; iat < nat; iat ++)
@@ -725,7 +726,7 @@ void Paw_Cell::paw_nl_force(const std::complex<double> * psi, const double * eps
                 // consider use blas subroutine for this part later
                 for(int ipw = 0; ipw < npw; ipw ++)
                 {
-                    std::complex<double> overlp = psi[iband*npw+ipw] * std::conj(vkb[iproj+proj_start][ipw]);
+                    std::complex<double> overlp = psi[iband*npwx+ipw] * std::conj(vkb[iproj+proj_start][ipw]);
                     ca[iproj] += overlp;
                     dca[0][iproj] += overlp * ig[ipw][0];
                     dca[1][iproj] += overlp * ig[ipw][1];

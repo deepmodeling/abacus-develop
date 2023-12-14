@@ -121,7 +121,7 @@ TEST_F(Test_PAW_Cell_k, test_paw)
     delete[] isk_in;
 
     // this is gamma point so gcar = kpg
-    paw_cell.set_paw_k(npw, kpt, ig_to_ix, ig_to_iy, ig_to_iz, (const double **) kpg, tpiba, (const double**) kpg);
+    paw_cell.set_paw_k(npw, npw, kpt, ig_to_ix, ig_to_iy, ig_to_iz, (const double **) kpg, tpiba, (const double**) kpg);
 
     delete[] ig_to_ix;
     delete[] ig_to_iy;
