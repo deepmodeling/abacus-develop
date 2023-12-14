@@ -495,6 +495,7 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_GPU *ctx,
     const int nbasis = wvf.get_nbasis();
     const int nbands = wvf.get_nbands();
     const int current_nbasis = wfc_basis->npwk[ik];
+    int starting_nw = nbands;
 
     bool result = false;
     ModuleBase::ComplexMatrix wfcatom(nbands, nbasis);
@@ -511,7 +512,7 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_GPU *ctx,
 
     if (!result)
     {
-        const int starting_nw = p_wf->get_starting_nw();
+        starting_nw = p_wf->get_starting_nw();
         if (starting_nw == 0)
             return;
         assert(starting_nw > 0);
@@ -606,6 +607,7 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_GPU *ctx,
     const int nbasis = wvf.get_nbasis();
     const int nbands = wvf.get_nbands();
     const int current_nbasis = wfc_basis->npwk[ik];
+    int starting_nw = nbands;
 
     bool result = false;
     ModuleBase::ComplexMatrix wfcatom(nbands, nbasis);
@@ -622,7 +624,7 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_GPU *ctx,
 
     if (!result)
     {
-        const int starting_nw = p_wf->get_starting_nw();
+        starting_nw = p_wf->get_starting_nw();
         if (starting_nw == 0)
             return;
         assert(starting_nw > 0);
