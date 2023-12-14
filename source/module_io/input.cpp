@@ -301,7 +301,7 @@ void Input::Default(void)
     mixing_beta = -10;
     mixing_ndim = 8;
     mixing_gg0 = 1.00; // use Kerker defaultly
-    mixing_beta_mag = -10.0; // only set when nspin == 2
+    mixing_beta_mag = -10.0; // only set when nspin == 2 || nspin == 4
     mixing_gg0_mag = 0.0; // defaultly exclude Kerker from mixing magnetic density
     mixing_gg0_min = 0.1; // defaultly minimum kerker coefficient
     mixing_tau = false;
@@ -2975,6 +2975,13 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             scf_thr_type = 1;
         }
     }
+
+    // set nspin with noncolin
+    if (noncolin || lspinorb)
+    {
+        nspin = 4;
+    }
+
     // mixing parameters
     if (mixing_beta < 0.0)
     {
@@ -2990,12 +2997,14 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         }
         else if (nspin == 4) // I will add this 
         {
-            mixing_beta = 0.2;
+            mixing_beta = 0.4;
+            mixing_beta_mag = 1.6;
+            mixing_gg0_mag = 0.0;
         }     
     }
     else
     {
-        if (nspin == 2 && mixing_beta_mag < 0.0)
+        if ((nspin == 2 || nspin == 4) && mixing_beta_mag < 0.0)
         {
             if (mixing_beta <= 0.4)
             {
@@ -3003,14 +3012,9 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             }
             else
             {
-                mixing_beta_mag = 1.6;
+                mixing_beta_mag = 1.6; // 1.6 can be discussed
             }
         }
-    }
-    // set nspin with noncolin
-    if (noncolin || lspinorb)
-    {
-        nspin = 4;
     }
 }
 #ifdef __MPI
