@@ -291,8 +291,8 @@ void Input::Default(void)
     //----------------------------------------------------------
     // occupation
     //----------------------------------------------------------
-    occupations = "smearing"; // pengfei 2014-10-13
-    smearing_method = "fixed";
+    occupations = "smearing"; 
+    smearing_method = "gauss";
     smearing_sigma = 0.01;
     //----------------------------------------------------------
     //  charge mixing
