@@ -936,13 +936,13 @@ calculations.
   - **gauss** or **gaussian**: Gaussian smearing method.
   - **mp**: methfessel-paxton smearing method; recommended for metals.
   - **fd**: Fermi-Dirac smearing method: $f=1/\{1+\exp[(E-\mu)/kT]\}$ and smearing_sigma below is the temperature $T$ (in Ry).
-- **Default**: fixed
+- **Default**: gauss
 
 ### smearing_sigma
 
 - **Type**: Real
 - **Description**: Energy range for smearing.
-- **Default**: 0.01
+- **Default**: 0.015
 - **Unit**: Ry
 
 ### smearing_sigma_temp
