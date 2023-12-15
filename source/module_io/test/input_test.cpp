@@ -151,7 +151,7 @@ TEST_F(InputTest, Default)
         EXPECT_EQ(INPUT.relax_nmax,0);
         EXPECT_EQ(INPUT.out_stru,0);
         EXPECT_EQ(INPUT.occupations,"smearing");
-        EXPECT_EQ(INPUT.smearing_method,"fixed");
+        EXPECT_EQ(INPUT.smearing_method,"gauss");
         EXPECT_DOUBLE_EQ(INPUT.smearing_sigma,0.01);
         EXPECT_EQ(INPUT.mixing_mode,"broyden");
         EXPECT_DOUBLE_EQ(INPUT.mixing_beta,-10.0);
