@@ -5,6 +5,7 @@ template <>
 void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::print_termination()
 {
     print_2d("after-optimization spin: (print in the inner loop): ", this->Mi_, this->nspin_);
+    print_2d("after-optimization lambda: (print in the inner loop): ", this->lambda_, this->nspin_);
     std::cout << "Inner optimization for lambda ends." << std::endl;
     std::cout << "===============================================================================" << std::endl;
 }

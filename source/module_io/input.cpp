@@ -291,9 +291,9 @@ void Input::Default(void)
     //----------------------------------------------------------
     // occupation
     //----------------------------------------------------------
-    occupations = "smearing"; // pengfei 2014-10-13
-    smearing_method = "fixed";
-    smearing_sigma = 0.01;
+    occupations = "smearing"; 
+    smearing_method = "gauss"; // this setting is based on the report in Issue #2847
+    smearing_sigma = 0.015; // this setting is based on the report in Issue #2847
     //----------------------------------------------------------
     //  charge mixing
     //----------------------------------------------------------
@@ -301,8 +301,9 @@ void Input::Default(void)
     mixing_beta = -10;
     mixing_ndim = 8;
     mixing_gg0 = 1.00; // use Kerker defaultly
-    mixing_beta_mag = -10.0; // only set when nspin == 2
+    mixing_beta_mag = -10.0; // only set when nspin == 2 || nspin == 4
     mixing_gg0_mag = 0.0; // defaultly exclude Kerker from mixing magnetic density
+    mixing_gg0_min = 0.1; // defaultly minimum kerker coefficient
     mixing_tau = false;
     mixing_dftu = false;
     //----------------------------------------------------------
@@ -1245,6 +1246,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("mixing_gg0_mag", word) == 0)
         {
             read_value(ifs, mixing_gg0_mag);
+        }
+        else if (strcmp("mixing_gg0_min", word) == 0)
+        {
+            read_value(ifs, mixing_gg0_min);
         }
         else if (strcmp("mixing_tau", word) == 0)
         {
@@ -2970,6 +2975,13 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             scf_thr_type = 1;
         }
     }
+
+    // set nspin with noncolin
+    if (noncolin || lspinorb)
+    {
+        nspin = 4;
+    }
+
     // mixing parameters
     if (mixing_beta < 0.0)
     {
@@ -2985,12 +2997,14 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         }
         else if (nspin == 4) // I will add this 
         {
-            mixing_beta = 0.2;
+            mixing_beta = 0.4;
+            mixing_beta_mag = 1.6;
+            mixing_gg0_mag = 0.0;
         }     
     }
     else
     {
-        if (nspin == 2 && mixing_beta_mag < 0.0)
+        if ((nspin == 2 || nspin == 4) && mixing_beta_mag < 0.0)
         {
             if (mixing_beta <= 0.4)
             {
@@ -2998,7 +3012,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             }
             else
             {
-                mixing_beta_mag = 1.6;
+                mixing_beta_mag = 1.6; // 1.6 can be discussed
             }
         }
     }
@@ -3160,6 +3174,7 @@ void Input::Bcast()
     Parallel_Common::bcast_double(mixing_gg0); // mohan add 2014-09-27
     Parallel_Common::bcast_double(mixing_beta_mag);
     Parallel_Common::bcast_double(mixing_gg0_mag);
+    Parallel_Common::bcast_double(mixing_gg0_min);
     Parallel_Common::bcast_bool(mixing_tau);
     Parallel_Common::bcast_bool(mixing_dftu);
 

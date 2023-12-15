@@ -74,6 +74,7 @@
     - [mixing\_ndim](#mixing_ndim)
     - [mixing\_gg0](#mixing_gg0)
     - [mixing\_gg0\_mag](#mixing_gg0_mag)
+    - [mixing\_gg0\_min](#mixing_gg0_min)
     - [mixing\_tau](#mixing_tau)
     - [mixing\_dftu](#mixing_dftu)
     - [gamma\_only](#gamma_only)
@@ -935,13 +936,13 @@ calculations.
   - **gauss** or **gaussian**: Gaussian smearing method.
   - **mp**: methfessel-paxton smearing method; recommended for metals.
   - **fd**: Fermi-Dirac smearing method: $f=1/\{1+\exp[(E-\mu)/kT]\}$ and smearing_sigma below is the temperature $T$ (in Ry).
-- **Default**: fixed
+- **Default**: gauss
 
 ### smearing_sigma
 
 - **Type**: Real
 - **Description**: Energy range for smearing.
-- **Default**: 0.001
+- **Default**: 0.015
 - **Unit**: Ry
 
 ### smearing_sigma_temp
@@ -1008,6 +1009,12 @@ We recommend the following options:
 - **Description**: Whether to perfom Kerker preconditioner of magnetic density. 
   Note: we do not recommand to open Kerker preconditioner of magnetic density unless the system is too hard to converge.
 - **Default**: 0.0
+
+### mixing_gg0_min
+
+- **Type**: Real
+- **Description**: the minimum kerker coefficient 
+- **Default**: 0.1
 
 ### mixing_tau
 

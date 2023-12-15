@@ -74,46 +74,69 @@ namespace hsolver
 {
 
 template<typename T, typename Device>
-DiagoCG<T, Device>::DiagoCG(const Real* precondition_in)
+DiagoCG<T, Device>::DiagoCG(
+    const std::string& basis_type,
+    const std::string& calculation)
 {
-    this->device = psi::device::get_device_type<Device>(this->ctx);
-    this->precondition = precondition_in;
-    test_cg = 0;
-    reorder = false;
-    this->one = new T(1.0, 0.0);
-    this->zero = new T(0.0, 0.0);
-    this->neg_one = new T(-1.0, 0.0);
+    basis_type_ = basis_type;
+    calculation_ = calculation;
+    this->one_ = new T(static_cast<T>(1.0));
+    this->zero_ = new T(static_cast<T>(0.0));
+    this->neg_one_ = new T(static_cast<T>(-1.0));
 }
 
 template<typename T, typename Device>
-DiagoCG<T, Device>::~DiagoCG() {
-    // delete this->cg;
-    // delete this->phi_m;
-    delmem_complex_op()(this->ctx, this->sphi);
-    delmem_complex_op()(this->ctx, this->hphi);
-    delmem_complex_op()(this->ctx, this->scg);
-    delmem_complex_op()(this->ctx, this->pphi);
-    delmem_complex_op()(this->ctx, this->gradient);
-    delmem_complex_op()(this->ctx, this->g0);
-    delmem_complex_op()(this->ctx, this->lagrange);
-    delete this->one;
-    delete this->zero;
-    delete this->neg_one;
+DiagoCG<T, Device>::DiagoCG(
+    const std::string& basis_type,
+    const std::string& calculation,
+    const bool& need_subspace,
+    const Func& subspace_func,
+    const Real& pw_diag_thr,
+    const int& pw_diag_nmax,
+    const int& nproc_in_pool)
+{
+    basis_type_ = basis_type;
+    calculation_ = calculation;
+    need_subspace_ = need_subspace;
+    subspace_func_ = subspace_func;
+    pw_diag_thr_ = pw_diag_thr;
+    pw_diag_nmax_ = pw_diag_nmax;
+    nproc_in_pool_ = nproc_in_pool;
+    this->one_ = new T(static_cast<T>(1.0));
+    this->zero_ = new T(static_cast<T>(0.0));
+    this->neg_one_ = new T(static_cast<T>(-1.0));
 }
 
 template<typename T, typename Device>
-void DiagoCG<T, Device>::diag(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Device> &psi, Real *eigenvalue_in)
+DiagoCG<T, Device>::~DiagoCG()
 {
+    delete this->one_;
+    delete this->zero_;
+    delete this->neg_one_;
+}
+
+template<typename T, typename Device>
+void DiagoCG<T, Device>::diag(
+    const Func& hpsi_func, 
+    const Func& spsi_func, 
+    ct::Tensor& psi,
+    ct::Tensor& eigen,
+    const ct::Tensor& prec)
+{
+    auto n_bands = psi.shape().dim_size(0);
+    auto n_basis = psi.shape().dim_size(1);
+    auto psi_pack = psi.accessor<T, 2>();
+    auto eigen_pack = eigen.accessor<Real, 1>();
     //do something
-    for(int ib = 0;ib<psi.get_nbands();ib++)
+    for(int ib = 0;ib<n_bands;ib++)
     {
-        eigenvalue_in[ib] = 0.0;
-        for(int ig = 0;ig<psi.get_nbasis();ig++)
+        eigen_pack[ib] = 0.0;
+        for(int ig = 0;ig<n_basis;ig++)
         {
-            psi(ib, ig) += T(2.0, 0.0);
-            eigenvalue_in[ib] += psi(ib, ig).real();
+            psi_pack[ib][ig] += T(2.0, 0.0);
+            eigen_pack[ib] += psi_pack[ib][ig].real();
         }
-        eigenvalue_in[ib] /= psi.get_nbasis();
+        eigen_pack[ib] /= n_basis;
     }
     DiagoIterAssist<T, Device>::avg_iter += 1.0;
     return;
@@ -215,5 +238,5 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_CPU* ctx,
 
 }//namespace hsolver
 
-template class hsolver::HSolverPW<std::complex<float>, psi::DEVICE_CPU>;
+template class hsolver::HSolverPW<std::complex<float>,  psi::DEVICE_CPU>;
 template class hsolver::HSolverPW<std::complex<double>, psi::DEVICE_CPU>;
