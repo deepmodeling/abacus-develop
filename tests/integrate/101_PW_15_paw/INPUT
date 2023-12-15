@@ -27,3 +27,5 @@ smearing_sigma			0.002
 mixing_type		broyden
 mixing_beta		0.7
 mixing_gg0      0.0
+
+cal_force 1
