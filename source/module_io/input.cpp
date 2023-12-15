@@ -292,8 +292,8 @@ void Input::Default(void)
     // occupation
     //----------------------------------------------------------
     occupations = "smearing"; 
-    smearing_method = "gauss";
-    smearing_sigma = 0.01;
+    smearing_method = "gauss"; // this setting is based on the report in Issue #2847
+    smearing_sigma = 0.015; // this setting is based on the report in Issue #2847
     //----------------------------------------------------------
     //  charge mixing
     //----------------------------------------------------------

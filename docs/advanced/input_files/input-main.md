@@ -942,7 +942,7 @@ calculations.
 
 - **Type**: Real
 - **Description**: Energy range for smearing.
-- **Default**: 0.01
+- **Default**: 0.015
 - **Unit**: Ry
 
 ### smearing_sigma_temp
