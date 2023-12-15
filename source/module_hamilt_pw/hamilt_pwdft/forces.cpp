@@ -832,8 +832,7 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
         /// only occupied band should be calculated.
         ///
         int nbands_occ = GlobalV::NBANDS;
-        const double threshold = ModuleBase::threshold_wg * wg(ik, 0);
-        while (std::fabs(wg(ik, nbands_occ - 1)) < threshold)
+        while (wg(ik, nbands_occ - 1) == 0.0)
         {
             nbands_occ--;
             if (nbands_occ == 0)
