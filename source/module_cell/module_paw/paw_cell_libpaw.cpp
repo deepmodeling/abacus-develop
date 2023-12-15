@@ -296,8 +296,8 @@ extern "C"
     void init_rho_(int&,  int*,   int&,int&, int&,  double*,double*,double*,double&,double*,double*);
     //             nspden,ngfftdg,nfft,natom,ntypat,rprimd, gprimd, gmet,   ucvol,  xred,   rho
 
-    void paw_force_(int&, int&,  int*, int*,   int&,double*,double*,double*,double*,double&,double*,double*,int&,  double*,double*);
-    //              natom,ntypat,typat,ngfftdg,nfft,nhat,   xred,   rprimd, gmet,   ucvol,  vtrial, vxc,    nspden,grnl,   nlstr
+    void paw_force_(int&, int&,  int*, int*,   int&,double*,double*,double*,double*,double*,double&,double*,double*,double*,int&,  double*,double*);
+    //              natom,ntypat,typat,ngfftdg,nfft,nhat,   xred,   rprimd, gprimd, gmet,   ucvol,  vtrial, vxc,    rhor,   nspden,grad,   stress
 }
 
 void Paw_Cell::prepare_paw()
@@ -721,18 +721,18 @@ double Paw_Cell::calculate_ecore()
     return esum * charge / ucvol * 2.0;
 }
 
-void Paw_Cell::calculate_force(double* vks, double* vxc, double* force)
+void Paw_Cell::calculate_force(double* vks, double* vxc, double * rhor, double* force)
 {
     ModuleBase::TITLE("Paw_Cell", "calculate_force");
-    double * vks_hartree, * vxc_hartree;
-    double * grnl, * nlstr;
+    double * vks_hartree, * vxc_hartree, * rhor_fortran;
+    double * grad, * nlstr;
 
-    grnl = new double[3*natom];
+    grad = new double[3*natom];
     nlstr = new double[6];
 
     for(int i = 0; i < 3*natom; i ++)
     {
-        grnl[i] = 0.0;
+        grad[i] = 0.0;
     }
     for(int i = 0; i < 6; i ++)
     {
@@ -740,13 +740,15 @@ void Paw_Cell::calculate_force(double* vks, double* vxc, double* force)
     }
 
 #ifdef __MPI
-    double * vks_collected, * vxc_collected;
+    double * vks_collected, * vxc_collected, *rhor_collected;
     if(GlobalV::RANK_IN_POOL == 0)
     {
         vks_hartree = new double[nspden * nfft];
         vxc_hartree = new double[nspden * nfft];
+        rhor_fortran = new double[nfft];
         vks_collected = new double[nspden * nfft];
         vxc_collected = new double[nspden * nfft];
+        rhor_collected = new double[nfft];
     }
 
     // Collecting vks and vxc from all processes; I hope there could be a better way
@@ -803,6 +805,45 @@ void Paw_Cell::calculate_force(double* vks, double* vxc, double* force)
         }
     }
 
+    double* rhor_send = new double[num_z[GlobalV::RANK_IN_POOL]];
+    double* rhor_receive = new double[nz];
+    for(int ixy = 0; ixy < nxy; ixy ++)
+    {
+        for(int iz = 0; iz < num_z[GlobalV::RANK_IN_POOL]; iz++)
+        {
+            rhor_send[iz] = rhor[ixy*num_z[GlobalV::RANK_IN_POOL] + iz];
+        }
+
+        MPI_Gatherv(rhor_send,num_z[GlobalV::RANK_IN_POOL],MPI_DOUBLE,rhor_receive,num_z.data(),start_z.data(),MPI_DOUBLE,0,MPI_COMM_WORLD);
+
+        if(GlobalV::RANK_IN_POOL == 0)
+        {
+            for(int iz = 0; iz < nz; iz ++)
+            {
+                rhor_collected[ixy*nz + iz] = rhor_receive[iz];
+            }
+        }
+    }
+    delete[] rhor_send;
+    delete[] rhor_receive;
+
+    if(GlobalV::RANK_IN_POOL == 0)
+    {
+        for(int ix = 0; ix < nx; ix ++)
+        {
+            for(int iy = 0; iy < ny; iy ++)
+            {
+                for(int iz = 0; iz < nz; iz ++)
+                {
+                    int ind_c = ix*ny*nz + iy*nz + iz;
+                    int ind_fortran = iz*ny*nx + iy*nx + ix;
+                    rhor_fortran[ind_fortran] = rhor_collected[ind_c];
+                    rhor_fortran[ind_fortran] = rhor_collected[ind_c];
+                }
+            }
+        }        
+    }
+
     if(GlobalV::RANK_IN_POOL == 0)
     {
         double* nhatgr;
@@ -814,13 +855,13 @@ void Paw_Cell::calculate_force(double* vks, double* vxc, double* force)
                 ucvol,nhat_tmp,nhatgr);
 
         paw_force_(natom,ntypat,typat.data(),ngfft.data(),nfft,nhat_tmp,xred.data(),
-                rprimd.data(),gmet.data(),ucvol,vks_hartree,vxc_hartree,nspden,grnl,nlstr);
+                rprimd.data(),gprimd.data(),gmet.data(),ucvol,vks_hartree,vxc_hartree,rhor_fortran,nspden,grad,nlstr);
 
         delete[] nhatgr;
         delete[] nhat_tmp;
     }
 
-    Parallel_Common::bcast_double(grnl,3*natom);
+    Parallel_Common::bcast_double(grad,3*natom);
     Parallel_Common::bcast_double(nlstr,6);
 
     if(GlobalV::RANK_IN_POOL == 0)
@@ -829,11 +870,14 @@ void Paw_Cell::calculate_force(double* vks, double* vxc, double* force)
         delete[] vxc_hartree;
         delete[] vks_collected;
         delete[] vxc_collected;
+        delete[] rhor_collected;
+        delete[] rhor_fortran;
     }
 
 #else
     vks_hartree = new double[nspden * nfft];
     vxc_hartree = new double[nspden * nfft];
+    rhor_fortran = new double[nfft];
     for(int is = 0; is < nspden; is ++)
     {
         for(int ix = 0; ix < nx; ix ++)
@@ -850,7 +894,19 @@ void Paw_Cell::calculate_force(double* vks, double* vxc, double* force)
             }
         }
     }
-
+    for(int ix = 0; ix < nx; ix ++)
+    {
+        for(int iy = 0; iy < ny; iy ++)
+        {
+            for(int iz = 0; iz < nz; iz ++)
+            {
+                int ind_c = ix*ny*nz + iy*nz + iz;
+                int ind_fortran = iz*ny*nx + iy*nx + ix;
+                rhor_fortran[ind_fortran] = rhor[ind_c];
+                rhor_fortran[ind_fortran] = rhor[ind_c];                
+            }
+        }
+    }
     double* nhatgr;
     nhatgr = new double[3*nfft];
     double* nhat_tmp;
@@ -860,13 +916,14 @@ void Paw_Cell::calculate_force(double* vks, double* vxc, double* force)
             ucvol,nhat_tmp,nhatgr);
 
     paw_force_(natom,ntypat,typat.data(),ngfft.data(),nfft,nhat_tmp,xred.data(),
-            rprimd.data(),gmet.data(),ucvol,vks_hartree,vxc_hartree,nspden,grnl,nlstr);
+            rprimd.data(),gprimd.data(),gmet.data(),ucvol,vks_hartree,vxc_hartree,rhor_fortran,nspden,grad,nlstr);
 
     delete[] nhatgr;
     delete[] nhat_tmp;
 
     delete[] vks_hartree;
     delete[] vxc_hartree;
+    delete[] rhor_fortran;
 #endif
 
     for(int i = 0; i < 3*natom; i++)
@@ -878,12 +935,12 @@ void Paw_Cell::calculate_force(double* vks, double* vxc, double* force)
     {
         for(int mu = 0; mu < 3; mu ++)
         {
-            force[3*iat+mu] -= (grnl[3*iat] * gprimd[mu] +
-                grnl[3*iat+1] * gprimd[mu+3] + grnl[3*iat+2] * gprimd[mu+6]);
+            force[3*iat+mu] -= (grad[3*iat] * gprimd[mu] +
+                grad[3*iat+1] * gprimd[mu+3] + grad[3*iat+2] * gprimd[mu+6]);
         }
     }
 
-    delete[] grnl;
+    delete[] grad;
     delete[] nlstr;
 
 }
