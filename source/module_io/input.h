@@ -234,6 +234,7 @@ class Input
     double mixing_beta_mag;
     double mixing_gg0_mag;
     double mixing_gg0_min;
+    double mixing_angle;
 
     bool mixing_tau; // whether to mix tau in mgga
     bool mixing_dftu; //whether to mix locale in DFT+U
