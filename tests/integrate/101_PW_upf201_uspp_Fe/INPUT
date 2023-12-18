@@ -30,3 +30,5 @@ pseudo_rcut            10
 
 cal_force              1
 cal_stress             1
+
+kpar                   3
