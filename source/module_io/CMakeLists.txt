@@ -13,6 +13,8 @@ list(APPEND objects
     print_info.cpp
     read_cube.cpp
     read_rho.cpp
+    read_rhog.cpp
+    read_wfc_pw.cpp
     restart.cpp
     binstream.cpp
     write_wfc_pw.cpp

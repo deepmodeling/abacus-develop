@@ -132,7 +132,7 @@ void ESolver_KS_PW<T, Device>::Init_GlobalC(Input& inp, UnitCell& cell)
     }
     else // old method
     {
-        this->psi = this->wf.allocate(this->kv.nks, this->kv.ngk.data(), this->pw_wfc->npwk_max);
+        this->psi = this->wf.allocate(this->kv.nkstot, this->kv.nks, this->kv.ngk.data(), this->pw_wfc->npwk_max);
     }
     //=======================
     // init pseudopotential
@@ -399,6 +399,12 @@ void ESolver_KS_PW<T, Device>::beforescf(int istep)
     }
 
     //=========================================================
+    // cal_ux should be called before init_scf because
+    // the direction of ux is used in noncoline_rho
+    //=========================================================
+    if(GlobalV::NSPIN == 4 && GlobalV::DOMAG) GlobalC::ucell.cal_ux();
+
+    //=========================================================
     // calculate the total local pseudopotential in real space
     //=========================================================
     this->pelec->init_scf(istep, this->sf.strucFac);
@@ -407,7 +413,7 @@ void ESolver_KS_PW<T, Device>::beforescf(int istep)
     Symmetry_rho srho;
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        srho.begin(is, *(this->pelec->charge), this->pw_rhod, GlobalC::Pgrid, this->symm);
+        srho.begin(is, *(this->pelec->charge), this->pw_rhod, GlobalC::Pgrid, GlobalC::ucell.symm);
     }
 
     // liuyu move here 2023-10-09
@@ -706,7 +712,7 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
     Symmetry_rho srho;
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        srho.begin(is, *(this->pelec->charge), this->pw_rhod, GlobalC::Pgrid, this->symm);
+        srho.begin(is, *(this->pelec->charge), this->pw_rhod, GlobalC::Pgrid, GlobalC::ucell.symm);
     }
 
     // compute magnetization, only for LSDA(spin==2)
@@ -857,7 +863,7 @@ void ESolver_KS_PW<T, Device>::cal_Force(ModuleBase::matrix& force)
                                ? new psi::Psi<std::complex<double>, Device>(this->kspw_psi[0])
                                : reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->kspw_psi);
     }
-    ff.cal_force(force, *this->pelec, this->pw_rhod, &this->symm, &this->sf, &this->kv, this->pw_wfc, this->__kspw_psi);
+    ff.cal_force(force, *this->pelec, this->pw_rhod, &GlobalC::ucell.symm, &this->sf, &this->kv, this->pw_wfc, this->__kspw_psi);
 }
 
 template <typename T, typename Device>
@@ -875,7 +881,7 @@ void ESolver_KS_PW<T, Device>::cal_Stress(ModuleBase::matrix& stress)
     ss.cal_stress(stress,
                   GlobalC::ucell,
                   this->pw_rhod,
-                  &this->symm,
+        &GlobalC::ucell.symm,
                   &this->sf,
                   &this->kv,
                   this->pw_wfc,
@@ -1020,7 +1026,7 @@ void ESolver_KS_PW<T, Device>::postprocess()
 
     if (INPUT.cal_cond)
     {
-        this->KG(INPUT.cond_fwhm, INPUT.cond_wcut, INPUT.cond_dw, INPUT.cond_dt, this->pelec->wg);
+        this->KG(INPUT.cond_smear, INPUT.cond_fwhm, INPUT.cond_wcut, INPUT.cond_dw, INPUT.cond_dt, this->pelec->wg);
     }
 }
 

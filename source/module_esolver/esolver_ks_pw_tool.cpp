@@ -25,11 +25,12 @@ namespace ModuleESolver
 #define TWOSQRT2LN2 2.354820045030949 // FWHM = 2sqrt(2ln2) * \sigma
 #define FACTOR 1.839939223835727e7
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::KG(const double fwhmin,
-                                       const double wcut,
-                                       const double dw_in,
-                                       const double dt_in,
-                                       ModuleBase::matrix& wg)
+void ESolver_KS_PW<T, Device>::KG(const int& smear_type,
+                                  const double fwhmin,
+                                  const double wcut,
+                                  const double dw_in,
+                                  const double dt_in,
+                                  ModuleBase::matrix& wg)
 {
     //-----------------------------------------------------------
     //               KS conductivity
@@ -38,9 +39,22 @@ void ESolver_KS_PW<T, Device>::KG(const double fwhmin,
     int nw = ceil(wcut / dw_in);
     double dw = dw_in / ModuleBase::Ry_to_eV; // converge unit in eV to Ry
     double sigma = fwhmin / TWOSQRT2LN2 / ModuleBase::Ry_to_eV;
+    const double gamma = fwhmin / 2.0 / ModuleBase::Ry_to_eV;
     double dt = dt_in;                    // unit in a.u., 1 a.u. = 4.837771834548454e-17 s
     const double expfactor = 23;      //exp(-23) = 1e-10
-    int nt = ceil(sqrt(2*expfactor)/sigma/dt); //set nt empirically
+    int nt; //set nt empirically
+    if(smear_type == 1)
+    {
+        nt = ceil(sqrt(2*expfactor)/sigma/dt); 
+    }
+    else if(smear_type == 2)
+    {
+        nt = ceil(expfactor/gamma/dt);
+    }
+    else
+    {
+        ModuleBase::WARNING_QUIT("ESolver_KS_PW::calcondw", "smear_type should be 0 or 1");
+    }
     std::cout << "nw: " << nw << " ; dw: " << dw * ModuleBase::Ry_to_eV << " eV" << std::endl;
     std::cout << "nt: " << nt << " ; dt: " << dt << " a.u.(ry^-1)" << std::endl;
     assert(nw >= 1);
@@ -72,7 +86,7 @@ void ESolver_KS_PW<T, Device>::KG(const double fwhmin,
     //------------------------------------------------------------------
     if (GlobalV::MY_RANK == 0)
     {
-        calcondw(nt, dt, fwhmin, wcut, dw_in, ct11, ct12, ct22);
+        calcondw(nt, dt, smear_type, fwhmin, wcut, dw_in, ct11, ct12, ct22);
     }
     delete[] ct11;
     delete[] ct12;
@@ -90,11 +104,13 @@ void ESolver_KS_PW<T, Device>::jjcorr_ks(const int ik,
                                               double* ct12,
                                               double* ct22)
 {
+    const int nbands = GlobalV::NBANDS;
+    if(wg(ik, 0) - wg(ik, nbands - 1) < 1e-8 || nbands == 0)
+        return;
     char transn = 'N';
     char transc = 'C';
     const int ndim = 3;
     const int npwx = this->wf.npwx;
-    const int nbands = GlobalV::NBANDS;
     const double ef = this->pelec->eferm.ef;
     const int npw = this->kv.ngk[ik];
     const int reducenb2 = (nbands - 1) * nbands / 2;
@@ -193,19 +209,38 @@ void ESolver_KS_PW<T, Device>::jjcorr_ks(const int ik,
 
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::calcondw(const int nt,
-                                             const double dt,
-                                             const double fwhmin,
-                                             const double wcut,
-                                             const double dw_in,
-                                             double* ct11,
-                                             double* ct12,
-                                             double* ct22)
+                                        const double dt,
+                                        const int& smear_type,
+                                        const double fwhmin,
+                                        const double wcut,
+                                        const double dw_in,
+                                        double* ct11,
+                                        double* ct12,
+                                        double* ct22)
 {
     double factor = FACTOR;
     const int ndim = 3;
     int nw = ceil(wcut / dw_in);
     double dw = dw_in / ModuleBase::Ry_to_eV; // converge unit in eV to Ry
-    double sigma = fwhmin / TWOSQRT2LN2 / ModuleBase::Ry_to_eV;
+    const double sigma = fwhmin / TWOSQRT2LN2 / ModuleBase::Ry_to_eV;
+    const double gamma = fwhmin / 2.0 / ModuleBase::Ry_to_eV;
+    double* winfunc = new double[nt];
+    //1: Gaussian, 2: Lorentzian
+    if(smear_type == 1)
+    {
+        for (int it = 0; it < nt; ++it)
+        {
+            winfunc[it] = exp(-double(1) / 2 * sigma * sigma * pow((it)*dt, 2));
+        }
+    }
+    else if(smear_type == 2)
+    {
+        for (int it = 0; it < nt; ++it)
+        {
+            winfunc[it] = exp(-gamma * (it)*dt);
+        }
+    }
+    
     std::ofstream ofscond("je-je.txt");
     ofscond << std::setw(8) << "#t(a.u.)" << std::setw(15) << "c11(t)" << std::setw(15) << "c12(t)" << std::setw(15)
             << "c22(t)" << std::setw(15) << "decay" << std::endl;
@@ -213,7 +248,7 @@ void ESolver_KS_PW<T, Device>::calcondw(const int nt,
     {
         ofscond << std::setw(8) << (it)*dt << std::setw(15) << -2 * ct11[it] << std::setw(15) << -2 * ct12[it]
                 << std::setw(15) << -2 * ct22[it] << std::setw(15)
-                << exp(-double(1) / 2 * sigma * sigma * pow((it)*dt, 2)) << std::endl;
+                << winfunc[it] << std::endl;
     }
     ofscond.close();
     double* cw11 = new double[nw];
@@ -227,12 +262,9 @@ void ESolver_KS_PW<T, Device>::calcondw(const int nt,
     {
         for (int it = 0; it < nt; ++it)
         {
-            cw11[iw] += -2 * ct11[it] * sin(-(iw + 0.5) * dw * it * dt)
-                        * exp(-double(1) / 2 * sigma * sigma * pow((it)*dt, 2)) / (iw + 0.5) / dw * dt;
-            cw12[iw] += -2 * ct12[it] * sin(-(iw + 0.5) * dw * it * dt)
-                        * exp(-double(1) / 2 * sigma * sigma * pow((it)*dt, 2)) / (iw + 0.5) / dw * dt;
-            cw22[iw] += -2 * ct22[it] * sin(-(iw + 0.5) * dw * it * dt)
-                        * exp(-double(1) / 2 * sigma * sigma * pow((it)*dt, 2)) / (iw + 0.5) / dw * dt;
+            cw11[iw] += -2 * ct11[it] * sin(-(iw + 0.5) * dw * it * dt) * winfunc[it] / (iw + 0.5) / dw * dt;
+            cw12[iw] += -2 * ct12[it] * sin(-(iw + 0.5) * dw * it * dt) * winfunc[it] / (iw + 0.5) / dw * dt;
+            cw22[iw] += -2 * ct22[it] * sin(-(iw + 0.5) * dw * it * dt) * winfunc[it] / (iw + 0.5) / dw * dt;
         }
     }
     ofscond.open("Onsager.txt");
@@ -261,6 +293,7 @@ void ESolver_KS_PW<T, Device>::calcondw(const int nt,
     delete[] cw11;
     delete[] cw12;
     delete[] cw22;
+    delete[] winfunc;
     delete[] kappa;
 }
 

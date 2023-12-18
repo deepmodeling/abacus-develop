@@ -51,7 +51,7 @@ TEST_F(Test_Libpaw_Cell, test_paw)
 
     int natom = 5;
     int ntypat = 2;
-    int typat[5] = {2,1,1,1,1};
+    int typat[5] = {1,2,2,2,2};
     double xred[15] = {-0.279789547400000, 7.109405980000000E-002, 0.000000000000000E+000,
         -0.212391634800000,      -0.119543389500000,       0.000000000000000E+000,
         -0.212388153900000,       0.166411496700000,       0.165096194500000,
@@ -107,18 +107,18 @@ TEST_F(Test_Libpaw_Cell, test_paw)
     EXPECT_EQ(paw_cell.get_libpaw_natom(),5);
     EXPECT_EQ(paw_cell.get_libpaw_ntypat(),2);
 
-    EXPECT_EQ(paw_cell.get_libpaw_typat()[0],2);
-    EXPECT_EQ(paw_cell.get_libpaw_typat()[1],1);
-    EXPECT_EQ(paw_cell.get_libpaw_typat()[2],1);
-    EXPECT_EQ(paw_cell.get_libpaw_typat()[3],1);
-    EXPECT_EQ(paw_cell.get_libpaw_typat()[4],1);
+    EXPECT_EQ(paw_cell.get_libpaw_typat()[0],1);
+    EXPECT_EQ(paw_cell.get_libpaw_typat()[1],2);
+    EXPECT_EQ(paw_cell.get_libpaw_typat()[2],2);
+    EXPECT_EQ(paw_cell.get_libpaw_typat()[3],2);
+    EXPECT_EQ(paw_cell.get_libpaw_typat()[4],2);
 
-    EXPECT_EQ(paw_cell.get_libpaw_filename_list()[0],'H');
+    EXPECT_EQ(paw_cell.get_libpaw_filename_list()[0],'C');
     EXPECT_EQ(paw_cell.get_libpaw_filename_list()[1],'.');
     EXPECT_EQ(paw_cell.get_libpaw_filename_list()[2],'x');
     EXPECT_EQ(paw_cell.get_libpaw_filename_list()[3],'m');
     EXPECT_EQ(paw_cell.get_libpaw_filename_list()[4],'l');
-    EXPECT_EQ(paw_cell.get_libpaw_filename_list()[264],'C');
+    EXPECT_EQ(paw_cell.get_libpaw_filename_list()[264],'H');
     EXPECT_EQ(paw_cell.get_libpaw_filename_list()[265],'.');
     EXPECT_EQ(paw_cell.get_libpaw_filename_list()[266],'x');
     EXPECT_EQ(paw_cell.get_libpaw_filename_list()[267],'m');
@@ -162,7 +162,6 @@ TEST_F(Test_Libpaw_Cell, test_paw)
     }
 
     std::ifstream ifs_ncoret("ncoret.dat");
-    std::cout << "ncoret" << std::endl;
     for(int i = 0; i < nfft; i++)
     {
         double tmp;

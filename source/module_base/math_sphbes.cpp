@@ -1,6 +1,7 @@
 #include "math_sphbes.h"
 #include "timer.h"
 #include "constants.h"
+#include <algorithm>
 
 #include <cassert>
 
@@ -805,6 +806,96 @@ void Sphbes::dsphbesj(const int n,
     {
         djl[i] = Sphbes::dsphbesj(l, q * r[i]);
     }
+}
+
+void Sphbes::sphbes_zeros(const int l, const int n, double* const zeros)
+{
+    assert( n > 0 );
+    assert( l >= 0 );
+
+    // The zeros of j_l and j_{l-1} are interlaced;
+    // So do the zeros of j_l and j_{l-2}.
+    // This property enables us to use bracketing method recursively
+    // to find all zeros of j_l from the zeros of j_0.
+
+    // if l is odd , j_0 --> j_1 --> j_3 --> j_5 --> ...
+    // if l is even, j_0 --> j_2 --> j_4 --> j_6 --> ...
+
+    int nz = n + (l+1)/2; // number of effective zeros in buffer
+    double* buffer = new double[nz];
+
+    // zeros of j_0 = sin(x)/x is just n*pi
+    double PI = std::acos(-1.0);
+    for (int i = 0; i < nz; i++)
+    {
+        buffer[i] = (i+1) * PI;
+    }
+
+    int ll = 1;
+    auto jl = [&ll] (double x) { return sphbesj(ll, x); };
+
+    if (l % 2 == 1)
+    {
+        for (int i = 0; i < nz-1; i++)
+        {
+            buffer[i] = illinois(jl, buffer[i], buffer[i+1], 1e-15, 50);
+        }
+        --nz;
+    }
+
+    for (ll = 2 + l%2; ll <= l; ll += 2, --nz)
+    {
+        for (int i = 0; i < nz-1; i++)
+        {
+            buffer[i] = illinois(jl, buffer[i], buffer[i+1], 1e-15, 50);
+        }
+    }
+
+    std::copy(buffer, buffer + n, zeros);
+    delete[] buffer;
+}
+
+double Sphbes::illinois(std::function<double(double)> func, double x0, double x1, const double tol, const int max_iter)
+{
+    assert(tol > 0.0 && max_iter > 0);
+
+    double f0 = func(x0);
+    double f1 = func(x1);
+    assert(f0 * f1 <= 0);
+
+    if (std::abs(f0) < std::abs(f1)) {
+        std::swap(x0, x1);
+        std::swap(f0, f1);
+    }
+
+    int iter = 0;
+    double x, f;
+    while (++iter <= max_iter && std::abs(f1) > tol)
+    {
+        // regula falsi
+        x = (x0 * f1 - x1 * f0) / (f1 - f0);
+        f = func(x);
+
+        // Illinois anti-stalling variant
+        if (f * f1 < 0)
+        {
+            x0 = x1;
+            f0 = f1;
+        }
+        else
+        {
+            f0 *= 0.5;
+        }
+        x1 = x;
+        f1 = f;
+    }
+
+    if (iter > max_iter)
+    {
+        std::cout << "Maximum number of iterations reached in illinois." << std::endl;
+    }
+
+    return x1;
 }
 
 }

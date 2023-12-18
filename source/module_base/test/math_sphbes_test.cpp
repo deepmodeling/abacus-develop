@@ -26,6 +26,7 @@
  *      - Spherical_Bessel_Roots
  *      - overloading of Spherical_Bessel. This funnction sets sjp[i] to 1.0 when i < msh.
  *      - sphbesj
+ *      - sphbes_zeros
  */
 
 double mean(const double* vect, const int totN)
@@ -331,6 +332,23 @@ TEST_F(Sphbes, SphericalBesselPrecisionNearZero)
     }
     delete[] x;
     delete[] Y;
+}
+
+TEST_F(Sphbes, Zeros)
+{
+    // This test checks whether sphbes_zeros properly computes the zeros of sphbesj.
+
+    int lmax = 20;
+    int nzeros = 500;
+    double* zeros = new double[nzeros];
+    for (int l = 0; l <= lmax; ++l)
+    {
+        ModuleBase::Sphbes::sphbes_zeros(l, nzeros, zeros);
+        for (int i = 0; i < nzeros; ++i)
+        {
+            EXPECT_LT(std::abs(ModuleBase::Sphbes::sphbesj(l, zeros[i])), 1e-14);
+        }
+    }
 }
 
 int main(int argc, char **argv)

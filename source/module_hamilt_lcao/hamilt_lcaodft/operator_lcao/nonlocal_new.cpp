@@ -265,8 +265,7 @@ void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(
     {
         for (int is2 = 0; is2 < npol; is2++)
         {
-            //step_trace[is * npol + is2] = col_indexes.size() * is + is2;
-            step_trace[is + is2 * npol] = col_indexes.size() * is + is2;
+            step_trace[is * npol + is2] = col_indexes.size() * is + is2;
         }
     }
     // calculate the local matrix
@@ -287,8 +286,7 @@ void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(
                 {
                     const int p1 = this->ucell->atoms[T0].ncpp.index1_soc[is][no];
                     const int p2 = this->ucell->atoms[T0].ncpp.index2_soc[is][no];
-                    //this->ucell->atoms[T0].ncpp.get_d(is, p1, p2, tmp_d);
-                    this->ucell->atoms[T0].ncpp.get_d(is, p2, p1, tmp_d);
+                    this->ucell->atoms[T0].ncpp.get_d(is, p1, p2, tmp_d);
                     nlm_tmp += nlm1[p1] * nlm2[p2] * (*tmp_d);
                 }
                 data_pointer[step_trace[is]] += nlm_tmp;

@@ -34,7 +34,7 @@ void AtomicRadials::build(const std::string& file, const int itype, std::ofstrea
 
     if (!is_open)
     {
-        ModuleBase::WARNING_QUIT("AtomicRadials::read", "Couldn't open orbital file: " + file);
+        ModuleBase::WARNING_QUIT("AtomicRadials::build", "Couldn't open orbital file: " + file);
     }
 
     if (ptr_log)

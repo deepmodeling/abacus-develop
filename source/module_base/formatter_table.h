@@ -76,7 +76,11 @@ namespace formatter
             void disable_mid_frame() { frame_mid_switch_ = 0; }
 
             /// @brief centerize the title
-            void center_title() { title_centered_ = true; }
+            void center_title() { title_position_ = 0; }
+            /// @brief make title left
+            void left_title() { title_position_ = -1; }
+            /// @brief make title right
+            void right_title() { title_position_ = 1; }
             /// @brief add new column of data to the table
             /// @param new_title title of the new column
             /// @param new_col data, stored in std::vector<std::string>
@@ -169,7 +173,7 @@ namespace formatter
             /// @brief total width of the table
             int total_width_ = 0;
             /// @brief data of the table
-            bool title_centered_ = false;
+            int title_position_ = -1;
             // warning: the col data is stored here row-by-row
             std::vector<std::vector<std::string>> data_;
     };

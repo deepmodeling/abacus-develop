@@ -37,24 +37,55 @@ void HSolverPW::update()
     return;
 }*/
 template<typename T, typename Device>
-void HSolverPW<T, Device>::initDiagh(const psi::Psi<T, Device>& psi_in)
+void HSolverPW<T, Device>::initDiagh(const psi::Psi<T, Device>& psi)
 {
     if (this->method == "cg")
     {
-        if(this->pdiagh!=nullptr)
+        if (this->pdiagh != nullptr)
         {
-            if(this->pdiagh->method != this->method)
+            if (this->pdiagh->method != this->method)
             {
-                delete (DiagoCG<T, Device>*)this->pdiagh;
-                this->pdiagh = new DiagoCG<T, Device>(precondition.data());
-                this->pdiagh->method = this->method;
+                delete reinterpret_cast<DiagoCG<T, Device>*>(this->pdiagh);
+            }
+            else {
+                return;
             }
         }
-        else
-        {
-            this->pdiagh = new DiagoCG<T, Device>(precondition.data());
-            this->pdiagh->method = this->method;
-        }
+        // this->pdiagh = new DiagoCG<T, Device>(precondition.data());
+        // warp the subspace_func into a lambda function
+        auto ngk_pointer = psi.get_ngk_pointer();
+        auto subspace_func = [this, ngk_pointer](const ct::Tensor& psi_in, ct::Tensor& psi_out) {
+            // psi_in should be a 2D tensor: 
+            // psi_in.shape() = [nbands, nbasis]
+            const auto ndim = psi_in.shape().ndim();
+            REQUIRES_OK(ndim == 2, "dims of psi_in should be less than or equal to 2");
+            // Convert a Tensor object to a psi::Psi object
+            auto psi_in_wrapper = psi::Psi<T, Device>(
+                psi_in.data<T>(), 1, 
+                psi_in.shape().dim_size(0), 
+                psi_in.shape().dim_size(1),
+                ngk_pointer);
+            auto psi_out_wrapper = psi::Psi<T, Device>(
+                psi_out.data<T>(), 1, 
+                psi_out.shape().dim_size(0), 
+                psi_out.shape().dim_size(1),
+                ngk_pointer);
+            auto eigen = ct::Tensor(
+                ct::DataTypeToEnum<Real>::value,
+                ct::DeviceType::CpuDevice, 
+                ct::TensorShape({psi_in.shape().dim_size(0)}));
+            
+            DiagoIterAssist<T, Device>::diagH_subspace(hamilt_, psi_in_wrapper, psi_out_wrapper, eigen.data<Real>());
+        };
+        this->pdiagh = new DiagoCG<T, Device>(
+            GlobalV::BASIS_TYPE,
+            GlobalV::CALCULATION,
+            DiagoIterAssist<T, Device>::need_subspace,
+            subspace_func,
+            DiagoIterAssist<T, Device>::PW_DIAG_THR,
+            DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
+            GlobalV::NPROC_IN_POOL);
+        this->pdiagh->method = this->method;
     }
     else if (this->method == "dav")
     {
@@ -80,13 +111,13 @@ void HSolverPW<T, Device>::initDiagh(const psi::Psi<T, Device>& psi_in)
                 delete (DiagoBPCG<T, Device>*)this->pdiagh;
                 this->pdiagh = new DiagoBPCG<T, Device>(precondition.data());
                 this->pdiagh->method = this->method;
-                reinterpret_cast<DiagoBPCG<T, Device>*>(this->pdiagh)->init_iter(psi_in);
+                reinterpret_cast<DiagoBPCG<T, Device>*>(this->pdiagh)->init_iter(psi);
             }
         }
         else {
             this->pdiagh = new DiagoBPCG<T, Device>(precondition.data());
             this->pdiagh->method = this->method;
-            reinterpret_cast<DiagoBPCG<T, Device>*>(this->pdiagh)->init_iter(psi_in);
+            reinterpret_cast<DiagoBPCG<T, Device>*>(this->pdiagh)->init_iter(psi);
         }
     }
     else
@@ -106,7 +137,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     ModuleBase::timer::tick("HSolverPW", "solve");
     // prepare for the precondition of diagonalization
     this->precondition.resize(psi.get_nbasis());
-
+    this->hamilt_ = pHamilt;
     // select the method of diagonalization
     this->method = method_in;
     this->initDiagh(psi);
@@ -134,27 +165,36 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
             kpt[2] = this->wfc_basis->kvec_c[ik].z;
 
             double ** kpg;
+            double ** gcar;
             kpg = new double*[npw];
+            gcar = new double*[npw];
             for(int ipw=0;ipw<npw;ipw++)
             {
                 kpg[ipw] = new double[3];
                 kpg[ipw][0] = _gk[ipw].x;
                 kpg[ipw][1] = _gk[ipw].y;
                 kpg[ipw][2] = _gk[ipw].z;
+
+                gcar[ipw] = new double[3];
+                gcar[ipw][0] = this->wfc_basis->getgcar(ik,ipw).x;
+                gcar[ipw][1] = this->wfc_basis->getgcar(ik,ipw).y;
+                gcar[ipw][2] = this->wfc_basis->getgcar(ik,ipw).z;
             }
 
-            GlobalC::paw_cell.set_paw_k(npw,kpt,
+            GlobalC::paw_cell.set_paw_k(npw,wfc_basis->npwk_max,kpt,
                 this->wfc_basis->get_ig2ix(ik).data(),
                 this->wfc_basis->get_ig2iy(ik).data(),
                 this->wfc_basis->get_ig2iz(ik).data(),
-                (const double **) kpg,GlobalC::ucell.tpiba);
+                (const double **) kpg,GlobalC::ucell.tpiba,(const double **) gcar);
 
             delete[] kpt;
             for(int ipw = 0; ipw < npw; ipw++)
             {
                 delete[] kpg[ipw];
+                delete[] gcar[ipw];
             }
             delete[] kpg;
+            delete[] gcar;
 
             GlobalC::paw_cell.get_vkb();
 
@@ -217,27 +257,36 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
             kpt[2] = this->wfc_basis->kvec_c[ik].z;
 
             double ** kpg;
+            double ** gcar;
             kpg = new double*[npw];
+            gcar = new double*[npw];
             for(int ipw=0;ipw<npw;ipw++)
             {
                 kpg[ipw] = new double[3];
                 kpg[ipw][0] = _gk[ipw].x;
                 kpg[ipw][1] = _gk[ipw].y;
                 kpg[ipw][2] = _gk[ipw].z;
+
+                gcar[ipw] = new double[3];
+                gcar[ipw][0] = this->wfc_basis->getgcar(ik,ipw).x;
+                gcar[ipw][1] = this->wfc_basis->getgcar(ik,ipw).y;
+                gcar[ipw][2] = this->wfc_basis->getgcar(ik,ipw).z;
             }
 
-            GlobalC::paw_cell.set_paw_k(npw,kpt,
+            GlobalC::paw_cell.set_paw_k(npw,wfc_basis->npwk_max,kpt,
                 this->wfc_basis->get_ig2ix(ik).data(),
                 this->wfc_basis->get_ig2iy(ik).data(),
                 this->wfc_basis->get_ig2iz(ik).data(),
-                (const double **) kpg,GlobalC::ucell.tpiba);
+                (const double **) kpg,GlobalC::ucell.tpiba,(const double **) gcar);
 
             delete[] kpt;
             for(int ipw = 0; ipw < npw; ipw++)
             {
                 delete[] kpg[ipw];
+                delete[] gcar[ipw];
             }
             delete[] kpg;
+            delete[] gcar;
 
             GlobalC::paw_cell.get_vkb();
             
@@ -288,7 +337,7 @@ void HSolverPW<T, Device>::endDiagh()
     // it should be deleted before calculating charge
     if(this->method == "cg")
     {
-        delete (DiagoCG<T, Device>*)this->pdiagh;
+        delete reinterpret_cast<DiagoCG<T, Device>*>(this->pdiagh);
         this->pdiagh = nullptr;
     }
     if(this->method == "dav")
@@ -341,7 +390,65 @@ void HSolverPW<T, Device>::updatePsiK(hamilt::Hamilt<T, Device>* pHamilt,
 template<typename T, typename Device>
 void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::Psi<T, Device>& psi, Real* eigenvalue)
 {
-    this->pdiagh->diag(hm, psi, eigenvalue);
+    if (this->method != "cg") {
+        this->pdiagh->diag(hm, psi, eigenvalue);
+        return;
+    }
+    // warp the hpsi_func and spsi_func into a lambda function
+    using ct_Device = typename ct::PsiToContainer<Device>::type;
+    auto cg = reinterpret_cast<DiagoCG<T, Device>*>(this->pdiagh);
+    // warp the hpsi_func and spsi_func into a lambda function
+    auto ngk_pointer = psi.get_ngk_pointer();
+    auto hpsi_func = [hm, ngk_pointer](const ct::Tensor& psi_in, ct::Tensor& hpsi_out) {
+        ModuleBase::timer::tick("DiagoCG_New", "hpsi_func");
+        // psi_in should be a 2D tensor: 
+        // psi_in.shape() = [nbands, nbasis]
+        const auto ndim = psi_in.shape().ndim();
+        REQUIRES_OK(ndim <= 2, "dims of psi_in should be less than or equal to 2");
+        // Convert a Tensor object to a psi::Psi object
+        auto psi_wrapper = psi::Psi<T, Device>(
+            psi_in.data<T>(), 1, 
+            ndim == 1 ? 1 : psi_in.shape().dim_size(0), 
+            ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1),
+            ngk_pointer);
+        psi::Range all_bands_range(true, psi_wrapper.get_current_k(), 0, psi_wrapper.get_nbands() - 1);
+        using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
+        hpsi_info info(&psi_wrapper, all_bands_range, hpsi_out.data<T>());
+        hm->ops->hPsi(info);
+        ModuleBase::timer::tick("DiagoCG_New", "hpsi_func");
+    };
+    auto spsi_func = [hm](const ct::Tensor& psi_in, ct::Tensor& spsi_out) {
+        ModuleBase::timer::tick("DiagoCG_New", "spsi_func");
+        // psi_in should be a 2D tensor: 
+        // psi_in.shape() = [nbands, nbasis]
+        const auto ndim = psi_in.shape().ndim();
+        REQUIRES_OK(ndim <= 2, "dims of psi_in should be less than or equal to 2");
+        // Convert a Tensor object to a psi::Psi object
+        hm->sPsi(psi_in.data<T>(), spsi_out.data<T>(), 
+            ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1), 
+            ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1), 
+            ndim == 1 ? 1 : psi_in.shape().dim_size(0));
+        ModuleBase::timer::tick("DiagoCG_New", "spsi_func");
+    };
+    auto psi_tensor = ct::TensorMap(
+        psi.get_pointer(), 
+        ct::DataTypeToEnum<T>::value, 
+        ct::DeviceTypeToEnum<ct_Device>::value,
+        ct::TensorShape({psi.get_nbands(), psi.get_nbasis()})).slice({0, 0}, {psi.get_nbands(), psi.get_current_nbas()});
+    auto eigen_tensor = ct::TensorMap(
+        eigenvalue,
+        ct::DataTypeToEnum<Real>::value,
+        ct::DeviceTypeToEnum<ct::DEVICE_CPU>::value,
+        ct::TensorShape({psi.get_nbands()}));
+    auto prec_tensor = ct::TensorMap(
+        precondition.data(),
+        ct::DataTypeToEnum<Real>::value, 
+        ct::DeviceTypeToEnum<ct::DEVICE_CPU>::value,
+        ct::TensorShape({static_cast<int>(precondition.size())})).to_device<ct_Device>().slice({0}, {psi.get_current_nbas()});
+    
+    cg->diag(hpsi_func, spsi_func, psi_tensor, eigen_tensor, prec_tensor);
+    // TODO: Double check tensormap's potential problem
+    ct::TensorMap(psi.get_pointer(), psi_tensor, {psi.get_nbands(), psi.get_nbasis()}).sync(psi_tensor);
 }
 
 template<typename T, typename Device>

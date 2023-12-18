@@ -137,8 +137,7 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
         /// only occupied band should be calculated.
         ///
         int nbands_occ = GlobalV::NBANDS;
-        const double threshold = ModuleBase::threshold_wg * wg(ik, 0);
-        while (std::fabs(wg(ik, nbands_occ - 1)) < threshold)
+        while (wg(ik, nbands_occ - 1) == 0.0)
         {
             nbands_occ--;
             if (nbands_occ == 0)
@@ -301,7 +300,7 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
 	//do symmetry
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
-        p_symm->symmetrize_mat3(sigma, GlobalC::ucell);
+        p_symm->symmetrize_mat3(sigma, GlobalC::ucell.lat);
     } // end symmetry
 
     delete [] h_atom_nh;

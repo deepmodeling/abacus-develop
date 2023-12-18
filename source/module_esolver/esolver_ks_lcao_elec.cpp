@@ -146,7 +146,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
                                                         DM);
     }
     // init density kernel and wave functions.
-    this->LOC.allocate_dm_wfc(this->GridT, this->pelec, this->LOWF, this->psi, this->kv);
+    this->LOC.allocate_dm_wfc(this->GridT, this->pelec, this->LOWF, this->psi, this->kv, istep);
 
     //======================================
     // do the charge extrapolation before the density matrix is regenerated.
@@ -252,6 +252,11 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
                    this->psi,
                    this->pelec);
     }
+    //=========================================================
+    // cal_ux should be called before init_scf because
+    // the direction of ux is used in noncoline_rho
+    //=========================================================
+    if(GlobalV::NSPIN == 4 && GlobalV::DOMAG) GlobalC::ucell.cal_ux();
     ModuleBase::timer::tick("ESolver_KS_LCAO", "beforesolver");
 }
 
@@ -299,7 +304,7 @@ void ESolver_KS_LCAO<TK, TR>::beforescf(int istep)
     Symmetry_rho srho;
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        srho.begin(is, *(this->pelec->charge), this->pw_rho, GlobalC::Pgrid, this->symm);
+        srho.begin(is, *(this->pelec->charge), this->pw_rho, GlobalC::Pgrid, GlobalC::ucell.symm);
     }
 // Peize Lin add 2016-12-03
 #ifdef __EXX
@@ -602,8 +607,8 @@ void ESolver_KS_LCAO<TK, TR>::nscf()
     const Parallel_Orbitals* pv = this->LOWF.ParaV;
     if (GlobalV::deepks_out_labels || GlobalV::deepks_scf)
     {
-        const std::vector<std::vector<TK>>& dm
-            = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMK_vector();
+        const elecstate::DensityMatrix<TK, double>* dm
+            = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
         this->dpks_cal_projected_DM(dm);
         GlobalC::ld.cal_descriptor(); // final descriptor
         GlobalC::ld.cal_gedm(GlobalC::ucell.nat);

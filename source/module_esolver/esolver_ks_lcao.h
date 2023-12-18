@@ -93,7 +93,7 @@ namespace ModuleESolver
         void dftu_cal_occup_m(const int& iter, const std::vector<std::vector<TK>>& dm) const;
 #ifdef __DEEPKS
         void dpks_cal_e_delta_band(const std::vector<std::vector<TK>>& dm) const;
-        void dpks_cal_projected_DM(const std::vector<std::vector<TK>>& dm) const;
+        void dpks_cal_projected_DM(const elecstate::DensityMatrix<TK, double>* dm) const;
 #endif
 
     };

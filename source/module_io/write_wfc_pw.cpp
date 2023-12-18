@@ -104,10 +104,17 @@ void ModuleIO::write_wfc_pw(const std::string& fn,
                             ofs2<<"<Reciprocal Lattice Vector>\n"<<std::endl;
                             ofs2<<"<G vectors>"<<std::endl;
                         }
-                        for (int ig = 0; ig < kv.ngk[ik]; ig++)
+                        for (int igl = 0; igl < wfcpw->npwk[ik]; ++igl)
                         {
-                            ofs2<<std::setw(10)<<wfcpw->getgcar(ik,ig).x<<std::setw(10)<<wfcpw->getgcar(ik,ig).y<<std::setw(10)<<wfcpw->getgcar(ik,ig).z<<std::endl;
-						}
+                            int isz = wfcpw->igl2isz_k[ik * wfcpw->npwk_max + igl];
+                            int iz = isz % wfcpw->nz;
+                            int is = isz / wfcpw->nz;
+                            int ixy = wfcpw->is2fftixy[is];
+                            int ix = ixy / wfcpw->fftny;
+                            int iy = ixy % wfcpw->fftny;
+
+                            ofs2 << std::setw(10) << ix << std::setw(10) << iy << std::setw(10) << iz << std::endl;
+                        }
                         if(id==GlobalV::NPROC_IN_POOL-1)
                         {
                             ofs2<<"<G vectors>\n"<<std::endl;
@@ -128,16 +135,22 @@ void ModuleIO::write_wfc_pw(const std::string& fn,
                         }
                         if(id==0)
                         {
-                            wfs2<<ikngtot*8*3;
+                            wfs2 << ikngtot * 4 * 3;
                         }
-
-                        for (int ig = 0; ig < kv.ngk[ik]; ig++)
+                        for (int igl = 0; igl < wfcpw->npwk[ik]; ++igl)
                         {
-                            wfs2<<wfcpw->getgcar(ik,ig).x<<wfcpw->getgcar(ik,ig).y<<wfcpw->getgcar(ik,ig).z;
-						}
+                            int isz = wfcpw->igl2isz_k[ik * wfcpw->npwk_max + igl];
+                            int iz = isz % wfcpw->nz;
+                            int is = isz / wfcpw->nz;
+                            int ixy = wfcpw->is2fftixy[is];
+                            int ix = ixy / wfcpw->fftny;
+                            int iy = ixy % wfcpw->fftny;
+
+                            wfs2 << ix << iy << iz;
+                        }
                         if(id==GlobalV::NPROC_IN_POOL-1)
                         {
-                            wfs2<<ikngtot*8*3;
+                            wfs2 << ikngtot * 4 * 3;
                         } 
                         wfs2.close();
                     } 
