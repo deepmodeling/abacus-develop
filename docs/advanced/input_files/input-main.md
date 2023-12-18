@@ -955,7 +955,6 @@ calculations.
 ### mixing_type
 
 - **Type**: String
-- **Availability**: `smearing_method` is not `fixed`.
 - **Description**: Charge mixing methods.
   - **plain**: Just simple mixing.
   - **pulay**: Standard Pulay method. [P. Pulay Chemical Physics Letters, (1980)](https://www.sciencedirect.com/science/article/abs/pii/0009261480803964)
@@ -970,20 +969,19 @@ calculations.
 - **Description**: In general, the formula of charge mixing can be written as $\rho_{new} = \rho_{old} + \beta * \rho_{update}$, where $\rho_{new}$ represents the new charge density after charge mixing, $\rho_{old}$ represents the charge density in previous step, $\rho_{update}$ is obtained through various mixing methods, and $\beta$ is set by the parameter `mixing_beta`. A lower value of 'mixing_beta' results in less influence of $\rho_{update}$ on $\rho_{new}$, making the self-consistent field (SCF) calculation more stable. However, it may require more steps to achieve convergence.
 We recommend the following options:
   - **0.8**: `nspin=1`
-  - **0.4**: `nspin=2`
-  - **0.2**: `nspin=4`
+  - **0.4**: `nspin=2` and `nspin=4`
   - **0**: keep charge density unchanged, usually used for restarting with `init_chg=file` or testing.
   - **0.1 or less**: if convergence of SCF calculation is difficult to reach, please try `0 < mixing_beta < 0.1`.
   
   Note: For low-dimensional large systems, the setup of `mixing_beta=0.1`, `mixing_ndim=20`, and `mixing_gg0=1.0` usually works well.
 
-- **Default**: 0.8 for `nspin=1`, 0.4 for `nspin=2`, 0.2 for `nspin=4`.
+- **Default**: 0.8 for `nspin=1`, 0.4 for `nspin=2` and `nspin=4`.
 
 ### mixing_beta_mag
 
 - **Type**: Real
 - **Description**: Mixing parameter of magnetic density.
-- **Default**: `4*mixing_beta`
+- **Default**: `4*mixing_beta`, but the maximum value is 1.6.
 
 ### mixing_ndim
 
