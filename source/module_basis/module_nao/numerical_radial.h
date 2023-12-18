@@ -6,6 +6,7 @@
 #include <memory>
 
 #include "module_base/spherical_bessel_transformer.h"
+#include "module_basis/module_ao/ORB_atomic_lm.h"
 
 /**
  * @brief A class that represents a numerical radial function.
@@ -99,6 +100,13 @@ public:
                const int itype = 0,
                const bool init_sbt = true
     );
+
+    /**
+     * @brief Overwrites the content of a Numerical_Orbital_Lm object with the current object.
+     *
+     * This function provides an interface to the corresponding object in the old module_ao.
+     */
+    void to_numerical_orbital_lm(Numerical_Orbital_Lm& orbital_lm);
 
     /** 
      * @brief Sets a SphericalBesselTransformer.
@@ -345,6 +353,9 @@ private:
      * backward: k to r
      */
     void transform(const bool forward);
+
+    /// Checks whether a grid is uniform.
+    bool is_uniform(const int n, const double* const grid, const double tol) const;
 
     /**
      * @brief Checks whether the given two grids are FFT-compliant.

@@ -23,6 +23,9 @@ using ModuleBase::SphericalBesselTransformer;
  *  - build
  *      - Initializes the object by setting the grid & values in one space.
  *
+ *  - to_numerical_orbital_lm
+ *      - Overwrites the content of a Numerical_Orbital_Lm object with the current object.
+ *
  *  - set_transformer
  *      - Sets a SphericalBesselTransformer for the object.
  *
@@ -527,6 +530,59 @@ TEST_F(NumericalRadialTest, RadialTable)
     }
 
     delete[] table;
+}
+
+TEST_F(NumericalRadialTest, ToNumericalOrbitalLm)
+{
+    /*
+     * Builds a Numerical_Orbital_Lm object from a NumericalRadial object.
+     *                                                                      */
+    int l = 1;
+    double dr = 0.01;
+    int nr = 5000;
+    int pr = 0;
+    int itype = 3;
+    int izeta = 5;
+    std::string symbol = "Au";
+    for (int ir = 0; ir != nr; ++ir)
+    {
+        double r = ir * dr;
+        grid[ir] = r;
+        f[ir] = std::exp(-r);
+    }
+
+    chi.build(l, true, nr, grid, f, pr, izeta, symbol, itype);
+
+    int nk = 1001;
+    double kcut = 30;
+    double dk = kcut / (nk - 1);
+    chi.set_uniform_grid(false, nk, kcut, 't');
+
+    Numerical_Orbital_Lm nol;
+    chi.to_numerical_orbital_lm(nol);
+
+    // check that the orbital_lm has the same values as the chi
+    EXPECT_EQ(nol.getLabel(), symbol);
+    EXPECT_EQ(nol.getType(), itype);
+    EXPECT_EQ(nol.getL(), l);
+    EXPECT_EQ(nol.getChi(), izeta);
+    EXPECT_EQ(nol.getNr(), nr);
+    EXPECT_EQ(nol.getNk(), nk);
+
+    EXPECT_EQ(nol.getRcut(), grid[nr-1]);
+    EXPECT_EQ(nol.getKcut(), kcut);
+
+    EXPECT_EQ(nol.getRadial(111), grid[111]);
+    EXPECT_EQ(nol.getRadial(777), grid[777]);
+    EXPECT_EQ(nol.getKpoint(777), 777 * dk);
+
+    EXPECT_EQ(nol.getRab(123), dr);
+    EXPECT_EQ(nol.getDk(), dk);
+
+    EXPECT_EQ(nol.getPsi(55), f[55]);
+    EXPECT_EQ(nol.getPsi(222), f[222]);
+    EXPECT_EQ(nol.getPsi(3333), f[3333]);
+    // k values may have noticable difference due to algorithmic distinction
 }
 
 int main(int argc, char** argv)
