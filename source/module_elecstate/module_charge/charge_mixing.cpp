@@ -299,13 +299,23 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
 
     std::complex<double>* rhog_in = nullptr;
     std::complex<double>* rhog_out = nullptr;
-    
+
+    //  can choose inner_product_recip_new1 or inner_product_recip_new2
+    //  inner_product_recip_new1 is a simple sum
+    //  inner_product_recip_new2 is a hartree-like sum, unit is Ry
+    auto inner_product_new
+        = std::bind(&Charge_Mixing::inner_product_recip_new2, this, std::placeholders::_1, std::placeholders::_2);
+    auto inner_product_old
+        = std::bind(&Charge_Mixing::inner_product_recip, this, std::placeholders::_1, std::placeholders::_2);
+
     if (GlobalV::NSPIN == 1)
     {
         rhog_in = chr->rhog_save[0];
         rhog_out = chr->rhog[0];    
         auto screen = std::bind(&Charge_Mixing::Kerker_screen_recip_new, this, std::placeholders::_1);
         this->mixing->push_data(this->rho_mdata, rhog_in, rhog_out, screen, true);
+        this->mixing->cal_coef(this->rho_mdata, inner_product_old);
+        this->mixing->mix_data(this->rho_mdata, rhog_out);
     }
     else if (GlobalV::NSPIN == 2)
     {
@@ -334,6 +344,11 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
                   }
               };
         this->mixing->push_data(this->rho_mdata, rhog_in, rhog_out, screen, twobeta_mix, true);
+        this->mixing->cal_coef(this->rho_mdata, inner_product_new);
+        this->mixing->mix_data(this->rho_mdata, rhog_out);
+        // delete
+        chr->get_rhog_from_mag();
+        chr->destroy_rhog_mag();
     }
     else if (GlobalV::NSPIN == 4)
     {
@@ -362,30 +377,8 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
                   }
               };
         this->mixing->push_data(this->rho_mdata, rhog_in, rhog_out, screen, twobeta_mix, true);
-    }
-
-    //  can choose inner_product_recip_new1 or inner_product_recip_new2
-    //  inner_product_recip_new1 is a simple sum
-    //  inner_product_recip_new2 is a hartree-like sum, unit is Ry
-    auto inner_product_new
-        = std::bind(&Charge_Mixing::inner_product_recip_new2, this, std::placeholders::_1, std::placeholders::_2);
-    auto inner_product_old
-        = std::bind(&Charge_Mixing::inner_product_recip, this, std::placeholders::_1, std::placeholders::_2);
-    if (GlobalV::NSPIN == 2)
-    {
-        this->mixing->cal_coef(this->rho_mdata, inner_product_new);
-    }
-    else if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4) // nspin=4 can use old inner_product
-    {
         this->mixing->cal_coef(this->rho_mdata, inner_product_old);
-    }
-
-    this->mixing->mix_data(this->rho_mdata, rhog_out);
-
-    if (GlobalV::NSPIN == 2)
-    {
-        chr->get_rhog_from_mag();
-        chr->destroy_rhog_mag();
+        this->mixing->mix_data(this->rho_mdata, rhog_out);
     }
 
     // rhog to rho
