@@ -441,6 +441,10 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
         rhor_out = chr->rho[0];
         auto screen = std::bind(&Charge_Mixing::Kerker_screen_real, this, std::placeholders::_1);
         this->mixing->push_data(this->rho_mdata, rhor_in, rhor_out, screen, true);    
+        auto inner_product
+            = std::bind(&Charge_Mixing::inner_product_real, this, std::placeholders::_1, std::placeholders::_2);
+        this->mixing->cal_coef(this->rho_mdata, inner_product);
+        this->mixing->mix_data(this->rho_mdata, rhor_out);
     }
     else if (GlobalV::NSPIN == 2)
     {
@@ -469,6 +473,13 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
             }
         };
         this->mixing->push_data(this->rho_mdata, rhor_in, rhor_out, screen, twobeta_mix, true);
+        auto inner_product
+            = std::bind(&Charge_Mixing::inner_product_real, this, std::placeholders::_1, std::placeholders::_2);
+        this->mixing->cal_coef(this->rho_mdata, inner_product);
+        this->mixing->mix_data(this->rho_mdata, rhor_out);
+        // delete
+        chr->get_rho_from_mag();
+        chr->destroy_rho_mag();
     }
     else if (GlobalV::NSPIN == 4)
     {
@@ -497,17 +508,12 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
             }
         };
         this->mixing->push_data(this->rho_mdata, rhor_in, rhor_out, screen, twobeta_mix, true);
+        auto inner_product
+            = std::bind(&Charge_Mixing::inner_product_real, this, std::placeholders::_1, std::placeholders::_2);
+        this->mixing->cal_coef(this->rho_mdata, inner_product);
+        this->mixing->mix_data(this->rho_mdata, rhor_out);
     }
     
-    auto inner_product
-        = std::bind(&Charge_Mixing::inner_product_real, this, std::placeholders::_1, std::placeholders::_2);
-    this->mixing->cal_coef(this->rho_mdata, inner_product);
-    this->mixing->mix_data(this->rho_mdata, rhor_out);
-    if (GlobalV::NSPIN == 2)
-    {
-        chr->get_rho_from_mag();
-        chr->destroy_rho_mag();
-    }
     chr->renormalize_rho();
     double *taur_out, *taur_in;
     if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
