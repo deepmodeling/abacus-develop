@@ -78,14 +78,30 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
     }
 
     if (GlobalV::SCF_THR_TYPE == 1)
-    {
-        this->mixing->init_mixing_data(this->rho_mdata,
-                                       this->rhopw->npw * GlobalV::NSPIN,
-                                       sizeof(std::complex<double>));
+    {  
+        if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0 )
+        {
+            this->mixing->init_mixing_data(this->rho_mdata,
+                                        this->rhopw->npw * 2,
+                                        sizeof(std::complex<double>));
+        }
+        else
+        {
+            this->mixing->init_mixing_data(this->rho_mdata,
+                                        this->rhopw->npw * GlobalV::NSPIN,
+                                        sizeof(std::complex<double>));
+        }
     }
     else
     {
-        this->mixing->init_mixing_data(this->rho_mdata, this->rhopw->nrxx * GlobalV::NSPIN, sizeof(double));
+        if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0 )
+        {
+            this->mixing->init_mixing_data(this->rho_mdata, this->rhopw->nrxx * 2, sizeof(double));
+        }
+        else
+        {
+            this->mixing->init_mixing_data(this->rho_mdata, this->rhopw->nrxx * GlobalV::NSPIN, sizeof(double));
+        }
     }
 
 #ifdef USE_PAW
@@ -481,10 +497,9 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
         chr->get_rho_from_mag();
         chr->destroy_rho_mag();
     }
-    else if (GlobalV::NSPIN == 4)
+    else if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE <= 0)
     {
-        // I do not merge this part with nspin=2 because the method of nspin=2 is almost done,
-        // while nspin=4 is not finished yet. I will try more methods for nspin=4 in the future. 
+        // normal broyden mixing for {rho, mx, my, mz}
         rhor_in = chr->rho_save[0];
         rhor_out = chr->rho[0];
         const int nrxx = this->rhopw->nrxx;
@@ -512,6 +527,67 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
             = std::bind(&Charge_Mixing::inner_product_real, this, std::placeholders::_1, std::placeholders::_2);
         this->mixing->cal_coef(this->rho_mdata, inner_product);
         this->mixing->mix_data(this->rho_mdata, rhor_out);
+    }
+    else if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0)
+    {
+        // special broyden mixing for {rho, |m|} proposed by J. Phys. Soc. Jpn. 82 (2013) 114706
+        // here only consider the case of mixing_angle = 1, which mean only change |m| and keep angle fixed
+        const int nrxx = this->rhopw->nrxx;
+        // allocate memory for rho_magabs and rho_magabs_save
+        double* rho_magabs = new double[nrxx * 2];
+        double* rho_magabs_save = new double[nrxx * 2];
+        ModuleBase::GlobalFunc::ZEROS(rho_magabs, nrxx * 2);
+        ModuleBase::GlobalFunc::ZEROS(rho_magabs_save, nrxx * 2);
+        // calculate rho_magabs and rho_magabs_save
+        for (int ir = 0; ir < nrxx; ir++)
+        {
+            rho_magabs[ir] = chr->rho[0][ir]; // rho
+            rho_magabs_save[ir] = chr->rho_save[0][ir]; // rho_save
+            // |m| for rho
+            rho_magabs[nrxx + ir] = std::sqrt(chr->rho[1][ir] * chr->rho[1][ir] + chr->rho[2][ir] * chr->rho[2][ir] + chr->rho[3][ir] * chr->rho[3][ir]);
+            // |m| for rho_save
+            rho_magabs_save[nrxx + ir] = std::sqrt(chr->rho_save[1][ir] * chr->rho_save[1][ir] + chr->rho_save[2][ir] * chr->rho_save[2][ir] + chr->rho_save[3][ir] * chr->rho_save[3][ir]);
+        }
+        rhor_in = rho_magabs_save;
+        rhor_out = rho_magabs;
+        auto screen = std::bind(&Charge_Mixing::Kerker_screen_real, this, std::placeholders::_1);
+        auto twobeta_mix
+            = [this, nrxx](double* out, const double* in, const double* sres) {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 256)
+#endif
+            for (int i = 0; i < nrxx; ++i)
+            {
+                out[i] = in[i] + this->mixing_beta * sres[i];
+            }
+            // magnetism, |m|
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 256)
+#endif
+            for (int i = nrxx; i < 2 * nrxx; ++i)
+            {
+                out[i] = in[i] + this->mixing_beta_mag * sres[i];
+            }
+        };
+        this->mixing->push_data(this->rho_mdata, rhor_in, rhor_out, screen, twobeta_mix, true);
+        auto inner_product
+            = std::bind(&Charge_Mixing::inner_product_real, this, std::placeholders::_1, std::placeholders::_2);
+        this->mixing->cal_coef(this->rho_mdata, inner_product);
+        this->mixing->mix_data(this->rho_mdata, rhor_out);
+        // use new |m| and angle to update {mx, my, mz}
+        for (int ir = 0; ir < nrxx; ir++)
+        {
+            chr->rho[0][ir] = rho_magabs[ir]; // rho
+            double norm = std::sqrt(chr->rho[1][ir] * chr->rho[1][ir] + chr->rho[2][ir] * chr->rho[2][ir] + chr->rho[3][ir] * chr->rho[3][ir]);
+            if (norm < 1e-10) continue;
+            double rescale_tmp = rho_magabs[nrxx + ir] / norm; 
+            chr->rho[1][ir] *= rescale_tmp;
+            chr->rho[2][ir] *= rescale_tmp;
+            chr->rho[3][ir] *= rescale_tmp;
+        }
+        // delete
+        delete[] rho_magabs;
+        delete[] rho_magabs_save;
     }
     
     chr->renormalize_rho();
@@ -752,9 +828,13 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
 {
     if (this->mixing_gg0 <= 0.0001 || this->mixing_beta <= 0.1)
         return;
-    std::vector<std::complex<double>> drhog(this->rhopw->npw * GlobalV::NSPIN);
-    std::vector<double> drhor_filter(this->rhopw->nrxx * GlobalV::NSPIN);
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    // consider a resize for mixing_angle
+    int resize_tmp = 1;
+    if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0) resize_tmp = 2;
+    //
+    std::vector<std::complex<double>> drhog(this->rhopw->npw * GlobalV::NSPIN / resize_tmp);
+    std::vector<double> drhor_filter(this->rhopw->nrxx * GlobalV::NSPIN / resize_tmp);
+    for (int is = 0; is < GlobalV::NSPIN / resize_tmp; ++is)
     {
         // Note after this process some G which is higher than Gmax will be filtered.
         // Thus we cannot use Kerker_screen_recip(drhog.data()) directly after it.
@@ -762,7 +842,7 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
     }
     // implement Kerker for density and magnetization separately
     double fac, gg0, amin;
-    for (int is = 0; is < GlobalV::NSPIN; is++)
+    for (int is = 0; is < GlobalV::NSPIN / resize_tmp; is++)
     {
 
         if (is >= 1)
@@ -773,6 +853,7 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
                 assert(is == 1); // make sure break works
 #endif
                 double is_mag = GlobalV::NSPIN - 1;
+                if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0) is_mag = 1;
                 for (int ig = 0; ig < this->rhopw->npw * is_mag; ig++)
                 {
                     drhog[is * this->rhopw->npw + ig] = 0;
@@ -806,7 +887,7 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
         }
     }
     // inverse FT
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    for (int is = 0; is < GlobalV::NSPIN / resize_tmp; ++is)
     {
         this->rhopw->recip2real(drhog.data() + is * this->rhopw->npw, drhor_filter.data() + is * this->rhopw->nrxx);
     }
@@ -814,7 +895,7 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
-    for (int ir = 0; ir < this->rhopw->nrxx * GlobalV::NSPIN; ir++)
+    for (int ir = 0; ir < this->rhopw->nrxx * GlobalV::NSPIN / resize_tmp; ir++)
     {
         drhor[ir] -= drhor_filter[ir];
     }
@@ -981,10 +1062,14 @@ double Charge_Mixing::inner_product_recip_new2(std::complex<double>* rhog1, std:
 double Charge_Mixing::inner_product_real(double* rho1, double* rho2)
 {
     double rnorm = 0.0;
+    // consider a resize for mixing_angle
+    int resize_tmp = 1;
+    if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0) resize_tmp = 2;
+
 #ifdef _OPENMP
 #pragma omp parallel for reduction(+ : rnorm)
 #endif
-    for (int ir = 0; ir < this->rhopw->nrxx * GlobalV::NSPIN; ++ir)
+    for (int ir = 0; ir < this->rhopw->nrxx * GlobalV::NSPIN / resize_tmp; ++ir)
     {
         rnorm += rho1[ir] * rho2[ir];
     }
