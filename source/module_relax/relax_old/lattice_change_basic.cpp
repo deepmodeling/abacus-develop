@@ -82,7 +82,7 @@ void Lattice_Change_Basic::change_lattice(UnitCell &ucell, double *move, double 
        "<<std::setprecision(12)<<ucell.latvec.e31<<"   "<<ucell.latvec.e32<<"
        "<<ucell.latvec.e33<<std::endl;
     */
-    if (ModuleSymmetry::Symmetry::symm_flag)
+    if (ModuleSymmetry::Symmetry::symm_flag && ucell.symm.nrotk > 0)
     {
         ModuleBase::matrix move_mat_t(3, 3);
         for (int i = 0;i < 3;++i)for (int j = 0;j < 3;++j)move_mat_t(j, i) = move[i * 3 + j] / ucell.lat0;    //transpose
