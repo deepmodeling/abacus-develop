@@ -350,10 +350,9 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
         chr->get_rhog_from_mag();
         chr->destroy_rhog_mag();
     }
-    else if (GlobalV::NSPIN == 4)
+    else if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE <= 0)
     {
-        // I do not merge this part with nspin=2 because the method of nspin=2 is almost done,
-        // while nspin=4 is not finished yet. I will try more methods for nspin=4 in the future. 
+        // normal broyden mixing for {rho, mx, my, mz}
         rhog_in = chr->rhog_save[0];
         rhog_out = chr->rhog[0];
         const int npw = this->rhopw->npw;
@@ -379,6 +378,68 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
         this->mixing->push_data(this->rho_mdata, rhog_in, rhog_out, screen, twobeta_mix, true);
         this->mixing->cal_coef(this->rho_mdata, inner_product_old);
         this->mixing->mix_data(this->rho_mdata, rhog_out);
+    }
+    else if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0)
+    {
+        // special broyden mixing for {rho, |m|} proposed by J. Phys. Soc. Jpn. 82 (2013) 114706
+        // here only consider the case of mixing_angle = 1, which mean only change |m| and keep angle fixed
+        const int npw = this->rhopw->npw;
+        // allocate memory for rho_magabs and rho_magabs_save
+        std::complex<double>* rhog_magabs = new std::complex<double>[npw * 2];
+        std::complex<double>* rhog_magabs_save = new std::complex<double>[npw * 2];
+        ModuleBase::GlobalFunc::ZEROS(rhog_magabs, npw * 2);
+        ModuleBase::GlobalFunc::ZEROS(rhog_magabs_save, npw * 2);
+        // calculate rho_magabs and rho_magabs_save
+        for (int ig = 0; ig < npw; ig++)
+        {
+            rhog_magabs[ig] = chr->rhog[0][ig]; // rho
+            rhog_magabs_save[ig] = chr->rhog_save[0][ig]; // rho_save
+            // |m| for rho
+            rhog_magabs[npw + ig] = std::sqrt(chr->rhog[1][ig] * chr->rhog[1][ig] + chr->rhog[2][ig] * chr->rhog[2][ig] + chr->rhog[3][ig] * chr->rhog[3][ig]);
+            // |m| for rho_save
+            rhog_magabs_save[npw + ig] = std::sqrt(chr->rhog_save[1][ig] * chr->rhog_save[1][ig] + chr->rhog_save[2][ig] * chr->rhog_save[2][ig] + chr->rhog_save[3][ig] * chr->rhog_save[3][ig]);
+        }
+        //
+        rhog_in = rhog_magabs_save;
+        rhog_out = rhog_magabs;
+        auto screen = std::bind(&Charge_Mixing::Kerker_screen_recip_new, this, std::placeholders::_1); // use old one
+        auto twobeta_mix
+            = [this, npw](std::complex<double>* out, const std::complex<double>* in, const std::complex<double>* sres) {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 256)
+#endif
+                  for (int i = 0; i < npw; ++i)
+                  {
+                      out[i] = in[i] + this->mixing_beta * sres[i];
+                  }
+            // magnetism, |m|
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 256)
+#endif
+                  for (int i = npw; i < 2 * npw; ++i)
+                  {
+                      out[i] = in[i] + this->mixing_beta_mag * sres[i];
+                  }
+              };
+        this->mixing->push_data(this->rho_mdata, rhog_in, rhog_out, screen, twobeta_mix, true);
+        auto inner_product_tmp
+            = std::bind(&Charge_Mixing::inner_product_recip_new1, this, std::placeholders::_1, std::placeholders::_2);
+        this->mixing->cal_coef(this->rho_mdata, inner_product_tmp);
+        this->mixing->mix_data(this->rho_mdata, rhog_out);
+        // use new |m| and angle to update {mx, my, mz}
+        for (int ig = 0; ig < npw; ig++)
+        {
+            chr->rhog[0][ig] = rhog_magabs[ig]; // rhog
+            std::complex<double> norm = std::sqrt(chr->rhog[1][ig] * chr->rhog[1][ig] + chr->rhog[2][ig] * chr->rhog[2][ig] + chr->rhog[3][ig] * chr->rhog[3][ig]);
+            if (abs(norm) < 1e-10) continue;
+            std::complex<double> rescale_tmp = rhog_magabs[npw + ig] / norm; 
+            chr->rhog[1][ig] *= rescale_tmp;
+            chr->rhog[2][ig] *= rescale_tmp;
+            chr->rhog[3][ig] *= rescale_tmp;
+        }
+        // delete
+        delete[] rhog_magabs;
+        delete[] rhog_magabs_save;
     }
 
     // rhog to rho
@@ -776,8 +837,12 @@ void Charge_Mixing::Kerker_screen_recip_new(std::complex<double>* drhog)
         return;
     double fac, gg0, amin;
 
+    // consider a resize for mixing_angle
+    int resize_tmp = 1;
+    if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0) resize_tmp = 2;
+
     // implement Kerker for density and magnetization separately
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    for (int is = 0; is < GlobalV::NSPIN / resize_tmp; ++is)
     {
         // new mixing method only support nspin=2 not nspin=4
         if (is >= 1)
@@ -980,10 +1045,13 @@ double Charge_Mixing::inner_product_recip(std::complex<double>* rho1, std::compl
 double Charge_Mixing::inner_product_recip_new1(std::complex<double>* rho1, std::complex<double>* rho2)
 {
     double rnorm = 0.0;
+    // consider a resize for mixing_angle
+    int resize_tmp = 1;
+    if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0) resize_tmp = 2;
 #ifdef _OPENMP
 #pragma omp parallel for reduction(+ : rnorm)
 #endif
-    for (int ig = 0; ig < this->rhopw->npw * GlobalV::NSPIN; ++ig)
+    for (int ig = 0; ig < this->rhopw->npw * GlobalV::NSPIN / resize_tmp; ++ig)
     {
         rnorm += (conj(rho1[ig]) * rho2[ig]).real();
     }
