@@ -16,13 +16,14 @@ class wavefunc : public WF_atomic
     ~wavefunc();
 
     // allocate memory
-    psi::Psi<std::complex<double>> *allocate(const int nks, const int *ngk, const int npwx);
+    psi::Psi<std::complex<double>>* allocate(const int nkstot, const int nks, const int* ngk, const int npwx);
 
     int out_wfc_pw; //qianrui modify 2020-10-19
     int out_wfc_r=0; // Peize Lin add 2021.11.21
 
     // init_wfc : "random",or "atomic" or "file"
     std::string init_wfc;
+    int nkstot;    // total number of k-points for all pools
     int mem_saver; // 1: save evc when doing nscf calculation.
     void wfcinit(psi::Psi<std::complex<double>>* psi_in, ModulePW::PW_Basis_K* wfc_basis);
     int get_starting_nw(void)const;

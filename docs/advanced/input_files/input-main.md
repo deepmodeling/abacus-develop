@@ -506,7 +506,7 @@ These variables are used to control general system parameters.
   
   - atomic: from atomic pseudo wave functions. If they are not enough, other wave functions are initialized with random numbers.
   - atomic+random: add small random numbers on atomic pseudo-wavefunctions
-  - file: from file
+  - file: from binary files `WAVEFUNC*.dat`, which are output by setting [out_wfc_pw](#out_wfc_pw) to `2`.
   - random: random numbers
   
   with `psi_initializer 1`, two more options are supported:
@@ -520,7 +520,7 @@ These variables are used to control general system parameters.
 - **Description**: This variable is used for both plane wave set and localized orbitals set. It indicates the type of starting density.
 
   - atomic: the density is starting from the summation of the atomic density of single atoms. 
-  - file: the density will be read in from a file. Besides, when you do `nspin=1` calculation, you only need the density file SPIN1_CHG.cube. However, if you do `nspin=2` calculation, you also need the density file SPIN2_CHG.cube. The density file should be output with these names if you set out_chg = 1 in INPUT file.
+  - file: the density will be read in from a binary file `charge-density.dat` first. If it does not exist, the charge density will be read in from cube files. Besides, when you do `nspin=1` calculation, you only need the density file SPIN1_CHG.cube. However, if you do `nspin=2` calculation, you also need the density file SPIN2_CHG.cube. The density file should be output with these names if you set out_chg = 1 in INPUT file.
 - **Default**: atomic
 
 ### init_vel
@@ -941,13 +941,13 @@ calculations.
   - **gauss** or **gaussian**: Gaussian smearing method.
   - **mp**: methfessel-paxton smearing method; recommended for metals.
   - **fd**: Fermi-Dirac smearing method: $f=1/\{1+\exp[(E-\mu)/kT]\}$ and smearing_sigma below is the temperature $T$ (in Ry).
-- **Default**: fixed
+- **Default**: gauss
 
 ### smearing_sigma
 
 - **Type**: Real
 - **Description**: Energy range for smearing.
-- **Default**: 0.01
+- **Default**: 0.015
 - **Unit**: Ry
 
 ### smearing_sigma_temp
@@ -960,7 +960,6 @@ calculations.
 ### mixing_type
 
 - **Type**: String
-- **Availability**: `smearing_method` is not `fixed`.
 - **Description**: Charge mixing methods.
   - **plain**: Just simple mixing.
   - **pulay**: Standard Pulay method. [P. Pulay Chemical Physics Letters, (1980)](https://www.sciencedirect.com/science/article/abs/pii/0009261480803964)
@@ -975,20 +974,19 @@ calculations.
 - **Description**: In general, the formula of charge mixing can be written as $\rho_{new} = \rho_{old} + \beta * \rho_{update}$, where $\rho_{new}$ represents the new charge density after charge mixing, $\rho_{old}$ represents the charge density in previous step, $\rho_{update}$ is obtained through various mixing methods, and $\beta$ is set by the parameter `mixing_beta`. A lower value of 'mixing_beta' results in less influence of $\rho_{update}$ on $\rho_{new}$, making the self-consistent field (SCF) calculation more stable. However, it may require more steps to achieve convergence.
 We recommend the following options:
   - **0.8**: `nspin=1`
-  - **0.4**: `nspin=2`
-  - **0.2**: `nspin=4`
+  - **0.4**: `nspin=2` and `nspin=4`
   - **0**: keep charge density unchanged, usually used for restarting with `init_chg=file` or testing.
   - **0.1 or less**: if convergence of SCF calculation is difficult to reach, please try `0 < mixing_beta < 0.1`.
   
   Note: For low-dimensional large systems, the setup of `mixing_beta=0.1`, `mixing_ndim=20`, and `mixing_gg0=1.0` usually works well.
 
-- **Default**: 0.8 for `nspin=1`, 0.4 for `nspin=2`, 0.2 for `nspin=4`.
+- **Default**: 0.8 for `nspin=1`, 0.4 for `nspin=2` and `nspin=4`.
 
 ### mixing_beta_mag
 
 - **Type**: Real
 - **Description**: Mixing parameter of magnetic density.
-- **Default**: `4*mixing_beta`
+- **Default**: `4*mixing_beta`, but the maximum value is 1.6.
 
 ### mixing_ndim
 

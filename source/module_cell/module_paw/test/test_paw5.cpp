@@ -14,6 +14,8 @@ class Test_PAW_Cell_k : public testing::Test
 TEST_F(Test_PAW_Cell_k, test_paw)
 {
 
+    GlobalV::CAL_FORCE = 1;
+
     int natom = 5;
     int ntypat = 2;
 
@@ -118,7 +120,8 @@ TEST_F(Test_PAW_Cell_k, test_paw)
     paw_cell.set_currentk(0);
     delete[] isk_in;
 
-    paw_cell.set_paw_k(npw, kpt, ig_to_ix, ig_to_iy, ig_to_iz, (const double **) kpg, tpiba);
+    // this is gamma point so gcar = kpg
+    paw_cell.set_paw_k(npw, npw, kpt, ig_to_ix, ig_to_iy, ig_to_iz, (const double **) kpg, tpiba, (const double**) kpg);
 
     delete[] ig_to_ix;
     delete[] ig_to_iy;
@@ -148,8 +151,8 @@ TEST_F(Test_PAW_Cell_k, test_paw)
     }
 
     std::complex<double> *psi;
-    psi = new std::complex<double>[npw];
     const int nband = 6;
+    psi = new std::complex<double>[npw*nband];
     std::vector<double> weight={2,2,2,2,0,0};
 
     std::ifstream ifs_psi("psi.dat");
@@ -159,12 +162,10 @@ TEST_F(Test_PAW_Cell_k, test_paw)
     {
         for(int ipw = 0; ipw < npw; ipw ++)
         {
-            ifs_psi >> psi[ipw];
+            ifs_psi >> psi[iband*npw+ipw];
         }
-        paw_cell.accumulate_rhoij(psi,weight[iband]);
+        paw_cell.accumulate_rhoij(&psi[iband*npw],weight[iband]);
     }
-
-    delete[] psi;
 
     std::vector<std::vector<double>> rhoijp;
     std::vector<std::vector<int>> rhoijselect;
@@ -197,94 +198,97 @@ TEST_F(Test_PAW_Cell_k, test_paw)
         }
     }
 
-/*
-    const int nproj = 8;
-    double** dij;
-    dij = new double*[1];
-    dij[0]=new double[nproj * nproj];
-    for(int i = 0; i < nproj * nproj; i ++)
-    {
-        dij[0][i] = 0.0;
-    }
-    dij[0][0] = 13.407893;
-    dij[0][9] = 0.8201733412;
-    dij[0][18] = 5.491609854;
-    dij[0][27] = 5.491609854;
-    dij[0][36] = 5.491609854;
-    dij[0][45] = 0.59649632;
-    dij[0][54] = 0.59649632;
-    dij[0][63] = 0.59649632;
-
+    //set sij
     std::vector<double> sij;
-    sij.resize(nproj * nproj);
+
+    // C atom
+    sij.resize(64);
     for(int i = 0; i < sij.size(); i ++)
     {
         sij[i] = 0.0;
     }
-    sij[0] = -4.902127221589223E-002;
-    sij[9] = -9.18672607663861;
-    sij[18] = -6.319002149104143E-003;
-    sij[27] = -6.319002149104143E-003;
-    sij[36] = -6.319002149104143E-003;
-    sij[45] = -2.38515151080165;
-    sij[54] = -2.38515151080165;
-    sij[63] = -2.38515151080165;
-    
-    sij[1] = 0.726604973599628;
-    sij[8] = 0.726604973599628;
-    sij[21] = 0.156822922280989;
-    sij[30] = 0.156822922280989;
-    sij[39] = 0.156822922280989;
-    sij[42] = 0.156822922280989;
-    sij[51] = 0.156822922280989;
-    sij[60] = 0.156822922280989;
+    sij[0] = -0.0589997365289;
+    sij[1] = 0.747236491416;
+    sij[8] = 0.747236491416;
+    sij[9] = -9.30610950738;
+    sij[18] = 0.0699425732126;
+    sij[21] = -0.483805550235;
+    sij[27] = 0.0699425732126;
+    sij[30] = -0.483805550235;
+    sij[36] = 0.0699425732126;
+    sij[39] = -0.483805550235;
+    sij[42] = -0.483805550235;
+    sij[45] = 3.20343380497;
+    sij[51] = -0.483805550235;
+    sij[54] = 3.20343380497;
+    sij[60] = -0.483805550235;
+    sij[63] = 3.20343380497;
 
-    for(int iat = 0; iat < nat; iat ++)
+    paw_cell.set_sij(0,sij.data());
+
+    // H atom
+    sij.resize(25);
+    for(int i = 0; i < sij.size(); i ++)
     {
-        paw_cell.set_dij(iat,dij);
+        sij[i] = 0.0;
+    }
+
+    sij[0] = 0.00772422455533;
+    sij[1] = 0.0123172347802;
+    sij[5] = 0.0123172347802;
+    sij[6] = 0.0196386056473;
+    sij[12] = 0.000908274554872;
+    sij[18] = 0.000908274554872;
+    sij[24] = 0.000908274554872;
+
+    for(int iat = 1; iat < nat; iat ++)
+    {
         paw_cell.set_sij(iat,sij.data());
+    }
+
+    // set dij
+    std::ifstream ifs_dij("dij_in.dat");
+    double** dij;
+    dij = new double*[1];
+
+    // C atom
+    dij[0]=new double[64];
+    for(int i = 0; i < 64; i ++)
+    {
+        ifs_dij >> dij[0][i];
+    }
+    paw_cell.set_dij(0,dij);
+    delete[] dij[0];
+
+    dij[0] = new double[25];
+    for(int iat = 1; iat < nat; iat ++)
+    {
+        for(int i = 0; i < 25; i ++)
+        {
+            ifs_dij >> dij[0][i];
+        }
+        paw_cell.set_dij(iat,dij);
     }
     delete[] dij[0];
     delete[] dij;
 
-    psi = new std::complex<double>[npw];
-    std::complex<double> *vnlpsi, *snlpsi;
-    vnlpsi = new std::complex<double>[npw];
-    snlpsi = new std::complex<double>[npw];
+    double force[15];
+    double epsilon[6] = {-1.1820349744334246e+00,-6.1373585531593766e-01,-6.1245076531494447e-01,
+        -6.1185767211855080e-01,-8.1899553911957745e-02,1.7727505277597955e-01};
+    
+    paw_cell.paw_nl_force(psi,epsilon,weight.data(),6,force);
 
-    ifs_psi.clear();
-    ifs_psi.seekg (0, std::ios::beg);
-
-    std::ifstream ifs_vnlpsi("vnlpsi_ref.dat");
-    std::ifstream ifs_snlpsi("snlpsi_ref.dat");
-
-    std::cout << std::setprecision(10);
-    for(int iband = 0; iband < nband; iband ++)
+    double force_ref[15] = {
+        0.00585756099172754,0.00503158883480039,2.0116281335185e-08,
+        -0.0154573057564919,0.0441062361839232,7.31842461588338e-11,
+        -0.0154715252567464,-0.0219321805387927,-0.0380705126948971,
+        -0.0154715261725948,-0.021932181037128,0.0380705141839775,
+        0.0467646730276522,4.17425941637841e-05,6.61390458383683e-11
+    };
+    
+    for(int i = 0; i < 15; i ++)
     {
-        for(int ipw = 0; ipw < npw; ipw ++)
-        {
-            ifs_psi >> psi[ipw];
-            vnlpsi[ipw] = 0.0;
-        }
-
-        paw_cell.paw_nl_psi(0, psi, vnlpsi);
-        paw_cell.paw_nl_psi(1, psi, snlpsi);
-
-        for(int ipw = 0; ipw < npw; ipw ++)
-        {
-            std::complex<double> tmp;
-            ifs_vnlpsi >> tmp;
-            EXPECT_NEAR(tmp.real(),vnlpsi[ipw].real(),1e-8);
-            EXPECT_NEAR(tmp.imag(),vnlpsi[ipw].imag(),1e-8);
-
-            ifs_snlpsi >> tmp;
-            EXPECT_NEAR(tmp.real(),snlpsi[ipw].real(),1e-8);
-            EXPECT_NEAR(tmp.imag(),snlpsi[ipw].imag(),1e-8);
-        }
+        EXPECT_NEAR(force[i],force_ref[i],1e-8);
     }
-
     delete[] psi;
-    delete[] vnlpsi;
-    delete[] snlpsi;
-*/
 }

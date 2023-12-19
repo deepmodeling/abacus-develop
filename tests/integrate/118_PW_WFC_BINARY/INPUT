@@ -2,17 +2,15 @@ INPUT_PARAMETERS
 #Parameters (1.General)
 suffix                  autotest
 calculation             scf
-nbands                  10
+nbands                  8
 symmetry                0
-latname                 bcc
-nspin                   2
+latname                 fcc
 pseudo_dir              ../../PP_ORB
 
 #Parameters (2.Iteration)
-ecutwfc                 8
-ecutrho                 60
+ecutwfc                 30
 scf_thr                 1e-9
-scf_nmax                100
+scf_nmax                4
 
 #Parameters (3.Basis)
 basis_type             pw
@@ -31,4 +29,6 @@ pseudo_rcut            10
 cal_force              1
 cal_stress             1
 
-kpar                   3
+init_chg               file
+init_wfc               file
+read_file_dir          .

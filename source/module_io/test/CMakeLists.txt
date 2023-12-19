@@ -169,3 +169,14 @@ AddTest(
   SOURCES output_radial_test.cpp ../output_radial.cpp
 )
 
+
+AddTest(
+  TARGET read_wfc_pw_test
+  LIBS base ${math_libs} device planewave
+  SOURCES read_wfc_pw_test.cpp ../read_wfc_pw.cpp ../binstream.cpp ../../module_basis/module_pw/test/test_tool.cpp
+)
+
+add_test(NAME read_wfc_pw_test_parallel
+      COMMAND mpirun -np 4 ./read_wfc_pw_test
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
