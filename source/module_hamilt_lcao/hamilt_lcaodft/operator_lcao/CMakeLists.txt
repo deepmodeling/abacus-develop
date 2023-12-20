@@ -10,6 +10,9 @@ add_library(
     ekinetic_new.cpp
     nonlocal_new.cpp
     sc_lambda_lcao.cpp
+        
+    rdmft_test.cpp
+
 )
 
 if(ENABLE_COVERAGE)

@@ -38,6 +38,10 @@
 
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 
+// test RDMFT
+#include <iostream>
+#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/rdmft_test.h"
+
 namespace ModuleESolver
 {
     template <typename TK, typename TR>
@@ -863,6 +867,53 @@ namespace ModuleESolver
     ModuleBase::timer::tick("ESolver_KS_LCAO", "out_deepks_labels");
 
 #endif
+
+
+
+    /******** test RDMFT *********/
+
+    //initialize the gradients of Etotal on wg and wfc, and set all elements to 0. 
+    ModuleBase::matrix E_gradient_wg(this->pelec->wg.nr, this->pelec->wg.nc, true);
+    psi::Psi<TK> E_gradient_wfc(this->psi->get_nk(), this->psi->get_nbands(), this->psi->get_nbasis()); 
+        
+    //initialize E_gradient_wfc to {0.0}
+    TK* pE_gradient_wfc = E_gradient_wfc.get_pointer();
+    #ifdef _OPENMP
+    #pragma omp parallel for schedule(static, 1024)
+    #endif
+    for(int i=0; i<E_gradient_wfc.size(); ++i) pE_gradient_wfc[i] = 0.0;
+
+    // esolver_ks_lcao.h(LCAO_Matrix LM),           LCAO_matrix.h(Parallel_Orbitals* ParaV)
+    // esolver_fp.h(elecstate::ElecState* pelec),   elecstate.h(ModuleBase::matrix wg),      this->pelec->wg
+    // esolver_fp.h(elecstate::ElecState* pelec),   elecstate.h(Charge* charge),             this->pelec->wg
+    // esolver_ks.h(psi::Psi<T>* psi)
+    // esolver_fp.h(K_Vectors kv), kv.kvec_d
+    // esolver_ks_lcao.h(Local_Orbital_Charge LOC)
+    // esolver_ks_lcao.h(LCAO_Hamilt UHM),            LCAO_hamilt.h(Gint_Gamma GG, Gint_k GK), this->UHM.GK    
+    // used for gamma only algorithms, Gint_Gamma GG. for k-dependent grid integration, Gint_k GK;
+
+    //test use dgemm_
+    hamilt::printResult_dgemm();
+
+    double Etotal_RDMFT = hamilt::rdmft_cal<TK,TR>(
+        &LM,
+        LM.ParaV,
+        this->pelec->wg,
+        *(this->psi),
+        E_gradient_wg,
+        E_gradient_wfc,
+        this->kv,
+        this->UHM.GK,
+        this->LOC,
+        *(this->pelec->charge),
+        *(this->pelec->pot)
+    );
+
+
+    /******** test RDMFT *********/
+
+
+
     // 3. some outputs
 #ifdef __EXX
     if (INPUT.rpa)

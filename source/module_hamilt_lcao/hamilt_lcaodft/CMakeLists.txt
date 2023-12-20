@@ -12,6 +12,9 @@ if(ENABLE_LCAO)
         operator_lcao/ekinetic_new.cpp
         operator_lcao/nonlocal_new.cpp
         operator_lcao/sc_lambda_lcao.cpp
+        
+        operator_lcao/rdmft_test.cpp
+        
         FORCE_STRESS.cpp
         FORCE_gamma.cpp
         FORCE_gamma_edm.cpp

@@ -19,3 +19,6 @@ dist
 .idea
 toolchain.tar.gz
 time.json
+
+job.err
+

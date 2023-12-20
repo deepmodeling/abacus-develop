@@ -10,7 +10,7 @@
 find_path(ELPA_INCLUDE_DIR
     elpa/elpa.h
     HINTS ${ELPA_DIR}
-    PATH_SUFFIXES "include" "include/elpa"
+    PATH_SUFFIXES "include" "include/elpa" "include/elpa_openmp-2021.11.001"
     )
 if(USE_OPENMP)
     find_library(ELPA_LIBRARY
