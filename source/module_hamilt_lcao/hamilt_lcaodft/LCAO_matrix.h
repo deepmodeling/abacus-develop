@@ -228,4 +228,6 @@ private:
 
 };
 
+#include "LCAO_matrix.hpp"
+
 #endif

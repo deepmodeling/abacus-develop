@@ -726,6 +726,7 @@ TEST_F(write_input, BerryWannier17)
                 testing::HasSubstr("nnkpfile                       seedname.nnkp #the wannier90 code nnkp file name"));
     EXPECT_THAT(output,
                 testing::HasSubstr("wannier_spin                   up #calculate spin in wannier90 code interface"));
+    EXPECT_THAT(output, testing::HasSubstr("wannier_method                 1 #different implementation methods under Lcao basis set"));
     EXPECT_THAT(output, testing::HasSubstr("out_wannier_mmn                1 #output .mmn file or not"));
     EXPECT_THAT(output, testing::HasSubstr("out_wannier_amn                1 #output .amn file or not"));
     EXPECT_THAT(output, testing::HasSubstr("out_wannier_unk                1 #output UNK. file or not"));

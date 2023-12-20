@@ -443,6 +443,10 @@ bool input_parameters_set(std::map<std::string, InputParameter> input_parameters
     {
         INPUT.wannier_spin = static_cast<SimpleString*>(input_parameters["wannier_spin"].get())->c_str();
     }
+    else if (input_parameters.count("wannier_method") != 0)
+    {
+        INPUT.wannier_method = *static_cast<int*>(input_parameters["wannier_method"].get());
+    }
     else if (input_parameters.count("out_wannier_mmn") != 0)
     {
         INPUT.out_wannier_mmn = *static_cast<bool*>(input_parameters["out_wannier_mmn"].get());

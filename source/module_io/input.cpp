@@ -183,6 +183,7 @@ void Input::Default(void)
     towannier90 = false;
     nnkpfile = "seedname.nnkp";
     wannier_spin = "up";
+    wannier_method = 1;
     out_wannier_amn = true;
     out_wannier_eig = true;
     out_wannier_mmn = true;
@@ -854,6 +855,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("wannier_spin", word) == 0) // add by jingan for wannier90
         {
             read_value(ifs, wannier_spin);
+        }
+        else if (strcmp("wannier_method", word) == 0) // add by jingan for wannier90
+        {
+            read_value(ifs, wannier_method);
         }
         else if (strcmp("out_wannier_mmn", word) == 0) // add by renxi for wannier90
         {
@@ -3070,6 +3075,7 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(towannier90);
     Parallel_Common::bcast_string(nnkpfile);
     Parallel_Common::bcast_string(wannier_spin);
+    Parallel_Common::bcast_int(wannier_method);
     Parallel_Common::bcast_bool(out_wannier_mmn);
     Parallel_Common::bcast_bool(out_wannier_amn);
     Parallel_Common::bcast_bool(out_wannier_unk);
