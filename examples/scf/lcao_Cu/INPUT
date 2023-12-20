@@ -7,8 +7,10 @@ calculation	scf
 ecutwfc		100
 scf_thr		1.0e-8
 scf_nmax	100
+
 smearing_method	gaussian
 smearing_sigma	0.02
+
 mixing_type	broyden
 mixing_beta	0.4
 
