@@ -68,6 +68,7 @@ TEST_F(InputTest, Default)
         EXPECT_FALSE(INPUT.towannier90);
         EXPECT_EQ(INPUT.nnkpfile,"seedname.nnkp");
         EXPECT_EQ(INPUT.wannier_spin,"up");
+        EXPECT_EQ(INPUT.wannier_method,1);
 		EXPECT_TRUE(INPUT.out_wannier_amn);
 		EXPECT_TRUE(INPUT.out_wannier_mmn);
 		EXPECT_TRUE(INPUT.out_wannier_unk);
@@ -427,6 +428,7 @@ TEST_F(InputTest, Read)
         EXPECT_FALSE(INPUT.towannier90);
         EXPECT_EQ(INPUT.nnkpfile,"seedname.nnkp");
         EXPECT_EQ(INPUT.wannier_spin,"up");
+        EXPECT_EQ(INPUT.wannier_method,1);
 		EXPECT_TRUE(INPUT.out_wannier_amn);
 		EXPECT_TRUE(INPUT.out_wannier_mmn);
 		EXPECT_TRUE(INPUT.out_wannier_unk);

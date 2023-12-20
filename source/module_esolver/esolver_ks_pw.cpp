@@ -32,7 +32,7 @@
 #include "module_io/numerical_descriptor.h"
 #include "module_io/rho_io.h"
 #include "module_io/potential_io.h"
-#include "module_io/to_wannier90.h"
+#include "module_io/to_wannier90_pw.h"
 #include "module_io/winput.h"
 #include "module_io/write_wfc_r.h"
 #include "module_psi/kernels/device.h"
@@ -1108,8 +1108,17 @@ void ESolver_KS_PW<T, Device>::nscf()
     // add by jingan in 2018.11.7
     if (INPUT.towannier90)
     {
-        toWannier90 myWannier(this->kv.nkstot, GlobalC::ucell.G);
-        myWannier.init_wannier_pw(INPUT.out_wannier_mmn, INPUT.out_wannier_amn, INPUT.out_wannier_unk, INPUT.out_wannier_eig, INPUT.out_wannier_wvfn_formatted, this->pelec->ekb, this->pw_wfc, this->pw_big, this->kv, this->psi);
+        toWannier90_PW myWannier(
+            INPUT.out_wannier_mmn,
+            INPUT.out_wannier_amn,
+            INPUT.out_wannier_unk, 
+            INPUT.out_wannier_eig,
+            INPUT.out_wannier_wvfn_formatted, 
+            INPUT.nnkpfile,
+            INPUT.wannier_spin
+        );
+
+        myWannier.calculate(this->pelec->ekb, this->pw_wfc, this->pw_big, this->kv, this->psi);
     }
 
     //=======================================================
