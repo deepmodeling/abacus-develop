@@ -294,7 +294,6 @@ void psiDotPsi(const Parallel_Orbitals* ParaV, const Parallel_2D& para_wfc_in, c
         }
     }
 
-
 }
 
 template <>
