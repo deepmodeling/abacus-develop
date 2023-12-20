@@ -383,22 +383,35 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
     {
         // special broyden mixing for {rho, |m|} proposed by J. Phys. Soc. Jpn. 82 (2013) 114706
         // here only consider the case of mixing_angle = 1, which mean only change |m| and keep angle fixed
-        const int npw = this->rhopw->npw;
         // allocate memory for rho_magabs and rho_magabs_save
+        const int nrxx = this->rhopw->nrxx;
+        double* rho_magabs = new double[nrxx];
+        double* rho_magabs_save = new double[nrxx];
+        ModuleBase::GlobalFunc::ZEROS(rho_magabs, nrxx);
+        ModuleBase::GlobalFunc::ZEROS(rho_magabs_save, nrxx);
+        // calculate rho_magabs and rho_magabs_save
+        for (int ir = 0; ir < nrxx; ir++)
+        {
+            // |m| for rho
+            rho_magabs[ir] = std::sqrt(chr->rho[1][ir] * chr->rho[1][ir] + chr->rho[2][ir] * chr->rho[2][ir] + chr->rho[3][ir] * chr->rho[3][ir]);
+            // |m| for rho_save
+            rho_magabs_save[ir] = std::sqrt(chr->rho_save[1][ir] * chr->rho_save[1][ir] + chr->rho_save[2][ir] * chr->rho_save[2][ir] + chr->rho_save[3][ir] * chr->rho_save[3][ir]);
+        }
+        // allocate memory for rhog_magabs and rhog_magabs_save
+        const int npw = this->rhopw->npw;
         std::complex<double>* rhog_magabs = new std::complex<double>[npw * 2];
         std::complex<double>* rhog_magabs_save = new std::complex<double>[npw * 2];
         ModuleBase::GlobalFunc::ZEROS(rhog_magabs, npw * 2);
         ModuleBase::GlobalFunc::ZEROS(rhog_magabs_save, npw * 2);
-        // calculate rho_magabs and rho_magabs_save
+        // calculate rhog_magabs and rhog_magabs_save
         for (int ig = 0; ig < npw; ig++)
         {
             rhog_magabs[ig] = chr->rhog[0][ig]; // rho
             rhog_magabs_save[ig] = chr->rhog_save[0][ig]; // rho_save
-            // |m| for rho
-            rhog_magabs[npw + ig] = std::sqrt(chr->rhog[1][ig] * chr->rhog[1][ig] + chr->rhog[2][ig] * chr->rhog[2][ig] + chr->rhog[3][ig] * chr->rhog[3][ig]);
-            // |m| for rho_save
-            rhog_magabs_save[npw + ig] = std::sqrt(chr->rhog_save[1][ig] * chr->rhog_save[1][ig] + chr->rhog_save[2][ig] * chr->rhog_save[2][ig] + chr->rhog_save[3][ig] * chr->rhog_save[3][ig]);
         }
+        // FT to get rhog_magabs and rhog_magabs_save
+        this->rhopw->real2recip(rho_magabs, rhog_magabs + this->rhopw->npw);
+        this->rhopw->real2recip(rho_magabs_save, rhog_magabs_save + this->rhopw->npw);
         //
         rhog_in = rhog_magabs_save;
         rhog_out = rhog_magabs;
@@ -423,29 +436,40 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
               };
         this->mixing->push_data(this->rho_mdata, rhog_in, rhog_out, screen, twobeta_mix, true);
         auto inner_product_tmp
-            = std::bind(&Charge_Mixing::inner_product_recip_new1, this, std::placeholders::_1, std::placeholders::_2);
+            = std::bind(&Charge_Mixing::inner_product_recip_new2, this, std::placeholders::_1, std::placeholders::_2);
         this->mixing->cal_coef(this->rho_mdata, inner_product_tmp);
         this->mixing->mix_data(this->rho_mdata, rhog_out);
+        // get new |m| in real space using FT
+        this->rhopw->recip2real(rhog_magabs + this->rhopw->npw, rho_magabs);
         // use new |m| and angle to update {mx, my, mz}
         for (int ig = 0; ig < npw; ig++)
         {
             chr->rhog[0][ig] = rhog_magabs[ig]; // rhog
-            std::complex<double> norm = std::sqrt(chr->rhog[1][ig] * chr->rhog[1][ig] + chr->rhog[2][ig] * chr->rhog[2][ig] + chr->rhog[3][ig] * chr->rhog[3][ig]);
+            double norm = std::sqrt(chr->rho[1][ig] * chr->rho[1][ig] + chr->rho[2][ig] * chr->rho[2][ig] + chr->rho[3][ig] * chr->rho[3][ig]);
             if (abs(norm) < 1e-10) continue;
-            std::complex<double> rescale_tmp = rhog_magabs[npw + ig] / norm; 
-            chr->rhog[1][ig] *= rescale_tmp;
-            chr->rhog[2][ig] *= rescale_tmp;
-            chr->rhog[3][ig] *= rescale_tmp;
+            double rescale_tmp = rho_magabs[npw + ig] / norm; 
+            chr->rho[1][ig] *= rescale_tmp;
+            chr->rho[2][ig] *= rescale_tmp;
+            chr->rho[3][ig] *= rescale_tmp;
         }
         // delete
         delete[] rhog_magabs;
         delete[] rhog_magabs_save;
+        delete[] rho_magabs;
+        delete[] rho_magabs_save;
     }
 
     // rhog to rho
-    for (int is = 0; is < GlobalV::NSPIN; is++)
+    if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0)
     {
-        chr->rhopw->recip2real(chr->rhog[is], chr->rho[is]);
+        chr->rhopw->recip2real(chr->rhog[0], chr->rho[0]);
+    }
+    else
+    {
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            chr->rhopw->recip2real(chr->rhog[is], chr->rho[is]);
+        }
     }
 
     // renormalize rho in R-space would induce a error in K-space
@@ -1069,6 +1093,8 @@ double Charge_Mixing::inner_product_recip_new2(std::complex<double>* rhog1, std:
 
     double sum = 0.0;
 
+    if (GlobalV::NSPIN==2)
+    {
 #ifdef _OPENMP
 #pragma omp parallel for reduction(+ : sum)
 #endif
@@ -1110,7 +1136,58 @@ double Charge_Mixing::inner_product_recip_new2(std::complex<double>* rhog1, std:
         // std::cout << " sum=" << sum << " mag=" << mag << std::endl;
         sum2 += mag;
         sum += sum2;
-
+    }
+    else if (GlobalV::NSPIN==4 && GlobalV::MIXING_ANGLE > 0)
+    {
+        if (!GlobalV::DOMAG && !GlobalV::DOMAG_Z)
+        {
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+ : sum)
+#endif
+            for (int ig = 0; ig < this->rhopw->npw; ++ig)
+            {
+                if (this->rhopw->gg[ig] < 1e-8)
+                    continue;
+                sum += (conj(rhog1[ig]) * rhog2[ig]).real() / this->rhopw->gg[ig];
+            }
+            sum *= fac;
+        }
+        else
+        {
+            // another part with magnetization
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+ : sum)
+#endif
+            for (int ig = 0; ig < this->rhopw->npw; ig++)
+            {
+                if (ig == this->rhopw->ig_gge0)
+                    continue;
+                sum += (conj(rhog1[ig]) * rhog2[ig]).real() / this->rhopw->gg[ig];
+            }
+            sum *= fac;
+            const int ig0 = this->rhopw->ig_gge0;
+            if (ig0 > 0)
+            {
+                sum += fac2
+                       * ((conj(rhog1[ig0 + this->rhopw->npw]) * rhog2[ig0 + this->rhopw->npw]).real());
+            }
+            double fac3 = fac2;
+            if (GlobalV::GAMMA_ONLY_PW)
+            {
+                fac3 *= 2.0;
+            }
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+ : sum)
+#endif
+            for (int ig = 0; ig < this->rhopw->npw; ig++)
+            {
+                if (ig == ig0)
+                    continue;
+                sum += fac3
+                       * ((conj(rhog1[ig + this->rhopw->npw]) * rhog2[ig + this->rhopw->npw]).real());
+            }
+        }
+    }
 #ifdef __MPI
     Parallel_Reduce::reduce_pool(sum);
 #endif
