@@ -8,6 +8,7 @@
 
 #include "module_base/constants.h"
 #include "module_base/cubic_spline.h"
+#include "module_base/global_variable.h"
 #include "module_base/math_integral.h"
 #include "module_base/spherical_bessel_transformer.h"
 
@@ -146,6 +147,27 @@ void NumericalRadial::build(const int l,
         std::memcpy(kvalue_, value, nk_ * sizeof(double));
     }
 
+}
+
+void NumericalRadial::to_numerical_orbital_lm(Numerical_Orbital_Lm& orbital_lm)
+{
+#ifdef __DEBUG
+    assert(rgrid_ && kgrid_);
+    assert(rgrid_[0] == 0.0 && kgrid_[0] == 0.0);
+    assert(is_uniform(nr_, rgrid_, 1e-14) && is_uniform(nk_, kgrid_, 1e-14));
+
+    // Numerical_Orbital_Lm does not extra exponent in the real space value
+    assert(pr_ == 0);
+#endif
+
+    double dr = rgrid_[1] - rgrid_[0];
+    double dk = kgrid_[1] - kgrid_[0];
+    double* rab = new double[nr_];
+    std::fill(rab, rab + nr_, dr);
+
+    orbital_lm.set_orbital_info(symbol_, itype_, l_, izeta_, nr_, rab, rgrid_,
+            Numerical_Orbital_Lm::Psi_Type::Psi, rvalue_, nk_, dk, 0.001,
+            GlobalV::out_element_info, true, GlobalV::CAL_FORCE);
 }
 
 void NumericalRadial::set_transformer(ModuleBase::SphericalBesselTransformer sbt, int update)
@@ -435,6 +457,12 @@ void NumericalRadial::transform(const bool forward)
     }
 }
 
+bool NumericalRadial::is_uniform(const int n, const double* const x, const double tol) const
+{
+    double dx = (x[n - 1] - x[0]) / (n - 1);
+    return std::all_of(x, x + n, [&](const double& xi) { return std::abs(x[0] + (&xi - x) * dx - xi) < tol; });
+}
+
 bool NumericalRadial::is_fft_compliant(const int nr,
                                        const double* const rgrid,
                                        const int nk,
@@ -450,6 +478,6 @@ bool NumericalRadial::is_fft_compliant(const int nr,
     double tol = 4.0 * std::numeric_limits<double>::epsilon();
 
     return std::abs(dr * dk - PI / (nr - 1)) < tol
-           && std::all_of(rgrid, rgrid + nr, [&](const double& r) { return std::abs(r - (&r - rgrid) * dr) < tol; })
-           && std::all_of(kgrid, kgrid + nk, [&](const double& k) { return std::abs(k - (&k - kgrid) * dk) < tol; });
+           && rgrid[0] == 0.0 && is_uniform(nr, rgrid, tol)
+           && kgrid[0] == 0.0 && is_uniform(nk, kgrid, tol);
 }
