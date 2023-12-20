@@ -891,6 +891,9 @@ namespace ModuleESolver
     // esolver_ks_lcao.h(Local_Orbital_Charge LOC)
     // esolver_ks_lcao.h(LCAO_Hamilt UHM),            LCAO_hamilt.h(Gint_Gamma GG, Gint_k GK), this->UHM.GK    
     // used for gamma only algorithms, Gint_Gamma GG. for k-dependent grid integration, Gint_k GK;
+    // esolver_fp.h(ModulePW::PW_Basis* pw_rho, ModulePW::PW_Basis* pw_rhod), this->pw_rho
+    // GlobalC::ppcell.vloc(ModuleBase::matrix vloc), 
+    // esolver_fp.h(Structure_Factor sf), structure_factor.h(ModuleBase::ComplexMatrix strucFac), this->sf.strucFac
 
     //test use dgemm_
     hamilt::printResult_dgemm();
@@ -906,8 +909,12 @@ namespace ModuleESolver
         this->UHM.GK,
         this->LOC,
         *(this->pelec->charge),
-        *(this->pelec->pot)
+        *(this->pelec->pot),
+        *(this->pw_rho),
+        GlobalC::ppcell.vloc,
+        this->sf.strucFac
     );
+
 
 
     /******** test RDMFT *********/

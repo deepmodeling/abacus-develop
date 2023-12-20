@@ -4,6 +4,7 @@
 #include "module_base/scalapack_connector.h"
 #include "module_base/timer.h"
 #include "module_psi/psi.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 // #include "module_elecstate/module_dm/density_matrix.h"
@@ -21,6 +22,10 @@
 //#include "module_base/timer.h"
 #include "module_base/tool_title.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
+#include "module_elecstate/potentials/H_Hartree_pw.h"
+#include "module_elecstate/potentials/pot_local.h"
+#include "module_elecstate/potentials/pot_xc.h"
+#include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 
 // for test use dgemm_
 #include "module_base/matrix.h"
@@ -148,8 +153,15 @@ void Veff_rdmft<TK, TR>::contributeHR()
         this->GK->cal_gint(&inout);
     }
 
+    // PotHartree sd;
     // added by zhengdy-soc, for non-collinear case
     // integral 4 times, is there any method to simplify?
+    ModuleBase::matrix v_matrix(GlobalV::NSPIN, charge_->nrxx);
+    // PotHartree potH();
+    // PotLocal potL();
+    // PotXC potXC();
+
+
     if (GlobalV::NSPIN == 4)
     {
         for (int is = 1; is < 4; is++)
@@ -174,6 +186,29 @@ void Veff_rdmft<TK, TR>::contributeHR()
     }
 
     this->GK->transfer_pvpR(this->hR);
+
+
+
+    ModuleBase::TITLE("Veff", "contributeHR");
+    ModuleBase::timer::tick("Veff", "contributeHR");
+
+    // if(potential)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     ModuleBase::timer::tick("Veff", "contributeHR");
     return;

@@ -32,6 +32,10 @@
 //#include "operator_lcao.h"
 //#include "module_cell/module_neighbor/sltk_grid_driver.h"
 //#include "module_cell/unitcell.h"
+#include "module_elecstate/potentials/H_Hartree_pw.h"
+#include "module_elecstate/potentials/pot_local.h"
+#include "module_elecstate/potentials/pot_xc.h"
+#include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 
 
 #include <iostream>
@@ -91,14 +95,19 @@ class Veff_rdmft : public OperatorLCAO<TK, TR>
                       LCAO_Matrix* LM_in,
                       const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
                       elecstate::Potential* pot_in,
+                      const Charge* charge_in,
                       hamilt::HContainer<TR>* hR_in,
                       std::vector<TK>* hK_in,
                       const UnitCell* ucell_in,
                       Grid_Driver* GridD_in,
-                      const Parallel_Orbitals* paraV)
+                      const Parallel_Orbitals* paraV,
+                      std::vector<std::string>& potential_in)
         : GK(GK_in),
           loc(loc_in),
           pot(pot_in),
+          charge_(charge_in),
+          ucell_(ucell_in),
+          potential(potential_in),
           OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in)
     {
         this->cal_type = lcao_gint;
@@ -111,13 +120,15 @@ class Veff_rdmft : public OperatorLCAO<TK, TR>
                           LCAO_Matrix* LM_in,
                           const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
                           elecstate::Potential* pot_in,
+                          const Charge* charge_in,
                           hamilt::HContainer<TR>* hR_in,
                           std::vector<TK>* hK_in,
                           const UnitCell* ucell_in,
                           Grid_Driver* GridD_in,
-                          const Parallel_Orbitals* paraV
+                          const Parallel_Orbitals* paraV,
+                          std::vector<std::string>& potential_in
                           )
-        : GG(GG_in), loc(loc_in), pot(pot_in),
+        : GG(GG_in), loc(loc_in), pot(pot_in),charge_(charge_in),ucell_(ucell_in),potential(potential_in),
         OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in)
     {
         this->cal_type = lcao_gint;
@@ -143,6 +154,12 @@ class Veff_rdmft : public OperatorLCAO<TK, TR>
     Local_Orbital_Charge* loc = nullptr;
 
     elecstate::Potential* pot = nullptr;
+
+    const UnitCell* ucell_;
+
+    const Charge* charge_;
+
+    std::vector<std::string> potential;
 
     /**
      * @brief initialize HR, search the nearest neighbor atoms
@@ -382,7 +399,10 @@ double rdmft_cal(LCAO_Matrix* LM_in,
                         Gint_k& GK_in,
                         Local_Orbital_Charge& loc_in,
                         const Charge& chg,
-                        elecstate::Potential& pot_in)  // delete pot_in parameter later
+                        elecstate::Potential& pot_in,
+                        const ModulePW::PW_Basis& rho_basis_in,
+                        const ModuleBase::matrix& vloc_in,
+                        const ModuleBase::ComplexMatrix& sf_in)  // delete pot_in parameter later
 {
     ModuleBase::TITLE("hamilt_lcao", "RDMFT_E&Egradient");
     ModuleBase::timer::tick("hamilt_lcao", "RDMFT_E&Egradient");
