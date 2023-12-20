@@ -1,3 +1,9 @@
+# Locally modified version
+
+This is a locally modified version of ABACUS for RDMFT calculations.
+
+Currently jghan has added some code.
+
 <p align="center">
     <img src="docs/abacus-logo.svg">
 </p>
