@@ -79,9 +79,10 @@ class ESolver_SDFT_PW : public ESolver_KS_PW<std::complex<double>>
      * @param dt t step
      * @param nbatch number of t batch
      * @param cond_thr threshold of errors for conductivities
+     * @param nche_min minimum N order of Chebyshev
      * @return N order of Chebyshev
      */
-    int set_cond_nche(const double dt, int& nbatch, const double cond_thr);
+    int set_cond_nche(const double dt, int& nbatch, const double cond_thr, const int& nche_min);
 
     /**
      * @brief calculate Jmatrix  <leftv|J|rightv>
