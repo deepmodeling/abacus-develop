@@ -47,14 +47,21 @@ class toQO
     public:
         toQO(std::string qo_basis, std::string strategy = "minimal");
         ~toQO();
-        // ----
-        // main functions, implemented in to_qo.cpp
-        // ----
+
+        /*
+         *  Initialization
+        */
         /// @brief initialize the QO class
         /// @param p_ucell interface (raw pointer) to the unitcell
         /// @param nkpts number of kpoints
         void initialize(UnitCell* p_ucell,
                         const std::vector<ModuleBase::Vector3<double>>& kvecs_d);
+        /// @brief to get rid of direct use of UnitCell
+        /// @param p_ucell 
+        void unwrap_unitcell(UnitCell* p_ucell);
+        /*
+         *  Two center integrator interfaces
+        */
         /// @brief build RadialCollection for numerical atomic orbitals
         /// @param ntype number of atom types
         /// @param orbital_fn filenames of numerical atomic orbitals
@@ -64,8 +71,18 @@ class toQO
         /// @param charges charges of atoms
         /// @param nmax maximum principle quantum number of atoms
         void build_hydrogen(const int ntype, const double* const charges, const int* const nmax);
+        /// @brief build RadialCollection for atomic orbitals
+        /// @param ntype number of atom types
+        /// @param pspot_fn filenames of pseudopotentials
+        /// @param screening_coeffs screening coefficients of pseudopotentials, appears like a factor (exp[-s*r]) scaling the pswfc
         void build_pswfc(const int ntype, const std::string* const pspot_fn, const double* const screening_coeffs);
+        /// @brief build RadialCollection for atomic orbitals
+        /// @param ntype number of atom types
+        /// @param pspot_fn filenames of pseudopotentials, if use qo_basis = hydrogen, omit this parameter
         void build_ao(const int ntype, const std::string* const pspot_fn = nullptr);
+        /*
+         *   Main functions
+        */
         /// @brief calculate the overlap between atomic orbitals and numerical atomic orbitals, in real space, at R[iR]
         /// @param iR index of supercell vector
         /// @note to save memory, the workflow can be organized as, once one S(R) is calculated, fold it to S(k), then clean up S(R)...
@@ -81,18 +98,6 @@ class toQO
         /// @param filename filename to write
         template <typename T>
         void write_ovlp(const std::vector<std::vector<T>>& matrix, std::string filename);
-
-        /// @brief to get rid of direct use of UnitCell
-        /// @param p_ucell 
-        void unwrap_unitcell(UnitCell* p_ucell);
-        // ----
-        // tool functions, implemented in to_qo_tools.cpp
-        // ----
-
-        /// @brief calculate vectors connecting all atom pairs that needed to calculate their overlap
-        ModuleBase::Vector3<double> cal_two_center_vector(ModuleBase::Vector3<double> rij,
-                                                          ModuleBase::Vector3<int> R);
-
         /*
             Neighboring list searching algorithm (not implemented yet)
 
@@ -120,6 +125,9 @@ class toQO
             A diagonalization of third order matrix of coefficients of ninj can transform the targeting function
             to a translated sphere, then translate it back to origin. Then it will be a 2d scan (phi, theta).
         */
+        /// @brief calculate vectors connecting all atom pairs that needed to calculate their overlap
+        ModuleBase::Vector3<double> cal_two_center_vector(ModuleBase::Vector3<double> rij,
+                                                          ModuleBase::Vector3<int> R);
         /// @brief this is a basic functional for scanning (ijR) pair for one certain i, return Rs
         /// @attention an algorithm loop over (i,)j,R
         /// @param it type of atom i
@@ -129,9 +137,13 @@ class toQO
         /// @param rcut cutoff radius of numerical atomic orbital of atom i
         /// @return a vector collects (n1, n2, n3) for present atom
         std::vector<ModuleBase::Vector3<int>> scan_supercell_for_atom(int it, int ia, int start_it = 0, int start_ia = 0);
-
+        /// @brief core algorithm to scan supercells, find the maximal supercell according to present cutoff radius
+        /// @param rcut sum of cutoff radius of orbitals of atom i and atom j
+        /// @param a cell vector a (in Bohr)
+        /// @param b cell vector b (in Bohr)
+        /// @param c cell vector c (in Bohr)
+        /// @return a vector of (n1n2n3) defining supercell
         std::vector<int> rcut_to_supercell_index(double rcut, ModuleBase::Vector3<double> a, ModuleBase::Vector3<double> b, ModuleBase::Vector3<double> c);
-
         /// @brief get vector squared norm in supercell
         /// @param rij rij in unitcell
         /// @param n1 supercell index 1
@@ -139,15 +151,25 @@ class toQO
         /// @param n3 supercell index 3
         /// @return (rij + n1R1 + n2R2 + n3R3)^2
         double norm2_rij_supercell(ModuleBase::Vector3<double> rij, int n1, int n2, int n3);
-        
         /// @brief get all possible (n1n2n3) defining supercell
         /// @return a vector of (n1n2n3)
         void scan_supercell();
-
+        /// @brief eliminate duplicate vectors in a vector of vector3
+        /// @tparam T type of vector3
+        /// @param vector3s vector of vector3, both input and output
+        template <typename T>
+        void eliminate_duplicate_vector3(std::vector<ModuleBase::Vector3<T>>& vector3s);
+        /*
+            Data management
+        */
+        /// @brief clean up ovlp_ao_nao_R_ or ovlp_ao_nao_k_
+        /// @param is_R true for ovlp_ao_nao_R_, false for ovlp_ao_nao_k_
         void deallocate_ovlp(bool is_R = false);
+        /// @brief allocate memory for ovlp_ao_nao_R_ or ovlp_ao_nao_k_
+        /// @param is_R true for ovlp_ao_nao_R_, false for ovlp_ao_nao_k_
         void allocate_ovlp(bool is_R = false);
+        /// @brief clean up all data members
         void clean_up();
-
         /// @brief zero out ovlp_ao_nao_R_ or ovlp_ao_nao_k_
         /// @param is_R true for ovlp_ao_nao_R_, false for ovlp_ao_nao_k_
         void zero_out_ovlps(const bool is_R);
@@ -155,19 +177,11 @@ class toQO
         /// @brief given a vector3 specifying a kpoint, fold ovlp_ao_nao_R_ (series of S(R), memory consuming)
         /// @param ik index of vector3 specifying a kpoint
         void fold_ovlp_R(int ik);
-
         /// @brief given a vector3 specifying a kpoint, append one single S(R), multiply by exp(-i*k*R) and add to ovlp_ao_nao_k_
         /// @param ik index of  vector3 specifying a kpoint
         /// @param iR index of supercell vector
         void append_ovlp_R_eiRk(int ik, int iR);
 
-        /// @brief eliminate duplicate vectors in a vector of vector3
-        /// @tparam T type of vector3
-        /// @param vector3s vector of vector3, both input and output
-        template <typename T>
-        void eliminate_duplicate_vector3(std::vector<ModuleBase::Vector3<T>>& vector3s);
-
-        
         // setters
         void set_qo_basis(const std::string qo_basis) { qo_basis_ = qo_basis; }
         void set_strategy(const std::string strategy) { strategy_ = strategy; }
@@ -192,7 +206,6 @@ class toQO
         std::vector<double> charges() const { return charges_; }
         atom_in atom_database() const { return atom_database_; }
         std::vector<ModuleBase::Vector3<double>> kvecs_d() const { return kvecs_d_; }
-
 
     private:
         //
