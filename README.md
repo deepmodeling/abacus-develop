@@ -1,6 +1,6 @@
 # Locally modified version
 
-This is a locally modified version of ABACUS for RDMFT calculations.
+This is a locally modified version of ABACUS-v3.4.4 for RDMFT calculations.
 
 Currently jghan has added some code.
 
