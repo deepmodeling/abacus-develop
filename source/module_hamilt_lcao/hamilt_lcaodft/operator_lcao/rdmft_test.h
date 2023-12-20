@@ -642,7 +642,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         // something wrong
         psiDotPsi( ParaV, para_wfc, para_Eij, wfc(ik, 0, 0), H_wfc_TV(ik, 0, 0), Eij, &(wfcHwfc_TV(ik, 0)));
         psiDotPsi( ParaV, para_wfc, para_Eij, wfc(ik, 0, 0), H_wfc_hartree(ik, 0, 0), Eij, &(wfcHwfc_hartree(ik, 0)));
-        //psiDotPsi( ParaV, para_wfc, para_Eij, wfc(ik, 0, 0), H_wfc_XC(ik, 0, 0), Eij, &(wfcHwfc_XC(ik, 0)));
+        psiDotPsi( ParaV, para_wfc, para_Eij, wfc(ik, 0, 0), H_wfc_XC(ik, 0, 0), Eij, &(wfcHwfc_XC(ik, 0)));
 
         std::cout << "\n\n\npsiDotPsi pass!\n\n\n";
         
