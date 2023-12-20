@@ -476,7 +476,7 @@ void Relax::move_cell_ions(const bool is_new_dir)
             };
         cp_mat_to_mat3();
 
-        if (ModuleSymmetry::Symmetry::symm_flag)
+        if (ModuleSymmetry::Symmetry::symm_flag && GlobalC::ucell.symm.nrotk > 0)
         {
             search_dr_cell = sr_dr_cell.Transpose().to_matrix();
             GlobalC::ucell.symm.symmetrize_mat3(search_dr_cell, GlobalC::ucell.lat);
@@ -558,7 +558,8 @@ void Relax::move_cell_ions(const bool is_new_dir)
         }
     }
 
-    if (ModuleSymmetry::Symmetry::symm_flag && GlobalC::ucell.symm.all_mbl)GlobalC::ucell.symm.symmetrize_vec3_nat(move_ion);
+    if (ModuleSymmetry::Symmetry::symm_flag && GlobalC::ucell.symm.all_mbl && GlobalC::ucell.symm.nrotk > 0)
+        GlobalC::ucell.symm.symmetrize_vec3_nat(move_ion);
 
 	GlobalC::ucell.update_pos_taud(move_ion);
 
