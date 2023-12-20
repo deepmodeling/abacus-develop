@@ -293,6 +293,7 @@
     - [gdir](#gdir)
     - [towannier90](#towannier90)
     - [nnkpfile](#nnkpfile)
+    - [wannier\_method](#wannier_method)
     - [wannier\_spin](#wannier_spin)
     - [out\_wannier\_mmn](#out_wannier_mmn)
     - [out\_wannier\_amn](#out_wannier_amn)
@@ -2740,6 +2741,14 @@ These variables are used to control berry phase and wannier90 interface paramete
 - **Type**: String
 - **Description**: the file name generated when running "wannier90 -pp ..." command
 - **Default**: seedname.nnkp
+
+### wannier_method
+
+- **Type**: Integer
+- **Description**: Only available on LCAO basis, using different methods to generate "\*.mmn" file and "\*.amn" file.
+  - 1: Calculated using the LCOA-in-PW method, the calculation accuracy can be improved by increasing `ecutwfc` to maintain consistency with the pw basis set results.
+  - 2: The overlap between atomic orbitals is calculated using grid integration. The radial grid points are generated using the Gauss-Legendre method, while the spherical grid points are generated using the Lebedev-Laikov method.
+- **Default**: 1
 
 ### wannier_spin
 

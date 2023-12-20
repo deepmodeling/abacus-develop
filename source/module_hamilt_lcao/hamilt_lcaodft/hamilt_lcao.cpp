@@ -69,8 +69,9 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
     this->hR = new HContainer<TR>(LM_in->ParaV);
     this->sR = new HContainer<TR>(LM_in->ParaV);
 
-    this->getSk(LM_in).resize(LM_in->ParaV->get_row_size() * LM_in->ParaV->get_col_size());
-    this->getHk(LM_in).resize(LM_in->ParaV->get_row_size() * LM_in->ParaV->get_col_size());
+    const std::size_t row_col_size = static_cast<std::size_t>(LM_in->ParaV->get_row_size()) * LM_in->ParaV->get_col_size();
+    this->getSk(LM_in).resize(row_col_size);
+    this->getHk(LM_in).resize(row_col_size);
 
     // Effective potential term (\sum_r <psi(r)|Veff(r)|psi(r)>) is registered without template
     std::vector<std::string> pot_register_in;

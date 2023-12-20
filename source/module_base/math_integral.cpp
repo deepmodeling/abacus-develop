@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <functional>
 #include <cmath>
+#include "constants.h"
 
 namespace ModuleBase
 {
@@ -292,6 +293,95 @@ double Integral::simpson(const int n, const double* const f, const double* const
     {
         return simpson(n-3, f, h) + simpson(4, &f[n-4], &h[n-4]);
     }
+}
+
+void Integral::Gauss_Legendre_grid_and_weight(const int n, double *x, double *weights)
+{
+    assert( n >= 1 );
+
+    double z = 0.0;
+    double z1 = 0.0;
+    double p1 = 1.0;
+    double p2 = 0.0;
+    double p3 = 0.0;
+    double pp = 0.0;
+
+    int half_grid_num = static_cast<int>((n+1)/2);
+    for(int i = 1; i <= half_grid_num; i++)
+    {
+        z = cos(ModuleBase::PI * (i - 0.25) / (n + 0.5));
+
+        while(true)
+        {
+            p1 = 1.0;
+            p2 = 0.0;
+
+            for(int j = 1; j <= n; j++)
+            {
+                p3 = p2;
+                p2 = p1;
+                p1 = ((2.0 * j - 1.0) * z * p2 - (j - 1.0) * p3) / j;
+            }
+
+            pp = n * (p2 - z * p1) / (1.0 - z*z);
+            z1 = z;
+            z = z1 - p1 / pp;
+
+            if (std::abs(z - z1) < 1e-13) break;
+        }
+
+        x[i-1] = -z;
+        x[n-i] = z;
+        weights[i-1] = 2.0 / ((1.0 - z * z) * pp * pp);
+        weights[n-i] = weights[i-1];
+    }
+
+}
+
+void Integral::Gauss_Legendre_grid_and_weight(const double xmin, const double xmax, const int n, double *x, double *weights)
+{
+    assert( n >= 1 );
+
+    double xl = (xmax - xmin) * 0.5;
+    double xmean = (xmax + xmin) * 0.5;
+
+    double z = 0.0;
+    double z1 = 0.0;
+    double p1 = 1.0;
+    double p2 = 0.0;
+    double p3 = 0.0;
+    double pp = 0.0;
+
+    int half_grid_num = static_cast<int>((n+1)/2);
+    for(int i = 1; i <= half_grid_num; i++)
+    {
+        z = cos(ModuleBase::PI * (i - 0.25) / (n + 0.5));
+
+        while(true)
+        {
+            p1 = 1.0;
+            p2 = 0.0;
+
+            for(int j = 1; j <= n; j++)
+            {
+                p3 = p2;
+                p2 = p1;
+                p1 = ((2.0 * j - 1.0) * z * p2 - (j - 1.0) * p3) / j;
+            }
+
+            pp = n * (p2 - z * p1) / (1.0 - z*z);
+            z1 = z;
+            z = z1 - p1 / pp;
+
+            if (std::abs(z - z1) < 1e-13) break;
+        }
+
+        x[i-1] = xmean - xl * z;
+        x[n-i] = xmean + xl * z;
+        weights[i-1] = 2.0 * xl / ((1.0 - z * z) * pp * pp);
+        weights[n-i] = weights[i-1];
+    }
+
 }
 
 }
