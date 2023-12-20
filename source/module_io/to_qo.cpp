@@ -293,6 +293,16 @@ void toQO::calculate()
     {
     #endif
     printf("Calculating overlap integrals for kpoints.\n");
+    if(nkpts_ < nR_)
+    {
+        std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl
+                  << "! Warning: number of kpoints is less than number of supercells, " << std::endl
+                  << "! this will cause information loss when transform matrix R -> k. " << std::endl
+                  << "! The further conversion k -> R cannot recover full information." << std::endl
+                  << "! Number of kpoints after irreducible transformation: " << nkpts_ << std::endl
+                  << "! Number of supercells: " << nR_ << std::endl
+                  << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
+    }
     for(int ik = 0; ik < nkpts_; ik++)
     {
         calculate_ovlp_k(ik);

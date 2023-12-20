@@ -258,7 +258,16 @@ TEST_F(toQOTest, CalculateSelfOvlpRMinimal)
     ucell.orbital_fn[1] = "C_special_use_unittest.orb"; // generated in unittest BuildAo
     ucell.atoms[1].nwl = 1; // only s and p for C
     tqo.initialize(&ucell, kvecs_c);
-    tqo.calculate_ovlp_R(12);
+    // find the R = 0,0,0
+    for(int iR = 0; iR < tqo.nR(); iR++)
+    {
+        if(tqo.supercells()[iR].x == 0 && tqo.supercells()[iR].y == 0 && tqo.supercells()[iR].z == 0)
+        {
+            tqo.calculate_ovlp_R(iR);
+            break;
+        }
+    }
+    // check if diagonal elements are 1
     for(int i = 0; i < tqo.nphi(); i++)
     {
         EXPECT_NEAR(tqo.ovlp_R()[0][i][i], 1.0, 1e-4);

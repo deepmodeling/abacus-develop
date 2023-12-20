@@ -130,6 +130,8 @@ class toQO
         /// @return a vector collects (n1, n2, n3) for present atom
         std::vector<ModuleBase::Vector3<int>> scan_supercell_for_atom(int it, int ia, int start_it = 0, int start_ia = 0);
 
+        std::vector<int> rcut_to_supercell_index(double rcut, ModuleBase::Vector3<double> a, ModuleBase::Vector3<double> b, ModuleBase::Vector3<double> c);
+
         /// @brief get vector squared norm in supercell
         /// @param rij rij in unitcell
         /// @param n1 supercell index 1

@@ -170,7 +170,12 @@ std::vector<ModuleBase::Vector3<int>> toQO::scan_supercell_for_atom(int it, int 
         if(GlobalV::MY_RANK == 0)
         {
         #endif
-        printf("WARNING: rcut_i of atom %d %d is larger than 10: %f bohr. \nThis value has been larger than maximal cutoff radius of numerical atomic orbitals, \nwill brings about high computational cost. Suggest to try other qo_basis.\n", it, ia, rcut_i);
+        std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl
+                  << "! Warning: rcut_i of atom in type " << it << " and index " << ia << " is larger than 10 bohr: " << std::fixed << rcut_i << " ." << std::endl
+                  << "! This value has been larger than maximal cutoff radius of numerical orbitals, " << std::endl
+                  << "! will brings about high computational cost and make k <-> R transform" << std::endl
+                  << "! possibly not reversible. Suggest to try other qo_basis." << std::endl
+                  << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
         #ifdef __MPI
         }
         #endif
@@ -185,15 +190,20 @@ std::vector<ModuleBase::Vector3<int>> toQO::scan_supercell_for_atom(int it, int 
             int n1 = 0; int n2 = 0; int n3 = 0;
             // calculate the sup of n1, n2, n3
             // rcut_i, j in bohr! a1, a2 and a3 are in lat0, so multiply with lat0
-            int n1max = int(std::ceil((rcut_i + rcut_j)/p_ucell_->a1.norm()/p_ucell_->lat0));
-            int n2max = int(std::ceil((rcut_i + rcut_j)/p_ucell_->a2.norm()/p_ucell_->lat0));
-            int n3max = int(std::ceil((rcut_i + rcut_j)/p_ucell_->a3.norm()/p_ucell_->lat0));
+            // int n1max = int(std::ceil((rcut_i + rcut_j)/p_ucell_->a1.norm()/p_ucell_->lat0));
+            // int n2max = int(std::ceil((rcut_i + rcut_j)/p_ucell_->a2.norm()/p_ucell_->lat0));
+            // int n3max = int(std::ceil((rcut_i + rcut_j)/p_ucell_->a3.norm()/p_ucell_->lat0));
+            ModuleBase::Vector3<double> a1_in_Bohr = p_ucell_->a1 * p_ucell_->lat0;
+            ModuleBase::Vector3<double> a2_in_Bohr = p_ucell_->a2 * p_ucell_->lat0;
+            ModuleBase::Vector3<double> a3_in_Bohr = p_ucell_->a3 * p_ucell_->lat0;
+            double rcut_ij = rcut_i + rcut_j;
+            std::vector<int> n1n2n3_max = rcut_to_supercell_index(rcut_ij, a1_in_Bohr, a2_in_Bohr, a3_in_Bohr);
             // scan n1, n2, n3
-            for(int n1 = -n1max; n1 <= n1max; n1++)
+            for(int n1 = -n1n2n3_max[0]; n1 <= n1n2n3_max[0]; n1++)
             {
-                for(int n2 = -n2max; n2 <= n2max; n2++)
+                for(int n2 = -n1n2n3_max[1]; n2 <= n1n2n3_max[1]; n2++)
                 {
-                    for(int n3 = -n3max; n3 <= n3max; n3++)
+                    for(int n3 = -n1n2n3_max[2]; n3 <= n1n2n3_max[2]; n3++)
                     {
                         double f = norm2_rij_supercell(rij, n1, n2, n3);
                         if(f < std::pow(rcut_i + rcut_j, 2))
@@ -206,6 +216,29 @@ std::vector<ModuleBase::Vector3<int>> toQO::scan_supercell_for_atom(int it, int 
         }
     }
     eliminate_duplicate_vector3<int>(n1n2n3);
+    return n1n2n3;
+}
+
+double cosine_between_vector3(ModuleBase::Vector3<double> v1, ModuleBase::Vector3<double> v2)
+{
+    double f = v1 * v2;
+    f /= v1.norm();
+    f /= v2.norm();
+    return f;
+}
+
+std::vector<int> toQO::rcut_to_supercell_index(double rcut, ModuleBase::Vector3<double> a, ModuleBase::Vector3<double> b, ModuleBase::Vector3<double> c)
+{
+    double fab = std::sqrt(1-std::pow(cosine_between_vector3(a, b), 2));
+    double fac = std::sqrt(1-std::pow(cosine_between_vector3(a, c), 2));
+    double fbc = std::sqrt(1-std::pow(cosine_between_vector3(b ,c), 2));
+    double fa = std::min(fab, fac);
+    double fb = std::min(fab, fbc);
+    double fc = std::min(fac, fbc);
+    int n1max = int(std::ceil(rcut/a.norm()/fa));
+    int n2max = int(std::ceil(rcut/b.norm()/fb));
+    int n3max = int(std::ceil(rcut/c.norm()/fc));
+    std::vector<int> n1n2n3 = {n1max, n2max, n3max};
     return n1n2n3;
 }
 
