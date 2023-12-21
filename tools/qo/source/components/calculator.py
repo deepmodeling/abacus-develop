@@ -44,10 +44,9 @@ class toQO_Calculator:
         matrix_R = np.zeros_like(matrices_k[0])
         print("Calculate unfold matrix from k to R-space.")
         for ik in range(len(kpoints)):
-            for ik_equiv in range(len(kpoints[ik])):
-                equiv_kpt = kpoints[ik][ik_equiv]
-                arg = np.exp(-1j * equiv_kpt @ supercell * 2 * np.pi)
-                matrix_R += arg * matrices_k[ik]
+            kpoint = kpoints[ik]
+            arg = np.exp(-1j * kpoint @ supercell * 2 * np.pi)
+            matrix_R += arg * matrices_k[ik]
         return matrix_R
     
     def projto_nao(self, sk: np.ndarray, saok: np.ndarray) -> np.ndarray:
@@ -155,8 +154,8 @@ class toQO_Calculator:
         qo = saok.conj() @ psi_exten.conj().T @ psi_exten
              # this saok is overlap between AO and NAO, line is AO, column is NAO
         # then normalize qo
-        for i in range(qo.shape[0]):
-            qo[i, :] = qo[i, :] / np.sqrt(qo[i, :] @ sk @ qo[i, :].conj().T)
+        #for i in range(qo.shape[0]):
+        #    qo[i, :] = qo[i, :] / np.sqrt(qo[i, :] @ sk @ qo[i, :].conj().T)
             #print("QO Normalization: after, norm of QO ", i, " is: ", qo[i, :] @ sk @ qo[i, :].conj().T)
         return qo
 

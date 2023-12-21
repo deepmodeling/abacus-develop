@@ -95,9 +95,9 @@ class toQO
         /// @brief write two dimensional matrix to file
         /// @tparam T type of matrix
         /// @param matrix matrix to write
-        /// @param filename filename to write
+        /// @param ik index of kpoint
         template <typename T>
-        void write_ovlp(const std::vector<std::vector<T>>& matrix, std::string filename);
+        void write_ovlp(const std::vector<std::vector<T>>& matrix, const int& ik);
         /*
             Neighboring list searching algorithm (not implemented yet)
 

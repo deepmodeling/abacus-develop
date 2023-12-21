@@ -306,7 +306,7 @@ void toQO::calculate()
     for(int ik = 0; ik < nkpts_; ik++)
     {
         calculate_ovlp_k(ik);
-        write_ovlp<std::complex<double>>(ovlp_k_, "QO_ovlp_" + std::to_string(ik) + ".dat"  );
+        write_ovlp<std::complex<double>>(ovlp_k_, ik);
     }
     printf("Calculating overlap integrals for kpoints done.\n\n");
     #ifdef __MPI

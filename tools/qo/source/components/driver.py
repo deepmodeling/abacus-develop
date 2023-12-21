@@ -92,6 +92,15 @@ class toQO_Driver:
         # the following function is not implemented correctly yet, Hqo(R) and Sqo(R) is not correct
 
         for R in Rs:
-            hqoR = self.cal_.unfolding_Hk(self.dm_.data.hqok, self.dm_.data.equivalent_kpoints, R) 
-            sqoR = self.cal_.unfolding_Hk(self.dm_.data.sqok, self.dm_.data.equivalent_kpoints, R)
-            print(sqoR)
+
+            #sqoR = self.cal_.unfolding_Hk(self.dm_.data.sqok, self.dm_.data.kpoints, R)
+            #print(sqoR.imag)
+            #hR = self.cal_.unfolding_Hk(self.dm_.data.hk, self.dm_.data.kpoints, R)
+            #sR = self.cal_.unfolding_Hk(self.dm_.data.sk, self.dm_.data.kpoints, R)
+            # print(sR.imag)
+            # hqoR = self.cal_.unfolding_Hk(self.dm_.data.hqok, self.dm_.data.kpoints, R)
+            # sqoR = self.cal_.unfolding_Hk(self.dm_.data.sqok, self.dm_.data.kpoints, R)
+            # print(sqoR.imag)
+            # plt.imshow(np.log10(np.abs(sqoR.imag)))
+            # plt.show()
+            pass

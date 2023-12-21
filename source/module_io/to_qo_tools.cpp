@@ -346,13 +346,18 @@ void toQO::append_ovlp_R_eiRk(int ik, int iR)
 }
 
 template <typename T>
-void toQO::write_ovlp(const std::vector<std::vector<T>> &ovlp, std::string filename)
+void toQO::write_ovlp(const std::vector<std::vector<T>> &ovlp, const int& ik)
 {
+    std::string filename = "QO_ovlp_" + std::to_string(ik) + ".dat";
     std::ofstream ofs(GlobalV::global_out_dir + filename);
     if(!ofs.is_open())
     {
         ModuleBase::WARNING_QUIT("toQO::write_ovlp", "can not open file: " + filename);
     }
+    // first write kpoint coordinate
+    ofs << "KPOINT_COORDINATE: " << std::setw(22) << std::setprecision(14) << std::right << std::scientific << kvecs_d_[ik].x << " "
+                                 << std::setw(22) << std::setprecision(14) << std::right << std::scientific << kvecs_d_[ik].y << " "
+                                 << std::setw(22) << std::setprecision(14) << std::right << std::scientific << kvecs_d_[ik].z << std::endl;
     for(int i = 0; i < ovlp.size(); i++)
     {
         for(int j = 0; j < ovlp[i].size(); j++)
@@ -363,5 +368,5 @@ void toQO::write_ovlp(const std::vector<std::vector<T>> &ovlp, std::string filen
     }
     ofs.close();
 }
-template void toQO::write_ovlp<double>(const std::vector<std::vector<double>>& ovlp, std::string filename);
-template void toQO::write_ovlp<std::complex<double>>(const std::vector<std::vector<std::complex<double>>>& ovlp, std::string filename);
+template void toQO::write_ovlp<double>(const std::vector<std::vector<double>>& ovlp, const int& ik);
+template void toQO::write_ovlp<std::complex<double>>(const std::vector<std::vector<std::complex<double>>>& ovlp, const int& ik);

@@ -272,6 +272,102 @@ TEST_F(toQOTest, CalculateSelfOvlpRMinimal)
     {
         EXPECT_NEAR(tqo.ovlp_R()[0][i][i], 1.0, 1e-4);
     }
+    //std::remove("Si_special_use_unittest.orb");
+    //std::remove("C_special_use_unittest.orb");
+    //tqo.write_ovlp(tqo.ovlp_R()[0], "QO_self_ovlp.dat");
+}
+
+TEST_F(toQOTest, CalculateSelfOvlpKSymmetrical)
+{
+    toQO tqo("hydrogen");
+    tqo.set_strategy("minimal");
+    std::vector<ModuleBase::Vector3<double>> kvecs_c;
+    kvecs_c.push_back(ModuleBase::Vector3<double>(-0.25, -0.25, -0.25)); // pair 1
+    kvecs_c.push_back(ModuleBase::Vector3<double>(0.25, 0.25, 0.25));
+    kvecs_c.push_back(ModuleBase::Vector3<double>(-0.25, 0.25, 0.25)); // pair 2
+    kvecs_c.push_back(ModuleBase::Vector3<double>(0.25, -0.25, -0.25));
+    kvecs_c.push_back(ModuleBase::Vector3<double>(-0.25, -0.25, 0.25)); // pair 3
+    kvecs_c.push_back(ModuleBase::Vector3<double>(0.25, 0.25, -0.25));
+    kvecs_c.push_back(ModuleBase::Vector3<double>(-0.25, 0.25, -0.25)); // pair 4
+    kvecs_c.push_back(ModuleBase::Vector3<double>(0.25, -0.25, 0.25));
+    kvecs_c.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma
+    ucell.orbital_fn[0] = "Si_special_use_unittest.orb"; // generated in unittest BuildAo
+    ucell.orbital_fn[1] = "C_special_use_unittest.orb"; // generated in unittest BuildAo
+    ucell.atoms[1].nwl = 1; // only s and p for C
+    tqo.initialize(&ucell, kvecs_c);
+    tqo.calculate_ovlp_k(0);
+    std::vector<std::vector<std::complex<double>>> ovlp_k_1 = tqo.ovlp_k();
+    tqo.calculate_ovlp_k(1);
+    std::vector<std::vector<std::complex<double>>> ovlp_k_2 = tqo.ovlp_k();
+    // check if all imaginary parts are cancelled
+    bool all_real = true;
+    for(int i = 0; i < ovlp_k_1.size(); i++)
+    {
+        for(int j = 0; j < ovlp_k_1[i].size(); j++)
+        {
+            // R = 0, 0, 0, then unfolding kphase would be e-ikR = 1,
+            // becomes direct summation over kpoints
+            std::complex<double> ovlp_R_ij = ovlp_k_1[i][j] + ovlp_k_2[i][j];
+            EXPECT_NEAR(ovlp_R_ij.imag(), 0.0, 1e-10);
+        }
+    }
+    tqo.calculate_ovlp_k(2);
+    std::vector<std::vector<std::complex<double>>> ovlp_k_3 = tqo.ovlp_k();
+    tqo.calculate_ovlp_k(3);
+    std::vector<std::vector<std::complex<double>>> ovlp_k_4 = tqo.ovlp_k();
+    // check if all imaginary parts are cancelled
+    for(int i = 0; i < ovlp_k_3.size(); i++)
+    {
+        for(int j = 0; j < ovlp_k_3[i].size(); j++)
+        {
+            // R = 0, 0, 0, then unfolding kphase would be e-ikR = 1,
+            // becomes direct summation over kpoints
+            std::complex<double> ovlp_R_ij = ovlp_k_3[i][j] + ovlp_k_4[i][j];
+            EXPECT_NEAR(ovlp_R_ij.imag(), 0.0, 1e-10);
+        }
+    }
+    tqo.calculate_ovlp_k(4);
+    std::vector<std::vector<std::complex<double>>> ovlp_k_5 = tqo.ovlp_k();
+    tqo.calculate_ovlp_k(5);
+    std::vector<std::vector<std::complex<double>>> ovlp_k_6 = tqo.ovlp_k();
+    // check if all imaginary parts are cancelled
+    for(int i = 0; i < ovlp_k_5.size(); i++)
+    {
+        for(int j = 0; j < ovlp_k_5[i].size(); j++)
+        {
+            // R = 0, 0, 0, then unfolding kphase would be e-ikR = 1,
+            // becomes direct summation over kpoints
+            std::complex<double> ovlp_R_ij = ovlp_k_5[i][j] + ovlp_k_6[i][j];
+            EXPECT_NEAR(ovlp_R_ij.imag(), 0.0, 1e-10);
+        }
+    }
+    tqo.calculate_ovlp_k(6);
+    std::vector<std::vector<std::complex<double>>> ovlp_k_7 = tqo.ovlp_k();
+    tqo.calculate_ovlp_k(7);
+    std::vector<std::vector<std::complex<double>>> ovlp_k_8 = tqo.ovlp_k();
+    // check if all imaginary parts are cancelled
+    for(int i = 0; i < ovlp_k_7.size(); i++)
+    {
+        for(int j = 0; j < ovlp_k_7[i].size(); j++)
+        {
+            // R = 0, 0, 0, then unfolding kphase would be e-ikR = 1,
+            // becomes direct summation over kpoints
+            std::complex<double> ovlp_R_ij = ovlp_k_7[i][j] + ovlp_k_8[i][j];
+            EXPECT_NEAR(ovlp_R_ij.imag(), 0.0, 1e-10);
+        }
+    }
+    tqo.calculate_ovlp_k(8);
+    std::vector<std::vector<std::complex<double>>> ovlp_k_9 = tqo.ovlp_k();
+    // check if all imaginary parts are cancelled
+    for(int i = 0; i < ovlp_k_9.size(); i++)
+    {
+        for(int j = 0; j < ovlp_k_9[i].size(); j++)
+        {
+            // R = 0, 0, 0, then unfolding kphase would be e-ikR = 1,
+            // becomes direct summation over kpoints
+            EXPECT_NEAR(ovlp_k_9[i][j].imag(), 0.0, 1e-10);
+        }
+    }
     std::remove("Si_special_use_unittest.orb");
     std::remove("C_special_use_unittest.orb");
     //tqo.write_ovlp(tqo.ovlp_R()[0], "QO_self_ovlp.dat");
@@ -372,7 +468,7 @@ TEST_F(toQOTest, CalculateSelfOvlpRPswfc)
     //tqo.write_ovlp(tqo.ovlp_R()[0], "QO_self_ovlp.dat");
 }
 
-TEST_F(toQOTest, CalculateOvlpK)
+TEST_F(toQOTest, CalculateOvlpKGamma)
 {
     toQO tqo("hydrogen");
     std::vector<ModuleBase::Vector3<double>> kvecs_c;
@@ -391,6 +487,97 @@ TEST_F(toQOTest, CalculateOvlpK)
             }
         }
     }
+}
+
+TEST_F(toQOTest, CalculateSelfOvlpKPswfcSymmetrical)
+{
+    toQO tqo("pswfc");
+    std::vector<ModuleBase::Vector3<double>> kvecs_c;
+    kvecs_c.push_back(ModuleBase::Vector3<double>(-0.25, -0.25, -0.25)); // pair 1
+    kvecs_c.push_back(ModuleBase::Vector3<double>(0.25, 0.25, 0.25));
+    kvecs_c.push_back(ModuleBase::Vector3<double>(-0.25, 0.25, 0.25)); // pair 2
+    kvecs_c.push_back(ModuleBase::Vector3<double>(0.25, -0.25, -0.25));
+    kvecs_c.push_back(ModuleBase::Vector3<double>(-0.25, -0.25, 0.25)); // pair 3
+    kvecs_c.push_back(ModuleBase::Vector3<double>(0.25, 0.25, -0.25));
+    kvecs_c.push_back(ModuleBase::Vector3<double>(-0.25, 0.25, -0.25)); // pair 4
+    kvecs_c.push_back(ModuleBase::Vector3<double>(0.25, -0.25, 0.25));
+    kvecs_c.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma
+    tqo.initialize(&ucell, kvecs_c);
+    std::cout << "Number of supercells: " << tqo.nR() << ", number of kpoints: " << tqo.nkpts() << std::endl;
+    tqo.calculate_ovlp_k(0);
+    std::vector<std::vector<std::complex<double>>> ovlp_k_1 = tqo.ovlp_k();
+    tqo.calculate_ovlp_k(1);
+    std::vector<std::vector<std::complex<double>>> ovlp_k_2 = tqo.ovlp_k();
+    // check if all imaginary parts are cancelled
+    bool all_real = true;
+    for(int i = 0; i < ovlp_k_1.size(); i++)
+    {
+        for(int j = 0; j < ovlp_k_1[i].size(); j++)
+        {
+            // R = 0, 0, 0, then unfolding kphase would be e-ikR = 1,
+            // becomes direct summation over kpoints
+            std::complex<double> ovlp_R_ij = ovlp_k_1[i][j] + ovlp_k_2[i][j];
+            EXPECT_NEAR(ovlp_R_ij.imag(), 0.0, 1e-10);
+        }
+    }
+    tqo.calculate_ovlp_k(2);
+    std::vector<std::vector<std::complex<double>>> ovlp_k_3 = tqo.ovlp_k();
+    tqo.calculate_ovlp_k(3);
+    std::vector<std::vector<std::complex<double>>> ovlp_k_4 = tqo.ovlp_k();
+    // check if all imaginary parts are cancelled
+    for(int i = 0; i < ovlp_k_3.size(); i++)
+    {
+        for(int j = 0; j < ovlp_k_3[i].size(); j++)
+        {
+            // R = 0, 0, 0, then unfolding kphase would be e-ikR = 1,
+            // becomes direct summation over kpoints
+            std::complex<double> ovlp_R_ij = ovlp_k_3[i][j] + ovlp_k_4[i][j];
+            EXPECT_NEAR(ovlp_R_ij.imag(), 0.0, 1e-10);
+        }
+    }
+    tqo.calculate_ovlp_k(4);
+    std::vector<std::vector<std::complex<double>>> ovlp_k_5 = tqo.ovlp_k();
+    tqo.calculate_ovlp_k(5);
+    std::vector<std::vector<std::complex<double>>> ovlp_k_6 = tqo.ovlp_k();
+    // check if all imaginary parts are cancelled
+    for(int i = 0; i < ovlp_k_5.size(); i++)
+    {
+        for(int j = 0; j < ovlp_k_5[i].size(); j++)
+        {
+            // R = 0, 0, 0, then unfolding kphase would be e-ikR = 1,
+            // becomes direct summation over kpoints
+            std::complex<double> ovlp_R_ij = ovlp_k_5[i][j] + ovlp_k_6[i][j];
+            EXPECT_NEAR(ovlp_R_ij.imag(), 0.0, 1e-10);
+        }
+    }
+    tqo.calculate_ovlp_k(6);
+    std::vector<std::vector<std::complex<double>>> ovlp_k_7 = tqo.ovlp_k();
+    tqo.calculate_ovlp_k(7);
+    std::vector<std::vector<std::complex<double>>> ovlp_k_8 = tqo.ovlp_k();
+    // check if all imaginary parts are cancelled
+    for(int i = 0; i < ovlp_k_7.size(); i++)
+    {
+        for(int j = 0; j < ovlp_k_7[i].size(); j++)
+        {
+            // R = 0, 0, 0, then unfolding kphase would be e-ikR = 1,
+            // becomes direct summation over kpoints
+            std::complex<double> ovlp_R_ij = ovlp_k_7[i][j] + ovlp_k_8[i][j];
+            EXPECT_NEAR(ovlp_R_ij.imag(), 0.0, 1e-10);
+        }
+    }
+    tqo.calculate_ovlp_k(8);
+    std::vector<std::vector<std::complex<double>>> ovlp_k_9 = tqo.ovlp_k();
+    // check if all imaginary parts are cancelled
+    for(int i = 0; i < ovlp_k_9.size(); i++)
+    {
+        for(int j = 0; j < ovlp_k_9[i].size(); j++)
+        {
+            // R = 0, 0, 0, then unfolding kphase would be e-ikR = 1,
+            // becomes direct summation over kpoints
+            EXPECT_NEAR(ovlp_k_9[i][j].imag(), 0.0, 1e-10);
+        }
+    }
+    //tqo.write_ovlp(tqo.ovlp_R()[0], "QO_self_ovlp.dat");
 }
 
 TEST_F(toQOTest, Calculate)
