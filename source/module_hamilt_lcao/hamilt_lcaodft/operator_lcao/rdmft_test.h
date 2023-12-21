@@ -237,18 +237,18 @@ void HkPsi(const Parallel_Orbitals* ParaV, const Parallel_2D& para_wfc_in, const
     // pzgemm_( &T_char, &N_char, &nbasis, &nbands, &nbasis, &one_complex, &HK, &one_int, &one_int, ParaV->desc,
     //     &wfc, &one_int, &one_int, ParaV->desc_wfc, &zero_complex, &H_wfc, &one_int, &one_int, ParaV->desc_wfc );
 
-    // zgemm_( &T_char, &N_char, &nbasis, &nbands, &nbasis, &one_complex, &HK, &nbasis, &wfc, &nbasis, &zero_complex, &H_wfc, &nbasis );
+    zgemm_( &T_char, &N_char, &nbasis, &nbands, &nbasis, &one_complex, &HK, &nbasis, &wfc, &nbasis, &zero_complex, &H_wfc, &nbasis );
 
-    for(int ib=0; ib<nbands; ++ib)
-    {
-        for(int ibs2=0; ibs2<nbasis; ++ibs2)
-        {
-            for(int ibs1=0; ibs1<nbasis; ++ibs1)
-            {
-                *(&H_wfc+ib*nbasis+ibs2) += *(&HK+ibs2*nbasis+ibs1) * *(&wfc+ib*nbasis+ibs1);
-            }
-        }
-    }
+    // for(int ib=0; ib<nbands; ++ib)
+    // {
+    //     for(int ibs2=0; ibs2<nbasis; ++ibs2)
+    //     {
+    //         for(int ibs1=0; ibs1<nbasis; ++ibs1)
+    //         {
+    //             *(&H_wfc+ib*nbasis+ibs2) += *(&HK+ibs2*nbasis+ibs1) * *(&wfc+ib*nbasis+ibs1);
+    //         }
+    //     }
+    // }
 
 
 
@@ -304,19 +304,19 @@ void psiDotPsi(const Parallel_Orbitals* ParaV, const Parallel_2D& para_wfc_in, c
     // std::vector<TK> Dmn(nrow_bands*ncol_bands);
     // pzgemm_( &C_char, &N_char, &nbands, &nbands, &nbasis, &one_complex, &wfc, &one_int, &one_int, ParaV->desc_wfc,
     //         &H_wfc, &one_int, &one_int, ParaV->desc_wfc, &zero_complex, &Dmn[0], &one_int, &one_int, para_Eij_in.desc );
-    // zgemm_( &C_char, &N_char, &nbands, &nbands, &nbasis, &one_complex,  &wfc, &nbasis, &H_wfc, &nbasis, &zero_complex, &Dmn[0], &nbands );
+    zgemm_( &C_char, &N_char, &nbands, &nbands, &nbasis, &one_complex,  &wfc, &nbasis, &H_wfc, &nbasis, &zero_complex, &Dmn[0], &nbands );
 
-    set_zero_HK(Dmn);
-    for(int ib1=0; ib1<nbands; ++ib1)
-    {
-        for(int ib2=0; ib2<nbands; ++ib2)
-        {
-            for(int ibas=0; ibas<nbasis; ++ibas)
-            {
-                Dmn[ib1*nbands+ib2] += std::conj( *(&wfc+ib1*nbasis+ibas) ) * (*(&H_wfc+ib2*nbasis+ibas));
-            }
-        }
-    }
+    // set_zero_HK(Dmn);
+    // for(int ib1=0; ib1<nbands; ++ib1)
+    // {
+    //     for(int ib2=0; ib2<nbands; ++ib2)
+    //     {
+    //         for(int ibas=0; ibas<nbasis; ++ibas)
+    //         {
+    //             Dmn[ib1*nbands+ib2] += std::conj( *(&wfc+ib1*nbasis+ibas) ) * (*(&H_wfc+ib2*nbasis+ibas));
+    //         }
+    //     }
+    // }
 
 
     
@@ -423,7 +423,6 @@ double rdmft_cal(LCAO_Matrix* LM_in,
                         Gint_k& GK_in,
                         Local_Orbital_Charge& loc_in,
                         const Charge& charge_in,
-                        elecstate::Potential& pot_in,
                         const ModulePW::PW_Basis& rho_basis_in,
                         const ModuleBase::matrix& vloc_in,
                         const ModuleBase::ComplexMatrix& sf_in)  // delete pot_in parameter later
@@ -494,46 +493,6 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         ParaV
     );
 
-    // // use class Veff<OperatorLCAO<TK, TR>> get the local potential
-    // std::vector<std::string> pot_register_localV;
-    // pot_register_localV.push_back("local");
-    // pot_in.pot_register(pot_register_localV);
-    // OperatorLCAO<TK, TR>* V_local = new Veff<OperatorLCAO<TK, TR>>(
-    //     &GK_in,
-    //     &loc_in,
-    //     LM_in,
-    //     kvec_d_in,
-    //     &pot_in,
-    //     &HR_TV,
-    //     &HK_TV,
-    //     &GlobalC::ucell,
-    //     &GlobalC::GridD,
-    //     ParaV
-    // );
-
-    // // use class Veff<OperatorLCAO<TK, TR>> get the hartree potential
-    // std::vector<std::string> pot_register_hartree;
-    // pot_register_hartree.push_back("hartree");
-    // pot_in.pot_register(pot_register_hartree);
-    // OperatorLCAO<TK, TR>* V_hartree = new Veff<OperatorLCAO<TK, TR>>(
-    //     &GK_in,
-    //     &loc_in,
-    //     LM_in,
-    //     kvec_d_in,
-    //     &pot_in,
-    //     &HR_hartree,
-    //     &HK_hartree,
-    //     &GlobalC::ucell,
-    //     &GlobalC::GridD,
-    //     ParaV
-    // );
-    // OperatorLCAO<TK, TR>* V_hartree_new = new OperatorLCAO<TK, TR>(
-    //     LM_in,
-    //     kvec_d_in,
-    //     &HR_hartree,
-    //     &HK_hartree
-    // );
-
     std::string local_pot = "local";
     OperatorLCAO<TK, TR>* V_local = new Veff_rdmft<TK,TR>(
         &GK_in,
@@ -570,8 +529,6 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         hartree_pot
     );
 
-
-
     OperatorLCAO<TK, TR>* V_XC = new OperatorEXX<OperatorLCAO<TK, TR>>(
         LM_in,
         &HR_XC,
@@ -605,16 +562,11 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     //************test**************//
 
     //prepare for actual calculation
-    //wg is global matrix, wg.nr*wg.nc = nk_total*nbands_global
-    // ModuleBase::matrix wg_forEtotal(wg.nr, wg.nc, true);
-    // ModuleBase::matrix wfcHwfc_TV(wg.nr, wg.nc, true);
-    // ModuleBase::matrix wfcHwfc_hartree(wg.nr, wg.nc, true);
-    // ModuleBase::matrix wfcHwfc_XC(wg.nr, wg.nc, true);
-
-    ModuleBase::matrix wg_forEtotal(nk_total, GlobalV::NBANDS, true);
-    ModuleBase::matrix wfcHwfc_TV(nk_total, GlobalV::NBANDS, true);
-    ModuleBase::matrix wfcHwfc_hartree(nk_total, GlobalV::NBANDS, true);
-    ModuleBase::matrix wfcHwfc_XC(nk_total, GlobalV::NBANDS, true);
+    //wg is global matrix, wg.nr = nk_total, wg.nc = GlobalV::NBANDS
+    ModuleBase::matrix wg_forEtotal(wg.nr, wg.nc, true);
+    ModuleBase::matrix wfcHwfc_TV(wg.nr, wg.nc, true);
+    ModuleBase::matrix wfcHwfc_hartree(wg.nr, wg.nc, true);
+    ModuleBase::matrix wfcHwfc_XC(wg.nr, wg.nc, true);
 
     // let the 2d-block of H_wfc is same to wfc, so we can use desc_wfc and 2d-block messages of wfc to describe H_wfc
     psi::Psi<TK> H_wfc_TV(nk_total, nbands_local, nbasis_local);
@@ -634,32 +586,6 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         pH_wfc_hartree[i] = 0.0;
         pH_wfc_XC[i] = 0.0;
     }
-
-    //************test**************//
-    int wg_half_number = 0;
-    int wg_zeroEight_num = 0;
-    int wg_zeroThree_num = 0;
-    for(int ik=0; ik<wg.nr; ++ik)
-    {
-        for(int ib=0; ib<wg.nc; ++ib)
-        {
-            if(ib%4 == 0) std::cout << "\n\n\n******\nwg: " << wg(ik, ib) << "\n******\n\n\n";
-            if( wg(ik, ib) < 0 ) std::cout << "\n\n\n******\nsomething wrong in wg!!!\n******\n\n\n";
-            if( wg(ik, ib) < 0.8 ) ++wg_zeroEight_num;
-            if( wg(ik, ib) < 0.5 ) ++wg_half_number;
-            if( wg(ik, ib) < 0.3 ) ++wg_zeroThree_num;
-        }
-    }
-    std::cout << "\n\n\n******\nwg_size, wg<0.8, wg<0.5, wg<0.3: " << wg.nr*wg.nc << " " << wg_zeroEight_num << " " 
-                << wg_half_number << " " << wg_zeroThree_num << "\n******\n\n\n";
-
-    // int H_col_size = ParaV->get_col_size();
-    // int wfc_col_size = para_wfc.get_col_size();
-
-    // std::cout << 
-
-
-    //************test**************//
 
     /*
     //test desc_wfc and desc_Eij
@@ -690,12 +616,8 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     {
         // get the HK with ik-th k vector
         V_ekinetic_potential->contributeHk(ik);
-        // V_nonlocal->contributeHk(ik);
-        // V_local->contributeHk(ik);
-        V_hartree->contributeHk(ik);    // because contributeHk() in class Veff is {}, so we get a OperatorLCAO* class object V_hartree_new to do contributeHk()
+        V_hartree->contributeHk(ik);
         V_XC->contributeHk(ik);
-
-        std::cout << "\n\nik= " << ik << "\n\n";
 
         if(ik==3)
         {
@@ -740,23 +662,20 @@ double rdmft_cal(LCAO_Matrix* LM_in,
 
     double Etotal_RDMFT = sumWg_getEnergy(wg_forEtotal);
 
-    std::cout << "\n\n\nEtotal_RDMFT pass!\n\n\n"; /////////////////////////
+    std::cout << "\n\n\nEtotal_RDMFT pass!\n\n\n";
 
     //for E_TV
-    // ModuleBase::matrix wg_forETV(wg.nr, wg.nc, true);
-    ModuleBase::matrix wg_forETV(nk_total, GlobalV::NBANDS, true);
+    ModuleBase::matrix wg_forETV(wg.nr, wg.nc, true);
     wgMul_wfcHwfc(wg, wfcHwfc_TV, wg_forETV, 0);
     double ETV_RDMFT = sumWg_getEnergy(wg_forETV);
 
     //for Ehartree
-    // ModuleBase::matrix wg_forEhartree(wg.nr, wg.nc, true);
-    ModuleBase::matrix wg_forEhartree(nk_total, GlobalV::NBANDS, true);
+    ModuleBase::matrix wg_forEhartree(wg.nr, wg.nc, true);
     wgMul_wfcHwfc(wg, wfcHwfc_hartree, wg_forEhartree, 1);
     double Ehartree_RDMFT = sumWg_getEnergy(wg_forEhartree);
 
     //for Exc
-    // ModuleBase::matrix wg_forExc(wg.nr, wg.nc, true);
-    ModuleBase::matrix wg_forExc(nk_total, GlobalV::NBANDS, true);
+    ModuleBase::matrix wg_forExc(wg.nr, wg.nc, true);
     wgMul_wfcHwfc(wg, wfcHwfc_XC, wg_forExc, 3);
     double Exc_RDMFT = sumWg_getEnergy(wg_forExc);
 

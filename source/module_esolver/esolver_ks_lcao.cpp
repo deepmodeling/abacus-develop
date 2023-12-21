@@ -910,7 +910,6 @@ namespace ModuleESolver
         this->UHM.GK,
         this->LOC,
         *(this->pelec->charge),
-        *(this->pelec->pot),
         *(this->pw_rho),
         GlobalC::ppcell.vloc,
         this->sf.strucFac
