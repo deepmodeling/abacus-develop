@@ -266,7 +266,7 @@ void HkPsi<double>(const Parallel_Orbitals* ParaV, const Parallel_2D& para_wfc_i
 // ModuleBase::matrix wfcHwfc(ik, 0)
 template <typename TK>
 void psiDotPsi(const Parallel_Orbitals* ParaV, const Parallel_2D& para_wfc_in, const Parallel_2D& para_Eij_in,
-                const TK& wfc, const TK& H_wfc, std::vector<TK>& Dmn, double* wfcHwfc)
+                const TK& wfc, const TK& H_wfc, std::vector<TK>& Dmn, double* wfcHwfc, std::string& test_rank_file)
 {
     const int one_int = 1;
     //const double one_double = 1.0, zero_double = 0.0;
@@ -280,9 +280,11 @@ void psiDotPsi(const Parallel_Orbitals* ParaV, const Parallel_2D& para_wfc_in, c
 
     const int nrow_bands = para_Eij_in.get_row_size();
     const int ncol_bands = para_Eij_in.get_col_size();
+    // const int nrow_bands = ParaV->nrow_bands;
+    // const int ncol_bands = ParaV->ncol_bands;
 
     //test
-    std::cout << "\n\n\n******\nwfcHwfc[0], wfcHwfc[1]: " << wfcHwfc[0] << " " << wfcHwfc[1] <<"\n";
+    // std::cout << "\n\n\n******\nwfcHwfc[0], wfcHwfc[1]: " << wfcHwfc[0] << " " << wfcHwfc[1] <<"\n";
     // set_zero_HK(Dmn);
     
     // in parallel_orbitals.h, there has int desc_Eij[9] which used for Eij in TDDFT, nbands*nbands. Just proper here.
@@ -291,6 +293,11 @@ void psiDotPsi(const Parallel_Orbitals* ParaV, const Parallel_2D& para_wfc_in, c
     pzgemm_( &C_char, &N_char, &nbands, &nbands, &nbasis, &one_complex, &wfc, &one_int, &one_int, ParaV->desc_wfc,
             &H_wfc, &one_int, &one_int, ParaV->desc_wfc, &zero_complex, &Dmn[0], &one_int, &one_int, para_Eij_in.desc );
 
+    std::ofstream outFile(test_rank_file, std::ios::app);
+    if (!outFile.is_open())
+    {
+        std::cerr << "Error opening file: " << test_rank_file << std::endl;
+    }
  
     for(int i=0; i<nrow_bands; ++i)
     {
@@ -303,17 +310,31 @@ void psiDotPsi(const Parallel_Orbitals* ParaV, const Parallel_2D& para_wfc_in, c
                 wfcHwfc[j_global] = std::real( Dmn[i*ncol_bands+j] ); // need to be sure imag(Dmn[i*nrow_bands+j]) == 0
                 // double testEnn = std::abs( std::imag( Dmn[i*ncol_bands+j] ) );
                 // if( testEnn>1e-16 )std::cout << "\n\nimag(Enn)!=0? imag(Enn)= " << testEnn << "\n\n";
+                outFile << "\n(i, j) of Dij: " << i << " " << j << "\n";
             }
         }
     }
     // test
-    std::cout << "after psiDotPsi()\nwfcHwfc[0], wfcHwfc[1]: " << wfcHwfc[0] << " " << wfcHwfc[1] <<"\n******\n\n\n";
+    //std::cout << "after psiDotPsi()\nwfcHwfc[0], wfcHwfc[1]: " << wfcHwfc[0] << " " << wfcHwfc[1] <<"\n******\n\n\n";
 
+    // outFile <<
+
+    outFile << "\n" << "Dmn" << ": \n";
+    for(int i=0; i<nrow_bands; ++i)
+    {
+        for(int j=0; j<ncol_bands; ++j)
+        {
+            outFile << Dmn[i*ncol_bands+j] << " ";
+        }
+        outFile << "\n";
+    }
+    outFile << "\n";
+    // outFile.close();
 }
 
 template <>
 void psiDotPsi<double>(const Parallel_Orbitals* ParaV, const Parallel_2D& para_wfc_in, const Parallel_2D& para_Eij_in,
-                        const double& wfc, const double& H_wfc, std::vector<double>& Dmn, double* wfcHwfc);
+                        const double& wfc, const double& H_wfc, std::vector<double>& Dmn, double* wfcHwfc, std::string& test_rank_file);
 
 
 // realize wg_wfc = wg * wfc. Calling this function and we can get wfc = wg*wfc.
@@ -577,10 +598,30 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     std::cout << "\n******\n\n\n";
     */
 
+    /********* sum energy of different mpi rank ***********/
+    int mydsize;
+    int my_rank;
+    MPI_Comm_size(MPI_COMM_WORLD, &mydsize);
+    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+
+    std::stringstream ss;
+    ss << "processor_" << my_rank << ".txt";
+    std::string test_rank_file = ss.str();
+
+    std::ofstream outFile(test_rank_file);
+    if (!outFile.is_open())
+    {
+        std::cerr << "Error opening file: " << test_rank_file << std::endl;
+    }
+
+    outFile << "\n******\nnumber of processors: " << mydsize << "\n******\n" ;
+    outFile << "rank: " << my_rank << std::endl;
+    /********* sum energy of different mpi rank ***********/
+
     // just for temperate. in the future when realize psiDotPsi() without pzgemm_/pdgemm_,we don't need it
-    // const int nrow_bands = ParaV->nrow_bands;
+
     // const int ncol_bands = ParaV->ncol_bands;
-    // std::vector<TK> Eij(ncol_bands*ncol_bands);   //////////ncol*ncol? why
+    // std::vector<TK> Eij(ParaV->nloc_Eij);   //////////ncol*ncol? why
     const int nrow_bands = para_Eij.get_row_size();
     const int ncol_bands = para_Eij.get_col_size();
     std::vector<TK> Eij(nrow_bands*ncol_bands);
@@ -593,15 +634,15 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         V_hartree->contributeHk(ik);
         V_XC->contributeHk(ik);
 
-        if(ik==3)
-        {
-            std::cout << "\n\n\n******\n";
-            for(int i=0; i<nbasis_local; ++i)
-            {
-                std::cout << "HK_TV, HK_hartree, HK_XC: " << HK_TV[i] << " " << HK_hartree[i] << " " << HK_XC[i] << "\n";
-            }
-            std::cout << "******\n\n\n";
-        }
+        // if(ik==3)
+        // {
+        //     std::cout << "\n\n\n******\n";
+        //     for(int i=0; i<nbasis_local; ++i)
+        //     {
+        //         std::cout << "HK_TV, HK_hartree, HK_XC: " << HK_TV[i] << " " << HK_hartree[i] << " " << HK_XC[i] << "\n";
+        //     }
+        //     std::cout << "******\n\n\n";
+        // }
 
         //
         HkPsi( ParaV, para_wfc, HK_TV[0], wfc(ik, 0, 0), H_wfc_TV(ik, 0, 0));
@@ -611,9 +652,9 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         std::cout << "\n\n\nHkPsi pass!\n\n\n";
         
         // something wrong
-        psiDotPsi( ParaV, para_wfc, para_Eij, wfc(ik, 0, 0), H_wfc_TV(ik, 0, 0), Eij, &(wfcHwfc_TV(ik, 0)));
-        psiDotPsi( ParaV, para_wfc, para_Eij, wfc(ik, 0, 0), H_wfc_hartree(ik, 0, 0), Eij, &(wfcHwfc_hartree(ik, 0)));
-        psiDotPsi( ParaV, para_wfc, para_Eij, wfc(ik, 0, 0), H_wfc_XC(ik, 0, 0), Eij, &(wfcHwfc_XC(ik, 0)));
+        psiDotPsi( ParaV, para_wfc, para_Eij, wfc(ik, 0, 0), H_wfc_TV(ik, 0, 0), Eij, &(wfcHwfc_TV(ik, 0)), test_rank_file);
+        psiDotPsi( ParaV, para_wfc, para_Eij, wfc(ik, 0, 0), H_wfc_hartree(ik, 0, 0), Eij, &(wfcHwfc_hartree(ik, 0)), test_rank_file);
+        psiDotPsi( ParaV, para_wfc, para_Eij, wfc(ik, 0, 0), H_wfc_XC(ik, 0, 0), Eij, &(wfcHwfc_XC(ik, 0)), test_rank_file);
 
         std::cout << "\n\n\npsiDotPsi pass!\n\n\n";
         
@@ -660,23 +701,20 @@ double rdmft_cal(LCAO_Matrix* LM_in,
 
 
     /********* sum energy of different mpi rank ***********/
-    int mydsize;
-    int my_rank;
-    MPI_Comm_size(MPI_COMM_WORLD, &mydsize);
-    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+    // int mydsize;
+    // int my_rank;
+    // MPI_Comm_size(MPI_COMM_WORLD, &mydsize);
+    // MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
-    std::stringstream ss;
-    ss << "processor_" << my_rank << ".txt";
-    std::string test_rank_file = ss.str();
+    // std::stringstream ss;
+    // ss << "processor_" << my_rank << ".txt";
+    // std::string test_rank_file = ss.str();
 
-    std::ofstream outFile(test_rank_file);
-    if (!outFile.is_open())
-    {
-        std::cerr << "Error opening file: " << test_rank_file << std::endl;
-    }
-
-    outFile << "\n******\nnumber of processors: " << mydsize << "\n******\n" ;
-    outFile << "rank: " << my_rank << std::endl;
+    // std::ofstream outFile(test_rank_file);
+    // if (!outFile.is_open())
+    // {
+    //     std::cerr << "Error opening file: " << test_rank_file << std::endl;
+    // }
 
     outFile << "\n\n\n******\nEtotal_RDMFT:   " << Etotal_RDMFT << "\nETV_RDMFT: " << ETV_RDMFT << "\nEhartree_RDMFT: " 
                 << Ehartree_RDMFT << "\nExc_RDMFT:      " << Exc_RDMFT << "\n******\n\n\n"; 
