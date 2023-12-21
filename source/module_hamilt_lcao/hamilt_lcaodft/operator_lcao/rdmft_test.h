@@ -234,24 +234,10 @@ void HkPsi(const Parallel_Orbitals* ParaV, const Parallel_2D& para_wfc_in, const
     //because wfc(bands, basis'), H(basis, basis'), we do wfc*H^T(in the perspective of cpp, not in fortran). And get H_wfc(bands, basis) is correct.
     // pzgemm_( &N_char, &T_char, &nbands, &nbasis, &nbasis, &one_complex, wfc, &one_int, &one_int, ParaV->desc_wfc,
     //     HK, &one_int, &one_int, ParaV->desc, &zero_complex, H_wfc, &one_int, &one_int, ParaV->desc_wfc );
-    // pzgemm_( &T_char, &N_char, &nbasis, &nbands, &nbasis, &one_complex, &HK, &one_int, &one_int, ParaV->desc,
-    //     &wfc, &one_int, &one_int, ParaV->desc_wfc, &zero_complex, &H_wfc, &one_int, &one_int, ParaV->desc_wfc );
+    pzgemm_( &T_char, &N_char, &nbasis, &nbands, &nbasis, &one_complex, &HK, &one_int, &one_int, ParaV->desc,
+        &wfc, &one_int, &one_int, ParaV->desc_wfc, &zero_complex, &H_wfc, &one_int, &one_int, ParaV->desc_wfc );
 
-    zgemm_( &T_char, &N_char, &nbasis, &nbands, &nbasis, &one_complex, &HK, &nbasis, &wfc, &nbasis, &zero_complex, &H_wfc, &nbasis );
-
-    // for(int ib=0; ib<nbands; ++ib)
-    // {
-    //     for(int ibs2=0; ibs2<nbasis; ++ibs2)
-    //     {
-    //         for(int ibs1=0; ibs1<nbasis; ++ibs1)
-    //         {
-    //             *(&H_wfc+ib*nbasis+ibs2) += *(&HK+ibs2*nbasis+ibs1) * *(&wfc+ib*nbasis+ibs1);
-    //         }
-    //     }
-    // }
-
-
-
+    // zgemm_( &T_char, &N_char, &nbasis, &nbands, &nbasis, &one_complex, &HK, &nbasis, &wfc, &nbasis, &zero_complex, &H_wfc, &nbasis );
 
     //test
     std::cout << "after HkPsi(),\nH_wfc[0], Hwfc[1]: " << H_wfc << " " << *(&H_wfc+1) <<"\n******\n\n\n";
@@ -299,27 +285,14 @@ void psiDotPsi(const Parallel_Orbitals* ParaV, const Parallel_2D& para_wfc_in, c
 
     //test
     std::cout << "\n\n\n******\nwfcHwfc[0], wfcHwfc[1]: " << wfcHwfc[0] << " " << wfcHwfc[1] <<"\n";
+    // set_zero_HK(Dmn);
     
     // in parallel_orbitals.h, there has int desc_Eij[9] which used for Eij in TDDFT, nbands*nbands. Just proper here.
     // std::vector<TK> Dmn(nrow_bands*ncol_bands);
-    // pzgemm_( &C_char, &N_char, &nbands, &nbands, &nbasis, &one_complex, &wfc, &one_int, &one_int, ParaV->desc_wfc,
-    //         &H_wfc, &one_int, &one_int, ParaV->desc_wfc, &zero_complex, &Dmn[0], &one_int, &one_int, para_Eij_in.desc );
-    zgemm_( &C_char, &N_char, &nbands, &nbands, &nbasis, &one_complex,  &wfc, &nbasis, &H_wfc, &nbasis, &zero_complex, &Dmn[0], &nbands );
-
-    // set_zero_HK(Dmn);
-    // for(int ib1=0; ib1<nbands; ++ib1)
-    // {
-    //     for(int ib2=0; ib2<nbands; ++ib2)
-    //     {
-    //         for(int ibas=0; ibas<nbasis; ++ibas)
-    //         {
-    //             Dmn[ib1*nbands+ib2] += std::conj( *(&wfc+ib1*nbasis+ibas) ) * (*(&H_wfc+ib2*nbasis+ibas));
-    //         }
-    //     }
-    // }
-
-
-    
+    pzgemm_( &C_char, &N_char, &nbands, &nbands, &nbasis, &one_complex, &wfc, &one_int, &one_int, ParaV->desc_wfc,
+            &H_wfc, &one_int, &one_int, ParaV->desc_wfc, &zero_complex, &Dmn[0], &one_int, &one_int, para_Eij_in.desc );
+    // zgemm_( &C_char, &N_char, &nbands, &nbands, &nbasis, &one_complex,  &wfc, &nbasis, &H_wfc, &nbasis, &zero_complex, &Dmn[0], &nbands );
+ 
     for(int i=0; i<nrow_bands; ++i)
     {
         int i_global = para_Eij_in.local2global_row(i);
@@ -679,10 +652,40 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     wgMul_wfcHwfc(wg, wfcHwfc_XC, wg_forExc, 3);
     double Exc_RDMFT = sumWg_getEnergy(wg_forExc);
 
-    std::cout << "\n\n\n******\nEtotal_RDMFT:   " << Etotal_RDMFT << "\nETV_RDMFT: " << ETV_RDMFT << "\nEhartree_RDMFT: " 
+    std::cout << "\n\n\n******\nin 0 processor\nEtotal_RDMFT:   " << Etotal_RDMFT << "\nETV_RDMFT: " << ETV_RDMFT << "\nEhartree_RDMFT: " 
                 << Ehartree_RDMFT << "\nExc_RDMFT:      " << Exc_RDMFT << "\n******\n\n\n";
 
     ModuleBase::timer::tick("hamilt_lcao", "RDMFT_E&Egradient");
+
+
+    /********* sum energy of different mpi rank ***********/
+    int mydsize;
+    int my_rank;
+    MPI_Comm_size(MPI_COMM_WORLD, &mydsize);
+    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+
+    std::stringstream ss;
+    ss << "processor_" << my_rank << ".txt";
+    std::string test_rank_file = ss.str();
+
+    std::ofstream outFile(test_rank_file);
+    if (!outFile.is_open())
+    {
+        std::cerr << "Error opening file: " << test_rank_file << std::endl;
+    }
+
+    outFile << "\n******\nnumber of processors: " << mydsize << "\n******\n" ;
+    outFile << "rank: " << my_rank << std::endl;
+
+    outFile << "\n\n\n******\nEtotal_RDMFT:   " << Etotal_RDMFT << "\nETV_RDMFT: " << ETV_RDMFT << "\nEhartree_RDMFT: " 
+                << Ehartree_RDMFT << "\nExc_RDMFT:      " << Exc_RDMFT << "\n******\n\n\n"; 
+
+    outFile << "\n";
+
+    outFile.close();
+    /********* sum energy of different mpi rank ***********/
+
+
     
     return Etotal_RDMFT;
     // return 1.0;

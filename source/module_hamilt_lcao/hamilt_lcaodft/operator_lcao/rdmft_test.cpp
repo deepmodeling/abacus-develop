@@ -259,9 +259,9 @@ void HkPsi<double>(const Parallel_Orbitals* ParaV, const Parallel_2D& para_wfc_i
     const int nbands = ParaV->desc_wfc[3];
 
     //because wfc(bands, basis'), H(basis, basis'), we do wfc*H^T(in the perspective of cpp, not in fortran). And get H_wfc(bands, basis) is correct.
-    // pdgemm_( &T_char, &N_char, &nbasis, &nbands, &nbasis, &one_double, &HK, &one_int, &one_int, ParaV->desc,
-    //     &wfc, &one_int, &one_int, ParaV->desc_wfc, &zero_double, &H_wfc, &one_int, &one_int, ParaV->desc_wfc );
-    dgemm_( &T_char, &N_char, &nbasis, &nbands, &nbasis, &one_double, &HK, &nbasis, &wfc, &nbasis, &zero_double, &H_wfc, &nbasis );
+    pdgemm_( &T_char, &N_char, &nbasis, &nbands, &nbasis, &one_double, &HK, &one_int, &one_int, ParaV->desc,
+        &wfc, &one_int, &one_int, ParaV->desc_wfc, &zero_double, &H_wfc, &one_int, &one_int, ParaV->desc_wfc );
+    // dgemm_( &T_char, &N_char, &nbasis, &nbands, &nbasis, &one_double, &HK, &nbasis, &wfc, &nbasis, &zero_double, &H_wfc, &nbasis );
 
 }
 
@@ -286,10 +286,10 @@ void psiDotPsi<double>(const Parallel_Orbitals* ParaV, const Parallel_2D& para_w
     
     // in parallel_orbitals.h, there has int desc_Eij[9] which used for Eij in TDDFT, nbands*nbands. Just proper here.
     // std::vector<double> Dmn(ncol_bands*nrow_bands); /////////////////////////////////////////////////////////////////////////////////////////////////
-    // pdgemm_( &T_char, &N_char, &nbands, &nbands, &nbasis, &one_double, &wfc, &one_int, &one_int, ParaV->desc_wfc,
-    //         &H_wfc, &one_int, &one_int, ParaV->desc_wfc, &zero_double, &Dmn[0], &one_int, &one_int, para_Eij_in.desc );
+    pdgemm_( &T_char, &N_char, &nbands, &nbands, &nbasis, &one_double, &wfc, &one_int, &one_int, ParaV->desc_wfc,
+            &H_wfc, &one_int, &one_int, ParaV->desc_wfc, &zero_double, &Dmn[0], &one_int, &one_int, para_Eij_in.desc );
 
-    dgemm_( &T_char, &N_char, &nbands, &nbands, &nbasis, &one_double,  &wfc, &nbasis, &H_wfc, &nbasis, &zero_double, &Dmn[0], &nbands );
+    // dgemm_( &T_char, &N_char, &nbands, &nbands, &nbasis, &one_double,  &wfc, &nbasis, &H_wfc, &nbasis, &zero_double, &Dmn[0], &nbands );
     
     for(int i=0; i<nrow_bands; ++i)
     {
