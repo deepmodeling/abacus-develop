@@ -1,8 +1,6 @@
 import source.components.data_manager as dm
 import source.components.basis_filter as bf
 import source.components.calculator as cal
-import matplotlib.pyplot as plt
-import numpy as np
 """
 1. filter out all irrelevant AOs from overlap matrix of AO in NAO representation
 ? maybe AO can also be normalized here?
@@ -93,8 +91,8 @@ class toQO_Driver:
 
         for R in Rs:
 
-            #sqoR = self.cal_.unfolding_Hk(self.dm_.data.sqok, self.dm_.data.kpoints, R)
-            #print(sqoR.imag)
+            sqoR = self.cal_.unfolding_Hk(self.dm_.data.sqok, self.dm_.data.kpoints, R)
+            print(sqoR.imag)
             #hR = self.cal_.unfolding_Hk(self.dm_.data.hk, self.dm_.data.kpoints, R)
             #sR = self.cal_.unfolding_Hk(self.dm_.data.sk, self.dm_.data.kpoints, R)
             # print(sR.imag)

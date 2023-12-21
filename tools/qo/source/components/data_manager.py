@@ -12,6 +12,38 @@ class toQO_DataManager:
     def __init__(self) -> None:
         self.data = dc.toQO_DataContainer() # Data manager borns with its data
 
+    def kpoints_eq(self, kpt1: np.ndarray, kpt2: np.ndarray):
+        """check if two kpoints are equal"""
+        return np.linalg.norm(kpt1 - kpt2) < 1e-6
+
+    def align_according_to_kpoints_ref(self, to_align: list, kpts: list, kpts_ref: list):
+        """align kpoints according to kpoints file"""
+        indexing = []
+        # first check if number of kpoints are the same
+        if len(kpts) != len(kpts_ref):
+            raise ValueError("kpoints read from files are not the same")
+        nkpts = len(kpts_ref)
+        for ik in range(nkpts):
+            _kpt = kpts_ref[ik]
+            for jk in range(nkpts):
+                if self.kpoints_eq(_kpt, kpts_ref[jk]):
+                    indexing.append(jk)
+                    break
+        # align
+        aligned = []
+        for ik in range(nkpts):
+            aligned.append(to_align[indexing[ik]])
+
+        return aligned
+
+    def check_kpoints_alignment(self, kpts1: list, kpts2: list):
+        """check if two kpoints lists are aligned"""
+        nkpts = len(kpts1)
+        for ik in range(nkpts):
+            if self.kpoints_eq(kpts1[ik], kpts2[ik]):
+                return False
+        return True
+
     def read(self, nkpts: int, calculation: str, path: str, band_range: tuple) -> None:
         """read data from files without any changes
         
@@ -27,14 +59,23 @@ class toQO_DataManager:
         """
         self.data.nkpts = nkpts
         self.data.hk, self.data.sk, self.data.nphi = ham.parse(self.data.nkpts, path)
-        self.data.saok = qov.parse(self.data.nkpts, path)
-        self.data.psi_lcao, self.data.kpoints, self.data.energies = wf.parse(self.data.nkpts, path)
-        self.data.kpoints, self.data.equivalent_kpoints = kpt.parse(path)
-
+        self.data.saok, saok_kpts = qov.parse(self.data.nkpts, path)
+        self.data.psi_lcao, psi_kpts, self.data.energies = wf.parse(self.data.nkpts, path)
+        kpts, self.data.equivalent_kpoints = kpt.parse(path)
+        # presently there may be at least two sets of kpoints in ABACUS
+        # Hamiltonian and Overlap matrix -> kpoints file
+        # Overlap AO with NAO            -> kpoints file
+        # wavefunction                   -> itself
+        # align all according to kpoints file
+        if not self.check_kpoints_alignment(kpts, psi_kpts):
+            self.data.psi_lcao = self.align_according_to_kpoints_ref(self.data.psi_lcao, psi_kpts, kpts)
+            self.data.energies = self.align_according_to_kpoints_ref(self.data.energies, psi_kpts, kpts)
+        if not self.check_kpoints_alignment(kpts, saok_kpts):
+            self.data.saok = self.align_according_to_kpoints_ref(self.data.saok, saok_kpts, kpts)
+        self.data.kpoints = kpts
         # band range selection operation
         self.data.psi_lcao = self.data.psi_lcao[:, band_range[0]:band_range[1], :]
         self.data.energies = self.data.energies[:, band_range[0]:band_range[1]]
-
 
     def resize(self) -> None:
         """resize the data container according to the data read from files or after basis filtering

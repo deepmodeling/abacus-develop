@@ -29,7 +29,9 @@ def parse(nkpts: int, path = "./"):
     _qo_ovlp_R0 = np.zeros_like(qo_ovlp[0])
     for ik in range(nkpts):
         _qo_ovlp_R0 += qo_ovlp[ik]
-    print(_qo_ovlp_R0)
+    # sum over all element imaginary parts and check if near zero
+    if np.sum(np.abs(np.imag(_qo_ovlp_R0))) > 1e-6:
+        raise ValueError("kpoint symmetry error, fail to cancel imaginary part at R = 0.")
     return np.array(qo_ovlp), np.array(kpoints)
 
 if __name__ == "__main__":

@@ -3,8 +3,8 @@ import numpy as np
 
 if __name__ == "__main__":
 
-    path = "./examples/pswfc_scf_lcao_ZnO"
-    nkpts = 30
+    path = "/root/abacus-develop/dev/tests/integrate/220_NO_KP_QO/OUT.ABACUS"
+    nkpts = 125
     band_range = (0, 13)
 
     d_ = driver.toQO_Driver()

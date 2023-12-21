@@ -1,6 +1,5 @@
 import numpy as np
 import scipy.linalg as la
-import matplotlib.pyplot as plt
 class toQO_BasisFilter:
     """Balance between flexible and accurate basis selection, filter basis according to practical band structure
     matrix should be k-point resoluted, i.e., matrix[ik] is the matrix for kpoint ik

@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 from source.tools.basic_functions import make_complex
 
 def recover_from_upper_triangle(matrix: list) -> np.ndarray:
@@ -83,10 +82,4 @@ def parse(nkpts: int, path = "./"):
     return hamiltonian, overlap, num_bands
 
 if __name__ == "__main__":
-    hamiltonian, overlap, num_bands = parse(1)
-    # two subplots, imshow, one for hamiltonian, one for overlap
-    fig, axs = plt.subplots(1, 2)
-    axs[0].imshow(hamiltonian[0].real)
-    axs[1].imshow(overlap[0].real)
-    plt.show()
-    print(hamiltonian[0].real)
+    pass

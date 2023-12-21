@@ -305,6 +305,7 @@ void toQO::calculate()
     }
     for(int ik = 0; ik < nkpts_; ik++)
     {
+        zero_out_ovlps(false);
         calculate_ovlp_k(ik);
         write_ovlp<std::complex<double>>(ovlp_k_, ik);
     }
