@@ -173,6 +173,10 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
 	// Read in latticies vector
 	//===========================
 	if(latName=="none"){	
+		if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_PARAMETERS") )
+		{
+			ModuleBase::WARNING_QUIT("UnitCell::read_atom_species","do not use LATTICE_PARAMETERS without explicit specification of lattice type");
+		}
 		if( !ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_VECTORS") )
 		{
 			ModuleBase::WARNING_QUIT("UnitCell::read_atom_species","Please set LATTICE_VECTORS in STRU file");
@@ -188,10 +192,6 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
 			ModuleBase::GlobalFunc::READ_VALUE(ifa, latvec.e23);
 			ifa >> latvec.e31 >> latvec.e32;
 			ModuleBase::GlobalFunc::READ_VALUE(ifa, latvec.e33);
-		}
-		if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_PARAMETERS") )
-		{
-			ModuleBase::WARNING_QUIT("UnitCell::read_atom_species","do not use LATTICE_PARAMETERS without explicit specification of lattice type");
 		}
 	}//supply lattice vectors
 	else{
