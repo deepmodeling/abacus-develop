@@ -95,6 +95,7 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
 
 	if(
 		(GlobalV::BASIS_TYPE == "lcao")
+	  ||(GlobalV::BASIS_TYPE == "lcao_in_pw")
 	  ||(
 		  (GlobalV::BASIS_TYPE == "pw")
 		&&(GlobalV::psi_initializer)
@@ -1295,6 +1296,6 @@ void UnitCell::read_orb_file(int it, std::string &orb_file, std::ofstream &ofs_r
 	ifs.close();
 	if(!atom->nw)
 	{
-		std::cout << "ERROR: " << atom->label << " nw = " << atom->nw << std::endl;
+		ModuleBase::WARNING_QUIT("read_orb_file","get nw = 0");
 	}
 }

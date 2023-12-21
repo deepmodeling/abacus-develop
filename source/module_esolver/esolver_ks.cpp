@@ -456,6 +456,9 @@ namespace ModuleESolver
 #else
                 double duration = (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - iterstart)).count() / static_cast<double>(1e6);
 #endif
+                /*
+                    SCF print: G1    -3.435545e+03  0.000000e+00   3.607e-01  2.862e-01
+                */
                 printiter(iter, drho, duration, diag_ethr);
                 if (this->conv_elec)
                 {
