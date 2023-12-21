@@ -79,7 +79,9 @@ namespace ModuleESolver
                              GlobalV::MIXING_NDIM,
                              GlobalV::MIXING_GG0,
                              GlobalV::MIXING_TAU,
-                             GlobalV::MIXING_BETA_MAG);
+                             GlobalV::MIXING_BETA_MAG,
+                             GlobalV::MIXING_GG0_MAG,
+                             GlobalV::MIXING_ANGLE);
         // I use default value to replace autoset                     
         // using bandgap to auto set mixing_beta
         // if (std::abs(GlobalV::MIXING_BETA + 10.0) < 1e-6)

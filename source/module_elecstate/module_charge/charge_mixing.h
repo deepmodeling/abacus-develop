@@ -80,13 +80,17 @@ class Charge_Mixing
      * @param mixing_gg0_in mixing gg0 for Kerker screen
      * @param mixing_tau_in whether to use tau mixing
      * @param mixing_beta_mag_in mixing beta for magnetism
+     * @param mixing_gg0_mag_in mixing gg0 for magnetism
+     * @param mixing_angle_in mixing angle for non-colinear angle mixing
      */
     void set_mixing(const std::string& mixing_mode_in,
                     const double& mixing_beta_in,
                     const int& mixing_ndim_in,
                     const double& mixing_gg0_in,
                     const bool& mixing_tau_in,
-                    const double& mixing_beta_mag_in); // mohan add mixing_gg0_in 2014-09-27
+                    const double& mixing_beta_mag_in,
+                    const double& mixing_gg0_mag_in,
+                    const double& mixing_angle_in);
 
     /**
      * @brief Get the drho
@@ -133,16 +137,18 @@ class Charge_Mixing
     double mixing_beta = 0.8;            ///< mixing beta for density
     double mixing_beta_mag = 1.6;        ///< mixing beta for magnetism
     int mixing_ndim = 8;                 ///< mixing ndim for broyden and pulay
-    double mixing_gg0 = 0.0;             ///< mixing gg0 for Kerker screen
+    double mixing_gg0 = 0.0;             ///< Kerker screen gg0 for density
+    double mixing_gg0_mag = 0.0;         ///< Kerker screen gg0 for magnetism
+    double mixing_angle = -10.0;         ///< mixing beta for non-colinear angle mixing
     bool mixing_tau = false;             ///< whether to use tau mixing
+    int nspin = 1;                       ///< number of spin
+    int mixing_nspin = 1;                ///< number of spin used in mixing
 
     bool new_e_iteration = true;
 
     ModulePW::PW_Basis* rhopw = nullptr;  ///< smooth grid
     ModulePW::PW_Basis* rhodpw = nullptr; ///< dense grid, same as rhopw for ncpp.
-    // bool autoset = false;
 
-  private:
     double rhog_dot_product(const std::complex<double>* const* const rhog1,
                             const std::complex<double>* const* const rhog2) const;
 

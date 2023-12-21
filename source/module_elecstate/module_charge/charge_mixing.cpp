@@ -24,14 +24,23 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
                                const int& mixing_ndim_in,
                                const double& mixing_gg0_in,
                                const bool& mixing_tau_in,
-                               const double& mixing_beta_mag_in)
+                               const double& mixing_beta_mag_in,
+                               const double& mixing_gg0_mag_in,
+                               const double& mixing_angle_in)
 {
+    // mixing parameters
     this->mixing_mode = mixing_mode_in;
     this->mixing_beta = mixing_beta_in;
     this->mixing_beta_mag = mixing_beta_mag_in;
     this->mixing_ndim = mixing_ndim_in;
     this->mixing_gg0 = mixing_gg0_in;
     this->mixing_tau = mixing_tau_in;
+    this->mixing_gg0_mag = mixing_gg0_mag_in;
+    this->mixing_angle = mixing_angle_in;
+    // nspin
+    this->nspin = GlobalV::NSPIN;
+    this->mixing_nspin = GlobalV::NSPIN;
+    if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0 ) this->mixing_nspin = 2;
 
     GlobalV::ofs_running<<"\n----------- Double Check Mixing Parameters Begin ------------"<<std::endl;
     GlobalV::ofs_running<<"mixing_type: "<< this->mixing_mode <<std::endl;
@@ -79,29 +88,13 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
 
     if (GlobalV::SCF_THR_TYPE == 1)
     {  
-        if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0 )
-        {
-            this->mixing->init_mixing_data(this->rho_mdata,
-                                        this->rhopw->npw * 2,
-                                        sizeof(std::complex<double>));
-        }
-        else
-        {
-            this->mixing->init_mixing_data(this->rho_mdata,
-                                        this->rhopw->npw * GlobalV::NSPIN,
-                                        sizeof(std::complex<double>));
-        }
+        this->mixing->init_mixing_data(this->rho_mdata,
+                                    this->rhopw->npw * this->mixing_nspin,
+                                    sizeof(std::complex<double>));
     }
     else
     {
-        if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0 )
-        {
-            this->mixing->init_mixing_data(this->rho_mdata, this->rhopw->nrxx * 2, sizeof(double));
-        }
-        else
-        {
-            this->mixing->init_mixing_data(this->rho_mdata, this->rhopw->nrxx * GlobalV::NSPIN, sizeof(double));
-        }
+        this->mixing->init_mixing_data(this->rho_mdata, this->rhopw->nrxx * this->mixing_nspin, sizeof(double));
     }
 
 #ifdef USE_PAW
