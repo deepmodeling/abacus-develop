@@ -285,11 +285,11 @@ void psiDotPsi<double>(const Parallel_Orbitals* ParaV, const Parallel_2D& para_w
     const int ncol_bands = para_Eij_in.get_col_size();
     
     // in parallel_orbitals.h, there has int desc_Eij[9] which used for Eij in TDDFT, nbands*nbands. Just proper here.
-    // std::vector<double> Dmn(ncol_bands*nrow_bands); /////////////////////////////////////////////////////////////////////////////////////////////////
+    // dgemm_( &T_char, &N_char, &nbands, &nbands, &nbasis, &one_double,  &wfc, &nbasis, &H_wfc, &nbasis, &zero_double, &Dmn[0], &nbands );
     pdgemm_( &T_char, &N_char, &nbands, &nbands, &nbasis, &one_double, &wfc, &one_int, &one_int, ParaV->desc_wfc,
             &H_wfc, &one_int, &one_int, ParaV->desc_wfc, &zero_double, &Dmn[0], &one_int, &one_int, para_Eij_in.desc );
 
-    // dgemm_( &T_char, &N_char, &nbands, &nbands, &nbasis, &one_double,  &wfc, &nbasis, &H_wfc, &nbasis, &zero_double, &Dmn[0], &nbands );
+
     
     for(int i=0; i<nrow_bands; ++i)
     {

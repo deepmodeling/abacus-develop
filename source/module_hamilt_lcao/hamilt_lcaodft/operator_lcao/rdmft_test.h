@@ -278,8 +278,6 @@ void psiDotPsi(const Parallel_Orbitals* ParaV, const Parallel_2D& para_wfc_in, c
     const int nbasis = ParaV->desc[2];
     const int nbands = ParaV->desc_wfc[3];
 
-    // const int nrow_bands = para_Eij_in.get_row_size();
-    // const int ncol_bands = para_Eij_in.get_col_size();
     const int nrow_bands = para_Eij_in.get_row_size();
     const int ncol_bands = para_Eij_in.get_col_size();
 
@@ -289,9 +287,10 @@ void psiDotPsi(const Parallel_Orbitals* ParaV, const Parallel_2D& para_wfc_in, c
     
     // in parallel_orbitals.h, there has int desc_Eij[9] which used for Eij in TDDFT, nbands*nbands. Just proper here.
     // std::vector<TK> Dmn(nrow_bands*ncol_bands);
+    // zgemm_( &C_char, &N_char, &nbands, &nbands, &nbasis, &one_complex,  &wfc, &nbasis, &H_wfc, &nbasis, &zero_complex, &Dmn[0], &nbands );
     pzgemm_( &C_char, &N_char, &nbands, &nbands, &nbasis, &one_complex, &wfc, &one_int, &one_int, ParaV->desc_wfc,
             &H_wfc, &one_int, &one_int, ParaV->desc_wfc, &zero_complex, &Dmn[0], &one_int, &one_int, para_Eij_in.desc );
-    // zgemm_( &C_char, &N_char, &nbands, &nbands, &nbasis, &one_complex,  &wfc, &nbasis, &H_wfc, &nbasis, &zero_complex, &Dmn[0], &nbands );
+
  
     for(int i=0; i<nrow_bands; ++i)
     {
@@ -307,6 +306,8 @@ void psiDotPsi(const Parallel_Orbitals* ParaV, const Parallel_2D& para_wfc_in, c
             }
         }
     }
+    // test
+    std::cout << "after psiDotPsi()\nwfcHwfc[0], wfcHwfc[1]: " << wfcHwfc[0] << " " << wfcHwfc[1] <<"\n******\n\n\n";
 
 }
 
