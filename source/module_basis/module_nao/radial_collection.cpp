@@ -225,7 +225,8 @@ void RadialCollection::build(const int ntype,
 
 void RadialCollection::build(const int ntype,
                              const std::string* const file,
-                             const double* const screening_coeffs)
+                             const double* const screening_coeffs,
+                             const double conv_thr)
 {
     cleanup();
     ntype_ = ntype;
@@ -234,7 +235,7 @@ void RadialCollection::build(const int ntype,
     for (int itype = 0; itype < ntype_; ++itype)
     {
         radset_[itype] = new PswfcRadials;
-        radset_[itype]->build(file[itype], itype, screening_coeffs[itype]);
+        radset_[itype]->build(file[itype], itype, screening_coeffs[itype], conv_thr);
 
         lmax_ = std::max(lmax_, radset_[itype]->lmax());
         nchi_ += radset_[itype]->nchi();

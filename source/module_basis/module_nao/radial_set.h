@@ -88,6 +88,7 @@ class RadialSet
     virtual void build(const std::string&,             ///< file name
                        const int,                      ///< the element index in calculation
                        const double,                   ///< radial screening coefficient, sometimes to be 0.1
+                       const double,                   ///< convergence threshold of norm of pseudowavefunction
                        std::ofstream* const = nullptr, ///< output file stream for logging
                        const int = 0                   ///< MPI rank
                        ) {}

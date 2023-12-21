@@ -1,5 +1,6 @@
 #include "module_basis/module_nao/pswfc_radials.h"
 #include "module_base/tool_quit.h"
+#include "module_base/math_integral.h"
 #include <algorithm>
 #include <cmath>
 
@@ -12,6 +13,7 @@ PswfcRadials& PswfcRadials::operator=(const PswfcRadials& rhs)
 void PswfcRadials::build(const std::string& file, 
                          const int itype, 
                          const double screening_coeff,
+                         const double conv_thr,
                          std::ofstream* ptr_log,
                          const int rank)
 {
@@ -32,7 +34,7 @@ void PswfcRadials::build(const std::string& file,
     }
 
     itype_ = itype;
-    read_upf_pswfc(ifs, screening_coeff, ptr_log, rank);
+    read_upf_pswfc(ifs, screening_coeff, conv_thr, ptr_log, rank);
     set_rcut_max();
     
     if (rank == 0)
@@ -121,8 +123,112 @@ std::string PswfcRadials::read_keyword_value(std::ifstream& ifs, std::string wor
     else return steal_from_quotes(word);
 }
 
+double PswfcRadials::radial_norm(const std::vector<double> rgrid,
+                                 const std::vector<double> rvalue)
+{
+    std::vector<double> integrand(rvalue.size());
+    for(int ir = 0; ir != rvalue.size(); ++ir)
+    {
+        integrand[ir] = rvalue[ir] * rvalue[ir] * rgrid[ir] * rgrid[ir];
+    }
+    double dr = rgrid[1] - rgrid[0];
+    double norm = ModuleBase::Integral::simpson(rvalue.size(), integrand.data(), dr);
+    norm = sqrt(norm);
+    return norm;
+}
+
+double PswfcRadials::cut_to_convergence(const std::vector<double>& rgrid,
+                                        std::vector<double>& rvalue, 
+                                        const double& conv_thr)
+{
+    double norm = 0.0;
+    int ir_ = 0;
+    int ir_min_ = 0;
+    int delta_ir = 5; // stepsize for radius cutoff searching, in Bohr
+
+    int ir_max_ = rgrid.size() - 1;
+    
+    double dr = rgrid[1] - rgrid[0]; // radial function realspace grid stepsize, in Bohr
+    printf("Norm of pseudowavefunction before cutoff: %6.4e\n", radial_norm(rgrid, rvalue));
+    int istep = 1;
+    double delta_norm = 1.0;
+    printf("Searching for the cutoff radius for pseudowavefunction, conv_thr = %6.4e\n", conv_thr);
+    printf("%10s%12s%14s%18s", "Step Nr.", "Rmax (a.u.)", "Norm", "Delta Norm\n");
+    while((std::fabs(delta_norm) > conv_thr)&&(ir_ <= ir_max_))
+    {
+        ir_ = std::min(ir_ + delta_ir, ir_max_); // update ir_, but be careful not to exceed ir_max_
+        delta_norm = norm;
+        std::vector<double> rgrid_slice = std::vector<double>(rgrid.begin() + ir_min_, rgrid.begin() + ir_ + 1);
+        std::vector<double> rvalue_slice = std::vector<double>(rvalue.begin() + ir_min_, rvalue.begin() + ir_ + 1);
+        norm = radial_norm(rgrid_slice, rvalue_slice);
+        delta_norm = norm - delta_norm;
+        if(istep == 1) printf("%10d%12.2f%14.10f%18.10e\n", istep, rgrid[ir_], norm, delta_norm);
+        ++istep;
+    }
+    printf("%10d%12.2f%14.10f%18.10e\n", istep, rgrid[ir_], norm, delta_norm);
+
+    rvalue = std::vector<double>(rvalue.begin() + ir_min_, rvalue.begin() + ir_ + 1);
+    return rgrid[ir_max_];
+}
+
+void PswfcRadials::smooth(std::vector<double>& rgrid,
+                          std::vector<double>& rvalue,
+                          const double sigma)
+{
+    double prefactor = 1.0 / sqrt(2.0 * M_PI) / sigma;
+    double rmax = rgrid.back();
+    for(int ir = 0; ir != rgrid.size(); ++ir)
+    {
+        double delta_r = rgrid[ir] - rmax;
+        double smooth = prefactor * exp(-delta_r * delta_r / 2.0 / sigma / sigma);
+        rvalue[ir] *= (1 - smooth);
+    }
+}
+
+std::vector<double> PswfcRadials::pswfc_prepossess(std::map<std::pair<int, int>, std::vector<double>>& lzeta_rvalues)
+{
+    double nmax = 0.0;
+    for(auto it = lzeta_rvalues.begin(); it != lzeta_rvalues.end(); it++)
+    {
+        int l = it->first.first;
+        int iz = it->first.second;
+        std::vector<double> rvalue = it->second;
+        std::vector<double> rgrid = std::vector<double>(rvalue.size(), 0.0);
+        for(int ir = 0; ir < rvalue.size(); ir++)
+        {
+            rgrid[ir] = ir * 0.01;
+        }
+        double rcut_i = cut_to_convergence(rgrid, rvalue, 1e-6);
+        if(rvalue.size() > nmax) nmax = rvalue.size();
+        lzeta_rvalues[it->first] = rvalue; // stores in map
+    }
+    // generate rgrid
+    std::vector<double> rgrid = std::vector<double>(nmax, 0.0);
+    for(int ir = 0; ir < nmax; ir++)
+    {
+        rgrid[ir] = ir * 0.01;
+    }
+    // zero padding on rvalue
+    for(auto it = lzeta_rvalues.begin(); it != lzeta_rvalues.end(); it++)
+    {
+        int l = it->first.first;
+        int iz = it->first.second;
+        std::vector<double> rvalue = it->second;
+        std::vector<double> rvalue_padded = std::vector<double>(nmax, 0.0);
+        for(int ir = 0; ir < rvalue.size(); ir++)
+        {
+            rvalue_padded[ir] = rvalue[ir];
+        }
+        smooth(rgrid, rvalue_padded, 0.1); // smooth the radial function to avoid high frequency noise in FFT-spherical bessel transform
+        lzeta_rvalues[it->first] = rvalue_padded; // stores in map
+    }
+
+    return rgrid;
+}
+
 void PswfcRadials::read_upf_pswfc(std::ifstream& ifs, 
                                   const double screening_coeff, 
+                                  const double conv_thr,
                                   std::ofstream* ptr_log, 
                                   const int rank)
 {
@@ -182,11 +288,10 @@ void PswfcRadials::read_upf_pswfc(std::ifstream& ifs,
     nzeta_max_ = *std::max_element(nzeta_, nzeta_ + lmax_ + 1);
     indexing(); // build index_map_
 
-    std::vector<double> rgrid = std::vector<double>(ngrid, 0.0);
-    for(int ir = 0; ir < ngrid; ir++)
-    {
-        rgrid[ir] = ir * dr;
-    }
+    // cut rvalue to convergence and generate rgrid
+    std::vector<double> rgrid = pswfc_prepossess(result);
+    // refresh ngird value
+    ngrid = rgrid.size();
 
     chi_ = new NumericalRadial[nchi_];
 

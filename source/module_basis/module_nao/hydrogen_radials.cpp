@@ -204,9 +204,10 @@ double HydrogenRadials::generate_hydrogen_radial_toconv(const double charge,
         delta_norm = norm;
         norm = radial_norm(rgrid, rvalue);
         delta_norm = norm - delta_norm;
-        printf("%10d%12.2f%14.10f%18.10e\n", istep, rmax_, norm, delta_norm);
+        if(istep == 0) printf("%10d%12.2f%14.10f%18.10e\n", istep, rmax_, norm, delta_norm);
         ++istep;
     }
+    printf("%10d%12.2f%14.10f%18.10e\n", istep, rmax_, norm, delta_norm);
     return rmax_;
 }
 

@@ -153,7 +153,7 @@ void toQO::build_pswfc(const int ntype, const std::string* const pspot_fn, const
     {
         pspot_fn_[it] = GlobalV::global_pseudo_dir + pspot_fn[it];
     }
-    ao_->build(ntype, pspot_fn_, screening_coeffs);
+    ao_->build(ntype, pspot_fn_, screening_coeffs, GlobalV::qo_thr);
     ModuleBase::SphericalBesselTransformer sbt;
     ao_->set_transformer(sbt);
     

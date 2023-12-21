@@ -86,30 +86,48 @@ TEST_F(PswfcRadialsTest, ReadUpfPswfc) {
     if(!is_open) {std::cout<<"File path WRONG.\n"; }
     ASSERT_TRUE(is_open);
 
-    pswfc_radials.read_upf_pswfc(ifs, 0.0);
+    pswfc_radials.read_upf_pswfc(ifs, 0.0, 1e-6);
     EXPECT_EQ(pswfc_radials.lmax(), 2);
     EXPECT_EQ(pswfc_radials.nzeta(0), 1);
     EXPECT_EQ(pswfc_radials.nzeta(1), 1);
     EXPECT_EQ(pswfc_radials.nzeta(2), 1);
     EXPECT_EQ(pswfc_radials.nzeta_max(), 1);
-
+    // l = 0, <PP_CHI.2>, 4S
     EXPECT_DOUBLE_EQ(pswfc_radials.chi(0, 0).rvalue(0), 5.0672226831E-13);
     EXPECT_DOUBLE_EQ(pswfc_radials.chi(0, 0).rvalue(1), 3.0740550920E-04);
     EXPECT_DOUBLE_EQ(pswfc_radials.chi(0, 0).rvalue(2), 6.2055866358E-04);
     EXPECT_DOUBLE_EQ(pswfc_radials.chi(0, 0).rvalue(3), 9.4519832136E-04);
     EXPECT_DOUBLE_EQ(pswfc_radials.chi(0, 0).rvalue(4), 1.2870457911E-03);
 
+    EXPECT_DOUBLE_EQ(pswfc_radials.chi(0, 0).rvalue(39), 6.2747938942E-02);
+    EXPECT_DOUBLE_EQ(pswfc_radials.chi(0, 0).rvalue(79), 3.2957297188E-01);
+    EXPECT_DOUBLE_EQ(pswfc_radials.chi(0, 0).rvalue(119), 6.5729325723E-01);
+    EXPECT_DOUBLE_EQ(pswfc_radials.chi(0, 0).rvalue(159), 7.9744230720E-01);
+    EXPECT_DOUBLE_EQ(pswfc_radials.chi(0, 0).rvalue(199), 7.3512466100E-01);
+    // l = 1, <PP_CHI.3>, 4P
     EXPECT_DOUBLE_EQ(pswfc_radials.chi(1, 0).rvalue(0), -1.2105620326E-12);
     EXPECT_DOUBLE_EQ(pswfc_radials.chi(1, 0).rvalue(1), 2.6035363423E-05);
     EXPECT_DOUBLE_EQ(pswfc_radials.chi(1, 0).rvalue(2), 1.0416837423E-04);
     EXPECT_DOUBLE_EQ(pswfc_radials.chi(1, 0).rvalue(3), 2.3447967866E-04);
     EXPECT_DOUBLE_EQ(pswfc_radials.chi(1, 0).rvalue(4), 4.1710331234E-04);
 
+    EXPECT_DOUBLE_EQ(pswfc_radials.chi(1, 0).rvalue(39), 4.3850721200E-02);
+    EXPECT_DOUBLE_EQ(pswfc_radials.chi(1, 0).rvalue(79), 2.0385391536E-01);
+    EXPECT_DOUBLE_EQ(pswfc_radials.chi(1, 0).rvalue(119), 4.4174606396E-01);
+    EXPECT_DOUBLE_EQ(pswfc_radials.chi(1, 0).rvalue(159), 6.1861552438E-01);
+    EXPECT_DOUBLE_EQ(pswfc_radials.chi(1, 0).rvalue(199), 6.6885272981E-01);
+    // l = 2, <PP_CHI.1>, 3D
     EXPECT_DOUBLE_EQ(pswfc_radials.chi(2, 0).rvalue(0), 2.0998757420E-11);
     EXPECT_DOUBLE_EQ(pswfc_radials.chi(2, 0).rvalue(1), 1.0346699413E-05);
     EXPECT_DOUBLE_EQ(pswfc_radials.chi(2, 0).rvalue(2), 8.2719900770E-05);
     EXPECT_DOUBLE_EQ(pswfc_radials.chi(2, 0).rvalue(3), 2.7887785682E-04);
     EXPECT_DOUBLE_EQ(pswfc_radials.chi(2, 0).rvalue(4), 6.6004347176E-04);
+
+    EXPECT_DOUBLE_EQ(pswfc_radials.chi(2, 0).rvalue(39), 4.4075591655E-01);
+    EXPECT_DOUBLE_EQ(pswfc_radials.chi(2, 0).rvalue(79), 1.2790898686E+00);
+    EXPECT_DOUBLE_EQ(pswfc_radials.chi(2, 0).rvalue(119), 7.5247184647E-01);
+    EXPECT_DOUBLE_EQ(pswfc_radials.chi(2, 0).rvalue(159), 2.7836191101E-01);
+    EXPECT_DOUBLE_EQ(pswfc_radials.chi(2, 0).rvalue(199), 1.3889295980E-01);
 }
 
 TEST_F(PswfcRadialsTest, Build)
