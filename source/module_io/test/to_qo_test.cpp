@@ -295,12 +295,13 @@ TEST_F(toQOTest, CalculateSelfOvlpKSymmetrical)
     ucell.orbital_fn[1] = "C_special_use_unittest.orb"; // generated in unittest BuildAo
     ucell.atoms[1].nwl = 1; // only s and p for C
     tqo.initialize(&ucell, kvecs_c);
+    // test symmetry cancellation on pair1
     tqo.calculate_ovlp_k(0);
     std::vector<std::vector<std::complex<double>>> ovlp_k_1 = tqo.ovlp_k();
     tqo.calculate_ovlp_k(1);
     std::vector<std::vector<std::complex<double>>> ovlp_k_2 = tqo.ovlp_k();
+    bool all_zero = true;
     // check if all imaginary parts are cancelled
-    bool all_real = true;
     for(int i = 0; i < ovlp_k_1.size(); i++)
     {
         for(int j = 0; j < ovlp_k_1[i].size(); j++)
@@ -309,12 +310,19 @@ TEST_F(toQOTest, CalculateSelfOvlpKSymmetrical)
             // becomes direct summation over kpoints
             std::complex<double> ovlp_R_ij = ovlp_k_1[i][j] + ovlp_k_2[i][j];
             EXPECT_NEAR(ovlp_R_ij.imag(), 0.0, 1e-10);
+            if(ovlp_R_ij.real() > 1e-10)
+            {
+                all_zero = false;
+            }
         }
     }
+    EXPECT_FALSE(all_zero);
+    // test symmetry cancellation on pair2
     tqo.calculate_ovlp_k(2);
     std::vector<std::vector<std::complex<double>>> ovlp_k_3 = tqo.ovlp_k();
     tqo.calculate_ovlp_k(3);
     std::vector<std::vector<std::complex<double>>> ovlp_k_4 = tqo.ovlp_k();
+    all_zero = true;
     // check if all imaginary parts are cancelled
     for(int i = 0; i < ovlp_k_3.size(); i++)
     {
@@ -324,12 +332,19 @@ TEST_F(toQOTest, CalculateSelfOvlpKSymmetrical)
             // becomes direct summation over kpoints
             std::complex<double> ovlp_R_ij = ovlp_k_3[i][j] + ovlp_k_4[i][j];
             EXPECT_NEAR(ovlp_R_ij.imag(), 0.0, 1e-10);
+            if(ovlp_R_ij.real() > 1e-10)
+            {
+                all_zero = false;
+            }
         }
     }
+    EXPECT_FALSE(all_zero);
+    // test symmetry cancellation on pair3
     tqo.calculate_ovlp_k(4);
     std::vector<std::vector<std::complex<double>>> ovlp_k_5 = tqo.ovlp_k();
     tqo.calculate_ovlp_k(5);
     std::vector<std::vector<std::complex<double>>> ovlp_k_6 = tqo.ovlp_k();
+    all_zero = true;
     // check if all imaginary parts are cancelled
     for(int i = 0; i < ovlp_k_5.size(); i++)
     {
@@ -339,12 +354,19 @@ TEST_F(toQOTest, CalculateSelfOvlpKSymmetrical)
             // becomes direct summation over kpoints
             std::complex<double> ovlp_R_ij = ovlp_k_5[i][j] + ovlp_k_6[i][j];
             EXPECT_NEAR(ovlp_R_ij.imag(), 0.0, 1e-10);
+            if(ovlp_R_ij.real() > 1e-10)
+            {
+                all_zero = false;
+            }
         }
     }
+    EXPECT_FALSE(all_zero);
+    // test symmetry cancellation on pair4
     tqo.calculate_ovlp_k(6);
     std::vector<std::vector<std::complex<double>>> ovlp_k_7 = tqo.ovlp_k();
     tqo.calculate_ovlp_k(7);
     std::vector<std::vector<std::complex<double>>> ovlp_k_8 = tqo.ovlp_k();
+    all_zero = true;
     // check if all imaginary parts are cancelled
     for(int i = 0; i < ovlp_k_7.size(); i++)
     {
@@ -354,10 +376,17 @@ TEST_F(toQOTest, CalculateSelfOvlpKSymmetrical)
             // becomes direct summation over kpoints
             std::complex<double> ovlp_R_ij = ovlp_k_7[i][j] + ovlp_k_8[i][j];
             EXPECT_NEAR(ovlp_R_ij.imag(), 0.0, 1e-10);
+            if(ovlp_R_ij.real() > 1e-10)
+            {
+                all_zero = false;
+            }
         }
     }
+    EXPECT_FALSE(all_zero);
+    // test symmetry cancellation on pair5
     tqo.calculate_ovlp_k(8);
     std::vector<std::vector<std::complex<double>>> ovlp_k_9 = tqo.ovlp_k();
+    all_zero = true;
     // check if all imaginary parts are cancelled
     for(int i = 0; i < ovlp_k_9.size(); i++)
     {
@@ -366,8 +395,13 @@ TEST_F(toQOTest, CalculateSelfOvlpKSymmetrical)
             // R = 0, 0, 0, then unfolding kphase would be e-ikR = 1,
             // becomes direct summation over kpoints
             EXPECT_NEAR(ovlp_k_9[i][j].imag(), 0.0, 1e-10);
+            if(ovlp_k_9[i][j].real() > 1e-10)
+            {
+                all_zero = false;
+            }
         }
     }
+    EXPECT_FALSE(all_zero);
     std::remove("Si_special_use_unittest.orb");
     std::remove("C_special_use_unittest.orb");
     //tqo.write_ovlp(tqo.ovlp_R()[0], "QO_self_ovlp.dat");
