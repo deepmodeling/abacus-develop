@@ -77,6 +77,7 @@
     - [mixing\_gg0\_min](#mixing_gg0_min)
     - [mixing\_tau](#mixing_tau)
     - [mixing\_dftu](#mixing_dftu)
+    - [mixing\_angle](#mixing_angle)
     - [gamma\_only](#gamma_only)
     - [printe](#printe)
     - [scf\_nmax](#scf_nmax)
@@ -1014,6 +1015,17 @@ We recommend the following options:
 - **Type**: Real
 - **Description**: the minimum kerker coefficient 
 - **Default**: 0.1
+
+### mixing_angle
+
+- **Type**: Real
+- **Availability**: Only relevant for non-colinear calculations `nspin=4`.
+- **Description**: Normal broyden mixing can give the converged result for a given magnetic configuration. If one is not interested in the energies of a given magnetic configuration but wants to determine the ground state by relaxing the magnetic moments’ directions, one cannot rely on the standard Broyden mixing algorithm. To enhance the ability to find correct magnetic configuration for non-colinear calculations, ABACUS implements a promising mixing method proposed by J. Phys. Soc. Jpn. 82 (2013) 114706. Here, `mixing_angle` is the angle mixing parameter. In fact, only `mixing_angle=1.0` is implemented currently.
+  - **<=0**: Normal broyden mixing for $m_{x}, m_{y}, m_{z}$
+  - **>0**: Angle mixing for the modulus $|m|$ with `mixing_angle=1.0`
+- **Default**: -10.0
+
+Note: In new angle mixing, you should set `mixing_beta_mag >> mixing_beta`. The setup of `mixing_beta=0.2`, `mixing_beta_mag=1.0` usually works well.
 
 ### mixing_tau
 
