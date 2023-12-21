@@ -129,39 +129,47 @@ void Veff_rdmft<TK, TR>::contributeHR()
 
     this->GK->reset_spin(GlobalV::CURRENT_SPIN);
 
-    ModuleBase::matrix v_matrix(GlobalV::NSPIN, charge_->nrxx);
-    elecstate::PotHartree potH(&rho_basis_);
-    elecstate::PotLocal potL(&vloc_, &sf_, &rho_basis_);
-    // elecstate::PotXC potXC();
+    double* vr_eff_rdmft = nullptr;
 
     // calculate v_hartree(r) or V_local(r) or v_xc(r)
     if( potential_ == "hartree" )
-    {
-        potH.cal_v_eff(charge_, ucell_, v_matrix);
+    {   
+        ModuleBase::matrix v_matrix_hartree(GlobalV::NSPIN, charge_->nrxx);
+        elecstate::PotHartree potH(&rho_basis_);
+        potH.cal_v_eff(charge_, ucell_, v_matrix_hartree);
+
+        for(int is=0; is<GlobalV::NSPIN; ++is)
+        {
+            // use pointer to attach v(r) for current spin
+            vr_eff_rdmft = &v_matrix_hartree(is, 0);
+
+            // do grid integral calculation to get HR
+            Gint_inout inout(vr_eff_rdmft, is, Gint_Tools::job_type::vlocal);
+            this->GK->cal_gint(&inout);
+        }
     }
     else if( potential_ == "local" )
-    {
-        potL.cal_v_eff(charge_, ucell_, v_matrix);
+    {   
+        ModuleBase::matrix v_matrix_local(1, charge_->nrxx);
+        elecstate::PotLocal potL(&vloc_, &sf_, &rho_basis_);
+        potL.cal_fixed_v( &v_matrix_local(0, 0) );
+
+        // use pointer to attach v(r)
+        vr_eff_rdmft = &v_matrix_local(0, 0);
+
+        // do grid integral calculation to get HR
+        Gint_inout inout(vr_eff_rdmft, 0, Gint_Tools::job_type::vlocal);
+        this->GK->cal_gint(&inout);
     }
     // else if( potential_ == "XC" )
     // {
+    //     elecstate::PotXC potXC();
     //     potXC.cal_v_eff(charge_, ucell_, v_matrix);
+    //     ...
     // }
     else
     {
         std::cout << "\n\n******\n there may be something wrong when use class Veff_rdmft\n\n******\n";
-    }
-
-
-    double* vr_eff_rdmft = nullptr;
-    for(int is=0; is<GlobalV::NSPIN; ++is)
-    {
-        // use pointer to attach v(r) for current spin
-        vr_eff_rdmft = &v_matrix(is, 0);
-
-        // do grid integral calculation to get HR
-        Gint_inout inout(vr_eff_rdmft, is, Gint_Tools::job_type::vlocal);
-        this->GK->cal_gint(&inout);
     }
 
     // get HR for 2D-block parallel format
@@ -181,38 +189,47 @@ void Veff_rdmft<double, double>::contributeHR()
 
     // this->GK->reset_spin(GlobalV::CURRENT_SPIN);
 
-    ModuleBase::matrix v_matrix(GlobalV::NSPIN, charge_->nrxx);
-    elecstate::PotHartree potH(&rho_basis_);
-    elecstate::PotLocal potL(&vloc_, &sf_, &rho_basis_);
-    // PotXC potXC();
+    double* vr_eff_rdmft = nullptr;
 
     // calculate v_hartree(r) or V_local(r) or v_xc(r)
     if( potential_ == "hartree" )
-    {
-        potH.cal_v_eff(charge_, ucell_, v_matrix);
+    {   
+        ModuleBase::matrix v_matrix_hartree(GlobalV::NSPIN, charge_->nrxx);
+        elecstate::PotHartree potH(&rho_basis_);
+        potH.cal_v_eff(charge_, ucell_, v_matrix_hartree);
+
+        for(int is=0; is<GlobalV::NSPIN; ++is)
+        {
+            // use pointer to attach v(r) for current spin
+            vr_eff_rdmft = &v_matrix_hartree(is, 0);
+
+            // do grid integral calculation to get HR
+            Gint_inout inout(vr_eff_rdmft, is, Gint_Tools::job_type::vlocal);
+            this->GG->cal_gint(&inout);
+        }
     }
     else if( potential_ == "local" )
-    {
-        potL.cal_v_eff(charge_, ucell_, v_matrix);
+    {   
+        ModuleBase::matrix v_matrix_local(1, charge_->nrxx);
+        elecstate::PotLocal potL(&vloc_, &sf_, &rho_basis_);
+        potL.cal_fixed_v( &v_matrix_local(0, 0) );
+
+        // use pointer to attach v(r)
+        vr_eff_rdmft = &v_matrix_local(0, 0);
+
+        // do grid integral calculation to get HR
+        Gint_inout inout(vr_eff_rdmft, 0, Gint_Tools::job_type::vlocal);
+        this->GG->cal_gint(&inout);
     }
     // else if( potential_ == "XC" )
     // {
+    //     elecstate::PotXC potXC();
     //     potXC.cal_v_eff(charge_, ucell_, v_matrix);
+    //     ...
     // }
     else
     {
         std::cout << "\n\n******\n there may be something wrong when use class Veff_rdmft\n\n******\n";
-    }
-
-    double* vr_eff_rdmft = nullptr;
-    for(int is=0; is<GlobalV::NSPIN; ++is)
-    {
-        // use pointer to attach v(r) for current spin
-        vr_eff_rdmft = &v_matrix(is, 0);
-
-        // do grid integral calculation to get HR
-        Gint_inout inout(vr_eff_rdmft, is, Gint_Tools::job_type::vlocal);
-        this->GG->cal_vlocal(&inout, this->LM, this->new_e_iteration);
     }
 
     // get HR for 2D-block parallel format

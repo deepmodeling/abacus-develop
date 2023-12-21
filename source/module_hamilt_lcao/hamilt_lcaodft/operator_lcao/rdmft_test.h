@@ -691,7 +691,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         // get the HK with ik-th k vector
         V_ekinetic_potential->contributeHk(ik);
         // V_nonlocal->contributeHk(ik);
-        // V_local_new->contributeHk(ik);
+        // V_local->contributeHk(ik);
         V_hartree->contributeHk(ik);    // because contributeHk() in class Veff is {}, so we get a OperatorLCAO* class object V_hartree_new to do contributeHk()
         V_XC->contributeHk(ik);
 
