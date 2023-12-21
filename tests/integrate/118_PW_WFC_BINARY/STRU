@@ -1,0 +1,13 @@
+ATOMIC_SPECIES
+Al 27 Al_ONCV_PBE-1.0.upf
+
+LATTICE_CONSTANT
+6.5
+
+ATOMIC_POSITIONS
+Direct
+
+Al #label
+0 #magnetism
+1 #number of atoms
+0 0 0

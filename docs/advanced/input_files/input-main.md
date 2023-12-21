@@ -70,10 +70,14 @@
     - [smearing\_sigma\_temp](#smearing_sigma_temp)
     - [mixing\_type](#mixing_type)
     - [mixing\_beta](#mixing_beta)
+    - [mixing\_beta\_mag](#mixing_beta_mag)
     - [mixing\_ndim](#mixing_ndim)
     - [mixing\_gg0](#mixing_gg0)
+    - [mixing\_gg0\_mag](#mixing_gg0_mag)
+    - [mixing\_gg0\_min](#mixing_gg0_min)
     - [mixing\_tau](#mixing_tau)
     - [mixing\_dftu](#mixing_dftu)
+    - [mixing\_angle](#mixing_angle)
     - [gamma\_only](#gamma_only)
     - [printe](#printe)
     - [scf\_nmax](#scf_nmax)
@@ -289,6 +293,7 @@
     - [gdir](#gdir)
     - [towannier90](#towannier90)
     - [nnkpfile](#nnkpfile)
+    - [wannier\_method](#wannier_method)
     - [wannier\_spin](#wannier_spin)
     - [out\_wannier\_mmn](#out_wannier_mmn)
     - [out\_wannier\_amn](#out_wannier_amn)
@@ -346,6 +351,7 @@
     - [cond\_wcut](#cond_wcut)
     - [cond\_dt](#cond_dt)
     - [cond\_dtbatch](#cond_dtbatch)
+    - [cond\_smear](#cond_smear)
     - [cond\_fwhm](#cond_fwhm)
     - [cond\_nonlocal](#cond_nonlocal)
   - [Implicit solvation model](#implicit-solvation-model)
@@ -360,6 +366,7 @@
     - [sc\_thr](#sc_thr)
     - [nsc](#nsc)
     - [nsc\_min](#nsc_min)
+    - [sc\_scf\_nmin](#sc_scf_nmin)
     - [alpha\_trial](#alpha_trial)
     - [sccut](#sccut)
     - [sc\_file](#sc_file)
@@ -496,7 +503,7 @@ These variables are used to control general system parameters.
   
   - atomic: from atomic pseudo wave functions. If they are not enough, other wave functions are initialized with random numbers.
   - atomic+random: add small random numbers on atomic pseudo-wavefunctions
-  - file: from file
+  - file: from binary files `WAVEFUNC*.dat`, which are output by setting [out_wfc_pw](#out_wfc_pw) to `2`.
   - random: random numbers
   
   with `psi_initializer 1`, two more options are supported:
@@ -510,7 +517,7 @@ These variables are used to control general system parameters.
 - **Description**: This variable is used for both plane wave set and localized orbitals set. It indicates the type of starting density.
 
   - atomic: the density is starting from the summation of the atomic density of single atoms. 
-  - file: the density will be read in from a file. Besides, when you do `nspin=1` calculation, you only need the density file SPIN1_CHG.cube. However, if you do `nspin=2` calculation, you also need the density file SPIN2_CHG.cube. The density file should be output with these names if you set out_chg = 1 in INPUT file.
+  - file: the density will be read in from a binary file `charge-density.dat` first. If it does not exist, the charge density will be read in from cube files. Besides, when you do `nspin=1` calculation, you only need the density file SPIN1_CHG.cube. However, if you do `nspin=2` calculation, you also need the density file SPIN2_CHG.cube. The density file should be output with these names if you set out_chg = 1 in INPUT file.
 - **Default**: atomic
 
 ### init_vel
@@ -931,13 +938,13 @@ calculations.
   - **gauss** or **gaussian**: Gaussian smearing method.
   - **mp**: methfessel-paxton smearing method; recommended for metals.
   - **fd**: Fermi-Dirac smearing method: $f=1/\{1+\exp[(E-\mu)/kT]\}$ and smearing_sigma below is the temperature $T$ (in Ry).
-- **Default**: fixed
+- **Default**: gauss
 
 ### smearing_sigma
 
 - **Type**: Real
 - **Description**: Energy range for smearing.
-- **Default**: 0.001
+- **Default**: 0.015
 - **Unit**: Ry
 
 ### smearing_sigma_temp
@@ -950,7 +957,6 @@ calculations.
 ### mixing_type
 
 - **Type**: String
-- **Availability**: `smearing_method` is not `fixed`.
 - **Description**: Charge mixing methods.
   - **plain**: Just simple mixing.
   - **pulay**: Standard Pulay method. [P. Pulay Chemical Physics Letters, (1980)](https://www.sciencedirect.com/science/article/abs/pii/0009261480803964)
@@ -965,20 +971,19 @@ calculations.
 - **Description**: In general, the formula of charge mixing can be written as $\rho_{new} = \rho_{old} + \beta * \rho_{update}$, where $\rho_{new}$ represents the new charge density after charge mixing, $\rho_{old}$ represents the charge density in previous step, $\rho_{update}$ is obtained through various mixing methods, and $\beta$ is set by the parameter `mixing_beta`. A lower value of 'mixing_beta' results in less influence of $\rho_{update}$ on $\rho_{new}$, making the self-consistent field (SCF) calculation more stable. However, it may require more steps to achieve convergence.
 We recommend the following options:
   - **0.8**: `nspin=1`
-  - **0.4**: `nspin=2`
-  - **0.2**: `nspin=4`
+  - **0.4**: `nspin=2` and `nspin=4`
   - **0**: keep charge density unchanged, usually used for restarting with `init_chg=file` or testing.
   - **0.1 or less**: if convergence of SCF calculation is difficult to reach, please try `0 < mixing_beta < 0.1`.
   
   Note: For low-dimensional large systems, the setup of `mixing_beta=0.1`, `mixing_ndim=20`, and `mixing_gg0=1.0` usually works well.
 
-- **Default**: 0.8 for `nspin=1`, 0.4 for `nspin=2`, 0.2 for `nspin=4`.
+- **Default**: 0.8 for `nspin=1`, 0.4 for `nspin=2` and `nspin=4`.
 
 ### mixing_beta_mag
 
 - **Type**: Real
 - **Description**: Mixing parameter of magnetic density.
-- **Default**: `4*mixing_beta`
+- **Default**: `4*mixing_beta`, but the maximum value is 1.6.
 
 ### mixing_ndim
 
@@ -1004,6 +1009,23 @@ We recommend the following options:
 - **Description**: Whether to perfom Kerker preconditioner of magnetic density. 
   Note: we do not recommand to open Kerker preconditioner of magnetic density unless the system is too hard to converge.
 - **Default**: 0.0
+
+### mixing_gg0_min
+
+- **Type**: Real
+- **Description**: the minimum kerker coefficient 
+- **Default**: 0.1
+
+### mixing_angle
+
+- **Type**: Real
+- **Availability**: Only relevant for non-colinear calculations `nspin=4`.
+- **Description**: Normal broyden mixing can give the converged result for a given magnetic configuration. If one is not interested in the energies of a given magnetic configuration but wants to determine the ground state by relaxing the magnetic moments’ directions, one cannot rely on the standard Broyden mixing algorithm. To enhance the ability to find correct magnetic configuration for non-colinear calculations, ABACUS implements a promising mixing method proposed by J. Phys. Soc. Jpn. 82 (2013) 114706. Here, `mixing_angle` is the angle mixing parameter. In fact, only `mixing_angle=1.0` is implemented currently.
+  - **<=0**: Normal broyden mixing for $m_{x}, m_{y}, m_{z}$
+  - **>0**: Angle mixing for the modulus $|m|$ with `mixing_angle=1.0`
+- **Default**: -10.0
+
+Note: In new angle mixing, you should set `mixing_beta_mag >> mixing_beta`. The setup of `mixing_beta=0.2`, `mixing_beta_mag=1.0` usually works well.
 
 ### mixing_tau
 
@@ -2720,6 +2742,14 @@ These variables are used to control berry phase and wannier90 interface paramete
 - **Description**: the file name generated when running "wannier90 -pp ..." command
 - **Default**: seedname.nnkp
 
+### wannier_method
+
+- **Type**: Integer
+- **Description**: Only available on LCAO basis, using different methods to generate "\*.mmn" file and "\*.amn" file.
+  - 1: Calculated using the LCOA-in-PW method, the calculation accuracy can be improved by increasing `ecutwfc` to maintain consistency with the pw basis set results.
+  - 2: The overlap between atomic orbitals is calculated using grid integration. The radial grid points are generated using the Gauss-Legendre method, while the spherical grid points are generated using the Lebedev-Laikov method.
+- **Default**: 1
+
 ### wannier_spin
 
 - **Type**: String
@@ -3159,8 +3189,10 @@ $\times[f(\epsilon_{i\mathbf{k}})-f(\epsilon_{j\mathbf{k}})]\delta(\epsilon_{j\m
 They can also be computed by $j$-$j$ correlation function.
 
 $L_{mn}=\frac{2e^{m+n-2}}{3\Omega\hbar\omega}\Im[\tilde{C}_{mn}(\omega)]$
-
-$\tilde{C}_{mn}=\int_0^\infty C_{mn}(t)e^{-i\omega t}e^{-\frac{1}{2}(\Delta E)^2t^2}dt$
+Guassian smearing:
+$\tilde{C}_{mn}=\int_0^\infty C_{mn}(t)e^{-i\omega t}e^{-\frac{1}{2}s^2t^2}dt$
+Lorentzian smearing:
+$\tilde{C}_{mn}=\int_0^\infty C_{mn}(t)e^{-i\omega t}e^{-\gamma t}dt$
 
 $C_{mn}(t)=-2\theta(t)\Im\left\{Tr\left[\sqrt{\hat f}\hat{j}_m(1-\hat{f})e^{i\frac{\hat{H}}{\hbar}t}\hat{j}_ne^{-i\frac{\hat{H}}{\hbar}t}\sqrt{\hat f}\right]\right\}$,
 
@@ -3217,13 +3249,21 @@ Thermal conductivities: $\kappa = \lim_{\omega\to 0}\kappa(\omega)$.
 - **Type**: Integer
 - **Availability**: [esolver_type](#esolver_type) = `sdft`
 - **Description**: exp(iH\*dt\*cond_dtbatch) is expanded with Chebyshev expansion to calculate conductivities. It is faster but costs more memory.
-- **Default**: 4
+  - If `cond_dtbatch = 0`: Autoset this parameter to make expansion orders larger than 100.
+- **Default**: 0
+
+### cond_smear
+- **Type**: Integer
+- **Description**: Smearing method for conductivities
+  - 1: Gaussian smearing
+  - 2: Lorentzian smearing
+- **Default**: 1
 
 ### cond_fwhm
 
 - **Type**: Real
 - **Availability**: [basis_type](#basis_type) = `pw`
-- **Description**: FWHM for conductivities, $\mathrm{FWHM}=2*\sqrt{2\ln2}\cdot \Delta E$. Here, we use gaussian functions to approximate $\delta(E)\approx \frac{1}{\sqrt{2\pi}\Delta E}e^{-\frac{E^2}{2{\Delta E}^2}}$. 
+- **Description**: FWHM for conductivities. For Gaussian smearing, $\mathrm{FWHM}=2\sqrt{2\ln2}s$; for Lorentzian smearing, $\mathrm{FWHM}=2\gamma$.
 - **Default**: 0.4
 - **Unit**: eV
 
@@ -3312,6 +3352,12 @@ These variables are used to control the usage of deltaspin functionality.
 
 - **Type**: Integer
 - **Description**: the minimum number of steps in the inner lambda loop
+- **Default**: 2
+
+### sc_scf_nmin
+
+- **Type**: Integer
+- **Description**: the minimum number of outer scf loop before initializing lambda loop
 - **Default**: 2
 
 ### alpha_trial

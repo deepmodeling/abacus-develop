@@ -32,7 +32,7 @@
 #include "module_io/numerical_descriptor.h"
 #include "module_io/rho_io.h"
 #include "module_io/potential_io.h"
-#include "module_io/to_wannier90.h"
+#include "module_io/to_wannier90_pw.h"
 #include "module_io/winput.h"
 #include "module_io/write_wfc_r.h"
 #include "module_psi/kernels/device.h"
@@ -132,7 +132,7 @@ void ESolver_KS_PW<T, Device>::Init_GlobalC(Input& inp, UnitCell& cell)
     }
     else // old method
     {
-        this->psi = this->wf.allocate(this->kv.nks, this->kv.ngk.data(), this->pw_wfc->npwk_max);
+        this->psi = this->wf.allocate(this->kv.nkstot, this->kv.nks, this->kv.ngk.data(), this->pw_wfc->npwk_max);
     }
     //=======================
     // init pseudopotential
@@ -399,6 +399,12 @@ void ESolver_KS_PW<T, Device>::beforescf(int istep)
     }
 
     //=========================================================
+    // cal_ux should be called before init_scf because
+    // the direction of ux is used in noncoline_rho
+    //=========================================================
+    if(GlobalV::NSPIN == 4 && GlobalV::DOMAG) GlobalC::ucell.cal_ux();
+
+    //=========================================================
     // calculate the total local pseudopotential in real space
     //=========================================================
     this->pelec->init_scf(istep, this->sf.strucFac);
@@ -407,7 +413,7 @@ void ESolver_KS_PW<T, Device>::beforescf(int istep)
     Symmetry_rho srho;
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        srho.begin(is, *(this->pelec->charge), this->pw_rhod, GlobalC::Pgrid, this->symm);
+        srho.begin(is, *(this->pelec->charge), this->pw_rhod, GlobalC::Pgrid, GlobalC::ucell.symm);
     }
 
 
@@ -756,7 +762,7 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
     Symmetry_rho srho;
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        srho.begin(is, *(this->pelec->charge), this->pw_rhod, GlobalC::Pgrid, this->symm);
+        srho.begin(is, *(this->pelec->charge), this->pw_rhod, GlobalC::Pgrid, GlobalC::ucell.symm);
     }
 
     // compute magnetization, only for LSDA(spin==2)
@@ -908,7 +914,7 @@ void ESolver_KS_PW<T, Device>::cal_Force(ModuleBase::matrix& force)
                                ? new psi::Psi<std::complex<double>, Device>(this->kspw_psi[0])
                                : reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->kspw_psi);
     }
-    ff.cal_force(force, *this->pelec, this->pw_rhod, &this->symm, &this->sf, &this->kv, this->pw_wfc, this->__kspw_psi);
+    ff.cal_force(force, *this->pelec, this->pw_rhod, &GlobalC::ucell.symm, &this->sf, &this->kv, this->pw_wfc, this->__kspw_psi);
 }
 
 template <typename T, typename Device>
@@ -926,7 +932,7 @@ void ESolver_KS_PW<T, Device>::cal_Stress(ModuleBase::matrix& stress)
     ss.cal_stress(stress,
                   GlobalC::ucell,
                   this->pw_rhod,
-                  &this->symm,
+        &GlobalC::ucell.symm,
                   &this->sf,
                   &this->kv,
                   this->pw_wfc,
@@ -1071,7 +1077,7 @@ void ESolver_KS_PW<T, Device>::postprocess()
 
     if (INPUT.cal_cond)
     {
-        this->KG(INPUT.cond_fwhm, INPUT.cond_wcut, INPUT.cond_dw, INPUT.cond_dt, this->pelec->wg);
+        this->KG(INPUT.cond_smear, INPUT.cond_fwhm, INPUT.cond_wcut, INPUT.cond_dw, INPUT.cond_dt, this->pelec->wg);
     }
 }
 
@@ -1153,8 +1159,17 @@ void ESolver_KS_PW<T, Device>::nscf()
     // add by jingan in 2018.11.7
     if (INPUT.towannier90)
     {
-        toWannier90 myWannier(this->kv.nkstot, GlobalC::ucell.G);
-        myWannier.init_wannier_pw(INPUT.out_wannier_mmn, INPUT.out_wannier_amn, INPUT.out_wannier_unk, INPUT.out_wannier_eig, INPUT.out_wannier_wvfn_formatted, this->pelec->ekb, this->pw_wfc, this->pw_big, this->kv, this->psi);
+        toWannier90_PW myWannier(
+            INPUT.out_wannier_mmn,
+            INPUT.out_wannier_amn,
+            INPUT.out_wannier_unk, 
+            INPUT.out_wannier_eig,
+            INPUT.out_wannier_wvfn_formatted, 
+            INPUT.nnkpfile,
+            INPUT.wannier_spin
+        );
+
+        myWannier.calculate(this->pelec->ekb, this->pw_wfc, this->pw_big, this->kv, this->psi);
     }
 
     //=======================================================

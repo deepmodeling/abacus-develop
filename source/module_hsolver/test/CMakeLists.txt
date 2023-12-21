@@ -12,7 +12,7 @@ AddTest(
 )
 AddTest(
   TARGET HSolver_cg
-  LIBS ${math_libs} base psi device
+  LIBS ${math_libs} base psi device container
   SOURCES diago_cg_test.cpp ../diago_cg.cpp  ../diago_iter_assist.cpp  ../diagh_consts.cpp
           ../../module_basis/module_pw/test/test_tool.cpp
           ../../module_hamilt_general/operator.cpp
@@ -20,7 +20,7 @@ AddTest(
 )
 AddTest(
   TARGET HSolver_cg_float
-  LIBS ${math_libs} base psi device
+  LIBS ${math_libs} base psi device container
   SOURCES diago_cg_float_test.cpp ../diago_cg.cpp  ../diago_iter_assist.cpp   ../diagh_consts.cpp
           ../../module_basis/module_pw/test/test_tool.cpp
           ../../module_hamilt_general/operator.cpp
@@ -45,7 +45,7 @@ AddTest(
 if(ENABLE_LCAO)
 AddTest(
   TARGET HSolver_cg_real
-  LIBS ${math_libs} base psi device
+  LIBS ${math_libs} base psi device container
   SOURCES diago_cg_float_test.cpp ../diago_cg.cpp  ../diago_iter_assist.cpp   ../diagh_consts.cpp
           ../../module_basis/module_pw/test/test_tool.cpp
           ../../module_hamilt_general/operator.cpp
@@ -94,7 +94,16 @@ if(ENABLE_LCAO)
     )
   endif()
 endif()
-
+if (USE_CUDA AND USE_CUSOLVER_LCAO)
+AddTest(
+  TARGET HSolver_LCAO_cusolver
+  LIBS ${math_libs}  base psi device 
+  SOURCES diago_lcao_cusolver_test.cpp ../diago_cusolver.cpp ../diago_blas.cpp 
+  ../kernels/math_kernel_op.cpp
+  ../kernels/dngvd_op.cpp
+  ../kernels/cuda/diag_cusolver.cu
+)
+endif()
 install(FILES H-KPoints-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES H-GammaOnly-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES S-KPoints-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

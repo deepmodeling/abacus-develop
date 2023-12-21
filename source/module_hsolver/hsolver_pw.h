@@ -70,6 +70,8 @@ class HSolverPW: public HSolver<T, Device>
 
     bool initialed_psi = false;
 
+    hamilt::Hamilt<T, Device>* hamilt_ = nullptr;
+
     Device * ctx = {};
     using resmem_var_op = psi::memory::resize_memory_op<Real, psi::DEVICE_CPU>;
     using delmem_var_op = psi::memory::delete_memory_op<Real, psi::DEVICE_CPU>;

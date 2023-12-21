@@ -83,13 +83,16 @@ void print_stress(const std::string& name, const ModuleBase::matrix& scs, const 
     const double output_acc = 1.0e-8;
     double unit_transform = 1;
     std::string title = name;
+    std::string unit = "";
     if (ry)
     {
         title += " (a.u.)";
+        unit = " a.u.";
     }
     else
     {
         title += " (KBAR)";
+        unit = " KBAR";
         unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
     }
 
@@ -108,14 +111,27 @@ void print_stress(const std::string& name, const ModuleBase::matrix& scs, const 
         stress_z.push_back(sz);
     }
 
+    double pressure = (scs(0, 0) + scs(1, 1) + scs(2, 2)) / 3.0 * unit_transform;
+
     context.enable_title();
     context << title.c_str() << stress_x << " " << stress_y << " " << stress_z;
     context.center_title();
     table = context.str();
     GlobalV::ofs_running << table << std::endl;
+    if (name == "TOTAL-STRESS")
+    {
+        GlobalV::ofs_running << " TOTAL-PRESSURE: " << std::fixed << std::setprecision(6) << pressure << unit
+                             << std::endl
+                             << std::endl;
+    }
     if (screen)
     {
         std::cout << table << std::endl;
+        if (name == "TOTAL-STRESS")
+        {
+            std::cout << " TOTAL-PRESSURE: " << std::fixed << std::setprecision(6) << pressure << unit << std::endl
+                      << std::endl;
+        }
     }
     return;
 }

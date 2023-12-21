@@ -7,7 +7,9 @@
 #ifdef __ELPA
 #include "diago_elpa.h"
 #endif
-
+#ifdef __CUSOLVER_LCAO
+#include "diago_cusolver.h"
+#endif
 namespace hsolver
 {
 
@@ -52,6 +54,24 @@ void HSolverLCAO<T>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
         if (this->pdiagh == nullptr)
         {
             this->pdiagh = new DiagoElpa<T>();
+            this->pdiagh->method = this->method;
+        }
+    }
+#endif
+#ifdef __CUSOLVER_LCAO
+    else if (this->method == "cusolver")
+    {
+        if (this->pdiagh != nullptr)
+        {
+            if (this->pdiagh->method != this->method)
+            {
+                delete[] this->pdiagh;
+                this->pdiagh = nullptr;
+            }
+        }
+        if (this->pdiagh == nullptr)
+        {
+            this->pdiagh = new DiagoCusolver<T>();
             this->pdiagh->method = this->method;
         }
     }

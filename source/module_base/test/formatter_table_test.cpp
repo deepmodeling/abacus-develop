@@ -236,6 +236,7 @@ TEST_F(TableTest, PrintTable) {
     table.set_frame_mid_switch(false);
     table.add_col("Column 1", {"Data 1", "Data 2", "Data 3"});
     table.add_col("Column 2", {"Data 4", "Longer Data 5", "Data 6"});
+    table.left_title();
     expected_output = "Table Title\n"
                       "|Column 1 Column 2     |\n"
                       "|Data 1   Data 4       |\n"

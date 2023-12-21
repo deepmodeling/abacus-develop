@@ -1,13 +1,15 @@
 #include "wavefunc.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/wavefunc_in_pw.h"
-#include "module_io/winput.h"
+
 #include "module_base/memory.h"
 #include "module_base/timer.h"
-#include "module_psi/psi.h"
-#include "module_hsolver/diago_iter_assist.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/wavefunc_in_pw.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
+#include "module_hsolver/diago_iter_assist.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_io/read_wfc_pw.h"
+#include "module_io/winput.h"
+#include "module_psi/psi.h"
 
 wavefunc::wavefunc()
 {
@@ -27,23 +29,25 @@ wavefunc::~wavefunc()
 	}
 }
 
-psi::Psi<std::complex<double>> *wavefunc::allocate(const int nks, const int *ngk, const int npwx_in)
+psi::Psi<std::complex<double>>* wavefunc::allocate(const int nkstot, const int nks, const int* ngk, const int npwx_in)
 {
     ModuleBase::TITLE("wavefunc","allocate");
 
 	this->npwx = npwx_in;
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"npwx",npwx);
+    this->nkstot = nkstot;
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "npwx", npwx);
 
-	assert(npwx > 0);
-	assert(nks > 0);
+    assert(npwx > 0);
+    assert(nks > 0);
 
-	// allocate for kinetic energy
+    // allocate for kinetic energy
 
-	// if use spin orbital, do not double nks but double allocate evc and wanf2.
-	int prefactor = 1;
-	if(GlobalV::NSPIN==4) prefactor = GlobalV::NPOL;//added by zhengdy-soc
+    // if use spin orbital, do not double nks but double allocate evc and wanf2.
+    int prefactor = 1;
+    if (GlobalV::NSPIN == 4)
+        prefactor = GlobalV::NPOL; // added by zhengdy-soc
 
-	const int nks2 = nks;
+    const int nks2 = nks;
 
 	psi::Psi<std::complex<double>>* psi_out = nullptr;
     if (GlobalV::CALCULATION == "nscf" && this->mem_saver == 1)
@@ -118,12 +122,7 @@ int wavefunc::get_starting_nw(void)const
 {
     if (init_wfc == "file")
     {
-        throw std::runtime_error("wavefunc::get_starting_nw. start_ wfc from file: not implemented yet! "
-                                 + ModuleBase::GlobalFunc::TO_STRING(__FILE__) + " line "
-                                 + ModuleBase::GlobalFunc::TO_STRING(__LINE__)); // Peize Lin change 2019-05-01
-        //**********************************************************************
-        // ... read the wavefunction into memory (if it is not done in c_bands)
-        //**********************************************************************
+        return GlobalV::NBANDS;
     }
     else if (init_wfc.substr(0,6) == "atomic")
     {
@@ -160,16 +159,64 @@ void diago_PAO_in_pw_k2(const int &ik,
                         wavefunc *p_wf,
                         hamilt::Hamilt<std::complex<float>> *phm_in)
 {
-    ModuleBase::TITLE("wavefunc","diago_PAO_in_pw_k2");
-    // (6) Prepare for atmoic orbitals or random orbitals
-    const int starting_nw = p_wf->get_starting_nw();
-    if(starting_nw == 0) return;
-    assert(starting_nw > 0);
-	std::vector<float> etatom(starting_nw, 0.0);
+    ModuleBase::TITLE("wavefunc", "diago_PAO_in_pw_k2");
 
     const int nbasis = wvf.get_nbasis();
     const int nbands = wvf.get_nbands();
     const int current_nbasis = wfc_basis->npwk[ik];
+
+    if (p_wf->init_wfc == "file")
+    {
+        ModuleBase::ComplexMatrix wfcatom(nbands, nbasis);
+        std::stringstream filename;
+        filename << GlobalV::global_readin_dir << "WAVEFUNC" << ik + 1 << ".dat";
+        bool result = ModuleIO::read_wfc_pw(filename.str(), wfc_basis, ik, p_wf->nkstot, wfcatom);
+
+        if (result)
+        {
+            std::vector<std::complex<float>> s_wfcatom(nbands * nbasis);
+            castmem_z2c_h2h_op()(cpu_ctx, cpu_ctx, s_wfcatom.data(), wfcatom.c, nbands * nbasis);
+
+            if (GlobalV::KS_SOLVER == "cg")
+            {
+                std::vector<float> etfile(nbands, 0.0);
+                if (phm_in != nullptr)
+                {
+                    hsolver::DiagoIterAssist<std::complex<float>>::diagH_subspace_init(phm_in,
+                                                                                       s_wfcatom.data(),
+                                                                                       wfcatom.nr,
+                                                                                       wfcatom.nc,
+                                                                                       wvf,
+                                                                                       etfile.data());
+                    return;
+                }
+                else
+                {
+                    ModuleBase::WARNING_QUIT("wavefunc", "Psi does not exist!");
+                }
+            }
+
+            assert(nbands <= wfcatom.nr);
+            for (int ib = 0; ib < nbands; ib++)
+            {
+                for (int ig = 0; ig < nbasis; ig++)
+                {
+                    wvf(ib, ig) = s_wfcatom[ib * nbasis + ig];
+                }
+            }
+            return;
+        }
+        else
+        {
+            p_wf->init_wfc = "atomic+random";
+        }
+    }
+
+    const int starting_nw = p_wf->get_starting_nw();
+    if (starting_nw == 0)
+        return;
+    assert(starting_nw > 0);
+    std::vector<float> etatom(starting_nw, 0.0);
 
     //special case here! use Psi(k-1) for the initialization of Psi(k)
     //this method should be tested.
@@ -267,55 +314,100 @@ void diago_PAO_in_pw_k2(const int &ik,
                         wavefunc *p_wf,
                         hamilt::Hamilt<std::complex<double>> *phm_in)
 {
-    ModuleBase::TITLE("wavefunc","diago_PAO_in_pw_k2");
-	// (6) Prepare for atmoic orbitals or random orbitals
-	const int starting_nw = p_wf->get_starting_nw();
-	if(starting_nw == 0) return;
-	assert(starting_nw > 0);
-	std::vector<double> etatom(starting_nw, 0.0);
+    ModuleBase::TITLE("wavefunc", "diago_PAO_in_pw_k2");
 
-	const int nbasis = wvf.get_nbasis();
-	const int nbands = wvf.get_nbands();
-	const int current_nbasis = wfc_basis->npwk[ik];
+    const int nbasis = wvf.get_nbasis();
+    const int nbands = wvf.get_nbands();
+    const int current_nbasis = wfc_basis->npwk[ik];
 
-	//special case here! use Psi(k-1) for the initialization of Psi(k)
-	//this method should be tested.
-	/*if(GlobalV::CALCULATION == "nscf" && GlobalC::ucell.natomwfc == 0 && ik>0)
-	{
-		//this is memsaver case
-		if(wvf.get_nk() == 1)
-		{
-			return;
-		}
-		else
-		{
-			ModuleBase::GlobalFunc::COPYARRAY(&wvf(ik-1, 0, 0), &wvf(ik, 0, 0), wvf.get_nbasis()* wvf.get_nbands());
-			return;
-		}
-	}
-	*/
+    if (p_wf->init_wfc == "file")
+    {
+        ModuleBase::ComplexMatrix wfcatom(nbands, nbasis);
+        std::stringstream filename;
+        filename << GlobalV::global_readin_dir << "WAVEFUNC" << ik + 1 << ".dat";
+        bool result = ModuleIO::read_wfc_pw(filename.str(), wfc_basis, ik, p_wf->nkstot, wfcatom);
 
-	if( p_wf->init_wfc=="random" || ( p_wf->init_wfc.substr(0,6)=="atomic" && GlobalC::ucell.natomwfc == 0 ))
-	{
-		p_wf->random(wvf.get_pointer(),0,nbands,ik, wfc_basis);
+        if (result)
+        {
+            if (GlobalV::KS_SOLVER == "cg")
+            {
+                std::vector<double> etfile(nbands, 0.0);
+                if (phm_in != nullptr)
+                {
+                    hsolver::DiagoIterAssist<std::complex<double>>::diagH_subspace_init(phm_in,
+                                                                                        wfcatom.c,
+                                                                                        wfcatom.nr,
+                                                                                        wfcatom.nc,
+                                                                                        wvf,
+                                                                                        etfile.data());
+                    return;
+                }
+                else
+                {
+                    ModuleBase::WARNING_QUIT("wavefunc", "Hamiltonian does not exist!");
+                }
+            }
 
-		if(GlobalV::KS_SOLVER=="cg") //xiaohui add 2013-09-02
-		{
-			if(phm_in!= nullptr)
-			{
-				hsolver::DiagoIterAssist<std::complex<double>>::diagH_subspace(phm_in, wvf, wvf, etatom.data());
-				return;
-			}
-			else
-			{
-				ModuleBase::WARNING_QUIT("wavefunc","Hamiltonian does not exist!");
-			}
-		}
-	}
-	else if(p_wf->init_wfc.substr(0,6)=="atomic")
-	{
-		ModuleBase::ComplexMatrix wfcatom(starting_nw, nbasis);//added by zhengdy-soc
-		if(GlobalV::test_wf)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "starting_nw", starting_nw);
+            assert(nbands <= wfcatom.nr);
+            for (int ib = 0; ib < nbands; ib++)
+            {
+                for (int ig = 0; ig < nbasis; ig++)
+                {
+                    wvf(ib, ig) = wfcatom(ib, ig);
+                }
+            }
+            return;
+        }
+        else
+        {
+            p_wf->init_wfc = "atomic+random";
+        }
+    }
+
+    // special case here! use Psi(k-1) for the initialization of Psi(k)
+    // this method should be tested.
+    /*if(GlobalV::CALCULATION == "nscf" && GlobalC::ucell.natomwfc == 0 && ik>0)
+    {
+        //this is memsaver case
+        if(wvf.get_nk() == 1)
+        {
+            return;
+        }
+        else
+        {
+            ModuleBase::GlobalFunc::COPYARRAY(&wvf(ik-1, 0, 0), &wvf(ik, 0, 0), wvf.get_nbasis()* wvf.get_nbands());
+            return;
+        }
+    }
+    */
+
+    const int starting_nw = p_wf->get_starting_nw();
+    if (starting_nw == 0)
+        return;
+    assert(starting_nw > 0);
+    std::vector<double> etatom(starting_nw, 0.0);
+
+    if (p_wf->init_wfc == "random" || (p_wf->init_wfc.substr(0, 6) == "atomic" && GlobalC::ucell.natomwfc == 0))
+    {
+        p_wf->random(wvf.get_pointer(), 0, nbands, ik, wfc_basis);
+        if (GlobalV::KS_SOLVER == "cg") // xiaohui add 2013-09-02
+        {
+            if (phm_in != nullptr)
+            {
+                hsolver::DiagoIterAssist<std::complex<double>>::diagH_subspace(phm_in, wvf, wvf, etatom.data());
+                return;
+            }
+            else
+            {
+                ModuleBase::WARNING_QUIT("wavefunc", "Hamiltonian does not exist!");
+            }
+        }
+    }
+    else if (p_wf->init_wfc.substr(0, 6) == "atomic")
+    {
+        ModuleBase::ComplexMatrix wfcatom(starting_nw, nbasis); // added by zhengdy-soc
+        if (GlobalV::test_wf)
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "starting_nw", starting_nw);
 
         p_wf->atomic_wfc(ik,
                                current_nbasis,
@@ -365,7 +457,7 @@ void diago_PAO_in_pw_k2(const int &ik,
 				wvf(ib, ig) = wfcatom(ib, ig);
 			}
 		}
-	} //end of atomic case
+    }
 }
 
 template <>
@@ -398,43 +490,62 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_GPU *ctx,
                         wavefunc *p_wf,
                         hamilt::Hamilt<std::complex<float>, psi::DEVICE_GPU> *phm_in)
 {
-    ModuleBase::TITLE("wavefunc","diago_PAO_in_pw_k2");
-    // (6) Prepare for atmoic orbitals or random orbitals
-    const int starting_nw = p_wf->get_starting_nw();
-    if(starting_nw == 0) return;
-    assert(starting_nw > 0);
+    ModuleBase::TITLE("wavefunc", "diago_PAO_in_pw_k2");
 
     const int nbasis = wvf.get_nbasis();
     const int nbands = wvf.get_nbands();
     const int current_nbasis = wfc_basis->npwk[ik];
+    int starting_nw = nbands;
 
-    ModuleBase::ComplexMatrix wfcatom(starting_nw, nbasis);//added by zhengdy-soc
-    if(GlobalV::test_wf)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "starting_nw", starting_nw);
-    if(p_wf->init_wfc.substr(0,6)=="atomic")
+    bool result = false;
+    ModuleBase::ComplexMatrix wfcatom(nbands, nbasis);
+    if (p_wf->init_wfc == "file")
     {
-        p_wf->atomic_wfc(ik,
-                               current_nbasis,
-                               GlobalC::ucell.lmax_ppwf,
-                               wfc_basis,
-                               wfcatom,
-                               GlobalC::ppcell.tab_at,
-                               GlobalV::NQX,
-                               GlobalV::DQ);
-        if (p_wf->init_wfc == "atomic+random"
-            && starting_nw == GlobalC::ucell.natomwfc) // added by qianrui 2021-5-16
+        std::stringstream filename;
+        filename << GlobalV::global_readin_dir << "WAVEFUNC" << ik + 1 << ".dat";
+        result = ModuleIO::read_wfc_pw(filename.str(), wfc_basis, ik, p_wf->nkstot, wfcatom);
+        if (!result)
         {
-            p_wf->atomicrandom(wfcatom, 0, starting_nw, ik, wfc_basis);
+            p_wf->init_wfc = "atomic+random";
         }
-
-        //====================================================
-        // If not enough atomic wfc are available, complete
-        // with random wfcs
-        //====================================================
-        p_wf->random(wfcatom.c, GlobalC::ucell.natomwfc, nbands, ik, wfc_basis);
     }
-    else if (p_wf->init_wfc == "random")
+
+    if (!result)
     {
-        p_wf->random(wfcatom.c, 0, nbands, ik, wfc_basis);
+        starting_nw = p_wf->get_starting_nw();
+        if (starting_nw == 0)
+            return;
+        assert(starting_nw > 0);
+        wfcatom.create(starting_nw, nbasis); // added by zhengdy-soc
+        if (GlobalV::test_wf)
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "starting_nw", starting_nw);
+
+        if (p_wf->init_wfc.substr(0, 6) == "atomic")
+        {
+            p_wf->atomic_wfc(ik,
+                             current_nbasis,
+                             GlobalC::ucell.lmax_ppwf,
+                             wfc_basis,
+                             wfcatom,
+                             GlobalC::ppcell.tab_at,
+                             GlobalV::NQX,
+                             GlobalV::DQ);
+            if (p_wf->init_wfc == "atomic+random"
+                && starting_nw == GlobalC::ucell.natomwfc) // added by qianrui 2021-5-16
+            {
+                p_wf->atomicrandom(wfcatom, 0, starting_nw, ik, wfc_basis);
+            }
+
+            //====================================================
+            // If not enough atomic wfc are available, complete
+            // with random wfcs
+            //====================================================
+            p_wf->random(wfcatom.c, GlobalC::ucell.natomwfc, nbands, ik, wfc_basis);
+        }
+        else if (p_wf->init_wfc == "random")
+        {
+            p_wf->random(wfcatom.c, 0, nbands, ik, wfc_basis);
+        }
     }
 
     std::complex<float> *c_wfcatom = nullptr;
@@ -491,43 +602,61 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_GPU *ctx,
                         wavefunc *p_wf,
                         hamilt::Hamilt<std::complex<double>, psi::DEVICE_GPU> *phm_in)
 {
-    ModuleBase::TITLE("wavefunc","diago_PAO_in_pw_k2");
-	// (6) Prepare for atmoic orbitals or random orbitals
-	const int starting_nw = p_wf->get_starting_nw();
-	if(starting_nw == 0) return;
-	assert(starting_nw > 0);
+    ModuleBase::TITLE("wavefunc", "diago_PAO_in_pw_k2");
 
-	const int nbasis = wvf.get_nbasis();
-	const int nbands = wvf.get_nbands();
-	const int current_nbasis = wfc_basis->npwk[ik];
+    const int nbasis = wvf.get_nbasis();
+    const int nbands = wvf.get_nbands();
+    const int current_nbasis = wfc_basis->npwk[ik];
+    int starting_nw = nbands;
 
-	ModuleBase::ComplexMatrix wfcatom(starting_nw, nbasis);//added by zhengdy-soc
-	if(GlobalV::test_wf)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "starting_nw", starting_nw);
-	if(p_wf->init_wfc.substr(0,6)=="atomic")
-	{
-        p_wf->atomic_wfc(ik,
-                               current_nbasis,
-                               GlobalC::ucell.lmax_ppwf,
-                               wfc_basis,
-                               wfcatom,
-                               GlobalC::ppcell.tab_at,
-                               GlobalV::NQX,
-                               GlobalV::DQ);
-        if (p_wf->init_wfc == "atomic+random"
-            && starting_nw == GlobalC::ucell.natomwfc) // added by qianrui 2021-5-16
-        {
-            p_wf->atomicrandom(wfcatom, 0, starting_nw, ik, wfc_basis);
-        }
-
-        //====================================================
-        // If not enough atomic wfc are available, complete
-        // with random wfcs
-        //====================================================
-        p_wf->random(wfcatom.c, GlobalC::ucell.natomwfc, nbands, ik, wfc_basis);
-    }
-    else if (p_wf->init_wfc == "random")
+    bool result = false;
+    ModuleBase::ComplexMatrix wfcatom(nbands, nbasis);
+    if (p_wf->init_wfc == "file")
     {
-        p_wf->random(wfcatom.c, 0, nbands, ik, wfc_basis);
+        std::stringstream filename;
+        filename << GlobalV::global_readin_dir << "WAVEFUNC" << ik + 1 << ".dat";
+        result = ModuleIO::read_wfc_pw(filename.str(), wfc_basis, ik, p_wf->nkstot, wfcatom);
+        if (!result)
+        {
+            p_wf->init_wfc = "atomic+random";
+        }
+    }
+
+    if (!result)
+    {
+        starting_nw = p_wf->get_starting_nw();
+        if (starting_nw == 0)
+            return;
+        assert(starting_nw > 0);
+        wfcatom.create(starting_nw, nbasis); // added by zhengdy-soc
+        if (GlobalV::test_wf)
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "starting_nw", starting_nw);
+        if (p_wf->init_wfc.substr(0, 6) == "atomic")
+        {
+            p_wf->atomic_wfc(ik,
+                             current_nbasis,
+                             GlobalC::ucell.lmax_ppwf,
+                             wfc_basis,
+                             wfcatom,
+                             GlobalC::ppcell.tab_at,
+                             GlobalV::NQX,
+                             GlobalV::DQ);
+            if (p_wf->init_wfc == "atomic+random"
+                && starting_nw == GlobalC::ucell.natomwfc) // added by qianrui 2021-5-16
+            {
+                p_wf->atomicrandom(wfcatom, 0, starting_nw, ik, wfc_basis);
+            }
+
+            //====================================================
+            // If not enough atomic wfc are available, complete
+            // with random wfcs
+            //====================================================
+            p_wf->random(wfcatom.c, GlobalC::ucell.natomwfc, nbands, ik, wfc_basis);
+        }
+        else if (p_wf->init_wfc == "random")
+        {
+            p_wf->random(wfcatom.c, 0, nbands, ik, wfc_basis);
+        }
     }
 
     std::complex<double> *z_wfcatom = nullptr;

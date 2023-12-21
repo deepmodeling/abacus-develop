@@ -3,6 +3,7 @@ suffix			autotest
 pseudo_dir              ../../PP_ORB
 orbital_dir             ../../PP_ORB
 ecutwfc                 50
+smearing_method         fixed
 nbands                  4
 calculation             nscf
 scf_nmax                50

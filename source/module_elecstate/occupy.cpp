@@ -141,7 +141,7 @@ void Occupy::iweights(const int nks,
     int ib_min = std::ceil(ib_mind);
     if (ib_min != int(ib_mind))
     {
-        ModuleBase::WARNING_QUIT("iweights", "It is not a semiconductor or insulator. Change 'smearing_method'.");
+        ModuleBase::WARNING_QUIT("iweights", "It is not a semiconductor or insulator. Please do not set 'smearing_method=fixed', and try other options.");
     }
     ef = -1e+10;
 
