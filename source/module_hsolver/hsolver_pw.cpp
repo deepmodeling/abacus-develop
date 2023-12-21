@@ -373,11 +373,11 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt, // ESolver_
                 kpg[ipw][2] = _gk[ipw].z;
             }
 
-            GlobalC::paw_cell.set_paw_k(npw,kpt,
+            GlobalC::paw_cell.set_paw_k(npw,wfc_basis->npwk_max,kpt,
                 this->wfc_basis->get_ig2ix(ik).data(),
                 this->wfc_basis->get_ig2iy(ik).data(),
                 this->wfc_basis->get_ig2iz(ik).data(),
-                (const double **) kpg,GlobalC::ucell.tpiba);
+                (const double **) kpg,GlobalC::ucell.tpiba,(const double **) gcar);
 
             delete[] kpt;
             for(int ipw = 0; ipw < npw; ipw++)
