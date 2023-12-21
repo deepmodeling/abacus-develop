@@ -897,7 +897,8 @@ namespace ModuleESolver
 
     //test use dgemm_
     hamilt::printResult_dgemm();
-
+    
+    // just support multi-k calculation now, support gamma only algorithms later
     double Etotal_RDMFT = hamilt::rdmft_cal<TK,TR>(
         &LM,
         LM.ParaV,

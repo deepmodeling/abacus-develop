@@ -71,6 +71,7 @@ template class Veff_rdmft<std::complex<double>, double>;
 
 template class Veff_rdmft<std::complex<double>, std::complex<double>>;
 
+// this part of the code is copying from class Veff
 // initialize_HR()
 template <typename TK, typename TR>
 void Veff_rdmft<TK, TR>::initialize_HR(const UnitCell* ucell_in,
@@ -119,101 +120,58 @@ void Veff_rdmft<TK, TR>::initialize_HR(const UnitCell* ucell_in,
 }
 
 
-
+// this part of the code is copying from class Veff and do some modifications.
 template<typename TK, typename TR>
 void Veff_rdmft<TK, TR>::contributeHR()
 {
     ModuleBase::TITLE("Veff", "contributeHR");
     ModuleBase::timer::tick("Veff", "contributeHR");
-    //-----------------------------------------
-    //(1) prepare data for this k point.
-    // copy the local potential from array.
-    //-----------------------------------------
-    double* vr_eff1 = this->pot->get_effective_v(GlobalV::CURRENT_SPIN);
-    double* vofk_eff1 = this->pot->get_effective_vofk(GlobalV::CURRENT_SPIN);
 
-    //--------------------------------------------
-    //(2) check if we need to calculate
-    // pvpR = < phi0 | v(spin) | phiR> for a new spin.
-    //--------------------------------------------
-    // GlobalV::ofs_running << " (spin change)" << std::endl;
     this->GK->reset_spin(GlobalV::CURRENT_SPIN);
 
-    // if you change the place of the following code,
-    // rememeber to delete the #include
-    if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
+    ModuleBase::matrix v_matrix(GlobalV::NSPIN, charge_->nrxx);
+    elecstate::PotHartree potH(&rho_basis_);
+    elecstate::PotLocal potL(&vloc_, &sf_, &rho_basis_);
+    // elecstate::PotXC potXC();
+
+    // calculate v_hartree(r) or V_local(r) or v_xc(r)
+    if( potential_ == "hartree" )
     {
-        Gint_inout inout(vr_eff1, vofk_eff1, 0, Gint_Tools::job_type::vlocal_meta);
-        this->GK->cal_gint(&inout);
+        potH.cal_v_eff(charge_, ucell_, v_matrix);
     }
+    else if( potential_ == "local" )
+    {
+        potL.cal_v_eff(charge_, ucell_, v_matrix);
+    }
+    // else if( potential_ == "XC" )
+    // {
+    //     potXC.cal_v_eff(charge_, ucell_, v_matrix);
+    // }
     else
     {
-        // vlocal = Vh[rho] + Vxc[rho] + Vl(pseudo)
-        Gint_inout inout(vr_eff1, 0, Gint_Tools::job_type::vlocal);
+        std::cout << "\n\n******\n there may be something wrong when use class Veff_rdmft\n\n******\n";
+    }
+
+
+    double* vr_eff_rdmft = nullptr;
+    for(int is=0; is<GlobalV::NSPIN; ++is)
+    {
+        // use pointer to attach v(r) for current spin
+        vr_eff_rdmft = &v_matrix(is, 0);
+
+        // do grid integral calculation to get HR
+        Gint_inout inout(vr_eff_rdmft, is, Gint_Tools::job_type::vlocal);
         this->GK->cal_gint(&inout);
     }
 
-    // PotHartree sd;
-    // added by zhengdy-soc, for non-collinear case
-    // integral 4 times, is there any method to simplify?
-    ModuleBase::matrix v_matrix(GlobalV::NSPIN, charge_->nrxx);
-    // PotHartree potH();
-    // PotLocal potL();
-    // PotXC potXC();
-
-
-    if (GlobalV::NSPIN == 4)
-    {
-        for (int is = 1; is < 4; is++)
-        {
-            vr_eff1 = this->pot->get_effective_v(is);
-            if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
-            {
-                vofk_eff1 = this->pot->get_effective_vofk(is);
-            }
-            
-            if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
-            {
-                Gint_inout inout(vr_eff1, vofk_eff1, is, Gint_Tools::job_type::vlocal_meta);
-                this->GK->cal_gint(&inout);
-            }
-            else
-            {
-                Gint_inout inout(vr_eff1, is, Gint_Tools::job_type::vlocal);
-                this->GK->cal_gint(&inout);
-            }
-        }
-    }
-
+    // get HR for 2D-block parallel format
     this->GK->transfer_pvpR(this->hR);
-
-
-
-    ModuleBase::TITLE("Veff", "contributeHR");
-    ModuleBase::timer::tick("Veff", "contributeHR");
-
-    // if(potential)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     ModuleBase::timer::tick("Veff", "contributeHR");
     return;
 }
 
+// this part of the code is copying from class Veff and do some modifications.
 // special case of gamma-only
 template<>
 void Veff_rdmft<double, double>::contributeHR()
@@ -221,31 +179,47 @@ void Veff_rdmft<double, double>::contributeHR()
     ModuleBase::TITLE("Veff", "contributeHR");
     ModuleBase::timer::tick("Veff", "contributeHR");
 
-    //-----------------------------------------
-    //(1) prepare data for this k point.
-    // copy the local potential from array.
-    //-----------------------------------------
-    const double* vr_eff1 = this->pot->get_effective_v(GlobalV::CURRENT_SPIN);
-    const double* vofk_eff1 = this->pot->get_effective_vofk(GlobalV::CURRENT_SPIN);
+    // this->GK->reset_spin(GlobalV::CURRENT_SPIN);
 
-    //--------------------------------------------
-    // (3) folding matrix,
-    // and diagonalize the H matrix (T+Vl+Vnl).
-    //--------------------------------------------
+    ModuleBase::matrix v_matrix(GlobalV::NSPIN, charge_->nrxx);
+    elecstate::PotHartree potH(&rho_basis_);
+    elecstate::PotLocal potL(&vloc_, &sf_, &rho_basis_);
+    // PotXC potXC();
 
-    if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
+    // calculate v_hartree(r) or V_local(r) or v_xc(r)
+    if( potential_ == "hartree" )
     {
-        Gint_inout inout(vr_eff1, vofk_eff1, Gint_Tools::job_type::vlocal_meta);
-        this->GG->cal_vlocal(&inout, this->LM, this->new_e_iteration);
+        potH.cal_v_eff(charge_, ucell_, v_matrix);
     }
+    else if( potential_ == "local" )
+    {
+        potL.cal_v_eff(charge_, ucell_, v_matrix);
+    }
+    // else if( potential_ == "XC" )
+    // {
+    //     potXC.cal_v_eff(charge_, ucell_, v_matrix);
+    // }
     else
     {
-        Gint_inout inout(vr_eff1, Gint_Tools::job_type::vlocal);
+        std::cout << "\n\n******\n there may be something wrong when use class Veff_rdmft\n\n******\n";
+    }
+
+    double* vr_eff_rdmft = nullptr;
+    for(int is=0; is<GlobalV::NSPIN; ++is)
+    {
+        // use pointer to attach v(r) for current spin
+        vr_eff_rdmft = &v_matrix(is, 0);
+
+        // do grid integral calculation to get HR
+        Gint_inout inout(vr_eff_rdmft, is, Gint_Tools::job_type::vlocal);
         this->GG->cal_vlocal(&inout, this->LM, this->new_e_iteration);
     }
+
+    // get HR for 2D-block parallel format
     this->GG->transfer_pvpR(this->hR);
 
     this->new_e_iteration = false;
+
 }
 
 

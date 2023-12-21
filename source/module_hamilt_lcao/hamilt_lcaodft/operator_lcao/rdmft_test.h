@@ -85,7 +85,7 @@ void printMatrix_vector(int M, int N, std::vector<TK>& matrixA, std::string name
 
 
 
-
+// this part of the code is copying from class Veff and do some modifications.
 template <typename TK, typename TR>
 class Veff_rdmft : public OperatorLCAO<TK, TR>
 {
@@ -94,20 +94,24 @@ class Veff_rdmft : public OperatorLCAO<TK, TR>
                       Local_Orbital_Charge* loc_in,
                       LCAO_Matrix* LM_in,
                       const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
-                      elecstate::Potential* pot_in,
                       const Charge* charge_in,
                       hamilt::HContainer<TR>* hR_in,
                       std::vector<TK>* hK_in,
                       const UnitCell* ucell_in,
                       Grid_Driver* GridD_in,
                       const Parallel_Orbitals* paraV,
-                      std::vector<std::string>& potential_in)
+                      const ModulePW::PW_Basis& rho_basis_in,
+                      const ModuleBase::matrix& vloc_in,
+                      const ModuleBase::ComplexMatrix& sf_in,
+                      std::string& potential_in)
         : GK(GK_in),
           loc(loc_in),
-          pot(pot_in),
           charge_(charge_in),
           ucell_(ucell_in),
-          potential(potential_in),
+          rho_basis_(rho_basis_in),
+          vloc_(vloc_in),
+          sf_(sf_in),
+          potential_(potential_in),
           OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in)
     {
         this->cal_type = lcao_gint;
@@ -119,16 +123,25 @@ class Veff_rdmft : public OperatorLCAO<TK, TR>
                           Local_Orbital_Charge* loc_in,
                           LCAO_Matrix* LM_in,
                           const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
-                          elecstate::Potential* pot_in,
                           const Charge* charge_in,
                           hamilt::HContainer<TR>* hR_in,
                           std::vector<TK>* hK_in,
                           const UnitCell* ucell_in,
                           Grid_Driver* GridD_in,
                           const Parallel_Orbitals* paraV,
-                          std::vector<std::string>& potential_in
+                          const ModulePW::PW_Basis& rho_basis_in,
+                          const ModuleBase::matrix& vloc_in,
+                          const ModuleBase::ComplexMatrix& sf_in,  
+                          std::string& potential_in
                           )
-        : GG(GG_in), loc(loc_in), pot(pot_in),charge_(charge_in),ucell_(ucell_in),potential(potential_in),
+        : GG(GG_in), 
+          loc(loc_in), 
+          charge_(charge_in),
+          ucell_(ucell_in),
+          rho_basis_(rho_basis_in),
+          vloc_(vloc_in),
+          sf_(sf_in),
+          potential_(potential_in),
         OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in)
     {
         this->cal_type = lcao_gint;
@@ -155,11 +168,18 @@ class Veff_rdmft : public OperatorLCAO<TK, TR>
 
     elecstate::Potential* pot = nullptr;
 
+    // add by jghan
     const UnitCell* ucell_;
 
     const Charge* charge_;
 
-    std::vector<std::string> potential;
+    std::string potential_;
+
+    const ModulePW::PW_Basis rho_basis_;
+
+    const ModuleBase::matrix vloc_;
+
+    const ModuleBase::ComplexMatrix sf_;
 
     /**
      * @brief initialize HR, search the nearest neighbor atoms
@@ -171,7 +191,11 @@ class Veff_rdmft : public OperatorLCAO<TK, TR>
 };
 
 
+// template class Veff_rdmft<double, double>;
 
+// template class Veff_rdmft<std::complex<double>, double>;
+
+// template class Veff_rdmft<std::complex<double>, std::complex<double>>;
 
 
 
@@ -387,7 +411,7 @@ double sumWg_getEnergy(const ModuleBase::matrix& wg_wfcHwfc);
 
 
 // for test add a function and call it in module_elecstate/elecstate_lcao.cpp
-// !!!just used for k-dependent grid integration. For gamma only algorithms, transfer Gint_k& GK_in to Gint_Gamma GG_in and use it in Veff<OperatorLCAO<TK, TR>>
+// !!!just used for k-dependent grid integration. For gamma only algorithms, transfer Gint_k& GK_in to Gint_Gamma& GG_in and use it in Veff<OperatorLCAO<TK, TR>>
 template <typename TK, typename TR>
 double rdmft_cal(LCAO_Matrix* LM_in,
                         Parallel_Orbitals* ParaV,
@@ -398,7 +422,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
                         const K_Vectors& kv_in,
                         Gint_k& GK_in,
                         Local_Orbital_Charge& loc_in,
-                        const Charge& chg,
+                        const Charge& charge_in,
                         elecstate::Potential& pot_in,
                         const ModulePW::PW_Basis& rho_basis_in,
                         const ModuleBase::matrix& vloc_in,
@@ -470,51 +494,82 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         ParaV
     );
 
-    // use class Veff<OperatorLCAO<TK, TR>> get the local potential
-    std::vector<std::string> pot_register_localV;
-    pot_register_localV.push_back("local");
-    pot_in.pot_register(pot_register_localV);
-    OperatorLCAO<TK, TR>* V_local = new Veff<OperatorLCAO<TK, TR>>(
+    // // use class Veff<OperatorLCAO<TK, TR>> get the local potential
+    // std::vector<std::string> pot_register_localV;
+    // pot_register_localV.push_back("local");
+    // pot_in.pot_register(pot_register_localV);
+    // OperatorLCAO<TK, TR>* V_local = new Veff<OperatorLCAO<TK, TR>>(
+    //     &GK_in,
+    //     &loc_in,
+    //     LM_in,
+    //     kvec_d_in,
+    //     &pot_in,
+    //     &HR_TV,
+    //     &HK_TV,
+    //     &GlobalC::ucell,
+    //     &GlobalC::GridD,
+    //     ParaV
+    // );
+
+    // // use class Veff<OperatorLCAO<TK, TR>> get the hartree potential
+    // std::vector<std::string> pot_register_hartree;
+    // pot_register_hartree.push_back("hartree");
+    // pot_in.pot_register(pot_register_hartree);
+    // OperatorLCAO<TK, TR>* V_hartree = new Veff<OperatorLCAO<TK, TR>>(
+    //     &GK_in,
+    //     &loc_in,
+    //     LM_in,
+    //     kvec_d_in,
+    //     &pot_in,
+    //     &HR_hartree,
+    //     &HK_hartree,
+    //     &GlobalC::ucell,
+    //     &GlobalC::GridD,
+    //     ParaV
+    // );
+    // OperatorLCAO<TK, TR>* V_hartree_new = new OperatorLCAO<TK, TR>(
+    //     LM_in,
+    //     kvec_d_in,
+    //     &HR_hartree,
+    //     &HK_hartree
+    // );
+
+    std::string local_pot = "local";
+    OperatorLCAO<TK, TR>* V_local = new Veff_rdmft<TK,TR>(
         &GK_in,
         &loc_in,
         LM_in,
         kvec_d_in,
-        &pot_in,
+        &charge_in,
         &HR_TV,
         &HK_TV,
         &GlobalC::ucell,
         &GlobalC::GridD,
-        ParaV
+        ParaV,
+        rho_basis_in,
+        vloc_in,
+        sf_in,
+        local_pot
     );
-    // OperatorLCAO<TK, TR>* V_local_new = new OperatorLCAO<TK, TR>(
-    //     LM_in,
-    //     kvec_d_in,
-    //     &HR_TV,
-    //     &HK_TV
-    // );
 
-    // use class Veff<OperatorLCAO<TK, TR>> get the hartree potential
-    std::vector<std::string> pot_register_hartree;
-    pot_register_hartree.push_back("hartree");
-    pot_in.pot_register(pot_register_hartree);
-    OperatorLCAO<TK, TR>* V_hartree = new Veff<OperatorLCAO<TK, TR>>(
+    std::string hartree_pot = "hartree";
+    OperatorLCAO<TK, TR>* V_hartree = new Veff_rdmft<TK,TR>(
         &GK_in,
         &loc_in,
         LM_in,
         kvec_d_in,
-        &pot_in,
+        &charge_in,
         &HR_hartree,
         &HK_hartree,
         &GlobalC::ucell,
         &GlobalC::GridD,
-        ParaV
+        ParaV,
+        rho_basis_in,
+        vloc_in,
+        sf_in,
+        hartree_pot
     );
-    OperatorLCAO<TK, TR>* V_hartree_new = new OperatorLCAO<TK, TR>(
-        LM_in,
-        kvec_d_in,
-        &HR_hartree,
-        &HK_hartree
-    );
+
 
 
     OperatorLCAO<TK, TR>* V_XC = new OperatorEXX<OperatorLCAO<TK, TR>>(
@@ -637,7 +692,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         V_ekinetic_potential->contributeHk(ik);
         // V_nonlocal->contributeHk(ik);
         // V_local_new->contributeHk(ik);
-        V_hartree_new->contributeHk(ik);    // because contributeHk() in class Veff is {}, so we get a OperatorLCAO* class object V_hartree_new to do contributeHk()
+        V_hartree->contributeHk(ik);    // because contributeHk() in class Veff is {}, so we get a OperatorLCAO* class object V_hartree_new to do contributeHk()
         V_XC->contributeHk(ik);
 
         std::cout << "\n\nik= " << ik << "\n\n";
