@@ -134,87 +134,21 @@ void LCAO_Matrix::allocate_HS_R(const int &nnR)
     return;
 }
 
-//------------------------------------------------------
-// DESCRIPTION:
-// set 'dtype' matrix element (iw1_all, iw2_all) with 
-// an input value 'v'
-//------------------------------------------------------
-void LCAO_Matrix::set_HSgamma(
-    const int &iw1_all, // index i for atomic orbital (row)
-    const int &iw2_all, // index j for atomic orbital (column)
-    const double& v, // value for matrix element (i,j) 
-    double* HSloc) //input pointer for store the matrix
+void LCAO_Matrix::set_HSgamma(const int& iw1_all, const int& iw2_all, const double& v, double* HSloc)
 {
-    // use iw1_all and iw2_all to set Hloc
-    // becareful! The ir and ic may be < 0 !!!
-    const int ir = this->ParaV->global2local_row(iw1_all);
-    const int ic = this->ParaV->global2local_col(iw2_all);
-
-    //const int index = ir * ParaO.ncol + ic;
-    long index=0;
-
-    // save the matrix as column major format
-    if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
-    {
-        index=ic*this->ParaV->nrow+ir;
-    }
-    else
-    {
-        index=ir*this->ParaV->ncol+ic;
-    }
-   
-       if( index >= this->ParaV->nloc)
-    {
-        std::cout << " iw1_all = " << iw1_all << std::endl;
-        std::cout << " iw2_all = " << iw2_all << std::endl;
-        std::cout << " ir = " << ir << std::endl;
-        std::cout << " ic = " << ic << std::endl;
-        std::cout << " index = " << index << std::endl;
-        std::cout << " this->ParaV->nloc = " << this->ParaV->nloc << std::endl;
-        ModuleBase::WARNING_QUIT("LCAO_Matrix","set_HSgamma");
-    }	 
-
-    //using input pointer HSloc
-    HSloc[index] += v;
-
+    LCAO_Matrix::set_mat2d<double>(iw1_all, iw2_all, v, *this->ParaV, HSloc);
     return;
 }
-
-void LCAO_Matrix::set_HSk(const int &iw1_all, const int &iw2_all, const std::complex<double> &v, const char &dtype, const int spin)
+void LCAO_Matrix::set_HSk(const int& iw1_all, const int& iw2_all, const std::complex<double>& v, const char& dtype, const int spin)
 {
-    // use iw1_all and iw2_all to set Hloc
-    // becareful! The ir and ic may < 0!!!!!!!!!!!!!!!!
-    const int ir = this->ParaV->global2local_row(iw1_all);
-    const int ic = this->ParaV->global2local_col(iw2_all);
-    //const int index = ir * this->ParaV->ncol + ic;
-    long index;
-    if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
-    {
-        index=ic*this->ParaV->nrow+ir;
-    }
-    else
-    {
-        index=ir*this->ParaV->ncol+ic;
-      }
-    assert(index < this->ParaV->nloc);
     if (dtype=='S')//overlap Hamiltonian.
-    {
-        this->Sloc2[index] += v;
-    }
+        LCAO_Matrix::set_mat2d<std::complex<double>>(iw1_all, iw2_all, v, *this->ParaV, this->Sloc2.data());
     else if (dtype=='T' || dtype=='N')// kinetic and nonlocal Hamiltonian.
-    {
-        this->Hloc_fixed2[index] += v; // because kinetic and nonlocal Hamiltonian matrices are already block-cycle staraged after caculated in lcao_nnr.cpp
-                                      // this statement will not be used.
-    }
+        LCAO_Matrix::set_mat2d<std::complex<double>>(iw1_all, iw2_all, v, *this->ParaV, this->Hloc_fixed2.data());
     else if (dtype=='L') // Local potential Hamiltonian.
-    {
-        this->Hloc2[index] += v;
-    }
+        LCAO_Matrix::set_mat2d<std::complex<double>>(iw1_all, iw2_all, v, *this->ParaV, this->Hloc2.data());
     else
-    {
-        ModuleBase::WARNING_QUIT("LCAO_Matrix","set_HSk");
-    }
-
+        ModuleBase::WARNING_QUIT("LCAO_Matrix", "set_HSk");
     return;
 }
 

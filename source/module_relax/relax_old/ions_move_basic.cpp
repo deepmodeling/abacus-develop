@@ -93,7 +93,8 @@ void Ions_Move_Basic::move_atoms(UnitCell &ucell, double *move, double *pos)
     const double move_threshold = 1.0e-10;
     const int total_freedom = ucell.nat * 3;
 
-    if (ModuleSymmetry::Symmetry::symm_flag && ucell.symm.all_mbl)ucell.symm.symmetrize_vec3_nat(move);
+    if (ModuleSymmetry::Symmetry::symm_flag && ucell.symm.all_mbl && ucell.symm.nrotk > 0)
+        ucell.symm.symmetrize_vec3_nat(move);
 
     for (int i = 0; i < total_freedom; i++)
     {

@@ -68,6 +68,7 @@ TEST_F(InputTest, Default)
         EXPECT_FALSE(INPUT.towannier90);
         EXPECT_EQ(INPUT.nnkpfile,"seedname.nnkp");
         EXPECT_EQ(INPUT.wannier_spin,"up");
+        EXPECT_EQ(INPUT.wannier_method,1);
 		EXPECT_TRUE(INPUT.out_wannier_amn);
 		EXPECT_TRUE(INPUT.out_wannier_mmn);
 		EXPECT_TRUE(INPUT.out_wannier_unk);
@@ -151,8 +152,8 @@ TEST_F(InputTest, Default)
         EXPECT_EQ(INPUT.relax_nmax,0);
         EXPECT_EQ(INPUT.out_stru,0);
         EXPECT_EQ(INPUT.occupations,"smearing");
-        EXPECT_EQ(INPUT.smearing_method,"fixed");
-        EXPECT_DOUBLE_EQ(INPUT.smearing_sigma,0.01);
+        EXPECT_EQ(INPUT.smearing_method,"gauss");
+        EXPECT_DOUBLE_EQ(INPUT.smearing_sigma,0.015);
         EXPECT_EQ(INPUT.mixing_mode,"broyden");
         EXPECT_DOUBLE_EQ(INPUT.mixing_beta,-10.0);
         EXPECT_EQ(INPUT.mixing_ndim,8);
@@ -427,6 +428,7 @@ TEST_F(InputTest, Read)
         EXPECT_FALSE(INPUT.towannier90);
         EXPECT_EQ(INPUT.nnkpfile,"seedname.nnkp");
         EXPECT_EQ(INPUT.wannier_spin,"up");
+        EXPECT_EQ(INPUT.wannier_method,1);
 		EXPECT_TRUE(INPUT.out_wannier_amn);
 		EXPECT_TRUE(INPUT.out_wannier_mmn);
 		EXPECT_TRUE(INPUT.out_wannier_unk);

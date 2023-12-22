@@ -94,18 +94,17 @@ auto RI_2D_Comm::split_m2D_ktoR(const K_Vectors &kv, const std::vector<const Tma
 }
 
 
-template<typename Tdata>
+template<typename Tdata, typename TK>
 void RI_2D_Comm::add_Hexx(
 	const K_Vectors &kv,
 	const int ik,
 	const double alpha,
 	const std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>> &Hs,
-	LCAO_Matrix &lm)
+    const Parallel_Orbitals& pv,
+    std::vector<TK>& Hloc)
 {
 	ModuleBase::TITLE("RI_2D_Comm","add_Hexx");
 	ModuleBase::timer::tick("RI_2D_Comm", "add_Hexx");
-  
-    const Parallel_Orbitals& pv = *lm.ParaV;
 
 	const std::map<int, std::vector<int>> is_list = {{1,{0}}, {2,{kv.isk[ik]}}, {4,{0,1,2,3}}};
 	for(const int is_b : is_list.at(GlobalV::NSPIN))
@@ -130,15 +129,7 @@ void RI_2D_Comm::add_Hexx(
 					{
 						const int iwt1 = RI_2D_Comm::get_iwt(iat1, iw1_b, is1_b);
                         if (pv.global2local_col(iwt1) < 0)	continue;
-
-						if(GlobalV::GAMMA_ONLY_LOCAL)
-							lm.set_HSgamma(iwt0, iwt1,
-								RI::Global_Func::convert<double>(H(iw0_b, iw1_b)) * RI::Global_Func::convert<double>(frac),
-                                lm.Hloc.data());
-						else
-							lm.set_HSk(iwt0, iwt1,
-								RI::Global_Func::convert<std::complex<double>>(H(iw0_b, iw1_b)) * frac,
-								'L', -1);
+                        LCAO_Matrix::set_mat2d(iwt0, iwt1, RI::Global_Func::convert<TK>(H(iw0_b, iw1_b)) * RI::Global_Func::convert<TK>(frac), pv, Hloc.data());
 					}
 				}
 			}
