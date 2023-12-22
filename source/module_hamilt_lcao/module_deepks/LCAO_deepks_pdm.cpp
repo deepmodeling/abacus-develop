@@ -110,6 +110,11 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<double, double
 				const Atom* atom1 = &ucell.atoms[T1];
 				const int nw1_tot = atom1->nw*GlobalV::NPOL;
 				const double Rcut_AO1 = orb.Phi[T1].getRcut(); 
+                const double dist1 = (tau1-tau0).norm() * ucell.lat0;
+                if (dist1 > Rcut_Alpha + Rcut_AO1)
+				{
+					continue;
+				}
 
                 auto row_indexes = pv->get_indexes_row(ibt1);
                 const int row_size = row_indexes.size();
@@ -138,11 +143,9 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<double, double
 					const int nw2_tot = atom2->nw*GlobalV::NPOL;
 					
 					const double Rcut_AO2 = orb.Phi[T2].getRcut();
-                	const double dist1 = (tau1-tau0).norm() * ucell.lat0;
                 	const double dist2 = (tau2-tau0).norm() * ucell.lat0;
 
-					if (dist1 > Rcut_Alpha + Rcut_AO1
-							|| dist2 > Rcut_Alpha + Rcut_AO2)
+					if (dist2 > Rcut_Alpha + Rcut_AO2)
 					{
 						continue;
 					}
