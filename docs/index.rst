@@ -28,6 +28,7 @@ the developments and applications of novel machine-learning-assisted DFT methods
    quick_start/easy_install
    quick_start/hands_on
    quick_start/input
+   quick_start/output
 
 .. toctree::
    :maxdepth: 2
