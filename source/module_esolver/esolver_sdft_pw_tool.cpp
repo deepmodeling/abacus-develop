@@ -105,7 +105,7 @@ psi::Psi<std::complex<float>>* gatherchi(psi::Psi<std::complex<float>>& chi,
     return p_chi;
 }
 
-void ESolver_SDFT_PW::check_che(const int nche_in)
+void ESolver_SDFT_PW::check_che(const int nche_in, const double try_emin, const double try_emax)
 {
     //------------------------------
     //      Convergence test
@@ -116,8 +116,8 @@ void ESolver_SDFT_PW::check_che(const int nche_in)
     Stochastic_Iter& stoiter = ((hsolver::HSolverPW_SDFT*)phsol)->stoiter;
     Stochastic_hchi& stohchi = stoiter.stohchi;
     int ntest0 = 5;
-    stohchi.Emax = INPUT.emax_sto;
-    stohchi.Emin = INPUT.emin_sto;
+    stohchi.Emax = try_emax;
+    stohchi.Emin = try_emin;
     // if (GlobalV::NBANDS > 0)
     // {
     //     double tmpemin = 1e10;
@@ -198,7 +198,12 @@ void ESolver_SDFT_PW::check_che(const int nche_in)
     }
 }
 
-int ESolver_SDFT_PW::set_cond_nche(const double dt, int& nbatch, const double cond_thr, const int& nche_min)
+int ESolver_SDFT_PW::set_cond_nche(const double dt,
+                                   int& nbatch,
+                                   const double cond_thr,
+                                   const int& nche_min,
+                                   double try_emin,
+                                   double try_emax)
 {
     int nche_guess = 1000;
     ModuleBase::Chebyshev<double> chet(nche_guess);
@@ -253,7 +258,7 @@ int ESolver_SDFT_PW::set_cond_nche(const double dt, int& nbatch, const double co
     int nche_new = 0;
 loop:
     // re-set Emin & Emax both in stohchi & stofunc
-    check_che(std::max(nche_old * 2, nche_min));
+    check_che(std::max(nche_old * 2, nche_min), try_emin, try_emax);
 
     // second try to find nche with new Emin & Emax
     getnche(nche_new);
@@ -261,6 +266,8 @@ loop:
     if(nche_new > nche_old * 2)
     {
         nche_old = nche_new;
+        try_emin = stoiter.stohchi.Emin;
+        try_emax = stoiter.stohchi.Emax;
         goto loop;
     }
 

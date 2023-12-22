@@ -225,11 +225,11 @@ void ESolver_SDFT_PW::postprocess()
     int cond_nche = 0;
     if (INPUT.cal_cond)
     {
-        cond_nche = set_cond_nche(INPUT.cond_dt, INPUT.cond_dtbatch, 1e-8, nche_test);
+        cond_nche = set_cond_nche(INPUT.cond_dt, INPUT.cond_dtbatch, 1e-8, nche_test, INPUT.emin_sto, INPUT.emax_sto);
     }
     else
     {
-        check_che(nche_test);
+        check_che(nche_test, INPUT.emin_sto, INPUT.emax_sto);
     }
     if (INPUT.out_dos)
     {
