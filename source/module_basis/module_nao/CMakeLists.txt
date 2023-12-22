@@ -6,6 +6,7 @@ if(ENABLE_LCAO)
     radial_set.cpp
     atomic_radials.cpp
     beta_radials.cpp
+    sphbes_radials.cpp
     radial_collection.cpp
     real_gaunt_table.cpp
     two_center_table.cpp

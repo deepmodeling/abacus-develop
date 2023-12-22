@@ -9,6 +9,7 @@
 #include "module_base/spherical_bessel_transformer.h"
 #include "module_basis/module_nao/numerical_radial.h"
 #include "module_basis/module_ao/ORB_nonlocal.h"
+#include "module_basis/module_ao/ORB_atomic.h"
 
 /**
  * @brief An abstract class representing the set of all numerical radial
@@ -62,6 +63,16 @@ class RadialSet
                        std::ofstream* const = nullptr ///< output file stream for logging
                        ) {}
     ///@}
+
+    /**
+     * @brief Overwrites the content of a Numerical_Orbital object with the current object.
+     *
+     * This function provides an interface to the corresponding object in the old module_ao.
+     */
+    virtual void to_numerical_orbital(Numerical_Orbital&,
+                                      const double lcao_ecut = 2000,
+                                      const double lcao_dk = 0.01
+                                      ) const;
 
     /**
      * @name Getters
