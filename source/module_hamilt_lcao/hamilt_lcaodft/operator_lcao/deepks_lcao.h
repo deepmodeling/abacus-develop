@@ -16,7 +16,7 @@ namespace hamilt
 /// The DeePKS class template inherits from class T
 /// it is used to calculate the Deep Potential Kohn-Sham correction from DeePKS method
 /// Template parameters:
-/// - T: base class, it would be OperatorLCAO<TK> or OperatorPW<TK>
+/// - T: base class, it would be OperatorLCAO<TK>
 /// - TR: data type of real space Hamiltonian, it would be double or std::complex<double>
 template <class T>
 class DeePKS : public T
@@ -40,8 +40,17 @@ class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                             elecstate::DensityMatrix<TK,double>* DM_in);
     ~DeePKS();
 
+    /**
+     * @brief contribute the DeePKS correction to real space Hamiltonian
+     * this function is used for update hR and H_V_delta
+    */
     virtual void contributeHR() override;
 #ifdef __DEEPKS
+    /**
+     * @brief contribute the DeePKS correction for each k-point to ld.H_V_delta or ld.H_V_delta_k
+     * this function is not used for update hK, but for DeePKS module
+     * @param ik: the index of k-point
+    */
     virtual void contributeHk(int ik) override;
 #endif
 
