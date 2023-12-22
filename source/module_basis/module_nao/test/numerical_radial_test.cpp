@@ -198,7 +198,7 @@ TEST_F(NumericalRadialTest, BuildAndGet)
 
     EXPECT_EQ(chi.nr(), sz);
     EXPECT_EQ(chi.nk(), 0);
-    EXPECT_EQ(chi.rcut(), grid[sz - 1]);
+    EXPECT_EQ(chi.rmax(), grid[sz - 1]);
 
     ASSERT_NE(chi.rgrid(), nullptr);
     ASSERT_NE(chi.rvalue(), nullptr);
@@ -306,7 +306,7 @@ TEST_F(NumericalRadialTest, SetUniformGrid)
     chi.build(2, false, sz, grid, f, pk);
     chi.set_uniform_grid(true, sz, PI / dk, 't', true);
 
-    double dr = PI / chi.kcut();
+    double dr = PI / chi.kmax();
     for (int ir = 0; ir != sz; ++ir)
     {
         double r = ir * dr;
@@ -341,7 +341,7 @@ TEST_F(NumericalRadialTest, Interpolate) {
 
     chi.set_uniform_grid(false, sz, PI/50*(sz-1), 'i', true);
 
-    double dr = PI / chi.kcut();
+    double dr = PI / chi.kmax();
     for (int ir = 0; ir != sz; ++ir)
     {
         double r = ir * dr;
@@ -470,7 +470,7 @@ TEST_F(NumericalRadialTest, RadialTable)
 
     double* table = new double[sz];
     double table_pref = ModuleBase::FOUR_PI * std::sqrt(ModuleBase::PI / 2.0);
-    double rmax_tab = chi1.rcut();
+    double rmax_tab = chi1.rmax();
 
     chi1.radtab('S', chi2, 0, table, chi1.nr(), rmax_tab);
     for (int i = 0; i != sz; ++i)
@@ -555,29 +555,37 @@ TEST_F(NumericalRadialTest, ToNumericalOrbitalLm)
 
     int nk = 1001;
     double kcut = 30;
-    double dk = kcut / (nk - 1);
     chi.set_uniform_grid(false, nk, kcut, 't');
 
     Numerical_Orbital_Lm nol;
-    chi.to_numerical_orbital_lm(nol);
+    double lcao_ecut = 100;
+    double lcao_dk = 0.01;
+
+    int nk_legacy = static_cast<int>(std::sqrt(lcao_ecut) / lcao_dk) + 4;
+    nk_legacy += 1 - nk_legacy % 2;
+
+    double kcut_legacy = (nk_legacy - 1) * lcao_dk;
+
+    chi.to_numerical_orbital_lm(nol, lcao_ecut, lcao_dk);
+    int nrcut = static_cast<int>(chi.rcut() / dr) + 1;
 
     // check that the orbital_lm has the same values as the chi
     EXPECT_EQ(nol.getLabel(), symbol);
     EXPECT_EQ(nol.getType(), itype);
     EXPECT_EQ(nol.getL(), l);
     EXPECT_EQ(nol.getChi(), izeta);
-    EXPECT_EQ(nol.getNr(), nr);
-    EXPECT_EQ(nol.getNk(), nk);
+    EXPECT_EQ(nol.getNr(), nrcut);
+    EXPECT_EQ(nol.getNk(), nk_legacy);
 
-    EXPECT_EQ(nol.getRcut(), grid[nr-1]);
-    EXPECT_EQ(nol.getKcut(), kcut);
+    EXPECT_EQ(nol.getRcut(), chi.rcut());
+    EXPECT_EQ(nol.getKcut(), kcut_legacy);
 
     EXPECT_EQ(nol.getRadial(111), grid[111]);
     EXPECT_EQ(nol.getRadial(777), grid[777]);
-    EXPECT_EQ(nol.getKpoint(777), 777 * dk);
+    EXPECT_EQ(nol.getKpoint(3), 3 * lcao_dk);
 
     EXPECT_EQ(nol.getRab(123), dr);
-    EXPECT_EQ(nol.getDk(), dk);
+    EXPECT_EQ(nol.getDk(), lcao_dk);
 
     EXPECT_EQ(nol.getPsi(55), f[55]);
     EXPECT_EQ(nol.getPsi(222), f[222]);

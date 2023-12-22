@@ -11,11 +11,11 @@
 /**
  * @brief A class that represents a numerical radial function.
  *
- * This class is supposed to be the underlying container for numerical
- * atomic orbitals, Kleinman-Bylander beta functions, and all other
- * similar numerical radial functions in three-dimensional space which
- * is associated with some angular momentum l and whose r & k space
- * values are related by an l-th order spherical Bessel transform.
+ * This class is designed to be the container for the radial part of
+ * numerical atomic orbitals, Kleinman-Bylander beta functions, and all
+ * other similar numerical radial functions in three-dimensional space,
+ * each of which is associated with some angular momentum l and whose r
+ * and k space values are related by an l-th order spherical Bessel transform.
  *
  * A NumericalRadial object can be initialized by "build", which requires
  * the angular momentum, the number of grid points, the grid and the
@@ -104,9 +104,11 @@ public:
     /**
      * @brief Overwrites the content of a Numerical_Orbital_Lm object with the current object.
      *
-     * This function provides an interface to the corresponding object in the old module_ao.
+     * This function provides an interface to the corresponding object in module_ao.
      */
-    void to_numerical_orbital_lm(Numerical_Orbital_Lm& orbital_lm);
+    void to_numerical_orbital_lm(Numerical_Orbital_Lm& orbital_lm, 
+                                 const double lcao_ecut = 2000.0,
+                                 const double lcao_dk = 0.01) const;
 
     /** 
      * @brief Sets a SphericalBesselTransformer.
@@ -172,7 +174,7 @@ public:
      * @brief Updates values on an existing grid.
      *
      * This function does not alter the grid; it merely updates values on the existing
-     * grid.  The number of values to read from "value" is nr_ or nk_. Values of the
+     * grid. The number of values to read from "value" is nr_ or nk_. Values of the
      * other space will be automatically updated if they exist.
      *
      * @note This function does not check the index bound; use with care!
@@ -187,8 +189,8 @@ public:
 
     //! Computes the radial table for two-center integrals.
     /*!
-     * TODO shall be removed from this class in the future;
-     *     the functionality should be moved to TwoCenterTable class.
+     * TODO This function shall be removed from this class in the future;
+     *     its functionality should be moved to TwoCenterTable class.
      *
      *  This function requires that both "this" and "ket" have existing kgrid_, and the
      *  two kgrid_ be identical.
@@ -261,10 +263,12 @@ public:
     int itype() const { return itype_; }
     int izeta() const { return izeta_; }
     int l() const { return l_; }
-    int nr() const { return nr_; }
+    int nr() const { return nr_; } // paired with rmax(), not rcut!
     int nk() const { return nk_; }
-    double rcut() const { return rgrid_ ? rgrid_[nr_ - 1] : 0.0; }
-    double kcut() const { return kgrid_ ? kgrid_[nk_ - 1] : 0.0; }
+    double rcut() const { return rgrid_[std::min(ircut_, nr_-1)]; } ///< padded zeros ignored
+    double kcut() const { return kgrid_[std::min(ikcut_, nk_-1)]; }
+    double rmax() const { return rgrid_[nr_-1]; } ///< padded zeros considered
+    double kmax() const { return kgrid_[nk_-1]; }
     const double* rgrid() const { return rgrid_; }
     const double* kgrid() const { return kgrid_; }
     const double* rvalue() const { return rvalue_; }
@@ -291,6 +295,22 @@ private:
 
     double* rgrid_ = nullptr;   ///< r-space grid
     double* kgrid_ = nullptr;   ///< k-space grid
+
+    /**
+     * @brief Index of the first trailing zero.
+     *
+     * A numerical radial function might be zero-padded for the sake of
+     * FFT-based spherical Bessel transform algorithms. The following two
+     * variables keep track of the actual cutoff radius. Specifically,
+     * if there are no trailing zeros in rvalues_, then ircut_ = nr_;
+     * if there are trailing zeros, then ircut_ is the index of the first
+     * trailing zero. For example, 
+     * rvalues_ = {1, 2, 3, 0, 0, 0} -> ircut_ = 3
+     * rvalues_ = {1, 2, 3, 4, 5, 6} -> ircut_ = 6
+     * rvalues_ = {0, 0, 0, 0, 0, 0} -> ircut_ = 0
+     */
+    int ircut_ = 0;
+    int ikcut_ = 0;
 
     double* rvalue_ = nullptr;  ///< r-space value
     double* kvalue_ = nullptr;  ///< k-space value
@@ -353,6 +373,9 @@ private:
      * backward: k to r
      */
     void transform(const bool forward);
+
+    /// Updates ircut_ or ikcut_.
+    void set_icut(const bool for_r_space, const bool for_k_space, const double tol = 1e-15);
 
     /// Checks whether a grid is uniform.
     bool is_uniform(const int n, const double* const grid, const double tol) const;

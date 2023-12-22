@@ -21,6 +21,8 @@ NumericalRadial::NumericalRadial(const NumericalRadial& other) :
     izeta_(other.izeta_),
     nr_(other.nr_),
     nk_(other.nk_),
+    ircut_(other.ircut_),
+    ikcut_(other.ikcut_),
     is_fft_compliant_(other.is_fft_compliant_),
     pr_(other.pr_),
     pk_(other.pk_),
@@ -61,6 +63,9 @@ NumericalRadial& NumericalRadial::operator=(const NumericalRadial& rhs)
 
     nr_ = rhs.nr_;
     nk_ = rhs.nk_;
+
+    ircut_ = rhs.ircut_;
+    ikcut_ = rhs.ikcut_;
 
     is_fft_compliant_ = rhs.is_fft_compliant_;
 
@@ -147,27 +152,33 @@ void NumericalRadial::build(const int l,
         std::memcpy(kvalue_, value, nk_ * sizeof(double));
     }
 
+    set_icut(for_r_space, !for_r_space);
 }
 
-void NumericalRadial::to_numerical_orbital_lm(Numerical_Orbital_Lm& orbital_lm)
+void NumericalRadial::to_numerical_orbital_lm(Numerical_Orbital_Lm& orbital_lm, const double lcao_ecut, const double lcao_dk) const
 {
 #ifdef __DEBUG
     assert(rgrid_ && kgrid_);
     assert(rgrid_[0] == 0.0 && kgrid_[0] == 0.0);
     assert(is_uniform(nr_, rgrid_, 1e-14) && is_uniform(nk_, kgrid_, 1e-14));
 
-    // Numerical_Orbital_Lm does not extra exponent in the real space value
+    // Numerical_Orbital_Lm does not support extra exponent in the real space value
     assert(pr_ == 0);
 #endif
 
     double dr = rgrid_[1] - rgrid_[0];
-    double dk = kgrid_[1] - kgrid_[0];
     double* rab = new double[nr_];
     std::fill(rab, rab + nr_, dr);
 
-    orbital_lm.set_orbital_info(symbol_, itype_, l_, izeta_, nr_, rab, rgrid_,
-            Numerical_Orbital_Lm::Psi_Type::Psi, rvalue_, nk_, dk, 0.001,
-            GlobalV::out_element_info, true, GlobalV::CAL_FORCE);
+    // Due to algorithmic difference (FFT vs. Simpson's integration),
+    // it is inappropriate to use the k grid of NumericalRadial to
+    // initialize the k grid of Numerical_Orbital_Lm.
+    
+    int nk_legacy = static_cast<int>(std::sqrt(lcao_ecut) / lcao_dk) + 4;
+    nk_legacy += 1 - nk_legacy % 2;
+    orbital_lm.set_orbital_info(symbol_, itype_, l_, izeta_, std::min(nr_, ircut_+1), rab, rgrid_,
+            Numerical_Orbital_Lm::Psi_Type::Psi, rvalue_, nk_legacy, lcao_dk,
+            0.001 /* dr_uniform */, GlobalV::out_element_info, true, GlobalV::CAL_FORCE);
 }
 
 void NumericalRadial::set_transformer(ModuleBase::SphericalBesselTransformer sbt, int update)
@@ -221,6 +232,7 @@ void NumericalRadial::set_grid(const bool for_r_space, const int ngrid, const do
 
         is_fft_compliant_ = is_fft_compliant(nr_, rgrid_, nk_, kgrid_);
         transform(!for_r_space); // transform(true): r -> k; transform(false): k -> r
+        // ircut_ or ikcut_ is updated in transform()
     }
     else
     { // obtain new values by interpolation in the current space
@@ -258,6 +270,7 @@ void NumericalRadial::set_grid(const bool for_r_space, const int ngrid, const do
         ngrid_tbu = ngrid;
 
         is_fft_compliant_ = is_fft_compliant(nr_, rgrid_, nk_, kgrid_);
+        set_icut(for_r_space, !for_r_space);
         transform(for_r_space); // transform(true): r -> k; transform(false): k -> r
     }
 }
@@ -294,12 +307,14 @@ void NumericalRadial::set_value(const bool for_r_space, const double* const valu
         std::memcpy(rvalue_, value, nr_ * sizeof(double));
         pr_ = p;
         transform(true);
+        set_icut(true, false);
     }
     else
     {
         std::memcpy(kvalue_, value, nk_ * sizeof(double));
         pk_ = p;
         transform(false);
+        set_icut(false, true);
     }
 }
 
@@ -318,6 +333,7 @@ void NumericalRadial::wipe(const bool r_space, const bool k_space)
         rvalue_ = nullptr;
         nr_ = 0;
         pr_ = 0;
+        ircut_ = 0;
     }
     
     if (k_space)
@@ -328,6 +344,7 @@ void NumericalRadial::wipe(const bool r_space, const bool k_space)
         kvalue_ = nullptr;
         nk_ = 0;
         pk_ = 0;
+        ikcut_ = 0;
     }
     is_fft_compliant_ = false;
 }
@@ -348,6 +365,7 @@ void NumericalRadial::radtab(const char op,
     // radtab requires that two NumericalRadial objects have exactly the same (non-null) kgrid_
     assert(nk_ > 0 && nk_ == ket.nk_);
     assert(std::equal(kgrid_, kgrid_ + nk_, ket.kgrid_));
+    assert(sbt_.is_ready());
 #endif
 
     double* rgrid_tab = new double[nr_tab];
@@ -377,7 +395,7 @@ void NumericalRadial::radtab(const char op,
 
     if (use_radrfft)
     {
-        sbt_.radrfft(l, nk_, kcut(), fk, table, pk_ + ket.pk_ + op_pk, deriv);
+        sbt_.radrfft(l, nk_, kmax(), fk, table, pk_ + ket.pk_ + op_pk, deriv);
     }
     else
     {
@@ -431,6 +449,8 @@ void NumericalRadial::transform(const bool forward)
         return;
     }
 
+    if (!sbt_.is_ready()) sbt_.init();
+
     if (forward)
     { // r -> k
         if (is_fft_compliant_)
@@ -442,6 +462,7 @@ void NumericalRadial::transform(const bool forward)
             sbt_.direct(l_, nr_, rgrid_, rvalue_, nk_, kgrid_, kvalue_, pr_);
         }
         pk_ = 0;
+        set_icut(false, true);
     }
     else
     { // k -> r
@@ -454,6 +475,28 @@ void NumericalRadial::transform(const bool forward)
             sbt_.direct(l_, nk_, kgrid_, kvalue_, nr_, rgrid_, rvalue_, pk_);
         }
         pr_ = 0;
+        set_icut(true, false);
+    }
+}
+
+void NumericalRadial::set_icut(const bool for_r_space, const bool for_k_space, const double tol)
+{
+    if (for_r_space)
+    {
+#ifdef __DEBUG
+        assert(rgrid_ && rvalue_);
+#endif
+        ircut_ = nr_;
+        while (ircut_ && std::abs(rvalue_[ircut_ - 1]) <= tol) { --ircut_; }
+    }
+
+    if (for_k_space)
+    {
+#ifdef __DEBUG
+        assert(kgrid_ && kvalue_);
+#endif
+        ikcut_ = nk_;
+        while (ikcut_ && std::abs(kvalue_[ikcut_ - 1]) <= tol) { --ikcut_; }
     }
 }
 
