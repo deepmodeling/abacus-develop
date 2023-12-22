@@ -266,7 +266,7 @@ void HkPsi<double>(const Parallel_Orbitals* ParaV, const Parallel_2D& para_wfc_i
 // ModuleBase::matrix wfcHwfc(ik, 0)
 template <typename TK>
 void psiDotPsi(const Parallel_Orbitals* ParaV, const Parallel_2D& para_wfc_in, const Parallel_2D& para_Eij_in,
-                const TK& wfc, const TK& H_wfc, std::vector<TK>& Dmn, double* wfcHwfc, std::string& test_rank_file)
+                const TK& wfc, const TK& H_wfc, std::vector<TK>& Dmn, double* wfcHwfc, std::string& test_rank_file, std::ofstream& outFile)
 {
     const int one_int = 1;
     //const double one_double = 1.0, zero_double = 0.0;
@@ -293,12 +293,6 @@ void psiDotPsi(const Parallel_Orbitals* ParaV, const Parallel_2D& para_wfc_in, c
     pzgemm_( &C_char, &N_char, &nbands, &nbands, &nbasis, &one_complex, &wfc, &one_int, &one_int, ParaV->desc_wfc,
             &H_wfc, &one_int, &one_int, ParaV->desc_wfc, &zero_complex, &Dmn[0], &one_int, &one_int, para_Eij_in.desc );
 
-    std::ofstream outFile(test_rank_file, std::ios::app);
-    if (!outFile.is_open())
-    {
-        std::cerr << "Error opening file: " << test_rank_file << std::endl;
-    }
- 
     for(int i=0; i<nrow_bands; ++i)
     {
         int i_global = para_Eij_in.local2global_row(i);
@@ -310,7 +304,7 @@ void psiDotPsi(const Parallel_Orbitals* ParaV, const Parallel_2D& para_wfc_in, c
                 wfcHwfc[j_global] = std::real( Dmn[i*ncol_bands+j] ); // need to be sure imag(Dmn[i*nrow_bands+j]) == 0
                 // double testEnn = std::abs( std::imag( Dmn[i*ncol_bands+j] ) );
                 // if( testEnn>1e-16 )std::cout << "\n\nimag(Enn)!=0? imag(Enn)= " << testEnn << "\n\n";
-                outFile << "\n(i, j) of Dij: " << i << " " << j << "\n";
+                outFile << "\n(i, j) of Dij: " << i << " " << j << "\n(i, i) of global Eij, i: " << i_global << "\n";
             }
         }
     }
@@ -334,7 +328,7 @@ void psiDotPsi(const Parallel_Orbitals* ParaV, const Parallel_2D& para_wfc_in, c
 
 template <>
 void psiDotPsi<double>(const Parallel_Orbitals* ParaV, const Parallel_2D& para_wfc_in, const Parallel_2D& para_Eij_in,
-                        const double& wfc, const double& H_wfc, std::vector<double>& Dmn, double* wfcHwfc, std::string& test_rank_file);
+                        const double& wfc, const double& H_wfc, std::vector<double>& Dmn, double* wfcHwfc, std::string& test_rank_file, std::ofstream& outFile);
 
 
 // realize wg_wfc = wg * wfc. Calling this function and we can get wfc = wg*wfc.
@@ -624,7 +618,9 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     // std::vector<TK> Eij(ParaV->nloc_Eij);   //////////ncol*ncol? why
     const int nrow_bands = para_Eij.get_row_size();
     const int ncol_bands = para_Eij.get_col_size();
-    std::vector<TK> Eij(nrow_bands*ncol_bands);
+    std::vector<TK> Eij_TV(nrow_bands*ncol_bands);
+    std::vector<TK> Eij_hartree(nrow_bands*ncol_bands);
+    std::vector<TK> Eij_XC(nrow_bands*ncol_bands);
 
     //calculate wg_wfcHamiltWfc, wg_HamiltWfc and Etotal
     for(int ik=0; ik<nk_total; ++ik)
@@ -652,9 +648,9 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         std::cout << "\n\n\nHkPsi pass!\n\n\n";
         
         // something wrong
-        psiDotPsi( ParaV, para_wfc, para_Eij, wfc(ik, 0, 0), H_wfc_TV(ik, 0, 0), Eij, &(wfcHwfc_TV(ik, 0)), test_rank_file);
-        psiDotPsi( ParaV, para_wfc, para_Eij, wfc(ik, 0, 0), H_wfc_hartree(ik, 0, 0), Eij, &(wfcHwfc_hartree(ik, 0)), test_rank_file);
-        psiDotPsi( ParaV, para_wfc, para_Eij, wfc(ik, 0, 0), H_wfc_XC(ik, 0, 0), Eij, &(wfcHwfc_XC(ik, 0)), test_rank_file);
+        psiDotPsi( ParaV, para_wfc, para_Eij, wfc(ik, 0, 0), H_wfc_TV(ik, 0, 0), Eij_TV, &(wfcHwfc_TV(ik, 0)), test_rank_file, outFile);
+        psiDotPsi( ParaV, para_wfc, para_Eij, wfc(ik, 0, 0), H_wfc_hartree(ik, 0, 0), Eij_hartree, &(wfcHwfc_hartree(ik, 0)), test_rank_file, outFile);
+        psiDotPsi( ParaV, para_wfc, para_Eij, wfc(ik, 0, 0), H_wfc_XC(ik, 0, 0), Eij_XC, &(wfcHwfc_XC(ik, 0)), test_rank_file, outFile);
 
         std::cout << "\n\n\npsiDotPsi pass!\n\n\n";
         
@@ -730,7 +726,6 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     // return 1.0;
 
 }
-
 
 
 }

@@ -268,7 +268,7 @@ void HkPsi<double>(const Parallel_Orbitals* ParaV, const Parallel_2D& para_wfc_i
 
 template <>
 void psiDotPsi<double>(const Parallel_Orbitals* ParaV, const Parallel_2D& para_wfc_in, const Parallel_2D& para_Eij_in,
-                        const double& wfc, const double& H_wfc, std::vector<double>& Dmn, double* wfcHwfc, std::string& test_rank_file)
+                        const double& wfc, const double& H_wfc, std::vector<double>& Dmn, double* wfcHwfc, std::string& test_rank_file, std::ofstream& outFile)
 {
     const int one_int = 1;
     const double one_double = 1.0;
