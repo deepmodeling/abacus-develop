@@ -38,7 +38,7 @@ void TwoCenterBundle::build(int ntype,
 
     // build RadialCollection objects
     orb_ = std::unique_ptr<RadialCollection>(new RadialCollection);
-    orb_->build(ntype, file_orb, 'o');
+    orb_->build(ntype, file_orb);
     orb_->set_transformer(sbt);
 
     beta_ = std::unique_ptr<RadialCollection>(new RadialCollection);
@@ -74,7 +74,7 @@ void TwoCenterBundle::build(int ntype,
 #endif
 
         alpha_ = std::unique_ptr<RadialCollection>(new RadialCollection);
-        alpha_->build(nfile_desc, file_desc, 'o');
+        alpha_->build(nfile_desc, file_desc);
         alpha_->set_transformer(sbt);
         rmax = std::max(rmax, alpha_->rcut_max());
 
@@ -118,4 +118,33 @@ void TwoCenterBundle::build(int ntype,
     ModuleBase::Ylm::set_coefficients();
 
     sbt.fft_clear();
+}
+
+void TwoCenterBundle::to_LCAO_Orbitals(LCAO_Orbitals& ORB) const
+{
+    ORB.ntype = orb_->ntype();
+    ORB.kmesh = (*orb_)(0, 0, 0).nk();
+    ORB.lmax = orb_->lmax();
+    ORB.nchimax = orb_->nzeta_max();
+    ORB.rcutmax_Phi = orb_->rcut_max();
+    
+    delete[] ORB.Phi;
+    ORB.Phi = new Numerical_Orbital[orb_->ntype()];
+    for (int itype = 0; itype < orb_->ntype(); ++itype)
+    {
+        (*orb_)(itype).to_numerical_orbital(ORB.Phi[itype]);
+    }
+
+    if (GlobalV::deepks_setorb)
+    {
+        ORB.lmax_d = alpha_->lmax();
+        ORB.nchimax_d = alpha_->nzeta_max();
+
+        delete[] ORB.Alpha;
+        ORB.Alpha = new Numerical_Orbital[alpha_->ntype()];
+        for (int itype = 0; itype < alpha_->ntype(); ++itype)
+        {
+            (*alpha_)(itype).to_numerical_orbital(ORB.Alpha[itype]);
+        }
+    }
 }

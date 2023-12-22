@@ -2,6 +2,7 @@
 #define TWO_CENTER_BUNDLE_H
 
 #include "module_basis/module_nao/two_center_integrator.h"
+#include "module_basis/module_ao/ORB_read.h"
 
 #include <memory>
 #include <string>
@@ -24,6 +25,14 @@ class TwoCenterBundle
                Numerical_Nonlocal* const nl,
                const int nfile_desc = 0,
                const std::string* file_desc = nullptr);
+
+    /**
+     * @brief Overwrites the content of a LCAO_Orbitals object (e.g. GlobalC::ORB)
+     * with the current object.
+     *
+     * This function provides an interface to the corresponding object in the old module_ao.
+     */
+    void to_LCAO_Orbitals(LCAO_Orbitals&) const;
 
     std::unique_ptr<TwoCenterIntegrator> kinetic_orb;
     std::unique_ptr<TwoCenterIntegrator> overlap_orb;
