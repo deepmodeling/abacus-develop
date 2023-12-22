@@ -14,6 +14,7 @@
 #include "module_basis/module_ao/parallel_2d.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_base/parallel_reduce.h"
 
 #include "module_hamilt_general/operator.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
