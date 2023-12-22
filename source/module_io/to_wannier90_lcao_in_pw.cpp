@@ -8,7 +8,8 @@
 #include "module_base/parallel_reduce.h"
 #include "binstream.h"
 
-#ifdef __LCAO
+#include "module_psi/psi_initializer_nao.h"
+//#ifdef __LCAO
 toWannier90_LCAO_IN_PW::toWannier90_LCAO_IN_PW(
     const bool &out_wannier_mmn, 
     const bool &out_wannier_amn, 
@@ -39,6 +40,19 @@ void toWannier90_LCAO_IN_PW::calculate(
 {
     this->ParaV = pv;
 
+    Structure_Factor* sf_ptr = const_cast<Structure_Factor*>(&sf);
+    ModulePW::PW_Basis_K* wfcpw_ptr = const_cast<ModulePW::PW_Basis_K*>(wfcpw);
+    #ifdef __MPI
+    this->psi_init_ = new psi_initializer_nao<std::complex<double>, psi::DEVICE_CPU>(
+        sf_ptr, wfcpw_ptr, &(GlobalC::ucell), &(GlobalC::Pkpoints));
+    #else
+    this->psi_init_ = new psi_initializer_nao<std::complex<double>, psi::DEVICE_CPU>(
+        sf_ptr, wfcpw_ptr, &(GlobalC::ucell));
+    #endif
+    this->psi_init_->set_orbital_files(GlobalC::ucell.orbital_fn);
+    this->psi_init_->initialize_only_once();
+    this->psi_init_->cal_ovlp_flzjlq();
+    this->psi_init_->allocate(true);
     read_nnkp(kv);
 
     if (GlobalV::NSPIN == 2)
@@ -107,14 +121,15 @@ psi::Psi<std::complex<double>>* toWannier90_LCAO_IN_PW::get_unk_from_lcao(
 
     // Orbital projection to plane wave
     ModuleBase::realArray table_local(GlobalC::ucell.ntype, GlobalC::ucell.nmax_total, GlobalV::NQX);
-    Wavefunc_in_pw::make_table_q(GlobalC::ORB.orbital_file, table_local);
+    //Wavefunc_in_pw::make_table_q(GlobalC::ORB.orbital_file, table_local);
 
     for (int ik = 0; ik < num_kpts; ik++)
     {
         int npw = kv.ngk[ik];
         ModuleBase::ComplexMatrix orbital_in_G(GlobalV::NLOCAL, npwx*GlobalV::NPOL);
         // Wavefunc_in_pw::produce_local_basis_in_pw(ik, wfcpw, sf, orbital_in_G, table_local);
-        produce_local_basis_in_pw(ik, wfcpw, sf, orbital_in_G, table_local);
+        //produce_local_basis_in_pw(ik, wfcpw, sf, orbital_in_G, table_local);
+        nao_G_expansion(ik, wfcpw, orbital_in_G);
 
         ModuleBase::ComplexMatrix lcao_wfc_global;
         get_lcao_wfc_global_ik(ik, psi_in, lcao_wfc_global);
@@ -196,70 +211,23 @@ psi::Psi<std::complex<double>>* toWannier90_LCAO_IN_PW::get_unk_from_lcao(
     return unk_inLcao;
 }
 
-void toWannier90_LCAO_IN_PW::produce_local_basis_in_pw(
+void toWannier90_LCAO_IN_PW::nao_G_expansion(
     const int& ik,
-    const ModulePW::PW_Basis_K* wfc_basis,
-    const Structure_Factor& sf,
-    ModuleBase::ComplexMatrix& psi,
-    const ModuleBase::realArray& table_local
+    const ModulePW::PW_Basis_K* wfcpw,
+    ModuleBase::ComplexMatrix& psi
 )
 {
-    ModuleBase::TITLE("toWannier90_LCAO_IN_PW", "produce_local_basis_in_pw");
-    assert(ik >= 0);
-    const int npw = wfc_basis->npwk[ik];
-    const int total_lm = (GlobalC::ucell.lmax + 1) * (GlobalC::ucell.lmax + 1);
-    ModuleBase::matrix ylm(total_lm, npw);
-
-    ModuleBase::Vector3<double>* gk = new ModuleBase::Vector3<double>[npw];
-    for (int ig = 0; ig < npw; ig++)
+    int npwx = wfcpw->npwk_max;
+    psi::Psi<std::complex<double>>* psig = this->psi_init_->cal_psig(ik);
+    int nbands = GlobalV::NLOCAL;
+    int nbasis = npwx*GlobalV::NPOL;
+    for (int ib = 0; ib < nbands; ib++)
     {
-        gk[ig] = wfc_basis->getgpluskcar(ik, ig);
-    }
-
-    ModuleBase::YlmReal::Ylm_Real(total_lm, npw, gk, ylm);
-
-    double* flq = new double[npw];
-    int iwall = 0;
-    for (int it = 0; it < GlobalC::ucell.ntype; it++)
-    {
-        for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
+        for (int ig = 0; ig < nbasis; ig++)
         {
-            std::complex<double>* sk = sf.get_sk(ik, it, ia, wfc_basis);
-            int ic = 0;
-            for (int L = 0; L < GlobalC::ucell.atoms[it].nwl + 1; L++)
-            {
-                std::complex<double> lphase = pow(ModuleBase::NEG_IMAG_UNIT, L); // mohan 2010-04-19
-                for (int N = 0; N < GlobalC::ucell.atoms[it].l_nchi[L]; N++)
-                {
-                    for (int ig = 0; ig < npw; ig++)
-                    {
-                        flq[ig] = ModuleBase::PolyInt::Polynomial_Interpolation(table_local,
-                                                                                it,
-                                                                                ic,
-                                                                                GlobalV::NQX,
-                                                                                GlobalV::DQ,
-                                                                                gk[ig].norm() * GlobalC::ucell.tpiba);
-                    }
-
-                    for (int m = 0; m < 2 * L + 1; m++)
-                    {
-                        const int lm = L * L + m;
-                        for (int ig = 0; ig < npw; ig++)
-                        {
-                            psi(iwall, ig) = lphase * sk[ig] * ylm(lm, ig) * flq[ig];
-                        }
-                        ++iwall;
-                    }
-
-                    ++ic;
-                } // end for N
-            }     // end for L
-            delete[] sk;
-        } // end for ia
-    } // end for it
-
-    delete[] flq;
-    delete[] gk;
+            psi(ib, ig) = psig[0](ik, ib, ig);
+        }
+    }
 }
 
 void toWannier90_LCAO_IN_PW::get_lcao_wfc_global_ik(
@@ -295,4 +263,4 @@ void toWannier90_LCAO_IN_PW::get_lcao_wfc_global_ik(
 #endif
 
 }
-#endif
+//#endif
