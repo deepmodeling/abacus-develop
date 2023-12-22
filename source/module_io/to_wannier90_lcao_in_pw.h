@@ -33,7 +33,7 @@
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
-//#ifdef __LCAO
+#ifdef __LCAO
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_wfc.h"
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
@@ -108,4 +108,4 @@ class toWannier90_LCAO_IN_PW : public toWannier90_PW
 };
 #endif
 
-//#endif
+#endif
