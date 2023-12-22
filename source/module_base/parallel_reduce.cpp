@@ -32,6 +32,15 @@ void Parallel_Reduce::reduce_all<double>(double& object)
 }
 
 template<>
+void Parallel_Reduce::reduce_all<float>(float& object)
+{
+#ifdef __MPI
+	MPI_Allreduce(MPI_IN_PLACE , &object , 1, MPI_FLOAT , MPI_SUM , MPI_COMM_WORLD);
+#endif
+	return;
+}
+
+template<>
 void Parallel_Reduce::reduce_all<int>(int* object, const int n)
 {
 #ifdef __MPI

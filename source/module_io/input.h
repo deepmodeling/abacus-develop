@@ -71,6 +71,7 @@ class Input
     bool towannier90; // add by jingan for wannier90
     std::string nnkpfile; // add by jingan for wannier90
     std::string wannier_spin; // add by jingan for wannier90
+    int wannier_method; // different implementation methods under Lcao basis set
     bool out_wannier_mmn;  // add by renxi for wannier90
     bool out_wannier_amn;
     bool out_wannier_unk;
@@ -234,6 +235,7 @@ class Input
     double mixing_beta_mag;
     double mixing_gg0_mag;
     double mixing_gg0_min;
+    double mixing_angle;
 
     bool mixing_tau; // whether to mix tau in mgga
     bool mixing_dftu; //whether to mix locale in DFT+U

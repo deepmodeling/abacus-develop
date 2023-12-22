@@ -248,7 +248,7 @@ int ELPA_Solver::decomposeRightMatrix(double* B, double* EigenValue, double* Eig
             {
                 int iGlobal = globalIndex(i, nblk, nprows, myprow);
                 if (iGlobal > jGlobal)
-                    B[i + j * narows] = 0;
+                    B[i + j * static_cast<std::size_t>(narows)] = 0;
             }
         }
         if (loglevel > 1)
@@ -295,8 +295,9 @@ int ELPA_Solver::decomposeRightMatrix(double* B, double* EigenValue, double* Eig
             int eidx = globalIndex(i, nblk, npcols, mypcol);
             // double ev_sqrt=1.0/sqrt(ev[eidx]);
             double ev_sqrt = EigenValue[eidx] > DBL_MIN ? 1.0 / sqrt(EigenValue[eidx]) : 0;
+            const std::size_t index_i = i * static_cast<std::size_t>(lda);
             for (int j = 0; j < narows; ++j)
-                dwork[i * lda + j] = EigenVector[i * lda + j] * ev_sqrt;
+                dwork[index_i + j] = EigenVector[index_i + j] * ev_sqrt;
         }
 
         // calculate work*q=q*ev^{-1/2}*q^T, put to b, which is B^{-1/2}
@@ -356,7 +357,7 @@ int ELPA_Solver::composeEigenVector(int DecomposedState, double* B, double* Eige
 void ELPA_Solver::verify(double* A, double* EigenValue, double* EigenVector, double& maxError, double& meanError)
 {
     double* V = EigenVector;
-    const int naloc = narows * nacols;
+    const std::size_t naloc = static_cast<std::size_t>(narows) * nacols;
     double* D = new double[naloc];
     double* R = dwork.data();
 
@@ -374,7 +375,7 @@ void ELPA_Solver::verify(double* A, double* EigenValue, double* EigenVector, dou
             localCol = localIndex(i, nblk, npcols, localProcCol);
             if (mypcol == localProcCol)
             {
-                int idx = localRow + localCol * narows;
+                const std::size_t idx = localRow + localCol * static_cast<std::size_t>(narows);
                 D[idx] = EigenValue[i];
             }
         }
@@ -413,7 +414,7 @@ void ELPA_Solver::verify(double* A,
                          double& meanError)
 {
     double* V = EigenVector;
-    const int naloc = narows * nacols;
+    const std::size_t naloc = static_cast<std::size_t>(narows) * nacols;
     double* D = new double[naloc];
     double* R = new double[naloc];
 
@@ -431,7 +432,7 @@ void ELPA_Solver::verify(double* A,
             localCol = localIndex(i, nblk, npcols, localProcCol);
             if (mypcol == localProcCol)
             {
-                int idx = localRow + localCol * narows;
+                const std::size_t idx = localRow + localCol * static_cast<std::size_t>(narows);
                 D[idx] = EigenValue[i];
             }
         }

@@ -95,6 +95,7 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
 
 	if(
 		(GlobalV::BASIS_TYPE == "lcao")
+	  ||(GlobalV::BASIS_TYPE == "lcao_in_pw")
 	  ||(
 		  (GlobalV::BASIS_TYPE == "pw")
 		&&(GlobalV::psi_initializer)
@@ -173,7 +174,15 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
 	// Read in latticies vector
 	//===========================
 	if(latName=="none"){	
-		if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_VECTORS") )
+		if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_PARAMETERS", 1, false) )
+		{
+			ModuleBase::WARNING_QUIT("UnitCell::read_atom_species","do not use LATTICE_PARAMETERS without explicit specification of lattice type");
+		}
+		if( !ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_VECTORS") )
+		{
+			ModuleBase::WARNING_QUIT("UnitCell::read_atom_species","Please set LATTICE_VECTORS in STRU file");
+		}
+		else if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_VECTORS") )
 		{
 			// Reading lattice vectors. notice
 			// here that only one cpu read these
@@ -185,13 +194,9 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
 			ifa >> latvec.e31 >> latvec.e32;
 			ModuleBase::GlobalFunc::READ_VALUE(ifa, latvec.e33);
 		}
-		if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_PARAMETERS") )
-		{
-			ModuleBase::WARNING_QUIT("UnitCell::read_atom_species","do not use LATTICE_PARAMETERS without explicit specification of lattice type");
-		}
 	}//supply lattice vectors
 	else{
-		if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_VECTORS") )
+		if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_VECTORS", 1, false) )
 		{
 			ModuleBase::WARNING_QUIT("UnitCell::read_atom_species","do not use LATTICE_VECTORS along with explicit specification of lattice type");
 		}
@@ -1291,6 +1296,6 @@ void UnitCell::read_orb_file(int it, std::string &orb_file, std::ofstream &ofs_r
 	ifs.close();
 	if(!atom->nw)
 	{
-		std::cout << "ERROR: " << atom->label << " nw = " << atom->nw << std::endl;
+		ModuleBase::WARNING_QUIT("read_orb_file","get nw = 0");
 	}
 }
