@@ -333,6 +333,7 @@ gdir                           3 #calculate the polarization in the direction of
 towannier90                    0 #use wannier90 code interface or not
 nnkpfile                       seedname.nnkp #the wannier90 code nnkp file name
 wannier_spin                   up #calculate spin in wannier90 code interface
+wannier_method                 1 #different implementation methods under Lcao basis set
 out_wannier_mmn                1 #output .mmn file or not
 out_wannier_amn                1 #output .amn file or not
 out_wannier_unk                1 #output UNK. file or not

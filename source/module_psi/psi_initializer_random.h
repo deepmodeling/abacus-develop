@@ -3,11 +3,15 @@
 
 #include "psi_initializer.h"
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
+
 /*
 Psi (planewave based wavefunction) initializer: random method
 */
-class psi_initializer_random : public psi_initializer
+template <typename T, typename Device>
+class psi_initializer_random : public psi_initializer<T, Device>
 {
+    private:
+        using Real = typename GetTypeReal<T>::type;
     public:
         #ifdef __MPI
         /// @brief parameterized constructor of psi initializer (with MPI support)
@@ -35,14 +39,14 @@ class psi_initializer_random : public psi_initializer
         /// @param iw_start the starting band index to fill random value
         /// @param iw_end the end band index
         /// @param ik kpoint index
-        void random(std::complex<double>* psi,
+        void random(T* psi,
                     const int iw_start,
                     const int iw_end,
                     const int ik) override;
         /// @brief calculate and output planewave wavefunction
         /// @param ik kpoint index
         /// @return initialized planewave wavefunction (psi::Psi<std::complex<double>>*)
-        psi::Psi<std::complex<double>>* cal_psig(int ik) override;
+        psi::Psi<T, Device>* cal_psig(int ik) override;
         /// @brief for variables can be only initialized for once.
         /// @param p_pspot_nl_in (for atomic) interfaces to pseudopot_cell_vnl object, in GlobalC now
         /// @attention if one variable is necessary for all methods, initialize it in constructor, not here.

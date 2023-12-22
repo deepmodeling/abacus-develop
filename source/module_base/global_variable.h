@@ -281,6 +281,7 @@ extern bool MIXING_TAU;
 extern double MIXING_BETA_MAG;
 extern double MIXING_GG0_MAG;
 extern double MIXING_GG0_MIN;
+extern double MIXING_ANGLE;
 
 //==========================================================
 // device flags added by denghui

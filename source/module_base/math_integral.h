@@ -97,6 +97,22 @@ class Integral
                           const double* const f, //!< function values at grid points
                           const double* const h  //!< grid spacing of length n-1, must be positive
     );
+
+    // Grid points and weights used to generate Gauss_Legendre integrals. Returns x in [-1, 1], the integration area is -1, 1.
+    // https://en.wikipedia.org/wiki/Gauss%E2%80%93Legendre_quadrature
+    // \int_{-1}^{1} f(x) dx \approx \sum_{i = 1}^{n} w_{i} f(x_{i})
+    // n is the number of sample points used,
+    // w_{i} are quadrature weights
+    // x_{i} are the roots of the n-th Legendre polynomial.
+    static void Gauss_Legendre_grid_and_weight(const int n, double *x, double *weights);
+
+    // Grid points and weights used to generate Gauss_Legendre integrals. Returns x in [xmin, xmax], the integration area is at xmin, xmax.
+    // \int_{-1}^{1} f(x) dx \approx \sum_{i = 1}^{n} w_{i} f(x_{i})
+    // xl = (xmax - xmin) / 2
+    // xmean = (xmax + xmin) / 2
+    // \int_{xmin}^{xmax} f(x) dx = xl \int_{-1}^{1} f(xl * t + xmean) dt
+    static void Gauss_Legendre_grid_and_weight(const double xmin, const double xmax, const int n, double *x, double *weights);
+
 };
 
 }
