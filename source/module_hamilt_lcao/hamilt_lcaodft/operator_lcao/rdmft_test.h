@@ -293,6 +293,39 @@ void psiDotPsi(const Parallel_Orbitals* ParaV, const Parallel_2D& para_wfc_in, c
     pzgemm_( &C_char, &N_char, &nbands, &nbands, &nbasis, &one_complex, &wfc, &one_int, &one_int, ParaV->desc_wfc,
             &H_wfc, &one_int, &one_int, ParaV->desc_wfc, &zero_complex, &Dmn[0], &one_int, &one_int, para_Eij_in.desc );
 
+    // int dsizeNow;
+    // int rankNow;
+    // MPI_Comm_size(MPI_COMM_WORLD, &dsizeNow);
+    // MPI_Comm_rank(MPI_COMM_WORLD, &rankNow);
+    // if( dsizeNow == 2 && rankNow == 1 )   // test for 2 processors
+    // {
+    //     for(int i=0; i<nrow_bands; ++i)
+    //     {
+    //         int i_global = para_Eij_in.local2global_row(i);
+    //         for(int j=0; j<ncol_bands; ++j)
+    //         {
+    //             int j_global = para_Eij_in.local2global_col(j);
+    //             if(i_global==j_global && i_global==1)
+    //             {
+    //                 // wfcHwfc[j_global] = std::real( Dmn[i*ncol_bands+j] ); // need to be sure imag(Dmn[i*nrow_bands+j]) == 0
+    //                 wfcHwfc[j_global] = std::real( Dmn[0+1] );
+    //                 // double testEnn = std::abs( std::imag( Dmn[i*ncol_bands+j] ) );
+    //                 // if( testEnn>1e-16 )std::cout << "\n\nimag(Enn)!=0? imag(Enn)= " << testEnn << "\n\n";
+    //                 outFile << "\n(i, j) of Dij: " << i << " " << j << "\n(i, i) of global Eij, i: " << i_global << "\n";
+    //             }
+    //             else if(i_global==j_global && i_global==3)
+    //             {
+    //                 // wfcHwfc[j_global] = std::real( Dmn[i*ncol_bands+j] ); // need to be sure imag(Dmn[i*nrow_bands+j]) == 0
+    //                 wfcHwfc[j_global] = std::real( Dmn[4*ncol_bands+0] );
+    //                 // double testEnn = std::abs( std::imag( Dmn[i*ncol_bands+j] ) );
+    //                 // if( testEnn>1e-16 )std::cout << "\n\nimag(Enn)!=0? imag(Enn)= " << testEnn << "\n\n";
+    //                 outFile << "\n(i, j) of Dij: " << i << " " << j << "\n(i, i) of global Eij, i: " << i_global << "\n";
+    //             }
+    //         }
+    //     }
+    // }
+    // else  // generally
+    // {
     for(int i=0; i<nrow_bands; ++i)
     {
         int i_global = para_Eij_in.local2global_row(i);
@@ -300,14 +333,17 @@ void psiDotPsi(const Parallel_Orbitals* ParaV, const Parallel_2D& para_wfc_in, c
         {
             int j_global = para_Eij_in.local2global_col(j);
             if(i_global==j_global)
-            {
-                wfcHwfc[j_global] = std::real( Dmn[i*ncol_bands+j] ); // need to be sure imag(Dmn[i*nrow_bands+j]) == 0
+            {   
+                // wfcHwfc = &wg(ik, 0)
+                wfcHwfc[j_global] = std::real( Dmn[j*nrow_bands+i] ); // need to be sure imag(Dmn[i*nrow_bands+j]) == 0
                 // double testEnn = std::abs( std::imag( Dmn[i*ncol_bands+j] ) );
                 // if( testEnn>1e-16 )std::cout << "\n\nimag(Enn)!=0? imag(Enn)= " << testEnn << "\n\n";
                 outFile << "\n(i, j) of Dij: " << i << " " << j << "\n(i, i) of global Eij, i: " << i_global << "\n";
             }
         }
     }
+    // }
+
     // test
     //std::cout << "after psiDotPsi()\nwfcHwfc[0], wfcHwfc[1]: " << wfcHwfc[0] << " " << wfcHwfc[1] <<"\n******\n\n\n";
 
@@ -672,6 +708,8 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     add_wg(wg, wfcHwfc_TV, wfcHwfc_hartree, wfcHwfc_XC, wg_forEtotal, 1);
 
     double Etotal_RDMFT = sumWg_getEnergy(wg_forEtotal);
+    //Parallel_Reduce::reduce_all(Etotal_RDMFT);
+
 
     std::cout << "\n\n\nEtotal_RDMFT pass!\n\n\n";
 
@@ -689,6 +727,11 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     ModuleBase::matrix wg_forExc(wg.nr, wg.nc, true);
     wgMul_wfcHwfc(wg, wfcHwfc_XC, wg_forExc, 3);
     double Exc_RDMFT = sumWg_getEnergy(wg_forExc);
+
+    Parallel_Reduce::reduce_all(Etotal_RDMFT);
+    Parallel_Reduce::reduce_all(ETV_RDMFT);
+    Parallel_Reduce::reduce_all(Ehartree_RDMFT);
+    Parallel_Reduce::reduce_all(Exc_RDMFT);
 
     std::cout << "\n\n\n******\nin 0 processor\nEtotal_RDMFT:   " << Etotal_RDMFT << "\nETV_RDMFT: " << ETV_RDMFT << "\nEhartree_RDMFT: " 
                 << Ehartree_RDMFT << "\nExc_RDMFT:      " << Exc_RDMFT << "\n******\n\n\n";
