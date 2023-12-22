@@ -895,8 +895,8 @@ namespace ModuleESolver
     // GlobalC::ppcell.vloc(ModuleBase::matrix vloc), 
     // esolver_fp.h(Structure_Factor sf), structure_factor.h(ModuleBase::ComplexMatrix strucFac), this->sf.strucFac
 
-    //test use dgemm_
-    hamilt::printResult_dgemm();
+    // //test use dgemm_
+    // hamilt::printResult_dgemm();
     
     // just support multi-k calculation now, support gamma only algorithms later
     double Etotal_RDMFT = hamilt::rdmft_cal<TK,TR>(
@@ -914,8 +914,6 @@ namespace ModuleESolver
         GlobalC::ppcell.vloc,
         this->sf.strucFac
     );
-
-
 
     /******** test RDMFT *********/
 
