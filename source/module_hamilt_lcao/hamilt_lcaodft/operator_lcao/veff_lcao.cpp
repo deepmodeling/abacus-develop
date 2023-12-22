@@ -158,10 +158,4 @@ void Veff<OperatorLCAO<double, double>>::contributeHR()
     this->new_e_iteration = false;
 }
 
-template<typename TK, typename TR>
-void Veff<OperatorLCAO<TK, TR>>::contributeHk(int ik)
-{
-    ModuleBase::TITLE("Veff", "contributeHk");
-}
-
 }
