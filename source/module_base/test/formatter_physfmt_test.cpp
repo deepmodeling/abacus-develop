@@ -92,7 +92,7 @@ TEST_F(PhysFmtTest, AdjustFormatterFlexible)
     EXPECT_EQ(physfmt.get_p_formatter()->get_precision(), 10);
     EXPECT_EQ(physfmt.get_p_formatter()->get_fillChar(), ' ');
     EXPECT_EQ(physfmt.get_p_formatter()->get_fixed(), true);
-    EXPECT_EQ(physfmt.get_p_formatter()->get_right(), false);
+    EXPECT_EQ(physfmt.get_p_formatter()->get_right(), true);
     EXPECT_EQ(physfmt.get_p_formatter()->get_error(), false);
 
     physfmt.adjust_formatter_flexible(8); // means for int, width is 8
@@ -100,6 +100,6 @@ TEST_F(PhysFmtTest, AdjustFormatterFlexible)
     EXPECT_EQ(physfmt.get_p_formatter()->get_precision(), 0);
     EXPECT_EQ(physfmt.get_p_formatter()->get_fillChar(), ' ');
     EXPECT_EQ(physfmt.get_p_formatter()->get_fixed(), true);
-    EXPECT_EQ(physfmt.get_p_formatter()->get_right(), false);
+    EXPECT_EQ(physfmt.get_p_formatter()->get_right(), true);
     EXPECT_EQ(physfmt.get_p_formatter()->get_error(), false);
 }

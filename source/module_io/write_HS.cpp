@@ -4,6 +4,7 @@
 #include "module_base/timer.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_base/formatter.h"
 
 void ModuleIO::saving_HS(const int istep,
                          const double* Hloc,
@@ -144,7 +145,9 @@ void ModuleIO::save_HS_triangle(const int istep,
 
     std::stringstream ssh;
     std::stringstream sss;
-
+    formatter::PhysicalFmt physfmt;
+    physfmt.adjust_formatter_flexible(GlobalV::out_ndigits, 0.5); // means for double, decimal part is 10, integer part is 5
+    // make up file name
     if (bit)
     {
         ssh << GlobalV::global_out_dir << file_name + "-H-bit";
@@ -163,6 +166,7 @@ void ModuleIO::save_HS_triangle(const int istep,
             sss << GlobalV::global_out_dir << istep << "_" << file_name + "-S";
         }
     }
+    // write data
     if (bit)
     {
 #ifdef __MPI
@@ -266,8 +270,8 @@ void ModuleIO::save_HS_triangle(const int istep,
         {
             if (GlobalV::out_app_flag)
             {
-                g1.open(ssh.str().c_str(), std::ofstream::app);
-                g2.open(sss.str().c_str(), std::ofstream::app);
+                g1.open(ssh.str().c_str(), std::ios::app);
+                g2.open(sss.str().c_str(), std::ios::app);
             }
             else
             {
@@ -340,15 +344,17 @@ void ModuleIO::save_HS_triangle(const int istep,
             g2.close();
         }
 #else
+        std::ofstream g1;
+        std::ofstream g2;
         if (GlobalV::out_app_flag)
         {
-            std::ofstream g1(ssh.str().c_str(), ofstream::app);
-            std::ofstream g2(sss.str().c_str(), ofstream::app);
+            g1.open(ssh.str().c_str(), std::ios::app);
+            g2.open(sss.str().c_str(), std::ios::app);
         }
         else
         {
-            std::ofstream g1(ssh.str().c_str());
-            std::ofstream g2(sss.str().c_str());
+            g1.open(ssh.str().c_str());
+            g2.open(sss.str().c_str());
         }
 
         g1 << GlobalV::NLOCAL;
@@ -510,8 +516,8 @@ void ModuleIO::save_HS_complete(const int istep,
         {
             if (GlobalV::out_app_flag)
             {
-                g1.open(ssh.str().c_str(), std::ofstream::app);
-                g2.open(sss.str().c_str(), std::ofstream::app);
+                g1.open(ssh.str().c_str(), std::ios::app);
+                g2.open(sss.str().c_str(), std::ios::app);
             }
             else
             {
@@ -584,15 +590,17 @@ void ModuleIO::save_HS_complete(const int istep,
             g2.close();
         }
 #else
+        std::ofstream g1;
+        std::ofstream g2;
         if (GlobalV::out_app_flag)
         {
-            std::ofstream g1(ssh.str().c_str(), ofstream::app);
-            std::ofstream g2(sss.str().c_str(), ofstream::app);
+            g1.open(ssh.str().c_str(), std::ios::app);
+            g2.open(sss.str().c_str(), std::ios::app);
         }
         else
         {
-            std::ofstream g1(ssh.str().c_str());
-            std::ofstream g2(sss.str().c_str());
+            g1.open(ssh.str().c_str());
+            g2.open(sss.str().c_str());
         }
 
         g1 << GlobalV::NLOCAL;
@@ -664,6 +672,11 @@ void ModuleIO::save_HS_complex_triangle(const int istep,
     std::stringstream ssh;
     std::stringstream sss;
 
+    formatter::PhysicalFmt physfmt;
+    physfmt.adjust_formatter_flexible(GlobalV::out_ndigits, 0.5); 
+    // means for double, decimal part is 10, integer part is 5
+    
+    // make up file name
     if (bit)
     {
         ssh << GlobalV::global_out_dir << file_name + "-H-bit";
@@ -682,7 +695,7 @@ void ModuleIO::save_HS_complex_triangle(const int istep,
             sss << GlobalV::global_out_dir << istep << "_" << file_name + "-S";
         }
     }
-
+    // write data
     if (bit)
     {
 #ifdef __MPI
@@ -786,8 +799,8 @@ void ModuleIO::save_HS_complex_triangle(const int istep,
         {
             if (GlobalV::out_app_flag)
             {
-                g1.open(ssh.str().c_str(), std::ofstream::app);
-                g2.open(sss.str().c_str(), std::ofstream::app);
+                g1.open(ssh.str().c_str(), std::ios::app);
+                g2.open(sss.str().c_str(), std::ios::app);
             }
             else
             {
@@ -843,8 +856,10 @@ void ModuleIO::save_HS_complex_triangle(const int istep,
             {
                 for (int j = i; j < GlobalV::NLOCAL; j++)
                 {
-                    g1 << " " << lineH[j - i];
-                    g2 << " " << lineS[j - i];
+                    g1 << " " << physfmt.get_p_formatter()->format(lineH[j - i]);
+                    g2 << " " << physfmt.get_p_formatter()->format(lineS[j - i]);
+                    // g1 << " " << lineH[j - i];
+                    // g2 << " " << lineS[j - i];
                 }
                 g1 << std::endl;
                 g2 << std::endl;
@@ -861,15 +876,17 @@ void ModuleIO::save_HS_complex_triangle(const int istep,
         }
 #else
 
+        std::ofstream g1;
+        std::ofstream g2;
         if (GlobalV::out_app_flag)
         {
-            std::ofstream g1(ssh.str().c_str(), ofstream::app);
-            std::ofstream g2(sss.str().c_str(), ofstream::app);
+            g1.open(ssh.str().c_str(), std::ios::app);
+            g2.open(sss.str().c_str(), std::ios::app);
         }
         else
         {
-            std::ofstream g1(ssh.str().c_str());
-            std::ofstream g2(sss.str().c_str());
+            g1.open(ssh.str().c_str());
+            g2.open(sss.str().c_str());
         }
 
         g1 << GlobalV::NLOCAL;
@@ -879,8 +896,10 @@ void ModuleIO::save_HS_complex_triangle(const int istep,
         {
             for (int j = i; j < GlobalV::NLOCAL; j++)
             {
-                g1 << " " << H[i * GlobalV::NLOCAL + j];
-                g2 << " " << S[i * GlobalV::NLOCAL + j];
+                g1 << " " << physfmt.get_p_formatter()->format(H[i * GlobalV::NLOCAL + j]);
+                g2 << " " << physfmt.get_p_formatter()->format(S[i * GlobalV::NLOCAL + j]);
+                // g1 << " " << H[i * GlobalV::NLOCAL + j];
+                // g2 << " " << S[i * GlobalV::NLOCAL + j];
             }
             g1 << std::endl;
             g2 << std::endl;
@@ -908,6 +927,9 @@ void ModuleIO::save_HS_complex_complete(const int istep,
 
     std::stringstream ssh;
     std::stringstream sss;
+
+    formatter::PhysicalFmt physfmt;
+    physfmt.adjust_formatter_flexible(GlobalV::out_ndigits, 0.5); 
 
     if (bit)
     {
@@ -1031,8 +1053,8 @@ void ModuleIO::save_HS_complex_complete(const int istep,
         {
             if (GlobalV::out_app_flag)
             {
-                g1.open(ssh.str().c_str(), std::ofstream::app);
-                g2.open(sss.str().c_str(), std::ofstream::app);
+                g1.open(ssh.str().c_str(), std::ios::app);
+                g2.open(sss.str().c_str(), std::ios::app);
             }
             else
             {
@@ -1088,8 +1110,10 @@ void ModuleIO::save_HS_complex_complete(const int istep,
             {
                 for (int j = 0; j < GlobalV::NLOCAL; j++)
                 {
-                    g1 << " " << lineH[j];
-                    g2 << " " << lineS[j];
+                    g1 << " " << physfmt.get_p_formatter()->format(lineH[j]);
+                    g2 << " " << physfmt.get_p_formatter()->format(lineS[j]);
+                    // g1 << " " << lineH[j];
+                    // g2 << " " << lineS[j];
                 }
                 g1 << std::endl;
                 g2 << std::endl;
@@ -1105,15 +1129,17 @@ void ModuleIO::save_HS_complex_complete(const int istep,
             g2.close();
         }
 #else
+        std::ofstream g1;
+        std::ofstream g2;
         if (GlobalV::out_app_flag)
         {
-            std::ofstream g1(ssh.str().c_str(), ofstream::app);
-            std::ofstream g2(sss.str().c_str(), ofstream::app);
+            g1.open(ssh.str().c_str(), std::ios::app);
+            g2.open(sss.str().c_str(), std::ios::app);
         }
         else
         {
-            std::ofstream g1(ssh.str().c_str());
-            std::ofstream g2(sss.str().c_str());
+            g1.open(ssh.str().c_str());
+            g2.open(sss.str().c_str());
         }
 
         g1 << GlobalV::NLOCAL;
@@ -1123,8 +1149,10 @@ void ModuleIO::save_HS_complex_complete(const int istep,
         {
             for (int j = 0; j < GlobalV::NLOCAL; j++)
             {
-                g1 << " " << H[i * GlobalV::NLOCAL + j];
-                g2 << " " << S[i * GlobalV::NLOCAL + j];
+                g1 << " " << physfmt.get_p_formatter()->format(H[i * GlobalV::NLOCAL + j]);
+                g2 << " " << physfmt.get_p_formatter()->format(S[i * GlobalV::NLOCAL + j]);
+                // g1 << " " << H[i * GlobalV::NLOCAL + j];
+                // g2 << " " << S[i * GlobalV::NLOCAL + j];
             }
             g1 << std::endl;
             g2 << std::endl;
