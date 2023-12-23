@@ -70,8 +70,10 @@ class ESolver_SDFT_PW : public ESolver_KS_PW<std::complex<double>>
      * @brief Check if Emin and Emax are converged
      *
      * @param nche_in N order of Chebyshev expansion
+     * @param try_emin trial Emin
+     * @param try_emax trial Emax
      */
-    void check_che(const int nche_in);
+    void check_che(const int nche_in, const double try_emin, const double try_emax);
 
     /**
      * @brief Set the N order of Chebyshev expansion for conductivities
@@ -79,9 +81,17 @@ class ESolver_SDFT_PW : public ESolver_KS_PW<std::complex<double>>
      * @param dt t step
      * @param nbatch number of t batch
      * @param cond_thr threshold of errors for conductivities
+     * @param nche_min minimum N order of Chebyshev
+     * @param try_emin trial Emin
+     * @param try_emax trial Emax
      * @return N order of Chebyshev
      */
-    int set_cond_nche(const double dt, int& nbatch, const double cond_thr);
+    int set_cond_nche(const double dt,
+                      int& nbatch,
+                      const double cond_thr,
+                      const int& nche_min,
+                      double try_emin,
+                      double try_emax);
 
     /**
      * @brief calculate Jmatrix  <leftv|J|rightv>
