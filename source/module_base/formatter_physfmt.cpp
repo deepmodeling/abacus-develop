@@ -168,9 +168,10 @@ void formatter::PhysicalFmt::adjust_formatter(bool left) {
 
 void formatter::PhysicalFmt::adjust_formatter_flexible(const int& decisive_length, 
                                                        const double& width_ratio, 
-                                                       const char& fillchar,
                                                        const bool& scientific,
-                                                       const bool& left)
+                                                       const bool& left,
+                                                       const char& fillchar
+                                                       )
 {
     assert(decisive_length >= 0);
     assert(width_ratio >= 0.0);

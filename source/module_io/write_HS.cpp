@@ -146,7 +146,7 @@ void ModuleIO::save_HS_triangle(const int istep,
     std::stringstream ssh;
     std::stringstream sss;
     formatter::PhysicalFmt physfmt;
-    physfmt.adjust_formatter_flexible(GlobalV::out_ndigits, 0.5); // means for double, decimal part is 10, integer part is 5
+    physfmt.adjust_formatter_flexible(GlobalV::out_ndigits, 0.5, true); // means for double, decimal part is 10, integer part is 5
     // make up file name
     if (bit)
     {
@@ -327,8 +327,10 @@ void ModuleIO::save_HS_triangle(const int istep,
             {
                 for (int j = i; j < GlobalV::NLOCAL; j++)
                 {
-                    g1 << " " << lineH[j - i];
-                    g2 << " " << lineS[j - i];
+                    g1 << " " << physfmt.get_p_formatter()->format(lineH[j - i]);
+                    g2 << " " << physfmt.get_p_formatter()->format(lineS[j - i]);
+                    // g1 << " " << lineH[j - i];
+                    // g2 << " " << lineS[j - i];
                 }
                 g1 << std::endl;
                 g2 << std::endl;
@@ -364,8 +366,10 @@ void ModuleIO::save_HS_triangle(const int istep,
         {
             for (int j = i; j < GlobalV::NLOCAL; j++)
             {
-                g1 << " " << H[i * GlobalV::NLOCAL + j];
-                g2 << " " << S[i * GlobalV::NLOCAL + j];
+                g1 << " " << physfmt.get_p_formatter()->format(H[i * GlobalV::NLOCAL + j]);
+                g2 << " " << physfmt.get_p_formatter()->format(S[i * GlobalV::NLOCAL + j]);
+                // g1 << " " << H[i * GlobalV::NLOCAL + j];
+                // g2 << " " << S[i * GlobalV::NLOCAL + j];
             }
             g1 << std::endl;
             g2 << std::endl;
@@ -395,6 +399,9 @@ void ModuleIO::save_HS_complete(const int istep,
     std::stringstream ssh;
     std::stringstream sss;
 
+    formatter::PhysicalFmt physfmt;
+    physfmt.adjust_formatter_flexible(GlobalV::out_ndigits, 0.5, true); // means for double, decimal part is 10, integer part is 5
+    // not actually used, confuse with old syntax
     if (bit)
     {
         ssh << GlobalV::global_out_dir << file_name + "-H-bit";
@@ -573,8 +580,10 @@ void ModuleIO::save_HS_complete(const int istep,
             {
                 for (int j = 0; j < GlobalV::NLOCAL; j++)
                 {
-                    g1 << " " << lineH[j];
-                    g2 << " " << lineS[j];
+                    g1 << " " << physfmt.get_p_formatter()->format(lineH[j]);
+                    g2 << " " << physfmt.get_p_formatter()->format(lineS[j]);
+                    // g1 << " " << lineH[j];
+                    // g2 << " " << lineS[j];
                 }
                 g1 << std::endl;
                 g2 << std::endl;
@@ -610,8 +619,10 @@ void ModuleIO::save_HS_complete(const int istep,
         {
             for (int j = 0; j < GlobalV::NLOCAL; j++)
             {
-                g1 << " " << H[i * GlobalV::NLOCAL + j];
-                g2 << " " << S[i * GlobalV::NLOCAL + j];
+                g1 << " " << physfmt.get_p_formatter()->format(H[i * GlobalV::NLOCAL + j]);
+                g2 << " " << physfmt.get_p_formatter()->format(S[i * GlobalV::NLOCAL + j]);
+                // g1 << " " << H[i * GlobalV::NLOCAL + j];
+                // g2 << " " << S[i * GlobalV::NLOCAL + j];
             }
             g1 << std::endl;
             g2 << std::endl;
@@ -673,7 +684,7 @@ void ModuleIO::save_HS_complex_triangle(const int istep,
     std::stringstream sss;
 
     formatter::PhysicalFmt physfmt;
-    physfmt.adjust_formatter_flexible(GlobalV::out_ndigits, 0.5); 
+    physfmt.adjust_formatter_flexible(GlobalV::out_ndigits, 0.5, true); 
     // means for double, decimal part is 10, integer part is 5
     
     // make up file name
@@ -929,7 +940,7 @@ void ModuleIO::save_HS_complex_complete(const int istep,
     std::stringstream sss;
 
     formatter::PhysicalFmt physfmt;
-    physfmt.adjust_formatter_flexible(GlobalV::out_ndigits, 0.5); 
+    physfmt.adjust_formatter_flexible(GlobalV::out_ndigits, 0.5, true); 
 
     if (bit)
     {
