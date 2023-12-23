@@ -343,6 +343,7 @@ void Input::Default(void)
     out_mat_t = 0;
     out_interval = 1;
     out_app_flag = true;
+    out_ndigits = 8;
     out_mat_r = 0; // jingan add 2019-8-14
     out_mat_dh = 0;
     out_wfc_lcao = 0;
@@ -1394,6 +1395,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("out_app_flag", word) == 0)
         {
             read_bool(ifs, out_app_flag);
+        }
+        else if (strcmp("out_ndigits", word) == 0)
+        {
+            read_value(ifs, out_ndigits);
         }
         else if (strcmp("out_mat_r", word) == 0)
         {
@@ -3254,6 +3259,7 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(out_alllog);
     Parallel_Common::bcast_bool(out_element_info);
     Parallel_Common::bcast_bool(out_app_flag);
+    Parallel_Common::bcast_int(out_ndigits);
     Parallel_Common::bcast_int(out_interval);
 
     Parallel_Common::bcast_double(dos_emin_ev);
