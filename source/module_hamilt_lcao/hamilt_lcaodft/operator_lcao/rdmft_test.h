@@ -238,8 +238,7 @@ void HkPsi<double>(const Parallel_Orbitals* ParaV, const double& HK, const doubl
 
 
 template <typename TK>
-void psiDotPsi(const Parallel_Orbitals* ParaV, const Parallel_2D& para_Eij_in,
-                const TK& wfc, const TK& H_wfc, std::vector<TK>& Dmn, double* wfcHwfc)
+void psiDotPsi(const Parallel_Orbitals* ParaV, const Parallel_2D& para_Eij_in, const TK& wfc, const TK& H_wfc, std::vector<TK>& Dmn, double* wfcHwfc)
 {
     const int one_int = 1;
     const std::complex<double> one_complex = {1.0, 0.0};
@@ -502,36 +501,37 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     //calculate wg_wfcHamiltWfc, wg_HamiltWfc and Etotal
     for(int ik=0; ik<nk_total; ++ik)
     {
-        // get the HK with ik-th k vector
+        // get the HK with ik-th k vector, the result is stored in HK_TV, HK_hartree and HK_XC respectively
         V_ekinetic_potential->contributeHk(ik);
         V_hartree->contributeHk(ik);
         V_XC->contributeHk(ik);
 
+        // get H(k) * wfc
         HkPsi( ParaV, HK_TV[0], wfc(ik, 0, 0), H_wfc_TV(ik, 0, 0));
         HkPsi( ParaV, HK_hartree[0], wfc(ik, 0, 0), H_wfc_hartree(ik, 0, 0));
         HkPsi( ParaV, HK_XC[0], wfc(ik, 0, 0), H_wfc_XC(ik, 0, 0));
-
-        std::cout << "\n\n\nHkPsi pass!\n\n\n";
         
+        // get wfc * H(k)_wfc
         psiDotPsi( ParaV, para_Eij, wfc(ik, 0, 0), H_wfc_TV(ik, 0, 0), Eij_TV, &(wfcHwfc_TV(ik, 0)) );
         psiDotPsi( ParaV, para_Eij, wfc(ik, 0, 0), H_wfc_hartree(ik, 0, 0), Eij_hartree, &(wfcHwfc_hartree(ik, 0)) );
         psiDotPsi( ParaV, para_Eij, wfc(ik, 0, 0), H_wfc_XC(ik, 0, 0), Eij_XC, &(wfcHwfc_XC(ik, 0)) );
-
-        std::cout << "\n\n\npsiDotPsi pass!\n\n\n";
         
+        // let H(k)=0 to storing next one, H(k+1)
         set_zero_HK(HK_TV);
         set_zero_HK(HK_hartree);
         set_zero_HK(HK_XC);
     }
 
-    //this would transfer the value of H_wfc_TV, H_wfc_hartree, H_wfc_XC
+    // this would transfer the value of H_wfc_TV, H_wfc_hartree, H_wfc_XC
+    // get the gradient of energy with respect to the wfc
     add_psi(ParaV, wg, H_wfc_TV, H_wfc_hartree, H_wfc_XC, wg_HamiltWfc);
+
+    // get the gradient of energy with respect to the occupation numbers
     add_wg(wg, wfcHwfc_TV, wfcHwfc_hartree, wfcHwfc_XC, wg_wfcHamiltWfc);
+
+    // get the total energy
     add_wg(wg, wfcHwfc_TV, wfcHwfc_hartree, wfcHwfc_XC, wg_forEtotal, 1);
-
     double Etotal_RDMFT = sumWg_getEnergy(wg_forEtotal);
-
-    std::cout << "\n\n\nEtotal_RDMFT pass!\n\n\n";
 
     //for E_TV
     ModuleBase::matrix wg_forETV(wg.nr, wg.nc, true);
@@ -548,12 +548,13 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     wgMul_wfcHwfc(wg, wfcHwfc_XC, wg_forExc, 3);
     double Exc_RDMFT = sumWg_getEnergy(wg_forExc);
 
+    // add up the results obtained by all processors, or we can do reduce_all(wfcHwfc_) before use add_wg() for Etotal replace it
     Parallel_Reduce::reduce_all(Etotal_RDMFT);
     Parallel_Reduce::reduce_all(ETV_RDMFT);
     Parallel_Reduce::reduce_all(Ehartree_RDMFT);
     Parallel_Reduce::reduce_all(Exc_RDMFT);
 
-    std::cout << "\n\n\n******\nin 0 processor\nEtotal_RDMFT:   " << Etotal_RDMFT << "\nETV_RDMFT: " << ETV_RDMFT << "\nEhartree_RDMFT: " 
+    std::cout << "\n\n\n******\nEtotal_RDMFT:   " << Etotal_RDMFT << "\nETV_RDMFT: " << ETV_RDMFT << "\nEhartree_RDMFT: " 
                 << Ehartree_RDMFT << "\nExc_RDMFT:      " << Exc_RDMFT << "\n******\n\n\n";
 
     ModuleBase::timer::tick("hamilt_lcao", "RDMFT_E&Egradient");
