@@ -7,15 +7,13 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
-// #include "module_elecstate/module_dm/density_matrix.h"
 #include "module_elecstate/module_dm/cal_dm_psi.h"
-#include <cmath>
 
 #include <iostream>
+#include <cmath>
+#include <complex>
 #include <fstream>
 #include <sstream>
-
-#include <complex>
 
 // used by class Veff_rdmft
 //#include "veff_lcao.h"
@@ -287,7 +285,7 @@ void psiDotPsi<double>(const Parallel_Orbitals* ParaV, const Parallel_2D& para_E
             int j_global = para_Eij_in.local2global_col(j);
             if(i_global==j_global)
             {
-                wfcHwfc[j_global] = std::real( Dmn[i*ncol_bands+j] ); // need to be sure imag(Dmn[i*nrow_bands+j]) <= 1e-12
+                wfcHwfc[j_global] = std::real( Dmn[i*ncol_bands+j] );
             }
         }
     }
@@ -295,7 +293,7 @@ void psiDotPsi<double>(const Parallel_Orbitals* ParaV, const Parallel_2D& para_E
 
 
 // wg_wfcHwfc = wg*wfcHwfc + wg_wfcHwfc
-//  Default symbol=0. When symbol = 0, 1, 2, 3, 4, wg = wg, 0.5*wg, g(wg), 0.5*g(wg), d_g(wg)/d_ewg respectively.
+// Default symbol=0. When symbol = 0, 1, 2, 3, 4, wg = wg, 0.5*wg, g(wg), 0.5*g(wg), d_g(wg)/d_ewg respectively.
 void wgMul_wfcHwfc(const ModuleBase::matrix& wg, const ModuleBase::matrix& wfcHwfc, ModuleBase::matrix& wg_wfcHwfc, int symbol)
 {
     for(int ir=0; ir<wg.nr; ++ ir)
@@ -305,7 +303,7 @@ void wgMul_wfcHwfc(const ModuleBase::matrix& wg, const ModuleBase::matrix& wfcHw
 }
 
 
-// Default symbol = 0 for the gradient of Etotal with respect to occupancy
+// Default symbol = 0 for the gradient of Etotal with respect to occupation numbers
 // symbol = 1 for the relevant calculation of Etotal
 void add_wg(const ModuleBase::matrix& wg, const ModuleBase::matrix& wfcHwfc_TV_in, const ModuleBase::matrix& wfcHwfc_hartree_in,
                 const ModuleBase::matrix& wfcHwfc_XC_in, ModuleBase::matrix& wg_wfcHwfc, int symbol)
@@ -325,7 +323,7 @@ void add_wg(const ModuleBase::matrix& wg, const ModuleBase::matrix& wfcHwfc_TV_i
         wgMul_wfcHwfc(wg, wfcHwfc_hartree_in, wg_wfcHwfc, 1);
         wgMul_wfcHwfc(wg, wfcHwfc_XC_in, wg_wfcHwfc, 3);
     }
-    else std::cout << "\n\n\n******\nthere are something wrong when calling rdmft_test() and calculation add_wd()\n******\n\n\n"; 
+    else std::cout << "\n\n\n******\nthere are something wrong when calling rdmft_test() and calculation add_wg()\n******\n\n\n"; 
 }
 
 
@@ -345,11 +343,12 @@ double sumWg_getEnergy(const ModuleBase::matrix& wg_wfcHwfc)
 // When symbol = 0, 1, 2, 3, 4, 5, return eta, 0.5*eta, g(eta), 0.5*g(eta), d_g(eta)/d_eta, 1.0 respectively. Default symbol=0.
 double wg_func(double eta, int symbol)
 {
-    if( symbol==0 ) return eta ;
-    else if ( symbol==1 ) return 0.5*eta ;
-    else if ( symbol==2 ) return eta;               //return std::pow(eta, 2.0) * 1.0 ;
-    else if ( symbol==3 ) return 0.5*eta;           //return 0.5*std::pow(eta, 2.0) * 1.0 ;
+    if( symbol==0 ) return eta;
+    else if ( symbol==1 ) return 0.5*eta;
+    else if ( symbol==2 ) return eta;
+    else if ( symbol==3 ) return 0.5*eta;
     else if ( symbol==4 ) return 1.0;
+    else if ( symbol==5 ) return 1.0;
     else 
     {
         std::cout << "\n!!!!!!\nThere may be some errors when calling wgMulPsi function\n!!!!!!\n";

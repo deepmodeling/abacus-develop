@@ -191,9 +191,22 @@ double wg_func(double wg, int symbol = 0);
 
 
 template <typename TK>
-void set_zero_HK(std::vector<TK>& HK)
+void set_zero_vector(std::vector<TK>& HK)
 {
     for(int i=0; i<HK.size(); ++i) HK[i] = 0.0;
+}
+
+
+template <typename TK>
+void set_zero_psi(psi::Psi<TK>& wfc_in)
+{
+    TK* pwfc_in = wfc_in.get_pointer();
+
+    #ifdef _OPENMP
+    #pragma omp parallel for schedule(static, 1024)
+    #endif
+    
+    for(int i=0; i<wfc_in.size(); ++i) pwfc_in[i] = 0.0;
 }
 
 
@@ -343,7 +356,7 @@ double sumWg_getEnergy(const ModuleBase::matrix& wg_wfcHwfc);
 
 
 // for test add a function and call it in module_elecstate/elecstate_lcao.cpp
-// !!!just used for k-dependent grid integration. For gamma only algorithms, transfer Gint_k& GK_in to Gint_Gamma& GG_in and use it in Veff<OperatorLCAO<TK, TR>>
+// !!!just used for k-dependent grid integration. For gamma only algorithms, transfer Gint_k& GK_in to Gint_Gamma& GG_in and use it in Veff_rdmft<OperatorLCAO<TK, TR>>
 template <typename TK, typename TR>
 double rdmft_cal(LCAO_Matrix* LM_in,
                         Parallel_Orbitals* ParaV,
@@ -357,7 +370,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
                         const Charge& charge_in,
                         const ModulePW::PW_Basis& rho_basis_in,
                         const ModuleBase::matrix& vloc_in,
-                        const ModuleBase::ComplexMatrix& sf_in)  // delete pot_in parameter later
+                        const ModuleBase::ComplexMatrix& sf_in)
 {
     ModuleBase::TITLE("hamilt_lcao", "RDMFT_E&Egradient");
     ModuleBase::timer::tick("hamilt_lcao", "RDMFT_E&Egradient");
@@ -394,6 +407,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     HR_XC.set_zero();
 
     // get every Hamiltion matrix
+
     OperatorLCAO<TK, TR>* V_ekinetic_potential = new EkineticNew<OperatorLCAO<TK, TR>>(
         LM_in,
         kvec_d_in,
@@ -478,18 +492,9 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     psi::Psi<TK> H_wfc_XC(nk_total, nbands_local, nbasis_local);
 
     // set zero
-    TK* pH_wfc_TV = H_wfc_TV.get_pointer();
-    TK* pH_wfc_hartree = H_wfc_hartree.get_pointer();
-    TK* pH_wfc_XC = H_wfc_XC.get_pointer();
-    #ifdef _OPENMP
-    #pragma omp parallel for schedule(static, 1024)
-    #endif
-    for(int i=0; i<H_wfc_TV.size(); ++i)
-    {
-        pH_wfc_TV[i] = 0.0;
-        pH_wfc_hartree[i] = 0.0;
-        pH_wfc_XC[i] = 0.0;
-    }
+    set_zero_psi(H_wfc_TV);
+    set_zero_psi(H_wfc_hartree);
+    set_zero_psi(H_wfc_XC);
 
     // just for temperate. in the future when realize psiDotPsi() without pzgemm_/pdgemm_,we don't need it
     const int nrow_bands = para_Eij.get_row_size();
@@ -517,9 +522,9 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         psiDotPsi( ParaV, para_Eij, wfc(ik, 0, 0), H_wfc_XC(ik, 0, 0), Eij_XC, &(wfcHwfc_XC(ik, 0)) );
         
         // let H(k)=0 to storing next one, H(k+1)
-        set_zero_HK(HK_TV);
-        set_zero_HK(HK_hartree);
-        set_zero_HK(HK_XC);
+        set_zero_vector(HK_TV);
+        set_zero_vector(HK_hartree);
+        set_zero_vector(HK_XC);
     }
 
     // this would transfer the value of H_wfc_TV, H_wfc_hartree, H_wfc_XC
@@ -533,27 +538,28 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     add_wg(wg, wfcHwfc_TV, wfcHwfc_hartree, wfcHwfc_XC, wg_forEtotal, 1);
     double Etotal_RDMFT = sumWg_getEnergy(wg_forEtotal);
 
-    //for E_TV
+    // for E_TV
     ModuleBase::matrix wg_forETV(wg.nr, wg.nc, true);
     wgMul_wfcHwfc(wg, wfcHwfc_TV, wg_forETV, 0);
     double ETV_RDMFT = sumWg_getEnergy(wg_forETV);
 
-    //for Ehartree
+    // for Ehartree
     ModuleBase::matrix wg_forEhartree(wg.nr, wg.nc, true);
     wgMul_wfcHwfc(wg, wfcHwfc_hartree, wg_forEhartree, 1);
     double Ehartree_RDMFT = sumWg_getEnergy(wg_forEhartree);
 
-    //for Exc
+    // for Exc
     ModuleBase::matrix wg_forExc(wg.nr, wg.nc, true);
     wgMul_wfcHwfc(wg, wfcHwfc_XC, wg_forExc, 3);
     double Exc_RDMFT = sumWg_getEnergy(wg_forExc);
 
-    // add up the results obtained by all processors, or we can do reduce_all(wfcHwfc_) before use add_wg() for Etotal replace it
+    // add up the results obtained by all processors, or we can do reduce_all(wfcHwfc_) before add_wg() used for Etotal to replace it
     Parallel_Reduce::reduce_all(Etotal_RDMFT);
     Parallel_Reduce::reduce_all(ETV_RDMFT);
     Parallel_Reduce::reduce_all(Ehartree_RDMFT);
     Parallel_Reduce::reduce_all(Exc_RDMFT);
 
+    // print results
     std::cout << "\n\n\n******\nEtotal_RDMFT:   " << Etotal_RDMFT << "\nETV_RDMFT: " << ETV_RDMFT << "\nEhartree_RDMFT: " 
                 << Ehartree_RDMFT << "\nExc_RDMFT:      " << Exc_RDMFT << "\n******\n\n\n";
 
