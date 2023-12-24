@@ -15,9 +15,9 @@ double SpinConstrain<FPTYPE, Device>::cal_escon()
     int nat = this->get_nat();
     for (int iat = 0; iat < nat; iat++)
     {
-        this->escon_ -= this->lambda_[iat].x * this->Mi_[iat].x;
-        this->escon_ -= this->lambda_[iat].y * this->Mi_[iat].y;
-        this->escon_ -= this->lambda_[iat].z * this->Mi_[iat].z;
+        this->escon_ += this->lambda_[iat].x * this->Mi_[iat].x;
+        this->escon_ += this->lambda_[iat].y * this->Mi_[iat].y;
+        this->escon_ += this->lambda_[iat].z * this->Mi_[iat].z;
     }
     return this->escon_;
 }
