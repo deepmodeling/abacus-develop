@@ -38,10 +38,8 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_h_lambda(
                             int iwt2 = this->get_iwt(it2, ia2, iw2);
                             const int nu = pv->global2local_col(iwt2);
                             if (nu < 0) continue;
-                            ModuleBase::Vector3<double> lambda
-                                = (iat1 == iat2) ? this->lambda_[iat2]
-                                                 : (this->lambda_[iat1] + this->lambda_[iat2]) / 2.0;
                             int icc;
+                            ModuleBase::Vector3<double> lambda = (this->lambda_[iat1] + this->lambda_[iat2]) / 2.0;
                             if (column_major)
                             {
                                 icc = mu + nu * pv->nrow;
