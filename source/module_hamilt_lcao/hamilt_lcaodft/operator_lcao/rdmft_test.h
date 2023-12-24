@@ -276,7 +276,8 @@ void psiDotPsi(const Parallel_Orbitals* ParaV, const Parallel_2D& para_Eij_in, c
             int j_global = para_Eij_in.local2global_col(j);
             if(i_global==j_global)
             {   
-                wfcHwfc[j_global] = std::real( Dmn[j*nrow_bands+i] ); // need to be sure imag(Dmn[i*nrow_bands+j]) <= 1e-12
+                // because the Dmn obtained from pzgemm_() is stored column-major
+                wfcHwfc[j_global] = std::real( Dmn[i+j*nrow_bands] );
             }
         }
     }
@@ -377,6 +378,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
 
     std::ofstream ofs_running;
     std::ofstream ofs_warning;
+    const std::vector<ModuleBase::Vector3<double>> kvec_d_in = kv_in.kvec_d;
     
     // create desc[] and something about MPI to Eij(nbands*nbands)
     Parallel_2D para_Eij;
@@ -386,12 +388,6 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     para_Eij.blacs_ctxt = ParaV->blacs_ctxt;
     para_Eij.set_local2global( GlobalV::NBANDS, GlobalV::NBANDS, ofs_running, ofs_warning );
     para_Eij.set_desc( GlobalV::NBANDS, GlobalV::NBANDS, para_Eij.get_row_size(), false );
-
-    // initialization
-    const int nk_total = wfc.get_nk();
-    const int nbands_local = wfc.get_nbands();
-    const int nbasis_local = wfc.get_nbasis();
-    const std::vector<ModuleBase::Vector3<double>> kvec_d_in = kv_in.kvec_d;
 
     //hK_in nk*nbasis*nbasis
     hamilt::HContainer<TR> HR_TV(GlobalC::ucell, ParaV);
@@ -485,6 +481,11 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     ModuleBase::matrix wfcHwfc_TV(wg.nr, wg.nc, true);
     ModuleBase::matrix wfcHwfc_hartree(wg.nr, wg.nc, true);
     ModuleBase::matrix wfcHwfc_XC(wg.nr, wg.nc, true);
+
+    // get local index and global k-points of wfc
+    const int nk_total = wfc.get_nk();
+    const int nbands_local = wfc.get_nbands();
+    const int nbasis_local = wfc.get_nbasis();
 
     // let the 2d-block of H_wfc is same to wfc, so we can use desc_wfc and 2d-block messages of wfc to describe H_wfc
     psi::Psi<TK> H_wfc_TV(nk_total, nbands_local, nbasis_local);

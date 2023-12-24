@@ -167,7 +167,7 @@ void Veff_rdmft<TK, TR>::contributeHR()
     // }
     else
     {
-        std::cout << "\n\n******\n there may be something wrong when use class Veff_rdmft\n\n******\n";
+        std::cout << "\n\n!!!!!!\n there may be something wrong when use class Veff_rdmft\n\n!!!!!!\n";
     }
 
     // get HR for 2D-block parallel format
@@ -227,7 +227,7 @@ void Veff_rdmft<double, double>::contributeHR()
     // }
     else
     {
-        std::cout << "\n\n******\n there may be something wrong when use class Veff_rdmft\n\n******\n";
+        std::cout << "\n\n!!!!!!\n there may be something wrong when use class Veff_rdmft\n\n!!!!!!\n";
     }
 
     // get HR for 2D-block parallel format
@@ -323,7 +323,7 @@ void add_wg(const ModuleBase::matrix& wg, const ModuleBase::matrix& wfcHwfc_TV_i
         wgMul_wfcHwfc(wg, wfcHwfc_hartree_in, wg_wfcHwfc, 1);
         wgMul_wfcHwfc(wg, wfcHwfc_XC_in, wg_wfcHwfc, 3);
     }
-    else std::cout << "\n\n\n******\nthere are something wrong when calling rdmft_test() and calculation add_wg()\n******\n\n\n"; 
+    else std::cout << "\n\n\n!!!!!!\nthere are something wrong when calling rdmft_test() and calculation add_wg()\n!!!!!!\n\n\n"; 
 }
 
 
