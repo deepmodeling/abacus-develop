@@ -33,7 +33,7 @@ psi_initializer<T, Device>::~psi_initializer()
 }
 
 template<typename T, typename Device>
-psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate()
+psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate(bool only_psig)
 {
     ModuleBase::timer::tick("psi_initializer", "allocate");
     /*
@@ -50,14 +50,14 @@ psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate()
     }
 	int prefactor = 1;
     int nbands_actual = 0;
-    if(GlobalV::init_wfc == "random") 
+    if(this->method == "random") 
     {
         nbands_actual = GlobalV::NBANDS;
         this->nbands_complem = 0;
     }
     else
     {
-        if(GlobalV::init_wfc.substr(0, 6) == "atomic")
+        if(this->method.substr(0, 6) == "atomic")
         {
             if(this->p_ucell->natomwfc >= GlobalV::NBANDS)
             {
@@ -70,7 +70,7 @@ psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate()
                 this->nbands_complem = GlobalV::NBANDS - this->p_ucell->natomwfc;
             }
         }
-        else if(GlobalV::init_wfc.substr(0, 3) == "nao")
+        else if(this->method.substr(0, 3) == "nao")
         {
             /*
                 previously GlobalV::NLOCAL is used here, however it is wrong. GlobalV::NLOCAL is fixed to 9*nat.
@@ -120,19 +120,34 @@ psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate()
                             1 : this->pw_wfc->nks;
     int nbasis_actual = this->pw_wfc->npwk_max * GlobalV::NPOL;
     psi::Psi<std::complex<double>>* psi_out = nullptr;
-    psi_out = new psi::Psi<std::complex<double>>(
-        nkpts_actual, 
-            GlobalV::NBANDS, // because no matter what, the wavefunction finally needed has GlobalV::NBANDS bands
-                nbasis_actual, 
-                    this->pw_wfc->npwk);
-    /*
-        WARNING: this will cause DIRECT MEMORY LEAK, psi is not properly deallocated
-    */
+    if(!only_psig)
+    {
+        psi_out = new psi::Psi<std::complex<double>>(
+            nkpts_actual, 
+                GlobalV::NBANDS, // because no matter what, the wavefunction finally needed has GlobalV::NBANDS bands
+                    nbasis_actual, 
+                        this->pw_wfc->npwk);
+        /*
+            WARNING: this will cause DIRECT MEMORY LEAK, psi is not properly deallocated
+        */
+        const size_t memory_cost_psi = 
+                nkpts_actual*
+                    GlobalV::NBANDS * this->pw_wfc->npwk_max * GlobalV::NPOL*
+                        sizeof(std::complex<double>);
+        std::cout << " MEMORY FOR PSI PER PROCESSOR (MB)  : " << double(memory_cost_psi)/1024.0/1024.0 << std::endl;
+        ModuleBase::Memory::record("Psi_PW", memory_cost_psi);
+    }
     this->psig = new psi::Psi<T, Device>(
         nkpts_actual, 
             nbands_actual, 
                 nbasis_actual, 
                     this->pw_wfc->npwk);
+    const size_t memory_cost_psig = 
+            nkpts_actual*
+                nbands_actual * this->pw_wfc->npwk_max * GlobalV::NPOL*
+                    sizeof(T);
+    std::cout << " MEMORY FOR AUXILLARY PSI PER PROCESSOR (MB)  : " << double(memory_cost_psig)/1024.0/1024.0 << std::endl;
+
     GlobalV::ofs_running << "Allocate memory for psi and psig done.\n"
                          << "Print detailed information of dimension of psi and psig:\n"
                          << "psi: (" << nkpts_actual << ", " << GlobalV::NBANDS << ", " << nbasis_actual << ")\n"
@@ -144,18 +159,6 @@ psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate()
                          << "nbasis_actual = " << nbasis_actual << "\n"
                          << "npwk_max = " << this->pw_wfc->npwk_max << "\n"
                          << "npol = " << GlobalV::NPOL << "\n";
-    
-    const size_t memory_cost_psi = 
-            nkpts_actual*
-                GlobalV::NBANDS * this->pw_wfc->npwk_max * GlobalV::NPOL*
-                    sizeof(std::complex<double>);
-	std::cout << " MEMORY FOR PSI PER PROCESSOR (MB)  : " << double(memory_cost_psi)/1024.0/1024.0 << std::endl;
-    const size_t memory_cost_psig = 
-            nkpts_actual*
-                nbands_actual * this->pw_wfc->npwk_max * GlobalV::NPOL*
-                    sizeof(T);
-    std::cout << " MEMORY FOR AUXILLARY PSI PER PROCESSOR (MB)  : " << double(memory_cost_psig)/1024.0/1024.0 << std::endl;
-	ModuleBase::Memory::record("Psi_PW", memory_cost_psi);
     ModuleBase::Memory::record("PsiG_PW", memory_cost_psig);
     ModuleBase::timer::tick("psi_initializer", "allocate");
     return psi_out;

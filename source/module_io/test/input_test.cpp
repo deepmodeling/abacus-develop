@@ -1523,12 +1523,13 @@ TEST_F(InputTest, Check)
 	INPUT.berry_phase = 0;
 	//
 	INPUT.towannier90 = 1;
-	INPUT.basis_type = "lcao_in_pw";
-	INPUT.ks_solver = "lapack";
-	testing::internal::CaptureStdout();
-	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
-	output = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output,testing::HasSubstr("to use towannier90, please set basis_type = pw or lcao"));
+	// due to the repair of lcao_in_pw, original warning has been deprecated, 2023/12/23, ykhuang
+	// INPUT.basis_type = "lcao_in_pw";
+	// INPUT.ks_solver = "lapack";
+	// testing::internal::CaptureStdout();
+	// EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	// output = testing::internal::GetCapturedStdout();
+	// EXPECT_THAT(output,testing::HasSubstr("to use towannier90, please set basis_type = pw or lcao"));
 	INPUT.basis_type = "pw";
 	INPUT.ks_solver = "cg";
 	//
