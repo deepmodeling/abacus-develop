@@ -3964,9 +3964,33 @@ void Input::Check(void)
 
     if (towannier90)
     {
-        if (basis_type != "pw" && basis_type != "lcao")
+        if (basis_type == "lcao_in_pw")
         {
-            ModuleBase::WARNING_QUIT("Input", "to use towannier90, please set basis_type = pw or lcao");
+            /*
+                Developer's notes: on the repair of lcao_in_pw
+
+                lcao_in_pw is a special basis_type, for scf calculation, it follows workflow of pw, 
+                but for nscf the toWannier90 calculation, the interface is in ESolver_KS_LCAO_elec,
+                therefore lcao_in_pw for towannier90 calculation follows lcao.
+
+                In the future lcao_in_pw will have its own ESolver.
+
+                2023/12/22 use new psi_initializer to expand numerical atomic orbitals, ykhuang
+            */
+            basis_type = "lcao";
+            wannier_method = 1; // it is the way to call toWannier90_lcao_in_pw
+            #ifdef __ELPA
+            ks_solver = "genelpa";
+            #else
+            ks_solver = "scalapack_gvx";
+            #endif
+        }
+        else
+        {
+            if ((basis_type != "pw")&&(basis_type != "lcao"))
+            {
+                ModuleBase::WARNING_QUIT("Input", "to use towannier90, please set basis_type = pw, lcao or lcao_in_pw");
+            }
         }
         if (calculation != "nscf")
         {

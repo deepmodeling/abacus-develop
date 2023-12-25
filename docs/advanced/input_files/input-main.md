@@ -75,9 +75,9 @@
     - [mixing\_gg0](#mixing_gg0)
     - [mixing\_gg0\_mag](#mixing_gg0_mag)
     - [mixing\_gg0\_min](#mixing_gg0_min)
+    - [mixing\_angle](#mixing_angle)
     - [mixing\_tau](#mixing_tau)
     - [mixing\_dftu](#mixing_dftu)
-    - [mixing\_angle](#mixing_angle)
     - [gamma\_only](#gamma_only)
     - [printe](#printe)
     - [scf\_nmax](#scf_nmax)
@@ -877,7 +877,7 @@ calculations.
 - **Description**: Choose the basis set.
   - **pw**: Using plane-wave basis set only.
   - **lcao**: Using localized atomic orbital sets.
-  - **lcao_in_pw**: (Unavailable currently, it will be fixed in future versions) Expand the localized atomic set in plane-wave basis.
+  - **lcao_in_pw**: Expand the localized atomic set in plane-wave basis, non-self-consistent field calculation not tested.
 - **Default**: pw
 
 ### ks_solver
@@ -2754,7 +2754,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: Integer
 - **Description**: Only available on LCAO basis, using different methods to generate "\*.mmn" file and "\*.amn" file.
-  - 1: Calculated using the LCOA-in-PW method, the calculation accuracy can be improved by increasing `ecutwfc` to maintain consistency with the pw basis set results.
+  - 1: Calculated using the `lcao_in_pw` method, the calculation accuracy can be improved by increasing `ecutwfc` to maintain consistency with the pw basis set results.
   - 2: The overlap between atomic orbitals is calculated using grid integration. The radial grid points are generated using the Gauss-Legendre method, while the spherical grid points are generated using the Lebedev-Laikov method.
 - **Default**: 1
 
