@@ -26,7 +26,7 @@ AddTest(
     ../beta_radials.cpp
     ../radial_set.cpp
     ../numerical_radial.cpp
-   ../../module_ao/ORB_atomic_lm.cpp
+    ../../module_ao/ORB_atomic_lm.cpp
     ../../../module_io/output_radial.cpp
   LIBS ${math_libs} device base
 )
@@ -38,6 +38,7 @@ AddTest(
     ../hydrogen_radials.cpp
     ../radial_set.cpp
     ../numerical_radial.cpp
+    ../../module_ao/ORB_atomic_lm.cpp
     ../../../module_io/output_radial.cpp
   LIBS ${math_libs} device base
 )
@@ -49,6 +50,7 @@ AddTest(
     ../pswfc_radials.cpp
     ../radial_set.cpp
     ../numerical_radial.cpp
+    ../../module_ao/ORB_atomic_lm.cpp
     ../../../module_io/output_radial.cpp
   LIBS ${math_libs} device base
 )

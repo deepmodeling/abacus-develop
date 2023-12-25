@@ -98,6 +98,8 @@ class toQO
         /// @param ik index of kpoint
         template <typename T>
         void write_ovlp(const std::vector<std::vector<T>>& matrix, const int& ik);
+        /// @brief write supercells information to file
+        void write_supercells();
         /*
             Neighboring list searching algorithm (not implemented yet)
 

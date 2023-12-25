@@ -370,3 +370,19 @@ void toQO::write_ovlp(const std::vector<std::vector<T>> &ovlp, const int& ik)
 }
 template void toQO::write_ovlp<double>(const std::vector<std::vector<double>>& ovlp, const int& ik);
 template void toQO::write_ovlp<std::complex<double>>(const std::vector<std::vector<std::complex<double>>>& ovlp, const int& ik);
+
+void toQO::write_supercells()
+{
+    std::ofstream ofs(GlobalV::global_out_dir + "QO_supercells.dat");
+    if(!ofs.is_open())
+    {
+        ModuleBase::WARNING_QUIT("toQO::write_supercells", "can not open file: QO_supercells.dat");
+    }
+    for(int i = 0; i < supercells_.size(); i++)
+    {
+        ofs << std::setw(5) << std::right << supercells_[i].x << " "
+            << std::setw(5) << std::right << supercells_[i].y << " "
+            << std::setw(5) << std::right << supercells_[i].z << std::endl;
+    }
+    ofs.close();
+}

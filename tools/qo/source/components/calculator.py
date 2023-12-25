@@ -22,7 +22,6 @@ class toQO_Calculator:
             np.ndarray: matrix in k-space
         """
         matrix_k = np.zeros_like(matrices_R[0])
-        print("Calculate fold matrix from R to k-space.")
         for iR in range(len(supercells)):
             arg = np.exp(1j * supercells[iR] @ kpoint * 2 * np.pi)
             matrix_k += arg * matrices_R[iR]
@@ -41,7 +40,6 @@ class toQO_Calculator:
         """
 
         matrix_R = np.zeros_like(matrices_k[0])
-        print("Calculate unfold matrix from k to R-space.")
         for ik in range(len(kpoints)):
             kpoint = kpoints[ik]
             arg = np.exp(-1j * kpoint @ supercell * 2 * np.pi)
@@ -59,7 +57,7 @@ class toQO_Calculator:
             np.ndarray: anything in nao representation
         """
         print("Calculate Atomic Orbital (AO) in NAO representation.")
-        psi_chi = np.linalg.solve(sk.T, saok.T).T
+        psi_chi = np.linalg.solve(sk, saok.T).T
         return psi_chi
 
     def projto_eigstate(self, psi_lcao: np.ndarray, saok: np.ndarray) -> np.ndarray:
@@ -93,10 +91,12 @@ class toQO_Calculator:
         # truncate m largest eigenvalues and eigenvectors
         yk_k = yk_k[-m:]
         vk_k = vk_k[:, -m:]
-        print("Get ", m, " largest eigenvalues and eigenvectors. Selected eigenvalues are: ", yk_k)
+        print("Get ", m, " largest eigenvalues and eigenvectors. Selected eigenvalues are: \n", yk_k)
         # calculate psi_complem
         yk_k = np.diag([np.sqrt(1/yk_k[i]) for i in range(m)])
         psi_complem = yk_k @ vk_k.T @ psi_chi_orth
+        print("Check orthogonalities between states in extended space.")
+        self.sg_.check_eigenstates(psi_complem.T, sk)
         return psi_complem
     
     def merge_space(self, psi_lcao: np.ndarray, psi_complem: np.ndarray, hk: np.ndarray, sk: np.ndarray) -> np.ndarray:
@@ -113,21 +113,19 @@ class toQO_Calculator:
         Returns:
             np.ndarray: extended states in k-space
         """
-        print("Combine psi_lcao and psi_complem to get extended wavefunction (empty states are appended).")
+        print("Combine occupied states and constructed virtual states to get extended wavefunction"
+             +"\n(empty states are appended)."
+             +"\nShape of occupied states is: ", psi_lcao.shape, "\nShape of empty states is: ", psi_complem.shape)
         psi_exten = np.concatenate((psi_lcao, psi_complem), axis=0)
+        print("Shape of extended states is: ", psi_exten.shape)
         # check orthogonality
         print("Check orthogonality of psi_exten.")
         sk_exten = psi_exten.conj() @ sk @ psi_exten.T
-        """# if sk_exten is not identity matrix?
+        # if sk_exten is not identity matrix?
         error = self.sg_.check_identity(sk_exten)
         while error > 1e-6:
-            print("Error of sk_exten is: ", error)
-            print("Reorthogonalize psi_exten.")
-            eigvals_exten, eigvecs_exten = la.eigh(sk_exten)
-            print("Eigenvalues of sk_exten are: \n", eigvals_exten)
-            psi_exten = np.diag([np.sqrt(1/eigvals_exten[i]) for i in range(eigvals_exten.shape[0])]) @ eigvecs_exten.T @ psi_exten
-            sk_exten = psi_exten.conj() @ sk @ psi_exten.T
-            error = self.sg_.check_identity(sk_exten)"""
+            print("Error of sk_exten not being identity is: ", error, ", unacceptable.")
+            exit()
             
         # if hk_exten is not diagonal in supspace psi_lcao?
         hk_exten = psi_exten.conj() @ hk @ psi_exten.T
@@ -136,6 +134,8 @@ class toQO_Calculator:
         print("Get extended energy spectrum.")
         eigvals_exten, eigvecs_exten = la.eigh(hk_exten, sk_exten)
         print("Eigenvalues of H_exten(k) are: \n", eigvals_exten)
+        eigvals, eigvecs = la.eigh(hk, sk)
+        print("Comparatively eigenvalues of H(k) are: \n", eigvals)
         return psi_exten
 
     def calculate_qo(self, saok: np.ndarray, psi_exten: np.ndarray, sk: np.ndarray) -> np.ndarray:

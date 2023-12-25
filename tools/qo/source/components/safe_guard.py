@@ -84,7 +84,9 @@ class toQO_SafeGuard:
             eigenvec (np.ndarray): eigenstates
             ovlp (np.ndarray): overlap matrix
         """
-        error = np.linalg.norm(eigenvec.conj().T @ ovlp @ eigenvec - np.eye(eigenvec.shape[-1]))
+        mat = eigenvec.conj().T @ ovlp @ eigenvec
+        print("Analyzing matrix of shape: ", mat.shape)
+        error = np.linalg.norm(mat - np.eye(eigenvec.shape[-1]))
         print("Error of eigenstates being orthonormal is: %14.10e"%error)
 
         return error

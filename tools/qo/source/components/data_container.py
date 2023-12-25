@@ -4,25 +4,25 @@ class toQO_DataContainer:
     """the one who really stores data, works as a repo
     """
     # hamiltonians
-    hk: np.ndarray # hamiltonian matrix in k-space
+    hk: list # hamiltonian matrix in k-space
     hqok: np.ndarray # hamiltonian matrix in QO basis in k-space
     sqok: np.ndarray # overlap matrix in QO basis in k-space
     # homogeneous overlaps
-    sk: np.ndarray # overlap matrix in k-space
+    sk: list # overlap matrix in k-space
     wk: list # overlap matrix in QO basis in k-space, list of np.ndarray
     # heterogeneous overlaps/transformations
     saok: list # AO-NAO overlap matrix in k-space, list of np.ndarray
     # data
-    kpoints: np.ndarray # kpoints direct coordinates
+    kpoints: list # kpoints direct coordinates
     equivalent_kpoints: list # weights of kpoints
-    energies: np.ndarray # energies of wavefunctions
+    energies: list # energies of wavefunctions
     # dimensions
     nkpts: int # number of kpoints
     nbands: int # number of bands
-    nchi: list # number of AOs for each kpoint
+    nchi: int # number of AOs
     nphi: int # number of NAOs
     # wavefunction in nao representations
-    psi_lcao: np.ndarray # wavefunction represented by numerical atomic orbitals
+    psi_lcao: list # wavefunction represented by numerical atomic orbitals
     psi_chi: list # ao represented by numerical atomic orbitals
     psi_chi_para: list # parallel component of QO wavefunction represented by NAOs
     psi_chi_orth: list # orthogonal component of QO wavefunction represented by NAOs

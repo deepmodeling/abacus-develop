@@ -16,7 +16,7 @@ def recover_from_upper_triangle(matrix: list) -> np.ndarray:
         matrix[i][i] = matrix[i][i] / 2
     return matrix
 
-def parse(nkpts: int, path = "./"):
+def parse(nkpts: int, path = "./") -> tuple[list, list, int]:
     """parse hamiltonian and overlap matrix H(k) and S(k)
 
     Args:
@@ -24,6 +24,7 @@ def parse(nkpts: int, path = "./"):
     """
     hamiltonian = []
     overlap = []
+    num_bands = 0
     if path[-1] != "/":
         path += "/"
     for ik in range(nkpts):
@@ -76,8 +77,6 @@ def parse(nkpts: int, path = "./"):
         overlap_k = recover_from_upper_triangle(overlap_k)
         overlap.append(overlap_k)
 
-    hamiltonian = np.array(hamiltonian)
-    overlap = np.array(overlap)
     #return recover_from_upper_triangle(np.array(hamiltonian)), recover_from_upper_triangle(np.array(overlap)), num_bands
     return hamiltonian, overlap, num_bands
 

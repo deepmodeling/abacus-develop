@@ -1,7 +1,7 @@
 import numpy as np
 from source.tools.basic_functions import make_complex
 
-def parse(nkpts: int, path = "./"):
+def parse(nkpts: int, path = "./") -> tuple[list, list]:
     """read QO overlap matrix S(k) from file
 
     Args:
@@ -21,7 +21,7 @@ def parse(nkpts: int, path = "./"):
             if line.startswith("KPOINT_COORDINATE:"):
                 _words = line.split(":")
                 _words = _words[-1].split()
-                kpoints.append([float(number) for number in _words])
+                kpoints.append(np.array([float(number) for number in _words]))
             else:
                 qo_ovlp_k.append([make_complex(number) for number in line.split()])
         qo_ovlp.append(np.array(qo_ovlp_k))
@@ -32,7 +32,7 @@ def parse(nkpts: int, path = "./"):
     # sum over all element imaginary parts and check if near zero
     if np.sum(np.abs(np.imag(_qo_ovlp_R0))) > 1e-6:
         raise ValueError("kpoint symmetry error, fail to cancel imaginary part at R = 0.")
-    return np.array(qo_ovlp), np.array(kpoints)
+    return qo_ovlp, kpoints
 
 if __name__ == "__main__":
     qo_ovlp = parse(2)

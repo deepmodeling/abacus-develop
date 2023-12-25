@@ -46,7 +46,24 @@ class toQO_Driver:
 
         Returns:
             selected_basis_indices (list): list of list, each list contains indices of selected basis for each kpoint
+
+        Notes:
+            This function is not practically used presently, because the charge for hydrogen-like orbital cannot be set very physically.
         """
+        print("""
+----------------------------------------------------------------------------------
+$$$$$$$$\ $$$$$$\ $$\    $$$$$$$$\ $$$$$$$$\ $$$$$$$\         $$$$$$\   $$$$$$\  
+$$  _____|\_$$  _|$$ |   \__$$  __|$$  _____|$$  __$$\       $$  __$$\ $$  __$$\ 
+$$ |        $$ |  $$ |      $$ |   $$ |      $$ |  $$ |      $$ /  $$ |$$ /  $$ |
+$$$$$\      $$ |  $$ |      $$ |   $$$$$\    $$$$$$$  |      $$$$$$$$ |$$ |  $$ |
+$$  __|     $$ |  $$ |      $$ |   $$  __|   $$  __$$<       $$  __$$ |$$ |  $$ |
+$$ |        $$ |  $$ |      $$ |   $$ |      $$ |  $$ |      $$ |  $$ |$$ |  $$ |
+$$ |      $$$$$$\ $$$$$$$$\ $$ |   $$$$$$$$\ $$ |  $$ |      $$ |  $$ | $$$$$$  |
+\__|      \______|\________|\__|   \________|\__|  \__|      \__|  \__| \______/ 
+----------------------------------------------------------------------------------
+In this step, irrelevant AOs will be filtered out from overlap matrix of AO in NAO
+representation.
+        """)
         filtered_saok = []
         selected_basis_indices = []
         for ik in range(self.dm_.data.nkpts):
@@ -62,16 +79,31 @@ class toQO_Driver:
         return selected_basis_indices
     
     def space_expansion(self):
-        """should make sure still have number of AO larger than number of bands
+        """Expand space to include orthogonal components to occupied states constructed from the arbitrary AO set.
         """
+        print("""
+----------------------------------------------------------------------------------------
+$$$$$$$$\ $$\   $$\ $$$$$$$\   $$$$$$\  $$\   $$\  $$$$$$\  $$$$$$\  $$$$$$\  $$\   $$\ 
+$$  _____|$$ |  $$ |$$  __$$\ $$  __$$\ $$$\  $$ |$$  __$$\ \_$$  _|$$  __$$\ $$$\  $$ |
+$$ |      \$$\ $$  |$$ |  $$ |$$ /  $$ |$$$$\ $$ |$$ /  \__|  $$ |  $$ /  $$ |$$$$\ $$ |
+$$$$$\     \$$$$  / $$$$$$$  |$$$$$$$$ |$$ $$\$$ |\$$$$$$\    $$ |  $$ |  $$ |$$ $$\$$ |
+$$  __|    $$  $$<  $$  ____/ $$  __$$ |$$ \$$$$ | \____$$\   $$ |  $$ |  $$ |$$ \$$$$ |
+$$ |      $$  /\$$\ $$ |      $$ |  $$ |$$ |\$$$ |$$\   $$ |  $$ |  $$ |  $$ |$$ |\$$$ |
+$$$$$$$$\ $$ /  $$ |$$ |      $$ |  $$ |$$ | \$$ |\$$$$$$  |$$$$$$\  $$$$$$  |$$ | \$$ |
+\________|\__|  \__|\__|      \__|  \__|\__|  \__| \______/ \______| \______/ \__|  \__|
+----------------------------------------------------------------------------------------
+In this step, space spanned by selected bands-corresponding states will merge with
+space spanned by orthogonal components of the arbitrary AO set.""")
         for ik in range(self.dm_.data.nkpts):
+            print("-"*50, "\nFor k-point No.", ik)
             self.dm_.data.psi_chi[ik] = self.cal_.projto_nao(self.dm_.data.sk[ik], self.dm_.data.saok[ik])
             self.dm_.data.psi_chi_para[ik] = self.cal_.projto_eigstate(self.dm_.data.psi_lcao[ik], self.dm_.data.saok[ik])
             self.dm_.data.psi_chi_orth[ik] = self.dm_.data.psi_chi[ik] - self.dm_.data.psi_chi_para[ik]
-            m = self.dm_.data.nchi[ik] - self.dm_.data.nbands
-            print("Number of empty states is: ", m)
-            print("Number of bands is: ", self.dm_.data.nbands)
-            print("Number of basis functions is: ", self.dm_.data.nchi[ik])
+            print("Back check the orthogonality between occupied states and constructed virtual states.")
+            _zero = self.dm_.data.psi_chi_orth[ik].conj() @ self.dm_.data.sk[ik] @ self.dm_.data.psi_lcao[ik].T
+            
+            m = self.dm_.data.nchi - self.dm_.data.nbands
+            print("Number of empty states is: ", m, "\nNumber of bands to reproduce is: ", self.dm_.data.nbands, "\nNumber of basis functions is: ", self.dm_.data.nchi)
             if m < 0:
                 raise ValueError("Number of AOs is smaller than number of bands selected.")
             self.dm_.data.psi_complem[ik] = self.cal_.canonical_orthogonalization(self.dm_.data.psi_chi_orth[ik], self.dm_.data.sk[ik], m)
@@ -79,26 +111,53 @@ class toQO_Driver:
                                                                 self.dm_.data.psi_complem[ik],
                                                                 self.dm_.data.hk[ik],
                                                                 self.dm_.data.sk[ik])
-
+        print("-"*50)
+        
     def reproduce_hamiltonian(self, Rs: list):
         """get QO, reproduce selected pieces of energy spectrum
         """
+        print("""
+---------------------------------------------------------------------------------------------
+$$$$$$$$\ $$$$$$$\   $$$$$$\  $$\   $$\  $$$$$$\  $$$$$$$$\  $$$$$$\  $$$$$$$\  $$\      $$\ 
+\__$$  __|$$  __$$\ $$  __$$\ $$$\  $$ |$$  __$$\ $$  _____|$$  __$$\ $$  __$$\ $$$\    $$$ |
+   $$ |   $$ |  $$ |$$ /  $$ |$$$$\ $$ |$$ /  \__|$$ |      $$ /  $$ |$$ |  $$ |$$$$\  $$$$ |
+   $$ |   $$$$$$$  |$$$$$$$$ |$$ $$\$$ |\$$$$$$\  $$$$$\    $$ |  $$ |$$$$$$$  |$$\$$\$$ $$ |
+   $$ |   $$  __$$< $$  __$$ |$$ \$$$$ | \____$$\ $$  __|   $$ |  $$ |$$  __$$< $$ \$$$  $$ |
+   $$ |   $$ |  $$ |$$ |  $$ |$$ |\$$$ |$$\   $$ |$$ |      $$ |  $$ |$$ |  $$ |$$ |\$  /$$ |
+   $$ |   $$ |  $$ |$$ |  $$ |$$ | \$$ |\$$$$$$  |$$ |       $$$$$$  |$$ |  $$ |$$ | \_/ $$ |
+   \__|   \__|  \__|\__|  \__|\__|  \__| \______/ \__|       \______/ \__|  \__|\__|     \__|
+---------------------------------------------------------------------------------------------
+In this step, H(k) (in NAO rep.) will be transformed into the one in Quasi-atomic Orbital (QO) 
+rep.
+        """)
+
         for ik in range(self.dm_.data.nkpts):
+            print("-"*50, "\nFor k-point No.", ik)
             self.dm_.data.psi_qo[ik] = self.cal_.calculate_qo(self.dm_.data.saok[ik], self.dm_.data.psi_exten[ik], self.dm_.data.sk[ik])
             self.dm_.data.hqok[ik], self.dm_.data.sqok[ik] = self.cal_.calculate_hqok(self.dm_.data.psi_qo[ik], self.dm_.data.hk[ik], self.dm_.data.sk[ik])
-
-        # the following function is not implemented correctly yet, Hqo(R) and Sqo(R) is not correct
-
+        print("-"*50)
+        print("""
+----------------------------------------------------------------------------------------
+$$\   $$\ $$\   $$\ $$$$$$$$\  $$$$$$\  $$\       $$$$$$$\  $$$$$$\ $$\   $$\  $$$$$$\  
+$$ |  $$ |$$$\  $$ |$$  _____|$$  __$$\ $$ |      $$  __$$\ \_$$  _|$$$\  $$ |$$  __$$\ 
+$$ |  $$ |$$$$\ $$ |$$ |      $$ /  $$ |$$ |      $$ |  $$ |  $$ |  $$$$\ $$ |$$ /  \__|
+$$ |  $$ |$$ $$\$$ |$$$$$\    $$ |  $$ |$$ |      $$ |  $$ |  $$ |  $$ $$\$$ |$$ |$$$$\ 
+$$ |  $$ |$$ \$$$$ |$$  __|   $$ |  $$ |$$ |      $$ |  $$ |  $$ |  $$ \$$$$ |$$ |\_$$ |
+$$ |  $$ |$$ |\$$$ |$$ |      $$ |  $$ |$$ |      $$ |  $$ |  $$ |  $$ |\$$$ |$$ |  $$ |
+\$$$$$$  |$$ | \$$ |$$ |       $$$$$$  |$$$$$$$$\ $$$$$$$  |$$$$$$\ $$ | \$$ |\$$$$$$  |
+ \______/ \__|  \__|\__|       \______/ \________|\_______/ \______|\__|  \__| \______/ 
+----------------------------------------------------------------------------------------
+In this step, H(k) will be converted into H(R). However, one should be sure the number of
+k points defined in ABACUS KPT is larger than number of supercells searched in R space to
+avoid information loss.
+        """)
+        result_HR = []
+        result_SR = []
         for R in Rs:
 
+            hqoR = self.cal_.unfolding_Hk(self.dm_.data.hqok, self.dm_.data.kpoints, R)
             sqoR = self.cal_.unfolding_Hk(self.dm_.data.sqok, self.dm_.data.kpoints, R)
-            print(sqoR.imag)
-            #hR = self.cal_.unfolding_Hk(self.dm_.data.hk, self.dm_.data.kpoints, R)
-            #sR = self.cal_.unfolding_Hk(self.dm_.data.sk, self.dm_.data.kpoints, R)
-            # print(sR.imag)
-            # hqoR = self.cal_.unfolding_Hk(self.dm_.data.hqok, self.dm_.data.kpoints, R)
-            # sqoR = self.cal_.unfolding_Hk(self.dm_.data.sqok, self.dm_.data.kpoints, R)
-            # print(sqoR.imag)
-            # plt.imshow(np.log10(np.abs(sqoR.imag)))
-            # plt.show()
-            pass
+            result_HR.append(hqoR)
+            result_SR.append(sqoR)
+
+        return result_HR, result_SR

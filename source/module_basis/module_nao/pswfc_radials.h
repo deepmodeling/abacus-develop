@@ -11,7 +11,13 @@ class PswfcRadials : public RadialSet {
         PswfcRadials& operator=(const PswfcRadials& rhs);
         PswfcRadials* clone() const { return new PswfcRadials(*this); }
         ~PswfcRadials() {};
-
+        /// @brief central function to build RadialCollection from ONCVPSP program generated pseudopotential file
+        /// @param file file name of pseudopotential file
+        /// @param itype atomic type, indiced in UnitCell class
+        /// @param screening_coeff screening coefficient of pseudowavefunction
+        /// @param conv_thr convergence threshold of norm of pseudowavefunction, see function cut_to_convergence for details
+        /// @param ptr_log output file stream for logging
+        /// @param rank MPI rank
         void build(const std::string& file = "", 
                    const int itype = 0,
                    const double screening_coeff = 0.1,
@@ -38,10 +44,24 @@ class PswfcRadials : public RadialSet {
         /// @return norm of the radial function
         double radial_norm(const std::vector<double> rgrid,
                            const std::vector<double> rvalue);
-
+        /// @brief python-like startswith function
+        /// @param word as it is
+        /// @param pattern pattern to be matched
+        /// @return true if word starts with pattern
         bool startswith(std::string word, std::string pattern);
+        /// @brief read value from attributes in HTML-like format
+        /// @param ifs input file stream
+        /// @param word as it is
+        /// @return value of the attribute
         std::string read_keyword_value(std::ifstream& ifs, std::string word);
+        /// @brief steal string from quotes
+        /// @param word as it is
+        /// @return string between quotes
         std::string steal_from_quotes(std::string word);
+        /// @brief steal string from quotes
+        /// @param ifs input file stream
+        /// @param word as it is
+        /// @return string between quotes
         std::string steal_from_quotes(std::ifstream& ifs, std::string word);
 
         /// @brief cut radial function to convergence

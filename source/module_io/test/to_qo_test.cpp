@@ -638,6 +638,7 @@ TEST_F(toQOTest, Calculate)
     // delete files generated namely QO_ovlp_0.dat and QO_ovlp_1.dat
     std::remove("QO_ovlp_0.dat");
     std::remove("QO_ovlp_1.dat");
+    std::remove("QO_supercells.dat");
 }
 
 int main(int argc, char** argv)

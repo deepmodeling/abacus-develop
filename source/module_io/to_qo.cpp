@@ -303,6 +303,7 @@ void toQO::calculate()
                   << "! Number of supercells: " << nR_ << std::endl
                   << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
     }
+    write_supercells();
     for(int ik = 0; ik < nkpts_; ik++)
     {
         zero_out_ovlps(false);
