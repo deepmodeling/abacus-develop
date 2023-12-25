@@ -115,7 +115,9 @@ check_out(){
                         echo -e "[WARNING   ] "\
                             "$key cal=$cal ref=$ref deviation=$deviation"
                         let failed++
+                        let fatal++
                         failed_case_list+=$dir'\n'
+                        fatal_case_list+=$dir'\n'
                     else
                         #echo "$key cal=$cal ref=$ref deviation=$deviation"
                         #echo "[ PASS ] $key"
@@ -127,7 +129,9 @@ check_out(){
                         echo -e "[WARNING   ] "\
                             "$key cal=$cal ref=$ref deviation=$deviation"
                         let failed++
+                        let fatal++
                         failed_case_list+=$dir'\n'
+                        fatal_case_list+=$dir'\n'
                     else
                         #echo "$key cal=$cal ref=$ref deviation=$deviation"
                         #echo "[ PASS ] $key"
@@ -138,7 +142,9 @@ check_out(){
                     echo -e "[WARNING   ] "\
                         "$key cal=$cal ref=$ref deviation=$deviation"
                     let failed++
+                    let fatal++
                     failed_case_list+=$dir'\n'
+                    fatal_case_list+=$dir'\n'
                 fi
                 if [ $(echo "sqrt($deviation*$deviation) < $fatal_threshold"|bc) = 0 ]; then
                     let fatal++
