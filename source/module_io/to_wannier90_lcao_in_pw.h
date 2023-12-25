@@ -17,7 +17,6 @@
 #include "module_base/matrix.h"
 #include "module_base/matrix3.h"
 #include "module_cell/klist.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/wavefunc_in_pw.h"
 #include "module_psi/psi.h"
 
 #include "module_basis/module_ao/ORB_table_phi.h"
@@ -39,6 +38,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_wfc.h"
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
 
+#include "module_psi/psi_initializer.h"
 
 class toWannier90_LCAO_IN_PW : public toWannier90_PW
 {
@@ -79,20 +79,29 @@ class toWannier90_LCAO_IN_PW : public toWannier90_PW
 
   protected:
     const Parallel_Orbitals* ParaV;
+    /// @brief psi initializer for expanding nao in planewave basis
+    psi_initializer<std::complex<double>, psi::DEVICE_CPU>* psi_init_;
 
+    /// @brief get Bloch function from LCAO wavefunction
+    /// @param psi_in 
+    /// @param wfcpw [in] data carrier, storing planewave basis number and k information
+    /// @param sf [in] computational methods instance, structure factor calculator
+    /// @param kv [in] data carrier, storing kpoints information
+    /// @return psi::Psi<std::complex<double>>*
     psi::Psi<std::complex<double>>* get_unk_from_lcao(
       const psi::Psi<std::complex<double>>& psi_in, 
       const ModulePW::PW_Basis_K* wfcpw, 
       const Structure_Factor& sf, 
       const K_Vectors& kv
     );
-
-    void produce_local_basis_in_pw(
+    /// @brief expand numerical atomic orbital (nao) in planewave basis at specific k point
+    /// @param ik [in] index of kpoint
+    /// @param wfc_basis [in] data carrier, storing planewave basis number and k information
+    /// @param psi [out] data carrier, storing the expanded wavefunction
+    void nao_G_expansion(
       const int& ik,
       const ModulePW::PW_Basis_K* wfc_basis,
-      const Structure_Factor& sf,
-      ModuleBase::ComplexMatrix& psi,
-      const ModuleBase::realArray& table_local
+      ModuleBase::ComplexMatrix& psi
     );
 
     void get_lcao_wfc_global_ik(const int ik, const psi::Psi<std::complex<double>>& psi_in, ModuleBase::ComplexMatrix &lcao_wfc_global);
