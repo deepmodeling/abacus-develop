@@ -146,7 +146,7 @@ void ModuleIO::save_HS_triangle(const int istep,
     std::stringstream ssh;
     std::stringstream sss;
     formatter::PhysicalFmt physfmt;
-    physfmt.adjust_formatter_flexible(GlobalV::out_ndigits, 0.5, true); // means for double, decimal part is 10, integer part is 5
+    physfmt.adjust_formatter_flexible(GlobalV::out_ndigits, -1, true); // means for double, decimal part is 10, integer part is 5
     // make up file name
     if (bit)
     {
@@ -400,7 +400,7 @@ void ModuleIO::save_HS_complete(const int istep,
     std::stringstream sss;
 
     formatter::PhysicalFmt physfmt;
-    physfmt.adjust_formatter_flexible(GlobalV::out_ndigits, 0.5, true); // means for double, decimal part is 10, integer part is 5
+    physfmt.adjust_formatter_flexible(GlobalV::out_ndigits, -1, true); // means for double, decimal part is 10, integer part is 5
     // not actually used, confuse with old syntax
     if (bit)
     {
@@ -684,7 +684,7 @@ void ModuleIO::save_HS_complex_triangle(const int istep,
     std::stringstream sss;
 
     formatter::PhysicalFmt physfmt;
-    physfmt.adjust_formatter_flexible(GlobalV::out_ndigits, 0.5, true); 
+    physfmt.adjust_formatter_flexible(GlobalV::out_ndigits, -1, true); 
     // means for double, decimal part is 10, integer part is 5
     
     // make up file name
@@ -940,7 +940,7 @@ void ModuleIO::save_HS_complex_complete(const int istep,
     std::stringstream sss;
 
     formatter::PhysicalFmt physfmt;
-    physfmt.adjust_formatter_flexible(GlobalV::out_ndigits, 0.5, true); 
+    physfmt.adjust_formatter_flexible(GlobalV::out_ndigits, -1, true); 
 
     if (bit)
     {
