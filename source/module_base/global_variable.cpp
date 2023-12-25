@@ -288,4 +288,9 @@ int sc_scf_nmin = 2;
 double alpha_trial = 0.01; // eV/uB^2
 double sccut = 3;          // eV/uB
 std::string sc_file = "none";
+
+//==========================================================
+// Crystal Orbital Hamiltonian Population (COHP) related
+//==========================================================
+bool out_cohp = false;
 } // namespace GlobalV

@@ -317,5 +317,8 @@ extern int sc_scf_nmin;
 extern double alpha_trial;
 extern double sccut;
 extern std::string sc_file;
+
+// Crystal Orbital Hamiltonian Population (COHP) related
+extern bool out_cohp; // for lcao, it is actually lcaohp instead of cohp, because one critical step is to convert pw basis into local.
 } // namespace GlobalV
 #endif

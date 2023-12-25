@@ -639,6 +639,10 @@ void Input::Default(void)
     alpha_trial = 0.01;
     sccut = 3.0;
     sc_file = "none";
+    //==========================================================
+    // variables for Crystal Orbital Hamiltonian Population (COHP)
+    //==========================================================
+    bool out_cohp = false;
     return;
 }
 
@@ -2607,6 +2611,12 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("sc_file", word) == 0){
             read_value(ifs, sc_file);
         }
+        //----------------------------------------------------------------------------------
+        // Crystal Orbital Hamiltonian Population (COHP)
+        //----------------------------------------------------------------------------------
+        else if (strcmp("out_cohp", word) == 0){
+            read_bool(ifs, out_cohp);
+        }
         else
         {
             // xiaohui add 2015-09-15
@@ -3853,7 +3863,10 @@ void Input::Bcast()
     Parallel_Common::bcast_string(sc_file);
     Parallel_Common::bcast_double(alpha_trial);
     Parallel_Common::bcast_double(sccut);
-
+    /*
+        Crystal Orbital Hamiltonian Population (COHP)
+    */
+    Parallel_Common::bcast_bool(out_cohp);
     return;
 }
 #endif

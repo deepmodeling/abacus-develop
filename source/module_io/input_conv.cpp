@@ -743,7 +743,10 @@ void Input_Conv::Convert(void)
     GlobalV::alpha_trial = INPUT.alpha_trial;
     GlobalV::sccut = INPUT.sccut;
     GlobalV::sc_file = INPUT.sc_file;
-
+    //-----------------------------------------------
+    // Crystal Orbital Hamiltonian Population (COHP)
+    //-----------------------------------------------
+    GlobalV::out_cohp = INPUT.out_cohp;
     // mixing parameters
     GlobalV::MIXING_MODE = INPUT.mixing_mode;
     GlobalV::MIXING_BETA = INPUT.mixing_beta;
