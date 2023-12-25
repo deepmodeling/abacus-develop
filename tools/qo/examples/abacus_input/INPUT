@@ -19,4 +19,7 @@ gamma_only	0
 
 qo_switch 1
 qo_basis pswfc
+qo_screening_coeff 0.5
+qo_thr 1e-6
 
+symmetry -1
