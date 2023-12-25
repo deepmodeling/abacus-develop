@@ -164,7 +164,6 @@ void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
         current_spin = this->klist->isk[ik];
     }
     int nbands = psi.get_nbands();
-    const double threshold = ModuleBase::threshold_wg * this->wg(ik, 0);
     //  here we compute the band energy: the sum of the eigenvalues
     if (GlobalV::NSPIN == 4)
     {
@@ -175,9 +174,6 @@ void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
             /// only occupied band should be calculated.
             /// be care of when smearing_sigma is large, wg would less than 0
             ///
-            if (std::fabs(this->wg(ik, ibnd)) < threshold) {
-                continue;
-            }
 
             this->basis->recip_to_real(this->ctx, &psi(ibnd,0), this->wfcr, ik);
 
@@ -185,8 +181,11 @@ void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
 
             const auto w1 = static_cast<Real>(this->wg(ik, ibnd) / get_ucell_omega());
 
-            // replaced by denghui at 20221110
-            elecstate_pw_op()(this->ctx, GlobalV::DOMAG, GlobalV::DOMAG_Z, this->charge->nrxx, w1, this->rho, this->wfcr, this->wfcr_another_spin);
+            if (w1 != 0.0)
+            {
+                // replaced by denghui at 20221110
+                elecstate_pw_op()(this->ctx, GlobalV::DOMAG, GlobalV::DOMAG_Z, this->charge->nrxx, w1, this->rho, this->wfcr, this->wfcr_another_spin);
+            }
         }
     }
     else
@@ -196,9 +195,6 @@ void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
             ///
             /// only occupied band should be calculated.
             ///
-            if (this->wg(ik, ibnd) < threshold) {
-                continue;
-            }
 
             this->basis->recip_to_real(this->ctx, &psi(ibnd,0), this->wfcr, ik);
 

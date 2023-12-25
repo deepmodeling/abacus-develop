@@ -250,6 +250,7 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_beta_mag", mixing_beta_mag, "mixing parameter for magnetic density");
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_gg0_mag", mixing_gg0_mag, "mixing parameter in kerker");
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_gg0_min", mixing_gg0_min, "the minimum kerker coefficient");
+    ModuleBase::GlobalFunc::OUTP(ofs, "mixing_angle", mixing_angle, "angle mixing parameter for non-colinear calculations");
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_tau", mixing_tau, "whether to mix tau in mGGA calculation");
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_dftu", mixing_dftu, "whether to mix locale in DFT+U calculation");
 
@@ -411,6 +412,7 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "towannier90", towannier90, "use wannier90 code interface or not");
     ModuleBase::GlobalFunc::OUTP(ofs, "nnkpfile", nnkpfile, "the wannier90 code nnkp file name");
     ModuleBase::GlobalFunc::OUTP(ofs, "wannier_spin", wannier_spin, "calculate spin in wannier90 code interface");
+    ModuleBase::GlobalFunc::OUTP(ofs, "wannier_method", wannier_method, "different implementation methods under Lcao basis set");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_wannier_mmn", out_wannier_mmn, "output .mmn file or not");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_wannier_amn", out_wannier_amn, "output .amn file or not");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_wannier_unk", out_wannier_unk, "output UNK. file or not");

@@ -13,6 +13,9 @@
 #include "module_base/parallel_global.h"
 #include "module_cell/parallel_kpoints.h"
 #endif
+
+#include "module_base/macros.h"
+#include <type_traits>
 /*
 Psi (planewave based wavefunction) initializer
 Auther: Kirk0830
@@ -30,8 +33,11 @@ Following methods are available:
             implemented in psi_initializer_nao.h
     5. nao+random: mix 'nao' with some random numbers to initialize psi
 */
+template<typename T, typename Device>
 class psi_initializer
 {
+    private:
+        using Real = typename GetTypeReal<T>::type;
     public:
         /// @brief default constructor of psi initializer
         psi_initializer() { };
@@ -56,8 +62,10 @@ class psi_initializer
 
         // shared methods
         /// @brief allocate memory for psi
+        /// @param only_psig if true, only allocate memory for psig, not psi
         /// @return pointer to psi, memory allocated
-        psi::Psi<std::complex<double>>* allocate();
+        /// @note whether use template for psig or not, it is std::complex<double> because psi is.
+        psi::Psi<std::complex<double>>* allocate(bool only_psig = false);
 
         /// @brief get method of initializing psi
         /// @return the method
@@ -79,21 +87,22 @@ class psi_initializer
         /// @param iw_start index of wavefunction (start), the index of first band to initialize
         /// @param iw_end index of wavefunction (end)
         /// @param ik index of kpoint
-        void random_t(std::complex<double>* psi, const int iw_start, const int iw_end, const int ik);
+        void random_t(T* psi, const int iw_start, const int iw_end, const int ik);
+
         // random
         /// @brief wrapper of random_t
         /// @param psi for psi::Psi<FPTYPE, Device>, first use psi.fix(ik), then psi.get_pointer() to pass to parameter list
         /// @param iw_start index of wavefunction (start), the index of first band to initialize
         /// @param iw_end index of wavefunction (end)
         /// @param ik index of kpoint
-        virtual void random(std::complex<double>* psi, const int iw_start, const int iw_end,
+        virtual void random(T* psi, const int iw_start, const int iw_end,
                             const int ik) { ModuleBase::WARNING_QUIT("psi_initializer::random", "Polymorphism error"); }
         #ifdef __MPI
         /// @brief (about planewaves distribution) from stick mapping to pool
         /// @param stick 
         /// @param ir 
         /// @param out 
-        void stick_to_pool(double* stick, const int& ir, double* out) const;
+        void stick_to_pool(Real* stick, const int& ir, Real* out) const;
         #endif
 
         // mutual methods, virtual, will be implemented differently in derived classes
@@ -102,7 +111,7 @@ class psi_initializer
         /// @brief calculate psi in planewave representation
         /// @param psi psi
         /// @param ik index of kpoint
-        virtual psi::Psi<std::complex<double>>* cal_psig(int ik) = 0;
+        virtual psi::Psi<T, Device>* cal_psig(int ik) = 0;
 
         /// @brief for variables can be only initialized for once.
         /// @param p_pspot_nl_in (for atomic) interfaces to pseudopot_cell_vnl object, in GlobalC now
@@ -187,10 +196,71 @@ class psi_initializer
         /// @brief getter of mem_saver
         /// @return this->mem_saver
         int get_mem_saver() const { return this->mem_saver; }
+        /// @brief setter of initialized
+        /// @param initialized_in new value of initialized
+        void set_initialized(bool initialized_in) { this->initialized = initialized_in; }
+        /// @brief getter of initialized
+        /// @return this->initialized
+        bool get_initialized() const { return this->initialized; }
         // member variables
         /// @brief interface to the psi::Psi data structure class
-        psi::Psi<std::complex<double>>* psig = nullptr;
+        psi::Psi<T, Device>* psig = nullptr;
 
+        /// @brief cast from std::complex<double> to float
+        /// @tparam U float placeholder
+        /// @param in psi value to cast
+        /// @return float psi value
+        template <typename U>
+        typename std::enable_if<std::is_same<U, float>::value, U>::type cast_to_T(const std::complex<double> in)
+        {
+            return static_cast<float>(in.real());
+        }
+        /// @brief cast from std::complex<double> to double
+        /// @tparam U double placeholder
+        /// @param in psi value to cast
+        /// @return double psi value
+        template <typename U>
+        typename std::enable_if<std::is_same<U, double>::value, U>::type cast_to_T(const std::complex<double> in)
+        {
+            return static_cast<double>(in.real());
+        }
+        /// @brief cast from std::complex<double> to std::complex<float>
+        /// @tparam U std::complex<float> placeholder
+        /// @param in psi value to cast
+        /// @return std::complex<float> psi value
+        template <typename U>
+        typename std::enable_if<std::is_same<U, std::complex<float>>::value, U>::type cast_to_T(const std::complex<double> in)
+        {
+            return std::complex<float>(static_cast<float>(in.real()), static_cast<float>(in.imag()));
+        }
+        /// @brief cast from std::complex<double> to std::complex<double>
+        /// @tparam U std::complex<double> placeholder
+        /// @param in psi value to cast
+        /// @return std::complex<double> psi value
+        template <typename U>
+        typename std::enable_if<std::is_same<U, std::complex<double>>::value, U>::type cast_to_T(const std::complex<double> in)
+        {
+            return std::complex<double>(in.real(), in.imag());
+        }
+        Real norm2(const std::complex<Real> in)
+        {
+            return in.real()*in.real() + in.imag()*in.imag();
+        }
+        Real norm2(const Real in)
+        {
+            return in*in;
+        }
+        /*
+        template <typename U>
+        void cast_right_to_left(U& left, const std::complex<double> right)
+        {
+            if(std::is_same<U, float>::value) *(*float)left = static_cast<float>(right.real());
+            else if(std::is_same<U, double>::value) *(*double)left = static_cast<double>(right.real());
+            else if(std::is_same<U, std::complex<float>>::value) *(*std::complex<float>)left = std::complex<float>(static_cast<float>(right.real()), static_cast<float>(right.imag()));
+            else if(std::is_same<U, std::complex<double>>::value) *(*std::complex<double>)left = std::complex<double>(right.real(), right.imag());
+            else ModuleBase::WARNING_QUIT("psi_initializer::cast_right_to_left", "type error");
+        }
+        */
     protected:
         // interfaces
         // ATTENTION: DO NOT USE DELETE ON THESE POINTERS
@@ -222,6 +292,7 @@ class psi_initializer
         // random
         int* ixy2is;
 
+        bool initialized = false; // whether initialized or not
         // atomic+random or nao+random
         double random_mix = 0;
 };

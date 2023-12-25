@@ -43,12 +43,13 @@ void Local_Orbital_Charge::allocate_gamma(
     // mohan update 2010-09-06
     if(lgd_now > 0)
     {
+		const std::size_t size_lgd_squre = static_cast<std::size_t>(lgd_now) * lgd_now;
 		this->DM = new double**[GlobalV::NSPIN];
 		this->DM_pool = new double *[GlobalV::NSPIN];
 		for(int is=0; is<GlobalV::NSPIN; is++)
 		{
-			this->DM_pool[is]=new double [lgd_now*lgd_now];
-			ModuleBase::GlobalFunc::ZEROS(DM_pool[is], lgd_now*lgd_now);
+			this->DM_pool[is]=new double [size_lgd_squre];
+			ModuleBase::GlobalFunc::ZEROS(DM_pool[is], size_lgd_squre);
 			this->DM[is] = new double*[lgd_now];
 
 			for (int i=0; i<lgd_now; i++)
@@ -58,7 +59,7 @@ void Local_Orbital_Charge::allocate_gamma(
 		}
 		this->init_DM = true;
         this->lgd_last = lgd_now;
-        ModuleBase::Memory::record("LOC::DM", sizeof(double) * GlobalV::NSPIN*lgd_now*lgd_now);
+        ModuleBase::Memory::record("LOC::DM", sizeof(double) * GlobalV::NSPIN*size_lgd_squre);
         //xiaohui add 'GlobalV::OUT_LEVEL', 2015-09-16
         if(GlobalV::OUT_LEVEL != "m") GlobalV::ofs_running << " allocate DM , the dimension is " << lgd_now << std::endl;
     }

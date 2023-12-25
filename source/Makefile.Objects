@@ -119,6 +119,7 @@ OBJS_BASE=abfs-vector3_order.o\
     global_variable.o\
     intarray.o\
     math_integral.o\
+    math_lebedev_laikov.o\
     math_polyint.o\
     math_sphbes.o\
     math_ylmreal.o\
@@ -147,11 +148,11 @@ OBJS_BASE=abfs-vector3_order.o\
 	cubic_spline.o\
 	spherical_bessel_transformer.o\
     mixing_data.o\
-    para_json.o\
     mixing.o\
     plain_mixing.o\
     pulay_mixing.o\
     broyden_mixing.o\
+
 
 OBJS_CELL=atom_pseudo.o\
     atom_spec.o\
@@ -414,9 +415,14 @@ OBJS_IO=input.o\
     read_cube.o\
     read_rho.o\
     read_rhog.o\
+    read_wfc_pw.o\
     restart.o\
     binstream.o\
     to_wannier90.o\
+    to_wannier90_pw.o\
+    to_wannier90_lcao_in_pw.o\
+    to_wannier90_lcao.o\
+    fR_overlap.o\
     unk_overlap_pw.o\
     write_wfc_pw.o\
     winput.o\
