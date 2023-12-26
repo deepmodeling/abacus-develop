@@ -11,8 +11,7 @@ stress_threshold=0.001
 # check accuracy
 ca=8
 # regex of case name
-case=".*OH.*$"
-#case="^[^#].*_.*$"
+case="^[^#].*_.*$"
 # enable AddressSanitizer
 sanitize=false
 
