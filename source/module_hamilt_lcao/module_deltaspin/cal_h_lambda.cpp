@@ -39,32 +39,30 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_h_lambda(
                             const int nu = pv->global2local_col(iwt2);
                             if (nu < 0) continue;
                             int icc;
+                            ModuleBase::Vector3<double> lambda = (this->lambda_[iat1] + this->lambda_[iat2]) / 2.0;
                             if (column_major)
-						    {
+                            {
                                 icc = mu + nu * pv->nrow;
                                 if (this->nspin_ == 2)
                                 {
-                                    h_lambda[icc] = (isk == 0)
-                                        ? -Sloc2[icc] * this->lambda_[iat2][2]
-                                        : -Sloc2[icc] * (-this->lambda_[iat2][2]);
+                                    h_lambda[icc] = (isk == 0) ? -Sloc2[icc] * lambda[2] : -Sloc2[icc] * (-lambda[2]);
                                 }
                                 else if (this->nspin_ == 4)
                                 {
                                     if (iwt1 % 2 == 0)
                                     {
-                                        h_lambda[icc] = (iwt2 % 2 == 0)
-                                                            ? -Sloc2[icc] * this->lambda_[iat2][2]
-                                                            : -Sloc2[icc + 1]
-                                                                  * (this->lambda_[iat2][0]
-                                                                     + this->lambda_[iat2][1] * std::complex<double>(0, 1));
+                                        h_lambda[icc]
+                                            = (iwt2 % 2 == 0)
+                                                  ? -Sloc2[icc] * lambda[2]
+                                                  : -Sloc2[icc + 1]
+                                                        * (lambda[0] + lambda[1] * std::complex<double>(0, 1));
                                     }
                                     else
                                     {
-                                        h_lambda[icc]
-                                            = (iwt2 % 2 == 0)
-                                                  ? -Sloc2[icc - 1]
-                                                        * (this->lambda_[iat2][0] - this->lambda_[iat2][1] * std::complex<double>(0, 1))
-                                                  : -Sloc2[icc] * (-this->lambda_[iat2][2]);
+                                        h_lambda[icc] = (iwt2 % 2 == 0)
+                                                            ? -Sloc2[icc - 1]
+                                                                  * (lambda[0] - lambda[1] * std::complex<double>(0, 1))
+                                                            : -Sloc2[icc] * (-lambda[2]);
                                     }
                                 }
                             }
@@ -73,27 +71,24 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_h_lambda(
                                 icc = mu * pv->ncol + nu;
                                 if (this->nspin_ == 2)
                                 {
-                                    h_lambda[icc] = (isk == 0)
-                                        ? -Sloc2[icc] * this->lambda_[iat1][2]
-                                        : -Sloc2[icc] * (-this->lambda_[iat1][2]);
+                                    h_lambda[icc] = (isk == 0) ? -Sloc2[icc] * lambda[2] : -Sloc2[icc] * (-lambda[2]);
                                 }
                                 else if (this->nspin_ == 4)
                                 {
                                     if (iwt1 % 2 == 0)
                                     {
-                                        h_lambda[icc] = (iwt2 % 2 == 0)
-                                                            ? -Sloc2[icc] * this->lambda_[iat1][2]
-                                                            : -Sloc2[icc - 1]
-                                                                  * (this->lambda_[iat1][0]
-                                                                     + this->lambda_[iat1][1] * std::complex<double>(0, 1));
+                                        h_lambda[icc]
+                                            = (iwt2 % 2 == 0)
+                                                  ? -Sloc2[icc] * lambda[2]
+                                                  : -Sloc2[icc - 1]
+                                                        * (lambda[0] + lambda[1] * std::complex<double>(0, 1));
                                     }
                                     else
                                     {
-                                        h_lambda[icc]
-                                            = (iwt2 % 2 == 0)
-                                                  ? -Sloc2[icc + 1]
-                                                        * (this->lambda_[iat1][0] - this->lambda_[iat1][1] * std::complex<double>(0, 1))
-                                                  : -Sloc2[icc] * (-this->lambda_[iat1][2]);
+                                        h_lambda[icc] = (iwt2 % 2 == 0)
+                                                            ? -Sloc2[icc + 1]
+                                                                  * (lambda[0] - lambda[1] * std::complex<double>(0, 1))
+                                                            : -Sloc2[icc] * (-lambda[2]);
                                     }
                                 }
                             }
