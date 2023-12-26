@@ -374,18 +374,26 @@ private:
      */
     void transform(const bool forward);
 
-    /// Updates ircut_ or ikcut_.
+    /// Updates ircut_ and/or ikcut_.
     void set_icut(const bool for_r_space, const bool for_k_space, const double tol = 1e-15);
 
+    // FIXME is_uniform and is_fft_compliant should be more robust for arrays whose elements
+    // are all close to machine precision
+
     /// Checks whether a grid is uniform.
-    bool is_uniform(const int n, const double* const grid, const double tol) const;
+    static bool is_uniform(const int n, const double* const grid, const double tol = 1e-15);
 
     /**
      * @brief Checks whether the given two grids are FFT-compliant.
      *
      * @see is_fft_compliant_
      */
-    bool is_fft_compliant(const int nr, const double* const rgrid, const int nk, const double* const kgrid) const;
+    static bool is_fft_compliant(const int nr,
+                                 const double* const rgrid,
+                                 const int nk,
+                                 const double* const kgrid,
+                                 const double tol = 1e-15
+                                 );
 };
 
 #endif

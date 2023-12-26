@@ -405,8 +405,8 @@ void NumericalRadial::radtab(const char op,
     delete[] fk;
     delete[] rgrid_tab;
 
-    // spherical Bessel transform has a prefactor of sqrt(2/pi) while the prefactor for the radial table
-    // of two-center integrals is 4*pi
+    // spherical Bessel transform has a prefactor of sqrt(2/pi)
+    // and the prefactor for the two-center integral radial table is 4*pi
     double pref = ModuleBase::FOUR_PI * std::sqrt(ModuleBase::PI / 2.0);
     std::for_each(table, table + nr_tab, [pref](double& x) { x *= pref; });
 }
@@ -500,16 +500,19 @@ void NumericalRadial::set_icut(const bool for_r_space, const bool for_k_space, c
     }
 }
 
-bool NumericalRadial::is_uniform(const int n, const double* const x, const double tol) const
+bool NumericalRadial::is_uniform(const int n, const double* const x, const double tol)
 {
     double dx = (x[n - 1] - x[0]) / (n - 1);
-    return std::all_of(x, x + n, [&](const double& xi) { return std::abs(x[0] + (&xi - x) * dx - xi) < tol; });
+    return std::all_of(x, x + n,
+            [&](const double& xi) { return std::abs(x[0] + (&xi - x) * dx - xi) < tol; });
 }
 
 bool NumericalRadial::is_fft_compliant(const int nr,
                                        const double* const rgrid,
                                        const int nk,
-                                       const double* const kgrid) const
+                                       const double* const kgrid,
+                                       const double tol
+                                       )
 {
     if (!rgrid || !kgrid || nr != nk || nr < 2)
     {
@@ -518,9 +521,8 @@ bool NumericalRadial::is_fft_compliant(const int nr,
 
     double dr = rgrid[nr - 1] / (nr - 1);
     double dk = kgrid[nk - 1] / (nk - 1);
-    double tol = 4.0 * std::numeric_limits<double>::epsilon();
 
-    return std::abs(dr * dk - PI / (nr - 1)) < tol
+    return nr * std::abs(dr * dk - PI / (nr - 1)) < tol
            && rgrid[0] == 0.0 && is_uniform(nr, rgrid, tol)
            && kgrid[0] == 0.0 && is_uniform(nk, kgrid, tol);
 }

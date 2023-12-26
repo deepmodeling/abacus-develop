@@ -395,7 +395,14 @@ TEST_F(NumericalRadialTest, SetValue)
         f[i] = std::exp(-r);
     }
 
+    int sz_cut = 20;
+    std::fill(f + sz_cut, f + sz, 0.0);
+
     chi.build(1, true, sz, grid, f, p);
+
+    EXPECT_EQ(chi.rcut(), sz_cut * dx);
+    EXPECT_EQ(chi.rmax(), (sz-1) * dx);
+
     for (int ir = 0; ir != sz; ++ir)
     {
         f[ir] *= 2;

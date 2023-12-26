@@ -114,7 +114,7 @@ class RadialSet
     std::string symbol_ = "";   ///< usually the chemical symbol
     int itype_ = 0;             ///< usually the index for element in calculation
     int lmax_ = -1;             ///< maximum angular momentum among all NumericalRadial objects
-    double rcut_max_ = 0.0;     ///< maximum cutoff radius among all NumericalRadial objects
+    double rcut_max_ = 0.0;     ///< maximum rcut (NOT rmax!) among all NumericalRadial objects
 
     int* nzeta_ = nullptr;      ///< number of NumericalRadial objects for each angular momentum
     int nzeta_max_ = 0;         ///< maximum number of NumericalRadial objects among each angular momentum
@@ -139,7 +139,7 @@ class RadialSet
     /// Builds index_map_ from nzeta_, nzeta_max_ and lmax_.
     void indexing();
 
-    /// Finds the maximum cutoff radius among all NumericalRadial objects and sets rcut_max_ accordingly.
+    /// Sets rcut_max_ to be the maximum rcut of all NumericalRadial objects.
     void set_rcut_max();
 };
 
