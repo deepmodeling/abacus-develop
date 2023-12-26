@@ -62,9 +62,10 @@ class psi_initializer
 
         // shared methods
         /// @brief allocate memory for psi
+        /// @param only_psig if true, only allocate memory for psig, not psi
         /// @return pointer to psi, memory allocated
         /// @note whether use template for psig or not, it is std::complex<double> because psi is.
-        psi::Psi<std::complex<double>>* allocate();
+        psi::Psi<std::complex<double>>* allocate(bool only_psig = false);
 
         /// @brief get method of initializing psi
         /// @return the method

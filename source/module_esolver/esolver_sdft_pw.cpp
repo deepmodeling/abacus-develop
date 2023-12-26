@@ -222,15 +222,15 @@ void ESolver_SDFT_PW::postprocess()
     int nche_test = this->nche_sto;
     if (INPUT.out_dos)
         nche_test = std::max(nche_test, INPUT.dos_nche);
-    int cond_nche;
+    int cond_nche = 0;
     if (INPUT.cal_cond)
     {
-        cond_nche = set_cond_nche(INPUT.cond_dt, INPUT.cond_dtbatch, 1e-8);
-        nche_test = std::max(nche_test, cond_nche);
+        cond_nche = set_cond_nche(INPUT.cond_dt, INPUT.cond_dtbatch, 1e-8, nche_test, INPUT.emin_sto, INPUT.emax_sto);
     }
-    if (nche_test > 0)
-        check_che(nche_test);
-
+    else
+    {
+        check_che(nche_test, INPUT.emin_sto, INPUT.emax_sto);
+    }
     if (INPUT.out_dos)
     {
         double emax, emin;

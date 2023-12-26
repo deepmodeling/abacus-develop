@@ -105,7 +105,7 @@ psi::Psi<std::complex<float>>* gatherchi(psi::Psi<std::complex<float>>& chi,
     return p_chi;
 }
 
-void ESolver_SDFT_PW::check_che(const int nche_in)
+void ESolver_SDFT_PW::check_che(const int nche_in, const double try_emin, const double try_emax)
 {
     //------------------------------
     //      Convergence test
@@ -116,8 +116,8 @@ void ESolver_SDFT_PW::check_che(const int nche_in)
     Stochastic_Iter& stoiter = ((hsolver::HSolverPW_SDFT*)phsol)->stoiter;
     Stochastic_hchi& stohchi = stoiter.stohchi;
     int ntest0 = 5;
-    stohchi.Emax = pw_wfc->gk_ecut * pw_wfc->tpiba2;
-    stohchi.Emin = 0;
+    stohchi.Emax = try_emax;
+    stohchi.Emin = try_emin;
     // if (GlobalV::NBANDS > 0)
     // {
     //     double tmpemin = 1e10;
@@ -198,13 +198,19 @@ void ESolver_SDFT_PW::check_che(const int nche_in)
     }
 }
 
-int ESolver_SDFT_PW::set_cond_nche(const double dt, int& nbatch, const double cond_thr)
+int ESolver_SDFT_PW::set_cond_nche(const double dt,
+                                   int& nbatch,
+                                   const double cond_thr,
+                                   const int& nche_min,
+                                   double try_emin,
+                                   double try_emax)
 {
     int nche_guess = 1000;
     ModuleBase::Chebyshev<double> chet(nche_guess);
     Stochastic_Iter& stoiter = ((hsolver::HSolverPW_SDFT*)phsol)->stoiter;
     const double mu = this->pelec->eferm.ef;
     stoiter.stofunc.mu = mu;
+    // try to find nbatch
     if(nbatch == 0)
     {
         for (int test_nbatch = 128; test_nbatch >= 1; test_nbatch /= 2)
@@ -230,32 +236,56 @@ int ESolver_SDFT_PW::set_cond_nche(const double dt, int& nbatch, const double co
             }
         }
     }
-    
-    stoiter.stofunc.t = 0.5 * dt * nbatch;
-    chet.calcoef_pair(&stoiter.stofunc, &Sto_Func<double>::ncos, &Sto_Func<double>::n_sin);
 
-    int nche;
-    bool find = false;
+    // first try to find nche
+    stoiter.stofunc.t = 0.5 * dt * nbatch;
+    auto getnche = [&](int& nche)
+    {
+        chet.calcoef_pair(&stoiter.stofunc, &Sto_Func<double>::ncos, &Sto_Func<double>::n_sin);
+        for (int i = 1; i < nche_guess; ++i)
+        {
+            double error = std::abs(chet.coef_complex[i] / chet.coef_complex[0]);
+            if(error < cond_thr)
+            {
+                nche = i + 1;
+                break;
+            }
+        }
+    };
+    int nche_old = 0;
+    getnche(nche_old);
+
+    int nche_new = 0;
+loop:
+    // re-set Emin & Emax both in stohchi & stofunc
+    check_che(std::max(nche_old * 2, nche_min), try_emin, try_emax);
+
+    // second try to find nche with new Emin & Emax
+    getnche(nche_new);
+    
+    if(nche_new > nche_old * 2)
+    {
+        nche_old = nche_new;
+        try_emin = stoiter.stohchi.Emin;
+        try_emax = stoiter.stohchi.Emax;
+        goto loop;
+    }
+
+    std::cout << "set N order of Chebyshev for KG as " << nche_new << std::endl;
     std::ofstream cheofs("Chebycoef");
     for (int i = 1; i < nche_guess; ++i)
     {
         double error = std::abs(chet.coef_complex[i] / chet.coef_complex[0]);
         cheofs << std::setw(5) << i << std::setw(20) << error << std::endl;
-        if (!find && error < cond_thr)
-        {
-            nche = i + 1;
-            std::cout << "set N order of Chebyshev for KG as " << nche << std::endl;
-            find = true;
-        }
     }
     cheofs.close();
 
-    if (!find)
+    if (nche_new >= 1000)
     {
         ModuleBase::WARNING_QUIT("ESolver_SDFT_PW", "N order of Chebyshev for KG will be larger than 1000!");
     }
 
-    return nche;
+    return nche_new;
 }
 
 void ESolver_SDFT_PW::cal_jmatrix(const psi::Psi<std::complex<float>>& kspsi_all,
