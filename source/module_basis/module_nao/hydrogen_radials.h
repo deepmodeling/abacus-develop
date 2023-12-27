@@ -160,21 +160,6 @@ class HydrogenRadials : public RadialSet
                       std::ofstream* ptr_log = nullptr);
 
     private:
-    /*
-        /// @brief [DEPRECATED IN ACTUAL USE!!!] generate hydrogen-like radial functions for a given charge, nmax, dr, rank, strategy
-        /// @param charge charge of the nucleus
-        /// @param nmax maxmium principal quantum number
-        /// @param rcut the maximal radius
-        /// @param dr step size of the radial grid
-        /// @param rank MPI rank
-        /// @param ptr_log pointer to the log ofstream
-        void generate_hydrogen_radials(const double charge = 1.0,
-                                       const int nmax = 0,
-                                       const double rcut = 10.0,
-                                       const double dr = 0.01,
-                                       const int rank = 0,
-                                       std::ofstream* ptr_log = nullptr);
-    */
         /// @brief generate hydrogen-like radial functions for a given n, l, in a given range [rmin, rmax]
         /// @param charge charge of the nucleus
         /// @param n principal quantum number
