@@ -22,10 +22,19 @@ class Veff : public T
 
 #endif
 
+/// @brief Effective potential class, used for calculating Hamiltonian with grid integration tools
+/// If user want to separate the contribution of V_{eff} into V_{H} and V_{XC} and V_{local pseudopotential} and so on,
+/// the user can separate the Potential class into different parts, and construct different Veff class for each part.
+/// @tparam TK 
+/// @tparam TR 
 template <typename TK, typename TR>
 class Veff<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 {
   public:
+    /**
+     * @brief Construct a new Veff object for multi-kpoint calculation
+     * @param GK_in: the pointer of Gint_k object, used for grid integration
+    */
     Veff<OperatorLCAO<TK, TR>>(Gint_k* GK_in,
                           Local_Orbital_Charge* loc_in,
                           LCAO_Matrix* LM_in,
@@ -46,6 +55,10 @@ class Veff<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
         this->initialize_HR(ucell_in, GridD_in, paraV);
         GK_in->initialize_pvpR(*ucell_in, GridD_in);
     }
+    /**
+     * @brief Construct a new Veff object for Gamma-only calculation
+     * @param GG_in: the pointer of Gint_Gamma object, used for grid integration
+    */
     Veff<OperatorLCAO<TK, TR>>(Gint_Gamma* GG_in,
                           Local_Orbital_Charge* loc_in,
                           LCAO_Matrix* LM_in,
@@ -69,9 +82,13 @@ class Veff<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
     ~Veff<OperatorLCAO<TK, TR>>(){};
 
+    /**
+     * @brief contributeHR() is used to calculate the HR matrix
+     * <phi_{\mu, 0}|V_{eff}|phi_{\nu, R}>
+     * the contribution of V_{eff} is calculated by the contribution of V_{H} and V_{XC} and V_{local pseudopotential} and so on.
+     * grid integration is used to calculate the contribution Hamiltonian of effective potential
+     */
     virtual void contributeHR() override;
-
-    virtual void contributeHk(int ik) override;
 
   private:
     // used for k-dependent grid integration.

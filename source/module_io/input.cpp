@@ -2886,6 +2886,34 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         by = 1;
         bz = 1;
     }
+    else if (basis_type == "lcao_in_pw")
+    {
+        if (ks_solver != "lapack")
+        {
+            ModuleBase::WARNING_QUIT("Input", "ks_solver must be lapack when basis_type is lcao_in_pw");
+        }
+        else
+        {
+            /*
+                then psi initialization setting adjustment
+            */
+            if (!psi_initializer)
+            {
+                psi_initializer = true;
+            }
+            if (init_wfc != "nao")
+            {
+                init_wfc = "nao";
+                GlobalV::ofs_warning << "init_wfc is set to nao when basis_type is lcao_in_pw" << std::endl;
+            }
+        }
+        /*
+            if bx, by and bz is not assigned here, undefined behavior will occur
+        */
+        bx = 1;
+        by = 1;
+        bz = 1;
+    }
     else if (basis_type == "lcao")
     {
         if (ks_solver == "default")
@@ -3930,9 +3958,33 @@ void Input::Check(void)
 
     if (towannier90)
     {
-        if (basis_type != "pw" && basis_type != "lcao")
+        if (basis_type == "lcao_in_pw")
         {
-            ModuleBase::WARNING_QUIT("Input", "to use towannier90, please set basis_type = pw or lcao");
+            /*
+                Developer's notes: on the repair of lcao_in_pw
+
+                lcao_in_pw is a special basis_type, for scf calculation, it follows workflow of pw, 
+                but for nscf the toWannier90 calculation, the interface is in ESolver_KS_LCAO_elec,
+                therefore lcao_in_pw for towannier90 calculation follows lcao.
+
+                In the future lcao_in_pw will have its own ESolver.
+
+                2023/12/22 use new psi_initializer to expand numerical atomic orbitals, ykhuang
+            */
+            basis_type = "lcao";
+            wannier_method = 1; // it is the way to call toWannier90_lcao_in_pw
+            #ifdef __ELPA
+            ks_solver = "genelpa";
+            #else
+            ks_solver = "scalapack_gvx";
+            #endif
+        }
+        else
+        {
+            if ((basis_type != "pw")&&(basis_type != "lcao"))
+            {
+                ModuleBase::WARNING_QUIT("Input", "to use towannier90, please set basis_type = pw, lcao or lcao_in_pw");
+            }
         }
         if (calculation != "nscf")
         {
