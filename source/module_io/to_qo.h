@@ -45,7 +45,7 @@ class toQO
         using RealMatrix = std::vector<std::vector<double>>;
 
     public:
-        toQO(std::string qo_basis, std::string strategy = "minimal");
+        toQO(std::string qo_basis, std::string strategy = "energy");
         ~toQO();
 
         /*
@@ -264,7 +264,7 @@ class toQO
         /// @details full: 1s, 2s, 2p, 3s, 3p, 3d, ...
         ///          minimal: 1s, 2p, 3d, 4f, ...
         ///          energy: according to Hund's rule
-        std::string strategy_ = "minimal";
+        std::string strategy_ = "energy";
 
         //
         // memory control
