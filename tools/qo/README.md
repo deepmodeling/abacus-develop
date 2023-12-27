@@ -35,7 +35,8 @@ This code runs like scripts, so no need to install.
    qo_basis hydrogen
    ```
    To use hydrogen-like radial function as projector. However, because the charges cannot be set very physically presently (unless let user set them), ABACUS will read atomic charge from pseudopotential file, which may cause unphysical shrink or expansion.
-2. Copy output Hamiltonian and overlap matrices $H(\mathbf{k})$ and $S(\mathbf{k})$ files (`data-[i]-H` and `data-[i]-S`), the overlap matrices between AO and numerical atomic orbitals $S^{\chi\phi}(\mathbf{k})$ `QO_ovlp_[i].dat`, converged wavefunction `LOWF_K_[i].txt`, kpoints information summary `kpoints` from ABACUS output `OUT.*` directory to the path you like.
+   For example see `examples`, find `INPUT`, `STRU` and `KPT`.
+2. Copy output Hamiltonian and overlap matrices $H(\mathbf{k})$ and $S(\mathbf{k})$ files (`data-[i]-H` and `data-[i]-S`), the overlap matrices between AO and numerical atomic orbitals $S^{\chi\phi}(\mathbf{k})$ `QO_ovlp_[i].dat`, converged wavefunction `LOWF_K_[i].txt`, kpoints information summary `kpoints` from ABACUS output `OUT.*` directory to the path you like. Or in another way, just assign the `path` in `source/main.py` to the path of `OUT.*` directory.
 3. Then you specify the path, number of kpoints, number of states want to introduce and the lattice vector $\mathbf{R}$ (presently it is the one set to $(0, 0, 0)$) in `source/main.py`.
     ```python
     import source.components.driver as driver
