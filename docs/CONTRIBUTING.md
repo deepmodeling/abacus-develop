@@ -230,7 +230,7 @@ To add a unit test:
     ```
     ./cell_unitcell_test
     ```
-    in the director of `build/source/cell/test` to run the test `cell_unitcell_test`.  
+    in the director of `build/source/module_cell/test` to run the test `cell_unitcell_test`.  
     However, it is more convenient to run unit tests with `ctest` command under the `build` directory. You can check all unit tests by
     ```bash
     ctest -N
