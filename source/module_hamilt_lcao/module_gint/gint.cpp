@@ -20,6 +20,13 @@ Gint::~Gint()
 {
 	delete this->hRGint;
 	delete this->hRGintCd;
+	for(int is=0;is<this->DMRGint.size();is++)
+	{
+		delete this->DMRGint[is];
+	}
+#ifdef __MPI
+	if(this->DMRGint_full != nullptr) delete this->DMRGint_full;
+#endif
 	
 }
 
