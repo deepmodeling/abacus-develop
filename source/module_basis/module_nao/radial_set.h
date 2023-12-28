@@ -70,7 +70,7 @@ class RadialSet
      * This function provides an interface to the corresponding object in the old module_ao.
      */
     virtual void to_numerical_orbital(Numerical_Orbital&,
-                                      const double lcao_ecut = 2000,
+                                      const int nk_legacy = 4005, // equivalent to lcao_ecut = 1600
                                       const double lcao_dk = 0.01
                                       ) const;
 

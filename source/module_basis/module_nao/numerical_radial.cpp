@@ -155,7 +155,7 @@ void NumericalRadial::build(const int l,
     set_icut(for_r_space, !for_r_space);
 }
 
-void NumericalRadial::to_numerical_orbital_lm(Numerical_Orbital_Lm& orbital_lm, const double lcao_ecut, const double lcao_dk) const
+void NumericalRadial::to_numerical_orbital_lm(Numerical_Orbital_Lm& orbital_lm, const int nk_legacy, const double lcao_dk) const
 {
 #ifdef __DEBUG
     assert(rgrid_ && kgrid_);
@@ -170,12 +170,6 @@ void NumericalRadial::to_numerical_orbital_lm(Numerical_Orbital_Lm& orbital_lm, 
     double* rab = new double[nr_];
     std::fill(rab, rab + nr_, dr);
 
-    // Due to algorithmic difference (FFT vs. Simpson's integration),
-    // it is inappropriate to use the k grid of NumericalRadial to
-    // initialize the k grid of Numerical_Orbital_Lm.
-    
-    int nk_legacy = static_cast<int>(std::sqrt(lcao_ecut) / lcao_dk) + 4;
-    nk_legacy += 1 - nk_legacy % 2;
     orbital_lm.set_orbital_info(symbol_, itype_, l_, izeta_, std::min(nr_, ircut_+1), rab, rgrid_,
             Numerical_Orbital_Lm::Psi_Type::Psi, rvalue_, nk_legacy, lcao_dk,
             0.001 /* dr_uniform */, GlobalV::out_element_info, true, GlobalV::CAL_FORCE);

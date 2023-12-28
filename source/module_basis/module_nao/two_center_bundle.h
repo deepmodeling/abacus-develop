@@ -13,18 +13,12 @@ class TwoCenterBundle
     TwoCenterBundle() = default;
     ~TwoCenterBundle() = default;
 
-    //void build(const int nfile_orb,
-    //           const std::string* file_orb,
-    //           const int nfile_pp,
-    //           const std::string* file_pp,
-    //           const int nfile_desc = 0,
-    //           const std::string* file_desc = nullptr);
+    // NOTE: some variables might be set only on RANK-0
+    void build_orb(int ntype, const std::string* file_orb0);
+    void build_beta(int ntype, Numerical_Nonlocal* nl);
+    void build_alpha(int ndesc = 0, std::string* file_desc0 = nullptr);
 
-    void build(const int ntype,
-               const std::string* file_orb,
-               Numerical_Nonlocal* const nl,
-               const int nfile_desc = 0,
-               const std::string* file_desc = nullptr);
+    void tabulate();
 
     /**
      * @brief Overwrites the content of a LCAO_Orbitals object (e.g. GlobalC::ORB)
@@ -32,14 +26,18 @@ class TwoCenterBundle
      *
      * This function provides an interface to the corresponding object in the old module_ao.
      */
-    void to_LCAO_Orbitals(LCAO_Orbitals&) const;
+    void to_LCAO_Orbitals(LCAO_Orbitals& orb,
+                          const double lcao_ecut,
+                          const double lcao_dk,
+                          const double lcao_dr,
+                          const double lcao_rmax
+                          ) const;
 
     std::unique_ptr<TwoCenterIntegrator> kinetic_orb;
     std::unique_ptr<TwoCenterIntegrator> overlap_orb;
     std::unique_ptr<TwoCenterIntegrator> overlap_orb_beta;
     std::unique_ptr<TwoCenterIntegrator> overlap_orb_alpha;
 
-  private:
     std::unique_ptr<RadialCollection> orb_;
     std::unique_ptr<RadialCollection> beta_;
     std::unique_ptr<RadialCollection> alpha_;

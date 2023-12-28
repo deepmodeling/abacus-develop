@@ -105,9 +105,12 @@ public:
      * @brief Overwrites the content of a Numerical_Orbital_Lm object with the current object.
      *
      * This function provides an interface to the corresponding object in module_ao.
+     * Due to algorithmic difference (FFT vs. Simpson's integration), it is inappropriate to
+     * use the k grid of NumericalRadial (which is FFT-compliant with r grid) to initialize
+     * the k grid of Numerical_Orbital_Lm.
      */
     void to_numerical_orbital_lm(Numerical_Orbital_Lm& orbital_lm, 
-                                 const double lcao_ecut = 2000.0,
+                                 const int nk_legacy = 4005, // equivalent to lcao_ecut = 1600
                                  const double lcao_dk = 0.01) const;
 
     /** 

@@ -253,7 +253,7 @@ char RadialCollection::check_file_type(const std::string& file) const
         std::string line;
         while (std::getline(ifs, line))
         {
-            if (line.find("<Coefficients") != std::string::npos)
+            if (line.find("<Coefficient") != std::string::npos)
             {
                 file_type = 'c';
                 break;
