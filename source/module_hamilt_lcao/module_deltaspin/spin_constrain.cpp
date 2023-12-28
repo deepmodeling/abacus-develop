@@ -545,12 +545,13 @@ void SpinConstrain<FPTYPE, Device>::print_Mi(bool print)
         {
             if (this->nspin_ == 2)
             {
-                std::cout << "Total Magnetism on atom: " << iat << " " << std::setprecision(10) << " (" << Mi_[iat].z << ")" << std::endl;
+                std::cout << "Total Magnetism on atom: " << iat + 1 << " " << std::setprecision(10) << " ("
+                          << Mi_[iat].z << ")" << std::endl;
             }
             else if (this->nspin_ ==4)
             {
-                std::cout << "Total Magnetism on atom: " << iat << " " << std::setprecision(10) << " (" << Mi_[iat].x
-                        << ", " << Mi_[iat].y << ", " << Mi_[iat].z << ")" << std::endl;
+                std::cout << "Total Magnetism on atom: " << iat + 1 << " " << std::setprecision(10) << " ("
+                          << Mi_[iat].x << ", " << Mi_[iat].y << ", " << Mi_[iat].z << ")" << std::endl;
             }
         }
     }
@@ -568,12 +569,12 @@ void SpinConstrain<FPTYPE, Device>::log_Mi_info(std::ofstream& ofs)
     {
         if (this->nspin_ == 2)
         {
-            ofs << "Total Magnetism on atom (with weight function): " << iat << " " << std::setprecision(10) << " ("
+            ofs << "Total Magnetism on atom (with weight function): " << iat + 1 << " " << std::setprecision(10) << " ("
                 << Mi_[iat].z << ")" << std::endl;
         }
         else if (this->nspin_ == 4)
         {
-            ofs << "Total Magnetism on atom (with weight function): " << iat << " " << std::setprecision(10) << " ("
+            ofs << "Total Magnetism on atom (with weight function): " << iat + 1 << " " << std::setprecision(10) << " ("
                 << Mi_[iat].x << ", " << Mi_[iat].y << ", " << Mi_[iat].z << ")" << std::endl;
         }
     }

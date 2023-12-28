@@ -55,6 +55,12 @@ public:
   /// calculate h_lambda operator for spin-constrained DFT
   void cal_h_lambda(std::complex<double>* h_lambda, const std::vector<std::complex<double>>& Sloc2, bool column_major, int isk);
 
+  /// calculate weight function
+  void cal_weight_func(std::complex<double>* weight,
+                       const std::vector<std::complex<double>>& Sloc2,
+                       bool column_major,
+                       int isk);
+
   void cal_MW(const int& step, LCAO_Matrix* LM, bool print = false);
 
   ModuleBase::matrix cal_MW_k(LCAO_Matrix* LM, const std::vector<std::vector<std::complex<double>>>& dm);

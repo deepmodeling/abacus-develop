@@ -9,6 +9,14 @@ void SpinConstrain<double, psi::DEVICE_CPU>::cal_h_lambda(std::complex<double>* 
 }
 
 template <>
+void SpinConstrain<double, psi::DEVICE_CPU>::cal_weight_func(std::complex<double>* weight,
+                                                             const std::vector<std::complex<double>>& Sloc2,
+                                                             bool column_major,
+                                                             int isk)
+{
+}
+
+template <>
 void SpinConstrain<double, psi::DEVICE_CPU>::cal_mw_from_lambda(int i_step)
 {
 }

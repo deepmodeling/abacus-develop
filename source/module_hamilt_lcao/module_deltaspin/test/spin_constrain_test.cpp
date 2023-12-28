@@ -398,10 +398,10 @@ TYPED_TEST(SpinConstrainTest, PrintMi)
     testing::internal::CaptureStdout();
     this->sc.print_Mi(true);
     std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("Total Magnetism on atom: 0  (0, 0, 0)"));
+    EXPECT_THAT(output, testing::HasSubstr("Total Magnetism on atom: 1  (0, 0, 0)"));
     this->sc.set_nspin(2);
      testing::internal::CaptureStdout();
     this->sc.print_Mi(true);
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("Total Magnetism on atom: 0  (0)"));
+    EXPECT_THAT(output, testing::HasSubstr("Total Magnetism on atom: 1  (0)"));
 }
