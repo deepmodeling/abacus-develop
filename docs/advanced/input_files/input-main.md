@@ -3321,10 +3321,11 @@ These variables are used to control the usage of deltaspin functionality.
 
 ### sc_mag_switch
 
-- **Type**: boolean
+- **Type**: int
 - **Description**: the switch of deltaspin functionality
   - 0: no deltaspin
   - 1: use the deltaspin method to constrain atomic magnetic moments
+  - 2: only output the atomic magnetic moments with weight function at the end of scf calculation
 - **Default**: 0
 
 ### decay_grad_switch
