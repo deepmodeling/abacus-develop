@@ -887,12 +887,7 @@ namespace ModuleESolver
         } // qifeng add 2019/9/10, jiyy modify 2023/2/27, liuyu move here 2023-04-18
     }
 
-    if (GlobalV::sc_mag_switch == 1)
-    {
-        SpinConstrain<TK, psi::DEVICE_CPU>& sc = SpinConstrain<TK, psi::DEVICE_CPU>::getScInstance();
-        sc.cal_MW(istep, &(this->LM), true);
-    }
-    else if (GlobalV::sc_mag_switch == 2)
+    if (GlobalV::sc_mag_switch == 1 || GlobalV::sc_mag_switch == 2)
     {
         SpinConstrain<TK, psi::DEVICE_CPU>& sc = SpinConstrain<TK, psi::DEVICE_CPU>::getScInstance();
         sc.cal_MW(istep, &(this->LM), true);
