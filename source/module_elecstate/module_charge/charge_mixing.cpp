@@ -906,76 +906,94 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
 {
     if (this->mixing_gg0 <= 0.0001 || this->mixing_beta <= 0.1)
         return;
-    // consider a resize for mixing_angle
-    int resize_tmp = 1;
-    if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0) resize_tmp = 2;
     //
-    std::vector<std::complex<double>> drhog(this->rhopw->npw * GlobalV::NSPIN / resize_tmp);
-    std::vector<double> drhor_filter(this->rhopw->nrxx * GlobalV::NSPIN / resize_tmp);
-    for (int is = 0; is < GlobalV::NSPIN / resize_tmp; ++is)
+    std::vector<std::complex<double>> drhog(this->rhopw->npw * this->_mixing_rho_type_num * this->_mixing_rho_unit_num);
+    std::vector<double> drhor_filter(this->rhopw->nrxx * this->_mixing_rho_type_num * this->_mixing_rho_unit_num);
+    for (int irho = 0; irho < this->_mixing_rho_type_num; ++irho)
     {
-        // Note after this process some G which is higher than Gmax will be filtered.
-        // Thus we cannot use Kerker_screen_recip(drhog.data()) directly after it.
-        this->rhopw->real2recip(drhor + is * this->rhopw->nrxx, drhog.data() + is * this->rhopw->npw);
+        // skip if other rho_type such as kinetic density is included
+        int address_r = irho * this->_mixing_rho_unit_num * this->rhopw->nrxx;
+        int address_g = irho * this->_mixing_rho_unit_num * this->rhopw->npw;
+        for (int is = 0; is < this->_mixing_rho_unit_num; ++is)
+        {
+            // Note after this process some G which is higher than Gmax will be filtered.
+            // Thus we cannot use Kerker_screen_recip(drhog.data()) directly after it.
+            this->rhopw->real2recip(drhor + is * this->rhopw->nrxx + address_r, drhog.data() + is * this->rhopw->npw + address_g);
+        }
     }
     // implement Kerker for density and magnetization separately
     double fac, gg0, amin;
-    for (int is = 0; is < GlobalV::NSPIN / resize_tmp; is++)
+    for (int irho = 0; irho < this->_mixing_rho_type_num; ++irho)
     {
-
-        if (is >= 1)
+        // skip if other rho_type such as kinetic density is included
+        int address_g = irho * this->_mixing_rho_unit_num * this->rhopw->npw;
+        for (int is = 0; is < this->_mixing_rho_unit_num; is++)
         {
-            if (GlobalV::MIXING_GG0_MAG <= 0.0001 || GlobalV::MIXING_BETA_MAG <= 0.1)
+            if (is >= 1)
             {
-#ifdef __DEBUG
-                assert(is == 1); // make sure break works
-#endif
-                double is_mag = GlobalV::NSPIN - 1;
-if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0) is_mag = 1;
-                for (int ig = 0; ig < this->rhopw->npw * is_mag; ig++)
+                if (this->mixing_gg0_mag <= 0.0001 || this->mixing_beta_mag <= 0.1)
                 {
-                    drhog[is * this->rhopw->npw + ig] = 0;
+#ifdef __DEBUG
+                    assert(is == 1); // make sure break works
+#endif
+                    double is_mag = this->_mixing_rho_unit_num - 1;
+                    for (int ig = 0; ig < this->rhopw->npw * is_mag; ig++)
+                    {
+                        drhog[is * this->rhopw->npw + ig + address_g] = 0;
+                    }
+                    break;
                 }
-                break;
+                fac = this->mixing_gg0_mag;
+                amin = this->mixing_beta_mag;
             }
-            fac = GlobalV::MIXING_GG0_MAG;
-            amin = GlobalV::MIXING_BETA_MAG;
-        }
-        else
-        {
-            fac = this->mixing_gg0;
-            amin = this->mixing_beta;
-        }
-        
-        gg0 = std::pow(fac * 0.529177 / GlobalC::ucell.tpiba, 2);
+            else
+            {
+                fac = this->mixing_gg0;
+                amin = this->mixing_beta;
+            }
+            
+            gg0 = std::pow(fac * 0.529177 / GlobalC::ucell.tpiba, 2);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
-        for (int ig = 0; ig < this->rhopw->npw; ig++)
-        {
-            double gg = this->rhopw->gg[ig];
-            // I have not decided how to handle gg=0 part, will be changed in future
-            //if (gg == 0)
-            //{
-            //    drhog[is * this->rhopw->npw + ig] *= 0;
-            //    continue;
-            //}
-            double filter_g = std::max(gg / (gg + gg0), GlobalV::MIXING_GG0_MIN / amin);
-            drhog[is * this->rhopw->npw + ig] *= (1 - filter_g);
+            for (int ig = 0; ig < this->rhopw->npw; ig++)
+            {
+                double gg = this->rhopw->gg[ig];
+                // I have not decided how to handle gg=0 part, will be changed in future
+                //if (gg == 0)
+                //{
+                //    drhog[is * this->rhopw->npw + ig] *= 0;
+                //    continue;
+                //}
+                double filter_g = std::max(gg / (gg + gg0), GlobalV::MIXING_GG0_MIN / amin);
+                drhog[is * this->rhopw->npw + ig + address_g] *= (1 - filter_g);
+            }
         }
-    }
-    // inverse FT
-    for (int is = 0; is < GlobalV::NSPIN / resize_tmp; ++is)
-    {
-        this->rhopw->recip2real(drhog.data() + is * this->rhopw->npw, drhor_filter.data() + is * this->rhopw->nrxx);
     }
 
+    // inverse FT
+    for (int irho = 0; irho < this->_mixing_rho_type_num; ++irho)
+    {
+        // skip if other rho_type such as kinetic density is included
+        int address_r = irho * this->_mixing_rho_unit_num * this->rhopw->nrxx;
+        int address_g = irho * this->_mixing_rho_unit_num * this->rhopw->npw;
+        for (int is = 0; is < this->_mixing_rho_unit_num; ++is)
+        {
+            this->rhopw->recip2real(drhog.data() + is * this->rhopw->npw + address_g, drhor_filter.data() + is * this->rhopw->nrxx + address_r);
+        }
+    }
+
+    for (int irho = 0; irho < this->_mixing_rho_type_num; ++irho)
+    {
+        // skip if other rho_type such as kinetic density is included
+        int address_r = irho * this->_mixing_rho_unit_num * this->rhopw->nrxx;
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
-    for (int ir = 0; ir < this->rhopw->nrxx * GlobalV::NSPIN / resize_tmp; ir++)
-    {
-        drhor[ir] -= drhor_filter[ir];
+        for (int ir = address_r; ir < address_r + this->rhopw->nrxx * this->_mixing_rho_unit_num; ir++)
+        {
+            drhor[ir] -= drhor_filter[ir];
+        }
     }
 }
 
