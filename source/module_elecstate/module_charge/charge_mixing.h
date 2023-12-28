@@ -64,7 +64,7 @@ class Charge_Mixing
     double inner_product_recip(std::complex<double>* rho1, std::complex<double>* rho2);
     double inner_product_recip_new1(std::complex<double>* rho1, std::complex<double>* rho2);
     double inner_product_recip_new2(std::complex<double>* rho1, std::complex<double>* rho2);
-
+    
     /**
      * @brief Inner product of two double vectors
      *
@@ -141,8 +141,9 @@ class Charge_Mixing
     double mixing_gg0_mag = 0.0;         ///< Kerker screen gg0 for magnetism
     double mixing_angle = -10.0;         ///< mixing beta for non-colinear angle mixing
     bool mixing_tau = false;             ///< whether to use tau mixing
-    int nspin = 1;                       ///< number of spin
-    int mixing_nspin = 1;                ///< number of spin used in mixing
+    int _nspin = 1;                      ///< number of spin      
+    int _mixing_rho_type_num = 1;        ///< how many types of rho stored in mixing_data. only charge density: 1; charge density and kinetic energy density: 2 
+    int _mixing_rho_unit_num = 1;        ///< number of data_unit for each rho_block in mixing_data, depending on nspin and whether mixing_tau is used
 
     bool new_e_iteration = true;
 

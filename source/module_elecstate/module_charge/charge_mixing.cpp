@@ -38,9 +38,12 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
     this->mixing_gg0_mag = mixing_gg0_mag_in;
     this->mixing_angle = mixing_angle_in;
     // nspin
-    this->nspin = GlobalV::NSPIN;
-    this->mixing_nspin = GlobalV::NSPIN;
-    if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0 ) this->mixing_nspin = 2;
+    this->_nspin = GlobalV::NSPIN;
+    this->_mixing_rho_unit_num = GlobalV::NSPIN;
+    this->_mixing_rho_type_num = 1;
+    if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0 ) this->_mixing_rho_unit_num = 2;
+    // will open for tau mixing in the future
+    // if (this->mixing_tau) this->_mixing_rho_type_num = 2;
 
     GlobalV::ofs_running<<"\n----------- Double Check Mixing Parameters Begin ------------"<<std::endl;
     GlobalV::ofs_running<<"mixing_type: "<< this->mixing_mode <<std::endl;
@@ -89,12 +92,12 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
     if (GlobalV::SCF_THR_TYPE == 1)
     {  
         this->mixing->init_mixing_data(this->rho_mdata,
-                                    this->rhopw->npw * this->mixing_nspin,
+                                    this->rhopw->npw * this->_mixing_rho_type_num * this->_mixing_rho_unit_num,
                                     sizeof(std::complex<double>));
     }
     else
     {
-        this->mixing->init_mixing_data(this->rho_mdata, this->rhopw->nrxx * this->mixing_nspin, sizeof(double));
+        this->mixing->init_mixing_data(this->rho_mdata, this->rhopw->nrxx * this->_mixing_rho_type_num * this->_mixing_rho_unit_num, sizeof(double));
     }
 
 #ifdef USE_PAW
@@ -928,7 +931,7 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
                 assert(is == 1); // make sure break works
 #endif
                 double is_mag = GlobalV::NSPIN - 1;
-                if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0) is_mag = 1;
+if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0) is_mag = 1;
                 for (int ig = 0; ig < this->rhopw->npw * is_mag; ig++)
                 {
                     drhog[is * this->rhopw->npw + ig] = 0;
@@ -996,7 +999,7 @@ double Charge_Mixing::inner_product_recip_new1(std::complex<double>* rho1, std::
 {
     double rnorm = 0.0;
     // consider a resize for mixing_angle
-    int resize_tmp = 1;
+int resize_tmp = 1;
     if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0) resize_tmp = 2;
 #ifdef _OPENMP
 #pragma omp parallel for reduction(+ : rnorm)
@@ -1126,7 +1129,7 @@ double Charge_Mixing::inner_product_recip_new2(std::complex<double>* rhog1, std:
 double Charge_Mixing::inner_product_real(double* rho1, double* rho2)
 {
     double rnorm = 0.0;
-    // consider a resize for mixing_angle
+// consider a resize for mixing_angle
     int resize_tmp = 1;
     if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0) resize_tmp = 2;
 
