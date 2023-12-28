@@ -525,7 +525,7 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
 {
     double* rhor_in;
     double* rhor_out;
-    if (GlobalV::NSPIN == 1)
+    if (this->_nspin == 1)
     {
         rhor_in = chr->rho_save[0];
         rhor_out = chr->rho[0];
@@ -536,7 +536,7 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
         this->mixing->cal_coef(this->rho_mdata, inner_product);
         this->mixing->mix_data(this->rho_mdata, rhor_out);
     }
-    else if (GlobalV::NSPIN == 2)
+    else if (this->_nspin == 2)
     {
         chr->allocate_rho_mag();
         chr->get_rho_mag();
@@ -571,7 +571,7 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
         chr->get_rho_from_mag();
         chr->destroy_rho_mag();
     }
-    else if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE <= 0)
+    else if (this->_nspin == 4 && this->mixing_angle <= 0)
     {
         // normal broyden mixing for {rho, mx, my, mz}
         rhor_in = chr->rho_save[0];
@@ -602,7 +602,7 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
         this->mixing->cal_coef(this->rho_mdata, inner_product);
         this->mixing->mix_data(this->rho_mdata, rhor_out);
     }
-    else if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0)
+    else if (this->_nspin == 4 && this->mixing_angle > 0)
     {
         // special broyden mixing for {rho, |m|} proposed by J. Phys. Soc. Jpn. 82 (2013) 114706
         // here only consider the case of mixing_angle = 1, which mean only change |m| and keep angle fixed
