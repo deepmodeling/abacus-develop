@@ -1,3 +1,7 @@
+//==========================================================
+// Author: Jingang Han
+// DATE : 2023-12-22
+//==========================================================
 #ifndef RDMFT_TEST_H
 #define RDMFT_TEST_H
 
@@ -104,7 +108,7 @@ class Veff_rdmft : public OperatorLCAO<TK, TR>
                       const ModulePW::PW_Basis& rho_basis_in,
                       const ModuleBase::matrix& vloc_in,
                       const ModuleBase::ComplexMatrix& sf_in,
-                      std::string& potential_in)
+                      const std::string& potential_in)
         : GK(GK_in),
           loc(loc_in),
           charge_(charge_in),
@@ -133,7 +137,7 @@ class Veff_rdmft : public OperatorLCAO<TK, TR>
                           const ModulePW::PW_Basis& rho_basis_in,
                           const ModuleBase::matrix& vloc_in,
                           const ModuleBase::ComplexMatrix& sf_in,  
-                          std::string& potential_in
+                          const std::string& potential_in
                           )
         : GG(GG_in), 
           loc(loc_in), 
@@ -389,7 +393,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     para_Eij.set_local2global( GlobalV::NBANDS, GlobalV::NBANDS, ofs_running, ofs_warning );
     para_Eij.set_desc( GlobalV::NBANDS, GlobalV::NBANDS, para_Eij.get_row_size(), false );
 
-    //hK_in nk*nbasis*nbasis
+    // global HR or HK is nk*nbasis*nbasis matrix. nbasis is stored by 2d-block, nk or nR is always global
     hamilt::HContainer<TR> HR_TV(GlobalC::ucell, ParaV);
     hamilt::HContainer<TR> HR_hartree(GlobalC::ucell, ParaV);
     hamilt::HContainer<TR> HR_XC(GlobalC::ucell, ParaV);
@@ -397,7 +401,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     std::vector<TK> HK_hartree(ParaV->get_row_size()*ParaV->get_col_size());
     std::vector<TK> HK_XC(ParaV->get_row_size()*ParaV->get_col_size());
     
-    //set zero ( std::vector will automatically be set to zero )
+    // set zero ( std::vector will automatically be set to zero )
     HR_TV.set_zero();
     HR_hartree.set_zero();
     HR_XC.set_zero();

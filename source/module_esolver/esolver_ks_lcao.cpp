@@ -875,13 +875,7 @@ namespace ModuleESolver
     //initialize the gradients of Etotal on wg and wfc, and set all elements to 0. 
     ModuleBase::matrix E_gradient_wg(this->pelec->wg.nr, this->pelec->wg.nc, true);
     psi::Psi<TK> E_gradient_wfc(this->psi->get_nk(), this->psi->get_nbands(), this->psi->get_nbasis()); 
-        
-    //initialize E_gradient_wfc to {0.0}
-    TK* pE_gradient_wfc = E_gradient_wfc.get_pointer();
-    #ifdef _OPENMP
-    #pragma omp parallel for schedule(static, 1024)
-    #endif
-    for(int i=0; i<E_gradient_wfc.size(); ++i) pE_gradient_wfc[i] = 0.0;
+    hamilt::set_zero_psi(E_gradient_wfc);
 
     // esolver_ks_lcao.h(LCAO_Matrix LM),           LCAO_matrix.h(Parallel_Orbitals* ParaV)
     // esolver_fp.h(elecstate::ElecState* pelec),   elecstate.h(ModuleBase::matrix wg),      this->pelec->wg

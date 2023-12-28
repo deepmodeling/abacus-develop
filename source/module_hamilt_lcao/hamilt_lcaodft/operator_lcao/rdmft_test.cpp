@@ -1,3 +1,7 @@
+//==========================================================
+// Author: Jingang Han
+// DATE : 2023-12-22
+//==========================================================
 #include "rdmft_test.h"
 
 #include "module_base/blas_connector.h"
@@ -129,7 +133,7 @@ void Veff_rdmft<TK, TR>::contributeHR()
 
     double* vr_eff_rdmft = nullptr;
 
-    // calculate v_hartree(r) or V_local(r) or v_xc(r)
+    // calculate v_hartree(r) or v_local(r) or v_xc(r)
     if( potential_ == "hartree" )
     {   
         ModuleBase::matrix v_matrix_hartree(GlobalV::NSPIN, charge_->nrxx);
