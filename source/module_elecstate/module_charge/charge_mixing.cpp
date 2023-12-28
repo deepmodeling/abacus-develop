@@ -41,7 +41,7 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
     this->_nspin = GlobalV::NSPIN;
     this->_mixing_rho_unit_num = GlobalV::NSPIN;
     this->_mixing_rho_type_num = 1;
-    if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0 ) this->_mixing_rho_unit_num = 2;
+    if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0 ) this->_mixing_rho_unit_num = 2; // {rho,|m|}
     // will open for tau mixing in the future
     // if (this->mixing_tau) this->_mixing_rho_type_num = 2;
 

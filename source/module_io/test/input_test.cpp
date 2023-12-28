@@ -158,6 +158,9 @@ TEST_F(InputTest, Default)
         EXPECT_DOUBLE_EQ(INPUT.mixing_beta,-10.0);
         EXPECT_EQ(INPUT.mixing_ndim,8);
         EXPECT_DOUBLE_EQ(INPUT.mixing_gg0,1.00);
+		EXPECT_DOUBLE_EQ(INPUT.mixing_gg0_mag,0.00);
+		EXPECT_DOUBLE_EQ(INPUT.mixing_beta_mag,-10.0);
+		EXPECT_DOUBLE_EQ(INPUT.mixing_angle,-10.0);
         EXPECT_EQ(INPUT.init_wfc,"atomic");
         EXPECT_EQ(INPUT.mem_saver,0);
         EXPECT_EQ(INPUT.printe,100);
