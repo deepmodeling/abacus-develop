@@ -563,7 +563,7 @@ namespace ModuleESolver
     }
 
     // run the inner lambda loop to contrain atomic moments with the DeltaSpin method
-    if (GlobalV::sc_mag_switch && iter > GlobalV::sc_scf_nmin)
+    if (GlobalV::sc_mag_switch == 1 && iter > GlobalV::sc_scf_nmin)
     {
         SpinConstrain<TK, psi::DEVICE_CPU>& sc = SpinConstrain<TK, psi::DEVICE_CPU>::getScInstance();
         sc.run_lambda_loop(iter-1);
@@ -636,7 +636,7 @@ namespace ModuleESolver
         this->dpks_cal_e_delta_band(dm);
     }
 #endif
-    if (GlobalV::sc_mag_switch)
+    if (GlobalV::sc_mag_switch == 1)
     {
         SpinConstrain<TK, psi::DEVICE_CPU>& sc = SpinConstrain<TK, psi::DEVICE_CPU>::getScInstance();
         sc.cal_MW(iter, &(this->LM));
@@ -774,7 +774,7 @@ namespace ModuleESolver
     }
 
     // escon: energy of spin constraint depends on Mi, so cal_energies should be called after cal_MW
-    if (GlobalV::sc_mag_switch)
+    if (GlobalV::sc_mag_switch == 1)
     {
         SpinConstrain<TK, psi::DEVICE_CPU>& sc = SpinConstrain<TK, psi::DEVICE_CPU>::getScInstance();
         sc.cal_MW(iter, &(this->LM));
@@ -887,7 +887,7 @@ namespace ModuleESolver
         } // qifeng add 2019/9/10, jiyy modify 2023/2/27, liuyu move here 2023-04-18
     }
 
-    if (GlobalV::sc_mag_switch)
+    if (GlobalV::sc_mag_switch == 1)
     {
         SpinConstrain<TK, psi::DEVICE_CPU>& sc = SpinConstrain<TK, psi::DEVICE_CPU>::getScInstance();
         sc.cal_MW(istep, &(this->LM), true);

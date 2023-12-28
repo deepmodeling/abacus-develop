@@ -329,7 +329,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
             );
             this->getOperator()->add(dftu);
         }
-        if (GlobalV::sc_mag_switch)
+        if (GlobalV::sc_mag_switch == 1)
         {
             Operator<TK>* sc_lambda = new OperatorScLambda<OperatorLCAO<TK, TR>>(
                 LM_in,

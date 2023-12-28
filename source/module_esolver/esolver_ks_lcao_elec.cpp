@@ -231,7 +231,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
         }
     }
 #endif
-    if (GlobalV::sc_mag_switch)
+    if (GlobalV::sc_mag_switch == 1)
     {
         SpinConstrain<TK, psi::DEVICE_CPU>& sc = SpinConstrain<TK, psi::DEVICE_CPU>::getScInstance();
         sc.init_sc(GlobalV::sc_thr,

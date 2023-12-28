@@ -897,7 +897,7 @@ TEST_F(write_input, Deltaspin22)
     EXPECT_THAT(output, testing::HasSubstr("#Parameters (22.non-collinear spin-constrained DFT)"));
     EXPECT_THAT(output,
                 testing::HasSubstr(
-                    "sc_mag_switch                  0 #0: no spin-constrained DFT; 1: constrain atomic magnetization"));
+                    "sc_mag_switch                  0 #0: no spin-constrained DFT; 1: constrain atomic magnetization; 2: output atomic magnetization with weight"));
     EXPECT_THAT(output,
                 testing::HasSubstr("decay_grad_switch              0 #switch to control gradient break condition"));
     EXPECT_THAT(output,

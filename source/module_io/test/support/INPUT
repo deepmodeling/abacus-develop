@@ -373,8 +373,8 @@ hubbard_u           0 #Hubbard Coulomb interaction parameter U(ev)
 orbital_corr        -1 #which correlated orbitals need corrected ; d:2 ,f:3, do not need correction:-1
 
 #Parameters (22.non-collinear spin-constrained DFT)
-sc_mag_switch                  0 #0: no spin-constrained DFT; 1: constrain atomic magnetization via values at xyz; 3: via spin value and angles
-decay_grad_switch              1 #
+sc_mag_switch                  0 #0: no spin-constrained DFT; 1: constrain atomic magnetization; 2: output atomic magnetization with weight
+decay_grad_switch              1 #switch to control gradient break condition
 sc_thr                         1e-04 #Convergence criterion of spin-constrained iteration (RMS) in uB
 nsc                            50 #Maximal number of spin-constrained iteration
 nsc_min                        4 #Minimum number of spin-constrained iteration

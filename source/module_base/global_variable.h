@@ -309,7 +309,7 @@ extern bool out_bandgap;
 extern int out_interval;
 
 // Deltaspin related
-extern bool sc_mag_switch; // 0: no deltaspin; 1: constrain atomic magnetic moments;
+extern int sc_mag_switch;      // 0: no deltaspin; 1: constrain atomic magnetic moments;
 extern bool decay_grad_switch; // 0: decay grad will be set to zero; 1: with decay grad set for some elements
 extern double sc_thr;
 extern int nsc;

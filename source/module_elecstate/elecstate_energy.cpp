@@ -274,7 +274,7 @@ void ElecState::cal_energies(const int type)
         this->f_en.esol_cav = get_solvent_model_Acav();
     }
 #ifdef __LCAO
-    if (GlobalV::sc_mag_switch)
+    if (GlobalV::sc_mag_switch == 1)
     {
         this->f_en.escon = get_spin_constrain_energy();
     }

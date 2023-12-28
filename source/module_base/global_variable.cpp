@@ -280,7 +280,7 @@ int out_interval = 1;    // convert from out_hsR_interval liuyu 2023-04-18
 //==========================================================
 // Deltaspin related
 //==========================================================
-bool sc_mag_switch = 0;
+int sc_mag_switch = 0;
 bool decay_grad_switch = 0;
 double sc_thr = 1.0e-6;
 int nsc = 100;

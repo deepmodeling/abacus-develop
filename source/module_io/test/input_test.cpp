@@ -1564,9 +1564,9 @@ TEST_F(InputTest, Check)
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
 	output = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output,testing::HasSubstr("sc_file (json format) must be set when sc_mag_switch > 0"));
-	// warning 2 of Deltaspin
-	INPUT.sc_file = "sc.json";
+    EXPECT_THAT(output, testing::HasSubstr("sc_file (json format) must be set when sc_mag_switch is 1"));
+    // warning 2 of Deltaspin
+    INPUT.sc_file = "sc.json";
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
 	output = testing::internal::GetCapturedStdout();
