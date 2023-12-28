@@ -1,0 +1,12 @@
+INPUT_PARAMETERS
+#Parameters     (General)
+calculation         scf
+
+#Parameters (3.PW)
+basis_type              lcao
+ecutwfc                 60
+scf_thr                 1e-6
+scf_nmax                100
+
+cal_force              1
+gamma_only		1
