@@ -1,6 +1,6 @@
 #include "spin_constrain.h"
 
-// init sc
+// init sc to run inner lambda loop
 template <typename FPTYPE, typename Device>
 void SpinConstrain<FPTYPE, Device>::init_sc(double sc_thr_in,
                                             int nsc_in,
@@ -30,6 +30,27 @@ void SpinConstrain<FPTYPE, Device>::init_sc(double sc_thr_in,
     this->set_npol(NPOL);
     this->set_ParaV(ParaV_in);
     this->set_solver_parameters(kv_in, phsol_in, p_hamilt_in, psi_in, pelec_in, KS_SOLVER_in, LM_in);
+}
+
+// init sc to output atomic magnetic moment with weighted overlap
+template <typename FPTYPE, typename Device>
+void SpinConstrain<FPTYPE, Device>::init_sc_2(const UnitCell& ucell,
+                                              int NPOL,
+                                              Parallel_Orbitals* ParaV_in,
+                                              int nspin_in,
+                                              K_Vectors kv_in,
+                                              hamilt::Hamilt<FPTYPE, Device>* p_hamilt_in,
+                                              elecstate::ElecState* pelec_in)
+{
+    this->set_atomCounts(ucell.get_atomCounts());
+    this->set_orbitalCounts(ucell.get_orbitalCounts());
+    this->set_lnchiCounts(ucell.get_lnchiCounts());
+    this->set_nspin(nspin_in);
+    this->set_npol(NPOL);
+    this->set_ParaV(ParaV_in);
+    this->kv_ = kv_in;
+    this->p_hamilt = p_hamilt_in;
+    this->pelec = pelec_in;
 }
 
 template class SpinConstrain<std::complex<double>, psi::DEVICE_CPU>;

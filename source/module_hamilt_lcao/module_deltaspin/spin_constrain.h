@@ -43,6 +43,15 @@ public:
                psi::Psi<FPTYPE>* psi_in,
                elecstate::ElecState* pelec_in);
 
+  /// @brief initialize sc for output atomic magnetic moment with weighted overlap
+  void init_sc_2(const UnitCell& ucell,
+                 int NPOL,
+                 Parallel_Orbitals* ParaV_in,
+                 int nspin_in,
+                 K_Vectors kv_in,
+                 hamilt::Hamilt<FPTYPE, Device>* p_hamilt_in,
+                 elecstate::ElecState* pelec_in);
+
   /// calculate h_lambda operator for spin-constrained DFT
   void cal_h_lambda(std::complex<double>* h_lambda, const std::vector<std::complex<double>>& Sloc2, bool column_major, int isk);
 
@@ -86,6 +95,9 @@ public:
 
   /// print mi
   void print_Mi(bool print = false);
+
+  /// save mi in log file
+  void log_Mi_info(std::ofstream& ofs);
 
   /// collect_mw from matrix multiplication result
   void collect_MW(ModuleBase::matrix& MecMulP, const ModuleBase::ComplexMatrix& mud, int nw, int isk);

@@ -233,6 +233,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
 #endif
     if (GlobalV::sc_mag_switch == 1)
     {
+        // init sc to run inner lambda loop
         SpinConstrain<TK, psi::DEVICE_CPU>& sc = SpinConstrain<TK, psi::DEVICE_CPU>::getScInstance();
         sc.init_sc(GlobalV::sc_thr,
                    GlobalV::nsc,
@@ -252,6 +253,18 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
                    this->p_hamilt,
                    this->psi,
                    this->pelec);
+    }
+    else if (GlobalV::sc_mag_switch == 2)
+    {
+        // init sc to output atomic magnetic moment with weighted overlap
+        SpinConstrain<TK, psi::DEVICE_CPU>& sc = SpinConstrain<TK, psi::DEVICE_CPU>::getScInstance();
+        sc.init_sc_2(GlobalC::ucell,
+                     GlobalV::NPOL,
+                     &(this->orb_con.ParaV),
+                     GlobalV::NSPIN,
+                     this->kv,
+                     this->p_hamilt,
+                     this->pelec);
     }
     //=========================================================
     // cal_ux should be called before init_scf because

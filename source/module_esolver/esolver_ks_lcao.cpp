@@ -892,6 +892,12 @@ namespace ModuleESolver
         SpinConstrain<TK, psi::DEVICE_CPU>& sc = SpinConstrain<TK, psi::DEVICE_CPU>::getScInstance();
         sc.cal_MW(istep, &(this->LM), true);
     }
+    else if (GlobalV::sc_mag_switch == 2)
+    {
+        SpinConstrain<TK, psi::DEVICE_CPU>& sc = SpinConstrain<TK, psi::DEVICE_CPU>::getScInstance();
+        sc.cal_MW(istep, &(this->LM), true);
+        sc.log_Mi_info(GlobalV::ofs_running);
+    }
 
     if (!GlobalV::CAL_FORCE && !GlobalV::CAL_STRESS)
     {

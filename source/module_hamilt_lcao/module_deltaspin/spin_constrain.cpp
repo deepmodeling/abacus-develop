@@ -556,5 +556,30 @@ void SpinConstrain<FPTYPE, Device>::print_Mi(bool print)
     }
 }
 
+/// save mi in log file
+template <typename FPTYPE, typename Device>
+void SpinConstrain<FPTYPE, Device>::log_Mi_info(std::ofstream& ofs)
+{
+    this->check_atomCounts();
+    int nat = this->get_nat();
+    ofs << std::endl;
+    ofs << "-----------------------------------------------------------------------" << std::endl;
+    for (int iat = 0; iat < nat; ++iat)
+    {
+        if (this->nspin_ == 2)
+        {
+            ofs << "Total Magnetism on atom (with weight function): " << iat << " " << std::setprecision(10) << " ("
+                << Mi_[iat].z << ")" << std::endl;
+        }
+        else if (this->nspin_ == 4)
+        {
+            ofs << "Total Magnetism on atom (with weight function): " << iat << " " << std::setprecision(10) << " ("
+                << Mi_[iat].x << ", " << Mi_[iat].y << ", " << Mi_[iat].z << ")" << std::endl;
+        }
+    }
+    ofs << "-----------------------------------------------------------------------" << std::endl;
+    ofs << std::endl;
+}
+
 template class SpinConstrain<std::complex<double>, psi::DEVICE_CPU>;
 template class SpinConstrain<double, psi::DEVICE_CPU>;
