@@ -3471,7 +3471,7 @@ These variables are used to control the usage of QO analysis.
   - `energy`: will generate hydrogen-like orbitals according to Aufbau principle. For example the Cu (1s2 2s2 2p6 3s2 3p6 3d10 4s1), will generate these orbitals.
   
   *warning: to use* `full`, *generation strategy may cause the space spanned larger than the one spanned by numerical atomic orbitals, in this case, must filter out orbitals in some way*
-- **Default**: `energy`
+- **Default**: `minimal`
 
 ### qo_screening_coeff
 
