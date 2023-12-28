@@ -573,7 +573,7 @@ TEST_F(NumericalRadialTest, ToNumericalOrbitalLm)
 
     double kcut_legacy = (nk_legacy - 1) * lcao_dk;
 
-    chi.to_numerical_orbital_lm(nol, lcao_ecut, lcao_dk);
+    chi.to_numerical_orbital_lm(nol, nk_legacy, lcao_dk);
     int nrcut = static_cast<int>(chi.rcut() / dr) + 1;
 
     // check that the orbital_lm has the same values as the chi

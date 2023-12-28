@@ -217,7 +217,7 @@ void RadialCollection::set_grid(const bool for_r_space, const int ngrid, const d
     {
         radset_[itype]->set_grid(for_r_space, ngrid, grid, mode);
     }
-    if (for_r_space) rcut_max_ = grid[ngrid - 1];
+    set_rcut_max();
 }
 
 void RadialCollection::set_uniform_grid(const bool for_r_space,
@@ -230,8 +230,7 @@ void RadialCollection::set_uniform_grid(const bool for_r_space,
     {
         radset_[itype]->set_uniform_grid(for_r_space, ngrid, cutoff, mode, enable_fft);
     }
-
-    if (for_r_space) rcut_max_ = cutoff;
+    set_rcut_max();
 }
 
 char RadialCollection::check_file_type(const std::string& file) const
