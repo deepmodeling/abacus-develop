@@ -131,7 +131,12 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* Gr
     // allocate the memory of BaseMatrix in HR, and set the new values to zero
     if(std::is_same<TK, double>::value)
     {
+        // only gamma-only has full size of Hamiltonian of DeePKS now, 
+        // multi-k keep same size of nonlocal operator, H_V_delta will be allocated by hR
         this->H_V_delta->allocate(nullptr, true);
+        // expand hR with H_V_delta, only gamma-only case now
+        this->hR->add(*this->H_V_delta);
+        this->hR->allocate(nullptr, false);
     }
 
     ModuleBase::timer::tick("DeePKS", "initialize_HR");
