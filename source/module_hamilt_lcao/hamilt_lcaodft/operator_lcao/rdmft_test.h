@@ -575,6 +575,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
 }
 
 
+
 }
 
 #endif
