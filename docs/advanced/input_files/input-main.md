@@ -2788,7 +2788,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 - **Description**: write the "UNK.*" file or not.
   - 0: don't write the "UNK.*" file.
   - 1: write the "UNK.*" file.
-- **Default**: 1
+- **Default**: 0
 
 ### out_wannier_wvfn_formatted
 
