@@ -300,12 +300,12 @@ void wgMulPsi(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& wg, psi:
     const int nbands_local = wfc.get_nbands();
     const int nbasis_local = wfc.get_nbasis();
 
-    const int nbasis = ParaV->desc[2];
+    const int nbasis = ParaV->desc[2];      // need to be deleted
     const int nbands = ParaV->desc_wfc[3];
 
     for (int ik = 0; ik < nk_local; ++ik)
     {
-        for (int ib_local = 0; ib_local < nbands_local; ++ib_local)
+        for (int ib_local = 0; ib_local < ParaV->ncol_bands; ++ib_local)  // ib_local < nbands_local , some problem
         {
             const double wg_local = wg_func( wg(ik, ParaV->local2global_col(ib_local)), symbol);
             TK* wfc_pointer = &(wfc(ik, ib_local, 0));

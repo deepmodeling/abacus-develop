@@ -895,43 +895,43 @@ namespace ModuleESolver
     double Etotal_RDMFT = 0.0;
 
     // gamma only calculation
-    // if( GlobalV::GAMMA_ONLY_LOCAL )
-    // {
-    //     Etotal_RDMFT = hamilt::rdmft_cal<TK,TR>(
-    //         &LM,
-    //         LM.ParaV,
-    //         this->pelec->wg,
-    //         *(this->psi),
-    //         E_gradient_wg,
-    //         E_gradient_wfc,
-    //         this->kv,
-    //         this->UHM.GG,
-    //         this->LOC,
-    //         *(this->pelec->charge),
-    //         *(this->pw_rho),
-    //         GlobalC::ppcell.vloc,
-    //         this->sf.strucFac
-    //     );
-    // }
-    // // multi-k calculation
-    // else
-    // {
-    //     Etotal_RDMFT = hamilt::rdmft_cal<TK,TR>(
-    //         &LM,
-    //         LM.ParaV,
-    //         this->pelec->wg,
-    //         *(this->psi),
-    //         E_gradient_wg,
-    //         E_gradient_wfc,
-    //         this->kv,
-    //         this->UHM.GK,
-    //         this->LOC,
-    //         *(this->pelec->charge),
-    //         *(this->pw_rho),
-    //         GlobalC::ppcell.vloc,
-    //         this->sf.strucFac
-    //     );
-    // }
+    if( GlobalV::GAMMA_ONLY_LOCAL )
+    {
+        Etotal_RDMFT = hamilt::rdmft_cal<TK,TR>(
+            &LM,
+            LM.ParaV,
+            this->pelec->wg,
+            *(this->psi),
+            E_gradient_wg,
+            E_gradient_wfc,
+            this->kv,
+            this->UHM.GG,
+            this->LOC,
+            *(this->pelec->charge),
+            *(this->pw_rho),
+            GlobalC::ppcell.vloc,
+            this->sf.strucFac
+        );
+    }
+    // multi-k calculation
+    else
+    {
+        Etotal_RDMFT = hamilt::rdmft_cal<TK,TR>(
+            &LM,
+            LM.ParaV,
+            this->pelec->wg,
+            *(this->psi),
+            E_gradient_wg,
+            E_gradient_wfc,
+            this->kv,
+            this->UHM.GK,
+            this->LOC,
+            *(this->pelec->charge),
+            *(this->pw_rho),
+            GlobalC::ppcell.vloc,
+            this->sf.strucFac
+        );
+    }
     /******** test RDMFT *********/
 
 
