@@ -362,7 +362,7 @@ double sumWg_getEnergy(const ModuleBase::matrix& wg_wfcHwfc);
 
 // for test add a function and call it in module_elecstate/elecstate_lcao.cpp
 // !!!just used for k-dependent grid integration. For gamma only algorithms, transfer Gint_k& GK_in to Gint_Gamma& GG_in and use it in Veff_rdmft<OperatorLCAO<TK, TR>>
-template <typename TK, typename TR>
+template <typename TK, typename TR, typename T_Gint>
 double rdmft_cal(LCAO_Matrix* LM_in,
                         Parallel_Orbitals* ParaV,
                         const ModuleBase::matrix& wg,
@@ -370,7 +370,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
                         ModuleBase::matrix& wg_wfcHamiltWfc,
                         psi::Psi<TK>& wg_HamiltWfc,
                         const K_Vectors& kv_in,
-                        Gint_k& GK_in,
+                        T_Gint& G_in, //Gint_k& GK_in
                         Local_Orbital_Charge& loc_in,
                         const Charge& charge_in,
                         const ModulePW::PW_Basis& rho_basis_in,
@@ -430,7 +430,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
 
     std::string local_pot = "local";
     OperatorLCAO<TK, TR>* V_local = new Veff_rdmft<TK,TR>(
-        &GK_in,
+        &G_in,
         &loc_in,
         LM_in,
         kvec_d_in,
@@ -448,7 +448,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
 
     std::string hartree_pot = "hartree";
     OperatorLCAO<TK, TR>* V_hartree = new Veff_rdmft<TK,TR>(
-        &GK_in,
+        &G_in,
         &loc_in,
         LM_in,
         kvec_d_in,
