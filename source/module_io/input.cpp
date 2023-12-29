@@ -187,7 +187,7 @@ void Input::Default(void)
     out_wannier_amn = true;
     out_wannier_eig = true;
     out_wannier_mmn = true;
-    out_wannier_unk = true;
+    out_wannier_unk = false;
     out_wannier_wvfn_formatted = true;
     for (int i = 0; i < 3; i++)
     {
