@@ -56,37 +56,37 @@ namespace hamilt
 // // for test use dgemm_
 // void printResult_dgemm();
 
-// //for print matrix
-// template <typename TK>
-// void printMatrix_pointer(int M, int N, TK& matrixA, std::string nameA)
-// {
-//     std::cout << "\n" << nameA << ": \n";
-//     for(int i=0; i<M; ++i)
-//     {
-//         for(int j=0; j<N; ++j)
-//         {
-//             std::cout << *(&matrixA+i*N+j) << " ";
-//         }
-//         std::cout << "\n";
-//     }
-//     std::cout << "\n";
-// }
+//for print matrix
+template <typename TK>
+void printMatrix_pointer(int M, int N, TK* matrixA, std::string nameA)
+{
+    std::cout << "\n" << nameA << ": \n";
+    for(int i=0; i<M; ++i)
+    {
+        for(int j=0; j<N; ++j)
+        {
+            std::cout << *(matrixA+i*N+j) << " ";
+        }
+        std::cout << "\n";
+    }
+    std::cout << "\n";
+}
 
 
-// template <typename TK>
-// void printMatrix_vector(int M, int N, std::vector<TK>& matrixA, std::string nameA)
-// {
-//     std::cout << "\n" << nameA << ": \n";
-//     for(int i=0; i<M; ++i)
-//     {
-//         for(int j=0; j<N; ++j)
-//         {
-//             std::cout << matrixA[i*N+j] << " ";
-//         }
-//         std::cout << "\n";
-//     }
-//     std::cout << "\n";
-// }
+template <typename TK>
+void printMatrix_vector(int M, int N, std::vector<TK>& matrixA, std::string nameA)
+{
+    std::cout << "\n" << nameA << ": \n";
+    for(int i=0; i<M; ++i)
+    {
+        for(int j=0; j<N; ++j)
+        {
+            std::cout << matrixA[i*N+j] << " ";
+        }
+        std::cout << "\n\n";
+    }
+    std::cout << "\n";
+}
 
 
 
@@ -108,7 +108,7 @@ class Veff_rdmft : public OperatorLCAO<TK, TR>
                       const ModulePW::PW_Basis& rho_basis_in,
                       const ModuleBase::matrix& vloc_in,
                       const ModuleBase::ComplexMatrix& sf_in,
-                      const std::string& potential_in)
+                      const std::string potential_in)
         : GK(GK_in),
           loc(loc_in),
           charge_(charge_in),
@@ -137,7 +137,7 @@ class Veff_rdmft : public OperatorLCAO<TK, TR>
                           const ModulePW::PW_Basis& rho_basis_in,
                           const ModuleBase::matrix& vloc_in,
                           const ModuleBase::ComplexMatrix& sf_in,  
-                          const std::string& potential_in
+                          const std::string potential_in
                           )
         : GG(GG_in), 
           loc(loc_in), 
@@ -305,7 +305,7 @@ void wgMulPsi(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& wg, psi:
 
     for (int ik = 0; ik < nk_local; ++ik)
     {
-        for (int ib_local = 0; ib_local < ParaV->ncol_bands; ++ib_local)  // ib_local < nbands_local , some problem
+        for (int ib_local = 0; ib_local < nbands_local; ++ib_local)  // ib_local < nbands_local , some problem, ParaV->ncol_bands
         {
             const double wg_local = wg_func( wg(ik, ParaV->local2global_col(ib_local)), symbol);
             TK* wfc_pointer = &(wfc(ik, ib_local, 0));
@@ -321,7 +321,7 @@ void add_psi(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& wg,
                 psi::Psi<TK>& psi_TV, psi::Psi<TK>& psi_hartree, psi::Psi<TK>& psi_XC, psi::Psi<TK>& wg_Hpsi)
 {
     const int nk = psi_TV.get_nk();
-    const int nbn_local = psi_TV.get_nbands();
+    const int nbn_local = psi_TV.get_nbands();  ///////////////////////////////////////////const int nbn_local = psi_TV.get_nbands(); ParaV->ncol_bands
     const int nbs_local = psi_TV.get_nbasis();
     wgMulPsi(ParaV, wg, psi_TV);
     wgMulPsi(ParaV, wg, psi_hartree);
@@ -383,6 +383,29 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     std::ofstream ofs_running;
     std::ofstream ofs_warning;
     const std::vector<ModuleBase::Vector3<double>> kvec_d_in = kv_in.kvec_d;
+
+    // get local index and global k-points of wfc
+    const int nk_total = wfc.get_nk();
+    const int nbands_local = wfc.get_nbands();  // const int nbands_local = wfc_.get_nbands();  ParaV->ncol_bands
+    const int nbasis_local = wfc.get_nbasis();
+
+    // if( GlobalV::GAMMA_ONLY_LOCAL )
+    // {
+    //     psi::Psi<TK> wfc(nk_total, nbands_local, nbasis_local);
+    //     // TK* pwfc_ = wfc_.get_pointer();
+    //     // TK* pwfc = wfc.get_pointer();
+    //     for(int ik=0; ik<nk_total; ++ik)
+    //     {
+    //         for(int inbn=0; inbn<nbands_local; ++inbn)
+    //         {
+    //             for(int inbs=0; inbs<nbasis_local; ++inbs) wfc(ik, inbn, inbs) = wfc_(ik, inbn, inbs);
+    //         }
+    //     }
+    // }
+    // else
+    // {
+    //     psi::Psi<TK> wfc(wfc_);
+    // }
     
     // create desc[] and something about MPI to Eij(nbands*nbands)
     Parallel_2D para_Eij;
@@ -417,6 +440,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         &GlobalC::GridD,
         ParaV
     );
+    // V_ekinetic_potential->contributeHR();
     
     OperatorLCAO<TK, TR>* V_nonlocal = new NonlocalNew<OperatorLCAO<TK, TR>>(
         LM_in,
@@ -427,42 +451,43 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         &GlobalC::GridD,
         ParaV
     );
+    V_nonlocal->contributeHR();
 
-    std::string local_pot = "local";
-    OperatorLCAO<TK, TR>* V_local = new Veff_rdmft<TK,TR>(
-        &G_in,
-        &loc_in,
-        LM_in,
-        kvec_d_in,
-        &charge_in,
-        &HR_TV,
-        &HK_TV,
-        &GlobalC::ucell,
-        &GlobalC::GridD,
-        ParaV,
-        rho_basis_in,
-        vloc_in,
-        sf_in,
-        local_pot
-    );
+    // std::string local_pot = "local";
+    // OperatorLCAO<TK, TR>* V_local = new Veff_rdmft<TK,TR>(
+    //     &G_in,
+    //     &loc_in,
+    //     LM_in,
+    //     kvec_d_in,
+    //     &charge_in,
+    //     &HR_TV,
+    //     &HK_TV,
+    //     &GlobalC::ucell,
+    //     &GlobalC::GridD,
+    //     ParaV,
+    //     rho_basis_in,
+    //     vloc_in,
+    //     sf_in,
+    //     local_pot
+    // );
 
-    std::string hartree_pot = "hartree";
-    OperatorLCAO<TK, TR>* V_hartree = new Veff_rdmft<TK,TR>(
-        &G_in,
-        &loc_in,
-        LM_in,
-        kvec_d_in,
-        &charge_in,
-        &HR_hartree,
-        &HK_hartree,
-        &GlobalC::ucell,
-        &GlobalC::GridD,
-        ParaV,
-        rho_basis_in,
-        vloc_in,
-        sf_in,
-        hartree_pot
-    );
+    // std::string hartree_pot = "hartree";
+    // OperatorLCAO<TK, TR>* V_hartree = new Veff_rdmft<TK,TR>(
+    //     &G_in,
+    //     &loc_in,
+    //     LM_in,
+    //     kvec_d_in,
+    //     &charge_in,
+    //     &HR_hartree,
+    //     &HK_hartree,
+    //     &GlobalC::ucell,
+    //     &GlobalC::GridD,
+    //     ParaV,
+    //     rho_basis_in,
+    //     vloc_in,
+    //     sf_in,
+    //     hartree_pot
+    // );
 
     OperatorLCAO<TK, TR>* V_XC = new OperatorEXX<OperatorLCAO<TK, TR>>(
         LM_in,
@@ -471,13 +496,26 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         kv_in
     );
 
+    // std::cout << "\n\n\n************\nV_hartree:\n";
+    // // in gamma only, must calculate HR_hartree before HR_local
+    // // HR_hartree has the HR of V_hartree. HR_XC get from another way, so don't need to do this 
+    // V_hartree->contributeHR();
+    // std::cout << "\n************\n\n\n";
+
+
     // now HR_TV has the HR of V_ekinetic + V_nonlcao + V_local, 
     V_ekinetic_potential->contributeHR();
     V_nonlocal->contributeHR();
-    V_local->contributeHR();
+    // // std::cout << "\n\n\n************\nV_local:\n";
+    // V_local->contributeHR();
+    // std::cout << "\n************\n\n\n";
+    // V_ekinetic_potential->contributeHR();
+    // V_nonlocal->contributeHR();
 
-    // HR_hartree has the HR of V_hartree. HR_XC get from another way, so don't need to do this 
-    V_hartree->contributeHR();
+
+
+
+
 
     //prepare for actual calculation
     //wg is global matrix, wg.nr = nk_total, wg.nc = GlobalV::NBANDS
@@ -485,11 +523,6 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     ModuleBase::matrix wfcHwfc_TV(wg.nr, wg.nc, true);
     ModuleBase::matrix wfcHwfc_hartree(wg.nr, wg.nc, true);
     ModuleBase::matrix wfcHwfc_XC(wg.nr, wg.nc, true);
-
-    // get local index and global k-points of wfc
-    const int nk_total = wfc.get_nk();
-    const int nbands_local = wfc.get_nbands();
-    const int nbasis_local = wfc.get_nbasis();
 
     // let the 2d-block of H_wfc is same to wfc, so we can use desc_wfc and 2d-block messages of wfc to describe H_wfc
     psi::Psi<TK> H_wfc_TV(nk_total, nbands_local, nbasis_local);
@@ -513,8 +546,22 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     {
         // get the HK with ik-th k vector, the result is stored in HK_TV, HK_hartree and HK_XC respectively
         V_ekinetic_potential->contributeHk(ik);
-        V_hartree->contributeHk(ik);
+
+        printMatrix_vector(ParaV->get_row_size(), ParaV->get_col_size(), HK_TV, "HK_T+nonlocal");
+
+
+        // V_hartree->contributeHk(ik);
         V_XC->contributeHk(ik);
+
+        // test
+
+        if(ik == 0)
+        {
+            std::cout << "\n\n\nik=0\n\n\n";
+            //printMatrix_vector(ParaV->get_row_size(), ParaV->get_col_size(), HK_hartree, "HK_hartree");
+        }
+
+        // test
 
         // get H(k) * wfc
         HkPsi( ParaV, HK_TV[0], wfc(ik, 0, 0), H_wfc_TV(ik, 0, 0));

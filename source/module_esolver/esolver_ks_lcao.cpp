@@ -897,11 +897,26 @@ namespace ModuleESolver
     // gamma only calculation
     if( GlobalV::GAMMA_ONLY_LOCAL )
     {
-        Etotal_RDMFT = hamilt::rdmft_cal<TK,TR>(
+        const int nk_total = this->psi->get_nk();
+        const int nbands_local = LM.ParaV->ncol_bands;  // when gamma_only, this->psi->get_nbands() = nbasis_local, so we use ParaV get the true nbands_local for wfc
+        const int nbasis_local = this->psi->get_nbasis();
+
+        std::cout << "\n\n\nnk_total= " << nk_total << "\n\n\n";
+        
+        psi::Psi<TK> wfc_rdmft(nk_total, nbands_local, nbasis_local);
+        for(int ik=0; ik<nk_total; ++ik)
+        {
+            for(int inbn=0; inbn<nbands_local; ++inbn)
+            {
+                for(int inbs=0; inbs<nbasis_local; ++inbs) wfc_rdmft(ik, inbn, inbs) = (*(this->psi))(ik, inbn, inbs);
+            }
+        }
+  
+        Etotal_RDMFT = hamilt::rdmft_cal<TK,TR,Gint_Gamma>(
             &LM,
             LM.ParaV,
             this->pelec->wg,
-            *(this->psi),
+            wfc_rdmft,
             E_gradient_wg,
             E_gradient_wfc,
             this->kv,
@@ -916,7 +931,7 @@ namespace ModuleESolver
     // multi-k calculation
     else
     {
-        Etotal_RDMFT = hamilt::rdmft_cal<TK,TR>(
+        Etotal_RDMFT = hamilt::rdmft_cal<TK,TR,Gint_k>(
             &LM,
             LM.ParaV,
             this->pelec->wg,
