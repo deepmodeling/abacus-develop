@@ -22,13 +22,6 @@ class Gint
     // the unified interface to grid integration
 	void cal_gint(Gint_inout *inout);
 
-    /*****test*****/
-    hamilt::HContainer<double>* get_hRGint()
-    {
-        return this->hRGint;
-    }
-    /*****test*****/
-
     // preparing FFT grid
     void prep_grid(
         const Grid_Technique& gt,

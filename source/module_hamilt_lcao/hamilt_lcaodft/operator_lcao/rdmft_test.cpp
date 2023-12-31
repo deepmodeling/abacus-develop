@@ -176,11 +176,6 @@ void Veff_rdmft<TK, TR>::contributeHR()
         std::cout << "\n\n!!!!!!\n there may be something wrong when use class Veff_rdmft\n\n!!!!!!\n";
     }
 
-    /*****test*****/
-    int MN = this->GK->get_hRGint()->get_memory_size() / sizeof(double);
-    printMatrix_pointer(MN/5, 5, this->GK->get_hRGint()->data(0,0), "hRGint");
-    /*****test*****/
-
     // get HR for 2D-block parallel format
     this->GK->transfer_pvpR(this->hR);
 
@@ -214,7 +209,6 @@ void Veff_rdmft<double, double>::contributeHR()
 
             // do grid integral calculation to get HR
             Gint_inout inout(vr_eff_rdmft, is, Gint_Tools::job_type::vlocal);
-            // this->GG->get_hRGint()->set_zero(); //////////////////////
             this->GG->cal_gint(&inout);
         }
     }
@@ -229,11 +223,9 @@ void Veff_rdmft<double, double>::contributeHR()
 
         // do grid integral calculation to get HR
         Gint_inout inout(vr_eff_rdmft, 0, Gint_Tools::job_type::vlocal);
-        // this->GG->get_hRGint()->set_zero(); //////////////////////
-        // this->GG->cal_gint(&inout);
 
         // because in gamma_only, cal_gint would not set hRGint zero first
-        // so must use cal_vlocal, and in rdmft_test.h, calculate V_hartree->contributeHR() first
+        // so must use cal_vlocal(), and in rdmft_test.h, calculate V_hartree->contributeHR() first
         this->GG->cal_vlocal(&inout, this->LM, false);
     }
     // else if( potential_ == "XC" )
@@ -246,12 +238,6 @@ void Veff_rdmft<double, double>::contributeHR()
     {
         std::cout << "\n\n!!!!!!\n there may be something wrong when use class Veff_rdmft\n\n!!!!!!\n";
     }
-
-
-    /*****test*****/
-    int MN = this->GG->get_hRGint()->get_memory_size() / sizeof(double);
-    printMatrix_pointer(MN/5, 5, this->GG->get_hRGint()->data(0,0), "hRGint");
-    /*****test*****/
 
     // get HR for 2D-block parallel format
     this->GG->transfer_pvpR(this->hR);

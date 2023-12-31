@@ -429,6 +429,13 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     HR_hartree.set_zero();
     HR_XC.set_zero();
 
+    if( GlobalV::GAMMA_ONLY_LOCAL )
+    {
+        HR_TV.fix_gamma();
+        HR_hartree.fix_gamma();
+        HR_XC.fix_gamma();
+    }
+
     // get every Hamiltion matrix
 
     OperatorLCAO<TK, TR>* V_ekinetic_potential = new EkineticNew<OperatorLCAO<TK, TR>>(
@@ -440,7 +447,6 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         &GlobalC::GridD,
         ParaV
     );
-    // V_ekinetic_potential->contributeHR();
     
     OperatorLCAO<TK, TR>* V_nonlocal = new NonlocalNew<OperatorLCAO<TK, TR>>(
         LM_in,
@@ -451,43 +457,42 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         &GlobalC::GridD,
         ParaV
     );
-    V_nonlocal->contributeHR();
 
-    // std::string local_pot = "local";
-    // OperatorLCAO<TK, TR>* V_local = new Veff_rdmft<TK,TR>(
-    //     &G_in,
-    //     &loc_in,
-    //     LM_in,
-    //     kvec_d_in,
-    //     &charge_in,
-    //     &HR_TV,
-    //     &HK_TV,
-    //     &GlobalC::ucell,
-    //     &GlobalC::GridD,
-    //     ParaV,
-    //     rho_basis_in,
-    //     vloc_in,
-    //     sf_in,
-    //     local_pot
-    // );
+    std::string local_pot = "local";
+    OperatorLCAO<TK, TR>* V_local = new Veff_rdmft<TK,TR>(
+        &G_in,
+        &loc_in,
+        LM_in,
+        kvec_d_in,
+        &charge_in,
+        &HR_TV,
+        &HK_TV,
+        &GlobalC::ucell,
+        &GlobalC::GridD,
+        ParaV,
+        rho_basis_in,
+        vloc_in,
+        sf_in,
+        local_pot
+    );
 
-    // std::string hartree_pot = "hartree";
-    // OperatorLCAO<TK, TR>* V_hartree = new Veff_rdmft<TK,TR>(
-    //     &G_in,
-    //     &loc_in,
-    //     LM_in,
-    //     kvec_d_in,
-    //     &charge_in,
-    //     &HR_hartree,
-    //     &HK_hartree,
-    //     &GlobalC::ucell,
-    //     &GlobalC::GridD,
-    //     ParaV,
-    //     rho_basis_in,
-    //     vloc_in,
-    //     sf_in,
-    //     hartree_pot
-    // );
+    std::string hartree_pot = "hartree";
+    OperatorLCAO<TK, TR>* V_hartree = new Veff_rdmft<TK,TR>(
+        &G_in,
+        &loc_in,
+        LM_in,
+        kvec_d_in,
+        &charge_in,
+        &HR_hartree,
+        &HK_hartree,
+        &GlobalC::ucell,
+        &GlobalC::GridD,
+        ParaV,
+        rho_basis_in,
+        vloc_in,
+        sf_in,
+        hartree_pot
+    );
 
     OperatorLCAO<TK, TR>* V_XC = new OperatorEXX<OperatorLCAO<TK, TR>>(
         LM_in,
@@ -496,26 +501,14 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         kv_in
     );
 
-    // std::cout << "\n\n\n************\nV_hartree:\n";
-    // // in gamma only, must calculate HR_hartree before HR_local
-    // // HR_hartree has the HR of V_hartree. HR_XC get from another way, so don't need to do this 
-    // V_hartree->contributeHR();
-    // std::cout << "\n************\n\n\n";
-
+    // in gamma only, must calculate HR_hartree before HR_local
+    // HR_hartree has the HR of V_hartree. HR_XC get from another way, so don't need to do this 
+    V_hartree->contributeHR();
 
     // now HR_TV has the HR of V_ekinetic + V_nonlcao + V_local, 
     V_ekinetic_potential->contributeHR();
     V_nonlocal->contributeHR();
-    // // std::cout << "\n\n\n************\nV_local:\n";
-    // V_local->contributeHR();
-    // std::cout << "\n************\n\n\n";
-    // V_ekinetic_potential->contributeHR();
-    // V_nonlocal->contributeHR();
-
-
-
-
-
+    V_local->contributeHR();
 
     //prepare for actual calculation
     //wg is global matrix, wg.nr = nk_total, wg.nc = GlobalV::NBANDS
@@ -546,22 +539,8 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     {
         // get the HK with ik-th k vector, the result is stored in HK_TV, HK_hartree and HK_XC respectively
         V_ekinetic_potential->contributeHk(ik);
-
-        printMatrix_vector(ParaV->get_row_size(), ParaV->get_col_size(), HK_TV, "HK_T+nonlocal");
-
-
-        // V_hartree->contributeHk(ik);
+        V_hartree->contributeHk(ik);
         V_XC->contributeHk(ik);
-
-        // test
-
-        if(ik == 0)
-        {
-            std::cout << "\n\n\nik=0\n\n\n";
-            //printMatrix_vector(ParaV->get_row_size(), ParaV->get_col_size(), HK_hartree, "HK_hartree");
-        }
-
-        // test
 
         // get H(k) * wfc
         HkPsi( ParaV, HK_TV[0], wfc(ik, 0, 0), H_wfc_TV(ik, 0, 0));
