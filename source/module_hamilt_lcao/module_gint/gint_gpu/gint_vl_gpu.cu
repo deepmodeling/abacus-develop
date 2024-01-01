@@ -158,7 +158,7 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
                                                                                 GridT.psi_u_g,
                                                                                 psir_ylm_left_g,
                                                                                 psir_ylm_right_g);
-
+            checkCudaLastError();
             GridT.fastest_matrix_mul(max_m, max_n,
                                      atom_pair_A_m_g, atom_pair_B_n_g, GridT.bxyz,
                                      atom_pair_mat_A_array_g, atom_pair_lda_g,

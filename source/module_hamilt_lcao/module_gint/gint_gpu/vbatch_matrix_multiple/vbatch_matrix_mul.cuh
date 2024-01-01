@@ -9,6 +9,7 @@
 
 
 cudaError_t checkCuda(cudaError_t result);
+cudaError_t checkCudaLastError();
 
 template<typename T, int DIM_X, int DIM_Y, int BLK_M, int BLK_N, int BLK_K,
          int DIM_XA, int DIM_YA, int DIM_XB, int DIM_YB,

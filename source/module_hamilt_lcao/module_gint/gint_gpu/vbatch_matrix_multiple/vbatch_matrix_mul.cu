@@ -9,7 +9,7 @@
 #define fetch(A, m, n, bound)  offs_d##A[min(n*LD##A+m, bound)]
 cudaError_t checkCuda(cudaError_t result)
 {
-#if defined(DEBUG) || defined(__DEBUG)
+#if defined(__DEBUG)
     if (result != cudaSuccess)
     {
         fprintf(stderr, "CUDA Runtime Error: %s\n", cudaGetErrorString(result));
@@ -18,6 +18,22 @@ cudaError_t checkCuda(cudaError_t result)
 #endif
     return result;
 }
+
+cudaError_t checkCudaLastError()
+{
+#if defined(__DEBUG)
+    cudaError_t result = cudaGetLastError();
+    if (result != cudaSuccess)
+    {
+        fprintf(stderr, "CUDA Runtime Error: %s\n", cudaGetErrorString(result));
+        assert(result == cudaSuccess);
+    }
+    return result;
+#else
+    return cudaSuccess;
+#endif
+}
+
 
 template<typename T, int DIM_X, int DIM_Y, int BLK_M, int BLK_N, int BLK_K,
          int DIM_XA, int DIM_YA, int DIM_XB, int DIM_YB,
@@ -259,17 +275,37 @@ void vbatched_gemm_impl(int max_m, int max_n,
     shared_mem_size += (BLK_M+1) * BLK_K * sizeof(T);
     shared_mem_size += (BLK_K+1) * BLK_N * sizeof(T);
     dim3 dimBlock(DIM_X, DIM_Y);
-    dim3 dimGrid(ceildiv( max_n, BLK_M ), ceildiv( max_m, BLK_N ), batchCount);
-
-    vbatched_gemm_kernel<T, DIM_X, DIM_Y,
+    const int max_batch_count = 32768;
+    const int loop_num = batchCount / max_batch_count;
+    const int remain_num = batchCount % max_batch_count;
+    for (int i = 0; i < loop_num; ++i)
+    {
+        dim3 dimGrid(ceildiv( max_n, BLK_M ), ceildiv( max_m, BLK_N ), max_batch_count);
+        vbatched_gemm_kernel<T, DIM_X, DIM_Y,
                          BLK_M, BLK_N, BLK_K,
                          DIM_XA, DIM_YA,
                          DIM_XB, DIM_YB>
                          <<<dimGrid, dimBlock, shared_mem_size, stream>>>
-                         (n, m, k,
-                         global_B_array, global_ldb,
-                         global_A_array, global_lda,
-                         global_C_array, global_ldc);
+                         (n + i * max_batch_count, m + i * max_batch_count, k,
+                         global_B_array + i * max_batch_count, global_ldb + i * max_batch_count,
+                         global_A_array + i * max_batch_count, global_lda + i * max_batch_count,
+                         global_C_array + i * max_batch_count, global_ldc + i * max_batch_count);
+        checkCudaLastError();
+    }
+    if (remain_num > 0)
+    {
+        dim3 dimGrid(ceildiv( max_n, BLK_M ), ceildiv( max_m, BLK_N ), remain_num);
+        vbatched_gemm_kernel<T, DIM_X, DIM_Y,
+                         BLK_M, BLK_N, BLK_K,
+                         DIM_XA, DIM_YA,
+                         DIM_XB, DIM_YB>
+                         <<<dimGrid, dimBlock, shared_mem_size, stream>>>
+                         (n + loop_num * max_batch_count, m + loop_num * max_batch_count, k,
+                         global_B_array + loop_num * max_batch_count, global_ldb + loop_num * max_batch_count,
+                         global_A_array + loop_num * max_batch_count, global_lda + loop_num * max_batch_count,
+                         global_C_array + loop_num * max_batch_count, global_ldc + loop_num * max_batch_count);    
+        checkCudaLastError();
+    }
 }
 
 template <typename T, int DIM_X, int DIM_Y, int BLK_M, int BLK_N, int BLK_K,

@@ -671,12 +671,9 @@ void Grid_Technique::cal_trace_lo(void)
 		const int max_atom_pair_number = GlobalC::ucell.nat * GlobalC::ucell.nat;
 		checkCudaErrors(cudaMallocHost((void **)&GridVlocal_v2_g, max_atom_pair_number * sizeof(double *)));  // the points to gpu memory, but gpu memory address save on host
 
-		for (int iat1 = 0; iat1 < GlobalC::ucell.nat; iat1++)
+		for (int iat = 0; iat < max_atom_pair_number; iat++)
 		{
-			for (int iat2 = 0; iat2 < GlobalC::ucell.nat; iat2++)
-			{
-				GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2] = nullptr;
-			}
+			GridVlocal_v2_g[iat] = nullptr;
 		}
 
 		psir_size = nbzp * max_atom * bxyz * GlobalC::ucell.nwmax;
