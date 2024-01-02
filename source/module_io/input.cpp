@@ -621,6 +621,15 @@ void Input::Default(void)
     alpha_trial = 0.01;
     sccut = 3.0;
     sc_file = "none";
+    //==========================================================
+    // variables for Quasiatomic Orbital analysis
+    //==========================================================
+    qo_switch = false;
+    qo_basis = "hydrogen";
+    qo_strategy = "minimal";
+    qo_thr = 1e-6;
+    qo_screening_coeff = 0.1;
+
     return;
 }
 
@@ -2254,6 +2263,21 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("sc_file", word) == 0){
             read_value(ifs, sc_file);
         }
+        else if (strcmp("qo_switch", word) == 0){
+            read_bool(ifs, qo_switch);
+        }
+        else if (strcmp("qo_basis", word) == 0){
+            read_value(ifs, qo_basis);
+        }
+        else if (strcmp("qo_strategy", word) == 0){
+            read_value(ifs, qo_strategy);
+        }
+        else if (strcmp("qo_thr", word) == 0){
+            read_value(ifs, qo_thr);
+        }
+        else if (strcmp("qo_screening_coeff", word) == 0){
+            read_value(ifs, qo_screening_coeff);
+        }
         else
         {
             // xiaohui add 2015-09-15
@@ -3014,6 +3038,12 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         }
     }
 
+    if(qo_switch)
+    {
+        out_mat_hs = true; // print H(k) and S(k)
+        out_wfc_lcao = 1; // print wave function in lcao basis in kspace
+    }
+  
     // set nspin with noncolin
     if (noncolin || lspinorb)
     {
@@ -3528,6 +3558,11 @@ void Input::Bcast()
     Parallel_Common::bcast_double(alpha_trial);
     Parallel_Common::bcast_double(sccut);
 
+    Parallel_Common::bcast_bool(qo_switch);
+    Parallel_Common::bcast_string(qo_basis);
+    Parallel_Common::bcast_string(qo_strategy);
+    Parallel_Common::bcast_double(qo_thr);
+    Parallel_Common::bcast_double(qo_screening_coeff);
     return;
 }
 #endif
@@ -4077,6 +4112,23 @@ void Input::Check(void)
         if (sccut <= 0)
         {
             ModuleBase::WARNING_QUIT("INPUT", "sccut must > 0");
+        }
+    }
+    if(qo_switch)
+    {
+        if(qo_basis == "pswfc")
+        {
+            if(qo_screening_coeff < 1e-6)
+            {
+                ModuleBase::WARNING_QUIT("INPUT", "screening coefficient of pswfc must be larger than 0");
+            }
+        }
+        else if(qo_basis == "hydrogen")
+        {
+            if(qo_thr > 1e-6)
+            {
+                ModuleBase::WARNING("INPUT", "too high the convergence threshold might yield unacceptable result");
+            }
         }
     }
 
