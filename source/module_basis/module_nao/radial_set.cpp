@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "module_base/spherical_bessel_transformer.h"
+#include "module_io/output_radial.h"
 
 RadialSet::~RadialSet()
 {
@@ -177,4 +178,31 @@ void RadialSet::cleanup()
 
     delete[] index_map_;
     index_map_ = nullptr;
+}
+
+void RadialSet::to_file(const std::string& file_name, const int rank) const
+{
+    ModuleIO::OutputRadial out_radial;
+    out_radial.initialize(file_name);
+    out_radial.configure(
+        symbol_,
+        100.0,  // fake value
+        rcut_max_,
+        lmax_,
+        nzeta_,
+        int(rcut_max_/0.01) + 1,
+        0.01
+    );
+    for(int l = 0; l <= lmax_; l++)
+    {
+        for(int izeta = 0; izeta < nzeta_[l]; izeta++)
+        {
+            out_radial.push(
+                chi_[index(l, izeta)].nr(),
+                chi_[index(l, izeta)].rgrid(),
+                chi_[index(l, izeta)].rvalue()
+            );
+        }
+    }
+    out_radial.finalize();
 }
