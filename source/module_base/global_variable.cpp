@@ -289,4 +289,13 @@ int sc_scf_nmin = 2;
 double alpha_trial = 0.01; // eV/uB^2
 double sccut = 3;          // eV/uB
 std::string sc_file = "none";
+
+//==========================================================
+// Quasiatomic orbital related
+//==========================================================
+bool qo_switch = false;
+std::string qo_basis = "hydrogen";
+std::string qo_strategy = "minimal";
+double qo_thr = 1.0e-6;
+std::vector<double> qo_screening_coeff = {};
 } // namespace GlobalV

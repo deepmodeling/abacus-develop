@@ -71,7 +71,7 @@ TEST_F(InputTest, Default)
         EXPECT_EQ(INPUT.wannier_method,1);
 		EXPECT_TRUE(INPUT.out_wannier_amn);
 		EXPECT_TRUE(INPUT.out_wannier_mmn);
-		EXPECT_TRUE(INPUT.out_wannier_unk);
+		EXPECT_FALSE(INPUT.out_wannier_unk);
 		EXPECT_TRUE(INPUT.out_wannier_eig);
         EXPECT_TRUE(INPUT.out_wannier_wvfn_formatted);
         EXPECT_DOUBLE_EQ(INPUT.kspacing[0], 0.0);

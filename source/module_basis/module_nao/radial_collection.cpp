@@ -4,7 +4,8 @@
 #include "module_base/spherical_bessel_transformer.h"
 #include "module_basis/module_nao/atomic_radials.h"
 #include "module_basis/module_nao/beta_radials.h"
-
+#include "module_basis/module_nao/hydrogen_radials.h"
+#include "module_basis/module_nao/pswfc_radials.h"
 
 RadialCollection::RadialCollection(const RadialCollection& other) :
     ntype_(other.ntype_),
@@ -188,6 +189,63 @@ void RadialCollection::build(const int nfile, const std::string* const file, con
     set_rcut_max();
 }
 
+void RadialCollection::build(const int ntype, 
+                             const double* const charges, 
+                             const int* const nmax, 
+                             const std::string* symbols,
+                             const double conv_thr,
+                             const std::string strategy)
+{
+    cleanup();
+    ntype_ = ntype;
+    radset_ = new RadialSet*[ntype_];
+
+    for (int itype = 0; itype < ntype_; ++itype)
+    {
+        radset_[itype] = new HydrogenRadials;
+        radset_[itype]->build(itype, 
+                              charges[itype], 
+                              nmax[itype], 
+                              10.0,             // rcut should be determined automatically, in principle...
+                              0.01,
+                              conv_thr,
+                              0,
+                              symbols[itype],
+                              strategy);
+
+        lmax_ = std::max(lmax_, radset_[itype]->lmax());
+        nchi_ += radset_[itype]->nchi();
+        nzeta_max_ = std::max(nzeta_max_, radset_[itype]->nzeta_max());
+    }
+
+    // what are these two functions for? Do I need them?
+    iter_build();
+    set_rcut_max();
+}
+
+void RadialCollection::build(const int ntype,
+                             const std::string* const file,
+                             const double* const screening_coeffs,
+                             const double conv_thr)
+{
+    cleanup();
+    ntype_ = ntype;
+    radset_ = new RadialSet*[ntype_];
+
+    for (int itype = 0; itype < ntype_; ++itype)
+    {
+        radset_[itype] = new PswfcRadials;
+        radset_[itype]->build(file[itype], itype, screening_coeffs[itype], conv_thr);
+
+        lmax_ = std::max(lmax_, radset_[itype]->lmax());
+        nchi_ += radset_[itype]->nchi();
+        nzeta_max_ = std::max(nzeta_max_, radset_[itype]->nzeta_max());
+    }
+
+    iter_build();
+    set_rcut_max();
+}
+
 void RadialCollection::set_transformer(ModuleBase::SphericalBesselTransformer sbt, const int update)
 {
     for (int itype = 0; itype < ntype_; ++itype)
@@ -216,4 +274,13 @@ void RadialCollection::set_uniform_grid(const bool for_r_space,
         radset_[itype]->set_uniform_grid(for_r_space, ngrid, cutoff, mode, enable_fft);
     }
     rcut_max_ = cutoff;
+}
+
+void RadialCollection::to_file(const std::string& appendix)
+{
+    for (int itype = 0; itype < ntype_; ++itype)
+    {
+        std::string fname = radset_[itype]->symbol() + "_" + appendix + ".orb";
+        radset_[itype]->to_file(fname);
+    }
 }

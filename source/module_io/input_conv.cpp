@@ -755,6 +755,14 @@ void Input_Conv::Convert(void)
     GlobalV::MIXING_ANGLE = INPUT.mixing_angle;
     GlobalV::MIXING_TAU = INPUT.mixing_tau;
     
+    //-----------------------------------------------
+    // Quasiatomic Orbital analysis
+    //-----------------------------------------------
+    GlobalV::qo_switch = INPUT.qo_switch;
+    GlobalV::qo_basis = INPUT.qo_basis;
+    GlobalV::qo_strategy = INPUT.qo_strategy;
+    GlobalV::qo_thr = INPUT.qo_thr;
+    GlobalV::qo_screening_coeff = std::vector<double>(INPUT.ntype, INPUT.qo_screening_coeff);
     ModuleBase::timer::tick("Input_Conv", "Convert");
     return;
 }

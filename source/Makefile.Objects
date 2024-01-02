@@ -106,6 +106,7 @@ OBJS_MAIN=main.o\
     driver_run.o\
 
 OBJS_BASE=abfs-vector3_order.o\
+    assoc_laguerre.o\
     complexarray.o\
     complexmatrix.o\
     clebsch_gordan_coeff.o\
@@ -326,6 +327,8 @@ OBJS_ORBITAL=ORB_atomic.o\
       parallel_2d.o\
       parallel_orbitals.o\
 	  atomic_radials.o\
+      hydrogen_radials.o\
+      pswfc_radials.o\
 	  beta_radials.o\
 	  numerical_radial.o\
 	  radial_collection.o\
@@ -419,6 +422,8 @@ OBJS_IO=input.o\
     restart.o\
     binstream.o\
     to_wannier90.o\
+    to_qo.o\
+    to_qo_tools.o\
     to_wannier90_pw.o\
     to_wannier90_lcao_in_pw.o\
     to_wannier90_lcao.o\
@@ -436,6 +441,7 @@ OBJS_IO=input.o\
     output_rho.o\
     output_potential.o\
     output_mat_sparse.o\
+    output_radial.o\
 
 OBJS_IO_LCAO=cal_r_overlap_R.o\
       write_orb_info.o\
