@@ -370,6 +370,12 @@
     - [alpha\_trial](#alpha_trial)
     - [sccut](#sccut)
     - [sc\_file](#sc_file)
+  - [Quasiatomic Orbital (QO) analysis](#quasiatomic-orbital-qo-analysis)
+    - [qo\_switch](#qo_switch)
+    - [qo\_basis](#qo_basis)
+    - [qo\_strategy](#qo_strategy)
+    - [qo\_screening\_coeff](#qo_screening_coeff)
+    - [qo\_thr](#qo_thr)
 
 [back to top](#full-list-of-input-keywords)
 
@@ -3315,6 +3321,8 @@ These variables are used to control the usage of implicit solvation model. This 
 - **Default**: 0.00037
 - **Unit**: $Bohr^{-3}$
 
+[back to top](#full-list-of-input-keywords)
+
 ## Deltaspin
 
 These variables are used to control the usage of deltaspin functionality.
@@ -3430,5 +3438,54 @@ and
 for `nspin 2` case. The difference is that `lambda`, `target_mag`, and `constrain` are scalars in `nspin 2` case, and are vectors in `nspin 4` case.
 
 - **Default**: none
+
+[back to top](#full-list-of-input-keywords)
+
+## Quasiatomic Orbital (QO) analysis
+
+These variables are used to control the usage of QO analysis.
+
+### qo_switch
+
+- **Type**: Boolean
+- **Description**: whether to let ABACUS output QO analysis required files
+- **Default**: 0
+
+### qo_basis
+
+- **Type**: String
+- **Description**: specify the type of atomic basis
+  - `pswfc`: use the pseudowavefunction in pseudopotential files as atomic basis. To use this option, please make sure in pseudopotential file there is pswfc in it.
+  - `hydrogen`: generate hydrogen-like atomic basis, whose charge is read from pseudopotential files presently.
+
+  *warning: to use* `pswfc` *, please use norm-conserving pseudopotentials with pseudowavefunctions, SG15 pseudopotentials cannot support this option.*
+- **Default**: `hydrogen`
+
+### qo_strategy
+
+- **Type**: String
+- **Availability**: for `qo_basis hydrogen` only.
+- **Description**: specify the strategy to generate hydrogen-like orbitals
+  - `minimal`: according to principle quantum number of the highest occupied state, generate only nodeless orbitals, for example Cu, only generate 1s, 2p, 3d and 4f orbitals (for Cu, 4s is occupied, thus $n_{max} = 4$)
+  - `full`: similarly according to the maximal principle quantum number, generate all possible orbitals, therefore for Cu, for example, will generate 1s, 2s, 2p, 3s, 3p, 3d, 4s, 4p, 4d, 4f.
+  - `energy`: will generate hydrogen-like orbitals according to Aufbau principle. For example the Cu (1s2 2s2 2p6 3s2 3p6 3d10 4s1), will generate these orbitals.
+  
+  *warning: to use* `full`, *generation strategy may cause the space spanned larger than the one spanned by numerical atomic orbitals, in this case, must filter out orbitals in some way*
+- **Default**: `minimal`
+
+### qo_screening_coeff
+
+- **Type**: Real
+- **Availability**: for `qo_basis pswfc` only.
+- **Description**: a screening factor $e^{-\eta|\mathbf{r}|}$ is multiplied to the pswfc to mimic the behavior of some kind of electron. $\eta$ is the screening coefficient. Presently one scalar value can be passed to ABACUS, therefore all atom types use the same value.
+- **Default**: 0.1
+- **Unit**: Bohr^-1
+
+### qo_thr
+
+- **Type**: Real
+- **Description**: the convergence threshold determining the cutoff of generated orbital. Lower threshold will yield orbital with larger cutoff radius.
+- **Default**: 1.0e-6
+
 
 [back to top](#full-list-of-input-keywords)
