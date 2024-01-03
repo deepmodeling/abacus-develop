@@ -40,7 +40,7 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
     // nspin
     this->nspin = GlobalV::NSPIN;
     this->mixing_nspin = GlobalV::NSPIN;
-    if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0 ) this->mixing_nspin = 2;
+    if (this->nspin == 4 && this->mixing_tau > 0 ) this->mixing_nspin = 2;
 
     GlobalV::ofs_running<<"\n----------- Double Check Mixing Parameters Begin ------------"<<std::endl;
     GlobalV::ofs_running<<"mixing_type: "<< this->mixing_mode <<std::endl;
