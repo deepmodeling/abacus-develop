@@ -319,25 +319,25 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
     }
     else if (GlobalV::NSPIN == 2)
     {
-        int _ngmc = chr->ngmc;
         // magnetic density
         std::complex<double> *rhog_mag = nullptr;
         std::complex<double> *rhog_mag_save = nullptr;
+        const int npw = this->rhopw->npw;
         // allocate rhog_mag[is*ngmc] and rhog_mag_save[is*ngmc]
-        rhog_mag = new std::complex<double>[_ngmc * GlobalV::NSPIN];
-        rhog_mag_save = new std::complex<double>[_ngmc * GlobalV::NSPIN];
-        ModuleBase::GlobalFunc::ZEROS(rhog_mag, _ngmc * GlobalV::NSPIN);
-        ModuleBase::GlobalFunc::ZEROS(rhog_mag_save, _ngmc * GlobalV::NSPIN);
+        rhog_mag = new std::complex<double>[npw * GlobalV::NSPIN];
+        rhog_mag_save = new std::complex<double>[npw * GlobalV::NSPIN];
+        ModuleBase::GlobalFunc::ZEROS(rhog_mag, npw * GlobalV::NSPIN);
+        ModuleBase::GlobalFunc::ZEROS(rhog_mag_save, npw * GlobalV::NSPIN);
         // get rhog_mag[is*ngmc] and rhog_mag_save[is*ngmc]
-        for (int ig = 0; ig < _ngmc; ig++)
+        for (int ig = 0; ig < npw; ig++)
         {
             rhog_mag[ig] = chr->rhog[0][ig] + chr->rhog[1][ig];
             rhog_mag_save[ig] = chr->rhog_save[0][ig] + chr->rhog_save[1][ig];
         }
-        for (int ig = 0; ig < _ngmc; ig++)
+        for (int ig = 0; ig < npw; ig++)
         {
-            rhog_mag[ig + _ngmc] = chr->rhog[0][ig] - chr->rhog[1][ig];
-            rhog_mag_save[ig + _ngmc] = chr->rhog_save[0][ig] - chr->rhog_save[1][ig];
+            rhog_mag[ig + npw] = chr->rhog[0][ig] - chr->rhog[1][ig];
+            rhog_mag_save[ig + npw] = chr->rhog_save[0][ig] - chr->rhog_save[1][ig];
         }
         //
         rhog_in = rhog_mag_save;
@@ -369,12 +369,12 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
         // get rhog[is][ngmc] from rhog_mag[is*ngmc]
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            ModuleBase::GlobalFunc::ZEROS(chr->rhog[is], _ngmc);
+            ModuleBase::GlobalFunc::ZEROS(chr->rhog[is], npw);
         }
-        for (int ig = 0; ig < _ngmc; ig++)
+        for (int ig = 0; ig < npw; ig++)
         {
-            chr->rhog[0][ig] = 0.5 * (rhog_mag[ig] + rhog_mag[ig+_ngmc]);
-            chr->rhog[1][ig] = 0.5 * (rhog_mag[ig] - rhog_mag[ig+_ngmc]);
+            chr->rhog[0][ig] = 0.5 * (rhog_mag[ig] + rhog_mag[ig+npw]);
+            chr->rhog[1][ig] = 0.5 * (rhog_mag[ig] - rhog_mag[ig+npw]);
         }
         // delete
         delete[] rhog_mag;
