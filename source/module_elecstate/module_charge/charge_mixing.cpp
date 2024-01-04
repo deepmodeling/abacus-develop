@@ -366,7 +366,7 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
         this->mixing->push_data(this->rho_mdata, rhog_in, rhog_out, screen, twobeta_mix, true);
         this->mixing->cal_coef(this->rho_mdata, inner_product_new);
         this->mixing->mix_data(this->rho_mdata, rhog_out);
-        // get rhog[is][nnrx] from rhog_mag[is*ngmc]
+        // get rhog[is][ngmc] from rhog_mag[is*ngmc]
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
             ModuleBase::GlobalFunc::ZEROS(chr->rhog[is], _ngmc);
@@ -572,11 +572,29 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
     }
     else if (GlobalV::NSPIN == 2)
     {
-        chr->allocate_rho_mag();
-        chr->get_rho_mag();
+        // magnetic density
+        double *rho_mag = nullptr;
+        double *rho_mag_save = nullptr; 
+        const int nrxx = this->rhopw->nrxx;
+        // allocate rho_mag[is*nnrx] and rho_mag_save[is*nnrx]
+        rho_mag = new double[nrxx * GlobalV::NSPIN];
+        rho_mag_save = new double[nrxx * GlobalV::NSPIN];
+        ModuleBase::GlobalFunc::ZEROS(rho_mag, nrxx * GlobalV::NSPIN);
+        ModuleBase::GlobalFunc::ZEROS(rho_mag_save, nrxx * GlobalV::NSPIN);
+        // get rho_mag[is*nnrx] and rho_mag_save[is*nnrx]
+        for (int ir = 0; ir < nrxx; ir++)
+        {
+            rho_mag[ir] = chr->rho[0][ir] + chr->rho[1][ir];
+            rho_mag_save[ir] = chr->rho_save[0][ir] + chr->rho_save[1][ir];
+        }
+        for (int ir = 0; ir < nrxx; ir++)
+        {
+            rho_mag[ir + nrxx] = chr->rho[0][ir] - chr->rho[1][ir];
+            rho_mag_save[ir + nrxx] = chr->rho_save[0][ir] - chr->rho_save[1][ir];
+        }
+        //
         rhor_in = chr->rho_mag_save;
         rhor_out = chr->rho_mag;
-        const int nrxx = this->rhopw->nrxx;
         auto screen = std::bind(&Charge_Mixing::Kerker_screen_real, this, std::placeholders::_1);
         auto twobeta_mix
             = [this, nrxx](double* out, const double* in, const double* sres) {
@@ -601,9 +619,20 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
             = std::bind(&Charge_Mixing::inner_product_real, this, std::placeholders::_1, std::placeholders::_2);
         this->mixing->cal_coef(this->rho_mdata, inner_product);
         this->mixing->mix_data(this->rho_mdata, rhor_out);
+        // get new rho[is][nrxx] from rho_mag[is*nrxx]
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            ModuleBase::GlobalFunc::ZEROS(chr->rho[is], nrxx);
+            //ModuleBase::GlobalFunc::ZEROS(rho_save[is], nrxx);
+        }
+        for (int ir = 0; ir < nrxx; ir++)
+        {
+            chr->rho[0][ir] = 0.5 * (rho_mag[ir] + rho_mag[ir+nrxx]);
+            chr->rho[1][ir] = 0.5 * (rho_mag[ir] - rho_mag[ir+nrxx]);
+        }
         // delete
-        chr->get_rho_from_mag();
-        chr->destroy_rho_mag();
+        delete[] rho_mag;
+        delete[] rho_mag_save;
     }
     else if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE <= 0)
     {
