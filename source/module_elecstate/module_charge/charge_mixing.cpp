@@ -343,7 +343,6 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
         rhog_in = rhog_mag_save;
         rhog_out = rhog_mag;
         //
-        const int npw = this->rhopw->npw;
         auto screen = std::bind(&Charge_Mixing::Kerker_screen_recip_new, this, std::placeholders::_1);
         auto twobeta_mix
             = [this, npw](std::complex<double>* out, const std::complex<double>* in, const std::complex<double>* sres) {
@@ -593,8 +592,8 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
             rho_mag_save[ir + nrxx] = chr->rho_save[0][ir] - chr->rho_save[1][ir];
         }
         //
-        rhor_in = chr->rho_mag_save;
-        rhor_out = chr->rho_mag;
+        rhor_in = rho_mag_save;
+        rhor_out = rho_mag;
         auto screen = std::bind(&Charge_Mixing::Kerker_screen_real, this, std::placeholders::_1);
         auto twobeta_mix
             = [this, nrxx](double* out, const double* in, const double* sres) {
