@@ -1976,15 +1976,15 @@ These variables are relevant to electric field and dipole correction
 
 - **Type**: Real
 - **Availability**: with efield_flag = True.
-- **Description**: Position of the maximum of the saw-like potential along crystal axis efield_dir, within the  unit cell, 0 < efield_pos_max < 1.
-- **Default**: 0.5
+- **Description**: Position of the maximum of the saw-like potential along crystal axis efield_dir, within the  unit cell, 0 <= efield_pos_max < 1.
+- **Default**: Autoset to `center of vacuum - width of vacuum / 20`
 
 ### efield_pos_dec
 
 - **Type**: Real
 - **Availability**: with efield_flag = True.
 - **Description**: Zone in the unit cell where the saw-like potential decreases, 0 < efield_pos_dec < 1.
-- **Default**: 0.1
+- **Default**: Autoset to `width of vacuum / 10`
 
 ### efield_amp
 

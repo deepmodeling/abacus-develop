@@ -366,8 +366,8 @@ void Input::Default(void)
     efield_flag = false;
     dip_cor_flag = false;
     efield_dir = 2;
-    efield_pos_max = 0.5;
-    efield_pos_dec = 0.1;
+    efield_pos_max = -1.0;
+    efield_pos_dec = -1.0;
     efield_amp = 0.0;
     //----------------------------------------------------------
     // gatefield                        Yu Liu add 2022-09-13

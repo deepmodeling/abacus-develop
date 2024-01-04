@@ -38,6 +38,8 @@ class Efield
 
     static void prepare(const UnitCell &cell, double &latvec, double &area);
 
+    static void autoset(const UnitCell& cell);
+
     static double etotefield; // dipole energy
     static double tot_dipole; // total dipole
     static int efield_dir; // 0, 1, 2 denotes x, y, z direction for dipole correction
