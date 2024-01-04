@@ -315,40 +315,6 @@ TEST_F(ChargeMixingTest, SetMixingTest)
     EXPECT_THAT(output, testing::HasSubstr("This Mixing mode is not implemended yet,coming soon."));
 }
 
-/**
-TEST_F(ChargeMixingTest, AutoSetTest)
-{
-    Charge_Mixing CMtest;
-    CMtest.set_rhopw(&pw_basis, &pw_basis);
-    GlobalV::SCF_THR_TYPE = 1;
-    GlobalV::NSPIN = 1;
-
-    CMtest.set_mixing("broyden", 1.0, 1, 0.2, false);
-    CMtest.auto_set(0.0, GlobalC::ucell);
-    EXPECT_EQ(CMtest.mixing_beta, 1.0);
-    EXPECT_EQ(CMtest.mixing_gg0, 0.2);
-
-    CMtest.need_auto_set();
-    CMtest.auto_set(0.0, GlobalC::ucell);
-    EXPECT_EQ(CMtest.mixing_beta, 0.2);
-    EXPECT_EQ(CMtest.mixing->mixing_beta, 0.2);
-    EXPECT_EQ(CMtest.mixing_gg0, 1.0);
-
-    CMtest.need_auto_set();
-    CMtest.auto_set(1.0, GlobalC::ucell);
-    EXPECT_EQ(CMtest.mixing_beta, 0.7);
-    EXPECT_EQ(CMtest.mixing->mixing_beta, 0.7);
-    EXPECT_EQ(CMtest.mixing_gg0, 1.0);
-
-    GlobalC::ucell.atoms = new Atom[1];
-    GlobalC::ucell.ntype = 1;
-    GlobalC::ucell.atoms[0].ncpp.psd = "Sc";
-    CMtest.need_auto_set();
-    CMtest.auto_set(1.0, GlobalC::ucell);
-    EXPECT_EQ(CMtest.mixing_gg0, 1.0);
-}
-**/
-
 TEST_F(ChargeMixingTest, KerkerScreenRecipTest)
 {
     Charge_Mixing CMtest;
