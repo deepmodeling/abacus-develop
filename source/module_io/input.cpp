@@ -337,6 +337,7 @@ void Input::Default(void)
     out_band = 0;
     out_proj_band = 0;
     out_mat_hs = 0;
+    out_mat_xc = 0;
     cal_syns = 0;
     dmax = 0.01;
     out_mat_hs2 = 0; // LiuXh add 2019-07-15
@@ -1395,6 +1396,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("out_mat_dh", word) == 0)
         {
             read_bool(ifs, out_mat_dh);
+        }
+        else if (strcmp("out_mat_xc", word) == 0)
+        {
+            read_bool(ifs, out_mat_xc);
         }
         else if (strcmp("out_interval", word) == 0)
         {
@@ -3279,6 +3284,7 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(out_mat_hs2); // LiuXh add 2019-07-15
     Parallel_Common::bcast_bool(out_mat_t);
     Parallel_Common::bcast_bool(out_mat_dh);
+    Parallel_Common::bcast_bool(out_mat_xc);
     Parallel_Common::bcast_bool(out_mat_r); // jingan add 2019-8-14
     Parallel_Common::bcast_int(out_wfc_lcao);
     Parallel_Common::bcast_bool(out_alllog);

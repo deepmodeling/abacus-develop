@@ -8,6 +8,7 @@
 #include "module_io/write_proj_band_lcao.h"
 #include "module_io/output_log.h"
 #include "module_io/to_qo.h"
+#include "module_io/write_Vxc.hpp"
 
 //--------------temporary----------------------------
 #include "module_base/global_function.h"
@@ -820,6 +821,12 @@ namespace ModuleESolver
             this->create_Output_DM(is, istep).write();
         }
     }
+
+    bool out_exc = true;    // tmp, add parameter!
+    if (GlobalV::out_mat_xc)
+        ModuleIO::write_Vxc<TK, TR>(GlobalV::NSPIN, GlobalV::NLOCAL, GlobalV::DRANK,
+            *this->psi, GlobalC::ucell, this->sf, *this->pw_rho, *this->pw_rhod, GlobalC::ppcell.vloc,
+            *this->pelec->charge, this->UHM, this->LM, this->LOC, this->kv, this->pelec->wg, GlobalC::GridD);
 
 #ifdef __EXX
     if (GlobalC::exx_info.info_global.cal_exx) // Peize Lin add if 2022.11.14
