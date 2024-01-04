@@ -501,9 +501,6 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
         }
     }
 
-    // renormalize rho in R-space would induce a error in K-space
-    //chr->renormalize_rho();
-
     // For kinetic energy density
     if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
     {
@@ -726,7 +723,6 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
         delete[] rho_magabs_save;
     }
     
-    chr->renormalize_rho();
     double *taur_out, *taur_in;
     if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
     {
