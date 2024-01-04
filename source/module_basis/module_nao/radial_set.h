@@ -62,6 +62,40 @@ class RadialSet
                        const int = 0,                 ///< the element index in calculation
                        std::ofstream* const = nullptr ///< output file stream for logging
                        ) {}
+
+    /**
+     * @brief Builds from quasi hydrogen radial functions.
+     *
+     * 
+     */
+    virtual void build(const int itype = 0,
+                       const double charge = 1.0,
+                       const int nmax = 0,
+                       const double rcut = 10.0,
+                       const double dr = 0.01,
+                       const double conv_thr = 1e-6,
+                       const int rank = 0,
+                       const std::string symbol = "",
+                       const std::string strategy = "minimal",
+                       std::ofstream* const ptr_log = nullptr
+    ) {}
+
+    /**
+     * @brief Builds the object from pseudopotential file
+     *
+     * Currently only AtomicRadials objects are supposed to used this
+     * interface.
+     */
+    virtual void build(const std::string&,             ///< file name
+                       const int,                      ///< the element index in calculation
+                       const double,                   ///< radial screening coefficient, sometimes to be 0.1
+                       const double,                   ///< convergence threshold of norm of pseudowavefunction
+                       std::ofstream* const = nullptr, ///< output file stream for logging
+                       const int = 0                   ///< MPI rank
+                       ) {}
+
+    void to_file(const std::string& file_name, const int rank = 0) const;
+
     ///@}
 
     /**

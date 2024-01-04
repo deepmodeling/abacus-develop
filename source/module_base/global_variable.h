@@ -318,5 +318,12 @@ extern int sc_scf_nmin;
 extern double alpha_trial;
 extern double sccut;
 extern std::string sc_file;
+
+// Quasiatomic orbital related
+extern bool qo_switch;
+extern std::string qo_basis;
+extern std::string qo_strategy;
+extern double qo_thr;
+extern std::vector<double> qo_screening_coeff;
 } // namespace GlobalV
 #endif

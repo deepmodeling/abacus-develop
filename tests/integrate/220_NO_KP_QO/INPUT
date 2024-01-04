@@ -1,0 +1,14 @@
+INPUT_PARAMETERS
+pseudo_dir ../../PP_ORB
+orbital_dir ../../PP_ORB
+
+ecutwfc 50
+scf_nmax 100
+scf_thr 1e-6
+basis_type lcao
+
+qo_switch 1 # turn on QO analysis output
+qo_basis pswfc # use pseudowavefunction read from pseudopotentials
+qo_screening_coeff 0.5 # controls the shrink of AO basis, larger value means tighter basis
+qo_thr 1e-6 # controls the accuracy of QO basis
+symmetry -1 # to ensure matrix elements of symmetry kpoints can be cancelled

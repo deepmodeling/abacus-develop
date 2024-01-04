@@ -15,7 +15,7 @@ AddTest(
         ../../module_hamilt_pw/hamilt_pwdft/soc.cpp
         ../../module_cell/atom_spec.cpp
         ../../module_cell/parallel_kpoints.cpp
-        mock_unitcell.cpp
+        ../../module_cell/test/support/mock_unitcell.cpp
 )
 endif()
 

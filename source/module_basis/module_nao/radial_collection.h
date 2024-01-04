@@ -29,6 +29,20 @@ class RadialCollection
     /// Builds the collection from Numerical_Nonlocal objects.
     void build(const int ntype, Numerical_Nonlocal* const nls);
 
+    /// builds the collection from quasi hydrogen radial functions
+    void build(const int ntype, 
+               const double* const charges, 
+               const int* const nmax, 
+               const std::string* symbols = nullptr,
+               const double conv_thr = 1e-10,
+               const std::string strategy = "minimal");
+               
+    /// builds the collection from pseudopotential pswfc
+    void build(const int ntype, 
+               const std::string* const file, 
+               const double* const screening_coeff,
+               const double conv_thr = 1e-10);
+
     /**
      * @name Getters
      */
@@ -108,6 +122,8 @@ class RadialCollection
                           const char mode = 'i',
                           const bool enable_fft = false);
     ///@}
+
+    void to_file(const std::string&);
 
   private:
     int ntype_ = 0;         ///< number of RadialSet in the collection
