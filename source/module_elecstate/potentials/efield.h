@@ -38,7 +38,7 @@ class Efield
 
     static void prepare(const UnitCell &cell, double &latvec, double &area);
 
-    static void autoset(const UnitCell& cell);
+    static void autoset(std::vector<double>& pos);
 
     static double etotefield; // dipole energy
     static double tot_dipole; // total dipole
