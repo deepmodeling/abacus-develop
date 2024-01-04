@@ -319,10 +319,30 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
     }
     else if (GlobalV::NSPIN == 2)
     {
-        chr->allocate_rhog_mag();
-        chr->get_rhog_mag();
-        rhog_in = chr->rhog_mag_save;
-        rhog_out = chr->rhog_mag;
+        int _ngmc = chr->ngmc;
+        // magnetic density
+        std::complex<double> *rhog_mag = nullptr;
+        std::complex<double> *rhog_mag_save = nullptr;
+        // allocate rhog_mag[is*ngmc] and rhog_mag_save[is*ngmc]
+        rhog_mag = new std::complex<double>[_ngmc * GlobalV::NSPIN];
+        rhog_mag_save = new std::complex<double>[_ngmc * GlobalV::NSPIN];
+        ModuleBase::GlobalFunc::ZEROS(rhog_mag, _ngmc * GlobalV::NSPIN);
+        ModuleBase::GlobalFunc::ZEROS(rhog_mag_save, _ngmc * GlobalV::NSPIN);
+        // get rhog_mag[is*ngmc] and rhog_mag_save[is*ngmc]
+        for (int ig = 0; ig < _ngmc; ig++)
+        {
+            rhog_mag[ig] = chr->rhog[0][ig] + chr->rhog[1][ig];
+            rhog_mag_save[ig] = chr->rhog_save[0][ig] + chr->rhog_save[1][ig];
+        }
+        for (int ig = 0; ig < _ngmc; ig++)
+        {
+            rhog_mag[ig + _ngmc] = chr->rhog[0][ig] - chr->rhog[1][ig];
+            rhog_mag_save[ig + _ngmc] = chr->rhog_save[0][ig] - chr->rhog_save[1][ig];
+        }
+        //
+        rhog_in = rhog_mag_save;
+        rhog_out = rhog_mag;
+        //
         const int npw = this->rhopw->npw;
         auto screen = std::bind(&Charge_Mixing::Kerker_screen_recip_new, this, std::placeholders::_1);
         auto twobeta_mix
@@ -346,9 +366,19 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
         this->mixing->push_data(this->rho_mdata, rhog_in, rhog_out, screen, twobeta_mix, true);
         this->mixing->cal_coef(this->rho_mdata, inner_product_new);
         this->mixing->mix_data(this->rho_mdata, rhog_out);
+        // get rhog[is][nnrx] from rhog_mag[is*ngmc]
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            ModuleBase::GlobalFunc::ZEROS(chr->rhog[is], _ngmc);
+        }
+        for (int ig = 0; ig < _ngmc; ig++)
+        {
+            chr->rhog[0][ig] = 0.5 * (rhog_mag[ig] + rhog_mag[ig+_ngmc]);
+            chr->rhog[1][ig] = 0.5 * (rhog_mag[ig] - rhog_mag[ig+_ngmc]);
+        }
         // delete
-        chr->get_rhog_from_mag();
-        chr->destroy_rhog_mag();
+        delete[] rhog_mag;
+        delete[] rhog_mag_save;
     }
     else if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE <= 0)
     {
