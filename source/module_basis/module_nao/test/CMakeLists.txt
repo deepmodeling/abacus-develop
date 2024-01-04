@@ -41,6 +41,7 @@ AddTest(
     ../radial_set.cpp
     ../numerical_radial.cpp
     ../../module_ao/ORB_atomic_lm.cpp
+    ../../module_ao/ORB_atomic.cpp
     ../../../module_io/output_radial.cpp
   LIBS ${math_libs} device base
 )
@@ -53,6 +54,7 @@ AddTest(
     ../radial_set.cpp
     ../numerical_radial.cpp
     ../../module_ao/ORB_atomic_lm.cpp
+    ../../module_ao/ORB_atomic.cpp
     ../../../module_io/output_radial.cpp
   LIBS ${math_libs} device base
 )
