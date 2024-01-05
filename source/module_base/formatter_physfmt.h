@@ -19,6 +19,17 @@ namespace formatter
             /// @brief adjust the formatter according to the context
             /// @param left whether the output string is left aligned
             void adjust_formatter(bool left = false);
+            /// @brief adjust formatter but provide interface to external for more flexibly control precision
+            /// @param decisive_length for double, it is precision, for int, it is width
+            /// @param width_ratio for double specifically, the length ratio len(integer)/len(decimal) part. If a negative value is given, then there will not be alignment.
+            /// @param fillchar most of time it is okay to keep it as default, set as like otherwise
+            /// @param left whether the output string is left aligned
+            void adjust_formatter_flexible(const int& decisive_length, 
+                                           const double& width_ratio = 0.0, 
+                                           const bool& scientific = false,
+                                           const bool& left = false,
+                                           const char& fillchar = ' '
+                                           );
             /// @brief setter the context
             /// @param context available choices see function adjust_formatter()
             void set_context(std::string context);
