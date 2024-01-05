@@ -6,6 +6,7 @@ if(ENABLE_LCAO)
     radial_set.cpp
     atomic_radials.cpp
     beta_radials.cpp
+    sphbes_radials.cpp
     hydrogen_radials.cpp
     pswfc_radials.cpp
     radial_collection.cpp

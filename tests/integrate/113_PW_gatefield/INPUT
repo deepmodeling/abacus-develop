@@ -25,6 +25,8 @@ mixing_beta		    0.7
 
 efield_flag         1
 dip_cor_flag        1
+efield_pos_max      0.5
+efield_pos_dec      0.1
 cal_force           1
 cal_stress          1
 

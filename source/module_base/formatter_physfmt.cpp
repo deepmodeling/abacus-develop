@@ -1,5 +1,6 @@
 #include "formatter_physfmt.h"
 #include <cstring>
+#include <cassert>
 
 formatter::PhysicalFmt::PhysicalFmt(std::string context, Fmt* p_formatter) {
     context_ = context;
@@ -17,6 +18,7 @@ formatter::PhysicalFmt::~PhysicalFmt() {
 
     if (this->p_formatter_ != nullptr && !this->decorator_mode_) {
         delete this->p_formatter_;
+        this->p_formatter_ = nullptr;
     }
 }
 
@@ -161,6 +163,35 @@ void formatter::PhysicalFmt::adjust_formatter(bool left) {
         this->p_formatter_->set_right(left);
     }
     else {
+    }
+}
+
+void formatter::PhysicalFmt::adjust_formatter_flexible(const int& decisive_length, 
+                                                       const double& width_ratio, 
+                                                       const bool& scientific,
+                                                       const bool& left,
+                                                       const char& fillchar
+                                                       )
+{
+    assert(decisive_length >= 0);
+    //assert(width_ratio >= 0.0); // use negative value to indicate that the integer part width is not considered
+    int width = int(decisive_length * (width_ratio + 1.0));
+    if(std::fabs(width_ratio - 0.0) > 1e-6) // note that it is the only correct way for double to check if equal
+    {
+        width += 1; // for the decimal point
+        if(scientific) width += 4; // for the scientific notation, roughly
+        if(width_ratio < 0.0) width = decisive_length; // for the integer part width is not considered
+        // double case
+        this->p_formatter_->set_width(width); this->p_formatter_->set_precision(decisive_length);
+        this->p_formatter_->set_fillChar(fillchar); this->p_formatter_->set_fixed(!scientific);
+        this->p_formatter_->set_right(!left);
+    }
+    else
+    {
+        // int and string case
+        this->p_formatter_->set_width(width); this->p_formatter_->set_precision(0);
+        this->p_formatter_->set_fillChar(fillchar); this->p_formatter_->set_fixed(true);
+        this->p_formatter_->set_right(!left);
     }
 }
 
