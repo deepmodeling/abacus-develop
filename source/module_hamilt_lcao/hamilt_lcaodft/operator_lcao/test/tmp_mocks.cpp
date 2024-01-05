@@ -280,3 +280,7 @@ Numerical_Orbital::Numerical_Orbital()
 Numerical_Orbital::~Numerical_Orbital()
 {
 }
+
+void Numerical_Orbital::set_orbital_info(const int&, const std::string&, const int&, const int*, const int&)
+{
+}

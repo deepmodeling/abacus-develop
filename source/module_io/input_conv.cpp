@@ -624,7 +624,8 @@ void Input_Conv::Convert(void)
     GlobalV::nelec = INPUT.nelec;
     GlobalV::out_pot = INPUT.out_pot;
     GlobalV::out_app_flag = INPUT.out_app_flag;
-
+    GlobalV::out_ndigits = INPUT.out_ndigits;
+    
     GlobalV::out_bandgap = INPUT.out_bandgap; // QO added for bandgap printing
     GlobalV::out_interval = INPUT.out_interval;
 #ifdef __LCAO

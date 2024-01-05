@@ -8,6 +8,8 @@
 #include <mpi.h>
 #endif
 
+#include <unistd.h>
+
 #include "global_function.h"
 #include "global_variable.h"
 #include "module_base/parallel_common.h"
@@ -283,5 +285,31 @@ void ModuleBase::Global_File::close_all_log(const int rank, const bool out_alllo
     close_log(GlobalV::ofs_info, "math_info");
 #endif
     return;
+}
+
+void ModuleBase::Global_File::delete_tmp_files()
+{
+    if (GlobalV::MY_RANK == 0)
+    {
+        for (int is = 0; is < GlobalV::NSPIN; ++is)
+        {
+            std::string tmp_chg_1 = GlobalV::global_out_dir + "NOW_SPIN" + std::to_string(is + 1) + "_CHG.cube";
+            std::string tmp_chg_2 = GlobalV::global_out_dir + "OLD1_SPIN" + std::to_string(is + 1) + "_CHG.cube";
+            std::string tmp_chg_3 = GlobalV::global_out_dir + "OLD2_SPIN" + std::to_string(is + 1) + "_CHG.cube";
+
+            if (access(tmp_chg_1.c_str(), 0) == 0)
+            {
+                std::remove(tmp_chg_1.c_str());
+            }
+            if (access(tmp_chg_2.c_str(), 0) == 0)
+            {
+                std::remove(tmp_chg_2.c_str());
+            }
+            if (access(tmp_chg_3.c_str(), 0) == 0)
+            {
+                std::remove(tmp_chg_3.c_str());
+            }
+        }
+    }
 }
 }
