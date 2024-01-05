@@ -82,6 +82,19 @@ RadialSet& RadialSet::operator=(const RadialSet& rhs)
     return *this;
 }
 
+void RadialSet::to_numerical_orbital(Numerical_Orbital& no, const int nk_legacy, const double lcao_dk) const
+{
+    delete[] no.chi();
+
+    no.chi() = new Numerical_Orbital_Lm[nchi_];
+    for (int i = 0; i < nchi_; i++)
+    {
+        chi_[i].to_numerical_orbital_lm(no.chi()[i], nk_legacy, lcao_dk);
+    }
+
+    no.set_orbital_info(itype_, symbol_, lmax_, nzeta_, nchi_);
+}
+
 void RadialSet::set_rcut_max()
 {
     rcut_max_ = 0.0;
@@ -146,7 +159,7 @@ void RadialSet::set_grid(const bool for_r_space, const int ngrid, const double* 
     {
         chi_[i].set_grid(for_r_space, ngrid, grid, mode);
     }
-    rcut_max_ = grid[ngrid - 1];
+    set_rcut_max();
 }
 
 void RadialSet::set_uniform_grid(const bool for_r_space,
@@ -159,7 +172,7 @@ void RadialSet::set_uniform_grid(const bool for_r_space,
     {
         chi_[i].set_uniform_grid(for_r_space, ngrid, cutoff, mode, enable_fft);
     }
-    rcut_max_ = cutoff;
+    set_rcut_max();
 }
 
 void RadialSet::cleanup()

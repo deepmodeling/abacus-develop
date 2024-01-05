@@ -114,12 +114,17 @@ TEST_F(RadialCollectionTest, BatchSet) {
     orb.set_transformer(sbt);
     orb.set_uniform_grid(true, 2001, 20.0);
 
-    EXPECT_EQ(orb.rcut_max(), 20.0);
+    // NOTE: cutoff radius is not necessarily the last rgrid point. This is
+    // because the grid might have zero padding for the sake of FFT. rcut
+    // keeps track of the "actual" cutoff radius.
+
+    EXPECT_EQ(orb.rcut_max(), 10.0);
+    std::array<int, 4> rcut = {8, 8, 10, 9};
     for (int itype = 0; itype != orb.ntype(); ++itype) {
         for (int l = 0; l <= orb(itype).lmax(); ++l) {
             for (int izeta = 0; izeta != orb.nzeta(itype, l); ++izeta) {
                 EXPECT_EQ(sbt, orb(itype, l, izeta).sbt());
-                EXPECT_DOUBLE_EQ(orb(itype, l, izeta).rcut(), 20.0);
+                EXPECT_DOUBLE_EQ(orb(itype, l, izeta).rcut(), rcut[itype]);
             }
         }
     }
