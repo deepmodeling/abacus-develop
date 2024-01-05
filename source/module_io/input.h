@@ -272,6 +272,7 @@ class Input
     bool out_mat_dh;
     int out_interval;
     bool out_app_flag;    // whether output r(R), H(R), S(R), T(R), and dH(R) matrices in an append manner during MD  liuyu 2023-03-20
+    int out_ndigits;
     bool out_mat_t;
     bool out_mat_r; // jingan add 2019-8-14, output r(R) matrix.
     int out_wfc_lcao; // output the wave functions in local basis.

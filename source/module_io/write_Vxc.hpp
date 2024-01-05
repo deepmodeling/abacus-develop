@@ -118,6 +118,7 @@ namespace ModuleIO
 
 
     /// @brief  write the Vxc matrix in KS orbital representation, usefull for GW calculation
+    /// including terms: Vxc(local/semi-local), Vexx
     template <typename TK, typename TR>
     void write_Vxc(int nspin, int nbasis, int drank, const psi::Psi<TK>& psi, const UnitCell& ucell, Structure_Factor& sf,
         const ModulePW::PW_Basis& rho_basis, const ModulePW::PW_Basis& rhod_basis, const ModuleBase::matrix& vloc,
@@ -165,7 +166,7 @@ namespace ModuleIO
         // ======test=======
 #endif
 
-        //3. calculate and write the MO-matrix Exc
+        //4. calculate and write the MO-matrix Exc
         Parallel_2D p2d;
         set_para2d_MO(*pv, nbands, p2d);
 

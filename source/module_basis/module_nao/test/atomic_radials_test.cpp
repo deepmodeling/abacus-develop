@@ -9,6 +9,7 @@
 
 #include "module_base/constants.h"
 #include "module_base/global_variable.h"
+#include "module_basis/module_ao/ORB_atomic.h"
 
 using ModuleBase::SphericalBesselTransformer;
 
@@ -32,6 +33,10 @@ using ModuleBase::SphericalBesselTransformer;
  *
  *  - all "batch setters"
  *      - Set a property for all NumericalRadial objects at once
+ *
+ *  - to_numerical_orbital
+ *      - Overwrites the content of a Numerical_Orbital object with the current object.
+ *
  *                                                                      */
 class AtomicRadialsTest : public ::testing::Test
 {
@@ -234,6 +239,30 @@ TEST_F(AtomicRadialsTest, BeginAndEnd)
 
     EXPECT_EQ(Ti_radials.cbegin(), &Ti_radials.chi(0, 0));
     EXPECT_EQ(Ti_radials.cend() - 1, &Ti_radials.chi(3, 0));
+}
+
+TEST_F(AtomicRadialsTest, ToNumericalOrbital)
+{
+    int itype = 5;
+    Ti_radials.build(file, itype, nullptr, GlobalV::MY_RANK);
+
+    ModuleBase::SphericalBesselTransformer sbt;
+    Ti_radials.set_transformer(sbt);
+    Ti_radials.set_uniform_grid(false, 1001, 30.0, 't');
+
+    Numerical_Orbital no;
+    Ti_radials.to_numerical_orbital(no);
+
+    EXPECT_EQ(Ti_radials.lmax(), no.getLmax());
+    EXPECT_EQ(Ti_radials.rcut_max(), no.getRcut());
+    EXPECT_EQ(Ti_radials.itype(), no.getType());
+    EXPECT_EQ(Ti_radials.nchi(), no.getTotal_nchi());
+    EXPECT_EQ(Ti_radials.symbol(), no.getLabel());
+
+    for (int l = 0; l <= Ti_radials.lmax(); l++)
+    {
+        EXPECT_EQ(Ti_radials.nzeta(l), no.getNchi(l));
+    }
 }
 
 int main(int argc, char** argv)

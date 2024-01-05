@@ -112,6 +112,7 @@ private:
 		const bool &force_flag, // mohan add 2021-05-07
 		const int &my_rank);	//caoyu add 2021-04-26
 
+    friend class TwoCenterBundle; // for the sake of TwoCenterBundle::to_LCAO_Orbitals
 };
 
 /// PLEASE avoid using 'ORB' as global variable 

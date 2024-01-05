@@ -143,6 +143,7 @@
     - [out\_mat\_dh](#out_mat_dh)
     - [out\_mat\_xc](#out_mat_xc)
     - [out\_app\_flag](#out_app_flag)
+    - [out\_ndigits](#out_ndigits)
     - [out\_interval](#out_interval)
     - [out\_element\_info](#out_element_info)
     - [restart\_save](#restart_save)
@@ -1574,7 +1575,7 @@ These variables are used to control the output of properties.
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis
-- **Description**: Whether to print the upper triangular part of the exchange-correlation matrices in **Kohn-Sham orbital representation** (unit: Ry) for each k point into files in the directory `OUT.${suffix}`, which is useful for the subsequent GW calculation . The files are named `k-$k-Vxc`, the meaning of `$k`corresponding to k point and spin  is same as [hs_matrix.md](../elec_properties/hs_matrix.md#out_mat_hs).
+- **Description**: Whether to print the upper triangular part of the exchange-correlation matrices in **Kohn-Sham orbital representation** (unit: Ry): $\braket{\psi_i|V_\text{xc}^\text{(semi-)local}+V_\text{exx}|\psi_j}$ for each k point into files in the directory `OUT.${suffix}`, which is useful for the subsequent GW calculation . The files are named `k-$k-Vxc`, the meaning of `$k`corresponding to k point and spin  is same as [hs_matrix.md](../elec_properties/hs_matrix.md#out_mat_hs).
 - **Default**: False
 
 ### out_app_flag
@@ -1583,6 +1584,13 @@ These variables are used to control the output of properties.
 - **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
 - **Description**: Whether to output $r(R)$, $H(R)$, $S(R)$, $T(R)$, $dH(R)$, $H(k)$, $S(k)$ and $wfc(k)$ matrices in an append manner during molecular dynamics calculations. Check input parameters [out_mat_r](#out_mat_r), [out_mat_hs2](#out_mat_hs2), [out_mat_t](#out_mat_t), [out_mat_dh](#out_mat_dh), [out_mat_hs](#out_mat_hs) and [out_wfc_lcao](#out_wfc_lcao) for more information.
 - **Default**: true
+
+### out_ndigits
+
+- **Type**: Integar
+- **Availability**: `out_mat_hs 1` case presently.
+- **Description**: Controls the length of decimal part of output data, such as charge density, Hamiltonian matrix, Overlap matrix and so on.
+- **Default**: 8
 
 ### out_interval
 
@@ -1984,15 +1992,15 @@ These variables are relevant to electric field and dipole correction
 
 - **Type**: Real
 - **Availability**: with efield_flag = True.
-- **Description**: Position of the maximum of the saw-like potential along crystal axis efield_dir, within the  unit cell, 0 < efield_pos_max < 1.
-- **Default**: 0.5
+- **Description**: Position of the maximum of the saw-like potential along crystal axis efield_dir, within the  unit cell, 0 <= efield_pos_max < 1.
+- **Default**: Autoset to `center of vacuum - width of vacuum / 20`
 
 ### efield_pos_dec
 
 - **Type**: Real
 - **Availability**: with efield_flag = True.
 - **Description**: Zone in the unit cell where the saw-like potential decreases, 0 < efield_pos_dec < 1.
-- **Default**: 0.1
+- **Default**: Autoset to `width of vacuum / 10`
 
 ### efield_amp
 
