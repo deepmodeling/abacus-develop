@@ -1,5 +1,6 @@
 #include "relax_driver.h"
 
+#include "module_base/global_file.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h" // use chr.
 #include "module_io/print_info.h"
 #include "module_io/write_wfc_r.h"
@@ -123,6 +124,11 @@ void Relax_Driver<FPTYPE, Device>::relax_driver(ModuleESolver::ESolver *p_esolve
     if (GlobalV::OUT_LEVEL == "i")
     {
         std::cout << " ION DYNAMICS FINISHED :)" << std::endl;
+    }
+
+    if (GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax")
+    {
+        ModuleBase::Global_File::delete_tmp_files();
     }
 
     ModuleBase::timer::tick("Ions", "opt_ions");
