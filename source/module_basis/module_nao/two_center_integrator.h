@@ -94,7 +94,7 @@ class TwoCenterIntegrator
                    const int l2,
                    const int izeta2,
                    const int m2,
-	               const ModuleBase::Vector3<double>& vR, // vR = R2 - R1
+	                 const ModuleBase::Vector3<double>& vR, // vR = R2 - R1
                    double* out = nullptr,
                    double* grad_out = nullptr
     ) const;

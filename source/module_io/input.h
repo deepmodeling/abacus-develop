@@ -271,6 +271,7 @@ class Input
     bool out_mat_dh;
     int out_interval;
     bool out_app_flag;    // whether output r(R), H(R), S(R), T(R), and dH(R) matrices in an append manner during MD  liuyu 2023-03-20
+    int out_ndigits;
     bool out_mat_t;
     bool out_mat_r; // jingan add 2019-8-14, output r(R) matrix.
     int out_wfc_lcao; // output the wave functions in local basis.
@@ -583,11 +584,19 @@ class Input
     double alpha_trial; // initial trial step size for lambda in eV/uB^2
     double sccut; // restriction of step size in eV/uB
     std::string sc_file; // file name for Deltaspin (json format)
-
-    // whether to use PAW
+    //==========================================================
+    // variables for PAW
     //==========================================================
     bool use_paw = false;
-
+    //==========================================================
+    // variables for Quasiatomic Orbital analysis
+    //==========================================================
+    bool qo_switch = false;
+    std::string qo_basis = "hydrogen";
+    std::string qo_strategy = "minimal";
+    double qo_thr = 1e-6;
+    double qo_screening_coeff = 0.0;
+    
   private:
     //==========================================================
     // MEMBER FUNCTIONS :

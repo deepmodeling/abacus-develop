@@ -82,9 +82,9 @@ void formatter::ContextFmt::set_context(std::vector<std::string> phys_fmt) {
     }
 }
 
-template<> formatter::ContextFmt& formatter::ContextFmt::operator<< <double>(double const&);
-template<> formatter::ContextFmt& formatter::ContextFmt::operator<< <int>(int const&);
-template<> formatter::ContextFmt& formatter::ContextFmt::operator<< <char>(char const&);
+template formatter::ContextFmt& formatter::ContextFmt::operator<< <double>(double const&);
+template formatter::ContextFmt& formatter::ContextFmt::operator<< <int>(int const&);
+template formatter::ContextFmt& formatter::ContextFmt::operator<< <char>(char const&);
 
 template <>
 formatter::ContextFmt& formatter::ContextFmt::operator<<(const std::string& value) {
@@ -122,14 +122,14 @@ formatter::ContextFmt& formatter::ContextFmt::operator<< (char const* value)
     return *this << value_;
 }
 
-template<> formatter::ContextFmt& formatter::ContextFmt::operator<< <double>(std::vector<double> const& value);
-template<> formatter::ContextFmt& formatter::ContextFmt::operator<< <std::string>(std::vector<std::string> const& value);
-template<> formatter::ContextFmt& formatter::ContextFmt::operator<< <int>(std::vector<int> const& value);
+template formatter::ContextFmt& formatter::ContextFmt::operator<< <double>(std::vector<double> const& value);
+template formatter::ContextFmt& formatter::ContextFmt::operator<< <std::string>(std::vector<std::string> const& value);
+template formatter::ContextFmt& formatter::ContextFmt::operator<< <int>(std::vector<int> const& value);
 
-template<> formatter::ContextFmt& formatter::ContextFmt::operator<< <double>(double*& value);
-template<> formatter::ContextFmt& formatter::ContextFmt::operator<< <int>(int*& value);
-template<> formatter::ContextFmt& formatter::ContextFmt::operator<< <std::string>(std::string*& value);
-template<> formatter::ContextFmt& formatter::ContextFmt::operator<< <char>(char*& value);
+template formatter::ContextFmt& formatter::ContextFmt::operator<< <double>(double*& value);
+template formatter::ContextFmt& formatter::ContextFmt::operator<< <int>(int*& value);
+template formatter::ContextFmt& formatter::ContextFmt::operator<< <std::string>(std::string*& value);
+template formatter::ContextFmt& formatter::ContextFmt::operator<< <char>(char*& value);
 
 void formatter::ContextFmt::reset() {
     Table::reset();

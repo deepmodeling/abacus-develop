@@ -440,6 +440,7 @@ namespace ModuleESolver
                         // }
                         
                         p_chgmix->mix_rho(pelec->charge);
+                        if (GlobalV::SCF_THR_TYPE == 2) pelec->charge->renormalize_rho(); // renormalize rho in R-space would induce a error in K-space
                         //----------charge mixing done-----------
                     }
                 }

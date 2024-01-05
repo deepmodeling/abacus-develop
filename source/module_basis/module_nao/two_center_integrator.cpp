@@ -10,10 +10,10 @@ TwoCenterIntegrator::TwoCenterIntegrator():
 }
 
 void TwoCenterIntegrator::tabulate(const RadialCollection& bra,
-                                 const RadialCollection& ket,
-                                 const char op,
-                                 const int nr,
-                                 const double cutoff)
+                                   const RadialCollection& ket,
+                                   const char op,
+                                   const int nr,
+                                   const double cutoff)
 {
     op_ = op;
     table_.build(bra, ket, op, nr, cutoff);

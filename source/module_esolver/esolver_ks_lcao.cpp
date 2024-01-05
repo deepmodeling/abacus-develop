@@ -1,5 +1,6 @@
 #include "esolver_ks_lcao.h"
 
+#include "module_base/global_variable.h"
 #include "module_io/dos_nao.h"
 #include "module_io/mulliken_charge.h"
 #include "module_io/nscf_band.h"
@@ -7,6 +8,7 @@
 #include "module_io/write_istate_info.h"
 #include "module_io/write_proj_band_lcao.h"
 #include "module_io/output_log.h"
+#include "module_io/to_qo.h"
 
 //--------------temporary----------------------------
 #include "module_base/global_function.h"
@@ -414,23 +416,36 @@ namespace ModuleESolver
 
     // * reading the localized orbitals/projectors
     // * construct the interpolation tables.
-    this->orb_con.read_orb_first(GlobalV::ofs_running,
-                                 GlobalC::ORB,
-                                 ucell.ntype,
-                                 GlobalV::global_orbital_dir,
-                                 ucell.orbital_fn,
-                                 ucell.descriptor_file,
-                                 ucell.lmax,
-                                 inp.lcao_ecut,
-                                 inp.lcao_dk,
-                                 inp.lcao_dr,
-                                 inp.lcao_rmax,
-                                 GlobalV::deepks_setorb,
-                                 inp.out_mat_r,
-                                 GlobalV::CAL_FORCE,
-                                 GlobalV::MY_RANK);
+
+    two_center_bundle.reset(new TwoCenterBundle);
+    two_center_bundle->build_orb(ucell.ntype, ucell.orbital_fn);
+    two_center_bundle->build_alpha(GlobalV::deepks_setorb, &ucell.descriptor_file);
+    // currently deepks only use one descriptor file, so cast bool to int is fine
+
+    //this->orb_con.read_orb_first(GlobalV::ofs_running,
+    //                             GlobalC::ORB,
+    //                             ucell.ntype,
+    //                             GlobalV::global_orbital_dir,
+    //                             ucell.orbital_fn,
+    //                             ucell.descriptor_file,
+    //                             ucell.lmax,
+    //                             inp.lcao_ecut,
+    //                             inp.lcao_dk,
+    //                             inp.lcao_dr,
+    //                             inp.lcao_rmax,
+    //                             GlobalV::deepks_setorb,
+    //                             inp.out_mat_r,
+    //                             GlobalV::CAL_FORCE,
+    //                             GlobalV::MY_RANK);
+
+    // TODO Due to the omnipresence of GlobalC::ORB, we still have to rely
+    // on the old interface for now.
+    two_center_bundle->to_LCAO_Orbitals(GlobalC::ORB,
+            inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax);
 
     ucell.infoNL.setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, GlobalC::ORB);
+
+    two_center_bundle->build_beta(ucell.ntype, ucell.infoNL.Beta);
 
     int Lmax = 0;
 #ifdef __EXX
@@ -448,16 +463,7 @@ namespace ModuleESolver
                                  ucell.infoNL.nproj,
                                  ucell.infoNL.Beta);
 #else
-    //-------------------------------------
-    //  new two-center integral module
-    //-------------------------------------
-    two_center_bundle.reset(new TwoCenterBundle);
-
-    // NOTE: ucell.orbital_fn does not include the path,
-    // GlobalV::global_orbital_dir & GlobalV::global_pseudo_dir is prepended inside build()
-    two_center_bundle->build(ucell.ntype, ucell.orbital_fn, ucell.infoNL.Beta,
-            GlobalV::deepks_setorb, &ucell.descriptor_file);
-    // currently deepks only use one descriptor file, so use bool as int
+    two_center_bundle->tabulate();
 
     // transfer the ownership to UOT
     // this is a temporary solution during refactoring
@@ -531,9 +537,9 @@ namespace ModuleESolver
 #ifdef __EXX
     // calculate exact-exchange
     if (GlobalC::exx_info.info_ri.real_number)
-        this->exd->exx_eachiterinit(*dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(), *(this->p_chgmix), iter);
+        this->exd->exx_eachiterinit(*dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(), iter);
     else
-        this->exc->exx_eachiterinit(*dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(), *(this->p_chgmix), iter);
+        this->exc->exx_eachiterinit(*dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(), iter);
 #endif
 
     if (GlobalV::dft_plus_u)
@@ -696,7 +702,7 @@ namespace ModuleESolver
             }
         }
     }
-
+    // print wavefunctions
     if (this->conv_elec)
     {
         if (elecstate::ElecStateLCAO<TK>::out_wfc_lcao)
@@ -713,7 +719,6 @@ namespace ModuleESolver
         if (elecstate::ElecStateLCAO<TK>::out_wfc_lcao)
             elecstate::ElecStateLCAO<TK>::out_wfc_flag = 0;
     }
-
     // (9) Calculate new potential according to new Charge Density.
 
     if (this->conv_elec || iter == GlobalV::SCF_NMAX)
@@ -896,6 +901,12 @@ namespace ModuleESolver
     if (!GlobalV::CAL_FORCE && !GlobalV::CAL_STRESS)
     {
         RA.delete_grid();
+    }
+    if(GlobalV::qo_switch)
+    {
+        toQO tqo(GlobalV::qo_basis, GlobalV::qo_strategy);
+        tqo.initialize(&GlobalC::ucell, this->kv.kvec_d);
+        tqo.calculate();
     }
 }
 
