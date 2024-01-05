@@ -1,10 +1,6 @@
 #include "module_psi/psi.h"
-#include "module_hamilt_lcao/module_gint/gint_tools.h"
-#include "module_hamilt_lcao/module_gint/gint_gamma.h"
-#include "module_hamilt_lcao/module_gint/gint_k.h"
-#include "module_elecstate/potentials/pot_xc.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/veff_lcao.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_dftu_lcao.h"
 #include "module_base/scalapack_connector.h"
 #include "module_base/parallel_reduce.h"
 template <typename T> struct TGint;
@@ -118,7 +114,7 @@ namespace ModuleIO
 
 
     /// @brief  write the Vxc matrix in KS orbital representation, usefull for GW calculation
-    /// including terms: Vxc(local/semi-local), Vexx
+    /// including terms: local/semi-local XC, EXX, DFTU
     template <typename TK, typename TR>
     void write_Vxc(int nspin, int nbasis, int drank, const psi::Psi<TK>& psi, const UnitCell& ucell, Structure_Factor& sf,
         const ModulePW::PW_Basis& rho_basis, const ModulePW::PW_Basis& rhod_basis, const ModuleBase::matrix& vloc,
@@ -165,6 +161,7 @@ namespace ModuleIO
         // hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>> test_vexxonly_op_ao(&lm, nullptr, &test_vexxonly_k_ao, kv);
         // ======test=======
 #endif
+        hamilt::OperatorDFTU<hamilt::OperatorLCAO<TK, TR>> vdftu_op_ao(&lm, kv.kvec_d, nullptr, &vxc_k_ao, kv.isk);
 
         //4. calculate and write the MO-matrix Exc
         Parallel_2D p2d;
@@ -188,6 +185,7 @@ namespace ModuleIO
             // exx_energy += all_band_energy(ik, test_vexxonly_k_mo, p2d, wg);
             // ======test=======
 #endif
+            if (GlobalV::dft_plus_u) vdftu_op_ao.contributeHk(ik);
             std::vector<TK> vxc_k_mo = cVc(vxc_k_ao.data(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d);
             // write
             ModuleIO::save_mat(-1, vxc_k_mo.data(), nbands,
