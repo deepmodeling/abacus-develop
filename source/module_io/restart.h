@@ -2,6 +2,7 @@
 #define RESTART_H
 
 #include <string>
+#include "module_base/global_function.h"
 #ifdef __LCAO
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #endif
@@ -21,7 +22,7 @@ public:
 		bool load_charge_finish = false;
 		bool load_H = false;
 		bool load_H_finish = false;
-		bool restart_exx = false;
+        bool restart_exx = false;   // to avoid the repeated load in MD/Relax
 	};
 	Info_Load info_load;
 	

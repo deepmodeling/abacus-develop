@@ -38,7 +38,18 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const K_Vectors& kv, const Charg
 #ifdef __MPI
     if (GlobalC::exx_info.info_global.cal_exx)
     {
-        if (GlobalC::restart.info_load.load_H_finish) XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
+        if (GlobalC::restart.info_load.load_H_finish && !GlobalC::restart.info_load.restart_exx) XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
+        else
+        {
+            if (GlobalC::ucell.atoms[0].ncpp.xc_func == "HF" || GlobalC::ucell.atoms[0].ncpp.xc_func == "PBE0" || GlobalC::ucell.atoms[0].ncpp.xc_func == "HSE")
+            {
+                XC_Functional::set_xc_type("pbe");
+            }
+            else if (GlobalC::ucell.atoms[0].ncpp.xc_func == "SCAN0")
+            {
+                XC_Functional::set_xc_type("scan");
+            }
+        }
         this->exx_ptr->cal_exx_ions();
     }
 
@@ -91,7 +102,8 @@ void Exx_LRI_Interface<T, Tdata>::exx_hamilt2density(elecstate::ElecState& elec,
     {
         // add exx
         // Peize Lin add 2016-12-03
-        if (GlobalC::restart.info_load.load_H_finish && Exx_LRI_Interface<T, Tdata>::two_level_step == 0 && iter == 1)
+        if (GlobalC::restart.info_load.load_H_finish && !GlobalC::restart.info_load.restart_exx
+            && Exx_LRI_Interface<T, Tdata>::two_level_step == 0 && iter == 1)
         {
             if (GlobalV::MY_RANK == 0)GlobalC::restart.load_disk("Eexx", 0, 1, &this->exx_ptr->Eexx);
             Parallel_Common::bcast_double(this->exx_ptr->Eexx);
@@ -113,6 +125,11 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
     const K_Vectors& kv,
     int& iter)
 {
+    auto restart_reset = [this]()
+        { // avoid calling restart related procedure in the subsequent ion steps
+            GlobalC::restart.info_load.restart_exx = true;
+            this->exx_ptr->Eexx = 0;
+        };
     if (GlobalC::exx_info.info_global.cal_exx)
     {
         // no separate_loop case
@@ -126,6 +143,7 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
 
             if (Exx_LRI_Interface<T, Tdata>::two_level_step)
             {
+                restart_reset();
                 return true;
             }
             else
@@ -143,6 +161,7 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
         else if (Exx_LRI_Interface<T, Tdata>::two_level_step == GlobalC::exx_info.info_global.hybrid_step
             || (iter == 1 && Exx_LRI_Interface<T, Tdata>::two_level_step != 0))
         {
+            restart_reset();
             return true;
         }
         else
@@ -176,10 +195,6 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
             return false;
         }
     }
-    else
-    {
-        return true;
-    }
+    restart_reset();
+    return true;
 }
-
-#endif

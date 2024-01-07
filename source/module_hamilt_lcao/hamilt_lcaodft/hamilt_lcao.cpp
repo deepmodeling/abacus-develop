@@ -395,7 +395,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
                 &(this->getHk(LM_in)),
                 *this->kv,
                 GlobalC::exx_info.info_ri.real_number ? &Exx_LRI_Interface<TK, double>::two_level_step : &Exx_LRI_Interface<TK, std::complex<double>>::two_level_step,
-                GlobalC::restart.info_load.load_H);
+                !GlobalC::restart.info_load.restart_exx&& GlobalC::restart.info_load.load_H);
         this->getOperator()->add(exx);
     }
 #endif
