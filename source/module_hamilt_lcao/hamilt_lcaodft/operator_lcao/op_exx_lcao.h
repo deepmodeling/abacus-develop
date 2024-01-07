@@ -3,13 +3,8 @@
 #include "module_base/timer.h"
 #include "module_cell/klist.h"
 #include "operator_lcao.h"
-<<<<<<< HEAD
 #ifdef __EXX
 #include <RI/global/Tensor.h>
-=======
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
-
->>>>>>> fab97e612 (Feature: restart from Hexx & refactor Restart)
 namespace hamilt
 {
 
@@ -41,7 +36,8 @@ public:
     {
         this->cal_type = lcao_exx;
         if (restart)
-        {
+        {///  Now only Hexx depends on DM, so we can directly read Hexx to reduce the computational cost.
+        /// If other operators depends on DM, we can also read DM and then calculate the operators to save the memory to store operator terms.
             assert(two_level_step != nullptr);
             /// read in Hexx
             if (std::is_same<TK, double>::value)
@@ -50,7 +46,9 @@ public:
                 for (int ik = 0; ik < this->kv.nks; ik++)
                 {
                     this->LM->Hexxd_k_load[ik].resize(this->LM->ParaV->get_local_size(), 0.0);
-                    GlobalC::restart.load_disk("Hexx", ik, this->LM->ParaV->get_local_size(), this->LM->Hexxd_k_load[ik].data());
+                    restart = GlobalC::restart.load_disk("Hexx", ik,
+                        this->LM->ParaV->get_local_size(), this->LM->Hexxd_k_load[ik].data(), false);
+                    if (!restart) break;
                 }
             }
             else
@@ -59,9 +57,14 @@ public:
                 for (int ik = 0; ik < this->kv.nks; ik++)
                 {
                     this->LM->Hexxc_k_load[ik].resize(this->LM->ParaV->get_local_size(), 0.0);
-                    GlobalC::restart.load_disk("Hexx", ik, this->LM->ParaV->get_local_size(), this->LM->Hexxc_k_load[ik].data());
+                    restart = GlobalC::restart.load_disk("Hexx", ik,
+                        this->LM->ParaV->get_local_size(), this->LM->Hexxc_k_load[ik].data(), false);
+                    if (!restart) break;
                 }
             }
+            if (!restart) std::cout << "WARNING: Hexx not found, restart from the non-exx loop. \n \
+                If the loaded charge density is EXX-solved, this may lead to poor convergence." << std::endl;
+            GlobalC::restart.info_load.load_H_finish = restart;
         }
     }
 

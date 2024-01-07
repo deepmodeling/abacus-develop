@@ -152,11 +152,11 @@ namespace ModuleESolver
             but in "nscf" calculation, there is no need of "two-level" method. */
             if (GlobalC::ucell.atoms[0].ncpp.xc_func == "HF" || GlobalC::ucell.atoms[0].ncpp.xc_func == "PBE0" || GlobalC::ucell.atoms[0].ncpp.xc_func == "HSE")
             {
-                XC_Functional::set_xc_type(GlobalC::restart.info_load.load_H ? GlobalC::ucell.atoms[0].ncpp.xc_func : "pbe");
+                XC_Functional::set_xc_type("pbe");
             }
             else if (GlobalC::ucell.atoms[0].ncpp.xc_func == "SCAN0")
             {
-                XC_Functional::set_xc_type(GlobalC::restart.info_load.load_H ? GlobalC::ucell.atoms[0].ncpp.xc_func : "scan");
+                XC_Functional::set_xc_type("scan");
             }
 
             // GlobalC::exx_lcao.init();

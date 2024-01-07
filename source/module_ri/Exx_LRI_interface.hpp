@@ -37,7 +37,10 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const K_Vectors& kv, const Charg
 {
 #ifdef __MPI
     if (GlobalC::exx_info.info_global.cal_exx)
-            this->exx_ptr->cal_exx_ions();
+    {
+        if (GlobalC::restart.info_load.load_H_finish) XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
+        this->exx_ptr->cal_exx_ions();
+    }
 
 		if (Exx_Abfs::Jle::generate_matrix)
 		{
@@ -88,7 +91,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_hamilt2density(elecstate::ElecState& elec,
     {
         // add exx
         // Peize Lin add 2016-12-03
-        if (GlobalC::restart.info_load.load_H && Exx_LRI_Interface<T, Tdata>::two_level_step == 0 && iter == 1)
+        if (GlobalC::restart.info_load.load_H_finish && Exx_LRI_Interface<T, Tdata>::two_level_step == 0 && iter == 1)
         {
             if (GlobalV::MY_RANK == 0)GlobalC::restart.load_disk("Eexx", 0, 1, &this->exx_ptr->Eexx);
             Parallel_Common::bcast_double(this->exx_ptr->Eexx);

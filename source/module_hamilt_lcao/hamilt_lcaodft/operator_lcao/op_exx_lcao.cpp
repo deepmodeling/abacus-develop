@@ -44,7 +44,7 @@ template<typename TK, typename TR>
 void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHk(int ik)
 {
     // Peize Lin add 2016-12-03
-    if (this->two_level_step != nullptr && *this->two_level_step == 0 && !this->restart) return;  //do nothing
+    if (this->two_level_step != nullptr && *this->two_level_step == 0 && !this->restart) return;  //in the non-exx loop, do nothing 
     if (XC_Functional::get_func_type() == 4 || XC_Functional::get_func_type() == 5)
     {
         if (this->restart && this->two_level_step != nullptr)

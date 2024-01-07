@@ -293,6 +293,14 @@ void ESolver_KS_LCAO<TK, TR>::beforescf(int istep)
     }
 
     this->beforesolver(istep);
+    // Peize Lin add 2016-12-03
+#ifdef __EXX    // set xc type before the first cal of xc in pelec->init_scf
+    if (GlobalC::exx_info.info_ri.real_number)
+        this->exd->exx_beforescf(this->kv, *this->p_chgmix);
+    else
+        this->exc->exx_beforescf(this->kv, *this->p_chgmix);
+#endif // __EXX
+
     this->pelec->init_scf(istep, this->sf.strucFac);
     // initalize DMR
     // DMR should be same size with Hamiltonian(R)
@@ -307,13 +315,6 @@ void ESolver_KS_LCAO<TK, TR>::beforescf(int istep)
     {
         srho.begin(is, *(this->pelec->charge), this->pw_rho, GlobalC::Pgrid, GlobalC::ucell.symm);
     }
-// Peize Lin add 2016-12-03
-#ifdef __EXX
-    if (GlobalC::exx_info.info_ri.real_number)
-        this->exd->exx_beforescf(this->kv, *this->p_chgmix);
-    else
-        this->exc->exx_beforescf(this->kv, *this->p_chgmix);
-#endif // __EXX
        // 1. calculate ewald energy.
        // mohan update 2021-02-25
     if (!GlobalV::test_skip_ewald)
