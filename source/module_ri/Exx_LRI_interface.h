@@ -30,7 +30,7 @@ public:
     using TAC = std::pair<int, std::array<int, 3>>;
     std::vector< std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& get_Hexxs() const { return this->exx_ptr->Hexxs; }
     
-    Tdata& get_Eexx() const { return this->exx_ptr->Eexx; }
+    double& get_Eexx() const { return this->exx_ptr->Eexx; }
 
     // Processes in ESolver_KS_LCAO
     /// @brief in beforescf: set xc type, opt_orb, do DM mixing
@@ -41,7 +41,7 @@ public:
         const int& iter);
 
     /// @brief in hamilt2density: calculate Hexx and Eexx
-    void exx_hamilt2density(elecstate::ElecState& elec, const Parallel_Orbitals& pv);
+    void exx_hamilt2density(elecstate::ElecState& elec, const Parallel_Orbitals& pv, const int iter);
 
     /// @brief: in do_after_converge: add exx operators; do DM mixing if seperate loop
     bool exx_after_converge(
@@ -50,11 +50,10 @@ public:
         const elecstate::DensityMatrix<T, double>& dm/**< double should be Tdata if complex-PBE-DM is supported*/,
         const K_Vectors& kv,
         int& iter);
-
+    static int two_level_step;
 private:
     std::shared_ptr<Exx_LRI<Tdata>> exx_ptr;
     Mix_DMk_2D mix_DMk_2D;
-    int two_level_step = 0;
 };
 
 #include "Exx_LRI_interface.hpp"

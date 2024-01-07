@@ -8,6 +8,8 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
 
 #include <sys/time.h>
+template <typename T, typename Tdata>
+int Exx_LRI_Interface<T, Tdata>::two_level_step = 0;
 
 template<typename T, typename Tdata>
 void Exx_LRI_Interface<T, Tdata>::write_Hexxs(const std::string& file_name) const
@@ -34,15 +36,8 @@ template<typename T, typename Tdata>
 void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const K_Vectors& kv, const Charge_Mixing& chgmix)
 {
 #ifdef __MPI
-		if ( GlobalC::exx_info.info_global.cal_exx )
-		{
-            if (GlobalC::ucell.atoms[0].ncpp.xc_func == "HF" || GlobalC::ucell.atoms[0].ncpp.xc_func == "PBE0" || GlobalC::ucell.atoms[0].ncpp.xc_func == "HSE")
-                XC_Functional::set_xc_type("pbe");
-            else if (GlobalC::ucell.atoms[0].ncpp.xc_func == "SCAN0")
-                XC_Functional::set_xc_type("scan");
-
-			this->exx_ptr->cal_exx_ions();
-		}
+    if (GlobalC::exx_info.info_global.cal_exx)
+            this->exx_ptr->cal_exx_ions();
 
 		if (Exx_Abfs::Jle::generate_matrix)
 		{
@@ -63,7 +58,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const K_Vectors& kv, const Charg
 				this->mix_DMk_2D.set_mixing(chgmix.get_mixing());
         }
         // for exx two_level scf
-        this->two_level_step = 0;
+        Exx_LRI_Interface<T, Tdata>::two_level_step = 0;
 #endif // __MPI
 }
 
@@ -72,7 +67,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const elecstate::DensityMatri
 {
     if (GlobalC::exx_info.info_global.cal_exx)
     {
-        if (!GlobalC::exx_info.info_global.separate_loop && this->two_level_step)
+        if (!GlobalC::exx_info.info_global.separate_loop && Exx_LRI_Interface<T, Tdata>::two_level_step)
         {
 			const bool flag_restart = (iter==1) ? true : false;
             this->mix_DMk_2D.mix(dm.get_DMK_vector(), flag_restart);
@@ -86,27 +81,20 @@ void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const elecstate::DensityMatri
 }
 
 template<typename T, typename Tdata>
-void Exx_LRI_Interface<T, Tdata>::exx_hamilt2density(elecstate::ElecState& elec, const Parallel_Orbitals& pv)
+void Exx_LRI_Interface<T, Tdata>::exx_hamilt2density(elecstate::ElecState& elec, const Parallel_Orbitals& pv, const  int iter)
 {
     // Peize Lin add 2020.04.04
     if (XC_Functional::get_func_type() == 4 || XC_Functional::get_func_type() == 5)
     {
         // add exx
         // Peize Lin add 2016-12-03
-        elec.set_exx(this->get_Eexx());
-
-        if (GlobalC::restart.info_load.load_H && GlobalC::restart.info_load.load_H_finish
-            && !GlobalC::restart.info_load.restart_exx)
+        if (GlobalC::restart.info_load.load_H && Exx_LRI_Interface<T, Tdata>::two_level_step == 0 && iter == 1)
         {
-            XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
-
-			const std::vector<std::map<int,std::map<std::pair<int, std::array<int, 3>>,RI::Tensor<Tdata>>>>
-				Ds = GlobalV::GAMMA_ONLY_LOCAL
-					? RI_2D_Comm::split_m2D_ktoR<Tdata>(*this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_gamma_out(), pv)
-					: RI_2D_Comm::split_m2D_ktoR<Tdata>(*this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_k_out(), pv);
-            this->exx_ptr->cal_exx_elec(Ds, pv);
-            GlobalC::restart.info_load.restart_exx = true;
+            if (GlobalV::MY_RANK == 0)GlobalC::restart.load_disk("Eexx", 0, 1, &this->exx_ptr->Eexx);
+            Parallel_Common::bcast_double(this->exx_ptr->Eexx);
+            this->exx_ptr->Eexx /= GlobalC::exx_info.info_global.hybrid_alpha;
         }
+        elec.set_exx(this->get_Eexx());
     }
     else
     {
@@ -122,47 +110,6 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
     const K_Vectors& kv,
     int& iter)
 {
-    // Add EXX operator
-    auto add_exx_operator = [&]() {
-        if (GlobalV::GAMMA_ONLY_LOCAL)
-        {
-            hamilt::HamiltLCAO<double, double>* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<double, double>*>(&hamilt);
-            hamilt::Operator<double>* exx
-                = new hamilt::OperatorEXX<hamilt::OperatorLCAO<double, double>>(&lm,
-                                                                        hamilt_lcao->getHR(), 
-                                                                        &(hamilt_lcao->getHk(&lm)),
-                                                                        kv);
-            hamilt_lcao->getOperator()->add(exx);
-        }
-        else
-        {
-            if(GlobalV::NSPIN < 4)
-            {
-                hamilt::HamiltLCAO<std::complex<double>, double>* hamilt_lcao
-                    = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(&hamilt);
-                hamilt::Operator<std::complex<double>>* exx
-                    = new hamilt::OperatorEXX<hamilt::OperatorLCAO<std::complex<double>, double>>(
-                        &lm,
-                        hamilt_lcao->getHR(), 
-                        &(hamilt_lcao->getHk(&lm)),
-                        kv);
-                hamilt_lcao->getOperator()->add(exx);
-            }
-            else
-            {
-                hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>* hamilt_lcao
-                    = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(&hamilt);
-                hamilt::Operator<std::complex<double>>* exx
-                    = new hamilt::OperatorEXX<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>(
-                        &lm,
-                        hamilt_lcao->getHR(), 
-                        &(hamilt_lcao->getHk(&lm)),
-                        kv);
-                hamilt_lcao->getOperator()->add(exx);
-            }
-        }
-    };
-    
     if (GlobalC::exx_info.info_global.cal_exx)
     {
         // no separate_loop case
@@ -174,7 +121,7 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
             // in first scf loop, exx updated once in beginning,
             // in second scf loop, exx updated every iter
 
-            if (this->two_level_step)
+            if (Exx_LRI_Interface<T, Tdata>::two_level_step)
             {
                 return true;
             }
@@ -184,33 +131,29 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
                 XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
                 iter = 0;
                 std::cout << " Entering 2nd SCF, where EXX is updated" << std::endl;
-                this->two_level_step++;
-
-                add_exx_operator();
-
+                Exx_LRI_Interface<T, Tdata>::two_level_step++;
                 return false;
             }
         }
         // has separate_loop case
         // exx converged or get max exx steps
-        else if (this->two_level_step == GlobalC::exx_info.info_global.hybrid_step
-                 || (iter == 1 && this->two_level_step != 0))
+        else if (Exx_LRI_Interface<T, Tdata>::two_level_step == GlobalC::exx_info.info_global.hybrid_step
+            || (iter == 1 && Exx_LRI_Interface<T, Tdata>::two_level_step != 0))
         {
             return true;
         }
         else
         {
             // update exx and redo scf
-            if (this->two_level_step == 0)
+            if (Exx_LRI_Interface<T, Tdata>::two_level_step == 0)
             {
-                add_exx_operator();
                 XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
             }
 
             std::cout << " Updating EXX " << std::flush;
             timeval t_start;       gettimeofday(&t_start, NULL);
 
-            const bool flag_restart = (this->two_level_step == 0) ? true : false;
+            const bool flag_restart = (Exx_LRI_Interface<T, Tdata>::two_level_step == 0) ? true : false;
             this->mix_DMk_2D.mix(dm.get_DMK_vector(), flag_restart);
 
             // GlobalC::exx_lcao.cal_exx_elec(p_esolver->LOC, p_esolver->LOWF.wfc_k_grid);

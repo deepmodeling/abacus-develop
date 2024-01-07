@@ -150,13 +150,13 @@ namespace ModuleESolver
             /* In the special "two-level" calculation case,
             first scf iteration only calculate the functional without exact exchange.
             but in "nscf" calculation, there is no need of "two-level" method. */
-            if (ucell.atoms[0].ncpp.xc_func == "HF" || ucell.atoms[0].ncpp.xc_func == "PBE0" || ucell.atoms[0].ncpp.xc_func == "HSE")
+            if (GlobalC::ucell.atoms[0].ncpp.xc_func == "HF" || GlobalC::ucell.atoms[0].ncpp.xc_func == "PBE0" || GlobalC::ucell.atoms[0].ncpp.xc_func == "HSE")
             {
-                XC_Functional::set_xc_type("pbe");
+                XC_Functional::set_xc_type(GlobalC::restart.info_load.load_H ? GlobalC::ucell.atoms[0].ncpp.xc_func : "pbe");
             }
-            else if (ucell.atoms[0].ncpp.xc_func == "SCAN0")
+            else if (GlobalC::ucell.atoms[0].ncpp.xc_func == "SCAN0")
             {
-                XC_Functional::set_xc_type("scan");
+                XC_Functional::set_xc_type(GlobalC::restart.info_load.load_H ? GlobalC::ucell.atoms[0].ncpp.xc_func : "scan");
             }
 
             // GlobalC::exx_lcao.init();
@@ -642,9 +642,9 @@ namespace ModuleESolver
 
 #ifdef __EXX
     if (GlobalC::exx_info.info_ri.real_number)
-        this->exd->exx_hamilt2density(*this->pelec, *this->LOWF.ParaV);
+        this->exd->exx_hamilt2density(*this->pelec, *this->LOWF.ParaV, iter);
     else
-        this->exc->exx_hamilt2density(*this->pelec, *this->LOWF.ParaV);
+        this->exc->exx_hamilt2density(*this->pelec, *this->LOWF.ParaV, iter);
 #endif
 
     // if DFT+U calculation is needed, this function will calculate
@@ -803,10 +803,25 @@ namespace ModuleESolver
     {
         for (int is = 0; is < GlobalV::NSPIN; ++is)
         {
-            GlobalC::restart.save_disk(*this->UHM.LM, "charge", is, this->pelec->charge->nrxx, this->pelec->charge->rho);
+            GlobalC::restart.save_disk("charge", is, this->pelec->charge->nrxx, this->pelec->charge->rho[is]);
         }
     }
-
+#ifdef __EXX
+    int two_level_step = GlobalC::exx_info.info_ri.real_number ? Exx_LRI_Interface<TK, double>::two_level_step : Exx_LRI_Interface<TK, std::complex<double>>::two_level_step;
+    if (GlobalC::restart.info_save.save_H && two_level_step > 0 &&
+        (!GlobalC::exx_info.info_global.separate_loop || iter == 1)) // to avoid saving the same value repeatedly
+    {
+        std::vector<TK> Hexxk_save(this->LOWF.ParaV->get_local_size());
+        for (int ik = 0;ik < this->kv.nks;++ik)
+        {
+            ModuleBase::GlobalFunc::ZEROS(Hexxk_save.data(), Hexxk_save.size());
+            hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>> opexx_save(&this->LM, nullptr, &Hexxk_save, this->kv);
+            opexx_save.contributeHk(ik);
+            GlobalC::restart.save_disk("Hexx", ik, this->LOWF.ParaV->get_local_size(), Hexxk_save.data());
+        }
+        if (GlobalV::MY_RANK == 0)GlobalC::restart.save_disk("Eexx", 0, 1, &this->pelec->f_en.exx);
+    }
+#endif
     //-----------------------------------
     // output charge density for tmp
     //-----------------------------------

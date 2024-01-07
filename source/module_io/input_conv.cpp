@@ -555,11 +555,11 @@ void Input_Conv::Convert(void)
             || dft_functional_lower == "opt_orb" || dft_functional_lower == "scan0")
         {
             GlobalC::restart.info_load.load_charge = true;
+            GlobalC::restart.info_load.load_H = true;
         }
         else
         {
             GlobalC::restart.info_load.load_charge = true;
-            GlobalC::restart.info_load.load_H = true;
         }
     }
 
