@@ -912,46 +912,48 @@ void Charge_Mixing::Kerker_screen_recip_new(std::complex<double>* drhog)
         return;
     double fac, gg0, amin;
 
-    // consider a resize for mixing_angle
-    int resize_tmp = 1;
-    if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0) resize_tmp = 2;
-
-    // implement Kerker for density and magnetization separately
-    for (int is = 0; is < GlobalV::NSPIN / resize_tmp; ++is)
+    // over all rho_type
+    for (int irho = 0; irho < this->_mixing_rho_type_num; ++irho)
     {
-        // new mixing method only support nspin=2 not nspin=4
-        if (is >= 1)
+        // skip if other rho_type such as kinetic density is included
+        int address_g = irho * this->_mixing_rho_unit_num * this->rhopw->npw;
+        // implement Kerker for density and magnetization separately
+        for (int is = 0; is < this->_mixing_rho_unit_num; ++is)
         {
-            if (GlobalV::MIXING_GG0_MAG <= 0.0001 || GlobalV::MIXING_BETA_MAG <= 0.1)
+            // kerker for magnetization
+            if (is >= 1)
             {
+                if (this->mixing_gg0_mag <= 0.0001 || this->mixing_beta_mag <= 0.1)
+                {
 #ifdef __DEBUG
                 assert(is == 1); // make sure break works
 #endif
-                double is_mag = GlobalV::NSPIN - 1;
-                //for (int ig = 0; ig < this->rhopw->npw * is_mag; ig++)
-                //{
-                //    drhog[is * this->rhopw->npw + ig] *= 1;
-                //}
-                break;
+                    //double is_mag = GlobalV::NSPIN - 1;
+                    //for (int ig = 0; ig < this->rhopw->npw * is_mag; ig++)
+                    //{
+                    //    drhog[is * this->rhopw->npw + ig] *= 1;
+                    //}
+                    break;
+                }
+                fac = this->mixing_gg0_mag;
+                amin = this->mixing_beta_mag;
             }
-            fac = GlobalV::MIXING_GG0_MAG;
-            amin = GlobalV::MIXING_BETA_MAG;
-        }
-        else
-        {
-            fac = this->mixing_gg0;
-            amin = this->mixing_beta;
-        }
+            else
+            {
+                fac = this->mixing_gg0;
+                amin = this->mixing_beta;
+            }
 
-        gg0 = std::pow(fac * 0.529177 / GlobalC::ucell.tpiba, 2);
+            gg0 = std::pow(fac * 0.529177 / GlobalC::ucell.tpiba, 2);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
-        for (int ig = 0; ig < this->rhopw->npw; ++ig)
-        {
-            double gg = this->rhopw->gg[ig];
-            double filter_g = std::max(gg / (gg + gg0), GlobalV::MIXING_GG0_MIN / amin);
-            drhog[is * this->rhopw->npw + ig] *= filter_g;
+            for (int ig = 0; ig < this->rhopw->npw; ++ig)
+            {
+                double gg = this->rhopw->gg[ig];
+                double filter_g = std::max(gg / (gg + gg0), GlobalV::MIXING_GG0_MIN / amin);
+                drhog[is * this->rhopw->npw + ig + address_g] *= filter_g;
+            }
         }
     }
     return;
