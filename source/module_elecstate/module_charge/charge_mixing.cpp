@@ -911,12 +911,13 @@ void Charge_Mixing::Kerker_screen_recip_new(std::complex<double>* drhog)
     if (this->mixing_gg0 <= 0.0 || this->mixing_beta <= 0.1)
         return;
     double fac, gg0, amin;
+    std::complex<double>* drhog_tmp;
 
     // over all rho_type
     for (int irho = 0; irho < this->_mixing_rho_type_num; ++irho)
     {
         // skip if other rho_type such as kinetic density is included
-        int address_g = irho * this->_mixing_rho_unit_num * this->rhopw->npw;
+        drhog_tmp = drhog + irho * this->_mixing_rho_unit_num * this->rhopw->npw;
         // implement Kerker for density and magnetization separately
         for (int is = 0; is < this->_mixing_rho_unit_num; ++is)
         {
@@ -952,7 +953,7 @@ void Charge_Mixing::Kerker_screen_recip_new(std::complex<double>* drhog)
             {
                 double gg = this->rhopw->gg[ig];
                 double filter_g = std::max(gg / (gg + gg0), GlobalV::MIXING_GG0_MIN / amin);
-                drhog[is * this->rhopw->npw + ig + address_g] *= filter_g;
+                drhog_tmp[is * this->rhopw->npw + ig] *= filter_g;
             }
         }
     }
@@ -980,10 +981,12 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
     }
     // implement Kerker for density and magnetization separately
     double fac, gg0, amin;
+    std::complex<double>* drhog_tmp;
+    double* drhor_tmp;
     for (int irho = 0; irho < this->_mixing_rho_type_num; ++irho)
     {
         // skip if other rho_type such as kinetic density is included
-        int address_g = irho * this->_mixing_rho_unit_num * this->rhopw->npw;
+        drhog_tmp = drhog + irho * this->_mixing_rho_unit_num * this->rhopw->npw;
         for (int is = 0; is < this->_mixing_rho_unit_num; is++)
         {
             if (is >= 1)
@@ -996,7 +999,7 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
                     double is_mag = this->_mixing_rho_unit_num - 1;
                     for (int ig = 0; ig < this->rhopw->npw * is_mag; ig++)
                     {
-                        drhog[is * this->rhopw->npw + ig + address_g] = 0;
+                        drhog_tmp[is * this->rhopw->npw + ig] = 0;
                     }
                     break;
                 }
@@ -1023,7 +1026,7 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
                 //    continue;
                 //}
                 double filter_g = std::max(gg / (gg + gg0), GlobalV::MIXING_GG0_MIN / amin);
-                drhog[is * this->rhopw->npw + ig + address_g] *= (1 - filter_g);
+                drhog_tmp[is * this->rhopw->npw + ig] *= (1 - filter_g);
             }
         }
     }
@@ -1043,13 +1046,13 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
     for (int irho = 0; irho < this->_mixing_rho_type_num; ++irho)
     {
         // skip if other rho_type such as kinetic density is included
-        int address_r = irho * this->_mixing_rho_unit_num * this->rhopw->nrxx;
+        drhor_tmp = drhor + irho * this->_mixing_rho_unit_num * this->rhopw->nrxx;
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
-        for (int ir = address_r; ir < address_r + this->rhopw->nrxx * this->_mixing_rho_unit_num; ir++)
+        for (int ir = 0; ir < this->rhopw->nrxx * this->_mixing_rho_unit_num; ir++)
         {
-            drhor[ir] -= drhor_filter[ir];
+            drhor_tmp[ir] -= drhor_filter[ir];
         }
     }
 }
