@@ -40,7 +40,7 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
     // nspin
     this->_nspin = GlobalV::NSPIN;
     this->_mixing_rho_unit_num = GlobalV::NSPIN;
-    this->_mixing_rho_type_num = 1;
+    this->_mixing_rho_type_num = 1; // only charge density
     if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0 ) this->_mixing_rho_unit_num = 2; // {rho,|m|}
     // will open for tau mixing in the future
     // if (this->mixing_tau) this->_mixing_rho_type_num = 2;
@@ -569,10 +569,10 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
         double *rho_mag_save = nullptr; 
         const int nrxx = this->rhopw->nrxx;
         // allocate rho_mag[is*nnrx] and rho_mag_save[is*nnrx]
-        rho_mag = new double[nrxx * GlobalV::NSPIN];
-        rho_mag_save = new double[nrxx * GlobalV::NSPIN];
-        ModuleBase::GlobalFunc::ZEROS(rho_mag, nrxx * GlobalV::NSPIN);
-        ModuleBase::GlobalFunc::ZEROS(rho_mag_save, nrxx * GlobalV::NSPIN);
+        rho_mag = new double[nrxx * _nspin];
+        rho_mag_save = new double[nrxx * _nspin];
+        ModuleBase::GlobalFunc::ZEROS(rho_mag, nrxx * _nspin);
+        ModuleBase::GlobalFunc::ZEROS(rho_mag_save, nrxx * _nspin);
         // get rho_mag[is*nnrx] and rho_mag_save[is*nnrx]
         for (int ir = 0; ir < nrxx; ir++)
         {
@@ -612,7 +612,7 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
         this->mixing->cal_coef(this->rho_mdata, inner_product);
         this->mixing->mix_data(this->rho_mdata, rhor_out);
         // get new rho[is][nrxx] from rho_mag[is*nrxx]
-        for (int is = 0; is < GlobalV::NSPIN; is++)
+        for (int is = 0; is < _nspin; is++)
         {
             ModuleBase::GlobalFunc::ZEROS(chr->rho[is], nrxx);
             //ModuleBase::GlobalFunc::ZEROS(rho_save[is], nrxx);
