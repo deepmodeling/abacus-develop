@@ -304,7 +304,7 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
     auto inner_product_old
         = std::bind(&Charge_Mixing::inner_product_recip, this, std::placeholders::_1, std::placeholders::_2);
 
-    if (GlobalV::NSPIN == 1)
+    if (this->_nspin == 1)
     {
         rhog_in = chr->rhog_save[0];
         rhog_out = chr->rhog[0];    
@@ -313,17 +313,17 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
         this->mixing->cal_coef(this->rho_mdata, inner_product_old);
         this->mixing->mix_data(this->rho_mdata, rhog_out);
     }
-    else if (GlobalV::NSPIN == 2)
+    else if (this->_nspin == 2)
     {
         // magnetic density
         std::complex<double> *rhog_mag = nullptr;
         std::complex<double> *rhog_mag_save = nullptr;
         const int npw = this->rhopw->npw;
         // allocate rhog_mag[is*ngmc] and rhog_mag_save[is*ngmc]
-        rhog_mag = new std::complex<double>[npw * GlobalV::NSPIN];
-        rhog_mag_save = new std::complex<double>[npw * GlobalV::NSPIN];
-        ModuleBase::GlobalFunc::ZEROS(rhog_mag, npw * GlobalV::NSPIN);
-        ModuleBase::GlobalFunc::ZEROS(rhog_mag_save, npw * GlobalV::NSPIN);
+        rhog_mag = new std::complex<double>[npw * _nspin];
+        rhog_mag_save = new std::complex<double>[npw * _nspin];
+        ModuleBase::GlobalFunc::ZEROS(rhog_mag, npw * _nspin);
+        ModuleBase::GlobalFunc::ZEROS(rhog_mag_save, npw * _nspin);
         // get rhog_mag[is*ngmc] and rhog_mag_save[is*ngmc]
         for (int ig = 0; ig < npw; ig++)
         {
@@ -362,7 +362,7 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
         this->mixing->cal_coef(this->rho_mdata, inner_product_new);
         this->mixing->mix_data(this->rho_mdata, rhog_out);
         // get rhog[is][ngmc] from rhog_mag[is*ngmc]
-        for (int is = 0; is < GlobalV::NSPIN; is++)
+        for (int is = 0; is < _nspin; is++)
         {
             ModuleBase::GlobalFunc::ZEROS(chr->rhog[is], npw);
         }
@@ -375,7 +375,7 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
         delete[] rhog_mag;
         delete[] rhog_mag_save;
     }
-    else if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE <= 0)
+    else if (this->_nspin == 4 && this->mixing_angle <= 0)
     {
         // normal broyden mixing for {rho, mx, my, mz}
         rhog_in = chr->rhog_save[0];
@@ -404,7 +404,7 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
         this->mixing->cal_coef(this->rho_mdata, inner_product_old);
         this->mixing->mix_data(this->rho_mdata, rhog_out);
     }
-    else if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0)
+    else if (this->_nspin == 4 && this->mixing_angle > 0)
     {
         // special broyden mixing for {rho, |m|} proposed by J. Phys. Soc. Jpn. 82 (2013) 114706
         // here only consider the case of mixing_angle = 1, which mean only change |m| and keep angle fixed
@@ -485,13 +485,14 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
     }
 
     // rhog to rho
-    if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0)
+    // |m| do not need FFT for angle-mixing method
+    if (this->_nspin == 4 && this->mixing_angle > 0)
     {
         chr->rhopw->recip2real(chr->rhog[0], chr->rho[0]);
     }
     else
     {
-        for (int is = 0; is < GlobalV::NSPIN; is++)
+        for (int is = 0; is < this->_nspin; is++)
         {
             chr->rhopw->recip2real(chr->rhog[is], chr->rho[is]);
         }
