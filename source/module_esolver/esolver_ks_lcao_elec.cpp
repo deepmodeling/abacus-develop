@@ -20,6 +20,7 @@
 #include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
 #include "module_hamilt_general/module_vdw/vdw.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dftu_new.h"
 #include "module_io/dm_io.h"
 
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
@@ -299,6 +300,12 @@ void ESolver_KS_LCAO<TK, TR>::beforescf(int istep)
     dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)
         ->get_DM()
         ->init_DMR(*(dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt)->getHR()));
+    if(GlobalV::dft_plus_u)
+    {
+        hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::dm_in_dftu =
+        dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)
+            ->get_DM();
+    }
 
     // the electron charge density should be symmetrized,
     // here is the initialization

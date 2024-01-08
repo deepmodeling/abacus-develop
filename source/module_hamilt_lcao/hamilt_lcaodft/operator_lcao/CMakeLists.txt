@@ -10,6 +10,7 @@ add_library(
     ekinetic_new.cpp
     nonlocal_new.cpp
     sc_lambda_lcao.cpp
+    dftu_new.cpp
 )
 
 if(ENABLE_COVERAGE)
