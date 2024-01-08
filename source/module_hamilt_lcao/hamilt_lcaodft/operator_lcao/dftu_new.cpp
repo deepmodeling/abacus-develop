@@ -174,7 +174,7 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                 int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
 
                 ModuleBase::Vector3<double> dtau = tau0 - tau1;
-                uot.two_center_bundle->overlap_orb_beta->snap(
+                uot.two_center_bundle->overlap_orb->snap(
                         T1, L1, N1, M1, T0, dtau * this->ucell->lat0, 0 /*cal_deri*/, nlm);
 #else
                 uot.snap_psibeta_half(orb,
@@ -192,9 +192,9 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                 // select the elements of nlm with target_L
                 std::vector<double> nlm_target(2*target_L+1);
                 int index = 0;
-                for(int nb =0;nb < this->ucell->infoNL.nproj[T0]; nb++)
+                for(int iw =0;iw < this->ucell->atoms[T0].nw; iw++)
                 {
-                    const int L0 = this->ucell->infoNL.Beta[T0].Proj[nb].getL();
+                    const int L0 = this->ucell->atoms[T0].iw2l[iw];
                     if(L0 == target_L)
                     {
                         for(int m = -L0; m <= L0; m++)
@@ -206,7 +206,7 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                     }
                     else
                     {
-                        index += 2*L0+1;
+                        index++;
                     }
                 }
                 nlm_tot[ad].insert({all_indexes[iw1l], nlm_target});
