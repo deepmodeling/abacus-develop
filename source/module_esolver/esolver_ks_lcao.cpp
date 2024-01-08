@@ -636,11 +636,6 @@ namespace ModuleESolver
     // the local occupation number matrix and energy correction
     if (GlobalV::dft_plus_u)
     {
-        if (GlobalC::dftu.omc != 2)
-        {
-            const std::vector<std::vector<TK>>& tmp_dm = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMK_vector();
-            this->dftu_cal_occup_m(iter, tmp_dm);
-        }
         GlobalC::dftu.cal_energy_correction(istep);
         GlobalC::dftu.output();
     }

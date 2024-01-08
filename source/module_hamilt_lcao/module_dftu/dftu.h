@@ -85,12 +85,13 @@ class DFTU
     void zero_locale();
     void mix_locale(const double& mixing_beta);
 
+public:
     // local occupancy matrix of the correlated subspace
     // locale: the out put local occupation number matrix of correlated electrons in the current electronic step
     // locale_save: the input local occupation number matrix of correlated electrons in the current electronic step
     std::vector<std::vector<std::vector<std::vector<ModuleBase::matrix>>>> locale; // locale[iat][l][n][spin](m1,m2)
     std::vector<std::vector<std::vector<std::vector<ModuleBase::matrix>>>> locale_save; // locale_save[iat][l][n][spin](m1,m2)
-
+private:
     //=============================================================
     // In dftu_tools.cpp
     // For calculating onsite potential, which is used

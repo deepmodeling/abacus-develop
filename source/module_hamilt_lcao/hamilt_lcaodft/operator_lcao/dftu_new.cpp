@@ -243,6 +243,11 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
         const double u_value = this->dftu->U[T0];
         std::vector<double> VU(target_L * 2 + 1 * target_L * 2 + 1);
         this->cal_v_of_u(occ, u_value, VU);
+        // save occ to dftu
+        for(int i=0;i<occ.size();i++)
+        {
+            this->dftu->locale[iat0][target_L][0][GlobalV::CURRENT_SPIN].c[i] = occ[i];
+        }
 
         // second iteration to calculate Hamiltonian matrix
         // calculate <psi_I|beta_m> U*(1/2*delta(m, m')-occ(m, m')) <beta_m'|psi_{J,R}> for each pair of <IJR> atoms
