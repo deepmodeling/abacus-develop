@@ -153,6 +153,7 @@ TEST_F(InputConvTest, Conv)
     EXPECT_EQ(hsolver::HSolverLCAO<std::complex<double>>::out_mat_t, false);
     EXPECT_EQ(hsolver::HSolverLCAO<double>::out_mat_dh, INPUT.out_mat_dh);
     EXPECT_EQ(hsolver::HSolverLCAO<std::complex<double>>::out_mat_dh, INPUT.out_mat_dh);
+    EXPECT_EQ(GlobalV::out_mat_xc, false);
     EXPECT_EQ(GlobalV::out_interval, 1);
     EXPECT_EQ(elecstate::ElecStateLCAO<double>::out_wfc_lcao, false);
     EXPECT_EQ(berryphase::berry_phase_flag, false);

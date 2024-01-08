@@ -277,6 +277,8 @@ double nelec = 0;
 bool out_bandgap = false; // QO added for bandgap printing
 int out_interval = 1;    // convert from out_hsR_interval liuyu 2023-04-18
 
+bool out_mat_xc = false; // output Vxc in KS-wfc representation for GW calculation
+
 //==========================================================
 // Deltaspin related
 //==========================================================
