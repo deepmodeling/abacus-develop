@@ -309,6 +309,8 @@ extern double nelec;
 extern bool out_bandgap;
 extern int out_interval;
 
+extern bool out_mat_xc; // output Vxc in KS-wfc representation for GW calculation
+
 // Deltaspin related
 extern bool sc_mag_switch; // 0: no deltaspin; 1: constrain atomic magnetic moments;
 extern bool decay_grad_switch; // 0: decay grad will be set to zero; 1: with decay grad set for some elements
