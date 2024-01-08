@@ -674,6 +674,16 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
 							atoms[it].m_loc_[ia].z = atoms[it].mag[ia];
 						}
 
+						// defaultly set a finite magnetization if magnetization is not specified
+						if (atoms[it].m_loc_[ia].x == 0 && atoms[it].m_loc_[ia].y == 0 && atoms[it].m_loc_[ia].z == 0) 
+						{
+							atoms[it].m_loc_[ia].x = 1.0;
+							atoms[it].m_loc_[ia].y = 1.0;
+							atoms[it].m_loc_[ia].z = 1.0;
+							atoms[it].mag[ia] = sqrt(pow(atoms[it].m_loc_[ia].x,2)+pow(atoms[it].m_loc_[ia].y,2)+pow(atoms[it].m_loc_[ia].z,2));
+							ModuleBase::GlobalFunc::OUT(ofs_running,"Autoset magnetism for this atom", 1.0, 1.0, 1.0);
+						}
+
 						//print only ia==0 && mag>0 to avoid too much output
 						//print when ia!=0 && mag[ia] != mag[0] to avoid too much output
 						if(ia==0 || (ia!=0 
@@ -694,6 +704,12 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
 					}
 					else if(GlobalV::NSPIN==2)
 					{
+						// defaultly set a finite magnetization if magnetization is not specified
+						if (atoms[it].mag[ia] == 0)
+						{
+							atoms[it].mag[ia] = 1.0;
+							ModuleBase::GlobalFunc::OUT(ofs_running,"Autoset magnetism for this atom", 1.0);
+						}
 						atoms[it].m_loc_[ia].x = atoms[it].mag[ia];
 						//print only ia==0 && mag>0 to avoid too much output
 						//print when ia!=0 && mag[ia] != mag[0] to avoid too much output
