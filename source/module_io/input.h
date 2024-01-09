@@ -546,6 +546,7 @@ class Input
 	double	bessel_nao_sigma;		// spherical bessel smearing_sigma
 	std::string	bessel_nao_ecut;		// energy cutoff for spherical bessel functions(Ry)
 	double	bessel_nao_rcut;		// radial cutoff for spherical bessel functions(a.u.)
+    std::vector<double> bessel_nao_rcuts;
 	double	bessel_nao_tolerence;	// tolerence for spherical bessel root
     // the following are used when generating jle.orb
 	int		bessel_descriptor_lmax;			// lmax used in descriptor
@@ -628,7 +629,7 @@ class Input
     {
         ifs >> var;
         std::string line;
-        getline(ifs, line);
+        getline(ifs, line); // read the rest of the line, directly discard it.
         return;
     }
     void read_kspacing(std::ifstream &ifs)
@@ -657,6 +658,11 @@ class Input
         // std::cout << "count: " << count << " kspacing: " << kspacing[0] << " " << kspacing[1] << " " << kspacing[2]
         // << std::endl;
     };
+
+    /* I hope this function would be more and more useful if want to support
+    vector/list of input */
+    template <typename T>
+    void read_value2stdvector(std::ifstream& ifs, std::vector<T>& var);
 
     void strtolower(char *sa, char *sb);
     void read_bool(std::ifstream &ifs, bool &var);

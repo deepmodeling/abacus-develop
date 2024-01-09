@@ -2203,7 +2203,9 @@ bool Input::Read(const std::string& fn)
         }
         else if (strcmp("bessel_nao_rcut", word) == 0)
         {
-            read_value(ifs, bessel_nao_rcut);
+            //read_value(ifs, bessel_nao_rcut);
+            read_value2stdvector(ifs, bessel_nao_rcuts);
+            bessel_nao_rcut = bessel_nao_rcuts[0]; // also compatible with old input file
         }
         else if (strcmp("bessel_nao_tolerence", word) == 0)
         {
@@ -3563,6 +3565,12 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(bessel_nao_smooth);
     Parallel_Common::bcast_double(bessel_nao_sigma);
     Parallel_Common::bcast_string(bessel_nao_ecut);
+    /* newly support vector/list input of bessel_nao_rcut */
+    int nrcut = bessel_nao_rcuts.size();
+    Parallel_Common::bcast_int(nrcut);
+    if (GlobalV::MY_RANK != 0) bessel_nao_rcuts.resize(nrcut);
+    Parallel_Common::bcast_double(bessel_nao_rcuts.data(), nrcut);
+    /* end */
     Parallel_Common::bcast_double(bessel_nao_rcut);
     Parallel_Common::bcast_double(bessel_nao_tolerence);
     Parallel_Common::bcast_int(bessel_descriptor_lmax);
@@ -4223,6 +4231,36 @@ void Input::strtolower(char* sa, char* sb)
     sb[len] = '\0';
 }
 
+template <typename T>
+void Input::read_value2stdvector(std::ifstream& ifs, std::vector<T>& var)
+{
+    // reset var
+    var.clear(); var.shrink_to_fit();
+    std::string line;
+    std::getline(ifs, line); // read the whole rest of line
+    std::vector<char> temp;
+    for(char &c: line)
+    {
+        if(c == '\t' || c == ' ' || c == '\n' || c == '#') // space or tab seperates values
+        {
+            if(temp.size() > 0) // if temp is not empty, excludes the case of multiple spaces or tabs
+            {
+                std::string str(temp.begin(), temp.end());
+                var.push_back(std::stod(str));
+                temp.clear();
+            }
+            if(c == '\n' || c == '#' || c == '\0') break; // end of line
+        }
+        else temp.push_back(c); // other characters
+    }
+    if(temp.size() > 0) // the last value
+    {
+        std::string str(temp.begin(), temp.end());
+        var.push_back(std::stod(str));
+    }
+}
+template void Input::read_value2stdvector(std::ifstream& ifs, std::vector<int>& var);
+template void Input::read_value2stdvector(std::ifstream& ifs, std::vector<double>& var);
 // Conut how many types of atoms are listed in STRU
 int Input::count_ntype(const std::string& fn)
 {
