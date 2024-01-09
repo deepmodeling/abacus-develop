@@ -1,5 +1,5 @@
 #include "write_HS.h"
-
+#include "module_base/formatter_contextfmt.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
@@ -94,11 +94,15 @@ void ModuleIO::save_mat(const int istep,
     const std::string label,
     const std::string& file_name,
     const Parallel_2D& pv,
-    const int drank)
+    const int drank,
+    const int ndigits)
 {
     ModuleBase::TITLE("ModuleIO", "save_mat");
     ModuleBase::timer::tick("ModuleIO", "save_mat");
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Dimension of " + label + " : ", dim);
+
+    formatter::PhysicalFmt physfmt;
+    physfmt.adjust_formatter_flexible(ndigits, -1, true);
 
     std::stringstream ss;
 

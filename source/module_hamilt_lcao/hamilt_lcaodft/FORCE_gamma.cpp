@@ -210,8 +210,8 @@ void Force_LCAO_gamma::allocate_gamma(const Parallel_Orbitals& pv)
         this->UHM->genH
             .build_ST_new('S', cal_deri, GlobalC::ucell, this->UHM->genH.LM->Sloc.data(), INPUT.cal_syns, INPUT.dmax);
         bool bit = false; // LiuXh, 2017-03-21
-        ModuleIO::save_mat(0, this->UHM->genH.LM->Hloc.data(), GlobalV::NLOCAL, bit, 0, GlobalV::out_app_flag, "H", "data-" + std::to_string(0), *this->ParaV, GlobalV::DRANK);
-        ModuleIO::save_mat(0, this->UHM->genH.LM->Sloc.data(), GlobalV::NLOCAL, bit, 0, GlobalV::out_app_flag, "S", "data-" + std::to_string(0), *this->ParaV, GlobalV::DRANK);
+        ModuleIO::save_mat(0, this->UHM->genH.LM->Hloc.data(), GlobalV::NLOCAL, bit, 0, GlobalV::out_app_flag, "H", "data-" + std::to_string(0), *this->ParaV, GlobalV::DRANK, GlobalV::out_ndigits);
+        ModuleIO::save_mat(0, this->UHM->genH.LM->Sloc.data(), GlobalV::NLOCAL, bit, 0, GlobalV::out_app_flag, "S", "data-" + std::to_string(0), *this->ParaV, GlobalV::DRANK, GlobalV::out_ndigits);
     }
 
     ModuleBase::timer::tick("Force_LCAO_gamma", "allocate_gamma");

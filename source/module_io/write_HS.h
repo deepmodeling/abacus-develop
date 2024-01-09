@@ -30,7 +30,8 @@ namespace ModuleIO
         const std::string label,
         const std::string& file_name,
         const Parallel_2D& pv,
-        const int drank);
+        const int drank,
+        const int ndigits);
 
     // comment out this function for not used
     // void save_HSR_tr(const int current_spin, LCAO_Matrix& lm); // LiuXh add 2019-07-15

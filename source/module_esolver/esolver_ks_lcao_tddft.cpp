@@ -260,8 +260,8 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
                 this->p_hamilt->matrix(h_mat, s_mat);
                 if (hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs)
                 {
-                    ModuleIO::save_mat(istep, h_mat.p, GlobalV::NLOCAL, bit, 1, GlobalV::out_app_flag, "H", "data-" + std::to_string(ik), *this->LOWF.ParaV, GlobalV::DRANK);
-                    ModuleIO::save_mat(istep, h_mat.p, GlobalV::NLOCAL, bit, 1, GlobalV::out_app_flag, "S", "data-" + std::to_string(ik), *this->LOWF.ParaV, GlobalV::DRANK);
+                    ModuleIO::save_mat(istep, h_mat.p, GlobalV::NLOCAL, bit, 1, GlobalV::out_app_flag, "H", "data-" + std::to_string(ik), *this->LOWF.ParaV, GlobalV::DRANK, GlobalV::out_ndigits);
+                    ModuleIO::save_mat(istep, h_mat.p, GlobalV::NLOCAL, bit, 1, GlobalV::out_app_flag, "S", "data-" + std::to_string(ik), *this->LOWF.ParaV, GlobalV::DRANK, GlobalV::out_ndigits);
                 }
             }
         }

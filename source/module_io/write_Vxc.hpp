@@ -190,7 +190,7 @@ namespace ModuleIO
             // write
             ModuleIO::save_mat(-1, vxc_k_mo.data(), nbands,
                 false/*binary*/, true/*triangle*/, false/*append*/,
-                "Vxc", "k-" + std::to_string(ik), p2d, drank);
+                "Vxc", "k-" + std::to_string(ik), p2d, drank, GlobalV::out_ndigits);
             // ======test=======
             // total_energy += all_band_energy(ik, vxc_k_mo, p2d, wg);
             // ======test=======
