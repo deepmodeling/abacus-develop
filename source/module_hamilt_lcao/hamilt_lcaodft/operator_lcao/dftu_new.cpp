@@ -9,6 +9,7 @@
 #ifdef _OPENMP
 #include <unordered_set>
 #endif
+#include "module_base/parallel_reduce.h"
 
 template <typename TK, typename TR>
 const elecstate::DensityMatrix<TK, double>* hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::dm_in_dftu = nullptr; 
@@ -191,29 +192,23 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
 #endif
                 // select the elements of nlm with target_L
                 std::vector<double> nlm_target(2*target_L+1);
-                int index = 0;
                 for(int iw =0;iw < this->ucell->atoms[T0].nw; iw++)
                 {
                     const int L0 = this->ucell->atoms[T0].iw2l[iw];
                     if(L0 == target_L)
                     {
-                        for(int m = -L0; m <= L0; m++)
+                        for(int m = 0; m < 2*L0+1; m++)
                         {
-                            nlm_target[m+target_L] = nlm[0][index];
-                            index++;
+                            nlm_target[m] = nlm[0][iw+m];
                         }
                         break;
-                    }
-                    else
-                    {
-                        index++;
                     }
                 }
                 nlm_tot[ad].insert({all_indexes[iw1l], nlm_target});
             }
         }
         //first iteration to calculate occupation matrix
-        std::vector<double> occ(target_L * 2 + 1);
+        std::vector<double> occ((target_L * 2 + 1) * (target_L * 2 + 1), 0.0);
         hamilt::HContainer<double>* dmR_current = this->dm_in_dftu->get_DMR_pointer(GlobalV::CURRENT_SPIN+1);
         for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
         {
@@ -238,10 +233,14 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                 }
             }
         }
+#ifdef __MPI
+        // sum up the occupation matrix
+        Parallel_Reduce::reduce_all(occ.data(), occ.size());
+#endif
         
         //calculate VU
         const double u_value = this->dftu->U[T0];
-        std::vector<double> VU(target_L * 2 + 1 * target_L * 2 + 1);
+        std::vector<double> VU(occ.size());
         this->cal_v_of_u(occ, u_value, VU);
         // save occ to dftu
         for(int i=0;i<occ.size();i++)
@@ -367,7 +366,6 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::cal_occupations(
     std::vector<int> step_trace(npol, 0);
     if(npol == 2) step_trace[1] = col_indexes.size() + 1;
     // calculate the local matrix
-    occ.assign(m_size * m_size, 0);
     for (int iw1l = 0; iw1l < row_indexes.size(); iw1l += npol)
     {
         const std::vector<double>& nlm1 = nlm1_all.find(row_indexes[iw1l])->second;
