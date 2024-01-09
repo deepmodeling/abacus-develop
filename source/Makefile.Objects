@@ -330,6 +330,7 @@ OBJS_ORBITAL=ORB_atomic.o\
       hydrogen_radials.o\
       pswfc_radials.o\
 	  beta_radials.o\
+	  sphbes_radials.o\
 	  numerical_radial.o\
 	  radial_collection.o\
 	  radial_set.o\
@@ -456,7 +457,6 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       unk_overlap_lcao.o\
       read_wfc_nao.o\
       write_wfc_nao.o\
-      write_HS.o\
       write_HS_sparse.o\
       single_R_io.o\
       write_HS_R.o\

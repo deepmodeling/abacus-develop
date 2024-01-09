@@ -34,7 +34,7 @@ int EFIELD_FLAG = 0; // 5: add electric field
 int DIP_COR_FLAG = 0; // 7: add dipole field
 bool GATE_FLAG = false;    // add gate field
 bool out_app_flag = true;  // whether output r(R), H(R), S(R), T(R), and dH(R) matrices in an append manner during MD  liuyu 2023-03-20
-
+int out_ndigits = 8;
 std::string DFT_FUNCTIONAL = "default";
 double XC_TEMPERATURE = 0.0;
 int NSPIN = 1; // LDA
@@ -276,6 +276,8 @@ int out_chg = 0;
 double nelec = 0;
 bool out_bandgap = false; // QO added for bandgap printing
 int out_interval = 1;    // convert from out_hsR_interval liuyu 2023-04-18
+
+bool out_mat_xc = false; // output Vxc in KS-wfc representation for GW calculation
 
 //==========================================================
 // Deltaspin related

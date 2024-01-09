@@ -624,7 +624,8 @@ void Input_Conv::Convert(void)
     GlobalV::nelec = INPUT.nelec;
     GlobalV::out_pot = INPUT.out_pot;
     GlobalV::out_app_flag = INPUT.out_app_flag;
-
+    GlobalV::out_ndigits = INPUT.out_ndigits;
+    
     GlobalV::out_bandgap = INPUT.out_bandgap; // QO added for bandgap printing
     GlobalV::out_interval = INPUT.out_interval;
 #ifdef __LCAO
@@ -638,6 +639,7 @@ void Input_Conv::Convert(void)
     hsolver::HSolverLCAO<std::complex<double>>::out_mat_hsR = INPUT.out_mat_hs2; // LiuXh add 2019-07-16
     hsolver::HSolverLCAO<std::complex<double>>::out_mat_t = INPUT.out_mat_t;
     hsolver::HSolverLCAO<std::complex<double>>::out_mat_dh = INPUT.out_mat_dh;
+    GlobalV::out_mat_xc = INPUT.out_mat_xc;
     if (GlobalV::GAMMA_ONLY_LOCAL)
     {
         elecstate::ElecStateLCAO<double>::out_wfc_lcao = INPUT.out_wfc_lcao;

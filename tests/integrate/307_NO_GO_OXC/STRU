@@ -1,0 +1,22 @@
+ATOMIC_SPECIES
+Si 14 Si_ONCV_PBE-1.0.upf upf201
+
+NUMERICAL_ORBITAL
+Si_gga_8au_60Ry_2s2p1d.orb
+
+LATTICE_CONSTANT
+20  // add lattice constant
+
+LATTICE_VECTORS
+0.5 0.5 0.0
+0.5 0.0 0.5
+0.0 0.5 0.5
+
+ATOMIC_POSITIONS
+Direct 
+
+Si	// Element type	
+0.0	// magnetism
+2	
+0.00 0.00 0.00 1 1 1
+0.25 0.25 0.25 1 1 1

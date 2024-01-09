@@ -26,7 +26,8 @@ mixing_type		broyden
 mixing_beta		0.4
 
 #Parameters (6.File)
-deepks_out_labels          0 
+deepks_out_labels          1 
 deepks_scf		1
 deepks_model		model_lda_pbe_18.ptg
 cal_force			1
+cal_stress                      1
