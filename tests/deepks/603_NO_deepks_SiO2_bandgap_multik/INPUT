@@ -14,8 +14,8 @@ mixing_type broyden
 mixing_beta 0.400000
 smearing_method gaussian
 smearing_sigma 0.020000
-cal_force 0
-cal_stress 0
+cal_force 1
+cal_stress 1
 deepks_scf 1
 deepks_out_labels 1
 deepks_bandgap 1
