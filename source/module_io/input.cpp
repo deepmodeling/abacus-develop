@@ -4238,26 +4238,17 @@ void Input::read_value2stdvector(std::ifstream& ifs, std::vector<T>& var)
     var.clear(); var.shrink_to_fit();
     std::string line;
     std::getline(ifs, line); // read the whole rest of line
-    std::vector<char> temp;
-    for(char &c: line)
+    line = (line.find('#') == std::string::npos) ? line : line.substr(0, line.find('#')); // remove comments
+    std::vector<std::string> tmp;
+    std::string::size_type start = 0, end = 0;
+    while ((start = line.find_first_not_of(" \t\n", end)) != std::string::npos) // find the first not of delimiters but not reaches the end
     {
-        if(c == '\t' || c == ' ' || c == '\n' || c == '#') // space or tab seperates values
-        {
-            if(temp.size() > 0) // if temp is not empty, excludes the case of multiple spaces or tabs
-            {
-                std::string str(temp.begin(), temp.end());
-                var.push_back(cast_string<T>(str));
-                temp.clear();
-            }
-            if(c == '\n' || c == '#' || c == '\0') break; // end of line
-        }
-        else temp.push_back(c); // other characters
+        end = line.find_first_of(" \t\n", start); // find the first of delimiters starting from start pos
+        tmp.push_back(line.substr(start, end - start)); // push back the substring
     }
-    if(temp.size() > 0) // the last value
-    {
-        std::string str(temp.begin(), temp.end());
-        var.push_back(cast_string<T>(str));
-    }
+    var.resize(tmp.size());
+    // capture "this"'s member function cast_string and iterate from tmp.begin() to tmp.end(), transform to var.begin()
+    std::transform(tmp.begin(), tmp.end(), var.begin(), [this](const std::string& s) { return cast_string<T>(s); });
 }
 template void Input::read_value2stdvector(std::ifstream& ifs, std::vector<int>& var);
 template void Input::read_value2stdvector(std::ifstream& ifs, std::vector<double>& var);
