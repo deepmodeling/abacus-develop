@@ -263,9 +263,15 @@ information that comes below.
       0.5 0.5 0.5 m 1 1 1 mag 1.0 angle1 90 angle2 180
       ```
 
-    - Default: If users do not specalize a finite magnetic moment in a magnetic calculations (`nspin==2 || nspin == 4`), e.g.:
+    - Default: If users do not specalize a finite magnetic moment for all atoms in a magnetic calculations (`nspin==2 || nspin == 4`), e.g.:
       ```
       Fe
+      0.0
+      2
+      0.0 0.0 0.0 m 0 0 0
+      0.5 0.5 0.5 m 1 1 1
+
+      O
       0.0
       2
       0.0 0.0 0.0 m 0 0 0
@@ -273,6 +279,12 @@ information that comes below.
       ```
       For `nspin==2`, we will autoset atomic magmon is `1.0`:
       ```
+      Fe
+      1.0
+      2
+      0.0 0.0 0.0 m 0 0 0
+      0.5 0.5 0.5 m 1 1 1
+
       Fe
       1.0
       2
@@ -286,4 +298,11 @@ information that comes below.
       2
       0.0 0.0 0.0 m 0 0 0 mag 1 1 1
       0.5 0.5 0.5 m 1 1 1 mag 1 1 1
+
+      O
+      0.0
+      2
+      0.0 0.0 0.0 m 0 0 0 mag 1 1 1
+      0.5 0.5 0.5 m 1 1 1 mag 1 1 1
       ```
+      However, this autoset will not be vaild once `STRU` specalize a finite magnetic for any single atom.
