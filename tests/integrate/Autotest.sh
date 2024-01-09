@@ -148,7 +148,6 @@ check_out(){
                     calculation=`grep calculation INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
                     running_path=`echo "OUT.autotest/running_$calculation"".log"`
                     cat $running_path
-                    '\n'
                 fi
                 if [ $(echo "sqrt($deviation*$deviation) < $fatal_threshold"|bc) = 0 ]; then
                     let fatal++
@@ -201,6 +200,8 @@ for dir in $testdir; do
     time {
         if [ "$case" = "282_NO_RPA" -o "$dir" = "102_PW_BPCG" ]; then
             mpirun -np 1 $abacus > log.txt
+        elif [ "$case" = "104_PW_NC_magnetic" ]; then
+            OMP_NUM_THREADS=1    mpirun -np $np $abacus > log.txt
         else
             mpirun -np $np $abacus > log.txt
         fi
