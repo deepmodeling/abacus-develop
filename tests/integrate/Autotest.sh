@@ -112,10 +112,13 @@ check_out(){
             if [ $(echo "sqrt($deviation*$deviation) < $threshold"|bc) = 0 ]; then
                 if [ $key == "totalforceref" ]; then
                     if [ $(echo "sqrt($deviation*$deviation) < $force_threshold"|bc) = 0 ]; then
-                        echo -e "[WARNING   ] "\
-                            "$key cal=$cal ref=$ref deviation=$deviation"
-                        let failed++
-                        failed_case_list+=$dir'\n'
+                        let fatal++
+                        fatal_case_list+=$dir
+                        echo -e "\e[0;31m[ERROR      ] \e[0m"\
+                            "An unacceptable deviation occurs."
+                        calculation=`grep calculation INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
+                        running_path=`echo "OUT.autotest/running_$calculation"".log"`
+                        cat $running_path
                     else
                         #echo "$key cal=$cal ref=$ref deviation=$deviation"
                         #echo "[ PASS ] $key"
@@ -124,10 +127,13 @@ check_out(){
 
                 elif [ $key == "totalstressref" ]; then
                     if [ $(echo "sqrt($deviation*$deviation) < $stress_threshold"|bc) = 0 ]; then
-                        echo -e "[WARNING   ] "\
-                            "$key cal=$cal ref=$ref deviation=$deviation"
-                        let failed++
-                        failed_case_list+=$dir'\n'
+                        let fatal++
+                        fatal_case_list+=$dir
+                        echo -e "\e[0;31m[ERROR      ] \e[0m"\
+                            "An unacceptable deviation occurs."
+                        calculation=`grep calculation INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
+                        running_path=`echo "OUT.autotest/running_$calculation"".log"`
+                        cat $running_path
                     else
                         #echo "$key cal=$cal ref=$ref deviation=$deviation"
                         #echo "[ PASS ] $key"
@@ -135,10 +141,14 @@ check_out(){
                     fi
 
                 else
-                    echo -e "[WARNING   ] "\
-                        "$key cal=$cal ref=$ref deviation=$deviation"
-                    let failed++
-                    failed_case_list+=$dir'\n'
+                    let fatal++
+                    fatal_case_list+=$dir
+                    echo -e "\e[0;31m[ERROR      ] \e[0m"\
+                        "An unacceptable deviation occurs."
+                    calculation=`grep calculation INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
+                    running_path=`echo "OUT.autotest/running_$calculation"".log"`
+                    cat $running_path
+                    '\n'
                 fi
                 if [ $(echo "sqrt($deviation*$deviation) < $fatal_threshold"|bc) = 0 ]; then
                     let fatal++
@@ -168,8 +178,6 @@ test -e CASES || (echo "Plese specify tests." && exit 1)
 which $abacus > /dev/null || (echo "No ABACUS executable was found." && exit 1)
 
 testdir=`cat CASES | grep -E $case`
-failed=0
-failed_case_list=()
 ok=0
 fatal=0
 fatal_case_list=()
@@ -237,19 +245,14 @@ fi
 
 if [ -z $g ]
 then
-if [ $failed -eq 0 ]
-then
-    echo -e "\e[0;32m[ PASSED   ] \e[0m $ok test cases passed."
-else
-    echo -e "[WARNING]\e[0m    $failed test cases out of $[ $failed + $ok ] failed."
-    echo -e $failed_case_list
-    if [ $fatal -gt 0 ]
+    if [ $fatal -eq 0 ]
     then
+        echo -e "\e[0;32m[ PASSED   ] \e[0m $ok test cases passed."
+    else
         echo -e "\e[0;31m[ERROR     ]\e[0m $fatal test cases out of $[ $failed + $ok ] produced fatal error."
         echo -e $fatal_case_list
         exit 1
     fi
-fi
 else
 echo "Generate test cases complete."
 fi
