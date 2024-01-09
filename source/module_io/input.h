@@ -5,6 +5,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <type_traits>
 
 #include "module_base/vector3.h"
 #include "module_md/md_para.h"
@@ -663,7 +664,14 @@ class Input
     vector/list of input */
     template <typename T>
     void read_value2stdvector(std::ifstream& ifs, std::vector<T>& var);
-
+    template <typename T>
+    typename std::enable_if<std::is_same<T, double>::value, T>::type cast_string(const std::string& str) { return std::stod(str); }
+    template <typename T>
+    typename std::enable_if<std::is_same<T, int>::value, T>::type cast_string(const std::string& str) { return std::stoi(str); }
+    template <typename T>
+    typename std::enable_if<std::is_same<T, bool>::value, T>::type cast_string(const std::string& str) { return (str == "true" || str == "1"); }
+    template <typename T>
+    typename std::enable_if<std::is_same<T, std::string>::value, T>::type cast_string(const std::string& str) { return str; }
     void strtolower(char *sa, char *sb);
     void read_bool(std::ifstream &ifs, bool &var);
 };

@@ -4246,7 +4246,7 @@ void Input::read_value2stdvector(std::ifstream& ifs, std::vector<T>& var)
             if(temp.size() > 0) // if temp is not empty, excludes the case of multiple spaces or tabs
             {
                 std::string str(temp.begin(), temp.end());
-                var.push_back(std::stod(str));
+                var.push_back(cast_string<T>(str));
                 temp.clear();
             }
             if(c == '\n' || c == '#' || c == '\0') break; // end of line
@@ -4256,11 +4256,13 @@ void Input::read_value2stdvector(std::ifstream& ifs, std::vector<T>& var)
     if(temp.size() > 0) // the last value
     {
         std::string str(temp.begin(), temp.end());
-        var.push_back(std::stod(str));
+        var.push_back(cast_string<T>(str));
     }
 }
 template void Input::read_value2stdvector(std::ifstream& ifs, std::vector<int>& var);
 template void Input::read_value2stdvector(std::ifstream& ifs, std::vector<double>& var);
+template void Input::read_value2stdvector(std::ifstream& ifs, std::vector<std::string>& var);
+
 // Conut how many types of atoms are listed in STRU
 int Input::count_ntype(const std::string& fn)
 {

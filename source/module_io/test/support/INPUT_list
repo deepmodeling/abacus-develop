@@ -7,3 +7,7 @@ bessel_nao_rcut_case5 7 8 9 10# s4110
 bessel_nao_rcut_case6 7 8 9 10 # s4111
 bessel_nao_rcut_case7   7   8   9   10# t4t10
 bessel_nao_rcut_case8 7 8   9 10 # t4t11
+bessel_nao_rcut_case9 string1 # something
+bessel_nao_rcut_case10 string1 string2 string3 string4
+bessel_nao_rcut_case11 1.23456789
+bessel_nao_rcut_case12 -1.23456789 2.3456789 -3.456789 4.56789
