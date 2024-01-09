@@ -1936,7 +1936,7 @@ void Symmetry::gtrans_convert(const ModuleBase::Vector3<double>* va, ModuleBase:
           vb[i]=va[i]*a*bi;
     }
 }
-void Symmetry::gmatrix_invmap(const ModuleBase::Matrix3* s, const int n, int* invmap)
+void Symmetry::gmatrix_invmap(const ModuleBase::Matrix3* s, const int n, int* invmap) const
 {
     ModuleBase::Matrix3 eig(1, 0, 0, 0, 1, 0, 0, 0, 1);
     ModuleBase::Matrix3 tmp;

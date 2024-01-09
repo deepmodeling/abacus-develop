@@ -10,6 +10,7 @@
 #include <RI/global/Global_Func-2.h>
 
 #include <array>
+#include <RI/global/Tensor.h>
 
 namespace RI_Util
 {

@@ -31,7 +31,7 @@ namespace RI_2D_Comm
 //public:
 	template<typename Tdata, typename Tmatrix>
 	extern std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>>
-        split_m2D_ktoR(const K_Vectors& kv, const std::vector<const Tmatrix*>& mks_2D, const Parallel_2D& pv, const int nspin);
+        split_m2D_ktoR(const K_Vectors& kv, const std::vector<const Tmatrix*>& mks_2D, const Parallel_2D& pv, const int nspin, const bool spgsym = false);
 
 	// judge[is] = {s0, s1}
 	extern std::vector<std::tuple<std::set<TA>, std::set<TA>>>

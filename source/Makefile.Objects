@@ -602,6 +602,8 @@ OBJS_MODULE_RI=conv_coulomb_pot_k.o\
       RI_2D_Comm.o\
       Mix_DMk_2D.o\
       Mix_Matrix.o\
+      symmetry_rotation.o\
+      symmetry_irreducible_sector.o\
 
 OBJS_PARALLEL=parallel_common.o\
     parallel_global.o\

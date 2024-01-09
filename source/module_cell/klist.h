@@ -22,6 +22,11 @@ class K_Vectors
     int nmp[3];                 /// Number of Monhorst-Pack
     std::vector<int> kl_segids; /// index of kline segment
 
+    /// @brief equal k points to each ibz-kpont, corresponding to a certain symmetry operations. 
+    /// dim: [iks_ibz][(isym, kvec_d)]
+    std::vector<std::map<int, ModuleBase::Vector3<double>>> kstars;
+
+
     K_Vectors();
     ~K_Vectors();
     K_Vectors& operator=(const K_Vectors&) = default;
@@ -109,11 +114,11 @@ class K_Vectors
      * @return int Returns the global index of the k-point.
      *
      * @note The function calculates the global index by dividing the total number of k-points (nkstot) by the number of
-     * process pools (KPAR), and adding the remainder if the process pool ID (MY_POOL) is less than the remainder.
      * @note The function is declared as inline for efficiency.
      */
     inline int getik_global(const int& ik) const;
 
+<<<<<<< HEAD
     int get_nks() const
     {
         return this->nks;
@@ -149,11 +154,11 @@ class K_Vectors
         this->nkstot_full = value;
     }
 
-  private:
-    int nks;         // number of symmetry-reduced k points in this pool(processor, up+dw)
-    int nkstot;      /// number of symmetry-reduced k points in full k mesh
-    int nkstot_full; /// number of k points before symmetry reduction in full k mesh
+    /// dim: [iks_ibz][(isym, kvec_d)]
+    std::vector<std::map<int, ModuleBase::Vector3<double>>> kstars;
 
+private:
+>>>>>>> 627516392 (symmetry rotation for EXX)
     int nspin;
     bool kc_done;
     bool kd_done;
