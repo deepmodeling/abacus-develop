@@ -77,10 +77,10 @@ class DFTU
     void cal_occup_m_k(const int iter, const std::vector<std::vector<std::complex<double>>>& dm_k, const K_Vectors& kv, const double& mixing_beta, hamilt::Hamilt<std::complex<double>>* p_ham);
     void cal_occup_m_gamma(const int iter, const std::vector<std::vector<double>>& dm_gamma, const double& mixing_beta);
 
-  private:
     // dftu can be calculated only after locale has been initialed
     bool initialed_locale = false;
 
+  private:
     void copy_locale();
     void zero_locale();
     void mix_locale(const double& mixing_beta);
