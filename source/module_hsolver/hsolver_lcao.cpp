@@ -143,7 +143,7 @@ void HSolverLCAO<T>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
     ModuleBase::timer::tick("HSolverLCAO", "solve");
 }
 template <typename T>
-int HSolverLCAO<T>::out_mat_hs = 0;
+std::vector<int> HSolverLCAO<T>::out_mat_hs = {0, 8};
 template <typename T>
 int HSolverLCAO<T>::out_mat_hsR = 0;
 template <typename T>

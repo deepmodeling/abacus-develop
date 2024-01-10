@@ -338,7 +338,7 @@ void Input::Default(void)
     out_dos = 0;
     out_band = 0;
     out_proj_band = 0;
-    out_mat_hs = 0;
+    out_mat_hs = {0, 8};
     out_mat_xc = 0;
     cal_syns = 0;
     dmax = 0.01;
@@ -1386,7 +1386,8 @@ bool Input::Read(const std::string& fn)
 
         else if (strcmp("out_mat_hs", word) == 0)
         {
-            read_bool(ifs, out_mat_hs);
+            read_value2stdvector(ifs, out_mat_hs);
+            if(out_mat_hs.size() == 1) out_mat_hs.push_back(8);
         }
         // LiuXh add 2019-07-15
         else if (strcmp("out_mat_hs2", word) == 0)
@@ -3068,7 +3069,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
 
     if(qo_switch)
     {
-        out_mat_hs = true; // print H(k) and S(k)
+        out_mat_hs[0] = 1; // print H(k) and S(k)
         out_wfc_lcao = 1; // print wave function in lcao basis in kspace
     }
   
@@ -3305,7 +3306,7 @@ void Input::Bcast()
     Parallel_Common::bcast_int(out_dos);
     Parallel_Common::bcast_bool(out_band);
     Parallel_Common::bcast_bool(out_proj_band);
-    Parallel_Common::bcast_bool(out_mat_hs);
+    Parallel_Common::bcast_int(out_mat_hs.data(), 2);
     Parallel_Common::bcast_bool(out_mat_hs2); // LiuXh add 2019-07-15
     Parallel_Common::bcast_bool(out_mat_t);
     Parallel_Common::bcast_bool(out_mat_dh);
