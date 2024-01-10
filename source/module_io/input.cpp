@@ -3068,6 +3068,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     {
         out_mat_hs = true; // print H(k) and S(k)
         out_wfc_lcao = 1; // print wave function in lcao basis in kspace
+        symmetry = "-1"; // disable kpoint reduce
     }
   
     // set nspin with noncolin
