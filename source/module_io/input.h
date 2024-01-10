@@ -5,6 +5,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <type_traits>
 
 #include "module_base/vector3.h"
 #include "module_md/md_para.h"
@@ -546,6 +547,7 @@ class Input
 	double	bessel_nao_sigma;		// spherical bessel smearing_sigma
 	std::string	bessel_nao_ecut;		// energy cutoff for spherical bessel functions(Ry)
 	double	bessel_nao_rcut;		// radial cutoff for spherical bessel functions(a.u.)
+    std::vector<double> bessel_nao_rcuts;
 	double	bessel_nao_tolerence;	// tolerence for spherical bessel root
     // the following are used when generating jle.orb
 	int		bessel_descriptor_lmax;			// lmax used in descriptor
@@ -628,7 +630,7 @@ class Input
     {
         ifs >> var;
         std::string line;
-        getline(ifs, line);
+        getline(ifs, line); // read the rest of the line, directly discard it.
         return;
     }
     void read_kspacing(std::ifstream &ifs)
@@ -658,6 +660,18 @@ class Input
         // << std::endl;
     };
 
+    /* I hope this function would be more and more useful if want to support
+    vector/list of input */
+    template <typename T>
+    void read_value2stdvector(std::ifstream& ifs, std::vector<T>& var);
+    template <typename T>
+    typename std::enable_if<std::is_same<T, double>::value, T>::type cast_string(const std::string& str) { return std::stod(str); }
+    template <typename T>
+    typename std::enable_if<std::is_same<T, int>::value, T>::type cast_string(const std::string& str) { return std::stoi(str); }
+    template <typename T>
+    typename std::enable_if<std::is_same<T, bool>::value, T>::type cast_string(const std::string& str) { return (str == "true" || str == "1"); }
+    template <typename T>
+    typename std::enable_if<std::is_same<T, std::string>::value, T>::type cast_string(const std::string& str) { return str; }
     void strtolower(char *sa, char *sb);
     void read_bool(std::ifstream &ifs, bool &var);
 };
