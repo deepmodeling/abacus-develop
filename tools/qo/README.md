@@ -10,7 +10,18 @@
 
 ## Installation
 
-This code runs like scripts, so no need to install.
+This code runs like scripts, you can also install this by:
+```bash
+python3 setup.py install
+```
+, then you can use it like a package:
+```python
+import abacus2qo
+```
+If you would like to change code and run it, you can also install it by:
+```bash
+python3 setup.py develop
+```
 
 ## Usage
 
@@ -62,6 +73,7 @@ This code runs like scripts, so no need to install.
             ])
     ```
     `HRs` and `SRs` are list of `numpy.ndarray`, so it is convinient to use `numpy.save` to save them.
+    You can also find a file `QO_supercells.dat` in `OUT.${suffix}/`, which contains the information of supercell. You can use it as a reference to construct `Rs`.
 4.  run it!
 
 ## Formulation info
