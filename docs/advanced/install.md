@@ -55,7 +55,7 @@ The new EXX implementation depends on two external libraries:
 
 These two libraries are added as submodules in the [deps](https://github.com/deepmodeling/abacus-develop/tree/develop/deps) folder. Set `-DENABLE_LIBRI=ON` to build with these two libraries.
 
-If you prefer using manually downloaded libraries, provide `-DLIBRI_DIR=${path to your LibRI folder} -DLIBCOMM_DIR=${path to your LibComm folder}`. 
+If you prefer using manually downloaded libraries, provide `-DLIBRI_DIR=${path to your LibRI folder} -DLIBCOMM_DIR=${path to your LibComm folder}`.
 
 ## Build Unit Tests
 
@@ -85,7 +85,7 @@ cmake -B build -DUSE_CUDA=1 -DCMAKE_CUDA_COMPILER=${path to cuda toolkit}/bin/nv
 
 > Note: This flag is **enabled by default**. It will get better performance than the standard implementation on `gcc` and `clang`. But it **will be disabled** when using `Intel Compiler` since the math functions will get wrong results and the performance is also unexpectly poor.
 
-To build math functions from source code, instead of using c++ standard implementation, define `USE_ABACUS_LIBM` flag. 
+To build math functions from source code, instead of using c++ standard implementation, define `USE_ABACUS_LIBM` flag.
 
 Currently supported math functions:
  `sin`, `cos`, `sincos`, `exp`, `cexp`
@@ -136,7 +136,7 @@ CEREAL_DIR    = /usr/local/include/cereal
 
 ##-------------------  FOR GNU COMPILER  ------------------------------
 ## FFTW_DIR          should contain lib/libfftw3.a.
-## OPENBLAS_LIB_DIR  should contain libopenblas.a. 
+## OPENBLAS_LIB_DIR  should contain libopenblas.a.
 ## SCALAPACK_LIB_DIR should contain libscalapack.a
 ## All three above will only be used when CXX=mpicxx or g++
 ## ELPA_DIR          should contain an include folder and lib/libelpa.a
@@ -270,8 +270,8 @@ directly.
 
 > `deepmd_c`/`deepmd_cc` and `tensorflow_cc` libraries would be called according to `DeePMD_DIR` and `TensorFlow_DIR`, which is showed in detail in [this page](https://github.com/deepmodeling/deepmd-kit/blob/master/doc/inference/cxx.md).
 
-### Add LibRI and LibComm Support
-To use new EXX, you need two libraries: [LibRI](https://github.com/abacusmodeling/LibRI) and [LibComm](https://github.com/abacusmodeling/LibComm) and need to define `LIBRI_DIR` and `LIBCOMM_DIR` in the file `Makefile.vars` or use 
+### Add LibRI Support
+To use new EXX, you need two libraries: [LibRI](https://github.com/abacusmodeling/LibRI) and [LibComm](https://github.com/abacusmodeling/LibComm) and need to define `LIBRI_DIR` and `LIBCOMM_DIR` in the file `Makefile.vars` or use
 ```makefile
 make LIBRI_DIR=/public/software/LibRI LIBCOMM_DIR=/public/software/LibComm
 ```
