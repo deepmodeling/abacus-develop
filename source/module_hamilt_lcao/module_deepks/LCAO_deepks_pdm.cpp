@@ -805,9 +805,9 @@ void LCAO_Deepks::cal_gdmx_k(const std::vector<std::vector<std::complex<double>>
                     key_tuple key_2(ibt2,dR2.x,dR2.y,dR2.z);
 					for (int iw1l = 0; iw1l < row_indexes.size(); ++iw1l)
                     {
-                        std::vector<double> nlm1 = this->nlm_save_k[iat][key_1][row_indexes[iw1l]][0];
                         for (int iw2l = 0; iw2l < col_indexes.size(); ++iw2l)
                         {
+                            std::vector<double> nlm1 = this->nlm_save_k[iat][key_1][row_indexes[iw1l]][0];
                             std::vector<std::vector<double>> nlm2 = this->nlm_save_k[iat][key_2][col_indexes[iw2l]];
 
                             assert(nlm1.size()==nlm2[0].size());
