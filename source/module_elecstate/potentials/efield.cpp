@@ -38,6 +38,22 @@ ModuleBase::matrix Efield::add_efield(const UnitCell& cell,
     ModuleBase::TITLE("Efield", "add_efield");
     ModuleBase::timer::tick("Efield", "add_efield");
 
+    // set the parameters
+    if (efield_pos_max == -1 || efield_pos_dec == -1)
+    {
+        // obtain the position of atoms along the efield direction
+        std::vector<double> pos;
+        for (int it = 0; it < cell.ntype; ++it)
+        {
+            for (int ia = 0; ia < cell.atoms[it].na; ++ia)
+            {
+                pos.push_back(cell.atoms[it].taud[ia][efield_dir]);
+            }
+        }
+
+        autoset(pos);
+    }
+
     double latvec; // latvec along the efield direction
     double area; // surface area along the efield direction
     prepare(cell, latvec, area);
@@ -301,6 +317,46 @@ void Efield::prepare(const UnitCell &cell, double &latvec, double &area)
         ModuleBase::WARNING_QUIT("Efield::prepare", "direction is wrong!");
     }
     bmod = sqrt(pow(bvec[0], 2) + pow(bvec[1], 2) + pow(bvec[2], 2));
+}
+
+void Efield::autoset(std::vector<double>& pos)
+{
+    // determine the vacuum region
+    std::sort(pos.begin(), pos.end());
+    double vacuum = 0.0;
+    double center = 0.0;
+    for (int i = 1; i < pos.size(); i++)
+    {
+        double diff = pos[i] - pos[i - 1];
+        if (diff > vacuum)
+        {
+            vacuum = diff;
+            center = (pos[i] + pos[i - 1]) / 2;
+        }
+    }
+
+    // consider the periodic boundary condition
+    double diff = pos[0] + 1 - pos[pos.size() - 1];
+    if (diff > vacuum)
+    {
+        vacuum = diff;
+        center = (pos[0] + pos[pos.size() - 1] + 1) / 2;
+    }
+
+    // set the parameters
+    efield_pos_max = center - vacuum / 20;
+    efield_pos_dec = vacuum / 10;
+    while (efield_pos_max >= 1)
+    {
+        efield_pos_max -= 1;
+    }
+    while (efield_pos_max < 0)
+    {
+        efield_pos_max += 1;
+    }
+
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Autoset efield_pos_max", efield_pos_max);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Autoset efield_pos_dec", efield_pos_dec);
 }
 
 } // namespace elecstate

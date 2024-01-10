@@ -319,11 +319,30 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
     }
     else if (GlobalV::NSPIN == 2)
     {
-        chr->allocate_rhog_mag();
-        chr->get_rhog_mag();
-        rhog_in = chr->rhog_mag_save;
-        rhog_out = chr->rhog_mag;
+        // magnetic density
+        std::complex<double> *rhog_mag = nullptr;
+        std::complex<double> *rhog_mag_save = nullptr;
         const int npw = this->rhopw->npw;
+        // allocate rhog_mag[is*ngmc] and rhog_mag_save[is*ngmc]
+        rhog_mag = new std::complex<double>[npw * GlobalV::NSPIN];
+        rhog_mag_save = new std::complex<double>[npw * GlobalV::NSPIN];
+        ModuleBase::GlobalFunc::ZEROS(rhog_mag, npw * GlobalV::NSPIN);
+        ModuleBase::GlobalFunc::ZEROS(rhog_mag_save, npw * GlobalV::NSPIN);
+        // get rhog_mag[is*ngmc] and rhog_mag_save[is*ngmc]
+        for (int ig = 0; ig < npw; ig++)
+        {
+            rhog_mag[ig] = chr->rhog[0][ig] + chr->rhog[1][ig];
+            rhog_mag_save[ig] = chr->rhog_save[0][ig] + chr->rhog_save[1][ig];
+        }
+        for (int ig = 0; ig < npw; ig++)
+        {
+            rhog_mag[ig + npw] = chr->rhog[0][ig] - chr->rhog[1][ig];
+            rhog_mag_save[ig + npw] = chr->rhog_save[0][ig] - chr->rhog_save[1][ig];
+        }
+        //
+        rhog_in = rhog_mag_save;
+        rhog_out = rhog_mag;
+        //
         auto screen = std::bind(&Charge_Mixing::Kerker_screen_recip_new, this, std::placeholders::_1);
         auto twobeta_mix
             = [this, npw](std::complex<double>* out, const std::complex<double>* in, const std::complex<double>* sres) {
@@ -346,9 +365,19 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
         this->mixing->push_data(this->rho_mdata, rhog_in, rhog_out, screen, twobeta_mix, true);
         this->mixing->cal_coef(this->rho_mdata, inner_product_new);
         this->mixing->mix_data(this->rho_mdata, rhog_out);
+        // get rhog[is][ngmc] from rhog_mag[is*ngmc]
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            ModuleBase::GlobalFunc::ZEROS(chr->rhog[is], npw);
+        }
+        for (int ig = 0; ig < npw; ig++)
+        {
+            chr->rhog[0][ig] = 0.5 * (rhog_mag[ig] + rhog_mag[ig+npw]);
+            chr->rhog[1][ig] = 0.5 * (rhog_mag[ig] - rhog_mag[ig+npw]);
+        }
         // delete
-        chr->get_rhog_from_mag();
-        chr->destroy_rhog_mag();
+        delete[] rhog_mag;
+        delete[] rhog_mag_save;
     }
     else if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE <= 0)
     {
@@ -472,9 +501,6 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
         }
     }
 
-    // renormalize rho in R-space would induce a error in K-space
-    //chr->renormalize_rho();
-
     // For kinetic energy density
     if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
     {
@@ -542,11 +568,29 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
     }
     else if (GlobalV::NSPIN == 2)
     {
-        chr->allocate_rho_mag();
-        chr->get_rho_mag();
-        rhor_in = chr->rho_mag_save;
-        rhor_out = chr->rho_mag;
+        // magnetic density
+        double *rho_mag = nullptr;
+        double *rho_mag_save = nullptr; 
         const int nrxx = this->rhopw->nrxx;
+        // allocate rho_mag[is*nnrx] and rho_mag_save[is*nnrx]
+        rho_mag = new double[nrxx * GlobalV::NSPIN];
+        rho_mag_save = new double[nrxx * GlobalV::NSPIN];
+        ModuleBase::GlobalFunc::ZEROS(rho_mag, nrxx * GlobalV::NSPIN);
+        ModuleBase::GlobalFunc::ZEROS(rho_mag_save, nrxx * GlobalV::NSPIN);
+        // get rho_mag[is*nnrx] and rho_mag_save[is*nnrx]
+        for (int ir = 0; ir < nrxx; ir++)
+        {
+            rho_mag[ir] = chr->rho[0][ir] + chr->rho[1][ir];
+            rho_mag_save[ir] = chr->rho_save[0][ir] + chr->rho_save[1][ir];
+        }
+        for (int ir = 0; ir < nrxx; ir++)
+        {
+            rho_mag[ir + nrxx] = chr->rho[0][ir] - chr->rho[1][ir];
+            rho_mag_save[ir + nrxx] = chr->rho_save[0][ir] - chr->rho_save[1][ir];
+        }
+        //
+        rhor_in = rho_mag_save;
+        rhor_out = rho_mag;
         auto screen = std::bind(&Charge_Mixing::Kerker_screen_real, this, std::placeholders::_1);
         auto twobeta_mix
             = [this, nrxx](double* out, const double* in, const double* sres) {
@@ -571,9 +615,20 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
             = std::bind(&Charge_Mixing::inner_product_real, this, std::placeholders::_1, std::placeholders::_2);
         this->mixing->cal_coef(this->rho_mdata, inner_product);
         this->mixing->mix_data(this->rho_mdata, rhor_out);
+        // get new rho[is][nrxx] from rho_mag[is*nrxx]
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            ModuleBase::GlobalFunc::ZEROS(chr->rho[is], nrxx);
+            //ModuleBase::GlobalFunc::ZEROS(rho_save[is], nrxx);
+        }
+        for (int ir = 0; ir < nrxx; ir++)
+        {
+            chr->rho[0][ir] = 0.5 * (rho_mag[ir] + rho_mag[ir+nrxx]);
+            chr->rho[1][ir] = 0.5 * (rho_mag[ir] - rho_mag[ir+nrxx]);
+        }
         // delete
-        chr->get_rho_from_mag();
-        chr->destroy_rho_mag();
+        delete[] rho_mag;
+        delete[] rho_mag_save;
     }
     else if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE <= 0)
     {
@@ -668,7 +723,6 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
         delete[] rho_magabs_save;
     }
     
-    chr->renormalize_rho();
     double *taur_out, *taur_in;
     if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
     {

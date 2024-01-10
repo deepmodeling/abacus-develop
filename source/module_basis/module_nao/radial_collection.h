@@ -24,7 +24,7 @@ class RadialCollection
     ~RadialCollection();
 
     /// Builds the collection from (orbital) files.
-    void build(const int nfile, const std::string* const file, const char type = 'o');
+    void build(const int nfile, const std::string* const file, const char ftype = '\0');
 
     /// Builds the collection from Numerical_Nonlocal objects.
     void build(const int ntype, Numerical_Nonlocal* const nls);
@@ -153,6 +153,16 @@ class RadialCollection
 
     /// Finds the maximum cutoff radius among all RadialSet objects and sets rcut_max_ accordingly.
     void set_rcut_max();
+
+    /**
+     * @brief Returns the file type of a given file.
+     *
+     * RadialCollection might be built from either numerical atomic orbital file ('o') or orbital
+     * parameter (coefficient) ('c') file. This function briefly scans the file to find its type.
+     *
+     * Only rank-0 performs the check; the result is broadcasted to all ranks.
+     */
+    char check_file_type(const std::string& file) const;
 };
 
 #endif

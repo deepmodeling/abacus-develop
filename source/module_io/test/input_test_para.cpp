@@ -184,6 +184,7 @@ TEST_F(InputParaTest, Bcast)
     EXPECT_EQ(INPUT.out_proj_band, 0);
     EXPECT_EQ(INPUT.out_mat_hs, 0);
     EXPECT_EQ(INPUT.out_mat_hs2, 0);
+    EXPECT_EQ(INPUT.out_mat_xc, 0);
     EXPECT_EQ(INPUT.out_interval, 1);
     EXPECT_EQ(INPUT.out_app_flag, 1);
     EXPECT_EQ(INPUT.out_mat_r, 0);
@@ -214,8 +215,8 @@ TEST_F(InputParaTest, Bcast)
     EXPECT_FALSE(INPUT.efield_flag);
     EXPECT_FALSE(INPUT.dip_cor_flag);
     EXPECT_EQ(INPUT.efield_dir, 2);
-    EXPECT_DOUBLE_EQ(INPUT.efield_pos_max, 0.5);
-    EXPECT_DOUBLE_EQ(INPUT.efield_pos_dec, 0.1);
+    EXPECT_DOUBLE_EQ(INPUT.efield_pos_max, -1.0);
+    EXPECT_DOUBLE_EQ(INPUT.efield_pos_dec, -1.0);
     EXPECT_DOUBLE_EQ(INPUT.efield_amp, 0.0);
     EXPECT_FALSE(INPUT.gate_flag);
     EXPECT_DOUBLE_EQ(INPUT.zgate, 0.5);

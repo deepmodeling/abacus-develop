@@ -96,6 +96,8 @@ public:
 	{
 		NOAR.set_position(R1_in, R2_in);
 	}
+
+	Numerical_Orbital_Lm*& chi() { return this->phiLN; }
 				
 private:
 	

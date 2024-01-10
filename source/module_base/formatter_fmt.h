@@ -4,10 +4,12 @@
 #include <string>
 #include <sstream>
 #include <iomanip>
+#include <complex>
 
 namespace formatter
 {
     class Fmt {
+            
         public:
             /// @brief default constructor, set default values: width = 4, precision = 2, fillChar = ' ', fixed = true, right = true, error = false
             Fmt();
@@ -65,6 +67,12 @@ namespace formatter
                 ss << std::setw(width_) << std::setfill(fillChar_);
                 ss << ss_.str();
                 return ss.str();
+            }
+            std::string format(const std::complex<double>& value){
+                return "(" + format(value.real()) + "," + format(value.imag()) + ")";
+            }
+            std::string format(const std::complex<float>& value){
+                return "(" + format(value.real()) + "," + format(value.imag()) + ")";
             }
             std::string format(const std::string& value) {
                 std::stringstream ss;

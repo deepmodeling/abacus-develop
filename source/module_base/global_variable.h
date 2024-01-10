@@ -34,6 +34,7 @@ extern int EFIELD_FLAG; // 5 add electric field
 extern int DIP_COR_FLAG; // 7 add dipole correction
 extern bool GATE_FLAG;     // add gate field
 extern bool out_app_flag;  // whether output r(R), H(R), S(R), T(R), and dH(R) matrices in an append manner during MD  liuyu 2023-03-20
+extern int out_ndigits;
 
 extern std::string DFT_FUNCTIONAL; // 6.5 change the DFT functional from input file.
 extern double XC_TEMPERATURE;
@@ -307,6 +308,8 @@ extern int out_chg;
 extern double nelec;
 extern bool out_bandgap;
 extern int out_interval;
+
+extern bool out_mat_xc; // output Vxc in KS-wfc representation for GW calculation
 
 // Deltaspin related
 extern bool sc_mag_switch; // 0: no deltaspin; 1: constrain atomic magnetic moments;
