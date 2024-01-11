@@ -222,7 +222,7 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "lcao_dk", lcao_dk, "delta k for 1D integration in LCAO");
     ModuleBase::GlobalFunc::OUTP(ofs, "lcao_dr", lcao_dr, "delta r for 1D integration in LCAO");
     ModuleBase::GlobalFunc::OUTP(ofs, "lcao_rmax", lcao_rmax, "max R for 1D two-center integration table");
-    ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_hs", out_mat_hs, "output H and S matrix");
+    ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_hs", out_mat_hs[0], "output H and S matrix");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_hs2", out_mat_hs2, "output H(R) and S(R) matrix");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_dh", out_mat_dh, "output of derivative of H(R) matrix");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_xc", out_mat_xc, "output exchange-correlation matrix in KS-orbital representation");
