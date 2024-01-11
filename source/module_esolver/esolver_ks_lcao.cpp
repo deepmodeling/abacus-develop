@@ -636,7 +636,7 @@ namespace ModuleESolver
     // the local occupation number matrix and energy correction
     if (GlobalV::dft_plus_u)
     {
-        GlobalC::dftu.cal_energy_correction(istep);
+        //GlobalC::dftu.cal_energy_correction(istep);
         GlobalC::dftu.output();
     }
 

@@ -120,6 +120,11 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
     {// skip the calculation if dm_in_dftu is nullptr
         return;
     }
+    else
+    {
+        //will update this->dftu->locale and this->dftu->EU
+        this->dftu->EU = 0.0;
+    }
     ModuleBase::timer::tick("DFTUNew", "calculate_HR");
 
     const Parallel_Orbitals* paraV = this->hR->get_atom_pair(0).get_paraV();
@@ -241,7 +246,7 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
         //calculate VU
         const double u_value = this->dftu->U[T0];
         std::vector<double> VU(occ.size());
-        this->cal_v_of_u(occ, u_value, VU);
+        this->cal_v_of_u(occ, u_value, VU, this->dftu->EU);
         // save occ to dftu
         for(int i=0;i<occ.size();i++)
         {
@@ -396,7 +401,8 @@ template <typename TK, typename TR>
 void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::cal_v_of_u(
     const std::vector<double>& occ,
     const double u_value,
-    std::vector<double>& VU)
+    std::vector<double>& VU,
+    double& EU)
 {
     const int m_size = int(sqrt(occ.size()));
 #ifdef __DEBUG
@@ -408,7 +414,8 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::cal_v_of_u(
     {
         for(int m2 = 0; m2 < m_size; m2++)
         {
-            VU[m1 * m_size + m2] = u_value * (0.5 * (m1 == m2) - occ[m1 * m_size + m2]);
+            VU[m1 * m_size + m2] = u_value * (0.5 * (m1 == m2) - occ[m2 * m_size + m1]);
+            EU += u_value * 0.5 * occ[m2 * m_size + m1] * occ[m1 * m_size + m2];
         }
     }
 }

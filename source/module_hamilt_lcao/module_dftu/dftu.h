@@ -48,9 +48,9 @@ class DFTU
     int omc; // occupation matrix control
     int mixing_dftu; //whether to mix locale
 
+    double EU; //+U energy
   private:
     LCAO_Matrix* LM;
-    double EU; //+U energy
     int cal_type = 3; // 1:dftu_tpye=1, dc=1; 2:dftu_type=1, dc=2; 3:dftu_tpye=2, dc=1; 4:dftu_tpye=2, dc=2;
     
     // transform between iwt index and it, ia, L, N and m index

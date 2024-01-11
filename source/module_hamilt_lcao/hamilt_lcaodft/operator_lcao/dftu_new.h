@@ -88,8 +88,9 @@ class DFTUNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                         const std::unordered_map<int, std::vector<double>>& nlm2_all,
                         const double* data_pointer,
                         std::vector<double>& occupations);
-    /// VU_{m, m'} = 1/2*delta_{m, m'} - occ_{m, m'} * U
-    void cal_v_of_u(const std::vector<double>& occupations, const double u_value, std::vector<double>& v_of_u);
+    /// VU_{m, m'} = sum_{m,m'} (1/2*delta_{m, m'} - occ_{m, m'}) * U
+    /// EU = sum_{m,m'} 1/2 * U * occ_{m, m'} * occ_{m', m}
+    void cal_v_of_u(const std::vector<double>& occupations, const double u_value, std::vector<double>& v_of_u, double& EU);
 
     /**
      * @brief calculate the non-local pseudopotential matrix with specific <I,J,R> atom-pairs
