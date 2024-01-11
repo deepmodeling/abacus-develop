@@ -676,13 +676,13 @@ namespace ModuleESolver
     // print Hamiltonian and Overlap matrix
     if (this->conv_elec)
     {
-        if (!GlobalV::GAMMA_ONLY_LOCAL && hsolver::HSolverLCAO<TK>::out_mat_hs)
+        if (!GlobalV::GAMMA_ONLY_LOCAL && hsolver::HSolverLCAO<TK>::out_mat_hs[0])
         {
             this->UHM.GK.renew(true);
         }
         for (int ik = 0; ik < this->kv.nks; ++ik)
         {
-            if (hsolver::HSolverLCAO<TK>::out_mat_hs)
+            if (hsolver::HSolverLCAO<TK>::out_mat_hs[0])
             {
                 this->p_hamilt->updateHk(ik);
             }
@@ -692,10 +692,30 @@ namespace ModuleESolver
             {
                 hamilt::MatrixBlock<TK> h_mat, s_mat;
                 this->p_hamilt->matrix(h_mat, s_mat);
-                if (hsolver::HSolverLCAO<TK>::out_mat_hs)
+                if (hsolver::HSolverLCAO<TK>::out_mat_hs[0])
                 {
-                    ModuleIO::save_mat(istep, h_mat.p, GlobalV::NLOCAL, bit, 1, GlobalV::out_app_flag, "H", "data-" + std::to_string(ik), *this->LOWF.ParaV, GlobalV::DRANK);
-                    ModuleIO::save_mat(istep, s_mat.p, GlobalV::NLOCAL, bit, 1, GlobalV::out_app_flag, "S", "data-" + std::to_string(ik), *this->LOWF.ParaV, GlobalV::DRANK);
+                    ModuleIO::save_mat(istep, 
+                                       h_mat.p, 
+                                       GlobalV::NLOCAL, 
+                                       bit,
+                                       hsolver::HSolverLCAO<TK>::out_mat_hs[1],
+                                       1, 
+                                       GlobalV::out_app_flag, 
+                                       "H", 
+                                       "data-" + std::to_string(ik), 
+                                       *this->LOWF.ParaV, 
+                                       GlobalV::DRANK);
+                    ModuleIO::save_mat(istep, 
+                                       s_mat.p, 
+                                       GlobalV::NLOCAL, 
+                                       bit,
+                                       hsolver::HSolverLCAO<TK>::out_mat_hs[1],
+                                       1, 
+                                       GlobalV::out_app_flag, 
+                                       "S", 
+                                       "data-" + std::to_string(ik), 
+                                       *this->LOWF.ParaV, 
+                                       GlobalV::DRANK);
                 }
             }
         }

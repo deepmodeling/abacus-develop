@@ -189,7 +189,7 @@ namespace ModuleIO
             std::vector<TK> vxc_k_mo = cVc(vxc_k_ao.data(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d);
             // write
             ModuleIO::save_mat(-1, vxc_k_mo.data(), nbands,
-                false/*binary*/, true/*triangle*/, false/*append*/,
+                false/*binary*/, GlobalV::out_ndigits, true/*triangle*/, false/*append*/,
                 "Vxc", "k-" + std::to_string(ik), p2d, drank);
             // ======test=======
             // total_energy += all_band_energy(ik, vxc_k_mo, p2d, wg);

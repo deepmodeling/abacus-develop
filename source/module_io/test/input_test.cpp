@@ -178,7 +178,7 @@ TEST_F(InputTest, Default)
         EXPECT_EQ(INPUT.out_dos,0);
         EXPECT_EQ(INPUT.out_band,0);
         EXPECT_EQ(INPUT.out_proj_band,0);
-        EXPECT_EQ(INPUT.out_mat_hs,0);
+        EXPECT_EQ(INPUT.out_mat_hs[0],0);
         EXPECT_EQ(INPUT.out_mat_hs2,0);
         EXPECT_EQ(INPUT.out_mat_xc, 0);
         EXPECT_EQ(INPUT.out_interval,1);
@@ -541,7 +541,7 @@ TEST_F(InputTest, Read)
         EXPECT_EQ(INPUT.out_dos,0);
         EXPECT_EQ(INPUT.out_band,0);
         EXPECT_EQ(INPUT.out_proj_band,0);
-        EXPECT_EQ(INPUT.out_mat_hs,0);
+        EXPECT_EQ(INPUT.out_mat_hs[0],0);
         EXPECT_EQ(INPUT.out_mat_hs2,0);
         EXPECT_EQ(INPUT.out_mat_xc, 0);
         EXPECT_EQ(INPUT.out_interval,1);
