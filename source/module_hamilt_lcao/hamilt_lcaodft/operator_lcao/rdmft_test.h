@@ -19,6 +19,7 @@
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/parallel_reduce.h"
+#include "module_elecstate/module_dm/cal_dm_psi.h"
 
 #include "module_hamilt_general/operator.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
@@ -190,8 +191,8 @@ class Veff_rdmft : public OperatorLCAO<TK, TR>
 
 };
 
-
-double wg_func(double wg, int symbol = 0);
+// now support XC_func_rdmft = "HF" or "power" 
+double wg_func(double wg, int symbol = 0, const std::string XC_func_rdmft = "HF", const double alpha_power = 0.656);
 
 
 template <typename TK>
@@ -294,7 +295,8 @@ void psiDotPsi<double>(const Parallel_Orbitals* ParaV, const Parallel_2D& para_w
 
 // realize wg_wfc = wg * wfc. Calling this function and we can get wfc = wg*wfc.
 template <typename TK>
-void wgMulPsi(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& wg, psi::Psi<TK>& wfc, int symbol = 0)
+void wgMulPsi(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& wg, psi::Psi<TK>& wfc, int symbol = 0,
+                const std::string XC_func_rdmft = "HF", const double alpha = 0.656)
 {
     const int nk_local = wfc.get_nk();
     const int nbands_local = wfc.get_nbands();
@@ -307,7 +309,7 @@ void wgMulPsi(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& wg, psi:
     {
         for (int ib_local = 0; ib_local < nbands_local; ++ib_local)  // ib_local < nbands_local , some problem, ParaV->ncol_bands
         {
-            const double wg_local = wg_func( wg(ik, ParaV->local2global_col(ib_local)), symbol);
+            const double wg_local = wg_func( wg(ik, ParaV->local2global_col(ib_local)), symbol, XC_func_rdmft, alpha);
             TK* wfc_pointer = &(wfc(ik, ib_local, 0));
             BlasConnector::scal(nbasis_local, wg_local, wfc_pointer, 1);
         }
@@ -317,15 +319,15 @@ void wgMulPsi(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& wg, psi:
 
 // add psi with eta and g(eta)
 template <typename TK>
-void add_psi(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& wg, 
-                psi::Psi<TK>& psi_TV, psi::Psi<TK>& psi_hartree, psi::Psi<TK>& psi_XC, psi::Psi<TK>& wg_Hpsi)
+void add_psi(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& wg, psi::Psi<TK>& psi_TV, psi::Psi<TK>& psi_hartree,
+                psi::Psi<TK>& psi_XC, psi::Psi<TK>& wg_Hpsi, const std::string XC_func_rdmft = "HF", const double alpha = 0.656)
 {
     const int nk = psi_TV.get_nk();
     const int nbn_local = psi_TV.get_nbands();  ///////////////////////////////////////////const int nbn_local = psi_TV.get_nbands(); ParaV->ncol_bands
     const int nbs_local = psi_TV.get_nbasis();
     wgMulPsi(ParaV, wg, psi_TV);
     wgMulPsi(ParaV, wg, psi_hartree);
-    wgMulPsi(ParaV, wg, psi_XC, 2);
+    wgMulPsi(ParaV, wg, psi_XC, 2, XC_func_rdmft, alpha);
 
     const int nbasis = ParaV->desc[2];
     const int nbands = ParaV->desc_wfc[3];
@@ -347,13 +349,14 @@ void add_psi(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& wg,
 
 // wg_wfcHwfc = wg*wfcHwfc + wg_wfcHwfc
 // When symbol = 0, 1, 2, 3, 4, wg = wg, 0.5*wg, g(wg), 0.5*g(wg), d_g(wg)/d_ewg respectively. Default symbol=0.
-void wgMul_wfcHwfc(const ModuleBase::matrix& wg, const ModuleBase::matrix& wfcHwfc, ModuleBase::matrix& wg_wfcHwfc, int symbol = 0);
+void wgMul_wfcHwfc(const ModuleBase::matrix& wg, const ModuleBase::matrix& wfcHwfc, ModuleBase::matrix& wg_wfcHwfc,
+                        int symbol = 0, const std::string XC_func_rdmft = "HF", const double alpha = 0.656);
 
 
 // Default symbol = 0 for the gradient of Etotal with respect to occupancy
 // symbol = 1 for the relevant calculation of Etotal
 void add_wg(const ModuleBase::matrix& wg, const ModuleBase::matrix& wfcHwfc_TV_in, const ModuleBase::matrix& wfcHwfc_hartree_in,
-                const ModuleBase::matrix& wfcHwfc_XC_in, ModuleBase::matrix& wg_wfcHwfc, int symbol = 0);
+            const ModuleBase::matrix& wfcHwfc_XC_in, ModuleBase::matrix& wg_wfcHwfc, const std::string XC_func_rdmft = "HF", const double alpha = 0.656, int symbol = 0);
 
 
 //give certain wg_wfcHwfc, get the corresponding energy
@@ -375,7 +378,9 @@ double rdmft_cal(LCAO_Matrix* LM_in,
                         const Charge& charge_in,
                         const ModulePW::PW_Basis& rho_basis_in,
                         const ModuleBase::matrix& vloc_in,
-                        const ModuleBase::ComplexMatrix& sf_in)
+                        const ModuleBase::ComplexMatrix& sf_in,
+                        const std::string XC_func_rdmft = "HF",
+                        const double alpha_power = 0.656)   // 0.656 for soilds, 0.525 for dissociation of H2, 0.55~0.58 for HEG
 {
     ModuleBase::TITLE("hamilt_lcao", "RDMFT_E&Egradient");
     ModuleBase::timer::tick("hamilt_lcao", "RDMFT_E&Egradient");
@@ -436,7 +441,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         HR_XC.fix_gamma();
     }
 
-    // get every Hamiltion matrix
+    /****** get every Hamiltion matrix ******/
 
     OperatorLCAO<TK, TR>* V_ekinetic_potential = new EkineticNew<OperatorLCAO<TK, TR>>(
         LM_in,
@@ -494,12 +499,24 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         hartree_pot
     );
 
-    OperatorLCAO<TK, TR>* V_XC = new OperatorEXX<OperatorLCAO<TK, TR>>(
-        LM_in,
-        &HR_XC,
-        &HK_XC,
-        kv_in
-    );
+    // construct V_XC based on different XC_functional
+    OperatorLCAO<TK, TR>* V_XC;
+    if( XC_func_rdmft == "HF" )
+    {
+        V_XC = new OperatorEXX<OperatorLCAO<TK, TR>>(
+            LM_in,
+            &HR_XC,
+            &HK_XC,
+            kv_in
+        );
+    }
+    else if( XC_func_rdmft == "power" )
+    {
+        std::vector< std::vector<TK>* > DM(nk_total);
+        for(int i=0; i<nk_total; ++i) DM[i] = new std::vector<TK>(ParaV->nloc);
+    }
+
+    /****** get every Hamiltion matrix ******/
 
     // in gamma only, must calculate HR_hartree before HR_local
     // HR_hartree has the HR of V_hartree. HR_XC get from another way, so don't need to do this 
@@ -560,13 +577,13 @@ double rdmft_cal(LCAO_Matrix* LM_in,
 
     // this would transfer the value of H_wfc_TV, H_wfc_hartree, H_wfc_XC
     // get the gradient of energy with respect to the wfc
-    add_psi(ParaV, wg, H_wfc_TV, H_wfc_hartree, H_wfc_XC, wg_HamiltWfc);
+    add_psi(ParaV, wg, H_wfc_TV, H_wfc_hartree, H_wfc_XC, wg_HamiltWfc, XC_func_rdmft, alpha_power);
 
     // get the gradient of energy with respect to the occupation numbers
-    add_wg(wg, wfcHwfc_TV, wfcHwfc_hartree, wfcHwfc_XC, wg_wfcHamiltWfc);
+    add_wg(wg, wfcHwfc_TV, wfcHwfc_hartree, wfcHwfc_XC, wg_wfcHamiltWfc, XC_func_rdmft, alpha_power);
 
     // get the total energy
-    add_wg(wg, wfcHwfc_TV, wfcHwfc_hartree, wfcHwfc_XC, wg_forEtotal, 1);
+    add_wg(wg, wfcHwfc_TV, wfcHwfc_hartree, wfcHwfc_XC, wg_forEtotal, XC_func_rdmft, alpha_power, 1);
     double Etotal_RDMFT = sumWg_getEnergy(wg_forEtotal);
 
     // for E_TV
@@ -581,7 +598,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
 
     // for Exc
     ModuleBase::matrix wg_forExc(wg.nr, wg.nc, true);
-    wgMul_wfcHwfc(wg, wfcHwfc_XC, wg_forExc, 3);
+    wgMul_wfcHwfc(wg, wfcHwfc_XC, wg_forExc, 3, XC_func_rdmft, alpha_power);
     double Exc_RDMFT = sumWg_getEnergy(wg_forExc);
 
     // add up the results obtained by all processors, or we can do reduce_all(wfcHwfc_) before add_wg() used for Etotal to replace it

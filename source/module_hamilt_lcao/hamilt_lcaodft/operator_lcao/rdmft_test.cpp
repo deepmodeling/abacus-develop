@@ -304,11 +304,12 @@ void psiDotPsi<double>(const Parallel_Orbitals* ParaV, const Parallel_2D& para_E
 
 // wg_wfcHwfc = wg*wfcHwfc + wg_wfcHwfc
 // Default symbol=0. When symbol = 0, 1, 2, 3, 4, wg = wg, 0.5*wg, g(wg), 0.5*g(wg), d_g(wg)/d_ewg respectively.
-void wgMul_wfcHwfc(const ModuleBase::matrix& wg, const ModuleBase::matrix& wfcHwfc, ModuleBase::matrix& wg_wfcHwfc, int symbol)
+void wgMul_wfcHwfc(const ModuleBase::matrix& wg, const ModuleBase::matrix& wfcHwfc, ModuleBase::matrix& wg_wfcHwfc,
+                        int symbol, const std::string XC_func_rdmft, const double alpha)
 {
     for(int ir=0; ir<wg.nr; ++ ir)
     {
-        for(int ic=0; ic<wg.nc; ++ic) wg_wfcHwfc(ir, ic) += wg_func(wg(ir, ic), symbol) * wfcHwfc(ir, ic);
+        for(int ic=0; ic<wg.nc; ++ic) wg_wfcHwfc(ir, ic) += wg_func(wg(ir, ic), symbol, XC_func_rdmft, alpha) * wfcHwfc(ir, ic);
     } 
 }
 
@@ -316,14 +317,14 @@ void wgMul_wfcHwfc(const ModuleBase::matrix& wg, const ModuleBase::matrix& wfcHw
 // Default symbol = 0 for the gradient of Etotal with respect to occupation numbers
 // symbol = 1 for the relevant calculation of Etotal
 void add_wg(const ModuleBase::matrix& wg, const ModuleBase::matrix& wfcHwfc_TV_in, const ModuleBase::matrix& wfcHwfc_hartree_in,
-                const ModuleBase::matrix& wfcHwfc_XC_in, ModuleBase::matrix& wg_wfcHwfc, int symbol)
+                const ModuleBase::matrix& wfcHwfc_XC_in, ModuleBase::matrix& wg_wfcHwfc, const std::string XC_func_rdmft, const double alpha, int symbol)
 {
     
     wg_wfcHwfc.zero_out();
     
     if( symbol==0 )
     {
-        wgMul_wfcHwfc(wg, wfcHwfc_XC_in, wg_wfcHwfc, 4);
+        wgMul_wfcHwfc(wg, wfcHwfc_XC_in, wg_wfcHwfc, 4, XC_func_rdmft, alpha);
         wg_wfcHwfc+=(wfcHwfc_TV_in);
         wg_wfcHwfc+=(wfcHwfc_hartree_in);
     }
@@ -331,7 +332,7 @@ void add_wg(const ModuleBase::matrix& wg, const ModuleBase::matrix& wfcHwfc_TV_i
     {
         wgMul_wfcHwfc(wg, wfcHwfc_TV_in, wg_wfcHwfc);
         wgMul_wfcHwfc(wg, wfcHwfc_hartree_in, wg_wfcHwfc, 1);
-        wgMul_wfcHwfc(wg, wfcHwfc_XC_in, wg_wfcHwfc, 3);
+        wgMul_wfcHwfc(wg, wfcHwfc_XC_in, wg_wfcHwfc, 3, XC_func_rdmft, alpha);
     }
     else std::cout << "\n\n\n!!!!!!\nthere are something wrong when calling rdmft_test() and calculation add_wg()\n!!!!!!\n\n\n"; 
 }
@@ -351,17 +352,39 @@ double sumWg_getEnergy(const ModuleBase::matrix& wg_wfcHwfc)
 
 // return the function of eta, g(eta)=eta, that is HF functional
 // When symbol = 0, 1, 2, 3, 4, 5, return eta, 0.5*eta, g(eta), 0.5*g(eta), d_g(eta)/d_eta, 1.0 respectively. Default symbol=0.
-double wg_func(double eta, int symbol)
+double wg_func(double eta, int symbol, const std::string XC_func_rdmft, const double alpha)
 {
-    if( symbol==0 ) return eta;
-    else if ( symbol==1 ) return 0.5*eta;
-    else if ( symbol==2 ) return eta;
-    else if ( symbol==3 ) return 0.5*eta;
-    else if ( symbol==4 ) return 1.0;
-    else if ( symbol==5 ) return 1.0;
-    else 
+    if( XC_func_rdmft == "HF" )
     {
-        std::cout << "\n!!!!!!\nThere may be some errors when calling wgMulPsi function\n!!!!!!\n";
+        if( symbol==0 ) return eta;
+        else if ( symbol==1 ) return 0.5*eta;
+        else if ( symbol==2 ) return eta;
+        else if ( symbol==3 ) return 0.5*eta;
+        else if ( symbol==4 ) return 1.0;
+        else if ( symbol==5 ) return 1.0;
+        else 
+        {
+            std::cout << "\n!!!!!!\nThere may be some errors when calling wg_fun()\n!!!!!!\n";
+            return eta ;
+        }
+    }
+    else if( XC_func_rdmft == "power" )
+    {
+        if( symbol==0 ) return eta;
+        else if ( symbol==1 ) return 0.5*eta;
+        else if ( symbol==2 ) return std::pow(eta, alpha);
+        else if ( symbol==3 ) return 0.5*std::pow(eta, alpha);
+        else if ( symbol==4 ) return alpha*std::pow(eta, alpha-1.0);
+        else if ( symbol==5 ) return 1.0;
+        else 
+        {
+            std::cout << "\n!!!!!!\nThere may be some errors when calling wg_fun()\n!!!!!!\n";
+            return eta ;
+        }
+    }
+    else
+    {
+        std::cout << "\n!!!!!!\nThere may be some errors when calling wg_fun()\n!!!!!!\n";
         return eta ;
     }
 }
