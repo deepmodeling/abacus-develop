@@ -1538,10 +1538,10 @@ These variables are used to control the output of properties.
 
 ### out_mat_hs
 
-- **Type**: Boolean
+- **Type**: Boolean Integer(optional)
 - **Availability**: Numerical atomic orbital basis
-- **Description**: Whether to print the upper triangular part of the Hamiltonian matrices (in Ry) and overlap matrices for each k point into files in the directory `OUT.${suffix}`. For more information, please refer to [hs_matrix.md](../elec_properties/hs_matrix.md#out_mat_hs). Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
-- **Default**: False
+- **Description**: Whether to print the upper triangular part of the Hamiltonian matrices (in Ry) and overlap matrices for each k point into files in the directory `OUT.${suffix}`. The second number controls precision. For more information, please refer to [hs_matrix.md](../elec_properties/hs_matrix.md#out_mat_hs). Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
+- **Default**: False 8
 
 ### out_mat_r
 
