@@ -249,6 +249,11 @@ void Veff_rdmft<double, double>::contributeHR()
 
 
 
+
+template <>
+void conj_psi<double>(psi::Psi<double>& wfc) {}
+
+
 template <>
 void HkPsi<double>(const Parallel_Orbitals* ParaV, const double& HK, const double& wfc, double& H_wfc)
 {
@@ -352,37 +357,53 @@ double sumWg_getEnergy(const ModuleBase::matrix& wg_wfcHwfc)
 
 // return the function of eta, g(eta)=eta, that is HF functional
 // When symbol = 0, 1, 2, 3, 4, 5, return eta, 0.5*eta, g(eta), 0.5*g(eta), d_g(eta)/d_eta, 1.0 respectively. Default symbol=0.
-double wg_func(double eta, int symbol, const std::string XC_func_rdmft, const double alpha)
+double wg_func(double eta, int symbol, const std::string XC_func_rdmft, double alpha)
 {
-    if( XC_func_rdmft == "HF" )
-    {
-        if( symbol==0 ) return eta;
-        else if ( symbol==1 ) return 0.5*eta;
-        else if ( symbol==2 ) return eta;
-        else if ( symbol==3 ) return 0.5*eta;
-        else if ( symbol==4 ) return 1.0;
-        else if ( symbol==5 ) return 1.0;
-        else 
-        {
-            std::cout << "\n!!!!!!\nThere may be some errors when calling wg_fun()\n!!!!!!\n";
-            return eta ;
-        }
-    }
-    else if( XC_func_rdmft == "power" )
-    {
-        if( symbol==0 ) return eta;
-        else if ( symbol==1 ) return 0.5*eta;
-        else if ( symbol==2 ) return std::pow(eta, alpha);
-        else if ( symbol==3 ) return 0.5*std::pow(eta, alpha);
-        else if ( symbol==4 ) return alpha*std::pow(eta, alpha-1.0);
-        else if ( symbol==5 ) return 1.0;
-        else 
-        {
-            std::cout << "\n!!!!!!\nThere may be some errors when calling wg_fun()\n!!!!!!\n";
-            return eta ;
-        }
-    }
-    else
+    // if( XC_func_rdmft == "HF" )
+    // {
+    //     if( symbol==0 ) return eta;
+    //     else if ( symbol==1 ) return 0.5*eta;
+    //     else if ( symbol==2 ) return eta;
+    //     else if ( symbol==3 ) return 0.5*eta;
+    //     else if ( symbol==4 ) return 1.0;
+    //     else if ( symbol==5 ) return 1.0;
+    //     else 
+    //     {
+    //         std::cout << "\n!!!!!!\nThere may be some errors when calling wg_fun()\n!!!!!!\n";
+    //         return eta ;
+    //     }
+    // }
+    // else if( XC_func_rdmft == "power" )
+    // {
+    //     if( symbol==0 ) return eta;
+    //     else if ( symbol==1 ) return 0.5*eta;
+    //     else if ( symbol==2 ) return std::pow(eta, alpha);
+    //     else if ( symbol==3 ) return 0.5*std::pow(eta, alpha);
+    //     else if ( symbol==4 ) return alpha*std::pow(eta, alpha-1.0);
+    //     else if ( symbol==5 ) return 1.0;
+    //     else 
+    //     {
+    //         std::cout << "\n!!!!!!\nThere may be some errors when calling wg_fun()\n!!!!!!\n";
+    //         return eta ;
+    //     }
+    // }
+    // else
+    // {
+    //     std::cout << "\n!!!!!!\nThere may be some errors when calling wg_fun()\n!!!!!!\n";
+    //     return eta ;
+    // }
+
+    if( XC_func_rdmft == "HF" ) alpha = 1.0;
+    else if( XC_func_rdmft == "Muller" ) alpha = 0.5;
+    else if( XC_func_rdmft == "power" ) ;
+
+    if( symbol==0 ) return eta;
+    else if ( symbol==1 ) return 0.5*eta;
+    else if ( symbol==2 ) return std::pow(eta, alpha);
+    else if ( symbol==3 ) return 0.5*std::pow(eta, alpha);
+    else if ( symbol==4 ) return alpha*std::pow(eta, alpha-1.0);
+    else if ( symbol==5 ) return 1.0;
+    else 
     {
         std::cout << "\n!!!!!!\nThere may be some errors when calling wg_fun()\n!!!!!!\n";
         return eta ;

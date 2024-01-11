@@ -47,6 +47,7 @@
 #include <iostream>
 #include <type_traits>
 #include <complex>
+#include <vector>
 
 
 
@@ -213,6 +214,18 @@ void set_zero_psi(psi::Psi<TK>& wfc_in)
     
     for(int i=0; i<wfc_in.size(); ++i) pwfc_in[i] = 0.0;
 }
+
+
+template <typename TK>
+void conj_psi(psi::Psi<TK>& wfc)
+{
+    TK* pwfc = wfc.get_pointer();
+    for(int i=0; i<wfc.size(); ++i) pwfc[i] = std::conj( pwfc[i] );
+}
+
+
+template <>
+void conj_psi<double>(psi::Psi<double>& wfc);
 
 
 // wfc and H_wfc need to be k_firest and provide wfc(ik, 0, 0) and H_wfc(ik, 0, 0)
@@ -510,10 +523,35 @@ double rdmft_cal(LCAO_Matrix* LM_in,
             kv_in
         );
     }
-    else if( XC_func_rdmft == "power" )
+    else if( XC_func_rdmft == "power" || XC_func_rdmft == "Muller" )
     {
+        // prepare for density matrix DM(nk*nbasis_local*nbasis_local)
         std::vector< std::vector<TK>* > DM(nk_total);
         for(int i=0; i<nk_total; ++i) DM[i] = new std::vector<TK>(ParaV->nloc);
+
+        // get wg_wfc = g(wg)*wfc
+        psi::Psi<TK> wg_wfc(wfc);
+        conj_psi(wg_wfc);
+        wgMulPsi(ParaV, wg, wg_wfc, 2, XC_func_rdmft, alpha_power);
+
+        // get the special DM used in constructing V_XC
+        for(int ik=0; ik<wfc.get_nk(); ++ik)
+        {
+            TK* DM_Kpointer = DM[ik]->data();  // why &(DM[ik][0]) is error
+#ifdef __MPI
+            elecstate::psiMulPsiMpi(wg_wfc, wfc, DM_Kpointer, ParaV->desc_wfc, ParaV->desc);
+#else
+            elecstate::psiMulPsi(wg_wfc, wfc, DM_Kpointer);
+#endif            
+        }
+
+        // test
+        V_XC = new OperatorEXX<OperatorLCAO<TK, TR>>(
+            LM_in,
+            &HR_XC,
+            &HK_XC,
+            kv_in
+        );
     }
 
     /****** get every Hamiltion matrix ******/

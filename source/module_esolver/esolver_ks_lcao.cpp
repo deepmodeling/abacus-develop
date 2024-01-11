@@ -944,7 +944,8 @@ namespace ModuleESolver
             *(this->pelec->charge),
             *(this->pw_rho),
             GlobalC::ppcell.vloc,
-            this->sf.strucFac
+            this->sf.strucFac,
+            "Muller"
         );
     }
     /******** test RDMFT *********/
