@@ -16,7 +16,7 @@ void OperatorLCAO<double, double>::get_hs_pointers()
 {
     ModuleBase::timer::tick("OperatorLCAO", "get_hs_pointers");
     this->hmatrix_k = this->LM->Hloc.data();
-    if ((this->new_e_iteration && ik == 0) || hsolver::HSolverLCAO<double>::out_mat_hs)
+    if ((this->new_e_iteration && ik == 0) || hsolver::HSolverLCAO<double>::out_mat_hs[0])
     {
         if (this->smatrix_k == nullptr)
         {
