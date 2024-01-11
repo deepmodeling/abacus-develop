@@ -206,6 +206,7 @@ void ELPA_Solver::exit()
         logfile.close();
     int error;
     elpa_deallocate(NEW_ELPA_HANDLE_POOL[handle_id], &error);
+    elpa_uninit(&error);
 }
 
 int ELPA_Solver::read_cpuflag()
