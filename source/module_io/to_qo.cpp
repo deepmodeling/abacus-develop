@@ -219,13 +219,22 @@ void toQO::calculate_ovlp_R(const int iR)
     // BUT SPECIFYING AN ATOM HERE IS NOT NECESSARY, THE ONLY REASON IS THE ARRANGEMENT OF ovlp_ao_nao_R_
             for(int li = 0; li <= lmaxi; li++)
             {
+                // orbitals arrange in the way stated: https://abacus.deepmodeling.com/en/latest/advanced/pp_orb.html#basis-set
+                // generate the magnetic quantum number mi list
+                std::vector<int> mis;
+                for(int mi_abs = 0; mi_abs <= li; mi_abs++)
+                {
+                    mis.push_back(mi_abs);
+                    if(mi_abs != 0) mis.push_back(-mi_abs);
+                }
     // RADIAL FUNCTIONS ARE ORGANIZED BY (l, zeta), SO FOR EACH l, GET THE MAXIMUM zeta
                 int nzetai = ao_->nzeta(it, li);
     // FOR (l, zeta) OF ATOM itia, SPECIFY A RADIAL ATOMIC ORBITAL
                 for(int izetai = 0; izetai < nzetai; izetai++)
                 {
     // FOR EACH RADIAL ATOMIC ORBITAL, SPECIFY A SPHERICAL HARMONIC
-                    for(int mi = -li; mi <= li; mi++)
+                    for(int mi = -li; mi <= li; mi++) // natural but it's not how ABACUS arrange orbitals
+                    //for(int mi : mis)
                     {
     // HERE WE GET flzeta(r)*Ylm(theta, phi),
     // THEN ANOTHER ORBITAL...(jt, ja, lj, izetaj, mj)
@@ -236,11 +245,20 @@ void toQO::calculate_ovlp_R(const int iR)
                             {
                                 int lmaxj = p_ucell_->atoms[jt].nwl;
                                 for(int lj = 0; lj <= lmaxj; lj++)
-                                {        
+                                {
+                                    // orbitals arrange in the way stated: https://abacus.deepmodeling.com/en/latest/advanced/pp_orb.html#basis-set
+                                    // generate the magnetic quantum number mj list
+                                    std::vector<int> mjs;
+                                    for(int mj_abs = 0; mj_abs <= lj; mj_abs++)
+                                    {
+                                        mjs.push_back(mj_abs);
+                                        if(mj_abs != 0) mjs.push_back(-mj_abs);
+                                    }
                                     int nzetaj = nao_->nzeta(jt, lj);
                                     for(int izetaj = 0; izetaj < nzetaj; izetaj++)
                                     {
-                                        for(int mj = -lj; mj <= lj; mj++)
+                                        for(int mj = -lj; mj <= lj; mj++) // natural but it's not how ABACUS arrange orbitals
+                                        //for(int mj : mjs)
                                         {
     // TWO ATOMIC ORBITALS ARE SPECIFIED, THEN WE NEED TO CALCULATE THE OVERLAP IN SUPERCELL
                                             ModuleBase::Vector3<double> rij = p_ucell_->atoms[it].tau[ia] - p_ucell_->atoms[jt].tau[ja];
