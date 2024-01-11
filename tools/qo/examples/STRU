@@ -1,23 +1,23 @@
 #This test is from example/scf/lcao_Si but change to Pseudopotential with pswfc
 
 ATOMIC_SPECIES
-Si 1.000 Sn_dojo_nsoc.upf #MUST USE PSEUDOPOTENTIAL WITH PSWFC!
+Sn 1.000 Sn_dojo_nsoc.upf #MUST USE PSEUDOPOTENTIAL WITH PSWFC!
 
 NUMERICAL_ORBITAL
-./Sn_dojo_6au.orb
+Sn_dojo_6au.orb
 
 LATTICE_CONSTANT
-10.2  			#Lattice constant
+1.889726877
 
 LATTICE_VECTORS
-0.5 0.5 0.0 		#Lattice vector 1
-0.5 0.0 0.5 		#Lattice vector 2
-0.0 0.5 0.5 		#Lattice vector 3
+  4.64567349   0.00000000   0.00000000
+  2.32283620   4.02327092   0.00000000
+  2.32283597   1.34109040   3.79317605
 
 ATOMIC_POSITIONS
-Cartesian 		#Cartesian(Unit is LATTICE_CONSTANT)
-Si 			#Name of element	
-0.0			#Magnetic for this element.
-2			#Number of atoms
-0.00 0.00 0.00 0 0 0	#x,y,z, move_x, move_y, move_z
-0.25 0.25 0.25 1 1 1
+Direct
+Sn
+0.00
+2
+  0.87500000   0.87500000   0.87500000 m 1 1 1
+  0.12500000   0.12500000   0.12500000 m 1 1 1

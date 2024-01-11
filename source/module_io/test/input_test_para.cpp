@@ -182,8 +182,9 @@ TEST_F(InputParaTest, Bcast)
     EXPECT_EQ(INPUT.out_dos, 0);
     EXPECT_EQ(INPUT.out_band, 0);
     EXPECT_EQ(INPUT.out_proj_band, 0);
-    EXPECT_EQ(INPUT.out_mat_hs, 0);
+    EXPECT_EQ(INPUT.out_mat_hs[0], 0);
     EXPECT_EQ(INPUT.out_mat_hs2, 0);
+    EXPECT_EQ(INPUT.out_mat_xc, 0);
     EXPECT_EQ(INPUT.out_interval, 1);
     EXPECT_EQ(INPUT.out_app_flag, 1);
     EXPECT_EQ(INPUT.out_mat_r, 0);
