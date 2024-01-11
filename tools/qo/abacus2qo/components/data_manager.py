@@ -1,10 +1,10 @@
 import numpy as np
-import source.components.data_container as dc
-import source.tools.hamiltonian as ham
-import source.tools.wavefunction as wf
-import source.tools.qo_ovlp as qov
-import source.tools.kpoints as kpt
-import source.components.safe_guard as sg
+import abacus2qo.components.data_container as dc
+import abacus2qo.tools.hamiltonian as ham
+import abacus2qo.tools.wavefunction as wf
+import abacus2qo.tools.qo_ovlp as qov
+import abacus2qo.tools.kpoints as kpt
+import abacus2qo.components.safe_guard as sg
 from scipy.linalg import eigh
 
 class toQO_DataManager:

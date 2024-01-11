@@ -299,7 +299,7 @@ void toQO::calculate()
                   << "! Warning: number of kpoints is less than number of supercells, " << std::endl
                   << "! this will cause information loss when transform matrix R -> k. " << std::endl
                   << "! The further conversion k -> R cannot recover full information." << std::endl
-                  << "! Number of kpoints after irreducible transformation: " << nkpts_ << std::endl
+                  << "! Number of kpoints: " << nkpts_ << std::endl
                   << "! Number of supercells: " << nR_ << std::endl
                   << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
     }

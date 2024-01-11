@@ -1,6 +1,6 @@
 import numpy as np
 import scipy.linalg as la
-import source.components.safe_guard as sg
+import abacus2qo.components.safe_guard as sg
 
 class toQO_Calculator:
     """python-end the Quasiatomic orbital (QO) analysis
