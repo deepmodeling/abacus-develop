@@ -2,7 +2,7 @@
 
 #include <ATen/core/tensor.h>
 #include <ATen/kernels/blas.h>
-#include <test/test_utils.h>
+#include <base/utils/gtest.h>
 
 namespace container {
 namespace kernels {
@@ -11,14 +11,14 @@ template <typename T>
 class BlasTest : public testing::Test {
 public:
     BlasTest() {
-        test_utils::init_blas_handle();
+        base::utils::init_blas_handle();
     }
     ~BlasTest() override {
-        test_utils::delete_blas_handle();
+        base::utils::delete_blas_handle();
     }
 };
 
-TYPED_TEST_SUITE(BlasTest, test_utils::Types);
+TYPED_TEST_SUITE(BlasTest, base::utils::Types);
 
 TYPED_TEST(BlasTest, Dot) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;
