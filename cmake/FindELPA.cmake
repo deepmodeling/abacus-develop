@@ -7,25 +7,6 @@
 #  ELPA_INCLUDE_DIR - Where to find ELPA headers.
 #
 
-find_path(ELPA_INCLUDE_DIR
-    elpa/elpa.h
-    HINTS ${ELPA_DIR}
-    PATH_SUFFIXES "include" "include/elpa"
-    )
-if(USE_OPENMP)
-    find_library(ELPA_LIBRARY
-        NAMES elpa_openmp elpa
-        HINTS ${ELPA_DIR}
-        PATH_SUFFIXES "lib"
-        )
-else()
-    find_library(ELPA_LIBRARY
-        NAMES elpa
-        HINTS ${ELPA_DIR}
-        PATH_SUFFIXES "lib"
-        )
-endif()
-
 find_package(PkgConfig)
 
 if(PKG_CONFIG_FOUND)
@@ -41,17 +22,17 @@ else()
     PATH_SUFFIXES "include" "include/elpa"
     )
   if(USE_OPENMP)
-	  find_library(ELPA_LINK_LIBRARIES
-        NAMES elpa_openmp elpa
-        HINTS ${ELPA_DIR}
-        PATH_SUFFIXES "lib"
-        )
+    find_library(ELPA_LINK_LIBRARIES
+      NAMES elpa_openmp elpa
+      HINTS ${ELPA_DIR}
+      PATH_SUFFIXES "lib"
+      )
   else()
-	  find_library(ELPA_LINK_LIBRARIES
-        NAMES elpa
-        HINTS ${ELPA_DIR}
-        PATH_SUFFIXES "lib"
-        )
+    find_library(ELPA_LINK_LIBRARIES
+      NAMES elpa
+      HINTS ${ELPA_DIR}
+      PATH_SUFFIXES "lib"
+      )
   endif()
   #message(
   #  "ELPA : We need pkg-config to get all information about the elpa library")
