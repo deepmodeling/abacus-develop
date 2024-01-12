@@ -51,7 +51,7 @@
 
 
 
-namespace hamilt
+namespace rdmft
 {
 
 
@@ -94,7 +94,7 @@ void printMatrix_vector(int M, int N, std::vector<TK>& matrixA, std::string name
 
 // this part of the code is copying from class Veff and do some modifications.
 template <typename TK, typename TR>
-class Veff_rdmft : public OperatorLCAO<TK, TR>
+class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
 {
   public:
     Veff_rdmft(Gint_k* GK_in,
@@ -119,9 +119,9 @@ class Veff_rdmft : public OperatorLCAO<TK, TR>
           vloc_(vloc_in),
           sf_(sf_in),
           potential_(potential_in),
-          OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in)
+          hamilt::OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in)
     {
-        this->cal_type = lcao_gint;
+        this->cal_type = hamilt::lcao_gint;
 
         this->initialize_HR(ucell_in, GridD_in, paraV);
         GK_in->initialize_pvpR(*ucell_in, GridD_in);
@@ -149,9 +149,9 @@ class Veff_rdmft : public OperatorLCAO<TK, TR>
           vloc_(vloc_in),
           sf_(sf_in),
           potential_(potential_in),
-        OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in)
+          hamilt::OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in)
     {
-        this->cal_type = lcao_gint;
+        this->cal_type = hamilt::lcao_gint;
 
         this->initialize_HR(ucell_in, GridD_in, paraV);
 
@@ -456,7 +456,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
 
     /****** get every Hamiltion matrix ******/
 
-    OperatorLCAO<TK, TR>* V_ekinetic_potential = new EkineticNew<OperatorLCAO<TK, TR>>(
+    hamilt::OperatorLCAO<TK, TR>* V_ekinetic_potential = new hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>(
         LM_in,
         kvec_d_in,
         &HR_TV,
@@ -466,7 +466,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         ParaV
     );
     
-    OperatorLCAO<TK, TR>* V_nonlocal = new NonlocalNew<OperatorLCAO<TK, TR>>(
+    hamilt::OperatorLCAO<TK, TR>* V_nonlocal = new hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>(
         LM_in,
         kvec_d_in,
         &HR_TV,
@@ -477,7 +477,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     );
 
     std::string local_pot = "local";
-    OperatorLCAO<TK, TR>* V_local = new Veff_rdmft<TK,TR>(
+    hamilt::OperatorLCAO<TK, TR>* V_local = new rdmft::Veff_rdmft<TK,TR>(
         &G_in,
         &loc_in,
         LM_in,
@@ -495,7 +495,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     );
 
     std::string hartree_pot = "hartree";
-    OperatorLCAO<TK, TR>* V_hartree = new Veff_rdmft<TK,TR>(
+    hamilt::OperatorLCAO<TK, TR>* V_hartree = new rdmft::Veff_rdmft<TK,TR>(
         &G_in,
         &loc_in,
         LM_in,
@@ -513,10 +513,10 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     );
 
     // construct V_XC based on different XC_functional
-    OperatorLCAO<TK, TR>* V_XC;
+    hamilt::OperatorLCAO<TK, TR>* V_XC;
     if( XC_func_rdmft == "HF" )
     {
-        V_XC = new OperatorEXX<OperatorLCAO<TK, TR>>(
+        V_XC = new hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>>(
             LM_in,
             &HR_XC,
             &HK_XC,
@@ -547,7 +547,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         }
 
         // test
-        V_XC = new OperatorEXX<OperatorLCAO<TK, TR>>(
+        V_XC = new hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>>(
             LM_in,
             &HR_XC,
             &HK_XC,

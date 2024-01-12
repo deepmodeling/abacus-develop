@@ -875,7 +875,7 @@ namespace ModuleESolver
     //initialize the gradients of Etotal on wg and wfc, and set all elements to 0. 
     ModuleBase::matrix E_gradient_wg(this->pelec->wg.nr, this->pelec->wg.nc, true);
     psi::Psi<TK> E_gradient_wfc(this->psi->get_nk(), this->psi->get_nbands(), this->psi->get_nbasis()); 
-    hamilt::set_zero_psi(E_gradient_wfc);
+    rdmft::set_zero_psi(E_gradient_wfc);
 
     // esolver_ks_lcao.h(LCAO_Matrix LM),           LCAO_matrix.h(Parallel_Orbitals* ParaV)
     // esolver_fp.h(elecstate::ElecState* pelec),   elecstate.h(ModuleBase::matrix wg),      this->pelec->wg
@@ -890,7 +890,7 @@ namespace ModuleESolver
     // esolver_fp.h(Structure_Factor sf), structure_factor.h(ModuleBase::ComplexMatrix strucFac), this->sf.strucFac
 
     // //test use dgemm_
-    // hamilt::printResult_dgemm();
+    // rdmft::printResult_dgemm();
 
     double Etotal_RDMFT = 0.0;
 
@@ -912,7 +912,7 @@ namespace ModuleESolver
             }
         }
   
-        Etotal_RDMFT = hamilt::rdmft_cal<TK,TR,Gint_Gamma>(
+        Etotal_RDMFT = rdmft::rdmft_cal<TK,TR,Gint_Gamma>(
             &LM,
             LM.ParaV,
             this->pelec->wg,
@@ -931,7 +931,7 @@ namespace ModuleESolver
     // multi-k calculation
     else
     {
-        Etotal_RDMFT = hamilt::rdmft_cal<TK,TR,Gint_k>(
+        Etotal_RDMFT = rdmft::rdmft_cal<TK,TR,Gint_k>(
             &LM,
             LM.ParaV,
             this->pelec->wg,

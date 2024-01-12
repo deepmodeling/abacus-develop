@@ -35,7 +35,7 @@
 
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"  //test
 
-namespace hamilt
+namespace rdmft
 {
 
 
