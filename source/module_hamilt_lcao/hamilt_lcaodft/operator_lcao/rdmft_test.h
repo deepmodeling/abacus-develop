@@ -564,21 +564,39 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         {
             Vxc_fromRI_d.init(MPI_COMM_WORLD, kv_in);
             Vxc_fromRI_d.cal_exx_ions();
+            Vxc_fromRI_d.cal_exx_elec(Ds_XC_d, *ParaV);
+
+            V_XC = new hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>>(
+            LM_in,
+            &HR_XC,
+            &HK_XC,
+            kv_in,
+            &Vxc_fromRI_d.Hexxs
+        );
         }
         else
         {
             Vxc_fromRI_c.init(MPI_COMM_WORLD, kv_in);
             Vxc_fromRI_c.cal_exx_ions();
-        }
+            Vxc_fromRI_c.cal_exx_elec(Ds_XC_c, *ParaV);
 
-
-        // test
-        V_XC = new hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>>(
+            V_XC = new hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>>(
             LM_in,
             &HR_XC,
             &HK_XC,
-            kv_in
+            kv_in,
+            nullptr,
+            &Vxc_fromRI_c.Hexxs
         );
+        }
+
+        // // test
+        // V_XC = new hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>>(
+        //     LM_in,
+        //     &HR_XC,
+        //     &HK_XC,
+        //     kv_in
+        // );
 
     }
 

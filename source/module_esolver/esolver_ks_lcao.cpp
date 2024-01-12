@@ -974,7 +974,8 @@ namespace ModuleESolver
             *(this->pw_rho),
             GlobalC::ppcell.vloc,
             this->sf.strucFac,
-            "Muller"
+            "power",
+            0.95
         );
     }
     /******** test RDMFT *********/
