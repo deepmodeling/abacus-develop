@@ -129,7 +129,7 @@ class Stress_Func
                      const Charge* const chr,
                      K_Vectors* p_kv,
                      ModulePW::PW_Basis_K* wfc_basis,
-                     const psi::Psi<complex<FPTYPE>>* psi_in = nullptr); // gga part in PW basis
+                     const psi::Psi<complex<FPTYPE>, Device>* psi_in); // gga part in PW basis
 
     // 7) the stress from the non-local pseudopotentials
     void stress_nl(ModuleBase::matrix& sigma,
