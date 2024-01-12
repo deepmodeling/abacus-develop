@@ -29,6 +29,10 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/nonlocal_new.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/veff_lcao.h"
 
+// used by Exx&LRI
+#include "module_ri/RI_2D_Comm.h"
+#include "module_ri/Exx_LRI.h"
+
 // used by class Veff_rdmft
 #include "module_base/timer.h"
 #include "module_elecstate/potentials/potential_new.h"
@@ -525,26 +529,60 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     }
     else if( XC_func_rdmft == "power" || XC_func_rdmft == "Muller" )
     {
-        // prepare for density matrix DM(nk*nbasis_local*nbasis_local)
-        std::vector< std::vector<TK>* > DM(nk_total);
-        for(int i=0; i<nk_total; ++i) DM[i] = new std::vector<TK>(ParaV->nloc);
-
+        // prepare for the special density matrix DM_XC(nk*nbasis_local*nbasis_local)
+        // std::vector< std::vector<TK>* > DM_XC(nk_total);
+        // for(int i=0; i<nk_total; ++i) DM_XC[i] = new std::vector<TK>(ParaV->nloc);
+        std::vector< std::vector<TK> > DM_XC(nk_total, std::vector<TK>(ParaV->nloc));
+        std::vector< std::vector<TK>* > DM_XC_pointer(nk_total);
+        for(int ik=0; ik<nk_total; ++ik) DM_XC_pointer[ik] = &DM_XC[ik];
 
         // get wg_wfc = g(wg)*wfc   ///////////////something error
         psi::Psi<TK> wg_wfc(wfc);
         conj_psi(wg_wfc);
         wgMulPsi(ParaV, wg, wg_wfc, 2, XC_func_rdmft, alpha_power);
 
-        // get the special DM used in constructing V_XC
+        // get the special DM_XC used in constructing V_XC
         for(int ik=0; ik<wfc.get_nk(); ++ik)
         {
-            TK* DM_Kpointer = DM[ik]->data();  // why &(DM[ik][0]) is error
+            TK* DM_Kpointer = DM_XC[ik].data();  // why &(DM_XC[ik][0]) is error  //////////////////////////////// . or ->
 #ifdef __MPI
             elecstate::psiMulPsiMpi(wg_wfc, wfc, DM_Kpointer, ParaV->desc_wfc, ParaV->desc);
 #else
             elecstate::psiMulPsi(wg_wfc, wfc, DM_Kpointer);
 #endif            
         }
+
+        // using Tdata = GlobalC::exx_info.info_ri.real_number ? double : std::complex<double>;
+
+        // std::vector<std::map<int,std::map<std::pair<int,std::array<int,3>>,RI::Tensor<Tdata>>>> Ds_XC = 
+        //     RI_2D_Comm::split_m2D_ktoR<Tdata, const std::vector<TK>>(kv_in, DM_XC, *ParaV);
+        
+        // Exx_LRI<Tdata> Vxc_fromRI(GlobalC::exx_info.info_ri);
+        // Vxc_fromRI.init(MPI_COMM_WORLD, kv_in);
+        // Vxc_fromRI.cal_exx_ions();
+
+        // transfer the DM_XC to appropriate format
+        // std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tata>>>> Ds_XC = RI_2D_Comm::split_m2D_ktoR<data>(kv_in, DM_XC, ParaV);
+        //const std::vector< const std::vector<TK>* >& DM_XC_tem = DM_XC; // test
+        std::vector<std::map<int,std::map<std::pair<int,std::array<int,3>>,RI::Tensor<double>>>> Ds_XC_d = 
+            RI_2D_Comm::split_m2D_ktoR<double, std::vector<TK>>(kv_in, DM_XC_pointer, *ParaV);
+        std::vector<std::map<int,std::map<std::pair<int,std::array<int,3>>,RI::Tensor<std::complex<double>>>>> Ds_XC_c = 
+            RI_2D_Comm::split_m2D_ktoR<std::complex<double>, std::vector<TK>>(kv_in, DM_XC_pointer, *ParaV);
+
+        Exx_LRI<double> Vxc_fromRI_d(GlobalC::exx_info.info_ri);
+        Exx_LRI<std::complex<double>> Vxc_fromRI_c(GlobalC::exx_info.info_ri);
+
+        if (GlobalC::exx_info.info_ri.real_number)
+        {
+            Vxc_fromRI_d.init(MPI_COMM_WORLD, kv_in);
+            Vxc_fromRI_d.cal_exx_ions();
+        }
+        else
+        {
+            Vxc_fromRI_c.init(MPI_COMM_WORLD, kv_in);
+            Vxc_fromRI_c.cal_exx_ions();
+        }
+
 
         // test
         V_XC = new hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>>(
@@ -554,7 +592,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
             kv_in
         );
 
-        for(int ik=0; ik<nk_total; ++ik) delete DM[ik];
+        // for(int ik=0; ik<nk_total; ++ik) delete DM_XC[ik];
     }
 
     /****** get every Hamiltion matrix ******/
