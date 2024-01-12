@@ -204,22 +204,22 @@ void set_zero_vector(std::vector<TK>& HK)
 
 
 template <typename TK>
-void set_zero_psi(psi::Psi<TK>& wfc_in)
+void set_zero_psi(psi::Psi<TK>& wfc)
 {
-    TK* pwfc_in = wfc_in.get_pointer();
+    TK* pwfc_in = wfc.get_pointer();
 
     #ifdef _OPENMP
     #pragma omp parallel for schedule(static, 1024)
     #endif
     
-    for(int i=0; i<wfc_in.size(); ++i) pwfc_in[i] = 0.0;
+    for(int i=0; i<wfc.size(); ++i) pwfc_in[i] = 0.0;
 }
 
 
 template <typename TK>
 void conj_psi(psi::Psi<TK>& wfc)
 {
-    TK* pwfc = wfc.get_pointer();
+    TK* pwfc = &wfc(0, 0, 0);
     for(int i=0; i<wfc.size(); ++i) pwfc[i] = std::conj( pwfc[i] );
 }
 
@@ -529,7 +529,8 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         std::vector< std::vector<TK>* > DM(nk_total);
         for(int i=0; i<nk_total; ++i) DM[i] = new std::vector<TK>(ParaV->nloc);
 
-        // get wg_wfc = g(wg)*wfc
+
+        // get wg_wfc = g(wg)*wfc   ///////////////something error
         psi::Psi<TK> wg_wfc(wfc);
         conj_psi(wg_wfc);
         wgMulPsi(ParaV, wg, wg_wfc, 2, XC_func_rdmft, alpha_power);
@@ -552,6 +553,8 @@ double rdmft_cal(LCAO_Matrix* LM_in,
             &HK_XC,
             kv_in
         );
+
+        for(int ik=0; ik<nk_total; ++ik) delete DM[ik];
     }
 
     /****** get every Hamiltion matrix ******/
