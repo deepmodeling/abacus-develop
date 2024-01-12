@@ -34,7 +34,7 @@ int EFIELD_FLAG = 0; // 5: add electric field
 int DIP_COR_FLAG = 0; // 7: add dipole field
 bool GATE_FLAG = false;    // add gate field
 bool out_app_flag = true;  // whether output r(R), H(R), S(R), T(R), and dH(R) matrices in an append manner during MD  liuyu 2023-03-20
-
+int out_ndigits = 8;
 std::string DFT_FUNCTIONAL = "default";
 double XC_TEMPERATURE = 0.0;
 int NSPIN = 1; // LDA
@@ -252,6 +252,7 @@ double MIXING_GG0 = 1.00;
 double MIXING_BETA_MAG = 1.6;
 double MIXING_GG0_MAG = 1.00;
 double MIXING_GG0_MIN = 0.1;
+double MIXING_ANGLE = 0.0;
 bool MIXING_TAU = 0;
 
 //==========================================================
@@ -276,6 +277,8 @@ double nelec = 0;
 bool out_bandgap = false; // QO added for bandgap printing
 int out_interval = 1;    // convert from out_hsR_interval liuyu 2023-04-18
 
+bool out_mat_xc = false; // output Vxc in KS-wfc representation for GW calculation
+
 //==========================================================
 // Deltaspin related
 //==========================================================
@@ -288,4 +291,13 @@ int sc_scf_nmin = 2;
 double alpha_trial = 0.01; // eV/uB^2
 double sccut = 3;          // eV/uB
 std::string sc_file = "none";
+
+//==========================================================
+// Quasiatomic orbital related
+//==========================================================
+bool qo_switch = false;
+std::string qo_basis = "hydrogen";
+std::string qo_strategy = "minimal";
+double qo_thr = 1.0e-6;
+std::vector<double> qo_screening_coeff = {};
 } // namespace GlobalV

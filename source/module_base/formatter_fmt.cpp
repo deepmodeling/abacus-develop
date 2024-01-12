@@ -21,27 +21,7 @@ formatter::Fmt::Fmt(int width, int precision, char fillChar, bool fixed, bool ri
 
 formatter::Fmt::~Fmt() {}
 
-// it's not good practice to overload such a function in a relative basic class, which will spoil the whole idea of inheritance
-// so here I comment them two out
-/*
-template <typename T>
-std::string formatter::Fmt::format(const std::vector<T>& value) {
-    std::stringstream ss;
-    for (auto v : value) {
-        ss << this->format(v);
-    }
-    return ss.str();
-}
 
-template <typename T>
-std::string formatter::Fmt::format(const T* value, int size) {
-    std::stringstream ss;
-    for (int i = 0; i < size; i++) {
-        ss << this->format(value[i]);
-    }
-    return ss.str();
-}
-*/
 
 void formatter::Fmt::reset() {
     width_ = 4;

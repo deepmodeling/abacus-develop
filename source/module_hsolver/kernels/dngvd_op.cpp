@@ -51,7 +51,19 @@ namespace hsolver {
         LapackConnector::xhegvd(1, 'V', 'U', nstart, vcc, ldh, scc, ldh, eigenvalue, work, lwork, rwork, lrwork, iwork, liwork, info);
 
         if (info != 0) {
-            std::cout << "Error: xhegvd failed!" << std::endl;
+            std::cout << "Error: xhegvd failed, linear dependent basis functions\n" 
+                      << ", wrong initialization of wavefunction, or wavefunction information loss\n"
+                      << ", output overlap matrix scc.txt to check\n"
+                      << std::endl;
+            // print scc to file scc.txt
+            std::ofstream ofs("scc.txt");
+            for (int i = 0; i < nstart; i++) {
+                for (int j = 0; j < nstart; j++) {
+                    ofs << scc[i * ldh + j] << " ";
+                }
+                ofs << std::endl;
+            }
+            ofs.close();
         }
         assert(0 == info);
 

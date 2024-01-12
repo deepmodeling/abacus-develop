@@ -31,7 +31,14 @@ class DiagoIterAssist
         psi::Psi<T, Device> &evc,
         Real *en,
         int n_band = 0);
-
+    /// @brief use LAPACK to diagonalize the Hamiltonian matrix
+    /// @param pHamilt interface to hamiltonian
+    /// @param psi wavefunction to diagonalize
+    /// @param psi_nr number of rows (nbands)
+    /// @param psi_nc number of columns (nbasis)
+    /// @param evc new wavefunction
+    /// @param en eigenenergies
+    /// @note exception handle: if there is no operator initialized in Hamilt, will directly copy value from psi to evc, and return all-zero eigenenergies.
     static void diagH_subspace_init(
         hamilt::Hamilt<T, Device>* pHamilt,
         const T* psi,

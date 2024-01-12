@@ -110,6 +110,11 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<double, double
 				const Atom* atom1 = &ucell.atoms[T1];
 				const int nw1_tot = atom1->nw*GlobalV::NPOL;
 				const double Rcut_AO1 = orb.Phi[T1].getRcut(); 
+                const double dist1 = (tau1-tau0).norm() * ucell.lat0;
+                if (dist1 >= Rcut_Alpha + Rcut_AO1)
+                {
+                    continue;
+                }
 
                 auto row_indexes = pv->get_indexes_row(ibt1);
                 const int row_size = row_indexes.size();
@@ -138,11 +143,9 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<double, double
 					const int nw2_tot = atom2->nw*GlobalV::NPOL;
 					
 					const double Rcut_AO2 = orb.Phi[T2].getRcut();
-                	const double dist1 = (tau1-tau0).norm() * ucell.lat0;
                 	const double dist2 = (tau2-tau0).norm() * ucell.lat0;
 
-					if (dist1 > Rcut_Alpha + Rcut_AO1
-							|| dist2 > Rcut_Alpha + Rcut_AO2)
+					if (dist2 >= Rcut_Alpha + Rcut_AO2)
 					{
 						continue;
 					}
@@ -163,15 +166,20 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<double, double
                     }
                     // prepare DM_gamma from DMR
                     std::vector<double> dm_array(row_size*col_size, 0.0);
-                    const double* dm_current;
+                    const double* dm_current = nullptr;
                     for(int is=0;is<dm->get_DMR_vector().size();is++)
                     {
-                        dm_current = dm->get_DMR_vector()[is]->find_matrix(ibt1, ibt2, 0, 0, 0)->get_pointer();
+                        auto* tmp = dm->get_DMR_vector()[is]->find_matrix(ibt1, ibt2, 0, 0, 0);
+#ifdef __DEBUG
+                        assert(tmp != nullptr);
+#endif
+                        dm_current = tmp->get_pointer();
                         for(int idm=0;idm<row_size*col_size;idm++)
                         {
                             dm_array[idm] += dm_current[idm];
                         }
                     }
+                    if(dm_current == nullptr) continue; //skip the long range DM pair more than nonlocal term
                     dm_current = dm_array.data();
                     //dgemm for s_2t and dm_current to get g_1dmt
                     constexpr char transa='T', transb='N';
@@ -308,6 +316,11 @@ void LCAO_Deepks::cal_projected_DM_k(const elecstate::DensityMatrix<std::complex
 				const Atom* atom1 = &ucell.atoms[T1];
 				const int nw1_tot = atom1->nw*GlobalV::NPOL;
 				const double Rcut_AO1 = orb.Phi[T1].getRcut();
+                const double dist1 = (tau1-tau0).norm() * ucell.lat0;
+                if (dist1 >= Rcut_Alpha + Rcut_AO1)
+                {
+                    continue;
+                }
 
                 ModuleBase::Vector3<double> dR1(GridD.getBox(ad1).x, GridD.getBox(ad1).y, GridD.getBox(ad1).z); 
 
@@ -339,11 +352,9 @@ void LCAO_Deepks::cal_projected_DM_k(const elecstate::DensityMatrix<std::complex
                     ModuleBase::Vector3<double> dR2(GridD.getBox(ad2).x, GridD.getBox(ad2).y, GridD.getBox(ad2).z);
 					
 					const double Rcut_AO2 = orb.Phi[T2].getRcut();
-                	const double dist1 = (tau1-tau0).norm() * ucell.lat0;
                 	const double dist2 = (tau2-tau0).norm() * ucell.lat0;
 
-					if (dist1 > Rcut_Alpha + Rcut_AO1
-							|| dist2 > Rcut_Alpha + Rcut_AO2)
+					if (dist2 >= Rcut_Alpha + Rcut_AO2)
 					{
 						continue;
 					}
@@ -794,9 +805,9 @@ void LCAO_Deepks::cal_gdmx_k(const std::vector<std::vector<std::complex<double>>
                     key_tuple key_2(ibt2,dR2.x,dR2.y,dR2.z);
 					for (int iw1l = 0; iw1l < row_indexes.size(); ++iw1l)
                     {
-                        std::vector<double> nlm1 = this->nlm_save_k[iat][key_1][row_indexes[iw1l]][0];
                         for (int iw2l = 0; iw2l < col_indexes.size(); ++iw2l)
                         {
+                            std::vector<double> nlm1 = this->nlm_save_k[iat][key_1][row_indexes[iw1l]][0];
                             std::vector<std::vector<double>> nlm2 = this->nlm_save_k[iat][key_2][col_indexes[iw2l]];
 
                             assert(nlm1.size()==nlm2[0].size());

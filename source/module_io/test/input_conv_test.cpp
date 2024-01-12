@@ -145,14 +145,15 @@ TEST_F(InputConvTest, Conv)
     EXPECT_EQ(GlobalV::out_bandgap, false);
     EXPECT_EQ(Local_Orbital_Charge::out_dm,false);
 	EXPECT_EQ(Local_Orbital_Charge::out_dm1,false);
-    EXPECT_EQ(hsolver::HSolverLCAO<double>::out_mat_hs, false);
-    EXPECT_EQ(hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs, false);
+    EXPECT_EQ(hsolver::HSolverLCAO<double>::out_mat_hs[0], false);
+    EXPECT_EQ(hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs[0], false);
     EXPECT_EQ(hsolver::HSolverLCAO<double>::out_mat_hsR, false);
     EXPECT_EQ(hsolver::HSolverLCAO<std::complex<double>>::out_mat_hsR, false);
     EXPECT_EQ(hsolver::HSolverLCAO<double>::out_mat_t, false);
     EXPECT_EQ(hsolver::HSolverLCAO<std::complex<double>>::out_mat_t, false);
     EXPECT_EQ(hsolver::HSolverLCAO<double>::out_mat_dh, INPUT.out_mat_dh);
     EXPECT_EQ(hsolver::HSolverLCAO<std::complex<double>>::out_mat_dh, INPUT.out_mat_dh);
+    EXPECT_EQ(GlobalV::out_mat_xc, false);
     EXPECT_EQ(GlobalV::out_interval, 1);
     EXPECT_EQ(elecstate::ElecStateLCAO<double>::out_wfc_lcao, false);
     EXPECT_EQ(berryphase::berry_phase_flag, false);

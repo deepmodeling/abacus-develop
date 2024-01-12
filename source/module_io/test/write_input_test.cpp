@@ -323,6 +323,7 @@ TEST_F(write_input, LCAO5)
     EXPECT_THAT(output,
                 testing::HasSubstr("lcao_rmax                      30 #max R for 1D two-center integration table"));
     EXPECT_THAT(output, testing::HasSubstr("out_mat_hs                     0 #output H and S matrix"));
+    EXPECT_THAT(output, testing::HasSubstr("out_mat_xc                     0 #output exchange-correlation matrix in KS-orbital representation"));
     EXPECT_THAT(output, testing::HasSubstr("out_mat_hs2                    0 #output H(R) and S(R) matrix"));
     EXPECT_THAT(output, testing::HasSubstr("out_mat_dh                     0 #output of derivative of H(R) matrix"));
     EXPECT_THAT(

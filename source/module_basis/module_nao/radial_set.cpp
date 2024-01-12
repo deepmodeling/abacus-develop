@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "module_base/spherical_bessel_transformer.h"
+#include "module_io/output_radial.h"
 
 RadialSet::~RadialSet()
 {
@@ -81,6 +82,19 @@ RadialSet& RadialSet::operator=(const RadialSet& rhs)
     return *this;
 }
 
+void RadialSet::to_numerical_orbital(Numerical_Orbital& no, const int nk_legacy, const double lcao_dk) const
+{
+    delete[] no.chi();
+
+    no.chi() = new Numerical_Orbital_Lm[nchi_];
+    for (int i = 0; i < nchi_; i++)
+    {
+        chi_[i].to_numerical_orbital_lm(no.chi()[i], nk_legacy, lcao_dk);
+    }
+
+    no.set_orbital_info(itype_, symbol_, lmax_, nzeta_, nchi_);
+}
+
 void RadialSet::set_rcut_max()
 {
     rcut_max_ = 0.0;
@@ -145,7 +159,7 @@ void RadialSet::set_grid(const bool for_r_space, const int ngrid, const double* 
     {
         chi_[i].set_grid(for_r_space, ngrid, grid, mode);
     }
-    rcut_max_ = grid[ngrid - 1];
+    set_rcut_max();
 }
 
 void RadialSet::set_uniform_grid(const bool for_r_space,
@@ -158,7 +172,7 @@ void RadialSet::set_uniform_grid(const bool for_r_space,
     {
         chi_[i].set_uniform_grid(for_r_space, ngrid, cutoff, mode, enable_fft);
     }
-    rcut_max_ = cutoff;
+    set_rcut_max();
 }
 
 void RadialSet::cleanup()
@@ -177,4 +191,31 @@ void RadialSet::cleanup()
 
     delete[] index_map_;
     index_map_ = nullptr;
+}
+
+void RadialSet::to_file(const std::string& file_name, const int rank) const
+{
+    ModuleIO::OutputRadial out_radial;
+    out_radial.initialize(file_name);
+    out_radial.configure(
+        symbol_,
+        100.0,  // fake value
+        rcut_max_,
+        lmax_,
+        nzeta_,
+        int(rcut_max_/0.01) + 1,
+        0.01
+    );
+    for(int l = 0; l <= lmax_; l++)
+    {
+        for(int izeta = 0; izeta < nzeta_[l]; izeta++)
+        {
+            out_radial.push(
+                chi_[index(l, izeta)].nr(),
+                chi_[index(l, izeta)].rgrid(),
+                chi_[index(l, izeta)].rvalue()
+            );
+        }
+    }
+    out_radial.finalize();
 }

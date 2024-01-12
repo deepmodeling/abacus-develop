@@ -25,7 +25,7 @@ namespace hsolver
 
     void solve(hamilt::Hamilt<T>* pHamilt, psi::Psi<T>& psi, elecstate::ElecState* pes, const std::string method_in, const bool skip_charge) override;
 
-    static int out_mat_hs; // mohan add 2010-09-02
+    static std::vector<int> out_mat_hs; // mohan add 2010-09-02
     static int out_mat_hsR; // LiuXh add 2019-07-16
     static int out_mat_t;
     static int out_mat_dh;

@@ -3,6 +3,7 @@
 #include "fire.h"
 #include "langevin.h"
 #include "md_func.h"
+#include "module_base/global_file.h"
 #include "module_base/timer.h"
 #include "module_io/print_info.h"
 #include "msst.h"
@@ -104,6 +105,8 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, MD_para& md_p
 
         mdrun->step_++;
     }
+
+    ModuleBase::Global_File::delete_tmp_files();
 
     delete mdrun;
     ModuleBase::timer::tick("Run_MD", "md_line");

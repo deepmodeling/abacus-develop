@@ -5,6 +5,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <type_traits>
 
 #include "module_base/vector3.h"
 #include "module_md/md_para.h"
@@ -235,6 +236,7 @@ class Input
     double mixing_beta_mag;
     double mixing_gg0_mag;
     double mixing_gg0_min;
+    double mixing_angle;
 
     bool mixing_tau; // whether to mix tau in mgga
     bool mixing_dftu; //whether to mix locale in DFT+U
@@ -263,13 +265,15 @@ class Input
     int out_dos; // dos calculation. mohan add 20090909
     bool out_band; // band calculation pengfei 2014-10-13
     bool out_proj_band; // projected band structure calculation jiyy add 2022-05-11
-    bool out_mat_hs; // output H matrix and S matrix in local basis.
+    std::vector<int> out_mat_hs; // output H matrix and S matrix in local basis.
+    bool out_mat_xc; // output exchange-correlation matrix in KS-orbital representation.
     bool cal_syns; // calculate asynchronous S matrix to output
     double dmax; // maximum displacement of all atoms in one step (bohr)
     bool out_mat_hs2; // LiuXh add 2019-07-16, output H(R) matrix and S(R) matrix in local basis.
     bool out_mat_dh;
     int out_interval;
     bool out_app_flag;    // whether output r(R), H(R), S(R), T(R), and dH(R) matrices in an append manner during MD  liuyu 2023-03-20
+    int out_ndigits;
     bool out_mat_t;
     bool out_mat_r; // jingan add 2019-8-14, output r(R) matrix.
     int out_wfc_lcao; // output the wave functions in local basis.
@@ -543,6 +547,7 @@ class Input
 	double	bessel_nao_sigma;		// spherical bessel smearing_sigma
 	std::string	bessel_nao_ecut;		// energy cutoff for spherical bessel functions(Ry)
 	double	bessel_nao_rcut;		// radial cutoff for spherical bessel functions(a.u.)
+    std::vector<double> bessel_nao_rcuts;
 	double	bessel_nao_tolerence;	// tolerence for spherical bessel root
     // the following are used when generating jle.orb
 	int		bessel_descriptor_lmax;			// lmax used in descriptor
@@ -582,11 +587,19 @@ class Input
     double alpha_trial; // initial trial step size for lambda in eV/uB^2
     double sccut; // restriction of step size in eV/uB
     std::string sc_file; // file name for Deltaspin (json format)
-
-    // whether to use PAW
+    //==========================================================
+    // variables for PAW
     //==========================================================
     bool use_paw = false;
-
+    //==========================================================
+    // variables for Quasiatomic Orbital analysis
+    //==========================================================
+    bool qo_switch = false;
+    std::string qo_basis = "hydrogen";
+    std::string qo_strategy = "minimal";
+    double qo_thr = 1e-6;
+    double qo_screening_coeff = 0.0;
+    
   private:
     //==========================================================
     // MEMBER FUNCTIONS :
@@ -617,7 +630,7 @@ class Input
     {
         ifs >> var;
         std::string line;
-        getline(ifs, line);
+        getline(ifs, line); // read the rest of the line, directly discard it.
         return;
     }
     void read_kspacing(std::ifstream &ifs)
@@ -647,6 +660,18 @@ class Input
         // << std::endl;
     };
 
+    /* I hope this function would be more and more useful if want to support
+    vector/list of input */
+    template <typename T>
+    void read_value2stdvector(std::ifstream& ifs, std::vector<T>& var);
+    template <typename T>
+    typename std::enable_if<std::is_same<T, double>::value, T>::type cast_string(const std::string& str) { return std::stod(str); }
+    template <typename T>
+    typename std::enable_if<std::is_same<T, int>::value, T>::type cast_string(const std::string& str) { return std::stoi(str); }
+    template <typename T>
+    typename std::enable_if<std::is_same<T, bool>::value, T>::type cast_string(const std::string& str) { return (str == "true" || str == "1"); }
+    template <typename T>
+    typename std::enable_if<std::is_same<T, std::string>::value, T>::type cast_string(const std::string& str) { return str; }
     void strtolower(char *sa, char *sb);
     void read_bool(std::ifstream &ifs, bool &var);
 };

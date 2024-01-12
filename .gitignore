@@ -20,5 +20,8 @@ dist
 toolchain.tar.gz
 time.json
 
+
 job.err
 
+*.pyc
+__pycache__

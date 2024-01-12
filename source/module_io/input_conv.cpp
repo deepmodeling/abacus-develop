@@ -624,7 +624,8 @@ void Input_Conv::Convert(void)
     GlobalV::nelec = INPUT.nelec;
     GlobalV::out_pot = INPUT.out_pot;
     GlobalV::out_app_flag = INPUT.out_app_flag;
-
+    GlobalV::out_ndigits = INPUT.out_ndigits;
+    
     GlobalV::out_bandgap = INPUT.out_bandgap; // QO added for bandgap printing
     GlobalV::out_interval = INPUT.out_interval;
 #ifdef __LCAO
@@ -638,6 +639,7 @@ void Input_Conv::Convert(void)
     hsolver::HSolverLCAO<std::complex<double>>::out_mat_hsR = INPUT.out_mat_hs2; // LiuXh add 2019-07-16
     hsolver::HSolverLCAO<std::complex<double>>::out_mat_t = INPUT.out_mat_t;
     hsolver::HSolverLCAO<std::complex<double>>::out_mat_dh = INPUT.out_mat_dh;
+    GlobalV::out_mat_xc = INPUT.out_mat_xc;
     if (GlobalV::GAMMA_ONLY_LOCAL)
     {
         elecstate::ElecStateLCAO<double>::out_wfc_lcao = INPUT.out_wfc_lcao;
@@ -752,8 +754,17 @@ void Input_Conv::Convert(void)
     GlobalV::MIXING_BETA_MAG = INPUT.mixing_beta_mag;
     GlobalV::MIXING_GG0_MAG = INPUT.mixing_gg0_mag;
     GlobalV::MIXING_GG0_MIN = INPUT.mixing_gg0_min;
+    GlobalV::MIXING_ANGLE = INPUT.mixing_angle;
     GlobalV::MIXING_TAU = INPUT.mixing_tau;
     
+    //-----------------------------------------------
+    // Quasiatomic Orbital analysis
+    //-----------------------------------------------
+    GlobalV::qo_switch = INPUT.qo_switch;
+    GlobalV::qo_basis = INPUT.qo_basis;
+    GlobalV::qo_strategy = INPUT.qo_strategy;
+    GlobalV::qo_thr = INPUT.qo_thr;
+    GlobalV::qo_screening_coeff = std::vector<double>(INPUT.ntype, INPUT.qo_screening_coeff);
     ModuleBase::timer::tick("Input_Conv", "Convert");
     return;
 }

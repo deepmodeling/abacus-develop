@@ -75,6 +75,7 @@
     - [mixing\_gg0](#mixing_gg0)
     - [mixing\_gg0\_mag](#mixing_gg0_mag)
     - [mixing\_gg0\_min](#mixing_gg0_min)
+    - [mixing\_angle](#mixing_angle)
     - [mixing\_tau](#mixing_tau)
     - [mixing\_dftu](#mixing_dftu)
     - [gamma\_only](#gamma_only)
@@ -140,7 +141,9 @@
     - [out\_mat\_hs2](#out_mat_hs2)
     - [out\_mat\_t](#out_mat_t)
     - [out\_mat\_dh](#out_mat_dh)
+    - [out\_mat\_xc](#out_mat_xc)
     - [out\_app\_flag](#out_app_flag)
+    - [out\_ndigits](#out_ndigits)
     - [out\_interval](#out_interval)
     - [out\_element\_info](#out_element_info)
     - [restart\_save](#restart_save)
@@ -369,6 +372,12 @@
     - [alpha\_trial](#alpha_trial)
     - [sccut](#sccut)
     - [sc\_file](#sc_file)
+  - [Quasiatomic Orbital (QO) analysis](#quasiatomic-orbital-qo-analysis)
+    - [qo\_switch](#qo_switch)
+    - [qo\_basis](#qo_basis)
+    - [qo\_strategy](#qo_strategy)
+    - [qo\_screening\_coeff](#qo_screening_coeff)
+    - [qo\_thr](#qo_thr)
 
 [back to top](#full-list-of-input-keywords)
 
@@ -875,7 +884,7 @@ calculations.
 - **Description**: Choose the basis set.
   - **pw**: Using plane-wave basis set only.
   - **lcao**: Using localized atomic orbital sets.
-  - **lcao_in_pw**: (Unavailable currently, it will be fixed in future versions) Expand the localized atomic set in plane-wave basis.
+  - **lcao_in_pw**: Expand the localized atomic set in plane-wave basis, non-self-consistent field calculation not tested.
 - **Default**: pw
 
 ### ks_solver
@@ -1014,6 +1023,17 @@ We recommend the following options:
 - **Type**: Real
 - **Description**: the minimum kerker coefficient 
 - **Default**: 0.1
+
+### mixing_angle
+
+- **Type**: Real
+- **Availability**: Only relevant for non-colinear calculations `nspin=4`.
+- **Description**: Normal broyden mixing can give the converged result for a given magnetic configuration. If one is not interested in the energies of a given magnetic configuration but wants to determine the ground state by relaxing the magnetic moments’ directions, one cannot rely on the standard Broyden mixing algorithm. To enhance the ability to find correct magnetic configuration for non-colinear calculations, ABACUS implements a promising mixing method proposed by J. Phys. Soc. Jpn. 82 (2013) 114706. Here, `mixing_angle` is the angle mixing parameter. In fact, only `mixing_angle=1.0` is implemented currently.
+  - **<=0**: Normal broyden mixing for $m_{x}, m_{y}, m_{z}$
+  - **>0**: Angle mixing for the modulus $|m|$ with `mixing_angle=1.0`
+- **Default**: -10.0
+
+Note: In new angle mixing, you should set `mixing_beta_mag >> mixing_beta`. The setup of `mixing_beta=0.2`, `mixing_beta_mag=1.0` usually works well.
 
 ### mixing_tau
 
@@ -1518,10 +1538,10 @@ These variables are used to control the output of properties.
 
 ### out_mat_hs
 
-- **Type**: Boolean
+- **Type**: Boolean Integer(optional)
 - **Availability**: Numerical atomic orbital basis
-- **Description**: Whether to print the upper triangular part of the Hamiltonian matrices (in Ry) and overlap matrices for each k point into files in the directory `OUT.${suffix}`. For more information, please refer to [hs_matrix.md](../elec_properties/hs_matrix.md#out_mat_hs). Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
-- **Default**: False
+- **Description**: Whether to print the upper triangular part of the Hamiltonian matrices (in Ry) and overlap matrices for each k point into files in the directory `OUT.${suffix}`. The second number controls precision. For more information, please refer to [hs_matrix.md](../elec_properties/hs_matrix.md#out_mat_hs). Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
+- **Default**: False 8
 
 ### out_mat_r
 
@@ -1551,12 +1571,26 @@ These variables are used to control the output of properties.
 - **Description**: Whether to print files containing the derivatives of the Hamiltonian matrix (in Ry/Bohr). The format will be the same as the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ as mentioned in [out_mat_hs2](#out_mat_hs2). The name of the files will be `data-dHRx-sparse_SPIN0.csr` and so on. Also controled by [out_interval](#out_interval) and [out_app_flag](#out_app_flag).
 - **Default**: False
 
+### out_mat_xc
+
+- **Type**: Boolean
+- **Availability**: Numerical atomic orbital basis
+- **Description**: Whether to print the upper triangular part of the exchange-correlation matrices in **Kohn-Sham orbital representation** (unit: Ry): $\braket{\psi_i|V_\text{xc}^\text{(semi-)local}+V_\text{exx}+V_\text{DFTU}|\psi_j}$ for each k point into files in the directory `OUT.${suffix}`, which is useful for the subsequent GW calculation. (Note that currently DeePKS term is not included. ) The files are named `k-$k-Vxc`, the meaning of `$k`corresponding to k point and spin  is same as [hs_matrix.md](../elec_properties/hs_matrix.md#out_mat_hs).
+- **Default**: False
+
 ### out_app_flag
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
 - **Description**: Whether to output $r(R)$, $H(R)$, $S(R)$, $T(R)$, $dH(R)$, $H(k)$, $S(k)$ and $wfc(k)$ matrices in an append manner during molecular dynamics calculations. Check input parameters [out_mat_r](#out_mat_r), [out_mat_hs2](#out_mat_hs2), [out_mat_t](#out_mat_t), [out_mat_dh](#out_mat_dh), [out_mat_hs](#out_mat_hs) and [out_wfc_lcao](#out_wfc_lcao) for more information.
 - **Default**: true
+
+### out_ndigits
+
+- **Type**: Integar
+- **Availability**: `out_mat_hs 1` case presently.
+- **Description**: Controls the length of decimal part of output data, such as charge density, Hamiltonian matrix, Overlap matrix and so on.
+- **Default**: 8
 
 ### out_interval
 
@@ -1958,15 +1992,15 @@ These variables are relevant to electric field and dipole correction
 
 - **Type**: Real
 - **Availability**: with efield_flag = True.
-- **Description**: Position of the maximum of the saw-like potential along crystal axis efield_dir, within the  unit cell, 0 < efield_pos_max < 1.
-- **Default**: 0.5
+- **Description**: Position of the maximum of the saw-like potential along crystal axis efield_dir, within the  unit cell, 0 <= efield_pos_max < 1.
+- **Default**: Autoset to `center of vacuum - width of vacuum / 20`
 
 ### efield_pos_dec
 
 - **Type**: Real
 - **Availability**: with efield_flag = True.
 - **Description**: Zone in the unit cell where the saw-like potential decreases, 0 < efield_pos_dec < 1.
-- **Default**: 0.1
+- **Default**: Autoset to `width of vacuum / 10`
 
 ### efield_amp
 
@@ -2734,7 +2768,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: Integer
 - **Description**: Only available on LCAO basis, using different methods to generate "\*.mmn" file and "\*.amn" file.
-  - 1: Calculated using the LCOA-in-PW method, the calculation accuracy can be improved by increasing `ecutwfc` to maintain consistency with the pw basis set results.
+  - 1: Calculated using the `lcao_in_pw` method, the calculation accuracy can be improved by increasing `ecutwfc` to maintain consistency with the pw basis set results.
   - 2: The overlap between atomic orbitals is calculated using grid integration. The radial grid points are generated using the Gauss-Legendre method, while the spherical grid points are generated using the Lebedev-Laikov method.
 - **Default**: 1
 
@@ -2776,7 +2810,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 - **Description**: write the "UNK.*" file or not.
   - 0: don't write the "UNK.*" file.
   - 1: write the "UNK.*" file.
-- **Default**: 1
+- **Default**: 0
 
 ### out_wannier_wvfn_formatted
 
@@ -3303,6 +3337,8 @@ These variables are used to control the usage of implicit solvation model. This 
 - **Default**: 0.00037
 - **Unit**: $Bohr^{-3}$
 
+[back to top](#full-list-of-input-keywords)
+
 ## Deltaspin
 
 These variables are used to control the usage of deltaspin functionality.
@@ -3418,5 +3454,54 @@ and
 for `nspin 2` case. The difference is that `lambda`, `target_mag`, and `constrain` are scalars in `nspin 2` case, and are vectors in `nspin 4` case.
 
 - **Default**: none
+
+[back to top](#full-list-of-input-keywords)
+
+## Quasiatomic Orbital (QO) analysis
+
+These variables are used to control the usage of QO analysis.
+
+### qo_switch
+
+- **Type**: Boolean
+- **Description**: whether to let ABACUS output QO analysis required files
+- **Default**: 0
+
+### qo_basis
+
+- **Type**: String
+- **Description**: specify the type of atomic basis
+  - `pswfc`: use the pseudowavefunction in pseudopotential files as atomic basis. To use this option, please make sure in pseudopotential file there is pswfc in it.
+  - `hydrogen`: generate hydrogen-like atomic basis, whose charge is read from pseudopotential files presently.
+
+  *warning: to use* `pswfc` *, please use norm-conserving pseudopotentials with pseudowavefunctions, SG15 pseudopotentials cannot support this option.*
+- **Default**: `hydrogen`
+
+### qo_strategy
+
+- **Type**: String
+- **Availability**: for `qo_basis hydrogen` only.
+- **Description**: specify the strategy to generate hydrogen-like orbitals
+  - `minimal`: according to principle quantum number of the highest occupied state, generate only nodeless orbitals, for example Cu, only generate 1s, 2p, 3d and 4f orbitals (for Cu, 4s is occupied, thus $n_{max} = 4$)
+  - `full`: similarly according to the maximal principle quantum number, generate all possible orbitals, therefore for Cu, for example, will generate 1s, 2s, 2p, 3s, 3p, 3d, 4s, 4p, 4d, 4f.
+  - `energy`: will generate hydrogen-like orbitals according to Aufbau principle. For example the Cu (1s2 2s2 2p6 3s2 3p6 3d10 4s1), will generate these orbitals.
+  
+  *warning: to use* `full`, *generation strategy may cause the space spanned larger than the one spanned by numerical atomic orbitals, in this case, must filter out orbitals in some way*
+- **Default**: `minimal`
+
+### qo_screening_coeff
+
+- **Type**: Real
+- **Availability**: for `qo_basis pswfc` only.
+- **Description**: a screening factor $e^{-\eta|\mathbf{r}|}$ is multiplied to the pswfc to mimic the behavior of some kind of electron. $\eta$ is the screening coefficient. Presently one scalar value can be passed to ABACUS, therefore all atom types use the same value.
+- **Default**: 0.1
+- **Unit**: Bohr^-1
+
+### qo_thr
+
+- **Type**: Real
+- **Description**: the convergence threshold determining the cutoff of generated orbital. Lower threshold will yield orbital with larger cutoff radius.
+- **Default**: 1.0e-6
+
 
 [back to top](#full-list-of-input-keywords)

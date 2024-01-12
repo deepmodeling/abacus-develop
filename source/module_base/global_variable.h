@@ -34,6 +34,7 @@ extern int EFIELD_FLAG; // 5 add electric field
 extern int DIP_COR_FLAG; // 7 add dipole correction
 extern bool GATE_FLAG;     // add gate field
 extern bool out_app_flag;  // whether output r(R), H(R), S(R), T(R), and dH(R) matrices in an append manner during MD  liuyu 2023-03-20
+extern int out_ndigits;
 
 extern std::string DFT_FUNCTIONAL; // 6.5 change the DFT functional from input file.
 extern double XC_TEMPERATURE;
@@ -281,6 +282,7 @@ extern bool MIXING_TAU;
 extern double MIXING_BETA_MAG;
 extern double MIXING_GG0_MAG;
 extern double MIXING_GG0_MIN;
+extern double MIXING_ANGLE;
 
 //==========================================================
 // device flags added by denghui
@@ -307,6 +309,8 @@ extern double nelec;
 extern bool out_bandgap;
 extern int out_interval;
 
+extern bool out_mat_xc; // output Vxc in KS-wfc representation for GW calculation
+
 // Deltaspin related
 extern bool sc_mag_switch; // 0: no deltaspin; 1: constrain atomic magnetic moments;
 extern bool decay_grad_switch; // 0: decay grad will be set to zero; 1: with decay grad set for some elements
@@ -317,5 +321,12 @@ extern int sc_scf_nmin;
 extern double alpha_trial;
 extern double sccut;
 extern std::string sc_file;
+
+// Quasiatomic orbital related
+extern bool qo_switch;
+extern std::string qo_basis;
+extern std::string qo_strategy;
+extern double qo_thr;
+extern std::vector<double> qo_screening_coeff;
 } // namespace GlobalV
 #endif
