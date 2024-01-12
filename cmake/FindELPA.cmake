@@ -7,23 +7,37 @@
 #  ELPA_INCLUDE_DIR - Where to find ELPA headers.
 #
 
-find_path(ELPA_INCLUDE_DIR
-    elpa/elpa.h
-    HINTS ${ELPA_DIR}
-    PATH_SUFFIXES "include" "include/elpa"
-    )
-if(USE_OPENMP)
-    find_library(ELPA_LIBRARY
-        NAMES elpa_openmp elpa
-        HINTS ${ELPA_DIR}
-        PATH_SUFFIXES "lib"
-        )
+# Legacy Routine
+#find_path(ELPA_INCLUDE_DIR
+#    elpa/elpa.h
+#    HINTS ${ELPA_DIR}
+#    PATH_SUFFIXES "include" "include/elpa"
+#    )
+#if(USE_OPENMP)
+#    find_library(ELPA_LIBRARY
+#        NAMES elpa_openmp elpa
+#        HINTS ${ELPA_DIR}
+#        PATH_SUFFIXES "lib"
+#        )
+#else()
+#    find_library(ELPA_LIBRARY
+#        NAMES elpa
+#        HINTS ${ELPA_DIR}
+#        PATH_SUFFIXES "lib"
+#        )
+#endif()
+
+find_package(PkgConfig)
+
+if(PKG_CONFIG_FOUND)
+        if(USE_OPENMP)
+    pkg_search_module(ELPA REQUIRED IMPORTED_TARGET GLOBAL elpa_openmp)
+  else()
+    pkg_search_module(ELPA REQUIRED IMPORTED_TARGET GLOBAL elpa)
+  endif()
 else()
-    find_library(ELPA_LIBRARY
-        NAMES elpa
-        HINTS ${ELPA_DIR}
-        PATH_SUFFIXES "lib"
-        )
+  message(
+    "ELPA : We need pkg-config to get all information about the elpa library")
 endif()
 
 # Handle the QUIET and REQUIRED arguments and
@@ -33,8 +47,8 @@ find_package_handle_standard_args(ELPA DEFAULT_MSG ELPA_LIBRARY ELPA_INCLUDE_DIR
 
 # Copy the results to the output variables and target.
 if(ELPA_FOUND)
-    set(ELPA_LIBRARIES ${ELPA_LIBRARY})
-    set(ELPA_INCLUDE_DIR ${ELPA_INCLUDE_DIR})
+    set(ELPA_LIBRARY ${ELPA_LIBRARIES})
+    set(ELPA_INCLUDE_DIR ${ELPA_INCLUDE_DIRS})
 
     if(NOT TARGET ELPA::ELPA)
         add_library(ELPA::ELPA UNKNOWN IMPORTED)
