@@ -2,7 +2,7 @@
 
 #include <ATen/core/tensor.h>
 #include <ATen/kernels/lapack.h>
-#include <test/test_utils.h>
+#include <base/utils/gtest.h>
 
 namespace container {
 namespace kernels {
@@ -11,16 +11,16 @@ template <typename T>
 class LapackTest : public testing::Test {
 public:
     LapackTest() {
-        test_utils::init_blas_handle();
-        test_utils::init_cusolver_handle();
+        base::utils::init_blas_handle();
+        base::utils::init_cusolver_handle();
     }
     ~LapackTest() override {
-        test_utils::delete_blas_handle();
-        test_utils::delete_cusolver_handle();
+        base::utils::delete_blas_handle();
+        base::utils::delete_cusolver_handle();
     }
 };
 
-TYPED_TEST_SUITE(LapackTest, test_utils::Types);
+TYPED_TEST_SUITE(LapackTest, base::utils::Types);
 
 TYPED_TEST(LapackTest, Trtri) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;

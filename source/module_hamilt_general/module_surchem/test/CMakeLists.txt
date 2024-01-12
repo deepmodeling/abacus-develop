@@ -28,7 +28,7 @@ AddTest(
 
 AddTest(
   TARGET surchem_cal_vcav
-  LIBS ${math_libs} planewave device base
+  LIBS ${math_libs} planewave device base container
   SOURCES cal_vcav_test.cpp  ../cal_vcav.cpp ../surchem.cpp ../../../module_hamilt_pw/hamilt_pwdft/parallel_grid.cpp 
   ../../module_xc/xc_functional_gradcorr.cpp ../../module_xc/xc_functional.cpp
   ../../module_xc/xc_functional_wrapper_xc.cpp ../../module_xc/xc_functional_wrapper_gcxc.cpp
@@ -39,7 +39,7 @@ AddTest(
 
 AddTest(
   TARGET surchem_cal_vel
-  LIBS ${math_libs} planewave device base
+  LIBS ${math_libs} planewave device base container
   SOURCES cal_vel_test.cpp  ../cal_vel.cpp ../surchem.cpp ../cal_epsilon.cpp ../minimize_cg.cpp ../../../module_hamilt_pw/hamilt_pwdft/parallel_grid.cpp 
   ../../module_xc/xc_functional_gradcorr.cpp ../../module_xc/xc_functional.cpp
   ../../module_xc/xc_functional_wrapper_xc.cpp ../../module_xc/xc_functional_wrapper_gcxc.cpp

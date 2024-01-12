@@ -22,17 +22,13 @@ void FFT::clear()
 	d_rspace = nullptr;
 #if defined(__CUDA) || defined(__ROCM)
     if (this->device == "gpu") {
-        if (this->precision == "single") {
-            if (c_auxr_3d != nullptr) {
-                delmem_cd_op()(gpu_ctx, c_auxr_3d);
-                c_auxr_3d = nullptr;
-            }
+        if (c_auxr_3d != nullptr) {
+            delmem_cd_op()(gpu_ctx, c_auxr_3d);
+            c_auxr_3d = nullptr;
         }
-        else {
-            if (z_auxr_3d != nullptr) {
-                delmem_zd_op()(gpu_ctx, z_auxr_3d);
-                z_auxr_3d = nullptr;
-            }
+        if (z_auxr_3d != nullptr) {
+            delmem_zd_op()(gpu_ctx, z_auxr_3d);
+            z_auxr_3d = nullptr;
         }
     }
 #endif // defined(__CUDA) || defined(__ROCM)
@@ -86,12 +82,8 @@ void FFT:: initfft(int nx_in, int ny_in, int nz_in, int lixy_in, int rixy_in, in
         //     fftw_malloc(sizeof(fftw_complex) * (this->nx * this->ny * this->nz)));
 #if defined(__CUDA) || defined(__ROCM)
         if (this->device == "gpu") {
-            if (this->precision == "single") {
-                resmem_cd_op()(gpu_ctx, this->c_auxr_3d, this->nx * this->ny * this->nz);
-            }
-            else {
-                resmem_zd_op()(gpu_ctx, this->z_auxr_3d, this->nx * this->ny * this->nz);
-            }
+            resmem_cd_op()(gpu_ctx, this->c_auxr_3d, this->nx * this->ny * this->nz);
+            resmem_zd_op()(gpu_ctx, this->z_auxr_3d, this->nx * this->ny * this->nz);
         }
 #endif // defined(__CUDA) || defined(__ROCM)
 #if defined(__ENABLE_FLOAT_FFTW)
@@ -242,20 +234,13 @@ void FFT :: initplan(const unsigned int& flag)
 
 #if defined(__CUDA) || defined(__ROCM)
     if (this->device == "gpu") {
-        if (this->precision == "single") {
         #if defined(__CUDA)
             cufftPlan3d(&c_handle, this->nx, this->ny, this->nz, CUFFT_C2C);
-        #elif defined(__ROCM)
-            hipfftPlan3d(&c_handle, this->nx, this->ny, this->nz, HIPFFT_C2C);
-        #endif
-        }
-        else {
-        #if defined(__CUDA)
             cufftPlan3d(&z_handle, this->nx, this->ny, this->nz, CUFFT_Z2Z);
         #elif defined(__ROCM)
+            hipfftPlan3d(&c_handle, this->nx, this->ny, this->nz, HIPFFT_C2C);
             hipfftPlan3d(&z_handle, this->nx, this->ny, this->nz, HIPFFT_Z2Z);
         #endif
-        }
     }
 #endif
 
@@ -363,20 +348,13 @@ void FFT:: cleanFFT()
     // fftw_destroy_plan(this->plan3dbackward);
 #if defined(__CUDA) || defined(__ROCM)
     if (this->device == "gpu") {
-        if (this->precision == "single") {
         #if defined(__CUDA)
             if(c_handle) { cufftDestroy(c_handle);  c_handle = {};}
-        #elif defined(__ROCM)
-            if(c_handle) { hipfftDestroy(c_handle); c_handle = {};}
-        #endif
-        }
-        else {
-        #if defined(__CUDA)
             if(z_handle) { cufftDestroy(z_handle);  z_handle = {};}
         #elif defined(__ROCM)
+            if(c_handle) { hipfftDestroy(c_handle); c_handle = {};}
             if(z_handle) { hipfftDestroy(z_handle); z_handle = {};}
         #endif
-        }
     }
 #endif
 }

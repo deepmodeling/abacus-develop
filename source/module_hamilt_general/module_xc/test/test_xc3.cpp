@@ -147,9 +147,13 @@ class XCTest_GRADWFC : public testing::Test
     protected:
 
         std::complex<double> * grad = nullptr;
+        ModuleBase::Vector3<double> * gcar_wrapper = nullptr;
+        ModuleBase::Vector3<double> * kvec_c_wrapper = nullptr;
         ~XCTest_GRADWFC()
         {
-            delete[] grad;
+            delete [] grad;
+            delete [] gcar_wrapper;
+            delete [] kvec_c_wrapper;
         }
 
         void SetUp()
@@ -157,8 +161,17 @@ class XCTest_GRADWFC : public testing::Test
             ModulePW::PW_Basis_K rhopw;
             rhopw.npwk = new int[1];
             rhopw.npwk[0] = 5;
+            rhopw.npwk_max = 5;
             rhopw.nmaxgr = 5;
             rhopw.nrxx = 5;
+            rhopw.nks = 1;
+            gcar_wrapper = new ModuleBase::Vector3<double>[rhopw.npwk_max];
+            for (int ii = 0; ii < rhopw.npwk_max; ii++)
+                gcar_wrapper[ii] = ModuleBase::Vector3<double>(0,0,0);
+            kvec_c_wrapper = new ModuleBase::Vector3<double>(1,2,3);
+
+            rhopw.gcar = gcar_wrapper;
+            rhopw.kvec_c = kvec_c_wrapper;
 
             std::complex<double> rhog[5];
             for (int i=0;i<5;i++)
@@ -169,7 +182,7 @@ class XCTest_GRADWFC : public testing::Test
 
             grad = new std::complex<double>[15];
 
-            XC_Functional::grad_wfc(rhog, 0, grad, &rhopw, tpiba);
+            XC_Functional::grad_wfc<std::complex<double>, psi::DEVICE_CPU>(0, tpiba, &rhopw, rhog, grad);
         }
 };
 
