@@ -13,19 +13,22 @@
 #    PATH_SUFFIXES "include" "include/elpa"
 #    )
 
+include(FindPackageHandleStandardArgs)
+
 find_package(PkgConfig)
 
 if(PKG_CONFIG_FOUND)
-	pkg_search_module(Libxc REQUIRED IMPORTED_TARGET GLOBAL libxc)
+  pkg_search_module(Libxc REQUIRED IMPORTED_TARGET GLOBAL libxc)
+  find_package_handle_standard_args(Libxc DEFAULT_MSG Libxc_LINK_LIBRARIES Libxc_INCLUDE_DIRS)
 else()
-  message(
-	  "LibXC : We need pkg-config to get all information about the libxc library")
+  find_package(Libxc REQUIRED HINTS
+    ${Libxc_DIR}/share/cmake/Libxc
+    ${Libxc_DIR}/lib/cmake/Libxc
+    ${Libxc_DIR}/lib64/cmake/Libxc
+  )
+  #message(
+  #	  "LibXC : We need pkg-config to get all information about the libxc library")
 endif()
-
-# Handle the QUIET and REQUIRED arguments and
-# set ELPA_FOUND to TRUE if all variables are non-zero.
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(Libxc DEFAULT_MSG Libxc_LINK_LIBRARIES Libxc_INCLUDE_DIRS)
 
 # Copy the results to the output variables and target.
 if(Libxc_FOUND AND NOT TARGET Libxc::xc)
