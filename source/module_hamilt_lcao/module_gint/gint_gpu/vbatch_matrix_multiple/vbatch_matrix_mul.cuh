@@ -7,10 +7,6 @@
 #include <stdio.h>    // for fprintf and stderr
 #include <assert.h>   // for assert
 
-
-cudaError_t checkCuda(cudaError_t result);
-cudaError_t checkCudaLastError();
-
 template <typename T, int DIM_X, int DIM_Y, int BLK_M, int BLK_N, int BLK_K,
          int DIM_XA, int DIM_YA, int DIM_XB, int DIM_YB>
 void vbatched_gemm_impl(int max_m, int max_n,

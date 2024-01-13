@@ -7,33 +7,6 @@
 #define sA(i,j)    sA[(j)*slda + (i)]
 #define sB(i,j)    sB[(j)*sldb + (i)]
 #define fetch(A, m, n, bound)  offs_d##A[min(n*LD##A+m, bound)]
-cudaError_t checkCuda(cudaError_t result)
-{
-#if defined(__DEBUG)
-    if (result != cudaSuccess)
-    {
-        fprintf(stderr, "CUDA Runtime Error: %s\n", cudaGetErrorString(result));
-        assert(result == cudaSuccess);
-    }
-#endif
-    return result;
-}
-
-cudaError_t checkCudaLastError()
-{
-#if defined(__DEBUG)
-    cudaError_t result = cudaGetLastError();
-    if (result != cudaSuccess)
-    {
-        fprintf(stderr, "CUDA Runtime Error: %s\n", cudaGetErrorString(result));
-        assert(result == cudaSuccess);
-    }
-    return result;
-#else
-    return cudaSuccess;
-#endif
-}
-
 
 template<typename T, int DIM_X, int DIM_Y, int BLK_M, int BLK_N, int BLK_K,
          int DIM_XA, int DIM_YA, int DIM_XB, int DIM_YB,
@@ -291,9 +264,7 @@ void vbatched_gemm_impl(int max_m, int max_n,
                          global_B_array + i * max_batch_count, global_ldb + i * max_batch_count,
                          global_A_array + i * max_batch_count, global_lda + i * max_batch_count,
                          global_C_array + i * max_batch_count, global_ldc + i * max_batch_count);
-        #ifdef __DEBUG
-            checkCudaLastError();
-        #endif
+        checkCudaLastError();
     }
     if (remain_num > 0)
     {
@@ -307,9 +278,7 @@ void vbatched_gemm_impl(int max_m, int max_n,
                          global_B_array + loop_num * max_batch_count, global_ldb + loop_num * max_batch_count,
                          global_A_array + loop_num * max_batch_count, global_lda + loop_num * max_batch_count,
                          global_C_array + loop_num * max_batch_count, global_ldc + loop_num * max_batch_count);
-        #ifdef __DEBUG
-            checkCudaLastError();
-        #endif
+        checkCudaLastError();
     }
 }
 
@@ -364,151 +333,105 @@ void gemm_time_measure(int max_m, int max_n,
 
 void gemm_algo_selector(int matrix_k, matrix_multiple_func_type & fastest_algo)
 {
-
     int batchCount_per_type = 32;
     int batchCount = batchCount_per_type * GlobalC::ucell.ntype * GlobalC::ucell.ntype;
-    int *h_m = new int[batchCount];
-    int *h_n = new int[batchCount];
-    int *h_k = new int[batchCount];
 
-    int *h_global_lda = new int[batchCount];
-    int *h_global_ldb = new int[batchCount];
-    int *h_global_ldc = new int[batchCount];
+    Cuda_Mem_Wrapper<int> m(batchCount);
+    Cuda_Mem_Wrapper<int> n(batchCount);
+    Cuda_Mem_Wrapper<int> k(batchCount);
+
     int max_m = GlobalC::ucell.nwmax, max_n = GlobalC::ucell.nwmax;
-    double **h_global_A_array = new double *[batchCount];
-    double **h_global_B_array = new double *[batchCount];
-    double **h_global_C_array = new double *[batchCount];
 
-    double *h_global_A = new double[batchCount * max_m * matrix_k];
-    double *h_global_B = new double[batchCount * max_n * matrix_k];
-    double *h_global_C = new double[batchCount * max_m * max_n];
+    Cuda_Mem_Wrapper<double> A(batchCount * max_m * matrix_k);
+    Cuda_Mem_Wrapper<double> B(batchCount * max_n * matrix_k);
+    Cuda_Mem_Wrapper<double> C(batchCount * max_m * max_n);
 
+    Cuda_Mem_Wrapper<int> lda(batchCount);
+    Cuda_Mem_Wrapper<int> ldb(batchCount);
+    Cuda_Mem_Wrapper<int> ldc(batchCount);
+
+    Cuda_Mem_Wrapper<double *> A_array(batchCount);
+    Cuda_Mem_Wrapper<double *> B_array(batchCount);
+    Cuda_Mem_Wrapper<double *> C_array(batchCount);
+    
     for (int i = 0; i < batchCount * max_m * matrix_k; ++i)
     {
-        h_global_A[i] = i * 0.001;
+        A.get_host_pointer()[i] = i * 0.001;
     }
     for (int i = 0; i < batchCount * max_n * matrix_k; ++i)
     {
-        h_global_B[i] = i * 0.002;
+        B.get_host_pointer()[i] = i * 0.002;
     }
-    memset(h_global_C, 0, batchCount * max_m * max_n * sizeof(double));
-
-    // Allocate device memory
-    int *d_m;
-    int *d_n;
-    int *d_k;
-    int *d_global_lda;
-    int *d_global_ldb;
-    int *d_global_ldc;
-
-    double **d_global_A_array;
-    double **d_global_B_array;
-    double **d_global_C_array;
-
-    double *d_global_A;
-    double *d_global_B;
-    double *d_global_C;
+    memset(C.get_host_pointer(), 0, batchCount * max_m * max_n * sizeof(double));
 
     double *cpu_result = new double[batchCount * max_m * max_n];
     memset(cpu_result, 0, batchCount * max_m * max_n * sizeof(double));
-
-    checkCuda(cudaMalloc(&d_m, batchCount * sizeof(int)));
-    checkCuda(cudaMalloc(&d_n, batchCount * sizeof(int)));
-    checkCuda(cudaMalloc(&d_k, batchCount * sizeof(int)));
-
-    checkCuda(cudaMalloc(&d_global_lda, batchCount * sizeof(int)));
-    checkCuda(cudaMalloc(&d_global_ldb, batchCount * sizeof(int)));
-    checkCuda(cudaMalloc(&d_global_ldc, batchCount * sizeof(int)));
-
-    checkCuda(cudaMalloc(&d_global_A_array, batchCount * sizeof(double *)));
-    checkCuda(cudaMalloc(&d_global_B_array, batchCount * sizeof(double *)));
-    checkCuda(cudaMalloc(&d_global_C_array, batchCount * sizeof(double *)));
-
-    checkCuda(cudaMalloc(&d_global_A, batchCount * max_m * matrix_k * sizeof(double)));
-    checkCuda(cudaMalloc(&d_global_B, batchCount * max_n * matrix_k * sizeof(double)));
-    checkCuda(cudaMalloc(&d_global_C, batchCount * max_m * max_n * sizeof(double)));
-     
-    checkCuda(cudaMemset(d_global_C, 0, batchCount * max_m * max_n * sizeof(double)));
     int index = 0;
     for (int i = 0; i < batchCount_per_type; ++i)
     {
         for (int j = 0; j < GlobalC::ucell.ntype; j++)
         {
-            for (int k = 0; k < GlobalC::ucell.ntype; k++)
+            for (int l = 0; l < GlobalC::ucell.ntype; l++)
             {
-                h_m[index] = GlobalC::ucell.atoms[j].nw;
-                h_n[index] = GlobalC::ucell.atoms[k].nw;
-                h_k[index] = matrix_k;
+                m.get_host_pointer()[index] = GlobalC::ucell.atoms[j].nw;
+                n.get_host_pointer()[index] = GlobalC::ucell.atoms[l].nw;
+                k.get_host_pointer()[index] = matrix_k;
 
-                h_global_lda[index] = matrix_k;
-                h_global_ldb[index] = matrix_k;
-                h_global_ldc[index] = GlobalC::ucell.atoms[k].nw;
+                lda.get_host_pointer()[index] = matrix_k;
+                ldb.get_host_pointer()[index] = matrix_k;
+                ldc.get_host_pointer()[index] = GlobalC::ucell.atoms[l].nw;
 
-                h_global_A_array[index] = &d_global_A[index * max_m * matrix_k];
-                h_global_B_array[index] = &d_global_B[index * max_n * matrix_k];
-                h_global_C_array[index] = &d_global_C[index * max_n * max_m]; // test atom add
-                BlasConnector::gemm('N', 'T', h_m[index], h_n[index], matrix_k, 1.0, &h_global_A[index * max_m * matrix_k], matrix_k, &h_global_B[index * max_n * matrix_k], matrix_k, 1.0, &cpu_result[index * max_m * max_n], h_n[index]);
+                A_array.get_host_pointer()[index] = &A.get_device_pointer()[index * max_m * matrix_k];
+                B_array.get_host_pointer()[index] = &B.get_device_pointer()[index * max_n * matrix_k];
+                C_array.get_host_pointer()[index] = &C.get_device_pointer()[index * max_n * max_m]; // test atom add
+                BlasConnector::gemm('N', 'T', m.get_host_pointer()[index], n.get_host_pointer()[index], matrix_k, 1.0,
+                                    &A.get_host_pointer()[index * max_m * matrix_k], matrix_k,
+                                    &B.get_host_pointer()[index * max_n * matrix_k], matrix_k,
+                                    1.0, &cpu_result[index * max_m * max_n], n.get_host_pointer()[index]);
                 index++;
             }
         }
     }
 
-    checkCuda(cudaMemcpy(d_m, h_m, batchCount * sizeof(int), cudaMemcpyHostToDevice));
-    checkCuda(cudaMemcpy(d_n, h_n, batchCount * sizeof(int), cudaMemcpyHostToDevice));
-    checkCuda(cudaMemcpy(d_k, h_k, batchCount * sizeof(int), cudaMemcpyHostToDevice));
+    
+    m.copy_host_to_device_sync();
+    n.copy_host_to_device_sync();
+    k.copy_host_to_device_sync();
 
-    checkCuda(cudaMemcpy(d_global_lda, h_global_lda, batchCount * sizeof(int), cudaMemcpyHostToDevice));
-    checkCuda(cudaMemcpy(d_global_ldb, h_global_ldb, batchCount * sizeof(int), cudaMemcpyHostToDevice));
-    checkCuda(cudaMemcpy(d_global_ldc, h_global_ldc, batchCount * sizeof(int), cudaMemcpyHostToDevice));
+    lda.copy_host_to_device_sync();
+    ldb.copy_host_to_device_sync();
+    ldc.copy_host_to_device_sync();
 
-    checkCuda(cudaMemcpy(d_global_A_array, h_global_A_array, batchCount * sizeof(double *), cudaMemcpyHostToDevice));
-    checkCuda(cudaMemcpy(d_global_B_array, h_global_B_array, batchCount * sizeof(double *), cudaMemcpyHostToDevice));
-    checkCuda(cudaMemcpy(d_global_C_array, h_global_C_array, batchCount * sizeof(double *), cudaMemcpyHostToDevice));
-
-    checkCuda(cudaMemcpy(d_global_A, h_global_A, batchCount * max_m * matrix_k * sizeof(double), cudaMemcpyHostToDevice));
-    checkCuda(cudaMemcpy(d_global_B, h_global_B, batchCount * max_n * matrix_k * sizeof(double), cudaMemcpyHostToDevice));
+    A.copy_host_to_device_sync();
+    B.copy_host_to_device_sync();
+    A_array.copy_host_to_device_sync();
+    B_array.copy_host_to_device_sync();
+    C_array.copy_host_to_device_sync();
 
     cudaStream_t temp_stream;
     checkCuda(cudaStreamCreate(&temp_stream));
 
     float fastest_time = 1000000;
     fastest_algo = vbatched_gemm_impl<double, 16, 4, 32, 16, 16, 16, 4, 16, 4>;
+
+    int *d_m = m.get_device_pointer();
+    int *d_n = n.get_device_pointer();
+    int *d_k = k.get_device_pointer();
+
+    double ** d_global_A_array = A_array.get_device_pointer();
+    double ** d_global_B_array = B_array.get_device_pointer();
+    double ** d_global_C_array = C_array.get_device_pointer();
+
+    double *h_global_C = C.get_host_pointer();
+    double *d_global_C = C.get_device_pointer();
+
+    int * d_global_lda = lda.get_device_pointer();
+    int * d_global_ldb = ldb.get_device_pointer();
+    int * d_global_ldc = ldc.get_device_pointer();
+
     #include"code_gen.cpp"
     checkCuda(cudaStreamDestroy(temp_stream));
     std::cout << " gemm_algo_selector::Fastest time: " << fastest_time << " ms" << std::endl;
     // fastest_algo = vbatched_gemm_impl<double, 16, 4, 32, 16, 16, 16, 4, 16, 4>;
-    delete[] h_global_A_array;
-    delete[] h_global_B_array;
-    delete[] h_global_C_array;
-
-    delete[] h_m;
-    delete[] h_n;
-
-    delete[] h_global_lda;
-    delete[] h_global_ldb;
-    delete[] h_global_ldc;
-
-    delete[] h_global_A;
-    delete[] h_global_B;
-    delete[] h_global_C;
-
     delete[] cpu_result;
-
-    // Cleanup
-    checkCuda(cudaFree(d_global_A_array));
-    checkCuda(cudaFree(d_global_B_array));
-    checkCuda(cudaFree(d_global_C_array));
-
-    checkCuda(cudaFree(d_m));
-    checkCuda(cudaFree(d_n));
-
-    checkCuda(cudaFree(d_global_lda));
-    checkCuda(cudaFree(d_global_ldb));
-    checkCuda(cudaFree(d_global_ldc));
-
-
-    checkCuda(cudaFree(d_global_A));
-    checkCuda(cudaFree(d_global_B));
-    checkCuda(cudaFree(d_global_C));
-
 }
