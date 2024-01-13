@@ -905,7 +905,8 @@ namespace ModuleESolver
     ModuleBase::matrix E_gradient_wg(this->pelec->wg.nr, this->pelec->wg.nc, true);
     psi::Psi<TK> E_gradient_wfc(this->psi->get_nk(), this->psi->get_nbands(), this->psi->get_nbasis()); 
     rdmft::set_zero_psi(E_gradient_wfc);
-
+    double Etotal_RDMFT = 0.0;
+    
     // esolver_ks_lcao.h(LCAO_Matrix LM),           LCAO_matrix.h(Parallel_Orbitals* ParaV)
     // esolver_fp.h(elecstate::ElecState* pelec),   elecstate.h(ModuleBase::matrix wg),      this->pelec->wg
     // esolver_fp.h(elecstate::ElecState* pelec),   elecstate.h(Charge* charge),             this->pelec->wg
@@ -921,7 +922,7 @@ namespace ModuleESolver
     // //test use dgemm_
     // rdmft::printResult_dgemm();
 
-    double Etotal_RDMFT = 0.0;
+
 
     // gamma only calculation
     if( GlobalV::GAMMA_ONLY_LOCAL )
@@ -954,7 +955,9 @@ namespace ModuleESolver
             *(this->pelec->charge),
             *(this->pw_rho),
             GlobalC::ppcell.vloc,
-            this->sf.strucFac
+            this->sf.strucFac,
+            "power",
+            0.95
         );
     }
     // multi-k calculation
@@ -978,6 +981,7 @@ namespace ModuleESolver
             0.95
         );
     }
+
     /******** test RDMFT *********/
 
 

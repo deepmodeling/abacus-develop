@@ -440,7 +440,9 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         HR_XC.fix_gamma();
     }
 
+
     /****** get every Hamiltion matrix ******/
+
     hamilt::OperatorLCAO<TK, TR>* V_ekinetic_potential = new hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>(
         LM_in,
         kvec_d_in,
@@ -461,7 +463,6 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         ParaV
     );
 
-    std::string local_pot = "local";
     hamilt::OperatorLCAO<TK, TR>* V_local = new rdmft::Veff_rdmft<TK,TR>(
         &G_in,
         &loc_in,
@@ -476,10 +477,9 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         rho_basis_in,
         vloc_in,
         sf_in,
-        local_pot
+        "local"
     );
 
-    std::string hartree_pot = "hartree";
     hamilt::OperatorLCAO<TK, TR>* V_hartree = new rdmft::Veff_rdmft<TK,TR>(
         &G_in,
         &loc_in,
@@ -494,7 +494,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         rho_basis_in,
         vloc_in,
         sf_in,
-        hartree_pot
+        "hartree"
     );
 
     // construct V_XC based on different XC_functional
@@ -515,10 +515,17 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         std::vector< const std::vector<TK>* > DM_XC_pointer(nk_total);
         for(int ik=0; ik<nk_total; ++ik) DM_XC_pointer[ik] = &DM_XC[ik];
 
+        std::cout << "\n\n\n******\n" << "before conj_psi()" << "\n******\n\n\n";
+
         // get wg_wfc = g(wg)*conj(wfc), different XC_functional has different g(wg)
         psi::Psi<TK> wg_wfc(wfc);
         conj_psi(wg_wfc);
+
+        std::cout << "\n\n\n******\n" << "before wgMulPsi()" << "\n******\n\n\n";
+
         wgMulPsi(ParaV, wg, wg_wfc, 2, XC_func_rdmft, alpha_power);
+
+        std::cout << "\n\n\n******\n" << "before psiMulPsiMpi()" << "\n******\n\n\n";
 
         // get the special DM_XC used in constructing V_XC
         for(int ik=0; ik<wfc.get_nk(); ++ik)
@@ -531,11 +538,15 @@ double rdmft_cal(LCAO_Matrix* LM_in,
 #endif            
         }
 
+        std::cout << "\n\n\n******\n" << "before split_m2D_ktoR()" << "\n******\n\n\n";
+
         // transfer the DM_XC to appropriate format
         std::vector<std::map<int,std::map<std::pair<int,std::array<int,3>>,RI::Tensor<double>>>> Ds_XC_d = 
             RI_2D_Comm::split_m2D_ktoR<double>(kv_in, DM_XC_pointer, *ParaV);
         std::vector<std::map<int,std::map<std::pair<int,std::array<int,3>>,RI::Tensor<std::complex<double>>>>> Ds_XC_c = 
             RI_2D_Comm::split_m2D_ktoR<std::complex<double>>(kv_in, DM_XC_pointer, *ParaV);
+
+        std::cout << "\n\n\n******\n" << "before Exx_LRI Vxc_fromRI" << "\n******\n\n\n";
 
         // provide the Ds_XC to V_XC
         // when we doing V_XC.contributeHk(ik), we get HK_XC constructed by the special DM_XC
@@ -545,6 +556,8 @@ double rdmft_cal(LCAO_Matrix* LM_in,
             Vxc_fromRI_d.init(MPI_COMM_WORLD, kv_in);
             Vxc_fromRI_d.cal_exx_ions();
             Vxc_fromRI_d.cal_exx_elec(Ds_XC_d, *ParaV);
+
+            std::cout << "\n\n\n******\n" << "before new OperatorEXX with Vxc_fromRI_d" << "\n******\n\n\n";
 
             V_XC = new hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>>(
                 LM_in,
@@ -561,6 +574,8 @@ double rdmft_cal(LCAO_Matrix* LM_in,
             Vxc_fromRI_c.cal_exx_ions();
             Vxc_fromRI_c.cal_exx_elec(Ds_XC_c, *ParaV);
 
+            std::cout << "\n\n\n******\n" << "before new OperatorEXX with Vxc_fromRI_c" << "\n******\n\n\n";
+
             V_XC = new hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>>(
                 LM_in,
                 &HR_XC,
@@ -569,9 +584,13 @@ double rdmft_cal(LCAO_Matrix* LM_in,
                 nullptr,
                 &Vxc_fromRI_c.Hexxs
             );
+
+            std::cout << "\n\n\n******\n" << "after new OperatorEXX with Vxc_fromRI_c" << "\n******\n\n\n";
         }
     }
+
     /****** get every Hamiltion matrix ******/
+
 
     // in gamma only, must calculate HR_hartree before HR_local
     // HR_hartree has the HR of V_hartree. HR_XC get from another way, so don't need to do this 
@@ -581,6 +600,8 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     V_ekinetic_potential->contributeHR();
     V_nonlocal->contributeHR();
     V_local->contributeHR();
+
+    std::cout << "\n\n\n******\n" << "after contributeHR()" << "\n******\n\n\n";
 
     //prepare for actual calculation
     //wg is global matrix, wg.nr = nk_total, wg.nc = GlobalV::NBANDS
@@ -606,6 +627,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     std::vector<TK> Eij_hartree(nrow_bands*ncol_bands);
     std::vector<TK> Eij_XC(nrow_bands*ncol_bands);
 
+
     /****** get wg_wfcHamiltWfc, wg_HamiltWfc and Etotal ******/
 
     //calculate Hwfc, wfcHwfc for each potential
@@ -614,7 +636,9 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         // get the HK with ik-th k vector, the result is stored in HK_TV, HK_hartree and HK_XC respectively
         V_ekinetic_potential->contributeHk(ik);
         V_hartree->contributeHk(ik);
+        std::cout << "\n\n\n******\n" << "after V_TV&V_hartree.contribute(ik)" << "\n******\n\n\n";
         V_XC->contributeHk(ik);
+        std::cout << "\n\n\n******\n" << "after V_XC.contribute(ik)" << "\n******\n\n\n";
 
         // get H(k) * wfc
         HkPsi( ParaV, HK_TV[0], wfc(ik, 0, 0), H_wfc_TV(ik, 0, 0));
@@ -644,6 +668,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     double Etotal_RDMFT = sumWg_getEnergy(wg_forEtotal);
 
     /****** get wg_wfcHamiltWfc, wg_HamiltWfc and Etotal ******/
+
 
     // for E_TV
     ModuleBase::matrix wg_forETV(wg.nr, wg.nc, true);
