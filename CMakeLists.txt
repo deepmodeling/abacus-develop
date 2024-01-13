@@ -295,7 +295,7 @@ endif()
 # Use cmake with AMD-ROCm: https://rocmdocs.amd.com/en/latest/Installation_Guide/Using-CMake-with-AMD-ROCm.html
 if(USE_ROCM)
   if(COMMIT_INFO)
-    message(FATAL_ERROR "Commit info is not supported on ROCm.")
+    message(FATAL_ERROR "Commit info is not supported on ROCm. Try to recompile with cmake command -DCOMMIT_INFO=OFF.")
   endif()
   if(NOT DEFINED ROCM_PATH )
     set (ROCM_PATH "/opt/rocm"  CACHE STRING "Default ROCM installation directory." )
