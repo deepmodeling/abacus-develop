@@ -546,8 +546,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         std::vector<std::map<int,std::map<std::pair<int,std::array<int,3>>,RI::Tensor<std::complex<double>>>>> Ds_XC_c = 
             RI_2D_Comm::split_m2D_ktoR<std::complex<double>>(kv_in, DM_XC_pointer, *ParaV);
 
-        std::cout << "\n\n\n******\n" << "print Ds_XC_c" << "\n******\n\n\n";
-
+        std::cout << "\n\n\n\n\n\n******\n" << "print Ds_XC_c" << "\n******\n\n\n\n\n\n";
         for(const auto& outerMap : Ds_XC_c)
         {
             for (const auto& middleMap : outerMap)
@@ -557,6 +556,9 @@ double rdmft_cal(LCAO_Matrix* LM_in,
                     const RI::Tensor<std::complex<double>>& tensor_XC = innerMap.second;
                     //const std::array<int, 3> & tensor_shape = tensor_XC.shape;
                     const std::valarray<std::complex<double>>& tensor_data = *tensor_XC.data;
+
+                    std::cout << "\nthe length of tensor_XC_data: " << tensor_data.size() << "\n";
+
                     std::cout << "\ntensor_XC shape: \n";
                     for(int ix=0; ix<tensor_XC.shape.size(); ++ix)
                     {
@@ -565,7 +567,37 @@ double rdmft_cal(LCAO_Matrix* LM_in,
                     std::cout << "\ntensor_XC data: \n";
                     for(size_t i = 0; i < tensor_data.size(); ++i)
                     {
+                        if(i%5==0) std::cout << "\n";
                         std::cout <<  tensor_data[i] << " ";
+                    }
+                    std::cout << "\n\n\n";
+                }
+            }
+        }
+
+        std::cout << "\n\n\n\n\n\n******\n" << "print LM_in->Hexxc" << "\n******\n\n\n\n\n\n";
+        for(const auto& outerMap : *LM_in->Hexxc)
+        {
+            for (const auto& middleMap : outerMap)
+            {
+                for (const auto& innerMap : middleMap.second)
+                {
+                    const RI::Tensor<std::complex<double>>& tensor_Hexx = innerMap.second;
+                    //const std::array<int, 3> & tensor_shape = tensor_XC.shape;
+                    const std::valarray<std::complex<double>>& tensor_Hexx_data = *tensor_Hexx.data;
+
+                    std::cout << "\nthe length of tensor_Hexx_data: " << tensor_Hexx_data.size() << "\n";
+
+                    std::cout << "\ntensor_Hexx shape: \n";
+                    for(int ix=0; ix<tensor_Hexx.shape.size(); ++ix)
+                    {
+                        std::cout << tensor_Hexx.shape[ix] << " ";
+                    }
+                    std::cout << "\ntensor_Hexx data: \n";
+                    for(size_t i = 0; i < tensor_Hexx_data.size(); ++i)
+                    {
+                        if(i%5==0) std::cout << "\n";
+                        std::cout <<  tensor_Hexx_data[i] << " ";
                     }
                     std::cout << "\n\n\n";
                 }
@@ -610,6 +642,8 @@ double rdmft_cal(LCAO_Matrix* LM_in,
                 nullptr,
                 &Vxc_fromRI_c.Hexxs
             );
+
+
 
             std::cout << "\n\n\n******\n" << "after new OperatorEXX with Vxc_fromRI_c" << "\n******\n\n\n";
         }
