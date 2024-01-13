@@ -20,6 +20,29 @@ void warp_reduce(FPTYPE & val) {
     }
 }
 
+
+template <typename T>
+__global__ void cal_stress_mgga(
+    const int spin,
+    const int nrxx,
+    const T w1,
+    const thrust::complex<T> * gradwfc,
+    T * crosstaus)
+{
+    int idx = threadIdx.x + blockIdx.x * blockDim.x;
+    if (idx >= nrxx) { return; }
+    int ipol = 0;
+    for (int ix = 0; ix < 3; ix++) {
+        for (int iy = 0; iy < ix + 1; iy++) {
+            crosstaus[spin * nrxx * 6 + ipol * nrxx + idx] 
+                += 2.0 * w1 
+                * (gradwfc[ix * nrxx + idx].real() * gradwfc[iy*nrxx + idx].real()
+                +  gradwfc[ix * nrxx + idx].imag() * gradwfc[iy*nrxx + idx].imag());
+            ipol += 1;
+        }
+    }
+}
+
 template <typename FPTYPE>
 __global__ void cal_dbecp_noevc_nl(
         const int ipol,
@@ -211,10 +234,27 @@ void cal_stress_nl_op<FPTYPE, psi::DEVICE_GPU>::operator() (
              stress);// array of data
 }
 
-template struct cal_dbecp_noevc_nl_op<float, psi::DEVICE_GPU>;
-template struct cal_stress_nl_op<float, psi::DEVICE_GPU>;
+template <typename T, typename Device>
+void cal_stress_mgga_op<T, Device>::operator()(
+    const int& spin,
+    const int& nrxx,
+    const Real& w1,
+    const T * gradwfc,
+    Real * crosstaus)
+{
+    auto gradwfc_ = reinterpret_cast<const thrust::complex<Real>*>(gradwfc);
+    const int block = (nrxx + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+    cal_stress_mgga<Real><<<block, THREADS_PER_BLOCK>>>(
+        spin, nrxx, w1, gradwfc_, crosstaus);
+}
 
+template struct cal_stress_mgga_op<std::complex<float>,  psi::DEVICE_GPU>;
+template struct cal_stress_mgga_op<std::complex<double>, psi::DEVICE_GPU>;
+
+template struct cal_dbecp_noevc_nl_op<float, psi::DEVICE_GPU>;
 template struct cal_dbecp_noevc_nl_op<double, psi::DEVICE_GPU>;
+
+template struct cal_stress_nl_op<float, psi::DEVICE_GPU>;
 template struct cal_stress_nl_op<double, psi::DEVICE_GPU>;
 
 }  // namespace hamilt

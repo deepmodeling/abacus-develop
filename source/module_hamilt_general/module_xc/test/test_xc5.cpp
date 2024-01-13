@@ -15,16 +15,6 @@
 // v_xc_libxc, called by v_xc, when we use functionals from LIBXC
 // v_xc_meta, unified interface of mGGA functionals
 
-template<>
-void Parallel_Reduce::reduce_pool<double>(double& object)
-{
-#ifdef __MPI
-	double swap = object;
-	MPI_Allreduce(&swap , &object , 1, MPI_DOUBLE , MPI_SUM , MPI_COMM_WORLD);
-#endif
-    return;
-}
-
 class XCTest_VXC : public testing::Test
 {
     protected:

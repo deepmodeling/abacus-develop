@@ -85,7 +85,7 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
                           pelec->charge,
                           p_kv,
                           wfc_basis,
-                          psi_in);
+                          d_psi_in);
     }
 
     // local contribution
