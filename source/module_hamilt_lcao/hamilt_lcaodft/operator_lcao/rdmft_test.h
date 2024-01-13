@@ -511,7 +511,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     else if( XC_func_rdmft == "power" || XC_func_rdmft == "Muller" )
     {
         // prepare for the special density matrix DM_XC(nk*nbasis_local*nbasis_local)
-        std::vector< std::vector<TK> > DM_XC(nk_total, std::vector<TK>(ParaV->nloc));
+        std::vector< std::vector<TK> > DM_XC(nk_total, std::vector<TK>(ParaV->nloc));  // ParaV->nloc
         std::vector< const std::vector<TK>* > DM_XC_pointer(nk_total);
         for(int ik=0; ik<nk_total; ++ik) DM_XC_pointer[ik] = &DM_XC[ik];
 
@@ -545,6 +545,32 @@ double rdmft_cal(LCAO_Matrix* LM_in,
             RI_2D_Comm::split_m2D_ktoR<double>(kv_in, DM_XC_pointer, *ParaV);
         std::vector<std::map<int,std::map<std::pair<int,std::array<int,3>>,RI::Tensor<std::complex<double>>>>> Ds_XC_c = 
             RI_2D_Comm::split_m2D_ktoR<std::complex<double>>(kv_in, DM_XC_pointer, *ParaV);
+
+        std::cout << "\n\n\n******\n" << "print Ds_XC_c" << "\n******\n\n\n";
+
+        for(const auto& outerMap : Ds_XC_c)
+        {
+            for (const auto& middleMap : outerMap)
+            {
+                for (const auto& innerMap : middleMap.second)
+                {
+                    const RI::Tensor<std::complex<double>>& tensor_XC = innerMap.second;
+                    //const std::array<int, 3> & tensor_shape = tensor_XC.shape;
+                    const std::valarray<std::complex<double>>& tensor_data = *tensor_XC.data;
+                    std::cout << "\ntensor_XC shape: \n";
+                    for(int ix=0; ix<tensor_XC.shape.size(); ++ix)
+                    {
+                        std::cout << tensor_XC.shape[ix] << " ";
+                    }
+                    std::cout << "\ntensor_XC data: \n";
+                    for(size_t i = 0; i < tensor_data.size(); ++i)
+                    {
+                        std::cout <<  tensor_data[i] << " ";
+                    }
+                    std::cout << "\n\n\n";
+                }
+            }
+        }
 
         std::cout << "\n\n\n******\n" << "before Exx_LRI Vxc_fromRI" << "\n******\n\n\n";
 
