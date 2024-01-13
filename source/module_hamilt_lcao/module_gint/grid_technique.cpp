@@ -680,6 +680,7 @@ void Grid_Technique::cal_trace_lo(void)
 		}
 
 		psir_size = nbzp * max_atom * bxyz * GlobalC::ucell.nwmax;
+
 		checkCudaErrors(cudaMalloc((void **)&psir_ylm_left_global_g, psir_size * nstreams * sizeof(double)));
 		checkCudaErrors(cudaMalloc((void **)&psir_ylm_right_global_g, psir_size * nstreams * sizeof(double)));
 		checkCudaErrors(cudaMemset(psir_ylm_left_global_g, 0, psir_size * nstreams * sizeof(double)));
@@ -720,6 +721,7 @@ void Grid_Technique::cal_trace_lo(void)
 
 		psi_size_max = max_atom * bxyz * nbzp;
 		psi_size_max_per_z = max_atom * bxyz;
+
 		checkCudaErrors(cudaMallocHost((void **)&psi_input_double_global, psi_size_max * nstreams * 5 * sizeof(double)));
 		checkCudaErrors(cudaMalloc((void **)&psi_input_double_global_g, psi_size_max * nstreams * 5 * sizeof(double)));
 

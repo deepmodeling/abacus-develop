@@ -32,10 +32,15 @@ void gpu_task_generate_vlocal(const Grid_Technique &GridT,
 
   const int grid_index_ij = i * GridT.nby * GridT.nbzp + j * GridT.nbzp;
   const int nwmax = GlobalC::ucell.nwmax;
+  bool *gpu_matrix_calc_flag = new bool[max_size * GridT.nbzp];
+  for (int i = 0; i < max_size * GridT.nbzp; i++)
+    gpu_matrix_calc_flag[i] = false;
+
   for (int z_index = 0; z_index < GridT.nbzp; z_index++) {
-int num_get_psi = 0;
+    int num_get_psi = 0;
     int grid_index = grid_index_ij + z_index;
     int num_psi_pos = psi_size_max * z_index;
+    int calc_flag_index = max_size * z_index;
     int bcell_start_index = GridT.bcell_start[grid_index];
 
     for (int id = 0; id < GridT.how_many_atoms[grid_index]; id++) {
@@ -63,6 +68,7 @@ int num_get_psi = 0;
                 sqrt(dr_temp[0] * dr_temp[0] + dr_temp[1] * dr_temp[1] +
                      dr_temp[2] * dr_temp[2]);
             if (distance <= GlobalC::ORB.Phi[it_temp].getRcut()) {
+              gpu_matrix_calc_flag[calc_flag_index + id] = true;
               int pos_temp_double = num_psi_pos + num_get_psi;
               int pos_temp_int = pos_temp_double * 2;
               pos_temp_double *= 5;
@@ -87,6 +93,7 @@ int num_get_psi = 0;
           }
         }
       }
+
     }
     num_psir[z_index] = num_get_psi;
   }
@@ -101,14 +108,20 @@ int num_get_psi = 0;
     int atom_num = GridT.how_many_atoms[grid_index];
     int vldr3_index = z_index * max_size * nwmax * GridT.bxyz;
     int bcell_start_index = GridT.bcell_start[grid_index];
+    int calc_flag_index = max_size * z_index;
     for (int atom1 = 0; atom1 < atom_num; atom1++) {
 
       int iat1 = GridT.which_atom[bcell_start_index + atom1];
       int it1 = GlobalC::ucell.iat2it[iat1];
       int lo1 = GridT.trace_lo[GlobalC::ucell.itiaiw2iwt(
           it1, GlobalC::ucell.iat2ia[iat1], 0)];
+      if (gpu_matrix_calc_flag[calc_flag_index + atom1] == false)
+        continue;
 
       for (int atom2 = 0; atom2 < atom_num; atom2++) {
+        if (gpu_matrix_calc_flag[calc_flag_index + atom2] == false)
+          continue;
+
         int iat2 = GridT.which_atom[bcell_start_index + atom2];
         int it2 = GlobalC::ucell.iat2it[iat2];
         int lo2 = GridT.trace_lo[GlobalC::ucell.itiaiw2iwt(

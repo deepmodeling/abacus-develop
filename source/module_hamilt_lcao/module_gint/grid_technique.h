@@ -7,6 +7,7 @@
 #if ((defined __CUDA) /* || (defined __ROCM) */)
 #include <cuda_runtime.h>
 #endif
+#include "gint_gpu/vbatch_matrix_multiple/cuda_tools.cuh"
 #include "gint_gpu/vbatch_matrix_multiple/vbatch_matrix_mul.cuh"
 
 // Author: mohan
