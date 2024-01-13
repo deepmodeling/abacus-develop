@@ -165,4 +165,6 @@ void gpu_task_generate_vlocal(const Grid_Technique &GridT,
       }
     }
   }
+
+  delete[] gpu_matrix_calc_flag;
 }
