@@ -3,10 +3,10 @@
 #include "module_base/ylm.h"
 #include "module_base/parallel_common.h"
 
-toQO::toQO(std::string qo_basis, std::string strategy)
+toQO::toQO(std::string qo_basis, std::vector<std::string> strategies)
 {
     qo_basis_ = qo_basis;
-    strategy_ = strategy;
+    strategies_ = strategies;
 }
 
 toQO::~toQO()
@@ -118,10 +118,18 @@ void toQO::build_nao(const int ntype, const std::string* const orbital_fn)
     delete[] orbital_fn_;
 }
 
+bool toQO::orbital_filter(const int l, const std::string spec)
+{
+    std::vector<std::string> l2symbol = {"s", "p", "d", "f", "g"}; // seems enough
+    if(spec == "all") return true;
+    else if(spec.find_first_of(l2symbol[l]) != std::string::npos) return true;
+    else return false;
+}
+
 void toQO::build_hydrogen(const int ntype, const double* const charges, const int* const nmax)
 {
     ao_ = std::unique_ptr<RadialCollection>(new RadialCollection);
-    ao_->build(ntype, charges, nmax, symbols_.data(), GlobalV::qo_thr, strategy_);
+    ao_->build(ntype, charges, nmax, symbols_.data(), GlobalV::qo_thr, strategies_.data());
     ModuleBase::SphericalBesselTransformer sbt;
     ao_->set_transformer(sbt);
     
@@ -162,7 +170,7 @@ void toQO::build_pswfc(const int ntype, const std::string* const pspot_fn, const
         int _nchi_it = 0;
         for(int l = 0; l <= ao_->lmax(itype); l++)
         {
-            _nchi_it += (2*l+1)*ao_->nzeta(itype, l);
+            if(orbital_filter(l, strategies_[itype])) _nchi_it += (2*l+1)*ao_->nzeta(itype, l);
         }
         nchi_ += _nchi_it * na_[itype];
     }
@@ -227,14 +235,15 @@ void toQO::calculate_ovlp_R(const int iR)
                     mis.push_back(mi_abs);
                     if(mi_abs != 0) mis.push_back(-mi_abs);
                 }
+                if((!orbital_filter(li, strategies_[it]))&&(qo_basis_ == "pswfc")) continue;
     // RADIAL FUNCTIONS ARE ORGANIZED BY (l, zeta), SO FOR EACH l, GET THE MAXIMUM zeta
                 int nzetai = ao_->nzeta(it, li);
     // FOR (l, zeta) OF ATOM itia, SPECIFY A RADIAL ATOMIC ORBITAL
                 for(int izetai = 0; izetai < nzetai; izetai++)
                 {
     // FOR EACH RADIAL ATOMIC ORBITAL, SPECIFY A SPHERICAL HARMONIC
-                    for(int mi = -li; mi <= li; mi++) // natural but it's not how ABACUS arrange orbitals
-                    //for(int mi : mis)
+                    //for(int mi = -li; mi <= li; mi++) // natural but it's not how ABACUS arrange orbitals
+                    for(int mi : mis)
                     {
     // HERE WE GET flzeta(r)*Ylm(theta, phi),
     // THEN ANOTHER ORBITAL...(jt, ja, lj, izetaj, mj)
@@ -257,8 +266,8 @@ void toQO::calculate_ovlp_R(const int iR)
                                     int nzetaj = nao_->nzeta(jt, lj);
                                     for(int izetaj = 0; izetaj < nzetaj; izetaj++)
                                     {
-                                        for(int mj = -lj; mj <= lj; mj++) // natural but it's not how ABACUS arrange orbitals
-                                        //for(int mj : mjs)
+                                        //for(int mj = -lj; mj <= lj; mj++) // natural but it's not how ABACUS arrange orbitals
+                                        for(int mj : mjs)
                                         {
     // TWO ATOMIC ORBITALS ARE SPECIFIED, THEN WE NEED TO CALCULATE THE OVERLAP IN SUPERCELL
                                             ModuleBase::Vector3<double> rij = p_ucell_->atoms[it].tau[ia] - p_ucell_->atoms[jt].tau[ja];
@@ -292,6 +301,7 @@ void toQO::calculate_ovlp_R(const int iR)
             }
         }
     }
+    write_ovlp(ovlp_R_[iR_save], 0);
 }
 
 void toQO::calculate_ovlp_k(int ik)

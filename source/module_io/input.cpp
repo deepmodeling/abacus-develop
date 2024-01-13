@@ -630,9 +630,9 @@ void Input::Default(void)
     //==========================================================
     qo_switch = false;
     qo_basis = "hydrogen";
-    qo_strategy = "minimal";
+    qo_strategy = {"minimal-valence"};
     qo_thr = 1e-6;
-    qo_screening_coeff = 0.1;
+    qo_screening_coeff = {0.1};
 
     return;
 }
@@ -2295,14 +2295,14 @@ bool Input::Read(const std::string& fn)
         else if (strcmp("qo_basis", word) == 0){
             read_value(ifs, qo_basis);
         }
-        else if (strcmp("qo_strategy", word) == 0){
-            read_value(ifs, qo_strategy);
-        }
         else if (strcmp("qo_thr", word) == 0){
             read_value(ifs, qo_thr);
         }
+        else if (strcmp("qo_strategy", word) == 0){
+            read_value2stdvector(ifs, qo_strategy);
+        }
         else if (strcmp("qo_screening_coeff", word) == 0){
-            read_value(ifs, qo_screening_coeff);
+            read_value2stdvector(ifs, qo_screening_coeff);
         }
         else
         {
@@ -3069,9 +3069,35 @@ void Input::Default_2(void) // jiyy add 2019-08-04
 
     if(qo_switch)
     {
+        /* parameter logic of QO */
         out_mat_hs[0] = 1; // print H(k) and S(k)
         out_wfc_lcao = 1; // print wave function in lcao basis in kspace
         symmetry = "-1"; // disable kpoint reduce
+        if(qo_basis == "hydrogen")
+        {
+            /* seems need to do nothing */
+        }
+        else if(qo_basis == "pswfc")
+        {
+            if(qo_screening_coeff.size() != ntype)
+            {
+                double default_screening_coeff = (qo_screening_coeff.size() == 1)? qo_screening_coeff[0]: 0.1;
+                qo_screening_coeff.resize(ntype, default_screening_coeff);
+            }
+        }
+        if(qo_strategy.size() != ntype)
+        {
+            if(qo_strategy.size() == 1)
+            {
+                qo_strategy.resize(ntype, qo_strategy[0]);
+            }
+            else
+            {
+                std::string default_strategy = (qo_basis == "hydrogen")? "minimal-valence": "all";
+                qo_strategy.resize(ntype, default_strategy);
+            }
+        }
+
     }
   
     // set nspin with noncolin
@@ -3600,9 +3626,12 @@ void Input::Bcast()
 
     Parallel_Common::bcast_bool(qo_switch);
     Parallel_Common::bcast_string(qo_basis);
-    Parallel_Common::bcast_string(qo_strategy);
     Parallel_Common::bcast_double(qo_thr);
-    Parallel_Common::bcast_double(qo_screening_coeff);
+    /* broadcasting std::vector is sometime a annorying task... */
+    if (GlobalV::MY_RANK != 0) qo_strategy.resize(ntype);
+    Parallel_Common::bcast_string(qo_strategy.data(), ntype);
+    if (GlobalV::MY_RANK != 0) qo_screening_coeff.resize(ntype);
+    Parallel_Common::bcast_double(qo_screening_coeff.data(), ntype);
     return;
 }
 #endif
@@ -4153,11 +4182,19 @@ void Input::Check(void)
     }
     if(qo_switch)
     {
+        /* first about rationality of parameters */
         if(qo_basis == "pswfc")
         {
-            if(qo_screening_coeff < 1e-6)
+            for(auto screen_coeff: qo_screening_coeff)
             {
-                ModuleBase::WARNING_QUIT("INPUT", "screening coefficient of pswfc must be larger than 0");
+                if(screen_coeff < 0)
+                {
+                    ModuleBase::WARNING_QUIT("INPUT", "screening coefficient must >= 0 to tune the pswfc decay");
+                }
+                if(std::fabs(screen_coeff) < 1e-6)
+                {
+                    ModuleBase::WARNING("INPUT", "every low screening coefficient might yield very high computational cost");
+                }
             }
         }
         else if(qo_basis == "hydrogen")
@@ -4167,6 +4204,9 @@ void Input::Check(void)
                 ModuleBase::WARNING("INPUT", "too high the convergence threshold might yield unacceptable result");
             }
         }
+        /* then size of std::vector<> parameters */
+        if(qo_screening_coeff.size() != ntype) ModuleBase::WARNING_QUIT("INPUT", "qo_screening_coeff.size() != ntype");
+        if(qo_strategy.size() != ntype) ModuleBase::WARNING_QUIT("INPUT", "qo_strategy.size() != ntype");
     }
 
     return;
