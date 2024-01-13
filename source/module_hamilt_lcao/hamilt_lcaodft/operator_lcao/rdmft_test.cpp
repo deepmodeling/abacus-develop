@@ -308,7 +308,7 @@ void psiDotPsi<double>(const Parallel_Orbitals* ParaV, const Parallel_2D& para_E
 
 
 // wg_wfcHwfc = wg*wfcHwfc + wg_wfcHwfc
-// Default symbol=0. When symbol = 0, 1, 2, 3, 4, wg = wg, 0.5*wg, g(wg), 0.5*g(wg), d_g(wg)/d_ewg respectively.
+// Default symbol=0. When symbol = 0, 1, 2, 3, 4, wg = wg, 0.5*wg, g(wg), 0.5*g(wg), d_g(wg)/d_wg respectively.
 void wgMul_wfcHwfc(const ModuleBase::matrix& wg, const ModuleBase::matrix& wfcHwfc, ModuleBase::matrix& wg_wfcHwfc,
                         int symbol, const std::string XC_func_rdmft, const double alpha)
 {
@@ -343,7 +343,7 @@ void add_wg(const ModuleBase::matrix& wg, const ModuleBase::matrix& wfcHwfc_TV_i
 }
 
 
-//give certain wg_wfcHwfc, get the corresponding energy
+// give certain wg_wfcHwfc, get the corresponding energy
 double sumWg_getEnergy(const ModuleBase::matrix& wg_wfcHwfc)
 {
     double energy = 0.0;
@@ -355,44 +355,11 @@ double sumWg_getEnergy(const ModuleBase::matrix& wg_wfcHwfc)
 }
 
 
-// return the function of eta, g(eta)=eta, that is HF functional
-// When symbol = 0, 1, 2, 3, 4, 5, return eta, 0.5*eta, g(eta), 0.5*g(eta), d_g(eta)/d_eta, 1.0 respectively. Default symbol=0.
+// for HF, Muller and power functional, g(wg) = wg, wg^0.5, wg^alpha respectively.
+// when symbol = 0, 1, 2, 3, 4, 5, return eta, 0.5*eta, g(eta), 0.5*g(eta), d_g(eta)/d_eta, 1.0 respectively.
+// Default symbol=0, XC_func_rdmft="HF", alpha=0.656
 double wg_func(double eta, int symbol, const std::string XC_func_rdmft, double alpha)
 {
-    // if( XC_func_rdmft == "HF" )
-    // {
-    //     if( symbol==0 ) return eta;
-    //     else if ( symbol==1 ) return 0.5*eta;
-    //     else if ( symbol==2 ) return eta;
-    //     else if ( symbol==3 ) return 0.5*eta;
-    //     else if ( symbol==4 ) return 1.0;
-    //     else if ( symbol==5 ) return 1.0;
-    //     else 
-    //     {
-    //         std::cout << "\n!!!!!!\nThere may be some errors when calling wg_fun()\n!!!!!!\n";
-    //         return eta ;
-    //     }
-    // }
-    // else if( XC_func_rdmft == "power" )
-    // {
-    //     if( symbol==0 ) return eta;
-    //     else if ( symbol==1 ) return 0.5*eta;
-    //     else if ( symbol==2 ) return std::pow(eta, alpha);
-    //     else if ( symbol==3 ) return 0.5*std::pow(eta, alpha);
-    //     else if ( symbol==4 ) return alpha*std::pow(eta, alpha-1.0);
-    //     else if ( symbol==5 ) return 1.0;
-    //     else 
-    //     {
-    //         std::cout << "\n!!!!!!\nThere may be some errors when calling wg_fun()\n!!!!!!\n";
-    //         return eta ;
-    //     }
-    // }
-    // else
-    // {
-    //     std::cout << "\n!!!!!!\nThere may be some errors when calling wg_fun()\n!!!!!!\n";
-    //     return eta ;
-    // }
-
     if( XC_func_rdmft == "HF" ) alpha = 1.0;
     else if( XC_func_rdmft == "Muller" ) alpha = 0.5;
     else if( XC_func_rdmft == "power" ) ;

@@ -341,7 +341,7 @@ void add_psi(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& wg, psi::
                 psi::Psi<TK>& psi_XC, psi::Psi<TK>& wg_Hpsi, const std::string XC_func_rdmft = "HF", const double alpha = 0.656)
 {
     const int nk = psi_TV.get_nk();
-    const int nbn_local = psi_TV.get_nbands();  ///////////////////////////////////////////const int nbn_local = psi_TV.get_nbands(); ParaV->ncol_bands
+    const int nbn_local = psi_TV.get_nbands();
     const int nbs_local = psi_TV.get_nbasis();
     wgMulPsi(ParaV, wg, psi_TV);
     wgMulPsi(ParaV, wg, psi_hartree);
@@ -381,8 +381,7 @@ void add_wg(const ModuleBase::matrix& wg, const ModuleBase::matrix& wfcHwfc_TV_i
 double sumWg_getEnergy(const ModuleBase::matrix& wg_wfcHwfc);
 
 
-// for test add a function and call it in module_elecstate/elecstate_lcao.cpp
-// !!!just used for k-dependent grid integration. For gamma only algorithms, transfer Gint_k& GK_in to Gint_Gamma& GG_in and use it in Veff_rdmft<OperatorLCAO<TK, TR>>
+// realization of energy and energy gradient in RDMFT
 template <typename TK, typename TR, typename T_Gint>
 double rdmft_cal(LCAO_Matrix* LM_in,
                         Parallel_Orbitals* ParaV,
@@ -409,26 +408,8 @@ double rdmft_cal(LCAO_Matrix* LM_in,
 
     // get local index and global k-points of wfc
     const int nk_total = wfc.get_nk();
-    const int nbands_local = wfc.get_nbands();  // const int nbands_local = wfc_.get_nbands();  ParaV->ncol_bands
+    const int nbands_local = wfc.get_nbands();
     const int nbasis_local = wfc.get_nbasis();
-
-    // if( GlobalV::GAMMA_ONLY_LOCAL )
-    // {
-    //     psi::Psi<TK> wfc(nk_total, nbands_local, nbasis_local);
-    //     // TK* pwfc_ = wfc_.get_pointer();
-    //     // TK* pwfc = wfc.get_pointer();
-    //     for(int ik=0; ik<nk_total; ++ik)
-    //     {
-    //         for(int inbn=0; inbn<nbands_local; ++inbn)
-    //         {
-    //             for(int inbs=0; inbs<nbasis_local; ++inbs) wfc(ik, inbn, inbs) = wfc_(ik, inbn, inbs);
-    //         }
-    //     }
-    // }
-    // else
-    // {
-    //     psi::Psi<TK> wfc(wfc_);
-    // }
     
     // create desc[] and something about MPI to Eij(nbands*nbands)
     Parallel_2D para_Eij;
@@ -460,7 +441,6 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     }
 
     /****** get every Hamiltion matrix ******/
-
     hamilt::OperatorLCAO<TK, TR>* V_ekinetic_potential = new hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>(
         LM_in,
         kvec_d_in,
@@ -535,7 +515,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         std::vector< const std::vector<TK>* > DM_XC_pointer(nk_total);
         for(int ik=0; ik<nk_total; ++ik) DM_XC_pointer[ik] = &DM_XC[ik];
 
-        // get wg_wfc = g(wg)*wfc
+        // get wg_wfc = g(wg)*conj(wfc), different XC_functional has different g(wg)
         psi::Psi<TK> wg_wfc(wfc);
         conj_psi(wg_wfc);
         wgMulPsi(ParaV, wg, wg_wfc, 2, XC_func_rdmft, alpha_power);
@@ -553,53 +533,44 @@ double rdmft_cal(LCAO_Matrix* LM_in,
 
         // transfer the DM_XC to appropriate format
         std::vector<std::map<int,std::map<std::pair<int,std::array<int,3>>,RI::Tensor<double>>>> Ds_XC_d = 
-            RI_2D_Comm::split_m2D_ktoR<double, std::vector<TK>>(kv_in, DM_XC_pointer, *ParaV);
+            RI_2D_Comm::split_m2D_ktoR<double>(kv_in, DM_XC_pointer, *ParaV);
         std::vector<std::map<int,std::map<std::pair<int,std::array<int,3>>,RI::Tensor<std::complex<double>>>>> Ds_XC_c = 
-            RI_2D_Comm::split_m2D_ktoR<std::complex<double>, std::vector<TK>>(kv_in, DM_XC_pointer, *ParaV);
+            RI_2D_Comm::split_m2D_ktoR<std::complex<double>>(kv_in, DM_XC_pointer, *ParaV);
 
-        Exx_LRI<double> Vxc_fromRI_d(GlobalC::exx_info.info_ri);
-        Exx_LRI<std::complex<double>> Vxc_fromRI_c(GlobalC::exx_info.info_ri);
-
+        // provide the Ds_XC to V_XC
+        // when we doing V_XC.contributeHk(ik), we get HK_XC constructed by the special DM_XC
         if (GlobalC::exx_info.info_ri.real_number)
         {
+            Exx_LRI<double> Vxc_fromRI_d(GlobalC::exx_info.info_ri);
             Vxc_fromRI_d.init(MPI_COMM_WORLD, kv_in);
             Vxc_fromRI_d.cal_exx_ions();
             Vxc_fromRI_d.cal_exx_elec(Ds_XC_d, *ParaV);
 
             V_XC = new hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>>(
-            LM_in,
-            &HR_XC,
-            &HK_XC,
-            kv_in,
-            &Vxc_fromRI_d.Hexxs
-        );
+                LM_in,
+                &HR_XC,
+                &HK_XC,
+                kv_in,
+                &Vxc_fromRI_d.Hexxs
+            );
         }
         else
         {
+            Exx_LRI<std::complex<double>> Vxc_fromRI_c(GlobalC::exx_info.info_ri);
             Vxc_fromRI_c.init(MPI_COMM_WORLD, kv_in);
             Vxc_fromRI_c.cal_exx_ions();
             Vxc_fromRI_c.cal_exx_elec(Ds_XC_c, *ParaV);
 
             V_XC = new hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>>(
-            LM_in,
-            &HR_XC,
-            &HK_XC,
-            kv_in,
-            nullptr,
-            &Vxc_fromRI_c.Hexxs
-        );
+                LM_in,
+                &HR_XC,
+                &HK_XC,
+                kv_in,
+                nullptr,
+                &Vxc_fromRI_c.Hexxs
+            );
         }
-
-        // // test
-        // V_XC = new hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>>(
-        //     LM_in,
-        //     &HR_XC,
-        //     &HK_XC,
-        //     kv_in
-        // );
-
     }
-
     /****** get every Hamiltion matrix ******/
 
     // in gamma only, must calculate HR_hartree before HR_local
@@ -635,7 +606,9 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     std::vector<TK> Eij_hartree(nrow_bands*ncol_bands);
     std::vector<TK> Eij_XC(nrow_bands*ncol_bands);
 
-    //calculate wg_wfcHamiltWfc, wg_HamiltWfc and Etotal
+    /****** get wg_wfcHamiltWfc, wg_HamiltWfc and Etotal ******/
+
+    //calculate Hwfc, wfcHwfc for each potential
     for(int ik=0; ik<nk_total; ++ik)
     {
         // get the HK with ik-th k vector, the result is stored in HK_TV, HK_hartree and HK_XC respectively
@@ -659,16 +632,18 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         set_zero_vector(HK_XC);
     }
 
-    // this would transfer the value of H_wfc_TV, H_wfc_hartree, H_wfc_XC
-    // get the gradient of energy with respect to the wfc
+    // !this would transfer the value of H_wfc_TV, H_wfc_hartree, H_wfc_XC
+    // get the gradient of energy with respect to the wfc, i.e., wg_HamiltWfc
     add_psi(ParaV, wg, H_wfc_TV, H_wfc_hartree, H_wfc_XC, wg_HamiltWfc, XC_func_rdmft, alpha_power);
 
-    // get the gradient of energy with respect to the occupation numbers
+    // get the gradient of energy with respect to the occupation numbers, i.e., wg_wfcHamiltWfc
     add_wg(wg, wfcHwfc_TV, wfcHwfc_hartree, wfcHwfc_XC, wg_wfcHamiltWfc, XC_func_rdmft, alpha_power);
 
     // get the total energy
     add_wg(wg, wfcHwfc_TV, wfcHwfc_hartree, wfcHwfc_XC, wg_forEtotal, XC_func_rdmft, alpha_power, 1);
     double Etotal_RDMFT = sumWg_getEnergy(wg_forEtotal);
+
+    /****** get wg_wfcHamiltWfc, wg_HamiltWfc and Etotal ******/
 
     // for E_TV
     ModuleBase::matrix wg_forETV(wg.nr, wg.nc, true);
