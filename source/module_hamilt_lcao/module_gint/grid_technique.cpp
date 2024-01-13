@@ -77,6 +77,9 @@ Grid_Technique::~Grid_Technique()
     checkCudaErrors(cudaFreeHost(atom_pair_right_info_global));
     checkCudaErrors(cudaFree(atom_pair_right_info_global_g));
 
+	checkCudaErrors(cudaFreeHost(atom_pair_k_info_global));
+	checkCudaErrors(cudaFree(atom_pair_k_info_global_g));
+
     checkCudaErrors(cudaFreeHost(atom_pair_lda_global));
     checkCudaErrors(cudaFree(atom_pair_lda_global_g));
 
@@ -691,6 +694,13 @@ void Grid_Technique::cal_trace_lo(void)
 		checkCudaErrors(cudaMallocHost((void **)&atom_pair_right_info_global, atom_pair_size_over_nbz * nstreams * sizeof(int)));
 		checkCudaErrors(cudaMalloc((void **)&atom_pair_right_info_global_g, atom_pair_size_over_nbz * nstreams * sizeof(int)));
 
+		checkCudaErrors(cudaMallocHost((void **)&atom_pair_k_info_global, atom_pair_size_over_nbz * sizeof(int)));
+		checkCudaErrors(cudaMalloc((void **)&atom_pair_k_info_global_g, atom_pair_size_over_nbz * sizeof(int)));
+		for (int i = 0;i < atom_pair_size_over_nbz;i++)
+		{
+			atom_pair_k_info_global[i] = bxyz;
+		}
+		checkCudaErrors(cudaMemcpy(atom_pair_k_info_global_g, atom_pair_k_info_global, atom_pair_size_over_nbz * sizeof(int), cudaMemcpyHostToDevice));
 		checkCudaErrors(cudaMallocHost((void **)&atom_pair_lda_global, atom_pair_size_over_nbz * nstreams * sizeof(int)));
 		checkCudaErrors(cudaMalloc((void **)&atom_pair_lda_global_g, atom_pair_size_over_nbz * nstreams * sizeof(int)));
 

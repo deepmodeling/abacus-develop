@@ -80,6 +80,8 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
 
             int *atom_pair_A_m_g = &GridT.atom_pair_left_info_global_g[GridT.atom_pair_size_over_nbz * stream_num];
             int *atom_pair_B_n_g = &GridT.atom_pair_right_info_global_g[GridT.atom_pair_size_over_nbz * stream_num];
+            int *atom_pair_k_g = GridT.atom_pair_k_info_global_g;
+
             int *atom_pair_lda_g = &GridT.atom_pair_lda_global_g[GridT.atom_pair_size_over_nbz * stream_num];
             int *atom_pair_ldb_g = &GridT.atom_pair_ldb_global_g[GridT.atom_pair_size_over_nbz * stream_num];
             int *atom_pair_ldc_g = &GridT.atom_pair_ldc_global_g[GridT.atom_pair_size_over_nbz * stream_num];
@@ -160,7 +162,7 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
                                                                                 psir_ylm_right_g);
             checkCudaLastError();
             GridT.fastest_matrix_mul(max_m, max_n,
-                                     atom_pair_A_m_g, atom_pair_B_n_g, GridT.bxyz,
+                                     atom_pair_A_m_g, atom_pair_B_n_g, atom_pair_k_g,
                                      atom_pair_mat_A_array_g, atom_pair_lda_g,
                                      atom_pair_mat_B_array_g, atom_pair_ldb_g,
                                      atom_pair_mat_C_array_g, atom_pair_ldc_g,

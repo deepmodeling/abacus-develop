@@ -156,6 +156,8 @@ public:
 	int *atom_pair_left_info_global_g;
 	int *atom_pair_right_info_global;
 	int *atom_pair_right_info_global_g;
+	int *atom_pair_k_info_global;
+	int *atom_pair_k_info_global_g;
 
 	int *atom_pair_lda_global;
 	int *atom_pair_lda_global_g;
@@ -180,7 +182,7 @@ public:
 
 	int *num_psir_global;
 	int *num_psir_global_g;
-	func_type fastest_matrix_mul;
+	matrix_multiple_func_type fastest_matrix_mul;
 private:
 	void init_gpu_gint_variables();
 	

@@ -216,7 +216,7 @@ template <typename T, int DIM_X, int DIM_Y,
          int DIM_XB, int DIM_YB>
 static __global__
 void vbatched_gemm_kernel(
-    int* M, int* N, int K,
+    int* M, int* N, int *K,
     T * * global_A_array, int* global_lda,
     T * * global_B_array, int* global_ldb,
     T              ** global_C_array, int* global_ldc)
@@ -227,6 +227,7 @@ void vbatched_gemm_kernel(
     int batchid = blockIdx.z;
     int local_M = (int)M[batchid];
     int local_N = (int)N[batchid];
+    int local_K = (int)K[batchid];
 
     if( blockIdx.x >= (local_M+BLK_M-1)/BLK_M ) return;
     if( blockIdx.y >= (local_N+BLK_N-1)/BLK_N ) return;
@@ -241,7 +242,7 @@ void vbatched_gemm_kernel(
                          DIM_XA, DIM_YA,
                          DIM_XB, DIM_YB, 
                          (BLK_M/DIM_X), (BLK_N/DIM_Y)>
-                        (local_M, local_N, K,
+                        (local_M, local_N, local_K,
                         global_A_array[batchid], (int)global_lda[batchid],
                         global_B_array[batchid], (int)global_ldb[batchid],
                         global_C_array[batchid], (int)global_ldc[batchid],
@@ -258,9 +259,9 @@ template <typename T, int DIM_X, int DIM_Y,
          int DIM_XA, int DIM_YA,
          int DIM_XB, int DIM_YB>
 void vbatched_gemm_impl(int max_m, int max_n,
-                 int* m, int* n, int k,
-                 T  * * global_A_array, int* global_lda,
-                 T * * global_B_array, int* global_ldb,
+                 int* m, int* n, int* k,
+                 T ** global_A_array, int* global_lda,
+                 T ** global_B_array, int* global_ldb,
                  T ** global_C_array, int* global_ldc,
                  int batchCount, cudaStream_t stream)
 {
@@ -286,11 +287,13 @@ void vbatched_gemm_impl(int max_m, int max_n,
                          DIM_XA, DIM_YA,
                          DIM_XB, DIM_YB>
                          <<<dimGrid, dimBlock, shared_mem_size, stream>>>
-                         (n + i * max_batch_count, m + i * max_batch_count, k,
+                         (n + i * max_batch_count, m + i * max_batch_count, k + i * max_batch_count,
                          global_B_array + i * max_batch_count, global_ldb + i * max_batch_count,
                          global_A_array + i * max_batch_count, global_lda + i * max_batch_count,
                          global_C_array + i * max_batch_count, global_ldc + i * max_batch_count);
-        checkCudaLastError();
+        #ifdef __DEBUG
+            checkCudaLastError();
+        #endif
     }
     if (remain_num > 0)
     {
@@ -300,22 +303,24 @@ void vbatched_gemm_impl(int max_m, int max_n,
                          DIM_XA, DIM_YA,
                          DIM_XB, DIM_YB>
                          <<<dimGrid, dimBlock, shared_mem_size, stream>>>
-                         (n + loop_num * max_batch_count, m + loop_num * max_batch_count, k,
+                         (n + loop_num * max_batch_count, m + loop_num * max_batch_count, k + loop_num * max_batch_count,
                          global_B_array + loop_num * max_batch_count, global_ldb + loop_num * max_batch_count,
                          global_A_array + loop_num * max_batch_count, global_lda + loop_num * max_batch_count,
-                         global_C_array + loop_num * max_batch_count, global_ldc + loop_num * max_batch_count);    
-        checkCudaLastError();
+                         global_C_array + loop_num * max_batch_count, global_ldc + loop_num * max_batch_count);
+        #ifdef __DEBUG
+            checkCudaLastError();
+        #endif
     }
 }
 
 template <typename T, int DIM_X, int DIM_Y, int BLK_M, int BLK_N, int BLK_K,
           int DIM_XA, int DIM_YA, int DIM_XB, int DIM_YB>
 void gemm_time_measure(int max_m, int max_n,
-                 int* m, int* n, int k,
+                 int* m, int* n, int *k,
                  T ** global_A_array, int* global_lda,
                  T ** global_B_array, int* global_ldb,
                  T ** global_C_array, int* global_ldc,
-                 int batchCount, cudaStream_t stream, float &fast_time, func_type &fastest_algo,
+                 int batchCount, cudaStream_t stream, float &fast_time, matrix_multiple_func_type &fastest_algo,
                  double *cpu_result, double * h_global_C, double *d_global_C)
 {
     cudaEvent_t start, stop;
@@ -351,19 +356,21 @@ void gemm_time_measure(int max_m, int max_n,
         fast_time = milliseconds;
         fastest_algo = vbatched_gemm_impl<T, DIM_X, DIM_Y, BLK_M, BLK_N, BLK_K, DIM_XA, DIM_YA, DIM_XB, DIM_YB>;
         #ifdef __DEBUG
-        std::cout << "found! fastest time: " << fast_time << std::endl;
-        std::cout << DIM_X << ","<< DIM_Y<< ","<< BLK_M<< ","<< BLK_N<< ","<< BLK_K<< ","<< DIM_XA<< ","<< DIM_YA<< ","<< DIM_XB<< ","<< DIM_YB << std::endl;
+            std::cout << "found! fastest time: " << fast_time << std::endl;
+            std::cout << DIM_X << ","<< DIM_Y<< ","<< BLK_M<< ","<< BLK_N<< ","<< BLK_K<< ","<< DIM_XA<< ","<< DIM_YA<< ","<< DIM_XB<< ","<< DIM_YB << std::endl;
         #endif
     }
 }
 
-void gemm_algo_selector(int matrix_k, func_type & fastest_algo)
+void gemm_algo_selector(int matrix_k, matrix_multiple_func_type & fastest_algo)
 {
 
     int batchCount_per_type = 32;
     int batchCount = batchCount_per_type * GlobalC::ucell.ntype * GlobalC::ucell.ntype;
     int *h_m = new int[batchCount];
     int *h_n = new int[batchCount];
+    int *h_k = new int[batchCount];
+
     int *h_global_lda = new int[batchCount];
     int *h_global_ldb = new int[batchCount];
     int *h_global_ldc = new int[batchCount];
@@ -389,6 +396,7 @@ void gemm_algo_selector(int matrix_k, func_type & fastest_algo)
     // Allocate device memory
     int *d_m;
     int *d_n;
+    int *d_k;
     int *d_global_lda;
     int *d_global_ldb;
     int *d_global_ldc;
@@ -406,9 +414,12 @@ void gemm_algo_selector(int matrix_k, func_type & fastest_algo)
 
     checkCuda(cudaMalloc(&d_m, batchCount * sizeof(int)));
     checkCuda(cudaMalloc(&d_n, batchCount * sizeof(int)));
+    checkCuda(cudaMalloc(&d_k, batchCount * sizeof(int)));
+
     checkCuda(cudaMalloc(&d_global_lda, batchCount * sizeof(int)));
     checkCuda(cudaMalloc(&d_global_ldb, batchCount * sizeof(int)));
     checkCuda(cudaMalloc(&d_global_ldc, batchCount * sizeof(int)));
+
     checkCuda(cudaMalloc(&d_global_A_array, batchCount * sizeof(double *)));
     checkCuda(cudaMalloc(&d_global_B_array, batchCount * sizeof(double *)));
     checkCuda(cudaMalloc(&d_global_C_array, batchCount * sizeof(double *)));
@@ -427,6 +438,8 @@ void gemm_algo_selector(int matrix_k, func_type & fastest_algo)
             {
                 h_m[index] = GlobalC::ucell.atoms[j].nw;
                 h_n[index] = GlobalC::ucell.atoms[k].nw;
+                h_k[index] = matrix_k;
+
                 h_global_lda[index] = matrix_k;
                 h_global_ldb[index] = matrix_k;
                 h_global_ldc[index] = GlobalC::ucell.atoms[k].nw;
@@ -442,6 +455,7 @@ void gemm_algo_selector(int matrix_k, func_type & fastest_algo)
 
     checkCuda(cudaMemcpy(d_m, h_m, batchCount * sizeof(int), cudaMemcpyHostToDevice));
     checkCuda(cudaMemcpy(d_n, h_n, batchCount * sizeof(int), cudaMemcpyHostToDevice));
+    checkCuda(cudaMemcpy(d_k, h_k, batchCount * sizeof(int), cudaMemcpyHostToDevice));
 
     checkCuda(cudaMemcpy(d_global_lda, h_global_lda, batchCount * sizeof(int), cudaMemcpyHostToDevice));
     checkCuda(cudaMemcpy(d_global_ldb, h_global_ldb, batchCount * sizeof(int), cudaMemcpyHostToDevice));
