@@ -3,6 +3,8 @@
 
 #include "module_psi/psi.h"
 #include <complex>
+#include <module_base/macros.h>
+
 
 namespace hamilt {
 
@@ -100,6 +102,17 @@ namespace hamilt {
                         const std::complex<FPTYPE>* dbecp,
                         FPTYPE* stress);
     };
+
+template <typename T, typename Device>
+struct cal_stress_mgga_op {
+    using Real = typename GetTypeReal<T>::type;
+    void operator()(
+        const int& spin,
+        const int& nrxx,
+        const Real& w1,
+        const T * gradwfc,
+        Real * crosstaus);
+};
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 template <typename FPTYPE>

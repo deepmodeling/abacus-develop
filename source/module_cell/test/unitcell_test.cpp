@@ -1385,6 +1385,60 @@ TEST_F(UcellTest,ReadAtomPositionsCAU)
 	remove("read_atom_positions.warn");
 }
 
+TEST_F(UcellTest,ReadAtomPositionsAutosetMag)
+{
+	std::string fn = "./support/STRU_MgO";
+	std::ifstream ifa(fn.c_str());
+	std::ofstream ofs_running;
+	std::ofstream ofs_warning;
+	ofs_running.open("read_atom_positions.tmp");
+	ofs_warning.open("read_atom_positions.warn");
+	//mandatory preliminaries
+	ucell->ntype = 2;
+	ucell->atoms = new Atom[ucell->ntype];
+	ucell->set_atom_flag = true;
+	GlobalV::test_pseudo_cell = 2;
+	GlobalV::BASIS_TYPE = "lcao";
+	GlobalV::deepks_setorb = true;
+	GlobalV::NSPIN = 2;
+	EXPECT_NO_THROW(ucell->read_atom_species(ifa,ofs_running));
+	EXPECT_DOUBLE_EQ(ucell->latvec.e11,4.27957);
+	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
+	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
+	//mandatory preliminaries
+	delete[] ucell->magnet.start_magnetization;
+	ucell->magnet.start_magnetization = new double[ucell->ntype];
+	ucell->read_atom_positions(ifa,ofs_running,ofs_warning);
+	for (int it = 0;it < ucell->ntype; it++)
+	{
+		for (int ia = 0;ia < ucell->atoms[it].na; ia++)
+		{
+			EXPECT_DOUBLE_EQ(ucell->atoms[it].mag[ia],1.0);
+			EXPECT_DOUBLE_EQ(ucell->atoms[it].m_loc_[ia].x,1.0);
+		}
+	}
+	//for nspin == 4
+	GlobalV::NSPIN = 4;
+	delete[] ucell->magnet.start_magnetization;
+	ucell->magnet.start_magnetization = new double[ucell->ntype];
+	ucell->read_atom_positions(ifa,ofs_running,ofs_warning);
+	for (int it = 0;it < ucell->ntype; it++)
+	{
+		for (int ia = 0;ia < ucell->atoms[it].na; ia++)
+		{
+			EXPECT_DOUBLE_EQ(ucell->atoms[it].mag[ia],sqrt(pow(1.0,2)+pow(1.0,2)+pow(1.0,2)));
+			EXPECT_DOUBLE_EQ(ucell->atoms[it].m_loc_[ia].x,1.0);
+			EXPECT_DOUBLE_EQ(ucell->atoms[it].m_loc_[ia].y,1.0);
+			EXPECT_DOUBLE_EQ(ucell->atoms[it].m_loc_[ia].z,1.0);
+		}
+	}
+	ofs_running.close();
+	ofs_warning.close();
+	ifa.close();
+	remove("read_atom_positions.tmp");
+	remove("read_atom_positions.warn");
+}
+
 TEST_F(UcellTest,ReadAtomPositionsWarning1)
 {
 	std::string fn = "./support/STRU_MgO_WarningC1";

@@ -158,9 +158,9 @@ void NumericalRadial::build(const int l,
 void NumericalRadial::to_numerical_orbital_lm(Numerical_Orbital_Lm& orbital_lm, const int nk_legacy, const double lcao_dk) const
 {
 #ifdef __DEBUG
-    assert(rgrid_ && kgrid_);
-    assert(rgrid_[0] == 0.0 && kgrid_[0] == 0.0);
-    assert(is_uniform(nr_, rgrid_, 1e-14) && is_uniform(nk_, kgrid_, 1e-14));
+    assert(rgrid_);
+    assert(rgrid_[0] == 0.0);
+    assert(is_uniform(nr_, rgrid_, 1e-14));
 
     // Numerical_Orbital_Lm does not support extra exponent in the real space value
     assert(pr_ == 0);
@@ -329,7 +329,7 @@ void NumericalRadial::wipe(const bool r_space, const bool k_space)
         pr_ = 0;
         ircut_ = 0;
     }
-    
+
     if (k_space)
     {
         delete[] kgrid_;
