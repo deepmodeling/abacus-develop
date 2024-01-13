@@ -297,7 +297,7 @@ std::string sc_file = "none";
 //==========================================================
 bool qo_switch = false;
 std::string qo_basis = "hydrogen";
-std::vector<std::string> qo_strategy = {"minimal-valence"};
+std::vector<std::string> qo_strategy = {};
 double qo_thr = 1.0e-6;
-std::vector<double> qo_screening_coeff = {0.1};
+std::vector<double> qo_screening_coeff = {};
 } // namespace GlobalV

@@ -630,7 +630,7 @@ void Input::Default(void)
     //==========================================================
     qo_switch = false;
     qo_basis = "hydrogen";
-    qo_strategy = {"minimal-valence"};
+    qo_strategy = {};
     qo_thr = 1e-6;
     qo_screening_coeff = {0.1};
 

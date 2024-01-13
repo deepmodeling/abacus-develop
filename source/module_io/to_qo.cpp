@@ -301,7 +301,6 @@ void toQO::calculate_ovlp_R(const int iR)
             }
         }
     }
-    write_ovlp(ovlp_R_[iR_save], 0);
 }
 
 void toQO::calculate_ovlp_k(int ik)

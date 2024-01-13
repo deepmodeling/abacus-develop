@@ -597,8 +597,8 @@ class Input
     bool qo_switch = false;
     std::string qo_basis = "hydrogen";
     double qo_thr = 1e-6;
-    std::vector<std::string> qo_strategy = {"minimal-valence"};
-    std::vector<double> qo_screening_coeff = {0.1};
+    std::vector<std::string> qo_strategy = {};
+    std::vector<double> qo_screening_coeff = {};
     
   private:
     //==========================================================
