@@ -118,7 +118,7 @@ void RI_2D_Comm::add_Hexx(
 		if(symbol == 1) std::cout << "\n\n\n******\n is_b: " << is_b << "\n******\n\n\n";
 		for(const auto &Hs_tmpA : Hs[is_b])
 		{
-			if(symbol == 1) std::cout << "\n\n\n******\n after Hs[is_b] \n******\n\n\n";
+			if(symbol == 1) std::cout << "\n\n\n******\n after Hs[is_b] !!!!!! \n******\n\n\n";
 			const TA &iat0 = Hs_tmpA.first;
 			for(const auto &Hs_tmpB : Hs_tmpA.second)
 			{
