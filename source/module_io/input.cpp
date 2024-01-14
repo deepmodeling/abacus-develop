@@ -596,6 +596,7 @@ void Input::Default(void)
     bessel_nao_sigma = 0.1;
     bessel_nao_ecut = "default";
     bessel_nao_rcut = 6.0; // -1.0 for forcing manual setting
+    bessel_nao_rcuts = {};
     bessel_nao_tolerence = 1E-12;
 
     bessel_descriptor_lmax = 2; // -1 for forcing manual setting
@@ -632,7 +633,7 @@ void Input::Default(void)
     qo_basis = "hydrogen";
     qo_strategy = {};
     qo_thr = 1e-6;
-    qo_screening_coeff = {0.1};
+    qo_screening_coeff = {};
 
     return;
 }
@@ -3073,32 +3074,25 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         out_mat_hs[0] = 1; // print H(k) and S(k)
         out_wfc_lcao = 1; // print wave function in lcao basis in kspace
         symmetry = "-1"; // disable kpoint reduce
-        if(qo_basis == "hydrogen")
-        {
-            /* seems need to do nothing */
-        }
-        else if(qo_basis == "pswfc")
-        {
-            if(qo_screening_coeff.size() != ntype)
-            {
-                double default_screening_coeff = (qo_screening_coeff.size() == 1)? qo_screening_coeff[0]: 0.1;
-                qo_screening_coeff.resize(ntype, default_screening_coeff);
-            }
-        }
-        if(qo_strategy.size() != ntype)
-        {
-            if(qo_strategy.size() == 1)
-            {
-                qo_strategy.resize(ntype, qo_strategy[0]);
-            }
-            else
-            {
-                std::string default_strategy = (qo_basis == "hydrogen")? "minimal-valence": "all";
-                qo_strategy.resize(ntype, default_strategy);
-            }
-        }
-
     }
+    if(qo_screening_coeff.size() != ntype)
+    {
+        double default_screening_coeff = (qo_screening_coeff.size() == 1)? qo_screening_coeff[0]: 0.1;
+        qo_screening_coeff.resize(ntype, default_screening_coeff);
+    }
+    if(qo_strategy.size() != ntype)
+    {
+        if(qo_strategy.size() == 1)
+        {
+            qo_strategy.resize(ntype, qo_strategy[0]);
+        }
+        else
+        {
+            std::string default_strategy = (qo_basis == "hydrogen")? "minimal-valence": "all";
+            qo_strategy.resize(ntype, default_strategy);
+        }
+    }
+
   
     // set nspin with noncolin
     if (noncolin || lspinorb)
@@ -3333,6 +3327,7 @@ void Input::Bcast()
     Parallel_Common::bcast_int(out_dos);
     Parallel_Common::bcast_bool(out_band);
     Parallel_Common::bcast_bool(out_proj_band);
+    if(GlobalV::MY_RANK != 0) out_mat_hs.resize(2); /* If this line is absent, will cause segmentation fault in io_input_test_para */
     Parallel_Common::bcast_int(out_mat_hs.data(), 2);
     Parallel_Common::bcast_bool(out_mat_hs2); // LiuXh add 2019-07-15
     Parallel_Common::bcast_bool(out_mat_t);
@@ -3596,8 +3591,11 @@ void Input::Bcast()
     /* newly support vector/list input of bessel_nao_rcut */
     int nrcut = bessel_nao_rcuts.size();
     Parallel_Common::bcast_int(nrcut);
-    if (GlobalV::MY_RANK != 0) bessel_nao_rcuts.resize(nrcut);
-    Parallel_Common::bcast_double(bessel_nao_rcuts.data(), nrcut);
+    if (nrcut != 0) /* as long as its value is really given, bcast, otherwise not */
+    {
+        bessel_nao_rcuts.resize(nrcut);
+        Parallel_Common::bcast_double(bessel_nao_rcuts.data(), nrcut);
+    }
     /* end */
     Parallel_Common::bcast_double(bessel_nao_rcut);
     Parallel_Common::bcast_double(bessel_nao_tolerence);
@@ -3628,10 +3626,13 @@ void Input::Bcast()
     Parallel_Common::bcast_string(qo_basis);
     Parallel_Common::bcast_double(qo_thr);
     /* broadcasting std::vector is sometime a annorying task... */
-    if (GlobalV::MY_RANK != 0) qo_strategy.resize(ntype);
-    Parallel_Common::bcast_string(qo_strategy.data(), ntype);
-    if (GlobalV::MY_RANK != 0) qo_screening_coeff.resize(ntype);
-    Parallel_Common::bcast_double(qo_screening_coeff.data(), ntype);
+    if (ntype != 0) /* ntype has been broadcasted before */
+    {
+        qo_strategy.resize(ntype); 
+        Parallel_Common::bcast_string(qo_strategy.data(), ntype);
+        qo_screening_coeff.resize(ntype);
+        Parallel_Common::bcast_double(qo_screening_coeff.data(), ntype);
+    }
     return;
 }
 #endif
