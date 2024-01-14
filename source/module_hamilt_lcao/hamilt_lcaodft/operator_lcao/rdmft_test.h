@@ -583,10 +583,11 @@ double rdmft_cal(LCAO_Matrix* LM_in,
                 &HK_XC,
                 kv_in,
                 nullptr,
-                &Vxc_fromRI_c.Hexxs
+                &Vxc_fromRI_c.Hexxs,
+                1
             );
 
-        std::cout << "\n\n\n\n\n\n******\n" << "Vxc_fromRI_c.Hexxs" << "\n******\n\n\n\n\n\n";
+        std::cout << "\n\n\n\n\n\n******\n" << "print Vxc_fromRI_c.Hexxs" << "\n******\n\n\n\n\n\n";
         for(const auto& outerMap : Vxc_fromRI_c.Hexxs)
         {
             std::cout << "\nVxc_fromRI_c.Hexxs Outer Map Size: " << outerMap.size() << std::endl;
@@ -606,12 +607,12 @@ double rdmft_cal(LCAO_Matrix* LM_in,
                     {
                         std::cout << tensor_XC.shape[ix] << " ";
                     }
-                    std::cout << "\ntensor_XC data: \n";
-                    for(size_t i = 0; i < tensor_data.size(); ++i)
-                    {
-                        if(i%5==0) std::cout << "\n";
-                        std::cout <<  tensor_data[i] << " ";
-                    }
+                    // std::cout << "\ntensor_XC data: \n";
+                    // for(size_t i = 0; i < tensor_data.size(); ++i)
+                    // {
+                    //     if(i%5==0) std::cout << "\n";
+                    //     std::cout <<  tensor_data[i] << " ";
+                    // }
                     std::cout << "\n\n\n";
                 }
             }
@@ -638,12 +639,12 @@ double rdmft_cal(LCAO_Matrix* LM_in,
                     {
                         std::cout << tensor_Hexx.shape[ix] << " ";
                     }
-                    std::cout << "\ntensor_Hexx data: \n";
-                    for(size_t i = 0; i < tensor_Hexx_data.size(); ++i)
-                    {
-                        if(i%5==0) std::cout << "\n";
-                        std::cout <<  tensor_Hexx_data[i] << " ";
-                    }
+                    // std::cout << "\ntensor_Hexx data: \n";
+                    // for(size_t i = 0; i < tensor_Hexx_data.size(); ++i)
+                    // {
+                    //     if(i%5==0) std::cout << "\n";
+                    //     std::cout <<  tensor_Hexx_data[i] << " ";
+                    // }
                     std::cout << "\n\n\n";
                 }
             }

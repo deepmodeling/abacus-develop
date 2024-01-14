@@ -101,7 +101,8 @@ void RI_2D_Comm::add_Hexx(
 	const double alpha,
 	const std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>> &Hs,
     const Parallel_Orbitals& pv,
-    std::vector<TK>& Hloc)
+    std::vector<TK>& Hloc,
+	int symbol)
 {
 	ModuleBase::TITLE("RI_2D_Comm","add_Hexx");
 	ModuleBase::timer::tick("RI_2D_Comm", "add_Hexx");
@@ -109,18 +110,25 @@ void RI_2D_Comm::add_Hexx(
 	const std::map<int, std::vector<int>> is_list = {{1,{0}}, {2,{kv.isk[ik]}}, {4,{0,1,2,3}}};
 	for(const int is_b : is_list.at(GlobalV::NSPIN))
 	{
+		if(symbol == 1) std::cout << "\n\n\n******\n after is_list.at(GlobalV::NSPIN) \n******\n\n\n";
 		int is0_b, is1_b;
 		std::tie(is0_b,is1_b) = RI_2D_Comm::split_is_block(is_b);
+		if(symbol == 1) std::cout << "\n\n\n******\n after split_is_block(is_b) \n******\n\n\n";
+		Hs[is_b];
+		if(symbol == 1) std::cout << "\n\n\n******\n is_b: " << is_b << "\n******\n\n\n";
 		for(const auto &Hs_tmpA : Hs[is_b])
 		{
+			if(symbol == 1) std::cout << "\n\n\n******\n after Hs[is_b] \n******\n\n\n";
 			const TA &iat0 = Hs_tmpA.first;
 			for(const auto &Hs_tmpB : Hs_tmpA.second)
 			{
+				if(symbol == 1) std::cout << "\n\n\n******\n after Hs_tmpA.second \n******\n\n\n";
 				const TA &iat1 = Hs_tmpB.first.first;
 				const TC &cell1 = Hs_tmpB.first.second;
 				const std::complex<double> frac = alpha
 					* std::exp( ModuleBase::TWO_PI*ModuleBase::IMAG_UNIT * (kv.kvec_c[ik] * (RI_Util::array3_to_Vector3(cell1)*GlobalC::ucell.latvec)) );
 				const RI::Tensor<Tdata> &H = Hs_tmpB.second;
+				if(symbol == 1) std::cout << "\n\n\n******\n after alpha \n******\n\n\n";
 				for(size_t iw0_b=0; iw0_b<H.shape[0]; ++iw0_b)
 				{
 					const int iwt0 = RI_2D_Comm::get_iwt(iat0, iw0_b, is0_b);
@@ -129,7 +137,9 @@ void RI_2D_Comm::add_Hexx(
 					{
 						const int iwt1 = RI_2D_Comm::get_iwt(iat1, iw1_b, is1_b);
                         if (pv.global2local_col(iwt1) < 0)	continue;
+						if(symbol == 1) std::cout << "\n\n\n******\n before run set_mat2d() \n******\n\n\n";
                         LCAO_Matrix::set_mat2d(iwt0, iwt1, RI::Global_Func::convert<TK>(H(iw0_b, iw1_b)) * RI::Global_Func::convert<TK>(frac), pv, Hloc.data());
+						if(symbol == 1) std::cout << "\n\n\n******\n successfully run set_mat2d() \n******\n\n\n";
 					}
 				}
 			}

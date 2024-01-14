@@ -43,7 +43,8 @@ namespace RI_2D_Comm
         const double alpha,
         const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Hs,
         const Parallel_Orbitals& pv,
-        std::vector<TK>& Hloc);
+        std::vector<TK>& Hloc,
+		int symbol = 0);
 
 	template<typename Tdata>
 	extern std::vector<std::vector<Tdata>> Hexxs_to_Hk(
