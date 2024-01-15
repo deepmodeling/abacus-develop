@@ -40,7 +40,7 @@ void Local_Orbital_wfc::gamma_file(psi::Psi<double>* psid, elecstate::ElecState*
 
     //allocate psi
     int ncol = this->ParaV->ncol_bands;
-    if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "lapack_gvx" || GlobalV::KS_SOLVER == "scalapack_gvx"
+    if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "lapack_gvx" || GlobalV::KS_SOLVER == "scalapack_gvx" || GlobalV::KS_SOLVER == "cg_in_lcao"
 #ifdef __CUSOLVER_LCAO
         || GlobalV::KS_SOLVER == "cusolver"
 #endif
