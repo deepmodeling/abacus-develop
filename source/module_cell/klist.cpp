@@ -364,6 +364,7 @@ bool K_Vectors::read_kpoints(const std::string &fn)
 			nkstot = 0;
             /* ISSUE#3482: to distinguish different kline segments */
             std::vector<int> kpt_segids;
+            kl_segids.clear(); kl_segids.shrink_to_fit();
             int kpt_segid = 0;
 			for(int iks=0; iks<nks_special; iks++)
 			{
@@ -447,6 +448,7 @@ bool K_Vectors::read_kpoints(const std::string &fn)
 			nkstot = 0;
             /* ISSUE#3482: to distinguish different kline segments */
             std::vector<int> kpt_segids;
+            kl_segids.clear(); kl_segids.shrink_to_fit();
             int kpt_segid = 0;
 			for(int iks=0; iks<nks_special; iks++)
 			{
@@ -1133,6 +1135,9 @@ void K_Vectors::mpi_k(void)
 
     Parallel_Common::bcast_int(nmp, 3);
 
+    kl_segids.resize(nkstot);
+    Parallel_Common::bcast_int(kl_segids.data(), nkstot);
+
     Parallel_Common::bcast_double(koffset, 3);
 
     this->nks = GlobalC::Pkpoints.nks_pool[GlobalV::MY_POOL];
@@ -1363,6 +1368,8 @@ void K_Vectors::mpi_k_after_vc(void)
     Parallel_Common::bcast_int(nspin);
     Parallel_Common::bcast_int(nkstot);
     Parallel_Common::bcast_int(nmp, 3);
+    kl_segids.resize(nkstot);
+    Parallel_Common::bcast_int(kl_segids.data(), nkstot);
     Parallel_Common::bcast_double(koffset, 3);
 
     this->nks = GlobalC::Pkpoints.nks_pool[GlobalV::MY_POOL];
