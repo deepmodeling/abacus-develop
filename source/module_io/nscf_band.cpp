@@ -35,17 +35,21 @@ void ModuleIO::nscf_band(
 		if (ik>0)
 		{
 			auto delta=kv.kvec_c[ik]-kv.kvec_c[ik-1];
-			klength[ik] = klength[ik-1] + delta.norm();
+			klength[ik] = klength[ik-1];
+			klength[ik] += (kv.kl_segids[ik] == kv.kl_segids[ik-1]) ? delta.norm() : 0.0;
 		}
+		/* first find if present kpoint in present pool */
 		if ( GlobalV::MY_POOL == Pkpoints->whichpool[ik] )
 		{
+			/* then get the local kpoint index, which starts definitly from 0 */
 			const int ik_now = ik - Pkpoints->startk_pool[GlobalV::MY_POOL];
+			/* if present kpoint corresponds the spin of the present one */
 			if( kv.isk[ik_now+is*nks] == is )
 			{ 
 				if ( GlobalV::RANK_IN_POOL == 0)
 				{
 					formatter::PhysicalFmt physfmt; // create a physical formatter temporarily
-					std::ofstream ofs(out_band_dir.c_str(),std::ios::app);
+					std::ofstream ofs(out_band_dir.c_str(), std::ios::app);
 					physfmt.adjust_formatter_flexible(4, 0, false); // for integer
 					ofs << physfmt.get_p_formatter()->format(ik+1);
 					physfmt.adjust_formatter_flexible(precision, 4.0/double(precision), false); // for decimal
@@ -96,7 +100,8 @@ void ModuleIO::nscf_band(
 		if (ik>0)
 		{
 			auto delta=kv.kvec_c[ik]-kv.kvec_c[ik-1];
-			klength[ik] = klength[ik-1] + delta.norm();
+			klength[ik] = klength[ik-1];
+			klength[ik] += (kv.kl_segids[ik] == kv.kl_segids[ik-1]) ? delta.norm() : 0.0;
 		}
 		if( kv.isk[ik] == is)
 		{

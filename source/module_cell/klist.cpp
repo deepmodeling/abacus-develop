@@ -362,6 +362,9 @@ bool K_Vectors::read_kpoints(const std::string &fn)
 
 			//recalculate nkstot.
 			nkstot = 0;
+            /* ISSUE#3482: to distinguish different kline segments */
+            std::vector<int> kpt_segids;
+            int kpt_segid = 0;
 			for(int iks=0; iks<nks_special; iks++)
 			{
 				ifk >> ksx[iks];
@@ -371,6 +374,9 @@ bool K_Vectors::read_kpoints(const std::string &fn)
 				//std::cout << " nkl[" << iks << "]=" << nkl[iks] << std::endl;
 				assert(nkl[iks] >= 0);
 				nkstot += nkl[iks];
+                /* ISSUE#3482: to distinguish different kline segments */
+                if((nkl[iks] == 1)&&(iks!=(nks_special-1))) kpt_segid++;
+                kpt_segids.push_back(kpt_segid);
 			}
 			assert( nkl[nks_special-1] == 1);
 
@@ -389,6 +395,7 @@ bool K_Vectors::read_kpoints(const std::string &fn)
 					kvec_c[count].x = ksx[iks-1] + is*dx;
 					kvec_c[count].y = ksy[iks-1] + is*dy;
 					kvec_c[count].z = ksz[iks-1] + is*dz;
+                    kl_segids.push_back(kpt_segids[iks-1]); /* ISSUE#3482: to distinguish different kline segments */
 					++count;
 				}
 			}
@@ -397,15 +404,14 @@ bool K_Vectors::read_kpoints(const std::string &fn)
 			kvec_c[count].x = ksx[nks_special-1];
 			kvec_c[count].y = ksy[nks_special-1];
 			kvec_c[count].z = ksz[nks_special-1];
+            kl_segids.push_back(kpt_segids[nks_special-1]); /* ISSUE#3482: to distinguish different kline segments */
 			++count;
 
 			//std::cout << " count = " << count << std::endl;
-			assert (count == nkstot );
-
-			for(int ik=0; ik<nkstot; ik++)
-			{
-				wk[ik] = 1.0;
-			}
+			assert(count == nkstot);
+            assert(kl_segids.size() == nkstot); /* ISSUE#3482: to distinguish different kline segments */
+			
+            std::for_each(wk.begin(), wk.end(), [](double& d){d = 1.0;});
 
             this->kc_done = true;
 
@@ -439,6 +445,9 @@ bool K_Vectors::read_kpoints(const std::string &fn)
 
 			//recalculate nkstot.
 			nkstot = 0;
+            /* ISSUE#3482: to distinguish different kline segments */
+            std::vector<int> kpt_segids;
+            int kpt_segid = 0;
 			for(int iks=0; iks<nks_special; iks++)
 			{
 				ifk >> ksx[iks];
@@ -448,6 +457,9 @@ bool K_Vectors::read_kpoints(const std::string &fn)
 				//std::cout << " nkl[" << iks << "]=" << nkl[iks] << std::endl;
 				assert(nkl[iks] >= 0);
 				nkstot += nkl[iks];
+                /* ISSUE#3482: to distinguish different kline segments */
+                if((nkl[iks] == 1)&&(iks!=(nks_special-1))) kpt_segid++;
+                kpt_segids.push_back(kpt_segid);
 			}
 			assert( nkl[nks_special-1] == 1);
 
@@ -461,11 +473,12 @@ bool K_Vectors::read_kpoints(const std::string &fn)
 				double dy = (ksy[iks] - ksy[iks-1]) / nkl[iks-1];
 				double dz = (ksz[iks] - ksz[iks-1]) / nkl[iks-1];
 //				GlobalV::ofs_running << " dx=" << dx << " dy=" << dy << " dz=" << dz << std::endl;
-				for(int is=0; is<nkl[iks-1]; is++) // ISSUE 3482, nkl = 1 will cause duplicate kpoints if it is not the last one
+				for(int is=0; is<nkl[iks-1]; is++)
 				{
 					kvec_d[count].x = ksx[iks-1] + is*dx;
 					kvec_d[count].y = ksy[iks-1] + is*dy;
 					kvec_d[count].z = ksz[iks-1] + is*dz;
+                    kl_segids.push_back(kpt_segids[iks-1]); /* ISSUE#3482: to distinguish different kline segments */
 					++count;
 				}
 			}
@@ -474,18 +487,16 @@ bool K_Vectors::read_kpoints(const std::string &fn)
 			kvec_d[count].x = ksx[nks_special-1];
 			kvec_d[count].y = ksy[nks_special-1];
 			kvec_d[count].z = ksz[nks_special-1];
+            kl_segids.push_back(kpt_segids[nks_special-1]); /* ISSUE#3482: to distinguish different kline segments */
 			++count;
 
 			//std::cout << " count = " << count << std::endl;
-			assert (count == nkstot );
+			assert(count == nkstot );
+            assert(kl_segids.size() == nkstot); /* ISSUE#3482: to distinguish different kline segments */
 
-			for(int ik=0; ik<nkstot; ik++)
-			{
-				wk[ik] = 1.0;
-			}
+			std::for_each(wk.begin(), wk.end(), [](double& d){d = 1.0;});
 
             this->kd_done = true;
-
 		}
 
         else
