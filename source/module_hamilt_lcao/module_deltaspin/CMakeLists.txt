@@ -7,6 +7,7 @@ if(ENABLE_LCAO)
       cal_mw_helper.cpp
       cal_mw.cpp
       cal_mw_new.cpp
+      cal_mw_new_helper.cpp
       basic_funcs.cpp
       lambda_loop_helper.cpp
       lambda_loop.cpp

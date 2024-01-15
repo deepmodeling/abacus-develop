@@ -67,6 +67,7 @@ AddTest(
     ../spin_constrain.cpp
     ../sc_parse_json.cpp
     ../init_sc.cpp
+    ../cal_mw_new_helper.cpp
     ../../../module_io/output.cpp
     ../../../module_basis/module_ao/parallel_2d.cpp
     ../../../module_basis/module_ao/parallel_orbitals.cpp

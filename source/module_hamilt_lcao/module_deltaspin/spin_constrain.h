@@ -51,7 +51,8 @@ public:
                  int nspin_in,
                  K_Vectors kv_in,
                  hamilt::Hamilt<FPTYPE, Device>* p_hamilt_in,
-                 elecstate::ElecState* pelec_in);
+                 elecstate::ElecState* pelec_in,
+                 const Grid_Driver& GridD_in);
 
   /// calculate h_lambda operator for spin-constrained DFT
   void cal_h_lambda(std::complex<double>* h_lambda, const std::vector<std::complex<double>>& Sloc2, bool column_major, int isk);
@@ -110,6 +111,9 @@ public:
 
   /// collect_mw from matrix multiplication result
   void collect_MW(ModuleBase::matrix& MecMulP, const ModuleBase::ComplexMatrix& mud, int nw, int isk);
+
+  /// set adjs_all
+  void set_adjs_all(const UnitCell& ucell, const Grid_Driver& GridD);
 
 public:
     /**

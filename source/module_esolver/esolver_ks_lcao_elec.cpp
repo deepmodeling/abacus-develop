@@ -264,7 +264,8 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
                      GlobalV::NSPIN,
                      this->kv,
                      this->p_hamilt,
-                     this->pelec);
+                     this->pelec,
+                     GlobalC::GridD);
     }
     //=========================================================
     // cal_ux should be called before init_scf because
