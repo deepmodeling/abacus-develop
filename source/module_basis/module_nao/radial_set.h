@@ -76,7 +76,7 @@ class RadialSet
                        const double conv_thr = 1e-6,
                        const int rank = 0,
                        const std::string symbol = "",
-                       const std::string strategy = "minimal",
+                       const std::string strategy = "minimal-valence",
                        std::ofstream* const ptr_log = nullptr
     ) {}
 
