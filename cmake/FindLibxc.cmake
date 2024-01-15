@@ -17,20 +17,22 @@ include(FindPackageHandleStandardArgs)
 
 find_package(PkgConfig)
 
-if(PKG_CONFIG_FOUND)
-  pkg_search_module(Libxc REQUIRED IMPORTED_TARGET GLOBAL libxc)
-  find_package_handle_standard_args(Libxc DEFAULT_MSG Libxc_LINK_LIBRARIES Libxc_INCLUDE_DIRS)
-else()
-  find_package(Libxc REQUIRED HINTS
+# Using CMake interface as default.
+# NO REQUIRED here, otherwhile it would throw error
+# with no LibXC found.
+find_package(Libxc HINTS
     ${Libxc_DIR}/share/cmake/Libxc
     ${Libxc_DIR}/lib/cmake/Libxc
     ${Libxc_DIR}/lib64/cmake/Libxc
   )
-  #message(
-  #	  "LibXC : We need pkg-config to get all information about the libxc library")
+if(NOT Libxc_FOUND AND PKG_CONFIG_FOUND)
+  pkg_search_module(Libxc REQUIRED IMPORTED_TARGET GLOBAL libxc)
+  find_package_handle_standard_args(Libxc DEFAULT_MSG Libxc_LINK_LIBRARIES Libxc_INCLUDE_DIRS)
 endif()
 
 # Copy the results to the output variables and target.
+# if find_package() above works, Libxc::xc would be present and
+# below would be skipped.
 if(Libxc_FOUND AND NOT TARGET Libxc::xc)
 	set(Libxc_LIBRARY ${Libxc_LINK_LIBRARIES})
 	set(Libxc_LIBRARIES ${Libxc_LIBRARY})
@@ -39,6 +41,9 @@ if(Libxc_FOUND AND NOT TARGET Libxc::xc)
 	set_target_properties(Libxc::xc PROPERTIES
 		IMPORTED_LOCATION "${Libxc_LIBRARY}"
 		INTERFACE_INCLUDE_DIRECTORIES "${Libxc_INCLUDE_DIR}")
+elseif(NOT Libxc_FOUND)
+  message(FATAL_ERROR
+          "LibXC : We need pkg-config to get all information about the libxc library")
 endif()
 
 set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} ${Libxc_INCLUDE_DIR})
