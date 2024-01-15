@@ -10,6 +10,9 @@
 find_package(PkgConfig)
 
 if(PKG_CONFIG_FOUND)
+  if(DEFINED ELPA_DIR)
+    string(APPEND CMAKE_PREFIX_PATH ";${ELPA_DIR}")
+  endif()
   if(USE_OPENMP)
     pkg_search_module(ELPA REQUIRED IMPORTED_TARGET GLOBAL elpa_openmp)
   else()

@@ -111,7 +111,7 @@ Here, 'build' is the path for building ABACUS; and '-D' is used for setting up s
   - `LAPACK_DIR`: Path to OpenBLAS library `libopenblas.so`(including BLAS and LAPACK)
   - `SCALAPACK_DIR`: Path to ScaLAPACK library `libscalapack.so`
   - `ELPA_DIR`: Path to ELPA install directory; should be the folder containing 'include' and 'lib'.
-  > Note: If you install ELPA from source, please add a symlink to avoid the additional include file folder with version name: `ln -s elpa/include/elpa-2021.05.002/elpa elpa/include/elpa`. This is a known behavior of ELPA.
+  > Note: If you install ELPA from source and have no `pkg-config` installed, please add a symlink to avoid the additional include file folder with version name: `ln -s elpa/include/elpa-2021.05.002/elpa elpa/include/elpa` to help the build system find ELPA headers.
 
   - `FFTW3_DIR`: Path to FFTW3.
   - `CEREAL_INCLUDE_DIR`: Path to the parent folder of `cereal/cereal.hpp`. Will download from GitHub if absent.
