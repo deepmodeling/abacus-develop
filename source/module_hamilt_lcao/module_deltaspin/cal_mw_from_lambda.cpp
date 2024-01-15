@@ -16,7 +16,7 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_mw_from_lambda(in
         = dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec);
     this->pelec->calculate_weights();
     this->pelec->calEBand();
-    if (this->KS_SOLVER == "genelpa" || this->KS_SOLVER == "scalapack_gvx" || this->KS_SOLVER == "lapack")
+    if (this->KS_SOLVER == "genelpa" || this->KS_SOLVER == "scalapack_gvx" || this->KS_SOLVER == "lapack" || this->KS_SOLVER == "cg_in_lcao")
     {
         elecstate::cal_dm_psi(this->ParaV, pelec_lcao->wg, *(this->psi), *(pelec_lcao->get_DM()));
     }

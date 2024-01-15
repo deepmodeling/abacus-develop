@@ -3848,6 +3848,10 @@ void Input::Check(void)
         {
             ModuleBase::WARNING_QUIT("Input", "not ready for cg method in lcao ."); // xiaohui add 2013-09-04
         }
+        else if (ks_solver == "cg_in_lcao")
+        {
+            GlobalV::ofs_warning << "cg_in_lcao is under testing" << std::endl;
+        }
         else if (ks_solver == "genelpa")
         {
 #ifndef __MPI
