@@ -42,9 +42,9 @@ template<>
 bool elecstate::ElecStateLCAO<std::complex<double>>::need_psi_grid = 1;
 //
 template<>
-int hsolver::HSolverLCAO<double>::out_mat_hs = 0;
+std::vector<int> hsolver::HSolverLCAO<double>::out_mat_hs = {0, 8};
 template<>
-int hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs = 0;
+std::vector<int> hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs = {0, 8};
 template<>
 int hsolver::HSolverLCAO<double>::out_mat_hsR = 0;
 template<>

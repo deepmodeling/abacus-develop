@@ -22,8 +22,8 @@ basis_type		lcao
 smearing_method		gauss
 smearing_sigma			0.002
 
-out_mat_hs                  1
-
+out_mat_hs                  1 5
+out_ndigits 5
 #Parameters (5.Mixing)
 mixing_type		broyden
 mixing_beta		0.7

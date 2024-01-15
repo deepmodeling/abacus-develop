@@ -32,6 +32,12 @@ namespace Global_File
 	void open_log ( std::ofstream &ofs, const std::string &fn, const std::string &calculation, const bool &restart);
 	void close_log( std::ofstream &ofs, const std::string &fn);
 	void close_all_log(const int rank, const bool out_alllog = false);
+
+    /**
+     * @brief delete tmperary files
+     *
+     */
+    void delete_tmp_files();
 }
 }
 #endif

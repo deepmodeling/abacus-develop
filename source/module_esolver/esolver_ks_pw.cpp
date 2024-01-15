@@ -1065,7 +1065,28 @@ void ESolver_KS_PW<T, Device>::postprocess()
         if (winput::out_spillage <= 2)
         {
             Numerical_Basis numerical_basis;
-            numerical_basis.output_overlap(this->psi[0], this->sf, this->kv, this->pw_wfc);
+            if(INPUT.bessel_nao_rcuts.size() == 1)
+            {
+                numerical_basis.output_overlap(this->psi[0], this->sf, this->kv, this->pw_wfc);
+            }
+            else
+            {
+                for(int i = 0; i < INPUT.bessel_nao_rcuts.size(); i++)
+                {
+                    if(GlobalV::MY_RANK == 0) {std::cout << "update value: bessel_nao_rcut <- " << std::fixed << INPUT.bessel_nao_rcuts[i] << " a.u." << std::endl;}
+                    INPUT.bessel_nao_rcut = INPUT.bessel_nao_rcuts[i];
+                    numerical_basis.output_overlap(this->psi[0], this->sf, this->kv, this->pw_wfc);
+                    std::string old_fname_header = winput::spillage_outdir + "/" + "orb_matrix.";
+                    std::string new_fname_header = winput::spillage_outdir + "/" + "orb_matrix_rcut" + std::to_string(int(INPUT.bessel_nao_rcut)) + "deriv";
+                    for(int derivative_order = 0; derivative_order <= 1; derivative_order++)
+                    {
+                        // rename generated files
+                        std::string old_fname = old_fname_header + std::to_string(derivative_order) + ".dat";
+                        std::string new_fname = new_fname_header + std::to_string(derivative_order) + ".dat";
+                        std::rename(old_fname.c_str(), new_fname.c_str());
+                    }
+                }
+            }
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "BASIS OVERLAP (Q and S) GENERATION.");
         }
     }

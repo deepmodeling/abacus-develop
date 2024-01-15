@@ -155,3 +155,25 @@ TEST_F(GlobalFile,closealllog)
 		remove("running.log");
 		remove("warning.log");
 }
+
+TEST_F(GlobalFile, DeleteTmpFiles)
+{
+
+    std::string tmp_chg_1 = GlobalV::global_out_dir + "NOW_SPIN1_CHG.cube";
+    std::string tmp_chg_2 = GlobalV::global_out_dir + "OLD1_SPIN1_CHG.cube";
+    std::string tmp_chg_3 = GlobalV::global_out_dir + "OLD2_SPIN1_CHG.cube";
+    std::ofstream ofs1(tmp_chg_1.c_str());
+    std::ofstream ofs2(tmp_chg_2.c_str());
+    std::ofstream ofs3(tmp_chg_3.c_str());
+    ofs1.close();
+    ofs2.close();
+    ofs3.close();
+    EXPECT_TRUE(access(tmp_chg_1.c_str(), 0) == 0);
+    EXPECT_TRUE(access(tmp_chg_2.c_str(), 0) == 0);
+    EXPECT_TRUE(access(tmp_chg_3.c_str(), 0) == 0);
+
+    ModuleBase::Global_File::delete_tmp_files();
+    EXPECT_TRUE(access(tmp_chg_1.c_str(), 0) == -1);
+    EXPECT_TRUE(access(tmp_chg_2.c_str(), 0) == -1);
+    EXPECT_TRUE(access(tmp_chg_3.c_str(), 0) == -1);
+}

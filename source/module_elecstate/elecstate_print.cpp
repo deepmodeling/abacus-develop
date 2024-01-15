@@ -315,7 +315,7 @@ void ElecState::print_etot(const bool converged,
         // std::cout << std::setiosflags(ios::showpos);
         if (scientific)
         {
-            std::cout << std::setiosflags(std::ios::scientific);
+            std::cout << std::scientific;
         }
 
         if (GlobalV::COLOUR)

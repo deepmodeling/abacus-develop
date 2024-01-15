@@ -3,7 +3,7 @@
 #include <ATen/core/tensor.h>
 #include <ATen/core/tensor_map.h>
 #include <ATen/kernels/memory.h>
-#include <test/test_utils.h>
+#include <base/utils/gtest.h>
 
 namespace container {
 namespace kernels {
@@ -15,7 +15,7 @@ public:
     ~MemoryTest() override = default;
 };
 
-TYPED_TEST_SUITE(MemoryTest, test_utils::Types);
+TYPED_TEST_SUITE(MemoryTest, base::utils::Types);
 
 TYPED_TEST(MemoryTest, ResizeAndSynchronizeMemory) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;

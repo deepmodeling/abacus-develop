@@ -14,7 +14,9 @@ AddTest(
     ../atomic_radials.cpp
     ../radial_set.cpp
     ../numerical_radial.cpp
+    ../../../module_io/output_radial.cpp
     ../../module_ao/ORB_atomic_lm.cpp
+    ../../module_ao/ORB_atomic.cpp
   LIBS ${math_libs} device base
 )
 
@@ -26,6 +28,34 @@ AddTest(
     ../radial_set.cpp
     ../numerical_radial.cpp
     ../../module_ao/ORB_atomic_lm.cpp
+    ../../module_ao/ORB_atomic.cpp
+    ../../../module_io/output_radial.cpp
+  LIBS ${math_libs} device base
+)
+
+AddTest(
+  TARGET hydrogen_radials
+  SOURCES
+    hydrogen_radials_test.cpp
+    ../hydrogen_radials.cpp
+    ../radial_set.cpp
+    ../numerical_radial.cpp
+    ../../module_ao/ORB_atomic_lm.cpp
+    ../../module_ao/ORB_atomic.cpp
+    ../../../module_io/output_radial.cpp
+  LIBS ${math_libs} device base
+)
+
+AddTest(
+  TARGET pswfc_radials
+  SOURCES
+  pswfc_radials_test.cpp
+    ../pswfc_radials.cpp
+    ../radial_set.cpp
+    ../numerical_radial.cpp
+    ../../module_ao/ORB_atomic_lm.cpp
+    ../../module_ao/ORB_atomic.cpp
+    ../../../module_io/output_radial.cpp
   LIBS ${math_libs} device base
 )
 
@@ -36,7 +66,9 @@ AddTest(
     ../sphbes_radials.cpp
     ../radial_set.cpp
     ../numerical_radial.cpp
+    ../../../module_io/output_radial.cpp
     ../../module_ao/ORB_atomic_lm.cpp
+    ../../module_ao/ORB_atomic.cpp
  LIBS ${math_libs} device base
 )
 
@@ -47,10 +79,14 @@ AddTest(
     ../radial_collection.cpp
     ../atomic_radials.cpp
     ../beta_radials.cpp
-    ../sphbes_radials.cpp
+    ../hydrogen_radials.cpp
+    ../pswfc_radials.cpp
     ../radial_set.cpp
     ../numerical_radial.cpp
+    ../../../module_io/output_radial.cpp
+    ../sphbes_radials.cpp
     ../../module_ao/ORB_atomic_lm.cpp
+    ../../module_ao/ORB_atomic.cpp
   LIBS ${math_libs} device base
 )
 
@@ -62,12 +98,15 @@ AddTest(
     ../radial_collection.cpp
     ../atomic_radials.cpp
     ../beta_radials.cpp
+    ../hydrogen_radials.cpp
+    ../pswfc_radials.cpp
     ../sphbes_radials.cpp
     ../radial_set.cpp
     ../numerical_radial.cpp
     ../two_center_bundle.cpp
     ../two_center_integrator.cpp
     ../real_gaunt_table.cpp
+    ../../../module_io/output_radial.cpp
   LIBS ${math_libs} device base container orb
 )
 
@@ -90,10 +129,13 @@ AddTest(
     ../radial_collection.cpp
     ../atomic_radials.cpp
     ../beta_radials.cpp
+    ../hydrogen_radials.cpp
+    ../pswfc_radials.cpp
     ../sphbes_radials.cpp
     ../radial_set.cpp
     ../numerical_radial.cpp
     ../two_center_bundle.cpp
+    ../../../module_io/output_radial.cpp
   LIBS ${math_libs} device base container orb
 )
 
@@ -108,9 +150,12 @@ AddTest(
     ../radial_collection.cpp
     ../atomic_radials.cpp
     ../beta_radials.cpp
+    ../hydrogen_radials.cpp
+    ../pswfc_radials.cpp
     ../sphbes_radials.cpp
     ../radial_set.cpp
     ../numerical_radial.cpp
+    ../../../module_io/output_radial.cpp
   LIBS ${math_libs} device base container orb
 )
 
