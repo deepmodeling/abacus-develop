@@ -297,6 +297,7 @@ void Nonlocal<OperatorPW<T, Device>>::act(
                 tmhpsi[ibands*max_npw+i] += vnlpsi[i];
             }
         }
+        delete[] vnlpsi;
 #endif
     }
     ModuleBase::timer::tick("Operator", "NonlocalPW");

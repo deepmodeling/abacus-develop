@@ -145,14 +145,23 @@ std::vector<std::pair<int, int>> HydrogenRadials::unzip_strategy(const int nmax,
 {
     if(strategy != "energy")
     {
+        // because for "energy", the nmax is used as the number of electrons
         assert(nmax < 8);
     }
     std::vector<std::pair<int, int>> nl_pairs;
-    if(strategy == "minimal")
+    if(strategy == "minimal-nodeless")
     {
         for(int n = 1; n <= nmax; n++)
         {
             std::pair<int, int> nl_pair = std::make_pair(n, n - 1);
+            nl_pairs.push_back(nl_pair);
+        }
+    }
+    else if(strategy == "minimal-valence")
+    {
+        for(int l = 0; l < nmax; l++)
+        {
+            std::pair<int, int> nl_pair = std::make_pair(nmax, l);
             nl_pairs.push_back(nl_pair);
         }
     }

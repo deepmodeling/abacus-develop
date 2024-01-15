@@ -123,36 +123,39 @@ orthonormalities between eigenstates are needed to check.""")
         self.data.psi_lcao = [np.array(psi_k)[band_range[0]:band_range[1], :] for psi_k in self.data.psi_lcao]
         self.data.energies = [np.array(energies_k)[band_range[0]:band_range[1]] for energies_k in self.data.energies]
 
+        # transpose psi_lcao to make it consistent with psi_chi
+        self.data.psi_lcao = [psi_k.T for psi_k in self.data.psi_lcao]
+
     def resize(self) -> None:
         """resize the data container according to the data read from files or after basis filtering
         
         Raises:
             ValueError: if AO filtered set cannot span larger space than the eigenvectors of the Hamiltonian
         """
-        self.data.nbands = self.data.psi_lcao[0].shape[0]
+        self.data.nbands = self.data.psi_lcao[0].shape[1]
         self.data.nchi = self.data.saok[0].shape[0]
         self.data.nphi = self.data.hk[0].shape[0]
 
-        _m = self.data.nchi - self.data.psi_lcao[0].shape[0]
+        _m = self.data.nchi - self.data.psi_lcao[0].shape[1]
         if _m < 0:
             print("number of AOs:", self.data.nchi)
-            print("number of bands selected in solved occupied eigenstates:", self.data.psi_lcao[0].shape[0])
+            print("number of bands selected in solved occupied eigenstates:", self.data.psi_lcao[0].shape[1])
             raise ValueError("current filtered AO set cannot span larger space than the eigenvectors of the Hamiltonian")
             
         self.data.psi_chi = [np.zeros(
-            (self.data.nchi, self.data.nphi)) for ik in range(self.data.nkpts)]
+            (self.data.nphi, self.data.nchi)) for ik in range(self.data.nkpts)]
         self.data.psi_qo = [np.zeros(
-            (self.data.nchi, self.data.nphi)) for ik in range(self.data.nkpts)] # how many AOs are there, how many QOs there are.
+            (self.data.nphi, self.data.nchi)) for ik in range(self.data.nkpts)] # how many AOs are there, how many QOs there are.
         self.data.psi_chi_para = [np.zeros(
-            (self.data.nchi, self.data.nphi)) for ik in range(self.data.nkpts)]
+            (self.data.nphi, self.data.nchi)) for ik in range(self.data.nkpts)]
         self.data.psi_chi_orth = [np.zeros(
-            (self.data.nchi, self.data.nphi)) for ik in range(self.data.nkpts)]
+            (self.data.nphi, self.data.nchi)) for ik in range(self.data.nkpts)]
         self.data.wk = [np.zeros(
             (self.data.nchi, self.data.nchi)) for ik in range(self.data.nkpts)]
         self.data.psi_complem = [np.zeros(
-            (_m, self.data.nphi)) for ik in range(self.data.nkpts)]
+            (self.data.nphi, _m)) for ik in range(self.data.nkpts)]
         self.data.psi_exten = [np.zeros(
-            (self.data.nchi, self.data.nphi)) for ik in range(self.data.nkpts)]
+            (self.data.nphi, self.data.nchi)) for ik in range(self.data.nkpts)]
         self.data.hqok = [np.zeros(
             (self.data.nchi, self.data.nchi)) for ik in range(self.data.nkpts)]
         self.data.sqok = [np.zeros(

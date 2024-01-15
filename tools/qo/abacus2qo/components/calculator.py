@@ -43,7 +43,7 @@ class toQO_Calculator:
         for ik in range(len(kpoints)):
             kpoint = kpoints[ik]
             arg = np.exp(-1j * kpoint @ supercell * 2 * np.pi)
-            matrix_R += arg * matrices_k[ik]
+            matrix_R += arg * matrices_k[ik]/np.sqrt(len(kpoints))
         return matrix_R
     
     def projto_nao(self, sk: np.ndarray, saok: np.ndarray) -> np.ndarray:
@@ -57,7 +57,7 @@ class toQO_Calculator:
             np.ndarray: anything in nao representation
         """
         print("Calculate Atomic Orbital (AO) in NAO representation.")
-        psi_chi = np.linalg.solve(sk, saok.T).T
+        psi_chi = np.linalg.solve(sk, saok.conj().T)
         return psi_chi
 
     def projto_eigstate(self, psi_lcao: np.ndarray, saok: np.ndarray) -> np.ndarray:
@@ -70,7 +70,7 @@ class toQO_Calculator:
         Returns:
             np.ndarray: states projected onto eigenstates of Hamiltonian in k-space represented by NAO
         """
-        psi_chi_para = saok @ psi_lcao.conj().T @ psi_lcao
+        psi_chi_para = psi_lcao @ psi_lcao.conj().T @ saok.conj().T
         return psi_chi_para
     
     def canonical_orthogonalization(self, psi_chi_orth: np.ndarray, sk: np.ndarray, m: int) -> np.ndarray:
@@ -85,7 +85,7 @@ class toQO_Calculator:
             np.ndarray: states orthogonalized
         """
         print("Perform canonical orthogonalization for newly appended subspace from AO introduction.")
-        wk = psi_chi_orth.conj() @ sk @ psi_chi_orth.T
+        wk = psi_chi_orth.conj().T @ sk @ psi_chi_orth
         yk_k, vk_k = la.eigh(wk)
         print("Eigenvalues of W(k) are: \n", yk_k)
         # truncate m largest eigenvalues and eigenvectors
@@ -94,9 +94,9 @@ class toQO_Calculator:
         print("Get ", m, " largest eigenvalues and eigenvectors. Selected eigenvalues are: \n", yk_k)
         # calculate psi_complem
         yk_k = np.diag([np.sqrt(1/yk_k[i]) for i in range(m)])
-        psi_complem = yk_k @ vk_k.T @ psi_chi_orth
+        psi_complem = psi_chi_orth @ vk_k @ yk_k
         print("Check orthogonalities between states in extended space.")
-        self.sg_.check_eigenstates(psi_complem.T, sk)
+        self.sg_.check_eigenstates(psi_complem, sk)
         return psi_complem
     
     def merge_space(self, psi_lcao: np.ndarray, psi_complem: np.ndarray, hk: np.ndarray, sk: np.ndarray) -> np.ndarray:
@@ -116,11 +116,11 @@ class toQO_Calculator:
         print("Combine occupied states and constructed virtual states to get extended wavefunction"
              +"\n(empty states are appended)."
              +"\nShape of occupied states is: ", psi_lcao.shape, "\nShape of empty states is: ", psi_complem.shape)
-        psi_exten = np.concatenate((psi_lcao, psi_complem), axis=0)
+        psi_exten = np.concatenate((psi_lcao, psi_complem), axis=1)
         print("Shape of extended states is: ", psi_exten.shape)
         # check orthogonality
         print("Check orthogonality of psi_exten.")
-        sk_exten = psi_exten.conj() @ sk @ psi_exten.T
+        sk_exten = psi_exten.conj().T @ sk @ psi_exten
         # if sk_exten is not identity matrix?
         error = self.sg_.check_identity(sk_exten)
         while error > 1e-6:
@@ -128,8 +128,8 @@ class toQO_Calculator:
             exit()
             
         # if hk_exten is not diagonal in supspace psi_lcao?
-        hk_exten = psi_exten.conj() @ hk @ psi_exten.T
-        self.sg_.check_diagonal(hk_exten[:psi_lcao.shape[0], :psi_lcao.shape[0]])
+        hk_exten = psi_exten.conj().T @ hk @ psi_exten
+        self.sg_.check_diagonal(hk_exten[:psi_lcao.shape[1], :psi_lcao.shape[1]])
         # get extended energy spectrum
         print("Get extended energy spectrum.")
         eigvals_exten, eigvecs_exten = la.eigh(hk_exten, sk_exten)
@@ -150,12 +150,12 @@ class toQO_Calculator:
             np.ndarray: qo represented by NAO in kspace
         """
         print("Calculate QO.")
-        qo = saok.conj() @ psi_exten.conj().T @ psi_exten
+        qo = psi_exten @ psi_exten.conj().T @ saok.conj().T
              # this saok is overlap between AO and NAO, line is AO, column is NAO
         # then normalize qo
-        #for i in range(qo.shape[0]):
-        #    qo[i, :] = qo[i, :] / np.sqrt(qo[i, :] @ sk @ qo[i, :].conj().T)
-            #print("QO Normalization: after, norm of QO ", i, " is: ", qo[i, :] @ sk @ qo[i, :].conj().T)
+        for i in range(qo.shape[1]):
+            qo[:, i] = qo[:, i] / np.sqrt(qo[:, i].conj().T @ sk @ qo[:, i])
+            print("QO Normalization: after, norm of the ", i, "-th QO is: %10.8f"%((qo[:, i].conj().T @ sk @ qo[:, i]).real))
         return qo
 
     def calculate_hqok(self, qo: np.ndarray, hk: np.ndarray, sk: np.ndarray) -> np.ndarray:
@@ -170,14 +170,21 @@ class toQO_Calculator:
             np.ndarray: hqok
         """
         print("Calculate hamiltonian matrix in QO basis in k-space.")
-        hqok = qo.conj() @ hk @ qo.T
-        sqok = qo.conj() @ sk @ qo.T # this is overlap matrix in QO basis
+        hqok = qo.conj().T @ hk @ qo
+        sqok = qo.conj().T @ sk @ qo # this is overlap matrix in QO basis
 
+        skip_diagonalization = False
         eigval_s, eigvec_s = la.eigh(sqok)
         print("Eigenvalues of overlap of in basis Sqo(k) are: \n", eigval_s)
-        eigvals_qo, eigvecs_qo = la.eigh(hqok, sqok)
-        print("Eigenvalues of Hamiltonian in QO basis Hqo(k) are: \n", eigvals_qo)
+        if abs(eigval_s[0]) < 1e-6:
+            print("WARNING: BAD CONDITION NUMBER OF OVERLAP MATRIX IN QO BASIS, THIS WILL CAUSE PROBLEMS IN DIAGONALIZATION.")
+            return np.zeros_like(hqok), np.zeros_like(sqok)
         
-        eigvals_nao, eigvecs_nao = la.eigh(hk, sk)
-        print("Eigenvalues of Hamiltonian in NAO basis H(k) are: \n", eigvals_nao)
-        return hqok, sqok
+        else:
+            eigvals_qo, eigvecs_qo = la.eigh(hqok, sqok)
+            print("Eigenvalues of Hamiltonian in QO basis Hqo(k) are: \n", eigvals_qo)
+            
+            eigvals_nao, eigvecs_nao = la.eigh(hk, sk)
+            print("Eigenvalues of Hamiltonian in NAO basis H(k) are: \n", eigvals_nao)
+
+            return hqok, sqok

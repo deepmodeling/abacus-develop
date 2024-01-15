@@ -7,8 +7,8 @@
 namespace hsolver
 {
 
-    template <typename T>
-    class HSolverLCAO : public HSolver<T>
+template<typename T, typename Device = psi::DEVICE_CPU>
+class HSolverLCAO : public HSolver<T, Device>
 {
   public:
     HSolverLCAO(const Parallel_Orbitals* ParaV_in)
@@ -40,7 +40,26 @@ namespace hsolver
         elecstate::ElecState* pes
     );*/
     const Parallel_Orbitals* ParaV;
+
+
+    bool is_first_scf = true;
+
+    using Real = typename GetTypeReal<T>::type;
+    std::vector<Real> precondition_lcao;
 };
+
+
+template <typename T>
+inline  T my_conj(T value)
+{
+    return value;
+}
+
+template <>
+inline  std::complex<double> my_conj(std::complex<double> value)
+{
+    return std::conj(value);
+}
 
 } // namespace hsolver
 

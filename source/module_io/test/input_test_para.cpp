@@ -28,7 +28,7 @@ TEST_F(InputParaTest, Bcast)
 {
     if (GlobalV::MY_RANK == 0)
     {
-        INPUT.Default();
+        INPUT.Default(); /* hmmm... why there is not Default_2 here? and, seems Default is execute directly on each processor? */
     }
     INPUT.Bcast();
     EXPECT_EQ(INPUT.suffix, "ABACUS");
@@ -183,6 +183,7 @@ TEST_F(InputParaTest, Bcast)
     EXPECT_EQ(INPUT.out_band, 0);
     EXPECT_EQ(INPUT.out_proj_band, 0);
     EXPECT_EQ(INPUT.out_mat_hs[0], 0);
+    EXPECT_EQ(INPUT.out_mat_hs[1], 8);
     EXPECT_EQ(INPUT.out_mat_hs2, 0);
     EXPECT_EQ(INPUT.out_mat_xc, 0);
     EXPECT_EQ(INPUT.out_interval, 1);
@@ -204,6 +205,8 @@ TEST_F(InputParaTest, Bcast)
     EXPECT_DOUBLE_EQ(INPUT.bessel_nao_sigma, 0.1);
     EXPECT_EQ(INPUT.bessel_nao_ecut, "default");
     EXPECT_DOUBLE_EQ(INPUT.bessel_nao_rcut, 6.0);
+    /* I need to test INPUT.bessel_nao_rcuts here */
+    EXPECT_EQ(INPUT.bessel_nao_rcuts.size(), 0);
     EXPECT_DOUBLE_EQ(INPUT.bessel_nao_tolerence, 1E-12);
     EXPECT_EQ(INPUT.bessel_descriptor_lmax, 2);
     EXPECT_TRUE(INPUT.bessel_descriptor_smooth);
@@ -378,6 +381,13 @@ TEST_F(InputParaTest, Bcast)
     EXPECT_FALSE(INPUT.mixing_dftu);
     EXPECT_EQ(INPUT.out_bandgap, 0);
     EXPECT_EQ(INPUT.out_mat_t, 0);
+
+    /* I need to test qo_switch, qo_strategy, qo_screening_coeff, qo_thr and qo_basis */
+    EXPECT_EQ(INPUT.qo_switch, 0);
+    EXPECT_EQ(INPUT.qo_strategy.size(), 0);
+    EXPECT_EQ(INPUT.qo_screening_coeff.size(), 0);
+    EXPECT_EQ(INPUT.qo_thr, 1e-6);
+    EXPECT_EQ(INPUT.qo_basis, "hydrogen");
 }
 
 TEST_F(InputParaTest, Init)

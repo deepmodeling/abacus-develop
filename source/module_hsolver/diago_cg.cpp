@@ -591,6 +591,7 @@ void DiagoCG<T, Device>::diag(
 namespace hsolver {
 template class DiagoCG<std::complex<float>, psi::DEVICE_CPU>;
 template class DiagoCG<std::complex<double>, psi::DEVICE_CPU>;
+// template class DiagoCG<double, psi::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
 template class DiagoCG<std::complex<float>, psi::DEVICE_GPU>;
 template class DiagoCG<std::complex<double>, psi::DEVICE_GPU>;
