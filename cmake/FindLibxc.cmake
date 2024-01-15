@@ -31,7 +31,7 @@ find_package(Libxc HINTS
 if(NOT TARGET Libxc::xc AND PKG_CONFIG_FOUND)
   pkg_search_module(Libxc REQUIRED IMPORTED_TARGET GLOBAL libxc)
   find_package_handle_standard_args(Libxc DEFAULT_MSG Libxc_LINK_LIBRARIES Libxc_INCLUDE_DIRS)
-elseif(NOT PKG_CONFIG_FOUND)
+elseif(NOT TARGET Libxc::xc NOT PKG_CONFIG_FOUND)
   message(FATAL_ERROR
           "LibXC : We need pkg-config to get all information about the libxc library")
 endif()
