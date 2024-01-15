@@ -263,7 +263,7 @@ class Input
     int out_wfc_pw; // 0: no; 1: txt; 2: dat
     bool out_wfc_r; // 0: no; 1: yes
     int out_dos; // dos calculation. mohan add 20090909
-    bool out_band; // band calculation pengfei 2014-10-13
+    std::vector<int> out_band; // band calculation pengfei 2014-10-13
     bool out_proj_band; // projected band structure calculation jiyy add 2022-05-11
     std::vector<int> out_mat_hs; // output H matrix and S matrix in local basis.
     bool out_mat_xc; // output exchange-correlation matrix in KS-orbital representation.

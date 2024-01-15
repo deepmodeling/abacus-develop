@@ -444,7 +444,7 @@ bool K_Vectors::read_kpoints(const std::string &fn)
 				ifk >> ksx[iks];
 				ifk >> ksy[iks];
 				ifk >> ksz[iks];
-				ModuleBase::GlobalFunc::READ_VALUE( ifk, nkl[iks] );
+				ModuleBase::GlobalFunc::READ_VALUE( ifk, nkl[iks] ); /* so ifk is ifstream for kpoint, then nkl is number of kpoints on line */
 				//std::cout << " nkl[" << iks << "]=" << nkl[iks] << std::endl;
 				assert(nkl[iks] >= 0);
 				nkstot += nkl[iks];
@@ -461,7 +461,7 @@ bool K_Vectors::read_kpoints(const std::string &fn)
 				double dy = (ksy[iks] - ksy[iks-1]) / nkl[iks-1];
 				double dz = (ksz[iks] - ksz[iks-1]) / nkl[iks-1];
 //				GlobalV::ofs_running << " dx=" << dx << " dy=" << dy << " dz=" << dz << std::endl;
-				for(int is=0; is<nkl[iks-1]; is++)
+				for(int is=0; is<nkl[iks-1]; is++) // ISSUE 3482, nkl = 1 will cause duplicate kpoints if it is not the last one
 				{
 					kvec_d[count].x = ksx[iks-1] + is*dx;
 					kvec_d[count].y = ksy[iks-1] + is*dy;
