@@ -52,6 +52,7 @@ void SpinConstrain<FPTYPE, Device>::init_sc_2(const UnitCell& ucell,
     this->kv_ = kv_in;
     this->p_hamilt = p_hamilt_in;
     this->pelec = pelec_in;
+    this->ucell = &ucell;
     this->set_adjs_all(ucell, GridD_in);
 }
 
