@@ -79,7 +79,7 @@ class HydrogenRadials : public RadialSet
                    const double conv_thr = 1e-6,
                    const int rank = 0,
                    const std::string symbol = "",
-                   const std::string strategy = "minimal",
+                   const std::string strategy = "minimal-valence",
                    std::ofstream* ptr_log = nullptr        
         );
 
@@ -88,7 +88,7 @@ class HydrogenRadials : public RadialSet
         /// @param strategy strategy string
         /// @return a vector of n, l pairs
         std::vector<std::pair<int, int>> unzip_strategy(const int nmax = 0,
-                                                        const std::string strategy = "minimal");
+                                                        const std::string strategy = "minimal-valence");
         /// @brief smooth the radial function to avoid high frequency noise in FFT-spherical bessel transform
         /// @param rgrid radial grid
         /// @param rvalue radial function
@@ -134,7 +134,7 @@ class HydrogenRadials : public RadialSet
                      const double dr = 0.01,
                      const double conv_thr = 1e-6,
                      const int rank = 0,
-                     const std::string strategy = "minimal",
+                     const std::string strategy = "minimal-valence",
                      std::ofstream* ptr_log = nullptr);
         /// @brief mapping the n, l pairs to the l, zeta pairs
         /// @param nmax maxmium principal quantum number
@@ -142,7 +142,7 @@ class HydrogenRadials : public RadialSet
         /// @return a map of n, l pairs to l, zeta pairs
         std::map<std::pair<int, int>, std::pair<int, int>>
         mapping_nl_lzeta(const int nmax = 0,
-                         const std::string strategy = "minimal");
+                         const std::string strategy = "minimal-valence");
         /// @brief kernel function of hydrogen-like radial functions
         /// @param charge charge of the nucleus
         /// @param nmax maxmium principal quantum number
@@ -156,7 +156,7 @@ class HydrogenRadials : public RadialSet
                       const double dr = 0.01,
                       const double conv_thr = 1e-6,
                       const int rank = 0,
-                      const std::string strategy = "minimal",
+                      const std::string strategy = "minimal-valence",
                       std::ofstream* ptr_log = nullptr);
 
     private:
