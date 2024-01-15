@@ -978,7 +978,7 @@ namespace ModuleESolver
             GlobalC::ppcell.vloc,
             this->sf.strucFac,
             "power",
-            1.0
+            0.99
         );
     }
 
