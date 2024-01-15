@@ -9,6 +9,7 @@
 #include "module_io/write_proj_band_lcao.h"
 #include "module_io/output_log.h"
 #include "module_io/to_qo.h"
+#include "module_io/write_Vxc.hpp"
 
 //--------------temporary----------------------------
 #include "module_base/global_function.h"
@@ -682,13 +683,13 @@ namespace ModuleESolver
     // print Hamiltonian and Overlap matrix
     if (this->conv_elec)
     {
-        if (!GlobalV::GAMMA_ONLY_LOCAL && hsolver::HSolverLCAO<TK>::out_mat_hs)
+        if (!GlobalV::GAMMA_ONLY_LOCAL && hsolver::HSolverLCAO<TK>::out_mat_hs[0])
         {
             this->UHM.GK.renew(true);
         }
         for (int ik = 0; ik < this->kv.nks; ++ik)
         {
-            if (hsolver::HSolverLCAO<TK>::out_mat_hs)
+            if (hsolver::HSolverLCAO<TK>::out_mat_hs[0])
             {
                 this->p_hamilt->updateHk(ik);
             }
@@ -698,14 +699,31 @@ namespace ModuleESolver
             {
                 hamilt::MatrixBlock<TK> h_mat, s_mat;
                 this->p_hamilt->matrix(h_mat, s_mat);
-                ModuleIO::saving_HS(istep,
-                                    h_mat.p,
-                                    s_mat.p,
-                                    bit,
-                    hsolver::HSolverLCAO<TK>::out_mat_hs,
-                                    "data-" + std::to_string(ik),
-                                    this->LOWF.ParaV[0],
-                                    1); // LiuXh, 2017-03-21
+                if (hsolver::HSolverLCAO<TK>::out_mat_hs[0])
+                {
+                    ModuleIO::save_mat(istep, 
+                                       h_mat.p, 
+                                       GlobalV::NLOCAL, 
+                                       bit,
+                                       hsolver::HSolverLCAO<TK>::out_mat_hs[1],
+                                       1, 
+                                       GlobalV::out_app_flag, 
+                                       "H", 
+                                       "data-" + std::to_string(ik), 
+                                       *this->LOWF.ParaV, 
+                                       GlobalV::DRANK);
+                    ModuleIO::save_mat(istep, 
+                                       s_mat.p, 
+                                       GlobalV::NLOCAL, 
+                                       bit,
+                                       hsolver::HSolverLCAO<TK>::out_mat_hs[1],
+                                       1, 
+                                       GlobalV::out_app_flag, 
+                                       "S", 
+                                       "data-" + std::to_string(ik), 
+                                       *this->LOWF.ParaV, 
+                                       GlobalV::DRANK);
+                }
             }
         }
     }
@@ -835,6 +853,12 @@ namespace ModuleESolver
             this->create_Output_DM(is, istep).write();
         }
     }
+
+    bool out_exc = true;    // tmp, add parameter!
+    if (GlobalV::out_mat_xc)
+        ModuleIO::write_Vxc<TK, TR>(GlobalV::NSPIN, GlobalV::NLOCAL, GlobalV::DRANK,
+            *this->psi, GlobalC::ucell, this->sf, *this->pw_rho, *this->pw_rhod, GlobalC::ppcell.vloc,
+            *this->pelec->charge, this->UHM, this->LM, this->LOC, this->kv, this->pelec->wg, GlobalC::GridD);
 
 #ifdef __EXX
     if (GlobalC::exx_info.info_global.cal_exx) // Peize Lin add if 2022.11.14

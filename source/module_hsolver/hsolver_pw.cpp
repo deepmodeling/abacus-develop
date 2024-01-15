@@ -759,6 +759,12 @@ typename HSolverPW<T, Device>::Real HSolverPW<T, Device>::reset_diagethr(std::of
     ofs_running << " hsover_error=" << hsover_error << " > DRHO=" << drho << std::endl;
     ofs_running << " Origin diag_ethr = " << this->diag_ethr << std::endl;
     this->diag_ethr = 0.1 * drho / GlobalV::nelec;
+    // It is essential for single precision implementation to keep the diag_ethr value
+    // less or equal to the single-precision limit of convergence(0.5e-4).
+    // modified by denghuilu at 2023-05-15
+    if (GlobalV::precision_flag == "single") {
+        this->diag_ethr = std::max(this->diag_ethr, static_cast<Real>(0.5e-4));
+    }
     ofs_running << " New    diag_ethr = " << this->diag_ethr << std::endl;
     return this->diag_ethr;
 }

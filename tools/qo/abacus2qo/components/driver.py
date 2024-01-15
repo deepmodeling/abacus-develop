@@ -1,6 +1,6 @@
-import source.components.data_manager as dm
-import source.components.basis_filter as bf
-import source.components.calculator as cal
+import abacus2qo.components.data_manager as dm
+import abacus2qo.components.basis_filter as bf
+import abacus2qo.components.calculator as cal
 """
 1. filter out all irrelevant AOs from overlap matrix of AO in NAO representation
 ? maybe AO can also be normalized here?

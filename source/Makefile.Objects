@@ -41,6 +41,7 @@ VPATH=./src_global:\
 ./module_hamilt_general/module_ewald:\
 ./module_hamilt_general/module_surchem:\
 ./module_hamilt_general/module_xc:\
+./module_hamilt_general/module_xc/kernels:\
 ./module_hamilt_pw/hamilt_pwdft:\
 ./module_hamilt_pw/hamilt_ofdft:\
 ./module_hamilt_pw/hamilt_stodft:\
@@ -394,6 +395,7 @@ OBJS_SYMMETRY=symm_other.o\
     symmetry.o\
 
 OBJS_XC=xc_functional.o\
+    xc_functional_op.o\
     xc_functional_vxc.o\
     xc_functional_gradcorr.o\
     xc_functional_wrapper_xc.o\
@@ -459,7 +461,6 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       unk_overlap_lcao.o\
       read_wfc_nao.o\
       write_wfc_nao.o\
-      write_HS.o\
       write_HS_sparse.o\
       single_R_io.o\
       write_HS_R.o\

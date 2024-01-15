@@ -1,6 +1,8 @@
 #include "module_hamilt_pw/hamilt_pwdft/kernels/stress_op.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
+#include <iomanip>
+
 namespace hamilt{
 
 template <typename FPTYPE>
@@ -131,6 +133,31 @@ struct cal_stress_nl_op<FPTYPE, psi::DEVICE_CPU> {
         stress[ipol * 3 + jpol] += local_stress;
     }
 };
+
+template <typename T, typename Device>
+void cal_stress_mgga_op<T, Device>::operator()(
+    const int& spin,
+    const int& nrxx,
+    const Real& w1,
+    const T * gradwfc,
+    Real * crosstaus)
+{
+    for (int ir = 0; ir < nrxx; ir++) {
+        int ipol = 0;
+        for (int ix = 0; ix < 3; ix++) {
+            for (int iy = 0; iy < ix + 1; iy++) {
+                crosstaus[spin * nrxx * 6 + ipol * nrxx + ir] 
+                    += 2.0 * w1 
+                    * (gradwfc[ix*nrxx + ir].real() * gradwfc[iy*nrxx + ir].real()
+                    +  gradwfc[ix*nrxx + ir].imag() * gradwfc[iy*nrxx + ir].imag());
+                ipol += 1;
+            }
+        }
+    }
+}
+
+template struct cal_stress_mgga_op<std::complex<float>,  psi::DEVICE_CPU>;
+template struct cal_stress_mgga_op<std::complex<double>, psi::DEVICE_CPU>;
 
 template struct cal_dbecp_noevc_nl_op<float, psi::DEVICE_CPU>;
 template struct cal_stress_nl_op<float, psi::DEVICE_CPU>;

@@ -925,7 +925,11 @@ bool input_parameters_set(std::map<std::string, InputParameter> input_parameters
     }
     else if (input_parameters.count("out_mat_hs") != 0)
     {
-        INPUT.out_mat_hs = *static_cast<bool*>(input_parameters["out_mat_hs"].get());
+        INPUT.out_mat_hs = *static_cast<std::vector<int>*>(input_parameters["out_mat_hs"].get());
+    }
+    else if (input_parameters.count("out_mat_xc") != 0)
+    {
+        INPUT.out_mat_xc = *static_cast<bool*>(input_parameters["out_mat_xc"].get());
     }
     else if (input_parameters.count("cal_syns") != 0)
     {

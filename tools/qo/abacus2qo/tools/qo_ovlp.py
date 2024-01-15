@@ -1,5 +1,5 @@
 import numpy as np
-from source.tools.basic_functions import make_complex
+from abacus2qo.tools.basic_functions import make_complex
 
 def parse(nkpts: int, path = "./") -> tuple[list, list]:
     """read QO overlap matrix S(k) from file

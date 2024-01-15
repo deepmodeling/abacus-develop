@@ -178,8 +178,9 @@ TEST_F(InputTest, Default)
         EXPECT_EQ(INPUT.out_dos,0);
         EXPECT_EQ(INPUT.out_band,0);
         EXPECT_EQ(INPUT.out_proj_band,0);
-        EXPECT_EQ(INPUT.out_mat_hs,0);
+        EXPECT_EQ(INPUT.out_mat_hs[0],0);
         EXPECT_EQ(INPUT.out_mat_hs2,0);
+        EXPECT_EQ(INPUT.out_mat_xc, 0);
         EXPECT_EQ(INPUT.out_interval,1);
         EXPECT_EQ(INPUT.out_app_flag,1);
         EXPECT_EQ(INPUT.out_mat_r,0);
@@ -540,8 +541,9 @@ TEST_F(InputTest, Read)
         EXPECT_EQ(INPUT.out_dos,0);
         EXPECT_EQ(INPUT.out_band,0);
         EXPECT_EQ(INPUT.out_proj_band,0);
-        EXPECT_EQ(INPUT.out_mat_hs,0);
+        EXPECT_EQ(INPUT.out_mat_hs[0],0);
         EXPECT_EQ(INPUT.out_mat_hs2,0);
+        EXPECT_EQ(INPUT.out_mat_xc, 0);
         EXPECT_EQ(INPUT.out_interval,1);
         EXPECT_EQ(INPUT.out_app_flag,0);
         EXPECT_EQ(INPUT.out_mat_r,0);
@@ -1644,7 +1646,140 @@ TEST_F(InputTest, Check)
 	*/
 }
 
+bool strcmp_inbuilt(const std::string& str1, const std::string& str2)
+{
+	if(str1.size() != str2.size())
+		return false;
+	for(int i=0; i<str1.size(); i++)
+	{
+		if(str1[i] != str2[i])
+			return false;
+	}
+	return true;
+}
 
+TEST_F(InputTest, ReadValue2stdvector)
+{
+	std::string input_file = "./support/INPUT_list";
+	std::ifstream ifs(input_file);
+	std::string word;
+	std::vector<int> value;
+	while(!ifs.eof())
+	{
+		ifs >> word;
+		if(strcmp_inbuilt(word, "bessel_nao_rcut_case0"))
+		{
+			value.clear(); value.shrink_to_fit();
+			INPUT.read_value2stdvector(ifs, value);
+			EXPECT_EQ(value.size(), 1);
+			EXPECT_EQ(value[0], 7);
+		}
+		if(strcmp_inbuilt(word, "bessel_nao_rcut_case1"))
+		{
+			value.clear(); value.shrink_to_fit();
+			INPUT.read_value2stdvector(ifs, value);
+			EXPECT_EQ(value.size(), 1);
+			EXPECT_EQ(value[0], 7);
+		}
+		if(strcmp_inbuilt(word, "bessel_nao_rcut_case2"))
+		{
+			value.clear(); value.shrink_to_fit();
+			INPUT.read_value2stdvector(ifs, value);
+			EXPECT_EQ(value.size(), 1);
+			EXPECT_EQ(value[0], 7);
+		}
+		if(strcmp_inbuilt(word, "bessel_nao_rcut_case3"))
+		{
+			value.clear(); value.shrink_to_fit();
+			INPUT.read_value2stdvector(ifs, value);
+			EXPECT_EQ(value.size(), 1);
+			EXPECT_EQ(value[0], 7);
+		}
+		if(strcmp_inbuilt(word, "bessel_nao_rcut_case4"))
+		{
+			value.clear(); value.shrink_to_fit();
+			INPUT.read_value2stdvector(ifs, value);
+			EXPECT_EQ(value.size(), 1);
+			EXPECT_EQ(value[0], 7);
+		}
+		if(strcmp_inbuilt(word, "bessel_nao_rcut_case5"))
+		{
+			value.clear(); value.shrink_to_fit();
+			INPUT.read_value2stdvector(ifs, value);
+			EXPECT_EQ(value.size(), 4);
+			EXPECT_EQ(value[0], 7);
+			EXPECT_EQ(value[1], 8);
+			EXPECT_EQ(value[2], 9);
+			EXPECT_EQ(value[3], 10);
+		}
+		if(strcmp_inbuilt(word, "bessel_nao_rcut_case6"))
+		{
+			value.clear(); value.shrink_to_fit();
+			INPUT.read_value2stdvector(ifs, value);
+			EXPECT_EQ(value.size(), 4);
+			EXPECT_EQ(value[0], 7);
+			EXPECT_EQ(value[1], 8);
+			EXPECT_EQ(value[2], 9);
+			EXPECT_EQ(value[3], 10);
+		}
+		if(strcmp_inbuilt(word, "bessel_nao_rcut_case7"))
+		{
+			value.clear(); value.shrink_to_fit();
+			INPUT.read_value2stdvector(ifs, value);
+			EXPECT_EQ(value.size(), 4);
+			EXPECT_EQ(value[0], 7);
+			EXPECT_EQ(value[1], 8);
+			EXPECT_EQ(value[2], 9);
+			EXPECT_EQ(value[3], 10);
+		}
+		if(strcmp_inbuilt(word, "bessel_nao_rcut_case8"))
+		{
+			value.clear(); value.shrink_to_fit();
+			INPUT.read_value2stdvector(ifs, value);
+			EXPECT_EQ(value.size(), 4);
+			EXPECT_EQ(value[0], 7);
+			EXPECT_EQ(value[1], 8);
+			EXPECT_EQ(value[2], 9);
+			EXPECT_EQ(value[3], 10);
+		}
+		std::vector<std::string> str_value;
+		if(strcmp_inbuilt(word, "bessel_nao_rcut_case9"))
+		{
+			str_value.clear(); str_value.shrink_to_fit();
+			INPUT.read_value2stdvector(ifs, str_value);
+			EXPECT_EQ(str_value.size(), 1);
+			EXPECT_EQ(str_value[0], "string1");
+		}
+		if(strcmp_inbuilt(word, "bessel_nao_rcut_case10"))
+		{
+			str_value.clear(); str_value.shrink_to_fit();
+			INPUT.read_value2stdvector(ifs, str_value);
+			EXPECT_EQ(str_value.size(), 4);
+			EXPECT_EQ(str_value[0], "string1");
+			EXPECT_EQ(str_value[1], "string2");
+			EXPECT_EQ(str_value[2], "string3");
+			EXPECT_EQ(str_value[3], "string4");
+		}
+		std::vector<double> double_value;
+		if(strcmp_inbuilt(word, "bessel_nao_rcut_case11"))
+		{
+			double_value.clear(); double_value.shrink_to_fit();
+			INPUT.read_value2stdvector(ifs, double_value);
+			EXPECT_EQ(double_value.size(), 1);
+			EXPECT_EQ(double_value[0], 1.23456789);
+		}
+		if(strcmp_inbuilt(word, "bessel_nao_rcut_case12"))
+		{
+			double_value.clear(); double_value.shrink_to_fit();
+			INPUT.read_value2stdvector(ifs, double_value);
+			EXPECT_EQ(double_value.size(), 4);
+			EXPECT_EQ(double_value[0], -1.23456789);
+			EXPECT_EQ(double_value[1], 2.3456789);
+			EXPECT_EQ(double_value[2], -3.456789);
+			EXPECT_EQ(double_value[3], 4.56789);
+		}
+	}
+}
 #undef private
 
 

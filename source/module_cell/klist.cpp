@@ -588,10 +588,16 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
     ModuleBase::Vector3<double> gb1(ucell.G.e11, ucell.G.e12, ucell.G.e13);
     ModuleBase::Vector3<double> gb2(ucell.G.e21, ucell.G.e22, ucell.G.e23);
     ModuleBase::Vector3<double> gb3(ucell.G.e31, ucell.G.e32, ucell.G.e33);
-    ModuleBase::Vector3<double> gk1(gb1.x / nmp[0], gb1.y / nmp[0], gb1.z / nmp[0]);
-    ModuleBase::Vector3<double> gk2(gb2.x / nmp[1], gb2.y / nmp[1], gb2.z / nmp[1]);
-    ModuleBase::Vector3<double> gk3(gb3.x / nmp[2], gb3.y / nmp[2], gb3.z / nmp[2]);
-    ModuleBase::Matrix3 gk(gk1.x, gk1.y, gk1.z, gk2.x, gk2.y, gk2.z, gk3.x, gk3.y, gk3.z);
+    ModuleBase::Vector3<double> gk1, gk2, gk3;
+    ModuleBase::Matrix3 gk;
+    if (this->is_mp)
+    {
+        gk1 = ModuleBase::Vector3<double>(gb1.x / nmp[0], gb1.y / nmp[0], gb1.z / nmp[0]);
+        gk2 = ModuleBase::Vector3<double>(gb2.x / nmp[1], gb2.y / nmp[1], gb2.z / nmp[1]);
+        gk3 = ModuleBase::Vector3<double>(gb3.x / nmp[2], gb3.y / nmp[2], gb3.z / nmp[2]);
+        gk = ModuleBase::Matrix3(gk1.x, gk1.y, gk1.z, gk2.x, gk2.y, gk2.z, gk3.x, gk3.y, gk3.z);
+    }
+
 
     //===============================================
     // search in all space group operations
@@ -646,13 +652,14 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
             match = false;
             return;
         }
-
-        symm.lattice_type(gk1, gk2, gk3, gk01, gk02, gk03, bk_const, bk0_const, bkbrav, bkbrav_name, ucell.atoms, false, nullptr);
-        GlobalV::ofs_running<<"(for k-lattice: )"<<std::endl;
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS TYPE", bkbrav);
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS LATTICE NAME", bkbrav_name);
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"ibrav", bkbrav);
-
+        if (this->is_mp)
+        {
+            symm.lattice_type(gk1, gk2, gk3, gk01, gk02, gk03, bk_const, bk0_const, bkbrav, bkbrav_name, ucell.atoms, false, nullptr);
+            GlobalV::ofs_running << "(for k-lattice: )" << std::endl;
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "BRAVAIS TYPE", bkbrav);
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "BRAVAIS LATTICE NAME", bkbrav_name);
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ibrav", bkbrav);
+        }
         // point-group analysis of reciprocal lattice
         ModuleBase::Matrix3 bsymop[48];
         int bnop = 0;
@@ -709,11 +716,11 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
     }
 
     // convert kgmatrix to k-lattice
-    ModuleBase::Matrix3* kkmatrix = new ModuleBase::Matrix3 [nrotkm];
-    symm.gmatrix_convert(kgmatrix.data(), kkmatrix, nrotkm, ucell.G, gk);
+    ModuleBase::Matrix3* kkmatrix = new ModuleBase::Matrix3[nrotkm];
+    if (this->is_mp)symm.gmatrix_convert(kgmatrix.data(), kkmatrix, nrotkm, ucell.G, gk);
     // direct coordinates of k-points in k-lattice
     std::vector<ModuleBase::Vector3<double>> kvec_d_k(nkstot);
-    for (int i=0;i<nkstot;++i) kvec_d_k[i]=kvec_d[i]*ucell.G*gk.Inverse();
+    if (this->is_mp) for (int i = 0;i < nkstot;++i) kvec_d_k[i] = kvec_d[i] * ucell.G * gk.Inverse();
 
     // use operation : kgmatrix to find
     // the new set kvec_d : ir_kpt
@@ -775,20 +782,19 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
 				kvec_rot = kvec_d[i] * kgmatrix[j]; //wrong for total energy, but correct for nonlocal force.
 				//kvec_rot = kgmatrix[j] * kvec_d[i]; //correct for total energy, but wrong for nonlocal force.
                 restrict_kpt(kvec_rot);
+                if (this->is_mp)
+                {
+                    kvec_rot_k = kvec_d_k[i] * kkmatrix[j];   //k-lattice rotation
+                    kvec_rot_k = kvec_rot_k * gk * ucell.G.Inverse(); //convert to recip lattice
+                    restrict_kpt(kvec_rot_k);
 
-                kvec_rot_k = kvec_d_k[i] * kkmatrix[j];   //k-lattice rotation
-                kvec_rot_k = kvec_rot_k * gk * ucell.G.Inverse(); //convert to recip lattice
-                restrict_kpt(kvec_rot_k);
-
-                assert(symm.equal(kvec_rot.x, kvec_rot_k.x));
-                assert(symm.equal(kvec_rot.y, kvec_rot_k.y));
-                assert(symm.equal(kvec_rot.z, kvec_rot_k.z));
-                // std::cout << "\n kvec_rot (in recip) = " << kvec_rot.x << " " << kvec_rot.y << " " << kvec_rot.z;
-                // std::cout << "\n kvec_rot(k to recip)= " << kvec_rot_k.x << " " << kvec_rot_k.y << " " << kvec_rot_k.z;
-                kvec_rot_k = kvec_rot_k * ucell.G * gk.Inverse(); //convert back to k-latice
-
-//				std::cout << "\n kvec_rot = " << kvec_rot.x << " " << kvec_rot.y << " " << kvec_rot.z;
-
+                    assert(symm.equal(kvec_rot.x, kvec_rot_k.x));
+                    assert(symm.equal(kvec_rot.y, kvec_rot_k.y));
+                    assert(symm.equal(kvec_rot.z, kvec_rot_k.z));
+                    // std::cout << "\n kvec_rot (in recip) = " << kvec_rot.x << " " << kvec_rot.y << " " << kvec_rot.z;
+                    // std::cout << "\n kvec_rot(k to recip)= " << kvec_rot_k.x << " " << kvec_rot_k.y << " " << kvec_rot_k.z;
+                    kvec_rot_k = kvec_rot_k * ucell.G * gk.Inverse(); //convert back to k-latice
+                }
                 for (int k=0; k< this->nkstot_ibz; ++k)
                 {
                     if (    symm.equal(kvec_rot.x, this->kvec_d_ibz[k].x) &&
