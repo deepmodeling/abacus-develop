@@ -28,12 +28,14 @@ ModuleBase::matrix SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_MW_
             dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(this->p_hamilt)->updateSk(ik, LM, 1);
         }
         // calculat weight function
+        /*
         std::vector<std::complex<double>> weight(LM->ParaV->nloc);
         std::fill(weight.begin(), weight.end(), std::complex<double>(0, 0));
         this->cal_weight_func(&weight[0],
                               LM->Sloc2,
                               ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(),
                               this->kv_.isk[ik]);
+        */
         ModuleBase::ComplexMatrix mud(this->ParaV->ncol, this->ParaV->nrow, true);
 #ifdef __MPI
         const char T_char = 'T';
@@ -50,7 +52,7 @@ ModuleBase::matrix SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_MW_
                 &one_int,
                 &one_int,
                 this->ParaV->desc,
-                weight.data(),
+                LM->Sloc2.data(),
                 &one_int,
                 &one_int,
                 this->ParaV->desc,

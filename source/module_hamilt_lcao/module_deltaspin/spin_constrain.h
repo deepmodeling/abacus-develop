@@ -63,6 +63,8 @@ public:
 
   void cal_MW(const int& step, LCAO_Matrix* LM, bool print = false);
 
+  void cal_MW_new();
+
   ModuleBase::matrix cal_MW_k(LCAO_Matrix* LM, const std::vector<std::vector<std::complex<double>>>& dm);
 
   void cal_mw_from_lambda(int i_step);
