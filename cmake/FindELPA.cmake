@@ -10,7 +10,7 @@
 find_package(PkgConfig)
 
 if(PKG_CONFIG_FOUND)
-        if(USE_OPENMP)
+  if(USE_OPENMP)
     pkg_search_module(ELPA REQUIRED IMPORTED_TARGET GLOBAL elpa_openmp)
   else()
     pkg_search_module(ELPA REQUIRED IMPORTED_TARGET GLOBAL elpa)
