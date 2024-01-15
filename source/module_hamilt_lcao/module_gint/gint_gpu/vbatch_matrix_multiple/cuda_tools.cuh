@@ -17,12 +17,16 @@ template <typename T>
 class Cuda_Mem_Wrapper
 {
 public:
+    Cuda_Mem_Wrapper(int one_stream_size, int one_stream_size_aligned, int stream_number = 1, bool malloc_host = true);
     Cuda_Mem_Wrapper(int one_stream_size, int stream_number = 1, bool malloc_host = true);
     ~Cuda_Mem_Wrapper();
     void copy_host_to_device_sync(int stream_id = 0);
-    void copy_host_to_device_async(int stream_id, cudaStream_t stream);
+    void copy_host_to_device_async(cudaStream_t stream, int stream_id);
     void copy_device_to_host_sync(int stream_id = 0);
-    void copy_device_to_host_async(int stream_id, cudaStream_t stream);
+    void copy_device_to_host_async(cudaStream_t stream, int stream_id);
+    void memset_device_sync(int stream_id = 0, int value = 0);
+    void memset_device_async(cudaStream_t stream, int stream_id = 0, int value = 0);
+    void memset_host(int stream_id = 0, int value = 0);
     T *get_device_pointer(int stream_id = 0);
     T *get_host_pointer(int stream_id = 0);
     void free_all();
@@ -30,8 +34,9 @@ private:
     T *device_pointer;
     T *host_pointer;
     int one_stream_size;
+    int one_stream_size_aligned;
     int stream_number;
-    int total_size;
+    int total_size_aligned;
 };
 
 #endif // CUDA_TOOLS_CUH#ifndef CUDA_TOOLS_CUH

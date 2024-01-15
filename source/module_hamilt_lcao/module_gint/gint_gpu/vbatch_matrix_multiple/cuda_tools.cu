@@ -48,22 +48,28 @@ void dump_cuda_array_to_file(double *cuda_array, int width, int hight, const std
 }
 
 template <typename T>
-Cuda_Mem_Wrapper<T>::Cuda_Mem_Wrapper(int one_stream_size, int stream_number, bool malloc_host)
+Cuda_Mem_Wrapper<T>::Cuda_Mem_Wrapper(int one_stream_size_in, int one_stream_size_aligned_in, int stream_number_in, bool malloc_host_in)
 {
-    this->stream_number = stream_number;
-    this->one_stream_size = one_stream_size;
-    this->total_size = stream_number * one_stream_size;
-    checkCuda(cudaMalloc((void **)&this->device_pointer, this->total_size * sizeof(T)));
-    checkCuda(cudaMemset(this->device_pointer, 0, this->total_size * sizeof(T)));
+    this->stream_number = stream_number_in;
+    this->one_stream_size = one_stream_size_in;
+    this->one_stream_size_aligned = one_stream_size_aligned_in;
+    this->total_size_aligned = this->one_stream_size_aligned * this->stream_number;
+
+    checkCuda(cudaMalloc((void **)&this->device_pointer, this->total_size_aligned * sizeof(T)));
+    checkCuda(cudaMemset(this->device_pointer, 0, this->total_size_aligned * sizeof(T)));
     this->host_pointer = nullptr;
 
-    if (malloc_host)
+    if (malloc_host_in)
     {
-        checkCuda(cudaMallocHost((void **)&this->host_pointer, this->total_size * sizeof(T)));
-        memset(this->host_pointer, 0, this->total_size * sizeof(T));
+        checkCuda(cudaMallocHost((void **)&this->host_pointer, this->total_size_aligned * sizeof(T)));
+        memset(this->host_pointer, 0, this->total_size_aligned * sizeof(T));
     }
 }
-
+template <typename T>
+Cuda_Mem_Wrapper<T>::Cuda_Mem_Wrapper(int one_stream_size_in, int stream_number_in, bool malloc_host_in)
+{
+    Cuda_Mem_Wrapper(one_stream_size_in, one_stream_size_in, stream_number_in, malloc_host_in);
+}
 template <typename T>
 void Cuda_Mem_Wrapper<T>::free_all()
 {
@@ -90,12 +96,13 @@ void Cuda_Mem_Wrapper<T>::copy_host_to_device_sync(int stream_id)
         exit(1);
     }
     #endif
-    checkCuda(cudaMemcpy(this->device_pointer + stream_id * this->one_stream_size, this->host_pointer + stream_id * this->one_stream_size,
+    checkCuda(cudaMemcpy(this->device_pointer + stream_id * this->one_stream_size_aligned, 
+                         this->host_pointer + stream_id * this->one_stream_size_aligned,
                this->one_stream_size * sizeof(T), cudaMemcpyHostToDevice));
 }
 
 template <typename T>
-void Cuda_Mem_Wrapper<T>::copy_host_to_device_async(int stream_id, cudaStream_t stream)
+void Cuda_Mem_Wrapper<T>::copy_host_to_device_async(cudaStream_t stream, int stream_id)
 {
     #if defined(__DEBUG)
     if (this->host_pointer == nullptr || this->device_pointer == nullptr)
@@ -104,8 +111,8 @@ void Cuda_Mem_Wrapper<T>::copy_host_to_device_async(int stream_id, cudaStream_t 
         exit(1);
     }
     #endif
-    checkCuda(cudaMemcpyAsync(this->device_pointer + stream_id * this->one_stream_size,
-                              this->host_pointer + stream_id * this->one_stream_size,
+    checkCuda(cudaMemcpyAsync(this->device_pointer + stream_id * this->one_stream_size_aligned,
+                              this->host_pointer + stream_id * this->one_stream_size_aligned,
                               this->one_stream_size * sizeof(T), cudaMemcpyHostToDevice, stream));
 }
 
@@ -119,12 +126,13 @@ void Cuda_Mem_Wrapper<T>::copy_device_to_host_sync(int stream_id)
         exit(1);
     }
     #endif
-    checkCuda(cudaMemcpy(this->host_pointer + stream_id * this->one_stream_size, this->device_pointer + stream_id * this->one_stream_size,
-               this->one_stream_size * sizeof(T), cudaMemcpyDeviceToHost));
+    checkCuda(cudaMemcpy(this->host_pointer + stream_id * this->one_stream_size_aligned, 
+                         this->device_pointer + stream_id * this->one_stream_size_aligned,
+                         this->one_stream_size * sizeof(T), cudaMemcpyDeviceToHost));
 }
 
 template <typename T>
-void Cuda_Mem_Wrapper<T>::copy_device_to_host_async(int stream_id, cudaStream_t stream)
+void Cuda_Mem_Wrapper<T>::copy_device_to_host_async(cudaStream_t stream, int stream_id)
 {
     #if defined(__DEBUG)
     if (this->host_pointer == nullptr || this->device_pointer == nullptr)
@@ -133,21 +141,38 @@ void Cuda_Mem_Wrapper<T>::copy_device_to_host_async(int stream_id, cudaStream_t 
         exit(1);
     }
     #endif
-    checkCuda(cudaMemcpyAsync(this->host_pointer + stream_id * this->one_stream_size,
-                              this->device_pointer + stream_id * this->one_stream_size,
+    checkCuda(cudaMemcpyAsync(this->host_pointer + stream_id * this->one_stream_size_aligned,
+                              this->device_pointer + stream_id * this->one_stream_size_aligned,
                               this->one_stream_size * sizeof(T), cudaMemcpyDeviceToHost, stream));
+}
+template <typename T>
+void Cuda_Mem_Wrapper<T>::memset_device_sync(int stream_id, int value)
+{
+    checkCuda(cudaMemset(this->device_pointer + stream_id * this->one_stream_size_aligned, value, this->one_stream_size * sizeof(T)));
+}
+
+template <typename T>
+void Cuda_Mem_Wrapper<T>::memset_device_async(cudaStream_t stream, int stream_id, int value)
+{
+    checkCuda(cudaMemsetAsync(this->device_pointer + stream_id * this->one_stream_size_aligned, value, this->one_stream_size * sizeof(T), stream));
+}
+
+template <typename T>
+void Cuda_Mem_Wrapper<T>::memset_host(int stream_id, int value)
+{
+    memset(this->host_pointer + stream_id * this->one_stream_size_aligned, value, this->one_stream_size * sizeof(T));
 }
 
 template <typename T>
 T* Cuda_Mem_Wrapper<T>::get_device_pointer(int stream_id)
 {
-    return this->device_pointer + stream_id * this->one_stream_size;
+    return this->device_pointer + stream_id * this->one_stream_size_aligned;
 }
 
 template <typename T>
 T* Cuda_Mem_Wrapper<T>::get_host_pointer(int stream_id)
 {
-    return this->host_pointer + stream_id * this->one_stream_size;
+    return this->host_pointer + stream_id * this->one_stream_size_aligned;
 }
 template class Cuda_Mem_Wrapper<double>;
 template class Cuda_Mem_Wrapper<double*>;
