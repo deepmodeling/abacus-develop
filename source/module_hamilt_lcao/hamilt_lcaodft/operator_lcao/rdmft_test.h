@@ -65,13 +65,14 @@ namespace rdmft
 
 //for print matrix
 template <typename TK>
-void printMatrix_pointer(int M, int N, TK* matrixA, std::string nameA)
+void printMatrix_pointer(int M, int N, const TK* matrixA, std::string nameA)
 {
     std::cout << "\n" << nameA << ": \n";
     for(int i=0; i<M; ++i)
     {
         for(int j=0; j<N; ++j)
         {
+            if( j%5 == 0 ) std::cout << "\n";
             std::cout << *(matrixA+i*N+j) << " ";
         }
         std::cout << "\n";
@@ -81,13 +82,14 @@ void printMatrix_pointer(int M, int N, TK* matrixA, std::string nameA)
 
 
 template <typename TK>
-void printMatrix_vector(int M, int N, std::vector<TK>& matrixA, std::string nameA)
+void printMatrix_vector(int M, int N, const std::vector<TK>& matrixA, std::string nameA)
 {
     std::cout << "\n" << nameA << ": \n";
     for(int i=0; i<M; ++i)
     {
         for(int j=0; j<N; ++j)
         {
+            if( j%5 == 0 ) std::cout << "\n";
             std::cout << matrixA[i*N+j] << " ";
         }
         std::cout << "\n\n";
@@ -197,7 +199,7 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
 
 };
 
-// now support XC_func_rdmft = "HF" or "power" 
+// now support XC_func_rdmft = "HF", "Muller", "power" 
 double wg_func(double wg, int symbol = 0, const std::string XC_func_rdmft = "HF", const double alpha_power = 0.656);
 
 
@@ -211,7 +213,7 @@ void set_zero_vector(std::vector<TK>& HK)
 template <typename TK>
 void set_zero_psi(psi::Psi<TK>& wfc)
 {
-    TK* pwfc_in = wfc.get_pointer();
+    TK* pwfc_in = &wfc(0, 0, 0);
 
     #ifdef _OPENMP
     #pragma omp parallel for schedule(static, 1024)
@@ -499,6 +501,11 @@ double rdmft_cal(LCAO_Matrix* LM_in,
 
     // construct V_XC based on different XC_functional
     hamilt::OperatorLCAO<TK, TR>* V_XC;
+
+    // must be declared here, because when we do V_XC->contributeHk(ik), we will still need members of V_XC, i.e. Hexxs
+    Exx_LRI<double> Vxc_fromRI_d(GlobalC::exx_info.info_ri);
+    Exx_LRI<std::complex<double>> Vxc_fromRI_c(GlobalC::exx_info.info_ri);
+
     if( XC_func_rdmft == "HF" )
     {
         V_XC = new hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>>(
@@ -515,22 +522,32 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         std::vector< const std::vector<TK>* > DM_XC_pointer(nk_total);
         for(int ik=0; ik<nk_total; ++ik) DM_XC_pointer[ik] = &DM_XC[ik];
 
-        std::cout << "\n\n\n******\n" << "before conj_psi()" << "\n******\n\n\n";
-
         // get wg_wfc = g(wg)*conj(wfc), different XC_functional has different g(wg)
         psi::Psi<TK> wg_wfc(wfc);
         conj_psi(wg_wfc);
-
-        std::cout << "\n\n\n******\n" << "before wgMulPsi()" << "\n******\n\n\n";
-
         wgMulPsi(ParaV, wg, wg_wfc, 2, XC_func_rdmft, alpha_power);
 
-        std::cout << "\n\n\n******\n" << "before psiMulPsiMpi()" << "\n******\n\n\n";
+        // std::cout << "\n" << "psi, wg, wg_psi" << ": \n";
+        // for(int ik=0; ik<nk_total; ++ik)
+        // {
+        //     for(int inbn=0; inbn<nbands_local; ++inbn)
+        //     {
+        //         for(int inbs=0; inbs<nbasis_local; ++inbs)
+        //         {
+        //             std::cout << wfc(ik, inbn, inbs) << " "<< wg(ik, inbn) << " " << wg_wfc(ik, inbn, inbs) << " \n";
+        //         }
+        //     }
+        // }
+        // std::cout << "\n";
 
         // get the special DM_XC used in constructing V_XC
         for(int ik=0; ik<wfc.get_nk(); ++ik)
         {
-            TK* DM_Kpointer = DM_XC[ik].data();  // why &(DM_XC[ik][0]) is error
+            // after this, be careful with wfc.get_pointer(), we can use &wfc(ik,inbn,inbs) instead
+            wfc.fix_k(ik);
+            wg_wfc.fix_k(ik);
+
+            TK* DM_Kpointer = DM_XC[ik].data();  // why &(DM_XC[ik][0]) is error, DM_XC[ik].data()
 #ifdef __MPI
             elecstate::psiMulPsiMpi(wg_wfc, wfc, DM_Kpointer, ParaV->desc_wfc, ParaV->desc);
 #else
@@ -538,7 +555,19 @@ double rdmft_cal(LCAO_Matrix* LM_in,
 #endif            
         }
 
-        std::cout << "\n\n\n******\n" << "before split_m2D_ktoR()" << "\n******\n\n\n";
+        // test
+        std::cout << "\n\n\n\n\n\n******\n" << "print DM_XC: " << "\n";
+
+        for(int ik=0; ik<nk_total; ++ik)
+        {
+            std::stringstream DM_XC_ik_ss;
+            DM_XC_ik_ss << "DM_XC[" << ik << "]";
+            std::string DM_XC_ik = DM_XC_ik_ss.str();
+            printMatrix_pointer(ParaV->nrow, ParaV->ncol, DM_XC_pointer[ik]->data(), DM_XC_ik);
+        }
+
+        std::cout << "\n******\n\n\n\n\n\n";
+        // test
 
         // transfer the DM_XC to appropriate format
         std::vector<std::map<int,std::map<std::pair<int,std::array<int,3>>,RI::Tensor<double>>>> Ds_XC_d = 
@@ -546,20 +575,13 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         std::vector<std::map<int,std::map<std::pair<int,std::array<int,3>>,RI::Tensor<std::complex<double>>>>> Ds_XC_c = 
             RI_2D_Comm::split_m2D_ktoR<std::complex<double>>(kv_in, DM_XC_pointer, *ParaV);
 
-
-        std::cout << "\n\n\n******\n" << "before Exx_LRI Vxc_fromRI" << "\n******\n\n\n";
-
         // provide the Ds_XC to V_XC
         // when we doing V_XC.contributeHk(ik), we get HK_XC constructed by the special DM_XC
         if (GlobalC::exx_info.info_ri.real_number)
         {
-            Exx_LRI<double> Vxc_fromRI_d(GlobalC::exx_info.info_ri);
             Vxc_fromRI_d.init(MPI_COMM_WORLD, kv_in);
             Vxc_fromRI_d.cal_exx_ions();
             Vxc_fromRI_d.cal_exx_elec(Ds_XC_d, *ParaV);
-
-            std::cout << "\n\n\n******\n" << "before new OperatorEXX with Vxc_fromRI_d" << "\n******\n\n\n";
-
             V_XC = new hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>>(
                 LM_in,
                 &HR_XC,
@@ -570,88 +592,81 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         }
         else
         {
-            Exx_LRI<std::complex<double>> Vxc_fromRI_c(GlobalC::exx_info.info_ri);
             Vxc_fromRI_c.init(MPI_COMM_WORLD, kv_in);
             Vxc_fromRI_c.cal_exx_ions();
             Vxc_fromRI_c.cal_exx_elec(Ds_XC_c, *ParaV);
-
-            std::cout << "\n\n\n******\n" << "before new OperatorEXX with Vxc_fromRI_c" << "\n******\n\n\n";
-
             V_XC = new hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>>(
                 LM_in,
                 &HR_XC,
                 &HK_XC,
                 kv_in,
                 nullptr,
-                &Vxc_fromRI_c.Hexxs,
-                1
+                &Vxc_fromRI_c.Hexxs
             );
 
-        std::cout << "\n\n\n\n\n\n******\n" << "print Vxc_fromRI_c.Hexxs" << "\n******\n\n\n\n\n\n";
-        for(const auto& outerMap : Vxc_fromRI_c.Hexxs)
-        {
-            std::cout << "\nVxc_fromRI_c.Hexxs Outer Map Size: " << outerMap.size() << std::endl;
-            for (const auto& middleMap : outerMap)
-            {
-                std::cout << "\nVxc_fromRI_c.Hexxs Middle Map Size: " << middleMap.second.size() << std::endl;
-                for (const auto& innerMap : middleMap.second)
-                {
-                    const RI::Tensor<std::complex<double>>& tensor_XC = innerMap.second;
-                    //const std::array<int, 3> & tensor_shape = tensor_XC.shape;
-                    const std::valarray<std::complex<double>>& tensor_data = *tensor_XC.data;
+        // std::cout << "\n\n\n\n\n\n******\n" << "print Vxc_fromRI_c.Hexxs" << "\n******\n\n\n\n\n\n";
+        // for(const auto& outerMap : Vxc_fromRI_c.Hexxs)
+        // {
+        //     std::cout << "\nVxc_fromRI_c.Hexxs Outer Map Size: " << outerMap.size() << std::endl;
+        //     for (const auto& middleMap : outerMap)
+        //     {
+        //         std::cout << "\nVxc_fromRI_c.Hexxs Middle Map Size: " << middleMap.second.size() << std::endl;
+        //         for (const auto& innerMap : middleMap.second)
+        //         {
+        //             const RI::Tensor<std::complex<double>>& tensor_XC = innerMap.second;
+        //             //const std::array<int, 3> & tensor_shape = tensor_XC.shape;
+        //             const std::valarray<std::complex<double>>& tensor_data = *tensor_XC.data;
 
-                    std::cout << "\nthe length of tensor_XC_data: " << tensor_data.size() << "\n";
+        //             std::cout << "\nthe length of tensor_XC_data: " << tensor_data.size() << "\n";
 
-                    std::cout << "\ntensor_XC shape: \n";
-                    for(int ix=0; ix<tensor_XC.shape.size(); ++ix)
-                    {
-                        std::cout << tensor_XC.shape[ix] << " ";
-                    }
-                    // std::cout << "\ntensor_XC data: \n";
-                    // for(size_t i = 0; i < tensor_data.size(); ++i)
-                    // {
-                    //     if(i%5==0) std::cout << "\n";
-                    //     std::cout <<  tensor_data[i] << " ";
-                    // }
-                    std::cout << "\n\n\n";
-                }
-            }
-        }
-
-
-        std::cout << "\n\n\n\n\n\n******\n" << "print LM_in->Hexxc" << "\n******\n\n\n\n\n\n";
-        for(const auto& outerMap : *LM_in->Hexxc)
-        {
-            std::cout << "\nHexx Outer Map Size: " << outerMap.size() << std::endl;
-            for (const auto& middleMap : outerMap)
-            {
-                std::cout << "\nHexx Middle Map Size: " << middleMap.second.size() << std::endl;
-                for (const auto& innerMap : middleMap.second)
-                {
-                    const RI::Tensor<std::complex<double>>& tensor_Hexx = innerMap.second;
-                    //const std::array<int, 3> & tensor_shape = tensor_XC.shape;
-                    const std::valarray<std::complex<double>>& tensor_Hexx_data = *tensor_Hexx.data;
-
-                    std::cout << "\nthe length of tensor_Hexx_data: " << tensor_Hexx_data.size() << "\n";
-
-                    std::cout << "\ntensor_Hexx shape: \n";
-                    for(int ix=0; ix<tensor_Hexx.shape.size(); ++ix)
-                    {
-                        std::cout << tensor_Hexx.shape[ix] << " ";
-                    }
-                    // std::cout << "\ntensor_Hexx data: \n";
-                    // for(size_t i = 0; i < tensor_Hexx_data.size(); ++i)
-                    // {
-                    //     if(i%5==0) std::cout << "\n";
-                    //     std::cout <<  tensor_Hexx_data[i] << " ";
-                    // }
-                    std::cout << "\n\n\n";
-                }
-            }
-        }
+        //             std::cout << "\ntensor_XC shape: \n";
+        //             for(int ix=0; ix<tensor_XC.shape.size(); ++ix)
+        //             {
+        //                 std::cout << tensor_XC.shape[ix] << " ";
+        //             }
+        //             std::cout << "\ntensor_XC data: \n";
+        //             for(size_t i = 0; i < tensor_data.size(); ++i)
+        //             {
+        //                 if(i%5==0) std::cout << "\n";
+        //                 std::cout <<  tensor_data[i] << " ";
+        //             }
+        //             std::cout << "\n\n\n";
+        //         }
+        //     }
+        // }
 
 
-            std::cout << "\n\n\n******\n" << "after new OperatorEXX with Vxc_fromRI_c" << "\n******\n\n\n";
+        // std::cout << "\n\n\n\n\n\n******\n" << "print LM_in->Hexxc" << "\n******\n\n\n\n\n\n";
+        // for(const auto& outerMap : *LM_in->Hexxc)
+        // {
+        //     std::cout << "\nHexx Outer Map Size: " << outerMap.size() << std::endl;
+        //     for (const auto& middleMap : outerMap)
+        //     {
+        //         std::cout << "\nHexx Middle Map Size: " << middleMap.second.size() << std::endl;
+        //         for (const auto& innerMap : middleMap.second)
+        //         {
+        //             const RI::Tensor<std::complex<double>>& tensor_Hexx = innerMap.second;
+        //             //const std::array<int, 3> & tensor_shape = tensor_XC.shape;
+        //             const std::valarray<std::complex<double>>& tensor_Hexx_data = *tensor_Hexx.data;
+
+        //             std::cout << "\nthe length of tensor_Hexx_data: " << tensor_Hexx_data.size() << "\n";
+
+        //             std::cout << "\ntensor_Hexx shape: \n";
+        //             for(int ix=0; ix<tensor_Hexx.shape.size(); ++ix)
+        //             {
+        //                 std::cout << tensor_Hexx.shape[ix] << " ";
+        //             }
+        //             std::cout << "\ntensor_Hexx data: \n";
+        //             for(size_t i = 0; i < tensor_Hexx_data.size(); ++i)
+        //             {
+        //                 if(i%5==0) std::cout << "\n";
+        //                 std::cout <<  tensor_Hexx_data[i] << " ";
+        //             }
+        //             std::cout << "\n\n\n";
+        //         }
+        //     }
+        // }
+
         }
     }
 
@@ -666,8 +681,6 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     V_ekinetic_potential->contributeHR();
     V_nonlocal->contributeHR();
     V_local->contributeHR();
-
-    std::cout << "\n\n\n******\n" << "after contributeHR()" << "\n******\n\n\n";
 
     //prepare for actual calculation
     //wg is global matrix, wg.nr = nk_total, wg.nc = GlobalV::NBANDS
@@ -702,9 +715,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         // get the HK with ik-th k vector, the result is stored in HK_TV, HK_hartree and HK_XC respectively
         V_ekinetic_potential->contributeHk(ik);
         V_hartree->contributeHk(ik);
-        std::cout << "\n\n\n******\n" << "after V_TV&V_hartree.contribute(ik)" << "\n******\n\n\n";
         V_XC->contributeHk(ik);
-        std::cout << "\n\n\n******\n" << "after V_XC.contribute(ik)" << "\n******\n\n\n";
 
         // get H(k) * wfc
         HkPsi( ParaV, HK_TV[0], wfc(ik, 0, 0), H_wfc_TV(ik, 0, 0));
