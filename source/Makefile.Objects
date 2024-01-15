@@ -339,6 +339,7 @@ OBJS_ORBITAL=ORB_atomic.o\
 	  two_center_bundle.o\
 	  two_center_integrator.o\
 	  two_center_table.o\
+      projgen.o\
 
 OBJS_PSI=psi.o\
     psi_memory_op.o\

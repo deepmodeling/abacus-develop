@@ -73,14 +73,15 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* G
             // When equal, the theoretical value of matrix element is zero, 
             // but the calculated value is not zero due to the numerical error, which would lead to result changes.
             if (this->ucell->cal_dtau(iat0, iat1, R_index1).norm() * this->ucell->lat0
-                < orb.Phi[T1].getRcut() + this->ucell->infoNL.Beta[T0].get_rcut_max())
+                < orb.Phi[T1].getRcut() + GlobalV::onsite_radius)
             {
                 is_adj[ad1] = true;
             }
         }
         filter_adjs(is_adj, adjs);
         this->adjs_all.push_back(adjs);
-        for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
+        
+        /*for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
         {
             const int T1 = adjs.ntype[ad1];
             const int I1 = adjs.natom[ad1];
@@ -104,10 +105,10 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* G
                                          paraV);
                 this->hR->insert_pair(tmp);
             }
-        }
+        }*/
     }
     // allocate the memory of BaseMatrix in HR, and set the new values to zero
-    this->hR->allocate(nullptr, true);
+    //this->hR->allocate(nullptr, true);
 
     ModuleBase::timer::tick("DFTUNew", "initialize_HR");
 }
@@ -180,7 +181,7 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                 int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
 
                 ModuleBase::Vector3<double> dtau = tau0 - tau1;
-                uot.two_center_bundle->overlap_orb->snap(
+                uot.two_center_bundle->overlap_orb_onsite->snap(
                         T1, L1, N1, M1, T0, dtau * this->ucell->lat0, 0 /*cal_deri*/, nlm);
 #else
                 uot.snap_psibeta_half(orb,

@@ -379,6 +379,7 @@ void Input_Conv::Convert(void)
             GlobalC::dftu.U = INPUT.hubbard_u;
         }
     }
+    GlobalV::onsite_radius = INPUT.onsite_radius;
 #endif
     //--------------------------------------------
     // added by zhengdy-soc

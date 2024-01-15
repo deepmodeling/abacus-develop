@@ -300,6 +300,7 @@ class Input
     double lcao_rmax; // rmax(a.u.) to make table.
     double search_radius; // 11.1
     bool search_pbc; // 11.2
+    double onsite_radius; // the radius of on-site orbitals
 
     //==========================================================
     // molecular dynamics

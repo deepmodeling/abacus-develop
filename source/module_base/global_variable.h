@@ -326,5 +326,8 @@ extern std::string qo_basis;
 extern std::string qo_strategy;
 extern double qo_thr;
 extern std::vector<double> qo_screening_coeff;
+
+// radius of on-site orbitals
+extern double onsite_radius;
 } // namespace GlobalV
 #endif

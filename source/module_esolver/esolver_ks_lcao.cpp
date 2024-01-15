@@ -421,6 +421,7 @@ namespace ModuleESolver
     two_center_bundle.reset(new TwoCenterBundle);
     two_center_bundle->build_orb(ucell.ntype, ucell.orbital_fn);
     two_center_bundle->build_alpha(GlobalV::deepks_setorb, &ucell.descriptor_file);
+    two_center_bundle->build_orb_onsite(ucell.ntype, GlobalV::onsite_radius);
     // currently deepks only use one descriptor file, so cast bool to int is fine
 
     //this->orb_con.read_orb_first(GlobalV::ofs_running,

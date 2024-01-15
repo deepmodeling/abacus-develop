@@ -298,4 +298,7 @@ std::string qo_basis = "hydrogen";
 std::string qo_strategy = "minimal";
 double qo_thr = 1.0e-6;
 std::vector<double> qo_screening_coeff = {};
+
+// on-site orbitals
+double onsite_radius = 0.0;
 } // namespace GlobalV

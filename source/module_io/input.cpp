@@ -363,6 +363,7 @@ void Input::Default(void)
     lcao_dk = 0.01;
     lcao_dr = 0.01;
     lcao_rmax = 30; // (a.u.)
+    onsite_radius = 0; // (a.u.)
     //----------------------------------------------------------
     // efield and dipole correction     Yu Liu add 2022-05-18
     //----------------------------------------------------------
@@ -1474,6 +1475,10 @@ bool Input::Read(const std::string& fn)
         else if (strcmp("lcao_rmax", word) == 0)
         {
             read_value(ifs, lcao_rmax);
+        }
+        else if (strcmp("onsite_radius", word) == 0)
+        {
+            read_value(ifs, onsite_radius);
         }
         //----------------------------------------------------------
         // Molecule Dynamics
@@ -3324,6 +3329,7 @@ void Input::Bcast()
     Parallel_Common::bcast_double(lcao_dk);
     Parallel_Common::bcast_double(lcao_dr);
     Parallel_Common::bcast_double(lcao_rmax);
+    Parallel_Common::bcast_double(onsite_radius);
     // zheng daye add 2014/5/5
     Parallel_Common::bcast_string(mdp.md_type);
     Parallel_Common::bcast_string(mdp.md_thermostat);
