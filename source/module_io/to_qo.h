@@ -45,7 +45,7 @@ class toQO
         using RealMatrix = std::vector<std::vector<double>>;
 
     public:
-        toQO(std::string qo_basis, std::string strategy = "minimal");
+        toQO(std::string qo_basis, std::vector<std::string> strategies);
         ~toQO();
 
         /*
@@ -164,6 +164,7 @@ class toQO
         /*
             Data management
         */
+        bool orbital_filter(const int, const std::string);
         /// @brief clean up ovlp_ao_nao_R_ or ovlp_ao_nao_k_
         /// @param is_R true for ovlp_ao_nao_R_, false for ovlp_ao_nao_k_
         void deallocate_ovlp(bool is_R = false);
@@ -186,14 +187,16 @@ class toQO
 
         // setters
         void set_qo_basis(const std::string qo_basis) { qo_basis_ = qo_basis; }
-        void set_strategy(const std::string strategy) { strategy_ = strategy; }
+        void set_strategies(const std::vector<std::string> strategies) { strategies_ = strategies; }
+        void set_strategy(const int itype, const std::string strategy) { strategies_[itype] = strategy; }
         void set_save_mem(const bool save_mem) { save_mem_ = save_mem; }
         
         // getters
         int ntype() const { return ntype_; }
         int nkpts() const { return nkpts_; }
         std::string qo_basis() const { return qo_basis_; }
-        std::string strategy() const { return strategy_; }
+        std::vector<std::string> strategies() const { return strategies_; }
+        std::string strategy(const int itype) const { return strategies_[itype]; }
         UnitCell* p_ucell() const { return p_ucell_; }
         RadialCollection* p_nao() const { return nao_.get(); }
         RadialCollection* p_ao() const { return ao_.get(); }
@@ -264,7 +267,7 @@ class toQO
         /// @details full: 1s, 2s, 2p, 3s, 3p, 3d, ...
         ///          minimal: 1s, 2p, 3d, 4f, ...
         ///          energy: according to Hund's rule
-        std::string strategy_ = "minimal";
+        std::vector<std::string> strategies_;
 
         //
         // memory control

@@ -116,7 +116,14 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
 
         // C++: dm(iw1,iw2) = wfc(ib,iw1).T * wg_wfc(ib,iw2)
 #ifdef __MPI
-        psiMulPsiMpi(wg_wfc, wfc, dmk_pointer, ParaV->desc_wfc, ParaV->desc);
+
+        if (GlobalV::KS_SOLVER == "cg_in_lcao")
+        {
+            psiMulPsi(wg_wfc, wfc, dmk_pointer);
+        } else 
+        {
+            psiMulPsiMpi(wg_wfc, wfc, dmk_pointer, ParaV->desc_wfc, ParaV->desc);
+        }
 #else
         psiMulPsi(wg_wfc, wfc, dmk_pointer);
 #endif
@@ -126,7 +133,7 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
     return;
 }
 
-#ifdef __MPI
+// #ifdef __MPI
 void psiMulPsiMpi(const psi::Psi<double>& psi1,
                          const psi::Psi<double>& psi2,
                          double* dm_out,
@@ -195,7 +202,7 @@ void psiMulPsiMpi(const psi::Psi<std::complex<double>>& psi1,
     ModuleBase::timer::tick("psiMulPsiMpi", "pdgemm");
 }
 
-#else
+// #else
 void psiMulPsi(const psi::Psi<double>& psi1, const psi::Psi<double>& psi2, double* dm_out)
 {
     const double one_float = 1.0, zero_float = 0.0;
@@ -241,6 +248,6 @@ void psiMulPsi(const psi::Psi<std::complex<double>>& psi1,
            dm_out,
            &nlocal);
 }
-#endif
+// #endif
 
 } // namespace elecstate
