@@ -34,6 +34,7 @@ has_dos=`grep -En '(^|[[:space:]])out_dos($|[[:space:]])' INPUT | awk '{print $2
 has_cond=`grep -En '(^|[[:space:]])cal_cond($|[[:space:]])' INPUT | awk '{print $2}'`
 has_hs=`grep -En '(^|[[:space:]])out_mat_hs($|[[:space:]])' INPUT | awk '{print $2}'`
 has_hs2=`grep -En '(^|[[:space:]])out_mat_hs2($|[[:space:]])' INPUT | awk '{print $2}'`
+has_xc=`grep -En '(^|[[:space:]])out_mat_xc($|[[:space:]])' INPUT | awk '{print $2}'`
 has_r=`grep -En '(^|[[:space:]])out_mat_r($|[[:space:]])' INPUT | awk '{print $2}'`
 deepks_out_labels=`grep deepks_out_labels INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 deepks_bandgap=`grep deepks_bandgap INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
@@ -59,7 +60,7 @@ out_chg=`grep out_chg INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 #echo $running_path
 base=`grep -En '(^|[[:space:]])basis_type($|[[:space:]])' INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 word="driver_line"
-symmetry=`grep "symmetry" INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
+symmetry=`grep -w "symmetry" INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 test -e $1 && rm $1
 #--------------------------------------------
 # if NOT non-self-consistent calculations
@@ -210,6 +211,18 @@ if ! test -z "$has_hs"  && [  $has_hs == 1 ]; then
     echo "CompareH_pass $?" >>$1
     python3 ../tools/CompareFile.py $sref $scal 8
     echo "CompareS_pass $?" >>$1
+fi
+
+if ! test -z "$has_xc"  && [  $has_xc == 1 ]; then
+	if ! test -z "$gamma_only"  && [ $gamma_only == 1 ]; then
+                xcref=k-0-Vxc.ref
+                xccal=OUT.autotest/k-0-Vxc
+        else
+                xcref=k-1-Vxc.ref
+                xccal=OUT.autotest/k-1-Vxc
+        fi
+        python3 ../tools/CompareFile.py $xcref $xccal 4
+    echo "CompareXC_pass $?" >>$1
 fi
 
 #echo $has_hs2

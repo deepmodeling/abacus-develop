@@ -688,7 +688,8 @@ void Exx_Lip::read_q_pack(const ModuleSymmetry::Symmetry& symm,
 
 
 	q_pack->wf_ptr = new wavefunc();
-    q_pack->wf_ptr->allocate(q_pack->kv_ptr->nks,
+    q_pack->wf_ptr->allocate(q_pack->kv_ptr->nkstot,
+                             q_pack->kv_ptr->nks,
                              q_pack->kv_ptr->ngk.data(),
                              wfc_basis->npwk_max); // mohan update 2021-02-25
     //	q_pack->wf_ptr->init(q_pack->kv_ptr->nks,q_pack->kv_ptr,ucell_ptr,old_pwptr,&ppcell,&GlobalC::ORB,&hm,&Pkpoints);

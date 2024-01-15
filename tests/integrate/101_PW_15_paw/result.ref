@@ -1,6 +1,7 @@
-etotref -200.9340475810059
-etotperatomref -100.4670237905
-pointgroupref T_d
-spacegroupref O_h
+etotref -200.9137994781310681
+etotperatomref -100.4568997391
+totalforceref 0.126270
+pointgroupref C_1h
+spacegroupref C_2h
 nksibzref 1
-totaltimeref 1.17
+totaltimeref 1.08

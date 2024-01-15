@@ -141,3 +141,42 @@ AddTest(
   LIBS base ${math_libs} device
   SOURCES csr_reader_test.cpp ../csr_reader.cpp ../file_reader.cpp ../sparse_matrix.cpp
 )
+
+AddTest(
+  TARGET read_rhog_test
+  LIBS ${math_libs} base device planewave
+  SOURCES read_rhog_test.cpp ../read_rhog.cpp ../binstream.cpp ../../module_basis/module_pw/test/test_tool.cpp
+)
+
+if(ENABLE_LCAO)
+AddTest(
+  TARGET to_qo_test
+  LIBS base ${math_libs} device numerical_atomic_orbitals container orb
+  SOURCES 
+  to_qo_test.cpp
+  ../to_qo.cpp
+  ../to_qo_tools.cpp
+  ../../module_cell/atom_spec.cpp
+  ../../module_cell/parallel_kpoints.cpp
+  ../../module_cell/test/support/mock_unitcell.cpp
+  ../output_radial.cpp
+)
+endif()
+
+AddTest(
+  TARGET output_radial_test
+  LIBS base ${math_libs} device
+  SOURCES output_radial_test.cpp ../output_radial.cpp
+)
+
+
+AddTest(
+  TARGET read_wfc_pw_test
+  LIBS base ${math_libs} device planewave
+  SOURCES read_wfc_pw_test.cpp ../read_wfc_pw.cpp ../binstream.cpp ../../module_basis/module_pw/test/test_tool.cpp
+)
+
+add_test(NAME read_wfc_pw_test_parallel
+      COMMAND mpirun -np 4 ./read_wfc_pw_test
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)

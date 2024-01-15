@@ -25,12 +25,14 @@
 #include "version.h"
 Input INPUT;
 
-void Input::Init(const std::string &fn)
+void Input::Init(const std::string& fn)
 {
     ModuleBase::timer::tick("Input", "Init");
     this->Default();
 
+    // only rank 0 reads the input file, check the code in this->Read()
     bool success = this->Read(fn);
+
     this->Default_2();
 
 // xiaohui add 2015-09-16
@@ -59,7 +61,8 @@ void Input::Init(const std::string &fn)
     // NAME : Run::make_dir( dir name : OUT.suffix)
     //----------------------------------------------------------
     bool out_dir = false;
-    if(!out_app_flag && (out_mat_hs2 || out_mat_r || out_mat_t || out_mat_dh)) out_dir = true;
+    if (!out_app_flag && (out_mat_hs2 || out_mat_r || out_mat_t || out_mat_dh))
+        out_dir = true;
     ModuleBase::Global_File::make_dir_out(this->suffix,
                                           this->calculation,
                                           out_dir,
@@ -68,22 +71,22 @@ void Input::Init(const std::string &fn)
                                           this->out_alllog); // xiaohui add 2013-09-01
     Check();
 #ifdef VERSION
-        const char* version = VERSION;
+    const char* version = VERSION;
 #else
-        const char* version = "unknown";
+    const char* version = "unknown";
 #endif
 #ifdef COMMIT
-        const char* commit = COMMIT;
+    const char* commit = COMMIT;
 #else
-        const char* commit = "unknown";
+    const char* commit = "unknown";
 #endif
     time_t time_now = time(NULL);
     GlobalV::ofs_running << "                                                                                     "
                          << std::endl;
-    GlobalV::ofs_running << "                              ABACUS " << version
-                         << std::endl << std::endl;
+    GlobalV::ofs_running << "                              ABACUS " << version << std::endl << std::endl;
     GlobalV::ofs_running << "               Atomic-orbital Based Ab-initio Computation at UStc                    "
-                         << std::endl << std::endl;
+                         << std::endl
+                         << std::endl;
     GlobalV::ofs_running << "                     Website: http://abacus.ustc.edu.cn/                             "
                          << std::endl;
     GlobalV::ofs_running << "               Documentation: https://abacus.deepmodeling.com/                       "
@@ -92,8 +95,7 @@ void Input::Init(const std::string &fn)
                          << std::endl;
     GlobalV::ofs_running << "                              https://github.com/deepmodeling/abacus-develop         "
                          << std::endl;
-    GlobalV::ofs_running << "                      Commit: " << commit
-                         << std::endl << std::endl;
+    GlobalV::ofs_running << "                      Commit: " << commit << std::endl << std::endl;
     GlobalV::ofs_running << std::setiosflags(std::ios::right);
 
 #ifdef __MPI
@@ -139,7 +141,7 @@ void Input::Default(void)
     // xiaohui modify 2015-03-25
     // suffix = "MESIA";
     suffix = "ABACUS";
-    stru_file = ""; // xiaohui modify 2015-02-01
+    stru_file = "";   // xiaohui modify 2015-02-01
     kpoint_file = ""; // xiaohui modify 2015-02-01
     pseudo_dir = "";
     orbital_dir = ""; // liuyu add 2021-08-14
@@ -151,7 +153,7 @@ void Input::Default(void)
     // calculation = "relax";
     calculation = "scf";
     esolver_type = "ksdft";
-    pseudo_rcut = 15.0; // qianrui add this parameter 2021-5
+    pseudo_rcut = 15.0;  // qianrui add this parameter 2021-5
     pseudo_mesh = false; // qianrui add this pararmeter
     ntype = 0;
     nbands = 0;
@@ -174,7 +176,8 @@ void Input::Default(void)
     cond_dw = 0.1;
     cond_wcut = 10;
     cond_dt = 0.02;
-    cond_dtbatch = 4;
+    cond_dtbatch = 0;
+    cond_smear = 1;
     cond_fwhm = 0.4;
     cond_nonlocal = true;
     berry_phase = false;
@@ -182,10 +185,11 @@ void Input::Default(void)
     towannier90 = false;
     nnkpfile = "seedname.nnkp";
     wannier_spin = "up";
+    wannier_method = 1;
     out_wannier_amn = true;
     out_wannier_eig = true;
     out_wannier_mmn = true;
-    out_wannier_unk = true;
+    out_wannier_unk = false;
     out_wannier_wvfn_formatted = true;
     for (int i = 0; i < 3; i++)
     {
@@ -203,14 +207,14 @@ void Input::Default(void)
     //----------------------------------------------------------
     // new function
     //----------------------------------------------------------
-    basis_type = "pw"; // xiaohui add 2013-09-01
+    basis_type = "pw";     // xiaohui add 2013-09-01
     ks_solver = "default"; // xiaohui add 2013-09-01
-    search_radius = -1.0; // unit: a.u. -1.0 has no meaning.
+    search_radius = -1.0;  // unit: a.u. -1.0 has no meaning.
     search_pbc = true;
     symmetry = "default";
     init_vel = false;
     ref_cell_factor = 1.0;
-    symmetry_prec = 1.0e-6; // LiuXh add 2021-08-12, accuracy for symmetry
+    symmetry_prec = 1.0e-6;    // LiuXh add 2021-08-12, accuracy for symmetry
     symmetry_autoclose = true; // whether to close symmetry automatically when error occurs in symmetry analysis
     cal_force = 0;
     force_thr = 1.0e-3;
@@ -224,7 +228,7 @@ void Input::Default(void)
     fixed_ibrav = false;
     fixed_atoms = false;
     relax_method = "cg"; // pengfei  2014-10-13
-    relax_cg_thr = 0.5; // pengfei add 2013-08-15
+    relax_cg_thr = 0.5;  // pengfei add 2013-08-15
     out_level = "ie";
     out_md_control = false;
     relax_new = true;
@@ -282,7 +286,7 @@ void Input::Default(void)
     //----------------------------------------------------------
     // iteration
     //----------------------------------------------------------
-    scf_thr = -1.0; // the default value (1e-9 for pw, and 1e-7 for lcao) will be set in Default_2
+    scf_thr = -1.0;    // the default value (1e-9 for pw, and 1e-7 for lcao) will be set in Default_2
     scf_thr_type = -1; // the default value (1 for pw, and 2 for lcao) will be set in Default_2
     scf_nmax = 100;
     relax_nmax = 0;
@@ -290,18 +294,20 @@ void Input::Default(void)
     //----------------------------------------------------------
     // occupation
     //----------------------------------------------------------
-    occupations = "smearing"; // pengfei 2014-10-13
-    smearing_method = "fixed";
-    smearing_sigma = 0.01;
+    occupations = "smearing";
+    smearing_method = "gauss"; // this setting is based on the report in Issue #2847
+    smearing_sigma = 0.015;    // this setting is based on the report in Issue #2847
     //----------------------------------------------------------
     //  charge mixing
     //----------------------------------------------------------
     mixing_mode = "broyden";
     mixing_beta = -10;
     mixing_ndim = 8;
-    mixing_gg0 = 1.00; // use Kerker defaultly
-    mixing_beta_mag = -10.0; // only set when nspin == 2
-    mixing_gg0_mag = 0.0; // defaultly exclude Kerker from mixing magnetic density
+    mixing_gg0 = 1.00;       // use Kerker defaultly
+    mixing_beta_mag = -10.0; // only set when nspin == 2 || nspin == 4
+    mixing_gg0_mag = 0.0;    // defaultly exclude Kerker from mixing magnetic density
+    mixing_gg0_min = 0.1;    // defaultly minimum kerker coefficient
+    mixing_angle = -10.0;    // defaultly close for npsin = 4
     mixing_tau = false;
     mixing_dftu = false;
     //----------------------------------------------------------
@@ -333,18 +339,20 @@ void Input::Default(void)
     out_band = 0;
     out_proj_band = 0;
     out_mat_hs = 0;
+    out_mat_xc = 0;
     cal_syns = 0;
     dmax = 0.01;
     out_mat_hs2 = 0; // LiuXh add 2019-07-15
     out_mat_t = 0;
     out_interval = 1;
     out_app_flag = true;
+    out_ndigits = 8;
     out_mat_r = 0; // jingan add 2019-8-14
     out_mat_dh = 0;
     out_wfc_lcao = 0;
     out_alllog = false;
-    dos_emin_ev = -15; //(ev)
-    dos_emax_ev = 15; //(ev)
+    dos_emin_ev = -15;    //(ev)
+    dos_emax_ev = 15;     //(ev)
     dos_edelta_ev = 0.01; //(ev)
     dos_scale = 0.01;
     dos_sigma = 0.07;
@@ -362,8 +370,8 @@ void Input::Default(void)
     efield_flag = false;
     dip_cor_flag = false;
     efield_dir = 2;
-    efield_pos_max = 0.5;
-    efield_pos_dec = 0.1;
+    efield_pos_max = -1.0;
+    efield_pos_dec = -1.0;
     efield_amp = 0.0;
     //----------------------------------------------------------
     // gatefield                        Yu Liu add 2022-09-13
@@ -584,18 +592,18 @@ void Input::Default(void)
     //==========================================================
     // spherical bessel  Peize Lin added on 2022-12-15
     //==========================================================
-	bessel_nao_smooth = true;
-	bessel_nao_sigma = 0.1;
-	bessel_nao_ecut = "default";
-	bessel_nao_rcut = 6.0;				// -1.0 for forcing manual setting
-	bessel_nao_tolerence = 1E-12;
+    bessel_nao_smooth = true;
+    bessel_nao_sigma = 0.1;
+    bessel_nao_ecut = "default";
+    bessel_nao_rcut = 6.0; // -1.0 for forcing manual setting
+    bessel_nao_tolerence = 1E-12;
 
-	bessel_descriptor_lmax = 2;			// -1 for forcing manual setting
-	bessel_descriptor_smooth = true;
-	bessel_descriptor_sigma = 0.1;
-	bessel_descriptor_ecut = "default";
-	bessel_descriptor_rcut = 6.0;		// -1.0 for forcing manual setting
-	bessel_descriptor_tolerence = 1E-12;
+    bessel_descriptor_lmax = 2; // -1 for forcing manual setting
+    bessel_descriptor_smooth = true;
+    bessel_descriptor_sigma = 0.1;
+    bessel_descriptor_ecut = "default";
+    bessel_descriptor_rcut = 6.0; // -1.0 for forcing manual setting
+    bessel_descriptor_tolerence = 1E-12;
 
     //==========================================================
     //    device control denghui added on 2022-11-15
@@ -617,10 +625,19 @@ void Input::Default(void)
     alpha_trial = 0.01;
     sccut = 3.0;
     sc_file = "none";
+    //==========================================================
+    // variables for Quasiatomic Orbital analysis
+    //==========================================================
+    qo_switch = false;
+    qo_basis = "hydrogen";
+    qo_strategy = "minimal";
+    qo_thr = 1e-6;
+    qo_screening_coeff = 0.1;
+
     return;
 }
 
-bool Input::Read(const std::string &fn)
+bool Input::Read(const std::string& fn)
 {
     ModuleBase::TITLE("Input", "Read");
 
@@ -658,7 +675,8 @@ bool Input::Read(const std::string &fn)
 
     if (ierr == 0)
     {
-        std::cout << " Error parameter list." << std::endl;
+        std::cout << " Error parameter list. "
+                  << " The parameter list always starts with key word 'INPUT_PARAMETERS'. " << std::endl;
         return false; // return error : false
     }
 
@@ -813,6 +831,10 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, cond_dtbatch);
         }
+        else if (strcmp("cond_smear", word) == 0)
+        {
+            read_value(ifs, cond_smear);
+        }
         else if (strcmp("cond_fwhm", word) == 0)
         {
             read_value(ifs, cond_fwhm);
@@ -848,6 +870,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("wannier_spin", word) == 0) // add by jingan for wannier90
         {
             read_value(ifs, wannier_spin);
+        }
+        else if (strcmp("wannier_method", word) == 0) // add by jingan for wannier90
+        {
+            read_value(ifs, wannier_method);
         }
         else if (strcmp("out_wannier_mmn", word) == 0) // add by renxi for wannier90
         {
@@ -1241,6 +1267,14 @@ bool Input::Read(const std::string &fn)
         {
             read_value(ifs, mixing_gg0_mag);
         }
+        else if (strcmp("mixing_gg0_min", word) == 0)
+        {
+            read_value(ifs, mixing_gg0_min);
+        }
+        else if (strcmp("mixing_angle", word) == 0)
+        {
+            read_value(ifs, mixing_angle);
+        }
         else if (strcmp("mixing_tau", word) == 0)
         {
             read_bool(ifs, mixing_tau);
@@ -1367,6 +1401,10 @@ bool Input::Read(const std::string &fn)
         {
             read_bool(ifs, out_mat_dh);
         }
+        else if (strcmp("out_mat_xc", word) == 0)
+        {
+            read_bool(ifs, out_mat_xc);
+        }
         else if (strcmp("out_interval", word) == 0)
         {
             read_value(ifs, out_interval);
@@ -1374,6 +1412,10 @@ bool Input::Read(const std::string &fn)
         else if (strcmp("out_app_flag", word) == 0)
         {
             read_bool(ifs, out_app_flag);
+        }
+        else if (strcmp("out_ndigits", word) == 0)
+        {
+            read_value(ifs, out_ndigits);
         }
         else if (strcmp("out_mat_r", word) == 0)
         {
@@ -2201,38 +2243,63 @@ bool Input::Read(const std::string &fn)
         //----------------------------------------------------------------------------------
         //    precision control denghui added on 2023-01-01
         //----------------------------------------------------------------------------------
-        else if (strcmp("precision", word) == 0) {
+        else if (strcmp("precision", word) == 0)
+        {
             read_value(ifs, precision);
         }
         //----------------------------------------------------------------------------------
         //    Deltaspin
         //----------------------------------------------------------------------------------
-        else if (strcmp("sc_mag_switch", word) == 0){
+        else if (strcmp("sc_mag_switch", word) == 0)
+        {
             read_bool(ifs, sc_mag_switch);
         }
-        else if (strcmp("decay_grad_switch", word) == 0){
+        else if (strcmp("decay_grad_switch", word) == 0)
+        {
             read_bool(ifs, decay_grad_switch);
         }
-        else if (strcmp("sc_thr", word) == 0){
+        else if (strcmp("sc_thr", word) == 0)
+        {
             read_value(ifs, sc_thr);
         }
-        else if (strcmp("nsc", word) == 0){
+        else if (strcmp("nsc", word) == 0)
+        {
             read_value(ifs, nsc);
         }
-        else if (strcmp("nsc_min", word) == 0){
+        else if (strcmp("nsc_min", word) == 0)
+        {
             read_value(ifs, nsc_min);
         }
-        else if (strcmp("sc_scf_nmin", word) == 0){
+        else if (strcmp("sc_scf_nmin", word) == 0)
+        {
             read_value(ifs, sc_scf_nmin);
         }
-        else if (strcmp("alpha_trial", word) == 0){
+        else if (strcmp("alpha_trial", word) == 0)
+        {
             read_value(ifs, alpha_trial);
         }
-        else if (strcmp("sccut", word) == 0){
+        else if (strcmp("sccut", word) == 0)
+        {
             read_value(ifs, sccut);
         }
-        else if (strcmp("sc_file", word) == 0){
+        else if (strcmp("sc_file", word) == 0)
+        {
             read_value(ifs, sc_file);
+        }
+        else if (strcmp("qo_switch", word) == 0){
+            read_bool(ifs, qo_switch);
+        }
+        else if (strcmp("qo_basis", word) == 0){
+            read_value(ifs, qo_basis);
+        }
+        else if (strcmp("qo_strategy", word) == 0){
+            read_value(ifs, qo_strategy);
+        }
+        else if (strcmp("qo_thr", word) == 0){
+            read_value(ifs, qo_thr);
+        }
+        else if (strcmp("qo_screening_coeff", word) == 0){
+            read_value(ifs, qo_screening_coeff);
         }
         else
         {
@@ -2282,9 +2349,9 @@ bool Input::Read(const std::string &fn)
     // sunliang added on 2022-12-06
     // To check if ntype in INPUT is equal to the atom species in STRU, if ntype is not set in INPUT, we will set it
     // according to STRU.
-    if(this->stru_file == "")
+    if (this->stru_file == "")
     {
-        this->stru_file="STRU";
+        this->stru_file = "STRU";
     }
     double ntype_stru = this->count_ntype(this->stru_file);
     if (this->ntype == 0)
@@ -2393,7 +2460,8 @@ bool Input::Read(const std::string &fn)
             exit(0);
         }
 
-        if (strcmp("genelpa", ks_solver.c_str()) != 0 && strcmp(ks_solver.c_str(), "scalapack_gvx") != 0 && strcmp(ks_solver.c_str(), "default") != 0 )
+        if (strcmp("genelpa", ks_solver.c_str()) != 0 && strcmp(ks_solver.c_str(), "scalapack_gvx") != 0
+            && strcmp(ks_solver.c_str(), "default") != 0)
         {
             std::cout << " WRONG ARGUMENTS OF ks_solver in DFT+U routine, only genelpa and scalapack_gvx are supported "
                       << std::endl;
@@ -2514,9 +2582,10 @@ bool Input::Read(const std::string &fn)
     }
     if ((out_mat_r || out_mat_hs2 || out_mat_t || out_mat_dh) && gamma_only_local)
     {
-        ModuleBase::WARNING_QUIT("Input", "printing of H(R)/S(R)/dH(R)/T(R) is not available for gamma only calculations");
+        ModuleBase::WARNING_QUIT("Input",
+                                 "printing of H(R)/S(R)/dH(R)/T(R) is not available for gamma only calculations");
     }
-    if(out_mat_dh && nspin == 4)
+    if (out_mat_dh && nspin == 4)
     {
         ModuleBase::WARNING_QUIT("Input", "priting of dH not available for nspin = 4");
     }
@@ -2614,9 +2683,10 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         GlobalV::double_grid = true;
     }
 
-    if (esolver_type == "sdft"&&psi_initializer)
+    if (esolver_type == "sdft" && psi_initializer)
     {
-        GlobalV::ofs_warning << "psi_initializer is not available for sdft, it is automatically set to false" << std::endl;
+        GlobalV::ofs_warning << "psi_initializer is not available for sdft, it is automatically set to false"
+                             << std::endl;
         psi_initializer = false;
     }
 
@@ -2643,7 +2713,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     if (of_kinetic != "wt")
         of_read_kernel = false; // sunliang add 2022-09-12
 
-    if(dft_functional == "default" && use_paw)
+    if (dft_functional == "default" && use_paw)
     {
         ModuleBase::WARNING_QUIT("Input", "dft_functional must be set when use_paw is true");
     }
@@ -2674,9 +2744,10 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             exx_ccp_rmesh_times = "1.5";
     }
     if (symmetry == "default")
-    {   //deal with no-forced default value
-        if (gamma_only || calculation == "nscf" || calculation == "get_S" || calculation == "get_pchg" || calculation == "get_wf")
-            symmetry = "0";     //if md or exx, symmetry will be force-set to 0 or -1 later
+    { // deal with no-forced default value
+        if (gamma_only || calculation == "nscf" || calculation == "get_S" || calculation == "get_pchg"
+            || calculation == "get_wf")
+            symmetry = "0"; // if md or exx, symmetry will be force-set to 0 or -1 later
         else
             symmetry = "1";
     }
@@ -2755,9 +2826,9 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         out_proj_band = 0;
         cal_force = 0;
         init_wfc = "file";
-        init_chg = "atomic"; // useless,
+        init_chg = "atomic";   // useless,
         chg_extrap = "atomic"; // xiaohui modify 2015-02-01
-        out_chg = 1; // this leads to the calculation of state charge.
+        out_chg = 1;           // this leads to the calculation of state charge.
         out_dm = 0;
         out_dm1 = 0;
         out_pot = 0;
@@ -2806,14 +2877,13 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         {
             init_vel = 1;
         }
-        if (esolver_type == "lj" || esolver_type == "dp" || mdp.md_type == "msst"
-            || mdp.md_type == "npt")
+        if (esolver_type == "lj" || esolver_type == "dp" || mdp.md_type == "msst" || mdp.md_type == "npt")
         {
             cal_stress = 1;
         }
 
         // md_prec_level only used in vc-md  liuyu 2023-03-27
-        if(mdp.md_type != "msst" && mdp.md_type != "npt")
+        if (mdp.md_type != "msst" && mdp.md_type != "npt")
         {
             mdp.md_prec_level = 0;
         }
@@ -2866,6 +2936,34 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         by = 1;
         bz = 1;
     }
+    else if (basis_type == "lcao_in_pw")
+    {
+        if (ks_solver != "lapack")
+        {
+            ModuleBase::WARNING_QUIT("Input", "ks_solver must be lapack when basis_type is lcao_in_pw");
+        }
+        else
+        {
+            /*
+                then psi initialization setting adjustment
+            */
+            if (!psi_initializer)
+            {
+                psi_initializer = true;
+            }
+            if (init_wfc != "nao")
+            {
+                init_wfc = "nao";
+                GlobalV::ofs_warning << "init_wfc is set to nao when basis_type is lcao_in_pw" << std::endl;
+            }
+        }
+        /*
+            if bx, by and bz is not assigned here, undefined behavior will occur
+        */
+        bx = 1;
+        by = 1;
+        bz = 1;
+    }
     else if (basis_type == "lcao")
     {
         if (ks_solver == "default")
@@ -2906,15 +3004,15 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             ModuleBase::GlobalFunc::AUTO_SET("gamma_only_local", "0");
         }
     }
-    //added by linpz 2023/02/13
-	if (bessel_nao_ecut == "default")
-	{
-		bessel_nao_ecut = std::to_string(ecutwfc);
-	}
-	if (bessel_descriptor_ecut == "default")
-	{
-		bessel_descriptor_ecut = std::to_string(ecutwfc);
-	}
+    // added by linpz 2023/02/13
+    if (bessel_nao_ecut == "default")
+    {
+        bessel_nao_ecut = std::to_string(ecutwfc);
+    }
+    if (bessel_descriptor_ecut == "default")
+    {
+        bessel_descriptor_ecut = std::to_string(ecutwfc);
+    }
     // charge extrapolation liuyu 2023/09/16
     if (chg_extrap == "default" && calculation == "md")
     {
@@ -2946,11 +3044,11 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         }
         else if (basis_type == "pw" and calculation == "nscf")
         {
-            scf_thr = 1.0e-6; 
+            scf_thr = 1.0e-6;
             // In NSCF calculation, the diagonalization threshold is set to 0.1*scf/nelec.
             // In other words, the scf_thr is used to control diagonalization convergence
-            // threthod in NSCF. In this case, the default 1.0e-9 is too strict. 
-            //renxi 20230908
+            // threthod in NSCF. In this case, the default 1.0e-9 is too strict.
+            // renxi 20230908
         }
     }
 
@@ -2965,6 +3063,19 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             scf_thr_type = 1;
         }
     }
+
+    if(qo_switch)
+    {
+        out_mat_hs = true; // print H(k) and S(k)
+        out_wfc_lcao = 1; // print wave function in lcao basis in kspace
+    }
+  
+    // set nspin with noncolin
+    if (noncolin || lspinorb)
+    {
+        nspin = 4;
+    }
+
     // mixing parameters
     if (mixing_beta < 0.0)
     {
@@ -2978,14 +3089,16 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             mixing_beta_mag = 1.6;
             mixing_gg0_mag = 0.0;
         }
-        else if (nspin == 4) // I will add this 
+        else if (nspin == 4) // I will add this
         {
-            mixing_beta = 0.2;
-        }     
+            mixing_beta = 0.4;
+            mixing_beta_mag = 1.6;
+            mixing_gg0_mag = 0.0;
+        }
     }
     else
     {
-        if (nspin == 2 && mixing_beta_mag < 0.0)
+        if ((nspin == 2 || nspin == 4) && mixing_beta_mag < 0.0)
         {
             if (mixing_beta <= 0.4)
             {
@@ -2993,7 +3106,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             }
             else
             {
-                mixing_beta_mag = 1.6;
+                mixing_beta_mag = 1.6; // 1.6 can be discussed
             }
         }
     }
@@ -3023,8 +3136,10 @@ void Input::Bcast()
     Parallel_Common::bcast_int(nbands);
     Parallel_Common::bcast_int(nbands_sto);
     Parallel_Common::bcast_int(nbands_istate);
-    for(int i=0;i<3;i++)
-    {Parallel_Common::bcast_double(kspacing[i]);}
+    for (int i = 0; i < 3; i++)
+    {
+        Parallel_Common::bcast_double(kspacing[i]);
+    }
     Parallel_Common::bcast_double(min_dist_coef);
     Parallel_Common::bcast_int(nche_sto);
     Parallel_Common::bcast_int(seed_sto);
@@ -3041,6 +3156,7 @@ void Input::Bcast()
     Parallel_Common::bcast_double(cond_wcut);
     Parallel_Common::bcast_double(cond_dt);
     Parallel_Common::bcast_int(cond_dtbatch);
+    Parallel_Common::bcast_int(cond_smear);
     Parallel_Common::bcast_double(cond_fwhm);
     Parallel_Common::bcast_bool(cond_nonlocal);
     Parallel_Common::bcast_int(bndpar);
@@ -3050,6 +3166,7 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(towannier90);
     Parallel_Common::bcast_string(nnkpfile);
     Parallel_Common::bcast_string(wannier_spin);
+    Parallel_Common::bcast_int(wannier_method);
     Parallel_Common::bcast_bool(out_wannier_mmn);
     Parallel_Common::bcast_bool(out_wannier_amn);
     Parallel_Common::bcast_bool(out_wannier_unk);
@@ -3064,7 +3181,7 @@ void Input::Bcast()
     Parallel_Common::bcast_int(lmaxmax);
 
     Parallel_Common::bcast_string(basis_type); // xiaohui add 2013-09-01
-    Parallel_Common::bcast_string(ks_solver); // xiaohui add 2013-09-01
+    Parallel_Common::bcast_string(ks_solver);  // xiaohui add 2013-09-01
     Parallel_Common::bcast_double(search_radius);
     Parallel_Common::bcast_bool(search_pbc);
     Parallel_Common::bcast_double(search_radius);
@@ -3154,13 +3271,15 @@ void Input::Bcast()
     Parallel_Common::bcast_double(mixing_gg0); // mohan add 2014-09-27
     Parallel_Common::bcast_double(mixing_beta_mag);
     Parallel_Common::bcast_double(mixing_gg0_mag);
+    Parallel_Common::bcast_double(mixing_gg0_min);
+    Parallel_Common::bcast_double(mixing_angle);
     Parallel_Common::bcast_bool(mixing_tau);
     Parallel_Common::bcast_bool(mixing_dftu);
 
     Parallel_Common::bcast_string(read_file_dir);
     Parallel_Common::bcast_string(init_wfc);
     Parallel_Common::bcast_bool(psi_initializer);
-    
+
     Parallel_Common::bcast_int(mem_saver);
     Parallel_Common::bcast_int(printe);
     Parallel_Common::bcast_string(init_chg);
@@ -3188,11 +3307,13 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(out_mat_hs2); // LiuXh add 2019-07-15
     Parallel_Common::bcast_bool(out_mat_t);
     Parallel_Common::bcast_bool(out_mat_dh);
+    Parallel_Common::bcast_bool(out_mat_xc);
     Parallel_Common::bcast_bool(out_mat_r); // jingan add 2019-8-14
     Parallel_Common::bcast_int(out_wfc_lcao);
     Parallel_Common::bcast_bool(out_alllog);
     Parallel_Common::bcast_bool(out_element_info);
     Parallel_Common::bcast_bool(out_app_flag);
+    Parallel_Common::bcast_int(out_ndigits);
     Parallel_Common::bcast_int(out_interval);
 
     Parallel_Common::bcast_double(dos_emin_ev);
@@ -3374,8 +3495,8 @@ void Input::Bcast()
 
     // Parallel_Common::bcast_int( epsilon0_choice );
     Parallel_Common::bcast_double(cell_factor); // LiuXh add 20180619
-    Parallel_Common::bcast_bool(restart_save); // Peize Lin add 2020.04.04
-    Parallel_Common::bcast_bool(restart_load); // Peize Lin add 2020.04.04
+    Parallel_Common::bcast_bool(restart_save);  // Peize Lin add 2020.04.04
+    Parallel_Common::bcast_bool(restart_load);  // Peize Lin add 2020.04.04
 
     //-----------------------------------------------------------------------------------
     // DFT+U (added by Quxin 2020-10-29)
@@ -3456,7 +3577,7 @@ void Input::Bcast()
     Parallel_Common::bcast_string(device);
     /**
      *  Deltaspin variables
-    */
+     */
     Parallel_Common::bcast_bool(sc_mag_switch);
     Parallel_Common::bcast_bool(decay_grad_switch);
     Parallel_Common::bcast_double(sc_thr);
@@ -3467,6 +3588,11 @@ void Input::Bcast()
     Parallel_Common::bcast_double(alpha_trial);
     Parallel_Common::bcast_double(sccut);
 
+    Parallel_Common::bcast_bool(qo_switch);
+    Parallel_Common::bcast_string(qo_basis);
+    Parallel_Common::bcast_string(qo_strategy);
+    Parallel_Common::bcast_double(qo_thr);
+    Parallel_Common::bcast_double(qo_screening_coeff);
     return;
 }
 #endif
@@ -3493,13 +3619,13 @@ void Input::Check(void)
     if (ntype <= 0)
         ModuleBase::WARNING_QUIT("Input", "ntype must > 0");
 
-    // std::cout << "diago_proc=" << diago_proc << std::endl;
-    // std::cout << " NPROC=" << GlobalV::NPROC << std::endl;
+        // std::cout << "diago_proc=" << diago_proc << std::endl;
+        // std::cout << " NPROC=" << GlobalV::NPROC << std::endl;
 #ifndef USE_PAW
-    if(use_paw)
+    if (use_paw)
     {
         ModuleBase::WARNING_QUIT("Input", "to use PAW, compile with USE_PAW");
-        if(basis_type != "pw")
+        if (basis_type != "pw")
         {
             ModuleBase::WARNING_QUIT("Input", "PAW is for pw basis only");
         }
@@ -3511,7 +3637,8 @@ void Input::Check(void)
         ModuleBase::WARNING_QUIT("Input", "please don't set diago_proc with lcao base");
     }
     int kspacing_zero_num = 0;
-    for (int i=0;i<3;i++){
+    for (int i = 0; i < 3; i++)
+    {
         if (kspacing[i] < 0.0)
         {
             ModuleBase::WARNING_QUIT("Input", "kspacing must > 0");
@@ -3542,7 +3669,7 @@ void Input::Check(void)
         ModuleBase::WARNING_QUIT("Input", "gate field cannot be used with efield if dip_cor_flag=false !");
     }
 
-    if(ref_cell_factor < 1.0)
+    if (ref_cell_factor < 1.0)
     {
         ModuleBase::WARNING_QUIT("Input", "ref_cell_factor must not be less than 1.0");
     }
@@ -3639,23 +3766,19 @@ void Input::Check(void)
             "wrong 'chg_extrap=dm' is only available for local orbitals."); // xiaohui modify 2015-02-01
     }
 
-    if (
-        (init_wfc != "atomic") 
-     && (init_wfc != "random") 
-     && (init_wfc != "atomic+random")
-     && (init_wfc != "nao")
-     && (init_wfc != "nao+random")
-     && (init_wfc != "file")
-     )
+    if ((init_wfc != "atomic") && (init_wfc != "random") && (init_wfc != "atomic+random") && (init_wfc != "nao")
+        && (init_wfc != "nao+random") && (init_wfc != "file"))
     {
-        if(psi_initializer)
+        if (psi_initializer)
         {
-            ModuleBase::WARNING_QUIT("Input", "wrong init_wfc, please use 'random', 'atomic(+random)', 'nao(+random)' or 'file' ");
+            ModuleBase::WARNING_QUIT(
+                "Input",
+                "wrong init_wfc, please use 'random', 'atomic(+random)', 'nao(+random)' or 'file' ");
         }
         else
         {
             ModuleBase::WARNING_QUIT("Input", "wrong init_wfc, please use 'atomic' or 'random' or 'file' ");
-        }   
+        }
     }
 
     if (nbands > 100000)
@@ -3708,7 +3831,6 @@ void Input::Check(void)
         {
             ModuleBase::WARNING_QUIT("Input", "Non-colliner Spin-constrained DFT not implemented for plane wave now.");
         }
-
     }
     else if (basis_type == "lcao")
     {
@@ -3841,7 +3963,8 @@ void Input::Check(void)
 
     std::string dft_functional_lower = dft_functional;
     std::transform(dft_functional.begin(), dft_functional.end(), dft_functional_lower.begin(), tolower);
-    if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0" || dft_functional_lower == "hse" || dft_functional_lower == "scan0")
+    if (dft_functional_lower == "hf" || dft_functional_lower == "pbe0" || dft_functional_lower == "hse"
+        || dft_functional_lower == "scan0")
     {
         const double exx_hybrid_alpha_value = std::stod(exx_hybrid_alpha);
         if (exx_hybrid_alpha_value < 0 || exx_hybrid_alpha_value > 1)
@@ -3897,9 +4020,33 @@ void Input::Check(void)
 
     if (towannier90)
     {
-        if (basis_type != "pw" && basis_type != "lcao")
+        if (basis_type == "lcao_in_pw")
         {
-            ModuleBase::WARNING_QUIT("Input", "to use towannier90, please set basis_type = pw or lcao");
+            /*
+                Developer's notes: on the repair of lcao_in_pw
+
+                lcao_in_pw is a special basis_type, for scf calculation, it follows workflow of pw,
+                but for nscf the toWannier90 calculation, the interface is in ESolver_KS_LCAO_elec,
+                therefore lcao_in_pw for towannier90 calculation follows lcao.
+
+                In the future lcao_in_pw will have its own ESolver.
+
+                2023/12/22 use new psi_initializer to expand numerical atomic orbitals, ykhuang
+            */
+            basis_type = "lcao";
+            wannier_method = 1; // it is the way to call toWannier90_lcao_in_pw
+#ifdef __ELPA
+            ks_solver = "genelpa";
+#else
+            ks_solver = "scalapack_gvx";
+#endif
+        }
+        else
+        {
+            if ((basis_type != "pw") && (basis_type != "lcao"))
+            {
+                ModuleBase::WARNING_QUIT("Input", "to use towannier90, please set basis_type = pw, lcao or lcao_in_pw");
+            }
         }
         if (calculation != "nscf")
         {
@@ -3923,28 +4070,28 @@ void Input::Check(void)
         }
     }
 
-	if(true)	// Numerical_Basis::output_overlap()
-	{
-		if (std::stod(bessel_nao_ecut) < 0)
-		{
-			ModuleBase::WARNING_QUIT("INPUT", "bessel_nao_ecut must >=0");
-		}
-		if (bessel_nao_rcut < 0)
-		{
-			ModuleBase::WARNING_QUIT("INPUT", "bessel_nao_rcut must >=0");
-		}
-	}
-	if(true)	// Numerical_Descriptor::output_descriptor()
-	{
-		if (std::stod(bessel_descriptor_ecut) < 0)
-		{
-			ModuleBase::WARNING_QUIT("INPUT", "bessel_descriptor_ecut must >=0");
-		}
-		if (bessel_descriptor_rcut < 0)
-		{
-			ModuleBase::WARNING_QUIT("INPUT", "bessel_descriptor_rcut must >=0");
-		}
-	}
+    if (true) // Numerical_Basis::output_overlap()
+    {
+        if (std::stod(bessel_nao_ecut) < 0)
+        {
+            ModuleBase::WARNING_QUIT("INPUT", "bessel_nao_ecut must >=0");
+        }
+        if (bessel_nao_rcut < 0)
+        {
+            ModuleBase::WARNING_QUIT("INPUT", "bessel_nao_rcut must >=0");
+        }
+    }
+    if (true) // Numerical_Descriptor::output_descriptor()
+    {
+        if (std::stod(bessel_descriptor_ecut) < 0)
+        {
+            ModuleBase::WARNING_QUIT("INPUT", "bessel_descriptor_ecut must >=0");
+        }
+        if (bessel_descriptor_rcut < 0)
+        {
+            ModuleBase::WARNING_QUIT("INPUT", "bessel_descriptor_rcut must >=0");
+        }
+    }
 
     // Deltaspin variables checking
     if (sc_mag_switch)
@@ -3994,6 +4141,23 @@ void Input::Check(void)
             ModuleBase::WARNING_QUIT("INPUT", "sccut must > 0");
         }
     }
+    if(qo_switch)
+    {
+        if(qo_basis == "pswfc")
+        {
+            if(qo_screening_coeff < 1e-6)
+            {
+                ModuleBase::WARNING_QUIT("INPUT", "screening coefficient of pswfc must be larger than 0");
+            }
+        }
+        else if(qo_basis == "hydrogen")
+        {
+            if(qo_thr > 1e-6)
+            {
+                ModuleBase::WARNING("INPUT", "too high the convergence threshold might yield unacceptable result");
+            }
+        }
+    }
 
     return;
 }
@@ -4004,11 +4168,11 @@ void Input::close_log(void) const
     ModuleBase::Global_File::close_all_log(GlobalV::MY_RANK, this->out_alllog);
 }
 
-void Input::read_bool(std::ifstream &ifs, bool &var)
+void Input::read_bool(std::ifstream& ifs, bool& var)
 {
     std::string str;
     ifs >> str;
-    for (auto &i: str)
+    for (auto& i: str)
     {
         i = tolower(i);
     }
@@ -4047,7 +4211,7 @@ void Input::read_bool(std::ifstream &ifs, bool &var)
     return;
 }
 
-void Input::strtolower(char *sa, char *sb)
+void Input::strtolower(char* sa, char* sb)
 {
     char c;
     int len = strlen(sa);
@@ -4060,7 +4224,7 @@ void Input::strtolower(char *sa, char *sb)
 }
 
 // Conut how many types of atoms are listed in STRU
-int Input::count_ntype(const std::string &fn)
+int Input::count_ntype(const std::string& fn)
 {
     // Only RANK0 core can reach here, because this function is called during Input::Read.
     assert(GlobalV::MY_RANK == 0);
@@ -4079,8 +4243,8 @@ int Input::count_ntype(const std::string &fn)
         while (true)
         {
             ModuleBase::GlobalFunc::READ_VALUE(ifa, temp);
-            if (temp == "LATTICE_CONSTANT" || temp == "NUMERICAL_ORBITAL" || temp == "NUMERICAL_DESCRIPTOR" || temp == "PAW_FILES"
-                || ifa.eof())
+            if (temp == "LATTICE_CONSTANT" || temp == "NUMERICAL_ORBITAL" || temp == "NUMERICAL_DESCRIPTOR"
+                || temp == "PAW_FILES" || ifa.eof())
             {
                 break;
             }

@@ -13,6 +13,8 @@ list(APPEND objects
     print_info.cpp
     read_cube.cpp
     read_rho.cpp
+    read_rhog.cpp
+    read_wfc_pw.cpp
     restart.cpp
     binstream.cpp
     write_wfc_pw.cpp
@@ -25,6 +27,7 @@ list(APPEND objects
     output_log.cpp
     output_rho.cpp
     output_potential.cpp
+    output_radial.cpp
     parameter_pool.cpp
 )
 
@@ -32,6 +35,10 @@ list(APPEND objects_advanced
     unk_overlap_pw.cpp
     berryphase.cpp
     to_wannier90.cpp
+    to_wannier90_pw.cpp
+    to_wannier90_lcao_in_pw.cpp
+    to_wannier90_lcao.cpp
+    fR_overlap.cpp
     winput.cpp
 )
 
@@ -46,7 +53,6 @@ if(ENABLE_LCAO)
       read_dm.cpp
       read_wfc_nao.cpp
       write_wfc_nao.cpp
-      write_HS.cpp
       write_dm.cpp
       dos_nao.cpp
       output_dm.cpp
@@ -54,6 +60,8 @@ if(ENABLE_LCAO)
       sparse_matrix.cpp
       file_reader.cpp
       csr_reader.cpp
+      to_qo.cpp
+      to_qo_tools.cpp
   )
   list(APPEND objects_advanced
       unk_overlap_lcao.cpp

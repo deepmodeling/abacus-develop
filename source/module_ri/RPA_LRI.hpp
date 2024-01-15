@@ -62,12 +62,18 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
     const MPI_Comm& mpi_comm_in,
     const K_Vectors& kv)
 {
-    exx_lri_rpa.mix_DMk_2D.set_nks(kv.nks, GlobalV::GAMMA_ONLY_LOCAL);
-    exx_lri_rpa.mix_DMk_2D.set_mixing(nullptr);
-    exx_lri_rpa.mix_DMk_2D.mix(dm.get_DMK_vector(), true);
+	Mix_DMk_2D mix_DMk_2D;
+	mix_DMk_2D.set_nks(kv.nks, GlobalV::GAMMA_ONLY_LOCAL);
+	mix_DMk_2D.set_mixing(nullptr);
+	mix_DMk_2D.mix(dm.get_DMK_vector(), true);
+	const std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>>
+		Ds = GlobalV::GAMMA_ONLY_LOCAL
+			? RI_2D_Comm::split_m2D_ktoR<Tdata>(kv, mix_DMk_2D.get_DMk_gamma_out(), *dm.get_paraV_pointer())
+			: RI_2D_Comm::split_m2D_ktoR<Tdata>(kv, mix_DMk_2D.get_DMk_k_out(), *dm.get_paraV_pointer());
+
     exx_lri_rpa.init(mpi_comm_in, kv);
     exx_lri_rpa.cal_exx_ions();
-    exx_lri_rpa.cal_exx_elec(*dm.get_paraV_pointer());
+    exx_lri_rpa.cal_exx_elec(Ds, *dm.get_paraV_pointer());
     // cout<<"postSCF_Eexx: "<<exx_lri_rpa.Eexx<<endl;
 }
 

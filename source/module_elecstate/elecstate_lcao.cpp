@@ -150,7 +150,10 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
 
     if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
     {
-        ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[0], this->charge->nrxx);
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[is], this->charge->nrxx);
+        }
         Gint_inout inout1(this->loc->DM_R, this->charge->kin_r, Gint_Tools::job_type::tau);
         this->uhm->GK.cal_gint(&inout1);
     }
@@ -222,7 +225,7 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[0], this->charge->nrxx);
+            ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[is], this->charge->nrxx);
         }
         Gint_inout inout1(this->loc->DM, this->charge->kin_r, Gint_Tools::job_type::tau);
         this->uhm->GG.cal_gint(&inout1);

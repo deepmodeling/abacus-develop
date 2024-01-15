@@ -223,6 +223,7 @@ TEST_F(write_input, STO3)
     EXPECT_THAT(output,
                 testing::HasSubstr(
                     "cond_dtbatch                   2 #exp(iH*dt*cond_dtbatch) is expanded with Chebyshev expansion."));
+    EXPECT_THAT(output, testing::HasSubstr("cond_smear                     1 #Smearing method for conductivities"));
     EXPECT_THAT(output, testing::HasSubstr("cond_fwhm                      0.3 #FWHM for conductivities"));
     EXPECT_THAT(output, testing::HasSubstr("cond_nonlocal                  1 #Nonlocal effects for conductivities"));
     EXPECT_THAT(output, testing::HasSubstr(""));
@@ -322,6 +323,7 @@ TEST_F(write_input, LCAO5)
     EXPECT_THAT(output,
                 testing::HasSubstr("lcao_rmax                      30 #max R for 1D two-center integration table"));
     EXPECT_THAT(output, testing::HasSubstr("out_mat_hs                     0 #output H and S matrix"));
+    EXPECT_THAT(output, testing::HasSubstr("out_mat_xc                     0 #output exchange-correlation matrix in KS-orbital representation"));
     EXPECT_THAT(output, testing::HasSubstr("out_mat_hs2                    0 #output H(R) and S(R) matrix"));
     EXPECT_THAT(output, testing::HasSubstr("out_mat_dh                     0 #output of derivative of H(R) matrix"));
     EXPECT_THAT(
@@ -725,6 +727,7 @@ TEST_F(write_input, BerryWannier17)
                 testing::HasSubstr("nnkpfile                       seedname.nnkp #the wannier90 code nnkp file name"));
     EXPECT_THAT(output,
                 testing::HasSubstr("wannier_spin                   up #calculate spin in wannier90 code interface"));
+    EXPECT_THAT(output, testing::HasSubstr("wannier_method                 1 #different implementation methods under Lcao basis set"));
     EXPECT_THAT(output, testing::HasSubstr("out_wannier_mmn                1 #output .mmn file or not"));
     EXPECT_THAT(output, testing::HasSubstr("out_wannier_amn                1 #output .amn file or not"));
     EXPECT_THAT(output, testing::HasSubstr("out_wannier_unk                1 #output UNK. file or not"));

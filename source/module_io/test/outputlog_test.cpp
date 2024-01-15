@@ -214,7 +214,7 @@ TEST(PrintStress, PrintStress)
     stress(2, 2) = 0.0;
 
     GlobalV::ofs_running.open("test.txt");
-    ModuleIO::print_stress("test", stress, true, false);
+    ModuleIO::print_stress("TOTAL-STRESS", stress, true, false);
     GlobalV::ofs_running.close();
 
     std::ifstream ifs("test.txt");
@@ -222,7 +222,7 @@ TEST(PrintStress, PrintStress)
     getline(ifs, output_str);
     EXPECT_THAT(output_str, testing::HasSubstr("----------------------------------------------------------------"));
     getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr("    test (KBAR)                                               "));
+    EXPECT_THAT(output_str, testing::HasSubstr("TOTAL-STRESS (KBAR)                                           "));
     getline(ifs, output_str);
     EXPECT_THAT(output_str, testing::HasSubstr("----------------------------------------------------------------"));
     getline(ifs, output_str);
@@ -233,6 +233,8 @@ TEST(PrintStress, PrintStress)
     EXPECT_THAT(output_str, testing::HasSubstr("        0.0000000000         0.0000000000         0.0000000000"));
     getline(ifs, output_str);
     EXPECT_THAT(output_str, testing::HasSubstr("----------------------------------------------------------------"));
+    getline(ifs, output_str);
+    EXPECT_THAT(output_str, testing::HasSubstr(" TOTAL-PRESSURE: 49035.075992 KBAR"));
     ifs.close();
     std::remove("test.txt");
 }

@@ -83,3 +83,23 @@ TEST_F(PhysFmtTest, SetDecoratorMode) {
     physfmt.set_decorator_mode(true);
     EXPECT_TRUE(physfmt.get_decorator_mode());
 }
+
+TEST_F(PhysFmtTest, AdjustFormatterFlexible)
+{
+    formatter::PhysicalFmt physfmt;
+    physfmt.adjust_formatter_flexible(10, 0.5); // means for double, decimal part is 10, integer part is 5
+    EXPECT_EQ(physfmt.get_p_formatter()->get_width(), 16);
+    EXPECT_EQ(physfmt.get_p_formatter()->get_precision(), 10);
+    EXPECT_EQ(physfmt.get_p_formatter()->get_fillChar(), ' ');
+    EXPECT_EQ(physfmt.get_p_formatter()->get_fixed(), true);
+    EXPECT_EQ(physfmt.get_p_formatter()->get_right(), true);
+    EXPECT_EQ(physfmt.get_p_formatter()->get_error(), false);
+
+    physfmt.adjust_formatter_flexible(8); // means for int, width is 8
+    EXPECT_EQ(physfmt.get_p_formatter()->get_width(), 8);
+    EXPECT_EQ(physfmt.get_p_formatter()->get_precision(), 0);
+    EXPECT_EQ(physfmt.get_p_formatter()->get_fillChar(), ' ');
+    EXPECT_EQ(physfmt.get_p_formatter()->get_fixed(), true);
+    EXPECT_EQ(physfmt.get_p_formatter()->get_right(), true);
+    EXPECT_EQ(physfmt.get_p_formatter()->get_error(), false);
+}

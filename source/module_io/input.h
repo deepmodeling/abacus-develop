@@ -71,6 +71,7 @@ class Input
     bool towannier90; // add by jingan for wannier90
     std::string nnkpfile; // add by jingan for wannier90
     std::string wannier_spin; // add by jingan for wannier90
+    int wannier_method; // different implementation methods under Lcao basis set
     bool out_wannier_mmn;  // add by renxi for wannier90
     bool out_wannier_amn;
     bool out_wannier_unk;
@@ -93,6 +94,7 @@ class Input
     int npart_sto; //for method_sto = 2, reduce memory
     bool cal_cond; //calculate electronic conductivities
     double cond_che_thr; //control the error of Chebyshev expansions for conductivities
+    int cond_smear; //smearing method for conductivities 1: Gaussian 2: Lorentzian
     double cond_dw; //d\omega for conductivities
     double cond_wcut; //cutoff \omega for conductivities
     double cond_dt;  //dt to integrate conductivities
@@ -232,6 +234,8 @@ class Input
     double mixing_gg0; // used in kerker method. mohan add 2014-09-27
     double mixing_beta_mag;
     double mixing_gg0_mag;
+    double mixing_gg0_min;
+    double mixing_angle;
 
     bool mixing_tau; // whether to mix tau in mgga
     bool mixing_dftu; //whether to mix locale in DFT+U
@@ -261,12 +265,14 @@ class Input
     bool out_band; // band calculation pengfei 2014-10-13
     bool out_proj_band; // projected band structure calculation jiyy add 2022-05-11
     bool out_mat_hs; // output H matrix and S matrix in local basis.
+    bool out_mat_xc; // output exchange-correlation matrix in KS-orbital representation.
     bool cal_syns; // calculate asynchronous S matrix to output
     double dmax; // maximum displacement of all atoms in one step (bohr)
     bool out_mat_hs2; // LiuXh add 2019-07-16, output H(R) matrix and S(R) matrix in local basis.
     bool out_mat_dh;
     int out_interval;
     bool out_app_flag;    // whether output r(R), H(R), S(R), T(R), and dH(R) matrices in an append manner during MD  liuyu 2023-03-20
+    int out_ndigits;
     bool out_mat_t;
     bool out_mat_r; // jingan add 2019-8-14, output r(R) matrix.
     int out_wfc_lcao; // output the wave functions in local basis.
@@ -579,11 +585,19 @@ class Input
     double alpha_trial; // initial trial step size for lambda in eV/uB^2
     double sccut; // restriction of step size in eV/uB
     std::string sc_file; // file name for Deltaspin (json format)
-
-    // whether to use PAW
+    //==========================================================
+    // variables for PAW
     //==========================================================
     bool use_paw = false;
-
+    //==========================================================
+    // variables for Quasiatomic Orbital analysis
+    //==========================================================
+    bool qo_switch = false;
+    std::string qo_basis = "hydrogen";
+    std::string qo_strategy = "minimal";
+    double qo_thr = 1e-6;
+    double qo_screening_coeff = 0.0;
+    
   private:
     //==========================================================
     // MEMBER FUNCTIONS :

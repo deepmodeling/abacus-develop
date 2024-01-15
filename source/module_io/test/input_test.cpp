@@ -59,7 +59,8 @@ TEST_F(InputTest, Default)
         EXPECT_DOUBLE_EQ(INPUT.cond_dw,0.1);
         EXPECT_DOUBLE_EQ(INPUT.cond_wcut,10);
         EXPECT_EQ(INPUT.cond_dt,0.02);
-		EXPECT_EQ(INPUT.cond_dtbatch,4);
+		EXPECT_EQ(INPUT.cond_dtbatch,0);
+		EXPECT_EQ(INPUT.cond_smear,1);
         EXPECT_DOUBLE_EQ(INPUT.cond_fwhm,0.4);
         EXPECT_TRUE(INPUT.cond_nonlocal);
         EXPECT_FALSE(INPUT.berry_phase);
@@ -67,9 +68,10 @@ TEST_F(InputTest, Default)
         EXPECT_FALSE(INPUT.towannier90);
         EXPECT_EQ(INPUT.nnkpfile,"seedname.nnkp");
         EXPECT_EQ(INPUT.wannier_spin,"up");
+        EXPECT_EQ(INPUT.wannier_method,1);
 		EXPECT_TRUE(INPUT.out_wannier_amn);
 		EXPECT_TRUE(INPUT.out_wannier_mmn);
-		EXPECT_TRUE(INPUT.out_wannier_unk);
+		EXPECT_FALSE(INPUT.out_wannier_unk);
 		EXPECT_TRUE(INPUT.out_wannier_eig);
         EXPECT_TRUE(INPUT.out_wannier_wvfn_formatted);
         EXPECT_DOUBLE_EQ(INPUT.kspacing[0], 0.0);
@@ -150,8 +152,8 @@ TEST_F(InputTest, Default)
         EXPECT_EQ(INPUT.relax_nmax,0);
         EXPECT_EQ(INPUT.out_stru,0);
         EXPECT_EQ(INPUT.occupations,"smearing");
-        EXPECT_EQ(INPUT.smearing_method,"fixed");
-        EXPECT_DOUBLE_EQ(INPUT.smearing_sigma,0.01);
+        EXPECT_EQ(INPUT.smearing_method,"gauss");
+        EXPECT_DOUBLE_EQ(INPUT.smearing_sigma,0.015);
         EXPECT_EQ(INPUT.mixing_mode,"broyden");
         EXPECT_DOUBLE_EQ(INPUT.mixing_beta,-10.0);
         EXPECT_EQ(INPUT.mixing_ndim,8);
@@ -178,6 +180,7 @@ TEST_F(InputTest, Default)
         EXPECT_EQ(INPUT.out_proj_band,0);
         EXPECT_EQ(INPUT.out_mat_hs,0);
         EXPECT_EQ(INPUT.out_mat_hs2,0);
+        EXPECT_EQ(INPUT.out_mat_xc, 0);
         EXPECT_EQ(INPUT.out_interval,1);
         EXPECT_EQ(INPUT.out_app_flag,1);
         EXPECT_EQ(INPUT.out_mat_r,0);
@@ -208,8 +211,8 @@ TEST_F(InputTest, Default)
         EXPECT_FALSE(INPUT.efield_flag);
         EXPECT_FALSE(INPUT.dip_cor_flag);
         EXPECT_EQ(INPUT.efield_dir,2);
-        EXPECT_DOUBLE_EQ(INPUT.efield_pos_max,0.5);
-        EXPECT_DOUBLE_EQ(INPUT.efield_pos_dec,0.1);
+        EXPECT_DOUBLE_EQ(INPUT.efield_pos_max, -1.0);
+        EXPECT_DOUBLE_EQ(INPUT.efield_pos_dec, -1.0);
         EXPECT_DOUBLE_EQ(INPUT.efield_amp ,0.0);
         EXPECT_FALSE(INPUT.gate_flag);
         EXPECT_DOUBLE_EQ(INPUT.zgate,0.5);
@@ -426,6 +429,7 @@ TEST_F(InputTest, Read)
         EXPECT_FALSE(INPUT.towannier90);
         EXPECT_EQ(INPUT.nnkpfile,"seedname.nnkp");
         EXPECT_EQ(INPUT.wannier_spin,"up");
+        EXPECT_EQ(INPUT.wannier_method,1);
 		EXPECT_TRUE(INPUT.out_wannier_amn);
 		EXPECT_TRUE(INPUT.out_wannier_mmn);
 		EXPECT_TRUE(INPUT.out_wannier_unk);
@@ -539,6 +543,7 @@ TEST_F(InputTest, Read)
         EXPECT_EQ(INPUT.out_proj_band,0);
         EXPECT_EQ(INPUT.out_mat_hs,0);
         EXPECT_EQ(INPUT.out_mat_hs2,0);
+        EXPECT_EQ(INPUT.out_mat_xc, 0);
         EXPECT_EQ(INPUT.out_interval,1);
         EXPECT_EQ(INPUT.out_app_flag,0);
         EXPECT_EQ(INPUT.out_mat_r,0);
@@ -1520,12 +1525,13 @@ TEST_F(InputTest, Check)
 	INPUT.berry_phase = 0;
 	//
 	INPUT.towannier90 = 1;
-	INPUT.basis_type = "lcao_in_pw";
-	INPUT.ks_solver = "lapack";
-	testing::internal::CaptureStdout();
-	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
-	output = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output,testing::HasSubstr("to use towannier90, please set basis_type = pw or lcao"));
+	// due to the repair of lcao_in_pw, original warning has been deprecated, 2023/12/23, ykhuang
+	// INPUT.basis_type = "lcao_in_pw";
+	// INPUT.ks_solver = "lapack";
+	// testing::internal::CaptureStdout();
+	// EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	// output = testing::internal::GetCapturedStdout();
+	// EXPECT_THAT(output,testing::HasSubstr("to use towannier90, please set basis_type = pw or lcao"));
 	INPUT.basis_type = "pw";
 	INPUT.ks_solver = "cg";
 	//

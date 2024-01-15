@@ -7,7 +7,7 @@ calculation   scf
 #ecutwfc       200
 ecutwfc       10
 scf_thr           1.0e-5
-scf_nmax         2
+scf_nmax         3
 out_chg    0
 
 #init_chg    file
@@ -25,6 +25,7 @@ smearing_sigma     0.07
 
 mixing_type    pulay
 mixing_beta    0.3
+mixing_beta_mag 0.3
 mixing_gg0     0.0
 
 ks_solver    genelpa

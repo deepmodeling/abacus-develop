@@ -10,6 +10,7 @@ endif()
 add_library(
     base
     OBJECT
+    assoc_laguerre.cpp
     clebsch_gordan_coeff.cpp
     complexarray.cpp
     complexmatrix.cpp
@@ -23,6 +24,7 @@ add_library(
     global_variable.cpp
     intarray.cpp
     math_integral.cpp
+    math_lebedev_laikov.cpp
     math_polyint.cpp
     math_sphbes.cpp
     math_ylmreal.cpp
