@@ -28,7 +28,7 @@ find_package(Libxc HINTS
     ${Libxc_DIR}/lib/cmake/Libxc
     ${Libxc_DIR}/lib64/cmake/Libxc
   )
-if(NOT Libxc_FOUND AND PKG_CONFIG_FOUND)
+if(NOT TARGET Libxc::xc AND PKG_CONFIG_FOUND)
   pkg_search_module(Libxc REQUIRED IMPORTED_TARGET GLOBAL libxc)
   find_package_handle_standard_args(Libxc DEFAULT_MSG Libxc_LINK_LIBRARIES Libxc_INCLUDE_DIRS)
 elseif(NOT PKG_CONFIG_FOUND)
