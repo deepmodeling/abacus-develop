@@ -1494,8 +1494,8 @@ These variables are used to control the output of properties.
 
 ### out_band
 
-- **Type**: Boolean
-- **Description**: Whether to output the band structure (in eV). For more information, refer to the [band.md](../elec_properties/band.md)
+- **Type**: Boolean Integer(optional)
+- **Description**: Whether to output the band structure (in eV), optionally output precision can be set by a second parameter, default is 8. For more information, refer to the [band.md](../elec_properties/band.md)
 - **Default**: False
 
 ### out_proj_band
