@@ -41,7 +41,7 @@ void SpinConstrain<FPTYPE, Device>::init_sc_2(const UnitCell& ucell,
                                               K_Vectors kv_in,
                                               hamilt::Hamilt<FPTYPE, Device>* p_hamilt_in,
                                               elecstate::ElecState* pelec_in,
-                                              const Grid_Driver& GridD_in)
+                                              Grid_Driver* GridD_in)
 {
     this->set_atomCounts(ucell.get_atomCounts());
     this->set_orbitalCounts(ucell.get_orbitalCounts());
