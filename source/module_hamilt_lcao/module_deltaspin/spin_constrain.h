@@ -13,6 +13,7 @@
 #include "module_cell/unitcell.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_hsolver/hsolver.h"
+#include "module_cell/module_neighbor/sltk_grid_driver.h"
 
 struct ScAtomData;
 
@@ -123,6 +124,9 @@ public:
     std::string KS_SOLVER;
     const double meV_to_Ry = 7.349864435130999e-05;
     K_Vectors kv_;
+
+    const UnitCell* ucell = nullptr;
+    std::vector<AdjacentAtomInfo> adjs_all;
 
   public:
     /**

@@ -51,6 +51,7 @@ void SpinConstrain<FPTYPE, Device>::init_sc_2(const UnitCell& ucell,
     this->kv_ = kv_in;
     this->p_hamilt = p_hamilt_in;
     this->pelec = pelec_in;
+    this->ucell = &ucell;
 }
 
 template class SpinConstrain<std::complex<double>, psi::DEVICE_CPU>;
