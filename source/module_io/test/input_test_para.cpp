@@ -26,12 +26,13 @@ class InputParaTest : public ::testing::Test
 #ifdef __MPI
 TEST_F(InputParaTest, Bcast)
 {
+    INPUT.Default();
     if (GlobalV::MY_RANK == 0)
     {
-        INPUT.Default(); /* hmmm... why there is not Default_2 here? and, seems Default is execute directly on each processor? */
+        INPUT.suffix = "BcastTest";
     }
     INPUT.Bcast();
-    EXPECT_EQ(INPUT.suffix, "ABACUS");
+    EXPECT_EQ(INPUT.suffix, "BcastTest");
     EXPECT_EQ(INPUT.stru_file, "");
     EXPECT_EQ(INPUT.kpoint_file, "");
     EXPECT_EQ(INPUT.pseudo_dir, "");
