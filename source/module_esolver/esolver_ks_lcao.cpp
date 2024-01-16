@@ -957,7 +957,7 @@ namespace ModuleESolver
             GlobalC::ppcell.vloc,
             this->sf.strucFac,
             "power",
-            1.0
+            0.5
         );
     }
     // multi-k calculation
@@ -978,7 +978,7 @@ namespace ModuleESolver
             GlobalC::ppcell.vloc,
             this->sf.strucFac,
             "power",
-            0.999
+            0.99
         );
     }
 

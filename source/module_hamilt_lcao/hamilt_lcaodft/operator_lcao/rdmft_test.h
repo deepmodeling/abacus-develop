@@ -530,19 +530,6 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         conj_psi(wg_wfc);
         wgMulPsi(ParaV, wg, wg_wfc, 2, XC_func_rdmft, alpha_power);
 
-        // std::cout << "\n" << "psi, wg, wg_psi" << ": \n";
-        // for(int ik=0; ik<nk_total; ++ik)
-        // {
-        //     for(int inbn=0; inbn<nbands_local; ++inbn)
-        //     {
-        //         for(int inbs=0; inbs<nbasis_local; ++inbs)
-        //         {
-        //             std::cout << wfc(ik, inbn, inbs) << " "<< wg(ik, inbn) << " " << wg_wfc(ik, inbn, inbs) << " \n";
-        //         }
-        //     }
-        // }
-        // std::cout << "\n";
-
         // get the special DM_XC used in constructing V_XC
         for(int ik=0; ik<wfc.get_nk(); ++ik)
         {
@@ -557,20 +544,6 @@ double rdmft_cal(LCAO_Matrix* LM_in,
             elecstate::psiMulPsi(wg_wfc, wfc, DM_Kpointer);
 #endif            
         }
-
-        // test
-        std::cout << "\n\n\n\n\n\n******\n" << "print DM_XC: " << "\n";
-
-        for(int ik=0; ik<nk_total; ++ik)
-        {
-            std::stringstream DM_XC_ik_ss;
-            DM_XC_ik_ss << "DM_XC[" << ik << "]";
-            std::string DM_XC_ik = DM_XC_ik_ss.str();
-            printMatrix_pointer(ParaV->nrow, ParaV->ncol, DM_XC_pointer[ik]->data(), DM_XC_ik);
-        }
-
-        std::cout << "\n******\n\n\n\n\n\n";
-        // test
 
         // transfer the DM_XC to appropriate format
         std::vector<std::map<int,std::map<std::pair<int,std::array<int,3>>,RI::Tensor<double>>>> Ds_XC_d = 
@@ -606,70 +579,6 @@ double rdmft_cal(LCAO_Matrix* LM_in,
                 nullptr,
                 &Vxc_fromRI_c.Hexxs
             );
-
-        // std::cout << "\n\n\n\n\n\n******\n" << "print Vxc_fromRI_c.Hexxs" << "\n******\n\n\n\n\n\n";
-        // for(const auto& outerMap : Vxc_fromRI_c.Hexxs)
-        // {
-        //     std::cout << "\nVxc_fromRI_c.Hexxs Outer Map Size: " << outerMap.size() << std::endl;
-        //     for (const auto& middleMap : outerMap)
-        //     {
-        //         std::cout << "\nVxc_fromRI_c.Hexxs Middle Map Size: " << middleMap.second.size() << std::endl;
-        //         for (const auto& innerMap : middleMap.second)
-        //         {
-        //             const RI::Tensor<std::complex<double>>& tensor_XC = innerMap.second;
-        //             //const std::array<int, 3> & tensor_shape = tensor_XC.shape;
-        //             const std::valarray<std::complex<double>>& tensor_data = *tensor_XC.data;
-
-        //             std::cout << "\nthe length of tensor_XC_data: " << tensor_data.size() << "\n";
-
-        //             std::cout << "\ntensor_XC shape: \n";
-        //             for(int ix=0; ix<tensor_XC.shape.size(); ++ix)
-        //             {
-        //                 std::cout << tensor_XC.shape[ix] << " ";
-        //             }
-        //             std::cout << "\ntensor_XC data: \n";
-        //             for(size_t i = 0; i < tensor_data.size(); ++i)
-        //             {
-        //                 if(i%5==0) std::cout << "\n";
-        //                 std::cout <<  tensor_data[i] << " ";
-        //             }
-        //             std::cout << "\n\n\n";
-        //         }
-        //     }
-        // }
-
-
-        // std::cout << "\n\n\n\n\n\n******\n" << "print LM_in->Hexxc" << "\n******\n\n\n\n\n\n";
-        // for(const auto& outerMap : *LM_in->Hexxc)
-        // {
-        //     std::cout << "\nHexx Outer Map Size: " << outerMap.size() << std::endl;
-        //     for (const auto& middleMap : outerMap)
-        //     {
-        //         std::cout << "\nHexx Middle Map Size: " << middleMap.second.size() << std::endl;
-        //         for (const auto& innerMap : middleMap.second)
-        //         {
-        //             const RI::Tensor<std::complex<double>>& tensor_Hexx = innerMap.second;
-        //             //const std::array<int, 3> & tensor_shape = tensor_XC.shape;
-        //             const std::valarray<std::complex<double>>& tensor_Hexx_data = *tensor_Hexx.data;
-
-        //             std::cout << "\nthe length of tensor_Hexx_data: " << tensor_Hexx_data.size() << "\n";
-
-        //             std::cout << "\ntensor_Hexx shape: \n";
-        //             for(int ix=0; ix<tensor_Hexx.shape.size(); ++ix)
-        //             {
-        //                 std::cout << tensor_Hexx.shape[ix] << " ";
-        //             }
-        //             std::cout << "\ntensor_Hexx data: \n";
-        //             for(size_t i = 0; i < tensor_Hexx_data.size(); ++i)
-        //             {
-        //                 if(i%5==0) std::cout << "\n";
-        //                 std::cout <<  tensor_Hexx_data[i] << " ";
-        //             }
-        //             std::cout << "\n\n\n";
-        //         }
-        //     }
-        // }
-
         }
     }
 
