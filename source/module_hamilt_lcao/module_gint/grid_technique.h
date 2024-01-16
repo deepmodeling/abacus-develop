@@ -183,6 +183,21 @@ public:
 
 	int *num_psir_global;
 	int *num_psir_global_g;
+
+	// additional variables for rho calculating
+	int num_mcell;
+	double *rho_g;
+	int *vec_len;
+	int *vec_len_g;
+	double **vec_l;
+	double **vec_l_g;
+	double **vec_r;
+	double **vec_r_g;
+	double **dot_product;
+	double **dot_product_g;
+
+
+
 	matrix_multiple_func_type fastest_matrix_mul;
 private:
 	void init_gpu_gint_variables();

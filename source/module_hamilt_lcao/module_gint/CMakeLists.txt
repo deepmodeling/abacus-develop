@@ -25,6 +25,9 @@ list(APPEND objects
     gint_gpu/gpu_task_generator.cpp
     gint_gpu/gint_vl_gpu.cu
     gint_gpu/vbatch_matrix_multiple/vbatch_matrix_mul.cu
+    gint_gpu/gint_rho.cu
+    gint_gpu/gpu_task_generator_rho.cpp
+    gint_gpu/gint_rho_gpu.cu
 )
 
 add_library(
