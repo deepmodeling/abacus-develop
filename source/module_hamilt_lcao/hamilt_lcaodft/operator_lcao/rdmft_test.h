@@ -33,6 +33,8 @@
 #include "module_ri/RI_2D_Comm.h"
 #include "module_ri/Exx_LRI.h"
 
+// there are some operator reload to print data in different formats
+#include "module_ri/test_code/test_function.h"
 
 // used by class Veff_rdmft
 #include "module_base/timer.h"
@@ -53,6 +55,7 @@
 #include <type_traits>
 #include <complex>
 #include <vector>
+#include <iomanip>
 
 
 
@@ -769,7 +772,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     Parallel_Reduce::reduce_all(Exc_RDMFT);
 
     // print results
-    std::cout << "\n\n\n******\nEtotal_RDMFT:   " << Etotal_RDMFT << "\nETV_RDMFT: " << ETV_RDMFT << "\nEhartree_RDMFT: " 
+    std::cout << std::setprecision(10) << "\n\n\n******\nEtotal_RDMFT:   " << Etotal_RDMFT << "\nETV_RDMFT: " << ETV_RDMFT << "\nEhartree_RDMFT: " 
                 << Ehartree_RDMFT << "\nExc_RDMFT:      " << Exc_RDMFT << "\n******\n\n\n";
 
     ModuleBase::timer::tick("hamilt_lcao", "RDMFT_E&Egradient");
