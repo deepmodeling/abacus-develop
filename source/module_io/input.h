@@ -667,7 +667,15 @@ class Input
     template <typename T>
     typename std::enable_if<std::is_same<T, double>::value, T>::type cast_string(const std::string& str) { return std::stod(str); }
     template <typename T>
-    typename std::enable_if<std::is_same<T, int>::value, T>::type cast_string(const std::string& str) { return std::stoi(str); }
+    typename std::enable_if<std::is_same<T, int>::value, T>::type cast_string(const std::string& str)
+    {
+        if (str == "true" || str == "1")
+            return 1;
+        else if (str == "false" || str == "0")
+            return 0;
+        else
+            return std::stoi(str);
+    }
     template <typename T>
     typename std::enable_if<std::is_same<T, bool>::value, T>::type cast_string(const std::string& str) { return (str == "true" || str == "1"); }
     template <typename T>

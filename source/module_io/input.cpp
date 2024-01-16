@@ -1385,7 +1385,6 @@ bool Input::Read(const std::string& fn)
         {
             read_bool(ifs, out_proj_band);
         }
-
         else if (strcmp("out_mat_hs", word) == 0)
         {
             read_value2stdvector(ifs, out_mat_hs);
