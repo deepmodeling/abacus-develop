@@ -116,7 +116,7 @@ Here, 'build' is the path for building ABACUS; and '-D' is used for setting up s
   - `FFTW3_DIR`: Path to FFTW3.
   - `CEREAL_INCLUDE_DIR`: Path to the parent folder of `cereal/cereal.hpp`. Will download from GitHub if absent.
   - `Libxc_DIR`: (Optional) Path to Libxc.
-  > Note: Building Libxc from source with Makefile does NOT support using it in CMake here. Please compile Libxc with CMake instead.
+  > Note: In ABACUS v3.5.1 or earlier, Libxc built from source with Makefile is NOT supported; please compile Libxc with CMake instead.
   - `LIBRI_DIR`: (Optional) Path to LibRI.
   - `LIBCOMM_DIR`: (Optional) Path to LibComm.
 
