@@ -3001,6 +3001,11 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             if (!bz)
                 bz = 1;
         }
+        if(dft_plus_u == true && onsite_radius == 0.0)
+        {
+            //autoset onsite_radius to 5.0 as default
+            onsite_radius = 5.0;
+        }
     }
 
     if (basis_type == "pw" || basis_type == "lcao_in_pw")
