@@ -14,9 +14,9 @@ find_package(Libxc HINTS
 if(NOT TARGET Libxc::xc)
   find_package(PkgConfig REQUIRED)
   pkg_search_module(Libxc REQUIRED IMPORTED_TARGET GLOBAL libxc)
+  find_package_handle_standard_args(Libxc DEFAULT_MSG Libxc_LINK_LIBRARIES Libxc_INCLUDE_DIRS)
 endif()
 
-find_package_handle_standard_args(Libxc DEFAULT_MSG Libxc_LINK_LIBRARIES Libxc_INCLUDE_DIRS)
 
 # Copy the results to the output variables and target.
 # if find_package() above works, Libxc::xc would be present and
