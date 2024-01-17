@@ -44,7 +44,7 @@ ModuleBase::matrix ModuleIO::cal_mulliken(const std::vector<std::vector<double>>
         const char N_char = 'N';
         const int one_int = 1;
         const double one_float = 1.0, zero_float = 0.0;        
-        pdgemm_(&T_char,
+        pdgemm_(&N_char,
                 &T_char,
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
