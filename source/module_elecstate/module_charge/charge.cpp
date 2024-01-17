@@ -278,7 +278,6 @@ void Charge::atomic_rho(const int spin_number_need,
     // centered at the nuclei
 #ifdef USE_PAW
         GlobalC::paw_cell.init_rho(rho_in);
-#endif
         double ne_tot = 0.0;
         std::vector<double> ne(spin_number_need);
         int spin0 = 1;
@@ -303,6 +302,14 @@ void Charge::atomic_rho(const int spin_number_need,
         for (int is = 0; is < spin_number_need; ++is)
             for (int ir = 0; ir < this->rhopw->nrxx; ++ir)
                 rho_in[is][ir] = rho_in[is][ir] / ne_tot * GlobalV::nelec;
+        
+        double* nhatgr;
+        GlobalC::paw_cell.get_nhat(nhat,nhatgr);
+
+        for (int is = 0; is < spin_number_need; ++is)
+            for (int ir = 0; ir < this->rhopw->nrxx; ++ir)
+                rho_in[is][ir] -= nhat[is][ir];
+#endif
     }
     else
     {
@@ -679,6 +686,10 @@ void Charge::save_rho_before_sum_band(void)
         ModuleBase::GlobalFunc::DCOPY(rho[is], rho_save[is], this->rhopw->nrxx);
         if (elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5)
             ModuleBase::GlobalFunc::DCOPY(kin_r[is], kin_r_save[is], this->rhopw->nrxx);
+#ifdef USE_PAW
+        if(GlobalV::use_paw)
+            ModuleBase::GlobalFunc::DCOPY(nhat[is], nhat_save[is], this->rhopw->nrxx);
+#endif
     }
     return;
 }

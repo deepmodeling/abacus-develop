@@ -7,21 +7,14 @@ void toQO::unwrap_unitcell(UnitCell* p_ucell)
     ntype_ = p_ucell->ntype;
     std::for_each(p_ucell->atoms, p_ucell->atoms + p_ucell->ntype, [this](Atom& atom){
         symbols_.push_back(atom.label);
-        charges_.push_back(atom.ncpp.zv);
+        na_.push_back(atom.na);
     });
     nmax_.resize(ntype_);
-    na_.resize(ntype_);
+    charges_.resize(ntype_);
     for(int itype = 0; itype < ntype_; itype++)
     {
-        if(strategy_ != "energy")
-        {
-            nmax_[itype] = atom_database_.principle_quantum_number[symbols_[itype]];
-        }
-        else
-        {
-            nmax_[itype] = atom_database_.atom_Z[symbols_[itype]];
-        }
-        na_[itype] = p_ucell_->atoms[itype].na;
+        nmax_[itype] = (strategies_[itype] != "energy")? atom_database_.principle_quantum_number[symbols_[itype]]: atom_database_.atom_Z[symbols_[itype]];
+        charges_[itype] = atom_database_.atom_Z[symbols_[itype]];
     }
 }
 
@@ -163,7 +156,7 @@ std::vector<ModuleBase::Vector3<int>> toQO::scan_supercell_for_atom(int it, int 
 {
     std::vector<ModuleBase::Vector3<int>> n1n2n3;
     // cutoff radius of numerical atomic orbital of atom itia
-    double rcut_i = ao_->rcut_max();
+    double rcut_i = ao_->rcut_max(it);
     if(rcut_i > 10)
     {
         #ifdef __MPI
@@ -185,7 +178,7 @@ std::vector<ModuleBase::Vector3<int>> toQO::scan_supercell_for_atom(int it, int 
     {
         for(int iatom = start_ia; iatom < p_ucell_->atoms[itype].na; iatom++)
         {
-            double rcut_j = nao_->rcut_max();
+            double rcut_j = nao_->rcut_max(itype);
             ModuleBase::Vector3<double> rij = p_ucell_->atoms[itype].tau[iatom] - p_ucell_->atoms[it].tau[ia]; // in unit lat0?
             int n1 = 0; int n2 = 0; int n3 = 0;
             // calculate the sup of n1, n2, n3
@@ -254,7 +247,6 @@ double toQO::norm2_rij_supercell(ModuleBase::Vector3<double> rij, int n1, int n2
     f += 2*n1*(p_ucell_->a1*rij);
     f += 2*n2*(p_ucell_->a2*rij);
     f += 2*n3*(p_ucell_->a3*rij);
-    f += rij*rij;
     return f;
 }
 
