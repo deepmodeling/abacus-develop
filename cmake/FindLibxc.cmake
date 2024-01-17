@@ -1,21 +1,4 @@
-###############################################################################
-# - Find ELPA
-# Find the native ELPA headers and libraries.
-#
-#  ELPA_FOUND        - True if libelpa is found.
-#  ELPA_LIBRARIES    - List of libraries when using libyaml
-#  ELPA_INCLUDE_DIR - Where to find ELPA headers.
-#
-
-#find_path(ELPA_INCLUDE_DIR
-#    elpa/elpa.h
-#    HINTS ${ELPA_DIR}
-#    PATH_SUFFIXES "include" "include/elpa"
-#    )
-
 include(FindPackageHandleStandardArgs)
-
-find_package(PkgConfig)
 
 if(DEFINED Libxc_DIR)
   string(APPEND CMAKE_PREFIX_PATH ";${Libxc_DIR}")
@@ -28,13 +11,12 @@ find_package(Libxc HINTS
     ${Libxc_DIR}/lib/cmake/Libxc
     ${Libxc_DIR}/lib64/cmake/Libxc
   )
-if(NOT TARGET Libxc::xc AND PKG_CONFIG_FOUND)
+if(NOT TARGET Libxc::xc)
+  find_package(PkgConfig REQUIRED)
   pkg_search_module(Libxc REQUIRED IMPORTED_TARGET GLOBAL libxc)
-  find_package_handle_standard_args(Libxc DEFAULT_MSG Libxc_LINK_LIBRARIES Libxc_INCLUDE_DIRS)
-elseif(NOT TARGET Libxc::xc AND NOT PKG_CONFIG_FOUND)
-  message(FATAL_ERROR
-          "LibXC : We need pkg-config to get all information about the libxc library")
 endif()
+
+find_package_handle_standard_args(Libxc DEFAULT_MSG Libxc_LINK_LIBRARIES Libxc_INCLUDE_DIRS)
 
 # Copy the results to the output variables and target.
 # if find_package() above works, Libxc::xc would be present and
