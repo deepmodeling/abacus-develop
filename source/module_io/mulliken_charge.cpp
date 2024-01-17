@@ -156,7 +156,7 @@ ModuleBase::matrix ModuleIO::cal_mulliken(const std::vector<std::vector<std::com
         const char N_char = 'N';
         const int one_int = 1;
         const std::complex<double> one_float = {1.0, 0.0}, zero_float = {0.0, 0.0};        
-        pzgemm_(&T_char,
+        pzgemm_(&N_char,
                 &T_char,
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
