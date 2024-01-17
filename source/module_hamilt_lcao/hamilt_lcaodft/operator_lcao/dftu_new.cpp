@@ -124,7 +124,7 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
     else
     {
         //will update this->dftu->locale and this->dftu->EU
-        this->dftu->EU = 0.0;
+        if(GlobalV::CURRENT_SPIN == 0) this->dftu->EU = 0.0;
     }
     ModuleBase::timer::tick("DFTUNew", "calculate_HR");
 
