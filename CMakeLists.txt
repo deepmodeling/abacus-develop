@@ -34,6 +34,8 @@ option(DEBUG_INFO "Print message for developers to debug." OFF)
 option(ENABLE_NATIVE_OPTIMIZATION "Enable compilation optimization for the native machine's CPU type" OFF)
 option(COMMIT_INFO "Print commit information in log" ON)
 option(ENABLE_FFT_TWO_CENTER "Enable FFT-based two-center integral method." ON)
+option(ENABLE_GOOGLEBENCH "Enable GOOGLE-benchmark usage." OFF)
+
 if (USE_CUDA)
   set(USE_CUSOLVER_LCAO ON)
 else()
@@ -607,6 +609,69 @@ IF (BUILD_TESTING)
     )
   endfunction(AddTest)
 endif()
+
+
+#  Add performance test in abacus
+IF (ENABLE_GOOGLEBENCH)
+  set(CMAKE_CXX_STANDARD 14) # Required in orbital
+  include(CTest)
+  enable_testing()
+  find_package(GTest HINTS /usr/local/lib/ ${GTEST_DIR})
+  if(NOT ${GTest_FOUND})
+    include(FetchContent)
+    FetchContent_Declare(
+      googletest
+      GIT_REPOSITORY https://github.com/google/googletest.git
+      GIT_TAG "origin/main"
+      GIT_SHALLOW TRUE
+      GIT_PROGRESS TRUE
+    )
+    FetchContent_MakeAvailable(googletest)
+  endif()
+
+  find_package(benchmark REQUIRED)
+  if(NOT ${benchmark_FOUND})
+    include(FetchContent)
+    FetchContent_Declare(
+      benchmark
+      GIT_REPOSITORY https://github.com/google/benchmark.git
+      GIT_TAG "origin/main"
+      GIT_SHALLOW TRUE
+      GIT_PROGRESS TRUE
+    )
+    FetchContent_MakeAvailable(benchmark)
+  endif()
+
+  function(AddPerfTest) # function for UT
+    add_compile_options(-O2)
+    cmake_parse_arguments(UT "DYN" "TARGET" "LIBS;DYN_LIBS;STATIC_LIBS;SOURCES;DEPENDS" ${ARGN})
+    add_executable(${UT_TARGET} ${UT_SOURCES})
+
+    if(ENABLE_COVERAGE)
+      add_coverage(${UT_TARGET})
+    endif()
+
+    
+    # Link Google Benchmark to the project
+    target_link_libraries(${UT_TARGET} benchmark::benchmark)
+
+
+    #dependencies & link library
+    target_link_libraries(${UT_TARGET} ${UT_LIBS}
+      Threads::Threads GTest::gtest_main GTest::gmock_main)
+    if(USE_OPENMP)
+      target_link_libraries(${UT_TARGET} OpenMP::OpenMP_CXX)
+    endif()
+    install(TARGETS ${UT_TARGET} DESTINATION ${CMAKE_BINARY_DIR}/tests )
+    add_test(NAME ${UT_TARGET}
+      COMMAND ${UT_TARGET}
+      WORKING_DIRECTORY $<TARGET_FILE_DIR:${UT_TARGET}>
+    )
+  endfunction(AddTest)
+endif()
+
+
+
 
 add_subdirectory(source)
 
