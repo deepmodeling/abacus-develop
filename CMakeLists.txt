@@ -52,6 +52,7 @@ if(ENABLE_RAPIDJSON)
       GIT_PROGRESS TRUE
     )
     FetchContent_MakeAvailable(rapidjson)
+    set(RapidJSON_INCLUDE_PATH "${CMAKE_CURRENT_BINARY_DIR}/_deps/rapidjson-src/include/")
   endif()
   add_compile_definitions(__RAPIDJSON)
   include_directories(${RapidJSON_INCLUDE_PATH})
