@@ -379,6 +379,41 @@ double wg_func(double eta, int symbol, const std::string XC_func_rdmft, double a
 
 
 
+template <typename TK, typename TR, typename T_Gint>
+RDMFT<TK, TR, T_Gint>::RDMFT()
+{
+
+}
+
+template <typename TK, typename TR, typename T_Gint>
+RDMFT<TK, TR, T_Gint>::~RDMFT()
+{
+    
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
 
 

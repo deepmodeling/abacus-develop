@@ -691,6 +691,22 @@ double rdmft_cal(LCAO_Matrix* LM_in,
 }
 
 
+template <typename TK, typename TR, typename T_Gint>
+class RDMFT
+{
+  public:
+    RDMFT();
+
+
+    ~RDMFT();
+
+
+
+
+};
+
+
+
 
 }
 
