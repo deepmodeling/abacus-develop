@@ -297,7 +297,7 @@ std::string sc_file = "none";
 //==========================================================
 bool qo_switch = false;
 std::string qo_basis = "hydrogen";
-std::string qo_strategy = "minimal";
+std::vector<std::string> qo_strategy = {};
 double qo_thr = 1.0e-6;
 std::vector<double> qo_screening_coeff = {};
 

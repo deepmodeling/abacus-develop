@@ -229,7 +229,7 @@ void RadialCollection::build(const int ntype,
                              const int* const nmax, 
                              const std::string* symbols,
                              const double conv_thr,
-                             const std::string strategy)
+                             const std::string* strategies)
 {
     cleanup();
     ntype_ = ntype;
@@ -246,7 +246,7 @@ void RadialCollection::build(const int ntype,
                               conv_thr,
                               0,
                               symbols[itype],
-                              strategy);
+                              strategies[itype]);
 
         lmax_ = std::max(lmax_, radset_[itype]->lmax());
         nchi_ += radset_[itype]->nchi();

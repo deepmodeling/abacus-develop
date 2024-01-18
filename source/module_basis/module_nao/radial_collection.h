@@ -38,7 +38,7 @@ class RadialCollection
                const int* const nmax, 
                const std::string* symbols = nullptr,
                const double conv_thr = 1e-10,
-               const std::string strategy = "minimal");
+               const std::string* strategies = nullptr);
                
     /// builds the collection from pseudopotential pswfc
     void build(const int ntype, 

@@ -2,27 +2,37 @@ name: Integration Test and Unit Test
 
 on:
   pull_request:
-  
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-  
+
 jobs:
   test:
     name: Test
     runs-on: self-hosted
     if: github.repository_owner == 'deepmodeling'
-    container: ghcr.io/deepmodeling/abacus-gnu
+    container:
+      image: ghcr.io/deepmodeling/abacus-gnu
+      volumes:
+        - /tmp/ccache:/github/home/.ccache
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
+
+      - name: Install Ccache
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ccache
+
       - name: Build
         run: |
           cmake -B build -DBUILD_TESTING=ON -DENABLE_DEEPKS=ON -DENABLE_LIBXC=ON -DENABLE_LIBRI=ON -DENABLE_PAW=ON
           cmake --build build -j8
           cmake --install build
+
       - name: Test
         env:
           GTEST_COLOR: 'yes'
