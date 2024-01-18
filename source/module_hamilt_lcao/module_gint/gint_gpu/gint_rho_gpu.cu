@@ -29,6 +29,7 @@ void gint_gamma_rho_gpu(hamilt::HContainer<double> *DM,
             int it2 = GlobalC::ucell.iat2it[iat2];
             int lo1 = GridT.trace_lo[GlobalC::ucell.itiaiw2iwt(it1, GlobalC::ucell.iat2ia[iat1], 0)];
             int lo2 = GridT.trace_lo[GlobalC::ucell.itiaiw2iwt(it2, GlobalC::ucell.iat2ia[iat2], 0)];
+            int a = lo1 == lo2 ? 1 : 2; 
 
                 hamilt::AtomPair<double> *tmp_ap = DM->find_pair(iat1, iat2);
                 int orb_index = 0;
@@ -40,7 +41,8 @@ void gint_gamma_rho_gpu(hamilt::HContainer<double> *DM,
                 {
                     for (int orb_j = 0; orb_j < tmp_ap->get_col_size(); orb_j++)
                     {
-                        dm_matrix_h[(lo1 + orb_i) * lgd + (lo2 + orb_j)]=tmp_ap->get_pointer(0)[orb_index] ;
+                        
+                        dm_matrix_h[(lo1 + orb_i) * lgd + (lo2 + orb_j)]=tmp_ap->get_pointer(0)[orb_index] * a;
                         orb_index++;
                     }
                 }
