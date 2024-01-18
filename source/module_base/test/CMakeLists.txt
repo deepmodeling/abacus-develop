@@ -218,7 +218,7 @@ AddTest(
   LIBS ${math_libs} formatter
 )
 if(ENABLE_GOOGLEBENCH)
-  AddPerfTest(
+  AddTest(
     TARGET math_sphbes_perf_test
     LIBS formatter
     SOURCES math_sphbes_perf_test.cpp ../math_sphbes.cpp ../timer.cpp 
