@@ -69,7 +69,7 @@ int count_ntype(const std::string& fn)
  * @param input_value_path parameter default value file path
  * @param input_value_path parameter input value file path
  */
-bool Init(const std::string& default_type_path,
+void Init(const std::string& default_type_path,
           const std::string& default_value_path,
           const std::string& input_value_path)
 {
@@ -103,10 +103,8 @@ void strtolower(char* sa, char* sb)
  * @brief Reads the default parameters from the specified file and saves them to the global variable
  *        default_parametes_type
  * @param fn Specifies the path to the file
- * @return true Read successfully
- * @return false Read failure
  */
-bool default_parametes_reader(const std::string& fn, std::map<std::string, std::string>& default_parametes_type)
+void default_parametes_reader(const std::string& fn, std::map<std::string, std::string>& default_parametes_type)
 {
     std::ifstream inputFile(fn.c_str());
     if (inputFile.is_open())
@@ -122,14 +120,14 @@ bool default_parametes_reader(const std::string& fn, std::map<std::string, std::
     }
     else
     {
-        std::cout << "Cannot open file !" << std::endl;
+        ModuleBase::WARNING_QUIT("Input", "Cannot open file" + fn);
     }
 }
 /**
  * @brief This function is used to read the input parameter file and store it as a key-value pair
  * @param fn Enter the path to the parameter file
  */
-bool input_parameters_get(const std::string& fn, std::map<std::string, InputParameter>& input)
+void input_parameters_get(const std::string& fn, std::map<std::string, InputParameter>& input)
 {
     // The module title information is displayed
     ModuleBase::TITLE("Input", "Read");
@@ -166,8 +164,7 @@ bool input_parameters_get(const std::string& fn, std::map<std::string, InputPara
     // If ierr is 0, the word "INPUT_PARAMETERS" is not found, and an error message is printed with false
     if (ierr == 0)
     {
-        std::cout << " Error parameter list." << std::endl;
-        return false; // return error : false
+        ModuleBase::WARNING_QUIT("Input", "INPUT_PARAMETERS statement not found.");
     }
     ifs.rdstate();
 
@@ -306,11 +303,9 @@ bool input_parameters_get(const std::string& fn, std::map<std::string, InputPara
     {
         ModuleBase::WARNING_QUIT("Input", "The ntype in INPUT is not equal to the ntype counted in STRU, check it.");
     }
-
-    return true;
 }
 
-bool input_parameters_set(std::map<std::string, InputParameter> input_parameters)
+void input_parameters_set(std::map<std::string, InputParameter> input_parameters)
 {
     if (input_parameters.count("nupdown") != 0)
     {
