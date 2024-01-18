@@ -129,19 +129,15 @@ void default_parametes_reader(const std::string& fn, std::map<std::string, std::
  */
 void input_parameters_get(const std::string& fn, std::map<std::string, InputParameter>& input)
 {
-    // The module title information is displayed
     ModuleBase::TITLE("Input", "Read");
-    // If it is not the primary node, return false
     if (GlobalV::MY_RANK != 0)
-        return false;
+        return;
 
     // Open the input parameter file
     std::ifstream ifs(fn.c_str(), std::ios::in); // "in_datas/input_parameters"
-    // If the opening fails, an error message is printed and false is returned
     if (!ifs)
     {
-        std::cout << " Can't find the INPUT file." << std::endl;
-        return false;
+        ModuleBase::WARNING_QUIT("Input", "Can't find the INPUT file at " + fn);
     }
     ifs.clear();
     ifs.seekg(0);
@@ -271,15 +267,11 @@ void input_parameters_get(const std::string& fn, std::map<std::string, InputPara
         }
         else if (ifs.bad() != 0)
         {
-            std::cout << " Bad input parameters. " << std::endl;
-            return false;
+            ModuleBase::WARNING_QUIT("Input", "Bad input parameters.");
         }
         else if (ifs.fail() != 0)
         {
-            std::cout << " word = " << word << std::endl;
-            std::cout << " Fail to read parameters. " << std::endl;
-            ifs.clear();
-            return false;
+            ModuleBase::WARNING_QUIT("Input", "Fail to read parameters: word = " + std::string(word));
         }
         else if (ifs.good() == 0)
         {
