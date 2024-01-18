@@ -252,7 +252,7 @@ LRI_CV_Tools::cal_latvec_range(const double &rcut_times)
 	const ModuleBase::Vector3<double> latvec_times = Rcut_max * rcut_times / (proj * GlobalC::ucell.lat0);
     const ModuleBase::Vector3<Tcell> latvec_times_ceil = {static_cast<Tcell>(std::ceil(latvec_times.x)),
                                                           static_cast<Tcell>(std::ceil(latvec_times.y)),
-                                                          static_cast<Tcell>(std::ceil(latvec_times.z)),
+                                                          static_cast<Tcell>(std::ceil(latvec_times.z))};
     const ModuleBase::Vector3<Tcell> period = 2 * latvec_times_ceil + ModuleBase::Vector3<Tcell>{1,1,1};
 	return std::array<Tcell,3>{period.x, period.y, period.z};
 }
