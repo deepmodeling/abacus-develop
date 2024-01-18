@@ -250,11 +250,10 @@ LRI_CV_Tools::cal_latvec_range(const double &rcut_times)
 	const ModuleBase::Vector3<double> proj = ModuleBase::Mathzone::latvec_projection(
 		std::array<ModuleBase::Vector3<double>,3>{GlobalC::ucell.a1, GlobalC::ucell.a2, GlobalC::ucell.a3});
 	const ModuleBase::Vector3<double> latvec_times = Rcut_max * rcut_times / (proj * GlobalC::ucell.lat0);
-	const ModuleBase::Vector3<Tcell> latvec_times_ceil = 
-		{std::ceil(latvec_times.x),
-		 std::ceil(latvec_times.y),
-		 std::ceil(latvec_times.z)};
-	const ModuleBase::Vector3<Tcell> period = 2 * latvec_times_ceil + ModuleBase::Vector3<Tcell>{1,1,1};
+    const ModuleBase::Vector3<Tcell> latvec_times_ceil = {static_cast<Tcell>(std::ceil(latvec_times.x)),
+                                                          static_cast<Tcell>(std::ceil(latvec_times.y)),
+                                                          static_cast<Tcell>(std::ceil(latvec_times.z)),
+    const ModuleBase::Vector3<Tcell> period = 2 * latvec_times_ceil + ModuleBase::Vector3<Tcell>{1,1,1};
 	return std::array<Tcell,3>{period.x, period.y, period.z};
 }
 
@@ -308,7 +307,7 @@ LRI_CV_Tools::get_dCVws(
 				const Abfs::Vector3_Order<double> R_delta = -tau0+tau1+(RI_Util::array3_to_Vector3(cell1)*GlobalC::ucell.latvec);
 				dCVws[it0][it1][R_delta][ix] = dCVs_B.second;
 			}
-		}		
+		}
 	}
 	return dCVws;
 }
