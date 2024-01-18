@@ -39,7 +39,7 @@ void gpu_task_generator_rho(const Grid_Technique &GridT,
   const int grid_index_ij = i * GridT.nby * GridT.nbzp + j * GridT.nbzp;
   const int nwmax = GlobalC::ucell.nwmax;
   bool *gpu_mat_cal_flag = new bool[max_size * GridT.nbzp];
-  int * start_idx_psi = new int[max_size * GridT.nbzp];
+
   for (int i = 0; i < max_size * GridT.nbzp; i++)
   {  
     gpu_mat_cal_flag[i] = false;
@@ -53,18 +53,16 @@ void gpu_task_generator_rho(const Grid_Technique &GridT,
     int num_psi_pos = psi_size_max * z_index;
     int calc_flag_index = max_size * z_index;
     int bcell_start_index = GridT.bcell_start[grid_index];
-    int atom_offset_psi = 0;
+    int na_grid = GridT.how_many_atoms[grid_index];
 
-    for (int id = 0; id < GridT.how_many_atoms[grid_index]; id++) {
+    
+    for (int id = 0; id < na_grid; id++) {
       int ib = 0;
       int mcell_index = bcell_start_index + id;
       int imcell = GridT.which_bigcell[mcell_index];
       int iat = GridT.which_atom[mcell_index];
       int it_temp = GlobalC::ucell.iat2it[iat];
       int start_ind_grid = GridT.start_ind[grid_index];
-      int nw = GlobalC::ucell.atoms[it_temp].nw;
-      start_idx_psi[z_index*max_size+id] = z_index * max_size * GridT.bxyz * nwmax+
-                                                atom_offset_psi;
 
       for (int bx_index = 0; bx_index < GridT.bx; bx_index++) {
         for (int by_index = 0; by_index < GridT.by; by_index++) {
@@ -95,20 +93,17 @@ void gpu_task_generator_rho(const Grid_Technique &GridT,
               psi_input_double[pos_temp_double + 2] = dr_temp[2] / distance;
               psi_input_double[pos_temp_double + 3] = distance;
 
-              int vindex_global = bx_index * GridT.ncy * nczp + by_index * nczp +
-                                  bz_index + start_ind_grid;
-              psi_input_double[pos_temp_double + 4] = 0;  // to be removed
 
               psi_input_int[pos_temp_int] = it_temp;
               psi_input_int[pos_temp_int + 1] =
-                  start_idx_psi[z_index * max_size + id] + ib;
+                  (z_index * GridT.bxyz + ib) * max_size * nwmax + id * nwmax;
               num_get_psi++;
             }
             ib++;
           }
         }
       }
-      atom_offset_psi += nw * GridT.bxyz;
+
     }
     num_psir[z_index] = num_get_psi;
   }
@@ -123,19 +118,18 @@ void gpu_task_generator_rho(const Grid_Technique &GridT,
     int grid_index = grid_index_ij + z_index;
     int calc_flag_index = max_size * z_index;
     int bcell_start_index = GridT.bcell_start[grid_index];
-    int nw_total = 0;
+    int bcell_start_psir = z_index * GridT.bxyz * max_size * nwmax;
 
     for (int atom1 = 0; atom1 < GridT.how_many_atoms[grid_index]; atom1++) {
+      if(!gpu_mat_cal_flag[calc_flag_index + atom1]){
+        continue;
+      }
       int mcell_index1 = bcell_start_index + atom1;
       int iat1 = GridT.which_atom[mcell_index1];
       int it1 = GlobalC::ucell.iat2it[iat1];
       int lo1=GridT.trace_lo[GlobalC::ucell.itiaiw2iwt(
                 it1, GlobalC::ucell.iat2ia[iat1],0)];
       int nw1 = GlobalC::ucell.atoms[it1].nw;
-      nw_total += nw1;
-      if(!gpu_mat_cal_flag[calc_flag_index + atom1]){
-        continue;
-      }
       
       for(int atom2 = 0; atom2 < GridT.how_many_atoms[grid_index]; atom2++) {
         if(!gpu_mat_cal_flag[calc_flag_index + atom2]){
@@ -148,18 +142,18 @@ void gpu_task_generator_rho(const Grid_Technique &GridT,
                 it2, GlobalC::ucell.iat2ia[iat2],0)];
         int nw2 = GlobalC::ucell.atoms[it2].nw;
 
-        int mat_A_idx = lgd * lo1 + lo2;
-        int mat_B_idx = start_idx_psi[z_index*max_size+atom2];
-        int mat_C_idx = start_idx_psi[z_index*max_size+atom1];
+        int mat_A_idx = bcell_start_psir + atom2 * nwmax;
+        int mat_B_idx = lgd * lo1 + lo2;
+        int mat_C_idx = bcell_start_psir + atom1 * nwmax;
 
-        mat_m[tid] = nw1;
-        mat_n[tid] = GridT.bxyz;
+        mat_m[tid] = GridT.bxyz;
+        mat_n[tid] = nw1;
         mat_k[tid] = nw2;
-        mat_lda[tid] = lgd;
-        mat_ldb[tid] = GridT.bxyz;
-        mat_ldc[tid] = GridT.bxyz;
-        mat_A[tid] = dm_matrix_g + mat_A_idx;
-        mat_B[tid] = psir_ylm_g + mat_B_idx;
+        mat_lda[tid] = nwmax * max_size;
+        mat_ldb[tid] = lgd;
+        mat_ldc[tid] = nwmax * max_size;
+        mat_A[tid] = psir_ylm_g + mat_A_idx;
+        mat_B[tid] = dm_matrix_g + mat_B_idx;
         mat_C[tid] = psir_zeros_g + mat_C_idx;
 
         if(mat_m[tid] > max_m){
@@ -171,27 +165,25 @@ void gpu_task_generator_rho(const Grid_Technique &GridT,
         }
         
         tid++;
+        }
       }
+      
 
-    }
 
     //generate dot tasks
-    double *vec_l_start = psir_ylm_g + start_idx_psi[z_index*max_size];
-    double *vec_r_start = psir_zeros_g + start_idx_psi[z_index*max_size];
     int* vindex = Gint_Tools::get_vindex(GridT.bxyz, GridT.bx, GridT.by, GridT.bz,
                         nczp, GridT.start_ind[grid_index], GridT.ncy*nczp);
     for(int i = 0; i < GridT.bxyz; i++){
-      vec_l[dot_count] = vec_l_start + i;
-      vec_r[dot_count] = vec_r_start + i;
+      vec_l[dot_count] = psir_ylm_g + (bcell_start_psir + i * max_size * nwmax);
+      vec_r[dot_count] = psir_zeros_g + (bcell_start_psir + i * max_size * nwmax);
       dot_product[dot_count] = rho_g + vindex[i];
-      vec_len[dot_count] = nw_total;
+      vec_len[dot_count] = nwmax * max_size;
       dot_count++;
     }
   }
   atom_pair_num = tid;
 
   delete[] gpu_mat_cal_flag;
-  delete[] start_idx_psi;
 } 
 
 // rho calculation tasks generate

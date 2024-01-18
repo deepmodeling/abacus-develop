@@ -701,6 +701,7 @@ void Grid_Technique::cal_trace_lo(void)
 		atom_pair_size_of_meshcell = max_atom * max_atom;
 		atom_pair_size_over_nbz = atom_pair_size_of_meshcell * nbzp;
 
+		// multiple bxyz
 		checkCudaErrors(cudaMallocHost((void **)&atom_pair_left_info_global, atom_pair_size_over_nbz * nstreams * sizeof(int)));
 		checkCudaErrors(cudaMalloc((void **)&atom_pair_left_info_global_g, atom_pair_size_over_nbz * nstreams * sizeof(int)));
 

@@ -7,7 +7,6 @@
 #include "vbatch_matrix_multiple/vbatch_matrix_mul.cuh"
 #include "vbatch_matrix_multiple/cuda_tools.cuh"
 
-#include <iostream>
 
 void gint_gamma_rho_gpu(hamilt::HContainer<double> *DM,
                         double *rho,
@@ -21,6 +20,7 @@ void gint_gamma_rho_gpu(hamilt::HContainer<double> *DM,
 
     double *dm_matrix_h = new double[lgd * lgd];
     ModuleBase::GlobalFunc::ZEROS(dm_matrix_h, lgd*lgd);
+    checkCuda(cudaMemset(GridT.rho_g, 0, GridT.ncxyz * sizeof(double)));
     for (int iat1 = 0; iat1 < GlobalC::ucell.nat; iat1++)
     {
         for (int iat2 = 0; iat2 < GlobalC::ucell.nat; iat2++)
@@ -191,20 +191,20 @@ void gint_gamma_rho_gpu(hamilt::HContainer<double> *DM,
                                      atom_pair_mat_B_array_g, atom_pair_ldb_g,
                                      atom_pair_mat_C_array_g, atom_pair_ldc_g,
                                      atom_pair_num, GridT.streams[stream_num]);
-            // new add
-            checkCuda(cudaStreamSynchronize(GridT.streams[stream_num]));
-            if(iter_num==0){
-                dump_cuda_array_to_file(psir_ylm_left_g,1,1,"ds");
-                dump_cuda_array_to_file(psir_ylm_right_g,1,1,"ds");
-            }
+          
+
+            // new add streamsynchronize
+            // checkCuda(cudaStreamSynchronize(GridT.streams[stream_num]));
 
             dim3 grid_dot(128);
             dim3 block_dot(64);
+            int incx = 1;
+            int incy = 1;
             psir_dot<<<grid_dot, block_dot, 0, GridT.streams[stream_num]>>>(vec_len_g,
                                                                             vec_l_g,
-                                                                            GridT.bxyz,
+                                                                            incx,
                                                                             vec_r_g,
-                                                                            GridT.bxyz,
+                                                                            incy,
                                                                             dot_product_g,
                                                                             dot_count);
 

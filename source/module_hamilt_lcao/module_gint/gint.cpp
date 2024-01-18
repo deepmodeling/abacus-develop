@@ -90,7 +90,7 @@ void Gint::cal_gint(Gint_inout *inout)
 							*this->gridt);
 			}
 			ModuleBase::timer::tick("Gint_interface", "cal_gint_rho");
-			return ;
+			return;
 		}
 		else
 		{
