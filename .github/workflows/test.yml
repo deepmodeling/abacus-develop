@@ -12,8 +12,10 @@ jobs:
     name: Test
     runs-on: self-hosted
     if: github.repository_owner == 'deepmodeling'
-    container: ghcr.io/deepmodeling/abacus-gnu
-
+    container:
+      image: ghcr.io/deepmodeling/abacus-gnu
+      volumes:
+        - /tmp/ccache:/github/home/.ccache
     steps:
       - name: Checkout
         uses: actions/checkout@v4
