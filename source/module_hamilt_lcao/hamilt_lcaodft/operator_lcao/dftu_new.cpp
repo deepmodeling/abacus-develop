@@ -117,7 +117,7 @@ template <typename TK, typename TR>
 void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
 {
     ModuleBase::TITLE("DFTUNew", "calculate_HR");
-    if(this->dm_in_dftu == nullptr)
+    if(this->dm_in_dftu == nullptr && this->dftu->initialed_locale == false)
     {// skip the calculation if dm_in_dftu is nullptr
         return;
     }
@@ -215,45 +215,57 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
         }
         //first iteration to calculate occupation matrix
         std::vector<double> occ((target_L * 2 + 1) * (target_L * 2 + 1), 0.0);
-        hamilt::HContainer<double>* dmR_current = this->dm_in_dftu->get_DMR_pointer(GlobalV::CURRENT_SPIN+1);
-        for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
+        if(this->dftu->initialed_locale == false)
         {
-            const int T1 = adjs.ntype[ad1];
-            const int I1 = adjs.natom[ad1];
-            const int iat1 = ucell->itia2iat(T1, I1);
-            ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];
-            for (int ad2 = 0; ad2 < adjs.adj_num + 1; ++ad2)
+            hamilt::HContainer<double>* dmR_current = this->dm_in_dftu->get_DMR_pointer(GlobalV::CURRENT_SPIN+1);
+            for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
             {
-                const int T2 = adjs.ntype[ad2];
-                const int I2 = adjs.natom[ad2];
-                const int iat2 = ucell->itia2iat(T2, I2);
-                ModuleBase::Vector3<int>& R_index2 = adjs.box[ad2];
-                ModuleBase::Vector3<int> R_vector(R_index2[0] - R_index1[0],
-                                                  R_index2[1] - R_index1[1],
-                                                  R_index2[2] - R_index1[2]);
-                const hamilt::BaseMatrix<double>* tmp = dmR_current->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2]);
-                // if not found , skip this pair of atoms
-                if (tmp != nullptr)
+                const int T1 = adjs.ntype[ad1];
+                const int I1 = adjs.natom[ad1];
+                const int iat1 = ucell->itia2iat(T1, I1);
+                ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];
+                for (int ad2 = 0; ad2 < adjs.adj_num + 1; ++ad2)
                 {
-                    this->cal_occupations(iat1, iat2, T0, paraV, nlm_tot[ad1], nlm_tot[ad2], tmp->get_pointer(), occ);
+                    const int T2 = adjs.ntype[ad2];
+                    const int I2 = adjs.natom[ad2];
+                    const int iat2 = ucell->itia2iat(T2, I2);
+                    ModuleBase::Vector3<int>& R_index2 = adjs.box[ad2];
+                    ModuleBase::Vector3<int> R_vector(R_index2[0] - R_index1[0],
+                                                    R_index2[1] - R_index1[1],
+                                                    R_index2[2] - R_index1[2]);
+                    const hamilt::BaseMatrix<double>* tmp = dmR_current->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2]);
+                    // if not found , skip this pair of atoms
+                    if (tmp != nullptr)
+                    {
+                        this->cal_occupations(iat1, iat2, T0, paraV, nlm_tot[ad1], nlm_tot[ad2], tmp->get_pointer(), occ);
+                    }
                 }
             }
+    #ifdef __MPI
+            // sum up the occupation matrix
+            Parallel_Reduce::reduce_all(occ.data(), occ.size());
+    #endif
+            // save occ to dftu
+            for(int i=0;i<occ.size();i++)
+            {
+                if(GlobalV::NSPIN==1) occ[i] *= 0.5;
+                this->dftu->locale[iat0][target_L][0][GlobalV::CURRENT_SPIN].c[i] = occ[i];
+            }
         }
-#ifdef __MPI
-        // sum up the occupation matrix
-        Parallel_Reduce::reduce_all(occ.data(), occ.size());
-#endif
+        else // use readin locale to calculate occupation matrix
+        {
+            for(int i=0;i<occ.size();i++)
+            {
+                occ[i] = this->dftu->locale[iat0][target_L][0][GlobalV::CURRENT_SPIN].c[i];
+            }
+            // set initialed_locale to false to avoid using readin locale in next iteration
+            if(GlobalV::CURRENT_SPIN == GlobalV::NSPIN-1) this->dftu->initialed_locale = false;
+        }
         
         //calculate VU
         const double u_value = this->dftu->U[T0];
         std::vector<double> VU(occ.size());
         this->cal_v_of_u(occ, u_value, VU, this->dftu->EU);
-        // save occ to dftu
-        for(int i=0;i<occ.size();i++)
-        {
-            this->dftu->locale[iat0][target_L][0][GlobalV::CURRENT_SPIN].c[i] = occ[i];
-        }
-        this->dftu->initialed_locale = true;
 
         // second iteration to calculate Hamiltonian matrix
         // calculate <psi_I|beta_m> U*(1/2*delta(m, m')-occ(m, m')) <beta_m'|psi_{J,R}> for each pair of <IJR> atoms
@@ -282,6 +294,8 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
             }
         }
     }
+
+    if(GlobalV::NSPIN==1) this->dftu->EU *= 2.0;
 
     ModuleBase::timer::tick("DFTUNew", "calculate_HR");
 }
