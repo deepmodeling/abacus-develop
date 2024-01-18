@@ -57,7 +57,7 @@ basis_type              lcao
 calculation             scf		# this is the key parameter telling abacus to do a scf calculation
 ```
 
-The pseudopotential files of `Mg_ONCV_PBE-1.0.upf` and `O_ONCV_PBE-1.0.upf` should be provided under the directory of `pseudo_dir`, and the orbital files `Mg_gga_8au_100Ry_4s2p1d.orb` and `O_gga_8au_100Ry_2s2p1d.orb` under the directory of `orbital_dir`. The pseudopotential and orbital files can be downloaded from the [ABACUS website](http://abacus.ustc.edu.cn/pseudo/list.htm).
+The pseudopotential files of `Mg_ONCV_PBE-1.0.upf` and `O_ONCV_PBE-1.0.upf` should be provided under the directory of `pseudo_dir` defined in `INPUT` (Default directory is "./"), and the orbital files `Mg_gga_8au_100Ry_4s2p1d.orb` and `O_gga_8au_100Ry_2s2p1d.orb` under the directory of `orbital_dir` also defined in `INPUT` (Default directory is "./"). The pseudopotential and orbital files can be downloaded from the [ABACUS website](http://abacus.ustc.edu.cn/pseudo/list.htm).
 
 The final mandatory input file is called `KPT`, which sets the reciprocal space k-mesh. Below is an example:
 
