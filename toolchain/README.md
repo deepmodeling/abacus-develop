@@ -91,6 +91,7 @@ The needed dependencies version default:
 - `LibXC` 6.2.2
 - `ELPA` 2023.05.001
 - `CEREAL` 1.3.2
+- `RapidJSON` 1.1.0
 And Intel-oneAPI need user or server manager to manually install from Intel.
 [Intel-oneAPI](https://www.intel.cn/content/www/cn/zh/developer/tools/oneapi/toolkits.html)
 
@@ -102,12 +103,12 @@ Dependencies below are optional， which is NOT installed by default:
 Users can install them by using `--with-*=install` in toolchain*.sh, which is `no` in default.
 > Notice: LibRI, LibComm and Libnpy is on actively development, you should check-out the package version when using this toolchain. Also, LibRI and LibComm can be installed by github submodule, which is also work for libnpy, which is more recommended.
 
-Notice: for `CEREAL`, `Libnpy`, `LibRI` and `LibComm`, 
+Notice: for `CEREAL`,`RapidJSON`, `Libnpy`, `LibRI` and `LibComm`, 
 you need to download them from github.com, 
 rename it as formatted, and put them in `build` directory at the same time
 e.g.:
 ```shell
-# packages downloaded from github.com
+# packages downloaded from github.com, RapidJSON is not supported now
 mv v1.3.2.tar.gz build/cereal-1.3.2.tar.gz
 ```
 
@@ -175,7 +176,7 @@ cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
         -DCMAKE_CUDA_COMPILER=${path to cuda toolkit}/bin/nvcc \
         ......
 ```
-Notice: You CANNOT use `icpx` compiler for GPU version of ABACUS
+Notice: You CANNOT use `icpx` compiler for GPU version of ABACUS for now
 
 ### shell problem
 If you encounter problem like:
@@ -206,6 +207,8 @@ The default compiler for Intel-oneAPI is `icpx` and `icx`, which will cause prob
 
 The best way is to change `icpx` to `icpc`, `icx` to `icc`. user can manually change it in toolchain*.sh via `--with-intel-classic=yes`
 
+Notice: `icc` and `icpc` from Intel Classic Compiler of Intel-oneAPI is not supported for 2024.0 and newer version.
+
 
 ### LibRI and LibComm problem
 (There is some problem sometimes when compling with LibRI and LibComm, detailed information is needed)
@@ -215,6 +218,9 @@ The best way is to change `icpx` to `icpc`, `icx` to `icc`. user can manually ch
 Sometimes Intel-oneAPI have problem to link `mpirun`, 
 which will always show in 2023.2.0 version of MPI in Intel-oneAPI. 
 Try `source /path/to/setvars.sh` or install another version of IntelMPI may help.
+
+which is fixed in 2024.0.0 version of Intel-oneAPI, 
+And will not occur in Intel-MPI before 2021.10.0 (Intel-oneAPI before 2023.2.0)
 
 More problem and possible solution can be accessed via [#2928](https://github.com/deepmodeling/abacus-develop/issues/2928)
 
@@ -230,9 +236,6 @@ from ABACUS repo, make dependencies package more independent and flexible.
 2. Users can manually change `pkg_install_dir` variable 
 in `scripts/stage*/install*` to change the installation directory 
 of each packages, which may let the installation more fiexible.
-3. Users can manually change `INSTALL` variable in `scripts/common_vars.sh`
-to change the installation directory of all packages, which may let the
-installation more fiexible.
 
 
 ## More

@@ -224,3 +224,10 @@ if(ENABLE_GOOGLEBENCH)
     SOURCES math_sphbes_perf_test.cpp ../math_sphbes.cpp ../timer.cpp 
   )
 endif()
+
+if(ENABLE_RAPIDJSON)
+  AddTest(
+    TARGET base_para_json_test
+    SOURCES para_json_test.cpp ../para_json.cpp
+  )
+endif()
