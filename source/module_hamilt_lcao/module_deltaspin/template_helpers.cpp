@@ -66,6 +66,12 @@ double SpinConstrain<double, psi::DEVICE_CPU>::cal_alpha_opt(std::vector<ModuleB
 }
 
 template <>
+void SpinConstrain<double, psi::DEVICE_CPU>::check_lock()
+{
+}
+
+
+template <>
 void SpinConstrain<double, psi::DEVICE_CPU>::print_termination()
 {
 }

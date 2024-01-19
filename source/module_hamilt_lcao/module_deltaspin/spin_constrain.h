@@ -211,6 +211,9 @@ public:
     /// bcast sc data read from json file
     void bcast_ScData(std::string sc_file, int nat, int ntype);
 
+    /// @brief numerical instability check
+    void check_lock();
+
   private:
     SpinConstrain(){};                               // Private constructor
     ~SpinConstrain(){};                              // Destructor

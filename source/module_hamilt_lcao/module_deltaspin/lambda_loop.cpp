@@ -47,6 +47,7 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::run_lambda_loop(int o
         {
             where_fill_scalar_else_2d(this->constrain_, 0, zero, delta_lambda, delta_lambda);
             add_scalar_multiply_2d(initial_lambda, delta_lambda, one, this->lambda_);
+            this->check_lock();
             this->cal_mw_from_lambda(i_step);
             new_spin = this->Mi_;
             bool GradLessThanBound = this->check_gradient_decay(new_spin, spin, delta_lambda, dnu_last_step);
@@ -90,6 +91,7 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::run_lambda_loop(int o
 
         where_fill_scalar_else_2d(this->constrain_, 0, zero, delta_lambda, delta_lambda);
         add_scalar_multiply_2d(initial_lambda, delta_lambda, one, this->lambda_);
+        this->check_lock();
         this->cal_mw_from_lambda(i_step);
 
         spin_plus = this->Mi_;

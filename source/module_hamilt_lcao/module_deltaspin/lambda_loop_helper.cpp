@@ -175,3 +175,30 @@ bool SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::check_gradient_decay(
     }
     return false;
 }
+
+template <>
+void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::check_lock()
+{
+    int nat = this->get_nat();
+    for (int iat = 0; iat < nat; iat++)
+    {
+        for (int jat = 0; jat < iat; jat++)
+        {
+            for (int idir = 0; idir <3; idir++)
+            {
+                if (this->constrain_[iat][idir] == 1 && this->constrain_[jat][idir] == 1)
+                {
+                    if (std::abs(this->target_mag_[iat][idir]) < 1e-9 &&
+                        std::abs(this->target_mag_[jat][idir]) < 1e-9 &&
+                        std::abs(this->lambda_[iat][idir]) > 1e-9 &&
+                        std::abs(this->lambda_[jat][idir]) > 1e-9 &&
+                        std::abs(this->lambda_[iat][idir] + this->lambda_[jat][idir]) < 1e-9)
+                    {
+                        this->lambda_[iat][idir] = 0.0;
+                        this->lambda_[jat][idir] = 0.0;
+                    }
+                }
+            }
+        }
+    }
+}
