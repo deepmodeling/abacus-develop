@@ -6,6 +6,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "gint_gpu/gint_vl.h"
+#include "gint_gpu/gint_rho.h"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -67,6 +68,28 @@ void Gint::cal_gint(Gint_inout *inout)
 							this->nbxx,
 							*this->gridt);
 			ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
+			return;
+		}
+		else if(inout->job == Gint_Tools::job_type::rho && GlobalV::GAMMA_ONLY_LOCAL && lgd > 0){
+            double* ylmcoef = new double[100];
+			ModuleBase::GlobalFunc::ZEROS(ylmcoef, 100);
+			for (int i = 0; i < 100; i++)
+			{
+				ylmcoef[i] = ModuleBase::Ylm::ylmcoef[i];
+			}
+
+			const int ncyz = this->ny*this->nplane;
+			for(int is=0; is<GlobalV::NSPIN; ++is)
+			{
+			inout->rho[is]=new double[this->ncxyz];
+			ModuleBase::GlobalFunc::ZEROS(inout->rho[is], this->ncxyz);
+			gint_gamma_rho_gpu(this->DMRGint[is],
+							inout->rho[is],
+							this->nplane,
+							ylmcoef,
+							*this->gridt);
+			}
+			ModuleBase::timer::tick("Gint_interface", "cal_gint_rho");
 			return;
 		}
 		else
