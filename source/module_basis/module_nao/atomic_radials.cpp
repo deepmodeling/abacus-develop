@@ -7,6 +7,7 @@
 #include "module_base/parallel_common.h"
 #include "module_base/tool_quit.h"
 #include "projgen.h"
+#include "module_base/math_integral.h"
 
 AtomicRadials& AtomicRadials::operator=(const AtomicRadials& rhs)
 {
@@ -88,6 +89,27 @@ void AtomicRadials::build(RadialSet* const other, const int itype, const double 
         std::vector<double> rvalue_new;
         projgen(l, ngrid, rgrid, rvalue, rcut, 20, rvalue_new);
         ngrid = rvalue_new.size(); 
+        {
+            for(int i=0;i<ngrid;i++)
+            {
+                rvalue_new[i] = rvalue[i] * (1 - std::exp(- std::pow((rgrid[i] - rcut), 2)/2/0.01));
+            }
+            // r^2 * chi (independent from p)
+            std::vector<double> tmp(ngrid);
+            std::transform(rgrid, rgrid + ngrid, rvalue_new.data(), tmp.begin(), [](double r_i, double chi_i) { return r_i * r_i * chi_i; });
+
+            // r^2 * chi * chi
+            std::vector<double> integrand(ngrid);
+
+            std::transform(rvalue_new.data(), rvalue_new.data() + ngrid, tmp.begin(), integrand.begin(), [](double chi_i, double tmp_i)
+                    { return tmp_i * chi_i; });
+            double dr = rgrid[1] - rgrid[0];
+            double overlap = ModuleBase::Integral::simpson(ngrid, integrand.data(), dr);
+            for(int i=0;i<ngrid;i++)
+            {
+                rvalue_new[i] /= overlap;
+            }
+        }
         //build the new on-site orbitals
         this->chi_[ichi].build(l, true, ngrid, rgrid, rvalue_new.data(), 0, izeta, symbol_, itype, false);
     }
