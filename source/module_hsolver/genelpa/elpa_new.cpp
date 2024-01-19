@@ -206,6 +206,7 @@ void ELPA_Solver::exit()
         logfile.close();
     int error;
     elpa_deallocate(NEW_ELPA_HANDLE_POOL[handle_id], &error);
+    elpa_uninit(&error);
 }
 
 int ELPA_Solver::read_cpuflag()
@@ -432,7 +433,7 @@ int ELPA_Solver::read_complex_kernel()
 
 int ELPA_Solver::allocate_work()
 {
-    unsigned long nloc = narows * nacols; // local size
+    unsigned long nloc = static_cast<unsigned long>(narows) * nacols; // local size
     unsigned long maxloc; // maximum local size
     MPI_Allreduce(&nloc, &maxloc, 1, MPI_UNSIGNED_LONG, MPI_MAX, comm);
     maxloc = nloc;

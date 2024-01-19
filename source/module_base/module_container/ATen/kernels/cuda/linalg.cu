@@ -31,7 +31,7 @@ __global__ void do_add_kernel(
     T* z)
 {
     // Perform add operation for the specified range [begin, end) in the output Tensor.
-    for (auto o_idx = threadIdx.x; o_idx < num_element; o_idx += blockDim.x) {
+    for (int o_idx = threadIdx.x; o_idx < num_element; o_idx += blockDim.x) {
         // Assign the sum of the input Tensor elements at index 'o_idx' to the output Tensor element at index 'o_idx'.
         z[o_idx] = alpha * x[o_idx] + beta * y[o_idx];
     }
@@ -44,7 +44,7 @@ __global__ void do_mul_kernel(
     const T* x,
     T* y)
 {
-    for (auto o_idx = threadIdx.x; o_idx < num_element; o_idx += blockDim.x) {
+    for (int o_idx = threadIdx.x; o_idx < num_element; o_idx += blockDim.x) {
         // Assign the sum of the input Tensor elements at index 'o_idx' to the output Tensor element at index 'o_idx'.
         y[o_idx] = alpha * x[o_idx];
     }
@@ -58,7 +58,7 @@ __global__ void do_mul_kernel(
     const T* y,
     T* z)
 {
-    for (auto o_idx = threadIdx.x; o_idx < num_element; o_idx += blockDim.x) {
+    for (int o_idx = threadIdx.x; o_idx < num_element; o_idx += blockDim.x) {
         // Assign the sum of the input Tensor elements at index 'o_idx' to the output Tensor element at index 'o_idx'.
         z[o_idx] = alpha * x[o_idx] * y[o_idx];
     }
@@ -72,7 +72,7 @@ __global__ void do_div_kernel(
     const T* y,
     T* z)
 {
-    for (auto o_idx = threadIdx.x; o_idx < num_element; o_idx += blockDim.x) {
+    for (int o_idx = threadIdx.x; o_idx < num_element; o_idx += blockDim.x) {
         // Assign the sum of the input Tensor elements at index 'o_idx' to the output Tensor element at index 'o_idx'.
         z[o_idx] = alpha * x[o_idx] / y[o_idx];
     }
@@ -88,7 +88,7 @@ __global__ void do_fma_kernel(
     const T* z,
     T* out)
 {
-    for (auto o_idx = threadIdx.x; o_idx < num_element; o_idx += blockDim.x) {
+    for (int o_idx = threadIdx.x; o_idx < num_element; o_idx += blockDim.x) {
         // Assign the sum of the input Tensor elements at index 'o_idx' to the output Tensor element at index 'o_idx'.
         out[o_idx] = alpha * x[o_idx] * y[o_idx] + beta * z[o_idx];
     }

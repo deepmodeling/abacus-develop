@@ -274,6 +274,13 @@ void Input_Conv::Convert(void)
         GlobalV::NSTOGROUP = INPUT.bndpar;
     }
     GlobalV::precision_flag = INPUT.precision;
+    if (GlobalV::device_flag == "cpu" and GlobalV::precision_flag == "single") {
+        // cpu single precision is not supported while float_fftw lib is not available
+        #ifndef __ENABLE_FLOAT_FFTW
+            ModuleBase::WARNING_QUIT("Input_Conv", "Single precision with cpu is not supported while float_fftw lib is not available; \
+            \n Please recompile with cmake flag \"-DENABLE_FLOAT_FFTW=ON\".\n");
+        #endif // __ENABLE_FLOAT_FFTW
+    }
     GlobalV::CALCULATION = INPUT.calculation;
     GlobalV::ESOLVER_TYPE = INPUT.esolver_type;
 
@@ -617,7 +624,8 @@ void Input_Conv::Convert(void)
     GlobalV::nelec = INPUT.nelec;
     GlobalV::out_pot = INPUT.out_pot;
     GlobalV::out_app_flag = INPUT.out_app_flag;
-
+    GlobalV::out_ndigits = INPUT.out_ndigits;
+    
     GlobalV::out_bandgap = INPUT.out_bandgap; // QO added for bandgap printing
     GlobalV::out_interval = INPUT.out_interval;
 #ifdef __LCAO
@@ -631,6 +639,7 @@ void Input_Conv::Convert(void)
     hsolver::HSolverLCAO<std::complex<double>>::out_mat_hsR = INPUT.out_mat_hs2; // LiuXh add 2019-07-16
     hsolver::HSolverLCAO<std::complex<double>>::out_mat_t = INPUT.out_mat_t;
     hsolver::HSolverLCAO<std::complex<double>>::out_mat_dh = INPUT.out_mat_dh;
+    GlobalV::out_mat_xc = INPUT.out_mat_xc;
     if (GlobalV::GAMMA_ONLY_LOCAL)
     {
         elecstate::ElecStateLCAO<double>::out_wfc_lcao = INPUT.out_wfc_lcao;
@@ -732,6 +741,7 @@ void Input_Conv::Convert(void)
     GlobalV::sc_thr = INPUT.sc_thr;
     GlobalV::nsc = INPUT.nsc;
     GlobalV::nsc_min = INPUT.nsc_min;
+    GlobalV::sc_scf_nmin = INPUT.sc_scf_nmin;
     GlobalV::alpha_trial = INPUT.alpha_trial;
     GlobalV::sccut = INPUT.sccut;
     GlobalV::sc_file = INPUT.sc_file;
@@ -743,8 +753,18 @@ void Input_Conv::Convert(void)
     GlobalV::MIXING_GG0 = INPUT.mixing_gg0;
     GlobalV::MIXING_BETA_MAG = INPUT.mixing_beta_mag;
     GlobalV::MIXING_GG0_MAG = INPUT.mixing_gg0_mag;
+    GlobalV::MIXING_GG0_MIN = INPUT.mixing_gg0_min;
+    GlobalV::MIXING_ANGLE = INPUT.mixing_angle;
     GlobalV::MIXING_TAU = INPUT.mixing_tau;
     
+    //-----------------------------------------------
+    // Quasiatomic Orbital analysis
+    //-----------------------------------------------
+    GlobalV::qo_switch = INPUT.qo_switch;
+    GlobalV::qo_basis = INPUT.qo_basis;
+    GlobalV::qo_strategy = INPUT.qo_strategy;
+    GlobalV::qo_thr = INPUT.qo_thr;
+    GlobalV::qo_screening_coeff = INPUT.qo_screening_coeff;
     ModuleBase::timer::tick("Input_Conv", "Convert");
     return;
 }

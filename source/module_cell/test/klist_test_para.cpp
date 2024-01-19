@@ -174,8 +174,8 @@ TEST_F(KlistParaTest,Set)
 	//construct cell and symmetry
 	ModuleSymmetry::Symmetry symm;
 	construct_ucell(stru_lib[0]);
-	if(GlobalV::MY_RANK == 0) GlobalV::ofs_running.open("tmp_klist_5");
-	symm.analy_sys(GlobalC::ucell,GlobalV::ofs_running);
+    if (GlobalV::MY_RANK == 0) GlobalV::ofs_running.open("tmp_klist_5");
+    symm.analy_sys(GlobalC::ucell.lat, GlobalC::ucell.st, GlobalC::ucell.atoms, GlobalV::ofs_running);
 	//read KPT
 	std::string k_file = "./support/KPT1";
 	//set klist
@@ -210,7 +210,7 @@ TEST_F(KlistParaTest,SetAfterVC)
 	ModuleSymmetry::Symmetry symm;
 	construct_ucell(stru_lib[0]);
 	if(GlobalV::MY_RANK == 0) GlobalV::ofs_running.open("tmp_klist_6");
-	symm.analy_sys(GlobalC::ucell,GlobalV::ofs_running);
+    symm.analy_sys(GlobalC::ucell.lat, GlobalC::ucell.st, GlobalC::ucell.atoms, GlobalV::ofs_running);
 	//read KPT
 	std::string k_file = "./support/KPT1";
 	//set klist

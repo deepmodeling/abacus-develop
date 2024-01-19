@@ -184,7 +184,7 @@ void ORB_control::setup_2d_division(std::ofstream& ofs_running,
     ofs_running << "\n SETUP THE DIVISION OF H/S MATRIX" << std::endl;
 
     // (1) calculate nrow, ncol, nloc.
-    if (ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "cusolver")
+    if (ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "cusolver" || ks_solver == "cg_in_lcao")
     {
         ofs_running << " divide the H&S matrix using 2D block algorithms." << std::endl;
 #ifdef __MPI
@@ -205,7 +205,7 @@ void ORB_control::setup_2d_division(std::ofstream& ofs_running,
     bool div_2d;
     if (ks_solver == "lapack" || ks_solver == "cg" || ks_solver == "dav") div_2d = false;
 #ifdef __MPI
-    else if (ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "cusolver") div_2d = true;
+    else if (ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "cusolver" || ks_solver == "cg_in_lcao") div_2d = true;
 #endif
     else
     {
@@ -382,7 +382,7 @@ assert(nb2d > 0);
     }
 
     // init blacs context for genelpa
-    if (ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "cusolver")
+    if (ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "cusolver" || ks_solver == "cg_in_lcao")
     {
         pv->set_desc(nlocal, nlocal, pv->nrow);
         pv->set_desc_wfc_Eij(nlocal, nbands, pv->nrow);

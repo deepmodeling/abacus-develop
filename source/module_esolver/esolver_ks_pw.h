@@ -36,17 +36,19 @@ namespace ModuleESolver
          * @brief calculate Onsager coefficients Lmn(\omega) and conductivities with Kubo-Greenwood formula
          * 
          * @param fwhmin FWHM for delta function
+         * @param smear_type 1: Gaussian, 2: Lorentzian
          * @param wcut cutoff \omega for Lmn(\omega)
          * @param dw_in \omega step
          * @param dt_in time step
          * @param wg wg(ik,ib) occupation for the ib-th band in the ik-th kpoint
          */
-        void KG(const double fwhmin,
+        void KG(const int& smear_type,
+                const double fwhmin,
                 const double wcut,
                 const double dw_in,
                 const double dt_in,
                 ModuleBase::matrix& wg);
-        
+
         /**
          * @brief calculate the response function Cmn(t) for currents
          * 
@@ -81,8 +83,16 @@ namespace ModuleESolver
         //temporary, this will be removed in the future;
         //Init Global class
         void Init_GlobalC(Input& inp, UnitCell& cell);
-        //calculate conductivities from j-j correlation function
-        void calcondw(const int nt,const double dt, const double fwhmin, const double wcut, const double dw_in, double *ct11, double *ct12, double *ct22);
+        /// @brief calculate conductivities from j-j correlation function
+        void calcondw(const int nt,
+                      const double dt,
+                      const int& smear_type,
+                      const double fwhmin,
+                      const double wcut,
+                      const double dw_in,
+                      double* ct11,
+                      double* ct12,
+                      double* ct22);
         /// @brief allocate psi_init the new psi_initializer
         void allocate_psi_init();
         /// @brief initialize psi
@@ -90,7 +100,7 @@ namespace ModuleESolver
     protected:
         psi::Psi<std::complex<double>, psi::DEVICE_CPU>* psi = nullptr;   //hide the psi in ESolver_KS for tmp use
     private:
-        psi_initializer* psi_init = nullptr;
+        psi_initializer<T, Device>* psi_init = nullptr;
         Device * ctx = {};
         psi::AbacusDevice_t device = {};
         psi::Psi<T, Device>* kspw_psi = nullptr;

@@ -28,6 +28,8 @@
  * 		- set_diagethr, for setting diagethr;
  *  	- reset_diagethr, for updating diagethr;
  * 		- cal_hsolerror, for calculate actually diagethr;
+ *  - 8. solve()
+ *      - lcao_in_pw specific implementation
  */
 class TestHSolverPW : public ::testing::Test
 {
@@ -205,3 +207,58 @@ int main(int argc, char **argv)
 	
 	return result;
 }*/
+
+TEST_F(TestHSolverPW, SolveLcaoInPW)
+{
+    pwbk.nks = 1;
+    // initial memory and data
+    elecstate_test.ekb.create(1, 2);
+    // 1 kpt, 2 bands, 3 basis
+    psi_test_cf.resize(1, 2, 3);
+    psi_test_cd.resize(1, 2, 3);
+
+    psi::Psi<std::complex<double>> transform_test_cd;
+    psi::Psi<std::complex<float>> transform_test_cf;
+    // transform psi, the old wanf2, has 2 local basis and 3 pw basis.
+    // so in principle the hcc has dimension 3*3 to diagonalize
+    // 2 lowest eigenvalues will be selected and save to psi    
+    transform_test_cd.resize(1, 3, 3);
+    transform_test_cf.resize(1, 3, 3);
+
+    std::complex<double> psi_value_d = {0.0, 0.0};
+    std::complex<float> psi_value_f = {0.0, 0.0};
+    for(int iband = 0; iband < transform_test_cd.get_nbands(); iband++)
+    {
+        for(int ibasis = 0; ibasis < transform_test_cd.get_nbasis(); ibasis++)
+        {
+            transform_test_cd.get_pointer()[iband * transform_test_cd.get_nbasis() + ibasis] = psi_value_d;
+            transform_test_cf.get_pointer()[iband * transform_test_cf.get_nbasis() + ibasis] = psi_value_f;
+            psi_value_d += std::complex<double>(1.0, 0.0);
+            psi_value_f += std::complex<float>(1.0, 0.0);
+        }
+    }
+    GlobalV::nelec = 1.0;
+
+    // check solve()
+    elecstate_test.ekb.c[0] = 1.0;
+    elecstate_test.ekb.c[1] = 2.0;
+    this->hs_f.solve(&hamilt_test_f, psi_test_cf, &elecstate_test, transform_test_cf, true);
+    EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<float>>::avg_iter, 0.0);
+    for (int i = 0; i < psi_test_cf.size(); i++)
+    {
+        EXPECT_DOUBLE_EQ(psi_test_cf.get_pointer()[i].real(), i);
+    }
+    EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[0], 0.0);
+    EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[1], 0.0);
+
+    elecstate_test.ekb.c[0] = 1.0;
+    elecstate_test.ekb.c[1] = 2.0;
+    this->hs_d.solve(&hamilt_test_d, psi_test_cd, &elecstate_test, transform_test_cd, true);
+    EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<double>>::avg_iter, 0.0);
+    for (int i = 0; i < psi_test_cd.size(); i++)
+    {
+        EXPECT_DOUBLE_EQ(psi_test_cd.get_pointer()[i].real(), i);
+    }
+    EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[0], 0.0);
+    EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[1], 0.0);
+}

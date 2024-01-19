@@ -124,6 +124,20 @@ struct PsiToContainer<psi::DEVICE_GPU> {
     using type = container::DEVICE_GPU; /**< The return type specialization for std::complex<double>. */
 };
 
+template <typename T> 
+struct ContainerToPsi {
+    using type = T; /**< The return type based on the input type. */
+};
+
+template <>
+struct ContainerToPsi<container::DEVICE_CPU> {
+    using type = psi::DEVICE_CPU; /**< The return type specialization for std::complex<float>. */
+};
+
+template <>
+struct ContainerToPsi<container::DEVICE_GPU> {
+    using type = psi::DEVICE_GPU; /**< The return type specialization for std::complex<double>. */
+};
 
 
 /**

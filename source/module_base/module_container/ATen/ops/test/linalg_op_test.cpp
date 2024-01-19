@@ -2,7 +2,7 @@
 
 #include <ATen/core/tensor.h>
 #include <ATen/ops/linalg_op.h>
-#include <test/test_utils.h>
+#include <base/utils/gtest.h>
 
 namespace container {
 namespace op {
@@ -14,7 +14,7 @@ public:
     ~LinalgOpTest() override = default;
 };
 
-TYPED_TEST_SUITE(LinalgOpTest, test_utils::Types);
+TYPED_TEST_SUITE(LinalgOpTest, base::utils::Types);
 
 TYPED_TEST(LinalgOpTest, Add) {
     using Type   = typename std::tuple_element<0, decltype(TypeParam())>::type;

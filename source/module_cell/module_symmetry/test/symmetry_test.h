@@ -1,6 +1,6 @@
 #pragma once
 #include "module_base/mathzone.h"
-#include "../symmetry.h"
+#include "module_cell/unitcell.h"
 #include "gtest/gtest.h"
 
 #define DOUBLETHRESHOLD 1e-8

@@ -34,6 +34,34 @@ option(DEBUG_INFO "Print message for developers to debug." OFF)
 option(ENABLE_NATIVE_OPTIMIZATION "Enable compilation optimization for the native machine's CPU type" OFF)
 option(COMMIT_INFO "Print commit information in log" ON)
 option(ENABLE_FFT_TWO_CENTER "Enable FFT-based two-center integral method." ON)
+option(ENABLE_RAPIDJSON "Enable rapid-json usage." OFF)
+
+
+
+# enable json support
+if(ENABLE_RAPIDJSON)
+  find_package(RapidJSON)
+  if(NOT RapidJSON_FOUND)
+    message(WARNING "Rapidjson is not found, trying downloading from github, or you can install Rapidjson first and reinstall abacus.")
+    include(FetchContent)
+    FetchContent_Declare(
+      rapidjson
+      GIT_REPOSITORY https://github.com/Tencent/rapidjson.git
+      GIT_TAG "origin/master"
+      GIT_SHALLOW TRUE
+      GIT_PROGRESS TRUE
+    )
+    set(RAPIDJSON_BUILD_TESTS OFF CACHE INTERNAL "")
+    set(RAPIDJSON_BUILD_EXAMPLES OFF CACHE INTERNAL "")
+    FetchContent_MakeAvailable(rapidjson)
+    set(RapidJSON_INCLUDE_PATH "${rapidjson_SOURCE_DIR}/include")
+  endif()
+  add_compile_definitions(__RAPIDJSON)
+  add_definitions(-DRAPIDJSON_HAS_CXX11_NOEXCEPT=0)
+  include_directories(${RapidJSON_INCLUDE_PATH})
+endif()
+
+
 if (USE_CUDA)
   set(USE_CUSOLVER_LCAO ON)
 else()
@@ -115,6 +143,11 @@ endif()
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+macro(set_if_higher VARIABLE VALUE)
+	if(${VARIABLE} LESS ${VALUE})
+		set(${VARIABLE} ${VALUE})
+	endif()
+endmacro()
 if (CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 5)
   message(WARNING "GCC4 is not fully supported.")
 endif()
@@ -229,7 +262,7 @@ endif()
 
 if(USE_CUDA OR USE_CUSOLVER_LCAO)
   cmake_minimum_required(VERSION 3.18) # required by `CUDA_ARCHITECTURES` below
-  set(CMAKE_CXX_STANDARD 14)
+  set_if_higher(CMAKE_CXX_STANDARD 14)
   set(CMAKE_CXX_EXTENSIONS ON)
   set(CMAKE_CUDA_STANDARD ${CMAKE_CXX_STANDARD})
   set(CMAKE_CUDA_STANDARD_REQUIRED ON)
@@ -286,7 +319,10 @@ endif()
 # Warning: CMake add support to HIP in version 3.21. This is rather a new version.
 # Use cmake with AMD-ROCm: https://rocmdocs.amd.com/en/latest/Installation_Guide/Using-CMake-with-AMD-ROCm.html
 if(USE_ROCM)
-  if (NOT DEFINED ROCM_PATH )
+  if(COMMIT_INFO)
+    message(FATAL_ERROR "Commit info is not supported on ROCm. Try to recompile with cmake command -DCOMMIT_INFO=OFF.")
+  endif()
+  if(NOT DEFINED ROCM_PATH )
     set (ROCM_PATH "/opt/rocm"  CACHE STRING "Default ROCM installation directory." )
   endif ()
   if(NOT DEFINED HIP_PATH)
@@ -391,10 +427,14 @@ if (ENABLE_FLOAT_FFTW)
 endif()
 
 if(ENABLE_DEEPKS)
-  set(CMAKE_CXX_STANDARD 14)
   # Torch uses outdated components to detech CUDA arch, causing failure on latest CUDA kits.
   # Set CMake variable TORCH_CUDA_ARCH_LIST in the form of "major.minor" if required.
   find_package(Torch REQUIRED)
+  if(NOT Torch_VERSION VERSION_LESS "2.1.0")
+    set_if_higher(CMAKE_CXX_STANDARD 17)
+  elseif(NOT Torch_VERSION VERSION_LESS "1.5.0")
+    set_if_higher(CMAKE_CXX_STANDARD 14)
+  endif()
   include_directories(${TORCH_INCLUDE_DIRS})
   target_link_libraries(${ABACUS_BIN_NAME} deepks)
   list(APPEND math_libs ${TORCH_LIBRARIES})
@@ -444,7 +484,7 @@ if(DEFINED LIBRI_DIR)
   set(ENABLE_LIBRI ON)
 endif()
 if(ENABLE_LIBRI)
-  set(CMAKE_CXX_STANDARD 14)
+  set_if_higher(CMAKE_CXX_STANDARD 14)
   if(LIBRI_DIR)
     include_directories(${LIBRI_DIR}/include)
   elseif(GIT_SUBMODULE)
@@ -554,7 +594,7 @@ if(INFO)
 endif()
 
 IF (BUILD_TESTING)
-  set(CMAKE_CXX_STANDARD 14) # Required in orbital
+  set_if_higher(CMAKE_CXX_STANDARD 14) # Required in orbital
   include(CTest)
   enable_testing()
   find_package(GTest HINTS /usr/local/lib/ ${GTEST_DIR})

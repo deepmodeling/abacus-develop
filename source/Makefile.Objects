@@ -41,6 +41,7 @@ VPATH=./src_global:\
 ./module_hamilt_general/module_ewald:\
 ./module_hamilt_general/module_surchem:\
 ./module_hamilt_general/module_xc:\
+./module_hamilt_general/module_xc/kernels:\
 ./module_hamilt_pw/hamilt_pwdft:\
 ./module_hamilt_pw/hamilt_ofdft:\
 ./module_hamilt_pw/hamilt_stodft:\
@@ -106,6 +107,7 @@ OBJS_MAIN=main.o\
     driver_run.o\
 
 OBJS_BASE=abfs-vector3_order.o\
+    assoc_laguerre.o\
     complexarray.o\
     complexmatrix.o\
     clebsch_gordan_coeff.o\
@@ -119,6 +121,7 @@ OBJS_BASE=abfs-vector3_order.o\
     global_variable.o\
     intarray.o\
     math_integral.o\
+    math_lebedev_laikov.o\
     math_polyint.o\
     math_sphbes.o\
     math_ylmreal.o\
@@ -325,7 +328,10 @@ OBJS_ORBITAL=ORB_atomic.o\
       parallel_2d.o\
       parallel_orbitals.o\
 	  atomic_radials.o\
+      hydrogen_radials.o\
+      pswfc_radials.o\
 	  beta_radials.o\
+	  sphbes_radials.o\
 	  numerical_radial.o\
 	  radial_collection.o\
 	  radial_set.o\
@@ -387,6 +393,7 @@ OBJS_SYMMETRY=symm_other.o\
     symmetry.o\
 
 OBJS_XC=xc_functional.o\
+    xc_functional_op.o\
     xc_functional_vxc.o\
     xc_functional_gradcorr.o\
     xc_functional_wrapper_xc.o\
@@ -413,9 +420,17 @@ OBJS_IO=input.o\
     print_info.o\
     read_cube.o\
     read_rho.o\
+    read_rhog.o\
+    read_wfc_pw.o\
     restart.o\
     binstream.o\
     to_wannier90.o\
+    to_qo.o\
+    to_qo_tools.o\
+    to_wannier90_pw.o\
+    to_wannier90_lcao_in_pw.o\
+    to_wannier90_lcao.o\
+    fR_overlap.o\
     unk_overlap_pw.o\
     write_wfc_pw.o\
     winput.o\
@@ -429,6 +444,7 @@ OBJS_IO=input.o\
     output_rho.o\
     output_potential.o\
     output_mat_sparse.o\
+    output_radial.o\
 
 OBJS_IO_LCAO=cal_r_overlap_R.o\
       write_orb_info.o\
@@ -443,7 +459,6 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       unk_overlap_lcao.o\
       read_wfc_nao.o\
       write_wfc_nao.o\
-      write_HS.o\
       write_HS_sparse.o\
       single_R_io.o\
       write_HS_R.o\

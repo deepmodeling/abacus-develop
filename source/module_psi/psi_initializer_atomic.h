@@ -6,8 +6,11 @@
 /*
 Psi (planewave based wavefunction) initializer: atomic
 */
-class psi_initializer_atomic : public psi_initializer
+template <typename T, typename Device>
+class psi_initializer_atomic : public psi_initializer<T, Device>
 {
+    private:
+        using Real = typename GetTypeReal<T>::type;
     public:
         #ifdef __MPI
         /// @brief parameterized constructor of psi initializer (with MPI support)
@@ -32,7 +35,7 @@ class psi_initializer_atomic : public psi_initializer
         /// @brief calculate and output planewave wavefunction
         /// @param ik kpoint index
         /// @return initialized planewave wavefunction (psi::Psi<std::complex<double>>*)
-        psi::Psi<std::complex<double>>* cal_psig(int ik) override;
+        psi::Psi<T, Device>* cal_psig(int ik) override;
 
         /// @brief initialize only once, for atomic, it should be, create ovlp_pswfcjlq, calculate ovlp_pswfcjlq
         /// @param p_pspot_nl_in (for atomic) interfaces to pseudopot_cell_vnl object, in GlobalC now

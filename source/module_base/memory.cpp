@@ -308,7 +308,7 @@ void Memory::print_all(std::ofstream &ofs)
 //             << std::setw(20) << class_name[k]
 //             << std::setw(20) << name[k]
 //             << std::setw(15) << consume[k];
-    std::cout<<"\n ----------------------------------------------------------"<<std::endl;
+    //std::cout<<"\n ----------------------------------------------------------"<<std::endl;
 	ofs<<" -------------   < 1.0 MB has been ignored ----------------"<<std::endl;
     ofs<<" ----------------------------------------------------------"<<std::endl;
 	delete[] print_flag; //mohan fix by valgrind at 2012-04-02

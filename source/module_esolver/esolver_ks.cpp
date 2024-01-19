@@ -182,12 +182,12 @@ namespace ModuleESolver
         // symmetry analysis should be performed every time the cell is changed
         if (ModuleSymmetry::Symmetry::symm_flag == 1)
         {
-            this->symm.analy_sys(ucell, GlobalV::ofs_running);
+            ucell.symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running);
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
         }
 
         // Setup the k points according to symmetry.
-        this->kv.set(this->symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, ucell.G, ucell.latvec);
+        this->kv.set(ucell.symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, ucell.G, ucell.latvec);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
         // print information
@@ -438,6 +438,7 @@ namespace ModuleESolver
                         // }
                         
                         p_chgmix->mix_rho(pelec->charge);
+                        if (GlobalV::SCF_THR_TYPE == 2) pelec->charge->renormalize_rho(); // renormalize rho in R-space would induce a error in K-space
                         //----------charge mixing done-----------
                     }
                 }
@@ -456,6 +457,9 @@ namespace ModuleESolver
 #else
                 double duration = (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - iterstart)).count() / static_cast<double>(1e6);
 #endif
+                /*
+                    SCF print: G1    -3.435545e+03  0.000000e+00   3.607e-01  2.862e-01
+                */
                 printiter(iter, drho, duration, diag_ethr);
                 if (this->conv_elec)
                 {

@@ -245,6 +245,40 @@ class Tensor {
     }
 
     /**
+     * @brief Copies data from a given device to the current tensor object.
+     * 
+     * This function is designed to copy a given number of elements from a device-specific memory location
+     * to the memory associated with this object. It ensures that the size of the data being copied does not exceed
+     * the size of the destination tensor.
+     *
+     * @tparam DEVICE The device type from which the data will be copied.
+     * @tparam T The data type of the elements being copied.
+     * 
+     * @param data Pointer to the data array in the device memory that needs to be copied.
+     * @param num_elements The number of elements to copy.
+     * 
+     * @pre The number of elements to copy (`num_elements`) must be less than or equal to the number of elements 
+     *      in the destination tensor (`this->shape_.num_elements()`). If this condition is not met, the function
+     *      will trigger an error through `REQUIRES_OK`.
+     * 
+     * @note The function uses a template specialization `TEMPLATE_CZ_2` to handle the copying of memory
+     *       based on the data type `T` and the device type `DEVICE`. It utilizes the `kernels::cast_memory`
+     *       method to perform the actual memory copy operation.
+     */
+    template <typename DEVICE, typename T>
+    void copy_from_device(const T* data, int64_t num_elements = -1) {
+        if (num_elements == -1) {
+            num_elements = this->NumElements();
+        }
+        REQUIRES_OK(this->shape_.NumElements() >= num_elements,
+                    "The number of elements of the input data must match the number of elements of the tensor.")
+
+        TEMPLATE_CZ_2(this->data_type_, this->device_,
+                   kernels::cast_memory<T_, T, DEVICE_, DEVICE>()(
+                           this->data<T_>(), data, num_elements))
+    }
+
+    /**
      * @brief Method to transform data from a given tensor object to the output tensor with a given data type
      *
      * @tparam T The data type of the returned tensor.
@@ -497,6 +531,12 @@ class Tensor {
 
     explicit operator bool() const {
         return this->NumElements() > 0;
+    }
+
+    template<typename T>
+    void set_value(T value) {
+        TEMPLATE_ALL_2(this->data_type_, this->device_,
+            kernels::set_memory<T, DEVICE_>()(this->data<T>(), value, this->NumElements()))
     }
 
 protected:

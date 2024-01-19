@@ -154,7 +154,7 @@ struct MPITraits;
 template <>
 struct MPITraits<int>
 {
-    static constexpr MPI_Datatype datatype()
+    static MPI_Datatype datatype()
     {
         return MPI_INT;
     }
@@ -163,7 +163,7 @@ struct MPITraits<int>
 template <>
 struct MPITraits<double>
 {
-    static constexpr MPI_Datatype datatype()
+    static MPI_Datatype datatype()
     {
         return MPI_DOUBLE;
     }
@@ -172,7 +172,7 @@ struct MPITraits<double>
 template <>
 struct MPITraits<std::complex<double>>
 {
-    static constexpr MPI_Datatype datatype()
+    static MPI_Datatype datatype()
     {
         return MPI_DOUBLE_COMPLEX;
     }

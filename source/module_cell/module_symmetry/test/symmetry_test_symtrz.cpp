@@ -66,7 +66,7 @@ TEST_F(SymmetryTest, ForceSymmetry)
     {
         ModuleSymmetry::Symmetry symm;
         construct_ucell(supercell_lib[stru]);
-        symm.analy_sys(ucell, ofs_running);
+        symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, ofs_running);
 
         ModuleBase::matrix force(ucell.nat, 3, true);
         //generate random number for force and restrict to [-100,100)
@@ -97,7 +97,7 @@ TEST_F(SymmetryTest, StressSymmetry)
     {
         ModuleSymmetry::Symmetry symm;
         construct_ucell(supercell_lib[stru]);
-        symm.analy_sys(ucell, ofs_running);
+        symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, ofs_running);
 
         ModuleBase::matrix stress(3, 3, true);
         //generate random number for stress and restrict to [-1e5,1e5)
@@ -105,7 +105,7 @@ TEST_F(SymmetryTest, StressSymmetry)
             for (int j = 0;j < 3;++j)
                 stress(i, j) = double(rand()) / double(RAND_MAX) * 2e5 - 1e5;
 
-        symm.symmetrize_mat3(stress, ucell);
+        symm.symmetrize_mat3(stress, ucell.lat);
         check_stress(supercell_lib[stru], stress);
 
     }

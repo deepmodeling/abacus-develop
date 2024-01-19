@@ -4,7 +4,13 @@
 #include "module_base/spherical_bessel_transformer.h"
 #include "module_basis/module_nao/atomic_radials.h"
 #include "module_basis/module_nao/beta_radials.h"
+#include "module_basis/module_nao/sphbes_radials.h"
 
+#include "module_base/parallel_common.h"
+#include "module_base/tool_quit.h"
+#include "module_base/global_variable.h"
+#include "module_basis/module_nao/hydrogen_radials.h"
+#include "module_basis/module_nao/pswfc_radials.h"
 
 RadialCollection::RadialCollection(const RadialCollection& other) :
     ntype_(other.ntype_),
@@ -147,38 +153,106 @@ void RadialCollection::build(const int ntype, Numerical_Nonlocal* const nls)
     set_rcut_max();
 }
 
-void RadialCollection::build(const int nfile, const std::string* const file, const char file_type)
+void RadialCollection::build(const int nfile, const std::string* const file, const char ftype)
 {
-#ifdef __DEBUG
-    //assert(file_type == 'o' || file_type == 'p');
-    assert(file_type == 'o'); // pseudopotential files are not read in this module
-#endif
 
     cleanup();
 
     ntype_ = nfile;
+#ifdef __MPI
+    Parallel_Common::bcast_int(ntype_);
+#endif
+
     radset_ = new RadialSet*[ntype_];
-    switch (file_type)
-    {
-    case 'o':
+    char* file_type = new char[ntype_];
+
+    if (ftype)
+    { // simply use the given file type if given
+        std::fill(file_type, file_type + ntype_, ftype);
+    }
+    else
+    { // otherwise check the file type
         for (int itype = 0; itype < ntype_; ++itype)
         {
-            radset_[itype] = new AtomicRadials;
-            radset_[itype]->build(file[itype], itype);
+            file_type[itype] = check_file_type(file[itype]);
         }
-        break;
-    //case 'p':
-    //    for (int itype = 0; itype < ntype_; ++itype)
-    //    {
-    //        radset_[itype] = new BetaRadials;
-    //        radset_[itype]->build(file[itype], itype);
-    //    }
-    //    break;
-    default:; /* not supposed to happen */
     }
 
     for (int itype = 0; itype < ntype_; ++itype)
     {
+        switch(file_type[itype])
+        {
+          case 'o': // orbital file
+            radset_[itype] = new AtomicRadials;
+            break;
+          case 'c': // coefficient file
+            radset_[itype] = new SphbesRadials;
+            break;
+          default: // not supposed to happend
+            ModuleBase::WARNING_QUIT("RadialCollection::build", "Unrecognized file: " + file[itype]);
+        }
+        radset_[itype]->build(file[itype], itype);
+    }
+
+    for (int itype = 0; itype < ntype_; ++itype)
+    {
+        lmax_ = std::max(lmax_, radset_[itype]->lmax());
+        nchi_ += radset_[itype]->nchi();
+        nzeta_max_ = std::max(nzeta_max_, radset_[itype]->nzeta_max());
+    }
+
+    iter_build();
+    set_rcut_max();
+}
+
+void RadialCollection::build(const int ntype, 
+                             const double* const charges, 
+                             const int* const nmax, 
+                             const std::string* symbols,
+                             const double conv_thr,
+                             const std::string* strategies)
+{
+    cleanup();
+    ntype_ = ntype;
+    radset_ = new RadialSet*[ntype_];
+
+    for (int itype = 0; itype < ntype_; ++itype)
+    {
+        radset_[itype] = new HydrogenRadials;
+        radset_[itype]->build(itype, 
+                              charges[itype], 
+                              nmax[itype], 
+                              10.0,             // rcut should be determined automatically, in principle...
+                              0.01,
+                              conv_thr,
+                              0,
+                              symbols[itype],
+                              strategies[itype]);
+
+        lmax_ = std::max(lmax_, radset_[itype]->lmax());
+        nchi_ += radset_[itype]->nchi();
+        nzeta_max_ = std::max(nzeta_max_, radset_[itype]->nzeta_max());
+    }
+
+    // what are these two functions for? Do I need them?
+    iter_build();
+    set_rcut_max();
+}
+
+void RadialCollection::build(const int ntype,
+                             const std::string* const file,
+                             const double* const screening_coeffs,
+                             const double conv_thr)
+{
+    cleanup();
+    ntype_ = ntype;
+    radset_ = new RadialSet*[ntype_];
+
+    for (int itype = 0; itype < ntype_; ++itype)
+    {
+        radset_[itype] = new PswfcRadials;
+        radset_[itype]->build(file[itype], itype, screening_coeffs[itype], conv_thr);
+
         lmax_ = std::max(lmax_, radset_[itype]->lmax());
         nchi_ += radset_[itype]->nchi();
         nzeta_max_ = std::max(nzeta_max_, radset_[itype]->nzeta_max());
@@ -202,7 +276,7 @@ void RadialCollection::set_grid(const bool for_r_space, const int ngrid, const d
     {
         radset_[itype]->set_grid(for_r_space, ngrid, grid, mode);
     }
-    rcut_max_ = grid[ngrid - 1];
+    set_rcut_max();
 }
 
 void RadialCollection::set_uniform_grid(const bool for_r_space,
@@ -215,5 +289,47 @@ void RadialCollection::set_uniform_grid(const bool for_r_space,
     {
         radset_[itype]->set_uniform_grid(for_r_space, ngrid, cutoff, mode, enable_fft);
     }
-    rcut_max_ = cutoff;
+    set_rcut_max();
+}
+
+char RadialCollection::check_file_type(const std::string& file) const
+{
+    // currently we only support ABACUS numerical atomic orbital file and
+    // SIAB/PTG-generated orbital coefficient file. The latter contains a
+    // <Coefficients ...> block, which is not present in the former.
+    //
+    // Unfortunately, the numerial atomic orbital file does not have any
+    // distinguishing feature. Many keywords in the orbital file may also
+    // be found in the coefficient file. Here we simply assume that if the
+    // file contains a <Coefficients ...> block, it is a coefficient file;
+    // otherwise it is an orbital file.
+
+    char file_type = 'o';
+    if (GlobalV::MY_RANK == 0)
+    {
+        std::ifstream ifs(file.c_str());
+        std::string line;
+        while (std::getline(ifs, line))
+        {
+            if (line.find("<Coefficient") != std::string::npos)
+            {
+                file_type = 'c';
+                break;
+            }
+        }
+        ifs.close();
+    }
+#ifdef __MPI
+    Parallel_Common::bcast_char(&file_type, 1);
+#endif
+    return file_type;
+}
+
+void RadialCollection::to_file(const std::string& appendix)
+{
+    for (int itype = 0; itype < ntype_; ++itype)
+    {
+        std::string fname = radset_[itype]->symbol() + "_" + appendix + ".orb";
+        radset_[itype]->to_file(fname);
+    }
 }

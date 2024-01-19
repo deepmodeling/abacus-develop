@@ -10,10 +10,11 @@
 // allocate density kernel may change once the ion
 // positions change
 void Local_Orbital_Charge::allocate_gamma(
-                const int& lgd, 
-                psi::Psi<double>* psid, 
-                elecstate::ElecState* pelec,
-                const int& nks)
+    const int& lgd,
+    psi::Psi<double>* psid,
+    elecstate::ElecState* pelec,
+    const int& nks,
+    const int& istep)
 {
      ModuleBase::TITLE("Local_Orbital_Charge","allocate_gamma");
 
@@ -42,12 +43,13 @@ void Local_Orbital_Charge::allocate_gamma(
     // mohan update 2010-09-06
     if(lgd_now > 0)
     {
+		const std::size_t size_lgd_squre = static_cast<std::size_t>(lgd_now) * lgd_now;
 		this->DM = new double**[GlobalV::NSPIN];
 		this->DM_pool = new double *[GlobalV::NSPIN];
 		for(int is=0; is<GlobalV::NSPIN; is++)
 		{
-			this->DM_pool[is]=new double [lgd_now*lgd_now];
-			ModuleBase::GlobalFunc::ZEROS(DM_pool[is], lgd_now*lgd_now);
+			this->DM_pool[is]=new double [size_lgd_squre];
+			ModuleBase::GlobalFunc::ZEROS(DM_pool[is], size_lgd_squre);
 			this->DM[is] = new double*[lgd_now];
 
 			for (int i=0; i<lgd_now; i++)
@@ -57,7 +59,7 @@ void Local_Orbital_Charge::allocate_gamma(
 		}
 		this->init_DM = true;
         this->lgd_last = lgd_now;
-        ModuleBase::Memory::record("LOC::DM", sizeof(double) * GlobalV::NSPIN*lgd_now*lgd_now);
+        ModuleBase::Memory::record("LOC::DM", sizeof(double) * GlobalV::NSPIN*size_lgd_squre);
         //xiaohui add 'GlobalV::OUT_LEVEL', 2015-09-16
         if(GlobalV::OUT_LEVEL != "m") GlobalV::ofs_running << " allocate DM , the dimension is " << lgd_now << std::endl;
     }
@@ -77,69 +79,11 @@ void Local_Orbital_Charge::allocate_gamma(
 	// Peize Lin test 2019-01-16
     this->init_dm_2d(nks);
 
-    if (INPUT.init_wfc == "file")
+    if (istep == 0 && INPUT.init_wfc == "file")
     {
-        this->gamma_file(psid, this->LOWF[0], pelec);
+        this->LOWF->gamma_file(psid, pelec);
     }
     return;
-}
-
-void Local_Orbital_Charge::gamma_file(psi::Psi<double>* psid, Local_Orbital_wfc &lowf, elecstate::ElecState* pelec)
-{
-	ModuleBase::TITLE("Local_Orbital_Charge","gamma_file");
-
-	int error;
-	std::cout << " Read in gamma point wave function files " << std::endl;
-
-	double **ctot;
-
-    //allocate psi
-    int ncol = this->ParaV->ncol_bands;
-    if(GlobalV::KS_SOLVER=="genelpa" || GlobalV::KS_SOLVER=="lapack_gvx" || GlobalV::KS_SOLVER == "scalapack_gvx"
-#ifdef __CUSOLVER_LCAO
-    ||GlobalV::KS_SOLVER=="cusolver"
-#endif
-    )
-    {
-        ncol = this->ParaV->ncol;
-    }
-    if(psid == nullptr)
-    {
-        ModuleBase::WARNING_QUIT("gamma_file", "psid should be allocated first!");
-    }
-    else
-    {
-        psid->resize(GlobalV::NSPIN, ncol, this->ParaV->nrow);
-    }
-    ModuleBase::GlobalFunc::ZEROS( psid->get_pointer(), psid->size() );
-
-	for(int is=0; is<GlobalV::NSPIN; ++is)
-	{
-
-		GlobalV::ofs_running << " Read in wave functions " << is << std::endl;
-		error = ModuleIO::read_wfc_nao( ctot , is, this->ParaV, psid, pelec);
-#ifdef __MPI
-		Parallel_Common::bcast_int(error);
-#endif
-		GlobalV::ofs_running << " Error=" << error << std::endl;
-		if(error==1)
-		{
-			ModuleBase::WARNING_QUIT("Local_Orbital_wfc","Can't find the wave function file: LOWF.dat");
-		}
-		else if(error==2)
-		{
-			ModuleBase::WARNING_QUIT("Local_Orbital_wfc","In wave function file, band number doesn't match");
-		}
-		else if(error==3)
-		{
-			ModuleBase::WARNING_QUIT("Local_Orbital_wfc","In wave function file, nlocal doesn't match");
-		}
-		else if(error==4)
-		{
-			ModuleBase::WARNING_QUIT("Local_Orbital_wfc","In k-dependent wave function file, k point is not correct");
-		}
-
-	}//loop ispin
 }
 
 void Local_Orbital_Charge::cal_dk_gamma_from_2D_pub(void)

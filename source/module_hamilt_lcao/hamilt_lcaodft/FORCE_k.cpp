@@ -243,14 +243,8 @@ void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv,
             this->UHM->genH.LM->zeros_HSk('S');
             this->UHM->genH.LM->folding_fixedH(ik, kvec_d, 1);
             bool bit = false; // LiuXh, 2017-03-21
-            ModuleIO::saving_HS(0,
-                                this->UHM->genH.LM->Hloc2.data(),
-                                this->UHM->genH.LM->Sloc2.data(),
-                                bit,
-                                1,
-                                "data-" + std::to_string(ik),
-                                this->ParaV[0],
-                                0); // LiuXh, 2017-03-21
+            ModuleIO::save_mat(0, this->UHM->genH.LM->Hloc2.data(), GlobalV::NLOCAL, bit, GlobalV::out_ndigits, 0, GlobalV::out_app_flag, "H", "data-" + std::to_string(ik), *this->ParaV, GlobalV::DRANK);
+            ModuleIO::save_mat(0, this->UHM->genH.LM->Sloc2.data(), GlobalV::NLOCAL, bit, GlobalV::out_ndigits, 0, GlobalV::out_app_flag, "S", "data-" + std::to_string(ik), *this->ParaV, GlobalV::DRANK);
         }
     }
 

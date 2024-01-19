@@ -12,7 +12,6 @@
 #include "module_ri/exx_abfs-construct_orbs.h"
 #include "module_ri/exx_abfs-io.h"
 #include "module_ri/conv_coulomb_pot_k.h"
-#include "module_ri/conv_coulomb_pot_k-template.h"
 #include "module_base/tool_title.h"
 #include "module_base/timer.h"
 #include "module_ri/serialization_cereal.h"
@@ -71,14 +70,19 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in, const K_Vectors &kv_in)
 			case Conv_Coulomb_Pot_K::Ccp_Type::Ccp:
 				return {};
 			case Conv_Coulomb_Pot_K::Ccp_Type::Hf:
-				return {};
+			{
+				// 4/3 * pi * Rcut^3 = V_{supercell} = V_{unitcell} * Nk
+				const int nspin0 = (GlobalV::NSPIN==2) ? 2 : 1;
+				const double hf_Rcut = std::pow(0.75 * this->p_kv->nkstot_full/nspin0 * GlobalC::ucell.omega / (ModuleBase::PI), 1.0/3.0);
+				return {{"hf_Rcut", hf_Rcut}};
+			}
 			case Conv_Coulomb_Pot_K::Ccp_Type::Hse:
 				return {{"hse_omega", this->info.hse_omega}};
 			default:
 				throw std::domain_error(std::string(__FILE__)+" line "+std::to_string(__LINE__));	break;
 		}
 	};
-    this->abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(this->abfs, info.ccp_type, get_ccp_parameter(), this->info.ccp_rmesh_times, p_kv->nkstot_full);
+    this->abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(this->abfs, this->info.ccp_type, get_ccp_parameter(), this->info.ccp_rmesh_times);
 
 
 	for( size_t T=0; T!=this->abfs.size(); ++T )
@@ -112,7 +116,7 @@ void Exx_LRI<Tdata>::cal_exx_ions()
 		= {RI_Util::Vector3_to_array3(GlobalC::ucell.a1),
 		   RI_Util::Vector3_to_array3(GlobalC::ucell.a2),
 		   RI_Util::Vector3_to_array3(GlobalC::ucell.a3)};
-	const std::array<Tcell,Ndim> period = {p_kv->nmp[0], p_kv->nmp[1], p_kv->nmp[2]};
+	const std::array<Tcell,Ndim> period = {this->p_kv->nmp[0], this->p_kv->nmp[1], this->p_kv->nmp[2]};
 
 	this->exx_lri.set_parallel(this->mpi_comm, atoms_pos, latvec, period);
 
@@ -161,17 +165,12 @@ void Exx_LRI<Tdata>::cal_exx_ions()
 }
 
 template<typename Tdata>
-void Exx_LRI<Tdata>::cal_exx_elec(const Parallel_Orbitals &pv)
+void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>> &Ds, const Parallel_Orbitals &pv)
 {
 	ModuleBase::TITLE("Exx_LRI","cal_exx_elec");
 	ModuleBase::timer::tick("Exx_LRI", "cal_exx_elec");
 
 	const std::vector<std::tuple<std::set<TA>, std::set<TA>>> judge = RI_2D_Comm::get_2D_judge(pv);
-
-	std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>> Ds =
-		GlobalV::GAMMA_ONLY_LOCAL
-		? RI_2D_Comm::split_m2D_ktoR<Tdata>(*p_kv, this->mix_DMk_2D.get_DMk_gamma_out(), pv)
-		: RI_2D_Comm::split_m2D_ktoR<Tdata>(*p_kv, this->mix_DMk_2D.get_DMk_k_out(), pv);
 
 	this->exx_lri.set_csm_threshold(this->info.cauchy_threshold);
 
@@ -181,12 +180,12 @@ void Exx_LRI<Tdata>::cal_exx_elec(const Parallel_Orbitals &pv)
 	{
 		if(!(GlobalV::CAL_FORCE || GlobalV::CAL_STRESS))
 		{
-			this->exx_lri.set_Ds(std::move(Ds[is]), this->info.dm_threshold);
+			this->exx_lri.set_Ds(Ds[is], this->info.dm_threshold);
 			this->exx_lri.cal_Hs();
 		}
 		else
 		{
-			this->exx_lri.set_Ds(std::move(Ds[is]), this->info.dm_threshold, std::to_string(is));
+			this->exx_lri.set_Ds(Ds[is], this->info.dm_threshold, std::to_string(is));
 			this->exx_lri.cal_Hs({"","",std::to_string(is)});
 		}
 		this->Hexxs[is] = RI::Communicate_Tensors_Map_Judge::comm_map2_first(

@@ -103,7 +103,7 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
     //    psi::Psi<std::complex<double>> dm_k_2d();
 
     if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "scalapack_gvx" || GlobalV::KS_SOLVER == "lapack"
-        || GlobalV::KS_SOLVER == "cusolver") // Peize Lin test 2019-05-15
+        || GlobalV::KS_SOLVER == "cusolver" || GlobalV::KS_SOLVER == "cg_in_lcao") // Peize Lin test 2019-05-15
     {
         //cal_dm(this->loc->ParaV, this->wg, psi, this->loc->dm_k);
         elecstate::cal_dm_psi(this->DM->get_paraV_pointer(), this->wg, psi, *(this->DM));
@@ -124,7 +124,7 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
 
     }
     if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "scalapack_gvx" || GlobalV::KS_SOLVER == "lapack"
-        || GlobalV::KS_SOLVER == "cusolver")
+        || GlobalV::KS_SOLVER == "cusolver" || GlobalV::KS_SOLVER == "cg_in_lcao")
     {
         for (int ik = 0; ik < psi.get_nk(); ik++)
         {
@@ -150,7 +150,10 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
 
     if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
     {
-        ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[0], this->charge->nrxx);
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[is], this->charge->nrxx);
+        }
         Gint_inout inout1(this->loc->DM_R, this->charge->kin_r, Gint_Tools::job_type::tau);
         this->uhm->GK.cal_gint(&inout1);
     }
@@ -172,7 +175,7 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
     this->calEBand();
 
     if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "scalapack_gvx" || GlobalV::KS_SOLVER == "lapack"
-        || GlobalV::KS_SOLVER == "cusolver")
+        || GlobalV::KS_SOLVER == "cusolver" || GlobalV::KS_SOLVER == "cg_in_lcao")
     {
         ModuleBase::timer::tick("ElecStateLCAO", "cal_dm_2d");
         // get DMK in 2d-block format
@@ -193,7 +196,7 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
         {
             // for gamma_only case, no convertion occured, just for print.
             if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "scalapack_gvx"
-                || GlobalV::KS_SOLVER == "cusolver")
+                || GlobalV::KS_SOLVER == "cusolver" || GlobalV::KS_SOLVER == "cg_in_lcao")
             {
                 psi.fix_k(ik);
                 this->print_psi(psi);
@@ -222,7 +225,7 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[0], this->charge->nrxx);
+            ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[is], this->charge->nrxx);
         }
         Gint_inout inout1(this->loc->DM, this->charge->kin_r, Gint_Tools::job_type::tau);
         this->uhm->GG.cal_gint(&inout1);

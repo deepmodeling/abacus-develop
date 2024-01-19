@@ -85,7 +85,7 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
                           pelec->charge,
                           p_kv,
                           wfc_basis,
-                          psi_in);
+                          d_psi_in);
     }
 
     // local contribution
@@ -123,7 +123,7 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     
 	if(ModuleSymmetry::Symmetry::symm_flag == 1)                          
 	{
-        p_symm->symmetrize_mat3(sigmatot, ucell);
+        p_symm->symmetrize_mat3(sigmatot, ucell.lat);
     }
 
 	bool ry = false;

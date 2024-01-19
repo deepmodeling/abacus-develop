@@ -223,7 +223,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
         Symmetry_rho srho;
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            srho.begin(is, *(pelec->charge), pw_rho, GlobalC::Pgrid, this->symm);
+            srho.begin(is, *(pelec->charge), pw_rho, GlobalC::Pgrid, GlobalC::ucell.symm);
         }
     }
 
@@ -248,7 +248,7 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
         }
         for (int ik = 0; ik < kv.nks; ++ik)
         {
-            if (hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs)
+            if (hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs[0])
             {
                 this->p_hamilt->updateHk(ik);
             }
@@ -258,14 +258,15 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
             {
                 hamilt::MatrixBlock<complex<double>> h_mat, s_mat;
                 this->p_hamilt->matrix(h_mat, s_mat);
-                ModuleIO::saving_HS(istep,
-                                    h_mat.p,
-                                    s_mat.p,
-                                    bit,
-                    hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs,
-                                    "data-" + std::to_string(ik),
-                                    this->LOWF.ParaV[0],
-                                    1); // LiuXh, 2017-03-21
+                if (hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs[0])
+                {
+                    ModuleIO::save_mat(istep, h_mat.p, GlobalV::NLOCAL, bit,
+                                       hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs[1],
+                                       1, GlobalV::out_app_flag, "H", "data-" + std::to_string(ik), *this->LOWF.ParaV, GlobalV::DRANK);
+                    ModuleIO::save_mat(istep, h_mat.p, GlobalV::NLOCAL, bit, 
+                                       hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs[1],
+                                       1, GlobalV::out_app_flag, "S", "data-" + std::to_string(ik), *this->LOWF.ParaV, GlobalV::DRANK);
+                }
             }
         }
     }

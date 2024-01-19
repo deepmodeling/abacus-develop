@@ -42,9 +42,9 @@ template<>
 bool elecstate::ElecStateLCAO<std::complex<double>>::need_psi_grid = 1;
 //
 template<>
-int hsolver::HSolverLCAO<double>::out_mat_hs = 0;
+std::vector<int> hsolver::HSolverLCAO<double>::out_mat_hs = {0, 8};
 template<>
-int hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs = 0;
+std::vector<int> hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs = {0, 8};
 template<>
 int hsolver::HSolverLCAO<double>::out_mat_hsR = 0;
 template<>
@@ -185,18 +185,6 @@ Structure_Factor::Structure_Factor()
 {
 }
 Structure_Factor::~Structure_Factor()
-{
-}
-ModuleSymmetry::Symmetry::Symmetry()
-{
-}
-ModuleSymmetry::Symmetry::~Symmetry()
-{
-}
-ModuleSymmetry::Symmetry_Basic::Symmetry_Basic()
-{
-}
-ModuleSymmetry::Symmetry_Basic::~Symmetry_Basic()
 {
 }
 WF_atomic::WF_atomic()

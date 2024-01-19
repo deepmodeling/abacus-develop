@@ -18,6 +18,10 @@ class DiagoIterAssist
     static Real PW_DIAG_THR;
     static int PW_DIAG_NMAX;
 
+    static Real LCAO_DIAG_THR;
+    static int LCAO_DIAG_NMAX;
+
+
     /// average steps of last cg diagonalization for each band.
     static Real avg_iter;
     static bool need_subspace;
@@ -31,7 +35,14 @@ class DiagoIterAssist
         psi::Psi<T, Device> &evc,
         Real *en,
         int n_band = 0);
-
+    /// @brief use LAPACK to diagonalize the Hamiltonian matrix
+    /// @param pHamilt interface to hamiltonian
+    /// @param psi wavefunction to diagonalize
+    /// @param psi_nr number of rows (nbands)
+    /// @param psi_nc number of columns (nbasis)
+    /// @param evc new wavefunction
+    /// @param en eigenenergies
+    /// @note exception handle: if there is no operator initialized in Hamilt, will directly copy value from psi to evc, and return all-zero eigenenergies.
     static void diagH_subspace_init(
         hamilt::Hamilt<T, Device>* pHamilt,
         const T* psi,
@@ -82,6 +93,12 @@ int DiagoIterAssist<T, Device>::PW_DIAG_NMAX = 30;
 
 template<typename T, typename Device>
 typename DiagoIterAssist<T, Device>::Real DiagoIterAssist<T, Device>::PW_DIAG_THR = 1.0e-2;
+
+template<typename T, typename Device>
+int DiagoIterAssist<T, Device>::LCAO_DIAG_NMAX = 50;
+
+template<typename T, typename Device>
+typename DiagoIterAssist<T, Device>::Real DiagoIterAssist<T, Device>::LCAO_DIAG_THR = 1.0e-12;
 
 template<typename T, typename Device>
 bool DiagoIterAssist<T, Device>::need_subspace = false;

@@ -443,6 +443,10 @@ bool input_parameters_set(std::map<std::string, InputParameter> input_parameters
     {
         INPUT.wannier_spin = static_cast<SimpleString*>(input_parameters["wannier_spin"].get())->c_str();
     }
+    else if (input_parameters.count("wannier_method") != 0)
+    {
+        INPUT.wannier_method = *static_cast<int*>(input_parameters["wannier_method"].get());
+    }
     else if (input_parameters.count("out_wannier_mmn") != 0)
     {
         INPUT.out_wannier_mmn = *static_cast<bool*>(input_parameters["out_wannier_mmn"].get());
@@ -530,6 +534,10 @@ bool input_parameters_set(std::map<std::string, InputParameter> input_parameters
     else if (input_parameters.count("cond_dtbatch") != 0)
     {
         INPUT.cond_dtbatch = *static_cast<int*>(input_parameters["cond_dtbatch"].get());
+    }
+    else if (input_parameters.count("cond_smear") != 0)
+    {
+        INPUT.cond_smear = *static_cast<int*>(input_parameters["cond_smear"].get());
     }
     else if (input_parameters.count("cond_fwhm") != 0)
     {
@@ -835,6 +843,14 @@ bool input_parameters_set(std::map<std::string, InputParameter> input_parameters
     {
         INPUT.mixing_gg0_mag = *static_cast<double*>(input_parameters["mixing_gg0_mag"].get());
     }
+    else if (input_parameters.count("mixing_gg0_min") != 0)
+    {
+        INPUT.mixing_gg0_min = *static_cast<double*>(input_parameters["mixing_gg0_min"].get());
+    }
+    else if (input_parameters.count("mixing_angle") != 0)
+    {
+        INPUT.mixing_angle = *static_cast<double*>(input_parameters["mixing_angle"].get());
+    }
     else if (input_parameters.count("mixing_tau") != 0)
     {
         INPUT.mixing_tau = *static_cast<bool*>(input_parameters["mixing_tau"].get());
@@ -909,7 +925,11 @@ bool input_parameters_set(std::map<std::string, InputParameter> input_parameters
     }
     else if (input_parameters.count("out_mat_hs") != 0)
     {
-        INPUT.out_mat_hs = *static_cast<bool*>(input_parameters["out_mat_hs"].get());
+        INPUT.out_mat_hs = *static_cast<std::vector<int>*>(input_parameters["out_mat_hs"].get());
+    }
+    else if (input_parameters.count("out_mat_xc") != 0)
+    {
+        INPUT.out_mat_xc = *static_cast<bool*>(input_parameters["out_mat_xc"].get());
     }
     else if (input_parameters.count("cal_syns") != 0)
     {

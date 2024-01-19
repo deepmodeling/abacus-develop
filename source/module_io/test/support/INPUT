@@ -333,6 +333,7 @@ gdir                           3 #calculate the polarization in the direction of
 towannier90                    0 #use wannier90 code interface or not
 nnkpfile                       seedname.nnkp #the wannier90 code nnkp file name
 wannier_spin                   up #calculate spin in wannier90 code interface
+wannier_method                 1 #different implementation methods under Lcao basis set
 out_wannier_mmn                1 #output .mmn file or not
 out_wannier_amn                1 #output .amn file or not
 out_wannier_unk                1 #output UNK. file or not
@@ -377,6 +378,7 @@ decay_grad_switch              1 #
 sc_thr                         1e-04 #Convergence criterion of spin-constrained iteration (RMS) in uB
 nsc                            50 #Maximal number of spin-constrained iteration
 nsc_min                        4 #Minimum number of spin-constrained iteration
+sc_scf_nmin                    4 #Minimum number of outer scf loop before initializing lambda loop
 alpha_trial                    0.02 #Initial trial step size for lambda in eV/uB^2
 sccut                          4 #Maximal step size for lambda in eV/uB
 sc_file                        sc.json #file name for parameters used in non-collinear spin-constrained DFT (json format)

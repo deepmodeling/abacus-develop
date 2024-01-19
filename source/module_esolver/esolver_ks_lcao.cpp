@@ -1,5 +1,6 @@
 #include "esolver_ks_lcao.h"
 
+#include "module_base/global_variable.h"
 #include "module_io/dos_nao.h"
 #include "module_io/mulliken_charge.h"
 #include "module_io/nscf_band.h"
@@ -7,6 +8,8 @@
 #include "module_io/write_istate_info.h"
 #include "module_io/write_proj_band_lcao.h"
 #include "module_io/output_log.h"
+#include "module_io/to_qo.h"
+#include "module_io/write_Vxc.hpp"
 
 //--------------temporary----------------------------
 #include "module_base/global_function.h"
@@ -82,12 +85,12 @@ namespace ModuleESolver
 
         if (ModuleSymmetry::Symmetry::symm_flag == 1)
         {
-            this->symm.analy_sys(ucell, GlobalV::ofs_running);
+            ucell.symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running);
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
         }
 
         // Setup the k points according to symmetry.
-        this->kv.set(this->symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, ucell.G, ucell.latvec);
+        this->kv.set(ucell.symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, ucell.G, ucell.latvec);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
         Print_Info::setup_parameters(ucell, this->kv);
@@ -280,7 +283,7 @@ namespace ModuleESolver
         * this->exx_lri_double,
         * this->exx_lri_complex,
 #endif  
-        & this->symm);
+        & GlobalC::ucell.symm);
     // delete RA after cal_Force
     this->RA.delete_grid();
     this->have_force = true;
@@ -414,23 +417,36 @@ namespace ModuleESolver
 
     // * reading the localized orbitals/projectors
     // * construct the interpolation tables.
-    this->orb_con.read_orb_first(GlobalV::ofs_running,
-                                 GlobalC::ORB,
-                                 ucell.ntype,
-                                 GlobalV::global_orbital_dir,
-                                 ucell.orbital_fn,
-                                 ucell.descriptor_file,
-                                 ucell.lmax,
-                                 inp.lcao_ecut,
-                                 inp.lcao_dk,
-                                 inp.lcao_dr,
-                                 inp.lcao_rmax,
-                                 GlobalV::deepks_setorb,
-                                 inp.out_mat_r,
-                                 GlobalV::CAL_FORCE,
-                                 GlobalV::MY_RANK);
+
+    two_center_bundle.reset(new TwoCenterBundle);
+    two_center_bundle->build_orb(ucell.ntype, ucell.orbital_fn);
+    two_center_bundle->build_alpha(GlobalV::deepks_setorb, &ucell.descriptor_file);
+    // currently deepks only use one descriptor file, so cast bool to int is fine
+
+    //this->orb_con.read_orb_first(GlobalV::ofs_running,
+    //                             GlobalC::ORB,
+    //                             ucell.ntype,
+    //                             GlobalV::global_orbital_dir,
+    //                             ucell.orbital_fn,
+    //                             ucell.descriptor_file,
+    //                             ucell.lmax,
+    //                             inp.lcao_ecut,
+    //                             inp.lcao_dk,
+    //                             inp.lcao_dr,
+    //                             inp.lcao_rmax,
+    //                             GlobalV::deepks_setorb,
+    //                             inp.out_mat_r,
+    //                             GlobalV::CAL_FORCE,
+    //                             GlobalV::MY_RANK);
+
+    // TODO Due to the omnipresence of GlobalC::ORB, we still have to rely
+    // on the old interface for now.
+    two_center_bundle->to_LCAO_Orbitals(GlobalC::ORB,
+            inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax);
 
     ucell.infoNL.setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, GlobalC::ORB);
+
+    two_center_bundle->build_beta(ucell.ntype, ucell.infoNL.Beta);
 
     int Lmax = 0;
 #ifdef __EXX
@@ -448,16 +464,7 @@ namespace ModuleESolver
                                  ucell.infoNL.nproj,
                                  ucell.infoNL.Beta);
 #else
-    //-------------------------------------
-    //  new two-center integral module
-    //-------------------------------------
-    two_center_bundle.reset(new TwoCenterBundle);
-
-    // NOTE: ucell.orbital_fn does not include the path,
-    // GlobalV::global_orbital_dir & GlobalV::global_pseudo_dir is prepended inside build()
-    two_center_bundle->build(ucell.ntype, ucell.orbital_fn, ucell.infoNL.Beta,
-            GlobalV::deepks_setorb, &ucell.descriptor_file);
-    // currently deepks only use one descriptor file, so use bool as int
+    two_center_bundle->tabulate();
 
     // transfer the ownership to UOT
     // this is a temporary solution during refactoring
@@ -486,7 +493,7 @@ namespace ModuleESolver
     // first need to calculate the weight according to
     // electrons number.
 
-    if (this->wf.init_wfc == "file")
+    if (istep == 0 && this->wf.init_wfc == "file" && this->LOWF.error == 0)
     {
         if (iter == 1)
         {
@@ -531,9 +538,9 @@ namespace ModuleESolver
 #ifdef __EXX
     // calculate exact-exchange
     if (GlobalC::exx_info.info_ri.real_number)
-        this->exd->exx_eachiterinit(*dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(), *(this->p_chgmix), iter);
+        this->exd->exx_eachiterinit(*dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(), iter);
     else
-        this->exc->exx_eachiterinit(*dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(), *(this->p_chgmix), iter);
+        this->exc->exx_eachiterinit(*dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(), iter);
 #endif
 
     if (GlobalV::dft_plus_u)
@@ -563,7 +570,7 @@ namespace ModuleESolver
     }
 
     // run the inner lambda loop to contrain atomic moments with the DeltaSpin method
-    if (GlobalV::sc_mag_switch && iter > 1)
+    if (GlobalV::sc_mag_switch && iter > GlobalV::sc_scf_nmin)
     {
         SpinConstrain<TK, psi::DEVICE_CPU>& sc = SpinConstrain<TK, psi::DEVICE_CPU>::getScInstance();
         sc.run_lambda_loop(iter-1);
@@ -650,7 +657,7 @@ namespace ModuleESolver
     Symmetry_rho srho;
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        srho.begin(is, *(this->pelec->charge), this->pw_rho, GlobalC::Pgrid, this->symm);
+        srho.begin(is, *(this->pelec->charge), this->pw_rho, GlobalC::Pgrid, GlobalC::ucell.symm);
     }
 
     // (6) compute magnetization, only for spin==2
@@ -669,13 +676,13 @@ namespace ModuleESolver
     // print Hamiltonian and Overlap matrix
     if (this->conv_elec)
     {
-        if (!GlobalV::GAMMA_ONLY_LOCAL && hsolver::HSolverLCAO<TK>::out_mat_hs)
+        if (!GlobalV::GAMMA_ONLY_LOCAL && hsolver::HSolverLCAO<TK>::out_mat_hs[0])
         {
             this->UHM.GK.renew(true);
         }
         for (int ik = 0; ik < this->kv.nks; ++ik)
         {
-            if (hsolver::HSolverLCAO<TK>::out_mat_hs)
+            if (hsolver::HSolverLCAO<TK>::out_mat_hs[0])
             {
                 this->p_hamilt->updateHk(ik);
             }
@@ -685,18 +692,35 @@ namespace ModuleESolver
             {
                 hamilt::MatrixBlock<TK> h_mat, s_mat;
                 this->p_hamilt->matrix(h_mat, s_mat);
-                ModuleIO::saving_HS(istep,
-                                    h_mat.p,
-                                    s_mat.p,
-                                    bit,
-                    hsolver::HSolverLCAO<TK>::out_mat_hs,
-                                    "data-" + std::to_string(ik),
-                                    this->LOWF.ParaV[0],
-                                    1); // LiuXh, 2017-03-21
+                if (hsolver::HSolverLCAO<TK>::out_mat_hs[0])
+                {
+                    ModuleIO::save_mat(istep, 
+                                       h_mat.p, 
+                                       GlobalV::NLOCAL, 
+                                       bit,
+                                       hsolver::HSolverLCAO<TK>::out_mat_hs[1],
+                                       1, 
+                                       GlobalV::out_app_flag, 
+                                       "H", 
+                                       "data-" + std::to_string(ik), 
+                                       *this->LOWF.ParaV, 
+                                       GlobalV::DRANK);
+                    ModuleIO::save_mat(istep, 
+                                       s_mat.p, 
+                                       GlobalV::NLOCAL, 
+                                       bit,
+                                       hsolver::HSolverLCAO<TK>::out_mat_hs[1],
+                                       1, 
+                                       GlobalV::out_app_flag, 
+                                       "S", 
+                                       "data-" + std::to_string(ik), 
+                                       *this->LOWF.ParaV, 
+                                       GlobalV::DRANK);
+                }
             }
         }
     }
-
+    // print wavefunctions
     if (this->conv_elec)
     {
         if (elecstate::ElecStateLCAO<TK>::out_wfc_lcao)
@@ -713,7 +737,6 @@ namespace ModuleESolver
         if (elecstate::ElecStateLCAO<TK>::out_wfc_lcao)
             elecstate::ElecStateLCAO<TK>::out_wfc_flag = 0;
     }
-
     // (9) Calculate new potential according to new Charge Density.
 
     if (this->conv_elec || iter == GlobalV::SCF_NMAX)
@@ -824,6 +847,12 @@ namespace ModuleESolver
         }
     }
 
+    bool out_exc = true;    // tmp, add parameter!
+    if (GlobalV::out_mat_xc)
+        ModuleIO::write_Vxc<TK, TR>(GlobalV::NSPIN, GlobalV::NLOCAL, GlobalV::DRANK,
+            *this->psi, GlobalC::ucell, this->sf, *this->pw_rho, *this->pw_rhod, GlobalC::ppcell.vloc,
+            *this->pelec->charge, this->UHM, this->LM, this->LOC, this->kv, this->pelec->wg, GlobalC::GridD);
+
 #ifdef __EXX
     if (GlobalC::exx_info.info_global.cal_exx) // Peize Lin add if 2022.11.14
     {
@@ -896,6 +925,12 @@ namespace ModuleESolver
     if (!GlobalV::CAL_FORCE && !GlobalV::CAL_STRESS)
     {
         RA.delete_grid();
+    }
+    if(GlobalV::qo_switch)
+    {
+        toQO tqo(GlobalV::qo_basis, GlobalV::qo_strategy);
+        tqo.initialize(&GlobalC::ucell, this->kv.kvec_d);
+        tqo.calculate();
     }
 }
 

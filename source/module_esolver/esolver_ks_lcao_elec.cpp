@@ -10,7 +10,8 @@
 #include "module_io/berryphase.h"
 #include "module_io/istate_charge.h"
 #include "module_io/istate_envelope.h"
-#include "module_io/to_wannier90.h"
+#include "module_io/to_wannier90_lcao.h"
+#include "module_io/to_wannier90_lcao_in_pw.h"
 #include "module_io/write_HS_R.h"
 #ifdef __DEEPKS
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
@@ -146,7 +147,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
                                                         DM);
     }
     // init density kernel and wave functions.
-    this->LOC.allocate_dm_wfc(this->GridT, this->pelec, this->LOWF, this->psi, this->kv);
+    this->LOC.allocate_dm_wfc(this->GridT, this->pelec, this->LOWF, this->psi, this->kv, istep);
 
     //======================================
     // do the charge extrapolation before the density matrix is regenerated.
@@ -252,6 +253,11 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
                    this->psi,
                    this->pelec);
     }
+    //=========================================================
+    // cal_ux should be called before init_scf because
+    // the direction of ux is used in noncoline_rho
+    //=========================================================
+    if(GlobalV::NSPIN == 4 && GlobalV::DOMAG) GlobalC::ucell.cal_ux();
     ModuleBase::timer::tick("ESolver_KS_LCAO", "beforesolver");
 }
 
@@ -299,7 +305,7 @@ void ESolver_KS_LCAO<TK, TR>::beforescf(int istep)
     Symmetry_rho srho;
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        srho.begin(is, *(this->pelec->charge), this->pw_rho, GlobalC::Pgrid, this->symm);
+        srho.begin(is, *(this->pelec->charge), this->pw_rho, GlobalC::Pgrid, GlobalC::ucell.symm);
     }
 // Peize Lin add 2016-12-03
 #ifdef __EXX
@@ -575,19 +581,36 @@ void ESolver_KS_LCAO<TK, TR>::nscf()
     // add by jingan in 2018.11.7
     if (GlobalV::CALCULATION == "nscf" && INPUT.towannier90)
     {
-        toWannier90 myWannier(this->kv.nkstot, GlobalC::ucell.G, this->LOWF.wfc_k_grid);
-        myWannier.init_wannier_lcao(INPUT.out_wannier_mmn,
-                                    INPUT.out_wannier_amn,
-                                    INPUT.out_wannier_unk,
-                                    INPUT.out_wannier_eig,
-                                    INPUT.out_wannier_wvfn_formatted,
-                                    this->GridT,
-                                    this->pelec->ekb,
-                                    this->pw_wfc,
-                                    this->pw_big,
-                                    this->sf,
-                                    this->kv,
-                                    nullptr);
+#ifdef __LCAO
+        if (INPUT.wannier_method == 1)
+        {
+            toWannier90_LCAO_IN_PW myWannier(
+                INPUT.out_wannier_mmn,
+                INPUT.out_wannier_amn,
+                INPUT.out_wannier_unk, 
+                INPUT.out_wannier_eig,
+                INPUT.out_wannier_wvfn_formatted,
+                INPUT.nnkpfile,
+                INPUT.wannier_spin
+            );
+
+            myWannier.calculate(this->pelec->ekb, this->pw_wfc, this->pw_big, this->sf, this->kv, this->psi, this->LOWF.ParaV);
+        }
+        else if (INPUT.wannier_method == 2)
+        {
+            toWannier90_LCAO myWannier(
+                INPUT.out_wannier_mmn,
+                INPUT.out_wannier_amn,
+                INPUT.out_wannier_unk, 
+                INPUT.out_wannier_eig,
+                INPUT.out_wannier_wvfn_formatted,
+                INPUT.nnkpfile,
+                INPUT.wannier_spin
+            );
+
+            myWannier.calculate(this->pelec->ekb, this->kv, *(this->psi), this->LOWF.ParaV);
+        }
+#endif
     }
 
     // add by jingan

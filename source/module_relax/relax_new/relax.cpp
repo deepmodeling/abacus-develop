@@ -462,16 +462,27 @@ void Relax::move_cell_ions(const bool is_new_dir)
     {
         // imo matrix3 class is not a very clever way to store 3*3 matrix ...
         ModuleBase::Matrix3 sr_dr_cell;
+        auto cp_mat_to_mat3 = [&sr_dr_cell, this]() -> void
+            {
+                sr_dr_cell.e11 = search_dr_cell(0, 0);
+                sr_dr_cell.e12 = search_dr_cell(0, 1);
+                sr_dr_cell.e13 = search_dr_cell(0, 2);
+                sr_dr_cell.e21 = search_dr_cell(1, 0);
+                sr_dr_cell.e22 = search_dr_cell(1, 1);
+                sr_dr_cell.e23 = search_dr_cell(1, 2);
+                sr_dr_cell.e31 = search_dr_cell(2, 0);
+                sr_dr_cell.e32 = search_dr_cell(2, 1);
+                sr_dr_cell.e33 = search_dr_cell(2, 2);
+            };
+        cp_mat_to_mat3();
 
-        sr_dr_cell.e11 = search_dr_cell(0,0);
-        sr_dr_cell.e12 = search_dr_cell(0,1);
-        sr_dr_cell.e13 = search_dr_cell(0,2);
-        sr_dr_cell.e21 = search_dr_cell(1,0);
-        sr_dr_cell.e22 = search_dr_cell(1,1);
-        sr_dr_cell.e23 = search_dr_cell(1,2);
-        sr_dr_cell.e31 = search_dr_cell(2,0);
-        sr_dr_cell.e32 = search_dr_cell(2,1);
-        sr_dr_cell.e33 = search_dr_cell(2,2);
+        if (ModuleSymmetry::Symmetry::symm_flag && GlobalC::ucell.symm.nrotk > 0)
+        {
+            search_dr_cell = sr_dr_cell.Transpose().to_matrix();
+            GlobalC::ucell.symm.symmetrize_mat3(search_dr_cell, GlobalC::ucell.lat);
+            cp_mat_to_mat3();
+            sr_dr_cell = sr_dr_cell.Transpose();
+        }
 
         // The logic here is as follows: a line search is a continuation
         // in the new direction; but GlobalC::ucell.latvec now is already
@@ -546,6 +557,9 @@ void Relax::move_cell_ions(const bool is_new_dir)
             move_ion[iat * 3 + 2] = move_ion_dr.z * fac;
         }
     }
+
+    if (ModuleSymmetry::Symmetry::symm_flag && GlobalC::ucell.symm.all_mbl && GlobalC::ucell.symm.nrotk > 0)
+        GlobalC::ucell.symm.symmetrize_vec3_nat(move_ion);
 
 	GlobalC::ucell.update_pos_taud(move_ion);
 

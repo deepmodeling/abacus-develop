@@ -3,11 +3,15 @@
 #include "psi_initializer_atomic.h"
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "module_cell/parallel_kpoints.h"
+
 /*
 Psi (planewave based wavefunction) initializer: atomic+random
 */
-class psi_initializer_atomic_random : public psi_initializer_atomic
+template <typename T, typename Device>
+class psi_initializer_atomic_random : public psi_initializer_atomic<T, Device>
 {
+    private:
+        using Real = typename GetTypeReal<T>::type;
     public:
         #ifdef __MPI
         /// @brief parameterized constructor of psi initializer (with MPI support)
@@ -37,7 +41,7 @@ class psi_initializer_atomic_random : public psi_initializer_atomic
         /// @brief calculate and output planewave wavefunction
         /// @param ik kpoint index
         /// @return initialized planewave wavefunction (psi::Psi<std::complex<double>>*)
-        psi::Psi<std::complex<double>>* cal_psig(int ik) override;
+        psi::Psi<T, Device>* cal_psig(int ik) override;
     private:
 };
 #endif

@@ -181,7 +181,7 @@ void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
         Symmetry_rho srho;
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            srho.begin(is, *(this->pelec->charge), pw_rho, GlobalC::Pgrid, this->symm);
+            srho.begin(is, *(this->pelec->charge), pw_rho, GlobalC::Pgrid, GlobalC::ucell.symm);
         }
         this->pelec->f_en.deband = this->pelec->cal_delta_eband();
     }
@@ -202,12 +202,12 @@ double ESolver_SDFT_PW::cal_Energy()
 void ESolver_SDFT_PW::cal_Force(ModuleBase::matrix& force)
 {
     Sto_Forces ff(GlobalC::ucell.nat);
-    ff.cal_stoforce(force, *this->pelec, pw_rho, &this->symm, &sf, &kv, pw_wfc, this->psi, this->stowf);
+    ff.cal_stoforce(force, *this->pelec, pw_rho, &GlobalC::ucell.symm, &sf, &kv, pw_wfc, this->psi, this->stowf);
 }
 void ESolver_SDFT_PW::cal_Stress(ModuleBase::matrix& stress)
 {
     Sto_Stress_PW ss;
-    ss.cal_stress(stress, *this->pelec, pw_rho, &this->symm, &sf, &kv, pw_wfc, this->psi, this->stowf, pelec->charge);
+    ss.cal_stress(stress, *this->pelec, pw_rho, &GlobalC::ucell.symm, &sf, &kv, pw_wfc, this->psi, this->stowf, pelec->charge);
 }
 void ESolver_SDFT_PW::postprocess()
 {
@@ -222,15 +222,15 @@ void ESolver_SDFT_PW::postprocess()
     int nche_test = this->nche_sto;
     if (INPUT.out_dos)
         nche_test = std::max(nche_test, INPUT.dos_nche);
-    int cond_nche;
+    int cond_nche = 0;
     if (INPUT.cal_cond)
     {
-        cond_nche = set_cond_nche(INPUT.cond_dt, INPUT.cond_dtbatch, 1e-8);
-        nche_test = std::max(nche_test, cond_nche);
+        cond_nche = set_cond_nche(INPUT.cond_dt, INPUT.cond_dtbatch, 1e-8, nche_test, INPUT.emin_sto, INPUT.emax_sto);
     }
-    if (nche_test > 0)
-        check_che(nche_test);
-
+    else
+    {
+        check_che(nche_test, INPUT.emin_sto, INPUT.emax_sto);
+    }
     if (INPUT.out_dos)
     {
         double emax, emin;
@@ -255,6 +255,7 @@ void ESolver_SDFT_PW::postprocess()
     if (INPUT.cal_cond)
     {
         this->sKG(cond_nche,
+                  INPUT.cond_smear,
                   INPUT.cond_fwhm,
                   INPUT.cond_wcut,
                   INPUT.cond_dw,
