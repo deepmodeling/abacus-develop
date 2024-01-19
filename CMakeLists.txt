@@ -393,8 +393,7 @@ endif()
 if(ENABLE_DEEPKS)
   set(CMAKE_CXX_STANDARD 14)
   # Torch uses outdated components to detech CUDA arch, causing failure on latest CUDA kits.
-  # See above for setting CMAKE_CUDA_ARCHITECTURES
-  set(TORCH_CUDA_ARCH_LIST ${CMAKE_CUDA_ARCHITECTURES})
+  # Set CMake variable TORCH_CUDA_ARCH_LIST in the form of "major.minor" if required.
   find_package(Torch REQUIRED)
   include_directories(${TORCH_INCLUDE_DIRS})
   target_link_libraries(${ABACUS_BIN_NAME} deepks)
