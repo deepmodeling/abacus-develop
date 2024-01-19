@@ -362,7 +362,6 @@ void gemm_algo_selector(int matrix_k, matrix_multiple_func_type & fastest_algo)
     {
         B.get_host_pointer()[i] = i * 0.002;
     }
-    memset(C.get_host_pointer(), 0, batchCount * max_m * max_n * sizeof(double));
 
     double *cpu_result = new double[batchCount * max_m * max_n];
     memset(cpu_result, 0, batchCount * max_m * max_n * sizeof(double));

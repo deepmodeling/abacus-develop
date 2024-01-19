@@ -67,9 +67,8 @@ Cuda_Mem_Wrapper<T>::Cuda_Mem_Wrapper(int one_stream_size_in, int one_stream_siz
     }
 }
 template <typename T>
-Cuda_Mem_Wrapper<T>::Cuda_Mem_Wrapper(int one_stream_size_in, int stream_number_in, bool malloc_host_in)
+Cuda_Mem_Wrapper<T>::Cuda_Mem_Wrapper(int one_stream_size_in, int stream_number_in, bool malloc_host_in): Cuda_Mem_Wrapper(one_stream_size_in, one_stream_size_in, stream_number_in, malloc_host_in)
 {
-    Cuda_Mem_Wrapper(one_stream_size_in, one_stream_size_in, stream_number_in, malloc_host_in);
 }
 template <typename T>
 void Cuda_Mem_Wrapper<T>::free_all()
