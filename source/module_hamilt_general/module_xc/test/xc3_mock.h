@@ -144,7 +144,11 @@ namespace ModulePW
 
 namespace ModuleBase
 {
-    void WARNING_QUIT(const std::string &file,const std::string &description) {exit(1);}
+    void WARNING_QUIT(const std::string &file,const std::string &description)
+    {
+        std::cout << " " << file <<"  warning : "<< description<<std::endl;
+        exit(1);
+    }
     void WARNING(const std::string &file,const std::string &description) {};
 
     void Matrix3::Identity(){};
