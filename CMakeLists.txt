@@ -34,9 +34,7 @@ option(DEBUG_INFO "Print message for developers to debug." OFF)
 option(ENABLE_NATIVE_OPTIMIZATION "Enable compilation optimization for the native machine's CPU type" OFF)
 option(COMMIT_INFO "Print commit information in log" ON)
 option(ENABLE_FFT_TWO_CENTER "Enable FFT-based two-center integral method." ON)
-<<<<<<< HEAD
 option(ENABLE_GOOGLEBENCH "Enable GOOGLE-benchmark usage." OFF)
-=======
 option(ENABLE_RAPIDJSON "Enable rapid-json usage." OFF)
 
 
@@ -64,7 +62,6 @@ if(ENABLE_RAPIDJSON)
   include_directories(${RapidJSON_INCLUDE_PATH})
 endif()
 
->>>>>>> upstream/develop
 
 if (USE_CUDA)
   set(USE_CUSOLVER_LCAO ON)
