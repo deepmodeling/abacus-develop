@@ -96,11 +96,11 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::calculate_MW(
                 this->Mi_[iat].y = total_charge_soc[2];
                 this->Mi_[iat].z = total_charge_soc[3];
             }
-            if (std::abs(this->Mi_[iat].x) < 1e-12)
+            if (std::abs(this->Mi_[iat].x) < 1e-10)
                 this->Mi_[iat].x = 0.0;
-            if (std::abs(this->Mi_[iat].y) < 1e-12)
+            if (std::abs(this->Mi_[iat].y) < 1e-10)
                 this->Mi_[iat].y = 0.0;
-            if (std::abs(this->Mi_[iat].z) < 1e-12)
+            if (std::abs(this->Mi_[iat].z) < 1e-10)
                 this->Mi_[iat].z = 0.0;
         }
     }
