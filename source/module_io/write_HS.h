@@ -25,6 +25,7 @@ namespace ModuleIO
         const T* mat,
         const int dim,
         const bool bit,
+        const int precision,
         const bool tri,
         const bool app,
         const std::string label,

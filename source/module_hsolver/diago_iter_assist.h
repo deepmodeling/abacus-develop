@@ -18,6 +18,10 @@ class DiagoIterAssist
     static Real PW_DIAG_THR;
     static int PW_DIAG_NMAX;
 
+    static Real LCAO_DIAG_THR;
+    static int LCAO_DIAG_NMAX;
+
+
     /// average steps of last cg diagonalization for each band.
     static Real avg_iter;
     static bool need_subspace;
@@ -89,6 +93,12 @@ int DiagoIterAssist<T, Device>::PW_DIAG_NMAX = 30;
 
 template<typename T, typename Device>
 typename DiagoIterAssist<T, Device>::Real DiagoIterAssist<T, Device>::PW_DIAG_THR = 1.0e-2;
+
+template<typename T, typename Device>
+int DiagoIterAssist<T, Device>::LCAO_DIAG_NMAX = 50;
+
+template<typename T, typename Device>
+typename DiagoIterAssist<T, Device>::Real DiagoIterAssist<T, Device>::LCAO_DIAG_THR = 1.0e-12;
 
 template<typename T, typename Device>
 bool DiagoIterAssist<T, Device>::need_subspace = false;

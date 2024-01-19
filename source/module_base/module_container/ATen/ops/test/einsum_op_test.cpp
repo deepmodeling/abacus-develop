@@ -2,7 +2,8 @@
 
 #include <ATen/core/tensor.h>
 #include <ATen/ops/einsum_op.h>
-#include <test/test_utils.h>
+#include <base/utils/gtest.h>
+
 
 namespace container {
 namespace op {
@@ -11,16 +12,16 @@ template <typename T>
 class EinsumOpTest : public testing::Test {
 public:
     EinsumOpTest() {
-        test_utils::init_blas_handle();
-        test_utils::init_cusolver_handle();
+        base::utils::init_blas_handle();
+        base::utils::init_cusolver_handle();
     }
     ~EinsumOpTest() override {
-        test_utils::delete_blas_handle();
-        test_utils::delete_cusolver_handle();
+        base::utils::delete_blas_handle();
+        base::utils::delete_cusolver_handle();
     }
 };
 
-TYPED_TEST_SUITE(EinsumOpTest, test_utils::Types);
+TYPED_TEST_SUITE(EinsumOpTest, base::utils::Types);
 
 TYPED_TEST(EinsumOpTest, Transform) {
     using Type = typename std::tuple_element<0, decltype(TypeParam())>::type;

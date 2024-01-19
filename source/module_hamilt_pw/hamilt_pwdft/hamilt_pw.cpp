@@ -214,9 +214,6 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
     if(GlobalV::use_paw)
     {
 #ifdef USE_PAW
-#ifdef __DEBUG
-        assert(psi.get_k_first());
-#endif
         for(int m = 0; m < nbands; m ++)
         {
             GlobalC::paw_cell.paw_nl_psi(1, reinterpret_cast<const std::complex<double>*> (&psi_in[m * npw]),

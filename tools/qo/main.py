@@ -15,12 +15,12 @@ qo_thr 1e-6            # controls the realspace spreading of AO
 qo_screening_coeff 0.5 # controls the exponential decay-manner of AO
 ```
 """
-import source.components.driver as driver
+import abacus2qo.components.driver as driver
 import numpy as np
 
 if __name__ == "__main__":
     # example of QO
-    path = "./tests/integrate/220_NO_KP_QO/OUT.ABACUS"
+    path = "./examples/OUT.ABACUS/"
     # fully non-reduced kpoints
     nkpts = 125
     # band range to reproduce

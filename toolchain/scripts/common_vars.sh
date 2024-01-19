@@ -7,8 +7,7 @@
 # directories and files used by the installer
 ROOTDIR=${ROOTDIR:-"$(pwd -P)"}
 SCRIPTDIR=${SCRIPTDIR:-"${ROOTDIR}/scripts"}
-INSTALLDIR=${INSTALLDIR:-"${ROOTDIR}/install"}
-#INSTALLDIR=${INSTALLDIR:-"${HOME}/abacus_deps"} # advanced installation
+INSTALLDIR=${INSTALLDIR:-"${ROOTDIR}/install"} # should not be changed
 BUILDDIR=${BUILDDIR:-"${ROOTDIR}/build"}
 SETUPFILE=${SETUPFILE:-"${INSTALLDIR}/setup"}
 ARCH_FILE_TEMPLATE=${ARCH_FILE_TEMPLATE:-"${SCRIPTDIR}/arch_base.tmpl"}

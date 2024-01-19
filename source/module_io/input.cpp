@@ -338,7 +338,7 @@ void Input::Default(void)
     out_dos = 0;
     out_band = 0;
     out_proj_band = 0;
-    out_mat_hs = 0;
+    out_mat_hs = {0, 8};
     out_mat_xc = 0;
     cal_syns = 0;
     dmax = 0.01;
@@ -596,6 +596,7 @@ void Input::Default(void)
     bessel_nao_sigma = 0.1;
     bessel_nao_ecut = "default";
     bessel_nao_rcut = 6.0; // -1.0 for forcing manual setting
+    bessel_nao_rcuts = {};
     bessel_nao_tolerence = 1E-12;
 
     bessel_descriptor_lmax = 2; // -1 for forcing manual setting
@@ -630,9 +631,9 @@ void Input::Default(void)
     //==========================================================
     qo_switch = false;
     qo_basis = "hydrogen";
-    qo_strategy = "minimal";
+    qo_strategy = {};
     qo_thr = 1e-6;
-    qo_screening_coeff = 0.1;
+    qo_screening_coeff = {};
 
     return;
 }
@@ -1386,7 +1387,8 @@ bool Input::Read(const std::string& fn)
 
         else if (strcmp("out_mat_hs", word) == 0)
         {
-            read_bool(ifs, out_mat_hs);
+            read_value2stdvector(ifs, out_mat_hs);
+            if(out_mat_hs.size() == 1) out_mat_hs.push_back(8);
         }
         // LiuXh add 2019-07-15
         else if (strcmp("out_mat_hs2", word) == 0)
@@ -2203,7 +2205,9 @@ bool Input::Read(const std::string& fn)
         }
         else if (strcmp("bessel_nao_rcut", word) == 0)
         {
-            read_value(ifs, bessel_nao_rcut);
+            //read_value(ifs, bessel_nao_rcut);
+            read_value2stdvector(ifs, bessel_nao_rcuts);
+            bessel_nao_rcut = bessel_nao_rcuts[0]; // also compatible with old input file
         }
         else if (strcmp("bessel_nao_tolerence", word) == 0)
         {
@@ -2292,14 +2296,14 @@ bool Input::Read(const std::string& fn)
         else if (strcmp("qo_basis", word) == 0){
             read_value(ifs, qo_basis);
         }
-        else if (strcmp("qo_strategy", word) == 0){
-            read_value(ifs, qo_strategy);
-        }
         else if (strcmp("qo_thr", word) == 0){
             read_value(ifs, qo_thr);
         }
+        else if (strcmp("qo_strategy", word) == 0){
+            read_value2stdvector(ifs, qo_strategy);
+        }
         else if (strcmp("qo_screening_coeff", word) == 0){
-            read_value(ifs, qo_screening_coeff);
+            read_value2stdvector(ifs, qo_screening_coeff);
         }
         else
         {
@@ -3066,9 +3070,29 @@ void Input::Default_2(void) // jiyy add 2019-08-04
 
     if(qo_switch)
     {
-        out_mat_hs = true; // print H(k) and S(k)
+        /* parameter logic of QO */
+        out_mat_hs[0] = 1; // print H(k) and S(k)
         out_wfc_lcao = 1; // print wave function in lcao basis in kspace
+        symmetry = "-1"; // disable kpoint reduce
     }
+    if(qo_screening_coeff.size() != ntype)
+    {
+        double default_screening_coeff = (qo_screening_coeff.size() == 1)? qo_screening_coeff[0]: 0.1;
+        qo_screening_coeff.resize(ntype, default_screening_coeff);
+    }
+    if(qo_strategy.size() != ntype)
+    {
+        if(qo_strategy.size() == 1)
+        {
+            qo_strategy.resize(ntype, qo_strategy[0]);
+        }
+        else
+        {
+            std::string default_strategy = (qo_basis == "hydrogen")? "minimal-valence": "all";
+            qo_strategy.resize(ntype, default_strategy);
+        }
+    }
+
   
     // set nspin with noncolin
     if (noncolin || lspinorb)
@@ -3303,7 +3327,8 @@ void Input::Bcast()
     Parallel_Common::bcast_int(out_dos);
     Parallel_Common::bcast_bool(out_band);
     Parallel_Common::bcast_bool(out_proj_band);
-    Parallel_Common::bcast_bool(out_mat_hs);
+    if(GlobalV::MY_RANK != 0) out_mat_hs.resize(2); /* If this line is absent, will cause segmentation fault in io_input_test_para */
+    Parallel_Common::bcast_int(out_mat_hs.data(), 2);
     Parallel_Common::bcast_bool(out_mat_hs2); // LiuXh add 2019-07-15
     Parallel_Common::bcast_bool(out_mat_t);
     Parallel_Common::bcast_bool(out_mat_dh);
@@ -3563,6 +3588,15 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(bessel_nao_smooth);
     Parallel_Common::bcast_double(bessel_nao_sigma);
     Parallel_Common::bcast_string(bessel_nao_ecut);
+    /* newly support vector/list input of bessel_nao_rcut */
+    int nrcut = bessel_nao_rcuts.size();
+    Parallel_Common::bcast_int(nrcut);
+    if (nrcut != 0) /* as long as its value is really given, bcast, otherwise not */
+    {
+        bessel_nao_rcuts.resize(nrcut);
+        Parallel_Common::bcast_double(bessel_nao_rcuts.data(), nrcut);
+    }
+    /* end */
     Parallel_Common::bcast_double(bessel_nao_rcut);
     Parallel_Common::bcast_double(bessel_nao_tolerence);
     Parallel_Common::bcast_int(bessel_descriptor_lmax);
@@ -3590,9 +3624,15 @@ void Input::Bcast()
 
     Parallel_Common::bcast_bool(qo_switch);
     Parallel_Common::bcast_string(qo_basis);
-    Parallel_Common::bcast_string(qo_strategy);
     Parallel_Common::bcast_double(qo_thr);
-    Parallel_Common::bcast_double(qo_screening_coeff);
+    /* broadcasting std::vector is sometime a annorying task... */
+    if (ntype != 0) /* ntype has been broadcasted before */
+    {
+        qo_strategy.resize(ntype); 
+        Parallel_Common::bcast_string(qo_strategy.data(), ntype);
+        qo_screening_coeff.resize(ntype);
+        Parallel_Common::bcast_double(qo_screening_coeff.data(), ntype);
+    }
     return;
 }
 #endif
@@ -3837,6 +3877,10 @@ void Input::Check(void)
         if (ks_solver == "cg")
         {
             ModuleBase::WARNING_QUIT("Input", "not ready for cg method in lcao ."); // xiaohui add 2013-09-04
+        }
+        else if (ks_solver == "cg_in_lcao")
+        {
+            GlobalV::ofs_warning << "cg_in_lcao is under testing" << std::endl;
         }
         else if (ks_solver == "genelpa")
         {
@@ -4143,11 +4187,19 @@ void Input::Check(void)
     }
     if(qo_switch)
     {
+        /* first about rationality of parameters */
         if(qo_basis == "pswfc")
         {
-            if(qo_screening_coeff < 1e-6)
+            for(auto screen_coeff: qo_screening_coeff)
             {
-                ModuleBase::WARNING_QUIT("INPUT", "screening coefficient of pswfc must be larger than 0");
+                if(screen_coeff < 0)
+                {
+                    ModuleBase::WARNING_QUIT("INPUT", "screening coefficient must >= 0 to tune the pswfc decay");
+                }
+                if(std::fabs(screen_coeff) < 1e-6)
+                {
+                    ModuleBase::WARNING("INPUT", "every low screening coefficient might yield very high computational cost");
+                }
             }
         }
         else if(qo_basis == "hydrogen")
@@ -4157,6 +4209,9 @@ void Input::Check(void)
                 ModuleBase::WARNING("INPUT", "too high the convergence threshold might yield unacceptable result");
             }
         }
+        /* then size of std::vector<> parameters */
+        if(qo_screening_coeff.size() != ntype) ModuleBase::WARNING_QUIT("INPUT", "qo_screening_coeff.size() != ntype");
+        if(qo_strategy.size() != ntype) ModuleBase::WARNING_QUIT("INPUT", "qo_strategy.size() != ntype");
     }
 
     return;
@@ -4222,6 +4277,29 @@ void Input::strtolower(char* sa, char* sb)
     }
     sb[len] = '\0';
 }
+
+template <typename T>
+void Input::read_value2stdvector(std::ifstream& ifs, std::vector<T>& var)
+{
+    // reset var
+    var.clear(); var.shrink_to_fit();
+    std::string line;
+    std::getline(ifs, line); // read the whole rest of line
+    line = (line.find('#') == std::string::npos) ? line : line.substr(0, line.find('#')); // remove comments
+    std::vector<std::string> tmp;
+    std::string::size_type start = 0, end = 0;
+    while ((start = line.find_first_not_of(" \t\n", end)) != std::string::npos) // find the first not of delimiters but not reaches the end
+    {
+        end = line.find_first_of(" \t\n", start); // find the first of delimiters starting from start pos
+        tmp.push_back(line.substr(start, end - start)); // push back the substring
+    }
+    var.resize(tmp.size());
+    // capture "this"'s member function cast_string and iterate from tmp.begin() to tmp.end(), transform to var.begin()
+    std::transform(tmp.begin(), tmp.end(), var.begin(), [this](const std::string& s) { return cast_string<T>(s); });
+}
+template void Input::read_value2stdvector(std::ifstream& ifs, std::vector<int>& var);
+template void Input::read_value2stdvector(std::ifstream& ifs, std::vector<double>& var);
+template void Input::read_value2stdvector(std::ifstream& ifs, std::vector<std::string>& var);
 
 // Conut how many types of atoms are listed in STRU
 int Input::count_ntype(const std::string& fn)

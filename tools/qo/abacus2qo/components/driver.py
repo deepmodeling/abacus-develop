@@ -1,6 +1,6 @@
-import source.components.data_manager as dm
-import source.components.basis_filter as bf
-import source.components.calculator as cal
+import abacus2qo.components.data_manager as dm
+import abacus2qo.components.basis_filter as bf
+import abacus2qo.components.calculator as cal
 """
 1. filter out all irrelevant AOs from overlap matrix of AO in NAO representation
 ? maybe AO can also be normalized here?
@@ -100,8 +100,8 @@ space spanned by orthogonal components of the arbitrary AO set.""")
             self.dm_.data.psi_chi_para[ik] = self.cal_.projto_eigstate(self.dm_.data.psi_lcao[ik], self.dm_.data.saok[ik])
             self.dm_.data.psi_chi_orth[ik] = self.dm_.data.psi_chi[ik] - self.dm_.data.psi_chi_para[ik]
             print("Back check the orthogonality between occupied states and constructed virtual states.")
-            _zero = self.dm_.data.psi_chi_orth[ik].conj() @ self.dm_.data.sk[ik] @ self.dm_.data.psi_lcao[ik].T
-            
+            _zero = self.dm_.data.psi_chi_orth[ik].conj().T @ self.dm_.data.sk[ik] @ self.dm_.data.psi_lcao[ik]
+            print("The result should be zero, and the result is: \n", _zero)
             m = self.dm_.data.nchi - self.dm_.data.nbands
             print("Number of empty states is: ", m, "\nNumber of bands to reproduce is: ", self.dm_.data.nbands, "\nNumber of basis functions is: ", self.dm_.data.nchi)
             if m < 0:
@@ -113,8 +113,18 @@ space spanned by orthogonal components of the arbitrary AO set.""")
                                                                 self.dm_.data.sk[ik])
         print("-"*50)
         
-    def reproduce_hamiltonian(self, Rs: list):
+    def reproduce_hamiltonian(self, Rs: list, test: str = "no"):
         """get QO, reproduce selected pieces of energy spectrum
+
+        Args:
+            Rs (list): list of R vectors
+            test (str, optional): test mode. Defaults to "no".
+
+            supported test modes:
+                "no": no test
+                "lcao": return H(R) and S(R) in LCAO rep.
+                "w/o diag": return H(R) and S(R) in QO rep. without diagonalization to check the accuracy of the algorithm
+        
         """
         print("""
 ---------------------------------------------------------------------------------------------
@@ -130,11 +140,17 @@ $$$$$$$$\ $$$$$$$\   $$$$$$\  $$\   $$\  $$$$$$\  $$$$$$$$\  $$$$$$\  $$$$$$$\  
 In this step, H(k) (in NAO rep.) will be transformed into the one in Quasi-atomic Orbital (QO) 
 rep.
         """)
-
-        for ik in range(self.dm_.data.nkpts):
-            print("-"*50, "\nFor k-point No.", ik)
-            self.dm_.data.psi_qo[ik] = self.cal_.calculate_qo(self.dm_.data.saok[ik], self.dm_.data.psi_exten[ik], self.dm_.data.sk[ik])
-            self.dm_.data.hqok[ik], self.dm_.data.sqok[ik] = self.cal_.calculate_hqok(self.dm_.data.psi_qo[ik], self.dm_.data.hk[ik], self.dm_.data.sk[ik])
+        if test == "no":
+            for ik in range(self.dm_.data.nkpts):
+                print("-"*50, "\nFor k-point No.", ik)
+                self.dm_.data.psi_qo[ik] = self.cal_.calculate_qo(
+                    self.dm_.data.saok[ik], 
+                    self.dm_.data.psi_exten[ik], 
+                    self.dm_.data.sk[ik])
+                self.dm_.data.hqok[ik], self.dm_.data.sqok[ik] = self.cal_.calculate_hqok(
+                    self.dm_.data.psi_qo[ik], 
+                    self.dm_.data.hk[ik], 
+                    self.dm_.data.sk[ik])
         print("-"*50)
         print("""
 ----------------------------------------------------------------------------------------
@@ -150,14 +166,30 @@ $$ |  $$ |$$ |\$$$ |$$ |      $$ |  $$ |$$ |      $$ |  $$ |  $$ |  $$ |\$$$ |$$
 In this step, H(k) will be converted into H(R). However, one should be sure the number of
 k points defined in ABACUS KPT is larger than number of supercells searched in R space to
 avoid information loss.
+----------------------------------------------------------------------------------------
+Note1: present QO algorithm is numerically unstable, reproduce of band structure is not
+       guaranteed. It is because the linear dependence of QO, yields eigenvalue of their
+       overlap matrix to be zero, which brings numerical instability.
+----------------------------------------------------------------------------------------
+Note2: the sequence of output matrix in QO representation is, (it, ia, l, zeta, m), "it"
+       is the index of atom type, "ia" is the index of atom of present type, "l" is the
+       angular momentum, "zeta" is the multiplicities of present angular momentum, "m" is
+       magnetic quantum number, arranged in the order in accordance with ABACUS:
+       Y00, Y10, Y11, Y1-1, Y20, Y21, Y2-1, Y22, Y2-2, ...
+----------------------------------------------------------------------------------------
         """)
         result_HR = []
         result_SR = []
         for R in Rs:
 
-            hqoR = self.cal_.unfolding_Hk(self.dm_.data.hqok, self.dm_.data.kpoints, R)
-            sqoR = self.cal_.unfolding_Hk(self.dm_.data.sqok, self.dm_.data.kpoints, R)
-            result_HR.append(hqoR)
-            result_SR.append(sqoR)
-
+            if test == "no":
+                hqoR = self.cal_.unfolding_Hk(self.dm_.data.hqok, self.dm_.data.kpoints, R)
+                sqoR = self.cal_.unfolding_Hk(self.dm_.data.sqok, self.dm_.data.kpoints, R)
+                result_HR.append(hqoR)
+                result_SR.append(sqoR)
+            if test == "lcao":
+                hR = self.cal_.unfolding_Hk(self.dm_.data.hk, self.dm_.data.kpoints, R)
+                sR = self.cal_.unfolding_Hk(self.dm_.data.sk, self.dm_.data.kpoints, R)
+                result_HR.append(hR)
+                result_SR.append(sR)
         return result_HR, result_SR

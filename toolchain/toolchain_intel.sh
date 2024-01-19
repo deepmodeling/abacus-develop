@@ -22,6 +22,7 @@
 --with-fftw=no \
 --with-elpa=install \
 --with-cereal=install \
+--with-rapidjson=install \
 --with-libtorch=no \
 --with-libnpy=no \
 --with-libri=no \

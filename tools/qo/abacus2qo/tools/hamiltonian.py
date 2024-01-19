@@ -1,5 +1,5 @@
 import numpy as np
-from source.tools.basic_functions import make_complex
+from abacus2qo.tools.basic_functions import make_complex
 
 def recover_from_upper_triangle(matrix: list) -> np.ndarray:
     """recover full matrix from upper-right triangle

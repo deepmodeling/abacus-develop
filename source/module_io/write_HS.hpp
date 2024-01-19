@@ -4,7 +4,7 @@
 #include "module_base/timer.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-
+#include "module_base/formatter_physfmt.h"
 
 /*
 void ModuleIO::save_HS_ccf(const int &iter, const int &Hnnz, const int *colptr_H, const int *rowind_H,
@@ -89,6 +89,7 @@ void ModuleIO::save_mat(const int istep,
     const T* mat,
     const int dim,
     const bool bit,
+    const int precision,
     const bool tri,
     const bool app,
     const std::string label,
@@ -102,6 +103,8 @@ void ModuleIO::save_mat(const int istep,
 
     std::stringstream ss;
 
+    formatter::PhysicalFmt physfmt;
+    physfmt.adjust_formatter_flexible(precision, -1, true);
     if (bit)ss << GlobalV::global_out_dir << file_name + "-" + label + "-bit";
     else
     {
@@ -227,7 +230,7 @@ void ModuleIO::save_mat(const int istep,
 
             if (drank == 0)
             {
-                for (int j = (tri ? i : 0); j < dim; j++) g << " " << line[tri ? j - i : j];
+                for (int j = (tri ? i : 0); j < dim; j++) g << " " << physfmt.get_p_formatter()->format(line[tri ? j - i : j]);
                 g << std::endl;
             }
             delete[] line;
@@ -247,7 +250,7 @@ void ModuleIO::save_mat(const int istep,
         {
             for (int j = (tri ? i : 0); j < dim; j++)
             {
-                g << " " << mat[i * dim + j];
+                g << " " << physfmt.get_p_formatter()->format(mat[i * dim + j]);
             }
             g << std::endl;
         }

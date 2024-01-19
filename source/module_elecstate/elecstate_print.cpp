@@ -271,6 +271,10 @@ void ElecState::print_etot(const bool converged,
     {
         label = "CG";
     }
+    else if (ks_solver_type == "cg_in_lcao")
+    {
+        label = "CGAO";
+    }
     else if (ks_solver_type == "lapack")
     {
         label = "LA";
@@ -315,7 +319,7 @@ void ElecState::print_etot(const bool converged,
         // std::cout << std::setiosflags(ios::showpos);
         if (scientific)
         {
-            std::cout << std::setiosflags(std::ios::scientific);
+            std::cout << std::scientific;
         }
 
         if (GlobalV::COLOUR)
