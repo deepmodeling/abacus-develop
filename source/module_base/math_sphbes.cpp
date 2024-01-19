@@ -1,7 +1,7 @@
 #include "math_sphbes.h"
-#include "timer.h"
 #include "constants.h"
 #include <algorithm>
+#include <iostream>
 
 #include <cassert>
 
@@ -425,7 +425,6 @@ void Sphbes::Spherical_Bessel
     double *jl		 // jl(1:msh) = j_l(q*r(i)),spherical bessel function
 )
 {
-    ModuleBase::timer::tick("Sphbes","Spherical_Bessel");
     double x1=0.0;
 
     int i=0;
@@ -598,7 +597,6 @@ void Sphbes::Spherical_Bessel
         }
     }
 
-    ModuleBase::timer::tick("Sphbes","Spherical_Bessel");
     return;
 }
 
@@ -613,7 +611,6 @@ void Sphbes::Spherical_Bessel
 	double *sjp
 )
 {
-	ModuleBase::timer::tick("Sphbes","Spherical_Bessel");
 
 	//calculate jlx first
 	Spherical_Bessel (msh, r, q, l, sj);
@@ -634,7 +631,6 @@ void Sphbes::dSpherical_Bessel_dx
     double *djl		 // jl(1:msh) = j_l(q*r(i)),spherical bessel function
 )
 {
-    ModuleBase::timer::tick("Sphbes","dSpherical_Bessel_dq");
     if (l < 0 )
     {
 		std::cout << "We temporarily only calculate derivative of l >= 0." << std::endl;
@@ -682,7 +678,6 @@ void Sphbes::dSpherical_Bessel_dx
         }
         delete[] jl;
     }
-    ModuleBase::timer::tick("Sphbes","dSpherical_Bessel_dq");
     return;
 }
 
@@ -808,7 +803,7 @@ void Sphbes::dsphbesj(const int n,
     }
 }
 
-void Sphbes::sphbes_zeros(const int l, const int n, double* const zeros)
+void Sphbes::sphbes_zeros(const int l, const int n, double* const zeros, const bool return_all)
 {
     assert( n > 0 );
     assert( l >= 0 );
@@ -818,10 +813,22 @@ void Sphbes::sphbes_zeros(const int l, const int n, double* const zeros)
     // This property enables us to use bracketing method recursively
     // to find all zeros of j_l from the zeros of j_0.
 
-    // if l is odd , j_0 --> j_1 --> j_3 --> j_5 --> ...
-    // if l is even, j_0 --> j_2 --> j_4 --> j_6 --> ...
+    // If return_all is true, zeros of j_0, j_1, ..., j_l will all be returned
+    // such that zeros[l*n+i] is the i-th zero of j_l. As such, it is required
+    // that the array "zeros" has a size of (l+1)*n.
+    //
+    // If return_all is false, only the zeros of j_l will be returned
+    // and "zeros" is merely required to have a size of n.
+    // Note that in this case the bracketing method can be applied with a stride
+    // of 2 instead of 1:
+    // j_0 --> j_1 --> j_3 --> j_5 --> ... --> j_l  (odd  l)
+    // j_0 --> j_2 --> j_4 --> j_6 --> ... --> j_l  (even l)
 
-    int nz = n + (l+1)/2; // number of effective zeros in buffer
+    // Every recursion step reduces the number of zeros by 1.
+    // If return_all is true, one needs to start with n+l zeros of j_0
+    // to ensure n zeros of j_l; otherwise with a stride of 2 one only
+    // needs to start with n+(l+1)/2 zeros of j_0
+    int nz = n + ( return_all ? l : (l+1)/2 );
     double* buffer = new double[nz];
 
     // zeros of j_0 = sin(x)/x is just n*pi
@@ -831,27 +838,34 @@ void Sphbes::sphbes_zeros(const int l, const int n, double* const zeros)
         buffer[i] = (i+1) * PI;
     }
 
-    int ll = 1;
+    int ll; // active l
     auto jl = [&ll] (double x) { return sphbesj(ll, x); };
-
-    if (l % 2 == 1)
+    int stride;
+    std::function<void()> copy_if_needed;
+    int offset = 0; // keeps track of the position in zeros for next copy (used when return_all == true)
+    if (return_all)
     {
+        copy_if_needed = [&](){ std::copy(buffer, buffer + n, zeros + offset); offset += n; };
+        stride = 1;
+        ll = 1;
+    }
+    else
+    {
+        copy_if_needed = [](){};
+        stride = 2;
+        ll = 2 - l % 2;
+    }
+
+    for (; ll <= l; ll += stride, --nz)
+    {
+        copy_if_needed();
         for (int i = 0; i < nz-1; i++)
         {
             buffer[i] = illinois(jl, buffer[i], buffer[i+1], 1e-15, 50);
         }
-        --nz;
     }
 
-    for (ll = 2 + l%2; ll <= l; ll += 2, --nz)
-    {
-        for (int i = 0; i < nz-1; i++)
-        {
-            buffer[i] = illinois(jl, buffer[i], buffer[i+1], 1e-15, 50);
-        }
-    }
-
-    std::copy(buffer, buffer + n, zeros);
+    std::copy(buffer, buffer + n, zeros + offset);
     delete[] buffer;
 }
 

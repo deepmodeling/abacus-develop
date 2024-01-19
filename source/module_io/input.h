@@ -263,7 +263,7 @@ class Input
     int out_wfc_pw; // 0: no; 1: txt; 2: dat
     bool out_wfc_r; // 0: no; 1: yes
     int out_dos; // dos calculation. mohan add 20090909
-    bool out_band; // band calculation pengfei 2014-10-13
+    std::vector<int> out_band; // band calculation pengfei 2014-10-13
     bool out_proj_band; // projected band structure calculation jiyy add 2022-05-11
     std::vector<int> out_mat_hs; // output H matrix and S matrix in local basis.
     bool out_mat_xc; // output exchange-correlation matrix in KS-orbital representation.
@@ -667,7 +667,15 @@ class Input
     template <typename T>
     typename std::enable_if<std::is_same<T, double>::value, T>::type cast_string(const std::string& str) { return std::stod(str); }
     template <typename T>
-    typename std::enable_if<std::is_same<T, int>::value, T>::type cast_string(const std::string& str) { return std::stoi(str); }
+    typename std::enable_if<std::is_same<T, int>::value, T>::type cast_string(const std::string& str)
+    {
+        if (str == "true" || str == "1")
+            return 1;
+        else if (str == "false" || str == "0")
+            return 0;
+        else
+            return std::stoi(str);
+    }
     template <typename T>
     typename std::enable_if<std::is_same<T, bool>::value, T>::type cast_string(const std::string& str) { return (str == "true" || str == "1"); }
     template <typename T>

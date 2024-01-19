@@ -176,9 +176,11 @@ TEST_F(InputTest, Default)
         EXPECT_EQ(INPUT.out_wfc_pw,0);
         EXPECT_EQ(INPUT.out_wfc_r,0);
         EXPECT_EQ(INPUT.out_dos,0);
-        EXPECT_EQ(INPUT.out_band,0);
+        EXPECT_EQ(INPUT.out_band[0],0);
+		EXPECT_EQ(INPUT.out_band[1],8);
         EXPECT_EQ(INPUT.out_proj_band,0);
         EXPECT_EQ(INPUT.out_mat_hs[0],0);
+		EXPECT_EQ(INPUT.out_mat_hs[1],8);
         EXPECT_EQ(INPUT.out_mat_hs2,0);
         EXPECT_EQ(INPUT.out_mat_xc, 0);
         EXPECT_EQ(INPUT.out_interval,1);
@@ -539,9 +541,11 @@ TEST_F(InputTest, Read)
         EXPECT_EQ(INPUT.out_wfc_pw,0);
         EXPECT_EQ(INPUT.out_wfc_r,0);
         EXPECT_EQ(INPUT.out_dos,0);
-        EXPECT_EQ(INPUT.out_band,0);
+        EXPECT_EQ(INPUT.out_band[0],0);
+		EXPECT_EQ(INPUT.out_band[1],8);
         EXPECT_EQ(INPUT.out_proj_band,0);
         EXPECT_EQ(INPUT.out_mat_hs[0],0);
+		EXPECT_EQ(INPUT.out_mat_hs[1],8);
         EXPECT_EQ(INPUT.out_mat_hs2,0);
         EXPECT_EQ(INPUT.out_mat_xc, 0);
         EXPECT_EQ(INPUT.out_interval,1);
@@ -921,7 +925,8 @@ TEST_F(InputTest, Default_2)
     EXPECT_EQ(INPUT.relax_nmax, 1);
     EXPECT_EQ(INPUT.out_stru, 0);
     EXPECT_EQ(INPUT.symmetry, "0");
-	EXPECT_EQ(INPUT.out_band,0);
+	EXPECT_EQ(INPUT.out_band[0],0);
+	EXPECT_EQ(INPUT.out_band[1],8);
 	EXPECT_EQ(INPUT.out_proj_band,0);
 	EXPECT_EQ(INPUT.cal_force,0);
 	EXPECT_EQ(INPUT.init_wfc,"file");
@@ -943,7 +948,8 @@ TEST_F(InputTest, Default_2)
     EXPECT_EQ(INPUT.relax_nmax, 1);
     EXPECT_EQ(INPUT.symmetry, "0");
     EXPECT_EQ(INPUT.out_stru, 0);
-	EXPECT_EQ(INPUT.out_band,0);
+	EXPECT_EQ(INPUT.out_band[0],0);
+	EXPECT_EQ(INPUT.out_band[1],8);
 	EXPECT_EQ(INPUT.out_proj_band,0);
 	EXPECT_EQ(INPUT.cal_force,0);
 	EXPECT_EQ(INPUT.init_wfc,"file");
