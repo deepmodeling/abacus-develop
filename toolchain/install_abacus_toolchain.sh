@@ -182,10 +182,12 @@ The --with-PKG options follow the rules:
   --with-scalapack        Parallel linear algebra library, needed for parallel
                           calculations.
                           Default = install
+  --with-elpa             Eigenvalue SoLvers for Petaflop-Applications library.
+                          Fast library for large parallel jobs， Especially for ABACUS LCAO
+                          Default = install
   --with-cereal           Enable cereal for ABACUS LCAO
                           Default = install
-  --with-elpa             Eigenvalue SoLvers for Petaflop-Applications library.
-                          Fast library for large parallel jobs.
+  --with-rapidjson        Enable rapidjson for ABACUS to read/write json files
                           Default = install
   --with-libtorch         Enable libtorch the machine learning framework needed for DeePKS
                           Default = no
@@ -230,7 +232,7 @@ EOF
 tool_list="gcc intel cmake"
 mpi_list="mpich openmpi intelmpi"
 math_list="mkl acml openblas"
-lib_list="fftw libxc scalapack elpa cereal libtorch libnpy libri libcomm"
+lib_list="fftw libxc scalapack elpa cereal rapidjson libtorch libnpy libri libcomm"
 package_list="${tool_list} ${mpi_list} ${math_list} ${lib_list}"
 # ------------------------------------------------------------------------
 
@@ -264,7 +266,8 @@ with_acml="__SYSTEM__"
 with_openblas="__INSTALL__"
 with_elpa="__INSTALL__"
 with_cereal="__INSTALL__"
-# with_libtorch="__DONTUSE__"
+with_rapidjson="__INSTALL__"
+# with_libtorch="__DONTUSE__" # default
 # with_libnpy="__DONTUSE__"
 # with_libri="__DONTUSE__"
 # with_libcomm="__DONTUSE__"
@@ -548,6 +551,9 @@ while [ $# -ge 1 ]; do
       ;;
     --with-cereal*)
       with_cereal=$(read_with "${1}")
+      ;;
+    --with-rapidjson*)
+      with_rapidjson=$(read_with "${1}")
       ;;
     --with-libnpy*)
       with_libnpy=$(read_with "${1}")
