@@ -336,7 +336,7 @@ void Input::Default(void)
     out_wfc_pw = 0;
     out_wfc_r = 0;
     out_dos = 0;
-    out_band = 0;
+    out_band = {0, 8};
     out_proj_band = 0;
     out_mat_hs = {0, 8};
     out_mat_xc = 0;
@@ -1378,13 +1378,13 @@ bool Input::Read(const std::string& fn)
         }
         else if (strcmp("out_band", word) == 0)
         {
-            read_bool(ifs, out_band);
+            read_value2stdvector(ifs, out_band);
+            if(out_band.size() == 1) out_band.push_back(8);
         }
         else if (strcmp("out_proj_band", word) == 0)
         {
             read_bool(ifs, out_proj_band);
         }
-
         else if (strcmp("out_mat_hs", word) == 0)
         {
             read_value2stdvector(ifs, out_mat_hs);
@@ -2826,7 +2826,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         this->relax_nmax = 1;
         out_stru = 0;
         out_dos = 0;
-        out_band = 0;
+        out_band[0] = 0;
         out_proj_band = 0;
         cal_force = 0;
         init_wfc = "file";
@@ -2843,7 +2843,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         this->relax_nmax = 1;
         out_stru = 0;
         out_dos = 0;
-        out_band = 0;
+        out_band[0] = 0;
         out_proj_band = 0;
         cal_force = 0;
         init_wfc = "file";
@@ -3325,7 +3325,8 @@ void Input::Bcast()
     Parallel_Common::bcast_int(out_wfc_pw);
     Parallel_Common::bcast_bool(out_wfc_r);
     Parallel_Common::bcast_int(out_dos);
-    Parallel_Common::bcast_bool(out_band);
+    if(GlobalV::MY_RANK != 0) out_band.resize(2); /* If this line is absent, will cause segmentation fault in io_input_test_para */
+    Parallel_Common::bcast_int(out_band.data(), 2);
     Parallel_Common::bcast_bool(out_proj_band);
     if(GlobalV::MY_RANK != 0) out_mat_hs.resize(2); /* If this line is absent, will cause segmentation fault in io_input_test_para */
     Parallel_Common::bcast_int(out_mat_hs.data(), 2);
