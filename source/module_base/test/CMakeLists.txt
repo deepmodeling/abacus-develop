@@ -217,3 +217,10 @@ AddTest(
   SOURCES assoc_laguerre_test.cpp ../assoc_laguerre.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp
   LIBS ${math_libs} formatter
 )
+
+if(ENABLE_RAPIDJSON)
+  AddTest(
+    TARGET base_para_json_test
+    SOURCES para_json_test.cpp ../para_json.cpp
+  )
+endif()

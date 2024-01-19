@@ -904,7 +904,7 @@ void input_parameters_set(std::map<std::string, InputParameter> input_parameters
     }
     else if (input_parameters.count("out_band") != 0)
     {
-        INPUT.out_band = *static_cast<bool*>(input_parameters["out_band"].get());
+        INPUT.out_band = *static_cast<std::vector<int>*>(input_parameters["out_band"].get());
     }
     else if (input_parameters.count("out_proj_band") != 0)
     {
