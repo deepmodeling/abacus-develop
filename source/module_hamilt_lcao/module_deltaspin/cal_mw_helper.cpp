@@ -22,7 +22,7 @@ std::vector<std::vector<std::vector<double>>> SpinConstrain<std::complex<double>
                 AorbMulP[is][iat].resize(nw_it, 0.0);
                 for (int iw = 0; iw < nw_it; iw++)
                 {
-                    AorbMulP[is][iat][iw] = orbMulP(is, num);
+                    AorbMulP[is][iat][iw] = std::abs(orbMulP(is, num))< 1e-10 ? 0.0 : orbMulP(is, num);
                     num++;
                 }
             }
@@ -96,12 +96,6 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::calculate_MW(
                 this->Mi_[iat].y = total_charge_soc[2];
                 this->Mi_[iat].z = total_charge_soc[3];
             }
-            if (std::abs(this->Mi_[iat].x) < 1e-12)
-                this->Mi_[iat].x = 0.0;
-            if (std::abs(this->Mi_[iat].y) < 1e-12)
-                this->Mi_[iat].y = 0.0;
-            if (std::abs(this->Mi_[iat].z) < 1e-12)
-                this->Mi_[iat].z = 0.0;
         }
     }
 }
