@@ -146,6 +146,8 @@
     - [out\_ndigits](#out_ndigits)
     - [out\_interval](#out_interval)
     - [out\_element\_info](#out_element_info)
+    - [band\_print\_num](#band_print_num)
+    - [bands\_to\_print](#bands_to_print)
     - [restart\_save](#restart_save)
     - [restart\_load](#restart_load)
     - [rpa](#rpa)
@@ -1598,6 +1600,20 @@ These variables are used to control the output of properties.
 - **Availability**: Numerical atomic orbital basis
 - **Description**: Control the interval for printing Mulliken population analysis, $r(R)$, $H(R)$, $S(R)$, $T(R)$, $dH(R)$, $H(k)$, $S(k)$ and $wfc(k)$ matrices during molecular dynamics calculations. Check input parameters [out_mul](#out_mul), [out_mat_r](#out_mat_r), [out_mat_hs2](#out_mat_hs2), [out_mat_t](#out_mat_t), [out_mat_dh](#out_mat_dh), [out_mat_hs](#out_mat_hs) and [out_wfc_lcao](#out_wfc_lcao) for more information, respectively.
 - **Default**: 1
+
+### band_print_num
+
+- **Type**: Integer
+- **Availability**: PW basis
+- **Description**: If you want to plot a partial charge density contributed from some chosen bands. `band_print_num` define the number of band list. The result can be found in "band*.cube".
+- **Default**: 0
+
+### bands_to_print
+
+- **Type**: vector
+- **Availability**: band_print_num > 0
+- **Description**: define which band you want to choose for partial charge density.
+- **Default**: []
 
 ### out_element_info
 
