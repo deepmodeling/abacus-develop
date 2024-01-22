@@ -11,7 +11,7 @@
 
 namespace ModuleBase
 {
-    void WARNING_QUIT(const std::string &file,const std::string &description) {return ;}
+    void WARNING_QUIT(const std::string &file,const std::string &description) {exit(1);}
 }
 
 namespace GlobalV
@@ -202,7 +202,7 @@ class XCTest_PZ_SPN : public testing::Test
                 e_lda.push_back(e);
                 v1_lda.push_back(v1);
                 v2_lda.push_back(v2);
-            }          
+            }
         }
 };
 
@@ -238,7 +238,7 @@ class XCTest_SLATER1_SPN : public testing::Test
                 e_lda.push_back(e);
                 v1_lda.push_back(v1);
                 v2_lda.push_back(v2);
-            }          
+            }
         }
 };
 
@@ -273,7 +273,7 @@ class XCTest_SLATER_RXC_SPN : public testing::Test
                 e_lda.push_back(e);
                 v1_lda.push_back(v1);
                 v2_lda.push_back(v2);
-            }           
+            }
         }
 };
 
@@ -310,7 +310,7 @@ class XCTest_P86_SPN : public testing::Test
                 v1_gga.push_back(v1);
                 v2_gga.push_back(v2);
                 v3_gga.push_back(v3);
-            }         
+            }
         }
 };
 

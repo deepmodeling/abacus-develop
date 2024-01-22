@@ -1011,7 +1011,7 @@ void ESolver_KS_PW<T, Device>::postprocess()
     GlobalV::ofs_running << " !FINAL_ETOT_IS " << this->pelec->f_en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
     GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
 
-    if (INPUT.out_dos != 0 || INPUT.out_band != 0)
+    if (INPUT.out_dos != 0 || INPUT.out_band[0] != 0)
     {
         GlobalV::ofs_running << "\n\n\n\n";
         GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
@@ -1053,7 +1053,7 @@ void ESolver_KS_PW<T, Device>::postprocess()
         }
     }
 
-    if (INPUT.out_band) // pengfei 2014-10-13
+    if (INPUT.out_band[0]) // pengfei 2014-10-13
     {
         int nks = 0;
         if (nspin0 == 1)
@@ -1074,6 +1074,7 @@ void ESolver_KS_PW<T, Device>::postprocess()
                                 nks,
                                 GlobalV::NBANDS,
                                 0.0,
+                                INPUT.out_band[1],
                                 this->pelec->ekb,
                                 this->kv,
                                 &(GlobalC::Pkpoints));
