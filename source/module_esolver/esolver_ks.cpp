@@ -437,7 +437,7 @@ namespace ModuleESolver
                         //     p_chgmix->auto_set(bandgap_for_autoset, GlobalC::ucell);
                         // }
                         // mixing will restart after GlobalV::MIXING_RESTART steps
-                        if (GlobalV::MIXING_RESTART > 0 && iter == GlobalV::MIXING_RESTART)
+                        if (GlobalV::MIXING_RESTART > 0 && iter == GlobalV::MIXING_RESTART - 1)
                         {
                             continue; // do not update chr->rho if restart mixing
                         }
