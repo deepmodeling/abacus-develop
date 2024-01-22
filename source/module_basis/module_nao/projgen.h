@@ -33,4 +33,11 @@ void projgen(
     const int nbes, 
     std::vector<double>& alpha);
 
+void smoothgen( 
+    const int nr, 
+    const double* r, 
+    const double* chi, 
+    const double rcut, 
+    std::vector<double>& alpha);
+
 #endif
