@@ -11,7 +11,7 @@
 
 namespace ModuleBase
 {
-    void WARNING_QUIT(const std::string &file,const std::string &description) {return ;}
+    void WARNING_QUIT(const std::string &file,const std::string &description) {exit(1);}
 }
 
 namespace GlobalV
@@ -95,7 +95,7 @@ class XCTest_PBEsol : public testing::Test
                 e_gga.push_back(e);
                 v1_gga.push_back(v1);
                 v2_gga.push_back(v2);
-            }                                           
+            }
         }
 };
 

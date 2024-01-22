@@ -229,7 +229,7 @@ conda create -n abacus_env abacus -c conda-forge
 conda activate abacus_env
 export CMAKE_PREFIX_PATH=$CONDA_PREFIX:$CMAKE_PREFIX_PATH
 
-# By default OpenBLAS is used; run `conda install "blas=*=mkl" mkl_fft -c conda-forge` to switch implementation.
+# By default OpenBLAS is used; run `conda install "blas=*=mkl" mkl_fft mkl-devel -c conda-forge` to switch implementation.
 export MKLROOT=$CONDA_PREFIX # If Intel MKL is required.
 
 export CMAKE_PREFIX_PATH=`python -c 'import torch;print(torch.utils.cmake_prefix_path)'`:$CMAKE_PREFIX_PATH # If DEEPKS support is required;

@@ -350,7 +350,7 @@ T ddot_real(
 //==========================================================
 static inline bool IS_COLUMN_MAJOR_KS_SOLVER()
 {
-    return GlobalV::KS_SOLVER=="genelpa" || GlobalV::KS_SOLVER=="scalapack_gvx" || GlobalV::KS_SOLVER=="cusolver";
+    return GlobalV::KS_SOLVER=="genelpa" || GlobalV::KS_SOLVER=="scalapack_gvx" || GlobalV::KS_SOLVER=="cusolver" || GlobalV::KS_SOLVER=="cg_in_lcao";
 }
 
 }//namespace GlobalFunc

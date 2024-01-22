@@ -271,6 +271,10 @@ void ElecState::print_etot(const bool converged,
     {
         label = "CG";
     }
+    else if (ks_solver_type == "cg_in_lcao")
+    {
+        label = "CGAO";
+    }
     else if (ks_solver_type == "lapack")
     {
         label = "LA";

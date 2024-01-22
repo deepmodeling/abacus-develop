@@ -41,12 +41,12 @@ TEST_F(HydrogenRadialsTest, UnzipStrategy)
     HydrogenRadials hr;
     std::vector<std::pair<int, int>> nl_pairs;
     // minimal, 1s
-    nl_pairs = hr.unzip_strategy(1, "minimal");
+    nl_pairs = hr.unzip_strategy(1, "minimal-nodeless");
     EXPECT_EQ(nl_pairs.size(), 1);
     EXPECT_EQ(nl_pairs[0].first, 1);
     EXPECT_EQ(nl_pairs[0].second, 0);
     // minimal, 1s, 2p, 3d, 4f
-    nl_pairs = hr.unzip_strategy(4, "minimal");
+    nl_pairs = hr.unzip_strategy(4, "minimal-nodeless");
     EXPECT_EQ(nl_pairs.size(), 4);
     EXPECT_EQ(nl_pairs[0].first, 1);
     EXPECT_EQ(nl_pairs[0].second, 0);
@@ -143,14 +143,14 @@ TEST_F(HydrogenRadialsTest, MappingNLLZeta)
     int l;
     int lzeta;
     // minimal, 1s, map (1, 0) to (0, 0)
-    nl_lzeta_map = hr.mapping_nl_lzeta(1, "minimal");
+    nl_lzeta_map = hr.mapping_nl_lzeta(1, "minimal-nodeless");
     EXPECT_EQ(nl_lzeta_map.size(), 1);
     l = nl_lzeta_map[std::make_pair(1, 0)].first;
     lzeta = nl_lzeta_map[std::make_pair(1, 0)].second;
     EXPECT_EQ(l, 0);
     EXPECT_EQ(lzeta, 0);
     // minimal, 1s, 2p, 3d, 4f, map (1, 0) to (0, 0), (2, 1) to (1, 0), (3, 2) to (2, 0), (4, 3) to (3, 0)
-    nl_lzeta_map = hr.mapping_nl_lzeta(4, "minimal");
+    nl_lzeta_map = hr.mapping_nl_lzeta(4, "minimal-nodeless");
     EXPECT_EQ(nl_lzeta_map.size(), 4);
     l = nl_lzeta_map[std::make_pair(1, 0)].first;
     lzeta = nl_lzeta_map[std::make_pair(1, 0)].second;
@@ -280,7 +280,7 @@ TEST_F(HydrogenRadialsTest, Build)
         1e-6,
         rank_,
         "H",
-        "minimal",
+        "minimal-nodeless",
         ptr_log_
     );
     // nmax = 1, minimal, yields 1s orbital

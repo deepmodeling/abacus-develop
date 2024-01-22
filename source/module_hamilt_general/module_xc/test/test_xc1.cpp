@@ -12,7 +12,7 @@
 
 namespace ModuleBase
 {
-    void WARNING_QUIT(const std::string &file,const std::string &description) {return ;}
+    void WARNING_QUIT(const std::string &file,const std::string &description) {exit(1);}
 }
 
 namespace GlobalV

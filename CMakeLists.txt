@@ -34,6 +34,34 @@ option(DEBUG_INFO "Print message for developers to debug." OFF)
 option(ENABLE_NATIVE_OPTIMIZATION "Enable compilation optimization for the native machine's CPU type" OFF)
 option(COMMIT_INFO "Print commit information in log" ON)
 option(ENABLE_FFT_TWO_CENTER "Enable FFT-based two-center integral method." ON)
+option(ENABLE_RAPIDJSON "Enable rapid-json usage." OFF)
+
+
+
+# enable json support
+if(ENABLE_RAPIDJSON)
+  find_package(RapidJSON)
+  if(NOT RapidJSON_FOUND)
+    message(WARNING "Rapidjson is not found, trying downloading from github, or you can install Rapidjson first and reinstall abacus.")
+    include(FetchContent)
+    FetchContent_Declare(
+      rapidjson
+      GIT_REPOSITORY https://github.com/Tencent/rapidjson.git
+      GIT_TAG "origin/master"
+      GIT_SHALLOW TRUE
+      GIT_PROGRESS TRUE
+    )
+    set(RAPIDJSON_BUILD_TESTS OFF CACHE INTERNAL "")
+    set(RAPIDJSON_BUILD_EXAMPLES OFF CACHE INTERNAL "")
+    FetchContent_MakeAvailable(rapidjson)
+    set(RapidJSON_INCLUDE_PATH "${rapidjson_SOURCE_DIR}/include")
+  endif()
+  add_compile_definitions(__RAPIDJSON)
+  add_definitions(-DRAPIDJSON_HAS_CXX11_NOEXCEPT=0)
+  include_directories(${RapidJSON_INCLUDE_PATH})
+endif()
+
+
 if (USE_CUDA)
   set(USE_CUSOLVER_LCAO ON)
 else()
@@ -292,7 +320,7 @@ endif()
 # Use cmake with AMD-ROCm: https://rocmdocs.amd.com/en/latest/Installation_Guide/Using-CMake-with-AMD-ROCm.html
 if(USE_ROCM)
   if(COMMIT_INFO)
-    message(FATAL_ERROR "Commit info is not supported on ROCm.")
+    message(FATAL_ERROR "Commit info is not supported on ROCm. Try to recompile with cmake command -DCOMMIT_INFO=OFF.")
   endif()
   if(NOT DEFINED ROCM_PATH )
     set (ROCM_PATH "/opt/rocm"  CACHE STRING "Default ROCM installation directory." )
