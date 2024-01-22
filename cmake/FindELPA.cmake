@@ -48,7 +48,7 @@ find_package_handle_standard_args(ELPA DEFAULT_MSG ELPA_LINK_LIBRARIES ELPA_INCL
 
 # Copy the results to the output variables and target.
 if(ELPA_FOUND)
-    set(ELPA_LIBRARY ${ELPA_LINK_LIBRARIES})
+    list(GET ELPA_LINK_LIBRARIES 0 ELPA_LIBRARY)
     set(ELPA_INCLUDE_DIR ${ELPA_INCLUDE_DIRS})
 
     if(NOT TARGET ELPA::ELPA)
