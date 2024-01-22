@@ -491,7 +491,7 @@ namespace ModuleESolver
     template <typename TK, typename TR>
     void ESolver_KS_LCAO<TK, TR>::eachiterinit(const int istep, const int iter)
 {
-    if (iter == 1)
+    if (iter == 1 || iter == GlobalV::MIXING_RESTART)
         this->p_chgmix->mix_reset();
 
     // mohan update 2012-06-05
