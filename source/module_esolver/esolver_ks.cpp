@@ -413,7 +413,7 @@ namespace ModuleESolver
                     this->conv_elec = (drho < this->scf_thr);
 
                     // If drho < hsolver_error in the first iter or drho < scf_thr, we do not change rho.
-                    if (drho < hsolver_error || this->conv_elec)
+                    if (drho < hsolver_error || (this->conv_elec && iter!=GlobalV::MIXING_RESTART))
                     {
                         if (drho < hsolver_error)    GlobalV::ofs_warning << " drho < hsolver_error, keep charge density unchanged." << std::endl;
                     }
