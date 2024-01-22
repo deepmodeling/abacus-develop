@@ -436,8 +436,15 @@ namespace ModuleESolver
                         //     }
                         //     p_chgmix->auto_set(bandgap_for_autoset, GlobalC::ucell);
                         // }
-                        
-                        p_chgmix->mix_rho(pelec->charge);
+                        // mixing will restart after GlobalV::MIXING_RESTART steps
+                        if (GlobalV::MIXING_RESTART > 0 && iter == GlobalV::MIXING_RESTART)
+                        {
+                            continue; // do not update chr->rho if restart mixing
+                        }
+                        else
+                        {
+                            p_chgmix->mix_rho(pelec->charge); // update chr->rho by mixing
+                        }
                         if (GlobalV::SCF_THR_TYPE == 2) pelec->charge->renormalize_rho(); // renormalize rho in R-space would induce a error in K-space
                         //----------charge mixing done-----------
                     }
