@@ -85,6 +85,7 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "cal_force", cal_force, "if calculate the force at the end of the electronic iteration");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_freq_ion", out_freq_ion, "the frequency ( >= 0 ) of ionic step to output charge density and wavefunction. 0: output only when ion steps are finished");
     ModuleBase::GlobalFunc::OUTP(ofs, "device", device, "the computing device for ABACUS");
+    ModuleBase::GlobalFunc::OUTP(ofs, "precision", precision, "the computing precision for ABACUS");
 
     ofs << "\n#Parameters (2.PW)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs, "ecutwfc", ecutwfc, "#energy cutoff for wave functions");
