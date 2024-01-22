@@ -894,6 +894,58 @@ void ESolver_KS_PW<T, Device>::afterscf(const int istep)
                             this->kspw_psi[0].get_pointer() - this->kspw_psi[0].get_psi_bias(),
                             this->psi[0].size());
     }
+
+    if(INPUT.band_print_num > 0)
+    {
+        std::complex<double> * wfcr = new std::complex<double>[this->pw_rho->nxyz];
+        double * rho_band = new double [this->pw_rho->nxyz];
+        for(int i = 0; i < this->pw_rho->nxyz; i++)
+        {
+            rho_band[i] = 0.0;
+        }
+
+        for(int i = 0; i < INPUT.band_print_num; i++)
+        {
+            int ib = INPUT.bands_to_print[i];
+            for(int ik = 0; ik < this->kv.nks; ik++)
+            {
+                this->psi->fix_k(ik);
+                this->pw_wfc->recip_to_real(this->ctx,&psi[0](ib,0),wfcr,ik);
+
+                double w1 = static_cast<double>(this->kv.wk[ik] / GlobalC::ucell.omega);
+
+                for(int i = 0; i < this->pw_rho->nxyz; i++)
+                {
+                    rho_band[i] += std::norm(wfcr[i]) * w1;
+                }
+            }
+
+            std::stringstream ssc;
+            ssc << GlobalV::global_out_dir << "band" << ib << ".cube";     
+
+            ModuleIO::write_rho
+            (
+#ifdef __MPI
+                this->pw_big->bz,
+                this->pw_big->nbz,
+                this->pw_big->nplane,
+                this->pw_big->startz_current,
+#endif
+                rho_band,
+                0,
+                GlobalV::NSPIN,
+                0,
+                ssc.str(),
+                this->pw_rho->nx,
+                this->pw_rho->ny,
+                this->pw_rho->nz,
+                0.0,
+                &(GlobalC::ucell),
+                11);
+        }
+        delete[] wfcr;
+        delete[] rho_band;
+    }
 }
 
 template <typename T, typename Device>
