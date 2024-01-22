@@ -223,7 +223,7 @@ TEST_F(SltkAtomInputTest, ConstructorNoExpand)
     GlobalV::test_grid = 1;
     // this is a bug if radius is too small
     // because the expand_flag will be false!
-    radius = 1e-1000;
+    radius = 0;
     Atom_input Atom_inp(ofs, *ucell, ucell->nat, ucell->ntype, pbc, radius, test_atom_in);
     EXPECT_FALSE(Atom_inp.getExpandFlag());
     // call set_FAtom and Load_atom
