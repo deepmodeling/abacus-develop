@@ -946,6 +946,7 @@ calculations.
   - **gauss** or **gaussian**: Gaussian smearing method.
   - **mp**: methfessel-paxton smearing method; recommended for metals.
   - **mp2**: 2-nd methfessel-paxton smearing method; recommended for metals.
+  - **mv** or **cold**: marzari-vanderbilt smearing method.
   - **fd**: Fermi-Dirac smearing method: $f=1/\{1+\exp[(E-\mu)/kT]\}$ and smearing_sigma below is the temperature $T$ (in Ry).
 - **Default**: gauss
 
