@@ -1001,6 +1001,13 @@ We recommend the following options:
   For systems that are difficult to converge, one could try increasing the value of 'mixing_ndim' to enhance the stability of the self-consistent field (SCF) calculation.
 - **Default**: 8
 
+### mixing_restart
+
+- **Type**: Integer
+- **Description**: At `mixing_restart`-th iteration, SCF will restart by using output charge density from perivos iteration as input charge density directly, and start a new mixing. `mixing_restart=0|1` means SCF starts from scratch.
+  
+- **Default**: 0
+
 ### mixing_gg0
 
 - **Type**: Real
