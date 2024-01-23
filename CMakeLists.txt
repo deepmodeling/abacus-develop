@@ -608,6 +608,7 @@ IF (ENABLE_GOOGLEBENCH)
       GIT_TAG "origin/main"
       GIT_SHALLOW TRUE
       GIT_PROGRESS TRUE
+      CMAKE_ARGS -DCMAKE_BUILD_TYPE=Release -DBENCHMARK_ENABLE_TESTING=OFF
     )
     FetchContent_MakeAvailable(benchmark)
   endif()
