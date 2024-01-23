@@ -219,9 +219,9 @@ AddTest(
 )
 if(ENABLE_GOOGLEBENCH)
   AddTest(
-    TARGET math_sphbes_perf_test
+    TARGET perf_sphbes
     LIBS formatter
-    SOURCES math_sphbes_perf_test.cpp ../math_sphbes.cpp ../timer.cpp 
+    SOURCES perf_sphbes_test.cpp ../math_sphbes.cpp ../timer.cpp 
   )
 endif()
 
