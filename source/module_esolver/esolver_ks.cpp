@@ -410,10 +410,10 @@ namespace ModuleESolver
                         }
                     }
 
-                    this->conv_elec = (drho < this->scf_thr);
+                    this->conv_elec = (drho < this->scf_thr && iter!=GlobalV::MIXING_RESTART);
 
                     // If drho < hsolver_error in the first iter or drho < scf_thr, we do not change rho.
-                    if (drho < hsolver_error || (this->conv_elec && iter!=GlobalV::MIXING_RESTART))
+                    if (drho < hsolver_error || this->conv_elec)
                     {
                         if (drho < hsolver_error)    GlobalV::ofs_warning << " drho < hsolver_error, keep charge density unchanged." << std::endl;
                     }
@@ -440,7 +440,7 @@ namespace ModuleESolver
                         // So, GlobalV::MIXING_RESTART=1 means mix from scratch
                         if (GlobalV::MIXING_RESTART > 0 && iter == GlobalV::MIXING_RESTART - 1)
                         {
-                            continue; // do not update chr->rho if restart mixing
+                            // do not mix charge density
                         }
                         else
                         {
@@ -474,6 +474,11 @@ namespace ModuleESolver
                     this->niter = iter;
                     bool stop = this->do_after_converge(iter);
                     if(stop) break;
+                }
+                // notice for restart
+                if (GlobalV::MIXING_RESTART > 0 && iter == GlobalV::MIXING_RESTART - 1)
+                {
+                    std::cout<<"SCF restart after this step!"<<std::endl;
                 }
             }
             afterscf(istep);
