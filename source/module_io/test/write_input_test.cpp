@@ -384,13 +384,16 @@ TEST_F(write_input, Mixing7)
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     EXPECT_THAT(output, testing::HasSubstr("#Parameters (7.Charge Mixing)"));
     EXPECT_THAT(output, testing::HasSubstr("mixing_type                    broyden #plain; pulay; broyden"));
-    EXPECT_THAT(output,
-                testing::HasSubstr("mixing_beta                    0.7 #mixing parameter: 0 means no new charge"));
+    EXPECT_THAT(output, testing::HasSubstr("mixing_beta                    0.7 #mixing parameter: 0 means no new charge"));
     EXPECT_THAT(output, testing::HasSubstr("mixing_ndim                    8 #mixing dimension in pulay or broyden"));
     EXPECT_THAT(output, testing::HasSubstr("mixing_gg0                     0 #mixing parameter in kerker"));
+    EXPECT_THAT(output, testing::HasSubstr("mixing_beta_mag                -10 #mixing parameter for magnetic density"));
+    EXPECT_THAT(output, testing::HasSubstr("mixing_gg0_mag                 0 #mixing parameter in kerker"));
+    EXPECT_THAT(output, testing::HasSubstr("mixing_gg0_min                 0.1 #the minimum kerker coefficient"));
+    EXPECT_THAT(output, testing::HasSubstr("mixing_angle                   -10 #angle mixing parameter for non-colinear calculations"));
     EXPECT_THAT(output, testing::HasSubstr("mixing_tau                     0 #whether to mix tau in mGGA calculation"));
-    EXPECT_THAT(output,
-                testing::HasSubstr("mixing_dftu                    0 #whether to mix locale in DFT+U calculation"));
+    EXPECT_THAT(output, testing::HasSubstr("mixing_dftu                    0 #whether to mix locale in DFT+U calculation"));
+    EXPECT_THAT(output, testing::HasSubstr("mixing_restart                 0 #which step to restart mixing during SCF"));
     EXPECT_THAT(output, testing::HasSubstr(""));
     ifs.close();
     remove("write_input_test.log");
