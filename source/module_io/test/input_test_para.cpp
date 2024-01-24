@@ -382,6 +382,7 @@ TEST_F(InputParaTest, Bcast)
     EXPECT_FALSE(INPUT.mixing_tau);
     EXPECT_FALSE(INPUT.mixing_dftu);
     EXPECT_EQ(INPUT.mixing_restart,0);
+    EXPECT_EQ(INPUT.mixing_dmr,false);
     EXPECT_EQ(INPUT.out_bandgap, 0);
     EXPECT_EQ(INPUT.out_mat_t, 0);
 

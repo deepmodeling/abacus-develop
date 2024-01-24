@@ -241,6 +241,7 @@ class Input
 
     bool mixing_tau; // whether to mix tau in mgga
     bool mixing_dftu; //whether to mix locale in DFT+U
+    bool mixing_dmr; // whether to mix real space density matrix
 
     //==========================================================
     // potential / charge / wavefunction / energy
