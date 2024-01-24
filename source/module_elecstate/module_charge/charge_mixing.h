@@ -56,7 +56,6 @@ class Charge_Mixing
      *
      */
     void Kerker_screen_real(double* rho);
-    void Kerker_screen_real_test(double* rho);
 
     /**
      * @brief Inner product of two complex vectors
