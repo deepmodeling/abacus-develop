@@ -86,19 +86,7 @@ class Charge_Mixing
                     const int& mixing_ndim_in,
                     const double& mixing_gg0_in,
                     const bool& mixing_tau_in,
-                    const double& mixing_beta_mag_in); // mohan add mixing_gg0_in 2014-09-27
-
-    // /**
-    //  * @brief use auto set
-    //  *
-    //  */
-    // void need_auto_set();
-
-    // /**
-    //  * @brief auto set mixing gg0 and mixing_beta
-    //  *
-    //  */
-    // void auto_set(const double& bandgap_in, const UnitCell& ucell_);
+                    const double& mixing_beta_mag_in);
 
     /**
      * @brief Get the drho
