@@ -16,6 +16,7 @@ class Charge_Mixing
     Base_Mixing::Mixing_Data rho_mdata;    ///< Mixing data for charge density
     Base_Mixing::Mixing_Data tau_mdata;    ///< Mixing data for kinetic energy density
     Base_Mixing::Mixing_Data nhat_mdata;   ///< Mixing data for compensation density
+    Base_Mixing::Mixing_Data dmr_mdata;    ///< Mixing data for real space density matrix
 
     Base_Mixing::Plain_Mixing* mixing_highf = nullptr; ///< The high_frequency part is mixed by plain mixing method.
 
@@ -87,6 +88,12 @@ class Charge_Mixing
                     const double& mixing_gg0_in,
                     const bool& mixing_tau_in,
                     const double& mixing_beta_mag_in);
+
+    /**
+     * @brief allocate memory of dmr_mdata
+     *
+     */
+    void allocate_mixing_dmr(int nnr);
 
     /**
      * @brief Get the drho

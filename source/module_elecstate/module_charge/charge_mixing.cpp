@@ -114,6 +114,26 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
     return;
 }
 
+void Charge_Mixing::allocate_mixing_dmr(int nnr)
+{
+    ModuleBase::TITLE("Charge_Mixing", "allocate_mixing_dmr");
+    ModuleBase::timer::tick("Charge_Mixing", "allocate_mixing_dmr");
+    //
+    const int dmr_nspin = (GlobalV::NSPIN == 2) ? 2 : 1;
+    // allocate memory for dmr_mdata
+    if (GlobalV::SCF_THR_TYPE == 1)
+    {
+        ModuleBase::WARNING_QUIT("Charge_Mixing", "This Mixing of Density Matrix is not supported for PW basis yet");
+    }
+    else if (GlobalV::SCF_THR_TYPE == 2)
+    {
+        this->mixing->init_mixing_data(this->dmr_mdata, nnr * dmr_nspin, sizeof(double));
+    }
+    ModuleBase::timer::tick("Charge_Mixing", "allocate_mixing_dmr");
+
+    return;
+}
+
 void Charge_Mixing::set_rhopw(ModulePW::PW_Basis* rhopw_in, ModulePW::PW_Basis* rhodpw_in)
 {
     this->rhopw = rhopw_in;
