@@ -232,6 +232,7 @@ class Input
     std::string mixing_mode; // "plain","broyden",...
     double mixing_beta; // 0 : no_mixing
     int mixing_ndim; // used in Broyden method
+    int mixing_restart;
     double mixing_gg0; // used in kerker method. mohan add 2014-09-27
     double mixing_beta_mag;
     double mixing_gg0_mag;
