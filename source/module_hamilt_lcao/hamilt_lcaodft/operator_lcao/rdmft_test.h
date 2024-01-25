@@ -6,7 +6,6 @@
 #define RDMFT_TEST_H
 
 #include "module_base/matrix.h"
-//#include "module_elecstate/module_dm/density_matrix.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_cell/unitcell.h"
@@ -20,6 +19,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/parallel_reduce.h"
 #include "module_elecstate/module_dm/cal_dm_psi.h"
+#include "module_elecstate/module_dm/density_matrix.h"
 
 #include "module_hamilt_general/operator.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
@@ -445,6 +445,10 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         HR_XC.fix_gamma();
     }
 
+    // get DM_hartree for multi-k or Gamma-only calculation
+    // elecstate::DensityMatrix<TK, TR> DM_hartree(&kv_in, ParaV, GlobalV::NSPIN);
+    // elecstate::DensityMatrix DM_hartree(ParaV, GlobalV::NSPIN);
+    std::vector< std::vector<TK> > DM_hartree_tmp(nk_total, std::vector<TK>(ParaV->nloc));
 
     /****** get every Hamiltion matrix ******/
 
@@ -520,7 +524,10 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     }
     else if( XC_func_rdmft == "power" || XC_func_rdmft == "Muller" )
     {
-        // prepare for the special density matrix DM_XC(nk*nbasis_local*nbasis_local)
+        /****** get the special density matrix DM_XC ******/
+        // Consider encapsulating it as a function that computes some special DM?
+
+        // prepare for DM_XC(nk*nbasis_local*nbasis_local)
         std::vector< std::vector<TK> > DM_XC(nk_total, std::vector<TK>(ParaV->nloc));  // ParaV->nloc
         std::vector< const std::vector<TK>* > DM_XC_pointer(nk_total);
         for(int ik=0; ik<nk_total; ++ik) DM_XC_pointer[ik] = &DM_XC[ik];
@@ -544,6 +551,8 @@ double rdmft_cal(LCAO_Matrix* LM_in,
             elecstate::psiMulPsi(wg_wfc, wfc, DM_Kpointer);
 #endif            
         }
+
+        /****** get the special density matrix DM_XC ******/
 
         // transfer the DM_XC to appropriate format
         std::vector<std::map<int,std::map<std::pair<int,std::array<int,3>>,RI::Tensor<double>>>> Ds_XC_d = 
