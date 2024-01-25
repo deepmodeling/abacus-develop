@@ -28,7 +28,7 @@ These requirements support the calculation of plane-wave basis in ABACUS. For LC
 Some of these packages can be installed with popular package management system, such as `apt` and `yum`:
 
 ```bash
-sudo apt update && sudo apt install -y libopenblas-openmp-dev liblapack-dev libscalapack-mpi-dev libelpa-dev libfftw3-dev libcereal-dev libxc-dev g++ make cmake bc git
+sudo apt update && sudo apt install -y libopenblas-openmp-dev liblapack-dev libscalapack-mpi-dev libelpa-dev libfftw3-dev libcereal-dev libxc-dev g++ make cmake bc git pkgconf
 ```
 
 > Installing ELPA by apt only matches requirements on Ubuntu 22.04. For earlier linux distributions, you should build ELPA from source.
@@ -111,12 +111,12 @@ Here, 'build' is the path for building ABACUS; and '-D' is used for setting up s
   - `LAPACK_DIR`: Path to OpenBLAS library `libopenblas.so`(including BLAS and LAPACK)
   - `SCALAPACK_DIR`: Path to ScaLAPACK library `libscalapack.so`
   - `ELPA_DIR`: Path to ELPA install directory; should be the folder containing 'include' and 'lib'.
-  > Note: If you install ELPA from source, please add a symlink to avoid the additional include file folder with version name: `ln -s elpa/include/elpa-2021.05.002/elpa elpa/include/elpa`. This is a known behavior of ELPA.
+  > Note: In ABACUS v3.5.1 or earlier, if you install ELPA from source , please add a symlink to avoid the additional include file folder with version name: `ln -s elpa/include/elpa-2021.05.002/elpa elpa/include/elpa` to help the build system find ELPA headers.
 
   - `FFTW3_DIR`: Path to FFTW3.
   - `CEREAL_INCLUDE_DIR`: Path to the parent folder of `cereal/cereal.hpp`. Will download from GitHub if absent.
   - `Libxc_DIR`: (Optional) Path to Libxc.
-  > Note: Building Libxc from source with Makefile does NOT support using it in CMake here. Please compile Libxc with CMake instead.
+  > Note: In ABACUS v3.5.1 or earlier, Libxc built from source with Makefile is NOT supported; please compile Libxc with CMake instead.
   - `LIBRI_DIR`: (Optional) Path to LibRI.
   - `LIBCOMM_DIR`: (Optional) Path to LibComm.
 

@@ -1,7 +1,7 @@
 #include "math_sphbes.h"
-#include "timer.h"
 #include "constants.h"
 #include <algorithm>
+#include <iostream>
 
 #include <cassert>
 
@@ -425,7 +425,6 @@ void Sphbes::Spherical_Bessel
     double *jl		 // jl(1:msh) = j_l(q*r(i)),spherical bessel function
 )
 {
-    ModuleBase::timer::tick("Sphbes","Spherical_Bessel");
     double x1=0.0;
 
     int i=0;
@@ -598,7 +597,6 @@ void Sphbes::Spherical_Bessel
         }
     }
 
-    ModuleBase::timer::tick("Sphbes","Spherical_Bessel");
     return;
 }
 
@@ -613,7 +611,6 @@ void Sphbes::Spherical_Bessel
 	double *sjp
 )
 {
-	ModuleBase::timer::tick("Sphbes","Spherical_Bessel");
 
 	//calculate jlx first
 	Spherical_Bessel (msh, r, q, l, sj);
@@ -634,7 +631,6 @@ void Sphbes::dSpherical_Bessel_dx
     double *djl		 // jl(1:msh) = j_l(q*r(i)),spherical bessel function
 )
 {
-    ModuleBase::timer::tick("Sphbes","dSpherical_Bessel_dq");
     if (l < 0 )
     {
 		std::cout << "We temporarily only calculate derivative of l >= 0." << std::endl;
@@ -682,7 +678,6 @@ void Sphbes::dSpherical_Bessel_dx
         }
         delete[] jl;
     }
-    ModuleBase::timer::tick("Sphbes","dSpherical_Bessel_dq");
     return;
 }
 

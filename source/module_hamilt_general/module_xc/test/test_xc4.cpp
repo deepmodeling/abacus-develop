@@ -11,7 +11,7 @@
 
 namespace ModuleBase
 {
-    void WARNING_QUIT(const std::string &file,const std::string &description) {return ;}
+    void WARNING_QUIT(const std::string &file,const std::string &description) {exit(1);}
 }
 
 namespace GlobalV
@@ -49,7 +49,7 @@ class XCTest_SCAN : public testing::Test
                 v2_.push_back(v2);
                 v3_.push_back(v3);
             }
-        }                       
+        }
 };
 
 TEST_F(XCTest_SCAN, set_xc_type)
