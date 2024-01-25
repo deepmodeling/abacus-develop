@@ -600,17 +600,19 @@ IF (ENABLE_GOOGLEBENCH)
   set(BUILD_TESTING ON)
   find_package(benchmark HINTS ${BENCHMARK_DIR})
   if(NOT ${benchmark_FOUND})
-    set(BENCHMARK_USE_BUNDLED_GTEST OFF)
     include(FetchContent)
     FetchContent_Declare(
       benchmark
       GIT_REPOSITORY https://github.com/google/benchmark.git
       GIT_TAG "origin/main"
       GIT_SHALLOW TRUE
-      GIT_PROGRESS TRUE
-      CMAKE_ARGS -DCMAKE_BUILD_TYPE=Release -DBENCHMARK_ENABLE_TESTING=OFF
+      GIT_PROGRESS TRUE 
     )
     FetchContent_MakeAvailable(benchmark)
+    set(BENCHMARK_USE_BUNDLED_GTEST OFF CACHE INTERNAL "disable benchmark bundled gtest")
+    set(CMAKE_BUILD_TYPE "Release" CACHE INTERNAL "build benchmark in release mode")
+    set(BENCHMARK_ENABLE_TESTING OFF CACHE INTERNAL "disable benchmark testing")
+    add_subdirectory(tests)
   endif()
 endif()
 
