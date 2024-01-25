@@ -116,6 +116,9 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
 
 void Charge_Mixing::allocate_mixing_dmr(int nnr)
 {
+    // Note that: we cannot allocate memory for dmr_mdata in set_mixing.
+    // since the size of dmr_mdata is given by the size of HContainer.nnr, which is calculated in DensityMatrix::init_DMR().
+    // and DensityMatrix::init_DMR() is called in beforescf(). While set_mixing() is called in ESolver_KS::Init().
     ModuleBase::TITLE("Charge_Mixing", "allocate_mixing_dmr");
     ModuleBase::timer::tick("Charge_Mixing", "allocate_mixing_dmr");
     //

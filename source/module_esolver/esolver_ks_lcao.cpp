@@ -501,6 +501,14 @@ namespace ModuleESolver
                                 GlobalV::MIXING_GG0,
                                 GlobalV::MIXING_TAU,
                                 GlobalV::MIXING_BETA_MAG);
+            // allocate memory for dmr_mdata
+            if (GlobalV::MIXING_DMR)
+            {
+                const elecstate::DensityMatrix<TK, double>* dm
+                    = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
+                int nnr_tmp = dm->get_DMR_pointer(1)->get_nnr();
+                this->p_chgmix->allocate_mixing_dmr(nnr_tmp);
+            }
         }
         this->p_chgmix->mix_reset();
     }
