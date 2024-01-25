@@ -136,6 +136,8 @@ namespace elecstate
      */
     std::vector<hamilt::HContainer<TR>*> get_DMR_vector() const;
 
+    std::vector<std::vector<TR>> get_DMR_save() const {return _DMR_save;}
+
     /**
      * @brief get pointer of DMK
      * @param ik k-point index, which is the index of _DMK

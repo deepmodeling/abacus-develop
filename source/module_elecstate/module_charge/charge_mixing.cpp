@@ -760,6 +760,29 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
 
 }
 
+void Charge_Mixing::mix_dmr(std::vector<hamilt::HContainer<double>*> dmr, std::vector<std::vector<double>> dmr_save)
+{
+    // Notice that here I do not pass a DensityMatrix object to this function directly, 
+    // since DensityMatrix is a Template class, which can not be used as a function parameter.
+    ModuleBase::TITLE("Charge_Mixing", "mix_dmr");
+    ModuleBase::timer::tick("Charge_Mixing", "mix_dmr");
+    //
+    const int dmr_nspin = (GlobalV::NSPIN == 2) ? 2 : 1;
+    double* dmr_in;
+    double* dmr_out;
+    if (GlobalV::NSPIN == 1)
+    {
+        dmr_in = dmr_save[0].data();
+        dmr_out = dmr[0]->get_wrapper();
+        this->mixing->push_data(this->rho_mdata, dmr_in, dmr_out, nullptr, false);    
+        this->mixing->mix_data(this->rho_mdata, dmr_out);
+    }
+
+    ModuleBase::timer::tick("Charge_Mixing", "mix_dmr");
+
+    return;
+}
+
 void Charge_Mixing::mix_reset()
 {
     this->mixing->reset();

@@ -2,6 +2,7 @@
 #ifndef CHARGE_MIXING_H
 #define CHARGE_MIXING_H
 #include "charge.h"
+#include "module_elecstate/module_dm/density_matrix.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/module_mixing/mixing.h"
@@ -31,6 +32,13 @@ class Charge_Mixing
      *
      */
     void mix_rho(Charge* chr);
+
+    /**
+     * @brief density matrix mixing, only for LCAO
+     *
+     */
+    void mix_dmr(std::vector<hamilt::HContainer<double>*> dmr, std::vector<std::vector<double>> dmr_save);
+
 
     /**
      * @brief charge mixing for reciprocal space

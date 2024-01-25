@@ -19,6 +19,7 @@
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/print_info.h"
+#include "module_elecstate/module_dm/density_matrix.h"
 #ifdef __EXX
 // #include "module_rpa/rpa.h"
 #include "module_ri/RPA_LRI.h"
@@ -796,6 +797,14 @@ namespace ModuleESolver
     template <typename TK, typename TR>
     void ESolver_KS_LCAO<TK, TR>::eachiterfinish(int iter)
 {
+    // mix density matrix
+    if (GlobalV::MIXING_RESTART > 0 && iter > GlobalV::MIXING_RESTART && GlobalV::MIXING_DMR )
+    {
+        elecstate::DensityMatrix<TK, double>* dm
+                    = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
+        this->p_chgmix->mix_dmr(dm->get_DMR_vector(), dm->get_DMR_save());
+    }
+
     //-----------------------------------
     // save charge density
     //-----------------------------------
