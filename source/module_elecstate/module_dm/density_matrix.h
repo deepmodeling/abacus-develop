@@ -190,6 +190,11 @@ namespace elecstate
      * @param ik k-point index
      */
     void read_DMK(const std::string directory, const int ispin, const int ik);
+
+    /**
+     * @brief save _DMR into _DMR_save
+     */
+    void save_DMR();
     
     std::vector<ModuleBase::ComplexMatrix> EDMK; // for TD-DFT
 
@@ -200,6 +205,7 @@ namespace elecstate
      * vector.size() = 2 for spin-polarization
      */
     std::vector<hamilt::HContainer<TR>*> _DMR;
+    std::vector<std::vector<TR>> _DMR_save;
 
     /**
      * @brief HContainer for density matrix in real space for gird parallelization
