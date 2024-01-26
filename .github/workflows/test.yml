@@ -29,7 +29,7 @@ jobs:
 
       - name: Build
         run: |
-          cmake -B build -DBUILD_TESTING=ON -DENABLE_DEEPKS=ON -DENABLE_LIBXC=ON -DENABLE_LIBRI=ON -DENABLE_PAW=ON
+          cmake -B build -DBUILD_TESTING=ON -DENABLE_DEEPKS=ON -DENABLE_LIBXC=ON -DENABLE_LIBRI=ON -DENABLE_PAW=ON -DENABLE_GOOGLEBENCH=ON
           cmake --build build -j8
           cmake --install build
 
