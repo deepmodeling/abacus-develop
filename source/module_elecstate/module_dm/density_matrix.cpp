@@ -263,13 +263,6 @@ hamilt::HContainer<TR>* DensityMatrix<TK, TR>::get_DMR_pointer(const int ispin) 
     return this->_DMR[ispin - 1];
 }
 
-// get _DMR pointer vector
-template <typename TK, typename TR>
-std::vector<hamilt::HContainer<TR>*> DensityMatrix<TK, TR>::get_DMR_vector() const
-{
-    return this->_DMR;
-}
-
 // get _DMK[ik] pointer
 template <typename TK, typename TR>
 TK* DensityMatrix<TK, TR>::get_DMK_pointer(const int ik) const

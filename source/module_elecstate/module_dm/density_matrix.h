@@ -134,7 +134,7 @@ namespace elecstate
      * @brief get pointer vector of DMR
      * @return HContainer<TR>* vector of DMR
      */
-    std::vector<hamilt::HContainer<TR>*> get_DMR_vector() const;
+    std::vector<hamilt::HContainer<TR>*> get_DMR_vector() const {return this->_DMR;}
 
     std::vector<std::vector<TR>> get_DMR_save() const {return _DMR_save;}
 
