@@ -131,7 +131,7 @@ void gpu_task_generator_rho(const Grid_Technique &GridT,
                 it1, GlobalC::ucell.iat2ia[iat1],0)];
       int nw1 = GlobalC::ucell.atoms[it1].nw;
       
-      for(int atom2 = atom1; atom2 < GridT.how_many_atoms[grid_index]; atom2++) {
+      for(int atom2 = 0; atom2 < GridT.how_many_atoms[grid_index]; atom2++) {
         if(!gpu_mat_cal_flag[calc_flag_index + atom2]){
         continue;
         }
