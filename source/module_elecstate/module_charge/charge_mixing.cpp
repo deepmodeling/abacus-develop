@@ -132,6 +132,8 @@ void Charge_Mixing::allocate_mixing_dmr(int nnr)
     {
         this->mixing->init_mixing_data(this->dmr_mdata, nnr * dmr_nspin, sizeof(double));
     }
+
+    this->dmr_mdata.reset();
     ModuleBase::timer::tick("Charge_Mixing", "allocate_mixing_dmr");
 
     return;
@@ -760,12 +762,14 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
 
 }
 
-void Charge_Mixing::mix_dmr(std::vector<hamilt::HContainer<double>*> dmr, std::vector<std::vector<double>> dmr_save)
+void Charge_Mixing::mix_dmr(elecstate::DensityMatrix<double, double>* DM)
 {
-    // Notice that here I do not pass a DensityMatrix object to this function directly, 
-    // since DensityMatrix is a Template class, which can not be used as a function parameter.
+    // Notice that DensityMatrix object is a Template class
     ModuleBase::TITLE("Charge_Mixing", "mix_dmr");
     ModuleBase::timer::tick("Charge_Mixing", "mix_dmr");
+    //
+    std::vector<hamilt::HContainer<double>*> dmr = DM->get_DMR_vector();
+    std::vector<std::vector<double>> dmr_save = DM->get_DMR_save();
     //
     const int dmr_nspin = (GlobalV::NSPIN == 2) ? 2 : 1;
     double* dmr_in;
@@ -776,6 +780,31 @@ void Charge_Mixing::mix_dmr(std::vector<hamilt::HContainer<double>*> dmr, std::v
         dmr_out = dmr[0]->get_wrapper();
         this->mixing->push_data(this->rho_mdata, dmr_in, dmr_out, nullptr, false);    
         this->mixing->mix_data(this->rho_mdata, dmr_out);
+    }
+
+    ModuleBase::timer::tick("Charge_Mixing", "mix_dmr");
+
+    return;
+}
+
+void Charge_Mixing::mix_dmr(elecstate::DensityMatrix<std::complex<double>, double>* DM)
+{
+    // Notice that DensityMatrix object is a Template class
+    ModuleBase::TITLE("Charge_Mixing", "mix_dmr");
+    ModuleBase::timer::tick("Charge_Mixing", "mix_dmr");
+    //
+    std::vector<hamilt::HContainer<double>*> dmr = DM->get_DMR_vector();
+    std::vector<std::vector<double>> dmr_save = DM->get_DMR_save();
+    //
+    const int dmr_nspin = (GlobalV::NSPIN == 2) ? 2 : 1;
+    double* dmr_in;
+    double* dmr_out;
+    if (GlobalV::NSPIN == 1)
+    {
+        dmr_in = dmr_save[0].data();
+        dmr_out = dmr[0]->get_wrapper();
+        this->mixing->push_data(this->dmr_mdata, dmr_in, dmr_out, nullptr, false);    
+        this->mixing->mix_data(this->dmr_mdata, dmr_out);
     }
 
     ModuleBase::timer::tick("Charge_Mixing", "mix_dmr");

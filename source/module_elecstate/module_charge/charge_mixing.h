@@ -37,8 +37,8 @@ class Charge_Mixing
      * @brief density matrix mixing, only for LCAO
      *
      */
-    void mix_dmr(std::vector<hamilt::HContainer<double>*> dmr, std::vector<std::vector<double>> dmr_save);
-
+    void mix_dmr(elecstate::DensityMatrix<double, double>* DM);
+    void mix_dmr(elecstate::DensityMatrix<std::complex<double>, double>* DM);
 
     /**
      * @brief charge mixing for reciprocal space
