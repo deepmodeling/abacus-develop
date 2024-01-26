@@ -19,7 +19,6 @@
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/print_info.h"
-#include "module_elecstate/module_dm/density_matrix.h"
 #ifdef __EXX
 // #include "module_rpa/rpa.h"
 #include "module_ri/RPA_LRI.h"
@@ -611,7 +610,7 @@ namespace ModuleESolver
     // save input rho
         this->pelec->charge->save_rho_before_sum_band();
         // save density matrix for mixing
-        if (GlobalV::MIXING_RESTART > 0 && GlobalV::MIXING_DMR && iter >= GlobalV::MIXING_RESTART - 1)
+        if (GlobalV::MIXING_RESTART > 0 && GlobalV::MIXING_DMR && iter >= GlobalV::MIXING_RESTART)
         {
             elecstate::DensityMatrix<TK, double>* dm
                 = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
