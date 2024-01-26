@@ -14,6 +14,7 @@
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h" //caoyu add for deepks 2021-06-03
 #include "module_elecstate/elecstate_lcao.h"
 #endif
+#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dftu_new.h"
 
 template<typename T>
 double Force_Stress_LCAO<T>::force_invalid_threshold_ev = 0.00;
@@ -226,7 +227,16 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
         {
             stress_dftu.create(3, 3);
         }
-        GlobalC::dftu.force_stress(pelec, *uhm.LM, force_dftu, stress_dftu, kv);
+        /*GlobalC::dftu.force_stress(pelec, *uhm.LM, force_dftu, stress_dftu, kv);*/
+        hamilt::DFTUNew<hamilt::OperatorLCAO<T, double>> tmp_dftu(uhm.LM,
+                                                                 kv.kvec_d,
+                                                                 nullptr,
+                                                                 nullptr,
+                                                                 &GlobalC::ucell,
+                                                                 &GlobalC::GridD,
+                                                                 &GlobalC::dftu,
+                                                                 uhm.LM->ParaV);
+        tmp_dftu.cal_force_stress(isforce, isstress, force_dftu, stress_dftu);
     }
     if (!GlobalV::GAMMA_ONLY_LOCAL)
     {
@@ -467,6 +477,10 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
             {
                 ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "VDW        FORCE", force_vdw, 0);
                 // this->print_force("VDW        FORCE",force_vdw,1,ry);
+            }
+            if (GlobalV::dft_plus_u)
+            {
+                ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "DFT+U      FORCE", force_dftu, 0);
             }
 #ifdef __DEEPKS
             // caoyu add 2021-06-03

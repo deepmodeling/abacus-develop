@@ -58,6 +58,13 @@ class DFTUNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     /// pointer of density matrix, it is a temporary implementation
     static const elecstate::DensityMatrix<TK, double>* dm_in_dftu;
 
+    /// calculate force and stress for DFT+U 
+    void cal_force_stress(
+      const bool cal_force, 
+      const bool cal_stress, 
+      ModuleBase::matrix& force, 
+      ModuleBase::matrix& stress);
+
   private:
     const UnitCell* ucell = nullptr;
 
@@ -90,7 +97,12 @@ class DFTUNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                         std::vector<double>& occupations);
     /// VU_{m, m'} = sum_{m,m'} (1/2*delta_{m, m'} - occ_{m, m'}) * U
     /// EU = sum_{m,m'} 1/2 * U * occ_{m, m'} * occ_{m', m}
-    void cal_v_of_u(const std::vector<double>& occupations, const double u_value, std::vector<double>& v_of_u, double& EU);
+    void cal_v_of_u(
+      const double* occ,
+      const int m_size,
+      const double u_value,
+      double* VU,
+      double& E);
 
     /**
      * @brief calculate the non-local pseudopotential matrix with specific <I,J,R> atom-pairs
@@ -110,6 +122,34 @@ class DFTUNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                     const std::unordered_map<int, std::vector<double>>& nlm2_all,
                     const std::vector<double>& vu_in,
                     TR* data_pointer);
+
+    /**
+     * @brief calculate the atomic Force of <I,J,R> atom pair
+     */
+    void cal_force_IJR(const int& iat1,
+                       const int& iat2,
+                       const int& T0,
+                       const Parallel_Orbitals* paraV,
+                       const std::unordered_map<int, std::vector<double>>& nlm1_all,
+                       const std::unordered_map<int, std::vector<double>>& nlm2_all,
+                       const std::vector<double>& vu_in,
+                       const hamilt::BaseMatrix<double>** dmR_pointer,
+                       const int nspin,
+                       double* force);
+    /**
+     * @brief calculate the Stress of <I,J,R> atom pair
+     */
+    void cal_stress_IJR(const int& iat1,
+                        const int& iat2,
+                        const int& T0,
+                        const Parallel_Orbitals* paraV,
+                        const std::unordered_map<int, std::vector<double>>& nlm1_all,
+                        const std::unordered_map<int, std::vector<double>>& nlm2_all,
+                        const std::vector<double>& vu_in,
+                        const hamilt::BaseMatrix<double>** dmR_pointer,
+                        const int nspin,
+                        const ModuleBase::Vector3<int>& R_index1,
+                        double* stress);
 
     std::vector<AdjacentAtomInfo> adjs_all;
 };

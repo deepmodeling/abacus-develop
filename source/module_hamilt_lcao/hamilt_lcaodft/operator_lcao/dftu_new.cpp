@@ -140,6 +140,7 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
         ucell->iat2iait(iat0, &I0, &T0);
         const int target_L = this->dftu->orbital_corr[T0];
         if(target_L == -1) continue;
+        const int tlp1 = 2*target_L+1;
         AdjacentAtomInfo& adjs = this->adjs_all[iat0];
 
         std::vector<std::unordered_map<int, std::vector<double>>> nlm_tot;
@@ -184,17 +185,7 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                 uot.two_center_bundle->overlap_orb_onsite->snap(
                         T1, L1, N1, M1, T0, dtau * this->ucell->lat0, 0 /*cal_deri*/, nlm);
 #else
-                uot.snap_psibeta_half(orb,
-                                      this->ucell->infoNL,
-                                      nlm,
-                                      tau1,
-                                      T1,
-                                      atom1->iw2l[iw1], // L1
-                                      atom1->iw2m[iw1], // m1
-                                      atom1->iw2n[iw1], // N1
-                                      tau0,
-                                      T0,
-                                      0 /*cal_deri*/); // R0,T0
+                ModuleBase::WARNING_QUIT("DFTUNew", "old two center integral method not implemented");
 #endif
                 // select the elements of nlm with target_L
                 std::vector<double> nlm_target(2*target_L+1);
@@ -214,7 +205,7 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
             }
         }
         //first iteration to calculate occupation matrix
-        std::vector<double> occ((target_L * 2 + 1) * (target_L * 2 + 1), 0.0);
+        std::vector<double> occ(tlp1 * tlp1, 0.0);
         if(this->dftu->initialed_locale == false)
         {
             hamilt::HContainer<double>* dmR_current = this->dm_in_dftu->get_DMR_pointer(GlobalV::CURRENT_SPIN+1);
@@ -265,7 +256,7 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
         //calculate VU
         const double u_value = this->dftu->U[T0];
         std::vector<double> VU(occ.size());
-        this->cal_v_of_u(occ, u_value, VU, this->dftu->EU);
+        this->cal_v_of_u(occ.data(), tlp1, u_value, VU.data(), this->dftu->EU);
 
         // second iteration to calculate Hamiltonian matrix
         // calculate <psi_I|beta_m> U*(1/2*delta(m, m')-occ(m, m')) <beta_m'|psi_{J,R}> for each pair of <IJR> atoms
@@ -414,16 +405,12 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::cal_occupations(
 
 template <typename TK, typename TR>
 void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::cal_v_of_u(
-    const std::vector<double>& occ,
+    const double* occ,
+    const int m_size,
     const double u_value,
-    std::vector<double>& VU,
+    double* VU,
     double& EU)
 {
-    const int m_size = int(sqrt(occ.size()));
-#ifdef __DEBUG
-    assert(m_size * m_size == occ.size());
-    assert(m_size * m_size == VU.size());
-#endif
     // calculate the local matrix
     for (int m1 = 0; m1 < m_size; m1++)
     {
@@ -445,6 +432,8 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
     ModuleBase::timer::tick("DFTUNew", "contributeHR");
     return;
 }
+
+#include "dftu_force_stress.hpp"
 
 template class hamilt::DFTUNew<hamilt::OperatorLCAO<double, double>>;
 template class hamilt::DFTUNew<hamilt::OperatorLCAO<std::complex<double>, double>>;
