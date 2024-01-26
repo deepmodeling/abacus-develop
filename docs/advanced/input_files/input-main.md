@@ -72,6 +72,7 @@
     - [mixing\_beta](#mixing_beta)
     - [mixing\_beta\_mag](#mixing_beta_mag)
     - [mixing\_ndim](#mixing_ndim)
+    - [mixing\_restart](#mixing_restart)
     - [mixing\_gg0](#mixing_gg0)
     - [mixing\_gg0\_mag](#mixing_gg0_mag)
     - [mixing\_gg0\_min](#mixing_gg0_min)
@@ -145,9 +146,9 @@
     - [out\_app\_flag](#out_app_flag)
     - [out\_ndigits](#out_ndigits)
     - [out\_interval](#out_interval)
-    - [out\_element\_info](#out_element_info)
     - [band\_print\_num](#band_print_num)
     - [bands\_to\_print](#bands_to_print)
+    - [out\_element\_info](#out_element_info)
     - [restart\_save](#restart_save)
     - [restart\_load](#restart_load)
     - [rpa](#rpa)
@@ -2801,9 +2802,9 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: String
 - **Description**: the spin direction for the Wannier function calculation when nspin is set to 2
-  - "up": Calculate spin up for the Wannier function.
-  - "down": Calculate spin down for the Wannier function.
-- **Default**: "up"
+  - `up`: Calculate spin up for the Wannier function.
+  - `down`: Calculate spin down for the Wannier function.
+- **Default**: `up`
 
 ### out_wannier_mmn
 
@@ -2843,6 +2844,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 - **Description**: write the "UNK.*" file in ASCII format or binary format.
   - 0: write the "UNK.*" file in binary format.
   - 1: write the "UNK.*" file in ASCII format (text file format).
+- **Default**: 1
 
 [back to top](#full-list-of-input-keywords)
 

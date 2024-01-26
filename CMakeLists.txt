@@ -34,6 +34,7 @@ option(DEBUG_INFO "Print message for developers to debug." OFF)
 option(ENABLE_NATIVE_OPTIMIZATION "Enable compilation optimization for the native machine's CPU type" OFF)
 option(COMMIT_INFO "Print commit information in log" ON)
 option(ENABLE_FFT_TWO_CENTER "Enable FFT-based two-center integral method." ON)
+option(ENABLE_GOOGLEBENCH "Enable GOOGLE-benchmark usage." OFF)
 option(ENABLE_RAPIDJSON "Enable rapid-json usage." OFF)
 
 
@@ -591,6 +592,25 @@ if(INFO)
   # modifications on blas_connector and lapack_connector
 endif()
 
+#  Add performance test in abacus
+IF (ENABLE_GOOGLEBENCH)
+  set(BUILD_TESTING ON)
+  find_package(benchmark HINTS ${BENCHMARK_DIR})
+  if(NOT ${benchmark_FOUND})
+    set(BENCHMARK_USE_BUNDLED_GTEST OFF)
+    include(FetchContent)
+    FetchContent_Declare(
+      benchmark
+      GIT_REPOSITORY https://github.com/google/benchmark.git
+      GIT_TAG "origin/main"
+      GIT_SHALLOW TRUE
+      GIT_PROGRESS TRUE 
+    )
+    set(BENCHMARK_ENABLE_TESTING OFF)
+    FetchContent_MakeAvailable(benchmark)
+  endif()
+endif()
+
 IF (BUILD_TESTING)
   set_if_higher(CMAKE_CXX_STANDARD 14) # Required in orbital
   include(CTest)
@@ -620,8 +640,14 @@ IF (BUILD_TESTING)
     endif()
 
     #dependencies & link library
-    target_link_libraries(${UT_TARGET} ${UT_LIBS}
-      Threads::Threads GTest::gtest_main GTest::gmock_main)
+    if(ENABLE_GOOGLEBENCH)
+      target_link_libraries(${UT_TARGET} ${UT_LIBS}
+        Threads::Threads GTest::gtest_main GTest::gmock_main benchmark::benchmark)
+      else()
+        target_link_libraries(${UT_TARGET} ${UT_LIBS}
+          Threads::Threads GTest::gtest_main GTest::gmock_main)
+    endif()
+      
     if(USE_OPENMP)
       target_link_libraries(${UT_TARGET} OpenMP::OpenMP_CXX)
     endif()
@@ -631,6 +657,7 @@ IF (BUILD_TESTING)
       WORKING_DIRECTORY $<TARGET_FILE_DIR:${UT_TARGET}>
     )
   endfunction(AddTest)
+
 endif()
 
 add_subdirectory(source)
