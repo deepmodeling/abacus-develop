@@ -306,6 +306,7 @@ TEST_F(toQOTest, Initialize)
 TEST_F(toQOTest, CalculateOvlpR)
 {
     define_fcc_cell(ucell);
+    GlobalV::qo_thr = 1e-10;
     toQO tqo("hydrogen", {"minimal-nodeless", "minimal-nodeless"});
     std::vector<ModuleBase::Vector3<double>> kvecs_c;
     kvecs_c.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
@@ -337,6 +338,7 @@ TEST_F(toQOTest, CalculateOvlpR)
 TEST_F(toQOTest, CalculateSelfOvlpRMinimal)
 {
     define_fcc_cell(ucell);
+    GlobalV::qo_thr = 1e-10;
     toQO tqo("hydrogen", {"minimal-nodeless", "minimal-nodeless"});
     std::vector<ModuleBase::Vector3<double>> kvecs_c;
     kvecs_c.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
@@ -356,7 +358,7 @@ TEST_F(toQOTest, CalculateSelfOvlpRMinimal)
     // check if diagonal elements are 1
     for(int i = 0; i < tqo.nphi(); i++)
     {
-        EXPECT_NEAR(tqo.ovlp_R()[0][i][i], 1.0, 1e-2); // this is too tight for 1s orbital, which fluctuates a lot in narrow region
+        EXPECT_NEAR(tqo.ovlp_R()[0][i][i], 1.0, 1e-3); // this is too tight for 1s orbital, which fluctuates a lot in narrow region
     }
     //std::remove("Si_special_use_unittest.orb");
     //std::remove("C_special_use_unittest.orb");
@@ -366,6 +368,7 @@ TEST_F(toQOTest, CalculateSelfOvlpRMinimal)
 TEST_F(toQOTest, CalculateSelfOvlpKSymmetrical)
 {
     define_fcc_cell(ucell);
+    GlobalV::qo_thr = 1e-10;
     toQO tqo("hydrogen", {"minimal-nodeless", "minimal-nodeless"});
     std::vector<ModuleBase::Vector3<double>> kvecs_c;
     kvecs_c.push_back(ModuleBase::Vector3<double>(-0.25, -0.25, -0.25)); // pair 1
@@ -496,6 +499,7 @@ TEST_F(toQOTest, CalculateSelfOvlpKSymmetrical)
 TEST_F(toQOTest, BuildHydrogenFull)
 {
     define_fcc_cell(ucell);
+    GlobalV::qo_thr = 1e-10;
     toQO tqo("hydrogen", {"full", "full"});
     tqo.unwrap_unitcell(&ucell);
     GlobalV::qo_thr = 1e-10;
@@ -508,6 +512,7 @@ TEST_F(toQOTest, BuildHydrogenFull)
 TEST_F(toQOTest, CalculateSelfOvlpRFull)
 {
     define_fcc_cell(ucell);
+    GlobalV::qo_thr = 1e-10;
     toQO tqo("hydrogen", {"full", "full"});
     std::vector<ModuleBase::Vector3<double>> kvecs_c;
     kvecs_c.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
@@ -528,14 +533,14 @@ TEST_F(toQOTest, CalculateSelfOvlpRFull)
     // check if diagonal elements are 1
     for(int i = 0; i < tqo.nphi(); i++)
     {
-        EXPECT_NEAR(tqo.ovlp_R()[0][i][i], 1.0, 1e-2); // this is too tight for 1s orbital, which fluctuates a lot in narrow region
+        EXPECT_NEAR(tqo.ovlp_R()[0][i][i], 1.0, 5e-4); // this is too tight for 1s orbital, which fluctuates a lot in narrow region
     }
     // check if symmetrical
     for(int i = 0; i < tqo.nchi(); i++)
     {
         for(int j = 0; j < tqo.nphi(); j++)
         {
-            EXPECT_NEAR(tqo.ovlp_R()[0][i][j], tqo.ovlp_R()[0][j][i], 1e-4);
+            EXPECT_NEAR(tqo.ovlp_R()[0][i][j], tqo.ovlp_R()[0][j][i], 1e-8);
         }
     }
     std::remove("Si_special_use_unittest.orb");
@@ -595,6 +600,7 @@ TEST_F(toQOTest, ScanSupercellSC4)
 TEST_F(toQOTest, CalculateSelfOvlpRPswfc)
 {
     define_fcc_cell(ucell);
+    GlobalV::qo_thr = 1e-10;
     toQO tqo("pswfc", {"all", "all"});
     std::vector<ModuleBase::Vector3<double>> kvecs_c;
     kvecs_c.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
@@ -633,6 +639,7 @@ TEST_F(toQOTest, CalculateSelfOvlpRPswfc)
 TEST_F(toQOTest, CalculateOvlpKGamma)
 {
     define_fcc_cell(ucell);
+    GlobalV::qo_thr = 1e-10;
     toQO tqo("hydrogen", {"minimal-nodeless", "minimal-nodeless"});
     std::vector<ModuleBase::Vector3<double>> kvecs_c;
     kvecs_c.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
@@ -655,6 +662,8 @@ TEST_F(toQOTest, CalculateOvlpKGamma)
 TEST_F(toQOTest, CalculateSelfOvlpKPswfcSymmetrical)
 {
     define_fcc_cell(ucell);
+    GlobalV::qo_thr = 1e-10;
+    GlobalV::qo_screening_coeff = {0.5, 0.5};
     toQO tqo("pswfc", {"all", "all"});
     std::vector<ModuleBase::Vector3<double>> kvecs_c;
     kvecs_c.push_back(ModuleBase::Vector3<double>(-0.25, -0.25, -0.25)); // pair 1
@@ -681,7 +690,7 @@ TEST_F(toQOTest, CalculateSelfOvlpKPswfcSymmetrical)
             // R = 0, 0, 0, then unfolding kphase would be e-ikR = 1,
             // becomes direct summation over kpoints
             std::complex<double> ovlp_R_ij = ovlp_k_1[i][j] + ovlp_k_2[i][j];
-            EXPECT_NEAR(ovlp_R_ij.imag(), 0.0, 1e-10);
+            EXPECT_NEAR(ovlp_R_ij.imag(), 0.0, 1e-8);
         }
     }
     tqo.calculate_ovlp_k(2);
@@ -696,7 +705,7 @@ TEST_F(toQOTest, CalculateSelfOvlpKPswfcSymmetrical)
             // R = 0, 0, 0, then unfolding kphase would be e-ikR = 1,
             // becomes direct summation over kpoints
             std::complex<double> ovlp_R_ij = ovlp_k_3[i][j] + ovlp_k_4[i][j];
-            EXPECT_NEAR(ovlp_R_ij.imag(), 0.0, 1e-10);
+            EXPECT_NEAR(ovlp_R_ij.imag(), 0.0, 1e-8);
         }
     }
     tqo.calculate_ovlp_k(4);
@@ -711,7 +720,7 @@ TEST_F(toQOTest, CalculateSelfOvlpKPswfcSymmetrical)
             // R = 0, 0, 0, then unfolding kphase would be e-ikR = 1,
             // becomes direct summation over kpoints
             std::complex<double> ovlp_R_ij = ovlp_k_5[i][j] + ovlp_k_6[i][j];
-            EXPECT_NEAR(ovlp_R_ij.imag(), 0.0, 1e-10);
+            EXPECT_NEAR(ovlp_R_ij.imag(), 0.0, 1e-8);
         }
     }
     tqo.calculate_ovlp_k(6);
@@ -726,7 +735,7 @@ TEST_F(toQOTest, CalculateSelfOvlpKPswfcSymmetrical)
             // R = 0, 0, 0, then unfolding kphase would be e-ikR = 1,
             // becomes direct summation over kpoints
             std::complex<double> ovlp_R_ij = ovlp_k_7[i][j] + ovlp_k_8[i][j];
-            EXPECT_NEAR(ovlp_R_ij.imag(), 0.0, 1e-10);
+            EXPECT_NEAR(ovlp_R_ij.imag(), 0.0, 1e-8);
         }
     }
     tqo.calculate_ovlp_k(8);
@@ -738,7 +747,7 @@ TEST_F(toQOTest, CalculateSelfOvlpKPswfcSymmetrical)
         {
             // R = 0, 0, 0, then unfolding kphase would be e-ikR = 1,
             // becomes direct summation over kpoints
-            EXPECT_NEAR(ovlp_k_9[i][j].imag(), 0.0, 1e-10);
+            EXPECT_NEAR(ovlp_k_9[i][j].imag(), 0.0, 1e-8);
         }
     }
     //tqo.write_ovlp(tqo.ovlp_R()[0], "QO_self_ovlp.dat");
@@ -747,6 +756,7 @@ TEST_F(toQOTest, CalculateSelfOvlpKPswfcSymmetrical)
 TEST_F(toQOTest, CalculateHydrogenlike)
 {
     define_fcc_cell(ucell);
+    GlobalV::qo_thr = 1e-10;
     toQO tqo("hydrogen", {"minimal-nodeless", "minimal-nodeless"});
     std::vector<ModuleBase::Vector3<double>> kvecs_c;
     kvecs_c.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point

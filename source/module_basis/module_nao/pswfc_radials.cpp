@@ -185,7 +185,8 @@ void PswfcRadials::smooth(std::vector<double>& rgrid,
     }
 }
 
-std::vector<double> PswfcRadials::pswfc_prepossess(std::map<std::pair<int, int>, std::vector<double>>& lzeta_rvalues)
+std::vector<double> PswfcRadials::pswfc_prepossess(std::map<std::pair<int, int>, std::vector<double>>& lzeta_rvalues,
+                                                   const double conv_thr)
 {
     double nmax = 0.0;
     for(auto it = lzeta_rvalues.begin(); it != lzeta_rvalues.end(); it++)
@@ -198,7 +199,7 @@ std::vector<double> PswfcRadials::pswfc_prepossess(std::map<std::pair<int, int>,
         {
             rgrid[ir] = ir * 0.01;
         }
-        double rcut_i = cut_to_convergence(rgrid, rvalue, 1e-6);
+        double rcut_i = cut_to_convergence(rgrid, rvalue, conv_thr);
         if(rvalue.size() > nmax) nmax = rvalue.size();
         lzeta_rvalues[it->first] = rvalue; // stores in map
     }
@@ -289,7 +290,7 @@ void PswfcRadials::read_upf_pswfc(std::ifstream& ifs,
     indexing(); // build index_map_
 
     // cut rvalue to convergence and generate rgrid
-    std::vector<double> rgrid = pswfc_prepossess(result);
+    std::vector<double> rgrid = pswfc_prepossess(result, conv_thr);
     // refresh ngird value
     ngrid = rgrid.size();
 

@@ -58,7 +58,7 @@ void toQO::initialize(UnitCell* p_ucell,
     double cutoff = 2*rcut_max;
     nao_->set_uniform_grid(true, ngrid, cutoff, 'i', true);
     ao_->set_uniform_grid(true, ngrid, cutoff, 'i', true);
-    overlap_calculator_->tabulate(*ao_, *nao_, 'S', ngrid, rcut_max);
+    overlap_calculator_->tabulate(*ao_, *nao_, 'S', ngrid, cutoff);
     // prepare for Ylm
     ModuleBase::Ylm::set_coefficients();
     // END: "Two-center bundle build"
@@ -274,15 +274,15 @@ void toQO::calculate_ovlp_R(const int iR)
                                             // there is waste here, but for easy to understand, I don't optimize it.
                                             ModuleBase::Vector3<int> R = supercells_[iR];
                                             ModuleBase::Vector3<double> Rij;
-                                            Rij.x = rij.x + R.x * p_ucell_->a1.x 
-                                                          + R.y * p_ucell_->a2.x 
-                                                          + R.z * p_ucell_->a3.x;
-                                            Rij.y = rij.y + R.x * p_ucell_->a1.y 
-                                                          + R.y * p_ucell_->a2.y 
-                                                          + R.z * p_ucell_->a3.y;
-                                            Rij.z = rij.z + R.x * p_ucell_->a1.z 
-                                                          + R.y * p_ucell_->a2.z 
-                                                          + R.z * p_ucell_->a3.z;
+                                            Rij.x = rij.x + double(R.x) * p_ucell_->a1.x 
+                                                          + double(R.y) * p_ucell_->a2.x 
+                                                          + double(R.z) * p_ucell_->a3.x;
+                                            Rij.y = rij.y + double(R.x) * p_ucell_->a1.y 
+                                                          + double(R.y) * p_ucell_->a2.y 
+                                                          + double(R.z) * p_ucell_->a3.y;
+                                            Rij.z = rij.z + double(R.x) * p_ucell_->a1.z 
+                                                          + double(R.y) * p_ucell_->a2.z 
+                                                          + double(R.z) * p_ucell_->a3.z;
                                             Rij *= p_ucell_->lat0; // convert to Bohr
                                             overlap_calculator_->calculate(
                                                 it, li, izetai, mi,

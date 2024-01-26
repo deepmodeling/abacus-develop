@@ -143,29 +143,32 @@ double HydrogenRadials::generate_hydrogen_radial_toconv(const double charge,
 std::vector<std::pair<int, int>> HydrogenRadials::unzip_strategy(const int nmax,
                                                                  const std::string strategy)
 {
-    if(strategy != "energy")
+    if(strategy.substr(0, 6) != "energy")
     {
         // because for "energy", the nmax is used as the number of electrons
         assert(nmax < 8);
     }
     std::vector<std::pair<int, int>> nl_pairs;
-    if(strategy == "minimal-nodeless")
+    if(strategy.substr(0, 7) == "minimal")
     {
-        for(int n = 1; n <= nmax; n++)
+        if(strategy == "minimal-nodeless")
         {
-            std::pair<int, int> nl_pair = std::make_pair(n, n - 1);
-            nl_pairs.push_back(nl_pair);
+            for(int n = 1; n <= nmax; n++)
+            {
+                std::pair<int, int> nl_pair = std::make_pair(n, n - 1);
+                nl_pairs.push_back(nl_pair);
+            }
+        }
+        else// if(strategy == "minimal-valence")
+        {
+            for(int l = 0; l < nmax; l++)
+            {
+                std::pair<int, int> nl_pair = std::make_pair(nmax, l);
+                nl_pairs.push_back(nl_pair);
+            }
         }
     }
-    else if(strategy == "minimal-valence")
-    {
-        for(int l = 0; l < nmax; l++)
-        {
-            std::pair<int, int> nl_pair = std::make_pair(nmax, l);
-            nl_pairs.push_back(nl_pair);
-        }
-    }
-    else if(strategy == "energy")
+    else if(strategy.substr(0, 6) == "energy")
     {
         // 1s, -(n+1)-> 2s, -(l+1)-> 2p, 3s, -(n+1)-> 3p, 4s, -(l+1)-> 3d, 4p, 5s, -(n+1)-> 4d, 5p, 6s
         int starting_n = 1;
@@ -193,6 +196,43 @@ std::vector<std::pair<int, int>> HydrogenRadials::unzip_strategy(const int nmax,
                 starting_n++;
             }
             nl_switch++;
+        }
+        if(strategy == "energy-valence")
+        {
+            std::vector<int> nmax_ls;
+            std::vector<int> nmax_minus1_ls;
+            int real_nmax = 0;
+            for(auto nl_pair : nl_pairs)
+            {
+                if(nl_pair.first > real_nmax) real_nmax = nl_pair.first;
+            }
+            for(auto it = nl_pairs.begin(); it != nl_pairs.end();)
+            {
+                if(it->first == real_nmax) nmax_ls.push_back(it->second);
+                else if(it->first == real_nmax - 1) nmax_minus1_ls.push_back(it->second);
+                else
+                {
+                    it = nl_pairs.erase(it);
+                    continue;
+                }
+                ++it;
+            }
+            for(auto it = nl_pairs.begin(); it != nl_pairs.end();)
+            {
+                if(it->first == real_nmax - 1)
+                {
+                    if(std::find(nmax_ls.begin(), nmax_ls.end(), it->second) != nmax_ls.end())
+                    {
+                        it = nl_pairs.erase(it);
+                        continue;
+                    }
+                }
+                ++it;
+            }
+        }
+        for(auto nl_pair : nl_pairs)
+        {
+            std::cout << nl_pair.first << " " << nl_pair.second << std::endl;
         }
     }
     else
