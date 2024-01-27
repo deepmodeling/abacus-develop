@@ -28,7 +28,8 @@ void MPIInit()
     npcol = 1;
     Cblacs_pinfo(&myrank, &mysize);
     Cblacs_get(-1, 0, &ictxt);
-    Cblacs_gridinit(&ictxt, "Row", nprow, npcol);
+    char order[] = "Row";
+    Cblacs_gridinit(&ictxt, order, nprow, npcol);
     Cblacs_gridinfo(ictxt, &nprow, &npcol, &myprow, &mypcol);
 }
 
