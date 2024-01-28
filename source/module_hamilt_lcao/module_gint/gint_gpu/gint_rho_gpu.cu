@@ -191,7 +191,7 @@ void gint_gamma_rho_gpu(hamilt::HContainer<double> *DM,
                                      atom_pair_mat_A_array_g, atom_pair_lda_g,
                                      atom_pair_mat_B_array_g, atom_pair_ldb_g,
                                      atom_pair_mat_C_array_g, atom_pair_ldc_g,
-                                     atom_pair_num, GridT.streams[stream_num]);
+                                     atom_pair_num, GridT.streams[stream_num], nullptr);
           
 
             // new add streamsynchronize

@@ -18,7 +18,7 @@ void vbatched_gemm_device(
     T* __restrict__ B, int LDB,
     T*       __restrict__ C, int LDC,
     T* sA, int slda,
-    T* sB, int sldb)
+    T* sB, int sldb, T alpha)
 {
     int idx = threadIdx.x;  // thread's m dimension
     int idy = threadIdx.y;  // thread's n dimension
@@ -175,7 +175,8 @@ void vbatched_gemm_device(
             int coord_dCm = blx*BLK_M + m*DIM_X + idx;
             if (coord_dCm < M && coord_dCn < N) {
                 int offsC = coord_dCn*LDC + coord_dCm;
-                atomicAdd(C + offsC, rC[n][m]);
+
+                atomicAdd(C + offsC, rC[n][m] * alpha);
             }
         }
     }
@@ -192,7 +193,7 @@ void vbatched_gemm_kernel(
     int* M, int* N, int *K,
     T * * global_A_array, int* global_lda,
     T * * global_B_array, int* global_ldb,
-    T              ** global_C_array, int* global_ldc)
+    T              ** global_C_array, int* global_ldc, T* alpha)
 {
     extern __shared__ __align__(sizeof(T)) unsigned char smem[];
     T *shared_mem = reinterpret_cast<T *>(smem);
@@ -209,7 +210,11 @@ void vbatched_gemm_kernel(
     int shared_ldb = BLK_K+1;
     T* shared_A = (T*)shared_mem;
     T* shared_B = shared_A + shared_lda * BLK_K;
-
+    double alpha_tmp = 1.0;
+    if (alpha != nullptr)
+    {
+        alpha_tmp = alpha[batchid];
+    }
     vbatched_gemm_device<T, DIM_X, DIM_Y, 
                          BLK_M, BLK_N, BLK_K,
                          DIM_XA, DIM_YA,
@@ -219,7 +224,7 @@ void vbatched_gemm_kernel(
                         global_A_array[batchid], (int)global_lda[batchid],
                         global_B_array[batchid], (int)global_ldb[batchid],
                         global_C_array[batchid], (int)global_ldc[batchid],
-                        shared_A, shared_lda, shared_B, shared_ldb);
+                        shared_A, shared_lda, shared_B, shared_ldb, alpha_tmp);
 }
 
 static inline int ceildiv( int x, int y )
@@ -236,7 +241,7 @@ void vbatched_gemm_impl(int max_m, int max_n,
                  T ** global_A_array, int* global_lda,
                  T ** global_B_array, int* global_ldb,
                  T ** global_C_array, int* global_ldc,
-                 int batchCount, cudaStream_t stream)
+                 int batchCount, cudaStream_t stream, T* alpha)
 {
     // The positions of A and B have been swapped here.
     // This is because the original code is for column-major matrices.
@@ -252,9 +257,16 @@ void vbatched_gemm_impl(int max_m, int max_n,
     const int max_batch_count = 32768;
     const int loop_num = batchCount / max_batch_count;
     const int remain_num = batchCount % max_batch_count;
+
     for (int i = 0; i < loop_num; ++i)
     {
         dim3 dimGrid(ceildiv( max_n, BLK_M ), ceildiv( max_m, BLK_N ), max_batch_count);
+        T* alpha_tmp = nullptr;
+        if (alpha != nullptr)
+        {
+            alpha_tmp = alpha + i * max_batch_count;
+        }
+
         vbatched_gemm_kernel<T, DIM_X, DIM_Y,
                          BLK_M, BLK_N, BLK_K,
                          DIM_XA, DIM_YA,
@@ -263,12 +275,17 @@ void vbatched_gemm_impl(int max_m, int max_n,
                          (n + i * max_batch_count, m + i * max_batch_count, k + i * max_batch_count,
                          global_B_array + i * max_batch_count, global_ldb + i * max_batch_count,
                          global_A_array + i * max_batch_count, global_lda + i * max_batch_count,
-                         global_C_array + i * max_batch_count, global_ldc + i * max_batch_count);
+                         global_C_array + i * max_batch_count, global_ldc + i * max_batch_count, alpha_tmp);
         checkCudaLastError();
     }
     if (remain_num > 0)
     {
         dim3 dimGrid(ceildiv( max_n, BLK_M ), ceildiv( max_m, BLK_N ), remain_num);
+        T* alpha_tmp = nullptr;
+        if (alpha != nullptr)
+        {
+            alpha_tmp = alpha + loop_num * max_batch_count;
+        }
         vbatched_gemm_kernel<T, DIM_X, DIM_Y,
                          BLK_M, BLK_N, BLK_K,
                          DIM_XA, DIM_YA,
@@ -277,7 +294,7 @@ void vbatched_gemm_impl(int max_m, int max_n,
                          (n + loop_num * max_batch_count, m + loop_num * max_batch_count, k + loop_num * max_batch_count,
                          global_B_array + loop_num * max_batch_count, global_ldb + loop_num * max_batch_count,
                          global_A_array + loop_num * max_batch_count, global_lda + loop_num * max_batch_count,
-                         global_C_array + loop_num * max_batch_count, global_ldc + loop_num * max_batch_count);
+                         global_C_array + loop_num * max_batch_count, global_ldc + loop_num * max_batch_count, alpha_tmp);
         checkCudaLastError();
     }
 }
