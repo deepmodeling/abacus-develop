@@ -12,14 +12,9 @@ set(BASE_PATH "${PROJECT_SOURCE_DIR}/../../source/module_base")
 set(ABACUS_SOURCE_DIR "${PROJECT_SOURCE_DIR}/../../source")
 include_directories(${BASE_PATH} ${ABACUS_SOURCE_DIR})
 list(APPEND _sources
-    #${ABACUS_SOURCE_DIR}/module_basis/module_nao/numerical_radial.h
-    #${ABACUS_SOURCE_DIR}/module_basis/module_nao/numerical_radial.cpp
-    ${ABACUS_SOURCE_DIR}/module_base/constants.h
-    ${ABACUS_SOURCE_DIR}/module_base/math_sphbes.h
-    ${ABACUS_SOURCE_DIR}/module_base/math_sphbes.cpp
-    ${PROJECT_SOURCE_DIR}/src/py_abacus.cpp
-    #${PROJECT_SOURCE_DIR}/src/py_numerical_radial.cpp
-    ${PROJECT_SOURCE_DIR}/src/py_math_base.cpp)
+    ${ABACUS_SOURCE_DIR}/module_basis/module_nao/numerical_radial.h
+    ${ABACUS_SOURCE_DIR}/module_basis/module_nao/numerical_radial.cpp
+    ${PROJECT_SOURCE_DIR}/src/py_numerical_radial.cpp)
 python_add_library(_core MODULE ${_sources} WITH_SOABI)
 target_link_libraries(_core PRIVATE pybind11::headers)
 target_compile_definitions(_core PRIVATE VERSION_INFO=${PROJECT_VERSION})

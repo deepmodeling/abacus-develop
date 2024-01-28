@@ -26,13 +26,12 @@ class InputParaTest : public ::testing::Test
 #ifdef __MPI
 TEST_F(InputParaTest, Bcast)
 {
-    INPUT.Default();
     if (GlobalV::MY_RANK == 0)
     {
-        INPUT.suffix = "BcastTest";
+        INPUT.Default(); /* hmmm... why there is not Default_2 here? and, seems Default is execute directly on each processor? */
     }
     INPUT.Bcast();
-    EXPECT_EQ(INPUT.suffix, "BcastTest");
+    EXPECT_EQ(INPUT.suffix, "ABACUS");
     EXPECT_EQ(INPUT.stru_file, "");
     EXPECT_EQ(INPUT.kpoint_file, "");
     EXPECT_EQ(INPUT.pseudo_dir, "");
@@ -181,8 +180,7 @@ TEST_F(InputParaTest, Bcast)
     EXPECT_EQ(INPUT.out_wfc_pw, 0);
     EXPECT_EQ(INPUT.out_wfc_r, 0);
     EXPECT_EQ(INPUT.out_dos, 0);
-    EXPECT_EQ(INPUT.out_band[0], 0);
-    EXPECT_EQ(INPUT.out_band[1], 8);
+    EXPECT_EQ(INPUT.out_band, 0);
     EXPECT_EQ(INPUT.out_proj_band, 0);
     EXPECT_EQ(INPUT.out_mat_hs[0], 0);
     EXPECT_EQ(INPUT.out_mat_hs[1], 8);
@@ -381,7 +379,6 @@ TEST_F(InputParaTest, Bcast)
     EXPECT_TRUE(INPUT.mdp.dump_virial);
     EXPECT_FALSE(INPUT.mixing_tau);
     EXPECT_FALSE(INPUT.mixing_dftu);
-    EXPECT_EQ(INPUT.mixing_restart,0);
     EXPECT_EQ(INPUT.out_bandgap, 0);
     EXPECT_EQ(INPUT.out_mat_t, 0);
 

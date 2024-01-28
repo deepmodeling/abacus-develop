@@ -309,7 +309,7 @@ namespace ModuleESolver
     GlobalV::ofs_running << " !FINAL_ETOT_IS " << this->pelec->f_en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
     GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
 
-    if (INPUT.out_dos != 0 || INPUT.out_band[0] != 0 || INPUT.out_proj_band != 0)
+    if (INPUT.out_dos != 0 || INPUT.out_band != 0 || INPUT.out_proj_band != 0)
     {
         GlobalV::ofs_running << "\n\n\n\n";
         GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
@@ -331,7 +331,7 @@ namespace ModuleESolver
 
     int nspin0 = (GlobalV::NSPIN == 2) ? 2 : 1;
 
-    if (INPUT.out_band[0]) // pengfei 2014-10-13
+    if (INPUT.out_band) // pengfei 2014-10-13
     {
         int nks = 0;
         if (nspin0 == 1)
@@ -348,15 +348,7 @@ namespace ModuleESolver
             std::stringstream ss2;
             ss2 << GlobalV::global_out_dir << "BANDS_" << is + 1 << ".dat";
             GlobalV::ofs_running << "\n Output bands in file: " << ss2.str() << std::endl;
-            ModuleIO::nscf_band(is, 
-                                ss2.str(), 
-                                nks, 
-                                GlobalV::NBANDS, 
-                                0.0, 
-                                INPUT.out_band[1],
-                                this->pelec->ekb, 
-                                this->kv, 
-                                &(GlobalC::Pkpoints));
+            ModuleIO::nscf_band(is, ss2.str(), nks, GlobalV::NBANDS, 0.0, this->pelec->ekb, this->kv, &(GlobalC::Pkpoints));
         }
     } // out_band
 
@@ -491,19 +483,8 @@ namespace ModuleESolver
     template <typename TK, typename TR>
     void ESolver_KS_LCAO<TK, TR>::eachiterinit(const int istep, const int iter)
 {
-    if (iter == 1 || iter == GlobalV::MIXING_RESTART)
-    {
-        if (iter == GlobalV::MIXING_RESTART) // delete mixing and re-construct it to restart 
-        {
-            this->p_chgmix->set_mixing(GlobalV::MIXING_MODE,
-                                GlobalV::MIXING_BETA,
-                                GlobalV::MIXING_NDIM,
-                                GlobalV::MIXING_GG0,
-                                GlobalV::MIXING_TAU,
-                                GlobalV::MIXING_BETA_MAG);
-        }
+    if (iter == 1)
         this->p_chgmix->mix_reset();
-    }
 
     // mohan update 2012-06-05
     this->pelec->f_en.deband_harris = this->pelec->cal_delta_eband();

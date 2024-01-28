@@ -85,7 +85,6 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "cal_force", cal_force, "if calculate the force at the end of the electronic iteration");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_freq_ion", out_freq_ion, "the frequency ( >= 0 ) of ionic step to output charge density and wavefunction. 0: output only when ion steps are finished");
     ModuleBase::GlobalFunc::OUTP(ofs, "device", device, "the computing device for ABACUS");
-    ModuleBase::GlobalFunc::OUTP(ofs, "precision", precision, "the computing precision for ABACUS");
 
     ofs << "\n#Parameters (2.PW)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs, "ecutwfc", ecutwfc, "#energy cutoff for wave functions");
@@ -123,7 +122,7 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs, "out_wfc_pw", out_wfc_pw, "output wave functions");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_wfc_r", out_wfc_r, "output wave functions in realspace");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_dos", out_dos, "output energy and dos");
-    ModuleBase::GlobalFunc::OUTP(ofs, "out_band", out_band[0], "output energy and band structure (with precision "+std::to_string(out_band[1])+")");
+    ModuleBase::GlobalFunc::OUTP(ofs, "out_band", out_band, "output energy and band structure");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_proj_band", out_proj_band, "output projected band structure");
     ModuleBase::GlobalFunc::OUTP(ofs, "restart_save", restart_save, "print to disk every step for restart");
     ModuleBase::GlobalFunc::OUTP(ofs, "restart_load", restart_load, "restart from disk");
@@ -223,7 +222,7 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "lcao_dk", lcao_dk, "delta k for 1D integration in LCAO");
     ModuleBase::GlobalFunc::OUTP(ofs, "lcao_dr", lcao_dr, "delta r for 1D integration in LCAO");
     ModuleBase::GlobalFunc::OUTP(ofs, "lcao_rmax", lcao_rmax, "max R for 1D two-center integration table");
-    ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_hs", out_mat_hs[0], "output H and S matrix (with precision "+std::to_string(out_mat_hs[1])+")");
+    ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_hs", out_mat_hs[0], "output H and S matrix");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_hs2", out_mat_hs2, "output H(R) and S(R) matrix");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_dh", out_mat_dh, "output of derivative of H(R) matrix");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_xc", out_mat_xc, "output exchange-correlation matrix in KS-orbital representation");
@@ -248,7 +247,6 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_type", mixing_mode, "plain; pulay; broyden");
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_beta", mixing_beta, "mixing parameter: 0 means no new charge");
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_ndim", mixing_ndim, "mixing dimension in pulay or broyden");
-    ModuleBase::GlobalFunc::OUTP(ofs, "mixing_restart", mixing_restart, "which step to restart mixing during SCF");
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_gg0", mixing_gg0, "mixing parameter in kerker");
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_beta_mag", mixing_beta_mag, "mixing parameter for magnetic density");
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_gg0_mag", mixing_gg0_mag, "mixing parameter in kerker");
@@ -495,32 +493,7 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "qo_switch", qo_switch, "0: no QO analysis; 1: QO analysis");
     ModuleBase::GlobalFunc::OUTP(ofs, "qo_basis", qo_basis, "type of QO basis function: hydrogen: hydrogen-like basis, pswfc: read basis from pseudopotential");
     ModuleBase::GlobalFunc::OUTP(ofs, "qo_thr", qo_thr, "accuracy for evaluating cutoff radius of QO basis function");
-
-    ofs << "\n#Parameters (24.PEXSI)" << std::endl;
-    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_npole", pexsi_npole, "Number of poles in expansion");
-    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_inertia", pexsi_inertia, "Whether inertia counting is used at the very beginning of PEXSI process");
-    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_nmax", pexsi_nmax, "Maximum number of PEXSI iterations after each inertia counting procedure.");
-    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_comm", pexsi_comm, "Whether to construct PSelInv communication pattern");
-    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_storage", pexsi_storage, "Storage space used by the Selected Inversion algorithm for symmetric matrices, 0: non-symmetric, 1: symmetric");
-    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_ordering", pexsi_ordering, "Ordering strategy for factorization and selected inversion");
-    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_row_ordering", pexsi_row_ordering, "row permutation strategy for factorization and selected inversion, 0: NoRowPerm, 1: LargeDiag");
-    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_nproc", pexsi_nproc, "Number of processors for parmetis");
-    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_symm", pexsi_symm, "matrix symmetry, 0: non-symmetric, 1: symmetric");
-    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_trans", pexsi_trans, "transpose, 0: no transpose, 1: transpose");
-    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_method", pexsi_method, "pole expansion method, 1: Cauchy Contour Integral, 2: Moussa optimized method");
-    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_nproc_pole", pexsi_nproc_pole, "Number of processes used by each pole");
-    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_temp", pexsi_temp, "Temperature, in the same unit as H");
-    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_gap", pexsi_gap, "Spectral gap");
-    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_delta_e", pexsi_delta_e, "An upper bound for the spectral radius of \f$S^{-1} H\f$");
-    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_mu_lower", pexsi_mu_lower, "Initial guess of lower bound for mu");
-    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_mu_upper", pexsi_mu_upper, "Initial guess of upper bound for mu");
-    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_mu", pexsi_mu, "Initial guess for mu (for the solver)");
-    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_mu_thr", pexsi_mu_thr, "Stopping criterion in terms of the chemical potential for the inertia counting procedure");
-    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_mu_expand", pexsi_mu_expand, "If the chemical potential is not in the initial interval, the interval is expanded by muInertiaExpansion");
-    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_mu_guard", pexsi_mu_guard, "Safe guard criterion in terms of the chemical potential to reinvoke the inertia counting procedure");
-    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_elec_thr", pexsi_elec_thr, "Stopping criterion of the PEXSI iteration in terms of the number of electrons compared to numElectronExact");
-    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_zero_thr", pexsi_zero_thr, "if the absolute value of matrix element is less than ZERO_Limit, it will be considered as 0");
-
+  
     ofs.close();
     return;
 }

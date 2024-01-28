@@ -69,7 +69,7 @@ int count_ntype(const std::string& fn)
  * @param input_value_path parameter default value file path
  * @param input_value_path parameter input value file path
  */
-void Init(const std::string& default_type_path,
+bool Init(const std::string& default_type_path,
           const std::string& default_value_path,
           const std::string& input_value_path)
 {
@@ -103,8 +103,10 @@ void strtolower(char* sa, char* sb)
  * @brief Reads the default parameters from the specified file and saves them to the global variable
  *        default_parametes_type
  * @param fn Specifies the path to the file
+ * @return true Read successfully
+ * @return false Read failure
  */
-void default_parametes_reader(const std::string& fn, std::map<std::string, std::string>& default_parametes_type)
+bool default_parametes_reader(const std::string& fn, std::map<std::string, std::string>& default_parametes_type)
 {
     std::ifstream inputFile(fn.c_str());
     if (inputFile.is_open())
@@ -120,24 +122,28 @@ void default_parametes_reader(const std::string& fn, std::map<std::string, std::
     }
     else
     {
-        ModuleBase::WARNING_QUIT("Input", "Cannot open file" + fn);
+        std::cout << "Cannot open file !" << std::endl;
     }
 }
 /**
  * @brief This function is used to read the input parameter file and store it as a key-value pair
  * @param fn Enter the path to the parameter file
  */
-void input_parameters_get(const std::string& fn, std::map<std::string, InputParameter>& input)
+bool input_parameters_get(const std::string& fn, std::map<std::string, InputParameter>& input)
 {
+    // The module title information is displayed
     ModuleBase::TITLE("Input", "Read");
+    // If it is not the primary node, return false
     if (GlobalV::MY_RANK != 0)
-        return;
+        return false;
 
     // Open the input parameter file
     std::ifstream ifs(fn.c_str(), std::ios::in); // "in_datas/input_parameters"
+    // If the opening fails, an error message is printed and false is returned
     if (!ifs)
     {
-        ModuleBase::WARNING_QUIT("Input", "Can't find the INPUT file at " + fn);
+        std::cout << " Can't find the INPUT file." << std::endl;
+        return false;
     }
     ifs.clear();
     ifs.seekg(0);
@@ -160,7 +166,8 @@ void input_parameters_get(const std::string& fn, std::map<std::string, InputPara
     // If ierr is 0, the word "INPUT_PARAMETERS" is not found, and an error message is printed with false
     if (ierr == 0)
     {
-        ModuleBase::WARNING_QUIT("Input", "INPUT_PARAMETERS statement not found.");
+        std::cout << " Error parameter list." << std::endl;
+        return false; // return error : false
     }
     ifs.rdstate();
 
@@ -267,11 +274,15 @@ void input_parameters_get(const std::string& fn, std::map<std::string, InputPara
         }
         else if (ifs.bad() != 0)
         {
-            ModuleBase::WARNING_QUIT("Input", "Bad input parameters.");
+            std::cout << " Bad input parameters. " << std::endl;
+            return false;
         }
         else if (ifs.fail() != 0)
         {
-            ModuleBase::WARNING_QUIT("Input", "Fail to read parameters: word = " + std::string(word));
+            std::cout << " word = " << word << std::endl;
+            std::cout << " Fail to read parameters. " << std::endl;
+            ifs.clear();
+            return false;
         }
         else if (ifs.good() == 0)
         {
@@ -295,9 +306,11 @@ void input_parameters_get(const std::string& fn, std::map<std::string, InputPara
     {
         ModuleBase::WARNING_QUIT("Input", "The ntype in INPUT is not equal to the ntype counted in STRU, check it.");
     }
+
+    return true;
 }
 
-void input_parameters_set(std::map<std::string, InputParameter> input_parameters)
+bool input_parameters_set(std::map<std::string, InputParameter> input_parameters)
 {
     if (input_parameters.count("nupdown") != 0)
     {
@@ -818,10 +831,6 @@ void input_parameters_set(std::map<std::string, InputParameter> input_parameters
     {
         INPUT.mixing_ndim = *static_cast<int*>(input_parameters["mixing_ndim"].get());
     }
-    else if (input_parameters.count("mixing_restart") != 0)
-    {
-        INPUT.mixing_restart = *static_cast<int*>(input_parameters["mixing_restart"].get());
-    }
     else if (input_parameters.count("mixing_gg0") != 0)
     {
         INPUT.mixing_gg0 = *static_cast<double*>(input_parameters["mixing_gg0"].get());
@@ -908,7 +917,7 @@ void input_parameters_set(std::map<std::string, InputParameter> input_parameters
     }
     else if (input_parameters.count("out_band") != 0)
     {
-        INPUT.out_band = *static_cast<std::vector<int>*>(input_parameters["out_band"].get());
+        INPUT.out_band = *static_cast<bool*>(input_parameters["out_band"].get());
     }
     else if (input_parameters.count("out_proj_band") != 0)
     {

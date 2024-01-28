@@ -12,7 +12,6 @@ namespace ModuleIO
 		const int &nks, 
 		const int &nband, 
 		const double &fermie,
-		const int &precision,
 		const ModuleBase::matrix &ekb,
 		const K_Vectors& kv,
 		const Parallel_Kpoints* Pkpoints);

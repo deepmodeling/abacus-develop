@@ -126,18 +126,13 @@ class Sphbes
      * This function computes the first n positive zeros of the l-th order
      * spherical Bessel function of the first kind. 
      *
-     * @param[in]   l           (maximum) order of the spherical Bessel function
-     * @param[in]   n           number of zeros to be computed (for each j_l if return_all is true)
-     * @param[out]  zeros       on exit, contains the positive zeros.
-     * @param[in]   return_all  if true, return all zeros from j_0 to j_l such that zeros[l*n+i]
-     *                          is the i-th zero of j_l. If false, return only the first n zeros of j_l.
-     *
-     * @note The size of array "zeros" must be at least (l+1)*n if return_all is true, and n otherwise.
+     * @param[in]   l       order of the spherical Bessel function
+     * @param[in]   n       number of zeros to be computed
+     * @param[out]  zeros   on exit, contains the first n positive zeros in ascending order
      */
     static void sphbes_zeros(const int l,
                              const int n,
-                             double* const zeros,
-                             bool return_all = false
+                             double* const zeros
     );
 
 private:

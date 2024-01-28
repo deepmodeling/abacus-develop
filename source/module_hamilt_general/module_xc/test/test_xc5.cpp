@@ -25,6 +25,9 @@ class XCTest_VXC : public testing::Test
         double et2 = 0, vt2 = 0;
         ModuleBase::matrix v2;
 
+        double et4 = 0, vt4 = 0;
+        ModuleBase::matrix v4;
+
         void SetUp()
         {
             ModulePW::PW_Basis rhopw;
@@ -84,6 +87,13 @@ class XCTest_VXC : public testing::Test
             vt2 = std::get<1>(etxc_vtxc_v);
             v2  = std::get<2>(etxc_vtxc_v);
 
+            GlobalV::NSPIN = 4;
+            GlobalV::DOMAG = true;
+            etxc_vtxc_v
+                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell);
+            et4 = std::get<0>(etxc_vtxc_v);
+            vt4 = std::get<1>(etxc_vtxc_v);
+            v4  = std::get<2>(etxc_vtxc_v);
         }
 };
 
@@ -111,6 +121,29 @@ TEST_F(XCTest_VXC, set_xc_type)
     EXPECT_NEAR(v2(1,3),-1.97506482,1.0e-8);
     EXPECT_NEAR(v2(1,4),-2.160374198,1.0e-8);
 
+    EXPECT_NEAR(et4,-27.40098253,1.0e-8);
+    EXPECT_NEAR(vt4,-35.81948838,1.0e-8);
+    EXPECT_NEAR(v4(0,0),0,1.0e-8);
+    EXPECT_NEAR(v4(0,1),-1.559604078,1.0e-8);
+    EXPECT_NEAR(v4(0,2),-1.920028447,1.0e-8);
+    EXPECT_NEAR(v4(0,3),-2.168396069,1.0e-8);
+    EXPECT_NEAR(v4(0,4),-2.36419592,1.0e-8);
+    EXPECT_NEAR(v4(1,0),0,1.0e-8);
+    EXPECT_NEAR(v4(1,1),-0.09308179605,1.0e-8);
+    EXPECT_NEAR(v4(1,2),-0.123132664,1.0e-8);
+    EXPECT_NEAR(v4(1,3),-0.144332804,1.0e-8);
+    EXPECT_NEAR(v4(1,4),-0.16127282,1.0e-8);
+    EXPECT_NEAR(v4(2,0),0,1.0e-8);
+    EXPECT_NEAR(v4(2,1),-0.9308179605,1.0e-8);
+    EXPECT_NEAR(v4(2,2),-1.23132664,1.0e-8);
+    EXPECT_NEAR(v4(2,3),-1.44332804,1.0e-8);
+    EXPECT_NEAR(v4(2,4),-1.6127282,1.0e-8);
+    EXPECT_NEAR(v4(3,0),0,1.0e-8);
+    EXPECT_NEAR(v4(3,1),-0.09308179605,1.0e-8);
+    EXPECT_NEAR(v4(3,2),-0.123132664,1.0e-8);
+    EXPECT_NEAR(v4(3,3),-0.144332804,1.0e-8);
+    EXPECT_NEAR(v4(3,4),-0.16127282,1.0e-8);
+
 }
 
 class XCTest_VXC_Libxc : public testing::Test
@@ -122,6 +155,9 @@ class XCTest_VXC_Libxc : public testing::Test
 
         double et2 = 0, vt2 = 0;
         ModuleBase::matrix v2;
+
+        double et4 = 0, vt4 = 0;
+        ModuleBase::matrix v4;
 
         void SetUp()
         {
@@ -182,6 +218,13 @@ class XCTest_VXC_Libxc : public testing::Test
             vt2 = std::get<1>(etxc_vtxc_v);
             v2  = std::get<2>(etxc_vtxc_v);
 
+            GlobalV::NSPIN = 4;
+            GlobalV::DOMAG = true;
+            etxc_vtxc_v
+                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell);
+            et4 = std::get<0>(etxc_vtxc_v);
+            vt4 = std::get<1>(etxc_vtxc_v);
+            v4  = std::get<2>(etxc_vtxc_v);
         }
 };
 
@@ -209,6 +252,28 @@ TEST_F(XCTest_VXC_Libxc, set_xc_type)
     EXPECT_NEAR(v2(1,3),-1.975058937,1.0e-8);
     EXPECT_NEAR(v2(1,4),-2.160368003,1.0e-8);
 
+    EXPECT_NEAR(et4,-27.28201062,1.0e-8);
+    EXPECT_NEAR(vt4,-35.98253991,1.0e-8);
+    EXPECT_NEAR(v4(0,0),0,1.0e-8);
+    EXPECT_NEAR(v4(0,1),-1.268278149,1.0e-8);
+    EXPECT_NEAR(v4(0,2),-1.598108222,1.0e-8);
+    EXPECT_NEAR(v4(0,3),-1.828079634,1.0e-8);
+    EXPECT_NEAR(v4(0,4),-2.010634115,1.0e-8);
+    EXPECT_NEAR(v4(1,0),0,1.0e-8);
+    EXPECT_NEAR(v4(1,1),-0.1255782493,1.0e-8);
+    EXPECT_NEAR(v4(1,2),-0.1582362929,1.0e-8);
+    EXPECT_NEAR(v4(1,3),-0.1810068558,1.0e-8);
+    EXPECT_NEAR(v4(1,4),-0.1990824429,1.0e-8);
+    EXPECT_NEAR(v4(2,0),0,1.0e-8);
+    EXPECT_NEAR(v4(2,1),-1.255782493,1.0e-8);
+    EXPECT_NEAR(v4(2,2),-1.582362929,1.0e-8);
+    EXPECT_NEAR(v4(2,3),-1.810068558,1.0e-8);
+    EXPECT_NEAR(v4(2,4),-1.990824429,1.0e-8);
+    EXPECT_NEAR(v4(3,0),0,1.0e-8);
+    EXPECT_NEAR(v4(3,1),-0.1255782493,1.0e-8);
+    EXPECT_NEAR(v4(3,2),-0.1582362929,1.0e-8);
+    EXPECT_NEAR(v4(3,3),-0.1810068558,1.0e-8);
+    EXPECT_NEAR(v4(3,4),-0.1990824429,1.0e-8);
 }
 
 class XCTest_VXC_meta : public testing::Test

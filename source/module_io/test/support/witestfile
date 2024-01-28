@@ -55,7 +55,7 @@ out_pot                        2 #output realspace potential
 out_wfc_pw                     0 #output wave functions
 out_wfc_r                      0 #output wave functions in realspace
 out_dos                        0 #output energy and dos
-out_band                       0 #output energy and band structure
+out_band                       false #output energy and band structure
 out_proj_band                  FaLse #output projected band structure
 restart_save                   f #print to disk every step for restart
 restart_load                   F #restart from disk

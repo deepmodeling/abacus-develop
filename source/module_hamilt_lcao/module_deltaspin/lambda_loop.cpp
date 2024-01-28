@@ -45,7 +45,6 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::run_lambda_loop(int o
         }
         else
         {
-            where_fill_scalar_else_2d(this->constrain_, 0, zero, delta_lambda, delta_lambda);
             add_scalar_multiply_2d(initial_lambda, delta_lambda, one, this->lambda_);
             this->cal_mw_from_lambda(i_step);
             new_spin = this->Mi_;
@@ -88,7 +87,6 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::run_lambda_loop(int o
         add_scalar_multiply_2d(dnu, search, alpha_trial, dnu);
         delta_lambda = dnu;
 
-        where_fill_scalar_else_2d(this->constrain_, 0, zero, delta_lambda, delta_lambda);
         add_scalar_multiply_2d(initial_lambda, delta_lambda, one, this->lambda_);
         this->cal_mw_from_lambda(i_step);
 

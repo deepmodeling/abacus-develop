@@ -54,12 +54,9 @@ By download $__filename from $__url,
 Rename it as $__filename and put it into ${BUILDDIR},
 And re-run toolchain installation script.
 
-You can manually install requirements packages via:
-1. Download from www.cp2k.org/static/downloads (for OpenBLAS, OpenMPI and Others)
-2. Download from github.com (for CEREAL, RapidJSON, libnpy, LibRI and others stage4 packages)
-3. Use git submodule update --init --recursive (for LibRI)
-4. wget https://bohrium-api.dp.tech/ds-dl/abacus-deps-93wi-v2 -O abacus-deps.zip
-5. for Intel-oneAPI, please contact your server manager our visit Intel official website
+Instead of github.com. you can manually install requirements packages via:
+1. Download from www.cp2k.org/static/downloads
+2. wget https://bohrium-api.dp.tech/ds-dl/abacus-deps-93wi-v1 -O abacus-deps-v1.zip
 EOF
 }
 

@@ -1,4 +1,4 @@
-add_library(pexsi OBJECT dist_bcd_matrix.cpp dist_ccs_matrix.cpp dist_matrix_transformer.cpp pexsi_solver.cpp simple_pexsi.cpp)
+add_library(pexsi OBJECT DistBCDMatrix.cpp DistCCSMatrix.cpp DistMatrixTransformer.cpp pexsi_solver.cpp simplePEXSI.cpp)
 
 if(ENABLE_COVERAGE)
   add_coverage(pexsi)

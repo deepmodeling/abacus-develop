@@ -29,7 +29,6 @@ public:
     int nkstot_full;    /// number of k points in full k mesh
 
     int nmp[3];						// Number of Monhorst-Pack
-    std::vector<int> kl_segids;	// index of kline segment
 
     K_Vectors();
     ~K_Vectors();
