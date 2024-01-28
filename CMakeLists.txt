@@ -10,12 +10,6 @@ project(ABACUS
     LANGUAGES CXX
 )
 
-# private options, should not be pushed to master
-# set(PEXSI_DIR "~/projects/pexsi-build/pexsi")
-# set(SuperLU_DIR "~/projects/pexsi-build/superlu")
-# set(ParMETIS_DIR "~/projects/pexsi-build/parmetis")
-# set(ELPA_INCLUDE_DIR "/usr/include/elpa_openmp-2023.05.001")
-
 option(ENABLE_LCAO "Enable LCAO calculation." ON)
 option(ENABLE_DEEPKS "Enable DeePKS functionality" OFF)
 option(ENABLE_LIBXC "Enable LibXC functionality" OFF)
@@ -40,7 +34,36 @@ option(DEBUG_INFO "Print message for developers to debug." OFF)
 option(ENABLE_NATIVE_OPTIMIZATION "Enable compilation optimization for the native machine's CPU type" OFF)
 option(COMMIT_INFO "Print commit information in log" ON)
 option(ENABLE_FFT_TWO_CENTER "Enable FFT-based two-center integral method." ON)
+option(ENABLE_GOOGLEBENCH "Enable GOOGLE-benchmark usage." OFF)
+option(ENABLE_RAPIDJSON "Enable rapid-json usage." OFF)
 option(USE_PEXSI "Enable support for PEXSI." OFF)
+
+
+
+# enable json support
+if(ENABLE_RAPIDJSON)
+  find_package(RapidJSON)
+  if(NOT RapidJSON_FOUND)
+    message(WARNING "Rapidjson is not found, trying downloading from github, or you can install Rapidjson first and reinstall abacus.")
+    include(FetchContent)
+    FetchContent_Declare(
+      rapidjson
+      GIT_REPOSITORY https://github.com/Tencent/rapidjson.git
+      GIT_TAG "origin/master"
+      GIT_SHALLOW TRUE
+      GIT_PROGRESS TRUE
+    )
+    set(RAPIDJSON_BUILD_TESTS OFF CACHE INTERNAL "")
+    set(RAPIDJSON_BUILD_EXAMPLES OFF CACHE INTERNAL "")
+    FetchContent_MakeAvailable(rapidjson)
+    set(RapidJSON_INCLUDE_PATH "${rapidjson_SOURCE_DIR}/include")
+  endif()
+  add_compile_definitions(__RAPIDJSON)
+  add_definitions(-DRAPIDJSON_HAS_CXX11_NOEXCEPT=0)
+  include_directories(${RapidJSON_INCLUDE_PATH})
+endif()
+
+
 if (USE_CUDA)
   set(USE_CUSOLVER_LCAO ON)
 else()
@@ -189,7 +212,7 @@ if(ENABLE_LCAO)
   
   if(USE_PEXSI)
     find_package(PEXSI REQUIRED)
-    target_link_libraries(${ABACUS_BIN_NAME} ${PEXSI_LIBRARY} ${SuperLU_LIBRARY} ${ParMETIS_LIBRARY} ${METIS_LIBRARY} pexsi)
+    target_link_libraries(${ABACUS_BIN_NAME} ${PEXSI_LIBRARY} ${SuperLU_DIST_LIBRARY} ${ParMETIS_LIBRARY} ${METIS_LIBRARY} pexsi)
     include_directories(${PEXSI_INCLUDE_DIR} ${ParMETIS_INCLUDE_DIR})
     add_compile_definitions(__PEXSI)
   endif()
@@ -414,8 +437,7 @@ endif()
 
 if(ENABLE_DEEPKS)
   # Torch uses outdated components to detech CUDA arch, causing failure on latest CUDA kits.
-  # See above for setting CMAKE_CUDA_ARCHITECTURES
-  set(TORCH_CUDA_ARCH_LIST CMAKE_CUDA_ARCHITECTURES)
+  # Set CMake variable TORCH_CUDA_ARCH_LIST in the form of "major.minor" if required.
   find_package(Torch REQUIRED)
   if(NOT Torch_VERSION VERSION_LESS "2.1.0")
     set_if_higher(CMAKE_CXX_STANDARD 17)
@@ -522,11 +544,8 @@ if(DEFINED Libxc_DIR)
   set(ENABLE_LIBXC ON)
 endif()
 if(ENABLE_LIBXC)
-  find_package(Libxc REQUIRED HINTS
-    ${Libxc_DIR}/share/cmake/Libxc
-    ${Libxc_DIR}/lib/cmake/Libxc
-    ${Libxc_DIR}/lib64/cmake/Libxc
-  )
+  # use `cmake/FindLibxc.cmake` to detect Libxc installation with `pkg-config`
+  find_package(Libxc REQUIRED)
   message(STATUS "Found Libxc: version " ${Libxc_VERSION})
   if(${Libxc_VERSION} VERSION_LESS 5.1.7)
     message(FATAL_ERROR "LibXC >= 5.1.7 is required.")
@@ -580,6 +599,25 @@ if(INFO)
   # modifications on blas_connector and lapack_connector
 endif()
 
+#  Add performance test in abacus
+IF (ENABLE_GOOGLEBENCH)
+  set(BUILD_TESTING ON)
+  find_package(benchmark HINTS ${BENCHMARK_DIR})
+  if(NOT ${benchmark_FOUND})
+    set(BENCHMARK_USE_BUNDLED_GTEST OFF)
+    include(FetchContent)
+    FetchContent_Declare(
+      benchmark
+      GIT_REPOSITORY https://github.com/google/benchmark.git
+      GIT_TAG "origin/main"
+      GIT_SHALLOW TRUE
+      GIT_PROGRESS TRUE 
+    )
+    set(BENCHMARK_ENABLE_TESTING OFF)
+    FetchContent_MakeAvailable(benchmark)
+  endif()
+endif()
+
 IF (BUILD_TESTING)
   set_if_higher(CMAKE_CXX_STANDARD 14) # Required in orbital
   include(CTest)
@@ -609,8 +647,14 @@ IF (BUILD_TESTING)
     endif()
 
     #dependencies & link library
-    target_link_libraries(${UT_TARGET} ${UT_LIBS}
-      Threads::Threads GTest::gtest_main GTest::gmock_main)
+    if(ENABLE_GOOGLEBENCH)
+      target_link_libraries(${UT_TARGET} ${UT_LIBS}
+        Threads::Threads GTest::gtest_main GTest::gmock_main benchmark::benchmark)
+      else()
+        target_link_libraries(${UT_TARGET} ${UT_LIBS}
+          Threads::Threads GTest::gtest_main GTest::gmock_main)
+    endif()
+      
     if(USE_OPENMP)
       target_link_libraries(${UT_TARGET} OpenMP::OpenMP_CXX)
     endif()
@@ -620,6 +664,7 @@ IF (BUILD_TESTING)
       WORKING_DIRECTORY $<TARGET_FILE_DIR:${UT_TARGET}>
     )
   endfunction(AddTest)
+
 endif()
 
 add_subdirectory(source)

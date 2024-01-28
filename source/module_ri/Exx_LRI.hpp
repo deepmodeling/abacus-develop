@@ -12,7 +12,6 @@
 #include "module_ri/exx_abfs-construct_orbs.h"
 #include "module_ri/exx_abfs-io.h"
 #include "module_ri/conv_coulomb_pot_k.h"
-#include "module_ri/conv_coulomb_pot_k-template.h"
 #include "module_base/tool_title.h"
 #include "module_base/timer.h"
 #include "module_ri/serialization_cereal.h"
@@ -71,14 +70,19 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in, const K_Vectors &kv_in)
 			case Conv_Coulomb_Pot_K::Ccp_Type::Ccp:
 				return {};
 			case Conv_Coulomb_Pot_K::Ccp_Type::Hf:
-				return {};
+			{
+				// 4/3 * pi * Rcut^3 = V_{supercell} = V_{unitcell} * Nk
+				const int nspin0 = (GlobalV::NSPIN==2) ? 2 : 1;
+				const double hf_Rcut = std::pow(0.75 * this->p_kv->nkstot_full/nspin0 * GlobalC::ucell.omega / (ModuleBase::PI), 1.0/3.0);
+				return {{"hf_Rcut", hf_Rcut}};
+			}
 			case Conv_Coulomb_Pot_K::Ccp_Type::Hse:
 				return {{"hse_omega", this->info.hse_omega}};
 			default:
 				throw std::domain_error(std::string(__FILE__)+" line "+std::to_string(__LINE__));	break;
 		}
 	};
-    this->abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(this->abfs, this->info.ccp_type, get_ccp_parameter(), this->info.ccp_rmesh_times, this->p_kv->nkstot_full);
+    this->abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(this->abfs, this->info.ccp_type, get_ccp_parameter(), this->info.ccp_rmesh_times);
 
 
 	for( size_t T=0; T!=this->abfs.size(); ++T )

@@ -30,7 +30,7 @@ VPATH=./src_global:\
 ./module_hsolver:\
 ./module_hsolver/kernels:\
 ./module_hsolver/genelpa:\
-./module_hsolver/pexsi:\
+./module_hsolver/module_pexsi:\
 ./module_elecstate:\
 ./module_elecstate/kernels:\
 ./module_elecstate/potentials:\
@@ -102,6 +102,7 @@ ${OBJS_VDW}\
 ${OBJS_DFTU}\
 ${OBJS_DELTASPIN}\
 ${OBJS_TENSOR}\
+${OBJS_HSOLVER_PEXSI}\
 
 OBJS_MAIN=main.o\
     driver.o\
@@ -290,13 +291,7 @@ OBJS_HSOLVER=diago_cg.o\
     diago_iter_assist.o\
     math_kernel_op.o\
     dngvd_op.o\
-    diago_pexsi.o\
-    DistBCDMatrix.o\
-    DistCCSMatrix.o\
-    DistMatrixTransformer.o\
-    pexsi_solver.o\
-    simplePEXSI.o\
-
+    
 OBJS_HSOLVER_LCAO=hsolver_lcao.o\
       diago_blas.o\
       diago_elpa.o\
@@ -305,6 +300,13 @@ OBJS_HSOLVER_LCAO=hsolver_lcao.o\
       elpa_new_complex.o\
       utils.o\
 
+OBJS_HSOLVER_PEXSI=diago_pexsi.o\
+      pexsi_solver.o\
+      simple_pexsi.o\
+      dist_bcd_matrix.o\
+      dist_ccs_matrix.o\
+      dist_matrix_transformer.o\
+      
 OBJS_MD=fire.o\
     langevin.o\
     md_base.o\

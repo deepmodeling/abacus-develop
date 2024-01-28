@@ -7,7 +7,7 @@ include Makefile.vars
 INCLUDES = -I. -Icommands -I../ -Imodule_base/module_container
 
 LIBS = -lm -lpthread
-OPTS = ${INCLUDES} -Ofast -g -traceback -xHost -std=c++11 -simd -march=native -m64 -qopenmp -Werror -Wall -pedantic 
+OPTS = ${INCLUDES} -std=c++14 -pedantic -m64 ${INCLUDES}
 HONG = -D__LCAO
 HONG += -D__ELPA
 ifeq ($(OPENMP), ON)
@@ -75,7 +75,7 @@ else
     FFTW_INCLUDE_DIR = ${FFTW_DIR}/include
     FFTW_LIB_DIR     = ${FFTW_DIR}/lib
     HONG  += -D__FFTW3
-    LIBS += -L${FFTW_LIB_DIR} -lfftw3 -Wl,-rpath=${FFTW_LIB_DIR} -qmkl
+    LIBS += -L${FFTW_LIB_DIR} -lfftw3 -Wl,-rpath=${FFTW_LIB_DIR}
     INCLUDES += -I${FFTW_INCLUDE_DIR}
     
     #==========================
@@ -140,12 +140,6 @@ ifdef LIBTORCH_DIR
   endif
 endif
 
-ifdef PEXSI_DIR
-    INCLUDES += -I${PEXSI_INCLUDE_DIR} ${SCOTCH_INCLUDE} ${DSUPERLU_INCLUDE}
-    LIBS += -L${PEXSI_LIB_DIR} -lpexsi_linux_release_v2.0 ${DSUPERLU_LIB} ${PTSCOTCH_LIB} ${SCOTCH_LIB}
-    HONG += -D__PEXSI
-endif
-
 ifdef DeePMD_DIR
     HONG  += -D__DPMD -DHIGH_PREC 
     OPTS  += -Wl,--no-as-needed
@@ -173,6 +167,13 @@ ifdef DeePMD_DIR
     LIBS += -L${TensorFlow_LIB_DIR} -ltensorflow_cc -Wl,-rpath=${TensorFlow_LIB_DIR}
     TensorFlow_INCLUDE_DIR = ${TensorFlow_DIR}/include
     INCLUDES += -I${TensorFlow_INCLUDE_DIR}
+endif
+
+ifdef PEXSI_DIR
+    OBJS_ABACUS += ${OBJS_HSOLVER_PEXSI}
+    INCLUDES += -I${PEXSI_DIR}/include -I${PARMETIS_DIR}/include -I${DSUPERLU_DIR}/include
+    LIBS += -L${PEXSI_DIR}/lib -lpexsi -L${DSUPERLU_DIR}/lib -lsuperlu_dist -L${PARMETIS_DIR}/lib -lparmetis -lmetis
+    HONG += -D__PEXSI
 endif
 
 include Makefile.Objects
