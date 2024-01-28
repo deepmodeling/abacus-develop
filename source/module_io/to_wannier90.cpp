@@ -78,6 +78,80 @@ void toWannier90::read_nnkp(const K_Vectors& kv)
     // read *.nnkp file
     GlobalV::ofs_running << "reading the " << wannier_file_name << ".nnkp file." << std::endl;
 
+    bool read_success = false;
+    if(GlobalV::MY_RANK == 0)
+    {
+        read_success = try_read_nnkp(kv);
+    }
+
+#ifdef __MPI
+    Parallel_Common::bcast_bool(read_success);
+#endif
+
+    if(GlobalV::MY_RANK != 0 && read_success)
+    {
+        read_success = try_read_nnkp(kv);
+    }
+
+#ifdef __MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
+}
+
+void toWannier90::out_eig(const ModuleBase::matrix& ekb)
+{
+#ifdef __MPI
+    if (GlobalV::MY_RANK == 0)
+    {
+        std::string fileaddress = GlobalV::global_out_dir + wannier_file_name + ".eig";
+        std::ofstream eig_file(fileaddress.c_str());
+        for (int ik = start_k_index; ik < (cal_num_kpts + start_k_index); ik++)
+        {
+            for (int ib = 0; ib < num_bands; ib++)
+            {
+                eig_file << std::setw(5) << ib + 1 << std::setw(5) << ik + 1 - start_k_index << std::setw(18)
+                         << std::showpoint << std::fixed << std::setprecision(12)
+                         << ekb(ik, cal_band_index[ib]) * ModuleBase::Ry_to_eV << std::endl;
+            }
+        }
+
+        eig_file.close();
+    }
+#else
+    std::string fileaddress = GlobalV::global_out_dir + wannier_file_name + ".eig";
+    std::ofstream eig_file(fileaddress.c_str());
+    for (int ik = start_k_index; ik < (cal_num_kpts + start_k_index); ik++)
+    {
+        for (int ib = 0; ib < num_bands; ib++)
+        {
+            eig_file << std::setw(5) << ib + 1 << std::setw(5) << ik + 1 - start_k_index << std::setw(18)
+                     << std::showpoint << std::fixed << std::setprecision(12)
+                     << ekb(ik, cal_band_index[ib]) * ModuleBase::Ry_to_eV << std::endl;
+        }
+    }
+
+    eig_file.close();
+#endif
+
+}
+
+void toWannier90::out_unk()
+{
+
+}
+
+void toWannier90::cal_Amn()
+{
+
+}
+
+void toWannier90::cal_Mmn()
+{
+
+}
+
+bool toWannier90::try_read_nnkp(const K_Vectors& kv)
+{
     std::ifstream nnkp_read(nnkpfile.c_str(), std::ios::in);
 
     if (!nnkp_read)
@@ -468,56 +542,5 @@ void toWannier90::read_nnkp(const K_Vectors& kv)
         }
     }
 
-}
-
-void toWannier90::out_eig(const ModuleBase::matrix& ekb)
-{
-#ifdef __MPI
-    if (GlobalV::MY_RANK == 0)
-    {
-        std::string fileaddress = GlobalV::global_out_dir + wannier_file_name + ".eig";
-        std::ofstream eig_file(fileaddress.c_str());
-        for (int ik = start_k_index; ik < (cal_num_kpts + start_k_index); ik++)
-        {
-            for (int ib = 0; ib < num_bands; ib++)
-            {
-                eig_file << std::setw(5) << ib + 1 << std::setw(5) << ik + 1 - start_k_index << std::setw(18)
-                         << std::showpoint << std::fixed << std::setprecision(12)
-                         << ekb(ik, cal_band_index[ib]) * ModuleBase::Ry_to_eV << std::endl;
-            }
-        }
-
-        eig_file.close();
-    }
-#else
-    std::string fileaddress = GlobalV::global_out_dir + wannier_file_name + ".eig";
-    std::ofstream eig_file(fileaddress.c_str());
-    for (int ik = start_k_index; ik < (cal_num_kpts + start_k_index); ik++)
-    {
-        for (int ib = 0; ib < num_bands; ib++)
-        {
-            eig_file << std::setw(5) << ib + 1 << std::setw(5) << ik + 1 - start_k_index << std::setw(18)
-                     << std::showpoint << std::fixed << std::setprecision(12)
-                     << ekb(ik, cal_band_index[ib]) * ModuleBase::Ry_to_eV << std::endl;
-        }
-    }
-
-    eig_file.close();
-#endif
-
-}
-
-void toWannier90::out_unk()
-{
-
-}
-
-void toWannier90::cal_Amn()
-{
-
-}
-
-void toWannier90::cal_Mmn()
-{
-
+    return true;
 }
