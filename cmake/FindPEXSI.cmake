@@ -1,9 +1,14 @@
 ###############################################################################
-# - Find cereal
-# Find the native cereal headers.
+# - Find PEXSI
+# Find PEXSI and its dependencies.
 #
-#  PEXSI_FOUND - True if cereal is found.
-#  PEXSI_INCLUDE_DIR - Where to find cereal headers.
+#  PEXSI_FOUND          - True if pexsi is found.
+#  PEXSI_INCLUDE_DIR    - Where to find pexsi headers.
+#  PEXSI_LIBRARY        - pexsi library.
+#  ParMETIS_INCLUDE_DIR - Where to find pexsi headers.
+#  ParMETIS_LIBRARY     - parmetis library.
+#  METIS_LIBRARY        - metis library.
+#  SuperLU_DIST_LIBRARY - superlu_dist library.
 
 find_path(PEXSI_INCLUDE_DIR
     NAMES c_pexsi_interface.h
@@ -42,7 +47,7 @@ find_library(SuperLU_DIST_LIBRARY
 )
 
 # Handle the QUIET and REQUIRED arguments and
-# set Cereal_FOUND to TRUE if all variables are non-zero.
+# set PEXSI_FOUND to TRUE if all variables are non-zero.
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(PEXSI DEFAULT_MSG PEXSI_LIBRARY PEXSI_INCLUDE_DIR ParMETIS_LIBRARY METIS_LIBRARY SuperLU_DIST_LIBRARY)
 
