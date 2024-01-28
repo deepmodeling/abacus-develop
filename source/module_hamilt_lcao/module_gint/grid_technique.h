@@ -153,6 +153,8 @@ public:
 	double *psir_ylm_left_global_g;
 	double *psir_ylm_right_global_g;
 
+	double *atom_pair_alpha_global;
+	double *atom_pair_alpha_global_g;
 	int *atom_pair_left_info_global;
 	int *atom_pair_left_info_global_g;
 	int *atom_pair_right_info_global;

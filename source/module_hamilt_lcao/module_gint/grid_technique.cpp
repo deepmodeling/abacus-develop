@@ -78,6 +78,9 @@ Grid_Technique::~Grid_Technique()
     checkCudaErrors(cudaFreeHost(atom_pair_right_info_global));
     checkCudaErrors(cudaFree(atom_pair_right_info_global_g));
 
+	checkCudaErrors(cudaFreeHost(atom_pair_alpha_global));
+	checkCudaErrors(cudaFree(atom_pair_alpha_global_g));
+	
 	checkCudaErrors(cudaFreeHost(atom_pair_k_info_global));
 	checkCudaErrors(cudaFree(atom_pair_k_info_global_g));
 
@@ -700,6 +703,9 @@ void Grid_Technique::cal_trace_lo(void)
 
 		atom_pair_size_of_meshcell = max_atom * max_atom;
 		atom_pair_size_over_nbz = atom_pair_size_of_meshcell * nbzp;
+		
+		checkCudaErrors(cudaMallocHost((void **)&atom_pair_alpha_global, atom_pair_size_over_nbz * nstreams * sizeof(double)));
+		checkCudaErrors(cudaMalloc((void **)&atom_pair_alpha_global_g, atom_pair_size_over_nbz * nstreams * sizeof(double)));
 
 		checkCudaErrors(cudaMallocHost((void **)&atom_pair_left_info_global, atom_pair_size_over_nbz * nstreams * sizeof(int)));
 		checkCudaErrors(cudaMalloc((void **)&atom_pair_left_info_global_g, atom_pair_size_over_nbz * nstreams * sizeof(int)));

@@ -16,6 +16,7 @@ void gpu_task_generator_rho(const Grid_Technique &GridT,
                             double *psir_ylm_g,
                             double *psir_zeros_g,
                             double *dm_matrix_g,
+                            double *mat_alpha,
                             int *mat_m,
                             int *mat_n,
                             int *mat_k,
@@ -131,7 +132,7 @@ void gpu_task_generator_rho(const Grid_Technique &GridT,
                 it1, GlobalC::ucell.iat2ia[iat1],0)];
       int nw1 = GlobalC::ucell.atoms[it1].nw;
       
-      for(int atom2 = 0; atom2 < GridT.how_many_atoms[grid_index]; atom2++) {
+      for(int atom2 = atom1; atom2 < GridT.how_many_atoms[grid_index]; atom2++) {
         if(!gpu_mat_cal_flag[calc_flag_index + atom2]){
         continue;
         }
@@ -146,6 +147,7 @@ void gpu_task_generator_rho(const Grid_Technique &GridT,
         int mat_B_idx = lgd * lo1 + lo2;
         int mat_C_idx = bcell_start_psir + atom1 * nwmax;
 
+        mat_alpha[tid] = atom2==atom1 ? 1 : 2;
         mat_m[tid] = GridT.bxyz;
         mat_n[tid] = nw1;
         mat_k[tid] = nw2;

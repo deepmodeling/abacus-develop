@@ -66,6 +66,7 @@ void gint_gamma_rho_gpu(hamilt::HContainer<double> *DM,
             double *psi_input_double = &GridT.psi_input_double_global[GridT.psi_size_max * stream_num * 5];
             int *psi_input_int = &GridT.psi_input_int_global[GridT.psi_size_max * stream_num * 2];
             int *num_psir = &GridT.num_psir_global[nbz * stream_num];
+            double *atom_pair_alpha = &GridT.atom_pair_alpha_global[GridT.atom_pair_size_over_nbz * stream_num];
             int *atom_pair_A_m = &GridT.atom_pair_left_info_global[GridT.atom_pair_size_over_nbz * stream_num];
             int *atom_pair_B_n = &GridT.atom_pair_right_info_global[GridT.atom_pair_size_over_nbz * stream_num];
             int *atom_pair_k = &GridT.atom_pair_k_info_global[GridT.atom_pair_size_over_nbz * stream_num];
@@ -79,6 +80,7 @@ void gint_gamma_rho_gpu(hamilt::HContainer<double> *DM,
             double *psir_ylm_left_g = &GridT.psir_ylm_left_global_g[GridT.psir_size * stream_num];
             double *psir_ylm_right_g = &GridT.psir_ylm_right_global_g[GridT.psir_size * stream_num];
 
+            double *atom_pair_alpha_g = &GridT.atom_pair_alpha_global_g[GridT.atom_pair_size_over_nbz * stream_num];
             int *atom_pair_A_m_g = &GridT.atom_pair_left_info_global_g[GridT.atom_pair_size_over_nbz * stream_num];
             int *atom_pair_B_n_g = &GridT.atom_pair_right_info_global_g[GridT.atom_pair_size_over_nbz * stream_num];
             int *atom_pair_k_g = &GridT.atom_pair_k_info_global_g[GridT.atom_pair_size_over_nbz * stream_num];
@@ -123,6 +125,7 @@ void gint_gamma_rho_gpu(hamilt::HContainer<double> *DM,
                         psir_ylm_left_g,
                         psir_ylm_right_g,
                         dm_matrix_g,
+                        atom_pair_alpha,
                         atom_pair_A_m,
                         atom_pair_B_n,
                         atom_pair_k,
@@ -147,7 +150,7 @@ void gint_gamma_rho_gpu(hamilt::HContainer<double> *DM,
             checkCuda(cudaMemcpyAsync(psi_input_int_g, psi_input_int, GridT.psi_size_max * 2 * sizeof(int), cudaMemcpyHostToDevice, GridT.streams[stream_num]));
             checkCuda(cudaMemcpyAsync(num_psir_g, num_psir, nbz * sizeof(int), cudaMemcpyHostToDevice, GridT.streams[stream_num]));
 
-
+            checkCuda(cudaMemcpyAsync(atom_pair_alpha_g, atom_pair_alpha, GridT.atom_pair_size_over_nbz * sizeof(double), cudaMemcpyHostToDevice, GridT.streams[stream_num]));
             checkCuda(cudaMemcpyAsync(atom_pair_A_m_g, atom_pair_A_m, GridT.atom_pair_size_over_nbz * sizeof(int), cudaMemcpyHostToDevice, GridT.streams[stream_num]));
             checkCuda(cudaMemcpyAsync(atom_pair_B_n_g, atom_pair_B_n, GridT.atom_pair_size_over_nbz * sizeof(int), cudaMemcpyHostToDevice, GridT.streams[stream_num]));
             checkCuda(cudaMemcpyAsync(atom_pair_k_g, atom_pair_k, GridT.atom_pair_size_over_nbz * sizeof(int), cudaMemcpyHostToDevice, GridT.streams[stream_num]));
@@ -191,7 +194,7 @@ void gint_gamma_rho_gpu(hamilt::HContainer<double> *DM,
                                      atom_pair_mat_A_array_g, atom_pair_lda_g,
                                      atom_pair_mat_B_array_g, atom_pair_ldb_g,
                                      atom_pair_mat_C_array_g, atom_pair_ldc_g,
-                                     atom_pair_num, GridT.streams[stream_num], nullptr);
+                                     atom_pair_num, GridT.streams[stream_num], atom_pair_alpha_g);
           
 
             // new add streamsynchronize
