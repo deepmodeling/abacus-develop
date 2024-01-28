@@ -9,7 +9,26 @@
 
 find_package(PkgConfig)
 
-if(PKG_CONFIG_FOUND)
+find_path(ELPA_INCLUDE_DIRS
+    elpa/elpa.h
+    HINTS ${ELPA_DIR}
+    PATH_SUFFIXES "include" "include/elpa"
+    )
+if(USE_OPENMP)
+    find_library(ELPA_LINK_LIBRARIES
+    NAMES elpa_openmp elpa
+    HINTS ${ELPA_DIR}
+    PATH_SUFFIXES "lib"
+    )
+else()
+    find_library(ELPA_LINK_LIBRARIES
+    NAMES elpa
+    HINTS ${ELPA_DIR}
+    PATH_SUFFIXES "lib"
+    )
+endif()
+
+if(NOT ELPA_INCLUDE_DIRS AND PKG_CONFIG_FOUND)
   if(DEFINED ELPA_DIR)
     string(APPEND CMAKE_PREFIX_PATH ";${ELPA_DIR}")
   endif()
@@ -18,27 +37,9 @@ if(PKG_CONFIG_FOUND)
   else()
     pkg_search_module(ELPA REQUIRED IMPORTED_TARGET GLOBAL elpa)
   endif()
-else()
-  find_path(ELPA_INCLUDE_DIRS
-    elpa/elpa.h
-    HINTS ${ELPA_DIR}
-    PATH_SUFFIXES "include" "include/elpa"
-    )
-  if(USE_OPENMP)
-    find_library(ELPA_LINK_LIBRARIES
-      NAMES elpa_openmp elpa
-      HINTS ${ELPA_DIR}
-      PATH_SUFFIXES "lib"
-      )
-  else()
-    find_library(ELPA_LINK_LIBRARIES
-      NAMES elpa
-      HINTS ${ELPA_DIR}
-      PATH_SUFFIXES "lib"
-      )
-  endif()
-  #message(
-  #  "ELPA : We need pkg-config to get all information about the elpa library")
+elseif(NOT PKG_CONFIG_FOUND)
+  message(
+    "ELPA : We need pkg-config to get all information about the elpa library")
 endif()
 
 # Handle the QUIET and REQUIRED arguments and
@@ -48,7 +49,7 @@ find_package_handle_standard_args(ELPA DEFAULT_MSG ELPA_LINK_LIBRARIES ELPA_INCL
 
 # Copy the results to the output variables and target.
 if(ELPA_FOUND)
-    set(ELPA_LIBRARY ${ELPA_LINK_LIBRARIES})
+    list(GET ELPA_LINK_LIBRARIES 0 ELPA_LIBRARY)
     set(ELPA_INCLUDE_DIR ${ELPA_INCLUDE_DIRS})
 
     if(NOT TARGET ELPA::ELPA)
