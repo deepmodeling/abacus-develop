@@ -492,19 +492,9 @@ void ESolver_KS_PW<T, Device>::othercalculation(const int istep)
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::eachiterinit(const int istep, const int iter)
 {
-    if (iter == 1 || iter == GlobalV::MIXING_RESTART)
-    {
-        if (iter == GlobalV::MIXING_RESTART) // delete mixing and re-construct it to restart 
-        {
-            this->p_chgmix->set_mixing(GlobalV::MIXING_MODE,
-                                GlobalV::MIXING_BETA,
-                                GlobalV::MIXING_NDIM,
-                                GlobalV::MIXING_GG0,
-                                GlobalV::MIXING_TAU,
-                                GlobalV::MIXING_BETA_MAG);
-        }
+    if (iter == 1)
         this->p_chgmix->mix_reset();
-    }
+
     // mohan move harris functional to here, 2012-06-05
     // use 'rho(in)' and 'v_h and v_xc'(in)
     this->pelec->f_en.deband_harris = this->pelec->cal_delta_eband();
@@ -904,58 +894,6 @@ void ESolver_KS_PW<T, Device>::afterscf(const int istep)
                             this->kspw_psi[0].get_pointer() - this->kspw_psi[0].get_psi_bias(),
                             this->psi[0].size());
     }
-
-    if(INPUT.band_print_num > 0)
-    {
-        std::complex<double> * wfcr = new std::complex<double>[this->pw_rho->nxyz];
-        double * rho_band = new double [this->pw_rho->nxyz];
-        for(int i = 0; i < this->pw_rho->nxyz; i++)
-        {
-            rho_band[i] = 0.0;
-        }
-
-        for(int i = 0; i < INPUT.band_print_num; i++)
-        {
-            int ib = INPUT.bands_to_print[i];
-            for(int ik = 0; ik < this->kv.nks; ik++)
-            {
-                this->psi->fix_k(ik);
-                this->pw_wfc->recip_to_real(this->ctx,&psi[0](ib,0),wfcr,ik);
-
-                double w1 = static_cast<double>(this->kv.wk[ik] / GlobalC::ucell.omega);
-
-                for(int i = 0; i < this->pw_rho->nxyz; i++)
-                {
-                    rho_band[i] += std::norm(wfcr[i]) * w1;
-                }
-            }
-
-            std::stringstream ssc;
-            ssc << GlobalV::global_out_dir << "band" << ib << ".cube";     
-
-            ModuleIO::write_rho
-            (
-#ifdef __MPI
-                this->pw_big->bz,
-                this->pw_big->nbz,
-                this->pw_big->nplane,
-                this->pw_big->startz_current,
-#endif
-                rho_band,
-                0,
-                GlobalV::NSPIN,
-                0,
-                ssc.str(),
-                this->pw_rho->nx,
-                this->pw_rho->ny,
-                this->pw_rho->nz,
-                0.0,
-                &(GlobalC::ucell),
-                11);
-        }
-        delete[] wfcr;
-        delete[] rho_band;
-    }
 }
 
 template <typename T, typename Device>
@@ -1021,7 +959,7 @@ void ESolver_KS_PW<T, Device>::postprocess()
     GlobalV::ofs_running << " !FINAL_ETOT_IS " << this->pelec->f_en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
     GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
 
-    if (INPUT.out_dos != 0 || INPUT.out_band[0] != 0)
+    if (INPUT.out_dos != 0 || INPUT.out_band != 0)
     {
         GlobalV::ofs_running << "\n\n\n\n";
         GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
@@ -1063,7 +1001,7 @@ void ESolver_KS_PW<T, Device>::postprocess()
         }
     }
 
-    if (INPUT.out_band[0]) // pengfei 2014-10-13
+    if (INPUT.out_band) // pengfei 2014-10-13
     {
         int nks = 0;
         if (nspin0 == 1)
@@ -1084,7 +1022,6 @@ void ESolver_KS_PW<T, Device>::postprocess()
                                 nks,
                                 GlobalV::NBANDS,
                                 0.0,
-                                INPUT.out_band[1],
                                 this->pelec->ekb,
                                 this->kv,
                                 &(GlobalC::Pkpoints));

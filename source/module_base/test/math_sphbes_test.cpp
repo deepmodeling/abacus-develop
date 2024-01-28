@@ -352,27 +352,15 @@ TEST_F(Sphbes, Zeros)
 
     int lmax = 20;
     int nzeros = 500;
-    double* zeros = new double[nzeros*(lmax+1)];
+    double* zeros = new double[nzeros];
     for (int l = 0; l <= lmax; ++l)
     {
-        ModuleBase::Sphbes::sphbes_zeros(l, nzeros, zeros, false);
+        ModuleBase::Sphbes::sphbes_zeros(l, nzeros, zeros);
         for (int i = 0; i < nzeros; ++i)
         {
             EXPECT_LT(std::abs(ModuleBase::Sphbes::sphbesj(l, zeros[i])), 1e-14);
         }
     }
-
-
-    ModuleBase::Sphbes::sphbes_zeros(lmax, nzeros, zeros, true);
-    for (int l = 0; l <= lmax; ++l)
-    {
-        for (int i = 0; i < nzeros; ++i)
-        {
-            EXPECT_LT(std::abs(ModuleBase::Sphbes::sphbesj(l, zeros[l*nzeros+i])), 1e-14);
-        }
-    }
-
-    delete[] zeros;
 }
 
 TEST_F(Sphbes, ZerosOld)

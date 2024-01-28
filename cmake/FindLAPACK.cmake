@@ -6,7 +6,7 @@
 #
 
 find_library(LAPACK_LIBRARY
-    NAMES openblas blas
+    NAMES openblas
     HINTS ${LAPACK_DIR}
     PATH_SUFFIXES "lib"
 )

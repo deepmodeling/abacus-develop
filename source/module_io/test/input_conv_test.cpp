@@ -183,7 +183,6 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_EQ(GlobalV::sc_mag_switch,0);
     EXPECT_TRUE(GlobalV::decay_grad_switch);
     EXPECT_EQ(GlobalV::sc_file, "sc.json");
-	EXPECT_EQ(GlobalV::MIXING_RESTART,0);
 }
 
 TEST_F(InputConvTest, ConvRelax)

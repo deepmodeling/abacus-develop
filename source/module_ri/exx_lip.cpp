@@ -481,7 +481,7 @@ void Exx_Lip::b_cal( int ik, int iq, int ib)
 	}
 
 	std::complex<double> * const porter = new std::complex<double> [rho_basis->nrxx];
-
+	
 	for(size_t iw=0; iw< GlobalV::NLOCAL; ++iw)
 	{
 		const std::complex<double> * const phi_w = phi[iw];
@@ -495,7 +495,7 @@ void Exx_Lip::b_cal( int ik, int iq, int ib)
 		if( Conv_Coulomb_Pot_K::Ccp_Type::Ccp==info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf==info.ccp_type )
 			if((iq==iq_vecik) && (gzero_rank_in_pool==GlobalV::RANK_IN_POOL))							/// need to check while use k_point parallel
 				b0[iw] = b_w[rho_basis->ig_gge0];
-
+		
 		for( size_t ig=0; ig<rho_basis->npw; ++ig)
 			b_w[ig] *= recip_qkg2[ig];
 	}
@@ -634,14 +634,12 @@ void Exx_Lip::write_q_pack() const
 	if(!GlobalV::RANK_IN_POOL)
 	{
 		const std::string exx_q_pack = "exx_q_pack/";
-		int return_value=0;
-		const std::string command_mkdir = "test -d " + GlobalV::global_out_dir + exx_q_pack + " || mkdir " + GlobalV::global_out_dir + exx_q_pack;
-        return_value = system(command_mkdir.c_str());
-        assert(return_value == 0);
 
-        const std::string command_kpoint = "test -f " + GlobalV::global_out_dir + exx_q_pack + GlobalV::global_kpoint_card + " || cp " + GlobalV::global_kpoint_card + " " + GlobalV::global_out_dir + exx_q_pack + GlobalV::global_kpoint_card;
-        return_value = system(command_kpoint.c_str());
-		assert(return_value==0);
+		const std::string command_mkdir = "test -d " + GlobalV::global_out_dir + exx_q_pack + " || mkdir " + GlobalV::global_out_dir + exx_q_pack;
+		system( command_mkdir.c_str() );	// Need to check
+
+		const std::string command_kpoint = "test -f " + GlobalV::global_out_dir + exx_q_pack + GlobalV::global_kpoint_card + " || cp " + GlobalV::global_kpoint_card + " " + GlobalV::global_out_dir + exx_q_pack + GlobalV::global_kpoint_card;
+		system( command_kpoint.c_str() );	// Need to check
 
 		std::stringstream ss_wf_wg;
 		ss_wf_wg << GlobalV::global_out_dir << exx_q_pack << "wf_wg_" << GlobalV::MY_POOL;

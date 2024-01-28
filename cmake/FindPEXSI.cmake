@@ -35,18 +35,18 @@ find_library(ParMETIS_LIBRARY
     PATH_SUFFIXES "lib"
 )
 
-find_library(SuperLU_DIST_LIBRARY
+find_library(SuperLU_LIBRARY
     NAMES libsuperlu_dist.a
-    HINTS ${SuperLU_DIST_DIR}
+    HINTS ${SuperLU_DIR}
     PATH_SUFFIXES "lib"
 )
 
 # Handle the QUIET and REQUIRED arguments and
 # set Cereal_FOUND to TRUE if all variables are non-zero.
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(PEXSI DEFAULT_MSG PEXSI_LIBRARY PEXSI_INCLUDE_DIR ParMETIS_LIBRARY METIS_LIBRARY SuperLU_DIST_LIBRARY)
+find_package_handle_standard_args(PEXSI DEFAULT_MSG PEXSI_LIBRARY PEXSI_INCLUDE_DIR ParMETIS_LIBRARY METIS_LIBRARY SuperLU_LIBRARY)
 
 
 # Copy the results to the output variables and target.
-mark_as_advanced(PEXSI_LIBRARY PEXSI_INCLUDE_DIR ParMETIS_LIBRARY SuperLU_DIST_LIBRARY)
+mark_as_advanced(PEXSI_LIBRARY PEXSI_INCLUDE_DIR ParMETIS_LIBRARY SuperLU_LIBRARY)
 

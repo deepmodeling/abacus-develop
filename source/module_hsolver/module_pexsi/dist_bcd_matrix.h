@@ -2,8 +2,6 @@
 #define DISTBCDMATRIX_H
 
 #include <mpi.h>
-
-#include "module_hsolver/module_pexsi/dist_matrix_transformer.h"
 // a Block Cyclic Data Distribution matrix
 // http://www.netlib.org/utk/papers/factor/node3.html
 // local matrix elements is stored in column major
@@ -28,27 +26,6 @@ class DistBCDMatrix
     int localCol(const int globalCol, int& mypcol);
     int pnum(const int prow, const int pcol);
     //~DistBCDMatrix();
-
-    const MPI_Comm get_comm() const
-    {
-        return comm;
-    };
-    const MPI_Group get_group() const
-    {
-        return group;
-    };
-    const int get_nrow() const
-    {
-        return nrow;
-    };
-    const int get_ncol() const
-    {
-        return ncol;
-    };
-    const char get_LAYOUT() const
-    {
-        return LAYOUT;
-    };
 
   private:
     // MPI communicator

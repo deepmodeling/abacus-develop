@@ -3,7 +3,7 @@
 
 #include "diagh.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
-#include "module_pexsi/pexsi_solver.h"
+#include "pexsi/pexsi_solver.h"
 
 namespace hsolver
 {

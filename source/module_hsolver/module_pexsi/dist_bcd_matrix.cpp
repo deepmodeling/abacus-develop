@@ -1,4 +1,3 @@
-#ifdef __PEXSI
 #include "dist_bcd_matrix.h"
 
 #include <mpi.h>
@@ -112,4 +111,3 @@ int DistBCDMatrix::pnum(const int prow, const int pcol)
     return this->prowpcol2pnum[prow * this->npcols + pcol];
 }
 } // namespace pexsi
-#endif

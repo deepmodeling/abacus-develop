@@ -18,11 +18,9 @@ class PEXSI_Solver
                  double& totalEnergyS,
                  double& totalFreeEnergy);
     int solve();
-    double* get_DM() const;
-    double* get_EDM() const;
+    const double* get_DM() const;
+    const double* get_EDM() const;
     const double get_totalFreeEnergy() const;
-    const double get_totalEnergyH() const;
-    const double get_totalEnergyS() const;
 
   private:
     int blacs_text;

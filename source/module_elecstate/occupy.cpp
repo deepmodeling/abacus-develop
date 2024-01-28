@@ -79,12 +79,6 @@ void Occupy::decision(const std::string &name, const std::string &smearing_metho
         {
             gaussian_type = 2; // 2nd Methfessel-Paxton method.
         }
-        else if (smearing_method == "mp3")
-        {
-            // acually any order Methfessel-Paxton method can be supported in Occupy::w1gauss()
-            // however the parameter is string instead of int
-            ModuleBase::WARNING_QUIT("occupy", "Some refactor of smearing shoule be done before supporting any order of Methfessel-Paxton method!");
-        }
 
         else if (smearing_method == "marzari-vanderbilt" || smearing_method == "cold" || smearing_method == "mv")
         {
@@ -603,3 +597,411 @@ double Occupy::w1gauss(const double &x, const int n)
 
     return w1;
 } // end function w1gauss
+
+/*
+void Occupy::tweights(const int nks,const int nspin,const int nband,const double &nelec,
+                      const int ntetra,const ModuleBase::matrix &tetra, double **ekb, double &ef, ModuleBase::matrix
+&wg)
+{
+    //===================================================================
+    // calculates weights with the tetrahedron method (Bloechl version)
+    // integer :: nks, nspin, GlobalV::NBANDS, ntetra, tetra (4, ntetra)
+    //===================================================================
+
+    double e1, e2, e3, e4, c1, c2, c3, c4, dosef;
+    int ik, ibnd, nt, nk, ns, i, kp1, kp2, kp3, kp4;
+
+    double etetra[4];
+    int itetra[4];
+
+    // Calculate the Fermi energy ef
+    efermit(ekb, GlobalV::NBANDS, nks, nelec, nspin, ntetra, tetra, ef);
+
+    for (ik = 0;ik < nks;ik++)
+    {
+        for (ibnd = 0;ibnd < nband;ibnd++)
+        {
+            wg(ik, ibnd) = 0.0;
+        } // enddo
+    } // enddo
+
+    for (ns = 0;ns < nspin;ns++)
+    {
+        //==================================================================
+        // nk is used to select k-points with up (ns=1) or down (ns=2) spin
+        //==================================================================
+        if (ns == 1)
+        {
+            nk = 0;
+        }
+        else
+        {
+            nk = nks / 2;
+        }
+
+        for (nt = 0;nt < ntetra;nt++)
+        {
+            for (ibnd = 0;ibnd < GlobalV::NBANDS;ibnd++)
+            {
+                //======================================================
+                // etetra are the energies at the vertexes of the nt-th
+                // tetrahedron
+                //======================================================
+                for (i = 0;i < 4;i++)
+                {
+                    etetra [i] = ekb[static_cast<int>( tetra(nt,i) ) + nk][ibnd];
+                }
+
+                itetra[0] = 0;
+
+                ModuleBase::hpsort(4, etetra, itetra);
+
+                //===============================================
+                // ...sort in ascending order: e1 < e2 < e3 < e4
+                //===============================================
+                e1 = etetra [0];
+                e2 = etetra [1];
+                e3 = etetra [2];
+                e4 = etetra [3];
+
+                //==============================================================
+                // kp1-kp4 are the irreducible k-points corresponding to e1-e4
+                //==============================================================
+
+                kp1 = static_cast<int>( tetra(nt,itetra[0]) )+ nk;
+                kp2 = static_cast<int>( tetra(nt,itetra[1]) )+ nk;
+                kp3 = static_cast<int>( tetra(nt,itetra[2]) )+ nk;
+                kp4 = static_cast<int>( tetra(nt,itetra[3]) )+ nk;
+
+                //======================
+                // calculate weights wg
+                //======================
+                if (ef >= e4)
+                {
+                    wg(kp1, ibnd) = wg(kp1, ibnd) + 0.250 / ntetra;
+                    wg(kp2, ibnd) = wg(kp2, ibnd) + 0.250 / ntetra;
+                    wg(kp3, ibnd) = wg(kp3, ibnd) + 0.250 / ntetra;
+                    wg(kp4, ibnd) = wg(kp4, ibnd) + 0.250 / ntetra;
+                }
+                else if (ef < e4 && ef >= e3)
+                {
+                    c4 = 0.250 / ntetra * pow(e4 - ef, 3) / (e4 - e1) / (e4 - e2)
+                         / (e4 - e3);
+                    dosef = 3.0 / ntetra * (e4 - ef) * (e4 - ef) / (e4 - e1) / (e4 - e2)
+                            / (e4 - e3);
+                    wg(kp1, ibnd) = wg(kp1, ibnd) + 0.250 / ntetra - c4 *
+                                    (e4 - ef) / (e4 - e1) + dosef * (e1 + e2 + e3 + e4 - 4.0 * ekb[kp1][ibnd]) / 40.0;
+                    wg(kp2, ibnd) = wg(kp2, ibnd) + 0.250 / ntetra - c4 *
+                                    (e4 - ef) / (e4 - e2) + dosef * (e1 + e2 + e3 + e4 - 4.0 * ekb[kp2][ibnd]) / 40.0;
+                    wg(kp3, ibnd) = wg(kp3, ibnd) + 0.250 / ntetra - c4 *
+                                    (e4 - ef) / (e4 - e3) + dosef * (e1 + e2 + e3 + e4 - 4.0 * ekb[kp3][ibnd]) / 40.0;
+                    wg(kp4, ibnd) = wg(kp4, ibnd) + 0.250 / ntetra - c4 *
+                                    (4.0 - (e4 - ef) * (1.0 / (e4 - e1) + 1.0 / (e4 - e2)
+                                                        + 1.0 / (e4 - e3))) + dosef * (e1 + e2 + e3 + e4 - 4.0 *
+                                                                                       ekb[kp4][ibnd]) / 40.0;
+                }
+
+                else if (ef < e3 && ef >= e2)
+                {
+                    c1 = 0.250 / ntetra * (ef - e1) * (ef - e1) / (e4 - e1) / (e3 - e1);
+                    c2 = 0.250 / ntetra * (ef - e1) * (ef - e2) * (e3 - ef)
+                         / (e4 - e1) / (e3 - e2) / (e3 - e1);
+                    c3 = 0.250 / ntetra * (ef - e2) * (ef - e2) * (e4 - ef) / (e4 - e2)
+                         / (e3 - e2) / (e4 - e1);
+                    dosef = 1.0 / ntetra / (e3 - e1) / (e4 - e1) * (3.0 *
+                            (e2 - e1) + 6.0 * (ef - e2) - 3.0 * (e3 - e1 + e4 - e2)
+                            * (ef - e2) * (ef - e2) / (e3 - e2) / (e4 - e2));
+                    wg(kp1, ibnd) = wg(kp1, ibnd) + c1 + (c1 + c2) * (e3 - ef)
+                                    / (e3 - e1) + (c1 + c2 + c3) * (e4 - ef) / (e4 - e1) + dosef *
+                                    (e1 + e2 + e3 + e4 - 4.0 * ekb[kp1][ibnd]) / 40.0;
+                    wg(kp2, ibnd) = wg(kp2, ibnd) + c1 + c2 + c3 + (c2 + c3)
+                                    * (e3 - ef) / (e3 - e2) + c3 * (e4 - ef) / (e4 - e2) + dosef *
+                                    (e1 + e2 + e3 + e4 - 4.0 * ekb[kp2][ibnd]) / 40.0;
+                    wg(kp3, ibnd) = wg(kp3, ibnd) + (c1 + c2) * (ef - e1)
+                                    / (e3 - e1) + (c2 + c3) * (ef - e2) / (e3 - e2) + dosef *
+                                    (e1 + e2 + e3 + e4 - 4.0 * ekb[kp3][ibnd]) / 40.0;
+                    wg(kp4, ibnd) = wg(kp4, ibnd) + (c1 + c2 + c3) * (ef - e1)
+                                    / (e4 - e1) + c3 * (ef - e2) / (e4 - e2) + dosef * (e1 + e2 +
+                                            e3 + e4 - 4.0 * ekb[kp4][ibnd]) / 40.0;
+                }
+                else if (ef < e2 && ef >= e1)
+                {
+                    c4 = 0.250 / ntetra * (ef - e1) * (ef - e1) * (ef - e1) / (e2 - e1) /
+                         (e3 - e1) / (e4 - e1);
+                    dosef = 3.0 / ntetra * (ef - e1) * (ef - e1) / (e2 - e1) / (e3 - e1)
+                            / (e4 - e1);
+                    wg(kp1, ibnd) = wg(kp1, ibnd) + c4 * (4.0 - (ef - e1)
+                                                          * (1.0 / (e2 - e1) + 1.0 / (e3 - e1) + 1.0 / (e4 - e1)))
+                                    + dosef * (e1 + e2 + e3 + e4 - 4.0 * ekb[kp1][ibnd]) / 40.0;
+                    wg(kp2, ibnd) = wg(kp2, ibnd) + c4 * (ef - e1) / (e2 - e1)
+                                    + dosef * (e1 + e2 + e3 + e4 - 4.0 * ekb[kp2][ibnd]) / 40.0;
+                    wg(kp3, ibnd) = wg(kp3, ibnd) + c4 * (ef - e1) / (e3 - e1)
+                                    + dosef * (e1 + e2 + e3 + e4 - 4.0 * ekb[kp3][ibnd]) / 40.0;
+                    wg(kp4, ibnd) = wg(kp4, ibnd) + c4 * (ef - e1) / (e4 - e1)
+                                    + dosef * (e1 + e2 + e3 + e4 - 4.0 * ekb[kp4][ibnd]) / 40.0;
+                } // endif
+            } // enddo
+        } // enddo
+    } // enddo
+
+    //=====================================================================
+    // add correct spin normalization : 2 for LDA, 1 for LSDA calculations
+    //=====================================================================
+    for (ik = 0;ik < nks;ik++)
+    {
+        for (ibnd = 0;ibnd < GlobalV::NBANDS;ibnd++)
+        {
+            wg(ik, ibnd) = wg(ik, ibnd) * 2.0 / nspin;
+        }
+    }
+    return;
+} // end subroutine tweights
+*/
+
+/*
+double Occupy::wsweight(const ModuleBase::Vector3<double> &r, ModuleBase::Vector3<double> *rws,const int nrws)
+{
+    //============================================================
+    // integer ir, nreq, nrws
+    // real(kind=dp) r(3), rrt, ck, eps, rws(0:3,nrws), wsweight
+    // parameter (eps=1.0e-6)
+    //============================================================
+    const double eps = 1.0e-6;
+
+    int nreq = 1;
+
+    for (int ir = 0;ir < nrws;ir++)
+    {
+        const double rrt = r * rws[ir];
+        const double ck = rrt - rws[ir].x;
+        //	rrt = r[1]*rws(1,ir) + r[2]*rws(2,ir) + r[3]*rws(3,ir);
+        //	ck = rrt-rws(0,ir);
+
+        if (ck > eps)
+        {
+            break;
+        }
+
+        if (std::abs(ck) < eps)
+        {
+            nreq++;
+        }
+    } // end do
+
+    const double wswe = 1.0 / nreq;
+
+    return wswe;
+} // end function wsweight
+*/
+
+/*
+void Occupy::efermit(double** ekb,const int nband,const int nks,const double &nelec,const int nspin,
+                     const int ntetra,const ModuleBase::matrix &tetra, double &ef)
+{
+    //=======================================================
+    // Finds the Fermi energy - tetrahedron method (Bloechl)
+    // the transformation Ry to eV
+    //=======================================================
+
+    // parameter :
+    const int maxiter = 300;
+    const double eps = 1.0e-10;
+
+    double efbetter;
+
+    //===================================
+    // nlw : the minimum energy band
+    // elw : the lower limit of the fermi ener
+    // eup : the upper limit of the fermi ener
+    // external sumkt
+    // find bounds for the Fermi energy.
+    //===================================
+    const int nlw = max(  1, static_cast<int>( (nelec / 2.0 - 5.0) )  );
+    double elw = ekb[nlw][0];
+    double eup = ekb[0][GlobalV::NBANDS-1];
+
+    for (int ik = 1;ik < nks;ik++)// do ik = 2, nks
+    {
+        elw = min(elw, ekb[ik][nlw]);
+        eup = max(eup, ekb[ik][GlobalV::NBANDS-1]);
+    }
+    for (int ik = 1;ik < nks;ik++)// do ik = 2, nks
+    {
+        elw = min(elw, ekb[ik][nlw]);
+        eup = max(eup, ekb[ik][GlobalV::NBANDS-1]);
+    }
+
+    //===============================
+    // Bisection method
+    // the number of states with eup
+    // the number of states with elw
+    //===============================
+    const double sumkup = sumkt(ekb, GlobalV::NBANDS, nks, nspin, ntetra, tetra, eup);
+    const double sumklw = sumkt(ekb, GlobalV::NBANDS, nks, nspin, ntetra, tetra, elw);
+
+    GlobalV::ofs_running << "\n sumkup = " << sumkup;
+    GlobalV::ofs_running << "\n sumklw = " << sumklw << std::endl;
+
+    if ((sumkup - nelec) < - eps || (sumklw - nelec) > eps)
+    {
+        ModuleBase::WARNING("efermit","unexpected error.");
+    }
+
+    double better = 1.0e+10;
+
+    bool converge = false;
+
+    double sumkmid = 0.0;
+    for (int iter = 0;iter < maxiter;iter++)
+    {
+        // the number of states with ef
+        ef = (eup + elw) / 2.0;
+        sumkmid = sumkt(ekb, GlobalV::NBANDS, nks, nspin, ntetra, tetra, ef);
+
+        if (std::abs(sumkmid - nelec) < better)
+        {
+            better = std::abs(sumkmid - nelec);
+            efbetter = ef;
+        }
+
+        // converged
+        if (std::abs(sumkmid - nelec) < eps)
+        {
+            converge = true;
+            break;
+        }
+        else if ((sumkmid - nelec) < - eps)
+        {
+            elw = ef;
+        }
+        else
+        {
+            eup = ef;
+        }
+    }
+    if (!converge)
+    {
+        // unconverged exit:
+        // the best available ef is used . Needed in some difficult cases
+        ef = efbetter;
+        sumkmid = sumkt(ekb, GlobalV::NBANDS, nks, nspin, ntetra, tetra, ef);
+    }
+
+    //==============================================================
+    // Check if Fermi level is above any of the highest eigenvalues
+    //==============================================================
+    for (int ik = 0;ik < nks;ik++)
+    {
+        if (ef > ekb[ik][GlobalV::NBANDS-1] + 1.e-4)
+        {
+            std::cout << "\n ef = " << ef;
+        }
+    }
+    return;
+} // end subroutine efermit
+*/
+
+/*
+double Occupy::sumkt(double** ekb,const int nband,const int nks,const int nspin,const int ntetra,
+                     const ModuleBase::matrix &tetra,const double &e)
+{
+    double etetra[4];
+    double sum = 0.0;
+
+    int nk = 0 ;
+    for (int ns = 0; ns < nspin;ns++)
+    {
+        //==================================================================
+        // nk is used to select k-points with up (ns=1) or down (ns=2) spin
+        //==================================================================
+        if (ns == 1)
+        {
+            nk = 0;
+        }
+        else
+        {
+            nk = nks / 2;
+        }
+
+        for (int nt = 0; nt < ntetra; nt++)
+        {
+            for (int ibnd = 0; ibnd < GlobalV::NBANDS; ibnd++)
+            {
+                //======================================================
+                // etetra are the energies at the vertexes of the nt-th
+                // tetrahedron
+                //======================================================
+                for (int i = 0; i < 4; i++)
+                {
+                    etetra [i] = ekb[  static_cast<int>( (tetra(i, nt) + nk) )][ ibnd  ];
+                }
+
+                piksort(4, etetra);
+                //===========================================
+                //sort in ascending order: e1 < e2 < e3 < e4
+                //===========================================
+                const double e1 = etetra [0];
+                const double e2 = etetra [1];
+                const double e3 = etetra [2];
+                const double e4 = etetra [3];
+
+                //===============================================
+                // calculate sum over k of the integrated charge
+                //===============================================
+                if (e >= e4)
+                {
+                    sum += 1.0 / ntetra;
+                }
+                else if (e < e4 && e >= e3)
+                {
+                    sum += 1.0 / ntetra * (1.0 - pow((e4 - e), 3) / (e4 - e1)
+                                           / (e4 - e2) / (e4 - e3));
+                }
+                else if (e < e3 && e >= e2)
+                {
+                    sum += 1.0 / ntetra / (e3 - e1) / (e4 - e1) *
+                           ((e2 - e1) * (e2 - e1) + 3.0 * (e2 - e1) * (e - e2) +
+                            3.0 * (e - e2) * (e - e2) - (e3 - e1 + e4 - e2) /
+                            (e3 - e2) / (e4 - e2) * pow((e - e2), 3));
+                }
+                else if (e < e2 && e >= e1)
+                {
+                    sum += 1.0 / ntetra * pow((e - e1), 3) /
+                           (e2 - e1) / (e3 - e1) / (e4 - e1);
+                }
+            }//ibnd
+        }//nt
+    }//ns
+
+// add correct spin normalization : 2 for LDA, 1 for LSDA calculations
+    sum *= 2.0 / nspin;
+    return sum;
+} // end function sumkt
+*/
+
+/*
+void Occupy::piksort(const int n, double *a)
+{
+    int i;
+    bool b = true;
+    for (int j = 1;j < n;j++) // do j = 2, n
+    {
+        const double temp = a [j];
+        for (i = j - 1;i >= 0;i--)  // do i = j - 1, 1, - 1
+        {
+            if (a [i] <= temp)
+            {
+                b = false;
+                break;
+            }
+            a [i + 1] = a [i];
+        }
+        if (b)
+        {
+            i = 0;
+        }
+        a [i + 1] = temp;
+    }
+    return;
+} //end subroutine piksort
+*/

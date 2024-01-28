@@ -5,37 +5,40 @@
 #include <map>
 #include <string>
 
-namespace Conv_Coulomb_Pot_K
+class Conv_Coulomb_Pot_K
 {
-	enum class Ccp_Type{		//	parameter:
-		Ccp,					//
-		Hf,						//		"hf_Rcut"
-		Hse};					//		"hse_omega"
+public:
 
-	template<typename T> T cal_orbs_ccp(
+	enum class Ccp_Type{		//  parameter:
+		Ccp,                 // 
+		Hf,					//
+		Hse};					//  	"hse_omega"
+
+	template<typename T> static T cal_orbs_ccp(
 		const T &orbs,
 		const Ccp_Type &ccp_type,
 		const std::map<std::string,double> &parameter,
-        const double rmesh_times);
-
-  //private:
-	template< typename T > double get_rmesh_proportion(
+        const double rmesh_times,
+        const int& nks);
+	
+private:
+		
+	template< typename T > static double get_rmesh_proportion(
 		const T &orbs,
 		const double psi_threshold);
+		
+private:
 
-  //private:
-	std::vector<double> cal_psi_ccp(
-		const std::vector<double> & psif);
-	std::vector<double> cal_psi_hf(
-		const std::vector<double> &psif,
-		const std::vector<double> &k_radial,
-		const double hf_Rcut);
-	std::vector<double> cal_psi_hse(
+	static std::vector<double> cal_psi_ccp( const std::vector<double> & psif );
+	
+	static std::vector<double> cal_psi_hf(const int& nks, const std::vector<double> &psif,
+                                          const std::vector<double> &k_radial,
+                                          const double omega);
+
+	static std::vector<double> cal_psi_hse( 
 		const std::vector<double> & psif,
 		const std::vector<double> & k_radial,
-		const double hse_omega);
-}
-
-#include "conv_coulomb_pot_k.hpp"
+		const double omega);
+};
 
 #endif

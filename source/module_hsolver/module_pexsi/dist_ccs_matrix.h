@@ -19,44 +19,6 @@ class DistCCSMatrix
     int globalCol(int localCol);
     int localCol(int globalCol, int& mypcol);
     void setnnz(int nnzLocal);
-
-    const MPI_Comm get_comm() const
-    {
-        return comm;
-    };
-    const MPI_Group get_group() const
-    {
-        return group;
-    };
-    const MPI_Group get_group_data() const
-    {
-        return group_data;
-    };
-    const int get_size() const
-    {
-        return size;
-    };
-    const int get_nnz() const
-    {
-        return nnz;
-    };
-    const int get_nnzlocal() const
-    {
-        return nnzLocal;
-    };
-    const int get_numcol_local() const
-    {
-        return numColLocal;
-    };
-    int* get_colptr_local() const
-    {
-        return colptrLocal;
-    };
-    int* get_rowind_local() const
-    {
-        return rowindLocal;
-    };
-
     ~DistCCSMatrix();
 
   private:
@@ -88,8 +50,6 @@ class DistCCSMatrix
     // Array stores the indices to the nonzero row indices in rowptrLocal and nzvalLocal
     int* colptrLocal;
     int* rowindLocal;
-
-    // friend class DistMatrixTransformer;
 };
 } // namespace pexsi
 #endif // DISTCCSMATRIX_H

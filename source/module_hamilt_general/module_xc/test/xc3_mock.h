@@ -75,7 +75,7 @@ namespace ModulePW
         return x;
     }
 
-
+    
     template <typename FPTYPE, typename Device>
     void PW_Basis_K::real_to_recip(const Device* ctx,
                        const std::complex<FPTYPE>* in,
@@ -115,7 +115,7 @@ namespace ModulePW
                                                                      const int ik,
                                                                      const bool add,
                                                                      const double factor) const;
-#if __CUDA || __ROCM
+#if __CUDA || __ROCM                                                                     
     template void PW_Basis_K::real_to_recip<double, psi::DEVICE_GPU>(const psi::DEVICE_GPU* ctx,
                                                                      const std::complex<double>* in,
                                                                      std::complex<double>* out,
@@ -129,7 +129,7 @@ namespace ModulePW
                                                                      const int ik,
                                                                      const bool add,
                                                                      const double factor) const;
-#endif
+#endif 
 
     FFT::FFT(){};
     FFT::~FFT(){};
@@ -144,13 +144,9 @@ namespace ModulePW
 
 namespace ModuleBase
 {
-    void WARNING_QUIT(const std::string &file,const std::string &description)
-    {
-        std::cout << " " << file <<"  warning : "<< description<<std::endl;
-        exit(1);
-    }
+    void WARNING_QUIT(const std::string &file,const std::string &description) {return ;}
     void WARNING(const std::string &file,const std::string &description) {};
-
+    
     void Matrix3::Identity(){};
 
     IntArray::IntArray(int,int){};

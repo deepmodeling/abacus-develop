@@ -33,7 +33,7 @@ ModuleBase::matrix SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_MW_
         const char N_char = 'N';
         const int one_int = 1;
         const std::complex<double> one_float = {1.0, 0.0}, zero_float = {0.0, 0.0};        
-        pzgemm_(&N_char,
+        pzgemm_(&T_char,
                 &T_char,
                 &nw,
                 &nw,

@@ -241,12 +241,12 @@ class InputParameter
         }
     }
 };
-void Init(const std::string& default_type_path,
+bool Init(const std::string& default_type_path,
           const std::string& default_value_path,
           const std::string& input_value_path);
-void default_parametes_reader(const std::string& fn, std::map<std::string, std::string>& default_parametes_type);
-void input_parameters_get(const std::string& fn, std::map<std::string, InputParameter>& input);
-void input_parameters_set(std::map<std::string, InputParameter> input_parameters);
+bool default_parametes_reader(const std::string& fn, std::map<std::string, std::string>& default_parametes_type);
+bool input_parameters_get(const std::string& fn, std::map<std::string, InputParameter>& input);
+bool input_parameters_set(std::map<std::string, InputParameter> input_parameters);
 
 extern std::map<std::string, InputParameter> input_parameters;
 extern std::map<std::string, std::string> default_parametes_type;

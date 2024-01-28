@@ -33,13 +33,13 @@ void WARNING(const std::string &file, const std::string &description);
  * @brief Close .log files and exit
  *
  */
-[[noreturn]] void QUIT(void);
+void QUIT(void);
 
 /**
  * @brief Close .log files and exit
  *
  */
-[[noreturn]] void QUIT(int ret);
+void QUIT(int ret);
 
 /**
  * @brief Combine the functions of WARNING and QUIT
@@ -47,7 +47,7 @@ void WARNING(const std::string &file, const std::string &description);
  * @param file The file where warning happens
  * @param description The warning information
  */
-[[noreturn]] void WARNING_QUIT(const std::string& file, const std::string& description);
+void WARNING_QUIT(const std::string &file, const std::string &description);
 
 /**
  * @brief Combine the functions of WARNING and QUIT
@@ -55,7 +55,7 @@ void WARNING(const std::string &file, const std::string &description);
  * @param file The file where warning happens
  * @param description The warning information
  */
-[[noreturn]] void WARNING_QUIT(const std::string& file, const std::string& description, int ret);
+void WARNING_QUIT(const std::string &file, const std::string &description, int ret);
 
 /**
  * @brief Check, if true, WARNING_QUIT

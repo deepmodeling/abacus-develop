@@ -1,4 +1,3 @@
-#ifdef __PEXSI
 #include "pexsi_solver.h"
 
 #include <mpi.h>
@@ -6,11 +5,6 @@
 #include <cstring>
 
 #include "module_base/global_variable.h"
-#include "simple_pexsi.h"
-
-extern MPI_Comm DIAG_WORLD;
-extern MPI_Comm GRID_WORLD;
-extern MPI_Group GRID_GROUP;
 
 namespace pexsi
 {
@@ -43,7 +37,9 @@ PEXSI_Solver::PEXSI_Solver(const int blacs_text,
 
 int PEXSI_Solver::solve()
 {
-
+    extern MPI_Comm DIAG_WORLD;
+    extern MPI_Comm GRID_WORLD;
+    extern MPI_Group GRID_GROUP;
     simplePEXSI(DIAG_WORLD,
                 GRID_WORLD,
                 GRID_GROUP,
@@ -65,12 +61,12 @@ int PEXSI_Solver::solve()
     return 0;
 }
 
-double* PEXSI_Solver::get_DM() const
+const double* PEXSI_Solver::get_DM() const
 {
     return DM;
 }
 
-double* PEXSI_Solver::get_EDM() const
+const double* PEXSI_Solver::get_EDM() const
 {
     return EDM;
 }
@@ -79,16 +75,4 @@ const double PEXSI_Solver::get_totalFreeEnergy() const
 {
     return totalFreeEnergy;
 }
-
-const double PEXSI_Solver::get_totalEnergyH() const
-{
-    return totalEnergyH;
-}
-
-const double PEXSI_Solver::get_totalEnergyS() const
-{
-    return totalEnergyS;
-}
-
 } // namespace pexsi
-#endif
