@@ -1,3 +1,4 @@
+#ifdef __PEXSI
 #include "dist_ccs_matrix.h"
 
 #include <mpi.h>
@@ -115,3 +116,4 @@ DistCCSMatrix::~DistCCSMatrix()
     delete[] rowindLocal;
 }
 } // namespace pexsi
+#endif

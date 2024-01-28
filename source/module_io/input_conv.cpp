@@ -750,6 +750,7 @@ void Input_Conv::Convert(void)
     GlobalV::MIXING_MODE = INPUT.mixing_mode;
     GlobalV::MIXING_BETA = INPUT.mixing_beta;
     GlobalV::MIXING_NDIM = INPUT.mixing_ndim;
+    GlobalV::MIXING_RESTART = INPUT.mixing_restart;
     GlobalV::MIXING_GG0 = INPUT.mixing_gg0;
     GlobalV::MIXING_BETA_MAG = INPUT.mixing_beta_mag;
     GlobalV::MIXING_GG0_MAG = INPUT.mixing_gg0_mag;
@@ -765,6 +766,35 @@ void Input_Conv::Convert(void)
     GlobalV::qo_strategy = INPUT.qo_strategy;
     GlobalV::qo_thr = INPUT.qo_thr;
     GlobalV::qo_screening_coeff = INPUT.qo_screening_coeff;
+
+    //-----------------------------------------------
+    // PEXSI related parameters
+    //-----------------------------------------------
+    GlobalV::pexsi_npole = INPUT.pexsi_npole;
+    GlobalV::pexsi_inertia = INPUT.pexsi_inertia;
+    GlobalV::pexsi_nmax = INPUT.pexsi_nmax;
+    // GlobalV::pexsi_symbolic = INPUT.pexsi_symbolic;
+    GlobalV::pexsi_comm = INPUT.pexsi_comm;
+    GlobalV::pexsi_storage = INPUT.pexsi_storage;
+    GlobalV::pexsi_ordering = INPUT.pexsi_ordering;
+    GlobalV::pexsi_row_ordering = INPUT.pexsi_row_ordering;
+    GlobalV::pexsi_nproc = INPUT.pexsi_nproc;
+    GlobalV::pexsi_symm = INPUT.pexsi_symm;
+    GlobalV::pexsi_trans = INPUT.pexsi_trans;
+    GlobalV::pexsi_method = INPUT.pexsi_method;
+    GlobalV::pexsi_nproc_pole = INPUT.pexsi_nproc_pole;
+    // GlobalV::pexsi_spin = INPUT.pexsi_spin;
+    GlobalV::pexsi_temp = INPUT.pexsi_temp;
+    GlobalV::pexsi_gap = INPUT.pexsi_gap;
+    GlobalV::pexsi_delta_e = INPUT.pexsi_delta_e;
+    GlobalV::pexsi_mu_lower = INPUT.pexsi_mu_lower;
+    GlobalV::pexsi_mu_upper = INPUT.pexsi_mu_upper;
+    GlobalV::pexsi_mu = INPUT.pexsi_mu;
+    GlobalV::pexsi_mu_thr = INPUT.pexsi_mu_thr;
+    GlobalV::pexsi_mu_expand = INPUT.pexsi_mu_expand;
+    GlobalV::pexsi_mu_guard = INPUT.pexsi_mu_guard;
+    GlobalV::pexsi_elec_thr = INPUT.pexsi_elec_thr;
+    GlobalV::pexsi_zero_thr = INPUT.pexsi_zero_thr;
     ModuleBase::timer::tick("Input_Conv", "Convert");
     return;
 }
