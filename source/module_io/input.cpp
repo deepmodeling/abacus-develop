@@ -713,6 +713,8 @@ bool Input::Read(const std::string& fn)
         return false; // return error : false
     }
 
+    bool plast_find = false; // whether the parameter md_plast is found liuyu 2024-01-28
+
     ifs.rdstate();
     while (ifs.good())
     {
@@ -1609,10 +1611,15 @@ bool Input::Read(const std::string& fn)
         else if (strcmp("md_pfirst", word) == 0)
         {
             read_value(ifs, mdp.md_pfirst);
+            if (!plast_find)
+            {
+                mdp.md_plast = mdp.md_pfirst;
+            }
         }
         else if (strcmp("md_plast", word) == 0)
         {
             read_value(ifs, mdp.md_plast);
+            plast_find = true;
         }
         else if (strcmp("md_pfreq", word) == 0)
         {
@@ -3036,8 +3043,6 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         }
         if (!out_md_control)
             out_level = "m"; // zhengdy add 2019-04-07
-        if (mdp.md_plast < 0.0)
-            mdp.md_plast = mdp.md_pfirst;
 
         if (mdp.md_tfreq == 0)
         {
@@ -3955,8 +3960,6 @@ void Input::Check(void)
         // deal with input parameters , 2019-04-30
         if (mdp.md_dt < 0)
             ModuleBase::WARNING_QUIT("Input::Check", "time interval of MD calculation should be set!");
-        if (mdp.md_type == "npt" && mdp.md_pfirst < 0)
-            ModuleBase::WARNING_QUIT("Input::Check", "pressure of MD calculation should be set!");
         if (mdp.md_type == "msst")
         {
             if (mdp.msst_qmass <= 0)
