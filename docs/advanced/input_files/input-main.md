@@ -2417,7 +2417,7 @@ These variables are used to control molecular dynamics calculations. For more in
 
 - **Type**: Real
 - **Description**: The target pressure used in NPT ensemble simulations, the default value of `md_plast` is `md_pfirst`. If `md_plast` is set to be different from `md_pfirst`, ABACUS will automatically change the target pressure from `md_pfirst` to `md_plast`.
-- **Default**: No default
+- **Default**: -1.0
 - **Unit**: kbar
 
 ### md_pfreq
