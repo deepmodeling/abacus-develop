@@ -100,7 +100,9 @@ void toWannier90::read_nnkp(const K_Vectors& kv)
 
 void toWannier90::out_eig(const ModuleBase::matrix& ekb)
 {
+#ifdef __MPI
     if (GlobalV::MY_RANK == 0)
+#endif
     {
         std::string fileaddress = GlobalV::global_out_dir + wannier_file_name + ".eig";
         std::ofstream eig_file(fileaddress.c_str());
