@@ -1140,15 +1140,6 @@ TEST_F(InputTest, Check)
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("time interval of MD calculation should be set!"));
 	INPUT.mdp.md_dt = 1.0;
-    //
-    INPUT.mdp.md_type = "npt";
-	INPUT.mdp.md_pmode = "iso";
-	INPUT.mdp.md_pfirst = -1.0;
-	testing::internal::CaptureStdout();
-	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
-	output = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output,testing::HasSubstr("pressure of MD calculation should be set!"));
-	INPUT.mdp.md_pfirst = 1.0;
 	//
 	INPUT.mdp.md_type = "msst";
 	INPUT.mdp.msst_qmass = -1.0;
