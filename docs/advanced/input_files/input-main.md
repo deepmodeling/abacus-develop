@@ -2123,14 +2123,14 @@ These variables are relevant when using hybrid functionals.
 ### exx_hybrid_step
 
 - **Type**: Integer
-- **Availability**: *[exx_seperate_loop](#exx_separate_loop)==1*
+- **Availability**: *[exx_separate_loop](#exx_separate_loop)==1*
 - **Description**: the maximal iteration number of the outer-loop, where the Fock exchange is calculated
 - **Default**: 100
 
 ### exx_mixing_beta
 
 - **Type**: Real
-- **Availability**: *[exx_seperate_loop](#exx_separate_loop)==1*
+- **Availability**: *[exx_separate_loop](#exx_separate_loop)==1*
 - **Description**: mixing_beta for densty matrix in each iteration of the outer-loop
 - **Default**: 1.0
 
