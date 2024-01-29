@@ -98,6 +98,7 @@ void DFTUNew<OperatorLCAO<TK, TR>>::cal_force_stress(
             }
         }
         //first iteration to calculate occupation matrix
+        std::vector<double> occ(tlp1 * tlp1 * GlobalV::NSPIN, 0);
         for(int i=0;i<occ.size();i++)
         {
             const int is = i / (tlp1 * tlp1);
