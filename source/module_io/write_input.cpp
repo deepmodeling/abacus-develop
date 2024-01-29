@@ -256,6 +256,7 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_angle", mixing_angle, "angle mixing parameter for non-colinear calculations");
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_tau", mixing_tau, "whether to mix tau in mGGA calculation");
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_dftu", mixing_dftu, "whether to mix locale in DFT+U calculation");
+    ModuleBase::GlobalFunc::OUTP(ofs, "mixing_dmr", mixing_dmr, "whether to mix real-space density matrix");
 
     ofs << "\n#Parameters (8.DOS)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs, "dos_emin_ev", dos_emin_ev, "minimal range for dos");

@@ -317,13 +317,6 @@ void AtomPair<T>::set_size(const int& col_size_in, const int& row_size_in)
     this->row_size = row_size_in;
 }
 
-// get size
-template <typename T>
-int AtomPair<T>::get_size() const
-{
-    return this->col_size * this->row_size;
-}
-
 // get paraV for check
 template <typename T>
 const Parallel_Orbitals* AtomPair<T>::get_paraV() const
@@ -786,17 +779,6 @@ T* AtomPair<T>::get_pointer(int ir) const
     assert(current_R >= 0);
 #endif
     return this->values[ir].get_pointer();
-}
-
-// get_R_size
-template <typename T>
-size_t AtomPair<T>::get_R_size() const
-{
-#ifdef __DEBUG
-    assert(this->R_index.size() / 3 == this->values.size());
-    assert(this->R_index.size() % 3 == 0);
-#endif
-    return this->R_index.size() / 3;
 }
 
 // get_memory_size

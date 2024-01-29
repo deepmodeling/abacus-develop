@@ -1,4 +1,6 @@
-#pragma once
+#ifndef EXX_LRI_INTERFACE_H
+#define EXX_LRI_INTERFACE_H
+
 #include "Exx_LRI.h"
 #include "module_ri/Mix_DMk_2D.h"
 #include <memory>
@@ -56,3 +58,5 @@ private:
 };
 
 #include "Exx_LRI_interface.hpp"
+
+#endif
