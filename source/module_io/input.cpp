@@ -311,6 +311,7 @@ void Input::Default(void)
     mixing_angle = -10.0;    // defaultly close for npsin = 4
     mixing_tau = false;
     mixing_dftu = false;
+    mixing_dmr = false;      // whether to mixing real space density matrix
     //----------------------------------------------------------
     // potential / charge / wavefunction / energy
     //----------------------------------------------------------
@@ -1292,6 +1293,10 @@ bool Input::Read(const std::string& fn)
         else if (strcmp("mixing_dftu", word) == 0)
         {
             read_bool(ifs, mixing_dftu);
+        }
+        else if (strcmp("mixing_dmr", word) == 0)
+        {
+            read_bool(ifs, mixing_dmr);
         }
         //----------------------------------------------------------
         // charge / potential / wavefunction
@@ -3343,6 +3348,7 @@ void Input::Bcast()
     Parallel_Common::bcast_double(mixing_angle);
     Parallel_Common::bcast_bool(mixing_tau);
     Parallel_Common::bcast_bool(mixing_dftu);
+    Parallel_Common::bcast_bool(mixing_dmr);
 
     Parallel_Common::bcast_string(read_file_dir);
     Parallel_Common::bcast_string(init_wfc);

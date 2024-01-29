@@ -263,13 +263,6 @@ hamilt::HContainer<TR>* DensityMatrix<TK, TR>::get_DMR_pointer(const int ispin) 
     return this->_DMR[ispin - 1];
 }
 
-// get _DMR pointer vector
-template <typename TK, typename TR>
-std::vector<hamilt::HContainer<TR>*> DensityMatrix<TK, TR>::get_DMR_vector() const
-{
-    return this->_DMR;
-}
-
 // get _DMK[ik] pointer
 template <typename TK, typename TR>
 TK* DensityMatrix<TK, TR>::get_DMK_pointer(const int ik) const
@@ -380,6 +373,38 @@ int DensityMatrix<TK, TR>::get_DMK_ncol() const
     assert(this->_DMK.size() != 0);
 #endif
     return this->_paraV->ncol;
+}
+
+template <typename TK, typename TR>
+void DensityMatrix<TK, TR>::save_DMR()
+{
+    ModuleBase::TITLE("DensityMatrix", "save_DMR");
+    ModuleBase::timer::tick("DensityMatrix", "save_DMR");
+    
+    const int nnr = this->_DMR[0]->get_nnr();
+    // allocate if _DMR_save is empty 
+    if(_DMR_save.size() == 0)
+    {
+        _DMR_save.resize(this->_DMR.size());
+        for(int is=0;is<this->_DMR.size();is++)
+        {
+            _DMR_save[is].resize(nnr);
+        }
+    }
+    // save _DMR to _DMR_save
+    for(int is=0;is<this->_DMR.size();is++)
+    {
+        TR* DMR_pointer = this->_DMR[is]->get_wrapper();
+        TR* DMR_save_pointer = _DMR_save[is].data();
+        // set to zero
+        ModuleBase::GlobalFunc::ZEROS(DMR_save_pointer, nnr);
+        for(int i=0;i<nnr;i++)
+        {
+            DMR_save_pointer[i] = DMR_pointer[i];
+        }
+    }
+
+    ModuleBase::timer::tick("DensityMatrix", "save_DMR");
 }
 
 // calculate DMR from DMK using add_element

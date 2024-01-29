@@ -73,6 +73,7 @@
     - [mixing\_beta\_mag](#mixing_beta_mag)
     - [mixing\_ndim](#mixing_ndim)
     - [mixing\_restart](#mixing_restart)
+    - [mixing\_dmr](#mixing_dmr)
     - [mixing\_gg0](#mixing_gg0)
     - [mixing\_gg0\_mag](#mixing_gg0_mag)
     - [mixing\_gg0\_min](#mixing_gg0_min)
@@ -1012,6 +1013,14 @@ We recommend the following options:
 - **Description**: At `mixing_restart`-th iteration, SCF will restart by using output charge density from perivos iteration as input charge density directly, and start a new mixing. `mixing_restart=0|1` means SCF starts from scratch.
   
 - **Default**: 0
+
+### mixing_dmr
+
+- **Type**: bool
+- **Availability**: Only for `mixing_restart>=2`
+- **Description**: At `mixing_restart`-th iteration, SCF will start a mixing for real-space density matrix by using the same coefficiences as the mixing of charge density.
+  
+- **Default**: false
 
 ### mixing_gg0
 
