@@ -69,6 +69,16 @@ After building and installing, unit tests can be performed with `ctest`.
 
 To run a subset of unit test, use `ctest -R <test-match-pattern>` to perform tests with name matched by given pattern.
 
+## Build Performance Tests
+
+To build performance tests for ABACUS, define `ENABLE_GOOGLEBENCH` flag. You can also specify the path to a local installation of [Google Benchmark](https://github.com/google/benchmark.git) by setting `BENCHMARK_DIR` flags. If not found locally, the configuration process will try to download it automatically.
+
+```bash
+cmake -B build -DENABLE_GOOGLEBENCH=1
+```
+
+Google Benchmark requires Google Test to build and run the tests. When setting `ENABLE_GOOGLEBENCH` to ON, `BUILD_TESTING` is automatically enabled. After building and installing, performance tests can be executed with `ctest`.
+
 ## Build with CUDA support
 
 ### Extra prerequisites

@@ -2,6 +2,7 @@
 #ifndef CHARGE_MIXING_H
 #define CHARGE_MIXING_H
 #include "charge.h"
+#include "module_elecstate/module_dm/density_matrix.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/module_mixing/mixing.h"
@@ -16,6 +17,7 @@ class Charge_Mixing
     Base_Mixing::Mixing_Data rho_mdata;    ///< Mixing data for charge density
     Base_Mixing::Mixing_Data tau_mdata;    ///< Mixing data for kinetic energy density
     Base_Mixing::Mixing_Data nhat_mdata;   ///< Mixing data for compensation density
+    Base_Mixing::Mixing_Data dmr_mdata;    ///< Mixing data for real space density matrix
 
     Base_Mixing::Plain_Mixing* mixing_highf = nullptr; ///< The high_frequency part is mixed by plain mixing method.
 
@@ -30,6 +32,13 @@ class Charge_Mixing
      *
      */
     void mix_rho(Charge* chr);
+
+    /**
+     * @brief density matrix mixing, only for LCAO
+     *
+     */
+    void mix_dmr(elecstate::DensityMatrix<double, double>* DM);
+    void mix_dmr(elecstate::DensityMatrix<std::complex<double>, double>* DM);
 
     /**
      * @brief charge mixing for reciprocal space
@@ -56,7 +65,6 @@ class Charge_Mixing
      *
      */
     void Kerker_screen_real(double* rho);
-    void Kerker_screen_real_test(double* rho);
 
     /**
      * @brief Inner product of two complex vectors
@@ -87,19 +95,13 @@ class Charge_Mixing
                     const int& mixing_ndim_in,
                     const double& mixing_gg0_in,
                     const bool& mixing_tau_in,
-                    const double& mixing_beta_mag_in); // mohan add mixing_gg0_in 2014-09-27
+                    const double& mixing_beta_mag_in);
 
-    // /**
-    //  * @brief use auto set
-    //  *
-    //  */
-    // void need_auto_set();
-
-    // /**
-    //  * @brief auto set mixing gg0 and mixing_beta
-    //  *
-    //  */
-    // void auto_set(const double& bandgap_in, const UnitCell& ucell_);
+    /**
+     * @brief allocate memory of dmr_mdata
+     *
+     */
+    void allocate_mixing_dmr(int nnr);
 
     /**
      * @brief Get the drho

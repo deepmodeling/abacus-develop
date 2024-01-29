@@ -51,6 +51,7 @@ void LCAO_Hamilt::calculate_HR_exx_sparse(
     {
 		int is0_b, is1_b;
 		std::tie(is0_b,is1_b) = RI_2D_Comm::split_is_block(is);
+        if (Hexxs.empty())	break;
 		for(const auto &HexxA : Hexxs[is])
 		{
 			const int iat0 = HexxA.first;

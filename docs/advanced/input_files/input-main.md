@@ -72,6 +72,8 @@
     - [mixing\_beta](#mixing_beta)
     - [mixing\_beta\_mag](#mixing_beta_mag)
     - [mixing\_ndim](#mixing_ndim)
+    - [mixing\_restart](#mixing_restart)
+    - [mixing\_dmr](#mixing_dmr)
     - [mixing\_gg0](#mixing_gg0)
     - [mixing\_gg0\_mag](#mixing_gg0_mag)
     - [mixing\_gg0\_min](#mixing_gg0_min)
@@ -145,6 +147,8 @@
     - [out\_app\_flag](#out_app_flag)
     - [out\_ndigits](#out_ndigits)
     - [out\_interval](#out_interval)
+    - [band\_print\_num](#band_print_num)
+    - [bands\_to\_print](#bands_to_print)
     - [out\_element\_info](#out_element_info)
     - [restart\_save](#restart_save)
     - [restart\_load](#restart_load)
@@ -945,6 +949,8 @@ calculations.
   - **fixed**: fixed occupations (available for non-coductors only)
   - **gauss** or **gaussian**: Gaussian smearing method.
   - **mp**: methfessel-paxton smearing method; recommended for metals.
+  - **mp2**: 2-nd methfessel-paxton smearing method; recommended for metals.
+  - **mv** or **cold**: marzari-vanderbilt smearing method.
   - **fd**: Fermi-Dirac smearing method: $f=1/\{1+\exp[(E-\mu)/kT]\}$ and smearing_sigma below is the temperature $T$ (in Ry).
 - **Default**: gauss
 
@@ -1000,6 +1006,21 @@ We recommend the following options:
   
   For systems that are difficult to converge, one could try increasing the value of 'mixing_ndim' to enhance the stability of the self-consistent field (SCF) calculation.
 - **Default**: 8
+
+### mixing_restart
+
+- **Type**: Integer
+- **Description**: At `mixing_restart`-th iteration, SCF will restart by using output charge density from perivos iteration as input charge density directly, and start a new mixing. `mixing_restart=0|1` means SCF starts from scratch.
+  
+- **Default**: 0
+
+### mixing_dmr
+
+- **Type**: bool
+- **Availability**: Only for `mixing_restart>=2`
+- **Description**: At `mixing_restart`-th iteration, SCF will start a mixing for real-space density matrix by using the same coefficiences as the mixing of charge density.
+  
+- **Default**: false
 
 ### mixing_gg0
 
@@ -1494,8 +1515,8 @@ These variables are used to control the output of properties.
 
 ### out_band
 
-- **Type**: Boolean
-- **Description**: Whether to output the band structure (in eV). For more information, refer to the [band.md](../elec_properties/band.md)
+- **Type**: Boolean Integer(optional)
+- **Description**: Whether to output the band structure (in eV), optionally output precision can be set by a second parameter, default is 8. For more information, refer to the [band.md](../elec_properties/band.md)
 - **Default**: False
 
 ### out_proj_band
@@ -1598,6 +1619,20 @@ These variables are used to control the output of properties.
 - **Availability**: Numerical atomic orbital basis
 - **Description**: Control the interval for printing Mulliken population analysis, $r(R)$, $H(R)$, $S(R)$, $T(R)$, $dH(R)$, $H(k)$, $S(k)$ and $wfc(k)$ matrices during molecular dynamics calculations. Check input parameters [out_mul](#out_mul), [out_mat_r](#out_mat_r), [out_mat_hs2](#out_mat_hs2), [out_mat_t](#out_mat_t), [out_mat_dh](#out_mat_dh), [out_mat_hs](#out_mat_hs) and [out_wfc_lcao](#out_wfc_lcao) for more information, respectively.
 - **Default**: 1
+
+### band_print_num
+
+- **Type**: Integer
+- **Availability**: PW basis
+- **Description**: If you want to plot a partial charge density contributed from some chosen bands. `band_print_num` define the number of band list. The result can be found in "band*.cube".
+- **Default**: 0
+
+### bands_to_print
+
+- **Type**: vector
+- **Availability**: band_print_num > 0
+- **Description**: define which band you want to choose for partial charge density.
+- **Default**: []
 
 ### out_element_info
 
@@ -2097,14 +2132,14 @@ These variables are relevant when using hybrid functionals.
 ### exx_hybrid_step
 
 - **Type**: Integer
-- **Availability**: *[exx_seperate_loop](#exx_separate_loop)==1*
+- **Availability**: *[exx_separate_loop](#exx_separate_loop)==1*
 - **Description**: the maximal iteration number of the outer-loop, where the Fock exchange is calculated
 - **Default**: 100
 
 ### exx_mixing_beta
 
 - **Type**: Real
-- **Availability**: *[exx_seperate_loop](#exx_separate_loop)==1*
+- **Availability**: *[exx_separate_loop](#exx_separate_loop)==1*
 - **Description**: mixing_beta for densty matrix in each iteration of the outer-loop
 - **Default**: 1.0
 
@@ -2391,7 +2426,7 @@ These variables are used to control molecular dynamics calculations. For more in
 
 - **Type**: Real
 - **Description**: The target pressure used in NPT ensemble simulations, the default value of `md_plast` is `md_pfirst`. If `md_plast` is set to be different from `md_pfirst`, ABACUS will automatically change the target pressure from `md_pfirst` to `md_plast`.
-- **Default**: No default
+- **Default**: -1.0
 - **Unit**: kbar
 
 ### md_pfreq
@@ -2776,9 +2811,9 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: String
 - **Description**: the spin direction for the Wannier function calculation when nspin is set to 2
-  - "up": Calculate spin up for the Wannier function.
-  - "down": Calculate spin down for the Wannier function.
-- **Default**: "up"
+  - `up`: Calculate spin up for the Wannier function.
+  - `down`: Calculate spin down for the Wannier function.
+- **Default**: `up`
 
 ### out_wannier_mmn
 
@@ -2818,6 +2853,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 - **Description**: write the "UNK.*" file in ASCII format or binary format.
   - 0: write the "UNK.*" file in binary format.
   - 1: write the "UNK.*" file in ASCII format (text file format).
+- **Default**: 1
 
 [back to top](#full-list-of-input-keywords)
 

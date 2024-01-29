@@ -28,7 +28,7 @@ These requirements support the calculation of plane-wave basis in ABACUS. For LC
 Some of these packages can be installed with popular package management system, such as `apt` and `yum`:
 
 ```bash
-sudo apt update && sudo apt install -y libopenblas-openmp-dev liblapack-dev libscalapack-mpi-dev libelpa-dev libfftw3-dev libcereal-dev libxc-dev g++ make cmake bc git
+sudo apt update && sudo apt install -y libopenblas-openmp-dev liblapack-dev libscalapack-mpi-dev libelpa-dev libfftw3-dev libcereal-dev libxc-dev g++ make cmake bc git pkgconf
 ```
 
 > Installing ELPA by apt only matches requirements on Ubuntu 22.04. For earlier linux distributions, you should build ELPA from source.
@@ -111,12 +111,12 @@ Here, 'build' is the path for building ABACUS; and '-D' is used for setting up s
   - `LAPACK_DIR`: Path to OpenBLAS library `libopenblas.so`(including BLAS and LAPACK)
   - `SCALAPACK_DIR`: Path to ScaLAPACK library `libscalapack.so`
   - `ELPA_DIR`: Path to ELPA install directory; should be the folder containing 'include' and 'lib'.
-  > Note: If you install ELPA from source, please add a symlink to avoid the additional include file folder with version name: `ln -s elpa/include/elpa-2021.05.002/elpa elpa/include/elpa`. This is a known behavior of ELPA.
+  > Note: In ABACUS v3.5.1 or earlier, if you install ELPA from source , please add a symlink to avoid the additional include file folder with version name: `ln -s elpa/include/elpa-2021.05.002/elpa elpa/include/elpa` to help the build system find ELPA headers.
 
   - `FFTW3_DIR`: Path to FFTW3.
   - `CEREAL_INCLUDE_DIR`: Path to the parent folder of `cereal/cereal.hpp`. Will download from GitHub if absent.
   - `Libxc_DIR`: (Optional) Path to Libxc.
-  > Note: Building Libxc from source with Makefile does NOT support using it in CMake here. Please compile Libxc with CMake instead.
+  > Note: In ABACUS v3.5.1 or earlier, Libxc built from source with Makefile is NOT supported; please compile Libxc with CMake instead.
   - `LIBRI_DIR`: (Optional) Path to LibRI.
   - `LIBCOMM_DIR`: (Optional) Path to LibComm.
 
@@ -126,6 +126,7 @@ Here, 'build' is the path for building ABACUS; and '-D' is used for setting up s
   - `ENABLE_LIBRI=OFF`: [Enable LibRI](../advanced/install.md#add-libri-support) to suppport variety of functionals. If `LIBRI_DIR` and `LIBCOMM_DIR` is defined, `ENABLE_LIBRI` will set to 'ON'.
   - `USE_OPENMP=ON`: Enable OpenMP support. Building ABACUS without OpenMP is not fully tested yet.
   - `BUILD_TESTING=OFF`: [Build unit tests](../advanced/install.md#build-unit-tests).
+  - `ENABLE_GOOGLEBENCH=OFF`: [Build performance tests](../advanced/install.md#build-performance-tests)
   - `ENABLE_MPI=ON`: Enable MPI parallel compilation. If set to `OFF`, a serial version of ABACUS with PW basis only will be compiled. Currently serial version of ABACUS with LCAO basis is not supported yet, so `ENABLE_LCAO` will be automatically set to `OFF`.
   - `ENABLE_COVERAGE=OFF`: Build ABACUS executable supporting [coverage analysis](../CONTRIBUTING.md#generating-code-coverage-report). This feature has a drastic impact on performance.
   - `ENABLE_ASAN=OFF`: Build with Address Sanitizer. This feature would help detecting memory problems.
@@ -229,7 +230,7 @@ conda create -n abacus_env abacus -c conda-forge
 conda activate abacus_env
 export CMAKE_PREFIX_PATH=$CONDA_PREFIX:$CMAKE_PREFIX_PATH
 
-# By default OpenBLAS is used; run `conda install "blas=*=mkl" mkl_fft -c conda-forge` to switch implementation.
+# By default OpenBLAS is used; run `conda install "blas=*=mkl" mkl_fft mkl-devel -c conda-forge` to switch implementation.
 export MKLROOT=$CONDA_PREFIX # If Intel MKL is required.
 
 export CMAKE_PREFIX_PATH=`python -c 'import torch;print(torch.utils.cmake_prefix_path)'`:$CMAKE_PREFIX_PATH # If DEEPKS support is required;
