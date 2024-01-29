@@ -1017,26 +1017,32 @@ void UnitCell::print_stru_file(const std::string &fn, const int &type, const int
 				context<<atoms[it].mbl[ia].x<<atoms[it].mbl[ia].y<<atoms[it].mbl[ia].z;
 				ofs<<context.str();
 
-				if(level == 1)
-				{
-					// output velocity
-					ofs <<" v ";
-					context.set_context("vector3d");
-					context<<atoms[it].vel[ia].x<<atoms[it].vel[ia].y<<atoms[it].vel[ia].z;
-					ofs<<context.str()<<std::endl;
-				}
-				else if(level == 2)
-				{
-					// output magnetic information
-				}
-				else if(level == 3)
-				{
-					// output velocity and magnetic information
-				}
-				else
-				{
-					ofs << std::endl;
-				}
+                if (GlobalV::CALCULATION == "md")
+                {
+                    // output velocity
+                    ofs << " v ";
+                    context.set_context("vector3d");
+                    context << atoms[it].vel[ia].x << atoms[it].vel[ia].y << atoms[it].vel[ia].z;
+                    ofs << context.str();
+                }
+
+                if (GlobalV::NSPIN == 2)
+                {
+                    // output magnetic information
+                    ofs << " mag ";
+                    context.set_context("double_w6_f2");
+                    context << atoms[it].mag[ia];
+                    ofs << context.str();
+                }
+                else if (GlobalV::NSPIN == 4)
+                {
+                    // output magnetic information
+                    ofs << " mag ";
+                    context.set_context("vector3d");
+                    context << atoms[it].m_loc_[ia].x << " " << atoms[it].m_loc_[ia].y << " " << atoms[it].m_loc_[ia].z;
+                    ofs << context.str();
+                }
+                ofs << std::endl;
 			}
 		}
 	}
@@ -1058,25 +1064,32 @@ void UnitCell::print_stru_file(const std::string &fn, const int &type, const int
 				context<<atoms[it].mbl[ia].x<<atoms[it].mbl[ia].y<<atoms[it].mbl[ia].z;
 				ofs<<context.str();
 
-				if(level == 1)
-				{
-					// output velocity
-					context.set_context("vector3d");
-					context<<atoms[it].vel[ia].x<<atoms[it].vel[ia].y<<atoms[it].vel[ia].z;
-					ofs <<" v "<<context.str()<<std::endl;
-				}
-				else if(level == 2)
-				{
-					// output magnetic information
-				}
-				else if(level == 3)
-				{
-					// output velocity and magnetic information
-				}
-				else
-				{
-					ofs << std::endl;
-				}
+                if (GlobalV::CALCULATION == "md")
+                {
+                    // output velocity
+                    ofs << " v ";
+                    context.set_context("vector3d");
+                    context << atoms[it].vel[ia].x << atoms[it].vel[ia].y << atoms[it].vel[ia].z;
+                    ofs << context.str();
+                }
+
+                if (GlobalV::NSPIN == 2)
+                {
+                    // output magnetic information
+                    ofs << " mag ";
+                    context.set_context("double_w6_f2");
+                    context << atoms[it].mag[ia];
+                    ofs << context.str();
+                }
+                else if (GlobalV::NSPIN == 4)
+                {
+                    // output magnetic information
+                    ofs << " mag ";
+                    context.set_context("vector3d");
+                    context << atoms[it].m_loc_[ia].x << " " << atoms[it].m_loc_[ia].y << " " << atoms[it].m_loc_[ia].z;
+                    ofs << context.str();
+                }
+                ofs << std::endl;
 			}
 		}
 	}
