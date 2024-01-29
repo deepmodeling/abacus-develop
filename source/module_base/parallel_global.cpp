@@ -26,7 +26,6 @@ MPI_Comm STO_WORLD;
 MPI_Comm PARAPW_WORLD; // qianrui add it for sto-dft 2021-4-14
 MPI_Comm GRID_WORLD; // mohan add 2012-01-13z
 MPI_Comm DIAG_WORLD; // mohan add 2012-01-13
-MPI_Group GRID_GROUP;
 
 void Parallel_Global::myProd(std::complex<double> *in,std::complex<double> *inout,int *len,MPI_Datatype *dptr)
 {
@@ -85,7 +84,6 @@ void Parallel_Global::split_diag_world(const int &diag_np)
 	}
 
 	MPI_Comm_split(MPI_COMM_WORLD, color, key, &DIAG_WORLD);
-    MPI_Comm_group(DIAG_WORLD, &GRID_GROUP);
 	MPI_Comm_rank(DIAG_WORLD, &GlobalV::DRANK);
 	MPI_Comm_size(DIAG_WORLD, &GlobalV::DSIZE);
 	GlobalV::DCOLOR=color;
@@ -102,30 +100,49 @@ void Parallel_Global::split_diag_world(const int &diag_np)
 
 
 
-void Parallel_Global::split_grid_world(const int &grid_np)
+void Parallel_Global::split_grid_world(const int &diag_np)
 {
 #ifdef __MPI
-	assert(grid_np>0); //LiuXh, 2020-12-14, diag_np --> grid_np
-    int myid;
-    MPI_Group WORLD_GROUP;
-    //MPI_Comm_rank(MPI_COMM_WORLD, &key);
-    MPI_Comm_rank(MPI_COMM_WORLD, &myid); //LiuXh, 2020-12-14, key --> myid
-    MPI_Comm_group(MPI_COMM_WORLD, &WORLD_GROUP);
+	assert(diag_np>0);
+	// number of processors in each 'grid group'.
+	int* group_grid_np = new int[diag_np];
+	ModuleBase::GlobalFunc::ZEROS(group_grid_np, diag_np);
+	// average processors in each 'grid group'
+	int ave = GlobalV::NPROC/diag_np;
+	// remain processors.
+	int remain = GlobalV::NPROC - ave * diag_np;
 
-    int grid_proc_range[3]={0, (GlobalV::NPROC/grid_np)*grid_np-1, GlobalV::NPROC/grid_np};
-    MPI_Group_range_incl(WORLD_GROUP, 1, &grid_proc_range, &GRID_GROUP);
+	for(int i=0; i<diag_np; ++i)
+	{
+		group_grid_np[i] = ave;
+		if(i<remain)
+		{
+			++group_grid_np[i];
+		}
+	}
 
-    GRID_WORLD=MPI_COMM_NULL;
-    MPI_Comm_create(MPI_COMM_WORLD, GRID_GROUP, &GRID_WORLD);
-    if(GRID_WORLD != MPI_COMM_NULL)
-    {
-        MPI_Comm_rank(GRID_WORLD, &GlobalV::GRANK); //LiuXh, 2020-12-14, DIAG_WORLD --> GRID_WORLD
-        MPI_Comm_size(GRID_WORLD, &GlobalV::GSIZE); //LiuXh, 2020-12-14, DIAG_WORLD --> GRID_WORLD
-    }else
-    {
-        GlobalV::GRANK=-1;
-        GlobalV::GSIZE=-1;
-    }
+	// color: same color will stay in same group.
+	// key: rank in each fragment group.
+	int color = -1;		// Peize Lin add initialization for compiler warning at 2020.01.31
+	int key = -1;		// Peize Lin add initialization for compiler warning at 2020.01.31
+
+	int np_now = 0;
+	for(int i=0; i<diag_np; ++i)
+	{
+		np_now += group_grid_np[i];
+		if(GlobalV::MY_RANK < np_now)
+		{
+			color = i;
+			key = group_grid_np[i] - (np_now - GlobalV::MY_RANK);
+			break;
+		}
+	}
+
+	MPI_Comm_split(MPI_COMM_WORLD, color, key, &GRID_WORLD);
+	MPI_Comm_rank(GRID_WORLD, &GlobalV::GRANK);
+	MPI_Comm_size(GRID_WORLD, &GlobalV::GSIZE);
+
+	delete[] group_grid_np;
 #else
 	GlobalV::GRANK=0;  //mohan fix bug 2012-02-04
 	GlobalV::GSIZE=1;

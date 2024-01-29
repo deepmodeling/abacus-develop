@@ -35,24 +35,7 @@ namespace hsolver
     ELPA_Solver es((const bool)isReal, COMM_DIAG, (const int)GlobalV::NBANDS, (const int)h_mat.row, (const int)h_mat.col, (const int*)h_mat.desc);
     this->DecomposedState=0; // for k pointer, the decomposed s_mat can not be reused
     ModuleBase::timer::tick("DiagoElpa", "elpa_solve");
-    std::cout << "???" << std::endl;
-    GlobalV::ofs_running << "nrow: " << h_mat.row << "\nncol: " << h_mat.col << "\n";
-    GlobalV::ofs_running << "print H" << std::endl;
-    for (int i = 0; i < h_mat.col; i++)
-    {
-        for (int j = 0; j < h_mat.row; j++)
-        {
-            if (std::abs(h_mat.p[i * h_mat.col + j]) < 0.00000001)
-            {
-                GlobalV::ofs_running << "0 ";
-            }
-            else
-                GlobalV::ofs_running << h_mat.p[i * h_mat.col + j] << " ";
-        }
-        GlobalV::ofs_running << std::endl;
-    }
     es.generalized_eigenvector(h_mat.p, s_mat.p, this->DecomposedState, eigen.data(), psi.get_pointer());
-
     ModuleBase::timer::tick("DiagoElpa", "elpa_solve");
     es.exit();
 
@@ -78,21 +61,6 @@ namespace hsolver
     //ELPA_Solver es(isReal, COMM_DIAG, GlobalV::NBANDS, h_mat.row, h_mat.col, h_mat.desc);
     ELPA_Solver es((const bool)isReal, COMM_DIAG, (const int)GlobalV::NBANDS, (const int)h_mat.row, (const int)h_mat.col, (const int*)h_mat.desc);
     ModuleBase::timer::tick("DiagoElpa", "elpa_solve");
-    GlobalV::ofs_running << "nrow: " << h_mat.row << "\nncol: " << h_mat.col << "\n";
-    GlobalV::ofs_running << "print H" << std::endl;
-    for (int i = 0; i < h_mat.col; i++)
-    {
-        for (int j = 0; j < h_mat.row; j++)
-        {
-            if (std::abs(h_mat.p[i * h_mat.col + j]) < 0.00000001)
-            {
-                GlobalV::ofs_running << "0 ";
-            }
-            else
-                GlobalV::ofs_running << h_mat.p[i * h_mat.col + j] << " ";
-        }
-        GlobalV::ofs_running << std::endl;
-    }
     es.generalized_eigenvector(h_mat.p, s_mat.p, this->DecomposedState, eigen.data(), psi.get_pointer());
     ModuleBase::timer::tick("DiagoElpa", "elpa_solve");
     es.exit();

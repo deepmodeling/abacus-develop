@@ -468,12 +468,11 @@ namespace ModuleESolver
                     SCF print: G1    -3.435545e+03  0.000000e+00   3.607e-01  2.862e-01
                 */
                 printiter(iter, drho, duration, diag_ethr);
-                if (this->conv_elec && iter >= 5)
+                if (this->conv_elec)
                 {
-                    std::cout << "this->conv_elec" << std::endl;
                     this->niter = iter;
                     bool stop = this->do_after_converge(iter);
-                    if(stop) {std::cout << "break\n"; break;}
+                    if(stop) break;
                 }
                 // notice for restart
                 if (GlobalV::MIXING_RESTART > 0 && iter == GlobalV::MIXING_RESTART - 1)
