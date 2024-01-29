@@ -394,6 +394,7 @@ TEST_F(write_input, Mixing7)
     EXPECT_THAT(output, testing::HasSubstr("mixing_tau                     0 #whether to mix tau in mGGA calculation"));
     EXPECT_THAT(output, testing::HasSubstr("mixing_dftu                    0 #whether to mix locale in DFT+U calculation"));
     EXPECT_THAT(output, testing::HasSubstr("mixing_restart                 0 #which step to restart mixing during SCF"));
+    EXPECT_THAT(output, testing::HasSubstr("mixing_dmr                     0 #whether to mix real-space density matrix"));
     EXPECT_THAT(output, testing::HasSubstr(""));
     ifs.close();
     remove("write_input_test.log");

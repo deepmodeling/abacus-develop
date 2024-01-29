@@ -601,25 +601,6 @@ size_t HContainer<T>::get_memory_size() const
     return memory;
 }
 
-// get_nnr
-template <typename T>
-size_t HContainer<T>::get_nnr() const
-{
-    size_t sum = 0;
-    for(int iap=0;iap < this->atom_pairs.size();++iap)
-    {
-        sum += this->atom_pairs[iap].get_R_size() * this->atom_pairs[iap].get_size();
-    }
-    return sum;
-}
-
-// get_wrapper
-template <typename T>
-T* HContainer<T>::get_wrapper() const
-{
-    return this->wrapper_pointer;
-}
-
 // synchronize
 template <typename T>
 void HContainer<T>::shape_synchron( const HContainer<T>& other)
