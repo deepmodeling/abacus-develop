@@ -17,8 +17,9 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
                        const int nbxx,
                        const Grid_Technique &GridT)
 {
-    const int nbz = GridT.nbzp;
 
+    const int nbz = GridT.nbzp;
+    checkCuda(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync));
     int iter_num = 0;
     for (int iat1 = 0; iat1 < GlobalC::ucell.nat; iat1++)
     {
@@ -58,11 +59,18 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
     }
 
     iter_num = 0;
+    #pragma omp parallel for num_threads(GridT.nstreams) shared(iter_num) collapse(2) ordered
     for (int i = 0; i < GridT.nbx; i++)
     {
         for (int j = 0; j < GridT.nby; j++)
         {
-            int stream_num = iter_num % GridT.nstreams;
+            int stream_num = 0;
+            #pragma omp critical
+            {
+                stream_num = iter_num % GridT.nstreams;
+                checkCuda(cudaStreamSynchronize(GridT.streams[stream_num]));
+                iter_num++;
+            }
             double *psi_input_double = &GridT.psi_input_double_global[GridT.psi_size_max * stream_num * 5];
             int *psi_input_int = &GridT.psi_input_int_global[GridT.psi_size_max * stream_num * 2];
             int *num_psir = &GridT.num_psir_global[nbz * stream_num];
@@ -98,7 +106,6 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
             int max_m = 0;
             int max_n = 0;
 
-            checkCuda(cudaStreamSynchronize(GridT.streams[stream_num]));
             gpu_task_generate_vlocal(GridT, i, j,
                                      GridT.atom_pair_size_of_meshcell,
                                      GridT.psi_size_max_per_z,
@@ -172,7 +179,7 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
                                      atom_pair_mat_B_array_g, atom_pair_ldb_g,
                                      atom_pair_mat_C_array_g, atom_pair_ldc_g,
                                      atom_pair_num, GridT.streams[stream_num], nullptr);
-            iter_num++;
+            checkCuda(cudaStreamSynchronize(GridT.streams[stream_num]));
         }
     }
     for (int i = 0; i < GridT.nstreams; i++)
