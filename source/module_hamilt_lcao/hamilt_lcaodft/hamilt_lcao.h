@@ -89,7 +89,7 @@ class HamiltLCAO : public Hamilt<TK>
     // special case for NSPIN=2 , data of HR should be separated into two parts
     // save them in this->hRS2;
     std::vector<TR> hRS2;
-    int refresh_times = 0;
+    int refresh_times = 1;
 
     // sk and hk will be refactored to HamiltLCAO later
     //std::vector<TK> sk;
