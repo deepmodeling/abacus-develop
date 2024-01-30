@@ -354,7 +354,15 @@ class HContainer
      * named nnr inherited from history
      * all AtomPairs and BaseMatrixs are counted
     */
-    size_t get_nnr() const;
+    size_t get_nnr() const
+    {
+      size_t sum = 0;
+      for(int iap=0;iap < this->atom_pairs.size();++iap)
+      {
+          sum += this->atom_pairs[iap].get_R_size() * this->atom_pairs[iap].get_size();
+      }
+      return sum;
+    }
 
     /**
      * @brief get infomation of IJR pairs in HContainer
@@ -373,7 +381,7 @@ class HContainer
     /**
      * @brief return the wrapper_pointer
     */
-    T* get_wrapper() const;
+    T* get_wrapper() const {return this->wrapper_pointer;}
 
     /**
      * @brief synchronization of atom-pairs for read-in HContainer

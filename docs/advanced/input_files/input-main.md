@@ -73,6 +73,7 @@
     - [mixing\_beta\_mag](#mixing_beta_mag)
     - [mixing\_ndim](#mixing_ndim)
     - [mixing\_restart](#mixing_restart)
+    - [mixing\_dmr](#mixing_dmr)
     - [mixing\_gg0](#mixing_gg0)
     - [mixing\_gg0\_mag](#mixing_gg0_mag)
     - [mixing\_gg0\_min](#mixing_gg0_min)
@@ -1012,6 +1013,14 @@ We recommend the following options:
 - **Description**: At `mixing_restart`-th iteration, SCF will restart by using output charge density from perivos iteration as input charge density directly, and start a new mixing. `mixing_restart=0|1` means SCF starts from scratch.
   
 - **Default**: 0
+
+### mixing_dmr
+
+- **Type**: bool
+- **Availability**: Only for `mixing_restart>=2`
+- **Description**: At `mixing_restart`-th iteration, SCF will start a mixing for real-space density matrix by using the same coefficiences as the mixing of charge density.
+  
+- **Default**: false
 
 ### mixing_gg0
 
@@ -2123,14 +2132,14 @@ These variables are relevant when using hybrid functionals.
 ### exx_hybrid_step
 
 - **Type**: Integer
-- **Availability**: *[exx_seperate_loop](#exx_separate_loop)==1*
+- **Availability**: *[exx_separate_loop](#exx_separate_loop)==1*
 - **Description**: the maximal iteration number of the outer-loop, where the Fock exchange is calculated
 - **Default**: 100
 
 ### exx_mixing_beta
 
 - **Type**: Real
-- **Availability**: *[exx_seperate_loop](#exx_separate_loop)==1*
+- **Availability**: *[exx_separate_loop](#exx_separate_loop)==1*
 - **Description**: mixing_beta for densty matrix in each iteration of the outer-loop
 - **Default**: 1.0
 
@@ -2417,7 +2426,7 @@ These variables are used to control molecular dynamics calculations. For more in
 
 - **Type**: Real
 - **Description**: The target pressure used in NPT ensemble simulations, the default value of `md_plast` is `md_pfirst`. If `md_plast` is set to be different from `md_pfirst`, ABACUS will automatically change the target pressure from `md_pfirst` to `md_plast`.
-- **Default**: No default
+- **Default**: -1.0
 - **Unit**: kbar
 
 ### md_pfreq
