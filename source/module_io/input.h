@@ -604,6 +604,11 @@ class Input
     std::vector<std::string> qo_strategy = {};
     std::vector<double> qo_screening_coeff = {};
     
+    std::time_t get_start_time(void) const
+    {
+        return start_time;
+    }
+
   private:
     //==========================================================
     // MEMBER FUNCTIONS :
@@ -615,6 +620,8 @@ class Input
     //        other processors)
     //==========================================================
 
+    // start time
+    std::time_t start_time;
     bool Read(const std::string &fn);
 
     void Default(void);
