@@ -728,3 +728,9 @@ install(PROGRAMS ${ABACUS_BIN_PATH}
 if(ENABLE_COVERAGE)
   coverage_evaluate()
 endif()
+
+
+if(ENABLE_RAPIDJSON)
+  target_link_libraries(${ABACUS_BIN_NAME}
+    json_output)
+endif()

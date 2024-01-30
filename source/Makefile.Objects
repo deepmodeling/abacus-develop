@@ -60,6 +60,7 @@ VPATH=./src_global:\
 ./module_relax/relax_new:\
 ./module_hamilt_general/module_vdw:\
 ./module_io:\
+./module_io/json_output:\
 ./src_ri:\
 ./module_ri:\
 ./\
@@ -447,6 +448,10 @@ OBJS_IO=input.o\
     output_potential.o\
     output_mat_sparse.o\
     output_radial.o\
+    para_json.o\
+    abacusjson.o\
+    general_info.o\
+
 
 OBJS_IO_LCAO=cal_r_overlap_R.o\
       write_orb_info.o\
