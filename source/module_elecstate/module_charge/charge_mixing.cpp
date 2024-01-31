@@ -316,12 +316,6 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
 
 void Charge_Mixing::mix_rho_recip_new(Charge* chr)
 {
-    // old support see mix_rho_recip()
-    if (GlobalV::double_grid)
-    {
-        ModuleBase::WARNING_QUIT("Charge_Mixing", "double_grid is not supported for new mixing method yet.");
-    }
-
     std::complex<double>* rhog_in = nullptr;
     std::complex<double>* rhog_out = nullptr;
     // for smooth part
@@ -430,8 +424,8 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
     else if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE <= 0)
     {
         // normal broyden mixing for {rho, mx, my, mz}
-        rhog_in = chr->rhog_save[0];
-        rhog_out = chr->rhog[0];
+        rhog_in = rhogs_in;
+        rhog_out = rhogs_out;
         const int npw = this->rhopw->npw;
         auto screen = std::bind(&Charge_Mixing::Kerker_screen_recip_new, this, std::placeholders::_1); // use old one
         auto twobeta_mix
@@ -460,6 +454,11 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
     {
         // special broyden mixing for {rho, |m|} proposed by J. Phys. Soc. Jpn. 82 (2013) 114706
         // here only consider the case of mixing_angle = 1, which mean only change |m| and keep angle fixed
+        // old support see mix_rho_recip()
+        if (GlobalV::double_grid)
+        {
+            ModuleBase::WARNING_QUIT("Charge_Mixing", "double_grid is not supported for new mixing method yet.");
+        }
         // allocate memory for rho_magabs and rho_magabs_save
         const int nrxx = this->rhopw->nrxx;
         double* rho_magabs = new double[nrxx];
