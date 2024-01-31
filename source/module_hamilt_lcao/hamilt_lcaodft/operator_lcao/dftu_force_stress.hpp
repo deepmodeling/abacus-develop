@@ -132,12 +132,14 @@ void DFTUNew<OperatorLCAO<TK, TR>>::cal_force_stress(
             const int iat1 = ucell->itia2iat(T1, I1);
             double* force_tmp = (cal_force)? &force(iat1, 0) : nullptr;
             ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];
+            ModuleBase::Vector3<double>& dis1 = adjs.adjacent_tau[ad1];
             for (int ad2 = 0; ad2 < adjs.adj_num + 1; ++ad2)
             {
                 const int T2 = adjs.ntype[ad2];
                 const int I2 = adjs.natom[ad2];
                 const int iat2 = ucell->itia2iat(T2, I2);
                 ModuleBase::Vector3<int>& R_index2 = adjs.box[ad2];
+                ModuleBase::Vector3<double>& dis2 = adjs.adjacent_tau[ad2];
                 ModuleBase::Vector3<int> R_vector(R_index2[0] - R_index1[0],
                                                   R_index2[1] - R_index1[1],
                                                   R_index2[2] - R_index1[2]);
@@ -154,7 +156,7 @@ void DFTUNew<OperatorLCAO<TK, TR>>::cal_force_stress(
                     if (cal_force) this->cal_force_IJR(iat1, iat2, T0, paraV, nlm_tot[ad1], nlm_tot[ad2], VU, tmp, GlobalV::NSPIN, force_tmp);
 
                     // calculate stress
-                    if (cal_stress) this->cal_stress_IJR(iat1, iat2, T0, paraV, nlm_tot[ad1], nlm_tot[ad2], VU, tmp, GlobalV::NSPIN, R_index1, stress_tmp.data());
+                    if (cal_stress) this->cal_stress_IJR(iat1, iat2, T0, paraV, nlm_tot[ad1], nlm_tot[ad2], VU, tmp, GlobalV::NSPIN, dis1, dis2, stress_tmp.data());
                 }
             }
         }
@@ -171,7 +173,7 @@ void DFTUNew<OperatorLCAO<TK, TR>>::cal_force_stress(
     // stress renormalization
     if(cal_stress)
     {
-        const double weight = -2.0 * this->ucell->lat0 / this->ucell->omega;
+        const double weight = this->ucell->lat0 / this->ucell->omega;
         for(int i=0;i<6;i++)
         {
             stress.c[i] = stress_tmp[i] * weight;
@@ -230,19 +232,16 @@ void DFTUNew<OperatorLCAO<TK, TR>>::cal_force_IJR(
     #ifdef __DEBUG
                 assert(nlm1.size() == nlm2.size());
     #endif
-                for (int is = 0; is < npol; ++is)
+                for (int m1 = 0; m1 < m_size; m1++)
                 {
-                    for (int m1 = 0; m1 < m_size; m1++)
+                    for(int m2 = 0; m2 < m_size; m2++)
                     {
-                        for(int m2 = 0; m2 < m_size; m2++)
-                        {
-                            force[0] += vu_in[m1 * m_size + m2 + is*m_size2] * nlm1[m1 + m_size] * nlm2[m2] * dm_pointer[step_trace[is]];
-                            force[1] += vu_in[m1 * m_size + m2 + is*m_size2] * nlm1[m1 + m_size*2] * nlm2[m2] * dm_pointer[step_trace[is]];
-                            force[2] += vu_in[m1 * m_size + m2 + is*m_size2] * nlm1[m1 + m_size*3] * nlm2[m2] * dm_pointer[step_trace[is]];
-                        }
+                        force[0] += vu_in[m1 * m_size + m2 + is*m_size2] * nlm1[m1 + m_size] * nlm2[m2] * dm_pointer[0];
+                        force[1] += vu_in[m1 * m_size + m2 + is*m_size2] * nlm1[m1 + m_size*2] * nlm2[m2] * dm_pointer[0];
+                        force[2] += vu_in[m1 * m_size + m2 + is*m_size2] * nlm1[m1 + m_size*3] * nlm2[m2] * dm_pointer[0];
                     }
                 }
-                dm_pointer += npol;
+                dm_pointer++;
             }
             dm_pointer += (npol - 1) * col_indexes.size();
         }
@@ -260,7 +259,8 @@ void DFTUNew<OperatorLCAO<TK, TR>>::cal_stress_IJR(
     const std::vector<double>& vu_in,
     const hamilt::BaseMatrix<double>** dmR_pointer,
     const int nspin,
-    const ModuleBase::Vector3<int>& R_index1,
+    const ModuleBase::Vector3<double>& dis1,
+    const ModuleBase::Vector3<double>& dis2,
     double* stress)
 {
     // npol is the number of polarizations,
@@ -293,22 +293,20 @@ void DFTUNew<OperatorLCAO<TK, TR>>::cal_stress_IJR(
     #ifdef __DEBUG
                 assert(nlm1.size() == nlm2.size());
     #endif
-                for (int is = 0; is < npol; ++is)
+                for (int m1 = 0; m1 < m_size; m1++)
                 {
-                    for (int m1 = 0; m1 < m_size; m1++)
+                    for(int m2 = 0; m2 < m_size; m2++)
                     {
-                        for(int m2 = 0; m2 < m_size; m2++)
-                        {
-                            stress[0] += vu_in[m1 * m_size + m2 + is*m_size2] * nlm1[m1 + m_size] * R_index1[0] * nlm2[m2] * dm_pointer[step_trace[is]];
-                            stress[1] += vu_in[m1 * m_size + m2 + is*m_size2] * nlm1[m1 + m_size] * R_index1[1] * nlm2[m2] * dm_pointer[step_trace[is]];
-                            stress[2] += vu_in[m1 * m_size + m2 + is*m_size2] * nlm1[m1 + m_size] * R_index1[2] * nlm2[m2] * dm_pointer[step_trace[is]];
-                            stress[3] += vu_in[m1 * m_size + m2 + is*m_size2] * nlm1[m1 + m_size*2] * R_index1[1] * nlm2[m2] * dm_pointer[step_trace[is]];
-                            stress[4] += vu_in[m1 * m_size + m2 + is*m_size2] * nlm1[m1 + m_size*2] * R_index1[2] * nlm2[m2] * dm_pointer[step_trace[is]];
-                            stress[5] += vu_in[m1 * m_size + m2 + is*m_size2] * nlm1[m1 + m_size*3] * R_index1[2] * nlm2[m2] * dm_pointer[step_trace[is]];
-                        }
+                        double tmp = vu_in[m1 * m_size + m2 + is*m_size2] * dm_pointer[0];
+                        stress[0] += tmp * (nlm1[m1 + m_size] * dis1[0] * nlm2[m2] + nlm1[m1] * nlm2[m2 + m_size] * dis2[0]);
+                        stress[1] += tmp * (nlm1[m1 + m_size] * dis1[1] * nlm2[m2] + nlm1[m1] * nlm2[m2 + m_size] * dis2[1]);
+                        stress[2] += tmp * (nlm1[m1 + m_size] * dis1[2] * nlm2[m2] + nlm1[m1] * nlm2[m2 + m_size] * dis2[2]);
+                        stress[3] += tmp * (nlm1[m1 + m_size*2] * dis1[1] * nlm2[m2] + nlm1[m1] * nlm2[m2 + m_size*2] * dis2[1]);
+                        stress[4] += tmp * (nlm1[m1 + m_size*2] * dis1[2] * nlm2[m2] + nlm1[m1] * nlm2[m2 + m_size*2] * dis2[2]);
+                        stress[5] += tmp * (nlm1[m1 + m_size*3] * dis1[2] * nlm2[m2] + nlm1[m1] * nlm2[m2 + m_size*3] * dis2[2]);
                     }
                 }
-                dm_pointer += npol;
+                dm_pointer++;
             }
             dm_pointer += (npol - 1) * col_indexes.size();
         }

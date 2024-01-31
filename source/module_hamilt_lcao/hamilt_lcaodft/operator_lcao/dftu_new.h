@@ -148,7 +148,8 @@ class DFTUNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                         const std::vector<double>& vu_in,
                         const hamilt::BaseMatrix<double>** dmR_pointer,
                         const int nspin,
-                        const ModuleBase::Vector3<int>& R_index1,
+                        const ModuleBase::Vector3<double>& dis1,
+                        const ModuleBase::Vector3<double>& dis2,
                         double* stress);
 
     std::vector<AdjacentAtomInfo> adjs_all;
