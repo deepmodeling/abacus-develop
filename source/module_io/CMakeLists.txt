@@ -23,13 +23,13 @@ list(APPEND objects
     write_rho.cpp
     write_potential.cpp
     write_dipole.cpp
+    td_current_io.cpp
     write_wfc_r.cpp
     output_log.cpp
     output_rho.cpp
     output_potential.cpp
     output_radial.cpp
     parameter_pool.cpp
-    para_json.cpp
 )
 
 list(APPEND objects_advanced
@@ -95,8 +95,4 @@ endif()
 if(BUILD_TESTING)
   add_subdirectory(test)
   add_subdirectory(test_serial)
-endif()
-
-if(ENABLE_RAPIDJSON)
-  add_subdirectory(json_output)
 endif()

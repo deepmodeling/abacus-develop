@@ -81,7 +81,6 @@ void Input::Init(const std::string& fn)
     const char* commit = "unknown";
 #endif
     time_t time_now = time(NULL);
-    start_time = time_now;
     GlobalV::ofs_running << "                                                                                     "
                          << std::endl;
     GlobalV::ofs_running << "                              ABACUS " << version << std::endl << std::endl;
@@ -460,6 +459,7 @@ void Input::Default(void)
 
     out_dipole = false;
     out_efield = false;
+    out_current = false;
 
     td_print_eij = -1.0;
     td_edm = 0;
@@ -1741,6 +1741,10 @@ bool Input::Read(const std::string& fn)
         else if (strcmp("out_efield", word) == 0)
         {
             read_value(ifs, out_efield);
+        }
+        else if (strcmp("out_current", word) == 0)
+        {
+            read_value(ifs, out_current);
         }
         else if (strcmp("td_print_eij", word) == 0)
         {
@@ -3534,6 +3538,7 @@ void Input::Bcast()
     // Parallel_Common::bcast_string(td_hhg_sigma);
     Parallel_Common::bcast_bool(out_dipole);
     Parallel_Common::bcast_bool(out_efield);
+    Parallel_Common::bcast_bool(out_current);
     Parallel_Common::bcast_double(td_print_eij);
     Parallel_Common::bcast_int(td_edm);
     Parallel_Common::bcast_bool(test_skip_ewald);
