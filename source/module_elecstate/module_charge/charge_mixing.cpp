@@ -535,6 +535,17 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
         delete[] rho_magabs_save;
     }
 
+    if (GlobalV::double_grid)
+    {
+        // plain mixing for high_frequencies
+        const int ndimhf = (this->rhodpw->npw - this->rhopw->npw) * GlobalV::NSPIN;
+        this->mixing_highf->plain_mix(rhoghf_out, rhoghf_in, rhoghf_out, ndimhf, nullptr);
+
+        // combine smooth part and high_frequency part
+        combine_data(chr->rhog[0], rhogs_out, rhoghf_out);
+        clean_data(rhogs_in, rhoghf_in);
+    }
+
     // rhog to rho
     if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0)
     {
