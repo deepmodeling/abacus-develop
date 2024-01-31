@@ -999,6 +999,8 @@ We recommend the following options:
 - **Description**: Mixing parameter of magnetic density.
 - **Default**: `4*mixing_beta`, but the maximum value is 1.6.
 
+Note that `mixing_beta_mag` is not euqal to `mixing_beta` means that $\rho_{up}$ and $\rho_{down}$ mix independently from each other. This setting will fail for one case where the $\rho_{up}$ and $\rho_{down}$ of the ground state refers to different Kohn-Sham orbitals. For an atomic system, the $\rho_{up}$ and $\rho_{down}$ of the ground state refers to different Kohn-Sham orbitals. We all know Kohn-Sham orbitals are orthogonal to each other. So the mixture of $\rho_{up}$ and $\rho_{down}$ should be exactly independent, otherwise SCF cannot find the ground state forever. To sum up, please make sure `mixing_beta_mag` and `mixing_gg0_mag` exactly euqal to `mixing_beta` and `mixing_gg0` if you calculate an atomic system.
+
 ### mixing_ndim
 
 - **Type**: Integer
