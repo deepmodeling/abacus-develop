@@ -113,6 +113,10 @@ class Integral
     // \int_{xmin}^{xmax} f(x) dx = xl \int_{-1}^{1} f(xl * t + xmean) dt
     static void Gauss_Legendre_grid_and_weight(const double xmin, const double xmax, const int n, double *x, double *weights);
 
+    static const double Lebedev_Laikov_grid110_x[110];
+    static const double Lebedev_Laikov_grid110_y[110];
+    static const double Lebedev_Laikov_grid110_z[110];
+    static const double Lebedev_Laikov_grid110_w[110];
 };
 
 }
