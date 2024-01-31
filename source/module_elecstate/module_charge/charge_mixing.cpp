@@ -417,6 +417,15 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
         // delete
         delete[] rhog_mag;
         delete[] rhog_mag_save;
+        // get rhogs_out for combine_data()
+        if (GlobalV::double_grid)
+        {
+            for (int ig = 0; ig < npw; ig++)
+            {
+                rhogs_out[ig] = chr->rhog[0][ig];
+                rhogs_out[ig + npw] = chr->rhog[1][ig];
+            }
+        }
     }
     else if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE <= 0)
     {
