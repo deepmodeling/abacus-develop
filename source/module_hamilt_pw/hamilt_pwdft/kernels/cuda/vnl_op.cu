@@ -4,6 +4,7 @@
 
 #include <thrust/complex.h>
 #include <cuda_runtime.h>
+#include <base/macros/macros.h>
 
 #define THREADS_PER_BLOCK 256
 
@@ -134,6 +135,9 @@ void cal_vnl_op<FPTYPE, psi::DEVICE_GPU>::operator() (
             gk, ylm, indv, nhtol, nhtolm, tab, vkb1,
             reinterpret_cast<const thrust::complex<FPTYPE>*>(sk),
             reinterpret_cast<thrust::complex<FPTYPE>*>(vkb_in));
+    
+    cudaErrcheck(cudaGetLastError());
+    cudaErrcheck(cudaDeviceSynchronize());
 }
 
 template struct cal_vnl_op<float, psi::DEVICE_GPU>;

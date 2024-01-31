@@ -2,6 +2,7 @@
 
 #include <cuda_runtime.h>
 #include <thrust/complex.h>
+#include <base/macros/macros.h>
 
 #define THREADS_PER_BLOCK 256
 
@@ -70,6 +71,9 @@ void elecstate_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
     spin, nrxx, w1, rho[0], 
     reinterpret_cast<const thrust::complex<FPTYPE>*>(wfcr)
   );
+
+  cudaErrcheck(cudaGetLastError());
+  cudaErrcheck(cudaDeviceSynchronize());
 }
 
 template <typename FPTYPE>
@@ -89,6 +93,9 @@ void elecstate_pw_op<FPTYPE, psi::DEVICE_GPU>::operator()(
     reinterpret_cast<const thrust::complex<FPTYPE>*>(wfcr), 
     reinterpret_cast<const thrust::complex<FPTYPE>*>(wfcr_another_spin)
   );
+
+  cudaErrcheck(cudaGetLastError());
+  cudaErrcheck(cudaDeviceSynchronize());
 }
 
 template struct elecstate_pw_op<float, psi::DEVICE_GPU>;

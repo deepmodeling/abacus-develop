@@ -1,9 +1,11 @@
 #include "module_psi/kernels/memory_op.h"
 
 #include <complex>
+#include <iostream>
 
 #include <cuda_runtime.h>
 #include <thrust/complex.h>
+#include <base/macros/macros.h>
 
 #define THREADS_PER_BLOCK 256
 
@@ -44,7 +46,7 @@ void resize_memory_op<FPTYPE, psi::DEVICE_GPU>::operator()(
   if (arr != nullptr) {
     delete_memory_op<FPTYPE, psi::DEVICE_GPU>()(dev, arr);
   }
-  cudaMalloc((void **)&arr, sizeof(FPTYPE) * size);
+  cudaErrcheck(cudaMalloc((void **)&arr, sizeof(FPTYPE) * size));
 }
 
 template <typename FPTYPE>
@@ -54,7 +56,7 @@ void set_memory_op<FPTYPE, psi::DEVICE_GPU>::operator()(
     const int var, 
     const size_t size) 
 {
-  cudaMemset(arr, var, sizeof(FPTYPE) * size);  
+  cudaErrcheck(cudaMemset(arr, var, sizeof(FPTYPE) * size));  
 }
 
 template <typename FPTYPE> 
@@ -65,7 +67,7 @@ void synchronize_memory_op<FPTYPE, psi::DEVICE_CPU, psi::DEVICE_GPU>::operator()
     const FPTYPE* arr_in,
     const size_t size) 
 {
-  cudaMemcpy(arr_out, arr_in, sizeof(FPTYPE) * size, cudaMemcpyDeviceToHost);  
+  cudaErrcheck(cudaMemcpy(arr_out, arr_in, sizeof(FPTYPE) * size, cudaMemcpyDeviceToHost));  
 }
 
 template <typename FPTYPE> 
@@ -76,7 +78,7 @@ void synchronize_memory_op<FPTYPE, psi::DEVICE_GPU, psi::DEVICE_CPU>::operator()
     const FPTYPE* arr_in,
     const size_t size) 
 {
-  cudaMemcpy(arr_out, arr_in, sizeof(FPTYPE) * size, cudaMemcpyHostToDevice);  
+  cudaErrcheck(cudaMemcpy(arr_out, arr_in, sizeof(FPTYPE) * size, cudaMemcpyHostToDevice));  
 }
 
 template <typename FPTYPE> 
@@ -87,7 +89,7 @@ void synchronize_memory_op<FPTYPE, psi::DEVICE_GPU, psi::DEVICE_GPU>::operator()
     const FPTYPE* arr_in,
     const size_t size) 
 {
-  cudaMemcpy(arr_out, arr_in, sizeof(FPTYPE) * size, cudaMemcpyDeviceToDevice);  
+  cudaErrcheck(cudaMemcpy(arr_out, arr_in, sizeof(FPTYPE) * size, cudaMemcpyDeviceToDevice));  
 }
 
 template <typename FPTYPE_out, typename FPTYPE_in>
@@ -97,8 +99,12 @@ struct cast_memory_op<FPTYPE_out, FPTYPE_in, psi::DEVICE_GPU, psi::DEVICE_GPU> {
                     FPTYPE_out* arr_out,
                     const FPTYPE_in* arr_in,
                     const size_t size) {
+        if (size == 0) {return;}
         const int block = (size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
         cast_memory<<<block, THREADS_PER_BLOCK>>>(arr_out, arr_in, size);
+
+        cudaErrcheck(cudaGetLastError());
+        cudaErrcheck(cudaDeviceSynchronize());
     }
 };
 
@@ -109,12 +115,16 @@ struct cast_memory_op<FPTYPE_out, FPTYPE_in, psi::DEVICE_GPU, psi::DEVICE_CPU> {
                     FPTYPE_out* arr_out,
                     const FPTYPE_in* arr_in,
                     const size_t size) {
+        
+        if (size == 0) {return;}
         FPTYPE_in * arr = nullptr;
-        cudaMalloc((void **)&arr, sizeof(FPTYPE_in) * size);
-        cudaMemcpy(arr, arr_in, sizeof(FPTYPE_in) * size, cudaMemcpyHostToDevice);
+        cudaErrcheck(cudaMalloc((void **)&arr, sizeof(FPTYPE_in) * size));
+        cudaErrcheck(cudaMemcpy(arr, arr_in, sizeof(FPTYPE_in) * size, cudaMemcpyHostToDevice));
         const int block = (size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
         cast_memory<<<block, THREADS_PER_BLOCK>>>(arr_out, arr, size);
-        cudaFree(arr);
+        cudaErrcheck(cudaGetLastError());
+        cudaErrcheck(cudaDeviceSynchronize());
+        cudaErrcheck(cudaFree(arr));
     }
 };
 
@@ -126,7 +136,7 @@ struct cast_memory_op<FPTYPE_out, FPTYPE_in, psi::DEVICE_CPU, psi::DEVICE_GPU> {
                     const FPTYPE_in* arr_in,
                     const size_t size) {
         auto * arr = (FPTYPE_in*) malloc(sizeof(FPTYPE_in) * size);
-        cudaMemcpy(arr, arr_in, sizeof(FPTYPE_in) * size, cudaMemcpyDeviceToHost);
+        cudaErrcheck(cudaMemcpy(arr, arr_in, sizeof(FPTYPE_in) * size, cudaMemcpyDeviceToHost));
         for (int ii = 0; ii < size; ii++) {
             arr_out[ii] = static_cast<FPTYPE_out>(arr[ii]);
         }
@@ -139,7 +149,7 @@ void delete_memory_op<FPTYPE, psi::DEVICE_GPU>::operator() (
     const psi::DEVICE_GPU* dev, 
     FPTYPE* arr) 
 {
-  cudaFree(arr);
+  cudaErrcheck(cudaFree(arr));
 }
 
 template struct resize_memory_op<int, psi::DEVICE_GPU>;
