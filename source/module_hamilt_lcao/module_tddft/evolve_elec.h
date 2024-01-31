@@ -34,6 +34,7 @@ class Evolve_elec
     static std::vector<int> td_vext_dire_case;
     static bool out_dipole;
     static bool out_efield;
+    static bool out_current;
 
     static double td_print_eij; // the threshold to output Eij elements
     static int td_edm;          // 0: new edm method   1: old edm method
