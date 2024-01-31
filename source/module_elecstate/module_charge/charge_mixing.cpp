@@ -549,13 +549,17 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
     // rhog to rho
     if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0)
     {
+        // only tranfer rhog[0]
+        // do not support double_grid, use rhopw directly
         chr->rhopw->recip2real(chr->rhog[0], chr->rho[0]);
     }
     else
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            chr->rhopw->recip2real(chr->rhog[is], chr->rho[is]);
+            // use rhodpw for double_grid
+            // rhodpw is the same as rhopw for !GlobalV::double_grid
+            this->rhodpw->recip2real(chr->rhog[is], chr->rho[is]);
         }
     }
 
