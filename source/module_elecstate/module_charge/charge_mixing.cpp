@@ -324,6 +324,19 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
 
     std::complex<double>* rhog_in = nullptr;
     std::complex<double>* rhog_out = nullptr;
+    // for smooth part
+    std::complex<double>* rhogs_in = chr->rhog_save[0];
+    std::complex<double>* rhogs_out = chr->rhog[0];
+    // for high_frequency part
+    std::complex<double>* rhoghf_in = nullptr;
+    std::complex<double>* rhoghf_out = nullptr;
+
+    if (GlobalV::double_grid)
+    {
+        // divide into smooth part and high_frequency part
+        divide_data(chr->rhog_save[0], rhogs_in, rhoghf_in);
+        divide_data(chr->rhog[0], rhogs_out, rhoghf_out);
+    }
 
     //  can choose inner_product_recip_new1 or inner_product_recip_new2
     //  inner_product_recip_new1 is a simple sum
@@ -333,10 +346,11 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
     auto inner_product_old
         = std::bind(&Charge_Mixing::inner_product_recip, this, std::placeholders::_1, std::placeholders::_2);
 
+    // DIIS Mixing Only for smooth part, while high_frequency part is mixed by plain mixing method.
     if (GlobalV::NSPIN == 1)
     {
-        rhog_in = chr->rhog_save[0];
-        rhog_out = chr->rhog[0];    
+        rhog_in = rhogs_in;
+        rhog_out = rhogs_out;
         auto screen = std::bind(&Charge_Mixing::Kerker_screen_recip_new, this, std::placeholders::_1);
         this->mixing->push_data(this->rho_mdata, rhog_in, rhog_out, screen, true);
         this->mixing->cal_coef(this->rho_mdata, inner_product_old);
