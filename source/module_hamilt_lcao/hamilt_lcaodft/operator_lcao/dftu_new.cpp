@@ -250,7 +250,6 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                 occ[i] = this->dftu->locale[iat0][target_L][0][GlobalV::CURRENT_SPIN].c[i];
             }
             // set initialed_locale to false to avoid using readin locale in next iteration
-            if(GlobalV::CURRENT_SPIN == GlobalV::NSPIN-1) this->dftu->initialed_locale = false;
         }
         
         //calculate VU
@@ -286,7 +285,10 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
         }
     }
 
+    //energy correction for NSPIN=1
     if(GlobalV::NSPIN==1) this->dftu->EU *= 2.0;
+    // for readin onsite_dm, set initialed_locale to false to avoid using readin locale in next iteration
+    if(GlobalV::CURRENT_SPIN == GlobalV::NSPIN-1) this->dftu->initialed_locale = false;
 
     ModuleBase::timer::tick("DFTUNew", "calculate_HR");
 }
