@@ -4,6 +4,7 @@
 
 #include <cuda_runtime.h>
 #include <thrust/complex.h>
+#include <base/macros/macros.h>
 
 namespace hamilt {
 
@@ -51,6 +52,9 @@ void veff_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
         size, // control params
         reinterpret_cast<thrust::complex<FPTYPE>*>(out), // array of data
         in); // array of data
+    
+    cudaErrcheck(cudaGetLastError());
+    cudaErrcheck(cudaDeviceSynchronize());
 }
 
 template <typename FPTYPE>
@@ -67,6 +71,9 @@ void veff_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
         reinterpret_cast<thrust::complex<FPTYPE>*>(out), // array of data
         reinterpret_cast<thrust::complex<FPTYPE>*>(out1), // array of data
         in[0]); // array of data
+    
+    cudaErrcheck(cudaGetLastError());
+    cudaErrcheck(cudaDeviceSynchronize());
 }
 
 template struct veff_pw_op<float, psi::DEVICE_GPU>;

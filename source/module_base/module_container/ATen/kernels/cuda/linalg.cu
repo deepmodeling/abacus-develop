@@ -232,6 +232,9 @@ void add<T, Device>::operator()(const int& num_element, const T& alpha, const T*
     do_add_kernel<Type><<<block, THREADS_PER_BLOCK>>> (
         num_element, alpha_, reinterpret_cast<const Type*>(x),
         beta_, reinterpret_cast<const Type*>(y), reinterpret_cast<Type*>(z));
+    
+    cudaErrcheck(cudaGetLastError());
+    cudaErrcheck(cudaDeviceSynchronize());
 }
 
 template<typename T, typename Device>
@@ -242,6 +245,9 @@ void mul<T, Device>::operator()(const int& num_element, const T& alpha, const T*
     do_mul_kernel<Type><<<block, THREADS_PER_BLOCK>>> (
         num_element, alpha_,
         reinterpret_cast<const Type*>(x),  reinterpret_cast<Type*>(y));
+    
+    cudaErrcheck(cudaGetLastError());
+    cudaErrcheck(cudaDeviceSynchronize());
 }
 
 template<typename T, typename Device>
@@ -252,6 +258,9 @@ void mul<T, Device>::operator()(const int& num_element, const T& alpha, const T*
     do_mul_kernel<Type><<<block, THREADS_PER_BLOCK>>> (
         num_element, alpha_,
         reinterpret_cast<const Type*>(x), reinterpret_cast<const Type*>(y), reinterpret_cast<Type*>(z));
+    
+    cudaErrcheck(cudaGetLastError());
+    cudaErrcheck(cudaDeviceSynchronize());
 }
 
 template<typename T, typename Device>
@@ -261,6 +270,9 @@ void div<T, Device>::operator()(const int& num_element, const T& alpha, const T*
     const int block = (num_element + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     do_div_kernel<Type><<<block, THREADS_PER_BLOCK>>> (
         num_element, alpha_, reinterpret_cast<const Type*>(x), reinterpret_cast<const Type*>(y), reinterpret_cast<Type*>(z));
+
+    cudaErrcheck(cudaGetLastError());
+    cudaErrcheck(cudaDeviceSynchronize());
 }
 
 template<typename T, typename Device>
@@ -272,6 +284,9 @@ void fma<T, Device>::operator()(const int& num_element, const T& alpha, const T*
     do_fma_kernel<Type><<<block, THREADS_PER_BLOCK>>> (
         num_element, alpha_, reinterpret_cast<const Type*>(x), reinterpret_cast<const Type*>(y),
         beta_, reinterpret_cast<const Type*>(z), reinterpret_cast<Type*>(out));
+    
+    cudaErrcheck(cudaGetLastError());
+    cudaErrcheck(cudaDeviceSynchronize());
 }
 
 template<typename T, typename Device, bool Conjugate>
@@ -314,6 +329,9 @@ void transpose<T, Device, Conjugate>::operator()(
     do_transpose_kernel<Type, Conjugate><<<block, THREADS_PER_BLOCK>>> (
         ndim, num_elements, p_, t_perm.data<int>(),
         t_in_strides.data<int64_t>(), t_out_strides.data<int64_t>(), q_);
+    
+    cudaErrcheck(cudaGetLastError());
+    cudaErrcheck(cudaDeviceSynchronize());
 }
 
 template<typename T, typename Device>
@@ -355,6 +373,9 @@ void stride<T, Device>::operator()(
     const int block = (num_elements + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     do_stride_kernel<Type><<<block, THREADS_PER_BLOCK>>> (
         ndim, num_elements, p_, t_stride.data<int64_t>(), t_in_strides.data<int64_t>(), t_out_strides.data<int64_t>(), q_);
+    
+    cudaErrcheck(cudaGetLastError());
+    cudaErrcheck(cudaDeviceSynchronize());
 }
 
 
@@ -397,6 +418,9 @@ void inflate<T, Device>::operator()(
     const int block = (num_elements + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     do_inflate_kernel<Type><<<block, THREADS_PER_BLOCK>>> (
         ndim, num_elements, p_, t_stride.data<int64_t>(), t_in_strides.data<int64_t>(), t_out_strides.data<int64_t>(), q_);
+    
+    cudaErrcheck(cudaGetLastError());
+    cudaErrcheck(cudaDeviceSynchronize());
 }
 
 
@@ -415,6 +439,9 @@ void reduce<T, Device>::operator()(
     const int block = (static_cast<int>(num_element) + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     do_reduce_kernel<Type><<<block, THREADS_PER_BLOCK>>> (
         num_element, inner_most_dim, p_, q_);
+    
+    cudaErrcheck(cudaGetLastError());
+    cudaErrcheck(cudaDeviceSynchronize());
 }
 
 template struct add<int, DEVICE_GPU>;

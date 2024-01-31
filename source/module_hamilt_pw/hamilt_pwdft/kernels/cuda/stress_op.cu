@@ -3,7 +3,7 @@
 
 #include <complex>
 #include <thrust/complex.h>
-#include <module_base/macros.h>
+#include <base/macros/macros.h>
 
 #include <cuda_runtime.h>
 
@@ -186,6 +186,9 @@ void cal_dbecp_noevc_nl_op<FPTYPE, psi::DEVICE_GPU>::operator() (
             reinterpret_cast<thrust::complex<FPTYPE>*>(vkb1),
             reinterpret_cast<thrust::complex<FPTYPE>*>(vkb2),
             reinterpret_cast<thrust::complex<FPTYPE>*>(dbecp_noevc));
+    
+    cudaErrcheck(cudaGetLastError());
+    cudaErrcheck(cudaDeviceSynchronize());
 }
 
 template <typename FPTYPE>
@@ -234,6 +237,9 @@ void cal_stress_nl_op<FPTYPE, psi::DEVICE_GPU>::operator() (
              reinterpret_cast<const thrust::complex<FPTYPE>*>(becp),
              reinterpret_cast<const thrust::complex<FPTYPE>*>(dbecp),
              stress);// array of data
+    
+    cudaErrcheck(cudaGetLastError());
+    cudaErrcheck(cudaDeviceSynchronize());
 }
 
 template <typename T, typename Device>
@@ -248,6 +254,9 @@ void cal_stress_mgga_op<T, Device>::operator()(
     const int block = (nrxx + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     cal_stress_mgga<Real><<<block, THREADS_PER_BLOCK>>>(
         spin, nrxx, w1, gradwfc_, crosstaus);
+
+    cudaErrcheck(cudaGetLastError());
+    cudaErrcheck(cudaDeviceSynchronize());
 }
 
 template struct cal_stress_mgga_op<std::complex<float>,  psi::DEVICE_GPU>;
