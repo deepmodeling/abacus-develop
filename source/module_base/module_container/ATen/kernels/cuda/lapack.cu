@@ -54,6 +54,9 @@ struct set_matrix<T, DEVICE_GPU> {
     {
         set_matrix_kernel<Type><<<dim - 1, THREADS_PER_BLOCK>>>(
             uplo, reinterpret_cast<Type*>(A), dim);
+        
+        cudaErrcheck(cudaGetLastError());
+        cudaErrcheck(cudaDeviceSynchronize());
     }
 };
 

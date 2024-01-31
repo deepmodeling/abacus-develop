@@ -1,6 +1,7 @@
 #include <module_hamilt_general/module_xc/kernels/xc_functional_op.h>
 #include <module_psi/kernels/device.h>
 #include <thrust/complex.h>
+#include <base/macros/macros.h>
 
 #define THREADS_PER_BLOCK 256
 
@@ -57,6 +58,9 @@ void xc_functional_grad_wfc_op<T, Device>::operator()(
     const int block = (npw + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     xc_functional_grad_wfc<Real><<<block, THREADS_PER_BLOCK>>>(
         ik, pol, npw, npwx, tpiba, gcar, kvec_c, rhog_, porter_);
+    
+    cudaErrcheck(cudaGetLastError());
+    cudaErrcheck(cudaDeviceSynchronize());
 }
 
 template <typename T, typename Device>
@@ -71,6 +75,9 @@ void xc_functional_grad_wfc_op<T, Device>::operator()(
     const int block = (nrxx + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     xc_functional_grad_wfc<<<block, THREADS_PER_BLOCK>>>(
         ipol, nrxx, porter_, grad_);
+    
+    cudaErrcheck(cudaGetLastError());
+    cudaErrcheck(cudaDeviceSynchronize());
 }
 
 template struct xc_functional_grad_wfc_op<std::complex<float> , psi::DEVICE_GPU>;
