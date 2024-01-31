@@ -609,6 +609,20 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
         }
     }
 
+#ifdef USE_PAW
+    if(GlobalV::use_paw)
+    {
+        double *nhat_out, *nhat_in;
+        nhat_in = chr->nhat_save[0];
+        nhat_out = chr->nhat[0];
+        // Note: there is no kerker modification for tau because I'm not sure
+        // if we should have it. If necessary we can try it in the future.
+        this->mixing->push_data(this->nhat_mdata, nhat_in, nhat_out, nullptr, false);
+
+        this->mixing->mix_data(this->nhat_mdata, nhat_out);
+    }
+#endif
+
     return;
 }
 
