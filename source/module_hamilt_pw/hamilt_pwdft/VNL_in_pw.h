@@ -182,7 +182,10 @@ public:
     template <typename FPTYPE>
     std::complex<FPTYPE>* get_deeq_nc_data() const;
 
+    void release_memory();
+
   private:
+    bool memory_released = false;
     float *s_nhtol = nullptr, *s_nhtolm = nullptr, *s_indv = nullptr, *s_tab = nullptr;
     std::complex<float>* c_vkb = nullptr;
 

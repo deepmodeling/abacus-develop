@@ -16,6 +16,9 @@ Driver::Driver()
 
 Driver::~Driver()
 {
+    // Release the device memory within singleton object GlobalC::ppcell 
+    // before the main function exits.
+    GlobalC::ppcell.release_memory();
 }
 
 void Driver::init()
