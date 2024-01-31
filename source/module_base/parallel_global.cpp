@@ -27,6 +27,12 @@ MPI_Comm PARAPW_WORLD; // qianrui add it for sto-dft 2021-4-14
 MPI_Comm GRID_WORLD; // mohan add 2012-01-13z
 MPI_Comm DIAG_WORLD; // mohan add 2012-01-13
 
+namespace Parallel_Global{
+int mpi_number=0;
+int omp_number=0;
+}
+
+
 void Parallel_Global::myProd(std::complex<double> *in,std::complex<double> *inout,int *len,MPI_Datatype *dptr)
 {
 	for(int i=0;i<*len;i++)
@@ -184,6 +190,8 @@ void Parallel_Global::read_mpi_parameters(int argc,char **argv)
     MPI_Comm_size(shmcomm, &process_num);
     MPI_Comm_rank(shmcomm, &local_rank);
     MPI_Comm_free(&shmcomm);
+    mpi_number = process_num;
+    omp_number = current_thread_num;
     if (current_thread_num * process_num > max_thread_num && local_rank==0)
     {
         std::stringstream mess;

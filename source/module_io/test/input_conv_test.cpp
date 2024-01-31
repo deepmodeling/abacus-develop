@@ -181,9 +181,11 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_EQ(GlobalV::of_kernel_file,"WTkernel.txt");
 	EXPECT_EQ(GlobalV::global_readin_dir,GlobalV::global_out_dir);
 	EXPECT_EQ(GlobalV::sc_mag_switch,0);
+	
     EXPECT_TRUE(GlobalV::decay_grad_switch);
     EXPECT_EQ(GlobalV::sc_file, "sc.json");
 	EXPECT_EQ(GlobalV::MIXING_RESTART,0);
+	EXPECT_EQ(GlobalV::MIXING_DMR,false);
 }
 
 TEST_F(InputConvTest, ConvRelax)

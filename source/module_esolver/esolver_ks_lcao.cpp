@@ -501,6 +501,14 @@ namespace ModuleESolver
                                 GlobalV::MIXING_GG0,
                                 GlobalV::MIXING_TAU,
                                 GlobalV::MIXING_BETA_MAG);
+            // allocate memory for dmr_mdata
+            if (GlobalV::MIXING_DMR)
+            {
+                const elecstate::DensityMatrix<TK, double>* dm
+                    = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
+                int nnr_tmp = dm->get_DMR_pointer(1)->get_nnr();
+                this->p_chgmix->allocate_mixing_dmr(nnr_tmp);
+            }
         }
         this->p_chgmix->mix_reset();
     }
@@ -601,6 +609,13 @@ namespace ModuleESolver
 {
     // save input rho
         this->pelec->charge->save_rho_before_sum_band();
+        // save density matrix for mixing
+        if (GlobalV::MIXING_RESTART > 0 && GlobalV::MIXING_DMR && iter >= GlobalV::MIXING_RESTART)
+        {
+            elecstate::DensityMatrix<TK, double>* dm
+                = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
+            dm->save_DMR();
+        }
 
         // using HSolverLCAO<TK>::solve()
     if (this->phsol != nullptr)
@@ -781,6 +796,14 @@ namespace ModuleESolver
     template <typename TK, typename TR>
     void ESolver_KS_LCAO<TK, TR>::eachiterfinish(int iter)
 {
+    // mix density matrix
+    if (GlobalV::MIXING_RESTART > 0 && iter >= GlobalV::MIXING_RESTART && GlobalV::MIXING_DMR )
+    {
+        elecstate::DensityMatrix<TK, double>* dm
+                    = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
+        this->p_chgmix->mix_dmr(dm);
+    }
+
     //-----------------------------------
     // save charge density
     //-----------------------------------

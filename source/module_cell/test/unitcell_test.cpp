@@ -744,7 +744,8 @@ TEST_F(UcellTest,PrintSTRU)
 	//Cartesian type of coordinates
 	std::string fn = "C1H2_STRU";
 	int type = 1; // for Cartesian
-	int level = 1; //print velocity in STRU
+	int level = 1;
+    GlobalV::CALCULATION = "md"; // print velocity in STRU
 	ucell->print_stru_file(fn,type,level);
 	std::ifstream ifs;
 	ifs.open("C1H2_STRU");

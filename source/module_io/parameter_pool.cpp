@@ -850,6 +850,10 @@ void input_parameters_set(std::map<std::string, InputParameter> input_parameters
     {
         INPUT.mixing_dftu = *static_cast<bool*>(input_parameters["mixing_dftu"].get());
     }
+    else if (input_parameters.count("mixing_dmr") != 0)
+    {
+        INPUT.mixing_dmr = *static_cast<bool*>(input_parameters["mixing_dmr"].get());
+    }
     else if (input_parameters.count("init_wfc") != 0)
     {
         INPUT.init_wfc = static_cast<SimpleString*>(input_parameters["init_wfc"].get())->c_str();

@@ -136,6 +136,15 @@ namespace ModuleESolver
     void ESolver_DP::cal_Stress(ModuleBase::matrix& stress)
     {
         stress = dp_virial;
+
+        // external stress
+        double unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
+        double external_stress[3] = {GlobalV::PRESS1, GlobalV::PRESS2, GlobalV::PRESS3};
+        for (int i = 0; i < 3; i++)
+        {
+            stress(i, i) -= external_stress[i] / unit_transform;
+        }
+
         ModuleIO::print_stress("TOTAL-STRESS", stress, true, false);
     }
 
