@@ -301,33 +301,4 @@ std::string qo_basis = "hydrogen";
 std::vector<std::string> qo_strategy = {};
 double qo_thr = 1.0e-6;
 std::vector<double> qo_screening_coeff = {};
-
-//==========================================================
-// PEXSI related
-//==========================================================
-int pexsi_npole = 54;
-int pexsi_inertia = 1;
-int pexsi_nmax = 80;
-// int pexsi_symbolic = 1;
-int pexsi_comm = 1;
-int pexsi_storage = 1;
-int pexsi_ordering = 0;
-int pexsi_row_ordering = 1;
-int pexsi_nproc = 1;
-int pexsi_symm = 1;
-int pexsi_trans = 0;
-int pexsi_method = 1;
-int pexsi_nproc_pole = 1;
-// double pexsi_spin = 2;
-double pexsi_temp = 0.0001;
-double pexsi_gap = 0;
-double pexsi_delta_e = 20.0;
-double pexsi_mu_lower = -10;
-double pexsi_mu_upper = 10;
-double pexsi_mu = 0.0;
-double pexsi_mu_thr = 0.05;
-double pexsi_mu_expand = 0.3;
-double pexsi_mu_guard = 0.2;
-double pexsi_elec_thr = 0.001;
-double pexsi_zero_thr = 1e-10;
 } // namespace GlobalV

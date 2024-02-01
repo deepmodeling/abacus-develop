@@ -20,6 +20,7 @@
 #include "module_base/timer.h"
 #include "module_base/tool_quit.h"
 #include "module_base/global_variable.h"
+#include "module_hsolver/diago_pexsi.h"
 
 namespace pexsi
 {
@@ -106,36 +107,36 @@ int loadPEXSIOption(MPI_Comm comm,
     double double_para[12];
 
     // read in PEXSI options from GlobalV
-    int_para[0] = GlobalV::pexsi_npole;
-    int_para[1] = GlobalV::pexsi_inertia;
-    int_para[2] = GlobalV::pexsi_nmax;
+    int_para[0] = hsolver::DiagoPexsi<double>::pexsi_npole;
+    int_para[1] = hsolver::DiagoPexsi<double>::pexsi_inertia;
+    int_para[2] = hsolver::DiagoPexsi<double>::pexsi_nmax;
     int_para[3] = 0;
-    int_para[4] = 1; // GlobalV::pexsi_symbolic;
-    int_para[5] = GlobalV::pexsi_comm;
+    int_para[4] = 1; // hsolver::DiagoPexsi<double>::pexsi_symbolic;
+    int_para[5] = hsolver::DiagoPexsi<double>::pexsi_comm;
     int_para[6] = 0;
-    int_para[7] = GlobalV::pexsi_storage;
-    int_para[8] = GlobalV::pexsi_ordering;
-    int_para[9] = GlobalV::pexsi_row_ordering;
-    int_para[10] = GlobalV::pexsi_nproc;
-    int_para[11] = GlobalV::pexsi_symm;
-    int_para[12] = GlobalV::pexsi_trans;
-    int_para[13] = GlobalV::pexsi_method;
+    int_para[7] = hsolver::DiagoPexsi<double>::pexsi_storage;
+    int_para[8] = hsolver::DiagoPexsi<double>::pexsi_ordering;
+    int_para[9] = hsolver::DiagoPexsi<double>::pexsi_row_ordering;
+    int_para[10] = hsolver::DiagoPexsi<double>::pexsi_nproc;
+    int_para[11] = hsolver::DiagoPexsi<double>::pexsi_symm;
+    int_para[12] = hsolver::DiagoPexsi<double>::pexsi_trans;
+    int_para[13] = hsolver::DiagoPexsi<double>::pexsi_method;
     int_para[14] = 2;
     int_para[15] = 0;
-    int_para[16] = GlobalV::pexsi_nproc_pole;
+    int_para[16] = hsolver::DiagoPexsi<double>::pexsi_nproc_pole;
 
-    double_para[0] = GlobalV::NSPIN; // GlobalV::pexsi_spin;
-    double_para[1] = GlobalV::pexsi_temp;
-    double_para[2] = GlobalV::pexsi_gap;
-    double_para[3] = GlobalV::pexsi_delta_e;
-    double_para[4] = GlobalV::pexsi_mu_lower;
-    double_para[5] = GlobalV::pexsi_mu_upper;
-    double_para[6] = GlobalV::pexsi_mu;
-    double_para[7] = GlobalV::pexsi_mu_thr;
-    double_para[8] = GlobalV::pexsi_mu_expand;
-    double_para[9] = GlobalV::pexsi_mu_guard;
-    double_para[10] = GlobalV::pexsi_elec_thr;
-    double_para[11] = GlobalV::pexsi_zero_thr;
+    double_para[0] = GlobalV::NSPIN; // hsolver::DiagoPexsi<double>::pexsi_spin;
+    double_para[1] = hsolver::DiagoPexsi<double>::pexsi_temp;
+    double_para[2] = hsolver::DiagoPexsi<double>::pexsi_gap;
+    double_para[3] = hsolver::DiagoPexsi<double>::pexsi_delta_e;
+    double_para[4] = hsolver::DiagoPexsi<double>::pexsi_mu_lower;
+    double_para[5] = hsolver::DiagoPexsi<double>::pexsi_mu_upper;
+    double_para[6] = hsolver::DiagoPexsi<double>::pexsi_mu;
+    double_para[7] = hsolver::DiagoPexsi<double>::pexsi_mu_thr;
+    double_para[8] = hsolver::DiagoPexsi<double>::pexsi_mu_expand;
+    double_para[9] = hsolver::DiagoPexsi<double>::pexsi_mu_guard;
+    double_para[10] = hsolver::DiagoPexsi<double>::pexsi_elec_thr;
+    double_para[11] = hsolver::DiagoPexsi<double>::pexsi_zero_thr;
     // int myid;
     // MPI_Comm_rank(comm, &myid);
     // if (myid == 0)
@@ -426,7 +427,7 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
                 const int nblk,
                 const int nrow,
                 const int ncol,
-                char LAYOUT, // matrix parameters
+                char layout, // matrix parameters
                 double* H,
                 double* S, // input matrices
                 const double numElectronExact,
@@ -531,7 +532,7 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
     // LiuXh modify 2021-03-30, add DONE(ofs_running,"xx") for test
     // DONE(ofs_running,"create block cyclic distribution matrix parameter, begin");
     // OUT(ofs_running, "checkpoint10");
-    DistBCDMatrix SRC_Matrix(comm_2D, group_2D, blacs_ctxt, size, nblk, nrow, ncol, LAYOUT);
+    DistBCDMatrix SRC_Matrix(comm_2D, group_2D, blacs_ctxt, size, nblk, nrow, ncol, layout);
 // OUT(ofs_running, "checkpoint11");
 #ifdef _DEBUG
     if (comm_PEXSI != MPI_COMM_NULL)

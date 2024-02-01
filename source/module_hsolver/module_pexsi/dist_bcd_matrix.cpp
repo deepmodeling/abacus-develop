@@ -17,7 +17,7 @@ DistBCDMatrix::DistBCDMatrix(MPI_Comm comm,
                              int nblk,
                              int nrow,
                              int ncol,
-                             char LAYOUT)
+                             char layout)
 {
     this->comm = comm;
     this->group = group;
@@ -26,13 +26,13 @@ DistBCDMatrix::DistBCDMatrix(MPI_Comm comm,
     this->nblk = nblk;
     this->nrow = nrow;
     this->ncol = ncol;
-    if (LAYOUT == 'R' || LAYOUT == 'r' || LAYOUT == 'C' || LAYOUT == 'c')
+    if (layout == 'R' || layout == 'r' || layout == 'C' || layout == 'c')
     {
-        this->LAYOUT = LAYOUT;
+        this->layout = layout;
     }
     else
     {
-        throw("The LAYOUT must be 'R', 'r', 'C', or 'c'");
+        throw("The layout must be 'R', 'r', 'C', or 'c'");
     }
 
     if (comm != MPI_COMM_NULL)
@@ -91,7 +91,6 @@ int DistBCDMatrix::globalRow(const int localRow)
 
 int DistBCDMatrix::globalCol(const int localCol)
 {
-
     return (localCol / nblk * npcols + mypcol) * nblk + localCol % nblk;
 }
 

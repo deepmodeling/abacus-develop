@@ -39,7 +39,7 @@ void buffer2CCSvalue(int nnzLocal, int* buffer2ccsIndex, double* buffer, double*
 
 void countMatrixDistribution(int N, double* A, std::map<int, int>& P);
 
-int getNonZeroIndex(char LAYOUT,
+int getNonZeroIndex(char layout,
                     const int nrow,
                     const int ncol,
                     double* H_2d,

@@ -167,7 +167,7 @@ inline void DistMatrixTransformer::countMatrixDistribution(int N, double* A, std
 }
 
 // find out the index of non-zero elements
-inline int DistMatrixTransformer::getNonZeroIndex(char LAYOUT,
+inline int DistMatrixTransformer::getNonZeroIndex(char layout,
                                                   const int nrow,
                                                   const int ncol,
                                                   double* H_2d,
@@ -231,7 +231,7 @@ inline int DistMatrixTransformer::getNonZeroIndex(char LAYOUT,
     if (myproc < 100)
         log << "rowidx and colidx cleared" << std::endl;
 #endif
-    if (LAYOUT == 'C' || LAYOUT == 'c')
+    if (layout == 'C' || layout == 'c')
     {
         for (int i = 0; i < ncol; ++i)
         {
@@ -247,7 +247,7 @@ inline int DistMatrixTransformer::getNonZeroIndex(char LAYOUT,
             }
         }
     }
-    else if (LAYOUT == 'R' || LAYOUT == 'r')
+    else if (layout == 'R' || layout == 'r')
     {
         for (int i = 0; i < ncol; ++i)
         {
@@ -267,7 +267,7 @@ inline int DistMatrixTransformer::getNonZeroIndex(char LAYOUT,
     {
 #ifdef _DEBUG
         if (myproc < 100)
-            log << "unknown LAYOUT: " << LAYOUT << std::endl;
+            log << "unknown layout: " << layout << std::endl;
 #endif
         return 1;
     }
@@ -622,7 +622,7 @@ int DistMatrixTransformer::transformBCDtoCCS(DistBCDMatrix& SRC_Matrix,
                 << " ; mypcol: " << SRC_Matrix.mypcol << std::endl;
             log << "nblk:" << SRC_Matrix.nblk << " ; nrow: " << SRC_Matrix.get_nrow() << " ; ncol: " << SRC_Matrix.get_ncol()
                 << std::endl;
-            log << "layout:" << SRC_Matrix.get_LAYOUT() << std::endl;
+            log << "layout:" << SRC_Matrix.get_layout() << std::endl;
             log << "ZERO = " << ZERO_Limit << std::endl;
             log << "DST_Matrix parameters:" << std::endl;
             log << "size: " << DST_Matrix.size << " ;nproc_data: " << DST_Matrix.nproc_data << std::endl;
@@ -641,7 +641,7 @@ int DistMatrixTransformer::transformBCDtoCCS(DistBCDMatrix& SRC_Matrix,
 #endif
         if (SRC_Matrix.get_comm() != MPI_COMM_NULL)
         {
-            getNonZeroIndex(SRC_Matrix.get_LAYOUT(),
+            getNonZeroIndex(SRC_Matrix.get_layout(),
                             SRC_Matrix.get_nrow(),
                             SRC_Matrix.get_ncol(),
                             H_2d,
@@ -660,7 +660,7 @@ int DistMatrixTransformer::transformBCDtoCCS(DistBCDMatrix& SRC_Matrix,
             if(SRC_Matrix.comm != MPI_COMM_NULL)
             {
                 log<<"NonZeroIndex :"<<std::endl;
-                if(SRC_Matrix.get_LAYOUT() == 'R' || SRC_Matrix.get_LAYOUT() == 'r')
+                if(SRC_Matrix.get_layout() == 'R' || SRC_Matrix.get_layout() == 'r')
                 {
                     for(int i=0; i<nnz; ++i)
                     {
@@ -713,7 +713,7 @@ int DistMatrixTransformer::transformBCDtoCCS(DistBCDMatrix& SRC_Matrix,
         std::vector<double> sender_buffer(sender_size);
         std::vector<double> receiver_buffer(receiver_size);
         // put H to sender buffer
-        if (SRC_Matrix.get_LAYOUT() == 'R' || SRC_Matrix.get_LAYOUT() == 'r')
+        if (SRC_Matrix.get_layout() == 'R' || SRC_Matrix.get_layout() == 'r')
         {
             for (int i = 0; i < sender_size; ++i)
             {
@@ -755,7 +755,7 @@ int DistMatrixTransformer::transformBCDtoCCS(DistBCDMatrix& SRC_Matrix,
 #endif
 
         // put S to sender buffer
-        if (SRC_Matrix.get_LAYOUT() == 'R' || SRC_Matrix.get_LAYOUT() == 'r')
+        if (SRC_Matrix.get_layout() == 'R' || SRC_Matrix.get_layout() == 'r')
         {
             for (int i = 0; i < sender_size; ++i)
             {
@@ -1434,7 +1434,7 @@ MPI_Barrier(COMM_TRANS);
 // OUT(ofs_running, "transformCCStoBCD: receiver_buffer is got from DM");
 #endif
         // transform receiver_buffer to DM
-        if (DST_Matrix.get_LAYOUT() == 'R' || DST_Matrix.get_LAYOUT() == 'r')
+        if (DST_Matrix.get_layout() == 'R' || DST_Matrix.get_layout() == 'r')
         {
             int DST_Matrix_elem = DST_Matrix.get_nrow() * DST_Matrix.get_ncol();
             for (int i = 0; i < receiver_size; ++i)
@@ -1518,7 +1518,7 @@ MPI_Barrier(COMM_TRANS);
 // OUT(ofs_running, "transformCCStoBCD: receiver_buffer is got from EDM");
 #endif
         // transform receiver_buffer to EDM
-        if (DST_Matrix.get_LAYOUT() == 'R' || DST_Matrix.get_LAYOUT() == 'r')
+        if (DST_Matrix.get_layout() == 'R' || DST_Matrix.get_layout() == 'r')
         {
             int DST_Matrix_elem = DST_Matrix.get_nrow() * DST_Matrix.get_ncol();
             for (int i = 0; i < receiver_size; ++i)

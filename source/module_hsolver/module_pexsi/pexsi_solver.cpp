@@ -10,8 +10,6 @@
 
 extern MPI_Comm DIAG_WORLD;
 extern MPI_Comm GRID_WORLD;
-extern MPI_Group GRID_GROUP;
-
 namespace pexsi
 {
 PEXSI_Solver::PEXSI_Solver(const int blacs_text,
@@ -43,10 +41,11 @@ PEXSI_Solver::PEXSI_Solver(const int blacs_text,
 
 int PEXSI_Solver::solve()
 {
-
+    MPI_Group grid_group;
+    MPI_Comm_group(DIAG_WORLD, &grid_group);
     simplePEXSI(DIAG_WORLD,
                 GRID_WORLD,
-                GRID_GROUP,
+                grid_group,
                 this->blacs_text,
                 GlobalV::NLOCAL,
                 this->nb,

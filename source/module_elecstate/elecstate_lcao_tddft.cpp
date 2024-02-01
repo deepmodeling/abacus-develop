@@ -67,9 +67,7 @@ void ElecStateLCAO_TDDFT::psiToRho_td(const psi::Psi<std::complex<double>>& psi)
     Gint_inout inout(this->loc->DM_R, this->charge->rho, Gint_Tools::job_type::rho); // rho calculation
     this->uhm->GK.cal_gint(&inout);
 
-    std::cout << "this->charge->renormalize_rho(); 1" << std::endl; 
     this->charge->renormalize_rho();
-    std::cout << "this->charge->renormalize_rho(); 1 done" << std::endl;
 
     ModuleBase::timer::tick("ElecStateLCAO", "psiToRho");
     return;

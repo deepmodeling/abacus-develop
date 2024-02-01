@@ -13,7 +13,7 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
                 const int nblk,
                 const int nrow,
                 const int ncol,
-                char LAYOUT, // input matrix parameters
+                char layout, // input matrix parameters
                 double* H,
                 double* S, // input matrices
                 const double nElectronExact,

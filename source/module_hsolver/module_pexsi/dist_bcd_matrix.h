@@ -16,10 +16,10 @@ class DistBCDMatrix
   public:
     // DistBCDMatrix(MPI_Comm comm, MPI_Group group, int nprow, int npcol, int size, int nblk, int nrow, int ncol);
     // DistBCDMatrix(MPI_Comm comm, MPI_Group group, int nprow, int npcol, int size, int nblk, int nrow, int ncol, char
-    // LAYOUT);
+    // layout);
 
     // DistBCDMatrix(MPI_Comm comm, MPI_Group group, int blacs_ctxt, int size, int nblk, int nrow, int ncol);
-    DistBCDMatrix(MPI_Comm comm, MPI_Group group, int blacs_ctxt, int size, int nblk, int nrow, int ncol, char LAYOUT);
+    DistBCDMatrix(MPI_Comm comm, MPI_Group group, int blacs_ctxt, int size, int nblk, int nrow, int ncol, char layout);
     ~DistBCDMatrix();
 
     int globalRow(const int localRow);
@@ -45,9 +45,9 @@ class DistBCDMatrix
     {
         return ncol;
     };
-    const char get_LAYOUT() const
+    const char get_layout() const
     {
-        return LAYOUT;
+        return layout;
     };
 
   private:
@@ -90,7 +90,7 @@ class DistBCDMatrix
     // the local data layout
     // 'R' or 'r' for row-major, which is used in C/C++
     // 'C' or 'c' for column-major, which is used in Fortran
-    char LAYOUT;
+    char layout;
 };
 } // namespace pexsi
 #endif // DISTBCDMATRIX_H

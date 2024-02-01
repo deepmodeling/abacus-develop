@@ -24,6 +24,9 @@
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_lcao/module_tddft/evolve_elec.h"
 #endif
+#ifdef __PEXSI
+#include "module_hsolver/diago_pexsi.h"
+#endif
 
 #include "module_base/timer.h"
 #include "module_elecstate/elecstate_lcao.h"
@@ -770,31 +773,59 @@ void Input_Conv::Convert(void)
     //-----------------------------------------------
     // PEXSI related parameters
     //-----------------------------------------------
-    GlobalV::pexsi_npole = INPUT.pexsi_npole;
-    GlobalV::pexsi_inertia = INPUT.pexsi_inertia;
-    GlobalV::pexsi_nmax = INPUT.pexsi_nmax;
-    // GlobalV::pexsi_symbolic = INPUT.pexsi_symbolic;
-    GlobalV::pexsi_comm = INPUT.pexsi_comm;
-    GlobalV::pexsi_storage = INPUT.pexsi_storage;
-    GlobalV::pexsi_ordering = INPUT.pexsi_ordering;
-    GlobalV::pexsi_row_ordering = INPUT.pexsi_row_ordering;
-    GlobalV::pexsi_nproc = INPUT.pexsi_nproc;
-    GlobalV::pexsi_symm = INPUT.pexsi_symm;
-    GlobalV::pexsi_trans = INPUT.pexsi_trans;
-    GlobalV::pexsi_method = INPUT.pexsi_method;
-    GlobalV::pexsi_nproc_pole = INPUT.pexsi_nproc_pole;
-    // GlobalV::pexsi_spin = INPUT.pexsi_spin;
-    GlobalV::pexsi_temp = INPUT.pexsi_temp;
-    GlobalV::pexsi_gap = INPUT.pexsi_gap;
-    GlobalV::pexsi_delta_e = INPUT.pexsi_delta_e;
-    GlobalV::pexsi_mu_lower = INPUT.pexsi_mu_lower;
-    GlobalV::pexsi_mu_upper = INPUT.pexsi_mu_upper;
-    GlobalV::pexsi_mu = INPUT.pexsi_mu;
-    GlobalV::pexsi_mu_thr = INPUT.pexsi_mu_thr;
-    GlobalV::pexsi_mu_expand = INPUT.pexsi_mu_expand;
-    GlobalV::pexsi_mu_guard = INPUT.pexsi_mu_guard;
-    GlobalV::pexsi_elec_thr = INPUT.pexsi_elec_thr;
-    GlobalV::pexsi_zero_thr = INPUT.pexsi_zero_thr;
+#ifdef __PEXSI
+    hsolver::DiagoPexsi<std::complex<double>>::pexsi_npole = INPUT.pexsi_npole;
+    hsolver::DiagoPexsi<std::complex<double>>::pexsi_inertia = INPUT.pexsi_inertia;
+    hsolver::DiagoPexsi<std::complex<double>>::pexsi_nmax = INPUT.pexsi_nmax;
+    // hsolver::DiagoPexsi<std::complex<double>>::pexsi_symbolic = INPUT.pexsi_symbolic;
+    hsolver::DiagoPexsi<std::complex<double>>::pexsi_comm = INPUT.pexsi_comm;
+    hsolver::DiagoPexsi<std::complex<double>>::pexsi_storage = INPUT.pexsi_storage;
+    hsolver::DiagoPexsi<std::complex<double>>::pexsi_ordering = INPUT.pexsi_ordering;
+    hsolver::DiagoPexsi<std::complex<double>>::pexsi_row_ordering = INPUT.pexsi_row_ordering;
+    hsolver::DiagoPexsi<std::complex<double>>::pexsi_nproc = INPUT.pexsi_nproc;
+    hsolver::DiagoPexsi<std::complex<double>>::pexsi_symm = INPUT.pexsi_symm;
+    hsolver::DiagoPexsi<std::complex<double>>::pexsi_trans = INPUT.pexsi_trans;
+    hsolver::DiagoPexsi<std::complex<double>>::pexsi_method = INPUT.pexsi_method;
+    hsolver::DiagoPexsi<std::complex<double>>::pexsi_nproc_pole = INPUT.pexsi_nproc_pole;
+    // hsolver::DiagoPexsi<std::complex<double>>::pexsi_spin = INPUT.pexsi_spin;
+    hsolver::DiagoPexsi<std::complex<double>>::pexsi_temp = INPUT.pexsi_temp;
+    hsolver::DiagoPexsi<std::complex<double>>::pexsi_gap = INPUT.pexsi_gap;
+    hsolver::DiagoPexsi<std::complex<double>>::pexsi_delta_e = INPUT.pexsi_delta_e;
+    hsolver::DiagoPexsi<std::complex<double>>::pexsi_mu_lower = INPUT.pexsi_mu_lower;
+    hsolver::DiagoPexsi<std::complex<double>>::pexsi_mu_upper = INPUT.pexsi_mu_upper;
+    hsolver::DiagoPexsi<std::complex<double>>::pexsi_mu = INPUT.pexsi_mu;
+    hsolver::DiagoPexsi<std::complex<double>>::pexsi_mu_thr = INPUT.pexsi_mu_thr;
+    hsolver::DiagoPexsi<std::complex<double>>::pexsi_mu_expand = INPUT.pexsi_mu_expand;
+    hsolver::DiagoPexsi<std::complex<double>>::pexsi_mu_guard = INPUT.pexsi_mu_guard;
+    hsolver::DiagoPexsi<std::complex<double>>::pexsi_elec_thr = INPUT.pexsi_elec_thr;
+    hsolver::DiagoPexsi<std::complex<double>>::pexsi_zero_thr = INPUT.pexsi_zero_thr;
+
+    hsolver::DiagoPexsi<double>::pexsi_npole = INPUT.pexsi_npole;
+    hsolver::DiagoPexsi<double>::pexsi_inertia = INPUT.pexsi_inertia;
+    hsolver::DiagoPexsi<double>::pexsi_nmax = INPUT.pexsi_nmax;
+    // hsolver::DiagoPexsi<double>::pexsi_symbolic = INPUT.pexsi_symbolic;
+    hsolver::DiagoPexsi<double>::pexsi_comm = INPUT.pexsi_comm;
+    hsolver::DiagoPexsi<double>::pexsi_storage = INPUT.pexsi_storage;
+    hsolver::DiagoPexsi<double>::pexsi_ordering = INPUT.pexsi_ordering;
+    hsolver::DiagoPexsi<double>::pexsi_row_ordering = INPUT.pexsi_row_ordering;
+    hsolver::DiagoPexsi<double>::pexsi_nproc = INPUT.pexsi_nproc;
+    hsolver::DiagoPexsi<double>::pexsi_symm = INPUT.pexsi_symm;
+    hsolver::DiagoPexsi<double>::pexsi_trans = INPUT.pexsi_trans;
+    hsolver::DiagoPexsi<double>::pexsi_method = INPUT.pexsi_method;
+    hsolver::DiagoPexsi<double>::pexsi_nproc_pole = INPUT.pexsi_nproc_pole;
+    // hsolver::DiagoPexsi<double>::pexsi_spin = INPUT.pexsi_spin;
+    hsolver::DiagoPexsi<double>::pexsi_temp = INPUT.pexsi_temp;
+    hsolver::DiagoPexsi<double>::pexsi_gap = INPUT.pexsi_gap;
+    hsolver::DiagoPexsi<double>::pexsi_delta_e = INPUT.pexsi_delta_e;
+    hsolver::DiagoPexsi<double>::pexsi_mu_lower = INPUT.pexsi_mu_lower;
+    hsolver::DiagoPexsi<double>::pexsi_mu_upper = INPUT.pexsi_mu_upper;
+    hsolver::DiagoPexsi<double>::pexsi_mu = INPUT.pexsi_mu;
+    hsolver::DiagoPexsi<double>::pexsi_mu_thr = INPUT.pexsi_mu_thr;
+    hsolver::DiagoPexsi<double>::pexsi_mu_expand = INPUT.pexsi_mu_expand;
+    hsolver::DiagoPexsi<double>::pexsi_mu_guard = INPUT.pexsi_mu_guard;
+    hsolver::DiagoPexsi<double>::pexsi_elec_thr = INPUT.pexsi_elec_thr;
+    hsolver::DiagoPexsi<double>::pexsi_zero_thr = INPUT.pexsi_zero_thr;
+#endif
     ModuleBase::timer::tick("Input_Conv", "Convert");
     return;
 }

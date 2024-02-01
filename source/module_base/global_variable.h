@@ -330,31 +330,5 @@ extern std::vector<std::string> qo_strategy;
 extern double qo_thr;
 extern std::vector<double> qo_screening_coeff;
 
-// PEXSI related
-extern int pexsi_npole;
-extern int pexsi_inertia;
-extern int pexsi_nmax;
-// extern int pexsi_symbolic;
-extern int pexsi_comm;
-extern int pexsi_storage;
-extern int pexsi_ordering;
-extern int pexsi_row_ordering;
-extern int pexsi_nproc;
-extern int pexsi_symm;
-extern int pexsi_trans;
-extern int pexsi_method;
-extern int pexsi_nproc_pole;
-// extern double pexsi_spin;
-extern double pexsi_temp;
-extern double pexsi_gap;
-extern double pexsi_delta_e;
-extern double pexsi_mu_lower;
-extern double pexsi_mu_upper;
-extern double pexsi_mu;
-extern double pexsi_mu_thr;
-extern double pexsi_mu_expand;
-extern double pexsi_mu_guard;
-extern double pexsi_elec_thr;
-extern double pexsi_zero_thr;
 } // namespace GlobalV
 #endif
