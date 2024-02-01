@@ -1,5 +1,6 @@
 #pragma once
 #include "dftu_new.h"
+#include "module_base/parallel_reduce.h"
 
 namespace hamilt
 {
@@ -84,11 +85,12 @@ void DFTUNew<OperatorLCAO<TK, TR>>::cal_force_stress(
                     const int L0 = this->ucell->atoms[T0].iw2l[iw];
                     if(L0 == target_L)
                     {
-                        for(int m = 0; m < tlp1; m++)
+                        for(int m = 0; m < tlp1; m++)//-l, -l+1, ..., l-1, l
                         {
-                            for(int n = 0; n < 4; n++)
+                            for(int n = 0; n < 4; n++)// value, deri_x, deri_y, deri_z
                             {
                                 nlm_target[m + n * tlp1] = nlm[n][iw+m];
+                                //if(dtau.norm2 == 0.0) std::cout<<__FILE__<<__LINE__<<" "<<m<<" "<<n<<" "<<(m+n*tlp1)<<" "<<iw+m<<" "<<nlm[n][iw+m]<<" "<<nlm_target[m + n * tlp1] << std::endl;
                             }
                         }
                         break;
@@ -133,14 +135,14 @@ void DFTUNew<OperatorLCAO<TK, TR>>::cal_force_stress(
             const int iat1 = ucell->itia2iat(T1, I1);
             double* force_tmp = (cal_force)? &force(iat1, 0) : nullptr;
             ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];
-            ModuleBase::Vector3<double>& dis1 = adjs.adjacent_tau[ad1];
+            ModuleBase::Vector3<double> dis1 = adjs.adjacent_tau[ad1] - tau0;
             for (int ad2 = 0; ad2 < adjs.adj_num + 1; ++ad2)
             {
                 const int T2 = adjs.ntype[ad2];
                 const int I2 = adjs.natom[ad2];
                 const int iat2 = ucell->itia2iat(T2, I2);
                 ModuleBase::Vector3<int>& R_index2 = adjs.box[ad2];
-                ModuleBase::Vector3<double>& dis2 = adjs.adjacent_tau[ad2];
+                ModuleBase::Vector3<double> dis2 = adjs.adjacent_tau[ad2] - tau0;
                 ModuleBase::Vector3<int> R_vector(R_index2[0] - R_index1[0],
                                                   R_index2[1] - R_index1[1],
                                                   R_index2[2] - R_index1[2]);
@@ -165,6 +167,10 @@ void DFTUNew<OperatorLCAO<TK, TR>>::cal_force_stress(
 
     if(cal_force)
     {
+#ifdef __MPI
+            // sum up the occupation matrix
+            Parallel_Reduce::reduce_all(force.c, force.nr*force.nc);
+#endif
         for(int i=0;i<force.nr*force.nc;i++)
         {
             force.c[i] *= 2.0;
@@ -174,6 +180,10 @@ void DFTUNew<OperatorLCAO<TK, TR>>::cal_force_stress(
     // stress renormalization
     if(cal_stress)
     {
+#ifdef __MPI
+        // sum up the occupation matrix
+        Parallel_Reduce::reduce_all(stress_tmp.data(), 6);
+#endif
         const double weight = this->ucell->lat0 / this->ucell->omega;
         for(int i=0;i<6;i++)
         {
@@ -275,9 +285,6 @@ void DFTUNew<OperatorLCAO<TK, TR>>::cal_stress_IJR(
     auto col_indexes = paraV->get_indexes_col(iat2);
     const int m_size = int(sqrt(vu_in.size()/nspin));
     const int m_size2 = m_size * m_size;
-#ifdef __DEBUG
-    assert(m_size * m_size * nspin == occ.size());
-#endif
     // step_trace = 0 for NSPIN=1,2; ={0, 1, local_col, local_col+1} for NSPIN=4
     std::vector<int> step_trace(npol, 0);
     if(npol == 2) step_trace[1] = col_indexes.size() + 1;
@@ -299,12 +306,13 @@ void DFTUNew<OperatorLCAO<TK, TR>>::cal_stress_IJR(
                     for(int m2 = 0; m2 < m_size; m2++)
                     {
                         double tmp = vu_in[m1 * m_size + m2 + is*m_size2] * dm_pointer[0];
-                        stress[0] += tmp * (nlm1[m1 + m_size] * dis1[0] * nlm2[m2] + nlm1[m1] * nlm2[m2 + m_size] * dis2[0]);
-                        stress[1] += tmp * (nlm1[m1 + m_size] * dis1[1] * nlm2[m2] + nlm1[m1] * nlm2[m2 + m_size] * dis2[1]);
-                        stress[2] += tmp * (nlm1[m1 + m_size] * dis1[2] * nlm2[m2] + nlm1[m1] * nlm2[m2 + m_size] * dis2[2]);
-                        stress[3] += tmp * (nlm1[m1 + m_size*2] * dis1[1] * nlm2[m2] + nlm1[m1] * nlm2[m2 + m_size*2] * dis2[1]);
-                        stress[4] += tmp * (nlm1[m1 + m_size*2] * dis1[2] * nlm2[m2] + nlm1[m1] * nlm2[m2 + m_size*2] * dis2[2]);
-                        stress[5] += tmp * (nlm1[m1 + m_size*3] * dis1[2] * nlm2[m2] + nlm1[m1] * nlm2[m2 + m_size*3] * dis2[2]);
+                        //std::cout<<__FILE__<<__LINE__<<" "<<tmp<<" "<<m1<<" "<<m2<<" "<<nlm1[m1 + m_size * 2]<<" "<<nlm2[m2 + m_size * 2]<<" "<<dis1.y<<" "<<dis2.y<<std::endl;
+                        stress[0] += tmp * (nlm1[m1 + m_size] * dis1.x * nlm2[m2] + nlm1[m1] * nlm2[m2 + m_size] * dis2.x);
+                        stress[1] += tmp * (nlm1[m1 + m_size] * dis1.y * nlm2[m2] + nlm1[m1] * nlm2[m2 + m_size] * dis2.y);
+                        stress[2] += tmp * (nlm1[m1 + m_size] * dis1.z * nlm2[m2] + nlm1[m1] * nlm2[m2 + m_size] * dis2.z);
+                        stress[3] += tmp * (nlm1[m1 + m_size*2] * dis1.y * nlm2[m2] + nlm1[m1] * nlm2[m2 + m_size*2] * dis2.y);
+                        stress[4] += tmp * (nlm1[m1 + m_size*2] * dis1.z * nlm2[m2] + nlm1[m1] * nlm2[m2 + m_size*2] * dis2.z);
+                        stress[5] += tmp * (nlm1[m1 + m_size*3] * dis1.z * nlm2[m2] + nlm1[m1] * nlm2[m2 + m_size*3] * dis2.z);
                     }
                 }
                 dm_pointer++;
