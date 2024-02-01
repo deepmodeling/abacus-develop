@@ -5,6 +5,7 @@
 #include <thrust/complex.h>
 #include <hipblas/hipblas.h>
 #include <hip/hip_runtime.h>
+#include <base/macros/macros.h>
 
 #define WARP_SIZE 32
 #define FULL_MASK 0xffffffff
@@ -39,23 +40,23 @@ static hipblasHandle_t cublas_handle = nullptr;
 
 static inline
 void xdot_wrapper(const int &n, const float * x, const int &incx, const float * y, const int &incy, float &result) {
-    hipblasSdot(cublas_handle, n, x, incx, y, incy, &result);
+    hipblasErrcheck(hipblasSdot(cublas_handle, n, x, incx, y, incy, &result));
 }
 
 static inline
 void xdot_wrapper(const int &n, const double * x, const int &incx, const double * y, const int &incy, double &result) {
-    hipblasDdot(cublas_handle, n, x, incx, y, incy, &result);
+    hipblasErrcheck(hipblasDdot(cublas_handle, n, x, incx, y, incy, &result));
 }
 
 void createGpuBlasHandle(){
     if (cublas_handle == nullptr) {
-        hipblasCreate(&cublas_handle);
+        hipblasErrcheck(hipblasCreate(&cublas_handle));
     }
 }
 
 void destoryBLAShandle(){
     if (cublas_handle != nullptr) {
-        hipblasDestroy(cublas_handle);
+        hipblasErrcheck(hipblasDestroy(cublas_handle));
         cublas_handle = nullptr;
     }
 }
@@ -343,6 +344,9 @@ void line_minimize_with_block_op<T, psi::DEVICE_GPU>::operator()(
     line_minimize_with_block<Real><<<n_band, THREAD_PER_BLOCK>>>(
             A, B, C, D,
             n_basis, n_basis_max);
+    
+    hipErrcheck(hipGetLastError());
+    hipErrcheck(hipDeviceSynchronize());
 }
 
 template <typename T>
@@ -367,6 +371,9 @@ void calc_grad_with_block_op<T, psi::DEVICE_GPU>::operator()(
             prec_in, err_out, beta_out,
             A, B, C, D,
             n_basis, n_basis_max);
+    
+    hipErrcheck(hipGetLastError());
+    hipErrcheck(hipDeviceSynchronize());
 }
 
 template <>
@@ -440,6 +447,9 @@ void vector_div_constant_op<double, psi::DEVICE_GPU>::operator()(
     int thread = 1024;
     int block = (dim + thread - 1) / thread;
     hipLaunchKernelGGL(HIP_KERNEL_NAME(vector_div_constant_kernel<double>), dim3(block), dim3(thread), 0, 0, dim, result, vector, constant);
+
+    hipErrcheck(hipGetLastError());
+    hipErrcheck(hipDeviceSynchronize());
 }
 // vector operator: result[i] = vector[i] / constant
 template <typename FPTYPE>
@@ -455,6 +465,9 @@ inline void vector_div_constant_complex_wrapper(
     int thread = 1024;
     int block = (dim + thread - 1) / thread;
     hipLaunchKernelGGL(HIP_KERNEL_NAME(vector_div_constant_kernel<thrust::complex<FPTYPE>>), dim3(block), dim3(thread), 0, 0, dim, result_tmp, vector_tmp, constant);
+
+    hipErrcheck(hipGetLastError());
+    hipErrcheck(hipDeviceSynchronize());
 }
 template <>
 void vector_div_constant_op<std::complex<float>, psi::DEVICE_GPU>::operator()(
@@ -465,6 +478,9 @@ void vector_div_constant_op<std::complex<float>, psi::DEVICE_GPU>::operator()(
     const float constant)
 {
     vector_div_constant_complex_wrapper(d, dim, result, vector, constant);
+
+    hipErrcheck(hipGetLastError());
+    hipErrcheck(hipDeviceSynchronize());
 }
 template <>
 void vector_div_constant_op<std::complex<double>, psi::DEVICE_GPU>::operator()(
@@ -475,6 +491,9 @@ void vector_div_constant_op<std::complex<double>, psi::DEVICE_GPU>::operator()(
     const double constant)
 {
     vector_div_constant_complex_wrapper(d, dim, result, vector, constant);
+
+    hipErrcheck(hipGetLastError());
+    hipErrcheck(hipDeviceSynchronize());
 }
 // vector operator: result[i] = vector1[i](not complex) * vector2[i](not complex)
 template <>
@@ -488,6 +507,9 @@ void vector_mul_vector_op<double, psi::DEVICE_GPU>::operator()(
     int thread = 1024;
     int block = (dim + thread - 1) / thread;
     hipLaunchKernelGGL(HIP_KERNEL_NAME(vector_mul_vector_kernel<double>), dim3(block), dim3(thread), 0, 0, dim, result, vector1, vector2);
+
+    hipErrcheck(hipGetLastError());
+    hipErrcheck(hipDeviceSynchronize());
 }
 
 // vector operator: result[i] = vector1[i](complex) * vector2[i](not complex)
@@ -504,6 +526,9 @@ inline void vector_mul_vector_complex_wrapper(
     int thread = 1024;
     int block = (dim + thread - 1) / thread;
     hipLaunchKernelGGL(HIP_KERNEL_NAME(vector_mul_vector_kernel<thrust::complex<FPTYPE>>), dim3(block), dim3(thread), 0, 0, dim, result_tmp, vector1_tmp, vector2);
+
+    hipErrcheck(hipGetLastError());
+    hipErrcheck(hipDeviceSynchronize());
 }
 template <>
 void vector_mul_vector_op<std::complex<float>, psi::DEVICE_GPU>::operator()(
@@ -537,6 +562,9 @@ void vector_div_vector_op<double, psi::DEVICE_GPU>::operator()(
     int thread = 1024;
     int block = (dim + thread - 1) / thread;
     hipLaunchKernelGGL(HIP_KERNEL_NAME(vector_div_vector_kernel<double>), dim3(block), dim3(thread), 0, 0, dim, result, vector1, vector2);
+
+    hipErrcheck(hipGetLastError());
+    hipErrcheck(hipDeviceSynchronize());
 }
 // vector operator: result[i] = vector1[i](complex) / vector2[i](not complex)
 template <typename FPTYPE> 
@@ -552,6 +580,9 @@ inline void vector_div_vector_op_complex_wrapper(
     int thread = 1024;
     int block = (dim + thread - 1) / thread;
     hipLaunchKernelGGL(HIP_KERNEL_NAME(vector_div_vector_kernel<thrust::complex<FPTYPE>>), dim3(block), dim3(thread), 0, 0, dim, result_tmp, vector1_tmp, vector2);
+
+    hipErrcheck(hipGetLastError());
+    hipErrcheck(hipDeviceSynchronize());
 }
 template <>
 void vector_div_vector_op<std::complex<float>, psi::DEVICE_GPU>::operator()(
@@ -595,6 +626,9 @@ void constantvector_addORsub_constantVector_op<T, psi::DEVICE_GPU>::operator()(
     int thread = 1024;
     int block = (dim + thread - 1) / thread;
     constantvector_addORsub_constantVector_kernel<Type, Real> <<<block, thread >>>(dim, result_tmp, vector1_tmp, constant1, vector2_tmp, constant2);
+
+    hipErrcheck(hipGetLastError());
+    hipErrcheck(hipDeviceSynchronize());
 }
 
 template <>
@@ -607,7 +641,7 @@ void axpy_op<double, psi::DEVICE_GPU>::operator()(
     double* Y,
     const int& incY)
 {
-    hipblasDaxpy(cublas_handle, N, alpha, X, incX, Y, incY);
+    hipblasErrcheck(hipblasDaxpy(cublas_handle, N, alpha, X, incX, Y, incY));
 }
 
 template <>
@@ -620,7 +654,7 @@ void axpy_op<std::complex<float>, psi::DEVICE_GPU>::operator()(
     std::complex<float> *Y,
     const int& incY)
 {
-    hipblasCaxpy(cublas_handle, N, (hipblasComplex*)alpha, (hipblasComplex*)X, incX, (hipblasComplex*)Y, incY);
+    hipblasErrcheck(hipblasCaxpy(cublas_handle, N, (hipblasComplex*)alpha, (hipblasComplex*)X, incX, (hipblasComplex*)Y, incY));
 }
 
 template <> 
@@ -633,7 +667,7 @@ void axpy_op<std::complex<double>, psi::DEVICE_GPU>::operator()(
     std::complex<double> *Y,
     const int& incY)
 {
-    hipblasZaxpy(cublas_handle, N, (hipblasDoubleComplex*)alpha, (hipblasDoubleComplex*)X, incX, (hipblasDoubleComplex*)Y, incY);
+    hipblasErrcheck(hipblasZaxpy(cublas_handle, N, (hipblasDoubleComplex*)alpha, (hipblasDoubleComplex*)X, incX, (hipblasDoubleComplex*)Y, incY));
 }
 
 template <>
@@ -661,7 +695,7 @@ void gemv_op<double, psi::DEVICE_GPU>::operator()(
     else if (trans == 'C') {
         cutrans = HIPBLAS_OP_C;
     }
-    hipblasDgemv(cublas_handle, cutrans, m, n, alpha, A, lda, X, incx, beta, Y, incx);
+    hipblasErrcheck(hipblasDgemv(cublas_handle, cutrans, m, n, alpha, A, lda, X, incx, beta, Y, incx));
 }
 
 template <>
@@ -686,7 +720,7 @@ void gemv_op<std::complex<float>, psi::DEVICE_GPU>::operator()(
     else if (trans == 'T'){
         cutrans = HIPBLAS_OP_T;
     } 
-    hipblasCgemv(cublas_handle, cutrans, m, n, (hipblasComplex*)alpha, (hipblasComplex*)A, lda, (hipblasComplex*)X, incx, (hipblasComplex*)beta, (hipblasComplex*)Y, incx);
+    hipblasErrcheck(hipblasCgemv(cublas_handle, cutrans, m, n, (hipblasComplex*)alpha, (hipblasComplex*)A, lda, (hipblasComplex*)X, incx, (hipblasComplex*)beta, (hipblasComplex*)Y, incx));
 }
 
 template <> 
@@ -714,7 +748,7 @@ void gemv_op<std::complex<double>, psi::DEVICE_GPU>::operator()(
     else if (trans == 'C'){
         cutrans = HIPBLAS_OP_C;
     }
-    hipblasZgemv(cublas_handle, cutrans, m, n, (hipblasDoubleComplex*)alpha, (hipblasDoubleComplex*)A, lda, (hipblasDoubleComplex*)X, incx, (hipblasDoubleComplex*)beta, (hipblasDoubleComplex*)Y, incx);
+    hipblasErrcheck(hipblasZgemv(cublas_handle, cutrans, m, n, (hipblasDoubleComplex*)alpha, (hipblasDoubleComplex*)A, lda, (hipblasDoubleComplex*)X, incx, (hipblasDoubleComplex*)beta, (hipblasDoubleComplex*)Y, incx));
 }
 
 template <>
@@ -724,7 +758,7 @@ void scal_op<float, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
                                                  std::complex<float>* X,
                                                  const int& incx)
 {
-    hipblasCscal(cublas_handle, N, (hipblasComplex*)alpha, (hipblasComplex*)X, incx);
+    hipblasErrcheck(hipblasCscal(cublas_handle, N, (hipblasComplex*)alpha, (hipblasComplex*)X, incx));
 }
 
 template <>
@@ -734,7 +768,7 @@ void scal_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
                                                   std::complex<double>* X,
                                                   const int& incx)
 {
-    hipblasZscal(cublas_handle, N, (hipblasDoubleComplex*)alpha, (hipblasDoubleComplex*)X, incx);
+    hipblasErrcheck(hipblasZscal(cublas_handle, N, (hipblasDoubleComplex*)alpha, (hipblasDoubleComplex*)X, incx));
 }
 
 template <>
@@ -769,7 +803,7 @@ void gemm_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_GPU* d,
     else if (transb == 'T') {
         cutransB = HIPBLAS_OP_T;
     }
-    hipblasDgemm(cublas_handle, cutransA, cutransB, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc);
+    hipblasErrcheck(hipblasDgemm(cublas_handle, cutransA, cutransB, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc));
 }
 
 template <>
@@ -810,7 +844,7 @@ void gemm_op<std::complex<float>, psi::DEVICE_GPU>::operator()(const psi::DEVICE
     else if (transb == 'C'){
         cutransB = HIPBLAS_OP_C;
     }
-    hipblasCgemm(cublas_handle, cutransA, cutransB, m, n ,k, (hipblasComplex*)alpha, (hipblasComplex*)a , lda, (hipblasComplex*)b, ldb, (hipblasComplex*)beta, (hipblasComplex*)c, ldc);
+    hipblasErrcheck(hipblasCgemm(cublas_handle, cutransA, cutransB, m, n ,k, (hipblasComplex*)alpha, (hipblasComplex*)a , lda, (hipblasComplex*)b, ldb, (hipblasComplex*)beta, (hipblasComplex*)c, ldc));
 }
 
 template <>
@@ -851,7 +885,7 @@ void gemm_op<std::complex<double>, psi::DEVICE_GPU>::operator()(const psi::DEVIC
     else if (transb == 'C'){
         cutransB = HIPBLAS_OP_C;
     }
-    hipblasZgemm(cublas_handle, cutransA, cutransB, m, n ,k, (hipblasDoubleComplex*)alpha, (hipblasDoubleComplex*)a , lda, (hipblasDoubleComplex*)b, ldb, (hipblasDoubleComplex*)beta, (hipblasDoubleComplex*)c, ldc);
+    hipblasErrcheck(hipblasZgemm(cublas_handle, cutransA, cutransB, m, n ,k, (hipblasDoubleComplex*)alpha, (hipblasDoubleComplex*)a , lda, (hipblasDoubleComplex*)b, ldb, (hipblasDoubleComplex*)beta, (hipblasDoubleComplex*)c, ldc));
 }
 
 template <>
@@ -868,13 +902,15 @@ void matrixTranspose_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_G
     {
         double ONE = 1.0, ZERO = 0.0;
         // use 'geam' API todo transpose.
-        hipblasDgeam(cublas_handle, HIPBLAS_OP_T, HIPBLAS_OP_N, col, row, &ONE, input_matrix, col, &ZERO, input_matrix, col, device_temp, col);
+        hipblasErrcheck(hipblasDgeam(cublas_handle, HIPBLAS_OP_T, HIPBLAS_OP_N, col, row, &ONE, input_matrix, col, &ZERO, input_matrix, col, device_temp, col));
     }
     else
     {
         int thread = 1024;
         int block = (row + col + thread - 1) / thread;
         hipLaunchKernelGGL(HIP_KERNEL_NAME(matrix_transpose_kernel<double>), dim3(block), dim3(thread), 0, 0, row, col, input_matrix, device_temp);
+        hipErrcheck(hipGetLastError());
+        hipErrcheck(hipDeviceSynchronize());
     }
 
     psi::memory::synchronize_memory_op<double, psi::DEVICE_GPU, psi::DEVICE_GPU>()(d, d, output_matrix, device_temp, row * col);
@@ -901,14 +937,16 @@ void matrixTranspose_op<std::complex<float>, psi::DEVICE_GPU>::operator()(const 
         ZERO.x = ZERO.y = 0.0;
 
         // use 'geam' API todo transpose.
-        hipblasCgeam(cublas_handle, HIPBLAS_OP_T, HIPBLAS_OP_N, col, row,
+        hipblasErrcheck(hipblasCgeam(cublas_handle, HIPBLAS_OP_T, HIPBLAS_OP_N, col, row,
                                    reinterpret_cast<const hipblasComplex *>(&ONE), (hipblasComplex*)input_matrix, col,
-                                   reinterpret_cast<const hipblasComplex *>(&ZERO), (hipblasComplex*)input_matrix, col, (hipblasComplex*)device_temp, col);
+                                   reinterpret_cast<const hipblasComplex *>(&ZERO), (hipblasComplex*)input_matrix, col, (hipblasComplex*)device_temp, col));
     } else
     {
         int thread = 1024;
         int block = (row + col + thread - 1) / thread;
         hipLaunchKernelGGL(HIP_KERNEL_NAME(matrix_transpose_kernel<thrust::complex<float>>), dim3(block), dim3(thread), 0, 0, row, col, (thrust::complex<float>*)input_matrix, (thrust::complex<float>*)device_temp);
+        hipErrcheck(hipGetLastError());
+        hipErrcheck(hipDeviceSynchronize());
     }
 
     psi::memory::synchronize_memory_op<std::complex<float>, psi::DEVICE_GPU, psi::DEVICE_GPU>()(d, d, output_matrix, device_temp, row * col);
@@ -931,12 +969,14 @@ void matrixTranspose_op<std::complex<double>, psi::DEVICE_GPU>::operator()(const
     {
         hipblasDoubleComplex ONE{1.0, 0.0}, ZERO{0.0, 0.0};
         // use 'geam' API todo transpose.
-        hipblasZgeam(cublas_handle, HIPBLAS_OP_T, HIPBLAS_OP_N, col, row, &ONE, (hipblasDoubleComplex*)input_matrix, col, &ZERO, (hipblasDoubleComplex*)input_matrix, col, (hipblasDoubleComplex*)device_temp, col);
+        hipblasErrcheck(hipblasZgeam(cublas_handle, HIPBLAS_OP_T, HIPBLAS_OP_N, col, row, &ONE, (hipblasDoubleComplex*)input_matrix, col, &ZERO, (hipblasDoubleComplex*)input_matrix, col, (hipblasDoubleComplex*)device_temp, col));
     } else
     {
         int thread = 1024;
         int block = (row + col + thread - 1) / thread;
         hipLaunchKernelGGL(HIP_KERNEL_NAME(matrix_transpose_kernel<thrust::complex<double>>), dim3(block), dim3(thread), 0, 0, row, col, (thrust::complex<double>*)input_matrix, (thrust::complex<double>*)device_temp);
+        hipErrcheck(hipGetLastError());
+        hipErrcheck(hipDeviceSynchronize());
     }
     
     psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_GPU, psi::DEVICE_GPU>()(d, d, output_matrix, device_temp, row * col);
@@ -957,6 +997,8 @@ void matrixSetToAnother < double, psi::DEVICE_GPU > ::operator()(
     int thread = 1024;
     int block = (LDA + thread - 1) / thread;
     hipLaunchKernelGGL(HIP_KERNEL_NAME(matrix_setTo_another_kernel<double>), dim3(block), dim3(thread), 0, 0, n, LDA, LDB, A, B);
+    hipErrcheck(hipGetLastError());
+    hipErrcheck(hipDeviceSynchronize());
 }
 template <>
 void matrixSetToAnother < std::complex<float>, psi::DEVICE_GPU > ::operator()(
@@ -970,6 +1012,8 @@ void matrixSetToAnother < std::complex<float>, psi::DEVICE_GPU > ::operator()(
     int thread = 1024;
     int block = (LDA + thread - 1) / thread;
     hipLaunchKernelGGL(HIP_KERNEL_NAME(matrix_setTo_another_kernel<thrust::complex<float>>), dim3(block), dim3(thread), 0, 0, n, LDA, LDB, reinterpret_cast<const thrust::complex<float>*>(A), reinterpret_cast<thrust::complex<float>*>(B));
+    hipErrcheck(hipGetLastError());
+    hipErrcheck(hipDeviceSynchronize());
 }
 template <>
 void matrixSetToAnother < std::complex<double>, psi::DEVICE_GPU > ::operator()(
@@ -983,6 +1027,8 @@ void matrixSetToAnother < std::complex<double>, psi::DEVICE_GPU > ::operator()(
     int thread = 1024;
     int block = (LDA + thread - 1) / thread;
     hipLaunchKernelGGL(HIP_KERNEL_NAME(matrix_setTo_another_kernel<thrust::complex<double>>), dim3(block), dim3(thread), 0, 0, n, LDA, LDB, reinterpret_cast<const thrust::complex<double>*>(A), reinterpret_cast<thrust::complex<double>*>(B));
+    hipErrcheck(hipGetLastError());
+    hipErrcheck(hipDeviceSynchronize());
 }
 
 

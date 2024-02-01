@@ -3,6 +3,7 @@
 #include <thrust/complex.h>
 
 #include <hip/hip_runtime.h>
+#include <base/macros/macros.h>
 
 namespace ModulePW {
 
@@ -75,6 +76,9 @@ void set_3d_fft_box_op<FPTYPE, psi::DEVICE_GPU>::operator()(
         box_index,
         reinterpret_cast<const thrust::complex<FPTYPE>*>(in),
         reinterpret_cast<thrust::complex<FPTYPE>*>(out));
+    
+    hipErrcheck(hipGetLastError());
+    hipErrcheck(hipDeviceSynchronize());
 }
 
 template <typename FPTYPE>
@@ -93,6 +97,9 @@ void set_recip_to_real_output_op<FPTYPE, psi::DEVICE_GPU>::operator()(
         factor,
         reinterpret_cast<const thrust::complex<FPTYPE>*>(in),
         reinterpret_cast<thrust::complex<FPTYPE>*>(out));
+    
+    hipErrcheck(hipGetLastError());
+    hipErrcheck(hipDeviceSynchronize());
 }
 
 template <typename FPTYPE>
@@ -115,6 +122,9 @@ void set_real_to_recip_output_op<FPTYPE, psi::DEVICE_GPU>::operator()(
         box_index,
         reinterpret_cast<const thrust::complex<FPTYPE>*>(in),
         reinterpret_cast<thrust::complex<FPTYPE>*>(out));
+    
+    hipErrcheck(hipGetLastError());
+    hipErrcheck(hipDeviceSynchronize());
 }
 
 template struct set_3d_fft_box_op<float, psi::DEVICE_GPU>;
