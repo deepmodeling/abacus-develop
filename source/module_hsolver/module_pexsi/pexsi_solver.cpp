@@ -1,3 +1,4 @@
+#include "module_base/parallel_global.h"
 #ifdef __PEXSI
 #include "pexsi_solver.h"
 
@@ -42,9 +43,17 @@ PEXSI_Solver::PEXSI_Solver(const int blacs_text,
 int PEXSI_Solver::solve()
 {
     MPI_Group grid_group;
-    MPI_Comm_group(DIAG_WORLD, &grid_group);
+    int myid, grid_np;
+    MPI_Group world_group;
+    MPI_Comm_rank(DIAG_WORLD, &myid);
+    MPI_Comm_size(DIAG_WORLD, &grid_np);
+    MPI_Comm_group(DIAG_WORLD, &world_group);
+
+    int grid_proc_range[3]={0, (GlobalV::NPROC/grid_np)*grid_np-1, GlobalV::NPROC/grid_np};
+    MPI_Group_range_incl(world_group, 1, &grid_proc_range, &grid_group);
+
     simplePEXSI(DIAG_WORLD,
-                GRID_WORLD,
+                DIAG_WORLD,
                 grid_group,
                 this->blacs_text,
                 GlobalV::NLOCAL,
