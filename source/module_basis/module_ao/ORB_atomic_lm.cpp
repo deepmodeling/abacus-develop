@@ -431,7 +431,7 @@ void Numerical_Orbital_Lm::cal_kradial(void)
 	//integration directly
 	for (int ik = 0; ik < nk; ik++)
 	{
-		ModuleBase::Sphbes::Spherical_Bessel(
+		ModuleBase::Sphbes::sphbesj(
 				this->nr, 
 				ModuleBase::GlobalFunc::VECTOR_TO_PTR(this->r_radial), 
 				this->k_radial[ik], 

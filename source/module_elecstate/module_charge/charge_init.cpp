@@ -360,7 +360,7 @@ void Charge::non_linear_core_correction
         for (int igl = igl_beg; igl < igl_end;igl++) 
         {
             gx = sqrt(this->rhopw->gg_uniq[igl] * GlobalC::ucell.tpiba2);
-            ModuleBase::Sphbes::Spherical_Bessel(mesh, r, gx, 0, aux);
+            ModuleBase::Sphbes::sphbesj(mesh, r, gx, 0, aux);
             for (int ir = 0;ir < mesh; ir++) 
             {
                 aux [ir] = r[ir] * r[ir] * rhoc [ir] * aux [ir];

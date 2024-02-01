@@ -31,7 +31,7 @@ void Exx_Abfs::Jle::init_jle( const double kmesh_times )
 			for(size_t E=0; E!=ecut_number; ++E)
 			{
 				std::vector<double> jle_r( GlobalC::ORB.Phi[T].PhiLN(0,0).getNr() );
-				ModuleBase::Sphbes::Spherical_Bessel(
+				ModuleBase::Sphbes::sphbesj(
 					GlobalC::ORB.Phi[T].PhiLN(0,0).getNr(), 
 					GlobalC::ORB.Phi[T].PhiLN(0,0).getRadial(), 
 					en[E], 

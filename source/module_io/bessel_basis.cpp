@@ -265,7 +265,7 @@ void Bessel_Basis::init_TableOne(
 		for (int ie=0; ie<ecut_number; ie++)
 		{
 			// calculate J_{l}( en[ir]*r)
-			ModuleBase::Sphbes::Spherical_Bessel(rmesh, r, en[ie], l, jle);
+			ModuleBase::Sphbes::sphbesj(rmesh, r, en[ie], l, jle);
 
 			//caoyu add 2021-3-10
 			//=========output .orb format=============
@@ -306,7 +306,7 @@ void Bessel_Basis::init_TableOne(
 			for(int ik=0; ik<kmesh; ik++)
 			{
 				// calculate J_{l}( ik*dk*r )
-				ModuleBase::Sphbes::Spherical_Bessel(rmesh, r, ik*dk, l, jlk);
+				ModuleBase::Sphbes::sphbesj(rmesh, r, ik*dk, l, jlk);
 
 				// calculate the function will be integrated
 				for(int ir=0; ir<rmesh; ir++)

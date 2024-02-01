@@ -185,7 +185,7 @@ void WF_atomic::init_at_1(Structure_Factor *sf_in)
                 for (int iq=startq; iq<GlobalV::NQX; iq++)
                 {
                     const double q = GlobalV::DQ * iq;
-                    ModuleBase::Sphbes::Spherical_Bessel(atom->ncpp.msh, atom->ncpp.r, q, l, aux);
+                    ModuleBase::Sphbes::sphbesj(atom->ncpp.msh, atom->ncpp.r, q, l, aux);
                     for (int ir = 0;ir < atom->ncpp.msh;ir++)
                     {
                         vchi[ir] = atom->ncpp.chi(ic,ir) * aux[ir] * atom->ncpp.r[ir];
