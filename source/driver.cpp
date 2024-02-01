@@ -7,15 +7,18 @@
 #include "module_io/cal_test.h"
 #include "module_io/input.h"
 #include "module_io/input_conv.h"
+#include "module_io/para_json.h"
 #include "module_io/print_info.h"
 #include "module_io/winput.h"
-
 Driver::Driver()
 {
 }
 
 Driver::~Driver()
 {
+    // Release the device memory within singleton object GlobalC::ppcell 
+    // before the main function exits.
+    GlobalC::ppcell.release_memory();
 }
 
 void Driver::init()
@@ -38,6 +41,8 @@ void Driver::init()
     // (4) close all of the running logs
     INPUT.close_log();
 
+    // (5) output the json file
+    Json::json_output();
     return;
 }
 

@@ -1,6 +1,8 @@
 #include "cuda_runtime.h"
 #include "module_base/kernels/math_op.h"
 
+#include <base/macros/macros.h>
+
 namespace ModuleBase {
 
 #define THREADS_PER_BLOCK 256
@@ -146,6 +148,9 @@ void cal_ylm_real_op<FPTYPE, psi::DEVICE_GPU>::operator() (
         g,
         p,
         ylm);
+    
+    cudaErrcheck(cudaGetLastError());
+    cudaErrcheck(cudaDeviceSynchronize());
 }
 
 template struct cal_ylm_real_op<float, psi::DEVICE_GPU>;

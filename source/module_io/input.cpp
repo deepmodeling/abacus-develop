@@ -82,6 +82,7 @@ void Input::Init(const std::string& fn)
     const char* commit = "unknown";
 #endif
     time_t time_now = time(NULL);
+    start_time = time_now;
     GlobalV::ofs_running << "                                                                                     "
                          << std::endl;
     GlobalV::ofs_running << "                              ABACUS " << version << std::endl << std::endl;
