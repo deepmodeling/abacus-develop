@@ -4,6 +4,7 @@
 
 #include <thrust/complex.h>
 #include <hip/hip_runtime.h>
+#include <base/macros/macros.h>
 
 #define THREADS_PER_BLOCK 256
 
@@ -112,6 +113,9 @@ void cal_sk_op<FPTYPE, psi::DEVICE_GPU>::operator() (
          reinterpret_cast<thrust::complex<FPTYPE>*>(eigts2),
          reinterpret_cast<thrust::complex<FPTYPE>*>(eigts3),
          reinterpret_cast<thrust::complex<FPTYPE>*>(sk));
+    
+    hipErrcheck(hipGetLastError());
+    hipErrcheck(hipDeviceSynchronize());
 }
 
 template struct cal_sk_op<float, psi::DEVICE_GPU>;
