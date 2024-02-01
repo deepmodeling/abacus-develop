@@ -5,6 +5,8 @@
 #include <thrust/complex.h>
 #include <cuda_runtime.h>
 
+#include <base/macros/macros.h>
+
 #define THREADS_PER_BLOCK 256
 
 namespace hamilt {
@@ -112,6 +114,9 @@ void cal_sk_op<FPTYPE, psi::DEVICE_GPU>::operator() (
          reinterpret_cast<thrust::complex<FPTYPE>*>(eigts2),
          reinterpret_cast<thrust::complex<FPTYPE>*>(eigts3),
          reinterpret_cast<thrust::complex<FPTYPE>*>(sk));
+    
+    cudaErrcheck(cudaGetLastError());
+    cudaErrcheck(cudaDeviceSynchronize());
 }
 
 template struct cal_sk_op<float, psi::DEVICE_GPU>;

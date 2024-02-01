@@ -5,6 +5,7 @@
 #include <thrust/complex.h>
 #include <thrust/inner_product.h>
 #include <thrust/execution_policy.h>
+#include <base/macros/macros.h>
 
 #include <cuda_runtime.h>
 
@@ -344,6 +345,9 @@ void line_minimize_with_block_op<T, psi::DEVICE_GPU>::operator()(
     line_minimize_with_block<Real><<<n_band, THREAD_PER_BLOCK>>>(
             A, B, C, D,
             n_basis, n_basis_max);
+    
+    cudaErrcheck(cudaGetLastError());
+    cudaErrcheck(cudaDeviceSynchronize());
 }
 
 template <typename T>
@@ -368,6 +372,9 @@ void calc_grad_with_block_op<T, psi::DEVICE_GPU>::operator()(
             prec_in, err_out, beta_out,
             A, B, C, D,
             n_basis, n_basis_max);
+    
+    cudaErrcheck(cudaGetLastError());
+    cudaErrcheck(cudaDeviceSynchronize());
 }
 
 template <>
@@ -441,6 +448,9 @@ void vector_div_constant_op<double, psi::DEVICE_GPU>::operator()(
     int thread = 1024;
     int block = (dim + thread - 1) / thread;
     vector_div_constant_kernel<double> << <block, thread >> > (dim, result, vector, constant);
+
+    cudaErrcheck(cudaGetLastError());
+    cudaErrcheck(cudaDeviceSynchronize());
 }
 
 // vector operator: result[i] = vector[i] / constant
@@ -458,6 +468,9 @@ inline void vector_div_constant_complex_wrapper(
     int thread = 1024;
     int block = (dim + thread - 1) / thread;
     vector_div_constant_kernel<thrust::complex<FPTYPE>> << <block, thread >> > (dim, result_tmp, vector_tmp, constant);
+
+    cudaErrcheck(cudaGetLastError());
+    cudaErrcheck(cudaDeviceSynchronize());
 }
 template <>
 void vector_div_constant_op<std::complex<float>, psi::DEVICE_GPU>::operator()(
@@ -491,6 +504,9 @@ void vector_mul_vector_op<double, psi::DEVICE_GPU>::operator()(
     int thread = 1024;
     int block = (dim + thread - 1) / thread;
     vector_mul_vector_kernel<double> << <block, thread >> > (dim, result, vector1, vector2);
+
+    cudaErrcheck(cudaGetLastError());
+    cudaErrcheck(cudaDeviceSynchronize());
 }
 // vector operator: result[i] = vector1[i](complex) * vector2[i](not complex)
 template <typename FPTYPE>
@@ -506,6 +522,9 @@ inline void vector_mul_vector_complex_wrapper(
     int thread = 1024;
     int block = (dim + thread - 1) / thread;
     vector_mul_vector_kernel<thrust::complex<FPTYPE>> << <block, thread >> > (dim, result_tmp, vector1_tmp, vector2);
+
+    cudaErrcheck(cudaGetLastError());
+    cudaErrcheck(cudaDeviceSynchronize());
 }
 template <>
 void vector_mul_vector_op<std::complex<float>, psi::DEVICE_GPU>::operator()(
@@ -540,6 +559,9 @@ void vector_div_vector_op<double, psi::DEVICE_GPU>::operator()(
     int thread = 1024;
     int block = (dim + thread - 1) / thread;
     vector_div_vector_kernel<double> << <block, thread >> > (dim, result, vector1, vector2);
+
+    cudaErrcheck(cudaGetLastError());
+    cudaErrcheck(cudaDeviceSynchronize());
 }
 // vector operator: result[i] = vector1[i](complex) / vector2[i](not complex)
 template <typename FPTYPE>
@@ -555,6 +577,9 @@ inline void vector_div_vector_complex_wrapper(
     int thread = 1024;
     int block = (dim + thread - 1) / thread;
     vector_div_vector_kernel<thrust::complex<FPTYPE>> << <block, thread >> > (dim, result_tmp, vector1_tmp, vector2);
+
+    cudaErrcheck(cudaGetLastError());
+    cudaErrcheck(cudaDeviceSynchronize());
 }
 template <>
 void vector_div_vector_op<std::complex<float>, psi::DEVICE_GPU>::operator()(
@@ -597,6 +622,9 @@ void constantvector_addORsub_constantVector_op<T, psi::DEVICE_GPU>::operator()(
     int thread = 1024;
     int block = (dim + thread - 1) / thread;
     constantvector_addORsub_constantVector_kernel<Type, Real> <<<block, thread >>>(dim, result_tmp, vector1_tmp, constant1, vector2_tmp, constant2);
+
+    cudaErrcheck(cudaGetLastError());
+    cudaErrcheck(cudaDeviceSynchronize());
 }
 
 template <>
@@ -877,6 +905,9 @@ void matrixTranspose_op<double, psi::DEVICE_GPU>::operator()(const psi::DEVICE_G
         int thread = 1024;
         int block = (row + col + thread - 1) / thread;
         matrix_transpose_kernel<double> << <block, thread >> > (row, col, input_matrix, device_temp);
+
+        cudaErrcheck(cudaGetLastError());
+        cudaErrcheck(cudaDeviceSynchronize());
     }
 
     psi::memory::synchronize_memory_op<double, psi::DEVICE_GPU, psi::DEVICE_GPU>()(d, d, output_matrix, device_temp, row * col);
@@ -911,11 +942,17 @@ void matrixTranspose_op<std::complex<float>, psi::DEVICE_GPU>::operator()(const 
         int thread = 1024;
         int block = (row + col + thread - 1) / thread;
         matrix_transpose_kernel<thrust::complex<float>> << <block, thread >> > (row, col, (thrust::complex<float>*)input_matrix, (thrust::complex<float>*)device_temp);
+
+        cudaErrcheck(cudaGetLastError());
+        cudaErrcheck(cudaDeviceSynchronize());
     }
 
     psi::memory::synchronize_memory_op<std::complex<float>, psi::DEVICE_GPU, psi::DEVICE_GPU>()(d, d, output_matrix, device_temp, row * col);
 
     psi::memory::delete_memory_op<std::complex<float>, psi::DEVICE_GPU>()(d, device_temp);
+
+    cudaErrcheck(cudaGetLastError());
+    cudaErrcheck(cudaDeviceSynchronize());
 
 }
 
@@ -943,6 +980,9 @@ void matrixTranspose_op<std::complex<double>, psi::DEVICE_GPU>::operator()(const
         int thread = 1024;
         int block = (row + col + thread - 1) / thread;
         matrix_transpose_kernel<thrust::complex<double>> << <block, thread >> > (row, col, (thrust::complex<double>*)input_matrix, (thrust::complex<double>*)device_temp);
+        
+        cudaErrcheck(cudaGetLastError());
+        cudaErrcheck(cudaDeviceSynchronize());
     }
     
     psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_GPU, psi::DEVICE_GPU>()(d, d, output_matrix, device_temp, row * col);
@@ -963,6 +1003,9 @@ void matrixSetToAnother<double, psi::DEVICE_GPU>::operator()(
     int thread = 1024;
     int block = (LDA + thread - 1) / thread;
     matrix_setTo_another_kernel<double> << <block, thread >> > (n, LDA, LDB, A, B);
+        
+    cudaErrcheck(cudaGetLastError());
+    cudaErrcheck(cudaDeviceSynchronize());
 }
 template <>
 void matrixSetToAnother<std::complex<float>, psi::DEVICE_GPU>::operator()(
@@ -976,6 +1019,9 @@ void matrixSetToAnother<std::complex<float>, psi::DEVICE_GPU>::operator()(
     int thread = 1024;
     int block = (LDA + thread - 1) / thread;
     matrix_setTo_another_kernel<thrust::complex<float>> << <block, thread >> > (n, LDA, LDB, reinterpret_cast<const thrust::complex<float>*>(A), reinterpret_cast<thrust::complex<float>*>(B));
+    
+    cudaErrcheck(cudaGetLastError());
+    cudaErrcheck(cudaDeviceSynchronize());
 }
 template <>
 void matrixSetToAnother<std::complex<double>, psi::DEVICE_GPU>::operator()(
@@ -989,6 +1035,9 @@ void matrixSetToAnother<std::complex<double>, psi::DEVICE_GPU>::operator()(
     int thread = 1024;
     int block = (LDA + thread - 1) / thread;
     matrix_setTo_another_kernel<thrust::complex<double>> << <block, thread >> > (n, LDA, LDB, reinterpret_cast<const thrust::complex<double>*>(A), reinterpret_cast<thrust::complex<double>*>(B));
+
+    cudaErrcheck(cudaGetLastError());
+    cudaErrcheck(cudaDeviceSynchronize());
 }
 
 

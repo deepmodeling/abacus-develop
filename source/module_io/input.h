@@ -241,6 +241,7 @@ class Input
 
     bool mixing_tau; // whether to mix tau in mgga
     bool mixing_dftu; //whether to mix locale in DFT+U
+    bool mixing_dmr; // whether to mix real space density matrix
 
     //==========================================================
     // potential / charge / wavefunction / energy
@@ -631,6 +632,11 @@ class Input
     double pexsi_elec_thr = 0.001;
     double pexsi_zero_thr = 1e-10;
     
+    std::time_t get_start_time(void) const
+    {
+        return start_time;
+    }
+
   private:
     //==========================================================
     // MEMBER FUNCTIONS :
@@ -642,6 +648,8 @@ class Input
     //        other processors)
     //==========================================================
 
+    // start time
+    std::time_t start_time;
     bool Read(const std::string &fn);
 
     void Default(void);
