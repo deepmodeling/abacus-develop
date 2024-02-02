@@ -302,6 +302,8 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
                 &GlobalC::GridD,
                 LM_in->ParaV
             );
+            //TDDFT velocity gague will calculate full non-local potential including the original one and the correction on its own.
+            //So the original non-local potential term should be skipped
             if(GlobalV::ESOLVER_TYPE != "tddft" || elecstate::H_TDDFT_pw::stype !=1)
             {
                 this->getOperator()->add(nonlocal);
