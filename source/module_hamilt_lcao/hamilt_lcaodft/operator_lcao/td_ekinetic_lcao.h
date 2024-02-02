@@ -72,7 +72,7 @@ class TDEkinetic<OperatorLCAO<TK,TR>> : public OperatorLCAO<TK, TR>
     ORB_table_phi MOT;
 	  ORB_gaunt_table MGT;
     
-    //Store the two center integrals outcome for td_ekinetic term
+    //Store the two center integrals outcome <𝝓_𝝁𝟎 |𝛁| 𝝓_𝝂𝑹> for td_ekinetic term
     std::map<size_t,                                // TA
       std::map<size_t,                            // TB
         std::map<int,                           // LA
