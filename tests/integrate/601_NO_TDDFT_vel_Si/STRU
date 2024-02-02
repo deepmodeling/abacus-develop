@@ -2,7 +2,7 @@ ATOMIC_SPECIES
 Si  28.085  Si_ONCV_PBE-1.0.upf
 
 NUMERICAL_ORBITAL
-Si_gga_8au_60Ry_2s2p1d.orb
+Si_gga_6au_100Ry_2s2p1d.orb
 
 LATTICE_CONSTANT
 10.2  // add lattice constant
