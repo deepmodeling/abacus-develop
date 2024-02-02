@@ -9,6 +9,7 @@
 #include "module_elecstate/module_dm/cal_dm_psi.h"
 #include "module_base/parallel_reduce.h"
 
+//init DSloc_R for current calculation
 void ModuleIO::Init_DS_tmp(const Parallel_Orbitals& pv,
                               LCAO_Hamilt& UHM)
 {    
@@ -18,7 +19,6 @@ void ModuleIO::Init_DS_tmp(const Parallel_Orbitals& pv,
     UHM.LM->DSloc_Rx = new double[nnr];
     UHM.LM->DSloc_Ry = new double[nnr];
     UHM.LM->DSloc_Rz = new double[nnr];
-    //?
     const auto init_DSloc_Rxyz = [&UHM, nnr](int num_threads, int thread_id) {
         int beg, len;
         ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, nnr, 1024, beg, len);
@@ -27,13 +27,13 @@ void ModuleIO::Init_DS_tmp(const Parallel_Orbitals& pv,
         ModuleBase::GlobalFunc::ZEROS(UHM.LM->DSloc_Rz + beg, len);
     };
     ModuleBase::OMP_PARALLEL(init_DSloc_Rxyz);
-    //? end
     bool cal_deri = true;
     UHM.genH.build_ST_new('S', cal_deri, GlobalC::ucell, UHM.genH.LM->SlocR.data());
 
     ModuleBase::timer::tick("ModuleIO", "Init_DS_tmp");
     return;
 }
+//destory DSloc_R so it can be used normally in the following force calculation
 void ModuleIO::destory_DS_tmp(LCAO_Hamilt& UHM)
 {
     ModuleBase::TITLE("ModuleIO", "destory_DS_tmp");
