@@ -9,6 +9,7 @@
 #include "module_elecstate/module_dm/cal_dm_psi.h"
 #include "module_base/parallel_reduce.h"
 
+#ifdef __LCAO
 //init DSloc_R for current calculation
 void ModuleIO::Init_DS_tmp(const Parallel_Orbitals& pv,
                               LCAO_Hamilt& UHM)
@@ -243,3 +244,4 @@ void ModuleIO::write_current(const int istep,
     destory_DS_tmp(UHM);
     return;
 }
+#endif //__LCAO
