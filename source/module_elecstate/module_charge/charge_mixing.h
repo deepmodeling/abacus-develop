@@ -16,26 +16,24 @@ class Charge_Mixing
 
     /**
      * @brief reset mixing
-     *
      */
     void mix_reset();
 
     /**
      * @brief charge mixing
-     *
+     * @param chr pointer of Charge object
      */
     void mix_rho(Charge* chr);
 
     /**
      * @brief density matrix mixing, only for LCAO
-     *
+     * @param DM pointer of DensityMatrix object
      */
     void mix_dmr(elecstate::DensityMatrix<double, double>* DM);
     void mix_dmr(elecstate::DensityMatrix<std::complex<double>, double>* DM);
 
     /**
      * @brief Set the mixing object
-     *
      * @param mixing_mode_in mixing mode: "plain", "broyden", "pulay"
      * @param mixing_beta_in mixing beta
      * @param mixing_ndim_in mixing ndim
@@ -52,7 +50,7 @@ class Charge_Mixing
 
     /**
      * @brief allocate memory of dmr_mdata
-     *
+     * @param nnr size of real-space density matrix
      */
     void allocate_mixing_dmr(int nnr);
 
@@ -64,7 +62,6 @@ class Charge_Mixing
     
     /**
      * @brief Set the smooth and dense grids
-     * 
      * @param rhopw_in smooth grid
      * @param rhodpw_in dense grid when double grid is used, otherwise same as rhopw
      */
@@ -72,22 +69,10 @@ class Charge_Mixing
 
     // extracting parameters normally these parameters will not be used outside charge mixing
     // while Exx is using them as well as some other places
-    const std::string& get_mixing_mode() const
-    {
-        return mixing_mode;
-    }
-    double get_mixing_beta() const
-    {
-        return mixing_beta;
-    }
-    int get_mixing_ndim() const
-    {
-        return mixing_ndim;
-    }
-    double get_mixing_gg0() const
-    {
-        return mixing_gg0;
-    }
+    const std::string& get_mixing_mode() const {return mixing_mode;}
+    double get_mixing_beta() const {return mixing_beta;}
+    int get_mixing_ndim() const {return mixing_ndim;}
+    double get_mixing_gg0() const {return mixing_gg0;}
 
   private:
   
@@ -116,32 +101,32 @@ class Charge_Mixing
 
     /**
      * @brief charge mixing for reciprocal space
-     *
+     * @param chr pointer of Charge object
      */
     void mix_rho_recip_new(Charge* chr);
 
     /**
      * @brief charge mixing for real space
-     *
+     * @param chr pointer of Charge object
      */
     void mix_rho_real(Charge* chr);
-    
+
     /**
      * @brief Kerker screen method for reciprocal space
-     *
+     * @param rhog charge density in reciprocal space
      */
     void Kerker_screen_recip(std::complex<double>* rhog);
     void Kerker_screen_recip_new(std::complex<double>* rhog);
 
     /**
      * @brief Kerker screen method for real space
-     *
+     * @param rho charge density in real space
      */
     void Kerker_screen_real(double* rho);
 
     /**
      * @brief Inner product of two complex vectors
-     *
+     * 
      */
     double inner_product_recip(std::complex<double>* rho1, std::complex<double>* rho2);
     double inner_product_recip_new1(std::complex<double>* rho1, std::complex<double>* rho2);
