@@ -81,6 +81,7 @@ void Input::Init(const std::string& fn)
     const char* commit = "unknown";
 #endif
     time_t time_now = time(NULL);
+    start_time = time_now;
     GlobalV::ofs_running << "                                                                                     "
                          << std::endl;
     GlobalV::ofs_running << "                              ABACUS " << version << std::endl << std::endl;
@@ -1738,13 +1739,13 @@ bool Input::Read(const std::string& fn)
         {
             read_value(ifs, out_dipole);
         }
-        else if (strcmp("out_efield", word) == 0)
-        {
-            read_value(ifs, out_efield);
-        }
         else if (strcmp("out_current", word) == 0)
         {
             read_value(ifs, out_current);
+        }
+        else if (strcmp("out_efield", word) == 0)
+        {
+            read_value(ifs, out_efield);
         }
         else if (strcmp("td_print_eij", word) == 0)
         {

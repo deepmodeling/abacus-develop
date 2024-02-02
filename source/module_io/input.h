@@ -408,7 +408,7 @@ class Input
     std::string td_vext_dire; // vext direction
     bool out_dipole; // output the dipole or not
     bool out_efield; // output the efield or not
-    bool out_current; // output the current or not
+    bool out_current; //output the current or not
 
     double td_print_eij; // threshold to output Eij elements
     int td_edm; //0: new edm method   1: old edm method
@@ -605,6 +605,11 @@ class Input
     std::vector<std::string> qo_strategy = {};
     std::vector<double> qo_screening_coeff = {};
     
+    std::time_t get_start_time(void) const
+    {
+        return start_time;
+    }
+
   private:
     //==========================================================
     // MEMBER FUNCTIONS :
@@ -616,6 +621,8 @@ class Input
     //        other processors)
     //==========================================================
 
+    // start time
+    std::time_t start_time;
     bool Read(const std::string &fn);
 
     void Default(void);
