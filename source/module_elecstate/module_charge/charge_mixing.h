@@ -73,6 +73,7 @@ class Charge_Mixing
     double get_mixing_beta() const {return mixing_beta;}
     int get_mixing_ndim() const {return mixing_ndim;}
     double get_mixing_gg0() const {return mixing_gg0;}
+    Base_Mixing::Mixing* get_mixing() const {return mixing;}
 
   private:
   
