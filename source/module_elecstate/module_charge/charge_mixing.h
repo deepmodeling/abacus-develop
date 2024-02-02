@@ -34,18 +34,6 @@ class Charge_Mixing
     void mix_dmr(elecstate::DensityMatrix<std::complex<double>, double>* DM);
 
     /**
-     * @brief charge mixing for reciprocal space
-     *
-     */
-    void mix_rho_recip_new(Charge* chr);
-
-    /**
-     * @brief charge mixing for real space
-     *
-     */
-    void mix_rho_real(Charge* chr);
-
-    /**
      * @brief Set the mixing object
      *
      * @param mixing_mode_in mixing mode: "plain", "broyden", "pulay"
@@ -126,6 +114,18 @@ class Charge_Mixing
     ModulePW::PW_Basis* rhopw = nullptr;  ///< smooth grid
     ModulePW::PW_Basis* rhodpw = nullptr; ///< dense grid, same as rhopw for ncpp.
 
+    /**
+     * @brief charge mixing for reciprocal space
+     *
+     */
+    void mix_rho_recip_new(Charge* chr);
+
+    /**
+     * @brief charge mixing for real space
+     *
+     */
+    void mix_rho_real(Charge* chr);
+    
     /**
      * @brief Kerker screen method for reciprocal space
      *
