@@ -32,6 +32,7 @@ class Evolve_elec
     static double td_force_dt;
     static bool td_vext;
     static std::vector<int> td_vext_dire_case;
+    //Output dipole, efield, current or not
     static bool out_dipole;
     static bool out_efield;
     static bool out_current;
