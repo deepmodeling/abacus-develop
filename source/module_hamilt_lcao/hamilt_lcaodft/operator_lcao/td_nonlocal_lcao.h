@@ -15,6 +15,8 @@ namespace hamilt
 #ifndef __TD_NONLOCALTEMPLATE
 #define __TD_NONLOCALTEMPLATE
 
+/// The TDNonlocal class template inherits from class T
+/// It is used to calculate correction term of non-local pseudopotential in time-dependent DFT
 template <class T>
 class TDNonlocal : public T
 {
@@ -22,6 +24,11 @@ class TDNonlocal : public T
 
 #endif
 
+/// TDNonlocal class template specialization for OperatorLCAO<TK> base class
+/// It is used to calculate correction term of non-local pseudopotential in time-dependent DFT
+/// Template parameters:
+/// - TK: data type of k-space Hamiltonian
+/// - TR: data type of real space Hamiltonian
 template <typename TK, typename TR>
 class TDNonlocal<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 {
@@ -48,7 +55,7 @@ class TDNonlocal<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     const UnitCell* ucell = nullptr;
 
     HContainer<TR>* HR = nullptr;
-    //Store real space hamiltonian. TD term should include imaginary part, thus it has to be complex type. Only shared between TD operators.
+    /// @brief Store real space hamiltonian. TD term should include imaginary part, thus it has to be complex type. Only shared between TD operators.
     HContainer<std::complex<double>>* hR_tmp = nullptr;
     Grid_Driver* Grid = nullptr;
 
@@ -63,10 +70,14 @@ class TDNonlocal<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * HContainer is used to store the non-local pseudopotential matrix with specific <I,J,R> atom-pairs
      * the size of HR will be fixed after initialization
      */
-
     void initialize_HR(Grid_Driver* GridD_in, const Parallel_Orbitals* paraV);
+
+    /**
+     * @brief initialize HR_tmp
+     * Allocate the memory for HR_tmp with the same size as HR
+    */
     void initialize_HR_tmp(const Parallel_Orbitals* paraV);
-    //init vector potential for td_nonlocal term
+    /// @brief init vector potential for td_nonlocal term
     void init_td(void);
     /**
      * @brief calculate the non-local pseudopotential matrix with specific <I,J,R> atom-pairs
@@ -86,8 +97,9 @@ class TDNonlocal<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                     const std::unordered_map<int, std::vector<std::complex<double>>>& nlm2_all,
                     std::complex<double>* data_pointer);
 
+    /// @brief exact the nearest neighbor atoms from all adjacent atoms
     std::vector<AdjacentAtomInfo> adjs_all;
-    //Store the vector potential for td_nonlocal term
+    /// @brief Store the vector potential for td_nonlocal term
     ModuleBase::Vector3<double> cart_At;
 };
 
