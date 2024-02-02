@@ -9,7 +9,6 @@
 #include "Matrix_Orbs22.h"
 #include "RI_Util.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include <sys/time.h>
 
 template<typename Tdata>
 RI::Tensor<Tdata> Matrix_Orbs22::cal_overlap_matrix(
@@ -281,9 +280,6 @@ std::map < size_t, std::map<size_t, std::map<size_t, std::map<size_t, RI::Tensor
 	const ModuleBase::Element_Basis_Index::IndexLNM &index_B1,
 	const ModuleBase::Element_Basis_Index::IndexLNM &index_B2 ) const
 {
-// std::ofstream ofs(GlobalC::exx_lcao.test_dir.process+"time_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK),std::ofstream::app);
-timeval t_start;
-gettimeofday( &t_start, NULL);
 	std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t, RI::Tensor<Tdata>>>>> matrixes;
 
 	for( const auto &co1 : center2_orb22_s )
