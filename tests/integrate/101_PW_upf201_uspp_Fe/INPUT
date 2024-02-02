@@ -24,6 +24,9 @@ smearing_sigma         0.02
 #parameters (5.Mixing)
 mixing_type            pulay
 mixing_beta            0.4
+mixing_beta_mag        0.4
+mixing_gg0             1.0
+mixing_gg0_mag         1.0
 
 pseudo_mesh            1
 pseudo_rcut            10
