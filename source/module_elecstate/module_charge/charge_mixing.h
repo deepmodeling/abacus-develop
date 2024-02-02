@@ -46,33 +46,6 @@ class Charge_Mixing
     void mix_rho_real(Charge* chr);
 
     /**
-     * @brief Kerker screen method for reciprocal space
-     *
-     */
-    void Kerker_screen_recip(std::complex<double>* rhog);
-    void Kerker_screen_recip_new(std::complex<double>* rhog);
-
-    /**
-     * @brief Kerker screen method for real space
-     *
-     */
-    void Kerker_screen_real(double* rho);
-
-    /**
-     * @brief Inner product of two complex vectors
-     *
-     */
-    double inner_product_recip(std::complex<double>* rho1, std::complex<double>* rho2);
-    double inner_product_recip_new1(std::complex<double>* rho1, std::complex<double>* rho2);
-    double inner_product_recip_new2(std::complex<double>* rho1, std::complex<double>* rho2);
-
-    /**
-     * @brief Inner product of two double vectors
-     *
-     */
-    double inner_product_real(double* rho1, double* rho2);
-
-    /**
      * @brief Set the mixing object
      *
      * @param mixing_mode_in mixing mode: "plain", "broyden", "pulay"
@@ -100,8 +73,6 @@ class Charge_Mixing
      *
      */
     double get_drho(Charge* chr, const double nelec);
-
-    // init pwrho and rhodpw
     
     /**
      * @brief Set the smooth and dense grids
@@ -111,10 +82,8 @@ class Charge_Mixing
      */
     void set_rhopw(ModulePW::PW_Basis* rhopw_in, ModulePW::PW_Basis* rhodpw_in);
 
-    // extracting parameters
-    // normally these parameters will not be used
-    // outside charge mixing, but Exx is using them
-    // as well as some other places
+    // extracting parameters normally these parameters will not be used outside charge mixing
+    // while Exx is using them as well as some other places
     const std::string& get_mixing_mode() const
     {
         return mixing_mode;
@@ -156,7 +125,33 @@ class Charge_Mixing
 
     ModulePW::PW_Basis* rhopw = nullptr;  ///< smooth grid
     ModulePW::PW_Basis* rhodpw = nullptr; ///< dense grid, same as rhopw for ncpp.
-    // bool autoset = false;
+
+    /**
+     * @brief Kerker screen method for reciprocal space
+     *
+     */
+    void Kerker_screen_recip(std::complex<double>* rhog);
+    void Kerker_screen_recip_new(std::complex<double>* rhog);
+
+    /**
+     * @brief Kerker screen method for real space
+     *
+     */
+    void Kerker_screen_real(double* rho);
+
+    /**
+     * @brief Inner product of two complex vectors
+     *
+     */
+    double inner_product_recip(std::complex<double>* rho1, std::complex<double>* rho2);
+    double inner_product_recip_new1(std::complex<double>* rho1, std::complex<double>* rho2);
+    double inner_product_recip_new2(std::complex<double>* rho1, std::complex<double>* rho2);
+
+    /**
+     * @brief Inner product of two double vectors
+     *
+     */
+    double inner_product_real(double* rho1, double* rho2);
 
     double rhog_dot_product(const std::complex<double>* const* const rhog1,
                             const std::complex<double>* const* const rhog2) const;
