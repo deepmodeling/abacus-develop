@@ -33,7 +33,7 @@ class Charge_Mixing
     void mix_dmr(elecstate::DensityMatrix<std::complex<double>, double>* DM);
 
     /**
-     * @brief Set the mixing object
+     * @brief Set all private mixing paramters
      * @param mixing_mode_in mixing mode: "plain", "broyden", "pulay"
      * @param mixing_beta_in mixing beta
      * @param mixing_ndim_in mixing ndim
@@ -85,7 +85,7 @@ class Charge_Mixing
     Base_Mixing::Plain_Mixing* mixing_highf = nullptr; ///< The high_frequency part is mixed by plain mixing method.
 
     //======================================
-    // General parameters
+    // private mixing parameters
     //======================================
     std::string mixing_mode = "broyden"; ///< mixing mode: "plain", "broyden", "pulay"
     double mixing_beta = 0.8;            ///< mixing beta for density
@@ -93,6 +93,10 @@ class Charge_Mixing
     int mixing_ndim = 8;                 ///< mixing ndim for broyden and pulay
     double mixing_gg0 = 0.0;             ///< mixing gg0 for Kerker screen
     bool mixing_tau = false;             ///< whether to use tau mixing
+    double mixing_gg0_mag = 0.0;         ///< mixing gg0 for Kerker screen for magnetism
+    double mixing_gg0_min = 0.1;         ///< minimum kerker coefficient
+    double mixing_angle = 0.0;           ///< mixing angle for nspin=4
+    bool mixing_dmr = false;             ///< whether to mixing real space density matrix
 
     bool new_e_iteration = true;
 
