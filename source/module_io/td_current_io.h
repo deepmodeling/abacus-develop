@@ -26,7 +26,7 @@ void Init_DS_tmp(const Parallel_Orbitals& pv,LCAO_Hamilt& UHM);
 
 /// @brief DS_locR will be initialized again in force calculation, so it must be destoryed here.
 void destory_DS_tmp(LCAO_Hamilt& UHM);
-}
-#endif // __LCAO
 
+#endif // __LCAO
+}
 #endif // TD_CURRENT_H
