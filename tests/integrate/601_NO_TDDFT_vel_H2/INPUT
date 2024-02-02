@@ -8,7 +8,7 @@ calculation		md
 esolver_type    	tddft
 
 #Parameter (Accuracy)
-ecutwfc			100
+ecutwfc			50
 scf_nmax		50
 
 ks_solver		scalapack_gvx
