@@ -4,6 +4,7 @@
 #include <thrust/complex.h>
 
 #include <hip/hip_runtime.h>
+#include <base/macros/macros.h>
 
 namespace hamilt{
 
@@ -51,11 +52,9 @@ void veff_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
         size, // control params
         reinterpret_cast<thrust::complex<FPTYPE>*>(out), // array of data
         in); // array of data
-    // cpu part:
-    // for (int ir = 0; ir < size; ++ir)
-    // {
-    //     out[ir] *= in[ir];
-    // }
+
+    hipErrcheck(hipGetLastError());
+    hipErrcheck(hipDeviceSynchronize());
 }
 
 template <typename FPTYPE>
@@ -72,20 +71,9 @@ void veff_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
         reinterpret_cast<thrust::complex<FPTYPE>*>(out), // array of data
         reinterpret_cast<thrust::complex<FPTYPE>*>(out1), // array of data
         in[0]); // array of data
-    // cpu part:
-    // std::complex<FPTYPE> sup = {0, 0}, sdown = {0, 0};
-    // for (int ir = 0; ir < size; ir++) {
-    //     sup = out[ir] * (in[0][ir] + in[3][ir])
-    //         + out1[ir]
-    //                 * (in[1][ir]
-    //                 - std::complex<FPTYPE>(0.0, 1.0) * in[2][ir]);
-    //     sdown = out1[ir] * (in[0][ir] - in[3][ir])
-    //             + out[ir]
-    //                 * (in[1][ir]
-    //                     + std::complex<FPTYPE>(0.0, 1.0) * in[2][ir]);
-    //     out[ir] = sup;
-    //     out1[ir] = sdown;
-    // }
+    
+    hipErrcheck(hipGetLastError());
+    hipErrcheck(hipDeviceSynchronize());
 }
 
 template struct veff_pw_op<float, psi::DEVICE_GPU>;
