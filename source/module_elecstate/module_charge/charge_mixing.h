@@ -13,13 +13,6 @@ class Charge_Mixing
   public:
     Charge_Mixing();
     ~Charge_Mixing();
-    Base_Mixing::Mixing* mixing = nullptr; ///< Mixing object to mix charge density, kinetic energy density and compensation density
-    Base_Mixing::Mixing_Data rho_mdata;    ///< Mixing data for charge density
-    Base_Mixing::Mixing_Data tau_mdata;    ///< Mixing data for kinetic energy density
-    Base_Mixing::Mixing_Data nhat_mdata;   ///< Mixing data for compensation density
-    Base_Mixing::Mixing_Data dmr_mdata;    ///< Mixing data for real space density matrix
-
-    Base_Mixing::Plain_Mixing* mixing_highf = nullptr; ///< The high_frequency part is mixed by plain mixing method.
 
     /**
      * @brief reset mixing
@@ -140,6 +133,15 @@ class Charge_Mixing
     }
 
   private:
+  
+    // mixing_data
+    Base_Mixing::Mixing* mixing = nullptr; ///< Mixing object to mix charge density, kinetic energy density and compensation density
+    Base_Mixing::Mixing_Data rho_mdata;    ///< Mixing data for charge density
+    Base_Mixing::Mixing_Data tau_mdata;    ///< Mixing data for kinetic energy density
+    Base_Mixing::Mixing_Data nhat_mdata;   ///< Mixing data for compensation density
+    Base_Mixing::Mixing_Data dmr_mdata;    ///< Mixing data for real space density matrix
+    Base_Mixing::Plain_Mixing* mixing_highf = nullptr; ///< The high_frequency part is mixed by plain mixing method.
+
     //======================================
     // General parameters
     //======================================
@@ -156,7 +158,6 @@ class Charge_Mixing
     ModulePW::PW_Basis* rhodpw = nullptr; ///< dense grid, same as rhopw for ncpp.
     // bool autoset = false;
 
-  private:
     double rhog_dot_product(const std::complex<double>* const* const rhog1,
                             const std::complex<double>* const* const rhog2) const;
 
