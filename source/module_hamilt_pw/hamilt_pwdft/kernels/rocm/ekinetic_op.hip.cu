@@ -4,6 +4,7 @@
 #include <thrust/complex.h>
 
 #include <hip/hip_runtime.h>
+#include <base/macros/macros.h>
 
 using namespace hamilt; 
 #define THREADS_PER_BLOCK 256
@@ -43,15 +44,9 @@ void hamilt::ekinetic_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
     gk2_ik, // array of data
     reinterpret_cast<thrust::complex<FPTYPE>*>(tmhpsi), // array of data
     reinterpret_cast<const thrust::complex<FPTYPE>*>(tmpsi_in)); // array of data
-  // cpu part:
-  // for (int ib = 0; ib < nband; ++ib) {
-  //   for (int ig = 0; ig < npw; ++ig) {
-  //     tmhpsi[ig] += gk2_ik[ig] * tpiba2 * tmpsi_in[ig];
-  //   }
-  //   tmhpsi += max_npw;
-  //   tmpsi_in += max_npw;
-  // }
-  // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+  hipErrcheck(hipGetLastError());
+  hipErrcheck(hipDeviceSynchronize());
 }
 
 namespace hamilt{
