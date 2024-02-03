@@ -1,6 +1,7 @@
 #ifndef DIGAOPEXSI_H
 #define DIGAOPEXSI_H
 
+#include <vector>
 #include "diagh.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_pexsi/pexsi_solver.h"
@@ -21,8 +22,8 @@ class DiagoPexsi : public DiagH<T>
     }
     void diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in) override;
     const Parallel_Orbitals* ParaV;
-    T* DM;
-    double* EDM;
+    std::vector<T*> DM;
+    std::vector<T*> EDM;
     double totalEnergyH;
     double totalEnergyS;
     double totalFreeEnergy;

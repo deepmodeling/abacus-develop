@@ -61,7 +61,7 @@ class ElecStateLCAO : public ElecState
 
 #ifdef __PEXSI
     // use for pexsi
-    void dmToRho(TK* DM);
+    void dmToRho(std::vector<TK*> pexsi_DM);
 #endif
 
   protected:

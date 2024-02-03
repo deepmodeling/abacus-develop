@@ -1,6 +1,8 @@
 #ifndef PEXSI_Solver_H
 #define PEXSI_Solver_H
 
+#include <vector>
+
 namespace pexsi
 {
 class PEXSI_Solver
@@ -12,8 +14,6 @@ class PEXSI_Solver
                  const int ncol,
                  const double* h,
                  const double* s,
-                 double* DM,
-                 double* EDM,
                  double& totalEnergyH,
                  double& totalEnergyS,
                  double& totalFreeEnergy);

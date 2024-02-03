@@ -3,8 +3,8 @@
 #include "pexsi_solver.h"
 
 #include <mpi.h>
-
 #include <cstring>
+#include <vector>
 
 #include "module_base/global_variable.h"
 #include "simple_pexsi.h"
@@ -19,8 +19,6 @@ PEXSI_Solver::PEXSI_Solver(const int blacs_text,
                            const int ncol,
                            const double* h,
                            const double* s,
-                           double* DM,
-                           double* EDM,
                            double& totalEnergyH,
                            double& totalEnergyS,
                            double& totalFreeEnergy)

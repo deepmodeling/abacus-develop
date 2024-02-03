@@ -80,9 +80,6 @@ int transformBCDtoCCS(DistBCDMatrix& SRC_Matrix,
                       double*& H_ccs,
                       double*& S_ccs);
 
-// int transformCCStoBCD(DistCCSMatrix& SRC_Matrix, double* DMnzvalLocal,
-// DistBCDMatrix& DST_Matrix, double* DM_2d);
-
 int transformCCStoBCD(DistCCSMatrix& SRC_Matrix,
                       double* DMnzvalLocal,
                       double* ENDnzvalLocal,

@@ -12,13 +12,7 @@ namespace pexsi
 {
 class DistBCDMatrix
 {
-
   public:
-    // DistBCDMatrix(MPI_Comm comm, MPI_Group group, int nprow, int npcol, int size, int nblk, int nrow, int ncol);
-    // DistBCDMatrix(MPI_Comm comm, MPI_Group group, int nprow, int npcol, int size, int nblk, int nrow, int ncol, char
-    // layout);
-
-    // DistBCDMatrix(MPI_Comm comm, MPI_Group group, int blacs_ctxt, int size, int nblk, int nrow, int ncol);
     DistBCDMatrix(MPI_Comm comm, MPI_Group group, int blacs_ctxt, int size, int nblk, int nrow, int ncol, char layout);
     ~DistBCDMatrix();
 
@@ -27,7 +21,6 @@ class DistBCDMatrix
     int localRow(const int globalRow, int& myprow);
     int localCol(const int globalCol, int& mypcol);
     int pnum(const int prow, const int pcol);
-    //~DistBCDMatrix();
 
     const MPI_Comm get_comm() const
     {
@@ -74,10 +67,6 @@ class DistBCDMatrix
     // row and c0lumn of Local matrix part
     int nrow;
     int ncol;
-
-    // protected:
-
-    // private:
 
     // current process row and column
     int myprow;

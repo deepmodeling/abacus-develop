@@ -86,14 +86,6 @@ if(ENABLE_LCAO)
     LIBS ${math_libs} ELPA::ELPA base genelpa psi device
     SOURCES diago_lcao_test.cpp ../diago_elpa.cpp ../diago_blas.cpp 
   )
-  # elseif(USE_PEXSI)
-  #   AddTest(
-  #     TARGET HSolver_LCAO
-  #     LIBS ${math_libs} ${PEXSI_LIBRARY} ${SuperLU_LIBRARY} ${ParMETIS_LIBRARY} ${METIS_LIBRARY} base psi device
-  #     SOURCES diago_lcao_test.cpp ../diago_pexsi.cpp ../diago_blas.cpp 
-  #   )
-  #   # print out the PEXSI library path
-  #   message(STATUS "PEXSI_LIBRARY: ${PEXSI_LIBRARY}")
   else()
     AddTest(
       TARGET HSolver_LCAO

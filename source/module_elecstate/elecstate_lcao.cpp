@@ -260,19 +260,25 @@ double ElecStateLCAO<std::complex<double>>::get_spin_constrain_energy()
 
 #ifdef __PEXSI
 template<>
-void ElecStateLCAO<double>::dmToRho(double* pexsi_DM)
+void ElecStateLCAO<double>::dmToRho(std::vector<double*> pexsi_DM)
 {
     ModuleBase::timer::tick("ElecStateLCAO", "dmToRho");
 
     // old 2D-to-Grid conversion has been replaced by new Gint Refactor 2023/09/25
     if (this->loc->out_dm) // keep interface for old Output_DM until new one is ready
     {
-        this->loc->set_dm_gamma(0, pexsi_DM);
+        for (int ik = 0; ik < GlobalV::NSPIN; ++ik)
+        {
+            this->loc->set_dm_gamma(ik, pexsi_DM[ik]);
+        }
         this->loc->cal_dk_gamma_from_2D_pub();
     }
 
     auto DM = this->get_DM();
-    DM->set_DMK_pointer(0, pexsi_DM);
+    for (int is = 0; is < GlobalV::NSPIN; is++)
+    {
+        this->DM->set_DMK_pointer(is, pexsi_DM[is]);
+    }
     DM->cal_DMR();
     
     for (int is = 0; is < GlobalV::NSPIN; is++)
@@ -301,7 +307,7 @@ void ElecStateLCAO<double>::dmToRho(double* pexsi_DM)
 }
 
 template<>
-void ElecStateLCAO<std::complex<double>>::dmToRho(std::complex<double>* DM)
+void ElecStateLCAO<std::complex<double>>::dmToRho(std::vector<std::complex<double>*> DM)
 {
     ModuleBase::WARNING_QUIT("ElecStateLCAO", "pexsi is not completed for multi-k case");
 }

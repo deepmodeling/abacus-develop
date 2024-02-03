@@ -153,6 +153,9 @@ void HSolverLCAO<T, Device>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
                 delete[] this->pdiagh;
                 this->pdiagh = nullptr;
             }
+            auto tem = dynamic_cast<DiagoPexsi<T>*>(this->pdiagh);
+            tem->DM.clear();
+            tem->EDM.clear();
         }
         if (this->pdiagh == nullptr)
         {

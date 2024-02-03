@@ -38,27 +38,16 @@ inline void strtolower(char* sa, char* sb)
 
 inline void setDefaultOption(int* int_para, double* double_para)
 {
-    // options.spin=2;
     double_para[0] = 2;
-    // options.gap=0;
     double_para[2] = 0;
-    // ZERO_Limit=DBL_MIN;
     double_para[11] = DBL_MIN;
-    // options.matrixType=0;
     int_para[3] = 0;
-    // options.solver=1;
     int_para[6] = 1;
-    // options.ordering=0;
     int_para[8] = 0;
-    // options.rowOrdering=0;
     int_para[9] = 0;
-    // options.symmetric=0;
     int_para[11] = 0;
-    // options.transpose=0;
     int_para[12] = 0;
-    // options.nPoints=2;
     int_para[14] = 2;
-    // options.verbosity=1;
     int_para[15] = 1;
 }
 
@@ -137,222 +126,7 @@ int loadPEXSIOption(MPI_Comm comm,
     double_para[9] = hsolver::DiagoPexsi<double>::pexsi_mu_guard;
     double_para[10] = hsolver::DiagoPexsi<double>::pexsi_elec_thr;
     double_para[11] = hsolver::DiagoPexsi<double>::pexsi_zero_thr;
-    // int myid;
-    // MPI_Comm_rank(comm, &myid);
-    // if (myid == 0)
-    // {
-    //     std::ifstream ifs(PexsiOptionFile.c_str());
-    //     if (!ifs)
-    //     {
-    //         return 1;
-    //     }
-    //     setDefaultOption(int_para, double_para);
 
-    //     ifs.clear();
-    //     ifs.seekg(0);
-
-    //     char key[128];
-    //     char lowercase_key[128];
-    //     const int LINE_LINGTH = 1024;
-    //     char unused_string[LINE_LINGTH];
-
-    //     while (ifs.good())
-    //     {
-    //         ifs >> key;
-    //         //~ cout<<"readin word is: "<<key<<endl;
-    //         strtolower(key, lowercase_key);
-    //         if (strcmp("spin", lowercase_key) == 0)
-    //         {
-    //             //~ ifs>>options.spin;
-    //             ifs >> double_para[0];
-    //             //~ cout<<"double_para[0]: "<<key<<" = "<<double_para[0]<<endl;
-    //         }
-    //         else if (strcmp("temperature", lowercase_key) == 0)
-    //         {
-    //             //~ ifs>>options.temperature;
-    //             ifs >> double_para[1];
-    //             //~ cout<<"double_para[1]: "<<key<<" = "<<double_para[1]<<endl;
-    //         }
-    //         else if (strcmp("gap", lowercase_key) == 0)
-    //         {
-    //             //~ ifs>>options.gap;
-    //             ifs >> double_para[2];
-    //             //~ cout<<"double_para[2]: "<<key<<" = "<<double_para[2]<<endl;
-    //         }
-    //         else if (strcmp("deltae", lowercase_key) == 0)
-    //         {
-    //             //~ ifs>>options.deltaE;
-    //             ifs >> double_para[3];
-    //             //~ cout<<"double_para[3]: "<<key<<" = "<<double_para[3]<<endl;
-    //         }
-    //         else if (strcmp("numpole", lowercase_key) == 0)
-    //         {
-    //             //~ ifs>>options.numPole;
-    //             ifs >> int_para[0];
-    //             //~ cout<<"int_para[0]: "<<key<<" = "<<int_para[0]<<endl;
-    //         }
-    //         else if (strcmp("isinertiacount", lowercase_key) == 0)
-    //         {
-    //             //~ ifs>>options.isInertiaCount;
-    //             ifs >> int_para[1];
-    //             //~ cout<<"int_para[1]: "<<key<<" = "<<int_para[1]<<endl;
-    //         }
-    //         else if (strcmp("maxpexsiiter", lowercase_key) == 0)
-    //         {
-    //             //~ ifs>>options.maxPEXSIIter;
-    //             ifs >> int_para[2];
-    //             //~ cout<<"int_para[2]: "<<key<<" = "<<int_para[2]<<endl;
-    //         }
-    //         else if (strcmp("mumin0", lowercase_key) == 0)
-    //         {
-    //             //~ ifs>>options.muMin0;
-    //             ifs >> double_para[4];
-    //             //~ cout<<"double_para[4]: "<<key<<" = "<<double_para[4]<<endl;
-    //         }
-    //         else if (strcmp("mumax0", lowercase_key) == 0)
-    //         {
-    //             //~ ifs>>options.muMax0;
-    //             ifs >> double_para[5];
-    //             //~ cout<<"double_para[5]: "<<key<<" = "<<double_para[5]<<endl;
-    //         }
-    //         else if (strcmp("mu0", lowercase_key) == 0)
-    //         {
-    //             //~ ifs>>options.mu0;
-    //             ifs >> double_para[6];
-    //             //~ cout<<"double_para[6]: "<<key<<" = "<<double_para[6]<<endl;
-    //         }
-    //         else if (strcmp("muinertiatolerance", lowercase_key) == 0)
-    //         {
-    //             //~ ifs>>options.muInertiaTolerance;
-    //             ifs >> double_para[7];
-    //             //~ cout<<"double_para[7]: "<<key<<" = "<<double_para[7]<<endl;
-    //         }
-    //         else if (strcmp("muinertiaexpansion", lowercase_key) == 0)
-    //         {
-    //             //~ ifs>>options.muInertiaExpansion;
-    //             ifs >> double_para[8];
-    //             //~ cout<<"double_para[8]: "<<key<<" = "<<double_para[8]<<endl;
-    //         }
-    //         else if (strcmp("mupexsisafeguard", lowercase_key) == 0)
-    //         {
-    //             //~ ifs>>options.muPEXSISafeGuard;
-    //             ifs >> double_para[9];
-    //             //~ cout<<"double_para[9]: "<<key<<" = "<<double_para[9]<<endl;
-    //         }
-    //         else if (strcmp("numelectronpexsitolerance", lowercase_key) == 0)
-    //         {
-    //             //~ ifs>>options.numElectronPEXSITolerance;
-    //             ifs >> double_para[10];
-    //             //~ cout<<"double_para[10]: "<<key<<" = "<<double_para[10]<<endl;
-    //         }
-    //         else if (strcmp("zero_limit", lowercase_key) == 0)
-    //         {
-    //             ifs >> double_para[11];
-    //         }
-    //         else if (strcmp("matrixtype", lowercase_key) == 0)
-    //         {
-    //             //~ ifs>>options.matrixType;
-    //             ifs >> int_para[3];
-    //             //~ cout<<"int_para[3]: "<<key<<" = "<<int_para[3]<<endl;
-    //         }
-    //         else if (strcmp("issymbolicfactorize", lowercase_key) == 0)
-    //         {
-    //             //~ ifs>>options.isSymbolicFactorize;
-    //             ifs >> int_para[4];
-    //             //~ cout<<"int_para[4]: "<<key<<" = "<<int_para[4]<<endl;
-    //         }
-    //         else if (strcmp("isconstructcommpattern", lowercase_key) == 0)
-    //         {
-    //             //~ ifs>>options.isConstructCommPattern;
-    //             ifs >> int_para[5];
-    //             //~ cout<<"int_para[5]: "<<key<<" = "<<int_para[5]<<endl;
-    //         }
-    //         else if (strcmp("solver", lowercase_key) == 0)
-    //         {
-    //             //~ ifs>>options.solver;
-    //             ifs >> int_para[6];
-    //             //~ cout<<"int_para[6]: "<<key<<" = "<<int_para[6]<<endl;
-    //         }
-    //         else if (strcmp("symmetricstorage", lowercase_key) == 0)
-    //         {
-    //             //~ ifs>>options.symmetricStorage;
-    //             ifs >> int_para[7];
-    //             //~ cout<<"int_para[7]: "<<key<<" = "<<int_para[7]<<endl;
-    //         }
-    //         else if (strcmp("ordering", lowercase_key) == 0)
-    //         {
-    //             //~ ifs>>options.ordering;
-    //             ifs >> int_para[8];
-    //             //~ cout<<"int_para[8]: "<<key<<" = "<<int_para[8]<<endl;
-    //         }
-    //         else if (strcmp("rowordering", lowercase_key) == 0)
-    //         {
-    //             //~ ifs>>options.rowOrdering;
-    //             ifs >> int_para[9];
-    //             //~ cout<<"int_para[9]: "<<key<<" = "<<int_para[9]<<endl;
-    //         }
-    //         else if (strcmp("npsymbfact", lowercase_key) == 0)
-    //         {
-    //             //~ ifs>>options.npSymbFact;
-    //             ifs >> int_para[10];
-    //             //~ cout<<"int_para[10]: "<<key<<" = "<<int_para[10]<<endl;
-    //         }
-    //         else if (strcmp("symmetric", lowercase_key) == 0)
-    //         {
-    //             //~ ifs>>options.symmetric;
-    //             ifs >> int_para[11];
-    //             //~ cout<<"int_para[11]: "<<key<<" = "<<int_para[11]<<endl;
-    //         }
-    //         else if (strcmp("transpose", lowercase_key) == 0)
-    //         {
-    //             //~ ifs>>options.transpose;
-    //             ifs >> int_para[12];
-    //             //~ cout<<"int_para[12]: "<<key<<" = "<<int_para[12]<<endl;
-    //         }
-    //         else if (strcmp("method", lowercase_key) == 0)
-    //         {
-    //             //~ ifs>>options.method;
-    //             ifs >> int_para[13];
-    //             //~ cout<<"int_para[13]: "<<key<<" = "<<int_para[13]<<endl;
-    //         }
-    //         else if (strcmp("npoints", lowercase_key) == 0)
-    //         {
-    //             //~ ifs>>options.nPoints;
-    //             ifs >> int_para[14];
-    //             //~ cout<<"int_para[14]: "<<key<<" = "<<int_para[14]<<endl;
-    //         }
-    //         else if (strcmp("verbosity", lowercase_key) == 0)
-    //         {
-    //             //~ ifs>>options.verbosity;
-    //             ifs >> int_para[15];
-    //             //~ cout<<"int_para[15]: "<<key<<" = "<<int_para[15]<<endl;
-    //         }
-    //         else if (strcmp("numprocessperpole", lowercase_key) == 0)
-    //         {
-    //             //~ ifs>>options.verbosity;
-    //             ifs >> int_para[16];
-    //             //~ cout<<"int_para[16]: "<<key<<" = "<<int_para[16]<<endl;
-    //         }
-    //         else
-    //         {
-    //             if (key[0] == '#' || key[0] == '/')
-    //             {
-    //                 ifs.getline(unused_string, LINE_LINGTH);
-    //             }
-    //             else
-    //             {
-    //                 std::cout << " THE PARAMETER NAME '" << key << "' IS NOT USED!" << std::endl;
-    //                 return 1;
-    //             }
-    //         }
-    //     }
-    // }
-
-    // // broadcast all options
-    // MPI_Bcast(int_para, 17, MPI_INT, 0, comm);
-    // MPI_Bcast(double_para, 12, MPI_DOUBLE, 0, comm);
-
-    // setup PEXSI options from int_para and double_para
     options.numPole = int_para[0];
     options.isInertiaCount = int_para[1];
     options.maxPEXSIIter = int_para[2];
@@ -446,37 +220,15 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
     if (comm_PEXSI != MPI_COMM_NULL)
     {
         MPI_Comm_rank(comm_PEXSI, &myid);
-// for log
-#ifdef _DEBUG
-        if (myid < 100)
-            log_openfile(myid, f_log);
-#endif
     }
 
-    // LiuXh modify 2021-03-30, add DONE(ofs_running,"xx") for test
-    // DONE(ofs_running,"set up PEXSI parameter, begin");
     //  set up PEXSI parameter
     PPEXSIOptions options;
     PPEXSISetDefaultOptions(&options);
     int numProcessPerPole;
     double ZERO_Limit;
     loadPEXSIOption(comm_PEXSI, PexsiOptionFile, options, numProcessPerPole, ZERO_Limit);
-// OUT(ofs_running, "checkpoint01");
-//  debug
-#ifdef _DEBUG
-    if (comm_PEXSI != MPI_COMM_NULL)
-    {
-        if (myid < 100)
-            log_PEXSIOption(numElectronExact, f_log);
-    }
-#endif
-    // end debug
-    // LiuXh modify 2021-03-30, add DONE(ofs_running,"xx") for test
-    // DONE(ofs_running,"set up PEXSI parameter, finish");
 
-    // set up PEXSI plan
-    // LiuXh modify 2021-03-30, add DONE(ofs_running,"xx") for test
-    // OUT(ofs_running, "checkpoint02");
     ModuleBase::timer::tick("Diago_LCAO_Matrix", "setup_PEXSI_plan");
     PPEXSIPlan plan;
     int info;
@@ -485,62 +237,27 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
     ModuleBase::timer::tick("Diago_LCAO_Matrix", "splitNProc2NProwNPcol");
     splitNProc2NProwNPcol(numProcessPerPole, pexsi_prow, pexsi_pcol);
     ModuleBase::timer::tick("Diago_LCAO_Matrix", "splitNProc2NProwNPcol");
-// OUT(ofs_running, "checkpoint03");
-#ifdef _DEBUG
-    // if(comm_PEXSI != MPI_COMM_NULL)
-    //{
-    if (myid < 100)
-        log_PEXSIgrid(pexsi_prow, pexsi_pcol, f_log);
-//}
-#endif
+
     outputFileIndex = -1;
-    // OUT(ofs_running, "checkpoint04");
     ModuleBase::timer::tick("Diago_LCAO_Matrix", "PEXSIPlanInit");
     if (comm_PEXSI != MPI_COMM_NULL)
     {
-        // OUT(ofs_running, "checkpoint05");
         plan = PPEXSIPlanInitialize(comm_PEXSI, pexsi_prow, pexsi_pcol, outputFileIndex, &info);
-#ifdef _DEBUG
-        // OUT(ofs_running, "checkpoint06");
-        if (myid < 100)
-            log_PEXSIinit(info, f_log);
-// OUT(ofs_running, "checkpoint07");
-#endif
     }
     ModuleBase::timer::tick("Diago_LCAO_Matrix", "PEXSIPlanInit");
-    // OUT(ofs_running, "checkpoint08");
-    // LiuXh modify 2021-03-30, add DONE(ofs_running,"xx") for test
+    
     ModuleBase::timer::tick("Diago_LCAO_Matrix", "setup_PEXSI_plan");
 
     // create compressed column storage distribution matrix parameter
     // LiuXh modify 2021-03-30, add DONE(ofs_running,"xx") for test
     // DONE(ofs_running,"create compressed column storage distribution matrix parameter, begin");
     DistCCSMatrix DST_Matrix(comm_PEXSI, numProcessPerPole, size);
-    // OUT(ofs_running, "checkpoint09");
     // LiuXh modify 2021-03-30, add DONE(ofs_running,"xx") for test
     // DONE(ofs_running,"create compressed column storage distribution matrix parameter, finish");
 
-#ifdef _DEBUG
-    if (comm_PEXSI != MPI_COMM_NULL)
-    {
-        if (myid < 100)
-            log_DSTMatrix(DST_Matrix, f_log);
-    }
-#endif
 
     // create block cyclic distribution matrix parameter
-    // LiuXh modify 2021-03-30, add DONE(ofs_running,"xx") for test
-    // DONE(ofs_running,"create block cyclic distribution matrix parameter, begin");
-    // OUT(ofs_running, "checkpoint10");
     DistBCDMatrix SRC_Matrix(comm_2D, group_2D, blacs_ctxt, size, nblk, nrow, ncol, layout);
-// OUT(ofs_running, "checkpoint11");
-#ifdef _DEBUG
-    if (comm_PEXSI != MPI_COMM_NULL)
-    {
-        if (myid < 100)
-            log_SRCMatrix(SRC_Matrix, f_log);
-    }
-#endif
     // LiuXh modify 2021-03-30, add DONE(ofs_running,"xx") for test
     // DONE(ofs_running,"create block cyclic distribution matrix parameter, finish");
     double* HnzvalLocal = nullptr;
@@ -550,23 +267,14 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
     double* FDMnzvalLocal = nullptr;
     // transform H and S from 2D block cyclic distribution to compressed column sparse matrix
     // LiuXh modify 2021-03-30, add DONE(ofs_running,"xx") for test
-    // OUT(ofs_running, "checkpoint12");
     DistMatrixTransformer::transformBCDtoCCS(SRC_Matrix, H, S, ZERO_Limit, DST_Matrix, HnzvalLocal, SnzvalLocal);
     // MPI_Barrier(MPI_COMM_WORLD);
     // LiuXh modify 2021-03-30, add DONE(ofs_running,"xx") for test
-    // OUT(ofs_running, "checkpoint13");
     if (comm_PEXSI != MPI_COMM_NULL)
     {
-// debug
-#ifdef _DEBUG
-        if (myid < 100)
-            log_DSTparameter(DST_Matrix, HnzvalLocal, f_log);
-#endif
-        // end debug
 
         // Load H and S to PEXSI
         int isSIdentity = 0;
-        // OUT(ofs_running, "checkpoint14");
         PPEXSILoadRealHSMatrix(plan,
                                options,
                                size,
@@ -579,25 +287,13 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
                                isSIdentity,
                                SnzvalLocal,
                                &info);
-// OUT(ofs_running, "checkpoint15");
-#ifdef _DEBUG
-        if (myid < 100)
-            log_HSload(f_log);
-#endif
-        // call PEXSI to solve Kohn-Sham equation
-        // PPEXSIDFTDriver2(plan, &options,
-        // numElectronExact,
-        // &muPEXSI,
-        // &numElectronPEXSI,
-        // &numTotalInertiaIter,
-        // &info);
+
         double mu;
         double nelec;
         double muMinInertia;
         double muMaxInertia;
         int numTotalPEXSIIter;
         int numTotalInertiaIter; // Number of total inertia[out]
-        // OUT(ofs_running, "checkpoint16");
         // LiuXh modify 2021-04-29, add DONE(ofs_running,"xx") for test
         ModuleBase::timer::tick("Diago_LCAO_Matrix", "PEXSIDFT");
         PPEXSIDFTDriver(plan,                 // PEXSI plan[in]
@@ -612,14 +308,6 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
                         &info);               // 0: successful; otherwise: unsuccessful
         // LiuXh modify 2021-04-29, add DONE(ofs_running,"xx") for test
         ModuleBase::timer::tick("Diago_LCAO_Matrix", "PEXSIDFT");
-// OUT(ofs_running, "checkpoint17");
-
-// debug
-#ifdef _DEBUG
-        if (myid < 100)
-            log_PEXSIcalled(mu, nelec, muMinInertia, muMaxInertia, numTotalPEXSIIter, f_log);
-#endif
-        // end debug
 
         // retrieve the results from the plan
         if (DMnzvalLocal != nullptr)
@@ -641,19 +329,10 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
                                         &totalEnergyS,
                                         &totalFreeEnergy,
                                         &info);
-#ifdef _DEBUG
-            if (myid < 100)
-                log_DM(DST_Matrix, DMnzvalLocal, f_log);
-#endif
         }
         // clean PEXSI
         PPEXSIPlanFinalize(plan, &info);
-#ifdef _DEBUG
-        if (myid < 100)
-            log_PEXSIFinalized(f_log);
-#endif
     }
-    // OUT(ofs_running, "checkpoint18");
 
     // transform Density Matrix and Energy Density Matrix from compressed column sparse matrix
     // back to 2D block cyclic distribution if neccessary
@@ -664,61 +343,13 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
         DM = new double[SRC_Matrix.get_nrow() * SRC_Matrix.get_ncol()];
         EDM = new double[SRC_Matrix.get_nrow() * SRC_Matrix.get_ncol()];
     }
-#ifdef _DEBUG
-    // OUT(ofs_running, "checkpoint19");
-    if (myid < 100)
-        log_DMEDM_in_BCD_allocated(f_log);
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
     // LiuXh modify 2021-04-29, add DONE(ofs_running,"xx") for test
     ModuleBase::timer::tick("Diago_LCAO_Matrix", "TransMAT22D");
     DistMatrixTransformer::transformCCStoBCD(DST_Matrix, DMnzvalLocal, EDMnzvalLocal, SRC_Matrix, DM, EDM);
     ModuleBase::timer::tick("Diago_LCAO_Matrix", "TransMAT22D");
     // LiuXh modify 2021-04-29, add DONE(ofs_running,"xx") for test
 
-#ifdef _DEBUG
     MPI_Barrier(MPI_COMM_WORLD);
-    // OUT(ofs_running, "checkpoint20");
-    if (comm_PEXSI != MPI_COMM_NULL)
-    {
-        if (myid < 100)
-            log_DMtransformed(f_log);
-        if (myid < 100)
-            log_closefile(f_log);
-        // output result
-        // save local data of DMnzvalLocal
-        /*
-        ofstream f_DM;
-        sprintf(fname,"DM_%2.2d.dat", myid);
-        f_DM.open(fname, ios::out);
-        for(int i=0; i<SRC_Matrix.nrow; ++i)
-        {
-            for(int j=0; j<SRC_Matrix.ncol; ++j)
-            {
-                f_DM<<DM[i*SRC_Matrix.ncol+j]<<"\t";
-            }
-            f_DM<<"\n";
-        }
-        f_DM.close();
-
-        // save local data of EDMnzvalLocal
-        ofstream f_EDM;
-        sprintf(fname,"EDM_%2.2d.dat", myid);
-        f_EDM.open(fname, ios::out);
-        for(int i=0; i<SRC_Matrix.nrow; ++i)
-        {
-            for(int j=0; j<SRC_Matrix.ncol; ++j)
-            {
-                f_EDM<<EDM[i*SRC_Matrix.ncol+j]<<"\t";
-            }
-            f_EDM<<"\n";
-        }
-        f_EDM.close();
-        */
-    }
-#endif
-    MPI_Barrier(MPI_COMM_WORLD);
-    // OUT(ofs_running, "checkpoint21");
     MPI_Barrier(MPI_COMM_WORLD);
     delete[] DMnzvalLocal;
     delete[] EDMnzvalLocal;
@@ -726,8 +357,6 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
     delete[] HnzvalLocal;
     delete[] SnzvalLocal;
     MPI_Barrier(MPI_COMM_WORLD);
-    // OUT(ofs_running, "checkpoint22");
-    // MPI_Barrier(MPI_COMM_WORLD);
     return 0;
 }
 } // namespace pexsi

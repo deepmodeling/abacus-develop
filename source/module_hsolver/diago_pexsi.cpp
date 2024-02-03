@@ -131,14 +131,12 @@ void DiagoPexsi<double>::diag(hamilt::Hamilt<double>* phm_in, psi::Psi<double>& 
                                        this->ParaV->ncol,
                                        h_mat.p,
                                        s_mat.p,
-                                       this->DM,
-                                       this->EDM,
                                        this->totalEnergyH,
                                        this->totalEnergyS,
                                        this->totalFreeEnergy);
     this->ps->solve();
-    this->EDM = this->ps->get_EDM();
-    this->DM = this->ps->get_DM(); // loc.dm_gamma[ik] loc.dm_gamma[0]?
+    this->EDM.push_back(this->ps->get_EDM());
+    this->DM.push_back(this->ps->get_DM()); // loc.dm_gamma[ik] loc.dm_gamma[0]?
     this->totalFreeEnergy = this->ps->get_totalFreeEnergy();
     this->totalEnergyH = this->ps->get_totalEnergyH();
     this->totalEnergyS = this->ps->get_totalEnergyS();
