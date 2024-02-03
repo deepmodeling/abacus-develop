@@ -309,6 +309,7 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
         // LiuXh modify 2021-04-29, add DONE(ofs_running,"xx") for test
         ModuleBase::timer::tick("Diago_LCAO_Matrix", "PEXSIDFT");
 
+        hsolver::DiagoPexsi<double>::pexsi_mu = mu;
         // retrieve the results from the plan
         if (DMnzvalLocal != nullptr)
             delete[] DMnzvalLocal;
