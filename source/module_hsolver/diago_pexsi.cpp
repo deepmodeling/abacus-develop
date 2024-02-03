@@ -125,6 +125,7 @@ void DiagoPexsi<double>::diag(hamilt::Hamilt<double>* phm_in, psi::Psi<double>& 
     phm_in->matrix(h_mat, s_mat);
     std::vector<double> eigen(GlobalV::NLOCAL, 0.0);
     MPI_Comm COMM_DIAG = MPI_COMM_WORLD;
+    int ik = psi.get_current_k();
     this->ps = new pexsi::PEXSI_Solver(this->ParaV->blacs_ctxt,
                                        this->ParaV->nb,
                                        this->ParaV->nrow,
@@ -134,12 +135,13 @@ void DiagoPexsi<double>::diag(hamilt::Hamilt<double>* phm_in, psi::Psi<double>& 
                                        this->totalEnergyH,
                                        this->totalEnergyS,
                                        this->totalFreeEnergy);
-    this->ps->solve();
+    this->ps->solve(mu_buffer[ik]);
     this->EDM.push_back(this->ps->get_EDM());
-    this->DM.push_back(this->ps->get_DM()); // loc.dm_gamma[ik] loc.dm_gamma[0]?
+    this->DM.push_back(this->ps->get_DM());
     this->totalFreeEnergy = this->ps->get_totalFreeEnergy();
     this->totalEnergyH = this->ps->get_totalEnergyH();
     this->totalEnergyS = this->ps->get_totalEnergyS();
+    this->mu_buffer[ik] = this->ps->get_mu();
 }
 
 template <>

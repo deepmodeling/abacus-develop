@@ -210,7 +210,9 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
                 double*& EDM, // output matrices
                 double& totalEnergyH,
                 double& totalEnergyS,
-                double& totalFreeEnergy) // output energy
+                double& totalFreeEnergy, // output energy
+                double& mu,
+                double mu0)
 {
 
     if (comm_2D == MPI_COMM_NULL && comm_PEXSI == MPI_COMM_NULL)
@@ -228,6 +230,7 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
     int numProcessPerPole;
     double ZERO_Limit;
     loadPEXSIOption(comm_PEXSI, PexsiOptionFile, options, numProcessPerPole, ZERO_Limit);
+    options.mu0 = mu0;
 
     ModuleBase::timer::tick("Diago_LCAO_Matrix", "setup_PEXSI_plan");
     PPEXSIPlan plan;
@@ -288,7 +291,6 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
                                SnzvalLocal,
                                &info);
 
-        double mu;
         double nelec;
         double muMinInertia;
         double muMaxInertia;
@@ -309,7 +311,6 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
         // LiuXh modify 2021-04-29, add DONE(ofs_running,"xx") for test
         ModuleBase::timer::tick("Diago_LCAO_Matrix", "PEXSIDFT");
 
-        hsolver::DiagoPexsi<double>::pexsi_mu = mu;
         // retrieve the results from the plan
         if (DMnzvalLocal != nullptr)
             delete[] DMnzvalLocal;

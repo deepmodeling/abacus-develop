@@ -38,7 +38,7 @@ PEXSI_Solver::PEXSI_Solver(const int blacs_text,
     this->totalFreeEnergy = 0.0;
 }
 
-int PEXSI_Solver::solve()
+int PEXSI_Solver::solve(double mu0)
 {
     MPI_Group grid_group;
     int myid, grid_np;
@@ -67,7 +67,9 @@ int PEXSI_Solver::solve()
                 this->EDM,
                 this->totalEnergyH,
                 this->totalEnergyS,
-                this->totalFreeEnergy);
+                this->totalFreeEnergy,
+                mu,
+                mu0);
     return 0;
 }
 
@@ -94,6 +96,11 @@ const double PEXSI_Solver::get_totalEnergyH() const
 const double PEXSI_Solver::get_totalEnergyS() const
 {
     return totalEnergyS;
+}
+
+const double PEXSI_Solver::get_mu() const
+{
+    return mu;
 }
 
 } // namespace pexsi

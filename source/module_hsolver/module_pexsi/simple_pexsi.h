@@ -22,6 +22,8 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
                 double*& EDM, // output matrices
                 double& totalEnergyH,
                 double& totalEnergyS,
-                double& totalFreeEnergy);
+                double& totalFreeEnergy,
+                double& mu,
+                double mu0);
 }
 #endif // SIMPLE_PEXSI_H

@@ -17,12 +17,13 @@ class PEXSI_Solver
                  double& totalEnergyH,
                  double& totalEnergyS,
                  double& totalFreeEnergy);
-    int solve();
+    int solve(double mu0);
     double* get_DM() const;
     double* get_EDM() const;
     const double get_totalFreeEnergy() const;
     const double get_totalEnergyH() const;
     const double get_totalEnergyS() const;
+    const double get_mu() const;
 
   private:
     int blacs_text;
@@ -36,6 +37,7 @@ class PEXSI_Solver
     double totalEnergyH;
     double totalEnergyS;
     double totalFreeEnergy;
+    double mu;
 };
 } // namespace pexsi
 #endif // PEXSI_Solver_H
