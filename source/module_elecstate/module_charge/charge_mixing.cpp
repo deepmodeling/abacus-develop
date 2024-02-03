@@ -210,16 +210,16 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
     return drho;
 }
 
-void Charge_Mixing::mix_rho_recip(Charge* chr)
+void Charge_Mixing::mix_rho_recip_new(Charge* chr)
 {
-    // electronic density
-    // rhog and rhog_save are calculated in get_drho() function
-
-    // ONLY smooth part of charge density is mixed by specific mixing method
-    // The high_frequency part is mixed by plain mixing method.
-    // NOTE: chr->rhopw is dense, while this->rhopw is smooth
-    std::complex<double>*rhogs_in = chr->rhog_save[0], *rhogs_out = chr->rhog[0];
-    std::complex<double>*rhoghf_in = nullptr, *rhoghf_out = nullptr;
+    std::complex<double>* rhog_in = nullptr;
+    std::complex<double>* rhog_out = nullptr;
+    // for smooth part
+    std::complex<double>* rhogs_in = chr->rhog_save[0];
+    std::complex<double>* rhogs_out = chr->rhog[0];
+    // for high_frequency part
+    std::complex<double>* rhoghf_in = nullptr;
+    std::complex<double>* rhoghf_out = nullptr;
 
     if (GlobalV::double_grid)
     {
@@ -227,103 +227,6 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         divide_data(chr->rhog_save[0], rhogs_in, rhoghf_in);
         divide_data(chr->rhog[0], rhogs_out, rhoghf_out);
     }
-
-    auto screen = std::bind(&Charge_Mixing::Kerker_screen_recip, this, std::placeholders::_1);
-    this->mixing->push_data(this->rho_mdata, rhogs_in, rhogs_out, screen, true);
-
-    auto inner_product
-        = std::bind(&Charge_Mixing::inner_product_recip, this, std::placeholders::_1, std::placeholders::_2);
-    this->mixing->cal_coef(this->rho_mdata, inner_product);
-
-    this->mixing->mix_data(this->rho_mdata, rhogs_out);
-
-    if (GlobalV::double_grid)
-    {
-        // plain mixing for high_frequencies
-        const int ndimhf = (this->rhodpw->npw - this->rhopw->npw) * GlobalV::NSPIN;
-        this->mixing_highf->plain_mix(rhoghf_out, rhoghf_in, rhoghf_out, ndimhf, nullptr);
-
-        // combine smooth part and high_frequency part
-        combine_data(chr->rhog[0], rhogs_out, rhoghf_out);
-        clean_data(rhogs_in, rhoghf_in);
-    }
-
-    // rhog to rho
-    for (int is = 0; is < GlobalV::NSPIN; is++)
-    {
-        rhodpw->recip2real(chr->rhog[is], chr->rho[is]);
-    }
-
-    // For kinetic energy density
-    if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
-    {
-        std::vector<std::complex<double>> kin_g(GlobalV::NSPIN * rhodpw->npw);
-        std::vector<std::complex<double>> kin_g_save(GlobalV::NSPIN * rhodpw->npw);
-
-        for (int is = 0; is < GlobalV::NSPIN; ++is)
-        {
-            rhodpw->real2recip(chr->kin_r[is], &kin_g[is * rhodpw->npw]);
-            rhodpw->real2recip(chr->kin_r_save[is], &kin_g_save[is * rhodpw->npw]);
-        }
-        std::complex<double>*taugs_in = kin_g_save.data(), *taugs_out = kin_g.data();
-        std::complex<double>*taughf_in = nullptr, *taughf_out = nullptr;
-        if (GlobalV::double_grid)
-        {
-            // divide into smooth part and high_frequency part
-            divide_data(kin_g_save.data(), taugs_in, taughf_in);
-            divide_data(kin_g.data(), taugs_out, taughf_out);
-        }
-
-        // Note: there is no kerker modification for tau because I'm not sure
-        // if we should have it. If necessary we can try it in the future.
-        this->mixing->push_data(this->tau_mdata, taugs_in, taugs_out, nullptr, false);
-
-        this->mixing->mix_data(this->tau_mdata, taugs_out);
-
-        if (GlobalV::double_grid)
-        {
-            // simple mixing for high_frequencies
-            const int ndimhf = (this->rhodpw->npw - this->rhopw->npw) * GlobalV::NSPIN;
-            this->mixing_highf->plain_mix(taughf_out, taughf_in, taughf_out, ndimhf, nullptr);
-
-            // combine smooth part and high_frequency part
-            combine_data(kin_g.data(), taugs_out, taughf_out);
-            clean_data(taugs_in, taughf_in);
-        }
-
-        // kin_g to kin_r
-        for (int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            rhodpw->recip2real(&kin_g[is * rhodpw->npw], chr->kin_r[is]);
-        }
-    }
-
-#ifdef USE_PAW
-    if(GlobalV::use_paw)
-    {
-        double *nhat_out, *nhat_in;
-        nhat_in = chr->nhat_save[0];
-        nhat_out = chr->nhat[0];
-        // Note: there is no kerker modification for tau because I'm not sure
-        // if we should have it. If necessary we can try it in the future.
-        this->mixing->push_data(this->nhat_mdata, nhat_in, nhat_out, nullptr, false);
-
-        this->mixing->mix_data(this->nhat_mdata, nhat_out);
-    }
-#endif
-    return;
-}
-
-void Charge_Mixing::mix_rho_recip_new(Charge* chr)
-{
-    // old support see mix_rho_recip()
-    if (GlobalV::double_grid)
-    {
-        ModuleBase::WARNING_QUIT("Charge_Mixing", "double_grid is not supported for new mixing method yet.");
-    }
-
-    std::complex<double>* rhog_in = nullptr;
-    std::complex<double>* rhog_out = nullptr;
 
     //  can choose inner_product_recip_new1 or inner_product_recip_new2
     //  inner_product_recip_new1 is a simple sum
@@ -333,10 +236,11 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
     auto inner_product_old
         = std::bind(&Charge_Mixing::inner_product_recip, this, std::placeholders::_1, std::placeholders::_2);
 
+    // DIIS Mixing Only for smooth part, while high_frequency part is mixed by plain mixing method.
     if (GlobalV::NSPIN == 1)
     {
-        rhog_in = chr->rhog_save[0];
-        rhog_out = chr->rhog[0];    
+        rhog_in = rhogs_in;
+        rhog_out = rhogs_out;
         auto screen = std::bind(&Charge_Mixing::Kerker_screen_recip_new, this, std::placeholders::_1);
         this->mixing->push_data(this->rho_mdata, rhog_in, rhog_out, screen, true);
         this->mixing->cal_coef(this->rho_mdata, inner_product_old);
@@ -403,12 +307,21 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
         // delete
         delete[] rhog_mag;
         delete[] rhog_mag_save;
+        // get rhogs_out for combine_data()
+        if (GlobalV::double_grid)
+        {
+            for (int ig = 0; ig < npw; ig++)
+            {
+                rhogs_out[ig] = chr->rhog[0][ig];
+                rhogs_out[ig + npw] = chr->rhog[1][ig];
+            }
+        }
     }
     else if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE <= 0)
     {
         // normal broyden mixing for {rho, mx, my, mz}
-        rhog_in = chr->rhog_save[0];
-        rhog_out = chr->rhog[0];
+        rhog_in = rhogs_in;
+        rhog_out = rhogs_out;
         const int npw = this->rhopw->npw;
         auto screen = std::bind(&Charge_Mixing::Kerker_screen_recip_new, this, std::placeholders::_1); // use old one
         auto twobeta_mix
@@ -437,6 +350,11 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
     {
         // special broyden mixing for {rho, |m|} proposed by J. Phys. Soc. Jpn. 82 (2013) 114706
         // here only consider the case of mixing_angle = 1, which mean only change |m| and keep angle fixed
+        // old support see mix_rho_recip()
+        if (GlobalV::double_grid)
+        {
+            ModuleBase::WARNING_QUIT("Charge_Mixing", "double_grid is not supported for new mixing method yet.");
+        }
         // allocate memory for rho_magabs and rho_magabs_save
         const int nrxx = this->rhopw->nrxx;
         double* rho_magabs = new double[nrxx];
@@ -513,65 +431,93 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
         delete[] rho_magabs_save;
     }
 
+    if (GlobalV::double_grid)
+    {
+        // plain mixing for high_frequencies
+        const int ndimhf = (this->rhodpw->npw - this->rhopw->npw) * GlobalV::NSPIN;
+        this->mixing_highf->plain_mix(rhoghf_out, rhoghf_in, rhoghf_out, ndimhf, nullptr);
+
+        // combine smooth part and high_frequency part
+        combine_data(chr->rhog[0], rhogs_out, rhoghf_out);
+        clean_data(rhogs_in, rhoghf_in);
+    }
+
     // rhog to rho
     if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0)
     {
+        // only tranfer rhog[0]
+        // do not support double_grid, use rhopw directly
         chr->rhopw->recip2real(chr->rhog[0], chr->rho[0]);
     }
     else
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            chr->rhopw->recip2real(chr->rhog[is], chr->rho[is]);
+            // use rhodpw for double_grid
+            // rhodpw is the same as rhopw for !GlobalV::double_grid
+            this->rhodpw->recip2real(chr->rhog[is], chr->rho[is]);
         }
     }
 
     // For kinetic energy density
     if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
     {
-        std::vector<std::complex<double>> kin_g(GlobalV::NSPIN * chr->rhopw->npw);
-        std::vector<std::complex<double>> kin_g_save(GlobalV::NSPIN * chr->rhopw->npw);
-        std::complex<double>* taug_in = nullptr;
-        std::complex<double>* taug_out = nullptr;
-        if (GlobalV::double_grid)
-        {
-            taug_in = new std::complex<double>[GlobalV::NSPIN * this->rhopw->npw];
-            taug_out = new std::complex<double>[GlobalV::NSPIN * this->rhopw->npw];
-        }
-        else
-        {
-            taug_in = kin_g_save.data();
-            taug_out = kin_g.data();
-        }
-
+        std::vector<std::complex<double>> kin_g(GlobalV::NSPIN * rhodpw->npw);
+        std::vector<std::complex<double>> kin_g_save(GlobalV::NSPIN * rhodpw->npw);
+        // FFT to get kin_g and kin_g_save
         for (int is = 0; is < GlobalV::NSPIN; ++is)
         {
-            chr->rhopw->real2recip(chr->kin_r[is], &kin_g[is * chr->rhopw->npw]);
-            chr->rhopw->real2recip(chr->kin_r_save[is], &kin_g_save[is * chr->rhopw->npw]);
-
-            // similar to rhog and rhog_save
-            if (GlobalV::double_grid)
-            {
-                std::memcpy(&taug_in[is * rhopw->npw],
-                            &kin_g_save[is * chr->rhopw->npw],
-                            rhopw->npw * sizeof(std::complex<double>));
-                std::memcpy(&taug_out[is * rhopw->npw],
-                            &kin_g[is * chr->rhopw->npw],
-                            rhopw->npw * sizeof(std::complex<double>));
-            }
+            rhodpw->real2recip(chr->kin_r[is], &kin_g[is * rhodpw->npw]);
+            rhodpw->real2recip(chr->kin_r_save[is], &kin_g_save[is * rhodpw->npw]);
         }
+        // for smooth part, for !GlobalV::double_grid only have this part
+        std::complex<double>*taugs_in = kin_g_save.data(), *taugs_out = kin_g.data();
+        // for high frequency part
+        std::complex<double>*taughf_in = nullptr, *taughf_out = nullptr;
+        if (GlobalV::double_grid)
+        {
+            // divide into smooth part and high_frequency part
+            divide_data(kin_g_save.data(), taugs_in, taughf_in);
+            divide_data(kin_g.data(), taugs_out, taughf_out);
+        }
+
         // Note: there is no kerker modification for tau because I'm not sure
         // if we should have it. If necessary we can try it in the future.
-        this->mixing->push_data(this->tau_mdata, taug_in, taug_out, nullptr, false);
+        this->mixing->push_data(this->tau_mdata, taugs_in, taugs_out, nullptr, false);
 
-        this->mixing->mix_data(this->tau_mdata, taug_out);
+        this->mixing->mix_data(this->tau_mdata, taugs_out);
+
+        if (GlobalV::double_grid)
+        {
+            // simple mixing for high_frequencies
+            const int ndimhf = (this->rhodpw->npw - this->rhopw->npw) * GlobalV::NSPIN;
+            this->mixing_highf->plain_mix(taughf_out, taughf_in, taughf_out, ndimhf, nullptr);
+
+            // combine smooth part and high_frequency part
+            combine_data(kin_g.data(), taugs_out, taughf_out);
+            clean_data(taugs_in, taughf_in);
+        }
 
         // kin_g to kin_r
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            chr->rhopw->recip2real(&kin_g[is * chr->rhopw->npw], chr->kin_r[is]);
+            rhodpw->recip2real(&kin_g[is * rhodpw->npw], chr->kin_r[is]);
         }
     }
+
+#ifdef USE_PAW
+    if(GlobalV::use_paw)
+    {
+        double *nhat_out, *nhat_in;
+        nhat_in = chr->nhat_save[0];
+        nhat_out = chr->nhat[0];
+        // Note: there is no kerker modification for tau because I'm not sure
+        // if we should have it. If necessary we can try it in the future.
+        this->mixing->push_data(this->nhat_mdata, nhat_in, nhat_out, nullptr, false);
+
+        this->mixing->mix_data(this->nhat_mdata, nhat_out);
+    }
+#endif
 
     return;
 }
@@ -1042,14 +988,7 @@ void Charge_Mixing::mix_rho(Charge* chr)
     // --------------------Mixing Body--------------------
     if (GlobalV::SCF_THR_TYPE == 1)
     {
-        if (GlobalV::double_grid || GlobalV::use_paw)
-        {
-            mix_rho_recip(chr);
-        }
-        else // new mixing method do not support double_grid or paw yet
-        {
-            mix_rho_recip_new(chr);
-        }
+        mix_rho_recip_new(chr);
     }
     else if (GlobalV::SCF_THR_TYPE == 2)
     {
