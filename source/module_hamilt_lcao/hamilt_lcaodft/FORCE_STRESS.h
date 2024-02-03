@@ -100,4 +100,8 @@ class Force_Stress_LCAO
 
     static double force_invalid_threshold_ev;
 };
+
+template<typename T>
+double Force_Stress_LCAO<T>::force_invalid_threshold_ev = 0.00;
+
 #endif
