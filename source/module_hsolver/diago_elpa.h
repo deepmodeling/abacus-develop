@@ -24,6 +24,9 @@ namespace hsolver
 #endif
 };
 
+template <typename T>
+int DiagoElpa<T>::DecomposedState = 0;
+
 } // namespace hsolver
 
 #endif

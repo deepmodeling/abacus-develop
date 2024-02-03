@@ -80,6 +80,15 @@ class ElecStateLCAO : public ElecState
     
 };
 
+template <typename TK>
+int ElecStateLCAO<TK>::out_wfc_lcao = 0;
+
+template <typename TK>
+int ElecStateLCAO<TK>::out_wfc_flag = 0;
+
+template <typename TK>
+bool ElecStateLCAO<TK>::need_psi_grid = 1;
+
 } // namespace elecstate
 
 #endif

@@ -243,15 +243,6 @@ void HSolverLCAO<T, Device>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
 }
 
 template <typename T, typename Device>
-std::vector<int> HSolverLCAO<T, Device>::out_mat_hs = {0, 8};
-template <typename T, typename Device>
-int HSolverLCAO<T, Device>::out_mat_hsR = 0;
-template <typename T, typename Device>
-int HSolverLCAO<T, Device>::out_mat_t = 0;
-template <typename T, typename Device>
-int HSolverLCAO<T, Device>::out_mat_dh = 0;
-
-template <typename T, typename Device>
 void HSolverLCAO<T, Device>::solve(hamilt::Hamilt<T>* pHamilt,
     psi::Psi<T>& psi,
     elecstate::ElecState* pes,

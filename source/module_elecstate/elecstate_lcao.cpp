@@ -10,14 +10,6 @@
 
 namespace elecstate
 {
-template <typename TK>
-int ElecStateLCAO<TK>::out_wfc_lcao = 0;
-
-template <typename TK>
-int ElecStateLCAO<TK>::out_wfc_flag = 0;
-
-template <typename TK>
-bool ElecStateLCAO<TK>::need_psi_grid = 1;
 
 template <>
 void ElecStateLCAO<double>::print_psi(const psi::Psi<double>& psi_in, const int istep)
