@@ -1,6 +1,6 @@
 #include "exx_abfs-construct_orbs.h"
 
-#include "exx_abfs-pca.h"
+#include "ABFs_Construct-PCA.h"
 #include "module_base/gram_schmidt_orth-inl.h"
 #include "module_base/gram_schmidt_orth.h"
 #include "module_basis/module_ao/ORB_read.h"
@@ -63,13 +63,13 @@ std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> Exx_Abfs::Construct_
 	const double norm_threshold )
 {
 	const std::vector<std::vector<std::vector<std::vector<double>>>>
-		&&abfs_same_atom_psir = psir_mult_psir( orbs );
+		abfs_same_atom_psir = psir_mult_psir( orbs );
 	const std::vector<std::vector<std::vector<std::vector<double>>>>
-		&&abfs_same_atom_psir_orth = orth( abfs_same_atom_psir, orbs, norm_threshold );
+		abfs_same_atom_psir_orth = orth( abfs_same_atom_psir, orbs, norm_threshold );
 	const std::vector<std::vector<std::vector<std::vector<double>>>>
-		&&abfs_same_atom_psi_orth = div_r( abfs_same_atom_psir_orth, orbs.get_r_radial );
+		abfs_same_atom_psi_orth = div_r( abfs_same_atom_psir_orth, orbs.get_r_radial );
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>
-		&&abfs_same_atom = orbital( abfs_same_atom_psi_orth, orbs, kmesh_times );
+		abfs_same_atom = orbital( abfs_same_atom_psi_orth, orbs, kmesh_times );
 	return abfs_same_atom;
 }
 */
@@ -107,7 +107,7 @@ std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> Exx_Abfs::Construct_
 	#endif
 
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>
-		&&abfs_same_atom_pca = orbital( abfs_same_atom_pca_psi, orbs, 1 );
+		abfs_same_atom_pca = orbital( abfs_same_atom_pca_psi, orbs, 1 );
 	return abfs_same_atom_pca;
 }
 
@@ -262,9 +262,10 @@ std::vector<std::vector<std::vector<std::vector<double>>>> Exx_Abfs::Construct_O
 	if(times_threshold>1)
 		return std::vector<std::vector<std::vector<std::vector<double>>>>(abfs.size());
 
-	const std::vector<std::vector<std::pair<std::vector<double>,RI::Tensor<double>>>> && eig = Exx_Abfs::PCA::cal_PCA( orbs, abfs, kmesh_times_mot );
+	const std::vector<std::vector<std::pair<std::vector<double>,RI::Tensor<double>>>>
+		eig = ABFs_Construct::PCA::cal_PCA( orbs, abfs, kmesh_times_mot );
 
-	const std::vector<std::vector<std::vector<std::vector<double>>>> && psis = get_psi( abfs );
+	const std::vector<std::vector<std::vector<std::vector<double>>>> psis = get_psi( abfs );
 	std::vector<std::vector<std::vector<std::vector<double>>>> psis_new( psis.size() );
 
 	for( size_t T=0; T!=eig.size(); ++T )

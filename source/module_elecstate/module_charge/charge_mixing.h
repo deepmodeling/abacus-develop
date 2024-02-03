@@ -44,7 +44,6 @@ class Charge_Mixing
      * @brief charge mixing for reciprocal space
      *
      */
-    void mix_rho_recip(Charge* chr);
     void mix_rho_recip_new(Charge* chr);
 
     /**
