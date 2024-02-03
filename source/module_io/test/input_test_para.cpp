@@ -392,6 +392,30 @@ TEST_F(InputParaTest, Bcast)
     EXPECT_EQ(INPUT.qo_screening_coeff.size(), 0);
     EXPECT_EQ(INPUT.qo_thr, 1e-6);
     EXPECT_EQ(INPUT.qo_basis, "hydrogen");
+
+    EXPECT_EQ(INPUT.pexsi_npole, 54);
+    EXPECT_TRUE(INPUT.pexsi_inertia);
+    EXPECT_EQ(INPUT.pexsi_nmax, 80);
+    EXPECT_TRUE(INPUT.pexsi_comm);
+    EXPECT_TRUE(INPUT.pexsi_storage);
+    EXPECT_EQ(INPUT.pexsi_ordering, 0);
+    EXPECT_EQ(INPUT.pexsi_row_ordering, 1);
+    EXPECT_EQ(INPUT.pexsi_nproc, 1);
+    EXPECT_TRUE(INPUT.pexsi_symm);
+    EXPECT_FALSE(INPUT.pexsi_trans);
+    EXPECT_EQ(INPUT.pexsi_method, 1);
+    EXPECT_EQ(INPUT.pexsi_nproc_pole, 1);
+    EXPECT_DOUBLE_EQ(INPUT.pexsi_temp, 0.0001);
+    EXPECT_DOUBLE_EQ(INPUT.pexsi_gap, 0);
+    EXPECT_DOUBLE_EQ(INPUT.pexsi_delta_e, 20);
+    EXPECT_DOUBLE_EQ(INPUT.pexsi_mu_lower, -10);
+    EXPECT_DOUBLE_EQ(INPUT.pexsi_mu_upper, 10);
+    EXPECT_DOUBLE_EQ(INPUT.pexsi_mu, 0);
+    EXPECT_DOUBLE_EQ(INPUT.pexsi_mu_thr, 0.05);
+    EXPECT_DOUBLE_EQ(INPUT.pexsi_mu_expand, 0.3);
+    EXPECT_DOUBLE_EQ(INPUT.pexsi_mu_guard, 0.2);
+    EXPECT_DOUBLE_EQ(INPUT.pexsi_elec_thr, 0.001);
+    EXPECT_DOUBLE_EQ(INPUT.pexsi_zero_thr, 1e-10);
 }
 
 TEST_F(InputParaTest, Init)

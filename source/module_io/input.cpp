@@ -22,7 +22,6 @@
 #include "module_base/global_variable.h"
 #include "module_base/parallel_common.h"
 #include "module_base/timer.h"
-#include "module_base/tool_quit.h"
 #include "version.h"
 Input INPUT;
 
@@ -645,16 +644,16 @@ void Input::Default(void)
     // variables for PEXSI
     //==========================================================
     pexsi_npole = 54;
-    pexsi_inertia = 1;
+    pexsi_inertia = true;
     pexsi_nmax = 80;
     // pexsi_symbolic = 1;
-    pexsi_comm = 1;
-    pexsi_storage = 1;
+    pexsi_comm = true;
+    pexsi_storage = true;
     pexsi_ordering = 0;
     pexsi_row_ordering = 1;
     pexsi_nproc = 1;
-    pexsi_symm = 1;
-    pexsi_trans = 0;
+    pexsi_symm = true;
+    pexsi_trans = false;
     pexsi_method = 1;
     pexsi_nproc_pole = 1;
     // pexsi_spin = 2;
@@ -3824,16 +3823,16 @@ void Input::Bcast()
     // PEXSI
     //==========================================================
     Parallel_Common::bcast_int(pexsi_npole);
-    Parallel_Common::bcast_int(pexsi_inertia);
+    Parallel_Common::bcast_bool(pexsi_inertia);
     Parallel_Common::bcast_int(pexsi_nmax);
     // Parallel_Common::bcast_int(pexsi_symbolic);
-    Parallel_Common::bcast_int(pexsi_comm);
-    Parallel_Common::bcast_int(pexsi_storage);
+    Parallel_Common::bcast_bool(pexsi_comm);
+    Parallel_Common::bcast_bool(pexsi_storage);
     Parallel_Common::bcast_int(pexsi_ordering);
     Parallel_Common::bcast_int(pexsi_row_ordering);
     Parallel_Common::bcast_int(pexsi_nproc);
-    Parallel_Common::bcast_int(pexsi_symm);
-    Parallel_Common::bcast_int(pexsi_trans);
+    Parallel_Common::bcast_bool(pexsi_symm);
+    Parallel_Common::bcast_bool(pexsi_trans);
     Parallel_Common::bcast_int(pexsi_method);
     Parallel_Common::bcast_int(pexsi_nproc_pole);
     // Parallel_Common::bcast_double(pexsi_spin);

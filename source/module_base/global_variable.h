@@ -330,6 +330,5 @@ extern std::string qo_basis;
 extern std::vector<std::string> qo_strategy;
 extern double qo_thr;
 extern std::vector<double> qo_screening_coeff;
-
 } // namespace GlobalV
 #endif

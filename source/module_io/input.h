@@ -607,16 +607,16 @@ class Input
     // variables for PEXSI
     //==========================================================
     int pexsi_npole = 54;
-    int pexsi_inertia = 1;
+    bool pexsi_inertia = true;
     int pexsi_nmax = 80;
     // int pexsi_symbolic = 1;
-    int pexsi_comm = 1;
-    int pexsi_storage = 1;
+    bool pexsi_comm = true;
+    bool pexsi_storage = true;
     int pexsi_ordering = 0;
     int pexsi_row_ordering = 1;
     int pexsi_nproc = 1;
-    int pexsi_symm = 1;
-    int pexsi_trans = 0;
+    bool pexsi_symm = true;
+    bool pexsi_trans = false;
     int pexsi_method = 1;
     int pexsi_nproc_pole = 1;
     // double pexsi_spin = 2;

@@ -922,4 +922,42 @@ TEST_F(write_input, Deltaspin22)
     EXPECT_THAT(output, testing::HasSubstr("sccut                          3 #Maximal step size for lambda in eV/uB"));
     remove("write_input_test.log");
 }
+
+TEST_F (write_input, PEXSI24)
+{
+    INPUT.Default();
+    INPUT.Read("./support/witestfile");
+    std::string output_file = "write_input_test.log";
+    INPUT.Print(output_file);
+    int a = access("write_input_test.log", 00);
+    EXPECT_EQ(a, 0);
+    std::ifstream ifs ("write_input_test.log");
+    std::string output ((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+    EXPECT_THAT(output, testing::HasSubstr("#Parameters (24.PEXSI)"));
+    EXPECT_THAT(output, testing::HasSubstr("pexsi_npole                    54 #Number of poles in expansion"));
+    EXPECT_THAT(output, testing::HasSubstr("pexsi_inertia                  1 #Whether inertia counting is used at the very beginning of PEXSI process"));
+    EXPECT_THAT(output, testing::HasSubstr("pexsi_nmax                     80 #Maximum number of PEXSI iterations after each inertia counting procedure."));
+    EXPECT_THAT(output, testing::HasSubstr("pexsi_comm                     1 #Whether to construct PSelInv communication pattern"));
+    EXPECT_THAT(output, testing::HasSubstr("pexsi_storage                  1 #Storage space used by the Selected Inversion algorithm for symmetric matrices."));
+    EXPECT_THAT(output, testing::HasSubstr("pexsi_ordering                 0 #Ordering strategy for factorization and selected inversion"));
+    EXPECT_THAT(output, testing::HasSubstr("pexsi_row_ordering             1 #Row permutation strategy for factorization and selected inversion, 0: NoRowPerm, 1: LargeDiag"));
+    EXPECT_THAT(output, testing::HasSubstr("pexsi_nproc                    1 #Number of processors for parmetis"));
+    EXPECT_THAT(output, testing::HasSubstr("pexsi_symm                     1 #Matrix symmetry"));
+    EXPECT_THAT(output, testing::HasSubstr("pexsi_trans                    0 #Whether to transpose"));
+    EXPECT_THAT(output, testing::HasSubstr("pexsi_method                   1 #pole expansion method, 1: Cauchy Contour Integral, 2: Moussa optimized method"));
+    EXPECT_THAT(output, testing::HasSubstr("pexsi_nproc_pole               1 #Number of processes used by each pole"));
+    EXPECT_THAT(output, testing::HasSubstr("pexsi_temp                     0.0001 #Temperature, in the same unit as H"));
+    EXPECT_THAT(output, testing::HasSubstr("pexsi_gap                      0 #Spectral gap"));
+    EXPECT_THAT(output, testing::HasSubstr("pexsi_delta_e                  20 #An upper bound for the spectral radius of \\f$S^{-1} H\\f$"));
+    EXPECT_THAT(output, testing::HasSubstr("pexsi_mu_lower                 -10 #Initial guess of lower bound for mu"));
+    EXPECT_THAT(output, testing::HasSubstr("pexsi_mu_upper                 10 #Initial guess of upper bound for mu"));
+    EXPECT_THAT(output, testing::HasSubstr("pexsi_mu                       0 #Initial guess for mu (for the solver)"));
+    EXPECT_THAT(output, testing::HasSubstr("pexsi_mu_thr                   0.05 #Stopping criterion in terms of the chemical potential for the inertia counting procedure"));
+    EXPECT_THAT(output, testing::HasSubstr("pexsi_mu_expand                0.3 #If the chemical potential is not in the initial interval, the interval is expanded by muInertiaExpansion"));
+    EXPECT_THAT(output, testing::HasSubstr("pexsi_mu_guard                 0.2 #Safe guard criterion in terms of the chemical potential to reinvoke the inertia counting procedure"));
+    EXPECT_THAT(output, testing::HasSubstr("pexsi_elec_thr                 0.001 #Stopping criterion of the PEXSI iteration in terms of the number of electrons compared to numElectronExact"));
+    EXPECT_THAT(output, testing::HasSubstr("pexsi_zero_thr                 1e-10 #if the absolute value of matrix element is less than ZERO_Limit, it will be considered as 0"));
+    ifs.close();
+    remove("write_input_test.log");
+}
 #undef private

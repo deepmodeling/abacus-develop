@@ -174,28 +174,26 @@ void ElecState::calEBand()
     ModuleBase::TITLE("ElecState", "calEBand");
     // calculate ebands using wg and ekb
     double eband = 0.0;
-    {
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) reduction(+:eband)
 #endif
-        for (int ik = 0; ik < this->ekb.nr; ++ik)
+    for (int ik = 0; ik < this->ekb.nr; ++ik)
+    {
+        for (int ibnd = 0; ibnd < this->ekb.nc; ibnd++)
         {
-            for (int ibnd = 0; ibnd < this->ekb.nc; ibnd++)
-            {
-                eband += this->ekb(ik, ibnd) * this->wg(ik, ibnd);
-            }
+            eband += this->ekb(ik, ibnd) * this->wg(ik, ibnd);
         }
-        this->f_en.eband = eband;
-        if (GlobalV::KPAR != 1 && GlobalV::ESOLVER_TYPE != "sdft")
-        {
-            //==================================
-            // Reduce all the Energy in each cpu
-            //==================================
-            this->f_en.eband /= GlobalV::NPROC_IN_POOL;
+    }
+    this->f_en.eband = eband;
+    if (GlobalV::KPAR != 1 && GlobalV::ESOLVER_TYPE != "sdft")
+    {
+        //==================================
+        // Reduce all the Energy in each cpu
+        //==================================
+        this->f_en.eband /= GlobalV::NPROC_IN_POOL;
 #ifdef __MPI
-            Parallel_Reduce::reduce_all(this->f_en.eband);
+        Parallel_Reduce::reduce_all(this->f_en.eband);
 #endif
-        }
     }
     return;
 }

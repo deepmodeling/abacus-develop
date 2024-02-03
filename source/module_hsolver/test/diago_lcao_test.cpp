@@ -7,9 +7,6 @@
 #ifdef __ELPA
 #include "module_hsolver/diago_elpa.h"
 #endif
-#ifdef __PEXSI
-#include "module_hsolver/diago_pexsi.h"
-#endif
 
 #define PASSTHRESHOLD 1e-10
 #define DETAILINFO    false
@@ -67,10 +64,6 @@ template<class T> class DiagoPrepare
 #ifdef __ELPA
         else if(ks_solver == "genelpa")
             dh = new hsolver::DiagoElpa<T>;
-#endif
-#ifdef __PEXSI
-        else if(ks_solver == "pexsi")
-            dh = new hsolver::DiagoPexsi;
 #endif
         else
         {

@@ -60,7 +60,7 @@ class ElecStateLCAO : public ElecState
     double get_spin_constrain_energy() override;
 
 #ifdef __PEXSI
-    //use for pexsi
+    // use for pexsi
     void dmToRho(TK* DM);
 #endif
 

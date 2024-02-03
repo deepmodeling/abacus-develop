@@ -18,15 +18,15 @@ namespace hsolver
 template <>
 int DiagoPexsi<double>::pexsi_npole = 0;
 template <>
-int DiagoPexsi<double>::pexsi_inertia = 0;
+bool DiagoPexsi<double>::pexsi_inertia = 0;
 template <>
 int DiagoPexsi<double>::pexsi_nmax = 0;
 // template <>
 // int DiagoPexsi<double>::pexsi_symbolic = 0;
 template <>
-int DiagoPexsi<double>::pexsi_comm = 0;
+bool DiagoPexsi<double>::pexsi_comm = 0;
 template <>
-int DiagoPexsi<double>::pexsi_storage = 0;
+bool DiagoPexsi<double>::pexsi_storage = 0;
 template <>
 int DiagoPexsi<double>::pexsi_ordering = 0;
 template <>
@@ -34,9 +34,9 @@ int DiagoPexsi<double>::pexsi_row_ordering = 0;
 template <>
 int DiagoPexsi<double>::pexsi_nproc = 0;
 template <>
-int DiagoPexsi<double>::pexsi_symm = 0;
+bool DiagoPexsi<double>::pexsi_symm = 0;
 template <>
-int DiagoPexsi<double>::pexsi_trans = 0;
+bool DiagoPexsi<double>::pexsi_trans = 0;
 template <>
 int DiagoPexsi<double>::pexsi_method = 0;
 template <>
@@ -69,15 +69,15 @@ double DiagoPexsi<double>::pexsi_zero_thr = 0.0;
 template <>
 int DiagoPexsi<std::complex<double>>::pexsi_npole = 0;
 template <>
-int DiagoPexsi<std::complex<double>>::pexsi_inertia = 0;
+bool DiagoPexsi<std::complex<double>>::pexsi_inertia = 0;
 template <>
 int DiagoPexsi<std::complex<double>>::pexsi_nmax = 0;
 // template <>
 // int DiagoPexsi<std::complex<double>>::pexsi_symbolic = 0;
 template <>
-int DiagoPexsi<std::complex<double>>::pexsi_comm = 0;
+bool DiagoPexsi<std::complex<double>>::pexsi_comm = 0;
 template <>
-int DiagoPexsi<std::complex<double>>::pexsi_storage = 0;
+bool DiagoPexsi<std::complex<double>>::pexsi_storage = 0;
 template <>
 int DiagoPexsi<std::complex<double>>::pexsi_ordering = 0;
 template <>
@@ -85,9 +85,9 @@ int DiagoPexsi<std::complex<double>>::pexsi_row_ordering = 0;
 template <>
 int DiagoPexsi<std::complex<double>>::pexsi_nproc = 0;
 template <>
-int DiagoPexsi<std::complex<double>>::pexsi_symm = 0;
+bool DiagoPexsi<std::complex<double>>::pexsi_symm = 0;
 template <>
-int DiagoPexsi<std::complex<double>>::pexsi_trans = 0;
+bool DiagoPexsi<std::complex<double>>::pexsi_trans = 0;
 template <>
 int DiagoPexsi<std::complex<double>>::pexsi_method = 0;
 template <>

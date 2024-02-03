@@ -80,12 +80,6 @@ AddTest(
 )
 
 if(ENABLE_LCAO)
-  # if(USE_ELPA and USE_PEXSI)
-  # AddTest(
-  #   TARGET HSolver_LCAO
-  #   LIBS ${math_libs} ELPA::ELPA base genelpa psi device
-  #   SOURCES diago_lcao_test.cpp ../diago_elpa.cpp ../diago_blas.cpp 
-  # )
   if(USE_ELPA)
   AddTest(
     TARGET HSolver_LCAO

@@ -191,10 +191,6 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
                 this->loc->set_dm_gamma(is, this->DM->get_DMK_pointer(is));
             }
         }
-
-
-        
-
         ModuleBase::timer::tick("ElecStateLCAO", "cal_dm_2d");
 
         for (int ik = 0; ik < psi.get_nk(); ++ik)
@@ -222,23 +218,6 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
     //------------------------------------------------------------
     // calculate the charge density on real space grid.
     //------------------------------------------------------------
-    // print matrix zzh
-    // GlobalV::ofs_running << "dm_gamma print\n";
-    // for(int i=0; i< this->loc->dm_gamma[0].nc; i++)
-    // {
-    //     for(int j=0; j<this->loc->dm_gamma[0].nr; j++)
-    //     {
-    //         if (std::abs(this->loc->dm_gamma[0](i, j)) < 0.00000001)
-    //         {
-    //             GlobalV::ofs_running << "0 ";
-    //         }
-    //         else
-    //         {
-    //             GlobalV::ofs_running << this->loc->dm_gamma[0](i, j) << " ";
-    //         }
-    //     }
-    //     GlobalV::ofs_running << std::endl;
-    // }
     ModuleBase::GlobalFunc::NOTE("Calculate the charge on real space grid!");
     this->uhm->GG.transfer_DM2DtoGrid(this->DM->get_DMR_vector()); // transfer DM2D to DM_grid in gint
     Gint_inout inout(this->loc->DM, this->charge->rho, Gint_Tools::job_type::rho);
@@ -285,11 +264,10 @@ void ElecStateLCAO<double>::dmToRho(double* pexsi_DM)
 {
     ModuleBase::timer::tick("ElecStateLCAO", "dmToRho");
 
-    this->loc->set_dm_gamma(0, pexsi_DM);
-
     // old 2D-to-Grid conversion has been replaced by new Gint Refactor 2023/09/25
     if (this->loc->out_dm) // keep interface for old Output_DM until new one is ready
     {
+        this->loc->set_dm_gamma(0, pexsi_DM);
         this->loc->cal_dk_gamma_from_2D_pub();
     }
 
@@ -332,7 +310,5 @@ void ElecStateLCAO<std::complex<double>>::dmToRho(std::complex<double>* DM)
 
 template class ElecStateLCAO<double>; // Gamma_only case
 template class ElecStateLCAO<std::complex<double>>; // multi-k case
-
-
 
 } // namespace elecstate
