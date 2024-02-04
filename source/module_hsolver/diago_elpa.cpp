@@ -17,10 +17,6 @@ typedef hamilt::MatrixBlock<std::complex<double>> matcd;
 namespace hsolver
 {
     template<>
-    int DiagoElpa<double>::DecomposedState = 0;
-    template<>
-    int DiagoElpa<std::complex<double>>::DecomposedState = 0;
-    template<>
     void DiagoElpa<std::complex<double>>::diag(hamilt::Hamilt<std::complex<double>>* phm_in, psi::Psi<std::complex<double>>& psi, Real* eigenvalue_in)
 {
     ModuleBase::TITLE("DiagoElpa", "diag");

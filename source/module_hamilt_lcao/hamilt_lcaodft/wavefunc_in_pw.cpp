@@ -324,7 +324,7 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int& ik,
 									std::complex<double> fup,fdown;
                               		//int nc;
                               		//This routine creates two functions only in the case j=l+1/2 or exit in the other case
-									if(fabs(j-L+0.5<1e-4)) continue;
+									if(fabs(j-L+0.5)<1e-4) continue;
 									delete[] chiaux;
 									chiaux = new double [npw];
                               		//Find the functions j= l- 1/2

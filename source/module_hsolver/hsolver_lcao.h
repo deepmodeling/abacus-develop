@@ -48,6 +48,14 @@ class HSolverLCAO : public HSolver<T, Device>
     std::vector<Real> precondition_lcao;
 };
 
+template <typename T, typename Device>
+std::vector<int> HSolverLCAO<T, Device>::out_mat_hs = {0, 8};
+template <typename T, typename Device>
+int HSolverLCAO<T, Device>::out_mat_hsR = 0;
+template <typename T, typename Device>
+int HSolverLCAO<T, Device>::out_mat_t = 0;
+template <typename T, typename Device>
+int HSolverLCAO<T, Device>::out_mat_dh = 0;
 
 template <typename T>
 inline  T my_conj(T value)
