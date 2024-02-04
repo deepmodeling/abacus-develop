@@ -42,6 +42,17 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
     this->mixing_angle = mixing_angle_in;
     this->mixing_dmr = mixing_dmr_in;
 
+    // check the paramters
+    if (GlobalV::MIXING_BETA > 1.0 || GlobalV::MIXING_BETA < 0.0)
+    {
+        ModuleBase::WARNING_QUIT("Charge_Mixing", "You'd better set mixing_beta to [0.0, 1.0]!");
+    }
+    if (GlobalV::MIXING_BETA_MAG < 0.0)
+    {
+        ModuleBase::WARNING_QUIT("Charge_Mixing", "You'd better set mixing_beta_mag >= 0.0!");
+    }
+
+    // print into running.log
     GlobalV::ofs_running<<"\n----------- Double Check Mixing Parameters Begin ------------"<<std::endl;
     GlobalV::ofs_running<<"mixing_type: "<< this->mixing_mode <<std::endl;
     GlobalV::ofs_running<<"mixing_beta: "<< this->mixing_beta <<std::endl;

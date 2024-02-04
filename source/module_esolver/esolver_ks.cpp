@@ -84,20 +84,6 @@ namespace ModuleESolver
                              GlobalV::MIXING_GG0_MIN,
                              GlobalV::MIXING_ANGLE,
                              GlobalV::MIXING_DMR);
-        // I use default value to replace autoset                     
-        // using bandgap to auto set mixing_beta
-        // if (std::abs(GlobalV::MIXING_BETA + 10.0) < 1e-6)
-        //{
-        //    p_chgmix->need_auto_set();
-        //}
-        if (GlobalV::MIXING_BETA > 1.0 || GlobalV::MIXING_BETA < 0.0)
-        {
-            ModuleBase::WARNING("INPUT", "You'd better set mixing_beta to [0.0, 1.0]!");
-        }
-        if (GlobalV::MIXING_BETA_MAG < 0.0)
-        {
-            ModuleBase::WARNING("INPUT", "You'd better set mixing_beta_mag >= 0.0!");
-        }
         
 #ifdef USE_PAW
         if(GlobalV::use_paw)
