@@ -202,7 +202,7 @@ void Input_Conv::read_td_efield()
     elecstate::H_TDDFT_pw::trigo_amp
         = convert_units(INPUT.td_trigo_amp, ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV); // Ry/bohr
     //init ncut for velocity gauge integral
-    for(auto omega: elecstate::H_TDDFT_pw::trape_omega)
+    for(auto omega: elecstate::H_TDDFT_pw::trigo_omega1)
     {
         int ncut = int(100.0 * omega * elecstate::H_TDDFT_pw::dt / ModuleBase::PI);
         if(ncut%2 == 0)
