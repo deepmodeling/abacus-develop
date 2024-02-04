@@ -208,6 +208,7 @@ TEST_F(ChargeMixingTest, SetMixingTest)
 
     GlobalV::MIXING_BETA = 0.7;
     GlobalV::MIXING_BETA_MAG = -0.1;
+    GlobalV::NSPIN = 2;
     testing::internal::CaptureStdout();
     EXPECT_EXIT(CMtest.set_mixing(GlobalV::MIXING_MODE,
                                 GlobalV::MIXING_BETA,
@@ -222,6 +223,7 @@ TEST_F(ChargeMixingTest, SetMixingTest)
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("You'd better set mixing_beta_mag >= 0.0!"));
 
+    GlobalV::NSPIN = 1;
     GlobalV::MIXING_BETA = 0.7;
     GlobalV::MIXING_BETA_MAG = 1.6;
     GlobalV::MIXING_MODE = "nothing";

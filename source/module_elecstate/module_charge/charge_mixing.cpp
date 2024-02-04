@@ -43,11 +43,11 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
     this->mixing_dmr = mixing_dmr_in;
 
     // check the paramters
-    if (GlobalV::MIXING_BETA > 1.0 || GlobalV::MIXING_BETA < 0.0)
+    if (this->mixing_beta > 1.0 || this->mixing_beta < 0.0)
     {
         ModuleBase::WARNING_QUIT("Charge_Mixing", "You'd better set mixing_beta to [0.0, 1.0]!");
     }
-    if (GlobalV::MIXING_BETA_MAG < 0.0)
+    if (GlobalV::NSPIN >= 2 && this->mixing_beta_mag < 0.0)
     {
         ModuleBase::WARNING_QUIT("Charge_Mixing", "You'd better set mixing_beta_mag >= 0.0!");
     }
