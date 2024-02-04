@@ -33,7 +33,7 @@ class HamiltPW : public Hamilt<T, Device>
               const int nrow,  // dimension of spsi: nbands * nrow
               const int npw,   // number of plane waves
               const int nbands // number of bands
-    ) const;
+    ) const override;
 
   private:
     // used in sPhi, which are calculated in hPsi or sPhi
