@@ -10,6 +10,16 @@
 #include "module_cell/unitcell.h"
 class Charge_Mixing
 {
+  /// Charge_Mixing class
+  /// This class is used to mix charge density, kinetic energy density and real-space density matrix
+  /// This Charge_Mixing class offers the following interfaces:
+  /// 1. set_mixing() to set all private mixing parameters
+  /// 2. init_mixing() to initialize mixing, including allocating memory for mixing data and reset mixing
+  /// 3. mix_rho() to mix charge density
+  /// 4. mix_dmr() to mix real-space density matrix
+  /// how to use it:
+  /// you can (re)start a mixing by calling set_mixing() and init_mixing() before calling mix_rho() or mix_dmr()
+
   public:
     Charge_Mixing();
     ~Charge_Mixing();
@@ -40,13 +50,21 @@ class Charge_Mixing
      * @param mixing_gg0_in mixing gg0 for Kerker screen
      * @param mixing_tau_in whether to use tau mixing
      * @param mixing_beta_mag_in mixing beta for magnetism
+     * @param mixing_gg0_mag_in mixing gg0 for Kerker screen for magnetism
+     * @param mixing_gg0_min_in minimum kerker coefficient
+     * @param mixing_angle_in mixing angle for nspin=4
+     * @param mixing_dmr_in whether to mixing real space density matrix
      */
     void set_mixing(const std::string& mixing_mode_in,
                     const double& mixing_beta_in,
                     const int& mixing_ndim_in,
                     const double& mixing_gg0_in,
                     const bool& mixing_tau_in,
-                    const double& mixing_beta_mag_in);
+                    const double& mixing_beta_mag_in,
+                    const double& mixing_gg0_mag_in,
+                    const double& mixing_gg0_min_in,
+                    const double& mixing_angle_in,
+                    const bool& mixing_dmr_in);
 
     /**
      * @brief allocate memory of dmr_mdata
