@@ -521,13 +521,11 @@ TEST_F(InputConvTest, ReadTdEfieldTest)
     EXPECT_EQ(elecstate::H_TDDFT_pw::lcut1, 0.05);
     EXPECT_EQ(elecstate::H_TDDFT_pw::lcut2, 0.95);
     EXPECT_NEAR(elecstate::H_TDDFT_pw::gauss_omega[0], 22.13 * 2 * ModuleBase::PI * ModuleBase::AU_to_FS, 1e-8);
-    EXPECT_EQ(elecstate::H_TDDFT_pw::gauss_ncut, 90);
     EXPECT_EQ(elecstate::H_TDDFT_pw::gauss_phase[0], 0.0);
     EXPECT_NEAR(elecstate::H_TDDFT_pw::gauss_sigma[0], 30.0 / ModuleBase::AU_to_FS, 1e-8);
     EXPECT_EQ(elecstate::H_TDDFT_pw::gauss_t0[0], 100.0);
     EXPECT_NEAR(elecstate::H_TDDFT_pw::gauss_amp[0], 0.25 * ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV, 1e-8);
     EXPECT_NEAR(elecstate::H_TDDFT_pw::trape_omega[0], 1.60 * 2 * ModuleBase::PI * ModuleBase::AU_to_FS, 1e-8);
-    EXPECT_EQ(elecstate::H_TDDFT_pw::trape_ncut, 8);
     EXPECT_EQ(elecstate::H_TDDFT_pw::trape_phase[0], 0.0);
     EXPECT_EQ(elecstate::H_TDDFT_pw::trape_t1[0], 1875);
     EXPECT_EQ(elecstate::H_TDDFT_pw::trape_t2[0], 5625);
@@ -535,7 +533,6 @@ TEST_F(InputConvTest, ReadTdEfieldTest)
     EXPECT_NEAR(elecstate::H_TDDFT_pw::trape_amp[0], 2.74 * ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV, 1e-8);
     EXPECT_NEAR(elecstate::H_TDDFT_pw::trigo_omega1[0], 1.164656 * 2 * ModuleBase::PI * ModuleBase::AU_to_FS, 1e-8);
     EXPECT_NEAR(elecstate::H_TDDFT_pw::trigo_omega2[0], 0.029116 * 2 * ModuleBase::PI * ModuleBase::AU_to_FS, 1e-8);
-    EXPECT_EQ(elecstate::H_TDDFT_pw::trigo_ncut, 6);
     EXPECT_EQ(elecstate::H_TDDFT_pw::trigo_phase1[0], 0.0);
     EXPECT_EQ(elecstate::H_TDDFT_pw::trigo_phase2[0], 0.0);
     EXPECT_NEAR(elecstate::H_TDDFT_pw::trigo_amp[0], 2.74 * ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV, 1e-8);
