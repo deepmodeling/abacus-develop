@@ -36,6 +36,7 @@ bool module_tddft::Evolve_elec::td_vext;
 std::vector<int> module_tddft::Evolve_elec::td_vext_dire_case;
 bool module_tddft::Evolve_elec::out_dipole;
 bool module_tddft::Evolve_elec::out_efield;
+bool module_tddft::Evolve_elec::out_current;
 double module_tddft::Evolve_elec::td_print_eij;
 int module_tddft::Evolve_elec::td_edm;
 double elecstate::Gatefield::zgate = 0.5;
@@ -79,6 +80,7 @@ std::vector<double> elecstate::H_TDDFT_pw::gauss_phase;
 std::vector<double> elecstate::H_TDDFT_pw::gauss_sigma; // time(a.u.)
 std::vector<double> elecstate::H_TDDFT_pw::gauss_t0;
 std::vector<double> elecstate::H_TDDFT_pw::gauss_amp; // Ry/bohr
+std::vector<int> elecstate::H_TDDFT_pw::gauss_ncut;
 
 // trapezoid
 int elecstate::H_TDDFT_pw::trape_count;
@@ -88,6 +90,7 @@ std::vector<double> elecstate::H_TDDFT_pw::trape_t1;
 std::vector<double> elecstate::H_TDDFT_pw::trape_t2;
 std::vector<double> elecstate::H_TDDFT_pw::trape_t3;
 std::vector<double> elecstate::H_TDDFT_pw::trape_amp; // Ry/bohr
+std::vector<int> elecstate::H_TDDFT_pw::trape_ncut;
 
 // Trigonometric
 int elecstate::H_TDDFT_pw::trigo_count;
@@ -96,6 +99,7 @@ std::vector<double> elecstate::H_TDDFT_pw::trigo_omega2; // time(a.u.)^-1
 std::vector<double> elecstate::H_TDDFT_pw::trigo_phase1;
 std::vector<double> elecstate::H_TDDFT_pw::trigo_phase2;
 std::vector<double> elecstate::H_TDDFT_pw::trigo_amp; // Ry/bohr
+std::vector<int> elecstate::H_TDDFT_pw::trigo_ncut;
 
 // Heaviside
 int elecstate::H_TDDFT_pw::heavi_count;
