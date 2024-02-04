@@ -500,7 +500,11 @@ namespace ModuleESolver
                                 GlobalV::MIXING_NDIM,
                                 GlobalV::MIXING_GG0,
                                 GlobalV::MIXING_TAU,
-                                GlobalV::MIXING_BETA_MAG);
+                                GlobalV::MIXING_BETA_MAG,
+                                GlobalV::MIXING_GG0_MAG,
+                                GlobalV::MIXING_GG0_MIN,
+                                GlobalV::MIXING_ANGLE,
+                                GlobalV::MIXING_DMR);
             // allocate memory for dmr_mdata
             if (GlobalV::MIXING_DMR)
             {

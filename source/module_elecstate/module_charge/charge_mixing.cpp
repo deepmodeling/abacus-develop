@@ -24,15 +24,35 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
                                const int& mixing_ndim_in,
                                const double& mixing_gg0_in,
                                const bool& mixing_tau_in,
-                               const double& mixing_beta_mag_in)
+                               const double& mixing_beta_mag_in,
+                               const double& mixing_gg0_mag_in,
+                               const double& mixing_gg0_min_in,
+                               const double& mixing_angle_in,
+                               const bool& mixing_dmr_in)
 {
+    // get private mixing parameters
     this->mixing_mode = mixing_mode_in;
     this->mixing_beta = mixing_beta_in;
     this->mixing_beta_mag = mixing_beta_mag_in;
     this->mixing_ndim = mixing_ndim_in;
     this->mixing_gg0 = mixing_gg0_in;
     this->mixing_tau = mixing_tau_in;
+    this->mixing_gg0_mag = mixing_gg0_mag_in;
+    this->mixing_gg0_min = mixing_gg0_min_in;
+    this->mixing_angle = mixing_angle_in;
+    this->mixing_dmr = mixing_dmr_in;
 
+    // check the paramters
+    if (this->mixing_beta > 1.0 || this->mixing_beta < 0.0)
+    {
+        ModuleBase::WARNING_QUIT("Charge_Mixing", "You'd better set mixing_beta to [0.0, 1.0]!");
+    }
+    if (GlobalV::NSPIN >= 2 && this->mixing_beta_mag < 0.0)
+    {
+        ModuleBase::WARNING_QUIT("Charge_Mixing", "You'd better set mixing_beta_mag >= 0.0!");
+    }
+
+    // print into running.log
     GlobalV::ofs_running<<"\n----------- Double Check Mixing Parameters Begin ------------"<<std::endl;
     GlobalV::ofs_running<<"mixing_type: "<< this->mixing_mode <<std::endl;
     GlobalV::ofs_running<<"mixing_beta: "<< this->mixing_beta <<std::endl;
