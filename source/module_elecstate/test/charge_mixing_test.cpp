@@ -93,7 +93,7 @@ class ChargeMixingTest : public ::testing::Test
         pw_dbasis.initparameters(false, 40);
         pw_dbasis.setuptransform(&pw_basis);
         pw_dbasis.collect_local_pw();
-        // mixing parameters
+        // default mixing parameters
         GlobalV::MIXING_MODE = "broyden";
         GlobalV::MIXING_BETA = 0.8;
         GlobalV::MIXING_NDIM = 8;
@@ -133,6 +133,16 @@ TEST_F(ChargeMixingTest, SetMixingTest)
                     GlobalV::MIXING_ANGLE,
                     GlobalV::MIXING_DMR);
     EXPECT_EQ(CMtest.rho_mdata.length, pw_basis.npw);
+    EXPECT_EQ(CMtest.get_mixing_mode(), "broyden");
+    EXPECT_EQ(CMtest.get_mixing_beta(), 1.0);
+    EXPECT_EQ(CMtest.get_mixing_ndim(), 1);
+    EXPECT_EQ(CMtest.get_mixing_gg0(), 1.0);
+    EXPECT_EQ(CMtest.mixing_tau, false);
+    EXPECT_EQ(CMtest.mixing_beta_mag, 1.6);
+    EXPECT_EQ(CMtest.mixing_gg0_mag, 0.0);
+    EXPECT_EQ(CMtest.mixing_gg0_min, 0.1);
+    EXPECT_EQ(CMtest.mixing_angle, -10.0);
+    EXPECT_EQ(CMtest.mixing_dmr, false);
 
     GlobalV::SCF_THR_TYPE = 2;
     CMtest.set_mixing(GlobalV::MIXING_MODE,
@@ -146,10 +156,6 @@ TEST_F(ChargeMixingTest, SetMixingTest)
                     GlobalV::MIXING_ANGLE,
                     GlobalV::MIXING_DMR);
     EXPECT_EQ(CMtest.rho_mdata.length, pw_basis.nrxx);
-    EXPECT_EQ(CMtest.get_mixing_mode(), "broyden");
-    EXPECT_EQ(CMtest.get_mixing_beta(), 1.0);
-    EXPECT_EQ(CMtest.get_mixing_ndim(), 1);
-    EXPECT_EQ(CMtest.get_mixing_gg0(), 1.0);
 
     FUNC_TYPE = 3;
     GlobalV::MIXING_TAU = true;
@@ -167,6 +173,8 @@ TEST_F(ChargeMixingTest, SetMixingTest)
                     GlobalV::MIXING_DMR);
     CMtest.mix_reset();
     EXPECT_EQ(CMtest.tau_mdata.length, pw_basis.npw);
+    EXPECT_EQ(CMtest.mixing_mode, "plain");
+    EXPECT_EQ(CMtest.mixing_tau, true);
 
     GlobalV::SCF_THR_TYPE = 2;
     CMtest.set_mixing(GlobalV::MIXING_MODE,
@@ -182,8 +190,41 @@ TEST_F(ChargeMixingTest, SetMixingTest)
     CMtest.mix_reset();
     EXPECT_EQ(CMtest.tau_mdata.length, pw_basis.nrxx);
 
-    GlobalV::MIXING_MODE = "nothing";
+    GlobalV::MIXING_BETA = 1.1;
     std::string output;
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(CMtest.set_mixing(GlobalV::MIXING_MODE,
+                                GlobalV::MIXING_BETA,
+                                GlobalV::MIXING_NDIM,
+                                GlobalV::MIXING_GG0,
+                                GlobalV::MIXING_TAU,
+                                GlobalV::MIXING_BETA_MAG,
+                                GlobalV::MIXING_GG0_MAG,
+                                GlobalV::MIXING_GG0_MIN,
+                                GlobalV::MIXING_ANGLE,
+                                GlobalV::MIXING_DMR);, ::testing::ExitedWithCode(0), "");
+    output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr("You'd better set mixing_beta to [0.0, 1.0]!"));
+
+    GlobalV::MIXING_BETA = 0.7;
+    GlobalV::MIXING_BETA_MAG = -0.1;
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(CMtest.set_mixing(GlobalV::MIXING_MODE,
+                                GlobalV::MIXING_BETA,
+                                GlobalV::MIXING_NDIM,
+                                GlobalV::MIXING_GG0,
+                                GlobalV::MIXING_TAU,
+                                GlobalV::MIXING_BETA_MAG,
+                                GlobalV::MIXING_GG0_MAG,
+                                GlobalV::MIXING_GG0_MIN,
+                                GlobalV::MIXING_ANGLE,
+                                GlobalV::MIXING_DMR);, ::testing::ExitedWithCode(0), "");
+    output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr("You'd better set mixing_beta_mag >= 0.0!"));
+
+    GlobalV::MIXING_BETA = 0.7;
+    GlobalV::MIXING_BETA_MAG = 1.6;
+    GlobalV::MIXING_MODE = "nothing";
     testing::internal::CaptureStdout();
     EXPECT_EXIT(CMtest.set_mixing(GlobalV::MIXING_MODE,
                                 GlobalV::MIXING_BETA,
