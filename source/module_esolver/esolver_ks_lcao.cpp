@@ -493,28 +493,15 @@ namespace ModuleESolver
 {
     if (iter == 1 || iter == GlobalV::MIXING_RESTART)
     {
-        if (iter == GlobalV::MIXING_RESTART) // delete mixing and re-construct it to restart 
+        this->p_chgmix->init_mixing();
+        if (iter == GlobalV::MIXING_RESTART && GlobalV::MIXING_DMR) // for mixing_dmr 
         {
-            this->p_chgmix->set_mixing(GlobalV::MIXING_MODE,
-                                GlobalV::MIXING_BETA,
-                                GlobalV::MIXING_NDIM,
-                                GlobalV::MIXING_GG0,
-                                GlobalV::MIXING_TAU,
-                                GlobalV::MIXING_BETA_MAG,
-                                GlobalV::MIXING_GG0_MAG,
-                                GlobalV::MIXING_GG0_MIN,
-                                GlobalV::MIXING_ANGLE,
-                                GlobalV::MIXING_DMR);
             // allocate memory for dmr_mdata
-            if (GlobalV::MIXING_DMR)
-            {
-                const elecstate::DensityMatrix<TK, double>* dm
-                    = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
-                int nnr_tmp = dm->get_DMR_pointer(1)->get_nnr();
-                this->p_chgmix->allocate_mixing_dmr(nnr_tmp);
-            }
+            const elecstate::DensityMatrix<TK, double>* dm
+                = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
+            int nnr_tmp = dm->get_DMR_pointer(1)->get_nnr();
+            this->p_chgmix->allocate_mixing_dmr(nnr_tmp);
         }
-        this->p_chgmix->mix_reset();
     }
 
     // mohan update 2012-06-05
