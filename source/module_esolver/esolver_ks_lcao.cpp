@@ -599,14 +599,14 @@ namespace ModuleESolver
     void ESolver_KS_LCAO<TK, TR>::hamilt2density(int istep, int iter, double ethr)
 {
     // save input rho
-        this->pelec->charge->save_rho_before_sum_band();
-        // save density matrix for mixing
-        if (GlobalV::MIXING_RESTART > 0 && GlobalV::MIXING_DMR && iter >= GlobalV::MIXING_RESTART)
-        {
-            elecstate::DensityMatrix<TK, double>* dm
-                = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
-            dm->save_DMR();
-        }
+    this->pelec->charge->save_rho_before_sum_band();
+    // save density matrix for mixing
+    if (GlobalV::MIXING_RESTART > 0 && GlobalV::MIXING_DMR && iter >= GlobalV::MIXING_RESTART)
+    {
+        elecstate::DensityMatrix<TK, double>* dm
+            = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
+        dm->save_DMR();
+    }
 
         // using HSolverLCAO<TK>::solve()
     if (this->phsol != nullptr)

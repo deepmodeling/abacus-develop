@@ -25,24 +25,6 @@ class Charge_Mixing
     ~Charge_Mixing();
 
     /**
-     * @brief reset mixing
-     */
-    void mix_reset();
-
-    /**
-     * @brief charge mixing
-     * @param chr pointer of Charge object
-     */
-    void mix_rho(Charge* chr);
-
-    /**
-     * @brief density matrix mixing, only for LCAO
-     * @param DM pointer of DensityMatrix object
-     */
-    void mix_dmr(elecstate::DensityMatrix<double, double>* DM);
-    void mix_dmr(elecstate::DensityMatrix<std::complex<double>, double>* DM);
-
-    /**
      * @brief Set all private mixing paramters
      * @param mixing_mode_in mixing mode: "plain", "broyden", "pulay"
      * @param mixing_beta_in mixing beta
@@ -79,10 +61,28 @@ class Charge_Mixing
     void allocate_mixing_dmr(int nnr);
 
     /**
+     * @brief charge mixing
+     * @param chr pointer of Charge object
+     */
+    void mix_rho(Charge* chr);
+
+    /**
+     * @brief density matrix mixing, only for LCAO
+     * @param DM pointer of DensityMatrix object
+     */
+    void mix_dmr(elecstate::DensityMatrix<double, double>* DM);
+    void mix_dmr(elecstate::DensityMatrix<std::complex<double>, double>* DM);
+    
+    /**
      * @brief Get the drho
      *
      */
     double get_drho(Charge* chr, const double nelec);
+
+    /**
+     * @brief reset mixing, actually we only call init_mixing() to reset mixing instead of this function 
+     */
+    void mix_reset();
     
     /**
      * @brief Set the smooth and dense grids
