@@ -491,10 +491,10 @@ TEST_F(ChargeMixingTest, InnerDotNewTest)
         drhog2_mag[i+pw_basis.npw] = drhog2[i] - drhog2[i+pw_basis.npw];
     }
     GlobalV::GAMMA_ONLY_PW = false;
-    inner = CMtest.inner_product_recip_new2(drhog1_mag.data(), drhog2_mag.data());
+    inner = CMtest.inner_product_recip_hartree(drhog1_mag.data(), drhog2_mag.data());
     EXPECT_NEAR(inner, 236763.82650318215, 1e-8);
     GlobalV::GAMMA_ONLY_PW = true;
-    inner = CMtest.inner_product_recip_new2(drhog1_mag.data(), drhog2_mag.data());
+    inner = CMtest.inner_product_recip_hartree(drhog1_mag.data(), drhog2_mag.data());
     EXPECT_NEAR(inner, 236763.82650318215 * 2, 1e-8);
 }
 

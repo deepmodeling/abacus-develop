@@ -159,7 +159,7 @@ class Charge_Mixing
      */
     double inner_product_recip(std::complex<double>* rho1, std::complex<double>* rho2);
     double inner_product_recip_simple(std::complex<double>* rho1, std::complex<double>* rho2);
-    double inner_product_recip_new2(std::complex<double>* rho1, std::complex<double>* rho2);
+    double inner_product_recip_hartree(std::complex<double>* rho1, std::complex<double>* rho2);
 
     /**
      * @brief Inner product of two double vectors
