@@ -70,6 +70,14 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
     GlobalV::ofs_running<<"mixing_ndim: "<< this->mixing_ndim <<std::endl;
     GlobalV::ofs_running<<"----------- Double Check Mixing Parameters End ------------"<<std::endl;
 
+    return;
+}
+
+void Charge_Mixing::init_mixing()
+{
+    // this init should be called at the 1-st iteration of each scf loop
+
+    // (re)construct mixing object
     if (this->mixing_mode == "broyden")
     {
         delete this->mixing;
@@ -97,6 +105,8 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
         this->mixing_highf = new Base_Mixing::Plain_Mixing(this->mixing_beta);
     }
 
+    // allocate memory for mixing data, if exists, free it first and then allocate new memory
+    // initailize rho_mdata
     if (GlobalV::SCF_THR_TYPE == 1)
     {  
         if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0 )
@@ -124,13 +134,26 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
         }
     }
 
+    // initailize tau_mdata
+    if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
+    {
+        if (GlobalV::SCF_THR_TYPE == 1)
+        {
+            this->mixing->init_mixing_data(this->tau_mdata,
+                                           this->rhopw->npw * GlobalV::NSPIN,
+                                           sizeof(std::complex<double>));
+        }
+        else
+        {
+            this->mixing->init_mixing_data(this->tau_mdata, this->rhopw->nrxx * GlobalV::NSPIN, sizeof(double));
+        }
+    }
+
+    // initailize nhat_mdata
 #ifdef USE_PAW
     if(GlobalV::use_paw) this->mixing->init_mixing_data(this->nhat_mdata, this->rhopw->nrxx * GlobalV::NSPIN, sizeof(double));
 #endif
 
-    // Note: we can not init tau_mdata here temporarily, since set_xc_type() is after it.
-    // you can find initalize tau_mdata in mix_reset();
-    // this->mixing->init_mixing_data(this->tau_mdata, this->rhopw->nrxx * GlobalV::NSPIN, sizeof(double));
     return;
 }
 

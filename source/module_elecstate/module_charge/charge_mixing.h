@@ -67,6 +67,12 @@ class Charge_Mixing
                     const bool& mixing_dmr_in);
 
     /**
+     * @brief initialize mixing, including constructing mixing and allocating memory for mixing data
+     * @brief this function should be called at eachiterinit()
+     */
+    void init_mixing();
+
+    /**
      * @brief allocate memory of dmr_mdata
      * @param nnr size of real-space density matrix
      */
