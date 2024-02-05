@@ -1260,7 +1260,7 @@ double Charge_Mixing::inner_product_recip(std::complex<double>* rho1, std::compl
 }
 
 // a simple inner product
-double Charge_Mixing::inner_product_recip_new1(std::complex<double>* rho1, std::complex<double>* rho2)
+double Charge_Mixing::inner_product_recip_simple(std::complex<double>* rho1, std::complex<double>* rho2)
 {
     double rnorm = 0.0;
     // consider a resize for mixing_angle

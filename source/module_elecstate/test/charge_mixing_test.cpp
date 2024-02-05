@@ -460,7 +460,7 @@ TEST_F(ChargeMixingTest, InnerDotNewTest)
     CMtest.set_rhopw(&pw_basis, &pw_basis);
     GlobalV::NSPIN = 1;
 
-    // inner_product_recip_new1
+    // a simple sum for inner product
     std::vector<std::complex<double>> drhog1(pw_basis.npw);
     std::vector<std::complex<double>> drhog2(pw_basis.npw);
     for (int i = 0; i < pw_basis.npw; ++i)
@@ -468,7 +468,7 @@ TEST_F(ChargeMixingTest, InnerDotNewTest)
         drhog1[i] = 1.0;
         drhog2[i] = double(i);
     }
-    double inner = CMtest.inner_product_recip_new1(drhog1.data(), drhog2.data());
+    double inner = CMtest.inner_product_recip_simple(drhog1.data(), drhog2.data());
     EXPECT_NEAR(inner, 0.5 * pw_basis.npw * (pw_basis.npw - 1), 1e-8);
 
     // inner_product_recip_new2
