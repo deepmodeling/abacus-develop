@@ -162,7 +162,7 @@ private:
     void output();
 
   private:
-    void write_occup_m(std::ofstream& ofs);
+    void write_occup_m(std::ofstream& ofs, bool diag=false);
     void read_occup_m(const std::string& fn);
     void local_occup_bcast();
 
