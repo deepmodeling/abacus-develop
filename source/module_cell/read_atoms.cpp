@@ -535,100 +535,101 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
 				ModuleBase::GlobalFunc::ZEROS(atoms[it].mag,na);
 				for (int ia = 0;ia < na; ia++)
 				{
- // modify the reading of frozen ions and velocities  -- Yuanbo Li 2021/8/20
-                                        ifpos >> v.x >> v.y >> v.z;
-                                        mv.x = true ;
-                                        mv.y = true ;
-                                        mv.z = true ;
-                                        atoms[it].vel[ia].set(0,0,0);
-										atoms[it].mag[ia]=magnet.start_magnetization[it];//if this line is used, default startmag_type would be 2
-										atoms[it].angle1[ia]=0;
-										atoms[it].angle2[ia]=0;
-										atoms[it].m_loc_[ia].set(0,0,0);
+ 				// modify the reading of frozen ions and velocities  -- Yuanbo Li 2021/8/20
+					ifpos >> v.x >> v.y >> v.z;
+					mv.x = true ;
+					mv.y = true ;
+					mv.z = true ;
+					atoms[it].vel[ia].set(0,0,0);
+					atoms[it].mag[ia]=magnet.start_magnetization[it];//if this line is used, default startmag_type would be 2
+					atoms[it].angle1[ia]=0;
+					atoms[it].angle2[ia]=0;
+					atoms[it].m_loc_[ia].set(0,0,0);
 
-                                        std::string tmpid;
-                                        tmpid = ifpos.get();
+					std::string tmpid;
+					tmpid = ifpos.get();
 
-										if( (int)tmpid[0] < 0 )
-										{
-											std::cout << "read_atom_positions, mismatch in atom number for atom type: " << atoms[it].label << std::endl;
-											exit(1); 
-										}
+					if( (int)tmpid[0] < 0 )
+					{
+						std::cout << "read_atom_positions, mismatch in atom number for atom type: " << atoms[it].label << std::endl;
+						exit(1); 
+					}
 
-										bool input_vec_mag=false;
-										bool input_angle_mag=false;
-                                        while ( (tmpid != "\n") && (ifpos.eof()==false) && (tmpid !="#") )
-                                        {
-                                                tmpid = ifpos.get() ;
-                                                // old method of reading frozen ions
-                                                char tmp = (char)tmpid[0];
-                                                if ( tmp >= 48 && tmp <= 57 )
-                                                {
-                                                        mv.x = std::stoi(tmpid);
-                                                        ifpos >> mv.y >> mv.z ;
-                                                }
-                                                // new method of reading frozen ions and velocities
-												if ( tmp >= 'a' && tmp <='z')
-												{
-													ifpos.putback(tmp);
-													ifpos >> tmpid;
-												}
-                                                if ( tmpid == "m" )
-                                                {
-                                                        ifpos >> mv.x >> mv.y >> mv.z ;
-                                                }
-                                                else if ( tmpid == "v" ||tmpid == "vel" || tmpid == "velocity" )
-                                                {
-                                                        ifpos >> atoms[it].vel[ia].x >> atoms[it].vel[ia].y >> atoms[it].vel[ia].z;
-                                                }
-												else if ( tmpid == "mag" || tmpid == "magmom")
-												{
-													set_element_mag_zero = true;
-													double tmpamg=0;
-													ifpos >> tmpamg;
-													tmp=ifpos.get();
-													while (tmp==' ')
-													{
-														tmp=ifpos.get();
-													}
-													
-													if((tmp >= 48 && tmp <= 57) or tmp=='-')
-													{
-														ifpos.putback(tmp);
-														ifpos >> atoms[it].m_loc_[ia].y>>atoms[it].m_loc_[ia].z;
-														atoms[it].m_loc_[ia].x=tmpamg;
-														atoms[it].mag[ia]=sqrt(pow(atoms[it].m_loc_[ia].x,2)+pow(atoms[it].m_loc_[ia].y,2)+pow(atoms[it].m_loc_[ia].z,2));
-														input_vec_mag=true;
-														
-													}
-													else
-													{
-														ifpos.putback(tmp);
-														atoms[it].mag[ia]=tmpamg;
-													}
-													
-													// atoms[it].mag[ia];
-												}
-												else if ( tmpid == "angle1")
-												{
-													 ifpos >> atoms[it].angle1[ia];
-													 atoms[it].angle1[ia]=atoms[it].angle1[ia]/180 *ModuleBase::PI;
-													 input_angle_mag=true;
-													 set_element_mag_zero = true;
-												}
-												else if ( tmpid == "angle2")
-												{
-													 ifpos >> atoms[it].angle2[ia];
-													 atoms[it].angle2[ia]=atoms[it].angle2[ia]/180 *ModuleBase::PI;
-													 input_angle_mag=true;
-													 set_element_mag_zero = true;
-												}
-												
-                                        }
-					while ( (tmpid != "\n") && (ifpos.eof()==false) )
-                                        {
-                                                tmpid = ifpos.get();
-                                        }
+					bool input_vec_mag=false;
+					bool input_angle_mag=false;
+					// read if catch goodbit before "\n" and "#"
+					while ( (tmpid != "\n") && (ifpos.good()) && (tmpid !="#") )
+					{
+						tmpid = ifpos.get() ;
+						// old method of reading frozen ions
+						char tmp = (char)tmpid[0];
+						if ( tmp >= 48 && tmp <= 57 )
+						{
+								mv.x = std::stoi(tmpid);
+								ifpos >> mv.y >> mv.z ;
+						}
+						// new method of reading frozen ions and velocities
+						if ( tmp >= 'a' && tmp <='z')
+						{
+							ifpos.putback(tmp);
+							ifpos >> tmpid;
+						}
+						if ( tmpid == "m" )
+						{
+								ifpos >> mv.x >> mv.y >> mv.z ;
+						}
+						else if ( tmpid == "v" ||tmpid == "vel" || tmpid == "velocity" )
+						{
+								ifpos >> atoms[it].vel[ia].x >> atoms[it].vel[ia].y >> atoms[it].vel[ia].z;
+						}
+						else if ( tmpid == "mag" || tmpid == "magmom")
+						{
+							set_element_mag_zero = true;
+							double tmpamg=0;
+							ifpos >> tmpamg;
+							tmp=ifpos.get();
+							while (tmp==' ')
+							{
+								tmp=ifpos.get();
+							}
+							
+							if((tmp >= 48 && tmp <= 57) or tmp=='-')
+							{
+								ifpos.putback(tmp);
+								ifpos >> atoms[it].m_loc_[ia].y>>atoms[it].m_loc_[ia].z;
+								atoms[it].m_loc_[ia].x=tmpamg;
+								atoms[it].mag[ia]=sqrt(pow(atoms[it].m_loc_[ia].x,2)+pow(atoms[it].m_loc_[ia].y,2)+pow(atoms[it].m_loc_[ia].z,2));
+								input_vec_mag=true;
+								
+							}
+							else
+							{
+								ifpos.putback(tmp);
+								atoms[it].mag[ia]=tmpamg;
+							}
+							
+							// atoms[it].mag[ia];
+						}
+						else if ( tmpid == "angle1")
+						{
+								ifpos >> atoms[it].angle1[ia];
+								atoms[it].angle1[ia]=atoms[it].angle1[ia]/180 *ModuleBase::PI;
+								input_angle_mag=true;
+								set_element_mag_zero = true;
+						}
+						else if ( tmpid == "angle2")
+						{
+								ifpos >> atoms[it].angle2[ia];
+								atoms[it].angle2[ia]=atoms[it].angle2[ia]/180 *ModuleBase::PI;
+								input_angle_mag=true;
+								set_element_mag_zero = true;
+						}	
+					}
+					// move to next line
+					while ( (tmpid != "\n") && (ifpos.good()) )
+					{
+							tmpid = ifpos.get();
+					}
 					std::string mags;
 					//cout<<"mag"<<atoms[it].mag[ia]<<"angle1"<<atoms[it].angle1[ia]<<"angle2"<<atoms[it].angle2[ia]<<'\n';
 
@@ -1016,26 +1017,32 @@ void UnitCell::print_stru_file(const std::string &fn, const int &type, const int
 				context<<atoms[it].mbl[ia].x<<atoms[it].mbl[ia].y<<atoms[it].mbl[ia].z;
 				ofs<<context.str();
 
-				if(level == 1)
-				{
-					// output velocity
-					ofs <<" v ";
-					context.set_context("vector3d");
-					context<<atoms[it].vel[ia].x<<atoms[it].vel[ia].y<<atoms[it].vel[ia].z;
-					ofs<<context.str()<<std::endl;
-				}
-				else if(level == 2)
-				{
-					// output magnetic information
-				}
-				else if(level == 3)
-				{
-					// output velocity and magnetic information
-				}
-				else
-				{
-					ofs << std::endl;
-				}
+                if (GlobalV::CALCULATION == "md")
+                {
+                    // output velocity
+                    ofs << " v ";
+                    context.set_context("vector3d");
+                    context << atoms[it].vel[ia].x << atoms[it].vel[ia].y << atoms[it].vel[ia].z;
+                    ofs << context.str();
+                }
+
+                if (GlobalV::NSPIN == 2)
+                {
+                    // output magnetic information
+                    ofs << " mag ";
+                    context.set_context("double_w6_f2");
+                    context << atoms[it].mag[ia];
+                    ofs << context.str();
+                }
+                else if (GlobalV::NSPIN == 4)
+                {
+                    // output magnetic information
+                    ofs << " mag ";
+                    context.set_context("vector3d");
+                    context << atoms[it].m_loc_[ia].x << " " << atoms[it].m_loc_[ia].y << " " << atoms[it].m_loc_[ia].z;
+                    ofs << context.str();
+                }
+                ofs << std::endl;
 			}
 		}
 	}
@@ -1057,25 +1064,32 @@ void UnitCell::print_stru_file(const std::string &fn, const int &type, const int
 				context<<atoms[it].mbl[ia].x<<atoms[it].mbl[ia].y<<atoms[it].mbl[ia].z;
 				ofs<<context.str();
 
-				if(level == 1)
-				{
-					// output velocity
-					context.set_context("vector3d");
-					context<<atoms[it].vel[ia].x<<atoms[it].vel[ia].y<<atoms[it].vel[ia].z;
-					ofs <<" v "<<context.str()<<std::endl;
-				}
-				else if(level == 2)
-				{
-					// output magnetic information
-				}
-				else if(level == 3)
-				{
-					// output velocity and magnetic information
-				}
-				else
-				{
-					ofs << std::endl;
-				}
+                if (GlobalV::CALCULATION == "md")
+                {
+                    // output velocity
+                    ofs << " v ";
+                    context.set_context("vector3d");
+                    context << atoms[it].vel[ia].x << atoms[it].vel[ia].y << atoms[it].vel[ia].z;
+                    ofs << context.str();
+                }
+
+                if (GlobalV::NSPIN == 2)
+                {
+                    // output magnetic information
+                    ofs << " mag ";
+                    context.set_context("double_w6_f2");
+                    context << atoms[it].mag[ia];
+                    ofs << context.str();
+                }
+                else if (GlobalV::NSPIN == 4)
+                {
+                    // output magnetic information
+                    ofs << " mag ";
+                    context.set_context("vector3d");
+                    context << atoms[it].m_loc_[ia].x << " " << atoms[it].m_loc_[ia].y << " " << atoms[it].m_loc_[ia].z;
+                    ofs << context.str();
+                }
+                ofs << std::endl;
 			}
 		}
 	}

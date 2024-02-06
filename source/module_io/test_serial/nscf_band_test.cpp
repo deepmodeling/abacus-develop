@@ -54,9 +54,16 @@ protected:
 	    ekb(1,1) =  2.0;
 	    ekb(1,2) =  3.0;
         kv = new K_Vectors;
+        // specify the kpoints
+        kv->kvec_c.resize(nks);
+        kv->kvec_c[0] = ModuleBase::Vector3<double>(0.0, 0.0, 0.0);
+        kv->kvec_c[1] = ModuleBase::Vector3<double>(1.0, 0.0, 0.0);
         kv->isk.resize(nks);
         kv->isk[0] = 0;
         kv->isk[1] = 1;
+        kv->kl_segids.resize(nks);
+        kv->kl_segids[0] = 0;
+        kv->kl_segids[1] = 0;
         Pkpoints = new Parallel_Kpoints;
     }
 
@@ -81,12 +88,12 @@ protected:
 TEST_F(BandTest, nscf_band)
 {
     // Call the function to be tested
-    ModuleIO::nscf_band(is, out_band_dir, nks, nband, fermie, ekb, *kv, Pkpoints);
+    ModuleIO::nscf_band(is, out_band_dir, nks, nband, fermie, 8, ekb, *kv, Pkpoints);
 
     // Check the output file
     std::ifstream ifs(out_band_dir);
     std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
     ASSERT_TRUE(ifs.is_open());
-    EXPECT_THAT(str, testing::HasSubstr("1       -27.2114       -13.6057              0"));
+    EXPECT_THAT(str, testing::HasSubstr("1   0.00000000 -27.21139600 -13.60569800   0.00000000"));
     ifs.close();
 }

@@ -164,8 +164,6 @@ inline void hipsolverAssert(hipsolverStatus_t code, const char* file, int line, 
     }
 }
 
-#define hipsolverErrcheck(res) { hipsolverAssert((res), __FILE__, __LINE__); }
-
 // hipSOLVER API errors
 static const char * hipblasGetErrorEnum(hipblasStatus_t error) {
     switch (error) {
@@ -190,25 +188,23 @@ static const char * hipblasGetErrorEnum(hipblasStatus_t error) {
     }
 }
 
-inline void hipblasAssertInternal(hipblasStatus_t code, const char *file, int line, bool abort=true) {
+inline void hipblasAssert(hipblasStatus_t code, const char *file, int line, bool abort=true) {
     if (code != HIPBLAS_STATUS_SUCCESS) {
-        fprintf(stderr,"hipBLAS Assert: %s %s %d\n", hipblasGetErrorEnum(code), file, line);
+        fprintf(stderr, "Unexpected hipBLAS Error: %s %s %d\n", hipblasGetErrorEnum(code), file, line);
         if (abort) exit(code);
     }
 }
 
-namespace container {
+#define hipsolverErrcheck(res) { hipsolverAssert((res), __FILE__, __LINE__); }
 
-#define hipblasErrcheckInternal(res) { hipblasAssertInternal((res), __FILE__, __LINE__); }
+#define hipblasErrcheck(res) { hipblasAssert((res), __FILE__, __LINE__); }
 
 // ROCM API errors
-#define hipErrcheck(res) {                                             \
-    if (res != hipSuccess) {                                           \
-        printf("ROCM error %s:%d: %s\n", __FILE__, __LINE__, hipGetErrorString(res)); \
-        exit(EXIT_FAILURE);                                             \
+#define hipErrcheck(res) {                                              \
+    if (res != hipSuccess) {                                            \
+        fprintf(stderr, " Unexpected Device Error %s:%d: %s, %s\n", __FILE__, __LINE__, hipGetErrorName(res), hipGetErrorString(res)); \
+        exit(res);                                                      \
     }                                                                   \
 }
-
-} // namespace container
 
 #endif // BASE_MACROS_ROCM_H_

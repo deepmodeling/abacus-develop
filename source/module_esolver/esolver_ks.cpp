@@ -79,21 +79,11 @@ namespace ModuleESolver
                              GlobalV::MIXING_NDIM,
                              GlobalV::MIXING_GG0,
                              GlobalV::MIXING_TAU,
-                             GlobalV::MIXING_BETA_MAG);
-        // I use default value to replace autoset                     
-        // using bandgap to auto set mixing_beta
-        // if (std::abs(GlobalV::MIXING_BETA + 10.0) < 1e-6)
-        //{
-        //    p_chgmix->need_auto_set();
-        //}
-        if (GlobalV::MIXING_BETA > 1.0 || GlobalV::MIXING_BETA < 0.0)
-        {
-            ModuleBase::WARNING("INPUT", "You'd better set mixing_beta to [0.0, 1.0]!");
-        }
-        if (GlobalV::MIXING_BETA_MAG < 0.0)
-        {
-            ModuleBase::WARNING("INPUT", "You'd better set mixing_beta_mag >= 0.0!");
-        }
+                             GlobalV::MIXING_BETA_MAG,
+                             GlobalV::MIXING_GG0_MAG,
+                             GlobalV::MIXING_GG0_MIN,
+                             GlobalV::MIXING_ANGLE,
+                             GlobalV::MIXING_DMR);
         
 #ifdef USE_PAW
         if(GlobalV::use_paw)
@@ -410,7 +400,7 @@ namespace ModuleESolver
                         }
                     }
 
-                    this->conv_elec = (drho < this->scf_thr);
+                    this->conv_elec = (drho < this->scf_thr && iter!=GlobalV::MIXING_RESTART);
 
                     // If drho < hsolver_error in the first iter or drho < scf_thr, we do not change rho.
                     if (drho < hsolver_error || this->conv_elec)
@@ -436,10 +426,18 @@ namespace ModuleESolver
                         //     }
                         //     p_chgmix->auto_set(bandgap_for_autoset, GlobalC::ucell);
                         // }
-                        
-                        p_chgmix->mix_rho(pelec->charge);
+                        // mixing will restart after GlobalV::MIXING_RESTART steps
+                        // So, GlobalV::MIXING_RESTART=1 means mix from scratch
+                        if (GlobalV::MIXING_RESTART > 0 && iter == GlobalV::MIXING_RESTART - 1)
+                        {
+                            // do not mix charge density
+                        }
+                        else
+                        {
+                            p_chgmix->mix_rho(pelec->charge); // update chr->rho by mixing
+                        }
                         if (GlobalV::SCF_THR_TYPE == 2) pelec->charge->renormalize_rho(); // renormalize rho in R-space would induce a error in K-space
-                        //----------charge mixing done-----------
+                        //----------charge mixing done-----------  
                     }
                 }
 #ifdef __MPI
@@ -466,6 +464,11 @@ namespace ModuleESolver
                     this->niter = iter;
                     bool stop = this->do_after_converge(iter);
                     if(stop) break;
+                }
+                // notice for restart
+                if (GlobalV::MIXING_RESTART > 0 && iter == GlobalV::MIXING_RESTART - 1)
+                {
+                    std::cout<<"SCF restart after this step!"<<std::endl;
                 }
             }
             afterscf(istep);

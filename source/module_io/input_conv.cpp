@@ -750,12 +750,14 @@ void Input_Conv::Convert(void)
     GlobalV::MIXING_MODE = INPUT.mixing_mode;
     GlobalV::MIXING_BETA = INPUT.mixing_beta;
     GlobalV::MIXING_NDIM = INPUT.mixing_ndim;
+    GlobalV::MIXING_RESTART = INPUT.mixing_restart;
     GlobalV::MIXING_GG0 = INPUT.mixing_gg0;
     GlobalV::MIXING_BETA_MAG = INPUT.mixing_beta_mag;
     GlobalV::MIXING_GG0_MAG = INPUT.mixing_gg0_mag;
     GlobalV::MIXING_GG0_MIN = INPUT.mixing_gg0_min;
     GlobalV::MIXING_ANGLE = INPUT.mixing_angle;
     GlobalV::MIXING_TAU = INPUT.mixing_tau;
+    GlobalV::MIXING_DMR = INPUT.mixing_dmr;
     
     //-----------------------------------------------
     // Quasiatomic Orbital analysis

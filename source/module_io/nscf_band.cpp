@@ -3,6 +3,7 @@
 #include "module_base/global_variable.h"
 #include "module_base/timer.h"
 #include "module_base/tool_title.h"
+#include "module_base/formatter_physfmt.h"
 
 void ModuleIO::nscf_band(
 	const int &is,
@@ -10,6 +11,7 @@ void ModuleIO::nscf_band(
 	const int &nks, 
 	const int &nband,
 	const double &fermie,
+	const int &precision,
 	const ModuleBase::matrix& ekb,
 	const K_Vectors& kv,
 	const Parallel_Kpoints* Pkpoints)
@@ -33,23 +35,28 @@ void ModuleIO::nscf_band(
 		if (ik>0)
 		{
 			auto delta=kv.kvec_c[ik]-kv.kvec_c[ik-1];
-			klength[ik] = klength[ik-1] + delta.norm();
+			klength[ik] = klength[ik-1];
+			klength[ik] += (kv.kl_segids[ik] == kv.kl_segids[ik-1]) ? delta.norm() : 0.0;
 		}
+		/* first find if present kpoint in present pool */
 		if ( GlobalV::MY_POOL == Pkpoints->whichpool[ik] )
 		{
+			/* then get the local kpoint index, which starts definitly from 0 */
 			const int ik_now = ik - Pkpoints->startk_pool[GlobalV::MY_POOL];
+			/* if present kpoint corresponds the spin of the present one */
 			if( kv.isk[ik_now+is*nks] == is )
 			{ 
 				if ( GlobalV::RANK_IN_POOL == 0)
 				{
-					std::ofstream ofs(out_band_dir.c_str(),std::ios::app);
-					ofs << std::setprecision(8);
-					//start from 1
-					ofs << ik+1;
-					ofs << " " << klength[ik] << " ";
+					formatter::PhysicalFmt physfmt; // create a physical formatter temporarily
+					std::ofstream ofs(out_band_dir.c_str(), std::ios::app);
+					physfmt.adjust_formatter_flexible(4, 0, false); // for integer
+					ofs << physfmt.get_p_formatter()->format(ik+1);
+					physfmt.adjust_formatter_flexible(precision, 4.0/double(precision), false); // for decimal
+					ofs << physfmt.get_p_formatter()->format(klength[ik]);
 					for(int ib = 0; ib < nband; ib++)
 					{
-						ofs << " " << (ekb(ik_now+is*nks, ib)-fermie) * ModuleBase::Ry_to_eV;
+						ofs << physfmt.get_p_formatter()->format((ekb(ik_now+is*nks, ib)-fermie) * ModuleBase::Ry_to_eV);
 					}
 					ofs << std::endl;
 					ofs.close();	
@@ -83,18 +90,30 @@ void ModuleIO::nscf_band(
 #else
 //	std::cout<<"\n nband = "<<nband<<std::endl;
 //	std::cout<<out_band_dir<<std::endl;
-
+	formatter::PhysicalFmt physfmt; // create a physical formatter temporarily
+	std::vector<double> klength;
+	klength.resize(nks);
+	klength[0] = 0.0;
 	std::ofstream ofs(out_band_dir.c_str());
 	for(int ik=0;ik<nks;ik++)
 	{
+		if (ik>0)
+		{
+			auto delta=kv.kvec_c[ik]-kv.kvec_c[ik-1];
+			klength[ik] = klength[ik-1];
+			klength[ik] += (kv.kl_segids[ik] == kv.kl_segids[ik-1]) ? delta.norm() : 0.0;
+		}
 		if( kv.isk[ik] == is)
 		{
-			ofs<<std::setw(12)<<ik + 1;
+			physfmt.adjust_formatter_flexible(4, 0, false); // for integer
+			ofs << physfmt.get_p_formatter()->format(ik+1);
+			physfmt.adjust_formatter_flexible(precision, 4.0/double(precision), false); // for decimal
+			ofs << physfmt.get_p_formatter()->format(klength[ik]); // add klength, in accordance with the MPI version
 			for(int ibnd = 0; ibnd < nband; ibnd++)
 			{
-				ofs <<std::setw(15) << (ekb(ik, ibnd)-fermie) * ModuleBase::Ry_to_eV;
+				ofs << physfmt.get_p_formatter()->format((ekb(ik, ibnd)-fermie) * ModuleBase::Ry_to_eV);
 			}
-			ofs<<std::endl;
+			ofs << std::endl;
 		}
 	}
 	ofs.close();

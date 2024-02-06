@@ -52,7 +52,7 @@ public:
 private:
 	const Exx_Info::Exx_Info_RI &info;
 	MPI_Comm mpi_comm;
-	const K_Vectors *p_kv;
+	const K_Vectors *p_kv = nullptr;
 
 	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> lcaos;
 	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs;

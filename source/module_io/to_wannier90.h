@@ -17,6 +17,8 @@
 #include "module_cell/klist.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/wavefunc_in_pw.h"
 #include "module_psi/psi.h"
+#include "module_base/parallel_common.h"
+#include "module_base/parallel_reduce.h"
 
 class toWannier90
 {
@@ -43,6 +45,8 @@ class toWannier90
     void out_unk();
 
   protected:
+    bool try_read_nnkp(const K_Vectors& kv);
+
     // Parameters related to k point
     int num_kpts;
     int cal_num_kpts;

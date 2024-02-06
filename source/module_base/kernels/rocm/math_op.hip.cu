@@ -1,6 +1,7 @@
 #include "module_base/kernels/math_op.h"
 
 #include <hip/hip_runtime.h>
+#include <base/macros/macros.h>
 
 namespace ModuleBase {
 
@@ -147,6 +148,9 @@ void cal_ylm_real_op<FPTYPE, psi::DEVICE_GPU>::operator() (
         g,
         p,
         ylm);
+
+    hipErrcheck(hipGetLastError());
+    hipErrcheck(hipDeviceSynchronize());
 }
 
 template struct cal_ylm_real_op<float, psi::DEVICE_GPU>;
