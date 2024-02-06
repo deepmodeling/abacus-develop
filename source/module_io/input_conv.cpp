@@ -136,6 +136,7 @@ void Input_Conv::read_td_efield()
     elecstate::H_TDDFT_pw::tend = INPUT.td_tend;
 
     elecstate::H_TDDFT_pw::dt = INPUT.mdp.md_dt / ModuleBase::AU_to_FS;
+    elecstate::H_TDDFT_pw::dt_int = elecstate::H_TDDFT_pw::dt;
 
     // space domain parameters
 
