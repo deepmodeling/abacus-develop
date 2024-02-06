@@ -550,7 +550,7 @@ TEST_F(ChargeMixingTest, KerkerScreenRecipNewTest)
     {
         drhog_old[i] = drhog[i] = std::complex<double>(1.0, 1.0);
     }
-    CMtest.Kerker_screen_recip_new(drhog);
+    CMtest.Kerker_screen_recip(drhog);
     for (int i = 0; i < GlobalV::NSPIN*pw_basis.npw; ++i)
     {
         EXPECT_EQ(drhog[i], drhog_old[i]);
@@ -559,7 +559,7 @@ TEST_F(ChargeMixingTest, KerkerScreenRecipNewTest)
     // RECIPROCAL
     CMtest.mixing_gg0 = 1.0;
     GlobalV::MIXING_GG0_MAG = 0.0;
-    CMtest.Kerker_screen_recip_new(drhog);
+    CMtest.Kerker_screen_recip(drhog);
     const double gg0 = std::pow(0.529177, 2);
     for (int i = 0; i < pw_basis.npw; ++i)
     {

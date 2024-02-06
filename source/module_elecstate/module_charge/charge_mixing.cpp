@@ -291,7 +291,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
     {
         rhog_in = rhogs_in;
         rhog_out = rhogs_out;
-        auto screen = std::bind(&Charge_Mixing::Kerker_screen_recip_new, this, std::placeholders::_1);
+        auto screen = std::bind(&Charge_Mixing::Kerker_screen_recip, this, std::placeholders::_1);
         this->mixing->push_data(this->rho_mdata, rhog_in, rhog_out, screen, true);
         this->mixing->cal_coef(this->rho_mdata, inner_product);
         this->mixing->mix_data(this->rho_mdata, rhog_out);
@@ -322,7 +322,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         rhog_in = rhog_mag_save;
         rhog_out = rhog_mag;
         //
-        auto screen = std::bind(&Charge_Mixing::Kerker_screen_recip_new, this, std::placeholders::_1);
+        auto screen = std::bind(&Charge_Mixing::Kerker_screen_recip, this, std::placeholders::_1);
         auto twobeta_mix
             = [this, npw](std::complex<double>* out, const std::complex<double>* in, const std::complex<double>* sres) {
 #ifdef _OPENMP
@@ -373,7 +373,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         rhog_in = rhogs_in;
         rhog_out = rhogs_out;
         const int npw = this->rhopw->npw;
-        auto screen = std::bind(&Charge_Mixing::Kerker_screen_recip_new, this, std::placeholders::_1); // use old one
+        auto screen = std::bind(&Charge_Mixing::Kerker_screen_recip, this, std::placeholders::_1); // use old one
         auto twobeta_mix
             = [this, npw](std::complex<double>* out, const std::complex<double>* in, const std::complex<double>* sres) {
 #ifdef _OPENMP
@@ -437,7 +437,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         //
         rhog_in = rhog_magabs_save;
         rhog_out = rhog_magabs;
-        auto screen = std::bind(&Charge_Mixing::Kerker_screen_recip_new, this, std::placeholders::_1); // use old one
+        auto screen = std::bind(&Charge_Mixing::Kerker_screen_recip, this, std::placeholders::_1); // use old one
         auto twobeta_mix
             = [this, npw](std::complex<double>* out, const std::complex<double>* in, const std::complex<double>* sres) {
 #ifdef _OPENMP
@@ -1089,7 +1089,7 @@ void Charge_Mixing::mix_rho(Charge* chr)
     return;
 }
 
-void Charge_Mixing::Kerker_screen_recip_new(std::complex<double>* drhog)
+void Charge_Mixing::Kerker_screen_recip(std::complex<double>* drhog)
 {
     if (this->mixing_gg0 <= 0.0 || this->mixing_beta <= 0.1)
         return;

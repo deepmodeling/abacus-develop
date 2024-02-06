@@ -144,7 +144,7 @@ class Charge_Mixing
      * @brief Kerker screen method for reciprocal space
      * @param rhog charge density in reciprocal space
      */
-    void Kerker_screen_recip_new(std::complex<double>* rhog);
+    void Kerker_screen_recip(std::complex<double>* rhog);
 
     /**
      * @brief Kerker screen method for real space
