@@ -52,6 +52,11 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
         ModuleBase::WARNING_QUIT("Charge_Mixing", "You'd better set mixing_beta_mag >= 0.0!");
     }
 
+    if (!(this->mixing_mode == "plain" || this->mixing_mode == "broyden" || this->mixing_mode == "pulay"))
+    {
+        ModuleBase::WARNING_QUIT("Charge_Mixing", "This Mixing mode is not implemended yet,coming soon.");
+    }
+
     // print into running.log
     GlobalV::ofs_running<<"\n----------- Double Check Mixing Parameters Begin ------------"<<std::endl;
     GlobalV::ofs_running<<"mixing_type: "<< this->mixing_mode <<std::endl;
@@ -70,6 +75,17 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
     GlobalV::ofs_running<<"mixing_ndim: "<< this->mixing_ndim <<std::endl;
     GlobalV::ofs_running<<"----------- Double Check Mixing Parameters End ------------"<<std::endl;
 
+    return;
+}
+
+void Charge_Mixing::init_mixing()
+{
+    // this init should be called at the 1-st iteration of each scf loop
+
+    ModuleBase::TITLE("Charge_Mixing", "init_mixing");
+    ModuleBase::timer::tick("Charge_Mixing", "init_mixing");
+
+    // (re)construct mixing object
     if (this->mixing_mode == "broyden")
     {
         delete this->mixing;
@@ -89,6 +105,7 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
     {
         ModuleBase::WARNING_QUIT("Charge_Mixing", "This Mixing mode is not implemended yet,coming soon.");
     }
+
     if (GlobalV::double_grid)
     {
         // ONLY smooth part of charge density is mixed by specific mixing method
@@ -97,6 +114,8 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
         this->mixing_highf = new Base_Mixing::Plain_Mixing(this->mixing_beta);
     }
 
+    // allocate memory for mixing data, if exists, free it first and then allocate new memory
+    // initailize rho_mdata
     if (GlobalV::SCF_THR_TYPE == 1)
     {  
         if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0 )
@@ -123,14 +142,29 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
             this->mixing->init_mixing_data(this->rho_mdata, this->rhopw->nrxx * GlobalV::NSPIN, sizeof(double));
         }
     }
+    
+    // initailize tau_mdata
+    if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
+    {
+        if (GlobalV::SCF_THR_TYPE == 1)
+        {
+            this->mixing->init_mixing_data(this->tau_mdata,
+                                           this->rhopw->npw * GlobalV::NSPIN,
+                                           sizeof(std::complex<double>));
+        }
+        else
+        {
+            this->mixing->init_mixing_data(this->tau_mdata, this->rhopw->nrxx * GlobalV::NSPIN, sizeof(double));
+        }
+    }
 
+    // initailize nhat_mdata
 #ifdef USE_PAW
     if(GlobalV::use_paw) this->mixing->init_mixing_data(this->nhat_mdata, this->rhopw->nrxx * GlobalV::NSPIN, sizeof(double));
 #endif
 
-    // Note: we can not init tau_mdata here temporarily, since set_xc_type() is after it.
-    // you can find initalize tau_mdata in mix_reset();
-    // this->mixing->init_mixing_data(this->tau_mdata, this->rhopw->nrxx * GlobalV::NSPIN, sizeof(double));
+    ModuleBase::timer::tick("Charge_Mixing", "init_mixing");
+
     return;
 }
 
@@ -933,16 +967,7 @@ void Charge_Mixing::mix_reset()
     // initailize tau_mdata
     if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
     {
-        if (GlobalV::SCF_THR_TYPE == 1)
-        {
-            this->mixing->init_mixing_data(this->tau_mdata,
-                                           this->rhopw->npw * GlobalV::NSPIN,
-                                           sizeof(std::complex<double>));
-        }
-        else
-        {
-            this->mixing->init_mixing_data(this->tau_mdata, this->rhopw->nrxx * GlobalV::NSPIN, sizeof(double));
-        }
+        this->tau_mdata.reset();
     }
     // reset for paw
 #ifdef USE_PAW
