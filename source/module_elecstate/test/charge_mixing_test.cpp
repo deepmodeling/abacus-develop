@@ -532,62 +532,6 @@ TEST_F(ChargeMixingTest, InnerDotRecipRhoTest)
     EXPECT_NEAR(inner, 110668.61166927818, 1e-8);
 }
 
-TEST_F(ChargeMixingTest, KerkerScreenRecipTest)
-{
-    Charge_Mixing CMtest;
-    CMtest.set_rhopw(&pw_basis, &pw_basis);
-    GlobalV::NSPIN = 1;
-    GlobalC::ucell.tpiba = 1.0;
-
-    CMtest.mixing_gg0 = 0.0;
-    std::complex<double>* drhog = new std::complex<double>[pw_basis.npw];
-    std::complex<double>* drhog_old = new std::complex<double>[pw_basis.npw];
-    double* drhor = new double[pw_basis.nrxx];
-    double* drhor_ref = new double[pw_basis.nrxx];
-    for (int i = 0; i < pw_basis.npw; ++i)
-    {
-        drhog_old[i] = drhog[i] = std::complex<double>(1.0, 1.0);
-    }
-    CMtest.Kerker_screen_recip(drhog);
-    for (int i = 0; i < pw_basis.npw; ++i)
-    {
-        EXPECT_EQ(drhog[i], drhog_old[i]);
-    }
-
-    // RECIPROCAL
-    CMtest.mixing_gg0 = 1.0;
-    CMtest.Kerker_screen_recip(drhog);
-    const double gg0 = std::pow(0.529177, 2);
-    for (int i = 0; i < pw_basis.npw; ++i)
-    {
-        std::complex<double> ration = drhog[i] / drhog_old[i];
-        double gg = this->pw_basis.gg[i];
-        double ration_ref = std::max(gg / (gg + gg0), 0.1 / CMtest.mixing_beta);
-        EXPECT_NEAR(ration.real(), ration_ref, 1e-10);
-        EXPECT_NEAR(ration.imag(), 0, 1e-10);
-    }
-
-    // REAL
-    pw_basis.recip2real(drhog, drhor_ref);
-    pw_basis.recip2real(drhog_old, drhor);
-
-    CMtest.mixing_gg0 = 0.0;
-    // nothing happens
-    CMtest.Kerker_screen_real(drhor);
-
-    CMtest.mixing_gg0 = 1.0;
-    CMtest.Kerker_screen_real(drhor);
-    for (int i = 0; i < pw_basis.nrxx; ++i)
-    {
-        EXPECT_NEAR(drhor[i], drhor_ref[i], 1e-8);
-    }
-
-    delete[] drhog;
-    delete[] drhog_old;
-    delete[] drhor;
-    delete[] drhor_ref;
-}
-
 TEST_F(ChargeMixingTest, KerkerScreenRecipNewTest)
 {
     Charge_Mixing CMtest;

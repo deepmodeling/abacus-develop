@@ -1089,27 +1089,6 @@ void Charge_Mixing::mix_rho(Charge* chr)
     return;
 }
 
-void Charge_Mixing::Kerker_screen_recip(std::complex<double>* drhog)
-{
-    if (this->mixing_gg0 <= 0.0 || this->mixing_beta <= 0.1)
-        return;
-    const double fac = this->mixing_gg0;
-    const double gg0 = std::pow(fac * 0.529177 / GlobalC::ucell.tpiba, 2);
-#ifdef _OPENMP
-#pragma omp parallel for collapse(2) schedule(static, 512)
-#endif
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
-    {
-        for (int ig = 0; ig < this->rhopw->npw; ++ig)
-        {
-            double gg = this->rhopw->gg[ig];
-            double filter_g = std::max(gg / (gg + gg0), GlobalV::MIXING_GG0_MIN / this->mixing_beta);
-            drhog[is * this->rhopw->npw + ig] *= filter_g;
-        }
-    }
-    return;
-}
-
 void Charge_Mixing::Kerker_screen_recip_new(std::complex<double>* drhog)
 {
     if (this->mixing_gg0 <= 0.0 || this->mixing_beta <= 0.1)
