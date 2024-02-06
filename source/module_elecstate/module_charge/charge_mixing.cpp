@@ -1366,7 +1366,7 @@ double Charge_Mixing::inner_product_recip_simple(std::complex<double>* rho1, std
     double rnorm = 0.0;
     // consider a resize for mixing_angle
     int resize_tmp = 1;
-    if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0) resize_tmp = 2;
+    if (GlobalV::NSPIN == 4 && this->mixing_angle > 0) resize_tmp = 2;
 #ifdef _OPENMP
 #pragma omp parallel for reduction(+ : rnorm)
 #endif
@@ -1554,7 +1554,7 @@ double Charge_Mixing::inner_product_real(double* rho1, double* rho2)
     double rnorm = 0.0;
     // consider a resize for mixing_angle
     int resize_tmp = 1;
-    if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0) resize_tmp = 2;
+    if (GlobalV::NSPIN == 4 && this->mixing_angle > 0) resize_tmp = 2;
 
 #ifdef _OPENMP
 #pragma omp parallel for reduction(+ : rnorm)
