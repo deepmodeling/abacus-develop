@@ -405,7 +405,7 @@ TEST_F(InputParaTest, Bcast)
     EXPECT_FALSE(INPUT.pexsi_trans);
     EXPECT_EQ(INPUT.pexsi_method, 1);
     EXPECT_EQ(INPUT.pexsi_nproc_pole, 1);
-    EXPECT_DOUBLE_EQ(INPUT.pexsi_temp, 0.0001);
+    EXPECT_DOUBLE_EQ(INPUT.pexsi_temp, 0.015);
     EXPECT_DOUBLE_EQ(INPUT.pexsi_gap, 0);
     EXPECT_DOUBLE_EQ(INPUT.pexsi_delta_e, 20);
     EXPECT_DOUBLE_EQ(INPUT.pexsi_mu_lower, -10);

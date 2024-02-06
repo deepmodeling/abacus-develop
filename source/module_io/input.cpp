@@ -657,7 +657,7 @@ void Input::Default(void)
     pexsi_method = 1;
     pexsi_nproc_pole = 1;
     // pexsi_spin = 2;
-    pexsi_temp = 0.0001;
+    pexsi_temp = 0.015;
     pexsi_gap = 0;
     pexsi_delta_e = 20.0;
     pexsi_mu_lower = -10;

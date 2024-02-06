@@ -1,4 +1,5 @@
 #include "FORCE_gamma.h"
+#include "module_elecstate/elecstate_lcao.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
@@ -35,8 +36,22 @@ void Force_LCAO_gamma::cal_foverlap(
     // construct a DensityMatrix for Gamma-Only
     const Parallel_Orbitals* pv = this->ParaV;
     elecstate::DensityMatrix<double, double> EDM(pv,GlobalV::NSPIN);
-
-    elecstate::cal_dm_psi(EDM.get_paraV_pointer(), wgEkb, psid[0], EDM);
+    
+#ifdef __PEXSI
+    if (GlobalV::KS_SOLVER == "pexsi")
+    {
+        auto pes = dynamic_cast<const elecstate::ElecStateLCAO<double>*>(pelec);
+        for (int ik = 0; ik < GlobalV::NSPIN; ik++)
+        {
+            EDM.set_DMK_pointer(ik, pes->pexsi_EDM[ik]);
+        }
+        
+    }
+    else
+#endif
+    {
+        elecstate::cal_dm_psi(EDM.get_paraV_pointer(), wgEkb, psid[0], EDM);
+    }
 
     ModuleBase::timer::tick("Force_LCAO_gamma","cal_edm_2d");
 

@@ -232,7 +232,7 @@ void HSolverLCAO<T, Device>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
         if (tem==nullptr) ModuleBase::WARNING_QUIT("HSolverLCAO", "pexsi need debug!");
         elecstate::ElecStateLCAO<T>* _pes = dynamic_cast<elecstate::ElecStateLCAO<T>*>(pes);
         pes->f_en.eband = tem->totalFreeEnergy;
-        _pes->dmToRho(tem->DM);
+        _pes->dmToRho(tem->DM, tem->EDM);
     }
     else
 #endif

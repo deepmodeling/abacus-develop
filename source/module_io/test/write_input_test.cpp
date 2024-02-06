@@ -946,7 +946,7 @@ TEST_F (write_input, PEXSI24)
     EXPECT_THAT(output, testing::HasSubstr("pexsi_trans                    0 #Whether to transpose"));
     EXPECT_THAT(output, testing::HasSubstr("pexsi_method                   1 #pole expansion method, 1: Cauchy Contour Integral, 2: Moussa optimized method"));
     EXPECT_THAT(output, testing::HasSubstr("pexsi_nproc_pole               1 #Number of processes used by each pole"));
-    EXPECT_THAT(output, testing::HasSubstr("pexsi_temp                     0.0001 #Temperature, in the same unit as H"));
+    EXPECT_THAT(output, testing::HasSubstr("pexsi_temp                     0.015 #Temperature, in the same unit as H"));
     EXPECT_THAT(output, testing::HasSubstr("pexsi_gap                      0 #Spectral gap"));
     EXPECT_THAT(output, testing::HasSubstr("pexsi_delta_e                  20 #An upper bound for the spectral radius of \\f$S^{-1} H\\f$"));
     EXPECT_THAT(output, testing::HasSubstr("pexsi_mu_lower                 -10 #Initial guess of lower bound for mu"));

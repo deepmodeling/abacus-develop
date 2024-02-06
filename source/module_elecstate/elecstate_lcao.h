@@ -1,6 +1,7 @@
 #ifndef ELECSTATELCAO_H
 #define ELECSTATELCAO_H
 
+#include <vector>
 #include "elecstate.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_hamilt.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
@@ -61,7 +62,8 @@ class ElecStateLCAO : public ElecState
 
 #ifdef __PEXSI
     // use for pexsi
-    void dmToRho(std::vector<TK*> pexsi_DM);
+    void dmToRho(std::vector<TK*> pexsi_DM, std::vector<TK*> pexsi_EDM);
+    std::vector<TK*> pexsi_EDM;
 #endif
 
   protected:

@@ -620,7 +620,7 @@ class Input
     int pexsi_method = 1;
     int pexsi_nproc_pole = 1;
     // double pexsi_spin = 2;
-    double pexsi_temp = 0.0001;
+    double pexsi_temp = 0.015;
     double pexsi_gap = 0;
     double pexsi_delta_e = 20.0;
     double pexsi_mu_lower = -10;

@@ -560,7 +560,7 @@ TEST_F(InputConvTest, PEXSI)
 	EXPECT_FALSE(hsolver::DiagoPexsi<double>::pexsi_trans);
 	EXPECT_EQ(hsolver::DiagoPexsi<double>::pexsi_method, 1);
 	EXPECT_EQ(hsolver::DiagoPexsi<double>::pexsi_nproc_pole, 1);
-	EXPECT_DOUBLE_EQ(hsolver::DiagoPexsi<double>::pexsi_temp, 1e-4);
+	EXPECT_DOUBLE_EQ(hsolver::DiagoPexsi<double>::pexsi_temp, 0.015);
 	EXPECT_DOUBLE_EQ(hsolver::DiagoPexsi<double>::pexsi_gap, 0);
 	EXPECT_DOUBLE_EQ(hsolver::DiagoPexsi<double>::pexsi_delta_e, 20);
 	EXPECT_DOUBLE_EQ(hsolver::DiagoPexsi<double>::pexsi_mu_lower, -10);
@@ -577,7 +577,7 @@ TEST_F(InputConvTest, PEXSI)
 	EXPECT_FALSE(hsolver::DiagoPexsi<std::complex<double>>::pexsi_trans);
 	EXPECT_EQ(hsolver::DiagoPexsi<std::complex<double>>::pexsi_method, 1);
 	EXPECT_EQ(hsolver::DiagoPexsi<std::complex<double>>::pexsi_nproc_pole, 1);
-	EXPECT_DOUBLE_EQ(hsolver::DiagoPexsi<std::complex<double>>::pexsi_temp, 0.0001);
+	EXPECT_DOUBLE_EQ(hsolver::DiagoPexsi<std::complex<double>>::pexsi_temp, 0.015);
 	EXPECT_DOUBLE_EQ(hsolver::DiagoPexsi<std::complex<double>>::pexsi_gap, 0);
 	EXPECT_DOUBLE_EQ(hsolver::DiagoPexsi<std::complex<double>>::pexsi_delta_e, 20);
 	EXPECT_DOUBLE_EQ(hsolver::DiagoPexsi<std::complex<double>>::pexsi_mu_lower, -10);

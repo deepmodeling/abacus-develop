@@ -1,4 +1,5 @@
 #include "elecstate_lcao.h"
+#include <vector>
 
 #include "cal_dm.h"
 #include "module_base/timer.h"
@@ -166,7 +167,7 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
     this->calEBand();
 
     if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "scalapack_gvx" || GlobalV::KS_SOLVER == "lapack"
-        || GlobalV::KS_SOLVER == "cusolver" || GlobalV::KS_SOLVER == "cg_in_lcao" || GlobalV::KS_SOLVER == "pexsi")
+        || GlobalV::KS_SOLVER == "cusolver" || GlobalV::KS_SOLVER == "cg_in_lcao")
     {
         ModuleBase::timer::tick("ElecStateLCAO", "cal_dm_2d");
 
@@ -252,7 +253,7 @@ double ElecStateLCAO<std::complex<double>>::get_spin_constrain_energy()
 
 #ifdef __PEXSI
 template<>
-void ElecStateLCAO<double>::dmToRho(std::vector<double*> pexsi_DM)
+void ElecStateLCAO<double>::dmToRho(std::vector<double*> pexsi_DM, std::vector<double*> pexsi_EDM)
 {
     ModuleBase::timer::tick("ElecStateLCAO", "dmToRho");
 
@@ -267,9 +268,11 @@ void ElecStateLCAO<double>::dmToRho(std::vector<double*> pexsi_DM)
     }
 
     auto DM = this->get_DM();
+    this->pexsi_EDM.clear();
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
         this->DM->set_DMK_pointer(is, pexsi_DM[is]);
+        this->pexsi_EDM.push_back(pexsi_EDM[is]);
     }
     DM->cal_DMR();
     
@@ -299,7 +302,7 @@ void ElecStateLCAO<double>::dmToRho(std::vector<double*> pexsi_DM)
 }
 
 template<>
-void ElecStateLCAO<std::complex<double>>::dmToRho(std::vector<std::complex<double>*> DM)
+void ElecStateLCAO<std::complex<double>>::dmToRho(std::vector<std::complex<double>*> pexsi_DM, std::vector<std::complex<double>*> pexsi_EDM)
 {
     ModuleBase::WARNING_QUIT("ElecStateLCAO", "pexsi is not completed for multi-k case");
 }
