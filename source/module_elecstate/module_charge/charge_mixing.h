@@ -132,7 +132,7 @@ class Charge_Mixing
      * @brief charge mixing for reciprocal space
      * @param chr pointer of Charge object
      */
-    void mix_rho_recip_new(Charge* chr);
+    void mix_rho_recip(Charge* chr);
 
     /**
      * @brief charge mixing for real space

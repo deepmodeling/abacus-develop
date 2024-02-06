@@ -264,7 +264,7 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
     return drho;
 }
 
-void Charge_Mixing::mix_rho_recip_new(Charge* chr)
+void Charge_Mixing::mix_rho_recip(Charge* chr)
 {
     std::complex<double>* rhog_in = nullptr;
     std::complex<double>* rhog_out = nullptr;
@@ -1027,7 +1027,7 @@ void Charge_Mixing::mix_rho(Charge* chr)
     // --------------------Mixing Body--------------------
     if (GlobalV::SCF_THR_TYPE == 1)
     {
-        mix_rho_recip_new(chr);
+        mix_rho_recip(chr);
     }
     else if (GlobalV::SCF_THR_TYPE == 2)
     {
