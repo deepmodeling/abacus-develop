@@ -64,6 +64,7 @@ std::vector<int> elecstate::H_TDDFT_pw::ttype;
 int elecstate::H_TDDFT_pw::tstart;
 int elecstate::H_TDDFT_pw::tend;
 double elecstate::H_TDDFT_pw::dt;
+double elecstate::H_TDDFT_pw::dt_int;
 
 // space domain parameters
 
