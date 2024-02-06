@@ -150,6 +150,7 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
         Gint_inout inout1(this->loc->DM_R, this->charge->kin_r, Gint_Tools::job_type::tau);
         this->uhm->GK.cal_gint(&inout1);
     }
+
     this->charge->renormalize_rho();
 
     ModuleBase::timer::tick("ElecStateLCAO", "psiToRho");
@@ -175,7 +176,6 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
         //cal_dm(this->loc->ParaV, this->wg, psi, this->loc->dm_gamma);
         elecstate::cal_dm_psi(this->DM->get_paraV_pointer(), this->wg, psi, *(this->DM));
         this->DM->cal_DMR();
-
         if (this->loc->out_dm) // keep interface for old Output_DM until new one is ready
         {
             this->loc->dm_gamma.resize(GlobalV::NSPIN);
@@ -185,7 +185,6 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
             }
         }
         ModuleBase::timer::tick("ElecStateLCAO", "cal_dm_2d");
-
         for (int ik = 0; ik < psi.get_nk(); ++ik)
         {
             // for gamma_only case, no convertion occured, just for print.
