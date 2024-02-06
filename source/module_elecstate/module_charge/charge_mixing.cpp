@@ -1146,7 +1146,7 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
         return;
     // consider a resize for mixing_angle
     int resize_tmp = 1;
-    if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0) resize_tmp = 2;
+    if (GlobalV::NSPIN == 4 && this->mixing_angle > 0) resize_tmp = 2;
     //
     std::vector<std::complex<double>> drhog(this->rhopw->npw * GlobalV::NSPIN / resize_tmp);
     std::vector<double> drhor_filter(this->rhopw->nrxx * GlobalV::NSPIN / resize_tmp);
@@ -1163,21 +1163,21 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
 
         if (is >= 1)
         {
-            if (GlobalV::MIXING_GG0_MAG <= 0.0001 || GlobalV::MIXING_BETA_MAG <= 0.1)
+            if (this->mixing_gg0_mag <= 0.0001 || this->mixing_beta_mag <= 0.1)
             {
 #ifdef __DEBUG
                 assert(is == 1); // make sure break works
 #endif
                 double is_mag = GlobalV::NSPIN - 1;
-                if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0) is_mag = 1;
+                if (GlobalV::NSPIN == 4 && this->mixing_angle > 0) is_mag = 1;
                 for (int ig = 0; ig < this->rhopw->npw * is_mag; ig++)
                 {
                     drhog[is * this->rhopw->npw + ig] = 0;
                 }
                 break;
             }
-            fac = GlobalV::MIXING_GG0_MAG;
-            amin = GlobalV::MIXING_BETA_MAG;
+            fac = this->mixing_gg0_mag;
+            amin = this->mixing_beta_mag;
         }
         else
         {
@@ -1198,7 +1198,7 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
             //    drhog[is * this->rhopw->npw + ig] *= 0;
             //    continue;
             //}
-            double filter_g = std::max(gg / (gg + gg0), GlobalV::MIXING_GG0_MIN / amin);
+            double filter_g = std::max(gg / (gg + gg0), this->mixing_gg0_min / amin);
             drhog[is * this->rhopw->npw + ig] *= (1 - filter_g);
         }
     }
