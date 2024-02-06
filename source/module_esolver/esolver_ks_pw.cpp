@@ -1118,9 +1118,9 @@ void ESolver_KS_PW<T, Device>::postprocess()
         // output overlap
         if (winput::out_spillage <= 2)
         {
-            Numerical_Basis numerical_basis;
             if(INPUT.bessel_nao_rcuts.size() == 1)
             {
+                Numerical_Basis numerical_basis;
                 numerical_basis.output_overlap(this->psi[0], this->sf, this->kv, this->pw_wfc);
             }
             else
@@ -1129,6 +1129,7 @@ void ESolver_KS_PW<T, Device>::postprocess()
                 {
                     if(GlobalV::MY_RANK == 0) {std::cout << "update value: bessel_nao_rcut <- " << std::fixed << INPUT.bessel_nao_rcuts[i] << " a.u." << std::endl;}
                     INPUT.bessel_nao_rcut = INPUT.bessel_nao_rcuts[i];
+                    Numerical_Basis numerical_basis;
                     numerical_basis.output_overlap(this->psi[0], this->sf, this->kv, this->pw_wfc);
                     std::string old_fname_header = winput::spillage_outdir + "/" + "orb_matrix.";
                     std::string new_fname_header = winput::spillage_outdir + "/" + "orb_matrix_rcut" + std::to_string(int(INPUT.bessel_nao_rcut)) + "deriv";

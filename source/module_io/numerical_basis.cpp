@@ -139,12 +139,11 @@ void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, 
         }
         Parallel_Reduce::reduce_pool(overlap_V.c, overlap_V.nr * overlap_V.nc);		// Peize Lin add 2020.04.23
     #endif
+        if(ofs.good()) this->output_info(ofs, bessel_basis, kv); else assert(false);
 
-        this->output_info(ofs, bessel_basis, kv);
+        if(ofs.good()) this->output_k(ofs, kv); else assert(false);
 
-        this->output_k(ofs, kv);
-
-        this->output_overlap_Q(ofs, overlap_Q, kv);
+        if(ofs.good()) this->output_overlap_Q(ofs, overlap_Q, kv); else assert(false);
 
         if (winput::out_spillage == 2)
         {
@@ -649,6 +648,7 @@ void Numerical_Basis::output_overlap_Q(std::ofstream& ofs,
     if (GlobalV::MY_RANK==0)
     {
         ofs << "\n<OVERLAP_Q>";
+        ofs.flush();
     }
 
     // (4)
@@ -694,8 +694,9 @@ void Numerical_Basis::output_overlap_Q(std::ofstream& ofs,
             const int dim = Qtmp.getSize();
             for (int i=0; i<dim; i++)
             {
-                if ( count%4==0 ) ofs << "\n";
+                if ( count%4==0 ) ofs << std::endl;
                 ofs << " " << Qtmp.ptr[i].real() << " " << Qtmp.ptr[i].imag();
+                ofs.flush();
                 ++count;
             }
             // end data writing.
@@ -742,11 +743,11 @@ void Numerical_Basis::output_overlap_Sq(const std::string& name,
                     const int size = overlap_Sq[ik_now].getSize();
                     for (int i=0; i<size; i++)
                     {
-                        if (count%2==0) ofs << "\n";
+                        if (count%2==0) ofs << std::endl;
                         ofs << " " << overlap_Sq[ik_now].ptr[i].real() << " " << overlap_Sq[ik_now].ptr[i].imag();
                         ++count;
                     }
-
+                    ofs.flush();
                     ofs.close();
                 }
     #ifdef __MPI
