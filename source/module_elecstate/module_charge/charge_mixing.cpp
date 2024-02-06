@@ -1097,7 +1097,7 @@ void Charge_Mixing::Kerker_screen_recip(std::complex<double>* drhog)
 
     // consider a resize for mixing_angle
     int resize_tmp = 1;
-    if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0) resize_tmp = 2;
+    if (GlobalV::NSPIN == 4 && this->mixing_angle > 0) resize_tmp = 2;
 
     // implement Kerker for density and magnetization separately
     for (int is = 0; is < GlobalV::NSPIN / resize_tmp; ++is)
@@ -1105,7 +1105,7 @@ void Charge_Mixing::Kerker_screen_recip(std::complex<double>* drhog)
         // new mixing method only support nspin=2 not nspin=4
         if (is >= 1)
         {
-            if (GlobalV::MIXING_GG0_MAG <= 0.0001 || GlobalV::MIXING_BETA_MAG <= 0.1)
+            if (this->mixing_gg0_mag <= 0.0001 || this->mixing_beta_mag <= 0.1)
             {
 #ifdef __DEBUG
                 assert(is == 1); // make sure break works
@@ -1117,8 +1117,8 @@ void Charge_Mixing::Kerker_screen_recip(std::complex<double>* drhog)
                 //}
                 break;
             }
-            fac = GlobalV::MIXING_GG0_MAG;
-            amin = GlobalV::MIXING_BETA_MAG;
+            fac = this->mixing_gg0_mag;
+            amin = this->mixing_beta_mag;
         }
         else
         {
@@ -1133,7 +1133,7 @@ void Charge_Mixing::Kerker_screen_recip(std::complex<double>* drhog)
         for (int ig = 0; ig < this->rhopw->npw; ++ig)
         {
             double gg = this->rhopw->gg[ig];
-            double filter_g = std::max(gg / (gg + gg0), GlobalV::MIXING_GG0_MIN / amin);
+            double filter_g = std::max(gg / (gg + gg0), this->mixing_gg0_min / amin);
             drhog[is * this->rhopw->npw + ig] *= filter_g;
         }
     }
