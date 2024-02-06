@@ -309,6 +309,7 @@ TEST_F(InputTest, Default)
         EXPECT_FALSE(INPUT.dft_plus_u);
         EXPECT_FALSE(INPUT.yukawa_potential);
         EXPECT_DOUBLE_EQ(INPUT.yukawa_lambda,-1.0);
+		EXPECT_EQ(INPUT.onsite_radius, 5.0);
         EXPECT_EQ(INPUT.omc,0);
         EXPECT_FALSE(INPUT.dft_plus_dmft);
         EXPECT_FALSE(INPUT.rpa);
@@ -673,6 +674,7 @@ TEST_F(InputTest, Read)
         EXPECT_FALSE(INPUT.dft_plus_u);
         EXPECT_FALSE(INPUT.yukawa_potential);
         EXPECT_DOUBLE_EQ(INPUT.yukawa_lambda,-1.0);
+		EXPECT_EQ(INPUT.onsite_radius, 5.0);
         EXPECT_EQ(INPUT.omc,0);
         EXPECT_FALSE(INPUT.dft_plus_dmft);
         EXPECT_FALSE(INPUT.rpa);

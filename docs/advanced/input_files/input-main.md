@@ -273,6 +273,7 @@
     - [dft\_plus\_u](#dft_plus_u)
     - [orbital\_corr](#orbital_corr)
     - [hubbard\_u](#hubbard_u)
+    - [onsite\_radius](#onsite_radius)
     - [yukawa\_potential](#yukawa_potential)
     - [yukawa\_lambda](#yukawa_lambda)
     - [omc](#omc)
@@ -2575,6 +2576,14 @@ These variables are used to control DFT+U correlated parameters
 > Note: Since only the simplified scheme by Duradev is implemented, the 'U' here is actually U-effective, which is given by Hubbard U minus Hund J.
 
 - **Default**: 0.0
+
+### onsite_radius
+
+- **Type**: Real
+- **Availability**: `dft_plus_u` is set to `true`
+- **Description**: Specified the radius of onsite projections for calculating the onsite orbitals occupations for DFT+U algorithm.
+- **Unit**: bohr
+- **Default**: 5.0
 
 ### yukawa_potential
 

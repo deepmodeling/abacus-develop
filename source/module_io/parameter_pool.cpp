@@ -1464,6 +1464,10 @@ void input_parameters_set(std::map<std::string, InputParameter> input_parameters
             }
         }
     }
+    else if (input_parameters.count("onsite_radius") != 0)
+    {
+        INPUT.onsite_radius = *static_cast<double*>(input_parameters["onsite_radius"].get());
+    }
     else if (input_parameters.count("omc") != 0)
     {
         INPUT.omc = *static_cast<int*>(input_parameters["omc"].get());
