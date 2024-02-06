@@ -269,6 +269,78 @@ TEST_F(ChargeMixingTest, InitMixingTest)
     EXPECT_EQ(CMtest.rho_mdata.length, 2 * pw_basis.nrxx);
 }
 
+TEST_F(ChargeMixingTest, InnerDotRealTest)
+{
+    Charge_Mixing CMtest;
+    // non mixing angle case
+    CMtest.set_mixing(GlobalV::MIXING_MODE,
+                    GlobalV::MIXING_BETA,
+                    GlobalV::MIXING_NDIM,
+                    GlobalV::MIXING_GG0,
+                    GlobalV::MIXING_TAU,
+                    GlobalV::MIXING_BETA_MAG,
+                    GlobalV::MIXING_GG0_MAG,
+                    GlobalV::MIXING_GG0_MIN,
+                    GlobalV::MIXING_ANGLE,
+                    GlobalV::MIXING_DMR);
+    CMtest.set_rhopw(&pw_basis, &pw_basis);
+    GlobalV::NSPIN = 4;
+
+    // a simple sum for inner product
+    std::vector<double> drho1(pw_basis.nrxx * GlobalV::NSPIN);
+    std::vector<double> drho2(pw_basis.nrxx * GlobalV::NSPIN);
+    for (int i = 0; i < pw_basis.nrxx * GlobalV::NSPIN; ++i)
+    {
+        drho1[i] = 1.0;
+        drho2[i] = double(i);
+    }
+    double inner = CMtest.inner_product_real(drho1.data(), drho2.data());
+    EXPECT_NEAR(inner, 0.5 * pw_basis.nrxx * GlobalV::NSPIN  * (pw_basis.nrxx * GlobalV::NSPIN - 1), 1e-8);
+
+    // mixing angle case
+    GlobalV::MIXING_ANGLE = 1.0;
+    CMtest.set_mixing(GlobalV::MIXING_MODE,
+                    GlobalV::MIXING_BETA,
+                    GlobalV::MIXING_NDIM,
+                    GlobalV::MIXING_GG0,
+                    GlobalV::MIXING_TAU,
+                    GlobalV::MIXING_BETA_MAG,
+                    GlobalV::MIXING_GG0_MAG,
+                    GlobalV::MIXING_GG0_MIN,
+                    GlobalV::MIXING_ANGLE,
+                    GlobalV::MIXING_DMR);
+    GlobalV::NSPIN = 4;
+
+    // a simple sum for inner product
+    drho1.resize(pw_basis.nrxx * 2);
+    drho2.resize(pw_basis.nrxx * 2);
+    for (int i = 0; i < pw_basis.nrxx * 2; ++i)
+    {
+        drho1[i] = 1.0;
+        drho2[i] = double(i);
+    }
+    inner = CMtest.inner_product_real(drho1.data(), drho2.data());
+    EXPECT_NEAR(inner, 0.5 * pw_basis.nrxx * 2  * (pw_basis.nrxx * 2 - 1), 1e-8);
+}
+
+TEST_F(ChargeMixingTest, InnerDotRecipSimpleTest)
+{
+    Charge_Mixing CMtest;
+    CMtest.set_rhopw(&pw_basis, &pw_basis);
+    GlobalV::NSPIN = 1;
+
+    // a simple sum for inner product
+    std::vector<std::complex<double>> drhog1(pw_basis.npw);
+    std::vector<std::complex<double>> drhog2(pw_basis.npw);
+    for (int i = 0; i < pw_basis.npw; ++i)
+    {
+        drhog1[i] = 1.0;
+        drhog2[i] = double(i);
+    }
+    double inner = CMtest.inner_product_recip_simple(drhog1.data(), drhog2.data());
+    EXPECT_NEAR(inner, 0.5 * pw_basis.npw * (pw_basis.npw - 1), 1e-8);
+}
+
 TEST_F(ChargeMixingTest, KerkerScreenRecipTest)
 {
     Charge_Mixing CMtest;
