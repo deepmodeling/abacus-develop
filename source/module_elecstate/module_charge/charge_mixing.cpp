@@ -230,7 +230,7 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
         }
 
         ModuleBase::GlobalFunc::NOTE("Calculate the norm of the Residual std::vector: < R[rho] | R[rho_save] >");
-        drho = this->inner_product_recip(drhog.data(), drhog.data());
+        drho = this->inner_product_recip_rho(drhog.data(), drhog.data());
     }
     else
     {
@@ -1238,19 +1238,144 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
     }
 }
 
-double Charge_Mixing::inner_product_recip(std::complex<double>* rho1, std::complex<double>* rho2)
+double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::complex<double>* rho2)
 {
-    std::complex<double>** rho1_2d = new std::complex<double>*[GlobalV::NSPIN];
-    std::complex<double>** rho2_2d = new std::complex<double>*[GlobalV::NSPIN];
+    ModuleBase::TITLE("Charge_Mixing", "inner_product_recip_rho");
+    ModuleBase::timer::tick("Charge_Mixing", "inner_product_recip_rho");
+
+    std::complex<double>** rhog1 = new std::complex<double>*[GlobalV::NSPIN];
+    std::complex<double>** rhog2 = new std::complex<double>*[GlobalV::NSPIN];
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        rho1_2d[is] = rho1 + is * this->rhopw->npw;
-        rho2_2d[is] = rho2 + is * this->rhopw->npw;
+        rhog1[is] = rho1 + is * this->rhopw->npw;
+        rhog2[is] = rho2 + is * this->rhopw->npw;
     }
-    double result = this->rhog_dot_product(rho1_2d, rho2_2d);
-    delete[] rho1_2d;
-    delete[] rho2_2d;
-    return result;
+
+    static const double fac = ModuleBase::e2 * ModuleBase::FOUR_PI / GlobalC::ucell.tpiba2;
+    static const double fac2 = ModuleBase::e2 * ModuleBase::FOUR_PI / (ModuleBase::TWO_PI * ModuleBase::TWO_PI);
+
+    double sum = 0.0;
+
+    auto part_of_noncolin = [&]()
+    {
+        double sum = 0.0;
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+ : sum)
+#endif
+        for (int ig = 0; ig < this->rhopw->npw; ++ig)
+        {
+            if (this->rhopw->gg[ig] < 1e-8)
+                continue;
+            sum += (conj(rhog1[0][ig]) * rhog2[0][ig]).real() / this->rhopw->gg[ig];
+        }
+        sum *= fac;
+        return sum;
+    };
+
+    switch (GlobalV::NSPIN)
+    {
+    case 1:
+        sum += part_of_noncolin();
+        break;
+
+    case 2: {
+        // (1) First part of density error.
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+ : sum)
+#endif
+        for (int ig = 0; ig < this->rhopw->npw; ++ig)
+        {
+            if (this->rhopw->gg[ig] < 1e-8)
+                continue;
+            sum += (conj(rhog1[0][ig] + rhog1[1][ig]) * (rhog2[0][ig] + rhog2[1][ig])).real() / this->rhopw->gg[ig];
+        }
+        sum *= fac;
+
+        if (GlobalV::GAMMA_ONLY_PW)
+        {
+            sum *= 2.0;
+        }
+
+        // (2) Second part of density error.
+        // including |G|=0 term.
+        double sum2 = 0.0;
+
+        sum2 += fac2 * (conj(rhog1[0][0] - rhog1[1][0]) * (rhog2[0][0] - rhog2[1][0])).real();
+
+        double mag = 0.0;
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+ : mag)
+#endif
+        for (int ig = 0; ig < this->rhopw->npw; ig++)
+        {
+            mag += (conj(rhog1[0][ig] - rhog1[1][ig]) * (rhog2[0][ig] - rhog2[1][ig])).real();
+        }
+        mag *= fac2;
+
+        // if(GlobalV::GAMMA_ONLY_PW);
+        if (GlobalV::GAMMA_ONLY_PW) // Peize Lin delete ; 2020.01.31
+        {
+            mag *= 2.0;
+        }
+
+        // std::cout << " sum=" << sum << " mag=" << mag << std::endl;
+        sum2 += mag;
+        sum += sum2;
+        break;
+    }
+    case 4:
+        // non-collinear spin, added by zhengdy
+        if (!GlobalV::DOMAG && !GlobalV::DOMAG_Z)
+            sum += part_of_noncolin();
+        else
+        {
+            // another part with magnetization
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+ : sum)
+#endif
+            for (int ig = 0; ig < this->rhopw->npw; ig++)
+            {
+                if (ig == this->rhopw->ig_gge0)
+                    continue;
+                sum += (conj(rhog1[0][ig]) * rhog2[0][ig]).real() / this->rhopw->gg[ig];
+            }
+            sum *= fac;
+            const int ig0 = this->rhopw->ig_gge0;
+            if (ig0 > 0)
+            {
+                sum += fac2
+                       * ((conj(rhog1[1][ig0]) * rhog2[1][ig0]).real() + (conj(rhog1[2][ig0]) * rhog2[2][ig0]).real()
+                          + (conj(rhog1[3][ig0]) * rhog2[3][ig0]).real());
+            }
+            double fac3 = fac2;
+            if (GlobalV::GAMMA_ONLY_PW)
+            {
+                fac3 *= 2.0;
+            }
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+ : sum)
+#endif
+            for (int ig = 0; ig < this->rhopw->npw; ig++)
+            {
+                if (ig == ig0)
+                    continue;
+                sum += fac3
+                       * ((conj(rhog1[1][ig]) * rhog2[1][ig]).real() + (conj(rhog1[2][ig]) * rhog2[2][ig]).real()
+                          + (conj(rhog1[3][ig]) * rhog2[3][ig]).real());
+            }
+        }
+        break;
+    }
+#ifdef __MPI
+    Parallel_Reduce::reduce_pool(sum);
+#endif
+    ModuleBase::timer::tick("Charge_Mixing", "inner_product_recip_rho");
+
+    sum *= GlobalC::ucell.omega * 0.5;
+
+    delete[] rhog1;
+    delete[] rhog2;
+    return sum;
 }
 
 // a simple inner product, now is not used anywhere. For test only.
@@ -1463,136 +1588,6 @@ double Charge_Mixing::inner_product_real(double* rho1, double* rho2)
     Parallel_Reduce::reduce_pool(rnorm);
 #endif
     return rnorm;
-}
-
-double Charge_Mixing::rhog_dot_product(const std::complex<double>* const* const rhog1,
-                                       const std::complex<double>* const* const rhog2) const
-{
-    ModuleBase::TITLE("Charge_Mixing", "rhog_dot_product");
-    ModuleBase::timer::tick("Charge_Mixing", "rhog_dot_product");
-    static const double fac = ModuleBase::e2 * ModuleBase::FOUR_PI / GlobalC::ucell.tpiba2;
-    static const double fac2 = ModuleBase::e2 * ModuleBase::FOUR_PI / (ModuleBase::TWO_PI * ModuleBase::TWO_PI);
-
-    double sum = 0.0;
-
-    auto part_of_noncolin = [&]() // Peize Lin change goto to function at 2020.01.31
-    {
-        double sum = 0.0;
-#ifdef _OPENMP
-#pragma omp parallel for reduction(+ : sum)
-#endif
-        for (int ig = 0; ig < this->rhopw->npw; ++ig)
-        {
-            if (this->rhopw->gg[ig] < 1e-8)
-                continue;
-            sum += (conj(rhog1[0][ig]) * rhog2[0][ig]).real() / this->rhopw->gg[ig];
-        }
-        sum *= fac;
-        return sum;
-    };
-
-    switch (GlobalV::NSPIN)
-    {
-    case 1:
-        sum += part_of_noncolin();
-        break;
-
-    case 2: {
-        // (1) First part of density error.
-#ifdef _OPENMP
-#pragma omp parallel for reduction(+ : sum)
-#endif
-        for (int ig = 0; ig < this->rhopw->npw; ++ig)
-        {
-            if (this->rhopw->gg[ig] < 1e-8)
-                continue;
-            sum += (conj(rhog1[0][ig] + rhog1[1][ig]) * (rhog2[0][ig] + rhog2[1][ig])).real() / this->rhopw->gg[ig];
-        }
-        sum *= fac;
-
-        if (GlobalV::GAMMA_ONLY_PW)
-        {
-            sum *= 2.0;
-        }
-
-        // (2) Second part of density error.
-        // including |G|=0 term.
-        double sum2 = 0.0;
-
-        sum2 += fac2 * (conj(rhog1[0][0] - rhog1[1][0]) * (rhog2[0][0] - rhog2[1][0])).real();
-
-        double mag = 0.0;
-#ifdef _OPENMP
-#pragma omp parallel for reduction(+ : mag)
-#endif
-        for (int ig = 0; ig < this->rhopw->npw; ig++)
-        {
-            mag += (conj(rhog1[0][ig] - rhog1[1][ig]) * (rhog2[0][ig] - rhog2[1][ig])).real();
-        }
-        mag *= fac2;
-
-        // if(GlobalV::GAMMA_ONLY_PW);
-        if (GlobalV::GAMMA_ONLY_PW) // Peize Lin delete ; 2020.01.31
-        {
-            mag *= 2.0;
-        }
-
-        // std::cout << " sum=" << sum << " mag=" << mag << std::endl;
-        sum2 += mag;
-        sum += sum2;
-        break;
-    }
-    case 4:
-        // non-collinear spin, added by zhengdy
-        if (!GlobalV::DOMAG && !GlobalV::DOMAG_Z)
-            sum += part_of_noncolin();
-        else
-        {
-            // another part with magnetization
-#ifdef _OPENMP
-#pragma omp parallel for reduction(+ : sum)
-#endif
-            for (int ig = 0; ig < this->rhopw->npw; ig++)
-            {
-                if (ig == this->rhopw->ig_gge0)
-                    continue;
-                sum += (conj(rhog1[0][ig]) * rhog2[0][ig]).real() / this->rhopw->gg[ig];
-            }
-            sum *= fac;
-            const int ig0 = this->rhopw->ig_gge0;
-            if (ig0 > 0)
-            {
-                sum += fac2
-                       * ((conj(rhog1[1][ig0]) * rhog2[1][ig0]).real() + (conj(rhog1[2][ig0]) * rhog2[2][ig0]).real()
-                          + (conj(rhog1[3][ig0]) * rhog2[3][ig0]).real());
-            }
-            double fac3 = fac2;
-            if (GlobalV::GAMMA_ONLY_PW)
-            {
-                fac3 *= 2.0;
-            }
-#ifdef _OPENMP
-#pragma omp parallel for reduction(+ : sum)
-#endif
-            for (int ig = 0; ig < this->rhopw->npw; ig++)
-            {
-                if (ig == ig0)
-                    continue;
-                sum += fac3
-                       * ((conj(rhog1[1][ig]) * rhog2[1][ig]).real() + (conj(rhog1[2][ig]) * rhog2[2][ig]).real()
-                          + (conj(rhog1[3][ig]) * rhog2[3][ig]).real());
-            }
-        }
-        break;
-    }
-#ifdef __MPI
-    Parallel_Reduce::reduce_pool(sum);
-#endif
-    ModuleBase::timer::tick("Charge_Mixing", "rhog_dot_product");
-
-    sum *= GlobalC::ucell.omega * 0.5;
-
-    return sum;
 }
 
 void Charge_Mixing::divide_data(std::complex<double>* data_d,
