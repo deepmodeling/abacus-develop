@@ -38,7 +38,7 @@ if(ENABLE_LCAO)
     endif()
   endif()
 
-  if(USE_PEXSI)
+  if(ENABLE_PEXSI)
   list(APPEND objects
       diago_pexsi.cpp
     )

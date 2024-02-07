@@ -41,7 +41,7 @@ find_library(ParMETIS_LIBRARY
 )
 
 find_library(SuperLU_DIST_LIBRARY
-    NAMES libsuperlu_dist.a
+    NAMES superlu_dist
     HINTS ${SuperLU_DIST_DIR}
     PATH_SUFFIXES "lib"
 )

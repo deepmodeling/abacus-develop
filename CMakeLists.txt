@@ -36,7 +36,7 @@ option(COMMIT_INFO "Print commit information in log" ON)
 option(ENABLE_FFT_TWO_CENTER "Enable FFT-based two-center integral method." ON)
 option(ENABLE_GOOGLEBENCH "Enable GOOGLE-benchmark usage." OFF)
 option(ENABLE_RAPIDJSON "Enable rapid-json usage." OFF)
-option(USE_PEXSI "Enable support for PEXSI." OFF)
+option(ENABLE_PEXSI "Enable support for PEXSI." OFF)
 
 
 
@@ -210,7 +210,7 @@ if(ENABLE_LCAO)
       add_compile_definitions(USE_NEW_TWO_CENTER)
   endif()
   
-  if(USE_PEXSI)
+  if(ENABLE_PEXSI)
     find_package(PEXSI REQUIRED)
     target_link_libraries(${ABACUS_BIN_NAME} ${PEXSI_LIBRARY} ${SuperLU_DIST_LIBRARY} ${ParMETIS_LIBRARY} ${METIS_LIBRARY} pexsi)
     include_directories(${PEXSI_INCLUDE_DIR} ${ParMETIS_INCLUDE_DIR})
