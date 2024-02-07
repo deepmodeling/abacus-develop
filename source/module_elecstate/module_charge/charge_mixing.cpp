@@ -264,7 +264,7 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
     return drho;
 }
 
-void Charge_Mixing::mix_rho_recip_new(Charge* chr)
+void Charge_Mixing::mix_rho_recip(Charge* chr)
 {
     std::complex<double>* rhog_in = nullptr;
     std::complex<double>* rhog_out = nullptr;
@@ -291,7 +291,7 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
     {
         rhog_in = rhogs_in;
         rhog_out = rhogs_out;
-        auto screen = std::bind(&Charge_Mixing::Kerker_screen_recip_new, this, std::placeholders::_1);
+        auto screen = std::bind(&Charge_Mixing::Kerker_screen_recip, this, std::placeholders::_1);
         this->mixing->push_data(this->rho_mdata, rhog_in, rhog_out, screen, true);
         this->mixing->cal_coef(this->rho_mdata, inner_product);
         this->mixing->mix_data(this->rho_mdata, rhog_out);
@@ -322,7 +322,7 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
         rhog_in = rhog_mag_save;
         rhog_out = rhog_mag;
         //
-        auto screen = std::bind(&Charge_Mixing::Kerker_screen_recip_new, this, std::placeholders::_1);
+        auto screen = std::bind(&Charge_Mixing::Kerker_screen_recip, this, std::placeholders::_1);
         auto twobeta_mix
             = [this, npw](std::complex<double>* out, const std::complex<double>* in, const std::complex<double>* sres) {
 #ifdef _OPENMP
@@ -373,7 +373,7 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
         rhog_in = rhogs_in;
         rhog_out = rhogs_out;
         const int npw = this->rhopw->npw;
-        auto screen = std::bind(&Charge_Mixing::Kerker_screen_recip_new, this, std::placeholders::_1); // use old one
+        auto screen = std::bind(&Charge_Mixing::Kerker_screen_recip, this, std::placeholders::_1); // use old one
         auto twobeta_mix
             = [this, npw](std::complex<double>* out, const std::complex<double>* in, const std::complex<double>* sres) {
 #ifdef _OPENMP
@@ -437,7 +437,7 @@ void Charge_Mixing::mix_rho_recip_new(Charge* chr)
         //
         rhog_in = rhog_magabs_save;
         rhog_out = rhog_magabs;
-        auto screen = std::bind(&Charge_Mixing::Kerker_screen_recip_new, this, std::placeholders::_1); // use old one
+        auto screen = std::bind(&Charge_Mixing::Kerker_screen_recip, this, std::placeholders::_1); // use old one
         auto twobeta_mix
             = [this, npw](std::complex<double>* out, const std::complex<double>* in, const std::complex<double>* sres) {
 #ifdef _OPENMP
@@ -1027,7 +1027,7 @@ void Charge_Mixing::mix_rho(Charge* chr)
     // --------------------Mixing Body--------------------
     if (GlobalV::SCF_THR_TYPE == 1)
     {
-        mix_rho_recip_new(chr);
+        mix_rho_recip(chr);
     }
     else if (GlobalV::SCF_THR_TYPE == 2)
     {
@@ -1093,32 +1093,11 @@ void Charge_Mixing::Kerker_screen_recip(std::complex<double>* drhog)
 {
     if (this->mixing_gg0 <= 0.0 || this->mixing_beta <= 0.1)
         return;
-    const double fac = this->mixing_gg0;
-    const double gg0 = std::pow(fac * 0.529177 / GlobalC::ucell.tpiba, 2);
-#ifdef _OPENMP
-#pragma omp parallel for collapse(2) schedule(static, 512)
-#endif
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
-    {
-        for (int ig = 0; ig < this->rhopw->npw; ++ig)
-        {
-            double gg = this->rhopw->gg[ig];
-            double filter_g = std::max(gg / (gg + gg0), GlobalV::MIXING_GG0_MIN / this->mixing_beta);
-            drhog[is * this->rhopw->npw + ig] *= filter_g;
-        }
-    }
-    return;
-}
-
-void Charge_Mixing::Kerker_screen_recip_new(std::complex<double>* drhog)
-{
-    if (this->mixing_gg0 <= 0.0 || this->mixing_beta <= 0.1)
-        return;
     double fac, gg0, amin;
 
     // consider a resize for mixing_angle
     int resize_tmp = 1;
-    if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0) resize_tmp = 2;
+    if (GlobalV::NSPIN == 4 && this->mixing_angle > 0) resize_tmp = 2;
 
     // implement Kerker for density and magnetization separately
     for (int is = 0; is < GlobalV::NSPIN / resize_tmp; ++is)
@@ -1126,7 +1105,7 @@ void Charge_Mixing::Kerker_screen_recip_new(std::complex<double>* drhog)
         // new mixing method only support nspin=2 not nspin=4
         if (is >= 1)
         {
-            if (GlobalV::MIXING_GG0_MAG <= 0.0001 || GlobalV::MIXING_BETA_MAG <= 0.1)
+            if (this->mixing_gg0_mag <= 0.0001 || this->mixing_beta_mag <= 0.1)
             {
 #ifdef __DEBUG
                 assert(is == 1); // make sure break works
@@ -1138,8 +1117,8 @@ void Charge_Mixing::Kerker_screen_recip_new(std::complex<double>* drhog)
                 //}
                 break;
             }
-            fac = GlobalV::MIXING_GG0_MAG;
-            amin = GlobalV::MIXING_BETA_MAG;
+            fac = this->mixing_gg0_mag;
+            amin = this->mixing_beta_mag;
         }
         else
         {
@@ -1154,7 +1133,7 @@ void Charge_Mixing::Kerker_screen_recip_new(std::complex<double>* drhog)
         for (int ig = 0; ig < this->rhopw->npw; ++ig)
         {
             double gg = this->rhopw->gg[ig];
-            double filter_g = std::max(gg / (gg + gg0), GlobalV::MIXING_GG0_MIN / amin);
+            double filter_g = std::max(gg / (gg + gg0), this->mixing_gg0_min / amin);
             drhog[is * this->rhopw->npw + ig] *= filter_g;
         }
     }
@@ -1167,7 +1146,7 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
         return;
     // consider a resize for mixing_angle
     int resize_tmp = 1;
-    if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0) resize_tmp = 2;
+    if (GlobalV::NSPIN == 4 && this->mixing_angle > 0) resize_tmp = 2;
     //
     std::vector<std::complex<double>> drhog(this->rhopw->npw * GlobalV::NSPIN / resize_tmp);
     std::vector<double> drhor_filter(this->rhopw->nrxx * GlobalV::NSPIN / resize_tmp);
@@ -1184,21 +1163,21 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
 
         if (is >= 1)
         {
-            if (GlobalV::MIXING_GG0_MAG <= 0.0001 || GlobalV::MIXING_BETA_MAG <= 0.1)
+            if (this->mixing_gg0_mag <= 0.0001 || this->mixing_beta_mag <= 0.1)
             {
 #ifdef __DEBUG
                 assert(is == 1); // make sure break works
 #endif
                 double is_mag = GlobalV::NSPIN - 1;
-                if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0) is_mag = 1;
+                if (GlobalV::NSPIN == 4 && this->mixing_angle > 0) is_mag = 1;
                 for (int ig = 0; ig < this->rhopw->npw * is_mag; ig++)
                 {
                     drhog[is * this->rhopw->npw + ig] = 0;
                 }
                 break;
             }
-            fac = GlobalV::MIXING_GG0_MAG;
-            amin = GlobalV::MIXING_BETA_MAG;
+            fac = this->mixing_gg0_mag;
+            amin = this->mixing_beta_mag;
         }
         else
         {
@@ -1219,7 +1198,7 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
             //    drhog[is * this->rhopw->npw + ig] *= 0;
             //    continue;
             //}
-            double filter_g = std::max(gg / (gg + gg0), GlobalV::MIXING_GG0_MIN / amin);
+            double filter_g = std::max(gg / (gg + gg0), this->mixing_gg0_min / amin);
             drhog[is * this->rhopw->npw + ig] *= (1 - filter_g);
         }
     }
@@ -1387,7 +1366,7 @@ double Charge_Mixing::inner_product_recip_simple(std::complex<double>* rho1, std
     double rnorm = 0.0;
     // consider a resize for mixing_angle
     int resize_tmp = 1;
-    if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0) resize_tmp = 2;
+    if (GlobalV::NSPIN == 4 && this->mixing_angle > 0) resize_tmp = 2;
 #ifdef _OPENMP
 #pragma omp parallel for reduction(+ : rnorm)
 #endif
@@ -1575,7 +1554,7 @@ double Charge_Mixing::inner_product_real(double* rho1, double* rho2)
     double rnorm = 0.0;
     // consider a resize for mixing_angle
     int resize_tmp = 1;
-    if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0) resize_tmp = 2;
+    if (GlobalV::NSPIN == 4 && this->mixing_angle > 0) resize_tmp = 2;
 
 #ifdef _OPENMP
 #pragma omp parallel for reduction(+ : rnorm)
