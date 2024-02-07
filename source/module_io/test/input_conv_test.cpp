@@ -548,7 +548,7 @@ TEST_F(InputConvTest, PEXSI)
 	std::string input_file = "./support/INPUT";
 	INPUT.Read(input_file);
 	Input_Conv::Convert();
-	EXPECT_EQ(pexsi::PEXSI_Solver::pexsi_npole, 54);
+	EXPECT_EQ(pexsi::PEXSI_Solver::pexsi_npole, 80);
 	EXPECT_TRUE(pexsi::PEXSI_Solver::pexsi_inertia);
 	EXPECT_EQ(pexsi::PEXSI_Solver::pexsi_nmax, 80);
 	EXPECT_TRUE(pexsi::PEXSI_Solver::pexsi_comm);

@@ -644,7 +644,7 @@ void Input::Default(void)
     //==========================================================
     // variables for PEXSI
     //==========================================================
-    pexsi_npole = 54;
+    pexsi_npole = 80;
     pexsi_inertia = true;
     pexsi_nmax = 80;
     // pexsi_symbolic = 1;

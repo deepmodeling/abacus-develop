@@ -124,7 +124,7 @@ class PEXSI_Solver
      */ 
     static double pexsi_elec_thr;
     /** 
-     * @brief  Stopping criterion for the zero threshold.
+     * @brief  If the absolute value of CCS matrix element is less than this value, it will be considered as zero.
      */ 
     static double pexsi_zero_thr;
 

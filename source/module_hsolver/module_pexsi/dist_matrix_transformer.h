@@ -2,7 +2,7 @@
 #define DISTMATRIXTRANSFORMER_H
 
 #include <mpi.h>
-
+#include <map>
 #include <vector>
 // transform a sparse matrix from block cyclic distribution (BCD) to Compressed Column Storage (CCS) distribution
 // they should have same MPI communicator

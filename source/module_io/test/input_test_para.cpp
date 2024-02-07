@@ -393,7 +393,7 @@ TEST_F(InputParaTest, Bcast)
     EXPECT_EQ(INPUT.qo_thr, 1e-6);
     EXPECT_EQ(INPUT.qo_basis, "hydrogen");
 
-    EXPECT_EQ(INPUT.pexsi_npole, 54);
+    EXPECT_EQ(INPUT.pexsi_npole, 80);
     EXPECT_TRUE(INPUT.pexsi_inertia);
     EXPECT_EQ(INPUT.pexsi_nmax, 80);
     EXPECT_TRUE(INPUT.pexsi_comm);

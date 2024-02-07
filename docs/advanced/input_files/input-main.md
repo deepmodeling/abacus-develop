@@ -382,6 +382,30 @@
     - [qo\_strategy](#qo_strategy)
     - [qo\_screening\_coeff](#qo_screening_coeff)
     - [qo\_thr](#qo_thr)
+  - [PEXSI](#PEXSI)
+    - [pexsi_npole](#pexsi_npole)
+    - [pexsi_inertia](#pexsi_inertia)
+    - [pexsi_nmax](#pexsi_nmax)
+    - [pexsi_comm](#pexsi_comm)
+    - [pexsi_storage](#pexsi_storage)
+    - [pexsi_ordering](#pexsi_ordering)
+    - [pexsi_row_ordering](#pexsi_row_ordering)
+    - [pexsi_nproc](#pexsi_nproc)
+    - [pexsi_symm](#pexsi_symm)
+    - [pexsi_trans](#pexsi_trans)
+    - [pexsi_method](#pexsi_method)
+    - [pexsi_nproc_pole](#pexsi_nproc_pole)
+    - [pexsi_temp](#pexsi_temp)
+    - [pexsi_gap](#pexsi_gap)
+    - [pexsi_delta_e](#pexsi_delta_e)
+    - [pexsi_mu_lower](#pexsi_mu_lower)
+    - [pexsi_mu_upper](#pexsi_mu_upper)
+    - [pexsi_mu](#pexsi_mu)
+    - [pexsi_mu_thr](#pexsi_mu_thr)
+    - [pexsi_mu_expand](#pexsi_mu_expand)
+    - [pexsi_mu_guard](#pexsi_mu_guard)
+    - [pexsi_elec_thr](#pexsi_elec_thr)
+    - [pexsi_zero_thr](#pexsi_zero_thr)
 
 [back to top](#full-list-of-input-keywords)
 
@@ -3548,5 +3572,146 @@ These variables are used to control the usage of QO analysis. Please note presen
 - **Description**: the convergence threshold determining the cutoff of generated orbital. Lower threshold will yield orbital with larger cutoff radius.
 - **Default**: 1.0e-6
 
+## PEXSI
+
+These variables are used to control the usage of PEXSI (Pole Expansion and Selected Inversion) method in calculations.
+
+### pexsi_npole
+
+- **Type**: Integer
+- **Description**: the number of poles used in the pole expansion method, should be a even number.
+- **Default**: 80
+
+### pexsi_inertia
+
+- **Type**: Boolean
+- **Description**: whether inertia counting is used at the very beginning.
+- **Default**: True
+
+### pexsi_nmax
+
+- **Type**: Integer
+- **Description**: maximum number of PEXSI iterations after each inertia counting procedure.
+- **Default**: 80
+
+### pexsi_comm
+
+- **Type**: Boolean
+- **Description**: whether to construct PSelInv communication pattern.
+- **Default**: True
+
+### pexsi_storage
+
+- **Type**: Boolean
+- **Description**: whether to use symmetric storage space used by the Selected Inversion algorithm for symmetric matrices.
+- **Default**: True
+
+### pexsi_ordering
+
+- **Type**: Integer
+- **Description**: ordering strategy for factorization and selected inversion. 0: Parallel ordering using ParMETIS, 1: Sequential ordering using METIS, 2: Multiple minimum degree ordering
+- **Default**: 0
+
+### pexsi_row_ordering
+
+- **Type**: Integer
+- **Description**: row permutation strategy for factorization and selected inversion, 0: No row permutation, 1: Make the diagonal entry of the matrix larger than the off-diagonal entries.
+- **Default**: 1
+
+### pexsi_nproc
+
+- **Type**: Integer
+- **Description**: number of processors for PARMETIS. Only used if pexsi_ordering == 0.
+- **Default**: 1
+
+### pexsi_symm
+
+- **Type**: Boolean
+- **Description**: whether the matrix is symmetric.
+- **Default**: True
+
+### pexsi_trans
+
+- **Type**: Boolean
+- **Description**: whether to factorize the transpose of the matrix.
+- **Default**: False
+
+### pexsi_method
+
+- **Type**: Integer
+- **Description**: the pole expansion method to be used. 1 for Cauchy Contour Integral method, 2 for Moussa optimized method.
+- **Default**: 1
+
+### pexsi_nproc_pole
+
+- **Type**: Integer
+- **Description**: the point parallelizaion of PEXSI. Recommend two points parallelization.
+- **Default**: 1
+
+### pexsi_temp
+
+- **Type**: Real
+- **Description**: temperature in Fermi-Dirac distribution, in Ry, should have the same effect as the smearing sigma when smearing method is set to Fermi-Dirac.
+- **Default**: 0.015
+
+### pexsi_gap
+
+- **Type**: Real
+- **Description**: spectral gap, this can be set to be 0 in most cases.
+- **Default**: 0
+
+### pexsi_delta_e
+
+- **Type**: Real
+- **Description**: an upper bound for the spectral radius of $S^{-1} H$.
+- **Default**: 20
+
+### pexsi_mu_lower
+
+- **Type**: Real
+- **Description**: initial guess of lower bound for mu.
+- **Default**: -10
+
+### pexsi_mu_upper
+
+- **Type**: Real
+- **Description**: initial guess of upper bound for mu.
+- **Default**: 10
+
+### pexsi_mu
+
+- **Type**: Real
+- **Description**: initial guess for mu (for the solver).
+- **Default**: 0
+
+### pexsi_mu_thr
+
+- **Type**: Real
+- **Description**: stopping criterion in terms of the chemical potential for the inertia counting procedure.
+- **Default**: 0.05
+
+### pexsi_mu_expand
+
+- **Type**: Real
+- **Description**: if the chemical potential is not in the initial interval, the interval is expanded by this value.
+- **Default**: 0.3
+
+### pexsi_mu_guard
+
+- **Type**: Real
+- **Description**: safe guard criterion in terms of the chemical potential to reinvoke the inertia counting procedure.
+- **Default**: 0.2
+
+### pexsi_elec_thr
+
+- **Type**: Real
+- **Description**: stopping criterion of the PEXSI iteration in terms of the number of electrons compared to numElectronExact.
+- **Default**: 0.001
+
+### pexsi_zero_thr
+
+- **Type**: Real
+- **Description**: if the absolute value of CCS matrix element is less than this value, it will be considered as zero.
+- **Default**: 1e-10
 
 [back to top](#full-list-of-input-keywords)

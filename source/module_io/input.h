@@ -607,7 +607,7 @@ class Input
     //==========================================================
     // variables for PEXSI
     //==========================================================
-    int pexsi_npole = 54;
+    int pexsi_npole = 80;
     bool pexsi_inertia = true;
     int pexsi_nmax = 80;
     // int pexsi_symbolic = 1;
