@@ -6,6 +6,7 @@
 #include "module_io/rho_io.h"
 #include "module_io/write_HS.h"
 #include "module_io/write_HS_R.h"
+#include "module_io/td_current_io.h"
 
 //--------------temporary----------------------------
 #include "module_base/blas_connector.h"
@@ -399,7 +400,17 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
             ModuleIO::write_dipole(pelec->charge->rho_save[is], pelec->charge->rhopw, is, istep, ss_dipole.str());
         }
     }
-
+    if(module_tddft::Evolve_elec::out_current == 1)
+    {
+        elecstate::DensityMatrix<std::complex<double>, double>* tmp_DM = dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->get_DM();
+        ModuleIO::write_current(istep,
+                        this->psi,
+                        pelec,
+                        kv,
+                        tmp_DM->get_paraV_pointer(),
+                        this->RA,
+                        this->UHM);
+    }
     ESolver_KS_LCAO<std::complex<double>, double>::afterscf(istep);
 }
 
