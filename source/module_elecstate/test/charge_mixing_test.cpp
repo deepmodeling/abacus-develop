@@ -536,77 +536,168 @@ TEST_F(ChargeMixingTest, KerkerScreenRecipTest)
 {
     Charge_Mixing CMtest;
     CMtest.set_rhopw(&pw_basis, &pw_basis);
-    GlobalV::NSPIN = 1;
     GlobalC::ucell.tpiba = 1.0;
-
-    CMtest.mixing_gg0 = 0.0;
-    std::complex<double>* drhog = new std::complex<double>[pw_basis.npw];
-    std::complex<double>* drhog_old = new std::complex<double>[pw_basis.npw];
-    double* drhor = new double[pw_basis.nrxx];
-    double* drhor_ref = new double[pw_basis.nrxx];
-    for (int i = 0; i < pw_basis.npw; ++i)
+    // nspin = 1
+    GlobalV::NSPIN = 1;
+    std::complex<double>* drhog = new std::complex<double>[GlobalV::NSPIN*pw_basis.npw];
+    std::complex<double>* drhog_old = new std::complex<double>[GlobalV::NSPIN*pw_basis.npw];
+    for (int i = 0; i < GlobalV::NSPIN*pw_basis.npw; ++i)
     {
         drhog_old[i] = drhog[i] = std::complex<double>(1.0, 1.0);
     }
+    // no kerker
+    CMtest.mixing_gg0 = 0.0;
     CMtest.Kerker_screen_recip(drhog);
-    for (int i = 0; i < pw_basis.npw; ++i)
+    for (int i = 0; i < GlobalV::NSPIN*pw_basis.npw; ++i)
     {
         EXPECT_EQ(drhog[i], drhog_old[i]);
     }
-
-    // RECIPROCAL
+    // kerker
     CMtest.mixing_gg0 = 1.0;
     CMtest.Kerker_screen_recip(drhog);
-    const double gg0 = std::pow(0.529177, 2);
+    double gg0 = std::pow(0.529177, 2);
     for (int i = 0; i < pw_basis.npw; ++i)
     {
-        std::complex<double> ration = drhog[i] / drhog_old[i];
         double gg = this->pw_basis.gg[i];
-        double ration_ref = std::max(gg / (gg + gg0), 0.1 / CMtest.mixing_beta);
-        EXPECT_NEAR(ration.real(), ration_ref, 1e-10);
-        EXPECT_NEAR(ration.imag(), 0, 1e-10);
+        double ref = std::max(gg / (gg + gg0), 0.1 / CMtest.mixing_beta);
+        EXPECT_NEAR(drhog[i].real(), ref, 1e-10);
+        EXPECT_NEAR(drhog[i].imag(), ref, 1e-10);
     }
-
-    // REAL
-    pw_basis.recip2real(drhog, drhor_ref);
-    pw_basis.recip2real(drhog_old, drhor);
-
-    CMtest.mixing_gg0 = 0.0;
-    // nothing happens
-    CMtest.Kerker_screen_real(drhor);
-
-    CMtest.mixing_gg0 = 1.0;
-    CMtest.Kerker_screen_real(drhor);
-    for (int i = 0; i < pw_basis.nrxx; ++i)
-    {
-        EXPECT_NEAR(drhor[i], drhor_ref[i], 1e-8);
-    }
-
     delete[] drhog;
     delete[] drhog_old;
-    delete[] drhor;
-    delete[] drhor_ref;
+
+    // nspin = 2
+    GlobalV::NSPIN = 2;
+    CMtest.mixing_beta = 0.4;
+    CMtest.mixing_beta_mag = 1.6;
+    drhog = new std::complex<double>[GlobalV::NSPIN*pw_basis.npw];
+    drhog_old = new std::complex<double>[GlobalV::NSPIN*pw_basis.npw];
+    for (int i = 0; i < GlobalV::NSPIN*pw_basis.npw; ++i)
+    {
+        drhog_old[i] = drhog[i] = std::complex<double>(1.0, 1.0);
+    }
+    // mixing_gg0 = 0.0
+    CMtest.mixing_gg0 = 0.0;
+    CMtest.Kerker_screen_recip(drhog);
+    for (int i = 0; i < GlobalV::NSPIN*pw_basis.npw; ++i)
+    {
+        EXPECT_EQ(drhog[i], drhog_old[i]);
+    }
+    // mixing_gg0 = 1.0, mixing_gg0_mag = 0.0
+    CMtest.mixing_gg0 = 1.0;
+    CMtest.Kerker_screen_recip(drhog);
+    gg0 = std::pow(0.529177, 2);
+    for (int i = 0; i < pw_basis.npw; ++i)
+    {
+        double gg = this->pw_basis.gg[i];
+        double ref = std::max(gg / (gg + gg0), 0.1 / CMtest.mixing_beta);
+        // rho
+        EXPECT_NEAR(drhog[i].real(), ref, 1e-10);
+        EXPECT_NEAR(drhog[i].imag(), ref, 1e-10);
+        // mag
+        EXPECT_NEAR(drhog[i+pw_basis.npw].real(), 1.0, 1e-10);
+        EXPECT_NEAR(drhog[i+pw_basis.npw].imag(), 1.0, 1e-10);
+    }
+    delete[] drhog;
+    delete[] drhog_old;
+
+    // nspin = 4
+    GlobalV::NSPIN = 4;
+    drhog = new std::complex<double>[GlobalV::NSPIN*pw_basis.npw];
+    drhog_old = new std::complex<double>[GlobalV::NSPIN*pw_basis.npw];
+    for (int i = 0; i < GlobalV::NSPIN*pw_basis.npw; ++i)
+    {
+        drhog_old[i] = drhog[i] = std::complex<double>(1.0, 1.0);
+    }
+    // mixing_gg0 = 0.0
+    CMtest.mixing_gg0 = 0.0;
+    CMtest.Kerker_screen_recip(drhog);
+    for (int i = 0; i < GlobalV::NSPIN*pw_basis.npw; ++i)
+    {
+        EXPECT_EQ(drhog[i], drhog_old[i]);
+    }
+    // mixing_gg0 = 1.0, mixing_gg0_mag = 0.0
+    CMtest.mixing_gg0 = 1.0;
+    CMtest.Kerker_screen_recip(drhog);
+    gg0 = std::pow(0.529177, 2);
+    for (int i = 0; i < pw_basis.npw; ++i)
+    {
+        double gg = this->pw_basis.gg[i];
+        double ref = std::max(gg / (gg + gg0), 0.1 / CMtest.mixing_beta);
+        // rho
+        EXPECT_NEAR(drhog[i].real(), ref, 1e-10);
+        EXPECT_NEAR(drhog[i].imag(), ref, 1e-10);
+    }
+    for (int i = 0; i < 3*pw_basis.npw; ++i)
+    {
+        EXPECT_NEAR(drhog[i + pw_basis.npw].real(), 1.0, 1e-10);
+        EXPECT_NEAR(drhog[i + pw_basis.npw].imag(), 1.0, 1e-10);
+    }
+    // mixing_gg0 = 1.0, mixing_gg0_mag = 2.0
+    CMtest.mixing_gg0 = 1.0;
+    CMtest.mixing_gg0_mag = 2.0;
+    CMtest.Kerker_screen_recip(drhog);
+    double gg1 = std::pow(1.0 * 0.529177, 2);
+    double gg2 = std::pow(2.0 * 0.529177, 2);
+    for (int i = 0; i < pw_basis.npw; ++i)
+    {
+        double gg = this->pw_basis.gg[i];
+        double ref = std::max(gg / (gg + gg1), 0.1 / CMtest.mixing_beta);
+        // rho
+        EXPECT_NEAR(drhog[i].real(), ref * ref, 1e-10);
+        EXPECT_NEAR(drhog[i].imag(), ref * ref, 1e-10);
+    }
+    for (int i = 0; i < pw_basis.npw; ++i)
+    {
+        double gg = this->pw_basis.gg[i];
+        double ref = std::max(gg / (gg + gg2), 0.1 / CMtest.mixing_beta_mag);
+        // rho
+        for (int j = 1; j < GlobalV::NSPIN; ++j)
+        {
+            EXPECT_NEAR(drhog[i + pw_basis.npw * j].real(), ref, 1e-10);
+            EXPECT_NEAR(drhog[i + pw_basis.npw * j].imag(), ref, 1e-10);
+        }
+    }
+    delete[] drhog;
+    delete[] drhog_old;
 }
 
-TEST_F(ChargeMixingTest, KerkerScreenRecipNewTest)
+TEST_F(ChargeMixingTest, KerkerScreenRealTest)
 {
     Charge_Mixing CMtest;
     CMtest.set_rhopw(&pw_basis, &pw_basis);
     GlobalC::ucell.tpiba = 1.0;
 
-    // for new kerker
-    GlobalV::NSPIN = 2;
-    CMtest.mixing_gg0 = 0.0;
-    GlobalV::MIXING_GG0_MAG = 0.0;
-    std::complex<double>* drhog = new std::complex<double>[GlobalV::NSPIN*pw_basis.npw];
-    std::complex<double>* drhog_old = new std::complex<double>[GlobalV::NSPIN*pw_basis.npw];
+    // nspin = 1
+    GlobalV::NSPIN = 1;
     double* drhor = new double[GlobalV::NSPIN*pw_basis.nrxx];
     double* drhor_ref = new double[GlobalV::NSPIN*pw_basis.nrxx];
+    for (int i = 0; i < GlobalV::NSPIN*pw_basis.nrxx; ++i)
+    {
+        drhor_ref[i] = drhor[i] = 1.0;
+    }
+    // no kerker
+    CMtest.mixing_gg0 = 0.0;
+    CMtest.Kerker_screen_real(drhor);
+    for (int i = 0; i < GlobalV::NSPIN*pw_basis.nrxx; ++i)
+    {
+        EXPECT_EQ(drhor[i], drhor_ref[i]);
+    }
+    delete[] drhor;
+    delete[] drhor_ref;
+
+    // nspin = 2
+    GlobalV::NSPIN = 2;
+    CMtest.mixing_gg0 = 0.0;
+    std::complex<double>* drhog = new std::complex<double>[GlobalV::NSPIN*pw_basis.npw];
+    std::complex<double>* drhog_old = new std::complex<double>[GlobalV::NSPIN*pw_basis.npw];
+    drhor = new double[GlobalV::NSPIN*pw_basis.nrxx];
+    drhor_ref = new double[GlobalV::NSPIN*pw_basis.nrxx];
     for (int i = 0; i < GlobalV::NSPIN*pw_basis.npw; ++i)
     {
         drhog_old[i] = drhog[i] = std::complex<double>(1.0, 1.0);
     }
-    CMtest.Kerker_screen_recip_new(drhog);
+    CMtest.Kerker_screen_recip(drhog); // no kerker
     for (int i = 0; i < GlobalV::NSPIN*pw_basis.npw; ++i)
     {
         EXPECT_EQ(drhog[i], drhog_old[i]);
@@ -615,7 +706,7 @@ TEST_F(ChargeMixingTest, KerkerScreenRecipNewTest)
     // RECIPROCAL
     CMtest.mixing_gg0 = 1.0;
     GlobalV::MIXING_GG0_MAG = 0.0;
-    CMtest.Kerker_screen_recip_new(drhog);
+    CMtest.Kerker_screen_recip(drhog);
     const double gg0 = std::pow(0.529177, 2);
     for (int i = 0; i < pw_basis.npw; ++i)
     {
@@ -646,6 +737,7 @@ TEST_F(ChargeMixingTest, KerkerScreenRecipNewTest)
     delete[] drhog_old;
     delete[] drhor;
     delete[] drhor_ref;
+
 }
 
 TEST_F(ChargeMixingTest, MixRhoTest)
