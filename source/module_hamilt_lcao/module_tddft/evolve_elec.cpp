@@ -18,6 +18,7 @@ bool Evolve_elec::td_vext;
 std::vector<int> Evolve_elec::td_vext_dire_case;
 bool Evolve_elec::out_dipole;
 bool Evolve_elec::out_efield;
+bool Evolve_elec::out_current;
 double Evolve_elec::td_print_eij; // the threshold to output Eij elements
 int Evolve_elec::td_edm;          // 0: new edm method   1: old edm method
 
