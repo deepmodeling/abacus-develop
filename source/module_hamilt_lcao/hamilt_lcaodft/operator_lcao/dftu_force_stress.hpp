@@ -21,6 +21,10 @@ void DFTUNew<OperatorLCAO<TK, TR>>::cal_force_stress(
     const Parallel_Orbitals* paraV = this->dm_in_dftu->get_DMR_pointer(1)->get_atom_pair(0).get_paraV();
     const int npol = this->ucell->get_npol();
     std::vector<double> stress_tmp(6, 0);
+    if (cal_force)
+    {
+        force.zero_out();
+    }
     // 1. calculate <psi|beta> for each pair of atoms
     // loop over all on-site atoms
     for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
@@ -116,8 +120,7 @@ void DFTUNew<OperatorLCAO<TK, TR>>::cal_force_stress(
         const double u_value = this->dftu->U[T0];
         std::vector<double> VU(occ.size());
         double eu_tmp = 0;
-        this->cal_v_of_u(&occ[0], tlp1, u_value, &VU[0], eu_tmp);
-        if(GlobalV::NSPIN==2) this->cal_v_of_u(&occ[tlp1*tlp1], tlp1, u_value, &VU[tlp1*tlp1], eu_tmp);
+        this->cal_v_of_u(occ, tlp1, u_value, &VU[0], eu_tmp);
 
         // second iteration to calculate force and stress
         // calculate Force for atom J
@@ -168,8 +171,8 @@ void DFTUNew<OperatorLCAO<TK, TR>>::cal_force_stress(
     if(cal_force)
     {
 #ifdef __MPI
-            // sum up the occupation matrix
-            Parallel_Reduce::reduce_all(force.c, force.nr*force.nc);
+        // sum up the occupation matrix
+        Parallel_Reduce::reduce_all(force.c, force.nr*force.nc);
 #endif
         for(int i=0;i<force.nr*force.nc;i++)
         {
@@ -224,9 +227,6 @@ void DFTUNew<OperatorLCAO<TK, TR>>::cal_force_IJR(
     auto col_indexes = paraV->get_indexes_col(iat2);
     const int m_size = int(sqrt(vu_in.size()/nspin));
     const int m_size2 = m_size * m_size;
-#ifdef __DEBUG
-    assert(m_size * m_size * nspin == occ.size());
-#endif
     // step_trace = 0 for NSPIN=1,2; ={0, 1, local_col, local_col+1} for NSPIN=4
     std::vector<int> step_trace(npol, 0);
     if(npol == 2) step_trace[1] = col_indexes.size() + 1;

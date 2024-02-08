@@ -188,7 +188,7 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                 ModuleBase::WARNING_QUIT("DFTUNew", "old two center integral method not implemented");
 #endif
                 // select the elements of nlm with target_L
-                std::vector<double> nlm_target(2*target_L+1);
+                std::vector<double> nlm_target(tlp1);
                 for(int iw =0;iw < this->ucell->atoms[T0].nw; iw++)
                 {
                     const int L0 = this->ucell->atoms[T0].iw2l[iw];
@@ -205,7 +205,8 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
             }
         }
         //first iteration to calculate occupation matrix
-        std::vector<double> occ(tlp1 * tlp1, 0.0);
+        const int spin_fold = (GlobalV::NSPIN == 4) ? 4 : 1;
+        std::vector<double> occ(tlp1 * tlp1 * spin_fold, 0.0);
         if(this->dftu->initialed_locale == false)
         {
             hamilt::HContainer<double>* dmR_current = this->dm_in_dftu->get_DMR_pointer(GlobalV::CURRENT_SPIN+1);
@@ -255,7 +256,9 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
         //calculate VU
         const double u_value = this->dftu->U[T0];
         std::vector<double> VU(occ.size());
-        this->cal_v_of_u(occ.data(), tlp1, u_value, VU.data(), this->dftu->EU);
+        this->cal_v_of_u(VU, tlp1, u_value, VU.data(), this->dftu->EU);
+        // transfer occ from pauli matrix format to normal format
+        if(GlobalV::NSPIN == 4) this->transfer_nspin4(VU);
 
         // second iteration to calculate Hamiltonian matrix
         // calculate <psi_I|beta_m> U*(1/2*delta(m, m')-occ(m, m')) <beta_m'|psi_{J,R}> for each pair of <IJR> atoms
@@ -315,13 +318,16 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(
     // ---------------------------------------------
     auto row_indexes = paraV->get_indexes_row(iat1);
     auto col_indexes = paraV->get_indexes_col(iat2);
-    const int m_size = int(sqrt(VU.size()));
-#ifdef __DEBUG
-    assert(m_size * m_size == VU.size());
-#endif
+    const int m_size = int(sqrt(VU.size())/npol);
     // step_trace = 0 for NSPIN=1,2; ={0, 1, local_col, local_col+1} for NSPIN=4
-    std::vector<int> step_trace(npol, 0);
-    if(npol == 2) step_trace[1] = col_indexes.size() + 1;
+    std::vector<int> step_trace(npol*npol, 0);
+    for (int is = 0; is < npol; is++)
+    {
+        for (int is2 = 0; is2 < npol; is2++)
+        {
+            step_trace[is * npol + is2] = paraV->get_col_size(iat2) * is + is2;
+        }
+    }
     // calculate the local matrix
     const TR* tmp_d = nullptr;
     for (int iw1l = 0; iw1l < row_indexes.size(); iw1l += npol)
@@ -333,14 +339,15 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(
 #ifdef __DEBUG
             assert(nlm1.size() == nlm2.size());
 #endif
-            for (int is = 0; is < npol; ++is)
+            for (int is = 0; is < npol*npol; ++is)
             {
+                int start = is * m_size * m_size;
                 TR nlm_tmp = TR(0);
                 for (int m1 = 0; m1 < m_size; m1++)
                 {
                     for(int m2 = 0; m2 < m_size; m2++)
                     {
-                        nlm_tmp += nlm1[m1] * nlm2[m2] * VU[m1 * m_size + m2];
+                        nlm_tmp += nlm1[m1] * nlm2[m2] * VU[m1 * m_size + m2 + start];
                     }
                 }
                 data_pointer[step_trace[is]] += nlm_tmp;
@@ -372,13 +379,20 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::cal_occupations(
     // ---------------------------------------------
     auto row_indexes = paraV->get_indexes_row(iat1);
     auto col_indexes = paraV->get_indexes_col(iat2);
-    const int m_size = int(sqrt(occ.size()));
+    const int m_size = int(sqrt(occ.size())/npol);
+    const int m_size2 = m_size * m_size;
 #ifdef __DEBUG
     assert(m_size * m_size == occ.size());
 #endif
     // step_trace = 0 for NSPIN=1,2; ={0, 1, local_col, local_col+1} for NSPIN=4
-    std::vector<int> step_trace(npol, 0);
-    if(npol == 2) step_trace[1] = col_indexes.size() + 1;
+    std::vector<int> step_trace(npol * npol, 0);
+    for (int is = 0; is < npol; is++)
+    {
+        for (int is2 = 0; is2 < npol; is2++)
+        {
+            step_trace[is * npol + is2] = paraV->get_col_size(iat2) * is + is2;
+        }
+    }
     // calculate the local matrix
     for (int iw1l = 0; iw1l < row_indexes.size(); iw1l += npol)
     {
@@ -389,13 +403,17 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::cal_occupations(
 #ifdef __DEBUG
             assert(nlm1.size() == nlm2.size());
 #endif
-            for (int is = 0; is < npol; ++is)
+            for (int is1 = 0; is1 < npol; ++is1)
             {
-                for (int m1 = 0; m1 < m_size; m1++)
+                for(int is2 = 0;is2 < npol; ++is2)
                 {
-                    for(int m2 = 0; m2 < m_size; m2++)
+                    for (int m1 = 0; m1 < m_size; ++m1)
                     {
-                        occ[m1 * m_size + m2] += nlm1[m1] * nlm2[m2] * dm_pointer[step_trace[is]];
+                        for(int m2 = 0; m2 < m_size; ++m2)
+                        {
+                            occ[m1 * m_size + m2 + (is1 * npol + is2) * m_size2] += 
+                                nlm1[m1] * nlm2[m2] * dm_pointer[step_trace[is1 * npol + is2]];
+                        }
                     }
                 }
             }
@@ -405,21 +423,75 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::cal_occupations(
     }
 }
 
+template<typename TK, typename TR>
+void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::transfer_nspin4(std::vector<double>& vu)
+{
+    const int m_size = int(sqrt(vu.size())/2);
+    const int m_size2 = m_size * m_size;
+    std::vector<double> vu_tmp(vu.size());
+    for(int m1=0;m1<m_size;m1++)
+    {
+        for(int m2=0;m2<m_size;m2++)
+        {
+            int index[4];
+            index[0] = m1*m_size+m2;
+            index[1] = m1*m_size+m2 + m_size2;
+            index[2] = m2*m_size+m1 + m_size2 * 2;
+            index[3] = m2*m_size+m1 + m_size2 * 3;
+            vu_tmp[index[0]] = 0.5 * (vu[index[0]] + vu[index[3]]);
+            vu_tmp[index[3]] = 0.5 * (vu[index[0]] - vu[index[3]]);
+            //vu should be complex<double> type, but here we use double type for test
+            vu_tmp[index[1]] = 0.5 * (vu[index[1]] );//+ std::complex<double>(0.0, 1.0) * vu[index[2]];
+            vu_tmp[index[2]] = 0.5 * (vu[index[1]] );//- std::complex<double>(0.0, 1.0) * vu[index[2]];
+        }
+    }
+    vu = vu_tmp;
+}
+
 template <typename TK, typename TR>
 void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::cal_v_of_u(
-    const double* occ,
+    const std::vector<double>& occ,
     const int m_size,
     const double u_value,
     double* VU,
     double& EU)
 {
     // calculate the local matrix
-    for (int m1 = 0; m1 < m_size; m1++)
+    int spin_fold = occ.size() / m_size / m_size;
+    if(spin_fold < 4)
+    for(int is=0;is<spin_fold;++is)
     {
-        for(int m2 = 0; m2 < m_size; m2++)
+        int start = is * m_size * m_size;
+        for (int m1 = 0; m1 < m_size; m1++)
         {
-            VU[m1 * m_size + m2] = u_value * (0.5 * (m1 == m2) - occ[m2 * m_size + m1]);
-            EU += u_value * 0.5 * occ[m2 * m_size + m1] * occ[m1 * m_size + m2];
+            for(int m2 = 0; m2 < m_size; m2++)
+            {
+                VU[start + m1 * m_size + m2] = u_value * (0.5 * (m1 == m2) - occ[start + m2 * m_size + m1]);
+                EU += u_value * 0.5 * occ[start + m2 * m_size + m1] * occ[start + m1 * m_size + m2];
+            }
+        }
+    }
+    else
+    {
+        for (int m1 = 0; m1 < m_size; m1++)
+        {
+            for(int m2 = 0; m2 < m_size; m2++)
+            {
+                VU[m1 * m_size + m2] = u_value * (1.0 * (m1 == m2) - occ[m2 * m_size + m1]);
+                EU += u_value * 0.5 * occ[m2 * m_size + m1] * occ[m1 * m_size + m2];
+            }
+        }
+        for(int is=1;is<spin_fold;++is)
+        {
+            int start = is * m_size * m_size;
+            for (int m1 = 0; m1 < m_size; m1++)
+            {
+                for(int m2 = 0; m2 < m_size; m2++)
+                {
+                    VU[start + m1 * m_size + m2] = u_value * (0 - occ[start + m2 * m_size + m1]);
+                    EU += u_value * 0.5 * occ[start + m2 * m_size + m1] * occ[start + m1 * m_size + m2];
+                }
+            }
         }
     }
 }

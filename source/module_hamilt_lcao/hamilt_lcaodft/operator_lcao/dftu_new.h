@@ -95,10 +95,13 @@ class DFTUNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                         const std::unordered_map<int, std::vector<double>>& nlm2_all,
                         const double* data_pointer,
                         std::vector<double>& occupations);
+
+    /// transfer VU format from pauli matrix to normal for non-collinear spin case
+    void transfer_nspin4(std::vector<double>& occ);
     /// VU_{m, m'} = sum_{m,m'} (1/2*delta_{m, m'} - occ_{m, m'}) * U
     /// EU = sum_{m,m'} 1/2 * U * occ_{m, m'} * occ_{m', m}
     void cal_v_of_u(
-      const double* occ,
+      const std::vector<double>& occ,
       const int m_size,
       const double u_value,
       double* VU,
