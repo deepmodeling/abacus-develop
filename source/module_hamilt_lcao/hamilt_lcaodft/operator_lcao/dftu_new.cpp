@@ -256,7 +256,7 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
         //calculate VU
         const double u_value = this->dftu->U[T0];
         std::vector<double> VU(occ.size());
-        this->cal_v_of_u(VU, tlp1, u_value, VU.data(), this->dftu->EU);
+        this->cal_v_of_u(occ, tlp1, u_value, VU.data(), this->dftu->EU);
         // transfer occ from pauli matrix format to normal format
         if(GlobalV::NSPIN == 4) this->transfer_nspin4(VU);
 
@@ -291,7 +291,7 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
     //energy correction for NSPIN=1
     if(GlobalV::NSPIN==1) this->dftu->EU *= 2.0;
     // for readin onsite_dm, set initialed_locale to false to avoid using readin locale in next iteration
-    if(GlobalV::CURRENT_SPIN == GlobalV::NSPIN-1) this->dftu->initialed_locale = false;
+    if(GlobalV::CURRENT_SPIN == GlobalV::NSPIN-1 || GlobalV::NSPIN==4) this->dftu->initialed_locale = false;
 
     ModuleBase::timer::tick("DFTUNew", "calculate_HR");
 }
@@ -478,7 +478,7 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::cal_v_of_u(
             for(int m2 = 0; m2 < m_size; m2++)
             {
                 VU[m1 * m_size + m2] = u_value * (1.0 * (m1 == m2) - occ[m2 * m_size + m1]);
-                EU += u_value * 0.5 * occ[m2 * m_size + m1] * occ[m1 * m_size + m2];
+                EU += u_value * 0.25 * occ[m2 * m_size + m1] * occ[m1 * m_size + m2];
             }
         }
         for(int is=1;is<spin_fold;++is)
@@ -489,7 +489,7 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::cal_v_of_u(
                 for(int m2 = 0; m2 < m_size; m2++)
                 {
                     VU[start + m1 * m_size + m2] = u_value * (0 - occ[start + m2 * m_size + m1]);
-                    EU += u_value * 0.5 * occ[start + m2 * m_size + m1] * occ[start + m1 * m_size + m2];
+                    EU += u_value * 0.25 * occ[start + m2 * m_size + m1] * occ[start + m1 * m_size + m2];
                 }
             }
         }
