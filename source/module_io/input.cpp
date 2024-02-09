@@ -81,6 +81,7 @@ void Input::Init(const std::string& fn)
     const char* commit = "unknown";
 #endif
     time_t time_now = time(NULL);
+    start_time = time_now;
     GlobalV::ofs_running << "                                                                                     "
                          << std::endl;
     GlobalV::ofs_running << "                              ABACUS " << version << std::endl << std::endl;
@@ -311,6 +312,7 @@ void Input::Default(void)
     mixing_angle = -10.0;    // defaultly close for npsin = 4
     mixing_tau = false;
     mixing_dftu = false;
+    mixing_dmr = false;      // whether to mixing real space density matrix
     //----------------------------------------------------------
     // potential / charge / wavefunction / energy
     //----------------------------------------------------------
@@ -683,6 +685,8 @@ bool Input::Read(const std::string& fn)
                   << " The parameter list always starts with key word 'INPUT_PARAMETERS'. " << std::endl;
         return false; // return error : false
     }
+
+    bool plast_find = false; // whether the parameter md_plast is found liuyu 2024-01-28
 
     ifs.rdstate();
     while (ifs.good())
@@ -1291,6 +1295,10 @@ bool Input::Read(const std::string& fn)
         {
             read_bool(ifs, mixing_dftu);
         }
+        else if (strcmp("mixing_dmr", word) == 0)
+        {
+            read_bool(ifs, mixing_dmr);
+        }
         //----------------------------------------------------------
         // charge / potential / wavefunction
         //----------------------------------------------------------
@@ -1580,10 +1588,15 @@ bool Input::Read(const std::string& fn)
         else if (strcmp("md_pfirst", word) == 0)
         {
             read_value(ifs, mdp.md_pfirst);
+            if (!plast_find)
+            {
+                mdp.md_plast = mdp.md_pfirst;
+            }
         }
         else if (strcmp("md_plast", word) == 0)
         {
             read_value(ifs, mdp.md_plast);
+            plast_find = true;
         }
         else if (strcmp("md_pfreq", word) == 0)
         {
@@ -2904,8 +2917,6 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         }
         if (!out_md_control)
             out_level = "m"; // zhengdy add 2019-04-07
-        if (mdp.md_plast < 0.0)
-            mdp.md_plast = mdp.md_pfirst;
 
         if (mdp.md_tfreq == 0)
         {
@@ -3338,6 +3349,7 @@ void Input::Bcast()
     Parallel_Common::bcast_double(mixing_angle);
     Parallel_Common::bcast_bool(mixing_tau);
     Parallel_Common::bcast_bool(mixing_dftu);
+    Parallel_Common::bcast_bool(mixing_dmr);
 
     Parallel_Common::bcast_string(read_file_dir);
     Parallel_Common::bcast_string(init_wfc);
@@ -3795,8 +3807,6 @@ void Input::Check(void)
         // deal with input parameters , 2019-04-30
         if (mdp.md_dt < 0)
             ModuleBase::WARNING_QUIT("Input::Check", "time interval of MD calculation should be set!");
-        if (mdp.md_type == "npt" && mdp.md_pfirst < 0)
-            ModuleBase::WARNING_QUIT("Input::Check", "pressure of MD calculation should be set!");
         if (mdp.md_type == "msst")
         {
             if (mdp.msst_qmass <= 0)

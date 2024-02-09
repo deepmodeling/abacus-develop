@@ -4,6 +4,7 @@
 
 #include <thrust/complex.h>
 #include <hip/hip_runtime.h>
+#include <base/macros/macros.h>
 
 namespace hamilt {
 
@@ -58,6 +59,9 @@ void meta_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
         reinterpret_cast<const thrust::complex<FPTYPE> * >(in),
         reinterpret_cast<thrust::complex<FPTYPE> * >(out),
         add);
+    
+    hipErrcheck(hipGetLastError());
+    hipErrcheck(hipDeviceSynchronize());
 }
 
 template struct meta_pw_op<float, psi::DEVICE_GPU>;

@@ -124,7 +124,7 @@ class AtomPair
      * @brief get size = col_size * row_size
      * @return int
     */
-    int get_size() const;
+    int get_size() const {return this->col_size * this->row_size;}
 
     /**
      * @brief get Parallel_Orbitals pointer of this AtomPair for checking 2d-block parallel
@@ -256,7 +256,14 @@ class AtomPair
     AtomPair& operator=(AtomPair&& other) noexcept;
 
     // interface for getting the size of this->R_index
-    size_t get_R_size() const;
+    size_t get_R_size() const
+    {
+#ifdef __DEBUG
+        assert(this->R_index.size() / 3 == this->values.size());
+        assert(this->R_index.size() % 3 == 0);
+#endif
+        return this->R_index.size() / 3;
+    }
 
     /**
      * @brief get total memory size of AtomPair

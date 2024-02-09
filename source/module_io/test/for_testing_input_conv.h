@@ -29,34 +29,6 @@
 
 bool berryphase::berry_phase_flag = false;
 
-template<>
-int elecstate::ElecStateLCAO<double>::out_wfc_lcao = 0;
-
-template<>
-int elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_lcao = 0;
-
-template<> 
-bool elecstate::ElecStateLCAO<double>::need_psi_grid = 1;
-
-template<>
-bool elecstate::ElecStateLCAO<std::complex<double>>::need_psi_grid = 1;
-//
-template<>
-std::vector<int> hsolver::HSolverLCAO<double>::out_mat_hs = {0, 8};
-template<>
-std::vector<int> hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs = {0, 8};
-template<>
-int hsolver::HSolverLCAO<double>::out_mat_hsR = 0;
-template<>
-int hsolver::HSolverLCAO<std::complex<double>>::out_mat_hsR = 0;
-template<>
-int hsolver::HSolverLCAO<double>::out_mat_t = 0;
-template<>
-int hsolver::HSolverLCAO<std::complex<double>>::out_mat_t = 0;
-template<>
-int hsolver::HSolverLCAO<double>::out_mat_dh = 0;
-template<>
-int hsolver::HSolverLCAO <std::complex<double>> ::out_mat_dh = 0;
 int Local_Orbital_Charge::out_dm = 0;
 int Local_Orbital_Charge::out_dm1 = 0;
 double module_tddft::Evolve_elec::td_force_dt;
@@ -130,10 +102,6 @@ int elecstate::H_TDDFT_pw::heavi_count;
 std::vector<double> elecstate::H_TDDFT_pw::heavi_t0;
 std::vector<double> elecstate::H_TDDFT_pw::heavi_amp; // Ry/bohr
 
-template<>
-double Force_Stress_LCAO<double>::force_invalid_threshold_ev = 0.0;
-template<>
-double Force_Stress_LCAO<std::complex<double>>::force_invalid_threshold_ev = 0.0;
 double BFGS_Basic::relax_bfgs_w1 = -1.0;
 double BFGS_Basic::relax_bfgs_w2 = -1.0;
 double Ions_Move_Basic::relax_bfgs_rmax = -1.0;
@@ -265,20 +233,6 @@ Magnetism::Magnetism()
 Magnetism::~Magnetism()
 {
 }
-
-void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
-                               const double& mixing_beta_in,
-                               const int& mixing_ndim_in,
-                               const double& mixing_gg0_in,
-                               const bool& mixing_tau_in,
-                               const double& mixing_beta_mag_in)
-{
-    return;
-}
-// void Charge_Mixing::need_auto_set()
-// {
-//     this->autoset = true;
-// }
 void Occupy::decision(const std::string& name, const std::string& smearing_method, const double& smearing_sigma)
 {
     return;
