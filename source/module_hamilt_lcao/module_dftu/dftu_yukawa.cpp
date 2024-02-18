@@ -34,6 +34,7 @@ void DFTU::cal_yukawa_lambda(double** rho, const int& nrxx)
     double sum_rho_lambda = 0.0;
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
+        if(GlobalV::NSPIN == 4 && is > 0) continue;// for non-collinear spin case, first spin contains the charge density
         for (int ir = 0; ir < nrxx; ir++)
         {
             double rho_ir = rho[is][ir];
@@ -173,6 +174,8 @@ void DFTU::cal_slater_UJ(double** rho, const int& nrxx)
                     // Hartree to Rydeberg
                     this->U_Yukawa[T][L][n] *= 2.0;
                     this->J_Yukawa[T][L][n] *= 2.0;
+                    // update current U with calculated U-J from Slater integrals
+                    this->U[T] = this->U_Yukawa[T][L][n] - this->J_Yukawa[T][L][n];
                 } // end n
             } // end if
         } // end L
