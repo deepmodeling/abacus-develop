@@ -55,7 +55,7 @@ void toQO::initialize(UnitCell* p_ucell,
     // build grids
     double rcut_max = std::max(nao_->rcut_max(), ao_->rcut_max());
     int ngrid = int(rcut_max / 0.01) + 1;
-    double cutoff = 2*rcut_max;
+    double cutoff = 2.0*rcut_max;
     nao_->set_uniform_grid(true, ngrid, cutoff, 'i', true);
     ao_->set_uniform_grid(true, ngrid, cutoff, 'i', true);
     overlap_calculator_->tabulate(*ao_, *nao_, 'S', ngrid, cutoff);

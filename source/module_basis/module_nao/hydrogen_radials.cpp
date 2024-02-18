@@ -136,6 +136,7 @@ double HydrogenRadials::generate_hydrogen_radial_toconv(const double charge,
         if(istep == 0) printf("%10d%12.2f%14.10f%18.10e\n", istep, rmax_, norm, delta_norm);
         ++istep;
     }
+    printf("...\n");
     printf("%10d%12.2f%14.10f%18.10e\n", istep, rmax_, norm, delta_norm);
     return rmax_;
 }

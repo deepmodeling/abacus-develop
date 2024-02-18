@@ -165,6 +165,7 @@ double PswfcRadials::cut_to_convergence(const std::vector<double>& rgrid,
         if(istep == 1) printf("%10d%12.2f%14.10f%18.10e\n", istep, rgrid[ir_], norm, delta_norm);
         ++istep;
     }
+    printf("...\n");
     printf("%10d%12.2f%14.10f%18.10e\n", istep, rgrid[ir_], norm, delta_norm);
 
     rvalue = std::vector<double>(rvalue.begin() + ir_min_, rvalue.begin() + ir_ + 1);

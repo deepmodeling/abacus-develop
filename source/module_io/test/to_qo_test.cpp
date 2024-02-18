@@ -566,6 +566,7 @@ TEST_F(toQOTest, ScanSupercellSC2)
     tqo.unwrap_unitcell(&ucell);
     tqo.build_nao(ucell.ntype, ucell.orbital_fn);
     GlobalV::qo_screening_coeff[0] = 0.1; // use this to control the tailing of radial function
+    GlobalV::qo_thr = 1e-6;
     tqo.build_ao(ucell.ntype, ucell.pseudo_fn); // radius = 13.6 Bohr
     tqo.scan_supercell();
     EXPECT_EQ(tqo.nR(), 81); // 5*5*5 - 12(edge center) - 8*4(corner)
@@ -578,6 +579,7 @@ TEST_F(toQOTest, ScanSupercellSC3)
     tqo.unwrap_unitcell(&ucell);
     tqo.build_nao(ucell.ntype, ucell.orbital_fn);
     GlobalV::qo_screening_coeff[0] = 0.25; // use this to control the tailing of radial function
+    GlobalV::qo_thr = 1e-6;
     tqo.build_ao(ucell.ntype, ucell.pseudo_fn); // radius = 13.6 Bohr
     tqo.scan_supercell();
     EXPECT_EQ(tqo.nR(), 57); // 5*5*5 - 12(edge center) - 8*(8-1)(corner) = 5*5*5 - 12(edge center) - 8*(2*2*2-1)(corner)
@@ -591,6 +593,7 @@ TEST_F(toQOTest, ScanSupercellSC4)
     tqo.unwrap_unitcell(&ucell);
     tqo.build_nao(ucell.ntype, ucell.orbital_fn);
     GlobalV::qo_screening_coeff[0] = 0.5; // use this to control the tailing of radial function
+    GlobalV::qo_thr = 1e-6;
     tqo.build_ao(ucell.ntype, ucell.pseudo_fn); // radius = 13.6 Bohr
     tqo.scan_supercell();
     EXPECT_EQ(tqo.nR(), 33); // 3*3*3 + 6(face)
@@ -663,7 +666,7 @@ TEST_F(toQOTest, CalculateSelfOvlpKPswfcSymmetrical)
 {
     define_fcc_cell(ucell);
     GlobalV::qo_thr = 1e-10;
-    GlobalV::qo_screening_coeff = {0.5, 0.5};
+    GlobalV::qo_screening_coeff = {2.0, 2.0};
     toQO tqo("pswfc", {"all", "all"});
     std::vector<ModuleBase::Vector3<double>> kvecs_c;
     kvecs_c.push_back(ModuleBase::Vector3<double>(-0.25, -0.25, -0.25)); // pair 1
