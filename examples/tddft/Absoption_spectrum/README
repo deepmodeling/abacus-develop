@@ -1,0 +1,10 @@
+/*******************************************************************************/
+/
+/ These are the examples of ABACUS program.
+/
+/*******************************************************************************/
+
+Here are two examples of how to calculate the absorption spectrum of a molecular system.
+Two different Gaussian wave packets are applied to the z-axis, giving a exmaple of how to apply a complex E-field.
+By setting 'out_dipole' to '1', you can get the dipole moment of the system. Then you can get the absorption spectrum by Fourier transform of the dipole moment.
+In a real calculation, you should use a larger 'md_nstep' to get a better spectrum ,usually 5000 or more(relevent to your frequency).

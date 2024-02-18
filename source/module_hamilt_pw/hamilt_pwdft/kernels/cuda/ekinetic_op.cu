@@ -4,6 +4,7 @@
 
 #include <cuda_runtime.h>
 #include <thrust/complex.h>
+#include <base/macros/macros.h>
 
 namespace hamilt {
 #define THREADS_PER_BLOCK 256
@@ -43,6 +44,9 @@ void hamilt::ekinetic_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
     gk2_ik, // array of data
     reinterpret_cast<thrust::complex<FPTYPE>*>(tmhpsi), // array of data
     reinterpret_cast<const thrust::complex<FPTYPE>*>(tmpsi_in)); // array of data
+  
+  cudaErrcheck(cudaGetLastError());
+  cudaErrcheck(cudaDeviceSynchronize());
 }
 
 template struct ekinetic_pw_op<float, psi::DEVICE_GPU>;

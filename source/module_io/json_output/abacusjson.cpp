@@ -15,7 +15,9 @@ void AbacusJson::add_nested_member(std::vector<std::string>::iterator begin,
                                    std::vector<std::string>::iterator end,
                                    rapidjson::Value& val,
                                    rapidjson::Value& parent,
-                                   rapidjson::Document::AllocatorType& allocator)
+                                   rapidjson::Document::AllocatorType& allocator,
+                                   bool IsArray
+                                   )
 {
     if (begin != end)
     {
@@ -25,16 +27,28 @@ void AbacusJson::add_nested_member(std::vector<std::string>::iterator begin,
             // if key exists, then overwrite it
             if (parent.HasMember(key))
             {
-                // if key is an object, then warn the user
-                if (parent[key].IsObject())
-                {
-                    std::cout << "Warning: write to json, key " << *begin
-                              << " exist and is an object, and abacus will overwrite it with a value." << std::endl;
+                if(parent[key].IsArray()){
+                    parent[key].PushBack(val, allocator);
+                }else{
+                    // if key is an object, then warn the user
+                    if (parent[key].IsObject())
+                    {
+                        std::cout << "Warning: write to json, key " << *begin
+                                << " exist and is an object, and abacus will overwrite it with a value." << std::endl;
+                    }
+                    parent[key] = val;
                 }
-                parent[key] = val;
             }
-            else
-                parent.AddMember(key, val, allocator);
+            else{
+                if(IsArray==true){
+                    rapidjson::Value arr(rapidjson::kArrayType);
+                    arr.PushBack(val, allocator);
+                    parent.AddMember(key, arr, allocator);
+                } else{
+                    parent.AddMember(key, val, allocator);
+                }
+                
+            }
         }
         else
         {
@@ -47,18 +61,17 @@ void AbacusJson::add_nested_member(std::vector<std::string>::iterator begin,
                     std::cout << "Warning: write to json, key " << *begin
                               << " exist and is not an object, and abacus will add it as a middle node." << std::endl;
                 }
-                add_nested_member(begin + 1, end, val, parent[key], allocator);
+                add_nested_member(begin + 1, end, val, parent[key], allocator,IsArray);
             }
             else
             {
-                rapidjson::Value val1(rapidjson::kObjectType);
-                add_nested_member(begin + 1, end, val, val1, allocator);
-                parent.AddMember(key, val1, allocator);
+                rapidjson::Value paraent_val(rapidjson::kObjectType);
+                add_nested_member(begin + 1, end, val, paraent_val, allocator,IsArray);
+                parent.AddMember(key, paraent_val, allocator);
             }
         }
     }
 }
-
 // Output the json to a file
 void AbacusJson::write_to_json(std::string filename)
 {
@@ -70,15 +83,30 @@ void AbacusJson::write_to_json(std::string filename)
     ofs << buffer.GetString();
     ofs.close();
 };
-template <>
-void AbacusJson::add_json(std::vector<std::string> keys, const std::string& value)
-{
-    if (!doc.IsObject())
-    {
-        doc.SetObject();
-    }
-    rapidjson::Value val(value.c_str(), doc.GetAllocator());
-    add_nested_member(keys.begin(), keys.end(), val, doc, doc.GetAllocator());
-}
+  template <>
+  void AbacusJson::add_json(std::vector<std::string> keys, const std::string& value,bool IsArray)
+  {
+      if (!doc.IsObject())
+      {
+          doc.SetObject();
+      }
+      rapidjson::Value val(value.c_str(), doc.GetAllocator());
+      add_nested_member(keys.begin(), keys.end(), val, doc, doc.GetAllocator(),IsArray);
+  }
+
+
+// Overloaded template functions for json class objects
+  template <>
+  void AbacusJson::add_json(std::vector<std::string> keys, const rapidjson::Value& value,bool IsArray)
+  {
+
+        if (!doc.IsObject())
+        {
+            doc.SetObject();
+        }
+
+        rapidjson::Value val(value,doc.GetAllocator());
+        add_nested_member(keys.begin(), keys.end(), val, doc, doc.GetAllocator(),IsArray);
+  }
 #endif
 } // namespace Json

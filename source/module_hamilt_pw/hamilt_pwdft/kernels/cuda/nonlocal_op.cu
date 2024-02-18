@@ -4,6 +4,7 @@
 
 #include <cuda_runtime.h>
 #include <thrust/complex.h>
+#include <base/macros/macros.h>
 
 namespace hamilt {
 
@@ -98,6 +99,9 @@ void hamilt::nonlocal_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
     deeq_x, deeq_y, deeq_z, deeq,  // deeq realArray operator()
     reinterpret_cast<thrust::complex<FPTYPE>*>(ps), // array of data
     reinterpret_cast<const thrust::complex<FPTYPE>*>(becp)); // array of data
+  
+  cudaErrcheck(cudaGetLastError());
+  cudaErrcheck(cudaDeviceSynchronize());
   iat += l1;
   sum += l1 * l3;
 }
@@ -127,6 +131,9 @@ void hamilt::nonlocal_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
     reinterpret_cast<const thrust::complex<FPTYPE>*>(deeq_nc),  // deeq realArray operator()
     reinterpret_cast<thrust::complex<FPTYPE>*>(ps), // array of data
     reinterpret_cast<const thrust::complex<FPTYPE>*>(becp)); // array of data
+  
+  cudaErrcheck(cudaGetLastError());
+  cudaErrcheck(cudaDeviceSynchronize());
   iat += l1;
   sum += l1 * l3;
   // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>

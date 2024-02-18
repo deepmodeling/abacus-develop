@@ -5,6 +5,7 @@
 
 #include <thrust/complex.h>
 #include <cuda_runtime.h>
+#include <base/macros/macros.h>
 
 #define THREADS_PER_BLOCK 256
 
@@ -130,6 +131,9 @@ void cal_vkb1_nl_op<FPTYPE, psi::DEVICE_GPU>::operator() (
             reinterpret_cast<const thrust::complex<FPTYPE>*>(vkb),
             gcar,// array of data
             reinterpret_cast<thrust::complex<FPTYPE>*>(vkb1)); // array of data
+    
+    cudaErrcheck(cudaGetLastError());
+    cudaErrcheck(cudaDeviceSynchronize());
 }
 
 template <typename FPTYPE>
@@ -169,6 +173,9 @@ void cal_force_nl_op<FPTYPE, psi::DEVICE_GPU>::operator() (
             reinterpret_cast<const thrust::complex<FPTYPE>*>(becp),
             reinterpret_cast<const thrust::complex<FPTYPE>*>(dbecp),
             force);// array of data
+    
+    cudaErrcheck(cudaGetLastError());
+    cudaErrcheck(cudaDeviceSynchronize());
 }
 
 template struct cal_vkb1_nl_op<float, psi::DEVICE_GPU>;

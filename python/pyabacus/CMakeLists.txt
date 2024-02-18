@@ -8,7 +8,6 @@ project(
 find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
 find_package(pybind11 CONFIG REQUIRED)
 
-set(BASE_PATH "${PROJECT_SOURCE_DIR}/../../source/module_base")
 set(ABACUS_SOURCE_DIR "${PROJECT_SOURCE_DIR}/../../source")
 include_directories(${BASE_PATH} ${ABACUS_SOURCE_DIR})
 list(APPEND _sources
@@ -17,6 +16,8 @@ list(APPEND _sources
     ${ABACUS_SOURCE_DIR}/module_base/constants.h
     ${ABACUS_SOURCE_DIR}/module_base/math_sphbes.h
     ${ABACUS_SOURCE_DIR}/module_base/math_sphbes.cpp
+    ${ABACUS_SOURCE_DIR}/module_base/math_integral.h
+    ${ABACUS_SOURCE_DIR}/module_base/math_integral.cpp
     ${PROJECT_SOURCE_DIR}/src/py_abacus.cpp
     #${PROJECT_SOURCE_DIR}/src/py_numerical_radial.cpp
     ${PROJECT_SOURCE_DIR}/src/py_math_base.cpp)

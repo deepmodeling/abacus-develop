@@ -138,17 +138,14 @@ static const char* cusolverGetErrorEnum(cusolverStatus_t error) {
     }
 }
 
-inline void cusolverAssert(cusolverStatus_t code, const char* file, int line, bool abort = true)
+inline void cusolverAssert(cusolverStatus_t code, const char* file, int line)
 {
     if (code != CUSOLVER_STATUS_SUCCESS)
     {
-        fprintf(stderr, "cuSOLVER Assert: %s %s %d\n", cusolverGetErrorEnum(code), file, line);
-        if (abort)
-            exit(code);
+        fprintf(stderr, " Unexpected cuSOLVER Error: %s %s %d\n", cusolverGetErrorEnum(code), file, line);
+        exit(code);
     }
 }
-
-#define cusolverErrcheck(res) { cusolverAssert((res), __FILE__, __LINE__); }
 
 // cuSOLVER API errors
 static const char * cublasGetErrorEnum(cublasStatus_t error) {
@@ -174,25 +171,23 @@ static const char * cublasGetErrorEnum(cublasStatus_t error) {
     }
 }
 
-inline void cublasAssertInternal(cublasStatus_t code, const char *file, int line, bool abort=true) {
-    if (code != CUBLAS_STATUS_SUCCESS) {
-        fprintf(stderr,"cuBLAS Assert: %s %s %d\n", cublasGetErrorEnum(code), file, line);
-        if (abort) exit(code);
+inline void cublasAssert(cublasStatus_t res, const char *file, int line) {
+    if (res != CUBLAS_STATUS_SUCCESS) {
+        fprintf(stderr, " Unexpected cuBLAS Error: %s %s %d\n", cublasGetErrorEnum(res), file, line);
+        exit(res);
     }
 }
 
-namespace container {
+#define cusolverErrcheck(res) { cusolverAssert((res), __FILE__, __LINE__); }
 
-#define cublasErrcheckInternal(res) { cublasAssertInternal((res), __FILE__, __LINE__); }
+#define cublasErrcheck(res) { cublasAssert((res), __FILE__, __LINE__); }
 
 // CUDA API errors
 #define cudaErrcheck(res) {                                             \
     if (res != cudaSuccess) {                                           \
-        printf("CUDA error %s:%d: %s\n", __FILE__, __LINE__, cudaGetErrorString(res)); \
-        exit(EXIT_FAILURE);                                             \
+        fprintf(stderr, " Unexpected Device Error %s:%d: %s, %s\n", __FILE__, __LINE__, cudaGetErrorName(res), cudaGetErrorString(res)); \
+        exit(res);                                                      \
     }                                                                   \
 }
-
-} // namespace container
 
 #endif // BASE_MACROS_CUDA_H_
