@@ -1129,6 +1129,13 @@ void ESolver_KS_PW<T, Device>::postprocess()
                 {
                     if(GlobalV::MY_RANK == 0) {std::cout << "update value: bessel_nao_rcut <- " << std::fixed << INPUT.bessel_nao_rcuts[i] << " a.u." << std::endl;}
                     INPUT.bessel_nao_rcut = INPUT.bessel_nao_rcuts[i];
+                    /*
+                        SEVERE BUG
+                        the memory management of numerical_basis class is NOT SAFE, data cleaning before overwriting is absent.
+                        instance created from present implementation of numerical_basis SHOULD NOT BE USED FOR MORE THAN ONE TIME.
+                        will cause data unexpected overwriting, file truncation and data loss. 
+                        Will be refactored in the future.
+                    */
                     Numerical_Basis numerical_basis;
                     numerical_basis.output_overlap(this->psi[0], this->sf, this->kv, this->pw_wfc);
                     std::string old_fname_header = winput::spillage_outdir + "/" + "orb_matrix.";
