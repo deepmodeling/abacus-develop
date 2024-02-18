@@ -4,6 +4,7 @@
 
 #include <hip/hip_runtime.h>
 #include <thrust/complex.h>
+#include <base/macros/macros.h>
 
 #define THREADS_PER_BLOCK 256
 
@@ -44,7 +45,7 @@ void resize_memory_op<FPTYPE, psi::DEVICE_GPU>::operator()(
   if (arr != nullptr) {
     delete_memory_op<FPTYPE, psi::DEVICE_GPU>()(dev, arr);
   }
-  hipMalloc((void **)&arr, sizeof(FPTYPE) * size);
+  hipErrcheck(hipMalloc((void **)&arr, sizeof(FPTYPE) * size));
 }
 
 template <typename FPTYPE>
@@ -54,7 +55,7 @@ void set_memory_op<FPTYPE, psi::DEVICE_GPU>::operator()(
     const int var, 
     const size_t size) 
 {
-  hipMemset(arr, var, sizeof(FPTYPE) * size);  
+  hipErrcheck(hipMemset(arr, var, sizeof(FPTYPE) * size));  
 }
 
 template <typename FPTYPE> 
@@ -65,7 +66,7 @@ void synchronize_memory_op<FPTYPE, psi::DEVICE_CPU, psi::DEVICE_GPU>::operator()
     const FPTYPE* arr_in,
     const size_t size) 
 {
-  hipMemcpy(arr_out, arr_in, sizeof(FPTYPE) * size, hipMemcpyDeviceToHost);  
+  hipErrcheck(hipMemcpy(arr_out, arr_in, sizeof(FPTYPE) * size, hipMemcpyDeviceToHost));  
 }
 
 template <typename FPTYPE> 
@@ -76,7 +77,7 @@ void synchronize_memory_op<FPTYPE, psi::DEVICE_GPU, psi::DEVICE_CPU>::operator()
     const FPTYPE* arr_in,
     const size_t size) 
 {
-  hipMemcpy(arr_out, arr_in, sizeof(FPTYPE) * size, hipMemcpyHostToDevice);  
+  hipErrcheck(hipMemcpy(arr_out, arr_in, sizeof(FPTYPE) * size, hipMemcpyHostToDevice));  
 }
 
 template <typename FPTYPE> 
@@ -87,7 +88,7 @@ void synchronize_memory_op<FPTYPE, psi::DEVICE_GPU, psi::DEVICE_GPU>::operator()
     const FPTYPE* arr_in,
     const size_t size) 
 {
-  hipMemcpy(arr_out, arr_in, sizeof(FPTYPE) * size, hipMemcpyDeviceToDevice);  
+  hipErrcheck(hipMemcpy(arr_out, arr_in, sizeof(FPTYPE) * size, hipMemcpyDeviceToDevice));  
 }
 
 template <typename FPTYPE_out, typename FPTYPE_in>
@@ -99,6 +100,8 @@ struct cast_memory_op<FPTYPE_out, FPTYPE_in, psi::DEVICE_GPU, psi::DEVICE_GPU> {
                     const size_t size) {
         const int block = (size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
         hipLaunchKernelGGL(cast_memory, dim3(block), dim3(THREADS_PER_BLOCK), 0, 0, arr_out, arr_in, size);
+        hipErrcheck(hipGetLastError());
+        hipErrcheck(hipDeviceSynchronize());
     }
 };
 
@@ -110,11 +113,13 @@ struct cast_memory_op<FPTYPE_out, FPTYPE_in, psi::DEVICE_GPU, psi::DEVICE_CPU> {
                     const FPTYPE_in* arr_in,
                     const size_t size) {
         FPTYPE_in * arr = nullptr;
-        hipMalloc((void **)&arr, sizeof(FPTYPE_in) * size);
-        hipMemcpy(arr, arr_in, sizeof(FPTYPE_in) * size, hipMemcpyHostToDevice);
+        hipErrcheck(hipMalloc((void **)&arr, sizeof(FPTYPE_in) * size));
+        hipErrcheck(hipMemcpy(arr, arr_in, sizeof(FPTYPE_in) * size, hipMemcpyHostToDevice));
         const int block = (size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
         hipLaunchKernelGGL(cast_memory, dim3(block), dim3(THREADS_PER_BLOCK), 0, 0, arr_out, arr, size);
-        hipFree(arr);
+        hipErrcheck(hipGetLastError());
+        hipErrcheck(hipDeviceSynchronize());
+        hipErrcheck(hipFree(arr));
     }
 };
 
@@ -126,7 +131,7 @@ struct cast_memory_op<FPTYPE_out, FPTYPE_in, psi::DEVICE_CPU, psi::DEVICE_GPU> {
                     const FPTYPE_in* arr_in,
                     const size_t size) {
         auto * arr = (FPTYPE_in*) malloc(sizeof(FPTYPE_in) * size);
-        hipMemcpy(arr, arr_in, sizeof(FPTYPE_in) * size, hipMemcpyDeviceToHost);
+        hipErrcheck(hipMemcpy(arr, arr_in, sizeof(FPTYPE_in) * size, hipMemcpyDeviceToHost));
         for (int ii = 0; ii < size; ii++) {
             arr_out[ii] = static_cast<FPTYPE_out>(arr[ii]);
         }
@@ -139,7 +144,7 @@ void delete_memory_op<FPTYPE, psi::DEVICE_GPU>::operator() (
     const psi::DEVICE_GPU* dev, 
     FPTYPE* arr) 
 {
-  hipFree(arr);
+  hipErrcheck(hipFree(arr));
 }
 
 template struct resize_memory_op<int, psi::DEVICE_GPU>;

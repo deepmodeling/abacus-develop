@@ -81,6 +81,7 @@ void Input::Init(const std::string& fn)
     const char* commit = "unknown";
 #endif
     time_t time_now = time(NULL);
+    start_time = time_now;
     GlobalV::ofs_running << "                                                                                     "
                          << std::endl;
     GlobalV::ofs_running << "                              ABACUS " << version << std::endl << std::endl;
@@ -303,6 +304,7 @@ void Input::Default(void)
     mixing_mode = "broyden";
     mixing_beta = -10;
     mixing_ndim = 8;
+    mixing_restart = 0;
     mixing_gg0 = 1.00;       // use Kerker defaultly
     mixing_beta_mag = -10.0; // only set when nspin == 2 || nspin == 4
     mixing_gg0_mag = 0.0;    // defaultly exclude Kerker from mixing magnetic density
@@ -310,6 +312,7 @@ void Input::Default(void)
     mixing_angle = -10.0;    // defaultly close for npsin = 4
     mixing_tau = false;
     mixing_dftu = false;
+    mixing_dmr = false;      // whether to mixing real space density matrix
     //----------------------------------------------------------
     // potential / charge / wavefunction / energy
     //----------------------------------------------------------
@@ -327,6 +330,8 @@ void Input::Default(void)
 
     out_bandgap = 0; // QO added for bandgap printing
 
+    band_print_num = 0;
+
     deepks_out_labels = 0; // caoyu added 2020-11-24, mohan added 2021-01-03
     deepks_scf = 0;
     deepks_bandgap = 0;
@@ -336,7 +341,7 @@ void Input::Default(void)
     out_wfc_pw = 0;
     out_wfc_r = 0;
     out_dos = 0;
-    out_band = 0;
+    out_band = {0, 8};
     out_proj_band = 0;
     out_mat_hs = {0, 8};
     out_mat_xc = 0;
@@ -680,6 +685,8 @@ bool Input::Read(const std::string& fn)
                   << " The parameter list always starts with key word 'INPUT_PARAMETERS'. " << std::endl;
         return false; // return error : false
     }
+
+    bool plast_find = false; // whether the parameter md_plast is found liuyu 2024-01-28
 
     ifs.rdstate();
     while (ifs.good())
@@ -1256,6 +1263,10 @@ bool Input::Read(const std::string& fn)
         {
             read_value(ifs, mixing_ndim);
         }
+        else if (strcmp("mixing_restart", word) == 0)
+        {
+            read_value(ifs, mixing_restart);
+        }
         else if (strcmp("mixing_gg0", word) == 0) // mohan add 2014-09-27
         {
             read_value(ifs, mixing_gg0);
@@ -1283,6 +1294,10 @@ bool Input::Read(const std::string& fn)
         else if (strcmp("mixing_dftu", word) == 0)
         {
             read_bool(ifs, mixing_dftu);
+        }
+        else if (strcmp("mixing_dmr", word) == 0)
+        {
+            read_bool(ifs, mixing_dmr);
         }
         //----------------------------------------------------------
         // charge / potential / wavefunction
@@ -1326,6 +1341,14 @@ bool Input::Read(const std::string& fn)
         else if (strcmp("out_chg", word) == 0)
         {
             read_bool(ifs, out_chg);
+        }
+        else if (strcmp("band_print_num", word) == 0)
+        {
+            read_value(ifs, band_print_num);
+        }
+        else if (strcmp("bands_to_print", word) == 0)
+        {
+            ifs.ignore(150, '\n');
         }
         else if (strcmp("out_dm", word) == 0)
         {
@@ -1378,13 +1401,13 @@ bool Input::Read(const std::string& fn)
         }
         else if (strcmp("out_band", word) == 0)
         {
-            read_bool(ifs, out_band);
+            read_value2stdvector(ifs, out_band);
+            if(out_band.size() == 1) out_band.push_back(8);
         }
         else if (strcmp("out_proj_band", word) == 0)
         {
             read_bool(ifs, out_proj_band);
         }
-
         else if (strcmp("out_mat_hs", word) == 0)
         {
             read_value2stdvector(ifs, out_mat_hs);
@@ -1565,10 +1588,15 @@ bool Input::Read(const std::string& fn)
         else if (strcmp("md_pfirst", word) == 0)
         {
             read_value(ifs, mdp.md_pfirst);
+            if (!plast_find)
+            {
+                mdp.md_plast = mdp.md_pfirst;
+            }
         }
         else if (strcmp("md_plast", word) == 0)
         {
             read_value(ifs, mdp.md_plast);
+            plast_find = true;
         }
         else if (strcmp("md_pfreq", word) == 0)
         {
@@ -2369,6 +2397,29 @@ bool Input::Read(const std::string& fn)
         ModuleBase::WARNING_QUIT("Input", "The ntype in INPUT is not equal to the ntype counted in STRU, check it.");
     }
 
+    if(band_print_num > 0)
+    {
+        bands_to_print.resize(band_print_num);
+        ifs.clear();
+        ifs.seekg(0); // move to the beginning of the file
+        ifs.rdstate();
+        while (ifs.good())
+        {
+            ifs >> word1;
+            if (ifs.eof() != 0)
+                break;
+            strtolower(word1, word); // convert uppercase std::string to lower case; word1 --> word
+
+            if (strcmp("bands_to_print", word) == 0)
+            {
+                for(int i = 0; i < band_print_num; i ++)
+                {
+                    ifs >> bands_to_print[i];
+                }
+            }
+        }
+    }
+
     //----------------------------------------------------------
     //       DFT+U    Xin Qu  added on 2020-10-29
     //----------------------------------------------------------
@@ -2826,7 +2877,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         this->relax_nmax = 1;
         out_stru = 0;
         out_dos = 0;
-        out_band = 0;
+        out_band[0] = 0;
         out_proj_band = 0;
         cal_force = 0;
         init_wfc = "file";
@@ -2843,7 +2894,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         this->relax_nmax = 1;
         out_stru = 0;
         out_dos = 0;
-        out_band = 0;
+        out_band[0] = 0;
         out_proj_band = 0;
         cal_force = 0;
         init_wfc = "file";
@@ -2866,8 +2917,6 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         }
         if (!out_md_control)
             out_level = "m"; // zhengdy add 2019-04-07
-        if (mdp.md_plast < 0.0)
-            mdp.md_plast = mdp.md_pfirst;
 
         if (mdp.md_tfreq == 0)
         {
@@ -3292,6 +3341,7 @@ void Input::Bcast()
     Parallel_Common::bcast_string(mixing_mode);
     Parallel_Common::bcast_double(mixing_beta);
     Parallel_Common::bcast_int(mixing_ndim);
+    Parallel_Common::bcast_int(mixing_restart);
     Parallel_Common::bcast_double(mixing_gg0); // mohan add 2014-09-27
     Parallel_Common::bcast_double(mixing_beta_mag);
     Parallel_Common::bcast_double(mixing_gg0_mag);
@@ -3299,6 +3349,7 @@ void Input::Bcast()
     Parallel_Common::bcast_double(mixing_angle);
     Parallel_Common::bcast_bool(mixing_tau);
     Parallel_Common::bcast_bool(mixing_dftu);
+    Parallel_Common::bcast_bool(mixing_dmr);
 
     Parallel_Common::bcast_string(read_file_dir);
     Parallel_Common::bcast_string(init_wfc);
@@ -3325,7 +3376,8 @@ void Input::Bcast()
     Parallel_Common::bcast_int(out_wfc_pw);
     Parallel_Common::bcast_bool(out_wfc_r);
     Parallel_Common::bcast_int(out_dos);
-    Parallel_Common::bcast_bool(out_band);
+    if(GlobalV::MY_RANK != 0) out_band.resize(2); /* If this line is absent, will cause segmentation fault in io_input_test_para */
+    Parallel_Common::bcast_int(out_band.data(), 2);
     Parallel_Common::bcast_bool(out_proj_band);
     if(GlobalV::MY_RANK != 0) out_mat_hs.resize(2); /* If this line is absent, will cause segmentation fault in io_input_test_para */
     Parallel_Common::bcast_int(out_mat_hs.data(), 2);
@@ -3522,6 +3574,17 @@ void Input::Bcast()
     Parallel_Common::bcast_double(cell_factor); // LiuXh add 20180619
     Parallel_Common::bcast_bool(restart_save);  // Peize Lin add 2020.04.04
     Parallel_Common::bcast_bool(restart_load);  // Peize Lin add 2020.04.04
+
+    Parallel_Common::bcast_int(band_print_num);
+    if(GlobalV::MY_RANK != 0)
+    {
+        bands_to_print.resize(band_print_num);
+    }
+
+    for(int i = 0; i < band_print_num; i++)
+    {
+        Parallel_Common::bcast_int(bands_to_print[i]);
+    }
 
     //-----------------------------------------------------------------------------------
     // DFT+U (added by Quxin 2020-10-29)
@@ -3744,8 +3807,6 @@ void Input::Check(void)
         // deal with input parameters , 2019-04-30
         if (mdp.md_dt < 0)
             ModuleBase::WARNING_QUIT("Input::Check", "time interval of MD calculation should be set!");
-        if (mdp.md_type == "npt" && mdp.md_pfirst < 0)
-            ModuleBase::WARNING_QUIT("Input::Check", "pressure of MD calculation should be set!");
         if (mdp.md_type == "msst")
         {
             if (mdp.msst_qmass <= 0)

@@ -23,8 +23,8 @@
  *  - set_as_identity_matrix()
  *  - print():Output the elements of this complex matrix greater than threshold.
  *  - checkreal()
- * 
- * Tested relative functions 
+ *
+ * Tested relative functions
  *  - operator "+" "-" "*" between two ComplexMatrix
  *  - operator "*" between a ComplexMatrix and double or complex, and reverse.
  *  - trace()
@@ -35,13 +35,13 @@
  *  - conj()
  *  - scale_accumulate():
  *  - scaled_sum():
- * 
+ *
  */
 
 //a mock function of WARNING_QUIT, to avoid the uncorrected call by matrix.cpp at line 37.
 namespace ModuleBase
 {
-    void WARNING_QUIT(const std::string &file,const std::string &description) {return ;}
+    void WARNING_QUIT(const std::string &file,const std::string &description) {exit(1);}
 }
 
 inline void EXPECT_COMPLEX_EQ(const std::complex<double>& a,const std::complex<double>& b)
@@ -104,8 +104,8 @@ TEST_F(ComplexMatrixTest,ConstructorCM)
 
 TEST_F(ComplexMatrixTest,ConstructorCMrvalue)
 {
-    ModuleBase::ComplexMatrix cm2(cm22);        
-    ModuleBase::ComplexMatrix cm1(std::move(cm22)); 
+    ModuleBase::ComplexMatrix cm2(cm22);
+    ModuleBase::ComplexMatrix cm1(std::move(cm22));
     EXPECT_EQ(cm1.nr,cm2.nr);
     EXPECT_EQ(cm1.nc,cm2.nc);
     EXPECT_EQ(cm1.size,cm2.size);
@@ -338,15 +338,15 @@ TEST_F(ComplexMatrixTest,OperatorMultMatrix)
     EXPECT_EQ(cm33.nr,3);
     EXPECT_EQ(cm33.nc,3);
     EXPECT_EQ(cm33.size,9);
-    EXPECT_COMPLEX_EQ(cm33(0,0),std::complex<double>{-46.0,72.0  }); 
+    EXPECT_COMPLEX_EQ(cm33(0,0),std::complex<double>{-46.0,72.0  });
     EXPECT_COMPLEX_EQ(cm33(0,1),std::complex<double>{-46.0,118.0 });
     EXPECT_COMPLEX_EQ(cm33(0,2),std::complex<double>{-46.0,164.0 });
     EXPECT_COMPLEX_EQ(cm33(1,0),std::complex<double>{-54.0,84.0  });
     EXPECT_COMPLEX_EQ(cm33(1,1),std::complex<double>{-54.0,138.0 });
-    EXPECT_COMPLEX_EQ(cm33(1,2),std::complex<double>{-54.0,192.0 }); 
+    EXPECT_COMPLEX_EQ(cm33(1,2),std::complex<double>{-54.0,192.0 });
     EXPECT_COMPLEX_EQ(cm33(2,0),std::complex<double>{-62.0,96.0  });
     EXPECT_COMPLEX_EQ(cm33(2,1),std::complex<double>{-62.0,158.0 });
-    EXPECT_COMPLEX_EQ(cm33(2,2),std::complex<double>{-62.0,220.0 }); 
+    EXPECT_COMPLEX_EQ(cm33(2,2),std::complex<double>{-62.0,220.0 });
 
     EXPECT_DEATH(cm22 * cm32,"");
 }
@@ -525,7 +525,7 @@ TEST_F(ComplexMatrixTest,ScaleSumArray)
     cmout = new ModuleBase::ComplexMatrix*[2];
     cmin1 = new ModuleBase::ComplexMatrix*[2];
     cmin2 = new ModuleBase::ComplexMatrix*[2];
-   
+
     cmin1[0] = &cm1;
     cmin1[1] = &cm2;
     cmin2[0] = &cm3;
@@ -563,7 +563,7 @@ TEST_F(ComplexMatrixTest,print)
    EXPECT_THAT(output,testing::HasSubstr("(3,4)\t(4,5)\t"));
    ifs.close();
    remove("printtest1.log");
-// The condition of  std::abs(data)>threshold_abs && std::imag(data)) <= threshold_imag 
+// The condition of  std::abs(data)>threshold_abs && std::imag(data)) <= threshold_imag
    ofs.open("printtest2.log");
    cm22.print(ofs,1e-10,2);
    ofs.close();

@@ -194,6 +194,8 @@ void RadialCollection::build(const int nfile, const std::string* const file, con
         radset_[itype]->build(file[itype], itype);
     }
 
+    delete[] file_type;
+
     for (int itype = 0; itype < ntype_; ++itype)
     {
         lmax_ = std::max(lmax_, radset_[itype]->lmax());

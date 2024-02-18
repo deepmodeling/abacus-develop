@@ -552,7 +552,7 @@ void HSolverPW<T, Device>::endDiagh()
         delete (DiagoDavid<T, Device>*)this->pdiagh;
         this->pdiagh = nullptr;
     }
-    if(this->method == "all-band cg")
+    if(this->method == "bpcg")
     {
         delete (DiagoBPCG<T, Device>*)this->pdiagh;
         this->pdiagh = nullptr;
@@ -624,17 +624,31 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::P
         hm->ops->hPsi(info);
         ModuleBase::timer::tick("DiagoCG_New", "hpsi_func");
     };
-    auto spsi_func = [hm](const ct::Tensor& psi_in, ct::Tensor& spsi_out) {
+    auto spsi_func = [this, hm](const ct::Tensor& psi_in, ct::Tensor& spsi_out) {
         ModuleBase::timer::tick("DiagoCG_New", "spsi_func");
         // psi_in should be a 2D tensor: 
         // psi_in.shape() = [nbands, nbasis]
         const auto ndim = psi_in.shape().ndim();
         REQUIRES_OK(ndim <= 2, "dims of psi_in should be less than or equal to 2");
-        // Convert a Tensor object to a psi::Psi object
-        hm->sPsi(psi_in.data<T>(), spsi_out.data<T>(), 
+
+        if (GlobalV::use_uspp)
+        {
+            // Convert a Tensor object to a psi::Psi object
+            hm->sPsi(psi_in.data<T>(), spsi_out.data<T>(), 
             ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1), 
             ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1), 
             ndim == 1 ? 1 : psi_in.shape().dim_size(0));
+        } else
+        {
+            psi::memory::synchronize_memory_op<T, Device, Device>()(
+                this->ctx,
+                this->ctx,
+                spsi_out.data<T>(),
+                psi_in.data<T>(),
+                static_cast<size_t>((ndim == 1 ? 1 : psi_in.shape().dim_size(0))
+                                    * (ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1))));
+        }
+        
         ModuleBase::timer::tick("DiagoCG_New", "spsi_func");
     };
     auto psi_tensor = ct::TensorMap(

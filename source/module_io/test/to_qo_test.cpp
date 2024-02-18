@@ -548,7 +548,39 @@ TEST_F(toQOTest, CalculateSelfOvlpRFull)
     //tqo.write_ovlp(tqo.ovlp_R()[0], "QO_self_ovlp.dat");
 }
 
-TEST_F(toQOTest, BuildPswfc)
+/* Si_dojo_soc.upf is special: two p orbitals, one s orbital */
+
+TEST_F(toQOTest, BuildPswfcPartial1)
+{
+    define_fcc_cell(ucell);
+    toQO tqo("pswfc", {"s", "s"});
+    tqo.unwrap_unitcell(&ucell);
+    tqo.build_ao(ucell.ntype, ucell.pseudo_fn);
+    EXPECT_EQ(tqo.p_ao()->nchi(), 5); // AO will always read and import all orbitals
+    EXPECT_EQ(tqo.nchi(), 2);
+}
+
+TEST_F(toQOTest, BuildPswfcPartial2)
+{
+    define_fcc_cell(ucell);
+    toQO tqo("pswfc", {"ps", "s"});
+    tqo.unwrap_unitcell(&ucell);
+    tqo.build_ao(ucell.ntype, ucell.pseudo_fn);
+    EXPECT_EQ(tqo.p_ao()->nchi(), 5); // AO will always read and import all orbitals
+    EXPECT_EQ(tqo.nchi(), 8); // the first element is Si, it has two p orbitals, so 3+3+1+1
+}
+
+TEST_F(toQOTest, BuildPswfcPartial3)
+{
+    define_fcc_cell(ucell);
+    toQO tqo("pswfc", {"all", "p"});
+    tqo.unwrap_unitcell(&ucell);
+    tqo.build_ao(ucell.ntype, ucell.pseudo_fn);
+    EXPECT_EQ(tqo.p_ao()->nchi(), 5); // AO will always read and import all orbitals
+    EXPECT_EQ(tqo.nchi(), 10);
+}
+
+TEST_F(toQOTest, BuildPswfcAll)
 {
     define_fcc_cell(ucell);
     toQO tqo("pswfc", {"all", "all"});
