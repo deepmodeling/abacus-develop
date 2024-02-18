@@ -38,8 +38,8 @@ The source code of ABACUS is based on several modules. Under the ABACUS root dir
 
 For those who are interested in the source code, the following figure shows the structure of the source code.
 
-```
-|-- module_base                 A basic module including 
+```text
+|-- module_base                 A basic module including
 |   |                           (1) Mathematical library interface functions: BLAS, LAPACK, Scalapack;
 |   |                           (2) Custom data classes: matrix, vector definitions and related functions;
 |   |                           (3) Parallelization functions: MPI, OpenMP;
@@ -59,7 +59,7 @@ For those who are interested in the source code, the following figure shows the 
 |   |-- potentials              The module for calculating the potentials, including Hartree, exchange-correlation, local pseudopotential, etc.
 |-- module_esolver              The module defining task-specific driver of corresponding workflow for evaluating energies, forces, etc., including lj, dp, ks, sdft, ofdft, etc.
 |   |                           TDDFT, Orbital-free DFT, etc.
-|-- module_hamilt_general       The module for defining general Hamiltonian that can be used both in PW and LCAO calculations. 
+|-- module_hamilt_general       The module for defining general Hamiltonian that can be used both in PW and LCAO calculations.
 |   |-- module_ewald            The module for calculating the Ewald summation.
 |   |-- module_surchem          The module for calculating the surface charge correction.
 |   |-- module_vdw              The module for calculating the van der Waals correction.
@@ -77,7 +77,7 @@ For those who are interested in the source code, the following figure shows the 
 |   |-- hamilt_pwdft            The module for defining the Hamiltonian in PW-DFT calculations.
 |   |   |-- operator_pw         The module for defining the operators in PW-DFT calculations.
 |   `-- hamilt_stodft           The module for defining the Hamiltonian in STODFT calculations.
-|-- module_hsolver              The module for solving the Hamiltonian with different diagonalization methods, including CG, Davidson in PW 
+|-- module_hsolver              The module for solving the Hamiltonian with different diagonalization methods, including CG, Davidson in PW
 |   |                           calculations, and scalapack and genelpa in LCAO calculations.
 |-- module_io                   The module for reading of INPUT files and output properties including band structure, density of states, charge density, etc.
 |-- module_md                   The module for performing molecular dynamics.
@@ -201,42 +201,55 @@ To add a unit test:
 
 ## Running unit tests
 
-1. Compiling ABACUS with unit tests.   
+1. Compiling ABACUS with unit tests.
 
     In order to run unit tests, ABACUS needs to be configured with `-D BUILD_TESTING=ON` flag. For example:
+
     ```bash
     cmake -B build -DBUILD_TESTING=ON
-    ``` 
-    then build ABACUS and unit testing with 
+    ```
+
+    then build ABACUS and unit testing with
+
     ```bash
     cmake --build build -j${number of processors}
     ```
+
     It is import to run the folloing command before running unit tests:
+
     ```bash
     cmake --install build
     ```
-    to install mandatory supporting input files for unit tests.  
+
+    to install mandatory supporting input files for unit tests.
     If you modified the unit tests to add new tests or learn how to write unit tests, it is convenient to run
+
     ```bash
     cmake --build build -j${number of processors} --target ${unit test name}
     ```
+
     to build a specific unit test. And please remember to run `cmake --install build` after building the unit test if the unit test requires supporting input files.
 
 2. Running unit tests
 
-    The test cases are located in `build/source/${module_name}/test` directory. Note that there are other directory names for unit tests, for example, `test_parallel` for running parallel unit tests, `test_pw` for running unit tests only used in plane wave basis calculation.  
+    The test cases are located in `build/source/${module_name}/test` directory. Note that there are other directory names for unit tests, for example, `test_parallel` for running parallel unit tests, `test_pw` for running unit tests only used in plane wave basis calculation.
 
     You can run a single test in the specific directory. For example, run
-    ```
+
+    ```bash
     ./cell_unitcell_test
     ```
-    under the directory of `build/source/module_cell/test` to run the test `cell_unitcell_test`.  
+
+    under the directory of `build/source/module_cell/test` to run the test `cell_unitcell_test`.
     However, it is more convenient to run unit tests with `ctest` command under the `build` directory. You can check all unit tests by
+
     ```bash
     ctest -N
     ```
-    The results will be shown as  
-    ```
+
+    The results will be shown as
+
+    ```text
     Test project /root/abacus/build
     Test   #1: integrated_test
     Test   #2: Container_UTs
@@ -245,23 +258,30 @@ To add a unit test:
     Test   #5: base_timer
     ...
     ```
+
     Note that the first one is integrated test, which is not a unit test. It is the test
     suite for testing the whole ABACUS package. The examples are located in the `tests/integrate` directory.
 
-    To run a subset of tests, run the following command 
+    To run a subset of tests, run the following command
+
     ```bash
     ctest -R <test-match-pattern> -V
     ```
-    For example, `ctest -R cell` will perform tests with name matched by `cell`.  
-    You can also run a single test with 
-    ```
+
+    For example, `ctest -R cell` will perform tests with name matched by `cell`.
+    You can also run a single test with
+
+    ```bash
     ctest -R <test-name>
     ```
-    For example, `ctest -R cell_unitcell_test_readpp` will   perform test `cell_unitcell_test_readpp`.  
+
+    For example, `ctest -R cell_unitcell_test_readpp` will   perform test `cell_unitcell_test_readpp`.
     To run all the unit tests, together with the integrated test, run
+
     ```bash
     cmake --build build --target test ARGS="-V --timeout 21600"
     ```
+
     in the `abacus-develop` directory.
 
 ## Debugging the codes
@@ -290,6 +310,32 @@ Run ABACUS as usual, and it will automatically detect the buffer overflow proble
 
 [Valgrind](https://valgrind.org/) is another option for performing dynamic analysis.
 
+## Adding a new building component
+
+ABACUS uses CMake as its default building system. To add a new building component:
+
+1. Add an `OPTION` to toggle the component to the `CMakeLists.txt` file under root directory. For example:
+
+    ```cmake
+    OPTION(ENABLE_NEW_COMPONENT "Enable new component" OFF)
+    ```
+
+2. Add the new component. For example:
+
+    ```cmake
+    IF (ENABLE_NEW_COMPONENT)
+      add_subdirectory(module_my_new_feature) # if the feature is implemented in a subdirectory
+      find_package(NewComponent REQUIRED) # if third-party libs are required
+      target_link_libraries(${ABACUS_BIN_NAME} PRIVATE NewComponent) # if the component is linked
+      include_directories(${NewComponent_INCLUDE_DIRS}) # if the component is included
+    endif()
+    ```
+
+3. Add the required third-party libraries to Dockerfiles.
+4. After the changes above are merged, submit another PR to build and test the new component in the CI pipeline.
+    - For integration test and unit test: add `-DENABLE_NEW_COMPONENT=ON` to the building step at `.github/workflows/test.yml`.
+    - For building test: add `-DENABLE_NEW_COMPONENT=ON` as a new configuration at `.github/workflows/build_test_cmake.yml`.
+
 ## Generating code coverage report
 
 This feature requires using GCC compiler. We use `gcov` and `lcov` to generate code coverage report.
@@ -306,7 +352,7 @@ This feature requires using GCC compiler. We use `gcov` and `lcov` to generate c
     cmake --build build --target test ARGS="-V --timeout 21600"
     ```
 
-If configuration fails unfortunately, you can find [required files](https://github.com/baixiaokuang/CMake-codecov/tree/master/cmake) (including three *.cmake and llvm-cov-wrapper), and copy these four files into `/abacus-develop/cmake`. Alternatively, you can define the path with option `-D CMAKE_CURRENT_SOURCE_DIR`.
+    If configuration fails unfortunately, you can find [required files](https://github.com/baixiaokuang/CMake-codecov/tree/master/cmake) (including three *.cmake and llvm-cov-wrapper), and copy these four files into `/abacus-develop/cmake`. Alternatively, you can define the path with option `-D CMAKE_CURRENT_SOURCE_DIR`.
 
 3. Generate HTML report.
 

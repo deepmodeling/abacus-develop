@@ -43,12 +43,18 @@ class H_TDDFT_pw : public PotBase
     static int tstart;
     static int tend;
     static double dt;
+    //cut dt for integral
+    static double dt_int;
+    static int istep_int;
 
     // space domain parameters
 
     //length gauge
     static double lcut1;
     static double lcut2;
+
+    //velocity gauge, vector magnetic potential
+    static double At[3];
 
     // time domain parameters
 
@@ -59,6 +65,9 @@ class H_TDDFT_pw : public PotBase
     static std::vector<double> gauss_sigma; // time(a.u.)
     static std::vector<double> gauss_t0;
     static std::vector<double> gauss_amp; // Ry/bohr
+    //add for velocity gauge, recut dt into n pieces to make sure the integral is accurate Enough
+    //must be even, thus would get odd number of points for simpson integral
+    static std::vector<int> gauss_ncut;
 
     // trapezoid
     static int trape_count;
@@ -68,6 +77,8 @@ class H_TDDFT_pw : public PotBase
     static std::vector<double> trape_t2;
     static std::vector<double> trape_t3;
     static std::vector<double> trape_amp; // Ry/bohr
+    //add for velocity gauge, recut dt into n pieces to make sure the integral is accurate Enough
+    static std::vector<int> trape_ncut;
 
     // Trigonometric
     static int trigo_count;
@@ -76,11 +87,16 @@ class H_TDDFT_pw : public PotBase
     static std::vector<double> trigo_phase1;
     static std::vector<double> trigo_phase2;
     static std::vector<double> trigo_amp; // Ry/bohr
+    //add for velocity gauge, recut dt into n pieces to make sure the integral is accurate Enough
+    static std::vector<int> trigo_ncut;
 
     // Heaviside
     static int heavi_count;
     static std::vector<double> heavi_t0;
     static std::vector<double> heavi_amp; // Ry/bohr
+
+    //update At for velocity gauge by intergral of E(t)dt
+    static void update_At(void);
 
   private:
     // internal time-step,
@@ -100,15 +116,17 @@ class H_TDDFT_pw : public PotBase
     void cal_v_space(std::vector<double> &vext_space, int direc);
     void cal_v_space_length(std::vector<double> &vext_space, int direc);
     double cal_v_space_length_potential(double i);
-    void cal_v_space_velocity(std::vector<double> &vext_space, int direc);
 
     // potential of electric field in time domain : Gauss , trapezoid, trigonometric, heaviside,  HHG
-    double cal_v_time(int t_type);
-    double cal_v_time_Gauss();
-    double cal_v_time_trapezoid();
-    double cal_v_time_trigonometric();
-    double cal_v_time_heaviside();
+    static double cal_v_time(int t_type, const bool last);
+    static double cal_v_time_Gauss(const bool last);
+    static double cal_v_time_trapezoid(const bool last);
+    static double cal_v_time_trigonometric(const bool last);
+    static double cal_v_time_heaviside();
     // double cal_v_time_HHG();
+
+    //get ncut number for At integral
+    static int check_ncut(int t_type);
 
     void prepare(const UnitCell& cell, int& dir);
 };

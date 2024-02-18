@@ -1291,6 +1291,10 @@ void input_parameters_set(std::map<std::string, InputParameter> input_parameters
     {
         INPUT.out_efield = *static_cast<bool*>(input_parameters["out_efield"].get());
     }
+    else if (input_parameters.count("out_current") != 0)
+    {
+        INPUT.out_current = *static_cast<bool*>(input_parameters["out_current"].get());
+    }
     else if (input_parameters.count("td_print_eij") != 0)
     {
         INPUT.td_print_eij = *static_cast<double*>(input_parameters["td_print_eij"].get());
