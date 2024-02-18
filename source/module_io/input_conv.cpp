@@ -371,13 +371,14 @@ void Input_Conv::Convert(void)
         GlobalC::dftu.omc = INPUT.omc;
         GlobalC::dftu.orbital_corr = INPUT.orbital_corr;
         GlobalC::dftu.mixing_dftu = INPUT.mixing_dftu;
-        if (!INPUT.yukawa_potential)
+        if (INPUT.yukawa_potential && INPUT.hubbard_u == nullptr)
         {
             // Duradev's rotational invariant formulation is implemented
             // where only an effective U given by U-J is used
             // unit is in eV
-            GlobalC::dftu.U = INPUT.hubbard_u;
+            INPUT.hubbard_u = new double[GlobalC::ucell.ntype];
         }
+        GlobalC::dftu.U = INPUT.hubbard_u;
     }
     GlobalV::onsite_radius = INPUT.onsite_radius;
 #endif
