@@ -43,7 +43,6 @@ cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
         -DENABLE_LIBXC=ON \
         -DUSE_OPENMP=ON \
         -DUSE_ELPA=ON \
-        -DENABLE_RAPIDJSON=ON \
         # -DENABLE_DEEPKS=1 \
         # -DTorch_DIR=$LIBTORCH \
         # -Dlibnpy_INCLUDE_DIR=$LIBNPY \
@@ -52,6 +51,7 @@ cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
         # -DLIBCOMM_DIR=$LIBCOMM \
 	    # -DDeePMD_DIR=$DEEPMD \
 	    # -DTensorFlow_DIR=$DEEPMD \
+#         -DENABLE_RAPIDJSON=ON \
 
 # if one want's to include deepmd, your gcc version should be >= 11.3.0
 
