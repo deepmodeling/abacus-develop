@@ -3,14 +3,14 @@
 # TODO: Review and if possible fix shellcheck errors.
 # shellcheck disable=all
 
-# Last Update in 2023-0918
+# Last Update in 2024-0219
 
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
-openmpi_ver="4.1.5"
-openmpi_sha256="c018b127619d2a2a30c1931f316fc8a245926d0f5b4ebed4711f9695e7f70925"
-openmpi_pkg="openmpi-${openmpi_ver}.tar.gz"
+openmpi_ver="5.0.0"
+openmpi_sha256="9d845ca94bc1aeb445f83d98d238cd08f6ec7ad0f73b0f79ec1668dbfdacd613"
+openmpi_pkg="openmpi-${openmpi_ver}.tar.bz2"
 
 source "${SCRIPT_DIR}"/common_vars.sh
 source "${SCRIPT_DIR}"/tool_kit.sh
@@ -43,7 +43,7 @@ case "${with_openmpi}" in
       fi
       echo "Installing from scratch into ${pkg_install_dir}"
       [ -d openmpi-${openmpi_ver} ] && rm -rf openmpi-${openmpi_ver}
-      tar -xzf ${openmpi_pkg}
+      tar -xjf ${openmpi_pkg}
       cd openmpi-${openmpi_ver}
       if [ "${OPENBLAS_ARCH}" = "x86_64" ]; then
         # can have issue with older glibc libraries, in which case
