@@ -70,5 +70,5 @@ cmake --install $BUILD_DIR 2>/dev/null
 # generate abacus_env.sh
 cat << EOF > "${TOOL}/abacus_env.sh"
 source $INSTALL_DIR/setup
-export PATH="${PREFIX}/bin":${PATH}
+export PATH="${PREFIX}/bin":\${PATH}
 EOF
