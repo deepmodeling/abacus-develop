@@ -453,6 +453,7 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "yukawa_lambda", yukawa_lambda, "default:0.0");
     ModuleBase::GlobalFunc::OUTP(ofs, "yukawa_potential", yukawa_potential, "default: false");
     ModuleBase::GlobalFunc::OUTP(ofs, "omc", omc, "the mode of occupation matrix control");
+    ModuleBase::GlobalFunc::OUTP(ofs, "onsite_radius", onsite_radius, "radius of the sphere for onsite projection (Bohr)");
     ofs << std::setw(20) << "hubbard_u ";
     for (int i = 0; i < ntype; i++)
     {
@@ -464,7 +465,6 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     {
         ofs << orbital_corr[i] << " ";
     }
-    ModuleBase::GlobalFunc::OUTP(ofs, "onsite_radius", onsite_radius, "radius of the sphere for onsite projection (Bohr)");
     ofs << "#which correlated orbitals need corrected ; d:2 ,f:3, do not need correction:-1" << std::endl;
 
 
