@@ -6,6 +6,8 @@
 # Only problem is the installation from github.com
 # LibRI is under highly-active development, the git submodule installation is more recommended
 
+# Last Update in 2023-1124
+
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 

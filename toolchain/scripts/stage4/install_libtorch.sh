@@ -4,11 +4,13 @@
 
 # shellcheck disable=all
 
+# Last Update in 2023-0908
+
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
 # From https://pytorch.org/get-started/locally/
-#libtorch_ver="1.12.1" # stable
+#libtorch_ver="1.12.1" # stable version
 #libtorch_sha256="82c7be80860f2aa7963f8700004a40af8205e1d721298f2e09b700e766a9d283"
 libtorch_ver="2.0.1" # newest, 
 # 2.0.1 libtorch will lead to lots of warning during build process in intel toolchain
