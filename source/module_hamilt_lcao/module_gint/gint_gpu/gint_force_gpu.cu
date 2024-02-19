@@ -146,7 +146,7 @@ void gint_gamma_force_gpu(hamilt::HContainer<double> *DM,
                 iat[index]=-max_size-1;
             }
             double *force_h=new double[3*nbz*bxyz*max_size];
-            for (int index=0;index<3*nbz*bxyz*nat;index++)
+            for (int index=0;index<3*nbz*bxyz*max_size;index++)
             {
                 force_h[index]=0.0;
             }
@@ -285,7 +285,7 @@ void gint_gamma_force_gpu(hamilt::HContainer<double> *DM,
                                                                                          nwmax,
                                                                                          max_size,
                                                                                          GridT.psir_size/nwmax);
-            // dump_cuda_array_double(dpsir_ylm_left_x_g,GridT.psir_size,1,i,j);
+
             checkCuda(cudaMemcpy(force_h, force_dot_g ,3*nbz*bxyz*max_size*sizeof(double), cudaMemcpyDeviceToHost));
             for (int index1=0;index1<nbz*bxyz*max_size;index1++)
             {
