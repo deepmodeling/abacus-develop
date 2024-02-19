@@ -79,7 +79,7 @@ if [ "$with_libnpy" != "__DONTUSE__" ]; then
     if [ "$with_libnpy" != "__SYSTEM__" ]; then
         cat << EOF > "${BUILDDIR}/setup_libnpy"
 prepend_path CPATH "$pkg_install_dir/include"
-export CPATH="${pkg_install_dir}/include":${CPATH}
+export CPATH="${pkg_install_dir}/include":\${CPATH}
 EOF
         cat "${BUILDDIR}/setup_libnpy" >> $SETUPFILE
     fi

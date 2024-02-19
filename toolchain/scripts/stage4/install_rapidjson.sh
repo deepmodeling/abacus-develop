@@ -78,7 +78,7 @@ if [ "$with_rapidjson" != "__DONTUSE__" ]; then
     # LibRI deps should find rapidjson include in CPATH
         cat << EOF > "${BUILDDIR}/setup_rapidjson"
 prepend_path CPATH "$pkg_install_dir/include"
-export CPATH="${pkg_install_dir}/include:"${CPATH}
+export CPATH="${pkg_install_dir}/include:"\${CPATH}
 EOF
         cat "${BUILDDIR}/setup_rapidjson" >> $SETUPFILE
     fi
