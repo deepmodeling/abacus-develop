@@ -495,24 +495,15 @@ namespace ModuleESolver
 {
     if (iter == 1 || iter == GlobalV::MIXING_RESTART)
     {
-        if (iter == GlobalV::MIXING_RESTART) // delete mixing and re-construct it to restart 
+        this->p_chgmix->init_mixing();
+        if (iter == GlobalV::MIXING_RESTART && GlobalV::MIXING_DMR) // for mixing_dmr 
         {
-            this->p_chgmix->set_mixing(GlobalV::MIXING_MODE,
-                                GlobalV::MIXING_BETA,
-                                GlobalV::MIXING_NDIM,
-                                GlobalV::MIXING_GG0,
-                                GlobalV::MIXING_TAU,
-                                GlobalV::MIXING_BETA_MAG);
             // allocate memory for dmr_mdata
-            if (GlobalV::MIXING_DMR)
-            {
-                const elecstate::DensityMatrix<TK, double>* dm
-                    = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
-                int nnr_tmp = dm->get_DMR_pointer(1)->get_nnr();
-                this->p_chgmix->allocate_mixing_dmr(nnr_tmp);
-            }
+            const elecstate::DensityMatrix<TK, double>* dm
+                = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
+            int nnr_tmp = dm->get_DMR_pointer(1)->get_nnr();
+            this->p_chgmix->allocate_mixing_dmr(nnr_tmp);
         }
-        this->p_chgmix->mix_reset();
     }
 
     // mohan update 2012-06-05
@@ -620,14 +611,14 @@ namespace ModuleESolver
     void ESolver_KS_LCAO<TK, TR>::hamilt2density(int istep, int iter, double ethr)
 {
     // save input rho
-        this->pelec->charge->save_rho_before_sum_band();
-        // save density matrix for mixing
-        if (GlobalV::MIXING_RESTART > 0 && GlobalV::MIXING_DMR && iter >= GlobalV::MIXING_RESTART)
-        {
-            elecstate::DensityMatrix<TK, double>* dm
-                = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
-            dm->save_DMR();
-        }
+    this->pelec->charge->save_rho_before_sum_band();
+    // save density matrix for mixing
+    if (GlobalV::MIXING_RESTART > 0 && GlobalV::MIXING_DMR && iter >= GlobalV::MIXING_RESTART)
+    {
+        elecstate::DensityMatrix<TK, double>* dm
+            = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
+        dm->save_DMR();
+    }
 
         // using HSolverLCAO<TK>::solve()
     if (this->phsol != nullptr)

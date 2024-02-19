@@ -16,6 +16,8 @@
 #include "operator_lcao/dftu_new.h"
 #include "operator_lcao/meta_lcao.h"
 #include "operator_lcao/op_exx_lcao.h"
+#include "operator_lcao/td_ekinetic_lcao.h"
+#include "operator_lcao/td_nonlocal_lcao.h"
 #include "operator_lcao/overlap_new.h"
 #include "operator_lcao/ekinetic_new.h"
 #include "operator_lcao/nonlocal_new.h"
@@ -24,6 +26,7 @@
 #include "module_hsolver/hsolver_lcao.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
+#include "module_elecstate/potentials/H_TDDFT_pw.h"
 
 namespace hamilt
 {
@@ -311,7 +314,17 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
                 &GlobalC::GridD,
                 LM_in->ParaV
             );
-            this->getOperator()->add(nonlocal);
+            //TDDFT velocity gague will calculate full non-local potential including the original one and the correction on its own.
+            //So the original non-local potential term should be skipped
+            if(GlobalV::ESOLVER_TYPE != "tddft" || elecstate::H_TDDFT_pw::stype !=1)
+            {
+                this->getOperator()->add(nonlocal);
+            }
+            else
+            {
+                delete nonlocal;
+            }
+            
         }
 
     #ifdef __DEEPKS
@@ -330,6 +343,34 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
             this->getOperator()->add(deepks);
         }
     #endif
+    //TDDFT_velocity_gague
+        if(GlobalV::ESOLVER_TYPE == "tddft" && elecstate::H_TDDFT_pw::stype ==1)
+        {
+            elecstate::H_TDDFT_pw::update_At();
+            Operator<TK>* td_ekinetic
+                = new TDEkinetic<OperatorLCAO<TK, TR>>(
+                    LM_in,
+                    this->hR,
+                    &(this->getHk(LM_in)),
+                    this->sR,
+                    kv,
+                    &GlobalC::ucell,
+                    &GlobalC::GridD
+                );
+                this->getOperator()->add(td_ekinetic);
+            
+            Operator<TK>* td_nonlocal
+                = new TDNonlocal<OperatorLCAO<TK, TR>>(
+                    LM_in, 
+                    this->kv->kvec_d, 
+                    this->hR, 
+                    &(this->getHk(LM_in)),
+                    &GlobalC::ucell, 
+                    &GlobalC::GridD,
+                    LM_in->ParaV
+                );
+            this->getOperator()->add(td_nonlocal);
+        }
         if (GlobalV::dft_plus_u)
         {
             Operator<TK>* dftu = 

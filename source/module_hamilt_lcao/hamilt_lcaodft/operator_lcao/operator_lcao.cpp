@@ -203,6 +203,22 @@ void OperatorLCAO<TK, TR>::init(const int ik_in)
 
             break;
         }
+        case lcao_tddft_velocity:
+        {
+            if(!this->hr_done)
+            {
+                //in cal_type=lcao_fixed, HR should be updated by each sub-chain nodes
+                OperatorLCAO<TK, TR>* last = this;
+                while(last != nullptr)
+                {
+                    last->contributeHR();
+                    last = dynamic_cast<OperatorLCAO<TK, TR>*>(last->next_sub_op);
+                }
+            }
+            this->contributeHk(ik_in);
+
+            break;
+        }
         default:
         {
             ModuleBase::WARNING_QUIT("OperatorLCAO::init", "unknown cal_type");

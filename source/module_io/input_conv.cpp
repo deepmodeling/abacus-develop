@@ -136,6 +136,7 @@ void Input_Conv::read_td_efield()
     elecstate::H_TDDFT_pw::tend = INPUT.td_tend;
 
     elecstate::H_TDDFT_pw::dt = INPUT.mdp.md_dt / ModuleBase::AU_to_FS;
+    elecstate::H_TDDFT_pw::dt_int = elecstate::H_TDDFT_pw::dt;
 
     // space domain parameters
 
@@ -153,7 +154,21 @@ void Input_Conv::read_td_efield()
     elecstate::H_TDDFT_pw::gauss_t0 = convert_units(INPUT.td_gauss_t0, 1.0);
     elecstate::H_TDDFT_pw::gauss_amp
         = convert_units(INPUT.td_gauss_amp, ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV); // Ry/bohr
-
+    //init ncut for velocity gauge integral
+    for(auto omega: elecstate::H_TDDFT_pw::gauss_omega)
+    {
+        int ncut = int(100.0 * omega * elecstate::H_TDDFT_pw::dt / ModuleBase::PI);
+        if(ncut%2 == 0)
+        {
+            ncut += 2;
+        }
+        else
+        {
+            ncut += 1;
+        }
+        if(elecstate::H_TDDFT_pw::stype == 0)ncut=1;
+        elecstate::H_TDDFT_pw::gauss_ncut.push_back(ncut);
+    }
     // trapezoid
     elecstate::H_TDDFT_pw::trape_omega
         = convert_units(INPUT.td_trape_freq, 2 * ModuleBase::PI * ModuleBase::AU_to_FS); // time(a.u.)^-1
@@ -163,7 +178,21 @@ void Input_Conv::read_td_efield()
     elecstate::H_TDDFT_pw::trape_t3 = convert_units(INPUT.td_trape_t3, 1.0);
     elecstate::H_TDDFT_pw::trape_amp
         = convert_units(INPUT.td_trape_amp, ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV); // Ry/bohr
-
+    //init ncut for velocity gauge integral
+    for(auto omega: elecstate::H_TDDFT_pw::trape_omega)
+    {
+        int ncut = int(100.0 * omega * elecstate::H_TDDFT_pw::dt / ModuleBase::PI);
+        if(ncut%2 == 0)
+        {
+            ncut += 2;
+        }
+        else
+        {
+            ncut += 1;
+        }
+        if(elecstate::H_TDDFT_pw::stype == 0)ncut=1;
+        elecstate::H_TDDFT_pw::trape_ncut.push_back(ncut);
+    }
     // Trigonometric
     elecstate::H_TDDFT_pw::trigo_omega1
         = convert_units(INPUT.td_trigo_freq1, 2 * ModuleBase::PI * ModuleBase::AU_to_FS); // time(a.u.)^-1
@@ -173,7 +202,21 @@ void Input_Conv::read_td_efield()
     elecstate::H_TDDFT_pw::trigo_phase2 = convert_units(INPUT.td_trigo_phase2, 1.0);
     elecstate::H_TDDFT_pw::trigo_amp
         = convert_units(INPUT.td_trigo_amp, ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV); // Ry/bohr
-
+    //init ncut for velocity gauge integral
+    for(auto omega: elecstate::H_TDDFT_pw::trigo_omega1)
+    {
+        int ncut = int(100.0 * omega * elecstate::H_TDDFT_pw::dt / ModuleBase::PI);
+        if(ncut%2 == 0)
+        {
+            ncut += 2;
+        }
+        else
+        {
+            ncut += 1;
+        }
+        if(elecstate::H_TDDFT_pw::stype == 0)ncut=1;
+        elecstate::H_TDDFT_pw::trigo_ncut.push_back(ncut);
+    }
     // Heaviside
     elecstate::H_TDDFT_pw::heavi_t0 = convert_units(INPUT.td_heavi_t0, 1.0);
     elecstate::H_TDDFT_pw::heavi_amp
@@ -466,6 +509,7 @@ void Input_Conv::Convert(void)
     }
     module_tddft::Evolve_elec::out_dipole = INPUT.out_dipole;
     module_tddft::Evolve_elec::out_efield = INPUT.out_efield;
+    module_tddft::Evolve_elec::out_current = INPUT.out_current;
     module_tddft::Evolve_elec::td_print_eij = INPUT.td_print_eij;
     module_tddft::Evolve_elec::td_edm = INPUT.td_edm;
     read_td_efield();

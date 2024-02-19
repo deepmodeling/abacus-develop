@@ -552,7 +552,7 @@ void HSolverPW<T, Device>::endDiagh()
         delete (DiagoDavid<T, Device>*)this->pdiagh;
         this->pdiagh = nullptr;
     }
-    if(this->method == "all-band cg")
+    if(this->method == "bpcg")
     {
         delete (DiagoBPCG<T, Device>*)this->pdiagh;
         this->pdiagh = nullptr;

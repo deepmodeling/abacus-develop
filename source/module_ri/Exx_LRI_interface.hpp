@@ -60,7 +60,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const K_Vectors& kv, const Charg
 			if(GlobalC::exx_info.info_global.separate_loop)
                 this->mix_DMk_2D.set_mixing(nullptr);
 			else
-				this->mix_DMk_2D.set_mixing(chgmix.mixing);
+				this->mix_DMk_2D.set_mixing(chgmix.get_mixing());
         }
         // for exx two_level scf
         this->two_level_step = 0;

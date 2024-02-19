@@ -11,6 +11,8 @@ if(ENABLE_LCAO)
         operator_lcao/overlap_new.cpp
         operator_lcao/ekinetic_new.cpp
         operator_lcao/nonlocal_new.cpp
+        operator_lcao/td_ekinetic_lcao.cpp
+        operator_lcao/td_nonlocal_lcao.cpp
         operator_lcao/sc_lambda_lcao.cpp
         operator_lcao/dftu_new.cpp
         FORCE_STRESS.cpp

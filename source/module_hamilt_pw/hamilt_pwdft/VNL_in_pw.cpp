@@ -23,6 +23,10 @@ pseudopot_cell_vnl::~pseudopot_cell_vnl()
 {
     if(GlobalV::use_paw) return;
     delete[] indv_ijkb0;
+}
+
+void pseudopot_cell_vnl::release_memory() {
+    if (this->nhm <= 0 || memory_released) return;
     if (GlobalV::device_flag == "gpu")
     {
         if (GlobalV::precision_flag == "single")
@@ -66,6 +70,7 @@ pseudopot_cell_vnl::~pseudopot_cell_vnl()
         }
         // There's no need to delete double precision pointers while in a CPU environment.
     }
+    memory_released = true;
 }
 
 //-----------------------------------

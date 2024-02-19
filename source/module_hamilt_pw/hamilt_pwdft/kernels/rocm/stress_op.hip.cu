@@ -4,6 +4,7 @@
 
 #include <thrust/complex.h>
 #include <hip/hip_runtime.h>
+#include <base/macros/macros.h>
 
 #define THREADS_PER_BLOCK 256
 #define FULL_MASK 0xffffffff
@@ -184,6 +185,9 @@ void cal_dbecp_noevc_nl_op<FPTYPE, psi::DEVICE_GPU>::operator() (
             reinterpret_cast<thrust::complex<FPTYPE>*>(vkb1),
             reinterpret_cast<thrust::complex<FPTYPE>*>(vkb2),
             reinterpret_cast<thrust::complex<FPTYPE>*>(dbecp_noevc));
+    
+    hipErrcheck(hipGetLastError());
+    hipErrcheck(hipDeviceSynchronize());
 }
 
 template <typename FPTYPE>
@@ -232,6 +236,9 @@ void cal_stress_nl_op<FPTYPE, psi::DEVICE_GPU>::operator() (
              reinterpret_cast<const thrust::complex<FPTYPE>*>(becp),
              reinterpret_cast<const thrust::complex<FPTYPE>*>(dbecp),
              stress);// array of data
+    
+    hipErrcheck(hipGetLastError());
+    hipErrcheck(hipDeviceSynchronize());
 }
 
 template <typename T, typename Device>
@@ -246,6 +253,9 @@ void cal_stress_mgga_op<T, Device>::operator()(
     const int block = (nrxx + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     cal_stress_mgga<Real><<<block, THREADS_PER_BLOCK>>>(
         spin, nrxx, w1, gradwfc_, crosstaus);
+
+    hipErrcheck(hipGetLastError());
+    hipErrcheck(hipDeviceSynchronize());
 }
 
 template struct cal_stress_mgga_op<std::complex<float>,  psi::DEVICE_GPU>;

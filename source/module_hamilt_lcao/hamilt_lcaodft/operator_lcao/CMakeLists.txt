@@ -9,6 +9,8 @@ add_library(
     overlap_new.cpp
     ekinetic_new.cpp
     nonlocal_new.cpp
+    td_ekinetic_lcao.cpp
+    td_nonlocal_lcao.cpp
     sc_lambda_lcao.cpp
     dftu_new.cpp
 )

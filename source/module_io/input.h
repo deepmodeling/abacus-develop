@@ -409,6 +409,7 @@ class Input
     std::string td_vext_dire; // vext direction
     bool out_dipole; // output the dipole or not
     bool out_efield; // output the efield or not
+    bool out_current; //output the current or not
 
     double td_print_eij; // threshold to output Eij elements
     int td_edm; //0: new edm method   1: old edm method

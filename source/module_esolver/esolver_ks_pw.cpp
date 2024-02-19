@@ -494,16 +494,7 @@ void ESolver_KS_PW<T, Device>::eachiterinit(const int istep, const int iter)
 {
     if (iter == 1 || iter == GlobalV::MIXING_RESTART)
     {
-        if (iter == GlobalV::MIXING_RESTART) // delete mixing and re-construct it to restart 
-        {
-            this->p_chgmix->set_mixing(GlobalV::MIXING_MODE,
-                                GlobalV::MIXING_BETA,
-                                GlobalV::MIXING_NDIM,
-                                GlobalV::MIXING_GG0,
-                                GlobalV::MIXING_TAU,
-                                GlobalV::MIXING_BETA_MAG);
-        }
-        this->p_chgmix->mix_reset();
+        this->p_chgmix->init_mixing();
     }
     // mohan move harris functional to here, 2012-06-05
     // use 'rho(in)' and 'v_h and v_xc'(in)

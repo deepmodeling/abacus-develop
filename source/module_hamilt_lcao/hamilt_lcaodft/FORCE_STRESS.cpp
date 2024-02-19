@@ -16,8 +16,6 @@
 #endif
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dftu_new.h"
 
-template<typename T>
-double Force_Stress_LCAO<T>::force_invalid_threshold_ev = 0.00;
 template <typename T>
 Force_Stress_LCAO<T>::Force_Stress_LCAO(Record_adj& ra, const int nat_in) : RA(&ra), f_pw(nat_in), nat(nat_in)
 {
