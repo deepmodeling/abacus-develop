@@ -7,7 +7,7 @@
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "gint_gpu/gint_vl.h"
 #include "gint_gpu/gint_rho.h"
-
+#include "gint_gpu/gint_force.h"
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -90,6 +90,52 @@ void Gint::cal_gint(Gint_inout *inout)
 							*this->gridt);
 			}
 			ModuleBase::timer::tick("Gint_interface", "cal_gint_rho");
+			return;
+		}
+		if (inout->job == Gint_Tools::job_type::force && GlobalV::GAMMA_ONLY_LOCAL && lgd > 0)
+		{
+			double *ylmcoef = new double[100];
+			ModuleBase::GlobalFunc::ZEROS(ylmcoef, 100);
+			for (int i = 0; i < 100; i++)
+			{
+				ylmcoef[i] = ModuleBase::Ylm::ylmcoef[i];
+			}
+			const int ncyz = this->ny * this->nplane;
+			int nat = GlobalC::ucell.nat;
+			for (int is = 0; is < GlobalV::NSPIN; ++is)
+			{
+				double *force = new double[GlobalC::ucell.nat * 3];
+				for (int i=0;i<nat*3;i++)
+				{
+					force[i]=0.0;
+				}
+				double *stress =new double[6];
+				for (int i=0;i<6;i++)
+				{
+					stress[i]=0.0;
+				}
+				gint_gamma_force_gpu(this->DMRGint[is],
+							GlobalC::ucell.omega / this->ncxyz,
+							inout->vl,
+							force,
+							stress,
+							this->nplane,
+							ylmcoef,
+							*this->gridt);
+				for (int iat=0;iat<nat;iat++)
+				{
+					inout->fvl_dphi[0](iat,0)+=force[iat*3];
+					inout->fvl_dphi[0](iat,1)+=force[iat*3+1];
+					inout->fvl_dphi[0](iat,2)+=force[iat*3+2];
+				}
+				inout->svl_dphi[is](0,0)+=stress[0];
+				inout->svl_dphi[is](0,1)+=stress[1];
+				inout->svl_dphi[is](0,2)+=stress[2];
+				inout->svl_dphi[is](1,1)+=stress[3];
+				inout->svl_dphi[is](1,2)+=stress[4];
+				inout->svl_dphi[is](2,2)+=stress[5];
+			}
+			ModuleBase::timer::tick("Gint_interface", "cal_gint_force");
 			return;
 		}
 		else

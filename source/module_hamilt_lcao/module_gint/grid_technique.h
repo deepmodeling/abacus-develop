@@ -137,6 +137,7 @@ public:
 	double *psi_u_g;
 	bool *atom_iw2_new_g;
 	int *atom_iw2_ylm_g;
+	int *atom_iw2_l_g;
 	double **GridVlocal_v2_g;
 	int nr_max;
 	int psi_size_max;
@@ -151,7 +152,18 @@ public:
 	// TODO it needs to be implemented through configuration files
 
 	double *psir_ylm_left_global_g;
+	double *dpsir_ylm_left_x_global_g;
+	double *dpsir_ylm_left_y_global_g;
+	double *dpsir_ylm_left_z_global_g;
+
+	double *ddpsir_ylm_left_xx_global_g;
+	double *ddpsir_ylm_left_xy_global_g;
+	double *ddpsir_ylm_left_xz_global_g;
+	double *ddpsir_ylm_left_yy_global_g;
+	double *ddpsir_ylm_left_yz_global_g;
+	double *ddpsir_ylm_left_zz_global_g;
 	double *psir_ylm_right_global_g;
+	double *psir_ylm_dm_global_g;
 
 	double *atom_pair_alpha_global;
 	double *atom_pair_alpha_global_g;

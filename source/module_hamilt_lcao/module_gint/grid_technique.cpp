@@ -61,6 +61,7 @@ Grid_Technique::~Grid_Technique()
     checkCudaErrors(cudaFree(atom_iw2_new_g));
     checkCudaErrors(cudaFree(atom_iw2_ylm_g));
     checkCudaErrors(cudaFree(atom_nw_g));
+	checkCudaErrors(cudaFree(atom_iw2_l_g));
 
     checkCudaErrors(cudaFreeHost(psi_input_double_global));
     checkCudaErrors(cudaFreeHost(psi_input_int_global));
@@ -99,7 +100,17 @@ Grid_Technique::~Grid_Technique()
     checkCudaErrors(cudaFreeHost(atom_pair_output_global));
 
     checkCudaErrors(cudaFree(atom_pair_left_global_g));
+	checkCudaErrors(cudaFree(dpsir_ylm_left_x_global_g));
+	checkCudaErrors(cudaFree(dpsir_ylm_left_y_global_g));
+	checkCudaErrors(cudaFree(dpsir_ylm_left_z_global_g));
+	checkCudaErrors(cudaFree(ddpsir_ylm_left_xx_global_g));
+	checkCudaErrors(cudaFree(ddpsir_ylm_left_xy_global_g));
+	checkCudaErrors(cudaFree(ddpsir_ylm_left_xz_global_g));
+	checkCudaErrors(cudaFree(ddpsir_ylm_left_yy_global_g));
+	checkCudaErrors(cudaFree(ddpsir_ylm_left_yz_global_g));
+	checkCudaErrors(cudaFree(ddpsir_ylm_left_zz_global_g));
     checkCudaErrors(cudaFree(atom_pair_right_global_g));
+	checkCudaErrors(cudaFree(psir_ylm_dm_global_g));
     checkCudaErrors(cudaFree(atom_pair_output_global_g));
 
     checkCudaErrors(cudaFreeHost(vec_len));
@@ -647,6 +658,8 @@ void Grid_Technique::cal_trace_lo(void)
 		memset(atom_iw2_new_now, 0, GlobalC::ucell.ntype * GlobalC::ucell.nwmax * sizeof(bool));
 		int *atom_iw2_ylm_now = (int *)malloc(GlobalC::ucell.ntype * GlobalC::ucell.nwmax * sizeof(int));
 		memset(atom_iw2_ylm_now, 0, GlobalC::ucell.ntype * GlobalC::ucell.nwmax * sizeof(int));
+		int *atom_iw2_l_now = (int *)malloc(GlobalC::ucell.ntype * GlobalC::ucell.nwmax * sizeof(int));
+		memset(atom_iw2_l_now, 0, GlobalC::ucell.ntype * GlobalC::ucell.nwmax * sizeof(int));
 
 		Atom *atomx;
 		for (int i = 0; i < GlobalC::ucell.ntype; i++)
@@ -658,6 +671,7 @@ void Grid_Technique::cal_trace_lo(void)
 				{
 					atom_iw2_new_now[i * GlobalC::ucell.nwmax + j] = atomx->iw2_new[j];
 					atom_iw2_ylm_now[i * GlobalC::ucell.nwmax + j] = atomx->iw2_ylm[j];
+					atom_iw2_l_now[i * GlobalC::ucell.nwmax + j]=atomx->iw2l[j];
 					pointer = &GlobalC::ORB.Phi[i].PhiLN(atomx->iw2l[j], atomx->iw2n[j]);
 					for (int k = 0; k < nr_max; k++)
 					{
@@ -683,8 +697,11 @@ void Grid_Technique::cal_trace_lo(void)
 
 		checkCudaErrors(cudaMalloc((void **)&atom_iw2_new_g, GlobalC::ucell.ntype * GlobalC::ucell.nwmax * sizeof(bool)));
 		checkCudaErrors(cudaMalloc((void **)&atom_iw2_ylm_g, GlobalC::ucell.ntype * GlobalC::ucell.nwmax * sizeof(int)));
+		checkCudaErrors(cudaMalloc((void **)&atom_iw2_l_g,   GlobalC::ucell.ntype * GlobalC::ucell.nwmax * sizeof(int)));
+
 		checkCudaErrors(cudaMemcpy(atom_iw2_new_g, atom_iw2_new_now, GlobalC::ucell.ntype * GlobalC::ucell.nwmax * sizeof(bool), cudaMemcpyHostToDevice));
 		checkCudaErrors(cudaMemcpy(atom_iw2_ylm_g, atom_iw2_ylm_now, GlobalC::ucell.ntype * GlobalC::ucell.nwmax * sizeof(int), cudaMemcpyHostToDevice));
+		checkCudaErrors(cudaMemcpy(atom_iw2_l_g, atom_iw2_l_now, GlobalC::ucell.ntype * GlobalC::ucell.nwmax * sizeof(int), cudaMemcpyHostToDevice));
 
 		const int max_atom_pair_number = GlobalC::ucell.nat * GlobalC::ucell.nat;
 		checkCudaErrors(cudaMallocHost((void **)&GridVlocal_v2_g, max_atom_pair_number * sizeof(double *)));  // the points to gpu memory, but gpu memory address save on host
@@ -697,7 +714,18 @@ void Grid_Technique::cal_trace_lo(void)
 		psir_size = nbzp * max_atom * bxyz * GlobalC::ucell.nwmax;
 
 		checkCudaErrors(cudaMalloc((void **)&psir_ylm_left_global_g, psir_size * nstreams * sizeof(double)));
+		checkCudaErrors(cudaMalloc((void **)&dpsir_ylm_left_x_global_g, psir_size * nstreams * sizeof(double)));
+		checkCudaErrors(cudaMalloc((void **)&dpsir_ylm_left_y_global_g, psir_size * nstreams * sizeof(double)));
+		checkCudaErrors(cudaMalloc((void **)&dpsir_ylm_left_z_global_g, psir_size * nstreams * sizeof(double)));
+		checkCudaErrors(cudaMalloc((void **)&ddpsir_ylm_left_xx_global_g, psir_size * nstreams * sizeof(double)));
+		checkCudaErrors(cudaMalloc((void **)&ddpsir_ylm_left_xy_global_g, psir_size * nstreams * sizeof(double)));
+		checkCudaErrors(cudaMalloc((void **)&ddpsir_ylm_left_xz_global_g, psir_size * nstreams * sizeof(double)));
+		checkCudaErrors(cudaMalloc((void **)&ddpsir_ylm_left_yy_global_g, psir_size * nstreams * sizeof(double)));
+		checkCudaErrors(cudaMalloc((void **)&ddpsir_ylm_left_yz_global_g, psir_size * nstreams * sizeof(double)));
+		checkCudaErrors(cudaMalloc((void **)&ddpsir_ylm_left_zz_global_g, psir_size * nstreams * sizeof(double)));
 		checkCudaErrors(cudaMalloc((void **)&psir_ylm_right_global_g, psir_size * nstreams * sizeof(double)));
+		checkCudaErrors(cudaMalloc((void **)&psir_ylm_right_global_g, psir_size * nstreams * sizeof(double)));
+		checkCudaErrors(cudaMalloc((void **)&psir_ylm_dm_global_g, psir_size * nstreams * sizeof(double)));
 		checkCudaErrors(cudaMemset(psir_ylm_left_global_g, 0, psir_size * nstreams * sizeof(double)));
 		checkCudaErrors(cudaMemset(psir_ylm_right_global_g, 0, psir_size * nstreams * sizeof(double)));
 
@@ -709,6 +737,17 @@ void Grid_Technique::cal_trace_lo(void)
 
 		checkCudaErrors(cudaMallocHost((void **)&atom_pair_left_info_global, atom_pair_size_over_nbz * nstreams * sizeof(int)));
 		checkCudaErrors(cudaMalloc((void **)&atom_pair_left_info_global_g, atom_pair_size_over_nbz * nstreams * sizeof(int)));
+		
+		checkCudaErrors(cudaMemset(dpsir_ylm_left_x_global_g, 0, psir_size * nstreams * sizeof(double)));
+		checkCudaErrors(cudaMemset(dpsir_ylm_left_y_global_g, 0, psir_size * nstreams * sizeof(double)));
+		checkCudaErrors(cudaMemset(dpsir_ylm_left_z_global_g, 0, psir_size * nstreams * sizeof(double)));
+		checkCudaErrors(cudaMemset(ddpsir_ylm_left_xx_global_g, 0, psir_size * nstreams * sizeof(double)));
+		checkCudaErrors(cudaMemset(ddpsir_ylm_left_xy_global_g, 0, psir_size * nstreams * sizeof(double)));
+		checkCudaErrors(cudaMemset(ddpsir_ylm_left_xz_global_g, 0, psir_size * nstreams * sizeof(double)));
+		checkCudaErrors(cudaMemset(ddpsir_ylm_left_yy_global_g, 0, psir_size * nstreams * sizeof(double)));
+		checkCudaErrors(cudaMemset(ddpsir_ylm_left_yz_global_g, 0, psir_size * nstreams * sizeof(double)));
+		checkCudaErrors(cudaMemset(ddpsir_ylm_left_zz_global_g, 0, psir_size * nstreams * sizeof(double)));
+		checkCudaErrors(cudaMemset(psir_ylm_dm_global_g, 0, psir_size * nstreams * sizeof(double)));
 
 		checkCudaErrors(cudaMallocHost((void **)&atom_pair_right_info_global, atom_pair_size_over_nbz * nstreams * sizeof(int)));
 		checkCudaErrors(cudaMalloc((void **)&atom_pair_right_info_global_g, atom_pair_size_over_nbz * nstreams * sizeof(int)));
@@ -731,6 +770,7 @@ void Grid_Technique::cal_trace_lo(void)
 
 		checkCudaErrors(cudaMalloc((void **)&atom_pair_left_global_g, atom_pair_size_over_nbz * nstreams * sizeof(double *)));
 		checkCudaErrors(cudaMalloc((void **)&atom_pair_right_global_g, atom_pair_size_over_nbz * nstreams * sizeof(double *)));
+
 		checkCudaErrors(cudaMalloc((void **)&atom_pair_output_global_g, atom_pair_size_over_nbz * nstreams * sizeof(double *)));
 
 		psi_size_max = max_atom * bxyz * nbzp;
