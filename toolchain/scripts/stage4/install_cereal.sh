@@ -5,6 +5,8 @@
 # CEREAL is not need any complex setting
 # Only problem is the installation from github.com
 
+# Last Update in 2023-0918
+
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
@@ -76,7 +78,7 @@ if [ "$with_cereal" != "__DONTUSE__" ]; then
     # LibRI deps should find cereal include in CPATH
         cat << EOF > "${BUILDDIR}/setup_cereal"
 prepend_path CPATH "$pkg_install_dir/include"
-export CPATH="${pkg_install_dir}/include:"${CPATH}
+export CPATH="${pkg_install_dir}/include:"\${CPATH}
 EOF
         cat "${BUILDDIR}/setup_cereal" >> $SETUPFILE
     fi

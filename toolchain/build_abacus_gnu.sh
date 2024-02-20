@@ -11,8 +11,8 @@
 
 # module load openmpi
 
-TOOL=$(pwd)
 ABACUS_DIR=..
+TOOL=$(pwd)
 INSTALL_DIR=$TOOL/install
 source $INSTALL_DIR/setup
 cd $ABACUS_DIR
@@ -22,7 +22,7 @@ BUILD_DIR=build_abacus_gnu
 rm -rf $BUILD_DIR
 
 PREFIX=$ABACUS_DIR
-LAPACK=$INSTALL_DIR/openblas-0.3.24/lib
+LAPACK=$INSTALL_DIR/openblas-0.3.25/lib
 SCALAPACK=$INSTALL_DIR/scalapack-2.2.1/lib
 ELPA=$INSTALL_DIR/elpa-2023.05.001/cpu
 FFTW3=$INSTALL_DIR/fftw-3.3.10
@@ -55,6 +55,7 @@ cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
 #         -DLIBCOMM_DIR=$LIBCOMM \
 # 	      -DDeePMD_DIR=$DEEPMD \
 # 	      -DTensorFlow_DIR=$DEEPMD \
+#         -DENABLE_RAPIDJSON=ON \
 
 # # add mkl env for libtorch to link
 # if one want to install libtorch, mkl should be load in build process
@@ -69,5 +70,5 @@ cmake --install $BUILD_DIR 2>/dev/null
 # generate abacus_env.sh
 cat << EOF > "${TOOL}/abacus_env.sh"
 source $INSTALL_DIR/setup
-export PATH="${PREFIX}/bin":${PATH}
+export PATH="${PREFIX}/bin":\${PATH}
 EOF

@@ -648,8 +648,10 @@ download_pkg_from_ABACUS_org() {
   local __filename="$2"
   local __url="https://www.cp2k.org/static/downloads/$__filename"
   # download
-  echo "wget ${DOWNLOADER_FLAGS} --quiet $__url"
-  if ! wget ${DOWNLOADER_FLAGS} --quiet $__url; then
+  #echo "wget ${DOWNLOADER_FLAGS} --quiet $__url"
+  #if ! wget ${DOWNLOADER_FLAGS} --quiet $__url; then
+  echo "wget ${DOWNLOADER_FLAGS} $__url"
+  if ! wget ${DOWNLOADER_FLAGS} $__url; then
     report_error "failed to download $__url"
     recommend_offline_installation $__filename $__url
     return 1

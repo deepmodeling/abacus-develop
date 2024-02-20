@@ -12,8 +12,8 @@
 # module load mkl compiler
 # source path/to/vars.sh
 
-TOOL=$(pwd)
 ABACUS_DIR=..
+TOOL=$(pwd)
 INSTALL_DIR=$TOOL/install
 source $INSTALL_DIR/setup
 cd $ABACUS_DIR
@@ -51,6 +51,7 @@ cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
         # -DLIBCOMM_DIR=$LIBCOMM \
 	    # -DDeePMD_DIR=$DEEPMD \
 	    # -DTensorFlow_DIR=$DEEPMD \
+#         -DENABLE_RAPIDJSON=ON \
 
 # if one want's to include deepmd, your gcc version should be >= 11.3.0
 
@@ -60,5 +61,5 @@ cmake --install $BUILD_DIR 2>/dev/null
 # generate abacus_env.sh
 cat << EOF > "${TOOL}/abacus_env.sh"
 source $INSTALL_DIR/setup
-export PATH="${PREFIX}/bin":${PATH}
+export PATH="${PREFIX}/bin":\${PATH}
 EOF

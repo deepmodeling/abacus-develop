@@ -3,6 +3,8 @@
 # TODO: Review and if possible fix shellcheck errors.
 # shellcheck disable=all
 
+# Last Update in 2023-0901
+
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
@@ -89,11 +91,11 @@ prepend_path LD_RUN_PATH "${pkg_install_dir}/lib"
 prepend_path LIBRARY_PATH "${pkg_install_dir}/lib"
 prepend_path PKG_CONFIG_PATH "$pkg_install_dir/lib/pkgconfig"
 prepend_path CMAKE_PREFIX_PATH "$pkg_install_dir"
-export LD_LIBRARY_PATH="$pkg_install_dir/lib":$LD_LIBRARY_PATH
-export LD_RUN_PATH="$pkg_install_dir/lib":$LD_RUN_PATH
-export LIBRARY_PATH="$pkg_install_dir/lib":$LIBRARY_PATH
-export PKG_CONFIG_PATH="$pkg_install_dir/lib/pkgconfig":$PKG_CONFIG_PATH
-export CMAKE_PREFIX_PATH="$pkg_install_dir":$CMAKE_PREFIX_PATH
+export LD_LIBRARY_PATH="$pkg_install_dir/lib":\${LD_LIBRARY_PATH}
+export LD_RUN_PATH="$pkg_install_dir/lib":\${LD_RUN_PATH}
+export LIBRARY_PATH="$pkg_install_dir/lib":\${LIBRARY_PATH}
+export PKG_CONFIG_PATH="$pkg_install_dir/lib/pkgconfig":\${PKG_CONFIG_PATH}
+export CMAKE_PREFIX_PATH="$pkg_install_dir":\${CMAKE_PREFIX_PATH}
 export SCALAPACK_ROOT="${pkg_install_dir}"
 EOF
     cat "${BUILDDIR}/setup_scalapack" >> $SETUPFILE

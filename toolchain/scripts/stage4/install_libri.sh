@@ -6,6 +6,8 @@
 # Only problem is the installation from github.com
 # LibRI is under highly-active development, the git submodule installation is more recommended
 
+# Last Update in 2023-1124
+
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
@@ -76,7 +78,7 @@ if [ "$with_libri" != "__DONTUSE__" ]; then
     if [ "$with_libri" != "__SYSTEM__" ]; then
         cat << EOF > "${BUILDDIR}/setup_libri"
 prepend_path CPATH "$pkg_install_dir/include"
-export CPATH="${pkg_install_dir}/include":${CPATH}
+export CPATH="${pkg_install_dir}/include":\${CPATH}
 EOF
         cat "${BUILDDIR}/setup_libri" >> $SETUPFILE
     fi
