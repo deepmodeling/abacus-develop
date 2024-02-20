@@ -82,7 +82,8 @@ class PswfcRadials : public RadialSet {
         /// @brief call cut_to_convergence for each (l,zeta) corresponding orbital in std::map, then zero-padding to the maximal r, generate a grid
         /// @param pswfc_map a map of (l,zeta) corresponding orbital
         /// @return a vector of radial grid
-        std::vector<double> pswfc_prepossess(std::map<std::pair<int, int>, std::vector<double>>& pswfc_map);
+        std::vector<double> pswfc_prepossess(std::map<std::pair<int, int>, std::vector<double>>& pswfc_map,
+                                             const double conv_thr = 1e-6);
     private:
 
 };
