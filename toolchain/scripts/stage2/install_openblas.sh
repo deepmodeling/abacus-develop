@@ -3,11 +3,13 @@
 # TODO: Review and if possible fix shellcheck errors.
 # shellcheck disable=all
 
+# Last Update in 2023-1111
+
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
-openblas_ver="0.3.24" # Keep in sync with get_openblas_arch.sh
-openblas_sha256="ceadc5065da97bd92404cac7254da66cc6eb192679cf1002098688978d4d5132"
+openblas_ver="0.3.25" # Keep in sync with get_openblas_arch.sh
+openblas_sha256="4c25cb30c4bb23eddca05d7d0a85997b8db6144f5464ba7f8c09ce91e2f35543"
 openblas_pkg="OpenBLAS-${openblas_ver}.tar.gz"
 
 source "${SCRIPT_DIR}"/common_vars.sh
@@ -153,12 +155,12 @@ prepend_path LIBRARY_PATH "$pkg_install_dir/lib"
 prepend_path PKG_CONFIG_PATH "$pkg_install_dir/lib/pkgconfig"
 prepend_path CMAKE_PREFIX_PATH "$pkg_install_dir"
 prepend_path CPATH "$pkg_install_dir/include"
-export LD_LIBRARY_PATH="$pkg_install_dir/lib:"${LD_LIBRARY_PATH}
-export LD_RUN_PATH="$pkg_install_dir/lib:"${LD_RUN_PATH}
-export LIBRARY_PATH="$pkg_install_dir/lib:"${LIBRARY_PATH}
-export CPATH="$pkg_install_dir/include:"${CPATH}
-export PKG_CONFIG_PATH="$pkg_install_dir/lib/pkgconfig:"${PKG_CONFIG_PATH}
-export CMAKE_PREFIX_PATH="$pkg_install_dir:"${CMAKE_PREFIX_PATH}
+export LD_LIBRARY_PATH="$pkg_install_dir/lib:"\${LD_LIBRARY_PATH}
+export LD_RUN_PATH="$pkg_install_dir/lib:"\${LD_RUN_PATH}
+export LIBRARY_PATH="$pkg_install_dir/lib:"\${LIBRARY_PATH}
+export CPATH="$pkg_install_dir/include:"\${CPATH}
+export PKG_CONFIG_PATH="$pkg_install_dir/lib/pkgconfig:"\${PKG_CONFIG_PATH}
+export CMAKE_PREFIX_PATH="$pkg_install_dir:"\${CMAKE_PREFIX_PATH}
 export OPENBLAS_ROOT=${pkg_install_dir}
 EOF
     cat "${BUILDDIR}/setup_openblas" >> $SETUPFILE
