@@ -132,7 +132,7 @@ class Charge_Mixing
      * @brief charge mixing for reciprocal space
      * @param chr pointer of Charge object
      */
-    void mix_rho_recip_new(Charge* chr);
+    void mix_rho_recip(Charge* chr);
 
     /**
      * @brief charge mixing for real space
@@ -145,7 +145,6 @@ class Charge_Mixing
      * @param rhog charge density in reciprocal space
      */
     void Kerker_screen_recip(std::complex<double>* rhog);
-    void Kerker_screen_recip_new(std::complex<double>* rhog);
 
     /**
      * @brief Kerker screen method for real space
@@ -157,7 +156,7 @@ class Charge_Mixing
      * @brief Inner product of two complex vectors
      * @brief inner_product_recip_rho is used for charge, like get_drho()
      * @brief inner_product_recip_hartree and inner_product_recip_simple are used for charge mixing
-     * @brief inner_product_recip_simple is used for test
+     * @brief inner_product_recip_simple is only used for test
      * @brief Actually, I am not sure if the definition of inner product for NSPIN=4 is correct, need to be checked.
      */
     double inner_product_recip_rho(std::complex<double>* rho1, std::complex<double>* rho2);
