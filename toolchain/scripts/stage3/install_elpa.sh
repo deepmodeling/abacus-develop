@@ -3,16 +3,14 @@
 # TODO: Review and if possible fix shellcheck errors.
 # shellcheck disable=all
 
+# Last Update in 2024-0219
+
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
 # From https://elpa.mpcdf.mpg.de/software/tarball-archive/ELPA_TARBALL_ARCHIVE.html
 elpa_ver="2023.05.001"
 elpa_sha256="ec64be5d6522810d601a3b8e6a31720e3c3eb4af33a434d8a64570d76e6462b6"
-#elpa_ver="2021.11.002"
-#elpa_sha256="576f1caeed7883b81396640fda0f504183866cf6cbd4bc71d1383ba2208f1f97"
-#elpa_ver="2022.11.001"
-#elpa_sha256="35e397d7c0af95bb43bc7bef7fff29425c1da400fa0cd86ae8d3bd2ff2f9d999"
 
 
 source "${SCRIPT_DIR}"/common_vars.sh
@@ -191,13 +189,13 @@ prepend_path LD_RUN_PATH "$pkg_install_dir/lib"
 prepend_path LIBRARY_PATH "$pkg_install_dir/lib"
 prepend_path PKG_CONFIG_PATH "$pkg_install_dir/lib/pkgconfig"
 prepend_path CMAKE_PREFIX_PATH "$pkg_install_dir"
-export PATH="$pkg_install_dir/bin":$PATH
-export LD_LIBRARY_PATH="$pkg_install_dir/lib":$LD_LIBRARY_PATH
-export LD_RUN_PATH="$pkg_install_dir/lib":$LD_RUN_PATH
-export LIBRARY_PATH="$pkg_install_dir/lib":$LIBRARY_PATH
-export CPATH="$pkg_install_dir/include":$CPATH
-export PKG_CONFIG_PATH="$pkg_install_dir/lib/pkgconfig":$PKG_CONFIG_PATH
-export CMAKE_PREFIX_PATH="$pkg_install_dir":$CMAKE_PREFIX_PATH
+export PATH="$pkg_install_dir/bin":\${PATH}
+export LD_LIBRARY_PATH="$pkg_install_dir/lib":\${LD_LIBRARY_PATH}
+export LD_RUN_PATH="$pkg_install_dir/lib":\${LD_RUN_PATH}
+export LIBRARY_PATH="$pkg_install_dir/lib":\${LIBRARY_PATH}
+export CPATH="$pkg_install_dir/include":\${CPATH}
+export PKG_CONFIG_PATH="$pkg_install_dir/lib/pkgconfig":\${PKG_CONFIG_PATH}
+export CMAKE_PREFIX_PATH="$pkg_install_dir":\${CMAKE_PREFIX_PATH}
 export ELPA_ROOT="$pkg_install_dir"
 EOF
   fi

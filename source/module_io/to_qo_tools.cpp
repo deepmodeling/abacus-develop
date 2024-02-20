@@ -13,7 +13,8 @@ void toQO::unwrap_unitcell(UnitCell* p_ucell)
     charges_.resize(ntype_);
     for(int itype = 0; itype < ntype_; itype++)
     {
-        nmax_[itype] = (strategies_[itype] != "energy")? atom_database_.principle_quantum_number[symbols_[itype]]: atom_database_.atom_Z[symbols_[itype]];
+        std::cout << "type " << itype << " " << symbols_[itype] << " strategy: " << strategies_[itype] << std::endl;
+        nmax_[itype] = (strategies_[itype].substr(0, 6) != "energy")? atom_database_.principle_quantum_number[symbols_[itype]]: atom_database_.atom_Z[symbols_[itype]];
         charges_[itype] = atom_database_.atom_Z[symbols_[itype]];
     }
 }

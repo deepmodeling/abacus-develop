@@ -20,7 +20,6 @@ DensityMatrix<TK, TR>::~DensityMatrix()
     {
         delete it;
     }
-    this->_DMR.clear();
 }
 
 // constructor for multi-k
@@ -386,7 +385,11 @@ void DensityMatrix<TK, TR>::save_DMR()
     if(_DMR_save.size() == 0)
     {
         _DMR_save.resize(this->_DMR.size());
-        for(int is=0;is<this->_DMR.size();is++)
+    }
+    // resize if _DMR_save[is].size is not equal to _DMR.size
+    for(int is = 0; is < _DMR_save.size(); is++)
+    {
+        if(_DMR_save[is].size() != nnr)
         {
             _DMR_save[is].resize(nnr);
         }
