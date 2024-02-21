@@ -5,6 +5,8 @@
 
 #include <cusolverDn.h>
 
+#include "module_base/memory_cuda.h"
+
 namespace hsolver
 {
 
@@ -219,6 +221,7 @@ struct dngvd_op<T, psi::DEVICE_GPU> {
         assert(nstart == ldh);
         // A to V
         cudaErrcheck(cudaMemcpy(V, A, sizeof(T) * ldh * nstart, cudaMemcpyDeviceToDevice));
+        ModuleBase::Memory_CUDA::record("DngvdOp","DngvdOp",sizeof(T) * ldh * nstart);
         xhegvd_wrapper(CUBLAS_FILL_MODE_UPPER, nstart, V, ldh,
             (T*)B, ldh, W);
     }
@@ -239,6 +242,7 @@ struct dnevx_op<T, psi::DEVICE_GPU> {
         assert(nstart <= ldh);
         // A to V
         cudaErrcheck(cudaMemcpy(V, A, sizeof(T) * nstart * ldh, cudaMemcpyDeviceToDevice));
+        ModuleBase::Memory_CUDA::record("DngvdOp","DnevxOp",sizeof(T) * nstart * ldh);
         xheevd_wrapper(CUBLAS_FILL_MODE_LOWER, nstart, V, ldh, W);
     }
 };

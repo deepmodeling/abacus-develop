@@ -4,6 +4,8 @@
 #include <cuda_runtime.h>
 #include <thrust/complex.h>
 
+#include "module_base/memory_cuda.h"
+
 namespace container {
 namespace kernels {
 
@@ -85,6 +87,7 @@ struct synchronize_memory<T, DEVICE_GPU, DEVICE_CPU> {
         const size_t& size)
     {
         cudaErrcheck(cudaMemcpy(arr_out, arr_in, sizeof(T) * size, cudaMemcpyHostToDevice));
+        ModuleBase::Memory_CUDA::record("memory","synchronize",sizeof(T) * size);
     }
 };
 
@@ -96,6 +99,7 @@ struct synchronize_memory<T, DEVICE_GPU, DEVICE_GPU> {
         const size_t& size)
     {
         cudaErrcheck(cudaMemcpy(arr_out, arr_in, sizeof(T) * size, cudaMemcpyHostToDevice));
+        ModuleBase::Memory_CUDA::record("memory","synchronize",sizeof(T) * size);
     }
 };
 
@@ -125,6 +129,7 @@ struct cast_memory<T_out, T_in, container::DEVICE_GPU, container::DEVICE_CPU> {
         T_in * arr = nullptr;
         cudaErrcheck(cudaMalloc((void **)&arr, sizeof(T_in) * size));
         cudaErrcheck(cudaMemcpy(arr, arr_in, sizeof(T_in) * size, cudaMemcpyHostToDevice));
+        ModuleBase::Memory_CUDA::record("memory","cast",sizeof(T) * size);
         const int block = static_cast<int>((size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK);
         do_cast_memory<<<block, THREADS_PER_BLOCK>>>(arr_out, arr, size);
         cudaErrcheck(cudaGetLastError());

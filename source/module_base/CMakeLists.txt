@@ -34,6 +34,7 @@ add_library(
     matrix.cpp
     matrix3.cpp
     memory.cpp
+    memory_cuda.cpp
     mymath.cpp
     opt_CG.cpp
     opt_DCsrch.cpp
