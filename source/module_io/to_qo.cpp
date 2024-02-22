@@ -147,7 +147,8 @@ void toQO::build_hydrogen(const int ntype, const double* const charges, const in
     if(GlobalV::MY_RANK == 0)
     {
     #endif
-    printf("Build arbitrary atomic orbital basis done.\n");
+    if(nchi_ > 0) printf("Build arbitrary atomic orbital basis done.\n");
+    else ModuleBase::WARNING_QUIT("toQO::initialize", "Error: no atomic orbital is built.");
     #ifdef __MPI
     }
     #endif
