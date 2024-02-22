@@ -5,13 +5,14 @@
 #include "diago_bpcg.h"
 #include "diago_cg.h"
 #include "diago_david.h"
+#include "diago_newdav.h"
 #include "module_base/timer.h"
 #include "module_base/tool_quit.h"
 #include "module_elecstate/elecstate_pw.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 #include "module_hsolver/diago_iter_assist.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
 #endif
@@ -102,6 +103,24 @@ void HSolverPW<T, Device>::initDiagh(const psi::Psi<T, Device>& psi)
         else
         {
             this->pdiagh = new DiagoDavid<T, Device>( precondition.data());
+            this->pdiagh->method = this->method;
+        }
+    }
+    else if (this->method == "new_dav")
+    {
+        Diago_NewDav<T>::PW_DIAG_NDIM = GlobalV::PW_DIAG_NDIM;
+        if (this->pdiagh != nullptr)
+        {
+            if (this->pdiagh->method != this->method)
+            {
+                delete (Diago_NewDav<T, Device>*)this->pdiagh;
+                this->pdiagh = new Diago_NewDav<T, Device>(precondition.data());
+                this->pdiagh->method = this->method;
+            }
+        }
+        else
+        {
+            this->pdiagh = new Diago_NewDav<T, Device>(precondition.data());
             this->pdiagh->method = this->method;
         }
     }
@@ -550,6 +569,11 @@ void HSolverPW<T, Device>::endDiagh()
     if(this->method == "dav")
     {
         delete (DiagoDavid<T, Device>*)this->pdiagh;
+        this->pdiagh = nullptr;
+    }
+    if (this->method == "new_dav")
+    {
+        delete (Diago_NewDav<T, Device>*)this->pdiagh;
         this->pdiagh = nullptr;
     }
     if(this->method == "bpcg")

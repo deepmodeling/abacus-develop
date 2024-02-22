@@ -2985,7 +2985,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
                 diago_proc = GlobalV::NPROC;
             }
         }
-        else if (ks_solver == "dav")
+        else if (ks_solver == "dav" || ks_solver == "new_dav")
         {
             GlobalV::ofs_warning << " It's ok to use dav." << std::endl;
         }
@@ -3914,7 +3914,7 @@ void Input::Check(void)
         {
             ModuleBase::WARNING_QUIT("Input", "lapack can not be used with plane wave basis.");
         }
-        else if (ks_solver != "default" && ks_solver != "cg" && ks_solver != "dav" && ks_solver != "bpcg")
+        else if (ks_solver != "default" && ks_solver != "cg" && ks_solver != "dav" && ks_solver != "new_dav" && ks_solver != "bpcg")
         {
             ModuleBase::WARNING_QUIT("Input", "please check the ks_solver parameter!");
         }

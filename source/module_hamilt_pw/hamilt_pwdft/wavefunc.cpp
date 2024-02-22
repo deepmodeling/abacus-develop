@@ -574,7 +574,7 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_GPU *ctx,
             //GlobalC::hm.diagH_subspace(ik ,starting_nw, nbands, wfcatom, wfcatom, etatom.data());
         }
     }
-    else if(GlobalV::KS_SOLVER=="dav")
+    else if (GlobalV::KS_SOLVER == "dav" || GlobalV::KS_SOLVER == "new_dav")
     {
         assert(nbands <= wfcatom.nr);
         // replace by haozhihan 2022-11-23
@@ -685,8 +685,8 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_GPU *ctx,
 			//GlobalC::hm.diagH_subspace(ik ,starting_nw, nbands, wfcatom, wfcatom, etatom.data());
 		}
 	}
-	else if(GlobalV::KS_SOLVER=="dav")
-	{
+    else if (GlobalV::KS_SOLVER == "dav" || GlobalV::KS_SOLVER == "new_dav")
+    {
 		assert(nbands <= wfcatom.nr);
 		// replace by haozhihan 2022-11-23
         hsolver::matrixSetToAnother<std::complex<double>, psi::DEVICE_GPU>()(
