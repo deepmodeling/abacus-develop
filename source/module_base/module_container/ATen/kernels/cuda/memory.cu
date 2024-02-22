@@ -129,7 +129,7 @@ struct cast_memory<T_out, T_in, container::DEVICE_GPU, container::DEVICE_CPU> {
         T_in * arr = nullptr;
         cudaErrcheck(cudaMalloc((void **)&arr, sizeof(T_in) * size));
         cudaErrcheck(cudaMemcpy(arr, arr_in, sizeof(T_in) * size, cudaMemcpyHostToDevice));
-        ModuleBase::Memory_CUDA::record("memory","cast",sizeof(T) * size);
+        ModuleBase::Memory_CUDA::record("memory","cast",sizeof(T_in) * size);
         const int block = static_cast<int>((size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK);
         do_cast_memory<<<block, THREADS_PER_BLOCK>>>(arr_out, arr, size);
         cudaErrcheck(cudaGetLastError());
