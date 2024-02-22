@@ -53,6 +53,10 @@ void Diag_Cusolver_gvd::init_double(int N){
     checkCudaErrors( cudaMalloc ((void**)&d_B, sizeof(double) * lda * m) );
     checkCudaErrors( cudaMalloc ((void**)&d_W, sizeof(double) * m) );
     checkCudaErrors( cudaMalloc ((void**)&devInfo, sizeof(int)) );
+    ModuleBase::Memory_CUDA::record("diag_cusolver","Diag::initD",sizeof(double) * lda * m);
+    ModuleBase::Memory_CUDA::record("diag_cusolver","Diag::initD",sizeof(double) * lda * m);
+    ModuleBase::Memory_CUDA::record("diag_cusolver","Diag::initD",sizeof(double) * m);
+    ModuleBase::Memory_CUDA::record("diag_cusolver","Diag::initD",sizeof(int));
 }
 
 void Diag_Cusolver_gvd::init_complex(int N){
@@ -62,6 +66,10 @@ void Diag_Cusolver_gvd::init_complex(int N){
     checkCudaErrors( cudaMalloc ((void**)&d_B2, sizeof(cuDoubleComplex) * lda * m) ); 
     checkCudaErrors( cudaMalloc ((void**)&d_W, sizeof(double) * m) );
     checkCudaErrors( cudaMalloc ((void**)&devInfo, sizeof(int)) );
+    ModuleBase::Memory_CUDA::record("diag_cusolver","Diag::initC",sizeof(cuDoubleComplex) * lda * m);
+    ModuleBase::Memory_CUDA::record("diag_cusolver","Diag::initC",sizeof(cuDoubleComplex) * lda * m);
+    ModuleBase::Memory_CUDA::record("diag_cusolver","Diag::initC",sizeof(double) * m);
+    ModuleBase::Memory_CUDA::record("diag_cusolver","Diag::initC",sizeof(int));
 }
         
 void Diag_Cusolver_gvd::Dngvd_double(int N, int M, double *A, double *B, double *W, double *V){
@@ -73,9 +81,9 @@ void Diag_Cusolver_gvd::Dngvd_double(int N, int M, double *A, double *B, double 
             this->init_double(M);
         }
         checkCudaErrors( cudaMemcpy(d_A, A, sizeof(double) * lda * m, cudaMemcpyHostToDevice) );
-        ModuleBase::Memory_CUDA::record("DiagCusolverGvd","DngvdDouble",sizeof(double) * lda * m);
+        //ModuleBase::Memory_CUDA::record("DiagCusolverGvd","DngvdDouble",sizeof(double) * lda * m);
         checkCudaErrors( cudaMemcpy(d_B, B, sizeof(double) * lda * m, cudaMemcpyHostToDevice) );
-        ModuleBase::Memory_CUDA::record("DiagCusolverGvd","DngvdDouble",sizeof(double) * lda * m);
+        //ModuleBase::Memory_CUDA::record("DiagCusolverGvd","DngvdDouble",sizeof(double) * lda * m);
 
     // Query working space of sygvd
     // The helper functions below can calculate the sizes needed for pre-allocated buffer.
@@ -95,6 +103,7 @@ void Diag_Cusolver_gvd::Dngvd_double(int N, int M, double *A, double *B, double 
             &lwork
         ));
         checkCudaErrors( cudaMalloc((void**)&d_work, sizeof(double)*lwork) );
+        ModuleBase::Memory_CUDA::record("diag_cusolver","Diag::DngvdD",sizeof(double)*lwork);
 
     // compute spectrum of (A,B)
         checkCudaErrors(cusolverDnDsygvd(
@@ -134,9 +143,9 @@ void Diag_Cusolver_gvd::Dngvd_complex(int N, int M, std::complex<double> *A, std
             this->init_complex(M);
         }
         checkCudaErrors( cudaMemcpy(d_A2, A, sizeof(cuDoubleComplex) * lda * m, cudaMemcpyHostToDevice) );
-        ModuleBase::Memory_CUDA::record("DiagCusolverGvd","DngvdComplex",sizeof(cuDoubleComplex) * lda * m);
+        //ModuleBase::Memory_CUDA::record("DiagCusolverGvd","DngvdComplex",sizeof(cuDoubleComplex) * lda * m);
         checkCudaErrors( cudaMemcpy(d_B2, B, sizeof(cuDoubleComplex) * lda * m, cudaMemcpyHostToDevice) );
-        ModuleBase::Memory_CUDA::record("DiagCusolverGvd","DngvdComplex",sizeof(cuDoubleComplex) * lda * m);
+        //ModuleBase::Memory_CUDA::record("DiagCusolverGvd","DngvdComplex",sizeof(cuDoubleComplex) * lda * m);
 
     // Query working space of Zhegvd
     // The helper functions below can calculate the sizes needed for pre-allocated buffer.
@@ -157,6 +166,7 @@ void Diag_Cusolver_gvd::Dngvd_complex(int N, int M, std::complex<double> *A, std
                 &lwork)
         );      
         checkCudaErrors( cudaMalloc((void**)&d_work2, sizeof(cuDoubleComplex)*lwork) );
+        ModuleBase::Memory_CUDA::record("diag_cusolver","Diag::DngvdC",sizeof(cuDoubleComplex)*lwork);
 
     // compute spectrum of (A,B)
         checkCudaErrors(

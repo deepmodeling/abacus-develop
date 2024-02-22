@@ -4,6 +4,7 @@
 #include <cublas_v2.h>
 #include <cuda_runtime.h>
 #include <base/macros/cuda.h>
+#include "module_base/memory_cuda.h"
 
 namespace container {
 namespace cuSolverConnector {
@@ -17,6 +18,7 @@ void trtri (cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& d
     cusolverErrcheck(cusolverDnXtrtri_bufferSize(cusolver_handle, cublas_fill_mode(uplo), cublas_diag_type(diag), n, GetTypeCuda<T>::cuda_data_type, reinterpret_cast<Type*>(A), lda, &d_lwork, &h_lwork));
     void* d_work = nullptr, *h_work = nullptr;
     cudaErrcheck(cudaMalloc((void**)&d_work, d_lwork));
+    ModuleBase::Memory_CUDA::record("cusolver","Cusolver::trtri",sizeof(d_lwork));
     if (h_lwork) {
         h_work = malloc(h_lwork);
         if (h_work == nullptr) {
@@ -26,6 +28,7 @@ void trtri (cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& d
     int h_info = 0;
     int* d_info = nullptr;
     cudaErrcheck(cudaMalloc((void**)&d_info, sizeof(int)));
+    ModuleBase::Memory_CUDA::record("cusolver","Cusolver::trtri",sizeof(int));
     // Perform Cholesky decomposition
     cusolverErrcheck(cusolverDnXtrtri(cusolver_handle, cublas_fill_mode(uplo), cublas_diag_type(diag), n, GetTypeCuda<T>::cuda_data_type, reinterpret_cast<Type*>(A), n, d_work, d_lwork, h_work, h_lwork, d_info));
     cudaErrcheck(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
@@ -44,6 +47,7 @@ void potri (cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& d
     cusolverErrcheck(cusolverDnSpotri_bufferSize(cusolver_handle, cublas_fill_mode(uplo), n, A, n, &lwork));
     float* work;
     cudaErrcheck(cudaMalloc((void**)&work, lwork * sizeof(float)));
+    ModuleBase::Memory_CUDA::record("cusolver","Cusolver::potri",lwork * sizeof(float));
     // Perform Cholesky decomposition
     cusolverErrcheck(cusolverDnSpotri(cusolver_handle, cublas_fill_mode(uplo), n, A, n, work, lwork, nullptr));
     cudaErrcheck(cudaFree(work));
@@ -55,6 +59,7 @@ void potri (cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& d
     cusolverErrcheck(cusolverDnDpotri_bufferSize(cusolver_handle, cublas_fill_mode(uplo), n, A, n, &lwork));
     double* work;
     cudaErrcheck(cudaMalloc((void**)&work, lwork * sizeof(double)));
+    ModuleBase::Memory_CUDA::record("cusolver","Cusolver::potri",lwork * sizeof(double));
     // Perform Cholesky decomposition
     cusolverErrcheck(cusolverDnDpotri(cusolver_handle, cublas_fill_mode(uplo), n, A, n, work, lwork, nullptr));
     cudaErrcheck(cudaFree(work));
@@ -66,6 +71,7 @@ void potri (cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& d
     cusolverErrcheck(cusolverDnCpotri_bufferSize(cusolver_handle, cublas_fill_mode(uplo), n, reinterpret_cast<cuComplex *>(A), n, &lwork));
     cuComplex* work;
     cudaErrcheck(cudaMalloc((void**)&work, lwork * sizeof(cuComplex)));
+    ModuleBase::Memory_CUDA::record("cusolver","Cusolver::potri",lwork * sizeof(float));
     // Perform Cholesky decomposition
     cusolverErrcheck(cusolverDnCpotri(cusolver_handle, cublas_fill_mode(uplo), n, reinterpret_cast<cuComplex *>(A), n, work, lwork, nullptr));
     cudaErrcheck(cudaFree(work));
@@ -77,6 +83,7 @@ void potri (cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& d
     cusolverErrcheck(cusolverDnZpotri_bufferSize(cusolver_handle, cublas_fill_mode(uplo), n, reinterpret_cast<cuDoubleComplex *>(A), n, &lwork));
     cuDoubleComplex* work;
     cudaErrcheck(cudaMalloc((void**)&work, lwork * sizeof(cuDoubleComplex)));
+    ModuleBase::Memory_CUDA::record("cusolver","Cusolver::potri",lwork * sizeof(cuDoubleComplex));
     // Perform Cholesky decomposition
     cusolverErrcheck(cusolverDnZpotri(cusolver_handle, cublas_fill_mode(uplo), n, reinterpret_cast<cuDoubleComplex *>(A), n, work, lwork, nullptr));
     cudaErrcheck(cudaFree(work));
@@ -90,6 +97,7 @@ void potrf (cusolverDnHandle_t& cusolver_handle, const char& uplo, const int& n,
     cusolverErrcheck(cusolverDnSpotrf_bufferSize(cusolver_handle, cublas_fill_mode(uplo), n, A, n, &lwork));
     float* work;
     cudaErrcheck(cudaMalloc((void**)&work, lwork * sizeof(float)));
+    ModuleBase::Memory_CUDA::record("cusolver","Cusolver::potrf",lwork * sizeof(float));
     // Perform Cholesky decomposition
     cusolverErrcheck(cusolverDnSpotrf(cusolver_handle, cublas_fill_mode(uplo), n, A, n, work, lwork, nullptr));
     cudaErrcheck(cudaFree(work));
@@ -101,6 +109,7 @@ void potrf (cusolverDnHandle_t& cusolver_handle, const char& uplo, const int& n,
     cusolverErrcheck(cusolverDnDpotrf_bufferSize(cusolver_handle, cublas_fill_mode(uplo), n, A, n, &lwork));
     double* work;
     cudaErrcheck(cudaMalloc((void**)&work, lwork * sizeof(double)));
+    ModuleBase::Memory_CUDA::record("cusolver","Cusolver::potrf",lwork * sizeof(double));
     // Perform Cholesky decomposition
     cusolverErrcheck(cusolverDnDpotrf(cusolver_handle, cublas_fill_mode(uplo), n, A, n, work, lwork, nullptr));
     cudaErrcheck(cudaFree(work));
@@ -112,6 +121,7 @@ void potrf (cusolverDnHandle_t& cusolver_handle, const char& uplo, const int& n,
     cusolverErrcheck(cusolverDnCpotrf_bufferSize(cusolver_handle, cublas_fill_mode(uplo), n, reinterpret_cast<cuComplex*>(A), n, &lwork));
     cuComplex* work;
     cudaErrcheck(cudaMalloc((void**)&work, lwork * sizeof(cuComplex)));
+    ModuleBase::Memory_CUDA::record("cusolver","Cusolver::potrf",lwork * sizeof(cuComplex));
     // Perform Cholesky decomposition
     cusolverErrcheck(cusolverDnCpotrf(cusolver_handle, cublas_fill_mode(uplo), n, reinterpret_cast<cuComplex*>(A), n, work, lwork, nullptr));
     cudaErrcheck(cudaFree(work));
@@ -123,6 +133,7 @@ void potrf (cusolverDnHandle_t& cusolver_handle, const char& uplo, const int& n,
     cusolverErrcheck(cusolverDnZpotrf_bufferSize(cusolver_handle, cublas_fill_mode(uplo), n, reinterpret_cast<cuDoubleComplex*>(A), n, &lwork));
     cuDoubleComplex* work;
     cudaErrcheck(cudaMalloc((void**)&work, lwork * sizeof(cuDoubleComplex)));
+    ModuleBase::Memory_CUDA::record("cusolver","Cusolver::potrf",lwork * sizeof(cuDoubleComplex));
     // Perform Cholesky decomposition
     cusolverErrcheck(cusolverDnZpotrf(cusolver_handle, cublas_fill_mode(uplo), n, reinterpret_cast<cuDoubleComplex*>(A), n, work, lwork, nullptr));
     cudaErrcheck(cudaFree(work));
@@ -138,12 +149,14 @@ void dnevd (cusolverDnHandle_t& cusolver_handle, const char& jobz, const char& u
     int*   d_info = nullptr;
     float* d_work = nullptr;
     cudaErrcheck(cudaMalloc((void**)&d_info, sizeof(int)));
+    ModuleBase::Memory_CUDA::record("cusolver","Cusolver::dnevd",sizeof(int));
 
     // calculate the sizes needed for pre-allocated buffer.
     cusolverErrcheck(cusolverDnSsyevd_bufferSize(cusolver_handle, cublas_eig_mode(jobz), cublas_fill_mode(uplo), 
                                 n, A, lda, W, &lwork));
     // allocate memery
     cudaErrcheck(cudaMalloc((void**)&d_work, sizeof(float) * lwork));
+    ModuleBase::Memory_CUDA::record("cusolver","Cusolver::dnevd",sizeof(float) * lwork);
     // compute eigenvalues and eigenvectors.
     cusolverErrcheck(cusolverDnSsyevd(cusolver_handle, cublas_eig_mode(jobz), cublas_fill_mode(uplo),
                                 n, A, lda, W, d_work, lwork, d_info));
@@ -164,12 +177,14 @@ void dnevd (cusolverDnHandle_t& cusolver_handle, const char& jobz, const char& u
     int*    d_info = nullptr;
     double* d_work = nullptr;
     cudaErrcheck(cudaMalloc((void**)&d_info, sizeof(int)));
+    ModuleBase::Memory_CUDA::record("cusolver","Cusolver::dnevd",sizeof(int));
 
     // calculate the sizes needed for pre-allocated buffer.
     cusolverErrcheck(cusolverDnDsyevd_bufferSize(cusolver_handle, cublas_eig_mode(jobz), cublas_fill_mode(uplo), 
                                 n, A, lda, W, &lwork));
     // allocate memery
     cudaErrcheck(cudaMalloc((void**)&d_work, sizeof(double) * lwork));
+    ModuleBase::Memory_CUDA::record("cusolver","Cusolver::dnevd",sizeof(double) * lwork);
     // compute eigenvalues and eigenvectors.
     cusolverErrcheck(cusolverDnDsyevd(cusolver_handle, cublas_eig_mode(jobz), cublas_fill_mode(uplo),
                                 n, A, lda, W, d_work, lwork, d_info));
@@ -190,12 +205,14 @@ void dnevd (cusolverDnHandle_t& cusolver_handle, const char& jobz, const char& u
     int*    d_info = nullptr;
     cuComplex* d_work = nullptr;
     cudaErrcheck(cudaMalloc((void**)&d_info, sizeof(int)));
+    ModuleBase::Memory_CUDA::record("cusolver","Cusolver::dnevd",sizeof(int));
 
     // calculate the sizes needed for pre-allocated buffer.
     cusolverErrcheck(cusolverDnCheevd_bufferSize(cusolver_handle, cublas_eig_mode(jobz), cublas_fill_mode(uplo), 
                                 n, reinterpret_cast<cuComplex*>(A), lda, W, &lwork));
     // allocate memery
     cudaErrcheck(cudaMalloc((void**)&d_work, sizeof(cuComplex) * lwork));
+    ModuleBase::Memory_CUDA::record("cusolver","Cusolver::dnevd",sizeof(cuComplex) * lwork);
     // compute eigenvalues and eigenvectors.
     cusolverErrcheck(cusolverDnCheevd(cusolver_handle, cublas_eig_mode(jobz), cublas_fill_mode(uplo),
                                 n, reinterpret_cast<cuComplex*>(A), lda, W, d_work, lwork, d_info));
@@ -216,12 +233,14 @@ void dnevd (cusolverDnHandle_t& cusolver_handle, const char& jobz, const char& u
     int*    d_info = nullptr;
     cuDoubleComplex* d_work = nullptr;
     cudaErrcheck(cudaMalloc((void**)&d_info, sizeof(int)));
+    ModuleBase::Memory_CUDA::record("cusolver","Cusolver::dnevd",sizeof(int));
 
     // calculate the sizes needed for pre-allocated buffer.
     cusolverErrcheck(cusolverDnZheevd_bufferSize(cusolver_handle, cublas_eig_mode(jobz), cublas_fill_mode(uplo), 
                                 n, reinterpret_cast<cuDoubleComplex*>(A), lda, W, &lwork));
     // allocate memery
     cudaErrcheck(cudaMalloc((void**)&d_work, sizeof(cuDoubleComplex) * lwork));
+    ModuleBase::Memory_CUDA::record("cusolver","Cusolver::dnevd",sizeof(cuDoubleComplex) * lwork);
     // compute eigenvalues and eigenvectors.
     cusolverErrcheck(cusolverDnZheevd(cusolver_handle, cublas_eig_mode(jobz), cublas_fill_mode(uplo),
                                 n, reinterpret_cast<cuDoubleComplex*>(A), lda, W, d_work, lwork, d_info));
@@ -243,12 +262,14 @@ void dngvd (cusolverDnHandle_t& cusolver_handle, const int& itype, const char& j
     int*   d_info = nullptr;
     float* d_work = nullptr;
     cudaErrcheck(cudaMalloc((void**)&d_info, sizeof(int)));
+    ModuleBase::Memory_CUDA::record("cusolver","Cusolver::dngvd",sizeof(int));
 
     // calculate the sizes needed for pre-allocated buffer.
     cusolverErrcheck(cusolverDnSsygvd_bufferSize(cusolver_handle, cublas_eig_type(itype), cublas_eig_mode(jobz), cublas_fill_mode(uplo), 
                                 n, A, lda, B, ldb, W, &lwork));
     // allocate memery
     cudaErrcheck(cudaMalloc((void**)&d_work, sizeof(float) * lwork));
+    ModuleBase::Memory_CUDA::record("cusolver","Cusolver::dngvd",sizeof(float) * lwork);
     // compute eigenvalues and eigenvectors.
     cusolverErrcheck(cusolverDnSsygvd(cusolver_handle, cublas_eig_type(itype), cublas_eig_mode(jobz), cublas_fill_mode(uplo), 
                                 n, A, lda, B, ldb, W, d_work, lwork, d_info));
@@ -269,12 +290,15 @@ void dngvd (cusolverDnHandle_t& cusolver_handle, const int& itype, const char& j
     int*   d_info = nullptr;
     double* d_work = nullptr;
     cudaErrcheck(cudaMalloc((void**)&d_info, sizeof(int)));
+    ModuleBase::Memory_CUDA::record("cusolver","Cusolver::dngvd",sizeof(int));
+    
 
     // calculate the sizes needed for pre-allocated buffer.
     cusolverErrcheck(cusolverDnDsygvd_bufferSize(cusolver_handle, cublas_eig_type(itype), cublas_eig_mode(jobz), cublas_fill_mode(uplo), 
                                 n, A, lda, B, ldb, W, &lwork));
     // allocate memery
     cudaErrcheck(cudaMalloc((void**)&d_work, sizeof(double) * lwork));
+    ModuleBase::Memory_CUDA::record("cusolver","Cusolver::dngvd",sizeof(double) * lwork);
     // compute eigenvalues and eigenvectors.
     cusolverErrcheck(cusolverDnDsygvd(cusolver_handle, cublas_eig_type(itype), cublas_eig_mode(jobz), cublas_fill_mode(uplo), 
                                 n, A, lda, B, ldb, W, d_work, lwork, d_info));
@@ -295,12 +319,14 @@ void dngvd (cusolverDnHandle_t& cusolver_handle, const int& itype, const char& j
     int*   d_info = nullptr;
     cuComplex* d_work = nullptr;
     cudaErrcheck(cudaMalloc((void**)&d_info, sizeof(int)));
+    ModuleBase::Memory_CUDA::record("cusolver","Cusolver::dngvd",sizeof(int));
 
     // calculate the sizes needed for pre-allocated buffer.
     cusolverErrcheck(cusolverDnChegvd_bufferSize(cusolver_handle, cublas_eig_type(itype), cublas_eig_mode(jobz), cublas_fill_mode(uplo), 
                                 n, reinterpret_cast<cuComplex*>(A), lda, reinterpret_cast<cuComplex*>(B), ldb, W, &lwork));
     // allocate memery
     cudaErrcheck(cudaMalloc((void**)&d_work, sizeof(cuComplex) * lwork));
+    ModuleBase::Memory_CUDA::record("cusolver","Cusolver::dngvd",sizeof(cuComplex) * lwork);
     // compute eigenvalues and eigenvectors.
     cusolverErrcheck(cusolverDnChegvd(cusolver_handle, cublas_eig_type(itype), cublas_eig_mode(jobz), cublas_fill_mode(uplo), 
                                 n, reinterpret_cast<cuComplex*>(A), lda, reinterpret_cast<cuComplex*>(B), ldb, W, d_work, lwork, d_info));
@@ -321,12 +347,14 @@ void dngvd (cusolverDnHandle_t& cusolver_handle, const int& itype, const char& j
     int*   d_info = nullptr;
     cuDoubleComplex* d_work = nullptr;
     cudaErrcheck(cudaMalloc((void**)&d_info, sizeof(int)));
+    ModuleBase::Memory_CUDA::record("cusolver","Cusolver::dngvd",sizeof(int));
 
     // calculate the sizes needed for pre-allocated buffer.
     cusolverErrcheck(cusolverDnZhegvd_bufferSize(cusolver_handle, cublas_eig_type(itype), cublas_eig_mode(jobz), cublas_fill_mode(uplo), 
                                 n, reinterpret_cast<cuDoubleComplex*>(A), lda, reinterpret_cast<cuDoubleComplex*>(B), ldb, W, &lwork));
     // allocate memery
     cudaErrcheck(cudaMalloc((void**)&d_work, sizeof(cuDoubleComplex) * lwork));
+    ModuleBase::Memory_CUDA::record("cusolver","Cusolver::dngvd",sizeof(cuDoubleComplex) * lwork);
     // compute eigenvalues and eigenvectors.
     cusolverErrcheck(cusolverDnZhegvd(cusolver_handle, cublas_eig_type(itype), cublas_eig_mode(jobz), cublas_fill_mode(uplo), 
                                 n, reinterpret_cast<cuDoubleComplex*>(A), lda, reinterpret_cast<cuDoubleComplex*>(B), ldb, W, d_work, lwork, d_info));

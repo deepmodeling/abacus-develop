@@ -155,6 +155,7 @@ void Memory_CUDA::print_all(std::ofstream &ofs)
 		}
 
 	}
+	ofs<<"As GPU Memory is often released, the result doesnt represent the exact memory usage peak in GPU."<<std::endl;
 	ofs<<" -------------   < 1.0 MB has been ignored ----------------"<<std::endl;
     ofs<<" ----------------------------------------------------------"<<std::endl;
 	delete[] print_flag;
