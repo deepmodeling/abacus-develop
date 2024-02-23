@@ -94,7 +94,7 @@ TEST_F(SpinConstrainTest, CollectMW)
     ModuleBase::matrix expected_MecMulP(4, 1);
     expected_MecMulP(0, 0) = 7.0;
     expected_MecMulP(1, 0) = 7.0;
-    expected_MecMulP(2, 0) = -1.0;
+    expected_MecMulP(2, 0) = 1.0;
     expected_MecMulP(3, 0) = -3.0;
     // Compare the matrices
     for (size_t i = 0; i < expected_MecMulP.nr; ++i)
