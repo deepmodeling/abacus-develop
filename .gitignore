@@ -21,3 +21,4 @@ toolchain.tar.gz
 time.json
 *.pyc
 __pycache__
+abacus.json
