@@ -219,5 +219,7 @@ void gint_gamma_rho_gpu(hamilt::HContainer<double> *DM,
     {
         checkCuda(cudaStreamSynchronize(GridT.streams[i]));
     }
-    checkCuda(cudaMemcpy(rho, GridT.rho_g, GridT.ncxyz * sizeof(double), cudaMemcpyDeviceToHost));
+    checkCuda(cudaMemcpy(rho, GridT.rho_g, nczp * GridT.ncx * GridT.ncy * sizeof(double), cudaMemcpyDeviceToHost));
+    checkCuda(cudaFree(dm_matrix_g));
+    delete[] dm_matrix_h;
 }
