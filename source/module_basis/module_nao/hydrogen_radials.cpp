@@ -1,6 +1,7 @@
 #include "module_basis/module_nao/hydrogen_radials.h"
 #include "module_base/global_variable.h"
 #include "module_base/math_integral.h"
+#include "module_base/atom_in.h" // for calculating slater screening constant
 #include <map>
 #include <iostream>
 #include <algorithm>
@@ -13,6 +14,7 @@ HydrogenRadials& HydrogenRadials::operator=(const HydrogenRadials& rhs)
 
 void HydrogenRadials::build(const int itype,
                             const double charge,
+                            const bool with_slater_screening,
                             const int nmax,
                             const double rcut,
                             const double dr,
@@ -27,11 +29,12 @@ void HydrogenRadials::build(const int itype,
     symbol_ = symbol;
     // rcut should be determined as soon as possible...
     //generate_hydrogen_radials(charge, nmax, 10.0, dr, rank, ptr_log);
-    hydrogen(charge, nmax, dr, conv_thr, rank, strategy, ptr_log);
+    hydrogen(charge, with_slater_screening, nmax, dr, conv_thr, rank, strategy, ptr_log);
     set_rcut_max();
 }
 
 std::vector<double> HydrogenRadials::generate_hydrogen_radial_segment(const double charge,
+                                                                      const bool with_slater_screening,
                                                                       const int n,
                                                                       const int l,
                                                                       const double rmin,
@@ -51,8 +54,15 @@ std::vector<double> HydrogenRadials::generate_hydrogen_radial_segment(const doub
         rgrid[ir] = rmin + ir * dr;
     }
 
+    double screened_charge = charge;
+    if(with_slater_screening)
+    {
+        double sigma = slater_screening(symbol_, n, l);
+        screened_charge = charge - sigma;
+    }
+
     double norm_factor = sqrt(
-        4.0*std::pow(charge, 3)*
+        4.0*std::pow(screened_charge, 3)*
         static_cast<double>(this->assoc_laguerre_.factorial(n - l - 1)) /
         std::pow(double(n), 4) / 
         static_cast<double>(this->assoc_laguerre_.factorial(n + l)) /
@@ -62,7 +72,7 @@ std::vector<double> HydrogenRadials::generate_hydrogen_radial_segment(const doub
     for(int ir = 0; ir != ngrid; ++ir)
     {
         // Bohr radius is 1.0
-        double rho = 2.0 * rgrid[ir] * charge / n / a0;
+        double rho = 2.0 * rgrid[ir] * screened_charge / n / a0;
         rvalue[ir] = norm_factor * std::pow(rho, l) * exp(-rho/2.0) * this->assoc_laguerre_.value(
             n, l, rho
         );
@@ -85,13 +95,14 @@ double HydrogenRadials::radial_norm(const std::vector<double> rgrid,
 }
 
 double HydrogenRadials::generate_hydrogen_radial_toconv(const double charge,
-                                                          const int n,
-                                                          const int l,
-                                                          const double conv_thr,
-                                                          const int rank,
-                                                          std::vector<double>& rgrid,
-                                                          std::vector<double>& rvalue,
-                                                          std::ofstream* ptr_log)
+                                                        const bool with_slater_screening,
+                                                        const int n,
+                                                        const int l,
+                                                        const double conv_thr,
+                                                        const int rank,
+                                                        std::vector<double>& rgrid,
+                                                        std::vector<double>& rvalue,
+                                                        std::ofstream* ptr_log)
 {
     double norm = 0.0;
     double rmax_ = 0.0; // in Bohr
@@ -121,7 +132,7 @@ double HydrogenRadials::generate_hydrogen_radial_toconv(const double charge,
             rgrid_segment[ir] = rmin_ + ir * dr;
         }
         std::vector<double> rvalue_segment = generate_hydrogen_radial_segment(
-            charge, n, l, rmin_, rmax_, dr, rank, ptr_log);
+            charge, with_slater_screening, n, l, rmin_, rmax_, dr, rank, ptr_log);
         // before push back, pop back the last element
         if(rgrid.size() != 0)
         {
@@ -231,10 +242,6 @@ std::vector<std::pair<int, int>> HydrogenRadials::unzip_strategy(const int nmax,
                 ++it;
             }
         }
-        for(auto nl_pair : nl_pairs)
-        {
-            std::cout << nl_pair.first << " " << nl_pair.second << std::endl;
-        }
     }
     else
     {
@@ -266,6 +273,7 @@ void HydrogenRadials::smooth(std::vector<double>& rgrid,
 
 std::map<std::pair<int, int>, std::pair<std::vector<double>, std::vector<double>>> 
 HydrogenRadials::generate_orb(const double charge,
+                              const bool with_slater_screening,
                               const int nmax,
                               const double dr,
                               const double conv_thr,
@@ -287,6 +295,7 @@ HydrogenRadials::generate_orb(const double charge,
         std::vector<double> rgrid;
         std::vector<double> rvalue;
         double rmax_nl = generate_hydrogen_radial_toconv(charge,
+                                                         with_slater_screening,
                                                          n,
                                                          l,
                                                          conv_thr,
@@ -361,6 +370,7 @@ HydrogenRadials::mapping_nl_lzeta(const int nmax,
 }
 
 void HydrogenRadials::hydrogen(const double charge,
+                               const bool with_slater_screening,
                                const int nmax,
                                const double dr,
                                const double conv_thr,
@@ -369,7 +379,7 @@ void HydrogenRadials::hydrogen(const double charge,
                                std::ofstream* ptr_log)
 {
     std::map<std::pair<int, int>, std::pair<std::vector<double>, std::vector<double>>> orbitals = 
-        generate_orb(charge, nmax, dr, conv_thr, rank, strategy, ptr_log);
+        generate_orb(charge, with_slater_screening, nmax, dr, conv_thr, rank, strategy, ptr_log);
     std::map<std::pair<int, int>, std::pair<int, int>> nl_lzeta = mapping_nl_lzeta(nmax, strategy);
 
     nchi_ = orbitals.size();
@@ -388,4 +398,55 @@ void HydrogenRadials::hydrogen(const double charge,
         chi_[index(l, lzeta)].normalize();
         //++ichi;
     }
+}
+
+double HydrogenRadials::slater_screening(const std::string symbol,
+                                         const int n,
+                                         const int l)
+{
+    atom_in atom_db;
+    std::vector<int> electron_config = atom_db.groundstate_electronconfiguration[symbol];
+    int isubshell = 0;
+    double sigma = 0.0;
+    int _len = 0;
+    for(int n_ = 1; n_ <= n; ++n_)
+    {
+        if(n_ == n) _len += l + 1;
+        else _len += n_;
+    }
+    if(_len > electron_config.size())
+    {
+        printf("Error: electron configuration is not enough for %s\n", symbol.c_str());
+        printf("n = %d, l = %d\n", n, l);
+        exit(1);
+    }
+    // special case for 1s: for H and He, use 0.30 for 1s screening constant
+    if(symbol == "H") return 0.0; // only one 1s electron, no screening by "other electrons"
+    else if(symbol == "He") return 0.30; // only two 1s electrons, one screening the other
+    else if(n == 1) return 0.30;
+    for(int n_ = 1; n_ <= n; ++n_)
+    {
+        int lmax = (n_ == n) ? l : n_ - 1;
+        for(int l_ = 0; l_ <= lmax; ++l_)
+        {
+            int nelec = electron_config[isubshell];
+            if(n - n_ >= 2) sigma += nelec * 1.0;
+            else if(n - n_ == 1)
+            {
+                double screening = (l > 1)? 1.00 : 0.85;
+                sigma += nelec * screening;
+            }
+            else
+            {
+                if(l_ == l) sigma += (nelec - 1) * 0.35;
+                else
+                {
+                    double screening = (l > 1)? 1.00 : 0.35;
+                    sigma += nelec * screening;
+                }
+            }
+            ++isubshell;
+        }
+    }
+    return sigma;
 }
