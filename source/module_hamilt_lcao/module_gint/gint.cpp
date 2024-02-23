@@ -85,16 +85,15 @@ void Gint::cal_gint(Gint_inout *inout)
 				ylmcoef[i] = ModuleBase::Ylm::ylmcoef[i];
 			}
 
-			const int ncyz = this->ny*this->nplane;
+			const int nrxx = this->gridt->ncx * this->gridt->ncy * this->nplane;
 			for(int is=0; is<GlobalV::NSPIN; ++is)
 			{
-			inout->rho[is]=new double[this->ncxyz];
-			ModuleBase::GlobalFunc::ZEROS(inout->rho[is], this->ncxyz);
-			gint_gamma_rho_gpu(this->DMRGint[is],
-							inout->rho[is],
-							this->nplane,
-							ylmcoef,
-							*this->gridt);
+				ModuleBase::GlobalFunc::ZEROS(inout->rho[is], nrxx);
+				gint_gamma_rho_gpu(this->DMRGint[is],
+								inout->rho[is],
+								this->nplane,
+								ylmcoef,
+								*this->gridt);
 			}
 			ModuleBase::timer::tick("Gint_interface", "cal_gint_rho");
 			return;
