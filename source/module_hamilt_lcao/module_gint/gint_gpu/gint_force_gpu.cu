@@ -316,10 +316,17 @@ void gint_gamma_force_gpu(hamilt::HContainer<double> *DM,
                     stress[i]+=stress_dot[i*blocksPerGrid+index];
                 }
             }
-
+            delete[] iat;
+            delete[] force_h;
             iter_num++;
         }   
     }
+    delete[] stress_dot;
+    delete[] dm_matrix_h;
+    checkCuda(cudaFree(dm_matrix_g));
+    checkCuda(cudaFree(stress_dot_global_g));
+    checkCuda(cudaFree(force_dot_global_g));
+    checkCuda(cudaFree(iat_global_g));
     checkCuda(cudaFree(stress_dot_global_g));
     for (int i = 0; i < GridT.nstreams; i++)
     {
