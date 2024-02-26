@@ -138,7 +138,9 @@ TEST_F(MemoryTest, printall)
 	ifs.close();
 }
 
-TEST_F(MemoryTest, finish)
+// Xiaoyang: As Memory::finish is never employed in the code, so I removed this test.
+
+/*TEST_F(MemoryTest, finish)
 {
 	*ModuleBase::Memory::name = "tmp_name";
 	*ModuleBase::Memory::class_name = "tmp_class_name";
@@ -150,5 +152,7 @@ TEST_F(MemoryTest, finish)
 	EXPECT_NO_THROW(ModuleBase::Memory::finish(ofs));
 	ofs.close();
 	EXPECT_FALSE(ModuleBase::Memory::init_flag);
-}
+}*/ 
+
+
 #undef private
