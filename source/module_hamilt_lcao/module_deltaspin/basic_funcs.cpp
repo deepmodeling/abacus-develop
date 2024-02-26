@@ -151,11 +151,11 @@ void print_2d(std::string info, const std::vector<ModuleBase::Vector3<double>> &
         iat += 1;
         if (nspin == 2)
         {
-            ofs << "ATOM " << fmt.format(row.z) << std::endl;
+            ofs << "ATOM " << std::left << std::setw(6) << iat << fmt.format(row.z) << std::endl;
         }
         else if (nspin == 4)
         {
-            ofs << "ATOM " << fmt.format(row.x) << fmt.format(row.y) << fmt.format(row.z) << std::endl;
+            ofs << "ATOM " << std::left << std::setw(6) << iat << fmt.format(row.x) << fmt.format(row.y) << fmt.format(row.z) << std::endl;
         }
     }
 }
