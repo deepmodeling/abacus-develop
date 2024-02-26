@@ -5,31 +5,16 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 // CUDA kernel to calculate psi and force
-__global__ void get_psi_force(double *ylmcoef,
-                        double delta_r_g,
-                        double bxyz_g,
-                        double nwmax_g,
-                        double *input_double,
-                        int *input_int,
-                        int *num_psir,
-                        int psi_size_max,
-                        int *ucell_atom_nwl,
-                        bool *atom_iw2_new,
-                        int *atom_iw2_ylm,
-                        int *atom_iw2_l,
-                        int *atom_nw,
-                        int nr_max,
-                        double *psi_u,
-                        double *psir_ylm_right,
-                        double *dpsir_ylm_left_x,
-                        double *dpsir_ylm_left_y,
-                        double *dpsir_ylm_left_z,
-                        double *ddpsir_ylm_left_xx,
-                        double *ddpsir_ylm_left_xy,
-                        double *ddpsir_ylm_left_xz,
-                        double *ddpsir_ylm_left_yy,
-                        double *ddpsir_ylm_left_yz,
-                        double *ddpsir_ylm_left_zz) {
+__global__ void
+get_psi_force(double *ylmcoef, double delta_r_g, double bxyz_g, double nwmax_g,
+              double *input_double, int *input_int, int *num_psir,
+              int psi_size_max, int *ucell_atom_nwl, bool *atom_iw2_new,
+              int *atom_iw2_ylm, int *atom_iw2_l, int *atom_nw, int nr_max,
+              double *psi_u, double *psir_ylm_right, double *dpsir_ylm_left_x,
+              double *dpsir_ylm_left_y, double *dpsir_ylm_left_z,
+              double *ddpsir_ylm_left_xx, double *ddpsir_ylm_left_xy,
+              double *ddpsir_ylm_left_xz, double *ddpsir_ylm_left_yy,
+              double *ddpsir_ylm_left_yz, double *ddpsir_ylm_left_zz) {
   // Get the size of psi for the current block
   int size = num_psir[blockIdx.x];
   int start_index = psi_size_max * blockIdx.x;
@@ -475,104 +460,86 @@ __global__ void get_psi_force(double *ylmcoef,
   }
 }
 
-__global__ void psir_dot_stress(int * n,
-                        double **x_array_g,
-                        int incx,
-                        double **y_array_g,
-                        int incy,
-                        double **results_g,
-                        int batchcount)
-{
-    int id = blockIdx.x * blockDim.x + threadIdx.x;
-    int stride = blockDim.x * gridDim.x;
-    for(int i = id; i < batchcount; i += stride){
-        double *sum = results_g[i];
-        double *x = x_array_g[i];
-        double *y = y_array_g[i];
+__global__ void psir_dot_stress(int *n, double **x_array_g, int incx,
+                                double **y_array_g, int incy,
+                                double **results_g, int batchcount) {
+  int id = blockIdx.x * blockDim.x + threadIdx.x;
+  int stride = blockDim.x * gridDim.x;
+  for (int i = id; i < batchcount; i += stride) {
+    double *sum = results_g[i];
+    double *x = x_array_g[i];
+    double *y = y_array_g[i];
 
-        for(int j = 0; j < n[i]; j++){
-            sum[0] += x[j*incx] * y[j*incy];
-        }
+    for (int j = 0; j < n[i]; j++) {
+      sum[0] += x[j * incx] * y[j * incy];
     }
+  }
 }
 
-__global__ void dot_product_stress(double *ddpsir_ylm_left_xx,
-                                    double *ddpsir_ylm_left_xy,
-                                    double *ddpsir_ylm_left_xz,
-                                    double *ddpsir_ylm_left_yy,
-                                    double *ddpsir_ylm_left_yz,
-                                    double *ddpsir_ylm_left_zz,
-                                    double *psir_ylm_dm,
-                                    double *stress_dot,
-                                    int elements_num)
-{
-  
-	__shared__ double cache[256][6]; // == threadsPerBlock
-	int tid = threadIdx.x + blockIdx.x * blockDim.x;
-	int cacheIndex = threadIdx.x;
-	double tmp[6]= {0.0};
-	while (tid < elements_num) {
-		tmp[0] += ddpsir_ylm_left_xx[tid] * psir_ylm_dm[tid] * 2;
+__global__ void
+dot_product_stress(double *ddpsir_ylm_left_xx, double *ddpsir_ylm_left_xy,
+                   double *ddpsir_ylm_left_xz, double *ddpsir_ylm_left_yy,
+                   double *ddpsir_ylm_left_yz, double *ddpsir_ylm_left_zz,
+                   double *psir_ylm_dm, double *stress_dot, int elements_num) {
+
+  __shared__ double cache[256][6]; // == threadsPerBlock
+  int tid = threadIdx.x + blockIdx.x * blockDim.x;
+  int cacheIndex = threadIdx.x;
+  double tmp[6] = {0.0};
+  while (tid < elements_num) {
+    tmp[0] += ddpsir_ylm_left_xx[tid] * psir_ylm_dm[tid] * 2;
     tmp[1] += ddpsir_ylm_left_xy[tid] * psir_ylm_dm[tid] * 2;
     tmp[2] += ddpsir_ylm_left_xz[tid] * psir_ylm_dm[tid] * 2;
     tmp[3] += ddpsir_ylm_left_yy[tid] * psir_ylm_dm[tid] * 2;
     tmp[4] += ddpsir_ylm_left_yz[tid] * psir_ylm_dm[tid] * 2;
     tmp[5] += ddpsir_ylm_left_zz[tid] * psir_ylm_dm[tid] * 2;
-		tid += blockDim.x * gridDim.x;
-	}
+    tid += blockDim.x * gridDim.x;
+  }
 
-  for (int i=0;i<6;i++)
-	  cache[cacheIndex][i] = tmp[i];
+  for (int i = 0; i < 6; i++)
+    cache[cacheIndex][i] = tmp[i];
 
-	__syncthreads();
+  __syncthreads();
 
-	int i = blockDim.x / 2;
-	while (i != 0) {
-		if (cacheIndex < i)
-      for (int index=0;index<6;index++)
-			  cache[cacheIndex][index] += cache[cacheIndex + i][index];
-		__syncthreads();
-		i /= 2;
-	}
-  
-	if (cacheIndex == 0)
-    for (int index=0;index<6;index++)
-		  stress_dot[blockIdx.x+gridDim.x*index] = cache[0][index];
+  int i = blockDim.x / 2;
+  while (i != 0) {
+    if (cacheIndex < i)
+      for (int index = 0; index < 6; index++)
+        cache[cacheIndex][index] += cache[cacheIndex + i][index];
+    __syncthreads();
+    i /= 2;
+  }
+
+  if (cacheIndex == 0)
+    for (int index = 0; index < 6; index++)
+      stress_dot[blockIdx.x + gridDim.x * index] = cache[0][index];
 }
 
 __global__ void dot_product_force(double *dpsir_ylm_left_x,
                                   double *dpsir_ylm_left_y,
-                                  double *dpsir_ylm_left_z,
-                                  double *psir_ylm_dm,
-                                  double *force_dot,
-                                  int *iat,
-                                  int nwmax,
-                                  int max_size,
-                                  int elements_num)
-{
-  int tid=threadIdx.x + blockIdx.x * blockDim.x;
-  while (tid<elements_num){
-  int iat_on_nbz=iat[tid];
-  if (iat_on_nbz<=-1) 
-  {
+                                  double *dpsir_ylm_left_z, double *psir_ylm_dm,
+                                  double *force_dot, int *iat, int nwmax,
+                                  int max_size, int elements_num) {
+  int tid = threadIdx.x + blockIdx.x * blockDim.x;
+  while (tid < elements_num) {
+    int iat_on_nbz = iat[tid];
+    if (iat_on_nbz <= -1) {
+      tid += blockDim.x * gridDim.x;
+      continue;
+    }
+
+    int iat_index = tid * 3;
+    int dist = tid * nwmax;
+    double tmp[3] = {0.0};
+
+    for (int i = 0; i < nwmax; i++) {
+      tmp[0] += dpsir_ylm_left_x[dist + i] * psir_ylm_dm[dist + i] * 2;
+      tmp[1] += dpsir_ylm_left_y[dist + i] * psir_ylm_dm[dist + i] * 2;
+      tmp[2] += dpsir_ylm_left_z[dist + i] * psir_ylm_dm[dist + i] * 2;
+    }
+
+    for (int i = 0; i < 3; i++)
+      force_dot[iat_index + i] = tmp[i];
     tid += blockDim.x * gridDim.x;
-    continue;
   }
-
-  int iat_index =tid*3;
-  int dist =tid*nwmax;
-  double tmp[3]={0.0};
-  
-  for (int i=0;i<nwmax;i++)
-  {
-    tmp[0]+=dpsir_ylm_left_x[dist+i]*psir_ylm_dm[dist+i]*2;
-    tmp[1]+=dpsir_ylm_left_y[dist+i]*psir_ylm_dm[dist+i]*2;
-    tmp[2]+=dpsir_ylm_left_z[dist+i]*psir_ylm_dm[dist+i]*2;
-  }
-
-  for (int i=0;i<3;i++)
-     force_dot[iat_index+i]=tmp[i];
-  tid += blockDim.x * gridDim.x;
-  }
-  
 }

@@ -5,45 +5,21 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "omp.h"
 
-void gpu_task_generator_force(const Grid_Technique &GridT, 
-                            const int i, const int j,
-                            const int psi_size_max, const int max_size,
-                            const int nczp,
-                            const double vfactor,
-                            const double *vlocal_global_value,
-                            int *iat_per_nbz,
-                            double *psi_input_double, int *psi_input_int,
-                            int *num_psir,
-                            const int lgd,
-                            double *psir_ylm_g,
-                            double *psir_zeros_g,
-                            double *dm_matrix_g,
-                            int *mat_m,
-                            int *mat_n,
-                            int *mat_k,
-                            int *mat_lda,
-                            int *mat_ldb,
-                            int *mat_ldc,
-                            double **mat_A,
-                            double **mat_B,
-                            double **mat_C,
-                            int &max_m,
-                            int &max_n,
-                            int &atom_pair_num,
-                            double *rho_g,
-                            double **vec_l,
-                            double **vec_r,
-                            double **dot_product,
-                            int *vec_len,
-                            int &dot_count 
-                            ) 
-{ 
+void gpu_task_generator_force(
+    const Grid_Technique &GridT, const int i, const int j,
+    const int psi_size_max, const int max_size, const int nczp,
+    const double vfactor, const double *vlocal_global_value, int *iat_per_nbz,
+    double *psi_input_double, int *psi_input_int, int *num_psir, const int lgd,
+    double *psir_ylm_g, double *psir_zeros_g, double *dm_matrix_g, int *mat_m,
+    int *mat_n, int *mat_k, int *mat_lda, int *mat_ldb, int *mat_ldc,
+    double **mat_A, double **mat_B, double **mat_C, int &max_m, int &max_n,
+    int &atom_pair_num, double *rho_g, double **vec_l, double **vec_r,
+    double **dot_product, int *vec_len, int &dot_count) {
   const int grid_index_ij = i * GridT.nby * GridT.nbzp + j * GridT.nbzp;
   const int nwmax = GlobalC::ucell.nwmax;
   bool *gpu_mat_cal_flag = new bool[max_size * GridT.nbzp];
 
-  for (int i = 0; i < max_size * GridT.nbzp; i++)
-  {  
+  for (int i = 0; i < max_size * GridT.nbzp; i++) {
     gpu_mat_cal_flag[i] = false;
   }
   dot_count = 0;
@@ -55,7 +31,7 @@ void gpu_task_generator_force(const Grid_Technique &GridT,
     int calc_flag_index = max_size * z_index;
     int bcell_start_index = GridT.bcell_start[grid_index];
     int na_grid = GridT.how_many_atoms[grid_index];
-    
+
     for (int id = 0; id < na_grid; id++) {
       int ib = 0;
       int mcell_index = bcell_start_index + id;
@@ -63,7 +39,6 @@ void gpu_task_generator_force(const Grid_Technique &GridT,
       int iat = GridT.which_atom[mcell_index];
       int it_temp = GlobalC::ucell.iat2it[iat];
       int start_ind_grid = GridT.start_ind[grid_index];
-      
 
       for (int bx_index = 0; bx_index < GridT.bx; bx_index++) {
         for (int by_index = 0; by_index < GridT.by; by_index++) {
@@ -89,33 +64,33 @@ void gpu_task_generator_force(const Grid_Technique &GridT,
               pos_temp_double *= 5;
               if (distance < 1.0E-9)
                 distance += 1.0E-9;
-              psi_input_double[pos_temp_double] = dr_temp[0] ;
-              psi_input_double[pos_temp_double + 1] = dr_temp[1] ;
-              psi_input_double[pos_temp_double + 2] = dr_temp[2] ;
+              psi_input_double[pos_temp_double] = dr_temp[0];
+              psi_input_double[pos_temp_double + 1] = dr_temp[1];
+              psi_input_double[pos_temp_double + 2] = dr_temp[2];
               psi_input_double[pos_temp_double + 3] = distance;
-              int vindex_global = bx_index * GridT.ncy * nczp + by_index * nczp +
-                                  bz_index + start_ind_grid;
+              int vindex_global = bx_index * GridT.ncy * nczp +
+                                  by_index * nczp + bz_index + start_ind_grid;
               psi_input_double[pos_temp_double + 4] =
                   vlocal_global_value[vindex_global] * vfactor;
 
               psi_input_int[pos_temp_int] = it_temp;
               psi_input_int[pos_temp_int + 1] =
                   (z_index * GridT.bxyz + ib) * max_size * nwmax + id * nwmax;
-              iat_per_nbz[z_index*GridT.bxyz*max_size+ib*max_size+id]=iat;
-              // printf("the na_grid is %d,the id is %d the ib is %d the iat is %d the nwmax is %d\n",na_grid,id,ib,iat,nwmax);
+              iat_per_nbz[z_index * GridT.bxyz * max_size + ib * max_size +
+                          id] = iat;
+              // printf("the na_grid is %d,the id is %d the ib is %d the iat is
+              // %d the nwmax is %d\n",na_grid,id,ib,iat,nwmax);
               num_get_psi++;
             }
             ib++;
           }
         }
       }
-
     }
     num_psir[z_index] = num_get_psi;
   }
 
-
-  //TODO:Separate the following code into a single function
+  // TODO:Separate the following code into a single function
   int tid = 0;
   max_m = 0;
   max_n = 0;
@@ -127,26 +102,27 @@ void gpu_task_generator_force(const Grid_Technique &GridT,
     int bcell_start_psir = z_index * GridT.bxyz * max_size * nwmax;
 
     for (int atom1 = 0; atom1 < GridT.how_many_atoms[grid_index]; atom1++) {
-      if(!gpu_mat_cal_flag[calc_flag_index + atom1]){
+      if (!gpu_mat_cal_flag[calc_flag_index + atom1]) {
         continue;
       }
       int mcell_index1 = bcell_start_index + atom1;
       int iat1 = GridT.which_atom[mcell_index1];
       int it1 = GlobalC::ucell.iat2it[iat1];
-      int lo1=GridT.trace_lo[GlobalC::ucell.itiaiw2iwt(
-                it1, GlobalC::ucell.iat2ia[iat1],0)];
+      int lo1 = GridT.trace_lo[GlobalC::ucell.itiaiw2iwt(
+          it1, GlobalC::ucell.iat2ia[iat1], 0)];
       int nw1 = GlobalC::ucell.atoms[it1].nw;
-      // printf("the id is %d the iat is %d the grid index is %d\n",atom1,iat1,grid_index);
-      // if (atom1!=iat1) printf("here is a question and the grid index is %d\n",grid_index);
-      for(int atom2 = 0; atom2 < GridT.how_many_atoms[grid_index]; atom2++) {
-        if(!gpu_mat_cal_flag[calc_flag_index + atom2]){
-        continue;
+      // printf("the id is %d the iat is %d the grid index is
+      // %d\n",atom1,iat1,grid_index); if (atom1!=iat1) printf("here is a
+      // question and the grid index is %d\n",grid_index);
+      for (int atom2 = 0; atom2 < GridT.how_many_atoms[grid_index]; atom2++) {
+        if (!gpu_mat_cal_flag[calc_flag_index + atom2]) {
+          continue;
         }
         int mcell_index2 = bcell_start_index + atom2;
         int iat2 = GridT.which_atom[mcell_index2];
         int it2 = GlobalC::ucell.iat2it[iat2];
-        int lo2=GridT.trace_lo[GlobalC::ucell.itiaiw2iwt(
-                it2, GlobalC::ucell.iat2ia[iat2],0)];
+        int lo2 = GridT.trace_lo[GlobalC::ucell.itiaiw2iwt(
+            it2, GlobalC::ucell.iat2ia[iat2], 0)];
         int nw2 = GlobalC::ucell.atoms[it2].nw;
 
         int mat_A_idx = bcell_start_psir + atom2 * nwmax;
@@ -162,21 +138,19 @@ void gpu_task_generator_force(const Grid_Technique &GridT,
         mat_B[tid] = dm_matrix_g + mat_B_idx;
         mat_C[tid] = psir_zeros_g + mat_C_idx;
 
-        if(mat_m[tid] > max_m){
+        if (mat_m[tid] > max_m) {
           max_m = mat_m[tid];
         }
 
-        if(mat_n[tid] > max_n){
+        if (mat_n[tid] > max_n) {
           max_n = mat_n[tid];
         }
-        
+
         tid++;
-        }
       }
-      
-    
+    }
   }
   atom_pair_num = tid;
 
   delete[] gpu_mat_cal_flag;
-} 
+}
