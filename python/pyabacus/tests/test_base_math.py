@@ -12,6 +12,9 @@ def test_sphbes():
     assert s.sphbesj(1, 0.0) == 0.0
     assert s.sphbesj(0, 0.0) == 1.0
 
+def test_sbt():
+    sbt = m.ModuleBase.SphericalBesselTransformer()
+
 @pytest.fixture
 def simpson_setup():
     n = 1000

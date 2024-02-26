@@ -3,6 +3,7 @@
 
 #include "module_base/math_sphbes.h"
 #include "module_base/math_integral.h"
+#include "module_base/spherical_bessel_transformer.h"
 
 namespace py = pybind11;
 using namespace pybind11::literals;
@@ -219,4 +220,6 @@ void bind_math_base(py::module& m)
                                                                     static_cast<double*>(x_info.ptr),
                                                                     static_cast<double*>(w_info.ptr));
         });
+    py::class_<ModuleBase::SphericalBesselTransformer>(module_base, "SphericalBesselTransformer")
+    .def(py::init<>());
 }
