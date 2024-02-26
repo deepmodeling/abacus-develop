@@ -5,7 +5,7 @@
 
 #include <cusolverDn.h>
 
-#include "module_base/memory_cuda.h"
+#include "module_base/memory.h"
 
 namespace hsolver
 {
@@ -42,7 +42,7 @@ void xhegvd_wrapper(
     int lwork = 0, info_gpu = 0;
     double* work = nullptr;
     cudaErrcheck(cudaMalloc((void**)&devInfo, sizeof(int)));
-    ModuleBase::Memory_CUDA::record("dngvd_op","Dngvd::xhegvdW",sizeof(int));
+    ModuleBase::Memory::record_gpu("dngvd_op","Dngvd::xhegvdW",sizeof(int));
     
 
     // calculate the sizes needed for pre-allocated buffer.
@@ -50,7 +50,7 @@ void xhegvd_wrapper(
         A, lda, B, ldb, W, &lwork));
     // allocate memery
     cudaErrcheck(cudaMalloc((void**)&work, sizeof(double) * lwork));
-    ModuleBase::Memory_CUDA::record("dngvd_op","Dngvd::xhegvdW",sizeof(double) * lwork);
+    ModuleBase::Memory::record_gpu("dngvd_op","Dngvd::xhegvdW",sizeof(double) * lwork);
 
     // compute eigenvalues and eigenvectors.
     cusolverErrcheck(cusolverDnDsygvd(cusolver_H, CUSOLVER_EIG_TYPE_1, CUSOLVER_EIG_MODE_VECTOR, uplo, n,
@@ -76,7 +76,7 @@ void xhegvd_wrapper (
     int lwork = 0, info_gpu = 0;
     float2 * work = nullptr;
     cudaErrcheck(cudaMalloc((void**)&devInfo, sizeof(int)));
-    ModuleBase::Memory_CUDA::record("dngvd_op","Dngvd::xhegvdW",sizeof(int));
+    ModuleBase::Memory::record_gpu("dngvd_op","Dngvd::xhegvdW",sizeof(int));
 
     // calculate the sizes needed for pre-allocated buffer.
     cusolverErrcheck(cusolverDnChegvd_bufferSize(cusolver_H, CUSOLVER_EIG_TYPE_1, CUSOLVER_EIG_MODE_VECTOR, uplo, n,
@@ -84,7 +84,7 @@ void xhegvd_wrapper (
                                                  reinterpret_cast<const float2 *>(B), ldb, W, &lwork));
     // allocate memery
     cudaErrcheck(cudaMalloc((void**)&work, sizeof(float2) * lwork));
-    ModuleBase::Memory_CUDA::record("dngvd_op","Dngvd::xhegvdW",sizeof(float2) * lwork);
+    ModuleBase::Memory::record_gpu("dngvd_op","Dngvd::xhegvdW",sizeof(float2) * lwork);
 
     // compute eigenvalues and eigenvectors.
     cusolverErrcheck(cusolverDnChegvd(cusolver_H, CUSOLVER_EIG_TYPE_1, CUSOLVER_EIG_MODE_VECTOR, uplo, n,
@@ -110,7 +110,7 @@ void xhegvd_wrapper (
     int lwork = 0, info_gpu = 0;
     double2 * work = nullptr;
     cudaErrcheck(cudaMalloc((void**)&devInfo, sizeof(int)));
-    ModuleBase::Memory_CUDA::record("dngvd_op","Dngvd::xhegvdW",sizeof(int));
+    ModuleBase::Memory::record_gpu("dngvd_op","Dngvd::xhegvdW",sizeof(int));
 
     // calculate the sizes needed for pre-allocated buffer.
     cusolverErrcheck(cusolverDnZhegvd_bufferSize(cusolver_H, CUSOLVER_EIG_TYPE_1, CUSOLVER_EIG_MODE_VECTOR, uplo, n,
@@ -118,7 +118,7 @@ void xhegvd_wrapper (
                                                  reinterpret_cast<const double2 *>(B), ldb, W, &lwork));
     // allocate memery
     cudaErrcheck(cudaMalloc((void**)&work, sizeof(double2) * lwork));
-    ModuleBase::Memory_CUDA::record("dngvd_op","Dngvd::xhegvdW",sizeof(double2) * lwork);
+    ModuleBase::Memory::record_gpu("dngvd_op","Dngvd::xhegvdW",sizeof(double2) * lwork);
 
     // compute eigenvalues and eigenvectors.
     cusolverErrcheck(cusolverDnZhegvd(cusolver_H, CUSOLVER_EIG_TYPE_1, CUSOLVER_EIG_MODE_VECTOR, uplo, n,
@@ -143,14 +143,14 @@ void xheevd_wrapper(
     int lwork = 0, info_gpu = 0;
     double* work = nullptr;
     cudaErrcheck(cudaMalloc((void**)&devInfo, sizeof(int)));
-    ModuleBase::Memory_CUDA::record("dngvd_op","Dngvd::Dngvd::xheevdW",sizeof(int));
+    ModuleBase::Memory::record_gpu("dngvd_op","Dngvd::Dngvd::xheevdW",sizeof(int));
 
     // calculate the sizes needed for pre-allocated buffer.
     cusolverErrcheck(cusolverDnDsyevd_bufferSize(cusolver_H, CUSOLVER_EIG_MODE_VECTOR, uplo, n,
         A, lda, W, &lwork));
     // allocate memery
     cudaErrcheck(cudaMalloc((void**)&work, sizeof(double) * lwork));
-    ModuleBase::Memory_CUDA::record("dngvd_op","Dngvd::Dngvd::xheevdW",sizeof(double) * lwork);
+    ModuleBase::Memory::record_gpu("dngvd_op","Dngvd::Dngvd::xheevdW",sizeof(double) * lwork);
     // compute eigenvalues and eigenvectors.
     cusolverErrcheck(cusolverDnDsyevd(cusolver_H, CUSOLVER_EIG_MODE_VECTOR, uplo, n, A, lda, W, work, lwork, devInfo));
 
@@ -172,14 +172,14 @@ void xheevd_wrapper (
     int lwork = 0, info_gpu = 0;
     float2 * work = nullptr;
     cudaErrcheck(cudaMalloc((void**)&devInfo, sizeof(int)));
-    ModuleBase::Memory_CUDA::record("dngvd_op","Dngvd::xheevdW",sizeof(int));
+    ModuleBase::Memory::record_gpu("dngvd_op","Dngvd::xheevdW",sizeof(int));
 
     // calculate the sizes needed for pre-allocated buffer.
     cusolverErrcheck(cusolverDnCheevd_bufferSize(cusolver_H, CUSOLVER_EIG_MODE_VECTOR, uplo, n,
                                                  reinterpret_cast<const float2 *>(A), lda, W, &lwork));
     // allocate memery
     cudaErrcheck(cudaMalloc((void**)&work, sizeof(float2) * lwork));
-    ModuleBase::Memory_CUDA::record("dngvd_op","Dngvd::xheevdW",sizeof(float2) * lwork);
+    ModuleBase::Memory::record_gpu("dngvd_op","Dngvd::xheevdW",sizeof(float2) * lwork);
     // compute eigenvalues and eigenvectors.
     cusolverErrcheck(cusolverDnCheevd(cusolver_H, CUSOLVER_EIG_MODE_VECTOR, uplo, n, reinterpret_cast<float2 *>(A), lda, W, work, lwork, devInfo));
 
@@ -201,14 +201,14 @@ void xheevd_wrapper (
     int lwork = 0, info_gpu = 0;
     double2 * work = nullptr;
     cudaErrcheck(cudaMalloc((void**)&devInfo, sizeof(int)));
-    ModuleBase::Memory_CUDA::record("dngvd_op","Dngvd::xheevdW",sizeof(int));
+    ModuleBase::Memory::record_gpu("dngvd_op","Dngvd::xheevdW",sizeof(int));
 
     // calculate the sizes needed for pre-allocated buffer.
     cusolverErrcheck(cusolverDnZheevd_bufferSize(cusolver_H, CUSOLVER_EIG_MODE_VECTOR, uplo, n,
                                                  reinterpret_cast<const double2 *>(A), lda, W, &lwork));
     // allocate memery
     cudaErrcheck(cudaMalloc((void**)&work, sizeof(double2) * lwork));
-    ModuleBase::Memory_CUDA::record("dngvd_op","Dngvd::xheevdW",sizeof(double2) * lwork);
+    ModuleBase::Memory::record_gpu("dngvd_op","Dngvd::xheevdW",sizeof(double2) * lwork);
     // compute eigenvalues and eigenvectors.
     cusolverErrcheck(cusolverDnZheevd(cusolver_H, CUSOLVER_EIG_MODE_VECTOR, uplo, n,
                                       reinterpret_cast<double2 *>(A), lda, W, work, lwork, devInfo));
@@ -234,7 +234,7 @@ struct dngvd_op<T, psi::DEVICE_GPU> {
         assert(nstart == ldh);
         // A to V
         cudaErrcheck(cudaMemcpy(V, A, sizeof(T) * ldh * nstart, cudaMemcpyDeviceToDevice));
-        //ModuleBase::Memory_CUDA::record("DngvdOp","DngvdOp",sizeof(T) * ldh * nstart);
+        //ModuleBase::Memory::record_gpu("DngvdOp","DngvdOp",sizeof(T) * ldh * nstart);
         xhegvd_wrapper(CUBLAS_FILL_MODE_UPPER, nstart, V, ldh,
             (T*)B, ldh, W);
     }
@@ -255,7 +255,7 @@ struct dnevx_op<T, psi::DEVICE_GPU> {
         assert(nstart <= ldh);
         // A to V
         cudaErrcheck(cudaMemcpy(V, A, sizeof(T) * nstart * ldh, cudaMemcpyDeviceToDevice));
-        //ModuleBase::Memory_CUDA::record("DngvdOp","DnevxOp",sizeof(T) * nstart * ldh);
+        //ModuleBase::Memory::record_gpu("DngvdOp","DnevxOp",sizeof(T) * nstart * ldh);
         xheevd_wrapper(CUBLAS_FILL_MODE_LOWER, nstart, V, ldh, W);
     }
 };

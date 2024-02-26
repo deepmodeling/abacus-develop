@@ -1,6 +1,7 @@
 //==========================================================
-// AUTHOR : mohan
-// DATE : 2008-11-18
+// AUTHOR : Zhang Xiaoyang
+// DATE : 2024-2-26
+// A reconfiguration version of original memory.cpp
 //==========================================================
 #include "memory.h"
 #include "global_variable.h"
@@ -13,6 +14,7 @@ namespace ModuleBase
 // 1024 KB   = 1 MB
 // 1024 MB   = 1 GB
 double Memory::total = 0.0;
+double Memory::total_gpu = 0.0;
 int Memory::complex_matrix_memory = 2*sizeof(double); // 16 byte
 int Memory::double_memory = sizeof(double); // 8 byte
 int Memory::int_memory = sizeof(int); // 4.0 Byte
@@ -20,13 +22,17 @@ int Memory::bool_memory = sizeof(bool); // 1.0 Byte
 int Memory::float_memory = sizeof(float); // 4.0 Byte
 int Memory::short_memory = sizeof(short); // 2.0 Byte
 
-int Memory::n_memory = 1000;
-int Memory::n_now = 0;
-bool Memory::init_flag =  false;
+//std::string *Memory::name;
+//std::string *Memory::class_name;
+//double *Memory::consume;
+std::map<std::string,double> Memory::name_mem_map;
+std::map<std::string,double> Memory::name_mem_gpu_map;
+std::map<std::string,bool> Memory::name_print_flag_map;
+std::map<std::string,bool> Memory::name_print_flag_gpu_map;
 
-std::string *Memory::name;
-std::string *Memory::class_name;
-double *Memory::consume;
+bool Memory::init_flag =  false;
+bool Memory::init_flag_gpu =  false;
+
 
 Memory::Memory()
 {
@@ -99,47 +105,17 @@ double Memory::record
 	const bool accumulate
 )
 {
-	if(!Memory::init_flag)
-	{
-		name = new std::string[n_memory];
-		class_name = new std::string[n_memory];
-		consume = new double[n_memory];
-		for(int i=0;i<n_memory;i++)
-		{
-			consume[i] = 0.0;
-		}
-		Memory::init_flag = true;
+	std::map<std::string,double>::iterator iter;
+	iter = name_mem_map.find(name_in);
+	if(iter != name_mem_map.end()){
+		name_mem_map[name_in] += Memory::calculate_mem(n_in,type);
+	}else{
+		name_mem_map[name_in] = Memory::calculate_mem(n_in,type);
+		init_flag = true;
 	}
-
-	int find = 0;
-	for(find = 0; find < n_now; find++)
-	{
-		if( name_in == name[find] )
-		{
-			break;
-		}
-	}
-
-	// find == n_now : found a new record.	
-	if(find == n_now)
-	{
-		n_now++;
-		name[find] = name_in;
-		class_name[find] = class_name_in;
-	}
-	if(n_now >= n_memory)
-	{
-		std::cout<<" Error! Too many memories required.";
-		return 0.0;
-	}
-
-	consume[find] = Memory::calculate_mem(n_in,type);
-
-	if(consume[find] > 5)
-	{
-		print(find);
-	}
-	return consume[find];
+	total += Memory::calculate_mem(n_in,type);
+	name_print_flag_map[name_in] = false;
+	return name_mem_map[name_in];
 }
 
 void Memory::record
@@ -149,170 +125,149 @@ void Memory::record
 	const bool accumulate
 )
 {
-	if(!Memory::init_flag)
-	{
-		name = new std::string[n_memory];
-		class_name = new std::string[n_memory];
-		consume = new double[n_memory];
-		for(int i=0;i<n_memory;i++)
-		{
-			consume[i] = 0.0;
-		}
-		Memory::init_flag = true;
-	}
-
-	int find = 0;
-	for(find = 0; find < n_now; find++)
-	{
-		if( name_in == name[find] )
-		{
-			break;
-		}
-	}
-
-	// find == n_now : found a new record.	
-	if(find == n_now)
-	{
-		n_now++;
-		name[find] = name_in;
-		class_name[find] = "";
-	}
-	if(n_now >= n_memory)
-	{
-		std::cout<<" Error! Too many memories has been recorded.";
-		return;
-	}
-
 	const double factor = 1.0/1024.0/1024.0;
-	double size_mb = n_in * factor;
-
-	if(accumulate)
-	{
-		consume[find] += size_mb;
-		Memory::total += size_mb;
+	std::map<std::string,double>::iterator iter;
+	iter = name_mem_map.find(name_in);
+	if(iter != name_mem_map.end()){
+		name_mem_map[name_in] += n_in * factor;
+	}else{
+		name_mem_map[name_in] = n_in * factor;
+		init_flag = true;
 	}
-	else
-	{
-		if(consume[find] < size_mb)
-		{
-			Memory::total += size_mb - consume[find];
-			consume[find] = size_mb;
-			if(consume[find] > 5)
-			{
-				print(find);
-			}
-		}
-	}
-
+	name_print_flag_map[name_in] = false;
+	total += n_in * factor;
 	return;
+}
+
+double Memory::record_gpu
+(
+	const std::string &class_name,
+	const std::string &name_in,
+	const long &size,
+	const bool accumulate
+)
+{
+	const double factor = 1.0/1024.0/1024.0;
+	std::map<std::string,double>::iterator iter;
+	iter = name_mem_gpu_map.find(name_in);
+	if(iter != name_mem_gpu_map.end()){
+		name_mem_gpu_map[name_in] += size * factor;
+	}else{
+		name_mem_gpu_map[name_in] = size * factor;
+		init_flag_gpu = true;
+	}
+	total_gpu += size * factor;
+	name_print_flag_gpu_map[name_in] = false;
+	return name_mem_gpu_map[name_in];
 }
 
 void Memory::print(const int find)
 {
-	GlobalV::ofs_running <<"\n Warning_Memory_Consuming allocated: "
-	<<" "<<name[find]<<" "<<consume[find]<<" MB" << std::endl;
+	//GlobalV::ofs_running <<"\n Warning_Memory_Consuming allocated: "
+	//<<" "<<name[find]<<" "<<consume[find]<<" MB" << std::endl;
 	return;
 }
 
 
 void Memory::finish(std::ofstream &ofs)
 {
-	print_all(ofs);
-	if(init_flag)
-	{
-		delete[] name;
-		delete[] class_name;
-		delete[] consume;
-		init_flag = false;
-	}
+	//print_all(ofs);
+	//if(init_flag)
+	//{
+	//	delete[] name;
+	//	delete[] class_name;
+	//	delete[] consume;
+	//	init_flag = false;
+	//}
 	return;
 }
 
-void Memory::print_all(std::ofstream &ofs)
-{
-//	std::cout<<"\n init_flag="<<init_flag;
-	if(!init_flag) return;
 
+void Memory::print_all(std::ofstream &ofs){
 	const double small = 1.0; 
+	if (init_flag){
 #ifdef __MPI
 		Parallel_Reduce::reduce_all(Memory::total);
 #endif
-    ofs <<"\n NAME---------------|MEMORY(MB)--------" << std::endl;
-//	std::cout<<"\n"<<std::setw(41)<< " " <<std::setprecision(4)<<total;
-	ofs <<std::setw(20)<< "total" << std::setw(15) <<std::setprecision(4)<< Memory::total << std::endl;
-    
-	bool *print_flag = new bool[n_memory];
-	for(int i=0; i<n_memory; i++) print_flag[i] = false;
-	
+		ofs <<"\n NAME---------------|MEMORY(MB)--------" << std::endl;
+	//	std::cout<<"\n"<<std::setw(41)<< " " <<std::setprecision(4)<<total;
+		ofs <<std::setw(20)<< "total" << std::setw(15) <<std::setprecision(4)<< Memory::total << std::endl;
 
-	for (int i=0; i<n_memory; i++)
-    {
-//		int k = 0;
-//		double tmp = -1.0;
-//		for(int j=0; j<n_memory; j++)
-//		{
-//			if(print_flag[j])
-//			{
-//				continue;
-//			}
-//			else if(tmp < consume[j])
-//			{
-//				k = j;
-//				tmp = consume[j];
-//			}
-//		}
-//		print_flag[k] = true;
+		std::map<std::string,double>::iterator iter;
+		std::map<std::string,double>::iterator sub_iter;
+		for(iter = name_mem_map.begin(); iter != name_mem_map.end(); iter++){
 #ifdef __MPI
-//		Parallel_Reduce::reduce_all(consume[k]);
-		Parallel_Reduce::reduce_all(consume[i]);
+			Parallel_Reduce::reduce_all(iter->second);
 #endif
-	}
-
-	for (int i=0; i<n_memory; i++) // Xiaoyang fix memory record sum bug 2023/10/25
-	{
-		int k = 0;
-		double tmp = -1.0;
-		for(int j=0; j<n_memory; j++)
-		{
-			if(print_flag[j])
-			{
+		}
+		for(iter = name_mem_map.begin(); iter != name_mem_map.end(); iter++){
+			double tmp = -1.0;
+			std::string current = "";
+			for (sub_iter = name_mem_map.begin(); sub_iter != name_mem_map.end(); sub_iter++){
+				if (name_print_flag_map[sub_iter->first]){
+					continue;
+				}
+				else if(tmp < sub_iter->second){
+					tmp = sub_iter->second;
+					current = sub_iter->first;
+				}
+			}
+			name_print_flag_map[current] = true;
+			if ( name_mem_map[current] < small ){
 				continue;
 			}
-			else if(tmp < consume[j])
+			else
 			{
-				k = j;
-				tmp = consume[j];
+				ofs << std::setw(20) << current
+				<< std::setw(15) << name_mem_map[current] << std::endl;
 			}
 		}
-		print_flag[k] = true;
-		if ( consume[k] < small ){
-			continue;
-		}
-		else
-		{
-			ofs << std::setw(20) << name[k]
-            << std::setw(15) << consume[k] << std::endl;
-		}
-
+		ofs<<" -------------   < 1.0 MB has been ignored ----------------"<<std::endl;
+		ofs<<" ----------------------------------------------------------"<<std::endl;
 	}
-//	    if ( consume[k] < small ) 
-//      {
-//            continue;
-//      }
-//  	else
-//  	{
-//        	ofs << std::setw(20) << name[k]
-//          << std::setw(15) << consume[k] << std::endl;
 
-//        	std::cout  << "\n "
-//             << std::setw(20) << class_name[k]
-//             << std::setw(20) << name[k]
-//             << std::setw(15) << consume[k];
-    //std::cout<<"\n ----------------------------------------------------------"<<std::endl;
-	ofs<<" -------------   < 1.0 MB has been ignored ----------------"<<std::endl;
-    ofs<<" ----------------------------------------------------------"<<std::endl;
-	delete[] print_flag; //mohan fix by valgrind at 2012-04-02
-	return;
+
+	if (init_flag_gpu){
+#ifdef __MPI
+		Parallel_Reduce::reduce_all(Memory::total_gpu);
+#endif
+		ofs <<"\n NAME---------------|MEMORY_GPU(MB)----" << std::endl;
+	//	std::cout<<"\n"<<std::setw(41)<< " " <<std::setprecision(4)<<total;
+		ofs <<std::setw(20)<< "total" << std::setw(15) <<std::setprecision(4)<< Memory::total_gpu << std::endl;
+
+		std::map<std::string,double>::iterator iter;
+		std::map<std::string,double>::iterator sub_iter;
+		for(iter = name_mem_gpu_map.begin(); iter != name_mem_gpu_map.end(); iter++){
+#ifdef __MPI
+			Parallel_Reduce::reduce_all(iter->second);
+#endif
+		}
+		for(iter = name_mem_gpu_map.begin(); iter != name_mem_gpu_map.end(); iter++){
+			double tmp = -1.0;
+			std::string current = "";
+			for (sub_iter = name_mem_gpu_map.begin(); sub_iter != name_mem_gpu_map.end(); sub_iter++){
+				if (name_print_flag_gpu_map[sub_iter->first]){
+					continue;
+				}
+				else if(tmp < sub_iter->second){
+					tmp = sub_iter->second;
+					current = sub_iter->first;
+				}
+			}
+			name_print_flag_gpu_map[current] = true;
+			if ( name_mem_gpu_map[current] < small ){
+				continue;
+			}
+			else
+			{
+				ofs << std::setw(20) << current
+				<< std::setw(15) << name_mem_gpu_map[current] << std::endl;
+			}
+		}
+		ofs<<" -------------   < 1.0 MB has been ignored ----------------"<<std::endl;
+		ofs<<" ----------------------------------------------------------"<<std::endl;
+	}
+
 }
 
 }

@@ -7,7 +7,7 @@
 #include <thrust/complex.h>
 #include <base/macros/macros.h>
 
-#include "module_base/memory_cuda.h"
+#include "module_base/memory.h"
 
 #define THREADS_PER_BLOCK 256
 
@@ -49,7 +49,7 @@ void resize_memory_op<FPTYPE, psi::DEVICE_GPU>::operator()(
     delete_memory_op<FPTYPE, psi::DEVICE_GPU>()(dev, arr);
   }
   cudaErrcheck(cudaMalloc((void **)&arr, sizeof(FPTYPE) * size));
-  ModuleBase::Memory_CUDA::record("memory_op","MemOp::CMem",sizeof(FPTYPE) * size);
+  ModuleBase::Memory::record_gpu("memory_op","MemOp::CMem",sizeof(FPTYPE) * size);
 }
 
 template <typename FPTYPE>
@@ -82,7 +82,7 @@ void synchronize_memory_op<FPTYPE, psi::DEVICE_GPU, psi::DEVICE_CPU>::operator()
     const size_t size) 
 {
   cudaErrcheck(cudaMemcpy(arr_out, arr_in, sizeof(FPTYPE) * size, cudaMemcpyHostToDevice));  
-  //ModuleBase::Memory_CUDA::record("memoryOp","synchronize",sizeof(FPTYPE) * size);
+  //ModuleBase::Memory::record_gpu("memoryOp","synchronize",sizeof(FPTYPE) * size);
 }
 
 template <typename FPTYPE> 
@@ -94,7 +94,7 @@ void synchronize_memory_op<FPTYPE, psi::DEVICE_GPU, psi::DEVICE_GPU>::operator()
     const size_t size) 
 {
   cudaErrcheck(cudaMemcpy(arr_out, arr_in, sizeof(FPTYPE) * size, cudaMemcpyDeviceToDevice));  
-  //ModuleBase::Memory_CUDA::record("memoryOp","synchronize",sizeof(FPTYPE) * size);
+  //ModuleBase::Memory::record_gpu("memoryOp","synchronize",sizeof(FPTYPE) * size);
 }
 
 template <typename FPTYPE_out, typename FPTYPE_in>
@@ -124,9 +124,9 @@ struct cast_memory_op<FPTYPE_out, FPTYPE_in, psi::DEVICE_GPU, psi::DEVICE_CPU> {
         if (size == 0) {return;}
         FPTYPE_in * arr = nullptr;
         cudaErrcheck(cudaMalloc((void **)&arr, sizeof(FPTYPE_in) * size));
-        ModuleBase::Memory_CUDA::record("memory_op","MemOp::CMemOp",sizeof(FPTYPE_in) * size);
+        ModuleBase::Memory::record_gpu("memory_op","MemOp::CMemOp",sizeof(FPTYPE_in) * size);
         cudaErrcheck(cudaMemcpy(arr, arr_in, sizeof(FPTYPE_in) * size, cudaMemcpyHostToDevice));
-        //ModuleBase::Memory_CUDA::record("memoryOp","synchronize",sizeof(FPTYPE_in) * size);
+        //ModuleBase::Memory::record_gpu("memoryOp","synchronize",sizeof(FPTYPE_in) * size);
         const int block = (size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
         cast_memory<<<block, THREADS_PER_BLOCK>>>(arr_out, arr, size);
         cudaErrcheck(cudaGetLastError());

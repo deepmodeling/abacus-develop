@@ -5,7 +5,7 @@
 #include <cublas_v2.h>
 #include <base/macros/cuda.h>
 
-#include "module_base/memory_cuda.h"
+#include "module_base/memory.h"
 
 namespace container {
 namespace cuBlasConnector {
@@ -177,9 +177,9 @@ T** allocate_(T** in, const int& batch_size)
 {
     T** out = nullptr;
     cudaErrcheck(cudaMalloc(reinterpret_cast<void **>(&out), sizeof(T*) * batch_size));
-    ModuleBase::Memory_CUDA::record("cublas","Cublas::allocate",sizeof(T*) * batch_size);
+    ModuleBase::Memory::record_gpu("cublas","Cublas::allocate",sizeof(T*) * batch_size);
     cudaErrcheck(cudaMemcpy(out, in, sizeof(T*) * batch_size, cudaMemcpyHostToDevice));
-    //ModuleBase::Memory_CUDA::record("cuBlasConnector","allocate",sizeof(T*) * batch_size);
+    //ModuleBase::Memory::record_gpu("cuBlasConnector","allocate",sizeof(T*) * batch_size);
     return out;
 }
 

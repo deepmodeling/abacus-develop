@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <iostream>
 #include <string>
+#include <map>
 
 namespace ModuleBase
 {
@@ -54,12 +55,17 @@ class Memory_CUDA
 
   private:
     static double total;
-    static std::string *name;
-    static std::string *class_name;
-    static double *consume;
+    static double total_gpu;
+    //static std::string *name;
+    static std::map<int,double> name_mem_map;
+    static std::map<int,double> name_mem_gpu_map;
+    //static std::string *class_name;
+    //static double *consume;
     static int n_memory;
     static int n_now;
+    static int n_now_gpu;
     static bool init_flag;
+    static bool gpu_init_flag;
 };
 
 } // namespace ModuleBase

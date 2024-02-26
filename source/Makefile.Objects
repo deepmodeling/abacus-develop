@@ -133,7 +133,6 @@ OBJS_BASE=abfs-vector3_order.o\
     matrix.o\
     matrix3.o\
     memory.o\
-    memory_cuda.o\
     mymath.o\
     realarray.o\
     sph_bessel_recursive-d1.o\

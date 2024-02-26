@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <iostream>
 #include <string>
+#include <map>
 namespace ModuleBase
 {
 
@@ -50,6 +51,19 @@ class Memory
       const bool accumulate = false
     );
 
+    /**
+     * @brief Record memory consumed in gpu device during computation. This is transfered from original memory_cuda.h
+     *
+     * @param class_name The name of a class
+     * @param name The name of a quantity
+     * @param size The memory usage of this record
+     * @param accumulate Useless, always set false
+     */
+    static double record_gpu(const std::string &class_name,
+                         const std::string &name,
+                         const long &size,
+                         const bool accumulate = false);
+
     static double &get_total(void)
     {
         return total;
@@ -78,12 +92,16 @@ class Memory
 
   private:
     static double total;
-    static std::string *name;
-    static std::string *class_name;
-    static double *consume;
-    static int n_memory;
-    static int n_now;
+    static double total_gpu;
+    //static std::string *name;
+    static std::map<std::string,double> name_mem_map;
+    static std::map<std::string,double> name_mem_gpu_map;
+    static std::map<std::string,bool> name_print_flag_map;
+    static std::map<std::string,bool> name_print_flag_gpu_map;
+    //static std::string *class_name;
+    //static double *consume;
     static bool init_flag;
+    static bool init_flag_gpu;
 
     static int complex_matrix_memory; //(16 Byte)
     static int double_memory; //(8 Byte)

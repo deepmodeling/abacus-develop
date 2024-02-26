@@ -1,7 +1,6 @@
 #include "driver.h"
 
 #include "module_base/memory.h"
-#include "module_base/memory_cuda.h"
 #include "module_base/timer.h"
 #include "module_esolver/esolver.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
@@ -99,7 +98,5 @@ void Driver::atomic_world(void)
 
     ModuleBase::timer::finish(GlobalV::ofs_running);
     ModuleBase::Memory::print_all(GlobalV::ofs_running);
-    ModuleBase::Memory_CUDA::print_all(GlobalV::ofs_running);
-
     return;
 }
