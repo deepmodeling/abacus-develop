@@ -100,25 +100,25 @@ TEST_F(MemoryTest,Record)
 	double mem = ModuleBase::Memory::record("wavefunc","evc",1024*1024,"double");
 	EXPECT_EQ(mem,double_mem/factor);
 	// for cdouble
-	mem = ModuleBase::Memory::record("wavefunc","evc",1024*1024,"cdouble");
+	mem = ModuleBase::Memory::record("wavefunc","evc2",1024*1024,"cdouble");
 	EXPECT_EQ(mem,complex_matrix_mem/factor);
 	// for int
-	mem = ModuleBase::Memory::record("wavefunc","evc",1024*1024,"int");
+	mem = ModuleBase::Memory::record("wavefunc","evc3",1024*1024,"int");
 	EXPECT_EQ(mem,int_mem/factor);
 	// for bool
-	mem = ModuleBase::Memory::record("wavefunc","evc",1024*1024,"bool");
+	mem = ModuleBase::Memory::record("wavefunc","evc4",1024*1024,"bool");
 	EXPECT_EQ(mem,bool_mem/factor);
 	// for float
-	mem = ModuleBase::Memory::record("wavefunc","evc",1024*1024,"float");
+	mem = ModuleBase::Memory::record("wavefunc","evc5",1024*1024,"float");
 	EXPECT_EQ(mem,float_mem/factor);
 	// for short
-	mem = ModuleBase::Memory::record("wavefunc","evc",1024*1024,"short");
+	mem = ModuleBase::Memory::record("wavefunc","evc6",1024*1024,"short");
 	EXPECT_EQ(mem,short_mem/factor);
 	// for Vector3
-	mem = ModuleBase::Memory::record("wavefunc","evc",1024*1024,"ModuleBase::Vector3<double>");
+	mem = ModuleBase::Memory::record("wavefunc","evc7",1024*1024,"ModuleBase::Vector3<double>");
 	EXPECT_EQ(mem,double_mem/factor*3);
 	// for AtomLink
-	mem = ModuleBase::Memory::record("wavefunc","evc",1024*1024,"AtomLink");
+	mem = ModuleBase::Memory::record("wavefunc","evc8",1024*1024,"AtomLink");
 	EXPECT_EQ(mem,double_mem/factor*3+int_mem/factor*2);
 }
 
@@ -138,7 +138,7 @@ TEST_F(MemoryTest, printall)
 	ifs.close();
 }
 
-// Xiaoyang: As Memory::finish is never employed in the code, so I removed this test.
+// As Memory::finish is never employed in the code, so I removed this test.
 
 /*TEST_F(MemoryTest, finish)
 {
