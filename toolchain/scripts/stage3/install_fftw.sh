@@ -3,6 +3,8 @@
 # TODO: Review and if possible fix shellcheck errors.
 # shellcheck disable=all
 
+# Last Update in 2023-0901
+
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
@@ -107,12 +109,12 @@ prepend_path LIBRARY_PATH "$pkg_install_dir/lib"
 prepend_path CPATH "$pkg_install_dir/include"
 prepend_path PKG_CONFIG_PATH "$pkg_install_dir/lib/pkgconfig"
 prepend_path CMAKE_PREFIX_PATH "$pkg_install_dir"
-export LD_LIBRARY_PATH="$pkg_install_dir/lib":$LD_LIBRARY_PATH
-export LD_RUN_PATH="$pkg_install_dir/lib":$LD_RUN_PATH
-export LIBRARY_PATH="$pkg_install_dir/lib":$LIBRARY_PATH
-export CPATH="$pkg_install_dir/include":$CPATH
-export PKG_CONFIG_PATH="$pkg_install_dir/lib/pkgconfig":$PKG_CONFIG_PATH
-export CMAKE_PREFIX_PATH="$pkg_install_dir":$CMAKE_PREFIX_PATH
+export LD_LIBRARY_PATH="$pkg_install_dir/lib":\${LD_LIBRARY_PATH}
+export LD_RUN_PATH="$pkg_install_dir/lib":\${LD_RUN_PATH}
+export LIBRARY_PATH="$pkg_install_dir/lib":\${LIBRARY_PATH}
+export CPATH="$pkg_install_dir/include":\${CPATH}
+export PKG_CONFIG_PATH="$pkg_install_dir/lib/pkgconfig":\${PKG_CONFIG_PATH}
+export CMAKE_PREFIX_PATH="$pkg_install_dir":\${CMAKE_PREFIX_PATH}
 EOF
   fi
   # we may also want to cover FFT_SG

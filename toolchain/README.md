@@ -1,5 +1,5 @@
 # The ABACUS Toolchain
-Version 2023.5
+Version 2024.1
 
 ## Author
 [QuantumMisaka](https://github.com/QuantumMisaka) 
@@ -56,11 +56,12 @@ All packages will be downloaded from [cp2k-static/download](https://www.cp2k.org
 - `Libnpy` which will be downloaded from [LIBNPY](https://github.com/llohse/libnpy)
 - `LibRI` which will be downloaded from [LibRI](https://github.com/abacusmodeling/LibRI)
 - `LibCOMM` which will be downloaded from [LibComm](https://github.com/abacusmodeling/LibComm)
+- `RapidJSON` which will be downloaded from [RapidJSON](https://github.com/Tencent/rapidjson)
 Notice: These packages will be downloaded by `wget` from `github.com`, which is hard to be done in Chinese Internet. You may need to use offline installation method. 
 
 Instead of github.com, we offer other package station, you can use it by:
 ```shell
-wget https://bohrium-api.dp.tech/ds-dl/abacus-deps-93wi-v2 -O abacus-deps-v1.zip
+wget https://bohrium-api.dp.tech/ds-dl/abacus-deps-93wi-v2 -O abacus-deps-v2.zip
 ```
 `unzip` it ,and you can do offline installation of these packages above after rename. The above station will be updated handly but one should notice that the version will always lower than github repo.
 
@@ -81,11 +82,11 @@ just by using this toolchain
 ```
 
 The needed dependencies version default:
-- `cmake` 3.27.6
+- `cmake` 3.28.1
 - `gcc` 13.2.0 (which will always NOT be installed, But use system)
-- `OpenMPI` 4.1.5
+- `OpenMPI` 5.0.0
 - `MPICH` 4.1.2
-- `OpenBLAS` 0.3.24 (Intel toolchain need `get_vars.sh` tool from it)
+- `OpenBLAS` 0.3.25 (Intel toolchain need `get_vars.sh` tool from it)
 - `ScaLAPACK` 2.2.1
 - `FFTW` 3.3.10
 - `LibXC` 6.2.2
@@ -108,7 +109,7 @@ you need to download them from github.com,
 rename it as formatted, and put them in `build` directory at the same time
 e.g.:
 ```shell
-# packages downloaded from github.com, RapidJSON is not supported now
+# packages downloaded from github.com
 mv v1.3.2.tar.gz build/cereal-1.3.2.tar.gz
 ```
 
@@ -203,15 +204,12 @@ When you encounter problem like `GLIBCXX_3.4.29 not found`, it is sure that your
 After my test, you need `gcc`>11.3.1 to enable deepmd feature in ABACUS.
 
 ### ELPA problem via Intel-oneAPI toolchain in AMD server
-The default compiler for Intel-oneAPI is `icpx` and `icx`, which will cause problem when compling ELPA in AMD server.
+The default compiler for Intel-oneAPI is `icpx` and `icx`, which will cause problem when compling ELPA in AMD server. (Which is a problem and needed to have more check-out)
 
 The best way is to change `icpx` to `icpc`, `icx` to `icc`. user can manually change it in toolchain*.sh via `--with-intel-classic=yes`
 
 Notice: `icc` and `icpc` from Intel Classic Compiler of Intel-oneAPI is not supported for 2024.0 and newer version.
 
-
-### LibRI and LibComm problem
-(There is some problem sometimes when compling with LibRI and LibComm, detailed information is needed)
 
 
 ### Intel-oneAPI problem
