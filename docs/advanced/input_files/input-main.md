@@ -555,7 +555,7 @@ These variables are used to control general system parameters.
 
 - **Type**: Real
 - **Description**: 
- the total number of electrons will be calculated by `nelec`-`nelec_delta`.
+ the total number of electrons will be calculated by `nelec`+`nelec_delta`.
 - **Default**: 0.0
 
 ### nupdown
