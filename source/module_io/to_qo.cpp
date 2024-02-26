@@ -225,9 +225,11 @@ void toQO::build_ao(const int ntype,
 {
     if(qo_basis_ == "hydrogen")
     {
+        bool with_slater_screening = std::find_if(screening_coeffs.begin(), screening_coeffs.end(), 
+            [](double sc) { return sc > 1e-10; }) != screening_coeffs.end();
         build_hydrogen(ntype_, 
                        charges_.data(),
-                       screening_coeffs.size() > 0, 
+                       with_slater_screening, 
                        nmax_.data(),
                        qo_thr,
                        rank);

@@ -24,6 +24,7 @@ void HydrogenRadials::build(const int itype,
                             const std::string strategy,
                             std::ofstream* ptr_log)
 {
+    if(with_slater_screening) {printf("Build hydrogen_radials with Slater screening coefficients.\n");}
     cleanup();
     itype_ = itype;
     symbol_ = symbol;
