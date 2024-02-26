@@ -5,6 +5,46 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "omp.h"
 
+/**
+ * @brief Description of the function.
+ *
+ * Detailed description of the function.
+ *
+ * @param GridT The Grid_Technique object.
+ * @param i The integer parameter i.
+ * @param j The integer parameter j.
+ * @param psi_size_max The maximum size of psi.
+ * @param max_size The maximum size.
+ * @param nczp The nczp parameter.
+ * @param vfactor The vfactor parameter.
+ * @param vlocal_global_value The array of vlocal_global_value.
+ * @param iat_per_nbz The array of iat_per_nbz.
+ * @param psi_input_double The double array of psi_input.
+ * @param psi_input_int The integer array of psi_input.
+ * @param num_psir The array of num_psir.
+ * @param lgd The lgd parameter.
+ * @param psir_ylm_g The double array of psir_ylm_g.
+ * @param psir_zeros_g The double array of psir_zeros_g.
+ * @param dm_matrix_g The double array of dm_matrix_g.
+ * @param mat_m The array of mat_m.
+ * @param mat_n The array of mat_n.
+ * @param mat_k The array of mat_k.
+ * @param mat_lda The array of mat_lda.
+ * @param mat_ldb The array of mat_ldb.
+ * @param mat_ldc The array of mat_ldc.
+ * @param mat_A The pointer to mat_A.
+ * @param mat_B The pointer to mat_B.
+ * @param mat_C The pointer to mat_C.
+ * @param max_m The reference to max_m.
+ * @param max_n The reference to max_n.
+ * @param atom_pair_num The reference to atom_pair_num.
+ * @param rho_g The double array of rho_g.
+ * @param vec_l The pointer to vec_l.
+ * @param vec_r The pointer to vec_r.
+ * @param dot_product The pointer to dot_product.
+ * @param vec_len The array of vec_len.
+ * @param dot_count The reference to dot_count.
+ */
 void gpu_task_generator_force(
     const Grid_Technique &GridT, const int i, const int j,
     const int psi_size_max, const int max_size, const int nczp,

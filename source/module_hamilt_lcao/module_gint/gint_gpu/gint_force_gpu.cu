@@ -11,6 +11,20 @@
 #include "vbatch_matrix_multiple/cuda_tools.cuh"
 
 // Function to calculate forces using GPU-accelerated gamma point Gint
+/**
+ * @brief Calculate forces and stresses for the `gint_gamma_force_gpu` function.
+ *
+ * This function calculates forces and stresses based on given parameters.
+ *
+ * @param DM A pointer to the HContainer<double> object.
+ * @param vfactor The scaling factor for some calculation.
+ * @param vlocal A pointer to an array of doubles.
+ * @param force A pointer to an array to store the calculated forces.
+ * @param stress A pointer to an array to store the calculated stresses.
+ * @param nczp An integer representing a parameter.
+ * @param ylmcoef_now A pointer to an array of doubles representing Ylm coefficients.
+ * @param GridT A reference to a Grid_Technique object.
+ */
 void gint_gamma_force_gpu(hamilt::HContainer<double> *DM, const double vfactor,
                           const double *vlocal, double *force, double *stress,
                           const int nczp, const double *ylmcoef_now,
@@ -23,7 +37,6 @@ void gint_gamma_force_gpu(hamilt::HContainer<double> *DM, const double vfactor,
   const int bxyz = GridT.bxyz;
   double *dm_matrix_h = new double[lgd * lgd];
   ModuleBase::GlobalFunc::ZEROS(dm_matrix_h, lgd * lgd);
-  checkCuda(cudaMemset(GridT.rho_g, 0, GridT.ncxyz * sizeof(double)));
   for (int iat1 = 0; iat1 < GlobalC::ucell.nat; iat1++) {
     for (int iat2 = 0; iat2 < GlobalC::ucell.nat; iat2++) {
       int it1 = GlobalC::ucell.iat2it[iat1];

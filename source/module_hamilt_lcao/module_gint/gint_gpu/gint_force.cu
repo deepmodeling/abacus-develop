@@ -5,6 +5,40 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 // CUDA kernel to calculate psi and force
+
+/*!
+ * \file
+ * \brief CUDA kernel to calculate psi and force
+ *
+ * CUDA kernel that performs calculations on psi and force.
+ *
+ * \param ylmcoef Pointer to the Ylm coefficients
+ * \param delta_r_g Delta r value
+ * \param bxyz_g Bxyz value
+ * \param nwmax_g Nwmax value
+ * \param input_double Array of double input values
+ * \param input_int Array of int input values
+ * \param num_psir Array containing the number of psi for each block
+ * \param psi_size_max Maximum size of psi
+ * \param ucell_atom_nwl Array containing Ucell atom nwl values
+ * \param atom_iw2_new Array indicating whether atom_iw2 is new
+ * \param atom_iw2_ylm Array of atom_iw2 Ylm values
+ * \param atom_iw2_l Array of atom_iw2 l values
+ * \param atom_nw Array of atom_nw values
+ * \param nr_max Maximum nr value
+ * \param psi_u Array for psi_u values
+ * \param psir_ylm_right Array for psir_ylm_right values
+ * \param dpsir_ylm_left_x Array for dpsir_ylm_left_x values
+ * \param dpsir_ylm_left_y Array for dpsir_ylm_left_y values
+ * \param dpsir_ylm_left_z Array for dpsir_ylm_left_z values
+ * \param ddpsir_ylm_left_xx Array for ddpsir_ylm_left_xx values
+ * \param ddpsir_ylm_left_xy Array for ddpsir_ylm_left_xy values
+ * \param ddpsir_ylm_left_xz Array for ddpsir_ylm_left_xz values
+ * \param ddpsir_ylm_left_yy Array for ddpsir_ylm_left_yy values
+ * \param ddpsir_ylm_left_yz Array for ddpsir_ylm_left_yz values
+ * \param ddpsir_ylm_left_zz Array for ddpsir_ylm_left_zz values
+ */
+
 __global__ void
 get_psi_force(double *ylmcoef, double delta_r_g, double bxyz_g, double nwmax_g,
               double *input_double, int *input_int, int *num_psir,
@@ -476,6 +510,24 @@ __global__ void psir_dot_stress(int *n, double **x_array_g, int incx,
   }
 }
 
+/**
+ * \brief Compute dot product of stress components and partial derivatives.
+ *
+ * This CUDA kernel computes the dot product of stress components and partial
+ * derivatives based on the input arrays.
+ *
+ * \param ddpsir_ylm_left_xx Array of ddpsir_ylm_left_xx values.
+ * \param ddpsir_ylm_left_xy Array of ddpsir_ylm_left_xy values.
+ * \param ddpsir_ylm_left_xz Array of ddpsir_ylm_left_xz values.
+ * \param ddpsir_ylm_left_yy Array of ddpsir_ylm_left_yy values.
+ * \param ddpsir_ylm_left_yz Array of ddpsir_ylm_left_yz values.
+ * \param ddpsir_ylm_left_zz Array of ddpsir_ylm_left_zz values.
+ * \param psir_ylm_dm Array of psir_ylm_dm values.
+ * \param stress_dot Output array for the dot product of stress components.
+ * \param elements_num Number of elements in the input arrays.
+ */
+
+
 __global__ void
 dot_product_stress(double *ddpsir_ylm_left_xx, double *ddpsir_ylm_left_xy,
                    double *ddpsir_ylm_left_xz, double *ddpsir_ylm_left_yy,
@@ -514,6 +566,22 @@ dot_product_stress(double *ddpsir_ylm_left_xx, double *ddpsir_ylm_left_xy,
     for (int index = 0; index < 6; index++)
       stress_dot[blockIdx.x + gridDim.x * index] = cache[0][index];
 }
+
+/**
+ * @brief Calculate the dot product force.
+ *
+ * This function calculates the dot product force based on the provided parameters.
+ *
+ * @param dpsir_ylm_left_x Pointer to the array of dpsir_ylm_left_x values.
+ * @param dpsir_ylm_left_y Pointer to the array of dpsir_ylm_left_y values.
+ * @param dpsir_ylm_left_z Pointer to the array of dpsir_ylm_left_z values.
+ * @param psir_ylm_dm Pointer to the array of psir_ylm_dm values.
+ * @param force_dot Pointer to the array where the calculated force will be stored.
+ * @param iat Pointer to the array of iat values.
+ * @param nwmax Maximum value for nwmax.
+ * @param max_size Maximum size for arrays.
+ * @param elements_num Number of elements to process.
+ */
 
 __global__ void dot_product_force(double *dpsir_ylm_left_x,
                                   double *dpsir_ylm_left_y,
