@@ -17,6 +17,7 @@
     - [init\_chg](#init_chg)
     - [init\_vel](#init_vel)
     - [nelec](#nelec)
+    - [nelec_delta](#nelec_delta)
     - [nupdown](#nupdown)
     - [dft\_functional](#dft_functional)
     - [xc\_temperature](#xc_temperature)
@@ -548,6 +549,13 @@ These variables are used to control general system parameters.
 
   - 0.0: the total number of electrons will be calculated by the sum of valence electrons (i.e. assuming neutral system).
   - `>0.0`: this denotes the total number of electrons in the system. Must be less than 2*nbands. 
+- **Default**: 0.0
+
+### nelec_delta
+
+- **Type**: Real
+- **Description**: 
+ the total number of electrons will be calculated by `nelec`-`nelec_delta`.
 - **Default**: 0.0
 
 ### nupdown
