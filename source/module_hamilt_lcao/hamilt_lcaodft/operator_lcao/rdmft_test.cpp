@@ -64,7 +64,6 @@ namespace rdmft
 //     printMatrix_vector(M_three, N_two, MB, "matrixB");
 //     printMatrix_vector(M_three, N_two, MC, "matrixC");
 //     std::cout << "\n******\n\n";
-
 // }
 
 

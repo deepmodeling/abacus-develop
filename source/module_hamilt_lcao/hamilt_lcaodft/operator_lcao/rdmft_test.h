@@ -445,10 +445,40 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         HR_XC.fix_gamma();
     }
 
-    // get DM_hartree for multi-k or Gamma-only calculation
-    // elecstate::DensityMatrix<TK, TR> DM_hartree(&kv_in, ParaV, GlobalV::NSPIN);
-    // elecstate::DensityMatrix DM_hartree(ParaV, GlobalV::NSPIN);
-    std::vector< std::vector<TK> > DM_hartree_tmp(nk_total, std::vector<TK>(ParaV->nloc));
+    // get desity matrix for multi-k or Gamma-only calculation
+    elecstate::DensityMatrix<TK, double> DM(&kv_in, ParaV, GlobalV::NSPIN);
+    elecstate::DensityMatrix<TK, double> DM_gamma_only(ParaV, GlobalV::NSPIN);
+    if( GlobalV::GAMMA_ONLY_LOCAL )
+    {
+        elecstate::cal_dm_psi(ParaV, wg, wfc, DM_gamma_only);
+        DM_gamma_only.cal_DMR();
+    }
+    else
+    {
+        elecstate::cal_dm_psi(ParaV, wg, wfc, DM);
+        DM.cal_DMR();
+
+        // ModuleBase::GlobalFunc::NOTE("Calculate the charge on real space grid!");
+        // this->uhm->GK.transfer_DM2DtoGrid(this->DM->get_DMR_vector()); // transfer DM2D to DM_grid in gint
+        // Gint_inout inout(this->loc->DM_R, this->charge->rho, Gint_Tools::job_type::rho);
+        // this->uhm->GK.cal_gint(&inout);
+
+        // if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+        // {
+        //     for (int is = 0; is < GlobalV::NSPIN; is++)
+        //     {
+        //         ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[is], this->charge->nrxx);
+        //     }
+        //     Gint_inout inout1(this->loc->DM_R, this->charge->kin_r, Gint_Tools::job_type::tau);
+        //     this->uhm->GK.cal_gint(&inout1);
+        // }
+
+        // this->charge->renormalize_rho();
+
+    }
+
+    // what is Local_Orbital_Charge& loc_in?
+
 
     /****** get every Hamiltion matrix ******/
 
