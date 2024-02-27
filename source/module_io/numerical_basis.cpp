@@ -657,7 +657,6 @@ void Numerical_Basis::output_overlap_Q(std::ofstream& ofs,
     if (GlobalV::MY_RANK==0)
     {
         ofs << "\n<OVERLAP_Q>";
-        ofs.flush();
     }
 
     // (4)
