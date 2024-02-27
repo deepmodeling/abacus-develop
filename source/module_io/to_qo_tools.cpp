@@ -6,7 +6,7 @@ void toQO::unwrap_unitcell(UnitCell* p_ucell)
     p_ucell_ = p_ucell;
     ntype_ = p_ucell->ntype;
     std::for_each(p_ucell->atoms, p_ucell->atoms + p_ucell->ntype, [this](Atom& atom){
-        symbols_.push_back(atom.ncpp.psd);
+        symbols_.push_back(atom.label);
         na_.push_back(atom.na);
     });
     nmax_.resize(ntype_);
