@@ -29,6 +29,8 @@ test = ["pytest", "numpy"]
 
 [tool.scikit-build]
 wheel.expand-macos-universal-tags = true
+cmake.verbose = true
+logging.level = "INFO"
 
 
 [tool.pytest.ini_options]
