@@ -14,6 +14,7 @@ AddTest(
     ../atomic_radials.cpp
     ../radial_set.cpp
     ../numerical_radial.cpp
+    ../projgen.cpp
     ../../../module_io/output_radial.cpp
     ../../module_ao/ORB_atomic_lm.cpp
     ../../module_ao/ORB_atomic.cpp
@@ -83,6 +84,7 @@ AddTest(
     ../pswfc_radials.cpp
     ../radial_set.cpp
     ../numerical_radial.cpp
+    ../projgen.cpp
     ../../../module_io/output_radial.cpp
     ../sphbes_radials.cpp
     ../../module_ao/ORB_atomic_lm.cpp
@@ -102,6 +104,7 @@ AddTest(
     ../pswfc_radials.cpp
     ../sphbes_radials.cpp
     ../radial_set.cpp
+    ../projgen.cpp
     ../numerical_radial.cpp
     ../two_center_bundle.cpp
     ../two_center_integrator.cpp
@@ -128,6 +131,7 @@ AddTest(
     ../real_gaunt_table.cpp
     ../radial_collection.cpp
     ../atomic_radials.cpp
+    ../projgen.cpp
     ../beta_radials.cpp
     ../hydrogen_radials.cpp
     ../pswfc_radials.cpp
@@ -154,6 +158,7 @@ AddTest(
     ../pswfc_radials.cpp
     ../sphbes_radials.cpp
     ../radial_set.cpp
+    ../projgen.cpp
     ../numerical_radial.cpp
     ../../../module_io/output_radial.cpp
   LIBS ${math_libs} device base container orb
