@@ -308,6 +308,7 @@ extern bool psi_initializer;
 extern int out_chg;
 
 extern double nelec;
+extern double nelec_delta;
 extern bool out_bandgap;
 extern int out_interval;
 

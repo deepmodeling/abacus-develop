@@ -88,6 +88,7 @@ TEST_F(InputParaTest, Bcast)
     EXPECT_DOUBLE_EQ(INPUT.xc_temperature, 0.0);
     EXPECT_EQ(INPUT.nspin, 1);
     EXPECT_DOUBLE_EQ(INPUT.nelec, 0.0);
+    EXPECT_DOUBLE_EQ(INPUT.nelec_delta, 0.0);
     EXPECT_EQ(INPUT.lmaxmax, 2);
     EXPECT_EQ(INPUT.basis_type, "pw");
     EXPECT_EQ(INPUT.ks_solver, "default");

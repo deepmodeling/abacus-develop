@@ -111,6 +111,7 @@ class Input
     int nspin; // LDA ; LSDA ; non-linear spin
     double nupdown = 0.0;
     double nelec; // total number of electrons
+    double nelec_delta; // change in the number of total electrons
     int lmaxmax;
 
     //==========================================================

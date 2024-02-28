@@ -204,6 +204,7 @@ void Input::Default(void)
     xc_temperature = 0.0;
     nspin = 1;
     nelec = 0.0;
+    nelec_delta = 0.0;
     lmaxmax = 2;
     //----------------------------------------------------------
     // new function
@@ -923,6 +924,10 @@ bool Input::Read(const std::string& fn)
         else if (strcmp("nelec", word) == 0)
         {
             read_value(ifs, nelec);
+        }
+        else if (strcmp("nelec_delta", word) == 0)
+        {
+            read_value(ifs, nelec_delta);
         }
         else if (strcmp("nupdown", word) == 0)
         {
@@ -3265,6 +3270,7 @@ void Input::Bcast()
     Parallel_Common::bcast_double(xc_temperature);
     Parallel_Common::bcast_int(nspin);
     Parallel_Common::bcast_double(nelec);
+    Parallel_Common::bcast_double(nelec_delta);
     Parallel_Common::bcast_double(nupdown);
     Parallel_Common::bcast_int(lmaxmax);
 
