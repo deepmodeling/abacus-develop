@@ -40,7 +40,16 @@ void Ions_Move_BFGS::start(UnitCell& ucell, const ModuleBase::matrix& force, con
     // istep must be set eariler.
 
     // use force to setup gradient.
-    Ions_Move_Basic::setup_gradient(ucell, force, this->pos, this->grad);
+    if (first_step)
+    {
+        Ions_Move_Basic::setup_gradient(ucell, force, this->pos, this->grad);
+        first_step = false;
+    }
+    else{
+        double *pos_tmp = new double[3 * ucell.nat];
+        Ions_Move_Basic::setup_gradient(ucell, force, pos_tmp, this->grad);
+        delete[] pos_tmp;
+    }
     // use energy_in and istep to setup etot and etot_old.
     Ions_Move_Basic::setup_etot(energy_in, 0);
     // use gradient and etot and etot_old to check
