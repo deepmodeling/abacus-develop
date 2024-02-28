@@ -10,14 +10,16 @@ find_package(pybind11 CONFIG REQUIRED)
 
 set(ABACUS_SOURCE_DIR "${PROJECT_SOURCE_DIR}/../../source")
 set(BASE_PATH "${ABACUS_SOURCE_DIR}/module_base")
-# add fftw3
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/../../cmake")
+# add fftw3
 find_package(FFTW3 REQUIRED)
 add_compile_definitions(__FFTW3)
 find_package(LAPACK REQUIRED)
 include_directories(${FFTW3_INCLUDE_DIRS})
 message(STATUS "FFTW3_INCLUDE_DIRS: ${FFTW3_INCLUDE_DIRS}")
-list(APPEND math_libs FFTW3::FFTW3 LAPACK::LAPACK)
+# add scalapack
+find_package(ScaLAPACK REQUIRED)
+list(APPEND math_libs FFTW3::FFTW3 LAPACK::LAPACK ScaLAPACK::ScaLAPACK)
 include_directories(${BASE_PATH} 
     ${ABACUS_SOURCE_DIR}
     ${ABACUS_SOURCE_DIR}/module_base/module_container)
@@ -31,7 +33,11 @@ set(ORB_BINARY_DIR "${PROJECT_SOURCE_DIR}/build/orb")
 set(ENABLE_LCAO ON)
 add_subdirectory(${ABACUS_SOURCE_DIR}/module_basis/module_ao ${ORB_BINARY_DIR})
 # add nao shared library
-file(GLOB _naos ${ABACUS_SOURCE_DIR}/module_basis/module_nao/*.cpp)
+file(GLOB _naos ${ABACUS_SOURCE_DIR}/module_basis/module_nao/*.cpp  
+${ABACUS_SOURCE_DIR}/module_base/kernels/math_op.cpp
+${ABACUS_SOURCE_DIR}/module_psi/kernels/psi_memory_op.cpp
+${ABACUS_SOURCE_DIR}/module_io/output_radial.cpp
+)
 add_library(naopack SHARED 
     ${_naos}
     )
@@ -52,5 +58,5 @@ list(APPEND _sources
 pybind11_add_module(_core MODULE ${_sources})
 target_link_libraries(_core PRIVATE pybind11::headers naopack)
 target_compile_definitions(_core PRIVATE VERSION_INFO=${PROJECT_VERSION})
-
 install(TARGETS _core naopack DESTINATION pyabacus)
+
