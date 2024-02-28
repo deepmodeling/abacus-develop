@@ -2,6 +2,7 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#define private public
 #include "module_elecstate/module_dm/density_matrix.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 
@@ -274,6 +275,38 @@ TEST_F(DMTest, DMInit4)
     EXPECT_EQ(DM.get_DMR_pointer(2)->get_atom_pair(2, 2).get_col_size(), paraV->get_col_size(2));
     //
     delete kv;
+}
+
+// test for save_DMR
+TEST_F(DMTest, saveDMR)
+{
+    // initalize a kvectors
+    K_Vectors* kv = nullptr;
+    int nspin = 2;
+    int nks = 4; // since nspin = 2
+    kv = new K_Vectors;
+    kv->nks = nks;
+    kv->kvec_d.resize(nks);
+    kv->kvec_d[1].x = 0.5;
+    kv->kvec_d[3].x = 0.5;
+    // construct a DM
+    elecstate::DensityMatrix<std::complex<double>, double> DM(kv, paraV, nspin);
+    Grid_Driver gd(0, 0, 0);
+    DM.init_DMR(&gd, &ucell);
+    // construct another DM
+    elecstate::DensityMatrix<std::complex<double>, double> DM_test(kv, paraV, nspin);
+    DM_test.init_DMR(*DM.get_DMR_pointer(1));
+    DM_test.save_DMR();
+    EXPECT_EQ(DM_test.get_DMR_pointer(1)->get_nnr(), DM.get_DMR_pointer(1)->get_nnr());
+    EXPECT_EQ(DM_test.get_DMR_pointer(1)->get_nnr(), DM_test._DMR_save[0].size());
+    // add a new AtomPair, act as a relaxation
+    hamilt::AtomPair<double> tmp_ap(9, 9, 1, 0, 0, paraV);
+    DM_test.get_DMR_pointer(1)->insert_pair(tmp_ap);
+    DM_test.get_DMR_pointer(1)->allocate();
+    // update DMR_save
+    DM_test.save_DMR();
+    EXPECT_EQ(DM_test.get_DMR_pointer(1)->get_nnr(), DM_test._DMR_save[0].size());
+    
 }
 
 int main(int argc, char** argv)
