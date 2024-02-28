@@ -668,6 +668,7 @@ void Input_Conv::Convert(void)
     GlobalV::chg_extrap = INPUT.chg_extrap; // xiaohui modify 2015-02-01
     GlobalV::out_chg = INPUT.out_chg;
     GlobalV::nelec = INPUT.nelec;
+    GlobalV::nelec_delta = INPUT.nelec_delta;
     GlobalV::out_pot = INPUT.out_pot;
     GlobalV::out_app_flag = INPUT.out_app_flag;
     GlobalV::out_ndigits = INPUT.out_ndigits;
