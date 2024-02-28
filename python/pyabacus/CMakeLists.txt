@@ -10,19 +10,45 @@ find_package(pybind11 CONFIG REQUIRED)
 
 set(ABACUS_SOURCE_DIR "${PROJECT_SOURCE_DIR}/../../source")
 set(BASE_PATH "${ABACUS_SOURCE_DIR}/module_base")
+set(ENABLE_LCAO ON)
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/../../cmake")
-# add fftw3
-find_package(FFTW3 REQUIRED)
-add_compile_definitions(__FFTW3)
-find_package(LAPACK REQUIRED)
-include_directories(${FFTW3_INCLUDE_DIRS})
-message(STATUS "FFTW3_INCLUDE_DIRS: ${FFTW3_INCLUDE_DIRS}")
-# add scalapack
-find_package(ScaLAPACK REQUIRED)
-list(APPEND math_libs FFTW3::FFTW3 LAPACK::LAPACK ScaLAPACK::ScaLAPACK)
+
+# add math_libs
+if(DEFINED ENV{MKLROOT} AND NOT DEFINED MKLROOT)
+    set(MKLROOT "$ENV{MKLROOT}")
+endif()
+if(MKLROOT)
+  find_package(IntelMKL REQUIRED)
+  add_definitions(-D__MKL)
+  include_directories(${MKL_INCLUDE_DIRS} ${MKL_INCLUDE_DIRS}/fftw)
+
+  # Since libtorch will find its own MKL, the fftw part conflicts with the original one.
+  # When enable deepks, mkl will be linked within ${TORCH_LIBRARIES}.
+  if(NOT ENABLE_DEEPKS)
+    list(APPEND math_libs IntelMKL::MKL)
+  endif()
+
+  if(CMAKE_CXX_COMPILER_ID MATCHES Intel)
+    list(APPEND math_libs -lifcore)
+  endif()
+else()
+    find_package(FFTW3 REQUIRED)
+    add_compile_definitions(__FFTW3)
+    find_package(LAPACK REQUIRED)
+    include_directories(${FFTW3_INCLUDE_DIRS})
+    message(STATUS "FFTW3_INCLUDE_DIRS: ${FFTW3_INCLUDE_DIRS}")
+  list(APPEND math_libs FFTW3::FFTW3 LAPACK::LAPACK)
+
+  if(ENABLE_LCAO)
+    find_package(ScaLAPACK REQUIRED)
+    list(APPEND math_libs ScaLAPACK::ScaLAPACK)
+  endif()
+endif()
+
 include_directories(${BASE_PATH} 
     ${ABACUS_SOURCE_DIR}
     ${ABACUS_SOURCE_DIR}/module_base/module_container)
+
 # add library
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # add base
@@ -30,8 +56,9 @@ set(BASE_BINARY_DIR "${PROJECT_SOURCE_DIR}/build/base")
 add_subdirectory(${ABACUS_SOURCE_DIR}/module_base ${BASE_BINARY_DIR})
 # add orb
 set(ORB_BINARY_DIR "${PROJECT_SOURCE_DIR}/build/orb")
-set(ENABLE_LCAO ON)
 add_subdirectory(${ABACUS_SOURCE_DIR}/module_basis/module_ao ${ORB_BINARY_DIR})
+# set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
 # add nao shared library
 file(GLOB _naos ${ABACUS_SOURCE_DIR}/module_basis/module_nao/*.cpp  
 ${ABACUS_SOURCE_DIR}/module_base/kernels/math_op.cpp
@@ -58,5 +85,17 @@ list(APPEND _sources
 pybind11_add_module(_core MODULE ${_sources})
 target_link_libraries(_core PRIVATE pybind11::headers naopack)
 target_compile_definitions(_core PRIVATE VERSION_INFO=${PROJECT_VERSION})
-install(TARGETS _core naopack DESTINATION pyabacus)
+# set RPATH
+execute_process(
+  COMMAND "${PYTHON_EXECUTABLE}" -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())"
+  OUTPUT_VARIABLE PYTHON_SITE_PACKAGES
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+# set package name to pyabacus
+set(TARGET_PACK pyabacus)
+set(CMAKE_INSTALL_RPATH "${PYTHON_SITE_PACKAGES}/${TARGET_PACK}")
+set_target_properties(_core PROPERTIES INSTALL_RPATH "$ORIGIN")
+set_target_properties(naopack PROPERTIES INSTALL_RPATH "$ORIGIN")
+install(TARGETS _core naopack DESTINATION ${TARGET_PACK})
 
