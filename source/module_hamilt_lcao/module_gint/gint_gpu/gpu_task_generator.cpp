@@ -7,9 +7,8 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 void gpu_task_generate_vlocal(const Grid_Technique &GridT, 
-                              const int i, const int j,
-                              const int atom_pair_size_of_meshcell_v2,
-                              const int psi_size_max, const int max_size,
+                              const int i, const int j, 
+                              const int max_size,
                               const int nczp,
                               const double vfactor,
                               const double *vlocal_global_value,
@@ -22,7 +21,6 @@ void gpu_task_generate_vlocal(const Grid_Technique &GridT,
                               int *atom_pair_lda,
                               int *atom_pair_ldb,
                               int *atom_pair_ldc,
-                              double* GridVlocal_v2_g[],     
                               double ** atom_pair_mat_A,
                               double ** atom_pair_mat_B,
                               double ** atom_pair_mat_C,
@@ -39,7 +37,7 @@ void gpu_task_generate_vlocal(const Grid_Technique &GridT,
   for (int z_index = 0; z_index < GridT.nbzp; z_index++) {
     int num_get_psi = 0;
     int grid_index = grid_index_ij + z_index;
-    int num_psi_pos = psi_size_max * z_index;
+    int num_psi_pos = GridT.psi_size_max_per_z * z_index;
     int calc_flag_index = max_size * z_index;
     int bcell_start_index = GridT.bcell_start[grid_index];
 
@@ -128,7 +126,7 @@ void gpu_task_generate_vlocal(const Grid_Technique &GridT,
             it2, GlobalC::ucell.iat2ia[iat2], 0)];
         if (lo1 <= lo2) {
           int atom_pair_nw = GlobalC::ucell.atoms[it1].nw * GlobalC::ucell.atoms[it2].nw;
-          if (GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2] == nullptr)
+          if (GridT.GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2] == nullptr)
           {
             //Note that this situation occurs here because the logic in hcontainer and 
             // grid integration is different. 
@@ -144,7 +142,7 @@ void gpu_task_generate_vlocal(const Grid_Technique &GridT,
 
           atom_pair_mat_A[atom_pair_num] = psir_ylm_left + calc_index1;
           atom_pair_mat_B[atom_pair_num] = psir_ylm_right + calc_index2;
-          atom_pair_mat_C[atom_pair_num] = GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2];
+          atom_pair_mat_C[atom_pair_num] = GridT.GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2];
 
           atom_pair_lda[atom_pair_num] = GridT.bxyz;
           atom_pair_ldb[atom_pair_num] = GridT.bxyz;
