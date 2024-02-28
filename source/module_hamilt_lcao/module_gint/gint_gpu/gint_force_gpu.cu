@@ -405,7 +405,6 @@ void gint_gamma_force_gpu(hamilt::HContainer<double> *DM, const double vfactor,
   checkCuda(cudaFree(stress_dot_global_g));
   checkCuda(cudaFree(force_dot_global_g));
   checkCuda(cudaFree(iat_global_g));
-  checkCuda(cudaFree(stress_dot_global_g));
   for (int i = 0; i < GridT.nstreams; i++) {
     checkCuda(cudaStreamSynchronize(GridT.streams[i]));
   }
