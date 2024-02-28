@@ -52,8 +52,8 @@ target_link_libraries(naopack
 list(APPEND _sources
     # ${ABACUS_SOURCE_DIR}/module_basis/module_nao/radial_collection.cpp
     ${PROJECT_SOURCE_DIR}/src/py_abacus.cpp
-    ${PROJECT_SOURCE_DIR}/src/py_math_base.cpp
-    ${PROJECT_SOURCE_DIR}/src/py_radial_collection.cpp
+    ${PROJECT_SOURCE_DIR}/src/py_base_math.cpp
+    ${PROJECT_SOURCE_DIR}/src/py_m_nao.cpp
     )
 pybind11_add_module(_core MODULE ${_sources})
 target_link_libraries(_core PRIVATE pybind11::headers naopack)

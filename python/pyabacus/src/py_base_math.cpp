@@ -10,7 +10,7 @@ using namespace pybind11::literals;
 template <typename... Args>
 using overload_cast_ = pybind11::detail::overload_cast_impl<Args...>;
 
-void bind_math_base(py::module& m)
+void bind_base_math(py::module& m)
 {
     py::module module_base = m.def_submodule("ModuleBase");
 

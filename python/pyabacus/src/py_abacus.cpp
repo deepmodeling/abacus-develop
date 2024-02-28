@@ -3,11 +3,11 @@
 
 namespace py = pybind11;
 
-void bind_math_base(py::module& m);
-void bind_radial_collection(py::module& m);
+void bind_base_math(py::module& m);
+void bind_m_nao(py::module& m);
 
 PYBIND11_MODULE(_core, m)
 {
-    bind_math_base(m);
-    bind_radial_collection(m);
+    bind_base_math(m);
+    bind_m_nao(m);
 }
