@@ -923,7 +923,7 @@ namespace ModuleESolver
     // //test use dgemm_
     // rdmft::printResult_dgemm();
 
-
+    // elecstate::DensityMatrix<TK, double>* DM = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();  ///////////////
 
     // gamma only calculation
     if( GlobalV::GAMMA_ONLY_LOCAL )
@@ -957,6 +957,7 @@ namespace ModuleESolver
             *(this->pw_rho),
             GlobalC::ppcell.vloc,
             this->sf.strucFac,
+            *( dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM() ),
             "power",
             0.5
         );
@@ -978,6 +979,7 @@ namespace ModuleESolver
             *(this->pw_rho),
             GlobalC::ppcell.vloc,
             this->sf.strucFac,
+            *( dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM() ),
             "power",
             0.99
         );

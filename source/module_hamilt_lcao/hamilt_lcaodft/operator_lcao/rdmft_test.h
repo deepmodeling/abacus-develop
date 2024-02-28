@@ -385,11 +385,57 @@ void add_wg(const ModuleBase::matrix& wg, const ModuleBase::matrix& wfcHwfc_TV_i
 //give certain wg_wfcHwfc, get the corresponding energy
 double sumWg_getEnergy(const ModuleBase::matrix& wg_wfcHwfc);
 
+// update_charge(kv_in, G_in, ParaV, wg, wfc, loc_in, charge_in, DM_in.get_DMR_vector());
+
+template <typename TR, typename TK, typename T_Gint>
+void update_charge(const K_Vectors& kv, T_Gint G_in, const Parallel_Orbitals* ParaV, const ModuleBase::matrix& wg,
+                    const psi::Psi<TK>& wfc,Local_Orbital_Charge& loc, Charge& charge, const hamilt::HContainer<TR>& DMR_in)
+{
+    if( GlobalV::GAMMA_ONLY_LOCAL )
+    {
+        elecstate::DensityMatrix<TK, double> DM_gamma_only(ParaV, GlobalV::NSPIN);
+        elecstate::cal_dm_psi(ParaV, wg, wfc, DM_gamma_only);
+        DM_gamma_only.cal_DMR();
+
+        // this code is copying from function ElecStateLCAO<TK>::psiToRho(), in elecstate_lcao.cpp
+        G_in.transfer_DM2DtoGrid(DM_gamma_only.get_DMR_vector());
+        Gint_inout inout(loc.DM, charge.rho, Gint_Tools::job_type::rho);  // what is Local_Orbital_Charge& loc_in? ///////////////
+        G_in.cal_gint(&inout);
+
+        charge.renormalize_rho();
+    }
+    else
+    {
+        std::cout << "\n******\n" << "before DM" << "\n******" << std::endl;
+        elecstate::DensityMatrix<TK, double> DM(&kv, ParaV, GlobalV::NSPIN);
+        elecstate::cal_dm_psi(ParaV, wg, wfc, DM);
+
+        DM.init_DMR(DMR_in);
+
+        // Grid_Driver gd(0, 0, 0);
+        // DM.init_DMR(&gd, &GlobalC::ucell);
+
+        std::cout << "\n******\n" << "before DM.cal_DMR()" << "\n******" << std::endl;
+        DM.cal_DMR();
+
+        std::cout << "\n******\n" << "after DM.cal_DMR()" << "\n******" << std::endl;
+
+        // this code is copying from function ElecStateLCAO<TK>::psiToRho(), in elecstate_lcao.cpp
+        G_in.transfer_DM2DtoGrid(DM.get_DMR_vector());
+        Gint_inout inout(loc.DM_R, charge.rho, Gint_Tools::job_type::rho);  // what is Local_Orbital_Charge& loc_in? ///////////////
+        G_in.cal_gint(&inout);
+
+        std::cout << "\n******\n" << "after G_in.cal_gint" << "\n******" << std::endl;
+
+        charge.renormalize_rho();
+    }
+}
+
 
 // realization of energy and energy gradient in RDMFT
 template <typename TK, typename TR, typename T_Gint>
 double rdmft_cal(LCAO_Matrix* LM_in,
-                        Parallel_Orbitals* ParaV,
+                        const Parallel_Orbitals* ParaV,
                         const ModuleBase::matrix& wg,
                         const psi::Psi<TK>& wfc,
                         ModuleBase::matrix& wg_wfcHamiltWfc,
@@ -397,10 +443,11 @@ double rdmft_cal(LCAO_Matrix* LM_in,
                         const K_Vectors& kv_in,
                         T_Gint& G_in, //Gint_k& GK_in
                         Local_Orbital_Charge& loc_in,
-                        const Charge& charge_in,
+                        Charge& charge_in,
                         const ModulePW::PW_Basis& rho_basis_in,
                         const ModuleBase::matrix& vloc_in,
                         const ModuleBase::ComplexMatrix& sf_in,
+                        const elecstate::DensityMatrix<TK, double>& DM_in,   // delete later
                         const std::string XC_func_rdmft = "HF",
                         const double alpha_power = 0.656)   // 0.656 for soilds, 0.525 for dissociation of H2, 0.55~0.58 for HEG
 {
@@ -445,40 +492,50 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         HR_XC.fix_gamma();
     }
 
-    // get desity matrix for multi-k or Gamma-only calculation
-    elecstate::DensityMatrix<TK, double> DM(&kv_in, ParaV, GlobalV::NSPIN);
-    elecstate::DensityMatrix<TK, double> DM_gamma_only(ParaV, GlobalV::NSPIN);
-    if( GlobalV::GAMMA_ONLY_LOCAL )
-    {
-        elecstate::cal_dm_psi(ParaV, wg, wfc, DM_gamma_only);
-        DM_gamma_only.cal_DMR();
-    }
-    else
-    {
-        elecstate::cal_dm_psi(ParaV, wg, wfc, DM);
-        DM.cal_DMR();
+    // // get desity matrix for multi-k or Gamma-only calculation
+    // elecstate::DensityMatrix<TK, double> DM(&kv_in, ParaV, GlobalV::NSPIN);
+    // elecstate::DensityMatrix<TK, double> DM_gamma_only(ParaV, GlobalV::NSPIN);
+    // if( GlobalV::GAMMA_ONLY_LOCAL )
+    // {
+    //     elecstate::cal_dm_psi(ParaV, wg, wfc, DM_gamma_only);
+    //     DM_gamma_only.cal_DMR();
 
-        // ModuleBase::GlobalFunc::NOTE("Calculate the charge on real space grid!");
-        // this->uhm->GK.transfer_DM2DtoGrid(this->DM->get_DMR_vector()); // transfer DM2D to DM_grid in gint
-        // Gint_inout inout(this->loc->DM_R, this->charge->rho, Gint_Tools::job_type::rho);
-        // this->uhm->GK.cal_gint(&inout);
+    //     // ***, this code is copying from function ElecStateLCAO<TK>::psiToRho(), in elecstate_lcao.cpp
+    //     G_in.transfer_DM2DtoGrid(DM_gamma_only.get_DMR_vector());
+    //     Gint_inout inout(loc_in.DM, charge_in.rho, Gint_Tools::job_type::rho);
+    //     G_in.cal_gint(&inout);
 
-        // if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
-        // {
-        //     for (int is = 0; is < GlobalV::NSPIN; is++)
-        //     {
-        //         ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[is], this->charge->nrxx);
-        //     }
-        //     Gint_inout inout1(this->loc->DM_R, this->charge->kin_r, Gint_Tools::job_type::tau);
-        //     this->uhm->GK.cal_gint(&inout1);
-        // }
+    //     charge_in.renormalize_rho();
+    // }
+    // else
+    // {
+    //     elecstate::cal_dm_psi(ParaV, wg, wfc, DM);
+    //     DM.cal_DMR();
 
-        // this->charge->renormalize_rho();
+    //     // ***, this code is copying from function ElecStateLCAO<TK>::psiToRho(), in elecstate_lcao.cpp
+    //     G_in.transfer_DM2DtoGrid(DM.get_DMR_vector());
+    //     Gint_inout inout(loc_in.DM_R, charge_in.rho, Gint_Tools::job_type::rho);
+    //     G_in.cal_gint(&inout);
 
-    }
+    //     charge_in.renormalize_rho();
+    // }
 
-    // what is Local_Orbital_Charge& loc_in?
+    // // what is Local_Orbital_Charge& loc_in?
 
+    std::cout << "\n******\n" << "before update charge" << "\n******" << std::endl;
+
+    update_charge(kv_in, G_in, ParaV, wg, wfc, loc_in, charge_in, *(DM_in.get_DMR_pointer(0)));  /////////////////////  DM_in.get_DMR_vector() error
+
+    std::cout << "\n******\n" << "after update charge" << "\n******" << std::endl;
+
+        // std::cout << "\n******\n" << "before DM" << "\n******" << std::endl;
+        // elecstate::DensityMatrix<TK, double> DM(&kv_in, ParaV, GlobalV::NSPIN);
+        // elecstate::cal_dm_psi(ParaV, wg, wfc, DM);
+
+        // std::cout << "\n******\n" << "before DM.cal_DMR()" << "\n******" << std::endl;
+        // DM.cal_DMR();
+
+        // std::cout << "\n******\n" << "after DM.cal_DMR()" << "\n******" << std::endl;
 
     /****** get every Hamiltion matrix ******/
 
@@ -501,7 +558,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         &GlobalC::GridD,
         ParaV
     );
-
+    std::cout << "\n******\n" << "before V_local" << "\n******" << std::endl;
     hamilt::OperatorLCAO<TK, TR>* V_local = new rdmft::Veff_rdmft<TK,TR>(
         &G_in,
         &loc_in,
@@ -518,7 +575,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         sf_in,
         "local"
     );
-
+    std::cout << "\n******\n" << "before V_hartree" << "\n******" << std::endl;
     hamilt::OperatorLCAO<TK, TR>* V_hartree = new rdmft::Veff_rdmft<TK,TR>(
         &G_in,
         &loc_in,
@@ -628,10 +685,14 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     // HR_hartree has the HR of V_hartree. HR_XC get from another way, so don't need to do this 
     V_hartree->contributeHR();
 
+    std::cout << "\n******\n" << "bafter V_hartree->contributeHR()" << "\n******" << std::endl;
+
     // now HR_TV has the HR of V_ekinetic + V_nonlcao + V_local, 
     V_ekinetic_potential->contributeHR();
     V_nonlocal->contributeHR();
     V_local->contributeHR();
+
+    std::cout << "\n******\n" << "bafter V_local->contributeHR()" << "\n******" << std::endl;
 
     //prepare for actual calculation
     //wg is global matrix, wg.nr = nk_total, wg.nc = GlobalV::NBANDS
