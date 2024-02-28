@@ -91,9 +91,9 @@ void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, 
             ofs.open(ss.str().c_str());
         }
 
+        // ALLOCATE MEMORY FOR THE OVERLAP MATRIX
         // OVERLAP : < J_mu | Psi >
         std::vector<ModuleBase::ComplexArray> overlap_Q(kv.nks);
-
         // OVERLAP : < J_mu | J_nu >
         std::vector<ModuleBase::ComplexArray> overlap_Sq(kv.nks);
 
@@ -101,7 +101,8 @@ void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, 
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"number of bands", GlobalV::NBANDS);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"number of local orbitals", GlobalV::NLOCAL);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"number of eigenvalues of Jl(x)", this->bessel_basis.get_ecut_number());
-
+        
+        // CALCULATE THE OVERLAP MATRIX
         // nks now is the reduced k-points.
         for (int ik = 0; ik < kv.nks; ik++)
         {
@@ -131,6 +132,7 @@ void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, 
                                                                  static_cast<double>(derivative_order),
                                                                  kv); // Peize Lin add 2020.04.23
 
+        // ALTHOUGH THIS FUNCTION NAMES output_overlap, IT ACTUALLY OUTPUTS THE OVERLAP MATRIX HERE
 #ifdef __MPI
         for (int ik = 0; ik < kv.nks; ik++)
         {
@@ -139,20 +141,26 @@ void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, 
         }
         Parallel_Reduce::reduce_pool(overlap_V.c, overlap_V.nr * overlap_V.nc);		// Peize Lin add 2020.04.23
     #endif
-
-        this->output_info(ofs, bessel_basis, kv);
-
-        this->output_k(ofs, kv);
-
-        this->output_overlap_Q(ofs, overlap_Q, kv);
-
-        if (winput::out_spillage == 2)
+        // exception handling following, for FileNotOpenFailure
+        if(ofs.good()) this->output_info(ofs, bessel_basis, kv); // header of orb_matrix* file
+        else ModuleBase::WARNING_QUIT("Numerical_Basis","Failed to open file for writing the overlap matrix.");
+        // because one stage of file io complete, re-check the file status.
+        if(ofs.good()) this->output_k(ofs, kv); // <WEIGHTS_OF_KPOINTS>...</WEIGHTS_OF_KPOINTS>
+        else ModuleBase::WARNING_QUIT("Numerical_Basis","Failed to write k-points to file.");
+        // because one stage of file io complete, re-check the file status.
+        if(ofs.good()) this->output_overlap_Q(ofs, overlap_Q, kv); // <OVERLAP_Q>...</OVERLAP_Q>
+        else ModuleBase::WARNING_QUIT("Numerical_Basis","Failed to write overlap Q to file.");
+        // because one stage of file io complete, re-check the file status.
+        if(winput::out_spillage == 2)
         {
-            this->output_overlap_Sq(ss.str(), ofs, overlap_Sq, kv);
+            // caution: this is the largest matrix to be output, always flush
+            if(ofs.good()) this->output_overlap_Sq(ss.str(), ofs, overlap_Sq, kv); // <OVERLAP_Sq>...</OVERLAP_Sq>
+            else ModuleBase::WARNING_QUIT("Numerical_Basis","Failed to write overlap S to file.");
         }
-
-        this->output_overlap_V(ofs, overlap_V); // Peize Lin add 2020.04.23
-
+        // because one stage of file io complete, re-check the file status.
+        if(ofs.good()) this->output_overlap_V(ofs, overlap_V); // <OVERLAP_V>...</OVERLAP_V>
+                                                               // Peize Lin add 2020.04.23
+        else ModuleBase::WARNING_QUIT("Numerical_Basis","Failed to write overlap V to file.");
         if (GlobalV::MY_RANK==0) ofs.close();
     }
     return;
@@ -694,7 +702,7 @@ void Numerical_Basis::output_overlap_Q(std::ofstream& ofs,
             const int dim = Qtmp.getSize();
             for (int i=0; i<dim; i++)
             {
-                if ( count%4==0 ) ofs << "\n";
+                if ( count%4==0 ) ofs << std::endl;
                 ofs << " " << Qtmp.ptr[i].real() << " " << Qtmp.ptr[i].imag();
                 ++count;
             }
@@ -742,11 +750,11 @@ void Numerical_Basis::output_overlap_Sq(const std::string& name,
                     const int size = overlap_Sq[ik_now].getSize();
                     for (int i=0; i<size; i++)
                     {
-                        if (count%2==0) ofs << "\n";
+                        if (count%2==0) ofs << std::endl;
                         ofs << " " << overlap_Sq[ik_now].ptr[i].real() << " " << overlap_Sq[ik_now].ptr[i].imag();
                         ++count;
                     }
-
+                    ofs.flush();
                     ofs.close();
                 }
     #ifdef __MPI
