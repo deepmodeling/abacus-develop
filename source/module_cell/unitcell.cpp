@@ -1702,6 +1702,12 @@ void UnitCell::cal_nelec(double& nelec)
 			ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "AUTOSET number of electrons: ", nelec);
 		}
     }
+	if (GlobalV::nelec_delta != 0)
+	{
+		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "nelec_delta is NOT zero, please make sure you know what you are doing! nelec_delta: ", GlobalV::nelec_delta);
+		nelec += GlobalV::nelec_delta;
+		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "nelec now: ", nelec);
+	}
     return;
 }
 

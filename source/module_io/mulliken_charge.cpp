@@ -208,14 +208,16 @@ ModuleBase::matrix ModuleIO::cal_mulliken(const std::vector<std::vector<std::com
                         const int ir = LM->ParaV->global2local_row(k1);
                         const int ic = LM->ParaV->global2local_col(k2);
                         MecMulP(1, j) += mud(ic, ir).real();
-                        MecMulP(2, j) += mud(ic, ir).imag();
+                        // M_y = i(M_{up,down} - M_{down,up}) = -(M_{up,down} - M_{down,up}).imag()
+                        MecMulP(2, j) -= mud(ic, ir).imag(); 
                     }
                     if(LM->ParaV->in_this_processor(k2, k1))
                     {
                         const int ir = LM->ParaV->global2local_row(k2);
                         const int ic = LM->ParaV->global2local_col(k1);
                         MecMulP(1, j) += mud(ic, ir).real();
-                        MecMulP(2, j) -= mud(ic, ir).imag();
+                        // M_y = i(M_{up,down} - M_{down,up}) = -(M_{up,down} - M_{down,up}).imag()
+                        MecMulP(2, j) += mud(ic, ir).imag();
                     }
                     if(LM->ParaV->in_this_processor(k2, k2))
                     {

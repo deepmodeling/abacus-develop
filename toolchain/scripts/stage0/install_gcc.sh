@@ -3,6 +3,8 @@
 # TODO: Review and if possible fix shellcheck errors.
 # shellcheck disable=all
 
+# Last Update in 2023-1111
+
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
@@ -171,13 +173,13 @@ prepend_path LD_RUN_PATH "${pkg_install_dir}/lib64"
 prepend_path LIBRARY_PATH "${pkg_install_dir}/lib"
 prepend_path LIBRARY_PATH "${pkg_install_dir}/lib64"
 prepend_path CPATH "${pkg_install_dir}/include"
-export LD_LIBRARY_PATH="${pkg_install_dir}/lib":$LD_LIBRARY_PATH
-export LD_LIBRARY_PATH="${pkg_install_dir}/lib64":$LD_LIBRARY_PATH
-export LD_RUN_PATH="${pkg_install_dir}/lib":$LD_RUN_PATH
-export LD_RUN_PATH="${pkg_install_dir}/lib64":$LD_RUN_PATH
-export LIBRARY_PATH="${pkg_install_dir}/lib":$LIBRARY_PATH
-export LIBRARY_PATH="${pkg_install_dir}/lib64":$LIBRARY_PATH
-export CPATH="${pkg_install_dir}/include":$CPATH
+export LD_LIBRARY_PATH="${pkg_install_dir}/lib":\${LD_LIBRARY_PATH}
+export LD_LIBRARY_PATH="${pkg_install_dir}/lib64":\${LD_LIBRARY_PATH}
+export LD_RUN_PATH="${pkg_install_dir}/lib":\${LD_RUN_PATH}
+export LD_RUN_PATH="${pkg_install_dir}/lib64":\${LD_RUN_PATH}
+export LIBRARY_PATH="${pkg_install_dir}/lib":\${LIBRARY_PATH}
+export LIBRARY_PATH="${pkg_install_dir}/lib64":\${LIBRARY_PATH}
+export CPATH="${pkg_install_dir}/include":\${CPATH}
 EOF
   fi
   cat << EOF >> "${BUILDDIR}/setup_gcc"
