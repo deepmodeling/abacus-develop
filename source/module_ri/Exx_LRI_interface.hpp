@@ -72,7 +72,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const K_Vectors& kv, const Charg
 				this->mix_DMk_2D.set_mixing(chgmix.get_mixing());
         }
         // for exx two_level scf
-        Exx_LRI_Interface<T, Tdata>::two_level_step = 0;
+        this->two_level_step = 0;
 #endif // __MPI
 }
 
@@ -81,7 +81,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const elecstate::DensityMatri
 {
     if (GlobalC::exx_info.info_global.cal_exx)
     {
-        if (!GlobalC::exx_info.info_global.separate_loop && Exx_LRI_Interface<T, Tdata>::two_level_step)
+        if (!GlobalC::exx_info.info_global.separate_loop && this->two_level_step)
         {
 			const bool flag_restart = (iter==1) ? true : false;
             this->mix_DMk_2D.mix(dm.get_DMK_vector(), flag_restart);
@@ -103,7 +103,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_hamilt2density(elecstate::ElecState& elec,
         // add exx
         // Peize Lin add 2016-12-03
         if (GlobalC::restart.info_load.load_H_finish && !GlobalC::restart.info_load.restart_exx
-            && Exx_LRI_Interface<T, Tdata>::two_level_step == 0 && iter == 1)
+            && this->two_level_step == 0 && iter == 1)
         {
             if (GlobalV::MY_RANK == 0)GlobalC::restart.load_disk("Eexx", 0, 1, &this->exx_ptr->Eexx);
             Parallel_Common::bcast_double(this->exx_ptr->Eexx);
@@ -141,7 +141,7 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
             // in first scf loop, exx updated once in beginning,
             // in second scf loop, exx updated every iter
 
-            if (Exx_LRI_Interface<T, Tdata>::two_level_step)
+            if (this->two_level_step)
             {
                 restart_reset();
                 return true;
@@ -152,14 +152,14 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
                 XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
                 iter = 0;
                 std::cout << " Entering 2nd SCF, where EXX is updated" << std::endl;
-                Exx_LRI_Interface<T, Tdata>::two_level_step++;
+                this->two_level_step++;
                 return false;
             }
         }
         // has separate_loop case
         // exx converged or get max exx steps
-        else if (Exx_LRI_Interface<T, Tdata>::two_level_step == GlobalC::exx_info.info_global.hybrid_step
-            || (iter == 1 && Exx_LRI_Interface<T, Tdata>::two_level_step != 0))
+        else if (this->two_level_step == GlobalC::exx_info.info_global.hybrid_step
+            || (iter == 1 && this->two_level_step != 0))
         {
             restart_reset();
             return true;
@@ -167,7 +167,7 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
         else
         {
             // update exx and redo scf
-            if (Exx_LRI_Interface<T, Tdata>::two_level_step == 0)
+            if (this->two_level_step == 0)
             {
                 XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
             }
@@ -175,7 +175,7 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
             std::cout << " Updating EXX " << std::flush;
             timeval t_start;       gettimeofday(&t_start, NULL);
 
-            const bool flag_restart = (Exx_LRI_Interface<T, Tdata>::two_level_step == 0) ? true : false;
+            const bool flag_restart = (this->two_level_step == 0) ? true : false;
             this->mix_DMk_2D.mix(dm.get_DMK_vector(), flag_restart);
 
             // GlobalC::exx_lcao.cal_exx_elec(p_esolver->LOC, p_esolver->LOWF.wfc_k_grid);

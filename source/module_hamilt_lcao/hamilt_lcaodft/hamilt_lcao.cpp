@@ -67,7 +67,8 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
     Local_Orbital_Charge* loc_in,
     elecstate::Potential* pot_in,
     const K_Vectors& kv_in,
-    elecstate::DensityMatrix<TK,double>* DM_in)
+    elecstate::DensityMatrix<TK, double>* DM_in,
+    int* exx_two_level_step)
 {
     this->kv = &kv_in;
     this->classname = "HamiltLCAO";
@@ -394,7 +395,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
                 this->hR,
                 &(this->getHk(LM_in)),
                 *this->kv,
-                GlobalC::exx_info.info_ri.real_number ? &Exx_LRI_Interface<TK, double>::two_level_step : &Exx_LRI_Interface<TK, std::complex<double>>::two_level_step,
+                exx_two_level_step,
                 !GlobalC::restart.info_load.restart_exx&& GlobalC::restart.info_load.load_H);
         this->getOperator()->add(exx);
     }
