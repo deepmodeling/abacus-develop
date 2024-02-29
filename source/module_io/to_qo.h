@@ -65,21 +65,40 @@ class toQO
         /// @brief build RadialCollection for numerical atomic orbitals
         /// @param ntype number of atom types
         /// @param orbital_fn filenames of numerical atomic orbitals
-        void build_nao(const int ntype, const std::string* const orbital_fn);
+        void build_nao(const int ntype, 
+                       const std::string orbital_dir,
+                       const std::string* const orbital_fn,
+                       const int rank);
         /// @brief build RadialCollection for atomic orbitals
         /// @param ntype number of atom types
         /// @param charges charges of atoms
         /// @param nmax maximum principle quantum number of atoms
-        void build_hydrogen(const int ntype, const double* const charges, const int* const nmax);
+        void build_hydrogen(const int ntype, 
+                            const double* const charges, 
+                            const bool slater_screening,
+                            const int* const nmax,
+                            const double qo_thr,
+                            const int rank);
         /// @brief build RadialCollection for atomic orbitals
         /// @param ntype number of atom types
         /// @param pspot_fn filenames of pseudopotentials
         /// @param screening_coeffs screening coefficients of pseudopotentials, appears like a factor (exp[-s*r]) scaling the pswfc
-        void build_pswfc(const int ntype, const std::string* const pspot_fn, const double* const screening_coeffs);
+        void build_pswfc(const int ntype, 
+                         const std::string pseudo_dir,
+                         const std::string* const pspot_fn, 
+                         const double* const screening_coeffs,
+                         const double qo_thr,
+                         const int rank);
         /// @brief build RadialCollection for atomic orbitals
         /// @param ntype number of atom types
         /// @param pspot_fn filenames of pseudopotentials, if use qo_basis = hydrogen, omit this parameter
-        void build_ao(const int ntype, const std::string* const pspot_fn = nullptr);
+        void build_ao(const int ntype, 
+                      const std::string pseudo_dir,
+                      const std::string* const pspot_fn = nullptr,
+                      const std::vector<double> screening_coeffs = std::vector<double>(),
+                      const double qo_thr = 1e-10,
+                      const std::ofstream& ofs = std::ofstream(),
+                      const int rank = 0);
         /*
          *   Main functions
         */

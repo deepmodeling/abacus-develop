@@ -256,6 +256,7 @@ TEST_F(HydrogenRadialsTest, GenerateHydrogenRadialToconv)
 
     double rmax_chg1_n1l0 = hr.generate_hydrogen_radial_toconv(
         1.0,
+        false,
         1,
         0,
         1e-7,
@@ -273,6 +274,7 @@ TEST_F(HydrogenRadialsTest, GenerateHydrogenRadialToconv)
 
     double rmax_chg4_n2l1 = hr.generate_hydrogen_radial_toconv(
         4.0,
+        false,
         2,
         1,
         1e-7,
@@ -298,6 +300,7 @@ TEST_F(HydrogenRadialsTest, Build)
     hr.build(
         itype_,
         charge_,
+        false,
         nmax_,
         rcut_,
         dr_,
@@ -316,6 +319,7 @@ TEST_F(HydrogenRadialsTest, Build)
     hr.build(
         itype_,
         charge_,
+        false,
         4,
         rcut_,
         dr_,
@@ -337,6 +341,7 @@ TEST_F(HydrogenRadialsTest, Build)
     hr.build(
         itype_,
         charge_,
+        false,
         29,
         rcut_,
         dr_,
@@ -355,9 +360,35 @@ TEST_F(HydrogenRadialsTest, Build)
     EXPECT_EQ(hr.nzeta_max(), 4);
     EXPECT_EQ(hr.nchi(), 7);
     // Cu, energy-valence, 3p 4s 3d
+    printf("Unittest for generating Cu energy-valence orbitals without Slater screening:\n");
     hr.build(
         itype_,
-        charge_,
+        29, // use the real nuclear charge for Cu
+        false,
+        29,
+        rcut_,
+        dr_,
+        1e-6,
+        rank_,
+        "Cu",
+        "energy-valence",
+        ptr_log_
+    );
+    // nmax = 29, energy-valence, yields 3p 4s 3d orbitals
+    EXPECT_EQ(hr.lmax(), 2);
+    EXPECT_EQ(hr.nzeta(0), 1);
+    EXPECT_EQ(hr.nzeta(1), 1);
+    EXPECT_EQ(hr.nzeta(2), 1);
+    EXPECT_EQ(hr.nzeta(3), 0);
+    EXPECT_EQ(hr.nzeta_max(), 1);
+    EXPECT_EQ(hr.nchi(), 3);
+    // test with Slater screening on Cu
+    // Cu, energy-valence, 3p 4s 3d
+    printf("Unittest for generating Cu energy-valence orbitals with Slater screening:\n");
+    hr.build(
+        itype_,
+        29, // use the real nuclear charge for Cu
+        true,
         29,
         rcut_,
         dr_,
@@ -379,6 +410,7 @@ TEST_F(HydrogenRadialsTest, Build)
     hr.build(
         itype_,
         charge_,
+        false,
         4,
         rcut_,
         dr_,
@@ -396,6 +428,31 @@ TEST_F(HydrogenRadialsTest, Build)
     EXPECT_EQ(hr.nzeta(3), 1);
     EXPECT_EQ(hr.nzeta_max(), 4);
     EXPECT_EQ(hr.nchi(), 10);
+}
+
+TEST_F(HydrogenRadialsTest, SlaterScreeningTest)
+{
+    HydrogenRadials hr;
+    double sigma = hr.slater_screening("H", 1, 0);
+    EXPECT_NEAR(sigma, 0.0, 1e-6);
+    sigma = hr.slater_screening("He", 1, 0);
+    EXPECT_NEAR(sigma, 0.30, 1e-6);
+    sigma = hr.slater_screening("F", 2, 1);
+    EXPECT_NEAR(sigma, 3.8, 1e-6);
+    sigma = hr.slater_screening("Ca", 4, 0);
+    EXPECT_NEAR(sigma, 17.15, 1e-6);
+    sigma = hr.slater_screening("Sc", 4, 0);
+    EXPECT_NEAR(sigma, 18, 1e-6);
+    sigma = hr.slater_screening("Cu", 4, 0);
+    EXPECT_NEAR(sigma, 25.3, 1e-6);
+    sigma = hr.slater_screening("Cu", 3, 2);
+    EXPECT_NEAR(sigma, 21.15, 1e-6);
+    sigma = hr.slater_screening("Pt", 6, 0);
+    EXPECT_NEAR(sigma, 74.45, 1e-6);
+    sigma = hr.slater_screening("Pt", 5, 1);
+    EXPECT_NEAR(sigma, 57.65, 1e-6);
+    sigma = hr.slater_screening("Os", 1, 0);
+    EXPECT_NEAR(sigma, 0.3, 1e-6);
 }
 
 int main(int argc, char** argv)
