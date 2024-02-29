@@ -126,8 +126,6 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
                 {
                     if (atoms[it].mag[ia] > -this->epsilon)
                     {
-                        std::cout << "mag=" << atoms[it].mag[ia] << std::endl;
-                        std::cout << "push: " << this->newpos[3 * (istart[it] + ia)] << " " << this->newpos[3 * (istart[it] + ia) + 1] << " " << this->newpos[3 * (istart[it] + ia) + 2] << std::endl;
                         pos_spinup.push_back(this->newpos[3 * (istart[it] + ia)]);
                         pos_spinup.push_back(this->newpos[3 * (istart[it] + ia) + 1]);
                         pos_spinup.push_back(this->newpos[3 * (istart[it] + ia) + 2]);
