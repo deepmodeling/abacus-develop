@@ -13,10 +13,10 @@ using overload_cast_ = pybind11::detail::overload_cast_impl<Args...>;
 void bind_m_nao(py::module& m)
 {
     // Create the submodule for Module NAO
-    py::module m_radial_collection = m.def_submodule("ModuleNAO");
+    py::module m_nao = m.def_submodule("ModuleNAO");
 
     // Bind the RadialCollection class
-    py::class_<RadialCollection>(m_radial_collection, "RadialCollection")
+    py::class_<RadialCollection>(m_nao, "RadialCollection")
         .def(py::init<>())
         .def("build", [](RadialCollection& self, int nfile, const py::list &file_list, char ftype){
              std::vector<std::string> files;
@@ -49,10 +49,51 @@ void bind_m_nao(py::module& m)
         .def_property_readonly("nzeta_max", overload_cast_<>()(&RadialCollection::nzeta_max, py::const_))
         .def("nchi", overload_cast_<const int>()(&RadialCollection::nchi, py::const_), "itype"_a)
         .def_property_readonly("nchi", overload_cast_<>()(&RadialCollection::nchi, py::const_));
-    //Bind the TwoCenterTable class
-    // py::class_<TwoCenterTable>(m_two_center_integrator, "TwoCenterIntegrator")
-    //     .def(py::init<>())
-    //     .def("tabulate", &TwoCenterIntegrator::tabulate, "bra"_a, "ket"_a, "op"_a, "nr"_a, "cutoff"_a)
-    //     .def("calculate", [](TwoCenterIntegrator& self, const int type))
+    //Bind the TwoCenterIntegrator class
+    py::class_<TwoCenterIntegrator>(m_nao, "TwoCenterIntegrator")
+        .def(py::init<>())
+        .def("tabulate", &TwoCenterIntegrator::tabulate, "bra"_a, "ket"_a, "op"_a, "nr"_a, "cutoff"_a)
+        .def("calculate", [](TwoCenterIntegrator& self, const int itype1, const int l1, const int izeta1, const int m1, const int itype2, const int l2, const int izeta2,  const int m2, py::array_t<double> pvR, bool cal_grad = false)
+        {
+            py::buffer_info pvR_info = pvR.request();
+            if (pvR_info.size != 3)
+            {
+                throw std::runtime_error("Radial part must have 3 elements");
+            }
+            double* cvR = static_cast<double*>(pvR_info.ptr);
+            ModuleBase::Vector3<double> vR(cvR[0], cvR[1], cvR[2]);
+            double out[1] = {0.0};
+            double* grad_out = nullptr;
+            if (cal_grad)
+            {
+                grad_out = new double[3];
+            }
+            self.calculate(itype1, l1, izeta1, m1, itype2, l2, izeta2, m2, vR, out, grad_out);
+            py::array_t<double> out_array({1}, out);
+            if (cal_grad)
+            {
+                py::array_t<double> grad_out_array({3}, grad_out);
+                return py::make_tuple(out_array, grad_out_array);
+            }
+            else
+            {
+                py::array_t<double> grad_out_array({0});
+                return py::make_tuple(out_array, grad_out_array);
+            }
+            
+        }, "itype1"_a, "l1"_a, "izeta1"_a, "m1"_a, "itype2"_a, "l2"_a, "izeta2"_a, "m2"_a, "pvR"_a, "cal_grad"_a = false)
+        .def("snap", [](TwoCenterIntegrator& self, const int itype1, const int l1, const int izeta1, const int m1, const int itype2, py::array_t<double> pvR, const bool deriv){
+            py::buffer_info pvR_info = pvR.request();
+            if (pvR_info.size != 3)
+            {
+                throw std::runtime_error("Radial part must have 3 elements");
+            }
+            double* cvR = static_cast<double*>(pvR_info.ptr);
+            ModuleBase::Vector3<double> vR(cvR[0], cvR[1], cvR[2]);
+            // TODO: check deriv & out memory allocation
+            std::vector<std::vector<double>> out;
+            self.snap(itype1, l1, izeta1, m1, itype2, vR, deriv, out);
+            return out;
+        }, "itype1"_a, "l1"_a, "izeta1"_a, "m1"_a, "itype2"_a, "pvR"_a, "deriv"_a = false);
         
 }
