@@ -10,6 +10,7 @@ find_package(pybind11 CONFIG REQUIRED)
 
 set(ABACUS_SOURCE_DIR "${PROJECT_SOURCE_DIR}/../../source")
 set(BASE_PATH "${ABACUS_SOURCE_DIR}/module_base")
+set(NAO_PATH "${ABACUS_SOURCE_DIR}/module_basis/module_nao")
 set(ENABLE_LCAO ON)
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/../../cmake")
 
@@ -59,12 +60,25 @@ set(ORB_BINARY_DIR "${PROJECT_SOURCE_DIR}/build/orb")
 add_subdirectory(${ABACUS_SOURCE_DIR}/module_basis/module_ao ${ORB_BINARY_DIR})
 # set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-# add nao shared library
-file(GLOB _naos ${ABACUS_SOURCE_DIR}/module_basis/module_nao/*.cpp  
-${ABACUS_SOURCE_DIR}/module_base/kernels/math_op.cpp
-${ABACUS_SOURCE_DIR}/module_psi/kernels/psi_memory_op.cpp
-${ABACUS_SOURCE_DIR}/module_io/output_radial.cpp
-)
+# add nao shared library  
+list(APPEND _naos
+    ${NAO_PATH}/atomic_radials.cpp
+    ${NAO_PATH}/beta_radials.cpp
+    ${NAO_PATH}/hydrogen_radials.cpp
+    ${NAO_PATH}/numerical_radial.cpp
+    ${NAO_PATH}/pswfc_radials.cpp
+    ${NAO_PATH}/radial_collection.cpp
+    ${NAO_PATH}/radial_set.cpp
+    ${NAO_PATH}/real_gaunt_table.cpp
+    ${NAO_PATH}/sphbes_radials.cpp
+    ${NAO_PATH}/two_center_bundle.cpp
+    ${NAO_PATH}/two_center_integrator.cpp
+    ${NAO_PATH}/two_center_table.cpp
+    # dependency
+    ${ABACUS_SOURCE_DIR}/module_base/kernels/math_op.cpp
+    ${ABACUS_SOURCE_DIR}/module_psi/kernels/psi_memory_op.cpp
+    ${ABACUS_SOURCE_DIR}/module_io/output_radial.cpp
+    )
 add_library(naopack SHARED 
     ${_naos}
     )
@@ -77,7 +91,6 @@ target_link_libraries(naopack
 )
 # list(APPEND _sources ${_naos} ${_bases})
 list(APPEND _sources
-    # ${ABACUS_SOURCE_DIR}/module_basis/module_nao/radial_collection.cpp
     ${PROJECT_SOURCE_DIR}/src/py_abacus.cpp
     ${PROJECT_SOURCE_DIR}/src/py_base_math.cpp
     ${PROJECT_SOURCE_DIR}/src/py_m_nao.cpp
