@@ -255,10 +255,11 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
         
         //calculate VU
         const double u_value = this->dftu->U[T0];
-        std::vector<double> VU(occ.size());
-        this->cal_v_of_u(occ, tlp1, u_value, VU.data(), this->dftu->EU);
+        std::vector<double> VU_tmp(occ.size());
+        this->cal_v_of_u(occ, tlp1, u_value, VU_tmp.data(), this->dftu->EU);
         // transfer occ from pauli matrix format to normal format
-        if(GlobalV::NSPIN == 4) this->transfer_nspin4(VU);
+        std::vector<TR> VU(occ.size());
+        this->transfer_vu(VU_tmp, VU);
 
         // second iteration to calculate Hamiltonian matrix
         // calculate <psi_I|beta_m> U*(1/2*delta(m, m')-occ(m, m')) <beta_m'|psi_{J,R}> for each pair of <IJR> atoms
@@ -305,7 +306,7 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(
     const Parallel_Orbitals* paraV,
     const std::unordered_map<int, std::vector<double>>& nlm1_all,
     const std::unordered_map<int, std::vector<double>>& nlm2_all,
-    const std::vector<double>& VU,
+    const std::vector<TR>& VU,
     TR* data_pointer)
 {
 
@@ -424,11 +425,28 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::cal_occupations(
 }
 
 template<typename TK, typename TR>
-void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::transfer_nspin4(std::vector<double>& vu)
+void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::transfer_vu(std::vector<double>& vu_tmp, std::vector<TR>& vu)
 {
+#ifdef __DEBUG
+    assert(vu.size() == vu_tmp.size());
+#endif
+    for(int i=0;i<vu_tmp.size();i++)
+    {
+        vu[i] = vu_tmp[i];
+    }
+}
+
+template<>
+void hamilt::DFTUNew<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>::transfer_vu(std::vector<double>& vu_tmp, std::vector<std::complex<double>>& vu)
+{
+#ifdef __DEBUG
+    assert(vu.size() == vu_tmp.size());
+#endif
+    
+    // TR == std::complex<double> transfer from double to std::complex<double>
     const int m_size = int(sqrt(vu.size())/2);
     const int m_size2 = m_size * m_size;
-    std::vector<double> vu_tmp(vu.size());
+    vu.resize(vu_tmp.size());
     for(int m1=0;m1<m_size;m1++)
     {
         for(int m2=0;m2<m_size;m2++)
@@ -438,14 +456,13 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::transfer_nspin4(std::vector<
             index[1] = m1*m_size+m2 + m_size2;
             index[2] = m2*m_size+m1 + m_size2 * 2;
             index[3] = m2*m_size+m1 + m_size2 * 3;
-            vu_tmp[index[0]] = 0.5 * (vu[index[0]] + vu[index[3]]);
-            vu_tmp[index[3]] = 0.5 * (vu[index[0]] - vu[index[3]]);
+            vu[index[0]] = 0.5 * (vu_tmp[index[0]] + vu_tmp[index[3]]);
+            vu[index[3]] = 0.5 * (vu_tmp[index[0]] - vu_tmp[index[3]]);
             //vu should be complex<double> type, but here we use double type for test
-            vu_tmp[index[1]] = 0.5 * (vu[index[1]] );//+ std::complex<double>(0.0, 1.0) * vu[index[2]];
-            vu_tmp[index[2]] = 0.5 * (vu[index[1]] );//- std::complex<double>(0.0, 1.0) * vu[index[2]];
+            vu[index[1]] = 0.5 * (vu_tmp[index[1]] + std::complex<double>(0.0, 1.0) * vu_tmp[index[2]]);
+            vu[index[2]] = 0.5 * (vu_tmp[index[1]] - std::complex<double>(0.0, 1.0) * vu_tmp[index[2]]);
         }
     }
-    vu = vu_tmp;
 }
 
 template <typename TK, typename TR>

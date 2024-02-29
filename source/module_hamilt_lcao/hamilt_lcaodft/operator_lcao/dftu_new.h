@@ -97,7 +97,7 @@ class DFTUNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                         std::vector<double>& occupations);
 
     /// transfer VU format from pauli matrix to normal for non-collinear spin case
-    void transfer_nspin4(std::vector<double>& occ);
+    void transfer_vu(std::vector<double>& vu_tmp, std::vector<TR>& vu);
     /// VU_{m, m'} = sum_{m,m'} (1/2*delta_{m, m'} - occ_{m, m'}) * U
     /// EU = sum_{m,m'} 1/2 * U * occ_{m, m'} * occ_{m', m}
     void cal_v_of_u(
@@ -123,7 +123,7 @@ class DFTUNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                     const Parallel_Orbitals* paraV,
                     const std::unordered_map<int, std::vector<double>>& nlm1_all,
                     const std::unordered_map<int, std::vector<double>>& nlm2_all,
-                    const std::vector<double>& vu_in,
+                    const std::vector<TR>& vu_in,
                     TR* data_pointer);
 
     /**

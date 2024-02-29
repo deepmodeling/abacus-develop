@@ -154,6 +154,37 @@ void DFTU::write_occup_m(std::ofstream &ofs, bool diag)
                     }
                     else if (GlobalV::NSPIN == 4) // SOC
                     {
+                        if(diag)// diagonalization for local occupation matrix and print the eigenvalues
+                        {//output the eigenvalues for rho , mag_x, mag_y, mag_z
+                            double sum0[4];
+                            std::vector<std::vector<double>> A(2 * l + 1, std::vector<double>(2 * l + 1));
+                            int index = 0;
+                            for(int is=0;is<4;is++)
+                            {
+                                for (int m0 = 0; m0 < 2 * l + 1; m0++)
+                                {
+                                    for (int m1 = 0; m1 < 2 * l + 1; m1++)
+                                    {
+                                        A[m0][m1] = locale[iat][l][n][0].c[index];
+                                        index++;
+                                    }
+                                }
+                                std::vector<double> eigenvalues = CalculateEigenvalues(A, 2 * l + 1);
+                                sum0[is] = 0.0;
+                                ofs<< "eigenvalues"
+                                    << "  " << is << std::endl;
+                                for (int i = 0; i < 2 * l + 1; i++)
+                                {
+                                    ofs << std::setw(12) << std::setprecision(8) << std::fixed
+                                        << eigenvalues[i];
+                                    sum0[is] += eigenvalues[i];
+                                }
+                                ofs << std::setw(12) << std::setprecision(8) << std::fixed
+                                    << sum0[is] << std::endl;
+                            }
+                            ofs << std::setw(12) << std::setprecision(8) << std::fixed<< "atomic mag: "<<iat<<" " << sum0[1] <<" "<< sum0[2] << " " << sum0[3] << std::endl;
+                        }
+                        else
                         for (int m0 = 0; m0 < 2 * l + 1; m0++)
                         {
                             for (int ipol0 = 0; ipol0 < GlobalV::NPOL; ipol0++)
