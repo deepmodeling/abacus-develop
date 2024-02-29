@@ -306,7 +306,8 @@ TEST_F(DMTest, saveDMR)
     // update DMR_save
     DM_test.save_DMR();
     EXPECT_EQ(DM_test.get_DMR_pointer(1)->get_nnr(), DM_test._DMR_save[0].size());
-    
+    // delete 
+    delete kv;   
 }
 
 int main(int argc, char** argv)
