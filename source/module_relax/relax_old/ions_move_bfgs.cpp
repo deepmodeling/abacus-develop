@@ -40,6 +40,8 @@ void Ions_Move_BFGS::start(UnitCell& ucell, const ModuleBase::matrix& force, con
     // istep must be set eariler.
 
     // use force to setup gradient.
+    // Only the first step needs to generate the pos from ucell.
+    // In the following steps, the pos is updated by BFGS methods.
     if (first_step)
     {
         Ions_Move_Basic::setup_gradient(ucell, force, this->pos, this->grad);
