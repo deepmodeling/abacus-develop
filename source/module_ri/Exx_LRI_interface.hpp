@@ -8,8 +8,6 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
 
 #include <sys/time.h>
-template <typename T, typename Tdata>
-int Exx_LRI_Interface<T, Tdata>::two_level_step = 0;
 
 template<typename T, typename Tdata>
 void Exx_LRI_Interface<T, Tdata>::write_Hexxs(const std::string& file_name) const
@@ -198,3 +196,4 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
     restart_reset();
     return true;
 }
+#endif

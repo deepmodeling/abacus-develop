@@ -5,6 +5,7 @@
 #include "operator_lcao.h"
 #ifdef __EXX
 #include <RI/global/Tensor.h>
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 namespace hamilt
 {
 
@@ -30,9 +31,9 @@ public:
         std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd_in = nullptr,
         std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc_in = nullptr,
         int* two_level_step = nullptr,
-        const bool restart = false)
-    : kv(kv_in), Hexxd(Hexxd_in), Hexxc(Hexxc_in), OperatorLCAO<TK, TR>(LM_in, kv_in.kvec_d, hR_in, hK_in),
-        two_level_step(two_level_step), restart(restart)
+        const bool restart_in = false)
+        : kv(kv_in), Hexxd(Hexxd_in), Hexxc(Hexxc_in), OperatorLCAO<TK, TR>(LM_in, kv_in.kvec_d, hR_in, hK_in),
+        two_level_step(two_level_step), restart(restart_in)
     {
         this->cal_type = lcao_exx;
         if (restart)

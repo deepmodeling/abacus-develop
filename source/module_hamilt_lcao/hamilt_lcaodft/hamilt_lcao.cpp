@@ -395,6 +395,8 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
                 this->hR,
                 &(this->getHk(LM_in)),
                 *this->kv,
+                LM_in->Hexxd,
+                LM_in->Hexxc,
                 exx_two_level_step,
                 !GlobalC::restart.info_load.restart_exx&& GlobalC::restart.info_load.load_H);
         this->getOperator()->add(exx);

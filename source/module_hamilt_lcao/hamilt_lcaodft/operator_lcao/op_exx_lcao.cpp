@@ -75,7 +75,7 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHk(int ik)
                 kv,
                 ik,
                 GlobalC::exx_info.info_global.hybrid_alpha,
-                *this->Hexxd == nullptr ? *this->LM->Hexxd : *this->Hexxd,
+                this->Hexxd == nullptr ? *this->LM->Hexxd : *this->Hexxd,
                 *this->LM->ParaV,
                 *this->hK);
         else
