@@ -9,9 +9,10 @@ Python).
 Installation
 ------------
 
-- install pybind11 and scikit-build-core by `pip install pybind11 scikit-build-core`
-- clone this repository
-- `pip install -v .`
+- create and activate a new conda env, e.g. `conda create -n myenv python=3.8 & conda activate myenv`.
+- clone ABACUS main repository and `cd abacus-develop/python/pyabacus`.
+- install dependencies by `pip install -r requirements.txt`
+- build pyabacus by `pip install -v .`.
 
 
 CI Examples
@@ -23,21 +24,11 @@ using [`cibuildwheel`][].
 
 Use `pytest` to run all the unit tests for pyabacus in the local machine.
 
+Run `python test_m_nao.py` in `tests` to check the S matrix.
+
 ```shell
-# pytest -v
-====================================================== test session starts =======================================================
-platform linux -- Python 3.8.18, pytest-8.0.0, pluggy-1.4.0 -- /root/miniconda3-gnu/envs/pyabacus/bin/python
-cachedir: .pytest_cache
-rootdir: /root/abacus-python/abacus-develop/python/pyabacus
-configfile: pyproject.toml
-testpaths: tests
-collected 3 items                                                                                                                
-
-tests/test_base_math.py::test_sphbes PASSED                                                                                [ 33%]
-tests/test_base_math.py::test_sbt PASSED                                                                                   [ 66%]
-tests/test_base_math.py::test_simpson PASSED                                                                               [100%]
-
-======================================================= 3 passed in 0.14s ========================================================
+$ python test_m_nao.py 
+norm(S_e3 - S_numer) =  3.341208104032616e-15
 ```
 
 License
