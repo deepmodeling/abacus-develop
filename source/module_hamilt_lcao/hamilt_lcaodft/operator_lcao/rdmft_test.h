@@ -131,10 +131,13 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
           potential_(potential_in),
           hamilt::OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in)
     {
+        std::cout << "\n******\n" << "cal_type" << "\n******" << std::endl;
         this->cal_type = hamilt::lcao_gint;
-
+        std::cout << "\n******\n" << "before initialize_HR()" << "\n******" << std::endl;
         this->initialize_HR(ucell_in, GridD_in, paraV);
-        GK_in->initialize_pvpR(*ucell_in, GridD_in);
+        std::cout << "\n******\n" << "after initialize_HR()" << "\n******" << std::endl;
+        GK_in->initialize_pvpR(*ucell_in, GridD_in);        // after modifying G_in in update_charge(), something wrong here 
+        std::cout << "\n******\n" << "after initialize_pvpR()" << "\n******" << std::endl;
     }
     Veff_rdmft(Gint_Gamma* GG_in,
                           Local_Orbital_Charge* loc_in,
@@ -387,19 +390,21 @@ double sumWg_getEnergy(const ModuleBase::matrix& wg_wfcHwfc);
 
 // update_charge(kv_in, G_in, ParaV, wg, wfc, loc_in, charge_in, DM_in.get_DMR_vector());
 
-template <typename TR, typename TK, typename T_Gint>
+template <typename TK, typename T_Gint>
 void update_charge(const K_Vectors& kv, T_Gint G_in, const Parallel_Orbitals* ParaV, const ModuleBase::matrix& wg,
-                    const psi::Psi<TK>& wfc,Local_Orbital_Charge& loc, Charge& charge, const hamilt::HContainer<TR>& DMR_in)
+                    const psi::Psi<TK>& wfc,Local_Orbital_Charge& loc, Charge& charge, elecstate::DensityMatrix<TK, double>& DM_in)
 {
     if( GlobalV::GAMMA_ONLY_LOCAL )
     {
         elecstate::DensityMatrix<TK, double> DM_gamma_only(ParaV, GlobalV::NSPIN);
         elecstate::cal_dm_psi(ParaV, wg, wfc, DM_gamma_only);
         DM_gamma_only.cal_DMR();
+        DM_gamma_only.init_DMR(&GlobalC::GridD, &GlobalC::ucell);
 
         // this code is copying from function ElecStateLCAO<TK>::psiToRho(), in elecstate_lcao.cpp
         G_in.transfer_DM2DtoGrid(DM_gamma_only.get_DMR_vector());
-        Gint_inout inout(loc.DM, charge.rho, Gint_Tools::job_type::rho);  // what is Local_Orbital_Charge& loc_in? ///////////////
+        //double** invaild_ptr = nullptr;
+        Gint_inout inout(loc.DM_R, charge.rho, Gint_Tools::job_type::rho);  // what is Local_Orbital_Charge& loc_in? ///////////////
         G_in.cal_gint(&inout);
 
         charge.renormalize_rho();
@@ -410,18 +415,28 @@ void update_charge(const K_Vectors& kv, T_Gint G_in, const Parallel_Orbitals* Pa
         elecstate::DensityMatrix<TK, double> DM(&kv, ParaV, GlobalV::NSPIN);
         elecstate::cal_dm_psi(ParaV, wg, wfc, DM);
 
-        DM.init_DMR(DMR_in);
+        std::cout << "\n******\n" << "after cal_dm_psi()" << "\n******" << std::endl;
 
-        // Grid_Driver gd(0, 0, 0);
-        // DM.init_DMR(&gd, &GlobalC::ucell);
+        // *(DM_in.get_DMR_pointer(0))
 
-        std::cout << "\n******\n" << "before DM.cal_DMR()" << "\n******" << std::endl;
+        // int spinMulR = DM_in.get_DMR_vector().size();
+
+        // for(int irs=0; irs < spinMulR; ++irs)
+        // {
+        //     DM.init_DMR( *( DM_in.get_DMR_vector()[irs] ) );
+        // }
+
+        DM.init_DMR(&GlobalC::GridD, &GlobalC::ucell);
+
+        std::cout << "\n******\n" << "after init_DMR()" << "\n******" << std::endl;
+
         DM.cal_DMR();
 
         std::cout << "\n******\n" << "after DM.cal_DMR()" << "\n******" << std::endl;
 
         // this code is copying from function ElecStateLCAO<TK>::psiToRho(), in elecstate_lcao.cpp
         G_in.transfer_DM2DtoGrid(DM.get_DMR_vector());
+        //double** invaild_ptr = nullptr;
         Gint_inout inout(loc.DM_R, charge.rho, Gint_Tools::job_type::rho);  // what is Local_Orbital_Charge& loc_in? ///////////////
         G_in.cal_gint(&inout);
 
@@ -447,7 +462,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
                         const ModulePW::PW_Basis& rho_basis_in,
                         const ModuleBase::matrix& vloc_in,
                         const ModuleBase::ComplexMatrix& sf_in,
-                        const elecstate::DensityMatrix<TK, double>& DM_in,   // delete later
+                        elecstate::DensityMatrix<TK, double>& DM_in,   // delete later
                         const std::string XC_func_rdmft = "HF",
                         const double alpha_power = 0.656)   // 0.656 for soilds, 0.525 for dissociation of H2, 0.55~0.58 for HEG
 {
@@ -522,9 +537,11 @@ double rdmft_cal(LCAO_Matrix* LM_in,
 
     // // what is Local_Orbital_Charge& loc_in?
 
-    std::cout << "\n******\n" << "before update charge" << "\n******" << std::endl;
+    T_Gint G_copy = G_in;
 
-    update_charge(kv_in, G_in, ParaV, wg, wfc, loc_in, charge_in, *(DM_in.get_DMR_pointer(0)));  /////////////////////  DM_in.get_DMR_vector() error
+    std::cout << "\n******\n" << "before update charge" << "\n******" << std::endl;
+    
+    update_charge(kv_in, G_copy, ParaV, wg, wfc, loc_in, charge_in, DM_in);  /////////////////////  DM_in.get_DMR_vector() error
 
     std::cout << "\n******\n" << "after update charge" << "\n******" << std::endl;
 

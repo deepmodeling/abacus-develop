@@ -981,7 +981,7 @@ namespace ModuleESolver
             this->sf.strucFac,
             *( dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM() ),
             "power",
-            0.99
+            1.0
         );
     }
 
