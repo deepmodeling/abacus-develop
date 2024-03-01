@@ -110,7 +110,45 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
 
         test_brav = true; // output the real ibrav and point group
         this->setgroup(this->symop, this->nop, this->real_brav);
-        this->getgroup(nrot_out, nrotk_out, ofs_running);
+
+        if (GlobalV::NSPIN > 1) pricell_loop = this->magmom_same_check(atoms);
+
+        if (!pricell_loop && GlobalV::NSPIN == 2)
+        {//analyze symmetry for spin-up atoms only
+            std::vector<double> pos_spinup;
+            for (int it = 0;it < ntype;++it)
+            {
+                int na_spinup = 0;
+                for (int ia = 0;ia < atoms[it].na;++ia) if (atoms[it].mag[ia] > -this->epsilon) ++na_spinup;
+                this->na[it] = na_spinup;
+                //update newpos
+                for (int ia = 0;ia < atoms[it].na;++ia)
+                {
+                    if (atoms[it].mag[ia] > -this->epsilon)
+                    {
+                        pos_spinup.push_back(this->newpos[3 * (istart[it] + ia)]);
+                        pos_spinup.push_back(this->newpos[3 * (istart[it] + ia) + 1]);
+                        pos_spinup.push_back(this->newpos[3 * (istart[it] + ia) + 2]);
+                    }
+                }
+                // update start to spin-up configuration
+                if (it > 0) istart[it] = istart[it - 1] + na[it - 1];
+                if (na[it] < na[itmin_type])
+                {
+                    this->itmin_type = it;
+                    this->itmin_start = istart[it];
+                }
+            }
+            this->getgroup(nrot_out, nrotk_out, ofs_running, pos_spinup.data());
+            // recover na and istart
+            for (int it = 0;it < ntype;++it)
+            {
+                this->na[it] = atoms[it].na;
+                if (it > 0) istart[it] = istart[it - 1] + na[it - 1];
+            }
+        }
+        else
+            this->getgroup(nrot_out, nrotk_out, ofs_running, this->newpos);
         };
 
     if (GlobalV::CALCULATION == "cell-relax" && nrotk > 0)
@@ -230,8 +268,6 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
     this->gtrans_convert(gtrans, gtrans, nrotk, optlat, latvec1);
 
     this->set_atom_map(atoms);
-
-    if (GlobalV::NSPIN > 1) pricell_loop = this->magmom_same_check(atoms);
 
     if (GlobalV::CALCULATION == "relax") this->all_mbl = this->is_all_movable(atoms, st);
 
@@ -765,9 +801,9 @@ void Symmetry::lattice_type(
 }
 
 
-void Symmetry::getgroup(int &nrot, int &nrotk, std::ofstream &ofs_running)
+void Symmetry::getgroup(int& nrot, int& nrotk, std::ofstream& ofs_running, double* pos)
 {
-    ModuleBase::TITLE("Symmetry","getgroup");
+    ModuleBase::TITLE("Symmetry", "getgroup");
 
 	//--------------------------------------------------------------------------------
     //return all possible space group operators that reproduce a lattice with basis
@@ -790,7 +826,7 @@ void Symmetry::getgroup(int &nrot, int &nrotk, std::ofstream &ofs_running)
     for (int i = 0; i < nop; ++i)
     {
     //    std::cout << "symop = " << symop[i].e11 <<" "<< symop[i].e12 <<" "<< symop[i].e13 <<" "<< symop[i].e21 <<" "<< symop[i].e22 <<" "<< symop[i].e23 <<" "<< symop[i].e31 <<" "<< symop[i].e32 <<" "<< symop[i].e33 << std::endl;
-        this->checksym(this->symop[i], this->gtrans[i], this->newpos);
+        this->checksym(this->symop[i], this->gtrans[i], pos);
       //  std::cout << "s_flag =" <<s_flag<<std::endl;
         if (s_flag == 1)
         {
