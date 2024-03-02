@@ -185,7 +185,7 @@ void toQO::build_pswfc(const int ntype, const std::string* const pspot_fn, const
     #endif
     delete[] pspot_fn_;
 }
-
+/*
 void toQO::build_szv(const int ntype)
 {
     // build the numerical atomic orbital basis
@@ -206,7 +206,7 @@ void toQO::build_szv(const int ntype)
         nchi_ += _nchi_it * na_[itype];
     }
 }
-
+*/
 void toQO::build_ao(const int ntype, const std::string* const pspot_fn)
 {
     if(qo_basis_ == "hydrogen")
@@ -217,10 +217,12 @@ void toQO::build_ao(const int ntype, const std::string* const pspot_fn)
     {
         build_pswfc(ntype_, pspot_fn, GlobalV::qo_screening_coeff.data());
     }
+    /*
     else if(qo_basis_ == "szv")
     {
         build_szv(ntype_);
     }
+    */
     else
     {
         #ifdef __MPI

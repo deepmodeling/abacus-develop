@@ -76,8 +76,8 @@ class toQO
         /// @param pspot_fn filenames of pseudopotentials
         /// @param screening_coeffs screening coefficients of pseudopotentials, appears like a factor (exp[-s*r]) scaling the pswfc
         void build_pswfc(const int ntype, const std::string* const pspot_fn, const double* const screening_coeffs);
-
-        void build_szv(const int ntype);
+        //function might be implemented in future
+        //void build_szv(const int ntype);
         /// @brief build RadialCollection for atomic orbitals
         /// @param ntype number of atom types
         /// @param pspot_fn filenames of pseudopotentials, if use qo_basis = hydrogen, omit this parameter
