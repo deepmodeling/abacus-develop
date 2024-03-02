@@ -918,6 +918,7 @@ namespace ModuleESolver
     // esolver_fp.h(ModulePW::PW_Basis* pw_rho, ModulePW::PW_Basis* pw_rhod), this->pw_rho
     // GlobalC::ppcell.vloc(ModuleBase::matrix vloc), 
     // esolver_fp.h(Structure_Factor sf), structure_factor.h(ModuleBase::ComplexMatrix strucFac), this->sf.strucFac
+    // elecstate::DensityMatrix<TK, double>&  *( dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM() )
 
 
     // //test use dgemm_
@@ -928,8 +929,9 @@ namespace ModuleESolver
     // gamma only calculation
     if( GlobalV::GAMMA_ONLY_LOCAL )
     {
+        // when gamma_only, this->psi->get_nbands() = nbasis_local, so we use ParaV get the true nbands_local for wfc
+        const int nbands_local = LM.ParaV->ncol_bands;
         const int nk_total = this->psi->get_nk();
-        const int nbands_local = LM.ParaV->ncol_bands;  // when gamma_only, this->psi->get_nbands() = nbasis_local, so we use ParaV get the true nbands_local for wfc
         const int nbasis_local = this->psi->get_nbasis();
 
         std::cout << "\n\n\nnk_total= " << nk_total << "\n\n\n";
@@ -957,7 +959,6 @@ namespace ModuleESolver
             *(this->pw_rho),
             GlobalC::ppcell.vloc,
             this->sf.strucFac,
-            *( dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM() ),
             "power",
             0.5
         );
@@ -979,7 +980,6 @@ namespace ModuleESolver
             *(this->pw_rho),
             GlobalC::ppcell.vloc,
             this->sf.strucFac,
-            *( dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM() ),
             "power",
             1.0
         );
