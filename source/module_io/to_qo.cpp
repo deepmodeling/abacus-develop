@@ -199,7 +199,7 @@ void toQO::build_pswfc(const int ntype,
         int _nchi_it = 0;
         for(int l = 0; l <= ao_->lmax(itype); l++)
         {
-            _nchi_it += (2*l+1)*ao_->nzeta(itype, l);
+            if(orbital_filter(l, strategies_[itype])) _nchi_it += (2*l+1)*ao_->nzeta(itype, l);
         }
         nchi_ += _nchi_it * na_[itype];
     }
