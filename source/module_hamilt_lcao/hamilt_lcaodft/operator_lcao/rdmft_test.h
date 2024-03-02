@@ -390,8 +390,12 @@ double sumWg_getEnergy(const ModuleBase::matrix& wg_wfcHwfc);
 
 // update_charge(kv_in, G_in, ParaV, wg, wfc, loc_in, charge_in, DM_in.get_DMR_vector());
 
+
+template <typename T_Gint>
+void test_GKorGG(T_Gint& G_in) {}
+
 template <typename TK, typename T_Gint>
-void update_charge(const K_Vectors& kv, T_Gint G_in, const Parallel_Orbitals* ParaV, const ModuleBase::matrix& wg,
+void update_charge(const K_Vectors& kv, T_Gint& G_in, const Parallel_Orbitals* ParaV, const ModuleBase::matrix& wg,
                     const psi::Psi<TK>& wfc,Local_Orbital_Charge& loc, Charge& charge, elecstate::DensityMatrix<TK, double>& DM_in)
 {
     if( GlobalV::GAMMA_ONLY_LOCAL )
@@ -401,7 +405,7 @@ void update_charge(const K_Vectors& kv, T_Gint G_in, const Parallel_Orbitals* Pa
         DM_gamma_only.cal_DMR();
         DM_gamma_only.init_DMR(&GlobalC::GridD, &GlobalC::ucell);
 
-        // this code is copying from function ElecStateLCAO<TK>::psiToRho(), in elecstate_lcao.cpp
+        //this code is copying from function ElecStateLCAO<TK>::psiToRho(), in elecstate_lcao.cpp
         G_in.transfer_DM2DtoGrid(DM_gamma_only.get_DMR_vector());
         //double** invaild_ptr = nullptr;
         Gint_inout inout(loc.DM_R, charge.rho, Gint_Tools::job_type::rho);  // what is Local_Orbital_Charge& loc_in? ///////////////
@@ -416,8 +420,6 @@ void update_charge(const K_Vectors& kv, T_Gint G_in, const Parallel_Orbitals* Pa
         elecstate::cal_dm_psi(ParaV, wg, wfc, DM);
 
         std::cout << "\n******\n" << "after cal_dm_psi()" << "\n******" << std::endl;
-
-        // *(DM_in.get_DMR_pointer(0))
 
         // int spinMulR = DM_in.get_DMR_vector().size();
 
@@ -537,13 +539,15 @@ double rdmft_cal(LCAO_Matrix* LM_in,
 
     // // what is Local_Orbital_Charge& loc_in?
 
-    T_Gint G_copy = G_in;
-
     std::cout << "\n******\n" << "before update charge" << "\n******" << std::endl;
     
-    update_charge(kv_in, G_copy, ParaV, wg, wfc, loc_in, charge_in, DM_in);  /////////////////////  DM_in.get_DMR_vector() error
+    update_charge(kv_in, G_in, ParaV, wg, wfc, loc_in, charge_in, DM_in);  /////////////////////
 
     std::cout << "\n******\n" << "after update charge" << "\n******" << std::endl;
+
+    test_GKorGG(G_in);
+
+    std::cout << "\n******\n" << "test" << "\n******" << std::endl;
 
         // std::cout << "\n******\n" << "before DM" << "\n******" << std::endl;
         // elecstate::DensityMatrix<TK, double> DM(&kv_in, ParaV, GlobalV::NSPIN);
