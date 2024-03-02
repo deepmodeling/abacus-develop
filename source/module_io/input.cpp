@@ -204,6 +204,7 @@ void Input::Default(void)
     xc_temperature = 0.0;
     nspin = 1;
     nelec = 0.0;
+    nelec_delta = 0.0;
     lmaxmax = 2;
     //----------------------------------------------------------
     // new function
@@ -922,6 +923,10 @@ bool Input::Read(const std::string& fn)
         else if (strcmp("nelec", word) == 0)
         {
             read_value(ifs, nelec);
+        }
+        else if (strcmp("nelec_delta", word) == 0)
+        {
+            read_value(ifs, nelec_delta);
         }
         else if (strcmp("nupdown", word) == 0)
         {
@@ -3131,8 +3136,15 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     }
     if(qo_screening_coeff.size() != ntype)
     {
-        double default_screening_coeff = (qo_screening_coeff.size() == 1)? qo_screening_coeff[0]: 0.1;
-        qo_screening_coeff.resize(ntype, default_screening_coeff);
+        if(qo_basis == "pswfc")
+        {
+            double default_screening_coeff = (qo_screening_coeff.size() == 1)? qo_screening_coeff[0]: 0.1;
+            qo_screening_coeff.resize(ntype, default_screening_coeff);
+        }
+        else
+        {
+            // if length of qo_screening_coeff is not 0, turn on Slater screening
+        }
     }
     if(qo_strategy.size() != ntype)
     {
@@ -3255,6 +3267,7 @@ void Input::Bcast()
     Parallel_Common::bcast_double(xc_temperature);
     Parallel_Common::bcast_int(nspin);
     Parallel_Common::bcast_double(nelec);
+    Parallel_Common::bcast_double(nelec_delta);
     Parallel_Common::bcast_double(nupdown);
     Parallel_Common::bcast_int(lmaxmax);
 

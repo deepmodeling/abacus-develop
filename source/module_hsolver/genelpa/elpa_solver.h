@@ -13,7 +13,8 @@ class ELPA_Solver
                 const int nev,
                 const int narows,
                 const int nacols,
-                const int* desc);
+                const int* desc,
+                const bool reuse_handle_0 = true);
     ELPA_Solver(const bool isReal,
                 const MPI_Comm comm,
                 const int nev,
