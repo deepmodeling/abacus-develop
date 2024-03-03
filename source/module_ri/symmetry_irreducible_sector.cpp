@@ -36,84 +36,87 @@ namespace ModuleSymmetry
         return get_aRb_direct(atoms, st, iat1, iat2, R_double);
     }
 
-    void Symmetry_rotation::find_irreducible_atom_pairs(const Symmetry& symm)
-    {
-        ModuleBase::TITLE("Symmetry_rotation", "find_irreducible_atom_pairs");
-        this->eps_ = symm.epsilon;
-        for (int iat1 = 0;iat1 < symm.nat;++iat1)
-            for (int iat2 = 0;iat2 < symm.nat;++iat2)
-            {
-                Tap pair = { iat1, iat2 };
-                bool exist = false;
-                for (int isym = 0;isym < symm.nrotk;++isym)
-                {
-                    Tap rotpair = { symm.get_rotated_atom(isym,iat1), symm.get_rotated_atom(isym,iat2) };
-                    for (int ip = 0;ip < this->atompair_stars_.size();++ip) // current irreduceble pairs
-                    {
-                        if (rotpair == this->atompair_stars_[ip].at(0))
-                        {
-                            this->atompair_stars_[ip].insert({ isym, pair });
-                            exist = true;
-                            break;
-                        }
-                    }
-                    if (exist)break;
-                }
-                if (!exist)this->atompair_stars_.push_back({ {0, pair} });
-            }
-    }
+    // void Symmetry_rotation::find_irreducible_atom_pairs(const Symmetry& symm)
+    // {
+    //     ModuleBase::TITLE("Symmetry_rotation", "find_irreducible_atom_pairs");
+    //     this->eps_ = symm.epsilon;
+    //     for (int iat1 = 0;iat1 < symm.nat;++iat1)
+    //         for (int iat2 = 0;iat2 < symm.nat;++iat2)
+    //         {
+    //             Tap pair = { iat1, iat2 };
+    //             bool exist = false;
+    //             for (int isym = 0;isym < symm.nrotk;++isym)
+    //             {
+    //                 Tap rotpair = { symm.get_rotated_atom(isym,iat1), symm.get_rotated_atom(isym,iat2) };
+    //                 for (int ip = 0;ip < this->atompair_stars_.size();++ip) // current irreduceble pairs
+    //                 {
+    //                     if (rotpair == this->atompair_stars_[ip].at(0))
+    //                     {
+    //                         this->atompair_stars_[ip].insert({ isym, pair });
+    //                         exist = true;
+    //                         break;
+    //                     }
+    //                 }
+    //                 if (exist)break;
+    //             }
+    //             if (!exist)this->atompair_stars_.push_back({ {0, pair} });
+    //         }
+    // }
 
-    void Symmetry_rotation::find_irreducible_atom_pairs_set(const Symmetry& symm)
-    {
-        ModuleBase::TITLE("Symmetry_rotation", "find_irreducible_atom_pairs_set");
-        this->eps_ = symm.epsilon;
-        std::vector<int> invmap(symm.nrotk, -1);
-        symm.gmatrix_invmap(symm.gmatrix, symm.nrotk, invmap.data());
-        // contruct initial ap-set
-        std::set<Tap, ap_less_func> ap_set;
-        for (int iat1 = 0; iat1 < symm.nat; ++iat1)
-            for (int iat2 = 0; iat2 < symm.nat; ++iat2)
-                ap_set.insert({ iat1, iat2 });
-        while (!ap_set.empty())
-        {
-            Tap ap = *ap_set.begin();
-            std::map<int, Tap> ap_star;
-            for (int isym = 0; isym < symm.nrotk; ++isym)
-            {
-                Tap rotpair = { symm.get_rotated_atom(isym,ap.first), symm.get_rotated_atom(isym,ap.second) };
-                if (ap_set.find(rotpair) != ap_set.end())
-                {
-                    ap_star.insert({ invmap[isym], rotpair });
-                    ap_set.erase(rotpair);
-                }
-            }
-            this->atompair_stars_.push_back(ap_star);
-        }
-    }
+    // void Symmetry_rotation::find_irreducible_atom_pairs_set(const Symmetry& symm)
+    // {
+    //     ModuleBase::TITLE("Symmetry_rotation", "find_irreducible_atom_pairs_set");
+    //     this->eps_ = symm.epsilon;
+    //     if (this->invmap_.empty())
+    //     {
+    //         this->invmap_.resize(symm.nrotk);
+    //         symm.gmatrix_invmap(symm.gmatrix, symm.nrotk, invmap_.data());
+    //     }
+    //     // contruct initial ap-set
+    //     std::set<Tap, ap_less_func> ap_set;
+    //     for (int iat1 = 0; iat1 < symm.nat; ++iat1)
+    //         for (int iat2 = 0; iat2 < symm.nat; ++iat2)
+    //             ap_set.insert({ iat1, iat2 });
+    //     while (!ap_set.empty())
+    //     {
+    //         Tap ap = *ap_set.begin();
+    //         std::map<int, Tap> ap_star;
+    //         for (int isym = 0; isym < symm.nrotk; ++isym)
+    //         {
+    //             Tap rotpair = { symm.get_rotated_atom(isym,ap.first), symm.get_rotated_atom(isym,ap.second) };
+    //             if (ap_set.find(rotpair) != ap_set.end())
+    //             {
+    //                 ap_star.insert({ this->invmap_[isym], rotpair });
+    //                 ap_set.erase(rotpair);
+    //             }
+    //         }
+    //         this->atompair_stars_.push_back(ap_star);
+    //     }
+    // }
 
-    inline void output_atompair_stars(const std::vector<std::map<int, Tap>>& ap_stars)
-    {
-        std::cout << "stars of irreducible atom pairs: " << std::endl;
-        for (int ip = 0; ip < ap_stars.size(); ++ip)
-        {
-            std::cout << "atom pair star " << ip << ": " << std::endl;
-            for (const auto& ap : ap_stars[ip])
-                std::cout << "isym=" << ap.first << ", atompair=(" << ap.second.first << ", " << ap.second.second << ") " << std::endl;
-        }
-    }
+    // inline void output_atompair_stars(const std::vector<std::map<int, Tap>>& ap_stars)
+    // {
+    //     std::cout << "stars of irreducible atom pairs: " << std::endl;
+    //     for (int ip = 0; ip < ap_stars.size(); ++ip)
+    //     {
+    //         std::cout << "atom pair star " << ip << ": " << std::endl;
+    //         for (const auto& ap : ap_stars[ip])
+    //             std::cout << "isym=" << ap.first << ", atompair=(" << ap.second.first << ", " << ap.second.second << ") " << std::endl;
+    //     }
+    // }
 
-    void Symmetry_rotation::test_irreducible_atom_pairs(const Symmetry& symm)
-    {
-        std::cout << "Algorithm 1: find irreducible atom pairs by set" << std::endl;
-        this->find_irreducible_atom_pairs_set(symm);
-        output_atompair_stars(this->atompair_stars_);
+    // void Symmetry_rotation::test_irreducible_atom_pairs(const Symmetry& symm)
+    // {
+    //     std::cout << "Algorithm 1: find irreducible atom pairs by set" << std::endl;
+    //     this->find_irreducible_atom_pairs_set(symm);
+    //     output_atompair_stars(this->atompair_stars_);
 
-        std::cout << std::endl;
-        this->atompair_stars_.clear();
-        std::cout << "Algorithm 2: find irreducible atom pairs by judge" << std::endl;
-        this->find_irreducible_atom_pairs(symm);
-        output_atompair_stars(this->atompair_stars_);
-    }
+    //     std::cout << std::endl;
+    //     this->atompair_stars_.clear();
+    //     std::cout << "Algorithm 2: find irreducible atom pairs by judge" << std::endl;
+    //     this->find_irreducible_atom_pairs(symm);
+    //     output_atompair_stars(this->atompair_stars_);
+    // }
 
     std::vector<TC> Symmetry_rotation::get_Rs_from_BvK(const K_Vectors& kv) const
     {
@@ -193,7 +196,7 @@ namespace ModuleSymmetry
         this->sector_stars_.clear();
 
         if (this->return_lattice_.empty()) this->get_return_lattice_all(symm, atoms, st);
-        if (this->atompair_stars_.empty()) this->find_irreducible_atom_pairs(symm);
+        // if (this->atompair_stars_.empty()) this->find_irreducible_atom_pairs(symm);
 
         // contruct {atom pair, R} set
         // constider different number of Rs for different atom pairs later.
@@ -204,18 +207,21 @@ namespace ModuleSymmetry
                     apR_all[{iat1, iat2}].insert(R);
 
         // get invmap
-        std::vector<int> invmap(symm.nrotk, -1);
-        symm.gmatrix_invmap(symm.gmatrix, symm.nrotk, invmap.data());
+        if (this->invmap_.empty())
+        {
+            this->invmap_.resize(symm.nrotk);
+            symm.gmatrix_invmap(symm.gmatrix, symm.nrotk, invmap_.data());
+        }
 
         while (!apR_all.empty())
         {
-            const Tap& irap = apR_all.begin()->first;
+            const Tap irap = apR_all.begin()->first;
             const TC irR = *apR_all[irap].begin();
             const TapR& irapR = { irap, irR };
             std::map<int, TapR> sector_star;
             for (int isym = 0;isym < symm.nrotk;++isym)
             {
-                const TapR& apRrot = this->rotate_R_by_formula(symm, invmap[isym], irapR);
+                const TapR& apRrot = this->rotate_R_by_formula(symm, this->invmap_[isym], irapR);
                 const Tap& aprot = apRrot.first;
                 const TC& Rrot = apRrot.second;
                 if (apR_all.count(aprot) && apR_all.at(aprot).count(Rrot))

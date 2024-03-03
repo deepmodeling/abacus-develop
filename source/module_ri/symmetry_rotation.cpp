@@ -18,7 +18,11 @@ namespace ModuleSymmetry
 
         this->nsym_ = ucell.symm.nrotk;
         this->eps_ = ucell.symm.epsilon;
-
+        if (this->invmap_.empty())
+        {
+            this->invmap_.resize(ucell.symm.nrotk);
+            ucell.symm.gmatrix_invmap(ucell.symm.gmatrix, ucell.symm.nrotk, invmap_.data());
+        }
         // 1. calculate the rotation matrix in real spherical harmonics representation for each symmetry operation: [T_l (isym)]_mm'
         std::vector<ModuleBase::Matrix3> gmatc(nsym_);
         for (int i = 0;i < nsym_;++i) gmatc[i] = this->direct_to_cartesian(ucell.symm.gmatrix[i], ucell.latvec);
@@ -371,30 +375,32 @@ namespace ModuleSymmetry
         output_return_lattice(this->return_lattice_);
     }
 
-    void Symmetry_rotation::set_block_to_mat2d(const int starti, const int startj, const ModuleBase::ComplexMatrix& block, std::vector<std::complex<double>>& obj_mat, const Parallel_2D& pv) const
+    void Symmetry_rotation::set_block_to_mat2d(const int starti, const int startj, const ModuleBase::ComplexMatrix& block,
+        std::vector<std::complex<double>>& obj_mat, const Parallel_2D& pv, const bool trans) const
     {   // caution: ComplaxMatrix is row-major(col-continuous), but obj_mat is col-major(row-continuous)
         for (int j = 0;j < block.nr;++j)//outside dimension
             for (int i = 0;i < block.nc;++i) //inside dimension
                 if (pv.in_this_processor(starti + i, startj + j))
                 {
                     int index = pv.global2local_col(startj + j) * pv.get_row_size() + pv.global2local_row(starti + i);
-                    obj_mat[index] = block(j, i);
+                    obj_mat[index] = trans ? block(i, j) : block(j, i);
                 }
     }
 
-    void Symmetry_rotation::set_block_to_mat2d(const int starti, const int startj, const ModuleBase::ComplexMatrix& block, std::vector<double>& obj_mat, const Parallel_2D& pv) const
+    void Symmetry_rotation::set_block_to_mat2d(const int starti, const int startj, const ModuleBase::ComplexMatrix& block,
+        std::vector<double>& obj_mat, const Parallel_2D& pv, const bool trans) const
     {   // caution: ComplaxMatrix is row-major(col-continuous), but obj_mat is col-major(row-continuous)
         for (int j = 0;j < block.nr;++j)//outside dimension
             for (int i = 0;i < block.nc;++i) //inside dimension
                 if (pv.in_this_processor(starti + i, startj + j))
                 {
                     int index = pv.global2local_col(startj + j) * pv.get_row_size() + pv.global2local_row(starti + i);
-                    obj_mat[index] = block(j, i).real();
+                    obj_mat[index] = trans ? block(i, j).real() : block(j, i).real();
                 }
     }
 
     // 2d-block parallized rotation matrix in AO-representation, denoted as M.
-    // finally we will use D(k)=M(R, k)^\dagger*D(Rk)*M(R, k) to recover D(k) from D(Rk) in cal_Ms.
+    // finally we will use D(k)=M(R, k)^\dagger*D(Rk)*M(R, k) to   D(k) from D(Rk) in cal_Ms.
     std::vector<std::complex<double>> Symmetry_rotation::contruct_2d_rot_mat_ao(const Symmetry& symm, const Atom* atoms, const Statistics& cell_st,
         const TCdouble& kvec_d_ibz, int isym, const Parallel_2D& pv) const
     {
@@ -406,7 +412,7 @@ namespace ModuleSymmetry
             int iat2 = symm.get_rotated_atom(isym, iat1); //iat2=rot(iat1)
             int ia2 = cell_st.iat2ia[iat2];
             // cal phase factor from return lattice:     exp(-ik_ibz*O)
-            double arg = 2 * ModuleBase::PI * kvec_d_ibz * this->return_lattice_[ia1][isym];
+            double arg = 2 * ModuleBase::PI * kvec_d_ibz * this->return_lattice_[iat1][isym];
             std::complex<double>phase_factor = std::complex<double>(std::cos(arg), std::sin(arg));
             int iw1start = atoms[it].stapos_wf + ia1 * atoms[it].nw;
             int iw2start = atoms[it].stapos_wf + ia2 * atoms[it].nw;
@@ -416,8 +422,8 @@ namespace ModuleSymmetry
                 int l = atoms[it].iw2l[iw];
                 int nm = 2 * l + 1;
                 //caution: the order of m in orbitals may be different from increasing
-                set_block_to_mat2d(iw1start + iw, iw2start + iw,
-                    phase_factor * this->rotmat_Slm_[isym][l], M_isym, pv);
+                set_block_to_mat2d(iw2start + iw, iw1start + iw,
+                    phase_factor * this->rotmat_Slm_[isym][l], M_isym, pv, true);
                 iw += nm;
             }
         }
@@ -426,7 +432,9 @@ namespace ModuleSymmetry
 
     // void cal_Ms (kstar), maybe use map to stare Ms
 
-    // D(k) = M^*(R, k) D(k_ibz) M^T(R, k)
+    // D(k) = M^T(R, k) D(k_ibz) M^*(R, k), if D(k) is col-maj
+    // D^T(k) = M^\dagger(R, k) D^T(k_ibz) M(R, k), if D(k) is row-maj
+    // Ds from RI_2D_Comm are row-maj
     // the link  ik_ibz-isym-ik can be found in kstars.
     std::vector<std::complex<double>> Symmetry_rotation::rot_matrix_ao(const std::vector<std::complex<double>>& DMkibz,
         const int ik_ibz, const int kstar_size, const int isym, const Parallel_2D& pv, const bool TRS_conj) const
@@ -440,38 +448,28 @@ namespace ModuleSymmetry
         const std::complex<double> beta(0.0, 0.0);
         const int nbasis = GlobalV::NLOCAL;
         const int i1 = 1;
-
-        // if TRS_conj, calculate [M^* D M^T]^* = [D^\dagger M^T]^T M^\dagger
-        // else, calculate M^* D M^T = [D^T M^\dagger]^T M^T
-
-        // step 1
-        pzgemm_(TRS_conj ? &dagger : &transpose, TRS_conj ? &transpose : &dagger, &nbasis, &nbasis, &nbasis,
-            &alpha, DMkibz.data(), &i1, &i1, pv.desc, this->Ms_[ik_ibz].at(isym).data(), &i1, &i1, pv.desc,
-            &beta, DMkibz_M.data(), &i1, &i1, pv.desc);
-
-        //step 2
-        alpha.real(1.0 / static_cast<double>(kstar_size));
-        pzgemm_(&transpose, TRS_conj ? &dagger : &transpose, &nbasis, &nbasis, &nbasis,
-            &alpha, DMkibz_M.data(), &i1, &i1, pv.desc, this->Ms_[ik_ibz].at(isym).data(), &i1, &i1, pv.desc,
-            &beta, DMk.data(), &i1, &i1, pv.desc);
-
-        // but if we store D^*(=D^T, col-maj/row-inside), we sould calculate D^*(k) = M D^*(k_ibz) M^dagger
-        // step 1
-        // if (TRS_conj)
-        //     pzgemm_(&dagger, &dagger, &nbasis, &nbasis, &nbasis,
-        //         &alpha, this->Ms_[ik_ibz].at(isym).data(), &i1, &i1, pv.desc, DMkibz.data(), &i1, &i1, pv.desc,
-        //         &beta, DMkibz_M.data(), &i1, &i1, pv.desc);
-        // else
-        //     pzgemm_(&notrans, &notrans, &nbasis, &nbasis, &nbasis,
-        //         &alpha, DMkibz.data(), &i1, &i1, pv.desc, this->Ms_[ik_ibz].at(isym).data(), &i1, &i1, pv.desc,
-        //         &beta, DMkibz_M.data(), &i1, &i1, pv.desc);
-
-        // //step 2
-        // alpha.real(1.0 / static_cast<double>(kstar_size));
-        // pzgemm_(TRS_conj ? &transpose : &dagger, TRS_conj ? &transpose : &notrans, &nbasis, &nbasis, &nbasis,
-        //     &alpha, this->Ms_[ik_ibz].at(isym).data(), &i1, &i1, pv.desc, DMkibz_M.data(), &i1, &i1, pv.desc,
-        //     &beta, DMk.data(), &i1, &i1, pv.desc);
-
+        if (TRS_conj)
+        {
+            // D^T* = M^T [M^T (D^T)^T]^\dagger
+            pzgemm_(&transpose, &transpose, &nbasis, &nbasis, &nbasis,
+                &alpha, this->Ms_[ik_ibz].at(isym).data(), &i1, &i1, pv.desc, DMkibz.data(), &i1, &i1, pv.desc,
+                &beta, DMkibz_M.data(), &i1, &i1, pv.desc);
+            alpha.real(1.0 / static_cast<double>(kstar_size));
+            pzgemm_(&transpose, &dagger, &nbasis, &nbasis, &nbasis,
+                &alpha, this->Ms_[ik_ibz].at(isym).data(), &i1, &i1, pv.desc, DMkibz_M.data(), &i1, &i1, pv.desc,
+                &beta, DMk.data(), &i1, &i1, pv.desc);
+        }
+        else
+        {
+            // D^T = M^\daggger D^T M
+            pzgemm_(&dagger, &notrans, &nbasis, &nbasis, &nbasis,
+                &alpha, this->Ms_[ik_ibz].at(isym).data(), &i1, &i1, pv.desc, DMkibz.data(), &i1, &i1, pv.desc,
+                &beta, DMkibz_M.data(), &i1, &i1, pv.desc);
+            alpha.real(1.0 / static_cast<double>(kstar_size));
+            pzgemm_(&notrans, &notrans, &nbasis, &nbasis, &nbasis,
+                &alpha, DMkibz_M.data(), &i1, &i1, pv.desc, this->Ms_[ik_ibz].at(isym).data(), &i1, &i1, pv.desc,
+                &beta, DMk.data(), &i1, &i1, pv.desc);
+        }
         return DMk;
     }
 

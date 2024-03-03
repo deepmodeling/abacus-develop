@@ -81,9 +81,10 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
         {mix_DMk_2D.set_nks(kv.get_nks(), GlobalV::GAMMA_ONLY_LOCAL);}
         
     mix_DMk_2D.set_mixing(nullptr);
+    ModuleSymmetry::Symmetry_rotation symrot;
     if (exx_spacegroup_symmetry)
     {
-        ModuleSymmetry::Symmetry_rotation symrot;
+        symrot.get_return_lattice_all(GlobalC::ucell.symm, GlobalC::ucell.atoms, GlobalC::ucell.st);
         symrot.cal_Ms(kv, GlobalC::ucell, *dm.get_paraV_pointer());
         mix_DMk_2D.mix(symrot.restore_dm(kv, dm.get_DMK_vector(), *dm.get_paraV_pointer()), true);
     }
@@ -101,7 +102,16 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
 
     exx_lri_rpa.init(mpi_comm_in, kv);
     exx_lri_rpa.cal_exx_ions();
-    exx_lri_rpa.cal_exx_elec(Ds, *dm.get_paraV_pointer());
+
+    if (exx_spacegroup_symmetry)
+    {
+        symrot.find_irreducible_sector(GlobalC::ucell.symm, GlobalC::ucell.atoms, GlobalC::ucell.st, symrot.get_Rs_from_BvK(kv));
+        exx_lri_rpa.cal_exx_elec(Ds, *dm.get_paraV_pointer(), &symrot);
+    }
+    else
+    {
+        exx_lri_rpa.cal_exx_elec(Ds, *dm.get_paraV_pointer());
+    }
     // cout<<"postSCF_Eexx: "<<exx_lri_rpa.Eexx<<endl;
 }
 

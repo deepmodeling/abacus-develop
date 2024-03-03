@@ -13,7 +13,7 @@
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 // for test
-#include "Exx_LRI.h"
+// #include "Exx_LRI.h"
  
 namespace ModuleSymmetry
 {
@@ -101,9 +101,12 @@ namespace ModuleSymmetry
             const TCdouble& posd_a1, const TCdouble& posd_a2)const;
         void get_return_lattice_all(const Symmetry& symm, const Atom* atoms, const Statistics& st);
 
-        /// set a block matrix onto a 2d-parallelized matrix, at the position (starti, startj) 
-        void set_block_to_mat2d(const int starti, const int startj, const ModuleBase::ComplexMatrix& block, std::vector<std::complex<double>>& obj_mat, const Parallel_2D& pv) const;
-        void set_block_to_mat2d(const int starti, const int startj, const ModuleBase::ComplexMatrix& block, std::vector<double>& obj_mat, const Parallel_2D& pv) const;
+        /// set a block matrix onto a 2d-parallelized matrix(col-maj), at the position (starti, startj) 
+        /// if trans=true, the block matrix is transposed before setting
+        void set_block_to_mat2d(const int starti, const int startj, const ModuleBase::ComplexMatrix& block,
+            std::vector<std::complex<double>>& obj_mat, const Parallel_2D& pv, const bool trans = false) const;
+        void set_block_to_mat2d(const int starti, const int startj, const ModuleBase::ComplexMatrix& block,
+            std::vector<double>& obj_mat, const Parallel_2D& pv, const bool trans = false) const;
 
         /// 2d-block parallized rotation matrix in AO-representation, denoted as M.
         /// finally we will use D(k)=M(R, k)^\dagger*D(Rk)*M(R, k) to recover D(k) from D(Rk).
@@ -129,11 +132,11 @@ namespace ModuleSymmetry
         template<typename Tdata>    // RI::Tensor type
         std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>> restore_HR(
             const Symmetry& symm, const Atom* atoms, const Statistics& st, const char mode,
-            const std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>>& HR_irreduceble);
+            const std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>>& HR_irreduceble)const;
         template<typename TR>   // HContainer type
         void restore_HR(
             const Symmetry& symm, const Atom* atoms, const Statistics& st, const char mode,
-            const hamilt::HContainer<TR>& HR_irreduceble, hamilt::HContainer<TR>& HR_rotated);
+            const hamilt::HContainer<TR>& HR_irreduceble, hamilt::HContainer<TR>& HR_rotated)const;
 
         //--------------------------------------------------------------------------------
         /// test functions
@@ -145,13 +148,7 @@ namespace ModuleSymmetry
         void test_HR_rotation(const Symmetry& symm, const Atom* atoms, const Statistics& st, const char mode,
             const hamilt::HContainer<TR>& HR_full);
         template<typename Tdata>    // HContainer type
-        void print_HR(const std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>>& HR, const std::string name);
-
-        // check whether Ds can be reduced in cal_Hs
-        template<typename Tdata>
-        void test_sector_equivalence_in_cal_Hs(const TapR& iapR_test,
-            const std::vector<std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>>>& Ds_full,
-            Exx_LRI<Tdata>& exx_lri, const Parallel_Orbitals& pv);
+        void print_HR(const std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>>& HR, const std::string name);;
         //--------------------------------------------------------------------------------
 
     private:
@@ -168,13 +165,13 @@ namespace ModuleSymmetry
         TCdouble get_aRb_direct(const Atom* atoms, const Statistics& st, const int iat1, const int iat2, const TC& R, const char gauge = 'R')const;
         TCdouble get_aRb_direct(const Atom* atoms, const Statistics& st, const int iat1, const int iat2, const TCdouble& R, const char gauge = 'R')const;
 
-        /// find the irreducible atom pairs
-        /// algorithm 1: the way finding irreducible k-points
-        void find_irreducible_atom_pairs(const Symmetry& symm);
-        /// algorithm 2: taking out atom pairs from the initial set
-        void find_irreducible_atom_pairs_set(const Symmetry& symm);
-        /// double check between the two algorithms
-        void test_irreducible_atom_pairs(const Symmetry& symm);
+        // /// find the irreducible atom pairs
+        // /// algorithm 1: the way finding irreducible k-points
+        // void find_irreducible_atom_pairs(const Symmetry& symm);
+        // /// algorithm 2: taking out atom pairs from the initial set
+        // void find_irreducible_atom_pairs_set(const Symmetry& symm);
+        // /// double check between the two algorithms
+        // void test_irreducible_atom_pairs(const Symmetry& symm);
 
         void output_full_map_to_irreducible_sector(const int nat);
         void output_sector_star();
@@ -186,10 +183,10 @@ namespace ModuleSymmetry
         /// mode='D': D_12(R)=T^T(V)D_1'2'(VR+O_1-O_2)T^*(V)
         template<typename Tdata>    // RI::Tensor type, blas
         RI::Tensor<Tdata> rotate_atompair_serial(const RI::Tensor<Tdata>& t, const int isym,
-            const Atom& a1, const Atom& a2, const char mode, bool output = false);
+            const Atom& a1, const Atom& a2, const char mode, bool output = false)const;
         template<typename TR>    // HContainer type, pblas
         void rotate_atompair_parallel(const TR* Alocal_in, const int isym, const Atom* atoms, const Statistics& st,
-            const Tap& ap_in, const Tap& ap_out, const char mode, const Parallel_Orbitals& pv, TR* Alocal_out, const bool output = false);
+            const Tap& ap_in, const Tap& ap_out, const char mode, const Parallel_Orbitals& pv, TR* Alocal_out, const bool output = false)const;
 
         //--------------------------------------------------------------------------------
 
@@ -210,7 +207,7 @@ namespace ModuleSymmetry
 
         /// irreducible sector
         /// irreducible atom pairs: [n_iap][(isym, ap=(iat1, iat2))]
-        std::vector<std::map<int, Tap>> atompair_stars_;
+        // std::vector<std::map<int, Tap>> atompair_stars_;
 
         ///The index range of the orbital matrix to be calculated: irreducible R in irreducible atom pairs
         // (including R in other atom pairs that cannot rotate into R_stars_[irreducebule_ap])
@@ -227,6 +224,8 @@ namespace ModuleSymmetry
 
         /// the direct lattice vector of {R|t}\tau-\tau' for each atoms and each symmetry operation. [natom][nsym]
         std::vector<std::vector<TCdouble>> return_lattice_;
+
+        std::vector<int> invmap_;
     };
 }
 

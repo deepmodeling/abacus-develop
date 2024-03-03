@@ -18,6 +18,8 @@
 #include <deque>
 #include <mpi.h>
 
+#include "symmetry_rotation.h"
+
 	class Parallel_Orbitals;
 	
 	template<typename T, typename Tdata>
@@ -74,7 +76,9 @@ private:
 	RI::Exx<TA,Tcell,Ndim,Tdata> exx_lri;
 
 	void cal_exx_ions();
-	void cal_exx_elec(const std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>> &Ds, const Parallel_Orbitals &pv);
+    void cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
+        const Parallel_Orbitals& pv,
+        const ModuleSymmetry::Symmetry_rotation* p_symrot = nullptr);
 	void post_process_Hexx( std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> &Hexxs_io ) const;
     double post_process_Eexx(const double& Eexx_in) const;
 

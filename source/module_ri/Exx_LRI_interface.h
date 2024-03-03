@@ -70,6 +70,7 @@ private:
     int two_level_step = 0;
 
     bool exx_spacegroup_symmetry = false;
+    bool restore_dm_only = false;   // true for test
     ModuleSymmetry::Symmetry_rotation symrot_;
 };
 
