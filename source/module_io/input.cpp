@@ -305,7 +305,7 @@ void Input::Default(void)
     mixing_mode = "broyden";
     mixing_beta = -10;
     mixing_ndim = 8;
-    mixing_restart = 0;
+    mixing_restart = 0.0;
     mixing_gg0 = 1.00;       // use Kerker defaultly
     mixing_beta_mag = -10.0; // only set when nspin == 2 || nspin == 4
     mixing_gg0_mag = 0.0;    // defaultly exclude Kerker from mixing magnetic density
@@ -3359,7 +3359,7 @@ void Input::Bcast()
     Parallel_Common::bcast_string(mixing_mode);
     Parallel_Common::bcast_double(mixing_beta);
     Parallel_Common::bcast_int(mixing_ndim);
-    Parallel_Common::bcast_int(mixing_restart);
+    Parallel_Common::bcast_double(mixing_restart);
     Parallel_Common::bcast_double(mixing_gg0); // mohan add 2014-09-27
     Parallel_Common::bcast_double(mixing_beta_mag);
     Parallel_Common::bcast_double(mixing_gg0_mag);
