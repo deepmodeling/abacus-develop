@@ -276,6 +276,7 @@ bool psi_initializer = false;
 
 int out_chg = 0;
 double nelec = 0;
+double nelec_delta = 0;
 bool out_bandgap = false; // QO added for bandgap printing
 int out_interval = 1;    // convert from out_hsR_interval liuyu 2023-04-18
 

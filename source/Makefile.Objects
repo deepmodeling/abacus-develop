@@ -453,6 +453,7 @@ OBJS_IO=input.o\
     para_json.o\
     abacusjson.o\
     general_info.o\
+    init_info.o\
 
 
 OBJS_IO_LCAO=cal_r_overlap_R.o\
