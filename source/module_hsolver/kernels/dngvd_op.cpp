@@ -250,44 +250,47 @@ struct dngvx_op<T, psi::DEVICE_CPU>
                     Real* eigenvalue,
                     T* vcc)
     {
-        int lwork;
+
         int info = 0;
 
-        std::string name1 = "ZHETRD";
-        std::string name2 = "U";
-        // std::cout << "ilaenv " << std::endl;
-        int nb = LapackConnector::ilaenv(1, name1.c_str(), name2.c_str(), nbase, -1, -1, -1);
-
-        // std::cout << "end ilaenv " << std::endl;
-
-        if (nb < 1)
-        {
-            nb = std::max(1, nbase);
-        }
-
-        if (nb == 1 || nb >= nbase)
-        {
-            lwork = 2 * nbase;
-        }
-        else
-        {
-            lwork = (nb + 1) * nbase;
-        }
-        T* work = new T[2 * lwork];
-        assert(work != 0);
-        Real* rwork = new Real[7 * nbase];
-        assert(rwork != 0);
-        int* iwork = new int[5 * nbase];
-        assert(iwork != 0);
-        int* ifail = new int[nbase];
-        assert(ifail != 0);
-
-        ModuleBase::GlobalFunc::ZEROS(work, lwork);
-        ModuleBase::GlobalFunc::ZEROS(rwork, 7 * nbase);
-        ModuleBase::GlobalFunc::ZEROS(iwork, 5 * nbase);
-        ModuleBase::GlobalFunc::ZEROS(ifail, nbase);
-
         int mm = m;
+
+        int lwork = -1;
+
+        T* work = new T[1];
+        Real* rwork = new Real[7 * nbase];
+        int* iwork = new int[5 * nbase];
+        int* ifail = new int[nbase];
+
+        LapackConnector::xhegvx(
+            1, // ITYPE = 1:  A*x = (lambda)*B*x
+            'V', // JOBZ = 'V':  Compute eigenvalues and eigenvectors.
+            'I', // RANGE = 'I': the IL-th through IU-th eigenvalues will be found.
+            'L', // UPLO = 'L':  Lower triangles of A and B are stored.
+            nbase, // N = base
+            hcc, // A is COMPLEX*16 array  dimension (LDA, N)
+            ldh, // LDA = base
+            scc,
+            ldh,
+            0.0, // Not referenced if RANGE = 'A' or 'I'.
+            0.0, // Not referenced if RANGE = 'A' or 'I'.
+            1, // IL: If RANGE='I', the index of the smallest eigenvalue to be returned. 1 <= IL <= IU <= N,
+            m, // IU: If RANGE='I', the index of the largest eigenvalue to be returned. 1 <= IL <= IU <= N,
+            0.0, // ABSTOL
+            mm, // M: The total number of eigenvalues found.  0 <= M <= N. if RANGE = 'I', M = IU-IL+1.
+            eigenvalue, // W store eigenvalues
+            vcc, // store eigenvector
+            ldh, // LDZ: The leading dimension of the array Z.
+            work,
+            lwork,
+            rwork,
+            iwork,
+            ifail,
+            info);
+
+        lwork = int(get_real(work[0]));
+        delete[] work; work = new T[lwork];
+
         LapackConnector::xhegvx(1,
                                 'V',
                                 'I',
