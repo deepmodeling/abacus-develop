@@ -342,6 +342,29 @@ void add_wg(const ModuleBase::matrix& wg, const ModuleBase::matrix& wfcHwfc_TV_i
 }
 
 
+void add_wg2(const std::vector<double>& wk_in, const ModuleBase::matrix& occ_number, const ModuleBase::matrix& wfcHwfc_TV_in, const ModuleBase::matrix& wfcHwfc_hartree_in,
+                const ModuleBase::matrix& wfcHwfc_XC_in, ModuleBase::matrix& wg_wfcHwfc, const std::string XC_func_rdmft, const double alpha)
+{
+    /****** delete when function rdmft_cal() -> class RDMFT ******/
+    ModuleBase::matrix wg(occ_number);
+    for(int ik=0; ik < wg.nr; ++ik)
+    {
+        for(int inb=0; inb < wg.nc; ++inb) wg(ik, inb) *= wk_in[ik];
+    }
+    ModuleBase::matrix wk_fun_occNum(occ_number.nr, occ_number.nc, true);
+    for(int ik=0; ik<wg.nr; ++ik)
+    {
+        for(int inb=0; inb<wg.nc; ++inb) wk_fun_occNum(ik, inb) = wk_in[ik] * wg_func(occ_number(ik, inb), 2, XC_func_rdmft, alpha);
+    }
+    /****** delete when function rdmft_cal() -> class RDMFT ******/
+
+    wg_wfcHwfc.zero_out();
+    wgMul_wfcHwfc(wg, wfcHwfc_TV_in, wg_wfcHwfc);
+    wgMul_wfcHwfc(wg, wfcHwfc_hartree_in, wg_wfcHwfc, 1);
+    wgMul_wfcHwfc(wk_fun_occNum, wfcHwfc_XC_in, wg_wfcHwfc, 1);
+}
+
+
 // give certain wg_wfcHwfc, get the corresponding energy
 double sumWg_getEnergy(const ModuleBase::matrix& wg_wfcHwfc)
 {

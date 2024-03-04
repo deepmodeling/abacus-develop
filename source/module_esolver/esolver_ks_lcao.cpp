@@ -902,12 +902,19 @@ namespace ModuleESolver
     /******** test RDMFT *********/
 
     //initialize the gradients of Etotal on wg and wfc, and set all elements to 0. 
-    ModuleBase::matrix occupation_num(this->pelec->wg);
     ModuleBase::matrix E_gradient_wg(this->pelec->wg.nr, this->pelec->wg.nc, true);
     psi::Psi<TK> E_gradient_wfc(this->psi->get_nk(), this->psi->get_nbands(), this->psi->get_nbasis()); 
     rdmft::set_zero_psi(E_gradient_wfc);
     double Etotal_RDMFT = 0.0;
-    
+
+    // get natural occupation numbers from wg which considers k point weights and spin, this just proper for nspin=1 !!!
+    // wk consider both weight of k-point and spin. When nspin=1, wk[ik] = W_k * 2 . When nspin=2, wk[ik] = W_k
+    ModuleBase::matrix occ_number(this->pelec->wg);
+    for(int ik=0; ik < occ_number.nr; ++ik)
+    {
+        for(int inb=0; inb < this->pelec->wg.nc; ++inb) occ_number(ik, inb) /= this->kv.wk[ik];
+    }
+
     // esolver_ks_lcao.h(LCAO_Matrix LM),           LCAO_matrix.h(Parallel_Orbitals* ParaV)
     // esolver_fp.h(elecstate::ElecState* pelec),   elecstate.h(ModuleBase::matrix wg),      this->pelec->wg
     // esolver_fp.h(elecstate::ElecState* pelec),   elecstate.h(Charge* charge),             this->pelec->wg
@@ -949,7 +956,7 @@ namespace ModuleESolver
         Etotal_RDMFT = rdmft::rdmft_cal<TK,TR,Gint_Gamma>(
             &LM,
             LM.ParaV,
-            this->pelec->wg,
+            occ_number,
             wfc_rdmft,
             E_gradient_wg,
             E_gradient_wfc,
@@ -970,7 +977,7 @@ namespace ModuleESolver
         Etotal_RDMFT = rdmft::rdmft_cal<TK,TR,Gint_k>(
             &LM,
             LM.ParaV,
-            this->pelec->wg,
+            occ_number,
             *(this->psi),
             E_gradient_wg,
             E_gradient_wfc,
@@ -982,7 +989,7 @@ namespace ModuleESolver
             GlobalC::ppcell.vloc,
             this->sf.strucFac,
             "power",
-            1.0
+            0.5
         );
     }
 

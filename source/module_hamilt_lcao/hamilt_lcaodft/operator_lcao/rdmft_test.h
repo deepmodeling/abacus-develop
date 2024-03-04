@@ -383,6 +383,10 @@ void add_wg(const ModuleBase::matrix& wg, const ModuleBase::matrix& wfcHwfc_TV_i
             const ModuleBase::matrix& wfcHwfc_XC_in, ModuleBase::matrix& wg_wfcHwfc, const std::string XC_func_rdmft = "HF", const double alpha = 0.656, int symbol = 0);
 
 
+void add_wg2(const std::vector<double>& wk_in, const ModuleBase::matrix& occ_number, const ModuleBase::matrix& wfcHwfc_TV_in, const ModuleBase::matrix& wfcHwfc_hartree_in,
+                const ModuleBase::matrix& wfcHwfc_XC_in, ModuleBase::matrix& wg_wfcHwfc, const std::string XC_func_rdmft, const double alpha);
+
+
 //give certain wg_wfcHwfc, get the corresponding energy
 double sumWg_getEnergy(const ModuleBase::matrix& wg_wfcHwfc);
 
@@ -445,7 +449,7 @@ void update_charge(const K_Vectors& kv, T_Gint& G_in, const Parallel_Orbitals* P
 template <typename TK, typename TR, typename T_Gint>
 double rdmft_cal(LCAO_Matrix* LM_in,
                         const Parallel_Orbitals* ParaV,
-                        const ModuleBase::matrix& wg,
+                        const ModuleBase::matrix& occ_number,
                         const psi::Psi<TK>& wfc,
                         ModuleBase::matrix& wg_wfcHamiltWfc,
                         psi::Psi<TK>& wg_HamiltWfc,
@@ -499,6 +503,21 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         HR_hartree.fix_gamma();
         HR_XC.fix_gamma();
     }
+
+    // get wg from natural occupation numbers
+    ModuleBase::matrix wg(occ_number);
+    for(int ik=0; ik < wg.nr; ++ik)
+    {
+        for(int inb=0; inb < wg.nc; ++inb) wg(ik, inb) *= kv_in.wk[ik];
+    }
+
+
+    // get k weight * fun(occ_number), different XC_functional has different fun(occ_number)
+    ModuleBase::matrix wk_fun_occNum(occ_number.nr, occ_number.nc, true);
+    for(int ik=0; ik<wg.nr; ++ik)
+    {
+        for(int inb=0; inb<wg.nc; ++inb) wk_fun_occNum(ik, inb) = kv_in.wk[ik] * wg_func(occ_number(ik, inb), 2, XC_func_rdmft, alpha_power);
+    }    
 
     // use wg and wfc update charge
     update_charge(kv_in, G_in, ParaV, wg, wfc, loc_in, charge_in);
@@ -585,10 +604,17 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         std::vector< const std::vector<TK>* > DM_XC_pointer(nk_total);
         for(int ik=0; ik<nk_total; ++ik) DM_XC_pointer[ik] = &DM_XC[ik];
 
-        // get wg_wfc = g(wg)*conj(wfc), different XC_functional has different g(wg)
+        // get k weight * fun(occ_number), different XC_functional has different fun(occ_number)
+        // ModuleBase::matrix wk_fun_occNum(occ_number.nr, occ_number.nc, true);
+        // for(int ik=0; ik<wg.nr; ++ik)
+        // {
+        //     for(int inb=0; inb<wg.nc; ++inb) wk_fun_occNum(ik, inb) = kv_in.wk[ik] * wg_func(occ_number(ik, inb), 2, XC_func_rdmft, alpha_power);
+        // }
+
+        // get wg_wfc = g(wg)*conj(wfc)
         psi::Psi<TK> wg_wfc(wfc);
         conj_psi(wg_wfc);
-        wgMulPsi(ParaV, wg, wg_wfc, 2, XC_func_rdmft, alpha_power);
+        wgMulPsi(ParaV, wk_fun_occNum, wg_wfc, 0);
 
         // get the special DM_XC used in constructing V_XC
         for(int ik=0; ik<wfc.get_nk(); ++ik)
@@ -663,21 +689,6 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     ModuleBase::matrix wfcHwfc_hartree(wg.nr, wg.nc, true);
     ModuleBase::matrix wfcHwfc_XC(wg.nr, wg.nc, true);
 
-    // test
-    double elecNum = 0;
-    for(int im=0; im < wg.nr ; ++im)
-    {   
-        for(int in=0; in < wg.nc ; ++in)
-        {
-            ++elecNum;
-            if ( wg(im, in)-0.25  > 1e-12 ) std::cout << "\n******\nnot all wg =0.25\n******" << std::endl;
-        }
-    }
-    std::cout << "\n******\nelectron number: " << elecNum << "\n******" << std::endl;
-
-    printMatrix_pointer(wg.nr, wg.nc, &wg(0, 0), "wg");
-    // test
-
     // let the 2d-block of H_wfc is same to wfc, so we can use desc_wfc and 2d-block messages of wfc to describe H_wfc
     psi::Psi<TK> H_wfc_TV(nk_total, nbands_local, nbasis_local);
     psi::Psi<TK> H_wfc_hartree(nk_total, nbands_local, nbasis_local);
@@ -724,13 +735,14 @@ double rdmft_cal(LCAO_Matrix* LM_in,
 
     // !this would transfer the value of H_wfc_TV, H_wfc_hartree, H_wfc_XC
     // get the gradient of energy with respect to the wfc, i.e., wg_HamiltWfc
-    add_psi(ParaV, wg, H_wfc_TV, H_wfc_hartree, H_wfc_XC, wg_HamiltWfc, XC_func_rdmft, alpha_power);
+    add_psi(ParaV, occ_number, H_wfc_TV, H_wfc_hartree, H_wfc_XC, wg_HamiltWfc, XC_func_rdmft, alpha_power);
 
-    // get the gradient of energy with respect to the occupation numbers, i.e., wg_wfcHamiltWfc
-    add_wg(wg, wfcHwfc_TV, wfcHwfc_hartree, wfcHwfc_XC, wg_wfcHamiltWfc, XC_func_rdmft, alpha_power);
+    // get the gradient of energy with respect to the natural occupation numbers, i.e., wg_wfcHamiltWfc
+    add_wg(occ_number, wfcHwfc_TV, wfcHwfc_hartree, wfcHwfc_XC, wg_wfcHamiltWfc, XC_func_rdmft, alpha_power);
 
     // get the total energy
-    add_wg(wg, wfcHwfc_TV, wfcHwfc_hartree, wfcHwfc_XC, wg_forEtotal, XC_func_rdmft, alpha_power, 1);
+    // add_wg(wg, wfcHwfc_TV, wfcHwfc_hartree, wfcHwfc_XC, wg_forEtotal, XC_func_rdmft, alpha_power, 1);
+    add_wg2(kv_in.wk, occ_number, wfcHwfc_TV, wfcHwfc_hartree, wfcHwfc_XC, wg_forEtotal, XC_func_rdmft, alpha_power);
     double Etotal_RDMFT = sumWg_getEnergy(wg_forEtotal);
 
     /****** get wg_wfcHamiltWfc, wg_HamiltWfc and Etotal ******/
@@ -748,7 +760,8 @@ double rdmft_cal(LCAO_Matrix* LM_in,
 
     // for Exc
     ModuleBase::matrix wg_forExc(wg.nr, wg.nc, true);
-    wgMul_wfcHwfc(wg, wfcHwfc_XC, wg_forExc, 3, XC_func_rdmft, alpha_power);
+    // wgMul_wfcHwfc(wg, wfcHwfc_XC, wg_forExc, 3, XC_func_rdmft, alpha_power);
+    wgMul_wfcHwfc(wk_fun_occNum, wfcHwfc_XC, wg_forExc, 1);
     double Exc_RDMFT = sumWg_getEnergy(wg_forExc);
 
     // add up the results obtained by all processors, or we can do reduce_all(wfcHwfc_) before add_wg() used for Etotal to replace it
@@ -757,10 +770,12 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     Parallel_Reduce::reduce_all(Ehartree_RDMFT);
     Parallel_Reduce::reduce_all(Exc_RDMFT);
 
+    std::cout << "\n\nGlobalV::NSPIN: " << GlobalV::NSPIN << "\n" << std::endl;
+
     // print results
     std::cout << std::setprecision(10) << "\n\n\n******\nEtotal_RDMFT:   " << Etotal_RDMFT << "\nETV_RDMFT: " << ETV_RDMFT << "\nEhartree_RDMFT: " 
-                << Ehartree_RDMFT << "\nExc_RDMFT:      " << Exc_RDMFT << "\n******\n\n\n";
-
+                << Ehartree_RDMFT << "\nExc_RDMFT:      " << Exc_RDMFT << "\n******\n\n\n" << std::endl;
+    
     ModuleBase::timer::tick("hamilt_lcao", "RDMFT_E&Egradient");
     
     return Etotal_RDMFT;
