@@ -3,9 +3,9 @@
 #include <algorithm>
 #include <cstring>
 #include <memory>
+#include <fstream>
 
 #include "module_base/spherical_bessel_transformer.h"
-#include "module_io/output_radial.h"
 
 RadialSet::~RadialSet()
 {
@@ -195,27 +195,60 @@ void RadialSet::cleanup()
 
 void RadialSet::to_file(const std::string& file_name, const int rank) const
 {
-    ModuleIO::OutputRadial out_radial;
-    out_radial.initialize(file_name);
-    out_radial.configure(
-        symbol_,
-        100.0,  // fake value
-        rcut_max_,
-        lmax_,
-        nzeta_,
-        int(rcut_max_/0.01) + 1,
-        0.01
-    );
-    for(int l = 0; l <= lmax_; l++)
+    std::ofstream file_to;
+    file_to.open(file_name, std::ios::out);
+
+    std::vector<std::string> sublayers = {"S", "P", "D", "F", "G", "H", "I", "J", "K"};
+    if(file_to.good())
     {
-        for(int izeta = 0; izeta < nzeta_[l]; izeta++)
+        for(int i = 0; i < 75; ++i)
         {
-            out_radial.push(
-                chi_[index(l, izeta)].nr(),
-                chi_[index(l, izeta)].rgrid(),
-                chi_[index(l, izeta)].rvalue()
-            );
+            file_to << "-";
+        }
+        file_to << std::endl;
+        // left aligned
+        file_to << std::left << std::setw(28) << "Element" << symbol_ << std::endl;
+        file_to << std::left << std::setw(28) << "Energy Cutoff(Ry)" << std::to_string(int(100.0)) << std::endl;
+        // rcut .1f, not scientific
+        file_to << std::left << std::setw(28) << "Radius Cutoff(a.u.)" 
+                << std::fixed << std::setprecision(1) << rcut_max_ << std::endl;
+        file_to << std::left << std::setw(28) << "Lmax" << lmax_ << std::endl;
+        for(int l = 0; l <= lmax_; ++l)
+        {
+            std::string title = "Number of " + sublayers[l] + "orbital-->";
+            file_to << std::left << std::setw(28) << title << nzeta_[l] << std::endl;
+        }
+        for(int i = 0; i < 75; ++i)
+        {
+            file_to << "-";
+        }
+        file_to << std::endl;
+        file_to << "SUMMARY  END\n\n";
+        file_to << std::left << std::setw(28) << "Mesh" << std::setprecision(0) << int(rcut_max_/0.01) + 1 << std::endl;
+        file_to << std::left << std::setw(28) << "dr" << std::setprecision(2) << 0.01 << std::endl;
+
+        for(int l = 0; l <= lmax_; l++)
+        {
+            for(int izeta = 0; izeta < nzeta_[l]; izeta++)
+            {
+                file_to << std::right << std::setw(20) << "Type"
+                        << std::right << std::setw(20) << "L"
+                        << std::right << std::setw(20) << "N" << std::endl;
+                file_to << std::right << std::setw(20) << std::to_string(0)
+                        << std::right << std::setw(20) << std::to_string(l)
+                        << std::right << std::setw(20) << std::to_string(izeta);
+                for(int i = 0; i < int(rcut_max_/0.01) + 1; i++)
+                {
+                    if(i % 4 == 0)
+                    {
+                        file_to << std::endl;
+                    }
+                    file_to << std::left << std::setw(22) << std::setprecision(14) << std::scientific 
+                            << chi_[index(l, izeta)].rvalue()[i];
+                }
+                file_to << std::endl;
+            }
         }
     }
-    out_radial.finalize();
+    file_to.close();
 }
