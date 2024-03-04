@@ -902,6 +902,7 @@ namespace ModuleESolver
     /******** test RDMFT *********/
 
     //initialize the gradients of Etotal on wg and wfc, and set all elements to 0. 
+    ModuleBase::matrix occupation_num(this->pelec->wg);
     ModuleBase::matrix E_gradient_wg(this->pelec->wg.nr, this->pelec->wg.nc, true);
     psi::Psi<TK> E_gradient_wfc(this->psi->get_nk(), this->psi->get_nbands(), this->psi->get_nbasis()); 
     rdmft::set_zero_psi(E_gradient_wfc);

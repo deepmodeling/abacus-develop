@@ -663,6 +663,21 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     ModuleBase::matrix wfcHwfc_hartree(wg.nr, wg.nc, true);
     ModuleBase::matrix wfcHwfc_XC(wg.nr, wg.nc, true);
 
+    // test
+    double elecNum = 0;
+    for(int im=0; im < wg.nr ; ++im)
+    {   
+        for(int in=0; in < wg.nc ; ++in)
+        {
+            ++elecNum;
+            if ( wg(im, in)-0.25  > 1e-12 ) std::cout << "\n******\nnot all wg =0.25\n******" << std::endl;
+        }
+    }
+    std::cout << "\n******\nelectron number: " << elecNum << "\n******" << std::endl;
+
+    printMatrix_pointer(wg.nr, wg.nc, &wg(0, 0), "wg");
+    // test
+
     // let the 2d-block of H_wfc is same to wfc, so we can use desc_wfc and 2d-block messages of wfc to describe H_wfc
     psi::Psi<TK> H_wfc_TV(nk_total, nbands_local, nbasis_local);
     psi::Psi<TK> H_wfc_hartree(nk_total, nbands_local, nbasis_local);
