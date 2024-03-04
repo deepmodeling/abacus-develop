@@ -401,8 +401,13 @@ namespace ModuleESolver
                             hsolver_error = this->phsol->cal_hsolerror();
                         }
                     }
-
-                    this->conv_elec = (drho < this->scf_thr && iter!=GlobalV::MIXING_RESTART);
+                    // mixing will restart at this->p_chgmix->mixing_restart steps
+                    if (drho <= 10e-3 && GlobalV::MIXING_RESTART > 0.0 && this->p_chgmix->mixing_restart > iter)
+                    {
+                        this->p_chgmix->mixing_restart = iter + 1;
+                    }
+                    // drho will be 0 at this->p_chgmix->mixing_restart step, which is not ground state
+                    this->conv_elec = (drho < this->scf_thr && iter!=this->p_chgmix->mixing_restart);
 
                     // If drho < hsolver_error in the first iter or drho < scf_thr, we do not change rho.
                     if (drho < hsolver_error || this->conv_elec)
@@ -428,9 +433,8 @@ namespace ModuleESolver
                         //     }
                         //     p_chgmix->auto_set(bandgap_for_autoset, GlobalC::ucell);
                         // }
-                        // mixing will restart after GlobalV::MIXING_RESTART steps
-                        // So, GlobalV::MIXING_RESTART=1 means mix from scratch
-                        if (GlobalV::MIXING_RESTART > 0 && iter == GlobalV::MIXING_RESTART - 1)
+                        // mixing will restart after this->p_chgmix->mixing_restart steps
+                        if (GlobalV::MIXING_RESTART > 0 && iter == this->p_chgmix->mixing_restart - 1)
                         {
                             // do not mix charge density
                         }
@@ -468,7 +472,7 @@ namespace ModuleESolver
                     if(stop) break;
                 }
                 // notice for restart
-                if (GlobalV::MIXING_RESTART > 0 && iter == GlobalV::MIXING_RESTART - 1)
+                if (GlobalV::MIXING_RESTART > 0 && iter == this->p_chgmix->mixing_restart - 1)
                 {
                     std::cout<<"SCF restart after this step!"<<std::endl;
                 }
