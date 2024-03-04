@@ -73,6 +73,75 @@ namespace hsolver {
     }
 };
 
+template <typename T>
+struct dngv_op<T, psi::DEVICE_CPU>
+{
+    using Real = typename GetTypeReal<T>::type;
+    void operator()(const psi::DEVICE_CPU* d,
+                    const int nbase,
+                    const int ldh,
+                    const T* hcc,
+                    T* scc,
+                    Real* eigenvalue,
+                    T* vcc)
+    {
+        for (int i = 0; i < nbase * ldh; i++)
+        {
+            vcc[i] = hcc[i];
+        }
+
+        int info = 0;
+
+        int lwork = 2 * nbase - 1;
+        T* work = new T[lwork];
+        ModuleBase::GlobalFunc::ZEROS(work, lwork);
+
+        int lrwork = 3 * nbase - 2;
+        Real* rwork = new Real[lrwork];
+        ModuleBase::GlobalFunc::ZEROS(rwork, lrwork);
+
+        //===========================
+        // calculate all eigenvalues
+        //===========================
+        LapackConnector::xhegv(
+                            1,
+                            'V',
+                            'U',
+                            nbase,
+                            vcc,
+                            ldh,
+                            scc,
+                            ldh,
+                            eigenvalue,
+                            work,
+                            lwork,
+                            rwork,
+                            info);
+
+        if (info != 0)
+        {
+            std::cout << "Error: xhegv failed, linear dependent basis functions\n"
+                      << ", wrong initialization of wavefunction, or wavefunction information loss\n"
+                      << ", output overlap matrix scc.txt to check\n"
+                      << std::endl;
+            // print scc to file scc.txt
+            std::ofstream ofs("scc.txt");
+            for (int i = 0; i < nbase; i++)
+            {
+                for (int j = 0; j < nbase; j++)
+                {
+                    ofs << scc[i * ldh + j] << " ";
+                }
+                ofs << std::endl;
+            }
+            ofs.close();
+        }
+        assert(0 == info);
+
+        delete[] work;
+        delete[] rwork;
+    }
+};
 
     template <typename T>
     struct dnevx_op<T, psi::DEVICE_CPU> {
@@ -168,14 +237,104 @@ namespace hsolver {
     }
 };
 
+template <typename T>
+struct dngvx_op<T, psi::DEVICE_CPU>
+{
+    using Real = typename GetTypeReal<T>::type;
+    void operator()(const psi::DEVICE_CPU* d,
+                    const int nbase,
+                    const int ldh,
+                    T* hcc,
+                    T* scc,
+                    const int m,
+                    Real* eigenvalue,
+                    T* vcc)
+    {
+        int lwork;
+        int info = 0;
+
+        std::string name1 = "ZHETRD";
+        std::string name2 = "U";
+        // std::cout << "ilaenv " << std::endl;
+        int nb = LapackConnector::ilaenv(1, name1.c_str(), name2.c_str(), nbase, -1, -1, -1);
+
+        // std::cout << "end ilaenv " << std::endl;
+
+        if (nb < 1)
+        {
+            nb = std::max(1, nbase);
+        }
+
+        if (nb == 1 || nb >= nbase)
+        {
+            lwork = 2 * nbase;
+        }
+        else
+        {
+            lwork = (nb + 1) * nbase;
+        }
+        T* work = new T[2 * lwork];
+        assert(work != 0);
+        Real* rwork = new Real[7 * nbase];
+        assert(rwork != 0);
+        int* iwork = new int[5 * nbase];
+        assert(iwork != 0);
+        int* ifail = new int[nbase];
+        assert(ifail != 0);
+
+        ModuleBase::GlobalFunc::ZEROS(work, lwork);
+        ModuleBase::GlobalFunc::ZEROS(rwork, 7 * nbase);
+        ModuleBase::GlobalFunc::ZEROS(iwork, 5 * nbase);
+        ModuleBase::GlobalFunc::ZEROS(ifail, nbase);
+
+        int mm = m;
+        LapackConnector::xhegvx(1,
+                                'V',
+                                'I',
+                                'U',
+                                nbase,
+                                hcc,
+                                ldh,
+                                scc,
+                                ldh,
+                                0.0,
+                                0.0,
+                                1,
+                                m,
+                                0.0,
+                                mm,
+                                eigenvalue,
+                                vcc,
+                                ldh,
+                                work,
+                                lwork,
+                                rwork,
+                                iwork,
+                                ifail,
+                                info);
+
+        delete[] work;
+        delete[] rwork;
+        delete[] iwork;
+        delete[] ifail;
+    }
+};
 
     template struct dngvd_op<std::complex<float>, psi::DEVICE_CPU>;
     template struct dngvd_op<std::complex<double>, psi::DEVICE_CPU>;
 
-    template struct dnevx_op <std::complex<float>, psi::DEVICE_CPU >;
+    template struct dnevx_op<std::complex<float>, psi::DEVICE_CPU>;
     template struct dnevx_op<std::complex<double>, psi::DEVICE_CPU>;
+
+    template struct dngvx_op<std::complex<float>, psi::DEVICE_CPU>;
+    template struct dngvx_op<std::complex<double>, psi::DEVICE_CPU>;
+
+    template struct dngv_op<std::complex<float>, psi::DEVICE_CPU>;
+    template struct dngv_op<std::complex<double>, psi::DEVICE_CPU>;
 #ifdef __LCAO
     template struct dngvd_op<double, psi::DEVICE_CPU>;
     template struct dnevx_op <double, psi::DEVICE_CPU >;
+    template struct dngvx_op<double, psi::DEVICE_CPU>;
+    template struct dngv_op<double, psi::DEVICE_CPU>;
 #endif
 } // namespace hsolver

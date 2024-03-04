@@ -41,6 +41,52 @@ namespace hsolver
             T* V);
 };
 
+    template <typename T, typename Device> struct dngv_op
+    {
+        using Real = typename GetTypeReal<T>::type;
+        /// @brief DNGVX computes first m eigenvalues and eigenvectors of a complex generalized
+        /// Input Parameters
+        ///     @param d : the type of device
+        ///     @param nbase : the number of dim of the matrix
+        ///     @param ldh : the number of dmx of the matrix
+        ///     @param A : the hermitian matrix A in A x=lambda B x (col major)
+        ///     @param B : the overlap matrix B in A x=lambda B x (col major)
+        /// Output Parameter
+        ///     @param W : calculated eigenvalues
+        ///     @param V : calculated eigenvectors (col major)
+        void operator()(const Device* d,
+            const int nstart,
+            const int ldh,
+            const T* A,
+            T* B,
+            Real* W,
+            T* V);
+    };
+
+
+    template <typename T, typename Device> struct dngvx_op
+    {
+        using Real = typename GetTypeReal<T>::type;
+        /// @brief DNGVX computes first m eigenvalues and eigenvectors of a complex generalized
+        /// Input Parameters
+        ///     @param d : the type of device
+        ///     @param nbase : the number of dim of the matrix
+        ///     @param ldh : the number of dmx of the matrix
+        ///     @param A : the hermitian matrix A in A x=lambda B x (col major)
+        ///     @param B : the overlap matrix B in A x=lambda B x (col major)
+        ///     @param m : the number of eigenpair
+        /// Output Parameter
+        ///     @param W : calculated eigenvalues
+        ///     @param V : calculated eigenvectors (col major)
+        void operator()(const Device* d,
+            const int nstart,
+            const int ldh,
+            T* A,
+            T* B,
+            const int m,
+            Real* W,
+            T* V);
+    };
 
     template <typename T, typename Device> struct dnevx_op
 {

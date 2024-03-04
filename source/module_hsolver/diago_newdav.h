@@ -84,7 +84,8 @@ class Diago_NewDav : public DiagH<T, Device>
                   const T* hphi,
                   const T* sphi,
                   T* hcc,
-                  T* scc);
+                  T* scc,
+                  bool init);
 
     void refresh(const int& dim,
                  const int& nband,
@@ -115,7 +116,8 @@ class Diago_NewDav : public DiagH<T, Device>
                      const T* scc,
                      const int& nbase_x,
                      Real* eigenvalue,
-                     T* vcc);
+                     T* vcc,
+                     bool init);
 
     void diag_mock(hamilt::Hamilt<T, Device>* phm_in, psi::Psi<T, Device>& psi, Real* eigenvalue_in);
 
