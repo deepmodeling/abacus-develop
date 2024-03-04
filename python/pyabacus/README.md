@@ -11,8 +11,7 @@ Installation
 
 - Create and activate a new conda env, e.g. `conda create -n myenv python=3.8 & conda activate myenv`.
 - Clone ABACUS main repository and `cd abacus-develop/python/pyabacus`.
-- Install dependencies by `pip install -r requirements.txt`.(Use `pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple` to accelerate installation process.)
-- Build pyabacus by `pip install -v .`.
+- Build pyabacus by `pip install -v .` or install test dependencies & build  pyabacus by `pip install .[test]`. (Use `pip install -r .[test] -i https://pypi.tuna.tsinghua.edu.cn/simple` to accelerate installation process.)
 
 
 CI Examples

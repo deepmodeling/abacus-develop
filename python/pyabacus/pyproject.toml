@@ -24,7 +24,7 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-test = ["pytest", "numpy"]
+test = ["contourpy","cycler","exceptiongroup","fonttools","importlib-metadata","importlib-resources","iniconfig","kiwisolver","matplotlib","mpmath","numpy","packaging","pillow","platformdirs","pluggy","pyparsing","pytest","python-dateutil","six","stylize","sympy","tomli","yapf","zipp"]
 
 
 [tool.scikit-build]
