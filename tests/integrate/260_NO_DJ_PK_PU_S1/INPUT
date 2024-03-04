@@ -1,0 +1,42 @@
+INPUT_PARAMETERS
+suffix    autotest
+nbands    40
+
+calculation    scf
+ecutwfc    20
+scf_thr    1.0e-4
+scf_nmax    50
+out_chg    0
+
+#init_chg    file
+#out_dos    1
+#dos_sigma    0.05
+#out_band    1
+
+smearing_method    gaussian
+smearing_sigma    0.01
+
+cal_force     1
+cal_stress    1
+#force_thr_ev    0.01
+#relax_method    cg
+#relax_bfgs_init    0.5
+
+mixing_type    broyden
+mixing_beta    0.4
+mixing_restart 5
+mixing_dmr     1
+#mixing_gg0    1.0
+
+ks_solver    scalapack_gvx
+basis_type    lcao
+gamma_only    0
+symmetry    0
+nspin    1
+
+#Parameter DFT+U
+dft_plus_u    1
+orbital_corr    2 -1
+hubbard_u    5.0 0.0
+pseudo_dir	../../PP_ORB
+orbital_dir	../../PP_ORB
