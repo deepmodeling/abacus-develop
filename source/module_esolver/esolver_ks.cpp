@@ -417,22 +417,6 @@ namespace ModuleESolver
                     else
                     {
                         //----------charge mixing---------------
-                        //before first calling mix_rho(), bandgap and cell structure can be analyzed to get better default parameters
-                        // if(iter == 1)
-                        // {
-                        //     double bandgap_for_autoset = 0.0;
-                        //     if (!GlobalV::TWO_EFERMI)
-                        //     {
-                        //         this->pelec->cal_bandgap();
-                        //         bandgap_for_autoset = this->pelec->bandgap;
-                        //     }
-                        //     else
-                        //     {
-                        //         this->pelec->cal_bandgap_updw();
-                        //         bandgap_for_autoset = std::min(this->pelec->bandgap_up, this->pelec->bandgap_dw);
-                        //     }
-                        //     p_chgmix->auto_set(bandgap_for_autoset, GlobalC::ucell);
-                        // }
                         // mixing will restart after this->p_chgmix->mixing_restart steps
                         if (GlobalV::MIXING_RESTART > 0 && iter == this->p_chgmix->mixing_restart - 1)
                         {
