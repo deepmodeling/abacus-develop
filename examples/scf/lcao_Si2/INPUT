@@ -7,3 +7,6 @@ ecutwfc			50
 scf_nmax		100
 scf_thr                 1e-6
 basis_type		lcao
+cal_stress      1
+cal_force       1
+gamma_only      1
