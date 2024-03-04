@@ -70,6 +70,7 @@ class RadialSet
      */
     virtual void build(const int itype = 0,
                        const double charge = 1.0,
+                       const bool with_slater_screening = false,
                        const int nmax = 0,
                        const double rcut = 10.0,
                        const double dr = 0.01,

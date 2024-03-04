@@ -3146,8 +3146,15 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     }
     if(qo_screening_coeff.size() != ntype)
     {
-        double default_screening_coeff = (qo_screening_coeff.size() == 1)? qo_screening_coeff[0]: 0.1;
-        qo_screening_coeff.resize(ntype, default_screening_coeff);
+        if(qo_basis == "pswfc")
+        {
+            double default_screening_coeff = (qo_screening_coeff.size() == 1)? qo_screening_coeff[0]: 0.1;
+            qo_screening_coeff.resize(ntype, default_screening_coeff);
+        }
+        else
+        {
+            // if length of qo_screening_coeff is not 0, turn on Slater screening
+        }
     }
     if(qo_strategy.size() != ntype)
     {

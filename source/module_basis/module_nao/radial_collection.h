@@ -35,6 +35,7 @@ class RadialCollection
     /// builds the collection from quasi hydrogen radial functions
     void build(const int ntype, 
                const double* const charges, 
+               const bool with_slater_screening,
                const int* const nmax, 
                const std::string* symbols = nullptr,
                const double conv_thr = 1e-10,

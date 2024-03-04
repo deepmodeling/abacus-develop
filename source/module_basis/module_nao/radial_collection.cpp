@@ -228,6 +228,7 @@ void RadialCollection::build(const int nfile, const std::string* const file, con
 
 void RadialCollection::build(const int ntype, 
                              const double* const charges, 
+                             const bool with_slater_screening,
                              const int* const nmax, 
                              const std::string* symbols,
                              const double conv_thr,
@@ -242,6 +243,7 @@ void RadialCollection::build(const int ntype,
         radset_[itype] = new HydrogenRadials;
         radset_[itype]->build(itype, 
                               charges[itype], 
+                              with_slater_screening,
                               nmax[itype], 
                               10.0,             // rcut should be determined automatically, in principle...
                               0.01,
