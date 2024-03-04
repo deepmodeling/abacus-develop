@@ -278,6 +278,7 @@
     - [yukawa\_potential](#yukawa_potential)
     - [yukawa\_lambda](#yukawa_lambda)
     - [omc](#omc)
+    - [onsite\_radius](#onsite_radius)
   - [vdW correction](#vdw-correction)
     - [vdw\_method](#vdw_method)
     - [vdw\_s6](#vdw_s6)
@@ -2620,6 +2621,43 @@ These variables are used to control DFT+U correlated parameters
 > Note : The easiest way to create `initial_onsite.dm` is to run a DFT+U calculation, look for a file named `onsite.dm` in the OUT.prefix directory, and make replacements there. The format of the file is rather straight-forward.
 
 - **Default**: 0
+
+### onsite_radius
+
+- **Type**: Real
+- **Description**: 
+
+  - The `Onsite-radius` parameter facilitates modulation of the single-zeta portion of numerical atomic orbitals for projections for DFT+U. 
+  - The modulation algorithm includes a smooth truncation applied directly to the tail of the original orbital, followed by normalization.  Consider the function:
+  $$
+  g(r;\sigma)=\begin{cases}
+  1-\exp\left(-\frac{(r-r_c)^2}{2\sigma^2}\right), & r < r_c\\
+  0, & r \geq r_c
+  \end{cases}
+  $$
+  - where $\sigma$ is a parameter that controls the smoothing interval. A normalized function truncated smoothly at $r_c$ can be represented as:
+
+  $$
+  \alpha(r) = \frac{\chi(r)g(r;\sigma)}{\langle\chi(r)g(r;\sigma), \chi(r)g(r;\sigma)\rangle}
+  $$
+
+  - To find an appropriate $\sigma$, the optimization process is as follows:
+
+  - Maximizing the overlap integral under a normalization constraint is equivalent to minimizing an error function:
+
+  $$
+  \min \langle \chi(r)-\alpha(r), \chi(r)-\alpha(r)\rangle \quad \text{subject to} \quad \langle \alpha(r),\alpha(r)\rangle=1
+  $$
+
+  - Similar to the process of generating numerical atomic orbitals, this optimization choice often induces additional oscillations in the outcome. To suppress these oscillations, we may include a derivative term in the objective function ($f'(r)\equiv \mathrm{d}f(r)/\mathrm{d}r$):
+
+  $$
+  \min \left[\gamma\langle \chi(r)-\alpha(r), \chi(r)-\alpha(r)\rangle + \langle \chi'(r)-\alpha'(r), \chi'(r)-\alpha'(r)\rangle\right] \quad \text{subject to} \quad \langle \alpha(r),\alpha(r)\rangle=1
+  $$
+
+  - where $\gamma$ is a parameter that adjusts the relative weight of the error function to the derivative error function.
+- **Unit**: Bohr
+- **Default**: 5.0 
 
 [back to top](#full-list-of-input-keywords)
 
