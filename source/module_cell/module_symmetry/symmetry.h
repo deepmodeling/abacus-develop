@@ -101,7 +101,7 @@ public:
 	
 	void change_lattice(void);
 
-	void getgroup(int &nrot, int &nrotk, std::ofstream &ofs_running);
+    void getgroup(int& nrot, int& nrotk, std::ofstream& ofs_running, double* pos);
     void checksym(ModuleBase::Matrix3& s, ModuleBase::Vector3<double>& gtrans, double* pos);
     /// @brief  primitive cell analysis
     void pricell(double* pos, const Atom* atoms);
