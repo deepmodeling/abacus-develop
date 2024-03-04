@@ -607,7 +607,7 @@ namespace ModuleESolver
     // save input rho
     this->pelec->charge->save_rho_before_sum_band();
     // save density matrix for mixing
-    if (GlobalV::MIXING_RESTART > 0 && GlobalV::MIXING_DMR && iter >= GlobalV::MIXING_RESTART)
+    if (GlobalV::MIXING_RESTART > 0 && GlobalV::MIXING_DMR && iter >= this->p_chgmix->mixing_restart)
     {
         elecstate::DensityMatrix<TK, double>* dm
             = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
@@ -794,7 +794,7 @@ namespace ModuleESolver
     void ESolver_KS_LCAO<TK, TR>::eachiterfinish(int iter)
 {
     // mix density matrix
-    if (GlobalV::MIXING_RESTART > 0 && iter >= GlobalV::MIXING_RESTART && GlobalV::MIXING_DMR )
+    if (GlobalV::MIXING_RESTART > 0 && iter >= this->p_chgmix->mixing_restart && GlobalV::MIXING_DMR )
     {
         elecstate::DensityMatrix<TK, double>* dm
                     = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
