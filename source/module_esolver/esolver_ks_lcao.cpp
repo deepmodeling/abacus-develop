@@ -491,10 +491,16 @@ namespace ModuleESolver
     template <typename TK, typename TR>
     void ESolver_KS_LCAO<TK, TR>::eachiterinit(const int istep, const int iter)
 {
-    if (iter == 1 || iter == GlobalV::MIXING_RESTART)
+    if (iter == 1)
+    {
+        this->p_chgmix->init_mixing(); // init mixing
+        this->p_chgmix->mixing_restart = GlobalV::SCF_NMAX;
+    }
+    // for mixing restart
+    if (iter == this->p_chgmix->mixing_restart || GlobalV::MIXING_RESTART > 0.0)
     {
         this->p_chgmix->init_mixing();
-        if (iter == GlobalV::MIXING_RESTART && GlobalV::MIXING_DMR) // for mixing_dmr 
+        if (GlobalV::MIXING_DMR) // for mixing_dmr 
         {
             // allocate memory for dmr_mdata
             const elecstate::DensityMatrix<TK, double>* dm
