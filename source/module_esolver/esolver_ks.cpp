@@ -402,7 +402,7 @@ namespace ModuleESolver
                         }
                     }
                     // mixing will restart at this->p_chgmix->mixing_restart steps
-                    if (drho <= 10e-3 && GlobalV::MIXING_RESTART > 0.0 && this->p_chgmix->mixing_restart > iter)
+                    if (drho <= GlobalV::MIXING_RESTART && GlobalV::MIXING_RESTART > 0.0 && this->p_chgmix->mixing_restart > iter)
                     {
                         this->p_chgmix->mixing_restart = iter + 1;
                     }
