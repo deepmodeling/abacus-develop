@@ -497,7 +497,7 @@ namespace ModuleESolver
         this->p_chgmix->mixing_restart = GlobalV::SCF_NMAX;
     }
     // for mixing restart
-    if (iter == this->p_chgmix->mixing_restart || GlobalV::MIXING_RESTART > 0.0)
+    if (iter == this->p_chgmix->mixing_restart && GlobalV::MIXING_RESTART > 0.0)
     {
         this->p_chgmix->init_mixing();
         if (GlobalV::MIXING_DMR) // for mixing_dmr 
