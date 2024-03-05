@@ -16,17 +16,17 @@ extern "C"
 typedef hamilt::MatrixBlock<double> matd;
 typedef hamilt::MatrixBlock<std::complex<double>> matcd;
 
-static inline void Cpdgemr2d(int M,
-                            int N,
-                            double* a,
-                            int ia,
-                            int ja,
-                            int* desca,
-                            double* b,
-                            int ib,
-                            int jb,
-                            int* descb,
-                            int blacs_ctxt)
+inline void Cpdgemr2d(int M,
+                        int N,
+                        double* a,
+                        int ia,
+                        int ja,
+                        int* desca,
+                        double* b,
+                        int ib,
+                        int jb,
+                        int* descb,
+                        int blacs_ctxt)
 {
     pdgemr2d_(&M, &N, a, &ia, &ja, desca, b, &ib, &jb, descb, &blacs_ctxt);
 }
@@ -67,14 +67,24 @@ void gatherMatrix(matd &mat_l, matd &mat_g)
 }
 
 // convert the Psi to a 2D block storage format
-void distributePsi(int ctxt, int nrows, int ncols, int rsrc, int csrc, double *psi, double *psi_g)
+void distributePsi(const int *desc_psi, double *psi, double *psi_g)
 {
-    int descg[9] = {1, ctxt, nrows, ncols, nrows, ncols, rsrc, csrc, nrows};
+    ModuleBase::timer::tick("DiagoCusolver", "distribute");
+    int ctxt = desc_psi[1];
+    int nrows = desc_psi[2];
+    int ncols = desc_psi[3];
+    int rsrc = desc_psi[6];
+    int csrc = desc_psi[7];
 
-    // not sure whether nprows and npcols equal to 1
-    // nrows = nbasis
-    int descl[9] = {1, ctxt, nrows, ncols, 1, 1, rsrc, csrc, nrows};
+    int descg[9] = {1, ctxt, nrows, ncols, nrows, ncols, rsrc, csrc, nrows};
+    int descl[9];
+    
+    for (int i = 0; i < 9; i++)
+    {
+        descl[i] = desc_psi[i];
+    }
     Cpdgemr2d(nrows, ncols, psi_g, 1, 1, descg, psi, 1, 1, descl, ctxt);
+    ModuleBase::timer::tick("DiagoCusolver", "distribute");
 }
 
 // Namespace for the diagonalization solver
@@ -85,6 +95,26 @@ namespace hsolver
     int DiagoCusolver<double>::DecomposedState = 0;
     template <>
     int DiagoCusolver<std::complex<double>>::DecomposedState = 0;
+
+    template <> DiagoCusolver<double>::DiagoCusolver(const Parallel_Orbitals * ParaV)
+    {
+        this->ParaV = ParaV;
+    }
+
+    template <> DiagoCusolver<std::complex<double>>::DiagoCusolver(const Parallel_Orbitals * Para)
+    {
+        this->ParaV = ParaV;
+    }
+
+    template <>
+    DiagoCusolver<double>::~DiagoCusolver()
+    {
+    }
+
+    template <>
+    DiagoCusolver<std::complex<double>>::~DiagoCusolver()
+    {
+    }
 
     // Diagonalization function for complex numbers
     template <>
@@ -172,7 +202,7 @@ namespace hsolver
         }
         MPI_Barrier(MPI_COMM_WORLD);
         MPI_Bcast(eigen.data(), GlobalV::NBANDS, MPI_DOUBLE, ROOT_PROC, MPI_COMM_WORLD);
-        distributePsi(ctxt, h_mat_g.row, h_mat_g.col, 0, 0, psi.get_pointer(), psi_g);
+        distributePsi(this->ParaV->desc_wfc, psi.get_pointer(), psi_g);
         #else
         this->dc.Dngvd_double(h_mat.col, h_mat.row, h_mat.p, s_mat.p, eigen.data(), psi.get_pointer());
         #endif

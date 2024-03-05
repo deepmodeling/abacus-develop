@@ -16,8 +16,13 @@ class DiagoCusolver : public DiagH<T>
   private:
     // Real is the real part of the complex type T
     using Real = typename GetTypeReal<T>::type;
+    Parallel_Orbitals const * ParaV;
 
   public:
+
+    DiagoCusolver(const Parallel_Orbitals* ParaV = nullptr);
+    ~DiagoCusolver();
+    
     // Override the diag function for CUSOLVER diagonalization
     void diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in) override;
 
