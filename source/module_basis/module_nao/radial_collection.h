@@ -124,7 +124,15 @@ class RadialCollection
                           const bool enable_fft = false);
     ///@}
 
-    void to_file(const std::string&);
+    /**
+     * @brief export all RadialSet objects to a file in a given format.
+     * 
+     * Supported formats:  
+     * - "abacus_orb" (default): ABACUS Numerical atomic orbital format
+     */
+    void to_file(const std::string& appendix,                ///< file name
+                 const std::string& format = "abacus_orb"    ///< file format
+                 ) const;
 
   private:
     int ntype_ = 0;         ///< number of RadialSet in the collection

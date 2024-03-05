@@ -64,27 +64,28 @@ class RadialSet
                        ) {}
 
     /**
-     * @brief Builds from quasi hydrogen radial functions.
+     * @brief Builds from hydrogen-like radial functions.
      *
-     * 
+     * Currently only HydrogenRadials objects are supposed to used this
+     * interface.
      */
-    virtual void build(const int itype = 0,
-                       const double charge = 1.0,
-                       const bool with_slater_screening = false,
-                       const int nmax = 0,
-                       const double rcut = 10.0,
-                       const double dr = 0.01,
-                       const double conv_thr = 1e-6,
-                       const int rank = 0,
-                       const std::string symbol = "",
-                       const std::string strategy = "minimal-valence",
-                       std::ofstream* const ptr_log = nullptr
-    ) {}
+    virtual void build(const int = 0,                         ///< the element index in calculation
+                       const double = 1.0,                    ///< nuclear charge
+                       const bool = false,                    ///< whether to include Slater screening
+                       const int = 0,                         ///< maximal principal quantum number or electrons
+                       const double = 10.0,                   ///< maximal radius
+                       const double = 0.01,                   ///< radial grid step
+                       const double = 1e-6,                   ///< convergence threshold for norm of pseudowavefunction
+                       const int = 0,                         ///< MPI rank
+                       const std::string = "",                ///< the name of the element
+                       const std::string = "minimal-valence", ///< the strategy to generate whole set of radial functions
+                       std::ofstream* const = nullptr         ///< output file stream for logging
+                       ) {}
 
     /**
-     * @brief Builds the object from pseudopotential file
+     * @brief Builds from pseudopotential file
      *
-     * Currently only AtomicRadials objects are supposed to used this
+     * Currently only PswfcRadials objects are supposed to used this
      * interface.
      */
     virtual void build(const std::string&,             ///< file name
@@ -94,8 +95,19 @@ class RadialSet
                        std::ofstream* const = nullptr, ///< output file stream for logging
                        const int = 0                   ///< MPI rank
                        ) {}
-
-    void to_file(const std::string& file_name, const int rank = 0) const;
+    /**
+     * @brief write any RadialSet object to a file in ABACUS numerical atomic orbital format.
+     * 
+     * This function will write any RadialSet object to file in ABACUS numerical atomic orbital format.
+     * However its counterparts,  
+     * `read_abacus_orb()` is in AtomicRadials,  
+     * `read_beta_upf100()` and `read_beta_upf201()` are in BetaRadials,
+     * `read_upf_pswfc()` is in PswfcRadials,  
+     * `read_coeff()` is in SphbesRadials,  
+     * due to read-in procedures always vary from one to another.
+     */
+    void write_abacus_orb(const std::string&,      ///< file name
+                          const int = 0) const;    ///< MPI rank
 
     ///@}
 
