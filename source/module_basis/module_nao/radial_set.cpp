@@ -193,7 +193,7 @@ void RadialSet::cleanup()
     index_map_ = nullptr;
 }
 
-void RadialSet::to_file(const std::string& file_name, const int rank) const
+void RadialSet::write_abacus_orb(const std::string& file_name, const int rank) const
 {
     std::ofstream file_to;
     file_to.open(file_name, std::ios::out);
