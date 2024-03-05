@@ -16,6 +16,17 @@
 #include "LCAO_hamilt.hpp"
 #endif
 
+#ifdef __MPI
+#include <mpi.h>
+#include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
+#endif
+
+#ifdef __USECNPY
+#include "cnpy.h"
+#endif
+
+#include "module_base/element_name.h"
+
 LCAO_Hamilt::LCAO_Hamilt()
 {
 }
@@ -264,6 +275,157 @@ void LCAO_Hamilt::calculate_HContainer_sparse_cd(const int &current_spin, const 
     }
 
     return;
+}
+
+void LCAO_Hamilt::output_HR_npz(std::string& zipname, const hamilt::HContainer<double>& hR)
+{
+    ModuleBase::TITLE("LCAO_Hamilt","output_HR_npz");
+
+#ifdef __USECNPY
+    std::string filename = "";
+
+    if(GlobalV::MY_RANK == 0)
+    {
+        
+// first block: lattice vectors
+        filename = "lattice_vectors";
+        std::vector<double> lattice_vectors;
+        lattice_vectors.resize(9);
+        lattice_vectors[0] = GlobalC::ucell.lat0 * GlobalC::ucell.a1.x;
+        lattice_vectors[1] = GlobalC::ucell.lat0 * GlobalC::ucell.a1.y;
+        lattice_vectors[2] = GlobalC::ucell.lat0 * GlobalC::ucell.a1.z;
+        lattice_vectors[3] = GlobalC::ucell.lat0 * GlobalC::ucell.a2.x;
+        lattice_vectors[4] = GlobalC::ucell.lat0 * GlobalC::ucell.a2.y;
+        lattice_vectors[5] = GlobalC::ucell.lat0 * GlobalC::ucell.a2.z;
+        lattice_vectors[6] = GlobalC::ucell.lat0 * GlobalC::ucell.a3.x;
+        lattice_vectors[7] = GlobalC::ucell.lat0 * GlobalC::ucell.a3.y;
+        lattice_vectors[8] = GlobalC::ucell.lat0 * GlobalC::ucell.a3.z;
+
+        cnpy::npz_save(zipname,filename,lattice_vectors);
+
+// second block: atom info
+        filename = "atom_info";
+        double* atom_info = new double[GlobalC::ucell.nat*5];
+        for(int iat = 0; iat < GlobalC::ucell.nat; ++iat)
+        {
+            const int it = GlobalC::ucell.iat2it[iat];
+            const int ia = GlobalC::ucell.iat2ia[iat];
+
+            //get atomic number (copied from write_cube.cpp)
+            std::string element = "";
+            element = GlobalC::ucell.atoms[it].label;
+			std::string::iterator temp = element.begin();
+			while (temp != element.end())
+			{
+				if ((*temp >= '1') && (*temp <= '9'))
+				{
+					temp = element.erase(temp);
+				}
+				else
+				{
+					temp++;
+				}
+			}
+            int z = 0;
+            for(int j=0; j!=ModuleBase::element_name.size(); j++)
+            {
+                if (element == ModuleBase::element_name[j])
+                {
+                    z=j+1;
+                    break;
+                }
+            }
+
+            atom_info[iat*5] = it;
+            atom_info[iat*5+1] = z;
+            atom_info[iat*5+2] = GlobalC::ucell.atoms[it].taud[ia].x;
+            atom_info[iat*5+3] = GlobalC::ucell.atoms[it].taud[ia].y;
+            atom_info[iat*5+4] = GlobalC::ucell.atoms[it].taud[ia].z;
+        }
+        std::vector<size_t> shape={(size_t)GlobalC::ucell.nat,5};
+
+        cnpy::npz_save(zipname,filename,atom_info,shape,"a");
+        delete[] atom_info;
+
+//third block: orbital info
+        for(int it = 0; it < GlobalC::ucell.ntype; ++it)
+        {
+            filename="orbital_info_"+std::to_string(it);
+            double* orbital_info = new double[GlobalC::ucell.atoms[it].nw*3];
+            for(int iw = 0; iw < GlobalC::ucell.atoms[it].nw; ++iw)
+            {
+                orbital_info[iw*3] = GlobalC::ucell.atoms[it].iw2n[iw];
+                orbital_info[iw*3+1] = GlobalC::ucell.atoms[it].iw2l[iw];
+                const int im = GlobalC::ucell.atoms[it].iw2m[iw];
+                const int m = (im % 2 == 0) ? -im/2 : (im+1)/2; // copied from LCAO_gen_fixedH.cpp
+                orbital_info[iw*3+2] = m;
+            }
+            shape={(size_t)GlobalC::ucell.atoms[it].nw,3};
+
+            cnpy::npz_save(zipname,filename,orbital_info,shape,"a");
+        }
+    }
+
+//fourth block: hr(i0,jR)
+#ifdef __MPI
+    hamilt::HContainer<double>* HR_serial;
+    Parallel_Orbitals serialV;
+    serialV.set_global2local(GlobalV::NLOCAL, GlobalV::NLOCAL, false, GlobalV::ofs_running);
+    serialV.set_atomic_trace(GlobalC::ucell.get_iat2iwt(), GlobalC::ucell.nat, GlobalV::NLOCAL);
+    if(GlobalV::MY_RANK == 0)
+    {
+        HR_serial = new hamilt::HContainer<double>(&serialV);
+    }
+    hamilt::gatherParallels(hR, HR_serial, 0);
+
+    if(GlobalV::MY_RANK==0)
+    {
+        for(int iap=0;iap<HR_serial[0].size_atom_pairs();++iap)
+        {
+            int atom_i = HR_serial[0].get_atom_pair(iap).get_atom_i();
+            int atom_j = HR_serial[0].get_atom_pair(iap).get_atom_j();
+            if(atom_i > atom_j) continue;
+            int start_i = serialV.atom_begin_row[atom_i];
+            int start_j = serialV.atom_begin_col[atom_j];
+            int row_size = serialV.get_row_size(atom_i);
+            int col_size = serialV.get_col_size(atom_j);
+            for(int iR=0;iR<HR_serial[0].get_atom_pair(iap).get_R_size();++iR)
+            {
+                auto& matrix = HR_serial[0].get_atom_pair(iap).get_HR_values(iR);
+                int* r_index = HR_serial[0].get_atom_pair(iap).get_R_index(iR);
+                filename = "hr_"+std::to_string(atom_i)+"_"+std::to_string(atom_j)+"_"
+                    +std::to_string(r_index[0])+"_"+std::to_string(r_index[1])+"_"+std::to_string(r_index[2]);
+                std::vector<size_t> shape = {(size_t)row_size,(size_t)col_size};
+                cnpy::npz_save(zipname,filename,matrix.get_pointer(),shape,"a");
+            }
+        }
+
+    }
+#else
+    const Parallel_Orbitals* paraV = this->LM->ParaV;
+    auto row_indexes = paraV->get_indexes_row();
+    auto col_indexes = paraV->get_indexes_col();
+    for(int iap=0;iap<hR.size_atom_pairs();++iap)
+    {
+        int atom_i = hR.get_atom_pair(iap).get_atom_i();
+        int atom_j = hR.get_atom_pair(iap).get_atom_j();
+        int start_i = paraV->atom_begin_row[atom_i];
+        int start_j = paraV->atom_begin_col[atom_j];
+        int row_size = paraV->get_row_size(atom_i);
+        int col_size = paraV->get_col_size(atom_j);
+        for(int iR=0;iR<hR.get_atom_pair(iap).get_R_size();++iR)
+        {
+            auto& matrix = hR.get_atom_pair(iap).get_HR_values(iR);
+            int* r_index = hR.get_atom_pair(iap).get_R_index(iR);
+
+            filename = "hr_"+std::to_string(atom_i)+"_"+std::to_string(atom_j)+"_"
+                +std::to_string(r_index[0])+"_"+std::to_string(r_index[1])+"_"+std::to_string(r_index[2]);
+            std::vector<size_t> shape = {(size_t)row_size,(size_t)col_size};
+            cnpy::npz_save(zipname,filename,matrix.get_pointer(),shape,"a");
+        }
+    }
+#endif
+#endif
 }
 
 void LCAO_Hamilt::calculate_HSR_sparse(const int &current_spin, const double &sparse_threshold, const int (&nmp)[3], hamilt::Hamilt<std::complex<double>>* p_ham)

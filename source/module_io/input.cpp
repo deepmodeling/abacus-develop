@@ -346,6 +346,7 @@ void Input::Default(void)
     out_proj_band = 0;
     out_mat_hs = {0, 8};
     out_mat_xc = 0;
+    out_hr_npz = 0;
     cal_syns = 0;
     dmax = 0.01;
     out_mat_hs2 = 0; // LiuXh add 2019-07-15
@@ -1435,6 +1436,10 @@ bool Input::Read(const std::string& fn)
         else if (strcmp("out_mat_xc", word) == 0)
         {
             read_bool(ifs, out_mat_xc);
+        }
+        else if (strcmp("out_hr_npz", word) == 0)
+        {
+            read_bool(ifs, out_hr_npz);
         }
         else if (strcmp("out_interval", word) == 0)
         {
@@ -2645,10 +2650,16 @@ bool Input::Read(const std::string& fn)
             gamma_only_local = 0;
         }
     }
-    if ((out_mat_r || out_mat_hs2 || out_mat_t || out_mat_dh) && gamma_only_local)
+    if ((out_mat_r || out_mat_hs2 || out_mat_t || out_mat_dh || out_hr_npz) && gamma_only_local)
     {
         ModuleBase::WARNING_QUIT("Input",
                                  "printing of H(R)/S(R)/dH(R)/T(R) is not available for gamma only calculations");
+    }
+    if(out_hr_npz)
+    {
+#ifndef __USECNPY
+        ModuleBase::WARNING_QUIT("Input", "to write in npz format, please recompile with -DENABLE_CNPY=1");
+#endif
     }
     if (out_mat_dh && nspin == 4)
     {
@@ -3396,6 +3407,7 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(out_mat_t);
     Parallel_Common::bcast_bool(out_mat_dh);
     Parallel_Common::bcast_bool(out_mat_xc);
+    Parallel_Common::bcast_bool(out_hr_npz);
     Parallel_Common::bcast_bool(out_mat_r); // jingan add 2019-8-14
     Parallel_Common::bcast_int(out_wfc_lcao);
     Parallel_Common::bcast_bool(out_alllog);

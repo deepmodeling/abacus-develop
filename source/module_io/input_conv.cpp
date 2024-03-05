@@ -685,6 +685,7 @@ void Input_Conv::Convert(void)
     hsolver::HSolverLCAO<std::complex<double>>::out_mat_t = INPUT.out_mat_t;
     hsolver::HSolverLCAO<std::complex<double>>::out_mat_dh = INPUT.out_mat_dh;
     GlobalV::out_mat_xc = INPUT.out_mat_xc;
+    GlobalV::out_hr_npz = INPUT.out_hr_npz;
     if (GlobalV::GAMMA_ONLY_LOCAL)
     {
         elecstate::ElecStateLCAO<double>::out_wfc_lcao = INPUT.out_wfc_lcao;

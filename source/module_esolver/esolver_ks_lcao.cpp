@@ -939,6 +939,25 @@ namespace ModuleESolver
     }
 #endif
 
+    if(GlobalV::out_hr_npz)
+    {
+        this->p_hamilt->updateHk(0); // first k point, up spin
+        hamilt::HamiltLCAO<std::complex<double>, double>* p_ham_lcao 
+            = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(this->p_hamilt);
+        std::string zipname = "output_HR0.npz";
+        this->UHM.output_HR_npz(zipname,*(p_ham_lcao->getHR()));
+
+        if(GlobalV::NSPIN==2)
+        {
+            this->p_hamilt->updateHk(this->kv.nks/2); // the other half of k points, down spin
+            hamilt::HamiltLCAO<std::complex<double>, double>* p_ham_lcao 
+                = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(this->p_hamilt);
+            zipname = "output_HR1.npz";
+            this->UHM.output_HR_npz(zipname,*(p_ham_lcao->getHR()));            
+        }
+    }
+
+
     if (!md_skip_out(GlobalV::CALCULATION, istep, GlobalV::out_interval))
     {
         this->create_Output_Mat_Sparse(istep).write();
