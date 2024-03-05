@@ -99,6 +99,9 @@ class Charge_Mixing
     double get_mixing_gg0() const {return mixing_gg0;}
     Base_Mixing::Mixing* get_mixing() const {return mixing;}
 
+    // for mixing restart
+    int mixing_restart = 0; //which step to restart mixing during SCF
+
   private:
   
     // mixing_data
