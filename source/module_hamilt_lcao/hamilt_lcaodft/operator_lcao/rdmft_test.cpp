@@ -306,44 +306,45 @@ void psiDotPsi<double>(const Parallel_Orbitals* ParaV, const Parallel_2D& para_E
 }
 
 
-// wg_wfcHwfc = wg*wfcHwfc + wg_wfcHwfc
-// Default symbol=0. When symbol = 0, 1, 2, 3, 4, wg = wg, 0.5*wg, g(wg), 0.5*g(wg), d_g(wg)/d_wg respectively.
-void wgMul_wfcHwfc(const ModuleBase::matrix& wg, const ModuleBase::matrix& wfcHwfc, ModuleBase::matrix& wg_wfcHwfc,
+// occNum_wfcHwfc = occNum*wfcHwfc + occNum_wfcHwfc
+// When symbol = 0, 1, 2, 3, 4, occNum = occNum, 0.5*occNum, g(occNum), 0.5*g(occNum), d_g(occNum)/d_occNum respectively. Default symbol=0.
+void occNum_Mul_wfcHwfc(const ModuleBase::matrix& occ_number, const ModuleBase::matrix& wfcHwfc, ModuleBase::matrix& occNum_wfcHwfc,
                         int symbol, const std::string XC_func_rdmft, const double alpha)
 {
-    for(int ir=0; ir<wg.nr; ++ ir)
+    for(int ir=0; ir<occ_number.nr; ++ ir)
     {
-        for(int ic=0; ic<wg.nc; ++ic) wg_wfcHwfc(ir, ic) += wg_func(wg(ir, ic), symbol, XC_func_rdmft, alpha) * wfcHwfc(ir, ic);
+        for(int ic=0; ic<occ_number.nc; ++ic) occNum_wfcHwfc(ir, ic) += occNum_func(occ_number(ir, ic), symbol, XC_func_rdmft, alpha) * wfcHwfc(ir, ic);
     } 
 }
 
 
 // Default symbol = 0 for the gradient of Etotal with respect to occupation numbers
 // symbol = 1 for the relevant calculation of Etotal
-void add_wg(const ModuleBase::matrix& wg, const ModuleBase::matrix& wfcHwfc_TV_in, const ModuleBase::matrix& wfcHwfc_hartree_in,
-                const ModuleBase::matrix& wfcHwfc_XC_in, ModuleBase::matrix& wg_wfcHwfc, const std::string XC_func_rdmft, const double alpha, int symbol)
+void add_occNum(const ModuleBase::matrix& occ_number, const ModuleBase::matrix& wfcHwfc_TV_in, const ModuleBase::matrix& wfcHwfc_hartree_in,
+                const ModuleBase::matrix& wfcHwfc_XC_in, ModuleBase::matrix& occNum_wfcHwfc, const std::string XC_func_rdmft, const double alpha, int symbol)
 {
     
-    wg_wfcHwfc.zero_out();
+    occNum_wfcHwfc.zero_out();
     
     if( symbol==0 )
     {
-        wgMul_wfcHwfc(wg, wfcHwfc_XC_in, wg_wfcHwfc, 4, XC_func_rdmft, alpha);
-        wg_wfcHwfc+=(wfcHwfc_TV_in);
-        wg_wfcHwfc+=(wfcHwfc_hartree_in);
+        occNum_Mul_wfcHwfc(occ_number, wfcHwfc_XC_in, occNum_wfcHwfc, 4, XC_func_rdmft, alpha);
+        occNum_wfcHwfc+=(wfcHwfc_TV_in);
+        occNum_wfcHwfc+=(wfcHwfc_hartree_in);
     }
-    else if( symbol==1 )
-    {
-        wgMul_wfcHwfc(wg, wfcHwfc_TV_in, wg_wfcHwfc);
-        wgMul_wfcHwfc(wg, wfcHwfc_hartree_in, wg_wfcHwfc, 1);
-        wgMul_wfcHwfc(wg, wfcHwfc_XC_in, wg_wfcHwfc, 3, XC_func_rdmft, alpha);
-    }
-    else std::cout << "\n\n\n!!!!!!\nthere are something wrong when calling rdmft_test() and calculation add_wg()\n!!!!!!\n\n\n"; 
+    // else if( symbol==1 )
+    // {
+    //     occNum_Mul_wfcHwfc(wg, wfcHwfc_TV_in, occNum_wfcHwfc);
+    //     occNum_Mul_wfcHwfc(wg, wfcHwfc_hartree_in, occNum_wfcHwfc, 1);
+    //     occNum_Mul_wfcHwfc(wg, wfcHwfc_XC_in, occNum_wfcHwfc, 3, XC_func_rdmft, alpha);
+    // }
+    else std::cout << "\n\n\n!!!!!!\nthere are something wrong when calling rdmft_test() and calculation add_occNum()\n!!!!!!\n\n\n"; 
 }
 
 
-void add_wg2(const std::vector<double>& wk_in, const ModuleBase::matrix& occ_number, const ModuleBase::matrix& wfcHwfc_TV_in, const ModuleBase::matrix& wfcHwfc_hartree_in,
-                const ModuleBase::matrix& wfcHwfc_XC_in, ModuleBase::matrix& wg_wfcHwfc, const std::string XC_func_rdmft, const double alpha)
+// do wk*g(occNum)*wfcHwfc and add for TV, hartree, XC. This function just use once, so it can be replace and delete
+void add_wfcHwfc(const std::vector<double>& wk_in, const ModuleBase::matrix& occ_number, const ModuleBase::matrix& wfcHwfc_TV_in, const ModuleBase::matrix& wfcHwfc_hartree_in,
+                const ModuleBase::matrix& wfcHwfc_XC_in, ModuleBase::matrix& occNum_wfcHwfc, const std::string XC_func_rdmft, const double alpha)
 {
     /****** delete when function rdmft_cal() -> class RDMFT ******/
     ModuleBase::matrix wg(occ_number);
@@ -354,33 +355,33 @@ void add_wg2(const std::vector<double>& wk_in, const ModuleBase::matrix& occ_num
     ModuleBase::matrix wk_fun_occNum(occ_number.nr, occ_number.nc, true);
     for(int ik=0; ik<wg.nr; ++ik)
     {
-        for(int inb=0; inb<wg.nc; ++inb) wk_fun_occNum(ik, inb) = wk_in[ik] * wg_func(occ_number(ik, inb), 2, XC_func_rdmft, alpha);
+        for(int inb=0; inb<wg.nc; ++inb) wk_fun_occNum(ik, inb) = wk_in[ik] * occNum_func(occ_number(ik, inb), 2, XC_func_rdmft, alpha);
     }
     /****** delete when function rdmft_cal() -> class RDMFT ******/
 
-    wg_wfcHwfc.zero_out();
-    wgMul_wfcHwfc(wg, wfcHwfc_TV_in, wg_wfcHwfc);
-    wgMul_wfcHwfc(wg, wfcHwfc_hartree_in, wg_wfcHwfc, 1);
-    wgMul_wfcHwfc(wk_fun_occNum, wfcHwfc_XC_in, wg_wfcHwfc, 1);
+    occNum_wfcHwfc.zero_out();
+    occNum_Mul_wfcHwfc(wg, wfcHwfc_TV_in, occNum_wfcHwfc);
+    occNum_Mul_wfcHwfc(wg, wfcHwfc_hartree_in, occNum_wfcHwfc, 1);
+    occNum_Mul_wfcHwfc(wk_fun_occNum, wfcHwfc_XC_in, occNum_wfcHwfc, 1);
 }
 
 
-// give certain wg_wfcHwfc, get the corresponding energy
-double sumWg_getEnergy(const ModuleBase::matrix& wg_wfcHwfc)
+// give certain occNum_wfcHwfc, get the corresponding energy
+double sum_getEnergy(const ModuleBase::matrix& occNum_wfcHwfc)
 {
     double energy = 0.0;
-    for(int ir=0; ir<wg_wfcHwfc.nr; ++ ir)
+    for(int ir=0; ir<occNum_wfcHwfc.nr; ++ ir)
     {
-        for(int ic=0; ic<wg_wfcHwfc.nc; ++ic) energy += wg_wfcHwfc(ir, ic);
+        for(int ic=0; ic<occNum_wfcHwfc.nc; ++ic) energy += occNum_wfcHwfc(ir, ic);
     }
     return energy;
 }
 
 
-// for HF, Muller and power functional, g(wg) = wg, wg^0.5, wg^alpha respectively.
+// for HF, Muller and power functional, g(eta) = eta, eta^0.5, eta^alpha respectively.
 // when symbol = 0, 1, 2, 3, 4, 5, return eta, 0.5*eta, g(eta), 0.5*g(eta), d_g(eta)/d_eta, 1.0 respectively.
 // Default symbol=0, XC_func_rdmft="HF", alpha=0.656
-double wg_func(double eta, int symbol, const std::string XC_func_rdmft, double alpha)
+double occNum_func(double eta, int symbol, const std::string XC_func_rdmft, double alpha)
 {
     if( XC_func_rdmft == "HF" ) alpha = 1.0;
     else if( XC_func_rdmft == "Muller" ) alpha = 0.5;

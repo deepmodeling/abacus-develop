@@ -901,20 +901,6 @@ namespace ModuleESolver
 
     /******** test RDMFT *********/
 
-    //initialize the gradients of Etotal on wg and wfc, and set all elements to 0. 
-    ModuleBase::matrix E_gradient_wg(this->pelec->wg.nr, this->pelec->wg.nc, true);
-    psi::Psi<TK> E_gradient_wfc(this->psi->get_nk(), this->psi->get_nbands(), this->psi->get_nbasis()); 
-    rdmft::set_zero_psi(E_gradient_wfc);
-    double Etotal_RDMFT = 0.0;
-
-    // get natural occupation numbers from wg which considers k point weights and spin, this just proper for nspin=1 !!!
-    // wk consider both weight of k-point and spin. When nspin=1, wk[ik] = W_k * 2 . When nspin=2, wk[ik] = W_k
-    ModuleBase::matrix occ_number(this->pelec->wg);
-    for(int ik=0; ik < occ_number.nr; ++ik)
-    {
-        for(int inb=0; inb < this->pelec->wg.nc; ++inb) occ_number(ik, inb) /= this->kv.wk[ik];
-    }
-
     // esolver_ks_lcao.h(LCAO_Matrix LM),           LCAO_matrix.h(Parallel_Orbitals* ParaV)
     // esolver_fp.h(elecstate::ElecState* pelec),   elecstate.h(ModuleBase::matrix wg),      this->pelec->wg
     // esolver_fp.h(elecstate::ElecState* pelec),   elecstate.h(Charge* charge),             this->pelec->wg
@@ -928,11 +914,19 @@ namespace ModuleESolver
     // esolver_fp.h(Structure_Factor sf), structure_factor.h(ModuleBase::ComplexMatrix strucFac), this->sf.strucFac
     // elecstate::DensityMatrix<TK, double>&  *( dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM() )
 
+    //initialize the gradients of Etotal on wg and wfc, and set all elements to 0. 
+    ModuleBase::matrix E_gradient_wg(this->pelec->wg.nr, this->pelec->wg.nc, true);
+    psi::Psi<TK> E_gradient_wfc(this->psi->get_nk(), this->psi->get_nbands(), this->psi->get_nbasis()); 
+    rdmft::set_zero_psi(E_gradient_wfc);
+    double Etotal_RDMFT = 0.0;
 
-    // //test use dgemm_
-    // rdmft::printResult_dgemm();
-
-    // elecstate::DensityMatrix<TK, double>* DM = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();  ///////////////
+    // get natural occupation numbers from wg which considers k point weights and spin, this just proper for nspin=1 !!! or 2 ? in Soild Si, it's correct
+    // wk consider both weight of k-point and spin. When nspin=1, wk[ik] = W_k * 2 . When nspin=2, wk[ik] = W_k
+    ModuleBase::matrix occ_number(this->pelec->wg);
+    for(int ik=0; ik < occ_number.nr; ++ik)
+    {
+        for(int inb=0; inb < this->pelec->wg.nc; ++inb) occ_number(ik, inb) /= this->kv.wk[ik];
+    }
 
     // gamma only calculation
     if( GlobalV::GAMMA_ONLY_LOCAL )
