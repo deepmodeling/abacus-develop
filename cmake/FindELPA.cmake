@@ -9,11 +9,27 @@
 
 find_package(PkgConfig)
 
+# Compatible layer towards old manual routines
+if(DEFINED ELPA_INCLUDE_DIR)
+  set(ELPA_INCLUDE_DIRS ${ELPA_INCLUDE_DIR})
+endif()
+if(DEFINED ELPA_LIBRARIES)
+  set(ELPA_LINK_LIBRARIES ${ELPA_LIBRARIES})
+endif()
+
 find_path(ELPA_INCLUDE_DIRS
     elpa/elpa.h
     HINTS ${ELPA_DIR}
     PATH_SUFFIXES "include" "include/elpa"
     )
+# Fix #3589
+# First if judges if ELPA dir specified
+if(ELPA_INCLUDE_DIRS MATCHES "^/usr/include/elpa/.*")
+  # Second if judges if global visible ELPA header found
+  if(DEFINED ELPA_DIR OR CMAKE_PREFIX_PATH MATCHES ".*elpa.*")
+    unset(ELPA_INCLUDE_DIRS)
+  endif()
+endif()
 if(USE_OPENMP)
     find_library(ELPA_LINK_LIBRARIES
     NAMES elpa_openmp elpa
@@ -28,6 +44,9 @@ else()
     )
 endif()
 
+# Incompatible with ELPA earlier than 2021.11.001
+# Before ELPA 2021.11.001, its pkg-config file 
+# is named like "elpa-2021.05.002.pc".
 if(NOT ELPA_INCLUDE_DIRS AND PKG_CONFIG_FOUND)
   if(DEFINED ELPA_DIR)
     string(APPEND CMAKE_PREFIX_PATH ";${ELPA_DIR}")
