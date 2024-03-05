@@ -214,7 +214,28 @@ void toQO::build_pswfc(const int ntype,
     #endif
     delete[] pspot_fn_;
 }
-
+/*
+void toQO::build_szv(const int ntype)
+{
+    // build the numerical atomic orbital basis
+    ModuleBase::SphericalBesselTransformer sbt;
+    ao_ = std::unique_ptr<RadialCollection>(new RadialCollection);
+    // add GlobalV::global_orbital_dir ahead of orbital_fn
+    int ntype_ = ntype;
+    std::vector<std::string> orbital_fn_(ntype_, "szv.orb");
+    ao_->build(ntype_, orbital_fn_.data(), 'o');
+    ao_->set_transformer(sbt);
+    for(int itype = 0; itype < ntype; itype++)
+    {
+        int _nchi_it = 0;
+        for(int l = 0; l <= ao_->lmax(itype); l++)
+        {
+            _nchi_it += (2*l+1)*ao_->nzeta(itype, l);
+        }
+        nchi_ += _nchi_it * na_[itype];
+    }
+}
+*/
 void toQO::build_ao(const int ntype, 
                     const std::string pseudo_dir,
                     const std::string* const pspot_fn,
@@ -243,6 +264,12 @@ void toQO::build_ao(const int ntype,
                     qo_thr,
                     rank);
     }
+    /*
+    else if(qo_basis_ == "szv")
+    {
+        build_szv(ntype_);
+    }
+    */
     else
     {
         #ifdef __MPI
@@ -317,7 +344,7 @@ void toQO::calculate_ovlp_R(const int iR)
                                         for(int mj : mjs)
                                         {
     // TWO ATOMIC ORBITALS ARE SPECIFIED, THEN WE NEED TO CALCULATE THE OVERLAP IN SUPERCELL
-                                            ModuleBase::Vector3<double> rij = p_ucell_->atoms[it].tau[ia] - p_ucell_->atoms[jt].tau[ja];
+                                            ModuleBase::Vector3<double> rij = p_ucell_->atoms[jt].tau[ja] - p_ucell_->atoms[it].tau[ia];
                                             // there is waste here, but for easy to understand, I don't optimize it.
                                             ModuleBase::Vector3<int> R = supercells_[iR];
                                             ModuleBase::Vector3<double> Rij;
