@@ -407,7 +407,7 @@ namespace ModuleESolver
                         this->p_chgmix->mixing_restart = iter + 1;
                     }
                     // drho will be 0 at this->p_chgmix->mixing_restart step, which is not ground state
-                    this->conv_elec = (drho < this->scf_thr && iter!=this->p_chgmix->mixing_restart);
+                    this->conv_elec = (drho < this->scf_thr && !(iter==this->p_chgmix->mixing_restart && GlobalV::MIXING_RESTART > 0.0));
 
                     // If drho < hsolver_error in the first iter or drho < scf_thr, we do not change rho.
                     if (drho < hsolver_error || this->conv_elec)
