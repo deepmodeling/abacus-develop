@@ -24,7 +24,7 @@ class Diago_NewDav : public DiagH<T, Device>
     ~Diago_NewDav();
 
     // this is the override function diag() for CG method
-    void diag(hamilt::Hamilt<T, Device>* phm_in, psi::Psi<T, Device>& phi, Real* eigenvalue_in);
+    void diag(hamilt::Hamilt<T, Device>* phm_in, psi::Psi<T, Device>& phi, Real* eigenvalue_in, bool need_subspace);
 
     static int PW_DIAG_NDIM;
 
@@ -112,8 +112,8 @@ class Diago_NewDav : public DiagH<T, Device>
 
     void diag_zhegvx(const int& nbase,
                      const int& nband,
-                     const T* hcc,
-                     const T* scc,
+                     T* hcc,
+                     T* scc,
                      const int& nbase_x,
                      Real* eigenvalue,
                      T* vcc,

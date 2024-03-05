@@ -587,6 +587,9 @@ void HSolverPW<T, Device>::endDiagh()
     {
         GlobalV::ofs_running<< "Average iterative diagonalization steps: "<<DiagoIterAssist<T, Device>::avg_iter / this->wfc_basis->nks
             <<" ; where current threshold is: "<<DiagoIterAssist<T, Device>::PW_DIAG_THR<<" . "<<std::endl;
+
+        std::cout << "avg_iter == " << DiagoIterAssist<T, Device>::avg_iter << std::endl;
+
         //reset avg_iter
         DiagoIterAssist<T, Device>::avg_iter = 0.0;
     }
@@ -622,7 +625,14 @@ template<typename T, typename Device>
 void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::Psi<T, Device>& psi, Real* eigenvalue)
 {
     if (this->method != "cg") {
-        this->pdiagh->diag(hm, psi, eigenvalue);
+        if (this->method == "new_dav")
+        {
+            ((Diago_NewDav<T, Device>*)this->pdiagh)->diag(hm, psi, eigenvalue, DiagoIterAssist<T, Device>::need_subspace);
+        }
+        else
+        {
+            this->pdiagh->diag(hm, psi, eigenvalue);
+        }
         return;
     }
     // warp the hpsi_func and spsi_func into a lambda function

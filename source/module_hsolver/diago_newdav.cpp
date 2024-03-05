@@ -39,7 +39,7 @@ inline void set_value(std::complex<double>& input, double x, double y)
 }
 inline void set_value(std::complex<float>& input, double x, double y)
 {
-    input = {x, y};
+    input = {static_cast<double>(x), static_cast<double>(y)};
 }
 
 inline std::complex<double> set_real_tocomplex(const std::complex<double>& x)
@@ -231,6 +231,15 @@ void Diago_NewDav<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
         // check convergence and update eigenvalues
         ModuleBase::timer::tick("Diago_NewDav", "check_update");
 
+        // std::cout << "print eigen value:" << std::endl;
+        // for (size_t i = 0; i < n_band; i++)
+        // {
+        //     std::cout << this->eigenvalue[i] << "\t";
+        // }
+        //  std::cout << std::endl;
+
+        
+
         this->notconv = 0;
         for (int m = 0; m < this->n_band; m++)
         {
@@ -245,11 +254,15 @@ void Diago_NewDav<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
             eigenvalue_in[m] = this->eigenvalue[m];
         }
 
+        // std::cout << "notconv nums == " << this->notconv << std::endl;
+
         ModuleBase::timer::tick("Diago_NewDav", "check_update");
-        if (!this->notconv || (nbase + this->notconv > this->nbase_x)
+        if (this->notconv == 0 || (nbase + this->notconv > this->nbase_x)
             || (dav_iter == DiagoIterAssist<T, Device>::PW_DIAG_NMAX))
         {
             ModuleBase::timer::tick("Diago_NewDav", "last");
+
+            // std::cout << "enter this" << std::endl;
 
             // updata eigenvectors of Hamiltonian
 
@@ -304,6 +317,8 @@ void Diago_NewDav<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
         } // end of if
 
     } while (1);
+
+    std::cout << "dav_iter == " << dav_iter << std::endl;
 
     DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(dav_iter);
 
@@ -752,8 +767,8 @@ void Diago_NewDav<T, Device>::cal_elem(const int& dim,
 template <typename T, typename Device>
 void Diago_NewDav<T, Device>::diag_zhegvx(const int& nbase,
                                           const int& nband,
-                                          const T* hcc,
-                                          const T* scc,
+                                          T* hcc,
+                                          T* scc,
                                           const int& nbase_x,
                                           Real* eigenvalue, // in CPU
                                           T* vcc,
@@ -764,6 +779,15 @@ void Diago_NewDav<T, Device>::diag_zhegvx(const int& nbase,
     if (GlobalV::RANK_IN_POOL == 0)
     {
         assert(nbase_x >= std::max(1, nbase));
+
+        std::vector<T> h_diag(nbase);
+        std::vector<T> s_diag(nbase);
+
+        for (size_t i = 0; i < nbase; i++)
+        {
+            h_diag[i] = hcc[i * this->nbase_x + i];
+            s_diag[i] = scc[i * this->nbase_x + i];
+        }
 
         if (this->device == psi::GpuDevice)
         {
@@ -795,6 +819,19 @@ void Diago_NewDav<T, Device>::diag_zhegvx(const int& nbase,
                                       nband,
                                       this->eigenvalue,
                                       this->vcc);
+            }
+        }
+
+        // reset:
+        for (size_t i = 0; i < nbase; i++)
+        {
+            hcc[i * this->nbase_x + i] = set_real_tocomplex(h_diag[i]);
+            scc[i * this->nbase_x + i] = set_real_tocomplex(s_diag[i]);
+
+            for (size_t j = i; j < nbase; j++)
+            {
+                hcc[i * this->nbase_x + j] = get_conj(hcc[j * this->nbase_x + i]);
+                scc[i * this->nbase_x + j] = get_conj(scc[j * this->nbase_x + i]);
             }
         }
     }
@@ -859,28 +896,28 @@ void Diago_NewDav<T, Device>::refresh(const int& dim,
                          this->vcc, // B nbase * nband
                          this->nbase_x,
                          this->zero,
-                         basis.get_pointer(), // C dim * nband
-                         this->dim);
-
-    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    // haozhihan repalce 2022-10-18
-    gemm_op<T, Device>()(this->ctx,
-                         'N',
-                         'N',
-                         this->dim, // m: row of A,C
-                         nband,     // n: col of B,C
-                         nbase,     // k: col of A, row of B
-                         this->one,
-                         this->sphi, // A dim * nbase
-                         this->dim,
-                         this->vcc, // B nbase * nband
-                         this->nbase_x,
-                         this->zero,
                          &basis(nband, 0), // C dim * nband
                          this->dim);
 
-    syncmem_complex_op()(this->ctx, this->ctx, hphi, &basis(0, 0), this->dim * nband);
-    syncmem_complex_op()(this->ctx, this->ctx, sphi, &basis(nband, 0), this->dim * nband);
+    // //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    // // haozhihan repalce 2022-10-18
+    // gemm_op<T, Device>()(this->ctx,
+    //                      'N',
+    //                      'N',
+    //                      this->dim, // m: row of A,C
+    //                      nband,     // n: col of B,C
+    //                      nbase,     // k: col of A, row of B
+    //                      this->one,
+    //                      this->sphi, // A dim * nbase
+    //                      this->dim,
+    //                      this->vcc, // B nbase * nband
+    //                      this->nbase_x,
+    //                      this->zero,
+    //                      &basis(nband, 0), // C dim * nband
+    //                      this->dim);
+
+    syncmem_complex_op()(this->ctx, this->ctx, hphi, &basis(nband, 0), this->dim * nband);
+    // syncmem_complex_op()(this->ctx, this->ctx, sphi, &basis(nband, 0), this->dim * nband);
     /*for (int m = 0; m < nband; m++)
     {
         for (int ig = 0; ig < this->dim; ig++)
@@ -891,7 +928,7 @@ void Diago_NewDav<T, Device>::refresh(const int& dim,
     }*/
 
     // update basis
-    basis.zero_out();
+    // basis.zero_out();
     for (int m = 0; m < nband; m++)
     {
         syncmem_complex_op()(this->ctx,
@@ -899,8 +936,6 @@ void Diago_NewDav<T, Device>::refresh(const int& dim,
                              &basis(m, 0),
                              psi.get_k_first() ? &psi(m, 0) : &psi(m, 0, 0),
                              this->dim);
-        /*for (int ig = 0; ig < npw; ig++)
-            basis(m, ig) = psi(m, ig);*/
     }
 
     // updata the reduced Hamiltonian
@@ -1099,7 +1134,7 @@ void Diago_NewDav<T, Device>::refresh(const int& dim,
 //     return;
 // }
 /*
-*/
+ */
 // template <typename T, typename Device>
 // void Diago_NewDav<T, Device>::planSchmitOrth(const int nband, int* pre_matrix_mm_m, int* pre_matrix_mv_m)
 // {
@@ -1161,9 +1196,11 @@ void Diago_NewDav<T, Device>::refresh(const int& dim,
 //     }
 // }
 
-
 template <typename T, typename Device>
-void Diago_NewDav<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in, psi::Psi<T, Device>& psi, Real* eigenvalue_in)
+void Diago_NewDav<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
+                                   psi::Psi<T, Device>& psi,
+                                   Real* eigenvalue_in,
+                                   bool need_subspace)
 {
     /// record the times of trying iterative diagonalization
     int ntry = 0;
@@ -1180,13 +1217,18 @@ void Diago_NewDav<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in, psi::Psi<T
     do
     {
 
-        DiagoIterAssist<T, Device>::diagH_subspace(phm_in, psi, psi, eigenvalue_in, psi.get_nbands());
+        // if (need_subspace || ntry > 0)
+        {
+            DiagoIterAssist<T, Device>::diagH_subspace(phm_in, psi, psi, eigenvalue_in, psi.get_nbands());
+        }
 
         this->diag_mock(phm_in, psi, eigenvalue_in);
 
         ++ntry;
 
     } while (DiagoIterAssist<T, Device>::test_exit_cond(ntry, this->notconv));
+
+    // std::cout << "in new_dav, ntry == " << ntry << std::endl;
 
     if (notconv > std::max(5, psi.get_nbands() / 4))
     {
