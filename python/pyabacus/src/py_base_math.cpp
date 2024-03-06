@@ -3,13 +3,14 @@
 
 #include "module_base/math_sphbes.h"
 #include "module_base/math_integral.h"
+#include "module_base/spherical_bessel_transformer.h"
 
 namespace py = pybind11;
 using namespace pybind11::literals;
 template <typename... Args>
 using overload_cast_ = pybind11::detail::overload_cast_impl<Args...>;
 
-void bind_math_base(py::module& m)
+void bind_base_math(py::module& m)
 {
     py::module module_base = m.def_submodule("ModuleBase");
 
@@ -219,4 +220,6 @@ void bind_math_base(py::module& m)
                                                                     static_cast<double*>(x_info.ptr),
                                                                     static_cast<double*>(w_info.ptr));
         });
+    py::class_<ModuleBase::SphericalBesselTransformer>(module_base, "SphericalBesselTransformer")
+    .def(py::init<>());
 }

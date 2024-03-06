@@ -11,7 +11,44 @@ namespace ModuleBase
 {
 
 int Ylm::nlm = 0;
-std::vector<double> Ylm::ylmcoef(100);
+std::vector<double> Ylm::ylmcoef = {
+	1.0 / sqrt(ModuleBase::FOUR_PI),
+	 sqrt (3.0 / ModuleBase::FOUR_PI),
+	 sqrt (15.0) / 2.0,
+	 sqrt (5.0) / 2.0,
+	 sqrt (5.0),
+	 1.0 / sqrt(3.0),
+	 sqrt (5.0 / 3.0),
+	 sqrt (35.0 / 9.0),
+	 sqrt (7.0/3.0)/1.5,
+	 sqrt (35.0 / 8.0),
+	 sqrt (7.0 / 8.0),
+	 sqrt (7.0),
+	 1.0 / sqrt (15.0),
+	 sqrt (14.0 / 15.0),
+	 sqrt (14.0 / 3.0),
+	 sqrt(7.0)*3.0/4.0,
+	 9.0/4.0/sqrt(5.0),
+	 sqrt(21.0/5.0),
+	 sqrt(24.0/25.0),
+	 sqrt(21.0)/2.0,
+	 sqrt(3.0)/2.0,
+	 0.5/sqrt(7.0),
+	 1.5*sqrt(3.0/7.0),
+	 3.0/sqrt(2.0),
+	 0.6*sqrt(11.0),
+	 0.8*sqrt(11.0/7.0),
+	 sqrt (33.0/8.0),
+	 sqrt (55.0/56.0),
+	 sqrt (33.0/7.0),
+	 sqrt (11.0)*2.0/7.0,
+	 sqrt (11.0)*0.75,
+	 sqrt (11.0)*0.25,
+	 sqrt (11.0),
+	 1.0/3.0/sqrt(5.0),
+	 2.0/3.0*sqrt(11.0/5.0),
+	 sqrt(22.0/5.0)
+};
 
 // here Lmax == max angular momentum + 1
 void Ylm::get_ylm_real( const int &Lmax, const ModuleBase::Vector3<double> &vec, double ylmr[] )
@@ -1287,48 +1324,7 @@ void Ylm::hes_rl_sph_harm
 
 	return;
 }
-
-void Ylm::set_coefficients(void)
-{
-	Ylm::ylmcoef[0] = 1.0 / sqrt(ModuleBase::FOUR_PI);
-	Ylm::ylmcoef[1] = sqrt (3.0 / ModuleBase::FOUR_PI);
-	Ylm::ylmcoef[2] = sqrt (15.0) / 2.0;
-	Ylm::ylmcoef[3] = sqrt (5.0) / 2.0;
-	Ylm::ylmcoef[4] = sqrt (5.0);
-	Ylm::ylmcoef[5] = 1.0 / sqrt(3.0);
-	Ylm::ylmcoef[6] = sqrt (5.0 / 3.0);
-	Ylm::ylmcoef[7] = sqrt (35.0 / 9.0);
-	Ylm::ylmcoef[8] = sqrt (7.0/3.0)/1.5;
-	Ylm::ylmcoef[9] = sqrt (35.0 / 8.0);
-	Ylm::ylmcoef[10] = sqrt (7.0 / 8.0);
-	Ylm::ylmcoef[11] = sqrt (7.0);
-	Ylm::ylmcoef[12] = 1.0 / sqrt (15.0);
-	Ylm::ylmcoef[13] = sqrt (14.0 / 15.0);
-	Ylm::ylmcoef[14] = sqrt (14.0 / 3.0);
-	Ylm::ylmcoef[15] = sqrt(7.0)*3.0/4.0;
-	Ylm::ylmcoef[16] = 9.0/4.0/sqrt(5.0);
-	Ylm::ylmcoef[17] = sqrt(21.0/5.0);
-	Ylm::ylmcoef[18] = sqrt(24.0/25.0);
-	Ylm::ylmcoef[19] = sqrt(21.0)/2.0;
-	Ylm::ylmcoef[20] = sqrt(3.0)/2.0;
-	Ylm::ylmcoef[21] = 0.5/sqrt(7.0);
-	Ylm::ylmcoef[22] = 1.5*sqrt(3.0/7.0);
-	Ylm::ylmcoef[23] = 3.0/sqrt(2.0);
-	Ylm::ylmcoef[24] = 0.6*sqrt(11.0);
-	Ylm::ylmcoef[25] = 0.8*sqrt(11.0/7.0);
-	Ylm::ylmcoef[26] = sqrt (33.0/8.0);
-	Ylm::ylmcoef[27] = sqrt (55.0/56.0);
-	Ylm::ylmcoef[28] = sqrt (33.0/7.0);
-	Ylm::ylmcoef[29] = sqrt (11.0)*2.0/7.0;
-	Ylm::ylmcoef[30] = sqrt (11.0)*0.75;
-	Ylm::ylmcoef[31] = sqrt (11.0)*0.25;
-	Ylm::ylmcoef[32] = sqrt (11.0);
-	Ylm::ylmcoef[33] = 1.0/3.0/sqrt(5.0);
-	Ylm::ylmcoef[34] = 2.0/3.0*sqrt(11.0/5.0);
-	Ylm::ylmcoef[35] = sqrt(22.0/5.0);
-	return;
-}
-
+void Ylm::set_coefficients (){};
 /*
 void Ylm::test1 (void)
 {
