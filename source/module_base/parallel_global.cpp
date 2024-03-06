@@ -223,7 +223,8 @@ void Parallel_Global::read_mpi_parameters(int argc,char **argv)
 #else
         const char* version = "unknown";
 #endif
-#ifdef COMMIT
+#ifdef COMMIT_INFO
+#include "commit.h"
         const char* commit = COMMIT;
 #else
         const char* commit = "unknown";

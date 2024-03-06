@@ -19,7 +19,8 @@ void gen_general_info(Input *input)
 #else
     const std::string version = "unknown";
 #endif
-#ifdef COMMIT
+#ifdef COMMIT_INFO
+#include "commit.h"
     const std::string commit = COMMIT;
 #else
     const std::string commit = "unknown";
