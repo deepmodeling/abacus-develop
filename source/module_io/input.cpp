@@ -75,7 +75,8 @@ void Input::Init(const std::string& fn)
 #else
     const char* version = "unknown";
 #endif
-#ifdef COMMIT
+#ifdef COMMIT_INFO
+#include "commit.h"
     const char* commit = COMMIT;
 #else
     const char* commit = "unknown";
