@@ -155,3 +155,23 @@ AddTest(
   LIBS ${math_libs} device base container orb
 )
 
+AddTest(
+  TARGET generate_projection
+  SOURCES
+    projgen_test.cpp
+    ../two_center_bundle.cpp
+    ../two_center_integrator.cpp
+    ../two_center_table.cpp
+    ../real_gaunt_table.cpp
+    ../radial_collection.cpp
+    ../atomic_radials.cpp
+    ../beta_radials.cpp
+    ../hydrogen_radials.cpp
+    ../pswfc_radials.cpp
+    ../sphbes_radials.cpp
+    ../radial_set.cpp
+    ../projgen.cpp
+    ../numerical_radial.cpp
+  LIBS ${math_libs} device base container orb
+)
+
