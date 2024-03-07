@@ -553,7 +553,7 @@ void Input::Default(void)
     //==========================================================
     //    DFT+U     Xin Qu added on 2020-10-29
     //==========================================================
-    dft_plus_u = false; // 1:DFT+U correction; 0: standard DFT calcullation
+    dft_plus_u = 0; // 1:DFT+U correction; 0: standard DFT calcullation
     yukawa_potential = false;
     yukawa_lambda = -1.0;
     omc = 0;
@@ -2117,7 +2117,7 @@ bool Input::Read(const std::string& fn)
         //----------------------------------------------------------------------------------
         else if (strcmp("dft_plus_u", word) == 0)
         {
-            read_bool(ifs, dft_plus_u);
+            read_value(ifs, dft_plus_u);
         }
         else if (strcmp("yukawa_potential", word) == 0)
             ifs.ignore(150, '\n');
@@ -2518,11 +2518,16 @@ bool Input::Read(const std::string& fn)
             }
         }
 
-        dft_plus_u = 0;
+        bool close_plus_u = 1;
         for (int i = 0; i < ntype; i++)
         {
             if (orbital_corr[i] != -1)
-                dft_plus_u = 1;
+                close_plus_u = 0;
+        }
+        if(close_plus_u)
+        {
+            dft_plus_u = 0;
+            GlobalV::ofs_running << "No atoms are correlated, DFT+U is closed!!!" << std::endl;
         }
 
         if (strcmp("lcao", basis_type.c_str()) != 0)
@@ -3062,7 +3067,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             if (!bz)
                 bz = 1;
         }
-        if(dft_plus_u == true && onsite_radius == 0.0)
+        if(dft_plus_u == 1 && onsite_radius == 0.0)
         {
             //autoset onsite_radius to 5.0 as default
             onsite_radius = 5.0;
@@ -3620,7 +3625,7 @@ void Input::Bcast()
     //-----------------------------------------------------------------------------------
     // DFT+U (added by Quxin 2020-10-29)
     //-----------------------------------------------------------------------------------
-    Parallel_Common::bcast_bool(dft_plus_u);
+    Parallel_Common::bcast_int(dft_plus_u);
     Parallel_Common::bcast_bool(yukawa_potential);
     Parallel_Common::bcast_int(omc);
     Parallel_Common::bcast_double(yukawa_lambda);

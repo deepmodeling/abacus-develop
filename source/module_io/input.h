@@ -486,7 +486,7 @@ class Input
     //==========================================================
     //    DFT+U       Xin Qu added on 2020-10-29
     //==========================================================
-    bool dft_plus_u;             ///< true:DFT+U correction; false: standard DFT calculation(default)
+    int dft_plus_u;             ///< true:DFT+U correction; false: standard DFT calculation(default)
     int* orbital_corr = nullptr; ///< which correlated orbitals need corrected ; d:2 ,f:3, do not need correction:-1
     double* hubbard_u = nullptr; ///< Hubbard Coulomb interaction parameter U(ev)
     int omc;                     ///< whether turn on occupation matrix control method or not

@@ -2562,11 +2562,12 @@ These variables are used to control DFT+U correlated parameters
 
 ### dft_plus_u
 
-- **Type**: Boolean
+- **Type**: Integer
 - **Description**: Determines whether to calculate the plus U correction, which is especially important for correlated electrons.
-  - True: Calculate plus U correction.
-  - False: Do not calculate plus U correction.
-- **Default**: False
+  - 1: Calculate plus U correction with radius-adjustable localized projections (with parameter `onsite_radius`).
+  - 2: Calculate plus U correction using first zeta of NAOs as projections (this is old method for testing).
+  - 0: Do not calculate plus U correction.
+- **Default**: 0
 
 ### orbital_corr
 
@@ -2616,7 +2617,7 @@ These variables are used to control DFT+U correlated parameters
 ### onsite_radius
 
 - **Type**: Real
-- **Availability**: `dft_plus_u` is set to `true`
+- **Availability**: `dft_plus_u` is set to 1
 - **Description**: 
 
   - The `Onsite-radius` parameter facilitates modulation of the single-zeta portion of numerical atomic orbitals for projections for DFT+U. 

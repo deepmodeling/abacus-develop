@@ -275,9 +275,9 @@ TEST_F(InputConvTest, dftplus)
 	INPUT.Default();
 	std::string input_file = "./support/INPUT";
 	INPUT.Read(input_file);
-	INPUT.dft_plus_u=true;
+	INPUT.dft_plus_u=1;
 	Input_Conv::Convert();
-	EXPECT_EQ(GlobalV::dft_plus_u,true);
+	EXPECT_EQ(GlobalV::dft_plus_u,1);
 	EXPECT_EQ(GlobalC::dftu.Yukawa,false);
 	EXPECT_EQ(GlobalC::dftu.omc,false);//
 	EXPECT_EQ(GlobalC::dftu.orbital_corr,INPUT.orbital_corr);
