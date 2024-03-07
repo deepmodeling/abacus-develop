@@ -75,7 +75,8 @@ void Input::Init(const std::string& fn)
 #else
     const char* version = "unknown";
 #endif
-#ifdef COMMIT
+#ifdef COMMIT_INFO
+#include "commit.h"
     const char* commit = COMMIT;
 #else
     const char* commit = "unknown";
@@ -305,7 +306,7 @@ void Input::Default(void)
     mixing_mode = "broyden";
     mixing_beta = -10;
     mixing_ndim = 8;
-    mixing_restart = 0;
+    mixing_restart = 0.0;
     mixing_gg0 = 1.00;       // use Kerker defaultly
     mixing_beta_mag = -10.0; // only set when nspin == 2 || nspin == 4
     mixing_gg0_mag = 0.0;    // defaultly exclude Kerker from mixing magnetic density
@@ -3136,8 +3137,15 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     }
     if(qo_screening_coeff.size() != ntype)
     {
-        double default_screening_coeff = (qo_screening_coeff.size() == 1)? qo_screening_coeff[0]: 0.1;
-        qo_screening_coeff.resize(ntype, default_screening_coeff);
+        if(qo_basis == "pswfc")
+        {
+            double default_screening_coeff = (qo_screening_coeff.size() == 1)? qo_screening_coeff[0]: 0.1;
+            qo_screening_coeff.resize(ntype, default_screening_coeff);
+        }
+        else
+        {
+            // if length of qo_screening_coeff is not 0, turn on Slater screening
+        }
     }
     if(qo_strategy.size() != ntype)
     {
@@ -3352,7 +3360,7 @@ void Input::Bcast()
     Parallel_Common::bcast_string(mixing_mode);
     Parallel_Common::bcast_double(mixing_beta);
     Parallel_Common::bcast_int(mixing_ndim);
-    Parallel_Common::bcast_int(mixing_restart);
+    Parallel_Common::bcast_double(mixing_restart);
     Parallel_Common::bcast_double(mixing_gg0); // mohan add 2014-09-27
     Parallel_Common::bcast_double(mixing_beta_mag);
     Parallel_Common::bcast_double(mixing_gg0_mag);

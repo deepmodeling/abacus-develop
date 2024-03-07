@@ -28,7 +28,6 @@ list(APPEND objects
     output_log.cpp
     output_rho.cpp
     output_potential.cpp
-    output_radial.cpp
     parameter_pool.cpp
     para_json.cpp
 )

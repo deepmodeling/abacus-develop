@@ -448,12 +448,11 @@ OBJS_IO=input.o\
     output_rho.o\
     output_potential.o\
     output_mat_sparse.o\
-    output_radial.o\
     para_json.o\
     abacusjson.o\
     general_info.o\
     init_info.o\
-
+    readin_info.o\
 
 OBJS_IO_LCAO=cal_r_overlap_R.o\
       write_orb_info.o\

@@ -209,6 +209,7 @@ void RadialCollection::build(const int nfile, const std::string* const file, con
 
 void RadialCollection::build(const int ntype, 
                              const double* const charges, 
+                             const bool with_slater_screening,
                              const int* const nmax, 
                              const std::string* symbols,
                              const double conv_thr,
@@ -223,6 +224,7 @@ void RadialCollection::build(const int ntype,
         radset_[itype] = new HydrogenRadials;
         radset_[itype]->build(itype, 
                               charges[itype], 
+                              with_slater_screening,
                               nmax[itype], 
                               10.0,             // rcut should be determined automatically, in principle...
                               0.01,
@@ -327,11 +329,11 @@ char RadialCollection::check_file_type(const std::string& file) const
     return file_type;
 }
 
-void RadialCollection::to_file(const std::string& appendix)
+void RadialCollection::to_file(const std::string& appendix, const std::string& format) const
 {
     for (int itype = 0; itype < ntype_; ++itype)
     {
         std::string fname = radset_[itype]->symbol() + "_" + appendix + ".orb";
-        radset_[itype]->to_file(fname);
+        radset_[itype]->write_abacus_orb(fname);
     }
 }
