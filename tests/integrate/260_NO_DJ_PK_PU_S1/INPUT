@@ -24,7 +24,7 @@ cal_stress    1
 
 mixing_type    broyden
 mixing_beta    0.4
-mixing_restart 5
+mixing_restart 1e-3
 mixing_dmr     1
 #mixing_gg0    1.0
 
