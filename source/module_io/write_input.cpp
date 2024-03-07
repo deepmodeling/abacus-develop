@@ -229,6 +229,7 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_dh", out_mat_dh, "output of derivative of H(R) matrix");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_xc", out_mat_xc, "output exchange-correlation matrix in KS-orbital representation");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_hr_npz", out_hr_npz, "output hr(I0,JR) submatrices in npz format");
+    ModuleBase::GlobalFunc::OUTP(ofs, "out_dm_npz", out_dm_npz, "output dmr(I0,JR) submatrices in npz format");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_interval", out_interval, "interval for printing H(R) and S(R) matrix during MD");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_app_flag", out_app_flag, "whether output r(R), H(R), S(R), T(R), and dH(R) matrices in an append manner during MD");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_mat_t", out_mat_t, "output T(R) matrix");

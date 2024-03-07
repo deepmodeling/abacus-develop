@@ -957,6 +957,19 @@ namespace ModuleESolver
         }
     }
 
+    if(GlobalV::out_dm_npz)
+    {
+        const elecstate::DensityMatrix<TK, double>* dm
+            = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
+        std::string zipname = "output_DM0.npz";
+        this->UHM.output_HR_npz(zipname,*(dm->get_DMR_pointer(1)));
+
+        if(GlobalV::NSPIN==2)
+        {
+            zipname = "output_DM1.npz";
+            this->UHM.output_HR_npz(zipname,*(dm->get_DMR_pointer(2)));       
+        }
+    }
 
     if (!md_skip_out(GlobalV::CALCULATION, istep, GlobalV::out_interval))
     {

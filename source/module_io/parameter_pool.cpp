@@ -930,6 +930,10 @@ void input_parameters_set(std::map<std::string, InputParameter> input_parameters
     {
         INPUT.out_hr_npz = *static_cast<bool*>(input_parameters["out_hr_npz"].get());
     }
+    else if (input_parameters.count("out_dm_npz") != 0)
+    {
+        INPUT.out_dm_npz = *static_cast<bool*>(input_parameters["out_dm_npz"].get());
+    }
     else if (input_parameters.count("cal_syns") != 0)
     {
         INPUT.cal_syns = *static_cast<bool*>(input_parameters["cal_syns"].get());
