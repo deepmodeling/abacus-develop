@@ -493,10 +493,16 @@ namespace ModuleESolver
     template <typename TK, typename TR>
     void ESolver_KS_LCAO<TK, TR>::eachiterinit(const int istep, const int iter)
 {
-    if (iter == 1 || iter == GlobalV::MIXING_RESTART)
+    if (iter == 1)
+    {
+        this->p_chgmix->init_mixing(); // init mixing
+        this->p_chgmix->mixing_restart = GlobalV::SCF_NMAX;
+    }
+    // for mixing restart
+    if (iter == this->p_chgmix->mixing_restart && GlobalV::MIXING_RESTART > 0.0)
     {
         this->p_chgmix->init_mixing();
-        if (iter == GlobalV::MIXING_RESTART && GlobalV::MIXING_DMR) // for mixing_dmr 
+        if (GlobalV::MIXING_DMR) // for mixing_dmr 
         {
             // allocate memory for dmr_mdata
             const elecstate::DensityMatrix<TK, double>* dm
@@ -613,7 +619,7 @@ namespace ModuleESolver
     // save input rho
     this->pelec->charge->save_rho_before_sum_band();
     // save density matrix for mixing
-    if (GlobalV::MIXING_RESTART > 0 && GlobalV::MIXING_DMR && iter >= GlobalV::MIXING_RESTART)
+    if (GlobalV::MIXING_RESTART > 0 && GlobalV::MIXING_DMR && iter >= this->p_chgmix->mixing_restart)
     {
         elecstate::DensityMatrix<TK, double>* dm
             = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
@@ -795,7 +801,7 @@ namespace ModuleESolver
     void ESolver_KS_LCAO<TK, TR>::eachiterfinish(int iter)
 {
     // mix density matrix
-    if (GlobalV::MIXING_RESTART > 0 && iter >= GlobalV::MIXING_RESTART && GlobalV::MIXING_DMR )
+    if (GlobalV::MIXING_RESTART > 0 && iter >= this->p_chgmix->mixing_restart && GlobalV::MIXING_DMR )
     {
         elecstate::DensityMatrix<TK, double>* dm
                     = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();

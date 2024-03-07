@@ -1021,16 +1021,16 @@ Note that `mixing_beta_mag` is not euqal to `mixing_beta` means that $\rho_{up}$
 
 ### mixing_restart
 
-- **Type**: Integer
-- **Description**: At `mixing_restart`-th iteration, SCF will restart by using output charge density from perivos iteration as input charge density directly, and start a new mixing. `mixing_restart=0|1` means SCF starts from scratch.
+- **Type**: double
+- **Description**: If the density difference between input and output `drho` is smaller than `mixing_restart`, SCF will restart at next step which means SCF will restart by using output charge density from perivos iteration as input charge density directly, and start a new mixing. Notice that `mixing_restart` will only take effect once in one SCF.
   
 - **Default**: 0
 
 ### mixing_dmr
 
 - **Type**: bool
-- **Availability**: Only for `mixing_restart>=2`
-- **Description**: At `mixing_restart`-th iteration, SCF will start a mixing for real-space density matrix by using the same coefficiences as the mixing of charge density.
+- **Availability**: Only for `mixing_restart>=0.0`
+- **Description**: At n-th iteration which is calculated by `drho<mixing_restart`, SCF will start a mixing for real-space density matrix by using the same coefficiences as the mixing of charge density.
   
 - **Default**: false
 

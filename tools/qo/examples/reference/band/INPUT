@@ -1,0 +1,11 @@
+INPUT_PARAMETERS
+# Created by Atomic Simulation Enviroment
+pseudo_dir /abacus-develop/tests/PP_ORB/
+orbital_dir /abacus-develop/tests/PP_ORB/
+ntype                                   1
+ecutwfc                                 100
+basis_type                              lcao
+symmetry                                0
+calculation                             nscf
+out_band                                1
+init_chg                                file

@@ -79,6 +79,8 @@ class toQO
                             const int* const nmax,
                             const double qo_thr,
                             const int rank);
+        //function might be implemented in future
+        //void build_szv(const int ntype);
         /// @brief build RadialCollection for atomic orbitals
         /// @param ntype number of atom types
         /// @param pspot_fn filenames of pseudopotentials

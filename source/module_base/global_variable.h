@@ -277,7 +277,7 @@ extern std::string of_kernel_file; // The name of WT kernel file.
 extern std::string MIXING_MODE;
 extern double MIXING_BETA;
 extern int MIXING_NDIM;
-extern int MIXING_RESTART;
+extern double MIXING_RESTART;
 extern double MIXING_GG0;
 extern bool MIXING_TAU;
 extern double MIXING_BETA_MAG;
