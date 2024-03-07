@@ -277,9 +277,9 @@ void LCAO_Hamilt::calculate_HContainer_sparse_cd(const int &current_spin, const 
     return;
 }
 
-void LCAO_Hamilt::output_HR_npz(std::string& zipname, const hamilt::HContainer<double>& hR)
+void LCAO_Hamilt::output_mat_npz(std::string& zipname, const hamilt::HContainer<double>& hR)
 {
-    ModuleBase::TITLE("LCAO_Hamilt","output_HR_npz");
+    ModuleBase::TITLE("LCAO_Hamilt","output_mat_npz");
 
 #ifdef __USECNPY
     std::string filename = "";
@@ -393,7 +393,7 @@ void LCAO_Hamilt::output_HR_npz(std::string& zipname, const hamilt::HContainer<d
             {
                 auto& matrix = HR_serial[0].get_atom_pair(iap).get_HR_values(iR);
                 int* r_index = HR_serial[0].get_atom_pair(iap).get_R_index(iR);
-                filename = "hr_"+std::to_string(atom_i)+"_"+std::to_string(atom_j)+"_"
+                filename = "mat_"+std::to_string(atom_i)+"_"+std::to_string(atom_j)+"_"
                     +std::to_string(r_index[0])+"_"+std::to_string(r_index[1])+"_"+std::to_string(r_index[2]);
                 std::vector<size_t> shape = {(size_t)row_size,(size_t)col_size};
                 cnpy::npz_save(zipname,filename,matrix.get_pointer(),shape,"a");
@@ -418,7 +418,7 @@ void LCAO_Hamilt::output_HR_npz(std::string& zipname, const hamilt::HContainer<d
             auto& matrix = hR.get_atom_pair(iap).get_HR_values(iR);
             int* r_index = hR.get_atom_pair(iap).get_R_index(iR);
 
-            filename = "hr_"+std::to_string(atom_i)+"_"+std::to_string(atom_j)+"_"
+            filename = "mat_"+std::to_string(atom_i)+"_"+std::to_string(atom_j)+"_"
                 +std::to_string(r_index[0])+"_"+std::to_string(r_index[1])+"_"+std::to_string(r_index[2]);
             std::vector<size_t> shape = {(size_t)row_size,(size_t)col_size};
             cnpy::npz_save(zipname,filename,matrix.get_pointer(),shape,"a");

@@ -53,7 +53,7 @@ class LCAO_Hamilt
     void calculate_dH_sparse(const int &current_spin, const double &sparse_threshold);
     void destroy_dH_R_sparse(void);
 
-    void output_HR_npz(std::string& zipname, const hamilt::HContainer<double>& hR);
+    void output_mat_npz(std::string& zipname, const hamilt::HContainer<double>& hR);
 
     // used for gamma only algorithms.
     Gint_Gamma GG;
