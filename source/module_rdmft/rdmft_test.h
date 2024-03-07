@@ -1,6 +1,6 @@
 //==========================================================
 // Author: Jingang Han
-// DATE : 2024-03-07
+// DATE : 2023-12-22
 //==========================================================
 #ifndef RDMFT_TEST_H
 #define RDMFT_TEST_H
@@ -763,6 +763,8 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     // print results
     std::cout << std::setprecision(10) << "\n\n\n******\nEtotal_RDMFT:   " << Etotal_RDMFT << "\nETV_RDMFT: " << ETV_RDMFT << "\nEhartree_RDMFT: " 
                 << Ehartree_RDMFT << "\nExc_RDMFT:      " << Exc_RDMFT << "\n******\n\n\n" << std::endl;
+    
+    std::cout << "\n!!!!!!\nlook module_rdmft\n!!!!!!\n" << std::endl;
     
     ModuleBase::timer::tick("hamilt_lcao", "RDMFT_E&Egradient");
     

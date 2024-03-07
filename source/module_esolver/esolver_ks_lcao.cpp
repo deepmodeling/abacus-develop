@@ -43,7 +43,9 @@
 
 // test RDMFT
 #include <iostream>
-#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/rdmft_test.h"
+// #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/rdmft_test.h"
+#include "module_rdmft/rdmft_test.h"
+
 
 namespace ModuleESolver
 {

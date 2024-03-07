@@ -16,6 +16,9 @@ add_subdirectory(module_io)
 add_subdirectory(module_relax)
 add_subdirectory(module_ri)
 
+# add by jghan
+add_subdirectory(module_rdmft)
+
 add_library(
     driver
     OBJECT
