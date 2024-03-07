@@ -18,4 +18,6 @@ void json_output();
 // Convert time_t to string
 void convert_time(std::time_t time_now, std::string& time_str);
 
+// generate struture wrapper function
+void gen_stru_wrapper(UnitCell *ucell);
 } // namespace Json

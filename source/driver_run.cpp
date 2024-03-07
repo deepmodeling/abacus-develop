@@ -5,6 +5,7 @@
 #include "module_io/print_info.h"
 #include "module_io/winput.h"
 #include "module_md/run_md.h"
+#include "module_io/para_json.h"
 
 /**
  * @brief This is the driver function which defines the workflow of ABACUS calculations.
@@ -44,8 +45,13 @@ void Driver::driver_run()
         ModuleBase::QUIT();
     }
 
-    // 4. Initialize Esolver
+    // 4. Initialize Esolver,and fill json-structure 
     p_esolver->Init(INPUT, GlobalC::ucell);
+
+
+#ifdef __RAPIDJSON
+    Json::gen_stru_wrapper(&GlobalC::ucell);
+#endif
 
     //------------------------------------------------------------
     // This part onward needs to be refactored.
