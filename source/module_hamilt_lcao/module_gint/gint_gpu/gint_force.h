@@ -71,7 +71,6 @@ void gpu_task_generator_force(
     double *psir_ylm_g, double *psir_zeros_g, double *dm_matrix_g, int *mat_m,
     int *mat_n, int *mat_k, int *mat_lda, int *mat_ldb, int *mat_ldc,
     double **mat_A, double **mat_B, double **mat_C, int &max_m, int &max_n,
-    int &atom_pair_num, double *rho_g, double **vec_l, double **vec_r,
-    double **dot_product, int *vec_len, int &dot_count);
+    int &atom_pair_num);
 
 #endif

@@ -65,9 +65,6 @@ get_psi_force(double *ylmcoef, double delta_r_g, double bxyz_g, double nwmax_g,
     dr[2] = input_double[index_double + 2];
     double distance = input_double[index_double + 3];
     distance = distance * distance;
-    double tx = 2.0 * dr[0];
-    double ty = 2.0 * dr[1];
-    double tz = 2.0 * dr[2];
     double vlbr3_value = input_double[index_double + 4];
     // begin calculation
     double ylma[49]; // Attention!!! At present, we only use L=5 at most. So
@@ -443,8 +440,6 @@ get_psi_force(double *ylmcoef, double delta_r_g, double bxyz_g, double nwmax_g,
     const double x03 = x0 * x3 / 2;
     // Temporary variables for interpolation
     double tmp, dtmp;
-
-    double phi = 0.0;
     // Loop over non-zero elements in atom_nw array
     int it_nw = it * nwmax_g;
     int iw_nr = (it_nw * nr_max + ip) * 2;

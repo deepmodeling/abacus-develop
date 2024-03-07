@@ -38,12 +38,6 @@
  * @param max_m The reference to max_m.
  * @param max_n The reference to max_n.
  * @param atom_pair_num The reference to atom_pair_num.
- * @param rho_g The double array of rho_g.
- * @param vec_l The pointer to vec_l.
- * @param vec_r The pointer to vec_r.
- * @param dot_product The pointer to dot_product.
- * @param vec_len The array of vec_len.
- * @param dot_count The reference to dot_count.
  */
 void gpu_task_generator_force(
     const Grid_Technique &GridT, const int i, const int j,
@@ -53,8 +47,7 @@ void gpu_task_generator_force(
     double *psir_ylm_g, double *psir_zeros_g, double *dm_matrix_g, int *mat_m,
     int *mat_n, int *mat_k, int *mat_lda, int *mat_ldb, int *mat_ldc,
     double **mat_A, double **mat_B, double **mat_C, int &max_m, int &max_n,
-    int &atom_pair_num, double *rho_g, double **vec_l, double **vec_r,
-    double **dot_product, int *vec_len, int &dot_count) {
+    int &atom_pair_num) {
   const int grid_index_ij = i * GridT.nby * GridT.nbzp + j * GridT.nbzp;
   const int nwmax = GlobalC::ucell.nwmax;
   bool *gpu_mat_cal_flag = new bool[max_size * GridT.nbzp];
@@ -62,7 +55,6 @@ void gpu_task_generator_force(
   for (int i = 0; i < max_size * GridT.nbzp; i++) {
     gpu_mat_cal_flag[i] = false;
   }
-  dot_count = 0;
   // psir generate
   for (int z_index = 0; z_index < GridT.nbzp; z_index++) {
     int num_get_psi = 0;

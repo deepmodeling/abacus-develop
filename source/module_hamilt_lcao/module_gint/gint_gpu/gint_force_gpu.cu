@@ -32,7 +32,6 @@ void gint_gamma_force_gpu(hamilt::HContainer<double> *DM, const double vfactor,
   const int nbz = GridT.nbzp;
   const int lgd = GridT.lgd;
   const int max_size = GridT.max_atom;
-  const int nat = GlobalC::ucell.nat;
   const int nwmax = GlobalC::ucell.nwmax;
   const int bxyz = GridT.bxyz;
   double *dm_matrix_h = new double[lgd * lgd];
@@ -213,19 +212,7 @@ void gint_gamma_force_gpu(hamilt::HContainer<double> *DM, const double vfactor,
         force_h[index] = 0.0;
       }
 
-      double *rho_g = GridT.rho_g;
 
-      int dot_count = 0;
-      int *vec_len = &GridT.vec_len[GridT.num_mcell * stream_num];
-      double **vec_l = &GridT.vec_l[GridT.num_mcell * stream_num];
-      double **vec_r = &GridT.vec_r[GridT.num_mcell * stream_num];
-      double **dot_product = &GridT.dot_product[GridT.num_mcell * stream_num];
-
-      int *vec_len_g = &GridT.vec_len_g[GridT.num_mcell * stream_num];
-      double **vec_l_g = &GridT.vec_l_g[GridT.num_mcell * stream_num];
-      double **vec_r_g = &GridT.vec_r_g[GridT.num_mcell * stream_num];
-      double **dot_product_g =
-          &GridT.dot_product_g[GridT.num_mcell * stream_num];
 
       int max_m = 0;
       int max_n = 0;
@@ -238,8 +225,7 @@ void gint_gamma_force_gpu(hamilt::HContainer<double> *DM, const double vfactor,
           psir_ylm_right_g, psir_ylm_dm_g, dm_matrix_g, atom_pair_A_m,
           atom_pair_B_n, atom_pair_k, atom_pair_lda, atom_pair_ldb,
           atom_pair_ldc, atom_pair_mat_A_array, atom_pair_mat_B_array,
-          atom_pair_mat_C_array, max_m, max_n, atom_pair_num, rho_g, vec_l,
-          vec_r, dot_product, vec_len, dot_count);
+          atom_pair_mat_C_array, max_m, max_n, atom_pair_num);
 
       checkCuda(cudaMemcpyAsync(psi_input_double_g, psi_input_double,
                                 GridT.psi_size_max * 5 * sizeof(double),
