@@ -48,8 +48,6 @@ class TwoCenterIntegrator
      * @param[in] op           Operator, could be 'S' or 'T'.
      * @param[in] nr           Number of r-space grid points.
      * @param[in] cutoff       r-space cutoff radius.
-     * @param[in] with_deriv   If true, the derivative of radial table is also tabulated.
-     *                         This is necessary to compute the gradient of integrals.
      *                                                                                  */
     void tabulate(const RadialCollection& bra,
                   const RadialCollection& ket,
