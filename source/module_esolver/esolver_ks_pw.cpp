@@ -492,7 +492,13 @@ void ESolver_KS_PW<T, Device>::othercalculation(const int istep)
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::eachiterinit(const int istep, const int iter)
 {
-    if (iter == 1 || iter == GlobalV::MIXING_RESTART)
+    if (iter == 1)
+    {
+        this->p_chgmix->init_mixing();
+        this->p_chgmix->mixing_restart = GlobalV::SCF_NMAX;
+    }
+    // for mixing restart
+    if (iter == this->p_chgmix->mixing_restart && GlobalV::MIXING_RESTART > 0.0)
     {
         this->p_chgmix->init_mixing();
     }
