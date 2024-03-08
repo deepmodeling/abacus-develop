@@ -80,35 +80,7 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* G
         }
         filter_adjs(is_adj, adjs);
         this->adjs_all.push_back(adjs);
-        
-        /*for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
-        {
-            const int T1 = adjs.ntype[ad1];
-            const int I1 = adjs.natom[ad1];
-            const int iat1 = ucell->itia2iat(T1, I1);
-            const ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];
-            for (int ad2 = 0; ad2 < adjs.adj_num + 1; ++ad2)
-            {
-                const int T2 = adjs.ntype[ad2];
-                const int I2 = adjs.natom[ad2];
-                const int iat2 = ucell->itia2iat(T2, I2);
-                ModuleBase::Vector3<int>& R_index2 = adjs.box[ad2];
-                if (paraV->get_col_size(iat2) <= 0 || paraV->get_row_size(iat1) <= 0)
-                {
-                    continue;
-                }
-                hamilt::AtomPair<TR> tmp(iat1,
-                                         iat2,
-                                         R_index2.x - R_index1.x,
-                                         R_index2.y - R_index1.y,
-                                         R_index2.z - R_index1.z,
-                                         paraV);
-                this->hR->insert_pair(tmp);
-            }
-        }*/
     }
-    // allocate the memory of BaseMatrix in HR, and set the new values to zero
-    //this->hR->allocate(nullptr, true);
 
     ModuleBase::timer::tick("DFTUNew", "initialize_HR");
 }
