@@ -100,7 +100,7 @@ void pseudo::set_pseudo_h(const Pseudopot_upf &upf)
 	
 	// mohan update 2021-02-22
 	//  max number of points in the atomic radial mesh
-	int ndmx = 2000; 
+	int ndmx = 200000; 
 	if (this->mesh > ndmx)
 	{
 		std::cout << "\n set_pseudo_h, too many grid points,";
