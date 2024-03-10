@@ -28,6 +28,11 @@ void PswfcRadials::build(const std::string& file,
         ifs.open(file);
         is_open = ifs.is_open();
     }
+
+#ifdef __MPI
+    Parallel_Common::bcast_bool(is_open);
+#endif
+
     if (!is_open)
     {
         ModuleBase::WARNING_QUIT("AtomicRadials::read", "Couldn't open pseudopotential file: " + file);
@@ -238,73 +243,105 @@ void PswfcRadials::read_upf_pswfc(std::ifstream& ifs,
     int nzeta = 0;
     double dr = 0.01; // in most cases, this is correct
 
-
-    std::map<std::pair<int, int>, std::vector<double>> result;
-
-    std::string line = "";
-    // read element
-    while(!startswith(line, "element=")&&!ifs.eof()) ifs >> line;
-    symbol_ = read_keyword_value(ifs, line);
-    // read lmax
-    while(!startswith(line, "l_max=")&&!ifs.eof()) ifs >> line;
-    lmax_ = std::stoi(read_keyword_value(ifs, line));
-    // read ngrid
-    while(!startswith(line, "mesh_size=")&&!ifs.eof()) ifs >> line;
-    ngrid = std::stoi(read_keyword_value(ifs, line));
-    // read nzeta
-    while(!startswith(line, "number_of_wfc=")&&!ifs.eof()) ifs >> line;
-    nzeta = std::stoi(read_keyword_value(ifs, line));
-    nchi_ = nzeta;
-    // read contents of pseudowavefunction
-    while(line != "<PP_PSWFC>") ifs >> line;
-    nzeta_ = new int[lmax_ + 1];
-    for(int il = 0; il < lmax_ + 1; il++) nzeta_[il] = 0;
-    for(int iz = 0; iz < nzeta; iz++) // read chi-by-chi
+    if(rank == 0)
     {
-        // find the next <PP_CHI.> tag
-        while(!startswith(line, "<PP_CHI.")&&!ifs.eof()) ifs >> line;
-        // read l
-        while(!startswith(line, "l=")&&!ifs.eof()) ifs >> line;
-        int l = std::stoi(read_keyword_value(ifs, line));
-        nzeta_[l] += 1;
-        // to data
-        while(line != ">"&&!ifs.eof()) ifs >> line;
-        // before read data, first create container to store
-        std::vector<double> rvalue = std::vector<double>(ngrid, 0.0);
-        for(int ir=0; ir < ngrid; ir++)
+        std::map<std::pair<int, int>, std::vector<double>> result;
+
+        std::string line = "";
+        // read element
+        while(!startswith(line, "element=")&&!ifs.eof()) ifs >> line;
+        symbol_ = read_keyword_value(ifs, line);
+        // read lmax
+        while(!startswith(line, "l_max=")&&!ifs.eof()) ifs >> line;
+        lmax_ = std::stoi(read_keyword_value(ifs, line));
+        // read ngrid
+        while(!startswith(line, "mesh_size=")&&!ifs.eof()) ifs >> line;
+        ngrid = std::stoi(read_keyword_value(ifs, line));
+        // read nzeta
+        while(!startswith(line, "number_of_wfc=")&&!ifs.eof()) ifs >> line;
+        nzeta = std::stoi(read_keyword_value(ifs, line));
+        nchi_ = nzeta;
+        // read contents of pseudowavefunction
+        while(line != "<PP_PSWFC>") ifs >> line;
+        nzeta_ = new int[lmax_ + 1];
+        for(int il = 0; il < lmax_ + 1; il++) nzeta_[il] = 0;
+        for(int iz = 0; iz < nzeta; iz++) // read chi-by-chi
         {
+            // find the next <PP_CHI.> tag
+            while(!startswith(line, "<PP_CHI.")&&!ifs.eof()) ifs >> line;
+            // read l
+            while(!startswith(line, "l=")&&!ifs.eof()) ifs >> line;
+            int l = std::stoi(read_keyword_value(ifs, line));
+            nzeta_[l] += 1;
+            // to data
+            while(line != ">"&&!ifs.eof()) ifs >> line;
+            // before read data, first create container to store
+            std::vector<double> rvalue = std::vector<double>(ngrid, 0.0);
+            for(int ir=0; ir < ngrid; ir++)
+            {
+                ifs >> line;
+                double screening = std::exp(-screening_coeff * ir * dr);
+                rvalue[ir] = std::stod(line) * screening;
+            }
+            result[std::make_pair(l, nzeta_[l] - 1)] = rvalue;
             ifs >> line;
-            double screening = std::exp(-screening_coeff * ir * dr);
-            rvalue[ir] = std::stod(line) * screening;
+            assert(startswith(line, "</PP_CHI."));
         }
-        result[std::make_pair(l, nzeta_[l] - 1)] = rvalue;
-        ifs >> line;
-        assert(startswith(line, "</PP_CHI."));
-    }
-    
-    if(result.size() == 0)
-    {
-        ModuleBase::WARNING_QUIT("AtomicRadials::read", "pseudowavefunction information is absent in pseudopotential.");
-    }
-
-    nzeta_max_ = *std::max_element(nzeta_, nzeta_ + lmax_ + 1);
-    indexing(); // build index_map_
-
-    // cut rvalue to convergence and generate rgrid
-    std::vector<double> rgrid = pswfc_prepossess(result, conv_thr);
-    // refresh ngird value
-    ngrid = rgrid.size();
-
-    chi_ = new NumericalRadial[nchi_];
-
-    for(auto it = result.begin(); it != result.end(); it++)
-    {
-        int l = it->first.first;
-        int iz = it->first.second;
-        chi_[index(l, iz)].build(l, true, ngrid, rgrid.data(), it->second.data(), 0, iz, symbol_, itype_, false);       
-        if(std::fabs(screening_coeff - 0.0) > 1e-6) // PHYSICAL REVIEW B 78, 245112 2008
+        
+        if(result.size() == 0)
         {
-            chi_[index(l, iz)].normalize();
+            ModuleBase::WARNING_QUIT("AtomicRadials::read", "pseudowavefunction information is absent in pseudopotential.");
         }
+
+        nzeta_max_ = *std::max_element(nzeta_, nzeta_ + lmax_ + 1);
+        indexing(); // build index_map_
+
+        // cut rvalue to convergence and generate rgrid
+        std::vector<double> rgrid = pswfc_prepossess(result, conv_thr);
+        // refresh ngird value
+        ngrid = rgrid.size();
+
+        chi_ = new NumericalRadial[nchi_];
+
+        for(auto it = result.begin(); it != result.end(); it++)
+        {
+            int l = it->first.first;
+            int iz = it->first.second;
+            chi_[index(l, iz)].build(l, true, ngrid, rgrid.data(), it->second.data(), 0, iz, symbol_, itype_, false);       
+            if(std::fabs(screening_coeff - 0.0) > 1e-6) // PHYSICAL REVIEW B 78, 245112 2008
+            {
+                chi_[index(l, iz)].normalize();
+            }
+        }
+    } // rank 0 does almost everything, then broadcast one-by-one
+#ifdef __MPI
+    Parallel_Common::bcast_string(symbol_);
+    Parallel_Common::bcast_int(lmax_);
+
+    Parallel_Common::bcast_int(nchi_);
+    Parallel_Common::bcast_int(nzeta_max_);
+
+    Parallel_Common::bcast_int(ngrid);
+    // Parallel_Common::bcast_double(dr); // we dont need to broadcast dr again because it is fixed to 0.01
+#endif
+    if(rank != 0)
+    {
+        nzeta_ = new int[lmax_ + 1];
+        index_map_ = new int[(lmax_ + 1) * nzeta_max_];
+    }
+#ifdef __MPI
+    Parallel_Common::bcast_int(nzeta_, lmax_ + 1);
+    Parallel_Common::bcast_int(index_map_, (lmax_ + 1) * nzeta_max_);
+#endif
+
+    double* rvalue = new double[ngrid];
+    double* rgrid = new double[ngrid];
+    if(rank != 0)
+    {
+        for(int ir = 0; ir != ngrid; ++ir)
+        {
+            rgrid[ir] = ir * dr;
+        }
+        chi_ = new NumericalRadial[nchi_];
     }
 }

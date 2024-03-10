@@ -110,6 +110,8 @@ class toQO
         /// @brief calculate the overlap between atomic orbitals and numerical atomic orbitals, in k space and write to file
         void calculate();
 
+        void bcast_stdvector_ofvector3int(std::vector<ModuleBase::Vector3<int>>& vec);
+        void bcast_stdvector_ofvector3double(std::vector<ModuleBase::Vector3<double>>& vec);
         void mpi_plan(); // this function will distribute R and k to different processes
         void calculate_ovlpR_mpi(const int& iR);
         void calculate_mpi();
@@ -221,7 +223,7 @@ class toQO
         
         // getters
         int ntype() const { return ntype_; }
-        int nkpts() const { return nkpts_; }
+        int nks() const { return nks_; }
         std::string qo_basis() const { return qo_basis_; }
         std::vector<std::string> strategies() const { return strategies_; }
         std::string strategy(const int itype) const { return strategies_[itype]; }
@@ -262,7 +264,7 @@ class toQO
         std::map<std::tuple<int,int>,int> index_mat_;    /// mapping from (i,j) to index
         std::map<int,std::tuple<int,int>> rindex_mat_;   /// mapping from index to (i,j)
 
-        int nkpts_ = 0; /// number of kpoints, for S(k)
+        int nks_ = 0; /// number of kpoints, for S(k)
         int nR_ = 0;    /// number of supercell vectors, for S(R)
         int nchi_ = 0;  /// number of atomic orbitals, chi in \mathbf{S}^{\chi\phi}(\mathbf{k})
         int nphi_ = 0;  /// number of numerical atomic orbitals, phi in \mathbf{S}^{\chi\phi}(\mathbf{k})

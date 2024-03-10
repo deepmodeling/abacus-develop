@@ -25,7 +25,7 @@ void toQO::initialize(UnitCell* p_ucell,
     }
     #endif
     kvecs_d_ = kvecs_d;
-    nkpts_ = kvecs_d.size();
+    nks_ = kvecs_d.size();
 
     // BEGIN: "Two-center bundle build"
     unwrap_unitcell(p_ucell);
@@ -109,14 +109,7 @@ void toQO::build_nao(const int ntype,
     // indexing
     radialcollection_indexing(*nao_, na_, index_nao_, rindex_nao_);
     nphi_ = index_nao_.size();
-    #ifdef __MPI
-    if(rank == 0)
-    {
-    #endif
-    printf("Build numerical atomic orbital basis done.\n");
-    #ifdef __MPI
-    }
-    #endif
+
     delete[] orbital_fn_;
 }
 
@@ -135,7 +128,9 @@ void toQO::build_hydrogen(const int ntype,
                           const double qo_thr,
                           const int rank)
 {
+    ModuleBase::SphericalBesselTransformer sbt;
     ao_ = std::unique_ptr<RadialCollection>(new RadialCollection);
+    // for this method, all processes CAN do together
     ao_->build(ntype, 
                charges, 
                slater_screening, 
@@ -143,8 +138,10 @@ void toQO::build_hydrogen(const int ntype,
                symbols_.data(), 
                qo_thr, 
                strategies_.data());
-    ModuleBase::SphericalBesselTransformer sbt;
     ao_->set_transformer(sbt);
+    // indexing
+    radialcollection_indexing(*ao_, na_, index_ao_, rindex_ao_);
+    nchi_ = index_ao_.size();
 }
 
 void toQO::build_pswfc(const int ntype, 
@@ -154,15 +151,27 @@ void toQO::build_pswfc(const int ntype,
                        const double qo_thr,
                        const int rank)
 {
+    ModuleBase::SphericalBesselTransformer sbt;
     ao_ = std::unique_ptr<RadialCollection>(new RadialCollection);
+    int ntype_ = ntype;
+#ifdef __MPI
+    Parallel_Common::bcast_int(ntype_);
+#endif
     std::string* pspot_fn_ = new std::string[ntype_];
     for(int it = 0; it < ntype; it++)
     {
         pspot_fn_[it] = pseudo_dir + pspot_fn[it];
     }
+#ifdef __MPI
+    Parallel_Common::bcast_string(pspot_fn_, ntype_);
+#endif
+    // for this method, all processes MIGHT NOT do together, because of possible conflict of reading files
+    // in the following build function, the file reading is done by RANK-0, then broadcast to other processes
     ao_->build(ntype, pspot_fn_, screening_coeffs, qo_thr);
-    ModuleBase::SphericalBesselTransformer sbt;
     ao_->set_transformer(sbt);
+    // indexing
+    radialcollection_indexing(*ao_, na_, index_ao_, rindex_ao_);
+    nchi_ = index_ao_.size();
     delete[] pspot_fn_;
 }
 /*
@@ -199,52 +208,22 @@ void toQO::build_ao(const int ntype,
     {
         bool with_slater_screening = std::find_if(screening_coeffs.begin(), screening_coeffs.end(), 
             [](double sc) { return sc > 1e-10; }) != screening_coeffs.end();
-        build_hydrogen(ntype_, 
-                       charges_.data(),
-                       with_slater_screening, 
-                       nmax_.data(),
-                       qo_thr,
-                       rank);
+        build_hydrogen(ntype_,                  /// ntype
+                       charges_.data(),         /// charges
+                       with_slater_screening,   /// slater_screening
+                       nmax_.data(),            /// nmax
+                       qo_thr,                  /// qo_thr
+                       rank);                   /// rank
     }
     else if(qo_basis_ == "pswfc")
     {
-        build_pswfc(ntype_, 
-                    pseudo_dir,
-                    pspot_fn, 
-                    screening_coeffs.data(),
-                    qo_thr,
-                    rank);
+        build_pswfc(ntype_,                     /// ntype
+                    pseudo_dir,                 /// pseudo_dir
+                    pspot_fn,                   /// pspot_fn
+                    screening_coeffs.data(),    /// screening_coeffs
+                    qo_thr,                     /// qo_thr
+                    rank);                      /// rank
     }
-    /*
-    else if(qo_basis_ == "szv")
-    {
-        build_szv(ntype_);
-    }
-    */
-    else
-    {
-        #ifdef __MPI
-        if(rank == 0)
-        {
-        #endif
-        // Not implemented error
-        ModuleBase::WARNING_QUIT("toQO::initialize", "Error: " + qo_basis_ + " is not implemented yet.");
-        #ifdef __MPI
-        }
-        #endif
-    }
-    // indexing
-    radialcollection_indexing(*ao_, na_, index_ao_, rindex_ao_);
-    nchi_ = index_ao_.size();
-    // radial functions generation completed
-    #ifdef __MPI
-    if(rank == 0)
-    {
-    #endif
-    printf("Build atom-centered orbital basis done.\n");
-    #ifdef __MPI
-    }
-    #endif
 }
 
 void toQO::calculate_ovlpR(const int iR)
@@ -299,18 +278,18 @@ void toQO::calculate()
     {
     #endif
     printf("Calculating overlap integrals for kpoints.\n");
-    if(nkpts_ < nR_)
+    if(nks_ < nR_)
     {
         std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl
                   << "! Warning: number of kpoints is less than number of supercells, " << std::endl
                   << "! this will cause information loss when transform matrix R -> k. " << std::endl
                   << "! The further conversion k -> R cannot recover full information." << std::endl
-                  << "! Number of kpoints: " << nkpts_ << std::endl
+                  << "! Number of kpoints: " << nks_ << std::endl
                   << "! Number of supercells: " << nR_ << std::endl
                   << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
     }
     write_supercells();
-    for(int ik = 0; ik < nkpts_; ik++)
+    for(int ik = 0; ik < nks_; ik++)
     {
         zero_out_ovlps(false);
         calculate_ovlpk(ik);
