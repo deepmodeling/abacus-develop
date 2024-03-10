@@ -39,118 +39,22 @@ void toQO::eliminate_duplicate_vector3(std::vector<ModuleBase::Vector3<T>> &v)
 }
 template void toQO::eliminate_duplicate_vector3<int>(std::vector<ModuleBase::Vector3<int>> &v);
 
-void toQO::deallocate_ovlp(const bool is_R)
+void toQO::allocate_ovlp(const bool& is_R)
 {
-    if(nchi_ == 0 || nphi_ == 0)
-    {
-        ModuleBase::WARNING_QUIT("toQO::deallocate_ovlp", "nchi_ or nphi_ is zero, which means not properly initialized.");
-    }
-    if(is_R)
-    {
-        int nR = save_mem_? 1 : nR_;
-        for(int iR = 0; iR < nR; iR++)
-        {
-            for(int i = 0; i < ovlp_R_[iR].size(); i++)
-            {
-                ovlp_R_[iR][i].clear();
-            }
-            ovlp_R_[iR].clear();
-        }
-        ovlp_R_.clear();
-    }
-    else
-    {
-        for(int i = 0; i < ovlp_k_.size(); i++)
-        {
-            ovlp_k_[i].clear();
-        }
-        ovlp_k_.clear();
-    }
+    if(is_R) ovlpR_.resize(nchi_ * nphi_, 0.0);
+    else ovlpk_.resize(nchi_ * nphi_, std::complex<double>(0.0, 0.0));
 }
 
-void toQO::allocate_ovlp(const bool is_R)
+void toQO::deallocate_ovlp(const bool& is_R)
 {
-
-    if(nchi_ == 0 || nphi_ == 0)
-    {
-        ModuleBase::WARNING_QUIT("toQO::allocate_ovlp", "nchi_ or nphi_ is zero, which means not properly initialized.");
-    }
-    if(is_R)
-    {
-        int nR = save_mem_? 1 : nR_;
-        // allocate memory for ovlp_R_
-        for(int iR = 0; iR < nR; iR++)
-        {
-            RealMatrix matrix;
-            for(int i = 0; i < nchi_; i++)
-            {
-                std::vector<double> row;
-                for(int j = 0; j < nphi_; j++)
-                {
-                    row.push_back(0.0);
-                }
-                matrix.push_back(row);
-            }
-            ovlp_R_.push_back(matrix);
-        }
-    }
-    else
-    {
-        // allocate memory for ovlp_k_
-        for(int i = 0; i < nchi_; i++)
-        {
-            std::vector<std::complex<double>> row;
-            for(int j = 0; j < nphi_; j++)
-            {
-                row.push_back(std::complex<double>(0.0, 0.0));
-            }
-            ovlp_k_.push_back(row);
-        }
-    }
+    if(is_R) ovlpR_.clear();
+    else ovlpk_.clear();
 }
 
-void toQO::clean_up()
+void toQO::zero_out_ovlps(const bool& is_R)
 {
-    if(nchi_ == 0 || nphi_ == 0)
-    {
-        ModuleBase::WARNING_QUIT("toQO::allocate", "nchi_ or nphi_ is zero, which means not properly initialized.");
-    }
-    deallocate_ovlp(true);
-    deallocate_ovlp(false);
-    allocate_ovlp(true);
-    allocate_ovlp(false);
-}
-
-void toQO::zero_out_ovlps(const bool is_R)
-{
-    if(nchi_ == 0 || nphi_ == 0)
-    {
-        ModuleBase::WARNING_QUIT("toQO::zero_out_ovlps", "nchi_ or nphi_ is zero, which means not properly initialized.");
-    }
-    if(is_R)
-    {
-        int nR = save_mem_? 1 : nR_;
-        for(int iR = 0; iR < nR; iR++)
-        {
-            for(int i = 0; i < nchi_; i++)
-            {
-                for(int j = 0; j < nphi_; j++)
-                {
-                    ovlp_R_[iR][i][j] = 0.0;
-                }
-            }
-        }
-    }
-    else
-    {
-        for(int i = 0; i < nchi_; i++)
-        {
-            for(int j = 0; j < nphi_; j++)
-            {
-                ovlp_k_[i][j] = std::complex<double>(0.0, 0.0);
-            }
-        }
-    }
+    if(is_R) std::fill(ovlpR_.begin(), ovlpR_.end(), 0.0);
+    else std::fill(ovlpk_.begin(), ovlpk_.end(), std::complex<double>(0.0, 0.0));
 }
 
 std::vector<ModuleBase::Vector3<int>> toQO::scan_supercell_for_atom(int it, int ia, int start_it, int start_ia)
@@ -285,84 +189,109 @@ ModuleBase::Vector3<double> toQO::cal_two_center_vector(ModuleBase::Vector3<doub
     return Rij;
 }
 
-void toQO::fold_ovlp_R(int ik)
+void toQO::append_ovlpR_eiRk(int ik, int iR)
 {
-    if(save_mem_) // exception handling
-    {
-        ModuleBase::WARNING_QUIT("toQO::folding_ovlp_R", "save_mem_ is true, which means ovlp_R_ has only one S(R).");
-    }
-    int nrow = ovlp_R_[0].size();
-    int ncol = ovlp_R_[0][0].size();
-    // clean up
-    zero_out_ovlps(false);
-    // calculate
-    for(int iR = 0; iR < supercells_.size(); iR++)
-    {
-        ModuleBase::Vector3<double> R(double(supercells_[iR].x), double(supercells_[iR].y), double(supercells_[iR].z));
-        double arg = (kvecs_d_[ik] * R) * ModuleBase::TWO_PI;
-        double sinp, cosp;
-        ModuleBase::libm::sincos(arg, &sinp, &cosp);
-        std::complex<double> phase = std::complex<double>(cosp, sinp);
-        for(int i = 0; i < nrow; i++)
-        {
-            for(int j = 0; j < ncol; j++)
-            {
-                ovlp_k_[i][j] += phase * ovlp_R_[iR][i][j];
-            }
-        }
-    }
-}
-
-void toQO::append_ovlp_R_eiRk(int ik, int iR)
-{
-    // save memory mode, so ovlp_R_ has only one S(R)
-    if(ovlp_R_.size() > 1)
-    {
-        ModuleBase::WARNING_QUIT("toQO::append_ovlp_R_eiRk", "ovlp_R_ has more than one S(R).");
-    }
-    int nrow = ovlp_R_[0].size();
-    int ncol = ovlp_R_[0][0].size();
-
     // calculate
     ModuleBase::Vector3<double> R(double(supercells_[iR].x), double(supercells_[iR].y), double(supercells_[iR].z));
     double arg = (kvecs_d_[ik] * R) * ModuleBase::TWO_PI;
     double sinp, cosp;
     ModuleBase::libm::sincos(arg, &sinp, &cosp);
     std::complex<double> phase = std::complex<double>(cosp, sinp);
-    for(int i = 0; i < nrow; i++)
-    {
-        for(int j = 0; j < ncol; j++)
-        {
-            ovlp_k_[i][j] += phase * ovlp_R_[0][i][j];
-        }
-    }
+    std::transform(ovlpR_.begin(), ovlpR_.end(), ovlpk_.begin(), ovlpk_.begin(),
+        [&](const double& ovlpR, const std::complex<double>& ovlpk) {
+            return ovlpR * phase + ovlpk;
+        });
 }
 
+// template function definition
+// 20240310 make compatible with R space matrices
 template <typename T>
-void toQO::write_ovlp(const std::vector<std::vector<T>> &ovlp, const int& ik)
+void toQO::write_ovlp(const std::string& dir,
+                      const std::vector<T> &ovlp, 
+                      const int& nrows,
+                      const int& ncols,
+                      const bool& is_R,
+                      const int& i)
 {
-    std::string filename = "QO_ovlp_" + std::to_string(ik) + ".dat";
-    std::ofstream ofs(GlobalV::global_out_dir + filename);
+    std::string filename = is_R? "QO_ovlpR_" + std::to_string(i) + ".dat": "QO_ovlp_" + std::to_string(i) + ".dat";
+    std::ofstream ofs(dir + filename);
     if(!ofs.is_open())
     {
         ModuleBase::WARNING_QUIT("toQO::write_ovlp", "can not open file: " + filename);
     }
-    // first write kpoint coordinate
-    ofs << "KPOINT_COORDINATE: " << std::setw(22) << std::setprecision(14) << std::right << std::scientific << kvecs_d_[ik].x << " "
-                                 << std::setw(22) << std::setprecision(14) << std::right << std::scientific << kvecs_d_[ik].y << " "
-                                 << std::setw(22) << std::setprecision(14) << std::right << std::scientific << kvecs_d_[ik].z << std::endl;
-    for(int i = 0; i < ovlp.size(); i++)
+    if(is_R)
     {
-        for(int j = 0; j < ovlp[i].size(); j++)
+        ofs << "SUPERCELL_COORDINATE: " << std::setw(5) << std::right << supercells_[i].x << " "
+                                        << std::setw(5) << std::right << supercells_[i].y << " "
+                                        << std::setw(5) << std::right << supercells_[i].z << std::endl;
+    }
+    else
+    {
+        ofs << "KPOINT_COORDINATE: " << std::setw(22) << std::setprecision(14) << std::right << std::scientific << kvecs_d_[i].x << " "
+                                     << std::setw(22) << std::setprecision(14) << std::right << std::scientific << kvecs_d_[i].y << " "
+                                     << std::setw(22) << std::setprecision(14) << std::right << std::scientific << kvecs_d_[i].z << std::endl;
+    }
+    for(int irow = 0; irow < nrows; irow++)
+    {
+        for(int icol = 0; icol < ncols; icol++)
         {
-            ofs << std::setw(22) << std::setprecision(14) << std::right << std::scientific << ovlp[i][j] << " ";
+            ofs << std::setw(22) << std::setprecision(14) << std::right << std::scientific << ovlp[irow*nrows+icol] << " ";
         }
         ofs << std::endl;
     }
     ofs.close();
 }
-template void toQO::write_ovlp<double>(const std::vector<std::vector<double>>& ovlp, const int& ik);
-template void toQO::write_ovlp<std::complex<double>>(const std::vector<std::vector<std::complex<double>>>& ovlp, const int& ik);
+// explicit instantiation
+template void toQO::write_ovlp<double>(const std::string& dir,
+                                       const std::vector<double>& ovlp, 
+                                       const int& nrows,
+                                       const int& ncols,
+                                       const bool& is_R,
+                                       const int& ik);
+template void toQO::write_ovlp<std::complex<double>>(const std::string& dir,
+                                                     const std::vector<std::complex<double>>& ovlp, 
+                                                     const int& nrows,
+                                                     const int& ncols,
+                                                     const bool& is_R,
+                                                     const int& ik);
+// a free function to convert string storing C++ std::complex to std::complex
+// format: (real,imag), both part in scientific format
+std::complex<double> str2complex(const std::string& str)
+{
+    std::string real_str, imag_str;
+    int i = 1; // skip '('
+    while(str[i] != ',') real_str += str[i]; i++;
+    i++; // skip ','
+    while(str[i] != ')') imag_str += str[i]; i++;
+    return std::complex<double>(std::stod(real_str), std::stod(imag_str));
+}
+// complete I/O of QO module
+void toQO::read_ovlp(const std::string& dir,
+                     const int& nrows,
+                     const int& ncols,
+                     const bool& is_R,
+                     const int& ik)
+{
+    std::string filename = is_R? "QO_ovlpR_" + std::to_string(ik) + ".dat": "QO_ovlp_" + std::to_string(ik) + ".dat";
+    std::ifstream ifs(dir + filename);
+    if(!ifs.is_open())
+    {
+        ModuleBase::WARNING_QUIT("toQO::read_ovlp", "can not open file: " + filename);
+    }
+    // read header
+    std::string line;
+    std::getline(ifs, line);
+    // read ovlp
+    int inum = 0;
+    while(ifs.good())
+    {
+        std::string anum;
+        ifs >> anum;
+        if(is_R) ovlpR_[inum] = std::stod(anum);
+        else ovlpk_[inum] = str2complex(anum);
+        inum++;
+    }
+}
 
 void toQO::write_supercells()
 {
@@ -378,4 +307,48 @@ void toQO::write_supercells()
             << std::setw(5) << std::right << supercells_[i].z << std::endl;
     }
     ofs.close();
+}
+
+#include "../module_base/parallel_common.h"
+void toQO::mpi_plan()
+{
+    
+}
+
+void toQO::radialcollection_indexing(const RadialCollection& radcol,
+                                     const std::vector<int>& natoms,
+                                     std::map<std::tuple<int,int,int,int,int>,int>& index_map,
+                                     std::map<int,std::tuple<int,int,int,int,int>>& index_map_reverse)
+{
+    // in RadialCollection, radials are stored type by type and actually not relevant with exact atom index,
+    // so the number of atom of each type is external information.
+    // the map should be like: (itype, iatom, l, izeta, m) -> index and the reverse one is index -> (itype, iatom, l, izeta, m)
+    int index = 0;
+    for(int itype = 0; itype < radcol.ntype(); itype++)
+    {
+        for(int iatom = 0; iatom < natoms[itype]; iatom++)
+        {
+            for(int l = 0; l <= radcol.lmax(itype); l++)
+            {
+                // here should be an orbital_filter operation
+                // temporary choice
+                if((!orbital_filter(l, strategies_[itype]))&&(qo_basis_ == "pswfc")) continue;
+                std::vector<int> ms;
+                for(int m_abs = 0; m_abs <= l; m_abs++)
+                {
+                    ms.push_back(m_abs);
+                    if(m_abs != 0) ms.push_back(-m_abs);
+                }
+                for(int izeta = 0; izeta < radcol.nzeta(itype, l); izeta++)
+                {
+                    for(int m: ms)
+                    {
+                        index_map[std::make_tuple(itype, iatom, l, izeta, m)] = index;
+                        index_map_reverse[index] = std::make_tuple(itype, iatom, l, izeta, m);
+                        index++;
+                    }
+                }
+            }
+        }
+    }
 }

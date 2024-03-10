@@ -35,15 +35,11 @@
         2.3. scan neighboring list: scan_supercell()
         2.4. allocate memory for ovlp_ao_nao_R_ and ovlp_ao_nao_k_: clean_up(), deallocate_ovlp() and allocate_ovlp()
     3. calculate overlap S(k): calculate()
-        3.1. calculate S(R) for all R: calculate_ovlp_k(), calculate_ovlp_R()
-        3.2. fold S(R) to S(k): fold_ovlp_R()
+        3.1. calculate S(R) for all R: calculate_ovlpk(), calculate_ovlpR()
+        3.2. fold S(R) to S(k): fold_ovlpR()
 */
 class toQO
 {
-    private:
-        using CplxMatrix = std::vector<std::vector<std::complex<double>>>;
-        using RealMatrix = std::vector<std::vector<double>>;
-
     public:
         toQO(std::string qo_basis, std::vector<std::string> strategies);
         ~toQO();
@@ -107,18 +103,39 @@ class toQO
         /// @brief calculate the overlap between atomic orbitals and numerical atomic orbitals, in real space, at R[iR]
         /// @param iR index of supercell vector
         /// @note to save memory, the workflow can be organized as, once one S(R) is calculated, fold it to S(k), then clean up S(R)...
-        void calculate_ovlp_R(const int iR);
+        void calculate_ovlpR(const int iR);
         /// @brief calculate the overlap between atomic orbitals and numerical atomic orbitals, in k space
         /// @param kvec_c vector3 specifying a kpoint
-        void calculate_ovlp_k(int ik);
+        void calculate_ovlpk(int ik);
         /// @brief calculate the overlap between atomic orbitals and numerical atomic orbitals, in k space and write to file
         void calculate();
+
+        void mpi_plan(); // this function will distribute R and k to different processes
+        void calculate_ovlpR_mpi(const int& iR);
+        void calculate_mpi();
+
+        /// @brief build bidirectional map indexing for one single RadialCollection object, which is an axis of two-center-integral table.
+        /// @details from (it,ia,l,zeta,m) to index and vice versa
+        void radialcollection_indexing(const RadialCollection&,
+                                       const std::vector<int>&,
+                                       std::map<std::tuple<int,int,int,int,int>,int>&,
+                                       std::map<int,std::tuple<int,int,int,int,int>>&);
         /// @brief write two dimensional matrix to file
         /// @tparam T type of matrix
         /// @param matrix matrix to write
         /// @param ik index of kpoint
         template <typename T>
-        void write_ovlp(const std::vector<std::vector<T>>& matrix, const int& ik);
+        void write_ovlp(const std::string& dir,
+                        const std::vector<T>& matrix, 
+                        const int& nrows,
+                        const int& ncols,
+                        const bool& is_R = false, 
+                        const int& ik = 0);
+        void read_ovlp(const std::string& dir,
+                       const int& nrows,
+                       const int& ncols,
+                       const bool& is_R = false,
+                       const int& ik = 0);
         /// @brief write supercells information to file
         void write_supercells();
         /*
@@ -186,31 +203,21 @@ class toQO
             Data management
         */
         bool orbital_filter(const int, const std::string);
-        /// @brief clean up ovlp_ao_nao_R_ or ovlp_ao_nao_k_
-        /// @param is_R true for ovlp_ao_nao_R_, false for ovlp_ao_nao_k_
-        void deallocate_ovlp(bool is_R = false);
-        /// @brief allocate memory for ovlp_ao_nao_R_ or ovlp_ao_nao_k_
-        /// @param is_R true for ovlp_ao_nao_R_, false for ovlp_ao_nao_k_
-        void allocate_ovlp(bool is_R = false);
-        /// @brief clean up all data members
-        void clean_up();
-        /// @brief zero out ovlp_ao_nao_R_ or ovlp_ao_nao_k_
-        /// @param is_R true for ovlp_ao_nao_R_, false for ovlp_ao_nao_k_
-        void zero_out_ovlps(const bool is_R);
 
-        /// @brief given a vector3 specifying a kpoint, fold ovlp_ao_nao_R_ (series of S(R), memory consuming)
-        /// @param ik index of vector3 specifying a kpoint
-        void fold_ovlp_R(int ik);
-        /// @brief given a vector3 specifying a kpoint, append one single S(R), multiply by exp(-i*k*R) and add to ovlp_ao_nao_k_
-        /// @param ik index of  vector3 specifying a kpoint
-        /// @param iR index of supercell vector
-        void append_ovlp_R_eiRk(int ik, int iR);
+        void deallocate_ovlp(const bool& is_R = false);  /// deallocate memory for ovlp_ao_nao_R_ or ovlp_ao_nao_k_
+        void allocate_ovlp(const bool& is_R = false);    /// allocate memory for ovlp_ao_nao_R_ or ovlp_ao_nao_k_
+        void zero_out_ovlps(const bool& is_R);           /// zero out ovlp_ao_nao_R_ or ovlp_ao_nao_k_
+        void append_ovlpR_eiRk(int ik, int iR);          /// append S(R) to S(k), memory saving
+
+        void deallocate_mpiovlp(const bool& is_R = false);
+        void allocate_mpiovlp(const bool& is_R = false);
+        void zero_out_mpiovlps(const bool& is_R = false);
+        void append_mpiovlpR_eiRk(const int& ik, const int& iR);
 
         // setters
         void set_qo_basis(const std::string qo_basis) { qo_basis_ = qo_basis; }
         void set_strategies(const std::vector<std::string> strategies) { strategies_ = strategies; }
         void set_strategy(const int itype, const std::string strategy) { strategies_[itype] = strategy; }
-        void set_save_mem(const bool save_mem) { save_mem_ = save_mem; }
         
         // getters
         int ntype() const { return ntype_; }
@@ -225,88 +232,48 @@ class toQO
         int nchi() const { return nchi_; }
         int nphi() const { return nphi_; }
         std::vector<ModuleBase::Vector3<int>> supercells() const { return supercells_; }
-        std::vector<RealMatrix> ovlp_R() const { return ovlp_R_; }
-        CplxMatrix ovlp_k() const { return ovlp_k_; }
-        bool save_mem() const { return save_mem_; }
+        std::vector<double> ovlpR() const { return ovlpR_; }
+        double ovlpR(const int i, const int j) const { return ovlpR_[i*nchi_+j]; }
+        std::vector<std::complex<double>> ovlpk() const { return ovlpk_; }
+        std::complex<double> ovlpk(const int i, const int j) const { return ovlpk_[i*nchi_+j]; }
         std::vector<std::string> symbols() const { return symbols_; }
         std::vector<double> charges() const { return charges_; }
         atom_in atom_database() const { return atom_database_; }
         std::vector<ModuleBase::Vector3<double>> kvecs_d() const { return kvecs_d_; }
 
     private:
-        //
-        // interface to deprecated
-        //
-        /// @brief interface to the unitcell
-        UnitCell* p_ucell_ = nullptr;
+        UnitCell* p_ucell_ = nullptr; /// interface to the unitcell, its lifespan is not managed here
+        atom_in atom_database_;       /// atomic information database, RAII
 
-        //
-        // high dimensional data
-        //
-        /// @brief supercell vectors
-        std::vector<ModuleBase::Vector3<int>> supercells_;
-        /// @brief overlaps between atomic orbitals and numerical atomic orbitals, in real space
-        std::vector<RealMatrix> ovlp_R_;
-        /// @brief overlap between atomic orbitals and numerical atomic orbitals, in k space
-        CplxMatrix ovlp_k_;
+        std::vector<ModuleBase::Vector3<int>> supercells_; /// supercell vectors
+        std::vector<ModuleBase::Vector3<double>> kvecs_d_; /// kpoints
+        // Two center integral
+        std::unique_ptr<RadialCollection> nao_;                   /// numerical atomic orbitals
+        std::unique_ptr<RadialCollection> ao_;                    /// atomic orbitals
+        std::unique_ptr<TwoCenterIntegrator> overlap_calculator_; /// two center integrator
+        std::vector<double> ovlpR_;
+        std::vector<std::complex<double>> ovlpk_;
+        /// indices
+        std::map<std::tuple<int,int,int,int,int>,int> index_ao_;   /// mapping from (it,ia,l,zeta,m) to index
+        std::map<int,std::tuple<int,int,int,int,int>> rindex_ao_;  /// mapping from index to (it,ia,l,zeta,m)
+        std::map<std::tuple<int,int,int,int,int>,int> index_nao_;  /// mapping from (it,ia,l,zeta,m) to index
+        std::map<int,std::tuple<int,int,int,int,int>> rindex_nao_; /// mapping from index to (it,ia,l,zeta,m)
+        
+        std::map<std::tuple<int,int>,int> index_mat_;    /// mapping from (i,j) to index
+        std::map<int,std::tuple<int,int>> rindex_mat_;   /// mapping from index to (i,j)
 
-        //
-        // basic data member
-        //
-        /// @brief number of kpoints, for S(k)
-        int nkpts_ = 0;
-        /// @brief number of supercell vectors, for S(R)
-        int nR_ = 0;
-        /// @brief number of atomic orbitals, chi in \mathbf{S}^{\chi\phi}(\mathbf{k})
-        int nchi_ = 0;
-        /// @brief number of numerical atomic orbitals, phi in \mathbf{S}^{\chi\phi}(\mathbf{k})
-        int nphi_ = 0;
-        //
-        // data unwrapped from unitcell
-        //
-        /// @brief number of atom types
-        int ntype_ = 0;
-        /// @brief number of atoms for each type
-        std::vector<int> na_;
-        //
-        // qo_basis = strategy
-        //
+        int nkpts_ = 0; /// number of kpoints, for S(k)
+        int nR_ = 0;    /// number of supercell vectors, for S(R)
+        int nchi_ = 0;  /// number of atomic orbitals, chi in \mathbf{S}^{\chi\phi}(\mathbf{k})
+        int nphi_ = 0;  /// number of numerical atomic orbitals, phi in \mathbf{S}^{\chi\phi}(\mathbf{k})
+
+        int ntype_ = 0;       /// number of atom types
+        std::vector<int> na_; /// number of atoms for each type
+
+        std::string qo_basis_ = "hydrogen";
+        std::vector<std::string> strategies_;
         std::vector<std::string> symbols_;
         std::vector<double> charges_;
         std::vector<int> nmax_;
-        //
-        //
-        //
-        std::vector<ModuleBase::Vector3<double>> kvecs_d_;
-        //
-        // attributes
-        //
-        /// @brief current atomic orbital basis for generating QO
-        /// @details hydrogen: hydrogen-like orbitals; pswfc: pseudowavefunction
-        std::string qo_basis_ = "hydrogen";
-        /// @brief strategy for generating QO
-        /// @details full: 1s, 2s, 2p, 3s, 3p, 3d, ...
-        ///          minimal: 1s, 2p, 3d, 4f, ...
-        ///          energy: according to Hund's rule
-        std::vector<std::string> strategies_;
-
-        //
-        // memory control
-        //
-        /// @brief whether to save memory
-        bool save_mem_ = true;
-
-        // 
-        // advanced data structures
-        //
-        // orbitals data carriers
-        /// @brief numerical atomic orbitals
-        std::unique_ptr<RadialCollection> nao_;
-        /// @brief atomic orbitals
-        std::unique_ptr<RadialCollection> ao_;
-        /// @brief two center integrator
-        std::unique_ptr<TwoCenterIntegrator> overlap_calculator_;
-        /// @brief atom database
-        atom_in atom_database_;
 };
 #endif // TOQO_H

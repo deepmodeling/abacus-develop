@@ -71,7 +71,6 @@ void toQO::initialize(UnitCell* p_ucell,
     // prepare for Ylm
     ModuleBase::Ylm::set_coefficients();
     // END: "Two-center bundle build"
-    
     // allocate memory for ovlp_ao_nao_R_ and ovlp_ao_nao_k_
     allocate_ovlp(true); allocate_ovlp(false);
     printf("---- Quasiatomic Orbital (QO) Analysis Initialization Done ----\n");
@@ -107,18 +106,9 @@ void toQO::build_nao(const int ntype,
 
     nao_->build(ntype_, orbital_fn_, 'o');
     nao_->set_transformer(sbt);
-    for(int it = 0; it < ntype_; it++)
-    {
-        int _nphi_it = 0;
-        for(int l = 0; l <= nao_->lmax(it); l++)
-        {
-            for(int izeta = 0; izeta < nao_->nzeta(it, l); izeta++)
-            {
-                _nphi_it += 2*l + 1;
-            }
-        }
-        nphi_ += _nphi_it*na_[it];
-    }
+    // indexing
+    radialcollection_indexing(*nao_, na_, index_nao_, rindex_nao_);
+    nphi_ = index_nao_.size();
     #ifdef __MPI
     if(rank == 0)
     {
@@ -155,26 +145,6 @@ void toQO::build_hydrogen(const int ntype,
                strategies_.data());
     ModuleBase::SphericalBesselTransformer sbt;
     ao_->set_transformer(sbt);
-    
-    for(int itype = 0; itype < ntype; itype++)
-    {
-        int _nchi_it = 0;
-        for(int l = 0; l <= ao_->lmax(itype); l++)
-        {
-            _nchi_it += (2*l+1)*ao_->nzeta(itype, l);
-        }
-        nchi_ += _nchi_it * na_[itype];
-    }
-
-    #ifdef __MPI
-    if(rank == 0)
-    {
-    #endif
-    if(nchi_ > 0) printf("Build arbitrary atomic orbital basis done.\n");
-    else ModuleBase::WARNING_QUIT("toQO::initialize", "Error: no atomic orbital is built.");
-    #ifdef __MPI
-    }
-    #endif
 }
 
 void toQO::build_pswfc(const int ntype, 
@@ -193,25 +163,6 @@ void toQO::build_pswfc(const int ntype,
     ao_->build(ntype, pspot_fn_, screening_coeffs, qo_thr);
     ModuleBase::SphericalBesselTransformer sbt;
     ao_->set_transformer(sbt);
-    
-    for(int itype = 0; itype < ntype; itype++)
-    {
-        int _nchi_it = 0;
-        for(int l = 0; l <= ao_->lmax(itype); l++)
-        {
-            if(orbital_filter(l, strategies_[itype])) _nchi_it += (2*l+1)*ao_->nzeta(itype, l);
-        }
-        nchi_ += _nchi_it * na_[itype];
-    }
-
-    #ifdef __MPI
-    if(rank == 0)
-    {
-    #endif
-    printf("Build arbitrary atomic orbital basis done.\n");
-    #ifdef __MPI
-    }
-    #endif
     delete[] pspot_fn_;
 }
 /*
@@ -277,116 +228,70 @@ void toQO::build_ao(const int ntype,
         {
         #endif
         // Not implemented error
-        GlobalV::ofs_running << "Error: " << qo_basis_ << " is not implemented yet." << std::endl;
         ModuleBase::WARNING_QUIT("toQO::initialize", "Error: " + qo_basis_ + " is not implemented yet.");
         #ifdef __MPI
         }
         #endif
-    } // radial functions generation completed
+    }
+    // indexing
+    radialcollection_indexing(*ao_, na_, index_ao_, rindex_ao_);
+    nchi_ = index_ao_.size();
+    // radial functions generation completed
+    #ifdef __MPI
+    if(rank == 0)
+    {
+    #endif
+    printf("Build atom-centered orbital basis done.\n");
+    #ifdef __MPI
+    }
+    #endif
 }
 
-void toQO::calculate_ovlp_R(const int iR)
+void toQO::calculate_ovlpR(const int iR)
 {
-    // save memory mode: only write to ovlp_ao_nao_R_[0]
-    int iR_save = save_mem_? 0 : iR;
-
-    int irow = 0; // row and column index of ovlp_ao_nao_R_
-    for(int it = 0; it < p_ucell_->ntype; it++)
+    for(int irow = 0; irow < nchi_; irow++)
     {
-    // FOR EACH TYPE it, GET THE MAXIMUM l
-        int lmaxi = atom_database_.principle_quantum_number[p_ucell_->atoms[it].ncpp.psd] - 1;
-        for(int ia = 0; ia < p_ucell_->atoms[it].na; ia++)
+        //         it,  ia,  li,  izeta, mi
+        std::tuple<int, int, int, int, int> orb1 = rindex_ao_[irow];
+        for(int icol = 0; icol < nphi_; icol++)
         {
-    // FOR EACH ATOM ia OF PRESENT TYPE it, SPECIFIES AN ATOM itia
-    // BUT SPECIFYING AN ATOM HERE IS NOT NECESSARY, THE ONLY REASON IS THE ARRANGEMENT OF ovlp_ao_nao_R_
-            for(int li = 0; li <= lmaxi; li++)
-            {
-                // orbitals arrange in the way stated: https://abacus.deepmodeling.com/en/latest/advanced/pp_orb.html#basis-set
-                // generate the magnetic quantum number mi list
-                std::vector<int> mis;
-                for(int mi_abs = 0; mi_abs <= li; mi_abs++)
-                {
-                    mis.push_back(mi_abs);
-                    if(mi_abs != 0) mis.push_back(-mi_abs);
-                }
-                if((!orbital_filter(li, strategies_[it]))&&(qo_basis_ == "pswfc")) continue;
-    // RADIAL FUNCTIONS ARE ORGANIZED BY (l, zeta), SO FOR EACH l, GET THE MAXIMUM zeta
-                int nzetai = ao_->nzeta(it, li);
-    // FOR (l, zeta) OF ATOM itia, SPECIFY A RADIAL ATOMIC ORBITAL
-                for(int izetai = 0; izetai < nzetai; izetai++)
-                {
-    // FOR EACH RADIAL ATOMIC ORBITAL, SPECIFY A SPHERICAL HARMONIC
-                    //for(int mi = -li; mi <= li; mi++) // natural but it's not how ABACUS arrange orbitals
-                    for(int mi : mis)
-                    {
-    // HERE WE GET flzeta(r)*Ylm(theta, phi),
-    // THEN ANOTHER ORBITAL...(jt, ja, lj, izetaj, mj)
-                        int icol = 0; 
-                        for(int jt = 0; jt < p_ucell_->ntype; jt++)
-                        {
-                            for(int ja = 0; ja < p_ucell_->atoms[jt].na; ja++)
-                            {
-                                int lmaxj = p_ucell_->atoms[jt].nwl;
-                                for(int lj = 0; lj <= lmaxj; lj++)
-                                {
-                                    // orbitals arrange in the way stated: https://abacus.deepmodeling.com/en/latest/advanced/pp_orb.html#basis-set
-                                    // generate the magnetic quantum number mj list
-                                    std::vector<int> mjs;
-                                    for(int mj_abs = 0; mj_abs <= lj; mj_abs++)
-                                    {
-                                        mjs.push_back(mj_abs);
-                                        if(mj_abs != 0) mjs.push_back(-mj_abs);
-                                    }
-                                    int nzetaj = nao_->nzeta(jt, lj);
-                                    for(int izetaj = 0; izetaj < nzetaj; izetaj++)
-                                    {
-                                        //for(int mj = -lj; mj <= lj; mj++) // natural but it's not how ABACUS arrange orbitals
-                                        for(int mj : mjs)
-                                        {
-    // TWO ATOMIC ORBITALS ARE SPECIFIED, THEN WE NEED TO CALCULATE THE OVERLAP IN SUPERCELL
-                                            ModuleBase::Vector3<double> rij = p_ucell_->atoms[jt].tau[ja] - p_ucell_->atoms[it].tau[ia];
-                                            // there is waste here, but for easy to understand, I don't optimize it.
-                                            ModuleBase::Vector3<int> R = supercells_[iR];
-                                            ModuleBase::Vector3<double> Rij;
-                                            Rij.x = rij.x + double(R.x) * p_ucell_->a1.x 
-                                                          + double(R.y) * p_ucell_->a2.x 
-                                                          + double(R.z) * p_ucell_->a3.x;
-                                            Rij.y = rij.y + double(R.x) * p_ucell_->a1.y 
-                                                          + double(R.y) * p_ucell_->a2.y 
-                                                          + double(R.z) * p_ucell_->a3.y;
-                                            Rij.z = rij.z + double(R.x) * p_ucell_->a1.z 
-                                                          + double(R.y) * p_ucell_->a2.z 
-                                                          + double(R.z) * p_ucell_->a3.z;
-                                            Rij *= p_ucell_->lat0; // convert to Bohr
-                                            overlap_calculator_->calculate(
-                                                it, li, izetai, mi,
-                                                jt, lj, izetaj, mj,
-                                                Rij, &ovlp_R_[iR_save][irow][icol]
-                                            );
-                                            icol++; // CHARNGE ORBITAL2: (jt, ja, lj, izetaj, mj)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        irow++; // CHARNGE ORBITAL1: (it, ia, li, izetai, mi)
-                    }
-                }
-            }
+            //         jt,  ja,  lj,  jzeta, mj
+            std::tuple<int, int, int, int, int> orb2 = rindex_nao_[icol];
+            int it = std::get<0>(orb1);
+            int ia = std::get<1>(orb1);
+            int jt = std::get<0>(orb2);
+            int ja = std::get<1>(orb2);
+            ModuleBase::Vector3<double> rij = p_ucell_->atoms[jt].tau[ja] - p_ucell_->atoms[it].tau[ia];
+            // there is waste here, but for easy to understand, I don't optimize it.
+            ModuleBase::Vector3<int> R = supercells_[iR];
+            ModuleBase::Vector3<double> Rij;
+            Rij.x = rij.x + double(R.x) * p_ucell_->a1.x 
+                          + double(R.y) * p_ucell_->a2.x 
+                          + double(R.z) * p_ucell_->a3.x;
+            Rij.y = rij.y + double(R.x) * p_ucell_->a1.y 
+                          + double(R.y) * p_ucell_->a2.y 
+                          + double(R.z) * p_ucell_->a3.y;
+            Rij.z = rij.z + double(R.x) * p_ucell_->a1.z 
+                          + double(R.y) * p_ucell_->a2.z 
+                          + double(R.z) * p_ucell_->a3.z;
+            Rij *= p_ucell_->lat0; // convert to Bohr
+            overlap_calculator_->calculate(
+                it, std::get<2>(orb1), std::get<3>(orb1), std::get<4>(orb1),
+                jt, std::get<2>(orb2), std::get<3>(orb2), std::get<4>(orb2),
+                Rij, &ovlpR_[irow*nphi_+icol]
+            );
         }
     }
 }
 
-void toQO::calculate_ovlp_k(int ik)
+void toQO::calculate_ovlpk(int ik)
 {
     for(int iR = 0; iR < nR_; iR++)
     {
-        calculate_ovlp_R(iR); // calculate S(R) for each R, save to ovlp_ao_nao_R_
-        if(save_mem_) append_ovlp_R_eiRk(ik, iR);
+        calculate_ovlpR(iR); // calculate S(R) for each R, save to ovlp_ao_nao_R_
+        append_ovlpR_eiRk(ik, iR);
     }
-    if(!save_mem_) fold_ovlp_R(ik);
 }
-
 void toQO::calculate()
 {
     #ifdef __MPI
@@ -408,8 +313,13 @@ void toQO::calculate()
     for(int ik = 0; ik < nkpts_; ik++)
     {
         zero_out_ovlps(false);
-        calculate_ovlp_k(ik);
-        write_ovlp<std::complex<double>>(ovlp_k_, ik);
+        calculate_ovlpk(ik);
+        write_ovlp<std::complex<double>>(GlobalV::global_out_dir, /// dir
+                                         ovlpk_,                  /// ovlp
+                                         nchi_,                   /// nrows  
+                                         nphi_,                   /// ncols
+                                         false,                   /// is_R
+                                         ik);                     /// ik or iR
     }
     printf("Calculating overlap integrals for kpoints done.\n\n");
     #ifdef __MPI
