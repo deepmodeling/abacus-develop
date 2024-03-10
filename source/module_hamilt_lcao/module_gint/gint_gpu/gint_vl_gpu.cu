@@ -61,7 +61,7 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
         checkCuda(cudaStreamSynchronize(GridT.streams[i]));
     }
 
-    #pragma omp parallel for num_threads(GridT.nstreams) collapse(2) ordered
+    #pragma omp parallel for num_threads(GridT.nstreams) collapse(2)
     for (int i = 0; i < GridT.nbx; i++)
     {
         for (int j = 0; j < GridT.nby; j++)
