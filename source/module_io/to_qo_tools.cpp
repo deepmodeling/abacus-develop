@@ -1,8 +1,14 @@
 #include "module_io/to_qo.h"
 #include "module_base/libm/libm.h"
-
-void toQO::unwrap_unitcell(UnitCell* p_ucell)
+#ifdef __MPI
+#include "../module_base/parallel_common.h"
+#endif
+void toQO::read_abacus_variables(UnitCell* p_ucell, 
+                                 const std::vector<ModuleBase::Vector3<double>>& kvecs_d,
+                                 const int& rank,
+                                 const int& nranks)
 {
+    // assume p_ucell will be totally available for all processors if MPI is enabled
     p_ucell_ = p_ucell;
     ntype_ = p_ucell->ntype;
     std::for_each(p_ucell->atoms, p_ucell->atoms + p_ucell->ntype, [this](Atom& atom){
@@ -17,6 +23,53 @@ void toQO::unwrap_unitcell(UnitCell* p_ucell)
         nmax_[itype] = (strategies_[itype].substr(0, 6) != "energy")? atom_database_.principle_quantum_number[symbols_[itype]]: atom_database_.atom_Z[symbols_[itype]];
         charges_[itype] = atom_database_.atom_Z[symbols_[itype]];
     }
+    kvecs_d_ = kvecs_d;
+    nks_ = kvecs_d.size();
+    nks_tot_ = nks_;
+    /*-------------------------------------------------------------------------------------------*/
+#ifdef __MPI
+    // scatter kvecs_d_ to all ranks
+    if(rank == 0) printf("toQO MPI kvecs_d scatter to %d processors\n", nranks);
+    std::vector<std::vector<int>> nks_divided(nranks); // indiced by iproc, then list of indices of kvecs_d_
+    if(rank == 0)
+    {
+        int nks = this->nks();
+        int nks_perrank = nks / nranks;
+        int nks_remain = nks % nranks;
+        
+        int start_ik = 0;
+        for(int i = 0; i < nranks; i++)
+        {
+            int nks_this_rank = nks_perrank + int(i < nks_remain);
+            std::vector<int> nks_this_rank_indices;
+            for(int j = 0; j < nks_this_rank; j++)
+            {
+                nks_this_rank_indices.push_back(start_ik + j);
+            }
+            start_ik += nks_this_rank;
+            nks_divided[i] = nks_this_rank_indices;
+        }
+    }
+    for(int i = 0; i < nranks; i++)
+    {
+        int nks_dim;
+        if(GlobalV::MY_RANK == 0) nks_dim = nks_divided[i].size();
+        Parallel_Common::bcast_int(nks_dim);
+        if(GlobalV::MY_RANK != 0) nks_divided[i].resize(nks_dim);
+        Parallel_Common::bcast_int(nks_divided[i].data(), nks_dim);
+    }
+    //bcast_stdvector_ofvector3double(kvecs_d_); // because kvecs_d is already broadcasted in the main program
+    iks_.clear();
+    for(int i = 0; i < nks_divided[rank].size(); i++) iks_.push_back(nks_divided[rank][i]);
+    // std::vector<ModuleBase::Vector3<double>> kvecs_d_this_rank_ = kvecs_d_;
+    // kvecs_d_.clear();
+    // for(int i = 0; i < nks_divided[rank].size(); i++)
+    // {
+    //     kvecs_d_.push_back(kvecs_d_this_rank_[nks_divided[rank][i]]);
+    // }
+    nks_ = iks_.size();
+    //printf("toQO MPI scatter routine: rank %d: nks_ = %d\n", rank, nks_);
+#endif
 }
 
 template <typename T>
@@ -47,8 +100,8 @@ void toQO::allocate_ovlp(const bool& is_R)
 
 void toQO::deallocate_ovlp(const bool& is_R)
 {
-    if(is_R) ovlpR_.clear();
-    else ovlpk_.clear();
+    if(is_R) {ovlpR_.clear(); ovlpR_.shrink_to_fit();}
+    else {ovlpk_.clear(); ovlpk_.shrink_to_fit();}
 }
 
 void toQO::zero_out_ovlps(const bool& is_R)
@@ -155,22 +208,77 @@ double toQO::norm2_rij_supercell(ModuleBase::Vector3<double> rij, int n1, int n2
     return f;
 }
 
-void toQO::scan_supercell()
+void toQO::scan_supercell(const int& rank, const int& nranks)
 {
-    std::vector<ModuleBase::Vector3<int>> n1n2n3_overall;
-    for(int it = 0; it < p_ucell_->ntype; it++)
+    if(rank == 0)
     {
-        for(int ia = 0; ia < p_ucell_->atoms[it].na; ia++)
+        std::vector<ModuleBase::Vector3<int>> n1n2n3_overall;
+        for(int it = 0; it < p_ucell_->ntype; it++)
         {
-            std::vector<ModuleBase::Vector3<int>> n1n2n3 = scan_supercell_for_atom(it, ia);
-            n1n2n3_overall.insert(n1n2n3_overall.end(), n1n2n3.begin(), n1n2n3.end());
+            for(int ia = 0; ia < p_ucell_->atoms[it].na; ia++)
+            {
+                std::vector<ModuleBase::Vector3<int>> n1n2n3 = scan_supercell_for_atom(it, ia);
+                n1n2n3_overall.insert(n1n2n3_overall.end(), n1n2n3.begin(), n1n2n3.end());
+            }
+        }
+        // delete duplicates
+        eliminate_duplicate_vector3<int>(n1n2n3_overall);
+
+        supercells_ = n1n2n3_overall;
+        nR_ = supercells_.size();
+        nR_tot_ = nR_;
+        printf("Total number of supercells R vectors nR_ = %d\n", nR_);
+
+        write_supercells();
+    }
+    /*-------------------------------------------------------------------------------------------*/
+    #ifdef __MPI // scatter supercells_ to all ranks
+    if(rank == 0) printf("toQO MPI supercells scatter to %d processors\n", nranks);
+    Parallel_Common::bcast_int(nR_);
+    Parallel_Common::bcast_int(nR_tot_);
+    bcast_stdvector_ofvector3int(supercells_);
+    // scatter
+    std::vector<std::vector<int>> nR_divided(nranks);  // indiced by iproc, then list of indices of supercells_
+    //printf("%s %d\n", __FILE__, __LINE__);
+    if(rank == 0)
+    {
+        // divide nR into std::vector of std::vector<int>, each std::vector<int> is a chunk of indices of supercells_
+        int nRs = nR_;
+        int nRs_perrank = nRs / nranks;
+        int nRs_remain = nRs % nranks;
+
+        int start_iR = 0;
+        for(int i = 0; i < nranks; i++)
+        {
+            int nR_this_rank = nRs_perrank + int(i < nRs_remain);
+            std::vector<int> nR_this_rank_indices;
+            for(int j = 0; j < nR_this_rank; j++)
+            {
+                nR_this_rank_indices.push_back(start_iR + j);
+            }
+            start_iR += nR_this_rank;
+            nR_divided[i] = nR_this_rank_indices;
         }
     }
-    // delete duplicates
-    eliminate_duplicate_vector3<int>(n1n2n3_overall);
-
-    supercells_ = n1n2n3_overall;
-    nR_ = supercells_.size();
+    for(int i = 0; i < nranks; i++)
+    {
+        int nR_dim;
+        if(rank == 0) nR_dim = nR_divided[i].size();
+        Parallel_Common::bcast_int(nR_dim);
+        if(rank != 0) nR_divided[i].resize(nR_dim);
+        Parallel_Common::bcast_int(nR_divided[i].data(), nR_dim);
+    }
+    iRs_.clear();
+    for(int i = 0; i < nR_divided[rank].size(); i++) iRs_.push_back(nR_divided[rank][i]);
+    // std::vector<ModuleBase::Vector3<int>> supercells_this_rank_ = supercells_;
+    // supercells_.clear();
+    // for(int i = 0; i < nR_divided[rank].size(); i++)
+    // {
+    //     supercells_.push_back(supercells_this_rank_[nR_divided[rank][i]]);
+    // }
+    nR_ = iRs_.size();
+    //printf("toQO MPI scatter routine: rank %d: nR_ = %d\n", rank, nR_);
+    #endif
 }
 
 ModuleBase::Vector3<double> toQO::cal_two_center_vector(ModuleBase::Vector3<double> rij,
@@ -242,18 +350,10 @@ void toQO::write_ovlp(const std::string& dir,
     ofs.close();
 }
 // explicit instantiation
-template void toQO::write_ovlp<double>(const std::string& dir,
-                                       const std::vector<double>& ovlp, 
-                                       const int& nrows,
-                                       const int& ncols,
-                                       const bool& is_R,
-                                       const int& ik);
-template void toQO::write_ovlp<std::complex<double>>(const std::string& dir,
-                                                     const std::vector<std::complex<double>>& ovlp, 
-                                                     const int& nrows,
-                                                     const int& ncols,
-                                                     const bool& is_R,
-                                                     const int& ik);
+template void toQO::write_ovlp<double>(const std::string& dir, const std::vector<double>& ovlp, const int& nrows, const int& ncols,
+                                       const bool& is_R, const int& ik);
+template void toQO::write_ovlp<std::complex<double>>(const std::string& dir, const std::vector<std::complex<double>>& ovlp, 
+                                                     const int& nrows, const int& ncols, const bool& is_R, const int& ik);
 // a free function to convert string storing C++ std::complex to std::complex
 // format: (real,imag), both part in scientific format
 std::complex<double> str2complex(const std::string& str)
@@ -272,8 +372,10 @@ void toQO::read_ovlp(const std::string& dir,
                      const bool& is_R,
                      const int& ik)
 {
+    zero_out_ovlps(is_R); // clear the ovlp vector before reading
+    assert (nrows * ncols == nchi_ * nphi_);
     std::string filename = is_R? "QO_ovlpR_" + std::to_string(ik) + ".dat": "QO_ovlp_" + std::to_string(ik) + ".dat";
-    std::ifstream ifs(dir + filename);
+    std::ifstream ifs(dir + "/" + filename);
     if(!ifs.is_open())
     {
         ModuleBase::WARNING_QUIT("toQO::read_ovlp", "can not open file: " + filename);
@@ -281,15 +383,24 @@ void toQO::read_ovlp(const std::string& dir,
     // read header
     std::string line;
     std::getline(ifs, line);
-    // read ovlp
+    // read ovlp values
     int inum = 0;
     while(ifs.good())
     {
-        std::string anum;
-        ifs >> anum;
-        if(is_R) ovlpR_[inum] = std::stod(anum);
-        else ovlpk_[inum] = str2complex(anum);
-        inum++;
+        if(is_R)
+        {
+            double val;
+            ifs >> val; inum++;
+            if(inum <= nchi_ * nphi_) ovlpR_[inum-1] = val;
+            else break;
+        }
+        else
+        {
+            std::string val_str;
+            ifs >> val_str; inum++;
+            if(inum <= nchi_ * nphi_) ovlpk_[inum-1] = str2complex(val_str);
+            else break;
+        }
     }
 }
 
@@ -309,99 +420,6 @@ void toQO::write_supercells()
     ofs.close();
 }
 
-#ifdef __MPI
-#include "../module_base/parallel_common.h"
-#endif
-void toQO::mpi_plan()
-{
-    #ifdef __MPI
-    /*
-        toQO module parallelization strategy
-
-        1. scan_supercell by rank0, then divide and scatter to all ranks
-        2. for each process, calculate the ovlpR with the supercell it holds
-        3. write ovlpR respectively to file
-        4. divide all kpoints to all ranks
-        5. for each process, calculate the ovlpk with the kpoint it holds
-
-        So in this function, divide supercell and kpoints.
-
-        because NPOOL is controlled by kpar, which is for kpoint parallelization of SCF
-        calculation, so we always have NPOOL = 1 for LCAO calculation. 
-        NPROC_IN_POOL would be number of processors
-        MY_RANK would be index of processor
-    */
-
-    // DIVIDE, rank0 can do this
-    int iproc = GlobalV::MY_RANK;
-    int nproc = GlobalV::NPROC_IN_POOL;
-
-    std::vector<std::vector<int>> nR_divided(nproc);  // indiced by iproc, then list of indices of supercells_
-    std::vector<std::vector<int>> nks_divided(nproc); // indiced by iproc, then list of indices of kvecs_d_
-    if(iproc == 0)
-    {
-        // divide nR into std::vector of std::vector<int>, each std::vector<int> is a chunk of indices of supercells_
-        int nRs = this->nR();
-        int nRs_perproc = nRs / nproc;
-        int nRs_remain = nRs % nproc;
-        for(int i = 0; i < nproc; i++)
-        {
-            int nR_this_proc = nRs_perproc + (i < nRs_remain);
-            std::vector<int> nR_this_proc_indices;
-            for(int j = 0; j < nR_this_proc; j++)
-            {
-                nR_this_proc_indices.push_back(i * nRs_perproc + j);
-            }
-            nR_divided.push_back(nR_this_proc_indices);
-        }
-        // similar to nR
-        int nks = this->nks();
-        int nks_perproc = nks / nproc;
-        int nks_remain = nks % nproc;
-        for(int i = 0; i < nproc; i++)
-        {
-            int nks_this_proc = nks_perproc + (i < nks_remain);
-            std::vector<int> nks_this_proc_indices;
-            for(int j = 0; j < nks_this_proc; j++)
-            {
-                nks_this_proc_indices.push_back(i * nks_perproc + j);
-            }
-            nks_divided.push_back(nks_this_proc_indices);
-        }
-    }
-    // SCATTER nRs_divided and nks_divided to all ranks
-    for(int i = 0; i < nproc; i++)
-    {
-        int nR_dim;
-        if(GlobalV::MY_RANK == 0) nR_dim = nR_divided[i].size();
-        Parallel_Common::bcast_int(nR_dim);
-        if(GlobalV::MY_RANK != 0) nR_divided[i].resize(nR_dim);
-        Parallel_Common::bcast_int(nR_divided[i].data(), nR_dim);
-        int nks_dim;
-        if(GlobalV::MY_RANK == 0) nks_dim = nks_divided[i].size();
-        Parallel_Common::bcast_int(nks_dim);
-        if(GlobalV::MY_RANK != 0) nks_divided[i].resize(nks_dim);
-        Parallel_Common::bcast_int(nks_divided[i].data(), nks_dim);
-    }
-    bcast_stdvector_ofvector3int(supercells_);
-    bcast_stdvector_ofvector3double(kvecs_d_);
-    // assign supercells_ and kvecs_d_ to supercells_this_proc_ and kvecs_d_this_proc_
-    std::vector<ModuleBase::Vector3<int>> supercells_this_proc_ = supercells_;
-    std::vector<ModuleBase::Vector3<double>> kvecs_d_this_proc_ = kvecs_d_;
-    supercells_.clear(); kvecs_d_.clear();
-    for(int i = 0; i < nR_divided[iproc].size(); i++)
-    {
-        supercells_.push_back(supercells_this_proc_[nR_divided[iproc][i]]);
-    }
-    for(int i = 0; i < nks_divided[iproc].size(); i++)
-    {
-        kvecs_d_.push_back(kvecs_d_this_proc_[nks_divided[iproc][i]]);
-    }
-    nR_ = supercells_.size();
-    nks_ = kvecs_d_.size();
-    printf("toQO MPI scatter routine: rank %d: nR_ = %d, nks_ = %d\n", GlobalV::MY_RANK, nR_, nks_);
-    #endif
-}
 // free function, to broadcast supercells_ and kvec_d_
 void toQO::bcast_stdvector_ofvector3int(std::vector<ModuleBase::Vector3<int>>& vec)
 {
@@ -419,6 +437,7 @@ void toQO::bcast_stdvector_ofvector3int(std::vector<ModuleBase::Vector3<int>>& v
         }
     }
     Parallel_Common::bcast_int(dim);
+    if(GlobalV::MY_RANK != 0) vec_1d.resize(dim * 3);
     Parallel_Common::bcast_int(vec_1d.data(), dim * 3);
     if(GlobalV::MY_RANK != 0)
     {
@@ -447,6 +466,7 @@ void toQO::bcast_stdvector_ofvector3double(std::vector<ModuleBase::Vector3<doubl
         }
     }
     Parallel_Common::bcast_int(dim);
+    if(GlobalV::MY_RANK != 0) vec_1d.resize(dim * 3);
     Parallel_Common::bcast_double(vec_1d.data(), dim * 3);
     if(GlobalV::MY_RANK != 0)
     {

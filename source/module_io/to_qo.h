@@ -54,7 +54,10 @@ class toQO
                         const std::vector<ModuleBase::Vector3<double>>& kvecs_d);
         /// @brief to get rid of direct use of UnitCell
         /// @param p_ucell 
-        void unwrap_unitcell(UnitCell* p_ucell);
+        void read_abacus_variables(UnitCell* p_ucell,
+                                   const std::vector<ModuleBase::Vector3<double>>& kvecs_d,
+                                   const int& iproc,
+                                   const int& nprocs);
         /*
          *  Two center integrator interfaces
         */
@@ -112,16 +115,13 @@ class toQO
 
         void bcast_stdvector_ofvector3int(std::vector<ModuleBase::Vector3<int>>& vec);
         void bcast_stdvector_ofvector3double(std::vector<ModuleBase::Vector3<double>>& vec);
-        void mpi_plan(); // this function will distribute R and k to different processes
-        void calculate_ovlpR_mpi(const int& iR);
-        void calculate_mpi();
 
         /// @brief build bidirectional map indexing for one single RadialCollection object, which is an axis of two-center-integral table.
         /// @details from (it,ia,l,zeta,m) to index and vice versa
-        void radialcollection_indexing(const RadialCollection&,
-                                       const std::vector<int>&,
-                                       std::map<std::tuple<int,int,int,int,int>,int>&,
-                                       std::map<int,std::tuple<int,int,int,int,int>>&);
+        void radialcollection_indexing(const RadialCollection&,                             /// [in] instance of RadialCollection
+                                       const std::vector<int>&,                             /// [in] number of atoms for each type
+                                       std::map<std::tuple<int,int,int,int,int>,int>&,      /// [out] mapping from (it,ia,l,zeta,m) to index
+                                       std::map<int,std::tuple<int,int,int,int,int>>&);     /// [out] mapping from index to (it,ia,l,zeta,m)
         /// @brief write two dimensional matrix to file
         /// @tparam T type of matrix
         /// @param matrix matrix to write
@@ -195,7 +195,7 @@ class toQO
         double norm2_rij_supercell(ModuleBase::Vector3<double> rij, int n1, int n2, int n3);
         /// @brief get all possible (n1n2n3) defining supercell
         /// @return a vector of (n1n2n3)
-        void scan_supercell();
+        void scan_supercell(const int& iproc, const int& nprocs);
         /// @brief eliminate duplicate vectors in a vector of vector3
         /// @tparam T type of vector3
         /// @param vector3s vector of vector3, both input and output
@@ -247,8 +247,10 @@ class toQO
         UnitCell* p_ucell_ = nullptr; /// interface to the unitcell, its lifespan is not managed here
         atom_in atom_database_;       /// atomic information database, RAII
 
-        std::vector<ModuleBase::Vector3<int>> supercells_; /// supercell vectors
-        std::vector<ModuleBase::Vector3<double>> kvecs_d_; /// kpoints
+        std::vector<int> iRs_;                             /// indices of supercell vectors (local)
+        std::vector<ModuleBase::Vector3<int>> supercells_; /// supercell vectors (global)
+        std::vector<int> iks_;                             /// indices of kpoints (local)
+        std::vector<ModuleBase::Vector3<double>> kvecs_d_; /// kpoints (global)
         // Two center integral
         std::unique_ptr<RadialCollection> nao_;                   /// numerical atomic orbitals
         std::unique_ptr<RadialCollection> ao_;                    /// atomic orbitals
@@ -264,10 +266,12 @@ class toQO
         std::map<std::tuple<int,int>,int> index_mat_;    /// mapping from (i,j) to index
         std::map<int,std::tuple<int,int>> rindex_mat_;   /// mapping from index to (i,j)
 
-        int nks_ = 0; /// number of kpoints, for S(k)
-        int nR_ = 0;    /// number of supercell vectors, for S(R)
-        int nchi_ = 0;  /// number of atomic orbitals, chi in \mathbf{S}^{\chi\phi}(\mathbf{k})
-        int nphi_ = 0;  /// number of numerical atomic orbitals, phi in \mathbf{S}^{\chi\phi}(\mathbf{k})
+        int nks_ = 0;     /// number of kpoints for present processor, for S(k)
+        int nks_tot_ = 0; /// total number of kpoints
+        int nR_ = 0;      /// number of supercell vectors on present processor, for S(R)
+        int nR_tot_ = 0;  /// total number of supercell vectors
+        int nchi_ = 0;    /// number of atomic orbitals, chi in \mathbf{S}^{\chi\phi}(\mathbf{k})
+        int nphi_ = 0;    /// number of numerical atomic orbitals, phi in \mathbf{S}^{\chi\phi}(\mathbf{k})
 
         int ntype_ = 0;       /// number of atom types
         std::vector<int> na_; /// number of atoms for each type

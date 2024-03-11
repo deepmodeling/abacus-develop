@@ -16,19 +16,8 @@ toQO::~toQO()
 void toQO::initialize(UnitCell* p_ucell,
                       const std::vector<ModuleBase::Vector3<double>>& kvecs_d)
 {
-    #ifdef __MPI
-    if(GlobalV::MY_RANK == 0)
-    {
-    #endif
-    printf("\n---- Quasiatomic Orbital (QO) Analysis Initialization ----\n");
-    #ifdef __MPI
-    }
-    #endif
-    kvecs_d_ = kvecs_d;
-    nks_ = kvecs_d.size();
-
     // BEGIN: "Two-center bundle build"
-    unwrap_unitcell(p_ucell);
+    read_abacus_variables(p_ucell, kvecs_d, GlobalV::MY_RANK, GlobalV::NPROC);
     // build two-center overlap calculator
     overlap_calculator_ = std::unique_ptr<TwoCenterIntegrator>(new TwoCenterIntegrator);
     // build orbitals
@@ -42,16 +31,11 @@ void toQO::initialize(UnitCell* p_ucell,
      */
     // build the numerical atomic orbital basis
     // PARALLELIZATION STRATEGY: use RANK-0 to read in the files, then broadcast
-    build_nao(p_ucell_->ntype, 
+    build_nao(ntype_, 
               GlobalV::global_orbital_dir,
               p_ucell_->orbital_fn,
               GlobalV::MY_RANK);
     // build another atomic orbital
-    // PARALLELIZATION STRATEGY: only RANK-0 works
-    #ifdef __MPI
-    if(GlobalV::MY_RANK == 0)
-    {
-    #endif
     build_ao(ntype_, 
              GlobalV::global_pseudo_dir,
              p_ucell_->pseudo_fn, 
@@ -60,8 +44,8 @@ void toQO::initialize(UnitCell* p_ucell,
              GlobalV::ofs_running,
              GlobalV::MY_RANK);
     // neighbor list search
-    scan_supercell();
-    // build grids
+    scan_supercell(GlobalV::MY_RANK, GlobalV::NPROC);
+    // build grids, for all processes
     double rcut_max = std::max(nao_->rcut_max(), ao_->rcut_max());
     int ngrid = int(rcut_max / 0.01) + 1;
     double cutoff = 2.0*rcut_max;
@@ -73,10 +57,6 @@ void toQO::initialize(UnitCell* p_ucell,
     // END: "Two-center bundle build"
     // allocate memory for ovlp_ao_nao_R_ and ovlp_ao_nao_k_
     allocate_ovlp(true); allocate_ovlp(false);
-    printf("---- Quasiatomic Orbital (QO) Analysis Initialization Done ----\n");
-    #ifdef __MPI
-    }
-    #endif
 }
 
 void toQO::build_nao(const int ntype, 
@@ -137,7 +117,8 @@ void toQO::build_hydrogen(const int ntype,
                nmax, 
                symbols_.data(), 
                qo_thr, 
-               strategies_.data());
+               strategies_.data(),
+               rank);
     ao_->set_transformer(sbt);
     // indexing
     radialcollection_indexing(*ao_, na_, index_ao_, rindex_ao_);
@@ -167,7 +148,7 @@ void toQO::build_pswfc(const int ntype,
 #endif
     // for this method, all processes MIGHT NOT do together, because of possible conflict of reading files
     // in the following build function, the file reading is done by RANK-0, then broadcast to other processes
-    ao_->build(ntype, pspot_fn_, screening_coeffs, qo_thr);
+    ao_->build(ntype, pspot_fn_, screening_coeffs, qo_thr, rank);
     ao_->set_transformer(sbt);
     // indexing
     radialcollection_indexing(*ao_, na_, index_ao_, rindex_ao_);
@@ -257,7 +238,7 @@ void toQO::calculate_ovlpR(const int iR)
             overlap_calculator_->calculate(
                 it, std::get<2>(orb1), std::get<3>(orb1), std::get<4>(orb1),
                 jt, std::get<2>(orb2), std::get<3>(orb2), std::get<4>(orb2),
-                Rij, &ovlpR_[irow*nphi_+icol]
+                Rij, &ovlpR_[irow*nchi_+icol]
             );
         }
     }
@@ -265,43 +246,68 @@ void toQO::calculate_ovlpR(const int iR)
 
 void toQO::calculate_ovlpk(int ik)
 {
-    for(int iR = 0; iR < nR_; iR++)
+    // first calculate all Rs corresponding two-center integrals on own process
+    if(ik == iks_[0])
     {
-        calculate_ovlpR(iR); // calculate S(R) for each R, save to ovlp_ao_nao_R_
+        // std::string info = "Calculate two-center integrals in realspace for given pair of orbitals\n";
+        // info += "Current process: " + std::to_string(GlobalV::MY_RANK) + "\n";
+        // info += "Total number of Rs: " + std::to_string(nR_tot_) + "\n";
+        // info += "Local number of Rs: " + std::to_string(iRs_.size()) + "\n";
+        // info += "Rs indices: ";
+        // for(auto iR: iRs_) info += std::to_string(iR) + " ";
+        // info += "\n";
+        // printf("%s", info.c_str());
+        for(auto iR: iRs_)
+        {
+            calculate_ovlpR(iR);
+            write_ovlp<double>(GlobalV::global_out_dir, ovlpR_, nchi_, nphi_, true, iR);
+        }
+#ifdef __MPI
+        // wait for all processes to finish the calculation
+        MPI_Barrier(MPI_COMM_WORLD);
+#endif
+    }
+    // then read and calculate all ks corresponding two-center integrals on own process
+    for(int iR = 0; iR < nR_tot_; iR++)
+    {
+        int barrier_iR = (iR + GlobalV::MY_RANK) % GlobalV::NPROC;
+#ifdef __MPI
+        MPI_Barrier(MPI_COMM_WORLD);
+#endif
+        read_ovlp(GlobalV::global_out_dir, nchi_, nphi_, true, barrier_iR);
+#ifdef __MPI
+        MPI_Barrier(MPI_COMM_WORLD);
+#endif
         append_ovlpR_eiRk(ik, iR);
     }
 }
 void toQO::calculate()
 {
-    #ifdef __MPI
-    if(GlobalV::MY_RANK == 0)
-    {
-    #endif
-    printf("Calculating overlap integrals for kpoints.\n");
-    if(nks_ < nR_)
-    {
-        std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl
-                  << "! Warning: number of kpoints is less than number of supercells, " << std::endl
-                  << "! this will cause information loss when transform matrix R -> k. " << std::endl
-                  << "! The further conversion k -> R cannot recover full information." << std::endl
-                  << "! Number of kpoints: " << nks_ << std::endl
-                  << "! Number of supercells: " << nR_ << std::endl
-                  << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
-    }
-    write_supercells();
-    for(int ik = 0; ik < nks_; ik++)
+    // std::string info = "Calculate two-center integrals in kspace for given pair of orbitals\n";
+    // info += "Current process: " + std::to_string(GlobalV::MY_RANK) + "\n";
+    // info += "Total number of kpoints: " + std::to_string(nks_tot_) + "\n";
+    // info += "Local number of kpoints: " + std::to_string(iks_.size()) + "\n";
+    // info += "kpoints indices: ";
+    // for(auto ik: iks_) info += std::to_string(ik) + " ";
+    // info += "\n";
+    // printf("%s", info.c_str());
+    for(auto ik: iks_)
     {
         zero_out_ovlps(false);
         calculate_ovlpk(ik);
-        write_ovlp<std::complex<double>>(GlobalV::global_out_dir, /// dir
-                                         ovlpk_,                  /// ovlp
-                                         nchi_,                   /// nrows  
-                                         nphi_,                   /// ncols
-                                         false,                   /// is_R
-                                         ik);                     /// ik or iR
+        write_ovlp<std::complex<double>>(GlobalV::global_out_dir, ovlpk_, nchi_, nphi_, false, ik);
     }
-    printf("Calculating overlap integrals for kpoints done.\n\n");
-    #ifdef __MPI
-    }
-    #endif
+#ifdef __MPI
+    // wait for all processes to finish the calculation
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
+    // delete all QO_ovlpR_* files
+    // if(GlobalV::MY_RANK == 0)
+    // {
+    //     for(int iR = 0; iR < nR_tot_; iR++)
+    //     {
+    //         std::string filename = GlobalV::global_out_dir + "/QO_ovlpR_" + std::to_string(iR) + ".dat";
+    //         std::remove(filename.c_str());
+    //     }
+    // }
 }

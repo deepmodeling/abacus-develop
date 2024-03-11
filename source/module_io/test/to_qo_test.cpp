@@ -61,6 +61,8 @@ void define_fcc_cell(UnitCell& ucell)
     GlobalV::qo_screening_coeff = {0.1, 0.1};
     GlobalV::qo_thr = 1e-6;
     GlobalV::ofs_running = std::ofstream("unittest.log");
+    GlobalV::MY_RANK = 0;
+    GlobalV::NPROC = 1;
 }
 
 void define_sc_cell(UnitCell& ucell)
@@ -118,7 +120,7 @@ TEST_F(toQOTest, Constructor)
     EXPECT_EQ(tqo.qo_basis(), "hydrogen");
     EXPECT_EQ(tqo.strategy(0), "minimal-nodeless");
     EXPECT_EQ(tqo.strategy(1), "minimal-nodeless");
-    EXPECT_EQ(tqo.nkpts(), 0);
+    EXPECT_EQ(tqo.nks(), 0);
     EXPECT_EQ(tqo.p_ucell(), nullptr);
 }
 
@@ -147,11 +149,22 @@ TEST_F(toQOTest, OrbitalFilter)
     EXPECT_FALSE(tqo.orbital_filter(4, tqo.strategy(3))); // whether l=4 is possible for stratgy of type 3
 }
 
-TEST_F(toQOTest, UnwrapUnitcell)
+TEST_F(toQOTest, ReadAbacusVariables)
 {
     define_fcc_cell(ucell);
+
     toQO tqo("hydrogen", {"minimal-nodeless", "minimal-nodeless"});
-    tqo.unwrap_unitcell(&ucell);
+    std::vector<ModuleBase::Vector3<double>> kvecs_d;
+    kvecs_d.push_back(ModuleBase::Vector3<double>(-0.25, -0.25, -0.25)); // pair 1
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.25, 0.25, 0.25));
+    kvecs_d.push_back(ModuleBase::Vector3<double>(-0.25, 0.25, 0.25)); // pair 2
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.25, -0.25, -0.25));
+    kvecs_d.push_back(ModuleBase::Vector3<double>(-0.25, -0.25, 0.25)); // pair 3
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.25, 0.25, -0.25));
+    kvecs_d.push_back(ModuleBase::Vector3<double>(-0.25, 0.25, -0.25)); // pair 4
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.25, -0.25, 0.25));
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma
+    tqo.read_abacus_variables(&ucell, kvecs_d, 0, 1);
     EXPECT_EQ(tqo.ntype(), ucell.ntype);
     EXPECT_EQ(tqo.symbols().size(), ucell.ntype);
     EXPECT_EQ(tqo.charges().size(), ucell.ntype);
@@ -159,13 +172,26 @@ TEST_F(toQOTest, UnwrapUnitcell)
     EXPECT_EQ(tqo.symbols()[1], "C");
     EXPECT_EQ(tqo.charges()[0], 14.0);
     EXPECT_EQ(tqo.charges()[1], 6.0);
+    EXPECT_EQ(tqo.nks(), 9);
+    EXPECT_EQ(tqo.kvecs_d().size(), 9);
+    EXPECT_EQ(tqo.kvecs_d()[0], ModuleBase::Vector3<double>(-0.25, -0.25, -0.25));
+    EXPECT_EQ(tqo.kvecs_d()[1], ModuleBase::Vector3<double>(0.25, 0.25, 0.25));
+    EXPECT_EQ(tqo.kvecs_d()[2], ModuleBase::Vector3<double>(-0.25, 0.25, 0.25));
+    EXPECT_EQ(tqo.kvecs_d()[3], ModuleBase::Vector3<double>(0.25, -0.25, -0.25));
+    EXPECT_EQ(tqo.kvecs_d()[4], ModuleBase::Vector3<double>(-0.25, -0.25, 0.25));
+    EXPECT_EQ(tqo.kvecs_d()[5], ModuleBase::Vector3<double>(0.25, 0.25, -0.25));
+    EXPECT_EQ(tqo.kvecs_d()[6], ModuleBase::Vector3<double>(-0.25, 0.25, -0.25));
+    EXPECT_EQ(tqo.kvecs_d()[7], ModuleBase::Vector3<double>(0.25, -0.25, 0.25));
+    EXPECT_EQ(tqo.kvecs_d()[8], ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
 }
 
 TEST_F(toQOTest, BuildNao)
 {
     define_fcc_cell(ucell);
     toQO tqo("hydrogen", {"minimal-nodeless", "minimal-nodeless"});
-    tqo.unwrap_unitcell(&ucell);
+    std::vector<ModuleBase::Vector3<double>> kvecs_d;
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
+    tqo.read_abacus_variables(&ucell, kvecs_d, 0, 1);
     tqo.build_nao(ucell.ntype, "./", ucell.orbital_fn, 0);
     EXPECT_EQ(tqo.p_nao()->nchi(), 10); // not (l, m)-resoluted
     EXPECT_EQ(tqo.nphi(), 26); // (l, m)-resoluted
@@ -175,7 +201,9 @@ TEST_F(toQOTest, RadialCollectionIndexing)
 {
     define_fcc_cell(ucell);
     toQO tqo("hydrogen", {"minimal-nodeless", "minimal-nodeless"});
-    tqo.unwrap_unitcell(&ucell);
+    std::vector<ModuleBase::Vector3<double>> kvecs_d;
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
+    tqo.read_abacus_variables(&ucell, kvecs_d, 0, 1);
     tqo.build_nao(ucell.ntype, "./", ucell.orbital_fn, 0);
     // ucell.orbital_fn[0] = "../../../../tests/PP_ORB/Si_gga_8au_100Ry_2s2p1d.orb";
     // ucell.orbital_fn[1] = "../../../../tests/PP_ORB/C_gga_8au_100Ry_2s2p1d.orb";
@@ -293,7 +321,9 @@ TEST_F(toQOTest, BuildHydrogenMinimal)
 {
     define_fcc_cell(ucell);
     toQO tqo("hydrogen", {"minimal-nodeless", "minimal-nodeless"});
-    tqo.unwrap_unitcell(&ucell);
+    std::vector<ModuleBase::Vector3<double>> kvecs_d;
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
+    tqo.read_abacus_variables(&ucell, kvecs_d, 0, 1);
     tqo.build_ao(ucell.ntype,
                  "./",
                  ucell.pseudo_fn,
@@ -311,7 +341,9 @@ TEST_F(toQOTest, Norm2RijSupercell)
 {
     define_fcc_cell(ucell);
     toQO tqo("hydrogen", {"minimal-nodeless", "minimal-nodeless"});
-    tqo.unwrap_unitcell(&ucell);
+    std::vector<ModuleBase::Vector3<double>> kvecs_d;
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
+    tqo.read_abacus_variables(&ucell, kvecs_d, 0, 1);
     ModuleBase::Vector3<double> rij(1.0, 0.0, 0.0);
     EXPECT_EQ(tqo.norm2_rij_supercell(rij, 0, 0, 0), 1.0); // R = 0, 0, 0
     EXPECT_EQ(tqo.norm2_rij_supercell(rij, 1, 0, 0), 145.0);
@@ -327,7 +359,9 @@ TEST_F(toQOTest, ScanSupercellForAtom)
 {
     define_fcc_cell(ucell);
     toQO tqo("hydrogen", {"minimal-nodeless", "minimal-nodeless"});
-    tqo.unwrap_unitcell(&ucell);
+    std::vector<ModuleBase::Vector3<double>> kvecs_d;
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
+    tqo.read_abacus_variables(&ucell, kvecs_d, 0, 1);
     tqo.build_nao(ucell.ntype,     // ntype
                   "./",            // orbital_dir
                   ucell.orbital_fn,// orbital_fn
@@ -373,7 +407,9 @@ TEST_F(toQOTest, ScanSupercellFCC)
 {
     define_fcc_cell(ucell);
     toQO tqo("hydrogen", {"minimal-nodeless", "minimal-nodeless"});
-    tqo.unwrap_unitcell(&ucell);
+    std::vector<ModuleBase::Vector3<double>> kvecs_d;
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
+    tqo.read_abacus_variables(&ucell, kvecs_d, 0, 1);
     tqo.build_nao(ucell.ntype, 
                   "./",
                   ucell.orbital_fn,
@@ -385,7 +421,7 @@ TEST_F(toQOTest, ScanSupercellFCC)
                  GlobalV::qo_thr,
                  GlobalV::ofs_running,
                  0);
-    tqo.scan_supercell();
+    tqo.scan_supercell(0, 1);
     EXPECT_EQ(tqo.nR(), 13);
 }
 
@@ -393,7 +429,9 @@ TEST_F(toQOTest, ScanSupercellSC1)
 {
     define_sc_cell(ucell);
     toQO tqo("hydrogen", {"minimal-nodeless"});
-    tqo.unwrap_unitcell(&ucell);
+    std::vector<ModuleBase::Vector3<double>> kvecs_d;
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
+    tqo.read_abacus_variables(&ucell, kvecs_d, 0, 1);
     tqo.build_nao(ucell.ntype, 
                   "./",
                   ucell.orbital_fn,
@@ -406,7 +444,7 @@ TEST_F(toQOTest, ScanSupercellSC1)
                  GlobalV::qo_thr,
                  GlobalV::ofs_running,
                  0);
-    tqo.scan_supercell();
+    tqo.scan_supercell(0, 1);
     EXPECT_EQ(tqo.nR(), 19); // 3*3*3 - 8 (corner 111, -1-1-1, etc)
 }
 
@@ -414,7 +452,9 @@ TEST_F(toQOTest, AllocateOvlpMinimal)
 {
     define_fcc_cell(ucell);
     toQO tqo("hydrogen", {"minimal-nodeless", "minimal-nodeless"});
-    tqo.unwrap_unitcell(&ucell);
+    std::vector<ModuleBase::Vector3<double>> kvecs_d;
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
+    tqo.read_abacus_variables(&ucell, kvecs_d, 0, 1);
     tqo.build_nao(ucell.ntype, 
                   "./",
                   ucell.orbital_fn,
@@ -431,7 +471,7 @@ TEST_F(toQOTest, AllocateOvlpMinimal)
                  GlobalV::qo_thr,
                  GlobalV::ofs_running,
                  0);
-    tqo.scan_supercell();
+    tqo.scan_supercell(0, 1);
     tqo.allocate_ovlp(true);
     tqo.allocate_ovlp(false);
     EXPECT_EQ(tqo.ovlpk().size(), tqo.nchi()*tqo.nphi()); // for single kpoint, ao*nao matrix
@@ -452,9 +492,33 @@ TEST_F(toQOTest, Initialize)
     define_fcc_cell(ucell);
     GlobalV::qo_screening_coeff = {};
     toQO tqo("hydrogen", {"minimal-nodeless", "minimal-nodeless"});
-    std::vector<ModuleBase::Vector3<double>> kvecs_c;
-    kvecs_c.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
-    tqo.initialize(&ucell, kvecs_c);
+    std::vector<ModuleBase::Vector3<double>> kvecs_d;
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
+    tqo.initialize(&ucell, kvecs_d);
+}
+
+TEST_F(toQOTest, ReadOvlp)
+{
+    define_fcc_cell(ucell);
+    GlobalV::qo_screening_coeff = {};
+    toQO tqo("hydrogen", {"minimal-nodeless", "minimal-nodeless"});
+    std::vector<ModuleBase::Vector3<double>> kvecs_d;
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
+    tqo.initialize(&ucell, kvecs_d);
+    int nrows = tqo.nchi();
+    int ncols = tqo.nphi();
+    tqo.read_ovlp("./support/", nrows, ncols, true, 0);
+    std::vector<double> ovlpR = tqo.ovlpR();
+    EXPECT_EQ(ovlpR.size(), nrows*ncols);
+    EXPECT_EQ(ovlpR[0], 9.95330157042009e-01);
+    EXPECT_EQ(ovlpR[1], -7.71640245637438e-02);
+    EXPECT_EQ(ovlpR[2], 0.00000000000000e+00);
+    EXPECT_EQ(ovlpR[28], 9.93363417688277e-01);
+    EXPECT_EQ(ovlpR[55], 9.93363417688277e-01);
+    EXPECT_EQ(ovlpR[82], 9.93363417688277e-01);
+    EXPECT_EQ(ovlpR[104], 2.32940220946083e-01);
+    EXPECT_EQ(ovlpR[105], 3.12427888919456e-01);
+    EXPECT_EQ(ovlpR[106], 2.26670648341119e-01);
 }
 
 TEST_F(toQOTest, CalculateOvlpR)
@@ -463,13 +527,15 @@ TEST_F(toQOTest, CalculateOvlpR)
     GlobalV::qo_screening_coeff = {};
     GlobalV::qo_thr = 1e-10;
     toQO tqo("hydrogen", {"minimal-nodeless", "minimal-nodeless"});
-    std::vector<ModuleBase::Vector3<double>> kvecs_c;
-    kvecs_c.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
-    tqo.initialize(&ucell, kvecs_c);
+    std::vector<ModuleBase::Vector3<double>> kvecs_d;
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
+    tqo.initialize(&ucell, kvecs_d);
     // find the R = 0,0,0
     for(int iR = 0; iR < tqo.nR(); iR++)
     {
-        if(tqo.supercells()[iR].x == 0 && tqo.supercells()[iR].y == 0 && tqo.supercells()[iR].z == 0)
+        if(tqo.supercells()[iR].x == 0 
+        && tqo.supercells()[iR].y == 0 
+        && tqo.supercells()[iR].z == 0)
         {
             tqo.calculate_ovlpR(iR);
             break;
@@ -483,10 +549,7 @@ TEST_F(toQOTest, CalculateOvlpR)
     {
         for(int j = 0; j < ncols; j++)
         {
-            if(tqo.ovlpR(i, j) != 0.0)
-            {
-                all_zero = false;
-            }
+            if(tqo.ovlpR(i, j) != 0.0) all_zero = false;
         }
     }
     EXPECT_EQ(all_zero, false);
@@ -498,12 +561,12 @@ TEST_F(toQOTest, CalculateSelfOvlpRMinimal)
     GlobalV::qo_screening_coeff = {};
     GlobalV::qo_thr = 1e-10;
     toQO tqo("hydrogen", {"minimal-nodeless", "minimal-nodeless"});
-    std::vector<ModuleBase::Vector3<double>> kvecs_c;
-    kvecs_c.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
+    std::vector<ModuleBase::Vector3<double>> kvecs_d;
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
     ucell.orbital_fn[0] = "Si_special_use_unittest.orb"; // generated in unittest BuildAo
     ucell.orbital_fn[1] = "C_special_use_unittest.orb"; // generated in unittest BuildAo
     ucell.atoms[1].nwl = 1; // only s and p for C
-    tqo.initialize(&ucell, kvecs_c);
+    tqo.initialize(&ucell, kvecs_d);
     // find the R = 0,0,0
     for(int iR = 0; iR < tqo.nR(); iR++)
     {
@@ -523,27 +586,51 @@ TEST_F(toQOTest, CalculateSelfOvlpRMinimal)
     //tqo.write_ovlp(tqo.ovlpR()[0], "QO_self_ovlp.dat");
 }
 
+TEST_F(toQOTest, AppendOvlpReiRk)
+{
+    define_fcc_cell(ucell);
+    GlobalV::qo_screening_coeff = {};
+    toQO tqo("hydrogen", {"minimal-nodeless", "minimal-nodeless"});
+    std::vector<ModuleBase::Vector3<double>> kvecs_d;
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
+    tqo.initialize(&ucell, kvecs_d);
+    int nrows = tqo.nchi();
+    int ncols = tqo.nphi();
+    tqo.read_ovlp("./support/", nrows, ncols, true, 0);
+    std::vector<double> ovlpR = tqo.ovlpR();
+    tqo.zero_out_ovlps(false);
+    tqo.append_ovlpR_eiRk(0, 0);
+    std::vector<std::complex<double>> ovlpk = tqo.ovlpk();
+    for(int i = 0; i < nrows*ncols; i++)
+    {
+        EXPECT_NEAR(ovlpk[i].real(), ovlpR[i], 1e-10);
+        EXPECT_NEAR(ovlpk[i].imag(), 0.0, 1e-10);
+    }
+}
+
 TEST_F(toQOTest, CalculateSelfOvlpKSymmetrical)
 {
     define_fcc_cell(ucell);
     GlobalV::qo_thr = 1e-10;
     GlobalV::qo_screening_coeff = {};
     toQO tqo("hydrogen", {"minimal-nodeless", "minimal-nodeless"});
-    std::vector<ModuleBase::Vector3<double>> kvecs_c;
-    kvecs_c.push_back(ModuleBase::Vector3<double>(-0.25, -0.25, -0.25)); // pair 1
-    kvecs_c.push_back(ModuleBase::Vector3<double>(0.25, 0.25, 0.25));
-    kvecs_c.push_back(ModuleBase::Vector3<double>(-0.25, 0.25, 0.25)); // pair 2
-    kvecs_c.push_back(ModuleBase::Vector3<double>(0.25, -0.25, -0.25));
-    kvecs_c.push_back(ModuleBase::Vector3<double>(-0.25, -0.25, 0.25)); // pair 3
-    kvecs_c.push_back(ModuleBase::Vector3<double>(0.25, 0.25, -0.25));
-    kvecs_c.push_back(ModuleBase::Vector3<double>(-0.25, 0.25, -0.25)); // pair 4
-    kvecs_c.push_back(ModuleBase::Vector3<double>(0.25, -0.25, 0.25));
-    kvecs_c.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma
     ucell.orbital_fn[0] = "Si_special_use_unittest.orb"; // generated in unittest BuildAo
     ucell.orbital_fn[1] = "C_special_use_unittest.orb"; // generated in unittest BuildAo
     ucell.atoms[1].nwl = 1; // only s and p for C
-    tqo.initialize(&ucell, kvecs_c);
-    // test symmetry cancellation on pair1
+
+    std::vector<ModuleBase::Vector3<double>> kvecs_d;
+    kvecs_d.push_back(ModuleBase::Vector3<double>(-0.25, -0.25, -0.25)); // pair 1
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.25, 0.25, 0.25));
+    kvecs_d.push_back(ModuleBase::Vector3<double>(-0.25, 0.25, 0.25)); // pair 2
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.25, -0.25, -0.25));
+    kvecs_d.push_back(ModuleBase::Vector3<double>(-0.25, -0.25, 0.25)); // pair 3
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.25, 0.25, -0.25));
+    kvecs_d.push_back(ModuleBase::Vector3<double>(-0.25, 0.25, -0.25)); // pair 4
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.25, -0.25, 0.25));
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma
+
+    tqo.initialize(&ucell, kvecs_d);
+    // test symmetry cancellation on pair1s
     int nrows = tqo.nchi();
     int ncols = tqo.nphi();
 
@@ -551,6 +638,7 @@ TEST_F(toQOTest, CalculateSelfOvlpKSymmetrical)
     std::vector<std::complex<double>> ovlpk_1 = tqo.ovlpk();
     tqo.calculate_ovlpk(1);
     std::vector<std::complex<double>> ovlpk_2 = tqo.ovlpk();
+
     bool all_zero = true;
     // check if all imaginary parts are cancelled
     for(int i = 0; i < nrows; i++)
@@ -655,6 +743,11 @@ TEST_F(toQOTest, CalculateSelfOvlpKSymmetrical)
     EXPECT_FALSE(all_zero);
     std::remove("Si_special_use_unittest.orb");
     std::remove("C_special_use_unittest.orb");
+    for(int iR = 0; iR < tqo.nR(); iR++)
+    {  
+        std::string fovlpR = "QO_ovlpR_" + std::to_string(iR) + ".dat";
+        std::remove(fovlpR.c_str());
+    }
     //tqo.write_ovlp(tqo.ovlpR()[0], "QO_self_ovlp.dat");
 }
 
@@ -663,7 +756,9 @@ TEST_F(toQOTest, BuildHydrogenFull)
     define_fcc_cell(ucell);
     GlobalV::qo_thr = 1e-10;
     toQO tqo("hydrogen", {"full", "full"});
-    tqo.unwrap_unitcell(&ucell);
+    std::vector<ModuleBase::Vector3<double>> kvecs_d;
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
+    tqo.read_abacus_variables(&ucell, kvecs_d, 0, 1);
     GlobalV::qo_thr = 1e-10;
     tqo.build_ao(ucell.ntype,
                  "./",
@@ -683,13 +778,13 @@ TEST_F(toQOTest, CalculateSelfOvlpRFull)
     GlobalV::qo_thr = 1e-10;
     GlobalV::qo_screening_coeff = {};
     toQO tqo("hydrogen", {"full", "full"});
-    std::vector<ModuleBase::Vector3<double>> kvecs_c;
-    kvecs_c.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
+    std::vector<ModuleBase::Vector3<double>> kvecs_d;
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
     ucell.orbital_fn[0] = "Si_special_use_unittest.orb"; // generated in unittest BuildAo
     ucell.orbital_fn[1] = "C_special_use_unittest.orb"; // generated in unittest BuildAo
     ucell.atoms[1].nwl = 1; // only s and p for C
     GlobalV::qo_thr = 1e-10;
-    tqo.initialize(&ucell, kvecs_c);
+    tqo.initialize(&ucell, kvecs_d);
     // find the R = 0,0,0
     for(int iR = 0; iR < tqo.nR(); iR++)
     {
@@ -723,7 +818,9 @@ TEST_F(toQOTest, BuildPswfcPartial1)
 {
     define_fcc_cell(ucell);
     toQO tqo("pswfc", {"s", "s"});
-    tqo.unwrap_unitcell(&ucell);
+    std::vector<ModuleBase::Vector3<double>> kvecs_d;
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
+    tqo.read_abacus_variables(&ucell, kvecs_d, 0, 1);
     tqo.build_ao(ucell.ntype,
                  "./",
                  ucell.pseudo_fn,
@@ -739,7 +836,9 @@ TEST_F(toQOTest, BuildPswfcPartial2)
 {
     define_fcc_cell(ucell);
     toQO tqo("pswfc", {"ps", "s"});
-    tqo.unwrap_unitcell(&ucell);
+    std::vector<ModuleBase::Vector3<double>> kvecs_d;
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
+    tqo.read_abacus_variables(&ucell, kvecs_d, 0, 1);
     tqo.build_ao(ucell.ntype,
                  "./",
                  ucell.pseudo_fn,
@@ -755,7 +854,9 @@ TEST_F(toQOTest, BuildPswfcPartial3)
 {
     define_fcc_cell(ucell);
     toQO tqo("pswfc", {"all", "p"});
-    tqo.unwrap_unitcell(&ucell);
+    std::vector<ModuleBase::Vector3<double>> kvecs_d;
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
+    tqo.read_abacus_variables(&ucell, kvecs_d, 0, 1);
     tqo.build_ao(ucell.ntype,
                  "./",
                  ucell.pseudo_fn,
@@ -772,7 +873,9 @@ TEST_F(toQOTest, BuildPswfcAll)
     define_fcc_cell(ucell);
     GlobalV::qo_thr = 1e-10;
     toQO tqo("pswfc", {"all", "all"});
-    tqo.unwrap_unitcell(&ucell);
+    std::vector<ModuleBase::Vector3<double>> kvecs_d;
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
+    tqo.read_abacus_variables(&ucell, kvecs_d, 0, 1);
     tqo.build_ao(ucell.ntype,
                  "./",
                  ucell.pseudo_fn,
@@ -789,7 +892,9 @@ TEST_F(toQOTest, ScanSupercellSC2)
 {
     define_sc_cell(ucell);
     toQO tqo("pswfc", {"all"});
-    tqo.unwrap_unitcell(&ucell);
+    std::vector<ModuleBase::Vector3<double>> kvecs_d;
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
+    tqo.read_abacus_variables(&ucell, kvecs_d, 0, 1);
     tqo.build_nao(ucell.ntype, 
                   "./",
                   ucell.orbital_fn,
@@ -803,7 +908,7 @@ TEST_F(toQOTest, ScanSupercellSC2)
                  GlobalV::qo_thr,
                  GlobalV::ofs_running,
                  0); // radius = 13.6 Bohr
-    tqo.scan_supercell();
+    tqo.scan_supercell(0, 1);
     EXPECT_EQ(tqo.nR(), 81); // 5*5*5 - 12(edge center) - 8*4(corner)
 }
 
@@ -811,7 +916,9 @@ TEST_F(toQOTest, ScanSupercellSC3)
 {
     define_sc_cell(ucell);
     toQO tqo("pswfc", {"all"});
-    tqo.unwrap_unitcell(&ucell);
+    std::vector<ModuleBase::Vector3<double>> kvecs_d;
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
+    tqo.read_abacus_variables(&ucell, kvecs_d, 0, 1);
     tqo.build_nao(ucell.ntype, 
                   "./",
                   ucell.orbital_fn,
@@ -825,7 +932,7 @@ TEST_F(toQOTest, ScanSupercellSC3)
                  GlobalV::qo_thr,
                  GlobalV::ofs_running,
                  0); // radius = 13.6 Bohr
-    tqo.scan_supercell();
+    tqo.scan_supercell(0, 1);
     EXPECT_EQ(tqo.nR(), 57); // 5*5*5 - 12(edge center) - 8*(8-1)(corner) = 5*5*5 - 12(edge center) - 8*(2*2*2-1)(corner)
     GlobalV::qo_screening_coeff[0] = 0.1;
 }
@@ -834,7 +941,9 @@ TEST_F(toQOTest, ScanSupercellSC4)
 {
     define_sc_cell(ucell);
     toQO tqo("pswfc", {"all"});
-    tqo.unwrap_unitcell(&ucell);
+    std::vector<ModuleBase::Vector3<double>> kvecs_d;
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
+    tqo.read_abacus_variables(&ucell, kvecs_d, 0, 1);
     tqo.build_nao(ucell.ntype, 
                   "./",
                   ucell.orbital_fn,
@@ -848,7 +957,7 @@ TEST_F(toQOTest, ScanSupercellSC4)
                  GlobalV::qo_thr,
                  GlobalV::ofs_running,
                  0); // radius = 13.6 Bohr
-    tqo.scan_supercell();
+    tqo.scan_supercell(0, 1);
     EXPECT_EQ(tqo.nR(), 33); // 3*3*3 + 6(face)
     GlobalV::qo_screening_coeff[0] = 0.1;
 }
@@ -858,13 +967,13 @@ TEST_F(toQOTest, CalculateSelfOvlpRPswfc)
     define_fcc_cell(ucell);
     GlobalV::qo_thr = 1e-10;
     toQO tqo("pswfc", {"all", "all"});
-    std::vector<ModuleBase::Vector3<double>> kvecs_c;
-    kvecs_c.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
+    std::vector<ModuleBase::Vector3<double>> kvecs_d;
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
     ucell.orbital_fn[0] = "Si_special_use_unittest.orb"; // generated in unittest BuildAo
     ucell.orbital_fn[1] = "C_special_use_unittest.orb"; // generated in unittest BuildAo
     ucell.atoms[1].nwl = 1; // only s and p for C
     //GlobalV::qo_thr = 1e-10;
-    tqo.initialize(&ucell, kvecs_c);
+    tqo.initialize(&ucell, kvecs_d);
     // find the R = 0,0,0
     for(int iR = 0; iR < tqo.nR(); iR++)
     {
@@ -897,9 +1006,9 @@ TEST_F(toQOTest, CalculateOvlpKGamma)
     GlobalV::qo_thr = 1e-10;
     GlobalV::qo_screening_coeff = {};
     toQO tqo("hydrogen", {"minimal-nodeless", "minimal-nodeless"});
-    std::vector<ModuleBase::Vector3<double>> kvecs_c;
-    kvecs_c.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
-    tqo.initialize(&ucell, kvecs_c);
+    std::vector<ModuleBase::Vector3<double>> kvecs_d;
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
+    tqo.initialize(&ucell, kvecs_d);
     tqo.calculate_ovlpk(0);
     int nrows = tqo.nchi();
     int ncols = tqo.nphi();
@@ -916,6 +1025,11 @@ TEST_F(toQOTest, CalculateOvlpKGamma)
         }
     }
     EXPECT_TRUE(all_real);
+    for(int iR = 0; iR < tqo.nR(); iR++)
+    {  
+        std::string fovlpk = "QO_ovlpk_" + std::to_string(iR) + ".dat";
+        std::remove(fovlpk.c_str());
+    }
 }
 
 TEST_F(toQOTest, CalculateOvlpKSlaterGamma)
@@ -924,9 +1038,9 @@ TEST_F(toQOTest, CalculateOvlpKSlaterGamma)
     GlobalV::qo_thr = 1e-10;
     GlobalV::qo_screening_coeff = {0.1};
     toQO tqo("hydrogen", {"energy-full", "energy-full"});
-    std::vector<ModuleBase::Vector3<double>> kvecs_c;
-    kvecs_c.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
-    tqo.initialize(&ucell, kvecs_c);
+    std::vector<ModuleBase::Vector3<double>> kvecs_d;
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
+    tqo.initialize(&ucell, kvecs_d);
     tqo.calculate_ovlpk(0);
     int nrows = tqo.nchi();
     int ncols = tqo.nphi();
@@ -943,6 +1057,11 @@ TEST_F(toQOTest, CalculateOvlpKSlaterGamma)
         }
     }
     EXPECT_TRUE(all_real);
+    for(int iR = 0; iR < tqo.nR(); iR++)
+    {  
+        std::string fovlpk = "QO_ovlpk_" + std::to_string(iR) + ".dat";
+        std::remove(fovlpk.c_str());
+    }
 }
 
 TEST_F(toQOTest, CalculateSelfOvlpKPswfcSymmetrical)
@@ -951,20 +1070,12 @@ TEST_F(toQOTest, CalculateSelfOvlpKPswfcSymmetrical)
     GlobalV::qo_thr = 1e-10;
     GlobalV::qo_screening_coeff = {2.0, 2.0};
     toQO tqo("pswfc", {"all", "all"});
-    std::vector<ModuleBase::Vector3<double>> kvecs_c;
-    kvecs_c.push_back(ModuleBase::Vector3<double>(-0.25, -0.25, -0.25)); // pair 1
-    kvecs_c.push_back(ModuleBase::Vector3<double>(0.25, 0.25, 0.25));
-    kvecs_c.push_back(ModuleBase::Vector3<double>(-0.25, 0.25, 0.25)); // pair 2
-    kvecs_c.push_back(ModuleBase::Vector3<double>(0.25, -0.25, -0.25));
-    kvecs_c.push_back(ModuleBase::Vector3<double>(-0.25, -0.25, 0.25)); // pair 3
-    kvecs_c.push_back(ModuleBase::Vector3<double>(0.25, 0.25, -0.25));
-    kvecs_c.push_back(ModuleBase::Vector3<double>(-0.25, 0.25, -0.25)); // pair 4
-    kvecs_c.push_back(ModuleBase::Vector3<double>(0.25, -0.25, 0.25));
-    kvecs_c.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma
-    tqo.initialize(&ucell, kvecs_c);
+    std::vector<ModuleBase::Vector3<double>> kvecs_d;
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
+    tqo.initialize(&ucell, kvecs_d);
     int nrows = tqo.nchi();
     int ncols = tqo.nphi();
-    std::cout << "Number of supercells: " << tqo.nR() << ", number of kpoints: " << tqo.nkpts() << std::endl;
+    std::cout << "Number of supercells: " << tqo.nR() << ", number of kpoints: " << tqo.nks() << std::endl;
     tqo.calculate_ovlpk(0);
     std::vector<std::complex<double>> ovlpk_1 = tqo.ovlpk();
     tqo.calculate_ovlpk(1);
@@ -1039,6 +1150,11 @@ TEST_F(toQOTest, CalculateSelfOvlpKPswfcSymmetrical)
         }
     }
     //tqo.write_ovlp(tqo.ovlpR()[0], "QO_self_ovlp.dat");
+    for(int iR = 0; iR < tqo.nR(); iR++)
+    {  
+        std::string fovlpR = "QO_ovlpR_" + std::to_string(iR) + ".dat";
+        std::remove(fovlpR.c_str());
+    }
 }
 
 TEST_F(toQOTest, CalculateHydrogenlike)
@@ -1047,10 +1163,10 @@ TEST_F(toQOTest, CalculateHydrogenlike)
     GlobalV::qo_thr = 1e-10;
     GlobalV::qo_screening_coeff = {};
     toQO tqo("hydrogen", {"minimal-nodeless", "minimal-nodeless"});
-    std::vector<ModuleBase::Vector3<double>> kvecs_c;
-    kvecs_c.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
-    kvecs_c.push_back(ModuleBase::Vector3<double>(0.5, 0.0, 0.0));
-    tqo.initialize(&ucell, kvecs_c);
+    std::vector<ModuleBase::Vector3<double>> kvecs_d;
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.5, 0.0, 0.0));
+    tqo.initialize(&ucell, kvecs_d);
     tqo.calculate();
     int nrows = tqo.nchi();
     int ncols = tqo.nphi();
@@ -1071,6 +1187,11 @@ TEST_F(toQOTest, CalculateHydrogenlike)
     std::remove("QO_ovlp_0.dat");
     std::remove("QO_ovlp_1.dat");
     std::remove("QO_supercells.dat");
+    for(int iR = 0; iR < tqo.nR(); iR++)
+    {  
+        std::string fovlpR = "QO_ovlpR_" + std::to_string(iR) + ".dat";
+        std::remove(fovlpR.c_str());
+    }
 }
 
 /**/

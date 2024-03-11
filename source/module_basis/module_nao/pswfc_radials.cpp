@@ -4,6 +4,10 @@
 #include <algorithm>
 #include <cmath>
 
+#ifdef __MPI
+#include "module_base/parallel_common.h"
+#endif
+
 PswfcRadials& PswfcRadials::operator=(const PswfcRadials& rhs)
 {
     RadialSet::operator=(rhs);
@@ -243,8 +247,14 @@ void PswfcRadials::read_upf_pswfc(std::ifstream& ifs,
     int nzeta = 0;
     double dr = 0.01; // in most cases, this is correct
 
+    // for MPI
+    std::vector<int> ls;
+    std::vector<int> izetas;
+    std::vector<double> rgrid;
+    std::vector<std::vector<double>> rvalues;
     if(rank == 0)
     {
+        // result is a map from (l, izeta) to rvalue, i.e., from (l,zeta) to exact value of radial function
         std::map<std::pair<int, int>, std::vector<double>> result;
 
         std::string line = "";
@@ -290,31 +300,43 @@ void PswfcRadials::read_upf_pswfc(std::ifstream& ifs,
         
         if(result.size() == 0)
         {
-            ModuleBase::WARNING_QUIT("AtomicRadials::read", "pseudowavefunction information is absent in pseudopotential.");
+            ModuleBase::WARNING_QUIT("PswfcRadials::read", "pseudowavefunction information is absent in pseudopotential.");
         }
 
         nzeta_max_ = *std::max_element(nzeta_, nzeta_ + lmax_ + 1);
         indexing(); // build index_map_
 
         // cut rvalue to convergence and generate rgrid
-        std::vector<double> rgrid = pswfc_prepossess(result, conv_thr);
+        rgrid = pswfc_prepossess(result, conv_thr);
         // refresh ngird value
         ngrid = rgrid.size();
-
-        chi_ = new NumericalRadial[nchi_];
-
+        // next seperate the result into keys and values by the following way:
+        // 1. because key is std::pair, therefore seperate into two std::vectors
+        // 2. for each key, value is a std::vector, therefore loop over to get the value
         for(auto it = result.begin(); it != result.end(); it++)
         {
             int l = it->first.first;
             int iz = it->first.second;
-            chi_[index(l, iz)].build(l, true, ngrid, rgrid.data(), it->second.data(), 0, iz, symbol_, itype_, false);       
-            if(std::fabs(screening_coeff - 0.0) > 1e-6) // PHYSICAL REVIEW B 78, 245112 2008
-            {
-                chi_[index(l, iz)].normalize();
-            }
+            ls.push_back(l);
+            izetas.push_back(iz);
+            rvalues.push_back(it->second);
         }
+        // // the following should be done for all ranks
+        // chi_ = new NumericalRadial[nchi_];
+
+        // for(auto it = result.begin(); it != result.end(); it++)
+        // {
+        //     int l = it->first.first;
+        //     int iz = it->first.second;
+        //     chi_[index(l, iz)].build(l, true, ngrid, rgrid.data(), it->second.data(), 0, iz, symbol_, itype_, false);       
+        //     if(std::fabs(screening_coeff - 0.0) > 1e-6) // PHYSICAL REVIEW B 78, 245112 2008
+        //     {
+        //         chi_[index(l, iz)].normalize();
+        //     }
+        // }
     } // rank 0 does almost everything, then broadcast one-by-one
 #ifdef __MPI
+    if(rank == 0) printf("PswfcRadials: pseudowavefunction read on rank 0, broadcast start.\n");
     Parallel_Common::bcast_string(symbol_);
     Parallel_Common::bcast_int(lmax_);
 
@@ -328,20 +350,34 @@ void PswfcRadials::read_upf_pswfc(std::ifstream& ifs,
     {
         nzeta_ = new int[lmax_ + 1];
         index_map_ = new int[(lmax_ + 1) * nzeta_max_];
+        
+        ls.resize(nchi_);
+        izetas.resize(nchi_);
+
+        rgrid.resize(ngrid);
+
+        rvalues.resize(nchi_);
+        for(int i = 0; i < nchi_; i++) rvalues[i].resize(ngrid);
     }
 #ifdef __MPI
     Parallel_Common::bcast_int(nzeta_, lmax_ + 1);
     Parallel_Common::bcast_int(index_map_, (lmax_ + 1) * nzeta_max_);
-#endif
 
-    double* rvalue = new double[ngrid];
-    double* rgrid = new double[ngrid];
-    if(rank != 0)
+    Parallel_Common::bcast_int(ls.data(), nchi_);
+    Parallel_Common::bcast_int(izetas.data(), nchi_);
+    Parallel_Common::bcast_double(rgrid.data(), ngrid);
+
+    for(int i = 0; i < nchi_; i++) Parallel_Common::bcast_double(rvalues[i].data(), ngrid);
+#endif
+    chi_ = new NumericalRadial[nchi_];
+    for(int i = 0; i < nchi_; i++)
     {
-        for(int ir = 0; ir != ngrid; ++ir)
+        chi_[index(ls[i], izetas[i])].build(ls[i], true, ngrid, rgrid.data(), rvalues[i].data(), 0, izetas[i], symbol_, itype_, false);
+        if(std::fabs(screening_coeff - 0.0) > 1e-6) // PHYSICAL REVIEW B 78, 245112 2008
         {
-            rgrid[ir] = ir * dr;
+            chi_[index(ls[i], izetas[i])].normalize();
         }
-        chi_ = new NumericalRadial[nchi_];
     }
+    //printf("PswfcRadials: pseudowavefunction read and broadcast finished on rank %d.\n", rank);
+    // nzeta and index_map are not deleted here...
 }
