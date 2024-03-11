@@ -68,8 +68,7 @@ public:
 	ModuleBase::Vector3<double> gtrans[48];
 	
 	ModuleBase::Matrix3 symop[48];	//the rotation matrices for the pure bravais lattice
-	int nop;	//the number of point group operations of the pure bravais lattice without basis
-	int s_flag;	//whether the current matrix is one of all space group operations
+    int nop;	//the number of point group operations of the pure bravais lattice without basis
 	int nrot;	//the number of pure point group rotations
     int nrotk = -1; 	//the number of all space group operations, >0 means the nrotk has been analyzed
     int max_nrotk = -1;  ///< record the maximum number of symmetry operations during cell-relax
@@ -90,8 +89,11 @@ public:
         double* cel_const, double* pre_const, int& real_brav, std::string& bravname, const Atom* atoms,
         bool convert_atoms, double* newpos = nullptr)const;
 
-    void getgroup(int& nrot, int& nrotk, std::ofstream& ofs_running, double* pos);
-    void checksym(ModuleBase::Matrix3& s, ModuleBase::Vector3<double>& gtrans, double* pos);
+    void getgroup(int& nrot, int& nrotk, std::ofstream& ofs_running, const int& nop,
+        const ModuleBase::Matrix3* symop, ModuleBase::Matrix3* gmatrix, ModuleBase::Vector3<double>* gtrans,
+        double* pos, double* rotpos, int* index, int itmin_type, int itmin_start, int* istart, int* na)const;
+    bool checksym(const ModuleBase::Matrix3& s, ModuleBase::Vector3<double>& gtrans,
+        double* pos, double* rotpos, int* index, int itmin_type, int itmin_start, int* istart, int* na)const;
     /// @brief  primitive cell analysis
     void pricell(double* pos, const Atom* atoms);
 
@@ -125,13 +127,8 @@ public:
     }
 private:
 
-	// (s)tart (p)osition of atom (t)ype which
-	// has (min)inal number.
-	ModuleBase::Vector3<double> sptmin;
-
     /// atom-map for each symmetry operation: isym_rotiat[isym][iat]=rotiat
     std::vector<std::vector<int>> isym_rotiat_;
-
 
     /// @brief  set atom map for each symmetry operation
     void set_atom_map(const Atom* atoms);
