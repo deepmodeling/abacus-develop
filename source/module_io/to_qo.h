@@ -211,11 +211,6 @@ class toQO
         void zero_out_ovlps(const bool& is_R);           /// zero out ovlp_ao_nao_R_ or ovlp_ao_nao_k_
         void append_ovlpR_eiRk(int ik, int iR);          /// append S(R) to S(k), memory saving
 
-        void deallocate_mpiovlp(const bool& is_R = false);
-        void allocate_mpiovlp(const bool& is_R = false);
-        void zero_out_mpiovlps(const bool& is_R = false);
-        void append_mpiovlpR_eiRk(const int& ik, const int& iR);
-
         // setters
         void set_qo_basis(const std::string qo_basis) { qo_basis_ = qo_basis; }
         void set_strategies(const std::vector<std::string> strategies) { strategies_ = strategies; }

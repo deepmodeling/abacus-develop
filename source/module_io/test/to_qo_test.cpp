@@ -315,6 +315,49 @@ TEST_F(toQOTest, RadialCollectionIndexing)
     EXPECT_EQ(index_reverse[51], std::make_tuple(1,1,2,0,-2)); // C, 2nd atom, 1d, m = -2
     EXPECT_EQ(index_reverse[52], std::make_tuple(1,2,0,0,0)); // C, 3rd atom, 1s
     EXPECT_EQ(index_reverse[64], std::make_tuple(1,2,2,0,-2)); // C, 3rd atom, 1d, m = -2
+
+    tqo.build_ao(ucell.ntype,
+                 "./",
+                 ucell.pseudo_fn,
+                 {},
+                 GlobalV::qo_thr,
+                 GlobalV::ofs_running,
+                 0);
+    EXPECT_EQ(tqo.p_ao()->nchi(), 5); // Si: 1s, 2p, 3d, C: 1s, 2p
+    EXPECT_EQ(tqo.nchi(), 13); // Si: 1s, 2px, 2py, 2pz, 3dz2, 3dxz, 3dyz, 3dx2-y2, 3dxy, C: 1s, 2px, 2py, 2pz
+    index.clear();
+    index_reverse.clear();
+    tqo.radialcollection_indexing(*(tqo.p_ao()), natoms, index, index_reverse);
+    EXPECT_EQ(index.size(), 30); // minimal-nodeless, Si: 1s, 2p, 3d, C: 1s, 2p, Si2C3
+                                 // (1 + 3)*3 + (1 + 3 + 5)*2 = 12 + 18 = 30
+    EXPECT_EQ(index_reverse.size(), 30);
+    // it, ia, l, izeta, m
+    EXPECT_EQ(index[std::make_tuple(0,0,0,0,0)], 0); // Si, 1st atom, 1s
+    EXPECT_EQ(index[std::make_tuple(0,0,1,0,0)], 1); // Si, 1st atom, 2px
+    EXPECT_EQ(index[std::make_tuple(0,0,1,0,1)], 2); // Si, 1st atom, 2py
+    EXPECT_EQ(index[std::make_tuple(0,0,1,0,-1)], 3); // Si, 1st atom, 2pz
+    EXPECT_EQ(index[std::make_tuple(0,0,2,0,0)], 4); // Si, 1st atom, 3dz2
+    EXPECT_EQ(index[std::make_tuple(0,0,2,0,1)], 5); // Si, 1st atom, 3dxz
+    EXPECT_EQ(index[std::make_tuple(0,0,2,0,-1)], 6); // Si, 1st atom, 3dyz
+    EXPECT_EQ(index[std::make_tuple(0,0,2,0,2)], 7); // Si, 1st atom, 3dx2-y2
+    EXPECT_EQ(index[std::make_tuple(0,0,2,0,-2)], 8); // Si, 1st atom, 3dxy
+    EXPECT_EQ(index[std::make_tuple(0,1,0,0,0)], 9); // Si, 2nd atom, 1s
+    EXPECT_EQ(index[std::make_tuple(0,1,1,0,0)], 10); // Si, 2nd atom, 2px
+    EXPECT_EQ(index[std::make_tuple(0,1,1,0,1)], 11); // Si, 2nd atom, 2py
+    EXPECT_EQ(index[std::make_tuple(0,1,1,0,-1)], 12); // Si, 2nd atom, 2pz
+    EXPECT_EQ(index[std::make_tuple(0,1,2,0,0)], 13); // Si, 2nd atom, 3dz2
+    EXPECT_EQ(index[std::make_tuple(0,1,2,0,1)], 14); // Si, 2nd atom
+    EXPECT_EQ(index[std::make_tuple(0,1,2,0,-1)], 15);
+    EXPECT_EQ(index[std::make_tuple(0,1,2,0,2)], 16);
+    EXPECT_EQ(index[std::make_tuple(0,1,2,0,-2)], 17);
+    EXPECT_EQ(index[std::make_tuple(1,0,0,0,0)], 18);
+    EXPECT_EQ(index[std::make_tuple(1,0,1,0,0)], 19);
+    EXPECT_EQ(index[std::make_tuple(1,0,1,0,1)], 20);
+    EXPECT_EQ(index[std::make_tuple(1,0,1,0,-1)], 21);
+    EXPECT_EQ(index[std::make_tuple(1,1,0,0,0)], 22);
+    EXPECT_EQ(index[std::make_tuple(1,1,1,0,0)], 23);
+    EXPECT_EQ(index[std::make_tuple(1,1,1,0,1)], 24);
+    EXPECT_EQ(index[std::make_tuple(1,1,1,0,-1)], 25);
 }
 
 TEST_F(toQOTest, BuildHydrogenMinimal)

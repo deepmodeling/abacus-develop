@@ -209,6 +209,8 @@ void toQO::build_ao(const int ntype,
 
 void toQO::calculate_ovlpR(const int iR)
 {
+    assert (rindex_ao_.size() == nchi_);
+    assert (rindex_nao_.size() == nphi_);
     for(int irow = 0; irow < nchi_; irow++)
     {
         //         it,  ia,  li,  izeta, mi
