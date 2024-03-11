@@ -39,7 +39,7 @@ inline void set_value(std::complex<double>& input, double x, double y)
 }
 inline void set_value(std::complex<float>& input, double x, double y)
 {
-    input = {static_cast<double>(x), static_cast<double>(y)};
+    input = {static_cast<float>(x), static_cast<float>(y)};
 }
 
 inline std::complex<double> set_real_tocomplex(const std::complex<double>& x)
@@ -133,7 +133,8 @@ void Diago_NewDav<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
     this->dim = psi.get_k_first() ? psi.get_current_nbas() : psi.get_nk() * psi.get_nbasis();
     this->dmx = psi.get_k_first() ? psi.get_nbasis() : psi.get_nk() * psi.get_nbasis();
     this->n_band = psi.get_nbands();
-    this->nbase_x = Diago_NewDav::PW_DIAG_NDIM * this->n_band; // maximum dimension of the reduced basis set
+    // this->nbase_x = Diago_NewDav::PW_DIAG_NDIM * this->n_band; // maximum dimension of the reduced basis set
+    this->nbase_x = 2 * this->n_band;
 
     // the lowest N eigenvalues
     psi::memory::resize_memory_op<Real, psi::DEVICE_CPU>()(this->cpu_ctx, this->eigenvalue, this->nbase_x, "DAV::eig");
@@ -174,6 +175,7 @@ void Diago_NewDav<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
 
     this->notconv = this->n_band; // the number of the unconvergent bands
 
+    std::cout << std::fixed << std::setprecision(7);
 
     ModuleBase::timer::tick("Diago_NewDav", "first");
 
@@ -203,14 +205,16 @@ void Diago_NewDav<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
     {
         dav_iter++;
 
-        for (int m = 0; m < nbase; m++)
-        {
-            phm_in->sPsi(basis.get_k_first() ? &basis(m, 0) : &basis(m, 0, 0),
-                         &this->sphi[m * this->dim],
-                         this->dim,
-                         this->dim,
-                         1);
-        }
+        // std::cout << "dav iter: " << dav_iter << " nbase == " << nbase << std::endl;
+
+        // for (int m = 0; m < nbase; m++)
+        // {
+        //     phm_in->sPsi(basis.get_k_first() ? &basis(m, 0) : &basis(m, 0, 0),
+        //                  &this->sphi[m * this->dim],
+        //                  this->dim,
+        //                  this->dim,
+        //                  1);
+        // }
 
         this->cal_grad(phm_in,
                        this->dim,
@@ -218,11 +222,9 @@ void Diago_NewDav<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
                        this->notconv,
                        basis,
                        this->hphi,
-                       this->sphi,
                        this->vcc,
                        unconv.data(),
                        this->eigenvalue);
-
 
         this->cal_elem(this->dim, nbase, this->notconv, basis, this->hphi, this->sphi, this->hcc, this->scc, false);
 
@@ -230,15 +232,6 @@ void Diago_NewDav<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
 
         // check convergence and update eigenvalues
         ModuleBase::timer::tick("Diago_NewDav", "check_update");
-
-        // std::cout << "print eigen value:" << std::endl;
-        // for (size_t i = 0; i < n_band; i++)
-        // {
-        //     std::cout << this->eigenvalue[i] << "\t";
-        // }
-        //  std::cout << std::endl;
-
-        
 
         this->notconv = 0;
         for (int m = 0; m < this->n_band; m++)
@@ -254,15 +247,11 @@ void Diago_NewDav<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
             eigenvalue_in[m] = this->eigenvalue[m];
         }
 
-        // std::cout << "notconv nums == " << this->notconv << std::endl;
-
         ModuleBase::timer::tick("Diago_NewDav", "check_update");
-        if (this->notconv == 0 || (nbase + this->notconv > this->nbase_x)
+        if (this->notconv == 0 || (nbase + this->notconv + 1 > this->nbase_x)
             || (dav_iter == DiagoIterAssist<T, Device>::PW_DIAG_NMAX))
         {
             ModuleBase::timer::tick("Diago_NewDav", "last");
-
-            // std::cout << "enter this" << std::endl;
 
             // updata eigenvectors of Hamiltonian
 
@@ -298,7 +287,7 @@ void Diago_NewDav<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
                 // then replace the first N (=nband) basis vectors with the current
                 // estimate of the eigenvectors and set the basis dimension to N;
 
-                std::cout << dav_iter << " refresh" << std::endl;
+                // std::cout << dav_iter << " refresh" << std::endl;
 
                 this->refresh(this->dim,
                               this->n_band,
@@ -312,13 +301,24 @@ void Diago_NewDav<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
                               this->scc,
                               this->vcc);
                 ModuleBase::timer::tick("Diago_NewDav", "last");
+
+                // std::cout << "after refresh output scc: " << std::endl;
+                // for (size_t i = 0; i < this->nbase_x; i++)
+                // {
+                //     for (size_t j = 0; j < this->nbase_x; j++)
+                //     {
+                //         std::cout << scc[i * this->nbase_x + j] << "\t";
+                //     }
+                //     std::cout << std::endl;
+                // }
+                // std::cout << std::endl;
             }
 
         } // end of if
 
     } while (1);
 
-    std::cout << "dav_iter == " << dav_iter << std::endl;
+    // std::cout << "dav_iter == " << dav_iter << std::endl;
 
     DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(dav_iter);
 
@@ -327,6 +327,119 @@ void Diago_NewDav<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
     return;
 }
 
+// /*
+
+template <typename T, typename Device>
+void Diago_NewDav<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
+                                       const int& dim,
+                                       const int& nbase, // current dimension of the reduced basis
+                                       const int& notconv,
+                                       psi::Psi<T, Device>& basis,
+                                       T* hphi,
+                                       T* vcc,
+                                       const int* unconv,
+                                       Real* eigenvalue)
+{
+    for (size_t i = 0; i < notconv; i++)
+    {
+        if (unconv[i] != i)
+        {
+            // std::cout << "unconv[i]: " << unconv[i] << ", i = " << i << std::endl;
+            syncmem_complex_op()(this->ctx, this->ctx, vcc + i * this->nbase_x, vcc + unconv[i] * this->nbase_x, nbase);
+            this->eigenvalue[i] = this->eigenvalue[unconv[i]];
+        }
+    }
+
+    gemm_op<T, Device>()(this->ctx,
+                         'N',
+                         'N',
+                         this->dim,        // m: row of A,C
+                         notconv,          // n: col of B,C
+                         nbase,            // k: col of A, row of B
+                         this->one,        // alpha
+                         &basis(0, 0),     // A
+                         this->dim,        // LDA
+                         vcc,              // B
+                         this->nbase_x,    // LDB
+                         this->zero,       // belta
+                         &basis(nbase, 0), // C dim * notconv
+                         this->dim         // LDC
+    );
+
+    for (int m = 0; m < notconv; m++)
+    {
+
+        std::vector<Real> e_temp_cpu(this->dim, (-this->eigenvalue[m]));
+
+        vector_mul_vector_op<T, Device>()(this->ctx,
+                                          this->dim,
+                                          &basis(nbase + m, 0),
+                                          &basis(nbase + m, 0),
+                                          e_temp_cpu.data());
+    }
+
+    gemm_op<T, Device>()(this->ctx,
+                         'N',
+                         'N',
+                         this->dim,        // m: row of A,C
+                         notconv,          // n: col of B,C
+                         nbase,            // k: col of A, row of B
+                         this->one,        // alpha
+                         hphi,             // A dim * nbase
+                         this->dim,        // LDA
+                         vcc,              // B nbase * notconv
+                         this->nbase_x,    // LDB
+                         this->one,        // belta
+                         &basis(nbase, 0), // C dim * notconv
+                         this->dim         // LDC
+    );
+
+    // precondition!!!
+    // std::vector<Real> pre(this->dim, 0.0);
+    for (int m = 0; m < notconv; m++)
+    {
+        // for (size_t i = 0; i < this->dim; i++)
+        // {
+        //     std::cout << "this->precondition[i] i==" << i << "  == " << this->precondition[i] << std::endl;
+        //     double x = this->precondition[i] - this->eigenvalue[m];
+        //     pre[i] = 0.5 * (1.0 + x + sqrt(1 + (x - 1.0) * (x - 1.0)));
+        // }
+
+        vector_div_vector_op<T, Device>()(this->ctx,
+                                          this->dim,
+                                          &basis(nbase + m, 0),
+                                          &basis(nbase + m, 0),
+                                          this->precondition);
+    }
+
+    // /*
+    //  * "normalize" correction vectors psi(:, nbase+1:nbase+notcnv)
+    //  * in order to improve numerical stability of subspace diagonalization
+    //  *
+    std::vector<Real> psi_norm(notconv, 0.0);
+    for (size_t i = 0; i < notconv; i++)
+    {
+        psi_norm[i] = dot_real_op<T, Device>()(this->ctx, this->dim, &basis(nbase + i, 0), &basis(nbase + i, 0), false);
+        assert(psi_norm[i] > 0.0);
+        psi_norm[i] = sqrt(psi_norm[i]);
+
+        vector_div_constant_op<T, Device>()(this->ctx,
+                                            this->dim,
+                                            &basis(nbase + i, 0),
+                                            &basis(nbase + i, 0),
+                                            psi_norm[i]);
+    }
+
+    // calculate H|psi> for not convergence bands
+    hpsi_info dav_hpsi_in(&basis, psi::Range(1, 0, nbase, nbase + notconv - 1), &hphi[nbase * this->dim]);
+    phm_in->ops->hPsi(dav_hpsi_in);
+
+    return;
+}
+
+// */
+
+/*
 template <typename T, typename Device>
 void Diago_NewDav<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
                                        const int& dim,
@@ -335,9 +448,9 @@ void Diago_NewDav<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
                                        psi::Psi<T, Device>& basis,
                                        T* hphi,
                                        T* sphi,
-                                       const T* vcc,
+                                       T* vcc,
                                        const int* unconv,
-                                       const Real* eigenvalue)
+                                       Real* eigenvalue)
 {
     if (test_david == 1)
         ModuleBase::TITLE("Diago_NewDav", "cal_grad");
@@ -480,10 +593,9 @@ void Diago_NewDav<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
         //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     }
 
-    /*
-     * "normalize" correction vectors psi(:, nbase+1:nbase+notcnv)
-     * in order to improve numerical stability of subspace diagonalization
-     */
+    // /*
+    //  * "normalize" correction vectors psi(:, nbase+1:nbase+notcnv)
+    //  * in order to improve numerical stability of subspace diagonalization
     std::vector<Real> psi_norm(notconv, 0.0);
     for (size_t i = 0; i < notconv; i++)
     {
@@ -491,60 +603,9 @@ void Diago_NewDav<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
         assert(psi_norm[i] > 0.0);
         psi_norm[i] = sqrt(psi_norm[i]);
 
-        vector_div_constant_op<T, Device>()(this->ctx, this->dim, &basis(nbase + i, 0), &basis(nbase + i, 0), psi_norm[i]);
+        vector_div_constant_op<T, Device>()(this->ctx, this->dim, &basis(nbase + i, 0), &basis(nbase + i, 0),
+psi_norm[i]);
     }
-
-    /*
-     * there is a nbase to nbase + notconv band orthogonalise and normalize
-     *
-    // there is a nbase to nbase + notconv band orthogonalise
-    // plan for SchmitOrth
-    T* lagrange = nullptr;
-    resmem_complex_op()(this->ctx, lagrange, notconv * (nbase + notconv));
-    setmem_complex_op()(this->ctx, lagrange, 0, notconv * (nbase + notconv));
-
-    std::vector<int> pre_matrix_mm_m(notconv, 0);
-    std::vector<int> pre_matrix_mv_m(notconv, 1);
-    this->planSchmitOrth(notconv, pre_matrix_mm_m.data(), pre_matrix_mv_m.data());
-    for (int m = 0; m < notconv; m++)
-    {
-        phm_in->sPsi(&basis(nbase + m, 0), &sphi[(nbase + m) * this->dim], this->dim, this->dim, 1);
-    }
-    // first nbase bands psi* dot notconv bands spsi to prepare lagrange_matrix
-
-    // calculate the square matrix for future lagranges
-    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    //  haozhihan replace 2022-10-18
-    gemm_op<T, Device>()(this->ctx,
-                         'C',
-                         'N',
-                         nbase,                    // m: row of A,C
-                         notconv,                  // n: col of B,C
-                         this->dim,                // k: col of A, row of B
-                         this->one,                // alpha
-                         &basis(0, 0),             // A
-                         this->dim,                // LDA: if(N) max(1,m) if(T) max(1,k)
-                         &sphi[nbase * this->dim], // B
-                         this->dim,                // LDB: if(N) max(1,k) if(T) max(1,n)
-                         this->zero,               // belta
-                         lagrange,                 // C
-                         nbase + notconv           // LDC: if(N) max(1, m)
-    );
-
-    for (int m = 0; m < notconv; m++)
-    {
-        this->SchmitOrth(this->dim,
-                         nbase + notconv,
-                         nbase + m,
-                         basis,
-                         sphi,
-                         &lagrange[m * (nbase + notconv)],
-                         pre_matrix_mm_m[m],
-                         pre_matrix_mv_m[m]);
-
-        phm_in->sPsi(&basis(nbase + m, 0), &sphi[(nbase + m) * this->dim], this->dim, this->dim, 1);
-    }
-    */
 
     // calculate H|psi> for not convergence bands
     hpsi_info dav_hpsi_in(&basis,
@@ -558,6 +619,8 @@ void Diago_NewDav<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
     ModuleBase::timer::tick("Diago_NewDav", "cal_grad");
     return;
 }
+
+*/
 
 template <typename T, typename Device>
 void Diago_NewDav<T, Device>::cal_elem(const int& dim,
@@ -576,7 +639,6 @@ void Diago_NewDav<T, Device>::cal_elem(const int& dim,
     if (notconv == 0)
         return;
     ModuleBase::timer::tick("Diago_NewDav", "cal_elem");
-
 
     if (init)
     {
@@ -749,6 +811,31 @@ void Diago_NewDav<T, Device>::cal_elem(const int& dim,
         }   
     }
 
+    // if (!init)
+    // {
+    //     std::cout << "output hcc: " << std::endl;
+    //     for (size_t i = 0; i < this->nbase_x; i++)
+    //     {
+    //         for (size_t j = 0; j < this->nbase_x; j++)
+    //         {
+    //             std::cout << hcc[i * this->nbase_x + j] << "\t";
+    //         }
+    //         std::cout << std::endl;
+    //     }
+    //     std::cout << std::endl;
+
+    //     std::cout << "output scc: " << std::endl;
+    //     for (size_t i = 0; i < this->nbase_x; i++)
+    //     {
+    //         for (size_t j = 0; j < this->nbase_x; j++)
+    //         {
+    //             std::cout << scc[i * this->nbase_x + j] << "\t";
+    //         }
+    //         std::cout << std::endl;
+    //     }
+    //     std::cout << std::endl;
+    // }
+
     ModuleBase::timer::tick("Diago_NewDav", "cal_elem");
     return;
 }
@@ -780,13 +867,16 @@ void Diago_NewDav<T, Device>::diag_zhegvx(const int& nbase,
     {
         assert(nbase_x >= std::max(1, nbase));
 
-        std::vector<T> h_diag(nbase);
-        std::vector<T> s_diag(nbase);
+        std::vector<std::vector<T>> h_diag(nbase, std::vector<T>(nbase, cs.zero));
+        std::vector<std::vector<T>> s_diag(nbase, std::vector<T>(nbase, cs.zero));
 
         for (size_t i = 0; i < nbase; i++)
         {
-            h_diag[i] = hcc[i * this->nbase_x + i];
-            s_diag[i] = scc[i * this->nbase_x + i];
+            for (size_t j = 0; j < nbase; j++)
+            {
+                h_diag[i][j] = hcc[i * this->nbase_x + j];
+                s_diag[i][j] = scc[i * this->nbase_x + j];
+            }
         }
 
         if (this->device == psi::GpuDevice)
@@ -810,7 +900,7 @@ void Diago_NewDav<T, Device>::diag_zhegvx(const int& nbase,
             }
             else
             {
-                
+
                 dngvx_op<T, Device>()(this->ctx,
                                       nbase,
                                       this->nbase_x,
@@ -819,19 +909,32 @@ void Diago_NewDav<T, Device>::diag_zhegvx(const int& nbase,
                                       nband,
                                       this->eigenvalue,
                                       this->vcc);
+                // dngvd_op<T, Device>()(this->ctx,
+                //                       nbase,
+                //                       this->nbase_x,
+                //                       this->hcc,
+                //                       this->scc,
+                //                       //   nband,
+                //                       this->eigenvalue,
+                //                       this->vcc);
             }
         }
 
         // reset:
         for (size_t i = 0; i < nbase; i++)
         {
-            hcc[i * this->nbase_x + i] = set_real_tocomplex(h_diag[i]);
-            scc[i * this->nbase_x + i] = set_real_tocomplex(s_diag[i]);
-
-            for (size_t j = i; j < nbase; j++)
+            for (size_t j = 0; j < nbase; j++)
             {
-                hcc[i * this->nbase_x + j] = get_conj(hcc[j * this->nbase_x + i]);
-                scc[i * this->nbase_x + j] = get_conj(scc[j * this->nbase_x + i]);
+                hcc[i * this->nbase_x + j] = h_diag[i][j];
+                scc[i * this->nbase_x + j] = s_diag[i][j];
+            }
+
+            for (size_t j = nbase; j < this->nbase_x; j++)
+            {
+                hcc[i * this->nbase_x + j] = cs.zero;
+                hcc[j * this->nbase_x + i] = cs.zero;
+                scc[i * this->nbase_x + j] = cs.zero;
+                scc[j * this->nbase_x + i] = cs.zero;
             }
         }
     }
@@ -848,12 +951,12 @@ void Diago_NewDav<T, Device>::diag_zhegvx(const int& nbase,
     }
 #endif
 
-    // std::cout << "output vcc: " << std::endl;
+    // std::cout << "after diago output hcc: " << std::endl;
     // for (size_t i = 0; i < this->nbase_x; i++)
     // {
     //     for (size_t j = 0; j < this->nbase_x; j++)
     //     {
-    //         std::cout << vcc[i * this->nbase_x + j] << "\t";
+    //         std::cout << hcc[i * this->nbase_x + j] << "\t";
     //     }
     //     std::cout << std::endl;
     // }
@@ -880,74 +983,38 @@ void Diago_NewDav<T, Device>::refresh(const int& dim,
         ModuleBase::TITLE("Diago_NewDav", "refresh");
     ModuleBase::timer::tick("Diago_NewDav", "refresh");
 
-    // update hp,sp
-    basis.zero_out();
-    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    // haozhihan repalce 2022-10-18
+    // update basis
+    for (size_t i = 0; i < nband; i++)
+    {
+        syncmem_complex_op()(this->ctx, this->ctx, &basis(i, 0), &psi(i, 0), this->dim);
+    }
     gemm_op<T, Device>()(this->ctx,
                          'N',
                          'N',
-                         this->dim, // m: row of A,C
-                         nband,     // n: col of B,C
-                         nbase,     // k: col of A, row of B
-                         this->one,
-                         this->hphi, // A dim * nbase
                          this->dim,
-                         this->vcc, // B nbase * nband
+                         nband,
+                         nbase,
+                         this->one,
+                         this->hphi,
+                         this->dim,
+                         this->vcc,
                          this->nbase_x,
                          this->zero,
-                         &basis(nband, 0), // C dim * nband
+                         &basis(nband, 0),
                          this->dim);
 
-    // //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    // // haozhihan repalce 2022-10-18
-    // gemm_op<T, Device>()(this->ctx,
-    //                      'N',
-    //                      'N',
-    //                      this->dim, // m: row of A,C
-    //                      nband,     // n: col of B,C
-    //                      nbase,     // k: col of A, row of B
-    //                      this->one,
-    //                      this->sphi, // A dim * nbase
-    //                      this->dim,
-    //                      this->vcc, // B nbase * nband
-    //                      this->nbase_x,
-    //                      this->zero,
-    //                      &basis(nband, 0), // C dim * nband
-    //                      this->dim);
-
+    // update hphi
     syncmem_complex_op()(this->ctx, this->ctx, hphi, &basis(nband, 0), this->dim * nband);
-    // syncmem_complex_op()(this->ctx, this->ctx, sphi, &basis(nband, 0), this->dim * nband);
-    /*for (int m = 0; m < nband; m++)
-    {
-        for (int ig = 0; ig < this->dim; ig++)
-        {
-            hp(m, ig) = basis(m, ig);
-            sp(m, ig) = basis(m + nband, ig);
-        }
-    }*/
 
-    // update basis
-    // basis.zero_out();
-    for (int m = 0; m < nband; m++)
-    {
-        syncmem_complex_op()(this->ctx,
-                             this->ctx,
-                             &basis(m, 0),
-                             psi.get_k_first() ? &psi(m, 0) : &psi(m, 0, 0),
-                             this->dim);
-    }
-
-    // updata the reduced Hamiltonian
     nbase = nband;
 
-    // hc.zero_out();
-    setmem_complex_op()(this->ctx, hcc, 0, this->nbase_x * this->nbase_x);
-
-    // sc.zero_out();
-    setmem_complex_op()(this->ctx, scc, 0, this->nbase_x * this->nbase_x);
-
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // set hcc/scc/vcc to 0
+    for (size_t i = 0; i < nbase; i++)
+    {
+        setmem_complex_op()(this->ctx, &hcc[this->nbase_x * i], 0, nbase);
+        setmem_complex_op()(this->ctx, &scc[this->nbase_x * i], 0, nbase);
+        setmem_complex_op()(this->ctx, &vcc[this->nbase_x * i], 0, nbase);
+    }
 
     if (this->device == psi::GpuDevice)
     {
@@ -993,13 +1060,39 @@ void Diago_NewDav<T, Device>::refresh(const int& dim,
         for (int i = 0; i < nbase; i++)
         {
             hcc[i * this->nbase_x + i] = eigenvalue_in[i];
-            // sc(i, i) = this->one;
             scc[i * this->nbase_x + i] = this->one[0];
-            // vc(i, i) = this->one;
             vcc[i * this->nbase_x + i] = this->one[0];
         }
     }
     ModuleBase::timer::tick("Diago_NewDav", "refresh");
+
+    // cancan hcc
+    // gemm_op<T, Device>()(this->ctx,
+    //                     'C',
+    //                     'N',
+    //                     this->nbase_x,
+    //                     this->nbase_x,
+    //                     this->dim,
+    //                     this->one,
+    //                     hphi,
+    //                     this->dim,
+    //                     &basis(0, 0),
+    //                     this->dim,
+    //                     this->zero,
+    //                     hcc,
+    //                     this->nbase_x);
+
+    // std::cout << "refresh hcc: " << std::endl;
+    // for (size_t i = 0; i < this->nbase_x; i++)
+    // {
+    //     for (size_t j = 0; j < this->nbase_x; j++)
+    //     {
+    //         std::cout << hcc[i * this->nbase_x + j] << "\t";
+    //     }
+    //     std::cout << std::endl;
+    // }
+    // std::cout << std::endl;
+
     return;
 }
 

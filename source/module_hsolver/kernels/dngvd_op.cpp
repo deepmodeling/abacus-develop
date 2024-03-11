@@ -173,7 +173,7 @@ struct dngv_op<T, psi::DEVICE_CPU>
             1, // ITYPE = 1:  A*x = (lambda)*B*x
             'V', // JOBZ = 'V':  Compute eigenvalues and eigenvectors.
             'I', // RANGE = 'I': the IL-th through IU-th eigenvalues will be found.
-            'U', // UPLO = 'L':  Lower triangles of A and B are stored.
+            'L', // UPLO = 'L':  Lower triangles of A and B are stored.
             nstart, // N = base
             aux, // A is COMPLEX*16 array  dimension (LDA, N)
             ldh, // LDA = base
@@ -266,7 +266,7 @@ struct dngvx_op<T, psi::DEVICE_CPU>
             1, // ITYPE = 1:  A*x = (lambda)*B*x
             'V', // JOBZ = 'V':  Compute eigenvalues and eigenvectors.
             'I', // RANGE = 'I': the IL-th through IU-th eigenvalues will be found.
-            'U', // UPLO = 'L':  Lower triangles of A and B are stored.
+            'L', // UPLO = 'L':  Lower triangles of A and B are stored.
             nbase, // N = base
             hcc, // A is COMPLEX*16 array  dimension (LDA, N)
             ldh, // LDA = base

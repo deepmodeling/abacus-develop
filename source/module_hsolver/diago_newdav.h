@@ -72,10 +72,10 @@ class Diago_NewDav : public DiagH<T, Device>
                   const int& notconv,
                   psi::Psi<T, Device>& basis,
                   T* hphi,
-                  T* sphi,
-                  const T* vcc,
+                  // T* sphi,
+                  T* vcc,
                   const int* unconv,
-                  const Real* eigenvalue);
+                  Real* eigenvalue);
 
     void cal_elem(const int& dim,
                   int& nbase,

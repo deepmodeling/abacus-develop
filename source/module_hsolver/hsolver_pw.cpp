@@ -588,7 +588,7 @@ void HSolverPW<T, Device>::endDiagh()
         GlobalV::ofs_running<< "Average iterative diagonalization steps: "<<DiagoIterAssist<T, Device>::avg_iter / this->wfc_basis->nks
             <<" ; where current threshold is: "<<DiagoIterAssist<T, Device>::PW_DIAG_THR<<" . "<<std::endl;
 
-        std::cout << "avg_iter == " << DiagoIterAssist<T, Device>::avg_iter << std::endl;
+        // std::cout << "avg_iter == " << DiagoIterAssist<T, Device>::avg_iter << std::endl;
 
         //reset avg_iter
         DiagoIterAssist<T, Device>::avg_iter = 0.0;
