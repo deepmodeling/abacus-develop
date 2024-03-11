@@ -775,8 +775,6 @@ class RDMFT
 {
   public:
     RDMFT();
-
-
     ~RDMFT();
 
 

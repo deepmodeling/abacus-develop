@@ -46,6 +46,8 @@ list(APPEND device_srcs
   
   # add by jghan
   module_rdmft/rdmft_test.cpp
+  module_rdmft/rdmft.cpp
+  module_rdmft/rdmft_tools.cpp
 )
 
 if(USE_CUDA)

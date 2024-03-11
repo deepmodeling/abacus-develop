@@ -2,6 +2,8 @@ add_library(
     rdmft
     OBJECT
     rdmft_test.cpp
+    rdmft.cpp
+    rdmft_tools.cpp
 )
 
 # add_library(
