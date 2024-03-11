@@ -63,20 +63,64 @@ namespace rdmft
 {
 
 
-template <typename TK, typename TR, typename T_Gint>
+template <typename TK, typename TR>
 class RDMFT
 {
   public:
     RDMFT();
     ~RDMFT();
     
-    Parallel_Orbitals* ParaV;
+    Parallel_Orbitals* ParaV = nullptr;
     Parallel_2D para_Eij;
-
     
+    // used for k-dependent grid integration.
+    Gint_k* GK = nullptr;
+    // used for gamma only algorithms.
+    Gint_Gamma* GG = nullptr;
 
+    K_Vectors kv;
 
+    ModuleBase::matrix occ_number;
+    psi::Psi<TK> wfc;
+    ModuleBase::matrix wg;  // //wg is global matrix, wg.nr = nk_total, wg.nc = GlobalV::NBANDS
+    ModuleBase::matrix wk_fun_occNum;
 
+    // store the gradients of Etotal with respect to the natural occupation numbers and wfc respectively
+    ModuleBase::matrix occNum_wfcHamiltWfc;
+    psi::Psi<TK> occNum_HamiltWfc;
+
+    hamilt::HContainer<TR> HR_TV;   // (GlobalC::ucell, ParaV)
+    hamilt::HContainer<TR> HR_hartree;
+    hamilt::HContainer<TR> HR_XC;
+
+    std::vector<TK> HK_TV;  // ( ParaV->get_row_size()*ParaV->get_col_size() )
+    std::vector<TK> HK_hartree;
+    std::vector<TK> HK_XC;
+
+    ModuleBase::matrix Etotal_n_k;  // (wg.nr, wg.nc, true)
+    ModuleBase::matrix wfcHwfc_TV;
+    ModuleBase::matrix wfcHwfc_hartree;
+    ModuleBase::matrix wfcHwfc_XC;
+
+    psi::Psi<TK> H_wfc_TV;  // (nk_total, nbands_local, nbasis_local)
+    psi::Psi<TK> H_wfc_hartree;
+    psi::Psi<TK> H_wfc_XC;
+
+    // just for temperate. in the future when realize psiDotPsi() without pzgemm_/pdgemm_,we don't need it
+    // const int nrow_bands = para_Eij.get_row_size();
+    // const int ncol_bands = para_Eij.get_col_size();
+    std::vector<TK> Eij_TV;     // (nrow_bands*ncol_bands)
+    std::vector<TK> Eij_hartree;
+    std::vector<TK> Eij_XC;
+
+    hamilt::OperatorLCAO<TK, TR>* V_ekinetic_potential;
+    hamilt::OperatorLCAO<TK, TR>* V_nonlocal;
+    hamilt::OperatorLCAO<TK, TR>* V_local;
+    hamilt::OperatorLCAO<TK, TR>* V_hartree;
+    hamilt::OperatorLCAO<TK, TR>* V_XC;
+
+    Exx_LRI<double> Vxc_fromRI_d;   // (GlobalC::exx_info.info_ri)
+    Exx_LRI<std::complex<double>> Vxc_fromRI_c;
 
 
   private:

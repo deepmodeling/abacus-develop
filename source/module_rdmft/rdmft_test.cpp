@@ -138,7 +138,7 @@ void Veff_rdmft<TK, TR>::contributeHR()
     if( potential_ == "hartree" )
     {   
         ModuleBase::matrix v_matrix_hartree(GlobalV::NSPIN, charge_->nrxx);
-        elecstate::PotHartree potH(&rho_basis_);
+        elecstate::PotHartree potH(rho_basis_);
         potH.cal_v_eff(charge_, ucell_, v_matrix_hartree);
 
         for(int is=0; is<GlobalV::NSPIN; ++is)
@@ -154,7 +154,7 @@ void Veff_rdmft<TK, TR>::contributeHR()
     else if( potential_ == "local" )
     {   
         ModuleBase::matrix v_matrix_local(1, charge_->nrxx);
-        elecstate::PotLocal potL(&vloc_, &sf_, &rho_basis_);
+        elecstate::PotLocal potL(vloc_, sf_, rho_basis_);
         potL.cal_fixed_v( &v_matrix_local(0, 0) );
 
         // use pointer to attach v(r)
@@ -198,7 +198,7 @@ void Veff_rdmft<double, double>::contributeHR()
     if( potential_ == "hartree" )
     {   
         ModuleBase::matrix v_matrix_hartree(GlobalV::NSPIN, charge_->nrxx);
-        elecstate::PotHartree potH(&rho_basis_);
+        elecstate::PotHartree potH(rho_basis_);
         potH.cal_v_eff(charge_, ucell_, v_matrix_hartree);
 
         for(int is=0; is<GlobalV::NSPIN; ++is)
@@ -214,7 +214,7 @@ void Veff_rdmft<double, double>::contributeHR()
     else if( potential_ == "local" )
     {   
         ModuleBase::matrix v_matrix_local(1, charge_->nrxx);
-        elecstate::PotLocal potL(&vloc_, &sf_, &rho_basis_);
+        elecstate::PotLocal potL(vloc_, sf_, rho_basis_);
         potL.cal_fixed_v( &v_matrix_local(0, 0) );
 
         // use pointer to attach v(r)

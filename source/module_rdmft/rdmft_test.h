@@ -117,9 +117,9 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
                       const UnitCell* ucell_in,
                       Grid_Driver* GridD_in,
                       const Parallel_Orbitals* paraV,
-                      const ModulePW::PW_Basis& rho_basis_in,
-                      const ModuleBase::matrix& vloc_in,
-                      const ModuleBase::ComplexMatrix& sf_in,
+                      const ModulePW::PW_Basis* rho_basis_in,
+                      const ModuleBase::matrix* vloc_in,
+                      const ModuleBase::ComplexMatrix* sf_in,
                       const std::string potential_in)
         : GK(GK_in),
           loc(loc_in),
@@ -147,9 +147,9 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
                           const UnitCell* ucell_in,
                           Grid_Driver* GridD_in,
                           const Parallel_Orbitals* paraV,
-                          const ModulePW::PW_Basis& rho_basis_in,
-                          const ModuleBase::matrix& vloc_in,
-                          const ModuleBase::ComplexMatrix& sf_in,  
+                          const ModulePW::PW_Basis* rho_basis_in,
+                          const ModuleBase::matrix* vloc_in,
+                          const ModuleBase::ComplexMatrix* sf_in,  
                           const std::string potential_in
                           )
         : GG(GG_in), 
@@ -195,11 +195,11 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
 
     std::string potential_;
 
-    const ModulePW::PW_Basis rho_basis_;
+    const ModulePW::PW_Basis* rho_basis_;
 
-    const ModuleBase::matrix vloc_;
+    const ModuleBase::matrix* vloc_;
 
-    const ModuleBase::ComplexMatrix sf_;
+    const ModuleBase::ComplexMatrix* sf_;
 
 };
 
@@ -553,9 +553,9 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         &GlobalC::ucell,
         &GlobalC::GridD,
         ParaV,
-        rho_basis_in,
-        vloc_in,
-        sf_in,
+        &rho_basis_in,
+        &vloc_in,
+        &sf_in,
         "local"
     );
 
@@ -570,9 +570,9 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         &GlobalC::ucell,
         &GlobalC::GridD,
         ParaV,
-        rho_basis_in,
-        vloc_in,
-        sf_in,
+        &rho_basis_in,
+        &vloc_in,
+        &sf_in,
         "hartree"
     );
 
