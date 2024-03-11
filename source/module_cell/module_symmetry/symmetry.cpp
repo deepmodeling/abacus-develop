@@ -1341,22 +1341,29 @@ void Symmetry::pricell(double* pos, const Atom* atoms)
     GlobalV::ofs_running<<"optimized primitive cell volume: "<<this->plat.Det()<<std::endl;
     double ncell_double = std::abs(this->optlat.Det()/this->plat.Det());
     this->ncell=floor(ncell_double+0.5);
-    if(this->ncell != ntrans)
-    {
-        std::cout << " WARNING: PRICELL: NCELL != NTRANS !" << std::endl;
-        std::cout << " NCELL=" << ncell << ", NTRANS=" << ntrans << std::endl;
-        std::cout << " Suggest solution: Use a larger `symmetry_prec`. " << std::endl;
+
+    auto reset_pcell = [this]() -> void {
         std::cout << " Now regard the structure as a primitive cell." << std::endl;
         this->ncell = 1;
         this->ptrans = std::vector<ModuleBase::Vector3<double> >(1, ModuleBase::Vector3<double>(0, 0, 0));
         GlobalV::ofs_running << "WARNING: Original cell may have more than one primitive cells, \
         but we have to treat it as a primitive cell. Use a larger `symmetry_prec`to avoid this warning." << std::endl;
+        };
+    if (this->ncell != ntrans)
+    {
+        std::cout << " WARNING: PRICELL: NCELL != NTRANS !" << std::endl;
+        std::cout << " NCELL=" << ncell << ", NTRANS=" << ntrans << std::endl;
+        std::cout << " Suggest solution: Use a larger `symmetry_prec`. " << std::endl;
+        reset_pcell();
         return;
     }
     if(std::abs(ncell_double-double(this->ncell)) > this->epsilon*100)
     {
-        std::cout << " ERROR: THE NUMBER OF PRIMITIVE CELL IS NOT AN INTEGER !" << std::endl;
-		ModuleBase::QUIT();
+        std::cout << " WARNING: THE NUMBER OF PRIMITIVE CELL IS NOT AN INTEGER !" << std::endl;
+        std::cout << " NCELL(double)=" << ncell_double << ", NTRANS=" << ncell << std::endl;
+        std::cout << " Suggest solution: Use a larger `symmetry_prec`. " << std::endl;
+        reset_pcell();
+        return;
     }
     GlobalV::ofs_running<<"Original cell was built up by "<<this->ncell<<" primitive cells."<<std::endl;
 
@@ -1374,9 +1381,9 @@ void Symmetry::pricell(double* pos, const Atom* atoms)
     n3=floor (nummat.e33 + epsilon);
     if(n1*n2*n3 != this->ncell) 
     {
-        std::cout << " ERROR: Number of cells and number of vectors did not agree.";
+        std::cout << " WARNING: Number of cells and number of vectors did not agree.";
         std::cout<<"Try to change symmetry_prec in INPUT." << std::endl;
-		ModuleBase::QUIT();
+        reset_pcell();
     }
     return;
 }
