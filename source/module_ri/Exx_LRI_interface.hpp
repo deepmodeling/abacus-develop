@@ -59,9 +59,11 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const K_Vectors& kv, const Charg
         this->exx_spacegroup_symmetry = (GlobalV::NSPIN < 4 && ModuleSymmetry::Symmetry::symm_flag == 1);
         if (this->exx_spacegroup_symmetry)
         {
+            const std::array<int, 3>& period = RI_Util::get_Born_vonKarmen_period(kv);
             this->symrot_.get_return_lattice_all(ucell.symm, ucell.atoms, ucell.st);
             this->symrot_.cal_Ms(kv, ucell, pv);
-            this->symrot_.find_irreducible_sector(ucell.symm, ucell.atoms, ucell.st, this->symrot_.get_Rs_from_BvK(kv));
+            this->symrot_.find_irreducible_sector(ucell.symm, ucell.atoms, ucell.st,
+                RI_Util::get_Born_von_Karmen_cells(period), period, ucell.lat);
         }
     }
 

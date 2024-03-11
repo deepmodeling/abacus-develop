@@ -189,7 +189,7 @@ namespace ModuleSymmetry
         }
     }
 
-    void Symmetry_rotation::find_irreducible_sector(const Symmetry& symm, const Atom* atoms, const Statistics& st, const std::vector<TC>& Rs)
+    void Symmetry_rotation::find_irreducible_sector(const Symmetry& symm, const Atom* atoms, const Statistics& st, const std::vector<TC>& Rs, const TC& period, const Lattice& lat)
     {
         this->full_map_to_irreducible_sector_.clear();
         this->irreducible_sector_.clear();
@@ -213,14 +213,29 @@ namespace ModuleSymmetry
             symm.gmatrix_invmap(symm.gmatrix, symm.nrotk, invmap_.data());
         }
 
+        // get symmetry of BvK supercell
+        if (this->isymbvk_to_isym_.empty())
+            this->gen_symmetry_BvK(symm, atoms, lat, st, period);
+        assert(!this->isymbvk_to_isym_.empty());
+        // std::vector<bool> in_2d_plain;
+        // const bool judge_2d = (symm.real_brav == 4);
+        // if (judge_2d) in_2d_plain = this->in_plain(symm, lat.latvec);
+
         while (!apR_all.empty())
         {
             const Tap irap = apR_all.begin()->first;
             const TC irR = *apR_all[irap].begin();
             const TapR& irapR = { irap, irR };
             std::map<int, TapR> sector_star;
-            for (int isym = 0;isym < symm.nrotk;++isym)
+            for (int isymbvk = 0;isymbvk < this->bvk_nsym_;++isymbvk)
             {
+                // if (judge_2d)
+                // {
+                //     std::cout << "isym=" << isym << ", inv[isym]=" << invmap_[isym] << std::endl;
+                //     assert(in_2d_plain[isym] == in_2d_plain[invmap_[isym]]);
+                //     if (!in_2d_plain[isym]) continue;
+                // }
+                const int& isym = this->isymbvk_to_isym_[isymbvk];
                 const TapR& apRrot = this->rotate_R_by_formula(symm, this->invmap_[isym], irapR);
                 const Tap& aprot = apRrot.first;
                 const TC& Rrot = apRrot.second;

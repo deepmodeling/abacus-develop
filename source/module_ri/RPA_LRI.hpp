@@ -105,7 +105,9 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
 
     if (exx_spacegroup_symmetry)
     {
-        symrot.find_irreducible_sector(GlobalC::ucell.symm, GlobalC::ucell.atoms, GlobalC::ucell.st, symrot.get_Rs_from_BvK(kv));
+        const std::array<Tcell, Ndim> period = RI_Util::get_Born_vonKarmen_period(kv);
+        symrot.find_irreducible_sector(GlobalC::ucell.symm, GlobalC::ucell.atoms, GlobalC::ucell.st,
+            RI_Util::get_Born_von_Karmen_cells(period), period, GlobalC::ucell.lat);
         exx_lri_rpa.cal_exx_elec(Ds, *dm.get_paraV_pointer(), &symrot);
     }
     else

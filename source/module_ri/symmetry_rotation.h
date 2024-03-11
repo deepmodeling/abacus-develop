@@ -12,8 +12,6 @@
 #include <RI/global/Tensor.h>
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
-// for test
-// #include "Exx_LRI.h"
  
 namespace ModuleSymmetry
 {
@@ -113,13 +111,14 @@ namespace ModuleSymmetry
         std::vector<std::complex<double>> contruct_2d_rot_mat_ao(const Symmetry& symm, const Atom* atoms, const Statistics& cell_st,
             const TCdouble& kvec_d_ibz, int isym, const Parallel_2D& pv) const;
 
-        ModuleBase::Matrix3 direct_to_cartesian(const ModuleBase::Matrix3& d, const ModuleBase::Matrix3& latvec);
+        ModuleBase::Matrix3 direct_to_cartesian(const ModuleBase::Matrix3& d, const ModuleBase::Matrix3& latvec)const;
 
         std::vector<std::vector<ModuleBase::ComplexMatrix>>& get_rotmat_Slm() { return this->rotmat_Slm_; }
 
         //--------------------------------------------------------------------------------
         /// The main function to find irreducible sector: {abR}
-        void find_irreducible_sector(const Symmetry& symm, const Atom* atoms, const Statistics& st, const std::vector<TC>& Rs);
+        void find_irreducible_sector(const Symmetry& symm, const Atom* atoms, const Statistics& st,
+            const std::vector<TC>& Rs, const TC& period, const Lattice& lat);
         std::vector<TC> get_Rs_from_BvK(const K_Vectors& kv)const;
         std::vector<TC> get_Rs_from_adjacent_list(const UnitCell& ucell, Grid_Driver& gd, const Parallel_Orbitals& pv)const;
         const std::map<Tap, std::set<TC>>& get_irreducible_sector()const { return this->irreducible_sector_; }
@@ -187,7 +186,12 @@ namespace ModuleSymmetry
         template<typename TR>    // HContainer type, pblas
         void rotate_atompair_parallel(const TR* Alocal_in, const int isym, const Atom* atoms, const Statistics& st,
             const Tap& ap_in, const Tap& ap_out, const char mode, const Parallel_Orbitals& pv, TR* Alocal_out, const bool output = false)const;
+        //--------------------------------------------------------------------------------
 
+        /// The sub functions judge special symmetry
+        void gen_symmetry_BvK(const Symmetry& symm, const Atom* atoms, const Lattice& lat, const Statistics& st, const TC bvk_period);
+        /// whether in 2D plain or not for each symmetry operation
+        std::vector<bool> in_plain(const ModuleSymmetry::Symmetry& symm, const ModuleBase::Matrix3& latvec)const;
         //--------------------------------------------------------------------------------
 
         int nsym_ = 1;
@@ -226,6 +230,10 @@ namespace ModuleSymmetry
         std::vector<std::vector<TCdouble>> return_lattice_;
 
         std::vector<int> invmap_;
+        std::vector<int> isymbvk_to_isym_;
+        std::vector<ModuleBase::Matrix3> bvk_gmatrix_;
+        std::vector<ModuleBase::Vector3<double>> bvk_gtrans_;
+        int bvk_nsym_;
     };
 }
 
