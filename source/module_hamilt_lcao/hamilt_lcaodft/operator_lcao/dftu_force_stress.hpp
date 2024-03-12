@@ -136,7 +136,8 @@ void DFTUNew<OperatorLCAO<TK, TR>>::cal_force_stress(
             const int T1 = adjs.ntype[ad1];
             const int I1 = adjs.natom[ad1];
             const int iat1 = ucell->itia2iat(T1, I1);
-            double* force_tmp = (cal_force)? &force(iat1, 0) : nullptr;
+            double* force_tmp1 = (cal_force)? &force(iat1, 0) : nullptr;
+            double* force_tmp2 = (cal_force)? &force(iat0, 0) : nullptr;
             ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];
             ModuleBase::Vector3<double> dis1 = adjs.adjacent_tau[ad1] - tau0;
             for (int ad2 = 0; ad2 < adjs.adj_num + 1; ++ad2)
@@ -159,7 +160,7 @@ void DFTUNew<OperatorLCAO<TK, TR>>::cal_force_stress(
                 if (tmp[0] != nullptr)
                 {
                     // calculate force
-                    if (cal_force) this->cal_force_IJR(iat1, iat2, T0, paraV, nlm_tot[ad1], nlm_tot[ad2], VU, tmp, GlobalV::NSPIN, force_tmp);
+                    if (cal_force) this->cal_force_IJR(iat1, iat2, T0, paraV, nlm_tot[ad1], nlm_tot[ad2], VU, tmp, GlobalV::NSPIN, force_tmp1, force_tmp2);
 
                     // calculate stress
                     if (cal_stress) this->cal_stress_IJR(iat1, iat2, T0, paraV, nlm_tot[ad1], nlm_tot[ad2], VU, tmp, GlobalV::NSPIN, dis1, dis2, stress_tmp.data());
@@ -214,7 +215,8 @@ void DFTUNew<OperatorLCAO<TK, TR>>::cal_force_IJR(
     const std::vector<double>& vu_in,
     const hamilt::BaseMatrix<double>** dmR_pointer,
     const int nspin,
-    double* force)
+    double* force1,
+    double* force2)
 {
     // npol is the number of polarizations,
     // 1 for non-magnetic (one Hamiltonian matrix only has spin-up or spin-down),
@@ -230,6 +232,7 @@ void DFTUNew<OperatorLCAO<TK, TR>>::cal_force_IJR(
     // step_trace = 0 for NSPIN=1,2; ={0, 1, local_col, local_col+1} for NSPIN=4
     std::vector<int> step_trace(npol, 0);
     if(npol == 2) step_trace[1] = col_indexes.size() + 1;
+    double tmp[3];
     // calculate the local matrix
     for (int is = 0; is < nspin; is++)
     {
@@ -247,9 +250,17 @@ void DFTUNew<OperatorLCAO<TK, TR>>::cal_force_IJR(
                 {
                     for(int m2 = 0; m2 < m_size; m2++)
                     {
-                        force[0] += vu_in[m1 * m_size + m2 + is*m_size2] * nlm1[m1 + m_size] * nlm2[m2] * dm_pointer[0];
-                        force[1] += vu_in[m1 * m_size + m2 + is*m_size2] * nlm1[m1 + m_size*2] * nlm2[m2] * dm_pointer[0];
-                        force[2] += vu_in[m1 * m_size + m2 + is*m_size2] * nlm1[m1 + m_size*3] * nlm2[m2] * dm_pointer[0];
+                        tmp[0] = vu_in[m1 * m_size + m2 + is*m_size2] * nlm1[m1 + m_size] * nlm2[m2] * dm_pointer[0];
+                        tmp[1] = vu_in[m1 * m_size + m2 + is*m_size2] * nlm1[m1 + m_size*2] * nlm2[m2] * dm_pointer[0];
+                        tmp[2] = vu_in[m1 * m_size + m2 + is*m_size2] * nlm1[m1 + m_size*3] * nlm2[m2] * dm_pointer[0];
+                        // force1 = - VU * <d phi_{I,R1}/d R1|chi_m> * <chi_m'|phi_{J,R2}>
+                        // force2 = - VU * <phi_{I,R1}|d chi_m/d R0> * <chi_m'|phi_{J,R2>}
+                        force1[0] += tmp[0];
+                        force1[1] += tmp[1];
+                        force1[2] += tmp[2];
+                        force2[0] -= tmp[0];
+                        force2[1] -= tmp[1];
+                        force2[2] -= tmp[2];
                     }
                 }
                 dm_pointer++;

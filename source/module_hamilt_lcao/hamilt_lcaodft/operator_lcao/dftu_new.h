@@ -138,7 +138,8 @@ class DFTUNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                        const std::vector<double>& vu_in,
                        const hamilt::BaseMatrix<double>** dmR_pointer,
                        const int nspin,
-                       double* force);
+                       double* force1,
+                       double* force2);
     /**
      * @brief calculate the Stress of <I,J,R> atom pair
      */
