@@ -314,7 +314,7 @@ TEST_F(InputParaTest, Bcast)
     EXPECT_FALSE(INPUT.restart_save);
     EXPECT_FALSE(INPUT.restart_load);
     EXPECT_FALSE(INPUT.test_skip_ewald);
-    EXPECT_FALSE(INPUT.dft_plus_u);
+    EXPECT_EQ(INPUT.dft_plus_u, 0);
     EXPECT_FALSE(INPUT.yukawa_potential);
     EXPECT_DOUBLE_EQ(INPUT.yukawa_lambda, -1.0);
     EXPECT_EQ(INPUT.omc, 0);
@@ -382,7 +382,7 @@ TEST_F(InputParaTest, Bcast)
     EXPECT_TRUE(INPUT.mdp.dump_virial);
     EXPECT_FALSE(INPUT.mixing_tau);
     EXPECT_FALSE(INPUT.mixing_dftu);
-    EXPECT_EQ(INPUT.mixing_restart,0);
+    EXPECT_EQ(INPUT.mixing_restart,0.0);
     EXPECT_EQ(INPUT.mixing_dmr,false);
     EXPECT_EQ(INPUT.out_bandgap, 0);
     EXPECT_EQ(INPUT.out_mat_t, 0);

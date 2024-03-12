@@ -233,8 +233,8 @@ class Input
     std::string mixing_mode; // "plain","broyden",...
     double mixing_beta; // 0 : no_mixing
     int mixing_ndim; // used in Broyden method
-    int mixing_restart;
-    double mixing_gg0; // used in kerker method. mohan add 2014-09-27
+    double mixing_restart; // mixing will restart once if drho is smaller than mixing_restart
+    double mixing_gg0; // used in kerker method
     double mixing_beta_mag;
     double mixing_gg0_mag;
     double mixing_gg0_min;
@@ -486,7 +486,7 @@ class Input
     //==========================================================
     //    DFT+U       Xin Qu added on 2020-10-29
     //==========================================================
-    bool dft_plus_u;             ///< true:DFT+U correction; false: standard DFT calculation(default)
+    int dft_plus_u;             ///< true:DFT+U correction; false: standard DFT calculation(default)
     int* orbital_corr = nullptr; ///< which correlated orbitals need corrected ; d:2 ,f:3, do not need correction:-1
     double* hubbard_u = nullptr; ///< Hubbard Coulomb interaction parameter U(ev)
     int omc;                     ///< whether turn on occupation matrix control method or not

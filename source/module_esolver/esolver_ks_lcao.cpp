@@ -493,10 +493,16 @@ namespace ModuleESolver
     template <typename TK, typename TR>
     void ESolver_KS_LCAO<TK, TR>::eachiterinit(const int istep, const int iter)
 {
-    if (iter == 1 || iter == GlobalV::MIXING_RESTART)
+    if (iter == 1)
+    {
+        this->p_chgmix->init_mixing(); // init mixing
+        this->p_chgmix->mixing_restart = GlobalV::SCF_NMAX;
+    }
+    // for mixing restart
+    if (iter == this->p_chgmix->mixing_restart && GlobalV::MIXING_RESTART > 0.0)
     {
         this->p_chgmix->init_mixing();
-        if (iter == GlobalV::MIXING_RESTART && GlobalV::MIXING_DMR) // for mixing_dmr 
+        if (GlobalV::MIXING_DMR) // for mixing_dmr 
         {
             // allocate memory for dmr_mdata
             const elecstate::DensityMatrix<TK, double>* dm
@@ -613,7 +619,7 @@ namespace ModuleESolver
     // save input rho
     this->pelec->charge->save_rho_before_sum_band();
     // save density matrix for mixing
-    if (GlobalV::MIXING_RESTART > 0 && GlobalV::MIXING_DMR && iter >= GlobalV::MIXING_RESTART)
+    if (GlobalV::MIXING_RESTART > 0 && GlobalV::MIXING_DMR && iter >= this->p_chgmix->mixing_restart)
     {
         elecstate::DensityMatrix<TK, double>* dm
             = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
@@ -663,7 +669,16 @@ namespace ModuleESolver
     // the local occupation number matrix and energy correction
     if (GlobalV::dft_plus_u)
     {
-        //GlobalC::dftu.cal_energy_correction(istep);
+        // only old DFT+U method should calculated energy correction in esolver, new DFT+U method will calculate energy in calculating Hamiltonian
+        if(GlobalV::dft_plus_u == 2) 
+        {
+            if (GlobalC::dftu.omc != 2)
+            {
+                const std::vector<std::vector<TK>>& tmp_dm = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMK_vector();
+                this->dftu_cal_occup_m(iter, tmp_dm);
+            }
+            GlobalC::dftu.cal_energy_correction(istep);
+        }
         GlobalC::dftu.output();
     }
 
@@ -795,7 +810,7 @@ namespace ModuleESolver
     void ESolver_KS_LCAO<TK, TR>::eachiterfinish(int iter)
 {
     // mix density matrix
-    if (GlobalV::MIXING_RESTART > 0 && iter >= GlobalV::MIXING_RESTART && GlobalV::MIXING_DMR )
+    if (GlobalV::MIXING_RESTART > 0 && iter >= this->p_chgmix->mixing_restart && GlobalV::MIXING_DMR )
     {
         elecstate::DensityMatrix<TK, double>* dm
                     = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();

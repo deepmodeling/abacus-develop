@@ -225,8 +225,13 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
         {
             stress_dftu.create(3, 3);
         }
-        /*GlobalC::dftu.force_stress(pelec, *uhm.LM, force_dftu, stress_dftu, kv);*/
-        hamilt::DFTUNew<hamilt::OperatorLCAO<T, double>> tmp_dftu(uhm.LM,
+        if(GlobalV::dft_plus_u == 2)
+        {
+            GlobalC::dftu.force_stress(pelec, *uhm.LM, force_dftu, stress_dftu, kv);
+        }
+        else
+        {
+            hamilt::DFTUNew<hamilt::OperatorLCAO<T, double>> tmp_dftu(uhm.LM,
                                                                  kv.kvec_d,
                                                                  nullptr,
                                                                  nullptr,
@@ -234,7 +239,8 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                                                                  &GlobalC::GridD,
                                                                  &GlobalC::dftu,
                                                                  uhm.LM->ParaV);
-        tmp_dftu.cal_force_stress(isforce, isstress, force_dftu, stress_dftu);
+            tmp_dftu.cal_force_stress(isforce, isstress, force_dftu, stress_dftu);
+        }
     }
     if (!GlobalV::GAMMA_ONLY_LOCAL)
     {

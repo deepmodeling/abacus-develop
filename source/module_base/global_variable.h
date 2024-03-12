@@ -250,7 +250,7 @@ extern double sigma_k;
 extern double nc_k;
 
 // DFTU control
-extern bool dft_plus_u;
+extern int dft_plus_u;
 // rpa related
 extern bool rpa_setorb;
 extern std::vector<std::string> rpa_orbitals;
@@ -277,7 +277,7 @@ extern std::string of_kernel_file; // The name of WT kernel file.
 extern std::string MIXING_MODE;
 extern double MIXING_BETA;
 extern int MIXING_NDIM;
-extern int MIXING_RESTART;
+extern double MIXING_RESTART;
 extern double MIXING_GG0;
 extern bool MIXING_TAU;
 extern double MIXING_BETA_MAG;

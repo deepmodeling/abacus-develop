@@ -274,7 +274,6 @@
     - [dft\_plus\_u](#dft_plus_u)
     - [orbital\_corr](#orbital_corr)
     - [hubbard\_u](#hubbard_u)
-    - [onsite\_radius](#onsite_radius)
     - [yukawa\_potential](#yukawa_potential)
     - [yukawa\_lambda](#yukawa_lambda)
     - [omc](#omc)
@@ -1021,16 +1020,16 @@ Note that `mixing_beta_mag` is not euqal to `mixing_beta` means that $\rho_{up}$
 
 ### mixing_restart
 
-- **Type**: Integer
-- **Description**: At `mixing_restart`-th iteration, SCF will restart by using output charge density from perivos iteration as input charge density directly, and start a new mixing. `mixing_restart=0|1` means SCF starts from scratch.
+- **Type**: double
+- **Description**: If the density difference between input and output `drho` is smaller than `mixing_restart`, SCF will restart at next step which means SCF will restart by using output charge density from perivos iteration as input charge density directly, and start a new mixing. Notice that `mixing_restart` will only take effect once in one SCF.
   
 - **Default**: 0
 
 ### mixing_dmr
 
 - **Type**: bool
-- **Availability**: Only for `mixing_restart>=2`
-- **Description**: At `mixing_restart`-th iteration, SCF will start a mixing for real-space density matrix by using the same coefficiences as the mixing of charge density.
+- **Availability**: Only for `mixing_restart>=0.0`
+- **Description**: At n-th iteration which is calculated by `drho<mixing_restart`, SCF will start a mixing for real-space density matrix by using the same coefficiences as the mixing of charge density.
   
 - **Default**: false
 
@@ -2563,11 +2562,12 @@ These variables are used to control DFT+U correlated parameters
 
 ### dft_plus_u
 
-- **Type**: Boolean
+- **Type**: Integer
 - **Description**: Determines whether to calculate the plus U correction, which is especially important for correlated electrons.
-  - True: Calculate plus U correction.
-  - False: Do not calculate plus U correction.
-- **Default**: False
+  - 1: Calculate plus U correction with radius-adjustable localized projections (with parameter `onsite_radius`).
+  - 2: Calculate plus U correction using first zeta of NAOs as projections (this is old method for testing).
+  - 0: Do not calculate plus U correction.
+- **Default**: 0
 
 ### orbital_corr
 
@@ -2587,14 +2587,6 @@ These variables are used to control DFT+U correlated parameters
 > Note: Since only the simplified scheme by Duradev is implemented, the 'U' here is actually U-effective, which is given by Hubbard U minus Hund J.
 
 - **Default**: 0.0
-
-### onsite_radius
-
-- **Type**: Real
-- **Availability**: `dft_plus_u` is set to `true`
-- **Description**: Specified the radius of onsite projections for calculating the onsite orbitals occupations for DFT+U algorithm.
-- **Unit**: bohr
-- **Default**: 5.0
 
 ### yukawa_potential
 
@@ -2625,6 +2617,7 @@ These variables are used to control DFT+U correlated parameters
 ### onsite_radius
 
 - **Type**: Real
+- **Availability**: `dft_plus_u` is set to 1
 - **Description**: 
 
   - The `Onsite-radius` parameter facilitates modulation of the single-zeta portion of numerical atomic orbitals for projections for DFT+U. 

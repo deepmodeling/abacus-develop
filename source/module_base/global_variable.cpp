@@ -221,7 +221,7 @@ double tau = 1.0798 * 1e-5;
 double sigma_k = 0.6;
 double nc_k = 0.00037;
 
-bool dft_plus_u = false; //DFTU control
+int dft_plus_u = 0; //DFTU control
 
 //Xinyang Dong added for rpa
 bool rpa_setorb = false;
@@ -248,7 +248,7 @@ std::string of_kernel_file = "WTkernel.txt";
 std::string MIXING_MODE = "broyden";
 double MIXING_BETA = 0.7;
 int MIXING_NDIM = 8;
-int MIXING_RESTART = 0;
+double MIXING_RESTART = 0.0;
 double MIXING_GG0 = 1.00;
 double MIXING_BETA_MAG = 1.6;
 double MIXING_GG0_MAG = 1.00;
