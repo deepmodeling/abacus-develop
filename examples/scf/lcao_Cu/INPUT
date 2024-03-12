@@ -13,6 +13,8 @@ smearing_sigma	0.02
 
 mixing_type	broyden
 mixing_beta	0.4
-
 basis_type	lcao
-gamma_only	0
+gamma_only	1
+cal_force   1
+cal_stress  1
+num_stream  4

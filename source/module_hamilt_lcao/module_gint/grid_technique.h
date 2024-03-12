@@ -135,8 +135,8 @@ public:
   int atom_pair_size_of_meshcell;
   int atom_pair_size_over_nbz;
 
-  const int nstreams = 4;
-  cudaStream_t streams[4];
+  const int nstreams = GlobalV::NUM_STREAM;
+  cudaStream_t* streams=new cudaStream_t[GlobalV::NUM_STREAM];
   // streams[nstreams]
   // TODO it needs to be implemented through configuration files
 

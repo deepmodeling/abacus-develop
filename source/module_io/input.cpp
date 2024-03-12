@@ -225,6 +225,7 @@ void Input::Default(void)
     press2 = 0.0;
     press3 = 0.0;
     cal_stress = false;
+    nstream=4;
     fixed_axes = "None"; // pengfei 2018-11-9
     fixed_ibrav = false;
     fixed_atoms = false;
@@ -1006,6 +1007,10 @@ bool Input::Read(const std::string& fn)
         else if (strcmp("cal_stress", word) == 0)
         {
             read_bool(ifs, cal_stress);
+        }
+        else if (strcmp("num_stream", word) == 0)
+        {
+            read_value(ifs, nstream);
         }
         else if (strcmp("fixed_axes", word) == 0)
         {
@@ -3276,6 +3281,7 @@ void Input::Bcast()
     Parallel_Common::bcast_double(press2);
     Parallel_Common::bcast_double(press3);
     Parallel_Common::bcast_bool(cal_stress);
+    Parallel_Common::bcast_int(nstream);
     Parallel_Common::bcast_string(fixed_axes);
     Parallel_Common::bcast_bool(fixed_ibrav);
     Parallel_Common::bcast_bool(fixed_atoms);
