@@ -341,7 +341,7 @@ void toQO::write_ovlp(const std::string& dir,
     {
         for(int icol = 0; icol < ncols; icol++)
         {
-            ofs << std::setw(22) << std::setprecision(14) << std::right << std::scientific << ovlp[irow*nrows+icol] << " ";
+            ofs << std::setw(22) << std::setprecision(14) << std::right << std::scientific << ovlp[irow*ncols+icol] << " ";
         }
         ofs << std::endl;
     }
