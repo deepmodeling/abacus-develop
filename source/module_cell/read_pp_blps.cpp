@@ -1,4 +1,6 @@
 #include "read_pp.h"
+#include "module_base/atom_in.h"
+#include "module_base/element_name.h"
 
 int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs)
 {
@@ -36,6 +38,16 @@ int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs)
     ifs >> zatom >> zion;
     this->zp = static_cast<int>(zion);
     ifs.ignore(300, '\n');
+
+    atom_in ai;
+    for (auto each_type:  ModuleBase::element_name)
+    {
+        if (zatom == ai.atom_Z[each_type])
+        {
+            this->psd = each_type;
+            break;
+        }
+    }
 
     int pspcod, pspxc, lloc, r2well;
     ifs >> pspcod >> pspxc >> this->lmax >> lloc >> this->mesh >> r2well;
