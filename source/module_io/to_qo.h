@@ -5,7 +5,6 @@
 #include <string>
 #include "module_cell/unitcell.h"
 #include "module_basis/module_nao/two_center_integrator.h"
-#include "module_basis/module_pw/pw_basis_k.h"
 #include "module_base/atom_in.h"
 #include "module_base/vector3.h"
 /*
@@ -41,180 +40,137 @@
 class toQO
 {
     public:
-        toQO(std::string qo_basis, std::vector<std::string> strategies);
+        // constructor is identical with what INPUT needs to define a toQO task
+        // how user defines a QO task in INPUT, how it is constructed here, this
+        // is to ensure the self-containedness of the class, as much as possible
+        // to avoid introducing variables not from constructor or other under
+        // control functions.
+        toQO(const std::string& qo_basis,                   //< basis of QO, hydrogen or pswfc
+             const std::vector<std::string>& strategies,    //< strategies for each atom type, more details see manual
+             const double& qo_thr,                          //< threshold for QO
+             const std::vector<double>& screening_coeffs);  //< screening coefficients for pseudowavefunction or Slater screening
         ~toQO();
 
-        /*
-         *  Initialization
-        */
-        /// @brief initialize the QO class
-        /// @param p_ucell interface (raw pointer) to the unitcell
-        /// @param nkpts number of kpoints
-        void initialize(UnitCell* p_ucell,
-                        const std::vector<ModuleBase::Vector3<double>>& kvecs_d);
-        /// @brief to get rid of direct use of UnitCell
-        /// @param p_ucell 
-        void read_abacus_variables(UnitCell* p_ucell,
-                                   const std::vector<ModuleBase::Vector3<double>>& kvecs_d,
-                                   const int& iproc,
-                                   const int& nprocs);
-        /*
-         *  Two center integrator interfaces
-        */
-        /// @brief build RadialCollection for numerical atomic orbitals
-        /// @param ntype number of atom types
-        /// @param orbital_fn filenames of numerical atomic orbitals
-        void build_nao(const int ntype, 
-                       const std::string orbital_dir,
-                       const std::string* const orbital_fn,
-                       const int rank);
-        /// @brief build RadialCollection for atomic orbitals
-        /// @param ntype number of atom types
-        /// @param charges charges of atoms
-        /// @param nmax maximum principle quantum number of atoms
-        void build_hydrogen(const int ntype, 
-                            const double* const charges, 
-                            const bool slater_screening,
-                            const int* const nmax,
-                            const double qo_thr,
-                            const int rank);
-        //function might be implemented in future
-        //void build_szv(const int ntype);
-        /// @brief build RadialCollection for atomic orbitals
-        /// @param ntype number of atom types
-        /// @param pspot_fn filenames of pseudopotentials
-        /// @param screening_coeffs screening coefficients of pseudopotentials, appears like a factor (exp[-s*r]) scaling the pswfc
-        void build_pswfc(const int ntype, 
-                         const std::string pseudo_dir,
-                         const std::string* const pspot_fn, 
-                         const double* const screening_coeffs,
-                         const double qo_thr,
-                         const int rank);
-        /// @brief build RadialCollection for atomic orbitals
-        /// @param ntype number of atom types
-        /// @param pspot_fn filenames of pseudopotentials, if use qo_basis = hydrogen, omit this parameter
-        void build_ao(const int ntype, 
-                      const std::string pseudo_dir,
-                      const std::string* const pspot_fn = nullptr,
-                      const std::vector<double> screening_coeffs = std::vector<double>(),
-                      const double qo_thr = 1e-10,
-                      const std::ofstream& ofs = std::ofstream(),
-                      const int rank = 0);
-        /*
-         *   Main functions
-        */
-        /// @brief calculate the overlap between atomic orbitals and numerical atomic orbitals, in real space, at R[iR]
-        /// @param iR index of supercell vector
-        /// @note to save memory, the workflow can be organized as, once one S(R) is calculated, fold it to S(k), then clean up S(R)...
-        void calculate_ovlpR(const int iR);
-        /// @brief calculate the overlap between atomic orbitals and numerical atomic orbitals, in k space
-        /// @param kvec_c vector3 specifying a kpoint
-        void calculate_ovlpk(int ik);
-        /// @brief calculate the overlap between atomic orbitals and numerical atomic orbitals, in k space and write to file
+        // initialize function is to import program-related information, it is,
+        // more dynamic than constructor because this is actually an interface
+        // to states of rest of program, unlike constructor, actually defines
+        // the state of the class.
+        void initialize(const std::string& out_dir,                                 //< directory of output files
+                        const std::string& pseudo_dir,                              //< directory of pseudopotentials
+                        const std::string& orbital_dir,                             //< directory of numerical atomic orbitals
+                        const UnitCell* p_ucell,                                    //< interface to the unitcell
+                        const std::vector<ModuleBase::Vector3<double>>& kvecs_d,    //< kpoints
+                        std::ofstream& ofs_running,                                 //< output stream for running information
+                        const int& rank,                                            //< rank of present processor
+                        const int& nranks);                                         //< total number of processors
+        // import structure, including supercell and kvectors are read in this function
+        void read_structures(const UnitCell* p_ucell,                                   //< interface to the unitcell
+                             const std::vector<ModuleBase::Vector3<double>>& kvecs_d,   //< kpoints
+                             const int& iproc,                                          //< rank of present processor
+                             const int& nprocs);                                        //< total number of processors
+        
+        // Two-center integral
+        // QO is just one kind of representation, here it is representation from numerical 
+        // atomic orbitals spanned space to atomic orbitals spanned space. Therefore two-center 
+        // integral is the core of the whole transformation, it calculates the overlap between 
+        // atomic orbitals and numerical atomic orbitals
+        // for |>: to build RadialCollection filled with AtomicRadials
+        void build_nao(const int ntype,                             //< number of atom types
+                       const std::string orbital_dir,               //< directory of numerical atomic orbitals
+                       const std::string* const orbital_fn,         //< filenames of numerical atomic orbitals
+                       const int rank);                             //< rank of present processor
+        // for <|: to build RadialCollection filled with PswfcRadials or HydrogenRadials
+        void build_ao(const int ntype,                                                      //< number of atom types
+                      const std::string pseudo_dir,                                         //< directory of pseudopotentials
+                      const std::string* const pspot_fn = nullptr,                          //< filenames of pseudopotentials
+                      const std::vector<double> screening_coeffs = std::vector<double>(),   //< screening coefficients of pseudopotentials
+                      const double qo_thr = 1e-10,                                          //< threshold for QO
+                      const std::ofstream& ofs = std::ofstream(),                           //< output stream for running information
+                      const int rank = 0);                                                  //< rank of present processor
+        // for <|: to build RadialCollection filled with HydrogenRadials
+        void build_hydrogen(const int ntype,                    //< number of atom types
+                            const double* const charges,        //< charges of atoms
+                            const bool slater_screening,        //< whether use slater screening
+                            const int* const nmax,              //< maximum principle quantum number of atoms
+                            const double qo_thr,                //< threshold for QO
+                            const int rank);                    //< rank of present processor
+        // for <|: to build RadialCollection filled with PswfcRadials
+        void build_pswfc(const int ntype,                           //< number of atom types
+                         const std::string pseudo_dir,              //< directory of pseudopotentials
+                         const std::string* const pspot_fn,         //< filenames of pseudopotentials
+                         const double* const screening_coeffs,      //< screening coefficients of pseudopotentials, appears like a factor (exp[-s*r]) scaling the pswfc
+                         const double qo_thr,                       //< threshold for QO
+                         const int rank);                           //< rank of present processor
+        // EXTERNAL EXPOSED FUNCTION, calculate all things in one shot
         void calculate();
+        // calculate <A(i, R)|phi(j, R')> = Sij(R)
+        void calculate_ovlpR(const int iR); //< iR index of supercell vector
+        // calculate <A(i, k)|phi(j, k)> = Sij(k)
+        void calculate_ovlpk(int ik);       //< ik index of kpoint
+        // for overlap I/O
+        // S to file
+        template <typename T>
+        void write_ovlp(const std::string& dir,             //< directory of output files
+                        const std::vector<T>& matrix,       //< matrix to write
+                        const int& nrows,                   //< number of rows
+                        const int& ncols,                   //< number of columns
+                        const bool& is_R = false,           //< whether it is in real space
+                        const int& imat = 0);               //< index of matrix
+        // S from file
+        void read_ovlp(const std::string& dir,              //< directory of output files
+                       const int& nrows,                    //< number of rows
+                       const int& ncols,                    //< number of columns
+                       const bool& is_R = false,            //< whether it is in real space
+                       const int& imat = 0);                //< index of matrix
+        /// @brief build bidirectional map indexing for one single RadialCollection object, which is an axis of two-center-integral table.
+        /// @details from (it,ia,l,zeta,m) to index and vice versa
+        void radialcollection_indexing(const RadialCollection&,                             //< [in] instance of RadialCollection
+                                       const std::vector<int>&,                             //< [in] number of atoms for each type
+                                       std::map<std::tuple<int,int,int,int,int>,int>&,      //< [out] mapping from (it,ia,l,zeta,m) to index
+                                       std::map<int,std::tuple<int,int,int,int,int>>&);     //< [out] mapping from index to (it,ia,l,zeta,m)
+        /// @brief calculate vectors connecting all atom pairs that needed to calculate their overlap
+        ModuleBase::Vector3<double> cal_two_center_vector(ModuleBase::Vector3<double> rij,      //< vector connecting atom i and atom j
+                                                          ModuleBase::Vector3<int> R);          //< supercell vector
+        /// @brief for qo_basis pswfc only, return if include present orbitals in two-center integral
+        bool orbital_filter(const int,              //< itype
+                            const std::string);     //< notation of subshell, like all, s, p, d and any combination of them
+        void deallocate_ovlp(const bool& is_R = false);     //< deallocate memory for ovlp_ao_nao_R_ or ovlp_ao_nao_k_
+        void allocate_ovlp(const bool& is_R = false);       //< allocate memory for ovlp_ao_nao_R_ or ovlp_ao_nao_k_
+        void zero_out_ovlps(const bool& is_R);              //< zero out ovlp_ao_nao_R_ or ovlp_ao_nao_k_
+        void append_ovlpR_eiRk(int ik, int iR);             //< append S(R) to S(k), memory saving
 
+        // MPI related
         void bcast_stdvector_ofvector3int(std::vector<ModuleBase::Vector3<int>>& vec);
         void bcast_stdvector_ofvector3double(std::vector<ModuleBase::Vector3<double>>& vec);
 
-        /// @brief build bidirectional map indexing for one single RadialCollection object, which is an axis of two-center-integral table.
-        /// @details from (it,ia,l,zeta,m) to index and vice versa
-        void radialcollection_indexing(const RadialCollection&,                             /// [in] instance of RadialCollection
-                                       const std::vector<int>&,                             /// [in] number of atoms for each type
-                                       std::map<std::tuple<int,int,int,int,int>,int>&,      /// [out] mapping from (it,ia,l,zeta,m) to index
-                                       std::map<int,std::tuple<int,int,int,int,int>>&);     /// [out] mapping from index to (it,ia,l,zeta,m)
-        /// @brief write two dimensional matrix to file
-        /// @tparam T type of matrix
-        /// @param matrix matrix to write
-        /// @param ik index of kpoint
-        template <typename T>
-        void write_ovlp(const std::string& dir,
-                        const std::vector<T>& matrix, 
-                        const int& nrows,
-                        const int& ncols,
-                        const bool& is_R = false, 
-                        const int& ik = 0);
-        void read_ovlp(const std::string& dir,
-                       const int& nrows,
-                       const int& ncols,
-                       const bool& is_R = false,
-                       const int& ik = 0);
-        /// @brief write supercells information to file
-        void write_supercells();
-        /*
-            Neighboring list searching algorithm (not implemented yet)
-
-            The neighboring list here is for searching all possible (ijR) pairs that overlap between atom i and atom j in different
-            cells distanced by R still has nonzero value. Therefore it is actually a problem:
-
-            |rij + n1R1 + n2R2 + n3R3| >= (rcut,i + rcut,j),
-            , where n1, n2, n3 are integers, R1, R2, R3 are lattice vectors, and rcut,i, rcut,j are cutoff radii of numerical orbitals 
-            of atom i and atom j. rij is the distance between atom i and atom j.in the unitcell.
-            Take square on both sides, we have
-            rij^2 + 2 rij * (n1R1 + n2R2 + n3R3) + (n1R1 + n2R2 + n3R3)^2 >= (rcut,i + rcut,j)^2
-            . n1, n2 and n3 are values of interest, rij and rcut,i and rcut,j are known for specific atom pair ij.
-
-            Therefore neighboring list searching problem is a problem of root finding of a quadratic equation.
-            The quadratic equation is
-            (R1^2)*n1^2 + (R2^2)*n2^2 + (R3^2)*n3^2 + 2*(R1*R2)*n1*n2 + 2*(R1*R3)*n1*n3 + 2*(R2*R3)*n2*n3
-            + 2*rij*(R1*n1 + R2*n2 + R3*n3) + rij^2 - (rcut,i + rcut,j)^2 = 0
-            one can drop the constraint that n1, n2 and n3 are integers, then use ceiling to get the integer values.
-
-            To solve the quadratic equation, one can rotate the coordinate system so that the function can become
-            a sphere. Then it will be an approximately 2d scan (phi, theta) instead of a 3d scan (n1, n2, n3). The time complexity will be reduced from 
-            O(Natom^2*Ncell^3) to O(Natom^2*Ncell^2).
-
-            This algorithm is not implemented yet.
-            A diagonalization of third order matrix of coefficients of ninj can transform the targeting function
-            to a translated sphere, then translate it back to origin. Then it will be a 2d scan (phi, theta).
-        */
-        /// @brief calculate vectors connecting all atom pairs that needed to calculate their overlap
-        ModuleBase::Vector3<double> cal_two_center_vector(ModuleBase::Vector3<double> rij,
-                                                          ModuleBase::Vector3<int> R);
+        // Neighboring list
+        /// @brief get all possible (n1n2n3) defining supercell and scatter if MPI enabled
+        void scan_supercell(const int& iproc,       //< rank of present processor
+                            const int& nprocs);     //< total number of processors
         /// @brief this is a basic functional for scanning (ijR) pair for one certain i, return Rs
-        /// @attention an algorithm loop over (i,)j,R
-        /// @param it type of atom i
-        /// @param ia index of atom i
-        /// @param start_it starting scan index of atom type
-        /// @param start_ia starting scan index of atom
-        /// @param rcut cutoff radius of numerical atomic orbital of atom i
+        /// @attention an algorithm loop over (i,)j,R, and return Rs
         /// @return a vector collects (n1, n2, n3) for present atom
-        std::vector<ModuleBase::Vector3<int>> scan_supercell_for_atom(int it, int ia, int start_it = 0, int start_ia = 0);
+        std::vector<ModuleBase::Vector3<int>> scan_supercell_for_atom(int it,               //< type of atom i
+                                                                      int ia,               //< index of atom i
+                                                                      int start_it = 0,     //< starting scan index of atom type
+                                                                      int start_ia = 0);    //< starting scan index of atom
         /// @brief core algorithm to scan supercells, find the maximal supercell according to present cutoff radius
-        /// @param rcut sum of cutoff radius of orbitals of atom i and atom j
-        /// @param a cell vector a (in Bohr)
-        /// @param b cell vector b (in Bohr)
-        /// @param c cell vector c (in Bohr)
         /// @return a vector of (n1n2n3) defining supercell
-        std::vector<int> rcut_to_supercell_index(double rcut, ModuleBase::Vector3<double> a, ModuleBase::Vector3<double> b, ModuleBase::Vector3<double> c);
+        std::vector<int> rcut_to_supercell_index(double rcut,                       //< sum of cutoff radius of orbitals of atom i and atom j
+                                                 ModuleBase::Vector3<double> a,     //< cell vector a (in Bohr)
+                                                 ModuleBase::Vector3<double> b,     //< cell vector b (in Bohr)
+                                                 ModuleBase::Vector3<double> c);    //< cell vector c (in Bohr)
         /// @brief get vector squared norm in supercell
-        /// @param rij rij in unitcell
-        /// @param n1 supercell index 1
-        /// @param n2 supercell index 2
-        /// @param n3 supercell index 3
         /// @return (rij + n1R1 + n2R2 + n3R3)^2
-        double norm2_rij_supercell(ModuleBase::Vector3<double> rij, int n1, int n2, int n3);
-        /// @brief get all possible (n1n2n3) defining supercell
-        /// @return a vector of (n1n2n3)
-        void scan_supercell(const int& iproc, const int& nprocs);
+        double norm2_rij_supercell(ModuleBase::Vector3<double> rij,     //< vector connecting atom i and atom j in unitcell
+                                   int n1,                              //< supercell index 1
+                                   int n2,                              //< supercell index 2
+                                   int n3);                             //< supercell index 3
         /// @brief eliminate duplicate vectors in a vector of vector3
-        /// @tparam T type of vector3
-        /// @param vector3s vector of vector3, both input and output
         template <typename T>
         void eliminate_duplicate_vector3(std::vector<ModuleBase::Vector3<T>>& vector3s);
-        /*
-            Data management
-        */
-        bool orbital_filter(const int, const std::string);
-
-        void deallocate_ovlp(const bool& is_R = false);  /// deallocate memory for ovlp_ao_nao_R_ or ovlp_ao_nao_k_
-        void allocate_ovlp(const bool& is_R = false);    /// allocate memory for ovlp_ao_nao_R_ or ovlp_ao_nao_k_
-        void zero_out_ovlps(const bool& is_R);           /// zero out ovlp_ao_nao_R_ or ovlp_ao_nao_k_
-        void append_ovlpR_eiRk(int ik, int iR);          /// append S(R) to S(k), memory saving
-
-        // setters
-        void set_qo_basis(const std::string qo_basis) { qo_basis_ = qo_basis; }
-        void set_strategies(const std::vector<std::string> strategies) { strategies_ = strategies; }
-        void set_strategy(const int itype, const std::string strategy) { strategies_[itype] = strategy; }
+        /// @brief write supercells information to file
+        void write_supercells();
         
         // getters
         int ntype() const { return ntype_; }
@@ -222,7 +178,7 @@ class toQO
         std::string qo_basis() const { return qo_basis_; }
         std::vector<std::string> strategies() const { return strategies_; }
         std::string strategy(const int itype) const { return strategies_[itype]; }
-        UnitCell* p_ucell() const { return p_ucell_; }
+        UnitCell* p_ucell() const { return const_cast<UnitCell*>(p_ucell_); }
         RadialCollection* p_nao() const { return nao_.get(); }
         RadialCollection* p_ao() const { return ao_.get(); }
         int nR() const { return nR_; }
@@ -239,42 +195,48 @@ class toQO
         std::vector<ModuleBase::Vector3<double>> kvecs_d() const { return kvecs_d_; }
 
     private:
-        UnitCell* p_ucell_ = nullptr; /// interface to the unitcell, its lifespan is not managed here
-        atom_in atom_database_;       /// atomic information database, RAII
-
-        std::vector<int> iRs_;                             /// indices of supercell vectors (local)
-        std::vector<ModuleBase::Vector3<int>> supercells_; /// supercell vectors (global)
-        std::vector<int> iks_;                             /// indices of kpoints (local)
-        std::vector<ModuleBase::Vector3<double>> kvecs_d_; /// kpoints (global)
-        // Two center integral
-        std::unique_ptr<RadialCollection> nao_;                   /// numerical atomic orbitals
-        std::unique_ptr<RadialCollection> ao_;                    /// atomic orbitals
-        std::unique_ptr<TwoCenterIntegrator> overlap_calculator_; /// two center integrator
-        std::vector<double> ovlpR_;
-        std::vector<std::complex<double>> ovlpk_;
-        /// indices
-        std::map<std::tuple<int,int,int,int,int>,int> index_ao_;   /// mapping from (it,ia,l,zeta,m) to index
-        std::map<int,std::tuple<int,int,int,int,int>> rindex_ao_;  /// mapping from index to (it,ia,l,zeta,m)
-        std::map<std::tuple<int,int,int,int,int>,int> index_nao_;  /// mapping from (it,ia,l,zeta,m) to index
-        std::map<int,std::tuple<int,int,int,int,int>> rindex_nao_; /// mapping from index to (it,ia,l,zeta,m)
-        
-        std::map<std::tuple<int,int>,int> index_mat_;    /// mapping from (i,j) to index
-        std::map<int,std::tuple<int,int>> rindex_mat_;   /// mapping from index to (i,j)
-
-        int nks_ = 0;     /// number of kpoints for present processor, for S(k)
-        int nks_tot_ = 0; /// total number of kpoints
-        int nR_ = 0;      /// number of supercell vectors on present processor, for S(R)
-        int nR_tot_ = 0;  /// total number of supercell vectors
-        int nchi_ = 0;    /// number of atomic orbitals, chi in \mathbf{S}^{\chi\phi}(\mathbf{k})
-        int nphi_ = 0;    /// number of numerical atomic orbitals, phi in \mathbf{S}^{\chi\phi}(\mathbf{k})
-
-        int ntype_ = 0;       /// number of atom types
-        std::vector<int> na_; /// number of atoms for each type
-
+        // Variables defining QO task
         std::string qo_basis_ = "hydrogen";
         std::vector<std::string> strategies_;
-        std::vector<std::string> symbols_;
-        std::vector<double> charges_;
-        std::vector<int> nmax_;
+        double qo_thr_ = 1e-10;
+        std::vector<double> screening_coeffs_;
+        // Variables defining I/O
+        std::string out_dir_;                   //< directory of output files
+        std::string pseudo_dir_;                //< directory of pseudopotentials
+        std::string orbital_dir_;               //< directory of numerical atomic orbitals
+        // Variables defining parallelism
+        int iproc_ = 0;
+        int nprocs_ = 1;
+        // variables defining structure
+        const UnitCell* p_ucell_ = nullptr;                        //< interface to the unitcell, its lifespan is not managed here
+        std::vector<int> iRs_;                                     //< indices of supercell vectors (local)
+        std::vector<ModuleBase::Vector3<int>> supercells_;         //< supercell vectors (global)
+        std::vector<int> iks_;                                     //< indices of kpoints (local)
+        std::vector<ModuleBase::Vector3<double>> kvecs_d_;         //< kpoints (global)
+        // Two center integral
+        std::unique_ptr<RadialCollection> nao_;                    //< numerical atomic orbitals
+        std::unique_ptr<RadialCollection> ao_;                     //< atomic orbitals
+        std::unique_ptr<TwoCenterIntegrator> overlap_calculator_;  //< two center integrator
+        std::vector<double> ovlpR_;                                //< overlap between atomic orbitals and numerical atomic orbitals, in real space
+        std::vector<std::complex<double>> ovlpk_;                  //< overlap between atomic orbitals and numerical atomic orbitals, in k space
+        //< indices
+        std::map<std::tuple<int,int,int,int,int>,int> index_ao_;   //< mapping from (it,ia,l,zeta,m) to index
+        std::map<int,std::tuple<int,int,int,int,int>> rindex_ao_;  //< mapping from index to (it,ia,l,zeta,m)
+        std::map<std::tuple<int,int,int,int,int>,int> index_nao_;  //< mapping from (it,ia,l,zeta,m) to index
+        std::map<int,std::tuple<int,int,int,int,int>> rindex_nao_; //< mapping from index to (it,ia,l,zeta,m)
+        // Variables defining dimensions or resource allocation
+        int nks_ = 0;                                              //< number of kpoints for present processor, for S(k)
+        int nks_tot_ = 0;                                          //< total number of kpoints
+        int nR_ = 0;                                               //< number of supercell vectors on present processor, for S(R)
+        int nR_tot_ = 0;                                           //< total number of supercell vectors
+        int nchi_ = 0;                                             //< number of atomic orbitals, chi in \mathbf{S}^{\chi\phi}(\mathbf{k})
+        int nphi_ = 0;                                             //< number of numerical atomic orbitals, phi in \mathbf{S}^{\chi\phi}(\mathbf{k})
+        // Variables defining atoms
+        atom_in atom_database_;                 //< atomic information database
+        int ntype_ = 0;                         //< number of atom types
+        std::vector<int> na_;                   //< number of atoms for each type
+        std::vector<std::string> symbols_;      //< symbols of atoms
+        std::vector<double> charges_;           //< charges of atoms
+        std::vector<int> nmax_;                 //< maximum principle quantum number of atoms
 };
 #endif // TOQO_H

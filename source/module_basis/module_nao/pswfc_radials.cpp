@@ -337,6 +337,7 @@ void PswfcRadials::read_upf_pswfc(std::ifstream& ifs,
     } // rank 0 does almost everything, then broadcast one-by-one
 #ifdef __MPI
     if(rank == 0) printf("PswfcRadials: pseudowavefunction read on rank 0, broadcast start.\n");
+    
     Parallel_Common::bcast_string(symbol_);
     Parallel_Common::bcast_int(lmax_);
 
@@ -368,6 +369,8 @@ void PswfcRadials::read_upf_pswfc(std::ifstream& ifs,
     Parallel_Common::bcast_double(rgrid.data(), ngrid);
 
     for(int i = 0; i < nchi_; i++) Parallel_Common::bcast_double(rvalues[i].data(), ngrid);
+
+    if(rank == 0) printf("PswfcRadials: pseudowavefunction read and broadcast finished on rank 0.\n");
 #endif
     chi_ = new NumericalRadial[nchi_];
     for(int i = 0; i < nchi_; i++)

@@ -967,8 +967,13 @@ namespace ModuleESolver
     }
     if(GlobalV::qo_switch)
     {
-        toQO tqo(GlobalV::qo_basis, GlobalV::qo_strategy);
-        tqo.initialize(&GlobalC::ucell, this->kv.kvec_d);
+        toQO tqo(GlobalV::qo_basis, GlobalV::qo_strategy, GlobalV::qo_thr, GlobalV::qo_screening_coeff);
+        tqo.initialize(GlobalV::global_out_dir, 
+                       GlobalV::global_pseudo_dir, 
+                       GlobalV::global_orbital_dir,
+                       &GlobalC::ucell, this->kv.kvec_d,
+                       GlobalV::ofs_running,
+                       GlobalV::MY_RANK, GlobalV::NPROC);
         tqo.calculate();
     }
 }
