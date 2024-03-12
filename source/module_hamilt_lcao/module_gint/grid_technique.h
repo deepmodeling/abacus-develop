@@ -135,8 +135,8 @@ public:
   int atom_pair_size_of_meshcell;
   int atom_pair_size_over_nbz;
 
-  const int nstreams = 1;
-  cudaStream_t streams[1];
+  const int nstreams = 4;
+  cudaStream_t streams[nstreams];
   // streams[nstreams]
   // TODO it needs to be implemented through configuration files
 
