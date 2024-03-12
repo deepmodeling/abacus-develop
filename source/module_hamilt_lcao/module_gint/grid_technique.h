@@ -136,7 +136,7 @@ public:
   int atom_pair_size_over_nbz;
 
   const int nstreams = 4;
-  cudaStream_t streams[nstreams];
+  cudaStream_t streams[4];
   // streams[nstreams]
   // TODO it needs to be implemented through configuration files
 
