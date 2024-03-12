@@ -246,8 +246,8 @@ void toQO::calculate_ovlpR(const int iR)
                           + double(R.z) * p_ucell_->a3.z;
             Rij *= p_ucell_->lat0; // convert to Bohr
             // print two-center integrals related variables in one line
-            printf("it: %d, ia: %d, li: %d, izeta: %d, mi: %d, jt: %d, ja: %d, lj: %d, jzeta: %d, mj: %d, iR: %d\n", 
-                it, ia, li, izeta, mi, jt, ja, lj, jzeta, mj, iR);
+            printf("it: %d, ia: %d, li: %d, iz: %d, mi: %d, jt: %d, ja: %d, lj: %d, jz: %d, mj: %d, iR: %d, Rij: %f %f %f\n", 
+                it, ia, li, izeta, mi, jt, ja, lj, jzeta, mj, iR, Rij.x, Rij.y, Rij.z);
             overlap_calculator_->calculate(
                 it, li, izeta, mi,
                 jt, lj, jzeta, mj,
