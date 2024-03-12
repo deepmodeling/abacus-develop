@@ -360,9 +360,15 @@ void Charge::atomic_rho(const int spin_number_need,
                                     rhoatm[ir] = atom->ncpp.rho_at[ir] / ModuleBase::FOUR_PI / r2;
                                 }
                                 rhoatm[0]
-                                    = pow((rhoatm[2] / rhoatm[1]), 1. / (atom->ncpp.r[2] - atom->ncpp.r[1])); // zws add
-                                rhoatm[0] = pow(rhoatm[0], atom->ncpp.r[1]);
-                                rhoatm[0] = rhoatm[1] / rhoatm[0];
+                                    = pow((rhoatm[2] / rhoatm[1]), atom->ncpp.r[1] / (atom->ncpp.r[2] - atom->ncpp.r[1])); // zws add, sunliang updated 2024-03-04
+                                if (rhoatm[0] < 1e-12)
+                                {
+                                    rhoatm[0] = rhoatm[1];
+                                }
+                                else
+                                {
+                                    rhoatm[0] = rhoatm[1] / rhoatm[0];
+                                }
 
                                 double charge = 0.0;
                                 ModuleBase::Integral::Simpson_Integral(atom->ncpp.msh,
