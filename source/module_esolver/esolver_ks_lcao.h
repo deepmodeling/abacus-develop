@@ -53,6 +53,8 @@ namespace ModuleESolver
         LCAO_Matrix LM;
         Grid_Technique GridT;
 
+        rdmft::RDMFT<TK, TR> rdmft_solver;  // add by JingangHan for rdmft calculation
+
         std::unique_ptr<TwoCenterBundle> two_center_bundle;
 
         // Temporarily store the stress to unify the interface with PW,

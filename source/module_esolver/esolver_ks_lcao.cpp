@@ -222,6 +222,10 @@ namespace ModuleESolver
     {
         this->pelec->fixed_weights(GlobalV::ocp_kb);
     }
+
+    // add by JingangHan for rdmft calculation
+    rdmft_solver.init( &(this->UHM.GG), &(this->UHM.GK), &(this->orb_con.ParaV), ucell );
+
 }
 
     template <typename TK, typename TR>
@@ -915,10 +919,11 @@ namespace ModuleESolver
     // esolver_fp.h(Structure_Factor sf), structure_factor.h(ModuleBase::ComplexMatrix strucFac), this->sf.strucFac
     // elecstate::DensityMatrix<TK, double>&  *( dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM() )
 
+
     //initialize the gradients of Etotal on wg and wfc, and set all elements to 0. 
     ModuleBase::matrix E_gradient_wg(this->pelec->wg.nr, this->pelec->wg.nc, true);
     psi::Psi<TK> E_gradient_wfc(this->psi->get_nk(), this->psi->get_nbands(), this->psi->get_nbasis()); 
-    rdmft::set_zero_psi(E_gradient_wfc);
+    E_gradient_wfc.zero_out();
     double Etotal_RDMFT = 0.0;
 
     // get natural occupation numbers from wg which considers k point weights and spin, this just proper for nspin=1 !!! or 2 ? in Soild Si, it's correct

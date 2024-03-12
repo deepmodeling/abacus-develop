@@ -44,19 +44,23 @@ namespace rdmft
 {
 
 
-template <typename TK, typename TR, typename T_Gint>
-RDMFT<TK, TR, T_Gint>::RDMFT()
+template <typename TK, typename TR>
+RDMFT<TK, TR>::RDMFT()
 {
 
 }
 
-template <typename TK, typename TR, typename T_Gint>
-RDMFT<TK, TR, T_Gint>::~RDMFT()
+template <typename TK, typename TR>
+RDMFT<TK, TR>::~RDMFT()
 {
     
 }
 
+template <typename TK, typename TR>
+void RDMFT<TK, TR>::init(Gint_Gamma* GG_in, Gint_k* GK_in, Parallel_Orbitals* ParaV_in, UnitCell& cell)
+{
 
+}
 
 
 

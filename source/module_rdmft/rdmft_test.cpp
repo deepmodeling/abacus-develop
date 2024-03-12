@@ -412,6 +412,7 @@ template <typename TK, typename TR, typename T_Gint>
 RDMFT<TK, TR, T_Gint>::~RDMFT()
 {
     
+    
 }
 
 

@@ -80,7 +80,7 @@ void printMatrix_pointer(int M, int N, const TK* matrixA, std::string nameA)
         }
         std::cout << "\n";
     }
-    std::cout << "\n";
+    std::cout << std::endl;
 }
 
 
@@ -97,7 +97,7 @@ void printMatrix_vector(int M, int N, const std::vector<TK>& matrixA, std::strin
         }
         std::cout << "\n\n";
     }
-    std::cout << "\n";
+    std::cout << std::endl;
 }
 
 
@@ -684,9 +684,9 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     psi::Psi<TK> H_wfc_XC(nk_total, nbands_local, nbasis_local);
 
     // set zero
-    set_zero_psi(H_wfc_TV);
-    set_zero_psi(H_wfc_hartree);
-    set_zero_psi(H_wfc_XC);
+    H_wfc_TV.zero_out();
+    H_wfc_hartree.zero_out();
+    H_wfc_XC.zero_out();
 
     // just for temperate. in the future when realize psiDotPsi() without pzgemm_/pdgemm_,we don't need it
     const int nrow_bands = para_Eij.get_row_size();

@@ -122,6 +122,7 @@ class RDMFT
     Exx_LRI<double> Vxc_fromRI_d;   // (GlobalC::exx_info.info_ri)
     Exx_LRI<std::complex<double>> Vxc_fromRI_c;
 
+    void init(Gint_Gamma* GG_in, Gint_k* GK_in, Parallel_Orbitals* ParaV_in, UnitCell& cell);
 
   private:
     
