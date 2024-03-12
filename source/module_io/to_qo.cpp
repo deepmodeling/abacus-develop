@@ -217,14 +217,20 @@ void toQO::calculate_ovlpR(const int iR)
     {
         //         it,  ia,  li,  izeta, mi
         std::tuple<int, int, int, int, int> orb1 = rindex_ao_[irow];
+        int it = std::get<0>(orb1);
+        int ia = std::get<1>(orb1);
+        int li = std::get<2>(orb1);
+        int izeta = std::get<3>(orb1);
+        int mi = std::get<4>(orb1);
         for(int icol = 0; icol < nphi_; icol++)
         {
             //         jt,  ja,  lj,  jzeta, mj
             std::tuple<int, int, int, int, int> orb2 = rindex_nao_[icol];
-            int it = std::get<0>(orb1);
-            int ia = std::get<1>(orb1);
             int jt = std::get<0>(orb2);
             int ja = std::get<1>(orb2);
+            int lj = std::get<2>(orb2);
+            int jzeta = std::get<3>(orb2);
+            int mj = std::get<4>(orb2);
             ModuleBase::Vector3<double> rij = p_ucell_->atoms[jt].tau[ja] - p_ucell_->atoms[it].tau[ia];
             // there is waste here, but for easy to understand, I don't optimize it.
             ModuleBase::Vector3<int> R = supercells_[iR];
@@ -239,10 +245,13 @@ void toQO::calculate_ovlpR(const int iR)
                           + double(R.y) * p_ucell_->a2.z 
                           + double(R.z) * p_ucell_->a3.z;
             Rij *= p_ucell_->lat0; // convert to Bohr
+            // print two-center integrals related variables in one line
+            printf("it: %d, ia: %d, li: %d, izeta: %d, mi: %d, jt: %d, ja: %d, lj: %d, jzeta: %d, mj: %d, Rij: %f %f %f\n", 
+                it, ia, li, izeta, mi, jt, ja, lj, jzeta, mj, Rij.x, Rij.y, Rij.z);
             overlap_calculator_->calculate(
-                it, std::get<2>(orb1), std::get<3>(orb1), std::get<4>(orb1),
-                jt, std::get<2>(orb2), std::get<3>(orb2), std::get<4>(orb2),
-                Rij, &ovlpR_[irow*nchi_+icol]
+                it, li, izeta, mi,
+                jt, lj, jzeta, mj,
+                Rij, &ovlpR_[irow*nphi_+icol]
             );
         }
     }

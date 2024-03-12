@@ -305,10 +305,8 @@ void toQO::append_ovlpR_eiRk(int ik, int iR)
     double sinp, cosp;
     ModuleBase::libm::sincos(arg, &sinp, &cosp);
     std::complex<double> phase = std::complex<double>(cosp, sinp);
-    std::transform(ovlpR_.begin(), ovlpR_.end(), ovlpk_.begin(), ovlpk_.begin(),
-        [&](const double& ovlpR, const std::complex<double>& ovlpk) {
-            return ovlpR * phase + ovlpk;
-        });
+    // add all values of ovlpR_ to ovlpk_ with multiplication of phase
+    for(int i = 0; i < nchi_ * nphi_; i++) ovlpk_[i] += ovlpR_[i] * phase;
 }
 
 // template function definition
