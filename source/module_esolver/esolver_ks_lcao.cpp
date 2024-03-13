@@ -44,7 +44,8 @@
 // test RDMFT
 #include <iostream>
 #include "module_rdmft/rdmft_test.h"
-
+#include "module_rdmft/rdmft.h"
+// #include "module_rdmft/rdmft_tools.h"
 
 namespace ModuleESolver
 {
@@ -224,8 +225,10 @@ namespace ModuleESolver
     }
 
     // add by JingangHan for rdmft calculation
-    rdmft_solver.init( &(this->UHM.GG), &(this->UHM.GK), &(this->orb_con.ParaV), ucell );
-
+    if( GlobalV::CALCULATION == "rdmft" || true )
+    { 
+        rdmft_solver.init( &(this->UHM.GG), &(this->UHM.GK), &(this->orb_con.ParaV), &ucell, &(this->kv) );
+    }
 }
 
     template <typename TK, typename TR>

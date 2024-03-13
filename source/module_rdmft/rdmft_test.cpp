@@ -402,20 +402,6 @@ double occNum_func(double eta, int symbol, const std::string XC_func_rdmft, doub
 
 
 
-template <typename TK, typename TR, typename T_Gint>
-RDMFT<TK, TR, T_Gint>::RDMFT()
-{
-
-}
-
-template <typename TK, typename TR, typename T_Gint>
-RDMFT<TK, TR, T_Gint>::~RDMFT()
-{
-    
-    
-}
-
-
 
 
 

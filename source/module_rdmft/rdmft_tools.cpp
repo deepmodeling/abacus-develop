@@ -2,7 +2,8 @@
 // Author: Jingang Han
 // DATE : 2024-03-11
 //==========================================================
-#include "rdmft.h"
+// #include "rdmft.h"
+#include "module_rdmft/rdmft_tools.h"
 
 #include "module_base/blas_connector.h"
 #include "module_base/scalapack_connector.h"

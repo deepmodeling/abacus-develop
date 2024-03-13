@@ -16,6 +16,10 @@
 #include "module_io/output_mat_sparse.h"
 #include "module_basis/module_nao/two_center_bundle.h"
 #include <memory>
+
+// add by JingangHan for rdmft calculation
+#include "module_rdmft/rdmft.h"
+
 namespace ModuleESolver
 {
     template <typename TK, typename TR>
