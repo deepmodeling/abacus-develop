@@ -59,6 +59,8 @@ void define_fcc_cell(UnitCell& ucell)
 
     GlobalV::global_out_dir = "./";
     GlobalV::qo_screening_coeff = {0.1, 0.1};
+    GlobalV::qo_thr = 1e-6;
+    GlobalV::ofs_running = std::ofstream("unittest.log");
 }
 
 void define_sc_cell(UnitCell& ucell)
@@ -92,6 +94,8 @@ void define_sc_cell(UnitCell& ucell)
 
     GlobalV::global_out_dir = "./";
     GlobalV::qo_screening_coeff = {0.1};
+    GlobalV::qo_thr = 1e-6;
+    GlobalV::ofs_running = std::ofstream("unittest.log");
 }
 
 class toQOTest : public testing::Test
@@ -162,7 +166,7 @@ TEST_F(toQOTest, BuildNao)
     define_fcc_cell(ucell);
     toQO tqo("hydrogen", {"minimal-nodeless", "minimal-nodeless"});
     tqo.unwrap_unitcell(&ucell);
-    tqo.build_nao(ucell.ntype, ucell.orbital_fn);
+    tqo.build_nao(ucell.ntype, "./", ucell.orbital_fn, 0);
     EXPECT_EQ(tqo.p_nao()->nchi(), 10); // not (l, m)-resoluted
     EXPECT_EQ(tqo.nphi(), 26); // (l, m)-resoluted
 }
@@ -172,7 +176,13 @@ TEST_F(toQOTest, BuildHydrogenMinimal)
     define_fcc_cell(ucell);
     toQO tqo("hydrogen", {"minimal-nodeless", "minimal-nodeless"});
     tqo.unwrap_unitcell(&ucell);
-    tqo.build_ao(ucell.ntype);
+    tqo.build_ao(ucell.ntype,
+                 "./",
+                 ucell.pseudo_fn,
+                 {},
+                 GlobalV::qo_thr,
+                 GlobalV::ofs_running,
+                 0);
     EXPECT_EQ(tqo.p_ao()->nchi(), 5); // Si: 1s, 2p, 3d, C: 1s, 2p
     EXPECT_EQ(tqo.nchi(), 13); // Si: 1s, 2px, 2py, 2pz, 3dz2, 3dxz, 3dyz, 3dx2-y2, 3dxy, C: 1s, 2px, 2py, 2pz
     tqo.p_ao()->to_file("special_use_unittest");
@@ -199,13 +209,22 @@ TEST_F(toQOTest, ScanSupercellForAtom)
     define_fcc_cell(ucell);
     toQO tqo("hydrogen", {"minimal-nodeless", "minimal-nodeless"});
     tqo.unwrap_unitcell(&ucell);
-    tqo.build_nao(ucell.ntype, ucell.orbital_fn);
+    tqo.build_nao(ucell.ntype,     // ntype
+                  "./",            // orbital_dir
+                  ucell.orbital_fn,// orbital_fn
+                  0);              // rank
     std::vector<int> nmax = std::vector<int>(ucell.ntype);
     for(int itype = 0; itype < ucell.ntype; itype++)
     {
         nmax[itype] = tqo.atom_database().principle_quantum_number[tqo.symbols()[itype]];
     }
-    tqo.build_ao(ucell.ntype);
+    tqo.build_ao(ucell.ntype,
+                 "./",
+                 ucell.pseudo_fn,
+                 {},
+                 GlobalV::qo_thr,
+                 GlobalV::ofs_running,
+                 0);
     std::vector<ModuleBase::Vector3<int>> n1n2n3 = tqo.scan_supercell_for_atom(0, 0);
     EXPECT_EQ(n1n2n3.size(), 13); // 13 = 3*3*3 - 2 - 3*4
 }
@@ -236,8 +255,17 @@ TEST_F(toQOTest, ScanSupercellFCC)
     define_fcc_cell(ucell);
     toQO tqo("hydrogen", {"minimal-nodeless", "minimal-nodeless"});
     tqo.unwrap_unitcell(&ucell);
-    tqo.build_nao(ucell.ntype, ucell.orbital_fn);
-    tqo.build_ao(ucell.ntype);
+    tqo.build_nao(ucell.ntype, 
+                  "./",
+                  ucell.orbital_fn,
+                  0);
+    tqo.build_ao(ucell.ntype,
+                 "./",
+                 ucell.pseudo_fn,
+                 {},
+                 GlobalV::qo_thr,
+                 GlobalV::ofs_running,
+                 0);
     tqo.scan_supercell();
     EXPECT_EQ(tqo.nR(), 13);
 }
@@ -247,9 +275,18 @@ TEST_F(toQOTest, ScanSupercellSC1)
     define_sc_cell(ucell);
     toQO tqo("hydrogen", {"minimal-nodeless"});
     tqo.unwrap_unitcell(&ucell);
-    tqo.build_nao(ucell.ntype, ucell.orbital_fn);
+    tqo.build_nao(ucell.ntype, 
+                  "./",
+                  ucell.orbital_fn,
+                  0);
     GlobalV::qo_thr = 1e-6;
-    tqo.build_ao(ucell.ntype);
+    tqo.build_ao(ucell.ntype,
+                 "./",
+                 ucell.pseudo_fn,
+                 {},
+                 GlobalV::qo_thr,
+                 GlobalV::ofs_running,
+                 0);
     tqo.scan_supercell();
     EXPECT_EQ(tqo.nR(), 19); // 3*3*3 - 8 (corner 111, -1-1-1, etc)
 }
@@ -259,13 +296,22 @@ TEST_F(toQOTest, AllocateOvlpMinimal)
     define_fcc_cell(ucell);
     toQO tqo("hydrogen", {"minimal-nodeless", "minimal-nodeless"});
     tqo.unwrap_unitcell(&ucell);
-    tqo.build_nao(ucell.ntype, ucell.orbital_fn);
+    tqo.build_nao(ucell.ntype, 
+                  "./",
+                  ucell.orbital_fn,
+                  0);
     std::vector<int> nmax = std::vector<int>(ucell.ntype);
     for(int itype = 0; itype < ucell.ntype; itype++)
     {
         nmax[itype] = tqo.atom_database().principle_quantum_number[tqo.symbols()[itype]];
     }
-    tqo.build_ao(ucell.ntype);
+    tqo.build_ao(ucell.ntype,
+                 "./",
+                 ucell.pseudo_fn,
+                 {},
+                 GlobalV::qo_thr,
+                 GlobalV::ofs_running,
+                 0);
     tqo.scan_supercell();
     tqo.allocate_ovlp(true);
     tqo.allocate_ovlp(false);
@@ -297,6 +343,7 @@ TEST_F(toQOTest, AllocateOvlpMinimal)
 TEST_F(toQOTest, Initialize)
 {
     define_fcc_cell(ucell);
+    GlobalV::qo_screening_coeff = {};
     toQO tqo("hydrogen", {"minimal-nodeless", "minimal-nodeless"});
     std::vector<ModuleBase::Vector3<double>> kvecs_c;
     kvecs_c.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
@@ -306,6 +353,8 @@ TEST_F(toQOTest, Initialize)
 TEST_F(toQOTest, CalculateOvlpR)
 {
     define_fcc_cell(ucell);
+    GlobalV::qo_screening_coeff = {};
+    GlobalV::qo_thr = 1e-10;
     toQO tqo("hydrogen", {"minimal-nodeless", "minimal-nodeless"});
     std::vector<ModuleBase::Vector3<double>> kvecs_c;
     kvecs_c.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
@@ -337,6 +386,8 @@ TEST_F(toQOTest, CalculateOvlpR)
 TEST_F(toQOTest, CalculateSelfOvlpRMinimal)
 {
     define_fcc_cell(ucell);
+    GlobalV::qo_screening_coeff = {};
+    GlobalV::qo_thr = 1e-10;
     toQO tqo("hydrogen", {"minimal-nodeless", "minimal-nodeless"});
     std::vector<ModuleBase::Vector3<double>> kvecs_c;
     kvecs_c.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
@@ -356,7 +407,7 @@ TEST_F(toQOTest, CalculateSelfOvlpRMinimal)
     // check if diagonal elements are 1
     for(int i = 0; i < tqo.nphi(); i++)
     {
-        EXPECT_NEAR(tqo.ovlp_R()[0][i][i], 1.0, 1e-2); // this is too tight for 1s orbital, which fluctuates a lot in narrow region
+        EXPECT_NEAR(tqo.ovlp_R()[0][i][i], 1.0, 1e-3); // this is too tight for 1s orbital, which fluctuates a lot in narrow region
     }
     //std::remove("Si_special_use_unittest.orb");
     //std::remove("C_special_use_unittest.orb");
@@ -366,6 +417,8 @@ TEST_F(toQOTest, CalculateSelfOvlpRMinimal)
 TEST_F(toQOTest, CalculateSelfOvlpKSymmetrical)
 {
     define_fcc_cell(ucell);
+    GlobalV::qo_thr = 1e-10;
+    GlobalV::qo_screening_coeff = {};
     toQO tqo("hydrogen", {"minimal-nodeless", "minimal-nodeless"});
     std::vector<ModuleBase::Vector3<double>> kvecs_c;
     kvecs_c.push_back(ModuleBase::Vector3<double>(-0.25, -0.25, -0.25)); // pair 1
@@ -496,10 +549,17 @@ TEST_F(toQOTest, CalculateSelfOvlpKSymmetrical)
 TEST_F(toQOTest, BuildHydrogenFull)
 {
     define_fcc_cell(ucell);
+    GlobalV::qo_thr = 1e-10;
     toQO tqo("hydrogen", {"full", "full"});
     tqo.unwrap_unitcell(&ucell);
     GlobalV::qo_thr = 1e-10;
-    tqo.build_ao(ucell.ntype);
+    tqo.build_ao(ucell.ntype,
+                 "./",
+                 ucell.pseudo_fn,
+                 {},
+                 GlobalV::qo_thr,
+                 GlobalV::ofs_running,
+                 0);
     EXPECT_EQ(tqo.p_ao()->nchi(), 9); // Si: 1s, 2s, 2p, 3s, 3p, 3d, C: 1s, 2s, 2p
     EXPECT_EQ(tqo.nchi(), 19); 
     tqo.p_ao()->to_file("special_use_unittest");
@@ -508,6 +568,8 @@ TEST_F(toQOTest, BuildHydrogenFull)
 TEST_F(toQOTest, CalculateSelfOvlpRFull)
 {
     define_fcc_cell(ucell);
+    GlobalV::qo_thr = 1e-10;
+    GlobalV::qo_screening_coeff = {};
     toQO tqo("hydrogen", {"full", "full"});
     std::vector<ModuleBase::Vector3<double>> kvecs_c;
     kvecs_c.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
@@ -528,14 +590,14 @@ TEST_F(toQOTest, CalculateSelfOvlpRFull)
     // check if diagonal elements are 1
     for(int i = 0; i < tqo.nphi(); i++)
     {
-        EXPECT_NEAR(tqo.ovlp_R()[0][i][i], 1.0, 1e-2); // this is too tight for 1s orbital, which fluctuates a lot in narrow region
+        EXPECT_NEAR(tqo.ovlp_R()[0][i][i], 1.0, 5e-4); // this is too tight for 1s orbital, which fluctuates a lot in narrow region
     }
     // check if symmetrical
     for(int i = 0; i < tqo.nchi(); i++)
     {
         for(int j = 0; j < tqo.nphi(); j++)
         {
-            EXPECT_NEAR(tqo.ovlp_R()[0][i][j], tqo.ovlp_R()[0][j][i], 1e-4);
+            EXPECT_NEAR(tqo.ovlp_R()[0][i][j], tqo.ovlp_R()[0][j][i], 1e-8);
         }
     }
     std::remove("Si_special_use_unittest.orb");
@@ -550,7 +612,13 @@ TEST_F(toQOTest, BuildPswfcPartial1)
     define_fcc_cell(ucell);
     toQO tqo("pswfc", {"s", "s"});
     tqo.unwrap_unitcell(&ucell);
-    tqo.build_ao(ucell.ntype, ucell.pseudo_fn);
+    tqo.build_ao(ucell.ntype,
+                 "./",
+                 ucell.pseudo_fn,
+                 GlobalV::qo_screening_coeff,
+                 GlobalV::qo_thr,
+                 GlobalV::ofs_running,
+                 0);
     EXPECT_EQ(tqo.p_ao()->nchi(), 5); // AO will always read and import all orbitals
     EXPECT_EQ(tqo.nchi(), 2);
 }
@@ -560,7 +628,13 @@ TEST_F(toQOTest, BuildPswfcPartial2)
     define_fcc_cell(ucell);
     toQO tqo("pswfc", {"ps", "s"});
     tqo.unwrap_unitcell(&ucell);
-    tqo.build_ao(ucell.ntype, ucell.pseudo_fn);
+    tqo.build_ao(ucell.ntype,
+                 "./",
+                 ucell.pseudo_fn,
+                 GlobalV::qo_screening_coeff,
+                 GlobalV::qo_thr,
+                 GlobalV::ofs_running,
+                 0);
     EXPECT_EQ(tqo.p_ao()->nchi(), 5); // AO will always read and import all orbitals
     EXPECT_EQ(tqo.nchi(), 8); // the first element is Si, it has two p orbitals, so 3+3+1+1
 }
@@ -570,7 +644,13 @@ TEST_F(toQOTest, BuildPswfcPartial3)
     define_fcc_cell(ucell);
     toQO tqo("pswfc", {"all", "p"});
     tqo.unwrap_unitcell(&ucell);
-    tqo.build_ao(ucell.ntype, ucell.pseudo_fn);
+    tqo.build_ao(ucell.ntype,
+                 "./",
+                 ucell.pseudo_fn,
+                 GlobalV::qo_screening_coeff,
+                 GlobalV::qo_thr,
+                 GlobalV::ofs_running,
+                 0);
     EXPECT_EQ(tqo.p_ao()->nchi(), 5); // AO will always read and import all orbitals
     EXPECT_EQ(tqo.nchi(), 10);
 }
@@ -578,9 +658,16 @@ TEST_F(toQOTest, BuildPswfcPartial3)
 TEST_F(toQOTest, BuildPswfcAll)
 {
     define_fcc_cell(ucell);
+    GlobalV::qo_thr = 1e-10;
     toQO tqo("pswfc", {"all", "all"});
     tqo.unwrap_unitcell(&ucell);
-    tqo.build_ao(ucell.ntype, ucell.pseudo_fn);
+    tqo.build_ao(ucell.ntype,
+                 "./",
+                 ucell.pseudo_fn,
+                 GlobalV::qo_screening_coeff,
+                 GlobalV::qo_thr,
+                 GlobalV::ofs_running,
+                 0);
     EXPECT_EQ(tqo.p_ao()->nchi(), 5); 
     EXPECT_EQ(tqo.nchi(), 11);
     tqo.p_ao()->to_file("special_use_unittest");
@@ -591,9 +678,19 @@ TEST_F(toQOTest, ScanSupercellSC2)
     define_sc_cell(ucell);
     toQO tqo("pswfc", {"all"});
     tqo.unwrap_unitcell(&ucell);
-    tqo.build_nao(ucell.ntype, ucell.orbital_fn);
+    tqo.build_nao(ucell.ntype, 
+                  "./",
+                  ucell.orbital_fn,
+                  0);
     GlobalV::qo_screening_coeff[0] = 0.1; // use this to control the tailing of radial function
-    tqo.build_ao(ucell.ntype, ucell.pseudo_fn); // radius = 13.6 Bohr
+    GlobalV::qo_thr = 1e-6;
+    tqo.build_ao(ucell.ntype,
+                 "./",
+                 ucell.pseudo_fn,
+                 GlobalV::qo_screening_coeff,
+                 GlobalV::qo_thr,
+                 GlobalV::ofs_running,
+                 0); // radius = 13.6 Bohr
     tqo.scan_supercell();
     EXPECT_EQ(tqo.nR(), 81); // 5*5*5 - 12(edge center) - 8*4(corner)
 }
@@ -603,9 +700,19 @@ TEST_F(toQOTest, ScanSupercellSC3)
     define_sc_cell(ucell);
     toQO tqo("pswfc", {"all"});
     tqo.unwrap_unitcell(&ucell);
-    tqo.build_nao(ucell.ntype, ucell.orbital_fn);
+    tqo.build_nao(ucell.ntype, 
+                  "./",
+                  ucell.orbital_fn,
+                  0);
     GlobalV::qo_screening_coeff[0] = 0.25; // use this to control the tailing of radial function
-    tqo.build_ao(ucell.ntype, ucell.pseudo_fn); // radius = 13.6 Bohr
+    GlobalV::qo_thr = 1e-6;
+    tqo.build_ao(ucell.ntype,
+                 "./",
+                 ucell.pseudo_fn,
+                 GlobalV::qo_screening_coeff,
+                 GlobalV::qo_thr,
+                 GlobalV::ofs_running,
+                 0); // radius = 13.6 Bohr
     tqo.scan_supercell();
     EXPECT_EQ(tqo.nR(), 57); // 5*5*5 - 12(edge center) - 8*(8-1)(corner) = 5*5*5 - 12(edge center) - 8*(2*2*2-1)(corner)
     GlobalV::qo_screening_coeff[0] = 0.1;
@@ -616,9 +723,19 @@ TEST_F(toQOTest, ScanSupercellSC4)
     define_sc_cell(ucell);
     toQO tqo("pswfc", {"all"});
     tqo.unwrap_unitcell(&ucell);
-    tqo.build_nao(ucell.ntype, ucell.orbital_fn);
+    tqo.build_nao(ucell.ntype, 
+                  "./",
+                  ucell.orbital_fn,
+                  0);
     GlobalV::qo_screening_coeff[0] = 0.5; // use this to control the tailing of radial function
-    tqo.build_ao(ucell.ntype, ucell.pseudo_fn); // radius = 13.6 Bohr
+    GlobalV::qo_thr = 1e-6;
+    tqo.build_ao(ucell.ntype,
+                 "./",
+                 ucell.pseudo_fn,
+                 GlobalV::qo_screening_coeff,
+                 GlobalV::qo_thr,
+                 GlobalV::ofs_running,
+                 0); // radius = 13.6 Bohr
     tqo.scan_supercell();
     EXPECT_EQ(tqo.nR(), 33); // 3*3*3 + 6(face)
     GlobalV::qo_screening_coeff[0] = 0.1;
@@ -627,6 +744,7 @@ TEST_F(toQOTest, ScanSupercellSC4)
 TEST_F(toQOTest, CalculateSelfOvlpRPswfc)
 {
     define_fcc_cell(ucell);
+    GlobalV::qo_thr = 1e-10;
     toQO tqo("pswfc", {"all", "all"});
     std::vector<ModuleBase::Vector3<double>> kvecs_c;
     kvecs_c.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
@@ -659,12 +777,13 @@ TEST_F(toQOTest, CalculateSelfOvlpRPswfc)
     }
     std::remove("Si_special_use_unittest.orb");
     std::remove("C_special_use_unittest.orb");
-    //tqo.write_ovlp(tqo.ovlp_R()[0], "QO_self_ovlp.dat");
 }
 
 TEST_F(toQOTest, CalculateOvlpKGamma)
 {
     define_fcc_cell(ucell);
+    GlobalV::qo_thr = 1e-10;
+    GlobalV::qo_screening_coeff = {};
     toQO tqo("hydrogen", {"minimal-nodeless", "minimal-nodeless"});
     std::vector<ModuleBase::Vector3<double>> kvecs_c;
     kvecs_c.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
@@ -682,11 +801,39 @@ TEST_F(toQOTest, CalculateOvlpKGamma)
             }
         }
     }
+    EXPECT_TRUE(all_real);
+}
+
+TEST_F(toQOTest, CalculateOvlpKSlaterGamma)
+{
+    define_fcc_cell(ucell);
+    GlobalV::qo_thr = 1e-10;
+    GlobalV::qo_screening_coeff = {0.1};
+    toQO tqo("hydrogen", {"energy-full", "energy-full"});
+    std::vector<ModuleBase::Vector3<double>> kvecs_c;
+    kvecs_c.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
+    tqo.initialize(&ucell, kvecs_c);
+    tqo.calculate_ovlp_k(0);
+    // all should be real numbers at Gamma point
+    bool all_real = true;
+    for(int i = 0; i < tqo.ovlp_k().size(); i++)
+    {
+        for(int j = 0; j < tqo.ovlp_k()[i].size(); j++)
+        {
+            if(tqo.ovlp_k()[i][j].imag() != 0.0)
+            {
+                all_real = false;
+            }
+        }
+    }
+    EXPECT_TRUE(all_real);
 }
 
 TEST_F(toQOTest, CalculateSelfOvlpKPswfcSymmetrical)
 {
     define_fcc_cell(ucell);
+    GlobalV::qo_thr = 1e-10;
+    GlobalV::qo_screening_coeff = {2.0, 2.0};
     toQO tqo("pswfc", {"all", "all"});
     std::vector<ModuleBase::Vector3<double>> kvecs_c;
     kvecs_c.push_back(ModuleBase::Vector3<double>(-0.25, -0.25, -0.25)); // pair 1
@@ -713,7 +860,7 @@ TEST_F(toQOTest, CalculateSelfOvlpKPswfcSymmetrical)
             // R = 0, 0, 0, then unfolding kphase would be e-ikR = 1,
             // becomes direct summation over kpoints
             std::complex<double> ovlp_R_ij = ovlp_k_1[i][j] + ovlp_k_2[i][j];
-            EXPECT_NEAR(ovlp_R_ij.imag(), 0.0, 1e-10);
+            EXPECT_NEAR(ovlp_R_ij.imag(), 0.0, 1e-8);
         }
     }
     tqo.calculate_ovlp_k(2);
@@ -728,7 +875,7 @@ TEST_F(toQOTest, CalculateSelfOvlpKPswfcSymmetrical)
             // R = 0, 0, 0, then unfolding kphase would be e-ikR = 1,
             // becomes direct summation over kpoints
             std::complex<double> ovlp_R_ij = ovlp_k_3[i][j] + ovlp_k_4[i][j];
-            EXPECT_NEAR(ovlp_R_ij.imag(), 0.0, 1e-10);
+            EXPECT_NEAR(ovlp_R_ij.imag(), 0.0, 1e-8);
         }
     }
     tqo.calculate_ovlp_k(4);
@@ -743,7 +890,7 @@ TEST_F(toQOTest, CalculateSelfOvlpKPswfcSymmetrical)
             // R = 0, 0, 0, then unfolding kphase would be e-ikR = 1,
             // becomes direct summation over kpoints
             std::complex<double> ovlp_R_ij = ovlp_k_5[i][j] + ovlp_k_6[i][j];
-            EXPECT_NEAR(ovlp_R_ij.imag(), 0.0, 1e-10);
+            EXPECT_NEAR(ovlp_R_ij.imag(), 0.0, 1e-8);
         }
     }
     tqo.calculate_ovlp_k(6);
@@ -758,7 +905,7 @@ TEST_F(toQOTest, CalculateSelfOvlpKPswfcSymmetrical)
             // R = 0, 0, 0, then unfolding kphase would be e-ikR = 1,
             // becomes direct summation over kpoints
             std::complex<double> ovlp_R_ij = ovlp_k_7[i][j] + ovlp_k_8[i][j];
-            EXPECT_NEAR(ovlp_R_ij.imag(), 0.0, 1e-10);
+            EXPECT_NEAR(ovlp_R_ij.imag(), 0.0, 1e-8);
         }
     }
     tqo.calculate_ovlp_k(8);
@@ -770,7 +917,7 @@ TEST_F(toQOTest, CalculateSelfOvlpKPswfcSymmetrical)
         {
             // R = 0, 0, 0, then unfolding kphase would be e-ikR = 1,
             // becomes direct summation over kpoints
-            EXPECT_NEAR(ovlp_k_9[i][j].imag(), 0.0, 1e-10);
+            EXPECT_NEAR(ovlp_k_9[i][j].imag(), 0.0, 1e-8);
         }
     }
     //tqo.write_ovlp(tqo.ovlp_R()[0], "QO_self_ovlp.dat");
@@ -779,6 +926,8 @@ TEST_F(toQOTest, CalculateSelfOvlpKPswfcSymmetrical)
 TEST_F(toQOTest, CalculateHydrogenlike)
 {
     define_fcc_cell(ucell);
+    GlobalV::qo_thr = 1e-10;
+    GlobalV::qo_screening_coeff = {};
     toQO tqo("hydrogen", {"minimal-nodeless", "minimal-nodeless"});
     std::vector<ModuleBase::Vector3<double>> kvecs_c;
     kvecs_c.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point

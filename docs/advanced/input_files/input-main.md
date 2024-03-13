@@ -17,6 +17,7 @@
     - [init\_chg](#init_chg)
     - [init\_vel](#init_vel)
     - [nelec](#nelec)
+    - [nelec_delta](#nelec_delta)
     - [nupdown](#nupdown)
     - [dft\_functional](#dft_functional)
     - [xc\_temperature](#xc_temperature)
@@ -550,6 +551,13 @@ These variables are used to control general system parameters.
   - `>0.0`: this denotes the total number of electrons in the system. Must be less than 2*nbands. 
 - **Default**: 0.0
 
+### nelec_delta
+
+- **Type**: Real
+- **Description**: 
+ the total number of electrons will be calculated by `nelec`+`nelec_delta`.
+- **Default**: 0.0
+
 ### nupdown
 
 - **Type**: Real
@@ -1011,16 +1019,16 @@ Note that `mixing_beta_mag` is not euqal to `mixing_beta` means that $\rho_{up}$
 
 ### mixing_restart
 
-- **Type**: Integer
-- **Description**: At `mixing_restart`-th iteration, SCF will restart by using output charge density from perivos iteration as input charge density directly, and start a new mixing. `mixing_restart=0|1` means SCF starts from scratch.
+- **Type**: double
+- **Description**: If the density difference between input and output `drho` is smaller than `mixing_restart`, SCF will restart at next step which means SCF will restart by using output charge density from perivos iteration as input charge density directly, and start a new mixing. Notice that `mixing_restart` will only take effect once in one SCF.
   
 - **Default**: 0
 
 ### mixing_dmr
 
 - **Type**: bool
-- **Availability**: Only for `mixing_restart>=2`
-- **Description**: At `mixing_restart`-th iteration, SCF will start a mixing for real-space density matrix by using the same coefficiences as the mixing of charge density.
+- **Availability**: Only for `mixing_restart>=0.0`
+- **Description**: At n-th iteration which is calculated by `drho<mixing_restart`, SCF will start a mixing for real-space density matrix by using the same coefficiences as the mixing of charge density.
   
 - **Default**: false
 
@@ -3524,7 +3532,8 @@ These variables are used to control the usage of QO analysis. Please note presen
   - `minimal-nodeless`: according to principle quantum number of the highest occupied state, generate only nodeless orbitals, for example Cu, only generate 1s, 2p, 3d and 4f orbitals (for Cu, 4s is occupied, thus $n_{max} = 4$)
   - `minimal-valence`: according to principle quantum number of the highest occupied state, generate only orbitals with highest principle quantum number, for example Cu, only generate 4s, 4p, 4d and 4f orbitals.
   - `full`: similarly according to the maximal principle quantum number, generate all possible orbitals, therefore for Cu, for example, will generate 1s, 2s, 2p, 3s, 3p, 3d, 4s, 4p, 4d, 4f.
-  - `energy`: will generate hydrogen-like orbitals according to Aufbau principle. For example the Cu (1s2 2s2 2p6 3s2 3p6 3d10 4s1), will generate these orbitals.
+  - `energy-full`: will generate hydrogen-like orbitals according to Aufbau principle. For example the Cu (1s2 2s2 2p6 3s2 3p6 3d10 4s1), will generate these orbitals.
+  - `energy-valence`: from the highest n (principal quantum number) layer and n-1 layer, generate all occupied and possible ls (angular momentum quantum number) for only once, for example Cu, will generate 4s, 3d and 3p orbitals.
 
   For `qo_basis pswfc`
   - `all`: use all possible pseudowavefunctions in pseudopotential file.
@@ -3537,8 +3546,13 @@ These variables are used to control the usage of QO analysis. Please note presen
 ### qo_screening_coeff
 
 - **Type**: Real \[Real...\](optional)
-- **Availability**: for `qo_basis pswfc` only.
-- **Description**: for each atom type, screening factor $e^{-\eta|\mathbf{r}|}$ is multiplied to the pswfc to mimic the behavior of some kind of electron. $\eta$ is the screening coefficient. If only one value is given, then will apply to each atom type. If not enough values are given, will apply default value to rest of atom types. This parameter plays important role in controlling the spread of QO orbitals together with `qo_thr`.
+- **Description**: rescale the shape of radial orbitals, available for both `qo_basis hydrogen` and `qo_basis pswfc`. cases but has different meaning.
+  
+  For `qo_basis pswfc`  
+  For each atom type, screening factor $e^{-\eta|\mathbf{r}|}$ is multiplied to the pswfc to mimic the behavior of some kind of electron. $\eta$ is the screening coefficient. If only one value is given, then will apply to each atom type. If not enough values are given, will apply default value to rest of atom types. This parameter plays important role in controlling the spread of QO orbitals together with `qo_thr`.
+
+  For `qo_basis hydrogen`  
+  If any float number is given, will apply Slater screening to all atom types. Slater screening is a classic and empirical method roughly taking many-electron effect into account for obtaining more accurate results when evaluating electron affinity and ionization energy. The Coulomb potential then becomes $V(r) = -\frac{Z-\sigma}{r}$. For example the effective nuclear charge for Cu 3d electrons now reduces from 29 to 7.85, 4s from 29 to 3.70, which means Slater screening will bring about longer tailing effect. If no value is given, will not apply Slater screening.
 - **Default**: 0.1
 - **Unit**: Bohr^-1
 

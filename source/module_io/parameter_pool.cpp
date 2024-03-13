@@ -820,7 +820,7 @@ void input_parameters_set(std::map<std::string, InputParameter> input_parameters
     }
     else if (input_parameters.count("mixing_restart") != 0)
     {
-        INPUT.mixing_restart = *static_cast<int*>(input_parameters["mixing_restart"].get());
+        INPUT.mixing_restart = *static_cast<double*>(input_parameters["mixing_restart"].get());
     }
     else if (input_parameters.count("mixing_gg0") != 0)
     {
@@ -1290,6 +1290,10 @@ void input_parameters_set(std::map<std::string, InputParameter> input_parameters
     else if (input_parameters.count("out_efield") != 0)
     {
         INPUT.out_efield = *static_cast<bool*>(input_parameters["out_efield"].get());
+    }
+    else if (input_parameters.count("out_current") != 0)
+    {
+        INPUT.out_current = *static_cast<bool*>(input_parameters["out_current"].get());
     }
     else if (input_parameters.count("td_print_eij") != 0)
     {

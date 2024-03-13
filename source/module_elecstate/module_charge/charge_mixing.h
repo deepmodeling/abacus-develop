@@ -99,6 +99,9 @@ class Charge_Mixing
     double get_mixing_gg0() const {return mixing_gg0;}
     Base_Mixing::Mixing* get_mixing() const {return mixing;}
 
+    // for mixing restart
+    int mixing_restart = 0; //which step to restart mixing during SCF
+
   private:
   
     // mixing_data
@@ -132,7 +135,7 @@ class Charge_Mixing
      * @brief charge mixing for reciprocal space
      * @param chr pointer of Charge object
      */
-    void mix_rho_recip_new(Charge* chr);
+    void mix_rho_recip(Charge* chr);
 
     /**
      * @brief charge mixing for real space
@@ -145,7 +148,6 @@ class Charge_Mixing
      * @param rhog charge density in reciprocal space
      */
     void Kerker_screen_recip(std::complex<double>* rhog);
-    void Kerker_screen_recip_new(std::complex<double>* rhog);
 
     /**
      * @brief Kerker screen method for real space
@@ -155,20 +157,20 @@ class Charge_Mixing
 
     /**
      * @brief Inner product of two complex vectors
-     * 
+     * @brief inner_product_recip_rho is used for charge, like get_drho()
+     * @brief inner_product_recip_hartree and inner_product_recip_simple are used for charge mixing
+     * @brief inner_product_recip_simple is only used for test
+     * @brief Actually, I am not sure if the definition of inner product for NSPIN=4 is correct, need to be checked.
      */
-    double inner_product_recip(std::complex<double>* rho1, std::complex<double>* rho2);
-    double inner_product_recip_new1(std::complex<double>* rho1, std::complex<double>* rho2);
-    double inner_product_recip_new2(std::complex<double>* rho1, std::complex<double>* rho2);
+    double inner_product_recip_rho(std::complex<double>* rho1, std::complex<double>* rho2);
+    double inner_product_recip_simple(std::complex<double>* rho1, std::complex<double>* rho2);
+    double inner_product_recip_hartree(std::complex<double>* rho1, std::complex<double>* rho2);
 
     /**
      * @brief Inner product of two double vectors
      *
      */
     double inner_product_real(double* rho1, double* rho2);
-
-    double rhog_dot_product(const std::complex<double>* const* const rhog1,
-                            const std::complex<double>* const* const rhog2) const;
 
     /**
      * @brief divide rho/tau to smooth and high frequency parts

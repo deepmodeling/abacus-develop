@@ -32,6 +32,7 @@ class RadialCollection
     /// builds the collection from quasi hydrogen radial functions
     void build(const int ntype, 
                const double* const charges, 
+               const bool with_slater_screening,
                const int* const nmax, 
                const std::string* symbols = nullptr,
                const double conv_thr = 1e-10,
@@ -123,7 +124,15 @@ class RadialCollection
                           const bool enable_fft = false);
     ///@}
 
-    void to_file(const std::string&);
+    /**
+     * @brief export all RadialSet objects to a file in a given format.
+     * 
+     * Supported formats:  
+     * - "abacus_orb" (default): ABACUS Numerical atomic orbital format
+     */
+    void to_file(const std::string& appendix,                ///< file name
+                 const std::string& format = "abacus_orb"    ///< file format
+                 ) const;
 
   private:
     int ntype_ = 0;         ///< number of RadialSet in the collection

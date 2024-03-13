@@ -42,8 +42,8 @@ TEST_F(SpinConstrainTest, PrintTermination)
     sc.print_termination();
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Inner optimization for lambda ends."));
-    EXPECT_THAT(output, testing::HasSubstr("ATOM 1   0 0 0"));
-    EXPECT_THAT(output, testing::HasSubstr("ATOM 1   1 2 3"));
+    EXPECT_THAT(output, testing::HasSubstr("ATOM 1         0.0000000000e+00    0.0000000000e+00    0.0000000000e+00"));
+    EXPECT_THAT(output, testing::HasSubstr("ATOM 1         1.0000000000e+00    2.0000000000e+00    3.0000000000e+00"));
 }
 
 TEST_F(SpinConstrainTest, CheckRmsStop)

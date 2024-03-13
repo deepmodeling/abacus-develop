@@ -181,14 +181,14 @@ TEST_F(BasicFuncsTest, Prin2d)
     print_2d(info, array, 4);
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output,testing::HasSubstr("initial spin"));
-    EXPECT_THAT(output,testing::HasSubstr("ATOM 1   1 2 3"));
-    EXPECT_THAT(output,testing::HasSubstr("ATOM 2   4 5 6"));
-    EXPECT_THAT(output,testing::HasSubstr("ATOM 3   7 8 9"));
+    EXPECT_THAT(output,testing::HasSubstr("ATOM 1         1.0000000000e+00    2.0000000000e+00    3.0000000000e+00"));
+    EXPECT_THAT(output,testing::HasSubstr("ATOM 2         4.0000000000e+00    5.0000000000e+00    6.0000000000e+00"));
+    EXPECT_THAT(output,testing::HasSubstr("ATOM 3         7.0000000000e+00    8.0000000000e+00    9.0000000000e+00"));
     testing::internal::CaptureStdout();
     print_2d(info, array, 2);
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output,testing::HasSubstr("initial spin"));
-    EXPECT_THAT(output,testing::HasSubstr("ATOM 1   3"));
-    EXPECT_THAT(output,testing::HasSubstr("ATOM 2   6"));
-    EXPECT_THAT(output,testing::HasSubstr("ATOM 3   9"));
+    EXPECT_THAT(output,testing::HasSubstr("ATOM 1         3.0000000000e+00"));
+    EXPECT_THAT(output,testing::HasSubstr("ATOM 2         6.0000000000e+00"));
+    EXPECT_THAT(output,testing::HasSubstr("ATOM 3         9.0000000000e+00"));
 }

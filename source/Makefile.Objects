@@ -266,6 +266,8 @@ OBJS_HAMILT_LCAO=hamilt_lcao.o\
     ekinetic_new.o\
     nonlocal_new.o\
     overlap_new.o\
+    td_ekinetic_lcao.o\
+    td_nonlocal_lcao.o\
     veff_lcao.o\
     meta_lcao.o\
     op_dftu_lcao.o\
@@ -440,16 +442,17 @@ OBJS_IO=input.o\
     write_rho.o\
     write_potential.o\
     write_dipole.o\
+    td_current_io.o\
     write_wfc_r.o\
     output_log.o\
     output_rho.o\
     output_potential.o\
     output_mat_sparse.o\
-    output_radial.o\
     para_json.o\
     abacusjson.o\
     general_info.o\
-
+    init_info.o\
+    readin_info.o\
 
 OBJS_IO_LCAO=cal_r_overlap_R.o\
       write_orb_info.o\

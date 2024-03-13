@@ -68,6 +68,7 @@ void Input::Print(const std::string &fn) const
                                  "accuracy for symmetry"); // LiuXh add 2021-08-12, accuracy for symmetry
     ModuleBase::GlobalFunc::OUTP(ofs, "symmetry_autoclose", symmetry_autoclose, "whether to close symmetry automatically when error occurs in symmetry analysis");
     ModuleBase::GlobalFunc::OUTP(ofs, "nelec", nelec, "input number of electrons");
+    ModuleBase::GlobalFunc::OUTP(ofs, "nelec_delta", nelec_delta, "change in the number of total electrons");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_mul", GlobalV::out_mul, " mulliken  charge or not"); // qifeng add 2019/9/10
     ModuleBase::GlobalFunc::OUTP(ofs, "noncolin", noncolin, "using non-collinear-spin");
     ModuleBase::GlobalFunc::OUTP(ofs, "lspinorb", lspinorb, "consider the spin-orbit interaction");
@@ -248,7 +249,7 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_type", mixing_mode, "plain; pulay; broyden");
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_beta", mixing_beta, "mixing parameter: 0 means no new charge");
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_ndim", mixing_ndim, "mixing dimension in pulay or broyden");
-    ModuleBase::GlobalFunc::OUTP(ofs, "mixing_restart", mixing_restart, "which step to restart mixing during SCF");
+    ModuleBase::GlobalFunc::OUTP(ofs, "mixing_restart", mixing_restart, "threshold to restart mixing during SCF");
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_gg0", mixing_gg0, "mixing parameter in kerker");
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_beta_mag", mixing_beta_mag, "mixing parameter for magnetic density");
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_gg0_mag", mixing_gg0_mag, "mixing parameter in kerker");
@@ -404,6 +405,7 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "td_vext_dire", td_vext_dire, "extern potential direction");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_dipole", out_dipole, "output dipole or not");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_efield", out_dipole, "output dipole or not");
+    ModuleBase::GlobalFunc::OUTP(ofs, "out_current", out_current, "output current or not");
     ModuleBase::GlobalFunc::OUTP(ofs, "ocp", GlobalV::ocp, "change occupation or not");
     ModuleBase::GlobalFunc::OUTP(ofs, "ocp_set", GlobalV::ocp_set, "set occupation");
 

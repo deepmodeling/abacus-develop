@@ -3,12 +3,14 @@
 # TODO: Review and if possible fix shellcheck errors.
 # shellcheck disable=all
 
+# Last Update in 2024-0219
+
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
-openmpi_ver="4.1.5"
-openmpi_sha256="c018b127619d2a2a30c1931f316fc8a245926d0f5b4ebed4711f9695e7f70925"
-openmpi_pkg="openmpi-${openmpi_ver}.tar.gz"
+openmpi_ver="5.0.0"
+openmpi_sha256="9d845ca94bc1aeb445f83d98d238cd08f6ec7ad0f73b0f79ec1668dbfdacd613"
+openmpi_pkg="openmpi-${openmpi_ver}.tar.bz2"
 
 source "${SCRIPT_DIR}"/common_vars.sh
 source "${SCRIPT_DIR}"/tool_kit.sh
@@ -41,7 +43,7 @@ case "${with_openmpi}" in
       fi
       echo "Installing from scratch into ${pkg_install_dir}"
       [ -d openmpi-${openmpi_ver} ] && rm -rf openmpi-${openmpi_ver}
-      tar -xzf ${openmpi_pkg}
+      tar -xjf ${openmpi_pkg}
       cd openmpi-${openmpi_ver}
       if [ "${OPENBLAS_ARCH}" = "x86_64" ]; then
         # can have issue with older glibc libraries, in which case
@@ -56,17 +58,16 @@ case "${with_openmpi}" in
           CFLAGS="${CFLAGS} -fgnu89-inline"
         fi
       fi
-      if [ $(command -v srun) ]; then
-        echo "Slurm installation found. OpenMPI will be configured with --with-pmi."
-        EXTRA_CONFIGURE_FLAGS="--with-pmi"
-      else
-        EXTRA_CONFIGURE_FLAGS=""
-      fi
-      # We still require MPI-1.0-compatability for PTSCOTCH
+    # OpenMPI 5.0 only supports PMIx
+    #   if [ $(command -v srun) ]; then
+    #     echo "Slurm installation found. OpenMPI will be configured with --with-pmi."
+    #     EXTRA_CONFIGURE_FLAGS="--with-pmi"
+    #   else
+    #     EXTRA_CONFIGURE_FLAGS=""
+    #   fi
       ./configure CFLAGS="${CFLAGS}" \
         --prefix=${pkg_install_dir} \
         --libdir="${pkg_install_dir}/lib" \
-        --enable-mpi1-compatibility \
         ${EXTRA_CONFIGURE_FLAGS} \
         > configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
       make -j $(get_nprocs) > make.log 2>&1 || tail -n ${LOG_LINES} make.log
@@ -164,13 +165,13 @@ export CP_LIBS="\${CP_LIBS} IF_MPI(${OPENMPI_LIBS}|)"
 EOF
   if [ "${with_openmpi}" != "__SYSTEM__" ]; then
     cat << EOF >> "${BUILDDIR}/setup_openmpi"
-export PATH="${pkg_install_dir}/bin":$PATH
 prepend_path PATH "${pkg_install_dir}/bin"
-export LD_LIBRARY_PATH="${pkg_install_dir}/lib":$LD_LIBRARY_PATH
-export LD_RUN_PATH="${pkg_install_dir}/lib":$LD_RUN_PATH
-export LIBRARY_PATH="${pkg_install_dir}/lib":$LIBRARY_PATH
-export CPATH="${pkg_install_dir}/include":$CPATH
-export MANPATH="${pkg_install_dir}/share/man":$MANPATH
+export PATH="${pkg_install_dir}/bin":\${PATH}
+export LD_LIBRARY_PATH="${pkg_install_dir}/lib":\${LD_LIBRARY_PATH}
+export LD_RUN_PATH="${pkg_install_dir}/lib":\${LD_RUN_PATH}
+export LIBRARY_PATH="${pkg_install_dir}/lib":\${LIBRARY_PATH}
+export CPATH="${pkg_install_dir}/include":\${CPATH}
+export MANPATH="${pkg_install_dir}/share/man":\${MANPATH}
 EOF
   fi
   cat "${BUILDDIR}/setup_openmpi" >> ${SETUPFILE}

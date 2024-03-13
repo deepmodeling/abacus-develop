@@ -42,23 +42,32 @@ void toQO::initialize(UnitCell* p_ucell,
      */
     // build the numerical atomic orbital basis
     // PARALLELIZATION STRATEGY: use RANK-0 to read in the files, then broadcast
-    build_nao(p_ucell_->ntype, p_ucell_->orbital_fn);
+    build_nao(p_ucell_->ntype, 
+              GlobalV::global_orbital_dir,
+              p_ucell_->orbital_fn,
+              GlobalV::MY_RANK);
     // build another atomic orbital
     // PARALLELIZATION STRATEGY: only RANK-0 works
     #ifdef __MPI
     if(GlobalV::MY_RANK == 0)
     {
     #endif
-    build_ao(ntype_, p_ucell_->pseudo_fn);
+    build_ao(ntype_, 
+             GlobalV::global_pseudo_dir,
+             p_ucell_->pseudo_fn, 
+             GlobalV::qo_screening_coeff, 
+             GlobalV::qo_thr,
+             GlobalV::ofs_running,
+             GlobalV::MY_RANK);
     // neighbor list search
     scan_supercell();
     // build grids
     double rcut_max = std::max(nao_->rcut_max(), ao_->rcut_max());
     int ngrid = int(rcut_max / 0.01) + 1;
-    double cutoff = 2*rcut_max;
+    double cutoff = 2.0*rcut_max;
     nao_->set_uniform_grid(true, ngrid, cutoff, 'i', true);
     ao_->set_uniform_grid(true, ngrid, cutoff, 'i', true);
-    overlap_calculator_->tabulate(*ao_, *nao_, 'S', ngrid, rcut_max);
+    overlap_calculator_->tabulate(*ao_, *nao_, 'S', ngrid, cutoff);
     // prepare for Ylm
     ModuleBase::Ylm::set_coefficients();
     // END: "Two-center bundle build"
@@ -71,7 +80,10 @@ void toQO::initialize(UnitCell* p_ucell,
     #endif
 }
 
-void toQO::build_nao(const int ntype, const std::string* const orbital_fn)
+void toQO::build_nao(const int ntype, 
+                     const std::string orbital_dir,
+                     const std::string* const orbital_fn,
+                     const int rank)
 {
     // build the numerical atomic orbital basis
     ModuleBase::SphericalBesselTransformer sbt;
@@ -82,11 +94,11 @@ void toQO::build_nao(const int ntype, const std::string* const orbital_fn)
     Parallel_Common::bcast_int(ntype_);
 #endif
     std::string* orbital_fn_ = new std::string[ntype_];
-    if(GlobalV::MY_RANK == 0)
+    if(rank == 0)
     {
         for(int it = 0; it < ntype_; it++)
         {
-            orbital_fn_[it] = GlobalV::global_orbital_dir + orbital_fn[it];
+            orbital_fn_[it] = orbital_dir + orbital_fn[it];
         }
     }
 #ifdef __MPI
@@ -108,7 +120,7 @@ void toQO::build_nao(const int ntype, const std::string* const orbital_fn)
         nphi_ += _nphi_it*na_[it];
     }
     #ifdef __MPI
-    if(GlobalV::MY_RANK == 0)
+    if(rank == 0)
     {
     #endif
     printf("Build numerical atomic orbital basis done.\n");
@@ -126,10 +138,21 @@ bool toQO::orbital_filter(const int l, const std::string spec)
     else return false;
 }
 
-void toQO::build_hydrogen(const int ntype, const double* const charges, const int* const nmax)
+void toQO::build_hydrogen(const int ntype, 
+                          const double* const charges, 
+                          const bool slater_screening,
+                          const int* const nmax,
+                          const double qo_thr,
+                          const int rank)
 {
     ao_ = std::unique_ptr<RadialCollection>(new RadialCollection);
-    ao_->build(ntype, charges, nmax, symbols_.data(), GlobalV::qo_thr, strategies_.data());
+    ao_->build(ntype, 
+               charges, 
+               slater_screening, 
+               nmax, 
+               symbols_.data(), 
+               qo_thr, 
+               strategies_.data());
     ModuleBase::SphericalBesselTransformer sbt;
     ao_->set_transformer(sbt);
     
@@ -144,24 +167,30 @@ void toQO::build_hydrogen(const int ntype, const double* const charges, const in
     }
 
     #ifdef __MPI
-    if(GlobalV::MY_RANK == 0)
+    if(rank == 0)
     {
     #endif
-    printf("Build arbitrary atomic orbital basis done.\n");
+    if(nchi_ > 0) printf("Build arbitrary atomic orbital basis done.\n");
+    else ModuleBase::WARNING_QUIT("toQO::initialize", "Error: no atomic orbital is built.");
     #ifdef __MPI
     }
     #endif
 }
 
-void toQO::build_pswfc(const int ntype, const std::string* const pspot_fn, const double* const screening_coeffs)
+void toQO::build_pswfc(const int ntype, 
+                       const std::string pseudo_dir,
+                       const std::string* const pspot_fn, 
+                       const double* const screening_coeffs,
+                       const double qo_thr,
+                       const int rank)
 {
     ao_ = std::unique_ptr<RadialCollection>(new RadialCollection);
     std::string* pspot_fn_ = new std::string[ntype_];
     for(int it = 0; it < ntype; it++)
     {
-        pspot_fn_[it] = GlobalV::global_pseudo_dir + pspot_fn[it];
+        pspot_fn_[it] = pseudo_dir + pspot_fn[it];
     }
-    ao_->build(ntype, pspot_fn_, screening_coeffs, GlobalV::qo_thr);
+    ao_->build(ntype, pspot_fn_, screening_coeffs, qo_thr);
     ModuleBase::SphericalBesselTransformer sbt;
     ao_->set_transformer(sbt);
     
@@ -176,7 +205,7 @@ void toQO::build_pswfc(const int ntype, const std::string* const pspot_fn, const
     }
 
     #ifdef __MPI
-    if(GlobalV::MY_RANK == 0)
+    if(rank == 0)
     {
     #endif
     printf("Build arbitrary atomic orbital basis done.\n");
@@ -185,21 +214,66 @@ void toQO::build_pswfc(const int ntype, const std::string* const pspot_fn, const
     #endif
     delete[] pspot_fn_;
 }
-
-void toQO::build_ao(const int ntype, const std::string* const pspot_fn)
+/*
+void toQO::build_szv(const int ntype)
+{
+    // build the numerical atomic orbital basis
+    ModuleBase::SphericalBesselTransformer sbt;
+    ao_ = std::unique_ptr<RadialCollection>(new RadialCollection);
+    // add GlobalV::global_orbital_dir ahead of orbital_fn
+    int ntype_ = ntype;
+    std::vector<std::string> orbital_fn_(ntype_, "szv.orb");
+    ao_->build(ntype_, orbital_fn_.data(), 'o');
+    ao_->set_transformer(sbt);
+    for(int itype = 0; itype < ntype; itype++)
+    {
+        int _nchi_it = 0;
+        for(int l = 0; l <= ao_->lmax(itype); l++)
+        {
+            _nchi_it += (2*l+1)*ao_->nzeta(itype, l);
+        }
+        nchi_ += _nchi_it * na_[itype];
+    }
+}
+*/
+void toQO::build_ao(const int ntype, 
+                    const std::string pseudo_dir,
+                    const std::string* const pspot_fn,
+                    const std::vector<double> screening_coeffs,
+                    const double qo_thr,
+                    const std::ofstream& ofs_running,
+                    const int rank)
 {
     if(qo_basis_ == "hydrogen")
     {
-        build_hydrogen(ntype_, charges_.data(), nmax_.data());
+        bool with_slater_screening = std::find_if(screening_coeffs.begin(), screening_coeffs.end(), 
+            [](double sc) { return sc > 1e-10; }) != screening_coeffs.end();
+        build_hydrogen(ntype_, 
+                       charges_.data(),
+                       with_slater_screening, 
+                       nmax_.data(),
+                       qo_thr,
+                       rank);
     }
     else if(qo_basis_ == "pswfc")
     {
-        build_pswfc(ntype_, pspot_fn, GlobalV::qo_screening_coeff.data());
+        build_pswfc(ntype_, 
+                    pseudo_dir,
+                    pspot_fn, 
+                    screening_coeffs.data(),
+                    qo_thr,
+                    rank);
     }
+    /*
+    else if(qo_basis_ == "szv")
+    {
+        build_szv(ntype_);
+    }
+    */
     else
     {
         #ifdef __MPI
-        if(GlobalV::MY_RANK == 0)
+        if(rank == 0)
         {
         #endif
         // Not implemented error
@@ -270,19 +344,19 @@ void toQO::calculate_ovlp_R(const int iR)
                                         for(int mj : mjs)
                                         {
     // TWO ATOMIC ORBITALS ARE SPECIFIED, THEN WE NEED TO CALCULATE THE OVERLAP IN SUPERCELL
-                                            ModuleBase::Vector3<double> rij = p_ucell_->atoms[it].tau[ia] - p_ucell_->atoms[jt].tau[ja];
+                                            ModuleBase::Vector3<double> rij = p_ucell_->atoms[jt].tau[ja] - p_ucell_->atoms[it].tau[ia];
                                             // there is waste here, but for easy to understand, I don't optimize it.
                                             ModuleBase::Vector3<int> R = supercells_[iR];
                                             ModuleBase::Vector3<double> Rij;
-                                            Rij.x = rij.x + R.x * p_ucell_->a1.x 
-                                                          + R.y * p_ucell_->a2.x 
-                                                          + R.z * p_ucell_->a3.x;
-                                            Rij.y = rij.y + R.x * p_ucell_->a1.y 
-                                                          + R.y * p_ucell_->a2.y 
-                                                          + R.z * p_ucell_->a3.y;
-                                            Rij.z = rij.z + R.x * p_ucell_->a1.z 
-                                                          + R.y * p_ucell_->a2.z 
-                                                          + R.z * p_ucell_->a3.z;
+                                            Rij.x = rij.x + double(R.x) * p_ucell_->a1.x 
+                                                          + double(R.y) * p_ucell_->a2.x 
+                                                          + double(R.z) * p_ucell_->a3.x;
+                                            Rij.y = rij.y + double(R.x) * p_ucell_->a1.y 
+                                                          + double(R.y) * p_ucell_->a2.y 
+                                                          + double(R.z) * p_ucell_->a3.y;
+                                            Rij.z = rij.z + double(R.x) * p_ucell_->a1.z 
+                                                          + double(R.y) * p_ucell_->a2.z 
+                                                          + double(R.z) * p_ucell_->a3.z;
                                             Rij *= p_ucell_->lat0; // convert to Bohr
                                             overlap_calculator_->calculate(
                                                 it, li, izetai, mi,

@@ -1,7 +1,8 @@
 list(APPEND objects_json
     abacusjson.cpp
     general_info.cpp
-
+    init_info.cpp
+    readin_info.cpp
 )
 
 add_library(

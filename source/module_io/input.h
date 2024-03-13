@@ -111,6 +111,7 @@ class Input
     int nspin; // LDA ; LSDA ; non-linear spin
     double nupdown = 0.0;
     double nelec; // total number of electrons
+    double nelec_delta; // change in the number of total electrons
     int lmaxmax;
 
     //==========================================================
@@ -232,8 +233,8 @@ class Input
     std::string mixing_mode; // "plain","broyden",...
     double mixing_beta; // 0 : no_mixing
     int mixing_ndim; // used in Broyden method
-    int mixing_restart;
-    double mixing_gg0; // used in kerker method. mohan add 2014-09-27
+    double mixing_restart; // mixing will restart once if drho is smaller than mixing_restart
+    double mixing_gg0; // used in kerker method
     double mixing_beta_mag;
     double mixing_gg0_mag;
     double mixing_gg0_min;
@@ -408,6 +409,7 @@ class Input
     std::string td_vext_dire; // vext direction
     bool out_dipole; // output the dipole or not
     bool out_efield; // output the efield or not
+    bool out_current; //output the current or not
 
     double td_print_eij; // threshold to output Eij elements
     int td_edm; //0: new edm method   1: old edm method

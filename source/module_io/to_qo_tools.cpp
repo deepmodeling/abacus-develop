@@ -6,14 +6,15 @@ void toQO::unwrap_unitcell(UnitCell* p_ucell)
     p_ucell_ = p_ucell;
     ntype_ = p_ucell->ntype;
     std::for_each(p_ucell->atoms, p_ucell->atoms + p_ucell->ntype, [this](Atom& atom){
-        symbols_.push_back(atom.label);
+        symbols_.push_back(atom.ncpp.psd);
         na_.push_back(atom.na);
     });
     nmax_.resize(ntype_);
     charges_.resize(ntype_);
     for(int itype = 0; itype < ntype_; itype++)
     {
-        nmax_[itype] = (strategies_[itype] != "energy")? atom_database_.principle_quantum_number[symbols_[itype]]: atom_database_.atom_Z[symbols_[itype]];
+        std::cout << "type " << itype << " " << symbols_[itype] << " strategy: " << strategies_[itype] << std::endl;
+        nmax_[itype] = (strategies_[itype].substr(0, 6) != "energy")? atom_database_.principle_quantum_number[symbols_[itype]]: atom_database_.atom_Z[symbols_[itype]];
         charges_[itype] = atom_database_.atom_Z[symbols_[itype]];
     }
 }

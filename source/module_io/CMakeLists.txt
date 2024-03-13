@@ -23,11 +23,11 @@ list(APPEND objects
     write_rho.cpp
     write_potential.cpp
     write_dipole.cpp
+    td_current_io.cpp
     write_wfc_r.cpp
     output_log.cpp
     output_rho.cpp
     output_potential.cpp
-    output_radial.cpp
     parameter_pool.cpp
     para_json.cpp
 )

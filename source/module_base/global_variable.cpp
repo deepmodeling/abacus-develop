@@ -248,7 +248,7 @@ std::string of_kernel_file = "WTkernel.txt";
 std::string MIXING_MODE = "broyden";
 double MIXING_BETA = 0.7;
 int MIXING_NDIM = 8;
-int MIXING_RESTART = 0;
+double MIXING_RESTART = 0.0;
 double MIXING_GG0 = 1.00;
 double MIXING_BETA_MAG = 1.6;
 double MIXING_GG0_MAG = 1.00;
@@ -276,6 +276,7 @@ bool psi_initializer = false;
 
 int out_chg = 0;
 double nelec = 0;
+double nelec_delta = 0;
 bool out_bandgap = false; // QO added for bandgap printing
 int out_interval = 1;    // convert from out_hsR_interval liuyu 2023-04-18
 
