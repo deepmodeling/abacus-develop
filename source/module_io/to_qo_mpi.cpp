@@ -26,7 +26,7 @@ void toQO::bcast_stdvector_ofvector3int(std::vector<ModuleBase::Vector3<int>>& v
         vec.clear(); vec.resize(dim);
         for(int i = 0; i < dim; i++)
         {
-            vec.push_back(ModuleBase::Vector3<int>(vec_1d[i*3], vec_1d[i*3+1], vec_1d[i*3+2]));
+            vec[i] = ModuleBase::Vector3<int>(vec_1d[i*3], vec_1d[i*3+1], vec_1d[i*3+2]);
         }
     }
     #endif
@@ -55,7 +55,7 @@ void toQO::bcast_stdvector_ofvector3double(std::vector<ModuleBase::Vector3<doubl
         vec.clear(); vec.resize(dim);
         for(int i = 0; i < dim; i++)
         {
-            vec.push_back(ModuleBase::Vector3<double>(vec_1d[i*3], vec_1d[i*3+1], vec_1d[i*3+2]));
+            vec[i] = ModuleBase::Vector3<double>(vec_1d[i*3], vec_1d[i*3+1], vec_1d[i*3+2]);
         }
     }
     #endif

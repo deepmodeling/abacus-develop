@@ -1,5 +1,4 @@
 #include "module_io/to_qo.h"
-#include "module_base/libm/libm.h"
 #ifdef __MPI
 #include "../module_base/parallel_common.h"
 #endif
@@ -30,6 +29,9 @@ void toQO::read_structures(const UnitCell* p_ucell,
     kvecs_d_ = kvecs_d;
     nks_ = kvecs_d.size();
     nks_tot_ = nks_;
+
+    iks_ = std::vector<int>(nks_);
+    for(int i = 0; i < nks_; i++) iks_[i] = i;
 
     // scatter k points to all ranks if MPI is enabled
 #ifdef __MPI
@@ -72,6 +74,28 @@ void toQO::read_structures(const UnitCell* p_ucell,
         else iks_.push_back(-1);
     }
     nks_ = iks_.size();
+    
+    // ensure all kpoints are successfully scattered
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
+    if(rank == 0) printf("toQO KPOINTS parallelization information: %d ranks\n", nranks);
+#ifdef __MPI
+    // the following information should be printed after the report of number of ranks
+    // therefore barrier to wait rank0.
+    MPI_Barrier(MPI_COMM_WORLD);
+    for(int i = 0; i < nranks; i++)
+    {
+        if(i == rank)
+        {
+            std::string kpar_info = "KPOINTS distributed on rank " + std::to_string(rank) + ": ";
+            for(int j = 0; j < nks_; j++)
+            {
+                if(j % 10 == 0) kpar_info += "\n";
+                kpar_info += std::to_string(iks_[j]) + " ";
+            }
+            printf("%s\n", kpar_info.c_str());
+        }
+    }
 #endif
 }
 
@@ -197,6 +221,9 @@ void toQO::scan_supercell(const int& rank, const int& nranks)
         nR_ = supercells_.size();
         nR_tot_ = nR_;
         
+        iRs_ = std::vector<int>(nR_);
+        for(int i = 0; i < nR_; i++) iRs_[i] = i;
+
         write_supercells();
     }
     /*-------------------------------------------------------------------------------------------*/
@@ -254,18 +281,6 @@ ModuleBase::Vector3<double> toQO::cal_two_center_vector(ModuleBase::Vector3<doub
                   + R.y * p_ucell_->a2.z 
                   + R.z * p_ucell_->a3.z;
     return Rij;
-}
-
-void toQO::append_ovlpR_eiRk(int ik, int iR)
-{
-    // calculate
-    ModuleBase::Vector3<double> R(double(supercells_[iR].x), double(supercells_[iR].y), double(supercells_[iR].z));
-    double arg = (kvecs_d_[ik] * R) * ModuleBase::TWO_PI;
-    double sinp, cosp;
-    ModuleBase::libm::sincos(arg, &sinp, &cosp);
-    std::complex<double> phase = std::complex<double>(cosp, sinp);
-    // add all values of ovlpR_ to ovlpk_ with multiplication of phase
-    for(int i = 0; i < nchi_ * nphi_; i++) ovlpk_[i] += ovlpR_[i] * phase;
 }
 
 void toQO::write_supercells()

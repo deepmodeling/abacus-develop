@@ -1,6 +1,7 @@
 #include "module_io/to_qo.h"
 #include "module_basis/module_nao/two_center_integrator.h"
 #include "module_base/ylm.h"
+#include "module_base/libm/libm.h"
 #ifdef __MPI
 #include "module_base/parallel_common.h"
 #endif
@@ -10,6 +11,8 @@ toQO::toQO(const std::string& qo_basis,
            const double& qo_thr,
            const std::vector<double>& screening_coeffs)
 {
+    // totally the same as what defined in INPUT
+    // qo_switch_ = 1 // certainly, this constructor will only be called when qo_switch_ == 1
     qo_basis_ = qo_basis;
     strategies_ = strategies;
     qo_thr_ = qo_thr;
@@ -311,7 +314,7 @@ void toQO::calculate_ovlpk(int ik)
 #endif
         // ik == -1 corresponds to the case of those processes with less kpoints than others
         if(ik != -1) read_ovlp(out_dir_, nchi_, nphi_, true, barrier_iR);
-        if(ik != -1) append_ovlpR_eiRk(ik, iR);
+        if(ik != -1) append_ovlpR_eiRk(ik, barrier_iR);
     }
 }
 
@@ -344,6 +347,18 @@ void toQO::calculate()
     //         std::remove(filename.c_str());
     //     }
     // }
+}
+
+void toQO::append_ovlpR_eiRk(int ik, int iR)
+{
+    // calculate sum S(R)*eiRk = S(k)
+    ModuleBase::Vector3<double> R(double(supercells_[iR].x), double(supercells_[iR].y), double(supercells_[iR].z));
+    double arg = (kvecs_d_[ik] * R) * ModuleBase::TWO_PI;
+    double sinp, cosp;
+    ModuleBase::libm::sincos(arg, &sinp, &cosp);
+    std::complex<double> phase = std::complex<double>(cosp, sinp);
+    // add all values of ovlpR_ to ovlpk_ with multiplication of phase
+    for(int i = 0; i < nchi_ * nphi_; i++) ovlpk_[i] += ovlpR_[i] * phase;
 }
 
 void toQO::allocate_ovlp(const bool& is_R)
