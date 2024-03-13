@@ -3,7 +3,6 @@
 #include "../module_base/parallel_common.h"
 #endif
 
-// free function, to broadcast supercells_ and kvec_d_
 void toQO::bcast_stdvector_ofvector3int(std::vector<ModuleBase::Vector3<int>>& vec)
 {
     #ifdef __MPI
