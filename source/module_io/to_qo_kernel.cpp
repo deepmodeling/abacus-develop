@@ -32,6 +32,25 @@ void toQO::initialize(const std::string& out_dir,
                       const int& rank,
                       const int& nranks)
 {
+    // print parameter settings for QO
+    if(rank == 0)
+    {
+        std::string init_info = "\nQuasiatomic orbital analysis activated.\n";
+        init_info += "Parameters settings check:\n";
+        init_info += "qo_basis: " + qo_basis_ + "\n";
+        init_info += "qo_strategies: ";
+        for(auto s: strategies_) init_info += s + " ";
+        init_info += "\n";
+        init_info += "Output directory: " + out_dir + "\n";
+        init_info += "Pseudopotential directory: " + pseudo_dir + "\n";
+        init_info += "Numerical atomic orbital directory: " + orbital_dir + "\n";
+        init_info += "Number of kpoints: " + std::to_string(kvecs_d.size()) + "\n";
+        init_info += "Parallelized on " + std::to_string(nranks) + " MPI processes\n";
+        printf("%s", init_info.c_str());
+    }
+#ifdef __MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
     // initialize the variables defining I/O
     out_dir_ = out_dir;
     pseudo_dir_ = pseudo_dir;
@@ -112,6 +131,13 @@ void toQO::build_nao(const int ntype,
     nphi_ = index_nao_.size();
 
     delete[] orbital_fn_;
+    if(rank == 0)
+    {
+        std::string nao_build_info = "toQO::build_nao: built numerical atomic orbitals for calculating QO overlap integrals\n";
+        nao_build_info += "Number of columns in QO_ovlp_*.dat: " + std::to_string(nphi_) + "\n";
+        nao_build_info += "Orbitals arrange in sequence of (it, ia, l, zeta, m), m in order of 0, 1, -1, 2, -2, ...\n";
+        printf("%s", nao_build_info.c_str());
+    }
 }
 
 bool toQO::orbital_filter(const int l, const std::string spec)
@@ -226,6 +252,15 @@ void toQO::build_ao(const int ntype,
                     qo_thr,                     /// qo_thr
                     rank);                      /// rank
     }
+    if(rank == 0)
+    {
+        std::string ao_build_info = "toQO::build_ao: built atomic orbitals for calculating QO overlap integrals\n";
+        ao_build_info += "Atom-centered orbital to project is: " + qo_basis_ + "\n";
+        ao_build_info += "Convergence threshold on norm of atom-centered orbital to control spreading: " + std::to_string(qo_thr_) + "\n";
+        ao_build_info += "Number of columns in QO_ovlp_*.dat: " + std::to_string(nchi_) + "\n";
+        ao_build_info += "Orbitals arrange in sequence of (it, ia, l, zeta, m), m in order of 0, 1, -1, 2, -2, ...\n";
+        printf("%s", ao_build_info.c_str());
+    }
 }
 
 void toQO::calculate_ovlpR(const int iR)
@@ -339,14 +374,15 @@ void toQO::calculate()
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
     // delete all QO_ovlpR_* files
-    // if(iproc_ == 0)
-    // {
-    //     for(int iR = 0; iR < nR_tot_; iR++)
-    //     {
-    //         std::string filename = out_dir_ + "/QO_ovlpR_" + std::to_string(iR) + ".dat";
-    //         std::remove(filename.c_str());
-    //     }
-    // }
+    if(iproc_ == 0)
+    {
+        for(int iR = 0; iR < nR_tot_; iR++)
+        {
+            std::string filename = out_dir_ + "/QO_ovlpR_" + std::to_string(iR) + ".dat";
+            std::remove(filename.c_str());
+        }
+        printf("toQO::calculate: calculation of S(k) done, run /tools/qo/postprocess.py to do representation transform.\n");
+    }
 }
 
 void toQO::append_ovlpR_eiRk(int ik, int iR)

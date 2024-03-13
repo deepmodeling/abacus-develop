@@ -78,24 +78,13 @@ void toQO::read_structures(const UnitCell* p_ucell,
     // ensure all kpoints are successfully scattered
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
-    if(rank == 0) printf("toQO KPOINTS parallelization information: %d ranks\n", nranks);
+    if(rank == 0) printf("toQO KPOINTS parallelization: calculation of S(k) will be parallelized on %d processes\n", nranks);
 #ifdef __MPI
     // the following information should be printed after the report of number of ranks
     // therefore barrier to wait rank0.
     MPI_Barrier(MPI_COMM_WORLD);
-    for(int i = 0; i < nranks; i++)
-    {
-        if(i == rank)
-        {
-            std::string kpar_info = "KPOINTS distributed on rank " + std::to_string(rank) + ": ";
-            for(int j = 0; j < nks_; j++)
-            {
-                if(j % 10 == 0) kpar_info += "\n";
-                kpar_info += std::to_string(iks_[j]) + " ";
-            }
-            printf("%s\n", kpar_info.c_str());
-        }
-    }
+    int last_ik_ = (iks_[nks_-1] == -1)? iks_[nks_-2]: iks_[nks_-1];
+    printf("KPOINTS distributed on process %d will calculate in range [%d, %d]\n", rank, iks_[0], last_ik_);
 #endif
 }
 
@@ -264,6 +253,14 @@ void toQO::scan_supercell(const int& rank, const int& nranks)
     iRs_.clear();
     for(int i = 0; i < nR_divided[rank].size(); i++) iRs_.push_back(nR_divided[rank][i]);
     nR_ = iRs_.size();
+
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
+    if(rank == 0) printf("toQO SUPERCELLS parallelization: calculation of S(R) will be parallelized on %d processes\n", nranks);
+#ifdef __MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+    int last_iR_ = nR_ - 1;
+    printf("SUPERCELLS distributed on process %d will calculate in range [%d, %d]\n", rank, iRs_[0], iRs_[last_iR_]);
 #endif
 }
 
