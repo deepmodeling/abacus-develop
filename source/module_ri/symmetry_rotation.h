@@ -147,7 +147,7 @@ namespace ModuleSymmetry
         void test_HR_rotation(const Symmetry& symm, const Atom* atoms, const Statistics& st, const char mode,
             const hamilt::HContainer<TR>& HR_full);
         template<typename Tdata>    // HContainer type
-        void print_HR(const std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>>& HR, const std::string name);;
+        void print_HR(const std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>>& HR, const std::string name, const double& threshold = 0.0);
         //--------------------------------------------------------------------------------
 
     private:

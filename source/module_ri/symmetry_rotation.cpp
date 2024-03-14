@@ -589,7 +589,7 @@ namespace ModuleSymmetry
         }
 
         // generate symmetry operation of the BvK lattice using the original optlat-direct coordinates
-        std::vector<ModuleBase::Matrix3> bvk_op(symm.nrotk);
+        std::vector<ModuleBase::Matrix3> bvk_op(48);
         int bvk_nop;
         symm.setgroup(bvk_op.data(), bvk_nop, bvk_brav);
         bvk_op.resize(bvk_nop);

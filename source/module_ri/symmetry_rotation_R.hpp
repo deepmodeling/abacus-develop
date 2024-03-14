@@ -36,13 +36,13 @@ namespace ModuleSymmetry
     }
 
     template<typename Tdata>
-    inline void print_tensor(const RI::Tensor<Tdata>& t, const std::string& name)
+    inline void print_tensor(const RI::Tensor<Tdata>& t, const std::string& name, const double& threshold = 0.0)
     {
         std::cout << name << ":\n";
         for (int i = 0;i < t.shape[0];++i)
         {
             for (int j = 0;j < t.shape[1];++j)
-                std::cout << t(i, j) << " ";
+                std::cout << ((std::abs(t(i, j)) > threshold) ? t(i, j) : static_cast<Tdata>(0)) << " ";
             std::cout << std::endl;
         }
     }
@@ -115,7 +115,7 @@ namespace ModuleSymmetry
     }
     
     template<typename Tdata>
-    void Symmetry_rotation::print_HR(const std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>>& HR, const std::string name)
+    void Symmetry_rotation::print_HR(const std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>>& HR, const std::string name, const double& threshold)
     {
         for (auto& HR_ia1 : HR)
         {
@@ -126,7 +126,7 @@ namespace ModuleSymmetry
                 TC R = HR_ia12R.first.second;
                 const RI::Tensor<Tdata>& HR_tensor = HR_ia12R.second;
                 std::cout << "atom pair (" << iat1 << ", " << iat2 << "), R=(" << R[0] << "," << R[1] << "," << R[2] << "), ";
-                print_tensor(HR_tensor, name);
+                print_tensor(HR_tensor, name, threshold);
             }
         }
     }
