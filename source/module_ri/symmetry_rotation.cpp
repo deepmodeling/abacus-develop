@@ -608,8 +608,8 @@ namespace ModuleSymmetry
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "POINT GROUP OF BvK SCELL", bvk_pgname);
         symm.pointgroup(bvk_nsg, bvk_sgnum, bvk_sgname, this->bvk_gmatrix_.data(), GlobalV::ofs_running);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "POINT GROUP IN SPACE GROUP OF BvK SCELL", bvk_pgname);
-        symm.gmatrix_convert_int(this->bvk_gmatrix_.data(), this->bvk_gmatrix_.data(), bvk_nsg, bvk_min_optlat, bvk_min_lat);
-
+        symm.gmatrix_convert_int(this->bvk_gmatrix_.data(), this->bvk_gmatrix_.data(), bvk_nsg, bvk_min_optlat, lat.latvec);
+        symm.gtrans_convert(this->bvk_gtrans_.data(), this->bvk_gtrans_.data(), bvk_nsg, bvk_min_optlat, lat.latvec);
         // get map from bvk-op to original op
         this->isymbvk_to_isym_ = get_isymbvk_to_isym_map(this->bvk_gmatrix_, symm);
         return;
