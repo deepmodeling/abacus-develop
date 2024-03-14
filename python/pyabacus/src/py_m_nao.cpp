@@ -345,12 +345,25 @@ void bind_m_nao(py::module& m)
         .def_property_readonly("pr", &NumericalRadial::pr)
         .def_property_readonly("pk", &NumericalRadial::pk)
         .def_property_readonly("sbt", &NumericalRadial::sbt)
-        .def("rgrid", overload_cast_<int>()(&NumericalRadial::rgrid, py::const_), "ir"_a)
-        .def("kgrid", overload_cast_<int>()(&NumericalRadial::kgrid, py::const_), "ik"_a)
-        .def("rvalue", overload_cast_<int>()(&NumericalRadial::rvalue, py::const_), "ir"_a)
-        .def("kvalue", overload_cast_<int>()(&NumericalRadial::kvalue, py::const_), "ik"_a)
-        .def_property_readonly("rgrid", overload_cast_<>()(&NumericalRadial::rgrid, py::const_))
-        .def_property_readonly("kgrid", overload_cast_<>()(&NumericalRadial::kgrid, py::const_))
-        .def_property_readonly("rvalue", overload_cast_<>()(&NumericalRadial::rvalue, py::const_))
-        .def_property_readonly("kvalue", overload_cast_<>()(&NumericalRadial::kvalue, py::const_));
+        .def_property_readonly("rgrid",
+                               [](NumericalRadial& self) {
+                                   const double* rgrid = self.rgrid();
+                                   return py::array_t<double>({self.nr()}, rgrid);
+                               })
+        .def_property_readonly("kgrid",
+                               [](NumericalRadial& self) {
+                                   const double* kgrid = self.kgrid();
+                                   return py::array_t<double>({self.nk()}, kgrid);
+                               })
+        .def_property_readonly("rvalue",
+                               [](NumericalRadial& self) {
+                                   const double* rvalue = self.rvalue();
+                                   return py::array_t<double>({self.nr()}, rvalue);
+                               })
+        .def_property_readonly("kvalue",
+                               [](NumericalRadial& self) {
+                                   const double* kvalue = self.kvalue();
+                                   return py::array_t<double>({self.nk()}, kvalue);
+                               })
+        .def_property_readonly("is_fft_compliant", overload_cast_<>()(&NumericalRadial::is_fft_compliant, py::const_));
 }
