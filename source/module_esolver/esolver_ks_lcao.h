@@ -11,14 +11,16 @@
 #include "module_ri/Mix_DMk_2D.h"
 #include "module_ri/Exx_LRI_interface.h"
 #endif
+
+// add by JingangHan for rdmft calculation
+#include "module_rdmft/rdmft.h"
+
 #include "module_io/output_dm.h"
 #include "module_io/output_dm1.h"
 #include "module_io/output_mat_sparse.h"
 #include "module_basis/module_nao/two_center_bundle.h"
 #include <memory>
 
-// add by JingangHan for rdmft calculation
-#include "module_rdmft/rdmft.h"
 
 namespace ModuleESolver
 {

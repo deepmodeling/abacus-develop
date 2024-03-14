@@ -45,30 +45,30 @@ namespace rdmft
 {
 
 
-template <typename TK, typename TR>
-RDMFT<TK, TR>::RDMFT()
-{
+// template <typename TK, typename TR>
+// RDMFT<TK, TR>::RDMFT()
+// {
 
-}
+// }
 
-template <typename TK, typename TR>
-RDMFT<TK, TR>::~RDMFT()
-{
+// template <typename TK, typename TR>
+// RDMFT<TK, TR>::~RDMFT()
+// {
+
+// }
+
+// template <typename TK, typename TR>
+// void RDMFT<TK, TR>::init(Gint_Gamma* GG_in, Gint_k* GK_in, Parallel_Orbitals* ParaV_in, UnitCell* ucell_in, K_Vectors* kv_in)
+// {
+//     GG = GG_in;
+//     GK = GK_in;
+//     ParaV = ParaV_in;
+//     ucell = ucell_in;
+//     kv = kv_in;
     
-}
+//     std::cout << "\n\n******\n" << "test class RDMFT and do rdmft_esolver.init()" << "\n******\n\n" << std::endl;
 
-template <typename TK, typename TR>
-void RDMFT<TK, TR>::init(Gint_Gamma* GG_in, Gint_k* GK_in, Parallel_Orbitals* ParaV_in, UnitCell* ucell_in, K_Vectors* kv_in)
-{
-    GG = GG_in;
-    GK = GK_in;
-    ParaV = ParaV_in;
-    ucell = ucell_in;
-    kv = kv_in;
-    
-    std::cout << "\n\n******\n" << "test class RDMFT and do rdmft_esolver.init()" << "\n******\n\n" << std::endl;
-
-}
+// }
 
 
 

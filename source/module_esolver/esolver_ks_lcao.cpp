@@ -42,10 +42,10 @@
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 
 // test RDMFT
-#include <iostream>
-#include "module_rdmft/rdmft_test.h"
 #include "module_rdmft/rdmft.h"
-// #include "module_rdmft/rdmft_tools.h"
+#include "module_rdmft/rdmft_tools.h"
+#include "module_rdmft/rdmft_test.h"
+#include <iostream>
 
 namespace ModuleESolver
 {

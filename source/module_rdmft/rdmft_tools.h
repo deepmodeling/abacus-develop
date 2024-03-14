@@ -37,18 +37,18 @@
 #include "module_ri/test_code/test_function.h"
 
 // used by class Veff_rdmft
-#include "module_base/timer.h"
-#include "module_elecstate/potentials/potential_new.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
-//#include "module_hamilt_lcao/module_gint/gint_gamma.h"
-//#include "module_hamilt_lcao/module_gint/gint_k.h"
-//#include "operator_lcao.h"
-//#include "module_cell/module_neighbor/sltk_grid_driver.h"
-//#include "module_cell/unitcell.h"
-#include "module_elecstate/potentials/H_Hartree_pw.h"
-#include "module_elecstate/potentials/pot_local.h"
-#include "module_elecstate/potentials/pot_xc.h"
-#include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
+// #include "module_base/timer.h"
+// #include "module_elecstate/potentials/potential_new.h"
+// #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
+// //#include "module_hamilt_lcao/module_gint/gint_gamma.h"
+// //#include "module_hamilt_lcao/module_gint/gint_k.h"
+// //#include "operator_lcao.h"
+// //#include "module_cell/module_neighbor/sltk_grid_driver.h"
+// //#include "module_cell/unitcell.h"
+// #include "module_elecstate/potentials/H_Hartree_pw.h"
+// #include "module_elecstate/potentials/pot_local.h"
+// #include "module_elecstate/potentials/pot_xc.h"
+// #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 
 
 #include <iostream>

@@ -20,7 +20,7 @@
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/parallel_reduce.h"
-#include "module_elecstate/module_dm/cal_dm_psi.h"
+// #include "module_elecstate/module_dm/cal_dm_psi.h"
 #include "module_elecstate/module_dm/density_matrix.h"
 
 #include "module_hamilt_general/operator.h"
@@ -75,54 +75,55 @@ class RDMFT
     Parallel_Orbitals* ParaV = nullptr;
     Parallel_2D para_Eij;
     
-    Gint_k* GK;      // used for k-dependent grid integration.
-    Gint_Gamma* GG;  // used for gamma only algorithms.
-    UnitCell* ucell;
-    K_Vectors* kv;
+    Gint_k* GK = nullptr;      // used for k-dependent grid integration.
+    Gint_Gamma* GG = nullptr;  // used for gamma only algorithms.
+    UnitCell* ucell = nullptr;
+    K_Vectors* kv = nullptr;
+
+    int nk_total = 0;
+    std::string XC_func_rdmft;
 
     ModuleBase::matrix occ_number;
     psi::Psi<TK> wfc;
-    ModuleBase::matrix wg;   // wg is global matrix, wg.nr = nk_total, wg.nc = GlobalV::NBANDS
+    ModuleBase::matrix wg;
     ModuleBase::matrix wk_fun_occNum;
 
     // store the gradients of Etotal with respect to the natural occupation numbers and wfc respectively
     ModuleBase::matrix occNum_wfcHamiltWfc;
     psi::Psi<TK> occNum_HamiltWfc;
 
-    hamilt::HContainer<TR> HR_TV;   // (GlobalC::ucell, ParaV)
-    hamilt::HContainer<TR> HR_hartree;
-    hamilt::HContainer<TR> HR_XC;
+    hamilt::HContainer<TR>* HR_TV = nullptr;
+    hamilt::HContainer<TR>* HR_hartree = nullptr;
+    hamilt::HContainer<TR>* HR_XC = nullptr;
 
-    std::vector<TK> HK_TV;  // ( ParaV->get_row_size()*ParaV->get_col_size() )
+    std::vector<TK> HK_TV;
     std::vector<TK> HK_hartree;
     std::vector<TK> HK_XC;
 
-    ModuleBase::matrix Etotal_n_k;  // (wg.nr, wg.nc, true)
+    ModuleBase::matrix Etotal_n_k;
     ModuleBase::matrix wfcHwfc_TV;
     ModuleBase::matrix wfcHwfc_hartree;
     ModuleBase::matrix wfcHwfc_XC;
 
-    psi::Psi<TK> H_wfc_TV;  // (nk_total, nbands_local, nbasis_local)
+    psi::Psi<TK> H_wfc_TV;
     psi::Psi<TK> H_wfc_hartree;
     psi::Psi<TK> H_wfc_XC;
 
-    // just for temperate. in the future when realize psiDotPsi() without pzgemm_/pdgemm_,we don't need it
-    // const int nrow_bands = para_Eij.get_row_size();
-    // const int ncol_bands = para_Eij.get_col_size();
-    std::vector<TK> Eij_TV;     // (nrow_bands*ncol_bands)
+    // // just for temperate. in the future when realize psiDotPsi() without pzgemm_/pdgemm_,we don't need it
+    std::vector<TK> Eij_TV;
     std::vector<TK> Eij_hartree;
     std::vector<TK> Eij_XC;
 
-    hamilt::OperatorLCAO<TK, TR>* V_ekinetic_potential;
-    hamilt::OperatorLCAO<TK, TR>* V_nonlocal;
-    hamilt::OperatorLCAO<TK, TR>* V_local;
-    hamilt::OperatorLCAO<TK, TR>* V_hartree;
-    hamilt::OperatorLCAO<TK, TR>* V_XC;
+    hamilt::OperatorLCAO<TK, TR>* V_ekinetic_potential = nullptr;
+    hamilt::OperatorLCAO<TK, TR>* V_nonlocal = nullptr;
+    hamilt::OperatorLCAO<TK, TR>* V_local = nullptr;
+    hamilt::OperatorLCAO<TK, TR>* V_hartree = nullptr;
+    hamilt::OperatorLCAO<TK, TR>* V_XC = nullptr;
 
-    Exx_LRI<double> Vxc_fromRI_d;   // (GlobalC::exx_info.info_ri)
-    Exx_LRI<std::complex<double>> Vxc_fromRI_c;
+    Exx_LRI<double>* Vxc_fromRI_d = nullptr;   // (GlobalC::exx_info.info_ri)
+    Exx_LRI<std::complex<double>>* Vxc_fromRI_c = nullptr;
 
-    void init(Gint_Gamma* GG_in, Gint_k* GK_in, Parallel_Orbitals* ParaV_in, UnitCell* ucell_in, K_Vectors* kv_in);
+    void init(Gint_Gamma* GG_in, Gint_k* GK_in, Parallel_Orbitals* ParaV_in, UnitCell* ucell_in, K_Vectors* kv_in, std::string XC_func_rdmft_in = "HF");
 
   private:
     
@@ -139,6 +140,93 @@ class RDMFT
 
 
 
+
+template <typename TK, typename TR>
+RDMFT<TK, TR>::RDMFT()
+{
+
+}
+
+template <typename TK, typename TR>
+RDMFT<TK, TR>::~RDMFT()
+{
+  delete HR_TV;
+  delete HR_hartree;
+  delete HR_XC;
+
+  delete Vxc_fromRI_d;
+  delete Vxc_fromRI_c;
+
+  delete V_ekinetic_potential;
+  delete V_nonlocal;
+  delete V_local;
+  delete V_hartree;
+  delete V_XC;
+
+}
+
+template <typename TK, typename TR>
+void RDMFT<TK, TR>::init(Gint_Gamma* GG_in, Gint_k* GK_in, Parallel_Orbitals* ParaV_in, UnitCell* ucell_in, K_Vectors* kv_in, std::string XC_func_rdmft_in)
+{
+    GG = GG_in;
+    GK = GK_in;
+    ParaV = ParaV_in;
+    ucell = ucell_in;
+    kv = kv_in;
+    nk_total = kv->nkstot_full;
+    XC_func_rdmft = XC_func_rdmft_in;
+    
+    std::cout << "\n\n******\n" << "test class RDMFT and do rdmft_esolver.init()" << "\n******\n\n" << std::endl;
+
+    // create desc[] and something about MPI to Eij(nbands*nbands)
+    std::ofstream ofs_running;
+    std::ofstream ofs_warning;
+    para_Eij.set_block_size(GlobalV::NB2D);
+    para_Eij.set_proc_dim(GlobalV::DSIZE);
+    para_Eij.comm_2D = ParaV->comm_2D;
+    para_Eij.blacs_ctxt = ParaV->blacs_ctxt;
+    para_Eij.set_local2global( GlobalV::NBANDS, GlobalV::NBANDS, ofs_running, ofs_warning );
+    para_Eij.set_desc( GlobalV::NBANDS, GlobalV::NBANDS, para_Eij.get_row_size(), false );
+
+    // 
+    occ_number.create(nk_total, GlobalV::NBANDS);
+    wg.create(nk_total, GlobalV::NBANDS);
+    wk_fun_occNum.create(nk_total, GlobalV::NBANDS);
+    occNum_wfcHamiltWfc.create(nk_total, GlobalV::NBANDS);
+    Etotal_n_k.create(nk_total, GlobalV::NBANDS);
+    wfcHwfc_TV.create(nk_total, GlobalV::NBANDS);
+    wfcHwfc_hartree.create(nk_total, GlobalV::NBANDS);
+    wfcHwfc_XC.create(nk_total, GlobalV::NBANDS);
+
+    // 
+    wfc.resize(nk_total, ParaV->ncol_bands, ParaV->nrow);   // test ParaV->nrow
+    occNum_HamiltWfc.resize(nk_total, ParaV->ncol_bands, ParaV->nrow);
+    H_wfc_TV.resize(nk_total, ParaV->ncol_bands, ParaV->nrow);
+    H_wfc_hartree.resize(nk_total, ParaV->ncol_bands, ParaV->nrow);
+    H_wfc_XC.resize(nk_total, ParaV->ncol_bands, ParaV->nrow);
+
+    // 
+    HK_TV.resize( ParaV->get_row_size()*ParaV->get_col_size() );
+    HK_hartree.resize( ParaV->get_row_size()*ParaV->get_col_size() );
+    HK_XC.resize( ParaV->get_row_size()*ParaV->get_col_size() );
+    Eij_TV.resize( para_Eij.get_row_size()*para_Eij.get_col_size() );
+    Eij_hartree.resize( para_Eij.get_row_size()*para_Eij.get_col_size() );
+    Eij_XC.resize( para_Eij.get_row_size()*para_Eij.get_col_size() );
+
+    std::cout << "\n\n******\n" << "malloc for many xxx" << "\n******\n\n" << std::endl;
+
+    // 
+    HR_TV = new hamilt::HContainer<TR>(*ucell, ParaV);
+    HR_hartree = new hamilt::HContainer<TR>(*ucell, ParaV);
+    HR_XC = new hamilt::HContainer<TR>(*ucell, ParaV);
+
+    // 
+    // Vxc_fromRI_d = new Exx_LRI<double>(GlobalC::exx_info.info_ri);
+    // Vxc_fromRI_c = new Exx_LRI<std::complex<double>>(GlobalC::exx_info.info_ri);
+
+    std::cout << "\n\n******\n" << "malloc for HR" << "\n******\n\n" << std::endl;
+
+}
 
 
 
