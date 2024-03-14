@@ -266,6 +266,10 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
 
 double Charge_Mixing::get_dkin(Charge* chr, const double nelec)
 {
+    if (!(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)) 
+    {
+        return 0.0;
+    };
     ModuleBase::TITLE("Charge_Mixing", "get_dkin");
     ModuleBase::timer::tick("Charge_Mixing", "get_dkin");
     double dkin = 0.0;
