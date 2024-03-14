@@ -101,6 +101,7 @@ class toQO
                          const double* const screening_coeffs,      //< screening coefficients of pseudopotentials, appears like a factor (exp[-s*r]) scaling the pswfc
                          const double qo_thr,                       //< threshold for QO
                          const int rank);                           //< rank of present processor
+        void build_szv();
         // EXTERNAL EXPOSED FUNCTION, calculate all things in one shot
         void calculate();
         // calculate <A(i, R)|phi(j, R')> = Sij(R)
@@ -126,14 +127,18 @@ class toQO
         /// @details from (it,ia,l,zeta,m) to index and vice versa
         void radialcollection_indexing(const RadialCollection&,                             //< [in] instance of RadialCollection
                                        const std::vector<int>&,                             //< [in] number of atoms for each type
+                                       const bool&,                                         //< [in] whether enable orbital filtering
                                        std::map<std::tuple<int,int,int,int,int>,int>&,      //< [out] mapping from (it,ia,l,zeta,m) to index
                                        std::map<int,std::tuple<int,int,int,int,int>>&);     //< [out] mapping from index to (it,ia,l,zeta,m)
         /// @brief calculate vectors connecting all atom pairs that needed to calculate their overlap
         ModuleBase::Vector3<double> cal_two_center_vector(ModuleBase::Vector3<double> rij,      //< vector connecting atom i and atom j
                                                           ModuleBase::Vector3<int> R);          //< supercell vector
-        /// @brief for qo_basis pswfc only, return if include present orbitals in two-center integral
-        bool orbital_filter(const int,              //< itype
-                            const std::string);     //< notation of subshell, like all, s, p, d and any combination of them
+        /// @brief when indexing, select where one orbital is really included in the two-center integral
+        bool orbital_filter_out(const int& itype,       //< itype
+                                const int& l,           //< angular momentum
+                                const int& izeta        //< zeta
+                                );
+        
         void deallocate_ovlp(const bool& is_R = false);     //< deallocate memory for ovlp_ao_nao_R_ or ovlp_ao_nao_k_
         void allocate_ovlp(const bool& is_R = false);       //< allocate memory for ovlp_ao_nao_R_ or ovlp_ao_nao_k_
         void zero_out_ovlps(const bool& is_R);              //< zero out ovlp_ao_nao_R_ or ovlp_ao_nao_k_

@@ -247,7 +247,10 @@ void PswfcRadials::read_upf_pswfc(std::ifstream& ifs,
     int nzeta = 0;
     double dr = 0.01; // in most cases, this is correct
 
-    // for MPI
+    // the following will have values on rank 0, if MPI enabled, and will be broadcasted to all ranks
+    // or say the correlated container std::pair<int, int>, will be decomposed into two std::vectors
+    // and the correlated container std::map<std::pair<int, int>, std::vector<double>> therefore will
+    // be decomposed into three std::vectors
     std::vector<int> ls;
     std::vector<int> izetas;
     std::vector<double> rgrid;
@@ -255,6 +258,8 @@ void PswfcRadials::read_upf_pswfc(std::ifstream& ifs,
     if(rank == 0)
     {
         // result is a map from (l, izeta) to rvalue, i.e., from (l,zeta) to exact value of radial function
+        // it is a temporary container to store the result of pseudowavefunction, next will be transfer to
+        // ls, izetas, rgrid and rvalues std::vectors and broadcast
         std::map<std::pair<int, int>, std::vector<double>> result;
 
         std::string line = "";
@@ -321,21 +326,9 @@ void PswfcRadials::read_upf_pswfc(std::ifstream& ifs,
             izetas.push_back(iz);
             rvalues.push_back(it->second);
         }
-        // // the following should be done for all ranks
-        // chi_ = new NumericalRadial[nchi_];
-
-        // for(auto it = result.begin(); it != result.end(); it++)
-        // {
-        //     int l = it->first.first;
-        //     int iz = it->first.second;
-        //     chi_[index(l, iz)].build(l, true, ngrid, rgrid.data(), it->second.data(), 0, iz, symbol_, itype_, false);       
-        //     if(std::fabs(screening_coeff - 0.0) > 1e-6) // PHYSICAL REVIEW B 78, 245112 2008
-        //     {
-        //         chi_[index(l, iz)].normalize();
-        //     }
-        // }
     } // rank 0 does almost everything, then broadcast one-by-one
 #ifdef __MPI
+    // first broadcast descriptive information to all ranks
     if(rank == 0) printf("PswfcRadials: pseudowavefunction read on rank 0, broadcast start.\n");
     
     Parallel_Common::bcast_string(symbol_);
@@ -347,16 +340,18 @@ void PswfcRadials::read_upf_pswfc(std::ifstream& ifs,
     Parallel_Common::bcast_int(ngrid);
     // Parallel_Common::bcast_double(dr); // we dont need to broadcast dr again because it is fixed to 0.01
 #endif
+    // then adjust and allocate memory for ranks other than 0, according to information broadcasted
+    // from rank0
     if(rank != 0)
     {
         nzeta_ = new int[lmax_ + 1];
         index_map_ = new int[(lmax_ + 1) * nzeta_max_];
         
+        // decomposed correlated container std::map<std::pair<int, int>, std::vector<double>> into three std::vectors,
+        // additionally with rgrid the r values of pseudowavefunction
         ls.resize(nchi_);
         izetas.resize(nchi_);
-
         rgrid.resize(ngrid);
-
         rvalues.resize(nchi_);
         for(int i = 0; i < nchi_; i++) rvalues[i].resize(ngrid);
     }
@@ -364,14 +359,15 @@ void PswfcRadials::read_upf_pswfc(std::ifstream& ifs,
     Parallel_Common::bcast_int(nzeta_, lmax_ + 1);
     Parallel_Common::bcast_int(index_map_, (lmax_ + 1) * nzeta_max_);
 
+    // correlated container bcast
     Parallel_Common::bcast_int(ls.data(), nchi_);
     Parallel_Common::bcast_int(izetas.data(), nchi_);
     Parallel_Common::bcast_double(rgrid.data(), ngrid);
-
     for(int i = 0; i < nchi_; i++) Parallel_Common::bcast_double(rvalues[i].data(), ngrid);
 
     if(rank == 0) printf("PswfcRadials: pseudowavefunction read and broadcast finished on rank 0.\n");
 #endif
+    // do the following for all ranks, as if rank 0
     chi_ = new NumericalRadial[nchi_];
     for(int i = 0; i < nchi_; i++)
     {

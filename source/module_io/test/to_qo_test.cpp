@@ -129,34 +129,6 @@ TEST_F(toQOTest, Constructor)
     EXPECT_EQ(tqo.p_ucell(), nullptr);
 }
 
-TEST_F(toQOTest, OrbitalFilter)
-{
-    define_fcc_cell(ucell);
-    toQO tqo("pswfc",
-             {"s", "spd", "all", "dfps"},
-             GlobalV::qo_thr,
-             GlobalV::qo_screening_coeff);
-    EXPECT_TRUE(tqo.orbital_filter(0, tqo.strategy(0))); // whether l=0 is possible for stratgy of type 0
-    EXPECT_FALSE(tqo.orbital_filter(1, tqo.strategy(0))); // whether l=1 is possible for stratgy of type 0
-    EXPECT_FALSE(tqo.orbital_filter(2, tqo.strategy(0))); // whether l=2 is possible for stratgy of type 0
-    EXPECT_TRUE(tqo.orbital_filter(0, tqo.strategy(1))); // whether l=0 is possible for stratgy of type 1
-    EXPECT_TRUE(tqo.orbital_filter(1, tqo.strategy(1))); // whether l=1 is possible for stratgy of type 1
-    EXPECT_TRUE(tqo.orbital_filter(2, tqo.strategy(1))); // whether l=2 is possible for stratgy of type 1
-    EXPECT_FALSE(tqo.orbital_filter(3, tqo.strategy(1))); // whether l=3 is possible for stratgy of type 1
-    EXPECT_TRUE(tqo.orbital_filter(0, tqo.strategy(2))); // whether l=0 is possible for stratgy of type 2
-    EXPECT_TRUE(tqo.orbital_filter(1, tqo.strategy(2))); // whether l=1 is possible for stratgy of type 2
-    EXPECT_TRUE(tqo.orbital_filter(2, tqo.strategy(2))); // whether l=2 is possible for stratgy of type 2
-    EXPECT_TRUE(tqo.orbital_filter(3, tqo.strategy(2))); // whether l=3 is possible for stratgy of type 2
-    EXPECT_TRUE(tqo.orbital_filter(4, tqo.strategy(2))); // whether l=4 is possible for stratgy of type 2
-    EXPECT_TRUE(tqo.orbital_filter(5, tqo.strategy(2))); // whether l=5 is possible for stratgy of type 2
-    EXPECT_TRUE(tqo.orbital_filter(6, tqo.strategy(2))); // whether l=6 is possible for stratgy of type 2
-    EXPECT_TRUE(tqo.orbital_filter(0, tqo.strategy(3))); // whether l=0 is possible for stratgy of type 3
-    EXPECT_TRUE(tqo.orbital_filter(1, tqo.strategy(3))); // whether l=1 is possible for stratgy of type 3
-    EXPECT_TRUE(tqo.orbital_filter(2, tqo.strategy(3))); // whether l=2 is possible for stratgy of type 3
-    EXPECT_TRUE(tqo.orbital_filter(3, tqo.strategy(3))); // whether l=3 is possible for stratgy of type 3
-    EXPECT_FALSE(tqo.orbital_filter(4, tqo.strategy(3))); // whether l=4 is possible for stratgy of type 3
-}
-
 TEST_F(toQOTest, ReadStructures)
 {
     define_fcc_cell(ucell);
@@ -229,7 +201,7 @@ TEST_F(toQOTest, RadialCollectionIndexing)
     std::vector<int> natoms = {1, 1};
     std::map<std::tuple<int,int,int,int,int>,int> index;
     std::map<int,std::tuple<int,int,int,int,int>> index_reverse;
-    tqo.radialcollection_indexing(*(tqo.p_nao()), natoms, index, index_reverse);
+    tqo.radialcollection_indexing(*(tqo.p_nao()), natoms, false, index, index_reverse);
     EXPECT_EQ(index.size(), 26); // 2*1 + 2*3 + 1*5 + 2*1 + 2*3 + 1*5 = 26
     EXPECT_EQ(index_reverse.size(), 26);
     // it, ia, l, izeta, m
@@ -308,7 +280,7 @@ TEST_F(toQOTest, RadialCollectionIndexing)
     EXPECT_EQ(index_reverse[25], std::make_tuple(1,0,2,0,-2)); // C, 1st atom, 1d, m = -2
     // test2 2Si, 3C
     natoms = {2, 3};
-    tqo.radialcollection_indexing(*(tqo.p_nao()), natoms, index, index_reverse);
+    tqo.radialcollection_indexing(*(tqo.p_nao()), natoms, false, index, index_reverse);
     EXPECT_EQ(index.size(), 65); // (2*1 + 2*3 + 1*5)*2 + (2*1 + 2*3 + 1*5)*3 = 65
     EXPECT_EQ(index_reverse.size(), 65);
     // it, ia, l, izeta, m
@@ -345,7 +317,7 @@ TEST_F(toQOTest, RadialCollectionIndexing)
     EXPECT_EQ(tqo.nchi(), 13); // Si: 1s, 2px, 2py, 2pz, 3dz2, 3dxz, 3dyz, 3dx2-y2, 3dxy, C: 1s, 2px, 2py, 2pz
     index.clear();
     index_reverse.clear();
-    tqo.radialcollection_indexing(*(tqo.p_ao()), natoms, index, index_reverse);
+    tqo.radialcollection_indexing(*(tqo.p_ao()), natoms, true, index, index_reverse);
     EXPECT_EQ(index.size(), 30); // minimal-nodeless, Si: 1s, 2p, 3d, C: 1s, 2p, Si2C3
                                  // (1 + 3)*3 + (1 + 3 + 5)*2 = 12 + 18 = 30
     EXPECT_EQ(index_reverse.size(), 30);
@@ -783,7 +755,7 @@ TEST_F(toQOTest, CalculateSelfOvlpKSymmetrical)
         {
             // R = 0, 0, 0, then unfolding kphase would be e-ikR = 1,
             // becomes direct summation over kpoints
-            std::complex<double> ovlpR_ij = ovlpk_1[i*nrows+j] + ovlpk_2[i*nrows+j];
+            std::complex<double> ovlpR_ij = ovlpk_1[i*ncols+j] + ovlpk_2[i*ncols+j];
             EXPECT_NEAR(ovlpR_ij.imag(), 0.0, 1e-10);
             if(ovlpR_ij.real() > 1e-10)
             {
@@ -805,7 +777,7 @@ TEST_F(toQOTest, CalculateSelfOvlpKSymmetrical)
         {
             // R = 0, 0, 0, then unfolding kphase would be e-ikR = 1,
             // becomes direct summation over kpoints
-            std::complex<double> ovlpR_ij = ovlpk_3[i*nrows+j] + ovlpk_4[i*nrows+j];
+            std::complex<double> ovlpR_ij = ovlpk_3[i*ncols+j] + ovlpk_4[i*ncols+j];
             EXPECT_NEAR(ovlpR_ij.imag(), 0.0, 1e-10);
             if(ovlpR_ij.real() > 1e-10)
             {
@@ -827,7 +799,7 @@ TEST_F(toQOTest, CalculateSelfOvlpKSymmetrical)
         {
             // R = 0, 0, 0, then unfolding kphase would be e-ikR = 1,
             // becomes direct summation over kpoints
-            std::complex<double> ovlpR_ij = ovlpk_5[i*nrows+j] + ovlpk_6[i*nrows+j];
+            std::complex<double> ovlpR_ij = ovlpk_5[i*ncols+j] + ovlpk_6[i*ncols+j];
             EXPECT_NEAR(ovlpR_ij.imag(), 0.0, 1e-10);
             if(ovlpR_ij.real() > 1e-10)
             {
@@ -849,7 +821,7 @@ TEST_F(toQOTest, CalculateSelfOvlpKSymmetrical)
         {
             // R = 0, 0, 0, then unfolding kphase would be e-ikR = 1,
             // becomes direct summation over kpoints
-            std::complex<double> ovlpR_ij = ovlpk_7[i*nrows+j] + ovlpk_8[i*nrows+j];
+            std::complex<double> ovlpR_ij = ovlpk_7[i*ncols+j] + ovlpk_8[i*ncols+j];
             EXPECT_NEAR(ovlpR_ij.imag(), 0.0, 1e-10);
             if(ovlpR_ij.real() > 1e-10)
             {
@@ -869,8 +841,8 @@ TEST_F(toQOTest, CalculateSelfOvlpKSymmetrical)
         {
             // R = 0, 0, 0, then unfolding kphase would be e-ikR = 1,
             // becomes direct summation over kpoints
-            EXPECT_NEAR(ovlpk_9[i*nrows+j].imag(), 0.0, 1e-10);
-            if(ovlpk_9[i*nrows+j].real() > 1e-10)
+            EXPECT_NEAR(ovlpk_9[i*ncols+j].imag(), 0.0, 1e-10);
+            if(ovlpk_9[i*ncols+j].real() > 1e-10)
             {
                 all_zero = false;
             }
@@ -960,6 +932,120 @@ TEST_F(toQOTest, CalculateSelfOvlpRFull)
 
 /* Si_dojo_soc.upf is special: two p orbitals, one s orbital */
 
+/* Prerequisite: orbital filter, filters out not needed orbitals */
+TEST_F(toQOTest, OrbitalFilterOut)
+{
+    define_fcc_cell(ucell);
+    GlobalV::qo_thr = 1e-10;
+    GlobalV::qo_screening_coeff = {};
+    // because qo_basis hydrogen doesnot have needs to filter out any orbitals, it should be always true
+    toQO tqo("hydrogen", {"full", "full"},
+             GlobalV::qo_thr,
+             GlobalV::qo_screening_coeff);
+    EXPECT_FALSE(tqo.orbital_filter_out(0, 0, 0)); // Si 1s
+    EXPECT_FALSE(tqo.orbital_filter_out(0, 0, 1)); // Si 2s
+    EXPECT_FALSE(tqo.orbital_filter_out(0, 1, 0)); // Si 2p -> 3
+    EXPECT_FALSE(tqo.orbital_filter_out(0, 0, 2)); // Si 3s 
+    EXPECT_FALSE(tqo.orbital_filter_out(0, 1, 1)); // Si 3p -> 3
+    EXPECT_FALSE(tqo.orbital_filter_out(0, 2, 0)); // Si 3d -> 5
+    EXPECT_FALSE(tqo.orbital_filter_out(1, 0, 0)); // C 1s
+    EXPECT_FALSE(tqo.orbital_filter_out(1, 0, 1)); // C 2s
+    EXPECT_FALSE(tqo.orbital_filter_out(1, 1, 0)); // C 2p -> 3
+    // therefore in total we should have 1 + 1 + 3 + 1 + 3 + 5 + 1 + 1 + 3 = 19 orbitals
+    // distinguished by (it, ia, l, zeta, m)
+
+    // if change to pswfc, then it should filter out some orbitals according to qo_strategy
+    GlobalV::qo_screening_coeff = {0.5, 0.5};
+    toQO tqo2("pswfc", {"s", "s"},
+              GlobalV::qo_thr,
+              GlobalV::qo_screening_coeff);
+    // for pswfc specifying l, filter does not care about number of zeta
+    for(int it = 0; it < 2; it++)
+    {
+        for(int l = 0; l < 100; l++) // any number of l are okay, because filter just want l = 0
+        {
+            for(int z = 0; z < 100; z++)
+            {
+                if(l == 0) EXPECT_FALSE(tqo2.orbital_filter_out(it, l, z));
+                else EXPECT_TRUE(tqo2.orbital_filter_out(it, l, z));
+            }
+        }
+    }
+    // next test with random ordered arranged names of subshell
+    toQO tqo3("pswfc", {"sfdp", "pdf"},
+              GlobalV::qo_thr,
+              GlobalV::qo_screening_coeff);
+    for(int l = 0; l < 100; l++)
+    {
+        for(int z = 0; z < 100; z++)
+        {
+            if(l == 0)
+            {
+                EXPECT_FALSE(tqo3.orbital_filter_out(0, l, z));
+                EXPECT_TRUE(tqo3.orbital_filter_out(1, l, z));
+            }
+            else if(l < 4)
+            {
+                EXPECT_FALSE(tqo3.orbital_filter_out(0, l, z));
+                EXPECT_FALSE(tqo3.orbital_filter_out(1, l, z));
+            }
+            else
+            {
+                EXPECT_TRUE(tqo3.orbital_filter_out(0, l, z));
+                EXPECT_TRUE(tqo3.orbital_filter_out(1, l, z));
+            }
+        }
+    }
+    // test combination `all` with `s`
+    toQO tqo4("pswfc", {"all", "p"},
+              GlobalV::qo_thr,
+              GlobalV::qo_screening_coeff);
+    for(int l = 0; l < 100; l++)
+    {
+        for(int z = 0; z < 100; z++)
+        {
+            if(l == 1) EXPECT_FALSE(tqo4.orbital_filter_out(1, l, z));
+            else EXPECT_TRUE(tqo4.orbital_filter_out(1, l, z));
+            EXPECT_FALSE(tqo4.orbital_filter_out(0, l, z)); // do not filter out anything
+        }
+    }
+    // test szv, which controls both l and zeta
+    toQO tqo5("szv", {"2", "4"},
+              GlobalV::qo_thr,
+              GlobalV::qo_screening_coeff);
+    // for 2 is given as lmax, l can only be 0, 1 and 2, izeta can only be 0
+    for(int l = 0; l < 100; l++)
+    {
+        for(int z = 0; z < 100; z++)
+        {
+            // any not single zeta orbitals are not valid
+            if(z != 0)
+            {
+                EXPECT_TRUE(tqo5.orbital_filter_out(0, l, z));
+                EXPECT_TRUE(tqo5.orbital_filter_out(1, l, z));
+            }
+            else
+            {
+                if(l <= 2)
+                {
+                    EXPECT_FALSE(tqo5.orbital_filter_out(0, l, z));
+                    EXPECT_FALSE(tqo5.orbital_filter_out(1, l, z));
+                }
+                else if(l <= 4)
+                {
+                    EXPECT_TRUE(tqo5.orbital_filter_out(0, l, z));
+                    EXPECT_FALSE(tqo5.orbital_filter_out(1, l, z));
+                }
+                else
+                {
+                    EXPECT_TRUE(tqo5.orbital_filter_out(0, l, z));
+                    EXPECT_TRUE(tqo5.orbital_filter_out(1, l, z));
+                }
+            }
+        }
+    }
+}
+
 TEST_F(toQOTest, BuildPswfcPartial1)
 {
     define_fcc_cell(ucell);
@@ -1017,7 +1103,7 @@ TEST_F(toQOTest, BuildPswfcPartial3)
                  GlobalV::ofs_running,
                  0);
     EXPECT_EQ(tqo.p_ao()->nchi(), 5); // AO will always read and import all orbitals
-    EXPECT_EQ(tqo.nchi(), 10);
+    EXPECT_EQ(tqo.nchi(), 10); // (3+3+1)+(3) = 10
 }
 
 TEST_F(toQOTest, BuildPswfcAll)
@@ -1195,7 +1281,7 @@ TEST_F(toQOTest, CalculateOvlpKGamma)
     {
         for(int j = 0; j < ncols; j++)
         {
-            if(tqo.ovlpk()[i*nrows+j].imag() != 0.0)
+            if(tqo.ovlpk()[i*ncols+j].imag() != 0.0)
             {
                 all_real = false;
             }
@@ -1235,7 +1321,7 @@ TEST_F(toQOTest, CalculateOvlpKSlaterGamma)
     {
         for(int j = 0; j < ncols; j++)
         {
-            if(tqo.ovlpk()[i*nrows+j].imag() != 0.0)
+            if(tqo.ovlpk()[i*ncols+j].imag() != 0.0)
             {
                 all_real = false;
             }
@@ -1257,8 +1343,18 @@ TEST_F(toQOTest, CalculateSelfOvlpKPswfcSymmetrical)
     toQO tqo("pswfc", {"all", "all"},
              GlobalV::qo_thr,
              GlobalV::qo_screening_coeff);
+             
     std::vector<ModuleBase::Vector3<double>> kvecs_d;
-    kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma point
+    kvecs_d.push_back(ModuleBase::Vector3<double>(-0.25, -0.25, -0.25)); // pair 1
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.25, 0.25, 0.25));
+    kvecs_d.push_back(ModuleBase::Vector3<double>(-0.25, 0.25, 0.25)); // pair 2
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.25, -0.25, -0.25));
+    kvecs_d.push_back(ModuleBase::Vector3<double>(-0.25, -0.25, 0.25)); // pair 3
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.25, 0.25, -0.25));
+    kvecs_d.push_back(ModuleBase::Vector3<double>(-0.25, 0.25, -0.25)); // pair 4
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.25, -0.25, 0.25));
+    kvecs_d.push_back(ModuleBase::Vector3<double>(0.0, 0.0, 0.0)); // Gamma
+
     tqo.initialize(GlobalV::global_out_dir,
                    "",
                    "",
@@ -1268,6 +1364,8 @@ TEST_F(toQOTest, CalculateSelfOvlpKPswfcSymmetrical)
                    0, 1);
     int nrows = tqo.nchi();
     int ncols = tqo.nphi();
+    EXPECT_EQ(nrows, 11);
+    EXPECT_EQ(ncols, 26);
     std::cout << "Number of supercells: " << tqo.nR() << ", number of kpoints: " << tqo.nks() << std::endl;
     tqo.calculate_ovlpk(0);
     std::vector<std::complex<double>> ovlpk_1 = tqo.ovlpk();
@@ -1281,7 +1379,7 @@ TEST_F(toQOTest, CalculateSelfOvlpKPswfcSymmetrical)
         {
             // R = 0, 0, 0, then unfolding kphase would be e-ikR = 1,
             // becomes direct summation over kpoints
-            std::complex<double> ovlpR_ij = ovlpk_1[i*nrows+j] + ovlpk_2[i*nrows+j];
+            std::complex<double> ovlpR_ij = ovlpk_1[i*ncols+j] + ovlpk_2[i*ncols+j];
             EXPECT_NEAR(ovlpR_ij.imag(), 0.0, 1e-8);
         }
     }
@@ -1296,7 +1394,7 @@ TEST_F(toQOTest, CalculateSelfOvlpKPswfcSymmetrical)
         {
             // R = 0, 0, 0, then unfolding kphase would be e-ikR = 1,
             // becomes direct summation over kpoints
-            std::complex<double> ovlpR_ij = ovlpk_3[i*nrows+j] + ovlpk_4[i*nrows+j];
+            std::complex<double> ovlpR_ij = ovlpk_3[i*ncols+j] + ovlpk_4[i*ncols+j];
             EXPECT_NEAR(ovlpR_ij.imag(), 0.0, 1e-8);
         }
     }
@@ -1311,7 +1409,7 @@ TEST_F(toQOTest, CalculateSelfOvlpKPswfcSymmetrical)
         {
             // R = 0, 0, 0, then unfolding kphase would be e-ikR = 1,
             // becomes direct summation over kpoints
-            std::complex<double> ovlpR_ij = ovlpk_5[i*nrows+j] + ovlpk_6[i*nrows+j];
+            std::complex<double> ovlpR_ij = ovlpk_5[i*ncols+j] + ovlpk_6[i*ncols+j];
             EXPECT_NEAR(ovlpR_ij.imag(), 0.0, 1e-8);
         }
     }
@@ -1326,7 +1424,7 @@ TEST_F(toQOTest, CalculateSelfOvlpKPswfcSymmetrical)
         {
             // R = 0, 0, 0, then unfolding kphase would be e-ikR = 1,
             // becomes direct summation over kpoints
-            std::complex<double> ovlpR_ij = ovlpk_7[i*nrows+j] + ovlpk_8[i*nrows+j];
+            std::complex<double> ovlpR_ij = ovlpk_7[i*ncols+j] + ovlpk_8[i*ncols+j];
             EXPECT_NEAR(ovlpR_ij.imag(), 0.0, 1e-8);
         }
     }
@@ -1339,7 +1437,7 @@ TEST_F(toQOTest, CalculateSelfOvlpKPswfcSymmetrical)
         {
             // R = 0, 0, 0, then unfolding kphase would be e-ikR = 1,
             // becomes direct summation over kpoints
-            EXPECT_NEAR(ovlpk_9[i*nrows+j].imag(), 0.0, 1e-8);
+            EXPECT_NEAR(ovlpk_9[i*ncols+j].imag(), 0.0, 1e-8);
         }
     }
     //tqo.write_ovlp(tqo.ovlpR()[0], "QO_self_ovlp.dat");
@@ -1378,7 +1476,7 @@ TEST_F(toQOTest, CalculateHydrogenlike)
     {
         for(int j = 0; j < ncols; j++)
         {
-            if(tqo.ovlpk()[i*nrows+j] != std::complex<double>(0.0, 0.0))
+            if(tqo.ovlpk()[i*ncols+j] != std::complex<double>(0.0, 0.0))
             {
                 all_zero = false;
             }

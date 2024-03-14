@@ -17,7 +17,7 @@
     - [init\_chg](#init_chg)
     - [init\_vel](#init_vel)
     - [nelec](#nelec)
-    - [nelec_delta](#nelec_delta)
+    - [nelec\_delta](#nelec_delta)
     - [nupdown](#nupdown)
     - [dft\_functional](#dft_functional)
     - [xc\_temperature](#xc_temperature)
@@ -3505,7 +3505,7 @@ for `nspin 2` case. The difference is that `lambda`, `target_mag`, and `constrai
 
 ## Quasiatomic Orbital (QO) analysis
 
-These variables are used to control the usage of QO analysis. Please note present implementation of QO always yield numerically instable results, use with much care.
+These variables are used to control the usage of QO analysis. QO further compress information from LCAO: usually PW basis has dimension in million, LCAO basis has dimension below thousand, and QO basis has dimension below hundred.
 
 ### qo_switch
 
@@ -3518,7 +3518,8 @@ These variables are used to control the usage of QO analysis. Please note presen
 - **Type**: String
 - **Description**: specify the type of atomic basis
   - `pswfc`: use the pseudowavefunction in pseudopotential files as atomic basis. To use this option, please make sure in pseudopotential file there is pswfc in it.
-  - `hydrogen`: generate hydrogen-like atomic basis.
+  - `hydrogen`: generate hydrogen-like atomic basis (or with Slater screening).
+  - `szv`: use the first set of zeta for each angular momentum from numerical atomic orbitals as atomic basis.
 
   *warning: to use* `pswfc` *, please use norm-conserving pseudopotentials with pseudowavefunctions, SG15 pseudopotentials cannot support this option.*
 - **Default**: `hydrogen`
@@ -3539,9 +3540,12 @@ These variables are used to control the usage of QO analysis. Please note presen
   - `all`: use all possible pseudowavefunctions in pseudopotential file.
   - `s`/`p`/`d`/...: only use s/p/d/f/...-orbital(s).
   - `spd`: use s, p and d orbital(s). Any unordered combination is acceptable.
+  
+  For `qo_basis szv`
+  Specify the maximal l value for each atom type, for example `1` for s and p, `2` for s, p and d, ...
 
   *warning: for* `qo_basis hydrogen` *to use* `full`, *generation strategy may cause the space spanned larger than the one spanned by numerical atomic orbitals, in this case, must filter out orbitals in some way*
-- **Default**: `minimal-valence`
+- **Default**: for `hydrogen`: `energy-valence`, for `pswfc`: `all`, for `szv`: `1`.
 
 ### qo_screening_coeff
 

@@ -38,6 +38,7 @@ void toQO::initialize(const std::string& out_dir,
         std::string init_info = "\nQuasiatomic orbital analysis activated.\n";
         init_info += "Parameters settings check:\n";
         init_info += "qo_basis: " + qo_basis_ + "\n";
+        init_info += "qo_thr: " + std::to_string(qo_thr_) + "\n";
         init_info += "qo_strategies: ";
         for(auto s: strategies_) init_info += s + " ";
         init_info += "\n";
@@ -49,6 +50,7 @@ void toQO::initialize(const std::string& out_dir,
         printf("%s", init_info.c_str());
     }
 #ifdef __MPI
+    // this MPI_Barrier is to ensure the above information is printed before the following
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
     // initialize the variables defining I/O
@@ -127,7 +129,7 @@ void toQO::build_nao(const int ntype,
     // indexing, all processes can do together. It is also cumbersome to broadcast a std::map of std::tuple
     // by ABACUS self-built MPI broadcast function, so the following indexing is done by all processes,
     // directly.
-    radialcollection_indexing(*nao_, na_, index_nao_, rindex_nao_);
+    radialcollection_indexing(*nao_, na_, false, index_nao_, rindex_nao_);
     nphi_ = index_nao_.size();
 
     delete[] orbital_fn_;
@@ -140,13 +142,34 @@ void toQO::build_nao(const int ntype,
     }
 }
 
-bool toQO::orbital_filter(const int l, const std::string spec)
+bool toQO::orbital_filter_out(const int& itype,
+                              const int& l,
+                              const int& izeta)
 {
-    // false = filter out, true = keep
-    // this function works for PswfcRadials, to select the orbitals of interest
-    std::vector<std::string> l2symbol = {"s", "p", "d", "f", "g"}; // seems enough
-    if(spec == "all") return true;
-    else if(spec.find_first_of(l2symbol[l]) != std::string::npos) return true;
+    // true = filter out, false = not filter out = keep
+    // this function works for RadialCollection, to select the orbitals of interest
+    if(qo_basis_ == "pswfc")
+    {
+        // for pswfc, what supports is specifying the name of subshell layer, like
+        // qo_strategy sp spdf
+        // means for the first atom type, use s and p orbitals, for the second, use
+        // s, p, d, and f orbitals
+        // default is `all` for all types, and for each type, all orbitals are used
+        std::vector<std::string> l2symbol = {"s", "p", "d", "f", "g"}; // seems enough
+        if(strategies_[itype] == "all") return false;
+        else if(l >= l2symbol.size()) return true;
+        else if(strategies_[itype].find_first_of(l2symbol[l]) != std::string::npos) return false;
+        else return true;
+    }
+    else if(qo_basis_ == "szv")
+    {
+        // however, to get szv from an unknown source is not as easy as what we thought, 
+        // because there might be polarization function in basis, in that case it is lmax + 1
+        // let user to specify the lmax
+        if(izeta != 0) return true;
+        else if(l > std::stoi(strategies_[itype])) return true;
+        else return false;
+    }
     else return false;
 }
 
@@ -165,7 +188,7 @@ void toQO::build_hydrogen(const int ntype,
     // indexing, all processes can do together. It is also cumbersome to broadcast a std::map of std::tuple
     // by ABACUS self-built MPI broadcast function, so the following indexing is done by all processes,
     // directly.
-    radialcollection_indexing(*ao_, na_, index_ao_, rindex_ao_);
+    radialcollection_indexing(*ao_, na_, true, index_ao_, rindex_ao_);
     nchi_ = index_ao_.size();
 }
 
@@ -199,31 +222,24 @@ void toQO::build_pswfc(const int ntype,
     // indexing, all processes can do together. It is also cumbersome to broadcast a std::map of std::tuple
     // by ABACUS self-built MPI broadcast function, so the following indexing is done by all processes,
     // directly.
-    radialcollection_indexing(*ao_, na_, index_ao_, rindex_ao_);
+    radialcollection_indexing(*ao_, na_, true, index_ao_, rindex_ao_);
     nchi_ = index_ao_.size();
     delete[] pspot_fn_;
 }
-/*
-void toQO::build_szv(const int ntype)
+
+void toQO::build_szv()
 {
     // build the numerical atomic orbital basis
     ModuleBase::SphericalBesselTransformer sbt;
-    ao_ = std::unique_ptr<RadialCollection>(new RadialCollection);
-    int ntype_ = ntype;
-    std::vector<std::string> orbital_fn_(ntype_, "szv.orb");
-    ao_->build(ntype_, orbital_fn_.data(), 'o');
+    ao_ = std::unique_ptr<RadialCollection>(new RadialCollection(*nao_));
     ao_->set_transformer(sbt);
-    for(int itype = 0; itype < ntype; itype++)
-    {
-        int _nchi_it = 0;
-        for(int l = 0; l <= ao_->lmax(itype); l++)
-        {
-            _nchi_it += (2*l+1)*ao_->nzeta(itype, l);
-        }
-        nchi_ += _nchi_it * na_[itype];
-    }
+    // indexing, all processes can do together. It is also cumbersome to broadcast a std::map of std::tuple
+    // by ABACUS self-built MPI broadcast function, so the following indexing is done by all processes,
+    // directly.
+    radialcollection_indexing(*ao_, na_, true, index_ao_, rindex_ao_);
+    nchi_ = index_ao_.size();
 }
-*/
+
 void toQO::build_ao(const int ntype, 
                     const std::string pseudo_dir,
                     const std::string* const pspot_fn,
@@ -252,12 +268,12 @@ void toQO::build_ao(const int ntype,
                     qo_thr,                     /// qo_thr
                     rank);                      /// rank
     }
+    else if(qo_basis_ == "szv") build_szv();
     if(rank == 0)
     {
         std::string ao_build_info = "toQO::build_ao: built atomic orbitals for calculating QO overlap integrals\n";
         ao_build_info += "Atom-centered orbital to project is: " + qo_basis_ + "\n";
-        ao_build_info += "Convergence threshold on norm of atom-centered orbital to control spreading: " + std::to_string(qo_thr_) + "\n";
-        ao_build_info += "Number of columns in QO_ovlp_*.dat: " + std::to_string(nchi_) + "\n";
+        ao_build_info += "Number of rows in QO_ovlp_*.dat: " + std::to_string(nchi_) + "\n";
         ao_build_info += "Orbitals arrange in sequence of (it, ia, l, zeta, m), m in order of 0, 1, -1, 2, -2, ...\n";
         printf("%s", ao_build_info.c_str());
     }
@@ -417,6 +433,7 @@ void toQO::zero_out_ovlps(const bool& is_R)
 
 void toQO::radialcollection_indexing(const RadialCollection& radcol,
                                      const std::vector<int>& natoms,
+                                     const bool& with_filter,
                                      std::map<std::tuple<int,int,int,int,int>,int>& index_map,
                                      std::map<int,std::tuple<int,int,int,int,int>>& index_map_reverse)
 {
@@ -430,9 +447,6 @@ void toQO::radialcollection_indexing(const RadialCollection& radcol,
         {
             for(int l = 0; l <= radcol.lmax(itype); l++)
             {
-                // here should be an orbital_filter operation
-                // temporary choice
-                if((!orbital_filter(l, strategies_[itype]))&&(qo_basis_ == "pswfc")) continue;
                 std::vector<int> ms;
                 for(int m_abs = 0; m_abs <= l; m_abs++)
                 {
@@ -441,6 +455,9 @@ void toQO::radialcollection_indexing(const RadialCollection& radcol,
                 }
                 for(int izeta = 0; izeta < radcol.nzeta(itype, l); izeta++)
                 {
+                    // usually, the orbital is distinguished by it, l and zeta, the ia and m are not
+                    // commonly used.
+                    if(orbital_filter_out(itype, l, izeta)&&with_filter) continue;
                     for(int m: ms)
                     {
                         index_map[std::make_tuple(itype, iatom, l, izeta, m)] = index;
