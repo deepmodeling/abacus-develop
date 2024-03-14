@@ -448,7 +448,12 @@ namespace ModuleESolver
                 /*
                     SCF print: G1    -3.435545e+03  0.000000e+00   3.607e-01  2.862e-01
                 */
-                printiter(iter, drho, duration, diag_ethr);
+                double dkin = 0.0; // for meta-GGA
+                if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+                {
+                    dkin = p_chgmix->get_dkin(pelec->charge, GlobalV::nelec);
+                }
+                printiter(iter, drho, dkin, duration, diag_ethr);
                 if (this->conv_elec)
                 {
                     this->niter = iter;
@@ -494,9 +499,9 @@ namespace ModuleESolver
     }
 
     template<typename T, typename Device>
-    void ESolver_KS<T, Device>::printiter(const int iter, const double drho, const double duration, const double ethr)
+    void ESolver_KS<T, Device>::printiter(const int iter, const double drho, const double dkin, const double duration, const double ethr)
     {
-        this->pelec->print_etot(this->conv_elec, iter, drho, drho, duration, INPUT.printe, ethr);
+        this->pelec->print_etot(this->conv_elec, iter, drho, dkin, duration, INPUT.printe, ethr);
     }
 
     template<typename T, typename Device>

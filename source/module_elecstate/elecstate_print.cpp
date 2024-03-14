@@ -380,7 +380,7 @@ void ElecState::print_etot(const bool converged,
             if (elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5)
             {
                 std::cout << std::setprecision(3);
-                std::cout << std::setw(11) << 0.0;
+                std::cout << std::setw(11) << scf_thr_kin;
             }
             std::cout << std::setprecision(3);
             std::cout << std::setw(11) << duration;
