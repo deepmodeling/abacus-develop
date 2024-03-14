@@ -110,7 +110,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const elecstate::DensityMatri
 				Ds = GlobalV::GAMMA_ONLY_LOCAL
                 ? RI_2D_Comm::split_m2D_ktoR<Tdata>(*this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_gamma_out(), *dm.get_paraV_pointer(), GlobalV::NSPIN)
                 : RI_2D_Comm::split_m2D_ktoR<Tdata>(*this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_k_out(), *dm.get_paraV_pointer(), GlobalV::NSPIN, this->exx_spacegroup_symmetry);
-            if (this->exx_spacegroup_symmetry && !restore_dm_only) { this->exx_ptr->cal_exx_elec(Ds, *dm.get_paraV_pointer(), &this->symrot_); }
+            if (this->exx_spacegroup_symmetry && GlobalC::exx_info.info_global.symmetry_rotate_realspace) { this->exx_ptr->cal_exx_elec(Ds, *dm.get_paraV_pointer(), &this->symrot_); }
             else { this->exx_ptr->cal_exx_elec(Ds, *dm.get_paraV_pointer()); }
         }
     }
@@ -217,24 +217,17 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
             // this->symrot_.test_HR_rotation(GlobalC::ucell.symm, GlobalC::ucell.atoms, GlobalC::ucell.st, 'H', *(dynamic_cast<hamilt::HamiltLCAO<T, double>*>(&hamilt)->getHR()));
             // exit(0);
 
-            if (this->exx_spacegroup_symmetry)
+            if (this->exx_spacegroup_symmetry && GlobalC::exx_info.info_global.symmetry_rotate_realspace)
             {
-                if (restore_dm_only)
-                {
-                    this->exx_ptr->cal_exx_elec(Ds, *dm.get_paraV_pointer());    // restore DM but not Hexx
-                    // this->symrot_.print_HR(this->exx_ptr->Hexxs[0], "Hexxs_restore-DM-only");   // test
-                }
-                else
-                {
-                    this->exx_ptr->cal_exx_elec(Ds, *dm.get_paraV_pointer(), &this->symrot_);
-                    // this->symrot_.print_HR(this->exx_ptr->Hexxs[0], "Hexxs_irreducible");   // test
-                    // this->symrot_.print_HR(this->exx_ptr->Hexxs[0], "Hexxs_restored");   // test
-                }
+                this->exx_ptr->cal_exx_elec(Ds, *dm.get_paraV_pointer(), &this->symrot_);
+                // this->symrot_.print_HR(this->exx_ptr->Hexxs[0], "Hexxs_irreducible");   // test
+                // this->symrot_.print_HR(this->exx_ptr->Hexxs[0], "Hexxs_restored");   // test
             }
             else
             {
-                this->exx_ptr->cal_exx_elec(Ds, *dm.get_paraV_pointer());
-                // this->symrot_.print_HR(this->exx_ptr->Hexxs[0], "Hexxs_ref");
+                this->exx_ptr->cal_exx_elec(Ds, *dm.get_paraV_pointer());    // restore DM but not Hexx
+                // this->symrot_.print_HR(this->exx_ptr->Hexxs[0], "Hexxs_restore-DM-only");   // test
+                // this->symrot_.print_HR(this->exx_ptr->Hexxs[0], "Hexxs_ref");   // test
             }
             // ========================  test   ========================
             // if (this->two_level_step)exit(0);

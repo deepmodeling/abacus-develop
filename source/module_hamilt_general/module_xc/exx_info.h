@@ -17,6 +17,7 @@ struct Exx_Info
 
         bool separate_loop = true;
         size_t hybrid_step = 1;
+        bool exx_symmetry_realspace = true;
     };
     Exx_Info_Global info_global;
 

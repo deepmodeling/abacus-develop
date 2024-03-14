@@ -482,6 +482,7 @@ struct Input_para
     double exx_opt_orb_ecut = 0.0;              ///< the cut-off of plane wave expansion for opt ABFs
     double exx_opt_orb_tolerence = 0.0;         ///< the threshold when solving for the zeros of spherical Bessel
                                                 ///< functions for opt ABFs
+    bool exx_symmetry_realspace; ///< true for rotate H(R) and D(k) and false for rotate D(k) only
     double rpa_ccp_rmesh_times = 10.0;          ///< how many times larger the radial mesh required for
                                                 ///< calculating Columb potential is to that of atomic orbitals
     // ==============   #Parameters (16.dft+u) ======================

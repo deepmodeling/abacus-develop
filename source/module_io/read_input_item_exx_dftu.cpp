@@ -248,6 +248,12 @@ void ReadInput::item_exx()
         this->add_item(item);
     }
     {
+        Input_Item item("exx_symmetry_realspace");
+        item.annotation = "whether to reduce real-space sector in Hexx calculation";
+        read_sync_bool(input.exx_symmetry_realspace);
+        this->add_item(item);
+    }
+    {
         Input_Item item("rpa_ccp_rmesh_times");
         item.annotation = "how many times larger the radial mesh required for "
                           "calculating Columb potential is to that "
