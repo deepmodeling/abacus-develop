@@ -496,7 +496,7 @@ namespace ModuleESolver
     template<typename T, typename Device>
     void ESolver_KS<T, Device>::printiter(const int iter, const double drho, const double duration, const double ethr)
     {
-        this->pelec->print_etot(this->conv_elec, iter, drho, duration, INPUT.printe, ethr);
+        this->pelec->print_etot(this->conv_elec, iter, drho, drho, duration, INPUT.printe, ethr);
     }
 
     template<typename T, typename Device>

@@ -154,6 +154,7 @@ void ElecState::print_band(const int& ik, const int& printe, const int& iter)
 void ElecState::print_etot(const bool converged,
                            const int& iter_in,
                            const double& scf_thr,
+                           const double& scf_thr_kin,
                            const double& duration,
                            const int printe,
                            const double& pw_diag_thr,
