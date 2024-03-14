@@ -322,7 +322,7 @@ void bind_m_nao(py::module& m)
              "enable_fft"_a = false)
         .def(
             "set_value",
-            [](&NumericalRadial self, const bool for_r_space, py::array_t<double> value, const int p) {
+            [](NumericalRadial& self, const bool for_r_space, py::array_t<double> value, const int p) {
                 py::buffer_info value_info = value.request();
                 self.set_value(for_r_space, static_cast<double*>(value_info.ptr), p);
             },
@@ -334,6 +334,7 @@ void bind_m_nao(py::module& m)
         // Getters
         .def_property_readonly("symbol", &NumericalRadial::symbol)
         .def_property_readonly("itype", &NumericalRadial::itype)
+        .def_property_readonly("izeta", &NumericalRadial::izeta)
         .def_property_readonly("l", &NumericalRadial::l)
         .def_property_readonly("nr", &NumericalRadial::nr)
         .def_property_readonly("nk", &NumericalRadial::nk)
@@ -341,16 +342,15 @@ void bind_m_nao(py::module& m)
         .def_property_readonly("kcut", &NumericalRadial::kcut)
         .def_property_readonly("rmax", &NumericalRadial::rmax)
         .def_property_readonly("kmax", &NumericalRadial::kmax)
+        .def_property_readonly("pr", &NumericalRadial::pr)
+        .def_property_readonly("pk", &NumericalRadial::pk)
+        .def_property_readonly("sbt", &NumericalRadial::sbt)
+        .def("rgrid", overload_cast_<int>()(&NumericalRadial::rgrid, py::const_), "ir"_a)
+        .def("kgrid", overload_cast_<int>()(&NumericalRadial::kgrid, py::const_), "ik"_a)
+        .def("rvalue", overload_cast_<int>()(&NumericalRadial::rvalue, py::const_), "ir"_a)
+        .def("kvalue", overload_cast_<int>()(&NumericalRadial::kvalue, py::const_), "ik"_a)
         .def_property_readonly("rgrid", overload_cast_<>()(&NumericalRadial::rgrid, py::const_))
         .def_property_readonly("kgrid", overload_cast_<>()(&NumericalRadial::kgrid, py::const_))
         .def_property_readonly("rvalue", overload_cast_<>()(&NumericalRadial::rvalue, py::const_))
-        .def_property_readonly("kvalue", overload_cast_<>()(&NumericalRadial::kvalue, py::const_))
-        .def_property_readonly("pr", &NumericalRadial::pr)
-        .def_property_readonly("pk", &NumericalRadial::pk)
-        .def_property_readonly("is_fft_compliant", &NumericalRadial::is_fft_compliant)
-        .def_property_readonly("sbt", &NumericalRadial::sbt)
-        .def("rgrid", overload_cast_<const int>()(&NumericalRadial::rgrid, py::const_), "ir"_a)
-        .def("kgrid", overload_cast_<const int>()(&NumericalRadial::kgrid, py::const_), "ik"_a)
-        .def("rvalue", overload_cast_<const int>()(&NumericalRadial::rvalue, py::const_), "ir"_a)
-        .def("kvalue", overload_cast_<const int>()(&NumericalRadial::kvalue, py::const_), "ik"_a);
+        .def_property_readonly("kvalue", overload_cast_<>()(&NumericalRadial::kvalue, py::const_));
 }
