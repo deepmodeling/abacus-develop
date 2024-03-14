@@ -80,8 +80,18 @@ class RDMFT
     UnitCell* ucell = nullptr;
     K_Vectors* kv = nullptr;
 
+
+    Charge* charge = nullptr;
+
+    //could be deleted future
+    LCAO_Matrix* LM = nullptr;
+    Local_Orbital_Charge* loc = nullptr;
+
+
+
     int nk_total = 0;
     std::string XC_func_rdmft;
+    double alpha_power = 0.656; // 0.656 for soilds, 0.525 for dissociation of H2, 0.55~0.58 for HEG
 
     ModuleBase::matrix occ_number;
     psi::Psi<TK> wfc;
@@ -125,6 +135,10 @@ class RDMFT
 
     void init(Gint_Gamma* GG_in, Gint_k* GK_in, Parallel_Orbitals* ParaV_in, UnitCell* ucell_in, K_Vectors* kv_in, std::string XC_func_rdmft_in = "HF");
 
+    template <typename T_Gint>
+    void update_charge(const K_Vectors& kv, T_Gint& G_in, const Parallel_Orbitals* ParaV, const ModuleBase::matrix& wg,
+                    const psi::Psi<TK>& wfc,Local_Orbital_Charge& loc, Charge& charge); // loc can be deleted in the future
+
   private:
     
 
@@ -136,101 +150,6 @@ class RDMFT
 
 
 };
-
-
-
-
-
-template <typename TK, typename TR>
-RDMFT<TK, TR>::RDMFT()
-{
-
-}
-
-template <typename TK, typename TR>
-RDMFT<TK, TR>::~RDMFT()
-{
-  delete HR_TV;
-  delete HR_hartree;
-  delete HR_XC;
-
-  delete Vxc_fromRI_d;
-  delete Vxc_fromRI_c;
-
-  delete V_ekinetic_potential;
-  delete V_nonlocal;
-  delete V_local;
-  delete V_hartree;
-  delete V_XC;
-
-}
-
-template <typename TK, typename TR>
-void RDMFT<TK, TR>::init(Gint_Gamma* GG_in, Gint_k* GK_in, Parallel_Orbitals* ParaV_in, UnitCell* ucell_in, K_Vectors* kv_in, std::string XC_func_rdmft_in)
-{
-    GG = GG_in;
-    GK = GK_in;
-    ParaV = ParaV_in;
-    ucell = ucell_in;
-    kv = kv_in;
-    nk_total = kv->nkstot_full;
-    XC_func_rdmft = XC_func_rdmft_in;
-    
-    std::cout << "\n\n******\n" << "test class RDMFT and do rdmft_esolver.init()" << "\n******\n\n" << std::endl;
-
-    // create desc[] and something about MPI to Eij(nbands*nbands)
-    std::ofstream ofs_running;
-    std::ofstream ofs_warning;
-    para_Eij.set_block_size(GlobalV::NB2D);
-    para_Eij.set_proc_dim(GlobalV::DSIZE);
-    para_Eij.comm_2D = ParaV->comm_2D;
-    para_Eij.blacs_ctxt = ParaV->blacs_ctxt;
-    para_Eij.set_local2global( GlobalV::NBANDS, GlobalV::NBANDS, ofs_running, ofs_warning );
-    para_Eij.set_desc( GlobalV::NBANDS, GlobalV::NBANDS, para_Eij.get_row_size(), false );
-
-    // 
-    occ_number.create(nk_total, GlobalV::NBANDS);
-    wg.create(nk_total, GlobalV::NBANDS);
-    wk_fun_occNum.create(nk_total, GlobalV::NBANDS);
-    occNum_wfcHamiltWfc.create(nk_total, GlobalV::NBANDS);
-    Etotal_n_k.create(nk_total, GlobalV::NBANDS);
-    wfcHwfc_TV.create(nk_total, GlobalV::NBANDS);
-    wfcHwfc_hartree.create(nk_total, GlobalV::NBANDS);
-    wfcHwfc_XC.create(nk_total, GlobalV::NBANDS);
-
-    // 
-    wfc.resize(nk_total, ParaV->ncol_bands, ParaV->nrow);   // test ParaV->nrow
-    occNum_HamiltWfc.resize(nk_total, ParaV->ncol_bands, ParaV->nrow);
-    H_wfc_TV.resize(nk_total, ParaV->ncol_bands, ParaV->nrow);
-    H_wfc_hartree.resize(nk_total, ParaV->ncol_bands, ParaV->nrow);
-    H_wfc_XC.resize(nk_total, ParaV->ncol_bands, ParaV->nrow);
-
-    // 
-    HK_TV.resize( ParaV->get_row_size()*ParaV->get_col_size() );
-    HK_hartree.resize( ParaV->get_row_size()*ParaV->get_col_size() );
-    HK_XC.resize( ParaV->get_row_size()*ParaV->get_col_size() );
-    Eij_TV.resize( para_Eij.get_row_size()*para_Eij.get_col_size() );
-    Eij_hartree.resize( para_Eij.get_row_size()*para_Eij.get_col_size() );
-    Eij_XC.resize( para_Eij.get_row_size()*para_Eij.get_col_size() );
-
-    std::cout << "\n\n******\n" << "malloc for many xxx" << "\n******\n\n" << std::endl;
-
-    // 
-    HR_TV = new hamilt::HContainer<TR>(*ucell, ParaV);
-    HR_hartree = new hamilt::HContainer<TR>(*ucell, ParaV);
-    HR_XC = new hamilt::HContainer<TR>(*ucell, ParaV);
-
-    // 
-    // Vxc_fromRI_d = new Exx_LRI<double>(GlobalC::exx_info.info_ri);
-    // Vxc_fromRI_c = new Exx_LRI<std::complex<double>>(GlobalC::exx_info.info_ri);
-
-    std::cout << "\n\n******\n" << "malloc for HR" << "\n******\n\n" << std::endl;
-
-}
-
-
-
-
 
 
 
