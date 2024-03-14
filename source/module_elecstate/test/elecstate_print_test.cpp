@@ -67,6 +67,10 @@ Charge::Charge()
 Charge::~Charge()
 {
 }
+int elecstate::get_xc_func_type()
+{
+    return 0;
+}
 
 /***************************************************************
  *  unit test of functions in elecstate_print.cpp
