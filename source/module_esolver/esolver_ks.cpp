@@ -486,6 +486,10 @@ namespace ModuleESolver
         std::cout << std::setw(15) << "ETOT(eV)";
         std::cout << std::setw(15) << "EDIFF(eV)";
         std::cout << std::setw(11) << "DRHO";
+        if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+        {
+            std::cout << std::setw(11) << "DKIN";
+        }
         std::cout << std::setw(11) << "TIME(s)" << std::endl;
     }
 
