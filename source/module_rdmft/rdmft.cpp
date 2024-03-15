@@ -173,11 +173,13 @@ void RDMFT<TK, TR>::update_charge(ModuleBase::matrix& occ_number_in, const psi::
             wk_fun_occNum(ik, inb) = kv->wk[ik] * occNum_func(occ_number(ik, inb), 2, XC_func_rdmft, alpha_power);
         }
     }
+    std::cout << "\n\nupdate_charge: " << "0" << "\n" << std::endl;
 
     // update wfc
     TK* pwfc_in = &wfc_in(0, 0, 0);
     TK* pwfc = &wfc(0, 0, 0);
     for(int i=0; i<wfc.size(); ++i) pwfc[i] = pwfc_in[i];
+    std::cout << "\n\nupdate_charge: " << "1" << "\n" << std::endl;
 
     // update charge
     if( GlobalV::GAMMA_ONLY_LOCAL )
@@ -205,9 +207,12 @@ void RDMFT<TK, TR>::update_charge(ModuleBase::matrix& occ_number_in, const psi::
     {
         // calculate DMK and DMR
         elecstate::DensityMatrix<TK, double> DM(kv, ParaV, GlobalV::NSPIN);
+        std::cout << "\n\nupdate_charge: " << "2" << "\n" << std::endl;
         elecstate::cal_dm_psi(ParaV, wg, wfc, DM);
+        std::cout << "\n\nupdate_charge: " << "3" << "\n" << std::endl;
         DM.init_DMR(&GlobalC::GridD, &GlobalC::ucell);
         DM.cal_DMR();
+        std::cout << "\n\nupdate_charge: " << "4" << "\n" << std::endl;
 
         // this code is copying from function ElecStateLCAO<TK>::psiToRho(), in elecstate_lcao.cpp
         for (int is = 0; is < GlobalV::NSPIN; is++)
@@ -216,9 +221,11 @@ void RDMFT<TK, TR>::update_charge(ModuleBase::matrix& occ_number_in, const psi::
         }
 
         GK->transfer_DM2DtoGrid(DM.get_DMR_vector());
+        std::cout << "\n\nupdate_charge: " << "5" << "\n" << std::endl;
         //double** invaild_ptr = nullptr;   // use invaild_ptr replace loc.DM_R in the future
         Gint_inout inout(loc->DM_R, charge->rho, Gint_Tools::job_type::rho);  // what is Local_Orbital_Charge& loc_in? ///////////////
         GK->cal_gint(&inout);
+        std::cout << "\n\nupdate_charge: " << "6" << "\n" << std::endl;
 
         charge->renormalize_rho();
     }
@@ -258,7 +265,7 @@ void RDMFT<TK, TR>::get_V_TV(LCAO_Matrix* LM_in)
     V_ekinetic_potential = new hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>(
         LM,
         kv->kvec_d,
-        HR_TV, // HR_T_nonlocal
+        HR_T_nonlocal,
         &HK_TV,
         &GlobalC::ucell,
         &GlobalC::GridD,
@@ -268,7 +275,7 @@ void RDMFT<TK, TR>::get_V_TV(LCAO_Matrix* LM_in)
     V_nonlocal = new hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>(
         LM,
         kv->kvec_d,
-        HR_TV, // HR_T_nonlocal
+        HR_T_nonlocal,
         &HK_TV,
         &GlobalC::ucell,
         &GlobalC::GridD,
@@ -286,7 +293,8 @@ void RDMFT<TK, TR>::get_V_hartree_local(LCAO_Matrix* LM_in, const ModulePW::PW_B
 {
     LM = LM_in;
     HR_hartree->set_zero();
-    // HR_TV->set_zero(); // need copy: HR_TV = HR_T_nonlocal 
+    HR_TV->set_zero();
+    HR_TV->add(*HR_T_nonlocal);
 
     if( GlobalV::GAMMA_ONLY_LOCAL )
     {
@@ -296,7 +304,7 @@ void RDMFT<TK, TR>::get_V_hartree_local(LCAO_Matrix* LM_in, const ModulePW::PW_B
             LM,
             kv->kvec_d,
             charge,
-            HR_TV,////////////////////////////////////
+            HR_TV,
             &HK_TV,     
             &GlobalC::ucell,
             &GlobalC::GridD,
@@ -332,7 +340,7 @@ void RDMFT<TK, TR>::get_V_hartree_local(LCAO_Matrix* LM_in, const ModulePW::PW_B
             LM,
             kv->kvec_d,
             charge,
-            HR_TV,////////////////////////////////////
+            HR_TV,
             &HK_TV,
             &GlobalC::ucell,
             &GlobalC::GridD,

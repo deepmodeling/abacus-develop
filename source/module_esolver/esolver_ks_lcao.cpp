@@ -996,12 +996,19 @@ namespace ModuleESolver
         );
     }
 
+    std::cout << "\n\nrdmft_solver: " << "0" << "\n" << std::endl;
     rdmft_solver.update_charge(occ_number, *(this->psi));
+    std::cout << "\n\nrdmft_solver: " << "1" << "\n" << std::endl;
     rdmft_solver.get_V_TV(&LM);
+    std::cout << "\n\nrdmft_solver: " << "2" << "\n" << std::endl;
     rdmft_solver.get_V_hartree_local(&LM, *(this->pw_rho), GlobalC::ppcell.vloc, this->sf.strucFac);
+    std::cout << "\n\nrdmft_solver: " << "3" << "\n" << std::endl;
     rdmft_solver.get_V_XC();
+    std::cout << "\n\nrdmft_solver: " << "4" << "\n" << std::endl;
     rdmft_solver.Run_rdmft();
+    std::cout << "\n\nrdmft_solver: " << "5" << "\n" << std::endl;
     rdmft_solver.cal_Energy();
+    std::cout << "\n\nrdmft_solver: " << "6" << "\n" << std::endl;
 
     /******** test RDMFT *********/
 
