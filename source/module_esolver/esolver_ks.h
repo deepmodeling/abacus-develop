@@ -69,7 +69,10 @@ namespace ModuleESolver
         void printhead();
         // Print inforamtion in each iter
         // G1    -3.435545e+03  0.000000e+00   3.607e-01  2.862e-01
-        void printiter(const int iter, const double drho, const double duration, const double ethr);
+        // for metaGGA
+        // ITER   ETOT(eV)       EDIFF(eV)      DRHO       DKIN       TIME(s) 
+        // G1    -3.435545e+03  0.000000e+00   3.607e-01  3.522e-01  2.862e-01
+        void printiter(const int iter, const double drho, const double dkin, const double duration, const double ethr);
         // Write the headline in the running_log file
         // "PW/LCAO" ALGORITHM --------------- ION=   1  ELEC=   1--------------------------------
         void writehead(std::ofstream& ofs_running, const int istep, const int iter);
