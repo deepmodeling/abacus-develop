@@ -501,7 +501,6 @@ void Grid_Technique::cal_trace_lo(void) {
 
 void Grid_Technique::init_gpu_gint_variables() {
   if (is_malloced) {
-    printf("adsfad \n");
     free_gpu_gint_variables();
   }
   double ylmcoef[100];
