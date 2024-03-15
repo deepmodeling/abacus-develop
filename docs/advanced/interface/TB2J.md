@@ -24,9 +24,9 @@ python setup.py install
 
 ## The Heisenberg model
 The Heisenberg Hamiltonian in TB2J contains three different parts, which are:
-$$
-E = -\sum_{i \neq j} \left[ J_{\text{iso}}^{ij} \vec{S}_i \cdot \vec{S}_j + \vec{S}_i J_{\text{ani}}^{ij} \vec{S}_j + \vec{D}_{ij} \cdot (\vec{S}_i \times \vec{S}_j) \right],
-$$
+
+$E = -\sum_{i \neq j} \left[ J_{\text{iso}}^{ij} \vec{S}_i \cdot \vec{S}_j + \vec{S}_i J_{\text{ani}}^{ij} \vec{S}_j + \vec{D}_{ij} \cdot (\vec{S}_i \times \vec{S}_j) \right],$
+
 where $J_{\text{iso}}^{ij}$ represents the isotropic exchange, $J_{\text{ani}}^{ij}$ represents the symmetric anisotropic exhcange which is a 3 $\times$ 3 tensor with $J^{\text{ani}} = J^{\text{ani,T}}$, $\vec{D}_{ij}$ represents the Dzyaloshinskii-Moriya interaction (DMI). 
 
 > **Note:** Exchange parameters conventions for other Heisenberg Hamiltonian can be found in [Conventions of Heisenberg Model](https://tb2j.readthedocs.io/en/latest/src/convention.html).

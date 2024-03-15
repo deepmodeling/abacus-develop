@@ -16,3 +16,4 @@ Interfaces to Other Softwares
    pyatb
    ShengBTE
    candela
+   TB2J
