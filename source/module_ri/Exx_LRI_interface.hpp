@@ -33,34 +33,6 @@ void Exx_LRI_Interface<T, Tdata>::read_Hexxs(const std::string& file_name)
 	ModuleBase::timer::tick("Exx_LRI", "read_Hexxs");
 }
 
-template<typename Tdata>
-inline void print_tensor(const RI::Tensor<Tdata>& t, const std::string& name, const double& threshold = 0.0)
-{
-    std::cout << name << ":\n";
-    for (int i = 0;i < t.shape[0];++i)
-    {
-        for (int j = 0;j < t.shape[1];++j)
-            std::cout << ((std::abs(t(i, j)) > threshold) ? t(i, j) : static_cast<Tdata>(0)) << " ";
-        std::cout << std::endl;
-    }
-}
-template<typename Tdata>
-inline void print_HR(const std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>& HR, const std::string name, const double& threshold)
-{
-    for (auto& HR_ia1 : HR)
-    {
-        int iat1 = HR_ia1.first;
-        for (auto& HR_ia12R : HR_ia1.second)
-        {
-            int iat2 = HR_ia12R.first.first;
-            std::array<int, 3> R = HR_ia12R.first.second;
-            const RI::Tensor<Tdata>& HR_tensor = HR_ia12R.second;
-            std::cout << "atom pair (" << iat1 << ", " << iat2 << "), R=(" << R[0] << "," << R[1] << "," << R[2] << "), ";
-            print_tensor(HR_tensor, name, threshold);
-        }
-    }
-}
-
 template<typename T, typename Tdata>
 void Exx_LRI_Interface<T, Tdata>::write_Hexxs(const std::string& file_name, const UnitCell& ucell) const
 {
@@ -92,13 +64,8 @@ void Exx_LRI_Interface<T, Tdata>::write_Hexxs(const std::string& file_name, cons
                 -1,
                 true);  //already global
     }
-
-    // test: output Hexxs
-    print_HR(this->exx_ptr->Hexxs[0], "Hexxs[0]_write", sparse_threshold);
-
     ModuleBase::timer::tick("Exx_LRI", "write_Hexxs");
 }
-
 
 template<typename T, typename Tdata>
 std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, Tdata>>>
@@ -163,7 +130,6 @@ void Exx_LRI_Interface<T, Tdata>::read_Hexxs(const std::string& file_name, const
                     this->exx_ptr->Hexxs.at(is).at(iat1).at({ iat2, dR })(ucell.iwt2iw[i], ucell.iwt2iw[j]) = matrix(i, j);
                 }
     }
-    print_HR(this->exx_ptr->Hexxs[0], "Hexxs[0]_read", 1e-10);
     ModuleBase::timer::tick("Exx_LRI", "read_Hexxs");
 }
 
