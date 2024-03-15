@@ -1,19 +1,19 @@
 from __future__ import annotations
 
 import pytest
-from pyabacus import ModuleBase as m
+from pyabacus import ModuleBase as base
 import numpy as np
 
 
 
 def test_sphbes():
-    s = m.Sphbes()
+    s = base.Sphbes()
     # test for sphbesj
     assert s.sphbesj(1, 0.0) == 0.0
     assert s.sphbesj(0, 0.0) == 1.0
 
 def test_sbt():
-    sbt = m.SphericalBesselTransformer()
+    sbt = base.SphericalBesselTransformer()
 
 @pytest.fixture
 def simpson_setup():
@@ -25,7 +25,7 @@ def simpson_setup():
 
 def test_simpson(simpson_setup):
     n, func, dx= simpson_setup
-    s = m.Integral()
+    s = base.Integral()
     assert s.simpson(n, func, dx) == pytest.approx(0, abs=1e-10)
     
 
