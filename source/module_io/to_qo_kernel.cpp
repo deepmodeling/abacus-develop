@@ -148,6 +148,7 @@ bool toQO::orbital_filter_out(const int& itype,
 {
     // true = filter out, false = not filter out = keep
     // this function works for RadialCollection, to select the orbitals of interest
+    std::vector<std::string> l2symbol = {"s", "p", "d", "f", "g"}; // seems enough
     if(qo_basis_ == "pswfc")
     {
         // for pswfc, what supports is specifying the name of subshell layer, like
@@ -155,7 +156,6 @@ bool toQO::orbital_filter_out(const int& itype,
         // means for the first atom type, use s and p orbitals, for the second, use
         // s, p, d, and f orbitals
         // default is `all` for all types, and for each type, all orbitals are used
-        std::vector<std::string> l2symbol = {"s", "p", "d", "f", "g"}; // seems enough
         if(strategies_[itype] == "all") return false;
         else if(l >= l2symbol.size()) return true;
         else if(strategies_[itype].find_first_of(l2symbol[l]) != std::string::npos) return false;
@@ -163,12 +163,13 @@ bool toQO::orbital_filter_out(const int& itype,
     }
     else if(qo_basis_ == "szv")
     {
-        // however, to get szv from an unknown source is not as easy as what we thought, 
-        // because there might be polarization function in basis, in that case it is lmax + 1
-        // let user to specify the lmax
-        if(izeta != 0) return true;
-        else if(l > std::stoi(strategies_[itype])) return true;
-        else return false;
+        // use two individual logic branch allows them have different orbital filtering logic,
+        // although presently they are almost the same
+        if(izeta != 0) return true; // filter out
+        else if(strategies_[itype] == "all") return false; // keep
+        else if(l >= l2symbol.size()) return true; // filter out
+        else if(strategies_[itype].find_first_of(l2symbol[l]) != std::string::npos) return false; // keep
+        else return true; // filter out
     }
     else return false;
 }

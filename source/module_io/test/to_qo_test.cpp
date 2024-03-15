@@ -1010,7 +1010,7 @@ TEST_F(toQOTest, OrbitalFilterOut)
         }
     }
     // test szv, which controls both l and zeta
-    toQO tqo5("szv", {"2", "4"},
+    toQO tqo5("szv", {"sdp", "spdfg"},
               GlobalV::qo_thr,
               GlobalV::qo_screening_coeff);
     // for 2 is given as lmax, l can only be 0, 1 and 2, izeta can only be 0

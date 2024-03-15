@@ -3522,7 +3522,8 @@ These variables are used to control the usage of QO analysis. QO further compres
   - `szv`: use the first set of zeta for each angular momentum from numerical atomic orbitals as atomic basis.
 
   *warning: to use* `pswfc` *, please use norm-conserving pseudopotentials with pseudowavefunctions, SG15 pseudopotentials cannot support this option.*
-- **Default**: `hydrogen`
+  *Developer notes: for ABACUS-lcao calculation, it is the most recommend to use `szv` instead of `pswfc` which is originally put forward in work of QO implementation on PW basis. The information loss always happens if `pswfc` or `hydrogen` orbitals are not well tuned, although making kpoints sampling more dense will mitigate this problem, but orbital-adjust parameters are needed to test system-by-system in this case.*
+- **Default**: `szv`
 
 ### qo_strategy
 
@@ -3536,16 +3537,13 @@ These variables are used to control the usage of QO analysis. QO further compres
   - `energy-full`: will generate hydrogen-like orbitals according to Aufbau principle. For example the Cu (1s2 2s2 2p6 3s2 3p6 3d10 4s1), will generate these orbitals.
   - `energy-valence`: from the highest n (principal quantum number) layer and n-1 layer, generate all occupied and possible ls (angular momentum quantum number) for only once, for example Cu, will generate 4s, 3d and 3p orbitals.
 
-  For `qo_basis pswfc`
-  - `all`: use all possible pseudowavefunctions in pseudopotential file.
+  For `qo_basis pswfc` and `qo_basis szv`
+  - `all`: use all possible pseudowavefunctions/numerical atomic orbital (of first zeta) in pseudopotential/numerical atomic orbital file.
   - `s`/`p`/`d`/...: only use s/p/d/f/...-orbital(s).
   - `spd`: use s, p and d orbital(s). Any unordered combination is acceptable.
   
-  For `qo_basis szv`
-  Specify the maximal l value for each atom type, for example `1` for s and p, `2` for s, p and d, ...
-
   *warning: for* `qo_basis hydrogen` *to use* `full`, *generation strategy may cause the space spanned larger than the one spanned by numerical atomic orbitals, in this case, must filter out orbitals in some way*
-- **Default**: for `hydrogen`: `energy-valence`, for `pswfc`: `all`, for `szv`: `1`.
+- **Default**: for `hydrogen`: `energy-valence`, for `pswfc` and `szv`: `all`
 
 ### qo_screening_coeff
 
