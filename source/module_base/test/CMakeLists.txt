@@ -9,12 +9,11 @@ AddTest(
   TARGET base_atom_in
   SOURCES atom_in_test.cpp
 )
-# Parallel test related to MPI should not be included in the base test set
-#AddTest(
-#  TARGET base_blacs_connector
-#  LIBS ${math_libs}
-#  SOURCES blacs_connector_test.cpp
-#)
+AddTest(
+  TARGET base_blacs_connector
+  LIBS ${math_libs}
+  SOURCES blacs_connector_test.cpp
+)
 AddTest(
   TARGET base_timer
   LIBS formatter
