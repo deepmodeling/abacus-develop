@@ -264,6 +264,44 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
     return drho;
 }
 
+double Charge_Mixing::get_dkin(Charge* chr, const double nelec)
+{
+    if (!(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)) 
+    {
+        return 0.0;
+    };
+    ModuleBase::TITLE("Charge_Mixing", "get_dkin");
+    ModuleBase::timer::tick("Charge_Mixing", "get_dkin");
+    double dkin = 0.0;
+    
+    // Get dkin from kin_r and kin_r_save for PW and LCAO both, which is different from drho.
+    for (int is = 0; is < GlobalV::NSPIN; is++)
+    {
+        if (is != 0 && is != 3 && GlobalV::DOMAG_Z)
+        {
+            continue;
+        }
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+ : dkin)
+#endif
+        for (int ir = 0; ir < this->rhopw->nrxx; ir++)
+        {
+            dkin += std::abs(chr->kin_r[is][ir] - chr->kin_r_save[is][ir]);
+        }
+    }
+#ifdef __MPI
+    Parallel_Reduce::reduce_pool(dkin);
+#endif
+    assert(nelec != 0);
+    assert(GlobalC::ucell.omega > 0);
+    assert(this->rhopw->nxyz > 0);
+    dkin *= GlobalC::ucell.omega / static_cast<double>(this->rhopw->nxyz);
+    dkin /= nelec;
+
+    ModuleBase::timer::tick("Charge_Mixing", "get_dkin");
+    return dkin;
+}
+
 void Charge_Mixing::mix_rho_recip(Charge* chr)
 {
     std::complex<double>* rhog_in = nullptr;
