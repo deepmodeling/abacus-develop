@@ -1,6 +1,8 @@
 #include "module_io/input.h"
 
-//Add json objects to gener_info
+/**
+* @brief In this part of the code to complete the general_info part of the json tree.
+*/
 namespace Json
 {
 #ifdef __RAPIDJSON
