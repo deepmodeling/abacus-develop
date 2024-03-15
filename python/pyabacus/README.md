@@ -21,12 +21,17 @@ There are examples for CI in `.github/workflows`. A simple way to produces
 binary "wheels" for all platforms is illustrated in the "wheels.yml" file,
 using [`cibuildwheel`][].
 
-Use `pytest` to run all the unit tests for pyabacus in the local machine.
+Use `pytest -v` to run all the unit tests for pyabacus in the local machine.
+```shell
+$ cd tests/
+$ pytest -v
+```
 
-Run `python test_m_nao.py` in `tests` to check the S matrix.
+Run `python ex_s_rotate.py` in `examples` to check the S matrix.
 
 ```shell
-$ python test_m_nao.py 
+$ cd examples/
+$ python ex_s_rotate.py
 norm(S_e3 - S_numer) =  3.341208104032616e-15
 ```
 
