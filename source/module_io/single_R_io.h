@@ -5,8 +5,18 @@
 
 namespace ModuleIO
 {
-	void output_single_R(std::ofstream &ofs, const std::map<size_t, std::map<size_t, double>> &XR, const double &sparse_threshold, const bool &binary, const Parallel_Orbitals &pv);
-	void output_single_R(std::ofstream& ofs, const std::map<size_t, std::map<size_t, std::complex<double>>>& XR, const double& sparse_threshold, const bool& binary, const Parallel_Orbitals& pv);
+    void output_single_R(std::ofstream& ofs,
+        const std::map<size_t, std::map<size_t, double>>& XR,
+        const double& sparse_threshold,
+        const bool& binary,
+        const Parallel_Orbitals& pv,
+        const bool& already_global = false);
+    void output_single_R(std::ofstream& ofs,
+        const std::map<size_t, std::map<size_t, std::complex<double>>>& XR,
+        const double& sparse_threshold,
+        const bool& binary,
+        const Parallel_Orbitals& pv,
+        const bool& already_global = false);
 }
 
 #endif

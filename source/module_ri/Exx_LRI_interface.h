@@ -30,12 +30,12 @@ public:
     void write_Hexxs(const std::string &file_name) const;
     void read_Hexxs(const std::string& file_name);
 
-    void write_Hexxs(const std::string& file_name, const Parallel_Orbitals& pv) const;
-    void read_Hexxs(const std::string& file_name, const Parallel_Orbitals& pv, const UnitCell& ucell);
+    void write_Hexxs(const std::string& file_name, const UnitCell& ucell) const;
+    void read_Hexxs(const std::string& file_name, const UnitCell& ucell);
 
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, Tdata>>>
         calculate_RI_Tensor_sparse(const double& sparse_threshold,
-            const std::map<int, std::map<TAC, RI::Tensor<Tdata>>>& hR, const Parallel_Orbitals& paraV)const;
+            const std::map<int, std::map<TAC, RI::Tensor<Tdata>>>& hR, const UnitCell& ucell)const;
 
     std::vector< std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& get_Hexxs() const { return this->exx_ptr->Hexxs; }
     

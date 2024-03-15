@@ -683,10 +683,14 @@ void ModuleIO::save_sparse(
     const std::string& filename,
     const Parallel_Orbitals& pv,
     const std::string& label,
-    const int& istep)
+    const int& istep,
+    const bool& already_global)
 {
     ModuleBase::TITLE("ModuleIO", "save_sparse");
     ModuleBase::timer::tick("ModuleIO", "save_sparse");
+
+    if (already_global && GlobalV::DRANK != 0) return;
+
     int total_R_num = all_R_coor.size();
     std::vector<int> nonzero_num(total_R_num, 0);
     int count = 0;
@@ -698,7 +702,7 @@ void ModuleIO::save_sparse(
                 nonzero_num[count] += row_loop.second.size();
         ++count;
     }
-    Parallel_Reduce::reduce_all(nonzero_num.data(), total_R_num);
+    if (!already_global)Parallel_Reduce::reduce_all(nonzero_num.data(), total_R_num);
 
     int output_R_number = 0;
     for (int index = 0; index < total_R_num; ++index)
@@ -759,7 +763,7 @@ void ModuleIO::save_sparse(
             }
         }
 
-        output_single_R(ofs, smat.at(R_coor), sparse_threshold, binary, pv);
+        output_single_R(ofs, smat.at(R_coor), sparse_threshold, binary, pv, already_global);
         ++count;
     }
     if (GlobalV::DRANK == 0) ofs.close();
@@ -775,7 +779,8 @@ template void ModuleIO::save_sparse<double>(
     const std::string&,
     const Parallel_Orbitals&,
     const std::string&,
-    const int&);
+    const int&,
+    const bool&);
 template void ModuleIO::save_sparse<std::complex<double>>(
     const std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>&,
     const std::set<Abfs::Vector3_Order<int>>&,
@@ -784,4 +789,5 @@ template void ModuleIO::save_sparse<std::complex<double>>(
     const std::string&,
     const Parallel_Orbitals&,
     const std::string&,
-    const int&);
+    const int&,
+    const bool&);

@@ -36,7 +36,8 @@ namespace ModuleIO
         const std::string& filename,
         const Parallel_Orbitals& pv,
         const std::string& label,
-        const int& istep = -1);
+        const int& istep = -1,
+        const bool& already_global = false);
 }
 
 #endif

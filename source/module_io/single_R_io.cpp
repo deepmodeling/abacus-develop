@@ -3,7 +3,12 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 
-void ModuleIO::output_single_R(std::ofstream &ofs, const std::map<size_t, std::map<size_t, double>> &XR, const double &sparse_threshold, const bool &binary, const Parallel_Orbitals &pv)
+void ModuleIO::output_single_R(std::ofstream& ofs,
+    const std::map<size_t, std::map<size_t, double>>& XR,
+    const double& sparse_threshold,
+    const bool& binary,
+    const Parallel_Orbitals& pv,
+    const bool& already_global)
 {
     double *line = nullptr;
     std::vector<int> indptr;
@@ -33,7 +38,7 @@ void ModuleIO::output_single_R(std::ofstream &ofs, const std::map<size_t, std::m
         // line = new double[GlobalV::NLOCAL];
         ModuleBase::GlobalFunc::ZEROS(line, GlobalV::NLOCAL);
 
-        if(pv.global2local_row(row) >= 0)
+        if (already_global || pv.global2local_row(row) >= 0)
         {
             auto iter = XR.find(row);
             if (iter != XR.end())
@@ -45,7 +50,7 @@ void ModuleIO::output_single_R(std::ofstream &ofs, const std::map<size_t, std::m
             }
         }
 
-        Parallel_Reduce::reduce_all(line, GlobalV::NLOCAL);
+        if (!already_global)Parallel_Reduce::reduce_all(line, GlobalV::NLOCAL);
 
         if(GlobalV::DRANK == 0)
         {
@@ -116,9 +121,16 @@ void ModuleIO::output_single_R(std::ofstream &ofs, const std::map<size_t, std::m
 
 }
 
-void ModuleIO::output_single_R(std::ofstream& ofs, const std::map<size_t, std::map<size_t, std::complex<double>>>& XR, const double& sparse_threshold, const bool& binary, const Parallel_Orbitals& pv)
+void ModuleIO::output_single_R(std::ofstream& ofs,
+    const std::map<size_t, std::map<size_t, std::complex<double>>>& XR,
+    const double& sparse_threshold,
+    const bool& binary,
+    const Parallel_Orbitals& pv,
+    const bool& already_global)
 {
-    std::complex<double> *line = nullptr;
+    if (already_global && GlobalV::DRANK != 0) return;
+
+    std::complex<double>* line = nullptr;
     std::vector<int> indptr;
     indptr.reserve(GlobalV::NLOCAL + 1);
     indptr.push_back(0);
@@ -146,7 +158,7 @@ void ModuleIO::output_single_R(std::ofstream& ofs, const std::map<size_t, std::m
         // line = new std::complex<double>[GlobalV::NLOCAL];
         ModuleBase::GlobalFunc::ZEROS(line, GlobalV::NLOCAL);
 
-        if(pv.global2local_row(row) >= 0)
+        if (already_global || pv.global2local_row(row) >= 0)
         {
             auto iter = XR.find(row);
             if (iter != XR.end())
@@ -158,7 +170,7 @@ void ModuleIO::output_single_R(std::ofstream& ofs, const std::map<size_t, std::m
             }
         }
 
-        Parallel_Reduce::reduce_all(line, GlobalV::NLOCAL);
+        if (!already_global)Parallel_Reduce::reduce_all(line, GlobalV::NLOCAL);
 
         if (GlobalV::DRANK == 0)
         {

@@ -524,11 +524,11 @@ void ESolver_KS_LCAO<TK, TR>::nscf()
     if (GlobalC::exx_info.info_global.cal_exx)
     {
         // GlobalC::exx_lcao.cal_exx_elec_nscf(this->LOWF.ParaV[0]);
-        const std::string file_name_exx = GlobalV::global_out_dir + "HexxR_" + std::to_string(GlobalV::MY_RANK);
+        const std::string file_name_exx = GlobalV::global_out_dir + "HexxR";
         if (GlobalC::exx_info.info_ri.real_number)
-            this->exd->read_Hexxs(file_name_exx, *this->LM.ParaV, GlobalC::ucell);
+            this->exd->read_Hexxs(file_name_exx, GlobalC::ucell);
         else
-            this->exc->read_Hexxs(file_name_exx, *this->LM.ParaV, GlobalC::ucell);
+            this->exc->read_Hexxs(file_name_exx, GlobalC::ucell);
 
         hamilt::HamiltLCAO<TK, TR>* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
         auto exx = new hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>>(&this->LM,
