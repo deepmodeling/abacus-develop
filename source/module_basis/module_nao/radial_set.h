@@ -95,6 +95,20 @@ class RadialSet
                        std::ofstream* const = nullptr, ///< output file stream for logging
                        const int = 0                   ///< MPI rank
                        ) {}
+
+    /**
+     * @brief Builds with the truncated spherical Bessel functions.
+     *
+     */
+    virtual void build(const int,
+                       const int,
+                       const double,
+                       const double = 0.1,
+                       const int = 0,
+                       std::ofstream* = nullptr,
+                       const int = 0
+    ) {};
+
     /**
      * @brief write any RadialSet object to a file in ABACUS numerical atomic orbital format.
      * 
