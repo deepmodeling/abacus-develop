@@ -17,9 +17,11 @@ Grid_Technique::Grid_Technique() {
   this->bcell_start = nullptr;
   this->in_this_processor = nullptr;
   this->trace_lo = nullptr;
-
   this->total_atoms_on_grid = 0;
   allocate_find_R2 = false;
+  #if ((defined __CUDA) /* || (defined __ROCM) */)
+  is_malloced = false;
+  #endif
 }
 
 Grid_Technique::~Grid_Technique() {
@@ -47,85 +49,7 @@ Grid_Technique::~Grid_Technique() {
   }
 
 #if ((defined __CUDA) /* || (defined __ROCM) */)
-  for (int i = 0; i < nstreams; ++i)
-    checkCudaErrors(cudaStreamDestroy(streams[i]));
-
-  checkCudaErrors(cudaFree(ylmcoef_g));
-  checkCudaErrors(cudaFree(ucell_atom_nwl_g));
-  checkCudaErrors(cudaFree(psi_u_g));
-  checkCudaErrors(cudaFree(atom_iw2_new_g));
-  checkCudaErrors(cudaFree(atom_iw2_ylm_g));
-  checkCudaErrors(cudaFree(atom_nw_g));
-  checkCudaErrors(cudaFree(atom_iw2_l_g));
-
-  checkCudaErrors(cudaFreeHost(psi_input_double_global));
-  checkCudaErrors(cudaFreeHost(psi_input_int_global));
-  checkCudaErrors(cudaFreeHost(num_psir_global));
-
-  checkCudaErrors(cudaFree(psi_input_double_global_g));
-  checkCudaErrors(cudaFree(psi_input_int_global_g));
-  checkCudaErrors(cudaFree(num_psir_global_g));
-  checkCudaErrors(cudaFree(psir_ylm_left_global_g));
-  checkCudaErrors(cudaFree(psir_ylm_right_global_g));
-
-  checkCudaErrors(cudaFreeHost(atom_pair_left_info_global));
-  checkCudaErrors(cudaFree(atom_pair_left_info_global_g));
-
-  checkCudaErrors(cudaFreeHost(atom_pair_right_info_global));
-  checkCudaErrors(cudaFree(atom_pair_right_info_global_g));
-
-  checkCudaErrors(cudaFreeHost(atom_pair_alpha_global));
-  checkCudaErrors(cudaFree(atom_pair_alpha_global_g));
-
-  checkCudaErrors(cudaFreeHost(atom_pair_k_info_global));
-  checkCudaErrors(cudaFree(atom_pair_k_info_global_g));
-
-  checkCudaErrors(cudaFreeHost(atom_pair_lda_global));
-  checkCudaErrors(cudaFree(atom_pair_lda_global_g));
-
-  checkCudaErrors(cudaFreeHost(atom_pair_ldb_global));
-  checkCudaErrors(cudaFree(atom_pair_ldb_global_g));
-
-  checkCudaErrors(cudaFreeHost(atom_pair_ldc_global));
-  checkCudaErrors(cudaFree(atom_pair_ldc_global_g));
-
-  checkCudaErrors(cudaFreeHost(atom_pair_left_global));
-  checkCudaErrors(cudaFreeHost(atom_pair_right_global));
-  checkCudaErrors(cudaFreeHost(atom_pair_output_global));
-
-  checkCudaErrors(cudaFree(atom_pair_left_global_g));
-  checkCudaErrors(cudaFree(dpsir_ylm_left_x_global_g));
-  checkCudaErrors(cudaFree(dpsir_ylm_left_y_global_g));
-  checkCudaErrors(cudaFree(dpsir_ylm_left_z_global_g));
-  checkCudaErrors(cudaFree(ddpsir_ylm_left_xx_global_g));
-  checkCudaErrors(cudaFree(ddpsir_ylm_left_xy_global_g));
-  checkCudaErrors(cudaFree(ddpsir_ylm_left_xz_global_g));
-  checkCudaErrors(cudaFree(ddpsir_ylm_left_yy_global_g));
-  checkCudaErrors(cudaFree(ddpsir_ylm_left_yz_global_g));
-  checkCudaErrors(cudaFree(ddpsir_ylm_left_zz_global_g));
-  checkCudaErrors(cudaFree(atom_pair_right_global_g));
-  checkCudaErrors(cudaFree(psir_ylm_dm_global_g));
-  checkCudaErrors(cudaFree(atom_pair_output_global_g));
-
-  checkCudaErrors(cudaFreeHost(vec_len));
-  checkCudaErrors(cudaFreeHost(vec_l));
-  checkCudaErrors(cudaFreeHost(vec_r));
-  checkCudaErrors(cudaFreeHost(dot_product));
-
-  checkCudaErrors(cudaFree(vec_len_g));
-  checkCudaErrors(cudaFree(vec_l_g));
-  checkCudaErrors(cudaFree(vec_r_g));
-  checkCudaErrors(cudaFree(dot_product_g));
-  checkCudaErrors(cudaFree(rho_g));
-
-  const int max_atom_pair_number = GlobalC::ucell.nat * GlobalC::ucell.nat;
-  for (int i = 0; i < max_atom_pair_number; i++) {
-    if (GridVlocal_v2_g[i] != nullptr) {
-      checkCudaErrors(cudaFree(GridVlocal_v2_g[i]));
-    }
-  }
-  checkCudaErrors(cudaFreeHost(GridVlocal_v2_g));
-
+  free_gpu_gint_variables();
 #endif
 }
 
@@ -576,6 +500,10 @@ void Grid_Technique::cal_trace_lo(void) {
 #if ((defined __CUDA) /* || (defined __ROCM) */)
 
 void Grid_Technique::init_gpu_gint_variables() {
+  if (is_malloced) {
+    printf("adsfad \n");
+    free_gpu_gint_variables();
+  }
   double ylmcoef[100];
   ModuleBase::GlobalFunc::ZEROS(ylmcoef, 100);
   for (int i = 0; i < 100; i++) {
@@ -861,8 +789,98 @@ void Grid_Technique::init_gpu_gint_variables() {
 
   gemm_algo_selector(bxyz, fastest_matrix_mul);
 
+  is_malloced = true;
+
   free(psi_u_now);
   free(atom_iw2_new_now);
   free(atom_iw2_ylm_now);
+}
+
+void Grid_Technique::free_gpu_gint_variables()
+{
+  if(!is_malloced)
+  {
+    return;
+  }
+  for (int i = 0; i < nstreams; ++i)
+  checkCudaErrors(cudaStreamDestroy(streams[i]));
+
+  checkCudaErrors(cudaFree(ylmcoef_g));
+  checkCudaErrors(cudaFree(ucell_atom_nwl_g));
+  checkCudaErrors(cudaFree(psi_u_g));
+  checkCudaErrors(cudaFree(atom_iw2_new_g));
+  checkCudaErrors(cudaFree(atom_iw2_ylm_g));
+  checkCudaErrors(cudaFree(atom_nw_g));
+  checkCudaErrors(cudaFree(atom_iw2_l_g));
+
+  checkCudaErrors(cudaFreeHost(psi_input_double_global));
+  checkCudaErrors(cudaFreeHost(psi_input_int_global));
+  checkCudaErrors(cudaFreeHost(num_psir_global));
+
+  checkCudaErrors(cudaFree(psi_input_double_global_g));
+  checkCudaErrors(cudaFree(psi_input_int_global_g));
+  checkCudaErrors(cudaFree(num_psir_global_g));
+  checkCudaErrors(cudaFree(psir_ylm_left_global_g));
+  checkCudaErrors(cudaFree(psir_ylm_right_global_g));
+
+  checkCudaErrors(cudaFreeHost(atom_pair_left_info_global));
+  checkCudaErrors(cudaFree(atom_pair_left_info_global_g));
+
+  checkCudaErrors(cudaFreeHost(atom_pair_right_info_global));
+  checkCudaErrors(cudaFree(atom_pair_right_info_global_g));
+
+  checkCudaErrors(cudaFreeHost(atom_pair_alpha_global));
+  checkCudaErrors(cudaFree(atom_pair_alpha_global_g));
+
+  checkCudaErrors(cudaFreeHost(atom_pair_k_info_global));
+  checkCudaErrors(cudaFree(atom_pair_k_info_global_g));
+
+  checkCudaErrors(cudaFreeHost(atom_pair_lda_global));
+  checkCudaErrors(cudaFree(atom_pair_lda_global_g));
+
+  checkCudaErrors(cudaFreeHost(atom_pair_ldb_global));
+  checkCudaErrors(cudaFree(atom_pair_ldb_global_g));
+
+  checkCudaErrors(cudaFreeHost(atom_pair_ldc_global));
+  checkCudaErrors(cudaFree(atom_pair_ldc_global_g));
+
+  checkCudaErrors(cudaFreeHost(atom_pair_left_global));
+  checkCudaErrors(cudaFreeHost(atom_pair_right_global));
+  checkCudaErrors(cudaFreeHost(atom_pair_output_global));
+
+  checkCudaErrors(cudaFree(atom_pair_left_global_g));
+  checkCudaErrors(cudaFree(dpsir_ylm_left_x_global_g));
+  checkCudaErrors(cudaFree(dpsir_ylm_left_y_global_g));
+  checkCudaErrors(cudaFree(dpsir_ylm_left_z_global_g));
+  checkCudaErrors(cudaFree(ddpsir_ylm_left_xx_global_g));
+  checkCudaErrors(cudaFree(ddpsir_ylm_left_xy_global_g));
+  checkCudaErrors(cudaFree(ddpsir_ylm_left_xz_global_g));
+  checkCudaErrors(cudaFree(ddpsir_ylm_left_yy_global_g));
+  checkCudaErrors(cudaFree(ddpsir_ylm_left_yz_global_g));
+  checkCudaErrors(cudaFree(ddpsir_ylm_left_zz_global_g));
+  checkCudaErrors(cudaFree(atom_pair_right_global_g));
+  checkCudaErrors(cudaFree(psir_ylm_dm_global_g));
+  checkCudaErrors(cudaFree(atom_pair_output_global_g));
+
+  checkCudaErrors(cudaFreeHost(vec_len));
+  checkCudaErrors(cudaFreeHost(vec_l));
+  checkCudaErrors(cudaFreeHost(vec_r));
+  checkCudaErrors(cudaFreeHost(dot_product));
+
+  checkCudaErrors(cudaFree(vec_len_g));
+  checkCudaErrors(cudaFree(vec_l_g));
+  checkCudaErrors(cudaFree(vec_r_g));
+  checkCudaErrors(cudaFree(dot_product_g));
+  checkCudaErrors(cudaFree(rho_g));
+
+  const int max_atom_pair_number = GlobalC::ucell.nat * GlobalC::ucell.nat;
+  for (int i = 0; i < max_atom_pair_number; i++) {
+    if (GridVlocal_v2_g[i] != nullptr) {
+      checkCudaErrors(cudaFree(GridVlocal_v2_g[i]));
+    }
+  }
+  checkCudaErrors(cudaFreeHost(GridVlocal_v2_g));
+
+  is_malloced = false;
 }
 #endif

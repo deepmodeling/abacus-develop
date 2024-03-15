@@ -120,6 +120,7 @@ private:
 #if ((defined __CUDA) /* || (defined __ROCM) */)
 public:
   double *ylmcoef_g;
+  bool is_malloced;
 
   int *atom_nw_g;
   int *ucell_atom_nwl_g;
@@ -203,6 +204,7 @@ public:
 
 private:
   void init_gpu_gint_variables();
+  void free_gpu_gint_variables();
 
 #endif
 };
