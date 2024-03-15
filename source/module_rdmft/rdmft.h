@@ -135,9 +135,7 @@ class RDMFT
 
     void init(Gint_Gamma* GG_in, Gint_k* GK_in, Parallel_Orbitals* ParaV_in, UnitCell* ucell_in, K_Vectors* kv_in, std::string XC_func_rdmft_in = "HF");
 
-    template <typename T_Gint>
-    void update_charge(const K_Vectors& kv, T_Gint& G_in, const Parallel_Orbitals* ParaV, const ModuleBase::matrix& wg,
-                    const psi::Psi<TK>& wfc,Local_Orbital_Charge& loc, Charge& charge); // loc can be deleted in the future
+    void update_charge();
 
   private:
     
@@ -150,6 +148,8 @@ class RDMFT
 
 
 };
+
+
 
 
 

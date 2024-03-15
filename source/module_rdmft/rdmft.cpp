@@ -125,20 +125,35 @@ void RDMFT<TK, TR>::init(Gint_Gamma* GG_in, Gint_k* GK_in, Parallel_Orbitals* Pa
     HR_hartree = new hamilt::HContainer<TR>(*ucell, ParaV);
     HR_XC = new hamilt::HContainer<TR>(*ucell, ParaV);
 
+    // set zero ( std::vector, ModuleBase::matrix will automatically be set to zero )
+    wfc.zero_out();
+    occNum_HamiltWfc.zero_out();
+    H_wfc_TV.zero_out();
+    H_wfc_hartree.zero_out();
+    H_wfc_XC.zero_out();
+    HR_TV->set_zero();
+    HR_hartree->set_zero();
+    HR_XC->set_zero();
+
+    if( GlobalV::GAMMA_ONLY_LOCAL )
+    {
+        HR_TV->fix_gamma();
+        HR_hartree->fix_gamma();
+        HR_XC->fix_gamma();
+    }
+
     // 
     // Vxc_fromRI_d = new Exx_LRI<double>(GlobalC::exx_info.info_ri);
     // Vxc_fromRI_c = new Exx_LRI<std::complex<double>>(GlobalC::exx_info.info_ri);
 
-    std::cout << "\n\n******\n" << "malloc for HR" << "\n******\n\n" << std::endl;
+    std::cout << "\n\n******\n" << "malloc for HR now!!!" << "\n******\n\n" << std::endl;
 
 }
 
 
 
 template <typename TK, typename TR>
-    template <typename T_Gint>
-void RDMFT<TK, TR>::update_charge(const K_Vectors& kv, T_Gint& G_in, const Parallel_Orbitals* ParaV, const ModuleBase::matrix& wg,
-                    const psi::Psi<TK>& wfc,Local_Orbital_Charge& loc, Charge& charge)  // loc can be deleted in the future
+void RDMFT<TK, TR>::update_charge()
 {
     if( GlobalV::GAMMA_ONLY_LOCAL )
     {
@@ -151,20 +166,20 @@ void RDMFT<TK, TR>::update_charge(const K_Vectors& kv, T_Gint& G_in, const Paral
         //this code is copying from function ElecStateLCAO<TK>::psiToRho(), in elecstate_lcao.cpp
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            ModuleBase::GlobalFunc::ZEROS(charge.rho[is], charge.nrxx);
+            ModuleBase::GlobalFunc::ZEROS(charge->rho[is], charge->nrxx);
         }
 
-        G_in.transfer_DM2DtoGrid(DM_gamma_only.get_DMR_vector());
-        //double** invaild_ptr = nullptr;
-        Gint_inout inout(loc.DM_R, charge.rho, Gint_Tools::job_type::rho);
-        G_in.cal_gint(&inout);
+        GG->transfer_DM2DtoGrid(DM_gamma_only.get_DMR_vector());
+        //double** invaild_ptr = nullptr;   // use invaild_ptr replace loc.DM_R in the future
+        Gint_inout inout(loc->DM_R, charge->rho, Gint_Tools::job_type::rho);
+        GG->cal_gint(&inout);
 
-        charge.renormalize_rho();
+        charge->renormalize_rho();
     }
     else
     {
         // calculate DMK and DMR
-        elecstate::DensityMatrix<TK, double> DM(&kv, ParaV, GlobalV::NSPIN);
+        elecstate::DensityMatrix<TK, double> DM(kv, ParaV, GlobalV::NSPIN);
         elecstate::cal_dm_psi(ParaV, wg, wfc, DM);
         DM.init_DMR(&GlobalC::GridD, &GlobalC::ucell);
         DM.cal_DMR();
@@ -172,15 +187,15 @@ void RDMFT<TK, TR>::update_charge(const K_Vectors& kv, T_Gint& G_in, const Paral
         // this code is copying from function ElecStateLCAO<TK>::psiToRho(), in elecstate_lcao.cpp
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-            ModuleBase::GlobalFunc::ZEROS(charge.rho[is], charge.nrxx);
+            ModuleBase::GlobalFunc::ZEROS(charge->rho[is], charge->nrxx);
         }
 
-        G_in.transfer_DM2DtoGrid(DM.get_DMR_vector());
+        GK->transfer_DM2DtoGrid(DM.get_DMR_vector());
         //double** invaild_ptr = nullptr;   // use invaild_ptr replace loc.DM_R in the future
-        Gint_inout inout(loc.DM_R, charge.rho, Gint_Tools::job_type::rho);  // what is Local_Orbital_Charge& loc_in? ///////////////
-        G_in.cal_gint(&inout);
+        Gint_inout inout(loc->DM_R, charge->rho, Gint_Tools::job_type::rho);  // what is Local_Orbital_Charge& loc_in? ///////////////
+        GK->cal_gint(&inout);
 
-        charge.renormalize_rho();
+        charge->renormalize_rho();
     }
 }
 

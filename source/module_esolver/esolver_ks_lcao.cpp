@@ -226,7 +226,7 @@ namespace ModuleESolver
 
     // add by JingangHan for rdmft calculation
     if( GlobalV::CALCULATION == "rdmft" || true )
-    { 
+    {
         rdmft_solver.init( &(this->UHM.GG), &(this->UHM.GK), &(this->orb_con.ParaV), &ucell, &(this->kv) );
     }
 }
@@ -956,7 +956,7 @@ namespace ModuleESolver
             }
         }
   
-        Etotal_RDMFT = rdmft::rdmft_cal<TK,TR,Gint_Gamma>(
+        Etotal_RDMFT = rdmftTest::rdmft_cal<TK,TR,Gint_Gamma>(
             &LM,
             LM.ParaV,
             occ_number,
@@ -977,7 +977,7 @@ namespace ModuleESolver
     // multi-k calculation
     else
     {
-        Etotal_RDMFT = rdmft::rdmft_cal<TK,TR,Gint_k>(
+        Etotal_RDMFT = rdmftTest::rdmft_cal<TK,TR,Gint_k>(
             &LM,
             LM.ParaV,
             occ_number,

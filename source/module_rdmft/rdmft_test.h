@@ -59,7 +59,7 @@
 
 
 
-namespace rdmft
+namespace rdmftTest
 {
 
 
@@ -459,8 +459,8 @@ double rdmft_cal(LCAO_Matrix* LM_in,
                         const std::string XC_func_rdmft = "HF",
                         const double alpha_power = 0.656)   // 0.656 for soilds, 0.525 for dissociation of H2, 0.55~0.58 for HEG
 {
-    ModuleBase::TITLE("rdmft", "RDMFT_E&Egradient");
-    ModuleBase::timer::tick("rdmft", "RDMFT_E&Egradient");
+    ModuleBase::TITLE("rdmftTest", "RDMFT_E&Egradient");
+    ModuleBase::timer::tick("rdmftTest", "RDMFT_E&Egradient");
 
     std::ofstream ofs_running;
     std::ofstream ofs_warning;
@@ -542,7 +542,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         ParaV
     );
 
-    hamilt::OperatorLCAO<TK, TR>* V_local = new rdmft::Veff_rdmft<TK,TR>(
+    hamilt::OperatorLCAO<TK, TR>* V_local = new rdmftTest::Veff_rdmft<TK,TR>(
         &G_in,
         &loc_in,
         LM_in,
@@ -559,7 +559,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         "local"
     );
 
-    hamilt::OperatorLCAO<TK, TR>* V_hartree = new rdmft::Veff_rdmft<TK,TR>(
+    hamilt::OperatorLCAO<TK, TR>* V_hartree = new rdmftTest::Veff_rdmft<TK,TR>(
         &G_in,
         &loc_in,
         LM_in,
@@ -763,7 +763,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     // print results
     std::cout << std::setprecision(10) << "\n\n\n******\nEtotal_RDMFT:   " << Etotal_RDMFT << "\nETV_RDMFT: " << ETV_RDMFT << "\nEhartree_RDMFT: " 
                 << Ehartree_RDMFT << "\nExc_RDMFT:      " << Exc_RDMFT << "\n******\n\n\n" << std::endl;
-    ModuleBase::timer::tick("rdmft", "RDMFT_E&Egradient");
+    ModuleBase::timer::tick("rdmftTest", "RDMFT_E&Egradient");
     
     return Etotal_RDMFT;
 
