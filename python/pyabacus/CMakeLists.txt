@@ -77,7 +77,6 @@ list(APPEND _naos
     # dependency
     ${ABACUS_SOURCE_DIR}/module_base/kernels/math_op.cpp
     ${ABACUS_SOURCE_DIR}/module_psi/kernels/psi_memory_op.cpp
-    ${ABACUS_SOURCE_DIR}/module_io/output_radial.cpp
     )
 add_library(naopack SHARED 
     ${_naos}
