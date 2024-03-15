@@ -35,7 +35,7 @@ class psi_initializer_atomic : public psi_initializer<T, Device>
         /// @brief calculate and output planewave wavefunction
         /// @param ik kpoint index
         /// @return initialized planewave wavefunction (psi::Psi<std::complex<double>>*)
-        psi::Psi<T, Device>* cal_psig(int ik) override;
+        psi::Psi<T, Device>* cal_psig(int ik, const bool& normalize = true) override;
 
         /// @brief initialize only once, for atomic, it should be, create ovlp_pswfcjlq, calculate ovlp_pswfcjlq
         /// @param p_pspot_nl_in (for atomic) interfaces to pseudopot_cell_vnl object, in GlobalC now

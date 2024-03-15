@@ -160,7 +160,7 @@ std::complex<double> psi_initializer_atomic<T, Device>::phase_factor(double arg,
 }
 
 template <typename T, typename Device>
-psi::Psi<T, Device>* psi_initializer_atomic<T, Device>::cal_psig(int ik)
+psi::Psi<T, Device>* psi_initializer_atomic<T, Device>::cal_psig(int ik, const bool& normalize)
 {
     ModuleBase::timer::tick("psi_initializer_atomic", "cal_psig");
     this->psig->fix_k(ik);

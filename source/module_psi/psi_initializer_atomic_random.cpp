@@ -23,11 +23,11 @@ void psi_initializer_atomic_random<T, Device>::initialize_only_once(pseudopot_ce
 }
 
 template <typename T, typename Device>
-psi::Psi<T, Device>* psi_initializer_atomic_random<T, Device>::cal_psig(int ik)
+psi::Psi<T, Device>* psi_initializer_atomic_random<T, Device>::cal_psig(int ik, const bool& normalize)
 {
     double rm = this->get_random_mix();
     this->psig->fix_k(ik);
-    this->psig = psi_initializer_atomic<T, Device>::cal_psig(ik);
+    this->psig = psi_initializer_atomic<T, Device>::cal_psig(ik, normalize);
     psi::Psi<T, Device> psi_random(1, this->psig->get_nbands(), this->psig->get_nbasis(), nullptr);
     psi_random.fix_k(0);
     this->random_t(psi_random.get_pointer(), 0, psi_random.get_nbands(), ik);

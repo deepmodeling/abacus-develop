@@ -218,7 +218,7 @@ void toWannier90_LCAO_IN_PW::nao_G_expansion(
 )
 {
     int npwx = wfcpw->npwk_max;
-    psi::Psi<std::complex<double>>* psig = this->psi_init_->cal_psig(ik);
+    psi::Psi<std::complex<double>>* psig = this->psi_init_->cal_psig(ik, false);
     int nbands = GlobalV::NLOCAL;
     int nbasis = npwx*GlobalV::NPOL;
     for (int ib = 0; ib < nbands; ib++)

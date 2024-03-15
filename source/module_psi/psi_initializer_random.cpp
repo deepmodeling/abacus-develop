@@ -34,7 +34,7 @@ void psi_initializer_random<T, Device>::random(T* psi,
 }
 
 template <typename T, typename Device>
-psi::Psi<T, Device>* psi_initializer_random<T, Device>::cal_psig(int ik)
+psi::Psi<T, Device>* psi_initializer_random<T, Device>::cal_psig(int ik, const bool& normalize)
 {
     ModuleBase::timer::tick("psi_initializer_random", "initialize");
     //this->print_status(psi);

@@ -335,7 +335,7 @@ void psi_initializer_nao<T, Device>::cal_ovlp_flzjlq()
 }
 
 template <typename T, typename Device>
-psi::Psi<T, Device>* psi_initializer_nao<T, Device>::cal_psig(int ik)
+psi::Psi<T, Device>* psi_initializer_nao<T, Device>::cal_psig(int ik, const bool& normalize)
 {
     ModuleBase::timer::tick("psi_initializer_nao", "initialize");
     assert(ik>=0);
@@ -454,22 +454,10 @@ psi::Psi<T, Device>* psi_initializer_nao<T, Device>::cal_psig(int ik)
                                     for(int ig = 0; ig < npw; ig++)
                                     {
                                         // normalize except the 0/0 case, this indeed happens sometimes when nspin=4, cause diagonalization failure
-                                        if(normalization_factors[0] != 0.0)
-                                        {
-                                            (*(this->psig))(ibasis, ig) /= normalization_factors[0];
-                                        }
-                                        if(normalization_factors[1] != 0.0)
-                                        {
-                                            (*(this->psig))(ibasis, ig + this->pw_wfc->npwk_max) /= normalization_factors[1];
-                                        }
-                                        if(normalization_factors[2] != 0.0)
-                                        {
-                                            (*(this->psig))(ibasis+2*L+1, ig) /= normalization_factors[2];
-                                        }
-                                        if(normalization_factors[3] != 0.0)
-                                        {
-                                            (*(this->psig))(ibasis+2*L+1, ig + this->pw_wfc->npwk_max) /= normalization_factors[3];
-                                        }
+                                        if((normalization_factors[0] != 0.0)&&normalize) (*(this->psig))(ibasis, ig) /= normalization_factors[0];
+                                        if((normalization_factors[1] != 0.0)&&normalize) (*(this->psig))(ibasis, ig + this->pw_wfc->npwk_max) /= normalization_factors[1];
+                                        if((normalization_factors[2] != 0.0)&&normalize) (*(this->psig))(ibasis+2*L+1, ig) /= normalization_factors[2];
+                                        if((normalization_factors[3] != 0.0)&&normalize) (*(this->psig))(ibasis+2*L+1, ig + this->pw_wfc->npwk_max) /= normalization_factors[3];
                                     }
                                     ibasis++;
                                 }
@@ -498,7 +486,7 @@ psi::Psi<T, Device>* psi_initializer_nao<T, Device>::cal_psig(int ik)
                             normalization_factor = sqrt(normalization_factor);
                             for(int ig=0; ig<npw; ig++)
                             {
-                                if(normalization_factor != 0.0) (*(this->psig))(ibasis, ig) /= normalization_factor;
+                                if((normalization_factor != 0.0)&&normalize) (*(this->psig))(ibasis, ig) /= normalization_factor;
                             }
                             ++ibasis;
                         }

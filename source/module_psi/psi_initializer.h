@@ -111,7 +111,8 @@ class psi_initializer
         /// @brief calculate psi in planewave representation
         /// @param psi psi
         /// @param ik index of kpoint
-        virtual psi::Psi<T, Device>* cal_psig(int ik) = 0;
+        /// @param normalize whether normalize psi or not, true only used in lcao_in_pw
+        virtual psi::Psi<T, Device>* cal_psig(int ik, const bool& normalize = true) = 0;
 
         /// @brief for variables can be only initialized for once.
         /// @param p_pspot_nl_in (for atomic) interfaces to pseudopot_cell_vnl object, in GlobalC now

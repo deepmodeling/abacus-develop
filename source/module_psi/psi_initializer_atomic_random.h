@@ -41,7 +41,7 @@ class psi_initializer_atomic_random : public psi_initializer_atomic<T, Device>
         /// @brief calculate and output planewave wavefunction
         /// @param ik kpoint index
         /// @return initialized planewave wavefunction (psi::Psi<std::complex<double>>*)
-        psi::Psi<T, Device>* cal_psig(int ik) override;
+        psi::Psi<T, Device>* cal_psig(int ik, const bool& normalize = true) override;
     private:
 };
 #endif

@@ -46,7 +46,7 @@ class psi_initializer_random : public psi_initializer<T, Device>
         /// @brief calculate and output planewave wavefunction
         /// @param ik kpoint index
         /// @return initialized planewave wavefunction (psi::Psi<std::complex<double>>*)
-        psi::Psi<T, Device>* cal_psig(int ik) override;
+        psi::Psi<T, Device>* cal_psig(int ik, const bool& normalize = true) override;
         /// @brief for variables can be only initialized for once.
         /// @param p_pspot_nl_in (for atomic) interfaces to pseudopot_cell_vnl object, in GlobalC now
         /// @attention if one variable is necessary for all methods, initialize it in constructor, not here.
