@@ -116,7 +116,7 @@ void ModuleIO::output_single_R(std::ofstream &ofs, const std::map<size_t, std::m
 
 }
 
-void ModuleIO::output_soc_single_R(std::ofstream &ofs, const std::map<size_t, std::map<size_t, std::complex<double>>> &XR, const double &sparse_threshold, const bool &binary, const Parallel_Orbitals &pv)
+void ModuleIO::output_single_R(std::ofstream& ofs, const std::map<size_t, std::map<size_t, std::complex<double>>>& XR, const double& sparse_threshold, const bool& binary, const Parallel_Orbitals& pv)
 {
     std::complex<double> *line = nullptr;
     std::vector<int> indptr;
