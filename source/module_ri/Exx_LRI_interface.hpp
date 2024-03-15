@@ -8,6 +8,8 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
 
 #include <sys/time.h>
+#include "module_io/csr_reader.h"
+#include "module_io/write_HS_sparse.h"
 
 template<typename T, typename Tdata>
 void Exx_LRI_Interface<T, Tdata>::write_Hexxs(const std::string& file_name) const
@@ -16,7 +18,7 @@ void Exx_LRI_Interface<T, Tdata>::write_Hexxs(const std::string& file_name) cons
 	ModuleBase::timer::tick("Exx_LRI", "write_Hexxs");
 	std::ofstream ofs(file_name, std::ofstream::binary);
 	cereal::BinaryOutputArchive oar(ofs);
-	oar(this->exx_ptr->Hexxs);
+    oar(this->exx_ptr->Hexxs);
 	ModuleBase::timer::tick("Exx_LRI", "write_Hexxs");
 }
 
@@ -30,6 +32,151 @@ void Exx_LRI_Interface<T, Tdata>::read_Hexxs(const std::string& file_name)
 	iar(this->exx_ptr->Hexxs);
 	ModuleBase::timer::tick("Exx_LRI", "read_Hexxs");
 }
+
+template<typename Tdata>
+inline void print_tensor(const RI::Tensor<Tdata>& t, const std::string& name, const double& threshold = 0.0)
+{
+    std::cout << name << ":\n";
+    for (int i = 0;i < t.shape[0];++i)
+    {
+        for (int j = 0;j < t.shape[1];++j)
+            std::cout << ((std::abs(t(i, j)) > threshold) ? t(i, j) : static_cast<Tdata>(0)) << " ";
+        std::cout << std::endl;
+    }
+}
+template<typename Tdata>
+inline void print_HR(const std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>& HR, const std::string name, const double& threshold)
+{
+    for (auto& HR_ia1 : HR)
+    {
+        int iat1 = HR_ia1.first;
+        for (auto& HR_ia12R : HR_ia1.second)
+        {
+            int iat2 = HR_ia12R.first.first;
+            std::array<int, 3> R = HR_ia12R.first.second;
+            const RI::Tensor<Tdata>& HR_tensor = HR_ia12R.second;
+            std::cout << "atom pair (" << iat1 << ", " << iat2 << "), R=(" << R[0] << "," << R[1] << "," << R[2] << "), ";
+            print_tensor(HR_tensor, name, threshold);
+        }
+    }
+}
+
+template<typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::write_Hexxs(const std::string& file_name, const Parallel_Orbitals& pv) const
+{
+    ModuleBase::TITLE("Exx_LRI", "write_Hexxs");
+    ModuleBase::timer::tick("Exx_LRI", "write_Hexxs");
+    std::set<Abfs::Vector3_Order<int>> all_R_coor;
+    double sparse_threshold = 1e-10;
+    for (int is = 0;is < this->exx_ptr->Hexxs.size();++is)
+    {
+        for (const auto& HexxA : this->exx_ptr->Hexxs[is])
+        {
+            const int iat0 = HexxA.first;
+            for (const auto& HexxB : HexxA.second)
+            {
+                const int iat1 = HexxB.first.first;
+                const Abfs::Vector3_Order<int> R = RI_Util::array3_to_Vector3(HexxB.first.second);
+                all_R_coor.insert(R);
+            }
+        }
+        ModuleIO::save_sparse(
+            this->calculate_RI_Tensor_sparse(sparse_threshold, this->exx_ptr->Hexxs[is], pv),
+            all_R_coor,
+            sparse_threshold,
+            false, //binary
+            file_name + "_" + std::to_string(is) + ".csr",
+            pv,
+            "Hexxs_" + std::to_string(is)
+        );
+    }
+
+    // test: output Hexxs
+    print_HR(this->exx_ptr->Hexxs[0], "Hexxs[0]_write", sparse_threshold);
+
+    ModuleBase::timer::tick("Exx_LRI", "write_Hexxs");
+}
+
+
+template<typename T, typename Tdata>
+std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, Tdata>>>
+Exx_LRI_Interface<T, Tdata>::calculate_RI_Tensor_sparse(const double& sparse_threshold,
+    const std::map<int, std::map<TAC, RI::Tensor<Tdata>>>& hR,
+    const Parallel_Orbitals& paraV)const
+{
+    ModuleBase::TITLE("Exx_LRI_Interface", "calculate_HContainer_sparse_d");
+    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, Tdata>>> target;
+    auto row_indexes = paraV.get_indexes_row();
+    auto col_indexes = paraV.get_indexes_col();
+    // for (int iap = 0;iap < hR.size_atom_pairs();++iap)
+    for (auto& a1_a2R_data : hR)
+    {
+        int atom_i = a1_a2R_data.first;
+        for (auto& a2R_data : a1_a2R_data.second)
+        {
+            int atom_j = a2R_data.first.first;
+            int start_i = paraV.atom_begin_row[atom_i];
+            int start_j = paraV.atom_begin_col[atom_j];
+            int row_size = paraV.get_row_size(atom_i);
+            int col_size = paraV.get_col_size(atom_j);
+            const TC& R = a2R_data.first.second;
+            auto& matrix = a2R_data.second;
+            Abfs::Vector3_Order<int> dR(R[0], R[1], R[2]);
+            for (int i = 0;i < row_size;++i)
+            {
+                int mu = row_indexes[start_i + i];
+                for (int j = 0;j < col_size;++j)
+                {
+                    int nu = col_indexes[start_j + j];
+                    const auto& value_tmp = matrix(i, j);
+                    if (std::abs(value_tmp) > sparse_threshold)
+                    {
+                        target[dR][mu][nu] = value_tmp;
+                    }
+                }
+            }
+        }
+    }
+    return target;
+}
+template<typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::read_Hexxs(const std::string& file_name, const Parallel_Orbitals& pv, const UnitCell& ucell)
+{
+    ModuleBase::TITLE("Exx_LRI", "read_Hexxs");
+    ModuleBase::timer::tick("Exx_LRI", "read_Hexxs");
+    this->exx_ptr->Hexxs.resize(GlobalV::NSPIN);
+    for (int is = 0;is < GlobalV::NSPIN;++is)
+    {
+        ModuleIO::csrFileReader<Tdata> csr(file_name + "_" + std::to_string(is) + ".csr");
+        int nR = csr.getNumberOfR();
+        int nbasis = csr.getMatrixDimension();
+        assert(nbasis == GlobalV::NLOCAL);
+        // allocate Hexxs[is]
+        for (int iat1 = 0; iat1 < ucell.nat; ++iat1)
+            for (int iat2 = 0;iat2 < ucell.nat;++iat2)
+                for (int iR = 0;iR < nR;++iR)
+                {
+                    const std::vector<int>& R = csr.getRCoordinate(iR);
+                    TC dR({ R[0], R[1], R[2] });
+                    this->exx_ptr->Hexxs[is][iat1][{iat2, dR}] = RI::Tensor<Tdata>({ static_cast<size_t>(ucell.atoms[ucell.iat2it[iat1]].nw), static_cast<size_t>(ucell.atoms[ucell.iat2it[iat2]].nw) });
+                }
+        // read Hexxs[is]
+        for (int i = 0;i < GlobalV::NLOCAL;++i)
+            for (int j = 0;j < GlobalV::NLOCAL;++j)
+                for (int iR = 0;iR < nR;++iR)
+                {
+                    int iat1 = ucell.iwt2iat[i];
+                    int iat2 = ucell.iwt2iat[j];
+                    const std::vector<int>& R = csr.getRCoordinate(iR);
+                    const auto& matrix = csr.getMatrix(iR);
+                    TC dR({ R[0], R[1], R[2] });
+                    this->exx_ptr->Hexxs.at(is).at(iat1).at({ iat2, dR })(ucell.iwt2iw[i], ucell.iwt2iw[j]) = matrix(i, j);
+                }
+    }
+    print_HR(this->exx_ptr->Hexxs[0], "Hexxs[0]_read", 1e-10);
+    ModuleBase::timer::tick("Exx_LRI", "read_Hexxs");
+}
+
 template<typename T, typename Tdata>
 void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const K_Vectors& kv, const Charge_Mixing& chgmix)
 {

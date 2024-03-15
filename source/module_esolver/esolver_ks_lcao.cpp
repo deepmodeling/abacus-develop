@@ -979,11 +979,11 @@ void ESolver_KS_LCAO<TK, TR>::afterscf(const int istep)
         const std::string file_name_exx = GlobalV::global_out_dir + "HexxR_" + std::to_string(GlobalV::MY_RANK);
         if (GlobalC::exx_info.info_ri.real_number)
         {
-            this->exd->write_Hexxs(file_name_exx);
+            this->exd->write_Hexxs(file_name_exx, *this->LM.ParaV);
         }
         else
         {
-            this->exc->write_Hexxs(file_name_exx);
+            this->exc->write_Hexxs(file_name_exx, *this->LM.ParaV);
         }
     }
 #endif

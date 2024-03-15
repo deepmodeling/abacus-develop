@@ -19,6 +19,9 @@ template<typename T, typename Tdata>
 class Exx_LRI_Interface
 {
 public:
+    using TC = std::array<int, 3>;
+    using TAC = std::pair<int, TC>;
+
     /// @brief  Constructor for Exx_LRI_Interface
     /// @param exx_ptr
     Exx_LRI_Interface(std::shared_ptr<Exx_LRI<Tdata>> exx_ptr) : exx_ptr(exx_ptr) {}
@@ -26,8 +29,14 @@ public:
 
     void write_Hexxs(const std::string &file_name) const;
     void read_Hexxs(const std::string& file_name);
-    
-    using TAC = std::pair<int, std::array<int, 3>>;
+
+    void write_Hexxs(const std::string& file_name, const Parallel_Orbitals& pv) const;
+    void read_Hexxs(const std::string& file_name, const Parallel_Orbitals& pv, const UnitCell& ucell);
+
+    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, Tdata>>>
+        calculate_RI_Tensor_sparse(const double& sparse_threshold,
+            const std::map<int, std::map<TAC, RI::Tensor<Tdata>>>& hR, const Parallel_Orbitals& paraV)const;
+
     std::vector< std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& get_Hexxs() const { return this->exx_ptr->Hexxs; }
     
     double& get_Eexx() const { return this->exx_ptr->Eexx; }
