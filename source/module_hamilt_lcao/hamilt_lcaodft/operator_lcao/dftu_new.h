@@ -157,6 +157,7 @@ class DFTUNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                         double* stress);
 
     std::vector<AdjacentAtomInfo> adjs_all;
+    std::vector<std::vector<std::unordered_map<int, std::vector<double>>>> nlm_tot;
 };
 
 } // namespace hamilt

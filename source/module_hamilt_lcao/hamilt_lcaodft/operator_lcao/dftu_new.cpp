@@ -50,6 +50,8 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* G
     ModuleBase::TITLE("DFTUNew", "initialize_HR");
     ModuleBase::timer::tick("DFTUNew", "initialize_HR");
 
+    nlm_tot.resize(this->ucell->nat);
+    const int npol = this->ucell->get_npol();
     this->adjs_all.clear();
     this->adjs_all.reserve(this->ucell->nat);
     for (int iat0 = 0; iat0 < ucell->nat; iat0++)
@@ -57,6 +59,10 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* G
         auto tau0 = ucell->get_tau(iat0);
         int T0, I0;
         ucell->iat2iait(iat0, &I0, &T0);
+        const int target_L = this->dftu->orbital_corr[T0];
+        if(target_L == -1) continue;
+        const int tlp1 = 2*target_L+1;
+
         AdjacentAtomInfo adjs;
         GridD->Find_atom(*ucell, tau0, T0, I0, &adjs);
         std::vector<bool> is_adj(adjs.adj_num + 1, false);
@@ -80,43 +86,9 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* G
         }
         filter_adjs(is_adj, adjs);
         this->adjs_all.push_back(adjs);
-    }
 
-    ModuleBase::timer::tick("DFTUNew", "initialize_HR");
-}
-
-template <typename TK, typename TR>
-void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
-{
-    ModuleBase::TITLE("DFTUNew", "calculate_HR");
-    if(this->dm_in_dftu == nullptr && this->dftu->initialed_locale == false)
-    {// skip the calculation if dm_in_dftu is nullptr
-        return;
-    }
-    else
-    {
-        //will update this->dftu->locale and this->dftu->EU
-        if(GlobalV::CURRENT_SPIN == 0) this->dftu->EU = 0.0;
-    }
-    ModuleBase::timer::tick("DFTUNew", "calculate_HR");
-
-    const Parallel_Orbitals* paraV = this->hR->get_atom_pair(0).get_paraV();
-    const int npol = this->ucell->get_npol();
-    // 1. calculate <psi|beta> for each pair of atoms
-    // loop over all on-site atoms
-    for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
-    {
-        // skip the atoms without plus-U
-        auto tau0 = ucell->get_tau(iat0);
-        int T0, I0;
-        ucell->iat2iait(iat0, &I0, &T0);
-        const int target_L = this->dftu->orbital_corr[T0];
-        if(target_L == -1) continue;
-        const int tlp1 = 2*target_L+1;
-        AdjacentAtomInfo& adjs = this->adjs_all[iat0];
-
-        std::vector<std::unordered_map<int, std::vector<double>>> nlm_tot;
-        nlm_tot.resize(adjs.adj_num + 1);
+        // calculate and save the table of two-center integrals
+        nlm_tot[iat0].resize(adjs.adj_num + 1);
 
         for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
         {
@@ -173,9 +145,45 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                         break;
                     }
                 }
-                nlm_tot[ad].insert({all_indexes[iw1l], nlm_target});
+                nlm_tot[iat0][ad].insert({all_indexes[iw1l], nlm_target});
             }
         }
+    }
+
+    ModuleBase::timer::tick("DFTUNew", "initialize_HR");
+}
+
+template <typename TK, typename TR>
+void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
+{
+    ModuleBase::TITLE("DFTUNew", "calculate_HR");
+    if(this->dm_in_dftu == nullptr && this->dftu->initialed_locale == false)
+    {// skip the calculation if dm_in_dftu is nullptr
+        return;
+    }
+    else
+    {
+        //will update this->dftu->locale and this->dftu->EU
+        if(GlobalV::CURRENT_SPIN == 0) this->dftu->EU = 0.0;
+    }
+    ModuleBase::timer::tick("DFTUNew", "calculate_HR");
+
+    const Parallel_Orbitals* paraV = this->hR->get_atom_pair(0).get_paraV();
+    const int npol = this->ucell->get_npol();
+    // 1. calculate <psi|beta> for each pair of atoms
+    // loop over all on-site atoms
+    for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
+    {
+        // skip the atoms without plus-U
+        auto tau0 = ucell->get_tau(iat0);
+        int T0, I0;
+        ucell->iat2iait(iat0, &I0, &T0);
+        const int target_L = this->dftu->orbital_corr[T0];
+        if(target_L == -1) continue;
+        const int tlp1 = 2*target_L+1;
+        AdjacentAtomInfo& adjs = this->adjs_all[iat0];
+
+        ModuleBase::timer::tick("DFTUNew", "cal_occupations");
         //first iteration to calculate occupation matrix
         const int spin_fold = (GlobalV::NSPIN == 4) ? 4 : 1;
         std::vector<double> occ(tlp1 * tlp1 * spin_fold, 0.0);
@@ -188,11 +196,13 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                 const int I1 = adjs.natom[ad1];
                 const int iat1 = ucell->itia2iat(T1, I1);
                 ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];
+                const std::unordered_map<int,std::vector<double>>& nlm1 = nlm_tot[iat0][ad1];
                 for (int ad2 = 0; ad2 < adjs.adj_num + 1; ++ad2)
                 {
                     const int T2 = adjs.ntype[ad2];
                     const int I2 = adjs.natom[ad2];
                     const int iat2 = ucell->itia2iat(T2, I2);
+                    const std::unordered_map<int,std::vector<double>>& nlm2 = nlm_tot[iat0][ad2];
                     ModuleBase::Vector3<int>& R_index2 = adjs.box[ad2];
                     ModuleBase::Vector3<int> R_vector(R_index2[0] - R_index1[0],
                                                     R_index2[1] - R_index1[1],
@@ -201,7 +211,7 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                     // if not found , skip this pair of atoms
                     if (tmp != nullptr)
                     {
-                        this->cal_occupations(iat1, iat2, T0, paraV, nlm_tot[ad1], nlm_tot[ad2], tmp->get_pointer(), occ);
+                        this->cal_occupations(iat1, iat2, T0, paraV, nlm1, nlm2, tmp->get_pointer(), occ);
                     }
                 }
             }
@@ -224,8 +234,10 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
             }
             // set initialed_locale to false to avoid using readin locale in next iteration
         }
+        ModuleBase::timer::tick("DFTUNew", "cal_occupations");
         
         //calculate VU
+        ModuleBase::timer::tick("DFTUNew", "cal_vu");
         const double u_value = this->dftu->U[T0];
         std::vector<double> VU_tmp(occ.size());
         this->cal_v_of_u(occ, tlp1, u_value, VU_tmp.data(), this->dftu->EU);
@@ -242,11 +254,13 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
             const int I1 = adjs.natom[ad1];
             const int iat1 = ucell->itia2iat(T1, I1);
             ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];
+            const std::unordered_map<int,std::vector<double>>& nlm1 = nlm_tot[iat0][ad1];
             for (int ad2 = 0; ad2 < adjs.adj_num + 1; ++ad2)
             {
                 const int T2 = adjs.ntype[ad2];
                 const int I2 = adjs.natom[ad2];
                 const int iat2 = ucell->itia2iat(T2, I2);
+                const std::unordered_map<int,std::vector<double>>& nlm2 = nlm_tot[iat0][ad2];
                 ModuleBase::Vector3<int>& R_index2 = adjs.box[ad2];
                 ModuleBase::Vector3<int> R_vector(R_index2[0] - R_index1[0],
                                                   R_index2[1] - R_index1[1],
@@ -255,10 +269,11 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                 // if not found , skip this pair of atoms
                 if (tmp != nullptr)
                 {
-                    this->cal_HR_IJR(iat1, iat2, T0, paraV, nlm_tot[ad1], nlm_tot[ad2], VU, tmp->get_pointer());
+                    this->cal_HR_IJR(iat1, iat2, T0, paraV, nlm1, nlm2, VU, tmp->get_pointer());
                 }
             }
         }
+        ModuleBase::timer::tick("DFTUNew", "cal_vu");
     }
 
     //energy correction for NSPIN=1
