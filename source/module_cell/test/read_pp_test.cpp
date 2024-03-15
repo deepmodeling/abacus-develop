@@ -494,7 +494,7 @@ TEST_F(ReadPPTest, BLPS)
 	EXPECT_FALSE(upf->tvanp);
 	EXPECT_FALSE(upf->has_so);
 	EXPECT_EQ(upf->nbeta,0);
-	EXPECT_EQ(upf->psd,"Silicon");
+	EXPECT_EQ(upf->psd,"Si");
 	EXPECT_EQ(upf->zp,4);
 	EXPECT_EQ(upf->lmax,0);
 	EXPECT_EQ(upf->mesh,1601);

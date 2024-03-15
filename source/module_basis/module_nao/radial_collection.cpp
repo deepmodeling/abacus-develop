@@ -329,11 +329,11 @@ char RadialCollection::check_file_type(const std::string& file) const
     return file_type;
 }
 
-void RadialCollection::to_file(const std::string& appendix)
+void RadialCollection::to_file(const std::string& appendix, const std::string& format) const
 {
     for (int itype = 0; itype < ntype_; ++itype)
     {
         std::string fname = radset_[itype]->symbol() + "_" + appendix + ".orb";
-        radset_[itype]->to_file(fname);
+        radset_[itype]->write_abacus_orb(fname);
     }
 }
