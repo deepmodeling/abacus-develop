@@ -11,7 +11,7 @@ Installation
 
 - Create and activate a new conda env, e.g. `conda create -n myenv python=3.8 & conda activate myenv`.
 - Clone ABACUS main repository and `cd abacus-develop/python/pyabacus`.
-- Build pyabacus by `pip install -v .` or install test dependencies & build  pyabacus by `pip install .[test]`. (Use `pip install -r .[test] -i https://pypi.tuna.tsinghua.edu.cn/simple` to accelerate installation process.)
+- Build pyabacus by `pip install -v .` or install test dependencies & build  pyabacus by `pip install .[test]`. (Use `pip install -v .[test] -i https://pypi.tuna.tsinghua.edu.cn/simple` to accelerate installation process.)
 
 
 CI Examples
@@ -25,6 +25,12 @@ Use `pytest -v` to run all the unit tests for pyabacus in the local machine.
 ```shell
 $ cd tests/
 $ pytest -v
+```
+
+Run `python vis_nao.py` to visualize the numerical orbital.
+```shell
+$ cd examples/
+$ python vis_nao.py
 ```
 
 Run `python ex_s_rotate.py` in `examples` to check the S matrix.
