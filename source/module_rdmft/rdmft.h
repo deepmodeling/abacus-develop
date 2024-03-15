@@ -101,7 +101,11 @@ class RDMFT
     // store the gradients of Etotal with respect to the natural occupation numbers and wfc respectively
     ModuleBase::matrix occNum_wfcHamiltWfc;
     psi::Psi<TK> occNum_HamiltWfc;
+    // E_RDMFT[4] stores ETV, Ehartree, Exc, Etotal respectively
+    double E_RDMFT[4] = {0.0};
+    // std::vector<double> E_RDMFT(4);
 
+    hamilt::HContainer<TR>* HR_T_nonlocal = nullptr;
     hamilt::HContainer<TR>* HR_TV = nullptr;
     hamilt::HContainer<TR>* HR_hartree = nullptr;
     hamilt::HContainer<TR>* HR_XC = nullptr;
@@ -149,9 +153,9 @@ class RDMFT
     // construct V_XC based on different XC_functional( i.e. RDMFT class member XC_func_rdmft)
     void get_V_XC();
 
+    double Run_rdmft();
 
-
-
+    void cal_Energy();
 
 
 

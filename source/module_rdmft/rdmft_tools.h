@@ -270,7 +270,7 @@ void add_wfcHwfc(const std::vector<double>& wk_in, const ModuleBase::matrix& occ
 
 
 //give certain occNum_wfcHwfc, get the corresponding energy
-double sum_getEnergy(const ModuleBase::matrix& occNum_wfcHwfc);
+double getEnergy(const ModuleBase::matrix& occNum_wfcHwfc);
 
 
 

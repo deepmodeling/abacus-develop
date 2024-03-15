@@ -500,6 +500,8 @@ double rdmft_cal(LCAO_Matrix* LM_in,
         HR_XC.fix_gamma();
     }
 
+    // hamilt::HContainer<TR> HR_T_nonlocal(GlobalC::ucell, ParaV); //////////////////
+    // HR_T_nonlocal.set_zero();////////////////////////////
 
     // all factors related to k-point summation, k-point weight W_k, and spin are considered in wg.
     // so this module uses wg or wk_fun_occNum to replace occ_number in all k-point summation functions.
@@ -670,6 +672,9 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     V_ekinetic_potential->contributeHR();
     V_nonlocal->contributeHR();
     V_local->contributeHR();
+    // V_local->add(V_ekinetic_potential); /////////////////////////////////
+    // V_local->add(V_nonlocal);
+    // V_local->contributeHR();
 
     //prepare for actual calculation
     //wg is global matrix, wg.nr = nk_total, wg.nc = GlobalV::NBANDS
@@ -703,6 +708,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     {
         // get the HK with ik-th k vector, the result is stored in HK_TV, HK_hartree and HK_XC respectively
         V_ekinetic_potential->contributeHk(ik);
+        // V_local->contributeHk(ik);      //////////////////////////////////
         V_hartree->contributeHk(ik);
         V_XC->contributeHk(ik);
 
@@ -761,7 +767,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     std::cout << "\n\nGlobalV::NSPIN: " << GlobalV::NSPIN << "\n" << std::endl;
 
     // print results
-    std::cout << std::setprecision(10) << "\n\n\nfrom rdmftTest: \n******\nEtotal_RDMFT:   " << Etotal_RDMFT << "\nETV_RDMFT: " << ETV_RDMFT << "\nEhartree_RDMFT: " 
+    std::cout << std::setprecision(10) << "\n\n\nfrom function rdmft_cal(): \n******\nEtotal_RDMFT:   " << Etotal_RDMFT << "\nETV_RDMFT: " << ETV_RDMFT << "\nEhartree_RDMFT: " 
                 << Ehartree_RDMFT << "\nExc_RDMFT:      " << Exc_RDMFT << "\n******\n\n\n" << std::endl;
     ModuleBase::timer::tick("rdmftTest", "RDMFT_E&Egradient");
     

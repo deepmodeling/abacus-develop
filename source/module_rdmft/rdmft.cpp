@@ -54,6 +54,7 @@ RDMFT<TK, TR>::RDMFT()
 template <typename TK, typename TR>
 RDMFT<TK, TR>::~RDMFT()
 {
+    delete HR_T_nonlocal;
     delete HR_TV;
     delete HR_hartree;
     delete HR_XC;
@@ -123,6 +124,7 @@ void RDMFT<TK, TR>::init(Gint_Gamma* GG_in, Gint_k* GK_in, Parallel_Orbitals* Pa
     std::cout << "\n\n******\n" << "malloc for many xxx" << "\n******\n\n" << std::endl;
 
     // 
+    HR_T_nonlocal = new hamilt::HContainer<TR>(*ucell, ParaV);
     HR_TV = new hamilt::HContainer<TR>(*ucell, ParaV);
     HR_hartree = new hamilt::HContainer<TR>(*ucell, ParaV);
     HR_XC = new hamilt::HContainer<TR>(*ucell, ParaV);
@@ -133,12 +135,14 @@ void RDMFT<TK, TR>::init(Gint_Gamma* GG_in, Gint_k* GK_in, Parallel_Orbitals* Pa
     H_wfc_TV.zero_out();
     H_wfc_hartree.zero_out();
     H_wfc_XC.zero_out();
+    HR_T_nonlocal->set_zero();         // HR->set_zero() might be delete here, test on Gamma_only in the furure 
     HR_TV->set_zero();
     HR_hartree->set_zero();
     HR_XC->set_zero();
 
     if( GlobalV::GAMMA_ONLY_LOCAL )
     {
+        HR_T_nonlocal->fix_gamma();
         HR_TV->fix_gamma();
         HR_hartree->fix_gamma();
         HR_XC->fix_gamma();
@@ -249,11 +253,12 @@ template <typename TK, typename TR>
 void RDMFT<TK, TR>::get_V_TV(LCAO_Matrix* LM_in)
 {
     LM = LM_in;
+    HR_T_nonlocal->set_zero();
     
     V_ekinetic_potential = new hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>(
         LM,
         kv->kvec_d,
-        HR_TV,
+        HR_TV, // HR_T_nonlocal
         &HK_TV,
         &GlobalC::ucell,
         &GlobalC::GridD,
@@ -263,12 +268,16 @@ void RDMFT<TK, TR>::get_V_TV(LCAO_Matrix* LM_in)
     V_nonlocal = new hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>(
         LM,
         kv->kvec_d,
-        HR_TV,
+        HR_TV, // HR_T_nonlocal
         &HK_TV,
         &GlobalC::ucell,
         &GlobalC::GridD,
         ParaV
     );
+
+    // update HR_ekinetic and HR_nonlocal in ion step
+    V_ekinetic_potential->contributeHR();
+    V_nonlocal->contributeHR();
 }
 
 
@@ -276,6 +285,9 @@ template <typename TK, typename TR>
 void RDMFT<TK, TR>::get_V_hartree_local(LCAO_Matrix* LM_in, const ModulePW::PW_Basis& rho_basis_in, const ModuleBase::matrix& vloc_in, const ModuleBase::ComplexMatrix& sf_in)
 {
     LM = LM_in;
+    HR_hartree->set_zero();
+    // HR_TV->set_zero(); // need copy: HR_TV = HR_T_nonlocal 
+
     if( GlobalV::GAMMA_ONLY_LOCAL )
     {
         V_local = new rdmft::Veff_rdmft<TK,TR>(
@@ -284,8 +296,8 @@ void RDMFT<TK, TR>::get_V_hartree_local(LCAO_Matrix* LM_in, const ModulePW::PW_B
             LM,
             kv->kvec_d,
             charge,
-            HR_TV,
-            &HK_TV,
+            HR_TV,////////////////////////////////////
+            &HK_TV,     
             &GlobalC::ucell,
             &GlobalC::GridD,
             ParaV,
@@ -320,7 +332,7 @@ void RDMFT<TK, TR>::get_V_hartree_local(LCAO_Matrix* LM_in, const ModulePW::PW_B
             LM,
             kv->kvec_d,
             charge,
-            HR_TV,
+            HR_TV,////////////////////////////////////
             &HK_TV,
             &GlobalC::ucell,
             &GlobalC::GridD,
@@ -348,12 +360,22 @@ void RDMFT<TK, TR>::get_V_hartree_local(LCAO_Matrix* LM_in, const ModulePW::PW_B
             "hartree"
         );
     }
+
+    // in gamma only, must calculate HR_hartree before HR_local
+    // HR_XC get from another way, so don't need to do this 
+    V_hartree->contributeHR();
+
+    // update HR_TV in e-step, now HR_TV has the HR of V_ekinetic + V_nonlcao + V_local, 
+    V_local->contributeHR();
+
 }
 
 
 template <typename TK, typename TR>
 void RDMFT<TK, TR>::get_V_XC()
 {
+    HR_XC->set_zero();
+
     std::vector< std::vector<TK> > DM_XC(nk_total, std::vector<TK>(ParaV->nloc));
     std::vector< const std::vector<TK>* > DM_XC_pointer(nk_total);
     for(int ik=0; ik<nk_total; ++ik) DM_XC_pointer[ik] = &DM_XC[ik];
@@ -404,6 +426,100 @@ void RDMFT<TK, TR>::get_V_XC()
         );
     }
 }
+
+
+template <typename TK, typename TR>
+double RDMFT<TK, TR>::Run_rdmft()
+{
+    // // in gamma only, must calculate HR_hartree before HR_local
+    // // HR_XC get from another way, so don't need to do this 
+    // V_hartree->contributeHR();
+
+    // // update HR_TV in e-step, now HR_TV has the HR of V_ekinetic + V_nonlcao + V_local, 
+    // V_local->contributeHR();
+
+    /****** get occNum_wfcHamiltWfc, occNum_HamiltWfc and Etotal ******/
+
+    //calculate Hwfc, wfcHwfc for each potential
+    for(int ik=0; ik<nk_total; ++ik)
+    {
+        // get the HK with ik-th k vector, the result is stored in HK_TV, HK_hartree and HK_XC respectively
+        V_ekinetic_potential->contributeHk(ik);
+        // V_local->contributeHk(ik);      //////////////////////////////////
+        V_hartree->contributeHk(ik);
+        V_XC->contributeHk(ik);
+
+        // get H(k) * wfc
+        HkPsi( ParaV, HK_TV[0], wfc(ik, 0, 0), H_wfc_TV(ik, 0, 0));
+        HkPsi( ParaV, HK_hartree[0], wfc(ik, 0, 0), H_wfc_hartree(ik, 0, 0));
+        HkPsi( ParaV, HK_XC[0], wfc(ik, 0, 0), H_wfc_XC(ik, 0, 0));
+
+        // get wfc * H(k)_wfc
+        psiDotPsi( ParaV, para_Eij, wfc(ik, 0, 0), H_wfc_TV(ik, 0, 0), Eij_TV, &(wfcHwfc_TV(ik, 0)) );
+        psiDotPsi( ParaV, para_Eij, wfc(ik, 0, 0), H_wfc_hartree(ik, 0, 0), Eij_hartree, &(wfcHwfc_hartree(ik, 0)) );
+        psiDotPsi( ParaV, para_Eij, wfc(ik, 0, 0), H_wfc_XC(ik, 0, 0), Eij_XC, &(wfcHwfc_XC(ik, 0)) );
+        
+        // let H(k)=0 to storing next one, H(k+1)
+        set_zero_vector(HK_TV);
+        set_zero_vector(HK_hartree);
+        set_zero_vector(HK_XC);
+    }
+
+    // !this would transfer the value of H_wfc_TV, H_wfc_hartree, H_wfc_XC
+    // get the gradient of energy with respect to the wfc, i.e., occNum_HamiltWfc
+    add_psi(ParaV, occ_number, H_wfc_TV, H_wfc_hartree, H_wfc_XC, occNum_HamiltWfc, XC_func_rdmft, alpha_power);
+
+    // get the gradient of energy with respect to the natural occupation numbers, i.e., occNum_wfcHamiltWfc
+    add_occNum(occ_number, wfcHwfc_TV, wfcHwfc_hartree, wfcHwfc_XC, occNum_wfcHamiltWfc, XC_func_rdmft, alpha_power);
+
+    // get the total energy
+    add_wfcHwfc(kv->wk, occ_number, wfcHwfc_TV, wfcHwfc_hartree, wfcHwfc_XC, Etotal_n_k, XC_func_rdmft, alpha_power);
+
+    E_RDMFT[3] = getEnergy(Etotal_n_k);
+    Parallel_Reduce::reduce_all(E_RDMFT[3]);
+    return E_RDMFT[3];
+
+    /****** get occNum_wfcHamiltWfc, occNum_HamiltWfc and Etotal ******/
+
+}
+
+
+template <typename TK, typename TR>
+void RDMFT<TK, TR>::cal_Energy()
+{
+    // for E_TV
+    ModuleBase::matrix ETV_n_k(wg.nr, wg.nc, true);
+    occNum_Mul_wfcHwfc(wg, wfcHwfc_TV, ETV_n_k, 0);
+    E_RDMFT[0] = getEnergy(ETV_n_k);
+
+    // for Ehartree
+    ModuleBase::matrix Ehartree_n_k(wg.nr, wg.nc, true);
+    occNum_Mul_wfcHwfc(wg, wfcHwfc_hartree, Ehartree_n_k, 1);
+    E_RDMFT[1] = getEnergy(Ehartree_n_k);
+
+    // for Exc
+    ModuleBase::matrix Exc_n_k(wg.nr, wg.nc, true);
+    // because we have got wk_fun_occNum, we can use symbol=1 realize it
+    occNum_Mul_wfcHwfc(wk_fun_occNum, wfcHwfc_XC, Exc_n_k, 1);
+    E_RDMFT[2] = getEnergy(Exc_n_k);
+
+    // add up the results obtained by all processors, or we can do reduce_all(wfcHwfc_) before add_wg() used for Etotal to replace it
+    Parallel_Reduce::reduce_all(E_RDMFT[0]);
+    Parallel_Reduce::reduce_all(E_RDMFT[1]);
+    Parallel_Reduce::reduce_all(E_RDMFT[2]);
+
+    // print results
+    std::cout << std::setprecision(10) << "\n\n\nfrom class rdmft: \n******\nEtotal_RDMFT:   " << E_RDMFT[0] << "\nETV_RDMFT: " << E_RDMFT[1] << "\nEhartree_RDMFT: " 
+                << E_RDMFT[2] << "\nExc_RDMFT:      " << E_RDMFT[3] << "\n******\n\n\n" << std::endl;
+    ModuleBase::timer::tick("rdmftTest", "RDMFT_E&Egradient");
+
+}
+
+
+
+
+
+
 
 
 

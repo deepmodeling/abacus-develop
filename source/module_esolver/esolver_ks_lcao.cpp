@@ -996,6 +996,13 @@ namespace ModuleESolver
         );
     }
 
+    rdmft_solver.update_charge(occ_number, *(this->psi));
+    rdmft_solver.get_V_TV(&LM);
+    rdmft_solver.get_V_hartree_local(&LM, *(this->pw_rho), GlobalC::ppcell.vloc, this->sf.strucFac);
+    rdmft_solver.get_V_XC();
+    rdmft_solver.Run_rdmft();
+    rdmft_solver.cal_Energy();
+
     /******** test RDMFT *********/
 
 
