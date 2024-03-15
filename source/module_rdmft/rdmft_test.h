@@ -583,7 +583,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     Exx_LRI<double> Vxc_fromRI_d(GlobalC::exx_info.info_ri);
     Exx_LRI<std::complex<double>> Vxc_fromRI_c(GlobalC::exx_info.info_ri);
 
-    if( XC_func_rdmft == "HF" )
+    if( XC_func_rdmft == "HF" ) // error, use our own wfc and wg, we should use our DM_XC update V_XC
     {
         V_XC = new hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>>(
             LM_in,
@@ -761,7 +761,7 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     std::cout << "\n\nGlobalV::NSPIN: " << GlobalV::NSPIN << "\n" << std::endl;
 
     // print results
-    std::cout << std::setprecision(10) << "\n\n\n******\nEtotal_RDMFT:   " << Etotal_RDMFT << "\nETV_RDMFT: " << ETV_RDMFT << "\nEhartree_RDMFT: " 
+    std::cout << std::setprecision(10) << "\n\n\nfrom rdmftTest: \n******\nEtotal_RDMFT:   " << Etotal_RDMFT << "\nETV_RDMFT: " << ETV_RDMFT << "\nEhartree_RDMFT: " 
                 << Ehartree_RDMFT << "\nExc_RDMFT:      " << Exc_RDMFT << "\n******\n\n\n" << std::endl;
     ModuleBase::timer::tick("rdmftTest", "RDMFT_E&Egradient");
     

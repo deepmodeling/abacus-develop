@@ -72,20 +72,20 @@ class RDMFT
     RDMFT();
     ~RDMFT();
     
-    Parallel_Orbitals* ParaV = nullptr;
+    Parallel_Orbitals* ParaV = nullptr;   //
     Parallel_2D para_Eij;
     
-    Gint_k* GK = nullptr;      // used for k-dependent grid integration.
-    Gint_Gamma* GG = nullptr;  // used for gamma only algorithms.
-    UnitCell* ucell = nullptr;
+    Gint_k* GK = nullptr;      // used for k-dependent grid integration.  // ...
+    Gint_Gamma* GG = nullptr;  // used for gamma only algorithms.         // ...
+    UnitCell* ucell = nullptr;  // ...
     K_Vectors* kv = nullptr;
 
 
-    Charge* charge = nullptr;
+    Charge* charge = nullptr;                                             // ...
 
     //could be deleted future
-    LCAO_Matrix* LM = nullptr;
-    Local_Orbital_Charge* loc = nullptr;
+    LCAO_Matrix* LM = nullptr;    // ...
+    Local_Orbital_Charge* loc = nullptr;  // ...
 
 
 
@@ -93,8 +93,8 @@ class RDMFT
     std::string XC_func_rdmft;
     double alpha_power = 0.656; // 0.656 for soilds, 0.525 for dissociation of H2, 0.55~0.58 for HEG
 
-    ModuleBase::matrix occ_number;
-    psi::Psi<TK> wfc;
+    ModuleBase::matrix occ_number;    // ...
+    psi::Psi<TK> wfc;                 // ...
     ModuleBase::matrix wg;
     ModuleBase::matrix wk_fun_occNum;
 
@@ -124,18 +124,36 @@ class RDMFT
     std::vector<TK> Eij_hartree;
     std::vector<TK> Eij_XC;
 
-    hamilt::OperatorLCAO<TK, TR>* V_ekinetic_potential = nullptr;
-    hamilt::OperatorLCAO<TK, TR>* V_nonlocal = nullptr;
-    hamilt::OperatorLCAO<TK, TR>* V_local = nullptr;
-    hamilt::OperatorLCAO<TK, TR>* V_hartree = nullptr;
-    hamilt::OperatorLCAO<TK, TR>* V_XC = nullptr;
+    hamilt::OperatorLCAO<TK, TR>* V_ekinetic_potential = nullptr;   // ...
+    hamilt::OperatorLCAO<TK, TR>* V_nonlocal = nullptr;             // ...
+    hamilt::OperatorLCAO<TK, TR>* V_local = nullptr;                // ... 
+    hamilt::OperatorLCAO<TK, TR>* V_hartree = nullptr;              // ...
+    hamilt::OperatorLCAO<TK, TR>* V_XC = nullptr;                   // ...
 
-    Exx_LRI<double>* Vxc_fromRI_d = nullptr;   // (GlobalC::exx_info.info_ri)
-    Exx_LRI<std::complex<double>>* Vxc_fromRI_c = nullptr;
+    Exx_LRI<double>* Vxc_fromRI_d = nullptr;   // (GlobalC::exx_info.info_ri) // ...
+    Exx_LRI<std::complex<double>>* Vxc_fromRI_c = nullptr;                    // ...
 
-    void init(Gint_Gamma* GG_in, Gint_k* GK_in, Parallel_Orbitals* ParaV_in, UnitCell* ucell_in, K_Vectors* kv_in, std::string XC_func_rdmft_in = "HF");
+    void init(Gint_Gamma* GG_in, Gint_k* GK_in, Parallel_Orbitals* ParaV_in, UnitCell* ucell_in,
+                        K_Vectors* kv_in, std::string XC_func_rdmft_in = "HF", double alpha_power_in = 0.656);
 
-    void update_charge();
+    // Or we can use rdmft_solver.wfc/occ_number directly when optimizing, so that the update_charge() function does not require parameters.
+    void update_charge(ModuleBase::matrix& occ_number_in, const psi::Psi<TK>& wfc_in);
+
+    // get the special density matrix DM_XC(nk*nbasis_local*nbasis_local)
+    void get_DM_XC(std::vector< std::vector<TK> >& DM_XC);
+
+    void get_V_TV(LCAO_Matrix* LM_in);
+
+    void get_V_hartree_local(LCAO_Matrix* LM_in, const ModulePW::PW_Basis& rho_basis_in, const ModuleBase::matrix& vloc_in, const ModuleBase::ComplexMatrix& sf_in);
+
+    // construct V_XC based on different XC_functional( i.e. RDMFT class member XC_func_rdmft)
+    void get_V_XC();
+
+
+
+
+
+
 
   private:
     
