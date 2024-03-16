@@ -287,7 +287,7 @@ void RDMFT<TK, TR>::get_V_hartree_local(LCAO_Matrix* LM_in, const ModulePW::PW_B
     LM = LM_in;
     HR_hartree->set_zero();
     HR_TV->set_zero();
-    HR_TV->add(*HR_T_nonlocal);
+    // HR_TV->add(*HR_T_nonlocal); // can't be here
 
     if( GlobalV::GAMMA_ONLY_LOCAL )
     {
@@ -368,7 +368,7 @@ void RDMFT<TK, TR>::get_V_hartree_local(LCAO_Matrix* LM_in, const ModulePW::PW_B
 
     // update HR_TV in e-step, now HR_TV has the HR of V_ekinetic + V_nonlcao + V_local, 
     V_local->contributeHR();
-    // HR_TV->add(*HR_T_nonlocal);
+    HR_TV->add(*HR_T_nonlocal);
 
 }
 
@@ -510,7 +510,7 @@ void RDMFT<TK, TR>::cal_Energy()
     Parallel_Reduce::reduce_all(E_RDMFT[2]);
 
     // print results
-    std::cout << std::setprecision(10) << "\n\n\nfrom class rdmft: \n******\nEtotal_RDMFT:   " << E_RDMFT[3] << "\nETV_RDMFT: " << E_RDMFT[0] << "\nEhartree_RDMFT: " 
+    std::cout << std::setprecision(10) << "\n\n\nfrom class RDMFT: \n******\nEtotal_RDMFT:   " << E_RDMFT[3] << "\nETV_RDMFT: " << E_RDMFT[0] << "\nEhartree_RDMFT: " 
                 << E_RDMFT[1] << "\nExc_RDMFT:      " << E_RDMFT[2] << "\n******\n\n\n" << std::endl;
     ModuleBase::timer::tick("rdmftTest", "RDMFT_E&Egradient");
 
