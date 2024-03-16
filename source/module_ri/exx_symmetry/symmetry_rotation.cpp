@@ -1,3 +1,4 @@
+#include "symmetry_rotation.h"
 #include "module_base/constants.h"
 #include <cmath>
 #include "module_base/parallel_reduce.h"
@@ -5,7 +6,7 @@
 #include "module_base/tool_title.h"
 #include "module_base/timer.h"
 #include "module_base/mathzone.h"
-#include "symmetry_rotation.h"
+
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 namespace ModuleSymmetry
@@ -19,14 +20,14 @@ namespace ModuleSymmetry
 
         this->nsym_ = ucell.symm.nrotk;
         this->eps_ = ucell.symm.epsilon;
-        if (this->invmap_.empty())
+        if (this->irs_.invmap_.empty())
         {
-            this->invmap_.resize(ucell.symm.nrotk);
-            ucell.symm.gmatrix_invmap(ucell.symm.gmatrix, ucell.symm.nrotk, invmap_.data());
+            this->irs_.invmap_.resize(ucell.symm.nrotk);
+            ucell.symm.gmatrix_invmap(ucell.symm.gmatrix, ucell.symm.nrotk, this->irs_.invmap_.data());
         }
         // 1. calculate the rotation matrix in real spherical harmonics representation for each symmetry operation: [T_l (isym)]_mm'
         std::vector<ModuleBase::Matrix3> gmatc(nsym_);
-        for (int i = 0;i < nsym_;++i) gmatc[i] = this->direct_to_cartesian(ucell.symm.gmatrix[i], ucell.latvec);
+        for (int i = 0;i < nsym_;++i) gmatc[i] = this->irs_.direct_to_cartesian(ucell.symm.gmatrix[i], ucell.latvec);
         this->cal_rotmat_Slm(gmatc.data(), ucell.lmax);
 
         // 2. calculate the rotation matrix in AO-representation for each ibz_kpoint and symmetry operation: M(k, isym)
@@ -265,115 +266,42 @@ namespace ModuleSymmetry
                 // set_integer(this->rotmat_Slm_[isym][l]);
             }
         }
-/*
-        std::vector<TCdouble> euler_angles_test(nsym_);
-        for (int isym = 0;isym < nsym_;++isym) euler_angles_test[isym] =
-            get_euler_angle(gmatc[isym].Det() > 0 ? gmatc[isym] : gmatc[isym] * ModuleBase::Matrix3(-1, 0, 0, 0, -1, 0, 0, 0, -1));
+        /*
+                std::vector<TCdouble> euler_angles_test(nsym_);
+                for (int isym = 0;isym < nsym_;++isym) euler_angles_test[isym] =
+                    get_euler_angle(gmatc[isym].Det() > 0 ? gmatc[isym] : gmatc[isym] * ModuleBase::Matrix3(-1, 0, 0, 0, -1, 0, 0, 0, -1));
 
-        auto test_Tmm = [&]()-> void
-            {
-                std::ofstream ofs("Tlm.dat");
-                for (int isym = 0;isym < nsym_;++isym)
-                {
-                    ofs << "isym=" << isym << std::endl;
-                    ofs << "gmatrix_cart=" << std::endl;
-                    ofs << gmatc[isym].e11 << " " << gmatc[isym].e12 << " " << gmatc[isym].e13 << std::endl;
-                    ofs << gmatc[isym].e21 << " " << gmatc[isym].e22 << " " << gmatc[isym].e23 << std::endl;
-                    ofs << gmatc[isym].e31 << " " << gmatc[isym].e32 << " " << gmatc[isym].e33 << std::endl;
-                    ofs << "gmatrix_direct=" << std::endl;
-                    ofs << GlobalC::ucell.symm.gmatrix[isym].e11 << " " << GlobalC::ucell.symm.gmatrix[isym].e12 << " " << GlobalC::ucell.symm.gmatrix[isym].e13 << std::endl;
-                    ofs << GlobalC::ucell.symm.gmatrix[isym].e21 << " " << GlobalC::ucell.symm.gmatrix[isym].e22 << " " << GlobalC::ucell.symm.gmatrix[isym].e23 << std::endl;
-                    ofs << GlobalC::ucell.symm.gmatrix[isym].e31 << " " << GlobalC::ucell.symm.gmatrix[isym].e32 << " " << GlobalC::ucell.symm.gmatrix[isym].e33 << std::endl;
-                    ofs << "kgmatrix_direct=" << std::endl;
-                    ofs << GlobalC::ucell.symm.kgmatrix[isym].e11 << " " << GlobalC::ucell.symm.kgmatrix[isym].e12 << " " << GlobalC::ucell.symm.kgmatrix[isym].e13 << std::endl;
-                    ofs << GlobalC::ucell.symm.kgmatrix[isym].e21 << " " << GlobalC::ucell.symm.kgmatrix[isym].e22 << " " << GlobalC::ucell.symm.kgmatrix[isym].e23 << std::endl;
-                    ofs << GlobalC::ucell.symm.kgmatrix[isym].e31 << " " << GlobalC::ucell.symm.kgmatrix[isym].e32 << " " << GlobalC::ucell.symm.kgmatrix[isym].e33 << std::endl;
-                    ofs << "euler_angle/pi: " << euler_angles_test[isym].x / ModuleBase::PI << " "
-                        << euler_angles_test[isym].y / ModuleBase::PI << " " << euler_angles_test[isym].z / ModuleBase::PI << std::endl;
-                    for (int l = 0;l <= lmax;++l)
-                        for (int i = 0;i < 2 * l + 1;++i)
+                auto test_Tmm = [&]()-> void
+                    {
+                        std::ofstream ofs("Tlm.dat");
+                        for (int isym = 0;isym < nsym_;++isym)
                         {
-                            for (int j = 0;j < 2 * l + 1;++j) ofs << this->rotmat_Slm_[isym][l](i, j) << " ";
-                            ofs << std::endl;
+                            ofs << "isym=" << isym << std::endl;
+                            ofs << "gmatrix_cart=" << std::endl;
+                            ofs << gmatc[isym].e11 << " " << gmatc[isym].e12 << " " << gmatc[isym].e13 << std::endl;
+                            ofs << gmatc[isym].e21 << " " << gmatc[isym].e22 << " " << gmatc[isym].e23 << std::endl;
+                            ofs << gmatc[isym].e31 << " " << gmatc[isym].e32 << " " << gmatc[isym].e33 << std::endl;
+                            ofs << "gmatrix_direct=" << std::endl;
+                            ofs << GlobalC::ucell.symm.gmatrix[isym].e11 << " " << GlobalC::ucell.symm.gmatrix[isym].e12 << " " << GlobalC::ucell.symm.gmatrix[isym].e13 << std::endl;
+                            ofs << GlobalC::ucell.symm.gmatrix[isym].e21 << " " << GlobalC::ucell.symm.gmatrix[isym].e22 << " " << GlobalC::ucell.symm.gmatrix[isym].e23 << std::endl;
+                            ofs << GlobalC::ucell.symm.gmatrix[isym].e31 << " " << GlobalC::ucell.symm.gmatrix[isym].e32 << " " << GlobalC::ucell.symm.gmatrix[isym].e33 << std::endl;
+                            ofs << "kgmatrix_direct=" << std::endl;
+                            ofs << GlobalC::ucell.symm.kgmatrix[isym].e11 << " " << GlobalC::ucell.symm.kgmatrix[isym].e12 << " " << GlobalC::ucell.symm.kgmatrix[isym].e13 << std::endl;
+                            ofs << GlobalC::ucell.symm.kgmatrix[isym].e21 << " " << GlobalC::ucell.symm.kgmatrix[isym].e22 << " " << GlobalC::ucell.symm.kgmatrix[isym].e23 << std::endl;
+                            ofs << GlobalC::ucell.symm.kgmatrix[isym].e31 << " " << GlobalC::ucell.symm.kgmatrix[isym].e32 << " " << GlobalC::ucell.symm.kgmatrix[isym].e33 << std::endl;
+                            ofs << "euler_angle/pi: " << euler_angles_test[isym].x / ModuleBase::PI << " "
+                                << euler_angles_test[isym].y / ModuleBase::PI << " " << euler_angles_test[isym].z / ModuleBase::PI << std::endl;
+                            for (int l = 0;l <= lmax;++l)
+                                for (int i = 0;i < 2 * l + 1;++i)
+                                {
+                                    for (int j = 0;j < 2 * l + 1;++j) ofs << this->rotmat_Slm_[isym][l](i, j) << " ";
+                                    ofs << std::endl;
+                                }
                         }
-                }
-                ofs.close();
-            };
-        test_Tmm();
-    */
-    }
-
-    // Perfoming {R|t} to atom position r in the R=0 lattice, we get Rr+t, which may get out of R=0 lattice, 
-    // whose image in R=0 lattice is r'=Rr+t-O. This function is to get O for each atom and each symmetry operation.
-    // the range of direct position is [-0.5, 0.5).
-    TCdouble Symmetry_rotation::get_return_lattice(const Symmetry& symm,
-        const ModuleBase::Matrix3& gmatd, const TCdouble gtransd,
-        const TCdouble& posd_a1, const TCdouble& posd_a2)const
-    {
-        // auto restrict_center = [&symm](const TCdouble& v) -> TCdouble {
-        //     // in [-0.5, 0.5)
-        //     TCdouble vr;
-        //     vr.x = fmod(v.x + 100.5 + 0.5 * symm.epsilon, 1) - 0.5 - 0.5 * symm.epsilon;
-        //     vr.y = fmod(v.y + 100.5 + 0.5 * symm.epsilon, 1) - 0.5 - 0.5 * symm.epsilon;
-        //     vr.z = fmod(v.z + 100.5 + 0.5 * symm.epsilon, 1) - 0.5 - 0.5 * symm.epsilon;
-        //     if (std::abs(vr.x) < symm.epsilon) vr.x = 0.0;
-        //     if (std::abs(vr.y) < symm.epsilon) vr.y = 0.0;
-        //     if (std::abs(vr.z) < symm.epsilon) vr.z = 0.0;
-        //     return vr;
-        //     };
-        auto restrict_center = [&symm](const TCdouble& v) -> TCdouble {
-            // in [0,1)
-            TCdouble vr;
-            vr.x = fmod(v.x + 100 + symm.epsilon, 1) - symm.epsilon;
-            vr.y = fmod(v.y + 100 + symm.epsilon, 1) - symm.epsilon;
-            vr.z = fmod(v.z + 100 + symm.epsilon, 1) - symm.epsilon;
-            if (std::abs(vr.x) < symm.epsilon) vr.x = 0.0;
-            if (std::abs(vr.y) < symm.epsilon) vr.y = 0.0;
-            if (std::abs(vr.z) < symm.epsilon) vr.z = 0.0;
-            return vr;
-            };
-        auto check_integer = [&symm](const double x) -> void {
-            assert(symm.equal(x, std::round(x)));
-            };
-        TCdouble rotpos1 = restrict_center(posd_a1) * gmatd + restrict_center(gtransd);  // row vector
-        TCdouble return_lattice_double = rotpos1 - restrict_center(posd_a2);
-#ifdef __DEBUG
-        check_integer(return_lattice_double.x);
-        check_integer(return_lattice_double.y);
-        check_integer(return_lattice_double.z);
-#endif
-        return TCdouble(std::round(return_lattice_double.x), std::round(return_lattice_double.y), std::round(return_lattice_double.z));
-    }
-
-    inline void output_return_lattice(const std::vector<std::vector<TCdouble>>& return_lattice)
-    {
-        std::cout << "return lattice:" << std::endl;
-        for (int iat = 0;iat < return_lattice.size();++iat)
-        {
-            std::cout << "atom" << iat << std::endl;
-            for (int isym = 0;isym < return_lattice[iat].size();++isym)
-                std::cout << "isym=" << isym << ", return lattice=" <<
-                return_lattice[iat][isym].x << " " << return_lattice[iat][isym].y << " " << return_lattice[iat][isym].z << std::endl;
-        }
-    }
-
-    void Symmetry_rotation::get_return_lattice_all(const Symmetry& symm, const Atom* atoms, const Statistics& st)
-    {
-        ModuleBase::TITLE("Symmetry_rotation", "get_return_lattice_all");
-        this->return_lattice_.resize(st.nat, std::vector<TCdouble>(symm.nrotk));
-        for (int iat1 = 0;iat1 < st.nat;++iat1)
-        {
-            int it = st.iat2it[iat1];
-            int ia1 = st.iat2ia[iat1];
-            for (int isym = 0;isym < symm.nrotk;++isym)
-            {
-                int iat2 = symm.get_rotated_atom(isym, iat1);
-                int ia2 = st.iat2ia[iat2];
-                this->return_lattice_[iat1][isym] = get_return_lattice(symm, symm.gmatrix[isym], symm.gtrans[isym], atoms[it].taud[ia1], atoms[it].taud[ia2]);
-            }
-        }
-        // test: output return_lattice
-        output_return_lattice(this->return_lattice_);
+                        ofs.close();
+                    };
+                test_Tmm();
+            */
     }
 
     void Symmetry_rotation::set_block_to_mat2d(const int starti, const int startj, const ModuleBase::ComplexMatrix& block,
@@ -413,7 +341,7 @@ namespace ModuleSymmetry
             int iat2 = symm.get_rotated_atom(isym, iat1); //iat2=rot(iat1)
             int ia2 = cell_st.iat2ia[iat2];
             // cal phase factor from return lattice:     exp(-ik_ibz*O)
-            double arg = 2 * ModuleBase::PI * kvec_d_ibz * this->return_lattice_[iat1][isym];
+            double arg = 2 * ModuleBase::PI * kvec_d_ibz * this->irs_.return_lattice_[iat1][isym];
             std::complex<double>phase_factor = std::complex<double>(std::cos(arg), std::sin(arg));
             int iw1start = atoms[it].stapos_wf + ia1 * atoms[it].nw;
             int iw2start = atoms[it].stapos_wf + ia2 * atoms[it].nw;
@@ -474,161 +402,40 @@ namespace ModuleSymmetry
         return DMk;
     }
 
-    ModuleBase::Matrix3 Symmetry_rotation::direct_to_cartesian(const ModuleBase::Matrix3& d, const ModuleBase::Matrix3& latvec)const
+    std::vector<TC> Symmetry_rotation::get_Rs_from_adjacent_list(const UnitCell& ucell, Grid_Driver& gd, const Parallel_Orbitals& pv) const
     {
-        return latvec.Inverse() * d * latvec;
-    }
-
-    std::vector<int> inline get_isymbvk_to_isym_map(const std::vector<ModuleBase::Matrix3>& bvkgmat, const ModuleSymmetry::Symmetry& symm)
-    {
-        auto matequal = [&symm](ModuleBase::Matrix3 a, ModuleBase::Matrix3 b)
-            {
-                return (symm.equal(a.e11, b.e11) && symm.equal(a.e12, b.e12) && symm.equal(a.e13, b.e13) &&
-                    symm.equal(a.e21, b.e21) && symm.equal(a.e22, b.e22) && symm.equal(a.e23, b.e23) &&
-                    symm.equal(a.e31, b.e31) && symm.equal(a.e23, b.e23) && symm.equal(a.e33, b.e33));
-            };
-        std::vector<int> isymbvk2isym(bvkgmat.size(), -1);
-        for (int isymbvk = 0;isymbvk < bvkgmat.size();++isymbvk)
+        // find the union set of Rs for all the atom pairs
+        std::set<TC> Rs_set;
+        for (int iat1 = 0;iat1 < ucell.nat;++iat1)
         {
-            for (int isym = 0;isym < symm.nrotk;++isym)
+            auto tau1 = ucell.get_tau(iat1);
+            int it1 = ucell.iat2it[iat1], ia1 = ucell.iat2ia[iat1];
+            AdjacentAtomInfo adjs;
+            gd.Find_atom(ucell, tau1, it1, ia1, &adjs);
+            for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
             {
-                if (matequal(bvkgmat[isymbvk], symm.gmatrix[isym]))
+                const int it2 = adjs.ntype[ad];
+                const int ia2 = adjs.natom[ad];
+                int iat2 = ucell.itia2iat(it2, ia2);
+                if (pv.get_row_size(iat1) && pv.get_col_size(iat2))
                 {
-                    isymbvk2isym[isymbvk] = isym;
-                    break;
+                    const ModuleBase::Vector3<int>& R_index = adjs.box[ad];
+                    if (ucell.cal_dtau(iat1, iat2, R_index).norm() * ucell.lat0
+                        < ucell.atoms[it1].Rcut + ucell.atoms[it2].Rcut)
+                        Rs_set.insert({ R_index.x, R_index.y, R_index.z });
                 }
             }
         }
-        return isymbvk2isym;
+        // set to vector
+        std::vector<TC> Rs(Rs_set.size());
+        for (auto& R : Rs_set) Rs.push_back(R);
+        return Rs;
     }
 
-    inline int gcd(const int a, const int b)
+    std::vector<TC> Symmetry_rotation::get_Rs_from_BvK(const K_Vectors& kv) const
     {
-        assert(a > 0 && b > 0);
-        int c = a % b;
-        return (c == 0) ? b : gcd(b, c);
+        const TC& period = RI_Util::get_Born_vonKarmen_period(kv);
+        return RI_Util::get_Born_von_Karmen_cells(period);
     }
-    void Symmetry_rotation::gen_symmetry_BvK(const ModuleSymmetry::Symmetry& symm, const Atom* atoms, const Lattice& lat, const Statistics& st, const TC bvk_period)
-    {
-        ModuleBase::TITLE("Symmetry_rotation", "gen_symmetry_BvK");
-        auto set_matrix3 = [](const ModuleBase::Vector3<double>& a1, const ModuleBase::Vector3<double>& a2, const ModuleBase::Vector3<double>& a3)
-            -> ModuleBase::Matrix3 {return ModuleBase::Matrix3(a1.x, a1.y, a1.z, a2.x, a2.y, a2.z, a3.x, a3.y, a3.z);};
-
-        if (bvk_period[0] == bvk_period[1] && bvk_period[0] == bvk_period[2])
-        {   //the BvK supercell has the same symmetry as the original cell
-            this->bvk_nsym_ = symm.nrotk;
-            this->isymbvk_to_isym_.resize(symm.nrotk);
-            for (int isym = 0;isym < symm.nrotk;++isym) this->isymbvk_to_isym_[isym] = isym;
-            return;
-        }
-
-        // extern lattice to minimal BvK lattice, and set direct coordinates in min BvK lattice 
-        int bvk_gcd = gcd(bvk_period[0], gcd(bvk_period[1], bvk_period[2]));
-        const TC bvk_min_period = TC({ bvk_period[0] / bvk_gcd, bvk_period[1] / bvk_gcd, bvk_period[2] / bvk_gcd });
-        const int bvk_nat = st.nat * bvk_min_period[0] * bvk_min_period[1] * bvk_min_period[2];
-        std::vector<int> bvk_na(st.ntype);
-        std::vector<int> bvk_istart(st.ntype, 0);
-        int bvk_itmin_start = 0, bvk_itmin_type = 0;
-        for (int it = 0;it < st.ntype;++it)
-        {
-            bvk_na[it] = atoms[it].na * bvk_min_period[0] * bvk_min_period[1] * bvk_min_period[2];
-            if (it > 0) bvk_istart[it] = bvk_istart[it - 1] + bvk_na[it - 1];
-            if (bvk_na[it] < bvk_na[bvk_itmin_type])
-            {
-                bvk_itmin_type = it;
-                bvk_itmin_start = bvk_istart[it];
-            }
-        }
-
-        std::vector<double> bvk_dpos(3 * bvk_nat);
-        std::vector<double> bvk_rot_dpos(3 * bvk_nat);
-        std::vector<int> order_index(bvk_nat + 2);
-        ModuleBase::Vector3<double> a1, a2, a3, s1, s2, s3; // a: to be optimized; s: original
-        s1 = a1 = lat.a1 * static_cast<double>(bvk_min_period[0]);
-        s2 = a2 = lat.a2 * static_cast<double>(bvk_min_period[1]);
-        s3 = a3 = lat.a3 * static_cast<double>(bvk_min_period[2]);
-        ModuleBase::Matrix3 bvk_min_lat = set_matrix3(s1, s2, s3);
-        int at = 0;
-        for (int it = 0; it < st.ntype; ++it)
-            for (int c1 = 0;c1 < bvk_min_period[0];++c1)
-                for (int c2 = 0;c2 < bvk_min_period[1];++c2)
-                    for (int c3 = 0;c3 < bvk_min_period[2];++c3)
-                        for (int ia = 0; ia < atoms[it].na; ++ia)
-                        {
-                            bvk_dpos[3 * at] = (static_cast<double> (c1) + atoms[it].taud[ia].x) / static_cast<double>(bvk_min_period[0]);
-                            bvk_dpos[3 * at + 1] = (static_cast<double> (c2) + atoms[it].taud[ia].y) / static_cast<double>(bvk_min_period[1]);
-                            bvk_dpos[3 * at + 2] = (static_cast<double> (c3) + atoms[it].taud[ia].z) / static_cast<double>(bvk_min_period[2]);
-                            for (int k = 0; k < 3; ++k)
-                            {
-                                symm.check_translation(bvk_dpos[3 * at + k], -floor(bvk_dpos[3 * at + k]));
-                                symm.check_boundary(bvk_dpos[3 * at + k]);
-                            }
-                            ++at;
-                        }
-
-        // analyze bravis and generate optimized lattice for minimal BvK lattice
-        double cel_const[6], pre_const[6];
-        int bvk_brav;
-        std::string bvk_latname;
-        // bvk_brav = symm.standard_lat(s1, s2, s3, cel_const); //not enough, optimal lattice may change after cell-extension
-        symm.lattice_type(a1, a2, a3, s1, s2, s3, cel_const, pre_const, bvk_brav, bvk_latname, nullptr, false, nullptr);
-        ModuleBase::Matrix3 bvk_min_optlat = set_matrix3(a1, a2, a3);
-        // convert the direct coordinates to the optimized lattice
-        for (int i = 0;i < bvk_nat;++i)
-        {
-            ModuleBase::Vector3<double> taud(bvk_dpos[3 * i], bvk_dpos[3 * i + 1], bvk_dpos[3 * i + 2]);
-            taud = taud * bvk_min_lat * bvk_min_optlat.Inverse();
-            bvk_dpos[3 * i] = taud.x;
-            bvk_dpos[3 * i + 1] = taud.y;
-            bvk_dpos[3 * i + 2] = taud.z;
-            for (int k = 0; k < 3; ++k)
-            {
-                symm.check_translation(bvk_dpos[3 * i + k], -floor(bvk_dpos[3 * i + k]));
-                symm.check_boundary(bvk_dpos[3 * i + k]);
-            }
-        }
-
-        // generate symmetry operation of the BvK lattice using the original optlat-direct coordinates
-        std::vector<ModuleBase::Matrix3> bvk_op(48);
-        int bvk_nop;
-        symm.setgroup(bvk_op.data(), bvk_nop, bvk_brav);
-        bvk_op.resize(bvk_nop);
-        int bvk_npg, bvk_nsg, bvk_pgnum, bvk_sgnum;
-        std::string bvk_pgname, bvk_sgname;
-        this->bvk_gmatrix_.resize(48);
-        this->bvk_gtrans_.resize(48);
-        symm.getgroup(bvk_npg, bvk_nsg, GlobalV::ofs_running, bvk_nop,
-            bvk_op.data(), this->bvk_gmatrix_.data(), this->bvk_gtrans_.data(),
-            bvk_dpos.data(), bvk_rot_dpos.data(), order_index.data(),
-            bvk_itmin_type, bvk_itmin_start, bvk_istart.data(), bvk_na.data());
-        this->bvk_gmatrix_.resize(bvk_nsg);
-        this->bvk_gtrans_.resize(bvk_nsg);
-        this->bvk_nsym_ = bvk_nsg;
-        symm.pointgroup(bvk_npg, bvk_pgnum, bvk_pgname, this->bvk_gmatrix_.data(), GlobalV::ofs_running);
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "POINT GROUP OF BvK SCELL", bvk_pgname);
-        symm.pointgroup(bvk_nsg, bvk_sgnum, bvk_sgname, this->bvk_gmatrix_.data(), GlobalV::ofs_running);
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "POINT GROUP IN SPACE GROUP OF BvK SCELL", bvk_pgname);
-        symm.gmatrix_convert_int(this->bvk_gmatrix_.data(), this->bvk_gmatrix_.data(), bvk_nsg, bvk_min_optlat, lat.latvec);
-        symm.gtrans_convert(this->bvk_gtrans_.data(), this->bvk_gtrans_.data(), bvk_nsg, bvk_min_optlat, lat.latvec);
-        // get map from bvk-op to original op
-        this->isymbvk_to_isym_ = get_isymbvk_to_isym_map(this->bvk_gmatrix_, symm);
-        return;
-    }
-
-    std::vector<bool> Symmetry_rotation::in_plain(const ModuleSymmetry::Symmetry& symm, const ModuleBase::Matrix3& latvec)const
-    {
-        // get euler angel of the cartesian gmatrix in optimal lattice
-        std::vector<ModuleBase::Matrix3> gmatc(symm.nrotk);
-        symm.gmatrix_convert_int(symm.gmatrix, gmatc.data(), symm.nrotk, latvec, symm.optlat);
-        for (auto& g : gmatc) g = direct_to_cartesian(g, symm.optlat);
-        std::vector<bool> in_plain(symm.nrotk, false);
-        for (int i = 0;i < symm.nrotk;++i)
-        {
-            TCdouble euler_angle = get_euler_angle(gmatc[i]);
-            if (symm.equal(euler_angle.y, 0.0) || symm.equal(euler_angle.y, ModuleBase::PI)) in_plain[i] = true;
-        }
-        return in_plain;
-    }
-
 
 }

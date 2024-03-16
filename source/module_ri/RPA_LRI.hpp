@@ -8,7 +8,7 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
-#include "module_ri/symmetry_rotation.h"
+#include "module_ri/exx_symmetry/symmetry_rotation.h"
 
 #include "RPA_LRI.h"
 #include "module_parameter/parameter.h"
@@ -84,7 +84,9 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
     ModuleSymmetry::Symmetry_rotation symrot;
     if (exx_spacegroup_symmetry)
     {
-        symrot.get_return_lattice_all(GlobalC::ucell.symm, GlobalC::ucell.atoms, GlobalC::ucell.st);
+        const std::array<Tcell, Ndim> period = RI_Util::get_Born_vonKarmen_period(kv);
+        symrot.find_irreducible_sector(GlobalC::ucell.symm, GlobalC::ucell.atoms, GlobalC::ucell.st,
+            RI_Util::get_Born_von_Karmen_cells(period), period, GlobalC::ucell.lat);
         symrot.cal_Ms(kv, GlobalC::ucell, *dm.get_paraV_pointer());
         mix_DMk_2D.mix(symrot.restore_dm(kv, dm.get_DMK_vector(), *dm.get_paraV_pointer()), true);
     }
@@ -104,16 +106,9 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
     exx_lri_rpa.cal_exx_ions();
 
     if (exx_spacegroup_symmetry)
-    {
-        const std::array<Tcell, Ndim> period = RI_Util::get_Born_vonKarmen_period(kv);
-        symrot.find_irreducible_sector(GlobalC::ucell.symm, GlobalC::ucell.atoms, GlobalC::ucell.st,
-            RI_Util::get_Born_von_Karmen_cells(period), period, GlobalC::ucell.lat);
         exx_lri_rpa.cal_exx_elec(Ds, *dm.get_paraV_pointer(), &symrot);
-    }
     else
-    {
         exx_lri_rpa.cal_exx_elec(Ds, *dm.get_paraV_pointer());
-    }
     // cout<<"postSCF_Eexx: "<<exx_lri_rpa.Eexx<<endl;
 }
 

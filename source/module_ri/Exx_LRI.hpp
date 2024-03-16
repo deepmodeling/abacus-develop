@@ -180,18 +180,13 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, R
 	this->Eexx = 0;
 	for(int is=0; is<GlobalV::NSPIN; ++is)
 	{
-        if (!(GlobalV::CAL_FORCE || GlobalV::CAL_STRESS))
-        {
-            this->exx_lri.set_Ds(Ds[is], this->info.dm_threshold);
-            this->exx_lri.cal_Hs({ "","","" },
-                (p_symrot == nullptr) ? std::map<std::pair<TA, TA>, std::set<TC> >({}) : p_symrot->get_irreducible_sector(),
-                (p_symrot == nullptr) ? true : false);
-        }
-        else
-        {
-            this->exx_lri.set_Ds(Ds[is], this->info.dm_threshold, std::to_string(is));
-            this->exx_lri.cal_Hs({ "","",std::to_string(is) });
-        }
+        std::string suffix = ((GlobalV::CAL_FORCE || GlobalV::CAL_STRESS) ? std::to_string(is) : "");
+
+        this->exx_lri.set_Ds(Ds[is], this->info.dm_threshold, suffix);
+        this->exx_lri.cal_Hs({ "","",suffix },
+            (p_symrot == nullptr) ? std::map<std::pair<TA, TA>, std::set<TC> >({}) : p_symrot->get_irreducible_sector(),
+            (p_symrot == nullptr) ? true : false);
+
         this->Hexxs[is] = RI::Communicate_Tensors_Map_Judge::comm_map2_first(
             this->mpi_comm, std::move(this->exx_lri.Hs), std::get<0>(judge[is]), std::get<1>(judge[is]));
 

@@ -1,159 +1,111 @@
-#include "symmetry_rotation.h"
+#include "module_ri/exx_symmetry/irreducible_sector.h"
 
 namespace ModuleSymmetry
 {
-    int Symmetry_rotation::round2int(const double x) const
-    {
-        return x > 0 ? static_cast<int>(x + eps_) : static_cast<int>(x - eps_);
-    }
-
-    TC Symmetry_rotation::rotate_R_by_formula(const Symmetry& symm,
+    TC Irreducible_Sector::rotate_R(const Symmetry& symm,
         const int isym, const int iat1, const int iat2, const TC& R, const char gauge) const
     {
+        auto round2int = [symm](const double x) -> int { return x > 0 ? static_cast<int>(x + symm.epsilon) : static_cast<int>(x - symm.epsilon); };
         const TCdouble R_double(static_cast<double>(R[0]), static_cast<double>(R[1]), static_cast<double>(R[2]));
         const TCdouble Rrot_double = (gauge == 'L')
             ? R_double * symm.gmatrix[isym] + this->return_lattice_[iat1][isym] - this->return_lattice_[iat2][isym]
             : R_double * symm.gmatrix[isym] + this->return_lattice_[iat2][isym] - this->return_lattice_[iat1][isym];
         return { round2int(Rrot_double.x), round2int(Rrot_double.y), round2int(Rrot_double.z) };
     }
-    TapR Symmetry_rotation::rotate_R_by_formula(const Symmetry& symm,
+    TapR Irreducible_Sector::rotate_apR_by_formula(const Symmetry& symm,
         const int isym, const TapR& apR, const char gauge) const
     {
         const Tap& aprot = { symm.get_rotated_atom(isym, apR.first.first), symm.get_rotated_atom(isym, apR.first.second) };
-        return { aprot, this->rotate_R_by_formula(symm, isym, apR.first.first, apR.first.second, apR.second, gauge) };
+        return { aprot, this->rotate_R(symm, isym, apR.first.first, apR.first.second, apR.second, gauge) };
     }
 
-    TCdouble Symmetry_rotation::get_aRb_direct(const Atom* atoms, const Statistics& st,
+    TCdouble Irreducible_Sector::get_aRb_direct(const Atom* atoms, const Statistics& st,
         const int iat1, const int iat2, const TCdouble& R, const char gauge)const
     {
         return TCdouble(atoms[st.iat2it[iat1]].taud[st.iat2ia[iat1]] - atoms[st.iat2it[iat2]].taud[st.iat2ia[iat2]]) + (gauge == 'L' ? R : TCdouble(-R));
     }
 
-    TCdouble Symmetry_rotation::get_aRb_direct(const Atom* atoms, const Statistics& st,
+    TCdouble Irreducible_Sector::get_aRb_direct(const Atom* atoms, const Statistics& st,
         const int iat1, const int iat2, const TC& R, const char gauge) const
     {
         const TCdouble R_double(static_cast<double>(R[0]), static_cast<double>(R[1]), static_cast<double>(R[2]));
         return get_aRb_direct(atoms, st, iat1, iat2, R_double);
     }
 
-    // void Symmetry_rotation::find_irreducible_atom_pairs(const Symmetry& symm)
-    // {
-    //     ModuleBase::TITLE("Symmetry_rotation", "find_irreducible_atom_pairs");
-    //     this->eps_ = symm.epsilon;
-    //     for (int iat1 = 0;iat1 < symm.nat;++iat1)
-    //         for (int iat2 = 0;iat2 < symm.nat;++iat2)
-    //         {
-    //             Tap pair = { iat1, iat2 };
-    //             bool exist = false;
-    //             for (int isym = 0;isym < symm.nrotk;++isym)
-    //             {
-    //                 Tap rotpair = { symm.get_rotated_atom(isym,iat1), symm.get_rotated_atom(isym,iat2) };
-    //                 for (int ip = 0;ip < this->atompair_stars_.size();++ip) // current irreduceble pairs
-    //                 {
-    //                     if (rotpair == this->atompair_stars_[ip].at(0))
-    //                     {
-    //                         this->atompair_stars_[ip].insert({ isym, pair });
-    //                         exist = true;
-    //                         break;
-    //                     }
-    //                 }
-    //                 if (exist)break;
-    //             }
-    //             if (!exist)this->atompair_stars_.push_back({ {0, pair} });
-    //         }
-    // }
-
-    // void Symmetry_rotation::find_irreducible_atom_pairs_set(const Symmetry& symm)
-    // {
-    //     ModuleBase::TITLE("Symmetry_rotation", "find_irreducible_atom_pairs_set");
-    //     this->eps_ = symm.epsilon;
-    //     if (this->invmap_.empty())
-    //     {
-    //         this->invmap_.resize(symm.nrotk);
-    //         symm.gmatrix_invmap(symm.gmatrix, symm.nrotk, invmap_.data());
-    //     }
-    //     // contruct initial ap-set
-    //     std::set<Tap, ap_less_func> ap_set;
-    //     for (int iat1 = 0; iat1 < symm.nat; ++iat1)
-    //         for (int iat2 = 0; iat2 < symm.nat; ++iat2)
-    //             ap_set.insert({ iat1, iat2 });
-    //     while (!ap_set.empty())
-    //     {
-    //         Tap ap = *ap_set.begin();
-    //         std::map<int, Tap> ap_star;
-    //         for (int isym = 0; isym < symm.nrotk; ++isym)
-    //         {
-    //             Tap rotpair = { symm.get_rotated_atom(isym,ap.first), symm.get_rotated_atom(isym,ap.second) };
-    //             if (ap_set.find(rotpair) != ap_set.end())
-    //             {
-    //                 ap_star.insert({ this->invmap_[isym], rotpair });
-    //                 ap_set.erase(rotpair);
-    //             }
-    //         }
-    //         this->atompair_stars_.push_back(ap_star);
-    //     }
-    // }
-
-    // inline void output_atompair_stars(const std::vector<std::map<int, Tap>>& ap_stars)
-    // {
-    //     std::cout << "stars of irreducible atom pairs: " << std::endl;
-    //     for (int ip = 0; ip < ap_stars.size(); ++ip)
-    //     {
-    //         std::cout << "atom pair star " << ip << ": " << std::endl;
-    //         for (const auto& ap : ap_stars[ip])
-    //             std::cout << "isym=" << ap.first << ", atompair=(" << ap.second.first << ", " << ap.second.second << ") " << std::endl;
-    //     }
-    // }
-
-    // void Symmetry_rotation::test_irreducible_atom_pairs(const Symmetry& symm)
-    // {
-    //     std::cout << "Algorithm 1: find irreducible atom pairs by set" << std::endl;
-    //     this->find_irreducible_atom_pairs_set(symm);
-    //     output_atompair_stars(this->atompair_stars_);
-
-    //     std::cout << std::endl;
-    //     this->atompair_stars_.clear();
-    //     std::cout << "Algorithm 2: find irreducible atom pairs by judge" << std::endl;
-    //     this->find_irreducible_atom_pairs(symm);
-    //     output_atompair_stars(this->atompair_stars_);
-    // }
-
-    std::vector<TC> Symmetry_rotation::get_Rs_from_BvK(const K_Vectors& kv) const
+    inline void output_return_lattice(const std::vector<std::vector<TCdouble>>& return_lattice)
     {
-        const TC& period = RI_Util::get_Born_vonKarmen_period(kv);
-        return RI_Util::get_Born_von_Karmen_cells(period);
-    }
-    std::vector<TC> Symmetry_rotation::get_Rs_from_adjacent_list(const UnitCell& ucell, Grid_Driver& gd, const Parallel_Orbitals& pv) const
-    {
-        // find the union set of Rs for all the atom pairs
-        std::set<TC> Rs_set;
-        for (int iat1 = 0;iat1 < ucell.nat;++iat1)
+        std::cout << "return lattice:" << std::endl;
+        for (int iat = 0;iat < return_lattice.size();++iat)
         {
-            auto tau1 = ucell.get_tau(iat1);
-            int it1 = ucell.iat2it[iat1], ia1 = ucell.iat2ia[iat1];
-            AdjacentAtomInfo adjs;
-            gd.Find_atom(ucell, tau1, it1, ia1, &adjs);
-            for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
+            std::cout << "atom" << iat << std::endl;
+            for (int isym = 0;isym < return_lattice[iat].size();++isym)
+                std::cout << "isym=" << isym << ", return lattice=" <<
+                return_lattice[iat][isym].x << " " << return_lattice[iat][isym].y << " " << return_lattice[iat][isym].z << std::endl;
+        }
+    }
+
+    // Perfoming {R|t} to atom position r in the R=0 lattice, we get Rr+t, which may get out of R=0 lattice, 
+    // whose image in R=0 lattice is r'=Rr+t-O. This function is to get O for each atom and each symmetry operation.
+    // the range of direct position is [-0.5, 0.5).
+    TCdouble Irreducible_Sector::get_return_lattice(const Symmetry& symm,
+        const ModuleBase::Matrix3& gmatd, const TCdouble gtransd,
+        const TCdouble& posd_a1, const TCdouble& posd_a2)const
+    {
+        // auto restrict_center = [&symm](const TCdouble& v) -> TCdouble {
+        //     // in [-0.5, 0.5)
+        //     TCdouble vr;
+        //     vr.x = fmod(v.x + 100.5 + 0.5 * symm.epsilon, 1) - 0.5 - 0.5 * symm.epsilon;
+        //     vr.y = fmod(v.y + 100.5 + 0.5 * symm.epsilon, 1) - 0.5 - 0.5 * symm.epsilon;
+        //     vr.z = fmod(v.z + 100.5 + 0.5 * symm.epsilon, 1) - 0.5 - 0.5 * symm.epsilon;
+        //     if (std::abs(vr.x) < symm.epsilon) vr.x = 0.0;
+        //     if (std::abs(vr.y) < symm.epsilon) vr.y = 0.0;
+        //     if (std::abs(vr.z) < symm.epsilon) vr.z = 0.0;
+        //     return vr;
+        //     };
+        auto restrict_center = [&symm](const TCdouble& v) -> TCdouble {
+            // in [0,1)
+            TCdouble vr;
+            vr.x = fmod(v.x + 100 + symm.epsilon, 1) - symm.epsilon;
+            vr.y = fmod(v.y + 100 + symm.epsilon, 1) - symm.epsilon;
+            vr.z = fmod(v.z + 100 + symm.epsilon, 1) - symm.epsilon;
+            if (std::abs(vr.x) < symm.epsilon) vr.x = 0.0;
+            if (std::abs(vr.y) < symm.epsilon) vr.y = 0.0;
+            if (std::abs(vr.z) < symm.epsilon) vr.z = 0.0;
+            return vr;
+            };
+        auto check_integer = [&symm](const double x) -> void {
+            assert(symm.equal(x, std::round(x)));
+            };
+        TCdouble rotpos1 = restrict_center(posd_a1) * gmatd + restrict_center(gtransd);  // row vector
+        TCdouble return_lattice_double = rotpos1 - restrict_center(posd_a2);
+#ifdef __DEBUG
+        check_integer(return_lattice_double.x);
+        check_integer(return_lattice_double.y);
+        check_integer(return_lattice_double.z);
+#endif
+        return TCdouble(std::round(return_lattice_double.x), std::round(return_lattice_double.y), std::round(return_lattice_double.z));
+    }
+
+    void Irreducible_Sector::get_return_lattice_all(const Symmetry& symm, const Atom* atoms, const Statistics& st)
+    {
+        ModuleBase::TITLE("Symmetry_rotation", "get_return_lattice_all");
+        this->return_lattice_.resize(st.nat, std::vector<TCdouble>(symm.nrotk));
+        for (int iat1 = 0;iat1 < st.nat;++iat1)
+        {
+            int it = st.iat2it[iat1];
+            int ia1 = st.iat2ia[iat1];
+            for (int isym = 0;isym < symm.nrotk;++isym)
             {
-                const int it2 = adjs.ntype[ad];
-                const int ia2 = adjs.natom[ad];
-                int iat2 = ucell.itia2iat(it2, ia2);
-                if (pv.get_row_size(iat1) && pv.get_col_size(iat2))
-                {
-                    const ModuleBase::Vector3<int>& R_index = adjs.box[ad];
-                    if (ucell.cal_dtau(iat1, iat2, R_index).norm() * ucell.lat0
-                        < ucell.atoms[it1].Rcut + ucell.atoms[it2].Rcut)
-                        Rs_set.insert({ R_index.x, R_index.y, R_index.z });
-                }
+                int iat2 = symm.get_rotated_atom(isym, iat1);
+                int ia2 = st.iat2ia[iat2];
+                this->return_lattice_[iat1][isym] = get_return_lattice(symm, symm.gmatrix[isym], symm.gtrans[isym], atoms[it].taud[ia1], atoms[it].taud[ia2]);
             }
         }
-        // set to vector
-        std::vector<TC> Rs(Rs_set.size());
-        for (auto& R : Rs_set) Rs.push_back(R);
-        return Rs;
+        // test: output return_lattice
+        output_return_lattice(this->return_lattice_);
     }
 
-    void Symmetry_rotation::output_full_map_to_irreducible_sector(const int nat)
+    void Irreducible_Sector::output_full_map_to_irreducible_sector(const int nat)
     {
         std::cout << "Final map to irreducible sector: " << std::endl;
         for (auto& apR_isym_irapR : this->full_map_to_irreducible_sector_)
@@ -168,7 +120,7 @@ namespace ModuleSymmetry
         }
     }
 
-    void Symmetry_rotation::output_sector_star()
+    void Irreducible_Sector::output_sector_star()
     {
         std::cout << "Found " << this->sector_stars_.size() << " irreducible sector stars:" << std::endl;
         // for (auto& irs_star : this->sector_stars_)
@@ -189,7 +141,7 @@ namespace ModuleSymmetry
         }
     }
 
-    void Symmetry_rotation::find_irreducible_sector(const Symmetry& symm, const Atom* atoms, const Statistics& st, const std::vector<TC>& Rs, const TC& period, const Lattice& lat)
+    void Irreducible_Sector::find_irreducible_sector(const Symmetry& symm, const Atom* atoms, const Statistics& st, const std::vector<TC>& Rs, const TC& period, const Lattice& lat)
     {
         this->full_map_to_irreducible_sector_.clear();
         this->irreducible_sector_.clear();
@@ -236,7 +188,7 @@ namespace ModuleSymmetry
                 //     if (!in_2d_plain[isym]) continue;
                 // }
                 const int& isym = this->isymbvk_to_isym_[isymbvk];
-                const TapR& apRrot = this->rotate_R_by_formula(symm, this->invmap_[isym], irapR);
+                const TapR& apRrot = this->rotate_apR_by_formula(symm, this->invmap_[isym], irapR);
                 const Tap& aprot = apRrot.first;
                 const TC& Rrot = apRrot.second;
                 if (apR_all.count(aprot) && apR_all.at(aprot).count(Rrot))

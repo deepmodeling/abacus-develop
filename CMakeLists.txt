@@ -532,7 +532,7 @@ if(ENABLE_LIBRI)
   else()
     message(FATAL_ERROR "Must provide LIBRI_DIR for RI related features.")
   endif()
-  target_link_libraries(${ABACUS_BIN_NAME} ri)
+  target_link_libraries(${ABACUS_BIN_NAME} ri exx_symmetry)
   add_compile_definitions(__EXX EXX_DM=3 EXX_H_COMM=2 TEST_EXX_LCAO=0
                           TEST_EXX_RADIAL=1)
 endif()

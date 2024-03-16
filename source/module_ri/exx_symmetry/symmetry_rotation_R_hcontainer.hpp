@@ -42,14 +42,14 @@ namespace ModuleSymmetry
     {
         ModuleBase::TITLE("Symmetry_rotation", "restore_HR");
         ModuleBase::timer::tick("Symmetry_rotation", "restore_HR");
-        for (auto& apR_isym_irapR : this->full_map_to_irreducible_sector_)
+        for (auto& apR_isym_irapR : this->irs_.full_map_to_irreducible_sector_)
         {
             const Tap& ap = apR_isym_irapR.first.first;
             const TC& R = apR_isym_irapR.first.second;
             const int& isym = apR_isym_irapR.second.first;
             const Tap& irap = apR_isym_irapR.second.second.first;
             const TC& irR = apR_isym_irapR.second.second.second;
-            assert(irR == this->rotate_R_by_formula(symm, isym, ap.first, ap.second, R));
+            assert(irR == this->irs_.rotate_R(symm, isym, ap.first, ap.second, R));
             // get in and out pointer from HContainer
             const hamilt::AtomPair<TR>& irap_hc = HR_irreduceble.get_atom_pair(irap.first, irap.second);
             const int irR_hc = irap_hc.find_R(irR[0], irR[1], irR[2]);
@@ -171,8 +171,8 @@ namespace ModuleSymmetry
         auto get_irreducible_ijR_info = [&HR_full, this]() -> std::vector<int>
             {
                 std::vector<int> irreducible_ijR_info;
-                irreducible_ijR_info.push_back(this->irreducible_sector_.size());
-                for (auto& irap_irR : this->irreducible_sector_)
+                irreducible_ijR_info.push_back(this->irs_.irreducible_sector_.size());
+                for (auto& irap_irR : this->irs_.irreducible_sector_)
                 {
                     const int iat1 = irap_irR.first.first, iat2 = irap_irR.first.second;
                     irreducible_ijR_info.insert(irreducible_ijR_info.end(), { iat1, iat2, 0 });
@@ -193,7 +193,7 @@ namespace ModuleSymmetry
         const std::vector<int>& irreducible_ijR_info = get_irreducible_ijR_info();
         hamilt::HContainer<TR> HR_irreducible(pv, nullptr, &irreducible_ijR_info);
         HR_irreducible.set_zero();
-        for (auto& irap_irR : this->irreducible_sector_)
+        for (auto& irap_irR : this->irs_.irreducible_sector_)
         {
             const int iat1 = irap_irR.first.first, iat2 = irap_irR.first.second;
             const hamilt::AtomPair<TR>& irap = HR_irreducible.get_atom_pair(iat1, iat2);

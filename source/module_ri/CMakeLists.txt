@@ -1,4 +1,7 @@
 if (ENABLE_LIBRI)
+
+  add_subdirectory(exx_symmetry)
+  
   list(APPEND objects
         Matrix_Orbs11.cpp
         Matrix_Orbs21.cpp
@@ -7,8 +10,6 @@ if (ENABLE_LIBRI)
         exx_lip.cpp
         Mix_DMk_2D.cpp
         Mix_Matrix.cpp
-        symmetry_rotation.cpp
-        symmetry_irreducible_sector.cpp
   )
 
   if(ENABLE_LCAO)

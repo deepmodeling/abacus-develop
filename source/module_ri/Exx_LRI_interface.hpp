@@ -60,10 +60,9 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const K_Vectors& kv, const Charg
         if (this->exx_spacegroup_symmetry)
         {
             const std::array<int, 3>& period = RI_Util::get_Born_vonKarmen_period(kv);
-            this->symrot_.get_return_lattice_all(ucell.symm, ucell.atoms, ucell.st);
-            this->symrot_.cal_Ms(kv, ucell, pv);
             this->symrot_.find_irreducible_sector(ucell.symm, ucell.atoms, ucell.st,
                 RI_Util::get_Born_von_Karmen_cells(period), period, ucell.lat);
+            this->symrot_.cal_Ms(kv, ucell, pv);
         }
     }
 
@@ -221,7 +220,7 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
             {
                 this->exx_ptr->cal_exx_elec(Ds, *dm.get_paraV_pointer(), &this->symrot_);
                 // this->symrot_.print_HR(this->exx_ptr->Hexxs[0], "Hexxs_irreducible");   // test
-                // this->symrot_.print_HR(this->exx_ptr->Hexxs[0], "Hexxs_restored");   // test
+                // this->symrot_.print_HR(this->exx_ptr->Hexxs[0], "Hexxs_restored", 1e-10);   // test
             }
             else
             {
