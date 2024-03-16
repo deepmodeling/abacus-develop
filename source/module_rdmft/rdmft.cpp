@@ -59,7 +59,6 @@ RDMFT<TK, TR>::~RDMFT()
     delete HR_hartree;
     delete HR_XC;
 
-    delete charge;
     delete Vxc_fromRI_d;
     delete Vxc_fromRI_c;
 
@@ -159,12 +158,11 @@ void RDMFT<TK, TR>::init(Gint_Gamma* GG_in, Gint_k* GK_in, Parallel_Orbitals* Pa
 
 
 template <typename TK, typename TR>
-void RDMFT<TK, TR>::update_charge(ModuleBase::matrix& occ_number_in, const psi::Psi<TK>& wfc_in)
+void RDMFT<TK, TR>::update_charge(ModuleBase::matrix& occ_number_in, const psi::Psi<TK>& wfc_in,  Charge* charge_in, Local_Orbital_Charge& loc_in)
 {
     // update occ_number, wg, wk_fun_occNum
     occ_number = (occ_number_in);
-    // occ_number.zero_out();
-    // occ_number+=(occ_number_in);
+    wg = (occ_number);
     for(int ik=0; ik < wg.nr; ++ik)
     {
         for(int inb=0; inb < wg.nc; ++inb)
@@ -173,15 +171,15 @@ void RDMFT<TK, TR>::update_charge(ModuleBase::matrix& occ_number_in, const psi::
             wk_fun_occNum(ik, inb) = kv->wk[ik] * occNum_func(occ_number(ik, inb), 2, XC_func_rdmft, alpha_power);
         }
     }
-    std::cout << "\n\nupdate_charge: " << "0" << "\n" << std::endl;
 
     // update wfc
     TK* pwfc_in = &wfc_in(0, 0, 0);
     TK* pwfc = &wfc(0, 0, 0);
     for(int i=0; i<wfc.size(); ++i) pwfc[i] = pwfc_in[i];
-    std::cout << "\n\nupdate_charge: " << "1" << "\n" << std::endl;
 
     // update charge
+    loc = &loc_in;
+    charge = charge_in;
     if( GlobalV::GAMMA_ONLY_LOCAL )
     {
         // calculate DMK and DMR
@@ -207,12 +205,9 @@ void RDMFT<TK, TR>::update_charge(ModuleBase::matrix& occ_number_in, const psi::
     {
         // calculate DMK and DMR
         elecstate::DensityMatrix<TK, double> DM(kv, ParaV, GlobalV::NSPIN);
-        std::cout << "\n\nupdate_charge: " << "2" << "\n" << std::endl;
         elecstate::cal_dm_psi(ParaV, wg, wfc, DM);
-        std::cout << "\n\nupdate_charge: " << "3" << "\n" << std::endl;
         DM.init_DMR(&GlobalC::GridD, &GlobalC::ucell);
         DM.cal_DMR();
-        std::cout << "\n\nupdate_charge: " << "4" << "\n" << std::endl;
 
         // this code is copying from function ElecStateLCAO<TK>::psiToRho(), in elecstate_lcao.cpp
         for (int is = 0; is < GlobalV::NSPIN; is++)
@@ -221,11 +216,9 @@ void RDMFT<TK, TR>::update_charge(ModuleBase::matrix& occ_number_in, const psi::
         }
 
         GK->transfer_DM2DtoGrid(DM.get_DMR_vector());
-        std::cout << "\n\nupdate_charge: " << "5" << "\n" << std::endl;
         //double** invaild_ptr = nullptr;   // use invaild_ptr replace loc.DM_R in the future
         Gint_inout inout(loc->DM_R, charge->rho, Gint_Tools::job_type::rho);  // what is Local_Orbital_Charge& loc_in? ///////////////
         GK->cal_gint(&inout);
-        std::cout << "\n\nupdate_charge: " << "6" << "\n" << std::endl;
 
         charge->renormalize_rho();
     }
@@ -375,6 +368,7 @@ void RDMFT<TK, TR>::get_V_hartree_local(LCAO_Matrix* LM_in, const ModulePW::PW_B
 
     // update HR_TV in e-step, now HR_TV has the HR of V_ekinetic + V_nonlcao + V_local, 
     V_local->contributeHR();
+    // HR_TV->add(*HR_T_nonlocal);
 
 }
 
@@ -452,8 +446,7 @@ double RDMFT<TK, TR>::Run_rdmft()
     for(int ik=0; ik<nk_total; ++ik)
     {
         // get the HK with ik-th k vector, the result is stored in HK_TV, HK_hartree and HK_XC respectively
-        V_ekinetic_potential->contributeHk(ik);
-        // V_local->contributeHk(ik);      //////////////////////////////////
+        V_local->contributeHk(ik);
         V_hartree->contributeHk(ik);
         V_XC->contributeHk(ik);
 
@@ -517,8 +510,8 @@ void RDMFT<TK, TR>::cal_Energy()
     Parallel_Reduce::reduce_all(E_RDMFT[2]);
 
     // print results
-    std::cout << std::setprecision(10) << "\n\n\nfrom class rdmft: \n******\nEtotal_RDMFT:   " << E_RDMFT[0] << "\nETV_RDMFT: " << E_RDMFT[1] << "\nEhartree_RDMFT: " 
-                << E_RDMFT[2] << "\nExc_RDMFT:      " << E_RDMFT[3] << "\n******\n\n\n" << std::endl;
+    std::cout << std::setprecision(10) << "\n\n\nfrom class rdmft: \n******\nEtotal_RDMFT:   " << E_RDMFT[3] << "\nETV_RDMFT: " << E_RDMFT[0] << "\nEhartree_RDMFT: " 
+                << E_RDMFT[1] << "\nExc_RDMFT:      " << E_RDMFT[2] << "\n******\n\n\n" << std::endl;
     ModuleBase::timer::tick("rdmftTest", "RDMFT_E&Egradient");
 
 }

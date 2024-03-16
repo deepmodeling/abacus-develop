@@ -141,7 +141,7 @@ class RDMFT
                         K_Vectors* kv_in, std::string XC_func_rdmft_in = "HF", double alpha_power_in = 0.656);
 
     // Or we can use rdmft_solver.wfc/occ_number directly when optimizing, so that the update_charge() function does not require parameters.
-    void update_charge(ModuleBase::matrix& occ_number_in, const psi::Psi<TK>& wfc_in);
+    void update_charge(ModuleBase::matrix& occ_number_in, const psi::Psi<TK>& wfc_in, Charge* charge_in, Local_Orbital_Charge& loc_in);
 
     // get the special density matrix DM_XC(nk*nbasis_local*nbasis_local)
     void get_DM_XC(std::vector< std::vector<TK> >& DM_XC);
