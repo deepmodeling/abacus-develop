@@ -72,35 +72,42 @@ class RDMFT
     RDMFT();
     ~RDMFT();
     
-    Parallel_Orbitals* ParaV = nullptr;   //
+    
+    /****** these parameters are passed in from outside, don't need delete ******/
+
+    Parallel_Orbitals* ParaV = nullptr;
     Parallel_2D para_Eij;
     
-    Gint_k* GK = nullptr;      // used for k-dependent grid integration.  // ...
-    Gint_Gamma* GG = nullptr;  // used for gamma only algorithms.         // ...
-    UnitCell* ucell = nullptr;  // ...
+    Gint_k* GK = nullptr;      // used for k-dependent grid integration.
+    Gint_Gamma* GG = nullptr;  // used for gamma only algorithms.
+    Charge* charge = nullptr;
+
+    // update after ion step
+    UnitCell* ucell = nullptr;
     K_Vectors* kv = nullptr;
+    LCAO_Matrix* LM = nullptr;
+    ModulePW::PW_Basis* rho_basis = nullptr;
+    ModuleBase::matrix* vloc = nullptr;
+    ModuleBase::ComplexMatrix* sf = nullptr;
+    Local_Orbital_Charge* loc = nullptr;  // would be delete in the future
 
-
-    Charge* charge = nullptr;                                             // ...
-
-    //could be deleted future
-    LCAO_Matrix* LM = nullptr;    // ...
-    Local_Orbital_Charge* loc = nullptr;  // ...
-
+    /****** these parameters are passed in from outside, don't need delete ******/
 
 
     int nk_total = 0;
     std::string XC_func_rdmft;
     double alpha_power = 0.656; // 0.656 for soilds, 0.525 for dissociation of H2, 0.55~0.58 for HEG
 
-    ModuleBase::matrix occ_number;    // ...
-    psi::Psi<TK> wfc;                 // ...
+    // natrual occupation numbers and wavefunction
+    ModuleBase::matrix occ_number;
+    psi::Psi<TK> wfc;
     ModuleBase::matrix wg;
     ModuleBase::matrix wk_fun_occNum;
 
     // store the gradients of Etotal with respect to the natural occupation numbers and wfc respectively
     ModuleBase::matrix occNum_wfcHamiltWfc;
     psi::Psi<TK> occNum_HamiltWfc;
+
     // E_RDMFT[4] stores ETV, Ehartree, Exc, Etotal respectively
     double E_RDMFT[4] = {0.0};
     // std::vector<double> E_RDMFT(4);
@@ -123,32 +130,35 @@ class RDMFT
     psi::Psi<TK> H_wfc_hartree;
     psi::Psi<TK> H_wfc_XC;
 
-    // // just for temperate. in the future when realize psiDotPsi() without pzgemm_/pdgemm_,we don't need it
+    // just for temperate. in the future when realize psiDotPsi() without pzgemm_/pdgemm_,we don't need it
     std::vector<TK> Eij_TV;
     std::vector<TK> Eij_hartree;
     std::vector<TK> Eij_XC;
 
-    hamilt::OperatorLCAO<TK, TR>* V_ekinetic_potential = nullptr;   // ...
-    hamilt::OperatorLCAO<TK, TR>* V_nonlocal = nullptr;             // ...
-    hamilt::OperatorLCAO<TK, TR>* V_local = nullptr;                // ... 
-    hamilt::OperatorLCAO<TK, TR>* V_hartree = nullptr;              // ...
-    hamilt::OperatorLCAO<TK, TR>* V_XC = nullptr;                   // ...
+    hamilt::OperatorLCAO<TK, TR>* V_ekinetic_potential = nullptr;
+    hamilt::OperatorLCAO<TK, TR>* V_nonlocal = nullptr;
+    hamilt::OperatorLCAO<TK, TR>* V_local = nullptr;
+    hamilt::OperatorLCAO<TK, TR>* V_hartree = nullptr;
+    hamilt::OperatorLCAO<TK, TR>* V_XC = nullptr;
 
-    Exx_LRI<double>* Vxc_fromRI_d = nullptr;   // (GlobalC::exx_info.info_ri) // ...
-    Exx_LRI<std::complex<double>>* Vxc_fromRI_c = nullptr;                    // ...
+    Exx_LRI<double>* Vxc_fromRI_d = nullptr;
+    Exx_LRI<std::complex<double>>* Vxc_fromRI_c = nullptr;
 
-    void init(Gint_Gamma* GG_in, Gint_k* GK_in, Parallel_Orbitals* ParaV_in, UnitCell* ucell_in,
-                        K_Vectors* kv_in, std::string XC_func_rdmft_in = "HF", double alpha_power_in = 0.656);
+    void init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& ParaV_in, UnitCell& ucell_in,
+                        K_Vectors& kv_in, std::string XC_func_rdmft_in = "HF", double alpha_power_in = 0.656);
+
+    void update_ion(UnitCell& ucell_in, LCAO_Matrix& LM_in, ModulePW::PW_Basis& rho_basis_in,
+                        ModuleBase::matrix& vloc_in, ModuleBase::ComplexMatrix& sf_in, Local_Orbital_Charge& loc_in);
 
     // Or we can use rdmft_solver.wfc/occ_number directly when optimizing, so that the update_charge() function does not require parameters.
-    void update_charge(ModuleBase::matrix& occ_number_in, const psi::Psi<TK>& wfc_in, Charge* charge_in, Local_Orbital_Charge& loc_in);
+    void update_charge(const ModuleBase::matrix& occ_number_in, const psi::Psi<TK>& wfc_in, Charge& charge_in);
 
     // get the special density matrix DM_XC(nk*nbasis_local*nbasis_local)
     void get_DM_XC(std::vector< std::vector<TK> >& DM_XC);
 
-    void get_V_TV(LCAO_Matrix* LM_in);
+    void get_V_TV();
 
-    void get_V_hartree_local(LCAO_Matrix* LM_in, const ModulePW::PW_Basis& rho_basis_in, const ModuleBase::matrix& vloc_in, const ModuleBase::ComplexMatrix& sf_in);
+    void get_V_hartree_local();
 
     // construct V_XC based on different XC_functional( i.e. RDMFT class member XC_func_rdmft)
     void get_V_XC();

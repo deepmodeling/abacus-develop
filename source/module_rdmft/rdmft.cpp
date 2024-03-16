@@ -71,14 +71,14 @@ RDMFT<TK, TR>::~RDMFT()
 }
 
 template <typename TK, typename TR>
-void RDMFT<TK, TR>::init(Gint_Gamma* GG_in, Gint_k* GK_in, Parallel_Orbitals* ParaV_in, UnitCell* ucell_in,
-                                    K_Vectors* kv_in, std::string XC_func_rdmft_in, double alpha_power_in)
+void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& ParaV_in, UnitCell& ucell_in,
+                                    K_Vectors& kv_in, std::string XC_func_rdmft_in, double alpha_power_in)
 {
-    GG = GG_in;
-    GK = GK_in;
-    ParaV = ParaV_in;
-    ucell = ucell_in;
-    kv = kv_in;
+    GG = &GG_in;
+    GK = &GK_in;
+    ParaV = &ParaV_in;
+    ucell = &ucell_in;
+    kv = &kv_in;
     nk_total = kv->nkstot_full;
     XC_func_rdmft = XC_func_rdmft_in;
     alpha_power = alpha_power_in;
@@ -120,8 +120,6 @@ void RDMFT<TK, TR>::init(Gint_Gamma* GG_in, Gint_k* GK_in, Parallel_Orbitals* Pa
     Eij_hartree.resize( para_Eij.get_row_size()*para_Eij.get_col_size() );
     Eij_XC.resize( para_Eij.get_row_size()*para_Eij.get_col_size() );
 
-    std::cout << "\n\n******\n" << "malloc for many xxx" << "\n******\n\n" << std::endl;
-
     // 
     HR_T_nonlocal = new hamilt::HContainer<TR>(*ucell, ParaV);
     HR_TV = new hamilt::HContainer<TR>(*ucell, ParaV);
@@ -156,9 +154,21 @@ void RDMFT<TK, TR>::init(Gint_Gamma* GG_in, Gint_k* GK_in, Parallel_Orbitals* Pa
 }
 
 
+template <typename TK, typename TR>
+void RDMFT<TK, TR>::update_ion(UnitCell& ucell_in, LCAO_Matrix& LM_in, ModulePW::PW_Basis& rho_basis_in,
+                                ModuleBase::matrix& vloc_in, ModuleBase::ComplexMatrix& sf_in, Local_Orbital_Charge& loc_in)
+{
+    ucell = &ucell_in;
+    LM = &LM_in;
+    rho_basis = &rho_basis_in;
+    vloc = &vloc_in;
+    sf = &sf_in;
+    loc = &loc_in;
+}
+
 
 template <typename TK, typename TR>
-void RDMFT<TK, TR>::update_charge(ModuleBase::matrix& occ_number_in, const psi::Psi<TK>& wfc_in,  Charge* charge_in, Local_Orbital_Charge& loc_in)
+void RDMFT<TK, TR>::update_charge(const ModuleBase::matrix& occ_number_in, const psi::Psi<TK>& wfc_in, Charge& charge_in)
 {
     // update occ_number, wg, wk_fun_occNum
     occ_number = (occ_number_in);
@@ -178,8 +188,7 @@ void RDMFT<TK, TR>::update_charge(ModuleBase::matrix& occ_number_in, const psi::
     for(int i=0; i<wfc.size(); ++i) pwfc[i] = pwfc_in[i];
 
     // update charge
-    loc = &loc_in;
-    charge = charge_in;
+    charge = &charge_in;
     if( GlobalV::GAMMA_ONLY_LOCAL )
     {
         // calculate DMK and DMR
@@ -250,9 +259,8 @@ void RDMFT<TK, TR>::get_DM_XC(std::vector< std::vector<TK> >& DM_XC)
 
 
 template <typename TK, typename TR>
-void RDMFT<TK, TR>::get_V_TV(LCAO_Matrix* LM_in)
+void RDMFT<TK, TR>::get_V_TV()
 {
-    LM = LM_in;
     HR_T_nonlocal->set_zero();
     
     V_ekinetic_potential = new hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>(
@@ -282,9 +290,8 @@ void RDMFT<TK, TR>::get_V_TV(LCAO_Matrix* LM_in)
 
 
 template <typename TK, typename TR>
-void RDMFT<TK, TR>::get_V_hartree_local(LCAO_Matrix* LM_in, const ModulePW::PW_Basis& rho_basis_in, const ModuleBase::matrix& vloc_in, const ModuleBase::ComplexMatrix& sf_in)
+void RDMFT<TK, TR>::get_V_hartree_local()
 {
-    LM = LM_in;
     HR_hartree->set_zero();
     HR_TV->set_zero();
     // HR_TV->add(*HR_T_nonlocal); // can't be here
@@ -293,7 +300,6 @@ void RDMFT<TK, TR>::get_V_hartree_local(LCAO_Matrix* LM_in, const ModulePW::PW_B
     {
         V_local = new rdmft::Veff_rdmft<TK,TR>(
             GG,
-            loc,
             LM,
             kv->kvec_d,
             charge,
@@ -302,15 +308,14 @@ void RDMFT<TK, TR>::get_V_hartree_local(LCAO_Matrix* LM_in, const ModulePW::PW_B
             &GlobalC::ucell,
             &GlobalC::GridD,
             ParaV,
-            &rho_basis_in,
-            &vloc_in,
-            &sf_in,
+            rho_basis,
+            vloc,
+            sf,
             "local"
         );
 
         V_hartree = new rdmft::Veff_rdmft<TK,TR>(
             GG,
-            loc,
             LM,
             kv->kvec_d,
             charge,
@@ -319,9 +324,9 @@ void RDMFT<TK, TR>::get_V_hartree_local(LCAO_Matrix* LM_in, const ModulePW::PW_B
             &GlobalC::ucell,
             &GlobalC::GridD,
             ParaV,
-            &rho_basis_in,
-            &vloc_in,
-            &sf_in,
+            rho_basis,
+            vloc,
+            sf,
             "hartree"
         );
     }
@@ -329,7 +334,6 @@ void RDMFT<TK, TR>::get_V_hartree_local(LCAO_Matrix* LM_in, const ModulePW::PW_B
     {
         V_local = new rdmft::Veff_rdmft<TK,TR>(
             GK,
-            loc,
             LM,
             kv->kvec_d,
             charge,
@@ -338,15 +342,14 @@ void RDMFT<TK, TR>::get_V_hartree_local(LCAO_Matrix* LM_in, const ModulePW::PW_B
             &GlobalC::ucell,
             &GlobalC::GridD,
             ParaV,
-            &rho_basis_in,
-            &vloc_in,
-            &sf_in,
+            rho_basis,
+            vloc,
+            sf,
             "local"
         );
 
         V_hartree = new rdmft::Veff_rdmft<TK,TR>(
             GK,
-            loc,
             LM,
             kv->kvec_d,
             charge,
@@ -355,9 +358,9 @@ void RDMFT<TK, TR>::get_V_hartree_local(LCAO_Matrix* LM_in, const ModulePW::PW_B
             &GlobalC::ucell,
             &GlobalC::GridD,
             ParaV,
-            &rho_basis_in,
-            &vloc_in,
-            &sf_in,
+            rho_basis,
+            vloc,
+            sf,
             "hartree"
         );
     }

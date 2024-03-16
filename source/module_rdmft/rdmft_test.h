@@ -108,7 +108,6 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
 {
   public:
     Veff_rdmft(Gint_k* GK_in,
-                      Local_Orbital_Charge* loc_in,
                       LCAO_Matrix* LM_in,
                       const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
                       const Charge* charge_in,
@@ -122,7 +121,6 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
                       const ModuleBase::ComplexMatrix* sf_in,
                       const std::string potential_in)
         : GK(GK_in),
-          loc(loc_in),
           charge_(charge_in),
           ucell_(ucell_in),
           rho_basis_(rho_basis_in),
@@ -138,7 +136,6 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
         GK_in->initialize_pvpR(*ucell_in, GridD_in);
     }
     Veff_rdmft(Gint_Gamma* GG_in,
-                          Local_Orbital_Charge* loc_in,
                           LCAO_Matrix* LM_in,
                           const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
                           const Charge* charge_in,
@@ -153,7 +150,6 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
                           const std::string potential_in
                           )
         : GG(GG_in), 
-          loc(loc_in), 
           charge_(charge_in),
           ucell_(ucell_in),
           rho_basis_(rho_basis_in),
@@ -182,7 +178,7 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
     Gint_Gamma* GG = nullptr;
 
     // Charge calculating method in LCAO base and contained grid base calculation: DM_R, DM, pvpR_reduced
-    Local_Orbital_Charge* loc = nullptr;
+    // Local_Orbital_Charge* loc = nullptr;
 
     elecstate::Potential* pot = nullptr;
 
@@ -546,7 +542,6 @@ double rdmft_cal(LCAO_Matrix* LM_in,
 
     hamilt::OperatorLCAO<TK, TR>* V_local = new rdmftTest::Veff_rdmft<TK,TR>(
         &G_in,
-        &loc_in,
         LM_in,
         kvec_d_in,
         &charge_in,
@@ -563,7 +558,6 @@ double rdmft_cal(LCAO_Matrix* LM_in,
 
     hamilt::OperatorLCAO<TK, TR>* V_hartree = new rdmftTest::Veff_rdmft<TK,TR>(
         &G_in,
-        &loc_in,
         LM_in,
         kvec_d_in,
         &charge_in,
