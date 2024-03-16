@@ -54,7 +54,6 @@ RDMFT<TK, TR>::RDMFT()
 template <typename TK, typename TR>
 RDMFT<TK, TR>::~RDMFT()
 {
-    delete HR_T_nonlocal;
     delete HR_TV;
     delete HR_hartree;
     delete HR_XC;
@@ -122,7 +121,6 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
     Eij_XC.resize( para_Eij.get_row_size()*para_Eij.get_col_size() );
 
     // 
-    HR_T_nonlocal = new hamilt::HContainer<TR>(*ucell, ParaV);
     HR_TV = new hamilt::HContainer<TR>(*ucell, ParaV);
     HR_hartree = new hamilt::HContainer<TR>(*ucell, ParaV);
     HR_XC = new hamilt::HContainer<TR>(*ucell, ParaV);
@@ -133,14 +131,12 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
     H_wfc_TV.zero_out();
     H_wfc_hartree.zero_out();
     H_wfc_XC.zero_out();
-    HR_T_nonlocal->set_zero();         // HR->set_zero() might be delete here, test on Gamma_only in the furure 
-    HR_TV->set_zero();
+    HR_TV->set_zero();         // HR->set_zero() might be delete here, test on Gamma_only in the furure 
     HR_hartree->set_zero();
     HR_XC->set_zero();
 
     if( GlobalV::GAMMA_ONLY_LOCAL )
     {
-        HR_T_nonlocal->fix_gamma();
         HR_TV->fix_gamma();
         HR_hartree->fix_gamma();
         HR_XC->fix_gamma();
@@ -261,12 +257,12 @@ void RDMFT<TK, TR>::get_DM_XC(std::vector< std::vector<TK> >& DM_XC)
 template <typename TK, typename TR>
 void RDMFT<TK, TR>::get_V_TV()
 {
-    HR_T_nonlocal->set_zero();
+    HR_TV->set_zero();
     
     V_ekinetic_potential = new hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>(
         LM,
         kv->kvec_d,
-        HR_T_nonlocal,
+        HR_TV,
         &HK_TV,
         &GlobalC::ucell,
         &GlobalC::GridD,
@@ -276,7 +272,7 @@ void RDMFT<TK, TR>::get_V_TV()
     V_nonlocal = new hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>(
         LM,
         kv->kvec_d,
-        HR_T_nonlocal,
+        HR_TV,
         &HK_TV,
         &GlobalC::ucell,
         &GlobalC::GridD,
@@ -290,7 +286,7 @@ void RDMFT<TK, TR>::get_V_TV()
             LM,
             kv->kvec_d,
             charge,
-            HR_T_nonlocal,
+            HR_TV,
             &HK_TV,     
             &GlobalC::ucell,
             &GlobalC::GridD,
@@ -308,7 +304,7 @@ void RDMFT<TK, TR>::get_V_TV()
             LM,
             kv->kvec_d,
             charge,
-            HR_T_nonlocal,
+            HR_TV,
             &HK_TV,
             &GlobalC::ucell,
             &GlobalC::GridD,
@@ -327,29 +323,12 @@ void RDMFT<TK, TR>::get_V_TV()
 
 
 template <typename TK, typename TR>
-void RDMFT<TK, TR>::get_V_hartree_local()
+void RDMFT<TK, TR>::get_V_hartree()
 {
     HR_hartree->set_zero();
-    HR_TV->set_zero();
 
     if( GlobalV::GAMMA_ONLY_LOCAL )
     {
-        // V_local = new rdmft::Veff_rdmft<TK,TR>(
-        //     GG,
-        //     LM,
-        //     kv->kvec_d,
-        //     charge,
-        //     HR_TV,
-        //     &HK_TV,     
-        //     &GlobalC::ucell,
-        //     &GlobalC::GridD,
-        //     ParaV,
-        //     rho_basis,
-        //     vloc,
-        //     sf,
-        //     "local"
-        // );
-
         V_hartree = new rdmft::Veff_rdmft<TK,TR>(
             GG,
             LM,
@@ -368,22 +347,6 @@ void RDMFT<TK, TR>::get_V_hartree_local()
     }
     else
     {
-        // V_local = new rdmft::Veff_rdmft<TK,TR>(
-        //     GK,
-        //     LM,
-        //     kv->kvec_d,
-        //     charge,
-        //     HR_TV,
-        //     &HK_TV,
-        //     &GlobalC::ucell,
-        //     &GlobalC::GridD,
-        //     ParaV,
-        //     rho_basis,
-        //     vloc,
-        //     sf,
-        //     "local"
-        // );
-
         V_hartree = new rdmft::Veff_rdmft<TK,TR>(
             GK,
             LM,
@@ -405,7 +368,7 @@ void RDMFT<TK, TR>::get_V_hartree_local()
     // HR_XC get from another way, so don't need to do this 
     V_hartree->contributeHR();
 
-    // update HR_TV in e-step, now HR_TV has the HR of V_ekinetic + V_nonlcao + V_local, 
+    // update HR_local in e-step, now HR_TV has the HR of V_ekinetic + V_nonlcao + V_local, 
     // V_local->contributeHR();
     // HR_TV->add(*HR_T_nonlocal);
 
@@ -472,13 +435,6 @@ void RDMFT<TK, TR>::get_V_XC()
 template <typename TK, typename TR>
 double RDMFT<TK, TR>::Run_rdmft()
 {
-    // // in gamma only, must calculate HR_hartree before HR_local
-    // // HR_XC get from another way, so don't need to do this 
-    // V_hartree->contributeHR();
-
-    // // update HR_TV in e-step, now HR_TV has the HR of V_ekinetic + V_nonlcao + V_local, 
-    // V_local->contributeHR();
-
     /****** get occNum_wfcHamiltWfc, occNum_HamiltWfc and Etotal ******/
 
     //calculate Hwfc, wfcHwfc for each potential
@@ -548,9 +504,11 @@ void RDMFT<TK, TR>::cal_Energy()
     Parallel_Reduce::reduce_all(E_RDMFT[1]);
     Parallel_Reduce::reduce_all(E_RDMFT[2]);
 
+    double Etotal = E_RDMFT[0] + E_RDMFT[1] + E_RDMFT[2];
+
     // print results
-    std::cout << std::setprecision(10) << "\n\n\nfrom class RDMFT: \n******\nEtotal_RDMFT:   " << E_RDMFT[3] << "\nETV_RDMFT: " << E_RDMFT[0] << "\nEhartree_RDMFT: " 
-                << E_RDMFT[1] << "\nExc_RDMFT:      " << E_RDMFT[2] << "\n******\n\n\n" << std::endl;
+    std::cout << std::setprecision(10) << "\n\n\nfrom class RDMFT: \n******\nEtotal_RDMFT:   " << E_RDMFT[3] << "\n\nETV_RDMFT:      " << E_RDMFT[0] << "\nEhartree_RDMFT: " 
+                << E_RDMFT[1] << "\nExc_RDMFT:      " << E_RDMFT[2] << "\n\nEtotal by add:  " << Etotal <<"\n******\n\n\n" << std::endl;
     ModuleBase::timer::tick("rdmftTest", "RDMFT_E&Egradient");
 
 }

@@ -112,7 +112,6 @@ class RDMFT
     double E_RDMFT[4] = {0.0};
     // std::vector<double> E_RDMFT(4);
 
-    hamilt::HContainer<TR>* HR_T_nonlocal = nullptr;
     hamilt::HContainer<TR>* HR_TV = nullptr;
     hamilt::HContainer<TR>* HR_hartree = nullptr;
     hamilt::HContainer<TR>* HR_XC = nullptr;
@@ -158,7 +157,7 @@ class RDMFT
 
     void get_V_TV();
 
-    void get_V_hartree_local();
+    void get_V_hartree();
 
     // construct V_XC based on different XC_functional( i.e. RDMFT class member XC_func_rdmft)
     void get_V_XC();
