@@ -17,6 +17,9 @@
 #include "module_io/output_potential.h"
 #include "module_io/output_rho.h"
 
+// // add by jgaHan for rdmft calculation
+// #include "module_rdmft/rdmft.h"
+
 namespace ModuleESolver
 {
 
@@ -47,6 +50,8 @@ namespace ModuleESolver
 
         // get current step of Ionic simulation
         virtual int getniter() override;
+
+        virtual double Run_rdmft(ModuleBase::matrix& E_gradient_wg, psi::Psi<T>& E_gradient_wfc) { return 0.0; };
 
     protected:
         // Something to do before SCF iterations.
@@ -90,6 +95,9 @@ namespace ModuleESolver
         Charge_Mixing* p_chgmix = nullptr;
         wavefunc wf;
         Charge_Extra CE;
+
+        // // TR need be std::complex<double> when NSPIN = 4
+        // rdmft::RDMFT<T, double> rdmft_solver;  // add by jghan for rdmft calculation
 
         // wavefunction coefficients
         psi::Psi<T>* psi = nullptr;

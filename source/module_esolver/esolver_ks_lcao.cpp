@@ -230,9 +230,9 @@ namespace ModuleESolver
         // rdmft_solver.init( &(this->UHM.GG), &(this->UHM.GK), &(this->orb_con.ParaV), &ucell, &(this->kv) );
         rdmft_solver.init( this->UHM.GG, this->UHM.GK, this->orb_con.ParaV, ucell, this->kv, *(this->pelec->charge) );
 
-        // test
-        rdmft_solver.update_ion(ucell, LM, *(this->pw_rho), GlobalC::ppcell.vloc, this->sf.strucFac, this->LOC);
-        std::cout << "\nrdmft_solver: " << "update_ion" << std::endl;
+        // the initialization and necessary calculations of these quantities have been completed in init()
+        // rdmft_solver.update_ion(ucell, LM, *(this->pw_rho), GlobalC::ppcell.vloc, this->sf.strucFac, this->LOC);
+        // rdmft_solver.get_V_TV();
     }
 }
 
@@ -774,6 +774,16 @@ namespace ModuleESolver
     {
         this->pelec->cal_converged();
     }
+
+    if( iter==1 || iter>=1 )   // add by jghan, 2024-03-16
+    {
+        ModuleBase::matrix occ_number(this->pelec->wg);
+        for(int ik=0; ik < occ_number.nr; ++ik)
+        {
+            for(int inb=0; inb < this->pelec->wg.nc; ++inb) occ_number(ik, inb) /= this->kv.wk[ik];
+        }
+        rdmft_solver.update_elec(occ_number, *(this->psi));
+    }
 }
 
     template <typename TK, typename TR>
@@ -1001,26 +1011,25 @@ namespace ModuleESolver
         );
     }
 
-    ModuleBase::TITLE("RDMFT", "E & Egradient");
-    ModuleBase::timer::tick("RDMFT", "E & Egradient");
-    // test class rdmft
-    std::cout << "\nrdmft_solver: " << "0" << std::endl;
-    // rdmft_solver.update_ion(&GlobalC::ucell, &LM, this->pw_rho, &GlobalC::ppcell.vloc, &(this->sf.strucFac));
-    //rdmft_solver.update_ion(GlobalC::ucell, LM, *(this->pw_rho), GlobalC::ppcell.vloc, this->sf.strucFac, this->LOC);
-    rdmft_solver.get_V_TV();
-    std::cout << "\nrdmft_solver: " << "1" << std::endl;
-    rdmft_solver.update_elec(occ_number, *(this->psi));
-    std::cout << "\nrdmft_solver: " << "2" << std::endl;
-    rdmft_solver.get_V_hartree();
-    std::cout << "\nrdmft_solver: " << "3" << std::endl;
-    rdmft_solver.get_V_XC();
-    std::cout << "\nrdmft_solver: " << "4" << std::endl;
-    rdmft_solver.Run_rdmft();
-    std::cout << "\nrdmft_solver: " << "5" << std::endl;
-    rdmft_solver.cal_Energy();
-    std::cout << "\nrdmft_solver: " << "6" << std::endl;
+    // ModuleBase::TITLE("RDMFT", "E & Egradient");
+    // ModuleBase::timer::tick("RDMFT", "E & Egradient");
+    // // test class rdmft
+    // std::cout << "\nrdmft_solver: " << "0" << std::endl;
+    // //rdmft_solver.update_ion(GlobalC::ucell, LM, *(this->pw_rho), GlobalC::ppcell.vloc, this->sf.strucFac, this->LOC);
+    // // rdmft_solver.get_V_TV();
+    // std::cout << "\nrdmft_solver: " << "1" << std::endl;
+    // // rdmft_solver.update_elec(occ_number, *(this->psi));
+    // std::cout << "\nrdmft_solver: " << "2" << std::endl;
+    // rdmft_solver.get_V_hartree();
+    // std::cout << "\nrdmft_solver: " << "3" << std::endl;
+    // rdmft_solver.get_V_XC();
+    // std::cout << "\nrdmft_solver: " << "4" << std::endl;
+    // rdmft_solver.cal_rdmft();
+    // std::cout << "\nrdmft_solver: " << "5" << std::endl;
+    // rdmft_solver.cal_Energy();
+    // std::cout << "\nrdmft_solver: " << "6" << std::endl;
 
-    ModuleBase::timer::tick("RDMFT", "E & Egradient");
+    // ModuleBase::timer::tick("RDMFT", "E & Egradient");
 
     /******** test RDMFT *********/
 
@@ -1133,6 +1142,28 @@ namespace ModuleESolver
     }
     return false;
     }
+
+
+template <typename TK, typename TR>
+double ESolver_KS_LCAO<TK, TR>::Run_rdmft(ModuleBase::matrix& E_gradient_wg, psi::Psi<TK>& E_gradient_wfc)
+{
+    rdmft_solver.get_V_hartree();
+    rdmft_solver.get_V_XC();
+    rdmft_solver.cal_rdmft();
+    rdmft_solver.cal_Energy();
+
+    E_gradient_wg = (rdmft_solver.occNum_wfcHamiltWfc);
+    
+    TK* pwfc = &( rdmft_solver.occNum_HamiltWfc(0, 0, 0) );
+    TK* pwfc_out = &E_gradient_wfc(0, 0, 0);
+    for(int i=0; i<E_gradient_wfc.size(); ++i) pwfc_out[i] = pwfc[i];
+
+    return rdmft_solver.E_RDMFT[3];
+}
+
+
+
+
     template class ESolver_KS_LCAO<double, double>;
     template class ESolver_KS_LCAO<std::complex<double>, double>;
     template class ESolver_KS_LCAO<std::complex<double>, std::complex<double>>;

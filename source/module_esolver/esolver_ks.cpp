@@ -380,6 +380,22 @@ namespace ModuleESolver
 #else
                 auto iterstart = std::chrono::system_clock::now();
 #endif
+                
+                // ModuleBase::TITLE("RDMFT", "E & Egradient");
+                // ModuleBase::timer::tick("RDMFT", "E & Egradient");
+                // if( iter>1 && ((GlobalV::CALCULATION == "rdmft" && ModuleESolver::determine_type() == "ksdft_lcao") || true) )
+                // {
+                //     // this should update_elec() when iter>2
+                //     // rdmft_solver.update_elec(...);
+
+                //     // do rdmft calculation
+                //     ModuleBase::matrix E_gradient_wg(this->pelec->wg.nr, this->pelec->wg.nc, true);
+                //     psi::Psi<T> E_gradient_wfc(this->psi->get_nk(), this->psi->get_nbands(), this->psi->get_nbasis()); 
+                //     double Etotal = this->Run_rdmft(E_gradient_wg, E_gradient_wfc);   // add by jghan 2024-03-16
+                // }
+                // ModuleBase::timer::tick("RDMFT", "E & Egradient");
+
+
                 double diag_ethr = this->phsol->set_diagethr(istep, iter, drho);
                 eachiterinit(istep, iter);
                 this->hamilt2density(istep, iter, diag_ethr);
@@ -469,6 +485,21 @@ namespace ModuleESolver
                 }
             }
             afterscf(istep);
+
+            ModuleBase::TITLE("RDMFT", "E & Egradient");
+            ModuleBase::timer::tick("RDMFT", "E & Egradient");
+            if( this->conv_elec )
+            {
+                // this should update_elec() when iter>2
+                // rdmft_solver.update_elec(...);
+
+                // do rdmft calculation
+                ModuleBase::matrix E_gradient_wg(this->pelec->wg.nr, this->pelec->wg.nc, true);
+                psi::Psi<T> E_gradient_wfc(this->psi->get_nk(), this->psi->get_nbands(), this->psi->get_nbasis()); 
+                double Etotal = this->Run_rdmft(E_gradient_wg, E_gradient_wfc);   // add by jghan 2024-03-16
+            }
+            ModuleBase::timer::tick("RDMFT", "E & Egradient");
+
 
             ModuleBase::timer::tick(this->classname, "Run");
         }       

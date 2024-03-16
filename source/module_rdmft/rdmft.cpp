@@ -82,8 +82,6 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
     nk_total = kv->nkstot_full;
     XC_func_rdmft = XC_func_rdmft_in;
     alpha_power = alpha_power_in;
-    
-    std::cout << "\n\n******\n" << "test class RDMFT and do rdmft_esolver.init()" << "\n******\n\n" << std::endl;
 
     // create desc[] and something about MPI to Eij(nbands*nbands)
     std::ofstream ofs_running;
@@ -141,12 +139,6 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
         HR_hartree->fix_gamma();
         HR_XC->fix_gamma();
     }
-
-    // 
-    // Vxc_fromRI_d = new Exx_LRI<double>(GlobalC::exx_info.info_ri);
-    // Vxc_fromRI_c = new Exx_LRI<std::complex<double>>(GlobalC::exx_info.info_ri);
-
-    std::cout << "\n\n******\n" << "malloc for HR" << "\n******\n\n" << std::endl;
 
 }
 
@@ -433,7 +425,7 @@ void RDMFT<TK, TR>::get_V_XC()
 
 
 template <typename TK, typename TR>
-double RDMFT<TK, TR>::Run_rdmft()
+double RDMFT<TK, TR>::cal_rdmft()
 {
     /****** get occNum_wfcHamiltWfc, occNum_HamiltWfc and Etotal ******/
 
@@ -514,7 +506,22 @@ void RDMFT<TK, TR>::cal_Energy()
 }
 
 
+// template <typename TK, typename TR>
+// double RDMFT<TK, TR>::Run_rdmft(ModuleBase::matrix& E_gradient_wg, psi::Psi<TK>& E_gradient_wfc)
+// {
+//     this->get_V_hartree();
+//     this->get_V_XC();
+//     this->cal_rdmft();
+//     this->cal_Energy();
 
+//     E_gradient_wg = (occNum_wfcHamiltWfc);
+    
+//     TK* pwfc = &occNum_HamiltWfc(0, 0, 0);
+//     TK* pwfc_out = &E_gradient_wfc(0, 0, 0);
+//     for(int i=0; i<wfc.size(); ++i) pwfc_out[i] = pwfc[i];
+
+//     return E_RDMFT[3];
+// }
 
 
 

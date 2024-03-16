@@ -12,7 +12,7 @@
 #include "module_ri/Exx_LRI_interface.h"
 #endif
 
-// add by JingangHan for rdmft calculation
+// add by jgaHan for rdmft calculation
 #include "module_rdmft/rdmft.h"
 
 #include "module_io/output_dm.h"
@@ -41,6 +41,8 @@ namespace ModuleESolver
         void nscf() override;
         void get_S();
 
+        virtual double Run_rdmft(ModuleBase::matrix& E_gradient_wg, psi::Psi<TK>& E_gradient_wfc) override;
+
     protected:
         virtual void beforescf(const int istep) override;
         virtual void eachiterinit(const int istep, const int iter) override;
@@ -59,7 +61,7 @@ namespace ModuleESolver
         LCAO_Matrix LM;
         Grid_Technique GridT;
 
-        rdmft::RDMFT<TK, TR> rdmft_solver;  // add by JingangHan for rdmft calculation
+        rdmft::RDMFT<TK, TR> rdmft_solver;  // add by jghan for rdmft calculation
 
         std::unique_ptr<TwoCenterBundle> two_center_bundle;
 

@@ -162,9 +162,11 @@ class RDMFT
     // construct V_XC based on different XC_functional( i.e. RDMFT class member XC_func_rdmft)
     void get_V_XC();
 
-    double Run_rdmft();
+    double cal_rdmft();
 
     void cal_Energy();
+
+    // double Run_rdmft(ModuleBase::matrix& E_gradient_wg, psi::Psi<TK>&E_gradient_wfc);
 
 
 
