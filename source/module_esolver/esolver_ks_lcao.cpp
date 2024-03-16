@@ -228,7 +228,7 @@ namespace ModuleESolver
     if( GlobalV::CALCULATION == "rdmft" || true )
     {
         // rdmft_solver.init( &(this->UHM.GG), &(this->UHM.GK), &(this->orb_con.ParaV), &ucell, &(this->kv) );
-        rdmft_solver.init( this->UHM.GG, this->UHM.GK, this->orb_con.ParaV, ucell, this->kv );
+        rdmft_solver.init( this->UHM.GG, this->UHM.GK, this->orb_con.ParaV, ucell, this->kv, *(this->pelec->charge) );
     }
 }
 
@@ -1004,9 +1004,9 @@ namespace ModuleESolver
     // rdmft_solver.update_ion(&GlobalC::ucell, &LM, this->pw_rho, &GlobalC::ppcell.vloc, &(this->sf.strucFac));
     rdmft_solver.update_ion(GlobalC::ucell, LM, *(this->pw_rho), GlobalC::ppcell.vloc, this->sf.strucFac, this->LOC);
     std::cout << "\nrdmft_solver: " << "0.1" << std::endl;
-    rdmft_solver.update_charge(occ_number, *(this->psi), *(this->pelec->charge));
-    std::cout << "\nrdmft_solver: " << "1" << std::endl;
     rdmft_solver.get_V_TV();
+    std::cout << "\nrdmft_solver: " << "1" << std::endl;
+    rdmft_solver.update_elec(occ_number, *(this->psi));
     std::cout << "\nrdmft_solver: " << "2" << std::endl;
     rdmft_solver.get_V_hartree_local();
     std::cout << "\nrdmft_solver: " << "3" << std::endl;

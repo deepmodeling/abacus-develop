@@ -145,13 +145,13 @@ class RDMFT
     Exx_LRI<std::complex<double>>* Vxc_fromRI_c = nullptr;
 
     void init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& ParaV_in, UnitCell& ucell_in,
-                        K_Vectors& kv_in, std::string XC_func_rdmft_in = "HF", double alpha_power_in = 0.656);
+                        K_Vectors& kv_in, Charge& charge_in, std::string XC_func_rdmft_in = "HF", double alpha_power_in = 0.656);
 
     void update_ion(UnitCell& ucell_in, LCAO_Matrix& LM_in, ModulePW::PW_Basis& rho_basis_in,
                         ModuleBase::matrix& vloc_in, ModuleBase::ComplexMatrix& sf_in, Local_Orbital_Charge& loc_in);
 
     // Or we can use rdmft_solver.wfc/occ_number directly when optimizing, so that the update_charge() function does not require parameters.
-    void update_charge(const ModuleBase::matrix& occ_number_in, const psi::Psi<TK>& wfc_in, Charge& charge_in);
+    void update_elec(const ModuleBase::matrix& occ_number_in, const psi::Psi<TK>& wfc_in);
 
     // get the special density matrix DM_XC(nk*nbasis_local*nbasis_local)
     void get_DM_XC(std::vector< std::vector<TK> >& DM_XC);
