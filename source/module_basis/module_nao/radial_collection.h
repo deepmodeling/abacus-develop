@@ -44,6 +44,13 @@ class RadialCollection
                const double* const screening_coeff,
                const double conv_thr = 1e-10);
 
+    /// builds a collection of truncated spherical Bessel functions
+    void build(const int lmax, 
+               const int nbes,
+               const double rcut,
+               const double sigma
+               );
+
     /**
      * @name Getters
      */
