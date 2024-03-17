@@ -51,7 +51,8 @@ namespace ModuleESolver
         // get current step of Ionic simulation
         virtual int getniter() override;
 
-        virtual double Run_rdmft(ModuleBase::matrix& E_gradient_wg, psi::Psi<T>& E_gradient_wfc) { return 0.0; };
+        virtual double Run_rdmft(ModuleBase::matrix& E_gradient_wg, psi::Psi<T>& E_gradient_wfc) { return 0.0; };   // add by jghan, 2024-03-16
+        virtual void update_elec_rdmft(const ModuleBase::matrix& occ_number_in, const psi::Psi<T>& wfc_in) {};
 
     protected:
         // Something to do before SCF iterations.

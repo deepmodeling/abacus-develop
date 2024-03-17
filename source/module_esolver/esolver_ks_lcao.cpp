@@ -775,15 +775,17 @@ namespace ModuleESolver
         this->pelec->cal_converged();
     }
 
-    if( iter==1 || iter>=1 )   // add by jghan, 2024-03-16
-    {
-        ModuleBase::matrix occ_number(this->pelec->wg);
-        for(int ik=0; ik < occ_number.nr; ++ik)
-        {
-            for(int inb=0; inb < this->pelec->wg.nc; ++inb) occ_number(ik, inb) /= this->kv.wk[ik];
-        }
-        rdmft_solver.update_elec(occ_number, *(this->psi));
-    }
+    // if( iter==1 )   // add by jghan, 2024-03-16
+    // {
+    //     ModuleBase::matrix occ_number(this->pelec->wg);
+    //     for(int ik=0; ik < occ_number.nr; ++ik)
+    //     {
+    //         for(int inb=0; inb < this->pelec->wg.nc; ++inb) occ_number(ik, inb) /= this->kv.wk[ik];
+    //     }
+    //     rdmft_solver.update_elec(occ_number, *(this->psi));
+    //     std::cout << "\n******\nrdmft_solver: " << "update_elec" << "\n******" << std::endl;
+    // }
+
 }
 
     template <typename TK, typename TR>
@@ -1013,21 +1015,11 @@ namespace ModuleESolver
 
     // ModuleBase::TITLE("RDMFT", "E & Egradient");
     // ModuleBase::timer::tick("RDMFT", "E & Egradient");
+
     // // test class rdmft
-    // std::cout << "\nrdmft_solver: " << "0" << std::endl;
-    // //rdmft_solver.update_ion(GlobalC::ucell, LM, *(this->pw_rho), GlobalC::ppcell.vloc, this->sf.strucFac, this->LOC);
-    // // rdmft_solver.get_V_TV();
-    // std::cout << "\nrdmft_solver: " << "1" << std::endl;
-    // // rdmft_solver.update_elec(occ_number, *(this->psi));
-    // std::cout << "\nrdmft_solver: " << "2" << std::endl;
-    // rdmft_solver.get_V_hartree();
-    // std::cout << "\nrdmft_solver: " << "3" << std::endl;
-    // rdmft_solver.get_V_XC();
-    // std::cout << "\nrdmft_solver: " << "4" << std::endl;
-    // rdmft_solver.cal_rdmft();
-    // std::cout << "\nrdmft_solver: " << "5" << std::endl;
-    // rdmft_solver.cal_Energy();
-    // std::cout << "\nrdmft_solver: " << "6" << std::endl;
+    // rdmft_solver.update_elec(occ_number, *(this->psi));
+    // this->Run_rdmft(E_gradient_wg, E_gradient_wfc);
+    // std::cout << "\nrdmft_solver: " << "0.0000" << std::endl;
 
     // ModuleBase::timer::tick("RDMFT", "E & Egradient");
 
@@ -1152,6 +1144,8 @@ double ESolver_KS_LCAO<TK, TR>::Run_rdmft(ModuleBase::matrix& E_gradient_wg, psi
     rdmft_solver.cal_rdmft();
     rdmft_solver.cal_Energy();
 
+    std::cout << "\np_eslover->Run_rdmft: " << "0" << std::endl;
+
     E_gradient_wg = (rdmft_solver.occNum_wfcHamiltWfc);
     
     TK* pwfc = &( rdmft_solver.occNum_HamiltWfc(0, 0, 0) );
@@ -1161,6 +1155,12 @@ double ESolver_KS_LCAO<TK, TR>::Run_rdmft(ModuleBase::matrix& E_gradient_wg, psi
     return rdmft_solver.E_RDMFT[3];
 }
 
+
+template <typename TK, typename TR>
+void ESolver_KS_LCAO<TK, TR>::update_elec_rdmft(const ModuleBase::matrix& occ_number_in, const psi::Psi<TK>& wfc_in)
+{
+    rdmft_solver.update_elec(occ_number_in, wfc_in);
+}
 
 
 

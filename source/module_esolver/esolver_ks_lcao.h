@@ -42,6 +42,7 @@ namespace ModuleESolver
         void get_S();
 
         virtual double Run_rdmft(ModuleBase::matrix& E_gradient_wg, psi::Psi<TK>& E_gradient_wfc) override;
+        virtual void update_elec_rdmft(const ModuleBase::matrix& occ_number_in, const psi::Psi<TK>& wfc_in) override;
 
     protected:
         virtual void beforescf(const int istep) override;
