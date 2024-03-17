@@ -758,8 +758,6 @@ double rdmft_cal(LCAO_Matrix* LM_in,
     Parallel_Reduce::reduce_all(Ehartree_RDMFT);
     Parallel_Reduce::reduce_all(Exc_RDMFT);
 
-    std::cout << "\n\nGlobalV::NSPIN: " << GlobalV::NSPIN << "\n" << std::endl;
-
     // print results
     std::cout << std::setprecision(10) << "\n\n\nfrom function rdmft_cal(): \n******\nEtotal_RDMFT:   " << Etotal_RDMFT << "\n\nETV_RDMFT:      " << ETV_RDMFT << "\nEhartree_RDMFT: " 
                 << Ehartree_RDMFT << "\nExc_RDMFT:      " << Exc_RDMFT << "\n******\n\n\n" << std::endl;

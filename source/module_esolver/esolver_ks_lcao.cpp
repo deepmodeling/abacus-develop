@@ -1139,20 +1139,7 @@ namespace ModuleESolver
 template <typename TK, typename TR>
 double ESolver_KS_LCAO<TK, TR>::Run_rdmft(ModuleBase::matrix& E_gradient_wg, psi::Psi<TK>& E_gradient_wfc)
 {
-    rdmft_solver.get_V_hartree();
-    rdmft_solver.get_V_XC();
-    rdmft_solver.cal_rdmft();
-    rdmft_solver.cal_Energy();
-
-    std::cout << "\np_eslover->Run_rdmft: " << "0" << std::endl;
-
-    E_gradient_wg = (rdmft_solver.occNum_wfcHamiltWfc);
-    
-    TK* pwfc = &( rdmft_solver.occNum_HamiltWfc(0, 0, 0) );
-    TK* pwfc_out = &E_gradient_wfc(0, 0, 0);
-    for(int i=0; i<E_gradient_wfc.size(); ++i) pwfc_out[i] = pwfc[i];
-
-    return rdmft_solver.E_RDMFT[3];
+    return rdmft_solver.Run(E_gradient_wg, E_gradient_wfc);
 }
 
 

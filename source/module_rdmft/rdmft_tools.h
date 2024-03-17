@@ -291,17 +291,6 @@ double getEnergy(const ModuleBase::matrix& occNum_wfcHwfc);
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 // this part of the code is copying from class Veff and do some modifications.
 template <typename TK, typename TR>
 class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>

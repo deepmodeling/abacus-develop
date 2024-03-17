@@ -166,7 +166,7 @@ class RDMFT
 
     void cal_Energy();
 
-    // double Run_rdmft(ModuleBase::matrix& E_gradient_wg, psi::Psi<TK>&E_gradient_wfc);
+    double Run(ModuleBase::matrix& E_gradient_wg, psi::Psi<TK>&E_gradient_wfc);
 
 
 

@@ -506,31 +506,22 @@ void RDMFT<TK, TR>::cal_Energy()
 }
 
 
-// template <typename TK, typename TR>
-// double RDMFT<TK, TR>::Run_rdmft(ModuleBase::matrix& E_gradient_wg, psi::Psi<TK>& E_gradient_wfc)
-// {
-//     this->get_V_hartree();
-//     this->get_V_XC();
-//     this->cal_rdmft();
-//     this->cal_Energy();
+template <typename TK, typename TR>
+double RDMFT<TK, TR>::Run(ModuleBase::matrix& E_gradient_wg, psi::Psi<TK>& E_gradient_wfc)
+{
+    this->get_V_hartree();
+    this->get_V_XC();
+    this->cal_rdmft();
+    this->cal_Energy();
 
-//     E_gradient_wg = (occNum_wfcHamiltWfc);
+    E_gradient_wg = (occNum_wfcHamiltWfc);
     
-//     TK* pwfc = &occNum_HamiltWfc(0, 0, 0);
-//     TK* pwfc_out = &E_gradient_wfc(0, 0, 0);
-//     for(int i=0; i<wfc.size(); ++i) pwfc_out[i] = pwfc[i];
+    TK* pwfc = &occNum_HamiltWfc(0, 0, 0);
+    TK* pwfc_out = &E_gradient_wfc(0, 0, 0);
+    for(int i=0; i<wfc.size(); ++i) pwfc_out[i] = pwfc[i];
 
-//     return E_RDMFT[3];
-// }
-
-
-
-
-
-
-
-
-
+    return E_RDMFT[3];
+}
 
 
 

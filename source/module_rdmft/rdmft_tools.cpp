@@ -214,21 +214,6 @@ double occNum_func(double eta, int symbol, const std::string XC_func_rdmft, doub
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 template class Veff_rdmft<double, double>;
 
 template class Veff_rdmft<std::complex<double>, double>;
