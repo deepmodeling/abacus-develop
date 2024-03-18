@@ -107,4 +107,8 @@ write(cs_stru, cs_atoms, format='abacus', pp=pp, basis=basis)
 
 ABACUS applies the density difference between two SCF steps (labeled as `DRHO` in the screen output) as the convergence criterion, which is considered as a more robust choice compared with the energy difference. `DRHO` is calculated via `DRHO = |rho(G)-rho_previous(G)|^2`. Note that the energy difference between two SCF steps (labed as `EDIFF`) is also printed out in the screen output.
 
+**4. Why EDIFF is much slower than DRHO?
+
+For metaGGA calculations, it is normal because in addition to charge density, kinetic density also needs to be considered in metaGGA calculations. In this case, you can try set `mixing_tau = true`. If you find EDIFF is much slower than DRHO for non-metaGGA calculations, please start a new issue to us.
+
 [back to top](#frequently-asked-questions)
