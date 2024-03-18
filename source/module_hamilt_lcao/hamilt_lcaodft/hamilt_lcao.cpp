@@ -9,6 +9,10 @@
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #include "operator_lcao/deepks_lcao.h"
 #endif
+#ifdef __EXX
+#include "operator_lcao/op_exx_lcao.h"
+#include "module_ri/Exx_LRI_interface.h"
+#endif
 #ifdef __ELPA
 #include "module_hsolver/diago_elpa.h"
 #endif
@@ -64,7 +68,8 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
     Local_Orbital_Charge* loc_in,
     elecstate::Potential* pot_in,
     const K_Vectors& kv_in,
-    elecstate::DensityMatrix<TK,double>* DM_in)
+    elecstate::DensityMatrix<TK, double>* DM_in,
+    int* exx_two_level_step)
 {
     this->kv = &kv_in;
     this->classname = "HamiltLCAO";
@@ -417,6 +422,21 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
         }
     }
 
+#ifdef __EXX
+    if (GlobalC::exx_info.info_global.cal_exx)
+    {
+        Operator<TK>* exx
+            = new OperatorEXX<OperatorLCAO<TK, TR>>(LM_in,
+                this->hR,
+                &(this->getHk(LM_in)),
+                *this->kv,
+                LM_in->Hexxd,
+                LM_in->Hexxc,
+                exx_two_level_step,
+                !GlobalC::restart.info_load.restart_exx&& GlobalC::restart.info_load.load_H);
+        this->getOperator()->add(exx);
+    }
+#endif
     // if NSPIN==2, HR should be separated into two parts, save HR into this->hRS2
     int memory_fold = 1;
     if(GlobalV::NSPIN == 2)

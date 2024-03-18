@@ -430,8 +430,9 @@ OBJS_IO=input.o\
     restart.o\
     binstream.o\
     to_wannier90.o\
-    to_qo.o\
-    to_qo_tools.o\
+    to_qo_kernel.o\
+    to_qo_mpi.o\
+    to_qo_structures.o\
     to_wannier90_pw.o\
     to_wannier90_lcao_in_pw.o\
     to_wannier90_lcao.o\

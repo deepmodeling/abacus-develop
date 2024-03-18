@@ -392,7 +392,7 @@ TEST_F(InputParaTest, Bcast)
     EXPECT_EQ(INPUT.qo_strategy.size(), 0);
     EXPECT_EQ(INPUT.qo_screening_coeff.size(), 0);
     EXPECT_EQ(INPUT.qo_thr, 1e-6);
-    EXPECT_EQ(INPUT.qo_basis, "hydrogen");
+    EXPECT_EQ(INPUT.qo_basis, "szv");
 }
 
 TEST_F(InputParaTest, Init)

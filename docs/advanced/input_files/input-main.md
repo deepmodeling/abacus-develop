@@ -17,7 +17,7 @@
     - [init\_chg](#init_chg)
     - [init\_vel](#init_vel)
     - [nelec](#nelec)
-    - [nelec_delta](#nelec_delta)
+    - [nelec\_delta](#nelec_delta)
     - [nupdown](#nupdown)
     - [dft\_functional](#dft_functional)
     - [xc\_temperature](#xc_temperature)
@@ -3545,7 +3545,7 @@ for `nspin 2` case. The difference is that `lambda`, `target_mag`, and `constrai
 
 ## Quasiatomic Orbital (QO) analysis
 
-These variables are used to control the usage of QO analysis. Please note present implementation of QO always yield numerically instable results, use with much care.
+These variables are used to control the usage of QO analysis. QO further compress information from LCAO: usually PW basis has dimension in million, LCAO basis has dimension below thousand, and QO basis has dimension below hundred.
 
 ### qo_switch
 
@@ -3558,10 +3558,12 @@ These variables are used to control the usage of QO analysis. Please note presen
 - **Type**: String
 - **Description**: specify the type of atomic basis
   - `pswfc`: use the pseudowavefunction in pseudopotential files as atomic basis. To use this option, please make sure in pseudopotential file there is pswfc in it.
-  - `hydrogen`: generate hydrogen-like atomic basis.
+  - `hydrogen`: generate hydrogen-like atomic basis (or with Slater screening).
+  - `szv`: use the first set of zeta for each angular momentum from numerical atomic orbitals as atomic basis.
 
   *warning: to use* `pswfc` *, please use norm-conserving pseudopotentials with pseudowavefunctions, SG15 pseudopotentials cannot support this option.*
-- **Default**: `hydrogen`
+  *Developer notes: for ABACUS-lcao calculation, it is the most recommend to use `szv` instead of `pswfc` which is originally put forward in work of QO implementation on PW basis. The information loss always happens if `pswfc` or `hydrogen` orbitals are not well tuned, although making kpoints sampling more dense will mitigate this problem, but orbital-adjust parameters are needed to test system-by-system in this case.*
+- **Default**: `szv`
 
 ### qo_strategy
 
@@ -3575,13 +3577,13 @@ These variables are used to control the usage of QO analysis. Please note presen
   - `energy-full`: will generate hydrogen-like orbitals according to Aufbau principle. For example the Cu (1s2 2s2 2p6 3s2 3p6 3d10 4s1), will generate these orbitals.
   - `energy-valence`: from the highest n (principal quantum number) layer and n-1 layer, generate all occupied and possible ls (angular momentum quantum number) for only once, for example Cu, will generate 4s, 3d and 3p orbitals.
 
-  For `qo_basis pswfc`
-  - `all`: use all possible pseudowavefunctions in pseudopotential file.
+  For `qo_basis pswfc` and `qo_basis szv`
+  - `all`: use all possible pseudowavefunctions/numerical atomic orbital (of first zeta) in pseudopotential/numerical atomic orbital file.
   - `s`/`p`/`d`/...: only use s/p/d/f/...-orbital(s).
   - `spd`: use s, p and d orbital(s). Any unordered combination is acceptable.
-
+  
   *warning: for* `qo_basis hydrogen` *to use* `full`, *generation strategy may cause the space spanned larger than the one spanned by numerical atomic orbitals, in this case, must filter out orbitals in some way*
-- **Default**: `minimal-valence`
+- **Default**: for `hydrogen`: `energy-valence`, for `pswfc` and `szv`: `all`
 
 ### qo_screening_coeff
 

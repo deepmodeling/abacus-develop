@@ -639,7 +639,7 @@ void Input::Default(void)
     // variables for Quasiatomic Orbital analysis
     //==========================================================
     qo_switch = false;
-    qo_basis = "hydrogen";
+    qo_basis = "szv";
     qo_strategy = {};
     qo_thr = 1e-6;
     qo_screening_coeff = {};
@@ -3170,7 +3170,13 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         }
         else
         {
-            std::string default_strategy = (qo_basis == "hydrogen")? "minimal-valence": "all";
+            std::string default_strategy;
+            if(qo_basis == "hydrogen") default_strategy = "energy-valence";
+            else if((qo_basis == "pswfc")||(qo_basis == "szv")) default_strategy = "all";
+            else
+            {
+                ModuleBase::WARNING_QUIT("Input", "When setting default values for qo_strategy, unexpected/unknown qo_basis is found. Please check it.");
+            }
             qo_strategy.resize(ntype, default_strategy);
         }
     }

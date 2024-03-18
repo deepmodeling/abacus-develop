@@ -660,9 +660,9 @@ namespace ModuleESolver
 
 #ifdef __EXX
     if (GlobalC::exx_info.info_ri.real_number)
-        this->exd->exx_hamilt2density(*this->pelec, *this->LOWF.ParaV);
+        this->exd->exx_hamilt2density(*this->pelec, *this->LOWF.ParaV, iter);
     else
-        this->exc->exx_hamilt2density(*this->pelec, *this->LOWF.ParaV);
+        this->exc->exx_hamilt2density(*this->pelec, *this->LOWF.ParaV, iter);
 #endif
 
     // if DFT+U calculation is needed, this function will calculate
@@ -825,10 +825,25 @@ namespace ModuleESolver
     {
         for (int is = 0; is < GlobalV::NSPIN; ++is)
         {
-            GlobalC::restart.save_disk(*this->UHM.LM, "charge", is, this->pelec->charge->nrxx, this->pelec->charge->rho);
+            GlobalC::restart.save_disk("charge", is, this->pelec->charge->nrxx, this->pelec->charge->rho[is]);
         }
     }
-
+#ifdef __EXX
+    int two_level_step = GlobalC::exx_info.info_ri.real_number ? this->exd->two_level_step : this->exc->two_level_step;
+    if (GlobalC::restart.info_save.save_H && two_level_step > 0 &&
+        (!GlobalC::exx_info.info_global.separate_loop || iter == 1)) // to avoid saving the same value repeatedly
+    {
+        std::vector<TK> Hexxk_save(this->LOWF.ParaV->get_local_size());
+        for (int ik = 0;ik < this->kv.nks;++ik)
+        {
+            ModuleBase::GlobalFunc::ZEROS(Hexxk_save.data(), Hexxk_save.size());
+            hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>> opexx_save(&this->LM, nullptr, &Hexxk_save, this->kv);
+            opexx_save.contributeHk(ik);
+            GlobalC::restart.save_disk("Hexx", ik, this->LOWF.ParaV->get_local_size(), Hexxk_save.data());
+        }
+        if (GlobalV::MY_RANK == 0)GlobalC::restart.save_disk("Eexx", 0, 1, &this->pelec->f_en.exx);
+    }
+#endif
     //-----------------------------------
     // output charge density for tmp
     //-----------------------------------
@@ -983,8 +998,13 @@ namespace ModuleESolver
     }
     if(GlobalV::qo_switch)
     {
-        toQO tqo(GlobalV::qo_basis, GlobalV::qo_strategy);
-        tqo.initialize(&GlobalC::ucell, this->kv.kvec_d);
+        toQO tqo(GlobalV::qo_basis, GlobalV::qo_strategy, GlobalV::qo_thr, GlobalV::qo_screening_coeff);
+        tqo.initialize(GlobalV::global_out_dir, 
+                       GlobalV::global_pseudo_dir, 
+                       GlobalV::global_orbital_dir,
+                       &GlobalC::ucell, this->kv.kvec_d,
+                       GlobalV::ofs_running,
+                       GlobalV::MY_RANK, GlobalV::NPROC);
         tqo.calculate();
     }
 }

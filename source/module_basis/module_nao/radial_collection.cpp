@@ -232,7 +232,8 @@ void RadialCollection::build(const int ntype,
                              const int* const nmax, 
                              const std::string* symbols,
                              const double conv_thr,
-                             const std::string* strategies)
+                             const std::string* strategies,
+                             const int& rank)
 {
     cleanup();
     ntype_ = ntype;
@@ -248,7 +249,7 @@ void RadialCollection::build(const int ntype,
                               10.0,             // rcut should be determined automatically, in principle...
                               0.01,
                               conv_thr,
-                              0,
+                              rank,
                               symbols[itype],
                               strategies[itype]);
 
@@ -265,7 +266,8 @@ void RadialCollection::build(const int ntype,
 void RadialCollection::build(const int ntype,
                              const std::string* const file,
                              const double* const screening_coeffs,
-                             const double conv_thr)
+                             const double conv_thr,
+                             const int& rank)
 {
     cleanup();
     ntype_ = ntype;
@@ -274,7 +276,7 @@ void RadialCollection::build(const int ntype,
     for (int itype = 0; itype < ntype_; ++itype)
     {
         radset_[itype] = new PswfcRadials;
-        radset_[itype]->build(file[itype], itype, screening_coeffs[itype], conv_thr);
+        radset_[itype]->build(file[itype], itype, screening_coeffs[itype], conv_thr, nullptr, rank);
 
         lmax_ = std::max(lmax_, radset_[itype]->lmax());
         nchi_ += radset_[itype]->nchi();

@@ -73,6 +73,15 @@ void bind_m_nao(py::module& m)
             "ngrid"_a,
             "grid"_a,
             "mode"_a = 'i')
+        .def(
+            "__call__",
+            [](RadialCollection& self, const int itype, const int l, const int izeta) -> const NumericalRadial& {
+                return self(itype, l, izeta);
+            },
+            py::return_value_policy::reference_internal,
+            "itype"_a,
+            "l"_a,
+            "izeta"_a)
         // Getters
         .def("symbol", &RadialCollection::symbol, "itype"_a)
         .def_property_readonly("ntype", &RadialCollection::ntype)
@@ -82,9 +91,9 @@ void bind_m_nao(py::module& m)
         .def_property_readonly("rcut_max", overload_cast_<>()(&RadialCollection::rcut_max, py::const_))
         .def("nzeta", &RadialCollection::nzeta, "itype"_a, "l"_a)
         .def("nzeta_max", overload_cast_<const int>()(&RadialCollection::nzeta_max, py::const_), "itype"_a)
-        .def_property_readonly("nzeta_max", overload_cast_<>()(&RadialCollection::nzeta_max, py::const_))
+        .def("nzeta_max", overload_cast_<>()(&RadialCollection::nzeta_max, py::const_))
         .def("nchi", overload_cast_<const int>()(&RadialCollection::nchi, py::const_), "itype"_a)
-        .def_property_readonly("nchi", overload_cast_<>()(&RadialCollection::nchi, py::const_));
+        .def("nchi", overload_cast_<>()(&RadialCollection::nchi, py::const_));
     // Bind the TwoCenterIntegrator class
     py::class_<TwoCenterIntegrator>(m_nao, "TwoCenterIntegrator")
         .def(py::init<>(), R"pbdoc(

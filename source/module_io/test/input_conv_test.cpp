@@ -367,7 +367,8 @@ TEST_F(InputConvTest, restart_load)
 	INPUT.dft_functional = "hf";
 	Input_Conv::Convert();
 	EXPECT_EQ( GlobalC::restart.folder,GlobalV::global_readin_dir + "restart/");
-	EXPECT_EQ(GlobalC::restart.info_load.load_charge,true);
+    EXPECT_EQ(GlobalC::restart.info_load.load_charge, true);
+    EXPECT_EQ(GlobalC::restart.info_load.load_H, true);
 }
 
 TEST_F(InputConvTest,restart_load2 )
@@ -378,8 +379,7 @@ TEST_F(InputConvTest,restart_load2 )
 	INPUT.restart_load=true;
 	INPUT.dft_functional="b3lyp";
 	Input_Conv::Convert();
-	EXPECT_EQ(GlobalC::restart.info_load.load_charge,true);
-	EXPECT_EQ(GlobalC::restart.info_load.load_H,true);
+    EXPECT_EQ(GlobalC::restart.info_load.load_charge, true);
 }
 
 TEST_F(InputConvTest,cell_factor  )
