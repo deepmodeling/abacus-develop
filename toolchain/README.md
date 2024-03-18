@@ -41,6 +41,8 @@ to compile install dependencies of ABACUS.
 
 You can just `./install_abacus_toolchain.sh -h` to get more help message.
 
+If you have a fresh environments and you have `sudo` permission, you can use `install_requirements.sh` to install system libraries and dependencies needed by toolchain.
+
 **Notice: You SHOULD `source` or `module load` related environments before use toolchain method for installation, espacially for `gcc` or `intel-oneAPI` !!!! for example, `module load mkl mpi icc compiler`**
 
 **Notice: You SHOULD keep your environments systematic, for example, you CANNOT load `intel-OneAPI` environments while use gcc toolchain !!!**
@@ -211,7 +213,6 @@ The best way is to change `icpx` to `icpc`, `icx` to `icc`. user can manually ch
 Notice: `icc` and `icpc` from Intel Classic Compiler of Intel-oneAPI is not supported for 2024.0 and newer version.
 
 
-
 ### Intel-oneAPI problem
 Sometimes Intel-oneAPI have problem to link `mpirun`, 
 which will always show in 2023.2.0 version of MPI in Intel-oneAPI. 
@@ -221,7 +222,6 @@ which is fixed in 2024.0.0 version of Intel-oneAPI,
 And will not occur in Intel-MPI before 2021.10.0 (Intel-oneAPI before 2023.2.0)
 
 More problem and possible solution can be accessed via [#2928](https://github.com/deepmodeling/abacus-develop/issues/2928)
-
 
 
 ## Advanced Installation Usage
@@ -237,5 +237,4 @@ of each packages, which may let the installation more fiexible.
 
 
 ## More
-More infomation can be read from `Details.md`, 
-which is merely easily refined from cp2k-toolchain README.
+More infomation can be read from `Details.md`.
