@@ -377,6 +377,13 @@ TEST_F(TwoCenterIntegratorTest, SphericalBessel)
             T_intor.calculate(0, l, zeta, 0, 0, l, zeta, 0, R0, &elem);
             ref = 0.5 * rcut * std::pow(zeros[l*nbes+zeta] * Sphbes::sphbesj(l+1, zeros[l*nbes+zeta]), 2);
             EXPECT_NEAR(elem, ref, 1e-3);
+
+            // orthogonality
+            for (int zeta2 = 0; zeta2 < zeta; ++zeta2) {
+                S_intor.calculate(0, l, zeta, 0, 0, l, zeta2, 0, R0, &elem);
+                ref = 0.0;
+                EXPECT_NEAR(elem, ref, 1e-5);
+            }
         }
     }
     delete[] zeros;
