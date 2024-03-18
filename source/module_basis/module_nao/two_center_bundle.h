@@ -17,6 +17,7 @@ class TwoCenterBundle
     void build_orb(int ntype, const std::string* file_orb0);
     void build_beta(int ntype, Numerical_Nonlocal* nl);
     void build_alpha(int ndesc = 0, std::string* file_desc0 = nullptr);
+    void build_orb_onsite(int ntype, double radius);
 
     void tabulate();
 
@@ -37,10 +38,12 @@ class TwoCenterBundle
     std::unique_ptr<TwoCenterIntegrator> overlap_orb;
     std::unique_ptr<TwoCenterIntegrator> overlap_orb_beta;
     std::unique_ptr<TwoCenterIntegrator> overlap_orb_alpha;
+    std::unique_ptr<TwoCenterIntegrator> overlap_orb_onsite;
 
     std::unique_ptr<RadialCollection> orb_;
     std::unique_ptr<RadialCollection> beta_;
     std::unique_ptr<RadialCollection> alpha_;
+    std::unique_ptr<RadialCollection> orb_onsite_;
 };
 
 #endif

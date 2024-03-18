@@ -295,7 +295,7 @@
 //         EXPECT_FALSE(INPUT.restart_save);
 //         EXPECT_FALSE(INPUT.restart_load);
 //         EXPECT_FALSE(INPUT.test_skip_ewald);
-//         EXPECT_FALSE(INPUT.dft_plus_u);
+//         EXPECT_EQ(INPUT.dft_plus_u, 0);
 //         EXPECT_FALSE(INPUT.yukawa_potential);
 //         EXPECT_DOUBLE_EQ(INPUT.yukawa_lambda, -1.0);
 //         EXPECT_EQ(INPUT.omc, 0);

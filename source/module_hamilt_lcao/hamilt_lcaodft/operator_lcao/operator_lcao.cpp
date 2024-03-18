@@ -177,7 +177,11 @@ void OperatorLCAO<TK, TR>::init(const int ik_in)
         {
             //only HK should be updated when cal_type=lcao_dftu
             //in cal_type=lcao_dftu, HK only need to update from one node
-            this->contributeHk(ik_in);
+            if(!this->hr_done)
+            {
+                //in cal_type=lcao_deepks, HR should be updated
+                this->contributeHR();
+            }
             break;
         }
         case lcao_sc_lambda:

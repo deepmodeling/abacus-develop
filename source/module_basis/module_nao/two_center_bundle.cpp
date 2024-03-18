@@ -46,12 +46,22 @@ void TwoCenterBundle::build_alpha(int ndesc, std::string* file_desc0)
     }
 }
 
+void TwoCenterBundle::build_orb_onsite(int ntype, double radius)
+{
+    if(GlobalV::onsite_radius > 0)
+    {
+        orb_onsite_ = std::unique_ptr<RadialCollection>(new RadialCollection);
+        orb_onsite_->build(orb_.get(), GlobalV::onsite_radius);
+    }
+}
+
 void TwoCenterBundle::tabulate()
 {
     ModuleBase::SphericalBesselTransformer sbt;
     orb_->set_transformer(sbt);
     beta_->set_transformer(sbt);
     if (alpha_) alpha_->set_transformer(sbt);
+    if (orb_onsite_) orb_onsite_->set_transformer(sbt);
 
     //================================================================
     //              build two-center integration tables
@@ -66,6 +76,7 @@ void TwoCenterBundle::tabulate()
     orb_->set_uniform_grid(true, nr, cutoff, 'i', true);
     beta_->set_uniform_grid(true, nr, cutoff, 'i', true);
     if (alpha_) alpha_->set_uniform_grid(true, nr, cutoff, 'i', true);
+    if (orb_onsite_) orb_onsite_->set_uniform_grid(true, nr, cutoff, 'i', true);
 
     // build TwoCenterIntegrator objects
     kinetic_orb = std::unique_ptr<TwoCenterIntegrator>(new TwoCenterIntegrator);
@@ -85,6 +96,12 @@ void TwoCenterBundle::tabulate()
         overlap_orb_alpha = std::unique_ptr<TwoCenterIntegrator>(new TwoCenterIntegrator);
         overlap_orb_alpha->tabulate(*orb_, *alpha_, 'S', nr, cutoff);
         ModuleBase::Memory::record("TwoCenterTable: Descriptor", overlap_orb_beta->table_memory());
+    }
+
+    if (orb_onsite_)
+    {
+        overlap_orb_onsite = std::unique_ptr<TwoCenterIntegrator>(new TwoCenterIntegrator);
+        overlap_orb_onsite->tabulate(*orb_, *orb_onsite_, 'S', nr, cutoff);
     }
 
     ModuleBase::Memory::record("RealGauntTable", RealGauntTable::instance().memory());

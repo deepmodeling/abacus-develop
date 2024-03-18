@@ -153,6 +153,25 @@ void RadialCollection::build(const int ntype, Numerical_Nonlocal* const nls)
     set_rcut_max();
 }
 
+void RadialCollection::build(const RadialCollection* nls, const double radius)
+{
+    cleanup();
+    this->ntype_ = nls->ntype();
+    this->rcut_max_ = radius>0.0?radius:nls->rcut_max();
+    this->radset_ = new RadialSet*[ntype_];
+    this->lmax_ = nls->lmax();
+    this->nchi_ = nls->nchi();
+    this->nzeta_max_ = nls->nzeta_max();
+
+    for (int itype = 0; itype < ntype_; ++itype)
+    {
+        radset_[itype] = new AtomicRadials;
+        static_cast<AtomicRadials*>(radset_[itype])->build(nls->radset_[itype], itype, this->rcut_max_);
+    }
+
+    iter_build();
+}
+
 void RadialCollection::build(const int nfile, const std::string* const file, const char ftype)
 {
 

@@ -17,6 +17,7 @@
 #include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_elecstate/occupy.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dftu_new.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/print_info.h"
 #ifdef __EXX
@@ -429,6 +430,7 @@ namespace ModuleESolver
     two_center_bundle.reset(new TwoCenterBundle);
     two_center_bundle->build_orb(ucell.ntype, ucell.orbital_fn);
     two_center_bundle->build_alpha(GlobalV::deepks_setorb, &ucell.descriptor_file);
+    two_center_bundle->build_orb_onsite(ucell.ntype, GlobalV::onsite_radius);
     // currently deepks only use one descriptor file, so cast bool to int is fine
 
     //this->orb_con.read_orb_first(GlobalV::ofs_running,
@@ -569,6 +571,16 @@ namespace ModuleESolver
 
     if (GlobalV::dft_plus_u)
     {
+        if(istep == 0 && iter == 1)
+        {
+            hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::dm_in_dftu = nullptr;
+        }
+        else
+        {
+            hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::dm_in_dftu =
+            dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)
+                ->get_DM();
+        }
         GlobalC::dftu.cal_slater_UJ(this->pelec->charge->rho, this->pw_rho->nrxx); // Calculate U and J if Yukawa potential is used
     }
 
@@ -657,12 +669,16 @@ namespace ModuleESolver
     // the local occupation number matrix and energy correction
     if (GlobalV::dft_plus_u)
     {
-        if (GlobalC::dftu.omc != 2)
+        // only old DFT+U method should calculated energy correction in esolver, new DFT+U method will calculate energy in calculating Hamiltonian
+        if(GlobalV::dft_plus_u == 2) 
         {
-            const std::vector<std::vector<TK>>& tmp_dm = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMK_vector();
-            this->dftu_cal_occup_m(iter, tmp_dm);
+            if (GlobalC::dftu.omc != 2)
+            {
+                const std::vector<std::vector<TK>>& tmp_dm = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMK_vector();
+                this->dftu_cal_occup_m(iter, tmp_dm);
+            }
+            GlobalC::dftu.cal_energy_correction(istep);
         }
-        GlobalC::dftu.cal_energy_correction(istep);
         GlobalC::dftu.output();
     }
 

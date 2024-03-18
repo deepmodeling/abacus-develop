@@ -1,0 +1,6 @@
+FeO Ferromagnetic+LDA+U
+NSPIN 2
+lcao
+init magnet: up + up
+SG15
+

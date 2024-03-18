@@ -48,9 +48,9 @@ class DFTU
     int omc; // occupation matrix control
     int mixing_dftu; //whether to mix locale
 
+    double EU; //+U energy
   private:
     LCAO_Matrix* LM;
-    double EU; //+U energy
     int cal_type = 3; // 1:dftu_tpye=1, dc=1; 2:dftu_type=1, dc=2; 3:dftu_tpye=2, dc=1; 4:dftu_tpye=2, dc=2;
     
     // transform between iwt index and it, ia, L, N and m index
@@ -77,20 +77,21 @@ class DFTU
     void cal_occup_m_k(const int iter, const std::vector<std::vector<std::complex<double>>>& dm_k, const K_Vectors& kv, const double& mixing_beta, hamilt::Hamilt<std::complex<double>>* p_ham);
     void cal_occup_m_gamma(const int iter, const std::vector<std::vector<double>>& dm_gamma, const double& mixing_beta);
 
-  private:
     // dftu can be calculated only after locale has been initialed
     bool initialed_locale = false;
 
+  private:
     void copy_locale();
     void zero_locale();
     void mix_locale(const double& mixing_beta);
 
+public:
     // local occupancy matrix of the correlated subspace
     // locale: the out put local occupation number matrix of correlated electrons in the current electronic step
     // locale_save: the input local occupation number matrix of correlated electrons in the current electronic step
     std::vector<std::vector<std::vector<std::vector<ModuleBase::matrix>>>> locale; // locale[iat][l][n][spin](m1,m2)
     std::vector<std::vector<std::vector<std::vector<ModuleBase::matrix>>>> locale_save; // locale_save[iat][l][n][spin](m1,m2)
-
+private:
     //=============================================================
     // In dftu_tools.cpp
     // For calculating onsite potential, which is used
@@ -161,7 +162,7 @@ class DFTU
     void output();
 
   private:
-    void write_occup_m(std::ofstream& ofs);
+    void write_occup_m(std::ofstream& ofs, bool diag=false);
     void read_occup_m(const std::string& fn);
     void local_occup_bcast();
 
