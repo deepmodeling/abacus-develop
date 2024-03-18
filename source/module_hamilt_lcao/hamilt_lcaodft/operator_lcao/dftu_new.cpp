@@ -50,8 +50,6 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* G
     ModuleBase::TITLE("DFTUNew", "initialize_HR");
     ModuleBase::timer::tick("DFTUNew", "initialize_HR");
 
-    nlm_tot.resize(this->ucell->nat);
-    const int npol = this->ucell->get_npol();
     this->adjs_all.clear();
     this->adjs_all.reserve(this->ucell->nat);
     for (int iat0 = 0; iat0 < ucell->nat; iat0++)
@@ -61,7 +59,6 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* G
         ucell->iat2iait(iat0, &I0, &T0);
         const int target_L = this->dftu->orbital_corr[T0];
         if(target_L == -1) continue;
-        const int tlp1 = 2*target_L+1;
 
         AdjacentAtomInfo adjs;
         GridD->Find_atom(*ucell, tau0, T0, I0, &adjs);
@@ -86,6 +83,28 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* G
         }
         filter_adjs(is_adj, adjs);
         this->adjs_all.push_back(adjs);
+    }
+
+    ModuleBase::timer::tick("DFTUNew", "initialize_HR");
+}
+
+template <typename TK, typename TR>
+void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::cal_nlm_all(const Parallel_Orbitals* paraV)
+{
+    ModuleBase::TITLE("DFTUNew", "cal_nlm_all");
+    if(this->precal_nlm_done) return;
+    ModuleBase::timer::tick("DFTUNew", "cal_nlm_all");
+    nlm_tot.resize(this->ucell->nat);
+    const int npol = this->ucell->get_npol();
+    for (int iat0 = 0; iat0 < ucell->nat; iat0++)
+    {
+        auto tau0 = ucell->get_tau(iat0);
+        int T0, I0;
+        ucell->iat2iait(iat0, &I0, &T0);
+        const int target_L = this->dftu->orbital_corr[T0];
+        if(target_L == -1) continue;
+        const int tlp1 = 2*target_L+1;
+        AdjacentAtomInfo& adjs = this->adjs_all[iat0];
 
         // calculate and save the table of two-center integrals
         nlm_tot[iat0].resize(adjs.adj_num + 1);
@@ -149,8 +168,8 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* G
             }
         }
     }
-
-    ModuleBase::timer::tick("DFTUNew", "initialize_HR");
+    this->precal_nlm_done = true;
+    ModuleBase::timer::tick("DFTUNew", "cal_nlm_all");
 }
 
 template <typename TK, typename TR>
@@ -170,7 +189,8 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
 
     const Parallel_Orbitals* paraV = this->hR->get_atom_pair(0).get_paraV();
     const int npol = this->ucell->get_npol();
-    // 1. calculate <psi|beta> for each pair of atoms
+    // 1. calculate <psi|alpha> for each pair of atoms
+    this->cal_nlm_all(paraV);
     // loop over all on-site atoms
     for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
     {
@@ -247,7 +267,7 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
 
         // second iteration to calculate Hamiltonian matrix
         // calculate <psi_I|beta_m> U*(1/2*delta(m, m')-occ(m, m')) <beta_m'|psi_{J,R}> for each pair of <IJR> atoms
-// 2. calculate <psi_I|beta>D<beta|psi_{J,R}> for each pair of <IJR> atoms
+        // 2. calculate <psi_I|beta>D<beta|psi_{J,R}> for each pair of <IJR> atoms
         for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
         {
             const int T1 = adjs.ntype[ad1];

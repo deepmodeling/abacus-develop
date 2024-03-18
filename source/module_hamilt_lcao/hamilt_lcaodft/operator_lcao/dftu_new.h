@@ -87,6 +87,12 @@ class DFTUNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      */
     void initialize_HR(Grid_Driver* GridD_in, const Parallel_Orbitals* paraV);
 
+    /**
+     * @brief calculate the <phi|alpha^I> overlap values and save them in this->nlm_tot
+     * it will be reused in the calculation of calculate_HR()
+    */
+    void cal_nlm_all(const Parallel_Orbitals* paraV);
+
     void cal_occupations(const int& iat1,
                         const int& iat2,
                         const int& T0,
@@ -157,6 +163,7 @@ class DFTUNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                         double* stress);
 
     std::vector<AdjacentAtomInfo> adjs_all;
+    bool precal_nlm_done = false;
     std::vector<std::vector<std::unordered_map<int, std::vector<double>>>> nlm_tot;
 };
 
