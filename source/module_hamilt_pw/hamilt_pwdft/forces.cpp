@@ -470,11 +470,11 @@ void Forces<FPTYPE, Device>::cal_force_loc(ModuleBase::matrix& forcelc,
                 aux[ir] = std::complex<double>(chr->rho[0][ir], 0.0);
             }
         }
-        for (int is = 1; is < GlobalV::NSPIN; is++)
+        if(GlobalV::NSPIN == 2)
         {
             for (int ir = irb; ir < ir_end; ++ir)
             { // accumulate aux
-                aux[ir] += std::complex<double>(chr->rho[is][ir], 0.0);
+                aux[ir] += std::complex<double>(chr->rho[1][ir], 0.0);
             }
         }
     }
