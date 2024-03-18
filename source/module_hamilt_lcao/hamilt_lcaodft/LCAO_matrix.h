@@ -33,7 +33,10 @@ class LCAO_Matrix
 #ifdef __EXX
     using TAC = std::pair<int, std::array<int, 3>>;
     std::vector< std::map<int, std::map<TAC, RI::Tensor<double>>>> *Hexxd;
-    std::vector< std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>> *Hexxc;
+    std::vector< std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc;
+    /// @brief Hexxk for all k-points, only for the 1st scf loop ofrestart load
+    std::vector<std::vector<double>> Hexxd_k_load;
+    std::vector<std::vector<std::complex<double>>> Hexxc_k_load;
 #endif
 
     void allocate_HS_k(const long &nloc);

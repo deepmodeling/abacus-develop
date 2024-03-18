@@ -190,7 +190,7 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA,std::map<TAC,RI:
 		}
 		this->Hexxs[is] = RI::Communicate_Tensors_Map_Judge::comm_map2_first(
 			this->mpi_comm, std::move(this->exx_lri.Hs), std::get<0>(judge[is]), std::get<1>(judge[is]));
-		this->Eexx += this->exx_lri.energy;
+        this->Eexx += std::real(this->exx_lri.energy);
 		post_process_Hexx(this->Hexxs[is]);
 	}
 	this->Eexx = post_process_Eexx(this->Eexx);
@@ -209,11 +209,11 @@ void Exx_LRI<Tdata>::post_process_Hexx( std::map<TA, std::map<TAC, RI::Tensor<Td
 }
 
 template<typename Tdata>
-Tdata Exx_LRI<Tdata>::post_process_Eexx( const Tdata &Eexx_in ) const
+double Exx_LRI<Tdata>::post_process_Eexx(const double& Eexx_in) const
 {
 	ModuleBase::TITLE("Exx_LRI","post_process_Eexx");
-	const Tdata SPIN_multiple = std::map<int,Tdata>{{1,2}, {2,1}, {4,1}}.at(GlobalV::NSPIN);				// why?
-	const Tdata frac = - SPIN_multiple;
+    const double SPIN_multiple = std::map<int, double>{ {1,2}, {2,1}, {4,1} }.at(GlobalV::NSPIN);				// why?
+    const double frac = -SPIN_multiple;
 	return frac * Eexx_in;
 }
 
