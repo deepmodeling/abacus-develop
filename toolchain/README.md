@@ -35,13 +35,25 @@ and give setup files that you can use to compile ABACUS.
 
 
 ## Usage Online & Offline
-Main script is `install_abacus_toolchain.sh`, 
-which will use scripts in `scripts` directory 
+Main script is *install_abacus_toolchain.sh*, 
+which will use scripts in *scripts* directory 
 to compile install dependencies of ABACUS.
 
 You can just `./install_abacus_toolchain.sh -h` to get more help message.
 
-If you have a fresh environments and you have `sudo` permission, you can use `install_requirements.sh` to install system libraries and dependencies needed by toolchain.
+There are also well-modified script to run *install_abacus_toolchain.sh* for `gnu-openblas` and `intel-mkl` toolchains dependencies.
+
+```shell
+# for gnu-openblas
+> ./toolchain_gnu.sh
+# for intel-mkl
+> ./toolchain_intel.sh
+# for intel-mkl-mpich
+> ./toolchain_intel-mpich.sh
+```
+It is recommended to run them first to get a fast installation of ABACUS under certain environments.
+
+If you have a fresh environments and you have `sudo` permission, you can use *install_requirements.sh* to install system libraries and dependencies needed by toolchain.
 
 **Notice: You SHOULD `source` or `module load` related environments before use toolchain method for installation, espacially for `gcc` or `intel-oneAPI` !!!! for example, `module load mkl mpi icc compiler`**
 
@@ -69,8 +81,8 @@ wget https://bohrium-api.dp.tech/ds-dl/abacus-deps-93wi-v2 -O abacus-deps-v2.zip
 
 If one want to install ABACUS by toolchain OFFLINE, 
 one can manually download all the packages from [cp2k-static/download](https://www.cp2k.org/static/downloads) or official website
-and put them in `build` directory by formatted name
-like `fftw-3.3.10.tar.gz`, or `openmpi-4.1.5.tar.gz`, 
+and put them in *build* directory by formatted name
+like *fftw-3.3.10.tar.gz*, or *openmpi-4.1.5.tar.gz*, 
 then run this toolchain. 
 All package will be detected and installed automatically. 
 Also, one can install parts of packages OFFLINE and parts of packages ONLINE
@@ -115,23 +127,12 @@ e.g.:
 mv v1.3.2.tar.gz build/cereal-1.3.2.tar.gz
 ```
 
-There are also well-modified script to run `install_abacus_toolchain.sh` for `gnu-openblas` and `intel-mkl` toolchains dependencies.
-
-```shell
-# for gnu-openblas
-> ./toolchain_gnu.sh
-# for intel-mkl
-> ./toolchain_intel.sh
-# for intel-mkl-mpich
-> ./toolchain_intel-mpich.sh
-```
-
 Users can easily compile and install dependencies of ABACUS
 by running these scripts after loading `gcc` or `intel-mkl-mpi`
 environment. 
 
 The toolchain installation process can be interrupted at anytime.
-just re-run `install_abacus_toolchain.sh`, toolchain itself may fix it
+just re-run *install_abacus_toolchain.sh*, toolchain itself may fix it
 
 If compliation is successful, a message will be shown like this:
 
@@ -146,7 +147,7 @@ If compliation is successful, a message will be shown like this:
 >     ./build_abacus_intel.sh
 > or you can modify the builder scripts to suit your needs.
 ```
-You can run `build_abacus_gnu.sh` or `build_abacus_intel.sh` to build ABACUS 
+You can run *build_abacus_gnu.sh* or *build_abacus_intel.sh* to build ABACUS 
 by gnu-toolchain or intel-toolchain respectively, the builder scripts will
 automatically locate the environment and compile ABACUS.
 You can manually change the builder scripts to suit your needs.
@@ -156,7 +157,7 @@ Then, after `source abacus_env.sh`, one can easily
 run builder scripts to build ABACUS binary software.
 
 If users want to use toolchain but lack of some system library
-dependencies, `install_requirements.sh` scripts will help.
+dependencies, *install_requirements.sh* scripts will help.
 
 If users want to re-install all the package, just do:
 ```shell
@@ -191,7 +192,12 @@ or   `permission denied` problem, you can simply run:
 ./pre_set.sh
 ```
 And also, you can fix `permission denied` problem via `chmod +x`
-if `pre_set.sh` have no execution permission.
+if *pre_set.sh* have no execution permission; 
+if the *pre_set.sh* also have `/bin/bash^M` problem, you can run:
+```
+> dos2unix pre_set.sh
+```
+to fix it
 
 ### libtorch and deepks problem
 If deepks feature have problem, you can manually change libtorch version
