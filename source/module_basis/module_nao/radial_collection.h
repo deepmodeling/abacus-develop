@@ -48,7 +48,8 @@ class RadialCollection
     void build(const int lmax, 
                const int nbes,
                const double rcut,
-               const double sigma
+               const double sigma,
+               const double dr
                );
 
     /**

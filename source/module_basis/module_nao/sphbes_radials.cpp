@@ -20,7 +20,7 @@ SphbesRadials& SphbesRadials::operator=(const SphbesRadials& rhs)
     return *this;
 }
 
-void SphbesRadials::build(const std::string& file, const int itype, std::ofstream* ptr_log, const int rank)
+void SphbesRadials::build(const std::string& file, const double dr, const int itype, std::ofstream* ptr_log, const int rank)
 {
     cleanup();
     coeff_.clear();
@@ -57,6 +57,7 @@ void SphbesRadials::build(const std::string& file, const int itype, std::ofstrea
     }
 
     itype_ = itype;
+    dr_ = dr;
     read_coeff(ifs, ptr_log, rank);
     build_radset();
 
@@ -66,7 +67,7 @@ void SphbesRadials::build(const std::string& file, const int itype, std::ofstrea
     }
 }
 
-void SphbesRadials::build(const int lmax, const int nbes, const double rcut, const double sigma, const int itype, std::ofstream* ptr_log, const int rank)
+void SphbesRadials::build(const int lmax, const int nbes, const double rcut, const double sigma, const double dr, const int itype, std::ofstream* ptr_log, const int rank)
 {
     cleanup();
     coeff_.clear();
@@ -88,6 +89,7 @@ void SphbesRadials::build(const int lmax, const int nbes, const double rcut, con
     itype_ = itype;
     rcut_max_ = rcut;
     sigma_ = sigma;
+    dr_ = dr;
 
     //////////////////////////
     // Instead of reading from a file, we will generate the coefficients here.
@@ -197,6 +199,8 @@ std::vector<double> SphbesRadials::sphbes_comb(const int l,
     // f[ir] = \sum_{iq} coeff[iq] * j_{l}(q[i] * r[ir])
     for (size_t iq = 0; iq != q.size(); ++iq)
     {
+        if (coeff_q[iq] == 0.0) continue;
+
         ModuleBase::Sphbes::sphbesj(nr, r.data(), q[iq], l, tmp.data());
         for (size_t ir = 0; ir != tmp.size(); ++ir)
         {

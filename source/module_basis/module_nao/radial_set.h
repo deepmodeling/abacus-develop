@@ -104,6 +104,7 @@ class RadialSet
                        const int,
                        const double,
                        const double = 0.1,
+                       const double = 0.01,
                        const int = 0,
                        std::ofstream* = nullptr,
                        const int = 0

@@ -45,7 +45,8 @@ class SphbesRadialsTest : public ::testing::Test
 
 TEST_F(SphbesRadialsTest, Build)
 {
-    I_radials.build(file, 999, nullptr, GlobalV::MY_RANK);
+    double dr = 0.01;
+    I_radials.build(file, dr, 999, nullptr, GlobalV::MY_RANK);
 
     // Checks the basic info.
     EXPECT_EQ(I_radials.symbol(), "I");
@@ -92,9 +93,10 @@ TEST_F(SphbesRadialsTest, Build2)
     int nbes = 10;
     double rcut = 7.0;
     double sigma = 0.0;
+    double dr = 0.01;
     int itype = 999;
 
-    I_radials.build(lmax, nbes, rcut, sigma, itype, nullptr, 0);
+    I_radials.build(lmax, nbes, rcut, sigma, dr, itype, nullptr, 0);
 
     // Checks the basic info.
     EXPECT_EQ(I_radials.symbol(), "");
@@ -132,7 +134,7 @@ TEST_F(SphbesRadialsTest, Build2)
             // NOTE: the radial functions are just truncated spherical Bessel functions.
             double q = zeros[l*nbes+zeta] / rcut;
             for (int i = 0; i < I_radials.chi(l, zeta).nr(); ++i) {
-                EXPECT_NEAR(I_radials.chi(l, zeta).rgrid(i), i * 0.01, tol);
+                EXPECT_NEAR(I_radials.chi(l, zeta).rgrid(i), i * dr, tol);
                         
                 EXPECT_NEAR(I_radials.chi(l, zeta).rvalue(i),
                         Sphbes::sphbesj(l, q * I_radials.chi(l, zeta).rgrid(i)), tol);

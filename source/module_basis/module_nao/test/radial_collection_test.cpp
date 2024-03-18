@@ -283,7 +283,8 @@ TEST_F(RadialCollectionTest, Build2) {
     int nbes = 10;
     double rcut = 10.0;
     double sigma = 0.0;
-    orb.build(lmax, nbes, rcut, sigma);
+    double dr = 0.01;
+    orb.build(lmax, nbes, rcut, sigma, dr);
 
     orb.lmax();
 
