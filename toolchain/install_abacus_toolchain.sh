@@ -59,6 +59,11 @@ USAGE:
 
 $(basename $SCRIPT_NAME) [options]
 
+Or a more RECOMMENDED way is to use it by pre-setting workflow scripts:
+> gcc-openmpi-openblas environments: toolchain_gnu.sh
+> intel-mkl-mpi environments: toolchain_intel.sh
+> intel-mpich environments: toolchain_intel_mpich.sh
+
 OPTIONS:
 
 -h, --help                Show this message.
