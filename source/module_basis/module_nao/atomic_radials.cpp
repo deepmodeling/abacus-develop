@@ -85,13 +85,21 @@ void AtomicRadials::build(RadialSet* const other, const int itype, const double 
         const double* rgrid = other->cbegin()[ichi].rgrid();
         const double* rvalue = other->cbegin()[ichi].rvalue();
         const int izeta = other->cbegin()[ichi].izeta();
-        // call projgen to modify the orbitals
-        std::vector<double> rvalue_new;
-        smoothgen(ngrid, rgrid, rvalue, rcut, rvalue_new);
-        ngrid = rvalue_new.size();
-        //projgen(l, ngrid, rgrid, rvalue, rcut, 20, rvalue_new);
-        //build the new on-site orbitals
-        this->chi_[ichi].build(l, true, ngrid, rgrid, rvalue_new.data(), 0, izeta, symbol_, itype, false);
+        // if the cutoff radius is larger than the original one, just copy the orbitals
+        if(rcut >= other->cbegin()[ichi].rcut())
+        {
+            this->chi_[ichi].build(l, true, ngrid, rgrid, rvalue, 0, izeta, symbol_, itype, false);
+        }
+        else
+        {
+            // call smoothgen to modify the orbitals to the local projections
+            std::vector<double> rvalue_new;
+            smoothgen(ngrid, rgrid, rvalue, rcut, rvalue_new);
+            ngrid = rvalue_new.size();
+            //projgen(l, ngrid, rgrid, rvalue, rcut, 20, rvalue_new);
+            //build the new on-site orbitals
+            this->chi_[ichi].build(l, true, ngrid, rgrid, rvalue_new.data(), 0, izeta, symbol_, itype, false);
+        }
     }
 }
 
