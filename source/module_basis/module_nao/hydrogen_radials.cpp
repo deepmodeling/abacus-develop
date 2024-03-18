@@ -24,7 +24,7 @@ void HydrogenRadials::build(const int itype,
                             const std::string strategy,
                             std::ofstream* ptr_log)
 {
-    if(with_slater_screening) {printf("Build hydrogen_radials with Slater screening coefficients.\n");}
+    if(with_slater_screening&&rank==0) {printf("Build hydrogen_radials with Slater screening coefficients.\n");}
     cleanup();
     itype_ = itype;
     symbol_ = symbol;
@@ -118,8 +118,14 @@ double HydrogenRadials::generate_hydrogen_radial_toconv(const double charge,
     {
         dr = delta_r;
     }
-    printf("Searching for the cutoff radius for n = %d, l = %d, conv_thr = %6.4e\n", n, l, conv_thr);
-    printf("%10s%12s%14s%18s", "Step Nr.", "Rmax (a.u.)", "Norm", "Delta Norm\n");
+    if(rank == 0)
+    {
+        printf("Searching for the cutoff radius for n = %d, l = %d, conv_thr = %6.4e\n", n, l, conv_thr);
+#ifdef __MPI
+        printf("Convergence information only shown from rank 0, other ranks will be silent.\n");
+#endif
+        printf("%10s%12s%14s%18s", "Step Nr.", "Rmax (a.u.)", "Norm", "Delta Norm\n");
+    }
     int istep = 1;
     double delta_norm = 1.0;
     while((std::fabs(delta_norm) > conv_thr))
@@ -145,11 +151,14 @@ double HydrogenRadials::generate_hydrogen_radial_toconv(const double charge,
         delta_norm = norm;
         norm = radial_norm(rgrid, rvalue);
         delta_norm = norm - delta_norm;
-        if(istep == 0) printf("%10d%12.2f%14.10f%18.10e\n", istep, rmax_, norm, delta_norm);
+        if((istep == 0)&&(rank == 0)) printf("%10d%12.2f%14.10f%18.10e\n", istep, rmax_, norm, delta_norm);
         ++istep;
     }
-    printf("...\n");
-    printf("%10d%12.2f%14.10f%18.10e\n", istep, rmax_, norm, delta_norm);
+    if(rank == 0)
+    {
+        printf("...\n");
+        printf("%10d%12.2f%14.10f%18.10e\n", istep, rmax_, norm, delta_norm);
+    }
     return rmax_;
 }
 
