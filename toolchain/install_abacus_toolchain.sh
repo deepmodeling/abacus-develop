@@ -23,7 +23,6 @@ SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")" && pwd -P)"
 #> \history  Created on Friday, 2023/08/18
 #            Update for Intel (18.08.2023, MK)
 #> \author   Zhaoqing Liu quanmisaka@stu.pku.edu.cn
-#> with the reference of Lianheng Tong (ltong) lianheng.tong@kcl.ac.uk
 # *****************************************************************************
 
 # ------------------------------------------------------------------------
@@ -218,8 +217,8 @@ package it is working on. This is true even if you lose the content of
 the entire ./build directory.
 
   +----------------------------------------------------------------+
-  |  YOU SHOULD ALWAYS SOURCE ./install/setup BEFORE YOU RUN ABACUS |
-  |  COMPILED WITH THIS TOOLCHAIN                                   |
+  |  YOU SHOULD ALWAYS SOURCE ./install/setup or ./abacus_env.sh    |
+  |  BEFORE YOU RUN ABACUS COMPILED WITH THIS TOOLCHAIN             |
   +----------------------------------------------------------------+
 
 EOF

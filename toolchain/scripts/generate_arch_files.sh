@@ -64,7 +64,7 @@ fi
 COVERAGE_FLAGS="-O1 -coverage -fkeep-static-functions"
 COVERAGE_DFLAGS="-D__NO_ABORT"
 
-# profile based optimization, see https://www.ABACUS.org/howto:pgo
+# profiling flags
 PROFOPT_FLAGS="\$(PROFOPT)"
 
 # special flags for gfortran
