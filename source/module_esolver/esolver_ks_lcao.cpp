@@ -944,14 +944,6 @@ namespace ModuleESolver
     E_gradient_wfc.zero_out();
     double Etotal_RDMFT = 0.0;
 
-    std::cout << "\n\n***\nnk_total: " << this->kv.nkstot_full << "\n***\n\n" << std::endl;
-    std::cout << "\n\n***\nwg.nr, wg.nc: " << this->pelec->wg.nr << " " << this->pelec->wg.nc << "\n***\n\n" << std::endl;
-    std::cout << "\n\n***\npsi's nk, nbands_local, nbasis_local: " << this->psi->get_nk() << " " << this->psi->get_nbands() << " " << this->psi->get_nbasis() << "\n***\n\n" << std::endl;
-    
-    rdmft::printMatrix_pointer(this->pelec->wg.nr, this->pelec->wg.nc, &(this->pelec->wg(0, 0)), "wg in ABACUS");
-    rdmft::printMatrix_pointer(this->pelec->wg.nr, this->pelec->wg.nc, &(this->rdmft_solver.wk_fun_occNum(0, 0)), "wk_fun_occNum in RDMFT");
-    
-
     // get natural occupation numbers from wg which considers k point weights and spin, this just proper for nspin=1 !!! or 2 ? in Soild Si, it's correct
     // wk consider both weight of k-point and spin. When nspin=1, wk[ik] = W_k * 2 . When nspin=2, wk[ik] = W_k
     ModuleBase::matrix occ_number(this->pelec->wg);

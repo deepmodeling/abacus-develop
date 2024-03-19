@@ -145,13 +145,13 @@ void HkPsi(const Parallel_Orbitals* ParaV, const TK& HK, const TK& wfc, TK& H_wf
     const std::complex<double> one_complex = {1.0, 0.0};
     const std::complex<double> zero_complex = {0.0, 0.0};
     const char N_char = 'N';
-    const char T_char = 'T';
+    const char C_char = 'C';
 
     const int nbasis = ParaV->desc[2];
     const int nbands = ParaV->desc_wfc[3];
 
     //because wfc(bands, basis'), H(basis, basis'), we do wfc*H^T(in the perspective of cpp, not in fortran). And get H_wfc(bands, basis) is correct.
-    pzgemm_( &T_char, &N_char, &nbasis, &nbands, &nbasis, &one_complex, &HK, &one_int, &one_int, ParaV->desc,
+    pzgemm_( &C_char, &N_char, &nbasis, &nbands, &nbasis, &one_complex, &HK, &one_int, &one_int, ParaV->desc,
         &wfc, &one_int, &one_int, ParaV->desc_wfc, &zero_complex, &H_wfc, &one_int, &one_int, ParaV->desc_wfc );
 }
 

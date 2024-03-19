@@ -383,30 +383,30 @@ namespace ModuleESolver
                 
                 ModuleBase::TITLE("RDMFT", "E & Egradient");
                 ModuleBase::timer::tick("RDMFT", "E & Egradient");
-                // if( iter==2 ) // ( iter>=2 && GlobalV::CALCULATION == "rdmft" && ModuleESolver::determine_type() == "ksdft_lcao" )
-                // {
-                //     if( iter==2 )
-                //     {
-                //         ModuleBase::matrix occ_number_ks(this->pelec->wg);
-                //         for(int ik=0; ik < occ_number_ks.nr; ++ik)
-                //         {
-                //             for(int inb=0; inb < occ_number_ks.nc; ++inb) occ_number_ks(ik, inb) /= this->kv.wk[ik];
-                //         }
-                //         this->update_elec_rdmft(occ_number_ks, *(this->psi));
-                //     }
-                //     else
-                //     {
-                //         // this should update occ_number and wfc in another way when iter>2
-                //         // this->update_elec_rdmft(occ_number, wfc);
-                //     }
+                if( iter==2 ) // ( iter>=2 && GlobalV::CALCULATION == "rdmft" && ModuleESolver::determine_type() == "ksdft_lcao" )
+                {
+                    if( iter==2 )
+                    {
+                        ModuleBase::matrix occ_number_ks(this->pelec->wg);
+                        for(int ik=0; ik < occ_number_ks.nr; ++ik)
+                        {
+                            for(int inb=0; inb < occ_number_ks.nc; ++inb) occ_number_ks(ik, inb) /= this->kv.wk[ik];
+                        }
+                        this->update_elec_rdmft(occ_number_ks, *(this->psi));
+                    }
+                    else
+                    {
+                        // this should update occ_number and wfc in another way when iter>2
+                        // this->update_elec_rdmft(occ_number, wfc);
+                    }
 
-                //     // do rdmft calculation
-                //     ModuleBase::matrix E_gradient_wg(this->pelec->wg.nr, this->pelec->wg.nc, true);
-                //     psi::Psi<T> E_gradient_wfc(this->psi->get_nk(), this->psi->get_nbands(), this->psi->get_nbasis()); 
-                //     double Etotal = this->Run_rdmft(E_gradient_wg, E_gradient_wfc);   // add by jghan 2024-03-16
+                    // do rdmft calculation
+                    ModuleBase::matrix E_gradient_wg(this->pelec->wg.nr, this->pelec->wg.nc, true);
+                    psi::Psi<T> E_gradient_wfc(this->psi->get_nk(), this->psi->get_nbands(), this->psi->get_nbasis()); 
+                    double Etotal = this->Run_rdmft(E_gradient_wg, E_gradient_wfc);   // add by jghan 2024-03-16
 
-                //     // continue;
-                // }
+                    // continue;
+                }
                 ModuleBase::timer::tick("RDMFT", "E & Egradient");
 
 
