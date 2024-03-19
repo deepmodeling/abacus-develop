@@ -59,6 +59,7 @@
     - [search\_radius](#search_radius)
     - [search\_pbc](#search_pbc)
     - [bx, by, bz](#bx-by-bz)
+    - [gint\_device](#gint_device)
   - [Electronic structure](#electronic-structure)
     - [basis\_type](#basis_type)
     - [ks\_solver](#ks_solver)
@@ -874,6 +875,12 @@ These variables are used to control the numerical atomic orbitals related parame
 - **Type**: Integer
 - **Description**: In the matrix operation of grid integral, bx/by/bz grids (in x, y, z directions) are treated as a whole as a matrix element. A different value will affect the calculation speed. The default is 0, which means abacus will automatically calculate these values.
 - **Default**: 0
+
+### gint_device
+
+- **Type**: String
+- **Description**: Choose the device for calculating the `gint` module when `USE_CUDA=ON` and `gamma_only=1`. If `USE_CUDA=ON` and `gamma_only=1`, the default value of `gint_device` is "gpu", but you can set it to "cpu" to specify the CPU for `gint` module calculations. If `USE_CUDA=OFF` or `gamma_only=0`, you can ignore this parameter as the `gint` module will always use the CPU.
+- **Default**: "gpu"
 
 [back to top](#full-list-of-input-keywords)
 

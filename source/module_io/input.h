@@ -118,6 +118,7 @@ class Input
     //==========================================================
     std::string basis_type; // xiaohui add 2013-09-01, for structural adjustment
     std::string ks_solver; // xiaohui add 2013-09-01
+    std::string gint_device; // device for calculating gint
 
     //==========================================================
     // Forces

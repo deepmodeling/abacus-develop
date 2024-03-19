@@ -370,6 +370,8 @@ void Input::Default(void)
     lcao_dk = 0.01;
     lcao_dr = 0.01;
     lcao_rmax = 30; // (a.u.)
+    gint_device = "gpu";
+
     //----------------------------------------------------------
     // efield and dipole correction     Yu Liu add 2022-05-18
     //----------------------------------------------------------
@@ -1510,6 +1512,10 @@ bool Input::Read(const std::string& fn)
         else if (strcmp("lcao_rmax", word) == 0)
         {
             read_value(ifs, lcao_rmax);
+        }
+        else if (strcmp("gint_device", word) == 0)
+        {
+            read_value(ifs, gint_device);
         }
         //----------------------------------------------------------
         // Molecule Dynamics
@@ -3265,6 +3271,7 @@ void Input::Bcast()
 
     Parallel_Common::bcast_string(basis_type); // xiaohui add 2013-09-01
     Parallel_Common::bcast_string(ks_solver);  // xiaohui add 2013-09-01
+    Parallel_Common::bcast_string(gint_device);
     Parallel_Common::bcast_double(search_radius);
     Parallel_Common::bcast_bool(search_pbc);
     Parallel_Common::bcast_double(search_radius);
@@ -3744,6 +3751,13 @@ void Input::Check(void)
         {
             ModuleBase::WARNING_QUIT("Input", "PAW is for pw basis only");
         }
+    }
+#endif
+
+#ifdef __CUDA
+    if(gint_device != "cpu" && gint_device != "gpu")
+    {
+        ModuleBase::WARNING_QUIT("Input", "gint_device must be 'cpu' or 'gpu'");
     }
 #endif
 

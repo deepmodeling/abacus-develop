@@ -186,6 +186,8 @@ TEST_F(InputConvTest, Conv)
     EXPECT_EQ(GlobalV::sc_file, "sc.json");
 	EXPECT_EQ(GlobalV::MIXING_RESTART,0);
 	EXPECT_EQ(GlobalV::MIXING_DMR,false);
+
+	EXPECT_EQ(GlobalV::gint_device,"gpu");
 }
 
 TEST_F(InputConvTest, ConvRelax)

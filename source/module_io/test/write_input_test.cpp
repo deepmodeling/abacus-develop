@@ -170,6 +170,8 @@ TEST_F(write_input, PW2)
                     "cell_factor                    1.2 #used in the construction of the pseudopotential tables"));
     EXPECT_THAT(output,
                 testing::HasSubstr("pw_seed                        1 #random seed for initializing wave functions"));
+    EXPECT_THAT(output,
+                testing::HasSubstr("gint_device                        gpu #the device for calculating gint module"));
     EXPECT_THAT(output, testing::HasSubstr(""));
     ifs.close();
     remove("write_input_test.log");
