@@ -1,7 +1,5 @@
 #!/bin/bash -e
 
-# author: Ole Schuett
-
 # Install Fedora packages required for the toolchain.
 
 echo "Installing Fedora packages..."

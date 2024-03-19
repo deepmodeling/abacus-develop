@@ -1,7 +1,5 @@
 #!/bin/bash -e
 
-# author: Ole Schuett
-
 # Install Ubuntu packages required for the toolchain.
 
 echo "Installing Ubuntu packages..."
