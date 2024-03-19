@@ -4,7 +4,6 @@ if(POLICY CMP0135) # https://cmake.org/cmake/help/git-stage/policy/CMP0135.html
 endif()
 
 project(ABACUS
-    VERSION 3.0.0
     DESCRIPTION "ABACUS is an electronic structure package based on DFT."
     HOMEPAGE_URL "https://github.com/deepmodeling/abacus-develop"
     LANGUAGES CXX

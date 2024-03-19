@@ -371,6 +371,7 @@ void Input::Default(void)
     lcao_dk = 0.01;
     lcao_dr = 0.01;
     lcao_rmax = 30; // (a.u.)
+    onsite_radius = 0; // (a.u.)
     //----------------------------------------------------------
     // efield and dipole correction     Yu Liu add 2022-05-18
     //----------------------------------------------------------
@@ -552,7 +553,7 @@ void Input::Default(void)
     //==========================================================
     //    DFT+U     Xin Qu added on 2020-10-29
     //==========================================================
-    dft_plus_u = false; // 1:DFT+U correction; 0: standard DFT calcullation
+    dft_plus_u = 0; // 2:DFT+U correction with dual occupations 1:DFT+U correction with full occupations; 0: standard DFT calcullation
     yukawa_potential = false;
     yukawa_lambda = -1.0;
     omc = 0;
@@ -638,7 +639,7 @@ void Input::Default(void)
     // variables for Quasiatomic Orbital analysis
     //==========================================================
     qo_switch = false;
-    qo_basis = "hydrogen";
+    qo_basis = "szv";
     qo_strategy = {};
     qo_thr = 1e-6;
     qo_screening_coeff = {};
@@ -1512,6 +1513,10 @@ bool Input::Read(const std::string& fn)
         {
             read_value(ifs, lcao_rmax);
         }
+        else if (strcmp("onsite_radius", word) == 0)
+        {
+            read_value(ifs, onsite_radius);
+        }
         //----------------------------------------------------------
         // Molecule Dynamics
         // Yu Liu add 2021-07-30
@@ -2112,7 +2117,7 @@ bool Input::Read(const std::string& fn)
         //----------------------------------------------------------------------------------
         else if (strcmp("dft_plus_u", word) == 0)
         {
-            read_bool(ifs, dft_plus_u);
+            read_value(ifs, dft_plus_u);
         }
         else if (strcmp("yukawa_potential", word) == 0)
             ifs.ignore(150, '\n');
@@ -2513,11 +2518,16 @@ bool Input::Read(const std::string& fn)
             }
         }
 
-        dft_plus_u = 0;
+        bool close_plus_u = 1;
         for (int i = 0; i < ntype; i++)
         {
             if (orbital_corr[i] != -1)
-                dft_plus_u = 1;
+                close_plus_u = 0;
+        }
+        if(close_plus_u)
+        {
+            dft_plus_u = 0;
+            GlobalV::ofs_running << "No atoms are correlated, DFT+U is closed!!!" << std::endl;
         }
 
         if (strcmp("lcao", basis_type.c_str()) != 0)
@@ -3057,6 +3067,11 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             if (!bz)
                 bz = 1;
         }
+        if(dft_plus_u == 1 && onsite_radius == 0.0)
+        {
+            //autoset onsite_radius to 5.0 as default
+            onsite_radius = 5.0;
+        }
     }
 
     if (basis_type == "pw" || basis_type == "lcao_in_pw")
@@ -3155,7 +3170,13 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         }
         else
         {
-            std::string default_strategy = (qo_basis == "hydrogen")? "minimal-valence": "all";
+            std::string default_strategy;
+            if(qo_basis == "hydrogen") default_strategy = "energy-valence";
+            else if((qo_basis == "pswfc")||(qo_basis == "szv")) default_strategy = "all";
+            else
+            {
+                ModuleBase::WARNING_QUIT("Input", "When setting default values for qo_strategy, unexpected/unknown qo_basis is found. Please check it.");
+            }
             qo_strategy.resize(ntype, default_strategy);
         }
     }
@@ -3426,6 +3447,7 @@ void Input::Bcast()
     Parallel_Common::bcast_double(lcao_dk);
     Parallel_Common::bcast_double(lcao_dr);
     Parallel_Common::bcast_double(lcao_rmax);
+    Parallel_Common::bcast_double(onsite_radius);
     // zheng daye add 2014/5/5
     Parallel_Common::bcast_string(mdp.md_type);
     Parallel_Common::bcast_string(mdp.md_thermostat);
@@ -3609,7 +3631,7 @@ void Input::Bcast()
     //-----------------------------------------------------------------------------------
     // DFT+U (added by Quxin 2020-10-29)
     //-----------------------------------------------------------------------------------
-    Parallel_Common::bcast_bool(dft_plus_u);
+    Parallel_Common::bcast_int(dft_plus_u);
     Parallel_Common::bcast_bool(yukawa_potential);
     Parallel_Common::bcast_int(omc);
     Parallel_Common::bcast_double(yukawa_lambda);

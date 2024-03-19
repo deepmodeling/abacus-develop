@@ -1,7 +1,5 @@
 #!/bin/bash -e
 
-# author: Ole Schuett
-
 if (($# != 1)); then
   echo "Usage: install_requirements.sh <BASE_IMAGE>"
   exit 1
