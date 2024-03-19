@@ -262,7 +262,14 @@ void bind_m_nao(py::module& m)
             "deriv"_a = false);
     // Bind the NumericalRadial class
     py::class_<NumericalRadial>(m_nao, "NumericalRadial")
-        .def(py::init<>())
+        .def(py::init<>(), R"pbdoc(
+    A class that represents a numerical radial function.
+
+    This class is designed to be the container for the radial part of numerical atomic orbitals, Kleinman-Bylander beta functions, and all other similar numerical radial functions in three-dimensional space, each of which is associated with some angular momentum l and whose r and k space values are related by an l-th order spherical Bessel transform.
+
+    A NumericalRadial object can be initialized by "build", which requires the angular momentum, the number of grid points, the grid and the corresponding values. Grid does not have to be uniform. One can initialize the object in either r or k space. After initialization, one can set the
+    grid in the other space via set_grid or set_uniform_grid. Values in the other space are automatically computed by a spherical Bessel transform.
+        )pbdoc")
         .def(
             "build",
             [](NumericalRadial& self,
@@ -293,6 +300,36 @@ void bind_m_nao(py::module& m)
                            itype,
                            init_sbt);
             },
+            R"pbdoc(
+    Initializes the object by providing the grid & values in one space.
+
+    Parameters
+    ----------
+    l : int
+        Angular momentum.
+    for_r_space : bool
+        Specifies whether the input corresponds to r or k space.
+    ngrid : int
+        Number of grid points.
+    grid : array_like
+        Grid points, must be positive & strictly increasing.
+    value : array_like
+        Values on the grid.
+    p : float
+        Implicit exponent in input values, see pr_ & pk_.
+    izeta : int
+        Multiplicity index of radial functions of the same itype and l.
+    symbol : str
+        Chemical symbol.
+    itype : int
+        Index for the element in calculation.
+    init_sbt : bool
+        If true, internal SphericalBesselTransformer will be initialized.
+
+    Notes
+    -----
+    init_sbt is only useful when the internal SphericalBesselTransformer (sbt_) is null-initialized; The function will NOT reset sbt_ if it is already usable.
+            )pbdoc",
             "l"_a,
             "for_r_space"_a,
             "ngrid"_a,
@@ -303,7 +340,26 @@ void bind_m_nao(py::module& m)
             "symbol"_a = "",
             "itype"_a = 0,
             "init_sbt"_a = true)
-        .def("set_transformer", &NumericalRadial::set_transformer, "sbt"_a, "update"_a = 0)
+        .def("set_transformer",
+             &NumericalRadial::set_transformer,
+             R"pbdoc(
+    Sets a SphericalBesselTransformer.
+
+    By default, the class uses an internal SphericalBesselTransformer, but one can optionally use a shared one. This could be beneficial when there are a lot of NumericalRadial objects whose grids have the same size.
+
+    Parameters
+    ----------
+    sbt : SphericalBesselTransformer
+        An external transformer.
+    update : int
+        Specifies whether and how values are recomputed with the new transformer.
+        Accepted values are:
+        *  0: does not recompute values;
+        *  1: calls a forward transform;
+        * -1: calls a backward transform.
+        )pbdoc",
+             "sbt"_a,
+             "update"_a = 0)
         .def(
             "set_grid",
             [](NumericalRadial& self,
@@ -318,12 +374,54 @@ void bind_m_nao(py::module& m)
                 }
                 self.set_grid(for_r_space, ngrid, static_cast<double*>(grid_info.ptr), mode);
             },
+            R"pbdoc(
+    Sets up a grid.
+
+    This function can be used to set up the grid which is absent in "build" (in which case values on the new grid are automatically computed by a spherical Bessel transform) or interpolate on an existing grid to a new grid.
+
+    Parameters
+    ----------
+    for_r_space : bool
+        Specifies whether to set grid for the r or k space.
+    ngrid : int
+        Number of grid points.
+    grid : array_like
+        Grid points, must be positive & strictly increasing.
+    mode : char
+        Specifies how values are updated, could be 'i' or 't':
+        - 'i': New values are obtained by interpolating and zero-padding
+               the existing values from current space. With this option,
+               it is an error if the designated space does not have a grid;
+        - 't': New values are obtained via transform from the other space.
+               With this option, it is an error if the other space does not
+               have a grid.
+            )pbdoc",
             "for_r_space"_a,
             "ngrid"_a,
             "grid"_a,
             "mode"_a = 'i')
         .def("set_uniform_grid",
              &NumericalRadial::set_uniform_grid,
+             R"pbdoc(
+    Sets up a uniform grid.
+
+    The functionality of this function is similar to set_grid, except that the new grid is a uniform grid specified by the cutoff and the number of grid points, which are calculated as:
+
+        grid[i] = i * (cutoff / (ngrid - 1))
+
+    Parameters
+    ----------
+    for_r_space : bool
+        Specifies whether to set grid for the r or k space.
+    ngrid : int
+        Number of grid points.
+    cutoff : float
+        The maximum value of the grid, which determines the grid spacing.
+    enable_fft : bool
+        If true, this function will not only set up the grid & values in the designated space, but also sets the grid in the other space such that the r & k grids are FFT-compliant (and updates values via a FFT-based spherical Bessel transform).
+     mode : char
+        Specifies how values are updated, could be 'i' or 't'.
+            )pbdoc",
              "for_r_space"_a,
              "ngrid"_a,
              "cutoff"_a,
@@ -335,11 +433,31 @@ void bind_m_nao(py::module& m)
                 py::buffer_info value_info = value.request();
                 self.set_value(for_r_space, static_cast<double*>(value_info.ptr), p);
             },
+            R"pbdoc(
+    Updates values on an existing grid.
+
+    This function does not alter the grid; it merely updates values on the existing grid. The number of values to read from "value" is determined by the current number of points in the r or k space (nr_ or nk_). Values of the other space will be automatically updated if they exist.
+
+    Warning
+    -------
+    This function does not check the index bound; use with care!
+                )pbdoc",
             "for_r_space"_a,
             "value"_a,
             "p"_a)
         .def("wipe", &NumericalRadial::wipe, "r_space"_a = true, "k_space"_a = true)
-        .def("normalize", &NumericalRadial::normalize, "for_r_space"_a = true)
+        .def("normalize",
+             &NumericalRadial::normalize,
+             R"pbdoc(
+    Normalizes the radial function.
+
+    The radial function is normalized such that the integral of the square of the function multiplied by the square of the radial coordinate over the entire space is equal to one:
+
+        ∫ from 0 to +∞ of (x^2 * f(x)^2) dx = 1
+
+    where x is r or k. The integral is evaluated with Simpson's rule. Values in the other space are updated automatically via a spherical Bessel transform.
+    )pbdoc",
+             "for_r_space"_a = true)
         // Getters
         .def_property_readonly("symbol", &NumericalRadial::symbol)
         .def_property_readonly("itype", &NumericalRadial::itype)

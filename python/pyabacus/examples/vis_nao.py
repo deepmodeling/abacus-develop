@@ -21,11 +21,8 @@ def cart2sph(x, y, z):
     azimuth = np.arctan2(y, x)
     return r, polar, azimuth
 
-def orbital_plot(m, l, zeta, file_list):
-    nfile = len(file_list)
-    orb = nao.RadialCollection()
-    orb.build(nfile, file_list, 'o')
-    chi = orb(m, l, zeta)
+def orbital_plot(orb, itype, l, zeta, m):
+    chi = orb(itype, l, zeta)
 
     # 3d mesh grid
     w = 3
@@ -59,10 +56,18 @@ def orbital_plot(m, l, zeta, file_list):
     fig.show()
 
 if __name__ == '__main__':
-    l = 1
-    zeta = 0
-    m = 0
+
     orb_dir = '../../../tests/PP_ORB/'
     file_list = ['H_gga_8au_100Ry_2s1p.orb', 'O_gga_10au_100Ry_2s2p1d.orb']
     file_list = [orb_dir + orbfile for orbfile in file_list ]
-    orbital_plot(m, l, zeta, file_list)
+    nfile = len(file_list)
+
+    # set parameters
+    l = 1
+    zeta = 0
+    m = 0
+    itype = 0
+    orb = nao.RadialCollection()
+    orb.build(nfile, file_list, 'o')
+
+    orbital_plot(orb, itype, l, zeta, m)
