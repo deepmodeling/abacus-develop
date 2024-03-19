@@ -1,44 +1,44 @@
 ---
-Language:        Cpp
+Language: Cpp
 BasedOnStyle: Microsoft
 
-AlignArrayOfStructures: Left
+AlignArrayOfStructures: Right
 AlwaysBreakTemplateDeclarations: Yes
 
-AllowAllArgumentsOnNextLine: 'false'
-AllowAllParametersOfDeclarationOnNextLine: 'false'
-BinPackArguments: 'false'
-BinPackParameters: 'false'
+AllowAllArgumentsOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: false
+BinPackArguments: false
+BinPackParameters: false
 
 BreakBeforeBinaryOperators: All
-BreakBeforeTernaryOperators: 'true'
+BreakBeforeTernaryOperators: true
 
-Cpp11BracedListStyle: 'true'
-FixNamespaceComments: 'true'
+Cpp11BracedListStyle: true
+FixNamespaceComments: true
 
 # About include
-IncludeBlocks:   Regroup
+IncludeBlocks: Regroup
 IncludeCategories:
-  - Regex:           '^<ext/.*\.h>'
-    Priority:        2
-    SortPriority:    0
-    CaseSensitive:   false
-  - Regex:           '^<.*\.h>'
-    Priority:        1
-    SortPriority:    0
-    CaseSensitive:   false
-  - Regex:           '^<.*'
-    Priority:        2
-    SortPriority:    0
-    CaseSensitive:   false
-  - Regex:           '.*'
-    Priority:        3
-    SortPriority:    0
-    CaseSensitive:   false
+  - Regex: '^<ext/.*\.h>'
+    Priority: 2
+    SortPriority: 0
+    CaseSensitive: false
+  - Regex: '^<.*\.h>'
+    Priority: 1
+    SortPriority: 0
+    CaseSensitive: false
+  - Regex: '^<.*'
+    Priority: 2
+    SortPriority: 0
+    CaseSensitive: false
+  - Regex: '.*'
+    Priority: 3
+    SortPriority: 0
+    CaseSensitive: false
 IncludeIsMainRegex: '([-_](test|unittest))?$'
 IncludeIsMainSourceRegex: ''
 
-IndentWidth: '4'
+IndentWidth: 4
 IndentWrappedFunctionNames: true
 
 # About Point
@@ -47,22 +47,22 @@ PointerAlignment: Left
 
 PackConstructorInitializers: NextLine
 
-ReflowComments: 'true'
-SortIncludes: 'true'
-SortUsingDeclarations: 'true'
+ReflowComments: true
+SortIncludes: true
+SortUsingDeclarations: true
 
 # About space
-SpaceAfterCStyleCast: 'false'
-SpaceAfterLogicalNot: 'false'
-SpaceBeforeRangeBasedForLoopColon: 'false'
-SpaceInEmptyParentheses: 'false'
-SpacesInAngles: 'false'
-SpacesInCStyleCastParentheses: 'false'
-SpacesInContainerLiterals: 'false'
-SpacesInParentheses: 'false'
-SpacesInSquareBrackets: 'false'
+SpaceAfterCStyleCast: false
+SpaceAfterLogicalNot: false
+SpaceBeforeRangeBasedForLoopColon: false
+SpaceInEmptyParentheses: false
+SpacesInAngles: false
+SpacesInCStyleCastParentheses: false
+SpacesInContainerLiterals: false
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
 
-Standard: Cpp11
-TabWidth: '4'
+Standard: c++11
+TabWidth: 4
 UseTab: Never
 ...
