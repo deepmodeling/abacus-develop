@@ -49,6 +49,14 @@ class RadialCollection
                const double conv_thr = 1e-10,
                const int& rank = 0);
 
+    /// builds a collection of truncated spherical Bessel functions
+    void build(const int lmax, 
+               const int nbes,
+               const double rcut,
+               const double sigma,
+               const double dr
+               );
+
     /**
      * @name Getters
      */

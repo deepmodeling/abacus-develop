@@ -5,10 +5,12 @@
 #include "module_base/spherical_bessel_transformer.h"
 #include "module_base/vector3.h"
 #include "module_base/ylm.h"
+#include "module_base/math_sphbes.h"
 
 #include <cstring>
 #include <chrono>
 using iclock = std::chrono::high_resolution_clock;
+using ModuleBase::Sphbes;
 
 //////////////////////////////////////////
 //! for comparison with module_ao
@@ -330,6 +332,62 @@ TEST_F(TwoCenterIntegratorTest, FiniteDifference)
 //
 //    otp.Destroy_Table(lcao);
 //}
+
+TEST_F(TwoCenterIntegratorTest, SphericalBessel)
+{
+    int lmax = 3;
+    int nbes = 5;
+    int rcut = 7.0;
+    double sigma = 0.0;
+    double dr = 0.005;
+    // The truncated spherical Bessel function has discontinuous first and
+    // second derivative at the cutoff, so a small "dr" is required in order
+    // to achieve sufficient accuracy.
+    //
+    // for dr = 0.01, the error of kinetic matrix element is about 1.5e-3
+    // for dr = 0.001, the error of kinetic matrix element is about 1.5e-4
+
+    orb.build(lmax, nbes, rcut, sigma, dr);
+
+    ModuleBase::SphericalBesselTransformer sbt;
+    orb.set_transformer(sbt);
+
+    double rmax = orb.rcut_max() * 2.0;
+    int nr = static_cast<int>(rmax / dr) + 1;
+    
+    orb.set_uniform_grid(true, nr, rmax, 'i', true);
+
+    S_intor.tabulate(orb, orb, 'S', nr, rmax);
+    T_intor.tabulate(orb, orb, 'T', nr, rmax);
+
+    ModuleBase::Vector3<double> R0 = {0.0, 0.0, 0.0};
+
+    // zeros of spherical bessel functions
+    double* zeros = new double[nbes*(lmax+1)];
+    Sphbes::sphbes_zeros(lmax, nbes, zeros, true);
+
+    // checks the diagonal elements with analytical expression
+    double elem, ref;
+	for (int l = 0; l <= lmax; ++l) {
+		for (int zeta = 0; zeta < nbes; ++zeta) {
+            S_intor.calculate(0, l, zeta, 0, 0, l, zeta, 0, R0, &elem);
+            ref = 0.5 * std::pow(rcut, 3) * std::pow(Sphbes::sphbesj(l+1, zeros[l*nbes+zeta]), 2);
+            EXPECT_NEAR(elem, ref, 1e-5);
+
+            T_intor.calculate(0, l, zeta, 0, 0, l, zeta, 0, R0, &elem);
+            ref = 0.5 * rcut * std::pow(zeros[l*nbes+zeta] * Sphbes::sphbesj(l+1, zeros[l*nbes+zeta]), 2);
+            EXPECT_NEAR(elem, ref, 1e-3);
+
+            // orthogonality
+            for (int zeta2 = 0; zeta2 < zeta; ++zeta2) {
+                S_intor.calculate(0, l, zeta, 0, 0, l, zeta2, 0, R0, &elem);
+                ref = 0.0;
+                EXPECT_NEAR(elem, ref, 1e-5);
+            }
+        }
+    }
+    delete[] zeros;
+}
 
 int main(int argc, char** argv)
 {
