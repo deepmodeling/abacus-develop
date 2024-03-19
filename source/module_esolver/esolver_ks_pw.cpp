@@ -291,11 +291,11 @@ void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
         {
             if(GlobalV::init_wfc.substr(0, 3) == "nao")
             {
-                this->psi_init->cal_ovlp_flzjlq(); // for nao, we recalculate the overlap matrix between flz and jlq
+                this->psi_init->tabulate(); // for nao, we recalculate the overlap matrix between flz and jlq
             }
             else if(GlobalV::init_wfc.substr(0, 6) == "atomic")
             {
-                this->psi_init->cal_ovlp_pswfcjlq(); // for atomic, we recalculate the overlap matrix between pswfc and jlq
+                this->psi_init->tabulate(); // for atomic, we recalculate the overlap matrix between pswfc and jlq
             }
             // for psig is not read-only, its value will be overwritten in initialize_psi(), dont need delete and reallocate
         }
@@ -526,81 +526,20 @@ void ESolver_KS_PW<T, Device>::allocate_psi_init()
     if((GlobalV::init_wfc.substr(0, 6) == "atomic")&&(GlobalC::ucell.natomwfc == 0))
     {
         GlobalV::init_wfc = "random";
-        std::cout << " WARNING: atomic pseudowavefunction is required but there is NOT ANY, set to random automatically." << std::endl;
-        #ifdef __MPI
-        this->psi_init = new psi_initializer_random<T, Device>(&(this->sf), this->pw_wfc, &(GlobalC::ucell), &(GlobalC::Pkpoints), INPUT.pw_seed);
-        #else
-        this->psi_init = new psi_initializer_random<T, Device>(&(this->sf), this->pw_wfc, &(GlobalC::ucell), INPUT.pw_seed);
-        #endif
-        this->psi_init->initialize_only_once();
+        this->psi_init = new psi_initializer_random<T, Device>();
     }
-    else
-    {
-        if(GlobalV::init_wfc == "atomic")
-        {
-            #ifdef __MPI
-            this->psi_init = new psi_initializer_atomic<T, Device>(&(this->sf), this->pw_wfc, &(GlobalC::ucell), &(GlobalC::Pkpoints), INPUT.pw_seed);
-            #else
-            this->psi_init = new psi_initializer_atomic<T, Device>(&(this->sf), this->pw_wfc, &(GlobalC::ucell), INPUT.pw_seed);
-            #endif
-            this->psi_init->initialize_only_once(&(GlobalC::ppcell));
-            this->psi_init->cal_ovlp_pswfcjlq();
-        }
-        else if(GlobalV::init_wfc == "random")
-        {
-            #ifdef __MPI
-            this->psi_init = new psi_initializer_random<T, Device>(&(this->sf), this->pw_wfc, &(GlobalC::ucell), &(GlobalC::Pkpoints), INPUT.pw_seed);
-            #else
-            this->psi_init = new psi_initializer_random<T, Device>(&(this->sf), this->pw_wfc, &(GlobalC::ucell), INPUT.pw_seed);
-            #endif
-            this->psi_init->initialize_only_once();
-        }
-        else if(GlobalV::init_wfc == "nao")
-        {
-            /*
-            if(GlobalV::NSPIN == 4)
-            {
-                ModuleBase::WARNING_QUIT("ESolver_KS_PW::allocate_psi_init", "for nao, soc this not safely implemented yet. To use it now, comment out this line.");
-            }
-            */
-            #ifdef __MPI
-            this->psi_init = new psi_initializer_nao<T, Device>(&(this->sf), this->pw_wfc, &(GlobalC::ucell), &(GlobalC::Pkpoints), INPUT.pw_seed);
-            #else
-            this->psi_init = new psi_initializer_nao<T, Device>(&(this->sf), this->pw_wfc, &(GlobalC::ucell), INPUT.pw_seed);
-            #endif
-            this->psi_init->set_orbital_files(GlobalC::ucell.orbital_fn);
-            this->psi_init->initialize_only_once();
-            this->psi_init->cal_ovlp_flzjlq();
-        }
-        else if(GlobalV::init_wfc == "atomic+random")
-        {
-            #ifdef __MPI
-            this->psi_init = new psi_initializer_atomic_random<T, Device>(&(this->sf), this->pw_wfc, &(GlobalC::ucell), &(GlobalC::Pkpoints), INPUT.pw_seed);
-            #else
-            this->psi_init = new psi_initializer_atomic_random<T, Device>(&(this->sf), this->pw_wfc, &(GlobalC::ucell), INPUT.pw_seed);
-            #endif
-            this->psi_init->initialize_only_once(&(GlobalC::ppcell));
-            this->psi_init->cal_ovlp_pswfcjlq();
-        }
-        else if(GlobalV::init_wfc == "nao+random")
-        {
-            /*
-            if(GlobalV::NSPIN == 4)
-            {
-                ModuleBase::WARNING_QUIT("ESolver_KS_PW::allocate_psi_init", "for nao, soc this not safely implemented yet. To use it now, comment out this line.");
-            }
-            */
-            #ifdef __MPI
-            this->psi_init = new psi_initializer_nao_random<T, Device>(&(this->sf), this->pw_wfc, &(GlobalC::ucell), &(GlobalC::Pkpoints), INPUT.pw_seed);
-            #else
-            this->psi_init = new psi_initializer_nao_random<T, Device>(&(this->sf), this->pw_wfc, &(GlobalC::ucell), INPUT.pw_seed);
-            #endif
-            this->psi_init->set_orbital_files(GlobalC::ucell.orbital_fn);
-            this->psi_init->initialize_only_once();
-            this->psi_init->cal_ovlp_flzjlq();
-        }
-        else ModuleBase::WARNING_QUIT("ESolver_KS_PW::allocate_psi_init", "for new psi initializer, init_wfc type not supported");
-    }
+    else if(GlobalV::init_wfc == "atomic") this->psi_init = new psi_initializer_atomic<T, Device>();
+    else if(GlobalV::init_wfc == "random") this->psi_init = new psi_initializer_random<T, Device>();
+    else if(GlobalV::init_wfc == "nao") this->psi_init = new psi_initializer_nao<T, Device>();
+    else if(GlobalV::init_wfc == "atomic+random") this->psi_init = new psi_initializer_atomic_random<T, Device>();
+    else if(GlobalV::init_wfc == "nao+random") this->psi_init = new psi_initializer_nao_random<T, Device>();
+    else ModuleBase::WARNING_QUIT("ESolver_KS_PW::allocate_psi_init", "for new psi initializer, init_wfc type not supported");
+    #ifdef __MPI
+    this->psi_init->initialize(&this->sf, this->pw_wfc, &GlobalC::ucell, &GlobalC::Pkpoints, 1, &GlobalC::ppcell, GlobalV::MY_RANK);
+    #else
+    this->psi_init->initialize(&this->sf, this->pw_wfc, &GlobalC::ucell, 1, &GlobalC::ppcell);
+    #endif
+    this->psi_init->tabulate();
     ModuleBase::timer::tick("ESolver_KS_PW", "allocate_psi_init");
 }
 /*
@@ -630,7 +569,7 @@ void ESolver_KS_PW<T, Device>::initialize_psi()
             }
             */
             // then adjust dimension from psig to psi
-            if (this->psi_init->get_method() != "random")
+            if (this->psi_init->method() != "random")
             {
                 if (
                     (
@@ -725,7 +664,7 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
                 more efficient. Or an extrapolation strategy can be used.
             */
 
-            if((istep == 0)&&(iter == 1)&&!(this->psi_init->get_initialized())) this->initialize_psi();
+            if((istep == 0)&&(iter == 1)&&!(this->psi_init->initialized())) this->initialize_psi();
         }
         if(GlobalV::BASIS_TYPE != "lcao_in_pw")
         {

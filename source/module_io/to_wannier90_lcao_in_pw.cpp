@@ -42,16 +42,13 @@ void toWannier90_LCAO_IN_PW::calculate(
 
     Structure_Factor* sf_ptr = const_cast<Structure_Factor*>(&sf);
     ModulePW::PW_Basis_K* wfcpw_ptr = const_cast<ModulePW::PW_Basis_K*>(wfcpw);
+    this->psi_init_ = new psi_initializer_nao<std::complex<double>, psi::DEVICE_CPU>();
     #ifdef __MPI
-    this->psi_init_ = new psi_initializer_nao<std::complex<double>, psi::DEVICE_CPU>(
-        sf_ptr, wfcpw_ptr, &(GlobalC::ucell), &(GlobalC::Pkpoints));
+    this->psi_init_->initialize(sf_ptr, wfcpw_ptr, &(GlobalC::ucell), &(GlobalC::Pkpoints), 1, nullptr, GlobalV::MY_RANK);
     #else
-    this->psi_init_ = new psi_initializer_nao<std::complex<double>, psi::DEVICE_CPU>(
-        sf_ptr, wfcpw_ptr, &(GlobalC::ucell));
+    this->psi_init_->initialize(sf_ptr, wfcpw_ptr, &(GlobalC::ucell), 1, nullptr);
     #endif
-    this->psi_init_->set_orbital_files(GlobalC::ucell.orbital_fn);
-    this->psi_init_->initialize_only_once();
-    this->psi_init_->cal_ovlp_flzjlq();
+    this->psi_init_->tabulate();
     this->psi_init_->allocate(true);
     read_nnkp(kv);
 
@@ -218,7 +215,7 @@ void toWannier90_LCAO_IN_PW::nao_G_expansion(
 )
 {
     int npwx = wfcpw->npwk_max;
-    psi::Psi<std::complex<double>>* psig = this->psi_init_->cal_psig(ik, false);
+    psi::Psi<std::complex<double>>* psig = this->psi_init_->cal_psig(ik);
     int nbands = GlobalV::NLOCAL;
     int nbasis = npwx*GlobalV::NPOL;
     for (int ib = 0; ib < nbands; ib++)

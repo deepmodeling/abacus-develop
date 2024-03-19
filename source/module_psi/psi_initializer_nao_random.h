@@ -13,30 +13,30 @@ class psi_initializer_nao_random : public psi_initializer_nao<T, Device>
     private:
         using Real = typename GetTypeReal<T>::type;
     public:
-        #ifdef __MPI
-        /// @brief parameterized constructor of psi initializer (with MPI support)
-        /// @param sf_in interface, link with Structure_Factor ESolver_FP::sf
-        /// @param pw_wfc_in interface, link with ModulePW::PW_Basis_K* ESolver_FP::pw_wfc
-        /// @param p_ucell_in interface, link with UnitCell GlobalC::ucell
-        /// @param p_parakpts_in interface, link with Parallel_Kpoints GlobalC::Pkpoints
-        /// @param random_seed_in random seed
-        psi_initializer_nao_random(Structure_Factor* sf_in, ModulePW::PW_Basis_K* pw_wfc_in, UnitCell* p_ucell_in, Parallel_Kpoints* p_parakpts_in, int random_seed_in = 1);
-        #else
-        /// @brief parameterized constructor of psi initializer (without MPI support)
-        /// @param sf_in interface, link with Structure_Factor ESolver_FP::sf
-        /// @param pw_wfc_in interface, link with ModulePW::PW_Basis_K* ESolver_FP::pw_wfc
-        /// @param p_ucell_in interface, link with UnitCell GlobalC::ucell
-        /// @param random_seed_in random seed
-        psi_initializer_nao_random(Structure_Factor* sf_in, ModulePW::PW_Basis_K* pw_wfc_in, UnitCell* p_ucell_in, int random_seed_in = 1);
-        #endif
-        /// @brief default destructor
-        ~psi_initializer_nao_random();
+        psi_initializer_nao_random() {this->set_method("nao+random"); this->set_random_mix(0.05);};
+        ~psi_initializer_nao_random() {};
 
-        void initialize_only_once(pseudopot_cell_vnl* p_pspot_nl_in = nullptr) override;
-        /// @brief calculate and output planewave wavefunction
-        /// @param ik kpoint index
-        /// @return initialized planewave wavefunction (psi::Psi<std::complex<double>>*)
-        psi::Psi<T, Device>* cal_psig(int ik, const bool& normalize = true) override;
+        #ifdef __MPI // MPI additional implementation
+        /// @brief initialize the psi_initializer with external data and methods
+        virtual void initialize(Structure_Factor*,                      //< structure factor
+                                ModulePW::PW_Basis_K*,                  //< planewave basis
+                                UnitCell*,                              //< unit cell
+                                Parallel_Kpoints*,                      //< parallel kpoints
+                                const int& = 1,                         //< random seed
+                                pseudopot_cell_vnl* = nullptr,          //< nonlocal pseudopotential
+                                const int& = 0) override;               //< MPI rank
+        #else
+        /// @brief serial version of initialize function, link psi_initializer with external data and methods
+        virtual void initialize(Structure_Factor*,                      //< structure factor
+                                ModulePW::PW_Basis_K*,                  //< planewave basis
+                                UnitCell*,                              //< unit cell
+                                const int& = 1,                         //< random seed
+                                pseudopot_cell_vnl* = nullptr) override;//< nonlocal pseudopotential
+        #endif
+
+        psi::Psi<T, Device>* cal_psig(int ik) override;
+
+        virtual void tabulate() override {psi_initializer_nao<T, Device>::tabulate();};
     private:
 };
 #endif
