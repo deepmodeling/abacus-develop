@@ -39,6 +39,13 @@ class RadialSet
      * set symbol_, itype_, nchi_ and chi_.
      *
      */
+
+    // FIXME The following functions are not pure virtual because each
+    // derived class may not need all of them. However, it is not a good
+    // design. Such functions will be removed in the future; their
+    // functionalities will be moved to the constructors of corresponding
+    // derived classes.
+
     ///@{
     /**
      * @brief Builds the object from a file.
@@ -99,15 +106,18 @@ class RadialSet
     /**
      * @brief Builds with the truncated spherical Bessel functions.
      *
+     * This is the interface for building the RadialSet with the truncated
+     * spherical Bessel functions.
+     * See the derived class "SphbesRadials" for the implementation.
      */
-    virtual void build(const int,
-                       const int,
-                       const double,
-                       const double = 0.1,
-                       const double = 0.01,
-                       const int = 0,
-                       std::ofstream* = nullptr,
-                       const int = 0
+    virtual void build(const int,                   ///< maximum angular momentum
+                       const int,                   ///< number of spherical Bessel functions
+                       const double,                ///< cutoff radius
+                       const double = 0.1,          ///< smoothing parameter
+                       const double = 0.01,         ///< radial grid spacing
+                       const int = 0,               ///< element index
+                       std::ofstream* = nullptr,    ///< output file stream for logging
+                       const int = 0                ///< MPI rank
     ) {};
 
     /**
