@@ -78,8 +78,9 @@ class RDMFT
     Parallel_Orbitals* ParaV = nullptr;
     Parallel_2D para_Eij;
     
-    Gint_k* GK = nullptr;      // used for k-dependent grid integration.
-    Gint_Gamma* GG = nullptr;  // used for gamma only algorithms.
+    // GK and GG are used for multi-k grid integration and gamma only algorithms respectively
+    Gint_k* GK = nullptr;
+    Gint_Gamma* GG = nullptr;
     Charge* charge = nullptr;
 
     // update after ion step
@@ -146,18 +147,27 @@ class RDMFT
     void init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& ParaV_in, UnitCell& ucell_in,
                         K_Vectors& kv_in, Charge& charge_in, std::string XC_func_rdmft_in = "HF", double alpha_power_in = 0.656);
 
+    // update in ion-step and get V_TV
     void update_ion(UnitCell& ucell_in, LCAO_Matrix& LM_in, ModulePW::PW_Basis& rho_basis_in,
                         ModuleBase::matrix& vloc_in, ModuleBase::ComplexMatrix& sf_in, Local_Orbital_Charge& loc_in);
 
-    // Or we can use rdmft_solver.wfc/occ_number directly when optimizing, so that the update_charge() function does not require parameters.
+    // update in elec-step
+    // Or we can use rdmft_solver.wfc/occ_number directly when optimizing, so that the update_elec() function does not require parameters.
     void update_elec(const ModuleBase::matrix& occ_number_in, const psi::Psi<TK>& wfc_in);
 
-    // get the special density matrix DM_XC(nk*nbasis_local*nbasis_local)
-    void get_DM_XC(std::vector< std::vector<TK> >& DM_XC);
+    // do all calculation after update occNum&wfc, get Etotal and the gradient of energy with respect to the occNum&wfc
+    double Run(ModuleBase::matrix& E_gradient_wg, psi::Psi<TK>&E_gradient_wfc);
+
+
+
+  protected:
 
     void get_V_TV();
 
     void get_V_hartree();
+
+    // get the special density matrix DM_XC(nk*nbasis_local*nbasis_local)
+    void get_DM_XC(std::vector< std::vector<TK> >& DM_XC);
 
     // construct V_XC based on different XC_functional( i.e. RDMFT class member XC_func_rdmft)
     void get_V_XC();
@@ -165,8 +175,6 @@ class RDMFT
     double cal_rdmft();
 
     void cal_Energy();
-
-    double Run(ModuleBase::matrix& E_gradient_wg, psi::Psi<TK>&E_gradient_wfc);
 
 
 

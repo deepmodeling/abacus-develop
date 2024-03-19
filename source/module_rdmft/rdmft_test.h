@@ -246,7 +246,7 @@ void HkPsi(const Parallel_Orbitals* ParaV, const TK& HK, const TK& wfc, TK& H_wf
     const std::complex<double> one_complex = {1.0, 0.0};
     const std::complex<double> zero_complex = {0.0, 0.0};
     const char N_char = 'N';
-    const char T_char = 'T';
+    const char T_char = 'C';        /////////////////////////// 'T' before
 
     const int nbasis = ParaV->desc[2];
     const int nbands = ParaV->desc_wfc[3];

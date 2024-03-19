@@ -224,15 +224,13 @@ namespace ModuleESolver
         this->pelec->fixed_weights(GlobalV::ocp_kb);
     }
 
-    // add by JingangHan for rdmft calculation
+    // add by jghan for rdmft calculation
     if( GlobalV::CALCULATION == "rdmft" || true )
     {
-        // rdmft_solver.init( &(this->UHM.GG), &(this->UHM.GK), &(this->orb_con.ParaV), &ucell, &(this->kv) );
         rdmft_solver.init( this->UHM.GG, this->UHM.GK, this->orb_con.ParaV, ucell, this->kv, *(this->pelec->charge) );
 
         // the initialization and necessary calculations of these quantities have been completed in init()
         // rdmft_solver.update_ion(ucell, LM, *(this->pw_rho), GlobalC::ppcell.vloc, this->sf.strucFac, this->LOC);
-        // rdmft_solver.get_V_TV();
     }
 }
 
@@ -945,6 +943,14 @@ namespace ModuleESolver
     psi::Psi<TK> E_gradient_wfc(this->psi->get_nk(), this->psi->get_nbands(), this->psi->get_nbasis()); 
     E_gradient_wfc.zero_out();
     double Etotal_RDMFT = 0.0;
+
+    std::cout << "\n\n***\nnk_total: " << this->kv.nkstot_full << "\n***\n\n" << std::endl;
+    std::cout << "\n\n***\nwg.nr, wg.nc: " << this->pelec->wg.nr << " " << this->pelec->wg.nc << "\n***\n\n" << std::endl;
+    std::cout << "\n\n***\npsi's nk, nbands_local, nbasis_local: " << this->psi->get_nk() << " " << this->psi->get_nbands() << " " << this->psi->get_nbasis() << "\n***\n\n" << std::endl;
+    
+    rdmft::printMatrix_pointer(this->pelec->wg.nr, this->pelec->wg.nc, &(this->pelec->wg(0, 0)), "wg in ABACUS");
+    rdmft::printMatrix_pointer(this->pelec->wg.nr, this->pelec->wg.nc, &(this->rdmft_solver.wk_fun_occNum(0, 0)), "wk_fun_occNum in RDMFT");
+    
 
     // get natural occupation numbers from wg which considers k point weights and spin, this just proper for nspin=1 !!! or 2 ? in Soild Si, it's correct
     // wk consider both weight of k-point and spin. When nspin=1, wk[ik] = W_k * 2 . When nspin=2, wk[ik] = W_k

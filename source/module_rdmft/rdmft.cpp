@@ -83,6 +83,8 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
     XC_func_rdmft = XC_func_rdmft_in;
     alpha_power = alpha_power_in;
 
+    // XC_func_rdmft = "power"; // just for test
+
     // create desc[] and something about MPI to Eij(nbands*nbands)
     std::ofstream ofs_running;
     std::ofstream ofs_warning;
@@ -153,6 +155,8 @@ void RDMFT<TK, TR>::update_ion(UnitCell& ucell_in, LCAO_Matrix& LM_in, ModulePW:
     vloc = &vloc_in;
     sf = &sf_in;
     loc = &loc_in;
+
+    this->get_V_TV();
 }
 
 
