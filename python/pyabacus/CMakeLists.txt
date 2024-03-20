@@ -19,12 +19,26 @@ if(DEFINED ENV{MKLROOT} AND NOT DEFINED MKLROOT)
     set(MKLROOT "$ENV{MKLROOT}")
 endif()
 if(MKLROOT)
+
+  set(ENABLE_MPI ON)
+  if (ENABLE_MPI)
+    find_package(MPI REQUIRED)
+    include_directories(${MPI_CXX_INCLUDE_PATH})
+    add_compile_definitions(__MPI)
+  endif()
+
+  set(USE_OPENMP ON)
+  if(USE_OPENMP)
+    find_package(OpenMP REQUIRED)
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    add_link_options(${OpenMP_CXX_LIBRARIES})
+  endif()
   find_package(IntelMKL REQUIRED)
   add_definitions(-D__MKL)
   include_directories(${MKL_INCLUDE_DIRS} ${MKL_INCLUDE_DIRS}/fftw)
 
-  # Since libtorch will find its own MKL, the fftw part conflicts with the original one.
-  # When enable deepks, mkl will be linked within ${TORCH_LIBRARIES}.
+# Since libtorch will find its own MKL, the fftw part conflicts with the original one.
+# When enable deepks, mkl will be linked within ${TORCH_LIBRARIES}.
   if(NOT ENABLE_DEEPKS)
     list(APPEND math_libs IntelMKL::MKL)
   endif()
@@ -38,7 +52,7 @@ else()
     find_package(LAPACK REQUIRED)
     include_directories(${FFTW3_INCLUDE_DIRS})
     message(STATUS "FFTW3_INCLUDE_DIRS: ${FFTW3_INCLUDE_DIRS}")
-  list(APPEND math_libs FFTW3::FFTW3 LAPACK::LAPACK)
+    list(APPEND math_libs FFTW3::FFTW3 LAPACK::LAPACK)
 
   if(ENABLE_LCAO)
     find_package(ScaLAPACK REQUIRED)
@@ -83,12 +97,23 @@ add_library(naopack SHARED
     ${_naos}
     )
 # link math_libs
-target_link_libraries(naopack
+if(MKLROOT)
+  target_link_libraries(naopack
     base
     container
     orb
     ${math_libs}
-)
+    MPI::MPI_CXX
+    OpenMP::OpenMP_CXX
+  )
+else()
+  target_link_libraries(naopack
+    base
+    container
+    orb
+    ${math_libs}
+  )
+endif()
 # list(APPEND _sources ${_naos} ${_bases})
 list(APPEND _sources
     ${PROJECT_SOURCE_DIR}/src/py_abacus.cpp
