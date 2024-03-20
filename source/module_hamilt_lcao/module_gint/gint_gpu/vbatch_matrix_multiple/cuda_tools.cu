@@ -11,7 +11,6 @@ cudaError_t checkCuda(cudaError_t result)
 #endif
     return result;
 }
-
 cudaError_t checkCudaLastError()
 {
 #if defined(__DEBUG)

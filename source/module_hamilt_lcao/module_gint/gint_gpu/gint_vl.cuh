@@ -2,7 +2,7 @@
 #define GINT_VL_CUH
 
 #include <cuda_runtime.h>
-
+namespace lcaoCudaKernel{
 __global__ void get_psi_and_vldr3(double *ylmcoef,
                                   double delta_r_g,
                                   double bxyz_g,
@@ -26,3 +26,4 @@ __global__ void psi_multiple(const int* m, int* n,
                                 double ** global_C_array);
 
 #endif // GINT_VL_CUH
+}

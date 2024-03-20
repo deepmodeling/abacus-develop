@@ -7,6 +7,7 @@
 #include "vbatch_matrix_multiple/vbatch_matrix_mul.cuh"
 #include "vbatch_matrix_multiple/cuda_tools.cuh"
 #include <omp.h>
+namespace lcaoCudaKernel{
 void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
                        const int lgd,
                        const int max_size,
@@ -214,4 +215,5 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
     {
         checkCuda(cudaStreamSynchronize(gridt.streams[i]));
     }
+}
 }

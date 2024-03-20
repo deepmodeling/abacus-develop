@@ -10,6 +10,7 @@
 #include "omp.h"
 #include "vbatch_matrix_multiple/cuda_tools.cuh"
 
+namespace lcaoCudaKernel{
 // Function to calculate forces using GPU-accelerated gamma point Gint
 /**
  * @brief Calculate forces and stresses for the `gint_gamma_force_gpu` function.
@@ -385,4 +386,5 @@ void gint_gamma_force_gpu(hamilt::HContainer<double> *dm, const double vfactor,
   for (int i = 0; i < gridt.nstreams; i++) {
     checkCuda(cudaStreamSynchronize(gridt.streams[i]));
   }
+}
 }

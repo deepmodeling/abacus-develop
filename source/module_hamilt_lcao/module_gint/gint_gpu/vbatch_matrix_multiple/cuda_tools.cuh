@@ -7,7 +7,6 @@
 #include <sstream>
 #include <iostream>
 #include <assert.h>   // for assert
-
 cudaError_t checkCuda(cudaError_t result);
 cudaError_t checkCudaLastError();
 

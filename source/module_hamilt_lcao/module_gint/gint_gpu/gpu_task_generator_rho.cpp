@@ -5,7 +5,7 @@
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_hamilt_lcao/module_gint/gint_tools.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-
+namespace lcaoCudaKernel{
 void gpu_task_generator_rho(const Grid_Technique &gridt, 
                             const int i, const int j,
                             const int psi_size_max, const int max_size,
@@ -187,3 +187,4 @@ void gpu_task_generator_rho(const Grid_Technique &gridt,
 
   delete[] gpu_mat_cal_flag;
 } 
+}

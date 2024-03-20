@@ -2,7 +2,7 @@
 #define GINT_RHO_CUH
 
 #include <cuda_runtime.h>
-
+namespace lcaoCudaKernel{
 __global__ void get_psi(double *ylmcoef,
                         double delta_r_g,
                         double bxyz_g,
@@ -28,3 +28,4 @@ __global__ void psir_dot(int * n,
                         int batchcount);
 
 #endif // GINT_RHO_CUH
+}

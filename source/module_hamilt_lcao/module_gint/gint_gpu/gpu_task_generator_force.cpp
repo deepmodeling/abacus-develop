@@ -4,7 +4,7 @@
 #include "module_hamilt_lcao/module_gint/gint_tools.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "omp.h"
-
+namespace lcaoCudaKernel{
 /**
  * @brief Description of the function.
  *
@@ -185,4 +185,5 @@ void gpu_task_generator_force(
   atom_pair_num = tid;
 
   delete[] gpu_mat_cal_flag;
+}
 }

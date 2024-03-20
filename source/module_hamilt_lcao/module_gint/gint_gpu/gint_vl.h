@@ -8,7 +8,7 @@
 
 cudaError_t checkCuda(cudaError_t result);
 
-
+namespace lcaoCudaKernel{
 void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint, int lgd_now,
                        const int max_size, double vfactor,
                        const double *vlocal, const double *ylmcoef_now,
@@ -36,4 +36,5 @@ void gpu_task_generate_vlocal(const Grid_Technique &gridt,
                               int & max_m,
                               int & max_n);
 
+}
 #endif
