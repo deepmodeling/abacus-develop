@@ -358,11 +358,10 @@ void Input_Conv::Convert(void)
     Lattice_Change_Basic::fixed_axes = INPUT.fixed_axes;
 
     GlobalV::CAL_STRESS = INPUT.cal_stress;
-<<<<<<< HEAD
+
     GlobalV::NUM_STREAM = INPUT.nstream;
     GlobalV::gint_device = INPUT.gint_device;
-=======
->>>>>>> parent of 3d09b0ebe (USE STREAM IN GPU LCAO)
+
 
     GlobalV::RELAX_METHOD = INPUT.relax_method;
     GlobalV::relax_scale_force = INPUT.relax_scale_force;

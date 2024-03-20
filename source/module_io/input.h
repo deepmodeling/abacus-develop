@@ -135,7 +135,7 @@ class Input
     double press2;
     double press3;
     bool cal_stress; // calculate the stress
-
+    int nstream;
     std::string fixed_axes; // which axes are fixed
     bool fixed_ibrav; //whether to keep type of lattice; must be used along with latname
     bool fixed_atoms; //whether to fix atoms during vc-relax

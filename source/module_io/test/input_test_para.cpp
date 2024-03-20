@@ -386,6 +386,7 @@ TEST_F(InputParaTest, Bcast)
     EXPECT_EQ(INPUT.out_bandgap, 0);
     EXPECT_EQ(INPUT.out_mat_t, 0);
     EXPECT_EQ(INPUT.gint_device, "gpu");
+    EXPECT_EQ(INPUT.num_stream,"4");
 
     /* I need to test qo_switch, qo_strategy, qo_screening_coeff, qo_thr and qo_basis */
     EXPECT_EQ(INPUT.qo_switch, 0);
