@@ -76,7 +76,7 @@ void Gint::cal_gint(Gint_inout *inout) {
         }
         gint_gamma_vl_gpu(this->hRGint, lgd, max_size,
                           GlobalC::ucell.omega / this->ncxyz, inout->vl, ylmcoef,
-                          this->nplane, GlobalV::NLOCAL, this->nbxx,
+                          this->nplane, this->nbxx,
                           *this->gridt);
         ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
         return;

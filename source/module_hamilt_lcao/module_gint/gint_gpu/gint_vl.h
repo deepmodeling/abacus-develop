@@ -12,9 +12,9 @@ cudaError_t checkCuda(cudaError_t result);
 void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint, int lgd_now,
                        const int max_size, double vfactor,
                        const double *vlocal, const double *ylmcoef_now,
-                       int pwnczp, int NLOCAL_now, int nbxx, const Grid_Technique &GridT);
+                       int pwnczp, int nbxx, const Grid_Technique &gridt);
 
-void gpu_task_generate_vlocal(const Grid_Technique &GridT, 
+void gpu_task_generate_vlocal(const Grid_Technique &gridt, 
                               const int i, const int j,
                               const int max_size,
                               const int nczp,

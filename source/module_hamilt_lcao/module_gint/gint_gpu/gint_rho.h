@@ -9,13 +9,13 @@
 cudaError_t checkCuda(cudaError_t result);
 
 
-void gint_gamma_rho_gpu(hamilt::HContainer<double> *DM,
+void gint_gamma_rho_gpu(hamilt::HContainer<double> *dm,
                         double *rho,
                         const int nczp,
                         const double *ylmcoef_now,
-                        const Grid_Technique &GridT);
+                        const Grid_Technique &gridt);
 
-void gpu_task_generator_rho(const Grid_Technique &GridT, 
+void gpu_task_generator_rho(const Grid_Technique &gridt, 
                             const int i, const int j,
                             const int psi_size_max, const int max_size,
                             const int nczp,
@@ -46,7 +46,7 @@ void gpu_task_generator_rho(const Grid_Technique &GridT,
                             int &dot_count 
                             );
 
-void rho_cal_task( const Grid_Technique &GridT,
+void rho_cal_task( const Grid_Technique &gridt,
                       const int i, const int j,
                       const int max_size,
                       const int lgd,
