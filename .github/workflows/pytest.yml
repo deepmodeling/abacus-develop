@@ -22,5 +22,5 @@ jobs:
           python -m pip install -v .[test]
       - name: Test Pyabacus
         run: |
-          cd python/pyabacus/examples
-          pytest
+          cd python/pyabacus/tests
+          pytest -v
