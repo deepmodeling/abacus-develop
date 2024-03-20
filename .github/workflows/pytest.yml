@@ -28,7 +28,7 @@ jobs:
           sudo apt-get install -y ccache
       - name:  Install Miniconda
         run: |
-          wget https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+          wget https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh --no-check-certificate
           bash miniconda.sh -b -p $HOME/miniconda
           source $HOME/miniconda/etc/profile.d/conda.sh
           conda init bash
