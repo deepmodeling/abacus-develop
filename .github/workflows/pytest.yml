@@ -19,7 +19,7 @@ jobs:
       - name: Build Pyabacus
         run: |
           cd python/pyabacus
-          pip install -v .[test]
+          python -m pip install -v .[test]
       - name: Test Pyabacus
         run: |
           cd python/pyabacus/examples
