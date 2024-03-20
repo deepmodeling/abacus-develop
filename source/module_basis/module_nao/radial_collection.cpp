@@ -287,6 +287,23 @@ void RadialCollection::build(const int ntype,
     set_rcut_max();
 }
 
+void RadialCollection::build(const int lmax, const int nbes, const double rcut, const double sigma, const double dr)
+{
+    cleanup();
+    ntype_ = 1;
+    radset_ = new RadialSet*[ntype_];
+
+    radset_[0] = new SphbesRadials;
+    radset_[0]->build(lmax, nbes, rcut, sigma, dr);
+
+    lmax_ = lmax;
+    nchi_ = radset_[0]->nchi();
+    nzeta_max_ = radset_[0]->nzeta_max();
+
+    iter_build();
+    set_rcut_max();
+}
+
 void RadialCollection::set_transformer(ModuleBase::SphericalBesselTransformer sbt, const int update)
 {
     for (int itype = 0; itype < ntype_; ++itype)

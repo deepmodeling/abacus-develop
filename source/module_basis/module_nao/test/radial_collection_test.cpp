@@ -277,6 +277,31 @@ TEST_F(RadialCollectionTest, Iteration)
     //EXPECT_EQ(*(orb.cend() - 1), &orb(3, 3, 0));
 }
 
+TEST_F(RadialCollectionTest, Build2) {
+    // build a collection of truncated spherical Bessel functions
+    int lmax = 3;
+    int nbes = 10;
+    double rcut = 10.0;
+    double sigma = 0.0;
+    double dr = 0.01;
+    orb.build(lmax, nbes, rcut, sigma, dr);
+
+    orb.lmax();
+
+    EXPECT_EQ(orb.ntype(), 1);
+    EXPECT_EQ(orb.lmax(), lmax);
+    EXPECT_DOUBLE_EQ(orb.rcut_max(), rcut);
+
+    for (int l = 0; l <= lmax; ++l) {
+        EXPECT_EQ(orb.nzeta(0, l), nbes);
+    }
+
+    EXPECT_EQ(orb.nzeta_max(0), nbes);
+    EXPECT_EQ(orb.nchi(0), nbes*(lmax+1));
+    EXPECT_EQ(orb.nchi(), nbes*(lmax+1));
+}
+
+
 int main(int argc, char** argv)
 {
 

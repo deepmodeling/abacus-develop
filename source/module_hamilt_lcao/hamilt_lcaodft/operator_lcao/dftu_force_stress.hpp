@@ -27,6 +27,7 @@ void DFTUNew<OperatorLCAO<TK, TR>>::cal_force_stress(
     }
     // 1. calculate <psi|beta> for each pair of atoms
     // loop over all on-site atoms
+    int atom_index = 0;
     for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
     {
         // skip the atoms without plus-U
@@ -36,7 +37,7 @@ void DFTUNew<OperatorLCAO<TK, TR>>::cal_force_stress(
         const int target_L = this->dftu->orbital_corr[T0];
         if(target_L == -1) continue;
         const int tlp1 = 2 * target_L + 1;
-        AdjacentAtomInfo& adjs = this->adjs_all[iat0];
+        AdjacentAtomInfo& adjs = this->adjs_all[atom_index++];
 
         std::vector<std::unordered_map<int, std::vector<double>>> nlm_tot;
         nlm_tot.resize(adjs.adj_num + 1);
