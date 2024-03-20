@@ -1,0 +1,44 @@
+name: Pyabacus Build and Test
+
+on:
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: PyTest
+    runs-on: self-hosted
+    if: github.repository_owner == 'deepmodeling'
+    container:
+      image: ghcr.io/deepmodeling/abacus-gnu
+      volumes:
+        - /tmp/ccache:/github/home/.ccache
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Ccache
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ccache
+      - name:  Install Miniconda
+        run: |
+          wget https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+          bash miniconda.sh -b -p $HOME/miniconda
+          source $HOME/miniconda/etc/profile.d/conda.sh
+          conda init bash
+          echo "source $HOME/miniconda/etc/profile.d/conda.sh" >> $GITHUB_ENV
+      - name: Create and activate conda environment
+        run: |
+          conda create --name pyenv python=3.8 -y
+          echo "conda activate pyenv" >> $GITHUB_ENV
+      - name: Build pyabacus
+        run: |
+          conda activate pyenv
+          cd python/pyabacus
+          pip install -v .[test]
