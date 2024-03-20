@@ -34,6 +34,25 @@ Following methods are available:
     4. nao: use numerical orbitals to initialize psi
             implemented in psi_initializer_nao.h
     5. nao+random: mix 'nao' with some random numbers to initialize psi
+
+To use:
+- WAVEFUNCTION INITIALIZATION
+A practical example would be in ESolver_KS_PW, because polymorphism is achieved by
+pointer, while a raw pointer is risky, therefore std::unique_ptr is a better 
+choice.
+1. new a std::unique_ptr<psi_initializer<T, Device>> with specific derived class
+2. initialize() to link psi_initializer with external data and methods
+3. allocate() to allocate memory for psi
+4. tabulate() to calculate the interpolate table
+5. proj_ao_onkG() to calculate projection of atomic radial function onto planewave basis
+6. share_psig() to get the shared pointer of psi, then use expire() to check if it is valid
+   and use with .lock() to get the shared pointer
+In summary:
+new->initialize->allocate->tabulate->proj_ao_onkG->share_psig
+- REPRESENTATION TRANSFORM
+There is also another way to use psi_initializer, say the representation transform.
+For this kind of use, see module_io/to_wannier90_lcao_in_pw, use allocate(true) instead
+of allocate() to only allocate memory for psig, then use share_psig() to get value.
 */
 template<typename T, typename Device>
 class psi_initializer
@@ -81,10 +100,6 @@ class psi_initializer
                             const int iw_end,       //< iw_end, ending band index
                             const int ik)           //< ik, kpoint index
         { ModuleBase::WARNING_QUIT("psi_initializer::random", "Polymorphism error"); }
-        /// @brief CENTRAL FUNCTION: import external files, such as pseudopotential file or numerical orbitals file
-        virtual void read_external_orbs(std::string* external_files,    //< orbital files
-                                        const int& rank = 0)            //< MPI rank
-        { ModuleBase::WARNING_QUIT("psi_initializer::set_orbital_files", "Polymorphism error"); }
         /// @brief CENTRAL FUNCTION: allocate interpolate table recording overlap integral between radial function and Spherical Bessel function
         virtual void allocate_table() { ModuleBase::WARNING_QUIT("psi_initializer::create_ovlp_table", "Polymorphism error"); }
         /// @brief CENTRAL FUNCTION: calculate the interpolate table
@@ -104,6 +119,9 @@ class psi_initializer
         bool initialized() const { return this->initialized_; }
         std::string method() const { return this->method_; }
         int nbands_complem() const { return this->nbands_complem_; }
+        // because unique_ptr is not copyable or used as rvlaue, use shared_ptr instead
+        // but to avoid ownership issue, use weak_ptr to share the pointer
+        // therefore there is no really getter to get directly the shared_ptr.
         std::weak_ptr<psi::Psi<T, Device>> share_psig() { return this->psig_; }
 
         void set_ucell(UnitCell* p_ucell_in) { this->p_ucell_ = p_ucell_in; }
@@ -119,6 +137,10 @@ class psi_initializer
         void set_nbands_complem(int nbands_in) { this->nbands_complem_ = nbands_in; }
 
         // tool methods
+        // the following function is for compatibility concern, in ESolver_KS_PW the FPTYPE
+        // now support double, float, std::complex<double> and std::complex<float>
+        // in total four datatype. However other functions only support double. Therefore to
+        // cast std::complex<double> to T and avoid compiler error, write the following functions.
         template <typename U>
         typename std::enable_if<std::is_same<U, float>::value, U>::type cast_to_T(const std::complex<double> in) {return static_cast<float>(in.real());}
         template <typename U>
@@ -129,8 +151,16 @@ class psi_initializer
         typename std::enable_if<std::is_same<U, std::complex<double>>::value, U>::type cast_to_T(const std::complex<double> in) {return std::complex<double>(in.real(), in.imag());}
 
     protected:
+        // interface to calculate structural factor. Because it has been created in ESolver, the best
+        // choice is to get a weak_ptr instead of pointer itself. However encapsulating a raw pointer
+        // is not a correct usage of smart pointer
         Structure_Factor* sf_ = nullptr;
+        // interface to PW_Basis_K, stores information of |k+G> and |G>, also with methods like
+        // getgpluskcar...
         ModulePW::PW_Basis_K* pw_wfc_ = nullptr;
+        // interface to UnitCell. UnitCell should be singleton and keep const for most cases. Due to
+        // many data are needed to read by psi_initializer, get a pointer to UnitCell instead of
+        // importing all information one-by-one in parameter list.
         UnitCell* p_ucell_ = nullptr;
         #ifdef __MPI
         Parallel_Kpoints* p_parakpts_ = nullptr;
@@ -142,7 +172,8 @@ class psi_initializer
         int random_seed_ = 1;
         // in old version it is of datatype int*, use std::vector<int> to avoid memory leak
         std::vector<int> ixy2is_;
-
+        // refactored psig, in old version it is of datatype Psi<T, Device>*, use std::shared_ptr to
+        // avoid memory leak
         std::shared_ptr<psi::Psi<T, Device>> psig_;
     private:
         int mem_saver_ = 0;

@@ -35,10 +35,9 @@ class psi_initializer_nao : public psi_initializer<T, Device>
                                 pseudopot_cell_vnl* = nullptr) override;//< nonlocal pseudopotential
         #endif
 
-        virtual void read_external_orbs(std::string* orbital_files,
-                                        const int& rank) override;
-        void allocate_table() override;
-        void tabulate() override;
+        void read_external_orbs(std::string* orbital_files, const int& rank);
+        virtual void allocate_table() override;
+        virtual void tabulate() override;
         
         std::vector<std::string> external_orbs() const { return orbital_files_; }
         std::vector<std::vector<int>> n_rgrid() const { return n_rgrid_; }

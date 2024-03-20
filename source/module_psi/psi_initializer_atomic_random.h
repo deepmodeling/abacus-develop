@@ -35,8 +35,8 @@ class psi_initializer_atomic_random : public psi_initializer_atomic<T, Device>
         #endif
 
         virtual void proj_ao_onkG(int ik) override;
-
         virtual void tabulate() override {psi_initializer_atomic<T, Device>::tabulate();};
+        
     private:
 };
 #endif

@@ -35,7 +35,6 @@ class psi_initializer_nao_random : public psi_initializer_nao<T, Device>
         #endif
 
         virtual void proj_ao_onkG(int ik) override;
-
         virtual void tabulate() override {psi_initializer_nao<T, Device>::tabulate();};
 };
 #endif

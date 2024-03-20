@@ -15,8 +15,6 @@ class psi_initializer_atomic : public psi_initializer<T, Device>
         psi_initializer_atomic() {this->set_method("atomic");}
         ~psi_initializer_atomic() {};
 
-        virtual void proj_ao_onkG(int ik) override;
-
         #ifdef __MPI // MPI additional implementation
         /// @brief initialize the psi_initializer with external data and methods
         virtual void initialize(Structure_Factor*,                      //< structure factor
@@ -34,10 +32,10 @@ class psi_initializer_atomic : public psi_initializer<T, Device>
                                 const int& = 1,                         //< random seed
                                 pseudopot_cell_vnl* = nullptr) override;//< nonlocal pseudopotential
         #endif
-
-        void allocate_table() override;
-        void tabulate() override;
-
+        virtual void allocate_table() override;
+        virtual void tabulate() override;
+        virtual void proj_ao_onkG(int ik) override;
+        // additional getter
         std::vector<std::string> pseudopot_files() const { return pseudopot_files_; }
 
     private:

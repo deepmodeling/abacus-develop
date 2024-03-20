@@ -108,27 +108,55 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::Init_GlobalC(Input& inp, UnitCell& cell)
 {
+    // ---------------------------------------------------------------------------------
+    // GlobalC is a historically left-over namespace, it is used to store global classes,
+    // including:
+    // pseudopot_cell_vnl: pseudopotential in cell, V non-local
+    // UnitCell: cell information with atomic properties
+    // Grid_Driver: 
+    // Parallel_Grid: 
+    // Parallel_Kpoints:
+    // Restart:
+    // Exx_Info:
+    // Exx_Lip:
+
+    // GlobalC would be refactored out in the future. If there is better idea about how
+    // to organize information stored in classes above, please feel free to discuss with
+    // issue or pull request.
+
     if (this->psi != nullptr)
         delete this->psi;
-    //======================================================
+
     // allocate memory for std::complex<double> datatype psi
-    //======================================================
-    /*
-        New psi initializer in ABACUS, Developer's note:
-        Because the calling relationship between ESolver_KS_PW and derived class is
-        complicated, up to upcoming of ABACUS 3.4, we only implement this new psi
-        initialization method for ksdft_pw, which means the routinely used dft theory.
-        For other theories like stochastic DFT, we still use the old method, in future
-        release we will implement the new method for all theories.
-    */
+    // New psi initializer in ABACUS, Developer's note:
+    // Because the calling relationship between ESolver_KS_PW and derived class is
+    // complicated, up to upcoming of ABACUS 3.4, we only implement this new psi
+    // initialization method for ksdft_pw, which means the routinely used dft theory.
+    // For other theories like stochastic DFT, we still use the old method.
+
+    // LCAOINPW also temporarily uses ESolver_KS_PW workflow, but in principle, it
+    // should have its own ESolver. ESolver class is for controlling workflow for each
+    // theory-basis combination, in the future it is also possible to seperate/decouple
+    // the basis (representation) with operator (hamiltonian) and solver (diagonalization).
+    // This feature requires feasible Linear Algebra library in-built in ABACUS, which
+    // is not ready yet.
     if (GlobalV::psi_initializer) // new method
     {
+        // psi_initializer drag initialization of pw wavefunction out of HSolver, make psi
+        // initialization decoupled with HSolver (diagonalization) procedure.
+        // However, due to EXX is hard to maintain, we still use the old method for EXX.
+        // LCAOINPW in version >= 3.5.0 uses this new method.
         this->psi = this->psi_init->allocate();
     }
     else // old method
     {
+        // old method explicitly requires variables such as total number of kpoints, number
+        // of bands, number of G-vectors, and so on. Comparatively in new method, these 
+        // variables are imported in function called initialize.
         this->psi = this->wf.allocate(this->kv.nkstot, this->kv.nks, this->kv.ngk.data(), this->pw_wfc->npwk_max);
     }
+    // ---------------------------------------------------------------------------------
+
     //=======================
     // init pseudopotential
     //=======================
@@ -146,17 +174,22 @@ void ESolver_KS_PW<T, Device>::Init_GlobalC(Input& inp, UnitCell& cell)
     GlobalC::ppcell.init_vnl(GlobalC::ucell, this->pw_rhod);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
 
+    // ---------------------------------------------------------------------------------
+    // there is a strange bug that the following procedure must be placed here, otherwise
+    // the value of psi will finally (before diagonalization) be all-zero, still dont know
+    // why.
     if (!GlobalV::psi_initializer)
     {
-        //==================================================
-        // create GlobalC::ppcell.tab_at , for trial wave functions.
-        //==================================================
+        // however, init_at_1 does not actually initialize the psi, instead, it is a
+        // function to calculate a interpolate table saving overlap intergral or say
+        // Spherical Bessel Transform of atomic orbitals.
         this->wf.init_at_1(&this->sf);
-        //================================
-        // Initial start wave functions
-        //================================
+        // similarly, wfcinit not really initialize any wavefunction, instead, it initialize
+        // the mapping from ixy, the 1d flattened index of point on fft grid (x, y) plane,
+        // to the index of "stick", composed of grid points.
         this->wf.wfcinit(this->psi, this->pw_wfc);
     }
+    // ---------------------------------------------------------------------------------
 
     this->kspw_psi = GlobalV::device_flag == "gpu" || GlobalV::precision_flag == "single"
                          ? new psi::Psi<T, Device>(this->psi[0])
@@ -209,6 +242,10 @@ void ESolver_KS_PW<T, Device>::Init(Input& inp, UnitCell& ucell)
     }
     if (GlobalV::psi_initializer)
     {
+        // update 20240320
+        // use std::unique_ptr to manage the lifetime of psi_initializer under
+        // restriction of C++11. Based on refactor of psi_initializer, the number
+        // of member functions decrease significantly. 
         this->allocate_psi_init();
     }
     // temporary
@@ -415,20 +452,15 @@ void ESolver_KS_PW<T, Device>::beforescf(int istep)
     ModuleBase::matrix veff = this->pelec->pot->get_effective_v();
     GlobalC::ppcell.cal_effective_D(veff, this->pw_rhod, GlobalC::ucell);
 
-    /*
-        after init_rho (in pelec->init_scf), we have rho now.
-        before hamilt2density, we update Hk and initialize psi
-    */
+    // after init_rho (in pelec->init_scf), we have rho now.
+    // before hamilt2density, we update Hk and initialize psi
     if(GlobalV::psi_initializer)
     {
-        /*
-            beforescf function will be called everytime before scf. However, once atomic coordinates changed,
-            structure factor will change, therefore all atomwise properties will change. So we need to reinitialize
-            psi every time before scf. But for random wavefunction, we dont, because random wavefunction is not
-            related to atomic coordinates.
-
-            What the old strategy does is only to initialize for once...
-        */
+        // beforescf function will be called everytime before scf. However, once atomic coordinates changed,
+        // structure factor will change, therefore all atomwise properties will change. So we need to reinitialize
+        // psi every time before scf. But for random wavefunction, we dont, because random wavefunction is not
+        // related to atomic coordinates.
+        // What the old strategy does is only to initialize for once...
         if(((GlobalV::init_wfc == "random")&&(istep == 0))||(GlobalV::init_wfc != "random")) this->initialize_psi();
     }
 }
@@ -502,6 +534,8 @@ void ESolver_KS_PW<T, Device>::eachiterinit(const int istep, const int iter)
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::allocate_psi_init()
 {
+    // under restriction of C++11, std::unique_ptr can not be allocate via std::make_unique
+    // use new instead, but will cause asymmetric allocation and deallocation, in literal aspect
     ModuleBase::timer::tick("ESolver_KS_PW", "allocate_psi_init");
     if((GlobalV::init_wfc.substr(0, 6) == "atomic")&&(GlobalC::ucell.natomwfc == 0)) this->psi_init = std::unique_ptr<psi_initializer<T, Device>>(new psi_initializer_random<T, Device>());
     else if(GlobalV::init_wfc == "atomic") this->psi_init = std::unique_ptr<psi_initializer<T, Device>>(new psi_initializer_atomic<T, Device>());
@@ -510,6 +544,7 @@ void ESolver_KS_PW<T, Device>::allocate_psi_init()
     else if(GlobalV::init_wfc == "atomic+random") this->psi_init = std::unique_ptr<psi_initializer<T, Device>>(new psi_initializer_atomic_random<T, Device>());
     else if(GlobalV::init_wfc == "nao+random") this->psi_init = std::unique_ptr<psi_initializer<T, Device>>(new psi_initializer_nao_random<T, Device>());
     else ModuleBase::WARNING_QUIT("ESolver_KS_PW::allocate_psi_init", "for new psi initializer, init_wfc type not supported");
+    // function polymorphism is moved from constructor to function initialize. Two slightly different implementation are for MPI and serial case, respectively.
     #ifdef __MPI
     this->psi_init->initialize(&this->sf, this->pw_wfc, &GlobalC::ucell, &GlobalC::Pkpoints, 1, &GlobalC::ppcell, GlobalV::MY_RANK);
     #else
@@ -531,34 +566,33 @@ void ESolver_KS_PW<T, Device>::initialize_psi()
     {
         for (int ik = 0; ik < this->pw_wfc->nks; ik++)
         {
+            // fix the wavefunction to initialize at given kpoint
             this->psi->fix_k(ik);
+            // update Hamiltonian from other kpoint to the given one
             this->p_hamilt->updateHk(ik);
+            // project atomic orbitals on |k+G> planewave basis, where k is wavevector of kpoint
+            // and G is wavevector of the peroiodic part of the Bloch function
             this->psi_init->proj_ao_onkG(ik);
+            // psi_initializer manages memory of psig with shared pointer,
+            // its access to use is shared here via weak pointer
+            // therefore once the psi_initializer is destructed, psig will be destructed, too
+            // this way, we can avoid memory leak and undefined behavior
             std::weak_ptr<psi::Psi<T, Device>> psig = this->psi_init->share_psig();
             if(psig.expired()) ModuleBase::WARNING_QUIT("ESolver_KS_PW::initialize_psi", "psig lifetime is expired");
+            // to use psig, we need to lock it to get a shared pointer version,
+            // then switch kpoint of psig to the given one
             auto psig_ = psig.lock(); psig_->fix_k(ik);
             std::vector<Real> etatom(psig_->get_nbands(), 0.0);
-            /*
-            if ((this->psi_init->get_method().substr(0, 3) == "nao"))
-            {
-                // there is undefined behavior! the old code is not tested and not reliable: wavefunc.cpp
-                hsolver::DiagoIterAssist<std::complex<double>>::diagH_subspace(
-                    phamilt_cg,
-                    *(psig), *(psig), etatom.data()
-                );
-            }
-            */
+
             // then adjust dimension from psig to psi
+            // either by matrix-multiplication or by copying-discarding
             if (this->psi_init->method() != "random")
             {
                 if (
-                    (
-                    (GlobalV::KS_SOLVER == "cg")
-                  ||(GlobalV::KS_SOLVER == "lapack")
-                    )&&
-                    (GlobalV::BASIS_TYPE == "pw") // presently lcao_in_pw and pw share the same esolver. In the future, we will have different esolver
+                      ((GlobalV::KS_SOLVER == "cg")||(GlobalV::KS_SOLVER == "lapack"))
+                    &&(GlobalV::BASIS_TYPE == "pw") // presently lcao_in_pw and pw share the same esolver. In the future, we will have different esolver
                     )
-                {
+                {// the following function is only run serially, to be improved
                     hsolver::DiagoIterAssist<T, Device>::diagH_subspace_init(
                         this->p_hamilt,
                         psig_->get_pointer(), psig_->get_nbands(), psig_->get_nbasis(),
@@ -566,9 +600,7 @@ void ESolver_KS_PW<T, Device>::initialize_psi()
                     );
                     continue;
                 }
-                else if (
-                    (GlobalV::KS_SOLVER == "lapack") && (GlobalV::BASIS_TYPE == "lcao_in_pw")
-                    )
+                else if ((GlobalV::KS_SOLVER == "lapack") && (GlobalV::BASIS_TYPE == "lcao_in_pw"))
                 {
                     if(ik == 0) GlobalV::ofs_running << " START WAVEFUNCTION: LCAO_IN_PW, psi initialization skipped " << std::endl;
                     continue;
@@ -614,63 +646,50 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
         // choose if psi should be diag in subspace
         // be careful that istep start from 0 and iter start from 1
         // if (iter == 1)
-        if ((istep == 0 || istep == 1) && iter == 1)
-        {
-            hsolver::DiagoIterAssist<T, Device>::need_subspace = false;
-        }
-        else
-        {
-            hsolver::DiagoIterAssist<T, Device>::need_subspace = true;
-        }
-
+        hsolver::DiagoIterAssist<T, Device>::need_subspace = ((istep == 0 || istep == 1) && iter == 1)? false : true;
         hsolver::DiagoIterAssist<T, Device>::SCF_ITER = iter;
         hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR = ethr;
         hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
 
-        /*
-            after init_rho (in pelec->init_scf), we have rho now.
-            before hamilt2density, we update Hk and initialize psi
-        */
+        // after init_rho (in pelec->init_scf), we have rho now.
+        // before hamilt2density, we update Hk and initialize psi
         if(GlobalV::psi_initializer)
         {
-            /*
-                beforescf function will be called everytime before scf. However, once atomic coordinates changed,
-                structure factor will change, therefore all atomwise properties will change. So we need to reinitialize
-                psi every time before scf. But for random wavefunction, we dont, because random wavefunction is not
-                related to atomic coordinates.
+            // beforescf function will be called everytime before scf. However, once atomic coordinates changed,
+            // structure factor will change, therefore all atomwise properties will change. So we need to reinitialize
+            // psi every time before scf. But for random wavefunction, we dont, because random wavefunction is not
+            // related to atomic coordinates.
 
-                What the old strategy does is only to initialize for once... we also initialize only once here because
-                this can save a lot of time. But if cell and ion change significantly, re-initialization psi will be
-                more efficient. Or an extrapolation strategy can be used.
-            */
-
+            // What the old strategy does is only to initialize for once... we also initialize only once here because
+            // this can save a lot of time. But if cell and ion change significantly, re-initialization psi will be
+            // more efficient. Or an extrapolation strategy can be used.
             if((istep == 0)&&(iter == 1)&&!(this->psi_init->initialized())) this->initialize_psi();
         }
         if(GlobalV::BASIS_TYPE != "lcao_in_pw")
         {
-            this->phsol->solve(this->p_hamilt, this->kspw_psi[0], this->pelec, GlobalV::KS_SOLVER);
+            // from HSolverPW
+            this->phsol->solve(this->p_hamilt,      // hamilt::Hamilt<T, Device>* pHamilt,
+                               this->kspw_psi[0],   // psi::Psi<T, Device>& psi,
+                               this->pelec,         // elecstate::ElecState<T, Device>* pelec,
+                               GlobalV::KS_SOLVER); // const std::string method_in,
         }
         else
         {
-            /*
-                It is not a good choice to overload another solve function here, this will spoil the concept of 
-                multiple inheritance and polymorphism. But for now, we just do it in this way.
-                In the future, there will be a series of class ESolver_KS_LCAO_PW, HSolver_LCAO_PW and so on.
-            */
+            // It is not a good choice to overload another solve function here, this will spoil the concept of 
+            // multiple inheritance and polymorphism. But for now, we just do it in this way.
+            // In the future, there will be a series of class ESolver_KS_LCAO_PW, HSolver_LCAO_PW and so on.
             std::weak_ptr<psi::Psi<T, Device>> psig = this->psi_init->share_psig();
             if(psig.expired()) ModuleBase::WARNING_QUIT("ESolver_KS_PW::hamilt2density", "psig lifetime is expired");
-            this->phsol->solve(this->p_hamilt, this->kspw_psi[0], this->pelec, psig.lock().get()[0]);
+            // from HSolverPW
+            this->phsol->solve(this->p_hamilt,          // hamilt::Hamilt<T, Device>* pHamilt,
+                               this->kspw_psi[0],       // psi::Psi<T, Device>& psi,
+                               this->pelec,             // elecstate::ElecState<T, Device>* pelec,
+                               psig.lock().get()[0]);   // psi::Psi<T, Device>& transform,
         }
         if (GlobalV::out_bandgap)
         {
-            if (!GlobalV::TWO_EFERMI)
-            {
-                this->pelec->cal_bandgap();
-            }
-            else
-            {
-                this->pelec->cal_bandgap_updw();
-            }
+            if (!GlobalV::TWO_EFERMI) this->pelec->cal_bandgap();
+            else this->pelec->cal_bandgap_updw();
         }
     }
     else
