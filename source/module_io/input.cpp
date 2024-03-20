@@ -370,7 +370,7 @@ void Input::Default(void)
     lcao_dr = 0.01;
     lcao_rmax = 30; // (a.u.)
     gint_device = "gpu";
-
+    nstream=4;
     //----------------------------------------------------------
     // efield and dipole correction     Yu Liu add 2022-05-18
     //----------------------------------------------------------
@@ -1512,6 +1512,10 @@ bool Input::Read(const std::string& fn)
         {
             read_value(ifs, gint_device);
         }
+	    else if (strcmp("num_stream",word)==0)
+		{
+	    	read_value(ifs,nstream);
+		}
         //----------------------------------------------------------
         // Molecule Dynamics
         // Yu Liu add 2021-07-30
@@ -3267,6 +3271,7 @@ void Input::Bcast()
     Parallel_Common::bcast_string(basis_type); // xiaohui add 2013-09-01
     Parallel_Common::bcast_string(ks_solver);  // xiaohui add 2013-09-01
     Parallel_Common::bcast_string(gint_device);
+    Parallel_Common::bcast_int(nstream);
     Parallel_Common::bcast_double(search_radius);
     Parallel_Common::bcast_bool(search_pbc);
     Parallel_Common::bcast_double(search_radius);
