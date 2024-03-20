@@ -299,8 +299,8 @@ void psi_initializer_nao<T, Device>::tabulate()
         {
             for(int izeta=0; izeta<this->p_ucell_->atoms[it].l_nchi[l]; izeta++)
             {
-                double* ovlp_flzjlq_q = new double[GlobalV::NQX];
-                double* qgrid = new double[GlobalV::NQX];
+                std::vector<double> ovlp_flzjlq_q(GlobalV::NQX);
+                std::vector<double> qgrid(GlobalV::NQX);
                 for (int iq = 0; iq < GlobalV::NQX; iq++)
                 {
                     qgrid[iq] = iq*GlobalV::DQ;
@@ -309,13 +309,13 @@ void psi_initializer_nao<T, Device>::tabulate()
                                  this->n_rgrid_[it][ic],
                                  this->rgrid_[it][ic].data(),
                                  this->rvalue_[it][ic].data(),
-                                 GlobalV::NQX, qgrid, ovlp_flzjlq_q);
+                                 GlobalV::NQX, 
+                                 qgrid.data(), 
+                                 ovlp_flzjlq_q.data());
                 for(int iq = 0; iq < GlobalV::NQX; iq++)
                 {
                     this->ovlp_flzjlq_(it, ic, iq) = ovlp_flzjlq_q[iq];
                 }
-                delete[] ovlp_flzjlq_q;
-                delete[] qgrid; /* eliminate direct memory leak, kirk0830, 2023/10/20 */
                 ++ic;
             }
         }
@@ -324,25 +324,25 @@ void psi_initializer_nao<T, Device>::tabulate()
 }
 
 template <typename T, typename Device>
-psi::Psi<T, Device>* psi_initializer_nao<T, Device>::cal_psig(int ik)
+void psi_initializer_nao<T, Device>::proj_ao_onkG(int ik)
 {
     ModuleBase::timer::tick("psi_initializer_nao", "initialize");
     assert(ik>=0);
-    this->psig->fix_k(ik);
+    this->psig_->fix_k(ik);
     const int npw = this->pw_wfc_->npwk[ik];
     const int total_lm = ( this->p_ucell_->lmax + 1) * ( this->p_ucell_->lmax + 1);
     ModuleBase::matrix ylm(total_lm, npw);
-    std::complex<double> *aux = new std::complex<double>[npw];
 
-    ModuleBase::Vector3<double> *gk = new ModuleBase::Vector3<double>[npw];
+    std::vector<std::complex<double>> aux(npw);
+    std::vector<ModuleBase::Vector3<double>> gk(npw);
     for(int ig=0;ig<npw;ig++)
     {
         gk[ig] = this->pw_wfc_->getgpluskcar(ik, ig);
     }
 
-    ModuleBase::YlmReal::Ylm_Real(total_lm, npw, gk, ylm);
+    ModuleBase::YlmReal::Ylm_Real(total_lm, npw, gk.data(), ylm);
     //int index = 0;
-    double *ovlp_flzjlg = new double[npw];
+    std::vector<double> ovlp_flzjlg(npw);
     int ibasis=0;
     for (int it = 0; it < this->p_ucell_->ntype; it++)
     {
@@ -407,22 +407,22 @@ psi::Psi<T, Device>* psi_initializer_nao<T, Device>::cal_psig(int ik)
                                         fdown = ModuleBase::IMAG_UNIT * sin(0.5* alpha) * aux[ig];
                                         //build the orthogonal wfc
                                         //first rotation with angle (alpha + ModuleBase::PI) around (OX)
-                                        (*(this->psig))(ibasis, ig) = 
+                                        (*(this->psig_))(ibasis, ig) = 
                                             this->template cast_to_T<T>(
                                                 (cos(0.5 * gamma) + ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fup
                                             );
-                                        (*(this->psig))(ibasis, ig + this->pw_wfc_->npwk_max) =
+                                        (*(this->psig_))(ibasis, ig + this->pw_wfc_->npwk_max) =
                                             this->template cast_to_T<T>(
                                                 (cos(0.5 * gamma) - ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fdown
                                             );
                                         // second rotation with angle gamma around(OZ)
                                         fup = cos(0.5 * (alpha + ModuleBase::PI)) * aux[ig];
                                         fdown = ModuleBase::IMAG_UNIT * sin(0.5 * (alpha + ModuleBase::PI))*aux[ig];
-                                        (*(this->psig))(ibasis+2*L+1,ig) =
+                                        (*(this->psig_))(ibasis+2*L+1,ig) =
                                             this->template cast_to_T<T>(
                                                 (cos(0.5 * gamma) + ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fup
                                             );
-                                       (*(this->psig))(ibasis+2*L+1, ig + this->pw_wfc_->npwk_max) =
+                                       (*(this->psig_))(ibasis+2*L+1, ig + this->pw_wfc_->npwk_max) =
                                             this->template cast_to_T<T>(
                                                 (cos(0.5 * gamma) - ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fdown
                                             );
@@ -440,10 +440,7 @@ psi::Psi<T, Device>* psi_initializer_nao<T, Device>::cal_psig(int ik)
                             const int lm = L*L+m;
                             for(int ig=0; ig<npw; ig++)
                             {
-                                (*(this->psig))(ibasis, ig) = 
-                                    this->template cast_to_T<T>(
-                                        lphase * sk[ig] * ylm(lm, ig) * ovlp_flzjlg[ig]
-                                    );
+                                (*(this->psig_))(ibasis, ig) =  this->template cast_to_T<T>(lphase * sk[ig] * ylm(lm, ig) * ovlp_flzjlg[ig]);
                             }
                             ++ibasis;
                         }
@@ -454,17 +451,12 @@ psi::Psi<T, Device>* psi_initializer_nao<T, Device>::cal_psig(int ik)
             delete[] sk;
         } // end for ia
     } // end for it
-    delete[] ovlp_flzjlg;
-    delete[] aux;
-    delete[] gk;
     /* complement the rest of bands if there are */
     if(this->nbands_complem() > 0)
     {
-        this->random_t(this->psig->get_pointer(), ibasis, this->psig->get_nbands(), ik);
+        this->random_t(this->psig_->get_pointer(), ibasis, this->psig_->get_nbands(), ik);
     }
     ModuleBase::timer::tick("psi_initializer_nao", "initialize");
-    
-    return this->psig;
 }
 
 template class psi_initializer_nao<std::complex<double>, psi::DEVICE_CPU>;

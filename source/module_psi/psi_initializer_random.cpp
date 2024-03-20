@@ -56,13 +56,12 @@ void psi_initializer_random<T, Device>::random(T* psi,
 }
 
 template <typename T, typename Device>
-psi::Psi<T, Device>* psi_initializer_random<T, Device>::cal_psig(int ik)
+void psi_initializer_random<T, Device>::proj_ao_onkG(int ik)
 {
     ModuleBase::timer::tick("psi_initializer_random", "initialize");
-    this->psig->fix_k(ik);
-    this->random(this->psig->get_pointer(), 0, this->psig->get_nbands(), ik);
+    this->psig_->fix_k(ik);
+    this->random(this->psig_->get_pointer(), 0, this->psig_->get_nbands(), ik);
     ModuleBase::timer::tick("psi_initializer_random", "initialize");
-    return this->psig;
 }
 
 template class psi_initializer_random<std::complex<double>, psi::DEVICE_CPU>;

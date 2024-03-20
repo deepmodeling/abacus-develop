@@ -15,7 +15,7 @@ class psi_initializer_atomic : public psi_initializer<T, Device>
         psi_initializer_atomic() {this->set_method("atomic");}
         ~psi_initializer_atomic() {};
 
-        psi::Psi<T, Device>* cal_psig(int ik) override;
+        virtual void proj_ao_onkG(int ik) override;
 
         #ifdef __MPI // MPI additional implementation
         /// @brief initialize the psi_initializer with external data and methods

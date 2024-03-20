@@ -33,17 +33,17 @@ psi initializer unit test
       - allocate wavefunctions with nao-specific method
     - psi_initializer_nao_random::allocate
       - allocate wavefunctions with nao-specific method
-    - psi_initializer_random::cal_psig
+    - psi_initializer_random::proj_ao_onkG
       - calculate wavefunction initial guess (before diagonalization) by randomly generating numbers
-    - psi_initializer_atomic::cal_psig
+    - psi_initializer_atomic::proj_ao_onkG
       - calculate wavefunction initial guess (before diagonalization) with atomic pseudo wavefunctions
       - nspin = 4 case
       - nspin = 4 with has_so case
-    - psi_initializer_atomic_random::cal_psig
+    - psi_initializer_atomic_random::proj_ao_onkG
       - calculate wavefunction initial guess (before diagonalization) with atomic pseudo wavefunctions and random numbers
-    - psi_initializer_nao::cal_psig
+    - psi_initializer_nao::proj_ao_onkG
       - calculate wavefunction initial guess (before diagonalization) with numerical atomic orbital wavefunctions
-    - psi_initializer_nao_random::cal_psig
+    - psi_initializer_nao_random::proj_ao_onkG
       - calculate wavefunction initial guess (before diagonalization) with numerical atomic orbital wavefunctions and random numbers
 */
 
@@ -203,6 +203,7 @@ class PsiIntializerUnitTest : public ::testing::Test {
             this->p_pw_wfc->fftnxy = 1;
             this->p_pw_wfc->fftnz = 1;
             this->p_pw_wfc->nst = 1;
+            this->p_pw_wfc->nz = 1;
             if(this->p_pw_wfc->is2fftixy != nullptr) delete[] this->p_pw_wfc->is2fftixy;
             this->p_pw_wfc->is2fftixy = new int[1];
             this->p_pw_wfc->is2fftixy[0] = 0;
@@ -236,6 +237,8 @@ class PsiIntializerUnitTest : public ::testing::Test {
             if(this->p_pw_wfc->kvec_d != nullptr) delete[] this->p_pw_wfc->kvec_d;
             this->p_pw_wfc->kvec_d = new ModuleBase::Vector3<double>[1];
             this->p_pw_wfc->kvec_d[0] = {0.0, 0.0, 0.0};
+
+            this->p_pspot_vnl->lmaxkb = 0;
 
             #ifdef __MPI
             if(this->p_parakpts->startk_pool != nullptr) delete[] this->p_parakpts->startk_pool;
@@ -311,15 +314,16 @@ TEST_F(PsiIntializerUnitTest, AllocateRandom) {
                                this->random_seed, 
                                this->p_pspot_vnl);
     #endif
-    this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, cal_psig
+    this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
     psi::Psi<std::complex<double>>* psi = this->psi_init->allocate();
     EXPECT_EQ(0, this->psi_init->nbands_complem());
     EXPECT_EQ(1, psi->get_nk());
     EXPECT_EQ(1, psi->get_nbands());
     EXPECT_EQ(1, psi->get_nbasis());
-    EXPECT_EQ(1, this->psi_init->psig->get_nk());
-    EXPECT_EQ(1, this->psi_init->psig->get_nbands());
-    EXPECT_EQ(1, this->psi_init->psig->get_nbasis());
+    auto psig = this->psi_init->share_psig().lock();
+    EXPECT_EQ(1, psig->get_nk());
+    EXPECT_EQ(1, psig->get_nbands());
+    EXPECT_EQ(1, psig->get_nbasis());
     delete psi;
 }
 
@@ -341,15 +345,16 @@ TEST_F(PsiIntializerUnitTest, AllocateAtomic) {
                                this->random_seed, 
                                this->p_pspot_vnl);
     #endif
-    this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, cal_psig
+    this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
     psi::Psi<std::complex<double>>* psi = this->psi_init->allocate();
     EXPECT_EQ(0, this->psi_init->nbands_complem());
     EXPECT_EQ(1, psi->get_nk());
     EXPECT_EQ(1, psi->get_nbands());
     EXPECT_EQ(1, psi->get_nbasis());
-    EXPECT_EQ(1, this->psi_init->psig->get_nk());
-    EXPECT_EQ(4, this->psi_init->psig->get_nbands());
-    EXPECT_EQ(1, this->psi_init->psig->get_nbasis());
+    auto psig = this->psi_init->share_psig().lock();
+    EXPECT_EQ(1, psig->get_nk());
+    EXPECT_EQ(4, psig->get_nbands());
+    EXPECT_EQ(1, psig->get_nbasis());
     delete psi;
 }
 
@@ -371,15 +376,16 @@ TEST_F(PsiIntializerUnitTest, AllocateAtomicRandom) {
                                this->random_seed, 
                                this->p_pspot_vnl);
     #endif
-    this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, cal_psig
+    this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
     psi::Psi<std::complex<double>>* psi = this->psi_init->allocate();
     EXPECT_EQ(0, this->psi_init->nbands_complem());
     EXPECT_EQ(1, psi->get_nk());
     EXPECT_EQ(1, psi->get_nbands());
     EXPECT_EQ(1, psi->get_nbasis());
-    EXPECT_EQ(1, this->psi_init->psig->get_nk());
-    EXPECT_EQ(4, this->psi_init->psig->get_nbands());
-    EXPECT_EQ(1, this->psi_init->psig->get_nbasis());
+    auto psig = this->psi_init->share_psig().lock();
+    EXPECT_EQ(1, psig->get_nk());
+    EXPECT_EQ(4, psig->get_nbands());
+    EXPECT_EQ(1, psig->get_nbasis());
     delete psi;
 }
 
@@ -401,15 +407,16 @@ TEST_F(PsiIntializerUnitTest, AllocateNao) {
                                this->random_seed, 
                                this->p_pspot_vnl);
     #endif
-    this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, cal_psig
+    this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
     psi::Psi<std::complex<double>>* psi = this->psi_init->allocate();
     EXPECT_EQ(0, this->psi_init->nbands_complem());
     EXPECT_EQ(1, psi->get_nk());
     EXPECT_EQ(1, psi->get_nbands());
     EXPECT_EQ(1, psi->get_nbasis());
-    EXPECT_EQ(1, this->psi_init->psig->get_nk());
-    EXPECT_EQ(13, this->psi_init->psig->get_nbands());
-    EXPECT_EQ(1, this->psi_init->psig->get_nbasis());
+    auto psig = this->psi_init->share_psig().lock();
+    EXPECT_EQ(1, psig->get_nk());
+    EXPECT_EQ(13, psig->get_nbands());
+    EXPECT_EQ(1, psig->get_nbasis());
     delete psi;
 }
 
@@ -431,15 +438,16 @@ TEST_F(PsiIntializerUnitTest, AllocateNaoRandom) {
                                this->random_seed, 
                                this->p_pspot_vnl);
     #endif
-    this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, cal_psig
+    this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
     psi::Psi<std::complex<double>>* psi = this->psi_init->allocate();
     EXPECT_EQ(0, this->psi_init->nbands_complem());
     EXPECT_EQ(1, psi->get_nk());
     EXPECT_EQ(1, psi->get_nbands());
     EXPECT_EQ(1, psi->get_nbasis());
-    EXPECT_EQ(1, this->psi_init->psig->get_nk());
-    EXPECT_EQ(13, this->psi_init->psig->get_nbands());
-    EXPECT_EQ(1, this->psi_init->psig->get_nbasis());
+    auto psig = this->psi_init->share_psig().lock();
+    EXPECT_EQ(1, psig->get_nk());
+    EXPECT_EQ(13, psig->get_nbands());
+    EXPECT_EQ(1, psig->get_nbasis());
     delete psi;
 }
 
@@ -461,9 +469,9 @@ TEST_F(PsiIntializerUnitTest, CalPsigRandom) {
                                this->random_seed, 
                                this->p_pspot_vnl);
     #endif
-    this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, cal_psig
+    this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
     psi::Psi<std::complex<double>>* psi = this->psi_init->allocate();
-    psi::Psi<std::complex<double>>* psig = this->psi_init->cal_psig(0);
+    this->psi_init->proj_ao_onkG(0);
     EXPECT_NEAR(0, psi->operator()(0,0,0).real(), 1e-12);
     delete psi;
 }
@@ -486,9 +494,9 @@ TEST_F(PsiIntializerUnitTest, CalPsigAtomic) {
                                this->random_seed, 
                                this->p_pspot_vnl);
     #endif
-    this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, cal_psig
+    this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
     psi::Psi<std::complex<double>>* psi = this->psi_init->allocate();
-    psi::Psi<std::complex<double>>* psig = this->psi_init->cal_psig(0);
+    this->psi_init->proj_ao_onkG(0);
     EXPECT_NEAR(0, psi->operator()(0,0,0).real(), 1e-12);
     delete psi;
 }
@@ -515,9 +523,9 @@ TEST_F(PsiIntializerUnitTest, CalPsigAtomicSoc) {
                                this->random_seed, 
                                this->p_pspot_vnl);
     #endif
-    this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, cal_psig
+    this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
     psi::Psi<std::complex<double>>* psi = this->psi_init->allocate();
-    psi::Psi<std::complex<double>>* psig = this->psi_init->cal_psig(0);
+    this->psi_init->proj_ao_onkG(0);
     EXPECT_NEAR(0, psi->operator()(0,0,0).real(), 1e-12);
     GlobalV::NSPIN = 1;
     GlobalV::NPOL = 1;
@@ -548,9 +556,9 @@ TEST_F(PsiIntializerUnitTest, CalPsigAtomicSocHasSo) {
                                this->random_seed, 
                                this->p_pspot_vnl);
     #endif
-    this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, cal_psig
+    this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
     psi::Psi<std::complex<double>>* psi = this->psi_init->allocate();
-    psi::Psi<std::complex<double>>* psig = this->psi_init->cal_psig(0);
+    this->psi_init->proj_ao_onkG(0);
     EXPECT_NEAR(0, psi->operator()(0,0,0).real(), 1e-12);
     GlobalV::NSPIN = 1;
     GlobalV::NPOL = 1;
@@ -577,9 +585,9 @@ TEST_F(PsiIntializerUnitTest, CalPsigAtomicRandom) {
                                this->random_seed, 
                                this->p_pspot_vnl);
     #endif
-    this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, cal_psig
+    this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
     psi::Psi<std::complex<double>>* psi = this->psi_init->allocate();
-    psi::Psi<std::complex<double>>* psig = this->psi_init->cal_psig(0);
+    this->psi_init->proj_ao_onkG(0);
     EXPECT_NEAR(0, psi->operator()(0,0,0).real(), 1e-12);
     delete psi;
 }
@@ -602,9 +610,9 @@ TEST_F(PsiIntializerUnitTest, CalPsigNao) {
                                this->random_seed, 
                                this->p_pspot_vnl);
     #endif
-    this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, cal_psig
+    this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
     psi::Psi<std::complex<double>>* psi = this->psi_init->allocate();
-    psi::Psi<std::complex<double>>* psig = this->psi_init->cal_psig(0);
+    this->psi_init->proj_ao_onkG(0);
     EXPECT_NEAR(0, psi->operator()(0,0,0).real(), 1e-12);
     delete psi;
 }
@@ -627,9 +635,9 @@ TEST_F(PsiIntializerUnitTest, CalPsigNaoRandom) {
                                this->random_seed, 
                                this->p_pspot_vnl);
     #endif
-    this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, cal_psig
+    this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
     psi::Psi<std::complex<double>>* psi = this->psi_init->allocate();
-    psi::Psi<std::complex<double>>* psig = this->psi_init->cal_psig(0);
+    this->psi_init->proj_ao_onkG(0);
     EXPECT_NEAR(0, psi->operator()(0,0,0).real(), 1e-12);
     delete psi;
 }
@@ -657,9 +665,9 @@ TEST_F(PsiIntializerUnitTest, CalPsigNaoSoc) {
                                this->random_seed, 
                                this->p_pspot_vnl);
     #endif
-    this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, cal_psig
+    this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
     psi::Psi<std::complex<double>>* psi = this->psi_init->allocate();
-    psi::Psi<std::complex<double>>* psig = this->psi_init->cal_psig(0);
+    this->psi_init->proj_ao_onkG(0);
     EXPECT_NEAR(0, psi->operator()(0,0,0).real(), 1e-12);
     delete psi;
 }
@@ -687,9 +695,9 @@ TEST_F(PsiIntializerUnitTest, CalPsigNaoSocHasSo) {
                                this->random_seed, 
                                this->p_pspot_vnl);
     #endif
-    this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, cal_psig
+    this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
     psi::Psi<std::complex<double>>* psi = this->psi_init->allocate();
-    psi::Psi<std::complex<double>>* psig = this->psi_init->cal_psig(0);
+    this->psi_init->proj_ao_onkG(0);
     EXPECT_NEAR(0, psi->operator()(0,0,0).real(), 1e-12);
     delete psi;
 }
@@ -717,9 +725,9 @@ TEST_F(PsiIntializerUnitTest, CalPsigNaoSocHasSoDOMAG) {
                                this->random_seed, 
                                this->p_pspot_vnl);
     #endif
-    this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, cal_psig
+    this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
     psi::Psi<std::complex<double>>* psi = this->psi_init->allocate();
-    psi::Psi<std::complex<double>>* psig = this->psi_init->cal_psig(0);
+    this->psi_init->proj_ao_onkG(0);
     EXPECT_NEAR(0, psi->operator()(0,0,0).real(), 1e-12);
     delete psi;
 }

@@ -215,14 +215,16 @@ void toWannier90_LCAO_IN_PW::nao_G_expansion(
 )
 {
     int npwx = wfcpw->npwk_max;
-    psi::Psi<std::complex<double>>* psig = this->psi_init_->cal_psig(ik);
+    this->psi_init_->proj_ao_onkG(ik);
+    std::weak_ptr<psi::Psi<std::complex<double>>> psig = this->psi_init_->share_psig();
+    if(psig.expired()) ModuleBase::WARNING_QUIT("toWannier90_LCAO_IN_PW::nao_G_expansion", "psig is expired");
     int nbands = GlobalV::NLOCAL;
     int nbasis = npwx*GlobalV::NPOL;
     for (int ib = 0; ib < nbands; ib++)
     {
         for (int ig = 0; ig < nbasis; ig++)
         {
-            psi(ib, ig) = psig[0](ik, ib, ig);
+            psi(ib, ig) = psig.lock().get()[0](ik, ib, ig);
         }
     }
 }

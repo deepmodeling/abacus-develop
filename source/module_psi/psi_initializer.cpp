@@ -7,16 +7,6 @@
 #include "module_base/global_variable.h"
 
 template<typename T, typename Device>
-psi_initializer<T, Device>::~psi_initializer()
-{
-    if (this->psig != nullptr)
-    {
-        delete this->psig;
-        this->psig = nullptr;
-    }
-}
-
-template<typename T, typename Device>
 psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate(bool only_psig)
 {
     ModuleBase::timer::tick("psi_initializer", "allocate");
@@ -26,12 +16,6 @@ psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate(bool only_p
         The way of calculating this->p_ucell_->natomwfc is, for each atom, read pswfc and for s, it is 1, for p, it is 3
         , then multiplied by the number of atoms, and then add them together.
     */
-
-    if (this->psig != nullptr)
-    {
-        delete this->psig;
-        this->psig = nullptr;
-    }
 	int prefactor = 1;
     int nbands_actual = 0;
     if(this->method_ == "random") 
@@ -98,11 +82,10 @@ psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate(bool only_p
     psi::Psi<std::complex<double>>* psi_out = nullptr;
     if(!only_psig)
     {
-        psi_out = new psi::Psi<std::complex<double>>(
-            nkpts_actual, 
-                GlobalV::NBANDS, // because no matter what, the wavefunction finally needed has GlobalV::NBANDS bands
-                    nbasis_actual, 
-                        this->pw_wfc_->npwk);
+        psi_out = new psi::Psi<std::complex<double>>(nkpts_actual, 
+                                                     GlobalV::NBANDS, // because no matter what, the wavefunction finally needed has GlobalV::NBANDS bands
+                                                     nbasis_actual, 
+                                                     this->pw_wfc_->npwk);
         /*
             WARNING: this will cause DIRECT MEMORY LEAK, psi is not properly deallocated
         */
@@ -113,11 +96,10 @@ psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate(bool only_p
         std::cout << " MEMORY FOR PSI PER PROCESSOR (MB)  : " << double(memory_cost_psi)/1024.0/1024.0 << std::endl;
         ModuleBase::Memory::record("Psi_PW", memory_cost_psi);
     }
-    this->psig = new psi::Psi<T, Device>(
-        nkpts_actual, 
-            nbands_actual, 
-                nbasis_actual, 
-                    this->pw_wfc_->npwk);
+    this->psig_ = std::make_shared<psi::Psi<T, Device>>(nkpts_actual, 
+                                                        nbands_actual, 
+                                                        nbasis_actual, 
+                                                        this->pw_wfc_->npwk);
     const size_t memory_cost_psig = 
             nkpts_actual*
                 nbands_actual * this->pw_wfc_->npwk_max * GlobalV::NPOL*
@@ -154,10 +136,10 @@ void psi_initializer<T, Device>::random_t(T* psi, const int iw_start, const int 
         const int nz = this->pw_wfc_->nz;
         const int nstnz = this->pw_wfc_->nst*nz;
 
-        Real *stickrr = new Real[nz];
-        Real *stickarg = new Real[nz];
-        Real *tmprr = new Real[nstnz];
-        Real *tmparg = new Real[nstnz];
+        std::vector<Real> stickrr(nz);
+        std::vector<Real> stickarg(nz);
+        std::vector<Real> tmprr(nstnz);
+        std::vector<Real> tmparg(nstnz);
         for (int iw = iw_start; iw < iw_end; iw++)
         {   
             // get the starting memory address of iw band
@@ -173,12 +155,12 @@ void psi_initializer<T, Device>::random_t(T* psi, const int iw_start, const int 
                     {
                         for(int iz=0; iz<nz; iz++)
                         {
-                            stickrr[ iz ] = std::rand()/Real(RAND_MAX);
-                            stickarg[ iz ] = std::rand()/Real(RAND_MAX);
+                            stickrr[iz] = std::rand()/Real(RAND_MAX);
+                            stickarg[iz] = std::rand()/Real(RAND_MAX);
                         }
                     }
-                    stick_to_pool(stickrr, ir, tmprr);
-                    stick_to_pool(stickarg, ir, tmparg);
+                    stick_to_pool(stickrr.data(), ir, tmprr.data());
+                    stick_to_pool(stickarg.data(), ir, tmparg.data());
                 }
 
                 for (int ig = 0;ig < ng;ig++)
@@ -191,10 +173,6 @@ void psi_initializer<T, Device>::random_t(T* psi, const int iw_start, const int 
                 startig += this->pw_wfc_->npwk_max;
             }
         }
-        delete[] stickrr;
-        delete[] stickarg;
-        delete[] tmprr;
-        delete[] tmparg;
     }
     else
     {

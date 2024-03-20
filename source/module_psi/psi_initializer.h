@@ -5,6 +5,8 @@
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 #include "module_basis/module_pw/pw_basis_k.h" // for kpoint related data structure
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
+// smart pointer for auto-memory management
+#include <memory>
 // numerical algorithm support
 #include "module_base/spherical_bessel_transformer.h" // for spherical bessel transform
 #ifdef __MPI
@@ -21,7 +23,7 @@ Psi (planewave based wavefunction) initializer
 Auther: Kirk0830
 Institute: AI for Science Institute, BEIJING
 
-This class is used to allocate memory and give initial guess for psi (not kspw_psi the FPTYPE, Device template one)
+This class is used to allocate memory and give initial guess for psi
 therefore only double datatype is needed to be supported.
 Following methods are available:
     1. random: use random number to initialize psi
@@ -39,8 +41,10 @@ class psi_initializer
     private:
         using Real = typename GetTypeReal<T>::type;
     public:
+        // technical notes:
+        // Polymorphism is used to implement different methods, and achieved by pointers and virtual functions
         psi_initializer() {};
-        virtual ~psi_initializer();
+        virtual ~psi_initializer() {};
         #ifdef __MPI // MPI additional implementation
         /// @brief initialize the psi_initializer with external data and methods
         virtual void initialize(Structure_Factor*,              //< structure factor
@@ -86,7 +90,8 @@ class psi_initializer
         /// @brief CENTRAL FUNCTION: calculate the interpolate table
         virtual void tabulate() = 0;
         /// @brief CENTRAL FUNCTION: calculate projection of atomic radial function onto planewave basis BASED ON THE OVERLAP TABLE
-        virtual psi::Psi<T, Device>* cal_psig(int ik) = 0;
+        virtual void proj_ao_onkG(int ik) = 0;
+
         // getter and setter
         UnitCell* p_ucell() const { return this->p_ucell_; }
         pseudopot_cell_vnl* p_pspot_nl() const { return this->p_pspot_nl_; }
@@ -99,6 +104,7 @@ class psi_initializer
         bool initialized() const { return this->initialized_; }
         std::string method() const { return this->method_; }
         int nbands_complem() const { return this->nbands_complem_; }
+        std::weak_ptr<psi::Psi<T, Device>> share_psig() { return this->psig_; }
 
         void set_ucell(UnitCell* p_ucell_in) { this->p_ucell_ = p_ucell_in; }
         void set_pspot_nl(pseudopot_cell_vnl* p_pspot_nl_in) { this->p_pspot_nl_ = p_pspot_nl_in; }
@@ -112,8 +118,6 @@ class psi_initializer
         void set_method(std::string method_in) { this->method_ = method_in; }
         void set_nbands_complem(int nbands_in) { this->nbands_complem_ = nbands_in; }
 
-        psi::Psi<T, Device>* psig = nullptr;
-
         // tool methods
         template <typename U>
         typename std::enable_if<std::is_same<U, float>::value, U>::type cast_to_T(const std::complex<double> in) {return static_cast<float>(in.real());}
@@ -123,7 +127,7 @@ class psi_initializer
         typename std::enable_if<std::is_same<U, std::complex<float>>::value, U>::type cast_to_T(const std::complex<double> in) {return std::complex<float>(static_cast<float>(in.real()), static_cast<float>(in.imag()));}
         template <typename U>
         typename std::enable_if<std::is_same<U, std::complex<double>>::value, U>::type cast_to_T(const std::complex<double> in) {return std::complex<double>(in.real(), in.imag());}
-        
+
     protected:
         Structure_Factor* sf_ = nullptr;
         ModulePW::PW_Basis_K* pw_wfc_ = nullptr;
@@ -138,6 +142,8 @@ class psi_initializer
         int random_seed_ = 1;
         // in old version it is of datatype int*, use std::vector<int> to avoid memory leak
         std::vector<int> ixy2is_;
+
+        std::shared_ptr<psi::Psi<T, Device>> psig_;
     private:
         int mem_saver_ = 0;
         std::string method_ = "none";

@@ -103,11 +103,6 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
     {
         delete reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->__kspw_psi);
     }
-    if (this->psi_init != nullptr)
-    {
-        delete this->psi_init;
-        this->psi_init = nullptr;
-    }
     delete this->psi;
 }
 template <typename T, typename Device>
@@ -508,26 +503,19 @@ template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::allocate_psi_init()
 {
     ModuleBase::timer::tick("ESolver_KS_PW", "allocate_psi_init");
-    // first reset psi_init
-    if(this->psi_init != nullptr)
-    {
-        delete this->psi_init;
-        this->psi_init = nullptr;
-    }
-    // then allocate psi_init according to init_wfc
-    if((GlobalV::init_wfc.substr(0, 6) == "atomic")&&(GlobalC::ucell.natomwfc == 0)) this->psi_init = new psi_initializer_random<T, Device>();
-    else if(GlobalV::init_wfc == "atomic") this->psi_init = new psi_initializer_atomic<T, Device>();
-    else if(GlobalV::init_wfc == "random") this->psi_init = new psi_initializer_random<T, Device>();
-    else if(GlobalV::init_wfc == "nao") this->psi_init = new psi_initializer_nao<T, Device>();
-    else if(GlobalV::init_wfc == "atomic+random") this->psi_init = new psi_initializer_atomic_random<T, Device>();
-    else if(GlobalV::init_wfc == "nao+random") this->psi_init = new psi_initializer_nao_random<T, Device>();
+    if((GlobalV::init_wfc.substr(0, 6) == "atomic")&&(GlobalC::ucell.natomwfc == 0)) this->psi_init = std::unique_ptr<psi_initializer<T, Device>>(new psi_initializer_random<T, Device>());
+    else if(GlobalV::init_wfc == "atomic") this->psi_init = std::unique_ptr<psi_initializer<T, Device>>(new psi_initializer_atomic<T, Device>());
+    else if(GlobalV::init_wfc == "random") this->psi_init = std::unique_ptr<psi_initializer<T, Device>>(new psi_initializer_random<T, Device>());
+    else if(GlobalV::init_wfc == "nao") this->psi_init = std::unique_ptr<psi_initializer<T, Device>>(new psi_initializer_nao<T, Device>());
+    else if(GlobalV::init_wfc == "atomic+random") this->psi_init = std::unique_ptr<psi_initializer<T, Device>>(new psi_initializer_atomic_random<T, Device>());
+    else if(GlobalV::init_wfc == "nao+random") this->psi_init = std::unique_ptr<psi_initializer<T, Device>>(new psi_initializer_nao_random<T, Device>());
     else ModuleBase::WARNING_QUIT("ESolver_KS_PW::allocate_psi_init", "for new psi initializer, init_wfc type not supported");
     #ifdef __MPI
     this->psi_init->initialize(&this->sf, this->pw_wfc, &GlobalC::ucell, &GlobalC::Pkpoints, 1, &GlobalC::ppcell, GlobalV::MY_RANK);
     #else
     this->psi_init->initialize(&this->sf, this->pw_wfc, &GlobalC::ucell, 1, &GlobalC::ppcell);
     #endif
-    // always new->initialize->tabulate->allocate->cal_psig
+    // always new->initialize->tabulate->allocate->proj_ao_onkG
     this->psi_init->tabulate();
     ModuleBase::timer::tick("ESolver_KS_PW", "allocate_psi_init");
 }
@@ -545,8 +533,11 @@ void ESolver_KS_PW<T, Device>::initialize_psi()
         {
             this->psi->fix_k(ik);
             this->p_hamilt->updateHk(ik);
-            psi::Psi<T, Device>* psig = this->psi_init->cal_psig(ik);
-            std::vector<Real> etatom(psig->get_nbands(), 0.0);
+            this->psi_init->proj_ao_onkG(ik);
+            std::weak_ptr<psi::Psi<T, Device>> psig = this->psi_init->share_psig();
+            if(psig.expired()) ModuleBase::WARNING_QUIT("ESolver_KS_PW::initialize_psi", "psig lifetime is expired");
+            auto psig_ = psig.lock(); psig_->fix_k(ik);
+            std::vector<Real> etatom(psig_->get_nbands(), 0.0);
             /*
             if ((this->psi_init->get_method().substr(0, 3) == "nao"))
             {
@@ -570,7 +561,7 @@ void ESolver_KS_PW<T, Device>::initialize_psi()
                 {
                     hsolver::DiagoIterAssist<T, Device>::diagH_subspace_init(
                         this->p_hamilt,
-                        psig->get_pointer(), psig->get_nbands(), psig->get_nbasis(),
+                        psig_->get_pointer(), psig_->get_nbands(), psig_->get_nbasis(),
                         *(this->kspw_psi), etatom.data()
                     );
                     continue;
@@ -590,7 +581,7 @@ void ESolver_KS_PW<T, Device>::initialize_psi()
                 {
                     hsolver::DiagoIterAssist<T, Device>::diagH_subspace(
                         this->p_hamilt,
-                        *(psig), *(this->kspw_psi), etatom.data()
+                        *(psig_), *(this->kspw_psi), etatom.data()
                     );
                     continue;
                 }
@@ -601,7 +592,7 @@ void ESolver_KS_PW<T, Device>::initialize_psi()
             {
                 for (int ibasis = 0; ibasis < this->kspw_psi->get_nbasis(); ibasis++)
                 {
-                    (*(this->kspw_psi))(iband, ibasis) = (*psig)(iband, ibasis);
+                    (*(this->kspw_psi))(iband, ibasis) = (*psig_)(iband, ibasis);
                 }
             }
         }
@@ -666,7 +657,9 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
                 multiple inheritance and polymorphism. But for now, we just do it in this way.
                 In the future, there will be a series of class ESolver_KS_LCAO_PW, HSolver_LCAO_PW and so on.
             */
-            this->phsol->solve(this->p_hamilt, this->kspw_psi[0], this->pelec, this->psi_init->psig[0]);
+            std::weak_ptr<psi::Psi<T, Device>> psig = this->psi_init->share_psig();
+            if(psig.expired()) ModuleBase::WARNING_QUIT("ESolver_KS_PW::hamilt2density", "psig lifetime is expired");
+            this->phsol->solve(this->p_hamilt, this->kspw_psi[0], this->pelec, psig.lock().get()[0]);
         }
         if (GlobalV::out_bandgap)
         {
