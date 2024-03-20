@@ -269,7 +269,16 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
 
     this->set_atom_map(atoms);
 
-    if (GlobalV::CALCULATION == "relax") this->all_mbl = this->is_all_movable(atoms, st);
+    if (GlobalV::CALCULATION == "relax")
+    {
+        this->all_mbl = this->is_all_movable(atoms, st);
+        if (!this->all_mbl)
+        {
+            std::cout << "WARNING: Symmetry cannot be kept when not all atoms are movable.\n ";
+            std::cout << "Continue with symmetry=0 ... \n";
+            ModuleSymmetry::Symmetry::symm_flag = 0;
+        }
+    }
 
     delete[] newpos;
     delete[] na;
