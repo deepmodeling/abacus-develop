@@ -13,12 +13,16 @@ void gint_gamma_rho_gpu(hamilt::HContainer<double> *dm,
                         double *rho,
                         const int nczp,
                         const double *ylmcoef_now,
-                        const Grid_Technique &gridt);
+                        const LCAO_Orbitals &ORB,
+                        const Grid_Technique &gridt,
+                        const UnitCell &ucell);
 
 void gpu_task_generator_rho(const Grid_Technique &gridt, 
                             const int i, const int j,
                             const int psi_size_max, const int max_size,
                             const int nczp,
+                            const UnitCell &ucell,
+                            const LCAO_Orbitals &ORB,
                             double *psi_input_double, int *psi_input_int,
                             int *num_psir,
                             const int lgd,

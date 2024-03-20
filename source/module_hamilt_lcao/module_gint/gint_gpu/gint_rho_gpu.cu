@@ -12,7 +12,9 @@ void gint_gamma_rho_gpu(hamilt::HContainer<double> *dm,
                         double *rho,
                         const int nczp,
                         const double *ylmcoef_now,
-                        const Grid_Technique &gridt)
+                        const LCAO_Orbitals &ORB,
+                        const Grid_Technique &gridt,
+                        const UnitCell &ucell)
 {
     const int nbz = gridt.nbzp;
     const int lgd = gridt.lgd;
@@ -21,14 +23,14 @@ void gint_gamma_rho_gpu(hamilt::HContainer<double> *dm,
     double *dm_matrix_h = new double[lgd * lgd];
     ModuleBase::GlobalFunc::ZEROS(dm_matrix_h, lgd*lgd);
     checkCuda(cudaMemset(gridt.rho_g, 0, gridt.ncxyz * sizeof(double)));
-    for (int iat1 = 0; iat1 < GlobalC::ucell.nat; iat1++)
+    for (int iat1 = 0; iat1 < ucell.nat; iat1++)
     {
-        for (int iat2 = 0; iat2 < GlobalC::ucell.nat; iat2++)
+        for (int iat2 = 0; iat2 < ucell.nat; iat2++)
         {
-            int it1 = GlobalC::ucell.iat2it[iat1];
-            int it2 = GlobalC::ucell.iat2it[iat2];
-            int lo1 = gridt.trace_lo[GlobalC::ucell.itiaiw2iwt(it1, GlobalC::ucell.iat2ia[iat1], 0)];
-            int lo2 = gridt.trace_lo[GlobalC::ucell.itiaiw2iwt(it2, GlobalC::ucell.iat2ia[iat2], 0)];
+            int it1 = ucell.iat2it[iat1];
+            int it2 = ucell.iat2it[iat2];
+            int lo1 = gridt.trace_lo[ucell.itiaiw2iwt(it1, ucell.iat2ia[iat1], 0)];
+            int lo2 = gridt.trace_lo[ucell.itiaiw2iwt(it2, ucell.iat2ia[iat2], 0)];
 
                 hamilt::AtomPair<double> *tmp_ap = dm->find_pair(iat1, iat2);
                 int orb_index = 0;
@@ -118,6 +120,7 @@ void gint_gamma_rho_gpu(hamilt::HContainer<double> *dm,
             gpu_task_generator_rho(gridt, i, j,
                         gridt.psi_size_max_per_z,
                         max_size, nczp,
+                        ucell, ORB,
                         psi_input_double,
                         psi_input_int,
                         num_psir,
@@ -174,9 +177,9 @@ void gint_gamma_rho_gpu(hamilt::HContainer<double> *dm,
             dim3 block_psi(64);
 
             get_psi<<<grid_psi, block_psi, 0, gridt.streams[stream_num]>>>(gridt.ylmcoef_g,
-                                                                            GlobalC::ORB.dr_uniform,
+                                                                            ORB.dr_uniform,
                                                                             gridt.bxyz,
-                                                                            GlobalC::ucell.nwmax,
+                                                                            ucell.nwmax,
                                                                             psi_input_double_g,
                                                                             psi_input_int_g,
                                                                             num_psir_g,
