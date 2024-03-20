@@ -1,10 +1,7 @@
 #include "module_hamilt_lcao/module_gint/gint_gpu/gint_rho.cuh"
 #include "module_hamilt_lcao/module_gint/gint_gpu/gint_rho.h"
-#include "module_basis/module_ao/ORB_read.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_hamilt_lcao/module_gint/gint_gpu/vbatch_matrix_multiple/cuda_tools.cuh"
-#include <cstdio>
 #include "spherical_harmonics.cuh"
+
 __global__ void get_psi(double *ylmcoef,
                         double delta_r_g,
                         double bxyz_g,

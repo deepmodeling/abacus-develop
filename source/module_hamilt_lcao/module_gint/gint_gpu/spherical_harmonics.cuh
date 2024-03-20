@@ -3,7 +3,7 @@
 
 static __device__  void spherical_harmonics(double *dr,double distance,int nwl,double (&ylma)[49],double *ylmcoef)
 {
-    /***************************
+        /***************************
         L = 0
         ***************************/
         ylma[0] = ylmcoef[0]; // l=0, m=0
@@ -127,6 +127,7 @@ static __device__  void spherical_harmonics(double *dr,double distance,int nwl,d
             ylma[istart + 2 * il] = (bl3 * ylma[istart + 2 * il - 4] - bl2 * ylma[istart2 + 2 * il - 4] - 2.0 * dr[0] * ylma[istart1 + 2 * il - 2]) / bl1;
         }*/
 }
+
 static __device__  void spherical_harmonics_d(double *dr,double distance,double (&grly)[49][3],int nwl,double (&ylma)[49],double *ylmcoef)
 {
     double tmp0;

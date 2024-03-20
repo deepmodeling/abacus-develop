@@ -9,26 +9,26 @@
  *
  * This function calculates forces and stress for a given set of parameters.
  *
- * @param DM A pointer to hamilt::HContainer<double>.
+ * @param dm A pointer to hamilt::HContainer<double>.
  * @param vfactor Scaling factor for forces.
  * @param vlocal Local potential values.
  * @param force Output array for forces.
  * @param stress Output array for stress.
  * @param nczp Size parameter.
  * @param ylmcoef_now Coefficients for spherical harmonics.
- * @param GridT Reference to Grid_Technique object.
+ * @param gridt Reference to Grid_Technique object.
  */
-void gint_gamma_force_gpu(hamilt::HContainer<double> *DM, const double vfactor,
+void gint_gamma_force_gpu(hamilt::HContainer<double> *dm, const double vfactor,
                           const double *vlocal, double *force, double *stress,
                           const int nczp, const double *ylmcoef_now,
-                          const Grid_Technique &GridT);
+                          const Grid_Technique &gridt);
 
 /**
  * @brief GPU task generator for forces.
  *
  * This function generates GPU tasks for force calculations.
  *
- * @param GridT Reference to Grid_Technique object.
+ * @param gridt Reference to Grid_Technique object.
  * @param i Value of i.
  * @param j Value of j.
  * @param psi_size_max Maximum size of psi.
@@ -64,7 +64,7 @@ void gint_gamma_force_gpu(hamilt::HContainer<double> *DM, const double vfactor,
  * @param dot_count Reference to dot_count.
  */
 void gpu_task_generator_force(
-    const Grid_Technique &GridT, const int i, const int j,
+    const Grid_Technique &gridt, const int i, const int j,
     const int psi_size_max, const int max_size, const int nczp,
     const double vfactor, const double *vlocal_global_value, int *iat_per_nbz,
     double *psi_input_double, int *psi_input_int, int *num_psir, const int lgd,

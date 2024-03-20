@@ -76,7 +76,7 @@ void Gint::cal_gint(Gint_inout *inout) {
         }
         gint_gamma_vl_gpu(this->hRGint, lgd, max_size,
                           GlobalC::ucell.omega / this->ncxyz, inout->vl, ylmcoef,
-                          this->nplane, GlobalV::NLOCAL, this->nbxx,
+                          this->nplane, this->nbxx,
                           *this->gridt);
         ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
         return;
@@ -92,7 +92,7 @@ void Gint::cal_gint(Gint_inout *inout) {
         for (int is = 0; is < GlobalV::NSPIN; ++is) {
           ModuleBase::GlobalFunc::ZEROS(inout->rho[is], nrxx);
           gint_gamma_rho_gpu(this->DMRGint[is], inout->rho[is], this->nplane,
-                            ylmcoef, *this->gridt);
+                            ylmcoef, GlobalC::ORB, *this->gridt, GlobalC::ucell);
         }
         ModuleBase::timer::tick("Gint_interface", "cal_gint_rho");
         return;
