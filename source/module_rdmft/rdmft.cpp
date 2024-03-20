@@ -178,14 +178,10 @@ void RDMFT<TK, TR>::update_elec(const ModuleBase::matrix& occ_number_in, const p
         }
     }
 
-    std::cout << "\nrdmft_solver: " << "0.1" << std::endl;
-
     // update wfc
     TK* pwfc_in = &wfc_in(0, 0, 0);
     TK* pwfc = &wfc(0, 0, 0);
     for(int i=0; i<wfc.size(); ++i) pwfc[i] = pwfc_in[i];
-
-    std::cout << "\nrdmft_solver: " << "0.2" << std::endl;
 
     // update charge
     if( GlobalV::GAMMA_ONLY_LOCAL )
@@ -213,17 +209,9 @@ void RDMFT<TK, TR>::update_elec(const ModuleBase::matrix& occ_number_in, const p
     {
         // calculate DMK and DMR
         elecstate::DensityMatrix<TK, double> DM(kv, ParaV, GlobalV::NSPIN);
-        std::cout << "\nrdmft_solver: " << "0.21" << std::endl;
-        std::cout << "\nwfc.get_nk(): " << wfc.get_nk() << std::endl;
-        std::cout << "\nkv->nks: " << kv->nks << std::endl;
-        std::cout << "\nwg.nr: " << wg.nr << std::endl;
         elecstate::cal_dm_psi(ParaV, wg, wfc, DM);
-        std::cout << "\nrdmft_solver: " << "0.22" << std::endl;
         DM.init_DMR(&GlobalC::GridD, &GlobalC::ucell);
-        std::cout << "\nrdmft_solver: " << "0.23" << std::endl;
         DM.cal_DMR();
-
-        std::cout << "\nrdmft_solver: " << "0.3" << std::endl;
 
         // this code is copying from function ElecStateLCAO<TK>::psiToRho(), in elecstate_lcao.cpp
         for (int is = 0; is < GlobalV::NSPIN; is++)
@@ -231,17 +219,12 @@ void RDMFT<TK, TR>::update_elec(const ModuleBase::matrix& occ_number_in, const p
             ModuleBase::GlobalFunc::ZEROS(charge->rho[is], charge->nrxx);
         }
 
-        std::cout << "\nrdmft_solver: " << "0.4" << std::endl;
-
         GK->transfer_DM2DtoGrid(DM.get_DMR_vector());
-        std::cout << "\nrdmft_solver: " << "0.5" << std::endl;
         //double** invaild_ptr = nullptr;   // use invaild_ptr replace loc.DM_R in the future
         Gint_inout inout(loc->DM_R, charge->rho, Gint_Tools::job_type::rho);  // what is Local_Orbital_Charge& loc_in? ///////////////
-        std::cout << "\nrdmft_solver: " << "0.6" << std::endl;
         GK->cal_gint(&inout);
-        std::cout << "\nrdmft_solver: " << "0.7" << std::endl;
+
         charge->renormalize_rho();
-        std::cout << "\nrdmft_solver: " << "0.8" << std::endl;
     }
 }
 
@@ -546,13 +529,13 @@ double RDMFT<TK, TR>::Run(ModuleBase::matrix& E_gradient_occNum, psi::Psi<TK>& E
     for(int i=0; i<wfc.size(); ++i) pwfc_out[i] = pwfc[i];
 
     // test
-    rdmft::printMatrix_pointer(E_gradient_occNum.nr, E_gradient_occNum.nc, &E_gradient_occNum(0, 0), "E_gradient_occNum");
-    rdmft::printMatrix_pointer(occ_number.nr, occ_number.nc, &occ_number(0, 0), "occ_number");
-    rdmft::printMatrix_pointer(wfcHwfc_TV.nr, wfcHwfc_TV.nc, &wfcHwfc_TV(0, 0), "wfcHwfc_TV");
-    rdmft::printMatrix_pointer(wfcHwfc_hartree.nr, wfcHwfc_hartree.nc, &wfcHwfc_hartree(0, 0), "wfcHwfc_hartree");
-    rdmft::printMatrix_pointer(wfcHwfc_XC.nr, wfcHwfc_XC.nc, &wfcHwfc_XC(0, 0), "wfcHwfc_XC");
-    rdmft::printMatrix_pointer(E_gradient_wfc.get_nbands(), E_gradient_wfc.get_nbasis(), &E_gradient_wfc(0, 0, 0), "E_gradient_wfc(ik=0)");
-    rdmft::printMatrix_pointer(E_gradient_wfc.get_nbands(), E_gradient_wfc.get_nbasis(), &E_gradient_wfc(2, 0, 0), "E_gradient_wfc(ik=2)");
+    // rdmft::printMatrix_pointer(E_gradient_occNum.nr, E_gradient_occNum.nc, &E_gradient_occNum(0, 0), "E_gradient_occNum");
+    // rdmft::printMatrix_pointer(occ_number.nr, occ_number.nc, &occ_number(0, 0), "occ_number");
+    // rdmft::printMatrix_pointer(wfcHwfc_TV.nr, wfcHwfc_TV.nc, &wfcHwfc_TV(0, 0), "wfcHwfc_TV");
+    // rdmft::printMatrix_pointer(wfcHwfc_hartree.nr, wfcHwfc_hartree.nc, &wfcHwfc_hartree(0, 0), "wfcHwfc_hartree");
+    // rdmft::printMatrix_pointer(wfcHwfc_XC.nr, wfcHwfc_XC.nc, &wfcHwfc_XC(0, 0), "wfcHwfc_XC");
+    // rdmft::printMatrix_pointer(E_gradient_wfc.get_nbands(), E_gradient_wfc.get_nbasis(), &E_gradient_wfc(0, 0, 0), "E_gradient_wfc(ik=0)");
+    // rdmft::printMatrix_pointer(E_gradient_wfc.get_nbands(), E_gradient_wfc.get_nbasis(), &E_gradient_wfc(2, 0, 0), "E_gradient_wfc(ik=2)");
     // test
 
     return E_RDMFT[3];
