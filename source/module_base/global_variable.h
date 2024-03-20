@@ -47,8 +47,11 @@ extern int CURRENT_K; // 8
 extern int CAL_FORCE; // 8.1
 extern double FORCE_THR; // 8.2
 extern bool CAL_STRESS; // 8.25 calcualte the stress
+<<<<<<< HEAD
 extern int NUM_STREAM;
 extern std::string gint_device;
+=======
+>>>>>>> parent of 3d09b0ebe (USE STREAM IN GPU LCAO)
 extern double PRESS1;
 extern double PRESS2;
 extern double PRESS3;
