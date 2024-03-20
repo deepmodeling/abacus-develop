@@ -279,15 +279,6 @@ void gint_gamma_force_gpu(hamilt::HContainer<double> *DM, const double vfactor,
                           GridT.atom_pair_size_over_nbz * sizeof(double *),
                           cudaMemcpyHostToDevice, GridT.streams[stream_num]));
 
-      // checkCuda(cudaMemcpyAsync(vec_len_g, vec_len, GridT.num_mcell *
-      // sizeof(int), cudaMemcpyHostToDevice, GridT.streams[stream_num]));
-      // checkCuda(cudaMemcpyAsync(vec_l_g, vec_l, GridT.num_mcell *
-      // sizeof(double *), cudaMemcpyHostToDevice, GridT.streams[stream_num]));
-      // checkCuda(cudaMemcpyAsync(vec_r_g, vec_r, GridT.num_mcell *
-      // sizeof(double *), cudaMemcpyHostToDevice, GridT.streams[stream_num]));
-      // checkCuda(cudaMemcpyAsync(dot_product_g, dot_product, GridT.num_mcell *
-      // sizeof(double *), cudaMemcpyHostToDevice, GridT.streams[stream_num]));
-
       checkCuda(cudaMemsetAsync(psir_ylm_dm_g, 0,
                                 GridT.psir_size * sizeof(double),
                                 GridT.streams[stream_num]));
