@@ -96,6 +96,7 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::cal_nlm_all(const Parallel_O
     ModuleBase::timer::tick("DFTUNew", "cal_nlm_all");
     nlm_tot.resize(this->ucell->nat);
     const int npol = this->ucell->get_npol();
+    int atom_index = 0;
     for (int iat0 = 0; iat0 < ucell->nat; iat0++)
     {
         auto tau0 = ucell->get_tau(iat0);
@@ -104,7 +105,7 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::cal_nlm_all(const Parallel_O
         const int target_L = this->dftu->orbital_corr[T0];
         if(target_L == -1) continue;
         const int tlp1 = 2*target_L+1;
-        AdjacentAtomInfo& adjs = this->adjs_all[iat0];
+        AdjacentAtomInfo& adjs = this->adjs_all[atom_index++];
 
         // calculate and save the table of two-center integrals
         nlm_tot[iat0].resize(adjs.adj_num + 1);
@@ -192,6 +193,7 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
     // 1. calculate <psi|alpha> for each pair of atoms
     this->cal_nlm_all(paraV);
     // loop over all on-site atoms
+    int atom_index = 0;
     for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
     {
         // skip the atoms without plus-U
@@ -201,7 +203,7 @@ void hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
         const int target_L = this->dftu->orbital_corr[T0];
         if(target_L == -1) continue;
         const int tlp1 = 2*target_L+1;
-        AdjacentAtomInfo& adjs = this->adjs_all[iat0];
+        AdjacentAtomInfo& adjs = this->adjs_all[atom_index++];
 
         ModuleBase::timer::tick("DFTUNew", "cal_occupations");
         //first iteration to calculate occupation matrix

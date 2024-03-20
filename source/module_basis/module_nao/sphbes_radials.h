@@ -33,6 +33,7 @@ class SphbesRadials : public RadialSet
      * @param[in] rank     MPI rank
      */
     void build(const std::string& file,
+               const double dr = 0.01,
                const int itype = 0,
                std::ofstream* ptr_log = nullptr,
                const int rank = 0
@@ -56,12 +57,11 @@ class SphbesRadials : public RadialSet
                const int nbes,
                const double rcut,
                const double sigma,
+               const double dr = 0.01,
                const int itype = 0,
                std::ofstream* ptr_log = nullptr,
                const int rank = 0
     );
-
-    void set_dr(const double dr) { dr_ = dr; }
 
     /**
      * @name Getters
