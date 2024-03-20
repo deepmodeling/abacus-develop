@@ -14,7 +14,7 @@ class psi_initializer_random : public psi_initializer<T, Device>
         using Real = typename GetTypeReal<T>::type;
     public:
         psi_initializer_random() {this->set_method("random");};
-        ~psi_initializer_random();
+        ~psi_initializer_random() {};
         /// @brief write random number to psi in certain range specified by ik, iw_start, iw_end
         void random(T* psi,                 //< psi
                     const int iw_start,     //< iw_start, starting band index of present kpoint
@@ -32,14 +32,14 @@ class psi_initializer_random : public psi_initializer<T, Device>
                                 Parallel_Kpoints*,              //< parallel kpoints
                                 const int& = 1,                 //< random seed
                                 pseudopot_cell_vnl* = nullptr,  //< nonlocal pseudopotential
-                                const int& = 0) override {};    //< MPI rank
+                                const int& = 0) override;       //< MPI rank
         #else
         /// @brief serial version of initialize function, link psi_initializer with external data and methods
         virtual void initialize(Structure_Factor*,                          //< structure factor
                                 ModulePW::PW_Basis_K*,                      //< planewave basis
                                 UnitCell*,                                  //< unit cell
                                 const int& = 1,                             //< random seed
-                                pseudopot_cell_vnl* = nullptr) override {}; //< nonlocal pseudopotential
+                                pseudopot_cell_vnl* = nullptr) override   ; //< nonlocal pseudopotential
         #endif
         virtual void tabulate() override {};
 };

@@ -39,7 +39,7 @@ class psi_initializer
     private:
         using Real = typename GetTypeReal<T>::type;
     public:
-        psi_initializer() { };
+        psi_initializer() {};
         virtual ~psi_initializer();
         #ifdef __MPI // MPI additional implementation
         /// @brief initialize the psi_initializer with external data and methods
@@ -93,7 +93,7 @@ class psi_initializer
         Structure_Factor* p_sf() const { return this->sf_; }
         ModulePW::PW_Basis_K* pw_wfc() const { return this->pw_wfc_; }
         int random_seed() const { return this->random_seed_; }
-        int* ixy2is() const { return this->ixy2is_; }
+        std::vector<int> ixy2is() const { return this->ixy2is_; }
         int mem_saver() const { return this->mem_saver_; }
         double random_mix() const { return this->random_mix_; }
         bool initialized() const { return this->initialized_; }
@@ -105,7 +105,7 @@ class psi_initializer
         void set_sf(Structure_Factor* sf_in) { this->sf_ = sf_in; }
         void set_pw_wfc(ModulePW::PW_Basis_K* pw_wfc_in) { this->pw_wfc_ = pw_wfc_in; }
         void set_random_mix(const double random_mix_in) { this->random_mix_ = random_mix_in; }
-        void set_ixy2is(int* ixy2is_in) { this->ixy2is_ = ixy2is_in; }
+        void set_ixy2is(const std::vector<int>& ixy2is_in) { this->ixy2is_ = ixy2is_in; }
         void set_random_seed(const int random_seed_in) { this->random_seed_ = random_seed_in; }
         void set_mem_saver(const int mem_saver_in) { this->mem_saver_ = mem_saver_in; }
         void set_initialized(bool initialized_in) { this->initialized_ = initialized_in; }
@@ -132,13 +132,16 @@ class psi_initializer
         Parallel_Kpoints* p_parakpts_ = nullptr;
         #endif
         pseudopot_cell_vnl* p_pspot_nl_ = nullptr;
-        int random_seed_ = 1; // random seed
+        // shared by atomic, nao, atomic+random, nao+random
         ModuleBase::SphericalBesselTransformer sbt; // useful for atomic-like methods
+        // shared by random, atomic+random, nao+random
+        int random_seed_ = 1;
+        // in old version it is of datatype int*, use std::vector<int> to avoid memory leak
+        std::vector<int> ixy2is_;
     private:
         int mem_saver_ = 0;
         std::string method_ = "none";
         int nbands_complem_ = 0;
-        int* ixy2is_;
         bool initialized_ = false;
         double random_mix_ = 0;
 };

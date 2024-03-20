@@ -287,19 +287,16 @@ void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
                                 this->pw_wfc->nz);
         this->pw_wfc->initparameters(false, INPUT.ecutwfc, this->kv.nks, this->kv.kvec_d.data());
         this->pw_wfc->collect_local_pw(inp.erf_ecut, inp.erf_height, inp.erf_sigma);
-        if(GlobalV::psi_initializer)
+        
+        if(GlobalV::psi_initializer) // new initialization method, used in KSDFT and LCAO_IN_PW calculation
         {
-            if(GlobalV::init_wfc.substr(0, 3) == "nao")
-            {
-                this->psi_init->tabulate(); // for nao, we recalculate the overlap matrix between flz and jlq
-            }
-            else if(GlobalV::init_wfc.substr(0, 6) == "atomic")
-            {
-                this->psi_init->tabulate(); // for atomic, we recalculate the overlap matrix between pswfc and jlq
-            }
+            // re-tabulate because GlobalV::DQ may change due to the change of atomic positions and cell parameters
+            // for nao, we recalculate the overlap matrix between flz and jlq
+            // for atomic, we recalculate the overlap matrix between pswfc and jlq
             // for psig is not read-only, its value will be overwritten in initialize_psi(), dont need delete and reallocate
+            if((GlobalV::init_wfc.substr(0, 3) == "nao")||(GlobalV::init_wfc.substr(0, 6) == "atomic")) this->psi_init->tabulate(); 
         }
-        else
+        else // old initialization method, used in EXX calculation
         {
             this->wf.init_after_vc(this->kv.nks); // reallocate wanf2, the planewave expansion of lcao
             this->wf.init_at_1(&this->sf); // re-calculate tab_at, the overlap matrix between atomic pswfc and jlq
@@ -437,14 +434,7 @@ void ESolver_KS_PW<T, Device>::beforescf(int istep)
 
             What the old strategy does is only to initialize for once...
         */
-        if(GlobalV::init_wfc == "random")
-        {
-            if(istep == 0) this->initialize_psi();
-        }
-        else
-        {
-            this->initialize_psi();
-        }
+        if(((GlobalV::init_wfc == "random")&&(istep == 0))||(GlobalV::init_wfc != "random")) this->initialize_psi();
     }
 }
 
@@ -518,16 +508,14 @@ template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::allocate_psi_init()
 {
     ModuleBase::timer::tick("ESolver_KS_PW", "allocate_psi_init");
+    // first reset psi_init
     if(this->psi_init != nullptr)
     {
         delete this->psi_init;
         this->psi_init = nullptr;
     }
-    if((GlobalV::init_wfc.substr(0, 6) == "atomic")&&(GlobalC::ucell.natomwfc == 0))
-    {
-        GlobalV::init_wfc = "random";
-        this->psi_init = new psi_initializer_random<T, Device>();
-    }
+    // then allocate psi_init according to init_wfc
+    if((GlobalV::init_wfc.substr(0, 6) == "atomic")&&(GlobalC::ucell.natomwfc == 0)) this->psi_init = new psi_initializer_random<T, Device>();
     else if(GlobalV::init_wfc == "atomic") this->psi_init = new psi_initializer_atomic<T, Device>();
     else if(GlobalV::init_wfc == "random") this->psi_init = new psi_initializer_random<T, Device>();
     else if(GlobalV::init_wfc == "nao") this->psi_init = new psi_initializer_nao<T, Device>();
@@ -539,6 +527,7 @@ void ESolver_KS_PW<T, Device>::allocate_psi_init()
     #else
     this->psi_init->initialize(&this->sf, this->pw_wfc, &GlobalC::ucell, 1, &GlobalC::ppcell);
     #endif
+    // always new->initialize->tabulate->allocate->cal_psig
     this->psi_init->tabulate();
     ModuleBase::timer::tick("ESolver_KS_PW", "allocate_psi_init");
 }

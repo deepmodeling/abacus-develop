@@ -240,7 +240,6 @@ void psi_initializer_nao<T, Device>::allocate_table()
 }
 
 
-
 #ifdef __MPI
 template <typename T, typename Device>
 void psi_initializer_nao<T, Device>::initialize(Structure_Factor* sf,

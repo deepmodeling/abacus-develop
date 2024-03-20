@@ -37,6 +37,5 @@ class psi_initializer_nao_random : public psi_initializer_nao<T, Device>
         psi::Psi<T, Device>* cal_psig(int ik) override;
 
         virtual void tabulate() override {psi_initializer_nao<T, Device>::tabulate();};
-    private:
 };
 #endif

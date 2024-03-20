@@ -9,7 +9,6 @@
 template<typename T, typename Device>
 psi_initializer<T, Device>::~psi_initializer()
 {
-    delete[] this->ixy2is_;
     if (this->psig != nullptr)
     {
         delete this->psig;

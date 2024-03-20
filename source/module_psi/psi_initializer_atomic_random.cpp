@@ -11,6 +11,9 @@ void psi_initializer_atomic_random<T, Device>::initialize(Structure_Factor* sf, 
                                                           const int& rank)
 {
     psi_initializer_atomic<T, Device>::initialize(sf, pw_wfc, p_ucell, p_parakpts, random_seed, p_pspot_nl, rank);
+    this->ixy2is_.clear();
+    this->ixy2is_.resize(this->pw_wfc_->fftnxy);
+    this->pw_wfc_->getfftixy2is(this->ixy2is_.data());
 }
 #else
 template <typename T, typename Device>
@@ -21,6 +24,9 @@ void psi_initializer_atomic_random<T, Device>::initialize(Structure_Factor* sf, 
                                                           pseudopot_cell_vnl* p_pspot_nl)
 {
     psi_initializer_atomic<T, Device>::initialize(sf, pw_wfc, p_ucell, random_seed, p_pspot_nl);
+    this->ixy2is_.clear();
+    this->ixy2is_.resize(this->pw_wfc_->fftnxy);
+    this->pw_wfc_->getfftixy2is(this->ixy2is_.data());
 }
 #endif
 
