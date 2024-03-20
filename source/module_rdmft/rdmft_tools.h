@@ -261,11 +261,13 @@ void occNum_Mul_wfcHwfc(const ModuleBase::matrix& occ_number, const ModuleBase::
 // Default symbol = 0 for the gradient of Etotal with respect to occupancy
 // symbol = 1 for the relevant calculation of Etotal
 void add_occNum(const ModuleBase::matrix& occ_number, const ModuleBase::matrix& wfcHwfc_TV_in, const ModuleBase::matrix& wfcHwfc_hartree_in,
-            const ModuleBase::matrix& wfcHwfc_XC_in, ModuleBase::matrix& occNum_wfcHwfc, const std::string XC_func_rdmft = "HF", const double alpha = 0.656, int symbol = 0);
+            const ModuleBase::matrix& wfcHwfc_XC_in, ModuleBase::matrix& occNum_wfcHwfc, const std::string XC_func_rdmft = "HF", const double alpha = 0.656);
 
 
-// do wk*g(occNum)*wfcHwfc and add for TV, hartree, XC. This function just use once, so it can be replace and delete
-void add_wfcHwfc(const std::vector<double>& wk_in, const ModuleBase::matrix& occ_number, const ModuleBase::matrix& wfcHwfc_TV_in, const ModuleBase::matrix& wfcHwfc_hartree_in,
+// // do wk*g(occNum)*wfcHwfc and add for TV, hartree, XC. This function just use once, so it can be replace and delete
+// void add_wfcHwfc(const std::vector<double>& wk_in, const ModuleBase::matrix& occ_number, const ModuleBase::matrix& wfcHwfc_TV_in, const ModuleBase::matrix& wfcHwfc_hartree_in,
+//                 const ModuleBase::matrix& wfcHwfc_XC_in, ModuleBase::matrix& occNum_wfcHwfc, const std::string XC_func_rdmft, const double alpha);
+void add_wfcHwfc(const ModuleBase::matrix& wg, const ModuleBase::matrix& wk_fun_occNum, const ModuleBase::matrix& wfcHwfc_TV_in, const ModuleBase::matrix& wfcHwfc_hartree_in,
                 const ModuleBase::matrix& wfcHwfc_XC_in, ModuleBase::matrix& occNum_wfcHwfc, const std::string XC_func_rdmft, const double alpha);
 
 

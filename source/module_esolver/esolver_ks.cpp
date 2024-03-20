@@ -401,10 +401,10 @@ namespace ModuleESolver
                     }
 
                     // do rdmft calculation
-                    ModuleBase::matrix E_gradient_wg(this->pelec->wg.nr, this->pelec->wg.nc, true);
+                    ModuleBase::matrix E_gradient_occNum(this->pelec->wg.nr, this->pelec->wg.nc, true);
                     psi::Psi<T> E_gradient_wfc(this->psi->get_nk(), this->psi->get_nbands(), this->psi->get_nbasis()); 
-                    double Etotal = this->Run_rdmft(E_gradient_wg, E_gradient_wfc);   // add by jghan 2024-03-16
-
+                    double Etotal = this->Run_rdmft(E_gradient_occNum, E_gradient_wfc);   // add by jghan 2024-03-16
+    
                     // continue;
                 }
                 ModuleBase::timer::tick("RDMFT", "E & Egradient");

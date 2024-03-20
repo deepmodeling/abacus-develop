@@ -117,47 +117,21 @@ void occNum_Mul_wfcHwfc(const ModuleBase::matrix& occ_number, const ModuleBase::
 }
 
 
-// Default symbol = 0 for the gradient of Etotal with respect to occupation numbers
-// symbol = 1 for the relevant calculation of Etotal
+// for the gradient of Etotal with respect to occupation numbers
 void add_occNum(const ModuleBase::matrix& occ_number, const ModuleBase::matrix& wfcHwfc_TV_in, const ModuleBase::matrix& wfcHwfc_hartree_in,
-                const ModuleBase::matrix& wfcHwfc_XC_in, ModuleBase::matrix& occNum_wfcHwfc, const std::string XC_func_rdmft, const double alpha, int symbol)
-{
-    
+                const ModuleBase::matrix& wfcHwfc_XC_in, ModuleBase::matrix& occNum_wfcHwfc, const std::string XC_func_rdmft, const double alpha)
+{ 
     occNum_wfcHwfc.zero_out();
-    
-    if( symbol==0 )
-    {
-        occNum_Mul_wfcHwfc(occ_number, wfcHwfc_XC_in, occNum_wfcHwfc, 4, XC_func_rdmft, alpha);
-        occNum_wfcHwfc+=(wfcHwfc_TV_in);
-        occNum_wfcHwfc+=(wfcHwfc_hartree_in);
-    }
-    // else if( symbol==1 )
-    // {
-    //     occNum_Mul_wfcHwfc(wg, wfcHwfc_TV_in, occNum_wfcHwfc);
-    //     occNum_Mul_wfcHwfc(wg, wfcHwfc_hartree_in, occNum_wfcHwfc, 1);
-    //     occNum_Mul_wfcHwfc(wg, wfcHwfc_XC_in, occNum_wfcHwfc, 3, XC_func_rdmft, alpha);
-    // }
-    else std::cout << "\n\n\n!!!!!!\nthere are something wrong when calling rdmft_test() and calculation add_occNum()\n!!!!!!\n\n\n"; 
+    occNum_Mul_wfcHwfc(occ_number, wfcHwfc_XC_in, occNum_wfcHwfc, 4, XC_func_rdmft, alpha);
+    occNum_wfcHwfc+=(wfcHwfc_TV_in);
+    occNum_wfcHwfc+=(wfcHwfc_hartree_in);
 }
 
 
 // do wk*g(occNum)*wfcHwfc and add for TV, hartree, XC. This function just use once, so it can be replace and delete
-void add_wfcHwfc(const std::vector<double>& wk_in, const ModuleBase::matrix& occ_number, const ModuleBase::matrix& wfcHwfc_TV_in, const ModuleBase::matrix& wfcHwfc_hartree_in,
+void add_wfcHwfc(const ModuleBase::matrix& wg, const ModuleBase::matrix& wk_fun_occNum, const ModuleBase::matrix& wfcHwfc_TV_in, const ModuleBase::matrix& wfcHwfc_hartree_in,
                 const ModuleBase::matrix& wfcHwfc_XC_in, ModuleBase::matrix& occNum_wfcHwfc, const std::string XC_func_rdmft, const double alpha)
 {
-    /****** delete when function rdmft_cal() -> class RDMFT ******/
-    ModuleBase::matrix wg(occ_number);
-    for(int ik=0; ik < wg.nr; ++ik)
-    {
-        for(int inb=0; inb < wg.nc; ++inb) wg(ik, inb) *= wk_in[ik];
-    }
-    ModuleBase::matrix wk_fun_occNum(occ_number.nr, occ_number.nc, true);
-    for(int ik=0; ik<wg.nr; ++ik)
-    {
-        for(int inb=0; inb<wg.nc; ++inb) wk_fun_occNum(ik, inb) = wk_in[ik] * occNum_func(occ_number(ik, inb), 2, XC_func_rdmft, alpha);
-    }
-    /****** delete when function rdmft_cal() -> class RDMFT ******/
-
     occNum_wfcHwfc.zero_out();
     occNum_Mul_wfcHwfc(wg, wfcHwfc_TV_in, occNum_wfcHwfc);
     occNum_Mul_wfcHwfc(wg, wfcHwfc_hartree_in, occNum_wfcHwfc, 1);

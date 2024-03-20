@@ -939,7 +939,7 @@ namespace ModuleESolver
 
 
     //initialize the gradients of Etotal on wg and wfc, and set all elements to 0. 
-    ModuleBase::matrix E_gradient_wg(this->pelec->wg.nr, this->pelec->wg.nc, true);
+    ModuleBase::matrix E_gradient_occNum(this->pelec->wg.nr, this->pelec->wg.nc, true);
     psi::Psi<TK> E_gradient_wfc(this->psi->get_nk(), this->psi->get_nbands(), this->psi->get_nbasis()); 
     E_gradient_wfc.zero_out();
     double Etotal_RDMFT = 0.0;
@@ -976,7 +976,7 @@ namespace ModuleESolver
             LM.ParaV,
             occ_number,
             wfc_rdmft,
-            E_gradient_wg,
+            E_gradient_occNum,
             E_gradient_wfc,
             this->kv,
             this->UHM.GG,
@@ -997,7 +997,7 @@ namespace ModuleESolver
             LM.ParaV,
             occ_number,
             *(this->psi),
-            E_gradient_wg,
+            E_gradient_occNum,
             E_gradient_wfc,
             this->kv,
             this->UHM.GK,
@@ -1016,7 +1016,7 @@ namespace ModuleESolver
 
     // // test class rdmft
     // rdmft_solver.update_elec(occ_number, *(this->psi));
-    // this->Run_rdmft(E_gradient_wg, E_gradient_wfc);
+    // this->Run_rdmft(E_gradient_occNum, E_gradient_wfc);
     // std::cout << "\nrdmft_solver: " << "0.0000" << std::endl;
 
     // ModuleBase::timer::tick("RDMFT", "E & Egradient");
@@ -1135,9 +1135,9 @@ namespace ModuleESolver
 
 
 template <typename TK, typename TR>
-double ESolver_KS_LCAO<TK, TR>::Run_rdmft(ModuleBase::matrix& E_gradient_wg, psi::Psi<TK>& E_gradient_wfc)
+double ESolver_KS_LCAO<TK, TR>::Run_rdmft(ModuleBase::matrix& E_gradient_occNum, psi::Psi<TK>& E_gradient_wfc)
 {
-    return rdmft_solver.Run(E_gradient_wg, E_gradient_wfc);
+    return rdmft_solver.Run(E_gradient_occNum, E_gradient_wfc);
 }
 
 

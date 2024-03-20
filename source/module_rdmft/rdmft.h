@@ -156,7 +156,7 @@ class RDMFT
     void update_elec(const ModuleBase::matrix& occ_number_in, const psi::Psi<TK>& wfc_in);
 
     // do all calculation after update occNum&wfc, get Etotal and the gradient of energy with respect to the occNum&wfc
-    double Run(ModuleBase::matrix& E_gradient_wg, psi::Psi<TK>&E_gradient_wfc);
+    double Run(ModuleBase::matrix& E_gradient_occNum, psi::Psi<TK>&E_gradient_wfc);
 
 
 
