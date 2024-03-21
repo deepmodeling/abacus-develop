@@ -7,6 +7,8 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 namespace lcaoCudaKernel{
 void gpu_task_generate_vlocal(const Grid_Technique &gridt, 
+                              const LCAO_Orbitals &ORB,
+                              const UnitCell &ucell,
                               const int i, const int j, 
                               const int max_size,
                               const int nczp,
@@ -29,7 +31,7 @@ void gpu_task_generate_vlocal(const Grid_Technique &gridt,
                               int & max_n) {
 
   const int grid_index_ij = i * gridt.nby * gridt.nbzp + j * gridt.nbzp;
-  const int nwmax = GlobalC::ucell.nwmax;
+  const int nwmax = ucell.nwmax;
   bool *gpu_matrix_calc_flag = new bool[max_size * gridt.nbzp];
   for (int i = 0; i < max_size * gridt.nbzp; i++)
     gpu_matrix_calc_flag[i] = false;
@@ -46,7 +48,7 @@ void gpu_task_generate_vlocal(const Grid_Technique &gridt,
       int mcell_index = bcell_start_index + id;
       int imcell = gridt.which_bigcell[mcell_index];
       int iat = gridt.which_atom[mcell_index];
-      int it_temp = GlobalC::ucell.iat2it[iat];
+      int it_temp = ucell.iat2it[iat];
       int start_ind_grid = gridt.start_ind[grid_index];
       for (int bx_index = 0; bx_index < gridt.bx; bx_index++) {
         for (int by_index = 0; by_index < gridt.by; by_index++) {
@@ -65,7 +67,7 @@ void gpu_task_generate_vlocal(const Grid_Technique &gridt,
             double distance =
                 sqrt(dr_temp[0] * dr_temp[0] + dr_temp[1] * dr_temp[1] +
                      dr_temp[2] * dr_temp[2]);
-            if (distance <= GlobalC::ORB.Phi[it_temp].getRcut()) {
+            if (distance <= ORB.Phi[it_temp].getRcut()) {
               gpu_matrix_calc_flag[calc_flag_index + id] = true;
               int pos_temp_double = num_psi_pos + num_get_psi;
               int pos_temp_int = pos_temp_double * 2;
@@ -110,9 +112,9 @@ void gpu_task_generate_vlocal(const Grid_Technique &gridt,
     for (int atom1 = 0; atom1 < atom_num; atom1++) {
 
       int iat1 = gridt.which_atom[bcell_start_index + atom1];
-      int it1 = GlobalC::ucell.iat2it[iat1];
-      int lo1 = gridt.trace_lo[GlobalC::ucell.itiaiw2iwt(
-          it1, GlobalC::ucell.iat2ia[iat1], 0)];
+      int it1 = ucell.iat2it[iat1];
+      int lo1 = gridt.trace_lo[ucell.itiaiw2iwt(
+          it1, ucell.iat2ia[iat1], 0)];
       if (gpu_matrix_calc_flag[calc_flag_index + atom1] == false)
         continue;
 
@@ -121,12 +123,12 @@ void gpu_task_generate_vlocal(const Grid_Technique &gridt,
           continue;
 
         int iat2 = gridt.which_atom[bcell_start_index + atom2];
-        int it2 = GlobalC::ucell.iat2it[iat2];
-        int lo2 = gridt.trace_lo[GlobalC::ucell.itiaiw2iwt(
-            it2, GlobalC::ucell.iat2ia[iat2], 0)];
+        int it2 = ucell.iat2it[iat2];
+        int lo2 = gridt.trace_lo[ucell.itiaiw2iwt(
+            it2, ucell.iat2ia[iat2], 0)];
         if (lo1 <= lo2) {
-          int atom_pair_nw = GlobalC::ucell.atoms[it1].nw * GlobalC::ucell.atoms[it2].nw;
-          if (gridt.GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2] == nullptr)
+          int atom_pair_nw = ucell.atoms[it1].nw * ucell.atoms[it2].nw;
+          if (gridt.GridVlocal_v2_g[iat1 * ucell.nat + iat2] == nullptr)
           {
             //Note that this situation occurs here because the logic in hcontainer and 
             // grid integration is different. 
@@ -142,14 +144,14 @@ void gpu_task_generate_vlocal(const Grid_Technique &gridt,
 
           atom_pair_mat_A[atom_pair_num] = psir_ylm_left + calc_index1;
           atom_pair_mat_B[atom_pair_num] = psir_ylm_right + calc_index2;
-          atom_pair_mat_C[atom_pair_num] = gridt.GridVlocal_v2_g[iat1 * GlobalC::ucell.nat + iat2];
+          atom_pair_mat_C[atom_pair_num] = gridt.GridVlocal_v2_g[iat1 * ucell.nat + iat2];
 
           atom_pair_lda[atom_pair_num] = gridt.bxyz;
           atom_pair_ldb[atom_pair_num] = gridt.bxyz;
-          atom_pair_ldc[atom_pair_num] = GlobalC::ucell.atoms[it2].nw;
+          atom_pair_ldc[atom_pair_num] = ucell.atoms[it2].nw;
 
-          atom_pair_A_m[atom_pair_num] = GlobalC::ucell.atoms[it1].nw;
-          atom_pair_B_n[atom_pair_num] = GlobalC::ucell.atoms[it2].nw;
+          atom_pair_A_m[atom_pair_num] = ucell.atoms[it1].nw;
+          atom_pair_B_n[atom_pair_num] = ucell.atoms[it2].nw;
           if (atom_pair_A_m[atom_pair_num] > max_m)
           {
              max_m = atom_pair_A_m[atom_pair_num];

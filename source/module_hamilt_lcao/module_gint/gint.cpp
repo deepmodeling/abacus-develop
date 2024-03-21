@@ -77,7 +77,7 @@ void Gint::cal_gint(Gint_inout *inout) {
         lcaoCudaKernel::gint_gamma_vl_gpu(this->hRGint, lgd, max_size,
                           GlobalC::ucell.omega / this->ncxyz, inout->vl, ylmcoef,
                           this->nplane, this->nbxx,
-                          *this->gridt);
+                          *this->gridt, GlobalC::ORB, GlobalC::ucell);
         ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
         return;
       } else if (inout->job == Gint_Tools::job_type::rho &&

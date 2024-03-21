@@ -12,9 +12,12 @@ namespace lcaoCudaKernel{
 void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint, int lgd_now,
                        const int max_size, double vfactor,
                        const double *vlocal, const double *ylmcoef_now,
-                       int pwnczp, int nbxx, const Grid_Technique &gridt);
+                       int pwnczp, int nbxx, const Grid_Technique &gridt,
+                       const LCAO_Orbitals &ORB, const UnitCell &ucell);
 
 void gpu_task_generate_vlocal(const Grid_Technique &gridt, 
+                              const LCAO_Orbitals &ORB,
+                              const UnitCell &ucell,
                               const int i, const int j,
                               const int max_size,
                               const int nczp,
