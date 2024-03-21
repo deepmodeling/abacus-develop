@@ -3,7 +3,7 @@
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_lcao/module_gint/gint_gpu/vbatch_matrix_multiple/cuda_tools.cuh"
-#include "spherical_harmonics.cuh"
+#include "sph.cuh"
 namespace lcaoCudaKernel{
 __global__ void get_psi_and_vldr3(double *ylmcoef,
                                   double delta_r_g,

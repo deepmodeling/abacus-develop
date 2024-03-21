@@ -1,6 +1,6 @@
 #include "module_hamilt_lcao/module_gint/gint_gpu/gint_rho.cuh"
 #include "module_hamilt_lcao/module_gint/gint_gpu/gint_rho.h"
-#include "spherical_harmonics.cuh"
+#include "sph.cuh"
 namespace lcaoCudaKernel{
 __global__ void get_psi(double *ylmcoef,
                         double delta_r_g,
@@ -58,7 +58,8 @@ __global__ void get_psi(double *ylmcoef,
         {
             if (atom_iw2_new[it_nw_iw])
             {
-                phi = c1 * psi_u[iw_nr] + c2 * psi_u[iw_nr + 1] + c3 * psi_u[iw_nr + 2] + c4 * psi_u[iw_nr + 3];
+                phi = c1 * psi_u[iw_nr] + c2 * psi_u[iw_nr + 1] +
+                      c3 * psi_u[iw_nr + 2] + c4 * psi_u[iw_nr + 3];
             }
             double temp = phi * ylma[atom_iw2_ylm[it_nw_iw]];
             psir_ylm_left[dist_tmp] = temp;

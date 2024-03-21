@@ -26,15 +26,15 @@ if(USE_CUDA)
   list(APPEND objects
       gint_gpu/gint_vl.cu
       gint_gpu/vbatch_matrix_multiple/cuda_tools.cu
-      gint_gpu/gpu_task_generator.cpp
+      gint_gpu/gtask_vl.cpp
       gint_gpu/gint_vl_gpu.cu
       gint_gpu/vbatch_matrix_multiple/vbatch_matrix_mul.cu
       gint_gpu/gint_rho.cu
-      gint_gpu/gpu_task_generator_rho.cpp
+      gint_gpu/gtask_rho.cpp
       gint_gpu/gint_rho_gpu.cu
       gint_gpu/gint_force_gpu.cu
       gint_gpu/gint_force.cu
-      gint_gpu/gpu_task_generator_force.cpp
+      gint_gpu/gtask_force.cpp
   )
 endif()
 
