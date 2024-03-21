@@ -1,3 +1,6 @@
+#ifndef SPH_CUH
+#define SPH_CUH
+
 #include "cuda_runtime.h"  
 #include "device_launch_parameters.h"
 
@@ -482,3 +485,5 @@ static __device__  void spherical_harmonics_d(double *dr,double distance,double 
     bl1;
     }*/
 }
+
+#endif
