@@ -1,5 +1,5 @@
-#include "module_hamilt_lcao/module_gint/gint_gpu/gint_rho.cuh"
-#include "module_hamilt_lcao/module_gint/gint_gpu/gint_rho.h"
+#include "module_hamilt_lcao/module_gint/kernels/cuda/gint_rho.cuh"
+#include "module_hamilt_lcao/module_gint/kernels/cuda/gint_rho.h"
 #include "sph.cuh"
 
 namespace lcaoCudaKernel{

@@ -1,6 +1,6 @@
 #include "module_hamilt_lcao/module_gint/gint_tools.h"
-#include "module_hamilt_lcao/module_gint/gint_gpu/gint_rho.h"
-#include "module_hamilt_lcao/module_gint/gint_gpu/gint_rho.cuh"
+#include "module_hamilt_lcao/module_gint/kernels/cuda/gint_rho.h"
+#include "module_hamilt_lcao/module_gint/kernels/cuda/gint_rho.cuh"
 #include "module_base/ylm.h"
 #include "vbatch_matrix_multiple/vbatch_matrix_mul.cuh"
 #include "vbatch_matrix_multiple/cuda_tools.cuh"

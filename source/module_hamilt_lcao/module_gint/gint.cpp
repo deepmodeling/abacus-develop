@@ -1,8 +1,8 @@
 #include "gint.h"
 
-#include "gint_gpu/gint_force.h"
-#include "gint_gpu/gint_rho.h"
-#include "gint_gpu/gint_vl.h"
+#include "kernels/cuda/gint_force.h"
+#include "kernels/cuda/gint_rho.h"
+#include "kernels/cuda/gint_vl.h"
 #include "module_base/memory.h"
 #include "module_base/timer.h"
 #include "module_basis/module_ao/ORB_read.h"

@@ -1,4 +1,4 @@
-#add_subdirectory(gint_gpu)
+#add_subdirectory(kernels/cuda)
 
 list(APPEND objects
     gint.cpp
@@ -24,17 +24,17 @@ list(APPEND objects
 
 if(USE_CUDA)
   list(APPEND objects
-      gint_gpu/gint_vl.cu
-      gint_gpu/vbatch_matrix_multiple/cuda_tools.cu
-      gint_gpu/gtask_vl.cpp
-      gint_gpu/gint_vl_gpu.cu
-      gint_gpu/vbatch_matrix_multiple/vbatch_matrix_mul.cu
-      gint_gpu/gint_rho.cu
-      gint_gpu/gtask_rho.cpp
-      gint_gpu/gint_rho_gpu.cu
-      gint_gpu/gint_force_gpu.cu
-      gint_gpu/gint_force.cu
-      gint_gpu/gtask_force.cpp
+      kernels/cuda/gint_vl.cu
+      kernels/cuda/vbatch_matrix_multiple/cuda_tools.cu
+      kernels/cuda/gtask_vl.cpp
+      kernels/cuda/gint_vl_gpu.cu
+      kernels/cuda/vbatch_matrix_multiple/vbatch_matrix_mul.cu
+      kernels/cuda/gint_rho.cu
+      kernels/cuda/gtask_rho.cpp
+      kernels/cuda/gint_rho_gpu.cu
+      kernels/cuda/gint_force_gpu.cu
+      kernels/cuda/gint_force.cu
+      kernels/cuda/gtask_force.cpp
   )
 endif()
 

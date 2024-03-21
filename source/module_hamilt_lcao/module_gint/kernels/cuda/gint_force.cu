@@ -1,7 +1,7 @@
-#include "module_hamilt_lcao/module_gint/gint_gpu/gint_force.cuh"
-#include "module_hamilt_lcao/module_gint/gint_gpu/gint_force.h"
-#include "module_hamilt_lcao/module_gint/gint_gpu/vbatch_matrix_multiple/cuda_tools.cuh"
-#include "module_hamilt_lcao/module_gint/gint_gpu/sph.cuh"
+#include "module_hamilt_lcao/module_gint/kernels/cuda/gint_force.cuh"
+#include "module_hamilt_lcao/module_gint/kernels/cuda/gint_force.h"
+#include "module_hamilt_lcao/module_gint/kernels/cuda/vbatch_matrix_multiple/cuda_tools.cuh"
+#include "module_hamilt_lcao/module_gint/kernels/cuda/sph.cuh"
 // CUDA kernel to calculate psi and force
 namespace lcaoCudaKernel{
 

@@ -1,4 +1,4 @@
-#include "module_hamilt_lcao/module_gint/gint_gpu/vbatch_matrix_multiple/cuda_tools.cuh"
+#include "module_hamilt_lcao/module_gint/kernels/cuda/vbatch_matrix_multiple/cuda_tools.cuh"
 #include <iostream>
 cudaError_t checkCuda(cudaError_t result)
 {
