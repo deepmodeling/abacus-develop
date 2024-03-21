@@ -4,9 +4,7 @@
 #include "gint_force.cuh"
 #include "gint_force.h"
 #include "module_base/ylm.h"
-#include "module_basis/module_ao/ORB_read.h"
 #include "module_hamilt_lcao/module_gint/gint_tools.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "omp.h"
 #include "vbatch_matrix_multiple/cuda_tools.cuh"
 

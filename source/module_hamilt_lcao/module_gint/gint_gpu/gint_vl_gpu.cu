@@ -2,8 +2,6 @@
 #include "module_hamilt_lcao/module_gint/gint_gpu/gint_vl.h"
 #include "module_hamilt_lcao/module_gint/gint_gpu/gint_vl.cuh"
 #include "module_base/ylm.h"
-#include "module_basis/module_ao/ORB_read.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "vbatch_matrix_multiple/vbatch_matrix_mul.cuh"
 #include "vbatch_matrix_multiple/cuda_tools.cuh"
 #include <omp.h>
