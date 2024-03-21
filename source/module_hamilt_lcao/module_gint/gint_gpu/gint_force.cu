@@ -4,6 +4,7 @@
 #include "module_hamilt_lcao/module_gint/gint_gpu/sph.cuh"
 // CUDA kernel to calculate psi and force
 namespace lcaoCudaKernel{
+
 /*!
  * \file
  * \brief CUDA kernel to calculate psi and force
@@ -254,4 +255,5 @@ __global__ void dot_product_force(double *dpsir_ylm_left_x,
     tid += blockDim.x * gridDim.x;
   }
 }
-}
+
+} // namespace lcaoCudaKernel

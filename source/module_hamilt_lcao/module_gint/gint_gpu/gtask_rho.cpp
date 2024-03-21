@@ -3,6 +3,7 @@
 #include "module_base/ylm.h"
 #include "module_hamilt_lcao/module_gint/gint_tools.h"
 namespace lcaoCudaKernel{
+
 void gpu_task_generator_rho(const Grid_Technique &gridt, 
                             const int i, const int j,
                             const int psi_size_max, const int max_size,
@@ -184,4 +185,5 @@ void gpu_task_generator_rho(const Grid_Technique &gridt,
 
   delete[] gpu_mat_cal_flag;
 } 
-}
+
+} // namespace lcaoCudaKernel

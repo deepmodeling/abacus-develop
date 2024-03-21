@@ -6,6 +6,7 @@
 #include "vbatch_matrix_multiple/cuda_tools.cuh"
 
 namespace lcaoCudaKernel{
+
 void gint_gamma_rho_gpu(hamilt::HContainer<double> *dm,
                         double *rho,
                         const int nczp,
@@ -220,4 +221,5 @@ void gint_gamma_rho_gpu(hamilt::HContainer<double> *dm,
     checkCuda(cudaFree(dm_matrix_g));
     delete[] dm_matrix_h;
 }
-}
+
+} // namespace lcaoCudaKernel

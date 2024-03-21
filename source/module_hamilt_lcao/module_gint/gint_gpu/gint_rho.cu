@@ -1,7 +1,9 @@
 #include "module_hamilt_lcao/module_gint/gint_gpu/gint_rho.cuh"
 #include "module_hamilt_lcao/module_gint/gint_gpu/gint_rho.h"
 #include "sph.cuh"
+
 namespace lcaoCudaKernel{
+
 __global__ void get_psi(double *ylmcoef,
                         double delta_r_g,
                         double bxyz_g,
@@ -92,4 +94,5 @@ __global__ void psir_dot(int * n,
         }
     }
 }
-}
+
+} // namespace lcaoCudaKernel

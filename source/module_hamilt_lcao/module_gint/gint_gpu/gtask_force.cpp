@@ -3,6 +3,7 @@
 #include "module_hamilt_lcao/module_gint/gint_tools.h"
 #include "omp.h"
 namespace lcaoCudaKernel{
+
 /**
  * @brief Description of the function.
  *
@@ -183,4 +184,5 @@ void gpu_task_generator_force(
 
   delete[] gpu_mat_cal_flag;
 }
-}
+
+} // namespace lcaoCudaKernel

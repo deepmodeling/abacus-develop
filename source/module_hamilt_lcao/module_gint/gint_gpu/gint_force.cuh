@@ -4,6 +4,7 @@
 #include <cuda_runtime.h>
 namespace lcaoCudaKernel
 {
+    
 /**
  * @brief GPU kernel to calculate the force.
  *
@@ -108,5 +109,5 @@ __global__ void dot_product_force(double *dpsir_ylm_left_x,
                                   double *force_dot, int *iat, int nwmax,
                                   int max_size, int elements_num);
 
+} // namespace lcaoCudaKernel
 #endif // GINT_VL_CUH
-}

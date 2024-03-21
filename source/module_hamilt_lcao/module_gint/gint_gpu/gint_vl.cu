@@ -3,6 +3,7 @@
 #include "module_hamilt_lcao/module_gint/gint_gpu/vbatch_matrix_multiple/cuda_tools.cuh"
 #include "sph.cuh"
 namespace lcaoCudaKernel{
+
 __global__ void get_psi_and_vldr3(double *ylmcoef,
                                   double delta_r_g,
                                   double bxyz_g,
@@ -100,4 +101,5 @@ __global__ void psi_multiple(int bxyz_g, const int* m, int* n,
         atomicAdd(&(output[iw1 + iw2]), v2);
     }
 }
-}
+
+} // namespace lcaoCudaKernel

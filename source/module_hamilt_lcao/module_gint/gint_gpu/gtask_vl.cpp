@@ -3,6 +3,7 @@
 #include "module_base/ylm.h"
 #include "module_hamilt_lcao/module_gint/gint_tools.h"
 namespace lcaoCudaKernel{
+
 void gpu_task_generate_vlocal(const Grid_Technique &gridt, 
                               const LCAO_Orbitals &ORB,
                               const UnitCell &ucell,
@@ -165,4 +166,5 @@ void gpu_task_generate_vlocal(const Grid_Technique &gridt,
 
   delete[] gpu_matrix_calc_flag;
 }
-}
+
+} // namespace lcaoCudaKernel

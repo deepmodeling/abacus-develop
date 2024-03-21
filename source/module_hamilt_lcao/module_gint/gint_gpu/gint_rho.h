@@ -8,6 +8,7 @@
 
 cudaError_t checkCuda(cudaError_t result);
 namespace lcaoCudaKernel{
+
 void gint_gamma_rho_gpu(hamilt::HContainer<double> *dm,
                         double *rho,
                         const int nczp,
@@ -72,5 +73,5 @@ void rho_cal_task( const Grid_Technique &gridt,
                       int &atom_pair_num
                       );
 
-}
+} // namespace lcaoCudaKernel
 #endif
