@@ -7,12 +7,15 @@ calculation     scf
 symmetry		1
 
 #Parameters (2.Iteration)
+ks_solver       cusolver
+cal_stress      1
+cal_force       1
+gamma_only      1
 ecutwfc			100
 scf_thr				1e-6
 scf_nmax			100
-cal_force 1
-cal_stress 1
-gamma_only 1
+
+
 #Parameters (3.Basis)
 basis_type		lcao
 
@@ -21,5 +24,5 @@ smearing_method		gauss
 smearing_sigma			0.002
 
 #Parameters (5.Mixing)
-mixing_type		broyden
+mixing_type		pulay
 mixing_beta		0.3
