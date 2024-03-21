@@ -92,7 +92,7 @@ void Gint::cal_gint(Gint_inout *inout) {
         for (int is = 0; is < GlobalV::NSPIN; ++is) {
           ModuleBase::GlobalFunc::ZEROS(inout->rho[is], nrxx);
           lcaoCudaKernel::gint_gamma_rho_gpu(this->DMRGint[is], inout->rho[is], this->nplane,
-                            ylmcoef, GlobalC::ORB, *this->gridt, GlobalC::ucell);
+                                           ylmcoef, *this->gridt, GlobalC::ORB, GlobalC::ucell);
         }
         ModuleBase::timer::tick("Gint_interface", "cal_gint_rho");
         return;

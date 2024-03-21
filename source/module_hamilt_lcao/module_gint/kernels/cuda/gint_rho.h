@@ -13,8 +13,8 @@ void gint_gamma_rho_gpu(hamilt::HContainer<double> *dm,
                         double *rho,
                         const int nczp,
                         const double *ylmcoef_now,
-                        const LCAO_Orbitals &ORB,
                         const Grid_Technique &gridt,
+                        const LCAO_Orbitals &ORB,
                         const UnitCell &ucell);
 
 void gpu_task_generator_rho(const Grid_Technique &gridt, 

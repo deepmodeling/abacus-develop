@@ -11,8 +11,8 @@ void gint_gamma_rho_gpu(hamilt::HContainer<double> *dm,
                         double *rho,
                         const int nczp,
                         const double *ylmcoef_now,
-                        const LCAO_Orbitals &ORB,
                         const Grid_Technique &gridt,
+                        const LCAO_Orbitals &ORB,
                         const UnitCell &ucell)
 {
     const int nbz = gridt.nbzp;
