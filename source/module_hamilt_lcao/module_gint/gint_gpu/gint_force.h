@@ -21,7 +21,8 @@ namespace lcaoCudaKernel{
 void gint_gamma_force_gpu(hamilt::HContainer<double> *dm, const double vfactor,
                           const double *vlocal, double *force, double *stress,
                           const int nczp, const double *ylmcoef_now,
-                          const Grid_Technique &gridt);
+                          const Grid_Technique &gridt,const LCAO_Orbitals &ORB,
+                          const UnitCell &ucell);
 
 /**
  * @brief GPU task generator for forces.
@@ -64,7 +65,8 @@ void gint_gamma_force_gpu(hamilt::HContainer<double> *dm, const double vfactor,
  * @param dot_count Reference to dot_count.
  */
 void gpu_task_generator_force(
-    const Grid_Technique &gridt, const int i, const int j,
+    const Grid_Technique &gridt, const LCAO_Orbitals &ORB,
+    const UnitCell &ucell, const int i, const int j,
     const int psi_size_max, const int max_size, const int nczp,
     const double vfactor, const double *vlocal_global_value, int *iat_per_nbz,
     double *psi_input_double, int *psi_input_int, int *num_psir, const int lgd,

@@ -29,22 +29,24 @@ namespace lcaoCudaKernel{
 void gint_gamma_force_gpu(hamilt::HContainer<double> *dm, const double vfactor,
                           const double *vlocal, double *force, double *stress,
                           const int nczp, const double *ylmcoef_now,
-                          const Grid_Technique &gridt) {
+                          const Grid_Technique &gridt, const LCAO_Orbitals &ORB,
+                          const UnitCell &ucell) 
+{
   const int nbz = gridt.nbzp;
   const int lgd = gridt.lgd;
   const int max_size = gridt.max_atom;
-  const int nwmax = GlobalC::ucell.nwmax;
+  const int nwmax = ucell.nwmax;
   const int bxyz = gridt.bxyz;
   double *dm_matrix_h = new double[lgd * lgd];
   ModuleBase::GlobalFunc::ZEROS(dm_matrix_h, lgd * lgd);
-  for (int iat1 = 0; iat1 < GlobalC::ucell.nat; iat1++) {
-    for (int iat2 = 0; iat2 < GlobalC::ucell.nat; iat2++) {
-      int it1 = GlobalC::ucell.iat2it[iat1];
-      int it2 = GlobalC::ucell.iat2it[iat2];
-      int lo1 = gridt.trace_lo[GlobalC::ucell.itiaiw2iwt(
-          it1, GlobalC::ucell.iat2ia[iat1], 0)];
-      int lo2 = gridt.trace_lo[GlobalC::ucell.itiaiw2iwt(
-          it2, GlobalC::ucell.iat2ia[iat2], 0)];
+  for (int iat1 = 0; iat1 < ucell.nat; iat1++) {
+    for (int iat2 = 0; iat2 < ucell.nat; iat2++) {
+      int it1 = ucell.iat2it[iat1];
+      int it2 = ucell.iat2it[iat2];
+      int lo1 = gridt.trace_lo[ucell.itiaiw2iwt(
+          it1, ucell.iat2ia[iat1], 0)];
+      int lo2 = gridt.trace_lo[ucell.itiaiw2iwt(
+          it2, ucell.iat2ia[iat2], 0)];
 
       hamilt::AtomPair<double> *tmp_ap = dm->find_pair(iat1, iat2);
       int orb_index = 0;
@@ -213,15 +215,13 @@ void gint_gamma_force_gpu(hamilt::HContainer<double> *dm, const double vfactor,
         force_h[index] = 0.0;
       }
 
-
-
       int max_m = 0;
       int max_n = 0;
       int atom_pair_num = 0;
       checkCuda(cudaStreamSynchronize(gridt.streams[stream_num]));
-      // TODO
+
       gpu_task_generator_force(
-          gridt, i, j, gridt.psi_size_max_per_z, max_size, nczp, vfactor,
+          gridt, ORB, ucell, i, j, gridt.psi_size_max_per_z, max_size, nczp, vfactor,
           vlocal, iat, psi_input_double, psi_input_int, num_psir, lgd,
           psir_ylm_right_g, psir_ylm_dm_g, dm_matrix_g, atom_pair_A_m,
           atom_pair_B_n, atom_pair_k, atom_pair_lda, atom_pair_ldb,
@@ -323,8 +323,8 @@ void gint_gamma_force_gpu(hamilt::HContainer<double> *dm, const double vfactor,
       dim3 block_psi(64);
 
       get_psi_force<<<grid_psi, block_psi, 0, gridt.streams[stream_num]>>>(
-          gridt.ylmcoef_g, GlobalC::ORB.dr_uniform, gridt.bxyz,
-          GlobalC::ucell.nwmax, psi_input_double_g, psi_input_int_g, num_psir_g,
+          gridt.ylmcoef_g, ORB.dr_uniform, gridt.bxyz,
+          ucell.nwmax, psi_input_double_g, psi_input_int_g, num_psir_g,
           gridt.psi_size_max_per_z, gridt.ucell_atom_nwl_g,
           gridt.atom_iw2_new_g, gridt.atom_iw2_ylm_g, gridt.atom_iw2_l_g,
           gridt.atom_nw_g, gridt.nr_max, gridt.psi_u_g, psir_ylm_right_g,

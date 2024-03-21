@@ -40,7 +40,8 @@ namespace lcaoCudaKernel{
  * @param atom_pair_num The reference to atom_pair_num.
  */
 void gpu_task_generator_force(
-    const Grid_Technique &gridt, const int i, const int j,
+    const Grid_Technique &gridt, const LCAO_Orbitals &ORB,
+    const UnitCell &ucell, const int i, const int j,
     const int psi_size_max, const int max_size, const int nczp,
     const double vfactor, const double *vlocal_global_value, int *iat_per_nbz,
     double *psi_input_double, int *psi_input_int, int *num_psir, const int lgd,
@@ -49,7 +50,7 @@ void gpu_task_generator_force(
     double **mat_A, double **mat_B, double **mat_C, int &max_m, int &max_n,
     int &atom_pair_num) {
   const int grid_index_ij = i * gridt.nby * gridt.nbzp + j * gridt.nbzp;
-  const int nwmax = GlobalC::ucell.nwmax;
+  const int nwmax = ucell.nwmax;
   bool *gpu_mat_cal_flag = new bool[max_size * gridt.nbzp];
 
   for (int i = 0; i < max_size * gridt.nbzp; i++) {
@@ -69,7 +70,7 @@ void gpu_task_generator_force(
       int mcell_index = bcell_start_index + id;
       int imcell = gridt.which_bigcell[mcell_index];
       int iat = gridt.which_atom[mcell_index];
-      int it_temp = GlobalC::ucell.iat2it[iat];
+      int it_temp = ucell.iat2it[iat];
       int start_ind_grid = gridt.start_ind[grid_index];
 
       for (int bx_index = 0; bx_index < gridt.bx; bx_index++) {
@@ -89,7 +90,7 @@ void gpu_task_generator_force(
             double distance =
                 sqrt(dr_temp[0] * dr_temp[0] + dr_temp[1] * dr_temp[1] +
                      dr_temp[2] * dr_temp[2]);
-            if (distance <= GlobalC::ORB.Phi[it_temp].getRcut()) {
+            if (distance <= ORB.Phi[it_temp].getRcut()) {
               gpu_mat_cal_flag[calc_flag_index + id] = true;
               int pos_temp_double = num_psi_pos + num_get_psi;
               int pos_temp_int = pos_temp_double * 2;
@@ -139,23 +140,21 @@ void gpu_task_generator_force(
       }
       int mcell_index1 = bcell_start_index + atom1;
       int iat1 = gridt.which_atom[mcell_index1];
-      int it1 = GlobalC::ucell.iat2it[iat1];
-      int lo1 = gridt.trace_lo[GlobalC::ucell.itiaiw2iwt(
-          it1, GlobalC::ucell.iat2ia[iat1], 0)];
-      int nw1 = GlobalC::ucell.atoms[it1].nw;
-      // printf("the id is %d the iat is %d the grid index is
-      // %d\n",atom1,iat1,grid_index); if (atom1!=iat1) printf("here is a
-      // question and the grid index is %d\n",grid_index);
+      int it1 = ucell.iat2it[iat1];
+      int lo1 = gridt.trace_lo[ucell.itiaiw2iwt(
+          it1, ucell.iat2ia[iat1], 0)];
+      int nw1 = ucell.atoms[it1].nw;
+
       for (int atom2 = 0; atom2 < gridt.how_many_atoms[grid_index]; atom2++) {
         if (!gpu_mat_cal_flag[calc_flag_index + atom2]) {
           continue;
         }
         int mcell_index2 = bcell_start_index + atom2;
         int iat2 = gridt.which_atom[mcell_index2];
-        int it2 = GlobalC::ucell.iat2it[iat2];
-        int lo2 = gridt.trace_lo[GlobalC::ucell.itiaiw2iwt(
-            it2, GlobalC::ucell.iat2ia[iat2], 0)];
-        int nw2 = GlobalC::ucell.atoms[it2].nw;
+        int it2 = ucell.iat2it[iat2];
+        int lo2 = gridt.trace_lo[ucell.itiaiw2iwt(
+            it2, ucell.iat2ia[iat2], 0)];
+        int nw2 = ucell.atoms[it2].nw;
 
         int mat_A_idx = bcell_start_psir + atom2 * nwmax;
         int mat_B_idx = lgd * lo1 + lo2;

@@ -117,7 +117,8 @@ void Gint::cal_gint(Gint_inout *inout) {
           }
           lcaoCudaKernel::gint_gamma_force_gpu(
               this->DMRGint[is], GlobalC::ucell.omega / this->ncxyz, inout->vl,
-              force, stress, this->nplane, ylmcoef, *this->gridt);
+              force, stress, this->nplane, ylmcoef,
+               *this->gridt, GlobalC::ORB, GlobalC::ucell);
           for (int iat = 0; iat < nat; iat++) {
             inout->fvl_dphi[0](iat, 0) += force[iat * 3];
             inout->fvl_dphi[0](iat, 1) += force[iat * 3 + 1];

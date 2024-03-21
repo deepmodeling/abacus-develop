@@ -20,7 +20,6 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
                        const LCAO_Orbitals &ORB,
                        const UnitCell &ucell)
 {
-
     const int nbz = gridt.nbzp;
     checkCuda(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync));
     {
