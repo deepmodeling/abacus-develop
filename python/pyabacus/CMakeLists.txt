@@ -24,7 +24,7 @@ if(MKLROOT)
   if (ENABLE_MPI)
     find_package(MPI REQUIRED)
     include_directories(${MPI_CXX_INCLUDE_PATH})
-    add_compile_definitions(__MPI)
+    #add_compile_definitions(__MPI)
   endif()
 
   set(USE_OPENMP ON)

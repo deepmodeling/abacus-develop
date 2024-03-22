@@ -3,14 +3,14 @@ INPUT_PARAMETERS
 suffix			autotest
 calculation     scf
 
-nbands			3
+nbands			13
 symmetry		1
 pseudo_dir	../../PP_ORB
 pseudo_rcut     10
 out_element_info    1
 
 #Parameters (2.Iteration)
-ecutwfc			60
+ecutwfc			20
 scf_thr				1e-6
 scf_nmax			100
 

@@ -441,8 +441,9 @@ These variables are used to control general system parameters.
   - 0: Only time reversal symmetry would be considered in symmetry operations, which implied k point and -k point would be treated as a single k point with twice the weight.
   - 1: Symmetry analysis will be performed to determine the type of Bravais lattice and associated symmetry operations. (point groups, space groups, primitive cells, and irreducible k-points)
 - **Default**: 
-  - -1: if (*[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*) and *[calculation](#calculation)!=nscf*. Currently symmetry is not supported in EXX (exact exchange) calculation.
-  - 0: if *[calculation](#calculation)==md/nscf/get_pchg/get_wf/get_S* or *[gamma_only]==True*
+  - 0:
+    - if *[calculation](#calculation)==md/nscf/get_pchg/get_wf/get_S* or *[gamma_only]==True*;  
+    - If (*[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*). Currently *symmetry==1* is not supported in EXX (exact exchange) calculation.
   - 1: else
 
 ### symmetry_prec
@@ -1452,6 +1453,8 @@ These variables are used to control the output of properties.
   - npsin = 4: SPIN1_CHG.cube, SPIN2_CHG.cube, SPIN3_CHG.cube, and SPIN4_CHG.cube.
 
   The circle order of the charge density on real space grids is: x is the outer loop, then y and finally z (z is moving fastest).
+
+  If EXX(exact exchange) is calculated, (i.e. *[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*), the Hexx(R) files will be output in the folder `OUT.${suffix}` too, which can be read in NSCF calculation.
 - **Default**: False
 
 ### out_pot
@@ -1655,16 +1658,20 @@ These variables are used to control the output of properties.
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis
-- **Description**: Whether to save charge density files and Hamiltonian matrix files per ionic step, which are used to restart calculations. According to the value of [read_file_dir](#read_file_dir):
+- **Description**: Whether to save charge density files per ionic step, which are used to restart calculations. According to the value of [read_file_dir](#read_file_dir):
   - auto: These files are saved in folder `OUT.${suffix}/restart/`;
   - other: These files are saved in folder `${read_file_dir}/restart/`.
+  
+  If EXX(exact exchange) is calculated (i.e. *[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*), the Hexx(k) files for each k-point will also be saved in the above folder, which can be read in EXX calculation with *[restart_load](#restart_load)==True*.
 - **Default**: False
 
 ### restart_load
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis
-- **Description**: If [restart_save](#restart_save) is set to true and an electronic iteration is finished, calculations can be restarted from the charge density file and Hamiltonian matrix file, which are saved in the former calculation. Please ensure [read_file_dir](#read_file_dir) is correct, and  the charge density file and Hamiltonian matrix file exist.
+- **Description**: If [restart_save](#restart_save) is set to true and an electronic iteration is finished, calculations can be restarted from the charge density file, which are saved in the former calculation. Please ensure [read_file_dir](#read_file_dir) is correct, and  the charge density file exist.
+
+  If EXX(exact exchange) is calculated (i.e. *[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*), the Hexx(k) files in the same folder for each k-point will also be read.
 - **Default**: False
 
 ### rpa
