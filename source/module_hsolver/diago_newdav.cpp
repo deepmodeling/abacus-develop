@@ -96,7 +96,7 @@ Diago_NewDav<T, Device>::~Diago_NewDav()
     delmem_complex_op()(this->ctx, this->scc);
     delmem_complex_op()(this->ctx, this->vcc);
     delmem_complex_op()(this->ctx, this->lagrange_matrix);
-    psi::memory::delete_memory_op<Real, psi::DEVICE_CPU>()(this->cpu_ctx, this->eigenvalue);
+    psi::memory::delete_memory_op<Real, psi::DEVICE_CPU>()(this->cpu_ctx, this->eigenvalue_in_dav);
     if (this->device == psi::GpuDevice)
     {
         delmem_var_op()(this->ctx, this->d_precondition);
@@ -104,14 +104,16 @@ Diago_NewDav<T, Device>::~Diago_NewDav()
 }
 
 template <typename T, typename Device>
-void Diago_NewDav<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
+void Diago_NewDav<T, Device>::diag_once(hamilt::Hamilt<T, Device>* phm_in,
                                         psi::Psi<T, Device>& psi,
-                                        Real* eigenvalue_in,
+                                        Real* eigenvalue_in_hsolver,
                                         std::vector<bool>& is_occupied)
 {
     if (test_david == 1)
-        ModuleBase::TITLE("Diago_NewDav", "diag_mock");
-    ModuleBase::timer::tick("Diago_NewDav", "diag_mock");
+    {
+        ModuleBase::TITLE("Diago_NewDav", "diag_once");
+    }
+    ModuleBase::timer::tick("Diago_NewDav", "diag_once");
 
     assert(Diago_NewDav::PW_DIAG_NDIM > 1);
     assert(Diago_NewDav::PW_DIAG_NDIM * psi.get_nbands() < psi.get_current_nbas() * GlobalV::NPROC_IN_POOL);
@@ -137,8 +139,11 @@ void Diago_NewDav<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
     this->nbase_x = 2 * this->n_band;
 
     // the lowest N eigenvalues
-    psi::memory::resize_memory_op<Real, psi::DEVICE_CPU>()(this->cpu_ctx, this->eigenvalue, this->nbase_x, "DAV::eig");
-    psi::memory::set_memory_op<Real, psi::DEVICE_CPU>()(this->cpu_ctx, this->eigenvalue, 0, this->nbase_x);
+    psi::memory::resize_memory_op<Real, psi::DEVICE_CPU>()(this->cpu_ctx,
+                                                           this->eigenvalue_in_dav,
+                                                           this->nbase_x,
+                                                           "DAV::eig");
+    psi::memory::set_memory_op<Real, psi::DEVICE_CPU>()(this->cpu_ctx, this->eigenvalue_in_dav, 0, this->nbase_x);
 
     psi::Psi<T, Device> basis(1, this->nbase_x, this->dim,
                               &(psi.get_ngk(0))); // the reduced basis set
@@ -164,12 +169,15 @@ void Diago_NewDav<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
 
     // convflag[m] = true if the m th band is convergent
     std::vector<bool> convflag(this->n_band, false);
+
     // unconv[m] store the number of the m th unconvergent band
     std::vector<int> unconv(this->n_band);
 
-    int nbase = 0; // the dimension of the reduced basis set
+    // the dimension of the reduced basis set
+    int nbase = 0;
 
-    this->notconv = this->n_band; // the number of the unconvergent bands
+    // the number of the unconvergent bands
+    this->notconv = this->n_band;
 
     ModuleBase::timer::tick("Diago_NewDav", "first");
 
@@ -194,18 +202,27 @@ void Diago_NewDav<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
     {
         for (size_t m = 0; m < this->n_band; m++)
         {
-            this->eigenvalue[m] = get_real(hcc[m * this->nbase_x + m]);
+            this->eigenvalue_in_dav[m] = get_real(hcc[m * this->nbase_x + m]);
+            eigenvalue_in_hsolver[m] = this->eigenvalue_in_dav[m];
+
             vcc[m * this->nbase_x + m] = set_real_tocomplex(1.0);
         }
     }
     else
     {
-        this->diag_zhegvx(nbase, this->n_band, this->hcc, this->scc, this->nbase_x, this->eigenvalue, this->vcc, true);
-    }
+        this->diag_zhegvx(nbase,
+                          this->n_band,
+                          this->hcc,
+                          this->scc,
+                          this->nbase_x,
+                          this->eigenvalue_in_dav,
+                          this->vcc,
+                          true);
 
-    for (size_t m = 0; m < this->n_band; m++)
-    {
-        eigenvalue_in[m] = this->eigenvalue[m];
+        for (size_t m = 0; m < this->n_band; m++)
+        {
+            eigenvalue_in_hsolver[m] = this->eigenvalue_in_dav[m];
+        }
     }
 
     ModuleBase::timer::tick("Diago_NewDav", "first");
@@ -223,27 +240,33 @@ void Diago_NewDav<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
                        this->hphi,
                        this->vcc,
                        unconv.data(),
-                       this->eigenvalue);
+                       this->eigenvalue_in_dav);
 
         this->cal_elem(this->dim, nbase, this->notconv, basis, this->hphi, this->hcc, this->scc, false);
 
-        this->diag_zhegvx(nbase, this->n_band, this->hcc, this->scc, this->nbase_x, this->eigenvalue, this->vcc, false);
+        this->diag_zhegvx(nbase,
+                          this->n_band,
+                          this->hcc,
+                          this->scc,
+                          this->nbase_x,
+                          this->eigenvalue_in_dav,
+                          this->vcc,
+                          false);
 
         // check convergence and update eigenvalues
         ModuleBase::timer::tick("Diago_NewDav", "check_update");
-
         this->notconv = 0;
         for (int m = 0; m < this->n_band; m++)
         {
             if (is_occupied[m])
             {
-                convflag[m]
-                    = (std::abs(this->eigenvalue[m] - eigenvalue_in[m]) < DiagoIterAssist<T, Device>::PW_DIAG_THR);
+                convflag[m] = (std::abs(this->eigenvalue_in_dav[m] - eigenvalue_in_hsolver[m])
+                               < DiagoIterAssist<T, Device>::PW_DIAG_THR);
             }
             else
             {
                 double empty_ethr = std::max(DiagoIterAssist<T, Device>::PW_DIAG_THR * 5.0, 1e-5);
-                convflag[m] = (std::abs(this->eigenvalue[m] - eigenvalue_in[m]) < empty_ethr);
+                convflag[m] = (std::abs(this->eigenvalue_in_dav[m] - eigenvalue_in_hsolver[m]) < empty_ethr);
             }
 
             if (!convflag[m])
@@ -252,10 +275,10 @@ void Diago_NewDav<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
                 this->notconv++;
             }
 
-            eigenvalue_in[m] = this->eigenvalue[m];
+            eigenvalue_in_hsolver[m] = this->eigenvalue_in_dav[m];
         }
-
         ModuleBase::timer::tick("Diago_NewDav", "check_update");
+
         if (this->notconv == 0 || (nbase + this->notconv + 1 > this->nbase_x)
             || (dav_iter == DiagoIterAssist<T, Device>::PW_DIAG_NMAX))
         {
@@ -295,12 +318,10 @@ void Diago_NewDav<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
                 // then replace the first N (=nband) basis vectors with the current
                 // estimate of the eigenvectors and set the basis dimension to N;
 
-                // std::cout << dav_iter << " refresh" << std::endl;
-
                 this->refresh(this->dim,
                               this->n_band,
                               nbase,
-                              eigenvalue_in,
+                              eigenvalue_in_hsolver,
                               psi,
                               basis,
                               this->hphi,
@@ -309,16 +330,15 @@ void Diago_NewDav<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
                               this->vcc);
                 ModuleBase::timer::tick("Diago_NewDav", "last");
             }
-
-        } // end of if
+        }
 
     } while (1);
 
-    std::cout << "dav_iter == " << dav_iter << std::endl;
+    // std::cout << "dav_iter == " << dav_iter << std::endl;
 
     DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(dav_iter);
 
-    ModuleBase::timer::tick("Diago_NewDav", "diag_mock");
+    ModuleBase::timer::tick("Diago_NewDav", "diag_once");
 
     return;
 }
@@ -332,7 +352,7 @@ void Diago_NewDav<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
                                        T* hphi,
                                        T* vcc,
                                        const int* unconv,
-                                       Real* eigenvalue)
+                                       Real* eigenvalue_in_dav)
 {
     for (size_t i = 0; i < notconv; i++)
     {
@@ -340,7 +360,7 @@ void Diago_NewDav<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
         {
             // std::cout << "unconv[i]: " << unconv[i] << ", i = " << i << std::endl;
             syncmem_complex_op()(this->ctx, this->ctx, vcc + i * this->nbase_x, vcc + unconv[i] * this->nbase_x, nbase);
-            this->eigenvalue[i] = this->eigenvalue[unconv[i]];
+            this->eigenvalue_in_dav[i] = this->eigenvalue_in_dav[unconv[i]];
         }
     }
 
@@ -363,7 +383,7 @@ void Diago_NewDav<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
     for (int m = 0; m < notconv; m++)
     {
 
-        std::vector<Real> e_temp_cpu(this->dim, (-this->eigenvalue[m]));
+        std::vector<Real> e_temp_cpu(this->dim, (-this->eigenvalue_in_dav[m]));
 
         vector_mul_vector_op<T, Device>()(this->ctx,
                                           this->dim,
@@ -396,7 +416,7 @@ void Diago_NewDav<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
         for (size_t i = 0; i < this->dim; i++)
         {
             // std::cout << "this->precondition[i] i==" << i << "  == " << this->precondition[i] << std::endl;
-            double x = this->precondition[i] - this->eigenvalue[m];
+            double x = this->precondition[i] - this->eigenvalue_in_dav[m];
             pre_sum += this->precondition[i];
             pre[i] = 0.5 * (1.0 + x + sqrt(1 + (x - 1.0) * (x - 1.0)));
         }
@@ -652,7 +672,7 @@ void Diago_NewDav<T, Device>::diag_zhegvx(const int& nbase,
                                           T* hcc,
                                           T* scc,
                                           const int& nbase_x,
-                                          Real* eigenvalue, // in CPU
+                                          Real* eigenvalue_in_dav, // in CPU
                                           T* vcc,
                                           bool init)
 {
@@ -679,11 +699,11 @@ void Diago_NewDav<T, Device>::diag_zhegvx(const int& nbase,
 #if defined(__CUDA) || defined(__ROCM)
             Real* eigenvalue_gpu = nullptr;
             resmem_var_op()(this->ctx, eigenvalue_gpu, this->nbase_x);
-            syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, eigenvalue_gpu, this->eigenvalue, this->nbase_x);
+            syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, eigenvalue_gpu, this->eigenvalue_in_dav, this->nbase_x);
 
             dnevx_op<T, Device>()(this->ctx, nbase, this->nbase_x, this->hcc, nband, eigenvalue_gpu, this->vcc);
 
-            syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, this->eigenvalue, eigenvalue_gpu, this->nbase_x);
+            syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, this->eigenvalue_in_dav, eigenvalue_gpu, this->nbase_x);
             delmem_var_op()(this->ctx, eigenvalue_gpu);
 #endif
         }
@@ -691,7 +711,13 @@ void Diago_NewDav<T, Device>::diag_zhegvx(const int& nbase,
         {
             if (init)
             {
-                dnevx_op<T, Device>()(this->ctx, nbase, this->nbase_x, this->hcc, nband, this->eigenvalue, this->vcc);
+                dnevx_op<T, Device>()(this->ctx,
+                                      nbase,
+                                      this->nbase_x,
+                                      this->hcc,
+                                      nband,
+                                      this->eigenvalue_in_dav,
+                                      this->vcc);
             }
             else
             {
@@ -702,7 +728,7 @@ void Diago_NewDav<T, Device>::diag_zhegvx(const int& nbase,
                                       this->hcc,
                                       this->scc,
                                       nband,
-                                      this->eigenvalue,
+                                      this->eigenvalue_in_dav,
                                       this->vcc);
             }
         }
@@ -734,7 +760,7 @@ void Diago_NewDav<T, Device>::diag_zhegvx(const int& nbase,
         {
             MPI_Bcast(&vcc[i * this->nbase_x], nbase, MPI_DOUBLE_COMPLEX, 0, POOL_WORLD);
         }
-        MPI_Bcast(this->eigenvalue, nband, MPI_DOUBLE, 0, POOL_WORLD);
+        MPI_Bcast(this->eigenvalue_in_dav, nband, MPI_DOUBLE, 0, POOL_WORLD);
     }
 #endif
 
@@ -746,7 +772,7 @@ template <typename T, typename Device>
 void Diago_NewDav<T, Device>::refresh(const int& dim,
                                       const int& nband,
                                       int& nbase,
-                                      const Real* eigenvalue_in,
+                                      const Real* eigenvalue_in_hsolver,
                                       const psi::Psi<T, Device>& psi,
                                       psi::Psi<T, Device>& basis,
                                       T* hp,
@@ -816,7 +842,7 @@ void Diago_NewDav<T, Device>::refresh(const int& dim,
 
         for (int i = 0; i < nbase; i++)
         {
-            hcc_cpu[i * this->nbase_x + i] = eigenvalue_in[i];
+            hcc_cpu[i * this->nbase_x + i] = eigenvalue_in_hsolver[i];
             scc_cpu[i * this->nbase_x + i] = this->one[0];
             vcc_cpu[i * this->nbase_x + i] = this->one[0];
         }
@@ -834,7 +860,7 @@ void Diago_NewDav<T, Device>::refresh(const int& dim,
     {
         for (int i = 0; i < nbase; i++)
         {
-            hcc[i * this->nbase_x + i] = eigenvalue_in[i];
+            hcc[i * this->nbase_x + i] = eigenvalue_in_hsolver[i];
             scc[i * this->nbase_x + i] = this->one[0];
             vcc[i * this->nbase_x + i] = this->one[0];
         }
@@ -847,7 +873,7 @@ void Diago_NewDav<T, Device>::refresh(const int& dim,
 template <typename T, typename Device>
 void Diago_NewDav<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
                                    psi::Psi<T, Device>& psi,
-                                   Real* eigenvalue_in,
+                                   Real* eigenvalue_in_hsolver,
                                    std::vector<bool>& is_occupied)
 {
     /// record the times of trying iterative diagonalization
@@ -864,8 +890,8 @@ void Diago_NewDav<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
 
     if (DiagoIterAssist<T, Device>::SCF_ITER == 1)
     {
-        std::cout << "diagH_subspace" << std::endl;
-        DiagoIterAssist<T, Device>::diagH_subspace(phm_in, psi, psi, eigenvalue_in, psi.get_nbands());
+        // std::cout << "diagH_subspace" << std::endl;
+        DiagoIterAssist<T, Device>::diagH_subspace(phm_in, psi, psi, eigenvalue_in_hsolver, psi.get_nbands());
 
         this->is_subspace = true;
     }
@@ -912,11 +938,11 @@ void Diago_NewDav<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
 
     if (outputeigenvalue)
     {
-        // output: eigenvalue_in
-        std::cout << "before dav, output eigenvalue_in" << std::endl;
+        // output: eigenvalue_in_hsolver
+        std::cout << "before dav, output eigenvalue_in_hsolver" << std::endl;
         for (size_t i = 0; i < psi.get_nbands(); i++)
         {
-            std::cout << eigenvalue_in[i] << "\t";
+            std::cout << eigenvalue_in_hsolver[i] << "\t";
         }
         std::cout << std::endl;
     }
@@ -924,15 +950,15 @@ void Diago_NewDav<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
     do
     {
 
-        if (ntry > 0)
-        {
-            std::cout << std::endl;
-            std::cout << "11111  ntry > 0, current iter == " << DiagoIterAssist<T, Device>::avg_iter << std::endl;
-            std::cout << std::endl;
-            // DiagoIterAssist<T, Device>::diagH_subspace(phm_in, psi, psi, eigenvalue_in, psi.get_nbands());
-        }
+        // if (ntry > 0)
+        // {
+        //     // std::cout << std::endl;
+        //     // std::cout << "11111  ntry > 0, current iter == " << DiagoIterAssist<T, Device>::avg_iter << std::endl;
+        //     // std::cout << std::endl;
+        //     // DiagoIterAssist<T, Device>::diagH_subspace(phm_in, psi, psi, eigenvalue_in_hsolver, psi.get_nbands());
+        // }
 
-        this->diag_mock(phm_in, psi, eigenvalue_in, is_occupied);
+        this->diag_once(phm_in, psi, eigenvalue_in_hsolver, is_occupied);
 
         ++ntry;
 
@@ -946,11 +972,11 @@ void Diago_NewDav<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
 
     if (outputeigenvalue)
     {
-        // output: eigenvalue_in
-        std::cout << "after dav, output eigenvalue_in" << std::endl;
+        // output: eigenvalue_in_hsolver
+        std::cout << "after dav, output eigenvalue_in_hsolver" << std::endl;
         for (size_t i = 0; i < psi.get_nbands(); i++)
         {
-            std::cout << eigenvalue_in[i] << "\t";
+            std::cout << eigenvalue_in_hsolver[i] << "\t";
         }
         std::cout << std::endl;
     }

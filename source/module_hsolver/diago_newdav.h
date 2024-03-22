@@ -52,7 +52,7 @@ class Diago_NewDav : public DiagH<T, Device>
     Real* d_precondition = nullptr;
 
     /// eigenvalue results
-    Real* eigenvalue = nullptr;
+    Real* eigenvalue_in_dav = nullptr;
 
     T* hphi = nullptr; // the product of H and psi in the reduced basis set
 
@@ -108,7 +108,7 @@ class Diago_NewDav : public DiagH<T, Device>
                      T* vcc,
                      bool init);
 
-    void diag_mock(hamilt::Hamilt<T, Device>* phm_in,
+    void diag_once(hamilt::Hamilt<T, Device>* phm_in,
                    psi::Psi<T, Device>& psi,
                    Real* eigenvalue_in,
                    std::vector<bool>& is_occupied);
