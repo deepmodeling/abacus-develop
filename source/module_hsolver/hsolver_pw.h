@@ -12,6 +12,7 @@ template<typename T, typename Device = psi::DEVICE_CPU>
 class HSolverPW: public HSolver<T, Device>
 {
   private:
+    bool is_first_scf = true;
     // Note GetTypeReal<T>::type will 
     // return T if T is real type(float, double), 
     // otherwise return the real type of T(complex<float>, complex<double>)
@@ -67,6 +68,8 @@ class HSolverPW: public HSolver<T, Device>
     void update_precondition(std::vector<Real> &h_diag, const int ik, const int npw);
 
     std::vector<Real> precondition;
+    std::vector<Real> eigenvalues;
+    std::vector<bool> is_occupied;
 
     bool initialed_psi = false;
 
