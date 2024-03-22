@@ -148,7 +148,8 @@ void psi_initializer_nao<T, Device>::read_external_orbs(std::string* orbital_fil
                     n_rgrid_it.push_back(n_rgrid_ichi);
                     rgrid_it.push_back(rgrid_ichi);
                     // before push back, normalize the rvalue_ichi, 2024/03/19, kirk0830
-                    normalize(rgrid_ichi, rvalue_ichi);
+                    // turn off normalize, 2024/03/22, kirk0830
+                    //normalize(rgrid_ichi, rvalue_ichi);
                     rvalue_it.push_back(rvalue_ichi);
                     ++ichi_overall;
                 }
