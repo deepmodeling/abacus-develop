@@ -17,6 +17,7 @@
 #include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_elecstate/occupy.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dftu_new.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/print_info.h"
 #ifdef __EXX
@@ -429,6 +430,7 @@ namespace ModuleESolver
     two_center_bundle.reset(new TwoCenterBundle);
     two_center_bundle->build_orb(ucell.ntype, ucell.orbital_fn);
     two_center_bundle->build_alpha(GlobalV::deepks_setorb, &ucell.descriptor_file);
+    two_center_bundle->build_orb_onsite(ucell.ntype, GlobalV::onsite_radius);
     // currently deepks only use one descriptor file, so cast bool to int is fine
 
     //this->orb_con.read_orb_first(GlobalV::ofs_running,
@@ -569,6 +571,16 @@ namespace ModuleESolver
 
     if (GlobalV::dft_plus_u)
     {
+        if(istep == 0 && iter == 1)
+        {
+            hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::dm_in_dftu = nullptr;
+        }
+        else
+        {
+            hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::dm_in_dftu =
+            dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)
+                ->get_DM();
+        }
         GlobalC::dftu.cal_slater_UJ(this->pelec->charge->rho, this->pw_rho->nrxx); // Calculate U and J if Yukawa potential is used
     }
 
@@ -648,21 +660,25 @@ namespace ModuleESolver
 
 #ifdef __EXX
     if (GlobalC::exx_info.info_ri.real_number)
-        this->exd->exx_hamilt2density(*this->pelec, *this->LOWF.ParaV);
+        this->exd->exx_hamilt2density(*this->pelec, *this->LOWF.ParaV, iter);
     else
-        this->exc->exx_hamilt2density(*this->pelec, *this->LOWF.ParaV);
+        this->exc->exx_hamilt2density(*this->pelec, *this->LOWF.ParaV, iter);
 #endif
 
     // if DFT+U calculation is needed, this function will calculate
     // the local occupation number matrix and energy correction
     if (GlobalV::dft_plus_u)
     {
-        if (GlobalC::dftu.omc != 2)
+        // only old DFT+U method should calculated energy correction in esolver, new DFT+U method will calculate energy in calculating Hamiltonian
+        if(GlobalV::dft_plus_u == 2) 
         {
-            const std::vector<std::vector<TK>>& tmp_dm = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMK_vector();
-            this->dftu_cal_occup_m(iter, tmp_dm);
+            if (GlobalC::dftu.omc != 2)
+            {
+                const std::vector<std::vector<TK>>& tmp_dm = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMK_vector();
+                this->dftu_cal_occup_m(iter, tmp_dm);
+            }
+            GlobalC::dftu.cal_energy_correction(istep);
         }
-        GlobalC::dftu.cal_energy_correction(istep);
         GlobalC::dftu.output();
     }
 
@@ -809,10 +825,25 @@ namespace ModuleESolver
     {
         for (int is = 0; is < GlobalV::NSPIN; ++is)
         {
-            GlobalC::restart.save_disk(*this->UHM.LM, "charge", is, this->pelec->charge->nrxx, this->pelec->charge->rho);
+            GlobalC::restart.save_disk("charge", is, this->pelec->charge->nrxx, this->pelec->charge->rho[is]);
         }
     }
-
+#ifdef __EXX
+    int two_level_step = GlobalC::exx_info.info_ri.real_number ? this->exd->two_level_step : this->exc->two_level_step;
+    if (GlobalC::restart.info_save.save_H && two_level_step > 0 &&
+        (!GlobalC::exx_info.info_global.separate_loop || iter == 1)) // to avoid saving the same value repeatedly
+    {
+        std::vector<TK> Hexxk_save(this->LOWF.ParaV->get_local_size());
+        for (int ik = 0;ik < this->kv.nks;++ik)
+        {
+            ModuleBase::GlobalFunc::ZEROS(Hexxk_save.data(), Hexxk_save.size());
+            hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>> opexx_save(&this->LM, nullptr, &Hexxk_save, this->kv);
+            opexx_save.contributeHk(ik);
+            GlobalC::restart.save_disk("Hexx", ik, this->LOWF.ParaV->get_local_size(), Hexxk_save.data());
+        }
+        if (GlobalV::MY_RANK == 0)GlobalC::restart.save_disk("Eexx", 0, 1, &this->pelec->f_en.exx);
+    }
+#endif
     //-----------------------------------
     // output charge density for tmp
     //-----------------------------------
@@ -967,8 +998,13 @@ namespace ModuleESolver
     }
     if(GlobalV::qo_switch)
     {
-        toQO tqo(GlobalV::qo_basis, GlobalV::qo_strategy);
-        tqo.initialize(&GlobalC::ucell, this->kv.kvec_d);
+        toQO tqo(GlobalV::qo_basis, GlobalV::qo_strategy, GlobalV::qo_thr, GlobalV::qo_screening_coeff);
+        tqo.initialize(GlobalV::global_out_dir, 
+                       GlobalV::global_pseudo_dir, 
+                       GlobalV::global_orbital_dir,
+                       &GlobalC::ucell, this->kv.kvec_d,
+                       GlobalV::ofs_running,
+                       GlobalV::MY_RANK, GlobalV::NPROC);
         tqo.calculate();
     }
 }

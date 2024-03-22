@@ -451,10 +451,11 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "of_kernel_file", of_kernel_file, "The name of WT kernel file.");
 
     ofs << "\n#Parameters (20.dft+u)" << std::endl;
-    ModuleBase::GlobalFunc::OUTP(ofs, "dft_plus_u", dft_plus_u, "true:DFT+U correction; false: standard DFT calcullation(default)");
+    ModuleBase::GlobalFunc::OUTP(ofs, "dft_plus_u", dft_plus_u, "1/2:new/old DFT+U correction method; 0: standard DFT calcullation(default)");
     ModuleBase::GlobalFunc::OUTP(ofs, "yukawa_lambda", yukawa_lambda, "default:0.0");
     ModuleBase::GlobalFunc::OUTP(ofs, "yukawa_potential", yukawa_potential, "default: false");
     ModuleBase::GlobalFunc::OUTP(ofs, "omc", omc, "the mode of occupation matrix control");
+    ModuleBase::GlobalFunc::OUTP(ofs, "onsite_radius", onsite_radius, "radius of the sphere for onsite projection (Bohr)");
     ofs << std::setw(20) << "hubbard_u ";
     for (int i = 0; i < ntype; i++)
     {

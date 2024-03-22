@@ -286,7 +286,8 @@ void LCAO_Hamilt::calculate_HSR_sparse(const int &current_spin, const double &sp
         this->calculate_HContainer_sparse_cd(current_spin, sparse_threshold, *(p_ham_lcao->getSR()), this->LM->SR_soc_sparse);
     }
 
-    if (GlobalV::dft_plus_u)
+    // only old DFT+U method need to calculate extra contribution to HR
+    if (GlobalV::dft_plus_u == 2)
     {
         if (GlobalV::NSPIN != 4)
         {

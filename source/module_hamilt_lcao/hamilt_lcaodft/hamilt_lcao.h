@@ -27,13 +27,14 @@ class HamiltLCAO : public Hamilt<TK>
      * HR and SR will be allocated with Operators
     */
     HamiltLCAO(Gint_Gamma* GG_in,
-               Gint_k* GK_in,
-               LCAO_gen_fixedH* genH_in,
-               LCAO_Matrix* LM_in,
-               Local_Orbital_Charge* loc_in,
-               elecstate::Potential* pot_in,
-               const K_Vectors& kv_in,
-               elecstate::DensityMatrix<TK,double>* DM_in);
+        Gint_k* GK_in,
+        LCAO_gen_fixedH* genH_in,
+        LCAO_Matrix* LM_in,
+        Local_Orbital_Charge* loc_in,
+        elecstate::Potential* pot_in,
+        const K_Vectors& kv_in,
+        elecstate::DensityMatrix<TK, double>* DM_in,
+        int* exx_two_level_step = nullptr);
     /**
      * @brief Constructor of vacuum Operators, only HR and SR will be initialed as empty HContainer
     */

@@ -1,5 +1,5 @@
 This test for:
-*Al-fcc
-*LPS (local pseudopotential)
+*Ag-fcc
+*LPS in psp6 format (local pseudopotential)
 *mixing_type broyden-kerker
 *mixing_beta 0.7

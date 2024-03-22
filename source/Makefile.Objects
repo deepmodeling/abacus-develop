@@ -274,6 +274,7 @@ OBJS_HAMILT_LCAO=hamilt_lcao.o\
     deepks_lcao.o\
     op_exx_lcao.o\
     sc_lambda_lcao.o\
+    dftu_new.o\
 
 OBJS_HCONTAINER=base_matrix.o\
     atom_pair.o\
@@ -343,6 +344,7 @@ OBJS_ORBITAL=ORB_atomic.o\
 	  two_center_bundle.o\
 	  two_center_integrator.o\
 	  two_center_table.o\
+      projgen.o\
 
 OBJS_PSI=psi.o\
     psi_memory_op.o\
@@ -429,8 +431,9 @@ OBJS_IO=input.o\
     restart.o\
     binstream.o\
     to_wannier90.o\
-    to_qo.o\
-    to_qo_tools.o\
+    to_qo_kernel.o\
+    to_qo_mpi.o\
+    to_qo_structures.o\
     to_wannier90_pw.o\
     to_wannier90_lcao_in_pw.o\
     to_wannier90_lcao.o\
@@ -454,6 +457,7 @@ OBJS_IO=input.o\
     general_info.o\
     init_info.o\
     readin_info.o\
+    output_info.o\
 
 OBJS_IO_LCAO=cal_r_overlap_R.o\
       write_orb_info.o\
