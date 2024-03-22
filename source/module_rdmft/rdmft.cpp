@@ -529,8 +529,8 @@ double RDMFT<TK, TR>::Run(ModuleBase::matrix& E_gradient_occNum, psi::Psi<TK>& E
     for(int i=0; i<wfc.size(); ++i) pwfc_out[i] = pwfc[i];
 
     // test
-    // rdmft::printMatrix_pointer(E_gradient_occNum.nr, E_gradient_occNum.nc, &E_gradient_occNum(0, 0), "E_gradient_occNum");
-    // rdmft::printMatrix_pointer(occ_number.nr, occ_number.nc, &occ_number(0, 0), "occ_number");
+    rdmft::printMatrix_pointer(E_gradient_occNum.nr, E_gradient_occNum.nc, &E_gradient_occNum(0, 0), "E_gradient_occNum");
+    rdmft::printMatrix_pointer(occ_number.nr, occ_number.nc, &occ_number(0, 0), "occ_number");
     // rdmft::printMatrix_pointer(wfcHwfc_TV.nr, wfcHwfc_TV.nc, &wfcHwfc_TV(0, 0), "wfcHwfc_TV");
     // rdmft::printMatrix_pointer(wfcHwfc_hartree.nr, wfcHwfc_hartree.nc, &wfcHwfc_hartree(0, 0), "wfcHwfc_hartree");
     // rdmft::printMatrix_pointer(wfcHwfc_XC.nr, wfcHwfc_XC.nc, &wfcHwfc_XC(0, 0), "wfcHwfc_XC");
