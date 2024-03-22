@@ -277,6 +277,247 @@ void LCAO_Hamilt::calculate_HContainer_sparse_cd(const int &current_spin, const 
     return;
 }
 
+void LCAO_Hamilt::read_mat_npz(std::string& zipname, hamilt::HContainer<double>& hR)
+{
+    ModuleBase::TITLE("LCAO_Hamilt","read_mat_npz");
+
+    const Parallel_Orbitals* paraV = this->LM->ParaV;
+
+#ifdef __USECNPY
+
+#ifdef __MPI
+
+    if(GlobalV::NPROC!=1)
+    {
+        std::cout << "read_mat_npz is not supported in NPI mode yet" << std::endl;
+        return;
+    }
+
+/*
+    hamilt::HContainer<double>* HR_serial;
+    Parallel_Orbitals serialV;
+    serialV.set_proc_dim(1,0);
+    serialV.mpi_create_cart(MPI_COMM_WORLD);
+    serialV.set_local2global(GlobalV::NLOCAL, GlobalV::NLOCAL, GlobalV::ofs_running, GlobalV::ofs_warning);
+    serialV.set_global2local(GlobalV::NLOCAL, GlobalV::NLOCAL, false, GlobalV::ofs_running);
+    serialV.set_atomic_trace(GlobalC::ucell.get_iat2iwt(), GlobalC::ucell.nat, GlobalV::NLOCAL);
+*/
+    if(GlobalV::MY_RANK == 0)
+    {
+        //HR_serial = new hamilt::HContainer<double>(&serialV);
+
+        cnpy::npz_t my_npz = cnpy::npz_load(zipname);
+        std::vector<std::string> fnames;
+
+        for(auto const& imap: my_npz)
+            fnames.push_back(imap.first);
+
+        for(int i = 0; i < fnames.size(); i ++)
+        {
+            if(fnames[i].find("mat_") == std::string::npos) continue;
+
+            std::vector<std::string> tokens;
+            std::string token;
+            std::stringstream fname_tmp(fnames[i]);
+            char delimiter = '_'; 
+        
+            while (std::getline(fname_tmp, token, delimiter)) { 
+                tokens.push_back(token); 
+            }
+            
+            cnpy::NpyArray arr = my_npz[fnames[i]];
+
+            int iat1 = std::stoi(tokens[1]);
+            int iat2 = std::stoi(tokens[2]);
+            int Rx = std::stoi(tokens[3]);
+            int Ry = std::stoi(tokens[4]);
+            int Rz = std::stoi(tokens[5]);
+
+            int it1 = GlobalC::ucell.iat2it[iat1];
+            int it2 = GlobalC::ucell.iat2it[iat2];
+
+            assert(arr.shape[0] == GlobalC::ucell.atoms[it1].nw);
+            assert(arr.shape[1] == GlobalC::ucell.atoms[it2].nw);
+            
+            //hamilt::AtomPair<double> tmp(iat1,iat2,Rx,Ry,Rz,&serialV);
+            //HR_serial->insert_pair(tmp);
+            hamilt::AtomPair<double> tmp(iat1,iat2,Rx,Ry,Rz,paraV);
+            hR.insert_pair(tmp);
+
+            // use symmetry : H_{mu,nu,R} = H_{nu,mu,-R}
+            if(Rx!=0 || Ry!=0 || Rz!=0)
+            {
+                //hamilt::AtomPair<double> tmp(iat2,iat1,-Rx,-Ry,-Rz,&serialV);
+                //HR_serial->insert_pair(tmp);
+                hamilt::AtomPair<double> tmp(iat2,iat1,-Rx,-Ry,-Rz,paraV);
+                hR.insert_pair(tmp);
+            }
+        }
+
+        //HR_serial->allocate();
+        hR.allocate();
+
+        for(int i = 0; i < fnames.size(); i ++)
+        {
+            if(fnames[i].find("mat_") == std::string::npos) continue;
+
+            std::vector<std::string> tokens;
+            std::string token;
+            std::stringstream fname_tmp(fnames[i]);
+            char delimiter = '_'; 
+        
+            while (std::getline(fname_tmp, token, delimiter)) { 
+                tokens.push_back(token); 
+            }
+            
+            cnpy::NpyArray arr = my_npz[fnames[i]];
+
+            int iat1 = std::stoi(tokens[1]);
+            int iat2 = std::stoi(tokens[2]);
+            int Rx = std::stoi(tokens[3]);
+            int Ry = std::stoi(tokens[4]);
+            int Rz = std::stoi(tokens[5]);
+
+            int it1 = GlobalC::ucell.iat2it[iat1];
+            int it2 = GlobalC::ucell.iat2it[iat2];
+
+            assert(arr.shape[0] == GlobalC::ucell.atoms[it1].nw);
+            assert(arr.shape[1] == GlobalC::ucell.atoms[it2].nw);
+
+            double* submat_read = arr.data<double>();
+            
+            //hamilt::BaseMatrix<double>* submat = HR_serial->find_matrix(iat1,iat2,Rx,Ry,Rz);
+            hamilt::BaseMatrix<double>* submat = hR.find_matrix(iat1,iat2,Rx,Ry,Rz);
+
+            for(int i = 0; i < arr.shape[0]; i ++)
+            {
+                for(int j = 0; j < arr.shape[1]; j ++)
+                {
+                    submat->add_element(i,j,submat_read[i*arr.shape[1]+j]);
+                }
+            }
+            
+            // use symmetry : H_{mu,nu,R} = H_{nu,mu,-R}
+            if(Rx!=0 || Ry!=0 || Rz!=0)
+            {
+                //hamilt::BaseMatrix<double>* submat = HR_serial->find_matrix(iat2,iat1,-Rx,-Ry,-Rz);
+                hamilt::BaseMatrix<double>* submat = hR.find_matrix(iat2,iat1,-Rx,-Ry,-Rz);
+                for(int i = 0; i < arr.shape[0]; i ++)
+                {
+                    for(int j = 0; j < arr.shape[1]; j ++)
+                    {
+                        submat->add_element(j,i,submat_read[i*arr.shape[1]+j]);
+                    }
+                }
+            }
+        }
+
+    }
+#else
+
+        cnpy::npz_t my_npz = cnpy::npz_load(zipname);
+        std::vector<std::string> fnames;
+
+        for(auto const& imap: my_npz)
+            fnames.push_back(imap.first);
+
+        for(int i = 0; i < fnames.size(); i ++)
+        {
+            if(fnames[i].find("mat_") == std::string::npos) continue;
+
+            std::vector<std::string> tokens;
+            std::string token;
+            std::stringstream fname_tmp(fnames[i]);
+            char delimiter = '_'; 
+        
+            while (std::getline(fname_tmp, token, delimiter)) { 
+                tokens.push_back(token); 
+            }
+            
+            cnpy::NpyArray arr = my_npz[fnames[i]];
+
+            int iat1 = std::stoi(tokens[1]);
+            int iat2 = std::stoi(tokens[2]);
+            int Rx = std::stoi(tokens[3]);
+            int Ry = std::stoi(tokens[4]);
+            int Rz = std::stoi(tokens[5]);
+
+            int it1 = GlobalC::ucell.iat2it[iat1];
+            int it2 = GlobalC::ucell.iat2it[iat2];
+
+            assert(arr.shape[0] == GlobalC::ucell.atoms[it1].nw);
+            assert(arr.shape[1] == GlobalC::ucell.atoms[it2].nw);
+            
+            hamilt::AtomPair<double> tmp(iat1,iat2,Rx,Ry,Rz,paraV);
+            hR->insert_pair(tmp);
+            // use symmetry : H_{mu,nu,R} = H_{nu,mu,-R}
+            if(Rx!=0 || Ry!=0 || Rz!=0)
+            {
+                hamilt::AtomPair<double> tmp(iat2,iat1,-Rx,-Ry,-Rz,paraV);
+                hR->insert_pair(tmp);
+            }
+        }
+
+        hR->allocate();
+
+        for(int i = 0; i < fnames.size(); i ++)
+        {
+            if(fnames[i].find("mat_") == std::string::npos) continue;
+
+            std::vector<std::string> tokens;
+            std::string token;
+            std::stringstream fname_tmp(fnames[i]);
+            char delimiter = '_'; 
+        
+            while (std::getline(fname_tmp, token, delimiter)) { 
+                tokens.push_back(token); 
+            }
+            
+            cnpy::NpyArray arr = my_npz[fnames[i]];
+
+            int iat1 = std::stoi(tokens[1]);
+            int iat2 = std::stoi(tokens[2]);
+            int Rx = std::stoi(tokens[3]);
+            int Ry = std::stoi(tokens[4]);
+            int Rz = std::stoi(tokens[5]);
+
+            int it1 = GlobalC::ucell.iat2it[iat1];
+            int it2 = GlobalC::ucell.iat2it[iat2];
+
+            assert(arr.shape[0] == GlobalC::ucell.atoms[it1].nw);
+            assert(arr.shape[1] == GlobalC::ucell.atoms[it2].nw);
+
+            double* submat_read = arr.data<double>();
+            
+            hamilt::BaseMatrix<double>* submat = hR->find_matrix(iat1,iat2,Rx,Ry,Rz);
+
+            for(int i = 0; i < arr.shape[0]; i ++)
+            {
+                for(int j = 0; j < arr.shape[1]; j ++)
+                {
+                    submat->add_element(i,j,submat_read[i*arr.shape[1]+j]);
+                }
+            }
+            
+            // use symmetry : H_{mu,nu,R} = H_{nu,mu,-R}
+            if(Rx!=0 || Ry!=0 || Rz!=0)
+            {
+                hamilt::BaseMatrix<double>* submat = hR->find_matrix(iat2,iat1,-Rx,-Ry,-Rz);
+                for(int i = 0; i < arr.shape[0]; i ++)
+                {
+                    for(int j = 0; j < arr.shape[1]; j ++)
+                    {
+                        submat->add_element(j,i,submat_read[i*arr.shape[1]+j]);
+                    }
+                }
+            }
+        }
+
+#endif
+
+#endif
+}
+
 void LCAO_Hamilt::output_mat_npz(std::string& zipname, const hamilt::HContainer<double>& hR)
 {
     ModuleBase::TITLE("LCAO_Hamilt","output_mat_npz");
