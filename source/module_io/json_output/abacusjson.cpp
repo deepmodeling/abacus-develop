@@ -4,15 +4,30 @@
 #include <iostream>
 #include <string>
 #include <vector>
-
+#include <sstream>
 namespace Json
 {
 
 #ifdef __RAPIDJSON
 rapidjson::Document AbacusJson::doc;
 
-void AbacusJson::add_nested_member(std::vector<std::string>::iterator begin,
-                                   std::vector<std::string>::iterator end,
+bool isNum(std::string str)  
+{  
+	std::stringstream sin;  
+    sin<<str;
+	double d;  
+	char c;  
+	if(!(sin >> d))  
+		return false;
+	
+	if (sin >> c) 
+		return false;
+	return true;  
+}
+
+
+void AbacusJson::add_nested_member(std::vector<jsonKeyNode>::iterator begin,
+                                   std::vector<jsonKeyNode>::iterator end,
                                    rapidjson::Value& val,
                                    rapidjson::Value& parent,
                                    rapidjson::Document::AllocatorType& allocator,
@@ -21,11 +36,25 @@ void AbacusJson::add_nested_member(std::vector<std::string>::iterator begin,
 {
     if (begin != end)
     {
-        rapidjson::Value key((*begin).c_str(), allocator);
+        jsonKeyNode keyNode = *begin;
+        rapidjson::Value key((*begin).key.c_str(), allocator);
+
+
         if (begin + 1 == end)
         {
+            
+            if( keyNode.key.empty() && parent.IsArray()){
+                int index = keyNode.i;
+                if(index>=0){
+                    parent[index] = val;
+                }
+                else {
+                    int arr_size = parent.Size();
+                    parent[arr_size+index] = val;
+                }
+            }
             // if key exists, then overwrite it
-            if (parent.HasMember(key))
+            else if (parent.HasMember(key))
             {
                 if(parent[key].IsArray()){
                     parent[key].PushBack(val, allocator);
@@ -33,7 +62,7 @@ void AbacusJson::add_nested_member(std::vector<std::string>::iterator begin,
                     // if key is an object, then warn the user
                     if (parent[key].IsObject())
                     {
-                        std::cout << "Warning: write to json, key " << *begin
+                        std::cout << "Warning: write to json, key " << (*begin).key
                                 << " exist and is an object, and abacus will overwrite it with a value." << std::endl;
                     }
                     parent[key] = val;
@@ -52,14 +81,25 @@ void AbacusJson::add_nested_member(std::vector<std::string>::iterator begin,
         }
         else
         {
+            if( keyNode.key.empty()&&parent.IsArray()){
+                int index = keyNode.i;
+                
+                if(index>=0){
+                    add_nested_member(begin + 1, end, val, parent[index], allocator,IsArray);
+                }
+                else {
+                    int arr_size = parent.Size();
+                    add_nested_member(begin + 1, end, val, parent[arr_size+index], allocator,IsArray);
+                }
+            }
             // need to check if the key exists
-            if (parent.HasMember(key))
+            else if (parent.HasMember(key))
             {
                 // this key should be an object
-                if (!parent[key].IsObject())
+                if (!parent[key].IsObject()&&!parent[key].IsArray())
                 {
-                    std::cout << "Warning: write to json, key " << *begin
-                              << " exist and is not an object, and abacus will add it as a middle node." << std::endl;
+                    std::cout << "Warning: write to json, key " << (*begin).key
+                              << " exist and is not an object or array, and abacus will add it as a middle node." << std::endl;
                 }
                 add_nested_member(begin + 1, end, val, parent[key], allocator,IsArray);
             }
@@ -84,7 +124,7 @@ void AbacusJson::write_to_json(std::string filename)
     ofs.close();
 };
   template <>
-  void AbacusJson::add_json(std::vector<std::string> keys, const std::string& value,bool IsArray)
+  void AbacusJson::add_json(std::vector<jsonKeyNode> keys, const std::string& value,bool IsArray)
   {
       if (!doc.IsObject())
       {
@@ -97,7 +137,7 @@ void AbacusJson::write_to_json(std::string filename)
 
 // Overloaded template functions for json class objects
   template <>
-  void AbacusJson::add_json(std::vector<std::string> keys, const rapidjson::Value& value,bool IsArray)
+  void AbacusJson::add_json(std::vector<jsonKeyNode> keys, const rapidjson::Value& value,bool IsArray)
   {
 
         if (!doc.IsObject())
