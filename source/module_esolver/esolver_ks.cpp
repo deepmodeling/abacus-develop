@@ -25,6 +25,8 @@
 #include "module_base/parallel_common.h"
 #endif
 
+#include "module_io/json_output/output_info.h"
+
 namespace ModuleESolver
 {
 
@@ -448,12 +450,26 @@ namespace ModuleESolver
                 /*
                     SCF print: G1    -3.435545e+03  0.000000e+00   3.607e-01  2.862e-01
                 */
+
                 double dkin = 0.0; // for meta-GGA
                 if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
                 {
                     dkin = p_chgmix->get_dkin(pelec->charge, GlobalV::nelec);
                 }
                 printiter(iter, drho, dkin, duration, diag_ethr);
+              
+#ifdef __RAPIDJSON
+                //add Json of scf mag
+                Json::add_output_scf_mag(
+                    GlobalC::ucell.magnet.tot_magnetization, GlobalC::ucell.magnet.abs_magnetization,
+                    this->pelec->f_en.etot * ModuleBase::Ry_to_eV,
+                    (this->pelec->f_en.etot - this->pelec->f_en.etot_old) * ModuleBase::Ry_to_eV,
+                    drho,
+                    duration
+                );
+#endif //__RAPIDJSON 
+          
+              
                 if (this->conv_elec)
                 {
                     this->niter = iter;
@@ -465,17 +481,26 @@ namespace ModuleESolver
                 {
                     std::cout<<"SCF restart after this step!"<<std::endl;
                 }
-            }
-            afterscf(istep);
 
+            }
+#ifdef __RAPIDJSON
+                //add Json of efermi energy converge
+                Json::add_output_efermi_energy_converge(
+                    this->pelec->eferm.ef * ModuleBase::Ry_to_eV,
+                    this->pelec->f_en.etot * ModuleBase::Ry_to_eV,
+                    this->conv_elec
+                );
+#endif //__RAPIDJSON 
+            afterscf(istep);
             ModuleBase::timer::tick(this->classname, "Run");
-        }       
-        // add nkstot,nkstot_ibz to output json
-        #ifdef __RAPIDJSON
-                int Jnkstot = this->pelec->klist->nkstot;
-                int Jnkstot_ibz = this->pelec->klist->nkstot_ibz;
-                Json::add_nkstot(Jnkstot,Jnkstot_ibz);
-        #endif //__RAPIDJSON 
+        } 
+
+#ifdef __RAPIDJSON
+            // add nkstot,nkstot_ibz to output json
+            int Jnkstot = this->pelec->klist->nkstot;
+            int Jnkstot_ibz = this->pelec->klist->nkstot_ibz;
+            Json::add_nkstot(Jnkstot,Jnkstot_ibz);
+#endif //__RAPIDJSON          
         return;
     };
 

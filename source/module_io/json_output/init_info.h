@@ -1,3 +1,5 @@
+#ifndef INIT_INFO_H
+#define INIT_INFO_H
 #include "module_cell/module_symmetry/symmetry.h"
 #include "module_cell/atom_spec.h"
 #include "module_cell/unitcell.h"
@@ -27,3 +29,4 @@ void add_nkstot(int nkstot,int nkstot_ibz);
 void gen_stru(UnitCell *ucell);
 #endif
 }
+#endif

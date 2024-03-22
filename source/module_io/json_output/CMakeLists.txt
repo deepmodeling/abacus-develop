@@ -3,6 +3,7 @@ list(APPEND objects_json
     general_info.cpp
     init_info.cpp
     readin_info.cpp
+    output_info.cpp
 )
 
 add_library(

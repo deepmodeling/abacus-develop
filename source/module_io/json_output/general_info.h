@@ -1,3 +1,5 @@
+#ifndef GENERAL_INFO_H
+#define GENERAL_INFO_H
 #include "module_io/input.h"
 
 /**
@@ -9,3 +11,4 @@ namespace Json
 void gen_general_info(Input *input);
 #endif
 }
+#endif
