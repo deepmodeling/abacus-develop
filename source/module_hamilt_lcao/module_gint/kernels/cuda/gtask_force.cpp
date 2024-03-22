@@ -85,7 +85,7 @@ void gpu_task_generator_force(
             dr_temp[2] = gridt.meshcell_pos[ib][2] +
                          gridt.meshball_positions[imcell][2] -
                          gridt.tau_in_bigcell[iat][2];
-
+            /* compute distance in and allocate the paramter in z_index */
             double distance =
                 sqrt(dr_temp[0] * dr_temp[0] + dr_temp[1] * dr_temp[1] +
                      dr_temp[2] * dr_temp[2]);
@@ -122,7 +122,7 @@ void gpu_task_generator_force(
     num_psir[z_index] = num_get_psi;
   }
 
-  // TODO:Separate the following code into a single function
+  /* allocate the Multiplication of multinomial matrices */
   int tid = 0;
   max_m = 0;
   max_n = 0;

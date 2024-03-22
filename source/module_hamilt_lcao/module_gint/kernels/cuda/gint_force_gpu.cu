@@ -36,6 +36,7 @@ void gint_gamma_force_gpu(hamilt::HContainer<double> *dm, const double vfactor,
   const int max_size = gridt.max_atom;
   const int nwmax = ucell.nwmax;
   const int bxyz = gridt.bxyz;
+  /* compute the dm matrix from Hcontainer */
   double *dm_matrix_h = new double[lgd * lgd];
   ModuleBase::GlobalFunc::ZEROS(dm_matrix_h, lgd * lgd);
   for (int iat1 = 0; iat1 < ucell.nat; iat1++) {
@@ -67,6 +68,7 @@ void gint_gamma_force_gpu(hamilt::HContainer<double> *dm, const double vfactor,
   checkCuda(cudaMemcpy(dm_matrix_g, dm_matrix_h, lgd * lgd * sizeof(double),
                        cudaMemcpyHostToDevice));
 
+  /*prepare the force and stress dot parameter */
   const int threadsPerBlock = 256;
   const int blocksPerGrid =
       std::min(64, (gridt.psir_size + threadsPerBlock - 1) / threadsPerBlock);
@@ -85,6 +87,7 @@ void gint_gamma_force_gpu(hamilt::HContainer<double> *dm, const double vfactor,
   checkCuda(cudaMemset(stress_dot_global_g, 0,
                        6 * blocksPerGrid * gridt.nstreams * sizeof(double)));
 
+  /* cudaMalloc global parameter in device*/
   double *force_dot_global_g;
   checkCuda(
       cudaMalloc((void **)&force_dot_global_g,
@@ -99,6 +102,7 @@ void gint_gamma_force_gpu(hamilt::HContainer<double> *dm, const double vfactor,
   checkCuda(cudaMemset(iat_global_g, 0,
                        nbz * bxyz * max_size * gridt.nstreams * sizeof(int)));
 
+  /*cuda stream allocate */
   for (int i = 0; i < gridt.nstreams; i++) {
     checkCuda(cudaStreamSynchronize(gridt.streams[i]));
   }
@@ -106,6 +110,7 @@ void gint_gamma_force_gpu(hamilt::HContainer<double> *dm, const double vfactor,
   int iter_num = 0;
   for (int i = 0; i < gridt.nbx; i++) {
     for (int j = 0; j < gridt.nby; j++) {
+      /* psi parameter allocate */
       int stream_num = iter_num % gridt.nstreams;
       double *psi_input_double =
           &gridt.psi_input_double_global[gridt.psi_size_max * stream_num * 5];
@@ -218,7 +223,7 @@ void gint_gamma_force_gpu(hamilt::HContainer<double> *dm, const double vfactor,
       int max_n = 0;
       int atom_pair_num = 0;
       checkCuda(cudaStreamSynchronize(gridt.streams[stream_num]));
-
+      /*gpu task compute in CPU */
       gpu_task_generator_force(
           gridt, ORB, ucell, i, j, gridt.psi_size_max_per_z, max_size, nczp, vfactor,
           vlocal, iat, psi_input_double, psi_input_int, num_psir, lgd,
@@ -320,7 +325,7 @@ void gint_gamma_force_gpu(hamilt::HContainer<double> *dm, const double vfactor,
                                 gridt.streams[stream_num]));
       dim3 grid_psi(nbz, 8);
       dim3 block_psi(64);
-
+      /* cuda stream compute and Multiplication of multinomial matrices */
       get_psi_force<<<grid_psi, block_psi, 0, gridt.streams[stream_num]>>>(
           gridt.ylmcoef_g, ORB.dr_uniform, gridt.bxyz,
           ucell.nwmax, psi_input_double_g, psi_input_int_g, num_psir_g,
@@ -336,7 +341,8 @@ void gint_gamma_force_gpu(hamilt::HContainer<double> *dm, const double vfactor,
           atom_pair_mat_A_array_g, atom_pair_lda_g, atom_pair_mat_B_array_g,
           atom_pair_ldb_g, atom_pair_mat_C_array_g, atom_pair_ldc_g,
           atom_pair_num, gridt.streams[stream_num], nullptr);
-
+      
+      /* force and stress compute in GPU */
       dim3 grid_dot_force(blocksPerGrid_force);
       dim3 block_dot_force(threadsPerBlock_force);
       dim3 grid_dot(blocksPerGrid);

@@ -21,7 +21,7 @@ basis_type		lcao
 
 #Parameters (4.Smearing)
 smearing_method		gauss
-smearing_sigma			0.002
+smearing_sigma	0.002
 
 #Parameters (5.Mixing)
 mixing_type		pulay
