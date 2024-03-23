@@ -6,16 +6,16 @@ namespace lcaoCudaKernel{
 
 void gpu_task_generator_rho(const Grid_Technique &gridt, 
                             const int i, const int j,
-                            const int psi_size_max, const int max_size,
+                            const int max_size,
                             const int nczp,
                             const UnitCell &ucell,
                             const LCAO_Orbitals &ORB,
                             double *psi_input_double, int *psi_input_int,
                             int *num_psir,
                             const int lgd,
-                            double *psir_ylm_g,
-                            double *psir_zeros_g,
-                            double *dm_matrix_g,
+                            double * const psir_ylm_g,
+                            double * const psir_dm_g,
+                            double * const dm_matrix_g,
                             double *mat_alpha,
                             int *mat_m,
                             int *mat_n,
@@ -39,15 +39,18 @@ void gpu_task_generator_rho(const Grid_Technique &gridt,
 { 
   const int grid_index_ij = i * gridt.nby * gridt.nbzp + j * gridt.nbzp;
   const int nwmax = ucell.nwmax;
+  const int psi_size_max = max_size * gridt.bxyz;
+
+  // record whether mat_psir is a zero matrix or not.
   bool *gpu_mat_cal_flag = new bool[max_size * gridt.nbzp];
 
   for (int i = 0; i < max_size * gridt.nbzp; i++)
   {  
-    gpu_mat_cal_flag[i] = false;
+  gpu_mat_cal_flag[i] = false;
   }
   dot_count = 0;
 
-  // psir generate
+  // generate data for calculating psir
   for (int z_index = 0; z_index < gridt.nbzp; z_index++) {
     int num_get_psi = 0;
     int grid_index = grid_index_ij + z_index;
@@ -94,10 +97,9 @@ void gpu_task_generator_rho(const Grid_Technique &gridt,
               psi_input_double[pos_temp_double + 2] = dr_temp[2] / distance;
               psi_input_double[pos_temp_double + 3] = distance;
 
-
-              psi_input_int[pos_temp_int] = it_temp;
+              psi_input_int[pos_temp_int] = it_temp;  // atom type
               psi_input_int[pos_temp_int + 1] =
-                  (z_index * gridt.bxyz + ib) * max_size * nwmax + id * nwmax;
+                  (z_index * gridt.bxyz + ib) * max_size * nwmax + id * nwmax; // psir index in psir_ylm
               num_get_psi++;
             }
             ib++;
@@ -110,11 +112,12 @@ void gpu_task_generator_rho(const Grid_Technique &gridt,
   }
 
 
-  //TODO:Separate the following code into a single function
+
   int tid = 0;
   max_m = 0;
   max_n = 0;
-
+  
+  // generate matrix multiplication tasks
   for (int z_index = 0; z_index < gridt.nbzp; z_index++) {
     int grid_index = grid_index_ij + z_index;
     int calc_flag_index = max_size * z_index;
@@ -156,7 +159,7 @@ void gpu_task_generator_rho(const Grid_Technique &gridt,
         mat_ldc[tid] = nwmax * max_size;
         mat_A[tid] = psir_ylm_g + mat_A_idx;
         mat_B[tid] = dm_matrix_g + mat_B_idx;
-        mat_C[tid] = psir_zeros_g + mat_C_idx;
+        mat_C[tid] = psir_dm_g + mat_C_idx;
 
         if(mat_m[tid] > max_m){
           max_m = mat_m[tid];
@@ -170,12 +173,12 @@ void gpu_task_generator_rho(const Grid_Technique &gridt,
         }
       }  
 
-    //generate dot tasks
+    //generate vec dot product tasks
     int* vindex = Gint_Tools::get_vindex(gridt.bxyz, gridt.bx, gridt.by, gridt.bz,
                         nczp, gridt.start_ind[grid_index], gridt.ncy*nczp);
     for(int i = 0; i < gridt.bxyz; i++){
       vec_l[dot_count] = psir_ylm_g + (bcell_start_psir + i * max_size * nwmax);
-      vec_r[dot_count] = psir_zeros_g + (bcell_start_psir + i * max_size * nwmax);
+      vec_r[dot_count] = psir_dm_g + (bcell_start_psir + i * max_size * nwmax);
       dot_product[dot_count] = rho_g + vindex[i];
       vec_len[dot_count] = nwmax * max_size;
       dot_count++;

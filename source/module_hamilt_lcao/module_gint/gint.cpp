@@ -91,8 +91,8 @@ void Gint::cal_gint(Gint_inout *inout) {
         const int nrxx = this->gridt->ncx * this->gridt->ncy * this->nplane;
         for (int is = 0; is < GlobalV::NSPIN; ++is) {
           ModuleBase::GlobalFunc::ZEROS(inout->rho[is], nrxx);
-          lcaoCudaKernel::gint_gamma_rho_gpu(this->DMRGint[is], inout->rho[is], this->nplane,
-                                           ylmcoef, *this->gridt, GlobalC::ORB, GlobalC::ucell);
+          lcaoCudaKernel::gint_gamma_rho_gpu(this->DMRGint[is], this->nplane, ylmcoef, 
+                                            *this->gridt, GlobalC::ORB, GlobalC::ucell, inout->rho[is]);
         }
         ModuleBase::timer::tick("Gint_interface", "cal_gint_rho");
         return;

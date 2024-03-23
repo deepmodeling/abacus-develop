@@ -18,7 +18,7 @@ __global__ void get_psi(double *ylmcoef,
                         int *atom_nw,
                         int nr_max,
                         double *psi_u,
-                        double *psir_ylm_left)
+                        double *psir_ylm)
 {
     int size = num_psir[blockIdx.x];
     int start_index = psi_size_max * blockIdx.x;
@@ -64,7 +64,7 @@ __global__ void get_psi(double *ylmcoef,
                       c3 * psi_u[iw_nr + 2] + c4 * psi_u[iw_nr + 3];
             }
             double temp = phi * ylma[atom_iw2_ylm[it_nw_iw]];
-            psir_ylm_left[dist_tmp] = temp;
+            psir_ylm[dist_tmp] = temp;
             dist_tmp += 1;
             iw_nr += nr_max;
             iw_nr += nr_max;
@@ -75,10 +75,10 @@ __global__ void get_psi(double *ylmcoef,
 
 
 __global__ void psir_dot(int * n,
-                        double **x_array_g,
-                        int incx,
-                        double **y_array_g,
-                        int incy,
+                        double **vec_l_g,
+                        int incl,
+                        double **vec_r_g,
+                        int incr,
                         double **results_g,
                         int batchcount)
 {
@@ -86,11 +86,11 @@ __global__ void psir_dot(int * n,
     int stride = blockDim.x * gridDim.x;
     for(int i = id; i < batchcount; i += stride){
         double *sum = results_g[i];
-        double *x = x_array_g[i];
-        double *y = y_array_g[i];
+        double *x = vec_l_g[i];
+        double *y = vec_r_g[i];
 
         for(int j = 0; j < n[i]; j++){
-            sum[0] += x[j*incx] * y[j*incy];
+            sum[0] += x[j*incl] * y[j*incr];
         }
     }
 }
