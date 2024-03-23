@@ -976,7 +976,7 @@ void ESolver_KS_LCAO<TK, TR>::afterscf(const int istep)
 #ifdef __EXX
     if (GlobalC::exx_info.info_global.cal_exx) // Peize Lin add if 2022.11.14
     {
-        const std::string file_name_exx = GlobalV::global_out_dir + "HexxR";
+        const std::string file_name_exx = GlobalV::global_out_dir + "HexxR" + std::to_string(GlobalV::MY_RANK);
         if (GlobalC::exx_info.info_ri.real_number)
         {
             this->exd->write_Hexxs(file_name_exx, GlobalC::ucell);

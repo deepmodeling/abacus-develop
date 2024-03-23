@@ -52,17 +52,16 @@ void Exx_LRI_Interface<T, Tdata>::write_Hexxs(const std::string& file_name, cons
                 all_R_coor.insert(R);
             }
         }
-        if (GlobalV::DRANK == 0)
-            ModuleIO::save_sparse(
-                this->calculate_RI_Tensor_sparse(sparse_threshold, this->exx_ptr->Hexxs[is], ucell),
-                all_R_coor,
-                sparse_threshold,
-                false, //binary
-                file_name + "_" + std::to_string(is) + ".csr",
-                Parallel_Orbitals(),
-                "Hexxs_" + std::to_string(is),
-                -1,
-                true);  //already global
+        ModuleIO::save_sparse(
+            this->calculate_RI_Tensor_sparse(sparse_threshold, this->exx_ptr->Hexxs[is], ucell),
+            all_R_coor,
+            sparse_threshold,
+            false, //binary
+            file_name + "_" + std::to_string(is) + ".csr",
+            Parallel_Orbitals(),
+            "Hexxs_" + std::to_string(is),
+            -1,
+            false);  //no reduce, one file for each process
     }
     ModuleBase::timer::tick("Exx_LRI", "write_Hexxs");
 }

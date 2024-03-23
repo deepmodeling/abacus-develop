@@ -684,12 +684,10 @@ void ModuleIO::save_sparse(
     const Parallel_Orbitals& pv,
     const std::string& label,
     const int& istep,
-    const bool& already_global)
+    const bool& reduce)
 {
     ModuleBase::TITLE("ModuleIO", "save_sparse");
     ModuleBase::timer::tick("ModuleIO", "save_sparse");
-
-    if (already_global && GlobalV::DRANK != 0) return;
 
     int total_R_num = all_R_coor.size();
     std::vector<int> nonzero_num(total_R_num, 0);
@@ -702,7 +700,7 @@ void ModuleIO::save_sparse(
                 nonzero_num[count] += row_loop.second.size();
         ++count;
     }
-    if (!already_global)Parallel_Reduce::reduce_all(nonzero_num.data(), total_R_num);
+    if (reduce)Parallel_Reduce::reduce_all(nonzero_num.data(), total_R_num);
 
     int output_R_number = 0;
     for (int index = 0; index < total_R_num; ++index)
@@ -711,7 +709,7 @@ void ModuleIO::save_sparse(
     std::stringstream sss;
     sss << filename;
     std::ofstream ofs;
-    if (GlobalV::DRANK == 0)
+    if (!reduce || GlobalV::DRANK == 0)
     {
         if (binary)
         {
@@ -748,7 +746,7 @@ void ModuleIO::save_sparse(
             continue;
         }
 
-        if (GlobalV::DRANK == 0)
+        if (!reduce || GlobalV::DRANK == 0)
         {
             if (binary)
             {
@@ -763,10 +761,10 @@ void ModuleIO::save_sparse(
             }
         }
 
-        output_single_R(ofs, smat.at(R_coor), sparse_threshold, binary, pv, already_global);
+        output_single_R(ofs, smat.at(R_coor), sparse_threshold, binary, pv, reduce);
         ++count;
     }
-    if (GlobalV::DRANK == 0) ofs.close();
+    if (!reduce || GlobalV::DRANK == 0) ofs.close();
 
     ModuleBase::timer::tick("ModuleIO", "save_sparse");
 }

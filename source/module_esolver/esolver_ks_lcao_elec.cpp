@@ -524,7 +524,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf()
     if (GlobalC::exx_info.info_global.cal_exx)
     {
         // GlobalC::exx_lcao.cal_exx_elec_nscf(this->LOWF.ParaV[0]);
-        const std::string file_name_exx = GlobalV::global_out_dir + "HexxR";
+        const std::string file_name_exx = GlobalV::global_out_dir + "HexxR" + std::to_string(GlobalV::MY_RANK);
         if (GlobalC::exx_info.info_ri.real_number)
             this->exd->read_Hexxs(file_name_exx, GlobalC::ucell);
         else

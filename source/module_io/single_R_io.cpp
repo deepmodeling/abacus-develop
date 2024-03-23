@@ -8,7 +8,7 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
     const double& sparse_threshold,
     const bool& binary,
     const Parallel_Orbitals& pv,
-    const bool& already_global)
+    const bool& reduce)
 {
     double *line = nullptr;
     std::vector<int> indptr;
@@ -16,11 +16,11 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
     indptr.push_back(0);
 
     std::stringstream tem1;
-    tem1 << GlobalV::global_out_dir << "temp_sparse_indices.dat";
+    tem1 << GlobalV::global_out_dir << std::to_string(GlobalV::DRANK) + "temp_sparse_indices.dat";
     std::ofstream ofs_tem1;
     std::ifstream ifs_tem1;
 
-    if (GlobalV::DRANK == 0)
+    if (!reduce || GlobalV::DRANK == 0)
     {
         if (binary)
         {
@@ -38,7 +38,7 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
         // line = new double[GlobalV::NLOCAL];
         ModuleBase::GlobalFunc::ZEROS(line, GlobalV::NLOCAL);
 
-        if (already_global || pv.global2local_row(row) >= 0)
+        if (!reduce || pv.global2local_row(row) >= 0)
         {
             auto iter = XR.find(row);
             if (iter != XR.end())
@@ -50,7 +50,7 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
             }
         }
 
-        if (!already_global)Parallel_Reduce::reduce_all(line, GlobalV::NLOCAL);
+        if (reduce)Parallel_Reduce::reduce_all(line, GlobalV::NLOCAL);
 
         if(GlobalV::DRANK == 0)
         {
@@ -87,7 +87,7 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
     delete[] line;
     line = nullptr;
 
-    if (GlobalV::DRANK == 0)
+    if (!reduce || GlobalV::DRANK == 0)
     {
         if (binary)
         {
@@ -126,21 +126,19 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
     const double& sparse_threshold,
     const bool& binary,
     const Parallel_Orbitals& pv,
-    const bool& already_global)
+    const bool& reduce)
 {
-    if (already_global && GlobalV::DRANK != 0) return;
-
     std::complex<double>* line = nullptr;
     std::vector<int> indptr;
     indptr.reserve(GlobalV::NLOCAL + 1);
     indptr.push_back(0);
 
     std::stringstream tem1;
-    tem1 << GlobalV::global_out_dir << "temp_sparse_indices.dat";
+    tem1 << GlobalV::global_out_dir << std::to_string(GlobalV::DRANK) + "temp_sparse_indices.dat";
     std::ofstream ofs_tem1;
     std::ifstream ifs_tem1;
 
-    if (GlobalV::DRANK == 0)
+    if (!reduce || GlobalV::DRANK == 0)
     {
         if (binary)
         {
@@ -158,7 +156,7 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
         // line = new std::complex<double>[GlobalV::NLOCAL];
         ModuleBase::GlobalFunc::ZEROS(line, GlobalV::NLOCAL);
 
-        if (already_global || pv.global2local_row(row) >= 0)
+        if (!reduce || pv.global2local_row(row) >= 0)
         {
             auto iter = XR.find(row);
             if (iter != XR.end())
@@ -170,9 +168,9 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
             }
         }
 
-        if (!already_global)Parallel_Reduce::reduce_all(line, GlobalV::NLOCAL);
+        if (reduce)Parallel_Reduce::reduce_all(line, GlobalV::NLOCAL);
 
-        if (GlobalV::DRANK == 0)
+        if (!reduce || GlobalV::DRANK == 0)
         {
             int nonzeros_count = 0;
             for (int col = 0; col < GlobalV::NLOCAL; ++col)
@@ -208,7 +206,7 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
     delete[] line;
     line = nullptr;
 
-    if (GlobalV::DRANK == 0)
+    if (!reduce || GlobalV::DRANK == 0)
     {
         if (binary)
         {
