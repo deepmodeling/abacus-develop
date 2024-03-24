@@ -13,14 +13,14 @@ namespace lcaoCudaKernel{
  * @param delta_r_g value of delta_r_g.
  * @param bxyz_g number of meshcells in a bigcell.
  * @param nwmax_g maximum nw.
- * @param input_double the array of `double` type datas used to calculate psir.
- * @param input_int the array of `int` type datas used to calculate psir.
- * @param num_psir array records the number of atoms on each bigcell.
+ * @param input_double `double` type datas used to calculate psir.
+ * @param input_int `int` type datas used to calculate psir.
+ * @param num_psir  number of atoms on each bigcell.
  * @param psi_size_max maximum number of atoms on bigcell.
- * @param ucell_atom_nwl array record nw of each type of atom.
+ * @param ucell_atom_nwl nw of each type of atom.
  * @param atom_iw2_new 
  * @param atom_iw2_ylm 
- * @param atom_nw Pointer to the array of atom_nw values.
+ * @param atom_nw pointer to the array of atom_nw values.
  * @param nr_max 
  * @param psi_u 
  * @param psir_ylm
@@ -44,13 +44,13 @@ __global__ void get_psi(double *ylmcoef,
 /**
  * @brief Kernel function to calculate batch vector dot products.
  *
- * @param n             array of vector length.
- * @param vec_l_g       array of pointers to left vec.
+ * @param n             vector length.
+ * @param vec_l_g       pointers to left vec.
  * @param incl          stride between consecutive elements in the `vec_l_g`.
- * @param vec_r_g       array of pointers to right vec.
+ * @param vec_r_g       pointers to right vec.
  * @param incr          stride between consecutive elements in the `vec_r_g`.
- * @param results_g     array to store the dot product results.
- * @param batchcount    Number of dot products to compute.
+ * @param results_g     dot product results.
+ * @param batchcount    total count of dot products to compute.
  */
 __global__ void psir_dot(int * n,
                         double **vec_l_g,

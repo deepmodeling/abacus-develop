@@ -18,7 +18,7 @@ namespace lcaoCudaKernel{
  * @param gridt Grid_Technique object containing grid information.
  * @param ORB LCAO_Orbitals.
  * @param ucell UnitCell.
- * @param rho array to store rho.
+ * @param rho rho.
  */
 void gint_gamma_rho_gpu(const hamilt::HContainer<double> *dm,
                         const int nczp,
@@ -42,32 +42,33 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double> *dm,
  * @param nczp number of meshcells along the z-axis on this processor.
  * @param ucell UnitCell object containing unit cell information.
  * @param ORB LCAO_Orbitals object containing LCAO orbital information.
- * @param psi_input_double array storing `double` type data used for calculating psir.
- * @param psi_input_int array storing `int` type data used for calculating psir.
- * @param num_psir array records the number of atoms on each bigcell.
+ * @param psi_input_double `double` type data used for calculating psir.
+ * @param psi_input_int `int` type data used for calculating psir.
+ * @param num_psir number of atoms on each bigcell.
  * @param lgd lgd.
- * @param psir_ylm_g array used to store psir.
- * @param psir_dm_g array used to store psir_dm.
- * @param dm_matrix_g array used to store  dm_matrix.
- * @param mat_alpha array containing alpha values for matrix multiplication.
- * @param mat_m array containing m values for matrix multiplication.
- * @param mat_n array containing n values for matrix multiplication.
- * @param mat_k array containing k values for matrix multiplication.
- * @param mat_lda array containing lda values for matrix multiplication.
- * @param mat_ldb array containing ldb values for matrix multiplication.
- * @param mat_ldc array containing ldc values for matrix multiplication.
- * @param mat_A matrix A for matrix multiplication.
- * @param mat_B matrix B for matrix multiplication.
- * @param mat_C matrix C for matrix multiplication.
+ * @param psir_ylm_g one-dimensional array storing psir.
+ * @param psir_dm_g one-dimensional array storing psir_dm.
+ * @param dm_matrix_g one-dimensional array storing mat_dm.
+ * @param mat_alpha alpha values for matrix multiplication.
+ * @param mat_m numbers of rows in mat_dm.
+ * @param mat_n numbers of columns in mat_psir.
+ * @param mat_k numbers of columns in mat_dm,
+ *              which equal to the numbers of rows in mat_psir.
+ * @param mat_lda leading dimension of mat_dm.
+ * @param mat_ldb leading dimension of mat_psir.
+ * @param mat_ldc leading dimension of mat_psir_dm.
+ * @param mat_A pointers to mat_dm.
+ * @param mat_B pointers to mat_psir.
+ * @param mat_C pointers to mat_psir_dm.
  * @param max_m maximum value of m.
  * @param max_n maximum value of n.
- * @param atom_pair_num total number of atom pairs, 
+ * @param atom_pair_num total count of atom pairs, 
  *                      which is also the number of mat mul operations.
- * @param rho_g array used to store rho.
- * @param vec_l psir_ylm for vec dot product.
- * @param vec_r psir_dm for vec dot product.
- * @param dot_product array storing the positions where each dot product should be stored.
- * @param vec_len Array storing the vector lengths for each dot product.
+ * @param rho_g rho.
+ * @param vec_l pointers to psir_ylm for vec dot product.
+ * @param vec_r pointers to psir_dm for vec dot product.
+ * @param dot_product pointers to the result of dot product.
+ * @param vec_len vector lengths for each dot product.
  * @param dot_count total count of dot products.
  */
 void gpu_task_generator_rho(const Grid_Technique &gridt, 
