@@ -1,6 +1,8 @@
 remove_definitions(-D __MPI)
 
 add_library(tddft_test_lib tddft_test.cpp)
+target_link_libraries(tddft_test_lib Threads::Threads GTest::gtest_main GTest::gmock_main)
+#target_include_directories(tddft_test_lib PUBLIC $<$<COMPILE_LANGUAGE:CXX>:${GTEST_INCLUDE_DIRS}>)
 
 AddTest(
   TARGET tddft_middle_hamilt_test
