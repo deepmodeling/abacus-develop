@@ -283,6 +283,7 @@ int out_interval = 1;    // convert from out_hsR_interval liuyu 2023-04-18
 bool out_mat_xc = false; // output Vxc in KS-wfc representation for GW calculation
 bool out_hr_npz = false;
 bool out_dm_npz = false;
+bool dm_to_rho = false; // reads dm in npz format, then prints density in cube format
 
 //==========================================================
 // Deltaspin related

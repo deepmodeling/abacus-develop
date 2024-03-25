@@ -687,6 +687,8 @@ void Input_Conv::Convert(void)
     GlobalV::out_mat_xc = INPUT.out_mat_xc;
     GlobalV::out_hr_npz = INPUT.out_hr_npz;
     GlobalV::out_dm_npz = INPUT.out_dm_npz;
+    GlobalV::dm_to_rho = INPUT.dm_to_rho;
+    
     if (GlobalV::GAMMA_ONLY_LOCAL)
     {
         elecstate::ElecStateLCAO<double>::out_wfc_lcao = INPUT.out_wfc_lcao;

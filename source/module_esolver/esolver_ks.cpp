@@ -358,6 +358,7 @@ namespace ModuleESolver
             ModuleBase::timer::tick(this->classname, "Run");
 
             this->beforescf(istep); //Something else to do before the iter loop
+            if(GlobalV::dm_to_rho) return;
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT SCF");
             if(this->maxniter > 0)  this->printhead(); //print the headline on the screen.
 
@@ -529,6 +530,21 @@ namespace ModuleESolver
     {
         int precision = 3;
         std::string tag = "CHG";
+        if(GlobalV::dm_to_rho)
+        {
+            return ModuleIO::Output_Rho(this->pw_big,
+                                    this->pw_rhod,
+                                    is,
+                                    GlobalV::NSPIN,
+                                    pelec->charge->rho[is],
+                                    iter,
+                                    this->pelec->eferm.get_efval(is),
+                                    &(GlobalC::ucell),
+                                    GlobalV::global_out_dir,
+                                    precision,
+                                    tag,
+                                    prefix);
+        }
         return ModuleIO::Output_Rho(this->pw_big,
                                     this->pw_rhod,
                                     is,

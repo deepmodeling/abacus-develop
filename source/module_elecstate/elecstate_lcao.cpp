@@ -87,6 +87,9 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
     ModuleBase::timer::tick("ElecStateLCAO", "psiToRho");
 
     this->calculate_weights();
+
+if(!GlobalV::dm_to_rho)
+{
     this->calEBand();
 
     ModuleBase::GlobalFunc::NOTE("Calculate the density matrix.");
@@ -124,6 +127,8 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
             this->print_psi(psi);
         }
     }
+}
+
     // old 2D-to-Grid conversion has been replaced by new Gint Refactor 2023/09/25
     //this->loc->cal_dk_k(*this->lowf->gridt, this->wg, (*this->klist));
     for (int is = 0; is < GlobalV::NSPIN; is++)

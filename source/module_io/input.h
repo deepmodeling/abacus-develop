@@ -274,6 +274,7 @@ class Input
     bool out_mat_xc; 
     bool out_hr_npz;// output exchange-correlation matrix in KS-orbital representation.
     bool out_dm_npz;
+    bool dm_to_rho;
     bool cal_syns; // calculate asynchronous S matrix to output
     double dmax; // maximum displacement of all atoms in one step (bohr)
     bool out_mat_hs2; // LiuXh add 2019-07-16, output H(R) matrix and S(R) matrix in local basis.

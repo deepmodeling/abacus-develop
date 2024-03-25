@@ -348,6 +348,7 @@ void Input::Default(void)
     out_mat_xc = 0;
     out_hr_npz = 0;
     out_dm_npz = 0;
+    dm_to_rho = 0;
     cal_syns = 0;
     dmax = 0.01;
     out_mat_hs2 = 0; // LiuXh add 2019-07-15
@@ -1445,6 +1446,10 @@ bool Input::Read(const std::string& fn)
         else if (strcmp("out_dm_npz", word) == 0)
         {
             read_bool(ifs, out_dm_npz);
+        }
+        else if (strcmp("dm_to_rho", word) == 0)
+        {
+            read_bool(ifs, dm_to_rho);
         }
         else if (strcmp("out_interval", word) == 0)
         {
@@ -2655,12 +2660,16 @@ bool Input::Read(const std::string& fn)
             gamma_only_local = 0;
         }
     }
-    if ((out_mat_r || out_mat_hs2 || out_mat_t || out_mat_dh || out_hr_npz || out_dm_npz) && gamma_only_local)
+    if ((out_mat_r || out_mat_hs2 || out_mat_t || out_mat_dh || out_hr_npz || out_dm_npz || dm_to_rho) && gamma_only_local)
     {
         ModuleBase::WARNING_QUIT("Input",
                                  "printing of H(R)/S(R)/dH(R)/T(R)/DM(R) is not available for gamma only calculations");
     }
-    if(out_hr_npz || out_dm_npz)
+    if(dm_to_rho && GlobalV::NPROC > 1)
+    {
+        ModuleBase::WARNING_QUIT("Input", "dm_to_rho is not available for parallel calculations");
+    }
+    if(out_hr_npz || out_dm_npz || dm_to_rho)
     {
 #ifndef __USECNPY
         ModuleBase::WARNING_QUIT("Input", "to write in npz format, please recompile with -DENABLE_CNPY=1");
@@ -3414,6 +3423,7 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(out_mat_xc);
     Parallel_Common::bcast_bool(out_hr_npz);
     Parallel_Common::bcast_bool(out_dm_npz);
+    Parallel_Common::bcast_bool(dm_to_rho);
     Parallel_Common::bcast_bool(out_mat_r); // jingan add 2019-8-14
     Parallel_Common::bcast_int(out_wfc_lcao);
     Parallel_Common::bcast_bool(out_alllog);

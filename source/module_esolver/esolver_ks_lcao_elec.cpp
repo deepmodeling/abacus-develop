@@ -300,6 +300,29 @@ void ESolver_KS_LCAO<TK, TR>::beforescf(int istep)
         ->get_DM()
         ->init_DMR(*(dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt)->getHR()));
 
+    if(GlobalV::dm_to_rho)
+    {
+        std::string zipname = "output_DM0.npz";
+        elecstate::DensityMatrix<TK, double>* dm
+            = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
+        this->UHM.read_mat_npz(zipname,*(dm->get_DMR_pointer(1)));
+        if(GlobalV::NSPIN == 2)
+        {
+            zipname = "output_DM1.npz";
+            this->UHM.read_mat_npz(zipname,*(dm->get_DMR_pointer(2)));
+        }
+
+        this->pelec->psiToRho(*this->psi);
+
+        this->create_Output_Rho(0, istep).write();
+        if(GlobalV::NSPIN == 2)
+        {
+            this->create_Output_Rho(1, istep).write();
+        }
+
+        return;
+    }
+
     // the electron charge density should be symmetrized,
     // here is the initialization
     Symmetry_rho srho;
