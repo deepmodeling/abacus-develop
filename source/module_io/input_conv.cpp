@@ -444,9 +444,9 @@ void Input_Conv::Convert(void)
         GlobalV::LSPINORB = INPUT.lspinorb;
         GlobalV::soc_lambda = INPUT.soc_lambda;
 
-        if (INPUT.cal_force || INPUT.cal_stress)
+        if (INPUT.cal_stress)
         {
-            ModuleBase::WARNING_QUIT("input_conv", "force & stress not ready for soc yet!");
+            ModuleBase::WARNING_QUIT("input_conv", "stress not ready for soc yet!");
         }
 
         if(INPUT.gamma_only_local)

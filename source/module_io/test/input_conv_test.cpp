@@ -315,7 +315,7 @@ TEST_F(InputConvTest, nspinbeta)
 	output2 = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output2,testing::HasSubstr("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"));
 	EXPECT_THAT(output2,testing::HasSubstr("                         NOTICE                          "));
-	EXPECT_THAT(output2,testing::HasSubstr("force & stress not ready for soc yet!"));
+	EXPECT_THAT(output2,testing::HasSubstr("stress not ready for soc yet!"));
 	EXPECT_THAT(output2,testing::HasSubstr("CHECK IN FILE : warning.log"));
 	EXPECT_THAT(output2,testing::HasSubstr("TIME STATISTICS"));
 }
