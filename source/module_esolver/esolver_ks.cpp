@@ -463,7 +463,7 @@ namespace ModuleESolver
                 Json::add_output_scf_mag(
                     GlobalC::ucell.magnet.tot_magnetization, GlobalC::ucell.magnet.abs_magnetization,
                     this->pelec->f_en.etot * ModuleBase::Ry_to_eV,
-                    (this->pelec->f_en.etot - this->pelec->f_en.etot_old) * ModuleBase::Ry_to_eV,
+                    this->pelec->f_en.etot_delta * ModuleBase::Ry_to_eV,
                     drho,
                     duration
                 );

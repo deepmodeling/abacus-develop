@@ -14,6 +14,7 @@ struct fenergy
 {
     double etot = 0.0;     ///< the total free energy
     double etot_old = 0.0; ///< old total free energy
+    double etot_delta = 0.0; // the difference of total energy between two steps = etot - etot_old
 
     double eband = 0.0;          ///< the band energy
     double deband = 0.0;         ///< correction for variational energy
