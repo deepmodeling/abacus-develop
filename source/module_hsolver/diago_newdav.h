@@ -102,7 +102,8 @@ class Diago_NewDav : public DiagH<T, Device>
                      const int& nbase_x,
                      Real* eigenvalue,
                      T* vcc,
-                     bool init);
+                     bool init,
+                     bool is_subspace);
 
     void diag_once(hamilt::Hamilt<T, Device>* phm_in,
                    psi::Psi<T, Device>& psi,
