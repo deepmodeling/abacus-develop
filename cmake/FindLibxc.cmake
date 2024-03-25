@@ -11,7 +11,7 @@ endif()
 find_package(PkgConfig)
 if(PKG_CONFIG_FOUND)
   pkg_search_module(Libxc IMPORTED_TARGET GLOBAL libxc)
-  find_package_handle_standard_args(Libxc DEFAULT_MSG Libxc_LINK_LIBRARIES Libxc_INCLUDE_DIRS)
+  find_package_handle_standard_args(Libxc DEFAULT_MSG Libxc_LINK_LIBRARIES Libxc_FOUND)
 endif()
 if(NOT Libxc_FOUND)
   find_package(Libxc REQUIRED HINTS
