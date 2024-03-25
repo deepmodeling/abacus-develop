@@ -86,7 +86,8 @@ TEST_F(DMIOTest,Read)
 	double ef;
 	UcellTestPrepare utp = UcellTestLib["Si"];
 	ucell = utp.SetUcellInfo();
-	ModuleIO::read_dm(is,fn,DM,DM_R,ef,ucell);
+	ModuleIO::read_dm(GlobalV::GAMMA_ONLY_LOCAL, GlobalV::NLOCAL,
+					  GlobalV::NSPIN,is,fn,DM,DM_R,ef,ucell);
 	EXPECT_DOUBLE_EQ(ef,0.570336288802337);
 	EXPECT_NEAR(DM[0][0][0],3.904e-01,1e-6);
 	EXPECT_NEAR(DM[0][25][25],3.445e-02,1e-6);
@@ -103,7 +104,8 @@ TEST_F(DMIOTest,Write)
 	double ef;
 	UcellTestPrepare utp = UcellTestLib["Si"];
 	ucell = utp.SetUcellInfo();
-	ModuleIO::read_dm(is,fn,DM,DM_R,ef,ucell);
+	ModuleIO::read_dm(GlobalV::GAMMA_ONLY_LOCAL, GlobalV::NLOCAL,
+					  GlobalV::NSPIN,is,fn,DM,DM_R,ef,ucell);
 	EXPECT_DOUBLE_EQ(ef,0.570336288802337);
 	EXPECT_NEAR(DM[0][0][0],3.904e-01,1e-6);
 	EXPECT_NEAR(DM[0][25][25],3.445e-02,1e-6);
