@@ -56,7 +56,7 @@ void add_nkstot(int nkstot,int nkstot_ibz){
 
 
 void gen_stru(UnitCell *ucell){
-    AbacusJson::add_json({"comment"},"Unless otherwise specified, the unit of energy is Ry and the unit of length is Bohr",false);
+    AbacusJson::add_json({"comment"},"Unless otherwise specified, the unit of energy is eV and the unit of length is Angstrom",false);
 
     int ntype = ucell->ntype;
 
