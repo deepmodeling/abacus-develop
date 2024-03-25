@@ -3,6 +3,17 @@
 
 #include <cuda_runtime.h>
 namespace lcaoCudaKernel{
+/*
+ * @brief: get the value of the spherical harmonics
+ * 
+ * 
+ * @note the left and right matrix elements of the grid point integral. 
+ * We can understand the grid point integral of the local potential term 
+ * as the following operation: 
+ * H = psi * vlocal * psi * dr^3. 
+ * Here, the matrix element of the left matrix is psi, and the matrix 
+ * element of the right matrix is vlocal * psi * dr^3.
+*/
 
 __global__ void get_psi_and_vldr3(double *ylmcoef,
                                   double delta_r_g,
@@ -20,11 +31,6 @@ __global__ void get_psi_and_vldr3(double *ylmcoef,
                                   double *psi_u,
                                   double *psir_ylm_left,
                                   double *psir_ylm_right);
-
-__global__ void psi_multiple(const int* m, int* n,
-                                double  const * const * global_A_array,
-                                double const * const * global_B_array,
-                                double ** global_C_array);
 
 } // namespace lcaoCudaKernel
 #endif // GINT_VL_CUH

@@ -74,32 +74,4 @@ __global__ void get_psi_and_vldr3(double *ylmcoef,
     }
 }
 
-__global__ void psi_multiple(int bxyz_g, const int* m, int* n,
-                                double  const * const * global_A_array,
-                                double const * const * global_B_array,
-                                double ** global_C_array)
-{
-    int atom_pair_index = blockIdx.x;
-    int nw_mul = m[atom_pair_index] * n[atom_pair_index];
-    int atom_nw2 = n[atom_pair_index];
-    const double * atom_left = global_A_array[atom_pair_index];
-    const double * atom_right = global_B_array[atom_pair_index];
-    double * output = global_C_array[atom_pair_index];
-    #pragma unroll
-    for (int iw_index = threadIdx.x; iw_index < nw_mul; iw_index += blockDim.x)
-    {
-        int iw1 = iw_index / atom_nw2 * bxyz_g;
-        int iw2 = iw_index % atom_nw2;
-        double v2 = 0.0;
-        const double * left = &atom_left[iw1];
-        const double * right = &atom_right[iw2 * bxyz_g];
-        #pragma unroll
-        for (int ib = 0; ib <  bxyz_g; ++ib)
-        {
-            v2 += left[ib] * right[ib];
-        }
-        atomicAdd(&(output[iw1 + iw2]), v2);
-    }
-}
-
 } // namespace lcaoCudaKernel

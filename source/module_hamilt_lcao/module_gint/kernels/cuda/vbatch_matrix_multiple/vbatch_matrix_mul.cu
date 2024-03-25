@@ -348,6 +348,14 @@ void gemm_time_measure(int max_m, int max_n,
     }
 }
 
+/*
+* Here we have utilized a very straightforward and brute-force method to select the 
+* optimal matrix multiplication kernel for a given scale of computation: we compute 
+* with all scales of kernels under the current computational task to find the fastest 
+* parameter combination. This approach can lead to an increase in compilation time 
+* (TODO: so in the future, it will be necessary to split this large section of code 
+* into multiple files, multiple compilation units). 
+*/
 void gemm_algo_selector(int matrix_k, matrix_multiple_func_type & fastest_algo)
 {
     int batchCount_per_type = 32;
@@ -445,6 +453,10 @@ void gemm_algo_selector(int matrix_k, matrix_multiple_func_type & fastest_algo)
     int * d_global_ldb = ldb.get_device_pointer();
     int * d_global_ldc = ldc.get_device_pointer();
 
+    /*
+     * Please do not manually modify the code in the following file; 
+     * it should simply be generated through a loop using a short Python program. 
+    */
     #include"code_gen.cpp"
     checkCuda(cudaStreamDestroy(temp_stream));
     std::cout << " gemm_algo_selector::Fastest time: " << fastest_time << " ms" << std::endl;
