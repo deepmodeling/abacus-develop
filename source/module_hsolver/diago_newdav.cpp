@@ -16,7 +16,6 @@
 
 using namespace hsolver;
 
-
 template <typename T, typename Device>
 Diago_NewDav<T, Device>::Diago_NewDav(const Real* precondition_in)
 {
@@ -42,10 +41,11 @@ Diago_NewDav<T, Device>::~Diago_NewDav()
     delmem_complex_op()(this->ctx, this->scc);
     delmem_complex_op()(this->ctx, this->vcc);
 
-    psi::memory::delete_memory_op<Real, psi::DEVICE_CPU>()(this->cpu_ctx, this->eigenvalue_in_dav);
+    delmem_real_h_op()(this->cpu_ctx, this->eigenvalue_in_dav);
+
     if (this->device == psi::GpuDevice)
     {
-        delmem_var_op()(this->ctx, this->d_precondition);
+        delmem_real_op()(this->ctx, this->d_precondition);
     }
 }
 
@@ -63,49 +63,34 @@ void Diago_NewDav<T, Device>::diag_once(hamilt::Hamilt<T, Device>* phm_in,
 
     assert(Diago_NewDav::PW_DIAG_NDIM > 1);
     assert(Diago_NewDav::PW_DIAG_NDIM * psi.get_nbands() < psi.get_current_nbas() * GlobalV::NPROC_IN_POOL);
+
     // qianrui change it 2021-7-25.
     // In strictly speaking, it shoule be PW_DIAG_NDIM*nband < npw sum of all pools. We roughly estimate it here.
-    // However, in most cases, total number of plane waves should be much larger than nband*PW_DIAG_NDIM
+    // However, in most cases, total number of plane waves should be much larger than nband * PW_DIAG_NDIM
 
-    /// initialize variables
-    /// k_first = 0 means that nks is more like a dimension of "basis" to be contracted in "HPsi".In LR-TDDFT the
-    /// formula writes :
-    /// $$\sum_{ jb\mathbf{k}'}A^I_{ia\mathbf{k}, jb\mathbf{k}' }X ^ I_{ jb\mathbf{k}'}$$
-    /// In the code :
-    /// - "H" means A
-    /// - "Psi" means X
-    /// - "band" means the superscript I : the number of excited states to be solved
-    /// - k : k-points, the same meaning as the ground state
-    /// - "basis" : number of occupied ks-orbitals(subscripts i,j) * number of unoccupied ks-orbitals(subscripts a,b),
-    /// corresponding to "bands" of the ground state
     this->dim = psi.get_k_first() ? psi.get_current_nbas() : psi.get_nk() * psi.get_nbasis();
-    this->dmx = psi.get_k_first() ? psi.get_nbasis() : psi.get_nk() * psi.get_nbasis();
     this->n_band = psi.get_nbands();
-    
+
     // maximum dimension of the reduced basis set
     this->nbase_x = 2 * this->n_band;
 
-    // the lowest N eigenvalues
-    psi::memory::resize_memory_op<Real, psi::DEVICE_CPU>()(this->cpu_ctx,
-                                                           this->eigenvalue_in_dav,
-                                                           this->nbase_x,
-                                                           "DAV::eig");
-    psi::memory::set_memory_op<Real, psi::DEVICE_CPU>()(this->cpu_ctx, this->eigenvalue_in_dav, 0, this->nbase_x);
-
-    psi::Psi<T, Device> basis(1, this->nbase_x, this->dim,
-                              &(psi.get_ngk(0))); // the reduced basis set
+    psi::Psi<T, Device> basis(1, this->nbase_x, this->dim, &(psi.get_ngk(0)));
     ModuleBase::Memory::record("DAV::basis", this->nbase_x * this->dim * sizeof(T));
+
+    // the eigenvalues in dav iter
+    resmem_real_h_op()(this->cpu_ctx, this->eigenvalue_in_dav, this->nbase_x, "DAV::eig");
+    setmem_real_h_op()(this->cpu_ctx, this->eigenvalue_in_dav, 0, this->nbase_x);
 
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // the product of H and psi in the reduced basis set
     resmem_complex_op()(this->ctx, this->hphi, this->nbase_x * this->dim, "DAV::hphi");
     setmem_complex_op()(this->ctx, this->hphi, 0, this->nbase_x * this->dim);
 
-    // Hamiltonian on the reduced basis
+    // Hamiltonian on the reduced basis set
     resmem_complex_op()(this->ctx, this->hcc, this->nbase_x * this->nbase_x, "DAV::hcc");
     setmem_complex_op()(this->ctx, this->hcc, 0, this->nbase_x * this->nbase_x);
 
-    // Overlap on the reduced basis
+    // Overlap on the reduced basis set
     resmem_complex_op()(this->ctx, this->scc, this->nbase_x * this->nbase_x, "DAV::scc");
     setmem_complex_op()(this->ctx, this->scc, 0, this->nbase_x * this->nbase_x);
 
@@ -202,6 +187,7 @@ void Diago_NewDav<T, Device>::diag_once(hamilt::Hamilt<T, Device>* phm_in,
 
         // check convergence and update eigenvalues
         ModuleBase::timer::tick("Diago_NewDav", "check_update");
+
         this->notconv = 0;
         for (int m = 0; m < this->n_band; m++)
         {
@@ -224,6 +210,7 @@ void Diago_NewDav<T, Device>::diag_once(hamilt::Hamilt<T, Device>* phm_in,
 
             eigenvalue_in_hsolver[m] = this->eigenvalue_in_dav[m];
         }
+
         ModuleBase::timer::tick("Diago_NewDav", "check_update");
 
         if (this->notconv == 0 || (nbase + this->notconv + 1 > this->nbase_x)
@@ -232,9 +219,7 @@ void Diago_NewDav<T, Device>::diag_once(hamilt::Hamilt<T, Device>* phm_in,
             ModuleBase::timer::tick("Diago_NewDav", "last");
 
             // updata eigenvectors of Hamiltonian
-
-            // ModuleBase::GlobalFunc::ZEROS(psi.get_pointer(), n_band * this->dmx);
-            setmem_complex_op()(this->ctx, psi.get_pointer(), 0, n_band * this->dmx);
+            setmem_complex_op()(this->ctx, psi.get_pointer(), 0, n_band * psi.get_nbasis());
             //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             // haozhihan repalce 2022-10-18
             gemm_op<T, Device>()(this->ctx,
@@ -250,7 +235,7 @@ void Diago_NewDav<T, Device>::diag_once(hamilt::Hamilt<T, Device>* phm_in,
                                  this->nbase_x,
                                  this->zero,
                                  psi.get_pointer(), // C dim * n_band
-                                 this->dmx);
+                                 psi.get_nbasis());
 
             if (!this->notconv || (dav_iter == DiagoIterAssist<T, Device>::PW_DIAG_NMAX))
             {
@@ -293,7 +278,7 @@ void Diago_NewDav<T, Device>::diag_once(hamilt::Hamilt<T, Device>* phm_in,
 template <typename T, typename Device>
 void Diago_NewDav<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
                                        const int& dim,
-                                       const int& nbase, // current dimension of the reduced basis
+                                       const int& nbase,
                                        const int& notconv,
                                        psi::Psi<T, Device>& basis,
                                        T* hphi,
@@ -399,8 +384,8 @@ void Diago_NewDav<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
 
 template <typename T, typename Device>
 void Diago_NewDav<T, Device>::cal_elem(const int& dim,
-                                       int& nbase,         // current dimension of the reduced basis
-                                       const int& notconv, // number of newly added basis vectors
+                                       int& nbase,
+                                       const int& notconv,
                                        const psi::Psi<T, Device>& basis,
                                        const T* hphi,
                                        T* hcc,
@@ -619,7 +604,7 @@ void Diago_NewDav<T, Device>::diag_zhegvx(const int& nbase,
                                           T* hcc,
                                           T* scc,
                                           const int& nbase_x,
-                                          Real* eigenvalue_in_dav, // in CPU
+                                          Real* eigenvalue_in_dav,
                                           T* vcc,
                                           bool init)
 {
@@ -645,13 +630,13 @@ void Diago_NewDav<T, Device>::diag_zhegvx(const int& nbase,
         {
 #if defined(__CUDA) || defined(__ROCM)
             Real* eigenvalue_gpu = nullptr;
-            resmem_var_op()(this->ctx, eigenvalue_gpu, this->nbase_x);
+            resmem_real_op()(this->ctx, eigenvalue_gpu, this->nbase_x);
             syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, eigenvalue_gpu, this->eigenvalue_in_dav, this->nbase_x);
 
             dnevx_op<T, Device>()(this->ctx, nbase, this->nbase_x, this->hcc, nband, eigenvalue_gpu, this->vcc);
 
             syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, this->eigenvalue_in_dav, eigenvalue_gpu, this->nbase_x);
-            delmem_var_op()(this->ctx, eigenvalue_gpu);
+            delmem_real_op()(this->ctx, eigenvalue_gpu);
 #endif
         }
         else
@@ -830,7 +815,7 @@ void Diago_NewDav<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
 #if defined(__CUDA) || defined(__ROCM)
     if (this->device == psi::GpuDevice)
     {
-        resmem_var_op()(this->ctx, this->d_precondition, psi.get_nbasis());
+        resmem_real_op()(this->ctx, this->d_precondition, psi.get_nbasis());
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, this->d_precondition, this->precondition, psi.get_nbasis());
     }
 #endif
@@ -897,14 +882,6 @@ void Diago_NewDav<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
     do
     {
 
-        // if (ntry > 0)
-        // {
-        //     // std::cout << std::endl;
-        //     // std::cout << "11111  ntry > 0, current iter == " << DiagoIterAssist<T, Device>::avg_iter << std::endl;
-        //     // std::cout << std::endl;
-        //     // DiagoIterAssist<T, Device>::diagH_subspace(phm_in, psi, psi, eigenvalue_in_hsolver, psi.get_nbands());
-        // }
-
         this->diag_once(phm_in, psi, eigenvalue_in_hsolver, is_occupied);
 
         ++ntry;
@@ -962,16 +939,21 @@ void Diago_NewDav<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
 
 namespace hsolver
 {
+
 template class Diago_NewDav<std::complex<float>, psi::DEVICE_CPU>;
 template class Diago_NewDav<std::complex<double>, psi::DEVICE_CPU>;
+
 #if ((defined __CUDA) || (defined __ROCM))
 template class Diago_NewDav<std::complex<float>, psi::DEVICE_GPU>;
 template class Diago_NewDav<std::complex<double>, psi::DEVICE_GPU>;
 #endif
+
 #ifdef __LCAO
 template class Diago_NewDav<double, psi::DEVICE_CPU>;
+
 #if ((defined __CUDA) || (defined __ROCM))
 template class Diago_NewDav<double, psi::DEVICE_GPU>;
 #endif
+
 #endif
 } // namespace hsolver

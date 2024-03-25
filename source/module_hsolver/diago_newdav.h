@@ -41,8 +41,6 @@ class Diago_NewDav : public DiagH<T, Device>
 
     /// row size for input psi matrix
     int n_band = 0;
-    /// col size for input psi matrix
-    int dmx = 0;
     /// non-zero col size for inputted psi matrix
     int dim = 0;
     // maximum dimension of the reduced basis set
@@ -114,9 +112,14 @@ class Diago_NewDav : public DiagH<T, Device>
     using resmem_complex_op = psi::memory::resize_memory_op<T, Device>;
     using delmem_complex_op = psi::memory::delete_memory_op<T, Device>;
     using setmem_complex_op = psi::memory::set_memory_op<T, Device>;
-    using resmem_var_op = psi::memory::resize_memory_op<Real, Device>;
-    using delmem_var_op = psi::memory::delete_memory_op<Real, Device>;
-    using setmem_var_op = psi::memory::set_memory_op<Real, Device>;
+
+    using resmem_real_op = psi::memory::resize_memory_op<Real, Device>;
+    using delmem_real_op = psi::memory::delete_memory_op<Real, Device>;
+    using setmem_real_op = psi::memory::set_memory_op<Real, Device>;
+
+    using resmem_real_h_op = psi::memory::resize_memory_op<Real, psi::DEVICE_CPU>;
+    using delmem_real_h_op = psi::memory::delete_memory_op<Real, psi::DEVICE_CPU>;
+    using setmem_real_h_op = psi::memory::set_memory_op<Real, psi::DEVICE_CPU>;
 
     using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<Real, Device, psi::DEVICE_CPU>;
     using syncmem_var_d2h_op = psi::memory::synchronize_memory_op<Real, psi::DEVICE_CPU, Device>;
