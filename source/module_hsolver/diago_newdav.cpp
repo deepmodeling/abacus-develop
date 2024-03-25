@@ -16,61 +16,6 @@
 
 using namespace hsolver;
 
-inline double get_real(const double& x)
-{
-    return x;
-}
-inline double get_real(const std::complex<double>& x)
-{
-    return x.real();
-}
-inline float get_real(const std::complex<float>& x)
-{
-    return x.real();
-}
-
-inline void set_value(double& input, double x, double y)
-{
-    input = x;
-}
-inline void set_value(std::complex<double>& input, double x, double y)
-{
-    input = {x, y};
-}
-inline void set_value(std::complex<float>& input, double x, double y)
-{
-    input = {static_cast<float>(x), static_cast<float>(y)};
-}
-
-inline std::complex<double> set_real_tocomplex(const std::complex<double>& x)
-{
-    return {x.real(), 0.0};
-}
-
-inline std::complex<float> set_real_tocomplex(const std::complex<float>& x)
-{
-    return {x.real(), 0.0};
-}
-
-inline double set_real_tocomplex(const double& x)
-{
-    return x;
-}
-
-inline std::complex<double> get_conj(const std::complex<double>& x)
-{
-    return {x.real(), -x.imag()};
-}
-
-inline std::complex<float> get_conj(const std::complex<float>& x)
-{
-    return {x.real(), -x.imag()};
-}
-
-inline double get_conj(const double& x)
-{
-    return x;
-}
 
 template <typename T, typename Device>
 Diago_NewDav<T, Device>::Diago_NewDav(const Real* precondition_in)
@@ -79,13 +24,14 @@ Diago_NewDav<T, Device>::Diago_NewDav(const Real* precondition_in)
     this->precondition = precondition_in;
 
     test_david = 2;
-    this->one = &this->cs.one;
-    this->zero = &this->cs.zero;
-    this->neg_one = &this->cs.neg_one;
     // 1: check which function is called and which step is executed
     // 2: check the eigenvalues of the result of each iteration
     // 3: check the eigenvalues and errors of the last result
     // default: no check
+
+    this->one = &this->cs.one;
+    this->zero = &this->cs.zero;
+    this->neg_one = &this->cs.neg_one;
 }
 
 template <typename T, typename Device>
@@ -95,7 +41,7 @@ Diago_NewDav<T, Device>::~Diago_NewDav()
     delmem_complex_op()(this->ctx, this->hcc);
     delmem_complex_op()(this->ctx, this->scc);
     delmem_complex_op()(this->ctx, this->vcc);
-    delmem_complex_op()(this->ctx, this->lagrange_matrix);
+
     psi::memory::delete_memory_op<Real, psi::DEVICE_CPU>()(this->cpu_ctx, this->eigenvalue_in_dav);
     if (this->device == psi::GpuDevice)
     {
@@ -135,7 +81,8 @@ void Diago_NewDav<T, Device>::diag_once(hamilt::Hamilt<T, Device>* phm_in,
     this->dim = psi.get_k_first() ? psi.get_current_nbas() : psi.get_nk() * psi.get_nbasis();
     this->dmx = psi.get_k_first() ? psi.get_nbasis() : psi.get_nk() * psi.get_nbasis();
     this->n_band = psi.get_nbands();
-    // this->nbase_x = Diago_NewDav::PW_DIAG_NDIM * this->n_band; // maximum dimension of the reduced basis set
+    
+    // maximum dimension of the reduced basis set
     this->nbase_x = 2 * this->n_band;
 
     // the lowest N eigenvalues
@@ -150,19 +97,19 @@ void Diago_NewDav<T, Device>::diag_once(hamilt::Hamilt<T, Device>* phm_in,
     ModuleBase::Memory::record("DAV::basis", this->nbase_x * this->dim * sizeof(T));
 
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    // ModuleBase::ComplexMatrix hp(nbase_x, this->dim); // the product of H and psi in the reduced basis set
+    // the product of H and psi in the reduced basis set
     resmem_complex_op()(this->ctx, this->hphi, this->nbase_x * this->dim, "DAV::hphi");
     setmem_complex_op()(this->ctx, this->hphi, 0, this->nbase_x * this->dim);
 
-    // ModuleBase::ComplexMatrix hc(this->nbase_x, this->nbase_x); // Hamiltonian on the reduced basis
+    // Hamiltonian on the reduced basis
     resmem_complex_op()(this->ctx, this->hcc, this->nbase_x * this->nbase_x, "DAV::hcc");
     setmem_complex_op()(this->ctx, this->hcc, 0, this->nbase_x * this->nbase_x);
 
-    // ModuleBase::ComplexMatrix sc(this->nbase_x, this->nbase_x); // Overlap on the reduced basis
+    // Overlap on the reduced basis
     resmem_complex_op()(this->ctx, this->scc, this->nbase_x * this->nbase_x, "DAV::scc");
     setmem_complex_op()(this->ctx, this->scc, 0, this->nbase_x * this->nbase_x);
 
-    // ModuleBase::ComplexMatrix vc(this->nbase_x, this->nbase_x); // Eigenvectors of hc
+    // Eigenvectors
     resmem_complex_op()(this->ctx, this->vcc, this->nbase_x * this->nbase_x, "DAV::vcc");
     setmem_complex_op()(this->ctx, this->vcc, 0, this->nbase_x * this->nbase_x);
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<

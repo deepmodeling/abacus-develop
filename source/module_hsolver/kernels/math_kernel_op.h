@@ -3,23 +3,84 @@
 #ifndef MODULE_HSOLVER_MATH_KERNEL_H
 #define MODULE_HSOLVER_MATH_KERNEL_H
 
-#include "module_base/blas_connector.h"
-#include "module_psi/psi.h"
-#include "module_base/parallel_reduce.h"
-#include "module_psi/kernels/memory_op.h"
 #include <module_base/macros.h>
 
+#include "module_base/blas_connector.h"
+#include "module_base/parallel_reduce.h"
+#include "module_psi/psi.h"
 
 #if defined(__CUDA) || defined(__UT_USE_CUDA)
 #include <cuda_runtime.h>
+
 #include "cublas_v2.h"
 #endif //__CUDA || __UT_USE_CUDA
 
 namespace hsolver
 {
 
+inline std::complex<double> set_real_tocomplex(const std::complex<double>& x)
+{
+    return {x.real(), 0.0};
+}
+
+inline std::complex<float> set_real_tocomplex(const std::complex<float>& x)
+{
+    return {x.real(), 0.0};
+}
+
+inline double set_real_tocomplex(const double& x)
+{
+    return x;
+}
+
+inline float set_real_tocomplex(const float& x)
+{
+    return x;
+}
+
+inline std::complex<double> get_conj(const std::complex<double>& x)
+{
+    return {x.real(), -x.imag()};
+}
+
+inline std::complex<float> get_conj(const std::complex<float>& x)
+{
+    return {x.real(), -x.imag()};
+}
+
+inline double get_conj(const double& x)
+{
+    return x;
+}
+
+inline float get_conj(const float& x)
+{
+    return x;
+}
+
+inline double get_real(const std::complex<double>& x)
+{
+    return x.real();
+}
+
+inline float get_real(const std::complex<float>& x)
+{
+    return x.real();
+}
+
+inline double get_real(const double& x)
+{
+    return x;
+}
+
+inline float get_real(const float& x)
+{
+    return x;
+}
+
 template <typename T, typename Device>
-struct line_minimize_with_block_op {
+struct line_minimize_with_block_op
+{
     /// @brief dot_real_op computes the dot product of the given complex arrays(treated as float arrays).
     /// And there's may have MPI communications while enabling planewave parallization strategy.
     ///
@@ -32,19 +93,18 @@ struct line_minimize_with_block_op {
     ///
     /// \return res : the result vector
     /// T : dot product result
-    void operator() (
-        T* grad_out,
-        T* hgrad_out,
-        T* psi_out,
-        T* hpsi_out,
-        const int &n_basis,
-        const int &n_basis_max,
-        const int &n_band);
+    void operator()(T* grad_out,
+                    T* hgrad_out,
+                    T* psi_out,
+                    T* hpsi_out,
+                    const int& n_basis,
+                    const int& n_basis_max,
+                    const int& n_band);
 };
 
-
 template <typename T, typename Device>
-struct calc_grad_with_block_op {
+struct calc_grad_with_block_op
+{
     /// @brief dot_real_op computes the dot product of the given complex arrays(treated as float arrays).
     /// And there's may have MPI communications while enabling planewave parallization strategy.
     ///
@@ -58,44 +118,40 @@ struct calc_grad_with_block_op {
     /// \return res : the result vector
     /// T : dot product result
     using Real = typename GetTypeReal<T>::type;
-    void operator() (
-        const Real* prec_in,
-        Real* err_out,
-        Real* beta_out,
-        T* psi_out,
-        T* hpsi_out,
-        T* grad_out,
-        T* grad_old_out,
-        const int &n_basis,
-        const int &n_basis_max,
-        const int &n_band);
+    void operator()(const Real* prec_in,
+                    Real* err_out,
+                    Real* beta_out,
+                    T* psi_out,
+                    T* hpsi_out,
+                    T* grad_out,
+                    T* grad_old_out,
+                    const int& n_basis,
+                    const int& n_basis_max,
+                    const int& n_band);
 };
 
 template <typename T, typename Device>
-struct dot_real_op {
+struct dot_real_op
+{
     using Real = typename GetTypeReal<T>::type;
     /// @brief dot_real_op computes the dot product of the given complex arrays(treated as float arrays).
-  /// And there's may have MPI communications while enabling planewave parallization strategy.
-  ///
-  /// Input Parameters
-  /// \param d : the type of computing device
-  /// \param dim : array size
-  /// \param psi_L : input array A
-  /// \param psi_R : input array B
-  /// \param reduce : flag to control whether to perform the MPI communications
-  ///
-  /// \return
-  /// FPTYPE : dot product result
-    Real operator() (
-      const Device* d,
-      const int& dim,
-        const T* psi_L,
-        const T* psi_R,
-      const bool reduce = true);
+    /// And there's may have MPI communications while enabling planewave parallization strategy.
+    ///
+    /// Input Parameters
+    /// \param d : the type of computing device
+    /// \param dim : array size
+    /// \param psi_L : input array A
+    /// \param psi_R : input array B
+    /// \param reduce : flag to control whether to perform the MPI communications
+    ///
+    /// \return
+    /// FPTYPE : dot product result
+    Real operator()(const Device* d, const int& dim, const T* psi_L, const T* psi_R, const bool reduce = true);
 };
 
 // vector operator: result[i] = vector[i] / constant
-template <typename T, typename Device> struct vector_div_constant_op
+template <typename T, typename Device>
+struct vector_div_constant_op
 {
     using Real = typename GetTypeReal<T>::type;
     /// @brief result[i] = vector[i] / constant
@@ -108,15 +164,12 @@ template <typename T, typename Device> struct vector_div_constant_op
     ///
     /// Output Parameters
     /// \param result : output array
-    void operator()(const Device* d,
-                    const int dim,
-        T* result,
-        const T* vector,
-        const Real constant);
+    void operator()(const Device* d, const int dim, T* result, const T* vector, const Real constant);
 };
 
 // replace vector_div_constant_op : x = alpha * x
-template <typename FPTYPE, typename Device> struct scal_op
+template <typename FPTYPE, typename Device>
+struct scal_op
 {
     /// @brief x = alpha * x
     ///
@@ -137,7 +190,8 @@ template <typename FPTYPE, typename Device> struct scal_op
 };
 
 // vector operator: result[i] = vector1[i](complex) * vector2[i](not complex)
-template <typename T, typename Device> struct vector_mul_vector_op
+template <typename T, typename Device>
+struct vector_mul_vector_op
 {
     using Real = typename GetTypeReal<T>::type;
     /// @brief result[i] = vector1[i](complex) * vector2[i](not complex)
@@ -150,15 +204,12 @@ template <typename T, typename Device> struct vector_mul_vector_op
     ///
     /// Output Parameters
     /// \param result : output array
-    void operator()(const Device* d,
-        const int& dim,
-        T* result,
-        const T* vector1,
-        const Real* vector2);
+    void operator()(const Device* d, const int& dim, T* result, const T* vector1, const Real* vector2);
 };
 
 // vector operator: result[i] = vector1[i](complex) / vector2[i](not complex)
-template <typename T, typename Device> struct vector_div_vector_op
+template <typename T, typename Device>
+struct vector_div_vector_op
 {
     using Real = typename GetTypeReal<T>::type;
     /// @brief result[i] = vector1[i](complex) / vector2[i](not complex)
@@ -171,15 +222,12 @@ template <typename T, typename Device> struct vector_div_vector_op
     ///
     /// Output Parameters
     /// \param result : output array
-    void operator()(const Device* d,
-        const int& dim,
-        T* result,
-        const T* vector1,
-        const Real* vector2);
+    void operator()(const Device* d, const int& dim, T* result, const T* vector1, const Real* vector2);
 };
 
 // vector operator: result[i] = vector1[i] * constant1 + vector2[i] * constant2
-template <typename T, typename Device> struct constantvector_addORsub_constantVector_op
+template <typename T, typename Device>
+struct constantvector_addORsub_constantVector_op
 {
     using Real = typename GetTypeReal<T>::type;
     /// @brief result[i] = vector1[i] * constant1 + vector2[i] * constant2
@@ -195,16 +243,17 @@ template <typename T, typename Device> struct constantvector_addORsub_constantVe
     /// Output Parameters
     /// \param result : output array
     void operator()(const Device* d,
-        const int& dim,
-        T* result,
-        const T* vector1,
-        const Real constant1,
-        const T* vector2,
-        const Real constant2);
+                    const int& dim,
+                    T* result,
+                    const T* vector1,
+                    const Real constant1,
+                    const T* vector2,
+                    const Real constant2);
 };
 
 //  compute Y = alpha * X + Y
-template <typename T, typename Device> struct axpy_op
+template <typename T, typename Device>
+struct axpy_op
 {
     /// @brief Y = alpha * X + Y
     ///
@@ -219,17 +268,12 @@ template <typename T, typename Device> struct axpy_op
     ///
     /// Output Parameters
     /// \param Y : output array Y
-    void operator()(const Device* d,
-        const int& N,
-        const T* alpha,
-        const T* X,
-        const int& incX,
-        T* Y,
-        const int& incY);
+    void operator()(const Device* d, const int& N, const T* alpha, const T* X, const int& incX, T* Y, const int& incY);
 };
 
 // compute y = alpha * op(A) * x + beta * y
-template <typename T, typename Device> struct gemv_op
+template <typename T, typename Device>
+struct gemv_op
 {
     /// @brief y = alpha * op(A) * x + beta * y
     ///
@@ -253,19 +297,19 @@ template <typename T, typename Device> struct gemv_op
                     const char& trans,
                     const int& m,
                     const int& n,
-        const T* alpha,
-        const T* A,
+                    const T* alpha,
+                    const T* A,
                     const int& lda,
-        const T* X,
+                    const T* X,
                     const int& incx,
-        const T* beta,
-        T* Y,
+                    const T* beta,
+                    T* Y,
                     const int& incy);
 };
 
-
 // compute C = alpha * op(A) * op(B) + beta * C
-template <typename T, typename Device> struct gemm_op
+template <typename T, typename Device>
+struct gemm_op
 {
     /// @brief C = alpha * op(A) * op(B) + beta * C
     ///
@@ -288,22 +332,23 @@ template <typename T, typename Device> struct gemm_op
     /// Output Parameters
     /// \param c : output matrix C
     void operator()(const Device* d,
-        const char& transa,
-        const char& transb,
-        const int& m,
-        const int& n,
-        const int& k,
-        const T* alpha,
-        const T* a,
-        const int& lda,
-        const T* b,
-        const int& ldb,
-        const T* beta,
-        T* c,
-        const int& ldc);
+                    const char& transa,
+                    const char& transb,
+                    const int& m,
+                    const int& n,
+                    const int& k,
+                    const T* alpha,
+                    const T* a,
+                    const int& lda,
+                    const T* b,
+                    const int& ldb,
+                    const T* beta,
+                    T* c,
+                    const int& ldc);
 };
 
-template <typename T, typename Device> struct matrixTranspose_op
+template <typename T, typename Device>
+struct matrixTranspose_op
 {
     /// @brief transpose the input matrix
     ///
@@ -315,14 +360,11 @@ template <typename T, typename Device> struct matrixTranspose_op
     ///
     /// Output Parameters
     /// \param output_matrix : output matrix
-    void operator()(const Device* d,
-        const int& row,
-        const int& col,
-        const T* input_matrix,
-        T* output_matrix);
+    void operator()(const Device* d, const int& row, const int& col, const T* input_matrix, T* output_matrix);
 };
 
-template <typename T, typename Device> struct matrixSetToAnother
+template <typename T, typename Device>
+struct matrixSetToAnother
 {
     /// @brief initialize matrix B with A
     ///
@@ -335,113 +377,96 @@ template <typename T, typename Device> struct matrixSetToAnother
     ///
     /// Output Parameters
     /// \param B : output matrix B
-    void operator()(const Device* d,
-        const int& n,
-        const T* A,
-        const int& LDA,
-        T* B,
-        const int& LDB);
+    void operator()(const Device* d, const int& n, const T* A, const int& LDA, T* B, const int& LDB);
 };
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 
 template <typename T>
-struct line_minimize_with_block_op<T, psi::DEVICE_GPU> {
-  using Real = typename GetTypeReal<T>::type;
-  void operator()(
-    T* grad_out,
-    T* hgrad_out,
-    T* psi_out,
-    T* hpsi_out,
-    const int &n_basis,
-    const int &n_basis_max,
-    const int &n_band);
+struct line_minimize_with_block_op<T, psi::DEVICE_GPU>
+{
+    using Real = typename GetTypeReal<T>::type;
+    void operator()(T* grad_out,
+                    T* hgrad_out,
+                    T* psi_out,
+                    T* hpsi_out,
+                    const int& n_basis,
+                    const int& n_basis_max,
+                    const int& n_band);
 };
 
 template <typename T>
-struct calc_grad_with_block_op<T, psi::DEVICE_GPU> {
-  using Real = typename GetTypeReal<T>::type;
-  void operator()(
-    const Real* prec_in,
-    Real* err_out,
-    Real* beta_out,
-    T* psi_out,
-    T* hpsi_out,
-    T* grad_out,
-    T* grad_old_out,
-    const int &n_basis,
-    const int &n_basis_max,
-    const int &n_band);
+struct calc_grad_with_block_op<T, psi::DEVICE_GPU>
+{
+    using Real = typename GetTypeReal<T>::type;
+    void operator()(const Real* prec_in,
+                    Real* err_out,
+                    Real* beta_out,
+                    T* psi_out,
+                    T* hpsi_out,
+                    T* grad_out,
+                    T* grad_old_out,
+                    const int& n_basis,
+                    const int& n_basis_max,
+                    const int& n_band);
 };
 
 // Partially specialize functor for psi::GpuDevice.
 template <typename T>
-struct dot_real_op<T, psi::DEVICE_GPU> {
+struct dot_real_op<T, psi::DEVICE_GPU>
+{
     using Real = typename GetTypeReal<T>::type;
-    Real operator()(
-        const psi::DEVICE_GPU* d,
-        const int& dim,
-        const T* psi_L,
-        const T* psi_R,
-        const bool reduce = true);
+    Real operator()(const psi::DEVICE_GPU* d, const int& dim, const T* psi_L, const T* psi_R, const bool reduce = true);
 };
 
 // vector operator: result[i] = vector[i] / constant
-template <typename T> struct vector_div_constant_op<T, psi::DEVICE_GPU>
+template <typename T>
+struct vector_div_constant_op<T, psi::DEVICE_GPU>
 {
     using Real = typename GetTypeReal<T>::type;
-    void operator()(const psi::DEVICE_GPU* d,
-        const int dim,
-        T* result,
-        const T* vector,
-        const Real constant);
+    void operator()(const psi::DEVICE_GPU* d, const int dim, T* result, const T* vector, const Real constant);
 };
 
 // vector operator: result[i] = vector1[i](complex) * vector2[i](not complex)
-template <typename T> struct vector_mul_vector_op<T, psi::DEVICE_GPU>
+template <typename T>
+struct vector_mul_vector_op<T, psi::DEVICE_GPU>
 {
     using Real = typename GetTypeReal<T>::type;
-    void operator()(const psi::DEVICE_GPU* d,
-        const int& dim,
-        T* result,
-        const T* vector1,
-        const  Real* vector2);
+    void operator()(const psi::DEVICE_GPU* d, const int& dim, T* result, const T* vector1, const Real* vector2);
 };
 
 // vector operator: result[i] = vector1[i](complex) / vector2[i](not complex)
-template <typename T> struct vector_div_vector_op<T, psi::DEVICE_GPU>
+template <typename T>
+struct vector_div_vector_op<T, psi::DEVICE_GPU>
 {
     using Real = typename GetTypeReal<T>::type;
-    void operator()(const psi::DEVICE_GPU* d,
-        const int& dim,
-        T* result,
-        const T* vector1,
-        const Real* vector2);
+    void operator()(const psi::DEVICE_GPU* d, const int& dim, T* result, const T* vector1, const Real* vector2);
 };
 
 // vector operator: result[i] = vector1[i] * constant1 + vector2[i] * constant2
-template <typename T> struct constantvector_addORsub_constantVector_op<T, psi::DEVICE_GPU>
+template <typename T>
+struct constantvector_addORsub_constantVector_op<T, psi::DEVICE_GPU>
 {
     using Real = typename GetTypeReal<T>::type;
     void operator()(const psi::DEVICE_GPU* d,
-        const int& dim,
-        T* result,
-        const T* vector1,
-        const Real constant1,
-        const T* vector2,
-        const Real constant2);
+                    const int& dim,
+                    T* result,
+                    const T* vector1,
+                    const Real constant1,
+                    const T* vector2,
+                    const Real constant2);
 };
 
-template <typename T> struct matrixSetToAnother<T, psi::DEVICE_GPU>
+template <typename T>
+struct matrixSetToAnother<T, psi::DEVICE_GPU>
 {
     void operator()(const psi::DEVICE_GPU* d,
-        const int& n,
-        const T* A, // input
-        const int& LDA,
-        T* B, // output
-        const int& LDB);
+                    const int& n,
+                    const T* A, // input
+                    const int& LDA,
+                    T* B, // output
+                    const int& LDB);
 };
-
 
 void createGpuBlasHandle();
 void destoryBLAShandle();

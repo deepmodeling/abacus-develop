@@ -60,9 +60,7 @@ class Diago_NewDav : public DiagH<T, Device>
 
     T* scc = nullptr; // Overlap on the reduced basis
 
-    T* vcc = nullptr; // Eigenvectors of hc
-
-    T* lagrange_matrix = nullptr;
+    T* vcc = nullptr; // Eigenvectors on the reduced basis
 
     /// device type of psi
     Device* ctx = {};
