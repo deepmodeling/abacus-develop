@@ -47,6 +47,9 @@ void Output_DM::write()
         _out_dm,
         _DM,
         _ef,
-        _ucell);
+        _ucell,
+        GlobalV::MY_RANK,
+        GlobalV::NSPIN,
+        GlobalV::NLOCAL);
 }
 } // namespace ModuleIO

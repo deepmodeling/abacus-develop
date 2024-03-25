@@ -111,7 +111,7 @@ TEST_F(DMIOTest,Write)
 	std::string ssd = "SPIN1_DM";
 	int precision = 3;
 	int out_dm = 1;
-	ModuleIO::write_dm(is,0,ssd,precision,out_dm,DM,ef,ucell);
+	ModuleIO::write_dm(is,0,ssd,precision,out_dm,DM,ef,ucell,GlobalV::MY_RANK,GlobalV::NSPIN,GlobalV::NLOCAL);
 	std::ifstream ifs;
 	ifs.open("SPIN1_DM");
 	std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());

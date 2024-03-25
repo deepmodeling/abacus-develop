@@ -30,7 +30,10 @@ void write_dm(
 	int out_dm,
 	double*** DM,
 	const double& ef,
-	const UnitCell* ucell);
+	const UnitCell* ucell,
+    const int my_rank,
+    const int nspin,
+    const int nlocal);
 
 }
 
