@@ -232,6 +232,7 @@ void gint_gamma_force_gpu(hamilt::HContainer<double> *dm, const double vfactor,
           atom_pair_ldc, atom_pair_mat_A_array, atom_pair_mat_B_array,
           atom_pair_mat_C_array, max_m, max_n, atom_pair_num);
 
+      /*variables memcpy to gpu host*/
       checkCuda(cudaMemcpyAsync(psi_input_double_g, psi_input_double,
                                 gridt.psi_size_max * 5 * sizeof(double),
                                 cudaMemcpyHostToDevice,
@@ -342,7 +343,7 @@ void gint_gamma_force_gpu(hamilt::HContainer<double> *dm, const double vfactor,
           atom_pair_ldb_g, atom_pair_mat_C_array_g, atom_pair_ldc_g,
           atom_pair_num, gridt.streams[stream_num], nullptr);
       
-      /* force and stress compute in GPU */
+      /* force compute in GPU */
       dim3 grid_dot_force(blocksPerGrid_force);
       dim3 block_dot_force(threadsPerBlock_force);
       dim3 grid_dot(blocksPerGrid);
@@ -364,6 +365,7 @@ void gint_gamma_force_gpu(hamilt::HContainer<double> *dm, const double vfactor,
           }
         }
       }
+      /*stress compute in GPU host*/
       dot_product_stress<<<grid_dot, block_dot, 0, gridt.streams[stream_num]>>>(
           ddpsir_ylm_left_xx_g, ddpsir_ylm_left_xy_g, ddpsir_ylm_left_xz_g,
           ddpsir_ylm_left_yy_g, ddpsir_ylm_left_yz_g, ddpsir_ylm_left_zz_g,
@@ -377,11 +379,13 @@ void gint_gamma_force_gpu(hamilt::HContainer<double> *dm, const double vfactor,
           stress[i] += stress_dot[i * blocksPerGrid + index];
         }
       }
+      /*free variables in GPU host*/
       delete[] iat;
       delete[] force_h;
       iter_num++;
     }
   }
+  /*free variables in CPU host*/
   delete[] stress_dot;
   delete[] dm_matrix_h;
   checkCuda(cudaFree(dm_matrix_g));
