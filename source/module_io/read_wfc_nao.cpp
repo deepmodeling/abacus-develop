@@ -311,7 +311,7 @@ int ModuleIO::read_wfc_nao(
 	if(error==2) return 2;
 	if(error==3) return 3;
 
-	ModuleIO::distri_wfc_nao(ctot, is, nb2d, nbands_g, ParaV, psid);
+	ModuleIO::distri_wfc_nao(ctot, is, nb2d, nbands_g, nlocal_g,ParaV, psid);
 	
 	// mohan add 2012-02-15,
 	// still have bugs, but can solve it later.
@@ -333,7 +333,7 @@ int ModuleIO::read_wfc_nao(
 }
 
 void ModuleIO::distri_wfc_nao(double** ctot, const int& is, const int& nb2d, const int& nbands_g,
-                              const Parallel_Orbitals* ParaV, psi::Psi<double>* psid)
+                              const int& nlocal_g, const Parallel_Orbitals* ParaV, psi::Psi<double>* psid)
 {
     ModuleBase::TITLE("ModuleIO","distri_wfc_nao");
 #ifdef __MPI

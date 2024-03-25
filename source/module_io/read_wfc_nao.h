@@ -12,7 +12,7 @@
 namespace ModuleIO
 {
     void distri_wfc_nao(double** ctot, const int& is, const int& nb2d,const int& nbands_g,
-                        const Parallel_Orbitals* ParaV, psi::Psi<double>* psid);
+                        const int& nlocal_g, const Parallel_Orbitals* ParaV, psi::Psi<double>* psid);
     void distri_wfc_nao_complex(std::complex<double>** ctot, const int& ik,const int& nb2d, const int& nbands_g,
                                 const Parallel_Orbitals* ParaV, psi::Psi<std::complex<double>>* psi);
 

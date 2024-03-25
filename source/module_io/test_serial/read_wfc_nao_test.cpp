@@ -55,7 +55,7 @@ TEST_F(ReadWfcNaoTest,DistriWfcNao)
       Parallel_Orbitals* ParaV = new Parallel_Orbitals;
       psi::Psi<double>* psid = new psi::Psi<double>(nks, nband, nlocal, &ngk[0]);
       // Act
-      ModuleIO::distri_wfc_nao(ctot, is, GlobalV::NB2D, GlobalV::NBANDS, ParaV, psid);
+      ModuleIO::distri_wfc_nao(ctot, is, GlobalV::NB2D, GlobalV::NBANDS, GlobalV::NLOCAL, ParaV, psid);
       // Assert
       for (int i=0; i<nband; i++)
       {
