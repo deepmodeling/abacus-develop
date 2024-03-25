@@ -243,14 +243,36 @@ struct dnevx_op<T, psi::DEVICE_GPU> {
     }
 };
 
+template <typename T>
+struct dngvx_op<T, psi::DEVICE_GPU>
+{
+    using Real = typename GetTypeReal<T>::type;
+    void operator()(const psi::DEVICE_GPU* d,
+                    const int nbase,
+                    const int ldh,
+                    T* hcc,
+                    T* scc,
+                    const int m,
+                    Real* eigenvalue,
+                    T* vcc)
+    {
+
+    }
+};
+
+
 template struct dngvd_op<std::complex<float>, psi::DEVICE_GPU>;
 template struct dnevx_op<std::complex<float>, psi::DEVICE_GPU>;
+template struct dngvx_op<std::complex<float>, psi::DEVICE_GPU>;
+
 template struct dngvd_op<std::complex<double>, psi::DEVICE_GPU>;
 template struct dnevx_op<std::complex<double>, psi::DEVICE_GPU>;
+template struct dngvx_op<std::complex<double>, psi::DEVICE_GPU>;
 
 #ifdef __LCAO
 template struct dngvd_op<double, psi::DEVICE_GPU>;
 template struct dnevx_op<double, psi::DEVICE_GPU>;
+template struct dngvx_op<double, psi::DEVICE_GPU>;
 #endif
 
 } // namespace hsolver
