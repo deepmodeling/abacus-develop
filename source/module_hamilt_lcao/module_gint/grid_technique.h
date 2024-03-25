@@ -6,9 +6,10 @@
 #include "module_basis/module_ao/parallel_orbitals.h"
 #if ((defined __CUDA) /* || (defined __ROCM) */)
 #include <cuda_runtime.h>
-#endif
 #include "kernels/cuda/vbatch_matrix_multiple/cuda_tools.cuh"
 #include "kernels/cuda/vbatch_matrix_multiple/vbatch_matrix_mul.cuh"
+#endif
+
 
 // Author: mohan
 // Date: 2009-10-17

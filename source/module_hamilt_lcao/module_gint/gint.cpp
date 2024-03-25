@@ -1,8 +1,11 @@
 #include "gint.h"
 
+#if ((defined __CUDA))
 #include "kernels/cuda/gint_force.h"
 #include "kernels/cuda/gint_rho.h"
 #include "kernels/cuda/gint_vl.h"
+#endif
+
 #include "module_base/memory.h"
 #include "module_base/timer.h"
 #include "module_basis/module_ao/ORB_read.h"
