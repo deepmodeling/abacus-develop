@@ -408,7 +408,13 @@ void ESolver_KS_LCAO<TK, TR>::othercalculation(const int istep)
                       this->UHM.GG,
                       INPUT.out_wfc_pw,
                       this->wf.out_wfc_r,
-                      this->kv);
+                      this->kv,
+                      GlobalV::nelec,
+                      GlobalV::NBANDS_ISTATE,
+                      GlobalV::NBANDS,
+                      GlobalV::NSPIN,
+                      GlobalV::NLOCAL,
+                      GlobalV::global_out_dir);
         else
             IEP.begin(this->psi,
                       this->pw_rho,
@@ -418,7 +424,13 @@ void ESolver_KS_LCAO<TK, TR>::othercalculation(const int istep)
                       this->UHM.GK,
                       INPUT.out_wfc_pw,
                       this->wf.out_wfc_r,
-                      this->kv);
+                      this->kv,
+                      GlobalV::nelec,
+                      GlobalV::NBANDS_ISTATE,
+                      GlobalV::NBANDS,
+                      GlobalV::NSPIN,
+                      GlobalV::NLOCAL,
+                      GlobalV::global_out_dir);
     }
     else
     {

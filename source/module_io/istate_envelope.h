@@ -24,7 +24,13 @@ public:
                Gint_Gamma& gg,
                int& out_wfc_pw,
                int& out_wfc_r,
-        const K_Vectors& kv);
+        const K_Vectors& kv,
+        const double nelec,
+        const int nbands_istate,
+        const int nbands,
+        const int nspin,
+        const int nlocal,
+        const std::string& global_out_dir);
 
 
     /// tmp, delete after Gint is refactored.
@@ -36,7 +42,13 @@ public:
         Gint_k& gg,
         int& out_wfc_pw,
         int& out_wfc_r,
-        const K_Vectors& kv) {
+        const K_Vectors& kv,
+        const double nelec,
+        const int nbands_istate,
+        const int nbands,
+        const int nspin,
+        const int nlocal,
+        const std::string& global_out_dir) {
         throw std::logic_error("gint_k should use with complex psi.");
     };
     /// for multi-k
@@ -48,7 +60,13 @@ public:
                Gint_k& gk,
                int& out_wfc_pw,
                int& out_wfc_r,
-               const K_Vectors& kv);
+               const K_Vectors& kv,
+               const double nelec,
+               const int nbands_istate,
+               const int nbands,
+               const int nspin,
+               const int nlocal,
+               const std::string& global_out_dir);
 
     /// tmp, delete after Gint is refactored.
     void begin(const psi::Psi<std::complex<double>>* psi,
@@ -59,7 +77,13 @@ public:
         Gint_Gamma& gk,
         int& out_wfc_pw,
         int& out_wfc_r,
-        const K_Vectors& kv) {
+        const K_Vectors& kv,
+        const double nelec,
+        const int nbands_istate,
+        const int nbands,
+        const int nspin,
+        const int nlocal,
+        const std::string& global_out_dir) {
         throw std::logic_error("gint_gamma should use with real psi.");
     };
 
