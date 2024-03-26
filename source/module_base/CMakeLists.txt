@@ -31,6 +31,7 @@ add_library(
     math_bspline.cpp
     math_chebyshev.cpp
     mathzone_add1.cpp
+    math_tools.cpp
     matrix.cpp
     matrix3.cpp
     memory.cpp

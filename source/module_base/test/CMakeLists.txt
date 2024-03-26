@@ -106,6 +106,11 @@ AddTest(
   SOURCES math_polyint_test.cpp ../math_polyint.cpp ../realarray.cpp ../timer.cpp 
 )
 AddTest(
+  TARGET base_math_tools
+  LIBS formatter
+  SOURCES math_tools_test.cpp ../math_tools.cpp ../timer.cpp
+)
+AddTest(
   TARGET base_gram_schmidt_orth
   LIBS ${math_libs}
   SOURCES gram_schmidt_orth_test.cpp ../gram_schmidt_orth.h ../gram_schmidt_orth-inl.h ../global_function.h ../math_integral.cpp
