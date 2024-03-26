@@ -16,7 +16,7 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint, int lgd_now,
                        int pwnczp, int nbxx, const Grid_Technique &gridt,
                        const LCAO_Orbitals &ORB, const UnitCell &ucell);
 
-void gpu_task_generate_vlocal(const Grid_Technique &gridt, 
+void gtask_vlocal(const Grid_Technique &gridt, 
                               const LCAO_Orbitals &ORB,
                               const UnitCell &ucell,
                               const int i, const int j,

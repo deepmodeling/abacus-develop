@@ -4,7 +4,7 @@
 #include "module_hamilt_lcao/module_gint/gint_tools.h"
 namespace lcaoCudaKernel{
 
-void gpu_task_generator_rho(const Grid_Technique &gridt, 
+void gtask_rho(const Grid_Technique &gridt, 
                             const int i, const int j,
                             const int max_size,
                             const int nczp,

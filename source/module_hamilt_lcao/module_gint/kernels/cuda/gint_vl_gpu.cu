@@ -126,7 +126,7 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
             int max_m = 0;
             int max_n = 0;
 
-            gpu_task_generate_vlocal(gridt, 
+            gtask_vlocal(gridt, 
                                      ORB, ucell,
                                      i, j,
                                      max_size, nczp,

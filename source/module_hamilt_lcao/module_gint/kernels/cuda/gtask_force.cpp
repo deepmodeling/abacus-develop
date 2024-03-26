@@ -38,7 +38,7 @@ namespace lcaoCudaKernel{
  * @param max_n The reference to max_n.
  * @param atom_pair_num The reference to atom_pair_num.
  */
-void gpu_task_generator_force(
+void gtask_force(
     const Grid_Technique &gridt, const LCAO_Orbitals &ORB,
     const UnitCell &ucell, const int i, const int j,
     const int psi_size_max, const int max_size, const int nczp,

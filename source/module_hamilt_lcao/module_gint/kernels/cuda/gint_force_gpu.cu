@@ -224,7 +224,7 @@ void gint_gamma_force_gpu(hamilt::HContainer<double> *dm, const double vfactor,
       int atom_pair_num = 0;
       checkCuda(cudaStreamSynchronize(gridt.streams[stream_num]));
       /*gpu task compute in CPU */
-      gpu_task_generator_force(
+      gtask_force(
           gridt, ORB, ucell, i, j, gridt.psi_size_max_per_z, max_size, nczp, vfactor,
           vlocal, iat, psi_input_double, psi_input_int, num_psir, lgd,
           psir_ylm_right_g, psir_ylm_dm_g, dm_matrix_g, atom_pair_A_m,

@@ -71,7 +71,7 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double> *dm,
  * @param vec_len vector lengths for each dot product.
  * @param dot_count total count of dot products.
  */
-void gpu_task_generator_rho(const Grid_Technique &gridt, 
+void gtask_rho(const Grid_Technique &gridt, 
                             const int i, const int j,
                             const int max_size,
                             const int nczp,

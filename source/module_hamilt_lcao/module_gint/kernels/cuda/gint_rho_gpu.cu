@@ -133,7 +133,7 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double> *dm,
             checkCuda(cudaStreamSynchronize(gridt.streams[stream_num]));
             
             // generate GPU tasks on CPU, including the calculation of psir, matrix multiplication, and dot product
-            gpu_task_generator_rho(gridt, i, j,
+            gtask_rho(gridt, i, j,
                         max_size, nczp,
                         ucell, ORB,
                         psi_input_double,

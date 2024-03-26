@@ -65,7 +65,7 @@ void gint_gamma_force_gpu(hamilt::HContainer<double> *dm, const double vfactor,
  * @param vec_len Array for vec_len values.
  * @param dot_count Reference to dot_count.
  */
-void gpu_task_generator_force(
+void gtask_force(
     const Grid_Technique &gridt, const LCAO_Orbitals &ORB,
     const UnitCell &ucell, const int i, const int j,
     const int psi_size_max, const int max_size, const int nczp,

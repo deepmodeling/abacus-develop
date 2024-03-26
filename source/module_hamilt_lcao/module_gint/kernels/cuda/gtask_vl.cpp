@@ -4,7 +4,7 @@
 #include "module_hamilt_lcao/module_gint/gint_tools.h"
 namespace lcaoCudaKernel{
 
-void gpu_task_generate_vlocal(const Grid_Technique &gridt, 
+void gtask_vlocal(const Grid_Technique &gridt, 
                               const LCAO_Orbitals &ORB,
                               const UnitCell &ucell,
                               const int i, const int j, 
