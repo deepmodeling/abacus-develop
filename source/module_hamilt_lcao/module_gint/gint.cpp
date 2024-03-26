@@ -70,28 +70,21 @@ void Gint::cal_gint(Gint_inout *inout) {
 #ifdef __CUDA
     if (GlobalV::gint_device == "gpu" && GlobalV::GAMMA_ONLY_LOCAL && lgd > 0)
     {
-      if (inout->job == Gint_Tools::job_type::vlocal &&
-          GlobalV::GAMMA_ONLY_LOCAL && lgd > 0) {
         double ylmcoef[100];
         ModuleBase::GlobalFunc::ZEROS(ylmcoef, 100);
         for (int i = 0; i < 100; i++) {
           ylmcoef[i] = ModuleBase::Ylm::ylmcoef[i];
         }
+
+      if (inout->job == Gint_Tools::job_type::vlocal) {
         GintKernel::gint_gamma_vl_gpu(this->hRGint, lgd, max_size,
                           GlobalC::ucell.omega / this->ncxyz, inout->vl, ylmcoef,
                           this->nplane, this->nbxx,
                           *this->gridt, GlobalC::ORB, GlobalC::ucell);
         ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
         return;
-      } else if (inout->job == Gint_Tools::job_type::rho &&
-                GlobalV::GAMMA_ONLY_LOCAL && lgd > 0) {
-        double *ylmcoef = new double[100];
-        ModuleBase::GlobalFunc::ZEROS(ylmcoef, 100);
-        for (int i = 0; i < 100; i++) {
-          ylmcoef[i] = ModuleBase::Ylm::ylmcoef[i];
-        }
-
-        const int nrxx = this->gridt->ncx * this->gridt->ncy * this->nplane;
+      } else if (inout->job == Gint_Tools::job_type::rho) {
+        int nrxx = this->gridt->ncx * this->gridt->ncy * this->nplane;
         for (int is = 0; is < GlobalV::NSPIN; ++is) {
           ModuleBase::GlobalFunc::ZEROS(inout->rho[is], nrxx);
           GintKernel::gint_gamma_rho_gpu(this->DMRGint[is], this->nplane, ylmcoef, 
@@ -100,13 +93,7 @@ void Gint::cal_gint(Gint_inout *inout) {
         ModuleBase::timer::tick("Gint_interface", "cal_gint_rho");
         return;
       }
-      else if (inout->job == Gint_Tools::job_type::force &&
-          GlobalV::GAMMA_ONLY_LOCAL && lgd > 0) {
-        double *ylmcoef = new double[100];
-        ModuleBase::GlobalFunc::ZEROS(ylmcoef, 100);
-        for (int i = 0; i < 100; i++) {
-          ylmcoef[i] = ModuleBase::Ylm::ylmcoef[i];
-        }
+      else if (inout->job == Gint_Tools::job_type::force) {
         const int ncyz = this->ny * this->nplane;
         int nat = GlobalC::ucell.nat;
         for (int is = 0; is < GlobalV::NSPIN; ++is) {
