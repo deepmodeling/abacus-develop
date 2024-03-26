@@ -477,7 +477,7 @@ namespace ModuleESolver
                     if(stop) break;
                 }
                 // notice for restart
-                if (GlobalV::MIXING_RESTART > 0 && iter == this->p_chgmix->mixing_restart - 1)
+                if (GlobalV::MIXING_RESTART > 0 && iter == this->p_chgmix->mixing_restart - 1 && iter != GlobalV::SCF_NMAX)
                 {
                     std::cout<<"SCF restart after this step!"<<std::endl;
                 }
