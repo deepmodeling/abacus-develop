@@ -1,41 +1,42 @@
 #include "gint_rho.h"
 #include "omp.h"
+#include "module_basis/module_ao/ORB_read.h"
 #include "module_base/ylm.h"
 #include "module_hamilt_lcao/module_gint/gint_tools.h"
 namespace lcaoCudaKernel{
 
 void gtask_rho(const Grid_Technique &gridt, 
-                            const int i, const int j,
-                            const int max_size,
-                            const int nczp,
-                            const UnitCell &ucell,
-                            const LCAO_Orbitals &ORB,
-                            double *psi_input_double, int *psi_input_int,
-                            int *num_psir,
-                            const int lgd,
-                            double * const psir_ylm_g,
-                            double * const psir_dm_g,
-                            double * const dm_matrix_g,
-                            double *mat_alpha,
-                            int *mat_m,
-                            int *mat_n,
-                            int *mat_k,
-                            int *mat_lda,
-                            int *mat_ldb,
-                            int *mat_ldc,
-                            double **mat_A,
-                            double **mat_B,
-                            double **mat_C,
-                            int &max_m,
-                            int &max_n,
-                            int &atom_pair_num,
-                            double *rho_g,
-                            double **vec_l,
-                            double **vec_r,
-                            double **dot_product,
-                            int *vec_len,
-                            int &dot_count 
-                            ) 
+               const int i, const int j,
+               const int max_size,
+               const int nczp,
+               const UnitCell &ucell,
+               const LCAO_Orbitals &ORB,
+               double *psi_input_double, int *psi_input_int,
+               int *num_psir,
+               const int lgd,
+               double * const psir_ylm_g,
+               double * const psir_dm_g,
+               double * const dm_matrix_g,
+               double *mat_alpha,
+               int *mat_m,
+               int *mat_n,
+               int *mat_k,
+               int *mat_lda,
+               int *mat_ldb,
+               int *mat_ldc,
+               double **mat_A,
+               double **mat_B,
+               double **mat_C,
+               int &max_m,
+               int &max_n,
+               int &atom_pair_num,
+               double *rho_g,
+               double **vec_l,
+               double **vec_r,
+               double **dot_product,
+               int *vec_len,
+               int &dot_count 
+              ) 
 { 
   const int grid_index_ij = i * gridt.nby * gridt.nbzp + j * gridt.nbzp;
   const int nwmax = ucell.nwmax;

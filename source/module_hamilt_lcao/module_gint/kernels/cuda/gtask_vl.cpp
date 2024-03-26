@@ -1,32 +1,33 @@
 #include "gint_vl.h"
 #include "omp.h"
+#include "module_basis/module_ao/ORB_read.h"
 #include "module_base/ylm.h"
 #include "module_hamilt_lcao/module_gint/gint_tools.h"
 namespace lcaoCudaKernel{
 
 void gtask_vlocal(const Grid_Technique &gridt, 
-                              const LCAO_Orbitals &ORB,
-                              const UnitCell &ucell,
-                              const int i, const int j, 
-                              const int max_size,
-                              const int nczp,
-                              const double vfactor,
-                              const double *vlocal_global_value,
-                              double *psir_ylm_left,
-                              double *psir_ylm_right,
-                              double *psi_input_double, int *psi_input_int,
-                              int *num_psir, 
-                              int *atom_pair_A_m,
-                              int *atom_pair_B_n,
-                              int *atom_pair_lda,
-                              int *atom_pair_ldb,
-                              int *atom_pair_ldc,
-                              double ** atom_pair_mat_A,
-                              double ** atom_pair_mat_B,
-                              double ** atom_pair_mat_C,
-                              int & atom_pair_num,
-                              int & max_m,
-                              int & max_n) {
+                  const LCAO_Orbitals &ORB,
+                  const UnitCell &ucell,
+                  const int i, const int j, 
+                  const int max_size,
+                  const int nczp,
+                  const double vfactor,
+                  const double *vlocal_global_value,
+                  double *psir_ylm_left,
+                  double *psir_ylm_right,
+                  double *psi_input_double, int *psi_input_int,
+                  int *num_psir, 
+                  int *atom_pair_A_m,
+                  int *atom_pair_B_n,
+                  int *atom_pair_lda,
+                  int *atom_pair_ldb,
+                  int *atom_pair_ldc,
+                  double ** atom_pair_mat_A,
+                  double ** atom_pair_mat_B,
+                  double ** atom_pair_mat_C,
+                  int & atom_pair_num,
+                  int & max_m,
+                  int & max_n) {
 
   const int grid_index_ij = i * gridt.nby * gridt.nbzp + j * gridt.nbzp;
   const int nwmax = ucell.nwmax;
