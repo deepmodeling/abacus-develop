@@ -1629,6 +1629,13 @@ TEST_F(InputTest, Check)
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("sc_scf_nmin must >= 2"));
 	INPUT.sc_scf_nmin = 2;
+	// warning 10 of Deltaspin
+	INPUT.nupdown = 4;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("nupdown should not be set when sc_mag_switch > 0"));
+	INPUT.nupdown = 0;
     // restore to default values
     INPUT.nspin = 1;
 	INPUT.sc_file = "none";
