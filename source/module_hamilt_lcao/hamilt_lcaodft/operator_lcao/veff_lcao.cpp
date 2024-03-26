@@ -156,6 +156,7 @@ void Veff<OperatorLCAO<double, double>>::contributeHR()
     this->GG->transfer_pvpR(this->hR);
 
     this->new_e_iteration = false;
+    ModuleBase::timer::tick("Veff", "contributeHR");
 }
 
 }
