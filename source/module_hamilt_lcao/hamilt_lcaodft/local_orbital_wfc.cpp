@@ -60,7 +60,8 @@ void Local_Orbital_wfc::gamma_file(psi::Psi<double>* psid, elecstate::ElecState*
 
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
-        this->error = ModuleIO::read_wfc_nao(ctot, is, this->ParaV, psid, pelec);
+        this->error = ModuleIO::read_wfc_nao(ctot, is, GlobalV::GAMMA_ONLY_LOCAL, GlobalV::NB2D, GlobalV::NBANDS, 
+                                             GlobalV::NLOCAL, GlobalV::global_readin_dir, this->ParaV, psid, pelec);
 #ifdef __MPI
         Parallel_Common::bcast_int(this->error);
 #endif
@@ -164,7 +165,8 @@ void Local_Orbital_wfc::allocate_k(const int& lgd,
         for (int ik = 0; ik < nkstot; ++ik)
         {
             std::complex<double>** ctot;
-            this->error = ModuleIO::read_wfc_nao_complex(ctot, ik, kvec_c[ik], this->ParaV, psi, pelec);
+            this->error = ModuleIO::read_wfc_nao_complex(ctot, ik, GlobalV::NB2D, GlobalV::NBANDS, GlobalV::NLOCAL, 
+                                    GlobalV::global_readin_dir, kvec_c[ik], this->ParaV, psi, pelec);
 #ifdef __MPI
             Parallel_Common::bcast_int(this->error);
 #endif

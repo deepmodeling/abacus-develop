@@ -8,6 +8,9 @@ void ModuleIO::read_dm(
 	const int nnrg,
 	const int* trace_lo,
 #endif
+    const bool gamma_only_local,
+    const int nlocal,
+    const int nspin,
 	const int &is,
 	const std::string &fn,
 	double*** DM,
@@ -77,10 +80,10 @@ void ModuleIO::read_dm(
                 }
             }
 
-            ModuleBase::CHECK_INT(ifs, GlobalV::NSPIN);
+            ModuleBase::CHECK_INT(ifs, nspin);
             ModuleBase::GlobalFunc::READ_VALUE(ifs, ef);
-            ModuleBase::CHECK_INT(ifs, GlobalV::NLOCAL);
-            ModuleBase::CHECK_INT(ifs, GlobalV::NLOCAL);
+            ModuleBase::CHECK_INT(ifs, nlocal);
+            ModuleBase::CHECK_INT(ifs, nlocal);
         }// If file exist, read in data.
     } // Finish reading the first part of density matrix.
 
@@ -88,11 +91,11 @@ void ModuleIO::read_dm(
 #ifndef __MPI
     GlobalV::ofs_running << " Read SPIN = " << is+1 << " density matrix now." << std::endl;
 
-    if(GlobalV::GAMMA_ONLY_LOCAL)
+    if(gamma_only_local)
     {
-        for(int i=0; i<GlobalV::NLOCAL; ++i)
+        for(int i=0; i<nlocal; ++i)
         {
-            for(int j=0; j<GlobalV::NLOCAL; ++j)
+            for(int j=0; j<nlocal; ++j)
             {
                 ifs >> DM[is][i][j];
             }
@@ -125,27 +128,27 @@ void ModuleIO::read_dm(
 
     Parallel_Common::bcast_double(ef);
 
-    if(GlobalV::GAMMA_ONLY_LOCAL)
+    if(gamma_only_local)
     {
 
-        double *tmp = new double[GlobalV::NLOCAL];
-        for(int i=0; i<GlobalV::NLOCAL; ++i)
+        double *tmp = new double[nlocal];
+        for(int i=0; i<nlocal; ++i)
         {
             //GlobalV::ofs_running << " i=" << i << std::endl;
-            ModuleBase::GlobalFunc::ZEROS(tmp, GlobalV::NLOCAL);
+            ModuleBase::GlobalFunc::ZEROS(tmp, nlocal);
             if(GlobalV::MY_RANK==0)
             {
-                for(int j=0; j<GlobalV::NLOCAL; ++j)
+                for(int j=0; j<nlocal; ++j)
                 {
                     ifs >> tmp[j];
                 }
             }
-            Parallel_Common::bcast_double(tmp, GlobalV::NLOCAL);
+            Parallel_Common::bcast_double(tmp, nlocal);
 
             const int mu = trace_lo[i];
             if(mu >= 0)
             {   
-                for(int j=0; j<GlobalV::NLOCAL; ++j)
+                for(int j=0; j<nlocal; ++j)
                 {
                     const int nu = trace_lo[j];
                     if(nu >= 0)

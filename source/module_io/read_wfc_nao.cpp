@@ -10,13 +10,14 @@ inline int CTOT2q(
 	int dim1,
 	int iprow,
 	int ipcol,
+    const int nbands,
 	double* work,
 	double** CTOT)
 {
     for(int j=0; j<naroc[1]; ++j)
     {
         int igcol=Local_Orbital_wfc::globalIndex(j, nb, dim1, ipcol);
-        if(igcol>=GlobalV::NBANDS) continue;
+        if(igcol>=nbands) continue;
         for(int i=0; i<naroc[0]; ++i)
         {
             int igrow=Local_Orbital_wfc::globalIndex(i, nb, dim0, iprow);
@@ -35,13 +36,14 @@ inline int CTOT2q_c(
 	int dim1,
 	int iprow,
 	int ipcol,
+    const int nbands,
 	std::complex<double>* work,
 	std::complex<double>** CTOT)
 {
     for(int j=0; j<naroc[1]; ++j)
     {
         int igcol=Local_Orbital_wfc::globalIndex(j, nb, dim1, ipcol);
-        if(igcol>=GlobalV::NBANDS) continue;
+        if(igcol>=nbands) continue;
         for(int i=0; i<naroc[0]; ++i)
         {
             int igrow=Local_Orbital_wfc::globalIndex(i, nb, dim0, iprow);
@@ -56,6 +58,10 @@ inline int CTOT2q_c(
 int ModuleIO::read_wfc_nao_complex(
     std::complex<double>** ctot, 
     const int& ik,
+    const int& nb2d,
+    const int& nbands_g,
+    const int& nlocal_g,
+    const std::string& global_readin_dir,
     const ModuleBase::Vector3<double> kvec_c,
     const Parallel_Orbitals* ParaV, 
     psi::Psi<std::complex<double>>* psi, 
@@ -66,7 +72,7 @@ int ModuleIO::read_wfc_nao_complex(
 
     std::stringstream ss;
 	// read wave functions
-    ss << GlobalV::global_readin_dir << "LOWF_K_" << ik+1 <<".txt";
+    ss << global_readin_dir << "LOWF_K_" << ik+1 <<".txt";
 //	std::cout << " name is = " << ss.str() << std::endl;
 
     std::ifstream ifs;
@@ -119,26 +125,26 @@ int ModuleIO::read_wfc_nao_complex(
 			 << " kz=" << kvec_c.z << std::endl;
 			 error = 4; 
 		}
-        else if (nbands!=GlobalV::NBANDS)
+        else if (nbands!=nbands_g)
         {
             GlobalV::ofs_warning << " read in nbands=" << nbands;
-            GlobalV::ofs_warning << " NBANDS=" << GlobalV::NBANDS << std::endl;
+            GlobalV::ofs_warning << " NBANDS=" << nbands_g << std::endl;
             error = 2;
         }
-        else if (nlocal != GlobalV::NLOCAL)
+        else if (nlocal != nlocal_g)
         {
             GlobalV::ofs_warning << " read in nlocal=" << nlocal;
-            GlobalV::ofs_warning << " NLOCAL=" << GlobalV::NLOCAL << std::endl;
+            GlobalV::ofs_warning << " NLOCAL=" << nlocal_g << std::endl;
             error = 3;
         }
 
-        ctot = new std::complex<double>*[GlobalV::NBANDS];
-        for (int i=0; i<GlobalV::NBANDS; i++)
+        ctot = new std::complex<double>*[nbands_g];
+        for (int i=0; i<nbands_g; i++)
         {
-            ctot[i] = new std::complex<double>[GlobalV::NLOCAL];
+            ctot[i] = new std::complex<double>[nlocal_g];
         }
 
-        for (int i=0; i<GlobalV::NBANDS; ++i)
+        for (int i=0; i<nbands_g; ++i)
         {
             int ib;
             ModuleBase::GlobalFunc::READ_VALUE(ifs, ib);
@@ -151,7 +157,7 @@ int ModuleIO::read_wfc_nao_complex(
 			ModuleBase::GlobalFunc::READ_VALUE(ifs, pelec->wg(ik,ib));
             assert( i==ib );
 			double a, b;
-            for (int j=0; j<GlobalV::NLOCAL; ++j)
+            for (int j=0; j<nlocal_g; ++j)
             {
                 ifs >> a >> b;
 				ctot[i][j]=std::complex<double>(a,b);
@@ -168,7 +174,7 @@ int ModuleIO::read_wfc_nao_complex(
 	if(error==3) return 3;
 	if(error==4) return 4;
 	
-	ModuleIO::distri_wfc_nao_complex(ctot, ik, ParaV, psi);
+	ModuleIO::distri_wfc_nao_complex(ctot, ik, nb2d, nbands_g, ParaV, psi);
 	
 	// mohan add 2012-02-15,
 	// still have bugs, but can solve it later.
@@ -177,7 +183,7 @@ int ModuleIO::read_wfc_nao_complex(
     if (GlobalV::DRANK==0)
     {
         // delte the ctot
-        for (int i=0; i<GlobalV::NBANDS; i++)
+        for (int i=0; i<nbands_g; i++)
         {
             delete[] ctot[i];
         }
@@ -188,10 +194,10 @@ int ModuleIO::read_wfc_nao_complex(
 	// TEST
 	//---------
 	/*
-	for(int i=0; i<GlobalV::NBANDS; ++i)
+	for(int i=0; i<nbands_g; ++i)
 	{
 		std::cout << " c band i=" << i+1 << std::endl;
-		for(int j=0; j<GlobalV::NLOCAL; ++j)
+		for(int j=0; j<nlocal_g; ++j)
 		{
 			std::cout << " " << c[i][j];
 		}
@@ -207,6 +213,11 @@ int ModuleIO::read_wfc_nao_complex(
 int ModuleIO::read_wfc_nao(
     double** ctot, 
     const int& is,
+    const bool& gamma_only_local,
+    const int& nb2d,
+    const int& nbands_g,
+    const int& nlocal_g,
+    const std::string& global_readin_dir,
     const Parallel_Orbitals* ParaV, 
     psi::Psi<double>* psid, 
     elecstate::ElecState* pelec)
@@ -218,12 +229,12 @@ int ModuleIO::read_wfc_nao(
 	if(GlobalV::GAMMA_ONLY_LOCAL)
 	{
 		// read wave functions
-    	ss << GlobalV::global_readin_dir << "LOWF_GAMMA_S" << is+1 <<".txt";
+    	ss << global_readin_dir << "LOWF_GAMMA_S" << is+1 <<".txt";
 		std::cout << " name is = " << ss.str() << std::endl;
 	}
 	else
 	{
-		ss << GlobalV::global_readin_dir << "LOWF_K.txt";
+		ss << global_readin_dir << "LOWF_K.txt";
 	}
 
     std::ifstream ifs;
@@ -254,27 +265,27 @@ int ModuleIO::read_wfc_nao(
         ModuleBase::GlobalFunc::READ_VALUE(ifs, nbands);
         ModuleBase::GlobalFunc::READ_VALUE(ifs, nlocal);
 
-        if (nbands!=GlobalV::NBANDS)
+        if (nbands!=nbands_g)
         {
             GlobalV::ofs_warning << " read in nbands=" << nbands;
-            GlobalV::ofs_warning << " NBANDS=" << GlobalV::NBANDS << std::endl;
+            GlobalV::ofs_warning << " NBANDS=" << nbands_g << std::endl;
             error = 2;
         }
-        else if (nlocal != GlobalV::NLOCAL)
+        else if (nlocal != nlocal_g)
         {
             GlobalV::ofs_warning << " read in nlocal=" << nlocal;
-            GlobalV::ofs_warning << " NLOCAL=" << GlobalV::NLOCAL << std::endl;
+            GlobalV::ofs_warning << " NLOCAL=" << nlocal_g << std::endl;
             error = 3;
         }
 
-        ctot = new double*[GlobalV::NBANDS];
-        for (int i=0; i<GlobalV::NBANDS; i++)
+        ctot = new double*[nbands_g];
+        for (int i=0; i<nbands_g; i++)
         {
-            ctot[i] = new double[GlobalV::NLOCAL];
+            ctot[i] = new double[nlocal_g];
         }
 
-		//std::cout << "nbands" << GlobalV::NBANDS << std::endl;
-        for (int i=0; i<GlobalV::NBANDS; i++)
+		//std::cout << "nbands" << nbands_g << std::endl;
+        for (int i=0; i<nbands_g; i++)
         {
             int ib;
             ModuleBase::GlobalFunc::READ_VALUE(ifs, ib);
@@ -282,7 +293,7 @@ int ModuleIO::read_wfc_nao(
             ModuleBase::GlobalFunc::READ_VALUE(ifs, pelec->wg(is, i));
             assert( (i+1)==ib);
 			//std::cout << " ib=" << ib << std::endl;
-            for (int j=0; j<GlobalV::NLOCAL; j++)
+            for (int j=0; j<nlocal_g; j++)
             {
                 ifs >> ctot[i][j];
 				//std::cout << ctot[i][j] << " ";
@@ -294,13 +305,13 @@ int ModuleIO::read_wfc_nao(
 
 #ifdef __MPI
     Parallel_Common::bcast_int(error);
-	Parallel_Common::bcast_double( &(pelec->ekb(is, 0)), GlobalV::NBANDS);
-	Parallel_Common::bcast_double( &(pelec->wg(is, 0)), GlobalV::NBANDS);
+	Parallel_Common::bcast_double( &(pelec->ekb(is, 0)), nbands_g);
+	Parallel_Common::bcast_double( &(pelec->wg(is, 0)), nbands_g);
 #endif
 	if(error==2) return 2;
 	if(error==3) return 3;
 
-	ModuleIO::distri_wfc_nao(ctot, is, ParaV, psid);
+	ModuleIO::distri_wfc_nao(ctot, is, nb2d, nbands_g, nlocal_g,ParaV, psid);
 	
 	// mohan add 2012-02-15,
 	// still have bugs, but can solve it later.
@@ -310,7 +321,7 @@ int ModuleIO::read_wfc_nao(
     if (GlobalV::MY_RANK==0)
     {
         // delte the ctot
-        for (int i=0; i<GlobalV::NBANDS; i++)
+        for (int i=0; i<nbands_g; i++)
         {
             delete[] ctot[i];
         }
@@ -321,8 +332,8 @@ int ModuleIO::read_wfc_nao(
     return 0;
 }
 
-void ModuleIO::distri_wfc_nao(double** ctot, const int& is,
-    const Parallel_Orbitals* ParaV, psi::Psi<double>* psid)
+void ModuleIO::distri_wfc_nao(double** ctot, const int& is, const int& nb2d, const int& nbands_g,
+                              const int& nlocal_g, const Parallel_Orbitals* ParaV, psi::Psi<double>* psid)
 {
     ModuleBase::TITLE("ModuleIO","distri_wfc_nao");
 #ifdef __MPI
@@ -340,9 +351,9 @@ void ModuleIO::distri_wfc_nao(double** ctot, const int& is,
 
 	double *work=new double[maxnloc]; // work/buffer matrix
 #ifdef __DEBUG
-assert(GlobalV::NB2D > 0);
+assert(nb2d > 0);
 #endif	
-	int nb = GlobalV::NB2D;
+	int nb = nb2d;
 	int info;
 	int naroc[2]; // maximum number of row or column
 	
@@ -363,7 +374,7 @@ assert(GlobalV::NB2D > 0);
 			info=MPI_Bcast(naroc, 2, MPI_INT, src_rank, ParaV->comm_2D);
 
 //2.2 copy from ctot to work, then bcast work
-			info=CTOT2q(myid, naroc, nb, ParaV->dim0, ParaV->dim1, iprow, ipcol, work, ctot);
+			info=CTOT2q(myid, naroc, nb, ParaV->dim0, ParaV->dim1, iprow, ipcol, nbands_g, work, ctot);
 			info=MPI_Bcast(work, maxnloc, MPI_DOUBLE, 0, ParaV->comm_2D);
 			//GlobalV::ofs_running << "iprow, ipcow : " << iprow << ipcol << std::endl;
 			//for (int i=0; i<maxnloc; ++i)
@@ -382,9 +393,9 @@ assert(GlobalV::NB2D > 0);
 
 	delete[] work;
 #else
-        for (int i=0; i<GlobalV::NBANDS; i++)
+        for (int i=0; i<nbands_g; i++)
         {
-            for (int j=0; j<GlobalV::NLOCAL; j++)
+            for (int j=0; j<nlocal_g; j++)
             {
                psid[0](is, i, j) = ctot[i][j];
             }
@@ -393,8 +404,8 @@ assert(GlobalV::NB2D > 0);
     return;
 }
 
-void ModuleIO::distri_wfc_nao_complex(std::complex<double>** ctot, const int& ik,
-    const Parallel_Orbitals* ParaV, psi::Psi<std::complex<double>>* psi)
+void ModuleIO::distri_wfc_nao_complex(std::complex<double>** ctot, const int& ik, const int& nb2d,
+         const int& nbands_g, const Parallel_Orbitals* ParaV, psi::Psi<std::complex<double>>* psi)
 {
     ModuleBase::TITLE("ModuleIO","distri_wfc_nao_complex");
 #ifdef __MPI
@@ -412,9 +423,9 @@ void ModuleIO::distri_wfc_nao_complex(std::complex<double>** ctot, const int& ik
 
 	std::complex<double> *work=new std::complex<double>[maxnloc]; // work/buffer matrix
 #ifdef __DEBUG
-assert(GlobalV::NB2D > 0);
+assert(nb2d > 0);
 #endif	
-	int nb = GlobalV::NB2D;
+	int nb = nb2d;
 	int info;
 	int naroc[2]; // maximum number of row or column
 	
@@ -435,7 +446,7 @@ assert(GlobalV::NB2D > 0);
 			info=MPI_Bcast(naroc, 2, MPI_INT, src_rank, ParaV->comm_2D);
 
 //2.2 copy from ctot to work, then bcast work
-			info=CTOT2q_c(myid, naroc, nb, ParaV->dim0, ParaV->dim1, iprow, ipcol, work, ctot);
+			info=CTOT2q_c(myid, naroc, nb, ParaV->dim0, ParaV->dim1, iprow, ipcol, nbands_g, work, ctot);
 			info=MPI_Bcast(work, maxnloc, MPI_DOUBLE_COMPLEX, 0, ParaV->comm_2D);
 			//ofs_running << "iprow, ipcow : " << iprow << ipcol << std::endl;
 			//for (int i=0; i<maxnloc; ++i)

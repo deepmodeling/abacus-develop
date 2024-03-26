@@ -179,6 +179,9 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
                 this->GridT.nnrg,
                 this->GridT.trace_lo,
 #endif
+                GlobalV::GAMMA_ONLY_LOCAL,
+                GlobalV::NLOCAL,
+                GlobalV::NSPIN,
                 is,
                 ssd.str(),
                 this->LOC.DM,
