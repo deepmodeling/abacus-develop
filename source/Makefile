@@ -10,6 +10,12 @@ LIBS = -lm -lpthread
 OPTS = -std=c++14 -pedantic -m64 ${INCLUDES}
 HONG = -D__LCAO
 HONG += -D__ELPA
+
+# An FFT-based spherical Bessel transform algorithm has become
+# the default since v3.3.4. Comment out the following line to use
+# the original Simpson-based spherical Bessel transform.
+HONG += -DUSE_NEW_TWO_CENTER
+
 ifeq ($(OPENMP), ON)
     ELPA_NAME = elpa_openmp
 else
@@ -45,7 +51,8 @@ ifeq ($(DEBUG), ON)
     endif
     OPTS += -O0 -fsanitize=address -fno-omit-frame-pointer -Wall -g #It can check segmental defaults
 else
-    HONG += -Ofast -march=native -DNDEBUG
+    # FIXME -Ofast is not compatible with the new two-center integration algorithm
+    HONG += -O3 -march=native -DNDEBUG
 endif
 
 ifeq ($(INTEL), ON)

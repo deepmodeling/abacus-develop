@@ -86,7 +86,8 @@ TEST_F(DMIOTest,Read)
 	double ef;
 	UcellTestPrepare utp = UcellTestLib["Si"];
 	ucell = utp.SetUcellInfo();
-	ModuleIO::read_dm(is,fn,DM,DM_R,ef,ucell);
+	ModuleIO::read_dm(GlobalV::GAMMA_ONLY_LOCAL, GlobalV::NLOCAL,
+					  GlobalV::NSPIN,is,fn,DM,DM_R,ef,ucell);
 	EXPECT_DOUBLE_EQ(ef,0.570336288802337);
 	EXPECT_NEAR(DM[0][0][0],3.904e-01,1e-6);
 	EXPECT_NEAR(DM[0][25][25],3.445e-02,1e-6);
@@ -103,7 +104,8 @@ TEST_F(DMIOTest,Write)
 	double ef;
 	UcellTestPrepare utp = UcellTestLib["Si"];
 	ucell = utp.SetUcellInfo();
-	ModuleIO::read_dm(is,fn,DM,DM_R,ef,ucell);
+	ModuleIO::read_dm(GlobalV::GAMMA_ONLY_LOCAL, GlobalV::NLOCAL,
+					  GlobalV::NSPIN,is,fn,DM,DM_R,ef,ucell);
 	EXPECT_DOUBLE_EQ(ef,0.570336288802337);
 	EXPECT_NEAR(DM[0][0][0],3.904e-01,1e-6);
 	EXPECT_NEAR(DM[0][25][25],3.445e-02,1e-6);
@@ -111,7 +113,7 @@ TEST_F(DMIOTest,Write)
 	std::string ssd = "SPIN1_DM";
 	int precision = 3;
 	int out_dm = 1;
-	ModuleIO::write_dm(is,0,ssd,precision,out_dm,DM,ef,ucell);
+	ModuleIO::write_dm(is,0,ssd,precision,out_dm,DM,ef,ucell,GlobalV::MY_RANK,GlobalV::NSPIN,GlobalV::NLOCAL);
 	std::ifstream ifs;
 	ifs.open("SPIN1_DM");
 	std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());

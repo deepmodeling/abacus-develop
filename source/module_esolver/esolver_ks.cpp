@@ -463,7 +463,7 @@ namespace ModuleESolver
                 Json::add_output_scf_mag(
                     GlobalC::ucell.magnet.tot_magnetization, GlobalC::ucell.magnet.abs_magnetization,
                     this->pelec->f_en.etot * ModuleBase::Ry_to_eV,
-                    (this->pelec->f_en.etot - this->pelec->f_en.etot_old) * ModuleBase::Ry_to_eV,
+                    this->pelec->f_en.etot_delta * ModuleBase::Ry_to_eV,
                     drho,
                     duration
                 );
@@ -477,7 +477,7 @@ namespace ModuleESolver
                     if(stop) break;
                 }
                 // notice for restart
-                if (GlobalV::MIXING_RESTART > 0 && iter == this->p_chgmix->mixing_restart - 1)
+                if (GlobalV::MIXING_RESTART > 0 && iter == this->p_chgmix->mixing_restart - 1 && iter != GlobalV::SCF_NMAX)
                 {
                     std::cout<<"SCF restart after this step!"<<std::endl;
                 }
