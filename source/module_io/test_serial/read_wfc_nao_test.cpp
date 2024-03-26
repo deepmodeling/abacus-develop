@@ -55,7 +55,7 @@ TEST_F(ReadWfcNaoTest,DistriWfcNao)
       Parallel_Orbitals* ParaV = new Parallel_Orbitals;
       psi::Psi<double>* psid = new psi::Psi<double>(nks, nband, nlocal, &ngk[0]);
       // Act
-      ModuleIO::distri_wfc_nao(ctot, is, ParaV, psid);
+      ModuleIO::distri_wfc_nao(ctot, is, GlobalV::NB2D, GlobalV::NBANDS, GlobalV::NLOCAL, ParaV, psid);
       // Assert
       for (int i=0; i<nband; i++)
       {
@@ -97,7 +97,8 @@ TEST_F(ReadWfcNaoTest,ReadWfcNao)
       pelec->ekb.create(nks,nband);
       pelec->wg.create(nks,nband);
       // Act
-      ModuleIO::read_wfc_nao(ctot, is, ParaV, psid, pelec);
+      ModuleIO::read_wfc_nao(ctot, is, GlobalV::GAMMA_ONLY_LOCAL, GlobalV::NB2D, GlobalV::NBANDS,
+                             GlobalV::NLOCAL, GlobalV::global_readin_dir, ParaV, psid, pelec);
       // Assert
       EXPECT_NEAR(pelec->ekb(0,1),0.314822,1e-5);
       EXPECT_NEAR(pelec->wg(0,1),0.0,1e-5);
