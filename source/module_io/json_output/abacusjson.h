@@ -5,6 +5,8 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include "json_node.h"
+
 
 #ifdef __RAPIDJSON
 #include "rapidjson/document.h"
@@ -54,9 +56,45 @@ using jsonValue = rapidjson::Value;
 class AbacusJson
 {
   public:
-    // The template specialization method adds a key-val object to the doc tree
+
+
+
+    // Output the json to a file
+    static void write_to_json(std::string filename);
+
+    static rapidjson::Document::AllocatorType& allocator(){
+      return doc.GetAllocator();
+    }
+
+    /**
+     *  @brief: The template specialization method adds value to the doc tree
+     *
+     *  @param: 'keys' is a vector string, represents the path to be added to the json tree.
+     *
+     *          'value' is the value that needs to be added to the json tree, which type can be 
+     *          Json::jsonValue or other common value type(such as int, double ,bool ,std::string).
+     *
+     *          'IsArray' is a bool value, means the whether the root node to which 'value' is added is an array.
+     *
+     *  @usage: 1. Add/Modify a double val to object json node (key2 is a object node): 
+     *                Json::AbacusJson::add_json({"key1","key2"}, 3.1415,false);
+     *
+     *          2. Pushback a double val to array json node (key2 is a array node):
+     *                Json::AbacusJson::add_json({"key1","key2"}, 3.1415,true);
+     *
+     *          3. Modify a doble val to array json node (key2 is a array node), when use this method, 
+     *            The index number of the array starts at 0, if it's negative, it's going from back to front. 
+     *            eg. If the index is -1, it means that the last element of the array is modified:
+     *            If we have a json array: {"key":[1,2,3]}
+     *                i). Json::AbacusJson::add_json({"key",0}, 4,true);  => {"key":[4,2,3]}
+     *                ii). Json::AbacusJson::add_json({"key",-1}, 4,true);  => {"key":[1,2,4]}
+     *                iii). Json::AbacusJson::add_json({"key",1}, 4,true);  => {"key":[1,4,3]}
+     *                iv). Json::AbacusJson::add_json({"key",2}, 4,true);  => {"key":[1,2,4]}
+     *                iv). Json::AbacusJson::add_json({"key",3}, 4,true);  => error!, The array element corresponding
+     *                     to the index has no value.
+    */
     template <typename T>
-    static void add_json(std::vector<std::string> keys, const T& value,bool IsArray)
+    static void add_json(std::vector<jsonKeyNode> keys, const T& value,bool IsArray)
     {
         if (!doc.IsObject())
         {
@@ -67,31 +105,25 @@ class AbacusJson
     }
 
 
-    // Output the json to a file
-    static void write_to_json(std::string filename);
-
-    static rapidjson::Document::AllocatorType& allocator(){
-      return doc.GetAllocator();
-    }
-
 
 
   private:
     static rapidjson::Document doc;
 
-    static void add_nested_member(std::vector<std::string>::iterator begin,
-                                  std::vector<std::string>::iterator end,
-                                  rapidjson::Value& val,
-                                  rapidjson::Value& parent,
-                                  rapidjson::Document::AllocatorType& allocator,
-                                  bool IsArray = false
-                                  );
-};
-template <>
-void AbacusJson::add_json(std::vector<std::string> keys, const std::string& value,bool IsArray);
+    static void add_nested_member(std::vector<jsonKeyNode>::iterator begin,
+                                    std::vector<jsonKeyNode>::iterator end,
+                                    rapidjson::Value& val,
+                                    rapidjson::Value& parent,
+                                    rapidjson::Document::AllocatorType& allocator,
+                                    bool IsArray
+                                    );
+  };
 
 template <>
-void AbacusJson::add_json(std::vector<std::string> keys, const rapidjson::Value& value,bool IsArray);
+void AbacusJson::add_json(std::vector<jsonKeyNode> keys, const std::string& value,bool IsArray);
+
+template <>
+void AbacusJson::add_json(std::vector<jsonKeyNode> keys, const rapidjson::Value& value,bool IsArray);
 
 
 } // namespace Json

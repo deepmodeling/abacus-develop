@@ -162,15 +162,15 @@ void bind_m_nao(py::module& m)
                     grad_out = new double[3];
                 }
                 self.calculate(itype1, l1, izeta1, m1, itype2, l2, izeta2, m2, vR, out, grad_out);
-                py::array_t<double> out_array({1}, out);
+                py::array_t<double> out_array(1, out);
                 if (cal_grad)
                 {
-                    py::array_t<double> grad_out_array({3}, grad_out);
+                    py::array_t<double> grad_out_array(3, grad_out);
                     return py::make_tuple(out_array, grad_out_array);
                 }
                 else
                 {
-                    py::array_t<double> grad_out_array({0});
+                    py::array_t<double> grad_out_array(0);
                     return py::make_tuple(out_array, grad_out_array);
                 }
             },
@@ -475,22 +475,22 @@ void bind_m_nao(py::module& m)
         .def_property_readonly("rgrid",
                                [](NumericalRadial& self) {
                                    const double* rgrid = self.rgrid();
-                                   return py::array_t<double>({self.nr()}, rgrid);
+                                   return py::array_t<double>(self.nr(), rgrid);
                                })
         .def_property_readonly("kgrid",
                                [](NumericalRadial& self) {
                                    const double* kgrid = self.kgrid();
-                                   return py::array_t<double>({self.nk()}, kgrid);
+                                   return py::array_t<double>(self.nk(), kgrid);
                                })
         .def_property_readonly("rvalue",
                                [](NumericalRadial& self) {
                                    const double* rvalue = self.rvalue();
-                                   return py::array_t<double>({self.nr()}, rvalue);
+                                   return py::array_t<double>(self.nr(), rvalue);
                                })
         .def_property_readonly("kvalue",
                                [](NumericalRadial& self) {
                                    const double* kvalue = self.kvalue();
-                                   return py::array_t<double>({self.nk()}, kvalue);
+                                   return py::array_t<double>(self.nk(), kvalue);
                                })
         .def_property_readonly("is_fft_compliant", overload_cast_<>()(&NumericalRadial::is_fft_compliant, py::const_));
 }

@@ -1,0 +1,26 @@
+name: Pyabacus Build and Test
+
+on:
+  pull_request:
+
+jobs:
+  test:
+    name: PyTest
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/deepmodeling/abacus-gnu
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+            python-version: 3.8
+      - name: Build Pyabacus
+        run: |
+          cd python/pyabacus
+          python -m pip install -v .[test]
+      - name: Test Pyabacus
+        run: |
+          cd python/pyabacus/tests
+          pytest -v
