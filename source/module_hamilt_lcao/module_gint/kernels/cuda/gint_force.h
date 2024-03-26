@@ -22,7 +22,8 @@ namespace GintKernel{
 void gint_gamma_force_gpu(hamilt::HContainer<double> *dm, const double vfactor,
                           const double *vlocal, double *force, double *stress,
                           const int nczp, const double *ylmcoef_now,
-                          const Grid_Technique &gridt,const LCAO_Orbitals &ORB,
+                          const double dr, const double *rcut,
+                          const Grid_Technique &gridt,
                           const UnitCell &ucell);
 
 /**
@@ -66,7 +67,7 @@ void gint_gamma_force_gpu(hamilt::HContainer<double> *dm, const double vfactor,
  * @param dot_count Reference to dot_count.
  */
 void gtask_force(
-    const Grid_Technique &gridt, const LCAO_Orbitals &ORB,
+    const Grid_Technique &gridt, const double *rcut,
     const UnitCell &ucell, const int i, const int j,
     const int psi_size_max, const int max_size, const int nczp,
     const double vfactor, const double *vlocal_global_value, int *iat_per_nbz,

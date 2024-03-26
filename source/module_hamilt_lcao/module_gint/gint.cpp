@@ -76,11 +76,19 @@ void Gint::cal_gint(Gint_inout *inout) {
           ylmcoef[i] = ModuleBase::Ylm::ylmcoef[i];
         }
 
+        const int ntype = GlobalC::ORB.get_ntype();
+        double *rcut = new double[ntype];
+        for (int it = 0; it < ntype; it++) {
+          rcut[it] = GlobalC::ORB.Phi[it].getRcut();
+        }
+
+        const double dr = GlobalC::ORB.dr_uniform;
+
       if (inout->job == Gint_Tools::job_type::vlocal) {
         GintKernel::gint_gamma_vl_gpu(this->hRGint, lgd, max_size,
                           GlobalC::ucell.omega / this->ncxyz, inout->vl, ylmcoef,
                           this->nplane, this->nbxx,
-                          *this->gridt, GlobalC::ORB, GlobalC::ucell);
+                          dr, rcut, *this->gridt, GlobalC::ucell);
         ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
         return;
       } else if (inout->job == Gint_Tools::job_type::rho) {
@@ -88,7 +96,7 @@ void Gint::cal_gint(Gint_inout *inout) {
         for (int is = 0; is < GlobalV::NSPIN; ++is) {
           ModuleBase::GlobalFunc::ZEROS(inout->rho[is], nrxx);
           GintKernel::gint_gamma_rho_gpu(this->DMRGint[is], this->nplane, ylmcoef, 
-                                            *this->gridt, GlobalC::ORB, GlobalC::ucell, inout->rho[is]);
+                                            dr, rcut, *this->gridt, GlobalC::ucell, inout->rho[is]);
         }
         ModuleBase::timer::tick("Gint_interface", "cal_gint_rho");
         return;
@@ -108,7 +116,7 @@ void Gint::cal_gint(Gint_inout *inout) {
           GintKernel::gint_gamma_force_gpu(
               this->DMRGint[is], GlobalC::ucell.omega / this->ncxyz, inout->vl,
               force, stress, this->nplane, ylmcoef,
-               *this->gridt, GlobalC::ORB, GlobalC::ucell);
+              dr, rcut, *this->gridt, GlobalC::ucell);
           for (int iat = 0; iat < nat; iat++) {
             inout->fvl_dphi[0](iat, 0) += force[iat * 3];
             inout->fvl_dphi[0](iat, 1) += force[iat * 3 + 1];

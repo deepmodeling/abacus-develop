@@ -28,7 +28,8 @@ namespace GintKernel{
 void gint_gamma_force_gpu(hamilt::HContainer<double> *dm, const double vfactor,
                           const double *vlocal, double *force, double *stress,
                           const int nczp, const double *ylmcoef_now,
-                          const Grid_Technique &gridt, const LCAO_Orbitals &ORB,
+                          const double dr, const double *rcut,
+                          const Grid_Technique &gridt,
                           const UnitCell &ucell) 
 {
   const int nbz = gridt.nbzp;
@@ -225,7 +226,7 @@ void gint_gamma_force_gpu(hamilt::HContainer<double> *dm, const double vfactor,
       checkCuda(cudaStreamSynchronize(gridt.streams[stream_num]));
       /*gpu task compute in CPU */
       gtask_force(
-          gridt, ORB, ucell, i, j, gridt.psi_size_max_per_z, max_size, nczp, vfactor,
+          gridt, rcut, ucell, i, j, gridt.psi_size_max_per_z, max_size, nczp, vfactor,
           vlocal, iat, psi_input_double, psi_input_int, num_psir, lgd,
           psir_ylm_right_g, psir_ylm_dm_g, dm_matrix_g, atom_pair_A_m,
           atom_pair_B_n, atom_pair_k, atom_pair_lda, atom_pair_ldb,
@@ -328,7 +329,7 @@ void gint_gamma_force_gpu(hamilt::HContainer<double> *dm, const double vfactor,
       dim3 block_psi(64);
       /* cuda stream compute and Multiplication of multinomial matrices */
       get_psi_force<<<grid_psi, block_psi, 0, gridt.streams[stream_num]>>>(
-          gridt.ylmcoef_g, ORB.dr_uniform, gridt.bxyz,
+          gridt.ylmcoef_g, dr, gridt.bxyz,
           ucell.nwmax, psi_input_double_g, psi_input_int_g, num_psir_g,
           gridt.psi_size_max_per_z, gridt.ucell_atom_nwl_g,
           gridt.atom_iw2_new_g, gridt.atom_iw2_ylm_g, gridt.atom_iw2_l_g,

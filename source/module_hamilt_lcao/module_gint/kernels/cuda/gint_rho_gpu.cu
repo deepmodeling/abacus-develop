@@ -10,8 +10,9 @@ namespace GintKernel{
 void gint_gamma_rho_gpu(const hamilt::HContainer<double> *dm,
                         const int nczp,
                         const double *ylmcoef_now,
+                        const double dr,
+                        const double *rcut,
                         const Grid_Technique &gridt,
-                        const LCAO_Orbitals &ORB,
                         const UnitCell &ucell,
                         double *rho)
 {
@@ -135,7 +136,7 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double> *dm,
             // generate GPU tasks on CPU, including the calculation of psir, matrix multiplication, and dot product
             gtask_rho(gridt, i, j,
                       max_size, nczp,
-                      ucell, ORB,
+                      ucell, rcut,
                       psi_input_double,
                       psi_input_int,
                       num_psir,
@@ -193,7 +194,7 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double> *dm,
             dim3 grid_psi(nbz, 8);
             dim3 block_psi(64);
             get_psi<<<grid_psi, block_psi, 0, gridt.streams[stream_num]>>>(gridt.ylmcoef_g,
-                                                                        ORB.dr_uniform,
+                                                                        dr,
                                                                         gridt.bxyz,
                                                                         ucell.nwmax,
                                                                         psi_input_double_g,

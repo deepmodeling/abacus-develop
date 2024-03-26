@@ -1,5 +1,4 @@
 #include "gint_force.h"
-#include "module_basis/module_ao/ORB_read.h"
 #include "module_base/ylm.h"
 #include "module_hamilt_lcao/module_gint/gint_tools.h"
 #include "omp.h"
@@ -40,7 +39,7 @@ namespace GintKernel{
  * @param atom_pair_num The reference to atom_pair_num.
  */
 void gtask_force(
-    const Grid_Technique &gridt, const LCAO_Orbitals &ORB,
+    const Grid_Technique &gridt, const double *rcut,
     const UnitCell &ucell, const int i, const int j,
     const int psi_size_max, const int max_size, const int nczp,
     const double vfactor, const double *vlocal_global_value, int *iat_per_nbz,
@@ -90,7 +89,7 @@ void gtask_force(
             double distance =
                 sqrt(dr_temp[0] * dr_temp[0] + dr_temp[1] * dr_temp[1] +
                      dr_temp[2] * dr_temp[2]);
-            if (distance <= ORB.Phi[it_temp].getRcut()) {
+            if (distance <= rcut[it_temp]) {
               gpu_mat_cal_flag[calc_flag_index + id] = true;
               int pos_temp_double = num_psi_pos + num_get_psi;
               int pos_temp_int = pos_temp_double * 2;

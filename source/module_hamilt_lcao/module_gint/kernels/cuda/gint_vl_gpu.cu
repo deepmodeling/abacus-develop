@@ -19,8 +19,9 @@ namespace GintKernel{
  * @param ylmcoef_now Pointer to the Ylm coefficients array.
  * @param nczp The number of grid layers in the C direction.
  * @param nbxx The total number of grid points.
+ * @param dr The grid spacing.
+ * @param rcut Pointer to the cutoff radius array.
  * @param gridt The Grid_Technique object containing grid information.
- * @param ORB The LCAO_Orbitals object containing orbital information.
  * @param ucell The UnitCell object containing unit cell information.
  * 
  * @note The grid integration on the GPU is mainly divided into the following steps:
@@ -38,8 +39,9 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
                        const double *ylmcoef_now,
                        const int nczp,
                        const int nbxx,
+                       const double dr,
+                       const double *rcut,
                        const Grid_Technique &gridt,
-                       const LCAO_Orbitals &ORB,
                        const UnitCell &ucell)
 {
     const int nbz = gridt.nbzp;
@@ -127,7 +129,7 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
             int max_n = 0;
 
             gtask_vlocal(gridt, 
-                         ORB, ucell,
+                         rcut, ucell,
                          i, j,
                          max_size, nczp,
                          vfactor,
@@ -177,7 +179,7 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
             dim3 block_psi(64);
 
             get_psi_and_vldr3<<<grid_psi, block_psi, 0, gridt.streams[stream_num]>>>(gridt.ylmcoef_g,
-                                                                                ORB.dr_uniform,
+                                                                                dr,
                                                                                 gridt.bxyz,
                                                                                 ucell.nwmax,
                                                                                 psi_input_double_g,

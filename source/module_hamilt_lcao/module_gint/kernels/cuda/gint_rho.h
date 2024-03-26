@@ -15,16 +15,18 @@ namespace GintKernel{
  * @param dm density matrix.
  * @param nczp number of meshcells along the z-axis on this processor.
  * @param ylmcoef_now coefficients for the spherical harmonics expansion.
+ * @param dr The grid spacing.
+ * @param rcut Pointer to the cutoff radius array.
  * @param gridt Grid_Technique object containing grid information.
- * @param ORB LCAO_Orbitals.
  * @param ucell UnitCell.
  * @param rho rho.
  */
 void gint_gamma_rho_gpu(const hamilt::HContainer<double> *dm,
                         const int nczp,
                         const double *ylmcoef_now,
+                        const double dr,
+                        const double *rcut,
                         const Grid_Technique &gridt,
-                        const LCAO_Orbitals &ORB,
                         const UnitCell &ucell,
                         double *rho);
 
@@ -41,7 +43,7 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double> *dm,
  * @param max_size maximum number of atoms on a meshcell.
  * @param nczp number of meshcells along the z-axis on this processor.
  * @param ucell UnitCell object containing unit cell information.
- * @param ORB LCAO_Orbitals object containing LCAO orbital information.
+ * @param rcut Pointer to the cutoff radius array.
  * @param psi_input_double `double` type data used for calculating psir.
  * @param psi_input_int `int` type data used for calculating psir.
  * @param num_psir number of atoms on each bigcell.
@@ -76,7 +78,7 @@ void gtask_rho(const Grid_Technique &gridt,
                             const int max_size,
                             const int nczp,
                             const UnitCell &ucell,
-                            const LCAO_Orbitals &ORB,
+                            const double *rcut,
                             double *psi_input_double, int *psi_input_int,
                             int *num_psir,
                             const int lgd,
