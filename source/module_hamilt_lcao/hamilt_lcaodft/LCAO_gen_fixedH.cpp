@@ -268,9 +268,28 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 								{
 									if(dtype=='S')
 									{
-										this->LM->DSloc_Rx[nnr] = olm[0];
-										this->LM->DSloc_Ry[nnr] = olm[1];
-										this->LM->DSloc_Rz[nnr] = olm[2];
+										if (GlobalV::NSPIN != 4)
+										{
+											this->LM->DSloc_Rx[nnr] = olm[0];
+											this->LM->DSloc_Ry[nnr] = olm[1];
+											this->LM->DSloc_Rz[nnr] = olm[2];
+										}
+                                        else
+										{
+											int is = (jj-jj0*GlobalV::NPOL) + (kk-kk0*GlobalV::NPOL)*2;
+											if (is ==0 || is ==3)
+											{
+												this->LM->DSloc_Rx[nnr] = olm[0];
+												this->LM->DSloc_Ry[nnr] = olm[1];
+												this->LM->DSloc_Rz[nnr] = olm[2];
+											}
+											else
+											{
+												this->LM->DSloc_Rx[nnr] = 0.0;
+												this->LM->DSloc_Ry[nnr] = 0.0;
+												this->LM->DSloc_Rz[nnr] = 0.0;
+											}
+                                        }
 										if(GlobalV::CAL_STRESS)
 										{
 											this->LM->DH_r[nnr*3] = dtau.x;

@@ -409,7 +409,7 @@ void Force_LCAO_k::cal_foverlap_k(const bool isforce,
                     {
                         // here do not sum over spin due to EDM.sum_DMR_spin();
                         double edm2d1 = tmp_matrix->get_value(mu,nu);
-                        double edm2d2 = 2.0 * edm2d1;
+                        double edm2d2 = (GlobalV::NSPIN == 4 && (mu % 2 == 1 || nu % 2 == 1)) ? 0.0 : 2.0 * edm2d1;
 
                         if (isforce)
                         {
