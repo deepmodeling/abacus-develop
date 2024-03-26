@@ -8,7 +8,7 @@
 
 cudaError_t checkCuda(cudaError_t result);
 
-namespace lcaoCudaKernel{
+namespace GintKernel{
 
 void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint, int lgd_now,
                        const int max_size, double vfactor,
@@ -40,6 +40,6 @@ void gtask_vlocal(const Grid_Technique &gridt,
                               int & max_m,
                               int & max_n);
 
-} // namespace lcaoCudaKernel
+} // namespace GintKernel
 
 #endif

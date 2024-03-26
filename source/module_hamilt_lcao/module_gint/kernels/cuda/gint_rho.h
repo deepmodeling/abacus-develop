@@ -7,7 +7,7 @@
 #include <cuda_runtime.h>
 
 cudaError_t checkCuda(cudaError_t result);
-namespace lcaoCudaKernel{
+namespace GintKernel{
 
 /**
  * calculate the rho by GPU
@@ -104,5 +104,5 @@ void gtask_rho(const Grid_Technique &gridt,
                             int &dot_count 
                             );
 
-} // namespace lcaoCudaKernel
+} // namespace GintKernel
 #endif

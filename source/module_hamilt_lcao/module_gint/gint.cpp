@@ -77,7 +77,7 @@ void Gint::cal_gint(Gint_inout *inout) {
         for (int i = 0; i < 100; i++) {
           ylmcoef[i] = ModuleBase::Ylm::ylmcoef[i];
         }
-        lcaoCudaKernel::gint_gamma_vl_gpu(this->hRGint, lgd, max_size,
+        GintKernel::gint_gamma_vl_gpu(this->hRGint, lgd, max_size,
                           GlobalC::ucell.omega / this->ncxyz, inout->vl, ylmcoef,
                           this->nplane, this->nbxx,
                           *this->gridt, GlobalC::ORB, GlobalC::ucell);
@@ -94,7 +94,7 @@ void Gint::cal_gint(Gint_inout *inout) {
         const int nrxx = this->gridt->ncx * this->gridt->ncy * this->nplane;
         for (int is = 0; is < GlobalV::NSPIN; ++is) {
           ModuleBase::GlobalFunc::ZEROS(inout->rho[is], nrxx);
-          lcaoCudaKernel::gint_gamma_rho_gpu(this->DMRGint[is], this->nplane, ylmcoef, 
+          GintKernel::gint_gamma_rho_gpu(this->DMRGint[is], this->nplane, ylmcoef, 
                                             *this->gridt, GlobalC::ORB, GlobalC::ucell, inout->rho[is]);
         }
         ModuleBase::timer::tick("Gint_interface", "cal_gint_rho");
@@ -118,7 +118,7 @@ void Gint::cal_gint(Gint_inout *inout) {
           for (int i = 0; i < 6; i++) {
             stress[i] = 0.0;
           }
-          lcaoCudaKernel::gint_gamma_force_gpu(
+          GintKernel::gint_gamma_force_gpu(
               this->DMRGint[is], GlobalC::ucell.omega / this->ncxyz, inout->vl,
               force, stress, this->nplane, ylmcoef,
                *this->gridt, GlobalC::ORB, GlobalC::ucell);

@@ -2,7 +2,7 @@
 #define GINT_FORCE_CUH
 
 #include <cuda_runtime.h>
-namespace lcaoCudaKernel
+namespace GintKernel
 {
     
 /**
@@ -109,5 +109,5 @@ __global__ void dot_product_force(double *dpsir_ylm_left_x,
                                   double *force_dot, int *iat, int nwmax,
                                   int max_size, int elements_num);
 
-} // namespace lcaoCudaKernel
+} // namespace GintKernel
 #endif // GINT_VL_CUH

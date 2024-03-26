@@ -2,7 +2,7 @@
 #define GINT_VL_CUH
 
 #include <cuda_runtime.h>
-namespace lcaoCudaKernel{
+namespace GintKernel{
 /*
  * @brief: get the value of the spherical harmonics
  * 
@@ -32,5 +32,5 @@ __global__ void get_psi_and_vldr3(double *ylmcoef,
                                   double *psir_ylm_left,
                                   double *psir_ylm_right);
 
-} // namespace lcaoCudaKernel
+} // namespace GintKernel
 #endif // GINT_VL_CUH

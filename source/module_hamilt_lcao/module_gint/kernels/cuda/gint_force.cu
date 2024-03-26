@@ -3,7 +3,7 @@
 #include "module_hamilt_lcao/module_gint/kernels/cuda/vbatch_matrix_multiple/cuda_tools.cuh"
 #include "module_hamilt_lcao/module_gint/kernels/cuda/sph.cuh"
 // CUDA kernel to calculate psi and force
-namespace lcaoCudaKernel{
+namespace GintKernel{
 
 /*!
  * \file
@@ -256,4 +256,4 @@ __global__ void dot_product_force(double *dpsir_ylm_left_x,
   }
 }
 
-} // namespace lcaoCudaKernel
+} // namespace GintKernel

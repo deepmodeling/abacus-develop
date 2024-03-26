@@ -8,7 +8,7 @@
 #include "omp.h"
 #include "vbatch_matrix_multiple/cuda_tools.cuh"
 
-namespace lcaoCudaKernel{
+namespace GintKernel{
 
 // Function to calculate forces using GPU-accelerated gamma point Gint
 /**
@@ -397,4 +397,4 @@ void gint_gamma_force_gpu(hamilt::HContainer<double> *dm, const double vfactor,
   }
 }
 
-} // namespace lcaoCudaKernel
+} // namespace GintKernel

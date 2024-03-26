@@ -3,7 +3,7 @@
 #include "module_base/ylm.h"
 #include "module_hamilt_lcao/module_gint/gint_tools.h"
 #include "omp.h"
-namespace lcaoCudaKernel{
+namespace GintKernel{
 
 /**
  * @brief Description of the function.
@@ -186,4 +186,4 @@ void gtask_force(
   delete[] gpu_mat_cal_flag;
 }
 
-} // namespace lcaoCudaKernel
+} // namespace GintKernel

@@ -2,7 +2,7 @@
 #include "module_hamilt_lcao/module_gint/kernels/cuda/gint_vl.h"
 #include "module_hamilt_lcao/module_gint/kernels/cuda/vbatch_matrix_multiple/cuda_tools.cuh"
 #include "sph.cuh"
-namespace lcaoCudaKernel{
+namespace GintKernel{
 
 __global__ void get_psi_and_vldr3(double *ylmcoef,
                                   double delta_r_g,
@@ -74,4 +74,4 @@ __global__ void get_psi_and_vldr3(double *ylmcoef,
     }
 }
 
-} // namespace lcaoCudaKernel
+} // namespace GintKernel

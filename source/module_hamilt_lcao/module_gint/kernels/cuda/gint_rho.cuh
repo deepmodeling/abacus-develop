@@ -2,7 +2,7 @@
 #define GINT_RHO_CUH
 
 #include <cuda_runtime.h>
-namespace lcaoCudaKernel{
+namespace GintKernel{
     
 /**
  * @brief CUDA kernel to calculate psir.
@@ -60,5 +60,5 @@ __global__ void psir_dot(int * n,
                         double **results_g,
                         int batchcount);
 
-} // namespace lcaoCudaKernel
+} // namespace GintKernel
 #endif // GINT_RHO_CUH

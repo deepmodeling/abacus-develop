@@ -3,7 +3,7 @@
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_base/ylm.h"
 #include "module_hamilt_lcao/module_gint/gint_tools.h"
-namespace lcaoCudaKernel{
+namespace GintKernel{
 
 void gtask_rho(const Grid_Technique &gridt, 
                const int i, const int j,
@@ -190,4 +190,4 @@ void gtask_rho(const Grid_Technique &gridt,
   delete[] gpu_mat_cal_flag;
 } 
 
-} // namespace lcaoCudaKernel
+} // namespace GintKernel

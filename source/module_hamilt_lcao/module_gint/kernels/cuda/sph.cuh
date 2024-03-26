@@ -4,7 +4,7 @@
 #include "cuda_runtime.h"  
 #include "device_launch_parameters.h"
 
-namespace lcaoCudaKernel{
+namespace GintKernel{
 
 static __device__  void spherical_harmonics(double *dr,double distance,int nwl,double (&ylma)[49],double *ylmcoef)
 {
@@ -488,6 +488,6 @@ static __device__  void spherical_harmonics_d(double *dr,double distance,double 
     }*/
 }
 
-} // lcaoCudaKernel
+} // GintKernel
 
 #endif

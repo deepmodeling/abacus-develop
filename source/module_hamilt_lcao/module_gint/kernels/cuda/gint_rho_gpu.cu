@@ -5,7 +5,7 @@
 #include "vbatch_matrix_multiple/vbatch_matrix_mul.cuh"
 #include "vbatch_matrix_multiple/cuda_tools.cuh"
 
-namespace lcaoCudaKernel{
+namespace GintKernel{
 
 void gint_gamma_rho_gpu(const hamilt::HContainer<double> *dm,
                         const int nczp,
@@ -248,4 +248,4 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double> *dm,
             delete[] dm_matrix_h;
             }
 
-            } // namespace lcaoCudaKernel
+            } // namespace GintKernel

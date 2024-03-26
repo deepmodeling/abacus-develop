@@ -2,7 +2,7 @@
 #include "module_hamilt_lcao/module_gint/kernels/cuda/gint_rho.h"
 #include "sph.cuh"
 
-namespace lcaoCudaKernel{
+namespace GintKernel{
 
 __global__ void get_psi(double *ylmcoef,
                         double delta_r_g,
@@ -95,4 +95,4 @@ __global__ void psir_dot(int * n,
     }
 }
 
-} // namespace lcaoCudaKernel
+} // namespace GintKernel

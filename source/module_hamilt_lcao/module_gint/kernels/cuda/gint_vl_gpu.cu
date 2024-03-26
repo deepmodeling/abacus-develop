@@ -6,7 +6,7 @@
 #include "vbatch_matrix_multiple/cuda_tools.cuh"
 #include <omp.h>
 
-namespace lcaoCudaKernel{
+namespace GintKernel{
 
 /**
  * Computes the gamma component of the VL (Vlocal) integral on the GPU.
@@ -242,4 +242,4 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double> *hRGint,
     }
 }
 
-} // namespace lcaoCudaKernel
+} // namespace GintKernel

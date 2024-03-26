@@ -3,7 +3,7 @@
 
 #include "module_hamilt_lcao/module_gint/gint.h"
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
-namespace lcaoCudaKernel{
+namespace GintKernel{
     
 /**
  * @brief Calculate forces using GPU.
@@ -76,5 +76,5 @@ void gtask_force(
     double **mat_A, double **mat_B, double **mat_C, int &max_m, int &max_n,
     int &atom_pair_num);
 
-} // namespace lcaoCudaKernel
+} // namespace GintKernel
 #endif

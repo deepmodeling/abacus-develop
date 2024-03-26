@@ -3,7 +3,7 @@
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_base/ylm.h"
 #include "module_hamilt_lcao/module_gint/gint_tools.h"
-namespace lcaoCudaKernel{
+namespace GintKernel{
 
 void gtask_vlocal(const Grid_Technique &gridt, 
                   const LCAO_Orbitals &ORB,
@@ -168,4 +168,4 @@ void gtask_vlocal(const Grid_Technique &gridt,
   delete[] gpu_matrix_calc_flag;
 }
 
-} // namespace lcaoCudaKernel
+} // namespace GintKernel
