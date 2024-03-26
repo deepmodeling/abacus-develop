@@ -99,12 +99,22 @@ extern "C"
                 		const std::complex<double> *beta,
 		const std::complex<double> *c, const int *ic, const int *jc, const int *descc);
 
-  void pztranc_(
+    void pztranc_(
 		const int *M, const int *N,
 		const std::complex<double> *alpha,
 		const std::complex<double> *A, const int *IA, const int *JA, const int *DESCA,
 		const std::complex<double> *beta,
 		std::complex<double> *C, const int *IC, const int *JC, const int *DESCC);
+	
+    void pdgemr2d_(const int *M, const int *N,
+	    double *A, const int *IA, const int *JA, const int *DESCA, 
+		double *B, const int *IB, const int *JB, const int *DESCB,
+		const int *ICTXT);			   
+		
+    void pzgemr2d_(const int *M, const int *N,
+	    std::complex<double> *A, const int *IA, const int *JA, const int *DESCA, 
+		std::complex<double> *B, const int *IB, const int *JB, const int *DESCB,
+		const int *ICTXT);
 }
 
 class ScalapackConnector
