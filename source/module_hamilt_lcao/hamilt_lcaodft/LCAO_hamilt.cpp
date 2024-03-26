@@ -309,6 +309,77 @@ void LCAO_Hamilt::read_mat_npz(std::string& zipname, hamilt::HContainer<double>&
         cnpy::npz_t my_npz = cnpy::npz_load(zipname);
         std::vector<std::string> fnames;
 
+        //check consistency
+        // 1. lattice vectors
+        double* lattice_vector = my_npz["lattice_vectors"].data<double>();
+        assert(std::abs(lattice_vector[0] - GlobalC::ucell.lat0 * GlobalC::ucell.a1.x) < 1e-6);
+        assert(std::abs(lattice_vector[1] - GlobalC::ucell.lat0 * GlobalC::ucell.a1.y) < 1e-6);
+        assert(std::abs(lattice_vector[2] - GlobalC::ucell.lat0 * GlobalC::ucell.a1.z) < 1e-6);
+        assert(std::abs(lattice_vector[3] - GlobalC::ucell.lat0 * GlobalC::ucell.a2.x) < 1e-6);
+        assert(std::abs(lattice_vector[4] - GlobalC::ucell.lat0 * GlobalC::ucell.a2.y) < 1e-6);
+        assert(std::abs(lattice_vector[5] - GlobalC::ucell.lat0 * GlobalC::ucell.a2.z) < 1e-6);
+        assert(std::abs(lattice_vector[6] - GlobalC::ucell.lat0 * GlobalC::ucell.a3.x) < 1e-6);
+        assert(std::abs(lattice_vector[7] - GlobalC::ucell.lat0 * GlobalC::ucell.a3.y) < 1e-6);
+        assert(std::abs(lattice_vector[8] - GlobalC::ucell.lat0 * GlobalC::ucell.a3.z) < 1e-6);
+
+        // 2. atoms
+        double* atom_info = my_npz["atom_info"].data<double>();
+        for(int iat = 0; iat < GlobalC::ucell.nat; ++iat)
+        {
+            const int it = GlobalC::ucell.iat2it[iat];
+            const int ia = GlobalC::ucell.iat2ia[iat];
+
+            //get atomic number (copied from write_cube.cpp)
+            std::string element = "";
+            element = GlobalC::ucell.atoms[it].label;
+			std::string::iterator temp = element.begin();
+			while (temp != element.end())
+			{
+				if ((*temp >= '1') && (*temp <= '9'))
+				{
+					temp = element.erase(temp);
+				}
+				else
+				{
+					temp++;
+				}
+			}
+            int z = 0;
+            for(int j=0; j!=ModuleBase::element_name.size(); j++)
+            {
+                if (element == ModuleBase::element_name[j])
+                {
+                    z=j+1;
+                    break;
+                }
+            }
+
+            assert(atom_info[iat*5] == it);
+            assert(atom_info[iat*5+1] == z);
+            //I will not be checking the coordinates for now in case the direct coordinates provided in the 
+            //npz file do not fall in the range [0,1); if a protocol is to be set in the future such that
+            //this could be guaranteed, then the following lines could be uncommented
+            //assert(std::abs(atom_info[iat*5+2] - GlobalC::ucell.atoms[it].taud[ia].x) < 1e-6);
+            //assert(std::abs(atom_info[iat*5+3] - GlobalC::ucell.atoms[it].taud[ia].y) < 1e-6);
+            //assert(std::abs(atom_info[iat*5+4] - GlobalC::ucell.atoms[it].taud[ia].z) < 1e-6);            
+        }
+
+        // 3. orbitals
+        for(int it = 0; it < GlobalC::ucell.ntype; ++it)
+        {
+            std::string filename="orbital_info_"+std::to_string(it);
+            double* orbital_info = my_npz[filename].data<double>();
+            for(int iw = 0; iw < GlobalC::ucell.atoms[it].nw; ++iw)
+            {
+                assert(orbital_info[iw*3] == GlobalC::ucell.atoms[it].iw2n[iw]);
+                assert(orbital_info[iw*3+1] == GlobalC::ucell.atoms[it].iw2l[iw]);
+                const int im = GlobalC::ucell.atoms[it].iw2m[iw];
+                const int m = (im % 2 == 0) ? -im/2 : (im+1)/2; // copied from LCAO_gen_fixedH.cpp
+                assert(orbital_info[iw*3+2] == m);
+            }
+        }
+
+        //starts reading the matrix
         for(auto const& imap: my_npz)
             fnames.push_back(imap.first);
 
