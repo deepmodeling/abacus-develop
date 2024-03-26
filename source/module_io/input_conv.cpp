@@ -446,12 +446,12 @@ void Input_Conv::Convert(void)
 
         if (INPUT.cal_force || INPUT.cal_stress)
         {
-            ModuleBase::WARNING_QUIT("input_conv", "force & stress not ready for soc yet!");
+            ModuleBase::WARNING_QUIT("input_conv", "force & stress not ready for nspin=4(soc or noncollinear-spin) yet!");
         }
 
         if(INPUT.gamma_only_local)
         {
-            ModuleBase::WARNING_QUIT("input_conv", "soc does not support gamma only calculation");
+            ModuleBase::WARNING_QUIT("input_conv", "nspin=4(soc or noncollinear-spin) does not support gamma only calculation");
         }
     }
     else
