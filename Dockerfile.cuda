@@ -17,7 +17,7 @@ ADD https://api.github.com/repos/deepmodeling/abacus-develop/git/refs/heads/deve
 
 RUN git clone https://github.com/deepmodeling/abacus-develop.git --depth 1 && \
     cd abacus-develop && \
-    cmake -B build -DUSE_CUDA=ON && \
+    cmake -B build -DUSE_CUDA=ON -DENABLE_RAPIDJSON=ON && \
     cmake --build build -j`nproc` && \
     cmake --install build && \
     rm -rf build && \
