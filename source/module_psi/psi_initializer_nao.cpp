@@ -16,125 +16,77 @@
 #include "module_base/parallel_reduce.h"
 #endif
 
-template <typename T, typename Device>
-#ifdef __MPI
-psi_initializer_nao<T, Device>::psi_initializer_nao(Structure_Factor* sf_in, ModulePW::PW_Basis_K* pw_wfc_in, UnitCell* p_ucell_in, Parallel_Kpoints* p_parakpts_in, int random_seed_in)
-                    : psi_initializer<T, Device>(sf_in, pw_wfc_in, p_ucell_in, p_parakpts_in, random_seed_in)
-#else
-psi_initializer_nao<T, Device>::psi_initializer_nao(Structure_Factor* sf_in, ModulePW::PW_Basis_K* pw_wfc_in, UnitCell* p_ucell_in, int random_seed_in)
-                    : psi_initializer<T, Device>(sf_in, pw_wfc_in, p_ucell_in, random_seed_in)
-#endif
-{
-    this->set_method("nao");
-}
-
-template <typename T, typename Device>
-psi_initializer_nao<T, Device>::~psi_initializer_nao() {}
-
 /*
 I don't know why some variables are distributed while others not... for example the orbital_files...
 We need not only read and import, but also distribute here
 */
-template <typename T, typename Device>
-void psi_initializer_nao<T, Device>::set_orbital_files(std::string* orbital_files)
+
+// free function, not needed to be a member of psi_initializer_nao
+void normalize(const std::vector<double>& r, std::vector<double>& flz)
 {
-    ModuleBase::timer::tick("psi_initializer_nao", "set_orbital_files");
-    #ifdef __MPI
-    if(GlobalV::MY_RANK == 0)
-    {
-    #endif
-        for (int itype = 0; itype < this->p_ucell->ntype; itype++)
-        {
-            this->orbital_files.push_back(orbital_files[itype]);
-        }
-    #ifdef __MPI
-    }
-    else
-    {
-        this->orbital_files.resize(this->p_ucell->ntype);
-    }
-    Parallel_Common::bcast_string(this->orbital_files.data(), this->p_ucell->ntype);
-    #endif
-    ModuleBase::timer::tick("psi_initializer_nao", "set_orbital_files");
+    std::vector<double> flz2r2(r.size());
+    std::transform(r.begin(), r.end(), flz.begin(), flz2r2.begin(), [](double r, double flz){return flz*flz*r*r;});
+    double dr = r[1] - r[0];
+    double norm = ModuleBase::Integral::simpson(r.size(), flz2r2.data(), dr);
+    norm = sqrt(norm);
+    std::transform(flz.begin(), flz.end(), flz.begin(), [norm](double flz){return flz/norm;});
 }
 
 template <typename T, typename Device>
-void psi_initializer_nao<T, Device>::create_ovlp_Xjlq()
+void psi_initializer_nao<T, Device>::read_external_orbs(std::string* orbital_files,
+                                                        const int& rank)
 {
-    // find correct dimension for ovlp_flzjlq
-    int dim1 = this->p_ucell->ntype;
-    int dim2 = 0; // dim2 should be the maximum number of zeta for each atomtype
-    for (int it = 0; it < this->p_ucell->ntype; it++)
+    ModuleBase::timer::tick("psi_initializer_nao", "read_external_orbs");
+    if(rank == 0)
     {
-        int nzeta = 0;
-        for (int l = 0; l < this->p_ucell->atoms[it].nwl+1; l++)
+        for (int itype = 0; itype < this->p_ucell_->ntype; itype++)
         {
-            nzeta += this->p_ucell->atoms[it].l_nchi[l];
+            this->orbital_files_.push_back(orbital_files[itype]);
         }
-        dim2 = (nzeta > dim2) ? nzeta : dim2;
-    }
-    if (dim2 == 0)
-    {
-        ModuleBase::WARNING_QUIT("psi_initializer_nao<T, Device>::psi_initializer_nao", "there is not ANY numerical atomic orbital read in present system, quit.");
-    }
-    int dim3 = GlobalV::NQX;
-    // allocate memory for ovlp_flzjlq
-    this->ovlp_flzjlq.create(dim1, dim2, dim3);
-    this->ovlp_flzjlq.zero_out();
-}
-
-template <typename T, typename Device>
-void psi_initializer_nao<T, Device>::read_orbital_files()
-{
-    ModuleBase::timer::tick("psi_initializer_nao", "read_orbital_files");
-    #ifdef __MPI
-    if(GlobalV::MY_RANK==0)
-    {
-    #endif
-        for(int it = 0; it < this->p_ucell->ntype; it++)
+        for(int it = 0; it < this->p_ucell_->ntype; it++)
         {
             // number of chi per atomtype
             int nchi = 0;
-            for(int l = 0; l <= this->p_ucell->atoms[it].nwl; l++)
+            for(int l = 0; l <= this->p_ucell_->atoms[it].nwl; l++)
             {
-                nchi += this->p_ucell->atoms[it].l_nchi[l];
+                nchi += this->p_ucell_->atoms[it].l_nchi[l];
             }
             
             std::vector<int> n_rgrid_it;
             std::vector<std::vector<double>> rgrid_it;
-            std::vector<std::vector<double>> flz_it;
+            std::vector<std::vector<double>> rvalue_it;
 
             std::ifstream ifs_it;
-            ifs_it.open(GlobalV::global_orbital_dir+this->orbital_files[it]);
+            ifs_it.open(GlobalV::global_orbital_dir+this->orbital_files_[it]);
 
             if(!ifs_it)
             {
-                GlobalV::ofs_warning<<"psi_initializer_nao<T, Device>::read_orbital_files: cannot open orbital file: "<<this->orbital_files[it]<<std::endl;
+                GlobalV::ofs_warning<<"psi_initializer_nao<T, Device>::read_orbital_files: cannot open orbital file: "<<this->orbital_files_[it]<<std::endl;
                 ModuleBase::WARNING_QUIT("psi_initializer_nao<T, Device>::read_orbital_files", "cannot open orbital file.");
             }
             else
             {
-                GlobalV::ofs_running<<"psi_initializer_nao<T, Device>::read_orbital_files: reading orbital file: "<<this->orbital_files[it]<<std::endl;
+                GlobalV::ofs_running<<"psi_initializer_nao<T, Device>::read_orbital_files: reading orbital file: "<<this->orbital_files_[it]<<std::endl;
             }
             ifs_it.close();
 
             int ichi_overall = 0;
             // check nwl and nchi for each rank
             
-            for(int l = 0; l <= this->p_ucell->atoms[it].nwl; l++)
+            for(int l = 0; l <= this->p_ucell_->atoms[it].nwl; l++)
             {
-                for(int ichi = 0; ichi < this->p_ucell->atoms[it].l_nchi[l]; ichi++)
+                for(int ichi = 0; ichi < this->p_ucell_->atoms[it].l_nchi[l]; ichi++)
                 {
                     int n_rgrid_ichi;
                     std::vector<double> rgrid_ichi;
-                    std::vector<double> flz_ichi;
+                    std::vector<double> rvalue_ichi;
 
                     GlobalV::ofs_running<<"-------------------------------------- "<<std::endl;
-                    GlobalV::ofs_running<<" reading orbital of element "<<this->p_ucell->atoms[it].label<<std::endl
+                    GlobalV::ofs_running<<" reading orbital of element "<<this->p_ucell_->atoms[it].label<<std::endl
                                         <<" angular momentum l = "<<l<<std::endl
                                         <<" index of chi = "<<ichi<<std::endl;
 
-                    ifs_it.open(GlobalV::global_orbital_dir+this->orbital_files[it]);
+                    ifs_it.open(GlobalV::global_orbital_dir+this->orbital_files_[it]);
                     double dr = 0.0;
                     char word[80];
                     
@@ -166,7 +118,7 @@ void psi_initializer_nao<T, Device>::read_orbital_files()
                     {
                         if(ifs_it.eof())
                         {
-                            GlobalV::ofs_warning<<" psi_initializer_nao<T, Device>::read_orbital_files: cannot find orbital of element "<<this->p_ucell->atoms[it].label<<std::endl
+                            GlobalV::ofs_warning<<" psi_initializer_nao<T, Device>::read_orbital_files: cannot find orbital of element "<<this->p_ucell_->atoms[it].label<<std::endl
                                                 <<" angular momentum l = "<<l<<std::endl
                                                 <<" index of chi = "<<ichi<<std::endl;
                         }
@@ -177,9 +129,9 @@ void psi_initializer_nao<T, Device>::read_orbital_files()
                         {
                             for(int ir = 0; ir<n_rgrid_ichi; ir++)
                             {
-                                double flz_ichi_ir;
-                                ifs_it>>flz_ichi_ir;
-                                flz_ichi.push_back(flz_ichi_ir);
+                                double rvalue_ichi_ir;
+                                ifs_it>>rvalue_ichi_ir;
+                                rvalue_ichi.push_back(rvalue_ichi_ir);
                             }
                             find = true;
                         }
@@ -195,178 +147,216 @@ void psi_initializer_nao<T, Device>::read_orbital_files()
                     ifs_it.close();
                     n_rgrid_it.push_back(n_rgrid_ichi);
                     rgrid_it.push_back(rgrid_ichi);
-                    flz_it.push_back(flz_ichi);
+                    // before push back, normalize the rvalue_ichi, 2024/03/19, kirk0830
+                    // turn off normalize, 2024/03/22, kirk0830
+                    //normalize(rgrid_ichi, rvalue_ichi);
+                    rvalue_it.push_back(rvalue_ichi);
                     ++ichi_overall;
                 }
             }
-            this->n_rgrid.push_back(n_rgrid_it);
-            this->rgrid.push_back(rgrid_it);
-            this->flz.push_back(flz_it);
+            this->n_rgrid_.push_back(n_rgrid_it);
+            this->rgrid_.push_back(rgrid_it);
+            this->rvalue_.push_back(rvalue_it);
             GlobalV::ofs_running<<"-------------------------------------- "<<std::endl;
         }
-    #ifdef __MPI
     }
-    #endif
-    // Broadcast n_rgrid, rgrid, flz
+    // MPI additional implementation
     #ifdef __MPI
-    if(GlobalV::MY_RANK!=0)
+    // bcast fname
+    if(rank != 0) this->orbital_files_.resize(this->p_ucell_->ntype);
+    Parallel_Common::bcast_string(this->orbital_files_.data(), this->p_ucell_->ntype);
+    // bcast orbital data
+    // resize
+    if(rank != 0) this->n_rgrid_.resize(this->p_ucell_->ntype);
+    int nchi[this->p_ucell_->ntype];
+    if(rank == 0)
     {
-        this->n_rgrid.resize(this->p_ucell->ntype);
+        for(int it = 0; it < this->p_ucell_->ntype; it++) nchi[it] = this->n_rgrid_[it].size();
     }
-    int nchi[this->p_ucell->ntype];
-    if(GlobalV::MY_RANK==0)
+    // bcast
+    Parallel_Common::bcast_int(nchi, this->p_ucell_->ntype);
+    // resize
+    if(rank != 0)
     {
-        for(int it = 0; it < this->p_ucell->ntype; it++)
+        this->n_rgrid_.resize(this->p_ucell_->ntype);
+        this->rgrid_.resize(this->p_ucell_->ntype);
+        this->rvalue_.resize(this->p_ucell_->ntype);
+        for(int it = 0; it < this->p_ucell_->ntype; it++)
         {
-            nchi[it] = this->n_rgrid[it].size();
+            this->n_rgrid_[it].resize(nchi[it]);
+            this->rgrid_[it].resize(nchi[it]);
+            this->rvalue_[it].resize(nchi[it]);
         }
     }
-    Parallel_Common::bcast_int(nchi, this->p_ucell->ntype);
-    if(GlobalV::MY_RANK!=0)
+    // bcast
+    for(int it = 0; it < this->p_ucell_->ntype; it++) Parallel_Common::bcast_int(this->n_rgrid_[it].data(), nchi[it]);
+    // resize
+    if(rank != 0)
     {
-        this->n_rgrid.resize(this->p_ucell->ntype);
-        this->rgrid.resize(this->p_ucell->ntype);
-        this->flz.resize(this->p_ucell->ntype);
-        for(int it = 0; it < this->p_ucell->ntype; it++)
-        {
-            this->n_rgrid[it].resize(nchi[it]);
-            this->rgrid[it].resize(nchi[it]);
-            this->flz[it].resize(nchi[it]);
-        }
-    }
-    for(int it = 0; it < this->p_ucell->ntype; it++)
-    {
-        Parallel_Common::bcast_int(this->n_rgrid[it].data(), nchi[it]);
-    }
-    if(GlobalV::MY_RANK!=0)
-    {
-        for(int it = 0; it < this->p_ucell->ntype; it++)
+        for(int it = 0; it < this->p_ucell_->ntype; it++)
         {
             for(int ichi = 0; ichi < nchi[it]; ichi++)
             {
-                this->rgrid[it][ichi].resize(this->n_rgrid[it][ichi]);
-                this->flz[it][ichi].resize(this->n_rgrid[it][ichi]);
+                this->rgrid_[it][ichi].resize(this->n_rgrid_[it][ichi]);
+                this->rvalue_[it][ichi].resize(this->n_rgrid_[it][ichi]);
             }
         }
     }
-    for(int it = 0; it < this->p_ucell->ntype; it++)
+    // bcast
+    for(int it = 0; it < this->p_ucell_->ntype; it++)
     {
         for(int ichi = 0; ichi < nchi[it]; ichi++)
         {
-            Parallel_Common::bcast_double(this->rgrid[it][ichi].data(), this->n_rgrid[it][ichi]);
-            Parallel_Common::bcast_double(this->flz[it][ichi].data(), this->n_rgrid[it][ichi]);
+            Parallel_Common::bcast_double(this->rgrid_[it][ichi].data(), this->n_rgrid_[it][ichi]);
+            Parallel_Common::bcast_double(this->rvalue_[it][ichi].data(), this->n_rgrid_[it][ichi]);
         }
     }
     #endif
-    ModuleBase::timer::tick("psi_initializer_nao", "read_orbital_files");
+    ModuleBase::timer::tick("psi_initializer_nao", "read_external_orbs");
 }
 
 template <typename T, typename Device>
-void psi_initializer_nao<T, Device>::initialize_only_once(pseudopot_cell_vnl* p_pspot_nl_in)
+void psi_initializer_nao<T, Device>::allocate_table()
 {
-    ModuleBase::timer::tick("psi_initializer_nao", "initialize_only_once");
-    this->create_ovlp_Xjlq();
-    this->read_orbital_files();
+    // find correct dimension for ovlp_flzjlq
+    int dim1 = this->p_ucell_->ntype;
+    int dim2 = 0; // dim2 should be the maximum number of zeta for each atomtype
+    for (int it = 0; it < this->p_ucell_->ntype; it++)
+    {
+        int nzeta = 0;
+        for (int l = 0; l < this->p_ucell_->atoms[it].nwl+1; l++)
+        {
+            nzeta += this->p_ucell_->atoms[it].l_nchi[l];
+        }
+        dim2 = (nzeta > dim2) ? nzeta : dim2;
+    }
+    if (dim2 == 0)
+    {
+        ModuleBase::WARNING_QUIT("psi_initializer_nao<T, Device>::psi_initializer_nao", "there is not ANY numerical atomic orbital read in present system, quit.");
+    }
+    int dim3 = GlobalV::NQX;
+    // allocate memory for ovlp_flzjlq
+    this->ovlp_flzjlq_.create(dim1, dim2, dim3);
+    this->ovlp_flzjlq_.zero_out();
+}
+
+
+#ifdef __MPI
+template <typename T, typename Device>
+void psi_initializer_nao<T, Device>::initialize(Structure_Factor* sf,
+                                                ModulePW::PW_Basis_K* pw_wfc,
+                                                UnitCell* p_ucell,
+                                                Parallel_Kpoints* p_parakpts,
+                                                const int& random_seed,
+                                                pseudopot_cell_vnl* p_pspot_nl,
+                                                const int& rank)
+{
+    ModuleBase::timer::tick("psi_initializer_nao", "initialize_mpi");
+    // import
+    this->sf_ = sf;
+    this->pw_wfc_ = pw_wfc;
+    this->p_ucell_ = p_ucell;
+    this->p_parakpts_ = p_parakpts;
+    this->p_pspot_nl_ = p_pspot_nl;
+    this->random_seed_ = random_seed;
+    // allocate
+    this->allocate_table();
+    this->read_external_orbs(this->p_ucell_->orbital_fn, rank);
     //this->cal_ovlp_flzjlq(); //because GlobalV::NQX will change during vcrelax, so it should be called in both init and init_after_vc
-    ModuleBase::timer::tick("psi_initializer_nao", "initialize_only_once");
+    ModuleBase::timer::tick("psi_initializer_nao", "initialize_mpi");
 }
+#else
+template <typename T, typename Device>
+void psi_initializer_nao<T, Device>::initialize(Structure_Factor* sf,
+                                                ModulePW::PW_Basis_K* pw_wfc,
+                                                UnitCell* p_ucell,
+                                                const int& random_seed,
+                                                pseudopot_cell_vnl* p_pspot_nl)
+{
+    ModuleBase::timer::tick("psi_initializer_nao", "initialize_serial");
+    // import
+    this->sf_ = sf;
+    this->pw_wfc_ = pw_wfc;
+    this->p_ucell_ = p_ucell;
+    this->p_pspot_nl_ = p_pspot_nl;
+    this->random_seed_ = random_seed;
+    // allocate
+    this->allocate_table();
+    this->read_external_orbs(this->p_ucell_->orbital_fn, 0);
+    //this->cal_ovlp_flzjlq(); //because GlobalV::NQX will change during vcrelax, so it should be called in both init and init_after_vc
+    ModuleBase::timer::tick("psi_initializer_nao", "initialize_serial");
+}
+#endif
 
 template <typename T, typename Device>
-void psi_initializer_nao<T, Device>::cal_ovlp_flzjlq()
+void psi_initializer_nao<T, Device>::tabulate()
 {
-    ModuleBase::timer::tick("psi_initializer_nao", "cal_ovlp_flzjlq");
-    //this->read_orbital_files();
-    this->ovlp_flzjlq.zero_out();
-    for(int it=0; it<this->p_ucell->ntype; it++)
+    ModuleBase::timer::tick("psi_initializer_nao", "tabulate");
+    this->ovlp_flzjlq_.zero_out();
+    for(int it=0; it<this->p_ucell_->ntype; it++)
     {
         int ic=0;
-        for(int l=0; l<this->p_ucell->atoms[it].nwl+1; l++)
+        for(int l=0; l<this->p_ucell_->atoms[it].nwl+1; l++)
         {
-            for(int izeta=0; izeta<this->p_ucell->atoms[it].l_nchi[l]; izeta++)
+            for(int izeta=0; izeta<this->p_ucell_->atoms[it].l_nchi[l]; izeta++)
             {
-                double* ovlp_flzjlq_q = new double[GlobalV::NQX];
-                double* qgrid = new double[GlobalV::NQX];
+                std::vector<double> ovlp_flzjlq_q(GlobalV::NQX);
+                std::vector<double> qgrid(GlobalV::NQX);
                 for (int iq = 0; iq < GlobalV::NQX; iq++)
                 {
                     qgrid[iq] = iq*GlobalV::DQ;
                 }
                 this->sbt.direct(l, 
-                                 this->n_rgrid[it][ic],
-                                 this->rgrid[it][ic].data(),
-                                 this->flz[it][ic].data(),
-                                 GlobalV::NQX, qgrid, ovlp_flzjlq_q);
+                                 this->n_rgrid_[it][ic],
+                                 this->rgrid_[it][ic].data(),
+                                 this->rvalue_[it][ic].data(),
+                                 GlobalV::NQX, 
+                                 qgrid.data(), 
+                                 ovlp_flzjlq_q.data());
                 for(int iq = 0; iq < GlobalV::NQX; iq++)
                 {
-                    this->ovlp_flzjlq(it, ic, iq) = ovlp_flzjlq_q[iq];
+                    this->ovlp_flzjlq_(it, ic, iq) = ovlp_flzjlq_q[iq];
                 }
-                delete[] ovlp_flzjlq_q;
-                delete[] qgrid; /* eliminate direct memory leak, kirk0830, 2023/10/20 */
                 ++ic;
             }
         }
     }
-    
-    if(GlobalV::MY_RANK==0)
-    {
-        for(int it = 0; it < this->p_ucell->ntype; it++)
-        {
-            std::stringstream ss;
-            ss<<GlobalV::global_out_dir<<this->p_ucell->atoms[it].label<< "/LOCAL_G.dat";
-            std::ofstream ofs(ss.str().c_str());
-            for(int iq = 0; iq < GlobalV::NQX; iq++)
-            {
-                int ic=0;
-                double energy_q = pow((double)iq*GlobalV::DQ, 2);
-                ofs<<energy_q*this->p_ucell->tpiba2;
-                for(int l = 0; l<this->p_ucell->atoms[it].nwl + 1; l++)
-                {
-                    for(int N=0; N<this->p_ucell->atoms[it].l_nchi[l]; N++)
-                    {
-                        ofs<<" "<<ovlp_flzjlq(it, ic, iq);
-                        ++ic;
-                    }
-                }
-                ofs<<std::endl;
-            }
-            ofs.close();
-        }
-    }
-    ModuleBase::timer::tick("psi_initializer_nao", "cal_ovlp_flzjlq");
+    ModuleBase::timer::tick("psi_initializer_nao", "tabulate");
 }
 
 template <typename T, typename Device>
-psi::Psi<T, Device>* psi_initializer_nao<T, Device>::cal_psig(int ik)
+void psi_initializer_nao<T, Device>::proj_ao_onkG(int ik)
 {
     ModuleBase::timer::tick("psi_initializer_nao", "initialize");
     assert(ik>=0);
-    this->psig->fix_k(ik);
-    const int npw = this->pw_wfc->npwk[ik];
-    const int total_lm = ( this->p_ucell->lmax + 1) * ( this->p_ucell->lmax + 1);
+    this->psig_->fix_k(ik);
+    const int npw = this->pw_wfc_->npwk[ik];
+    const int total_lm = ( this->p_ucell_->lmax + 1) * ( this->p_ucell_->lmax + 1);
     ModuleBase::matrix ylm(total_lm, npw);
-    std::complex<double> *aux = new std::complex<double>[npw];
 
-    ModuleBase::Vector3<double> *gk = new ModuleBase::Vector3<double>[npw];
+    std::vector<std::complex<double>> aux(npw);
+    std::vector<ModuleBase::Vector3<double>> gk(npw);
     for(int ig=0;ig<npw;ig++)
     {
-        gk[ig] = this->pw_wfc->getgpluskcar(ik, ig);
+        gk[ig] = this->pw_wfc_->getgpluskcar(ik, ig);
     }
 
-    ModuleBase::YlmReal::Ylm_Real(total_lm, npw, gk, ylm);
+    ModuleBase::YlmReal::Ylm_Real(total_lm, npw, gk.data(), ylm);
     //int index = 0;
-    double *ovlp_flzjlg = new double[npw];
+    std::vector<double> ovlp_flzjlg(npw);
     int ibasis=0;
-    for (int it = 0; it < this->p_ucell->ntype; it++)
+    for (int it = 0; it < this->p_ucell_->ntype; it++)
     {
 /* HERE LOOP OVER ALL TYPES */
-        for (int ia = 0; ia < this->p_ucell->atoms[it].na; ia++)
+        for (int ia = 0; ia < this->p_ucell_->atoms[it].na; ia++)
         {
 /* HERE LOOP OVER ALL ATOMS */
-            std::complex<double>* sk = this->sf->get_sk(ik, it, ia, this->pw_wfc);
+            std::complex<double>* sk = this->sf_->get_sk(ik, it, ia, this->pw_wfc_);
             int ic = 0; // ic is a flatten index of chi, therefore it is defined here.
-            for(int L = 0; L < this->p_ucell->atoms[it].nwl+1; L++)
+            for(int L = 0; L < this->p_ucell_->atoms[it].nwl+1; L++)
             {
                 std::complex<double> lphase = pow(ModuleBase::NEG_IMAG_UNIT, L); //mohan 2010-04-19
-                for(int N=0; N < this->p_ucell->atoms[it].l_nchi[L]; N++)
+                for(int N=0; N < this->p_ucell_->atoms[it].l_nchi[L]; N++)
                 {
 /* HERE LOOP OVER ALL NAOS */
 					/* 
@@ -377,10 +367,10 @@ psi::Psi<T, Device>* psi_initializer_nao<T, Device>::cal_psig(int ik)
                     for(int ig=0; ig<npw; ig++)
                     {
                         ovlp_flzjlg[ig] = ModuleBase::PolyInt::Polynomial_Interpolation(
-							this->ovlp_flzjlq, // the spherical bessel transform of numerical orbital function
+							this->ovlp_flzjlq_, // the spherical bessel transform of numerical orbital function
                         	it, ic, 		   // each (it, ic)-pair defines a unique numerical orbital function
 							GlobalV::NQX, GlobalV::DQ, // grid number and grid spacing of q
-							gk[ig].norm() * this->p_ucell->tpiba // norm of (G+k) = K
+							gk[ig].norm() * this->p_ucell_->tpiba // norm of (G+k) = K
 							);
                     }
 /* FOR EVERY NAO IN EACH ATOM */
@@ -403,8 +393,8 @@ psi::Psi<T, Device>* psi_initializer_nao<T, Device>::cal_psig(int ik)
                                 {
                                     continue;
                                 }
-                                alpha = this->p_ucell->atoms[it].angle1[ia];
-                                gamma = -1 * this->p_ucell->atoms[it].angle2[ia] + 0.5 * ModuleBase::PI;
+                                alpha = this->p_ucell_->atoms[it].angle1[ia];
+                                gamma = -1 * this->p_ucell_->atoms[it].angle2[ia] + 0.5 * ModuleBase::PI;
                                 for(int m = 0;m<2*L+1;m++)
                                 {
                                     const int lm = L*L + m;
@@ -412,64 +402,31 @@ psi::Psi<T, Device>* psi_initializer_nao<T, Device>::cal_psig(int ik)
                                     {
                                         aux[ig] = sk[ig] * ylm(lm,ig) * ovlp_flzjlg[ig];
                                     }
-                                    std::vector<Real> normalization_factors = {0, 0, 0, 0};
                                     for(int ig = 0;ig<npw;ig++)
                                     {
                                         fup = cos(0.5 * alpha) * aux[ig];
                                         fdown = ModuleBase::IMAG_UNIT * sin(0.5* alpha) * aux[ig];
                                         //build the orthogonal wfc
                                         //first rotation with angle (alpha + ModuleBase::PI) around (OX)
-                                        (*(this->psig))(ibasis, ig) = 
+                                        (*(this->psig_))(ibasis, ig) = 
                                             this->template cast_to_T<T>(
                                                 (cos(0.5 * gamma) + ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fup
                                             );
-                                        normalization_factors[0] += this->norm2((*(this->psig))(ibasis, ig));
-                                        (*(this->psig))(ibasis, ig + this->pw_wfc->npwk_max) =
+                                        (*(this->psig_))(ibasis, ig + this->pw_wfc_->npwk_max) =
                                             this->template cast_to_T<T>(
                                                 (cos(0.5 * gamma) - ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fdown
                                             );
-                                        normalization_factors[1] += this->norm2((*(this->psig))(ibasis, ig + this->pw_wfc->npwk_max));
                                         // second rotation with angle gamma around(OZ)
                                         fup = cos(0.5 * (alpha + ModuleBase::PI)) * aux[ig];
                                         fdown = ModuleBase::IMAG_UNIT * sin(0.5 * (alpha + ModuleBase::PI))*aux[ig];
-                                        (*(this->psig))(ibasis+2*L+1,ig) =
+                                        (*(this->psig_))(ibasis+2*L+1,ig) =
                                             this->template cast_to_T<T>(
                                                 (cos(0.5 * gamma) + ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fup
                                             );
-                                        normalization_factors[2] += this->norm2((*(this->psig))(ibasis+2*L+1, ig));
-                                        (*(this->psig))(ibasis+2*L+1, ig + this->pw_wfc->npwk_max) =
+                                       (*(this->psig_))(ibasis+2*L+1, ig + this->pw_wfc_->npwk_max) =
                                             this->template cast_to_T<T>(
                                                 (cos(0.5 * gamma) - ModuleBase::IMAG_UNIT * sin(0.5 * gamma)) * fdown
                                             );
-                                        normalization_factors[3] += this->norm2((*(this->psig))(ibasis+2*L+1, ig + this->pw_wfc->npwk_max));
-                                    }
-                                    for(int i = 0; i < 4; i++)
-                                    {
-                                        #ifdef __MPI
-                                        // if MPI, gather the norm2 over all processes
-                                        Parallel_Reduce::reduce_all(normalization_factors[i]);
-                                        #endif
-                                        normalization_factors[i] = sqrt(normalization_factors[i]);
-                                    }
-                                    for(int ig = 0; ig < npw; ig++)
-                                    {
-                                        // normalize except the 0/0 case, this indeed happens sometimes when nspin=4, cause diagonalization failure
-                                        if(normalization_factors[0] != 0.0)
-                                        {
-                                            (*(this->psig))(ibasis, ig) /= normalization_factors[0];
-                                        }
-                                        if(normalization_factors[1] != 0.0)
-                                        {
-                                            (*(this->psig))(ibasis, ig + this->pw_wfc->npwk_max) /= normalization_factors[1];
-                                        }
-                                        if(normalization_factors[2] != 0.0)
-                                        {
-                                            (*(this->psig))(ibasis+2*L+1, ig) /= normalization_factors[2];
-                                        }
-                                        if(normalization_factors[3] != 0.0)
-                                        {
-                                            (*(this->psig))(ibasis+2*L+1, ig + this->pw_wfc->npwk_max) /= normalization_factors[3];
-                                        }
                                     }
                                     ibasis++;
                                 }
@@ -482,23 +439,9 @@ psi::Psi<T, Device>* psi_initializer_nao<T, Device>::cal_psig(int ik)
                         for(int m = 0; m < 2*L+1; m++)
                         {
                             const int lm = L*L+m;
-                            Real normalization_factor = 0.0;
                             for(int ig=0; ig<npw; ig++)
                             {
-                                (*(this->psig))(ibasis, ig) = 
-                                    this->template cast_to_T<T>(
-                                        lphase * sk[ig] * ylm(lm, ig) * ovlp_flzjlg[ig]
-                                    );
-                                normalization_factor += this->norm2((*(this->psig))(ibasis, ig));
-                            }
-                            #ifdef __MPI
-                            // if MPI, gather the norm2 over all processes
-                            Parallel_Reduce::reduce_all(normalization_factor);
-                            #endif
-                            normalization_factor = sqrt(normalization_factor);
-                            for(int ig=0; ig<npw; ig++)
-                            {
-                                if(normalization_factor != 0.0) (*(this->psig))(ibasis, ig) /= normalization_factor;
+                                (*(this->psig_))(ibasis, ig) =  this->template cast_to_T<T>(lphase * sk[ig] * ylm(lm, ig) * ovlp_flzjlg[ig]);
                             }
                             ++ibasis;
                         }
@@ -509,17 +452,12 @@ psi::Psi<T, Device>* psi_initializer_nao<T, Device>::cal_psig(int ik)
             delete[] sk;
         } // end for ia
     } // end for it
-    delete[] ovlp_flzjlg;
-    delete[] aux;
-    delete[] gk;
     /* complement the rest of bands if there are */
-    if(this->get_nbands_complem() > 0)
+    if(this->nbands_complem() > 0)
     {
-        this->random_t(this->psig->get_pointer(), ibasis, this->psig->get_nbands(), ik);
+        this->random_t(this->psig_->get_pointer(), ibasis, this->psig_->get_nbands(), ik);
     }
     ModuleBase::timer::tick("psi_initializer_nao", "initialize");
-    
-    return this->psig;
 }
 
 template class psi_initializer_nao<std::complex<double>, psi::DEVICE_CPU>;
