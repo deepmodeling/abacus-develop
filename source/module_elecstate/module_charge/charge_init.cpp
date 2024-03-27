@@ -52,7 +52,11 @@ void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMa
 #ifdef __MPI
                         &(GlobalC::Pgrid),
 #endif
+                        GlobalV::MY_RANK,
+                        GlobalV::ESOLVER_TYPE,
+                        GlobalV::RANK_IN_STOGROUP,
                         is,
+                        GlobalV::ofs_running,
                         GlobalV::NSPIN,
                         ssc.str(),
                         this->rho[is],
@@ -123,7 +127,11 @@ void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMa
 #ifdef __MPI
                             &(GlobalC::Pgrid),
 #endif
+                            GlobalV::MY_RANK,
+                            GlobalV::ESOLVER_TYPE,
+                            GlobalV::RANK_IN_STOGROUP,
                             is,
+                            GlobalV::ofs_running,
                             GlobalV::NSPIN,
                             ssc.str(),
                             this->kin_r[is],

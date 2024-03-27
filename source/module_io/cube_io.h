@@ -12,7 +12,11 @@ bool read_cube(
 #ifdef __MPI
     Parallel_Grid* Pgrid,
 #endif
+    int my_rank,
+    std::string esolver_type,
+    int rank_in_stogroup,
     const int& is,
+    std::ofstream& ofs_running,
     const int& nspin,
     const std::string& fn,
     double* data,
