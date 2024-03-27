@@ -6,7 +6,7 @@
 #include "gint_force.h"
 #include "module_base/ylm.h"
 #include "module_hamilt_lcao/module_gint/gint_tools.h"
-#include "kernels/cuda/vbatch_matrix_multiple/cuda_tools.cuh"
+#include "kernels/cuda/cuda_tools.cuh"
 
 namespace GintKernel{
 

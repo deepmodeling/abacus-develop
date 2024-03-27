@@ -6,8 +6,8 @@
 #include "module_basis/module_ao/parallel_orbitals.h"
 #if ((defined __CUDA) /* || (defined __ROCM) */)
 #include <cuda_runtime.h>
-#include "kernels/cuda/vbatch_matrix_multiple/cuda_tools.cuh"
-#include "kernels/cuda/vbatch_matrix_multiple/vbatch_matrix_mul.cuh"
+#include "kernels/cuda/cuda_tools.cuh"
+#include "kernels/cuda/vbatch_matrix_mul.cuh"
 #endif
 
 

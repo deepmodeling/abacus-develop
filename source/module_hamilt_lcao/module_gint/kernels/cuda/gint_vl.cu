@@ -1,5 +1,5 @@
 #include "module_hamilt_lcao/module_gint/kernels/cuda/gint_vl.cuh"
-#include "module_hamilt_lcao/module_gint/kernels/cuda/vbatch_matrix_multiple/cuda_tools.cuh"
+#include "module_hamilt_lcao/module_gint/kernels/cuda/cuda_tools.cuh"
 #include "sph.cuh"
 namespace GintKernel{
 

@@ -24,8 +24,8 @@ list(APPEND objects
 
 if(USE_CUDA)
   list(APPEND objects
-      kernels/cuda/vbatch_matrix_multiple/cuda_tools.cu
-      kernels/cuda/vbatch_matrix_multiple/vbatch_matrix_mul.cu
+      kernels/cuda/cuda_tools.cu
+      kernels/cuda/vbatch_matrix_mul.cu
       kernels/cuda/gint_vl.cu
       kernels/cuda/gint_rho.cu
       kernels/cuda/gint_force.cu
