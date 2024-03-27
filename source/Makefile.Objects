@@ -129,6 +129,7 @@ OBJS_BASE=abfs-vector3_order.o\
     math_bspline.o\
     math_chebyshev.o\
     math_op.o\
+    math_tools.o\
     mathzone_add1.o\
     matrix.o\
     matrix3.o\
