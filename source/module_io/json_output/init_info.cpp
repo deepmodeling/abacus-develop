@@ -21,7 +21,7 @@ void gen_init(UnitCell *ucell){
     // Json::AbacusJson::add_Json(pgname,false,"init", "point_group");
     // Json::AbacusJson::add_Json(spgname,false,"init","point_group_in_space");
 
-    int  numAtoms = ucell->atoms->na;
+    int  numAtoms = ucell->nat;
     AbacusJson::add_json({"init", "natom"}, numAtoms,false);
     AbacusJson::add_json({"init", "nband"}, GlobalV::NBANDS,false);
 
@@ -32,10 +32,13 @@ void gen_init(UnitCell *ucell){
     for (int it = 0; it < ntype; it++)
     {
         std::string label = ucell->atoms[it].label;
+        int atom_number = ucell->atoms[it].na;
         int number = ucell->atoms[it].ncpp.zv;
 
         nelec_total+=ucell->atoms[it].ncpp.zv * ucell->atoms[it].na;
+        AbacusJson::add_json({"init", "natom_each_type",label}, atom_number,false);
         AbacusJson::add_json({"init", "nelectron_each_type",label}, number,false);
+
 
         //Json::AbacusJson::add_Json(number,false,"init", "nelectron_each_type",label);
     }    

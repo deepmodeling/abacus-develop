@@ -12,6 +12,9 @@
 
 This JSON template provides input and output configurations for ABACUS. It contains parameters for the execution of the program and the output of results, primarily for recording computational processes and outcomes for post processing. 
 
+Notice: one need to add the option `-DENABLE_RAPIDJSON=ON` when compiling ABACUS to enable the output of "abacus.json".
+
+
 ## General Information
 
 - `version` - [str] The version number of ABACUS.
@@ -39,10 +42,11 @@ This JSON template provides input and output configurations for ABACUS. It conta
 - `point_group` - [str] the Schoenflies name of the point group.
 - `point_group_in_space` - [str] the Schoenflies name of the point group in the space group.
 - `nkstot`, `nkstot_ibz` - [int] Total number of k-points and total number of irreducible k-points.
-- `nelectron_each_type` - [object(str-int)] The number of electrons for each atom type, e.g., `{"C": 2, "H":1}`.
+- `nelectron_each_type` - [object(str-int)] The number of valence electron for each atom type, e.g., `{"C": 2, "H":1}`.
 - `nelectron` - [int] Total number of electrons.
 - `nband` - [int] Number of bands.
 - `natom` - [int] Total number of atoms.
+- `natom_each_type` - [object(str-int)] The atom number of each atom type, e.g., `{"C": 2, "H":1}`.
 - `label` - [array(str)] An array of atomic labels.
 - `element` - [array(object(str:str))] The element of each atom type.
 - `cell` - [array(array(double))] The lattice vector. Unit in Angstrom.
