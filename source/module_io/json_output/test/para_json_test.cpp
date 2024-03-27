@@ -289,18 +289,24 @@ TEST(AbacusJsonTest, InitInfo)
     ucell.symm.pgname = "T_d";
     ucell.symm.spgname = "O_h";
     ucell.atoms =atomlist;
-    ucell.atoms->na = 100;
     ucell.ntype = 3;
     GlobalV::NBANDS = 10;
 
 
-    for(int i=0;i<1;i++){
-        ucell.atoms[i].label = "Si";
-        ucell.atoms[i].ncpp.zv = 3;
-
+    
+    ucell.atoms[0].label = "Si";
+    ucell.atoms[0].ncpp.zv = 3;
+    ucell.atoms[0].na = 1;
+    ucell.atoms[1].label = "C";
+    ucell.atoms[1].ncpp.zv = 4;
+    ucell.atoms[1].na = 2;
+    ucell.atoms[2].label = "O";
+    ucell.atoms[2].ncpp.zv = 5;
+    ucell.atoms[2].na = 3;
+    ucell.nat = 0;
+    for(int i=0;i<ucell.ntype;i++){
+        ucell.nat += ucell.atoms[i].na;
     }
-
-
     // init the doc allocator
     Json::AbacusJson::doc.Parse("{}");
     int Jnkstot=1,Jnkstot_ibz = 2;
@@ -313,7 +319,7 @@ TEST(AbacusJsonTest, InitInfo)
     ASSERT_EQ(Json::AbacusJson::doc["init"]["nkstot"].GetInt(), 1);
     ASSERT_EQ(Json::AbacusJson::doc["init"]["nkstot_ibz"].GetInt(), 2);
 
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["natom"].GetInt(), 100);
+    ASSERT_EQ(Json::AbacusJson::doc["init"]["natom"].GetInt(), 6);
     ASSERT_EQ(Json::AbacusJson::doc["init"]["nband"].GetInt(), 10);
 
 
@@ -321,7 +327,12 @@ TEST(AbacusJsonTest, InitInfo)
     ASSERT_STREQ(Json::AbacusJson::doc["init"]["point_group_in_space"].GetString(), "O_h");
 
     ASSERT_EQ(Json::AbacusJson::doc["init"]["nelectron_each_type"]["Si"].GetInt(), 3);
+    ASSERT_EQ(Json::AbacusJson::doc["init"]["nelectron_each_type"]["C"].GetInt(), 4);
+    ASSERT_EQ(Json::AbacusJson::doc["init"]["nelectron_each_type"]["O"].GetInt(), 5);
 
+    ASSERT_EQ(Json::AbacusJson::doc["init"]["natom_each_type"]["Si"].GetInt(), 1);
+    ASSERT_EQ(Json::AbacusJson::doc["init"]["natom_each_type"]["C"].GetInt(), 2);
+    ASSERT_EQ(Json::AbacusJson::doc["init"]["natom_each_type"]["O"].GetInt(), 3);
 }
 
 
