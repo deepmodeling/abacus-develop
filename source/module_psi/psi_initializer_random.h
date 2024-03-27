@@ -13,43 +13,34 @@ class psi_initializer_random : public psi_initializer<T, Device>
     private:
         using Real = typename GetTypeReal<T>::type;
     public:
-        #ifdef __MPI
-        /// @brief parameterized constructor of psi initializer (with MPI support)
-        /// @param sf_in interface, link with Structure_Factor ESolver_FP::sf
-        /// @param pw_wfc_in interface, link with ModulePW::PW_Basis_K* ESolver_FP::pw_wfc
-        /// @param p_ucell_in interface, link with UnitCell GlobalC::ucell
-        /// @param p_parakpts_in interface, link with Parallel_Kpoints GlobalC::Pkpoints
-        /// @param random_seed_in random seed
-        psi_initializer_random(Structure_Factor* sf_in, ModulePW::PW_Basis_K* pw_wfc_in, UnitCell* p_ucell_in, Parallel_Kpoints* p_parakpts_in, int random_seed_in = 1);
-        #else
-        /// @brief parameterized constructor of psi initializer (without MPI support)
-        /// @param sf_in interface, link with Structure_Factor ESolver_FP::sf
-        /// @param pw_wfc_in interface, link with ModulePW::PW_Basis_K* ESolver_FP::pw_wfc
-        /// @param p_ucell_in interface, link with UnitCell GlobalC::ucell
-        /// @param random_seed_in random seed
-        psi_initializer_random(Structure_Factor* sf_in, ModulePW::PW_Basis_K* pw_wfc_in, UnitCell* p_ucell_in, int random_seed_in = 1);
-        #endif
-        /// @brief default destructor
-        ~psi_initializer_random();
-
-        // methods
-        
-        /// @brief kernel function, generating psi value in certain band range
-        /// @param psi psi data carrier
-        /// @param iw_start the starting band index to fill random value
-        /// @param iw_end the end band index
-        /// @param ik kpoint index
-        void random(T* psi,
-                    const int iw_start,
-                    const int iw_end,
-                    const int ik) override;
+        psi_initializer_random() {this->set_method("random");};
+        ~psi_initializer_random() {};
+        /// @brief write random number to psi in certain range specified by ik, iw_start, iw_end
+        void random(T* psi,                 //< psi
+                    const int iw_start,     //< iw_start, starting band index of present kpoint
+                    const int iw_end,       //< iw_end, ending band index of present kpoint
+                    const int ik) override; //< ik, kpoint index
         /// @brief calculate and output planewave wavefunction
         /// @param ik kpoint index
         /// @return initialized planewave wavefunction (psi::Psi<std::complex<double>>*)
-        psi::Psi<T, Device>* cal_psig(int ik) override;
-        /// @brief for variables can be only initialized for once.
-        /// @param p_pspot_nl_in (for atomic) interfaces to pseudopot_cell_vnl object, in GlobalC now
-        /// @attention if one variable is necessary for all methods, initialize it in constructor, not here.
-        void initialize_only_once(pseudopot_cell_vnl* p_pspot_nl_in = nullptr) override {};
+        virtual void proj_ao_onkG(int ik) override;
+        #ifdef __MPI // MPI additional implementation
+        /// @brief initialize the psi_initializer with external data and methods
+        virtual void initialize(Structure_Factor*,              //< structure factor
+                                ModulePW::PW_Basis_K*,          //< planewave basis
+                                UnitCell*,                      //< unit cell
+                                Parallel_Kpoints*,              //< parallel kpoints
+                                const int& = 1,                 //< random seed
+                                pseudopot_cell_vnl* = nullptr,  //< nonlocal pseudopotential
+                                const int& = 0) override;       //< MPI rank
+        #else
+        /// @brief serial version of initialize function, link psi_initializer with external data and methods
+        virtual void initialize(Structure_Factor*,                          //< structure factor
+                                ModulePW::PW_Basis_K*,                      //< planewave basis
+                                UnitCell*,                                  //< unit cell
+                                const int& = 1,                             //< random seed
+                                pseudopot_cell_vnl* = nullptr) override   ; //< nonlocal pseudopotential
+        #endif
+        virtual void tabulate() override {};
 };
 #endif
