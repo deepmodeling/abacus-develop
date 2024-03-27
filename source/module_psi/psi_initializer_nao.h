@@ -12,68 +12,54 @@ class psi_initializer_nao : public psi_initializer<T, Device>
     private:
         using Real = typename GetTypeReal<T>::type;
     public:
-        #ifdef __MPI
-        /// @brief parameterized constructor of psi initializer (with MPI support)
-        /// @param sf_in interface, link with Structure_Factor ESolver_FP::sf
-        /// @param pw_wfc_in interface, link with ModulePW::PW_Basis_K* ESolver_FP::pw_wfc
-        /// @param p_ucell_in interface, link with UnitCell GlobalC::ucell
-        /// @param p_parakpts_in interface, link with Parallel_Kpoints GlobalC::Pkpoints
-        /// @param random_seed_in random seed
-        psi_initializer_nao(Structure_Factor* sf_in, ModulePW::PW_Basis_K* pw_wfc_in, UnitCell* p_ucell_in, Parallel_Kpoints* p_parakpts_in, int random_seed_in = 1);
+        psi_initializer_nao() {this->set_method("nao");};
+        ~psi_initializer_nao() {};
+
+        virtual void proj_ao_onkG(int ik) override;
+
+        #ifdef __MPI // MPI additional implementation
+        /// @brief initialize the psi_initializer with external data and methods
+        virtual void initialize(Structure_Factor*,                      //< structure factor
+                                ModulePW::PW_Basis_K*,                  //< planewave basis
+                                UnitCell*,                              //< unit cell
+                                Parallel_Kpoints*,                      //< parallel kpoints
+                                const int& = 1,                         //< random seed
+                                pseudopot_cell_vnl* = nullptr,          //< nonlocal pseudopotential
+                                const int& = 0) override;               //< MPI rank
         #else
-        /// @brief parameterized constructor of psi initializer (without MPI support)
-        /// @param sf_in interface, link with Structure_Factor ESolver_FP::sf
-        /// @param pw_wfc_in interface, link with ModulePW::PW_Basis_K* ESolver_FP::pw_wfc
-        /// @param p_ucell_in interface, link with UnitCell GlobalC::ucell
-        /// @param random_seed_in random seed
-        psi_initializer_nao(Structure_Factor* sf_in, ModulePW::PW_Basis_K* pw_wfc_in, UnitCell* p_ucell_in, int random_seed_in = 1);
+        /// @brief serial version of initialize function, link psi_initializer with external data and methods
+        virtual void initialize(Structure_Factor*,                      //< structure factor
+                                ModulePW::PW_Basis_K*,                  //< planewave basis
+                                UnitCell*,                              //< unit cell
+                                const int& = 1,                         //< random seed
+                                pseudopot_cell_vnl* = nullptr) override;//< nonlocal pseudopotential
         #endif
-        /// @brief default destructor
-        ~psi_initializer_nao();
 
-        // methods
-
-        /// @brief calculate and output planewave wavefunction
-        /// @param ik kpoint index
-        /// @return initialized planewave wavefunction (psi::Psi<std::complex<double>>*)
-        psi::Psi<T, Device>* cal_psig(int ik) override;
-
-        /// @brief initialize only once, for nao, it should be, read numerical orbitals, create ovlp_Xjlq(, calculate ovlp_flzjlq)
-        /// @param p_pspot_nl_in (for atomic) interfaces to pseudopot_cell_vnl object, in GlobalC now
-        /// @attention if one variable is necessary for all methods, initialize it in constructor, not here.
-        void initialize_only_once(pseudopot_cell_vnl* p_pspot_nl_in = nullptr) override;
-        // setters
-
-        /// @brief setter of numerical orbital files
-        /// @param orbital_files array storing numerical orbital files
-        void set_orbital_files(std::string* orbital_files) override;
-        // I wont write a function to set ovlp_flzjlq, it is totally useless
+        void read_external_orbs(std::string* orbital_files, const int& rank);
+        virtual void allocate_table() override;
+        virtual void tabulate() override;
         
-        /// @brief allocate memory for ovlp_flzjlq and initialize all elements to 0
-        /// @attention warning! p_ucell must be set in advance!
-        void create_ovlp_Xjlq() override;
-        /// @brief before refactor and reorganization of UnitCell class, it is temporary to write this function here.
-        /// In future version, it will be moved into UnitCell class.
-        void read_orbital_files();
-        /// @brief calculate overlap integral between f_{l\\zeta} the radial numerical orbital and spherical Bessel function
-        void cal_ovlp_flzjlq() override;
-        
-        // getters
+        std::vector<std::string> external_orbs() const { return orbital_files_; }
+        std::vector<std::vector<int>> n_rgrid() const { return n_rgrid_; }
+        std::vector<int> n_rgrid(const int& itype) const { return n_rgrid_[itype]; }
+        int n_rgrid(const int& itype, const int& ichi) const { return n_rgrid_[itype][ichi]; }
+        std::vector<std::vector<std::vector<double>>> rvalue() const { return rvalue_; }
+        std::vector<std::vector<double>> rvalue(const int& itype) const { return rvalue_[itype]; }
+        std::vector<double> rvalue(const int& itype, const int& ichi) const { return rvalue_[itype][ichi]; }
+        double rvalue(const int& itype, const int& ichi, const int& ir) const { return rvalue_[itype][ichi][ir]; }
+        std::vector<std::vector<std::vector<double>>> rgrid() const { return rgrid_; }
+        std::vector<std::vector<double>> rgrid(const int& itype) const { return rgrid_[itype]; }
+        std::vector<double> rgrid(const int& itype, const int& ichi) const { return rgrid_[itype][ichi]; }
+        double rgrid(const int& itype, const int& ichi, const int& ir) const { return rgrid_[itype][ichi][ir]; }
 
-        /// @brief getter of orbital filenames
-        /// @return orbital filenames in array
-        std::vector<std::string> get_orbital_files() const { return orbital_files; }
-        /// @brief getter of matrix of overlap between numerical orbital and Spherical Bessel function
-        /// @return ovlp_flzjlq
-        ModuleBase::realArray get_ovlp_flzjlq() const { return ovlp_flzjlq; }
     private:
-        std::vector<std::string> orbital_files;
-        ModuleBase::realArray ovlp_flzjlq;
+        std::vector<std::string> orbital_files_;
+        ModuleBase::realArray ovlp_flzjlq_;
         /// @brief number of realspace grids per type per chi, [itype][ichi]
-        std::vector<std::vector<int>> n_rgrid;
+        std::vector<std::vector<int>> n_rgrid_;
         /// @brief data of numerical atomic orbital per type per chi per position, [itype][ichi][ir]
-        std::vector<std::vector<std::vector<double>>> flz;
+        std::vector<std::vector<std::vector<double>>> rvalue_;
         /// @brief r of numerical atomic orbital per type per chi per position, [itype][ichi][ir]
-        std::vector<std::vector<std::vector<double>>> rgrid;
+        std::vector<std::vector<std::vector<double>>> rgrid_;
 };
 #endif

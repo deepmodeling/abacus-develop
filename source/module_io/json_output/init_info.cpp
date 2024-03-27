@@ -75,11 +75,7 @@ void gen_stru(UnitCell *ucell){
 
         std::string atom_element = ucell->atoms[i].ncpp.psd;
 
-        Json::jsonValue element_obj(JobjectType);
-        element_obj.JaddStringKV(atom_label,atom_element);
-        Json::AbacusJson::add_json({"init","element"}, element_obj,false);
-    
-        // Json::AbacusJson::add_Json(element_obj,false,"init","element");
+        Json::AbacusJson::add_json({"init","element",atom_label}, atom_element,false);
 
 
         std::string orbital_str = GlobalV::global_orbital_dir + orbital_fn[i];
