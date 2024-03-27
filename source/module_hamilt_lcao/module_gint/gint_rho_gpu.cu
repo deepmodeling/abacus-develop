@@ -1,9 +1,9 @@
 #include "module_hamilt_lcao/module_gint/gint_tools.h"
-#include "module_hamilt_lcao/module_gint/kernels/cuda/gint_rho.h"
+#include "module_hamilt_lcao/module_gint/gint_rho.h"
 #include "module_hamilt_lcao/module_gint/kernels/cuda/gint_rho.cuh"
 #include "module_base/ylm.h"
-#include "vbatch_matrix_multiple/vbatch_matrix_mul.cuh"
-#include "vbatch_matrix_multiple/cuda_tools.cuh"
+#include "kernels/cuda/vbatch_matrix_multiple/vbatch_matrix_mul.cuh"
+#include "kernels/cuda/vbatch_matrix_multiple/cuda_tools.cuh"
 
 namespace GintKernel{
 
@@ -133,7 +133,7 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double> *dm,
 
             checkCuda(cudaStreamSynchronize(gridt.streams[stream_num]));
             
-            // generate GPU tasks on CPU, including the calculation of psir, matrix multiplication, and dot product
+            // generate GPU tasks, including the calculation of psir, matrix multiplication, and dot product
             gtask_rho(gridt, i, j,
                       max_size, nczp,
                       ucell, rcut,

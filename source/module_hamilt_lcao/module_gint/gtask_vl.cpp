@@ -1,7 +1,8 @@
 #include "gint_vl.h"
-#include "omp.h"
 #include "module_base/ylm.h"
 #include "module_hamilt_lcao/module_gint/gint_tools.h"
+
+#include <omp.h>
 namespace GintKernel{
 
 void gtask_vlocal(const Grid_Technique &gridt, 

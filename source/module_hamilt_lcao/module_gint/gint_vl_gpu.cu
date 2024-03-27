@@ -1,9 +1,9 @@
 #include "module_hamilt_lcao/module_gint/gint_tools.h"
-#include "module_hamilt_lcao/module_gint/kernels/cuda/gint_vl.h"
+#include "module_hamilt_lcao/module_gint/gint_vl.h"
 #include "module_hamilt_lcao/module_gint/kernels/cuda/gint_vl.cuh"
 #include "module_base/ylm.h"
-#include "vbatch_matrix_multiple/vbatch_matrix_mul.cuh"
-#include "vbatch_matrix_multiple/cuda_tools.cuh"
+#include "kernels/cuda/vbatch_matrix_multiple/vbatch_matrix_mul.cuh"
+#include "kernels/cuda/vbatch_matrix_multiple/cuda_tools.cuh"
 #include <omp.h>
 
 namespace GintKernel{

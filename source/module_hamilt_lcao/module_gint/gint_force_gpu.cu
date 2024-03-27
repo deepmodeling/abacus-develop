@@ -1,12 +1,12 @@
 #include <fstream>
 #include <sstream>
+#include <omp.h>
 
-#include "gint_force.cuh"
+#include "kernels/cuda/gint_force.cuh"
 #include "gint_force.h"
 #include "module_base/ylm.h"
 #include "module_hamilt_lcao/module_gint/gint_tools.h"
-#include "omp.h"
-#include "vbatch_matrix_multiple/cuda_tools.cuh"
+#include "kernels/cuda/vbatch_matrix_multiple/cuda_tools.cuh"
 
 namespace GintKernel{
 

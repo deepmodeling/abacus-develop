@@ -1,9 +1,9 @@
 #include "gint.h"
 
 #if ((defined __CUDA))
-#include "kernels/cuda/gint_force.h"
-#include "kernels/cuda/gint_rho.h"
-#include "kernels/cuda/gint_vl.h"
+#include "gint_force.h"
+#include "gint_rho.h"
+#include "gint_vl.h"
 #endif
 
 #include "module_base/memory.h"

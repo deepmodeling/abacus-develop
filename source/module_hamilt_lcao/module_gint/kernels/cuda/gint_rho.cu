@@ -1,5 +1,4 @@
 #include "module_hamilt_lcao/module_gint/kernels/cuda/gint_rho.cuh"
-#include "module_hamilt_lcao/module_gint/kernels/cuda/gint_rho.h"
 #include "sph.cuh"
 
 namespace GintKernel{
