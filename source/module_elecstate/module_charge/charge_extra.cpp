@@ -429,7 +429,11 @@ void Charge_Extra::read_files(
 #ifdef __MPI
             Pgrid,
 #endif
+            GlobalV::MY_RANK,
+            GlobalV::ESOLVER_TYPE,
+            GlobalV::RANK_IN_STOGROUP,
             is,
+            GlobalV::ofs_running,
             GlobalV::NSPIN,
             filename,
             data[is],
