@@ -68,7 +68,7 @@ void Gint::cal_gint(Gint_inout *inout) {
 
   if (max_size != 0) {
 #ifdef __CUDA
-    if (GlobalV::gint_device == "gpu" && GlobalV::GAMMA_ONLY_LOCAL && lgd > 0)
+    if (GlobalV::device_flag == "gpu" && GlobalV::GAMMA_ONLY_LOCAL && lgd > 0)
     {
         double ylmcoef[100];
         ModuleBase::GlobalFunc::ZEROS(ylmcoef, 100);

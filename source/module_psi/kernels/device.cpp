@@ -554,38 +554,40 @@ int get_node_rank() {
 }
 #endif
 
-std::string get_device_flag(const std::string& device, const std::string& ks_solver, const std::string& basis_type) {
-    std::string str = "gpu";
-    std::string env = "host";
-    int device_num = -1;
-#if ((defined __CUDA) || (defined __ROCM))
-    device_num = device::get_device_num();
-    if (device_num <= 0) {
-        str = "cpu";
-    }
-    env = "device";
-#else
-    str = "cpu";
-#endif
-    if (ks_solver != "cg" && ks_solver != "dav" && ks_solver != "bpcg") {
-        str = "cpu";
-    }
-    if (basis_type != "pw") {
-        str = "cpu";
-    }
+std::string get_device_flag(const std::string& device, const std::string& ks_solver,
+                            const std::string& basis_type, const bool& gamma_only) {
     if (device == "cpu") {
-        str = "cpu";
+        return "cpu";
     }
-    if (str == device) {
-        return str;
+    else if (device == "gpu") {
+#if ((defined __CUDA) || (defined __ROCM))
+        int device_num = device::get_device_num();
+        if (device_num <= 0) {
+            std::string msg = "Cannot find GPU on this computer!";
+            ModuleBase::WARNING_QUIT("device", msg);
+            return "unknown";
+        }
+#else
+        std::string msg = "The GPU is not supported in this build!";
+        ModuleBase::WARNING_QUIT("device", msg);
+        return "unknown";
+#endif
+        if (basis_type == "lcao_in_pw") {
+            std::string msg = "The GPU currently does not support the basis type \"lcao_in_pw\"!";
+            ModuleBase::WARNING_QUIT("device", msg);
+            return "unknown";
+        }
+        else if (basis_type == "lcao" && gamma_only == false) {
+            std::string msg = "The GPU currently does not support the basis type \"lcao\" with \"gamma_only\" set to \"0\"!";
+            ModuleBase::WARNING_QUIT("device", msg);
+            return "unknow";
+        }
+        else {
+            return "gpu";
+        }
     }
     else {
-        std::string msg = "INPUT device setting does not match the request!";
-        msg += "\n Input device = " + device;
-        msg += "\n Input basis_type = " + basis_type;
-        msg += "\n Input ks_solver = " + ks_solver;
-        msg += "\n Compile setting = " + env;
-        msg += "\n Environment device_num = " + std::to_string(device_num) + "\n";
+        std::string msg = "INPUT device can only be set to \"cpu\" or \"gpu\"!";
         ModuleBase::WARNING_QUIT("device", msg);
         return "unknown";
     }
