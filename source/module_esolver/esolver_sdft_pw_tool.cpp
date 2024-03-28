@@ -13,6 +13,7 @@
 
 #define TWOSQRT2LN2 2.354820045030949 // FWHM = 2sqrt(2ln2) * \sigma
 #define FACTOR 1.839939223835727e7
+
 namespace ModuleESolver
 {
 struct parallel_distribution
@@ -66,6 +67,8 @@ struct info_gatherv
     int* displs = nullptr;
 };
 #endif
+
+
 void convert_psi(const psi::Psi<std::complex<double>>& psi_in, psi::Psi<std::complex<float>>& psi_out)
 {
     psi_in.fix_k(0);
@@ -76,6 +79,7 @@ void convert_psi(const psi::Psi<std::complex<double>>& psi_in, psi::Psi<std::com
     }
     return;
 }
+
 
 psi::Psi<std::complex<float>>* gatherchi(psi::Psi<std::complex<float>>& chi,
                                          psi::Psi<std::complex<float>>& chi_all,
@@ -104,6 +108,7 @@ psi::Psi<std::complex<float>>* gatherchi(psi::Psi<std::complex<float>>& chi,
 #endif
     return p_chi;
 }
+
 
 void ESolver_SDFT_PW::check_che(const int nche_in, const double try_emin, const double try_emax)
 {
@@ -649,7 +654,7 @@ void ESolver_SDFT_PW::sKG(const int nche_KG,
     double gamma = fwhmin / 2.0 / ModuleBase::Ry_to_eV;
     double dt = dt_in;                               // unit in a.u., 1 a.u. = 4.837771834548454e-17 s
     const double expfactor = 18.42;                  // exp(-18.42) = 1e-8
-    int nt; // set nt empirically
+    int nt=0; // set nt empirically
     if(smear_type == 1)
     {
         nt = ceil(sqrt(2 * expfactor) / sigma / dt);
@@ -813,8 +818,10 @@ void ESolver_SDFT_PW::sKG(const int nche_KG,
         //-----------------------------------------------------------
         //               ks conductivity
         //-----------------------------------------------------------
-        if (GlobalV::MY_STOGROUP == 0 && allbands_ks > 0)
-            jjcorr_ks(ik, nt, dt, dEcut, this->pelec->wg, velop, ct11, ct12, ct22);
+		if (GlobalV::MY_STOGROUP == 0 && allbands_ks > 0)
+		{
+			jjcorr_ks(ik, nt, dt, dEcut, this->pelec->wg, velop, ct11, ct12, ct22);
+		}
 
         //-----------------------------------------------------------
         //               sto conductivity
@@ -897,7 +904,9 @@ void ESolver_SDFT_PW::sKG(const int nche_KG,
                              npw,
                              npwx,
                              perbands_sto);
+
         che.calcoef_real(&stoiter.stofunc, &Sto_Func<double>::nroot_mfd);
+
         che.calfinalvec_real(&stohchi,
                              &Stochastic_hchi::hchi_norm,
                              stopsi->get_pointer(),
@@ -1173,12 +1182,16 @@ void ESolver_SDFT_PW::sKG(const int nche_KG,
                 / 2.0);
             double tmp12 = static_cast<double>(
                 ModuleBase::GlobalFunc::ddot_real(num_per, j1l.data() + st_per, j2r.data() + st_per, false));
+
             double tmp21 = static_cast<double>(
                 ModuleBase::GlobalFunc::ddot_real(num_per, j2l.data() + st_per, j1r.data() + st_per, false));
+
             ct12[it] -= 0.5 * (tmp12 + tmp21) * kv.wk[ik] / 2.0;
+
             ct22[it] += static_cast<double>(
                 ModuleBase::GlobalFunc::ddot_real(num_per, j2l.data() + st_per, j2r.data() + st_per, false) * kv.wk[ik]
                 / 2.0);
+
             ModuleBase::timer::tick(this->classname, "ddot_real");
         }
         std::cout << std::endl;
@@ -1303,8 +1316,11 @@ void ESolver_SDFT_PW::caldos(const int nche_dos,
             }
         }
     }
-    if (stoiter.method == 2)
-        delete[] allorderchi;
+
+	if (stoiter.method == 2)
+	{
+		delete[] allorderchi;
+	}
 
     std::ofstream ofsdos;
     int ndos = int((emax - emin) / de) + 1;
@@ -1413,7 +1429,5 @@ void ESolver_SDFT_PW::caldos(const int nche_dos,
 
 namespace GlobalTemp
 {
-
-const ModuleBase::matrix* veff;
-
+	const ModuleBase::matrix* veff;
 }

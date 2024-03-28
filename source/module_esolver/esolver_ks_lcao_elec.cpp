@@ -101,8 +101,8 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
     // init psi
     if (this->psi == nullptr)
     {
-        int nsk;
-        int ncol;
+        int nsk=0;
+        int ncol=0;
         if (GlobalV::GAMMA_ONLY_LOCAL)
         {
             nsk = GlobalV::NSPIN;
@@ -264,9 +264,12 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
     //=========================================================
     // cal_ux should be called before init_scf because
     // the direction of ux is used in noncoline_rho
-    //=========================================================
-    if(GlobalV::NSPIN == 4 && GlobalV::DOMAG) GlobalC::ucell.cal_ux();
-    ModuleBase::timer::tick("ESolver_KS_LCAO", "beforesolver");
+	//=========================================================
+	if(GlobalV::NSPIN == 4 && GlobalV::DOMAG) 
+	{
+		GlobalC::ucell.cal_ux();
+	}
+	ModuleBase::timer::tick("ESolver_KS_LCAO", "beforesolver");
 }
 
 template <typename TK, typename TR>
