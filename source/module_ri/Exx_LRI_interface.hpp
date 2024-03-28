@@ -12,32 +12,32 @@
 #include "module_io/write_HS_sparse.h"
 
 template<typename T, typename Tdata>
-void Exx_LRI_Interface<T, Tdata>::write_Hexxs(const std::string& file_name) const
+void Exx_LRI_Interface<T, Tdata>::write_Hexxs_cereal(const std::string& file_name) const
 {
-	ModuleBase::TITLE("Exx_LRI","write_Hexxs");
-	ModuleBase::timer::tick("Exx_LRI", "write_Hexxs");
+    ModuleBase::TITLE("Exx_LRI", "write_Hexxs_cereal");
+    ModuleBase::timer::tick("Exx_LRI", "write_Hexxs_cereal");
     std::ofstream ofs(file_name + "_" + std::to_string(GlobalV::MY_RANK), std::ofstream::binary);
 	cereal::BinaryOutputArchive oar(ofs);
     oar(this->exx_ptr->Hexxs);
-	ModuleBase::timer::tick("Exx_LRI", "write_Hexxs");
+    ModuleBase::timer::tick("Exx_LRI", "write_Hexxs_cereal");
 }
 
 template<typename T, typename Tdata>
-void Exx_LRI_Interface<T, Tdata>::read_Hexxs(const std::string& file_name)
+void Exx_LRI_Interface<T, Tdata>::read_Hexxs_cereal(const std::string& file_name)
 {
-	ModuleBase::TITLE("Exx_LRI","read_Hexxs");
-	ModuleBase::timer::tick("Exx_LRI", "read_Hexxs");
+    ModuleBase::TITLE("Exx_LRI", "read_Hexxs_cereal");
+    ModuleBase::timer::tick("Exx_LRI", "read_Hexxs_cereal");
     std::ifstream ifs(file_name + "_" + std::to_string(GlobalV::MY_RANK), std::ofstream::binary);
 	cereal::BinaryInputArchive iar(ifs);
 	iar(this->exx_ptr->Hexxs);
-	ModuleBase::timer::tick("Exx_LRI", "read_Hexxs");
+    ModuleBase::timer::tick("Exx_LRI", "read_Hexxs_cereal");
 }
 
 template<typename T, typename Tdata>
-void Exx_LRI_Interface<T, Tdata>::write_Hexxs(const std::string& file_name, const UnitCell& ucell) const
+void Exx_LRI_Interface<T, Tdata>::write_Hexxs_csr(const std::string& file_name, const UnitCell& ucell) const
 {
-    ModuleBase::TITLE("Exx_LRI", "write_Hexxs");
-    ModuleBase::timer::tick("Exx_LRI", "write_Hexxs");
+    ModuleBase::TITLE("Exx_LRI", "write_Hexxs_csr");
+    ModuleBase::timer::tick("Exx_LRI", "write_Hexxs_csr");
     std::set<Abfs::Vector3_Order<int>> all_R_coor;
     double sparse_threshold = 1e-10;
     for (int is = 0;is < this->exx_ptr->Hexxs.size();++is)
@@ -63,7 +63,7 @@ void Exx_LRI_Interface<T, Tdata>::write_Hexxs(const std::string& file_name, cons
             -1,
             false);  //no reduce, one file for each process
     }
-    ModuleBase::timer::tick("Exx_LRI", "write_Hexxs");
+    ModuleBase::timer::tick("Exx_LRI", "write_Hexxs_csr");
 }
 
 template<typename T, typename Tdata>
@@ -96,7 +96,7 @@ Exx_LRI_Interface<T, Tdata>::calculate_RI_Tensor_sparse(const double& sparse_thr
     return target;
 }
 template<typename T, typename Tdata>
-void Exx_LRI_Interface<T, Tdata>::read_Hexxs(const std::string& file_name, const UnitCell& ucell)
+void Exx_LRI_Interface<T, Tdata>::read_Hexxs_csr(const std::string& file_name, const UnitCell& ucell)
 {
     ModuleBase::TITLE("Exx_LRI", "read_Hexxs");
     ModuleBase::timer::tick("Exx_LRI", "read_Hexxs");

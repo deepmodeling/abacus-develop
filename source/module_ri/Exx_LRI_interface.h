@@ -28,12 +28,12 @@ public:
     Exx_LRI_Interface() = delete;
 
     /// read and write Hexxs using cereal
-    void write_Hexxs(const std::string& file_name) const;
-    void read_Hexxs(const std::string& file_name);
+    void write_Hexxs_cereal(const std::string& file_name) const;
+    void read_Hexxs_cereal(const std::string& file_name);
 
     /// read and write Hexxs in CSR format
-    void write_Hexxs(const std::string& file_name, const UnitCell& ucell) const;
-    void read_Hexxs(const std::string& file_name, const UnitCell& ucell);
+    void write_Hexxs_csr(const std::string& file_name, const UnitCell& ucell) const;
+    void read_Hexxs_csr(const std::string& file_name, const UnitCell& ucell);
 
     std::vector< std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& get_Hexxs() const { return this->exx_ptr->Hexxs; }
     
