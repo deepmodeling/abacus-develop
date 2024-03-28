@@ -161,14 +161,14 @@ bool SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::check_gradient_decay(
         std::cout << "maximum gradient: " << std::endl;
         for (int it = 0; it < ntype; it++)
         {
-            std::cout << max_gradient[it] << std::endl;
+            std::cout << max_gradient[it]/ModuleBase::Ry_to_eV << std::endl;
         }
     }
     for (int it = 0; it < ntype; it++)
     {
         if (this->decay_grad_[it] > 0 && std::abs(max_gradient[it]) < this->decay_grad_[it])
         {
-            std::cout << "Reach limitation of current step ( maximum gradient < " << this->decay_grad_[it]
+            std::cout << "Reach limitation of current step ( maximum gradient < " << this->decay_grad_[it]/ModuleBase::Ry_to_eV // uB^2/Ry to uB^2/eV
                       << " in atom type " << it << " ), exit." << std::endl;
             return true;
         }
