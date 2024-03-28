@@ -13,15 +13,15 @@ namespace GintKernel{
  * @param gridt The Grid_Technique object.
  * @param i The integer parameter i.
  * @param j The integer parameter j.
- * @param psi_size_max The maximum size of psi.
+ * @param psiSizeMax The maximum size of psi.
  * @param max_size The maximum size.
  * @param nczp The nczp parameter.
  * @param vfactor The vfactor parameter.
  * @param vlocal_global_value The array of vlocal_global_value.
  * @param iat_per_nbz The array of iat_per_nbz.
- * @param psi_input_double The double array of psi_input.
- * @param psi_input_int The integer array of psi_input.
- * @param num_psir The array of num_psir.
+ * @param psiInputDouble The double array of psi_input.
+ * @param psiInputInt The integer array of psi_input.
+ * @param numPsir The array of numPsir.
  * @param lgd The lgd parameter.
  * @param psir_ylm_g The double array of psir_ylm_g.
  * @param psir_zeros_g The double array of psir_zeros_g.
@@ -39,16 +39,23 @@ namespace GintKernel{
  * @param max_n The reference to max_n.
  * @param atom_pair_num The reference to atom_pair_num.
  */
-void gtask_force(
-    const Grid_Technique &gridt, const double *rcut,
-    const UnitCell &ucell, const int i, const int j,
-    const int psi_size_max, const int max_size, const int nczp,
-    const double vfactor, const double *vlocal_global_value, int *iat_per_nbz,
-    double *psi_input_double, int *psi_input_int, int *num_psir, const int lgd,
-    double *psir_ylm_g, double *psir_zeros_g, double *dm_matrix_g, int *mat_m,
-    int *mat_n, int *mat_k, int *mat_lda, int *mat_ldb, int *mat_ldc,
-    double **mat_A, double **mat_B, double **mat_C, int &max_m, int &max_n,
-    int &atom_pair_num) {
+void gpu_task_generator_force(const Grid_Technique &gridt, 
+                        const LCAO_Orbitals &ORB,
+                        const UnitCell &ucell, 
+                        const int i, 
+                        const int j,
+                        const int psiSizeMax, 
+                        const int max_size, 
+                        const int nczp,
+                        const double vfactor, 
+                        const double *vlocal_global_value, 
+                        int *iat_per_nbz,
+                        const int lgd, 
+                        double *dm_matrix_g, 
+                        int &max_m, 
+                        int &max_n,
+                        int &atom_pair_num,
+                        SGridParameter &para){
   const int grid_index_ij = i * gridt.nby * gridt.nbzp + j * gridt.nbzp;
   const int nwmax = ucell.nwmax;
   bool *gpu_mat_cal_flag = new bool[max_size * gridt.nbzp];
@@ -60,7 +67,7 @@ void gtask_force(
   for (int z_index = 0; z_index < gridt.nbzp; z_index++) {
     int num_get_psi = 0;
     int grid_index = grid_index_ij + z_index;
-    int num_psi_pos = psi_size_max * z_index;
+    int num_psi_pos = psiSizeMax * z_index;
     int calc_flag_index = max_size * z_index;
     int bcell_start_index = gridt.bcell_start[grid_index];
     int na_grid = gridt.how_many_atoms[grid_index];
@@ -90,29 +97,27 @@ void gtask_force(
             double distance =
                 sqrt(dr_temp[0] * dr_temp[0] + dr_temp[1] * dr_temp[1] +
                      dr_temp[2] * dr_temp[2]);
-            if (distance <= rcut[it_temp]) {
+            if (distance <= ORB.Phi[it_temp].getRcut()) {
               gpu_mat_cal_flag[calc_flag_index + id] = true;
               int pos_temp_double = num_psi_pos + num_get_psi;
               int pos_temp_int = pos_temp_double * 2;
               pos_temp_double *= 5;
               if (distance < 1.0E-9)
                 distance += 1.0E-9;
-              psi_input_double[pos_temp_double] = dr_temp[0];
-              psi_input_double[pos_temp_double + 1] = dr_temp[1];
-              psi_input_double[pos_temp_double + 2] = dr_temp[2];
-              psi_input_double[pos_temp_double + 3] = distance;
+              para.psiInputDouble[pos_temp_double] = dr_temp[0];
+              para.psiInputDouble[pos_temp_double + 1] = dr_temp[1];
+              para.psiInputDouble[pos_temp_double + 2] = dr_temp[2];
+              para.psiInputDouble[pos_temp_double + 3] = distance;
               int vindex_global = bx_index * gridt.ncy * nczp +
                                   by_index * nczp + bz_index + start_ind_grid;
-              psi_input_double[pos_temp_double + 4] =
+              para.psiInputDouble[pos_temp_double + 4] =
                   vlocal_global_value[vindex_global] * vfactor;
 
-              psi_input_int[pos_temp_int] = it_temp;
-              psi_input_int[pos_temp_int + 1] =
+              para.psi_input_int[pos_temp_int] = it_temp;
+              para.psi_input_int[pos_temp_int + 1] =
                   (z_index * gridt.bxyz + ib) * max_size * nwmax + id * nwmax;
               iat_per_nbz[z_index * gridt.bxyz * max_size + ib * max_size +
                           id] = iat;
-              // printf("the na_grid is %d,the id is %d the ib is %d the iat is
-              // %d the nwmax is %d\n",na_grid,id,ib,iat,nwmax);
               num_get_psi++;
             }
             ib++;
@@ -120,7 +125,7 @@ void gtask_force(
         }
       }
     }
-    num_psir[z_index] = num_get_psi;
+    para.numPsir[z_index] = num_get_psi;
   }
 
   /* allocate the Multiplication of multinomial matrices */
@@ -141,8 +146,7 @@ void gtask_force(
       int mcell_index1 = bcell_start_index + atom1;
       int iat1 = gridt.which_atom[mcell_index1];
       int it1 = ucell.iat2it[iat1];
-      int lo1 = gridt.trace_lo[ucell.itiaiw2iwt(
-          it1, ucell.iat2ia[iat1], 0)];
+      int lo1 = gridt.trace_lo[ucell.itiaiw2iwt(it1, ucell.iat2ia[iat1], 0)];
       int nw1 = ucell.atoms[it1].nw;
 
       for (int atom2 = 0; atom2 < gridt.how_many_atoms[grid_index]; atom2++) {
@@ -152,29 +156,28 @@ void gtask_force(
         int mcell_index2 = bcell_start_index + atom2;
         int iat2 = gridt.which_atom[mcell_index2];
         int it2 = ucell.iat2it[iat2];
-        int lo2 = gridt.trace_lo[ucell.itiaiw2iwt(
-            it2, ucell.iat2ia[iat2], 0)];
+        int lo2 = gridt.trace_lo[ucell.itiaiw2iwt(it2, ucell.iat2ia[iat2], 0)];
         int nw2 = ucell.atoms[it2].nw;
 
         int mat_A_idx = bcell_start_psir + atom2 * nwmax;
         int mat_B_idx = lgd * lo1 + lo2;
         int mat_C_idx = bcell_start_psir + atom1 * nwmax;
-        mat_m[tid] = gridt.bxyz;
-        mat_n[tid] = nw1;
-        mat_k[tid] = nw2;
-        mat_lda[tid] = nwmax * max_size;
-        mat_ldb[tid] = lgd;
-        mat_ldc[tid] = nwmax * max_size;
-        mat_A[tid] = psir_ylm_g + mat_A_idx;
-        mat_B[tid] = dm_matrix_g + mat_B_idx;
-        mat_C[tid] = psir_zeros_g + mat_C_idx;
+        para.atomPairAm[tid] = gridt.bxyz;
+        para.atomPairBn[tid] = nw1;
+        para.atomPairK[tid] = nw2;
+        para.atomPairLda[tid] = nwmax * max_size;
+        para.atomPairLdb[tid] = lgd;
+        para.atomPairLdc[tid] = nwmax * max_size;
+        para.atomPairMatA[tid] = para.psirYlmRDev + mat_A_idx;
+        para.atomPairMatB[tid] = dm_matrix_g + mat_B_idx;
+        para.atomPairMatC[tid] = para.psirYlmDmDev + mat_C_idx;
 
-        if (mat_m[tid] > max_m) {
-          max_m = mat_m[tid];
+        if (para.atomPairAm[tid] > max_m) {
+          max_m = para.atomPairAm[tid];
         }
 
-        if (mat_n[tid] > max_n) {
-          max_n = mat_n[tid];
+        if (para.atomPairBn[tid] > max_n) {
+          max_n = para.atomPairBn[tid];
         }
 
         tid++;
@@ -185,5 +188,40 @@ void gtask_force(
 
   delete[] gpu_mat_cal_flag;
 }
+
+ void AllocateDm(double *matrixHost, hamilt::HContainer<double> *dm,
+                  const Grid_Technique &gridt, const UnitCell &ucell)
+  {
+    ModuleBase::GlobalFunc::ZEROS(matrixHost, gridt.lgd * gridt.lgd);
+    for (int iatRow = 0; iatRow < ucell.nat; iatRow++)
+    {
+      for (int iatColumn = 0; iatColumn < ucell.nat; iatColumn++)
+      {
+        int indexTypeRow = ucell.iat2it[iatRow];
+        int indexTypeColumn = ucell.iat2it[iatColumn];
+        int localOrbitRow = gridt.trace_lo[ucell.itiaiw2iwt(
+            indexTypeRow, ucell.iat2ia[iatRow], 0)];
+        int localOrbitColumn = gridt.trace_lo[ucell.itiaiw2iwt(
+            indexTypeColumn, ucell.iat2ia[iatColumn], 0)];
+        hamilt::AtomPair<double> *tmpAtomPair = dm->find_pair(iatRow, iatColumn);
+        int orbitIndex = 0;
+        if (tmpAtomPair == NULL)
+          continue;
+        for (int orbitRow = 0; orbitRow < tmpAtomPair->get_row_size();
+             orbitRow++)
+        {
+          for (int orbitColumn = 0; orbitColumn < tmpAtomPair->get_col_size();
+               orbitColumn++)
+          {
+            matrixHost[(localOrbitRow + orbitRow) * gridt.lgd +
+                       (localOrbitColumn + orbitColumn)] =
+                tmpAtomPair->get_pointer(0)[orbitIndex];
+            orbitIndex++;
+          }
+        }
+      }
+    }
+    return;
+  }
 
 } // namespace GintKernel
