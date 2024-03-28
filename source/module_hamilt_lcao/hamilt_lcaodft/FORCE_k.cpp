@@ -497,6 +497,7 @@ void Force_LCAO_k::cal_ftvnl_dphi_k(const elecstate::DensityMatrix<std::complex<
 
     int total_irr = 0;
     const Parallel_Orbitals* pv = this->ParaV;
+    const int nspin_ = (GlobalV::NSPIN == 2) ? 2 : 1;
     // get the adjacent atom's information.
 
     //	GlobalV::ofs_running << " calculate the ftvnl_dphi_k force" << std::endl;
@@ -549,7 +550,7 @@ void Force_LCAO_k::cal_ftvnl_dphi_k(const elecstate::DensityMatrix<std::complex<
                     continue;
                 }
                 std::vector<hamilt::BaseMatrix<double>*> tmp_matrix;
-                for (int is = 0; is < GlobalV::NSPIN; ++is)
+                for (int is = 0; is < nspin_; ++is)
                 {
                     tmp_matrix.push_back(DM->get_DMR_pointer(is+1)->find_matrix(iat1, iat2, Rx, Ry, Rz));
                 }
@@ -560,7 +561,7 @@ void Force_LCAO_k::cal_ftvnl_dphi_k(const elecstate::DensityMatrix<std::complex<
                     {
                         // get value from DM
                         double dm2d1 = 0.0;
-                        for (int is = 0; is < GlobalV::NSPIN; ++is)
+                        for (int is = 0; is < nspin_; ++is)
                         {
                             dm2d1 += tmp_matrix[is]->get_value(mu, nu);
                         }
@@ -710,6 +711,8 @@ void Force_LCAO_k::cal_fvnl_dbeta_k(const elecstate::DensityMatrix<std::complex<
     // Data structure for storing <psi|beta>, for a detailed description
     // check out the same data structure in build_Nonlocal_mu_new
     std::vector<std::map<key_tuple, std::unordered_map<int, std::vector<std::vector<double>>>>> nlm_tot;
+
+    const int nspin_ = (GlobalV::NSPIN == 2) ? 2 : 1;
 
     nlm_tot.resize(GlobalC::ucell.nat);
 
@@ -925,7 +928,7 @@ void Force_LCAO_k::cal_fvnl_dbeta_k(const elecstate::DensityMatrix<std::complex<
                             continue;
                         }
                         std::vector<double*> tmp_matrix_ptr;
-                        for (int is = 0; is < GlobalV::NSPIN; ++is)
+                        for (int is = 0; is < nspin_; ++is)
                         {
                             auto* tmp_base_matrix = DM->get_DMR_pointer(is+1)->find_matrix(iat1, iat2, rx2, ry2, rz2);
                             tmp_matrix_ptr.push_back(tmp_base_matrix->get_pointer());
@@ -1060,7 +1063,7 @@ void Force_LCAO_k::cal_fvnl_dbeta_k(const elecstate::DensityMatrix<std::complex<
                                     force_updated = true;
                                     // get DMR
                                     double dm2d1 = 0.0;
-                                    for (int is = 0; is < GlobalV::NSPIN; ++is)
+                                    for (int is = 0; is < nspin_; ++is)
                                     {  
                                         dm2d1 += tmp_matrix_ptr[is][nnr_inner];
                                     }
