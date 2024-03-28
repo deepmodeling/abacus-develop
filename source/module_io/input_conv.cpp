@@ -360,8 +360,6 @@ void Input_Conv::Convert(void)
     GlobalV::CAL_STRESS = INPUT.cal_stress;
 
     GlobalV::NUM_STREAM = INPUT.nstream;
-    GlobalV::gint_device = INPUT.gint_device;
-
 
     GlobalV::RELAX_METHOD = INPUT.relax_method;
     GlobalV::relax_scale_force = INPUT.relax_scale_force;

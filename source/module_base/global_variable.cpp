@@ -46,7 +46,6 @@ int CAL_FORCE = 0; // if cal_force >1, means do the grid integration 'cal_force'
 double FORCE_THR = 1.0e-3;
 bool CAL_STRESS = false;
 int NUM_STREAM = 4;
-std::string gint_device = "gpu";
 double PRESS1 = 0.0;
 double PRESS2 = 0.0;
 double PRESS3 = 0.0;

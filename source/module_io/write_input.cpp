@@ -236,7 +236,6 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "bx", bx, "division of an element grid in FFT grid along x");
     ModuleBase::GlobalFunc::OUTP(ofs, "by", by, "division of an element grid in FFT grid along y");
     ModuleBase::GlobalFunc::OUTP(ofs, "bz", bz, "division of an element grid in FFT grid along z");
-    ModuleBase::GlobalFunc::OUTP(ofs, "gint_device", gint_device, "the device for calculating gint module");
     ModuleBase::GlobalFunc::OUTP(ofs, "num_stream",nstream,"the nstream in compute the LCAO with CUDA");
 
     ofs << "\n#Parameters (6.Smearing)" << std::endl;

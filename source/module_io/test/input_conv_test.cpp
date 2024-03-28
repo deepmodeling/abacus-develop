@@ -187,7 +187,6 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_EQ(GlobalV::MIXING_RESTART,0);
 	EXPECT_EQ(GlobalV::MIXING_DMR,false);
 
-	EXPECT_EQ(GlobalV::gint_device,"gpu");
 	EXPECT_EQ(GlobalV::NUM_STREAM,"4");
 }
 

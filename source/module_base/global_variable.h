@@ -49,7 +49,6 @@ extern double FORCE_THR; // 8.2
 extern bool CAL_STRESS; // 8.25 calcualte the stress
 
 extern int NUM_STREAM;
-extern std::string gint_device;
 
 extern double PRESS1;
 extern double PRESS2;

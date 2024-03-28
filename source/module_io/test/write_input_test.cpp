@@ -171,8 +171,6 @@ TEST_F(write_input, PW2)
     EXPECT_THAT(output,
                 testing::HasSubstr("pw_seed                        1 #random seed for initializing wave functions"));
     EXPECT_THAT(output,
-                testing::HasSubstr("gint_device                        gpu #the device for calculating gint module"));
-    EXPECT_THAT(output,
                 test::HasSubstr("num_stream                         4 #the stream in compute LCAO with GPU"))
     EXPECT_THAT(output, testing::HasSubstr(""));
     ifs.close();
