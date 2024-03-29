@@ -79,7 +79,7 @@ void Force_LCAO_k::ftable_k(const bool isforce,
     // ---------------------------------------
     this->cal_fvl_dphi_k(isforce, isstress, pelec->pot, fvl_dphi, svl_dphi, loc.DM_R);
 
-    this->cal_fvnl_dbeta_k(DM, isforce, isstress, fvnl_dbeta, svnl_dbeta);
+    //this->cal_fvnl_dbeta_k(DM, isforce, isstress, fvnl_dbeta, svnl_dbeta);
 
 #ifdef __DEEPKS
     if (GlobalV::deepks_scf)
@@ -227,7 +227,7 @@ void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv,
     // test(this->UHM->LM->DHloc_fixedR_x,"this->UHM->LM->DHloc_fixedR_x T part");
 
     // calculate dVnl=<phi|dVnl|dphi> in LCAO
-    this->UHM->genH.build_Nonlocal_mu_new(this->UHM->genH.LM->Hloc_fixed.data(), cal_deri);
+    //this->UHM->genH.build_Nonlocal_mu_new(this->UHM->genH.LM->Hloc_fixed.data(), cal_deri);
     // test(this->UHM->LM->DHloc_fixedR_x,"this->UHM->LM->DHloc_fixedR_x Vnl part");
 
     // calculate asynchronous S matrix to output for Hefei-NAMD
@@ -565,7 +565,7 @@ void Force_LCAO_k::cal_ftvnl_dphi_k(const elecstate::DensityMatrix<std::complex<
                         {
                             dm2d1 += tmp_matrix[is]->get_value(mu, nu);
                         }
-                        double dm2d2 = 2.0 * dm2d1;
+                        double dm2d2 = (GlobalV::NSPIN == 4 && (mu % 2 == 1 || nu % 2 == 1)) ? 0.0 : 2.0 * dm2d1;
                         //
                         if (isforce)
                         {

@@ -300,9 +300,28 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 									else if(dtype=='T')
 									{
 										// notice the 'sign'
-										this->LM->DHloc_fixedR_x[nnr] = olm[0];
-										this->LM->DHloc_fixedR_y[nnr] = olm[1];
-										this->LM->DHloc_fixedR_z[nnr] = olm[2];
+										if (GlobalV::NSPIN != 4)
+										{
+											this->LM->DHloc_fixedR_x[nnr] = olm[0];
+											this->LM->DHloc_fixedR_y[nnr] = olm[1];
+											this->LM->DHloc_fixedR_z[nnr] = olm[2];
+										}
+										else
+										{
+											int is = (jj-jj0*GlobalV::NPOL) + (kk-kk0*GlobalV::NPOL)*2;
+											if (is ==0 || is ==3)
+											{
+												this->LM->DHloc_fixedR_x[nnr] = olm[0];
+												this->LM->DHloc_fixedR_y[nnr] = olm[1];
+												this->LM->DHloc_fixedR_z[nnr] = olm[2];
+											}
+											else
+											{
+												this->LM->DHloc_fixedR_x[nnr] = 0.0;
+												this->LM->DHloc_fixedR_y[nnr] = 0.0;
+												this->LM->DHloc_fixedR_z[nnr] = 0.0;
+											}
+                                        }
 										if(GlobalV::CAL_STRESS)
 										{
 											this->LM->stvnl11[nnr] = olm[0] * dtau.x;
