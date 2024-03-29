@@ -255,184 +255,184 @@ __global__ void dot_product_force(double *dpsir_ylm_left_x,
     tid += blockDim.x * gridDim.x;
   }
 }
-  void CalculateInit(DensityMat &densityMat,
-                   ForceStressIatGlobal &forceStressIatG,
+  void CalculateInit(DensityMat &denstiy_mat,
+                   ForceStressIatGlobal &force_stress_iatG,
                    hamilt::HContainer<double> *dm,
                    const Grid_Technique &gridt, const UnitCell &ucell,
-                   int lgd, int cudaBlocks, int atomNumOnGrids)
+                   int lgd, int cuda_block, int atom_num_grid)
   {
-    densityMat.densityMatHost = new double[lgd * lgd];
-    AllocateDm(densityMat.densityMatHost, dm, gridt, ucell);
+    denstiy_mat.density_mat_h = new double[lgd * lgd];
+    AllocateDm(denstiy_mat.density_mat_h, dm, gridt, ucell);
 
-    checkCuda(cudaMalloc((void **)&densityMat.densityMatDev,
+    checkCuda(cudaMalloc((void **)&denstiy_mat.density_mat_d,
                          lgd * lgd * sizeof(double)));
-    checkCuda(cudaMemcpy(densityMat.densityMatDev, densityMat.densityMatHost,
+    checkCuda(cudaMemcpy(denstiy_mat.density_mat_d, denstiy_mat.density_mat_h,
                          lgd * lgd * sizeof(double), cudaMemcpyHostToDevice));
 
-    checkCuda(cudaMalloc((void **)&forceStressIatG.stressGlobal,
-                         6 * cudaBlocks * gridt.nstreams * sizeof(double)));
-    checkCuda(cudaMemset(forceStressIatG.stressGlobal, 0,
-                         6 * cudaBlocks * gridt.nstreams * sizeof(double)));
+    checkCuda(cudaMalloc((void **)&force_stress_iatG.stress_global,
+                         6 * cuda_block * gridt.nstreams * sizeof(double)));
+    checkCuda(cudaMemset(force_stress_iatG.stress_global, 0,
+                         6 * cuda_block * gridt.nstreams * sizeof(double)));
 
-    checkCuda(cudaMalloc((void **)&forceStressIatG.forceGlobal,
-                         3 * atomNumOnGrids * gridt.nstreams * sizeof(double)));
-    checkCuda(cudaMemset(forceStressIatG.forceGlobal, 0,
-                         3 * atomNumOnGrids * gridt.nstreams * sizeof(double)));
+    checkCuda(cudaMalloc((void **)&force_stress_iatG.force_global,
+                         3 * atom_num_grid * gridt.nstreams * sizeof(double)));
+    checkCuda(cudaMemset(force_stress_iatG.force_global, 0,
+                         3 * atom_num_grid * gridt.nstreams * sizeof(double)));
 
-    checkCuda(cudaMalloc((void **)&forceStressIatG.iatGlobal,
-                         atomNumOnGrids * gridt.nstreams * sizeof(int)));
-    checkCuda(cudaMemset(forceStressIatG.iatGlobal, 0,
-                         atomNumOnGrids * gridt.nstreams * sizeof(int)));
+    checkCuda(cudaMalloc((void **)&force_stress_iatG.iat_global,
+                         atom_num_grid * gridt.nstreams * sizeof(int)));
+    checkCuda(cudaMemset(force_stress_iatG.iat_global, 0,
+                         atom_num_grid * gridt.nstreams * sizeof(int)));
   }
   void CalculateGridInit(SGridParameter &para,
                        int iter_num,
                        int nbz,
                        const Grid_Technique &gridt)
   {
-    para.streamNum = iter_num % gridt.nstreams;
-    para.input_dou = &gridt.psi_dou_glo[gridt.psi_size_max * para.streamNum * 5];
-    para.input_int = &gridt.psi_int_glo[gridt.psi_size_max * para.streamNum * 2];
-    para.num_psir = &gridt.num_psir_glo[nbz * para.streamNum];
-    para.atom_pair_A_m = &gridt.l_info_global[gridt.atom_pair_nbz * para.streamNum];
-    para.atom_pair_B_n = &gridt.r_info_global[gridt.atom_pair_nbz * para.streamNum];
-    para.atom_pair_K = &gridt.k_info_global[gridt.atom_pair_nbz * para.streamNum];
-    para.atom_pair_lda = &gridt.lda_info_global[gridt.atom_pair_nbz * para.streamNum];
-    para.atom_pair_ldb = &gridt.ldb_info_global[gridt.atom_pair_nbz * para.streamNum];
-    para.atom_pair_ldc = &gridt.ldc_info_global[gridt.atom_pair_nbz * para.streamNum];
-    para.psi_input_double_g = &gridt.psi_dou_glo_g[gridt.psi_size_max * para.streamNum * 5];
-    para.input_int_g = &gridt.psi_int_glo_g[gridt.psi_size_max * para.streamNum * 2];
-    para.num_psirDevice = &gridt.num_psir_glo_g[nbz * para.streamNum];
-    para.psir_dm_device = &gridt.dm_global_g[gridt.psir_size * para.streamNum];
-    para.psir_r_device = &gridt.right_global_g[gridt.psir_size * para.streamNum];
-    para.psir_lx_device = &gridt.d_left_x_g[gridt.psir_size * para.streamNum];
-    para.psir_ly_device = &gridt.d_left_y_g[gridt.psir_size * para.streamNum];
-    para.psir_lz_device = &gridt.d_left_z_g[gridt.psir_size * para.streamNum];
-    para.psir_lxx_device = &gridt.dd_left_xx_g[gridt.psir_size * para.streamNum];
-    para.psir_lxy_device = &gridt.dd_left_xy_g[gridt.psir_size * para.streamNum];
-    para.psir_lxz_device = &gridt.dd_left_xz_g[gridt.psir_size * para.streamNum];
-    para.psir_lyy_device = &gridt.dd_left_yy_g[gridt.psir_size * para.streamNum];
-    para.psir_lyz_device = &gridt.dd_left_yz_g[gridt.psir_size * para.streamNum];
-    para.psir_lzz_device = &gridt.dd_left_zz_g[gridt.psir_size * para.streamNum];
-    para.A_m_device = &gridt.l_info_global_g[gridt.atom_pair_nbz * para.streamNum];
-    para.B_n_device = &gridt.r_info_global_g[gridt.atom_pair_nbz * para.streamNum];
-    para.K_device = &gridt.k_info_global_g[gridt.atom_pair_nbz * para.streamNum];
-    para.lda_device = &gridt.lda_info_global_g[gridt.atom_pair_nbz * para.streamNum];
-    para.ldb_device = &gridt.ldb_info_global_g[gridt.atom_pair_nbz * para.streamNum];
-    para.ldc_device = &gridt.ldc_info_global_g[gridt.atom_pair_nbz * para.streamNum];
-    para.matrix_A = &gridt.ap_left_glo[gridt.atom_pair_nbz * para.streamNum];
-    para.matrix_B = &gridt.ap_right_glo[gridt.atom_pair_nbz * para.streamNum];
-    para.matrix_C = &gridt.ap_output_glo[gridt.atom_pair_nbz * para.streamNum];
-    para.matrix_ADev = &gridt.ap_left_glo_g[gridt.atom_pair_nbz * para.streamNum];
-    para.matrix_BDev = &gridt.ap_right_glo_g[gridt.atom_pair_nbz * para.streamNum];
-    para.matrix_CDev = &gridt.ap_output_glo_g[gridt.atom_pair_nbz * para.streamNum];
+    para.stream_num = iter_num % gridt.nstreams;
+    para.input_dou = &gridt.psi_dou_glo[gridt.psi_size_max * para.stream_num * 5];
+    para.input_int = &gridt.psi_int_glo[gridt.psi_size_max * para.stream_num * 2];
+    para.num_psir = &gridt.num_psir_glo[nbz * para.stream_num];
+    para.atom_pair_A_m = &gridt.l_info_global[gridt.atom_pair_nbz * para.stream_num];
+    para.atom_pair_B_n = &gridt.r_info_global[gridt.atom_pair_nbz * para.stream_num];
+    para.atom_pair_K = &gridt.k_info_global[gridt.atom_pair_nbz * para.stream_num];
+    para.atom_pair_lda = &gridt.lda_info_global[gridt.atom_pair_nbz * para.stream_num];
+    para.atom_pair_ldb = &gridt.ldb_info_global[gridt.atom_pair_nbz * para.stream_num];
+    para.atom_pair_ldc = &gridt.ldc_info_global[gridt.atom_pair_nbz * para.stream_num];
+    para.psi_input_double_g = &gridt.psi_dou_glo_g[gridt.psi_size_max * para.stream_num * 5];
+    para.input_int_g = &gridt.psi_int_glo_g[gridt.psi_size_max * para.stream_num * 2];
+    para.num_psirDevice = &gridt.num_psir_glo_g[nbz * para.stream_num];
+    para.psir_dm_device = &gridt.dm_global_g[gridt.psir_size * para.stream_num];
+    para.psir_r_device = &gridt.right_global_g[gridt.psir_size * para.stream_num];
+    para.psir_lx_device = &gridt.d_left_x_g[gridt.psir_size * para.stream_num];
+    para.psir_ly_device = &gridt.d_left_y_g[gridt.psir_size * para.stream_num];
+    para.psir_lz_device = &gridt.d_left_z_g[gridt.psir_size * para.stream_num];
+    para.psir_lxx_device = &gridt.dd_left_xx_g[gridt.psir_size * para.stream_num];
+    para.psir_lxy_device = &gridt.dd_left_xy_g[gridt.psir_size * para.stream_num];
+    para.psir_lxz_device = &gridt.dd_left_xz_g[gridt.psir_size * para.stream_num];
+    para.psir_lyy_device = &gridt.dd_left_yy_g[gridt.psir_size * para.stream_num];
+    para.psir_lyz_device = &gridt.dd_left_yz_g[gridt.psir_size * para.stream_num];
+    para.psir_lzz_device = &gridt.dd_left_zz_g[gridt.psir_size * para.stream_num];
+    para.A_m_device = &gridt.l_info_global_g[gridt.atom_pair_nbz * para.stream_num];
+    para.B_n_device = &gridt.r_info_global_g[gridt.atom_pair_nbz * para.stream_num];
+    para.K_device = &gridt.k_info_global_g[gridt.atom_pair_nbz * para.stream_num];
+    para.lda_device = &gridt.lda_info_global_g[gridt.atom_pair_nbz * para.stream_num];
+    para.ldb_device = &gridt.ldb_info_global_g[gridt.atom_pair_nbz * para.stream_num];
+    para.ldc_device = &gridt.ldc_info_global_g[gridt.atom_pair_nbz * para.stream_num];
+    para.matrix_A = &gridt.ap_left_glo[gridt.atom_pair_nbz * para.stream_num];
+    para.matrix_B = &gridt.ap_right_glo[gridt.atom_pair_nbz * para.stream_num];
+    para.matrix_C = &gridt.ap_output_glo[gridt.atom_pair_nbz * para.stream_num];
+    para.matrix_ADev = &gridt.ap_left_glo_g[gridt.atom_pair_nbz * para.stream_num];
+    para.matrix_BDev = &gridt.ap_right_glo_g[gridt.atom_pair_nbz * para.stream_num];
+    para.matrix_CDev = &gridt.ap_output_glo_g[gridt.atom_pair_nbz * para.stream_num];
   }
 
-  void ForceStressIatInit(ForceStressIat &forceStressIat, int streamNum, int cudaBlocks, int atomNumOnGrids,
-                          int max_size, ForceStressIatGlobal &forceStressIatG)
+  void ForceStressIatInit(ForceStressIat &force_stress_iat, int stream_num, int cuda_block, int atom_num_grid,
+                          int max_size, ForceStressIatGlobal &force_stress_iatG)
   {
     const int iat_min = -max_size - 1;
-    forceStressIat.stressHost = new double[6 * cudaBlocks];
-    forceStressIat.stressDev = &forceStressIatG.stressGlobal[6 * cudaBlocks * streamNum];
-    forceStressIat.forceDev = &forceStressIatG.forceGlobal[3 * atomNumOnGrids * streamNum];
-    forceStressIat.iatDev = &forceStressIatG.iatGlobal[atomNumOnGrids * streamNum];
-    forceStressIat.iatHost = new int[atomNumOnGrids];
-    for (int index = 0; index < atomNumOnGrids; index++)
+    force_stress_iat.stress_host = new double[6 * cuda_block];
+    force_stress_iat.stress_device = &force_stress_iatG.stress_global[6 * cuda_block * stream_num];
+    force_stress_iat.force_device = &force_stress_iatG.force_global[3 * atom_num_grid * stream_num];
+    force_stress_iat.iat_device = &force_stress_iatG.iat_global[atom_num_grid * stream_num];
+    force_stress_iat.iat_host = new int[atom_num_grid];
+    for (int index = 0; index < atom_num_grid; index++)
     {
-      forceStressIat.iatHost[index] = iat_min;
+      force_stress_iat.iat_host[index] = iat_min;
     }
-    forceStressIat.forceHost = new double[3 * atomNumOnGrids];
-    ModuleBase::GlobalFunc::ZEROS(forceStressIat.forceHost, 3 * atomNumOnGrids);
+    force_stress_iat.force_host = new double[3 * atom_num_grid];
+    ModuleBase::GlobalFunc::ZEROS(force_stress_iat.force_host, 3 * atom_num_grid);
   }
   void CalculateGridMemCpy(SGridParameter &para,
                          const Grid_Technique &gridt,
-                         int nbz, int atomNumOnGrids)
+                         int nbz, int atom_num_grid)
   {
     checkCuda(cudaMemcpyAsync(para.psi_input_double_g, para.input_dou,
-                              gridt.psi_size_max * 5 * sizeof(double), cudaMemcpyHostToDevice, gridt.streams[para.streamNum]));
+                              gridt.psi_size_max * 5 * sizeof(double), cudaMemcpyHostToDevice, gridt.streams[para.stream_num]));
     checkCuda(cudaMemcpyAsync(para.input_int_g, para.input_int,
-                              gridt.psi_size_max * 2 * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[para.streamNum]));
+                              gridt.psi_size_max * 2 * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[para.stream_num]));
     checkCuda(cudaMemcpyAsync(para.num_psirDevice, para.num_psir, nbz * sizeof(int),
-                              cudaMemcpyHostToDevice, gridt.streams[para.streamNum]));
+                              cudaMemcpyHostToDevice, gridt.streams[para.stream_num]));
     checkCuda(cudaMemcpyAsync(para.A_m_device, para.atom_pair_A_m,
-                              gridt.atom_pair_nbz * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[para.streamNum]));
+                              gridt.atom_pair_nbz * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[para.stream_num]));
     checkCuda(cudaMemcpyAsync(para.B_n_device, para.atom_pair_B_n,
-                              gridt.atom_pair_nbz * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[para.streamNum]));
+                              gridt.atom_pair_nbz * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[para.stream_num]));
     checkCuda(cudaMemcpyAsync(para.K_device, para.atom_pair_K,
-                              gridt.atom_pair_nbz * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[para.streamNum]));
+                              gridt.atom_pair_nbz * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[para.stream_num]));
     checkCuda(cudaMemcpyAsync(para.lda_device, para.atom_pair_lda,
-                              gridt.atom_pair_nbz * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[para.streamNum]));
+                              gridt.atom_pair_nbz * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[para.stream_num]));
     checkCuda(cudaMemcpyAsync(para.ldb_device, para.atom_pair_ldb,
-                              gridt.atom_pair_nbz * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[para.streamNum]));
+                              gridt.atom_pair_nbz * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[para.stream_num]));
     checkCuda(cudaMemcpyAsync(para.ldc_device, para.atom_pair_ldc,
-                              gridt.atom_pair_nbz * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[para.streamNum]));
+                              gridt.atom_pair_nbz * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[para.stream_num]));
     checkCuda(cudaMemcpyAsync(para.matrix_ADev, para.matrix_A,
-                              gridt.atom_pair_nbz * sizeof(double *), cudaMemcpyHostToDevice, gridt.streams[para.streamNum]));
+                              gridt.atom_pair_nbz * sizeof(double *), cudaMemcpyHostToDevice, gridt.streams[para.stream_num]));
     checkCuda(cudaMemcpyAsync(para.matrix_BDev, para.matrix_B,
-                              gridt.atom_pair_nbz * sizeof(double *), cudaMemcpyHostToDevice, gridt.streams[para.streamNum]));
+                              gridt.atom_pair_nbz * sizeof(double *), cudaMemcpyHostToDevice, gridt.streams[para.stream_num]));
     checkCuda(cudaMemcpyAsync(para.matrix_CDev, para.matrix_C,
-                              gridt.atom_pair_nbz * sizeof(double *), cudaMemcpyHostToDevice, gridt.streams[para.streamNum]));
+                              gridt.atom_pair_nbz * sizeof(double *), cudaMemcpyHostToDevice, gridt.streams[para.stream_num]));
     checkCuda(cudaMemsetAsync(para.psir_dm_device, 0, gridt.psir_size * sizeof(double),
-                              gridt.streams[para.streamNum]));
+                              gridt.streams[para.stream_num]));
     checkCuda(cudaMemsetAsync(para.psir_r_device, 0, gridt.psir_size * sizeof(double),
-                              gridt.streams[para.streamNum]));
+                              gridt.streams[para.stream_num]));
     checkCuda(cudaMemsetAsync(para.psir_lx_device, 0, gridt.psir_size * sizeof(double),
-                              gridt.streams[para.streamNum]));
+                              gridt.streams[para.stream_num]));
     checkCuda(cudaMemsetAsync(para.psir_ly_device, 0,
-                              gridt.psir_size * sizeof(double), gridt.streams[para.streamNum]));
+                              gridt.psir_size * sizeof(double), gridt.streams[para.stream_num]));
     checkCuda(cudaMemsetAsync(para.psir_lz_device, 0,
-                              gridt.psir_size * sizeof(double), gridt.streams[para.streamNum]));
+                              gridt.psir_size * sizeof(double), gridt.streams[para.stream_num]));
     checkCuda(cudaMemsetAsync(para.psir_lxx_device, 0,
-                              gridt.psir_size * sizeof(double), gridt.streams[para.streamNum]));
+                              gridt.psir_size * sizeof(double), gridt.streams[para.stream_num]));
     checkCuda(cudaMemsetAsync(para.psir_lxy_device, 0,
-                              gridt.psir_size * sizeof(double), gridt.streams[para.streamNum]));
+                              gridt.psir_size * sizeof(double), gridt.streams[para.stream_num]));
     checkCuda(cudaMemsetAsync(para.psir_lxz_device, 0,
-                              gridt.psir_size * sizeof(double), gridt.streams[para.streamNum]));
+                              gridt.psir_size * sizeof(double), gridt.streams[para.stream_num]));
     checkCuda(cudaMemsetAsync(para.psir_lyy_device, 0,
-                              gridt.psir_size * sizeof(double), gridt.streams[para.streamNum]));
+                              gridt.psir_size * sizeof(double), gridt.streams[para.stream_num]));
     checkCuda(cudaMemsetAsync(para.psir_lyz_device, 0,
-                              gridt.psir_size * sizeof(double), gridt.streams[para.streamNum]));
+                              gridt.psir_size * sizeof(double), gridt.streams[para.stream_num]));
     checkCuda(cudaMemsetAsync(para.psir_lzz_device, 0,
-                              gridt.psir_size * sizeof(double), gridt.streams[para.streamNum]));
+                              gridt.psir_size * sizeof(double), gridt.streams[para.stream_num]));
   }
 
-  void ForceStressIatMemCpy(ForceStressIat &forceStressIat,
+  void ForceStressIatMemCpy(ForceStressIat &force_stress_iat,
                             const Grid_Technique &gridt,
-                            int atomNumOnGrids, int cudaBlocks, int streamNum)
+                            int atom_num_grid, int cuda_block, int stream_num)
   {
-    checkCuda(cudaMemcpyAsync(forceStressIat.iatDev, forceStressIat.iatHost, atomNumOnGrids * sizeof(int),
-                              cudaMemcpyHostToDevice, gridt.streams[streamNum]));
-    checkCuda(cudaMemsetAsync(forceStressIat.stressDev, 0,
-                              6 * cudaBlocks * sizeof(double), gridt.streams[streamNum]));
-    checkCuda(cudaMemsetAsync(forceStressIat.forceDev, 0,
-                              3 * atomNumOnGrids * sizeof(double), gridt.streams[streamNum]));
+    checkCuda(cudaMemcpyAsync(force_stress_iat.iat_device, force_stress_iat.iat_host, atom_num_grid * sizeof(int),
+                              cudaMemcpyHostToDevice, gridt.streams[stream_num]));
+    checkCuda(cudaMemsetAsync(force_stress_iat.stress_device, 0,
+                              6 * cuda_block * sizeof(double), gridt.streams[stream_num]));
+    checkCuda(cudaMemsetAsync(force_stress_iat.force_device, 0,
+                              3 * atom_num_grid * sizeof(double), gridt.streams[stream_num]));
   }
-  void ForceCalculate(ForceStressIat &forceStressIat,
-                    double *force, int atomNumOnGrids)
+  void ForceCalculate(ForceStressIat &force_stress_iat,
+                    double *force, int atom_num_grid)
   {
-    checkCuda(cudaMemcpy(forceStressIat.forceHost, forceStressIat.forceDev,
-                         3 * atomNumOnGrids * sizeof(double), cudaMemcpyDeviceToHost));
-    for (int index1 = 0; index1 < atomNumOnGrids; index1++)
+    checkCuda(cudaMemcpy(force_stress_iat.force_host, force_stress_iat.force_device,
+                         3 * atom_num_grid * sizeof(double), cudaMemcpyDeviceToHost));
+    for (int index1 = 0; index1 < atom_num_grid; index1++)
     {
-      int iat1 = forceStressIat.iatHost[index1];
+      int iat1 = force_stress_iat.iat_host[index1];
       if (iat1 >= 0)
       {
         for (int index2 = 0; index2 < 3; index2++)
         {
-          force[iat1 * 3 + index2] += forceStressIat.forceHost[index1 * 3 + index2];
+          force[iat1 * 3 + index2] += force_stress_iat.force_host[index1 * 3 + index2];
         }
       }
     }
   }
-  void StressCalculate(ForceStressIat &forceStressIat,
-                     double *stress, int cudaBlocks)
+  void StressCalculate(ForceStressIat &force_stress_iat,
+                     double *stress, int cuda_block)
   {
-    checkCuda(cudaMemcpy(forceStressIat.stressHost, forceStressIat.stressDev,
-                         6 * cudaBlocks * sizeof(double), cudaMemcpyDeviceToHost));
+    checkCuda(cudaMemcpy(force_stress_iat.stress_host, force_stress_iat.stress_device,
+                         6 * cuda_block * sizeof(double), cudaMemcpyDeviceToHost));
     for (int i = 0; i < 6; i++)
     {
-      for (int index = 0; index < cudaBlocks; index++)
+      for (int index = 0; index < cuda_block; index++)
       {
-        stress[i] += forceStressIat.stressHost[i * cudaBlocks + index];
+        stress[i] += force_stress_iat.stress_host[i * cuda_block + index];
       }
     }
   }

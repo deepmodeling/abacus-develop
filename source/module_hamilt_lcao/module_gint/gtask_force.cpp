@@ -40,7 +40,6 @@ namespace GintKernel{
  * @param atom_pair_num The reference to atom_pair_num.
  */
 void gpu_task_generator_force(const Grid_Technique &gridt, 
-                        const LCAO_Orbitals &ORB,
                         const UnitCell &ucell, 
                         const int i, 
                         const int j,
@@ -48,6 +47,7 @@ void gpu_task_generator_force(const Grid_Technique &gridt,
                         const int max_size, 
                         const int nczp,
                         const double vfactor, 
+                        double *rcut,
                         const double *vlocal_global_value, 
                         int *iat_per_nbz,
                         const int lgd, 
@@ -97,7 +97,7 @@ void gpu_task_generator_force(const Grid_Technique &gridt,
             double distance =
                 sqrt(dr_temp[0] * dr_temp[0] + dr_temp[1] * dr_temp[1] +
                      dr_temp[2] * dr_temp[2]);
-            if (distance <= ORB.Phi[it_temp].getRcut()) {
+            if (distance <= rcut[it_temp]) {
               gpu_mat_cal_flag[calc_flag_index + id] = true;
               int pos_temp_double = num_psi_pos + num_get_psi;
               int pos_temp_int = pos_temp_double * 2;
