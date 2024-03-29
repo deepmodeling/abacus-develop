@@ -1086,6 +1086,11 @@ bool ESolver_KS_LCAO<TK, TR>::do_after_converge(int& iter)
 				iter);
 	}
 #endif // __EXX
+    if(GlobalV::dft_plus_u)
+    {
+        // use the converged occupation matrix for next MD/Relax SCF calculation
+        GlobalC::dftu.initialed_locale = true;
+    }
     return true;
 }
 
