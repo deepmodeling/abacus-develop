@@ -330,6 +330,7 @@ TEST_F(SimpsonIntegralITF, UniformGridOdd)
     const int ngrid_max = 10000;
     double *f = new double[ngrid_max];
     int ind = 0;
+    double ref_val = std::atan(end) - std::atan(start);
     std::ofstream file_o("data/itf_uni_out.bin", std::ios::binary);
     for (int ngrid = 5; ngrid <= ngrid_max; ngrid += 2) {
         const double dx = (end - start) / (ngrid - 1);
@@ -339,7 +340,7 @@ TEST_F(SimpsonIntegralITF, UniformGridOdd)
         }
         double tol = (end-start) * std::pow(dx, 4) * 24 / 180;
         EXPECT_NEAR(std::atan(end) - std::atan(start), ModuleBase::Integral::simpson(ngrid, f, dx), std::max(tol, doublethreshold));
-        double err = std::abs(ModuleBase::Integral::simpson(ngrid, f, dx) - ModuleBase::Integral::simpson(ngrid - 2, f, dx)) / ModuleBase::Integral::simpson(ngrid, f, dx);
+        double err = std::abs(ModuleBase::Integral::simpson(ngrid, f, dx) - ref_val) / std::abs(ref_val);
         file_o.write(reinterpret_cast<char*>(&err), sizeof(double));
     }
     delete[] f;
@@ -354,6 +355,7 @@ TEST_F(SimpsonIntegralITF, SinGridOdd)
     double *h = new double[ngrid_max];
     double *f = new double[ngrid_max];
     std::ofstream file_o("data/itf_sin_out.bin", std::ios::binary);
+    double ref_val = std::atan(end) - std::atan(start);
     for (int ngrid = 5; ngrid <= ngrid_max; ngrid += 2) {
         sinspace(start, end, ngrid, xv, h);
         for (int i = 0; i < ngrid; ++i) {
@@ -364,7 +366,7 @@ TEST_F(SimpsonIntegralITF, SinGridOdd)
         double dx = h[ngrid / 2];
         double tol = (end-start) * std::pow(dx, 4);
         EXPECT_NEAR(std::atan(end) - std::atan(start), ModuleBase::Integral::simpson(ngrid, f, h), std::max(tol, doublethreshold));
-        double err = std::abs(ModuleBase::Integral::simpson(ngrid, f, h) - ModuleBase::Integral::simpson(ngrid - 2, f, h)) / ModuleBase::Integral::simpson(ngrid, f, h);
+        double err = std::abs(ModuleBase::Integral::simpson(ngrid, f, h) - ref_val) / std::abs(ref_val);
         file_o.write(reinterpret_cast<char*>(&err), sizeof(double));
     }
     
@@ -384,6 +386,7 @@ TEST_F(SimpsonIntegralExp, UniformGridOdd)
     const int ngrid_max = 10000;
     double *f = new double[ngrid_max];
     std::ofstream file_o("data/exp_uni_out.bin", std::ios::binary);
+    double ref_val = std::exp(end) - std::exp(start);
     for (int ngrid = 5; ngrid <= ngrid_max; ngrid += 2) {
         const double dx = (end - start) / (ngrid - 1);
         for (int i = 0; i < ngrid; ++i) {
@@ -392,7 +395,7 @@ TEST_F(SimpsonIntegralExp, UniformGridOdd)
         }
         double tol = (end-start) * std::exp(1) * std::pow(dx, 4) / 180;
         EXPECT_NEAR(std::exp(end) - std::exp(start), ModuleBase::Integral::simpson(ngrid, f, dx), std::max(tol, doublethreshold));
-         double err = std::abs(ModuleBase::Integral::simpson(ngrid, f, dx) - ModuleBase::Integral::simpson(ngrid - 2, f, dx)) / ModuleBase::Integral::simpson(ngrid, f, dx);
+        double err = std::abs(ModuleBase::Integral::simpson(ngrid, f, dx) - ref_val) / std::abs(ref_val);
         file_o.write(reinterpret_cast<char*>(&err), sizeof(double));
     }
     delete[] f;
@@ -407,7 +410,7 @@ TEST_F(SimpsonIntegralExp, SinGridOdd)
     double *h = new double[ngrid_max];
     double *f = new double[ngrid_max];
     std::ofstream file_o("data/exp_sin_out.bin", std::ios::binary);
-
+    double ref_val = std::exp(end) - std::exp(start);
    // skip ngrid = 3 since the errors exceeds the threshold
     for (int ngrid = 5; ngrid <= ngrid_max; ngrid += 2) {
         sinspace(start, end, ngrid, xv, h);
@@ -418,7 +421,7 @@ TEST_F(SimpsonIntegralExp, SinGridOdd)
         double dx = h[ngrid / 2];
         double tol = (end-start) * std::pow(dx, 4);
         EXPECT_NEAR(std::exp(end) - std::exp(start), ModuleBase::Integral::simpson(ngrid, f, h), std::max(tol, doublethreshold));
-        double err = std::abs(ModuleBase::Integral::simpson(ngrid, f, h) - ModuleBase::Integral::simpson(ngrid - 2, f, h)) / ModuleBase::Integral::simpson(ngrid, f, h);
+        double err = std::abs(ModuleBase::Integral::simpson(ngrid, f, h) - ref_val) / std::abs(ref_val);
         file_o.write(reinterpret_cast<char*>(&err), sizeof(double));
     }
     
