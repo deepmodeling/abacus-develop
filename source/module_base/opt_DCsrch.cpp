@@ -165,8 +165,8 @@ int dcsrch(double& stp,
     double xtrapl = 1.1;
     double xtrapu = 4.0;
 
-    bool brackt;
-    int stage;
+    bool brackt = false;
+    int stage = 0;
     double finit, ftest, fm, fx, fxm, fy, fym, ginit, gtest, gm, gx, gxm, gy, gym, stx, sty, stmin, stmax, width,
         width1;
 

@@ -1194,7 +1194,7 @@ void
 __sincos (double x, double *sinx, double *cosx)
 {
   mynumber u;
-  int k;
+  int k = 0;
 
   u.x = x;
   k = u.i[HIGH_HALF] & 0x7fffffff;
@@ -1230,7 +1230,7 @@ __sincos (double x, double *sinx, double *cosx)
   if (k < 0x7ff00000)
     {
       double a, da, xx;
-      unsigned int n;
+      unsigned int n = 0;
 
       /* If |x| < 105414350 use simple range reduction.  */
       n = k < 0x419921FB ? reduce_sincos (x, &a, &da) : __branred (x, &a, &da);

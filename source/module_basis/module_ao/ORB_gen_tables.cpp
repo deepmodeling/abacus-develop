@@ -760,7 +760,7 @@ void ORB_gen_tables::snap_psipsi(
 	/// -dim1 : type pairs,
 	/// -dim2 : radial orbital pairs,
 	/// -dim3 : find lmax between T1 and T2, and get lmax*2+1
-	int dim1, dim2, dim3;
+	int dim1, dim2=0, dim3;
 
 	dim1 = this->MOT.OV_Tpair(T1, T2);
 	dim3 = this->MOT.OV_L2plus1(T1, T2); //2*lmax+1

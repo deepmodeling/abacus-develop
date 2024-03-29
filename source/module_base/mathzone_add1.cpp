@@ -189,7 +189,7 @@ double Mathzone_Add1::Uni_RadialF
 {
   	double h1, h2, h3, f1, f2, f3, f4;
   	double g1, g2, x1, x2, y1, y2, f;
-  	double result;
+  	double result = 0.0;
 	double rmax = (msh-1) * dr;
 
   	if (newr < 0.0)
@@ -367,7 +367,7 @@ void Mathzone_Add1::Uni_Deriv_Phi
 #endif
 
 	bool is_re;
-	double fac;
+	double fac = 0.0;
 	if (nd % 4 == 0) 
 	{
 		is_re = true; 

@@ -186,7 +186,7 @@ void ORB_table_phi::cal_ST_Phi12_R
 
 	//double* integrated_func = new double[kmesh];
 
-	int ll;
+	int ll =0;
 	if(l==0) ll=0;
 	else 	 ll=l-1;
 

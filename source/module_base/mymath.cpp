@@ -7,8 +7,8 @@ namespace ModuleBase
 
 void heapAjust(double *r, int *ind, int s, int m)
 {
-    int j, ic;
-    double rc;
+    int j = 0, ic = 0;
+    double rc = 0.0;
     rc = r[s];
     ic = ind[s];
 
@@ -36,8 +36,8 @@ void heapAjust(double *r, int *ind, int s, int m)
 void heapsort(const int n, double *r, int *ind)
 {
     ModuleBase::timer::tick("mymath", "heapsort");
-    int i, ic;
-    double rc;
+    int i = 0, ic = 0
+    double rc = 0.0;
 
     if (ind[0] == 0)
     {
@@ -89,8 +89,8 @@ c adapted from Numerical Recipes pg. 329 (new edition)
 // from hpsort.f90
 void hpsort(int n, double *ra, int *ind)
 {
-    int i, ir, j, k, iind;
-    double rra;
+    int i = 0, ir = 0, j = 0, k = 0, iind = 0;
+    double rra = 0.0;
 
     if (ind[0] == 0)
     {
