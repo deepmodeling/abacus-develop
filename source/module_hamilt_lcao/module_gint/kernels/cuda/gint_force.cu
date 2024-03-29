@@ -328,13 +328,13 @@ __global__ void dot_product_force(double *dpsir_ylm_left_x,
   }
 
   void ForceStressIatInit(ForceStressIat &forceStressIat, int streamNum, int cudaBlocks, int atomNumOnGrids,
-                          int max_size, double *stressGlobal, double *forceGlobal, int *iatGlobal)
+                          int max_size, ForceStressIatGlobal &forceStressIatG)
   {
     const int iat_min = -max_size - 1;
     forceStressIat.stressHost = new double[6 * cudaBlocks];
-    forceStressIat.stressDev = &stressGlobal[6 * cudaBlocks * streamNum];
-    forceStressIat.forceDev = &forceGlobal[3 * atomNumOnGrids * streamNum];
-    forceStressIat.iatDev = &iatGlobal[atomNumOnGrids * streamNum];
+    forceStressIat.stressDev = &forceStressIatG.stressGlobal[6 * cudaBlocks * streamNum];
+    forceStressIat.forceDev = &forceStressIatG.forceGlobal[3 * atomNumOnGrids * streamNum];
+    forceStressIat.iatDev = &forceStressIatG.iatGlobal[atomNumOnGrids * streamNum];
     forceStressIat.iatHost = new int[atomNumOnGrids];
     for (int index = 0; index < atomNumOnGrids; index++)
     {

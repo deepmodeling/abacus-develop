@@ -101,8 +101,7 @@ void gint_gamma_force_gpu(hamilt::HContainer<double> *dm,
 
             CalculateGridInit(para,iter_num,nbz,gridt);
             ForceStressIatInit(forceStressIat,para.streamNum,cudaBlocks,atomNumOnGrids,
-                                max_size,forceStressIatG.stressGlobal,
-                                forceStressIatG.forceGlobal,forceStressIatG.iatGlobal);
+                                max_size,forceStressIatG);
             checkCuda(cudaStreamSynchronize(gridt.streams[para.streamNum]));
 
             /*gpu task compute in CPU */

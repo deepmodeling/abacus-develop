@@ -262,7 +262,7 @@ void CalculateGridInit(SGridParameter &para,
  * @param iatGlobal sorted in the ForceStressIatG,the array of global iat
  */
 void ForceStressIatInit(ForceStressIat &forceStressIat,int streamNum,int cudaBlocks,int atomNumOnGrids,
-                        int max_size,double *stressGlobal,double *forceGlobal,int *iatGlobal);
+                        int max_size,ForceStressIatGlobal &forceStressIatg );
 /**
  * @brief GridParameter memCpy,from Host to Device
  *
