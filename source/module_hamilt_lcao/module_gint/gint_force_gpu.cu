@@ -107,7 +107,7 @@ void gint_gamma_force_gpu(hamilt::HContainer<double> *dm,
 
             /*gpu task compute in CPU */
             gpu_task_generator_force(gridt,ORB,ucell,i,j,
-                                    gridt.psi_size_max_per_z,
+                                    gridt.psi_size_max_z,
                                     max_size,nczp,vfactor,vlocal,
                                     forceStressIat.iatHost,lgd,densityMat.densityMatDev,
                                     max_m,max_n,atom_pair_num,
@@ -119,25 +119,25 @@ void gint_gamma_force_gpu(hamilt::HContainer<double> *dm,
             /* cuda stream compute and Multiplication of multinomial matrices */
             get_psi_force<<<GridPsi, blockPsi, 0, gridt.streams[para.streamNum]>>>(
                 gridt.ylmcoef_g, ORB.dr_uniform, gridt.bxyz, ucell.nwmax,para.psi_input_double_g, 
-                para.psi_input_int_g, para.numPsirDevice, gridt.psi_size_max_per_z,
+                para.input_int_g, para.num_psirDevice, gridt.psi_size_max_z,
                 gridt.ucell_atom_nwl_g, gridt.atom_iw2_new_g,gridt.atom_iw2_ylm_g,gridt.atom_iw2_l_g, 
-                gridt.atom_nw_g, gridt.nr_max, gridt.psi_u_g, para.psirYlmRDev,
-                para.psirYlmLxDev,para.psirYlmLyDev,para.psirYlmLzDev, 
-                para.psirYlmLxxDev,para.psirYlmLxyDev, para.psirYlmLxzDev, 
-                para.psirYlmLyyDev, para.psirYlmLyzDev, para.psirYlmLzzDev);
+                gridt.atom_nw_g, gridt.nr_max, gridt.psi_u_g, para.psir_r_device,
+                para.psir_lx_device,para.psir_ly_device,para.psir_lz_device, 
+                para.psir_lxx_device,para.psir_lxy_device, para.psir_lxz_device, 
+                para.psir_lyy_device, para.psir_lyz_device, para.psir_lzz_device);
             checkCudaLastError();
             gridt.fastest_matrix_mul(max_m, max_n, 
-                                        para.atomPairAmDev, para.atomPairBnDev,
-                                        para.atomPairKDev, para.atomPairMatADev, 
-                                        para.atomPairLdaDev,para.atomPairMatBDev, 
-                                        para.atomPairLdbDev, para.atomPairMatCDev,
-                                        para.atomPairLdcDev, atom_pair_num,
+                                        para.A_m_device, para.B_n_device,
+                                        para.K_device, para.matrix_ADev, 
+                                        para.lda_device,para.matrix_BDev, 
+                                        para.ldb_device, para.matrix_CDev,
+                                        para.ldc_device, atom_pair_num,
                                         gridt.streams[para.streamNum], nullptr);
 
             /* force compute in GPU */
             dot_product_force<<<girdDotForce, blockDotForce, 0,gridt.streams[para.streamNum]>>>(
-                para.psirYlmLxDev, para.psirYlmLyDev, 
-                para.psirYlmLzDev, para.psirYlmDmDev, 
+                para.psir_lx_device, para.psir_ly_device, 
+                para.psir_lz_device, para.psir_dm_device, 
                 forceStressIat.forceDev,forceStressIat.iatDev, nwmax, 
                 max_size, 
                 gridt.psir_size / nwmax);
@@ -146,10 +146,10 @@ void gint_gamma_force_gpu(hamilt::HContainer<double> *dm,
 
             /*stress compute in GPU*/
             dot_product_stress<<<gridDot, blockDot, 0, gridt.streams[para.streamNum]>>>(
-                        para.psirYlmLxxDev, para.psirYlmLxyDev, 
-                        para.psirYlmLxzDev, para.psirYlmLyyDev,
-                        para.psirYlmLyzDev, para.psirYlmLzzDev, 
-                        para.psirYlmDmDev, forceStressIat.stressDev,
+                        para.psir_lxx_device, para.psir_lxy_device, 
+                        para.psir_lxz_device, para.psir_lyy_device,
+                        para.psir_lyz_device, para.psir_lzz_device, 
+                        para.psir_dm_device, forceStressIat.stressDev,
                         gridt.psir_size);
             /* stress compute in CPU*/
             StressCalculate(forceStressIat,stress,cudaBlocks);

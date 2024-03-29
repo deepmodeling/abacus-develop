@@ -10,7 +10,7 @@ void gtask_rho(const Grid_Technique &gridt,
                const int nczp,
                const UnitCell &ucell,
                const double *rcut,
-               double *psi_input_double, int *psi_input_int,
+               double *psi_input_double, int *input_int,
                int *num_psir,
                const int lgd,
                double * const psir_ylm_g,
@@ -97,8 +97,8 @@ void gtask_rho(const Grid_Technique &gridt,
               psi_input_double[pos_temp_double + 2] = dr_temp[2] / distance;
               psi_input_double[pos_temp_double + 3] = distance;
 
-              psi_input_int[pos_temp_int] = it_temp;  // atom type
-              psi_input_int[pos_temp_int + 1] =
+              input_int[pos_temp_int] = it_temp;  // atom type
+              input_int[pos_temp_int + 1] =
                   (z_index * gridt.bxyz + ib) * max_size * nwmax + id * nwmax; // psir index in psir_ylm
               num_get_psi++;
             }

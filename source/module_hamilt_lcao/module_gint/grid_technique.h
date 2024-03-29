@@ -129,65 +129,65 @@ public:
   bool *atom_iw2_new_g;
   int *atom_iw2_ylm_g;
   int *atom_iw2_l_g;
-  double **GridVlocal_v2_g;
+  double **grid_vlocal_g;
   int nr_max;
   int psi_size_max;
-  int psi_size_max_per_z;
+  int psi_size_max_z;
   int psir_size;
-  int atom_pair_size_of_meshcell;
-  int atom_pair_size_over_nbz;
+  int atom_pair_mesh;
+  int atom_pair_nbz;
 
   const int nstreams = 4;
   cudaStream_t streams[4];
   // streams[nstreams]
   // TODO it needs to be implemented through configuration files
 
-  double *psir_ylm_left_global_g;
-  double *dpsir_ylm_left_x_global_g;
-  double *dpsir_ylm_left_y_global_g;
-  double *dpsir_ylm_left_z_global_g;
+  double *left_global_g;
+  double *d_left_x_g;
+  double *d_left_y_g;
+  double *d_left_z_g;
 
-  double *ddpsir_ylm_left_xx_global_g;
-  double *ddpsir_ylm_left_xy_global_g;
-  double *ddpsir_ylm_left_xz_global_g;
-  double *ddpsir_ylm_left_yy_global_g;
-  double *ddpsir_ylm_left_yz_global_g;
-  double *ddpsir_ylm_left_zz_global_g;
-  double *psir_ylm_right_global_g;
-  double *psir_ylm_dm_global_g;
+  double *dd_left_xx_g;
+  double *dd_left_xy_g;
+  double *dd_left_xz_g;
+  double *dd_left_yy_g;
+  double *dd_left_yz_g;
+  double *dd_left_zz_g;
+  double *right_global_g;
+  double *dm_global_g;
 
-  double *atom_pair_alpha_global;
-  double *atom_pair_alpha_global_g;
-  int *atom_pair_left_info_global;
-  int *atom_pair_left_info_global_g;
-  int *atom_pair_right_info_global;
-  int *atom_pair_right_info_global_g;
-  int *atom_pair_k_info_global;
-  int *atom_pair_k_info_global_g;
+  double *alpha_global;
+  double *alpha_global_g;
+  int *l_info_global;
+  int *l_info_global_g;
+  int *r_info_global;
+  int *r_info_global_g;
+  int *k_info_global;
+  int *k_info_global_g;
 
-  int *atom_pair_lda_global;
-  int *atom_pair_lda_global_g;
-  int *atom_pair_ldb_global;
-  int *atom_pair_ldb_global_g;
-  int *atom_pair_ldc_global;
-  int *atom_pair_ldc_global_g;
+  int *lda_info_global;
+  int *lda_info_global_g;
+  int *ldb_info_global;
+  int *ldb_info_global_g;
+  int *ldc_info_global;
+  int *ldc_info_global_g;
 
-  double **atom_pair_left_global;
-  double **atom_pair_right_global;
-  double **atom_pair_output_global;
+  double **ap_left_glo;
+  double **ap_right_glo;
+  double **ap_output_glo;
 
-  double **atom_pair_left_global_g;
-  double **atom_pair_right_global_g;
-  double **atom_pair_output_global_g;
+  double **ap_left_glo_g;
+  double **ap_right_glo_g;
+  double **ap_output_glo_g;
 
-  double *psi_input_double_global;
-  double *psi_input_double_global_g;
+  double *psi_dou_glo;
+  double *psi_dou_glo_g;
 
-  int *psi_input_int_global;
-  int *psi_input_int_global_g;
+  int *psi_int_glo;
+  int *psi_int_glo_g;
 
-  int *num_psir_global;
-  int *num_psir_global_g;
+  int *num_psir_glo;
+  int *num_psir_glo_g;
 
   // additional variables for rho calculating
   int num_mcell;

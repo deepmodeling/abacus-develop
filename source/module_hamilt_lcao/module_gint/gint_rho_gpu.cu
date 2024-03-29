@@ -72,47 +72,47 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double> *dm,
 
             // psi_input contains data used to generate the psi values.
             // The suffix "_g" indicates that the data is stored in the GPU, otherwise it is stored in the host.
-            double *psi_input_double = &gridt.psi_input_double_global[gridt.psi_size_max * stream_num * 5];
-            int *psi_input_int = &gridt.psi_input_int_global[gridt.psi_size_max * stream_num * 2];
-            double *psi_input_double_g = &gridt.psi_input_double_global_g[gridt.psi_size_max * stream_num * 5];
-            int *psi_input_int_g = &gridt.psi_input_int_global_g[gridt.psi_size_max * stream_num * 2];
+            double *psi_input_double = &gridt.psi_dou_glo[gridt.psi_size_max * stream_num * 5];
+            int *input_int = &gridt.psi_int_glo[gridt.psi_size_max * stream_num * 2];
+            double *psi_input_double_g = &gridt.psi_dou_glo_g[gridt.psi_size_max * stream_num * 5];
+            int *input_int_g = &gridt.psi_int_glo_g[gridt.psi_size_max * stream_num * 2];
 
             // num_psir represents the number of atoms in each bigcell.
-            int *num_psir = &gridt.num_psir_global[nbz * stream_num];
-            int *num_psir_g = &gridt.num_psir_global_g[nbz * stream_num];
+            int *num_psir = &gridt.num_psir_glo[nbz * stream_num];
+            int *num_psir_g = &gridt.num_psir_glo_g[nbz * stream_num];
 
             // atom_pair_alpha represents the coefficient alpha in the expression alpha * mat_DM * mat_psir.
-            double *atom_pair_alpha = &gridt.atom_pair_alpha_global[gridt.atom_pair_size_over_nbz * stream_num];
-            double *atom_pair_alpha_g = &gridt.atom_pair_alpha_global_g[gridt.atom_pair_size_over_nbz * stream_num];
+            double *atom_pair_alpha = &gridt.alpha_global[gridt.atom_pair_nbz * stream_num];
+            double *atom_pair_alpha_g = &gridt.alpha_global_g[gridt.atom_pair_nbz * stream_num];
 
             // m, n, k, lda, ldb, ldc in matrix multiplication
-            int *atom_pair_A_m = &gridt.atom_pair_left_info_global[gridt.atom_pair_size_over_nbz * stream_num];
-            int *atom_pair_B_n = &gridt.atom_pair_right_info_global[gridt.atom_pair_size_over_nbz * stream_num];
-            int *atom_pair_k = &gridt.atom_pair_k_info_global[gridt.atom_pair_size_over_nbz * stream_num];
-            int *atom_pair_lda = &gridt.atom_pair_lda_global[gridt.atom_pair_size_over_nbz * stream_num];
-            int *atom_pair_ldb = &gridt.atom_pair_ldb_global[gridt.atom_pair_size_over_nbz * stream_num];
-            int *atom_pair_ldc = &gridt.atom_pair_ldc_global[gridt.atom_pair_size_over_nbz * stream_num];
+            int *atom_pair_A_m = &gridt.l_info_global[gridt.atom_pair_nbz * stream_num];
+            int *atom_pair_B_n = &gridt.r_info_global[gridt.atom_pair_nbz * stream_num];
+            int *atom_pair_k = &gridt.k_info_global[gridt.atom_pair_nbz * stream_num];
+            int *atom_pair_lda = &gridt.lda_info_global[gridt.atom_pair_nbz * stream_num];
+            int *atom_pair_ldb = &gridt.ldb_info_global[gridt.atom_pair_nbz * stream_num];
+            int *atom_pair_ldc = &gridt.ldc_info_global[gridt.atom_pair_nbz * stream_num];
 
-            int *atom_pair_A_m_g = &gridt.atom_pair_left_info_global_g[gridt.atom_pair_size_over_nbz * stream_num];
-            int *atom_pair_B_n_g = &gridt.atom_pair_right_info_global_g[gridt.atom_pair_size_over_nbz * stream_num];
-            int *atom_pair_k_g = &gridt.atom_pair_k_info_global_g[gridt.atom_pair_size_over_nbz * stream_num];
-            int *atom_pair_lda_g = &gridt.atom_pair_lda_global_g[gridt.atom_pair_size_over_nbz * stream_num];
-            int *atom_pair_ldb_g = &gridt.atom_pair_ldb_global_g[gridt.atom_pair_size_over_nbz * stream_num];
-            int *atom_pair_ldc_g = &gridt.atom_pair_ldc_global_g[gridt.atom_pair_size_over_nbz * stream_num];
+            int *atom_pair_A_m_g = &gridt.l_info_global_g[gridt.atom_pair_nbz * stream_num];
+            int *atom_pair_B_n_g = &gridt.r_info_global_g[gridt.atom_pair_nbz * stream_num];
+            int *atom_pair_k_g = &gridt.k_info_global_g[gridt.atom_pair_nbz * stream_num];
+            int *atom_pair_lda_g = &gridt.lda_info_global_g[gridt.atom_pair_nbz * stream_num];
+            int *atom_pair_ldb_g = &gridt.ldb_info_global_g[gridt.atom_pair_nbz * stream_num];
+            int *atom_pair_ldc_g = &gridt.ldc_info_global_g[gridt.atom_pair_nbz * stream_num];
 
             // matrix A, B, C used in matrix multiplication
-            double **atom_pair_mat_A_array = &gridt.atom_pair_left_global[gridt.atom_pair_size_over_nbz * stream_num];
-            double **atom_pair_mat_B_array = &gridt.atom_pair_right_global[gridt.atom_pair_size_over_nbz * stream_num];
-            double **atom_pair_mat_C_array = &gridt.atom_pair_output_global[gridt.atom_pair_size_over_nbz * stream_num];
+            double **atom_pair_mat_A_array = &gridt.ap_left_glo[gridt.atom_pair_nbz * stream_num];
+            double **atom_pair_mat_B_array = &gridt.ap_right_glo[gridt.atom_pair_nbz * stream_num];
+            double **atom_pair_mat_C_array = &gridt.ap_output_glo[gridt.atom_pair_nbz * stream_num];
 
-            double **atom_pair_mat_A_array_g = &gridt.atom_pair_left_global_g[gridt.atom_pair_size_over_nbz * stream_num];
-            double **atom_pair_mat_B_array_g = &gridt.atom_pair_right_global_g[gridt.atom_pair_size_over_nbz * stream_num];
-            double **atom_pair_mat_C_array_g = &gridt.atom_pair_output_global_g[gridt.atom_pair_size_over_nbz * stream_num];
+            double **atom_pair_mat_A_array_g = &gridt.ap_left_glo_g[gridt.atom_pair_nbz * stream_num];
+            double **atom_pair_mat_B_array_g = &gridt.ap_right_glo_g[gridt.atom_pair_nbz * stream_num];
+            double **atom_pair_mat_C_array_g = &gridt.ap_output_glo_g[gridt.atom_pair_nbz * stream_num];
 
             // psir_ylm_left_g is used to store the psi values.
             // psir_ylm_right_g is used to store psir_dm, which is the product of mat_DM * mat_psir.
-            double *psir_ylm_left_g = &gridt.psir_ylm_left_global_g[gridt.psir_size * stream_num];
-            double *psir_ylm_right_g = &gridt.psir_ylm_right_global_g[gridt.psir_size * stream_num];
+            double *psir_ylm_left_g = &gridt.left_global_g[gridt.psir_size * stream_num];
+            double *psir_ylm_right_g = &gridt.right_global_g[gridt.psir_size * stream_num];
             double *rho_g = gridt.rho_g;
 
             // variables for dot product psir * psir_dm
@@ -138,7 +138,7 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double> *dm,
                       max_size, nczp,
                       ucell, rcut,
                       psi_input_double,
-                      psi_input_int,
+                      input_int,
                       num_psir,
                       lgd,
                       psir_ylm_left_g,
@@ -167,20 +167,20 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double> *dm,
 
             // Copying data from host to device
             checkCuda(cudaMemcpyAsync(psi_input_double_g, psi_input_double, gridt.psi_size_max * 5 * sizeof(double), cudaMemcpyHostToDevice, gridt.streams[stream_num]));
-            checkCuda(cudaMemcpyAsync(psi_input_int_g, psi_input_int, gridt.psi_size_max * 2 * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[stream_num]));
+            checkCuda(cudaMemcpyAsync(input_int_g, input_int, gridt.psi_size_max * 2 * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[stream_num]));
             checkCuda(cudaMemcpyAsync(num_psir_g, num_psir, nbz * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[stream_num]));
 
-            checkCuda(cudaMemcpyAsync(atom_pair_alpha_g, atom_pair_alpha, gridt.atom_pair_size_over_nbz * sizeof(double), cudaMemcpyHostToDevice, gridt.streams[stream_num]));
-            checkCuda(cudaMemcpyAsync(atom_pair_A_m_g, atom_pair_A_m, gridt.atom_pair_size_over_nbz * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[stream_num]));
-            checkCuda(cudaMemcpyAsync(atom_pair_B_n_g, atom_pair_B_n, gridt.atom_pair_size_over_nbz * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[stream_num]));
-            checkCuda(cudaMemcpyAsync(atom_pair_k_g, atom_pair_k, gridt.atom_pair_size_over_nbz * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[stream_num]));
-            checkCuda(cudaMemcpyAsync(atom_pair_lda_g, atom_pair_lda, gridt.atom_pair_size_over_nbz * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[stream_num]));
-            checkCuda(cudaMemcpyAsync(atom_pair_ldb_g, atom_pair_ldb, gridt.atom_pair_size_over_nbz * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[stream_num]));
-            checkCuda(cudaMemcpyAsync(atom_pair_ldc_g, atom_pair_ldc, gridt.atom_pair_size_over_nbz * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[stream_num]));
+            checkCuda(cudaMemcpyAsync(atom_pair_alpha_g, atom_pair_alpha, gridt.atom_pair_nbz * sizeof(double), cudaMemcpyHostToDevice, gridt.streams[stream_num]));
+            checkCuda(cudaMemcpyAsync(atom_pair_A_m_g, atom_pair_A_m, gridt.atom_pair_nbz * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[stream_num]));
+            checkCuda(cudaMemcpyAsync(atom_pair_B_n_g, atom_pair_B_n, gridt.atom_pair_nbz * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[stream_num]));
+            checkCuda(cudaMemcpyAsync(atom_pair_k_g, atom_pair_k, gridt.atom_pair_nbz * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[stream_num]));
+            checkCuda(cudaMemcpyAsync(atom_pair_lda_g, atom_pair_lda, gridt.atom_pair_nbz * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[stream_num]));
+            checkCuda(cudaMemcpyAsync(atom_pair_ldb_g, atom_pair_ldb, gridt.atom_pair_nbz * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[stream_num]));
+            checkCuda(cudaMemcpyAsync(atom_pair_ldc_g, atom_pair_ldc, gridt.atom_pair_nbz * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[stream_num]));
 
-            checkCuda(cudaMemcpyAsync(atom_pair_mat_A_array_g, atom_pair_mat_A_array, gridt.atom_pair_size_over_nbz * sizeof(double *), cudaMemcpyHostToDevice, gridt.streams[stream_num]));
-            checkCuda(cudaMemcpyAsync(atom_pair_mat_B_array_g, atom_pair_mat_B_array, gridt.atom_pair_size_over_nbz * sizeof(double *), cudaMemcpyHostToDevice, gridt.streams[stream_num]));
-            checkCuda(cudaMemcpyAsync(atom_pair_mat_C_array_g, atom_pair_mat_C_array, gridt.atom_pair_size_over_nbz * sizeof(double *), cudaMemcpyHostToDevice, gridt.streams[stream_num]));
+            checkCuda(cudaMemcpyAsync(atom_pair_mat_A_array_g, atom_pair_mat_A_array, gridt.atom_pair_nbz * sizeof(double *), cudaMemcpyHostToDevice, gridt.streams[stream_num]));
+            checkCuda(cudaMemcpyAsync(atom_pair_mat_B_array_g, atom_pair_mat_B_array, gridt.atom_pair_nbz * sizeof(double *), cudaMemcpyHostToDevice, gridt.streams[stream_num]));
+            checkCuda(cudaMemcpyAsync(atom_pair_mat_C_array_g, atom_pair_mat_C_array, gridt.atom_pair_nbz * sizeof(double *), cudaMemcpyHostToDevice, gridt.streams[stream_num]));
 
             checkCuda(cudaMemcpyAsync(vec_len_g, vec_len, gridt.num_mcell * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[stream_num]));
             checkCuda(cudaMemcpyAsync(vec_l_g, vec_l, gridt.num_mcell * sizeof(double *), cudaMemcpyHostToDevice, gridt.streams[stream_num]));
@@ -198,9 +198,9 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double> *dm,
                                                                         gridt.bxyz,
                                                                         ucell.nwmax,
                                                                         psi_input_double_g,
-                                                                        psi_input_int_g,
+                                                                        input_int_g,
                                                                         num_psir_g,
-                                                                        gridt.psi_size_max_per_z,
+                                                                        gridt.psi_size_max_z,
                                                                         gridt.ucell_atom_nwl_g,
                                                                         gridt.atom_iw2_new_g,
                                                                         gridt.atom_iw2_ylm_g,

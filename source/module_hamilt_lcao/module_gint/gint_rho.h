@@ -45,7 +45,7 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double> *dm,
  * @param ucell UnitCell object containing unit cell information.
  * @param rcut Pointer to the cutoff radius array.
  * @param psi_input_double `double` type data used for calculating psir.
- * @param psi_input_int `int` type data used for calculating psir.
+ * @param input_int `int` type data used for calculating psir.
  * @param num_psir number of atoms on each bigcell.
  * @param lgd lgd.
  * @param psir_ylm_g one-dimensional array storing psir.
@@ -79,7 +79,7 @@ void gtask_rho(const Grid_Technique &gridt,
                             const int nczp,
                             const UnitCell &ucell,
                             const double *rcut,
-                            double *psi_input_double, int *psi_input_int,
+                            double *psi_input_double, int *input_int,
                             int *num_psir,
                             const int lgd,
                             double * const psir_ylm_g,

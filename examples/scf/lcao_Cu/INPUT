@@ -18,6 +18,6 @@ basis_type	lcao
 gamma_only	1
 cal_force 	1
 cal_stress	1
-gint_device	gpu
+device	gpu
 num_stream	4
 ks_solver 	cusolver

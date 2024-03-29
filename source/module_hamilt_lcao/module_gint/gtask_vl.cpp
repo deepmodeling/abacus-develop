@@ -15,7 +15,7 @@ void gtask_vlocal(const Grid_Technique &gridt,
                   const double *vlocal_global_value,
                   double *psir_ylm_left,
                   double *psir_ylm_right,
-                  double *psi_input_double, int *psi_input_int,
+                  double *psi_input_double, int *input_int,
                   int *num_psir, 
                   int *atom_pair_A_m,
                   int *atom_pair_B_n,
@@ -38,7 +38,7 @@ void gtask_vlocal(const Grid_Technique &gridt,
   for (int z_index = 0; z_index < gridt.nbzp; z_index++) {
     int num_get_psi = 0;
     int grid_index = grid_index_ij + z_index;
-    int num_psi_pos = gridt.psi_size_max_per_z * z_index;
+    int num_psi_pos = gridt.psi_size_max_z * z_index;
     int calc_flag_index = max_size * z_index;
     int bcell_start_index = gridt.bcell_start[grid_index];
 
@@ -83,8 +83,8 @@ void gtask_vlocal(const Grid_Technique &gridt,
               psi_input_double[pos_temp_double + 4] =
                   vlocal_global_value[vindex_global] * vfactor;
 
-              psi_input_int[pos_temp_int] = it_temp;
-              psi_input_int[pos_temp_int + 1] =
+              input_int[pos_temp_int] = it_temp;
+              input_int[pos_temp_int + 1] =
                   ((z_index * max_size + id) * gridt.bxyz) * nwmax + ib;
               num_get_psi++;
             }
@@ -127,7 +127,7 @@ void gtask_vlocal(const Grid_Technique &gridt,
             it2, ucell.iat2ia[iat2], 0)];
         if (lo1 <= lo2) {
           int atom_pair_nw = ucell.atoms[it1].nw * ucell.atoms[it2].nw;
-          if (gridt.GridVlocal_v2_g[iat1 * ucell.nat + iat2] == nullptr)
+          if (gridt.grid_vlocal_g[iat1 * ucell.nat + iat2] == nullptr)
           {
             //Note that this situation occurs here because the logic in hcontainer and 
             // grid integration is different. 
@@ -143,7 +143,7 @@ void gtask_vlocal(const Grid_Technique &gridt,
 
           atom_pair_mat_A[atom_pair_num] = psir_ylm_left + calc_index1;
           atom_pair_mat_B[atom_pair_num] = psir_ylm_right + calc_index2;
-          atom_pair_mat_C[atom_pair_num] = gridt.GridVlocal_v2_g[iat1 * ucell.nat + iat2];
+          atom_pair_mat_C[atom_pair_num] = gridt.grid_vlocal_g[iat1 * ucell.nat + iat2];
 
           atom_pair_lda[atom_pair_num] = gridt.bxyz;
           atom_pair_ldb[atom_pair_num] = gridt.bxyz;

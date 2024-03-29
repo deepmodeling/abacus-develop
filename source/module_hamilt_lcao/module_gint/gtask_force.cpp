@@ -19,9 +19,9 @@ namespace GintKernel{
  * @param vfactor The vfactor parameter.
  * @param vlocal_global_value The array of vlocal_global_value.
  * @param iat_per_nbz The array of iat_per_nbz.
- * @param psiInputDouble The double array of psi_input.
+ * @param input_dou The double array of psi_input.
  * @param psiInputInt The integer array of psi_input.
- * @param numPsir The array of numPsir.
+ * @param num_psir The array of num_psir.
  * @param lgd The lgd parameter.
  * @param psir_ylm_g The double array of psir_ylm_g.
  * @param psir_zeros_g The double array of psir_zeros_g.
@@ -104,17 +104,17 @@ void gpu_task_generator_force(const Grid_Technique &gridt,
               pos_temp_double *= 5;
               if (distance < 1.0E-9)
                 distance += 1.0E-9;
-              para.psiInputDouble[pos_temp_double] = dr_temp[0];
-              para.psiInputDouble[pos_temp_double + 1] = dr_temp[1];
-              para.psiInputDouble[pos_temp_double + 2] = dr_temp[2];
-              para.psiInputDouble[pos_temp_double + 3] = distance;
+              para.input_dou[pos_temp_double] = dr_temp[0];
+              para.input_dou[pos_temp_double + 1] = dr_temp[1];
+              para.input_dou[pos_temp_double + 2] = dr_temp[2];
+              para.input_dou[pos_temp_double + 3] = distance;
               int vindex_global = bx_index * gridt.ncy * nczp +
                                   by_index * nczp + bz_index + start_ind_grid;
-              para.psiInputDouble[pos_temp_double + 4] =
+              para.input_dou[pos_temp_double + 4] =
                   vlocal_global_value[vindex_global] * vfactor;
 
-              para.psi_input_int[pos_temp_int] = it_temp;
-              para.psi_input_int[pos_temp_int + 1] =
+              para.input_int[pos_temp_int] = it_temp;
+              para.input_int[pos_temp_int + 1] =
                   (z_index * gridt.bxyz + ib) * max_size * nwmax + id * nwmax;
               iat_per_nbz[z_index * gridt.bxyz * max_size + ib * max_size +
                           id] = iat;
@@ -125,7 +125,7 @@ void gpu_task_generator_force(const Grid_Technique &gridt,
         }
       }
     }
-    para.numPsir[z_index] = num_get_psi;
+    para.num_psir[z_index] = num_get_psi;
   }
 
   /* allocate the Multiplication of multinomial matrices */
@@ -162,22 +162,22 @@ void gpu_task_generator_force(const Grid_Technique &gridt,
         int mat_A_idx = bcell_start_psir + atom2 * nwmax;
         int mat_B_idx = lgd * lo1 + lo2;
         int mat_C_idx = bcell_start_psir + atom1 * nwmax;
-        para.atomPairAm[tid] = gridt.bxyz;
-        para.atomPairBn[tid] = nw1;
-        para.atomPairK[tid] = nw2;
-        para.atomPairLda[tid] = nwmax * max_size;
-        para.atomPairLdb[tid] = lgd;
-        para.atomPairLdc[tid] = nwmax * max_size;
-        para.atomPairMatA[tid] = para.psirYlmRDev + mat_A_idx;
-        para.atomPairMatB[tid] = dm_matrix_g + mat_B_idx;
-        para.atomPairMatC[tid] = para.psirYlmDmDev + mat_C_idx;
+        para.atom_pair_A_m[tid] = gridt.bxyz;
+        para.atom_pair_B_n[tid] = nw1;
+        para.atom_pair_K[tid] = nw2;
+        para.atom_pair_lda[tid] = nwmax * max_size;
+        para.atom_pair_ldb[tid] = lgd;
+        para.atom_pair_ldc[tid] = nwmax * max_size;
+        para.matrix_A[tid] = para.psir_r_device + mat_A_idx;
+        para.matrix_B[tid] = dm_matrix_g + mat_B_idx;
+        para.matrix_C[tid] = para.psir_dm_device + mat_C_idx;
 
-        if (para.atomPairAm[tid] > max_m) {
-          max_m = para.atomPairAm[tid];
+        if (para.atom_pair_A_m[tid] > max_m) {
+          max_m = para.atom_pair_A_m[tid];
         }
 
-        if (para.atomPairBn[tid] > max_n) {
-          max_n = para.atomPairBn[tid];
+        if (para.atom_pair_B_n[tid] > max_n) {
+          max_n = para.atom_pair_B_n[tid];
         }
 
         tid++;

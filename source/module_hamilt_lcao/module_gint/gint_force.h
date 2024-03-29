@@ -8,41 +8,41 @@ namespace GintKernel{
 typedef struct 
 {
     int      streamNum;
-    double  *psiInputDouble;
-    int     *psi_input_int;
-    int     *numPsir;
-    int     *atomPairAm;
-    int     *atomPairBn;
-    int     *atomPairK;
-    int     *atomPairLda;
-    int     *atomPairLdb;
-    int     *atomPairLdc;
+    double  *input_dou;
+    int     *input_int;
+    int     *num_psir;
+    int     *atom_pair_A_m;
+    int     *atom_pair_B_n;
+    int     *atom_pair_K;
+    int     *atom_pair_lda;
+    int     *atom_pair_ldb;
+    int     *atom_pair_ldc;
     double  *psi_input_double_g;
-    int     *psi_input_int_g;
-    int     *numPsirDevice ;
-    double  *psirYlmDmDev;
-    double  *psirYlmRDev ;
-    double  *psirYlmLxDev ;
-    double  *psirYlmLyDev ;
-    double  *psirYlmLzDev ;
-    double  *psirYlmLxxDev;
-    double  *psirYlmLxyDev;
-    double  *psirYlmLxzDev;
-    double  *psirYlmLyyDev;
-    double  *psirYlmLyzDev;
-    double  *psirYlmLzzDev;
-    int     *atomPairAmDev;
-    int     *atomPairBnDev;
-    int     *atomPairKDev;
-    int     *atomPairLdaDev;
-    int     *atomPairLdbDev;
-    int     *atomPairLdcDev;
-    double  **atomPairMatA;
-    double  **atomPairMatB;
-    double  **atomPairMatC;
-    double  **atomPairMatADev;
-    double  **atomPairMatBDev;
-    double  **atomPairMatCDev;
+    int     *input_int_g;
+    int     *num_psirDevice ;
+    double  *psir_dm_device;
+    double  *psir_r_device ;
+    double  *psir_lx_device ;
+    double  *psir_ly_device ;
+    double  *psir_lz_device ;
+    double  *psir_lxx_device;
+    double  *psir_lxy_device;
+    double  *psir_lxz_device;
+    double  *psir_lyy_device;
+    double  *psir_lyz_device;
+    double  *psir_lzz_device;
+    int     *A_m_device;
+    int     *B_n_device;
+    int     *K_device;
+    int     *lda_device;
+    int     *ldb_device;
+    int     *ldc_device;
+    double  **matrix_A;
+    double  **matrix_B;
+    double  **matrix_C;
+    double  **matrix_ADev;
+    double  **matrix_BDev;
+    double  **matrix_CDev;
 }SGridParameter;
 
 typedef struct 
@@ -109,7 +109,7 @@ void gint_gamma_force_gpu(hamilt::HContainer<double> *dm,
  * @param vlocal_global_value Global values of local potential.
  * @param iat_per_nbz Array of iat values per nbz.
  * @param psi_input_double Double array for input psi values.
- * @param psi_input_int Integer array for input psi values.
+ * @param input_int Integer array for input psi values.
  * @param num_psir Array for num_psir values.
  * @param lgd Value of lgd.
  * @param psir_ylm_g GPU array for psir_ylm.
@@ -139,7 +139,7 @@ void gtask_force(
     const UnitCell &ucell, const int i, const int j,
     const int psi_size_max, const int max_size, const int nczp,
     const double vfactor, const double *vlocal_global_value, int *iat_per_nbz,
-    double *psi_input_double, int *psi_input_int, int *num_psir, const int lgd,
+    double *psi_input_double, int *input_int, int *num_psir, const int lgd,
     double *psir_ylm_g, double *psir_zeros_g, double *dm_matrix_g, int *mat_m,
     int *mat_n, int *mat_k, int *mat_lda, int *mat_ldb, int *mat_ldc,
     double **mat_A, double **mat_B, double **mat_C, int &max_m, int &max_n,
@@ -158,9 +158,9 @@ void gtask_force(
  * @param vfactor Scaling factor,stand for the Local potential.
  * @param vlocal_global_value Global values of local potential.
  * @param iat_per_nbz save the number of the iat on per nbz grids.
- * @param psiInputDouble Double array for input psi values,contains the x,y,z,distance of the grids.
- * @param psi_input_int Integer array for input psi values,contains the index of the girds.
- * @param numPsir Array for numPsir values,contained the each number of the atom psir on a grid.
+ * @param input_dou Double array for input psi values,contains the x,y,z,distance of the grids.
+ * @param input_int Integer array for input psi values,contains the index of the girds.
+ * @param num_psir Array for num_psir values,contained the each number of the atom psir on a grid.
  * @param lgd Value of lgd,stand for the local grid dimension.
  * @param psir_ylm_g GPU array for psir_ylm,send as the right matrix.
  * @param psir_zeros_g GPU array for psir_zeros,send as the zero matirx.

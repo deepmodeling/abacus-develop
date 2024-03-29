@@ -290,41 +290,41 @@ __global__ void dot_product_force(double *dpsir_ylm_left_x,
                        const Grid_Technique &gridt)
   {
     para.streamNum = iter_num % gridt.nstreams;
-    para.psiInputDouble = &gridt.psi_input_double_global[gridt.psi_size_max * para.streamNum * 5];
-    para.psi_input_int = &gridt.psi_input_int_global[gridt.psi_size_max * para.streamNum * 2];
-    para.numPsir = &gridt.num_psir_global[nbz * para.streamNum];
-    para.atomPairAm = &gridt.atom_pair_left_info_global[gridt.atom_pair_size_over_nbz * para.streamNum];
-    para.atomPairBn = &gridt.atom_pair_right_info_global[gridt.atom_pair_size_over_nbz * para.streamNum];
-    para.atomPairK = &gridt.atom_pair_k_info_global[gridt.atom_pair_size_over_nbz * para.streamNum];
-    para.atomPairLda = &gridt.atom_pair_lda_global[gridt.atom_pair_size_over_nbz * para.streamNum];
-    para.atomPairLdb = &gridt.atom_pair_ldb_global[gridt.atom_pair_size_over_nbz * para.streamNum];
-    para.atomPairLdc = &gridt.atom_pair_ldc_global[gridt.atom_pair_size_over_nbz * para.streamNum];
-    para.psi_input_double_g = &gridt.psi_input_double_global_g[gridt.psi_size_max * para.streamNum * 5];
-    para.psi_input_int_g = &gridt.psi_input_int_global_g[gridt.psi_size_max * para.streamNum * 2];
-    para.numPsirDevice = &gridt.num_psir_global_g[nbz * para.streamNum];
-    para.psirYlmDmDev = &gridt.psir_ylm_dm_global_g[gridt.psir_size * para.streamNum];
-    para.psirYlmRDev = &gridt.psir_ylm_right_global_g[gridt.psir_size * para.streamNum];
-    para.psirYlmLxDev = &gridt.dpsir_ylm_left_x_global_g[gridt.psir_size * para.streamNum];
-    para.psirYlmLyDev = &gridt.dpsir_ylm_left_y_global_g[gridt.psir_size * para.streamNum];
-    para.psirYlmLzDev = &gridt.dpsir_ylm_left_z_global_g[gridt.psir_size * para.streamNum];
-    para.psirYlmLxxDev = &gridt.ddpsir_ylm_left_xx_global_g[gridt.psir_size * para.streamNum];
-    para.psirYlmLxyDev = &gridt.ddpsir_ylm_left_xy_global_g[gridt.psir_size * para.streamNum];
-    para.psirYlmLxzDev = &gridt.ddpsir_ylm_left_xz_global_g[gridt.psir_size * para.streamNum];
-    para.psirYlmLyyDev = &gridt.ddpsir_ylm_left_yy_global_g[gridt.psir_size * para.streamNum];
-    para.psirYlmLyzDev = &gridt.ddpsir_ylm_left_yz_global_g[gridt.psir_size * para.streamNum];
-    para.psirYlmLzzDev = &gridt.ddpsir_ylm_left_zz_global_g[gridt.psir_size * para.streamNum];
-    para.atomPairAmDev = &gridt.atom_pair_left_info_global_g[gridt.atom_pair_size_over_nbz * para.streamNum];
-    para.atomPairBnDev = &gridt.atom_pair_right_info_global_g[gridt.atom_pair_size_over_nbz * para.streamNum];
-    para.atomPairKDev = &gridt.atom_pair_k_info_global_g[gridt.atom_pair_size_over_nbz * para.streamNum];
-    para.atomPairLdaDev = &gridt.atom_pair_lda_global_g[gridt.atom_pair_size_over_nbz * para.streamNum];
-    para.atomPairLdbDev = &gridt.atom_pair_ldb_global_g[gridt.atom_pair_size_over_nbz * para.streamNum];
-    para.atomPairLdcDev = &gridt.atom_pair_ldc_global_g[gridt.atom_pair_size_over_nbz * para.streamNum];
-    para.atomPairMatA = &gridt.atom_pair_left_global[gridt.atom_pair_size_over_nbz * para.streamNum];
-    para.atomPairMatB = &gridt.atom_pair_right_global[gridt.atom_pair_size_over_nbz * para.streamNum];
-    para.atomPairMatC = &gridt.atom_pair_output_global[gridt.atom_pair_size_over_nbz * para.streamNum];
-    para.atomPairMatADev = &gridt.atom_pair_left_global_g[gridt.atom_pair_size_over_nbz * para.streamNum];
-    para.atomPairMatBDev = &gridt.atom_pair_right_global_g[gridt.atom_pair_size_over_nbz * para.streamNum];
-    para.atomPairMatCDev = &gridt.atom_pair_output_global_g[gridt.atom_pair_size_over_nbz * para.streamNum];
+    para.input_dou = &gridt.psi_dou_glo[gridt.psi_size_max * para.streamNum * 5];
+    para.input_int = &gridt.psi_int_glo[gridt.psi_size_max * para.streamNum * 2];
+    para.num_psir = &gridt.num_psir_glo[nbz * para.streamNum];
+    para.atom_pair_A_m = &gridt.l_info_global[gridt.atom_pair_nbz * para.streamNum];
+    para.atom_pair_B_n = &gridt.r_info_global[gridt.atom_pair_nbz * para.streamNum];
+    para.atom_pair_K = &gridt.k_info_global[gridt.atom_pair_nbz * para.streamNum];
+    para.atom_pair_lda = &gridt.lda_info_global[gridt.atom_pair_nbz * para.streamNum];
+    para.atom_pair_ldb = &gridt.ldb_info_global[gridt.atom_pair_nbz * para.streamNum];
+    para.atom_pair_ldc = &gridt.ldc_info_global[gridt.atom_pair_nbz * para.streamNum];
+    para.psi_input_double_g = &gridt.psi_dou_glo_g[gridt.psi_size_max * para.streamNum * 5];
+    para.input_int_g = &gridt.psi_int_glo_g[gridt.psi_size_max * para.streamNum * 2];
+    para.num_psirDevice = &gridt.num_psir_glo_g[nbz * para.streamNum];
+    para.psir_dm_device = &gridt.dm_global_g[gridt.psir_size * para.streamNum];
+    para.psir_r_device = &gridt.right_global_g[gridt.psir_size * para.streamNum];
+    para.psir_lx_device = &gridt.d_left_x_g[gridt.psir_size * para.streamNum];
+    para.psir_ly_device = &gridt.d_left_y_g[gridt.psir_size * para.streamNum];
+    para.psir_lz_device = &gridt.d_left_z_g[gridt.psir_size * para.streamNum];
+    para.psir_lxx_device = &gridt.dd_left_xx_g[gridt.psir_size * para.streamNum];
+    para.psir_lxy_device = &gridt.dd_left_xy_g[gridt.psir_size * para.streamNum];
+    para.psir_lxz_device = &gridt.dd_left_xz_g[gridt.psir_size * para.streamNum];
+    para.psir_lyy_device = &gridt.dd_left_yy_g[gridt.psir_size * para.streamNum];
+    para.psir_lyz_device = &gridt.dd_left_yz_g[gridt.psir_size * para.streamNum];
+    para.psir_lzz_device = &gridt.dd_left_zz_g[gridt.psir_size * para.streamNum];
+    para.A_m_device = &gridt.l_info_global_g[gridt.atom_pair_nbz * para.streamNum];
+    para.B_n_device = &gridt.r_info_global_g[gridt.atom_pair_nbz * para.streamNum];
+    para.K_device = &gridt.k_info_global_g[gridt.atom_pair_nbz * para.streamNum];
+    para.lda_device = &gridt.lda_info_global_g[gridt.atom_pair_nbz * para.streamNum];
+    para.ldb_device = &gridt.ldb_info_global_g[gridt.atom_pair_nbz * para.streamNum];
+    para.ldc_device = &gridt.ldc_info_global_g[gridt.atom_pair_nbz * para.streamNum];
+    para.matrix_A = &gridt.ap_left_glo[gridt.atom_pair_nbz * para.streamNum];
+    para.matrix_B = &gridt.ap_right_glo[gridt.atom_pair_nbz * para.streamNum];
+    para.matrix_C = &gridt.ap_output_glo[gridt.atom_pair_nbz * para.streamNum];
+    para.matrix_ADev = &gridt.ap_left_glo_g[gridt.atom_pair_nbz * para.streamNum];
+    para.matrix_BDev = &gridt.ap_right_glo_g[gridt.atom_pair_nbz * para.streamNum];
+    para.matrix_CDev = &gridt.ap_output_glo_g[gridt.atom_pair_nbz * para.streamNum];
   }
 
   void ForceStressIatInit(ForceStressIat &forceStressIat, int streamNum, int cudaBlocks, int atomNumOnGrids,
@@ -347,51 +347,51 @@ __global__ void dot_product_force(double *dpsir_ylm_left_x,
                          const Grid_Technique &gridt,
                          int nbz, int atomNumOnGrids)
   {
-    checkCuda(cudaMemcpyAsync(para.psi_input_double_g, para.psiInputDouble,
+    checkCuda(cudaMemcpyAsync(para.psi_input_double_g, para.input_dou,
                               gridt.psi_size_max * 5 * sizeof(double), cudaMemcpyHostToDevice, gridt.streams[para.streamNum]));
-    checkCuda(cudaMemcpyAsync(para.psi_input_int_g, para.psi_input_int,
+    checkCuda(cudaMemcpyAsync(para.input_int_g, para.input_int,
                               gridt.psi_size_max * 2 * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[para.streamNum]));
-    checkCuda(cudaMemcpyAsync(para.numPsirDevice, para.numPsir, nbz * sizeof(int),
+    checkCuda(cudaMemcpyAsync(para.num_psirDevice, para.num_psir, nbz * sizeof(int),
                               cudaMemcpyHostToDevice, gridt.streams[para.streamNum]));
-    checkCuda(cudaMemcpyAsync(para.atomPairAmDev, para.atomPairAm,
-                              gridt.atom_pair_size_over_nbz * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[para.streamNum]));
-    checkCuda(cudaMemcpyAsync(para.atomPairBnDev, para.atomPairBn,
-                              gridt.atom_pair_size_over_nbz * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[para.streamNum]));
-    checkCuda(cudaMemcpyAsync(para.atomPairKDev, para.atomPairK,
-                              gridt.atom_pair_size_over_nbz * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[para.streamNum]));
-    checkCuda(cudaMemcpyAsync(para.atomPairLdaDev, para.atomPairLda,
-                              gridt.atom_pair_size_over_nbz * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[para.streamNum]));
-    checkCuda(cudaMemcpyAsync(para.atomPairLdbDev, para.atomPairLdb,
-                              gridt.atom_pair_size_over_nbz * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[para.streamNum]));
-    checkCuda(cudaMemcpyAsync(para.atomPairLdcDev, para.atomPairLdc,
-                              gridt.atom_pair_size_over_nbz * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[para.streamNum]));
-    checkCuda(cudaMemcpyAsync(para.atomPairMatADev, para.atomPairMatA,
-                              gridt.atom_pair_size_over_nbz * sizeof(double *), cudaMemcpyHostToDevice, gridt.streams[para.streamNum]));
-    checkCuda(cudaMemcpyAsync(para.atomPairMatBDev, para.atomPairMatB,
-                              gridt.atom_pair_size_over_nbz * sizeof(double *), cudaMemcpyHostToDevice, gridt.streams[para.streamNum]));
-    checkCuda(cudaMemcpyAsync(para.atomPairMatCDev, para.atomPairMatC,
-                              gridt.atom_pair_size_over_nbz * sizeof(double *), cudaMemcpyHostToDevice, gridt.streams[para.streamNum]));
-    checkCuda(cudaMemsetAsync(para.psirYlmDmDev, 0, gridt.psir_size * sizeof(double),
+    checkCuda(cudaMemcpyAsync(para.A_m_device, para.atom_pair_A_m,
+                              gridt.atom_pair_nbz * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[para.streamNum]));
+    checkCuda(cudaMemcpyAsync(para.B_n_device, para.atom_pair_B_n,
+                              gridt.atom_pair_nbz * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[para.streamNum]));
+    checkCuda(cudaMemcpyAsync(para.K_device, para.atom_pair_K,
+                              gridt.atom_pair_nbz * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[para.streamNum]));
+    checkCuda(cudaMemcpyAsync(para.lda_device, para.atom_pair_lda,
+                              gridt.atom_pair_nbz * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[para.streamNum]));
+    checkCuda(cudaMemcpyAsync(para.ldb_device, para.atom_pair_ldb,
+                              gridt.atom_pair_nbz * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[para.streamNum]));
+    checkCuda(cudaMemcpyAsync(para.ldc_device, para.atom_pair_ldc,
+                              gridt.atom_pair_nbz * sizeof(int), cudaMemcpyHostToDevice, gridt.streams[para.streamNum]));
+    checkCuda(cudaMemcpyAsync(para.matrix_ADev, para.matrix_A,
+                              gridt.atom_pair_nbz * sizeof(double *), cudaMemcpyHostToDevice, gridt.streams[para.streamNum]));
+    checkCuda(cudaMemcpyAsync(para.matrix_BDev, para.matrix_B,
+                              gridt.atom_pair_nbz * sizeof(double *), cudaMemcpyHostToDevice, gridt.streams[para.streamNum]));
+    checkCuda(cudaMemcpyAsync(para.matrix_CDev, para.matrix_C,
+                              gridt.atom_pair_nbz * sizeof(double *), cudaMemcpyHostToDevice, gridt.streams[para.streamNum]));
+    checkCuda(cudaMemsetAsync(para.psir_dm_device, 0, gridt.psir_size * sizeof(double),
                               gridt.streams[para.streamNum]));
-    checkCuda(cudaMemsetAsync(para.psirYlmRDev, 0, gridt.psir_size * sizeof(double),
+    checkCuda(cudaMemsetAsync(para.psir_r_device, 0, gridt.psir_size * sizeof(double),
                               gridt.streams[para.streamNum]));
-    checkCuda(cudaMemsetAsync(para.psirYlmLxDev, 0, gridt.psir_size * sizeof(double),
+    checkCuda(cudaMemsetAsync(para.psir_lx_device, 0, gridt.psir_size * sizeof(double),
                               gridt.streams[para.streamNum]));
-    checkCuda(cudaMemsetAsync(para.psirYlmLyDev, 0,
+    checkCuda(cudaMemsetAsync(para.psir_ly_device, 0,
                               gridt.psir_size * sizeof(double), gridt.streams[para.streamNum]));
-    checkCuda(cudaMemsetAsync(para.psirYlmLzDev, 0,
+    checkCuda(cudaMemsetAsync(para.psir_lz_device, 0,
                               gridt.psir_size * sizeof(double), gridt.streams[para.streamNum]));
-    checkCuda(cudaMemsetAsync(para.psirYlmLxxDev, 0,
+    checkCuda(cudaMemsetAsync(para.psir_lxx_device, 0,
                               gridt.psir_size * sizeof(double), gridt.streams[para.streamNum]));
-    checkCuda(cudaMemsetAsync(para.psirYlmLxyDev, 0,
+    checkCuda(cudaMemsetAsync(para.psir_lxy_device, 0,
                               gridt.psir_size * sizeof(double), gridt.streams[para.streamNum]));
-    checkCuda(cudaMemsetAsync(para.psirYlmLxzDev, 0,
+    checkCuda(cudaMemsetAsync(para.psir_lxz_device, 0,
                               gridt.psir_size * sizeof(double), gridt.streams[para.streamNum]));
-    checkCuda(cudaMemsetAsync(para.psirYlmLyyDev, 0,
+    checkCuda(cudaMemsetAsync(para.psir_lyy_device, 0,
                               gridt.psir_size * sizeof(double), gridt.streams[para.streamNum]));
-    checkCuda(cudaMemsetAsync(para.psirYlmLyzDev, 0,
+    checkCuda(cudaMemsetAsync(para.psir_lyz_device, 0,
                               gridt.psir_size * sizeof(double), gridt.streams[para.streamNum]));
-    checkCuda(cudaMemsetAsync(para.psirYlmLzzDev, 0,
+    checkCuda(cudaMemsetAsync(para.psir_lzz_device, 0,
                               gridt.psir_size * sizeof(double), gridt.streams[para.streamNum]));
   }
 
