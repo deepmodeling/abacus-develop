@@ -196,38 +196,118 @@ void gpu_task_generator_force(const Grid_Technique &gridt,
                         int &max_n,
                         int &atom_pair_num,
                         SGridParameter &para);
-
+/**
+ * @brief Density Matrix,force Stress Iat Init
+ *
+ * Using structure to init the parameter
+ *
+ * @param densityMat DensityMat,contained the densityMatDevice and destiyMatHost
+ * @param forceStressIatG ForceStressIatGlobal,contined the Force Stress and Iat
+ * Number
+ * @param dm hamilt::HContainer,denstiy stored in the Hcontainer
+ * @param gridt Grid_Technique,stored the major method in the the gint.
+ * @param UnitCell ucell,stored the cell tools
+ * @param lgd Value of lgd,stand for the local grid dimension.
+ * @param cudaBlocks in stress compute,used for Block nums
+ * @param atomNumOnGrids in force calculate,used for Block nums
+ */
 void CalculateInit(DensityMat &densityMat,
                 ForceStressIatGlobal &forceStressIatG,
                 hamilt::HContainer<double> *dm,
                 const Grid_Technique &gridt, const UnitCell &ucell,
                 int lgd,int cudaBlocks,int atomNumOnGrids);
 
+/**
+ * @brief Density Matrix,from Hcontainer to structure
+ *
+ * Using structure to init the parameter
+ *
+ * @param MatrixHost double *,contained the destiyMatHost
+ * @param dm hamilt::HContainer,denstiy stored in the Hcontainer
+ * @param gridt Grid_Technique,stored the major method in the the gint.
+ * @param lgd Value of lgd,stand for the local grid dimension.
+ */
 void AllocateDm(double *MatrixHost,
                 hamilt::HContainer<double> *dm,
                 const Grid_Technique &gridt,
                 const UnitCell &ucell);
 
+/**
+ * @brief grid parameter Init
+ *
+ * GridParameter init
+ *
+ * @param para double *,contained the destiyMatHost
+ * @param iter_num int , used for calcute the stream
+ * @param nbz int,stand for the number of Z-axis
+ * @param gridt Grid_Technique,stored the major method in the the gint.
+ */
 void CalculateGridInit(SGridParameter &para,
                 int iter_num,
                 int nbz,
                 const Grid_Technique &gridt);
-
+/**
+ * @brief ForceStressIat on host and device Init
+ *
+ * GridParameter init
+ *
+ * @param ForceStressIat ForceStressIat,contains the Force Stree Iat on Device
+ * and Host
+ * @param streamNum int , record the stream in GPU
+ * @param cudaBlocks in stress compute,used for Block nums
+ * @param atomNumOnGrids in force calculate,used for Block nums
+ * @param max_size Maximum size of atoms on a grid.
+ * @param stressGlobal sorted in the ForceStressIatG,the array of global stress
+ * @param forceGlobal sorted in the ForceStressIatG,the array of global force
+ * @param iatGlobal sorted in the ForceStressIatG,the array of global iat
+ */
 void ForceStressIatInit(ForceStressIat &forceStressIat,int streamNum,int cudaBlocks,int atomNumOnGrids,
                         int max_size,double *stressGlobal,double *forceGlobal,int *iatGlobal);
-
+/**
+ * @brief GridParameter memCpy,from Host to Device
+ *
+ * parameter init,which contains the gpu task and multi matrix multiplication
+ *
+ * @param para Grid parameter in task generator,
+ * @param gridt Grid_Technique,stored the major method in the the gint.
+ * @param nbz int,stand for the number of Z-axis
+ * @param atomNumOnGrids in force calculate,used for Block nums
+ */
 void CalculateGridMemCpy(SGridParameter &para,
                         const Grid_Technique &gridt,
                         int nbz,
                         int atomNumOnGrids);
-
+/**
+ * @brief Force Stress Force Iat memCpy,from Host to Device
+ *
+ *  @param ForceStressIat ForceStressIat,contains the Force Stree Iat on Device
+ * and Host
+ *  @param gridt Grid_Technique,stored the major method in the the gint.
+ *  @param atomNumOnGrids in force calculate,used for Block nums
+ *  @param cudaBlocks in stress compute,used for Block nums
+ *  @param streamNum int , record the stream in GPU
+ */
 void ForceStressIatMemCpy(ForceStressIat &forceStressIat,
                         const Grid_Technique &gridt,
                         int atomNumOnGrids,int cudaBlocks,int streamNum);
-
+/**
+ * @brief Force Calculate on Host
+ *
+ * @param ForceStressIat ForceStressIat,contains the Force Stree Iat on Device
+ * and Host
+ * @param force stored the force for each atom on each directions
+ * @param atomNumOnGrids in force calculate,used for Block nums
+ */
 void ForceCalculate(ForceStressIat &forceStressIat,
                     double *force,int atomNumOnGrids);
-
+/**
+ * @brief Stress Calculate on Host
+ *
+ * @param ForceStressIat ForceStressIat,contains the Force Stree Iat on Device
+ * and Host
+ * @param stress stored the stress for each directions
+ * @param cudaBlocks in stress compute,used for Block nums
+ */
 void StressCalculate(ForceStressIat &forceStressIat,
                     double *stress,int cudaBlocks);
 } // namespace GintKernel
