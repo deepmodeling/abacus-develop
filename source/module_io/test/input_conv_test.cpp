@@ -1,6 +1,5 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#include "module_hsolver/diago_pexsi.h"
 #include "module_io/input_conv.h"
 #include "module_base/global_variable.h"
 #include "for_testing_input_conv.h"

@@ -26,6 +26,9 @@
 #include "module_relax/relax_old/ions_move_basic.h"
 #include "module_relax/relax_old/ions_move_cg.h"
 #include "module_relax/relax_old/lattice_change_basic.h"
+#ifdef __PEXSI
+#include "module_hsolver/module_pexsi/pexsi_solver.h"
+#endif
 
 bool berryphase::berry_phase_flag = false;
 
@@ -354,6 +357,37 @@ Restart restart;
 pseudopot_cell_vnl ppcell;
 Charge_Mixing CHR_MIX;
 } // namespace GlobalC
+
+#ifdef  __PEXSI
+namespace pexsi
+{
+int PEXSI_Solver::pexsi_npole = 0;
+bool PEXSI_Solver::pexsi_inertia = 0;
+int PEXSI_Solver::pexsi_nmax = 0;
+// int PEXSI_Solver::pexsi_symbolic = 0;
+bool PEXSI_Solver::pexsi_comm = 0;
+bool PEXSI_Solver::pexsi_storage = 0;
+int PEXSI_Solver::pexsi_ordering = 0;
+int PEXSI_Solver::pexsi_row_ordering = 0;
+int PEXSI_Solver::pexsi_nproc = 0;
+bool PEXSI_Solver::pexsi_symm = 0;
+bool PEXSI_Solver::pexsi_trans = 0;
+int PEXSI_Solver::pexsi_method = 0;
+int PEXSI_Solver::pexsi_nproc_pole = 0;
+// double PEXSI_Solver::pexsi_spin = 2;
+double PEXSI_Solver::pexsi_temp = 0.0;
+double PEXSI_Solver::pexsi_gap = 0.0;
+double PEXSI_Solver::pexsi_delta_e = 0.0;
+double PEXSI_Solver::pexsi_mu_lower = 0.0;
+double PEXSI_Solver::pexsi_mu_upper = 0.0;
+double PEXSI_Solver::pexsi_mu = 0.0;
+double PEXSI_Solver::pexsi_mu_thr = 0.0;
+double PEXSI_Solver::pexsi_mu_expand = 0.0;
+double PEXSI_Solver::pexsi_mu_guard = 0.0;
+double PEXSI_Solver::pexsi_elec_thr = 0.0;
+double PEXSI_Solver::pexsi_zero_thr = 0.0;
+} // namespace pexsi
+#endif
 
 #undef private
 

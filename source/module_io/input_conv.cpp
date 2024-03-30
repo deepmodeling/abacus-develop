@@ -25,7 +25,7 @@
 #include "module_hamilt_lcao/module_tddft/evolve_elec.h"
 #endif
 #ifdef __PEXSI
-#include "module_hsolver/diago_pexsi.h"
+#include "module_hsolver/module_pexsi/pexsi_solver.h"
 #endif
 
 #include "module_base/timer.h"
