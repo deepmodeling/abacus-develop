@@ -1,4 +1,6 @@
 #include "read_pp.h"
+#include "module_base/atom_in.h"
+#include "module_base/element_name.h"
 
 int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs)
 {
@@ -37,6 +39,16 @@ int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs)
     this->zp = static_cast<int>(zion);
     ifs.ignore(300, '\n');
 
+    atom_in ai;
+    for (auto each_type:  ModuleBase::element_name)
+    {
+        if (zatom == ai.atom_Z[each_type])
+        {
+            this->psd = each_type;
+            break;
+        }
+    }
+
     int pspcod, pspxc, lloc, r2well;
     ifs >> pspcod >> pspxc >> this->lmax >> lloc >> this->mesh >> r2well;
 
@@ -54,11 +66,25 @@ int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs)
         ModuleBase::WARNING_QUIT("Pseudopot_upf::read_pseudo_blps", msg);
     }
 
-    ifs.ignore(300, '\n');
-    ifs.ignore(300, '\n');
-    ifs.ignore(300, '\n');
-    ifs.ignore(300, '\n');
-    ifs.ignore(300, '\n');
+    if (pspcod == 8)
+    {
+        for (int i = 0; i < 5; ++i)
+        {
+            ifs.ignore(300, '\n');
+        }
+    }
+    else if (pspcod == 6)
+    {
+        for (int i = 0; i < 17; ++i)
+        {
+            ifs.ignore(300, '\n');
+        }
+    }
+    else
+    {
+        std::string msg = "Unknown pspcod: " + std::to_string(pspcod);
+        ModuleBase::WARNING_QUIT("Pseudopot_upf::read_pseudo_blps", msg);
+    }
 
     assert(mesh > 0);
 
@@ -71,11 +97,23 @@ int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs)
     ModuleBase::GlobalFunc::ZEROS(r,mesh);
     ModuleBase::GlobalFunc::ZEROS(rab,mesh);
     ModuleBase::GlobalFunc::ZEROS(vloc,mesh);
-    int num;
-    for(int i = 0;i < mesh; ++i)
+    int num = 0;
+    if (pspcod == 8)
     {
-        ifs >> num >> this->r[i] >> this->vloc[i];
-        this->vloc[i] = this->vloc[i]*2; // Hartree to Ry
+        for(int i = 0;i < mesh; ++i)
+        {
+            ifs >> num >> this->r[i] >> this->vloc[i];
+            this->vloc[i] = this->vloc[i]*2; // Hartree to Ry
+        }
+    }
+    else if (pspcod == 6)
+    {
+        double temp = 0.;
+        for(int i = 0;i < mesh; ++i)
+        {
+            ifs >> num >> this->r[i] >> temp >> this->vloc[i];
+            this->vloc[i] = this->vloc[i]*2; // Hartree to Ry
+        }
     }
     rab[0] = r[1] - r[0];
     for(int i = 1; i < mesh - 1; ++i)

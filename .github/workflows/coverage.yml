@@ -31,3 +31,4 @@ jobs:
         if: ${{ ! cancelled() }}
         with:
           gcov: true
+          token: ${{ secrets.CODECOV_TOKEN }}

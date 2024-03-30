@@ -153,6 +153,25 @@ void RadialCollection::build(const int ntype, Numerical_Nonlocal* const nls)
     set_rcut_max();
 }
 
+void RadialCollection::build(const RadialCollection* nls, const double radius)
+{
+    cleanup();
+    this->ntype_ = nls->ntype();
+    this->rcut_max_ = radius>0.0?radius:nls->rcut_max();
+    this->radset_ = new RadialSet*[ntype_];
+    this->lmax_ = nls->lmax();
+    this->nchi_ = nls->nchi();
+    this->nzeta_max_ = nls->nzeta_max();
+
+    for (int itype = 0; itype < ntype_; ++itype)
+    {
+        radset_[itype] = new AtomicRadials;
+        static_cast<AtomicRadials*>(radset_[itype])->build(nls->radset_[itype], itype, this->rcut_max_);
+    }
+
+    iter_build();
+}
+
 void RadialCollection::build(const int nfile, const std::string* const file, const char ftype)
 {
 
@@ -209,10 +228,12 @@ void RadialCollection::build(const int nfile, const std::string* const file, con
 
 void RadialCollection::build(const int ntype, 
                              const double* const charges, 
+                             const bool with_slater_screening,
                              const int* const nmax, 
                              const std::string* symbols,
                              const double conv_thr,
-                             const std::string* strategies)
+                             const std::string* strategies,
+                             const int& rank)
 {
     cleanup();
     ntype_ = ntype;
@@ -223,11 +244,12 @@ void RadialCollection::build(const int ntype,
         radset_[itype] = new HydrogenRadials;
         radset_[itype]->build(itype, 
                               charges[itype], 
+                              with_slater_screening,
                               nmax[itype], 
                               10.0,             // rcut should be determined automatically, in principle...
                               0.01,
                               conv_thr,
-                              0,
+                              rank,
                               symbols[itype],
                               strategies[itype]);
 
@@ -244,7 +266,8 @@ void RadialCollection::build(const int ntype,
 void RadialCollection::build(const int ntype,
                              const std::string* const file,
                              const double* const screening_coeffs,
-                             const double conv_thr)
+                             const double conv_thr,
+                             const int& rank)
 {
     cleanup();
     ntype_ = ntype;
@@ -253,12 +276,29 @@ void RadialCollection::build(const int ntype,
     for (int itype = 0; itype < ntype_; ++itype)
     {
         radset_[itype] = new PswfcRadials;
-        radset_[itype]->build(file[itype], itype, screening_coeffs[itype], conv_thr);
+        radset_[itype]->build(file[itype], itype, screening_coeffs[itype], conv_thr, nullptr, rank);
 
         lmax_ = std::max(lmax_, radset_[itype]->lmax());
         nchi_ += radset_[itype]->nchi();
         nzeta_max_ = std::max(nzeta_max_, radset_[itype]->nzeta_max());
     }
+
+    iter_build();
+    set_rcut_max();
+}
+
+void RadialCollection::build(const int lmax, const int nbes, const double rcut, const double sigma, const double dr)
+{
+    cleanup();
+    ntype_ = 1;
+    radset_ = new RadialSet*[ntype_];
+
+    radset_[0] = new SphbesRadials;
+    radset_[0]->build(lmax, nbes, rcut, sigma, dr);
+
+    lmax_ = lmax;
+    nchi_ = radset_[0]->nchi();
+    nzeta_max_ = radset_[0]->nzeta_max();
 
     iter_build();
     set_rcut_max();
@@ -327,11 +367,11 @@ char RadialCollection::check_file_type(const std::string& file) const
     return file_type;
 }
 
-void RadialCollection::to_file(const std::string& appendix)
+void RadialCollection::to_file(const std::string& appendix, const std::string& format) const
 {
     for (int itype = 0; itype < ntype_; ++itype)
     {
         std::string fname = radset_[itype]->symbol() + "_" + appendix + ".orb";
-        radset_[itype]->to_file(fname);
+        radset_[itype]->write_abacus_orb(fname);
     }
 }

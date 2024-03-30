@@ -38,6 +38,8 @@ class AtomicRadials : public RadialSet
                const int rank = 0                //!< MPI rank
     );
 
+    void build(RadialSet* const other, const int itype, const double rcut);
+
     //! Get the energy cutoff as given by the orbital file
     double orb_ecut() const { return orb_ecut_; }
 

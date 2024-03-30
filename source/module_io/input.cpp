@@ -75,7 +75,8 @@ void Input::Init(const std::string& fn)
 #else
     const char* version = "unknown";
 #endif
-#ifdef COMMIT
+#ifdef COMMIT_INFO
+#include "commit.h"
     const char* commit = COMMIT;
 #else
     const char* commit = "unknown";
@@ -204,6 +205,7 @@ void Input::Default(void)
     xc_temperature = 0.0;
     nspin = 1;
     nelec = 0.0;
+    nelec_delta = 0.0;
     lmaxmax = 2;
     //----------------------------------------------------------
     // new function
@@ -304,7 +306,7 @@ void Input::Default(void)
     mixing_mode = "broyden";
     mixing_beta = -10;
     mixing_ndim = 8;
-    mixing_restart = 0;
+    mixing_restart = 0.0;
     mixing_gg0 = 1.00;       // use Kerker defaultly
     mixing_beta_mag = -10.0; // only set when nspin == 2 || nspin == 4
     mixing_gg0_mag = 0.0;    // defaultly exclude Kerker from mixing magnetic density
@@ -369,6 +371,7 @@ void Input::Default(void)
     lcao_dk = 0.01;
     lcao_dr = 0.01;
     lcao_rmax = 30; // (a.u.)
+    onsite_radius = 0; // (a.u.)
     //----------------------------------------------------------
     // efield and dipole correction     Yu Liu add 2022-05-18
     //----------------------------------------------------------
@@ -550,7 +553,7 @@ void Input::Default(void)
     //==========================================================
     //    DFT+U     Xin Qu added on 2020-10-29
     //==========================================================
-    dft_plus_u = false; // 1:DFT+U correction; 0: standard DFT calcullation
+    dft_plus_u = 0; // 2:DFT+U correction with dual occupations 1:DFT+U correction with full occupations; 0: standard DFT calcullation
     yukawa_potential = false;
     yukawa_lambda = -1.0;
     omc = 0;
@@ -636,7 +639,7 @@ void Input::Default(void)
     // variables for Quasiatomic Orbital analysis
     //==========================================================
     qo_switch = false;
-    qo_basis = "hydrogen";
+    qo_basis = "szv";
     qo_strategy = {};
     qo_thr = 1e-6;
     qo_screening_coeff = {};
@@ -950,6 +953,10 @@ bool Input::Read(const std::string& fn)
         else if (strcmp("nelec", word) == 0)
         {
             read_value(ifs, nelec);
+        }
+        else if (strcmp("nelec_delta", word) == 0)
+        {
+            read_value(ifs, nelec_delta);
         }
         else if (strcmp("nupdown", word) == 0)
         {
@@ -1533,6 +1540,10 @@ bool Input::Read(const std::string& fn)
         else if (strcmp("lcao_rmax", word) == 0)
         {
             read_value(ifs, lcao_rmax);
+        }
+        else if (strcmp("onsite_radius", word) == 0)
+        {
+            read_value(ifs, onsite_radius);
         }
         //----------------------------------------------------------
         // Molecule Dynamics
@@ -2134,7 +2145,7 @@ bool Input::Read(const std::string& fn)
         //----------------------------------------------------------------------------------
         else if (strcmp("dft_plus_u", word) == 0)
         {
-            read_bool(ifs, dft_plus_u);
+            read_value(ifs, dft_plus_u);
         }
         else if (strcmp("yukawa_potential", word) == 0)
             ifs.ignore(150, '\n');
@@ -2638,11 +2649,16 @@ bool Input::Read(const std::string& fn)
             }
         }
 
-        dft_plus_u = 0;
+        bool close_plus_u = 1;
         for (int i = 0; i < ntype; i++)
         {
             if (orbital_corr[i] != -1)
-                dft_plus_u = 1;
+                close_plus_u = 0;
+        }
+        if(close_plus_u)
+        {
+            dft_plus_u = 0;
+            GlobalV::ofs_running << "No atoms are correlated, DFT+U is closed!!!" << std::endl;
         }
 
         if (strcmp("lcao", basis_type.c_str()) != 0)
@@ -3182,6 +3198,11 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             if (!bz)
                 bz = 1;
         }
+        if(dft_plus_u == 1 && onsite_radius == 0.0)
+        {
+            //autoset onsite_radius to 5.0 as default
+            onsite_radius = 5.0;
+        }
     }
 
     if (basis_type == "pw" || basis_type == "lcao_in_pw")
@@ -3262,8 +3283,15 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     }
     if(qo_screening_coeff.size() != ntype)
     {
-        double default_screening_coeff = (qo_screening_coeff.size() == 1)? qo_screening_coeff[0]: 0.1;
-        qo_screening_coeff.resize(ntype, default_screening_coeff);
+        if(qo_basis == "pswfc")
+        {
+            double default_screening_coeff = (qo_screening_coeff.size() == 1)? qo_screening_coeff[0]: 0.1;
+            qo_screening_coeff.resize(ntype, default_screening_coeff);
+        }
+        else
+        {
+            // if length of qo_screening_coeff is not 0, turn on Slater screening
+        }
     }
     if(qo_strategy.size() != ntype)
     {
@@ -3273,7 +3301,13 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         }
         else
         {
-            std::string default_strategy = (qo_basis == "hydrogen")? "minimal-valence": "all";
+            std::string default_strategy;
+            if(qo_basis == "hydrogen") default_strategy = "energy-valence";
+            else if((qo_basis == "pswfc")||(qo_basis == "szv")) default_strategy = "all";
+            else
+            {
+                ModuleBase::WARNING_QUIT("Input", "When setting default values for qo_strategy, unexpected/unknown qo_basis is found. Please check it.");
+            }
             qo_strategy.resize(ntype, default_strategy);
         }
     }
@@ -3386,6 +3420,7 @@ void Input::Bcast()
     Parallel_Common::bcast_double(xc_temperature);
     Parallel_Common::bcast_int(nspin);
     Parallel_Common::bcast_double(nelec);
+    Parallel_Common::bcast_double(nelec_delta);
     Parallel_Common::bcast_double(nupdown);
     Parallel_Common::bcast_int(lmaxmax);
 
@@ -3477,7 +3512,7 @@ void Input::Bcast()
     Parallel_Common::bcast_string(mixing_mode);
     Parallel_Common::bcast_double(mixing_beta);
     Parallel_Common::bcast_int(mixing_ndim);
-    Parallel_Common::bcast_int(mixing_restart);
+    Parallel_Common::bcast_double(mixing_restart);
     Parallel_Common::bcast_double(mixing_gg0); // mohan add 2014-09-27
     Parallel_Common::bcast_double(mixing_beta_mag);
     Parallel_Common::bcast_double(mixing_gg0_mag);
@@ -3543,6 +3578,7 @@ void Input::Bcast()
     Parallel_Common::bcast_double(lcao_dk);
     Parallel_Common::bcast_double(lcao_dr);
     Parallel_Common::bcast_double(lcao_rmax);
+    Parallel_Common::bcast_double(onsite_radius);
     // zheng daye add 2014/5/5
     Parallel_Common::bcast_string(mdp.md_type);
     Parallel_Common::bcast_string(mdp.md_thermostat);
@@ -3726,7 +3762,7 @@ void Input::Bcast()
     //-----------------------------------------------------------------------------------
     // DFT+U (added by Quxin 2020-10-29)
     //-----------------------------------------------------------------------------------
-    Parallel_Common::bcast_bool(dft_plus_u);
+    Parallel_Common::bcast_int(dft_plus_u);
     Parallel_Common::bcast_bool(yukawa_potential);
     Parallel_Common::bcast_int(omc);
     Parallel_Common::bcast_double(yukawa_lambda);
@@ -4424,6 +4460,10 @@ void Input::Check(void)
         if (sccut <= 0)
         {
             ModuleBase::WARNING_QUIT("INPUT", "sccut must > 0");
+        }
+        if (nupdown > 0.0)
+        {
+            ModuleBase::WARNING_QUIT("INPUT", "nupdown should not be set when sc_mag_switch > 0");
         }
     }
     if(qo_switch)

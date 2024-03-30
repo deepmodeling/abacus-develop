@@ -74,10 +74,11 @@ class Charge_Mixing
     void mix_dmr(elecstate::DensityMatrix<std::complex<double>, double>* DM);
     
     /**
-     * @brief Get the drho
+     * @brief Get the drho between rho and rho_save, similar for get_dkin
      *
      */
     double get_drho(Charge* chr, const double nelec);
+    double get_dkin(Charge* chr, const double nelec);
 
     /**
      * @brief reset mixing, actually we only call init_mixing() to reset mixing instead of this function 
@@ -98,6 +99,9 @@ class Charge_Mixing
     int get_mixing_ndim() const {return mixing_ndim;}
     double get_mixing_gg0() const {return mixing_gg0;}
     Base_Mixing::Mixing* get_mixing() const {return mixing;}
+
+    // for mixing restart
+    int mixing_restart = 0; //which step to restart mixing during SCF
 
   private:
   

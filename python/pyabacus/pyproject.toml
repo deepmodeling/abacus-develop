@@ -24,11 +24,13 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-test = ["pytest", "numpy"]
+test = ["contourpy","cycler","exceptiongroup","fonttools","importlib-metadata","importlib-resources","iniconfig","kiwisolver","matplotlib","mpmath","numpy","packaging","pillow","platformdirs","pluggy","pyparsing","pytest","python-dateutil","six","stylize","sympy","tomli","yapf","zipp", "scipy", "plotly"]
 
 
 [tool.scikit-build]
 wheel.expand-macos-universal-tags = true
+cmake.verbose = true
+logging.level = "INFO"
 
 
 [tool.pytest.ini_options]

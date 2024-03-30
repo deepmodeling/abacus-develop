@@ -110,7 +110,45 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
 
         test_brav = true; // output the real ibrav and point group
         this->setgroup(this->symop, this->nop, this->real_brav);
-        this->getgroup(nrot_out, nrotk_out, ofs_running);
+
+        if (GlobalV::NSPIN > 1) pricell_loop = this->magmom_same_check(atoms);
+
+        if (!pricell_loop && GlobalV::NSPIN == 2)
+        {//analyze symmetry for spin-up atoms only
+            std::vector<double> pos_spinup;
+            for (int it = 0;it < ntype;++it)
+            {
+                int na_spinup = 0;
+                for (int ia = 0;ia < atoms[it].na;++ia) if (atoms[it].mag[ia] > -this->epsilon) ++na_spinup;
+                this->na[it] = na_spinup;
+                //update newpos
+                for (int ia = 0;ia < atoms[it].na;++ia)
+                {
+                    if (atoms[it].mag[ia] > -this->epsilon)
+                    {
+                        pos_spinup.push_back(this->newpos[3 * (istart[it] + ia)]);
+                        pos_spinup.push_back(this->newpos[3 * (istart[it] + ia) + 1]);
+                        pos_spinup.push_back(this->newpos[3 * (istart[it] + ia) + 2]);
+                    }
+                }
+                // update start to spin-up configuration
+                if (it > 0) istart[it] = istart[it - 1] + na[it - 1];
+                if (na[it] < na[itmin_type])
+                {
+                    this->itmin_type = it;
+                    this->itmin_start = istart[it];
+                }
+            }
+            this->getgroup(nrot_out, nrotk_out, ofs_running, pos_spinup.data());
+            // recover na and istart
+            for (int it = 0;it < ntype;++it)
+            {
+                this->na[it] = atoms[it].na;
+                if (it > 0) istart[it] = istart[it - 1] + na[it - 1];
+            }
+        }
+        else
+            this->getgroup(nrot_out, nrotk_out, ofs_running, this->newpos);
         };
 
     if (GlobalV::CALCULATION == "cell-relax" && nrotk > 0)
@@ -231,9 +269,16 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
 
     this->set_atom_map(atoms);
 
-    if (GlobalV::NSPIN > 1) pricell_loop = this->magmom_same_check(atoms);
-
-    if (GlobalV::CALCULATION == "relax") this->all_mbl = this->is_all_movable(atoms, st);
+    if (GlobalV::CALCULATION == "relax")
+    {
+        this->all_mbl = this->is_all_movable(atoms, st);
+        if (!this->all_mbl)
+        {
+            std::cout << "WARNING: Symmetry cannot be kept when not all atoms are movable.\n ";
+            std::cout << "Continue with symmetry=0 ... \n";
+            ModuleSymmetry::Symmetry::symm_flag = 0;
+        }
+    }
 
     delete[] newpos;
     delete[] na;
@@ -765,9 +810,9 @@ void Symmetry::lattice_type(
 }
 
 
-void Symmetry::getgroup(int &nrot, int &nrotk, std::ofstream &ofs_running)
+void Symmetry::getgroup(int& nrot, int& nrotk, std::ofstream& ofs_running, double* pos)
 {
-    ModuleBase::TITLE("Symmetry","getgroup");
+    ModuleBase::TITLE("Symmetry", "getgroup");
 
 	//--------------------------------------------------------------------------------
     //return all possible space group operators that reproduce a lattice with basis
@@ -790,7 +835,7 @@ void Symmetry::getgroup(int &nrot, int &nrotk, std::ofstream &ofs_running)
     for (int i = 0; i < nop; ++i)
     {
     //    std::cout << "symop = " << symop[i].e11 <<" "<< symop[i].e12 <<" "<< symop[i].e13 <<" "<< symop[i].e21 <<" "<< symop[i].e22 <<" "<< symop[i].e23 <<" "<< symop[i].e31 <<" "<< symop[i].e32 <<" "<< symop[i].e33 << std::endl;
-        this->checksym(this->symop[i], this->gtrans[i], this->newpos);
+        this->checksym(this->symop[i], this->gtrans[i], pos);
       //  std::cout << "s_flag =" <<s_flag<<std::endl;
         if (s_flag == 1)
         {
@@ -1305,22 +1350,29 @@ void Symmetry::pricell(double* pos, const Atom* atoms)
     GlobalV::ofs_running<<"optimized primitive cell volume: "<<this->plat.Det()<<std::endl;
     double ncell_double = std::abs(this->optlat.Det()/this->plat.Det());
     this->ncell=floor(ncell_double+0.5);
-    if(this->ncell != ntrans)
-    {
-        std::cout << " WARNING: PRICELL: NCELL != NTRANS !" << std::endl;
-        std::cout << " NCELL=" << ncell << ", NTRANS=" << ntrans << std::endl;
-        std::cout << " Suggest solution: Use a larger `symmetry_prec`. " << std::endl;
+
+    auto reset_pcell = [this]() -> void {
         std::cout << " Now regard the structure as a primitive cell." << std::endl;
         this->ncell = 1;
         this->ptrans = std::vector<ModuleBase::Vector3<double> >(1, ModuleBase::Vector3<double>(0, 0, 0));
         GlobalV::ofs_running << "WARNING: Original cell may have more than one primitive cells, \
         but we have to treat it as a primitive cell. Use a larger `symmetry_prec`to avoid this warning." << std::endl;
+        };
+    if (this->ncell != ntrans)
+    {
+        std::cout << " WARNING: PRICELL: NCELL != NTRANS !" << std::endl;
+        std::cout << " NCELL=" << ncell << ", NTRANS=" << ntrans << std::endl;
+        std::cout << " Suggest solution: Use a larger `symmetry_prec`. " << std::endl;
+        reset_pcell();
         return;
     }
     if(std::abs(ncell_double-double(this->ncell)) > this->epsilon*100)
     {
-        std::cout << " ERROR: THE NUMBER OF PRIMITIVE CELL IS NOT AN INTEGER !" << std::endl;
-		ModuleBase::QUIT();
+        std::cout << " WARNING: THE NUMBER OF PRIMITIVE CELL IS NOT AN INTEGER !" << std::endl;
+        std::cout << " NCELL(double)=" << ncell_double << ", NTRANS=" << ncell << std::endl;
+        std::cout << " Suggest solution: Use a larger `symmetry_prec`. " << std::endl;
+        reset_pcell();
+        return;
     }
     GlobalV::ofs_running<<"Original cell was built up by "<<this->ncell<<" primitive cells."<<std::endl;
 
@@ -1338,9 +1390,9 @@ void Symmetry::pricell(double* pos, const Atom* atoms)
     n3=floor (nummat.e33 + epsilon);
     if(n1*n2*n3 != this->ncell) 
     {
-        std::cout << " ERROR: Number of cells and number of vectors did not agree.";
+        std::cout << " WARNING: Number of cells and number of vectors did not agree.";
         std::cout<<"Try to change symmetry_prec in INPUT." << std::endl;
-		ModuleBase::QUIT();
+        reset_pcell();
     }
     return;
 }

@@ -198,7 +198,9 @@ We also support [Gitpod](https://www.gitpod.io/): [Open in Gitpod](https://gitpo
 
 ## Install by conda
 
-Conda is a package management system with a separated environment, not requiring system privileges. A pre-built ABACUS binary with all requirements is available at [conda-forge](https://anaconda.org/conda-forge/abacus). It supports advanced features including Libxc, LibRI, and DeePKS. Conda will install the GPU-supported version of ABACUS if a valid GPU driver is present. Please refer to [the advanced installation guide](../advanced/install.md) for more details.
+Conda is a package management system with a separated environment, not requiring system privileges.
+You can refer to [DeepModeling conda FAQ](https://docs.deepmodeling.com/faq/conda.html) for how to setup a conda environment.
+A pre-built ABACUS binary with all requirements is available at [conda-forge](https://anaconda.org/conda-forge/abacus). It supports advanced features including Libxc, LibRI, and DeePKS. Conda will install the GPU-supported version of ABACUS if a valid GPU driver is present. Please refer to [the advanced installation guide](../advanced/install.md) for more details.
 
 ```bash
 # Install

@@ -417,14 +417,16 @@ void Input_Conv::Convert(void)
         GlobalC::dftu.omc = INPUT.omc;
         GlobalC::dftu.orbital_corr = INPUT.orbital_corr;
         GlobalC::dftu.mixing_dftu = INPUT.mixing_dftu;
-        if (!INPUT.yukawa_potential)
+        if (INPUT.yukawa_potential && INPUT.hubbard_u == nullptr)
         {
             // Duradev's rotational invariant formulation is implemented
             // where only an effective U given by U-J is used
             // unit is in eV
-            GlobalC::dftu.U = INPUT.hubbard_u;
+            INPUT.hubbard_u = new double[GlobalC::ucell.ntype];
         }
+        GlobalC::dftu.U = INPUT.hubbard_u;
     }
+    GlobalV::onsite_radius = INPUT.onsite_radius;
 #endif
     //--------------------------------------------
     // added by zhengdy-soc
@@ -447,12 +449,12 @@ void Input_Conv::Convert(void)
 
         if (INPUT.cal_force || INPUT.cal_stress)
         {
-            ModuleBase::WARNING_QUIT("input_conv", "force & stress not ready for soc yet!");
+            ModuleBase::WARNING_QUIT("input_conv", "force & stress not ready for nspin=4(soc or noncollinear-spin) yet!");
         }
 
         if(INPUT.gamma_only_local)
         {
-            ModuleBase::WARNING_QUIT("input_conv", "soc does not support gamma only calculation");
+            ModuleBase::WARNING_QUIT("input_conv", "nspin=4(soc or noncollinear-spin) does not support gamma only calculation");
         }
     }
     else
@@ -558,11 +560,11 @@ void Input_Conv::Convert(void)
             || dft_functional_lower == "opt_orb" || dft_functional_lower == "scan0")
         {
             GlobalC::restart.info_load.load_charge = true;
+            GlobalC::restart.info_load.load_H = true;
         }
         else
         {
             GlobalC::restart.info_load.load_charge = true;
-            GlobalC::restart.info_load.load_H = true;
         }
     }
 
@@ -669,6 +671,7 @@ void Input_Conv::Convert(void)
     GlobalV::chg_extrap = INPUT.chg_extrap; // xiaohui modify 2015-02-01
     GlobalV::out_chg = INPUT.out_chg;
     GlobalV::nelec = INPUT.nelec;
+    GlobalV::nelec_delta = INPUT.nelec_delta;
     GlobalV::out_pot = INPUT.out_pot;
     GlobalV::out_app_flag = INPUT.out_app_flag;
     GlobalV::out_ndigits = INPUT.out_ndigits;

@@ -14,7 +14,7 @@
 namespace ModuleESolver
 {
 
-    class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, double>
+class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, double>
 {
   public:
     ESolver_KS_LCAO_TDDFT();

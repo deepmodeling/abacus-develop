@@ -68,6 +68,7 @@ void Input::Print(const std::string &fn) const
                                  "accuracy for symmetry"); // LiuXh add 2021-08-12, accuracy for symmetry
     ModuleBase::GlobalFunc::OUTP(ofs, "symmetry_autoclose", symmetry_autoclose, "whether to close symmetry automatically when error occurs in symmetry analysis");
     ModuleBase::GlobalFunc::OUTP(ofs, "nelec", nelec, "input number of electrons");
+    ModuleBase::GlobalFunc::OUTP(ofs, "nelec_delta", nelec_delta, "change in the number of total electrons");
     ModuleBase::GlobalFunc::OUTP(ofs, "out_mul", GlobalV::out_mul, " mulliken  charge or not"); // qifeng add 2019/9/10
     ModuleBase::GlobalFunc::OUTP(ofs, "noncolin", noncolin, "using non-collinear-spin");
     ModuleBase::GlobalFunc::OUTP(ofs, "lspinorb", lspinorb, "consider the spin-orbit interaction");
@@ -248,7 +249,7 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_type", mixing_mode, "plain; pulay; broyden");
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_beta", mixing_beta, "mixing parameter: 0 means no new charge");
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_ndim", mixing_ndim, "mixing dimension in pulay or broyden");
-    ModuleBase::GlobalFunc::OUTP(ofs, "mixing_restart", mixing_restart, "which step to restart mixing during SCF");
+    ModuleBase::GlobalFunc::OUTP(ofs, "mixing_restart", mixing_restart, "threshold to restart mixing during SCF");
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_gg0", mixing_gg0, "mixing parameter in kerker");
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_beta_mag", mixing_beta_mag, "mixing parameter for magnetic density");
     ModuleBase::GlobalFunc::OUTP(ofs, "mixing_gg0_mag", mixing_gg0_mag, "mixing parameter in kerker");
@@ -450,10 +451,11 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "of_kernel_file", of_kernel_file, "The name of WT kernel file.");
 
     ofs << "\n#Parameters (20.dft+u)" << std::endl;
-    ModuleBase::GlobalFunc::OUTP(ofs, "dft_plus_u", dft_plus_u, "true:DFT+U correction; false: standard DFT calcullation(default)");
+    ModuleBase::GlobalFunc::OUTP(ofs, "dft_plus_u", dft_plus_u, "1/2:new/old DFT+U correction method; 0: standard DFT calcullation(default)");
     ModuleBase::GlobalFunc::OUTP(ofs, "yukawa_lambda", yukawa_lambda, "default:0.0");
     ModuleBase::GlobalFunc::OUTP(ofs, "yukawa_potential", yukawa_potential, "default: false");
     ModuleBase::GlobalFunc::OUTP(ofs, "omc", omc, "the mode of occupation matrix control");
+    ModuleBase::GlobalFunc::OUTP(ofs, "onsite_radius", onsite_radius, "radius of the sphere for onsite projection (Bohr)");
     ofs << std::setw(20) << "hubbard_u ";
     for (int i = 0; i < ntype; i++)
     {

@@ -4,7 +4,6 @@ if(POLICY CMP0135) # https://cmake.org/cmake/help/git-stage/policy/CMP0135.html
 endif()
 
 project(ABACUS
-    VERSION 3.0.0
     DESCRIPTION "ABACUS is an electronic structure package based on DFT."
     HOMEPAGE_URL "https://github.com/deepmodeling/abacus-develop"
     LANGUAGES CXX
@@ -92,8 +91,9 @@ You can install Git first and reinstall abacus.")
       RESULT_VARIABLE GIT_COMMIT_DATE_RESULT
     )
     if(GIT_COMMIT_HASH_RESULT EQUAL 0 AND GIT_COMMIT_DATE_RESULT EQUAL 0)
-      set(COMMIT "${GIT_COMMIT_HASH} (${GIT_COMMIT_DATE})")
-      add_definitions("-DCOMMIT=\"${COMMIT}\"")
+      add_definitions(-DCOMMIT_INFO)
+      file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/commit.h" "#define COMMIT \"${GIT_COMMIT_HASH} (${GIT_COMMIT_DATE})\"\n")
+      include_directories(${CMAKE_CURRENT_BINARY_DIR})
       message(STATUS "Current commit hash: ${GIT_COMMIT_HASH}")
       message(STATUS "Last commit date: ${GIT_COMMIT_DATE}")
     else()
@@ -328,9 +328,6 @@ endif()
 # Warning: CMake add support to HIP in version 3.21. This is rather a new version.
 # Use cmake with AMD-ROCm: https://rocmdocs.amd.com/en/latest/Installation_Guide/Using-CMake-with-AMD-ROCm.html
 if(USE_ROCM)
-  if(COMMIT_INFO)
-    message(FATAL_ERROR "Commit info is not supported on ROCm. Try to recompile with cmake command -DCOMMIT_INFO=OFF.")
-  endif()
   if(NOT DEFINED ROCM_PATH )
     set (ROCM_PATH "/opt/rocm"  CACHE STRING "Default ROCM installation directory." )
   endif ()
@@ -404,10 +401,11 @@ if(MKLROOT)
     list(APPEND math_libs -lifcore)
   endif()
 else()
+
   find_package(FFTW3 REQUIRED)
-  find_package(LAPACK REQUIRED)
+  find_package(Lapack REQUIRED)
   include_directories(${FFTW3_INCLUDE_DIRS})
-  list(APPEND math_libs FFTW3::FFTW3 LAPACK::LAPACK)
+  list(APPEND math_libs FFTW3::FFTW3 LAPACK::LAPACK BLAS::BLAS)
 
   if(ENABLE_LCAO)
     find_package(ScaLAPACK REQUIRED)

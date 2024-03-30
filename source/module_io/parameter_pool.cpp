@@ -820,7 +820,7 @@ void input_parameters_set(std::map<std::string, InputParameter> input_parameters
     }
     else if (input_parameters.count("mixing_restart") != 0)
     {
-        INPUT.mixing_restart = *static_cast<int*>(input_parameters["mixing_restart"].get());
+        INPUT.mixing_restart = *static_cast<double*>(input_parameters["mixing_restart"].get());
     }
     else if (input_parameters.count("mixing_gg0") != 0)
     {
@@ -1421,11 +1421,11 @@ void input_parameters_set(std::map<std::string, InputParameter> input_parameters
     }
     else if (input_parameters.count("dft_plus_u") != 0)
     {
-        INPUT.dft_plus_u = *static_cast<bool*>(input_parameters["dft_plus_u"].get());
+        INPUT.dft_plus_u = *static_cast<int*>(input_parameters["dft_plus_u"].get());
     }
     else if (input_parameters.count("orbital_corr") != 0)
     {
-        INPUT.dft_plus_u = 0;
+        bool close_plus_u = true;
         bool dmft_flag = false;
         SimpleVector<double> vec_D = *static_cast<SimpleVector<double>*>(input_parameters["orbital_corr"].get());
         for (int i = 0; i < INPUT.ntype; i++)
@@ -1440,8 +1440,13 @@ void input_parameters_set(std::map<std::string, InputParameter> input_parameters
             if (INPUT.orbital_corr[i] != -1)
             {
                 dmft_flag = true;
-                INPUT.dft_plus_u = 1;
+                close_plus_u = false;
             }
+        }
+        if(close_plus_u)
+        {
+            std::cout << "No atoms are correlated!!!" << std::endl;
+            INPUT.dft_plus_u = 0;
         }
         if (!dmft_flag)
         {
@@ -1467,6 +1472,10 @@ void input_parameters_set(std::map<std::string, InputParameter> input_parameters
                 exit(0);
             }
         }
+    }
+    else if (input_parameters.count("onsite_radius") != 0)
+    {
+        INPUT.onsite_radius = *static_cast<double*>(input_parameters["onsite_radius"].get());
     }
     else if (input_parameters.count("omc") != 0)
     {

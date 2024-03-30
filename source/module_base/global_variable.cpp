@@ -221,7 +221,7 @@ double tau = 1.0798 * 1e-5;
 double sigma_k = 0.6;
 double nc_k = 0.00037;
 
-bool dft_plus_u = false; //DFTU control
+int dft_plus_u = 0; //DFTU control
 
 //Xinyang Dong added for rpa
 bool rpa_setorb = false;
@@ -248,7 +248,7 @@ std::string of_kernel_file = "WTkernel.txt";
 std::string MIXING_MODE = "broyden";
 double MIXING_BETA = 0.7;
 int MIXING_NDIM = 8;
-int MIXING_RESTART = 0;
+double MIXING_RESTART = 0.0;
 double MIXING_GG0 = 1.00;
 double MIXING_BETA_MAG = 1.6;
 double MIXING_GG0_MAG = 1.00;
@@ -276,6 +276,7 @@ bool psi_initializer = false;
 
 int out_chg = 0;
 double nelec = 0;
+double nelec_delta = 0;
 bool out_bandgap = false; // QO added for bandgap printing
 int out_interval = 1;    // convert from out_hsR_interval liuyu 2023-04-18
 
@@ -298,8 +299,11 @@ std::string sc_file = "none";
 // Quasiatomic orbital related
 //==========================================================
 bool qo_switch = false;
-std::string qo_basis = "hydrogen";
+std::string qo_basis = "szv";
 std::vector<std::string> qo_strategy = {};
 double qo_thr = 1.0e-6;
 std::vector<double> qo_screening_coeff = {};
+
+// on-site orbitals
+double onsite_radius = 0.0;
 } // namespace GlobalV

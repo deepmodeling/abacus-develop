@@ -6,6 +6,8 @@
 
 #include "module_base/parallel_common.h"
 #include "module_base/tool_quit.h"
+#include "projgen.h"
+#include "module_base/math_integral.h"
 
 AtomicRadials& AtomicRadials::operator=(const AtomicRadials& rhs)
 {
@@ -58,6 +60,46 @@ void AtomicRadials::build(const std::string& file, const int itype, std::ofstrea
     if (rank == 0)
     {
         ifs.close();
+    }
+}
+
+void AtomicRadials::build(RadialSet* const other, const int itype, const double rcut)
+{
+    this->symbol_ = other->symbol();
+    this->lmax_ = other->lmax();
+    this->nchi_ = other->nchi();
+    this->nzeta_max_ = other->nzeta_max();
+    this->itype_ = itype;
+    this->symbol_ = other->symbol();
+    this->nzeta_ = new int[this->lmax_ + 1];
+    for (int l = 0; l <= this->lmax_; ++l)
+    {
+        this->nzeta_[l] = other->nzeta(l);
+    }
+    this->indexing();
+    this->chi_ = new NumericalRadial[nchi_];
+    for(int ichi = 0;ichi<this->nchi_;ichi++)
+    {
+        const int l = other->cbegin()[ichi].l();
+        int ngrid = other->cbegin()[ichi].nr();
+        const double* rgrid = other->cbegin()[ichi].rgrid();
+        const double* rvalue = other->cbegin()[ichi].rvalue();
+        const int izeta = other->cbegin()[ichi].izeta();
+        // if the cutoff radius is larger than the original one, just copy the orbitals
+        if(rcut >= other->cbegin()[ichi].rcut())
+        {
+            this->chi_[ichi].build(l, true, ngrid, rgrid, rvalue, 0, izeta, symbol_, itype, false);
+        }
+        else
+        {
+            // call smoothgen to modify the orbitals to the local projections
+            std::vector<double> rvalue_new;
+            smoothgen(ngrid, rgrid, rvalue, rcut, rvalue_new);
+            ngrid = rvalue_new.size();
+            //projgen(l, ngrid, rgrid, rvalue, rcut, 20, rvalue_new);
+            //build the new on-site orbitals
+            this->chi_[ichi].build(l, true, ngrid, rgrid, rvalue_new.data(), 0, izeta, symbol_, itype, false);
+        }
     }
 }
 
