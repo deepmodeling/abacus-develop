@@ -41,7 +41,7 @@ namespace GintKernel
 
 __global__ void get_psi_force(double* ylmcoef,
                               double delta_r_g,
-                              double bxyz_g,
+                              int bxyz_g,
                               double nwmax_g,
                               double* input_double,
                               int* input_int,

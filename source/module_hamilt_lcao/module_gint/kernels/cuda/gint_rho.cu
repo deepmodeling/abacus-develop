@@ -1,11 +1,12 @@
 #include "module_hamilt_lcao/module_gint/kernels/cuda/gint_rho.cuh"
 #include "sph.cuh"
+#include "interp.cuh"
 
 namespace GintKernel{
 
 __global__ void get_psi(double *ylmcoef,
                         double delta_r_g,
-                        double bxyz_g,
+                        int bxyz_g,
                         double nwmax_g,
                         double *input_double,
                         int *input_int,
@@ -39,36 +40,8 @@ __global__ void get_psi(double *ylmcoef,
         
         spherical_harmonics(dr,distance,nwl,ylma,ylmcoef);
    
-        distance /= delta_r_g;
-
-        int ip = (int)(distance);
-        double dx = distance - ip;
-        double dx2 = dx * dx;
-        double dx3 = dx2 * dx;
-
-        double c3 = 3.0 * dx2 - 2.0 * dx3;
-        double c1 = 1.0 - c3;
-        double c2 = (dx - 2.0 * dx2 + dx3) * delta_r_g;
-        double c4 = (dx3 - dx2) * delta_r_g;
-
-        double phi = 0.0;
-        int it_nw = it * nwmax_g;
-        int iw_nr = (it_nw * nr_max + ip) * 2;
-        int it_nw_iw = it_nw;
-        for (int iw = 0; iw < atom_nw[it]; ++iw)
-        {
-            if (atom_iw2_new[it_nw_iw])
-            {
-                phi = c1 * psi_u[iw_nr] + c2 * psi_u[iw_nr + 1] +
-                      c3 * psi_u[iw_nr + 2] + c4 * psi_u[iw_nr + 3];
-            }
-            double temp = phi * ylma[atom_iw2_ylm[it_nw_iw]];
-            psir_ylm[dist_tmp] = temp;
-            dist_tmp += 1;
-            iw_nr += nr_max;
-            iw_nr += nr_max;
-            it_nw_iw++;
-        }
+        interpolate(distance, delta_r_g, it, nwmax_g, nr_max, atom_nw, atom_iw2_new,
+                    psi_u, ylma, atom_iw2_ylm, psir_ylm, dist_tmp, 1);
     }
 }
 
