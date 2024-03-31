@@ -48,6 +48,7 @@ class Input
     int ntype; // number of atom types
     int nbands; // number of bands
     int nbands_istate; // number of bands around fermi level for get_pchg calculation.
+    std::string out_band_index; // specify which bands to calculate for get_pchg calculation, formalism similar to ocp_set.
     int pw_seed; // random seed for initializing wave functions qianrui 2021-8-12
 
     bool init_vel;             // read velocity from STRU or not  liuyu 2021-07-14
