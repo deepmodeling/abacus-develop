@@ -1,13 +1,15 @@
 #ifndef GINT_RHO_H
 #define GINT_RHO_H
-#include "module_hamilt_lcao/module_gint/grid_technique.h"
-#include "module_hamilt_lcao/module_gint/gint.h"
-#include <cuda.h>    // for CUDA_VERSION
 #include <cublas_v2.h>
+#include <cuda.h> // for CUDA_VERSION
 #include <cuda_runtime.h>
 
+#include "module_hamilt_lcao/module_gint/gint.h"
+#include "module_hamilt_lcao/module_gint/grid_technique.h"
+
 cudaError_t checkCuda(cudaError_t result);
-namespace GintKernel{
+namespace GintKernel
+{
 
 /**
  * calculate the rho by GPU
@@ -21,21 +23,22 @@ namespace GintKernel{
  * @param ucell UnitCell.
  * @param rho rho.
  */
-void gint_gamma_rho_gpu(const hamilt::HContainer<double> *dm,
+void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
                         const int nczp,
-                        const double *ylmcoef_now,
+                        const double* ylmcoef_now,
                         const double dr,
-                        const double *rcut,
-                        const Grid_Technique &gridt,
-                        const UnitCell &ucell,
-                        double *rho);
+                        const double* rcut,
+                        const Grid_Technique& gridt,
+                        const UnitCell& ucell,
+                        double* rho);
 
 /**
  * generate GPU tasks for computing the rho.
- * the computation task can be divided into psir calculation, matrix multiplication and vector dot product.
- * the matrix multiplication is mat_dm * mat_psir, and the vector dot product is psir * psir_dm.
- * This function will be split into three separate functions,
- * which are calculating psir, matrix multiplication, and vector dot product.
+ * the computation task can be divided into psir calculation, matrix
+ * multiplication and vector dot product. the matrix multiplication is mat_dm *
+ * mat_psir, and the vector dot product is psir * psir_dm. This function will be
+ * split into three separate functions, which are calculating psir, matrix
+ * multiplication, and vector dot product.
  *
  * @param gridt Grid_Technique object containing grid information.
  * @param i X index of the bigcell.
@@ -64,7 +67,7 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double> *dm,
  * @param mat_C pointers to mat_psir_dm.
  * @param max_m maximum value of m.
  * @param max_n maximum value of n.
- * @param atom_pair_num total count of atom pairs, 
+ * @param atom_pair_num total count of atom pairs,
  *                      which is also the number of mat mul operations.
  * @param rho_g rho.
  * @param vec_l pointers to psir_ylm for vec dot product.
@@ -73,38 +76,39 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double> *dm,
  * @param vec_len vector lengths for each dot product.
  * @param dot_count total count of dot products.
  */
-void gtask_rho(const Grid_Technique &gridt, 
-                            const int i, const int j,
-                            const int max_size,
-                            const int nczp,
-                            const UnitCell &ucell,
-                            const double *rcut,
-                            double *psi_input_double, int *input_int,
-                            int *num_psir,
-                            const int lgd,
-                            double * const psir_ylm_g,
-                            double * const psir_dm_g,
-                            double * const dm_matrix_g,
-                            double *mat_alpha,
-                            int *mat_m,
-                            int *mat_n,
-                            int *mat_k,
-                            int *mat_lda,
-                            int *mat_ldb,
-                            int *mat_ldc,
-                            double **mat_A,
-                            double **mat_B,
-                            double **mat_C,
-                            int &max_m,
-                            int &max_n,
-                            int &atom_pair_num,
-                            double *rho_g,
-                            double **vec_l,
-                            double **vec_r,
-                            double **dot_product,
-                            int *vec_len,
-                            int &dot_count 
-                            );
+void gtask_rho(const Grid_Technique& gridt,
+               const int i,
+               const int j,
+               const int max_size,
+               const int nczp,
+               const UnitCell& ucell,
+               const double* rcut,
+               double* psi_input_double,
+               int* input_int,
+               int* num_psir,
+               const int lgd,
+               double* const psir_ylm_g,
+               double* const psir_dm_g,
+               double* const dm_matrix_g,
+               double* mat_alpha,
+               int* mat_m,
+               int* mat_n,
+               int* mat_k,
+               int* mat_lda,
+               int* mat_ldb,
+               int* mat_ldc,
+               double** mat_A,
+               double** mat_B,
+               double** mat_C,
+               int& max_m,
+               int& max_n,
+               int& atom_pair_num,
+               double* rho_g,
+               double** vec_l,
+               double** vec_r,
+               double** dot_product,
+               int* vec_len,
+               int& dot_count);
 
 } // namespace GintKernel
 #endif
