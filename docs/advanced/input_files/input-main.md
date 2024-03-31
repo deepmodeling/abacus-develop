@@ -384,30 +384,30 @@
     - [qo\_strategy](#qo_strategy)
     - [qo\_screening\_coeff](#qo_screening_coeff)
     - [qo\_thr](#qo_thr)
-  - [PEXSI](#PEXSI)
-    - [pexsi_npole](#pexsi_npole)
-    - [pexsi_inertia](#pexsi_inertia)
-    - [pexsi_nmax](#pexsi_nmax)
-    - [pexsi_comm](#pexsi_comm)
-    - [pexsi_storage](#pexsi_storage)
-    - [pexsi_ordering](#pexsi_ordering)
-    - [pexsi_row_ordering](#pexsi_row_ordering)
-    - [pexsi_nproc](#pexsi_nproc)
-    - [pexsi_symm](#pexsi_symm)
-    - [pexsi_trans](#pexsi_trans)
-    - [pexsi_method](#pexsi_method)
-    - [pexsi_nproc_pole](#pexsi_nproc_pole)
-    - [pexsi_temp](#pexsi_temp)
-    - [pexsi_gap](#pexsi_gap)
-    - [pexsi_delta_e](#pexsi_delta_e)
-    - [pexsi_mu_lower](#pexsi_mu_lower)
-    - [pexsi_mu_upper](#pexsi_mu_upper)
-    - [pexsi_mu](#pexsi_mu)
-    - [pexsi_mu_thr](#pexsi_mu_thr)
-    - [pexsi_mu_expand](#pexsi_mu_expand)
-    - [pexsi_mu_guard](#pexsi_mu_guard)
-    - [pexsi_elec_thr](#pexsi_elec_thr)
-    - [pexsi_zero_thr](#pexsi_zero_thr)
+  - [PEXSI](#pexsi)
+    - [pexsi\_npole](#pexsi_npole)
+    - [pexsi\_inertia](#pexsi_inertia)
+    - [pexsi\_nmax](#pexsi_nmax)
+    - [pexsi\_comm](#pexsi_comm)
+    - [pexsi\_storage](#pexsi_storage)
+    - [pexsi\_ordering](#pexsi_ordering)
+    - [pexsi\_row\_ordering](#pexsi_row_ordering)
+    - [pexsi\_nproc](#pexsi_nproc)
+    - [pexsi\_symm](#pexsi_symm)
+    - [pexsi\_trans](#pexsi_trans)
+    - [pexsi\_method](#pexsi_method)
+    - [pexsi\_nproc\_pole](#pexsi_nproc_pole)
+    - [pexsi\_temp](#pexsi_temp)
+    - [pexsi\_gap](#pexsi_gap)
+    - [pexsi\_delta\_e](#pexsi_delta_e)
+    - [pexsi\_mu\_lower](#pexsi_mu_lower)
+    - [pexsi\_mu\_upper](#pexsi_mu_upper)
+    - [pexsi\_mu](#pexsi_mu)
+    - [pexsi\_mu\_thr](#pexsi_mu_thr)
+    - [pexsi\_mu\_expand](#pexsi_mu_expand)
+    - [pexsi\_mu\_guard](#pexsi_mu_guard)
+    - [pexsi\_elec\_thr](#pexsi_elec_thr)
+    - [pexsi\_zero\_thr](#pexsi_zero_thr)
 
 [back to top](#full-list-of-input-keywords)
 
@@ -3643,7 +3643,7 @@ These variables are used to control the usage of PEXSI (Pole Expansion and Selec
 
 - **Type**: Integer
 - **Description**: the number of poles used in the pole expansion method, should be a even number.
-- **Default**: 80
+- **Default**: 40
 
 ### pexsi_inertia
 

@@ -934,7 +934,7 @@ TEST_F (write_input, PEXSI24)
     std::ifstream ifs ("write_input_test.log");
     std::string output ((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     EXPECT_THAT(output, testing::HasSubstr("#Parameters (24.PEXSI)"));
-    EXPECT_THAT(output, testing::HasSubstr("pexsi_npole                    80 #Number of poles in expansion"));
+    EXPECT_THAT(output, testing::HasSubstr("pexsi_npole                    40 #Number of poles in expansion"));
     EXPECT_THAT(output, testing::HasSubstr("pexsi_inertia                  1 #Whether inertia counting is used at the very beginning of PEXSI process"));
     EXPECT_THAT(output, testing::HasSubstr("pexsi_nmax                     80 #Maximum number of PEXSI iterations after each inertia counting procedure."));
     EXPECT_THAT(output, testing::HasSubstr("pexsi_comm                     1 #Whether to construct PSelInv communication pattern"));
