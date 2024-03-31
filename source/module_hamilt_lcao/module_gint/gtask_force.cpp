@@ -189,7 +189,7 @@ void gpu_task_generator_force(const Grid_Technique &gridt,
   delete[] gpu_mat_cal_flag;
 }
 
- void AllocateDm(double *matrixHost, hamilt::HContainer<double> *dm,
+ void allocateDm(double *matrixHost, hamilt::HContainer<double> *dm,
                   const Grid_Technique &gridt, const UnitCell &ucell)
   {
     ModuleBase::GlobalFunc::ZEROS(matrixHost, gridt.lgd * gridt.lgd);
