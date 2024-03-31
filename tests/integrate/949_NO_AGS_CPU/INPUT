@@ -1,9 +1,12 @@
 INPUT_PARAMETERS
-gamma_only 1
-cal_stress 1
-cal_force 1
-ks_solver  cusolver
+gamma_only    1
+cal_stress    1
+cal_force    1
+ks_solver    genelpa
 # Created by Atomic Simulation Enviroment
 stru_file                               327
-basis_type                              lcao
+basis_type    lcao
 dft_functional                          pbe
+device    cpu
+suffix    autotest
+calculation    scf

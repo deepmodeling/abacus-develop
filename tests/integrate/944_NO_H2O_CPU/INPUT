@@ -1,7 +1,7 @@
 INPUT_PARAMETERS
 #Parameters (1.General)
-suffix                  autotest
-calculation             scf
+suffix    autotest
+calculation    scf
 nbands                  6
 symmetry                0
 
@@ -11,7 +11,7 @@ scf_thr                     1e-6
 scf_nmax                   50
 
 #Parameters (3.Basis)
-basis_type              lcao 
+basis_type    lcao
 
 #Parameters (4.Smearing)
 smearing_method                gaussian
@@ -23,4 +23,7 @@ mixing_beta             0.4
 
 #Parameters (6.Deepks)
 cal_force			1
-cal_stress 1
+cal_stress    1
+ks_solver    genelpa
+device    cpu
+gamma_only    1

@@ -17,3 +17,8 @@ mixing_beta	0.4
 basis_type	lcao
 gamma_only	0
 symmetry	1
+ks_solver    genelpa
+device    cpu
+suffix    autotest
+cal_force    1
+cal_stress    1

@@ -1,7 +1,7 @@
 INPUT_PARAMETERS
 #Parameters (1.General)
 suffix			autotest
-calculation     scf
+calculation    scf
 
 #nbands			8
 symmetry		1
@@ -10,8 +10,8 @@ symmetry		1
 ecutwfc			100
 scf_thr				1e-6
 scf_nmax			100
-cal_force 1
-cal_stress 1
+cal_force    1
+cal_stress    1
 #Parameters (3.Basis)
 basis_type		lcao
 
@@ -22,4 +22,6 @@ smearing_sigma			0.002
 #Parameters (5.Mixing)
 mixing_type		broyden
 mixing_beta		0.3
-ks_solver scalapack_gvx
+ks_solver    genelpa
+device    cpu
+gamma_only    1
