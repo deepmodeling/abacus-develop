@@ -44,8 +44,10 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
                     ModuleBase::WARNING_QUIT("ElecStateLCAO::cal_dm", "please check global2local_col!");
                 }
             }
-            if (ib_global >= wg.nc)
-                continue;
+			if (ib_global >= wg.nc)
+			{
+				continue;
+			}
             const double wg_local = wg(ik, ib_global);
             double* wg_wfc_pointer = &(wg_wfc(0, ib_local, 0));
             BlasConnector::scal(nbasis_local, wg_local, wg_wfc_pointer, 1);
@@ -107,9 +109,11 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
                     ModuleBase::WARNING_QUIT("ElecStateLCAO::cal_dm", "please check global2local_col!");
                 }
             }
-            if (ib_global >= wg.nc)
-                continue;
-            const double wg_local = wg(ik, ib_global);
+			if (ib_global >= wg.nc)
+			{
+				continue;
+			}
+			const double wg_local = wg(ik, ib_global);
             std::complex<double>* wg_wfc_pointer = &(wg_wfc(0, ib_local, 0));
             BlasConnector::scal(nbasis_local, wg_local, wg_wfc_pointer, 1);
         }
@@ -233,7 +237,8 @@ void psiMulPsi(const psi::Psi<std::complex<double>>& psi1,
     const char N_char = 'N', T_char = 'T';
     const int nlocal = psi1.get_nbasis();
     const int nbands = psi1.get_nbands();
-    const std::complex<double> one_complex = {1.0, 0.0}, zero_complex = {0.0, 0.0};
+    const std::complex<double> one_complex = {1.0, 0.0};
+    const std::complex<double> zero_complex = {0.0, 0.0};
     zgemm_(&N_char,
            &T_char,
            &nlocal,

@@ -40,7 +40,7 @@ namespace ModuleESolver
         virtual ~ESolver_FP();
 
         //! Initialize of the first-principels energy solver
-        virtual void Init(Input& inp, UnitCell& cell) override;
+        virtual void init(Input& inp, UnitCell& cell) override;
 
         virtual void init_after_vc(Input& inp, UnitCell& cell);    // liuyu add 2023-03-09
 

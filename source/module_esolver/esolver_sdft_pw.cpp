@@ -36,11 +36,12 @@ ESolver_SDFT_PW::~ESolver_SDFT_PW()
 {
 }
 
-void ESolver_SDFT_PW::Init(Input& inp, UnitCell& ucell)
+void ESolver_SDFT_PW::init(Input& inp, UnitCell& ucell)
 {
     this->nche_sto = inp.nche_sto;
     this->method_sto = inp.method_sto;
-    ESolver_KS::Init(inp, ucell);
+
+    ESolver_KS::init(inp, ucell);
 
     this->pelec = new elecstate::ElecStatePW_SDFT(pw_wfc,
                                                   &(chr),
@@ -110,23 +111,23 @@ void ESolver_SDFT_PW::Init(Input& inp, UnitCell& ucell)
 }
 
 
-void ESolver_SDFT_PW::beforescf(const int istep)
+void ESolver_SDFT_PW::before_scf(const int istep)
 {
-    ESolver_KS_PW::beforescf(istep);
+    ESolver_KS_PW::before_scf(istep);
 	if (istep > 0 && INPUT.nbands_sto != 0 && INPUT.initsto_freq > 0 && istep % INPUT.initsto_freq == 0)
 	{
 		Update_Sto_Orbitals(this->stowf, INPUT.seed_sto);
 	}
 }
 
-void ESolver_SDFT_PW::eachiterfinish(int iter)
+void ESolver_SDFT_PW::iter_finish(int iter)
 {
     // this->pelec->print_eigenvalue(GlobalV::ofs_running);
     this->pelec->cal_energies(2);
 }
 
 
-void ESolver_SDFT_PW::afterscf(const int istep)
+void ESolver_SDFT_PW::after_scf(const int istep)
 {
     // save charge difference into files for charge extrapolation
     if (GlobalV::CALCULATION != "scf")
@@ -220,13 +221,13 @@ void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
     }
 }
 
-double ESolver_SDFT_PW::cal_Energy()
+double ESolver_SDFT_PW::cal_energy()
 {
     return this->pelec->f_en.etot;
 }
 
 
-void ESolver_SDFT_PW::cal_Force(ModuleBase::matrix& force)
+void ESolver_SDFT_PW::cal_force(ModuleBase::matrix& force)
 {
     Sto_Forces ff(GlobalC::ucell.nat);
 
@@ -242,7 +243,7 @@ void ESolver_SDFT_PW::cal_Force(ModuleBase::matrix& force)
 }
 
 
-void ESolver_SDFT_PW::cal_Stress(ModuleBase::matrix& stress)
+void ESolver_SDFT_PW::cal_stress(ModuleBase::matrix& stress)
 {
     Sto_Stress_PW ss;
 	ss.cal_stress(
@@ -259,7 +260,7 @@ void ESolver_SDFT_PW::cal_Stress(ModuleBase::matrix& stress)
 }
 
 
-void ESolver_SDFT_PW::postprocess(void)
+void ESolver_SDFT_PW::post_process(void)
 {
 
     GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
@@ -338,10 +339,10 @@ void ESolver_SDFT_PW::postprocess(void)
 }
 
 
-void ESolver_SDFT_PW::othercalculation(const int istep)
+void ESolver_SDFT_PW::others(const int istep)
 {
-    ModuleBase::TITLE("ESolver_SDFT_PW", "othercalculation");
-    ModuleBase::timer::tick("ESolver_SDFT_PW", "othercalculation");
+    ModuleBase::TITLE("ESolver_SDFT_PW", "others");
+    ModuleBase::timer::tick("ESolver_SDFT_PW", "others");
 
     if (GlobalV::CALCULATION == "nscf")
     {
@@ -349,9 +350,9 @@ void ESolver_SDFT_PW::othercalculation(const int istep)
     }
     else
     {
-        ModuleBase::WARNING_QUIT("ESolver_SDFT_PW::othercalculation", "CALCULATION type not supported");
+        ModuleBase::WARNING_QUIT("ESolver_SDFT_PW::others", "CALCULATION type not supported");
     }
-    ModuleBase::timer::tick("ESolver_SDFT_PW", "othercalculation");
+    ModuleBase::timer::tick("ESolver_SDFT_PW", "others");
     return;
 }
 
@@ -369,7 +370,7 @@ void ESolver_SDFT_PW::nscf(void)
 
     std::cout << " DIGA_THR          : " << diag_thr << std::endl;
 
-    this->beforescf(istep);
+    this->before_scf(istep);
 
     this->hamilt2density(istep, iter, diag_thr);
 

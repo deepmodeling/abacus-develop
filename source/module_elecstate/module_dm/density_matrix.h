@@ -15,28 +15,33 @@ namespace elecstate
  * <TK,TR> = <double,double> for Gamma-only calculation
  * <TK,TR> = <std::complex<double>,double> for multi-k calculation
  */
-    template<typename T> struct ShiftRealComplex
-    {
-        using type = void;
-    };
-    template<>
-    struct ShiftRealComplex<double> {
-        using type = std::complex<double>;
-    };
-    template<>
-    struct ShiftRealComplex<std::complex<double>> {
-        using type = double;
-    };
+template<typename T> struct ShiftRealComplex
+{
+    using type = void;
+};
 
-    template <typename TK, typename TR>
-    class DensityMatrix
-    {
-        using TRShift = typename ShiftRealComplex<TR>::type;
-  public:
-    /**
-     * @brief Destructor of class DensityMatrix
-     */
-    ~DensityMatrix();
+template<>
+struct ShiftRealComplex<double> 
+{
+	using type = std::complex<double>;
+};
+
+template<>
+struct ShiftRealComplex<std::complex<double>> 
+{
+	using type = double;
+};
+
+template <typename TK, typename TR>
+class DensityMatrix
+{
+	using TRShift = typename ShiftRealComplex<TR>::type;
+
+	public:
+	/**
+	 * @brief Destructor of class DensityMatrix
+	 */
+	~DensityMatrix();
 
     /**
      * @brief Constructor of class DensityMatrix for multi-k calculation
@@ -160,6 +165,7 @@ namespace elecstate
      * @brief get pointer of paraV
      */
     const Parallel_Orbitals* get_paraV_pointer() const;
+
     const K_Vectors* get_kv_pointer() const;
 
     /**

@@ -16,6 +16,7 @@
 #include "module_io/output_mat_sparse.h"
 #include "module_basis/module_nao/two_center_bundle.h"
 #include <memory>
+
 namespace ModuleESolver
 {
     template <typename TK, typename TR>
@@ -25,32 +26,58 @@ namespace ModuleESolver
         ESolver_KS_LCAO();
         ~ESolver_KS_LCAO();
 
-        void Init(Input& inp, UnitCell& cell) override;
+        void init(Input& inp, UnitCell& cell) override;
+
         void init_after_vc(Input& inp, UnitCell& cell) override;
 
-        double cal_Energy() override;
-        void cal_Force(ModuleBase::matrix& force) override;
-        void cal_Stress(ModuleBase::matrix& stress) override;
-        void postprocess() override;
+        double cal_energy() override;
+
+        void cal_force(ModuleBase::matrix& force) override;
+
+        void cal_stress(ModuleBase::matrix& stress) override;
+
+        void post_process() override;
+
         void nscf() override;
+
         void get_S();
 
     protected:
-        virtual void beforescf(const int istep) override;
-        virtual void eachiterinit(const int istep, const int iter) override;
+
+        virtual void before_scf(const int istep) override;
+
+        virtual void iter_init(const int istep, const int iter) override;
+
         virtual void hamilt2density(const int istep, const int iter, const double ethr) override;
-        virtual void updatepot(const int istep, const int iter) override;
-        virtual void eachiterfinish(const int iter) override;
-        virtual void afterscf(const int istep) override;
+
+        virtual void update_pot(const int istep, const int iter) override;
+
+        virtual void iter_finish(const int iter) override;
+
+        virtual void after_scf(const int istep) override;
+
         virtual bool do_after_converge(int& iter) override;
 
-        virtual void othercalculation(const int istep)override;
+        virtual void others(const int istep)override;
+
+        // we will get rid of this class soon, don't use it, mohan 2024-03-28
         ORB_control orb_con;    //Basis_LCAO
+
+        // we will get rid of this class soon, don't use it, mohan 2024-03-28
         Record_adj RA;
+
+        // we will get rid of this class soon, don't use it, mohan 2024-03-28
         Local_Orbital_wfc LOWF;
+
+        // we will get rid of this class soon, don't use it, mohan 2024-03-28
         Local_Orbital_Charge LOC;
+
+        // we will get rid of this class soon, don't use it, mohan 2024-03-28
         LCAO_Hamilt UHM;
+
+        // we will get rid of this class soon, don't use it, mohan 2024-03-28
         LCAO_Matrix LM;
+
         Grid_Technique GridT;
 
         std::unique_ptr<TwoCenterBundle> two_center_bundle;
@@ -97,8 +124,5 @@ namespace ModuleESolver
 #endif
 
     };
-
-
-
 }
 #endif

@@ -15,23 +15,33 @@ class ESolver_SDFT_PW : public ESolver_KS_PW<std::complex<double>>
   public:
     ESolver_SDFT_PW();
     ~ESolver_SDFT_PW();
-    void Init(Input& inp, UnitCell& cell) override;
-    double cal_Energy() override;
-    void cal_Force(ModuleBase::matrix& force) override;
-    void cal_Stress(ModuleBase::matrix& stress) override;
+
+    void init(Input& inp, UnitCell& cell) override;
+
+    double cal_energy() override;
+
+    void cal_force(ModuleBase::matrix& force) override;
+
+    void cal_stress(ModuleBase::matrix& stress) override;
 
   public:
+
     Stochastic_WF stowf;
 
   protected:
-    virtual void beforescf(const int istep) override;
-    // virtual void eachiterinit(int iter) override;
+    virtual void before_scf(const int istep) override;
+
     virtual void hamilt2density(const int istep, const int iter, const double ethr) override;
+
     virtual void nscf() override;
-    virtual void othercalculation(const int istep) override;
-    virtual void eachiterfinish(const int iter) override;
-    virtual void afterscf(const int istep) override;
-    virtual void postprocess() override;
+
+    virtual void others(const int istep) override;
+
+    virtual void iter_finish(const int iter) override;
+
+    virtual void after_scf(const int istep) override;
+
+    virtual void post_process() override;
 
   public:
     /**

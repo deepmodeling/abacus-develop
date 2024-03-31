@@ -20,14 +20,19 @@ class ESolver_OF : public ESolver_FP
     ESolver_OF();
     ~ESolver_OF();
 
-    virtual void Init(Input& inp, UnitCell& ucell) override;
-    virtual void init_after_vc(Input& inp, UnitCell& ucell) override;
-    virtual void Run(int istep, UnitCell& ucell) override;
-    virtual void postprocess() override;
+    virtual void init(Input& inp, UnitCell& ucell) override;
 
-    virtual double cal_Energy() override;
-    virtual void cal_Force(ModuleBase::matrix& force) override;
-    virtual void cal_Stress(ModuleBase::matrix& stress) override;
+    virtual void init_after_vc(Input& inp, UnitCell& ucell) override;
+
+    virtual void run(int istep, UnitCell& ucell) override;
+
+    virtual void post_process() override;
+
+    virtual double cal_energy() override;
+
+    virtual void cal_force(ModuleBase::matrix& force) override;
+
+    virtual void cal_stress(ModuleBase::matrix& stress) override;
 
     virtual int getniter() override
     {

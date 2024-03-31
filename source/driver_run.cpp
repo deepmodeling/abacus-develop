@@ -19,16 +19,16 @@
  * Esolver::Run takes in a configuration and provides force and stress, 
  * the configuration-changing subroutine takes force and stress and updates the configuration
  */
-void Driver::driver_run()
+void Driver::driver_run(void)
 {
     ModuleBase::TITLE("Driver", "driver_line");
     ModuleBase::timer::tick("Driver", "driver_line");
 
-    // 1. Determine type of Esolver
+    //! 1: initialize the ESolver 
     ModuleESolver::ESolver *p_esolver = nullptr;
     ModuleESolver::init_esolver(p_esolver);
 
-    // 2. Setup cell and atom information
+    //! 2: setup cell and atom information
 #ifndef __LCAO
     if(GlobalV::BASIS_TYPE == "lcao_in_pw" || GlobalV::BASIS_TYPE == "lcao")
     {
@@ -37,30 +37,29 @@ void Driver::driver_run()
 #endif
     GlobalC::ucell.setup_cell(GlobalV::stru_file, GlobalV::ofs_running);
 
-    // 3. For these two types of calculations
+    //! 3: for these two types of calculations
     // nothing else need to be initialized
-    if(GlobalV::CALCULATION == "test_neighbour" || GlobalV::CALCULATION == "test_memory")
+    if(GlobalV::CALCULATION == "test_neighbour" 
+    || GlobalV::CALCULATION == "test_memory")
     {
-        p_esolver->Run(0, GlobalC::ucell);
+        p_esolver->run(0, GlobalC::ucell);
         ModuleBase::QUIT();
     }
 
-    // 4. Initialize Esolver,and fill json-structure 
-    p_esolver->Init(INPUT, GlobalC::ucell);
+    //! 4: initialize Esolver and fill json-structure 
+    p_esolver->init(INPUT, GlobalC::ucell);
 
 
 #ifdef __RAPIDJSON
     Json::gen_stru_wrapper(&GlobalC::ucell);
 #endif
 
-    //------------------------------------------------------------
-    // This part onward needs to be refactored.
-    //---------------------------MD/Relax-------------------------
+    //! 5: md or relax calculations 
     if(GlobalV::CALCULATION == "md")
     {
         Run_MD::md_line(GlobalC::ucell, p_esolver, INPUT.mdp);
     }
-    else // scf; cell relaxation; nscf; etc
+    else //! scf; cell relaxation; nscf; etc
     {
         if (GlobalV::precision_flag == "single")
         {
@@ -73,10 +72,9 @@ void Driver::driver_run()
             rl_driver.relax_driver(p_esolver);
         }
     }
-    //---------------------------MD/Relax------------------
 
-    // 6. clean up esolver
-    p_esolver->postprocess();
+    //! 6: clean up esolver
+    p_esolver->post_process();
     ModuleESolver::clean_esolver(p_esolver);
 
     ModuleBase::timer::tick("Driver", "driver_line");

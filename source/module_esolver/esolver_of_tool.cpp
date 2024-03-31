@@ -291,6 +291,7 @@ void ESolver_OF::adjust_direction()
  */
 void ESolver_OF::check_direction(double* dEdtheta, double** ptemp_phi, UnitCell& ucell)
 {
+    assert(GlobalV::NSPIN>0);
     double* temp_theta = new double[GlobalV::NSPIN];
     ModuleBase::GlobalFunc::ZEROS(temp_theta, GlobalV::NSPIN);
 

@@ -105,6 +105,8 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
     }
     delete this->psi;
 }
+
+
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::Init_GlobalC(Input& inp, UnitCell& cell)
 {
@@ -217,9 +219,9 @@ void ESolver_KS_PW<T, Device>::Init_GlobalC(Input& inp, UnitCell& cell)
 
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::Init(Input& inp, UnitCell& ucell)
+void ESolver_KS_PW<T, Device>::init(Input& inp, UnitCell& ucell)
 {
-    ESolver_KS<T, Device>::Init(inp, ucell);
+    ESolver_KS<T, Device>::init(inp, ucell);
 
     // init HSolver
     if (this->phsol == nullptr)
@@ -433,10 +435,11 @@ void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
     ModuleBase::timer::tick("ESolver_KS_PW", "init_after_vc");
 }
 
+
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::beforescf(int istep)
+void ESolver_KS_PW<T, Device>::before_scf(int istep)
 {
-    ModuleBase::TITLE("ESolver_KS_PW", "beforescf");
+    ModuleBase::TITLE("ESolver_KS_PW", "before_scf");
 
     if (GlobalC::ucell.cell_parameter_updated)
     {
@@ -523,7 +526,7 @@ void ESolver_KS_PW<T, Device>::beforescf(int istep)
     // before hamilt2density, we update Hk and initialize psi
     if(GlobalV::psi_initializer)
     {
-        // beforescf function will be called everytime before scf. However, once atomic coordinates changed,
+        // before_scf function will be called everytime before scf. However, once atomic coordinates changed,
         // structure factor will change, therefore all atomwise properties will change. So we need to reinitialize
         // psi every time before scf. But for random wavefunction, we dont, because random wavefunction is not
         // related to atomic coordinates.
@@ -538,10 +541,10 @@ void ESolver_KS_PW<T, Device>::beforescf(int istep)
 
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::othercalculation(const int istep)
+void ESolver_KS_PW<T, Device>::others(const int istep)
 {
-    ModuleBase::TITLE("ESolver_KS_PW", "othercalculation");
-    ModuleBase::timer::tick("ESolver_KS_PW", "othercalculation");
+    ModuleBase::TITLE("ESolver_KS_PW", "others");
+    ModuleBase::timer::tick("ESolver_KS_PW", "others");
     if (GlobalV::CALCULATION == "test_memory")
     {
         Cal_Test::test_memory(this->pw_rho,
@@ -571,15 +574,15 @@ void ESolver_KS_PW<T, Device>::othercalculation(const int istep)
     }
     else
     {
-        ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::othercalculation", "CALCULATION type not supported");
+        ModuleBase::WARNING_QUIT("ESolver_KS_PW::others", "CALCULATION type not supported");
     }
 
-    ModuleBase::timer::tick("ESolver_KS_PW", "othercalculation");
+    ModuleBase::timer::tick("ESolver_KS_PW", "others");
     return;
 }
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::eachiterinit(const int istep, const int iter)
+void ESolver_KS_PW<T, Device>::iter_init(const int istep, const int iter)
 {
     if (iter == 1)
     {
@@ -804,7 +807,7 @@ void ESolver_KS_PW<T, Device>::hamilt2density(
         // before hamilt2density, we update Hk and initialize psi
         if(GlobalV::psi_initializer)
         {
-            // beforescf function will be called everytime before scf. However, once atomic coordinates changed,
+            // before_scf function will be called everytime before scf. However, once atomic coordinates changed,
             // structure factor will change, therefore all atomwise properties will change. So we need to reinitialize
             // psi every time before scf. But for random wavefunction, we dont, because random wavefunction is not
             // related to atomic coordinates.
@@ -899,7 +902,7 @@ void ESolver_KS_PW<T, Device>::hamilt2density(
 
 // Temporary, it should be rewritten with Hamilt class.
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::updatepot(const int istep, const int iter)
+void ESolver_KS_PW<T, Device>::update_pot(const int istep, const int iter)
 {
     if (!this->conv_elec)
     {
@@ -918,7 +921,7 @@ void ESolver_KS_PW<T, Device>::updatepot(const int istep, const int iter)
 
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::eachiterfinish(const int iter)
+void ESolver_KS_PW<T, Device>::iter_finish(const int iter)
 {
     // liuyu 2023-10-24
     // D in uspp need vloc, thus needs update when veff updated
@@ -966,7 +969,7 @@ void ESolver_KS_PW<T, Device>::eachiterfinish(const int iter)
 
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::afterscf(const int istep)
+void ESolver_KS_PW<T, Device>::after_scf(const int istep)
 {
     this->create_Output_Potential(istep).write();
 
@@ -1075,19 +1078,22 @@ void ESolver_KS_PW<T, Device>::afterscf(const int istep)
 
 
 template <typename T, typename Device>
-double ESolver_KS_PW<T, Device>::cal_Energy()
+double ESolver_KS_PW<T, Device>::cal_energy()
 {
     return this->pelec->f_en.etot;
 }
 
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::cal_Force(ModuleBase::matrix& force)
+void ESolver_KS_PW<T, Device>::cal_force(ModuleBase::matrix& force)
 {
     Forces<double, Device> ff(GlobalC::ucell.nat);
-    if (this->__kspw_psi != nullptr)
-        this->__kspw_psi = nullptr;
-    if (this->__kspw_psi == nullptr)
+	if (this->__kspw_psi != nullptr)
+	{
+		this->__kspw_psi = nullptr;
+	}
+
+	if (this->__kspw_psi == nullptr)
     {
         this->__kspw_psi = GlobalV::precision_flag == "single"
                                ? new psi::Psi<std::complex<double>, Device>(this->kspw_psi[0])
@@ -1107,11 +1113,14 @@ void ESolver_KS_PW<T, Device>::cal_Force(ModuleBase::matrix& force)
 
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::cal_Stress(ModuleBase::matrix& stress)
+void ESolver_KS_PW<T, Device>::cal_stress(ModuleBase::matrix& stress)
 {
     Stress_PW<double, Device> ss(this->pelec);
     if (this->__kspw_psi != nullptr)
+    {
         this->__kspw_psi = nullptr;
+    }
+
     if (this->__kspw_psi == nullptr)
     {
 		this->__kspw_psi = GlobalV::precision_flag == "single"
@@ -1141,7 +1150,7 @@ void ESolver_KS_PW<T, Device>::cal_Stress(ModuleBase::matrix& stress)
 
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::postprocess(void)
+void ESolver_KS_PW<T, Device>::post_process(void)
 {
 
     GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
@@ -1361,7 +1370,9 @@ void ESolver_KS_PW<T, Device>::nscf(void)
     ModuleBase::TITLE("ESolver_KS_PW", "nscf");
     ModuleBase::timer::tick("ESolver_KS_PW", "nscf");
 
-    this->beforescf(0);
+    // mohan add istep_tmp 2024-03-31
+    const int istep_tmp = 0;
+    this->before_scf(istep_tmp);
 
     //! Setup the parameters for diagonalization
     double diag_ethr = GlobalV::PW_DIAG_THR;

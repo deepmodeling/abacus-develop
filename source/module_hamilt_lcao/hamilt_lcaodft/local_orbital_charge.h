@@ -13,6 +13,10 @@
 #include "module_psi/psi.h"
 #include "module_elecstate/elecstate.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/DM_gamma_2d_to_grid.h"
+
+
+// try to get rid of this class, so please do not use it 
+// in new code anymoer, mohan 2024-03-28
 class Local_Orbital_Charge
 {
 	public:
@@ -27,21 +31,24 @@ class Local_Orbital_Charge
         psi::Psi<double>* psi,
         const K_Vectors& kv,
         const int& istep);
+
     void allocate_dm_wfc(const Grid_Technique& gt,
         elecstate::ElecState* pelec,
         Local_Orbital_wfc& lowf,
         psi::Psi<std::complex<double>>* psi,
         const K_Vectors& kv,
         const int& istep);
-    //-----------------
+
 	// in DM_gamma.cpp
-	//-----------------
-    void allocate_gamma(const int& lgd, psi::Psi<double>* psid, elecstate::ElecState* pelec, const int& nks, const int& istep);
+	void allocate_gamma(const int& lgd, 
+			psi::Psi<double>* psid, 
+			elecstate::ElecState* pelec, 
+			const int& nks, 
+			const int& istep);
+
     void cal_dk_gamma_from_2D_pub(void);
 
-	//-----------------
 	// in DM_k.cpp
-	//-----------------
 	void allocate_DM_k(const int& nks, const int& nnrg);
 
 	// liaochen modify on 2010-3-23 
@@ -53,9 +60,7 @@ class Local_Orbital_Charge
     static int out_dm; // output density matrix or not.
     static int out_dm1;
     
-    //-----------------
 	// in dm_2d.cpp
-    //-----------------
     // dm stands for density matrix
     std::vector<ModuleBase::matrix> dm_gamma;			// dm_gamma[is](iw1,iw2);
     std::vector<ModuleBase::ComplexMatrix> dm_k;		// dm_k[ik](iw1,iw2);
@@ -72,13 +77,10 @@ class Local_Orbital_Charge
         double** dm2d,
         const K_Vectors& kv);     //output, dm2d[NSPIN][LNNR]
 
-    //-----------------
 	// wavefunctions' pointer
-    //-----------------
     Local_Orbital_wfc* LOWF;
-    //-----------------
+
 	// Parallel Variables' pointer
-    //-----------------
     const Parallel_Orbitals* ParaV;
 
     //temporary set it to public for ElecStateLCAO class, would be refactor later
@@ -87,12 +89,14 @@ class Local_Orbital_Charge
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> DMR_sparse;
 
     void set_dm_k(int ik, std::complex<double>* dm_k_in); // set dm_k from a pointer
+
     void set_dm_gamma(int is, double* dm_gamma_in); // set dm_gamma from a pointer
 
 private:
 
 	// whether the DM array has been allocated
 	bool init_DM;
+
 	// whether the DM(R) array has been allocated
 	bool init_DM_R;
 
