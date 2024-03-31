@@ -411,7 +411,8 @@ void Relax::new_direction()
     //prepare for line search
     bool restart = true;
     double x=0, y=etot;
-    double xnew, yd;
+    //TODO: add a certain threshold for the progress.
+    double xnew, yd = 1e-8;
 
     this->ls.line_search(restart, x, y, f, xnew, yd);
 
