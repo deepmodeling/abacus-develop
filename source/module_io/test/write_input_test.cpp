@@ -170,8 +170,6 @@ TEST_F(write_input, PW2)
                     "cell_factor                    1.2 #used in the construction of the pseudopotential tables"));
     EXPECT_THAT(output,
                 testing::HasSubstr("pw_seed                        1 #random seed for initializing wave functions"));
-    EXPECT_THAT(output,
-                test::HasSubstr("num_stream                         4 #the stream in compute LCAO with GPU"))
     EXPECT_THAT(output, testing::HasSubstr(""));
     ifs.close();
     remove("write_input_test.log");
@@ -741,6 +739,7 @@ TEST_F(write_input, BerryWannier17)
     EXPECT_THAT(
         output,
         testing::HasSubstr("out_wannier_wvfn_formatted     1 #output UNK. file in text format or in binary format"));
+
     EXPECT_THAT(output, testing::HasSubstr(""));
     ifs.close();
     remove("write_input_test.log");
