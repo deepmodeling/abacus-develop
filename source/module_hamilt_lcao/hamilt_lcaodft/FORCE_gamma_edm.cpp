@@ -43,7 +43,7 @@ void Force_LCAO_gamma::cal_foverlap(
         auto pes = dynamic_cast<const elecstate::ElecStateLCAO<double>*>(pelec);
         for (int ik = 0; ik < GlobalV::NSPIN; ik++)
         {
-            EDM.set_DMK_pointer(ik, pes->pexsi_EDM[ik]);
+            EDM.set_DMK_pointer(ik, pes->get_DM()->pexsi_EDM[ik]);
         }
         
     }

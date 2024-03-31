@@ -267,11 +267,17 @@ void ElecStateLCAO<double>::dmToRho(std::vector<double*> pexsi_DM, std::vector<d
     }
 
     auto DM = this->get_DM();
-    this->pexsi_EDM.clear();
-    for (int is = 0; is < GlobalV::NSPIN; is++)
+    this->get_DM()->pexsi_EDM.clear();
+
+    int nspin = GlobalV::NSPIN;
+    if (GlobalV::NSPIN == 4)
+    {
+        nspin = 1;
+    }
+    for (int is = 0; is < nspin; is++)
     {
         this->DM->set_DMK_pointer(is, pexsi_DM[is]);
-        this->pexsi_EDM.push_back(pexsi_EDM[is]);
+        this->get_DM()->pexsi_EDM.push_back(pexsi_EDM[is]);
     }
     DM->cal_DMR();
     

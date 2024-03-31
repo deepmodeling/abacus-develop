@@ -200,6 +200,14 @@ namespace elecstate
     
     std::vector<ModuleBase::ComplexMatrix> EDMK; // for TD-DFT
 
+#ifdef __PEXSI
+    /**
+     * @brief EDM storage for PEXSI
+     * used in MD calculation
+     */
+    std::vector<TK*> pexsi_EDM;
+#endif
+
   private:
     /**
      * @brief HContainer for density matrix in real space for 2D parallelization
@@ -247,6 +255,8 @@ namespace elecstate
      * _nks = kv->_nks / nspin
      */
     int _nks = 0;
+
+
 };
 
 } // namespace elecstate
