@@ -62,9 +62,9 @@ ESolver_KS_LCAO_TDDFT::~ESolver_KS_LCAO_TDDFT()
     }
 }
 
-void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell& ucell)
+void ESolver_KS_LCAO_TDDFT::init(Input& inp, UnitCell& ucell)
 {
-    ESolver_KS::Init(inp, ucell);
+    ESolver_KS::init(inp, ucell);
 
     // Initialize the FFT.
     // this function belongs to cell LOOP
@@ -257,7 +257,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(
     this->pelec->f_en.deband = this->pelec->cal_delta_eband();
 }
 
-void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
+void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
 {
     // print Hamiltonian and Overlap matrix
     if (this->conv_elec)
@@ -434,7 +434,7 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
 }
 
 
-void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
+void ESolver_KS_LCAO_TDDFT::after_scf(const int istep)
 {
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
@@ -457,8 +457,9 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
                         this->RA,
                         this->UHM);
     }
-    ESolver_KS_LCAO<std::complex<double>, double>::afterscf(istep);
+    ESolver_KS_LCAO<std::complex<double>, double>::after_scf(istep);
 }
+
 
 // use the original formula (Hamiltonian matrix) to calculate energy density matrix
 void ESolver_KS_LCAO_TDDFT::cal_edm_tddft(void)

@@ -25,8 +25,10 @@ int NLOCAL = 0; // total number of local basis.
 double  KSPACING[3] = {0.0,0.0,0.0};
 double MIN_DIST_COEF = 0.2;
 
+
 double PSEUDORCUT = 0;
 bool PSEUDO_MESH = false;
+
 
 std::string CALCULATION = "scf";
 std::string ESOLVER_TYPE = "ksdft";

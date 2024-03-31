@@ -46,7 +46,7 @@ class Langevin_test : public testing::Test
         Setcell::parameters();
 
         ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
-        p_esolver->Init(INPUT, ucell);
+        p_esolver->init(INPUT, ucell);
 
         mdrun = new Langevin(INPUT.mdp, ucell);
         mdrun->setup(p_esolver, GlobalV::global_readin_dir);

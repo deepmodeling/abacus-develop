@@ -14,8 +14,10 @@ namespace elecstate
 template <>
 void ElecStateLCAO<double>::print_psi(const psi::Psi<double>& psi_in, const int istep)
 {
-    if (!ElecStateLCAO<double>::out_wfc_lcao)
-        return;
+	if (!ElecStateLCAO<double>::out_wfc_lcao)
+	{
+		return;
+	}
 
     // output but not do  "2d-to-grid" conversion
     double** wfc_grid = nullptr;
@@ -28,8 +30,11 @@ void ElecStateLCAO<double>::print_psi(const psi::Psi<double>& psi_in, const int 
 template <>
 void ElecStateLCAO<std::complex<double>>::print_psi(const psi::Psi<std::complex<double>>& psi_in, const int istep)
 {
-    if (!ElecStateLCAO<std::complex<double>>::out_wfc_lcao && !ElecStateLCAO<std::complex<double>>::need_psi_grid)
-        return;
+	if (!ElecStateLCAO<std::complex<double>>::out_wfc_lcao 
+			&& !ElecStateLCAO<std::complex<double>>::need_psi_grid)
+	{
+		return;
+	}
 
     // output but not do "2d-to-grid" conversion
     std::complex<double>** wfc_grid = nullptr;
@@ -38,6 +43,7 @@ void ElecStateLCAO<std::complex<double>>::print_psi(const psi::Psi<std::complex<
     {
         wfc_grid = this->lowf->wfc_k_grid[ik];
     }
+
 #ifdef __MPI
     this->lowf->wfc_2d_to_grid(istep,
                                ElecStateLCAO<std::complex<double>>::out_wfc_flag,
