@@ -1,7 +1,9 @@
+#include "gint_force.cuh"
 #include "module_hamilt_lcao/module_gint/gint_force.h"
 #include "module_hamilt_lcao/module_gint/kernels/cuda/cuda_tools.cuh"
 #include "module_hamilt_lcao/module_gint/kernels/cuda/gint_force.cuh"
 #include "module_hamilt_lcao/module_gint/kernels/cuda/sph.cuh"
+#include "interp.cuh"
 // CUDA kernel to calculate psi and force
 namespace GintKernel
 {
@@ -94,69 +96,31 @@ __global__ void get_psi_force(double* ylmcoef,
         int nwl = ucell_atom_nwl[it];
         spherical_harmonics_d(dr, distance, grly, nwl, ylma, ylmcoef);
 
-        // Calculate normalized position for interpolation
-        distance = sqrt(distance);
-        const double postion = distance / delta_r_g;
-        // Extract integer part and fractional part of the position
-        const double ip = static_cast<int>(postion);
-        const double x0 = postion - ip;
-        const double x1 = 1.0 - x0;
-        const double x2 = 2.0 - x0;
-        const double x3 = 3.0 - x0;
-        const double x12 = x1 * x2 / 6;
-        const double x03 = x0 * x3 / 2;
-        // Temporary variables for interpolation
-        double tmp, dtmp;
-        // Loop over non-zero elements in atom_nw array
-        int it_nw = it * nwmax_g;
-        int iw_nr = (it_nw * nr_max + ip) * 2;
-        int it_nw_iw = it_nw;
-        for (int iw = 0; iw < atom_nw[it]; ++iw)
-        {
-            if (atom_iw2_new[it_nw_iw])
-            {
-                // Perform interpolation using cubic B-spline
-                // basis functions
-                tmp = x12 * (psi_u[iw_nr] * x3 + psi_u[iw_nr + 6] * x0)
-                      + x03 * (psi_u[iw_nr + 2] * x2 - psi_u[iw_nr + 4] * x1);
-                dtmp = x12 * (psi_u[iw_nr + 1] * x3 + psi_u[iw_nr + 7] * x0)
-                       + x03 * (psi_u[iw_nr + 3] * x2 - psi_u[iw_nr + 5] * x1);
-            }
-            // Extract information from atom_iw2_* arrays
-            const int ll = atom_iw2_l[it_nw_iw];
-
-            const int idx_lm = atom_iw2_ylm[it_nw_iw];
-
-            const double rl = pow(distance, ll);
-
-            // Compute right-hand side of the equation
-            psir_ylm_right[dist_tmp] = tmp * ylma[idx_lm] / rl * vlbr3_value;
-            // Compute derivatives with respect to spatial
-            // coordinates
-            const double tmpdphi_rly
-                = (dtmp - tmp * ll / distance) / rl * ylma[idx_lm] / distance;
-            const double tmprl = tmp / rl;
-            dpsir_ylm_left_x[dist_tmp]
-                = tmpdphi_rly * dr[0] + tmprl * grly[idx_lm][0];
-
-            dpsir_ylm_left_y[dist_tmp]
-                = tmpdphi_rly * dr[1] + tmprl * grly[idx_lm][1];
-            dpsir_ylm_left_z[dist_tmp]
-                = tmpdphi_rly * dr[2] + tmprl * grly[idx_lm][2];
-
-            ddpsir_ylm_left_xx[dist_tmp] = dpsir_ylm_left_x[dist_tmp] * dr[0];
-            ddpsir_ylm_left_xy[dist_tmp] = dpsir_ylm_left_x[dist_tmp] * dr[1];
-            ddpsir_ylm_left_xz[dist_tmp] = dpsir_ylm_left_x[dist_tmp] * dr[2];
-            ddpsir_ylm_left_yy[dist_tmp] = dpsir_ylm_left_y[dist_tmp] * dr[1];
-            ddpsir_ylm_left_yz[dist_tmp] = dpsir_ylm_left_y[dist_tmp] * dr[2];
-            ddpsir_ylm_left_zz[dist_tmp] = dpsir_ylm_left_z[dist_tmp] * dr[2];
-
-            // Update loop counters and indices
-            dist_tmp += 1;
-            iw_nr += nr_max;
-            iw_nr += nr_max;
-            it_nw_iw++;
-        }
+        interpolate_f(distance,
+                      delta_r_g,
+                      it,
+                      nwmax_g,
+                      nr_max,
+                      atom_nw,
+                      atom_iw2_new,
+                      psi_u,
+                      atom_iw2_l,
+                      atom_iw2_ylm,
+                      psir_ylm_right,
+                      dist_tmp,
+                      ylma,
+                      vlbr3_value,
+                      dpsir_ylm_left_x,
+                      dr,
+                      grly,
+                      dpsir_ylm_left_y,
+                      dpsir_ylm_left_z,
+                      ddpsir_ylm_left_xx,
+                      ddpsir_ylm_left_xy,
+                      ddpsir_ylm_left_xz,
+                      ddpsir_ylm_left_yy,
+                      ddpsir_ylm_left_yz,
+                      ddpsir_ylm_left_zz);
     }
 }
 
