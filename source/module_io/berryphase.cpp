@@ -488,9 +488,9 @@ void berryphase::Macroscopic_polarization(const int npwx,
 	
 	// ion polarization	
 	double polarization_ion[3]; // means three lattice vector directions R1，R2，R3
-    polarization[0] = 0;
-    polarization[1] = 0;
-    polarization[2] = 0;
+    polarization_ion[0] = 0;
+    polarization_ion[1] = 0;
+    polarization_ion[2] = 0;
 	ModuleBase::GlobalFunc::ZEROS(polarization_ion,3);
 	// reciprocal lattice
 	ModuleBase::Vector3<double> rcell_1(GlobalC::ucell.G.e11,GlobalC::ucell.G.e12,GlobalC::ucell.G.e13);
