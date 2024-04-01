@@ -239,8 +239,8 @@ double berryphase::stringPhase(int index_str,
 {
 	std::complex<double> zeta(1.0, 0.0);
 	ModuleBase::ComplexMatrix mat(nbands,nbands);
-	int ik_1;
-	int ik_2;
+	int ik_1 = 0;
+	int ik_2 = 0;
 	ModuleBase::Vector3<double> G(0.0,0.0,0.0);
 	ModuleBase::Vector3<double> dk = kv.kvec_c[ k_index[index_str][1] ] - kv.kvec_c[ k_index[index_str][0] ];
 	//GlobalV::ofs_running << "the std::string index is " << index_str << std::endl;
