@@ -71,9 +71,9 @@ namespace ModuleSymmetry
 
         /// set a block matrix onto a 2d-parallelized matrix(col-maj), at the position (starti, startj) 
         /// if trans=true, the block matrix is transposed before setting
-        void set_block_to_mat2d(const int starti, const int startj, const ModuleBase::ComplexMatrix& block,
+        void set_block_to_mat2d(const int starti, const int startj, const RI::Tensor<std::complex<double>>& block,
             std::vector<std::complex<double>>& obj_mat, const Parallel_2D& pv, const bool trans = false) const;
-        void set_block_to_mat2d(const int starti, const int startj, const ModuleBase::ComplexMatrix& block,
+        void set_block_to_mat2d(const int starti, const int startj, const RI::Tensor<std::complex<double>>& block,
             std::vector<double>& obj_mat, const Parallel_2D& pv, const bool trans = false) const;
 
         /// 2d-block parallized rotation matrix in AO-representation, denoted as M.
@@ -81,7 +81,7 @@ namespace ModuleSymmetry
         std::vector<std::complex<double>> contruct_2d_rot_mat_ao(const Symmetry& symm, const Atom* atoms, const Statistics& cell_st,
             const TCdouble& kvec_d_ibz, int isym, const Parallel_2D& pv) const;
 
-        std::vector<std::vector<ModuleBase::ComplexMatrix>>& get_rotmat_Slm() { return this->rotmat_Slm_; }
+        std::vector<std::vector<RI::Tensor<std::complex<double>>>>& get_rotmat_Slm() { return this->rotmat_Slm_; }
 
         //--------------------------------------------------------------------------------
         /// The main functions to rotate matrices
@@ -153,7 +153,7 @@ namespace ModuleSymmetry
         std::vector<std::vector<int>> abfs_l_nchi_;///< number of abfs for each angular momentum
 
         /// the rotation matrix under the basis of S_l^m. size: [nsym][lmax][nm*nm]
-        std::vector<std::vector<ModuleBase::ComplexMatrix>> rotmat_Slm_;
+        std::vector<std::vector<RI::Tensor<std::complex<double>>>> rotmat_Slm_;
         // [natom][nsym], phase factor corresponding to a certain kvec_d_ibz
         // std::vector<std::vector<std::complex<double>>> phase_factor_;
 

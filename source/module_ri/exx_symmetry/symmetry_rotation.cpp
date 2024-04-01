@@ -236,11 +236,11 @@ namespace ModuleSymmetry
     /// T_mm' = [c^\dagger D c]_mm'
     void Symmetry_rotation::cal_rotmat_Slm(const ModuleBase::Matrix3* gmatc, const int lmax)
     {
-        auto set_integer = [](ModuleBase::ComplexMatrix& mat) -> void
+        auto set_integer = [](RI::Tensor<std::complex<double>>& mat) -> void
             {
                 double zero_thres = 1e-10;
-                for (int i = 0;i < mat.nr;++i)
-                    for (int j = 0;j < mat.nc;++j)
+                for (int i = 0;i < mat.shape[0];++i)
+                    for (int j = 0;j < mat.shape[1];++j)
                     {
                         if (std::abs(mat(i, j).real() - std::round(mat(i, j).real())) < zero_thres) mat(i, j).real(std::round(mat(i, j).real()));
                         if (std::abs(mat(i, j).imag() - std::round(mat(i, j).imag())) < zero_thres) mat(i, j).imag(std::round(mat(i, j).imag()));
@@ -248,14 +248,14 @@ namespace ModuleSymmetry
             };
         this->rotmat_Slm_.resize(nsym_);
         // c matrix is independent on isym
-        std::vector<ModuleBase::ComplexMatrix> c_mm(lmax + 1);
+        std::vector<RI::Tensor<std::complex<double>>> c_mm(lmax + 1);
         for (int l = 0;l <= lmax;++l)
-        {
-            c_mm[l].create(2 * l + 1, 2 * l + 1);
+            c_mm[l] = RI::Tensor<std::complex<double>>({ size_t(2 * l + 1), size_t(2 * l + 1) });
+        for (int l = 0;l <= lmax;++l)
             for (int m1 = -l;m1 <= l;++m1)
                 for (int m2 = -l;m2 <= l;++m2)
                     c_mm[l](m2im(m1), m2im(m2)) = ovlp_Ylm_Slm(l, m1, m2);
-        }
+
         for (int isym = 0;isym < nsym_;++isym)
         {
             // if R is a reflection operation, calculate D^l(R)=(-1)^l*D^l(IR), so the euler angle of (IR) is needed.
@@ -265,11 +265,11 @@ namespace ModuleSymmetry
             this->rotmat_Slm_[isym].resize(lmax + 1);
             for (int l = 0;l <= lmax;++l)
             {// wigner D matrix                
-                ModuleBase::ComplexMatrix D_mm(2 * l + 1, 2 * l + 1);
+                RI::Tensor<std::complex<double>> D_mm({ size_t(2 * l + 1), size_t(2 * l + 1) });
                 for (int m1 = -l;m1 <= l;++m1)
                     for (int m2 = -l;m2 <= l;++m2)
                         D_mm(m2im(m1), m2im(m2)) = wigner_D(euler_angle, l, m1, m2, (gmatc[isym].Det() < 0));
-                this->rotmat_Slm_[isym][l] = transpose(c_mm[l], /*conj=*/true) * D_mm * c_mm[l];
+                this->rotmat_Slm_[isym][l] = c_mm[l].dagger() * D_mm * c_mm[l];
                 // set_integer(this->rotmat_Slm_[isym][l]);
             }
         }
@@ -311,11 +311,11 @@ namespace ModuleSymmetry
             */
     }
 
-    void Symmetry_rotation::set_block_to_mat2d(const int starti, const int startj, const ModuleBase::ComplexMatrix& block,
+    void Symmetry_rotation::set_block_to_mat2d(const int starti, const int startj, const RI::Tensor<std::complex<double>>& block,
         std::vector<std::complex<double>>& obj_mat, const Parallel_2D& pv, const bool trans) const
     {   // caution: ComplaxMatrix is row-major(col-continuous), but obj_mat is col-major(row-continuous)
-        for (int j = 0;j < block.nr;++j)//outside dimension
-            for (int i = 0;i < block.nc;++i) //inside dimension
+        for (int j = 0;j < block.shape[0];++j)//outside dimension
+            for (int i = 0;i < block.shape[1];++i) //inside dimension
                 if (pv.in_this_processor(starti + i, startj + j))
                 {
                     int index = pv.global2local_col(startj + j) * pv.get_row_size() + pv.global2local_row(starti + i);
@@ -323,11 +323,11 @@ namespace ModuleSymmetry
                 }
     }
 
-    void Symmetry_rotation::set_block_to_mat2d(const int starti, const int startj, const ModuleBase::ComplexMatrix& block,
+    void Symmetry_rotation::set_block_to_mat2d(const int starti, const int startj, const RI::Tensor<std::complex<double>>& block,
         std::vector<double>& obj_mat, const Parallel_2D& pv, const bool trans) const
     {   // caution: ComplaxMatrix is row-major(col-continuous), but obj_mat is col-major(row-continuous)
-        for (int j = 0;j < block.nr;++j)//outside dimension
-            for (int i = 0;i < block.nc;++i) //inside dimension
+        for (int j = 0;j < block.shape[0];++j)//outside dimension
+            for (int i = 0;i < block.shape[1];++i) //inside dimension
                 if (pv.in_this_processor(starti + i, startj + j))
                 {
                     int index = pv.global2local_col(startj + j) * pv.get_row_size() + pv.global2local_row(starti + i);

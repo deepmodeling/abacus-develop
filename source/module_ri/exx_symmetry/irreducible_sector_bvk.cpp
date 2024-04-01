@@ -134,7 +134,7 @@ namespace ModuleSymmetry
         symm.pointgroup(bvk_npg, bvk_pgnum, bvk_pgname, this->bvk_gmatrix_.data(), GlobalV::ofs_running);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "POINT GROUP OF BvK SCELL", bvk_pgname);
         symm.pointgroup(bvk_nsg, bvk_sgnum, bvk_sgname, this->bvk_gmatrix_.data(), GlobalV::ofs_running);
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "POINT GROUP IN SPACE GROUP OF BvK SCELL", bvk_pgname);
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "POINT GROUP IN SPACE GROUP OF BvK SCELL", bvk_sgname);
         symm.gmatrix_convert_int(this->bvk_gmatrix_.data(), this->bvk_gmatrix_.data(), bvk_nsg, bvk_min_optlat, lat.latvec);
         symm.gtrans_convert(this->bvk_gtrans_.data(), this->bvk_gtrans_.data(), bvk_nsg, bvk_min_optlat, lat.latvec);
         // get map from bvk-op to original op

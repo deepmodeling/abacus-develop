@@ -4,6 +4,7 @@
 #include "module_base/timer.h"
 #include <array>
 #include <RI/global/Global_Func-2.h>
+#include <RI/symmetry/Symmetry_Rotation.h>
 
 namespace ModuleSymmetry
 {
@@ -64,11 +65,11 @@ namespace ModuleSymmetry
     }
 
     template<typename Tdata>
-    inline void set_block(const int starti, const int startj, const ModuleBase::ComplexMatrix& block,
+    inline void set_block(const int starti, const int startj, const RI::Tensor<std::complex<double>>& block,
         RI::Tensor<Tdata>& obj_tensor)
     {   // no changing row/col order
-        for (int i = 0;i < block.nr;++i)
-            for (int j = 0;j < block.nc;++j)
+        for (int i = 0;i < block.shape[0];++i)
+            for (int j = 0;j < block.shape[1];++j)
                 obj_tensor(starti + i, startj + j) = RI::Global_Func::convert<Tdata>(block(i, j));
     }
 
@@ -86,78 +87,6 @@ namespace ModuleSymmetry
         }
         return T;
     }
-
-    inline void TAT_HR(std::complex<double>* TAT, const std::complex<double>* A,
-        const RI::Tensor<std::complex<double>>& T1, const RI::Tensor<std::complex<double>>& T2)
-    {
-        const char notrans = 'N', transpose = 'T', dagger = 'C';
-        const std::complex<double> alpha(1.0, 0.0), beta(0.0, 0.0);
-        // H'^T = T2^T * H^T * T1^*
-        const int& nw2 = T2.shape[0], & nw1 = T1.shape[0];
-        const RI::Shape_Vector& shape = { static_cast<size_t>(nw1),static_cast<size_t>(nw2) };
-        RI::Tensor<std::complex<double>> AT2(shape);
-        zgemm_(&notrans, &notrans, &nw2, &nw1, &nw2, &alpha, T2.ptr(), &nw2, A, &nw2, &beta, AT2.ptr(), &nw2);
-        zgemm_(&notrans, &dagger, &nw2, &nw1, &nw1, &alpha, AT2.ptr(), &nw2, T1.ptr(), &nw1, &beta, TAT, &nw2);
-        // row-maj version
-        // BlasConnector::gemm(notrans, notrans, nw1, nw2, nw2,
-        //     alpha, A_complex.ptr(), nw2, T2.ptr(), nw2, beta, AT2.ptr(), nw2);
-        // BlasConnector::gemm(dagger, notrans, nw1, nw2, nw1,
-        //     alpha, T1.ptr(), nw1, AT2.ptr(), nw2, beta, TAT.ptr(), nw2);
-    }
-    inline void TAT_HR(double* TAT, const double* A,
-        const RI::Tensor<double>& T1, const RI::Tensor<double>& T2)
-    {
-        const char notrans = 'N', transpose = 'T', dagger = 'C';
-        const double alpha(1.0), beta(0.0);
-        // H'^T = T2^T * H^T * T1^*
-        const int& nw2 = T2.shape[0], & nw1 = T1.shape[0];
-        const RI::Shape_Vector& shape = { static_cast<size_t>(nw1),static_cast<size_t>(nw2) };
-        RI::Tensor<double> AT2(shape);
-        dgemm_(&notrans, &notrans, &nw2, &nw1, &nw2, &alpha, T2.ptr(), &nw2, A, &nw2, &beta, AT2.ptr(), &nw2);
-        dgemm_(&notrans, &dagger, &nw2, &nw1, &nw1, &alpha, AT2.ptr(), &nw2, T1.ptr(), &nw1, &beta, TAT, &nw2);
-    }
-    inline void TAT_DR(std::complex<double>* TAT, const std::complex<double>* A,
-        const RI::Tensor<std::complex<double>>& T1, const RI::Tensor<std::complex<double>>& T2)
-    {
-        const char notrans = 'N', transpose = 'T', dagger = 'C';
-        const std::complex<double> alpha(1.0, 0.0), beta(0.0, 0.0);
-        //T2^\dagger * D^T * T1 = [(D^T)^T * (T2^T)^\dagger]^T * (T1^T)^T
-        const int& nw2 = T2.shape[0], & nw1 = T1.shape[0];
-        const RI::Shape_Vector& shape = { static_cast<size_t>(nw1),static_cast<size_t>(nw2) };
-        RI::Tensor<std::complex<double>> AT2(shape);
-        zgemm_(&transpose, &dagger, &nw1, &nw2, &nw2, &alpha, A, &nw2, T2.ptr(), &nw2, &beta, AT2.ptr(), &nw1);
-        zgemm_(&transpose, &transpose, &nw2, &nw1, &nw1, &alpha, AT2.ptr(), &nw1, T1.ptr(), &nw1, &beta, TAT, &nw2);
-    }
-    inline void TAT_DR(double* TAT, const double* A,
-        const RI::Tensor<double>& T1, const RI::Tensor<double>& T2)
-    {
-        const char notrans = 'N', transpose = 'T', dagger = 'C';
-        const double alpha(1.0), beta(0.0);
-        //T2^\dagger * D^T * T1 = [(D^T)^T * (T2^T)^\dagger]^T * (T1^T)^T
-        const int& nw2 = T2.shape[0], & nw1 = T1.shape[0];
-        const RI::Shape_Vector& shape = { static_cast<size_t>(nw1),static_cast<size_t>(nw2) };
-        RI::Tensor<double> AT2(shape);
-        dgemm_(&transpose, &dagger, &nw1, &nw2, &nw2, &alpha, A, &nw2, T2.ptr(), &nw2, &beta, AT2.ptr(), &nw1);
-        dgemm_(&transpose, &transpose, &nw2, &nw1, &nw1, &alpha, AT2.ptr(), &nw1, T1.ptr(), &nw1, &beta, TAT, &nw2);
-    }
-    inline void TA_HR(std::complex<double>* TA, const std::complex<double>* A,
-        const RI::Tensor<std::complex<double>>& T1, const int& nw12)
-    {
-        const char notrans = 'N', transpose = 'T', dagger = 'C';
-        const std::complex<double> alpha(1.0, 0.0), beta(0.0, 0.0);
-        // C'^T = C^T * T1^*
-        const int& nabf = T1.shape[0];
-        zgemm_(&notrans, &dagger, &nw12, &nabf, &nabf, &alpha, A, &nw12, T1.ptr(), &nabf, &beta, TA, &nw12);
-    }
-    inline void TA_HR(double* TA, const double* A,
-        const RI::Tensor<double>& T1, const int& nw12)
-    {
-        const char notrans = 'N', transpose = 'T', dagger = 'C';
-        const double alpha(1.0), beta(0.0);
-        // C'^T = C^T * T1^*
-        const int& nabf = T1.shape[0];
-        dgemm_(&notrans, &dagger, &nw12, &nabf, &nabf, &alpha, A, &nw12, T1.ptr(), &nabf, &beta, TA, &nw12);
-    }
     template<typename Tdata>
     RI::Tensor<Tdata> Symmetry_rotation::rotate_atompair_serial(const RI::Tensor<Tdata>& A, const int isym,
         const Atom& a1, const Atom& a2, const char mode, const bool output)const
@@ -172,7 +101,7 @@ namespace ModuleSymmetry
         const RI::Tensor<Tdata>& T2 = sametype ? T1 : this->set_rotation_matrix<Tdata>(a2, isym);
         // rotate
         RI::Tensor<Tdata>TAT(A.shape);
-        (mode == 'H') ? TAT_HR(TAT.ptr(), A.ptr(), T1, T2) : TAT_DR(TAT.ptr(), A.ptr(), T1, T2);
+        (mode == 'H') ? RI::Sym::T1_HR_T2(TAT.ptr(), A.ptr(), T1, T2) : RI::Sym::T1_DR_T2(TAT.ptr(), A.ptr(), T1, T2);
         if (output)
         {
             print_tensor(A, "A");
@@ -196,7 +125,7 @@ namespace ModuleSymmetry
         const RI::Tensor<Tdata>& T1 = this->set_rotation_matrix<Tdata>(a1, isym);
         const RI::Tensor<Tdata>& T2 = sametype ? T1 : this->set_rotation_matrix<Tdata>(a2, isym);
         // rotate
-        (mode == 'H') ? TAT_HR(TAT, A, T1, T2) : TAT_DR(TAT, A, T1, T2);
+        (mode == 'H') ? RI::Sym::T1_HR_T2(TAT, A, T1, T2) : RI::Sym::T1_DR_T2(TAT, A, T1, T2);
     }
 
 
@@ -235,7 +164,7 @@ namespace ModuleSymmetry
                 a1.nw, a2.nw, isym, a1, a2, 'H');
         // step 2: multiply the ABFs' rotation matrix from the left
         const RI::Tensor<Tdata>& Tabfs = this->set_rotation_matrix_abf<Tdata>(type1, isym);
-        TA_HR(Cout.ptr(), Cout.ptr(), Tabfs, slice_size);
+        RI::Sym::T1_HR(Cout.ptr(), Cout.ptr(), Tabfs, slice_size);
         return Cout;
     }
 

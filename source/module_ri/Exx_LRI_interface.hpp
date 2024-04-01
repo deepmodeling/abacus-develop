@@ -52,7 +52,6 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const K_Vectors& kv, const Charg
                 XC_Functional::set_xc_type("scan");
             }
         }
-        bool test_Cs_rotation = true;  // for test
         // initialize the rotation matrix in AO representation
         this->exx_spacegroup_symmetry = (GlobalV::NSPIN < 4 && ModuleSymmetry::Symmetry::symm_flag == 1);
         if (this->exx_spacegroup_symmetry)
@@ -60,12 +59,11 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const K_Vectors& kv, const Charg
             const std::array<int, 3>& period = RI_Util::get_Born_vonKarmen_period(kv);
             this->symrot_.find_irreducible_sector(ucell.symm, ucell.atoms, ucell.st,
                 RI_Util::get_Born_von_Karmen_cells(period), period, ucell.lat);
-            if (test_Cs_rotation)
-                this->symrot_.set_Cs_rotation(this->exx_ptr->get_abfs_nchis());
+            // this->symrot_.set_Cs_rotation(this->exx_ptr->get_abfs_nchis());
             this->symrot_.cal_Ms(kv, ucell, pv);
         }
 
-        this->exx_ptr->cal_exx_ions(test_Cs_rotation, &this->symrot_);
+        this->exx_ptr->cal_exx_ions();
     }
 
 		if (Exx_Abfs::Jle::generate_matrix)
