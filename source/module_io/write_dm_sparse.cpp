@@ -6,8 +6,13 @@
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
-void ModuleIO::write_dm1(const int &is, const int &istep, double** dm2d, const Parallel_Orbitals* ParaV,
-    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> &DMR_sparse)
+void ModuleIO::write_dm1(
+		const int &is, 
+		const int &istep, 
+		double** dm2d, 
+		const Parallel_Orbitals* ParaV,
+		std::map<Abfs::Vector3_Order<int>, 
+		std::map<size_t, std::map<size_t, double>>> &DMR_sparse)
 {
     ModuleBase::timer::tick("ModuleIO","write_dm");
     ModuleBase::TITLE("ModuleIO","write_dm");
@@ -19,8 +24,11 @@ void ModuleIO::write_dm1(const int &is, const int &istep, double** dm2d, const P
     ModuleBase::timer::tick("ModuleIO","write_dm");
 }
 
-void ModuleIO::get_dm_sparse(const int &is, double** dm2d, const Parallel_Orbitals* ParaV,
-    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> &DMR_sparse)
+void ModuleIO::get_dm_sparse(
+		const int &is, 
+		double** dm2d, 
+		const Parallel_Orbitals* ParaV,
+		std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> &DMR_sparse)
 {
     ModuleBase::timer::tick("ModuleIO","get_dm_sparse");
     ModuleBase::TITLE("ModuleIO","get_dm_sparse");
@@ -31,7 +39,7 @@ void ModuleIO::get_dm_sparse(const int &is, double** dm2d, const Parallel_Orbita
     ModuleBase::Vector3<double> dtau, tau1, tau2;
     ModuleBase::Vector3<double> dtau1, dtau2, tau0;
 
-    double temp_value_double;
+    double temp_value_double = 0.0;
 
     for(int T1 = 0; T1 < GlobalC::ucell.ntype; ++T1)
     {
@@ -56,7 +64,10 @@ void ModuleIO::get_dm_sparse(const int &is, double** dm2d, const Parallel_Orbita
 
                 bool adj = false;
 
-                if(distance < rcut) adj = true;
+				if(distance < rcut) 
+				{
+					adj = true;
+				}
                 else if(distance >= rcut)
                 {
                     for(int ad0 = 0; ad0 < GlobalC::GridD.getAdjacentNum()+1; ++ad0)
@@ -85,21 +96,24 @@ void ModuleIO::get_dm_sparse(const int &is, double** dm2d, const Parallel_Orbita
                 {
                     const int start2 = GlobalC::ucell.itiaiw2iwt(T2,I2,0);
 
-                    Abfs::Vector3_Order<int> dR(GlobalC::GridD.getBox(ad).x, GlobalC::GridD.getBox(ad).y, GlobalC::GridD.getBox(ad).z);
+					Abfs::Vector3_Order<int> dR(
+							GlobalC::GridD.getBox(ad).x, 
+							GlobalC::GridD.getBox(ad).y, 
+							GlobalC::GridD.getBox(ad).z);
 
                     for(int ii=0; ii<atom1->nw; ii++)
                     {
                         const int iw1_all = start + ii;
                         const int mu = ParaV->global2local_row(iw1_all);
 
-                        if(mu<0)continue;
+                        if(mu<0) continue;
 
                         for(int jj=0; jj<atom2->nw; jj++)
                         {
                             int iw2_all = start2 + jj;
                             const int nu = ParaV->global2local_col(iw2_all);
 
-                            if(nu<0)continue;
+                            if(nu<0) continue;
 
                             temp_value_double = dm2d[is][index];
                             if (std::abs(temp_value_double) > sparse_threshold)
@@ -118,8 +132,12 @@ void ModuleIO::get_dm_sparse(const int &is, double** dm2d, const Parallel_Orbita
     ModuleBase::timer::tick("ModuleIO","get_dm_sparse");
 }
 
-void ModuleIO::write_dm_sparse(const int &is, const int &istep, const Parallel_Orbitals* ParaV,
-    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> &DMR_sparse)
+
+void ModuleIO::write_dm_sparse(
+		const int &is, 
+		const int &istep, 
+		const Parallel_Orbitals* ParaV,
+		std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> &DMR_sparse)
 {
     ModuleBase::timer::tick("ModuleIO","write_dm_sparse");
     ModuleBase::TITLE("ModuleIO","write_dm_sparse");
@@ -244,6 +262,7 @@ void ModuleIO::write_dm_sparse(const int &is, const int &istep, const Parallel_O
 
     ModuleBase::timer::tick("ModuleIO","write_dm_sparse");
 }
+
 
 void ModuleIO::destroy_dm_sparse(std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> &DMR_sparse)
 {

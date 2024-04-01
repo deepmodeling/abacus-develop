@@ -451,7 +451,7 @@ void Input_Conv::Convert(void)
 
         if(INPUT.gamma_only_local)
         {
-            ModuleBase::WARNING_QUIT("input_conv", "soc does not support gamma only calculation");
+            ModuleBase::WARNING_QUIT("input_conv", "nspin=4(soc or noncollinear-spin) does not support gamma only calculation");
         }
     }
     else

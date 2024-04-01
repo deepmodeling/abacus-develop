@@ -101,8 +101,8 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
     // init psi
     if (this->psi == nullptr)
     {
-        int nsk;
-        int ncol;
+        int nsk=0;
+        int ncol=0;
         if (GlobalV::GAMMA_ONLY_LOCAL)
         {
             nsk = GlobalV::NSPIN;
@@ -179,6 +179,9 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
                 this->GridT.nnrg,
                 this->GridT.trace_lo,
 #endif
+                GlobalV::GAMMA_ONLY_LOCAL,
+                GlobalV::NLOCAL,
+                GlobalV::NSPIN,
                 is,
                 ssd.str(),
                 this->LOC.DM,
@@ -261,16 +264,19 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
     //=========================================================
     // cal_ux should be called before init_scf because
     // the direction of ux is used in noncoline_rho
-    //=========================================================
-    if(GlobalV::NSPIN == 4 && GlobalV::DOMAG) GlobalC::ucell.cal_ux();
-    ModuleBase::timer::tick("ESolver_KS_LCAO", "beforesolver");
+	//=========================================================
+	if(GlobalV::NSPIN == 4 && GlobalV::DOMAG) 
+	{
+		GlobalC::ucell.cal_ux();
+	}
+	ModuleBase::timer::tick("ESolver_KS_LCAO", "beforesolver");
 }
 
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::beforescf(int istep)
+void ESolver_KS_LCAO<TK, TR>::before_scf(int istep)
 {
-    ModuleBase::TITLE("ESolver_KS_LCAO", "beforescf");
-    ModuleBase::timer::tick("ESolver_KS_LCAO", "beforescf");
+    ModuleBase::TITLE("ESolver_KS_LCAO", "before_scf");
+    ModuleBase::timer::tick("ESolver_KS_LCAO", "before_scf");
 
     if (GlobalC::ucell.cell_parameter_updated)
     {
@@ -329,15 +335,15 @@ void ESolver_KS_LCAO<TK, TR>::beforescf(int istep)
 
     this->p_hamilt->non_first_scf = istep;
 
-    ModuleBase::timer::tick("ESolver_KS_LCAO", "beforescf");
+    ModuleBase::timer::tick("ESolver_KS_LCAO", "before_scf");
     return;
 }
 
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::othercalculation(const int istep)
+void ESolver_KS_LCAO<TK, TR>::others(const int istep)
 {
-    ModuleBase::TITLE("ESolver_KS_LCAO", "othercalculation");
-    ModuleBase::timer::tick("ESolver_KS_LCAO", "othercalculation");
+    ModuleBase::TITLE("ESolver_KS_LCAO", "others");
+    ModuleBase::timer::tick("ESolver_KS_LCAO", "others");
     if (GlobalV::CALCULATION == "get_S")
     {
         this->get_S();
@@ -408,7 +414,13 @@ void ESolver_KS_LCAO<TK, TR>::othercalculation(const int istep)
                       this->UHM.GG,
                       INPUT.out_wfc_pw,
                       this->wf.out_wfc_r,
-                      this->kv);
+                      this->kv,
+                      GlobalV::nelec,
+                      GlobalV::NBANDS_ISTATE,
+                      GlobalV::NBANDS,
+                      GlobalV::NSPIN,
+                      GlobalV::NLOCAL,
+                      GlobalV::global_out_dir);
         else
             IEP.begin(this->psi,
                       this->pw_rho,
@@ -418,14 +430,20 @@ void ESolver_KS_LCAO<TK, TR>::othercalculation(const int istep)
                       this->UHM.GK,
                       INPUT.out_wfc_pw,
                       this->wf.out_wfc_r,
-                      this->kv);
+                      this->kv,
+                      GlobalV::nelec,
+                      GlobalV::NBANDS_ISTATE,
+                      GlobalV::NBANDS,
+                      GlobalV::NSPIN,
+                      GlobalV::NLOCAL,
+                      GlobalV::global_out_dir);
     }
     else
     {
-        ModuleBase::WARNING_QUIT("ESolver_KS_LCAO<TK, TR>::othercalculation", "CALCULATION type not supported");
+        ModuleBase::WARNING_QUIT("ESolver_KS_LCAO<TK, TR>::others", "CALCULATION type not supported");
     }
 
-    ModuleBase::timer::tick("ESolver_KS_LCAO", "othercalculation");
+    ModuleBase::timer::tick("ESolver_KS_LCAO", "others");
     return;
 }
 template <>

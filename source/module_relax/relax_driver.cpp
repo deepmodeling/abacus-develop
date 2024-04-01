@@ -48,7 +48,7 @@ void Relax_Driver<FPTYPE, Device>::relax_driver(ModuleESolver::ESolver *p_esolve
 #endif //__RAPIDJSON 
 
         // mohan added eiter to count for the electron iteration number, 2021-01-28
-        p_esolver->Run(istep - 1, GlobalC::ucell);
+        p_esolver->run(istep - 1, GlobalC::ucell);
 
         time_t eend = time(NULL);
         time_t fstart = time(NULL);
@@ -62,17 +62,17 @@ void Relax_Driver<FPTYPE, Device>::relax_driver(ModuleESolver::ESolver *p_esolve
             // but I'll use force and stress explicitly here for now
 
             // calculate the total energy
-            this->etot = p_esolver->cal_Energy();
+            this->etot = p_esolver->cal_energy();
 
             // calculate and gather all parts of total ionic forces
             if (GlobalV::CAL_FORCE)
             {
-                p_esolver->cal_Force(force);
+                p_esolver->cal_force(force);
             }
             // calculate and gather all parts of stress
             if (GlobalV::CAL_STRESS)
             {
-                p_esolver->cal_Stress(stress);
+                p_esolver->cal_stress(stress);
             }
 
             if (GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax")
@@ -105,8 +105,12 @@ void Relax_Driver<FPTYPE, Device>::relax_driver(ModuleESolver::ESolver *p_esolve
                     GlobalC::ucell.print_cell_cif("STRU_NOW.cif");
                 }
 
-                ModuleESolver::ESolver_KS<FPTYPE, Device>* p_esolver_ks = dynamic_cast<ModuleESolver::ESolver_KS<FPTYPE, Device>*>(p_esolver);
-                if (p_esolver_ks && stop && p_esolver_ks->maxniter == p_esolver_ks->niter && !(p_esolver_ks->conv_elec))
+                ModuleESolver::ESolver_KS<FPTYPE, Device>* p_esolver_ks 
+                = dynamic_cast<ModuleESolver::ESolver_KS<FPTYPE, Device>*>(p_esolver);
+                if (p_esolver_ks 
+                    && stop 
+                    && p_esolver_ks->maxniter == p_esolver_ks->niter 
+                    && !(p_esolver_ks->conv_elec))
                 {
                     std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
                     std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;

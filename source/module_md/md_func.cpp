@@ -6,11 +6,11 @@
 namespace MD_func
 {
 
-double gaussrand()
+double gaussrand(void)
 {
     static double V1, V2, S;
     static int phase = 0;
-    double X;
+    double X=0.0;
 
     if (phase == 0)
     {
@@ -228,16 +228,16 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
     ModuleBase::TITLE("MD_func", "force_virial");
     ModuleBase::timer::tick("MD_func", "force_virial");
 
-    p_esolver->Run(istep, unit_in);
+    p_esolver->run(istep, unit_in);
 
-    potential = p_esolver->cal_Energy();
+    potential = p_esolver->cal_energy();
 
     ModuleBase::matrix force_temp(unit_in.nat, 3);
-    p_esolver->cal_Force(force_temp);
+    p_esolver->cal_force(force_temp);
 
     if (cal_stress)
     {
-        p_esolver->cal_Stress(virial);
+        p_esolver->cal_stress(virial);
     }
 
     /// convert Rydberg to Hartree

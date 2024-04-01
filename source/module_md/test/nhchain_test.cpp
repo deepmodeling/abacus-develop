@@ -46,7 +46,7 @@ class NHC_test : public testing::Test
         Setcell::parameters();
 
         ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
-        p_esolver->Init(INPUT, ucell);
+        p_esolver->init(INPUT, ucell);
 
         INPUT.mdp.md_type = "npt";
         INPUT.mdp.md_pmode = "tri";

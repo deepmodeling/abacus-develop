@@ -239,10 +239,13 @@ void unkOverlap_lcao::init(const Grid_Technique& gt, std::complex<double>*** wfc
 	return;
 }
 
+//REMARK: the code next seemed to duplicate with those in 
+//module_hamilt_pw/hamilt/pwdft/wavefunc.cpp.
 int unkOverlap_lcao::iw2it(int iw)
 {
     int ic, type;
     ic = 0;
+	type = 0;
     for(int it = 0; it < GlobalC::ucell.ntype; it++)
 	{
         for(int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
@@ -255,7 +258,7 @@ int unkOverlap_lcao::iw2it(int iw)
                     {
                         if(ic == iw)
                         {
-                           type = it;
+                            type = it;
                         }
                         ic++;
 					}
@@ -270,9 +273,10 @@ int unkOverlap_lcao::iw2ia(int iw)
 {
     int ic, na;
     ic = 0;
+	na = 0;
     for(int it = 0; it < GlobalC::ucell.ntype; it++)
 	{
-        for(int ia = 0; ia<  GlobalC::ucell.atoms[it].na; ia++)
+        for(int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
         {
             for(int L = 0; L < GlobalC::ucell.atoms[it].nwl+1; L++)
 			{
@@ -282,7 +286,7 @@ int unkOverlap_lcao::iw2ia(int iw)
                     {
                         if(ic == iw)
                         {
-                           na = ia;
+                            na = ia;
                         }
                         ic++;
                     } 
@@ -297,9 +301,10 @@ int unkOverlap_lcao::iw2iL(int iw)
 {
 	int ic, iL;
     ic = 0;
+	iL = 0;
     for(int it = 0; it < GlobalC::ucell.ntype; it++)
 	{
-        for(int ia = 0; ia<  GlobalC::ucell.atoms[it].na; ia++)
+        for(int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
         {
             for(int L = 0; L < GlobalC::ucell.atoms[it].nwl+1; L++)
 			{
@@ -309,7 +314,7 @@ int unkOverlap_lcao::iw2iL(int iw)
                     {
                         if(ic == iw)
                         {
-                           iL = L;
+                            iL = L;
                         }
                         ic++;
                     } 
@@ -324,9 +329,10 @@ int unkOverlap_lcao::iw2iN(int iw)
 {
 	int ic, iN;
     ic = 0;
+	iN = 0;
     for(int it = 0; it < GlobalC::ucell.ntype; it++)
 	{
-        for(int ia = 0; ia<  GlobalC::ucell.atoms[it].na; ia++)
+        for(int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
         {
             for(int L = 0; L < GlobalC::ucell.atoms[it].nwl+1; L++)
 			{
@@ -336,7 +342,7 @@ int unkOverlap_lcao::iw2iN(int iw)
                     {
                         if(ic == iw)
                         {
-                           iN = N;
+                            iN = N;
                         }
                         ic++;
                     } 
@@ -351,9 +357,10 @@ int unkOverlap_lcao::iw2im(int iw)
 {
 	int ic, im;
     ic = 0;
+	im = 0;
     for(int it = 0; it < GlobalC::ucell.ntype; it++)
 	{
-        for(int ia = 0; ia<  GlobalC::ucell.atoms[it].na; ia++)
+        for(int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
         {
             for(int L = 0; L < GlobalC::ucell.atoms[it].nwl+1; L++)
 			{
@@ -363,7 +370,7 @@ int unkOverlap_lcao::iw2im(int iw)
                     {
                         if(ic == iw)
                         {
-                           im = i;
+                            im = i;
                         }
                         ic++;
                     } 
