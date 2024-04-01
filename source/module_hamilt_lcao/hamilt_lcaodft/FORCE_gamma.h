@@ -20,8 +20,11 @@ public:
     ~Force_LCAO_gamma();
 
   private:
+
     LCAO_Hamilt* UHM;
+
     const Parallel_Orbitals* ParaV;
+
     elecstate::Potential* pot;
 
     // orthonormal force + contribution from T and VNL
@@ -43,12 +46,17 @@ public:
 #else
                       ModuleBase::matrix& svl_dphi,
 #endif
-                      LCAO_Hamilt& uhm);
+                      LCAO_Hamilt& uhm,
+                      LCAO_Matrix& lm);
+
+
 
     // get the ds, dt, dvnl.
-    void allocate_gamma(const Parallel_Orbitals& pv);
+	void allocate_gamma(
+			const Parallel_Orbitals& pv,
+			LCAO_Matrix &lm);
 
-    void finish_ftable_gamma(void);
+    void finish_ftable_gamma(LCAO_Matrix &lm);
 
     void average_force(double* fm);
 
@@ -61,15 +69,17 @@ public:
 
     void cal_foverlap(const bool isforce,
                       const bool isstress,
-                      const psi::Psi<double>* psid,
-                      const elecstate::ElecState* pelec,
-                      ModuleBase::matrix& foverlap,
-                      ModuleBase::matrix& soverlap);
+                      const psi::Psi<double> *psid,
+                      const elecstate::ElecState *pelec,
+                      LCAO_Matrix &lm,
+                      ModuleBase::matrix &foverlap,
+                      ModuleBase::matrix &soverlap);
 
     //-------------------------------------------------------------
     // forces related to kinetic and non-local pseudopotentials
     //--------------------------------------------------------------
     void cal_ftvnl_dphi(const elecstate::DensityMatrix<double, double>* DM,
+                        LCAO_Matrix &lm,
                         const bool isforce,
                         const bool isstress,
                         ModuleBase::matrix& ftvnl_dphi,

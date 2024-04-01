@@ -12,16 +12,15 @@
 
 class Force_LCAO_k : public Force_LCAO_gamma
 {
-public:
+    public:
     template <typename T>
     friend class Force_Stress_LCAO;
 
     Force_LCAO_k();
     ~Force_LCAO_k();
 
-  private:
+    private:
     LCAO_Hamilt* UHM;
-    const Parallel_Orbitals* ParaV;
 
     // orthonormal force + contribution from T and VNL
     void ftable_k(const bool isforce,
@@ -43,53 +42,65 @@ public:
 #else
                   ModuleBase::matrix& svl_dphi,
 #endif
-                  LCAO_Hamilt& uhm,
-                  const K_Vectors& kv);
+				  LCAO_Hamilt &uhm,
+				  Parallel_Orbitals &pv,
+				  LCAO_Matrix &lm,
+                  const K_Vectors &kv);
 
     // get the ds, dt, dvnl.
     void allocate_k(const Parallel_Orbitals& pv,
+                    LCAO_Matrix &lm,
                     const int& nks,
                     const std::vector<ModuleBase::Vector3<double>>& kvec_d);
 
-    void finish_k(void);
+    void finish_k(LCAO_Matrix &lm);
 
     // calculate the force due to < dphi | beta > < beta | phi >
-    void cal_ftvnl_dphi_k(const elecstate::DensityMatrix<std::complex<double>, double>* DM,
-                          const bool isforce,
-                          const bool isstress,
-                          Record_adj& ra,
-                          ModuleBase::matrix& ftvnl_dphi,
-                          ModuleBase::matrix& stvnl_dphi);
+	void cal_ftvnl_dphi_k(const elecstate::DensityMatrix<std::complex<double>, double>* DM,
+			const Parallel_Orbitals &pv,
+			LCAO_Matrix &lm,
+			const bool isforce,
+			const bool isstress,
+			Record_adj& ra,
+			ModuleBase::matrix& ftvnl_dphi,
+			ModuleBase::matrix& stvnl_dphi);
 
     // calculate the overlap force
     void cal_foverlap_k(const bool isforce,
                         const bool isstress,
-                        Record_adj& ra,
-                        const psi::Psi<std::complex<double>>* psi,
-                        Local_Orbital_Charge& loc,
-                        const elecstate::DensityMatrix<std::complex<double>, double>* DM,
-                        ModuleBase::matrix& foverlap,
-                        ModuleBase::matrix& soverlap,
-                        const elecstate::ElecState* pelec,
-                        const int& nks,
-                        const K_Vectors& kv);
+                        Record_adj &ra,
+                        const psi::Psi<std::complex<double>> *psi,
+						Local_Orbital_Charge &loc,
+						Parallel_Orbitals &pv,
+						LCAO_Matrix &lm,
+						const elecstate::DensityMatrix<std::complex<double>, double> *DM,
+                        ModuleBase::matrix &foverlap,
+                        ModuleBase::matrix &soverlap,
+                        const elecstate::ElecState *pelec,
+                        const int &nks,
+                        const K_Vectors &kv);
 
     // calculate the force due to < phi | Vlocal | dphi >
-    void cal_fvl_dphi_k(const bool isforce,
-                        const bool isstress,
-                        const elecstate::Potential* pot_in,
-                        ModuleBase::matrix& fvl_dphi,
-                        ModuleBase::matrix& svl_dphi,
-                        double** DM_R);
+	void cal_fvl_dphi_k(const bool isforce,
+		  	const bool isstress,
+			LCAO_Matrix &lm,
+			const elecstate::Potential* pot_in,
+			ModuleBase::matrix& fvl_dphi,
+			ModuleBase::matrix& svl_dphi,
+			double** DM_R);
 
     // new method to calculate the force due to < phi | dbeta > < beta | phi > , developed by wenfei-li
     void cal_fvnl_dbeta_k(const elecstate::DensityMatrix<std::complex<double>, double>* DM,
                           const bool isforce,
-                          const bool isstress, 
-                          ModuleBase::matrix& fvnl_dbeta,
+						  const bool isstress, 
+						  const Parallel_Orbitals &pv,
+						  ModuleBase::matrix& fvnl_dbeta,
                           ModuleBase::matrix& svnl_dbeta);
 
-    void test(double* mm, const std::string& name);
+	void test(
+			Parallel_Orbitals &pv,
+			double* mm, 
+			const std::string& name);
 };
 
 #endif

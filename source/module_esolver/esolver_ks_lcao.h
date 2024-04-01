@@ -32,9 +32,9 @@ namespace ModuleESolver
 
         double cal_energy() override;
 
-        void cal_force(ModuleBase::matrix& force) override;
+        void cal_force(ModuleBase::matrix &force) override;
 
-        void cal_stress(ModuleBase::matrix& stress) override;
+        void cal_stress(ModuleBase::matrix &stress) override;
 
         void post_process() override;
 
@@ -89,7 +89,7 @@ namespace ModuleESolver
         ModuleBase::matrix scs;
         bool have_force = false;
 
-        void Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell& ucell);
+        void init_basis_lcao(ORB_control& orb_con, Input& inp, UnitCell& ucell);
 
         //--------------common for all calculation, not only scf-------------
         // set matrix and grid integral

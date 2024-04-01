@@ -23,30 +23,35 @@
 
 // Peize Lin add 2022.09.13
 template<typename Tdata>
-void LCAO_Hamilt::calculate_HR_exx_sparse(
+void LCAO_Hamilt::cal_HR_exx_sparse(
 			const int &current_spin, 
 			const double &sparse_threshold,
 			const int (&nmp)[3],
 			const std::vector< std::map<int, std::map<std::pair<int,std::array<int,3>>, RI::Tensor<Tdata>>>>& Hexxs)
 {
-	ModuleBase::TITLE("LCAO_Hamilt","calculate_HR_exx_sparse");
-	ModuleBase::timer::tick("LCAO_Hamilt","calculate_HR_exx_sparse");
+	ModuleBase::TITLE("LCAO_Hamilt","cal_HR_exx_sparse");
+	ModuleBase::timer::tick("LCAO_Hamilt","cal_HR_exx_sparse");
 
 	const Tdata frac = GlobalC::exx_info.info_global.hybrid_alpha;
 
 	std::map<int,std::array<double,3>> atoms_pos;
 	for(int iat=0; iat<GlobalC::ucell.nat; ++iat)
-		atoms_pos[iat] = RI_Util::Vector3_to_array3( GlobalC::ucell.atoms[ GlobalC::ucell.iat2it[iat] ].tau[ GlobalC::ucell.iat2ia[iat] ] );
+	{
+		atoms_pos[iat] = RI_Util::Vector3_to_array3( 
+        GlobalC::ucell.atoms[ GlobalC::ucell.iat2it[iat] ].tau[ GlobalC::ucell.iat2ia[iat] ] );
+	}
 	const std::array<std::array<double,3>,3> latvec
 		= {RI_Util::Vector3_to_array3(GlobalC::ucell.a1),
 		   RI_Util::Vector3_to_array3(GlobalC::ucell.a2),
 		   RI_Util::Vector3_to_array3(GlobalC::ucell.a3)};
+
 	const std::array<int,3> Rs_period = {nmp[0], nmp[1], nmp[2]};
 
 	RI::Cell_Nearest<int,int,3,double,3> cell_nearest;
 	cell_nearest.init(atoms_pos, latvec, Rs_period);	
 
 	const std::vector<int> is_list = (GlobalV::NSPIN!=4) ? std::vector<int>{current_spin} : std::vector<int>{0,1,2,3};
+
 	for(const int is : is_list)
     {
 		int is0_b, is1_b;
@@ -102,7 +107,7 @@ void LCAO_Hamilt::calculate_HR_exx_sparse(
 		}
 	}
 
-	ModuleBase::timer::tick("LCAO_Hamilt","calculate_HR_exx_sparse");
+	ModuleBase::timer::tick("LCAO_Hamilt","cal_HR_exx_sparse");
 }
 
 #endif

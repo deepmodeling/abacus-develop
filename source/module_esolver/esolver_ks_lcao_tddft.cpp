@@ -90,7 +90,7 @@ void ESolver_KS_LCAO_TDDFT::init(Input& inp, UnitCell& ucell)
     // Init Basis should be put outside of Ensolver.
     // * reading the localized orbitals/projectors
     // * construct the interpolation tables.
-    this->Init_Basis_lcao(this->orb_con, inp, ucell);
+    this->init_basis_lcao(this->orb_con, inp, ucell);
     //------------------init Basis_lcao----------------------
 
     //------------------init Hamilt_lcao----------------------

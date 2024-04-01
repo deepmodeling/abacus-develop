@@ -30,8 +30,10 @@ class Force_Stress_LCAO
         const bool isstress,
         const bool istestf,
         const bool istests,
-        Local_Orbital_Charge& loc,
-        const elecstate::ElecState* pelec,
+		Local_Orbital_Charge& loc,
+		Parallel_Orbitals &pv,
+		LCAO_Matrix &lm,
+		const elecstate::ElecState* pelec,
         const psi::Psi<T>* psi,
         LCAO_Hamilt& uhm,
         ModuleBase::matrix& fcs,
@@ -85,8 +87,10 @@ class Force_Stress_LCAO
 #else
         ModuleBase::matrix& svl_dphi,
 #endif
-        LCAO_Hamilt& uhm,
-        const K_Vectors& kv);
+		LCAO_Hamilt &uhm,
+	    Parallel_Orbitals &pv,
+		LCAO_Matrix &lm,
+		const K_Vectors& kv);
 
     void calStressPwPart(ModuleBase::matrix& sigmadvl,
                          ModuleBase::matrix& sigmahar,
