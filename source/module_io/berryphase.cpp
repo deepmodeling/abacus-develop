@@ -577,7 +577,7 @@ void berryphase::Macroscopic_polarization(const int npwx,
 	// ion polarization	end
 	
 	// calculate Macroscopic polarization modulus because berry phase
-	int modulus;
+	int modulus = 0;
 	if( (!lodd) && (GlobalV::NSPIN==1) ) modulus = 2;
 	else modulus = 1;
 	
