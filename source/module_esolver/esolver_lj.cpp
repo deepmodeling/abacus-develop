@@ -7,7 +7,7 @@
 namespace ModuleESolver
 {
 
-    void ESolver_LJ::Init(Input& inp, UnitCell& ucell)
+    void ESolver_LJ::init(Input& inp, UnitCell& ucell)
     {
         ucell_ = &ucell;
         lj_potential = 0;
@@ -24,7 +24,7 @@ namespace ModuleESolver
         lj_sigma *= ModuleBase::ANGSTROM_AU;
     }
 
-    void ESolver_LJ::Run(const int istep, UnitCell& ucell)
+    void ESolver_LJ::run(const int istep, UnitCell& ucell)
     {
         Grid_Driver grid_neigh(GlobalV::test_deconstructor, GlobalV::test_grid_driver, GlobalV::test_grid);
         atom_arrange::search(
@@ -93,18 +93,18 @@ namespace ModuleESolver
 #endif
     }
 
-    double ESolver_LJ::cal_Energy()
+    double ESolver_LJ::cal_energy()
     {
         return lj_potential;
     }
 
-    void ESolver_LJ::cal_Force(ModuleBase::matrix& force)
+    void ESolver_LJ::cal_force(ModuleBase::matrix& force)
     {
         force = lj_force;
         ModuleIO::print_force(GlobalV::ofs_running, *ucell_, "TOTAL-FORCE (eV/Angstrom)", force, false);
     }
 
-    void ESolver_LJ::cal_Stress(ModuleBase::matrix& stress)
+    void ESolver_LJ::cal_stress(ModuleBase::matrix& stress)
     {
         stress = lj_virial;
 
@@ -119,7 +119,7 @@ namespace ModuleESolver
         ModuleIO::print_stress("TOTAL-STRESS", stress, true, false);
     }
 
-    void ESolver_LJ::postprocess()
+    void ESolver_LJ::post_process(void)
     {
         GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
         GlobalV::ofs_running << std::setprecision(16);

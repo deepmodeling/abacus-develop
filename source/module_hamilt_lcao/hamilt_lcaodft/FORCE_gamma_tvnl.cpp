@@ -237,6 +237,7 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
 
 void Force_LCAO_gamma::cal_ftvnl_dphi(
     const elecstate::DensityMatrix<double, double>* DM,
+    LCAO_Matrix &lm,
     const bool isforce, 
 	const bool isstress, 
 	ModuleBase::matrix& ftvnl_dphi, 
@@ -268,25 +269,26 @@ void Force_LCAO_gamma::cal_ftvnl_dphi(
 
                 if(isforce)
 				{
-					ftvnl_dphi(iat,0) += sum * this->UHM->LM->DHloc_fixed_x[index];
-					ftvnl_dphi(iat,1) += sum * this->UHM->LM->DHloc_fixed_y[index];
-					ftvnl_dphi(iat,2) += sum * this->UHM->LM->DHloc_fixed_z[index];
+					ftvnl_dphi(iat,0) += sum * lm.DHloc_fixed_x[index];
+					ftvnl_dphi(iat,1) += sum * lm.DHloc_fixed_y[index];
+					ftvnl_dphi(iat,2) += sum * lm.DHloc_fixed_z[index];
 				}
                 if(isstress)
                 {
-                    stvnl_dphi(0,0) += sum/2.0 * this->UHM->LM->DHloc_fixed_11[index];
-                    stvnl_dphi(0,1) += sum/2.0 * this->UHM->LM->DHloc_fixed_12[index];
-                    stvnl_dphi(0,2) += sum/2.0 * this->UHM->LM->DHloc_fixed_13[index];
-                    stvnl_dphi(1,1) += sum/2.0 * this->UHM->LM->DHloc_fixed_22[index];
-                    stvnl_dphi(1,2) += sum/2.0 * this->UHM->LM->DHloc_fixed_23[index];
-                    stvnl_dphi(2,2) += sum/2.0 * this->UHM->LM->DHloc_fixed_33[index];   
+                    stvnl_dphi(0,0) += sum/2.0 * lm.DHloc_fixed_11[index];
+                    stvnl_dphi(0,1) += sum/2.0 * lm.DHloc_fixed_12[index];
+                    stvnl_dphi(0,2) += sum/2.0 * lm.DHloc_fixed_13[index];
+                    stvnl_dphi(1,1) += sum/2.0 * lm.DHloc_fixed_22[index];
+                    stvnl_dphi(1,2) += sum/2.0 * lm.DHloc_fixed_23[index];
+                    stvnl_dphi(2,2) += sum/2.0 * lm.DHloc_fixed_33[index];   
                 }
             }
         }
     }
-    if(isstress){
-        StressTools::stress_fill(GlobalC::ucell.lat0, GlobalC::ucell.omega, stvnl_dphi);
-    }
+	if(isstress)
+	{
+		StressTools::stress_fill(GlobalC::ucell.lat0, GlobalC::ucell.omega, stvnl_dphi);
+	}
     ModuleBase::timer::tick("Force_LCAO_gamma","cal_ftvnl_dphi");
     return;
 }

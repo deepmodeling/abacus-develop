@@ -440,11 +440,11 @@ void DensityMatrix<TK,TR>::cal_DMR_test()
                 const int* r_index = tmp_ap.get_R_index(ir);
                 hamilt::BaseMatrix<TR>* tmp_matrix = tmp_ap.find_matrix(r_index[0], r_index[1], r_index[2]);
 #ifdef __DEBUG
-            if (tmp_matrix == nullptr)
-            {
-                std::cout << "tmp_matrix is nullptr" << std::endl;
-                continue;
-            }
+				if (tmp_matrix == nullptr)
+				{
+					std::cout << "tmp_matrix is nullptr" << std::endl;
+					continue;
+				}
 #endif
                 std::complex<TR> tmp_res;
                 // loop over k-points
@@ -515,44 +515,47 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR()
 #endif
                 // loop over k-points
                 if(GlobalV::NSPIN !=4 )
-                for (int ik = 0; ik < this->_nks; ++ik)
-                {
-                    // cal k_phase
-                    // if TK==std::complex<double>, kphase is e^{ikR}
-                    const ModuleBase::Vector3<double> dR(r_index[0], r_index[1], r_index[2]);
-                    const double arg = (this->_kv->kvec_d[ik] * dR) * ModuleBase::TWO_PI;
-                    double sinp, cosp;
-                    ModuleBase::libm::sincos(arg, &sinp, &cosp);
-                    std::complex<double> kphase = std::complex<double>(cosp, sinp);
-                    // set DMR element
-                    double* tmp_DMR_pointer = tmp_matrix->get_pointer();
-                    std::complex<double>* tmp_DMK_pointer = this->_DMK[ik + ik_begin].data();
-                    double* DMK_real_pointer = nullptr;
-                    double* DMK_imag_pointer = nullptr;
-                    // jump DMK to fill DMR
-                    // DMR is row-major, DMK is column-major
-                    tmp_DMK_pointer += col_ap * this->_paraV->nrow + row_ap;
-                    for (int mu = 0; mu < this->_paraV->get_row_size(iat1); ++mu)
-                    {
-                        DMK_real_pointer = (double*)tmp_DMK_pointer;
-                        DMK_imag_pointer = DMK_real_pointer + 1;
-                        BlasConnector::axpy(this->_paraV->get_col_size(iat2),
-                                            kphase.real(),
-                                            DMK_real_pointer,
-                                            ld_hk2,
-                                            tmp_DMR_pointer,
-                                            1);
-                        // "-" since i^2 = -1
-                        BlasConnector::axpy(this->_paraV->get_col_size(iat2),
-                                            -kphase.imag(),
-                                            DMK_imag_pointer,
-                                            ld_hk2,
-                                            tmp_DMR_pointer,
-                                            1);
-                        tmp_DMK_pointer += 1;
-                        tmp_DMR_pointer += this->_paraV->get_col_size(iat2);
-                    }
-                }
+				{
+					for (int ik = 0; ik < this->_nks; ++ik)
+					{
+						// cal k_phase
+						// if TK==std::complex<double>, kphase is e^{ikR}
+						const ModuleBase::Vector3<double> dR(r_index[0], r_index[1], r_index[2]);
+						const double arg = (this->_kv->kvec_d[ik] * dR) * ModuleBase::TWO_PI;
+						double sinp, cosp;
+						ModuleBase::libm::sincos(arg, &sinp, &cosp);
+						std::complex<double> kphase = std::complex<double>(cosp, sinp);
+						// set DMR element
+						double* tmp_DMR_pointer = tmp_matrix->get_pointer();
+						std::complex<double>* tmp_DMK_pointer = this->_DMK[ik + ik_begin].data();
+						double* DMK_real_pointer = nullptr;
+						double* DMK_imag_pointer = nullptr;
+						// jump DMK to fill DMR
+						// DMR is row-major, DMK is column-major
+						tmp_DMK_pointer += col_ap * this->_paraV->nrow + row_ap;
+						for (int mu = 0; mu < this->_paraV->get_row_size(iat1); ++mu)
+						{
+							DMK_real_pointer = (double*)tmp_DMK_pointer;
+							DMK_imag_pointer = DMK_real_pointer + 1;
+							BlasConnector::axpy(this->_paraV->get_col_size(iat2),
+									kphase.real(),
+									DMK_real_pointer,
+									ld_hk2,
+									tmp_DMR_pointer,
+									1);
+							// "-" since i^2 = -1
+							BlasConnector::axpy(this->_paraV->get_col_size(iat2),
+									-kphase.imag(),
+									DMK_imag_pointer,
+									ld_hk2,
+									tmp_DMR_pointer,
+									1);
+							tmp_DMK_pointer += 1;
+							tmp_DMR_pointer += this->_paraV->get_col_size(iat2);
+						}
+					}
+				}
+
                 // treat DMR as pauli matrix when NSPIN=4
                 if(GlobalV::NSPIN==4)
                 {

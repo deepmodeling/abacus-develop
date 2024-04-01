@@ -23,13 +23,13 @@ void ModuleIO::output_HS_R(const int& istep,
     if(GlobalV::NSPIN==1||GlobalV::NSPIN==4)
     {
         // jingan add 2021-6-4, modify 2021-12-2
-        UHM.calculate_HSR_sparse(0, sparse_threshold, kv.nmp, p_ham);
+        UHM.cal_HSR_sparse(0, sparse_threshold, kv.nmp, p_ham);
     }
     else if(GlobalV::NSPIN==2)
     {
         // save HR of current_spin first
-        UHM.calculate_HSR_sparse(GlobalV::CURRENT_SPIN, sparse_threshold, kv.nmp, p_ham);
-        // calculate HR of the other spin
+        UHM.cal_HSR_sparse(GlobalV::CURRENT_SPIN, sparse_threshold, kv.nmp, p_ham);
+        // cal HR of the other spin
         if(GlobalV::VL_IN_H)
         {
             int ik = 0;
@@ -46,7 +46,7 @@ void ModuleIO::output_HS_R(const int& istep,
             p_ham->refresh();
             p_ham->updateHk(ik);
         }
-        UHM.calculate_HSR_sparse(GlobalV::CURRENT_SPIN, sparse_threshold, kv.nmp, p_ham);
+        UHM.cal_HSR_sparse(GlobalV::CURRENT_SPIN, sparse_threshold, kv.nmp, p_ham);
     }
 
     ModuleIO::save_HSR_sparse(istep, *UHM.LM, sparse_threshold, binary, SR_filename, HR_filename_up, HR_filename_down);
@@ -70,7 +70,7 @@ void ModuleIO::output_dH_R(const int& istep,
     UHM.GK.allocate_pvdpR();
     if(GlobalV::NSPIN==1||GlobalV::NSPIN==4)
     {
-        UHM.calculate_dH_sparse(0, sparse_threshold);
+        UHM.cal_dH_sparse(0, sparse_threshold);
     }
     else if(GlobalV::NSPIN==2)
     {
@@ -95,7 +95,7 @@ void ModuleIO::output_dH_R(const int& istep,
                     }
                 }
 
-                UHM.calculate_dH_sparse(GlobalV::CURRENT_SPIN, sparse_threshold);
+                UHM.cal_dH_sparse(GlobalV::CURRENT_SPIN, sparse_threshold);
             }
         }
     }
@@ -119,7 +119,7 @@ void ModuleIO::output_S_R(
     ModuleBase::TITLE("ModuleIO","output_S_R");
     ModuleBase::timer::tick("ModuleIO","output_S_R"); 
 
-    UHM.calculate_SR_sparse(sparse_threshold, p_ham);
+    UHM.cal_SR_sparse(sparse_threshold, p_ham);
     ModuleIO::save_sparse(UHM.LM->SR_sparse, UHM.LM->all_R_coor, sparse_threshold, binary, SR_filename, *UHM.LM->ParaV, "S", 0);
     UHM.destroy_all_HSR_sparse();
 
@@ -148,7 +148,7 @@ void ModuleIO::output_T_R(
         sst << GlobalV::global_out_dir << TR_filename;
     }
 
-    UHM.calculate_TR_sparse(sparse_threshold);
+    UHM.cal_TR_sparse(sparse_threshold);
     ModuleIO::save_sparse(UHM.LM->TR_sparse, UHM.LM->all_R_coor, sparse_threshold, binary, sst.str().c_str(), *UHM.LM->ParaV, "T", istep);
     UHM.destroy_TR_sparse();
 

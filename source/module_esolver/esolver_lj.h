@@ -14,17 +14,25 @@ namespace ModuleESolver
             classname = "ESolver_LJ";
         }
 
-        void Init(Input& inp, UnitCell& cell) override;
-        void Run(const int istep, UnitCell& cell) override;
-        double cal_Energy() override;
-        void cal_Force(ModuleBase::matrix& force) override;
-        void cal_Stress(ModuleBase::matrix& stress) override;
-        void postprocess() override;
+        void init(Input& inp, UnitCell& cell) override;
+
+        void run(const int istep, UnitCell& cell) override;
+
+        double cal_energy() override;
+
+        void cal_force(ModuleBase::matrix& force) override;
+
+        void cal_stress(ModuleBase::matrix& stress) override;
+
+        void post_process() override;
 
       private:
+
         double LJ_energy(const double d);
+
         ModuleBase::Vector3<double> LJ_force(const double d,
             const ModuleBase::Vector3<double> dr);
+
         void LJ_virial(const ModuleBase::Vector3<double>& force,
             const ModuleBase::Vector3<double>& dtau);
 

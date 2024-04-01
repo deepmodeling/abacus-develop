@@ -40,7 +40,7 @@ ESolver_FP::~ESolver_FP()
 }
 
 
-void ESolver_FP::Init(Input& inp, UnitCell& cell)
+void ESolver_FP::init(Input& inp, UnitCell& cell)
 {
 	if(!GlobalV::use_paw)
 	{

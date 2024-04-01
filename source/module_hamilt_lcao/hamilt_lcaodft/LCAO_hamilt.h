@@ -18,39 +18,60 @@ class LCAO_Hamilt
     public:
 
     LCAO_Hamilt();
+
     ~LCAO_Hamilt();
 
     void grid_prepare(const Grid_Technique& gt, const ModulePW::PW_Basis& rhopw, const ModulePW::PW_Basis_Big& bigpw);
 
     // jingan add 2021-6-4
     void set_R_range_sparse();
-    void calculate_HContainer_sparse_d(const int &current_spin, 
+
+    void cal_HContainer_sparse_d(const int &current_spin, 
         const double &sparse_threshold, 
         const hamilt::HContainer<double>& hR, 
         std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>>& target);
-    void calculate_HContainer_sparse_cd(const int &current_spin, 
+
+    void cal_HContainer_sparse_cd(const int &current_spin, 
         const double &sparse_threshold, 
         const hamilt::HContainer<std::complex<double>>& hR, 
         std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>& target);
-    void calculate_dSTN_R_sparse(const int &current_spin, const double &sparse_threshold);
-    void calculate_STN_R_sparse_for_S(const double &sparse_threshold);
-    void calculate_STN_R_sparse_for_T(const double &sparse_threshold);
-    void calculat_HR_dftu_sparse(const int &current_spin, const double &sparse_threshold);
-    void calculat_HR_dftu_soc_sparse(const int &current_spin, const double &sparse_threshold);
+
+    void cal_dSTN_R_sparse(const int &current_spin, const double &sparse_threshold);
+
+    void cal_STN_R_sparse_for_S(const double &sparse_threshold);
+
+    void cal_STN_R_sparse_for_T(const double &sparse_threshold);
+
+    void cal_HR_dftu_sparse(const int &current_spin, const double &sparse_threshold);
+
+    void cal_HR_dftu_soc_sparse(const int &current_spin, const double &sparse_threshold);
+
 #ifdef __EXX
-    template<typename Tdata> void calculate_HR_exx_sparse(
+    template<typename Tdata> void cal_HR_exx_sparse(
             const int &current_spin,
             const double &sparse_threshold,
             const int (&nmp)[3],
             const std::vector< std::map <int, std::map < std::pair<int, std::array<int,3>>, RI::Tensor<Tdata> > >>& Hexxs);
 #endif
-    void calculate_HSR_sparse(const int &current_spin, const double &sparse_threshold, const int (&nmp)[3], hamilt::Hamilt<std::complex<double>>* p_ham);
-    void calculate_SR_sparse(const double &sparse_threshold, hamilt::Hamilt<std::complex<double>>* p_ham);
+
+	void cal_HSR_sparse(
+			const int &current_spin, 
+			const double &sparse_threshold, 
+			const int (&nmp)[3], 
+			hamilt::Hamilt<std::complex<double>>* p_ham);
+
+    void cal_SR_sparse(const double &sparse_threshold, hamilt::Hamilt<std::complex<double>>* p_ham);
+
     void clear_zero_elements(const int &current_spin, const double &sparse_threshold);
+
     void destroy_all_HSR_sparse(void);
-    void calculate_TR_sparse(const double &sparse_threshold);
+
+    void cal_TR_sparse(const double &sparse_threshold);
+
     void destroy_TR_sparse(void);
-    void calculate_dH_sparse(const int &current_spin, const double &sparse_threshold);
+
+    void cal_dH_sparse(const int &current_spin, const double &sparse_threshold);
+
     void destroy_dH_R_sparse(void);
 
     // used for gamma only algorithms.

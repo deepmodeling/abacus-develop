@@ -273,10 +273,10 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
 }
 
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::beforescf(int istep)
+void ESolver_KS_LCAO<TK, TR>::before_scf(int istep)
 {
-    ModuleBase::TITLE("ESolver_KS_LCAO", "beforescf");
-    ModuleBase::timer::tick("ESolver_KS_LCAO", "beforescf");
+    ModuleBase::TITLE("ESolver_KS_LCAO", "before_scf");
+    ModuleBase::timer::tick("ESolver_KS_LCAO", "before_scf");
 
     if (GlobalC::ucell.cell_parameter_updated)
     {
@@ -335,15 +335,15 @@ void ESolver_KS_LCAO<TK, TR>::beforescf(int istep)
 
     this->p_hamilt->non_first_scf = istep;
 
-    ModuleBase::timer::tick("ESolver_KS_LCAO", "beforescf");
+    ModuleBase::timer::tick("ESolver_KS_LCAO", "before_scf");
     return;
 }
 
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::othercalculation(const int istep)
+void ESolver_KS_LCAO<TK, TR>::others(const int istep)
 {
-    ModuleBase::TITLE("ESolver_KS_LCAO", "othercalculation");
-    ModuleBase::timer::tick("ESolver_KS_LCAO", "othercalculation");
+    ModuleBase::TITLE("ESolver_KS_LCAO", "others");
+    ModuleBase::timer::tick("ESolver_KS_LCAO", "others");
     if (GlobalV::CALCULATION == "get_S")
     {
         this->get_S();
@@ -440,10 +440,10 @@ void ESolver_KS_LCAO<TK, TR>::othercalculation(const int istep)
     }
     else
     {
-        ModuleBase::WARNING_QUIT("ESolver_KS_LCAO<TK, TR>::othercalculation", "CALCULATION type not supported");
+        ModuleBase::WARNING_QUIT("ESolver_KS_LCAO<TK, TR>::others", "CALCULATION type not supported");
     }
 
-    ModuleBase::timer::tick("ESolver_KS_LCAO", "othercalculation");
+    ModuleBase::timer::tick("ESolver_KS_LCAO", "others");
     return;
 }
 template <>

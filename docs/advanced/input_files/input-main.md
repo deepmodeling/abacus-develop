@@ -338,8 +338,8 @@
     - [td\_trigo\_amp](#td_trigo_amp)
     - [td\_heavi\_t0](#td_heavi_t0)
     - [td\_heavi\_amp](#td_heavi_amp)
-    - [td\_out\_dipole](#td_out_dipole)
-    - [td\_out\_efield](#td_out_efield)
+    - [out\_dipole](#out_dipole)
+    - [out\_efield](#out_efield)
     - [ocp](#ocp)
     - [ocp\_set](#ocp_set)
   - [Variables useful for debugging](#variables-useful-for-debugging)
@@ -3177,7 +3177,7 @@ These variables are used to control berry phase and wannier90 interface paramete
   E = 0.0 , t>t0
 - **Default**: 2.74
 
-### td_out_dipole
+### out_dipole
 
 - **Type**: Boolean
 - **Description**:
@@ -3185,10 +3185,10 @@ These variables are used to control berry phase and wannier90 interface paramete
   - False: do not output dipole.
 - **Default**: False
 
-### td_out_efield
+### out_efield
 
 - **Type**: Boolean
-- **Description**: The unit of output file is atomic unit (1 a.u. = 1 Ry/(bohr $\cdot$ e) = 51.422 V/Angstrom).
+- **Description**: output TDDFT Efield or not(V/Angstrom)
   - True: output efield.
   - False: do not output efield.
 - **Default**: False

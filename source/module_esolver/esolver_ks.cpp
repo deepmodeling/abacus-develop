@@ -73,9 +73,9 @@ ESolver_KS<T, Device>::~ESolver_KS()
 }
 
 template<typename T, typename Device>
-void ESolver_KS<T, Device>::Init(Input& inp, UnitCell& ucell)
+void ESolver_KS<T, Device>::init(Input& inp, UnitCell& ucell)
 {
-	ESolver_FP::Init(inp,ucell);
+	ESolver_FP::init(inp,ucell);
 
 	//------------------Charge Mixing------------------
 	p_chgmix->set_mixing(GlobalV::MIXING_MODE,
@@ -94,12 +94,12 @@ void ESolver_KS<T, Device>::Init(Input& inp, UnitCell& ucell)
 #ifdef USE_PAW
 	if(GlobalV::use_paw)
 	{
-		int * atom_type;
-		double ** atom_coord;
+		int * atom_type = nullptr;
+		double ** atom_coord = nullptr;
 		std::vector<std::string> filename_list;
 
 		atom_type = new int [ucell.nat];
-		atom_coord = new double * [ucell.nat];
+		atom_coord = new double *[ucell.nat];
 		filename_list.resize(ucell.ntype);
 
 		for(int ia = 0; ia < ucell.nat; ia ++)
@@ -199,12 +199,14 @@ void ESolver_KS<T, Device>::Init(Input& inp, UnitCell& ucell)
 #ifdef __MPI
 	this->pw_wfc->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
 #endif
+
 	this->pw_wfc->initgrids(inp.ref_cell_factor * ucell.lat0,
 			ucell.latvec,
 			this->pw_rho->nx,
 			this->pw_rho->ny,
 			this->pw_rho->nz);
 	this->pw_wfc->initparameters(false, inp.ecutwfc, this->kv.nks, this->kv.kvec_d.data());
+
 #ifdef __MPI
 	if (INPUT.pw_seed > 0)
 	{
@@ -212,8 +214,11 @@ void ESolver_KS<T, Device>::Init(Input& inp, UnitCell& ucell)
 	}
 	// qianrui add 2021-8-13 to make different kpar parameters can get the same results
 #endif
+
 	this->pw_wfc->ft.fft_mode = inp.fft_mode;
+
 	this->pw_wfc->setuptransform();
+
 	for (int ik = 0; ik < this->kv.nks; ++ik)
 	{
 		this->kv.ngk[ik] = this->pw_wfc->npwk[ik];
@@ -285,6 +290,7 @@ void ESolver_KS<T, Device>::Init(Input& inp, UnitCell& ucell)
 #endif
 }
 
+
 template<typename T, typename Device>
 void ESolver_KS<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
 {
@@ -322,6 +328,7 @@ void ESolver_KS<T, Device>::hamilt2density(const int istep, const int iter, cons
 	ModuleBase::timer::tick(this->classname, "hamilt2density");
 }
 
+
 template<typename T, typename Device>
 void ESolver_KS<T, Device>::print_wfcfft(Input& inp, std::ofstream &ofs)
 {
@@ -352,6 +359,7 @@ void ESolver_KS<T, Device>::print_wfcfft(Input& inp, std::ofstream &ofs)
 
 	ofs << "\n PARALLEL PW FOR WAVE FUNCTIONS" << std::endl;
 	ofs <<" "<< std::setw(8)  << "PROC"<< std::setw(15) << "COLUMNS(POT)"<< std::setw(15) << "PW" << std::endl;
+
 	for (int i = 0; i < GlobalV::NPROC_IN_POOL ; ++i)
 	{
 		ofs <<" "<<std::setw(8)<< i+1 << std::setw(15) 
@@ -359,6 +367,7 @@ void ESolver_KS<T, Device>::print_wfcfft(Input& inp, std::ofstream &ofs)
             << std::setw(15) 
             << this->pw_wfc->npw_per[i] << std::endl;
 	}
+
 	ofs << " --------------- sum -------------------" << std::endl;
 	ofs << " " << std::setw(8) 
         << GlobalV::NPROC_IN_POOL 
@@ -367,25 +376,28 @@ void ESolver_KS<T, Device>::print_wfcfft(Input& inp, std::ofstream &ofs)
 	ModuleBase::GlobalFunc::DONE(ofs, "INIT PLANEWAVE");
 }
 
+
 template<typename T, typename Device>
-void ESolver_KS<T, Device>::Run(const int istep, UnitCell& ucell)
+void ESolver_KS<T, Device>::run(const int istep, UnitCell& ucell)
 {
 	if (!(GlobalV::CALCULATION == "scf" 
        || GlobalV::CALCULATION == "md"
        || GlobalV::CALCULATION == "relax" 
        || GlobalV::CALCULATION == "cell-relax"))
 	{
-		this->othercalculation(istep);
+		this->others(istep);
 	}
 	else
 	{
-		ModuleBase::timer::tick(this->classname, "Run");
+		ModuleBase::timer::tick(this->classname, "run");
 
-		this->beforescf(istep); //Something else to do before the iter loop
+		this->before_scf(istep); //Something else to do before the iter loop
+
 		ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT SCF");
+
 		if(this->maxniter > 0)  
 		{
-			this->printhead(); //print the headline on the screen.
+			this->print_head(); //print the headline on the screen.
 		}
 
 		bool firstscf = true;
@@ -393,7 +405,7 @@ void ESolver_KS<T, Device>::Run(const int istep, UnitCell& ucell)
 		this->niter = this->maxniter;
 		for (int iter = 1; iter <= this->maxniter; ++iter)
 		{
-			writehead(GlobalV::ofs_running, istep, iter);
+			this->write_head(GlobalV::ofs_running, istep, iter);
 #ifdef __MPI
 			auto iterstart = MPI_Wtime();
 #else
@@ -401,7 +413,7 @@ void ESolver_KS<T, Device>::Run(const int istep, UnitCell& ucell)
 #endif
 			double diag_ethr = this->phsol->set_diagethr(istep, iter, drho);
 
-			eachiterinit(istep, iter);
+			this->iter_init(istep, iter);
 
 			this->hamilt2density(istep, iter, diag_ethr);
 
@@ -480,23 +492,22 @@ void ESolver_KS<T, Device>::Run(const int istep, UnitCell& ucell)
 
 			// Hamilt should be used after it is constructed.
 			// this->phamilt->update(conv_elec);
-			updatepot(istep, iter);
-			eachiterfinish(iter);
+			this->update_pot(istep, iter);
+			this->iter_finish(iter);
 #ifdef __MPI
 			double duration = (double)(MPI_Wtime() - iterstart);
 #else
-			double duration = (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - iterstart)).count() / static_cast<double>(1e6);
+			double duration = 
+               (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() 
+                - iterstart)).count() / static_cast<double>(1e6);
 #endif
-			/*
-			   SCF print: G1    -3.435545e+03  0.000000e+00   3.607e-01  2.862e-01
-			 */
 
 			double dkin = 0.0; // for meta-GGA
 			if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
 			{
 				dkin = p_chgmix->get_dkin(pelec->charge, GlobalV::nelec);
 			}
-			printiter(iter, drho, dkin, duration, diag_ethr);
+			this->print_iter(iter, drho, dkin, duration, diag_ethr);
 
 #ifdef __RAPIDJSON
 			//add Json of scf mag
@@ -513,7 +524,10 @@ void ESolver_KS<T, Device>::Run(const int istep, UnitCell& ucell)
 			{
 				this->niter = iter;
 				bool stop = this->do_after_converge(iter);
-				if(stop) break;
+				if(stop) 
+				{
+					break;
+				}
 			}
 
 			// notice for restart
@@ -532,8 +546,10 @@ void ESolver_KS<T, Device>::Run(const int istep, UnitCell& ucell)
 				this->conv_elec
 				);
 #endif //__RAPIDJSON 
-		afterscf(istep);
-		ModuleBase::timer::tick(this->classname, "Run");
+
+		this->after_scf(istep);
+
+		ModuleBase::timer::tick(this->classname, "run");
 	} 
 
 #ifdef __RAPIDJSON
@@ -545,27 +561,33 @@ void ESolver_KS<T, Device>::Run(const int istep, UnitCell& ucell)
 	return;
 };
 
+
 template<typename T, typename Device>
-void ESolver_KS<T, Device>::printhead()
+void ESolver_KS<T, Device>::print_head(void)
 {
 	std::cout << " " << std::setw(7) << "ITER";
+
 	if (GlobalV::NSPIN == 2)
 	{
 		std::cout << std::setw(10) << "TMAG";
 		std::cout << std::setw(10) << "AMAG";
 	}
+
 	std::cout << std::setw(15) << "ETOT(eV)";
 	std::cout << std::setw(15) << "EDIFF(eV)";
 	std::cout << std::setw(11) << "DRHO";
+
 	if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
 	{
 		std::cout << std::setw(11) << "DKIN";
 	}
+
 	std::cout << std::setw(11) << "TIME(s)" << std::endl;
 }
 
+
 template<typename T, typename Device>
-void ESolver_KS<T, Device>::printiter(
+void ESolver_KS<T, Device>::print_iter(
 		const int iter, 
 		const double drho, 
 		const double dkin, 
@@ -575,8 +597,9 @@ void ESolver_KS<T, Device>::printiter(
         this->pelec->print_etot(this->conv_elec, iter, drho, dkin, duration, INPUT.printe, ethr);
 }
 
+
 template<typename T, typename Device>
-void ESolver_KS<T, Device>::writehead(std::ofstream& ofs_running, const int istep, const int iter)
+void ESolver_KS<T, Device>::write_head(std::ofstream& ofs_running, const int istep, const int iter)
 {
 	ofs_running
 		<< "\n "
@@ -585,6 +608,7 @@ void ESolver_KS<T, Device>::writehead(std::ofstream& ofs_running, const int iste
 		<< "  ELEC=" << std::setw(4) << iter
 		<< "--------------------------------\n";
 }
+
 
 template<typename T, typename Device>
 int ESolver_KS<T, Device>::getniter()
@@ -599,7 +623,7 @@ ModuleIO::Output_Rho ESolver_KS<T, Device>::create_Output_Rho(
 		int iter, 
 		const std::string& prefix)
 {
-	int precision = 3;
+	const int precision = 3;
 	std::string tag = "CHG";
 	return ModuleIO::Output_Rho(this->pw_big,
 			this->pw_rhod,
@@ -618,7 +642,7 @@ ModuleIO::Output_Rho ESolver_KS<T, Device>::create_Output_Rho(
 template<typename T, typename Device>
 ModuleIO::Output_Rho ESolver_KS<T, Device>::create_Output_Kin(int is, int iter, const std::string& prefix)
 {
-	int precision = 11;
+	const int precision = 11;
 	std::string tag = "TAU";
 	return ModuleIO::Output_Rho(this->pw_big,
 			this->pw_rhod,

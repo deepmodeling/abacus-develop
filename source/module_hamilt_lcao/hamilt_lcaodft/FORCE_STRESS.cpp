@@ -29,7 +29,9 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                                           const bool isstress,
                                           const bool istestf,
                                           const bool istests,
-                                          Local_Orbital_Charge& loc,
+										  Local_Orbital_Charge &loc,
+										  Parallel_Orbitals &pv,
+										  LCAO_Matrix &lm,
                                           const elecstate::ElecState* pelec,
                                           const psi::Psi<T>* psi,
                                           LCAO_Hamilt& uhm,
@@ -155,7 +157,9 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
 #else
                                      svl_dphi,
 #endif
-                                     uhm,
+									 uhm,
+									 pv,
+									 lm,
                                      kv);
     // implement vdw force or stress here
     //  Peize Lin add 2014-04-04, update 2021-03-09
@@ -242,10 +246,12 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
             tmp_dftu.cal_force_stress(isforce, isstress, force_dftu, stress_dftu);
         }
     }
+
     if (!GlobalV::GAMMA_ONLY_LOCAL)
     {
-        this->flk.finish_k();
+        this->flk.finish_k(lm);
     }
+
 #ifdef __EXX
     // Force and Stress contribution from exx
     ModuleBase::matrix force_exx;
@@ -712,7 +718,8 @@ void Force_Stress_LCAO<T>::calForcePwPart(ModuleBase::matrix& fvl_dvl,
 
 // overlap, kinetic, nonlocal pseudopotential, Local potential terms in force and stress
 template<>
-void Force_Stress_LCAO<double>::calForceStressIntegralPart(const bool isGammaOnly,
+void Force_Stress_LCAO<double>::calForceStressIntegralPart(
+    const bool isGammaOnly,
     const bool isforce,
     const bool isstress,
     Local_Orbital_Charge& loc,
@@ -731,9 +738,12 @@ void Force_Stress_LCAO<double>::calForceStressIntegralPart(const bool isGammaOnl
 #else
     ModuleBase::matrix& svl_dphi,
 #endif
-    LCAO_Hamilt& uhm,
+    LCAO_Hamilt &uhm,
+	Parallel_Orbitals &pv,
+    LCAO_Matrix &lm,
     const K_Vectors& kv)
 {
+
     flk.ftable_gamma(isforce,
         isstress,
         psi,
@@ -752,11 +762,15 @@ void Force_Stress_LCAO<double>::calForceStressIntegralPart(const bool isGammaOnl
 #else
         svl_dphi,
 #endif
-        uhm);
+        uhm,
+        lm);
     return;
 }
+
+
 template<>
-void Force_Stress_LCAO<std::complex<double>>::calForceStressIntegralPart(const bool isGammaOnly,
+void Force_Stress_LCAO<std::complex<double>>::calForceStressIntegralPart(
+    const bool isGammaOnly,
     const bool isforce,
     const bool isstress,
     Local_Orbital_Charge& loc,
@@ -775,7 +789,9 @@ void Force_Stress_LCAO<std::complex<double>>::calForceStressIntegralPart(const b
 #else
     ModuleBase::matrix& svl_dphi,
 #endif
-    LCAO_Hamilt& uhm,
+	LCAO_Hamilt &uhm,
+	Parallel_Orbitals &pv,
+	LCAO_Matrix &lm,
     const K_Vectors& kv)
 {
         flk.ftable_k(isforce,
@@ -797,8 +813,10 @@ void Force_Stress_LCAO<std::complex<double>>::calForceStressIntegralPart(const b
 #else
                      svl_dphi,
 #endif
-                     uhm,
-            kv);
+					 uhm,
+					 pv,
+					 lm,
+                     kv);
     return;
 }
 
