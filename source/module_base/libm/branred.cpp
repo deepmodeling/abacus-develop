@@ -86,8 +86,7 @@ static const double split =  CN;	/* 2^27 + 1 */
 int
 __branred(double x, double *a, double *aa)
 {
-  int i = 0;
-  int k = 0;
+  int i,k;
   mynumber  u,gor;
   double r[6],b1,bb1,b2,bb2,x1,x2,t1,t2;
   double s = 0;
