@@ -33,11 +33,14 @@ namespace ModuleSymmetry
             return this->irs_.get_return_lattice(symm, gmatd, gtransd, posd_a1, posd_a2);
         }
         //--------------------------------------------------------------------------------
-/// functions  to contruct rotation matrix in AO-representation
+        // setters
+        void set_Cs_rotation(const std::vector<std::vector<int>>& abfs_l_nchi);
+        //--------------------------------------------------------------------------------
+        /// functions  to contruct rotation matrix in AO-representation
 
-/// The top-level calculation interface of this class. calculate the rotation matrix in AO representation: M
-/// only need once call in each ion step (decided by the configuration)
-/// @param kstars  equal k points to each ibz-kpont, corresponding to a certain symmetry operations. 
+        /// The top-level calculation interface of this class. calculate the rotation matrix in AO representation: M
+        /// only need once call in each ion step (decided by the configuration)
+        /// @param kstars  equal k points to each ibz-kpont, corresponding to a certain symmetry operations. 
         void cal_Ms(const K_Vectors& kv,
             //const std::vector<std::map<int, TCdouble>>& kstars,
             const UnitCell& ucell, const Parallel_2D& pv);
@@ -98,6 +101,9 @@ namespace ModuleSymmetry
         template<typename Tdata>    // RI::Tensor type, using col-major implementation
         void test_HR_rotation(const Symmetry& symm, const Atom* atoms, const Statistics& st, const char mode,
             const std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>>& HR_full);
+        template<typename Tdata>    // test the rotation of RI coefficients 
+        void test_Cs_rotation(const Symmetry& symm, const Atom* atoms, const Statistics& st,
+            const std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>>& Cs_full)const;
         template<typename TR>   // HContainer type, using row-major implementation
         void test_HR_rotation(const Symmetry& symm, const Atom* atoms, const Statistics& st, const char mode,
             const hamilt::HContainer<TR>& HR_full);
@@ -124,8 +130,15 @@ namespace ModuleSymmetry
         void rotate_atompair_parallel(const TR* Alocal_in, const int isym, const Atom* atoms, const Statistics& st,
             const Tap& ap_in, const Tap& ap_out, const char mode, const Parallel_Orbitals& pv, TR* Alocal_out, const bool output = false)const;
 
+        /// rotate a 3-dim C tensor in RI technique
+        template<typename Tdata>
+        RI::Tensor<Tdata> rotate_singleC_serial(const RI::Tensor<Tdata>& C, const int isym,
+            const Atom& a1, const Atom& a2, const int& type1, bool output = false)const;
+
         template<typename Tdata>
         RI::Tensor<Tdata> set_rotation_matrix(const Atom& a, const int& isym)const;
+        template<typename Tdata>
+        RI::Tensor<Tdata> set_rotation_matrix_abf(const int& type, const int& isym)const;
         //--------------------------------------------------------------------------------
 
         int nsym_ = 1;
@@ -133,6 +146,11 @@ namespace ModuleSymmetry
         double eps_ = 1e-6;
 
         bool TRS_first_ = true; //if R(k)=-k, firstly use TRS to restore D(k) from D(R(k)), i.e conjugate D(R(k)).
+
+        bool reduce_Cs_ = false;
+        int abfs_Lmax_ = 0;
+
+        std::vector<std::vector<int>> abfs_l_nchi_;///< number of abfs for each angular momentum
 
         /// the rotation matrix under the basis of S_l^m. size: [nsym][lmax][nm*nm]
         std::vector<std::vector<ModuleBase::ComplexMatrix>> rotmat_Slm_;

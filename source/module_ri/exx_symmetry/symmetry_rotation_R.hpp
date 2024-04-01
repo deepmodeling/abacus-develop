@@ -46,6 +46,22 @@ namespace ModuleSymmetry
             std::cout << std::endl;
         }
     }
+    template<typename Tdata>
+    inline void print_tensor3(const RI::Tensor<Tdata>& t, const std::string& name, const double& threshold = 0.0)
+    {
+        std::cout << name << ":\n";
+        for (int a = 0;a < t.shape[0];++a)
+        {
+            std::cout << "abf: " << a << '\n';
+            for (int i = 0;i < t.shape[1];++i)
+            {
+                for (int j = 0;j < t.shape[2];++j)
+                    std::cout << ((std::abs(t(a, i, j)) > threshold) ? t(a, i, j) : static_cast<Tdata>(0)) << " ";
+                std::cout << std::endl;
+            }
+            std::cout << std::endl;
+        }
+    }
 
     template<typename Tdata>
     inline void set_block(const int starti, const int startj, const ModuleBase::ComplexMatrix& block,
@@ -124,7 +140,24 @@ namespace ModuleSymmetry
         dgemm_(&transpose, &dagger, &nw1, &nw2, &nw2, &alpha, A, &nw2, T2.ptr(), &nw2, &beta, AT2.ptr(), &nw1);
         dgemm_(&transpose, &transpose, &nw2, &nw1, &nw1, &alpha, AT2.ptr(), &nw1, T1.ptr(), &nw1, &beta, TAT, &nw2);
     }
-
+    inline void TA_HR(std::complex<double>* TA, const std::complex<double>* A,
+        const RI::Tensor<std::complex<double>>& T1, const int& nw12)
+    {
+        const char notrans = 'N', transpose = 'T', dagger = 'C';
+        const std::complex<double> alpha(1.0, 0.0), beta(0.0, 0.0);
+        // C'^T = C^T * T1^*
+        const int& nabf = T1.shape[0];
+        zgemm_(&notrans, &dagger, &nw12, &nabf, &nabf, &alpha, A, &nw12, T1.ptr(), &nabf, &beta, TA, &nw12);
+    }
+    inline void TA_HR(double* TA, const double* A,
+        const RI::Tensor<double>& T1, const int& nw12)
+    {
+        const char notrans = 'N', transpose = 'T', dagger = 'C';
+        const double alpha(1.0), beta(0.0);
+        // C'^T = C^T * T1^*
+        const int& nabf = T1.shape[0];
+        dgemm_(&notrans, &dagger, &nw12, &nabf, &nabf, &alpha, A, &nw12, T1.ptr(), &nabf, &beta, TA, &nw12);
+    }
     template<typename Tdata>
     RI::Tensor<Tdata> Symmetry_rotation::rotate_atompair_serial(const RI::Tensor<Tdata>& A, const int isym,
         const Atom& a1, const Atom& a2, const char mode, const bool output)const
@@ -164,6 +197,46 @@ namespace ModuleSymmetry
         const RI::Tensor<Tdata>& T2 = sametype ? T1 : this->set_rotation_matrix<Tdata>(a2, isym);
         // rotate
         (mode == 'H') ? TAT_HR(TAT, A, T1, T2) : TAT_DR(TAT, A, T1, T2);
+    }
+
+
+    template<typename Tdata>
+    RI::Tensor<Tdata> Symmetry_rotation::set_rotation_matrix_abf(const int& type, const int& isym)const
+    {
+        int  nabfs = 0;
+        for (int l = 0;l < this->abfs_l_nchi_[type].size();++l)nabfs += this->abfs_l_nchi_[type][l] * (2 * l + 1);
+        RI::Tensor<Tdata> T({ static_cast<size_t>(nabfs), static_cast<size_t>(nabfs) }); // check if zero
+        int iw = 0;
+        for (int L = 0;L < this->abfs_l_nchi_[type].size();++L)
+        {
+            int nm = 2 * L + 1;
+            for (int N = 0;N < this->abfs_l_nchi_[type][L];++N)
+            {
+                set_block(iw, iw, this->rotmat_Slm_[isym][L], T);
+                iw += nm;
+                std::cout << "L=" << L << ", N=" << N << ", iw=" << iw << "\n";
+            }
+        }
+        assert(iw == nabfs);
+        return T;
+    }
+
+    template<typename Tdata>
+    RI::Tensor<Tdata> Symmetry_rotation::rotate_singleC_serial(const RI::Tensor<Tdata>& C,
+        const int isym, const Atom& a1, const Atom& a2, const int& type1, bool output)const
+    {
+        assert(this->reduce_Cs_);
+        RI::Tensor<Tdata> Cout(C.shape);
+        assert(C.shape.size() == 3);
+        const int& slice_size = C.shape[1] * C.shape[2];
+        // step 1: multiply 2 AOs' rotation matrices
+        for (int iabf = 0;iabf < C.shape[0];++iabf)
+            this->rotate_atompair_serial(Cout.ptr() + iabf * slice_size, C.ptr() + iabf * slice_size,
+                a1.nw, a2.nw, isym, a1, a2, 'H');
+        // step 2: multiply the ABFs' rotation matrix from the left
+        const RI::Tensor<Tdata>& Tabfs = this->set_rotation_matrix_abf<Tdata>(type1, isym);
+        TA_HR(Cout.ptr(), Cout.ptr(), Tabfs, slice_size);
+        return Cout;
     }
 
     template<typename Tdata>
@@ -227,6 +300,33 @@ namespace ModuleSymmetry
                 print_tensor(HR_ref, std::string("R_ref").insert(0, 1, mode));
             }
         }
+    }
+
+    template<typename Tdata>
+    void Symmetry_rotation::test_Cs_rotation(const Symmetry& symm, const Atom* atoms, const Statistics& st,
+        const std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>>& Cs_full)const
+    {
+        for (auto& sector_pair : this->irs_.full_map_to_irreducible_sector_)
+        {
+            const TapR& apR = sector_pair.first;
+            const int& isym = sector_pair.second.first;
+            const TapR& irapR = sector_pair.second.second;
+            // if (apR.first != irapR.first || apR.second != irapR.second)
+            if (apR.first != irapR.first)
+            {
+                std::cout << "irapR=(" << irapR.first.first << "," << irapR.first.second << "), (" << irapR.second[0] << "," << irapR.second[1] << "," << irapR.second[2] << "):\n";
+                std::cout << "apR=(" << apR.first.first << "," << apR.first.second << "), (" << apR.second[0] << "," << apR.second[1] << "," << apR.second[2] << "):\n";
+                const RI::Tensor<Tdata>& Cs_ir = Cs_full.at(irapR.first.first).at({ irapR.first.second,irapR.second });
+                const RI::Tensor<Tdata>& Cs_ref = Cs_full.at(apR.first.first).at({ apR.first.second,apR.second });
+                const RI::Tensor<Tdata>& Cs_rot = this->rotate_singleC_serial(Cs_ir, isym,
+                    atoms[st.iat2it[irapR.first.first]], atoms[st.iat2it[irapR.first.second]], irapR.first.first);
+                print_tensor3(Cs_rot, "Cs_rot");
+                print_tensor3(Cs_ref, "Cs_ref");
+                print_tensor3(Cs_ir, "Cs_irreducible");
+                exit(0);
+            }
+        }
+
     }
 
 }

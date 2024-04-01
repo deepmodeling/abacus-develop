@@ -290,5 +290,18 @@ void Exx_LRI<Tdata>::cal_exx_stress()
 	ModuleBase::timer::tick("Exx_LRI", "cal_exx_stress");
 }
 
+template<typename Tdata>
+std::vector<std::vector<int>> Exx_LRI<Tdata>::get_abfs_nchis() const
+{
+    std::vector<std::vector<int>> abfs_nchis;
+    for (const auto& abfs_T : this->abfs)
+    {
+        std::vector<int> abfs_nchi_T;
+        for (const auto& abfs_L : abfs_T)
+            abfs_nchi_T.push_back(abfs_L.size());
+        abfs_nchis.push_back(abfs_nchi_T);
+    }
+    return abfs_nchis;
+}
 
 #endif

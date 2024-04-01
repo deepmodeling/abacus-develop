@@ -11,6 +11,13 @@
 
 namespace ModuleSymmetry
 {
+    void Symmetry_rotation::set_Cs_rotation(const std::vector<std::vector<int>>& abfs_l_nchi)
+    {
+        this->reduce_Cs_ = true;
+        this->abfs_l_nchi_ = abfs_l_nchi;
+        this->abfs_Lmax_ = 0;
+        for (auto& abfs_T : abfs_l_nchi) this->abfs_Lmax_ = std::max(this->abfs_Lmax_, static_cast<int>(abfs_T.size()) - 1);
+    }
     void Symmetry_rotation::cal_Ms(const K_Vectors& kv,
         //const std::vector<std::map<int, TCdouble>>& kstars,
         const UnitCell& ucell, const Parallel_2D& pv)
@@ -28,7 +35,7 @@ namespace ModuleSymmetry
         // 1. calculate the rotation matrix in real spherical harmonics representation for each symmetry operation: [T_l (isym)]_mm'
         std::vector<ModuleBase::Matrix3> gmatc(nsym_);
         for (int i = 0;i < nsym_;++i) gmatc[i] = this->irs_.direct_to_cartesian(ucell.symm.gmatrix[i], ucell.latvec);
-        this->cal_rotmat_Slm(gmatc.data(), ucell.lmax);
+        this->cal_rotmat_Slm(gmatc.data(), reduce_Cs_ ? std::max(this->abfs_Lmax_, ucell.lmax) : ucell.lmax);
 
         // 2. calculate the rotation matrix in AO-representation for each ibz_kpoint and symmetry operation: M(k, isym)
         auto restrict_kpt = [](const TCdouble& kvec, const double& symm_prec) -> TCdouble
