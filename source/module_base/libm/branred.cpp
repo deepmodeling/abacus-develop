@@ -88,7 +88,14 @@ __branred(double x, double *a, double *aa)
 {
   int i,k;
   mynumber  u,gor;
-  double r[6],s,t,sum,b,bb,sum1,sum2,b1,bb1,b2,bb2,x1,x2,t1,t2;
+  double r[6],b1,bb1,b2,bb2,x1,x2,t1,t2;
+  double s = 0;
+  double t = 0;
+  double sum = 0;
+  double b = 0;
+  double bb = 0;
+  double sum1 = 0;
+  double sum2 = 0;
 
   x*=tm600.x;
   t=x*split;   /* split x to two numbers */
