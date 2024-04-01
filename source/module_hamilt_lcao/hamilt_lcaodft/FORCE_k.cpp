@@ -79,7 +79,7 @@ void Force_LCAO_k::ftable_k(const bool isforce,
     // ---------------------------------------
     this->cal_fvl_dphi_k(isforce, isstress, pelec->pot, fvl_dphi, svl_dphi, loc.DM_R);
 
-    //this->cal_fvnl_dbeta_k(DM, isforce, isstress, fvnl_dbeta, svnl_dbeta);
+    this->cal_fvnl_dbeta_k(DM, isforce, isstress, fvnl_dbeta, svnl_dbeta);
 
 #ifdef __DEEPKS
     if (GlobalV::deepks_scf)
@@ -227,7 +227,7 @@ void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv,
     // test(this->UHM->LM->DHloc_fixedR_x,"this->UHM->LM->DHloc_fixedR_x T part");
 
     // calculate dVnl=<phi|dVnl|dphi> in LCAO
-    //this->UHM->genH.build_Nonlocal_mu_new(this->UHM->genH.LM->Hloc_fixed.data(), cal_deri);
+    this->UHM->genH.build_Nonlocal_mu_new(this->UHM->genH.LM->Hloc_fixed.data(), cal_deri);
     // test(this->UHM->LM->DHloc_fixedR_x,"this->UHM->LM->DHloc_fixedR_x Vnl part");
 
     // calculate asynchronous S matrix to output for Hefei-NAMD
