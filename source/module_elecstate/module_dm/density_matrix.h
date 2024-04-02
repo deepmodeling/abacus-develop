@@ -110,7 +110,7 @@ class DensityMatrix
      * @param j column index
      * @return T a matrix element of density matrix dm(k)
      */
-    TK get_DMK(const int ispin, const int ik, const int i, const int j) const;
+    TK& get_DMK(const int ispin, const int ik, const int i, const int j) const;
 
     /**
      * @brief get total number of k-points of density matrix dm(k)
@@ -139,9 +139,9 @@ class DensityMatrix
      * @brief get pointer vector of DMR
      * @return HContainer<TR>* vector of DMR
      */
-    std::vector<hamilt::HContainer<TR>*> get_DMR_vector() const {return this->_DMR;}
+    std::vector<hamilt::HContainer<TR>*>& get_DMR_vector() const {return this->_DMR;}
 
-    std::vector<std::vector<TR>> get_DMR_save() const {return _DMR_save;}
+    std::vector<std::vector<TR>>& get_DMR_save() const {return _DMR_save;}
 
     /**
      * @brief get pointer of DMK
@@ -153,7 +153,7 @@ class DensityMatrix
     /**
      * @brief get pointer vector of DMK
     */
-    std::vector<std::vector<TK>> get_DMK_vector() const;
+    std::vector<std::vector<TK>>& get_DMK_vector() const {return this->_DMK;}
 
     /**
      * @brief set _DMK using a input TK* pointer
@@ -164,9 +164,9 @@ class DensityMatrix
     /**
      * @brief get pointer of paraV
      */
-    const Parallel_Orbitals* get_paraV_pointer() const;
+    const Parallel_Orbitals* get_paraV_pointer() const {return this->_paraV;}
 
-    const K_Vectors* get_kv_pointer() const;
+    const K_Vectors* get_kv_pointer() const {return this->_kv;}
 
     /**
      * @brief calculate density matrix DMR from dm(k) using blas::axpy

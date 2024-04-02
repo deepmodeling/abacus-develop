@@ -272,27 +272,6 @@ TK* DensityMatrix<TK, TR>::get_DMK_pointer(const int ik) const
     return const_cast<TK*>(this->_DMK[ik].data());
 }
 
-// get _DMK[ik] vector
-template <typename TK, typename TR>
-std::vector<std::vector<TK>> DensityMatrix<TK, TR>::get_DMK_vector() const
-{
-    return this->_DMK;
-}
-
-// get _paraV pointer
-template <typename TK, typename TR>
-const Parallel_Orbitals* DensityMatrix<TK, TR>::get_paraV_pointer() const
-{
-    return this->_paraV;
-}
-
-// get _kv pointer
-template <typename TK, typename TR>
-const K_Vectors* DensityMatrix<TK, TR>::get_kv_pointer() const
-{
-    return this->_kv;
-}
-
 // set DMK using a pointer
 template <typename TK, typename TR>
 void DensityMatrix<TK, TR>::set_DMK_pointer(const int ik, TK* DMK_in)
@@ -327,7 +306,7 @@ void DensityMatrix<TK, TR>::set_DMK_zero()
 
 // get a matrix element of density matrix dm(k)
 template <typename TK, typename TR>
-TK DensityMatrix<TK, TR>::get_DMK(const int ispin, const int ik, const int i, const int j) const
+TK& DensityMatrix<TK, TR>::get_DMK(const int ispin, const int ik, const int i, const int j) const
 {
 #ifdef __DEBUG
     assert(ispin > 0 && ispin <= this->_nspin);
