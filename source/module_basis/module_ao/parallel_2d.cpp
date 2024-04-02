@@ -131,7 +131,7 @@ void Parallel_2D::set_desc(const int& gr, const int& gc, const int& lld, bool fi
 #endif
     if (first_time)
     {
-        int myprow, mypcol;
+        int myprow=0, mypcol=0;
         int* usermap = new int[this->dim0 * this->dim1];
         for (int i = 0; i < this->dim0; ++i)
         {

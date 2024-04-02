@@ -135,6 +135,6 @@ int csrFileReader<T>::getStep() const
 // T of AtomPair can be double
 template class csrFileReader<double>;
 // ToDo: T of AtomPair can be std::complex<double>
-// template class csrFileReader<std::complex<double>>;
+template class csrFileReader<std::complex<double>>;
 
 } // namespace ModuleIO
