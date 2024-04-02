@@ -10,8 +10,29 @@
 class Relax
 {
     public:
-
-    Relax(){};
+    // Updated constructor with member initializer list
+      Relax()
+          : istep(0),
+            ltrial(false),
+            brent_done(false),
+            step_size(1.0),
+            sr_sr(0.0),
+            srp_srp(100000),
+            gr_gr(0.0),
+            gr_grp(0.0),
+            grp_grp(0.0),
+            gr_sr(0.0),
+            gamma(0.0),
+            cg_step(0),
+            dmove(0.0),
+            dmovel(0.0),
+            dmoveh(0.0),
+            etot(0.0),
+            etot_p(0.0),
+            force_thr_eva(0.0),
+            fac_force(0.0),
+            fac_stress(0.0),
+            if_cell_moves(false){}
     ~Relax(){};
 
     //prepare for relaxation
