@@ -140,7 +140,7 @@ void Broyden_Mixing::tem_cal_coef(const Mixing_Data& mdata, std::function<double
         double* work = new double[ndim_cal_dF];
         int* iwork = new int[ndim_cal_dF];
         char uu = 'U';
-        int info = 0;
+        int info;
         dsytrf_(&uu, &ndim_cal_dF, beta_tmp.c, &ndim_cal_dF, iwork, work, &ndim_cal_dF, &info);
         if (info != 0)
             ModuleBase::WARNING_QUIT("Charge_Mixing", "Error when factorizing beta.");
