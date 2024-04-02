@@ -1229,7 +1229,7 @@ __sincos (double x, double *sinx, double *cosx)
   /* |x| < 2^1024.  */
   if (k < 0x7ff00000)
     {
-      double a, da, xx;
+      double a = 0.0, da = 0.0, xx = 0.0;
       unsigned int n = 0;
 
       /* If |x| < 105414350 use simple range reduction.  */
