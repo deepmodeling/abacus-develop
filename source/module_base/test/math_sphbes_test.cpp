@@ -475,6 +475,7 @@ TEST_F(Sphbes, SphericalBesselsjp)
 {
     int iii = 0;
     double* sjp = new double[msh];
+    std::memset(sjp, 0, msh * sizeof(double));
     ModuleBase::Sphbes::Spherical_Bessel(msh, r, q, l0, jl, sjp);
     EXPECT_NEAR(mean(jl, msh) / 0.2084468748396, 1.0, doublethreshold);
     for (int iii = 0; iii < msh; ++iii)
