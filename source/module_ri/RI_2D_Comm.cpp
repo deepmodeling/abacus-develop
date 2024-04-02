@@ -69,3 +69,4 @@ RI_2D_Comm::get_ik_list(const K_Vectors &kv, const int is_k)
 			ik_list.push_back(ik);
 	return ik_list;
 }
+
