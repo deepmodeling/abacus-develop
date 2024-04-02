@@ -839,6 +839,7 @@ TEST_F(write_input, DFTU20)
         testing::HasSubstr(
             "dft_plus_u                     0 #1/2:new/old DFT+U correction method; 0: standard DFT calcullation(default)"));
     EXPECT_THAT(output, testing::HasSubstr("yukawa_lambda                  -1 #default:0.0"));
+    EXPECT_THAT(output, testing::HasSubstr("uramping                       -1 #increasing U values during SCF"));
     EXPECT_THAT(output, testing::HasSubstr("yukawa_potential               0 #default: false"));
     EXPECT_THAT(output, testing::HasSubstr("omc                            0 #the mode of occupation matrix control"));
     EXPECT_THAT(output, testing::HasSubstr("hubbard_u           0 #Hubbard Coulomb interaction parameter U(ev)"));

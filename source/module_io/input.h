@@ -492,6 +492,7 @@ class Input
     int omc;                     ///< whether turn on occupation matrix control method or not
     bool yukawa_potential;       ///< default:false
     double yukawa_lambda;        ///< default:-1.0, which means we calculate lambda
+    double uramping;             ///< default:-1.0, which means we do not use U-Ramping method
 
     //==========================================================
     //    DFT+DMFT       Xin Qu added on 2021-08
