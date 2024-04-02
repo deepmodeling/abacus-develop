@@ -18,6 +18,7 @@
 //--------------Temporary----------------
 #include "module_base/global_variable.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_hamilt_lcao/module_dftu/dftu.h"
 //---------------------------------------
 
 #ifdef USE_PAW
@@ -454,7 +455,8 @@ void ESolver_KS<T, Device>::run(const int istep, UnitCell& ucell)
 				// drho will be 0 at this->p_chgmix->mixing_restart step, which is not ground state
 				bool not_restart_step = !(iter==this->p_chgmix->mixing_restart && GlobalV::MIXING_RESTART > 0.0);
 				// SCF will continue if U is not converged for uramping calculation
-				bool is_U_converged = GlobalC::dftu.U_converged();
+				bool is_U_converged = true;
+				if (GlobalV::dft_plus_u) is_U_converged = GlobalC::dftu.u_converged();
 				//
 				this->conv_elec = (drho < this->scf_thr 
                     && not_restart_step

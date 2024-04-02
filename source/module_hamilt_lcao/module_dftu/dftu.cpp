@@ -373,7 +373,7 @@ void DFTU::uramping_update()
     }
 }
 
-bool DFTU::U_converged()
+bool DFTU::u_converged()
 {
     for(int i = 0; i < this->U0.size(); i++)
     {
