@@ -92,7 +92,7 @@ void SparseMatrix<T>::readCSR(const std::vector<T>& values,
 
 // define the operator to index a matrix element
 template <typename T>
-T SparseMatrix<T>::operator()(int row, int col)
+T SparseMatrix<T>::operator()(int row, int col) const
 {
     if (row < 0 || row >= _rows || col < 0 || col >= _cols)
     {
