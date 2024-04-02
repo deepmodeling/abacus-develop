@@ -1180,7 +1180,7 @@ void UnitCell::setup_cell_after_vc(std::ofstream &log)
     {
         log << std::endl;
         ModuleBase::GlobalFunc::OUT(log, "Volume (Bohr^3)", this->omega);
-        ModuleBase::GlobalFunc::OUT(log, "Volume (A^3))", this->omega * pow(ModuleBase::BOHR_TO_A, 3));
+        ModuleBase::GlobalFunc::OUT(log, "Volume (A^3)", this->omega * pow(ModuleBase::BOHR_TO_A, 3));
     }
 
     lat0_angstrom = lat0 * 0.529177;

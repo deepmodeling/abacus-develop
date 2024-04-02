@@ -274,7 +274,7 @@ OBJS_HAMILT_LCAO=hamilt_lcao.o\
     deepks_lcao.o\
     op_exx_lcao.o\
     sc_lambda_lcao.o\
-    dftu_new.o\
+    dftu_lcao.o\
 
 OBJS_HCONTAINER=base_matrix.o\
     atom_pair.o\
@@ -497,6 +497,10 @@ OBJS_LCAO=DM_gamma.o\
       FORCE_gamma_tvnl.o\
       FORCE_gamma_vl.o\
       FORCE_k.o\
+      foverlap_k.o\
+      ftvnl_dphi_k.o\
+      fvl_dphi_k.o\
+      fvnl_dbeta_k.o\
       LCAO_gen_fixedH.o\
       LCAO_hamilt.o\
       LCAO_matrix.o\

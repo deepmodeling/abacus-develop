@@ -21,7 +21,7 @@ void gen_init(UnitCell *ucell){
     // Json::AbacusJson::add_Json(pgname,false,"init", "point_group");
     // Json::AbacusJson::add_Json(spgname,false,"init","point_group_in_space");
 
-    int  numAtoms = ucell->atoms->na;
+    int  numAtoms = ucell->nat;
     AbacusJson::add_json({"init", "natom"}, numAtoms,false);
     AbacusJson::add_json({"init", "nband"}, GlobalV::NBANDS,false);
 
@@ -32,10 +32,13 @@ void gen_init(UnitCell *ucell){
     for (int it = 0; it < ntype; it++)
     {
         std::string label = ucell->atoms[it].label;
+        int atom_number = ucell->atoms[it].na;
         int number = ucell->atoms[it].ncpp.zv;
 
         nelec_total+=ucell->atoms[it].ncpp.zv * ucell->atoms[it].na;
+        AbacusJson::add_json({"init", "natom_each_type",label}, atom_number,false);
         AbacusJson::add_json({"init", "nelectron_each_type",label}, number,false);
+
 
         //Json::AbacusJson::add_Json(number,false,"init", "nelectron_each_type",label);
     }    
@@ -56,7 +59,7 @@ void add_nkstot(int nkstot,int nkstot_ibz){
 
 
 void gen_stru(UnitCell *ucell){
-    AbacusJson::add_json({"comment"},"Unless otherwise specified, the unit of energy is Ry and the unit of length is Bohr",false);
+    AbacusJson::add_json({"comment"},"Unless otherwise specified, the unit of energy is eV and the unit of length is Angstrom",false);
 
     int ntype = ucell->ntype;
 
@@ -75,11 +78,7 @@ void gen_stru(UnitCell *ucell){
 
         std::string atom_element = ucell->atoms[i].ncpp.psd;
 
-        Json::jsonValue element_obj(JobjectType);
-        element_obj.JaddStringKV(atom_label,atom_element);
-        Json::AbacusJson::add_json({"init","element"}, element_obj,false);
-    
-        // Json::AbacusJson::add_Json(element_obj,false,"init","element");
+        Json::AbacusJson::add_json({"init","element",atom_label}, atom_element,false);
 
 
         std::string orbital_str = GlobalV::global_orbital_dir + orbital_fn[i];

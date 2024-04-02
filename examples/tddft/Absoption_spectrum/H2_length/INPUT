@@ -26,12 +26,10 @@ md_tfirst       0
 
 #Parameters (6.Efield Parameters)
 td_vext         1
-td_stype        1
+td_stype        0
 
 td_tstart 		1
 td_tend			1000
-td_lcut1		0.01
-td_lcut2		0.99
 
 td_vext_dire    3 3
 td_ttype        0 0

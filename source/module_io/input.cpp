@@ -4287,6 +4287,10 @@ void Input::Check(void)
         {
             ModuleBase::WARNING_QUIT("INPUT", "sccut must > 0");
         }
+        if (nupdown > 0.0)
+        {
+            ModuleBase::WARNING_QUIT("INPUT", "nupdown should not be set when sc_mag_switch > 0");
+        }
     }
     if(qo_switch)
     {

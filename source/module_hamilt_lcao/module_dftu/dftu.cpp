@@ -355,4 +355,32 @@ void DFTU::cal_energy_correction(const int istep)
     return;
 }
 
+void DFTU::set_dmr(const elecstate::DensityMatrix<std::complex<double>, double>* dmr)
+{
+    this->dm_in_dftu_cd = dmr;
+    return;
+}
+
+void DFTU::set_dmr(const elecstate::DensityMatrix<double, double>* dmr)
+{
+    this->dm_in_dftu_d = dmr;
+    return;
+}
+
+const hamilt::HContainer<double>* DFTU::get_dmr(int ispin) const
+{
+    if(this->dm_in_dftu_d != nullptr)
+    {
+        return this->dm_in_dftu_d->get_DMR_pointer(ispin+1);
+    }
+    else if(this->dm_in_dftu_cd != nullptr)
+    {
+        return this->dm_in_dftu_cd->get_DMR_pointer(ispin+1);
+    }
+    else
+    {
+        return nullptr;
+    }
+}
+
 } // namespace ModuleDFTU

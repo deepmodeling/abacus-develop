@@ -38,7 +38,9 @@ void Force_LCAO_gamma::ftable_gamma(const bool isforce,
 #else
                                     ModuleBase::matrix& svl_dphi,
 #endif
-                                    LCAO_Hamilt& uhm)
+									LCAO_Hamilt &uhm,
+                                    Gint_Gamma &gint_gamma,
+									LCAO_Matrix &lm)
 {
     ModuleBase::TITLE("Force_LCAO_gamma", "ftable");
     ModuleBase::timer::tick("Force_LCAO_gamma", "ftable_gamma");
@@ -49,22 +51,21 @@ void Force_LCAO_gamma::ftable_gamma(const bool isforce,
 
     this->ParaV = DM->get_paraV_pointer();
     //const Parallel_Orbitals* pv = loc.ParaV;
-    this->UHM = &uhm;
 
     // allocate DSloc_x, DSloc_y, DSloc_z
     // allocate DHloc_fixed_x, DHloc_fixed_y, DHloc_fixed_z
-    this->allocate_gamma(*this->ParaV);
+    this->allocate_gamma(*this->ParaV, uhm.genH, lm);
 
     // calculate the 'energy density matrix' here.
-    this->cal_foverlap(isforce, isstress, psid, pelec, foverlap, soverlap);
+    this->cal_foverlap(isforce, isstress, psid, pelec, lm, foverlap, soverlap);
 
     // sum up the density matrix with different spin
     // DM->sum_DMR_spin();
     //
-    this->cal_ftvnl_dphi(DM, isforce, isstress, ftvnl_dphi, stvnl_dphi);
+    this->cal_ftvnl_dphi(DM, lm, isforce, isstress, ftvnl_dphi, stvnl_dphi);
     this->cal_fvnl_dbeta(DM, isforce, isstress, fvnl_dbeta, svnl_dbeta);
 
-    this->cal_fvl_dphi(loc.DM, isforce, isstress, pelec->pot, fvl_dphi, svl_dphi);
+    this->cal_fvl_dphi(loc.DM, isforce, isstress, pelec->pot, gint_gamma, fvl_dphi, svl_dphi);
 
     // caoyu add for DeePKS
 #ifdef __DEEPKS
@@ -119,13 +120,16 @@ void Force_LCAO_gamma::ftable_gamma(const bool isforce,
 
     // delete DSloc_x, DSloc_y, DSloc_z
     // delete DHloc_fixed_x, DHloc_fixed_y, DHloc_fixed_z
-    this->finish_ftable_gamma();
+    this->finish_ftable_gamma(lm);
 
     ModuleBase::timer::tick("Force_LCAO_gamma", "ftable_gamma");
     return;
 }
 
-void Force_LCAO_gamma::allocate_gamma(const Parallel_Orbitals& pv)
+void Force_LCAO_gamma::allocate_gamma(
+    const Parallel_Orbitals &pv,
+    LCAO_gen_fixedH &gen_h,
+    LCAO_Matrix &lm)
 {
     ModuleBase::TITLE("Force_LCAO_gamma", "allocate_gamma");
     ModuleBase::timer::tick("Force_LCAO_gamma", "allocate_gamma");
@@ -138,108 +142,134 @@ void Force_LCAO_gamma::allocate_gamma(const Parallel_Orbitals& pv)
     // liaochen add on 2010/7/12
     // save the results in dense matrix by now.
     // pv.nloc: number of H elements in this proc.
-    this->UHM->LM->DSloc_x = new double[pv.nloc];
-    this->UHM->LM->DSloc_y = new double[pv.nloc];
-    this->UHM->LM->DSloc_z = new double[pv.nloc];
-    ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DSloc_x, pv.nloc);
-    ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DSloc_y, pv.nloc);
-    ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DSloc_z, pv.nloc);
+    lm.DSloc_x = new double[pv.nloc];
+    lm.DSloc_y = new double[pv.nloc];
+    lm.DSloc_z = new double[pv.nloc];
+    ModuleBase::GlobalFunc::ZEROS(lm.DSloc_x, pv.nloc);
+    ModuleBase::GlobalFunc::ZEROS(lm.DSloc_y, pv.nloc);
+    ModuleBase::GlobalFunc::ZEROS(lm.DSloc_z, pv.nloc);
     ModuleBase::Memory::record("Force::dS_GO", sizeof(double) * pv.nloc * 3);
     // allocate stress part in gamma_only-line, added by zhengdy-stress
     if (GlobalV::CAL_STRESS)
     {
-        this->UHM->LM->DSloc_11 = new double[pv.nloc];
-        this->UHM->LM->DSloc_12 = new double[pv.nloc];
-        this->UHM->LM->DSloc_13 = new double[pv.nloc];
-        this->UHM->LM->DSloc_22 = new double[pv.nloc];
-        this->UHM->LM->DSloc_23 = new double[pv.nloc];
-        this->UHM->LM->DSloc_33 = new double[pv.nloc];
-        ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DSloc_11, pv.nloc);
-        ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DSloc_12, pv.nloc);
-        ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DSloc_13, pv.nloc);
-        ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DSloc_22, pv.nloc);
-        ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DSloc_23, pv.nloc);
-        ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DSloc_33, pv.nloc);
-        this->UHM->LM->DHloc_fixed_11 = new double[pv.nloc];
-        this->UHM->LM->DHloc_fixed_12 = new double[pv.nloc];
-        this->UHM->LM->DHloc_fixed_13 = new double[pv.nloc];
-        this->UHM->LM->DHloc_fixed_22 = new double[pv.nloc];
-        this->UHM->LM->DHloc_fixed_23 = new double[pv.nloc];
-        this->UHM->LM->DHloc_fixed_33 = new double[pv.nloc];
-        ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DHloc_fixed_11, pv.nloc);
-        ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DHloc_fixed_12, pv.nloc);
-        ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DHloc_fixed_13, pv.nloc);
-        ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DHloc_fixed_22, pv.nloc);
-        ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DHloc_fixed_23, pv.nloc);
-        ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DHloc_fixed_33, pv.nloc);
+        lm.DSloc_11 = new double[pv.nloc];
+        lm.DSloc_12 = new double[pv.nloc];
+        lm.DSloc_13 = new double[pv.nloc];
+        lm.DSloc_22 = new double[pv.nloc];
+        lm.DSloc_23 = new double[pv.nloc];
+        lm.DSloc_33 = new double[pv.nloc];
+        ModuleBase::GlobalFunc::ZEROS(lm.DSloc_11, pv.nloc);
+        ModuleBase::GlobalFunc::ZEROS(lm.DSloc_12, pv.nloc);
+        ModuleBase::GlobalFunc::ZEROS(lm.DSloc_13, pv.nloc);
+        ModuleBase::GlobalFunc::ZEROS(lm.DSloc_22, pv.nloc);
+        ModuleBase::GlobalFunc::ZEROS(lm.DSloc_23, pv.nloc);
+        ModuleBase::GlobalFunc::ZEROS(lm.DSloc_33, pv.nloc);
+        lm.DHloc_fixed_11 = new double[pv.nloc];
+        lm.DHloc_fixed_12 = new double[pv.nloc];
+        lm.DHloc_fixed_13 = new double[pv.nloc];
+        lm.DHloc_fixed_22 = new double[pv.nloc];
+        lm.DHloc_fixed_23 = new double[pv.nloc];
+        lm.DHloc_fixed_33 = new double[pv.nloc];
+        ModuleBase::GlobalFunc::ZEROS(lm.DHloc_fixed_11, pv.nloc);
+        ModuleBase::GlobalFunc::ZEROS(lm.DHloc_fixed_12, pv.nloc);
+        ModuleBase::GlobalFunc::ZEROS(lm.DHloc_fixed_13, pv.nloc);
+        ModuleBase::GlobalFunc::ZEROS(lm.DHloc_fixed_22, pv.nloc);
+        ModuleBase::GlobalFunc::ZEROS(lm.DHloc_fixed_23, pv.nloc);
+        ModuleBase::GlobalFunc::ZEROS(lm.DHloc_fixed_33, pv.nloc);
         ModuleBase::Memory::record("Stress::dSH_GO", sizeof(double) * pv.nloc * 12);
     }
     // calculate dS in LCAO basis
     // ModuleBase::timer::tick("Force_LCAO_gamma","build_S_new");
-    this->UHM->genH.build_ST_new('S', cal_deri, GlobalC::ucell, this->UHM->LM->Sloc.data());
+    gen_h.build_ST_new('S', cal_deri, GlobalC::ucell, lm.Sloc.data());
     // ModuleBase::timer::tick("Force_LCAO_gamma","build_S_new");
 
     // calculate dT in LCAP
     // allocation dt
     // liaochen add on 2010/7/12
-    this->UHM->LM->DHloc_fixed_x = new double[pv.nloc];
-    this->UHM->LM->DHloc_fixed_y = new double[pv.nloc];
-    this->UHM->LM->DHloc_fixed_z = new double[pv.nloc];
+    lm.DHloc_fixed_x = new double[pv.nloc];
+    lm.DHloc_fixed_y = new double[pv.nloc];
+    lm.DHloc_fixed_z = new double[pv.nloc];
     ModuleBase::Memory::record("Force::dTVNL", sizeof(double) * pv.nloc * 3);
-    ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DHloc_fixed_x, pv.nloc);
-    ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DHloc_fixed_y, pv.nloc);
-    ModuleBase::GlobalFunc::ZEROS(this->UHM->LM->DHloc_fixed_z, pv.nloc);
+    ModuleBase::GlobalFunc::ZEROS(lm.DHloc_fixed_x, pv.nloc);
+    ModuleBase::GlobalFunc::ZEROS(lm.DHloc_fixed_y, pv.nloc);
+    ModuleBase::GlobalFunc::ZEROS(lm.DHloc_fixed_z, pv.nloc);
 
     // calculate dT
     // calculate T + VNL(P1) in LCAO basis
     // ModuleBase::timer::tick("Force_LCAO_gamma","build_T_new");
-    this->UHM->genH.build_ST_new('T', cal_deri, GlobalC::ucell, this->UHM->LM->Hloc_fixed.data());
+    gen_h.build_ST_new('T', cal_deri, GlobalC::ucell, lm.Hloc_fixed.data());
     // ModuleBase::timer::tick("Force_LCAO_gamma","build_T_new");
-    // test_gamma(this->UHM->LM->DHloc_fixed_x, "dHloc_fixed_x T part");
+    // test_gamma(lm.DHloc_fixed_x, "dHloc_fixed_x T part");
 
     // ModuleBase::timer::tick("Force_LCAO_gamma","build_Nonlocal_mu");
-    this->UHM->genH.build_Nonlocal_mu_new(this->UHM->genH.LM->Hloc_fixed.data(), cal_deri);
+    gen_h.build_Nonlocal_mu_new(lm.Hloc_fixed.data(), cal_deri);
     // ModuleBase::timer::tick("Force_LCAO_gamma","build_Nonlocal_mu");
-    // test_gamma(this->UHM->LM->DHloc_fixed_x, "dHloc_fixed_x Vnl part");
+    // test_gamma(lm.DHloc_fixed_x, "dHloc_fixed_x Vnl part");
 
     // calculate asynchronous S matrix to output for Hefei-NAMD
     if (INPUT.cal_syns)
     {
         cal_deri = false;
-        this->UHM->genH.LM->zeros_HSgamma('S');
-        this->UHM->genH
-            .build_ST_new('S', cal_deri, GlobalC::ucell, this->UHM->genH.LM->Sloc.data(), INPUT.cal_syns, INPUT.dmax);
+
+        lm.zeros_HSgamma('S');
+
+        gen_h.build_ST_new('S', cal_deri, GlobalC::ucell, 
+
+        lm.Sloc.data(), INPUT.cal_syns, INPUT.dmax);
+
         bool bit = false; // LiuXh, 2017-03-21
-        ModuleIO::save_mat(0, this->UHM->genH.LM->Hloc.data(), GlobalV::NLOCAL, bit, GlobalV::out_ndigits, 0, GlobalV::out_app_flag, "H", "data-" + std::to_string(0), *this->ParaV, GlobalV::DRANK);
-        ModuleIO::save_mat(0, this->UHM->genH.LM->Sloc.data(), GlobalV::NLOCAL, bit, GlobalV::out_ndigits, 0, GlobalV::out_app_flag, "S", "data-" + std::to_string(0), *this->ParaV, GlobalV::DRANK);
-    }
+
+		ModuleIO::save_mat(0, 
+				lm.Hloc.data(), 
+				GlobalV::NLOCAL, 
+				bit, 
+				GlobalV::out_ndigits, 
+				0, 
+				GlobalV::out_app_flag, 
+				"H", 
+				"data-" + std::to_string(0), 
+				*this->ParaV, 
+				GlobalV::DRANK);
+
+		ModuleIO::save_mat(0, 
+				lm.Sloc.data(), 
+				GlobalV::NLOCAL, 
+				bit, 
+				GlobalV::out_ndigits, 
+				0, 
+				GlobalV::out_app_flag, 
+				"S", 
+				"data-" + std::to_string(0), 
+				*this->ParaV, 
+				GlobalV::DRANK);
+	}
 
     ModuleBase::timer::tick("Force_LCAO_gamma", "allocate_gamma");
     return;
 }
 
-void Force_LCAO_gamma::finish_ftable_gamma(void)
+void Force_LCAO_gamma::finish_ftable_gamma(LCAO_Matrix &lm)
 {
-    delete[] this->UHM->LM->DSloc_x;
-    delete[] this->UHM->LM->DSloc_y;
-    delete[] this->UHM->LM->DSloc_z;
-    delete[] this->UHM->LM->DHloc_fixed_x;
-    delete[] this->UHM->LM->DHloc_fixed_y;
-    delete[] this->UHM->LM->DHloc_fixed_z;
+    delete[] lm.DSloc_x;
+    delete[] lm.DSloc_y;
+    delete[] lm.DSloc_z;
+    delete[] lm.DHloc_fixed_x;
+    delete[] lm.DHloc_fixed_y;
+    delete[] lm.DHloc_fixed_z;
     if (GlobalV::CAL_STRESS) // added by zhengdy-stress
     {
-        delete[] this->UHM->LM->DSloc_11;
-        delete[] this->UHM->LM->DSloc_12;
-        delete[] this->UHM->LM->DSloc_13;
-        delete[] this->UHM->LM->DHloc_fixed_11;
-        delete[] this->UHM->LM->DHloc_fixed_12;
-        delete[] this->UHM->LM->DHloc_fixed_13;
-        delete[] this->UHM->LM->DSloc_22;
-        delete[] this->UHM->LM->DSloc_23;
-        delete[] this->UHM->LM->DSloc_33;
-        delete[] this->UHM->LM->DHloc_fixed_22;
-        delete[] this->UHM->LM->DHloc_fixed_23;
-        delete[] this->UHM->LM->DHloc_fixed_33;
+        delete[] lm.DSloc_11;
+        delete[] lm.DSloc_12;
+        delete[] lm.DSloc_13;
+        delete[] lm.DHloc_fixed_11;
+        delete[] lm.DHloc_fixed_12;
+        delete[] lm.DHloc_fixed_13;
+        delete[] lm.DSloc_22;
+        delete[] lm.DSloc_23;
+        delete[] lm.DSloc_33;
+        delete[] lm.DHloc_fixed_22;
+        delete[] lm.DHloc_fixed_23;
+        delete[] lm.DHloc_fixed_33;
     }
     return;
 }

@@ -285,9 +285,13 @@ void ModuleIO::write_proj_band_lcao(
             out << "<pband>" << std::endl;
             out << "<nspin>" << GlobalV::NSPIN << "</nspin>" << std::endl;
             if (GlobalV::NSPIN == 4)
+            {
                 out << "<norbitals>" << std::setw(2) << GlobalV::NLOCAL / 2 << "</norbitals>" << std::endl;
+            }
             else
+            {
                 out << "<norbitals>" << std::setw(2) << GlobalV::NLOCAL << "</norbitals>" << std::endl;
+            }
             out << "<band_structure nkpoints=\"" << nks << "\" nbands=\"" << GlobalV::NBANDS << "\" units=\"eV\">"
                 << std::endl;
                 for (int ik = 0; ik < nks; ik++)

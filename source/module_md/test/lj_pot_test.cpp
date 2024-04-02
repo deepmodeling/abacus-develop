@@ -35,7 +35,7 @@ class LJ_pot_test : public testing::Test
         Setcell::parameters();
 
         ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
-        p_esolver->Init(INPUT, ucell);
+        p_esolver->init(INPUT, ucell);
         MD_func::force_virial(p_esolver, 0, ucell, potential, force, true, stress);
     }
 
