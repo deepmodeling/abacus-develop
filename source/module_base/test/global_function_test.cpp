@@ -228,7 +228,7 @@ TEST_F(GlobalFunctionTest, OutV2)
     ModuleBase::GlobalFunc::OUT(ofs, "tmp_double", tmp_double);
     ModuleBase::GlobalFunc::OUT(ofs, "tmp_string", tmp_string);
     std::string para = "";
-    int length;
+    int length = 0;
     for (int i=0;i<50;i++)
     {
     	para += "a";
@@ -365,7 +365,7 @@ TEST_F(GlobalFunctionTest, ToString)
     EXPECT_EQ(ModuleBase::GlobalFunc::TO_STRING(tmp_double),"5");
     EXPECT_EQ(ModuleBase::GlobalFunc::TO_STRING(tmp_string),"string");
     std::string para = "";
-    int length;
+    int length = 0;
     for (int i=0;i<100;i++)
     {
     	para += "a";
@@ -451,7 +451,7 @@ TEST_F(GlobalFunctionTest, AutoSet)
     ModuleBase::GlobalFunc::AUTO_SET("tmp_d", tmp_d);
     ModuleBase::GlobalFunc::AUTO_SET("tmp_string", tmp_string);
     std::string para = "";
-    int length;
+    int length = 0;
     for (int i=0;i<10;i++)
     {
     	para += "a";
@@ -559,8 +559,8 @@ TEST_F(GlobalFunctionTest, ReadValue)
     ofs << "string" << std::endl;
     ofs.close();
     ifs.open("tmp");
-    int tmp_int;
-    double tmp_double;
+    int tmp_int = 0;
+    double tmp_double = 0.0;
     std::string tmp_string;
     // source/module_cell/read_atoms.cpp line 153:154
     ModuleBase::GlobalFunc::READ_VALUE(ifs, tmp_int);
