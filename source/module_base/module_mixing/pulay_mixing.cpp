@@ -135,7 +135,7 @@ void Pulay_Mixing::tem_cal_coef(const Mixing_Data& mdata, std::function<double(F
         double* work = new double[ndim_use];
         int* iwork = new int[ndim_use];
         char uu = 'U';
-        int info = 0;
+        int info;
         dsytrf_(&uu, &ndim_use, beta_tmp.c, &ndim_use, iwork, work, &ndim_use, &info);
         if (info != 0)
             ModuleBase::WARNING_QUIT("Charge_Mixing", "Error when factorizing beta.");
