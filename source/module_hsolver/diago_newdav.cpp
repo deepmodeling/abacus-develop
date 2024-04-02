@@ -444,6 +444,7 @@ void Diago_NewDav<T, Device>::cal_elem(const int& dim,
                              this->nbase_x);
     }
 
+#ifdef __MPI
     if (GlobalV::NPROC_IN_POOL > 1)
     {
         matrixTranspose_op<T, Device>()(this->ctx, this->nbase_x, this->nbase_x, hcc, hcc);
@@ -508,6 +509,7 @@ void Diago_NewDav<T, Device>::cal_elem(const int& dim,
         matrixTranspose_op<T, Device>()(this->ctx, this->nbase_x, this->nbase_x, hcc, hcc);
         matrixTranspose_op<T, Device>()(this->ctx, this->nbase_x, this->nbase_x, scc, scc);
     }
+#endif
 
     nbase += notconv;
     int nb1 = nbase - notconv;
@@ -682,6 +684,7 @@ void Diago_NewDav<T, Device>::diag_zhegvx(const int& nbase,
             }
         }
 
+#ifdef __MPI
         if (GlobalV::NPROC_IN_POOL > 1)
         {
             // vcc: nbase * nband
@@ -691,6 +694,8 @@ void Diago_NewDav<T, Device>::diag_zhegvx(const int& nbase,
             }
             MPI_Bcast(this->eigenvalue_in_dav, nband, MPI_DOUBLE, 0, POOL_WORLD);
         }
+#endif
+
     }
     else if (is_subspace == true)
     {
@@ -700,10 +705,14 @@ void Diago_NewDav<T, Device>::diag_zhegvx(const int& nbase,
 
             vcc[m * this->nbase_x + m] = set_real_tocomplex(1.0);
         }
+        
+#ifdef __MPI
         if (GlobalV::NPROC_IN_POOL > 1)
         {
             MPI_Bcast(this->eigenvalue_in_dav, this->n_band, MPI_DOUBLE, 0, POOL_WORLD);
         }
+#endif
+
     }
 
     ModuleBase::timer::tick("Diago_NewDav", "diag_zhegvx");
