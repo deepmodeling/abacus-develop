@@ -39,8 +39,8 @@ TEST(ToolThreadingTEST, TastDist1DInt)
     int nw=1;
     int iw=1;
     int nt=16;
-    int st;
-    int le;
+    int st=0;
+    int le=0;
     ModuleBase::TASK_DIST_1D(nw,iw,nt,st,le);
     EXPECT_EQ(st,0);
     EXPECT_EQ(le,16);
@@ -81,8 +81,8 @@ TEST(ToolThreadingTEST, BlockTaskDist1DInt)
     int nw=1;
     int iw=1;
     int nt=16;
-    int st;
-    int le;
+    int st=0;
+    int le=0;
     int bs=1;
     ModuleBase:: BLOCK_TASK_DIST_1D(nw,iw,nt,bs,st,le);
     EXPECT_EQ(st,0);

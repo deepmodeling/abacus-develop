@@ -19,12 +19,12 @@
 
 TEST(blacs_connector, Cblacs_gridinit)
 {
-    int icontxt;
+    int icontxt = 0;
     char layout[] = "ROW";
     int nprow = 1;
     int npcol = 1;
 
-    int myid, nprocs;
+    int myid = 0, nprocs = 0;
     Cblacs_pinfo(&myid, &nprocs);
     Cblacs_get(-1, 0, &icontxt);
 
@@ -37,8 +37,8 @@ TEST(blacs_connector, Cblacs_gridinit)
 
 int main(int argc, char** argv)
 {
-    int myrank;
-    int mysize;
+    int myrank = 0;
+    int mysize = 0;
 
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &mysize);

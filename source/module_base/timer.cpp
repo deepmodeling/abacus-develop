@@ -94,7 +94,7 @@ void timer::tick(const std::string &class_name,const std::string &name)
 		if(timer_one.start_flag)
 		{
 #ifdef __MPI
-			int is_initialized;
+			int is_initialized = 0;
     		MPI_Initialized(&is_initialized);
 			if(is_initialized)
 			{
@@ -109,7 +109,7 @@ void timer::tick(const std::string &class_name,const std::string &name)
 		else
 		{
 #ifdef __MPI
-			int is_initialized;
+			int is_initialized = 0;
     		MPI_Initialized(&is_initialized);
 			if(is_initialized)
 			{
@@ -144,11 +144,11 @@ void timer::write_to_json(std::string file_name)
 #ifdef __MPI
     // in some unit test, the mpi is not initialized, so we need to check it
 	// if mpi is not initialized, we do not run this function
-	int is_initialized;
+	int is_initialized = 0;
     MPI_Initialized(&is_initialized);
 	if (!is_initialized)
 		return;	
-	int my_rank;
+	int my_rank = 0;
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 	if (my_rank != 0)
 		return;

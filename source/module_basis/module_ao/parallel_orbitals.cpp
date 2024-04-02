@@ -214,7 +214,7 @@ int Parallel_Orbitals::set_nloc_wfc_Eij(
 {
     ModuleBase::TITLE("Parallel_Orbitals", "set_nloc_wfc_Eij");
     // for wavefuncton , calculate nbands_loc
-    int end_id;
+    int end_id = 0;
     int block = N_A / nb;
     if (block * nb < N_A)
     {
