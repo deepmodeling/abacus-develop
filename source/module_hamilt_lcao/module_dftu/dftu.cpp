@@ -373,4 +373,16 @@ void DFTU::uramping_update()
     }
 }
 
+bool DFTU::U_converged()
+{
+    for(int i = 0; i < this->U0.size(); i++)
+    {
+        if (this->U[i] != this->U0[i]) 
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
 } // namespace ModuleDFTU
