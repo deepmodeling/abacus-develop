@@ -358,7 +358,7 @@ void DFTU::cal_energy_correction(const int istep)
 void DFTU::uramping_update()
 {
     // if uramping < 0.1, use the original U
-    if(this->uramping < 0.1) return;
+    if(this->uramping < 0.01) return;
     // loop to change U
     for(int i = 0; i < this->U0.size(); i++)
     {

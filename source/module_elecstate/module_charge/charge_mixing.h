@@ -102,6 +102,7 @@ class Charge_Mixing
 
     // for mixing restart
     int mixing_restart = 0; //which step to restart mixing during SCF
+    int mixing_restart_count = 0; // the number of restart mixing during SCF
 
   private:
   

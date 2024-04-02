@@ -2475,6 +2475,7 @@ bool Input::Read(const std::string& fn)
             else if (strcmp("uramping", word) == 0)
             {
                 read_value(ifs, uramping);
+                uramping /= ModuleBase::Ry_to_eV;
             }
             else if (strcmp("hubbard_u", word) == 0)
             {

@@ -424,7 +424,7 @@ void Input_Conv::Convert(void)
         }
         GlobalC::dftu.U = INPUT.hubbard_u;
         GlobalC::dftu.U0 = std::vector<double>(INPUT.hubbard_u, INPUT.hubbard_u + GlobalC::ucell.ntype);
-        if (INPUT.uramping > 0.1) ModuleBase::GlobalFunc::ZEROS(GlobalC::dftu.U, GlobalC::ucell.ntype);
+        if (INPUT.uramping > 0.01) ModuleBase::GlobalFunc::ZEROS(GlobalC::dftu.U, GlobalC::ucell.ntype);
     }
     GlobalV::onsite_radius = INPUT.onsite_radius;
 #endif

@@ -548,16 +548,19 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
     {
         this->p_chgmix->init_mixing(); // init mixing
         this->p_chgmix->mixing_restart = GlobalV::SCF_NMAX + 1;
+        this->p_chgmix->mixing_restart_count = 0;
     }
     // for mixing restart
     if (iter == this->p_chgmix->mixing_restart 
         && GlobalV::MIXING_RESTART > 0.0)
     {
         this->p_chgmix->init_mixing();
+        this->p_chgmix->mixing_restart_count++;
         if (GlobalV::dft_plus_u)
         {   
             GlobalC::dftu.uramping_update(); // update U by uramping if uramping > 0.1
-            if(GlobalC::dftu.uramping > 0.1 && !GlobalC::dftu.u_converged()) this->p_chgmix->mixing_restart = GlobalV::SCF_NMAX + 1;
+            std::cout << " Current U = " << GlobalC::dftu.U[0] << " Ry " << std::endl;
+            if(GlobalC::dftu.uramping > 0.01 && !GlobalC::dftu.u_converged()) this->p_chgmix->mixing_restart = GlobalV::SCF_NMAX + 1;
         }
         if (GlobalV::MIXING_DMR) // for mixing_dmr 
         {
@@ -693,7 +696,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density(int istep, int iter, double ethr)
     // save input rho
     this->pelec->charge->save_rho_before_sum_band();
     // save density matrix for mixing
-    if (GlobalV::MIXING_RESTART > 0 && GlobalV::MIXING_DMR && iter >= this->p_chgmix->mixing_restart)
+    if (GlobalV::MIXING_RESTART > 0 && GlobalV::MIXING_DMR && this->p_chgmix->mixing_restart_count > 0)
     {
         elecstate::DensityMatrix<TK, double>* dm
             = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
@@ -902,7 +905,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int iter)
     ModuleBase::TITLE("ESolver_KS_LCAO", "iter_finish");
 
     // mix density matrix
-    if (GlobalV::MIXING_RESTART > 0 && iter >= this->p_chgmix->mixing_restart && GlobalV::MIXING_DMR )
+    if (GlobalV::MIXING_RESTART > 0 && this->p_chgmix->mixing_restart_count > 0 && GlobalV::MIXING_DMR )
     {
         elecstate::DensityMatrix<TK, double>* dm
                     = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
