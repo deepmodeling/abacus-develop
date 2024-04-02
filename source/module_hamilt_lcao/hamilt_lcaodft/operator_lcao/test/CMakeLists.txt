@@ -51,6 +51,16 @@ AddTest(
   tmp_mocks.cpp ../../../../module_hamilt_general/operator.cpp
 )
 
+AddTest(
+  TARGET operator_dftu_test
+  LIBS ${math_libs} psi base device numerical_atomic_orbitals container 
+  SOURCES test_dftu.cpp ../dftu_lcao.cpp ../../../module_hcontainer/func_folding.cpp 
+  ../../../module_hcontainer/base_matrix.cpp ../../../module_hcontainer/hcontainer.cpp ../../../module_hcontainer/atom_pair.cpp  
+  ../../../../module_basis/module_ao/parallel_2d.cpp ../../../../module_basis/module_ao/parallel_orbitals.cpp 
+  ../../../../module_basis/module_ao/ORB_atomic_lm.cpp
+  tmp_mocks.cpp ../../../../module_hamilt_general/operator.cpp
+)
+
 install(FILES parallel_operator_tests.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 find_program(BASH bash)
 add_test(NAME operators_para_test
