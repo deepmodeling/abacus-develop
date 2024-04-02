@@ -14,7 +14,7 @@
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h" //caoyu add for deepks 2021-06-03
 #include "module_elecstate/elecstate_lcao.h"
 #endif
-#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dftu_new.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dftu_lcao.h"
 
 template <typename T>
 Force_Stress_LCAO<T>::Force_Stress_LCAO(Record_adj& ra, const int nat_in) : RA(&ra), f_pw(nat_in), nat(nat_in)
@@ -240,14 +240,14 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
         }
         else
         {
-            hamilt::DFTUNew<hamilt::OperatorLCAO<T, double>> tmp_dftu(uhm.LM,
+            hamilt::DFTU<hamilt::OperatorLCAO<T, double>> tmp_dftu(uhm.LM,
                                                                  kv.kvec_d,
                                                                  nullptr,
                                                                  nullptr,
-                                                                 &GlobalC::ucell,
+                                                                 GlobalC::ucell,
                                                                  &GlobalC::GridD,
                                                                  &GlobalC::dftu,
-                                                                 uhm.LM->ParaV);
+                                                                 *(uhm.LM->ParaV));
             tmp_dftu.cal_force_stress(isforce, isstress, force_dftu, stress_dftu);
         }
     }

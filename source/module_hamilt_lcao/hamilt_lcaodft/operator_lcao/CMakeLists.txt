@@ -12,7 +12,7 @@ add_library(
     td_ekinetic_lcao.cpp
     td_nonlocal_lcao.cpp
     sc_lambda_lcao.cpp
-    dftu_new.cpp
+    dftu_lcao.cpp
 )
 
 if(ENABLE_COVERAGE)
