@@ -366,7 +366,7 @@ void Mathzone_Add1::Uni_Deriv_Phi
 	//fftw_destroy_plan(p2);
 #endif
 
-	bool is_re;
+	bool is_re = true;
 	double fac = 0.0;
 	if (nd % 4 == 0) 
 	{
