@@ -5,7 +5,7 @@
 #include "diago_bpcg.h"
 #include "diago_cg.h"
 #include "diago_david.h"
-#include "diago_newdav.h"
+#include "diago_subspacedav.h"
 #include "module_base/timer.h"
 #include "module_base/tool_quit.h"
 #include "module_elecstate/elecstate_pw.h"

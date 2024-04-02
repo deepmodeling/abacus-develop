@@ -2,7 +2,7 @@ list(APPEND objects
     diagh_consts.cpp
     diago_cg.cpp
     diago_david.cpp
-    diago_newdav.cpp
+    diago_subspacedav.cpp
     diago_bpcg.cpp
     hsolver_pw.cpp
     hsolver_pw_sdft.cpp
