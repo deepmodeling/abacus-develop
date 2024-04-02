@@ -392,7 +392,9 @@ void ESolver_KS<T, Device>::run(const int istep, UnitCell& ucell)
 		ModuleBase::timer::tick(this->classname, "run");
 
 		this->before_scf(istep); //Something else to do before the iter loop
+
 		ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT SCF");
+
 		if(this->maxniter > 0)  
 		{
 			this->print_head(); //print the headline on the screen.
@@ -499,9 +501,6 @@ void ESolver_KS<T, Device>::run(const int istep, UnitCell& ucell)
                (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() 
                 - iterstart)).count() / static_cast<double>(1e6);
 #endif
-			/*
-			   SCF print: G1    -3.435545e+03  0.000000e+00   3.607e-01  2.862e-01
-			 */
 
 			double dkin = 0.0; // for meta-GGA
 			if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
@@ -525,7 +524,10 @@ void ESolver_KS<T, Device>::run(const int istep, UnitCell& ucell)
 			{
 				this->niter = iter;
 				bool stop = this->do_after_converge(iter);
-				if(stop) break;
+				if(stop) 
+				{
+					break;
+				}
 			}
 
 			// notice for restart
@@ -544,7 +546,9 @@ void ESolver_KS<T, Device>::run(const int istep, UnitCell& ucell)
 				this->conv_elec
 				);
 #endif //__RAPIDJSON 
-		after_scf(istep);
+
+		this->after_scf(istep);
+
 		ModuleBase::timer::tick(this->classname, "run");
 	} 
 

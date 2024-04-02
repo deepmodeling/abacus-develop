@@ -7,6 +7,7 @@ void Force_LCAO_gamma::cal_fvl_dphi(
 	const bool isforce, 
     const bool isstress,
     const elecstate::Potential* pot_in,
+    Gint_Gamma &gint_gamma,
     ModuleBase::matrix& fvl_dphi,
 	ModuleBase::matrix& svl_dphi)
 {   
@@ -27,13 +28,22 @@ void Force_LCAO_gamma::cal_fvl_dphi(
 
         if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
         {
-            Gint_inout inout(DM_in, is, vr_eff1, vofk_eff1, isforce, isstress, &fvl_dphi, &svl_dphi, Gint_Tools::job_type::force_meta);
-            this->UHM->GG.cal_gint(&inout);
+            Gint_inout inout(DM_in, 
+					is, 
+					vr_eff1, 
+					vofk_eff1, 
+					isforce, 
+					isstress, 
+					&fvl_dphi, 
+					&svl_dphi, 
+					Gint_Tools::job_type::force_meta);
+
+            gint_gamma.cal_gint(&inout);
         }
         else
         {
             Gint_inout inout(DM_in, is, vr_eff1, isforce, isstress, &fvl_dphi, &svl_dphi, Gint_Tools::job_type::force);
-            this->UHM->GG.cal_gint(&inout);
+            gint_gamma.cal_gint(&inout);
         }
         
     }

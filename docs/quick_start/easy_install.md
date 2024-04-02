@@ -152,6 +152,7 @@ You can change the number after `-j` on your need: set to the number of CPU core
 ## Run
 
 If ABACUS is installed into a custom directory using `CMAKE_INSTALL_PREFIX`, please add it to your environment variable `PATH` to locate the correct executable.
+*(Note: `my-install-dir` should be changed to the location of your installed abacus:`/home/your-path/abacus/bin/`.)*
 
 ```bash
 export PATH=/my-install-dir/:$PATH

@@ -79,8 +79,8 @@ void ESolver_KS_LCAO_TDDFT::init(Input& inp, UnitCell& ucell)
         this->pelec = new elecstate::ElecStateLCAO_TDDFT(&(this->chr),
                                                          &(kv),
                                                          kv.nks,
-                                                         &(this->LOC),
-                                                         &(this->UHM),
+														 &(this->LOC),
+														 &(this->GK), // mohan add 2024-04-01
                                                          &(this->LOWF),
                                                          this->pw_rho,
                                                          pw_big);
@@ -90,7 +90,7 @@ void ESolver_KS_LCAO_TDDFT::init(Input& inp, UnitCell& ucell)
     // Init Basis should be put outside of Ensolver.
     // * reading the localized orbitals/projectors
     // * construct the interpolation tables.
-    this->Init_Basis_lcao(this->orb_con, inp, ucell);
+    this->init_basis_lcao(this->orb_con, inp, ucell);
     //------------------init Basis_lcao----------------------
 
     //------------------init Hamilt_lcao----------------------
@@ -264,7 +264,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
     {
         if (!GlobalV::GAMMA_ONLY_LOCAL)
         {
-            this->UHM.GK.renew(true);
+            this->GK.renew(true);
         }
         for (int ik = 0; ik < kv.nks; ++ik)
         {

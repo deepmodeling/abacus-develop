@@ -6,6 +6,10 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_wfc.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_hamilt.h"
+// for grid integration
+#include "module_hamilt_lcao/module_gint/gint_gamma.h"
+#include "module_hamilt_lcao/module_gint/gint_k.h"
+
 #include "module_basis/module_ao/ORB_control.h"
 #ifdef __EXX
 #include "module_ri/Mix_DMk_2D.h"
@@ -32,9 +36,9 @@ namespace ModuleESolver
 
         double cal_energy() override;
 
-        void cal_force(ModuleBase::matrix& force) override;
+        void cal_force(ModuleBase::matrix &force) override;
 
-        void cal_stress(ModuleBase::matrix& stress) override;
+        void cal_stress(ModuleBase::matrix &stress) override;
 
         void post_process() override;
 
@@ -75,6 +79,12 @@ namespace ModuleESolver
         // we will get rid of this class soon, don't use it, mohan 2024-03-28
         LCAO_Hamilt UHM;
 
+        // used for k-dependent grid integration.
+        Gint_k GK;
+
+		// used for gamma only algorithms.
+		Gint_Gamma GG;
+
         // we will get rid of this class soon, don't use it, mohan 2024-03-28
         LCAO_Matrix LM;
 
@@ -89,7 +99,7 @@ namespace ModuleESolver
         ModuleBase::matrix scs;
         bool have_force = false;
 
-        void Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell& ucell);
+        void init_basis_lcao(ORB_control& orb_con, Input& inp, UnitCell& ucell);
 
         //--------------common for all calculation, not only scf-------------
         // set matrix and grid integral
