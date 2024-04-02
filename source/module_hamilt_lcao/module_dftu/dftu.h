@@ -42,6 +42,7 @@ class DFTU
     // calculate the energy correction
     void cal_energy_correction(const int istep);
     double get_energy(){return EU;}
+    void uramping_update(); // update U by uramping
 
     double* U; // U (Hubbard parameter U)
     std::vector<double> U0; // U0 (target Hubbard parameter U0)
