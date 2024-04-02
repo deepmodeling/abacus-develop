@@ -21,7 +21,7 @@ namespace ABFs_Construct::PCA
 		const int nr = a.shape[0];
 		const int nc = a.shape[1];
 
-		double work_tmp=0;
+		double work_tmp=1;
 		constexpr int minus_one = -1;
 		dsyev_(&jobz, &uplo, &nr, a.ptr(), &nc, w, &work_tmp, &minus_one, &info);		// get best lwork
 
@@ -117,7 +117,7 @@ namespace ABFs_Construct::PCA
 				RI::Tensor<double> mm = A_sub.transpose() * A_sub;
 				std::vector<double> eig_value(mm.shape[0]);
 				
-				int info=0;
+				int info=1;
 
 				tensor_dsyev('V', 'L', mm, eig_value.data(), info);
 
