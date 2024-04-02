@@ -110,7 +110,7 @@ class DensityMatrix
      * @param j column index
      * @return T a matrix element of density matrix dm(k)
      */
-    TK& get_DMK(const int ispin, const int ik, const int i, const int j) const;
+    TK get_DMK(const int ispin, const int ik, const int i, const int j) const;
 
     /**
      * @brief get total number of k-points of density matrix dm(k)
@@ -139,9 +139,11 @@ class DensityMatrix
      * @brief get pointer vector of DMR
      * @return HContainer<TR>* vector of DMR
      */
-    std::vector<hamilt::HContainer<TR>*>& get_DMR_vector() const {return this->_DMR;}
+    const std::vector<hamilt::HContainer<TR>*>& get_DMR_vector() const {return this->_DMR;}
+    std::vector<hamilt::HContainer<TR>*>& get_DMR_vector() {return this->_DMR;}
 
-    std::vector<std::vector<TR>>& get_DMR_save() const {return _DMR_save;}
+    const std::vector<std::vector<TR>>& get_DMR_save() const {return this->_DMR_save;}
+    std::vector<std::vector<TR>>& get_DMR_save() {return this->_DMR_save;}
 
     /**
      * @brief get pointer of DMK
@@ -153,7 +155,8 @@ class DensityMatrix
     /**
      * @brief get pointer vector of DMK
     */
-    std::vector<std::vector<TK>>& get_DMK_vector() const {return this->_DMK;}
+    const std::vector<std::vector<TK>>& get_DMK_vector() const {return this->_DMK;}
+    std::vector<std::vector<TK>>& get_DMK_vector() {return this->_DMK;}
 
     /**
      * @brief set _DMK using a input TK* pointer

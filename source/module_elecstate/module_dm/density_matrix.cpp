@@ -306,7 +306,7 @@ void DensityMatrix<TK, TR>::set_DMK_zero()
 
 // get a matrix element of density matrix dm(k)
 template <typename TK, typename TR>
-TK& DensityMatrix<TK, TR>::get_DMK(const int ispin, const int ik, const int i, const int j) const
+TK DensityMatrix<TK, TR>::get_DMK(const int ispin, const int ik, const int i, const int j) const
 {
 #ifdef __DEBUG
     assert(ispin > 0 && ispin <= this->_nspin);
