@@ -17,7 +17,7 @@
 using namespace hsolver;
 
 template <typename T, typename Device>
-Diago_NewDav<T, Device>::Diago_NewDav(const Real* precondition_in)
+Diago_SubspaceDav<T, Device>::Diago_SubspaceDav(const Real* precondition_in)
 {
     this->device = psi::device::get_device_type<Device>(this->ctx);
     this->precondition = precondition_in;
@@ -34,7 +34,7 @@ Diago_NewDav<T, Device>::Diago_NewDav(const Real* precondition_in)
 }
 
 template <typename T, typename Device>
-Diago_NewDav<T, Device>::~Diago_NewDav()
+Diago_SubspaceDav<T, Device>::~Diago_SubspaceDav()
 {
     delmem_complex_op()(this->ctx, this->hphi);
     delmem_complex_op()(this->ctx, this->hcc);
@@ -50,19 +50,19 @@ Diago_NewDav<T, Device>::~Diago_NewDav()
 }
 
 template <typename T, typename Device>
-void Diago_NewDav<T, Device>::diag_once(hamilt::Hamilt<T, Device>* phm_in,
+void Diago_SubspaceDav<T, Device>::diag_once(hamilt::Hamilt<T, Device>* phm_in,
                                         psi::Psi<T, Device>& psi,
                                         Real* eigenvalue_in_hsolver,
                                         std::vector<bool>& is_occupied)
 {
     if (test_david == 1)
     {
-        ModuleBase::TITLE("Diago_NewDav", "diag_once");
+        ModuleBase::TITLE("Diago_SubspaceDav", "diag_once");
     }
-    ModuleBase::timer::tick("Diago_NewDav", "diag_once");
+    ModuleBase::timer::tick("Diago_SubspaceDav", "diag_once");
 
-    assert(Diago_NewDav::PW_DIAG_NDIM > 1);
-    assert(Diago_NewDav::PW_DIAG_NDIM * psi.get_nbands() < psi.get_current_nbas() * GlobalV::NPROC_IN_POOL);
+    assert(Diago_SubspaceDav::PW_DIAG_NDIM > 1);
+    assert(Diago_SubspaceDav::PW_DIAG_NDIM * psi.get_nbands() < psi.get_current_nbas() * GlobalV::NPROC_IN_POOL);
 
     // qianrui change it 2021-7-25.
     // In strictly speaking, it shoule be PW_DIAG_NDIM*nband < npw sum of all pools. We roughly estimate it here.
@@ -111,7 +111,7 @@ void Diago_NewDav<T, Device>::diag_once(hamilt::Hamilt<T, Device>* phm_in,
     // the number of the unconvergent bands
     this->notconv = this->n_band;
 
-    ModuleBase::timer::tick("Diago_NewDav", "first");
+    ModuleBase::timer::tick("Diago_SubspaceDav", "first");
 
     for (int m = 0; m < this->n_band; m++)
     {
@@ -145,7 +145,7 @@ void Diago_NewDav<T, Device>::diag_once(hamilt::Hamilt<T, Device>* phm_in,
         eigenvalue_in_hsolver[m] = this->eigenvalue_in_dav[m];
     }
 
-    ModuleBase::timer::tick("Diago_NewDav", "first");
+    ModuleBase::timer::tick("Diago_SubspaceDav", "first");
 
     int dav_iter = 0;
     do
@@ -175,7 +175,7 @@ void Diago_NewDav<T, Device>::diag_once(hamilt::Hamilt<T, Device>* phm_in,
                           false);
 
         // check convergence and update eigenvalues
-        ModuleBase::timer::tick("Diago_NewDav", "check_update");
+        ModuleBase::timer::tick("Diago_SubspaceDav", "check_update");
 
         this->notconv = 0;
         for (int m = 0; m < this->n_band; m++)
@@ -200,12 +200,12 @@ void Diago_NewDav<T, Device>::diag_once(hamilt::Hamilt<T, Device>* phm_in,
             eigenvalue_in_hsolver[m] = this->eigenvalue_in_dav[m];
         }
 
-        ModuleBase::timer::tick("Diago_NewDav", "check_update");
+        ModuleBase::timer::tick("Diago_SubspaceDav", "check_update");
 
         if (this->notconv == 0 || (nbase + this->notconv + 1 > this->nbase_x)
             || (dav_iter == DiagoIterAssist<T, Device>::PW_DIAG_NMAX))
         {
-            ModuleBase::timer::tick("Diago_NewDav", "last");
+            ModuleBase::timer::tick("Diago_SubspaceDav", "last");
 
             // updata eigenvectors of Hamiltonian
             setmem_complex_op()(this->ctx, psi.get_pointer(), 0, n_band * psi.get_nbasis());
@@ -230,7 +230,7 @@ void Diago_NewDav<T, Device>::diag_once(hamilt::Hamilt<T, Device>* phm_in,
             {
                 // overall convergence or last iteration: exit the iteration
 
-                ModuleBase::timer::tick("Diago_NewDav", "last");
+                ModuleBase::timer::tick("Diago_SubspaceDav", "last");
                 break;
             }
             else
@@ -249,7 +249,7 @@ void Diago_NewDav<T, Device>::diag_once(hamilt::Hamilt<T, Device>* phm_in,
                               this->hcc,
                               this->scc,
                               this->vcc);
-                ModuleBase::timer::tick("Diago_NewDav", "last");
+                ModuleBase::timer::tick("Diago_SubspaceDav", "last");
             }
         }
 
@@ -259,13 +259,13 @@ void Diago_NewDav<T, Device>::diag_once(hamilt::Hamilt<T, Device>* phm_in,
 
     DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(dav_iter);
 
-    ModuleBase::timer::tick("Diago_NewDav", "diag_once");
+    ModuleBase::timer::tick("Diago_SubspaceDav", "diag_once");
 
     return;
 }
 
 template <typename T, typename Device>
-void Diago_NewDav<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
+void Diago_SubspaceDav<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
                                        const int& dim,
                                        const int& nbase,
                                        const int& notconv,
@@ -275,7 +275,7 @@ void Diago_NewDav<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
                                        const int* unconv,
                                        Real* eigenvalue_in_dav)
 {
-    ModuleBase::timer::tick("Diago_NewDav", "cal_grad");
+    ModuleBase::timer::tick("Diago_SubspaceDav", "cal_grad");
 
     for (size_t i = 0; i < notconv; i++)
     {
@@ -361,12 +361,12 @@ void Diago_NewDav<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
     hpsi_info dav_hpsi_in(&basis, psi::Range(1, 0, nbase, nbase + notconv - 1), &hphi[nbase * this->dim]);
     phm_in->ops->hPsi(dav_hpsi_in);
 
-    ModuleBase::timer::tick("Diago_NewDav", "cal_grad");
+    ModuleBase::timer::tick("Diago_SubspaceDav", "cal_grad");
     return;
 }
 
 template <typename T, typename Device>
-void Diago_NewDav<T, Device>::cal_elem(const int& dim,
+void Diago_SubspaceDav<T, Device>::cal_elem(const int& dim,
                                        int& nbase,
                                        const int& notconv,
                                        const psi::Psi<T, Device>& basis,
@@ -375,7 +375,7 @@ void Diago_NewDav<T, Device>::cal_elem(const int& dim,
                                        T* scc,
                                        bool init)
 {
-    ModuleBase::timer::tick("Diago_NewDav", "cal_elem");
+    ModuleBase::timer::tick("Diago_SubspaceDav", "cal_elem");
 
     if (init)
     {
@@ -591,12 +591,12 @@ void Diago_NewDav<T, Device>::cal_elem(const int& dim,
     //     std::cout << std::endl;
     // }
 
-    ModuleBase::timer::tick("Diago_NewDav", "cal_elem");
+    ModuleBase::timer::tick("Diago_SubspaceDav", "cal_elem");
     return;
 }
 
 template <typename T, typename Device>
-void Diago_NewDav<T, Device>::diag_zhegvx(const int& nbase,
+void Diago_SubspaceDav<T, Device>::diag_zhegvx(const int& nbase,
                                           const int& nband,
                                           T* hcc,
                                           T* scc,
@@ -606,7 +606,7 @@ void Diago_NewDav<T, Device>::diag_zhegvx(const int& nbase,
                                           bool init,
                                           bool is_subspace)
 {
-    ModuleBase::timer::tick("Diago_NewDav", "diag_zhegvx");
+    ModuleBase::timer::tick("Diago_SubspaceDav", "diag_zhegvx");
 
     if (is_subspace == false)
     {
@@ -715,12 +715,12 @@ void Diago_NewDav<T, Device>::diag_zhegvx(const int& nbase,
 
     }
 
-    ModuleBase::timer::tick("Diago_NewDav", "diag_zhegvx");
+    ModuleBase::timer::tick("Diago_SubspaceDav", "diag_zhegvx");
     return;
 }
 
 template <typename T, typename Device>
-void Diago_NewDav<T, Device>::refresh(const int& dim,
+void Diago_SubspaceDav<T, Device>::refresh(const int& dim,
                                       const int& nband,
                                       int& nbase,
                                       const Real* eigenvalue_in_hsolver,
@@ -731,7 +731,7 @@ void Diago_NewDav<T, Device>::refresh(const int& dim,
                                       T* hc,
                                       T* vc)
 {
-    ModuleBase::timer::tick("Diago_NewDav", "refresh");
+    ModuleBase::timer::tick("Diago_SubspaceDav", "refresh");
 
     // update basis
     for (size_t i = 0; i < nband; i++)
@@ -814,13 +814,13 @@ void Diago_NewDav<T, Device>::refresh(const int& dim,
             vcc[i * this->nbase_x + i] = this->one[0];
         }
     }
-    ModuleBase::timer::tick("Diago_NewDav", "refresh");
+    ModuleBase::timer::tick("Diago_SubspaceDav", "refresh");
 
     return;
 }
 
 template <typename T, typename Device>
-void Diago_NewDav<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
+void Diago_SubspaceDav<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
                                    psi::Psi<T, Device>& psi,
                                    Real* eigenvalue_in_hsolver,
                                    std::vector<bool>& is_occupied)
@@ -908,7 +908,7 @@ void Diago_NewDav<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
     if (notconv > std::max(5, psi.get_nbands() / 4))
     {
         std::cout << "\n notconv = " << this->notconv;
-        std::cout << "\n Diago_NewDav::diag', too many bands are not converged! \n";
+        std::cout << "\n Diago_SubspaceDav::diag', too many bands are not converged! \n";
     }
 
     if (outputeigenvalue)
@@ -957,19 +957,19 @@ void Diago_NewDav<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
 namespace hsolver
 {
 
-template class Diago_NewDav<std::complex<float>, psi::DEVICE_CPU>;
-template class Diago_NewDav<std::complex<double>, psi::DEVICE_CPU>;
+template class Diago_SubspaceDav<std::complex<float>, psi::DEVICE_CPU>;
+template class Diago_SubspaceDav<std::complex<double>, psi::DEVICE_CPU>;
 
 #if ((defined __CUDA) || (defined __ROCM))
-template class Diago_NewDav<std::complex<float>, psi::DEVICE_GPU>;
-template class Diago_NewDav<std::complex<double>, psi::DEVICE_GPU>;
+template class Diago_SubspaceDav<std::complex<float>, psi::DEVICE_GPU>;
+template class Diago_SubspaceDav<std::complex<double>, psi::DEVICE_GPU>;
 #endif
 
 #ifdef __LCAO
-template class Diago_NewDav<double, psi::DEVICE_CPU>;
+template class Diago_SubspaceDav<double, psi::DEVICE_CPU>;
 
 #if ((defined __CUDA) || (defined __ROCM))
-template class Diago_NewDav<double, psi::DEVICE_GPU>;
+template class Diago_SubspaceDav<double, psi::DEVICE_GPU>;
 #endif
 
 #endif

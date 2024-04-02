@@ -289,7 +289,7 @@ void ElecState::print_etot(const bool converged,
     {
         label = "DA";
     }
-    else if (ks_solver_type == "new_dav")
+    else if (ks_solver_type == "subspace_dav")
     {
         label = "ND";
     }
