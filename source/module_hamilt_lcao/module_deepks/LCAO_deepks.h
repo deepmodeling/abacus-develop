@@ -93,6 +93,8 @@ private:
     int nks_V_delta = 0;
 
     bool init_pdm = false; //for DeePKS NSCF calculation
+
+    bool if_equiv = false; //equivariant version
     
 	// deep neural network module that provides corrected Hamiltonian term and
 	// related derivatives.
@@ -106,7 +108,7 @@ private:
     std::vector<std::map<key_tuple,std::unordered_map<int,std::vector<std::vector<double>>>>> nlm_save_k;
 
     // projected density matrix
-	double** pdm;	//[tot_Inl][2l+1][2l+1]	caoyu modified 2021-05-07
+	double** pdm;	//[tot_Inl][2l+1][2l+1]	caoyu modified 2021-05-07; if equivariant version: [nat][nlm*nlm]
 	std::vector<torch::Tensor> pdm_tensor;
 
 	// descriptors
@@ -287,11 +289,20 @@ public:
         const elecstate::DensityMatrix<std::complex<double>, double>* dm,
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
-        Grid_Driver& GridD,
-        const int nks,
-        const std::vector<ModuleBase::Vector3<double>> &kvec_d);
+        Grid_Driver& GridD);
     void check_projected_dm(void);
 
+    void cal_projected_DM_equiv(
+        const elecstate::DensityMatrix<double, double>* dm,
+        const UnitCell &ucell,
+        const LCAO_Orbitals &orb,
+        Grid_Driver& GridD);
+    void cal_projected_DM_k_equiv(
+        const elecstate::DensityMatrix<std::complex<double>, double>* dm,
+        const UnitCell &ucell,
+        const LCAO_Orbitals &orb,
+        Grid_Driver& GridD);
+        
     //calculate the gradient of pdm with regard to atomic positions
     //d/dX D_{Inl,mm'}
     void cal_gdmx(//const ModuleBase::matrix& dm,

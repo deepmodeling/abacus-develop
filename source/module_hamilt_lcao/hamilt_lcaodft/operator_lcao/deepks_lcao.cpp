@@ -189,9 +189,7 @@ void DeePKS<OperatorLCAO<std::complex<double>, double>>::contributeHR()
         GlobalC::ld.cal_projected_DM_k(this->DM,
             *this->ucell,
             GlobalC::ORB,
-            GlobalC::GridD,
-            this->nks,
-            this->kvec_d);
+            GlobalC::GridD);
         GlobalC::ld.cal_descriptor();
         // calculate dE/dD
         GlobalC::ld.cal_gedm(this->ucell->nat);
@@ -230,9 +228,7 @@ void DeePKS<OperatorLCAO<std::complex<double>, std::complex<double>>>::contribut
         GlobalC::ld.cal_projected_DM_k(this->DM,
             *this->ucell,
             GlobalC::ORB,
-            GlobalC::GridD,
-            this->nks,
-            this->kvec_d);
+            GlobalC::GridD);
         GlobalC::ld.cal_descriptor();
         // calculate dE/dD
         GlobalC::ld.cal_gedm(this->ucell->nat);

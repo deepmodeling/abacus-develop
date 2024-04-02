@@ -87,17 +87,35 @@ void LCAO_Deepks::init(
     assert(nm >= 0);
     assert(tot_inl_per_atom >= 0);
     
-    const int tot_inl = tot_inl_per_atom * nat;
+    int tot_inl = tot_inl_per_atom * nat;
+
+    if(if_equiv) tot_inl = nat;
 
     this->lmaxd = lm;
     this->nmaxd = nm;
-    this->inlmax = tot_inl;
+    
     GlobalV::ofs_running << " lmax of descriptor = " << this->lmaxd << std::endl;
     GlobalV::ofs_running << " nmax of descriptor= " << nmaxd << std::endl;
-	GlobalV::ofs_running << " total basis (all atoms) for descriptor= " << std::endl;
-    
-    //init pdm**
-    const int pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);
+
+    int pdm_size = 0;
+    this->inlmax = tot_inl;
+    if(!if_equiv)
+    {
+        GlobalV::ofs_running << " total basis (all atoms) for descriptor= " << std::endl;
+
+        //init pdm**
+        pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);
+    }
+    else
+    {
+        for(int il = 0; il < this->lmaxd + 1; il++)
+        {
+            pdm_size += (2 * il + 1) * orb.Alpha[0].getNchi(il);
+        }
+        pdm_size = pdm_size * pdm_size;
+        GlobalV::ofs_running << " Equivariant version, size of pdm matrices : " << pdm_size << std::endl;
+    }
+
     this->pdm = new double* [this->inlmax];
     for (int inl = 0;inl < this->inlmax;inl++)
     {
@@ -106,15 +124,17 @@ void LCAO_Deepks::init(
     }
 
     // cal n(descriptor) per atom , related to Lmax, nchi(L) and m. (not total_nchi!)
-	this->des_per_atom=0; // mohan add 2021-04-21
-    for (int l = 0; l <= this->lmaxd; l++)
+    if(!if_equiv)
     {
-        this->des_per_atom += orb.Alpha[0].getNchi(l) * (2 * l + 1);
+        this->des_per_atom=0; // mohan add 2021-04-21
+        for (int l = 0; l <= this->lmaxd; l++)
+        {
+            this->des_per_atom += orb.Alpha[0].getNchi(l) * (2 * l + 1);
+        }
+        this->n_descriptor = nat * this->des_per_atom;
+
+        this->init_index(ntype, nat, na, tot_inl, orb);
     }
-
-    this->n_descriptor = nat * this->des_per_atom;
-
-    this->init_index(ntype, nat, na, tot_inl, orb);
     this->allocate_nlm(nat);
 
     this->pv = &pv_in;

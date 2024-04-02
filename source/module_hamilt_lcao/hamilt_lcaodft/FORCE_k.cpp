@@ -84,7 +84,7 @@ void Force_LCAO_k::ftable_k(const bool isforce,
     if (GlobalV::deepks_scf)
     {
         const std::vector<std::vector<std::complex<double>>>& dm_k = DM->get_DMK_vector();
-        GlobalC::ld.cal_projected_DM_k(DM, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD, kv.nks, kv.kvec_d);
+        GlobalC::ld.cal_projected_DM_k(DM, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD);
         GlobalC::ld.cal_descriptor();
         GlobalC::ld.cal_gedm(GlobalC::ucell.nat);
 

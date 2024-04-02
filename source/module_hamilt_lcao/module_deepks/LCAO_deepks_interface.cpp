@@ -188,7 +188,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(double etot,
     {
         // this part is for integrated test of deepks
         // so it is printed no matter even if deepks_out_labels is not used
-        ld->cal_projected_DM_k(dm, ucell, orb, GridD, nks, kvec_d);
+        ld->cal_projected_DM_k(dm, ucell, orb, GridD);
         ld->check_projected_dm(); // print out the projected dm for NSCF calculaiton
         ld->cal_descriptor();     // final descriptor
         ld->check_descriptor(ucell);

@@ -52,9 +52,7 @@ namespace ModuleESolver
         GlobalC::ld.cal_projected_DM_k(dm, //this->LOC.dm_k,
             GlobalC::ucell,
             GlobalC::ORB,
-            GlobalC::GridD,
-            this->kv.nks,
-            this->kv.kvec_d);
+            GlobalC::GridD);
     }
     template<>
     void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::dpks_cal_projected_DM(const elecstate::DensityMatrix<std::complex<double>, double>* dm)const
@@ -62,9 +60,7 @@ namespace ModuleESolver
         GlobalC::ld.cal_projected_DM_k(dm, //this->LOC.dm_k,
             GlobalC::ucell,
             GlobalC::ORB,
-            GlobalC::GridD,
-            this->kv.nks,
-            this->kv.kvec_d);
+            GlobalC::GridD);
     }
 #endif
 }
