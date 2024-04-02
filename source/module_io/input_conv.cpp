@@ -423,6 +423,7 @@ void Input_Conv::Convert(void)
             INPUT.hubbard_u = new double[GlobalC::ucell.ntype];
         }
         GlobalC::dftu.U = INPUT.hubbard_u;
+        GlobalC::dftu.U0 = std::vector<double>(INPUT.hubbard_u, INPUT.hubbard_u + GlobalC::ucell.ntype);
     }
     GlobalV::onsite_radius = INPUT.onsite_radius;
 #endif
