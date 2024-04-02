@@ -160,7 +160,7 @@ void Parallel_Global::read_mpi_parameters(int argc,char **argv)
 {
 #ifdef __MPI
 #ifdef _OPENMP
-	int provided;
+	int provided = 0;
 	MPI_Init_thread(&argc,&argv,MPI_THREAD_MULTIPLE,&provided);
 	if( provided != MPI_THREAD_MULTIPLE )
 		GlobalV::ofs_warning<<"MPI_Init_thread request "<<MPI_THREAD_MULTIPLE<<" but provide "<<provided<<std::endl;
@@ -186,7 +186,7 @@ void Parallel_Global::read_mpi_parameters(int argc,char **argv)
 #endif
     MPI_Comm shmcomm;
     MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, 0, MPI_INFO_NULL, &shmcomm);
-    int process_num, local_rank;
+    int process_num = 0, local_rank = 0;
     MPI_Comm_size(shmcomm, &process_num);
     MPI_Comm_rank(shmcomm, &local_rank);
     MPI_Comm_free(&shmcomm);
