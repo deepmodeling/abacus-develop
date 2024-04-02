@@ -111,10 +111,13 @@ void ESolver_KS_LCAO<TK, TR>::init(Input& inp, UnitCell& ucell)
     // autoset nbands in ElecState, it should before basis_init (for Psi 2d divid)
     if (this->pelec == nullptr)
     {
-        this->pelec = new elecstate::ElecStateLCAO<TK>(&(this->chr),
+        this->pelec = new elecstate::ElecStateLCAO<TK>(
+            &(this->chr),
             &(this->kv),
             this->kv.nks,
             &(this->LOC),
+            &(this->GG), // mohan add 2024-04-01
+            &(this->GK), // mohan add 2024-04-01
             &(this->UHM),
             &(this->LOWF),
             this->pw_rho,
@@ -255,6 +258,8 @@ void ESolver_KS_LCAO<TK, TR>::init_after_vc(Input& inp, UnitCell& ucell)
 				&(this->kv),
 				this->kv.nks,
 				&(this->LOC),
+                &(this->GG), // mohan add 2024-04-01
+                &(this->GK), // mohan add 2024-04-01
 				&(this->UHM),
 				&(this->LOWF),
 				this->pw_rho,
@@ -313,6 +318,8 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(ModuleBase::matrix& force)
 			this->pelec,
 			this->psi,
 			this->UHM,
+            this->GG, // mohan add 2024-04-01
+            this->GK, // mohan add 2024-04-01
 			force,
 			this->scs,
 			this->sf,
@@ -665,7 +672,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
         // update Gint_K
         if (!GlobalV::GAMMA_ONLY_LOCAL)
         {
-            this->UHM.GK.renew();
+            this->GK.renew();
         }
         // update real space Hamiltonian
         this->p_hamilt->refresh();
@@ -803,7 +810,7 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
     {
         if (!GlobalV::GAMMA_ONLY_LOCAL && hsolver::HSolverLCAO<TK>::out_mat_hs[0])
         {
-            this->UHM.GK.renew(true);
+            this->GK.renew(true);
         }
         for (int ik = 0; ik < this->kv.nks; ++ik)
         {
@@ -1016,9 +1023,24 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     bool out_exc = true;    // tmp, add parameter!
     if (GlobalV::out_mat_xc)
     {
-        ModuleIO::write_Vxc<TK, TR>(GlobalV::NSPIN, GlobalV::NLOCAL, GlobalV::DRANK,
-            *this->psi, GlobalC::ucell, this->sf, *this->pw_rho, *this->pw_rhod, GlobalC::ppcell.vloc,
-            *this->pelec->charge, this->UHM, this->LM, this->LOC, this->kv, this->pelec->wg, GlobalC::GridD);
+		ModuleIO::write_Vxc<TK, TR>(
+				GlobalV::NSPIN, 
+				GlobalV::NLOCAL, 
+				GlobalV::DRANK,
+				*this->psi, 
+				GlobalC::ucell, 
+				this->sf, 
+				*this->pw_rho, 
+				*this->pw_rhod, 
+				GlobalC::ppcell.vloc,
+				*this->pelec->charge, 
+				this->GG,
+				this->GK,
+				this->LM, 
+				this->LOC, 
+				this->kv, 
+				this->pelec->wg, 
+				GlobalC::GridD);
     }
 
 #ifdef __EXX
@@ -1181,7 +1203,8 @@ ModuleIO::Output_DM1 ESolver_KS_LCAO<TK, TR>::create_Output_DM1(int istep)
 template <typename TK, typename TR>
 ModuleIO::Output_Mat_Sparse<TK> ESolver_KS_LCAO<TK, TR>::create_Output_Mat_Sparse(int istep)
 {
-	return ModuleIO::Output_Mat_Sparse<TK>(hsolver::HSolverLCAO<TK>::out_mat_hsR,
+	return ModuleIO::Output_Mat_Sparse<TK>(
+            hsolver::HSolverLCAO<TK>::out_mat_hsR,
 			hsolver::HSolverLCAO<TK>::out_mat_dh,
 			hsolver::HSolverLCAO<TK>::out_mat_t,
 			INPUT.out_mat_r,
@@ -1189,6 +1212,7 @@ ModuleIO::Output_Mat_Sparse<TK> ESolver_KS_LCAO<TK, TR>::create_Output_Mat_Spars
 			this->pelec->pot->get_effective_v(),
 			*this->LOWF.ParaV,
 			this->UHM,
+            this->GK, // mohan add 2024-04-01
 			this->LM,
 			this->kv,
 			this->p_hamilt);

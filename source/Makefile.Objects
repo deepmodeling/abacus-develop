@@ -496,6 +496,10 @@ OBJS_LCAO=DM_gamma.o\
       FORCE_gamma_tvnl.o\
       FORCE_gamma_vl.o\
       FORCE_k.o\
+      foverlap_k.o\
+      ftvnl_dphi_k.o\
+      fvl_dphi_k.o\
+      fvnl_dbeta_k.o\
       LCAO_gen_fixedH.o\
       LCAO_hamilt.o\
       LCAO_matrix.o\

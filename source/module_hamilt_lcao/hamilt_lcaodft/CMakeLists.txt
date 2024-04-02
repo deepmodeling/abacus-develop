@@ -21,6 +21,10 @@ if(ENABLE_LCAO)
         FORCE_gamma_tvnl.cpp
         FORCE_gamma_vl.cpp
         FORCE_k.cpp
+        foverlap_k.cpp
+        ftvnl_dphi_k.cpp
+        fvl_dphi_k.cpp
+        fvnl_dbeta_k.cpp
         LCAO_gen_fixedH.cpp
         LCAO_hamilt.cpp
         LCAO_matrix.cpp

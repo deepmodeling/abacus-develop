@@ -59,6 +59,8 @@ void ModuleIO::output_HS_R(const int& istep,
 void ModuleIO::output_dH_R(const int& istep,
                            const ModuleBase::matrix& v_eff,
                            LCAO_Hamilt& UHM,
+                           Gint_k& gint_k,  // mohan add 2024-04-01
+                           LCAO_Matrix &lm,  // mohan add 2024-04-01
                            const K_Vectors& kv,
                            const bool& binary,
                            const double& sparse_threshold)
@@ -66,11 +68,13 @@ void ModuleIO::output_dH_R(const int& istep,
     ModuleBase::TITLE("ModuleIO","output_dH_R"); 
     ModuleBase::timer::tick("ModuleIO","output_dH_R"); 
 
-    UHM.LM->Hloc_fixedR.resize(UHM.LM->ParaV->nnr);
-    UHM.GK.allocate_pvdpR();
+    lm.Hloc_fixedR.resize(lm.ParaV->nnr);
+    gint_k.allocate_pvdpR();
     if(GlobalV::NSPIN==1||GlobalV::NSPIN==4)
     {
-        UHM.cal_dH_sparse(0, sparse_threshold);
+        // mohan add 2024-04-01
+        assert(GlobalV::CURRENT_SPIN==0);
+        UHM.cal_dH_sparse(GlobalV::CURRENT_SPIN, sparse_threshold, gint_k);
     }
     else if(GlobalV::NSPIN==2)
     {
@@ -91,19 +95,20 @@ void ModuleIO::output_dH_R(const int& istep,
                     if(GlobalV::VL_IN_H)
                     {
                         Gint_inout inout(vr_eff1, GlobalV::CURRENT_SPIN, Gint_Tools::job_type::dvlocal);
-                        UHM.GK.cal_gint(&inout);
+                        gint_k.cal_gint(&inout);
                     }
                 }
 
-                UHM.cal_dH_sparse(GlobalV::CURRENT_SPIN, sparse_threshold);
+                UHM.cal_dH_sparse(GlobalV::CURRENT_SPIN, sparse_threshold, gint_k);
             }
         }
     }
 
-    ModuleIO::save_dH_sparse(istep, *UHM.LM, sparse_threshold, binary);
+    // mohan update 2024-04-01
+    ModuleIO::save_dH_sparse(istep, lm, sparse_threshold, binary);
     UHM.destroy_dH_R_sparse();
 
-    UHM.GK.destroy_pvdpR();
+    gint_k.destroy_pvdpR();
 
     ModuleBase::timer::tick("ModuleIO","output_HS_R"); 
     return;

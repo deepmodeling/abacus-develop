@@ -13,6 +13,8 @@
 #ifdef __EXX
 #include "module_ri/Exx_LRI.h"
 #endif
+#include "module_hamilt_lcao/module_gint/gint_gamma.h"
+#include "module_hamilt_lcao/module_gint/gint_k.h"
 
 template<typename T>
 class Force_Stress_LCAO
@@ -35,7 +37,9 @@ class Force_Stress_LCAO
 		LCAO_Matrix &lm,
 		const elecstate::ElecState* pelec,
         const psi::Psi<T>* psi,
-        LCAO_Hamilt& uhm,
+		LCAO_Hamilt& uhm,
+		Gint_Gamma &gint_gamma, // mohan add 2024-04-01
+		Gint_k &gint_k, // mohan add 2024-04-01
         ModuleBase::matrix& fcs,
         ModuleBase::matrix& scs,
         const Structure_Factor& sf,
@@ -68,7 +72,8 @@ class Force_Stress_LCAO
                         ModulePW::PW_Basis* rhopw,
                         const Structure_Factor& sf);
 
-    void calForceStressIntegralPart(const bool isGammaOnly,
+    void integral_part(
+        const bool isGammaOnly,
         const bool isforce,
         const bool isstress,
         Local_Orbital_Charge& loc,
@@ -88,6 +93,8 @@ class Force_Stress_LCAO
         ModuleBase::matrix& svl_dphi,
 #endif
 		LCAO_Hamilt &uhm,
+		Gint_Gamma &gint_gamma,
+		Gint_k &gint_k,
 	    Parallel_Orbitals &pv,
 		LCAO_Matrix &lm,
 		const K_Vectors& kv);

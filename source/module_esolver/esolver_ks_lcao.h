@@ -6,6 +6,10 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_wfc.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_hamilt.h"
+// for grid integration
+#include "module_hamilt_lcao/module_gint/gint_gamma.h"
+#include "module_hamilt_lcao/module_gint/gint_k.h"
+
 #include "module_basis/module_ao/ORB_control.h"
 #ifdef __EXX
 #include "module_ri/Mix_DMk_2D.h"
@@ -74,6 +78,12 @@ namespace ModuleESolver
 
         // we will get rid of this class soon, don't use it, mohan 2024-03-28
         LCAO_Hamilt UHM;
+
+        // used for k-dependent grid integration.
+        Gint_k GK;
+
+		// used for gamma only algorithms.
+		Gint_Gamma GG;
 
         // we will get rid of this class soon, don't use it, mohan 2024-03-28
         LCAO_Matrix LM;

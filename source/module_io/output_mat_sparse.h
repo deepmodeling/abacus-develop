@@ -4,6 +4,7 @@
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_hamilt.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
+#include "module_hamilt_lcao/module_gint/gint_k.h"
 #include "module_hsolver/hsolver_lcao.h"
 #include "output_interface.h"
 
@@ -22,9 +23,11 @@ namespace ModuleIO
         const ModuleBase::matrix& v_eff,
         const Parallel_Orbitals& pv,
         LCAO_Hamilt& UHM,
+        Gint_k &gint_k, // mohan add 2024-04-01
         LCAO_Matrix& LM,
         const K_Vectors& kv,
         hamilt::Hamilt<T>* p_ham);
+
     void write() override;
 
   private:
@@ -36,6 +39,7 @@ namespace ModuleIO
     const ModuleBase::matrix& _v_eff;
     const Parallel_Orbitals& _pv;
     LCAO_Hamilt& _UHM;
+    Gint_k& _gint_k; // mohan add 2024-04-01
     LCAO_Matrix& _LM;
     const K_Vectors& _kv;
     hamilt::Hamilt<T>* _p_ham;
