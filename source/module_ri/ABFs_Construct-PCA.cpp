@@ -21,7 +21,7 @@ namespace ABFs_Construct::PCA
 		const int nr = a.shape[0];
 		const int nc = a.shape[1];
 
-		double work_tmp=1;
+		double work_tmp=0.0;
 		constexpr int minus_one = -1;
 		dsyev_(&jobz, &uplo, &nr, a.ptr(), &nc, w, &work_tmp, &minus_one, &info);		// get best lwork
 
