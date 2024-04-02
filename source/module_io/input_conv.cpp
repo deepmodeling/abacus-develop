@@ -413,6 +413,7 @@ void Input_Conv::Convert(void)
         GlobalC::dftu.Yukawa = INPUT.yukawa_potential;
         GlobalC::dftu.omc = INPUT.omc;
         GlobalC::dftu.orbital_corr = INPUT.orbital_corr;
+        GlobalC::dftu.uramping = INPUT.uramping;
         GlobalC::dftu.mixing_dftu = INPUT.mixing_dftu;
         if (INPUT.yukawa_potential && INPUT.hubbard_u == nullptr)
         {

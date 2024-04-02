@@ -45,6 +45,7 @@ class DFTU
 
     double* U; // U (Hubbard parameter U)
     int* orbital_corr; //
+    double uramping; // increase U by uramping, default is -1.0
     int omc; // occupation matrix control
     int mixing_dftu; //whether to mix locale
 
