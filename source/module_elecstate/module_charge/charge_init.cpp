@@ -52,7 +52,11 @@ void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMa
 #ifdef __MPI
                         &(GlobalC::Pgrid),
 #endif
+                        GlobalV::MY_RANK,
+                        GlobalV::ESOLVER_TYPE,
+                        GlobalV::RANK_IN_STOGROUP,
                         is,
+                        GlobalV::ofs_running,
                         GlobalV::NSPIN,
                         ssc.str(),
                         this->rho[is],
@@ -123,7 +127,11 @@ void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMa
 #ifdef __MPI
                             &(GlobalC::Pgrid),
 #endif
+                            GlobalV::MY_RANK,
+                            GlobalV::ESOLVER_TYPE,
+                            GlobalV::RANK_IN_STOGROUP,
                             is,
+                            GlobalV::ofs_running,
                             GlobalV::NSPIN,
                             ssc.str(),
                             this->kin_r[is],
@@ -174,7 +182,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMa
     {
         for (int is = 0; is < GlobalV::NSPIN; ++is)
         {
-            GlobalC::restart.load_disk("charge", is, this->nrxx, rho);
+            GlobalC::restart.load_disk("charge", is, this->nrxx, rho[is]);
         }
         GlobalC::restart.info_load.load_charge_finish = true;
     }

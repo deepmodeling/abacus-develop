@@ -779,23 +779,24 @@ int wavefunc::get_R(int ix, int iy, int iz)   // pengfei 2016-11-23
 }
 
 
-int wavefunc::iw2it( int iw)    // pengfei 2016-11-23
+int wavefunc::iw2it(int iw)    // pengfei 2016-11-23
 {
     int ic, type;
-    ic =0;
-    for(int it =0; it<GlobalC::ucell.ntype; it++)
+    ic = 0;
+    type = 0;
+    for(int it = 0; it<GlobalC::ucell.ntype; it++)
 	{
         for(int ia = 0; ia<GlobalC::ucell.atoms[it].na; ia++)
         {
-            for(int L=0; L<GlobalC::ucell.atoms[it].nwl+1; L++)
+            for(int L = 0; L<GlobalC::ucell.atoms[it].nwl+1; L++)
 			{
-                for(int N=0; N<GlobalC::ucell.atoms[it].l_nchi[L]; N++)
+                for(int N = 0; N<GlobalC::ucell.atoms[it].l_nchi[L]; N++)
                 {
                     for(int i=0; i<(2*L+1); i++)
                     {
                         if(ic == iw)
                         {
-                           type = it;
+                            type = it;
                         }
                         ic++;
 					}
@@ -809,7 +810,8 @@ int wavefunc::iw2it( int iw)    // pengfei 2016-11-23
 int wavefunc::iw2ia( int iw)    // pengfei 2016-11-23
 {
 	int ic, na;
-	ic =0;
+	ic = 0;
+    na = 0;
 	for(int it =0; it<GlobalC::ucell.ntype; it++)
 	{
 		for(int ia = 0; ia<GlobalC::ucell.atoms[it].na; ia++)

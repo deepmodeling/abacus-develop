@@ -55,6 +55,18 @@ void gen_general_info(Input *input)
     AbacusJson::add_json({"general_info", "kpt_file"}, input->kpoint_file,false);
     AbacusJson::add_json({"general_info", "start_time"}, start_time_str,false);
     AbacusJson::add_json({"general_info", "end_time"}, end_time_str,false);
+
+    // AbacusJson::add_Json(version,false,"general_info", "version");
+    // AbacusJson::add_Json(commit,false,"general_info", "commit");
+    // AbacusJson::add_Json(input->device,false,"general_info", "device");
+    // AbacusJson::add_Json(mpi_num,false,"general_info", "mpi_num");
+    // AbacusJson::add_Json(omp_num,false,"general_info", "omp_num");
+    // AbacusJson::add_Json(input->pseudo_dir,false,"general_info", "pseudo_dir");
+    // AbacusJson::add_Json(input->orbital_dir,false,"general_info", "orbital_dir");
+    // AbacusJson::add_Json(input->stru_file,false,"general_info", "stru_file");
+    // AbacusJson::add_Json(input->kpoint_file,false,"general_info", "kpt_file");
+    // AbacusJson::add_Json(start_time_str,false,"general_info", "start_time");
+    // AbacusJson::add_Json(end_time_str,false,"general_info", "end_time");
 }
 #endif
 } // namespace Json

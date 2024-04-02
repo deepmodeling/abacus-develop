@@ -7,17 +7,11 @@ Inspired by cp2k-toolchain, still in improvement.
 
 ## Options
 
-Before you use the toolchain installer, you SHOULD put it under the path of ABACUS
-
-```shell
-> mv abacus_toolchain path/to/abacus/
-```
-
 To use the ABACUS toolchain installer, you may want to first follow
 the instructions given in installer help message:
 
 ```shell
-> ./install_ABACUS_toolchain.sh --help
+> ./install_abacus_toolchain.sh --help
 ```
 
 ## Basic usage
@@ -25,13 +19,30 @@ the instructions given in installer help message:
 If you are new to ABACUS, and want a basic ABACUS binary, then just calling
 
 ```shell
-> ./install_ABACUS_toolchain.sh
+> ./toolchain_gnu.sh
 ```
+to install ABACUS requirements by gcc-openmpi-openblas toolchain or
+```shell
+> ./toolchain_intel.sh
+```
+to install ABACUS requirements by intel-mpi-mkl toolchain (intel-environments need to be loaded first)
+may be enough. 
+The gcc-toolchain will use your system gcc, and mpi library (if
+existing) and build scalapack, fftw, openblas, elpa and libxc from scratch,
+and give you compiled libraries that allow you to compile ABACUS. 
+The intel-toolchain will use your system intel-mpi and mkl library environments 
+to build elpa and libxc from scratch, and give you compiled libraries that allow you to compile ABACUS.
 
-may be enough. This will use your system gcc, and mpi library (if
-existing) and build scalapack, fftw, openblas (MKL will be used
-instead if MKLROOT env variable is found) and libxc from scratch, 
-and give you compiled libraries that allow you to compile ABACUS.
+After finish the toolchain requirements installation, you can use the following command to compile ABACUS:
+
+```shell
+> ./build_abacus_gnu.sh
+```
+or 
+```shell
+> ./build_abacus_intel.sh
+```
+to get ABACUS binary file.
 
 
 ## Complete toolchain build
@@ -40,7 +51,7 @@ For a complete toolchain build, with everything installed from
 scratch, use:
 
 ```shell
-> ./install_ABACUS_toolchain.sh --install-all
+> ./install_abacus_toolchain.sh --install-all
 ```
 
 ### Package settings
@@ -49,7 +60,7 @@ One can then change settings for some packages, by setting
 `--with-PKG` options after the `--install-all` option. e.g.:
 
 ```shell
-> ./install_ABACUS_toolchain.sh --install-all --with-mkl=system
+> ./install_abacus_toolchain.sh --install-all --with-mkl=system
 ```
 
 will set the script to look for a system MKL library to link, while
@@ -136,7 +147,7 @@ be installed separately by the user.
 
 ### Structure of the toolchain scripts
 
-- `install_ABACUS_toolchain.sh` is the main script that will call all
+- `install_abacus_toolchain.sh` is the main script that will call all
   other scripts.  It contains default flag settings, user input
   parser, calls to each package installation scripts and the
   generator of the ABACUS arch files.
@@ -151,7 +162,7 @@ be installed separately by the user.
   write to __two__ files: `build/setup_PKG` and `install/setup`.
 
   - The `build/setup_PKG` file contains all the instructions to set
-    the variables used by the `install_ABACUS_toolchain.sh` and other
+    the variables used by the `install_abacus_toolchain.sh` and other
     `script/install_PKG.sh` scripts in order for them to correctly
     compile the toolchain and set the correct library flags for the
     arch files.

@@ -20,7 +20,7 @@ SphbesRadials& SphbesRadials::operator=(const SphbesRadials& rhs)
     return *this;
 }
 
-void SphbesRadials::build(const std::string& file, const int itype, std::ofstream* ptr_log, const int rank)
+void SphbesRadials::build(const std::string& file, const double dr, const int itype, std::ofstream* ptr_log, const int rank)
 {
     cleanup();
     coeff_.clear();
@@ -57,6 +57,7 @@ void SphbesRadials::build(const std::string& file, const int itype, std::ofstrea
     }
 
     itype_ = itype;
+    dr_ = dr;
     read_coeff(ifs, ptr_log, rank);
     build_radset();
 
@@ -66,6 +67,46 @@ void SphbesRadials::build(const std::string& file, const int itype, std::ofstrea
     }
 }
 
+void SphbesRadials::build(const int lmax, const int nbes, const double rcut, const double sigma, const double dr, const int itype, std::ofstream* ptr_log, const int rank)
+{
+    cleanup();
+    coeff_.clear();
+
+    if (ptr_log)
+    {
+        (*ptr_log) << "\n\n\n\n";
+        (*ptr_log) << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+        (*ptr_log) << " |                                                                     |" << std::endl;
+        (*ptr_log) << " |               SETUP TRUNCATED SPHERICAL BESSEL ORBITALS             |" << std::endl;
+        (*ptr_log) << " |                                                                     |" << std::endl;
+        (*ptr_log) << " | Orbital information includes the cutoff radius, angular momentum,   |" << std::endl;
+        (*ptr_log) << " | zeta number, spherical Bessel coefficients and smoothing parameter. |" << std::endl;
+        (*ptr_log) << " |                                                                     |" << std::endl;
+        (*ptr_log) << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
+        (*ptr_log) << "\n\n\n\n";
+    }
+
+    itype_ = itype;
+    rcut_max_ = rcut;
+    sigma_ = sigma;
+    dr_ = dr;
+
+    //////////////////////////
+    // Instead of reading from a file, we will generate the coefficients here.
+    for (int l = 0; l <= lmax; ++l)
+    {
+        for (int zeta = 0; zeta < nbes; ++zeta)
+        {
+            std::vector<double> coeff_q(nbes, 0.0);
+            coeff_q[zeta] = 1.0;
+            coeff_.emplace(std::make_pair(l, zeta), std::move(coeff_q));
+        }
+    }
+
+    //////////////////////////
+
+    build_radset(false);
+}
 
 void SphbesRadials::read_coeff(std::ifstream& ifs, std::ofstream* ptr_log, const int rank)
 {
@@ -119,7 +160,6 @@ void SphbesRadials::read_coeff(std::ifstream& ifs, std::ofstream* ptr_log, const
     }
 }
 
-
 std::string SphbesRadials::extract(std::string const& str, std::string const& keyword) {
      std::smatch match;
      std::string regex_string = keyword + "=\" *([^= ]+) *\"";
@@ -159,6 +199,8 @@ std::vector<double> SphbesRadials::sphbes_comb(const int l,
     // f[ir] = \sum_{iq} coeff[iq] * j_{l}(q[i] * r[ir])
     for (size_t iq = 0; iq != q.size(); ++iq)
     {
+        if (coeff_q[iq] == 0.0) continue;
+
         ModuleBase::Sphbes::sphbesj(nr, r.data(), q[iq], l, tmp.data());
         for (size_t ir = 0; ir != tmp.size(); ++ir)
         {
@@ -174,7 +216,7 @@ double SphbesRadials::smooth(double r, double rcut, double sigma)
     return (r < rcut) * (sigma == 0 ? 1.0 : 1.0 - std::exp(-0.5 * std::pow( (r - rcut) / sigma, 2)));
 }
 
-void SphbesRadials::build_radset()
+void SphbesRadials::build_radset(const bool normalize)
 {
     // symbol_ is set in read_coeff()
     // itype_ is set in build()
@@ -216,6 +258,6 @@ void SphbesRadials::build_radset()
                 [this] (double ri, double fi) { return fi * smooth(ri, rcut_max_, sigma_); });
 
         chi_[index(l, izeta)].build(l, true, nr, r.data(), f.data(), 0, izeta, symbol_, itype_, false);
-        chi_[index(l, izeta)].normalize();
+        if (normalize) chi_[index(l, izeta)].normalize();
     }
 }

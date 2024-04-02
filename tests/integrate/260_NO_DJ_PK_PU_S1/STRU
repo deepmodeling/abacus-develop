@@ -3,7 +3,7 @@ Fe 1.000 Fe_ONCV_PBE-1.0.upf
 O  1.000 O_ONCV_PBE-1.0.upf
 
 NUMERICAL_ORBITAL
-Fe_gga_9au_100Ry_4s2p2d1f.orb
+Fe_gga_6au_100Ry_4s2p2d1f.orb
 O_gga_7au_100Ry_2s2p1d.orb
 
 LATTICE_CONSTANT
@@ -20,7 +20,7 @@ Fe
 0.0
 2
 0.00            0.00            0.00         mag  1.0
-0.50            0.50            0.50         mag  -1.0
+0.51            0.51            0.51         mag  1.0
 
 O
 0.0

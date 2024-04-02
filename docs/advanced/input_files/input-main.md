@@ -17,7 +17,7 @@
     - [init\_chg](#init_chg)
     - [init\_vel](#init_vel)
     - [nelec](#nelec)
-    - [nelec_delta](#nelec_delta)
+    - [nelec\_delta](#nelec_delta)
     - [nupdown](#nupdown)
     - [dft\_functional](#dft_functional)
     - [xc\_temperature](#xc_temperature)
@@ -277,6 +277,7 @@
     - [yukawa\_potential](#yukawa_potential)
     - [yukawa\_lambda](#yukawa_lambda)
     - [omc](#omc)
+    - [onsite\_radius](#onsite_radius)
   - [vdW correction](#vdw-correction)
     - [vdw\_method](#vdw_method)
     - [vdw\_s6](#vdw_s6)
@@ -337,8 +338,8 @@
     - [td\_trigo\_amp](#td_trigo_amp)
     - [td\_heavi\_t0](#td_heavi_t0)
     - [td\_heavi\_amp](#td_heavi_amp)
-    - [td\_out\_dipole](#td_out_dipole)
-    - [td\_out\_efield](#td_out_efield)
+    - [out\_dipole](#out_dipole)
+    - [out\_efield](#out_efield)
     - [ocp](#ocp)
     - [ocp\_set](#ocp_set)
   - [Variables useful for debugging](#variables-useful-for-debugging)
@@ -440,8 +441,9 @@ These variables are used to control general system parameters.
   - 0: Only time reversal symmetry would be considered in symmetry operations, which implied k point and -k point would be treated as a single k point with twice the weight.
   - 1: Symmetry analysis will be performed to determine the type of Bravais lattice and associated symmetry operations. (point groups, space groups, primitive cells, and irreducible k-points)
 - **Default**: 
-  - -1: if (*[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*) and *[calculation](#calculation)!=nscf*. Currently symmetry is not supported in EXX (exact exchange) calculation.
-  - 0: if *[calculation](#calculation)==md/nscf/get_pchg/get_wf/get_S* or *[gamma_only]==True*
+  - 0:
+    - if *[calculation](#calculation)==md/nscf/get_pchg/get_wf/get_S* or *[gamma_only]==True*;  
+    - If (*[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*). Currently *symmetry==1* is not supported in EXX (exact exchange) calculation.
   - 1: else
 
 ### symmetry_prec
@@ -1451,6 +1453,8 @@ These variables are used to control the output of properties.
   - npsin = 4: SPIN1_CHG.cube, SPIN2_CHG.cube, SPIN3_CHG.cube, and SPIN4_CHG.cube.
 
   The circle order of the charge density on real space grids is: x is the outer loop, then y and finally z (z is moving fastest).
+
+  If EXX(exact exchange) is calculated, (i.e. *[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*), the Hexx(R) files will be output in the folder `OUT.${suffix}` too, which can be read in NSCF calculation.
 - **Default**: False
 
 ### out_pot
@@ -1654,16 +1658,20 @@ These variables are used to control the output of properties.
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis
-- **Description**: Whether to save charge density files and Hamiltonian matrix files per ionic step, which are used to restart calculations. According to the value of [read_file_dir](#read_file_dir):
+- **Description**: Whether to save charge density files per ionic step, which are used to restart calculations. According to the value of [read_file_dir](#read_file_dir):
   - auto: These files are saved in folder `OUT.${suffix}/restart/`;
   - other: These files are saved in folder `${read_file_dir}/restart/`.
+  
+  If EXX(exact exchange) is calculated (i.e. *[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*), the Hexx(k) files for each k-point will also be saved in the above folder, which can be read in EXX calculation with *[restart_load](#restart_load)==True*.
 - **Default**: False
 
 ### restart_load
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis
-- **Description**: If [restart_save](#restart_save) is set to true and an electronic iteration is finished, calculations can be restarted from the charge density file and Hamiltonian matrix file, which are saved in the former calculation. Please ensure [read_file_dir](#read_file_dir) is correct, and  the charge density file and Hamiltonian matrix file exist.
+- **Description**: If [restart_save](#restart_save) is set to true and an electronic iteration is finished, calculations can be restarted from the charge density file, which are saved in the former calculation. Please ensure [read_file_dir](#read_file_dir) is correct, and  the charge density file exist.
+
+  If EXX(exact exchange) is calculated (i.e. *[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*), the Hexx(k) files in the same folder for each k-point will also be read.
 - **Default**: False
 
 ### rpa
@@ -2561,11 +2569,12 @@ These variables are used to control DFT+U correlated parameters
 
 ### dft_plus_u
 
-- **Type**: Boolean
+- **Type**: Integer
 - **Description**: Determines whether to calculate the plus U correction, which is especially important for correlated electrons.
-  - True: Calculate plus U correction.
-  - False: Do not calculate plus U correction.
-- **Default**: False
+  - 1: Calculate plus U correction with radius-adjustable localized projections (with parameter `onsite_radius`).
+  - 2: Calculate plus U correction using first zeta of NAOs as projections (this is old method for testing).
+  - 0: Do not calculate plus U correction.
+- **Default**: 0
 
 ### orbital_corr
 
@@ -2611,6 +2620,44 @@ These variables are used to control DFT+U correlated parameters
 > Note : The easiest way to create `initial_onsite.dm` is to run a DFT+U calculation, look for a file named `onsite.dm` in the OUT.prefix directory, and make replacements there. The format of the file is rather straight-forward.
 
 - **Default**: 0
+
+### onsite_radius
+
+- **Type**: Real
+- **Availability**: `dft_plus_u` is set to 1
+- **Description**: 
+
+  - The `Onsite-radius` parameter facilitates modulation of the single-zeta portion of numerical atomic orbitals for projections for DFT+U. 
+  - The modulation algorithm includes a smooth truncation applied directly to the tail of the original orbital, followed by normalization.  Consider the function:
+  $$
+  g(r;\sigma)=\begin{cases}
+  1-\exp\left(-\frac{(r-r_c)^2}{2\sigma^2}\right), & r < r_c\\
+  0, & r \geq r_c
+  \end{cases}
+  $$
+  - where $\sigma$ is a parameter that controls the smoothing interval. A normalized function truncated smoothly at $r_c$ can be represented as:
+
+  $$
+  \alpha(r) = \frac{\chi(r)g(r;\sigma)}{\langle\chi(r)g(r;\sigma), \chi(r)g(r;\sigma)\rangle}
+  $$
+
+  - To find an appropriate $\sigma$, the optimization process is as follows:
+
+  - Maximizing the overlap integral under a normalization constraint is equivalent to minimizing an error function:
+
+  $$
+  \min \langle \chi(r)-\alpha(r), \chi(r)-\alpha(r)\rangle \quad \text{subject to} \quad \langle \alpha(r),\alpha(r)\rangle=1
+  $$
+
+  - Similar to the process of generating numerical atomic orbitals, this optimization choice often induces additional oscillations in the outcome. To suppress these oscillations, we may include a derivative term in the objective function ($f'(r)\equiv \mathrm{d}f(r)/\mathrm{d}r$):
+
+  $$
+  \min \left[\gamma\langle \chi(r)-\alpha(r), \chi(r)-\alpha(r)\rangle + \langle \chi'(r)-\alpha'(r), \chi'(r)-\alpha'(r)\rangle\right] \quad \text{subject to} \quad \langle \alpha(r),\alpha(r)\rangle=1
+  $$
+
+  - where $\gamma$ is a parameter that adjusts the relative weight of the error function to the derivative error function.
+- **Unit**: Bohr
+- **Default**: 5.0 
 
 [back to top](#full-list-of-input-keywords)
 
@@ -3130,7 +3177,7 @@ These variables are used to control berry phase and wannier90 interface paramete
   E = 0.0 , t>t0
 - **Default**: 2.74
 
-### td_out_dipole
+### out_dipole
 
 - **Type**: Boolean
 - **Description**:
@@ -3138,10 +3185,10 @@ These variables are used to control berry phase and wannier90 interface paramete
   - False: do not output dipole.
 - **Default**: False
 
-### td_out_efield
+### out_efield
 
 - **Type**: Boolean
-- **Description**: The unit of output file is atomic unit (1 a.u. = 1 Ry/(bohr $\cdot$ e) = 51.422 V/Angstrom).
+- **Description**: output TDDFT Efield or not(V/Angstrom)
   - True: output efield.
   - False: do not output efield.
 - **Default**: False
@@ -3505,7 +3552,7 @@ for `nspin 2` case. The difference is that `lambda`, `target_mag`, and `constrai
 
 ## Quasiatomic Orbital (QO) analysis
 
-These variables are used to control the usage of QO analysis. Please note present implementation of QO always yield numerically instable results, use with much care.
+These variables are used to control the usage of QO analysis. QO further compress information from LCAO: usually PW basis has dimension in million, LCAO basis has dimension below thousand, and QO basis has dimension below hundred.
 
 ### qo_switch
 
@@ -3518,10 +3565,12 @@ These variables are used to control the usage of QO analysis. Please note presen
 - **Type**: String
 - **Description**: specify the type of atomic basis
   - `pswfc`: use the pseudowavefunction in pseudopotential files as atomic basis. To use this option, please make sure in pseudopotential file there is pswfc in it.
-  - `hydrogen`: generate hydrogen-like atomic basis.
+  - `hydrogen`: generate hydrogen-like atomic basis (or with Slater screening).
+  - `szv`: use the first set of zeta for each angular momentum from numerical atomic orbitals as atomic basis.
 
   *warning: to use* `pswfc` *, please use norm-conserving pseudopotentials with pseudowavefunctions, SG15 pseudopotentials cannot support this option.*
-- **Default**: `hydrogen`
+  *Developer notes: for ABACUS-lcao calculation, it is the most recommend to use `szv` instead of `pswfc` which is originally put forward in work of QO implementation on PW basis. The information loss always happens if `pswfc` or `hydrogen` orbitals are not well tuned, although making kpoints sampling more dense will mitigate this problem, but orbital-adjust parameters are needed to test system-by-system in this case.*
+- **Default**: `szv`
 
 ### qo_strategy
 
@@ -3535,13 +3584,13 @@ These variables are used to control the usage of QO analysis. Please note presen
   - `energy-full`: will generate hydrogen-like orbitals according to Aufbau principle. For example the Cu (1s2 2s2 2p6 3s2 3p6 3d10 4s1), will generate these orbitals.
   - `energy-valence`: from the highest n (principal quantum number) layer and n-1 layer, generate all occupied and possible ls (angular momentum quantum number) for only once, for example Cu, will generate 4s, 3d and 3p orbitals.
 
-  For `qo_basis pswfc`
-  - `all`: use all possible pseudowavefunctions in pseudopotential file.
+  For `qo_basis pswfc` and `qo_basis szv`
+  - `all`: use all possible pseudowavefunctions/numerical atomic orbital (of first zeta) in pseudopotential/numerical atomic orbital file.
   - `s`/`p`/`d`/...: only use s/p/d/f/...-orbital(s).
   - `spd`: use s, p and d orbital(s). Any unordered combination is acceptable.
-
+  
   *warning: for* `qo_basis hydrogen` *to use* `full`, *generation strategy may cause the space spanned larger than the one spanned by numerical atomic orbitals, in this case, must filter out orbitals in some way*
-- **Default**: `minimal-valence`
+- **Default**: for `hydrogen`: `energy-valence`, for `pswfc` and `szv`: `all`
 
 ### qo_screening_coeff
 

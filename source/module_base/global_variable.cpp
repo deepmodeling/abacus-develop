@@ -25,8 +25,8 @@ int NLOCAL = 0; // total number of local basis.
 double  KSPACING[3] = {0.0,0.0,0.0};
 double MIN_DIST_COEF = 0.2;
 
-double PSEUDORCUT;
-bool PSEUDO_MESH;
+double PSEUDORCUT=0;//initialization
+bool PSEUDO_MESH=0;
 
 std::string CALCULATION = "scf";
 std::string ESOLVER_TYPE = "ksdft";
@@ -221,7 +221,7 @@ double tau = 1.0798 * 1e-5;
 double sigma_k = 0.6;
 double nc_k = 0.00037;
 
-bool dft_plus_u = false; //DFTU control
+int dft_plus_u = 0; //DFTU control
 
 //Xinyang Dong added for rpa
 bool rpa_setorb = false;
@@ -299,8 +299,11 @@ std::string sc_file = "none";
 // Quasiatomic orbital related
 //==========================================================
 bool qo_switch = false;
-std::string qo_basis = "hydrogen";
+std::string qo_basis = "szv";
 std::vector<std::string> qo_strategy = {};
 double qo_thr = 1.0e-6;
 std::vector<double> qo_screening_coeff = {};
+
+// on-site orbitals
+double onsite_radius = 0.0;
 } // namespace GlobalV

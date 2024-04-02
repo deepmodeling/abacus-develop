@@ -5,6 +5,8 @@
 101_PW_15_pseudopots_LibxcLDA
 101_PW_15_paw
 101_PW_blps_pseudopots
+101_PW_lps6_pseudopots
+101_PW_lps8_pseudopots
 101_PW_OU_pseudopots
 101_PW_upf100_Al_pseudopots
 101_PW_upf201_Al_pseudopots
@@ -177,7 +179,9 @@
 250_NO_KP_CR_VDW3
 250_NO_KP_CR_VDW3ABC
 250_NO_KP_CR_VDW3BJ
-260_NO_15_PK_PU_AF
+260_NO_DJ_PK_PU_FM
+260_NO_DJ_PK_PU_SO
+260_NO_DJ_PK_PU_S1
 270_NO_MD_1O
 270_NO_MD_2O
 281_NO_KP_HSE
@@ -326,6 +330,7 @@
 905_OF_FFT_fullpwdim_2
 905_OF_FFT_fullpw_off
 906_OF_LibxcPBE
+907_OF_LPS
 920_OF_MD_LDA
 920_OF_MD_LibxcPBE
 921_OF_CR_LDA

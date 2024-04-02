@@ -307,6 +307,7 @@ class Input
     double lcao_rmax; // rmax(a.u.) to make table.
     double search_radius; // 11.1
     bool search_pbc; // 11.2
+    double onsite_radius; // the radius of on-site orbitals
 
     //==========================================================
     // molecular dynamics
@@ -485,7 +486,7 @@ class Input
     //==========================================================
     //    DFT+U       Xin Qu added on 2020-10-29
     //==========================================================
-    bool dft_plus_u;             ///< true:DFT+U correction; false: standard DFT calculation(default)
+    int dft_plus_u;              ///< 1:DFT+U correction; 2:old DFT+U method; 0:standard DFT calculation(default)
     int* orbital_corr = nullptr; ///< which correlated orbitals need corrected ; d:2 ,f:3, do not need correction:-1
     double* hubbard_u = nullptr; ///< Hubbard Coulomb interaction parameter U(ev)
     int omc;                     ///< whether turn on occupation matrix control method or not

@@ -33,7 +33,10 @@ class LCAO_Matrix
 #ifdef __EXX
     using TAC = std::pair<int, std::array<int, 3>>;
     std::vector< std::map<int, std::map<TAC, RI::Tensor<double>>>> *Hexxd;
-    std::vector< std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>> *Hexxc;
+    std::vector< std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc;
+    /// @brief Hexxk for all k-points, only for the 1st scf loop ofrestart load
+    std::vector<std::vector<double>> Hexxd_k_load;
+    std::vector<std::vector<std::complex<double>>> Hexxc_k_load;
 #endif
 
     void allocate_HS_k(const long &nloc);
@@ -189,41 +192,96 @@ private:
     double* DHloc_fixed_23;
     double* DHloc_fixed_33;
 
-    template <typename T>
-    static void set_mat2d(const int& global_ir, const int& global_ic, const T& v, const Parallel_Orbitals& pv, T* mat);
-    void set_HSgamma(const int& iw1_all, const int& iw2_all, const double& v, double* HSloc);
-    void set_HSk(const int &iw1_all, const int &iw2_all, const std::complex<double> &v, const char &dtype, const int spin = 0);
+	template <typename T>
+		static void set_mat2d(
+				const int& global_ir, 
+				const int& global_ic, 
+				const T& v, 
+				const Parallel_Orbitals& pv, 
+				T* mat);
 
-    void set_force (const int& iw1_all, const int& iw2_all, const double& vx, const double& vy, 
-        const double& vz, const char &dtype);
-    void set_stress (const int& iw1_all, const int& iw2_all, const double& vx, const double& vy,
-        const double& vz, const char &dtype, const ModuleBase::Vector3<double> &dtau);
+	void set_HSgamma(
+			const int& iw1_all, 
+			const int& iw2_all, 
+			const double& v, 
+			double* HSloc);
 
-    void set_HR_tr(const int &Rx, const int &Ry, const int &Rz, const int &iw1_all, const int &iw2_all, const double &v);
-    void set_HR_tr_soc(const int &Rx, const int &Ry, const int &Rz, 
-        const int &iw1_all, const int &iw2_all, const std::complex<double> &v); //LiuXh add 2019-07-16
+	void set_HSk(
+			const int &iw1_all, 
+			const int &iw2_all, 
+			const std::complex<double> &v, 
+			const char &dtype, 
+			const int spin = 0);
+
+	void set_force (
+			const int& iw1_all, 
+			const int& iw2_all, 
+			const double& vx, 
+			const double& vy, 
+			const double& vz, 
+			const char &dtype);
+
+	void set_stress (
+			const int& iw1_all, 
+			const int& iw2_all, 
+			const double& vx, 
+			const double& vy,
+			const double& vz, 
+			const char &dtype, 
+			const ModuleBase::Vector3<double> &dtau);
+
+	void set_HR_tr(
+			const int &Rx, 
+			const int &Ry, 
+			const int &Rz, 
+			const int &iw1_all, 
+			const int &iw2_all, 
+			const double &v);
+
+	void set_HR_tr_soc(
+			const int &Rx, 
+			const int &Ry, 
+			const int &Rz, 
+			const int &iw1_all, 
+			const int &iw2_all, 
+			const std::complex<double> &v); //LiuXh add 2019-07-16
 
     void zeros_HSgamma(const char &mtype);
+
     void zeros_HSk(const char &mtype);
+
     void zeros_HSR(const char &mtype);
 
     void print_HSgamma(const char &mtype, std::ostream &os=std::cout);
-    void print_HSk(const char &mtype, const char &vtype = 'C', const double &accuracy = 1.0e-5, std::ostream &os=std::cout);
+
+	void print_HSk(
+			const char &mtype, 
+			const char &vtype = 'C', 
+			const double &accuracy = 1.0e-5, 
+			std::ostream &os=std::cout);
+
     void update_Hloc(void);
+
     void update_Hloc2(const int &ik);
 
     void allocate_HS_R(const int &nnr);
 
     void output_HSk(const char &mtype, std::string &fn);
+
     //LiuXh add 2019-07-15
     void allocate_Hloc_fixedR_tr(void);
+
     void allocate_HR_tr(void);
+
     void allocate_SlocR_tr(void);
+
     void destroy_Hloc_fixedR_tr(void);
 
     // jingan add 2021-6-4, modify 2021-12-2
     void destroy_HS_R_sparse(void);
+
     void destroy_T_R_sparse(void);
+
     void destroy_dH_R_sparse(void);
 
 };

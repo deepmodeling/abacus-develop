@@ -306,9 +306,10 @@ TEST_F(InputTest, Default)
         EXPECT_FALSE(INPUT.restart_save);
         EXPECT_FALSE(INPUT.restart_load);
         EXPECT_FALSE(INPUT.test_skip_ewald);
-        EXPECT_FALSE(INPUT.dft_plus_u);
+        EXPECT_EQ(INPUT.dft_plus_u, 0);
         EXPECT_FALSE(INPUT.yukawa_potential);
         EXPECT_DOUBLE_EQ(INPUT.yukawa_lambda,-1.0);
+		EXPECT_EQ(INPUT.onsite_radius, 0.0);
         EXPECT_EQ(INPUT.omc,0);
         EXPECT_FALSE(INPUT.dft_plus_dmft);
         EXPECT_FALSE(INPUT.rpa);
@@ -670,9 +671,10 @@ TEST_F(InputTest, Read)
         EXPECT_FALSE(INPUT.restart_save);
         EXPECT_FALSE(INPUT.restart_load);
         EXPECT_FALSE(INPUT.test_skip_ewald);
-        EXPECT_FALSE(INPUT.dft_plus_u);
+        EXPECT_EQ(INPUT.dft_plus_u, 0);
         EXPECT_FALSE(INPUT.yukawa_potential);
         EXPECT_DOUBLE_EQ(INPUT.yukawa_lambda,-1.0);
+		EXPECT_EQ(INPUT.onsite_radius, 0.0);
         EXPECT_EQ(INPUT.omc,0);
         EXPECT_FALSE(INPUT.dft_plus_dmft);
         EXPECT_FALSE(INPUT.rpa);
@@ -1627,6 +1629,13 @@ TEST_F(InputTest, Check)
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("sc_scf_nmin must >= 2"));
 	INPUT.sc_scf_nmin = 2;
+	// warning 10 of Deltaspin
+	INPUT.nupdown = 4;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("nupdown should not be set when sc_mag_switch > 0"));
+	INPUT.nupdown = 0;
     // restore to default values
     INPUT.nspin = 1;
 	INPUT.sc_file = "none";

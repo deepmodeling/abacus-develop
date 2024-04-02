@@ -154,6 +154,7 @@ void ElecState::print_band(const int& ik, const int& printe, const int& iter)
 void ElecState::print_etot(const bool converged,
                            const int& iter_in,
                            const double& scf_thr,
+                           const double& scf_thr_kin,
                            const double& duration,
                            const int printe,
                            const double& pw_diag_thr,
@@ -260,6 +261,7 @@ void ElecState::print_etot(const bool converged,
     {
         this->f_en.etot_old = this->f_en.etot;
     }
+    this->f_en.etot_delta = this->f_en.etot - this->f_en.etot_old;
 
     // mohan update 2011-02-26
     std::stringstream ss;
@@ -373,9 +375,14 @@ void ElecState::print_etot(const bool converged,
             }
             std::cout << std::setprecision(6);
             std::cout << std::setw(15) << this->f_en.etot * ModuleBase::Ry_to_eV;
-            std::cout << std::setw(15) << (this->f_en.etot - this->f_en.etot_old) * ModuleBase::Ry_to_eV;
+            std::cout << std::setw(15) << this->f_en.etot_delta * ModuleBase::Ry_to_eV;
             std::cout << std::setprecision(3);
             std::cout << std::setw(11) << scf_thr;
+            if (elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5)
+            {
+                std::cout << std::setprecision(3);
+                std::cout << std::setw(11) << scf_thr_kin;
+            }
             std::cout << std::setprecision(3);
             std::cout << std::setw(11) << duration;
             std::cout << std::endl;

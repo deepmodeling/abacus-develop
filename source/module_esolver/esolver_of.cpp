@@ -57,9 +57,9 @@ ESolver_OF::~ESolver_OF()
     delete this->opt_cg_mag_;
 }
 
-void ESolver_OF::Init(Input& inp, UnitCell& ucell)
+void ESolver_OF::init(Input& inp, UnitCell& ucell)
 {
-    ESolver_FP::Init(inp, ucell);
+    ESolver_FP::init(inp, ucell);
 
     // save necessary parameters
     this->of_kinetic_ = inp.of_kinetic;
@@ -217,9 +217,9 @@ void ESolver_OF::init_after_vc(Input& inp, UnitCell& ucell)
     }
 }
 
-void ESolver_OF::Run(int istep, UnitCell& ucell)
+void ESolver_OF::run(int istep, UnitCell& ucell)
 {
-    ModuleBase::timer::tick("ESolver_OF", "Run");
+    ModuleBase::timer::tick("ESolver_OF", "run");
     // get Ewald energy, initial rho and phi if necessary
     this->before_opt(istep, ucell);
     this->iter_ = 0;
@@ -232,11 +232,13 @@ void ESolver_OF::Run(int istep, UnitCell& ucell)
         // calculate the energy of new rho and phi
         this->energy_llast_ = this->energy_last_;
         this->energy_last_ = this->energy_current_;
-        this->energy_current_ = this->cal_Energy();
+        this->energy_current_ = this->cal_energy();
 
         // check if the job is done
-        if (this->check_exit())
-            break;
+		if (this->check_exit())
+		{
+			break;
+		}
 
         // find the optimization direction and step lenghth theta according to the potential
         this->optimize(ucell);
@@ -249,7 +251,7 @@ void ESolver_OF::Run(int istep, UnitCell& ucell)
 
     this->after_opt(istep, ucell);
 
-    ModuleBase::timer::tick("ESolver_OF", "Run");
+    ModuleBase::timer::tick("ESolver_OF", "run");
 }
 
 /**
@@ -334,7 +336,10 @@ void ESolver_OF::update_potential(UnitCell& ucell)
 {
     // (1) get dL/dphi
     if (GlobalV::NSPIN == 4)
+    {
         ucell.cal_ux();
+    }
+
     this->pelec->pot->update_from_charge(pelec->charge, &ucell); // Hartree + XC + external
     this->kinetic_potential(pelec->charge->rho,
                             this->pphi_,
@@ -582,7 +587,7 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell)
 /**
  * @brief Output the FINAL_ETOT
  */
-void ESolver_OF::postprocess()
+void ESolver_OF::post_process()
 {
 
     GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
@@ -597,7 +602,7 @@ void ESolver_OF::postprocess()
  *
  * @return total energy
  */
-double ESolver_OF::cal_Energy()
+double ESolver_OF::cal_energy()
 {
     this->pelec->cal_energies(2);
     double kinetic_energy = this->kinetic_energy(); // kinetic energy
@@ -621,7 +626,7 @@ double ESolver_OF::cal_Energy()
  *
  * @param [out] force
  */
-void ESolver_OF::cal_Force(ModuleBase::matrix& force)
+void ESolver_OF::cal_force(ModuleBase::matrix& force)
 {
     Forces<double> ff(GlobalC::ucell.nat);
     ff.cal_force(force, *pelec, this->pw_rho, &GlobalC::ucell.symm, &sf);
@@ -632,7 +637,7 @@ void ESolver_OF::cal_Force(ModuleBase::matrix& force)
  *
  * @param [out] stress
  */
-void ESolver_OF::cal_Stress(ModuleBase::matrix& stress)
+void ESolver_OF::cal_stress(ModuleBase::matrix& stress)
 {
     ModuleBase::matrix kinetic_stress_;
     kinetic_stress_.create(3, 3);

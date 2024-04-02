@@ -158,10 +158,14 @@ void timer::write_to_json(std::string file_name)
 	auto double_to_string = [](double d) -> std::string
 	{
 		formatter::Fmt fmt(0, 15, ' ', false, false, false);
-		if(isinf(d))
+		if(std::isinf(d))
+        {
 			return "Infinity";
+        }
 		else
+        {
 			return fmt.format(d);
+        }
 	};
 
 	// The output json file format is like this:

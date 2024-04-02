@@ -193,6 +193,12 @@ if [ "$sanitize" == true ]; then
 fi
 
 for dir in $testdir; do
+    if [ ! -d $dir ];then
+        echo -e "\e[0;31m[ERROR     ]\e[0m $dir is not a directory.\n"
+        let fatal++
+        fatal_case_list+=$dir'\n'
+        continue
+    fi
     cd $dir
     echo -e "\e[0;32m[ RUN      ]\e[0m $dir"
     TIMEFORMAT='[----------] Time elapsed: %R seconds'

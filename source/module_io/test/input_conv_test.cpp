@@ -275,9 +275,9 @@ TEST_F(InputConvTest, dftplus)
 	INPUT.Default();
 	std::string input_file = "./support/INPUT";
 	INPUT.Read(input_file);
-	INPUT.dft_plus_u=true;
+	INPUT.dft_plus_u=1;
 	Input_Conv::Convert();
-	EXPECT_EQ(GlobalV::dft_plus_u,true);
+	EXPECT_EQ(GlobalV::dft_plus_u,1);
 	EXPECT_EQ(GlobalC::dftu.Yukawa,false);
 	EXPECT_EQ(GlobalC::dftu.omc,false);//
 	EXPECT_EQ(GlobalC::dftu.orbital_corr,INPUT.orbital_corr);
@@ -315,7 +315,7 @@ TEST_F(InputConvTest, nspinbeta)
 	output2 = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output2,testing::HasSubstr("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"));
 	EXPECT_THAT(output2,testing::HasSubstr("                         NOTICE                          "));
-	EXPECT_THAT(output2,testing::HasSubstr("force & stress not ready for soc yet!"));
+	EXPECT_THAT(output2,testing::HasSubstr("force & stress not ready for nspin=4(soc or noncollinear-spin) yet!"));
 	EXPECT_THAT(output2,testing::HasSubstr("CHECK IN FILE : warning.log"));
 	EXPECT_THAT(output2,testing::HasSubstr("TIME STATISTICS"));
 }
@@ -367,7 +367,8 @@ TEST_F(InputConvTest, restart_load)
 	INPUT.dft_functional = "hf";
 	Input_Conv::Convert();
 	EXPECT_EQ( GlobalC::restart.folder,GlobalV::global_readin_dir + "restart/");
-	EXPECT_EQ(GlobalC::restart.info_load.load_charge,true);
+    EXPECT_EQ(GlobalC::restart.info_load.load_charge, true);
+    EXPECT_EQ(GlobalC::restart.info_load.load_H, true);
 }
 
 TEST_F(InputConvTest,restart_load2 )
@@ -378,8 +379,7 @@ TEST_F(InputConvTest,restart_load2 )
 	INPUT.restart_load=true;
 	INPUT.dft_functional="b3lyp";
 	Input_Conv::Convert();
-	EXPECT_EQ(GlobalC::restart.info_load.load_charge,true);
-	EXPECT_EQ(GlobalC::restart.info_load.load_H,true);
+    EXPECT_EQ(GlobalC::restart.info_load.load_charge, true);
 }
 
 TEST_F(InputConvTest,cell_factor  )

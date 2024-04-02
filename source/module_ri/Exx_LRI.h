@@ -45,7 +45,7 @@ public:
 	void cal_exx_stress();
 
 	std::vector< std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> Hexxs;
-	Tdata Eexx;
+    double Eexx;
 	ModuleBase::matrix force_exx;
 	ModuleBase::matrix stress_exx;
 
@@ -64,7 +64,7 @@ private:
 	void cal_exx_ions();
 	void cal_exx_elec(const std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>> &Ds, const Parallel_Orbitals &pv);
 	void post_process_Hexx( std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> &Hexxs_io ) const;
-	Tdata post_process_Eexx( const Tdata &Eexx_in ) const;
+    double post_process_Eexx(const double& Eexx_in) const;
 
 	friend class RPA_LRI<double, Tdata>;
 	friend class RPA_LRI<std::complex<double>, Tdata>;
