@@ -156,7 +156,7 @@ void DeePKS<OperatorLCAO<double, double>>::contributeHR()
             *this->ucell,
             GlobalC::ORB,
             GlobalC::GridD);
-        GlobalC::ld.cal_descriptor();        
+        GlobalC::ld.cal_descriptor(this->ucell->nat);        
         GlobalC::ld.cal_gedm(this->ucell->nat);
         //GlobalC::ld.add_v_delta(*this->ucell,
         //    GlobalC::ORB,
@@ -190,7 +190,7 @@ void DeePKS<OperatorLCAO<std::complex<double>, double>>::contributeHR()
             *this->ucell,
             GlobalC::ORB,
             GlobalC::GridD);
-        GlobalC::ld.cal_descriptor();
+        GlobalC::ld.cal_descriptor(this->ucell->nat);
         // calculate dE/dD
         GlobalC::ld.cal_gedm(this->ucell->nat);
 
@@ -229,7 +229,7 @@ void DeePKS<OperatorLCAO<std::complex<double>, std::complex<double>>>::contribut
             *this->ucell,
             GlobalC::ORB,
             GlobalC::GridD);
-        GlobalC::ld.cal_descriptor();
+        GlobalC::ld.cal_descriptor(this->ucell->nat);
         // calculate dE/dD
         GlobalC::ld.cal_gedm(this->ucell->nat);
 

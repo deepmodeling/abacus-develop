@@ -450,9 +450,11 @@ public:
 
     ///Calculates descriptors
     ///which are eigenvalues of pdm in blocks of I_n_l
-	void cal_descriptor(void);
+	void cal_descriptor(const int nat);
     ///print descriptors based on LCAO basis
     void check_descriptor(const UnitCell &ucell);
+
+    void cal_descriptor_equiv(const int nat);
 
     ///calculates gradient of descriptors w.r.t atomic positions
     ///----------------------------------------------------

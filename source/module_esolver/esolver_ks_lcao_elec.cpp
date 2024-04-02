@@ -652,7 +652,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf()
         const elecstate::DensityMatrix<TK, double>* dm
             = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
         this->dpks_cal_projected_DM(dm);
-        GlobalC::ld.cal_descriptor(); // final descriptor
+        GlobalC::ld.cal_descriptor(GlobalC::ucell.nat); // final descriptor
         GlobalC::ld.cal_gedm(GlobalC::ucell.nat);
     }
 #endif

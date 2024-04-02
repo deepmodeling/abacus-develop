@@ -185,7 +185,7 @@ void test_deepks::check_gdmx(void)
 
 void test_deepks::check_descriptor(void)
 {
-	this->ld.cal_descriptor();
+	this->ld.cal_descriptor(ucell.nat);
 	this->ld.check_descriptor(ucell);
 	this->compare_with_ref("descriptor.dat","descriptor_ref.dat");
 }

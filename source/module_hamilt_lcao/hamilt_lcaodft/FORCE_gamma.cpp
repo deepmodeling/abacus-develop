@@ -73,7 +73,7 @@ void Force_LCAO_gamma::ftable_gamma(const bool isforce,
     {
         const std::vector<std::vector<double>>& dm_gamma = DM->get_DMK_vector();
         GlobalC::ld.cal_projected_DM(DM, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD);
-        GlobalC::ld.cal_descriptor();
+        GlobalC::ld.cal_descriptor(GlobalC::ucell.nat);
         GlobalC::ld.cal_gedm(GlobalC::ucell.nat);
         GlobalC::ld
             .cal_f_delta_gamma(dm_gamma, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD, isstress, svnl_dalpha);

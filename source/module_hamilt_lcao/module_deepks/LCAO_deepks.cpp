@@ -113,6 +113,7 @@ void LCAO_Deepks::init(
             pdm_size += (2 * il + 1) * orb.Alpha[0].getNchi(il);
         }
         pdm_size = pdm_size * pdm_size;
+        this->des_per_atom=pdm_size;
         GlobalV::ofs_running << " Equivariant version, size of pdm matrices : " << pdm_size << std::endl;
     }
 

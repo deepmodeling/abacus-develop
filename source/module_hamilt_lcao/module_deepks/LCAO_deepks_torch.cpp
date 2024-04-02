@@ -30,11 +30,38 @@
 #include "module_base/libm/libm.h"
 #include "module_base/blas_connector.h"
 
+void LCAO_Deepks::cal_descriptor_equiv(const int nat)
+{
+    ModuleBase::TITLE("LCAO_Deepks", "cal_descriptor_equiv");
+    ModuleBase::timer::tick("LCAO_Deepks", "cal_descriptor_equiv");
+
+    // a rather unnecessary way of writing this, but I'll do it for now
+    if (!this->d_tensor.empty())
+    {
+        this->d_tensor.erase(this->d_tensor.begin(), this->d_tensor.end());
+    }
+
+    for(int iat = 0; iat < nat; iat++)
+    {
+        auto tmp = torch::zeros(des_per_atom,torch::kFloat64);
+        std::memcpy(tmp.data_ptr(),pdm[iat],sizeof(double)*tmp.numel());
+        this->d_tensor.push_back(tmp);
+    }
+
+    ModuleBase::timer::tick("LCAO_Deepks", "cal_descriptor_equiv");
+}
+
 //calculates descriptors from projected density matrices
-void LCAO_Deepks::cal_descriptor(void)
+void LCAO_Deepks::cal_descriptor(const int nat)
 {
     ModuleBase::TITLE("LCAO_Deepks", "cal_descriptor");
     ModuleBase::timer::tick("LCAO_Deepks", "cal_descriptor");
+
+    if(if_equiv)
+    {
+        this->cal_descriptor_equiv(nat);
+        return;
+    }
 
     //init pdm_tensor and d_tensor
     torch::Tensor tmp;
@@ -85,24 +112,41 @@ void LCAO_Deepks::check_descriptor(const UnitCell &ucell)
     if(GlobalV::MY_RANK!=0) return;
     std::ofstream ofs("descriptor.dat");
     ofs<<std::setprecision(10);
-    for (int it = 0; it < ucell.ntype; it++)
+    if(!if_equiv)
     {
-        for (int ia = 0; ia < ucell.atoms[it].na; ia++)
+        for (int it = 0; it < ucell.ntype; it++)
         {
-            int iat=ucell.itia2iat(it,ia);
-            ofs << ucell.atoms[it].label << " atom_index " << ia + 1 << " n_descriptor " << this->des_per_atom << std::endl;
-            int id = 0;
-            for(int inl=0;inl<inlmax/ucell.nat;inl++)
+            for (int ia = 0; ia < ucell.atoms[it].na; ia++)
             {
-                int nm = 2*inl_l[inl]+1;
-                for(int im=0;im<nm;im++)
+                int iat=ucell.itia2iat(it,ia);
+                ofs << ucell.atoms[it].label << " atom_index " << ia + 1 << " n_descriptor " << this->des_per_atom << std::endl;
+                int id = 0;
+                for(int inl=0;inl<inlmax/ucell.nat;inl++)
                 {
-                    const int ind=iat*inlmax/ucell.nat+inl;
-                    ofs << d_tensor[ind].index({im}).item().toDouble() << " ";
-                    if (id % 8 == 7) ofs << std::endl;
-                    id++;
-                }
-            }   
+                    int nm = 2*inl_l[inl]+1;
+                    for(int im=0;im<nm;im++)
+                    {
+                        const int ind=iat*inlmax/ucell.nat+inl;
+                        ofs << d_tensor[ind].index({im}).item().toDouble() << " ";
+                        if (id % 8 == 7) ofs << std::endl;
+                        id++;
+                    }
+                }   
+                ofs << std::endl << std::endl;
+            }
+        }
+    }
+    else
+    {
+        for(int iat = 0; iat < ucell.nat; iat ++)
+        {
+            int it = ucell.iat2it[iat];
+            ofs << ucell.atoms[it].label << " atom_index " << iat + 1 << " n_descriptor " << this->des_per_atom << std::endl;
+            for(int i = 0; i < this->des_per_atom; i ++)
+            {
+                ofs << this->pdm[iat][i] << " ";
+                if (i % 8 == 7) ofs << std::endl;
+            }
             ofs << std::endl << std::endl;
         }
     }
