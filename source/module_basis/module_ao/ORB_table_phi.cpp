@@ -187,8 +187,10 @@ void ORB_table_phi::cal_ST_Phi12_R
 	//double* integrated_func = new double[kmesh];
 
 	int ll =0;
-	if(l==0) ll=0;
-	else 	 ll=l-1;
+	if(l != 0)
+    {
+        ll = l - 1;
+    }
 
 	const std::vector<std::vector<double>> &jlm1 = pSB->get_jlx()[ll];
 	const std::vector<std::vector<double>> &jl = pSB->get_jlx()[l];
