@@ -554,6 +554,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
         && GlobalV::MIXING_RESTART > 0.0)
     {
         this->p_chgmix->init_mixing();
+        GlobalC::dftu.uramping_update(); // update U by uramping if uramping > 0.1
         if (GlobalV::MIXING_DMR) // for mixing_dmr 
         {
             // allocate memory for dmr_mdata
