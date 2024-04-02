@@ -1039,14 +1039,14 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
 #ifdef __EXX
     if (GlobalC::exx_info.info_global.cal_exx) // Peize Lin add if 2022.11.14
     {
-        const std::string file_name_exx = GlobalV::global_out_dir + "HexxR_" + std::to_string(GlobalV::MY_RANK);
+        const std::string file_name_exx = GlobalV::global_out_dir + "HexxR" + std::to_string(GlobalV::MY_RANK);
         if (GlobalC::exx_info.info_ri.real_number)
         {
-            this->exd->write_Hexxs(file_name_exx);
+            this->exd->write_Hexxs_csr(file_name_exx, GlobalC::ucell);
         }
         else
         {
-            this->exc->write_Hexxs(file_name_exx);
+            this->exc->write_Hexxs_csr(file_name_exx, GlobalC::ucell);
         }
     }
 #endif
