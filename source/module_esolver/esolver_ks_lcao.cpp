@@ -555,9 +555,15 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
         this->p_chgmix->init_mixing(); // init mixing
         this->p_chgmix->mixing_restart = GlobalV::SCF_NMAX + 1;
         this->p_chgmix->mixing_restart_count = 0;
-        if(GlobalC::dftu.uramping > 0.01 && !GlobalC::dftu.u_converged())
+        // this output will be removed once the feeature is stable
+        if(GlobalC::dftu.uramping > 0.01)
         {
-            std::cout << " Current U = " << GlobalC::dftu.U[0] << " Ry " << std::endl;
+            std::cout << " U-Ramping! Current U = " ;
+            for (int i = 0; i < GlobalC::dftu.U0.size(); i++)
+            {
+                std::cout << GlobalC::dftu.U[i] * ModuleBase::Ry_to_eV << " ";
+            }
+            std::cout << " eV " << std::endl;
         }
     }
     // for mixing restart
@@ -569,7 +575,15 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
         if (GlobalV::dft_plus_u)
         {   
             GlobalC::dftu.uramping_update(); // update U by uramping if uramping > 0.1
-            std::cout << " Current U = " << GlobalC::dftu.U[0] << " Ry " << std::endl;
+            if(GlobalC::dftu.uramping > 0.01)
+            {
+                std::cout << " U-Ramping! Current U = " ;
+                for (int i = 0; i < GlobalC::dftu.U0.size(); i++)
+                {
+                    std::cout << GlobalC::dftu.U[i] * ModuleBase::Ry_to_eV << " ";
+                }
+                std::cout << " eV " << std::endl;
+            }
             if(GlobalC::dftu.uramping > 0.01 && !GlobalC::dftu.u_converged()) this->p_chgmix->mixing_restart = GlobalV::SCF_NMAX + 1;
         }
         if (GlobalV::MIXING_DMR) // for mixing_dmr 
