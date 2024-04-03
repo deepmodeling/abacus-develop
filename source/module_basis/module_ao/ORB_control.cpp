@@ -203,7 +203,7 @@ void ORB_control::setup_2d_division(std::ofstream& ofs_running,
 
     // determine whether 2d-division or not according to ks_solver
     bool div_2d;
-    if (ks_solver == "lapack" || ks_solver == "cg" || ks_solver == "dav" || ks_solver == "subspace_dav") div_2d = false;
+    if (ks_solver == "lapack" || ks_solver == "cg" || ks_solver == "dav" || ks_solver == "dav_subspace") div_2d = false;
 #ifdef __MPI
     else if (ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "cusolver" || ks_solver == "cg_in_lcao") div_2d = true;
 #endif

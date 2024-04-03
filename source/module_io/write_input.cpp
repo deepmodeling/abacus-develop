@@ -103,7 +103,7 @@ void Input::Print(const std::string &fn) const
         ModuleBase::GlobalFunc::OUTP(ofs, "pw_diag_nmax", pw_diag_nmax, "max iteration number for cg");
         ModuleBase::GlobalFunc::OUTP(ofs, "diago_cg_prec", diago_cg_prec, "diago_cg_prec");
     }
-    else if (ks_solver == "dav" || ks_solver == "subspace_dav")
+    else if (ks_solver == "dav")
     {
         ModuleBase::GlobalFunc::OUTP(ofs, "pw_diag_ndim", pw_diag_ndim, "max dimension for davidson");
     }

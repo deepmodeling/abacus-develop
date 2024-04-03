@@ -11,7 +11,7 @@ namespace hsolver
 {
 
 template <typename T = std::complex<double>, typename Device = psi::DEVICE_CPU>
-class Diago_SubspaceDav : public DiagH<T, Device>
+class Diago_DavSubspace : public DiagH<T, Device>
 {
   private:
     // Note GetTypeReal<T>::type will
@@ -20,8 +20,8 @@ class Diago_SubspaceDav : public DiagH<T, Device>
     using Real = typename GetTypeReal<T>::type;
 
   public:
-    Diago_SubspaceDav(const Real* precondition_in);
-    ~Diago_SubspaceDav();
+    Diago_DavSubspace(const Real* precondition_in);
+    ~Diago_DavSubspace();
 
     // this is the override function diag() for CG method
     void diag(hamilt::Hamilt<T, Device>* phm_in,
@@ -136,7 +136,7 @@ class Diago_SubspaceDav : public DiagH<T, Device>
 };
 
 template <typename Real, typename Device>
-int Diago_SubspaceDav<Real, Device>::PW_DIAG_NDIM = 4;
+int Diago_DavSubspace<Real, Device>::PW_DIAG_NDIM = 4;
 
 } // namespace hsolver
 

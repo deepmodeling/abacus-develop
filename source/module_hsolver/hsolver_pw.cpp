@@ -5,7 +5,7 @@
 #include "diago_bpcg.h"
 #include "diago_cg.h"
 #include "diago_david.h"
-#include "diago_subspacedav.h"
+#include "diago_dav_subspace.h"
 #include "module_base/timer.h"
 #include "module_base/tool_quit.h"
 #include "module_elecstate/elecstate_pw.h"
@@ -97,21 +97,21 @@ void HSolverPW<T, Device>::initDiagh(const psi::Psi<T, Device>& psi)
             this->pdiagh->method = this->method;
         }
     }
-    else if (this->method == "subspace_dav")
+    else if (this->method == "dav_subspace")
     {
-        Diago_SubspaceDav<T>::PW_DIAG_NDIM = GlobalV::PW_DIAG_NDIM;
+        Diago_DavSubspace<T>::PW_DIAG_NDIM = GlobalV::PW_DIAG_NDIM;
         if (this->pdiagh != nullptr)
         {
             if (this->pdiagh->method != this->method)
             {
-                delete (Diago_SubspaceDav<T, Device>*)this->pdiagh;
-                this->pdiagh = new Diago_SubspaceDav<T, Device>(precondition.data());
+                delete (Diago_DavSubspace<T, Device>*)this->pdiagh;
+                this->pdiagh = new Diago_DavSubspace<T, Device>(precondition.data());
                 this->pdiagh->method = this->method;
             }
         }
         else
         {
-            this->pdiagh = new Diago_SubspaceDav<T, Device>(precondition.data());
+            this->pdiagh = new Diago_DavSubspace<T, Device>(precondition.data());
             this->pdiagh->method = this->method;
         }
     }
@@ -626,9 +626,9 @@ void HSolverPW<T, Device>::endDiagh()
         delete (DiagoDavid<T, Device>*)this->pdiagh;
         this->pdiagh = nullptr;
     }
-    if (this->method == "subspace_dav")
+    if (this->method == "dav_subspace")
     {
-        delete (Diago_SubspaceDav<T, Device>*)this->pdiagh;
+        delete (Diago_DavSubspace<T, Device>*)this->pdiagh;
         this->pdiagh = nullptr;
     }
     if (this->method == "bpcg")
@@ -681,10 +681,10 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::P
 {
     if (this->method != "cg")
     {
-        if (this->method == "subspace_dav")
+        if (this->method == "dav_subspace")
         {
 
-            ((Diago_SubspaceDav<T, Device>*)this->pdiagh)->diag(hm, psi, eigenvalue, is_occupied);
+            ((Diago_DavSubspace<T, Device>*)this->pdiagh)->diag(hm, psi, eigenvalue, is_occupied);
         }
         else
         {
@@ -791,7 +791,7 @@ void HSolverPW<T, Device>::update_precondition(std::vector<Real>& h_diag, const 
         {
             Real g2kin = static_cast<Real>(this->wfc_basis->getgk2(ik, ig)) * tpiba2;
 
-            if (this->method == "subspace_dav")
+            if (this->method == "dav_subspace")
             {
                 h_diag[ig] = g2kin;
             }
