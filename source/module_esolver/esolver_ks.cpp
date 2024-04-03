@@ -456,7 +456,10 @@ void ESolver_KS<T, Device>::run(const int istep, UnitCell& ucell)
 				bool not_restart_step = !(iter==this->p_chgmix->mixing_restart && GlobalV::MIXING_RESTART > 0.0);
 				// SCF will continue if U is not converged for uramping calculation
 				bool is_U_converged = true;
+				// to avoid unnecessary dependence on dft+u, refactor is needed
+#ifdef __LCAO
 				if (GlobalV::dft_plus_u) is_U_converged = GlobalC::dftu.u_converged();
+#endif
 				//
 				this->conv_elec = (drho < this->scf_thr 
                     && not_restart_step
