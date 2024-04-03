@@ -15,6 +15,7 @@ namespace ABFs_Construct::PCA
 {
 	void tensor_dsyev(const char jobz, const char uplo, RI::Tensor<double> & a, double*const w, int & info)
 	{
+		info = 0;
 		// reference: dsyev in lapack_connector.h (for ModuleBase::matrix)
 		assert(a.shape.size() == 2);
 		assert(a.shape[0] == a.shape[1]);
