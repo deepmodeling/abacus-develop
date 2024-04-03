@@ -424,7 +424,7 @@ void Bessel_Basis::readin_C4(
 							}
 							else
 							{
-								double no_use_c4;
+								double no_use_c4 = 0.0;
 								for(int ie=0; ie<ecut_number; ie++)
 								{
 									inc4 >> no_use_c4;
