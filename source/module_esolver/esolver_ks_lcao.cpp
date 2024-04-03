@@ -549,6 +549,10 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
         this->p_chgmix->init_mixing(); // init mixing
         this->p_chgmix->mixing_restart = GlobalV::SCF_NMAX + 1;
         this->p_chgmix->mixing_restart_count = 0;
+        if(GlobalC::dftu.uramping > 0.01 && !GlobalC::dftu.u_converged())
+        {
+            std::cout << " Current U = " << GlobalC::dftu.U[0] << " Ry " << std::endl;
+        }
     }
     // for mixing restart
     if (iter == this->p_chgmix->mixing_restart 
