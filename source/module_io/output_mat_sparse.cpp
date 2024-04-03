@@ -7,7 +7,8 @@ namespace ModuleIO
 {
 
     template<typename T>
-    Output_Mat_Sparse<T>::Output_Mat_Sparse(int out_mat_hsR,
+    Output_Mat_Sparse<T>::Output_Mat_Sparse(
+        int out_mat_hsR,
         int out_mat_dh,
         int out_mat_t,
         int out_mat_r,
@@ -15,6 +16,7 @@ namespace ModuleIO
         const ModuleBase::matrix& v_eff,
         const Parallel_Orbitals& pv,
         LCAO_Hamilt& UHM,
+        Gint_k& gint_k, // mohan add 2024-04-01
         LCAO_Matrix& LM,
         const K_Vectors& kv,
         hamilt::Hamilt<T>* p_ham)
@@ -26,15 +28,21 @@ namespace ModuleIO
       _v_eff(v_eff),
       _pv(pv),
       _UHM(UHM),
+      _gint_k(gint_k), // mohan add 2024-04-01
       _LM(LM),
       _kv(kv),
       _p_ham(p_ham)
 {
-    }
-    template<>
-    void Output_Mat_Sparse<double>::write() {}
-    template<>
-    void Output_Mat_Sparse<std::complex<double>>::write()
+}
+
+template<>
+void Output_Mat_Sparse<double>::write(void) 
+{
+}
+
+
+template<>
+void Output_Mat_Sparse<std::complex<double>>::write(void)
 {
     if (_out_mat_hsR)
     {
@@ -48,8 +56,14 @@ namespace ModuleIO
 
     if (_out_mat_dh)
     {
-        output_dH_R(_istep, this->_v_eff, this->_UHM, _kv); // LiuXh add 2019-07-15
-    }
+		output_dH_R(
+				_istep, 
+				this->_v_eff, 
+				this->_UHM, 
+				this->_gint_k, // mohan add 2024-04-01
+				this->_LM,
+				_kv); // LiuXh add 2019-07-15
+	}
 
     // add by jingan for out r_R matrix 2019.8.14
     if (_out_mat_r)
@@ -67,6 +81,7 @@ namespace ModuleIO
     }
 }
 
-    template class Output_Mat_Sparse<double>;
-    template class Output_Mat_Sparse<std::complex<double>>;
+template class Output_Mat_Sparse<double>;
+template class Output_Mat_Sparse<std::complex<double>>;
+
 } // namespace ModuleIO

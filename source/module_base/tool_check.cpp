@@ -29,7 +29,7 @@ void CHECK_NAME(std::ifstream &ifs,const std::string &name_in,bool quit)
 
 void CHECK_INT(std::ifstream &ifs,const int &v,bool quit)
 {
-	int v_in;
+	int v_in = 0;
 	ifs >> v_in;
 	if( v!= v_in)
 	{

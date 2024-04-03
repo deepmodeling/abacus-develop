@@ -1,3 +1,29 @@
+#include "FORCE_k.h"
+
+#include <map>
+#include <unordered_map>
+
+#include "module_base/memory.h"
+#include "module_base/parallel_reduce.h"
+#include "module_base/timer.h"
+#include "module_base/tool_threading.h"
+#include "module_cell/module_neighbor/sltk_grid_driver.h"
+#include "module_elecstate/cal_dm.h"
+#include "module_elecstate/module_dm/cal_dm_psi.h"
+#include "module_elecstate/elecstate_lcao.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_io/write_HS.h"
+
+#ifdef __DEEPKS
+#include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
+#endif
+
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
+
+typedef std::tuple<int, int, int, int> key_tuple;
 
 // must consider three-center H matrix.
 void Force_LCAO_k::cal_fvnl_dbeta_k(const elecstate::DensityMatrix<std::complex<double>, double>* DM,

@@ -126,7 +126,12 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
     }
 
     // prepare grid in Gint
-    this->UHM.grid_prepare(this->GridT, *this->pw_rho, *this->pw_big);
+	this->UHM.grid_prepare(
+			this->GridT, 
+			this->GG,
+			this->GK,
+			*this->pw_rho, 
+			*this->pw_big);
 
     // init Hamiltonian
     if (this->p_hamilt != nullptr)
@@ -137,8 +142,8 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
     if (this->p_hamilt == nullptr)
     {
         elecstate::DensityMatrix<TK, double>* DM = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
-        this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(GlobalV::GAMMA_ONLY_LOCAL ? &(this->UHM.GG) : nullptr,
-            GlobalV::GAMMA_ONLY_LOCAL ? nullptr : &(this->UHM.GK),
+        this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(GlobalV::GAMMA_ONLY_LOCAL ? &(this->GG) : nullptr,
+            GlobalV::GAMMA_ONLY_LOCAL ? nullptr : &(this->GK),
             &(this->UHM.genH),
             &(this->LM),
             &(this->LOC),
@@ -194,7 +199,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
         if (GlobalV::GAMMA_ONLY_LOCAL)
         {
             Gint_inout inout(this->LOC.DM, this->pelec->charge->rho, Gint_Tools::job_type::rho);
-            this->UHM.GG.cal_gint(&inout);
+            this->GG.cal_gint(&inout);
             if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
             {
                 for (int is = 0; is < GlobalV::NSPIN; is++)
@@ -202,13 +207,13 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
                     ModuleBase::GlobalFunc::ZEROS(this->pelec->charge->kin_r[0], this->pw_rho->nrxx);
                 }
                 Gint_inout inout1(this->LOC.DM, this->pelec->charge->kin_r, Gint_Tools::job_type::tau);
-                this->UHM.GG.cal_gint(&inout1);
+                this->GG.cal_gint(&inout1);
             }
         }
         else
         {
             Gint_inout inout(this->LOC.DM_R, this->pelec->charge->rho, Gint_Tools::job_type::rho);
-            this->UHM.GK.cal_gint(&inout);
+            this->GK.cal_gint(&inout);
             if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
             {
                 for (int is = 0; is < GlobalV::NSPIN; is++)
@@ -216,7 +221,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
                     ModuleBase::GlobalFunc::ZEROS(this->pelec->charge->kin_r[0], this->pw_rho->nrxx);
                 }
                 Gint_inout inout1(this->LOC.DM_R, this->pelec->charge->kin_r, Gint_Tools::job_type::tau);
-                this->UHM.GK.cal_gint(&inout1);
+                this->GK.cal_gint(&inout1);
             }
         }
 
@@ -389,7 +394,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
     else if (GlobalV::CALCULATION == "get_pchg")
     {
         IState_Charge ISC(this->psi, this->LOC);
-        ISC.begin(this->UHM.GG,
+        ISC.begin(this->GG,
                   this->pelec,
                   this->pw_rho,
                   this->pw_big,
@@ -411,7 +416,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       this->pw_wfc,
                       this->pw_big,
                       this->LOWF,
-                      this->UHM.GG,
+                      this->GG,
                       INPUT.out_wfc_pw,
                       this->wf.out_wfc_r,
                       this->kv,
@@ -427,7 +432,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       this->pw_wfc,
                       this->pw_big,
                       this->LOWF,
-                      this->UHM.GK,
+                      this->GK,
                       INPUT.out_wfc_pw,
                       this->wf.out_wfc_r,
                       this->kv,
@@ -524,11 +529,11 @@ void ESolver_KS_LCAO<TK, TR>::nscf()
     if (GlobalC::exx_info.info_global.cal_exx)
     {
         // GlobalC::exx_lcao.cal_exx_elec_nscf(this->LOWF.ParaV[0]);
-        const std::string file_name_exx = GlobalV::global_out_dir + "HexxR_" + std::to_string(GlobalV::MY_RANK);
+        const std::string file_name_exx = GlobalV::global_out_dir + "HexxR" + std::to_string(GlobalV::MY_RANK);
         if (GlobalC::exx_info.info_ri.real_number)
-            this->exd->read_Hexxs(file_name_exx);
+            this->exd->read_Hexxs_csr(file_name_exx, GlobalC::ucell);
         else
-            this->exc->read_Hexxs(file_name_exx);
+            this->exc->read_Hexxs_csr(file_name_exx, GlobalC::ucell);
 
         hamilt::HamiltLCAO<TK, TR>* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
         auto exx = new hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>>(&this->LM,

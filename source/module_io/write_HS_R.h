@@ -23,7 +23,9 @@ namespace ModuleIO
         void output_dH_R(
             const int &istep,
             const ModuleBase::matrix& v_eff,
-            LCAO_Hamilt &UHM,
+			LCAO_Hamilt &UHM,
+			Gint_k& gint_k,  // mohan add 2024-04-01
+			LCAO_Matrix &lm,  // mohan add 2024-04-01
             const K_Vectors& kv,
             const bool& binary = false,
             const double& sparse_threshold = 1e-10);

@@ -39,6 +39,7 @@ void Force_LCAO_gamma::ftable_gamma(const bool isforce,
                                     ModuleBase::matrix& svl_dphi,
 #endif
 									LCAO_Hamilt &uhm,
+                                    Gint_Gamma &gint_gamma,
 									LCAO_Matrix &lm)
 {
     ModuleBase::TITLE("Force_LCAO_gamma", "ftable");
@@ -50,11 +51,10 @@ void Force_LCAO_gamma::ftable_gamma(const bool isforce,
 
     this->ParaV = DM->get_paraV_pointer();
     //const Parallel_Orbitals* pv = loc.ParaV;
-    this->UHM = &uhm;
 
     // allocate DSloc_x, DSloc_y, DSloc_z
     // allocate DHloc_fixed_x, DHloc_fixed_y, DHloc_fixed_z
-    this->allocate_gamma(*this->ParaV, lm);
+    this->allocate_gamma(*this->ParaV, uhm.genH, lm);
 
     // calculate the 'energy density matrix' here.
     this->cal_foverlap(isforce, isstress, psid, pelec, lm, foverlap, soverlap);
@@ -65,7 +65,7 @@ void Force_LCAO_gamma::ftable_gamma(const bool isforce,
     this->cal_ftvnl_dphi(DM, lm, isforce, isstress, ftvnl_dphi, stvnl_dphi);
     this->cal_fvnl_dbeta(DM, isforce, isstress, fvnl_dbeta, svnl_dbeta);
 
-    this->cal_fvl_dphi(loc.DM, isforce, isstress, pelec->pot, fvl_dphi, svl_dphi);
+    this->cal_fvl_dphi(loc.DM, isforce, isstress, pelec->pot, gint_gamma, fvl_dphi, svl_dphi);
 
     // caoyu add for DeePKS
 #ifdef __DEEPKS
@@ -128,6 +128,7 @@ void Force_LCAO_gamma::ftable_gamma(const bool isforce,
 
 void Force_LCAO_gamma::allocate_gamma(
     const Parallel_Orbitals &pv,
+    LCAO_gen_fixedH &gen_h,
     LCAO_Matrix &lm)
 {
     ModuleBase::TITLE("Force_LCAO_gamma", "allocate_gamma");
@@ -179,7 +180,7 @@ void Force_LCAO_gamma::allocate_gamma(
     }
     // calculate dS in LCAO basis
     // ModuleBase::timer::tick("Force_LCAO_gamma","build_S_new");
-    this->UHM->genH.build_ST_new('S', cal_deri, GlobalC::ucell, lm.Sloc.data());
+    gen_h.build_ST_new('S', cal_deri, GlobalC::ucell, lm.Sloc.data());
     // ModuleBase::timer::tick("Force_LCAO_gamma","build_S_new");
 
     // calculate dT in LCAP
@@ -196,12 +197,12 @@ void Force_LCAO_gamma::allocate_gamma(
     // calculate dT
     // calculate T + VNL(P1) in LCAO basis
     // ModuleBase::timer::tick("Force_LCAO_gamma","build_T_new");
-    this->UHM->genH.build_ST_new('T', cal_deri, GlobalC::ucell, lm.Hloc_fixed.data());
+    gen_h.build_ST_new('T', cal_deri, GlobalC::ucell, lm.Hloc_fixed.data());
     // ModuleBase::timer::tick("Force_LCAO_gamma","build_T_new");
     // test_gamma(lm.DHloc_fixed_x, "dHloc_fixed_x T part");
 
     // ModuleBase::timer::tick("Force_LCAO_gamma","build_Nonlocal_mu");
-    this->UHM->genH.build_Nonlocal_mu_new(lm.Hloc_fixed.data(), cal_deri);
+    gen_h.build_Nonlocal_mu_new(lm.Hloc_fixed.data(), cal_deri);
     // ModuleBase::timer::tick("Force_LCAO_gamma","build_Nonlocal_mu");
     // test_gamma(lm.DHloc_fixed_x, "dHloc_fixed_x Vnl part");
 
@@ -212,7 +213,7 @@ void Force_LCAO_gamma::allocate_gamma(
 
         lm.zeros_HSgamma('S');
 
-        this->UHM->genH.build_ST_new('S', cal_deri, GlobalC::ucell, 
+        gen_h.build_ST_new('S', cal_deri, GlobalC::ucell, 
 
         lm.Sloc.data(), INPUT.cal_syns, INPUT.dmax);
 

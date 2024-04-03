@@ -14,7 +14,7 @@
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h" //caoyu add for deepks 2021-06-03
 #include "module_elecstate/elecstate_lcao.h"
 #endif
-#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dftu_new.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dftu_lcao.h"
 
 template <typename T>
 Force_Stress_LCAO<T>::Force_Stress_LCAO(Record_adj& ra, const int nat_in) : RA(&ra), f_pw(nat_in), nat(nat_in)
@@ -34,8 +34,10 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
 										  LCAO_Matrix &lm,
                                           const elecstate::ElecState* pelec,
                                           const psi::Psi<T>* psi,
-                                          LCAO_Hamilt& uhm,
-                                          ModuleBase::matrix& fcs,
+										  LCAO_Hamilt& uhm,
+										  Gint_Gamma &gint_gamma, // mohan add 2024-04-01
+										  Gint_k &gint_k, // mohan add 2024-04-01
+										  ModuleBase::matrix& fcs,
                                           ModuleBase::matrix& scs,
                                           const Structure_Factor& sf,
                                           const K_Vectors& kv,
@@ -138,7 +140,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
     //--------------------------------------------------------
     // implement four terms which needs integration
     //--------------------------------------------------------
-    this->calForceStressIntegralPart(GlobalV::GAMMA_ONLY_LOCAL,
+    this->integral_part(GlobalV::GAMMA_ONLY_LOCAL,
                                      isforce,
                                      isstress,
                                      loc,
@@ -158,9 +160,12 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                                      svl_dphi,
 #endif
 									 uhm,
+									 gint_gamma,
+									 gint_k,
 									 pv,
 									 lm,
                                      kv);
+
     // implement vdw force or stress here
     //  Peize Lin add 2014-04-04, update 2021-03-09
     //  jiyy add 2019-05-18, update 2021-05-02
@@ -235,14 +240,14 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
         }
         else
         {
-            hamilt::DFTUNew<hamilt::OperatorLCAO<T, double>> tmp_dftu(uhm.LM,
+            hamilt::DFTU<hamilt::OperatorLCAO<T, double>> tmp_dftu(uhm.LM,
                                                                  kv.kvec_d,
                                                                  nullptr,
                                                                  nullptr,
-                                                                 &GlobalC::ucell,
+                                                                 GlobalC::ucell,
                                                                  &GlobalC::GridD,
                                                                  &GlobalC::dftu,
-                                                                 uhm.LM->ParaV);
+                                                                 *(uhm.LM->ParaV));
             tmp_dftu.cal_force_stress(isforce, isstress, force_dftu, stress_dftu);
         }
     }
@@ -718,7 +723,7 @@ void Force_Stress_LCAO<T>::calForcePwPart(ModuleBase::matrix& fvl_dvl,
 
 // overlap, kinetic, nonlocal pseudopotential, Local potential terms in force and stress
 template<>
-void Force_Stress_LCAO<double>::calForceStressIntegralPart(
+void Force_Stress_LCAO<double>::integral_part(
     const bool isGammaOnly,
     const bool isforce,
     const bool isstress,
@@ -738,7 +743,9 @@ void Force_Stress_LCAO<double>::calForceStressIntegralPart(
 #else
     ModuleBase::matrix& svl_dphi,
 #endif
-    LCAO_Hamilt &uhm,
+	LCAO_Hamilt &uhm,
+	Gint_Gamma &gint_gamma, // mohan add 2024-04-01
+	Gint_k &gint_k, // mohan add 2024-04-01
 	Parallel_Orbitals &pv,
     LCAO_Matrix &lm,
     const K_Vectors& kv)
@@ -763,13 +770,14 @@ void Force_Stress_LCAO<double>::calForceStressIntegralPart(
         svl_dphi,
 #endif
         uhm,
+        gint_gamma,
         lm);
     return;
 }
 
 
 template<>
-void Force_Stress_LCAO<std::complex<double>>::calForceStressIntegralPart(
+void Force_Stress_LCAO<std::complex<double>>::integral_part(
     const bool isGammaOnly,
     const bool isforce,
     const bool isstress,
@@ -790,9 +798,11 @@ void Force_Stress_LCAO<std::complex<double>>::calForceStressIntegralPart(
     ModuleBase::matrix& svl_dphi,
 #endif
 	LCAO_Hamilt &uhm,
+	Gint_Gamma &gint_gamma,
+	Gint_k &gint_k,
 	Parallel_Orbitals &pv,
 	LCAO_Matrix &lm,
-    const K_Vectors& kv)
+	const K_Vectors& kv)
 {
         flk.ftable_k(isforce,
                      isstress,
@@ -814,6 +824,7 @@ void Force_Stress_LCAO<std::complex<double>>::calForceStressIntegralPart(
                      svl_dphi,
 #endif
 					 uhm,
+                     gint_k,
 					 pv,
 					 lm,
                      kv);

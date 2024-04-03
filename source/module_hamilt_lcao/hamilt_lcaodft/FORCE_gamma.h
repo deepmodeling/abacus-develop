@@ -9,6 +9,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_psi/psi.h"
+#include "module_hamilt_lcao/module_gint/gint_gamma.h"
 
 class Force_LCAO_gamma
 {
@@ -20,8 +21,6 @@ public:
     ~Force_LCAO_gamma();
 
   private:
-
-    LCAO_Hamilt* UHM;
 
     const Parallel_Orbitals* ParaV;
 
@@ -46,14 +45,16 @@ public:
 #else
                       ModuleBase::matrix& svl_dphi,
 #endif
-                      LCAO_Hamilt& uhm,
-                      LCAO_Matrix& lm);
+					  LCAO_Hamilt& uhm,
+					  Gint_Gamma &gint_gamma,
+					  LCAO_Matrix& lm);
 
 
 
     // get the ds, dt, dvnl.
 	void allocate_gamma(
 			const Parallel_Orbitals& pv,
+            LCAO_gen_fixedH &gen_h,
 			LCAO_Matrix &lm);
 
     void finish_ftable_gamma(LCAO_Matrix &lm);
@@ -98,6 +99,7 @@ public:
                       const bool isforce,
                       const bool isstress,
                       const elecstate::Potential* pot_in,
+                      Gint_Gamma &gint_gamma, // mohan add 2024-04-01
                       ModuleBase::matrix& fvl_dphi,
                       ModuleBase::matrix& svl_dphi);
 };

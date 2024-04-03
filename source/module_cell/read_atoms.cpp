@@ -773,7 +773,9 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
 						Coordinate=="Cartesian_angstrom_center_xyz" || 
 						Coordinate=="Cartesian_au")
 					{
-						double dx,dy,dz;
+						double dx=0.0;
+						double dy=0.0;
+						double dz=0.0;
 						ModuleBase::Mathzone::Cartesian_to_Direct(atoms[it].tau[ia].x, atoms[it].tau[ia].y, atoms[it].tau[ia].z,
 						latvec.e11, latvec.e12, latvec.e13,
 						latvec.e21, latvec.e22, latvec.e23,
@@ -1251,7 +1253,9 @@ void UnitCell::check_dtau(void)
 			atom1->taud[ia].y = dy2;
 			atom1->taud[ia].z = dz2;
 
-			double cx2, cy2, cz2;
+			double cx2=0.0;
+			double cy2=0.0;
+			double cz2=0.0;
 
 			ModuleBase::Mathzone::Direct_to_Cartesian(
 			atom1->taud[ia].x, atom1->taud[ia].y, atom1->taud[ia].z,
