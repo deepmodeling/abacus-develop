@@ -18,7 +18,7 @@ bool winput::begin_stop_flag;
 bool winput::end_flag;
 std::string winput::wf_type;
 bool winput::build_wf;
-int winput::imp_pao;
+int winput::imp_pao = 0;
 bool winput::b_out_wf;
 bool winput::b_fftwan;//add 2008-07-20
 bool winput::b_plot_build;//add 2008-06-04
