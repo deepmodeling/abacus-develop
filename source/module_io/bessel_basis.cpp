@@ -407,7 +407,7 @@ void Bessel_Basis::readin_C4(
 							std::string title1, title2, title3;
 							inc4 >> title1 >> title2 >> title3;
 
-							int tmp_type, tmp_l, tmp_n;
+							int tmp_type=0, tmp_l=0, tmp_n=0;
 							inc4 >> tmp_type >> tmp_l >> tmp_n;
 							//std::cout << "\n Find T=" << tmp_type << " L=" << tmp_l << " N=" << tmp_n;
 
