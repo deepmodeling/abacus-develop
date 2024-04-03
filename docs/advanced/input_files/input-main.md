@@ -276,6 +276,7 @@
     - [hubbard\_u](#hubbard_u)
     - [yukawa\_potential](#yukawa_potential)
     - [yukawa\_lambda](#yukawa_lambda)
+    - [uramping](#uramping)
     - [omc](#omc)
     - [onsite\_radius](#onsite_radius)
   - [vdW correction](#vdw-correction)
@@ -2609,6 +2610,14 @@ These variables are used to control DFT+U correlated parameters
 - **Availability**: DFT+U with `yukawa_potential` = True.
 - **Description**: The screen length of Yukawa potential. If left to default, the screen length will be calculated as an average of the entire system. It's better to stick to the default setting unless there is a very good reason.
 - **Default**: Calculated on the fly.
+
+### uramping
+
+- **Type**: Real
+- **Unit**: eV
+- **Availability**: DFT+U calculations with `mixing_restart > 0`.
+- **Description**: Once `uramping` > 0.15 eV. DFT+U calculations will start SCF with U = 0 eV, namely normal LDA/PBE calculations. Once SCF restarts when `drho<mixing_restart`, U value will increase by `uramping` eV. SCF will repeat above calcuations until U values reach target defined in `hubbard_u`.
+- **Default**: -1.0.
 
 ### omc
 
