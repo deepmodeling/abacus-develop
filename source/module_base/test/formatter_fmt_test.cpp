@@ -33,22 +33,22 @@ class FmtTest : public testing::Test
 
 TEST_F(FmtTest, DefaultConstructor) {
     formatter::Fmt fmt;
-    EXPECT_EQ(fmt.get_width(), 4);
-    EXPECT_EQ(fmt.get_precision(), 2);
-    EXPECT_EQ(fmt.get_fillChar(), ' ');
-    EXPECT_EQ(fmt.get_fixed(), true);
-    EXPECT_EQ(fmt.get_right(), true);
-    EXPECT_EQ(fmt.get_error(), false);
+    EXPECT_EQ(fmt.width(), 4);
+    EXPECT_EQ(fmt.precision(), 2);
+    EXPECT_EQ(fmt.fillChar(), ' ');
+    EXPECT_EQ(fmt.fixed(), true);
+    EXPECT_EQ(fmt.right(), true);
+    EXPECT_EQ(fmt.error(), false);
 }
 
 TEST_F(FmtTest, ParameterizedConstructor) {
     formatter::Fmt fmt(10, 5, '0', false, false, true);
-    EXPECT_EQ(fmt.get_width(), 10);
-    EXPECT_EQ(fmt.get_precision(), 5);
-    EXPECT_EQ(fmt.get_fillChar(), '0');
-    EXPECT_EQ(fmt.get_fixed(), false);
-    EXPECT_EQ(fmt.get_right(), false);
-    EXPECT_EQ(fmt.get_error(), true);
+    EXPECT_EQ(fmt.width(), 10);
+    EXPECT_EQ(fmt.precision(), 5);
+    EXPECT_EQ(fmt.fillChar(), '0');
+    EXPECT_EQ(fmt.fixed(), false);
+    EXPECT_EQ(fmt.right(), false);
+    EXPECT_EQ(fmt.error(), true);
 }
 
 TEST_F(FmtTest, Setters) {
@@ -59,12 +59,12 @@ TEST_F(FmtTest, Setters) {
     fmt.set_fixed(false);
     fmt.set_right(false);
     fmt.set_error(true);
-    EXPECT_EQ(fmt.get_width(), 10);
-    EXPECT_EQ(fmt.get_precision(), 5);
-    EXPECT_EQ(fmt.get_fillChar(), '0');
-    EXPECT_EQ(fmt.get_fixed(), false);
-    EXPECT_EQ(fmt.get_right(), false);
-    EXPECT_EQ(fmt.get_error(), true);
+    EXPECT_EQ(fmt.width(), 10);
+    EXPECT_EQ(fmt.precision(), 5);
+    EXPECT_EQ(fmt.fillChar(), '0');
+    EXPECT_EQ(fmt.fixed(), false);
+    EXPECT_EQ(fmt.right(), false);
+    EXPECT_EQ(fmt.error(), true);
 }
 
 TEST_F(FmtTest, Format) {
@@ -102,4 +102,63 @@ TEST_F(FmtTest, ComplexFormat) {
     EXPECT_EQ(fmt.format(std::complex<double>(1, 2)), "(       +1.0000000000,       +2.0000000000)");
     EXPECT_EQ(fmt.format(std::complex<double>(1, -2)), "(       +1.0000000000,       -2.0000000000)");
 
+}
+
+TEST_F(FmtTest, ToFormat)
+{
+    formatter::Fmt fmt;
+    int width, precision;
+    bool fixed, right;
+    fmt.to_format("%20.10f", width, precision, fixed, right);
+    EXPECT_EQ(width, 20);
+    EXPECT_EQ(precision, 10);
+    EXPECT_EQ(fixed, true);
+    EXPECT_EQ(right, true);
+    fmt.to_format("%-20.10f", width, precision, fixed, right);
+    EXPECT_EQ(width, 20);
+    EXPECT_EQ(precision, 10);
+    EXPECT_EQ(fixed, true);
+    EXPECT_EQ(right, false);
+    fmt.to_format("%20.10e", width, precision, fixed, right);
+    EXPECT_EQ(width, 20);
+    EXPECT_EQ(precision, 10);
+    EXPECT_EQ(fixed, false);
+    EXPECT_EQ(right, true);
+    fmt.to_format("%-20.10e", width, precision, fixed, right);
+    EXPECT_EQ(width, 20);
+    EXPECT_EQ(precision, 10);
+    EXPECT_EQ(fixed, false);
+    EXPECT_EQ(right, false);
+    fmt.to_format("%20d", width, precision, fixed, right);
+    EXPECT_EQ(width, 20);
+    EXPECT_EQ(precision, 0);
+    EXPECT_EQ(fixed, true);
+    EXPECT_EQ(right, true);
+    fmt.to_format("%-20d", width, precision, fixed, right);
+    EXPECT_EQ(width, 20);
+    EXPECT_EQ(precision, 0);
+    EXPECT_EQ(fixed, true);
+    EXPECT_EQ(right, false);
+    fmt.to_format("%20s", width, precision, fixed, right);
+    EXPECT_EQ(width, 20);
+    EXPECT_EQ(precision, 0);
+    EXPECT_EQ(fixed, true);
+    EXPECT_EQ(right, true);
+    fmt.to_format("%-20s", width, precision, fixed, right);
+    EXPECT_EQ(width, 20);
+    EXPECT_EQ(precision, 0);
+    EXPECT_EQ(fixed, true);
+    EXPECT_EQ(right, false);
+}
+
+TEST_F(FmtTest, Format2Args)
+{
+    formatter::Fmt fmt;
+    EXPECT_EQ(fmt.format("%20.10f", 1), "          1.0000000000");
+    EXPECT_EQ(fmt.format("%20.10f", 1.23456789), "          1.2345678900");
+    EXPECT_EQ(fmt.format("%20.10e", 1.23456789), "   1.2345678900e+00");
+    EXPECT_EQ(fmt.format("%20.10e", 1.23456789e10), "   1.2345678900e+10");
+    EXPECT_EQ(fmt.format("%20.10e", 1.23456789e-10), "   1.2345678900e-10");
+    EXPECT_EQ(fmt.format("%20d", 1), "                   1");
+    EXPECT_EQ(fmt.format("%20s", "hello"), "               hello");
 }

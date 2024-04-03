@@ -44,31 +44,31 @@ TEST_F(PhysFmtTest, AdjustFormatter) {
     formatter::Fmt fmt;
     formatter::PhysicalFmt physfmt("energy", &fmt);
     physfmt.adjust_formatter();
-    EXPECT_EQ(fmt.get_width(), 20);
-    EXPECT_EQ(fmt.get_precision(), 10);
-    EXPECT_EQ(fmt.get_fillChar(), ' ');
-    EXPECT_EQ(fmt.get_fixed(), true);
-    EXPECT_EQ(fmt.get_right(), true);
-    EXPECT_EQ(fmt.get_error(), false);
+    EXPECT_EQ(fmt.width(), 20);
+    EXPECT_EQ(fmt.precision(), 10);
+    EXPECT_EQ(fmt.fillChar(), ' ');
+    EXPECT_EQ(fmt.fixed(), true);
+    EXPECT_EQ(fmt.right(), true);
+    EXPECT_EQ(fmt.error(), false);
     physfmt.adjust_formatter(true);
-    EXPECT_EQ(fmt.get_width(), 20);
-    EXPECT_EQ(fmt.get_precision(), 10);
-    EXPECT_EQ(fmt.get_fillChar(), ' ');
-    EXPECT_EQ(fmt.get_fixed(), true);
-    EXPECT_EQ(fmt.get_right(), false);
-    EXPECT_EQ(fmt.get_error(), false);
+    EXPECT_EQ(fmt.width(), 20);
+    EXPECT_EQ(fmt.precision(), 10);
+    EXPECT_EQ(fmt.fillChar(), ' ');
+    EXPECT_EQ(fmt.fixed(), true);
+    EXPECT_EQ(fmt.right(), false);
+    EXPECT_EQ(fmt.error(), false);
 }
 
 TEST_F(PhysFmtTest, SetContext) {
     formatter::PhysicalFmt physfmt;
     physfmt.set_context("energy");
     EXPECT_EQ(physfmt.get_context(), "energy");
-    EXPECT_EQ(physfmt.get_p_formatter()->get_width(), 20);
-    EXPECT_EQ(physfmt.get_p_formatter()->get_precision(), 10);
-    EXPECT_EQ(physfmt.get_p_formatter()->get_fillChar(), ' ');
-    EXPECT_EQ(physfmt.get_p_formatter()->get_fixed(), true);
-    EXPECT_EQ(physfmt.get_p_formatter()->get_right(), true);
-    EXPECT_EQ(physfmt.get_p_formatter()->get_error(), false);
+    EXPECT_EQ(physfmt.get_p_formatter()->width(), 20);
+    EXPECT_EQ(physfmt.get_p_formatter()->precision(), 10);
+    EXPECT_EQ(physfmt.get_p_formatter()->fillChar(), ' ');
+    EXPECT_EQ(physfmt.get_p_formatter()->fixed(), true);
+    EXPECT_EQ(physfmt.get_p_formatter()->right(), true);
+    EXPECT_EQ(physfmt.get_p_formatter()->error(), false);
 }
 
 TEST_F(PhysFmtTest, Setpformatter) {
@@ -88,18 +88,18 @@ TEST_F(PhysFmtTest, AdjustFormatterFlexible)
 {
     formatter::PhysicalFmt physfmt;
     physfmt.adjust_formatter_flexible(10, 0.5); // means for double, decimal part is 10, integer part is 5
-    EXPECT_EQ(physfmt.get_p_formatter()->get_width(), 16);
-    EXPECT_EQ(physfmt.get_p_formatter()->get_precision(), 10);
-    EXPECT_EQ(physfmt.get_p_formatter()->get_fillChar(), ' ');
-    EXPECT_EQ(physfmt.get_p_formatter()->get_fixed(), true);
-    EXPECT_EQ(physfmt.get_p_formatter()->get_right(), true);
-    EXPECT_EQ(physfmt.get_p_formatter()->get_error(), false);
+    EXPECT_EQ(physfmt.get_p_formatter()->width(), 16);
+    EXPECT_EQ(physfmt.get_p_formatter()->precision(), 10);
+    EXPECT_EQ(physfmt.get_p_formatter()->fillChar(), ' ');
+    EXPECT_EQ(physfmt.get_p_formatter()->fixed(), true);
+    EXPECT_EQ(physfmt.get_p_formatter()->right(), true);
+    EXPECT_EQ(physfmt.get_p_formatter()->error(), false);
 
     physfmt.adjust_formatter_flexible(8); // means for int, width is 8
-    EXPECT_EQ(physfmt.get_p_formatter()->get_width(), 8);
-    EXPECT_EQ(physfmt.get_p_formatter()->get_precision(), 0);
-    EXPECT_EQ(physfmt.get_p_formatter()->get_fillChar(), ' ');
-    EXPECT_EQ(physfmt.get_p_formatter()->get_fixed(), true);
-    EXPECT_EQ(physfmt.get_p_formatter()->get_right(), true);
-    EXPECT_EQ(physfmt.get_p_formatter()->get_error(), false);
+    EXPECT_EQ(physfmt.get_p_formatter()->width(), 8);
+    EXPECT_EQ(physfmt.get_p_formatter()->precision(), 0);
+    EXPECT_EQ(physfmt.get_p_formatter()->fillChar(), ' ');
+    EXPECT_EQ(physfmt.get_p_formatter()->fixed(), true);
+    EXPECT_EQ(physfmt.get_p_formatter()->right(), true);
+    EXPECT_EQ(physfmt.get_p_formatter()->error(), false);
 }

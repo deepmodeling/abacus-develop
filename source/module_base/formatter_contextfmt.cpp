@@ -197,12 +197,12 @@ void formatter::ContextFmt::print_status() const {
     std::cout << "title_switch: " << this->title_switch_ << std::endl;
     std::cout << "iterative: " << this->iterative_ << std::endl;
     std::cout << "fmt: " << std::endl;
-    std::cout << "width: " << this->fmt_.get_width() << std::endl;
-    std::cout << "precision: " << this->fmt_.get_precision() << std::endl;
-    std::cout << "fillChar: " << this->fmt_.get_fillChar() << std::endl;
-    std::cout << "fixed: " << this->fmt_.get_fixed() << std::endl;
-    std::cout << "right: " << this->fmt_.get_right() << std::endl;
-    std::cout << "error: " << this->fmt_.get_error() << std::endl;
+    std::cout << "width: " << this->fmt_.width() << std::endl;
+    std::cout << "precision: " << this->fmt_.precision() << std::endl;
+    std::cout << "fillChar: " << this->fmt_.fillChar() << std::endl;
+    std::cout << "fixed: " << this->fmt_.fixed() << std::endl;
+    std::cout << "right: " << this->fmt_.right() << std::endl;
+    std::cout << "error: " << this->fmt_.error() << std::endl;
     std::cout << "p_phys_fmt: " << this->p_phys_fmt_ << std::endl;
     std::cout << "mode: " << Table::get_mode() << std::endl;
     std::cout << "col_delimiter: " << Table::get_col_delimiter() << std::endl;

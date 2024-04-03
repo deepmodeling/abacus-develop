@@ -23,37 +23,26 @@ namespace formatter
             Fmt(int width, int precision, char fillChar, bool fixed, bool right, bool error);
             /// @brief destructor
             ~Fmt();
-            /// @brief setter the width
-            /// @param width 
-            void set_width(int width) { width_ = width; }
-            /// @brief setter the precision
-            /// @param precision
-            void set_precision(int precision) { precision_ = precision; }
-            /// @brief setter the fillChar
-            /// @param fillChar
-            void set_fillChar(char fillChar) { fillChar_ = fillChar; }
-            /// @brief setter the fixed
-            /// @param fixed
-            void set_fixed(bool fixed) { fixed_ = fixed; }
-            /// @brief setter the right
-            /// @param right
-            void set_right(bool right) { right_ = right; }
-            /// @brief setter the error
-            /// @param error
-            void set_error(bool error) { error_ = error; }
-            /// @brief reset the format to default values
-            void reset();
+
             /// @brief format the input value to string
             /// @tparam T double, int or std::string
             /// @param value input value
             /// @return std::string, the formatted string
             template <typename T> std::string format(const T& value) {
                 std::stringstream ss_;
-                if (std::is_signed<T>::value) {
-                    if (value >= 0) {
-                        if (error_) ss_ << "+";
-                    } else {}
+                if((std::is_same<T, std::string>::value)||(std::is_same<T, const char*>::value)
+                    ||(std::is_same<T, char*>::value)||(std::is_same<T, const char>::value)||(std::is_same<T, char>::value))
+                {
+                    // if is string, no need to set precision
                 }
+                else
+                {
+                    // if is double, float, int, can set error flag
+                    if (error_) {
+                        if (value >= 0) ss_ << "+";
+                    }
+                }
+
                 ss_ << std::setprecision(precision_);
                 std::stringstream ss;
                 if (fixed_) {
@@ -81,24 +70,45 @@ namespace formatter
                 ss << value;
                 return ss.str();
             }
-            /// @brief getter the width
-            /// @return width
-            int get_width() const { return width_; }
-            /// @brief getter the precision
-            /// @return precision
-            int get_precision() const { return precision_; }
-            /// @brief getter the fillChar
-            /// @return fillChar
-            char get_fillChar() const { return fillChar_; }
-            /// @brief getter the fixed
-            /// @return fixed
-            bool get_fixed() const { return fixed_; }
-            /// @brief getter the right
-            /// @return right
-            bool get_right() const { return right_; }
-            /// @brief getter the error
-            /// @return error
-            bool get_error() const { return error_; }
+
+            template <typename T> std::string format(const std::string& strfmt, const T& value) {
+                int width, precision;
+                bool fixed, right;
+                to_format(strfmt, width, precision, fixed, right);
+                set_width(width);
+                set_precision(precision);
+                set_fixed(fixed);
+                set_right(right);
+                return format<T>(value);
+            }
+            /// @brief for compatibility with printf fashion format string
+            /// @param strfmt [in] "%20.10f"-like format string
+            /// @param width [out] width of the output string
+            /// @param precision [out] precision of the output string
+            /// @param fixed [out] whether the output string keeps decimal places
+            /// @param right [out] whether the output string is right aligned
+            void to_format(const std::string& strfmt,
+                        int& width,
+                        int& precision,
+                        bool& fixed,
+                        bool& right);
+
+            // getter and setter
+            int width() const { return width_; }
+            int precision() const { return precision_; }
+            char fillChar() const { return fillChar_; }
+            bool fixed() const { return fixed_; }
+            bool right() const { return right_; }
+            bool error() const { return error_; }
+
+            void set_width(int width) { width_ = width; }
+            void set_precision(int precision) { precision_ = precision; }
+            void set_fillChar(char fillChar) { fillChar_ = fillChar; }
+            void set_fixed(bool fixed) { fixed_ = fixed; }
+            void set_right(bool right) { right_ = right; }
+            void set_error(bool error) { error_ = error; }
+            /// @brief reset the format to default values
+            void reset();
 
         private:
             /// @brief width of the output string
