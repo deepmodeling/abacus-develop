@@ -42,7 +42,7 @@ class Force_LCAO_k : public Force_LCAO_gamma
 #else
                   ModuleBase::matrix& svl_dphi,
 #endif
-				  LCAO_Hamilt &uhm,
+                  LCAO_gen_fixedH &gen_h, // mohan add 2024-04-02
                   Gint_k &gint_k,
 				  Parallel_Orbitals &pv,
 				  LCAO_Matrix &lm,

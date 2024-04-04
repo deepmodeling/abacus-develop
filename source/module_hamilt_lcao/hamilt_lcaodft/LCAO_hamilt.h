@@ -24,16 +24,6 @@ class LCAO_Hamilt
 
     ~LCAO_Hamilt();
 
-	void grid_prepare(
-			const Grid_Technique& gt, 
-			Gint_Gamma &gint_gamma,
-			Gint_k &gint_k,
-			const ModulePW::PW_Basis& rhopw, 
-			const ModulePW::PW_Basis_Big& bigpw);
-
-    // jingan add 2021-6-4
-    void set_R_range_sparse(LCAO_Matrix &lm);
-
     void cal_HContainer_sparse_d(const int &current_spin, 
         const double &sparse_threshold, 
         const hamilt::HContainer<double>& hR, 
@@ -44,16 +34,6 @@ class LCAO_Hamilt
         const hamilt::HContainer<std::complex<double>>& hR, 
         std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>& target);
 
-    void cal_dSTN_R_sparse(const int &current_spin, const double &sparse_threshold);
-
-    // mohan update 2024-04-01
-	void cal_STN_R_sparse_for_S(
-			const Parallel_Orbitals pv,
-			std::vector<double> &slocR,
-			std::vector<std::complex<double>> &slocR_soc,
-			std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> &SR_sparse,
-			std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> &SR_soc_sparse,
-			const double &sparse_threshold);
 
     void cal_STN_R_sparse_for_T(const double &sparse_threshold);
 
@@ -81,19 +61,13 @@ class LCAO_Hamilt
 
     void destroy_all_HSR_sparse(void);
 
-    void cal_TR_sparse(const double &sparse_threshold);
+    void cal_TR_sparse(
+			LCAO_gen_fixedH &gen_h,
+			const double &sparse_threshold);
 
     void destroy_TR_sparse(void);
 
-	void cal_dH_sparse(
-			const int &current_spin, 
-			const double &sparse_threshold,
-			Gint_k &gint_k); // mohan add 2024-04-01
-
     void destroy_dH_R_sparse(void);
-
-    // use overlap matrix to generate fixed Hamiltonian
-    LCAO_gen_fixedH genH;
 
     LCAO_Matrix* LM;
 };

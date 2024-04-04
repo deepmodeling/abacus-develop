@@ -1,5 +1,4 @@
 #include "output_mat_sparse.h"
-
 #include "cal_r_overlap_R.h"
 #include "write_HS_R.h"
 
@@ -16,6 +15,7 @@ namespace ModuleIO
         const ModuleBase::matrix& v_eff,
         const Parallel_Orbitals& pv,
         LCAO_Hamilt& UHM,
+        LCAO_gen_fixedH &gen_h, // mohan add 2024-04-02
         Gint_k& gint_k, // mohan add 2024-04-01
         LCAO_Matrix& LM,
         const K_Vectors& kv,
@@ -28,6 +28,7 @@ namespace ModuleIO
       _v_eff(v_eff),
       _pv(pv),
       _UHM(UHM),
+      _gen_h(gen_h), // mohan add 2024-04-02
       _gint_k(gint_k), // mohan add 2024-04-01
       _LM(LM),
       _kv(kv),
@@ -44,22 +45,26 @@ void Output_Mat_Sparse<double>::write(void)
 template<>
 void Output_Mat_Sparse<std::complex<double>>::write(void)
 {
+    //! generate a file containing the Hamiltonian and S(overlap) matrices 
     if (_out_mat_hsR)
     {
         output_HS_R(_istep, this->_v_eff, this->_UHM, _kv, _p_ham);
     }
 
+    //! generate a file containing the kinetic energy matrix
     if (_out_mat_t)
     {
-        output_T_R(_istep, this->_UHM); // LiuXh add 2019-07-15
+        output_T_R(_istep, this->_UHM, this->_gen_h); // LiuXh add 2019-07-15
     }
 
+    //! generate a file containing the derivatives of the Hamiltonian matrix (in Ry/Bohr)
     if (_out_mat_dh)
     {
 		output_dH_R(
 				_istep, 
 				this->_v_eff, 
 				this->_UHM, 
+                this->_gen_h,
 				this->_gint_k, // mohan add 2024-04-01
 				this->_LM,
 				_kv); // LiuXh add 2019-07-15

@@ -23,6 +23,7 @@
 #include "module_io/dm_io.h"
 
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
 
 namespace ModuleESolver
 {
@@ -69,7 +70,7 @@ void ESolver_KS_LCAO<TK, TR>::set_matrix_grid(Record_adj& ra)
     // (2)For each atom, calculate the adjacent atoms in different cells
     // and allocate the space for H(R) and S(R).
     // If k point is used here, allocate HlocR after atom_arrange.
-    Parallel_Orbitals* pv = this->UHM.LM->ParaV;
+    Parallel_Orbitals* pv = this->LM.ParaV;
     ra.for_2d(*pv, GlobalV::GAMMA_ONLY_LOCAL);
     if (!GlobalV::GAMMA_ONLY_LOCAL)
     {
@@ -126,7 +127,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
     }
 
     // prepare grid in Gint
-	this->UHM.grid_prepare(
+	LCAO_domain::grid_prepare(
 			this->GridT, 
 			this->GG,
 			this->GK,
@@ -144,7 +145,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
         elecstate::DensityMatrix<TK, double>* DM = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
         this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(GlobalV::GAMMA_ONLY_LOCAL ? &(this->GG) : nullptr,
             GlobalV::GAMMA_ONLY_LOCAL ? nullptr : &(this->GK),
-            &(this->UHM.genH),
+            &(this->gen_h),
             &(this->LM),
             &(this->LOC),
             this->pelec->pot,
@@ -234,7 +235,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
     // since it depends on ionic positions
     if (GlobalV::deepks_setorb)
     {
-        const Parallel_Orbitals* pv = this->UHM.LM->ParaV;
+        const Parallel_Orbitals* pv = this->LM.ParaV;
         // build and save <psi(0)|alpha(R)> at beginning
         GlobalC::ld.build_psialpha(GlobalV::CAL_FORCE, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD, GlobalC::UOT);
 
@@ -476,14 +477,15 @@ void ESolver_KS_LCAO<std::complex<double>, double>::get_S()
                          GlobalV::test_atom_input);
 
     this->RA.for_2d(this->orb_con.ParaV, GlobalV::GAMMA_ONLY_LOCAL);
-    this->UHM.genH.LM->ParaV = &this->orb_con.ParaV;
+    this->LM.ParaV = &this->orb_con.ParaV;
     if (this->p_hamilt == nullptr)
     {
-        this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(this->UHM.genH.LM, this->kv);
+        this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(&this->LM, this->kv);
         dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, double>*>(this->p_hamilt->ops)->contributeHR();
     }
-    ModuleIO::output_S_R(this->UHM, this->p_hamilt, "SR.csr");
+    ModuleIO::output_S_R(this->uhm, this->p_hamilt, "SR.csr");
 }
+
 template <>
 void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S()
 {
@@ -503,15 +505,15 @@ void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S()
                          GlobalV::test_atom_input);
 
     this->RA.for_2d(this->orb_con.ParaV, GlobalV::GAMMA_ONLY_LOCAL);
-    this->UHM.genH.LM->ParaV = &this->orb_con.ParaV;
+    this->LM.ParaV = &this->orb_con.ParaV;
     if (this->p_hamilt == nullptr)
     {
         this->p_hamilt
-            = new hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>(this->UHM.genH.LM, this->kv);
+            = new hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>(&this->LM, this->kv);
         dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>*>(this->p_hamilt->ops)
             ->contributeHR();
     }
-    ModuleIO::output_S_R(this->UHM, this->p_hamilt, "SR.csr");
+    ModuleIO::output_S_R(this->uhm, this->p_hamilt, "SR.csr");
 }
 
 template <typename TK, typename TR>

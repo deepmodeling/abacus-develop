@@ -50,7 +50,7 @@ void Force_LCAO_k::ftable_k(const bool isforce,
 #else
                             ModuleBase::matrix& svl_dphi,
 #endif
-                            LCAO_Hamilt &uhm,
+                            LCAO_gen_fixedH &gen_h,
                             Gint_k &gint_k,
                             Parallel_Orbitals &pv,
                             LCAO_Matrix &lm,
@@ -65,7 +65,7 @@ void Force_LCAO_k::ftable_k(const bool isforce,
 	this->allocate_k(
 			pv, 
 			lm, 
-            uhm.genH,
+            gen_h,
 			kv.nks, 
 			kv.kvec_d);
 
@@ -148,7 +148,7 @@ void Force_LCAO_k::ftable_k(const bool isforce,
             GlobalC::ld.check_v_delta_k(pv->nnr);
             for (int ik = 0; ik < kv.nks; ik++)
             {
-                uhm.LM->folding_fixedH(ik, kv.kvec_d);
+                LM->folding_fixedH(ik, kv.kvec_d);
             }
             GlobalC::ld.cal_e_delta_band_k(dm_k, kv.nks);
             std::ofstream ofs("E_delta_bands.dat");
