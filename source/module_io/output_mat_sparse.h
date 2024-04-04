@@ -23,6 +23,7 @@ namespace ModuleIO
         const ModuleBase::matrix& v_eff,
         const Parallel_Orbitals& pv,
         LCAO_Hamilt& UHM,
+        LCAO_gen_fixedH &gen_h, // mohan add 2024-04-02
         Gint_k &gint_k, // mohan add 2024-04-01
         LCAO_Matrix& LM,
         const K_Vectors& kv,
@@ -31,19 +32,38 @@ namespace ModuleIO
     void write() override;
 
   private:
+
+    //! generate a file containing the Hamiltonian and S(overlap) matrices 
     int _out_mat_hsR;
+
+    //! generate a file containing the derivatives of the Hamiltonian matrix (in Ry/Bohr)
     int _out_mat_dh;
+
+    //! generate a file containing the kinetic energy matrix
     int _out_mat_t;
+
+    //! generate a file containing the matrix representation of the position matrix (in Bohr)
     int _out_mat_r;
+
     int _istep;
+
     const ModuleBase::matrix& _v_eff;
+
     const Parallel_Orbitals& _pv;
+
     LCAO_Hamilt& _UHM;
+
+    LCAO_gen_fixedH& _gen_h; // mohan add 2024-04-02
+
     Gint_k& _gint_k; // mohan add 2024-04-01
+
     LCAO_Matrix& _LM;
+
     const K_Vectors& _kv;
+
     hamilt::Hamilt<T>* _p_ham;
 };
+
 } // namespace ModuleIO
 
 #endif // OUTPUT_MAT_SPARSE_H

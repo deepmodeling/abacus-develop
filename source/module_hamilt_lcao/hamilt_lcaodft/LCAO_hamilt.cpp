@@ -16,6 +16,10 @@
 #include "LCAO_hamilt.hpp"
 #endif
 
+#include "sparse_format.h"
+
+using namespace sparse_format;
+
 LCAO_Hamilt::LCAO_Hamilt()
 {
 }
@@ -28,187 +32,6 @@ LCAO_Hamilt::~LCAO_Hamilt()
     }
 }
 
-//--------------------------------------------
-// prepare grid network for Gint(grid integral)
-//--------------------------------------------
-void LCAO_Hamilt::grid_prepare(
-		const Grid_Technique& gt, 
-        Gint_Gamma &gint_gamma,
-        Gint_k &gint_k,
-		const ModulePW::PW_Basis& rhopw, 
-		const ModulePW::PW_Basis_Big& bigpw)
-{
-    ModuleBase::TITLE("LCAO_Hamilt","grid_prepare");
-    ModuleBase::timer::tick("LCAO_Hamilt","grid_prepare");
-
-    if(GlobalV::GAMMA_ONLY_LOCAL)
-    {
-        gint_gamma.prep_grid(gt, bigpw.nbx, bigpw.nby, bigpw.nbzp, bigpw.nbzp_start,
-            rhopw.nxyz, bigpw.bx, bigpw.by, bigpw.bz, bigpw.bxyz, bigpw.nbxx,
-            rhopw.ny, rhopw.nplane, rhopw.startz_current);
-
-    }
-    else // multiple k-points
-    {
-        // cal the grid integration of 'Vl' matrix for l-points algorithms.
-        gint_k.prep_grid(gt, bigpw.nbx, bigpw.nby, bigpw.nbzp, bigpw.nbzp_start,
-            rhopw.nxyz, bigpw.bx, bigpw.by, bigpw.bz, bigpw.bxyz, bigpw.nbxx,
-            rhopw.ny, rhopw.nplane, rhopw.startz_current);
-    }
-
-    ModuleBase::timer::tick("LCAO_Hamilt","grid_prepare");
-    return;
-}
-
-void LCAO_Hamilt::set_R_range_sparse(LCAO_Matrix &lm)
-{
-    int R_minX = int(GlobalC::GridD.getD_minX());
-    int R_minY = int(GlobalC::GridD.getD_minY());
-    int R_minZ = int(GlobalC::GridD.getD_minZ());
-
-    int R_x = GlobalC::GridD.getCellX();
-    int R_y = GlobalC::GridD.getCellY();
-    int R_z = GlobalC::GridD.getCellZ();
-
-    for(int ix = 0; ix < R_x; ix++)
-    {
-        for(int iy = 0; iy < R_y; iy++)
-        {
-            for(int iz = 0; iz < R_z; iz++)
-            {
-                Abfs::Vector3_Order<int> temp_R(ix+R_minX, iy+R_minY, iz+R_minZ);
-                lm.all_R_coor.insert(temp_R);
-            }
-        }
-    }
-
-    return;
-}
-
-void LCAO_Hamilt::cal_STN_R_sparse_for_S(
-		const Parallel_Orbitals pv,
-        std::vector<double> &slocR,
-        std::vector<std::complex<double>> &slocR_soc,
-        std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> &SR_sparse,
-        std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> &SR_soc_sparse,
-		const double &sparse_threshold)
-{
-    ModuleBase::TITLE("LCAO_Hamilt","cal_STN_R_sparse_for_S");
-
-    int index = 0;
-    ModuleBase::Vector3<double> dtau, tau1, tau2;
-    ModuleBase::Vector3<double> dtau1, dtau2, tau0;
-
-    double tmp=0.0;
-    std::complex<double> tmpc=complex<double>(0.0,0.0); 
-
-    for(int T1 = 0; T1 < GlobalC::ucell.ntype; ++T1)
-    {
-        Atom* atom1 = &GlobalC::ucell.atoms[T1];
-        for(int I1 = 0; I1 < atom1->na; ++I1)
-        {
-            tau1 = atom1->tau[I1];
-            GlobalC::GridD.Find_atom(GlobalC::ucell, tau1, T1, I1);
-            Atom* atom1 = &GlobalC::ucell.atoms[T1];
-            const int start = GlobalC::ucell.itiaiw2iwt(T1,I1,0);
-
-            for(int ad = 0; ad < GlobalC::GridD.getAdjacentNum()+1; ++ad)
-            {
-                const int T2 = GlobalC::GridD.getType(ad);
-                const int I2 = GlobalC::GridD.getNatom(ad);
-                Atom* atom2 = &GlobalC::ucell.atoms[T2];
-
-                tau2 = GlobalC::GridD.getAdjacentTau(ad);
-                dtau = tau2 - tau1;
-                double distance = dtau.norm() * GlobalC::ucell.lat0;
-                double rcut = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Phi[T2].getRcut();
-
-                bool adj = false;
-
-				if(distance < rcut) 
-				{
-					adj = true;
-				}
-                else if(distance >= rcut)
-                {
-                    for(int ad0 = 0; ad0 < GlobalC::GridD.getAdjacentNum()+1; ++ad0)
-                    {
-                        const int T0 = GlobalC::GridD.getType(ad0);
-
-                        tau0 = GlobalC::GridD.getAdjacentTau(ad0);
-                        dtau1 = tau0 - tau1;
-                        dtau2 = tau0 - tau2;
-
-                        double distance1 = dtau1.norm() * GlobalC::ucell.lat0;
-                        double distance2 = dtau2.norm() * GlobalC::ucell.lat0;
-
-                        double rcut1 = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
-                        double rcut2 = GlobalC::ORB.Phi[T2].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
-
-                        if( distance1 < rcut1 && distance2 < rcut2 )
-                        {
-                            adj = true;
-                            break;
-                        }
-                    }
-                }
-
-                if(adj)
-                {
-                    const int start2 = GlobalC::ucell.itiaiw2iwt(T2,I2,0);
-
-					Abfs::Vector3_Order<int> dR(
-							GlobalC::GridD.getBox(ad).x, 
-							GlobalC::GridD.getBox(ad).y, 
-							GlobalC::GridD.getBox(ad).z);
-
-                    for(int ii=0; ii<atom1->nw*GlobalV::NPOL; ii++)
-                    {
-                        const int iw1_all = start + ii;
-                        const int mu = pv.global2local_row(iw1_all);
-
-						if(mu<0)
-						{
-							continue;
-						}
-
-                        for(int jj=0; jj<atom2->nw*GlobalV::NPOL; jj++)
-                        {
-                            int iw2_all = start2 + jj;
-                            const int nu = pv.global2local_col(iw2_all);
-
-							if(nu<0)
-							{
-								continue;
-							}
-
-                            if(GlobalV::NSPIN!=4)
-                            {
-                                tmp = slocR[index];
-                                if (std::abs(tmp) > sparse_threshold)
-                                {
-                                    SR_sparse[dR][iw1_all][iw2_all] = tmp;
-                                }
-                            }
-                            else
-                            {
-                                tmpc = slocR_soc[index];
-                                if(std::abs(tmpc) > sparse_threshold)
-                                {
-                                    SR_soc_sparse[dR][iw1_all][iw2_all] = tmpc;
-                                }
-                            }
-
-                            ++index;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    return;
-}
 
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 void LCAO_Hamilt::cal_HContainer_sparse_d(
@@ -306,7 +129,7 @@ void LCAO_Hamilt::cal_HSR_sparse(
 {
     ModuleBase::TITLE("LCAO_Hamilt","cal_HSR_sparse");
 
-    set_R_range_sparse(*this->LM);
+    sparse_format::set_R_range(*this->LM);
 
     //cal_STN_R_sparse(current_spin, sparse_threshold);
     if(GlobalV::NSPIN!=4)
@@ -371,47 +194,6 @@ void LCAO_Hamilt::cal_HSR_sparse(
 
     clear_zero_elements(current_spin, sparse_threshold);
 }
-
-void LCAO_Hamilt::cal_dH_sparse(
- const int &current_spin, 
- const double &sparse_threshold,
- Gint_k &gint_k)
-{
-    ModuleBase::TITLE("LCAO_Hamilt","cal_dH_sparse");
-
-    set_R_range_sparse(*this->LM);
-
-    const int nnr = this->LM->ParaV->nnr;
-    this->LM->DHloc_fixedR_x = new double[nnr];
-    this->LM->DHloc_fixedR_y = new double[nnr];
-    this->LM->DHloc_fixedR_z = new double[nnr];
-
-    ModuleBase::GlobalFunc::ZEROS(this->LM->DHloc_fixedR_x, this->LM->ParaV->nloc);
-    ModuleBase::GlobalFunc::ZEROS(this->LM->DHloc_fixedR_y, this->LM->ParaV->nloc);
-    ModuleBase::GlobalFunc::ZEROS(this->LM->DHloc_fixedR_z, this->LM->ParaV->nloc);
-    // cal dT=<phi|kin|dphi> in LCAO
-    // cal T + VNL(P1) in LCAO basis
-    if(GlobalV::CAL_STRESS)
-	{
-        GlobalV::CAL_STRESS = false;
-        this->genH.build_ST_new('T', true, GlobalC::ucell, this->LM->Hloc_fixedR.data());
-        GlobalV::CAL_STRESS = true;
-    }
-    else
-    {
-        this->genH.build_ST_new('T', true, GlobalC::ucell, this->LM->Hloc_fixedR.data());
-    }
-    this->genH.build_Nonlocal_mu_new (this->LM->Hloc_fixed.data(), true);
-    
-    cal_dSTN_R_sparse(current_spin, sparse_threshold);
-
-    delete[] this->LM->DHloc_fixedR_x;
-    delete[] this->LM->DHloc_fixedR_y;
-    delete[] this->LM->DHloc_fixedR_z;
-
-    gint_k.cal_dvlocal_R_sparseMatrix(current_spin, sparse_threshold, this->LM);
-}
-
 
 void LCAO_Hamilt::cal_STN_R_sparse_for_T(const double &sparse_threshold)
 {
@@ -526,7 +308,7 @@ void LCAO_Hamilt::cal_STN_R_sparse_for_T(const double &sparse_threshold)
 void LCAO_Hamilt::cal_SR_sparse(const double &sparse_threshold, hamilt::Hamilt<std::complex<double>>* p_ham)
 {
     ModuleBase::TITLE("LCAO_Hamilt","cal_SR_sparse");
-    set_R_range_sparse(*this->LM);
+    sparse_format::set_R_range(*this->LM);
     //cal_STN_R_sparse(current_spin, sparse_threshold);
     if(GlobalV::NSPIN!=4)
     {
@@ -542,15 +324,19 @@ void LCAO_Hamilt::cal_SR_sparse(const double &sparse_threshold, hamilt::Hamilt<s
     }
 }
 
-void LCAO_Hamilt::cal_TR_sparse(const double &sparse_threshold)
+void LCAO_Hamilt::cal_TR_sparse(
+		LCAO_gen_fixedH &gen_h,
+		const double &sparse_threshold)
 {
     ModuleBase::TITLE("LCAO_Hamilt","cal_TR_sparse");
     
     //need to rebuild T(R)
     this->LM->Hloc_fixedR.resize(this->LM->ParaV->nnr);
     this->LM->zeros_HSR('T');
-    this->genH.build_ST_new('T', 0, GlobalC::ucell, this->LM->Hloc_fixedR.data());
-    this->set_R_range_sparse(*this->LM);
+
+    gen_h.build_ST_new('T', 0, GlobalC::ucell, this->LM->Hloc_fixedR.data());
+
+    sparse_format::set_R_range(*this->LM);
     this->cal_STN_R_sparse_for_T(sparse_threshold);
 
     return;
@@ -872,117 +658,6 @@ void LCAO_Hamilt::clear_zero_elements(const int &current_spin, const double &spa
     }
 }
 
-void LCAO_Hamilt::cal_dSTN_R_sparse(const int &current_spin, const double &sparse_threshold)
-{
-    ModuleBase::TITLE("LCAO_Hamilt","cal_dSTN_R_sparse");
-
-    int index = 0;
-    ModuleBase::Vector3<double> dtau, tau1, tau2;
-    ModuleBase::Vector3<double> dtau1, dtau2, tau0;
-
-    double temp_value_double;
-    std::complex<double> temp_value_complex;
-
-    for(int T1 = 0; T1 < GlobalC::ucell.ntype; ++T1)
-    {
-        Atom* atom1 = &GlobalC::ucell.atoms[T1];
-        for(int I1 = 0; I1 < atom1->na; ++I1)
-        {
-            tau1 = atom1->tau[I1];
-            GlobalC::GridD.Find_atom(GlobalC::ucell, tau1, T1, I1);
-            Atom* atom1 = &GlobalC::ucell.atoms[T1];
-            const int start = GlobalC::ucell.itiaiw2iwt(T1,I1,0);
-
-            for(int ad = 0; ad < GlobalC::GridD.getAdjacentNum()+1; ++ad)
-            {
-                const int T2 = GlobalC::GridD.getType(ad);
-                const int I2 = GlobalC::GridD.getNatom(ad);
-                Atom* atom2 = &GlobalC::ucell.atoms[T2];
-
-                tau2 = GlobalC::GridD.getAdjacentTau(ad);
-                dtau = tau2 - tau1;
-                double distance = dtau.norm() * GlobalC::ucell.lat0;
-                double rcut = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Phi[T2].getRcut();
-
-                bool adj = false;
-
-                if(distance < rcut) adj = true;
-                else if(distance >= rcut)
-                {
-                    for(int ad0 = 0; ad0 < GlobalC::GridD.getAdjacentNum()+1; ++ad0)
-                    {
-                        const int T0 = GlobalC::GridD.getType(ad0);
-
-                        tau0 = GlobalC::GridD.getAdjacentTau(ad0);
-                        dtau1 = tau0 - tau1;
-                        dtau2 = tau0 - tau2;
-
-                        double distance1 = dtau1.norm() * GlobalC::ucell.lat0;
-                        double distance2 = dtau2.norm() * GlobalC::ucell.lat0;
-
-                        double rcut1 = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
-                        double rcut2 = GlobalC::ORB.Phi[T2].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
-
-                        if( distance1 < rcut1 && distance2 < rcut2 )
-                        {
-                            adj = true;
-                            break;
-                        }
-                    }
-                }
-
-                if(adj)
-                {
-                    const int start2 = GlobalC::ucell.itiaiw2iwt(T2,I2,0);
-
-                    Abfs::Vector3_Order<int> dR(GlobalC::GridD.getBox(ad).x, GlobalC::GridD.getBox(ad).y, GlobalC::GridD.getBox(ad).z);
-
-                    for(int ii=0; ii<atom1->nw*GlobalV::NPOL; ii++)
-                    {
-                        const int iw1_all = start + ii;
-                        const int mu = this->LM->ParaV->global2local_row(iw1_all);
-
-                        if(mu<0)continue;
-
-                        for(int jj=0; jj<atom2->nw*GlobalV::NPOL; jj++)
-                        {
-                            int iw2_all = start2 + jj;
-                            const int nu = this->LM->ParaV->global2local_col(iw2_all);
-
-                            if(nu<0)continue;
-
-                            if(GlobalV::NSPIN!=4)
-                            {
-                                temp_value_double = this->LM->DHloc_fixedR_x[index];
-                                if (std::abs(temp_value_double) > sparse_threshold)
-                                {
-                                    this->LM->dHRx_sparse[current_spin][dR][iw1_all][iw2_all] = temp_value_double;
-                                }
-                                temp_value_double = this->LM->DHloc_fixedR_y[index];
-                                if (std::abs(temp_value_double) > sparse_threshold)
-                                {
-                                    this->LM->dHRy_sparse[current_spin][dR][iw1_all][iw2_all] = temp_value_double;
-                                }
-                                temp_value_double = this->LM->DHloc_fixedR_z[index];
-                                if (std::abs(temp_value_double) > sparse_threshold)
-                                {
-                                    this->LM->dHRz_sparse[current_spin][dR][iw1_all][iw2_all] = temp_value_double;
-                                }
-                            }
-                            else
-                            {
-                                ModuleBase::WARNING_QUIT("cal_dSTN_R_sparse","soc not supported!");
-                            }
-                            ++index;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    return;
-}
 
 void LCAO_Hamilt::destroy_all_HSR_sparse(void)
 {
