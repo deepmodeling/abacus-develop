@@ -338,6 +338,7 @@ void ModuleIO::save_HSR_sparse(
     return;
 }
 
+
 void ModuleIO::save_dH_sparse(
     const int &istep,
     LCAO_Matrix &lm,
@@ -598,7 +599,7 @@ void ModuleIO::save_dH_sparse(
                     g1z[ispin].write(reinterpret_cast<char *>(&dRx), sizeof(int));
                     g1z[ispin].write(reinterpret_cast<char *>(&dRy), sizeof(int));
                     g1z[ispin].write(reinterpret_cast<char *>(&dRz), sizeof(int));
-                    g1z[ispin].write(reinterpret_cast<char *>(&dHz_nonzero_num[ispin][count]), sizeof(int));                                        
+                    g1z[ispin].write(reinterpret_cast<char *>(&dHz_nonzero_num[ispin][count]), sizeof(int)); 
                 }
             }
             else
@@ -655,9 +656,18 @@ void ModuleIO::save_dH_sparse(
 
     if(GlobalV::DRANK==0) 
     {
-        for (int ispin = 0; ispin < spin_loop; ++ispin) g1x[ispin].close();
-        for (int ispin = 0; ispin < spin_loop; ++ispin) g1y[ispin].close();
-        for (int ispin = 0; ispin < spin_loop; ++ispin) g1z[ispin].close();
+		for (int ispin = 0; ispin < spin_loop; ++ispin) 
+		{
+			g1x[ispin].close();
+		}
+		for (int ispin = 0; ispin < spin_loop; ++ispin) 
+		{
+			g1y[ispin].close();
+		}
+		for (int ispin = 0; ispin < spin_loop; ++ispin) 
+		{
+			g1z[ispin].close();
+		}
     }
     
     for (int ispin = 0; ispin < spin_loop; ++ispin) 
@@ -695,16 +705,28 @@ void ModuleIO::save_sparse(
     for (auto& R_coor : all_R_coor)
     {
         auto iter = smat.find(R_coor);
-        if (iter != smat.end())
-            for (auto& row_loop : iter->second)
-                nonzero_num[count] += row_loop.second.size();
+		if (iter != smat.end())
+		{
+			for (auto& row_loop : iter->second)
+			{
+				nonzero_num[count] += row_loop.second.size();
+			}
+		}
         ++count;
     }
-    if (reduce)Parallel_Reduce::reduce_all(nonzero_num.data(), total_R_num);
+	if (reduce)
+	{
+		Parallel_Reduce::reduce_all(nonzero_num.data(), total_R_num);
+	}
 
     int output_R_number = 0;
-    for (int index = 0; index < total_R_num; ++index)
-        if (nonzero_num[index] != 0) ++output_R_number;
+	for (int index = 0; index < total_R_num; ++index)
+	{
+		if (nonzero_num[index] != 0) 
+		{
+			++output_R_number;
+		}
+	}
 
     std::stringstream sss;
     sss << filename;
@@ -713,10 +735,14 @@ void ModuleIO::save_sparse(
     {
         if (binary)
         {
-            if (GlobalV::CALCULATION == "md" && GlobalV::out_app_flag && istep)
-                ofs.open(sss.str().c_str(), std::ios::binary | std::ios::app);
-            else
-                ofs.open(sss.str().c_str(), std::ios::binary);
+			if (GlobalV::CALCULATION == "md" && GlobalV::out_app_flag && istep)
+			{
+				ofs.open(sss.str().c_str(), std::ios::binary | std::ios::app);
+			}
+			else
+			{
+				ofs.open(sss.str().c_str(), std::ios::binary);
+			}
             ofs.write(reinterpret_cast<char*>(0), sizeof(int));
             ofs.write(reinterpret_cast<char*>(&GlobalV::NLOCAL), sizeof(int));
             ofs.write(reinterpret_cast<char*>(&output_R_number), sizeof(int));
@@ -724,9 +750,13 @@ void ModuleIO::save_sparse(
         else
         {
             if (GlobalV::CALCULATION == "md" && GlobalV::out_app_flag && istep)
-                ofs.open(sss.str().c_str(), std::ios::app);
-            else
-                ofs.open(sss.str().c_str());
+			{
+				ofs.open(sss.str().c_str(), std::ios::app);
+			}
+			else
+			{
+				ofs.open(sss.str().c_str());
+			}
             ofs << "STEP: " << std::max(istep, 0) << std::endl;
             ofs << "Matrix Dimension of " + label + "(R): " << GlobalV::NLOCAL << std::endl;
             ofs << "Matrix number of " + label + "(R): " << output_R_number << std::endl;
@@ -764,7 +794,10 @@ void ModuleIO::save_sparse(
         output_single_R(ofs, smat.at(R_coor), sparse_threshold, binary, pv, reduce);
         ++count;
     }
-    if (!reduce || GlobalV::DRANK == 0) ofs.close();
+	if (!reduce || GlobalV::DRANK == 0) 
+	{
+		ofs.close();
+	}
 
     ModuleBase::timer::tick("ModuleIO", "save_sparse");
 }
@@ -779,6 +812,8 @@ template void ModuleIO::save_sparse<double>(
     const std::string&,
     const int&,
     const bool&);
+
+
 template void ModuleIO::save_sparse<std::complex<double>>(
     const std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>&,
     const std::set<Abfs::Vector3_Order<int>>&,
