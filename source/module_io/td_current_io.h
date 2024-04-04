@@ -15,17 +15,21 @@ void write_current(const int istep,
                     const elecstate::ElecState* pelec,
                     const K_Vectors& kv,
                     const Parallel_Orbitals* pv,
-                    Record_adj& ra,
-                    LCAO_Hamilt& UHM);
+					Record_adj& ra,
+					LCAO_Matrix &lm, // mohan add 2024-04-02
+					LCAO_gen_fixedH &gen_h); // mohan add 2024-04-02
 
 /// @brief calculate sum_n[𝜌_(𝑛𝑘,𝜇𝜈)] for current calculation
 void cal_tmp_DM(elecstate::DensityMatrix<std::complex<double>, double>& DM, const int ik, const int nspin);
 
 /// @brief Init DS_locR for currrent calculation
-void Init_DS_tmp(const Parallel_Orbitals& pv,LCAO_Hamilt& UHM);
+void Init_DS_tmp(
+		const Parallel_Orbitals& pv,
+		LCAO_Matrix &lm,
+		LCAO_gen_fixedH &gen_h);
 
 /// @brief DS_locR will be initialized again in force calculation, so it must be destoryed here.
-void destory_DS_tmp(LCAO_Hamilt& UHM);
+void destory_DS_tmp(LCAO_Matrix &lm);
 
 #endif // __LCAO
 }

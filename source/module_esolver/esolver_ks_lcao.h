@@ -77,7 +77,9 @@ namespace ModuleESolver
         Local_Orbital_Charge LOC;
 
         // we will get rid of this class soon, don't use it, mohan 2024-03-28
-        LCAO_Hamilt UHM;
+        LCAO_Hamilt uhm;
+
+        LCAO_gen_fixedH gen_h; // mohan add 2024-04-02
 
         // used for k-dependent grid integration.
         Gint_k GK;
