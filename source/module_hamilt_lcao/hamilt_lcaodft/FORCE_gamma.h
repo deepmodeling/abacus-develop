@@ -45,7 +45,7 @@ public:
 #else
                       ModuleBase::matrix& svl_dphi,
 #endif
-					  LCAO_Hamilt& uhm,
+                      LCAO_gen_fixedH &gen_h, // mohan add 2024-04-02
 					  Gint_Gamma &gint_gamma,
 					  LCAO_Matrix& lm);
 

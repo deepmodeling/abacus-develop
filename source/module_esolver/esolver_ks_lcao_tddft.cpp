@@ -100,7 +100,7 @@ void ESolver_KS_LCAO_TDDFT::init(Input& inp, UnitCell& ucell)
     //------------------init Hamilt_lcao----------------------
 
     // pass Hamilt-pointer to Operator
-    this->UHM.genH.LM = this->UHM.LM = &this->LM;
+    this->gen_h.LM = this->uhm.LM = &this->LM;
     // pass basis-pointer to EState and Psi
     this->LOC.ParaV = this->LOWF.ParaV = this->LM.ParaV;
 
@@ -455,8 +455,9 @@ void ESolver_KS_LCAO_TDDFT::after_scf(const int istep)
                         kv,
                         tmp_DM->get_paraV_pointer(),
                         this->RA,
-                        this->UHM);
-    }
+						this->LM, // mohan add 2024-04-02
+						this->gen_h); // mohan add 2024-02
+	}
     ESolver_KS_LCAO<std::complex<double>, double>::after_scf(istep);
 }
 

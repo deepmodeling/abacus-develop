@@ -13,9 +13,6 @@
 
 class LCAO_gen_fixedH
 {
-    friend class Force_LCAO_gamma;
-    friend class Force_LCAO_k;
-    friend class LCAO_Hamilt;
 
   public:
     LCAO_Matrix* LM;
@@ -37,7 +34,6 @@ class LCAO_gen_fixedH
                       double dmax = 0.0);
 	// cal_syns : calculate asynchronous overlap matrix for Hefei-NAMD
 
-  private:
     // can used in gamma algorithm.
     void build_Nonlocal_beta_new(double* Hloc);
 
