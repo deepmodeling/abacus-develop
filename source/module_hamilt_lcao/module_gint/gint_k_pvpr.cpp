@@ -48,9 +48,11 @@ void Gint_k::destroy_pvpR(void)
     {
         return;
     }
-
-    for (int is = 0; is < GlobalV::NSPIN; is++)
-        delete[] pvpR_reduced[is];
+    
+	for(int is =0;is<GlobalV::NSPIN;is++) 
+	{
+		delete[] pvpR_reduced[is];
+	}
     delete[] pvpR_reduced;
 
     this->pvpR_alloc_flag = false;
@@ -192,80 +194,53 @@ void Gint_k::folding_vl_k(
                                 dR.y = adjs.box[ad].y;
                                 dR.z = adjs.box[ad].z;
 
-                                // calculate the phase factor exp(ikR).
-                                const double arg
-                                    = (kvec_d[ik] * dR) * ModuleBase::TWO_PI;
-                                double sinp, cosp;
-                                ModuleBase::libm::sincos(arg, &sinp, &cosp);
-                                const std::complex<double> phase
-                                    = std::complex<double>(cosp, sinp);
-                                int ixxx = DM_start
-                                           + this->gridt->find_R2st[iat][nad];
-
-                                if (GlobalV::NSPIN != 4)
+                            // calculate the phase factor exp(ikR).
+                            const double arg = (kvec_d[ik] * dR) * ModuleBase::TWO_PI;
+                            double sinp, cosp;
+                            ModuleBase::libm::sincos(arg, &sinp, &cosp);
+                            const std::complex<double> phase = std::complex<double>(cosp, sinp);
+                            int ixxx = DM_start + this->gridt->find_R2st[iat][nad];
+                            
+                            if(GlobalV::NSPIN!=4)
+                            {
+                                for(int iw=0; iw<atom1->nw; iw++)
                                 {
-                                    for (int iw = 0; iw < atom1->nw; iw++)
+                                    std::complex<double> *vij = pvp[this->gridt->trace_lo[start1+iw]];
+                                    const int* iw2_lo = &this->gridt->trace_lo[start2];
+                                    // get the <phi | V | phi>(R) Hamiltonian.
+                                    const double *vijR = &pvpR_reduced[0][ixxx];
+                                    for(int iw2 = 0; iw2<atom2->nw; ++iw2)
                                     {
-                                        std::complex<double>* vij
-                                            = pvp[this->gridt
-                                                      ->trace_lo[start1 + iw]];
-                                        const int* iw2_lo
-                                            = &this->gridt->trace_lo[start2];
-                                        // get the <phi | V | phi>(R)
-                                        // Hamiltonian.
-                                        const double* vijR
-                                            = &pvpR_reduced[0][ixxx];
-                                        for (int iw2 = 0; iw2 < atom2->nw;
-                                             ++iw2)
-                                        {
-                                            vij[iw2_lo[iw2]]
-                                                += vijR[iw2] * phase;
-                                            // if(((start1+iw == 238 ) && (
-                                            // start2+iw2 == 1089 )))
-                                            //     GlobalV::ofs_running<<__FILE__<<__LINE__<<"
-                                            //     "<<iat<<" "<<iat2<<"
-                                            //     "<<ixxx<<" "<<start1+iw<<"
-                                            //     "<<start2+iw2<<"
-                                            //     "<<vijR[iw2]<<"
-                                            //     "<<iw2_lo[iw2]<<"
-                                            //     "<<vij[iw2_lo[iw2]]<<std::endl;
-                                        }
-                                        ixxx += atom2->nw;
+                                        vij[iw2_lo[iw2]] += vijR[iw2] * phase; 
                                     }
+                                    ixxx += atom2->nw;
                                 }
-                                else
+                            }
+                            else
+                            {
+                                for(int iw=0; iw<atom1->nw; iw++)
                                 {
-                                    for (int iw = 0; iw < atom1->nw; iw++)
+                                    int iw2_lo = this->gridt->trace_lo[start2]/GlobalV::NPOL;
+                                    for(int spin = 0;spin<4;spin++) 
                                     {
-                                        int iw2_lo
-                                            = this->gridt->trace_lo[start2]
-                                              / GlobalV::NPOL;
-                                        for (int spin = 0; spin < 4; spin++)
+                                        auto vij = pvp_nc[spin][this->gridt->trace_lo[start1]/GlobalV::NPOL + iw];
+                                        auto vijR = &pvpR_reduced[spin][ixxx];
+                                        auto vijs = &vij[iw2_lo];
+                                        for(int iw2 = 0; iw2<atom2->nw; ++iw2)
                                         {
-                                            auto vij = pvp_nc
-                                                [spin]
-                                                [this->gridt->trace_lo[start1]
-                                                     / GlobalV::NPOL
-                                                 + iw];
-                                            auto vijR
-                                                = &pvpR_reduced[spin][ixxx];
-                                            auto vijs = &vij[iw2_lo];
-                                            for (int iw2 = 0; iw2 < atom2->nw;
-                                                 ++iw2)
-                                            {
-                                                vijs[iw2] += vijR[iw2] * phase;
-                                            }
+                                            vijs[iw2] += vijR[iw2] * phase; 
                                         }
-                                        ixxx += atom2->nw;
                                     }
+                                    ixxx += atom2->nw;
                                 }
-                                ++nad;
-                            } // end distane<rcut
-                        }
-                    } // end ad
-                }
-            } // end ia
-        }     // end it
+                            }
+                            ++nad;
+                        }// end distane<rcut
+                    }
+                }// end ad
+            }
+        }// end ia
+    }// end it
 #ifdef _OPENMP
     }
 #endif
