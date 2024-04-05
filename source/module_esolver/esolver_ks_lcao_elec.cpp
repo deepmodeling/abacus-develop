@@ -312,10 +312,14 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(int istep)
     this->beforesolver(istep);
     // Peize Lin add 2016-12-03
 #ifdef __EXX    // set xc type before the first cal of xc in pelec->init_scf
-    if (GlobalC::exx_info.info_ri.real_number)
-        this->exd->exx_beforescf(this->kv, *this->p_chgmix);
-    else
-        this->exc->exx_beforescf(this->kv, *this->p_chgmix);
+	if (GlobalC::exx_info.info_ri.real_number)
+	{
+		this->exd->exx_beforescf(this->kv, *this->p_chgmix);
+	}
+	else
+	{
+		this->exc->exx_beforescf(this->kv, *this->p_chgmix);
+	}
 #endif // __EXX
 
     this->pelec->init_scf(istep, this->sf.strucFac);
@@ -331,9 +335,10 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(int istep)
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
         srho.begin(is, *(this->pelec->charge), this->pw_rho, GlobalC::Pgrid, GlobalC::ucell.symm);
-    }
-       // 1. calculate ewald energy.
-       // mohan update 2021-02-25
+    } 
+
+    // 1. calculate ewald energy.
+    // mohan update 2021-02-25
     if (!GlobalV::test_skip_ewald)
     {
         this->pelec->f_en.ewald_energy = H_Ewald_pw::compute_ewald(GlobalC::ucell, this->pw_rho, this->sf.strucFac);
@@ -350,13 +355,13 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "others");
     ModuleBase::timer::tick("ESolver_KS_LCAO", "others");
+
     if (GlobalV::CALCULATION == "get_S")
     {
         this->get_S();
         ModuleBase::QUIT();
     }
-
-    if (GlobalV::CALCULATION == "test_memory")
+    else if (GlobalV::CALCULATION == "test_memory")
     {
         Cal_Test::test_memory(this->pw_rho,
                               this->pw_wfc,
@@ -364,8 +369,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                               this->p_chgmix->get_mixing_ndim());
         return;
     }
-
-    if (GlobalV::CALCULATION == "test_neighbour")
+    else if (GlobalV::CALCULATION == "test_neighbour")
     {
         // test_search_neighbor();
         if (GlobalV::SEARCH_RADIUS < 0)
@@ -452,14 +456,18 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
     ModuleBase::timer::tick("ESolver_KS_LCAO", "others");
     return;
 }
+
+
 template <>
-void ESolver_KS_LCAO<double, double>::get_S()
+void ESolver_KS_LCAO<double, double>::get_S(void)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "get_S");
-    ModuleBase::WARNING_QUIT("ESolver_KS_LCAO<TK, TR>::get_S", "not implemented for");
+    ModuleBase::WARNING_QUIT("ESolver_KS_LCAO<double,double>::get_S", "not implemented for");
 }
+
+
 template <>
-void ESolver_KS_LCAO<std::complex<double>, double>::get_S()
+void ESolver_KS_LCAO<std::complex<double>, double>::get_S(void)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "get_S");
     // (1) Find adjacent atoms for each atom.
@@ -477,17 +485,21 @@ void ESolver_KS_LCAO<std::complex<double>, double>::get_S()
                          GlobalV::test_atom_input);
 
     this->RA.for_2d(this->orb_con.ParaV, GlobalV::GAMMA_ONLY_LOCAL);
+
     this->LM.ParaV = &this->orb_con.ParaV;
+
     if (this->p_hamilt == nullptr)
     {
         this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(&this->LM, this->kv);
         dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, double>*>(this->p_hamilt->ops)->contributeHR();
     }
+
     ModuleIO::output_S_R(this->uhm, this->p_hamilt, "SR.csr");
 }
 
+
 template <>
-void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S()
+void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S(void)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "get_S");
     // (1) Find adjacent atoms for each atom.
@@ -516,8 +528,9 @@ void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S()
     ModuleIO::output_S_R(this->uhm, this->p_hamilt, "SR.csr");
 }
 
+
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::nscf()
+void ESolver_KS_LCAO<TK, TR>::nscf(void)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "nscf");
 
@@ -533,9 +546,13 @@ void ESolver_KS_LCAO<TK, TR>::nscf()
         // GlobalC::exx_lcao.cal_exx_elec_nscf(this->LOWF.ParaV[0]);
         const std::string file_name_exx = GlobalV::global_out_dir + "HexxR" + std::to_string(GlobalV::MY_RANK);
         if (GlobalC::exx_info.info_ri.real_number)
+        {
             this->exd->read_Hexxs_csr(file_name_exx, GlobalC::ucell);
+        }
         else
+        {
             this->exc->read_Hexxs_csr(file_name_exx, GlobalC::ucell);
+        }
 
         hamilt::HamiltLCAO<TK, TR>* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
         auto exx = new hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>>(&this->LM,
@@ -625,7 +642,14 @@ void ESolver_KS_LCAO<TK, TR>::nscf()
                 INPUT.wannier_spin
             );
 
-            myWannier.calculate(this->pelec->ekb, this->pw_wfc, this->pw_big, this->sf, this->kv, this->psi, this->LOWF.ParaV);
+            myWannier.calculate(
+              this->pelec->ekb, 
+              this->pw_wfc, 
+              this->pw_big, 
+              this->sf, 
+              this->kv, 
+              this->psi, 
+              this->LOWF.ParaV);
         }
         else if (INPUT.wannier_method == 2)
         {
