@@ -31,10 +31,10 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                                           const bool istests,
 										  Local_Orbital_Charge &loc,
 										  Parallel_Orbitals &pv,
-										  LCAO_Matrix &lm,
                                           const elecstate::ElecState* pelec,
                                           const psi::Psi<T>* psi,
-										  LCAO_Hamilt& uhm,
+										  LCAO_Matrix& lm,
+                                          LCAO_gen_fixedH &gen_h, // mohan add 2024-04-02
 										  Gint_Gamma &gint_gamma, // mohan add 2024-04-01
 										  Gint_k &gint_k, // mohan add 2024-04-01
 										  ModuleBase::matrix& fcs,
@@ -159,7 +159,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
 #else
                                      svl_dphi,
 #endif
-									 uhm,
+                                     gen_h, // mohan add 2024-04-02
 									 gint_gamma,
 									 gint_k,
 									 pv,
@@ -236,18 +236,19 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
         }
         if(GlobalV::dft_plus_u == 2)
         {
-            GlobalC::dftu.force_stress(pelec, *uhm.LM, force_dftu, stress_dftu, kv);
+            GlobalC::dftu.force_stress(pelec, lm, force_dftu, stress_dftu, kv);
         }
         else
         {
-            hamilt::DFTU<hamilt::OperatorLCAO<T, double>> tmp_dftu(uhm.LM,
-                                                                 kv.kvec_d,
-                                                                 nullptr,
-                                                                 nullptr,
-                                                                 GlobalC::ucell,
-                                                                 &GlobalC::GridD,
-                                                                 &GlobalC::dftu,
-                                                                 *(uhm.LM->ParaV));
+			hamilt::DFTU<hamilt::OperatorLCAO<T, double>> tmp_dftu(
+					&lm,
+					kv.kvec_d,
+					nullptr,
+					nullptr,
+					GlobalC::ucell,
+					&GlobalC::GridD,
+					&GlobalC::dftu,
+					*(lm.ParaV));
             tmp_dftu.cal_force_stress(isforce, isstress, force_dftu, stress_dftu);
         }
     }
@@ -743,7 +744,7 @@ void Force_Stress_LCAO<double>::integral_part(
 #else
     ModuleBase::matrix& svl_dphi,
 #endif
-	LCAO_Hamilt &uhm,
+    LCAO_gen_fixedH &gen_h, // mohan add 2024-04-02
 	Gint_Gamma &gint_gamma, // mohan add 2024-04-01
 	Gint_k &gint_k, // mohan add 2024-04-01
 	Parallel_Orbitals &pv,
@@ -769,7 +770,7 @@ void Force_Stress_LCAO<double>::integral_part(
 #else
         svl_dphi,
 #endif
-        uhm,
+        gen_h,
         gint_gamma,
         lm);
     return;
@@ -797,7 +798,7 @@ void Force_Stress_LCAO<std::complex<double>>::integral_part(
 #else
     ModuleBase::matrix& svl_dphi,
 #endif
-	LCAO_Hamilt &uhm,
+    LCAO_gen_fixedH &gen_h, // mohan add 2024-04-02
 	Gint_Gamma &gint_gamma,
 	Gint_k &gint_k,
 	Parallel_Orbitals &pv,
@@ -823,7 +824,7 @@ void Force_Stress_LCAO<std::complex<double>>::integral_part(
 #else
                      svl_dphi,
 #endif
-					 uhm,
+					 gen_h,
                      gint_k,
 					 pv,
 					 lm,

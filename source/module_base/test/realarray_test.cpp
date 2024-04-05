@@ -11,7 +11,7 @@
  *     - get the total number of real array created
  *   - Construct
  *     - construct real arrays (3 or 4 dimensions)
- *   - Creat 
+ *   - Creat
  *     - create a real array (3 or 4 dimensions)
  *   - GetSize
  *     - get the total size of a real array
@@ -22,7 +22,7 @@
  *   - GetBound
  *     - get the size of each dimension of a real array
  *   - ArrayEqReal
- *     - set all value of an array to a double float 
+ *     - set all value of an array to a double float
  *   - ArrayEqArray
  *     - equal a realarray to another one
  *   - Parentheses
@@ -43,8 +43,8 @@ protected:
 	ModuleBase::realArray a3, a4, b3, b4;
 	double aa = 11.0;
 	double bb = 1.0;
-	int count0;
-	int count1;
+	int count0 = 0;
+	int count1 = 0;
 	const double zero = 0.0;
 };
 

@@ -38,7 +38,7 @@ void Force_LCAO_gamma::ftable_gamma(const bool isforce,
 #else
                                     ModuleBase::matrix& svl_dphi,
 #endif
-									LCAO_Hamilt &uhm,
+		                            LCAO_gen_fixedH &gen_h, // mohan add 2024-04-02
                                     Gint_Gamma &gint_gamma,
 									LCAO_Matrix &lm)
 {
@@ -54,7 +54,7 @@ void Force_LCAO_gamma::ftable_gamma(const bool isforce,
 
     // allocate DSloc_x, DSloc_y, DSloc_z
     // allocate DHloc_fixed_x, DHloc_fixed_y, DHloc_fixed_z
-    this->allocate_gamma(*this->ParaV, uhm.genH, lm);
+    this->allocate_gamma(*this->ParaV, gen_h, lm);
 
     // calculate the 'energy density matrix' here.
     this->cal_foverlap(isforce, isstress, psid, pelec, lm, foverlap, soverlap);
