@@ -24,6 +24,6 @@ namespace sparse_format
             const std::vector< std::map <int, std::map < std::pair<int, std::array<int,3>>, RI::Tensor<Tdata> > >>& Hexxs);
 
 }
-
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_hamilt.hpp"
 #endif
 #endif
