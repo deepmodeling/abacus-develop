@@ -162,6 +162,7 @@ void Input::Default(void)
     nbands_sto = 256;
     nbndsto_str = "256";
     nbands_istate = 5;
+    out_band_index = "";
     pw_seed = 1;
     emin_sto = 0.0;
     emax_sto = 0.0;
@@ -782,6 +783,10 @@ bool Input::Read(const std::string& fn)
             // Originally disabled in line 2401.
             // if (nbands_istate < 0)
             // 	ModuleBase::WARNING_QUIT("Input", "NBANDS_ISTATE must > 0");
+        }
+        else if (strcmp("out_band_index", word) == 0)
+        {
+            getline(ifs, out_band_index);
         }
         else if (strcmp("nche_sto", word) == 0) // Chebyshev expansion order
         {
@@ -3248,6 +3253,7 @@ void Input::Bcast()
     Parallel_Common::bcast_int(nbands);
     Parallel_Common::bcast_int(nbands_sto);
     Parallel_Common::bcast_int(nbands_istate);
+    Parallel_Common::bcast_string(out_band_index);
     for (int i = 0; i < 3; i++)
     {
         Parallel_Common::bcast_double(kspacing[i]);
