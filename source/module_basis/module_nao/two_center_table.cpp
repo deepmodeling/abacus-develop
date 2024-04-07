@@ -223,7 +223,7 @@ void TwoCenterTable::_tabulate(const NumericalRadial* it1, const NumericalRadial
     // consistency between the table and its derivative during interpolation.
     using ModuleBase::CubicSpline;
     CubicSpline::build(nr_, rgrid_, table_.inner_most_ptr<double>(itab), dtable_.inner_most_ptr<double>(itab),
-            CubicSpline::BoundaryCondition::first_deriv, CubicSpline::BoundaryCondition::first_deriv,
+            -1, CubicSpline::BoundaryCondition::first_deriv, CubicSpline::BoundaryCondition::first_deriv,
             0.0, 0.0);
 }
 
