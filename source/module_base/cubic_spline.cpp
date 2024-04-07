@@ -5,108 +5,115 @@
 #include <cmath>
 #include <cstring>
 #include <functional>
+#include <numeric>
+#include <chrono>
 
 namespace ModuleBase
 {
+    std::chrono::duration<double> CubicSpline::time_c01;
+    std::chrono::duration<double> CubicSpline::time_c23;
+    std::chrono::duration<double> CubicSpline::time_poly;
+    std::chrono::duration<double> CubicSpline::time_seg;
+    std::chrono::duration<double> CubicSpline::time_dd;
+    std::chrono::duration<double> CubicSpline::time_alloc;
 
-CubicSpline::CubicSpline(CubicSpline const& other)
+CubicSpline::CubicSpline(
+    const int n,
+    const double* const x,
+    const double* const y,
+    BoundaryCondition bc_start,
+    BoundaryCondition bc_end,
+    const double deriv_start,
+    const double deriv_end
+)
 {
-    n_ = other.n_;
-    is_uniform_ = other.is_uniform_;
-    uniform_thr_ = other.uniform_thr_;
-
-    x_ = new double[n_];
-    y_ = new double[n_];
-    s_ = new double[n_];
-
-    std::memcpy(x_, other.x_, n_ * sizeof(double));
-    std::memcpy(y_, other.y_, n_ * sizeof(double));
-    std::memcpy(s_, other.s_, n_ * sizeof(double));
+    x_ = std::vector<double>(x, x + n);
+    y_ = std::vector<double>(y, y + n);
+    s_.resize(n);
+    build(n, x, y, s_.data(), -1, bc_start, bc_end, deriv_start, deriv_end);
 }
 
-CubicSpline& CubicSpline::operator=(CubicSpline const& other)
+CubicSpline::CubicSpline(
+    const int n,
+    const double x0,
+    const double dx,
+    const double* const y,
+    BoundaryCondition bc_start,
+    BoundaryCondition bc_end,
+    const double deriv_start,
+    const double deriv_end
+)
 {
-    if (this != &other)
-    {
-        cleanup();
-        n_ = other.n_;
-        is_uniform_ = other.is_uniform_;
-        uniform_thr_ = other.uniform_thr_;
-
-        x_ = new double[n_];
-        y_ = new double[n_];
-        s_ = new double[n_];
-
-        std::memcpy(x_, other.x_, n_ * sizeof(double));
-        std::memcpy(y_, other.y_, n_ * sizeof(double));
-        std::memcpy(s_, other.s_, n_ * sizeof(double));
-    }
-
-    return *this;
+    x0_ = x0;
+    dx_ = dx;
+    y_ = std::vector<double>(y, y + n);
+    s_.resize(n);
+    build(n, nullptr, y, s_.data(), dx, bc_start, bc_end, deriv_start, deriv_end);
 }
 
-void CubicSpline::cleanup()
+void CubicSpline::_validate_build(
+    const int n,
+    const double* const x,
+    const double* const y,
+    const double dx,
+    BoundaryCondition bc_start,
+    BoundaryCondition bc_end
+)
 {
-    delete[] x_;
-    delete[] y_;
-    delete[] s_;
-
-    x_ = nullptr;
-    y_ = nullptr;
-    s_ = nullptr;
-}
-
-void CubicSpline::check_build(const int n,
-                              const double* const x,
-                              const double* const y,
-                              BoundaryCondition bc_start,
-                              BoundaryCondition bc_end)
-{
+//#ifdef __DEBUG
     assert(n > 1);
 
-    // periodic boundary condition must apply to both ends
+    // if periodic boundary condition is specified, it must be applied to both ends
     assert((bc_start == BoundaryCondition::periodic) == (bc_end == BoundaryCondition::periodic));
 
     // y[0] must equal y[n-1] for periodic boundary condition
     assert(bc_start != BoundaryCondition::periodic || y[0] == y[n - 1]);
 
-    // if one of the boundary condition is not-a-knot, n must be larger than 2
+    // not-a-knot boundary condition requires the existence of "internal" knot, n must be at least 3
     assert((bc_start != BoundaryCondition::not_a_knot && bc_end != BoundaryCondition::not_a_knot) || n > 2);
 
-    for (int i = 0; i != n - 1; ++i)
-    {
-        assert(x[i + 1] > x[i] && "CubicSpline: x must be strictly increasing");
-    }
+    // knots must be STRICTLY increasing
+    assert((x && std::is_sorted(x, x + n, std::less_equal<double>())) || dx > 0.0);
+//#endif
 }
 
-void CubicSpline::check_interp(const int n,
-                               const double* const x,
-                               const double* const y,
-                               const double* const s,
-                               const int n_interp,
-                               const double* const x_interp,
-                               double* const y_interp,
-                               double* const dy_interp)
+void CubicSpline::_validate_eval(
+    const int n,
+    const double* const x,
+    const double* const y,
+    const double* const s,
+    const int n_interp,
+    const double* const x_interp,
+    const double x0,
+    const double dx
+)
 {
-    assert(n > 1 && x && y && s);     // make sure the interpolant exists
-    assert(n_interp > 0 && x_interp); // make sure the interpolation points exist
-    assert(y_interp || dy_interp);    // make sure at least one of y or dy is not null
+//#ifdef __DEBUG
+    assert(n > 1 && y && s);
+    assert((x && std::is_sorted(x, x + n, std::less_equal<double>())) || dx > 0.0);
 
-    // check that x_interp is in the range of the interpolant
+    assert(n_interp > 0 && x_interp);
+
+    double xmin = x ? x[0] : x0;
+    double xmax = x ? x[n - 1] : x0 + (n - 1) * dx;
     assert(std::all_of(x_interp, x_interp + n_interp,
-                [n, x](const double xi) { return xi >= x[0] && xi <= x[n - 1]; }));
+                       [xmin, xmax](const double x_i) { return xmin <= x_i && x_i <= xmax; }));
+//#endif
 }
 
-void CubicSpline::build(const int n,
-                        const double* const x,
-                        const double* const y,
-                        double* const s,
-                        BoundaryCondition bc_start,
-                        BoundaryCondition bc_end,
-                        const double deriv_start,
-                        const double deriv_end)
+void CubicSpline::build(
+    const int n,
+    const double* const x,
+    const double* const y,
+    double* const s,
+    const double dx_uniform,
+    BoundaryCondition bc_start,
+    BoundaryCondition bc_end,
+    const double deriv_start,
+    const double deriv_end
+)
 {
-    check_build(n, x, y, bc_start, bc_end);
+    _validate_build(n, x, y, dx_uniform, bc_start, bc_end);
 
     if (n == 2 && bc_start == BoundaryCondition::periodic)
     { // in this case the polynomial is a constant
@@ -114,38 +121,64 @@ void CubicSpline::build(const int n,
     }
     else if (n == 3 && bc_start == BoundaryCondition::not_a_knot && bc_end == BoundaryCondition::not_a_knot)
     { // in this case two conditions coincide; simply build a parabola that passes through the three data points
-        double idx10 = 1. / (x[1] - x[0]);
-        double idx21 = 1. / (x[2] - x[1]);
-        double idx20 = 1. / (x[2] - x[0]);
+        double idx10, idx21, idx20, dx21;
+        if (x)
+        {
+            idx10 = 1. / (x[1] - x[0]);
+            idx21 = 1. / (x[2] - x[1]);
+            idx20 = 1. / (x[2] - x[0]);
+            dx21 = x[2] - x[1];
+        }
+        else
+        {
+            idx10 = idx21 = 1. / dx_uniform;
+            idx20 = 0.5 / dx_uniform;
+            dx21 = dx_uniform;
+        }
 
         s[0] = -y[0] * (idx10 + idx20) + y[1] * (idx21 + idx10) + y[2] * (idx20 - idx21);
         s[1] = -y[1] * (-idx10 + idx21) + y[0] * (idx20 - idx10) + y[2] * (idx21 - idx20);
-        s[2] = s[1] + 2.0 * (-y[1] * idx10 + y[2] * idx20) + 2.0 * y[0] * idx10 * idx20 * (x[2] - x[1]);
+        s[2] = s[1] + 2.0 * (-y[1] * idx10 + y[2] * idx20) + 2.0 * y[0] * idx10 * idx20 * dx21;
     }
     else
     {
-        double* dx = new double[n - 1];
-        double* dd = new double[n - 1];
+        double* buffer = new double[5 * n];
 
-        // tridiagonal linear system (cyclic if using the periodic boundary condition)
-        double* diag = new double[n];
-        double* subdiag = new double[n - 1];
-        double* supdiag = new double[n - 1];
+        double* dx = buffer;
+        double* dd = buffer + n; // divided differences
 
-        for (int i = 0; i != n - 1; ++i)
+        std::adjacent_difference(y, y + n, dd);
+        dd += 1; // the first element computed by adjacent_difference is not a difference
+
+        if (x)
         {
-            dx[i] = x[i + 1] - x[i];
-            dd[i] = (y[i + 1] - y[i]) / dx[i];
+            std::adjacent_difference(x, x + n, dx);
+            dx += 1;
+        }
+        else
+        {
+            std::fill(dx, dx + n - 1, dx_uniform);
         }
 
+        std::transform(dd, dd + n - 1, dx, dd, std::divides<double>());
+
+        // tridiagonal linear system (cyclic tridiagonal if periodic boundary condition)
+        double* diag = buffer + 2 * n;
+        double* subdiag = buffer + 3 * n;
+        double* supdiag = buffer + 4 * n;
+
         // common part of the tridiagonal linear system
+
+        std::memcpy(subdiag, dx + 1, sizeof(double) * (n - 2));
+        std::memcpy(supdiag + 1, dx, sizeof(double) * (n - 2));
+
         for (int i = 1; i != n - 1; ++i)
         {
             diag[i] = 2.0 * (dx[i - 1] + dx[i]);
-            supdiag[i] = dx[i - 1];
-            subdiag[i - 1] = dx[i];
             s[i] = 3.0 * (dd[i - 1] * dx[i] + dd[i] * dx[i - 1]);
         }
+
+        // below for the boundary-condition-specific part
 
         if (bc_start == BoundaryCondition::periodic)
         {
@@ -154,7 +187,7 @@ void CubicSpline::build(const int n,
             supdiag[0] = dx[n - 2];
             subdiag[n - 2] = dx[0];
             s[0] = 3.0 * (dd[0] * dx[n - 2] + dd[n - 2] * dx[0]);
-            solve_cyctri(n - 1, diag, supdiag, subdiag, s);
+            _solve_cyctri(n - 1, diag, supdiag, subdiag, s);
             s[n - 1] = s[0];
         }
         else
@@ -173,8 +206,8 @@ void CubicSpline::build(const int n,
                 break;
             default: // BoundaryCondition::not_a_knot
                 diag[0] = dx[1];
-                supdiag[0] = x[2] - x[0];
-                s[0] = (dd[0] * dx[1] * (dx[0] + 2 * (x[2] - x[0])) + dd[1] * dx[0] * dx[0]) / (x[2] - x[0]);
+                supdiag[0] = dx[0] + dx[1];
+                s[0] = (dd[0] * dx[1] * (dx[0] + 2 * (dx[0] + dx[1])) + dd[1] * dx[0] * dx[0]) / (dx[0] + dx[1]);
             }
 
             switch (bc_end)
@@ -191,10 +224,10 @@ void CubicSpline::build(const int n,
                 break;
             default: // BoundaryCondition::not_a_knot
                 diag[n - 1] = dx[n - 3];
-                subdiag[n - 2] = x[n - 1] - x[n - 3];
-                s[n - 1] = (dd[n - 2] * dx[n - 3] * (dx[n - 2] + 2 * (x[n - 1] - x[n - 3]))
+                subdiag[n - 2] = dx[n - 3] + dx[n - 2];
+                s[n - 1] = (dd[n - 2] * dx[n - 3] * (dx[n - 2] + 2 * (dx[n - 3] + dx[n - 2]))
                             + dd[n - 3] * dx[n - 2] * dx[n - 2])
-                           / (x[n - 1] - x[n - 3]);
+                           / (dx[n - 3] + dx[n - 2]);
             }
 
             int NRHS = 1;
@@ -205,114 +238,127 @@ void CubicSpline::build(const int n,
             dgtsv_(&N, &NRHS, subdiag, diag, supdiag, s, &LDB, &INFO);
         }
 
-        delete[] diag;
-        delete[] subdiag;
-        delete[] supdiag;
-        delete[] dx;
-        delete[] dd;
+        delete[] buffer;
     }
 }
 
-void CubicSpline::build(const int n,
-                        const double* const x,
-                        const double* const y,
-                        BoundaryCondition bc_start,
-                        BoundaryCondition bc_end,
-                        const double deriv_start,
-                        const double deriv_end)
+void CubicSpline::eval(
+    const int n,
+    const double* const x,
+    const double* const y,
+    const double* const s,
+    const int n_interp,
+    const double* const x_interp,
+    double* const y_interp,
+    double* const s_interp,
+    const double x0,
+    const double dx
+)
 {
-    cleanup();
+    _validate_eval(n, x, y, s, n_interp, x_interp, x0, dx);
 
-    n_ = n;
-    x_ = new double[n];
-    y_ = new double[n];
-    s_ = new double[n];
+    iclock::time_point start = iclock::now();
 
-    std::memcpy(x_, x, sizeof(double) * n);
-    std::memcpy(y_, y, sizeof(double) * n);
-    build(n_, x_, y_, s_, bc_start, bc_end, deriv_start, deriv_end);
+    // segind[p] will store the index of the polynomial segment that contains x_interp[p]
+    int* segind = new int[n_interp];
 
-    double dx_avg = (x[n - 1] - x[0]) / (n - 1);
-    is_uniform_ = std::all_of(x, x + n,
-            [dx_avg, &x](const double& xi) -> bool { return std::abs(xi - (&xi - x) * dx_avg) < 1e-15; });
-}
+    double* buffer = new double[6 * n_interp];
+    double* dd = buffer; // divided difference
+    double* w  = buffer +     n_interp;
+    double* c0 = buffer + 2 * n_interp;
+    double* c1 = buffer + 3 * n_interp;
+    double* c2 = buffer + 4 * n_interp;
+    double* c3 = buffer + 5 * n_interp;
 
-void CubicSpline::eval(const int n,
-                       const double* const x,
-                       const double* const y,
-                       const double* const s,
-                       const int n_interp,
-                       const double* const x_interp,
-                       double* const y_interp,
-                       double* const dy_interp)
-{
-    check_interp(n, x, y, s, n_interp, x_interp, y_interp, dy_interp);
-    _eval(x, y, s, n_interp, x_interp, y_interp, dy_interp, _gen_search(n, x));
-}
+    time_alloc += iclock::now() - start;
+    start = iclock::now();
 
-void CubicSpline::eval(const int n_interp,
-                       const double* const x_interp,
-                       double* const y_interp,
-                       double* const dy_interp)
-{
-    check_interp(n_, x_, y_, s_, n_interp, x_interp, y_interp, dy_interp);
-    _eval(x_, y_, s_, n_interp, x_interp, y_interp, dy_interp, _gen_search(n_, x_, is_uniform_));
-}
-
-std::function<int(double)> CubicSpline::_gen_search(const int n, const double* const x, int is_uniform)
-{
-    if (is_uniform != 0 && is_uniform != 1)
+    if (x)
     {
-        double dx_avg = (x[n - 1] - x[0]) / (n - 1);
-        is_uniform = std::all_of(x, x + n,
-                [dx_avg, &x] (const double& xi) { return std::abs(xi - (&xi - x) * dx_avg) < 1e-15; });
-    }
+        std::transform(x_interp, x_interp + n_interp, segind,
+                       [n, x](double x_i) { return _index(n, x, x_i); });
 
-    if (is_uniform)
-    {
-        double dx = x[1] - x[0];
-        return [dx, n, x](double xi) -> int { return xi == x[n - 1] ? n - 2 : xi / dx; };
+        std::transform(segind, segind + n_interp, x_interp, w,
+                       [x](int p, double x_i) { return x_i - x[p]; });
+
+        std::transform(segind, segind + n_interp, dd,
+                       [x, y](int p) { return (y[p + 1] - y[p]) / (x[p + 1] - x[p]); });
+
+        std::transform(segind, segind + n_interp, dd, c2,
+                       [x, s](int p, double d) { return (3.0 * d - 2.0 * s[p] - s[p + 1]) / (x[p + 1] - x[p]); });
+
+        std::transform(segind, segind + n_interp, dd, c3,
+                       [x, s](int p, double d) { return (s[p] + s[p + 1] - 2.0 * d) / std::pow(x[p + 1] - x[p], 2); });
     }
     else
     {
-        return [n, x](double xi) -> int { return (std::upper_bound(x, x + n, xi) - x) - 1; };
+        std::transform(x_interp, x_interp + n_interp, segind,
+                       [n, x0, dx](double x_i) { return _index(n, x0, dx, x_i); });
+
+        std::transform(segind, segind + n_interp, x_interp, w,
+                       [x0, dx](int p, double x_i) { return x_i - x0 - p * dx; });
+        time_seg += iclock::now() - start;
+        start = iclock::now();
+
+        std::transform(segind, segind + n_interp, dd,
+                       [dx, y](int p) { return (y[p + 1] - y[p]) / dx; });
+        time_dd += iclock::now() - start;
+        start = iclock::now();
+
+        std::transform(segind, segind + n_interp, dd, c2,
+                       [dx, s](int p, double d) { return (3.0 * d - 2.0 * s[p] - s[p + 1]) / dx; });
+
+        std::transform(segind, segind + n_interp, dd, c3,
+                       [dx, s](int p, double d) { return (s[p] + s[p + 1] - 2.0 * d) / (dx * dx); });
+        time_c23 += iclock::now() - start;
+        start = iclock::now();
     }
-}
 
-void CubicSpline::_eval(const double* const x,
-                        const double* const y,
-                        const double* const s,
-                        const int n_interp,
-                        const double* const x_interp,
-                        double* const y_interp,
-                        double* const dy_interp,
-                        std::function<int(double)> search)
-{
-    void (*poly_eval)(double, double, double, double, double, double*, double*) =
-        y_interp ? (dy_interp ? _poly_eval<true, true>: _poly_eval<true, false>) : _poly_eval<false, true>;
+    std::transform(segind, segind + n_interp, c0, [y](int p) { return y[p]; });
+    std::transform(segind, segind + n_interp, c1, [s](int p) { return s[p]; });
 
-    for (int i = 0; i != n_interp; ++i)
+    time_c01 += iclock::now() - start;
+    start = iclock::now();
+
+    if (y_interp)
     {
-        int p = search(x_interp[i]);
-        double w = x_interp[i] - x[p];
-
-        double dx = x[p + 1] - x[p];
-        double dd = (y[p + 1] - y[p]) / dx;
-
-        double c0 = y[p];
-        double c1 = s[p];
-        double c3 = (s[p] + s[p + 1] - 2.0 * dd) / (dx * dx);
-        double c2 = (dd - s[p]) / dx - c3 * dx;
-
-        poly_eval(w, c0, c1, c2, c3, y_interp + i, dy_interp + i);
+        for (int i = 0; i < n_interp; ++i)
+        {
+            y_interp[i] = ((c3[i] * w[i] + c2[i]) * w[i] + c1[i]) * w[i] + c0[i];
+        }
     }
+
+    if (s_interp)
+    {
+        for (int i = 0; i < n_interp; ++i)
+        {
+            s_interp[i] = (3.0 * c3[i] * w[i] + 2.0 * c2[i]) * w[i] + c1[i];
+        }
+    }
+    time_poly += iclock::now() - start;
+
+    delete[] segind;
+    delete[] buffer;
 }
 
-void CubicSpline::solve_cyctri(const int n,
-                               double* const diag,
-                               double* const supdiag,
-                               double* const subdiag,
-                               double* const b)
+void CubicSpline::eval(
+    const int n_interp,
+    const double* const x_interp,
+    double* const y_interp,
+    double* const s_interp
+) const
+{
+    _validate_eval(y_.size(), x_.data(), y_.data(), s_.data(), n_interp, x_interp, x0_, dx_);
+    eval(y_.size(), x_.data(), y_.data(), s_.data(), n_interp, x_interp, y_interp, s_interp, x0_, dx_);
+}
+
+void CubicSpline::_solve_cyctri(
+    const int n,
+    double* const diag,
+    double* const supdiag,
+    double* const subdiag,
+    double* const b
+)
 {
     // This function uses the Sherman-Morrison formula to convert a cyclic tridiagonal linear system
     // into a tridiagonal one.

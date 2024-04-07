@@ -1,6 +1,8 @@
 #include "module_base/cubic_spline.h"
 
 #include <cmath>
+#include <chrono>
+#include <cstdlib>
 
 #include "gtest/gtest.h"
 #include "module_base/constants.h"
@@ -99,8 +101,6 @@ double count_err(double* x, std::function<double(double)> func, int n)
 
 TEST_F(CubicSplineTest, NotAKnot)
 {
-    CubicSpline cubspl;
-
     int n = 10;
     for (int i = 0; i != n; ++i)
     {
@@ -108,7 +108,7 @@ TEST_F(CubicSplineTest, NotAKnot)
         y_[i] = std::sin(x_[i]);
     }
 
-    cubspl.build(n, x_, y_, CubicSpline::BoundaryCondition::not_a_knot, CubicSpline::BoundaryCondition::not_a_knot);
+    CubicSpline cubspl(n, x_, y_);
 
     int ni = 6;
     x_interp_[0] = 0.0;
@@ -132,12 +132,7 @@ TEST_F(CubicSplineTest, NotAKnot)
     }
 
     // static member function
-    ModuleBase::CubicSpline::build(n,
-                                   x_,
-                                   y_,
-                                   s_,
-                                   ModuleBase::CubicSpline::BoundaryCondition::not_a_knot,
-                                   ModuleBase::CubicSpline::BoundaryCondition::not_a_knot);
+    ModuleBase::CubicSpline::build(n, x_, y_, s_);
     ModuleBase::CubicSpline::eval(n, x_, y_, s_, ni, x_interp_, y_interp_);
     for (int i = 0; i != ni; ++i)
     {
@@ -147,8 +142,6 @@ TEST_F(CubicSplineTest, NotAKnot)
 
 TEST_F(CubicSplineTest, PeriodicAndUniform)
 {
-    CubicSpline cubspl;
-
     int n = 10;
     for (int i = 0; i != n; ++i)
     {
@@ -156,7 +149,11 @@ TEST_F(CubicSplineTest, PeriodicAndUniform)
         y_[i] = std::cos(x_[i]);
     }
 
-    cubspl.build(n, x_, y_, CubicSpline::BoundaryCondition::periodic, CubicSpline::BoundaryCondition::periodic);
+    CubicSpline cubspl(n,
+                       x_,
+                       y_,
+                       CubicSpline::BoundaryCondition::periodic,
+                       CubicSpline::BoundaryCondition::periodic);
 
     int ni = 5;
     x_interp_[0] = 0.0;
@@ -180,8 +177,6 @@ TEST_F(CubicSplineTest, PeriodicAndUniform)
 
 TEST_F(CubicSplineTest, FirstDeriv)
 {
-    CubicSpline cubspl;
-
     int n = 10;
     for (int i = 0; i != n; ++i)
     {
@@ -189,13 +184,13 @@ TEST_F(CubicSplineTest, FirstDeriv)
         y_[i] = std::exp(-x_[i]);
     }
 
-    cubspl.build(n,
-                 x_,
-                 y_,
-                 CubicSpline::BoundaryCondition::first_deriv,
-                 CubicSpline::BoundaryCondition::first_deriv,
-                 -3,
-                 -0.5);
+    CubicSpline cubspl(n,
+                       x_,
+                       y_,
+                       CubicSpline::BoundaryCondition::first_deriv,
+                       CubicSpline::BoundaryCondition::first_deriv,
+                       -3,
+                       -0.5);
 
     int ni = 6;
     x_interp_[0] = 0.0;
@@ -221,8 +216,6 @@ TEST_F(CubicSplineTest, FirstDeriv)
 
 TEST_F(CubicSplineTest, TwoPoints)
 {
-    CubicSpline cubspl;
-
     int ni = 5;
     x_interp_[0] = 0.0;
     x_interp_[1] = 0.1;
@@ -236,13 +229,13 @@ TEST_F(CubicSplineTest, TwoPoints)
     y_[1] = 4.33;
 
     // first derivative
-    cubspl.build(2,
-                 x_,
-                 y_,
-                 CubicSpline::BoundaryCondition::first_deriv,
-                 CubicSpline::BoundaryCondition::first_deriv,
-                 0.8,
-                 1.5);
+    CubicSpline cubspl(2,
+                       x_,
+                       y_,
+                       CubicSpline::BoundaryCondition::first_deriv,
+                       CubicSpline::BoundaryCondition::first_deriv,
+                       0.8,
+                       1.5);
 
     y_ref_[0] = 2.33;
     y_ref_[1] = 2.4373;
@@ -257,13 +250,13 @@ TEST_F(CubicSplineTest, TwoPoints)
     }
 
     // second derivative
-    cubspl.build(2,
-                 x_,
-                 y_,
-                 CubicSpline::BoundaryCondition::second_deriv,
-                 CubicSpline::BoundaryCondition::second_deriv,
-                 0.8,
-                 1.5);
+    cubspl = CubicSpline(2,
+                         x_,
+                         y_,
+                         CubicSpline::BoundaryCondition::second_deriv,
+                         CubicSpline::BoundaryCondition::second_deriv,
+                         0.8,
+                         1.5);
 
     y_ref_[0] = 2.33;
     y_ref_[1] = 2.48245;
@@ -279,7 +272,11 @@ TEST_F(CubicSplineTest, TwoPoints)
 
     // periodic
     y_[1] = y_[0];
-    cubspl.build(2, x_, y_, CubicSpline::BoundaryCondition::periodic, CubicSpline::BoundaryCondition::periodic);
+    cubspl = CubicSpline(2,
+                         x_,
+                         y_,
+                         CubicSpline::BoundaryCondition::periodic,
+                         CubicSpline::BoundaryCondition::periodic);
 
     cubspl.eval(ni, x_interp_, y_interp_);
     for (int i = 0; i != ni; ++i)
@@ -292,8 +289,6 @@ TEST_F(CubicSplineTest, TwoPoints)
 
 TEST_F(CubicSplineTest, ThreePoints)
 {
-    CubicSpline cubspl;
-
     int ni = 5;
     x_interp_[0] = 0.0;
     x_interp_[1] = 0.1;
@@ -310,7 +305,7 @@ TEST_F(CubicSplineTest, ThreePoints)
     y_[1] = 2.5;
     y_[2] = 4.8;
 
-    cubspl.build(3, x_, y_, CubicSpline::BoundaryCondition::not_a_knot, CubicSpline::BoundaryCondition::not_a_knot);
+    CubicSpline cubspl(3, x_, y_);
 
     y_ref_[0] = 1.2;
     y_ref_[1] = 1.5075;
@@ -326,7 +321,11 @@ TEST_F(CubicSplineTest, ThreePoints)
 
     // periodic
     y_[2] = y_[0];
-    cubspl.build(3, x_, y_, CubicSpline::BoundaryCondition::periodic, CubicSpline::BoundaryCondition::periodic);
+    cubspl = CubicSpline(3,
+                         x_,
+                         y_,
+                         CubicSpline::BoundaryCondition::periodic,
+                         CubicSpline::BoundaryCondition::periodic);
 
     y_ref_[0] = 1.2;
     y_ref_[1] = 1.44375;
@@ -342,7 +341,7 @@ TEST_F(CubicSplineTest, ThreePoints)
 }
 
 /**
- * @brief£º The following is the theoretical accuracy test code flow for cubic spline interpolation functions.
+ * @brief The following is the theoretical accuracy test code flow for cubic spline interpolation functions.
  *
  *          Boundary conditions for the cubic spline interpolation known cases of theoretical error follow the following
  * formula: err<=5/384*(max(|f''''(x)|))*h^4 , which h = x_ (i + 1) - x_i
@@ -357,8 +356,6 @@ TEST_F(CubicSplineTest, ThreePoints)
  */
 TEST_F(CubicSplineTest, FirstDeriv_sinx_uniform)
 {
-    CubicSpline cubspl;
-
     int n = 10;
     for (int i = 0; i != n; ++i)
     {
@@ -368,13 +365,13 @@ TEST_F(CubicSplineTest, FirstDeriv_sinx_uniform)
 
     auto f = [](double x) -> double { return sin(x); };
     double err = count_err(x_, f, n);
-    cubspl.build(n,
-                 x_,
-                 y_,
-                 CubicSpline::BoundaryCondition::first_deriv,
-                 CubicSpline::BoundaryCondition::first_deriv,
-                 1,
-                 0.80901699);
+    CubicSpline cubspl(n,
+                       x_,
+                       y_,
+                       CubicSpline::BoundaryCondition::first_deriv,
+                       CubicSpline::BoundaryCondition::first_deriv,
+                       1,
+                       0.80901699);
 
     int ni = 6;
     x_interp_[0] = 0.0;
@@ -400,8 +397,6 @@ TEST_F(CubicSplineTest, FirstDeriv_sinx_uniform)
 
 TEST_F(CubicSplineTest, FirstDeriv_sinx_Notuniform)
 {
-    CubicSpline cubspl;
-
     int n = 10;
     x_[0] = 0;
     y_[0] = sin(x_[0]);
@@ -413,13 +408,13 @@ TEST_F(CubicSplineTest, FirstDeriv_sinx_Notuniform)
 
     auto f = [](double x) -> double { return sin(x); };
     double err = count_err(x_, f, n);
-    cubspl.build(n,
-                 x_,
-                 y_,
-                 CubicSpline::BoundaryCondition::first_deriv,
-                 CubicSpline::BoundaryCondition::first_deriv,
-                 1,
-                 1);
+    CubicSpline cubspl(n,
+                       x_,
+                       y_,
+                       CubicSpline::BoundaryCondition::first_deriv,
+                       CubicSpline::BoundaryCondition::first_deriv,
+                       1,
+                       1);
 
     int ni = 6;
     x_interp_[0] = 0.0;
@@ -445,8 +440,6 @@ TEST_F(CubicSplineTest, FirstDeriv_sinx_Notuniform)
 
 TEST_F(CubicSplineTest, SecondDeriv_sinx_uniform)
 {
-    CubicSpline cubspl;
-
     int n = 10;
     for (int i = 0; i != n; ++i)
     {
@@ -456,13 +449,13 @@ TEST_F(CubicSplineTest, SecondDeriv_sinx_uniform)
 
     auto f = [](double x) -> double { return sin(x); };
     double err = count_err(x_, f, n);
-    cubspl.build(n,
-                 x_,
-                 y_,
-                 CubicSpline::BoundaryCondition::second_deriv,
-                 CubicSpline::BoundaryCondition::second_deriv,
-                 0,
-                 0.587785);
+    CubicSpline cubspl(n,
+                       x_,
+                       y_,
+                       CubicSpline::BoundaryCondition::second_deriv,
+                       CubicSpline::BoundaryCondition::second_deriv,
+                       0,
+                       0.587785);
 
     int ni = 6;
     x_interp_[0] = 0.0;
@@ -488,8 +481,6 @@ TEST_F(CubicSplineTest, SecondDeriv_sinx_uniform)
 
 TEST_F(CubicSplineTest, SecondDeriv_sinx_Notuniform)
 {
-    CubicSpline cubspl;
-
     int n = 10;
     x_[0] = 0;
     y_[0] = sin(x_[0]);
@@ -500,13 +491,13 @@ TEST_F(CubicSplineTest, SecondDeriv_sinx_Notuniform)
     }
     auto f = [](double x) -> double { return sin(x); };
     double err = count_err(x_, f, n);
-    cubspl.build(n,
-                 x_,
-                 y_,
-                 CubicSpline::BoundaryCondition::second_deriv,
-                 CubicSpline::BoundaryCondition::second_deriv,
-                 0,
-                 0);
+    CubicSpline cubspl(n,
+                       x_,
+                       y_,
+                       CubicSpline::BoundaryCondition::second_deriv,
+                       CubicSpline::BoundaryCondition::second_deriv,
+                       0,
+                       0);
 
     int ni = 6;
     x_interp_[0] = 0.0;
@@ -532,8 +523,6 @@ TEST_F(CubicSplineTest, SecondDeriv_sinx_Notuniform)
 
 TEST_F(CubicSplineTest, Periodic_sinx_uniform)
 {
-    CubicSpline cubspl;
-
     int n = 10;
     for (int i = 0; i != n - 1; ++i)
     {
@@ -544,7 +533,11 @@ TEST_F(CubicSplineTest, Periodic_sinx_uniform)
     y_[9] = sin(0);
     auto f = [](double x) -> double { return sin(x); };
     double err = count_err(x_, f, n);
-    cubspl.build(n, x_, y_, CubicSpline::BoundaryCondition::periodic, CubicSpline::BoundaryCondition::periodic);
+    CubicSpline cubspl(n, 
+                       x_,
+                       y_,
+                       CubicSpline::BoundaryCondition::periodic,
+                       CubicSpline::BoundaryCondition::periodic);
 
     int ni = 6;
     x_interp_[0] = 0.0;
@@ -570,8 +563,6 @@ TEST_F(CubicSplineTest, Periodic_sinx_uniform)
 
 TEST_F(CubicSplineTest, Periodic_sinx_Notuniform)
 {
-    CubicSpline cubspl;
-
     int n = 10;
     x_[0] = 0;
     y_[0] = sin(x_[0]);
@@ -582,7 +573,11 @@ TEST_F(CubicSplineTest, Periodic_sinx_Notuniform)
     }
     x_[9] = 2 * PI;
     y_[9] = sin(0);
-    cubspl.build(n, x_, y_, CubicSpline::BoundaryCondition::periodic, CubicSpline::BoundaryCondition::periodic);
+    CubicSpline cubspl(n,
+                       x_,
+                       y_,
+                       CubicSpline::BoundaryCondition::periodic,
+                       CubicSpline::BoundaryCondition::periodic);
 
     auto f = [](double x) -> double { return sin(x); };
     double err = count_err(x_, f, n);
@@ -610,8 +605,6 @@ TEST_F(CubicSplineTest, Periodic_sinx_Notuniform)
 
 TEST_F(CubicSplineTest, NotAKnot_sinx_uniform)
 {
-    CubicSpline cubspl;
-
     int n = 10;
     for (int i = 0; i != n; ++i)
     {
@@ -619,7 +612,7 @@ TEST_F(CubicSplineTest, NotAKnot_sinx_uniform)
         y_[i] = sin(x_[i]);
     }
 
-    cubspl.build(n, x_, y_, CubicSpline::BoundaryCondition::not_a_knot, CubicSpline::BoundaryCondition::not_a_knot);
+    CubicSpline cubspl(n, x_, y_);
     auto f = [](double x) -> double { return sin(x); };
     double err = count_err(x_, f, n);
     int ni = 6;
@@ -648,8 +641,6 @@ TEST_F(CubicSplineTest, NotAKnot_sinx_uniform)
 
 TEST_F(CubicSplineTest, NotAKnot_sinx_Notuniform)
 {
-    CubicSpline cubspl;
-
     int n = 10;
     x_[0] = 0;
     y_[0] = sin(x_[0]);
@@ -660,7 +651,7 @@ TEST_F(CubicSplineTest, NotAKnot_sinx_Notuniform)
     }
     auto f = [](double x) -> double { return sin(x); };
     double err = count_err(x_, f, n);
-    cubspl.build(n, x_, y_, CubicSpline::BoundaryCondition::not_a_knot, CubicSpline::BoundaryCondition::not_a_knot);
+    CubicSpline cubspl(n, x_, y_);
 
     int ni = 6;
     x_interp_[0] = 0.0;
@@ -686,23 +677,21 @@ TEST_F(CubicSplineTest, NotAKnot_sinx_Notuniform)
 
 TEST_F(CubicSplineTest, FirstDeriv_2x_uniform)
 {
-    CubicSpline cubspl;
-
     int n = 10;
     for (int i = 0; i != n; ++i)
     {
         x_[i] = ((double)i * 10.0);
         y_[i] = 2 * x_[i];
     }
-    auto f = [](double x) -> double { return 0; };
+    auto f = [](double) -> double { return 0; };
     double err = count_err(x_, f, n);
-    cubspl.build(n,
-                 x_,
-                 y_,
-                 CubicSpline::BoundaryCondition::first_deriv,
-                 CubicSpline::BoundaryCondition::first_deriv,
-                 2,
-                 2);
+    CubicSpline cubspl(n,
+                       x_,
+                       y_,
+                       CubicSpline::BoundaryCondition::first_deriv,
+                       CubicSpline::BoundaryCondition::first_deriv,
+                       2,
+                       2);
 
     int ni = 6;
     x_interp_[0] = 0.0;
@@ -728,8 +717,6 @@ TEST_F(CubicSplineTest, FirstDeriv_2x_uniform)
 
 TEST_F(CubicSplineTest, FirstDeriv_2x_Notuniform)
 {
-    CubicSpline cubspl;
-
     int n = 10;
     x_[0] = 0;
     y_[0] = 0;
@@ -738,15 +725,15 @@ TEST_F(CubicSplineTest, FirstDeriv_2x_Notuniform)
         x_[9 - i] = exp(-i);
         y_[9 - i] = 2 * (x_[9 - i]);
     }
-    auto f = [](double x) -> double { return 0; };
+    auto f = [](double) -> double { return 0; };
     double err = count_err(x_, f, n);
-    cubspl.build(n,
-                 x_,
-                 y_,
-                 CubicSpline::BoundaryCondition::first_deriv,
-                 CubicSpline::BoundaryCondition::first_deriv,
-                 2,
-                 2);
+    CubicSpline cubspl(n,
+                       x_,
+                       y_,
+                       CubicSpline::BoundaryCondition::first_deriv,
+                       CubicSpline::BoundaryCondition::first_deriv,
+                       2,
+                       2);
 
     int ni = 6;
     x_interp_[0] = 0.0;
@@ -772,23 +759,21 @@ TEST_F(CubicSplineTest, FirstDeriv_2x_Notuniform)
 
 TEST_F(CubicSplineTest, SecondDeriv_2x_uniform)
 {
-    CubicSpline cubspl;
-
     int n = 10;
     for (int i = 0; i != n; ++i)
     {
         x_[i] = ((double)i * 10.0);
         y_[i] = 2 * x_[i];
     }
-    auto f = [](double x) -> double { return 0; };
+    auto f = [](double) -> double { return 0; };
     double err = count_err(x_, f, n);
-    cubspl.build(n,
-                 x_,
-                 y_,
-                 CubicSpline::BoundaryCondition::second_deriv,
-                 CubicSpline::BoundaryCondition::second_deriv,
-                 0,
-                 0);
+    CubicSpline cubspl(n,
+                       x_,
+                       y_,
+                       CubicSpline::BoundaryCondition::second_deriv,
+                       CubicSpline::BoundaryCondition::second_deriv,
+                       0,
+                       0);
 
     int ni = 6;
     x_interp_[0] = 0.0;
@@ -814,8 +799,6 @@ TEST_F(CubicSplineTest, SecondDeriv_2x_uniform)
 
 TEST_F(CubicSplineTest, SecondDeriv_2x_Notuniform)
 {
-    CubicSpline cubspl;
-
     int n = 10;
     x_[0] = 0;
     y_[0] = 0;
@@ -824,15 +807,15 @@ TEST_F(CubicSplineTest, SecondDeriv_2x_Notuniform)
         x_[9 - i] = exp(-i);
         y_[9 - i] = 2 * (x_[9 - i]);
     }
-    auto f = [](double x) -> double { return 0; };
+    auto f = [](double) -> double { return 0; };
     double err = count_err(x_, f, n);
-    cubspl.build(n,
-                 x_,
-                 y_,
-                 CubicSpline::BoundaryCondition::second_deriv,
-                 CubicSpline::BoundaryCondition::second_deriv,
-                 0,
-                 0);
+    CubicSpline cubspl(n,
+                       x_,
+                       y_,
+                       CubicSpline::BoundaryCondition::second_deriv,
+                       CubicSpline::BoundaryCondition::second_deriv,
+                       0,
+                       0);
 
     int ni = 6;
     x_interp_[0] = 0.0;
@@ -858,17 +841,15 @@ TEST_F(CubicSplineTest, SecondDeriv_2x_Notuniform)
 
 TEST_F(CubicSplineTest, NotAKnot_2x_uniform)
 {
-    CubicSpline cubspl;
-
     int n = 10;
     for (int i = 0; i != n; ++i)
     {
         x_[i] = ((double)i * 10.0);
         y_[i] = 2 * (x_[i]);
     }
-    auto f = [](double x) -> double { return 0; };
+    auto f = [](double) -> double { return 0; };
     double err = count_err(x_, f, n);
-    cubspl.build(n, x_, y_, CubicSpline::BoundaryCondition::not_a_knot, CubicSpline::BoundaryCondition::not_a_knot);
+    CubicSpline cubspl(n, x_, y_);
 
     int ni = 6;
     x_interp_[0] = 0.0;
@@ -894,8 +875,6 @@ TEST_F(CubicSplineTest, NotAKnot_2x_uniform)
 
 TEST_F(CubicSplineTest, NotAKnot_2x_Notuniform)
 {
-    CubicSpline cubspl;
-
     int n = 10;
     x_[0] = 0;
     y_[0] = 0;
@@ -905,8 +884,8 @@ TEST_F(CubicSplineTest, NotAKnot_2x_Notuniform)
         y_[9 - i] = 2 * (x_[9 - i]);
     }
 
-    cubspl.build(n, x_, y_, CubicSpline::BoundaryCondition::not_a_knot, CubicSpline::BoundaryCondition::not_a_knot);
-    auto f = [](double x) -> double { return 0; };
+    CubicSpline cubspl(n, x_, y_);
+    auto f = [](double) -> double { return 0; };
     double err = count_err(x_, f, n);
     int ni = 6;
     x_interp_[0] = 0.0;
@@ -932,8 +911,6 @@ TEST_F(CubicSplineTest, NotAKnot_2x_Notuniform)
 
 TEST_F(CubicSplineTest, FirstDeriv_expx_uniform)
 {
-    CubicSpline cubspl;
-
     int n = 10;
     for (int i = 0; i != n; ++i)
     {
@@ -942,13 +919,13 @@ TEST_F(CubicSplineTest, FirstDeriv_expx_uniform)
     }
     auto f = [](double x) -> double { return exp(-x); };
     double err = count_err(x_, f, n);
-    cubspl.build(n,
-                 x_,
-                 y_,
-                 CubicSpline::BoundaryCondition::first_deriv,
-                 CubicSpline::BoundaryCondition::first_deriv,
-                 -1,
-                 -0.406570);
+    CubicSpline cubspl(n,
+                       x_,
+                       y_,
+                       CubicSpline::BoundaryCondition::first_deriv,
+                       CubicSpline::BoundaryCondition::first_deriv,
+                       -1,
+                       -0.406570);
 
     int ni = 6;
     x_interp_[0] = 0.000000000000000;
@@ -973,8 +950,6 @@ TEST_F(CubicSplineTest, FirstDeriv_expx_uniform)
 
 TEST_F(CubicSplineTest, FirstDeriv_expx_Notuniform)
 {
-    CubicSpline cubspl;
-
     int n = 10;
     x_[0] = 0;
     y_[0] = 1;
@@ -985,13 +960,13 @@ TEST_F(CubicSplineTest, FirstDeriv_expx_Notuniform)
     }
     auto f = [](double x) -> double { return exp(-x); };
     double err = count_err(x_, f, n);
-    cubspl.build(n,
-                 x_,
-                 y_,
-                 CubicSpline::BoundaryCondition::first_deriv,
-                 CubicSpline::BoundaryCondition::first_deriv,
-                 -1,
-                 -0.367879);
+    CubicSpline cubspl(n,
+                       x_,
+                       y_,
+                       CubicSpline::BoundaryCondition::first_deriv,
+                       CubicSpline::BoundaryCondition::first_deriv,
+                       -1,
+                       -0.367879);
 
     int ni = 6;
 
@@ -1017,8 +992,6 @@ TEST_F(CubicSplineTest, FirstDeriv_expx_Notuniform)
 
 TEST_F(CubicSplineTest, SecondDeriv_expx_uniform)
 {
-    CubicSpline cubspl;
-
     int n = 10;
     for (int i = 0; i != n; ++i)
     {
@@ -1027,13 +1000,13 @@ TEST_F(CubicSplineTest, SecondDeriv_expx_uniform)
     }
     auto f = [](double x) -> double { return exp(-x); };
     double err = count_err(x_, f, n);
-    cubspl.build(n,
-                 x_,
-                 y_,
-                 CubicSpline::BoundaryCondition::second_deriv,
-                 CubicSpline::BoundaryCondition::second_deriv,
-                 1,
-                 0.406570);
+    CubicSpline cubspl(n,
+                       x_,
+                       y_,
+                       CubicSpline::BoundaryCondition::second_deriv,
+                       CubicSpline::BoundaryCondition::second_deriv,
+                       1,
+                       0.406570);
 
     int ni = 6;
     x_interp_[0] = 0.000000000000000;
@@ -1058,7 +1031,6 @@ TEST_F(CubicSplineTest, SecondDeriv_expx_uniform)
 
 TEST_F(CubicSplineTest, SecondDeriv_expx_Notuniform)
 {
-    CubicSpline cubspl;
     int n = 10;
     x_[0] = 0;
     y_[0] = 1;
@@ -1069,13 +1041,13 @@ TEST_F(CubicSplineTest, SecondDeriv_expx_Notuniform)
     }
     auto f = [](double x) -> double { return exp(-x); };
     double err = count_err(x_, f, n);
-    cubspl.build(n,
-                 x_,
-                 y_,
-                 CubicSpline::BoundaryCondition::second_deriv,
-                 CubicSpline::BoundaryCondition::second_deriv,
-                 1,
-                 0.367879441171442);
+    CubicSpline cubspl(n,
+                       x_,
+                       y_,
+                       CubicSpline::BoundaryCondition::second_deriv,
+                       CubicSpline::BoundaryCondition::second_deriv,
+                       1,
+                       0.367879441171442);
 
     int ni = 6;
     x_interp_[0] = 0.000000000000000;
@@ -1137,8 +1109,6 @@ TEST_F(CubicSplineTest, SecondDeriv_expx_Notuniform)
 
 TEST_F(CubicSplineTest, NotAKnot_expx_Notuniform)
 {
-    CubicSpline cubspl;
-
     int n = 10;
     x_[0] = 0;
     y_[0] = 1;
@@ -1150,7 +1120,7 @@ TEST_F(CubicSplineTest, NotAKnot_expx_Notuniform)
     auto f = [](double x) -> double { return exp(-x); };
     double err = count_err(x_, f, n);
 
-    cubspl.build(n, x_, y_, CubicSpline::BoundaryCondition::not_a_knot, CubicSpline::BoundaryCondition::not_a_knot);
+    CubicSpline cubspl(n, x_, y_);
 
     int ni = 6;
     x_interp_[0] = 0.000000000000000;
@@ -1175,8 +1145,6 @@ TEST_F(CubicSplineTest, NotAKnot_expx_Notuniform)
 
 TEST_F(CubicSplineTest, FirstDeriv_lnx_uniform)
 {
-    CubicSpline cubspl;
-
     int n = 10;
     for (int i = 1; i != n + 1; ++i)
     {
@@ -1185,13 +1153,13 @@ TEST_F(CubicSplineTest, FirstDeriv_lnx_uniform)
     }
     auto f = [](double x) -> double { return -6 * pow(x, -4); };
     double err = count_err(x_, f, n);
-    cubspl.build(n,
-                 x_,
-                 y_,
-                 CubicSpline::BoundaryCondition::first_deriv,
-                 CubicSpline::BoundaryCondition::first_deriv,
-                 2,
-                 0.2);
+    CubicSpline cubspl(n,
+                       x_,
+                       y_,
+                       CubicSpline::BoundaryCondition::first_deriv,
+                       CubicSpline::BoundaryCondition::first_deriv,
+                       2,
+                       0.2);
 
     int ni = 6;
     x_interp_[0] = 0.001000000000000;
@@ -1216,8 +1184,6 @@ TEST_F(CubicSplineTest, FirstDeriv_lnx_uniform)
 
 TEST_F(CubicSplineTest, FirstDeriv_lnx_Notuniform)
 {
-    CubicSpline cubspl;
-
     int n = 10;
     for (int i = 9; i >= 0; i--)
     {
@@ -1226,13 +1192,13 @@ TEST_F(CubicSplineTest, FirstDeriv_lnx_Notuniform)
     }
     auto f = [](double x) -> double { return -6 * pow(x, -4); };
     double err = count_err(x_, f, n);
-    cubspl.build(n,
-                 x_,
-                 y_,
-                 CubicSpline::BoundaryCondition::first_deriv,
-                 CubicSpline::BoundaryCondition::first_deriv,
-                 1620.616785515076799,
-                 0.2);
+    CubicSpline cubspl(n,
+                       x_,
+                       y_,
+                       CubicSpline::BoundaryCondition::first_deriv,
+                       CubicSpline::BoundaryCondition::first_deriv,
+                       1620.616785515076799,
+                       0.2);
 
     int ni = 6;
     x_interp_[0] = 0.001000000000000;
@@ -1257,8 +1223,6 @@ TEST_F(CubicSplineTest, FirstDeriv_lnx_Notuniform)
 
 TEST_F(CubicSplineTest, SecondDeriv_lnx_uniform)
 {
-    CubicSpline cubspl;
-
     int n = 10;
     for (int i = 1; i != n + 1; ++i)
     {
@@ -1267,13 +1231,13 @@ TEST_F(CubicSplineTest, SecondDeriv_lnx_uniform)
     }
     auto f = [](double x) -> double { return -6 * pow(x, -4); };
     double err = count_err(x_, f, n);
-    cubspl.build(n,
-                 x_,
-                 y_,
-                 CubicSpline::BoundaryCondition::second_deriv,
-                 CubicSpline::BoundaryCondition::second_deriv,
-                 -4,
-                 -0.04);
+    CubicSpline cubspl(n,
+                       x_,
+                       y_,
+                       CubicSpline::BoundaryCondition::second_deriv,
+                       CubicSpline::BoundaryCondition::second_deriv,
+                       -4,
+                       -0.04);
 
     int ni = 6;
     x_interp_[0] = 0.001000000000000;
@@ -1298,7 +1262,6 @@ TEST_F(CubicSplineTest, SecondDeriv_lnx_uniform)
 
 TEST_F(CubicSplineTest, SecondDeriv_lnx_Notuniform)
 {
-    CubicSpline cubspl;
     int n = 10;
     for (int i = 9; i >= 0; i--)
     {
@@ -1307,13 +1270,13 @@ TEST_F(CubicSplineTest, SecondDeriv_lnx_Notuniform)
     }
     auto f = [](double x) -> double { return -6 * pow(x, -4); };
     double err = count_err(x_, f, n);
-    cubspl.build(n,
-                 x_,
-                 y_,
-                 CubicSpline::BoundaryCondition::second_deriv,
-                 CubicSpline::BoundaryCondition::second_deriv,
-                 -2626398.765493220183998,
-                 0.04);
+    CubicSpline cubspl(n,
+                       x_,
+                       y_,
+                       CubicSpline::BoundaryCondition::second_deriv,
+                       CubicSpline::BoundaryCondition::second_deriv,
+                       -2626398.765493220183998,
+                       0.04);
 
     int ni = 6;
     x_interp_[0] = 0.001000000000000;
@@ -1337,8 +1300,6 @@ TEST_F(CubicSplineTest, SecondDeriv_lnx_Notuniform)
 
 TEST_F(CubicSplineTest, NotAKnot_lnx_uniform)
 {
-    CubicSpline cubspl;
-
     int n = 10;
     for (int i = 1; i != n + 1; ++i)
     {
@@ -1348,7 +1309,7 @@ TEST_F(CubicSplineTest, NotAKnot_lnx_uniform)
     auto f = [](double x) -> double { return -6 * pow(x, -4); };
     double err = count_err(x_, f, n);
 
-    cubspl.build(n, x_, y_, CubicSpline::BoundaryCondition::not_a_knot, CubicSpline::BoundaryCondition::not_a_knot);
+    CubicSpline cubspl(n, x_, y_);
 
     int ni = 6;
     x_interp_[0] = 0.001000000000000;
@@ -1373,8 +1334,6 @@ TEST_F(CubicSplineTest, NotAKnot_lnx_uniform)
 
 TEST_F(CubicSplineTest, NotAKnot_lnx_Notuniform)
 {
-    CubicSpline cubspl;
-
     int n = 10;
     for (int i = 9; i >= 0; i--)
     {
@@ -1384,7 +1343,7 @@ TEST_F(CubicSplineTest, NotAKnot_lnx_Notuniform)
     auto f = [](double x) -> double { return -6 * pow(x, -4); };
     double err = count_err(x_, f, n);
 
-    cubspl.build(n, x_, y_, CubicSpline::BoundaryCondition::not_a_knot, CubicSpline::BoundaryCondition::not_a_knot);
+    CubicSpline cubspl(n, x_, y_);
 
     int ni = 6;
     x_interp_[0] = 0.001000000000000;
@@ -1409,8 +1368,6 @@ TEST_F(CubicSplineTest, NotAKnot_lnx_Notuniform)
 
 TEST_F(CubicSplineTest, SecondDeriv)
 {
-    CubicSpline cubspl;
-
     int n = 10;
     for (int i = 0; i != n; ++i)
     {
@@ -1418,13 +1375,13 @@ TEST_F(CubicSplineTest, SecondDeriv)
         y_[i] = std::exp(-x_[i]);
     }
 
-    cubspl.build(n,
-                 x_,
-                 y_,
-                 CubicSpline::BoundaryCondition::second_deriv,
-                 CubicSpline::BoundaryCondition::second_deriv,
-                 -1,
-                 -0.01);
+    CubicSpline cubspl(n,
+                       x_,
+                       y_,
+                       CubicSpline::BoundaryCondition::second_deriv,
+                       CubicSpline::BoundaryCondition::second_deriv,
+                       -1,
+                       -0.01);
 
     int ni = 6;
     x_interp_[0] = 0.0;
@@ -1446,6 +1403,62 @@ TEST_F(CubicSplineTest, SecondDeriv)
     {
         EXPECT_NEAR(y_interp_[i], y_ref_[i], tol);
     }
+}
+
+TEST_F(CubicSplineTest, Performance)
+{
+    using iclock = std::chrono::high_resolution_clock;
+
+    iclock::time_point start;
+    std::chrono::duration<double> elapsed;
+
+    int n = 2000;
+    double dx = 0.01;
+
+    double* kbuffer = new double[3 * n];
+    double* y = kbuffer;
+    double* s = kbuffer + n;
+    double* x = kbuffer + 2 * n;
+
+    for (int i = 0; i < n; ++i) {
+        y[i] = std::sin(i*dx);
+        x[i] = i*dx;
+    }
+    //CubicSpline::build(n, nullptr, y, s, dx);
+    CubicSpline cubspl(n, 0, dx, y);
+    //CubicSpline cubspl(n, x, y);
+
+    int n_interp = 100;
+    int nt = 10000;
+
+    double* ibuffer = new double[3 * n_interp];
+    double* x_interp = ibuffer;
+    double* y_interp = ibuffer + n_interp;
+    double* s_interp = ibuffer + 2 * n_interp;
+
+    double x0 = 0.0;
+    double wmax = (n - 1) * dx;
+    for (int p = 0; p < n_interp; ++p) {
+        x_interp[p] = x0 + wmax * static_cast<double>(std::rand()) / RAND_MAX;
+    }
+    
+    start = iclock::now();
+    for (int it = 0; it != nt; ++it) {
+        //CubicSpline::eval(n, nullptr, y, s, n_interp, x_interp, y_interp, s_interp, x0, dx);
+        cubspl.eval(n_interp, x_interp, y_interp, s_interp);
+    }
+    elapsed = iclock::now() - start;
+    std::cout << "Elapsed time: " << elapsed.count() << " s" << std::endl;
+
+    std::cout << "time_alloc = " << cubspl.time_alloc.count() << std::endl;
+    std::cout << "time_seg = " << cubspl.time_seg.count() << std::endl;
+    std::cout << "*time_dd = " << cubspl.time_dd.count() << std::endl;
+    std::cout << "*time_c23 = " << cubspl.time_c23.count() << std::endl;
+    std::cout << "time_c01 = " << cubspl.time_c01.count() << std::endl;
+    std::cout << "time_poly = " << cubspl.time_poly.count() << std::endl;
+
+    delete[] ibuffer;
+    delete[] kbuffer;
 }
 
 int main(int argc, char** argv)
