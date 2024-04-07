@@ -2129,7 +2129,9 @@ bool Input::Read(const std::string& fn)
         else if (strcmp("yukawa_lambda", word) == 0)
             ifs.ignore(150, '\n');
         else if (strcmp("uramping", word) == 0)
+        {
             ifs.ignore(150, '\n');
+        }
         //----------------------------------------------------------------------------------
         //         Xin Qu added on 2020-08 for DFT+DMFT
         //----------------------------------------------------------------------------------
