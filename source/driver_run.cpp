@@ -37,16 +37,7 @@ void Driver::driver_run(void)
 #endif
     GlobalC::ucell.setup_cell(GlobalV::stru_file, GlobalV::ofs_running);
 
-    //! 3: for these two types of calculations
-    // nothing else need to be initialized
-    if(GlobalV::CALCULATION == "test_neighbour" 
-    || GlobalV::CALCULATION == "test_memory")
-    {
-        p_esolver->run(0, GlobalC::ucell);
-        ModuleBase::QUIT();
-    }
-
-    //! 4: initialize Esolver and fill json-structure 
+    //! 3: initialize Esolver and fill json-structure 
     p_esolver->init(INPUT, GlobalC::ucell);
 
 
@@ -54,7 +45,7 @@ void Driver::driver_run(void)
     Json::gen_stru_wrapper(&GlobalC::ucell);
 #endif
 
-    //! 5: md or relax calculations 
+    //! 4: md or relax calculations 
     if(GlobalV::CALCULATION == "md")
     {
         Run_MD::md_line(GlobalC::ucell, p_esolver, INPUT.mdp);
@@ -73,7 +64,7 @@ void Driver::driver_run(void)
         }
     }
 
-    //! 6: clean up esolver
+    //! 5: clean up esolver
     p_esolver->post_process();
     ModuleESolver::clean_esolver(p_esolver);
 
