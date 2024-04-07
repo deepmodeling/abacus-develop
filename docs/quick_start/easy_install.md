@@ -206,7 +206,7 @@ A pre-built ABACUS binary with all requirements is available at [conda-forge](ht
 ```bash
 # Install
 # We recommend installing ABACUS in a new environment to avoid potential conflicts:
-conda create -n abacus_env abacus -c conda-forge
+conda create -n abacus_env abacus blas=*=mkl mpich -c conda-forge
 
 # Run
 conda activate abacus_env
