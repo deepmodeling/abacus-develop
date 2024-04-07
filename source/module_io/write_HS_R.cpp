@@ -3,12 +3,15 @@
 #include "module_base/timer.h"
 #include "write_HS_sparse.h"
 
+#include "module_hamilt_lcao/hamilt_lcaodft/sparse_format.h"
+
+
 // if 'binary=true', output binary file.
 // The 'sparse_threshold' is the accuracy of the sparse matrix. 
 // If the absolute value of the matrix element is less than or equal to the 'sparse_threshold', it will be ignored.
 void ModuleIO::output_HS_R(const int& istep,
                            const ModuleBase::matrix& v_eff,
-                           LCAO_Hamilt& UHM,
+                           LCAO_Hamilt& uhm,
                            const K_Vectors& kv,
                            hamilt::Hamilt<std::complex<double>>* p_ham,
                            const std::string& SR_filename,
@@ -22,13 +25,15 @@ void ModuleIO::output_HS_R(const int& istep,
 
     if(GlobalV::NSPIN==1||GlobalV::NSPIN==4)
     {
+        // mohan add 2024-04-02
+        const int spin_now = 0;
         // jingan add 2021-6-4, modify 2021-12-2
-        UHM.cal_HSR_sparse(0, sparse_threshold, kv.nmp, p_ham);
+        uhm.cal_HSR_sparse(spin_now, sparse_threshold, kv.nmp, p_ham);
     }
     else if(GlobalV::NSPIN==2)
     {
         // save HR of current_spin first
-        UHM.cal_HSR_sparse(GlobalV::CURRENT_SPIN, sparse_threshold, kv.nmp, p_ham);
+        uhm.cal_HSR_sparse(GlobalV::CURRENT_SPIN, sparse_threshold, kv.nmp, p_ham);
         // cal HR of the other spin
         if(GlobalV::VL_IN_H)
         {
@@ -46,11 +51,11 @@ void ModuleIO::output_HS_R(const int& istep,
             p_ham->refresh();
             p_ham->updateHk(ik);
         }
-        UHM.cal_HSR_sparse(GlobalV::CURRENT_SPIN, sparse_threshold, kv.nmp, p_ham);
+        uhm.cal_HSR_sparse(GlobalV::CURRENT_SPIN, sparse_threshold, kv.nmp, p_ham);
     }
 
-    ModuleIO::save_HSR_sparse(istep, *UHM.LM, sparse_threshold, binary, SR_filename, HR_filename_up, HR_filename_down);
-    UHM.destroy_all_HSR_sparse();
+    ModuleIO::save_HSR_sparse(istep, *uhm.LM, sparse_threshold, binary, SR_filename, HR_filename_up, HR_filename_down);
+    uhm.destroy_all_HSR_sparse();
 
     ModuleBase::timer::tick("ModuleIO","output_HS_R"); 
     return;
@@ -58,7 +63,8 @@ void ModuleIO::output_HS_R(const int& istep,
 
 void ModuleIO::output_dH_R(const int& istep,
                            const ModuleBase::matrix& v_eff,
-                           LCAO_Hamilt& UHM,
+                           LCAO_Hamilt& uhm,
+                           LCAO_gen_fixedH& gen_h, // mohan add 2024-04-02
                            Gint_k& gint_k,  // mohan add 2024-04-01
                            LCAO_Matrix &lm,  // mohan add 2024-04-01
                            const K_Vectors& kv,
@@ -74,8 +80,14 @@ void ModuleIO::output_dH_R(const int& istep,
     {
         // mohan add 2024-04-01
         assert(GlobalV::CURRENT_SPIN==0);
-        UHM.cal_dH_sparse(GlobalV::CURRENT_SPIN, sparse_threshold, gint_k);
-    }
+
+		sparse_format::cal_dH(
+                lm,
+				gen_h,
+				GlobalV::CURRENT_SPIN, 
+				sparse_threshold, 
+				gint_k);
+	}
     else if(GlobalV::NSPIN==2)
     {
         for (int ik = 0; ik < kv.nks; ik++)
@@ -99,14 +111,19 @@ void ModuleIO::output_dH_R(const int& istep,
                     }
                 }
 
-                UHM.cal_dH_sparse(GlobalV::CURRENT_SPIN, sparse_threshold, gint_k);
-            }
+				sparse_format::cal_dH(
+                        lm,
+						gen_h,
+						GlobalV::CURRENT_SPIN, 
+						sparse_threshold, 
+						gint_k);
+			}
         }
     }
 
     // mohan update 2024-04-01
     ModuleIO::save_dH_sparse(istep, lm, sparse_threshold, binary);
-    UHM.destroy_dH_R_sparse();
+    uhm.destroy_dH_R_sparse();
 
     gint_k.destroy_pvdpR();
 
@@ -115,7 +132,7 @@ void ModuleIO::output_dH_R(const int& istep,
 }
 
 void ModuleIO::output_S_R(
-    LCAO_Hamilt &UHM,
+    LCAO_Hamilt &uhm,
     hamilt::Hamilt<std::complex<double>>* p_ham,
     const std::string &SR_filename,
     const bool &binary,
@@ -124,9 +141,20 @@ void ModuleIO::output_S_R(
     ModuleBase::TITLE("ModuleIO","output_S_R");
     ModuleBase::timer::tick("ModuleIO","output_S_R"); 
 
-    UHM.cal_SR_sparse(sparse_threshold, p_ham);
-    ModuleIO::save_sparse(UHM.LM->SR_sparse, UHM.LM->all_R_coor, sparse_threshold, binary, SR_filename, *UHM.LM->ParaV, "S", 0);
-    UHM.destroy_all_HSR_sparse();
+    uhm.cal_SR_sparse(sparse_threshold, p_ham);
+
+	ModuleIO::save_sparse(
+			uhm.LM->SR_sparse, 
+			uhm.LM->all_R_coor,
+			sparse_threshold, 
+			binary, 
+			SR_filename,
+			*uhm.LM->ParaV, 
+			"S", 
+			0
+			);
+
+    uhm.destroy_all_HSR_sparse();
 
     ModuleBase::timer::tick("ModuleIO","output_S_R");
     return;
@@ -134,7 +162,8 @@ void ModuleIO::output_S_R(
 
 void ModuleIO::output_T_R(
     const int istep,
-    LCAO_Hamilt &UHM,
+    LCAO_Hamilt &uhm,
+    LCAO_gen_fixedH &gen_h, // mohan add 2024-04-02
     const std::string &TR_filename,
     const bool &binary,
     const double &sparse_threshold
@@ -153,9 +182,20 @@ void ModuleIO::output_T_R(
         sst << GlobalV::global_out_dir << TR_filename;
     }
 
-    UHM.cal_TR_sparse(sparse_threshold);
-    ModuleIO::save_sparse(UHM.LM->TR_sparse, UHM.LM->all_R_coor, sparse_threshold, binary, sst.str().c_str(), *UHM.LM->ParaV, "T", istep);
-    UHM.destroy_TR_sparse();
+    uhm.cal_TR_sparse(gen_h, sparse_threshold);
+
+	ModuleIO::save_sparse(
+			uhm.LM->TR_sparse, 
+			uhm.LM->all_R_coor,
+			sparse_threshold, 
+			binary, 
+		    sst.str().c_str(),
+			*uhm.LM->ParaV, 
+			"T", 
+			istep
+			);
+
+    uhm.destroy_TR_sparse();
 
     ModuleBase::timer::tick("ModuleIO","output_T_R");
     return;

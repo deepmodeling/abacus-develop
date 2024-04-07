@@ -27,6 +27,8 @@ if(ENABLE_LCAO)
         fvnl_dbeta_k.cpp
         LCAO_gen_fixedH.cpp
         LCAO_hamilt.cpp
+        grid_init.cpp
+        sparse_format.cpp
         LCAO_matrix.cpp
         LCAO_nnr.cpp
         record_adj.cpp

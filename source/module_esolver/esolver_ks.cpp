@@ -1,31 +1,24 @@
 #include "esolver_ks.h"
-
 #include <time.h>
 #ifdef __MPI
 #include <mpi.h>
 #else
 #include <chrono>
 #endif
-
 #include <iostream>
-
 #include "module_io/print_info.h"
 #include "module_base/timer.h"
 #include "module_io/input.h"
 #include "module_io/json_output/init_info.h"
-
-
 //--------------Temporary----------------
 #include "module_base/global_variable.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 //---------------------------------------
-
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
 #include "module_base/parallel_common.h"
 #endif
-
 #include "module_io/json_output/output_info.h"
 
 namespace ModuleESolver
@@ -76,6 +69,8 @@ ESolver_KS<T, Device>::~ESolver_KS()
 template<typename T, typename Device>
 void ESolver_KS<T, Device>::init(Input& inp, UnitCell& ucell)
 {
+	ModuleBase::TITLE("ESolver_KS", "init");
+
 	ESolver_FP::init(inp,ucell);
 
 	//------------------Charge Mixing------------------
@@ -381,6 +376,8 @@ void ESolver_KS<T, Device>::print_wfcfft(Input& inp, std::ofstream &ofs)
 template<typename T, typename Device>
 void ESolver_KS<T, Device>::run(const int istep, UnitCell& ucell)
 {
+	ModuleBase::TITLE("ESolver_KS", "run");
+    
 	if (!(GlobalV::CALCULATION == "scf" 
        || GlobalV::CALCULATION == "md"
        || GlobalV::CALCULATION == "relax" 
