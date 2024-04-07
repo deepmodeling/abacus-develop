@@ -298,11 +298,11 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 										else
 										{
 											int is = (jj-jj0*GlobalV::NPOL) + (kk-kk0*GlobalV::NPOL)*2;
-											if (is == 0 || is == 3)
+											if (is == 0) // is==3 is not needed in force calculation
 											{
-												this->LM->DSloc_Rx[nnr] = olm[is];
-												this->LM->DSloc_Ry[nnr] = olm[is];
-												this->LM->DSloc_Rz[nnr] = olm[is];
+												this->LM->DSloc_Rx[nnr] = olm[0];
+												this->LM->DSloc_Ry[nnr] = olm[1];
+												this->LM->DSloc_Rz[nnr] = olm[2];
 											}
 											else
 											{
@@ -330,11 +330,11 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 										else
 										{
 											int is = (jj-jj0*GlobalV::NPOL) + (kk-kk0*GlobalV::NPOL)*2;
-											if (is == 0 || is == 3)
+											if (is == 0) // is==3 is not needed in force calculation
 											{
-												this->LM->DHloc_fixedR_x[nnr] = olm[is];
-												this->LM->DHloc_fixedR_y[nnr] = olm[is];
-												this->LM->DHloc_fixedR_z[nnr] = olm[is];
+												this->LM->DHloc_fixedR_x[nnr] = olm[0];
+												this->LM->DHloc_fixedR_y[nnr] = olm[1];
+												this->LM->DHloc_fixedR_z[nnr] = olm[2];
 											}
 											else
 											{
@@ -802,75 +802,123 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 								}// calc_deri
 								else // calculate the derivative
 								{
-									if(GlobalV::GAMMA_ONLY_LOCAL)
+									if (GlobalV::NSPIN == 4)
 									{
-										double nlm[3]={0,0,0};
-
-										// sum all projectors for one atom.
-										std::vector<double> nlm_1 = (*nlm_cur1_f)[iw1_all][0];
-										std::vector<std::vector<double>> nlm_2;
-										nlm_2.resize(3);
-										for(int i=0;i<3;i++)
-										{
-											nlm_2[i] = (*nlm_cur2_f)[iw2_all][i+1];
-										}
-
-										assert(nlm_1.size()==nlm_2[0].size());
-
-										const int nproj = GlobalC::ucell.infoNL.nproj[T0];
-										int ib = 0;
-										for (int nb = 0; nb < nproj; nb++)
-										{
-											const int L0 = GlobalC::ucell.infoNL.Beta[T0].Proj[nb].getL();
-											for(int m=0;m<2*L0+1;m++)
-											{
-												for(int ir=0;ir<3;ir++)
-												{
-													nlm[ir] += nlm_2[ir][ib]*nlm_1[ib]*GlobalC::ucell.atoms[T0].ncpp.dion(nb,nb);
-												}
-												ib+=1;
-											}
-										}
-										assert(ib==nlm_1.size());
-										this->LM->set_force (iw1_all, iw2_all, nlm[0], nlm[1], nlm[2], 'N');
-									}
-									else
-									{
-										// mohan change the order on 2011-06-17
-										// origin: < psi1 | beta > < beta | dpsi2/dtau >
-										//now: < psi1/dtau | beta > < beta | psi2 >
-										double nlm[3]={0,0,0};
-
-										// sum all projectors for one atom.
 										std::vector<double> nlm_1 = (*nlm_cur2_f)[iw2_all][0];
 										std::vector<std::vector<double>> nlm_2;
 										nlm_2.resize(3);
-										for(int i=0;i<3;i++)
+										for (int i=0; i< 3; i++)
 										{
 											nlm_2[i] = (*nlm_cur1_f)[iw1_all][i+1];
 										}
-
-										assert(nlm_1.size()==nlm_2[0].size());
-
-										const int nproj = GlobalC::ucell.infoNL.nproj[T0];
-										int ib = 0;
-										for (int nb = 0; nb < nproj; nb++)
+										std::complex<double> nlm[4][3] = {ModuleBase::ZERO};
+										int is0 = (j-j0*GlobalV::NPOL) + (k-k0*GlobalV::NPOL)*2;
+										for (int no=0; no < GlobalC::ucell.atoms[T0].ncpp.non_zero_count_soc[is0]; no++)
 										{
-											const int L0 = GlobalC::ucell.infoNL.Beta[T0].Proj[nb].getL();
-											for(int m=0;m<2*L0+1;m++)
+											const int p1 = GlobalC::ucell.atoms[T0].ncpp.index1_soc[is0][no];
+											const int p2 = GlobalC::ucell.atoms[T0].ncpp.index2_soc[is0][no];
+											for (int ir=0; ir<3; ir++)
 											{
-												for(int ir=0;ir<3;ir++)
-												{
-													nlm[ir] += nlm_2[ir][ib]*nlm_1[ib]*GlobalC::ucell.atoms[T0].ncpp.dion(nb,nb);
-												}
-												ib+=1;
+												nlm[is0][ir] += nlm_2[ir][p1]*nlm_1[p2]*GlobalC::ucell.atoms[T0].ncpp.d_so(is0, p2, p1);
 											}
 										}
-										assert(ib==nlm_1.size());
+										if (is0 == 0)
+										{
+											this->LM->DHloc_fixedR_x[nnr+nnr_inner] += (nlm[0][0].real() + nlm[3][0].real());
+											this->LM->DHloc_fixedR_y[nnr+nnr_inner] += (nlm[0][1].real() + nlm[3][1].real());
+											this->LM->DHloc_fixedR_z[nnr+nnr_inner] += (nlm[0][2].real() + nlm[3][2].real());
+										}
+										else if (is0 == 1)
+										{
+											this->LM->DHloc_fixedR_x[nnr+nnr_inner] += (nlm[1][0].real() + nlm[2][0].real());
+											this->LM->DHloc_fixedR_y[nnr+nnr_inner] += (nlm[1][1].real() + nlm[2][1].real());
+											this->LM->DHloc_fixedR_z[nnr+nnr_inner] += (nlm[1][2].real() + nlm[2][2].real());
+										}
+										else if (is0 == 2)
+										{
+											this->LM->DHloc_fixedR_x[nnr+nnr_inner] += (-nlm[1][0].imag() + nlm[2][0].imag());
+											this->LM->DHloc_fixedR_y[nnr+nnr_inner] += (-nlm[1][1].imag() + nlm[2][1].imag());
+											this->LM->DHloc_fixedR_z[nnr+nnr_inner] += (-nlm[1][2].imag() + nlm[2][2].imag());
+										}
+										else if (is0 == 3)
+										{
+											this->LM->DHloc_fixedR_x[nnr+nnr_inner] += (nlm[0][0].imag() - nlm[3][0].imag());
+											this->LM->DHloc_fixedR_y[nnr+nnr_inner] += (nlm[0][1].imag() - nlm[3][1].imag());
+											this->LM->DHloc_fixedR_z[nnr+nnr_inner] += (nlm[0][2].imag() - nlm[3][2].imag());
+										}
+									}
+									else
+									{
+										if(GlobalV::GAMMA_ONLY_LOCAL)
+										{
+											double nlm[3]={0,0,0};
 
-										this->LM->DHloc_fixedR_x[nnr+nnr_inner] += nlm[0];
-										this->LM->DHloc_fixedR_y[nnr+nnr_inner] += nlm[1];
-										this->LM->DHloc_fixedR_z[nnr+nnr_inner] += nlm[2];
+											// sum all projectors for one atom.
+											std::vector<double> nlm_1 = (*nlm_cur1_f)[iw1_all][0];
+											std::vector<std::vector<double>> nlm_2;
+											nlm_2.resize(3);
+											for(int i=0;i<3;i++)
+											{
+												nlm_2[i] = (*nlm_cur2_f)[iw2_all][i+1];
+											}
+
+											assert(nlm_1.size()==nlm_2[0].size());
+
+											const int nproj = GlobalC::ucell.infoNL.nproj[T0];
+											int ib = 0;
+											for (int nb = 0; nb < nproj; nb++)
+											{
+												const int L0 = GlobalC::ucell.infoNL.Beta[T0].Proj[nb].getL();
+												for(int m=0;m<2*L0+1;m++)
+												{
+													for(int ir=0;ir<3;ir++)
+													{
+														nlm[ir] += nlm_2[ir][ib]*nlm_1[ib]*GlobalC::ucell.atoms[T0].ncpp.dion(nb,nb);
+													}
+													ib+=1;
+												}
+											}
+											assert(ib==nlm_1.size());
+											this->LM->set_force (iw1_all, iw2_all, nlm[0], nlm[1], nlm[2], 'N');
+										}
+										else
+										{
+											// mohan change the order on 2011-06-17
+											// origin: < psi1 | beta > < beta | dpsi2/dtau >
+											//now: < psi1/dtau | beta > < beta | psi2 >
+											double nlm[3]={0,0,0};
+
+											// sum all projectors for one atom.
+											std::vector<double> nlm_1 = (*nlm_cur2_f)[iw2_all][0];
+											std::vector<std::vector<double>> nlm_2;
+											nlm_2.resize(3);
+											for(int i=0;i<3;i++)
+											{
+												nlm_2[i] = (*nlm_cur1_f)[iw1_all][i+1];
+											}
+
+											assert(nlm_1.size()==nlm_2[0].size());
+
+											const int nproj = GlobalC::ucell.infoNL.nproj[T0];
+											int ib = 0;
+											for (int nb = 0; nb < nproj; nb++)
+											{
+												const int L0 = GlobalC::ucell.infoNL.Beta[T0].Proj[nb].getL();
+												for(int m=0;m<2*L0+1;m++)
+												{
+													for(int ir=0;ir<3;ir++)
+													{
+														nlm[ir] += nlm_2[ir][ib]*nlm_1[ib]*GlobalC::ucell.atoms[T0].ncpp.dion(nb,nb);
+													}
+													ib+=1;
+												}
+											}
+											assert(ib==nlm_1.size());
+
+											this->LM->DHloc_fixedR_x[nnr+nnr_inner] += nlm[0];
+											this->LM->DHloc_fixedR_y[nnr+nnr_inner] += nlm[1];
+											this->LM->DHloc_fixedR_z[nnr+nnr_inner] += nlm[2];
+										}
 									}
 								}//!calc_deri
 								nnr_inner++;
