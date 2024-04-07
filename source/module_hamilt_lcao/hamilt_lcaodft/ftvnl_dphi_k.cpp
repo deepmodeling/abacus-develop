@@ -35,6 +35,8 @@ void Force_LCAO_k::cal_ftvnl_dphi_k(const elecstate::DensityMatrix<std::complex<
     ModuleBase::TITLE("Force_LCAO_k", "cal_ftvnl_dphi_k");
     ModuleBase::timer::tick("Force_LCAO_k", "cal_ftvnl_dphi_k");
 
+    const int nspin_ = (GlobalV::NSPIN == 2) ? 2 : 1;
+
     int total_irr = 0;
     // get the adjacent atom's information.
 
@@ -90,7 +92,7 @@ void Force_LCAO_k::cal_ftvnl_dphi_k(const elecstate::DensityMatrix<std::complex<
                     continue;
                 }
                 std::vector<hamilt::BaseMatrix<double>*> tmp_matrix;
-                for (int is = 0; is < GlobalV::NSPIN; ++is)
+                for (int is = 0; is < nspin_; ++is)
                 {
                     tmp_matrix.push_back(DM->get_DMR_pointer(is+1)->find_matrix(iat1, iat2, Rx, Ry, Rz));
                 }
@@ -101,7 +103,7 @@ void Force_LCAO_k::cal_ftvnl_dphi_k(const elecstate::DensityMatrix<std::complex<
                     {
                         // get value from DM
                         double dm2d1 = 0.0;
-                        for (int is = 0; is < GlobalV::NSPIN; ++is)
+                        for (int is = 0; is < nspin_; ++is)
                         {
                             dm2d1 += tmp_matrix[is]->get_value(mu, nu);
                         }
