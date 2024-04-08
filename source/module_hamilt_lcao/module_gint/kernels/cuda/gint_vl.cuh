@@ -31,7 +31,7 @@ __global__ void get_psi_and_vldr3(double* ylmcoef,
                                   int nr_max,
                                   double* psi_u,
                                   double* psir_ylm_left,
-                                  double* psir_ylm_right);
+                                  double* psir_r);
 
 } // namespace GintKernel
 #endif // GINT_VL_CUH

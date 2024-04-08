@@ -18,9 +18,9 @@ typedef struct
     int* atom_pair_lda;
     int* atom_pair_ldb;
     int* atom_pair_ldc;
-    double* psi_input_double_g;
+    double* input_double_g;
     int* input_int_g;
-    int* num_psirDevice;
+    int* num_psir_g;
     double* psir_dm_device;
     double* psir_r_device;
     double* psir_lx_device;

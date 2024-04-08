@@ -33,7 +33,8 @@ static __device__ void spherical_harmonics(double* dr,
     /***************************
     L = 2
     ***************************/
-    ylma[4] = ylmcoef[2] * dr[2] * ylma[1] - ylmcoef[3] * ylma[0]; // l=2, m=0
+    tmp0=ylmcoef[3] * ylma[0];
+    ylma[4] = ylmcoef[2] * dr[2] * ylma[1] - tmp0 ; // l=2, m=0
     tmp0 = ylmcoef[4] * dr[2];
     ylma[5] = tmp0 * ylma[2]; // l=2,m=1
     ylma[6] = tmp0 * ylma[3]; // l=2,m=-1
@@ -48,7 +49,8 @@ static __device__ void spherical_harmonics(double* dr,
     /***************************
     L = 3
     ***************************/
-    ylma[9] = ylmcoef[7] * dr[2] * ylma[4] - ylmcoef[8] * ylma[1]; // l=3, m=0
+    tmp0=ylmcoef[8] * ylma[1];
+    ylma[9] = ylmcoef[7] * dr[2] * ylma[4] - tmp0; // l=3, m=0
 
     tmp0 = ylmcoef[9] * dr[2];
     ylma[10] = tmp0 * ylma[5] - ylmcoef[10] * ylma[2]; // l=3,m=1
@@ -69,7 +71,8 @@ static __device__ void spherical_harmonics(double* dr,
     /***************************
     L = 4
     ***************************/
-    ylma[16] = ylmcoef[15] * dr[2] * ylma[9] - ylmcoef[16] * ylma[4]; // l=4,m=0
+    tmp0=ylmcoef[16] * ylma[4];
+    ylma[16] = ylmcoef[15] * dr[2] * ylma[9] - tmp0; // l=4,m=0
 
     tmp0 = ylmcoef[17] * dr[2];
     ylma[17] = tmp0 * ylma[10] - ylmcoef[18] * ylma[5]; // l=4,m=1
@@ -94,8 +97,9 @@ static __device__ void spherical_harmonics(double* dr,
     /***************************
     L = 5
     ***************************/
+    tmp0=ylmcoef[25] * ylma[9];
     ylma[25]
-        = ylmcoef[24] * dr[2] * ylma[16] - ylmcoef[25] * ylma[9]; // l=5,m=0
+        = ylmcoef[24] * dr[2] * ylma[16] - tmp0; // l=5,m=0
 
     tmp0 = ylmcoef[26] * dr[2];
     ylma[26] = tmp0 * ylma[17] - ylmcoef[27] * ylma[10]; // l=5,m=1

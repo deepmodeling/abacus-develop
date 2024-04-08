@@ -84,7 +84,7 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
                 = &gridt.psi_dou_glo[gridt.psi_size_max * stream_num * 5];
             int* input_int
                 = &gridt.psi_int_glo[gridt.psi_size_max * stream_num * 2];
-            double* psi_input_double_g
+            double* input_double_g
                 = &gridt.psi_dou_glo_g[gridt.psi_size_max * stream_num * 5];
             int* input_int_g
                 = &gridt.psi_int_glo_g[gridt.psi_size_max * stream_num * 2];
@@ -143,11 +143,11 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
                 = &gridt.ap_output_glo_g[gridt.atom_pair_nbz * stream_num];
 
             // psir_ylm_left_g is used to store the psi values.
-            // psir_ylm_right_g is used to store psir_dm, which is the product
+            // psir_r_g is used to store psir_dm, which is the product
             // of mat_DM * mat_psir.
             double* psir_ylm_left_g
                 = &gridt.left_global_g[gridt.psir_size * stream_num];
-            double* psir_ylm_right_g
+            double* psir_r_g
                 = &gridt.right_global_g[gridt.psir_size * stream_num];
             double* rho_g = gridt.rho_g;
 
@@ -185,7 +185,7 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
                       num_psir,
                       lgd,
                       psir_ylm_left_g,
-                      psir_ylm_right_g,
+                      psir_r_g,
                       dm_matrix_g,
                       atom_pair_alpha,
                       atom_pair_A_m,
@@ -208,7 +208,7 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
                       dot_count);
 
             // Copying data from host to device
-            checkCuda(cudaMemcpyAsync(psi_input_double_g,
+            checkCuda(cudaMemcpyAsync(input_double_g,
                                       psi_input_double,
                                       gridt.psi_size_max * 5 * sizeof(double),
                                       cudaMemcpyHostToDevice,
@@ -301,7 +301,7 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
                                       0,
                                       gridt.psir_size * sizeof(double),
                                       gridt.streams[stream_num]));
-            checkCuda(cudaMemsetAsync(psir_ylm_right_g,
+            checkCuda(cudaMemsetAsync(psir_r_g,
                                       0,
                                       gridt.psir_size * sizeof(double),
                                       gridt.streams[stream_num]));
@@ -314,13 +314,13 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
                 dr,
                 gridt.bxyz,
                 ucell.nwmax,
-                psi_input_double_g,
+                input_double_g,
                 input_int_g,
                 num_psir_g,
                 gridt.psi_size_max_z,
-                gridt.ucell_atom_nwl_g,
-                gridt.atom_iw2_new_g,
-                gridt.atom_iw2_ylm_g,
+                gridt.atom_nwl_g,
+                gridt.atom_new_g,
+                gridt.atom_ylm_g,
                 gridt.atom_nw_g,
                 gridt.nr_max,
                 gridt.psi_u_g,

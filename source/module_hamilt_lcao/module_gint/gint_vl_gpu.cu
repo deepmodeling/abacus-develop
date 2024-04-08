@@ -126,14 +126,14 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
             int* atom_pair_ldc
                 = &gridt.ldc_info_global[gridt.atom_pair_nbz * stream_num];
 
-            double* psi_input_double_g
+            double* input_double_g
                 = &gridt.psi_dou_glo_g[gridt.psi_size_max * stream_num * 5];
             int* input_int_g
                 = &gridt.psi_int_glo_g[gridt.psi_size_max * stream_num * 2];
             int* num_psir_g = &gridt.num_psir_glo_g[nbz * stream_num];
             double* psir_ylm_left_g
                 = &gridt.left_global_g[gridt.psir_size * stream_num];
-            double* psir_ylm_right_g
+            double* psir_r_g
                 = &gridt.right_global_g[gridt.psir_size * stream_num];
 
             int* atom_pair_A_m_g
@@ -177,7 +177,7 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
                          vfactor,
                          vlocal,
                          psir_ylm_left_g,
-                         psir_ylm_right_g,
+                         psir_r_g,
                          psi_input_double,
                          input_int,
                          num_psir,
@@ -198,7 +198,7 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
                 atom_pair_k[z] = gridt.bxyz;
             }
 
-            checkCuda(cudaMemcpyAsync(psi_input_double_g,
+            checkCuda(cudaMemcpyAsync(input_double_g,
                                       psi_input_double,
                                       gridt.psi_size_max * 5 * sizeof(double),
                                       cudaMemcpyHostToDevice,
@@ -266,7 +266,7 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
                                       0,
                                       gridt.psir_size * sizeof(double),
                                       gridt.streams[stream_num]));
-            checkCuda(cudaMemsetAsync(psir_ylm_right_g,
+            checkCuda(cudaMemsetAsync(psir_r_g,
                                       0,
                                       gridt.psir_size * sizeof(double),
                                       gridt.streams[stream_num]));
@@ -282,18 +282,18 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
                 dr,
                 gridt.bxyz,
                 ucell.nwmax,
-                psi_input_double_g,
+                input_double_g,
                 input_int_g,
                 num_psir_g,
                 gridt.psi_size_max_z,
-                gridt.ucell_atom_nwl_g,
-                gridt.atom_iw2_new_g,
-                gridt.atom_iw2_ylm_g,
+                gridt.atom_nwl_g,
+                gridt.atom_new_g,
+                gridt.atom_ylm_g,
                 gridt.atom_nw_g,
                 gridt.nr_max,
                 gridt.psi_u_g,
                 psir_ylm_left_g,
-                psir_ylm_right_g);
+                psir_r_g);
             checkCudaLastError();
             gridt.fastest_matrix_mul(max_m,
                                      max_n,

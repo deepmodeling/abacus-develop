@@ -138,11 +138,11 @@ class Grid_Technique : public Grid_MeshBall
     bool is_malloced;
 
     int* atom_nw_g;
-    int* ucell_atom_nwl_g;
+    int* atom_nwl_g;
     double* psi_u_g;
-    bool* atom_iw2_new_g;
-    int* atom_iw2_ylm_g;
-    int* atom_iw2_l_g;
+    bool* atom_new_g;
+    int* atom_ylm_g;
+    int* atom_l_g;
     double** grid_vlocal_g;
     int nr_max;
     int psi_size_max;

@@ -29,16 +29,16 @@ namespace GintKernel
  * \param atom_nw Array of atom_nw values
  * \param nr_max Maximum nr value
  * \param psi_u Array for psi_u values
- * \param psir_ylm_right Array for psir_ylm_right values
- * \param dpsir_ylm_left_x Array for dpsir_ylm_left_x values
- * \param dpsir_ylm_left_y Array for dpsir_ylm_left_y values
- * \param dpsir_ylm_left_z Array for dpsir_ylm_left_z values
- * \param ddpsir_ylm_left_xx Array for ddpsir_ylm_left_xx values
- * \param ddpsir_ylm_left_xy Array for ddpsir_ylm_left_xy values
- * \param ddpsir_ylm_left_xz Array for ddpsir_ylm_left_xz values
- * \param ddpsir_ylm_left_yy Array for ddpsir_ylm_left_yy values
- * \param ddpsir_ylm_left_yz Array for ddpsir_ylm_left_yz values
- * \param ddpsir_ylm_left_zz Array for ddpsir_ylm_left_zz values
+ * \param psir_r Array for psir_r values
+ * \param psir_lx Array for psir_lx values
+ * \param psir_ly Array for psir_ly values
+ * \param psir_lz Array for psir_lz values
+ * \param psir_lxx Array for psir_lxx values
+ * \param psir_lxy Array for psir_lxy values
+ * \param psir_lxz Array for psir_lxz values
+ * \param psir_lyy Array for psir_lyy values
+ * \param psir_lyz Array for psir_lyz values
+ * \param psir_lzz Array for psir_lzz values
  */
 
 __global__ void get_psi_force(double* ylmcoef,
@@ -56,16 +56,16 @@ __global__ void get_psi_force(double* ylmcoef,
                               int* atom_nw,
                               int nr_max,
                               double* psi_u,
-                              double* psir_ylm_right,
-                              double* dpsir_ylm_left_x,
-                              double* dpsir_ylm_left_y,
-                              double* dpsir_ylm_left_z,
-                              double* ddpsir_ylm_left_xx,
-                              double* ddpsir_ylm_left_xy,
-                              double* ddpsir_ylm_left_xz,
-                              double* ddpsir_ylm_left_yy,
-                              double* ddpsir_ylm_left_yz,
-                              double* ddpsir_ylm_left_zz)
+                              double* psir_r,
+                              double* psir_lx,
+                              double* psir_ly,
+                              double* psir_lz,
+                              double* psir_lxx,
+                              double* psir_lxy,
+                              double* psir_lxz,
+                              double* psir_lyy,
+                              double* psir_lyz,
+                              double* psir_lzz)
 {
     // Get the size of psi for the current block
     int size = num_psir[blockIdx.x];
@@ -106,46 +106,24 @@ __global__ void get_psi_force(double* ylmcoef,
                       psi_u,
                       atom_iw2_l,
                       atom_iw2_ylm,
-                      psir_ylm_right,
+                      psir_r,
                       dist_tmp,
                       ylma,
                       vlbr3_value,
-                      dpsir_ylm_left_x,
+                      psir_lx,
                       dr,
                       grly,
-                      dpsir_ylm_left_y,
-                      dpsir_ylm_left_z,
-                      ddpsir_ylm_left_xx,
-                      ddpsir_ylm_left_xy,
-                      ddpsir_ylm_left_xz,
-                      ddpsir_ylm_left_yy,
-                      ddpsir_ylm_left_yz,
-                      ddpsir_ylm_left_zz);
+                      psir_ly,
+                      psir_lz,
+                      psir_lxx,
+                      psir_lxy,
+                      psir_lxz,
+                      psir_lyy,
+                      psir_lyz,
+                      psir_lzz);
     }
 }
 
-__global__ void psir_dot_stress(int* n,
-                                double** x_array_g,
-                                int incx,
-                                double** y_array_g,
-                                int incy,
-                                double** results_g,
-                                int batchcount)
-{
-    int id = blockIdx.x * blockDim.x + threadIdx.x;
-    int stride = blockDim.x * gridDim.x;
-    for (int i = id; i < batchcount; i += stride)
-    {
-        double* sum = results_g[i];
-        double* x = x_array_g[i];
-        double* y = y_array_g[i];
-
-        for (int j = 0; j < n[i]; j++)
-        {
-            sum[0] += x[j * incx] * y[j * incy];
-        }
-    }
-}
 
 /**
  * \brief Compute dot product of stress components and partial derivatives.
@@ -153,23 +131,23 @@ __global__ void psir_dot_stress(int* n,
  * This CUDA kernel computes the dot product of stress components and partial
  * derivatives based on the input arrays.
  *
- * \param ddpsir_ylm_left_xx Array of ddpsir_ylm_left_xx values.
- * \param ddpsir_ylm_left_xy Array of ddpsir_ylm_left_xy values.
- * \param ddpsir_ylm_left_xz Array of ddpsir_ylm_left_xz values.
- * \param ddpsir_ylm_left_yy Array of ddpsir_ylm_left_yy values.
- * \param ddpsir_ylm_left_yz Array of ddpsir_ylm_left_yz values.
- * \param ddpsir_ylm_left_zz Array of ddpsir_ylm_left_zz values.
+ * \param psir_lxx Array of psir_lxx values.
+ * \param psir_lxy Array of psir_lxy values.
+ * \param psir_lxz Array of psir_lxz values.
+ * \param psir_lyy Array of psir_lyy values.
+ * \param psir_lyz Array of psir_lyz values.
+ * \param psir_lzz Array of psir_lzz values.
  * \param psir_ylm_dm Array of psir_ylm_dm values.
  * \param stress_dot Output array for the dot product of stress components.
  * \param elements_num Number of elements in the input arrays.
  */
 
-__global__ void dot_product_stress(double* ddpsir_ylm_left_xx,
-                                   double* ddpsir_ylm_left_xy,
-                                   double* ddpsir_ylm_left_xz,
-                                   double* ddpsir_ylm_left_yy,
-                                   double* ddpsir_ylm_left_yz,
-                                   double* ddpsir_ylm_left_zz,
+__global__ void dot_product_stress(double* psir_lxx,
+                                   double* psir_lxy,
+                                   double* psir_lxz,
+                                   double* psir_lyy,
+                                   double* psir_lyz,
+                                   double* psir_lzz,
                                    double* psir_ylm_dm,
                                    double* stress_dot,
                                    int elements_num)
@@ -181,12 +159,12 @@ __global__ void dot_product_stress(double* ddpsir_ylm_left_xx,
     double tmp[6] = {0.0};
     while (tid < elements_num)
     {
-        tmp[0] += ddpsir_ylm_left_xx[tid] * psir_ylm_dm[tid] * 2;
-        tmp[1] += ddpsir_ylm_left_xy[tid] * psir_ylm_dm[tid] * 2;
-        tmp[2] += ddpsir_ylm_left_xz[tid] * psir_ylm_dm[tid] * 2;
-        tmp[3] += ddpsir_ylm_left_yy[tid] * psir_ylm_dm[tid] * 2;
-        tmp[4] += ddpsir_ylm_left_yz[tid] * psir_ylm_dm[tid] * 2;
-        tmp[5] += ddpsir_ylm_left_zz[tid] * psir_ylm_dm[tid] * 2;
+        tmp[0] += psir_lxx[tid] * psir_ylm_dm[tid] * 2;
+        tmp[1] += psir_lxy[tid] * psir_ylm_dm[tid] * 2;
+        tmp[2] += psir_lxz[tid] * psir_ylm_dm[tid] * 2;
+        tmp[3] += psir_lyy[tid] * psir_ylm_dm[tid] * 2;
+        tmp[4] += psir_lyz[tid] * psir_ylm_dm[tid] * 2;
+        tmp[5] += psir_lzz[tid] * psir_ylm_dm[tid] * 2;
         tid += blockDim.x * gridDim.x;
     }
 
@@ -216,9 +194,9 @@ __global__ void dot_product_stress(double* ddpsir_ylm_left_xx,
  * This function calculates the dot product force based on the provided
  * parameters.
  *
- * @param dpsir_ylm_left_x Pointer to the array of dpsir_ylm_left_x values.
- * @param dpsir_ylm_left_y Pointer to the array of dpsir_ylm_left_y values.
- * @param dpsir_ylm_left_z Pointer to the array of dpsir_ylm_left_z values.
+ * @param psir_lx Pointer to the array of psir_lx values.
+ * @param psir_ly Pointer to the array of psir_ly values.
+ * @param psir_lz Pointer to the array of psir_lz values.
  * @param psir_ylm_dm Pointer to the array of psir_ylm_dm values.
  * @param force_dot Pointer to the array where the calculated force will be
  * stored.
@@ -228,9 +206,9 @@ __global__ void dot_product_stress(double* ddpsir_ylm_left_xx,
  * @param elements_num Number of elements to process.
  */
 
-__global__ void dot_product_force(double* dpsir_ylm_left_x,
-                                  double* dpsir_ylm_left_y,
-                                  double* dpsir_ylm_left_z,
+__global__ void dot_product_force(double* psir_lx,
+                                  double* psir_ly,
+                                  double* psir_lz,
                                   double* psir_ylm_dm,
                                   double* force_dot,
                                   int* iat,
@@ -254,9 +232,9 @@ __global__ void dot_product_force(double* dpsir_ylm_left_x,
 
         for (int i = 0; i < nwmax; i++)
         {
-            tmp[0] += dpsir_ylm_left_x[dist + i] * psir_ylm_dm[dist + i] * 2;
-            tmp[1] += dpsir_ylm_left_y[dist + i] * psir_ylm_dm[dist + i] * 2;
-            tmp[2] += dpsir_ylm_left_z[dist + i] * psir_ylm_dm[dist + i] * 2;
+            tmp[0] += psir_lx[dist + i] * psir_ylm_dm[dist + i] * 2;
+            tmp[1] += psir_ly[dist + i] * psir_ylm_dm[dist + i] * 2;
+            tmp[2] += psir_lz[dist + i] * psir_ylm_dm[dist + i] * 2;
         }
 
         for (int i = 0; i < 3; i++)
@@ -324,11 +302,11 @@ void para_init(SGridParameter& para,
         = &gridt.ldb_info_global[gridt.atom_pair_nbz * para.stream_num];
     para.atom_pair_ldc
         = &gridt.ldc_info_global[gridt.atom_pair_nbz * para.stream_num];
-    para.psi_input_double_g
+    para.input_double_g
         = &gridt.psi_dou_glo_g[gridt.psi_size_max * para.stream_num * 5];
     para.input_int_g
         = &gridt.psi_int_glo_g[gridt.psi_size_max * para.stream_num * 2];
-    para.num_psirDevice = &gridt.num_psir_glo_g[nbz * para.stream_num];
+    para.num_psir_g = &gridt.num_psir_glo_g[nbz * para.stream_num];
     para.psir_dm_device = &gridt.dm_global_g[gridt.psir_size * para.stream_num];
     para.psir_r_device
         = &gridt.right_global_g[gridt.psir_size * para.stream_num];
@@ -343,7 +321,7 @@ void para_init(SGridParameter& para,
         = &gridt.dd_left_xz_g[gridt.psir_size * para.stream_num];
     para.psir_lyy_device
         = &gridt.dd_left_yy_g[gridt.psir_size * para.stream_num];
-    para.psir_lyz_device
+    para.psir_lyy_device
         = &gridt.dd_left_yz_g[gridt.psir_size * para.stream_num];
     para.psir_lzz_device
         = &gridt.dd_left_zz_g[gridt.psir_size * para.stream_num];
@@ -399,7 +377,7 @@ void para_mem_copy(SGridParameter& para,
                          int nbz,
                          int atom_num_grid)
 {
-    checkCuda(cudaMemcpyAsync(para.psi_input_double_g,
+    checkCuda(cudaMemcpyAsync(para.input_double_g,
                               para.input_dou,
                               gridt.psi_size_max * 5 * sizeof(double),
                               cudaMemcpyHostToDevice,
@@ -409,7 +387,7 @@ void para_mem_copy(SGridParameter& para,
                               gridt.psi_size_max * 2 * sizeof(int),
                               cudaMemcpyHostToDevice,
                               gridt.streams[para.stream_num]));
-    checkCuda(cudaMemcpyAsync(para.num_psirDevice,
+    checkCuda(cudaMemcpyAsync(para.num_psir_g,
                               para.num_psir,
                               nbz * sizeof(int),
                               cudaMemcpyHostToDevice,
@@ -495,7 +473,7 @@ void para_mem_copy(SGridParameter& para,
                               0,
                               gridt.psir_size * sizeof(double),
                               gridt.streams[para.stream_num]));
-    checkCuda(cudaMemsetAsync(para.psir_lyz_device,
+    checkCuda(cudaMemsetAsync(para.psir_lyy_device,
                               0,
                               gridt.psir_size * sizeof(double),
                               gridt.streams[para.stream_num]));

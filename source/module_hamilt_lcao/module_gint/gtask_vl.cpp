@@ -16,7 +16,7 @@ void gtask_vlocal(const Grid_Technique& gridt,
                   const double vfactor,
                   const double* vlocal_global_value,
                   double* psir_ylm_left,
-                  double* psir_ylm_right,
+                  double* psir_r,
                   double* psi_input_double,
                   int* input_int,
                   int* num_psir,
@@ -167,7 +167,7 @@ void gtask_vlocal(const Grid_Technique& gridt,
                     atom_pair_mat_A[atom_pair_num]
                         = psir_ylm_left + calc_index1;
                     atom_pair_mat_B[atom_pair_num]
-                        = psir_ylm_right + calc_index2;
+                        = psir_r + calc_index2;
                     atom_pair_mat_C[atom_pair_num]
                         = gridt.grid_vlocal_g[iat1 * ucell.nat + iat2];
 

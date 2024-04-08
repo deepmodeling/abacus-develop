@@ -59,21 +59,21 @@ static __device__ void interpolate_f(double& distance,
                                      double* psi_u,
                                      int* atom_iw2_l,
                                      int* atom_iw2_ylm,
-                                     double* psir_ylm_right,
+                                     double* psir_r,
                                      int& dist_tmp,
                                      double ylma[49],
                                      double vlbr3_value,
-                                     double* dpsir_ylm_left_x,
+                                     double* psir_lx,
                                      double dr[3],
                                      double grly[49][3],
-                                     double* dpsir_ylm_left_y,
-                                     double* dpsir_ylm_left_z,
-                                     double* ddpsir_ylm_left_xx,
-                                     double* ddpsir_ylm_left_xy,
-                                     double* ddpsir_ylm_left_xz,
-                                     double* ddpsir_ylm_left_yy,
-                                     double* ddpsir_ylm_left_yz,
-                                     double* ddpsir_ylm_left_zz)
+                                     double* psir_ly,
+                                     double* psir_lz,
+                                     double* psir_lxx,
+                                     double* psir_lxy,
+                                     double* psir_lxz,
+                                     double* psir_lyy,
+                                     double* psir_lyz,
+                                     double* psir_lzz)
 {
     // Calculate normalized position for interpolation
     distance = sqrt(distance);
@@ -111,26 +111,26 @@ static __device__ void interpolate_f(double& distance,
         const double rl = pow(distance, ll);
 
         // Compute right-hand side of the equation
-        psir_ylm_right[dist_tmp] = tmp * ylma[idx_lm] / rl * vlbr3_value;
+        psir_r[dist_tmp] = tmp * ylma[idx_lm] / rl * vlbr3_value;
         // Compute derivatives with respect to spatial
         // coordinates
         const double tmpdphi_rly
             = (dtmp - tmp * ll / distance) / rl * ylma[idx_lm] / distance;
         const double tmprl = tmp / rl;
-        dpsir_ylm_left_x[dist_tmp]
+        psir_lx[dist_tmp]
             = tmpdphi_rly * dr[0] + tmprl * grly[idx_lm][0];
 
-        dpsir_ylm_left_y[dist_tmp]
+        psir_ly[dist_tmp]
             = tmpdphi_rly * dr[1] + tmprl * grly[idx_lm][1];
-        dpsir_ylm_left_z[dist_tmp]
+        psir_lz[dist_tmp]
             = tmpdphi_rly * dr[2] + tmprl * grly[idx_lm][2];
 
-        ddpsir_ylm_left_xx[dist_tmp] = dpsir_ylm_left_x[dist_tmp] * dr[0];
-        ddpsir_ylm_left_xy[dist_tmp] = dpsir_ylm_left_x[dist_tmp] * dr[1];
-        ddpsir_ylm_left_xz[dist_tmp] = dpsir_ylm_left_x[dist_tmp] * dr[2];
-        ddpsir_ylm_left_yy[dist_tmp] = dpsir_ylm_left_y[dist_tmp] * dr[1];
-        ddpsir_ylm_left_yz[dist_tmp] = dpsir_ylm_left_y[dist_tmp] * dr[2];
-        ddpsir_ylm_left_zz[dist_tmp] = dpsir_ylm_left_z[dist_tmp] * dr[2];
+        psir_lxx[dist_tmp] = psir_lx[dist_tmp] * dr[0];
+        psir_lxy[dist_tmp] = psir_lx[dist_tmp] * dr[1];
+        psir_lxz[dist_tmp] = psir_lx[dist_tmp] * dr[2];
+        psir_lyy[dist_tmp] = psir_ly[dist_tmp] * dr[1];
+        psir_lyz[dist_tmp] = psir_ly[dist_tmp] * dr[2];
+        psir_lzz[dist_tmp] = psir_lz[dist_tmp] * dr[2];
 
         // Update loop counters and indices
         dist_tmp += 1;

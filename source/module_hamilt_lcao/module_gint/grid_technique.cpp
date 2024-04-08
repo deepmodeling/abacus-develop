@@ -678,9 +678,9 @@ void Grid_Technique::init_gpu_gint_variables()
                                GlobalC::ucell.ntype * sizeof(int),
                                cudaMemcpyHostToDevice));
 
-    checkCudaErrors(cudaMalloc((void**)&ucell_atom_nwl_g,
+    checkCudaErrors(cudaMalloc((void**)&atom_nwl_g,
                                GlobalC::ucell.ntype * sizeof(int)));
-    checkCudaErrors(cudaMemcpy(ucell_atom_nwl_g,
+    checkCudaErrors(cudaMemcpy(atom_nwl_g,
                                ucell_atom_nwl_now,
                                GlobalC::ucell.ntype * sizeof(int),
                                cudaMemcpyHostToDevice));
@@ -695,27 +695,27 @@ void Grid_Technique::init_gpu_gint_variables()
                                cudaMemcpyHostToDevice));
 
     checkCudaErrors(
-        cudaMalloc((void**)&atom_iw2_new_g,
+        cudaMalloc((void**)&atom_new_g,
                    GlobalC::ucell.ntype * GlobalC::ucell.nwmax * sizeof(bool)));
     checkCudaErrors(
-        cudaMalloc((void**)&atom_iw2_ylm_g,
+        cudaMalloc((void**)&atom_ylm_g,
                    GlobalC::ucell.ntype * GlobalC::ucell.nwmax * sizeof(int)));
     checkCudaErrors(
-        cudaMalloc((void**)&atom_iw2_l_g,
+        cudaMalloc((void**)&atom_l_g,
                    GlobalC::ucell.ntype * GlobalC::ucell.nwmax * sizeof(int)));
 
     checkCudaErrors(
-        cudaMemcpy(atom_iw2_new_g,
+        cudaMemcpy(atom_new_g,
                    atom_iw2_new_now,
                    GlobalC::ucell.ntype * GlobalC::ucell.nwmax * sizeof(bool),
                    cudaMemcpyHostToDevice));
     checkCudaErrors(
-        cudaMemcpy(atom_iw2_ylm_g,
+        cudaMemcpy(atom_ylm_g,
                    atom_iw2_ylm_now,
                    GlobalC::ucell.ntype * GlobalC::ucell.nwmax * sizeof(int),
                    cudaMemcpyHostToDevice));
     checkCudaErrors(
-        cudaMemcpy(atom_iw2_l_g,
+        cudaMemcpy(atom_l_g,
                    atom_iw2_l_now,
                    GlobalC::ucell.ntype * GlobalC::ucell.nwmax * sizeof(int),
                    cudaMemcpyHostToDevice));
@@ -902,12 +902,12 @@ void Grid_Technique::free_gpu_gint_variables()
         checkCudaErrors(cudaStreamDestroy(streams[i]));
 
     checkCudaErrors(cudaFree(ylmcoef_g));
-    checkCudaErrors(cudaFree(ucell_atom_nwl_g));
+    checkCudaErrors(cudaFree(atom_nwl_g));
     checkCudaErrors(cudaFree(psi_u_g));
-    checkCudaErrors(cudaFree(atom_iw2_new_g));
-    checkCudaErrors(cudaFree(atom_iw2_ylm_g));
+    checkCudaErrors(cudaFree(atom_new_g));
+    checkCudaErrors(cudaFree(atom_ylm_g));
     checkCudaErrors(cudaFree(atom_nw_g));
-    checkCudaErrors(cudaFree(atom_iw2_l_g));
+    checkCudaErrors(cudaFree(atom_l_g));
 
     checkCudaErrors(cudaFreeHost(psi_dou_glo));
     checkCudaErrors(cudaFreeHost(psi_int_glo));

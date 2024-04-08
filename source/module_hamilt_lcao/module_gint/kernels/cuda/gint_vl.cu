@@ -20,7 +20,7 @@ __global__ void get_psi_and_vldr3(double* ylmcoef,
                                   int nr_max,
                                   double* psi_u,
                                   double* psir_ylm_left,
-                                  double* psir_ylm_right)
+                                  double* psir_r)
 {
     int size = num_psir[blockIdx.x];
     int start_index = psi_size_max * blockIdx.x;
@@ -59,7 +59,7 @@ __global__ void get_psi_and_vldr3(double* ylmcoef,
 
         for (int iw = 0; iw < atom_nw[it]; ++iw)
         {
-            psir_ylm_right[dist_tmp] = psir_ylm_left[dist_tmp] * vlbr3_value;
+            psir_r[dist_tmp] = psir_ylm_left[dist_tmp] * vlbr3_value;
             dist_tmp += bxyz_g;
         }
     }
