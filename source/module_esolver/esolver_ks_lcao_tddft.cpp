@@ -62,9 +62,9 @@ ESolver_KS_LCAO_TDDFT::~ESolver_KS_LCAO_TDDFT()
     }
 }
 
-void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell& ucell)
+void ESolver_KS_LCAO_TDDFT::init(Input& inp, UnitCell& ucell)
 {
-    ESolver_KS::Init(inp, ucell);
+    ESolver_KS::init(inp, ucell);
 
     // Initialize the FFT.
     // this function belongs to cell LOOP
@@ -79,8 +79,8 @@ void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell& ucell)
         this->pelec = new elecstate::ElecStateLCAO_TDDFT(&(this->chr),
                                                          &(kv),
                                                          kv.nks,
-                                                         &(this->LOC),
-                                                         &(this->UHM),
+														 &(this->LOC),
+														 &(this->GK), // mohan add 2024-04-01
                                                          &(this->LOWF),
                                                          this->pw_rho,
                                                          pw_big);
@@ -90,7 +90,7 @@ void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell& ucell)
     // Init Basis should be put outside of Ensolver.
     // * reading the localized orbitals/projectors
     // * construct the interpolation tables.
-    this->Init_Basis_lcao(this->orb_con, inp, ucell);
+    this->init_basis_lcao(this->orb_con, inp, ucell);
     //------------------init Basis_lcao----------------------
 
     //------------------init Hamilt_lcao----------------------
@@ -100,7 +100,7 @@ void ESolver_KS_LCAO_TDDFT::Init(Input& inp, UnitCell& ucell)
     //------------------init Hamilt_lcao----------------------
 
     // pass Hamilt-pointer to Operator
-    this->UHM.genH.LM = this->UHM.LM = &this->LM;
+    this->gen_h.LM = &this->LM;
     // pass basis-pointer to EState and Psi
     this->LOC.ParaV = this->LOWF.ParaV = this->LM.ParaV;
 
@@ -257,14 +257,14 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(
     this->pelec->f_en.deband = this->pelec->cal_delta_eband();
 }
 
-void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
+void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
 {
     // print Hamiltonian and Overlap matrix
     if (this->conv_elec)
     {
         if (!GlobalV::GAMMA_ONLY_LOCAL)
         {
-            this->UHM.GK.renew(true);
+            this->GK.renew(true);
         }
         for (int ik = 0; ik < kv.nks; ++ik)
         {
@@ -434,7 +434,7 @@ void ESolver_KS_LCAO_TDDFT::updatepot(const int istep, const int iter)
 }
 
 
-void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
+void ESolver_KS_LCAO_TDDFT::after_scf(const int istep)
 {
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
@@ -455,10 +455,12 @@ void ESolver_KS_LCAO_TDDFT::afterscf(const int istep)
                         kv,
                         tmp_DM->get_paraV_pointer(),
                         this->RA,
-                        this->UHM);
-    }
-    ESolver_KS_LCAO<std::complex<double>, double>::afterscf(istep);
+						this->LM, // mohan add 2024-04-02
+						this->gen_h); // mohan add 2024-02
+	}
+    ESolver_KS_LCAO<std::complex<double>, double>::after_scf(istep);
 }
+
 
 // use the original formula (Hamiltonian matrix) to calculate energy density matrix
 void ESolver_KS_LCAO_TDDFT::cal_edm_tddft(void)

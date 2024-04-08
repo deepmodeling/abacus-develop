@@ -46,7 +46,10 @@ void Gint_k::destroy_pvpR(void)
         return;
     }
     
-    for(int is =0;is<GlobalV::NSPIN;is++) delete[] pvpR_reduced[is];
+	for(int is =0;is<GlobalV::NSPIN;is++) 
+	{
+		delete[] pvpR_reduced[is];
+	}
     delete[] pvpR_reduced;
 
     this->pvpR_alloc_flag = false;
@@ -194,8 +197,6 @@ void Gint_k::folding_vl_k(const int &ik,
                                     for(int iw2 = 0; iw2<atom2->nw; ++iw2)
                                     {
                                         vij[iw2_lo[iw2]] += vijR[iw2] * phase; 
-                                        //if(((start1+iw == 238 ) && ( start2+iw2 == 1089 )))
-                                        //    GlobalV::ofs_running<<__FILE__<<__LINE__<<" "<<iat<<" "<<iat2<<" "<<ixxx<<" "<<start1+iw<<" "<<start2+iw2<<" "<<vijR[iw2]<<" "<<iw2_lo[iw2]<<" "<<vij[iw2_lo[iw2]]<<std::endl;
                                     }
                                     ixxx += atom2->nw;
                                 }

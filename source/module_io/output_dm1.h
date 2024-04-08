@@ -14,16 +14,25 @@ namespace ModuleIO
 class Output_DM1 : public Output_Interface
 {
   public:
-    Output_DM1(int nspin, int istep, Local_Orbital_Charge& LOC, Record_adj& RA, K_Vectors& kv, const elecstate::DensityMatrix<std::complex<double>,double>* DM);
-    void write() override;
+	  Output_DM1(
+			  int nspin, 
+			  int istep, 
+			  Local_Orbital_Charge& LOC, 
+			  Record_adj& RA, 
+			  K_Vectors& kv, 
+			  const elecstate::DensityMatrix<std::complex<double>,double>* DM);
+
+	  void write() override;
 
   private:
-    int _nspin;
-    int _istep;
-    Local_Orbital_Charge& _LOC;
-    Record_adj& _RA;
-    K_Vectors& _kv;
-    const elecstate::DensityMatrix<std::complex<double>,double>* _DM;
+
+	  int _nspin;
+	  int _istep;
+	  Local_Orbital_Charge& loc;
+	  Record_adj& _RA;
+	  K_Vectors& _kv;
+	  const elecstate::DensityMatrix<std::complex<double>,double>* _DM;
+
 };
 
 } // namespace ModuleIO

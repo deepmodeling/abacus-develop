@@ -15,28 +15,33 @@ namespace elecstate
  * <TK,TR> = <double,double> for Gamma-only calculation
  * <TK,TR> = <std::complex<double>,double> for multi-k calculation
  */
-    template<typename T> struct ShiftRealComplex
-    {
-        using type = void;
-    };
-    template<>
-    struct ShiftRealComplex<double> {
-        using type = std::complex<double>;
-    };
-    template<>
-    struct ShiftRealComplex<std::complex<double>> {
-        using type = double;
-    };
+template<typename T> struct ShiftRealComplex
+{
+    using type = void;
+};
 
-    template <typename TK, typename TR>
-    class DensityMatrix
-    {
-        using TRShift = typename ShiftRealComplex<TR>::type;
-  public:
-    /**
-     * @brief Destructor of class DensityMatrix
-     */
-    ~DensityMatrix();
+template<>
+struct ShiftRealComplex<double> 
+{
+	using type = std::complex<double>;
+};
+
+template<>
+struct ShiftRealComplex<std::complex<double>> 
+{
+	using type = double;
+};
+
+template <typename TK, typename TR>
+class DensityMatrix
+{
+	using TRShift = typename ShiftRealComplex<TR>::type;
+
+	public:
+	/**
+	 * @brief Destructor of class DensityMatrix
+	 */
+	~DensityMatrix();
 
     /**
      * @brief Constructor of class DensityMatrix for multi-k calculation
@@ -134,9 +139,11 @@ namespace elecstate
      * @brief get pointer vector of DMR
      * @return HContainer<TR>* vector of DMR
      */
-    std::vector<hamilt::HContainer<TR>*> get_DMR_vector() const {return this->_DMR;}
+    const std::vector<hamilt::HContainer<TR>*>& get_DMR_vector() const {return this->_DMR;}
+    std::vector<hamilt::HContainer<TR>*>& get_DMR_vector() {return this->_DMR;}
 
-    std::vector<std::vector<TR>> get_DMR_save() const {return _DMR_save;}
+    const std::vector<std::vector<TR>>& get_DMR_save() const {return this->_DMR_save;}
+    std::vector<std::vector<TR>>& get_DMR_save() {return this->_DMR_save;}
 
     /**
      * @brief get pointer of DMK
@@ -148,7 +155,8 @@ namespace elecstate
     /**
      * @brief get pointer vector of DMK
     */
-    std::vector<std::vector<TK>> get_DMK_vector() const;
+    const std::vector<std::vector<TK>>& get_DMK_vector() const {return this->_DMK;}
+    std::vector<std::vector<TK>>& get_DMK_vector() {return this->_DMK;}
 
     /**
      * @brief set _DMK using a input TK* pointer
@@ -159,8 +167,9 @@ namespace elecstate
     /**
      * @brief get pointer of paraV
      */
-    const Parallel_Orbitals* get_paraV_pointer() const;
-    const K_Vectors* get_kv_pointer() const;
+    const Parallel_Orbitals* get_paraV_pointer() const {return this->_paraV;}
+
+    const K_Vectors* get_kv_pointer() const {return this->_kv;}
 
     /**
      * @brief calculate density matrix DMR from dm(k) using blas::axpy

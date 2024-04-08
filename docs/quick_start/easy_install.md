@@ -152,6 +152,7 @@ You can change the number after `-j` on your need: set to the number of CPU core
 ## Run
 
 If ABACUS is installed into a custom directory using `CMAKE_INSTALL_PREFIX`, please add it to your environment variable `PATH` to locate the correct executable.
+*(Note: `my-install-dir` should be changed to the location of your installed abacus:`/home/your-path/abacus/bin/`.)*
 
 ```bash
 export PATH=/my-install-dir/:$PATH
@@ -205,7 +206,7 @@ A pre-built ABACUS binary with all requirements is available at [conda-forge](ht
 ```bash
 # Install
 # We recommend installing ABACUS in a new environment to avoid potential conflicts:
-conda create -n abacus_env abacus -c conda-forge
+conda create -n abacus_env abacus "libblas=*=*mkl" mpich -c conda-forge
 
 # Run
 conda activate abacus_env
@@ -215,7 +216,7 @@ OMP_NUM_THREADS=1 mpirun -n 4 abacus
 conda update -n abacus_env abacus -c conda-forge
 ```
 
-> If OpenBLAS gives warning about OpenMP threads, please install conda package `openblas=*=openmp*` or `blas=*=mkl`. See [switching BLAS implementation in conda](https://conda-forge.org/docs/maintainer/knowledge_base.html#switching-blas-implementation).
+> If OpenBLAS gives warning about OpenMP threads, please install conda package `"openblas=*=openmp*"` or `"libblas=*=*mkl"`. See [switching BLAS implementation in conda](https://conda-forge.org/docs/maintainer/knowledge_base.html#switching-blas-implementation).
 
 > ABACUS supports `OpenMPI` and `MPICH` variant. Install `mpich` or `openmpi` package to switch MPI library if required.
 

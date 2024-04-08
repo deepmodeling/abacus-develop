@@ -40,10 +40,5 @@ namespace Wavefunc_in_pw
                                    ModuleBase::ComplexMatrix& psi,
                                    const ModuleBase::realArray& table_local);
 
-    // void produce_local_basis_q_in_pw(const int &ik,
-    //                                  ModuleBase::ComplexMatrix &psi,
-    //                                  ModulePW::PW_Basis_K *wfc_basis,
-    //                                  const ModuleBase::realArray &table_local,
-    //                                  ModuleBase::Vector3<double> q); // pengfei 2016-11-23
 }
 #endif

@@ -233,9 +233,10 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 			if(arho > epsr)
 			{
 				grho2a = gdr1[ir].norm2();
-
+				
+				//normally values in rhotmp can either be >= 0 or < 0.
 				if( rhotmp1[ir] >= 0.0 ) segno = 1.0;
-				if( rhotmp1[ir] < 0.0 ) segno = -1.0;
+				else segno = -1.0;
 				if (use_libxc && is_stress)
 				{
 #ifdef USE_LIBXC

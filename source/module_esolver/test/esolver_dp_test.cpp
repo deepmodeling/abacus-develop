@@ -10,12 +10,12 @@
 
 /**
  * - Tested Functions:
- *   - ESolver_DP::Init()
- *   - ESolver_DP::Run()
- *   - ESolver_DP::cal_Energy()
- *   - ESolver_DP::cal_Force()
- *   - ESolver_DP::cal_Stress()
- *   - ESolver_DP::postprocess()
+ *   - ESolver_DP::init()
+ *   - ESolver_DP::run()
+ *   - ESolver_DP::cal_energy()
+ *   - ESolver_DP::cal_force()
+ *   - ESolver_DP::cal_stress()
+ *   - ESolver_DP::post_process()
  *   - ESolver_DP::type_map()
  */
 namespace ModuleIO
@@ -39,7 +39,7 @@ class ESolverDPTest : public ::testing::Test
     {
         // Initialize variables before each test
         esolver = new ModuleESolver::ESolver_DP("./support/case_1.pb");
-        esolver->Init(inp, ucell);
+        esolver->init(inp, ucell);
     }
 
     void TearDown() override
@@ -85,7 +85,7 @@ TEST_F(ESolverDPTest, InitCase2)
     esolver->dp_type[0] = 0;
     esolver->dp_type[1] = 0;
     esolver->dp_file = "./support/case_2.pb";
-    esolver->Init(inp, ucell);
+    esolver->init(inp, ucell);
 
     // Check the initialized variables
     EXPECT_EQ(esolver->dp_type[0], 0);
@@ -100,17 +100,17 @@ TEST_F(ESolverDPTest, RunWarningQuit)
     int istep = 0;
 
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(esolver->Run(istep, ucell), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(esolver->run(istep, ucell), ::testing::ExitedWithCode(0), "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Please recompile with -D__DPMD"));
 }
 
-// Test the cal_Energy() funciton
+// Test the cal_energy() funciton
 TEST_F(ESolverDPTest, CalEnergy)
 {
     double etot = 0.0;
     esolver->dp_potential = 9.8;
-    etot = esolver->cal_Energy();
+    etot = esolver->cal_energy();
 
     // Check the results
     EXPECT_DOUBLE_EQ(etot, 9.8);
@@ -128,7 +128,7 @@ TEST_F(ESolverDPTest, CalForce)
         }
     }
 
-    esolver->cal_Force(force);
+    esolver->cal_force(force);
 
     // Check the results
     for (int i = 0; i < ucell.nat; ++i)
@@ -152,7 +152,7 @@ TEST_F(ESolverDPTest, CalStress)
         }
     }
 
-    esolver->cal_Stress(stress);
+    esolver->cal_stress(stress);
 
     // Check the results
     for (int i = 0; i < 3; ++i)
@@ -171,7 +171,7 @@ TEST_F(ESolverDPTest, Postprocess)
 
     // Check the results
     GlobalV::ofs_running.open("log");
-    esolver->postprocess();
+    esolver->post_process();
     GlobalV::ofs_running.close();
 
     std::string expected_output = "\n\n --------------------------------------------\n !FINAL_ETOT_IS 133.3358404 eV\n "
