@@ -60,7 +60,7 @@ void test_pblas()
 		MPI_Comm ictxt = MPI_Comm_c2f(MPI_COMM_WORLD);
 //		ScalapackConnector::blacs_gridinit( ictxt, RC, dim[0], dim[1] );
 		ScalapackConnector::blacs_gridinit( ictxt, 'R', dim[0], dim[1] );
-		int nprow, npcol, myprow, mypcol;
+		int nprow=0, npcol=0, myprow=0, mypcol=0;
 		ScalapackConnector::blacs_gridinfo(ictxt,nprow, npcol, myprow, mypcol);
 		assert(nprow==3);	assert(npcol==2);
 
@@ -76,7 +76,7 @@ void test_pblas()
 		{
 			const int mlld = ScalapackConnector::numroc( m, mb, myprow, irsrc, nprow );
 			const int nlld = ScalapackConnector::numroc( n, nb, mypcol, icsrc, npcol );
-			int info;
+			int info=0;
 			std::vector<int> descv(9);
 			ScalapackConnector::descinit(ModuleBase::GlobalFunc::VECTOR_TO_PTR(descv), m, n, mb, nb, irsrc, icsrc, ictxt, mlld, info);
 			return descv;

@@ -40,7 +40,11 @@ void Local_Orbital_wfc::gamma_file(psi::Psi<double>* psid, elecstate::ElecState*
 
     //allocate psi
     int ncol = this->ParaV->ncol_bands;
-    if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "lapack_gvx" || GlobalV::KS_SOLVER == "scalapack_gvx" || GlobalV::KS_SOLVER == "cg_in_lcao"
+
+    if (GlobalV::KS_SOLVER == "genelpa" 
+     || GlobalV::KS_SOLVER == "lapack_gvx" 
+     || GlobalV::KS_SOLVER == "scalapack_gvx" 
+     || GlobalV::KS_SOLVER == "cg_in_lcao"
 #ifdef __CUSOLVER_LCAO
         || GlobalV::KS_SOLVER == "cusolver"
 #endif
@@ -48,6 +52,7 @@ void Local_Orbital_wfc::gamma_file(psi::Psi<double>* psid, elecstate::ElecState*
     {
         ncol = this->ParaV->ncol;
     }
+
     if (psid == nullptr)
     {
         ModuleBase::WARNING_QUIT("gamma_file", "psid should be allocated first!");
@@ -125,10 +130,8 @@ void Local_Orbital_wfc::allocate_k(const int& lgd,
 	}
 	// allocate the second part.
 	//if(lgd != 0) xiaohui modify 2015-02-04, fixed memory bug
-	//if(lgd != 0 && this->complex_flag == false)
 	if(lgd != 0)
 	{
-		//std::cout<<"lgd="<<lgd<<" ; GlobalV::NLOCAL="<<GlobalV::NLOCAL<<std::endl; //delete 2015-09-06, xiaohui
 		const int page=GlobalV::NBANDS*lgd;
 		this->wfc_k_grid2=new std::complex<double> [nks*page];
 		ModuleBase::GlobalFunc::ZEROS(wfc_k_grid2, nks*page);
@@ -137,12 +140,8 @@ void Local_Orbital_wfc::allocate_k(const int& lgd,
 			for(int ib=0; ib<GlobalV::NBANDS; ib++)
 			{
 				this->wfc_k_grid[ik][ib] = &wfc_k_grid2[ik*page+ib*lgd];
-				//std::cout<<"ik="<<ik<<" ib="<<ib<<std::endl<<"wfc_k_grid address: "<<wfc_k_grid[ik][ib]<<" wfc_k_grid2 address: "<<&wfc_k_grid2[ik*page+ib*lgd]<<std::endl;
 			}
-			//std::cout<<"set wfc_k_grid pointer success, ik: "<<ik<<std::endl;
 			ModuleBase::Memory::record("LOWF::wfc_k_grid", sizeof(std::complex<double>) * GlobalV::NBANDS*GlobalV::NLOCAL);
-			//ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"MemoryForWaveFunctions (MB)",mem);
-			//std::cout<<"wfc_k_grid["<<ik<<"] use "<<mem<<" MB"<<std::endl;
 			this->complex_flag = true;
 		}
 	}
@@ -152,7 +151,10 @@ void Local_Orbital_wfc::allocate_k(const int& lgd,
     }
     else if (INPUT.init_wfc == "file")
     {
-        if (istep > 0)return;
+		if (istep > 0)
+		{
+			return;
+		}
         std::cout << " Read in wave functions files: " << nkstot << std::endl;
         if (psi == nullptr)
         {
@@ -201,6 +203,8 @@ void Local_Orbital_wfc::allocate_k(const int& lgd,
 
 	return;
 }
+
+
 int Local_Orbital_wfc::globalIndex(int localindex, int nblk, int nprocs, int myproc)
 {
     int iblock, gIndex;
@@ -229,9 +233,9 @@ void Local_Orbital_wfc::wfc_2d_to_grid(const int istep,
 
     const Parallel_Orbitals* pv = this->ParaV;
     const int inc = 1;
-    int  myid;
+    int myid=0;
     MPI_Comm_rank(pv->comm_2D, &myid);
-    int info;
+    int info=0;
     
     //calculate maxnloc for bcasting 2d-wfc
     long maxnloc; // maximum number of elements in local matrix
@@ -268,14 +272,18 @@ void Local_Orbital_wfc::wfc_2d_to_grid(const int istep,
             info=MPI_Bcast(naroc, 2, MPI_INT, src_rank, pv->comm_2D);
             info=MPI_Bcast(work, maxnloc, MPI_DOUBLE, src_rank, pv->comm_2D);
 
-            if (out_wfc_lcao)
-                info = this->set_wfc_grid(naroc, pv->nb,
-                    pv->dim0, pv->dim1, iprow, ipcol,
-                    work, wfc_grid, myid, ctot);
-            else
-                info = this->set_wfc_grid(naroc, pv->nb,
-                        pv->dim0, pv->dim1, iprow, ipcol,
-                        work, wfc_grid);
+			if (out_wfc_lcao)
+			{
+				info = this->set_wfc_grid(naroc, pv->nb,
+						pv->dim0, pv->dim1, iprow, ipcol,
+						work, wfc_grid, myid, ctot);
+			}
+			else
+			{
+				info = this->set_wfc_grid(naroc, pv->nb,
+						pv->dim0, pv->dim1, iprow, ipcol,
+						work, wfc_grid);
+			}
 
         }//loop ipcol
     }//loop iprow
@@ -338,12 +346,12 @@ void Local_Orbital_wfc::wfc_2d_to_grid(const int istep,
 
     const Parallel_Orbitals* pv = this->ParaV;
     const int inc = 1;
-    int  myid;
+    int myid=0;
     MPI_Comm_rank(pv->comm_2D, &myid);
-    int info;
+    int info=0;
     
     //calculate maxnloc for bcasting 2d-wfc
-    long maxnloc; // maximum number of elements in local matrix
+    long maxnloc=0; // maximum number of elements in local matrix
     info=MPI_Reduce(&pv->nloc_wfc, &maxnloc, 1, MPI_LONG, MPI_MAX, 0, pv->comm_2D);
     info=MPI_Bcast(&maxnloc, 1, MPI_LONG, 0, pv->comm_2D);
     std::complex<double> *work=new std::complex<double>[maxnloc]; // work/buffer matrix
@@ -360,7 +368,7 @@ void Local_Orbital_wfc::wfc_2d_to_grid(const int istep,
         ModuleBase::Memory::record("LOWF::ctot", sizeof(std::complex<double>) * GlobalV::NBANDS * GlobalV::NLOCAL);
     }
     
-    int naroc[2]; // maximum number of row or column
+    int naroc[2] = {0}; // maximum number of row or column
     for(int iprow=0; iprow<pv->dim0; ++iprow)
     {
         for(int ipcol=0; ipcol<pv->dim1; ++ipcol)
@@ -377,15 +385,19 @@ void Local_Orbital_wfc::wfc_2d_to_grid(const int istep,
             info=MPI_Bcast(naroc, 2, MPI_INT, src_rank, pv->comm_2D);
             info = MPI_Bcast(work, maxnloc, MPI_DOUBLE_COMPLEX, src_rank, pv->comm_2D);
             
-            if (out_wfc_lcao)
-                info = this->set_wfc_grid(naroc, pv->nb,
-                    pv->dim0, pv->dim1, iprow, ipcol,
-                    work, wfc_grid, myid, ctot);
-            else
-                // mohan update 2021-02-12, delte BFIELD option
-                info = this->set_wfc_grid(naroc, pv->nb,
-                        pv->dim0, pv->dim1, iprow, ipcol,
-                        work, wfc_grid);
+			if (out_wfc_lcao)
+			{
+				info = this->set_wfc_grid(naroc, pv->nb,
+						pv->dim0, pv->dim1, iprow, ipcol,
+						work, wfc_grid, myid, ctot);
+			}
+			else
+			{
+				// mohan update 2021-02-12, delte BFIELD option
+				info = this->set_wfc_grid(naroc, pv->nb,
+						pv->dim0, pv->dim1, iprow, ipcol,
+						work, wfc_grid);
+			}
         }//loop ipcol
     }//loop iprow
 

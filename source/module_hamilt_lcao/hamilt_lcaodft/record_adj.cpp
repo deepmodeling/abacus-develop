@@ -63,7 +63,6 @@ void Record_adj::for_2d(Parallel_Orbitals &pv, bool gamma_only)
 	ModuleBase::GlobalFunc::ZEROS(na_each, na_proc);
 	int iat = 0;
 	
-//	std::cout << " in for_2d" << std::endl;
 
 	for (int T1 = 0; T1 < GlobalC::ucell.ntype; ++T1)
 	{

@@ -8,6 +8,9 @@ Numerical_Orbital::Numerical_Orbital()
 	//question remains
 	this->nchi = nullptr;
 	this->phiLN = new Numerical_Orbital_Lm[1];
+	this->rcut = 0.0;
+	this->max_nchi = 0;
+	this->type = 0;
 }
 
 Numerical_Orbital::~Numerical_Orbital()

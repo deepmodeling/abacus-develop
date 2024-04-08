@@ -5,7 +5,10 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/record_adj.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_wfc.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_hamilt.h"
+// for grid integration
+#include "module_hamilt_lcao/module_gint/gint_gamma.h"
+#include "module_hamilt_lcao/module_gint/gint_k.h"
+
 #include "module_basis/module_ao/ORB_control.h"
 #ifdef __EXX
 #include "module_ri/Mix_DMk_2D.h"
@@ -16,6 +19,7 @@
 #include "module_io/output_mat_sparse.h"
 #include "module_basis/module_nao/two_center_bundle.h"
 #include <memory>
+
 namespace ModuleESolver
 {
     template <typename TK, typename TR>
@@ -25,32 +29,63 @@ namespace ModuleESolver
         ESolver_KS_LCAO();
         ~ESolver_KS_LCAO();
 
-        void Init(Input& inp, UnitCell& cell) override;
+        void init(Input& inp, UnitCell& cell) override;
+
         void init_after_vc(Input& inp, UnitCell& cell) override;
 
-        double cal_Energy() override;
-        void cal_Force(ModuleBase::matrix& force) override;
-        void cal_Stress(ModuleBase::matrix& stress) override;
-        void postprocess() override;
+        double cal_energy() override;
+
+        void cal_force(ModuleBase::matrix &force) override;
+
+        void cal_stress(ModuleBase::matrix &stress) override;
+
+        void post_process() override;
+
         void nscf() override;
+
         void get_S();
 
     protected:
-        virtual void beforescf(const int istep) override;
-        virtual void eachiterinit(const int istep, const int iter) override;
+
+        virtual void before_scf(const int istep) override;
+
+        virtual void iter_init(const int istep, const int iter) override;
+
         virtual void hamilt2density(const int istep, const int iter, const double ethr) override;
-        virtual void updatepot(const int istep, const int iter) override;
-        virtual void eachiterfinish(const int iter) override;
-        virtual void afterscf(const int istep) override;
+
+        virtual void update_pot(const int istep, const int iter) override;
+
+        virtual void iter_finish(const int iter) override;
+
+        virtual void after_scf(const int istep) override;
+
         virtual bool do_after_converge(int& iter) override;
 
-        virtual void othercalculation(const int istep)override;
+        virtual void others(const int istep)override;
+
+        // we will get rid of this class soon, don't use it, mohan 2024-03-28
         ORB_control orb_con;    //Basis_LCAO
+
+        // we will get rid of this class soon, don't use it, mohan 2024-03-28
         Record_adj RA;
+
+        // we will get rid of this class soon, don't use it, mohan 2024-03-28
         Local_Orbital_wfc LOWF;
+
+        // we will get rid of this class soon, don't use it, mohan 2024-03-28
         Local_Orbital_Charge LOC;
-        LCAO_Hamilt UHM;
+
+        LCAO_gen_fixedH gen_h; // mohan add 2024-04-02
+
+        // used for k-dependent grid integration.
+        Gint_k GK;
+
+		// used for gamma only algorithms.
+		Gint_Gamma GG;
+
+        // we will get rid of this class soon, don't use it, mohan 2024-03-28
         LCAO_Matrix LM;
+
         Grid_Technique GridT;
 
         std::unique_ptr<TwoCenterBundle> two_center_bundle;
@@ -62,11 +97,12 @@ namespace ModuleESolver
         ModuleBase::matrix scs;
         bool have_force = false;
 
-        void Init_Basis_lcao(ORB_control& orb_con, Input& inp, UnitCell& ucell);
+        void init_basis_lcao(ORB_control& orb_con, Input& inp, UnitCell& ucell);
 
         //--------------common for all calculation, not only scf-------------
         // set matrix and grid integral
         void set_matrix_grid(Record_adj& ra);
+
         void beforesolver(const int istep);
         //----------------------------------------------------------------------
 
@@ -88,17 +124,18 @@ namespace ModuleESolver
         std::shared_ptr<Exx_LRI<double>> exx_lri_double = nullptr;
         std::shared_ptr<Exx_LRI<std::complex<double>>> exx_lri_complex = nullptr;
 #endif
+
     private:
+
         // tmp interfaces  before sub-modules are refactored
         void dftu_cal_occup_m(const int& iter, const std::vector<std::vector<TK>>& dm) const;
+
 #ifdef __DEEPKS
         void dpks_cal_e_delta_band(const std::vector<std::vector<TK>>& dm) const;
+
         void dpks_cal_projected_DM(const elecstate::DensityMatrix<TK, double>* dm) const;
 #endif
 
     };
-
-
-
 }
 #endif

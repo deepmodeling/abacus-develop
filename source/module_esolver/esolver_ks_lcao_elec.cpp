@@ -23,6 +23,7 @@
 #include "module_io/dm_io.h"
 
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
 
 namespace ModuleESolver
 {
@@ -69,7 +70,7 @@ void ESolver_KS_LCAO<TK, TR>::set_matrix_grid(Record_adj& ra)
     // (2)For each atom, calculate the adjacent atoms in different cells
     // and allocate the space for H(R) and S(R).
     // If k point is used here, allocate HlocR after atom_arrange.
-    Parallel_Orbitals* pv = this->UHM.LM->ParaV;
+    Parallel_Orbitals* pv = this->LM.ParaV;
     ra.for_2d(*pv, GlobalV::GAMMA_ONLY_LOCAL);
     if (!GlobalV::GAMMA_ONLY_LOCAL)
     {
@@ -126,7 +127,12 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
     }
 
     // prepare grid in Gint
-    this->UHM.grid_prepare(this->GridT, *this->pw_rho, *this->pw_big);
+	LCAO_domain::grid_prepare(
+			this->GridT, 
+			this->GG,
+			this->GK,
+			*this->pw_rho, 
+			*this->pw_big);
 
     // init Hamiltonian
     if (this->p_hamilt != nullptr)
@@ -137,9 +143,9 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
     if (this->p_hamilt == nullptr)
     {
         elecstate::DensityMatrix<TK, double>* DM = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
-        this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(GlobalV::GAMMA_ONLY_LOCAL ? &(this->UHM.GG) : nullptr,
-            GlobalV::GAMMA_ONLY_LOCAL ? nullptr : &(this->UHM.GK),
-            &(this->UHM.genH),
+        this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(GlobalV::GAMMA_ONLY_LOCAL ? &(this->GG) : nullptr,
+            GlobalV::GAMMA_ONLY_LOCAL ? nullptr : &(this->GK),
+            &(this->gen_h),
             &(this->LM),
             &(this->LOC),
             this->pelec->pot,
@@ -194,7 +200,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
         if (GlobalV::GAMMA_ONLY_LOCAL)
         {
             Gint_inout inout(this->LOC.DM, this->pelec->charge->rho, Gint_Tools::job_type::rho);
-            this->UHM.GG.cal_gint(&inout);
+            this->GG.cal_gint(&inout);
             if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
             {
                 for (int is = 0; is < GlobalV::NSPIN; is++)
@@ -202,13 +208,13 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
                     ModuleBase::GlobalFunc::ZEROS(this->pelec->charge->kin_r[0], this->pw_rho->nrxx);
                 }
                 Gint_inout inout1(this->LOC.DM, this->pelec->charge->kin_r, Gint_Tools::job_type::tau);
-                this->UHM.GG.cal_gint(&inout1);
+                this->GG.cal_gint(&inout1);
             }
         }
         else
         {
             Gint_inout inout(this->LOC.DM_R, this->pelec->charge->rho, Gint_Tools::job_type::rho);
-            this->UHM.GK.cal_gint(&inout);
+            this->GK.cal_gint(&inout);
             if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
             {
                 for (int is = 0; is < GlobalV::NSPIN; is++)
@@ -216,7 +222,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
                     ModuleBase::GlobalFunc::ZEROS(this->pelec->charge->kin_r[0], this->pw_rho->nrxx);
                 }
                 Gint_inout inout1(this->LOC.DM_R, this->pelec->charge->kin_r, Gint_Tools::job_type::tau);
-                this->UHM.GK.cal_gint(&inout1);
+                this->GK.cal_gint(&inout1);
             }
         }
 
@@ -229,7 +235,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
     // since it depends on ionic positions
     if (GlobalV::deepks_setorb)
     {
-        const Parallel_Orbitals* pv = this->UHM.LM->ParaV;
+        const Parallel_Orbitals* pv = this->LM.ParaV;
         // build and save <psi(0)|alpha(R)> at beginning
         GlobalC::ld.build_psialpha(GlobalV::CAL_FORCE, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD, GlobalC::UOT);
 
@@ -273,10 +279,10 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
 }
 
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::beforescf(int istep)
+void ESolver_KS_LCAO<TK, TR>::before_scf(int istep)
 {
-    ModuleBase::TITLE("ESolver_KS_LCAO", "beforescf");
-    ModuleBase::timer::tick("ESolver_KS_LCAO", "beforescf");
+    ModuleBase::TITLE("ESolver_KS_LCAO", "before_scf");
+    ModuleBase::timer::tick("ESolver_KS_LCAO", "before_scf");
 
     if (GlobalC::ucell.cell_parameter_updated)
     {
@@ -306,10 +312,14 @@ void ESolver_KS_LCAO<TK, TR>::beforescf(int istep)
     this->beforesolver(istep);
     // Peize Lin add 2016-12-03
 #ifdef __EXX    // set xc type before the first cal of xc in pelec->init_scf
-    if (GlobalC::exx_info.info_ri.real_number)
-        this->exd->exx_beforescf(this->kv, *this->p_chgmix);
-    else
-        this->exc->exx_beforescf(this->kv, *this->p_chgmix);
+	if (GlobalC::exx_info.info_ri.real_number)
+	{
+		this->exd->exx_beforescf(this->kv, *this->p_chgmix);
+	}
+	else
+	{
+		this->exc->exx_beforescf(this->kv, *this->p_chgmix);
+	}
 #endif // __EXX
 
     this->pelec->init_scf(istep, this->sf.strucFac);
@@ -325,9 +335,10 @@ void ESolver_KS_LCAO<TK, TR>::beforescf(int istep)
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
         srho.begin(is, *(this->pelec->charge), this->pw_rho, GlobalC::Pgrid, GlobalC::ucell.symm);
-    }
-       // 1. calculate ewald energy.
-       // mohan update 2021-02-25
+    } 
+
+    // 1. calculate ewald energy.
+    // mohan update 2021-02-25
     if (!GlobalV::test_skip_ewald)
     {
         this->pelec->f_en.ewald_energy = H_Ewald_pw::compute_ewald(GlobalC::ucell, this->pw_rho, this->sf.strucFac);
@@ -335,22 +346,22 @@ void ESolver_KS_LCAO<TK, TR>::beforescf(int istep)
 
     this->p_hamilt->non_first_scf = istep;
 
-    ModuleBase::timer::tick("ESolver_KS_LCAO", "beforescf");
+    ModuleBase::timer::tick("ESolver_KS_LCAO", "before_scf");
     return;
 }
 
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::othercalculation(const int istep)
+void ESolver_KS_LCAO<TK, TR>::others(const int istep)
 {
-    ModuleBase::TITLE("ESolver_KS_LCAO", "othercalculation");
-    ModuleBase::timer::tick("ESolver_KS_LCAO", "othercalculation");
+    ModuleBase::TITLE("ESolver_KS_LCAO", "others");
+    ModuleBase::timer::tick("ESolver_KS_LCAO", "others");
+
     if (GlobalV::CALCULATION == "get_S")
     {
         this->get_S();
         ModuleBase::QUIT();
     }
-
-    if (GlobalV::CALCULATION == "test_memory")
+    else if (GlobalV::CALCULATION == "test_memory")
     {
         Cal_Test::test_memory(this->pw_rho,
                               this->pw_wfc,
@@ -358,8 +369,7 @@ void ESolver_KS_LCAO<TK, TR>::othercalculation(const int istep)
                               this->p_chgmix->get_mixing_ndim());
         return;
     }
-
-    if (GlobalV::CALCULATION == "test_neighbour")
+    else if (GlobalV::CALCULATION == "test_neighbour")
     {
         // test_search_neighbor();
         if (GlobalV::SEARCH_RADIUS < 0)
@@ -389,7 +399,7 @@ void ESolver_KS_LCAO<TK, TR>::othercalculation(const int istep)
     else if (GlobalV::CALCULATION == "get_pchg")
     {
         IState_Charge ISC(this->psi, this->LOC);
-        ISC.begin(this->UHM.GG,
+        ISC.begin(this->GG,
                   this->pelec,
                   this->pw_rho,
                   this->pw_big,
@@ -411,7 +421,7 @@ void ESolver_KS_LCAO<TK, TR>::othercalculation(const int istep)
                       this->pw_wfc,
                       this->pw_big,
                       this->LOWF,
-                      this->UHM.GG,
+                      this->GG,
                       INPUT.out_wfc_pw,
                       this->wf.out_wfc_r,
                       this->kv,
@@ -427,7 +437,7 @@ void ESolver_KS_LCAO<TK, TR>::othercalculation(const int istep)
                       this->pw_wfc,
                       this->pw_big,
                       this->LOWF,
-                      this->UHM.GK,
+                      this->GK,
                       INPUT.out_wfc_pw,
                       this->wf.out_wfc_r,
                       this->kv,
@@ -440,20 +450,24 @@ void ESolver_KS_LCAO<TK, TR>::othercalculation(const int istep)
     }
     else
     {
-        ModuleBase::WARNING_QUIT("ESolver_KS_LCAO<TK, TR>::othercalculation", "CALCULATION type not supported");
+        ModuleBase::WARNING_QUIT("ESolver_KS_LCAO<TK, TR>::others", "CALCULATION type not supported");
     }
 
-    ModuleBase::timer::tick("ESolver_KS_LCAO", "othercalculation");
+    ModuleBase::timer::tick("ESolver_KS_LCAO", "others");
     return;
 }
+
+
 template <>
-void ESolver_KS_LCAO<double, double>::get_S()
+void ESolver_KS_LCAO<double, double>::get_S(void)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "get_S");
-    ModuleBase::WARNING_QUIT("ESolver_KS_LCAO<TK, TR>::get_S", "not implemented for");
+    ModuleBase::WARNING_QUIT("ESolver_KS_LCAO<double,double>::get_S", "not implemented for");
 }
+
+
 template <>
-void ESolver_KS_LCAO<std::complex<double>, double>::get_S()
+void ESolver_KS_LCAO<std::complex<double>, double>::get_S(void)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "get_S");
     // (1) Find adjacent atoms for each atom.
@@ -471,16 +485,23 @@ void ESolver_KS_LCAO<std::complex<double>, double>::get_S()
                          GlobalV::test_atom_input);
 
     this->RA.for_2d(this->orb_con.ParaV, GlobalV::GAMMA_ONLY_LOCAL);
-    this->UHM.genH.LM->ParaV = &this->orb_con.ParaV;
+
+    this->LM.ParaV = &this->orb_con.ParaV;
+
     if (this->p_hamilt == nullptr)
     {
-        this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(this->UHM.genH.LM, this->kv);
+        this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(&this->LM, this->kv);
         dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, double>*>(this->p_hamilt->ops)->contributeHR();
     }
-    ModuleIO::output_S_R(this->UHM, this->p_hamilt, "SR.csr");
+
+    ModuleIO::output_SR(orb_con.ParaV, this->LM, GlobalC::GridD, this->p_hamilt, "SR.csr");
+
+    return;
 }
+
+
 template <>
-void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S()
+void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S(void)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "get_S");
     // (1) Find adjacent atoms for each atom.
@@ -498,19 +519,23 @@ void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S()
                          GlobalV::test_atom_input);
 
     this->RA.for_2d(this->orb_con.ParaV, GlobalV::GAMMA_ONLY_LOCAL);
-    this->UHM.genH.LM->ParaV = &this->orb_con.ParaV;
+    this->LM.ParaV = &this->orb_con.ParaV;
     if (this->p_hamilt == nullptr)
     {
         this->p_hamilt
-            = new hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>(this->UHM.genH.LM, this->kv);
+            = new hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>(&this->LM, this->kv);
         dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>*>(this->p_hamilt->ops)
             ->contributeHR();
     }
-    ModuleIO::output_S_R(this->UHM, this->p_hamilt, "SR.csr");
+
+    ModuleIO::output_SR(orb_con.ParaV, this->LM, GlobalC::GridD, this->p_hamilt, "SR.csr");
+
+    return;
 }
 
+
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::nscf()
+void ESolver_KS_LCAO<TK, TR>::nscf(void)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "nscf");
 
@@ -524,11 +549,15 @@ void ESolver_KS_LCAO<TK, TR>::nscf()
     if (GlobalC::exx_info.info_global.cal_exx)
     {
         // GlobalC::exx_lcao.cal_exx_elec_nscf(this->LOWF.ParaV[0]);
-        const std::string file_name_exx = GlobalV::global_out_dir + "HexxR_" + std::to_string(GlobalV::MY_RANK);
+        const std::string file_name_exx = GlobalV::global_out_dir + "HexxR" + std::to_string(GlobalV::MY_RANK);
         if (GlobalC::exx_info.info_ri.real_number)
-            this->exd->read_Hexxs(file_name_exx);
+        {
+            this->exd->read_Hexxs_csr(file_name_exx, GlobalC::ucell);
+        }
         else
-            this->exc->read_Hexxs(file_name_exx);
+        {
+            this->exc->read_Hexxs_csr(file_name_exx, GlobalC::ucell);
+        }
 
         hamilt::HamiltLCAO<TK, TR>* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
         auto exx = new hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>>(&this->LM,
@@ -618,7 +647,14 @@ void ESolver_KS_LCAO<TK, TR>::nscf()
                 INPUT.wannier_spin
             );
 
-            myWannier.calculate(this->pelec->ekb, this->pw_wfc, this->pw_big, this->sf, this->kv, this->psi, this->LOWF.ParaV);
+            myWannier.calculate(
+              this->pelec->ekb, 
+              this->pw_wfc, 
+              this->pw_big, 
+              this->sf, 
+              this->kv, 
+              this->psi, 
+              this->LOWF.ParaV);
         }
         else if (INPUT.wannier_method == 2)
         {

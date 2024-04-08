@@ -17,7 +17,7 @@
 #include "module_hsolver/diago_elpa.h"
 #endif
 #include "operator_lcao/op_dftu_lcao.h"
-#include "operator_lcao/dftu_new.h"
+#include "operator_lcao/dftu_lcao.h"
 #include "operator_lcao/meta_lcao.h"
 #include "operator_lcao/op_exx_lcao.h"
 #include "operator_lcao/td_ekinetic_lcao.h"
@@ -226,15 +226,15 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
             }
             else
             {
-                dftu = new DFTUNew<OperatorLCAO<TK, TR>>(
+                dftu = new DFTU<OperatorLCAO<TK, TR>>(
                     LM_in,
                     this->kv->kvec_d,
                     this->hR,
                     &(this->getHk(LM_in)),
-                    &GlobalC::ucell,
+                    GlobalC::ucell,
                     &GlobalC::GridD,
                     &GlobalC::dftu,
-                    LM_in->ParaV
+                    *(LM_in->ParaV)
                 );
             }
             this->getOperator()->add(dftu);
@@ -397,15 +397,15 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
             }
             else
             {
-                dftu = new DFTUNew<OperatorLCAO<TK, TR>>(
+                dftu = new DFTU<OperatorLCAO<TK, TR>>(
                     LM_in,
                     this->kv->kvec_d,
                     this->hR,
                     &(this->getHk(LM_in)),
-                    &GlobalC::ucell,
+                    GlobalC::ucell,
                     &GlobalC::GridD,
                     &GlobalC::dftu,
-                    LM_in->ParaV
+                    *(LM_in->ParaV)
                 );
             }
             this->getOperator()->add(dftu);

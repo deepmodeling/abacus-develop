@@ -420,16 +420,22 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
         {
             ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "PAW      FORCE (eV/Angstrom)", forcepaw, 0);
         }
-        if (GlobalV::EFIELD_FLAG)
-            ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "EFIELD   FORCE (eV/Angstrom)", force_e, 0);
-        if (GlobalV::GATE_FLAG)
-            ModuleIO::print_force(GlobalV::ofs_running,
-                                  GlobalC::ucell,
-                                  "GATEFIELD   FORCE (eV/Angstrom)",
-                                  force_gate,
-                                  0);
-        if (GlobalV::imp_sol)
-            ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "IMP_SOL   FORCE (eV/Angstrom)", forcesol, 0);
+		if (GlobalV::EFIELD_FLAG)
+		{
+			ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "EFIELD   FORCE (eV/Angstrom)", force_e, 0);
+		}
+		if (GlobalV::GATE_FLAG)
+		{
+			ModuleIO::print_force(GlobalV::ofs_running,
+					GlobalC::ucell,
+					"GATEFIELD   FORCE (eV/Angstrom)",
+					force_gate,
+					0);
+		}
+		if (GlobalV::imp_sol)
+		{
+			ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "IMP_SOL   FORCE (eV/Angstrom)", forcesol, 0);
+		}
     }
     ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "TOTAL-FORCE (eV/Angstrom)", force, 0);
 

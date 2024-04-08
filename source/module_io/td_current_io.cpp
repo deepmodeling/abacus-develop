@@ -11,40 +11,48 @@
 
 #ifdef __LCAO
 //init DSloc_R for current calculation
-void ModuleIO::Init_DS_tmp(const Parallel_Orbitals& pv,
-                              LCAO_Hamilt& UHM)
+void ModuleIO::Init_DS_tmp(
+		const Parallel_Orbitals& pv,
+		LCAO_Matrix &lm,
+		LCAO_gen_fixedH &gen_h)
 {    
     ModuleBase::TITLE("ModuleIO", "Init_DS_tmp");
     ModuleBase::timer::tick("ModuleIO", "Init_DS_tmp");
     const int nnr = pv.nnr;
-    UHM.LM->DSloc_Rx = new double[nnr];
-    UHM.LM->DSloc_Ry = new double[nnr];
-    UHM.LM->DSloc_Rz = new double[nnr];
-    const auto init_DSloc_Rxyz = [&UHM, nnr](int num_threads, int thread_id) {
+    lm.DSloc_Rx = new double[nnr];
+    lm.DSloc_Ry = new double[nnr];
+    lm.DSloc_Rz = new double[nnr];
+
+    const auto init_DSloc_Rxyz = [&lm, nnr](int num_threads, int thread_id) {
         int beg, len;
         ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, nnr, 1024, beg, len);
-        ModuleBase::GlobalFunc::ZEROS(UHM.LM->DSloc_Rx + beg, len);
-        ModuleBase::GlobalFunc::ZEROS(UHM.LM->DSloc_Ry + beg, len);
-        ModuleBase::GlobalFunc::ZEROS(UHM.LM->DSloc_Rz + beg, len);
+        ModuleBase::GlobalFunc::ZEROS(lm.DSloc_Rx + beg, len);
+        ModuleBase::GlobalFunc::ZEROS(lm.DSloc_Ry + beg, len);
+        ModuleBase::GlobalFunc::ZEROS(lm.DSloc_Rz + beg, len);
     };
+
     ModuleBase::OMP_PARALLEL(init_DSloc_Rxyz);
     bool cal_deri = true;
-    UHM.genH.build_ST_new('S', cal_deri, GlobalC::ucell, UHM.genH.LM->SlocR.data());
+    gen_h.build_ST_new('S', cal_deri, GlobalC::ucell, lm.SlocR.data());
 
     ModuleBase::timer::tick("ModuleIO", "Init_DS_tmp");
     return;
 }
+
+
 //destory DSloc_R so it can be used normally in the following force calculation
-void ModuleIO::destory_DS_tmp(LCAO_Hamilt& UHM)
+void ModuleIO::destory_DS_tmp(LCAO_Matrix &lm)
 {
     ModuleBase::TITLE("ModuleIO", "destory_DS_tmp");
     ModuleBase::timer::tick("ModuleIO", "destory_DS_tmp");
-    delete[] UHM.LM->DSloc_Rx;
-    delete[] UHM.LM->DSloc_Ry;
-    delete[] UHM.LM->DSloc_Rz;
+    delete[] lm.DSloc_Rx;
+    delete[] lm.DSloc_Ry;
+    delete[] lm.DSloc_Rz;
     ModuleBase::timer::tick("ModuleIO", "destory_DS_tmp");
     return;
 }
+
+
 void ModuleIO::cal_tmp_DM(elecstate::DensityMatrix<std::complex<double>, double>& DM, const int ik, const int nspin)
 {
     ModuleBase::TITLE("ModuleIO", "cal_tmp_DM");
@@ -133,14 +141,15 @@ void ModuleIO::write_current(const int istep,
                                 const elecstate::ElecState* pelec,
                                 const K_Vectors& kv,
                                 const Parallel_Orbitals* pv,
-                                Record_adj& ra,
-                                LCAO_Hamilt& UHM)
+								Record_adj& ra,
+								LCAO_Matrix &lm, // mohan add 2024-04-02
+								LCAO_gen_fixedH &gen_h) // mohan add 2024-04-02
 {
 
     ModuleBase::TITLE("ModuleIO", "write_current");
     ModuleBase::timer::tick("ModuleIO", "write_current");
     //Init_DS_tmp
-    Init_DS_tmp(*pv, UHM);
+    Init_DS_tmp(*pv, lm, gen_h);
     // construct a DensityMatrix object
     elecstate::DensityMatrix<std::complex<double>, double> DM(&kv,pv,GlobalV::NSPIN);
     
@@ -209,9 +218,9 @@ void ModuleIO::write_current(const int istep,
                             // here do not sum over spin due to EDM.sum_DMR_spin();
                             double edm2d1 = tmp_matrix->get_value(mu,nu);
                             double edm2d2 = 2.0 * edm2d1;
-                            current_ik[0] -= edm2d2 * UHM.LM->DSloc_Rx[irr];
-                            current_ik[1] -= edm2d2 * UHM.LM->DSloc_Ry[irr];
-                            current_ik[2] -= edm2d2 * UHM.LM->DSloc_Rz[irr];
+                            current_ik[0] -= edm2d2 * lm.DSloc_Rx[irr];
+                            current_ik[1] -= edm2d2 * lm.DSloc_Ry[irr];
+                            current_ik[2] -= edm2d2 * lm.DSloc_Rz[irr];
                             ++local_total_irr;
                             ++irr;
                         } // end kk
@@ -241,7 +250,7 @@ void ModuleIO::write_current(const int istep,
         //write end
         ModuleBase::timer::tick("ModuleIO", "write_current");
     }//end nks
-    destory_DS_tmp(UHM);
+    destory_DS_tmp(lm);
     return;
 }
 #endif //__LCAO

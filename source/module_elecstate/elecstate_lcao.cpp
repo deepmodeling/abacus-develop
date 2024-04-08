@@ -15,8 +15,10 @@ namespace elecstate
 template <>
 void ElecStateLCAO<double>::print_psi(const psi::Psi<double>& psi_in, const int istep)
 {
-    if (!ElecStateLCAO<double>::out_wfc_lcao)
-        return;
+	if (!ElecStateLCAO<double>::out_wfc_lcao)
+	{
+		return;
+	}
 
     // output but not do  "2d-to-grid" conversion
     double** wfc_grid = nullptr;
@@ -29,8 +31,11 @@ void ElecStateLCAO<double>::print_psi(const psi::Psi<double>& psi_in, const int 
 template <>
 void ElecStateLCAO<std::complex<double>>::print_psi(const psi::Psi<std::complex<double>>& psi_in, const int istep)
 {
-    if (!ElecStateLCAO<std::complex<double>>::out_wfc_lcao && !ElecStateLCAO<std::complex<double>>::need_psi_grid)
-        return;
+	if (!ElecStateLCAO<std::complex<double>>::out_wfc_lcao 
+			&& !ElecStateLCAO<std::complex<double>>::need_psi_grid)
+	{
+		return;
+	}
 
     // output but not do "2d-to-grid" conversion
     std::complex<double>** wfc_grid = nullptr;
@@ -39,6 +44,7 @@ void ElecStateLCAO<std::complex<double>>::print_psi(const psi::Psi<std::complex<
     {
         wfc_grid = this->lowf->wfc_k_grid[ik];
     }
+
 #ifdef __MPI
     this->lowf->wfc_2d_to_grid(istep,
                                ElecStateLCAO<std::complex<double>>::out_wfc_flag,
@@ -137,9 +143,9 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
     //------------------------------------------------------------
 
     ModuleBase::GlobalFunc::NOTE("Calculate the charge on real space grid!");
-    this->uhm->GK.transfer_DM2DtoGrid(this->DM->get_DMR_vector()); // transfer DM2D to DM_grid in gint
+    this->gint_k->transfer_DM2DtoGrid(this->DM->get_DMR_vector()); // transfer DM2D to DM_grid in gint
     Gint_inout inout(this->loc->DM_R, this->charge->rho, Gint_Tools::job_type::rho);
-    this->uhm->GK.cal_gint(&inout);
+    this->gint_k->cal_gint(&inout);
 
     if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
     {
@@ -148,7 +154,7 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
             ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[is], this->charge->nrxx);
         }
         Gint_inout inout1(this->loc->DM_R, this->charge->kin_r, Gint_Tools::job_type::tau);
-        this->uhm->GK.cal_gint(&inout1);
+        this->gint_k->cal_gint(&inout1);
     }
 
     this->charge->renormalize_rho();
@@ -211,9 +217,13 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
     // calculate the charge density on real space grid.
     //------------------------------------------------------------
     ModuleBase::GlobalFunc::NOTE("Calculate the charge on real space grid!");
-    this->uhm->GG.transfer_DM2DtoGrid(this->DM->get_DMR_vector()); // transfer DM2D to DM_grid in gint
+
+    this->gint_gamma->transfer_DM2DtoGrid(this->DM->get_DMR_vector()); // transfer DM2D to DM_grid in gint
+
     Gint_inout inout(this->loc->DM, this->charge->rho, Gint_Tools::job_type::rho);
-    this->uhm->GG.cal_gint(&inout);
+
+    this->gint_gamma->cal_gint(&inout);
+
     if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
@@ -221,7 +231,7 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
             ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[is], this->charge->nrxx);
         }
         Gint_inout inout1(this->loc->DM, this->charge->kin_r, Gint_Tools::job_type::tau);
-        this->uhm->GG.cal_gint(&inout1);
+        this->gint_gamma->cal_gint(&inout1);
     }
 
     this->charge->renormalize_rho();
