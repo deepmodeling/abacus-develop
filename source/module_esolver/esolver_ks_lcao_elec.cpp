@@ -398,6 +398,8 @@ void ESolver_KS_LCAO<TK, TR>::othercalculation(const int istep)
                   GlobalV::NBANDS,
                   GlobalV::nelec,
                   GlobalV::NSPIN,
+                  GlobalV::NLOCAL,
+                  GlobalV::OUT_BAND_INDEX,
                   GlobalV::global_out_dir,
                   GlobalV::MY_RANK,
                   GlobalV::ofs_warning);

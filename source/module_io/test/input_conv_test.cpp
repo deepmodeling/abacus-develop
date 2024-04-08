@@ -45,6 +45,7 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_DOUBLE_EQ(GlobalV::MIN_DIST_COEF,0.2);
     EXPECT_EQ(GlobalV::NBANDS, 8);
     EXPECT_EQ(GlobalV::NBANDS_ISTATE,5);
+    EXPECT_EQ(GlobalV::OUT_BAND_INDEX, INPUT.out_band_index);
 	EXPECT_EQ(GlobalV::device_flag,"cpu");
 	EXPECT_EQ(GlobalV::KPAR,1);
 	EXPECT_EQ(GlobalV::NSTOGROUP,1);
@@ -460,7 +461,7 @@ TEST_F(InputConvTest,parse )
     EXPECT_EQ(module_tddft::Evolve_elec::td_vext_dire_case.size(), 0);
 }
 
-TEST_F(InputConvTest,parse2 )
+TEST_F(InputConvTest, parse2)
 {
 	INPUT.Default();
 	std::string input_file = "./support/INPUT";

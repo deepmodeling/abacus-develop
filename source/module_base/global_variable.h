@@ -20,6 +20,7 @@ namespace GlobalV
 
 extern int NBANDS;
 extern int NBANDS_ISTATE; // 1.05 // mohan add 2011-03-22
+extern std::string OUT_BAND_INDEX;
 extern int NLOCAL; // 1.1 // mohan add 2009-05-29
 
 extern double KSPACING[3];
