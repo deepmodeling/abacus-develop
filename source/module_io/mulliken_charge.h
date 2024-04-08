@@ -4,7 +4,6 @@
 #include "module_base/matrix.h"
 #include "module_base/complexmatrix.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_hamilt.h"
 #include "module_cell/klist.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_elecstate/elecstate.h"
@@ -14,7 +13,12 @@
 namespace ModuleIO
 {
     template<typename T>
-    void out_mulliken(const int& step, LCAO_Matrix* LM, const elecstate::ElecState* pelec, const K_Vectors& kv, hamilt::Hamilt<T>* ham_in);
+		void out_mulliken(
+				const int& step, 
+				LCAO_Matrix* LM, 
+				const elecstate::ElecState* pelec, 
+				const K_Vectors& kv, 
+				hamilt::Hamilt<T>* ham_in);
 
     /* 
     1. cal_mulliken:    for gamma-only
@@ -27,9 +31,12 @@ namespace ModuleIO
     */
 
     template<typename T>
-    ModuleBase::matrix cal_mulliken(const std::vector<std::vector<T>>& dm,
-        LCAO_Matrix* LM, const K_Vectors& kv, hamilt::Hamilt<T>* ham_in
-    );
+		ModuleBase::matrix cal_mulliken(
+				const std::vector<std::vector<T>>& dm,
+				LCAO_Matrix* LM, 
+				const K_Vectors& kv, 
+				hamilt::Hamilt<T>* ham_in
+				);
 
 
     std::vector<std::vector<std::vector<double>>> convert(const ModuleBase::matrix &orbMulP);
