@@ -6,6 +6,7 @@
 #ifndef NUMERICAL_BASIS_H
 #define NUMERICAL_BASIS_H
 #include <vector>
+#include <set>
 
 #include "bessel_basis.h"
 #include "module_base/complexarray.h"
@@ -41,6 +42,8 @@ class Numerical_Basis
     std::vector<ModuleBase::IntArray> mu_index;
     static std::vector<ModuleBase::IntArray> init_mu_index(void);
 
+    std::set<std::tuple<int, int, int, int>> index_;
+
     void numerical_atomic_wfc(const int& ik,
                               const ModulePW::PW_Basis_K* wfcpw,
                               ModuleBase::ComplexMatrix& psi,
@@ -53,11 +56,24 @@ class Numerical_Basis
                                            const double derivative_order,
                                            const Structure_Factor& sf) const;
 
+    // computed in the plane-wave basis
     ModuleBase::ComplexArray cal_overlap_Sq(const int& ik,
                                             const int& np,
                                             const double derivative_order,
                                             const Structure_Factor& sf,
                                             const ModulePW::PW_Basis_K* wfcpw) const;
+
+    // computed by two-center integration
+    ModuleBase::ComplexArray cal_overlap_Sq(
+        const char type, // 'S' or 'T'
+        const int lmax,
+        const int nbes,
+        const double rcut,
+        const double smoothing_sigma,
+        const double dr,
+        const UnitCell& ucell,
+        const std::vector<ModuleBase::IntArray> mu_index
+    ) const;
 
     static ModuleBase::matrix cal_overlap_V(const ModulePW::PW_Basis_K* wfcpw,
                                             const psi::Psi<std::complex<double>>& psi,
