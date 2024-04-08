@@ -117,7 +117,6 @@ void ESolver_KS_LCAO<TK, TR>::init(Input& inp, UnitCell& ucell)
             &(this->LOC),
             &(this->GG), // mohan add 2024-04-01
             &(this->GK), // mohan add 2024-04-01
-            &(this->uhm),
             &(this->LOWF),
             this->pw_rho,
             this->pw_big);
@@ -131,7 +130,7 @@ void ESolver_KS_LCAO<TK, TR>::init(Input& inp, UnitCell& ucell)
     //------------------init Basis_lcao----------------------
 
     //! pass Hamilt-pointer to Operator
-    this->gen_h.LM = this->uhm.LM = &this->LM;
+    this->gen_h.LM = &this->LM;
 
     //! pass basis-pointer to EState and Psi
     this->LOC.ParaV = this->LOWF.ParaV = this->LM.ParaV = &(this->orb_con.ParaV);
@@ -259,7 +258,6 @@ void ESolver_KS_LCAO<TK, TR>::init_after_vc(Input& inp, UnitCell& ucell)
 				&(this->LOC),
                 &(this->GG), // mohan add 2024-04-01
                 &(this->GK), // mohan add 2024-04-01
-				&(this->uhm),
 				&(this->LOWF),
 				this->pw_rho,
 				this->pw_big);
@@ -426,7 +424,7 @@ void ESolver_KS_LCAO<TK, TR>::post_process(void)
     {
         ModuleIO::write_proj_band_lcao(
             this->psi,
-            this->uhm,
+            this->LM,
             this->pelec,
             this->kv,
             GlobalC::ucell,
@@ -437,7 +435,8 @@ void ESolver_KS_LCAO<TK, TR>::post_process(void)
     {
 		ModuleIO::out_dos_nao(
 				this->psi,
-				this->uhm,
+                this->LM,
+                this->orb_con.ParaV,
 				this->pelec->ekb,
 				this->pelec->wg,
 				INPUT.dos_edelta_ev,
@@ -1204,10 +1203,10 @@ ModuleIO::Output_Mat_Sparse<TK> ESolver_KS_LCAO<TK, TR>::create_Output_Mat_Spars
 			istep,
 			this->pelec->pot->get_effective_v(),
 			*this->LOWF.ParaV,
-			this->uhm,
-            this->gen_h, // mohan add 2024-04-02
+            this->gen_h, // mohan add 2024-04-06
             this->GK, // mohan add 2024-04-01
 			this->LM,
+            GlobalC::GridD, // mohan add 2024-04-06
 			this->kv,
 			this->p_hamilt);
 }

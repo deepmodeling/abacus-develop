@@ -8,7 +8,7 @@
 void ModuleIO::save_HSR_sparse(
     const int &istep,
     LCAO_Matrix &lm,
-    const double& sparse_threshold,
+    const double& sparse_thr,
     const bool &binary,  
     const std::string &SR_filename, 
     const std::string &HR_filename_up, 
@@ -279,11 +279,11 @@ void ModuleIO::save_HSR_sparse(
             {
                 if (GlobalV::NSPIN != 4)
                 {
-                    output_single_R(g1[ispin], HR_sparse_ptr[ispin][R_coor], sparse_threshold, binary, *lm.ParaV);
+                    output_single_R(g1[ispin], HR_sparse_ptr[ispin][R_coor], sparse_thr, binary, *lm.ParaV);
                 }
                 else
                 {
-                    output_single_R(g1[ispin], HR_soc_sparse_ptr[R_coor], sparse_threshold, binary, *lm.ParaV);
+                    output_single_R(g1[ispin], HR_soc_sparse_ptr[R_coor], sparse_thr, binary, *lm.ParaV);
                 }
             }
         }
@@ -308,11 +308,11 @@ void ModuleIO::save_HSR_sparse(
         {
             if (GlobalV::NSPIN != 4)
             {
-                output_single_R(g2, SR_sparse_ptr[R_coor], sparse_threshold, binary, *lm.ParaV);
+                output_single_R(g2, SR_sparse_ptr[R_coor], sparse_thr, binary, *lm.ParaV);
             }
             else
             {
-                output_single_R(g2, SR_soc_sparse_ptr[R_coor], sparse_threshold, binary, *lm.ParaV);
+                output_single_R(g2, SR_soc_sparse_ptr[R_coor], sparse_thr, binary, *lm.ParaV);
             }
         }
 
@@ -322,7 +322,10 @@ void ModuleIO::save_HSR_sparse(
 
     if(GlobalV::DRANK==0) 
     {
-        for (int ispin = 0; ispin < spin_loop; ++ispin) g1[ispin].close();
+		for (int ispin = 0; ispin < spin_loop; ++ispin) 
+		{
+			g1[ispin].close();
+		}
         g2.close();
     }
     
@@ -342,7 +345,7 @@ void ModuleIO::save_HSR_sparse(
 void ModuleIO::save_dH_sparse(
     const int &istep,
     LCAO_Matrix &lm,
-    const double& sparse_threshold,
+    const double& sparse_thr,
     const bool &binary
 )
 {
@@ -619,33 +622,33 @@ void ModuleIO::save_dH_sparse(
             {
                 if (GlobalV::NSPIN != 4)
                 {
-                    output_single_R(g1x[ispin], dHRx_sparse_ptr[ispin][R_coor], sparse_threshold, binary, *lm.ParaV);
+                    output_single_R(g1x[ispin], dHRx_sparse_ptr[ispin][R_coor], sparse_thr, binary, *lm.ParaV);
                 }
                 else
                 {
-                    output_single_R(g1x[ispin], dHRx_soc_sparse_ptr[R_coor], sparse_threshold, binary, *lm.ParaV);
+                    output_single_R(g1x[ispin], dHRx_soc_sparse_ptr[R_coor], sparse_thr, binary, *lm.ParaV);
                 }
             }
             if (dHy_nonzero_num[ispin][count] > 0)
             {
                 if (GlobalV::NSPIN != 4)
                 {
-                    output_single_R(g1y[ispin], dHRy_sparse_ptr[ispin][R_coor], sparse_threshold, binary, *lm.ParaV);
+                    output_single_R(g1y[ispin], dHRy_sparse_ptr[ispin][R_coor], sparse_thr, binary, *lm.ParaV);
                 }
                 else
                 {
-                    output_single_R(g1y[ispin], dHRy_soc_sparse_ptr[R_coor], sparse_threshold, binary, *lm.ParaV);
+                    output_single_R(g1y[ispin], dHRy_soc_sparse_ptr[R_coor], sparse_thr, binary, *lm.ParaV);
                 }
             }
             if (dHz_nonzero_num[ispin][count] > 0)
             {
                 if (GlobalV::NSPIN != 4)
                 {
-                    output_single_R(g1z[ispin], dHRz_sparse_ptr[ispin][R_coor], sparse_threshold, binary, *lm.ParaV);
+                    output_single_R(g1z[ispin], dHRz_sparse_ptr[ispin][R_coor], sparse_thr, binary, *lm.ParaV);
                 }
                 else
                 {
-                    output_single_R(g1z[ispin], dHRz_soc_sparse_ptr[R_coor], sparse_threshold, binary, *lm.ParaV);
+                    output_single_R(g1z[ispin], dHRz_soc_sparse_ptr[R_coor], sparse_thr, binary, *lm.ParaV);
                 }
             }                        
         }
@@ -684,11 +687,12 @@ void ModuleIO::save_dH_sparse(
     return;
 }
 
+
 template<typename Tdata>
 void ModuleIO::save_sparse(
     const std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, Tdata>>>& smat,
     const std::set<Abfs::Vector3_Order<int>>& all_R_coor,
-    const double& sparse_threshold,
+    const double& sparse_thr,
     const bool& binary,
     const std::string& filename,
     const Parallel_Orbitals& pv,
@@ -791,7 +795,7 @@ void ModuleIO::save_sparse(
             }
         }
 
-        output_single_R(ofs, smat.at(R_coor), sparse_threshold, binary, pv, reduce);
+        output_single_R(ofs, smat.at(R_coor), sparse_thr, binary, pv, reduce);
         ++count;
     }
 	if (!reduce || GlobalV::DRANK == 0) 
