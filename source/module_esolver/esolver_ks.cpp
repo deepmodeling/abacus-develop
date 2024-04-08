@@ -541,7 +541,7 @@ void ESolver_KS<T, Device>::run(const int istep, UnitCell& ucell)
              && iter == this->p_chgmix->mixing_restart - 1 
              && iter != GlobalV::SCF_NMAX)
 			{
-				std::cout<<"SCF restart after this step!"<<std::endl;
+				std::cout<<" SCF restart after this step!"<<std::endl;
 			}
 		}
 #ifdef __RAPIDJSON
