@@ -817,34 +817,54 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 										{
 											const int p1 = GlobalC::ucell.atoms[T0].ncpp.index1_soc[is0][no];
 											const int p2 = GlobalC::ucell.atoms[T0].ncpp.index2_soc[is0][no];
-											for (int ir=0; ir<3; ir++)
+											if (is0 == 0)
 											{
-												nlm[is0][ir] += nlm_2[ir][p1]*nlm_1[p2]*GlobalC::ucell.atoms[T0].ncpp.d_so(is0, p2, p1);
+												this->LM->DHloc_fixedR_x[nnr+nnr_inner] += nlm_2[0][p1]*nlm_1[p2]*
+														(GlobalC::ucell.atoms[T0].ncpp.d_so(0, p2, p1).real()
+														+ GlobalC::ucell.atoms[T0].ncpp.d_so(3, p2, p1).real())*0.5;
+												this->LM->DHloc_fixedR_y[nnr+nnr_inner] += nlm_2[1][p1]*nlm_1[p2]*
+														(GlobalC::ucell.atoms[T0].ncpp.d_so(0, p2, p1).real()
+														+ GlobalC::ucell.atoms[T0].ncpp.d_so(3, p2, p1).real())*0.5;
+												this->LM->DHloc_fixedR_z[nnr+nnr_inner] += nlm_2[2][p1]*nlm_1[p2]*
+														(GlobalC::ucell.atoms[T0].ncpp.d_so(0, p2, p1).real()
+														+ GlobalC::ucell.atoms[T0].ncpp.d_so(3, p2, p1).real())*0.5;
 											}
-										}
-										if (is0 == 0)
-										{
-											this->LM->DHloc_fixedR_x[nnr+nnr_inner] += (nlm[0][0].real() + nlm[3][0].real());
-											this->LM->DHloc_fixedR_y[nnr+nnr_inner] += (nlm[0][1].real() + nlm[3][1].real());
-											this->LM->DHloc_fixedR_z[nnr+nnr_inner] += (nlm[0][2].real() + nlm[3][2].real());
-										}
-										else if (is0 == 1)
-										{
-											this->LM->DHloc_fixedR_x[nnr+nnr_inner] += (nlm[1][0].real() + nlm[2][0].real());
-											this->LM->DHloc_fixedR_y[nnr+nnr_inner] += (nlm[1][1].real() + nlm[2][1].real());
-											this->LM->DHloc_fixedR_z[nnr+nnr_inner] += (nlm[1][2].real() + nlm[2][2].real());
-										}
-										else if (is0 == 2)
-										{
-											this->LM->DHloc_fixedR_x[nnr+nnr_inner] += (-nlm[1][0].imag() + nlm[2][0].imag());
-											this->LM->DHloc_fixedR_y[nnr+nnr_inner] += (-nlm[1][1].imag() + nlm[2][1].imag());
-											this->LM->DHloc_fixedR_z[nnr+nnr_inner] += (-nlm[1][2].imag() + nlm[2][2].imag());
-										}
-										else if (is0 == 3)
-										{
-											this->LM->DHloc_fixedR_x[nnr+nnr_inner] += (nlm[0][0].imag() - nlm[3][0].imag());
-											this->LM->DHloc_fixedR_y[nnr+nnr_inner] += (nlm[0][1].imag() - nlm[3][1].imag());
-											this->LM->DHloc_fixedR_z[nnr+nnr_inner] += (nlm[0][2].imag() - nlm[3][2].imag());
+											else if (is0 == 1)
+											{
+												this->LM->DHloc_fixedR_x[nnr+nnr_inner] += nlm_2[0][p1]*nlm_1[p2]*
+														(GlobalC::ucell.atoms[T0].ncpp.d_so(1, p2, p1).real()
+														+ GlobalC::ucell.atoms[T0].ncpp.d_so(2, p2, p1).real())*0.5;
+												this->LM->DHloc_fixedR_y[nnr+nnr_inner] += nlm_2[1][p1]*nlm_1[p2]*
+														(GlobalC::ucell.atoms[T0].ncpp.d_so(1, p2, p1).real()
+														+ GlobalC::ucell.atoms[T0].ncpp.d_so(2, p2, p1).real())*0.5;
+												this->LM->DHloc_fixedR_z[nnr+nnr_inner] += nlm_2[2][p1]*nlm_1[p2]*
+														(GlobalC::ucell.atoms[T0].ncpp.d_so(1, p2, p1).real()
+														+ GlobalC::ucell.atoms[T0].ncpp.d_so(2, p2, p1).real())*0.5;
+											}
+											else if (is0 == 2)
+											{
+												this->LM->DHloc_fixedR_x[nnr+nnr_inner] += nlm_2[0][p1]*nlm_1[p2]*
+														(-GlobalC::ucell.atoms[T0].ncpp.d_so(1, p2, p1).imag()
+														+ GlobalC::ucell.atoms[T0].ncpp.d_so(2, p2, p1).imag())*0.5;
+												this->LM->DHloc_fixedR_y[nnr+nnr_inner] += nlm_2[1][p1]*nlm_1[p2]*
+														(-GlobalC::ucell.atoms[T0].ncpp.d_so(1, p2, p1).imag()
+														+ GlobalC::ucell.atoms[T0].ncpp.d_so(2, p2, p1).imag())*0.5;
+												this->LM->DHloc_fixedR_z[nnr+nnr_inner] += nlm_2[2][p1]*nlm_1[p2]*
+														(-GlobalC::ucell.atoms[T0].ncpp.d_so(1, p2, p1).imag()
+														+ GlobalC::ucell.atoms[T0].ncpp.d_so(2, p2, p1).imag())*0.5;
+											}
+											else if (is0 == 3)
+											{
+												this->LM->DHloc_fixedR_x[nnr+nnr_inner] += nlm_2[0][p1]*nlm_1[p2]*
+														(GlobalC::ucell.atoms[T0].ncpp.d_so(0, p2, p1).real()
+														- GlobalC::ucell.atoms[T0].ncpp.d_so(3, p2, p1).real())*0.5;
+												this->LM->DHloc_fixedR_y[nnr+nnr_inner] += nlm_2[1][p1]*nlm_1[p2]*
+														(GlobalC::ucell.atoms[T0].ncpp.d_so(0, p2, p1).real()
+														- GlobalC::ucell.atoms[T0].ncpp.d_so(3, p2, p1).real())*0.5;
+												this->LM->DHloc_fixedR_z[nnr+nnr_inner] += nlm_2[2][p1]*nlm_1[p2]*
+														(GlobalC::ucell.atoms[T0].ncpp.d_so(0, p2, p1).real()
+														- GlobalC::ucell.atoms[T0].ncpp.d_so(3, p2, p1).real())*0.5;
+											}
 										}
 									}
 									else

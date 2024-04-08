@@ -36,6 +36,8 @@ void Force_LCAO_k::cal_fvnl_dbeta_k(const elecstate::DensityMatrix<std::complex<
     ModuleBase::TITLE("Force_LCAO_k", "cal_fvnl_dbeta_k_new");
     ModuleBase::timer::tick("Force_LCAO_k", "cal_fvnl_dbeta_k_new");
 
+    const int nspin_ = (GlobalV::NSPIN == 2) ? 2 : 1;
+
     // Data structure for storing <psi|beta>, for a detailed description
     // check out the same data structure in build_Nonlocal_mu_new
     std::vector<std::map<key_tuple, std::unordered_map<int, std::vector<std::vector<double>>>>> nlm_tot;
@@ -258,7 +260,7 @@ void Force_LCAO_k::cal_fvnl_dbeta_k(const elecstate::DensityMatrix<std::complex<
                             continue;
                         }
                         std::vector<double*> tmp_matrix_ptr;
-                        for (int is = 0; is < GlobalV::NSPIN; ++is)
+                        for (int is = 0; is < nspin_; ++is)
                         {
                             auto* tmp_base_matrix = DM->get_DMR_pointer(is+1)->find_matrix(iat1, iat2, rx2, ry2, rz2);
                             tmp_matrix_ptr.push_back(tmp_base_matrix->get_pointer());
@@ -313,6 +315,8 @@ void Force_LCAO_k::cal_fvnl_dbeta_k(const elecstate::DensityMatrix<std::complex<
                             key_tuple key2(iat2, rx2 - rx0, ry2 - ry0, rz2 - rz0);
 
                             int nnr_inner = 0;
+                            int dhsize = pv.get_row_size(iat1)*pv.get_col_size(iat2);
+                            std::vector<std::vector<double>> dhvnl(3, std::vector<double>(dhsize, 0.0));
                             for (int j = 0; j < atom1->nw * GlobalV::NPOL; j++)
                             {
                                 const int j0 = j / GlobalV::NPOL; // added by zhengdy-soc
@@ -333,44 +337,60 @@ void Force_LCAO_k::cal_fvnl_dbeta_k(const elecstate::DensityMatrix<std::complex<
 										continue;
 									}
 
-                                    // const Atom* atom0 = &GlobalC::ucell.atoms[T0];
-                                    double nlm[3] = {0, 0, 0};
-                                    std::vector<double> nlm_1 = nlm_tot[iat][key2][iw2_all][0];
-                                    std::vector<std::vector<double>> nlm_2;
-                                    nlm_2.resize(3);
-                                    for (int i = 0; i < 3; i++)
+                                    if (GlobalV::NSPIN==4)
                                     {
-                                        nlm_2[i] = nlm_tot[iat][key1][iw1_all][i + 1];
-                                    }
-
-                                    assert(nlm_1.size() == nlm_2[0].size());
-
-                                    const int nproj = GlobalC::ucell.infoNL.nproj[T0];
-                                    int ib = 0;
-                                    for (int nb = 0; nb < nproj; nb++)
-                                    {
-                                        const int L0 = GlobalC::ucell.infoNL.Beta[T0].Proj[nb].getL();
-                                        for (int m = 0; m < 2 * L0 + 1; m++)
-                                        {
-                                            for (int ir = 0; ir < 3; ir++)
-                                            {
-                                                nlm[ir] += nlm_2[ir][ib] * nlm_1[ib]
-                                                           * GlobalC::ucell.atoms[T0].ncpp.dion(nb, nb);
-                                            }
-                                            ib += 1;
-                                        }
-                                    }
-                                    assert(ib == nlm_1.size());
-
-                                    double nlm1[3] = {0, 0, 0};
-                                    if (isstress)
-                                    {
-                                        std::vector<double> nlm_1 = nlm_tot[iat][key1][iw1_all][0];
+                                        std::vector<double> nlm_1 = nlm_tot[iat][key2][iw2_all][0];
                                         std::vector<std::vector<double>> nlm_2;
                                         nlm_2.resize(3);
                                         for (int i = 0; i < 3; i++)
                                         {
-                                            nlm_2[i] = nlm_tot[iat][key2][iw2_all][i + 1];
+                                            nlm_2[i] = nlm_tot[iat][key1][iw1_all][i + 1];
+                                        }
+                                        std::complex<double> nlm[4][3] = {ModuleBase::ZERO};
+                                        int is0 = (j-j0*GlobalV::NPOL) + (k-k0*GlobalV::NPOL) * 2;
+                                        for (int no = 0; no < GlobalC::ucell.atoms[T0].ncpp.non_zero_count_soc[is0]; no++)
+                                        {
+                                            const int p1 = GlobalC::ucell.atoms[T0].ncpp.index1_soc[is0][no];
+                                            const int p2 = GlobalC::ucell.atoms[T0].ncpp.index2_soc[is0][no];
+                                            for (int ir = 0; ir < 3; ir++)
+                                            {
+                                                if (is0 == 0)
+                                                {
+                                                    dhvnl[ir][nnr_inner] += nlm_2[ir][p1]*nlm_1[p2]*
+                                                            (GlobalC::ucell.atoms[T0].ncpp.d_so(0, p2, p1).real()
+                                                            + GlobalC::ucell.atoms[T0].ncpp.d_so(3, p2, p1).real())*0.5;
+                                                }
+                                                else if (is0 == 1)
+                                                {
+                                                    dhvnl[ir][nnr_inner] += nlm_2[ir][p1]*nlm_1[p2]*
+                                                            (GlobalC::ucell.atoms[T0].ncpp.d_so(1, p2, p1).real()
+                                                            + GlobalC::ucell.atoms[T0].ncpp.d_so(2, p2, p1).real())*0.5;
+                                                }
+                                                else if (is0 == 2)
+                                                {
+                                                    dhvnl[ir][nnr_inner] += nlm_2[ir][p1]*nlm_1[p2]*
+                                                            (-GlobalC::ucell.atoms[T0].ncpp.d_so(1, p2, p1).imag()
+                                                            +GlobalC::ucell.atoms[T0].ncpp.d_so(2, p2, p1).imag())*0.5;
+                                                }
+                                                else if (is0 == 3)
+                                                {
+                                                    dhvnl[ir][nnr_inner] += nlm_2[ir][p1]*nlm_1[p2]*
+                                                            (GlobalC::ucell.atoms[T0].ncpp.d_so(0, p2, p1).real()
+                                                            - GlobalC::ucell.atoms[T0].ncpp.d_so(3, p2, p1).real())*0.5;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        // const Atom* atom0 = &GlobalC::ucell.atoms[T0];
+                                        double nlm[3] = {0, 0, 0};
+                                        std::vector<double> nlm_1 = nlm_tot[iat][key2][iw2_all][0];
+                                        std::vector<std::vector<double>> nlm_2;
+                                        nlm_2.resize(3);
+                                        for (int i = 0; i < 3; i++)
+                                        {
+                                            nlm_2[i] = nlm_tot[iat][key1][iw1_all][i + 1];
                                         }
 
                                         assert(nlm_1.size() == nlm_2[0].size());
@@ -384,38 +404,69 @@ void Force_LCAO_k::cal_fvnl_dbeta_k(const elecstate::DensityMatrix<std::complex<
                                             {
                                                 for (int ir = 0; ir < 3; ir++)
                                                 {
-                                                    nlm1[ir] += nlm_2[ir][ib] * nlm_1[ib]
-                                                                * GlobalC::ucell.atoms[T0].ncpp.dion(nb, nb);
+                                                    nlm[ir] += nlm_2[ir][ib] * nlm_1[ib]
+                                                               * GlobalC::ucell.atoms[T0].ncpp.dion(nb, nb);
                                                 }
                                                 ib += 1;
                                             }
                                         }
                                         assert(ib == nlm_1.size());
-                                    }
 
-                                    /// only one projector for each atom force, but another projector for stress
-                                    force_updated = true;
-                                    // get DMR
-                                    double dm2d1 = 0.0;
-                                    for (int is = 0; is < GlobalV::NSPIN; ++is)
-                                    {  
-                                        dm2d1 += tmp_matrix_ptr[is][nnr_inner];
-                                    }
-                                    double dm2d2 = 2.0 * dm2d1;
-                                    //
-                                    for (int jpol = 0; jpol < 3; jpol++)
-                                    {
-                                        if (isforce)
-                                        {
-                                            adj_fvnl_dbeta[ad0 * 3 + jpol] -= dm2d2 * nlm[jpol];
-                                        }
+                                        double nlm1[3] = {0, 0, 0};
                                         if (isstress)
                                         {
-                                            for (int ipol = jpol; ipol < 3; ipol++)
+                                            std::vector<double> nlm_1 = nlm_tot[iat][key1][iw1_all][0];
+                                            std::vector<std::vector<double>> nlm_2;
+                                            nlm_2.resize(3);
+                                            for (int i = 0; i < 3; i++)
                                             {
-                                                local_svnl_dbeta(jpol, ipol)
-                                                    += dm2d1
-                                                        * (nlm[jpol] * r1[ipol] + nlm1[jpol] * r0[ipol]);
+                                                nlm_2[i] = nlm_tot[iat][key2][iw2_all][i + 1];
+                                            }
+
+                                            assert(nlm_1.size() == nlm_2[0].size());
+
+                                            const int nproj = GlobalC::ucell.infoNL.nproj[T0];
+                                            int ib = 0;
+                                            for (int nb = 0; nb < nproj; nb++)
+                                            {
+                                                const int L0 = GlobalC::ucell.infoNL.Beta[T0].Proj[nb].getL();
+                                                for (int m = 0; m < 2 * L0 + 1; m++)
+                                                {
+                                                    for (int ir = 0; ir < 3; ir++)
+                                                    {
+                                                        nlm1[ir] += nlm_2[ir][ib] * nlm_1[ib]
+                                                                    * GlobalC::ucell.atoms[T0].ncpp.dion(nb, nb);
+                                                    }
+                                                    ib += 1;
+                                                }
+                                            }
+                                            assert(ib == nlm_1.size());
+                                        }
+
+                                        /// only one projector for each atom force, but another projector for stress
+                                        force_updated = true;
+                                        // get DMR
+                                        double dm2d1 = 0.0;
+                                        for (int is = 0; is < nspin_; ++is)
+                                        {
+                                            dm2d1 += tmp_matrix_ptr[is][nnr_inner];
+                                        }
+                                        double dm2d2 = 2.0 * dm2d1;
+                                        //
+                                        for (int jpol = 0; jpol < 3; jpol++)
+                                        {
+                                            if (isforce)
+                                            {
+                                                adj_fvnl_dbeta[ad0 * 3 + jpol] -= dm2d2 * nlm[jpol];
+                                            }
+                                            if (isstress)
+                                            {
+                                                for (int ipol = jpol; ipol < 3; ipol++)
+                                                {
+                                                    local_svnl_dbeta(jpol, ipol)
+                                                        += dm2d1
+                                                            * (nlm[jpol] * r1[ipol] + nlm1[jpol] * r0[ipol]);
+                                                }
                                             }
                                         }
                                     }
@@ -423,6 +474,23 @@ void Force_LCAO_k::cal_fvnl_dbeta_k(const elecstate::DensityMatrix<std::complex<
                                     nnr_inner++;
                                 } // k
                             }     // j
+                            if (GlobalV::NSPIN == 4)
+                            {
+                                force_updated = true;
+                                if (isforce)
+                                {
+                                    for (int ir = 0; ir < dhsize; ir++)
+                                    {
+                                        adj_fvnl_dbeta[ad0 * 3 + 0] -= 2.0 * tmp_matrix_ptr[0][ir] * dhvnl[0][ir];
+                                        adj_fvnl_dbeta[ad0 * 3 + 1] -= 2.0 * tmp_matrix_ptr[0][ir] * dhvnl[1][ir];
+                                        adj_fvnl_dbeta[ad0 * 3 + 2] -= 2.0 * tmp_matrix_ptr[0][ir] * dhvnl[2][ir];
+                                    }
+                                }
+                                if (isstress)
+                                {
+                                    ModuleBase::WARNING_QUIT("Force_LCAO_k::cal_fvnl_dbeta_k", "not implemented for stress in soc calculation");
+                                }
+                            }
                         }         // ad0
 
                         // outer circle : accumulate nnr
