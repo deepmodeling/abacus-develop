@@ -158,9 +158,9 @@ void calculateInit(DensityMat& denstiy_mat,
                    hamilt::HContainer<double>* dm,
                    const Grid_Technique& gridt,
                    const UnitCell& ucell,
-                   int lgd,
-                   int cuda_block,
-                   int atom_num_grid);
+                   const int lgd,
+                   const int cuda_block,
+                   const int atom_num_grid);
 
 /**
  * @brief Density Matrix,from Hcontainer to structure
@@ -188,30 +188,27 @@ void allocateDm(double* MatrixHost,
  * @param gridt Grid_Technique,stored the major method in the the gint.
  */
 void para_init(SGridParameter& para,
-                       int iter_num,
-                       int nbz,
+                       const int iter_num,
+                       const int nbz,
                        const Grid_Technique& gridt);
 /**
  * @brief ForceStressIat on host and device Init
  *
  * GridParameter init
  *
- * @param ForceStressIat ForceStressIat,contains the Force Stree Iat on Device
- * and Host
+ * @param ForceStressIat ForceStressIat,contains the Force Stree Iat on Host
  * @param stream_num int , record the stream in GPU
  * @param cuda_block in stress compute,used for Block nums
  * @param atom_num_grid in force calculate,used for Block nums
  * @param max_size Maximum size of atoms on a grid.
- * @param stress_global sorted in the ForceStressIatG,the array of global stress
- * @param force_global sorted in the ForceStressIatG,the array of global force
- * @param iat_global sorted in the ForceStressIatG,the array of global iat
+ * @param ForceStressIatGlobal ForceStressIatGlobal,contains the Force Stree Iat on Host
  */
 void cal_init(ForceStressIat& calcualte,
-                        int stream_num,
-                        int cuda_block,
-                        int atom_num_grid,
-                        int max_size,
-                        ForceStressIatGlobal& calcualteg);
+                        const int stream_num,
+                        const int cuda_block,
+                        const int atom_num_grid,
+                        const int max_size,
+                        const ForceStressIatGlobal& calcualteg);
 /**
  * @brief GridParameter memCpy,from Host to Device
  *
@@ -224,8 +221,8 @@ void cal_init(ForceStressIat& calcualte,
  */
 void para_mem_copy(SGridParameter& para,
                          const Grid_Technique& gridt,
-                         int nbz,
-                         int atom_num_grid);
+                         const int nbz,
+                         const int atom_num_grid);
 /**
  * @brief Force Stress Force Iat memCpy,from Host to Device
  *
@@ -238,9 +235,9 @@ void para_mem_copy(SGridParameter& para,
  */
 void cal_mem_cpy(ForceStressIat& calcualte,
                           const Grid_Technique& gridt,
-                          int atom_num_grid,
-                          int cuda_block,
-                          int stream_num);
+                          const int atom_num_grid,
+                          const int cuda_block,
+                          const int stream_num);
 /**
  * @brief Force Calculate on Host
  *
@@ -249,9 +246,9 @@ void cal_mem_cpy(ForceStressIat& calcualte,
  * @param force stored the force for each atom on each directions
  * @param atom_num_grid in force calculate,used for Block nums
  */
-void cal_calculate_cpu(ForceStressIat& calcualte,
+void cal_force_add(ForceStressIat& calcualte,
                     double* force,
-                    int atom_num_grid);
+                    const int atom_num_grid);
 /**
  * @brief Stress Calculate on Host
  *
@@ -260,8 +257,8 @@ void cal_calculate_cpu(ForceStressIat& calcualte,
  * @param stress stored the stress for each directions
  * @param cuda_block in stress compute,used for Block nums
  */
-void cal_stress_cpu(ForceStressIat& calcualte,
+void cal_stress_add(ForceStressIat& calcualte,
                      double* stress,
-                     int cuda_block);
+                     const int cuda_block);
 } // namespace GintKernel
 #endif

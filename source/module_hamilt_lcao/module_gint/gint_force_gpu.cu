@@ -210,7 +210,7 @@ void gint_gamma_force_gpu(hamilt::HContainer<double>* dm,
                 max_size,
                 gridt.psir_size / nwmax);
             /* force compute in CPU*/
-            cal_calculate_cpu(calcualte, force, atom_num_grid);
+            cal_force_add(calcualte, force, atom_num_grid);
 
             /*stress compute in GPU*/
             dot_product_stress<<<grid_dot,
@@ -227,7 +227,7 @@ void gint_gamma_force_gpu(hamilt::HContainer<double>* dm,
                 calcualte.stress_device,
                 gridt.psir_size);
             /* stress compute in CPU*/
-            cal_stress_cpu(calcualte, stress, cuda_block);
+            cal_stress_add(calcualte, stress, cuda_block);
             iter_num++;
         }
     }

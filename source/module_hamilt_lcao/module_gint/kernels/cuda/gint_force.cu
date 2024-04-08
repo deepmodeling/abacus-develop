@@ -169,23 +169,31 @@ __global__ void dot_product_stress(double* psir_lxx,
     }
 
     for (int i = 0; i < 6; i++)
+    {
         cache[cacheIndex][i] = tmp[i];
-
+    }
     __syncthreads();
 
     int i = blockDim.x / 2;
     while (i != 0)
     {
         if (cacheIndex < i)
+        {
             for (int index = 0; index < 6; index++)
+            {
                 cache[cacheIndex][index] += cache[cacheIndex + i][index];
+            }
+        }
         __syncthreads();
         i /= 2;
     }
 
-    if (cacheIndex == 0)
+    if (cacheIndex == 0){
         for (int index = 0; index < 6; index++)
+        {
             stress_dot[blockIdx.x + gridDim.x * index] = cache[0][index];
+        }
+    }
 }
 
 /**
@@ -238,7 +246,9 @@ __global__ void dot_product_force(double* psir_lx,
         }
 
         for (int i = 0; i < 3; i++)
+        {
             force_dot[iat_index + i] = tmp[i];
+        }
         tid += blockDim.x * gridDim.x;
     }
 }
@@ -279,17 +289,32 @@ void calculateInit(DensityMat& denstiy_mat,
                          0,
                          atom_num_grid * gridt.nstreams * sizeof(int)));
 }
+
+/**
+ * @brief grid parameter Init
+ *
+ * GridParameter init
+ *
+ * @param para double *,contained the destiyMatHost
+ * @param iter_num int , used for calcute the stream
+ * @param nbz int,stand for the number of Z-axis
+ * @param gridt Grid_Technique,stored the major method in the the gint.
+ */
 void para_init(SGridParameter& para,
                        int iter_num,
                        int nbz,
                        const Grid_Technique& gridt)
 {
+
+    // stream_num stand for nstreams
     para.stream_num = iter_num % gridt.nstreams;
+    //input_dou and input _int used for the Spherical Harmonics
     para.input_dou
         = &gridt.psi_dou_glo[gridt.psi_size_max * para.stream_num * 5];
     para.input_int
         = &gridt.psi_int_glo[gridt.psi_size_max * para.stream_num * 2];
     para.num_psir = &gridt.num_psir_glo[nbz * para.stream_num];
+    //one dimension,record the length and the leading dimension of three matrix
     para.atom_pair_A_m
         = &gridt.l_info_global[gridt.atom_pair_nbz * para.stream_num];
     para.atom_pair_B_n
@@ -302,6 +327,7 @@ void para_init(SGridParameter& para,
         = &gridt.ldb_info_global[gridt.atom_pair_nbz * para.stream_num];
     para.atom_pair_ldc
         = &gridt.ldc_info_global[gridt.atom_pair_nbz * para.stream_num];
+    //input_double_g and input_int_g used for the Spherical Harmonics on GPU
     para.input_double_g
         = &gridt.psi_dou_glo_g[gridt.psi_size_max * para.stream_num * 5];
     para.input_int_g
@@ -310,6 +336,7 @@ void para_init(SGridParameter& para,
     para.psir_dm_device = &gridt.dm_global_g[gridt.psir_size * para.stream_num];
     para.psir_r_device
         = &gridt.right_global_g[gridt.psir_size * para.stream_num];
+    //psi function ,record the force in x y z,and the stress in six dimension
     para.psir_lx_device = &gridt.d_left_x_g[gridt.psir_size * para.stream_num];
     para.psir_ly_device = &gridt.d_left_y_g[gridt.psir_size * para.stream_num];
     para.psir_lz_device = &gridt.d_left_z_g[gridt.psir_size * para.stream_num];
@@ -325,6 +352,7 @@ void para_init(SGridParameter& para,
         = &gridt.dd_left_yz_g[gridt.psir_size * para.stream_num];
     para.psir_lzz_device
         = &gridt.dd_left_zz_g[gridt.psir_size * para.stream_num];
+    //one dimension,record the length and the leading dimension of three matrix on GPU
     para.A_m_device
         = &gridt.l_info_global_g[gridt.atom_pair_nbz * para.stream_num];
     para.B_n_device
@@ -337,6 +365,7 @@ void para_init(SGridParameter& para,
         = &gridt.ldb_info_global_g[gridt.atom_pair_nbz * para.stream_num];
     para.ldc_device
         = &gridt.ldc_info_global_g[gridt.atom_pair_nbz * para.stream_num];
+    //two dimension,record number to compute
     para.matrix_A = &gridt.ap_left_glo[gridt.atom_pair_nbz * para.stream_num];
     para.matrix_B = &gridt.ap_right_glo[gridt.atom_pair_nbz * para.stream_num];
     para.matrix_C = &gridt.ap_output_glo[gridt.atom_pair_nbz * para.stream_num];
@@ -347,13 +376,24 @@ void para_init(SGridParameter& para,
     para.matrix_C_device
         = &gridt.ap_output_glo_g[gridt.atom_pair_nbz * para.stream_num];
 }
-
+/**
+ * @brief ForceStressIat on host and device Init
+ *
+ * GridParameter init
+ *
+ * @param ForceStressIat ForceStressIat,contains the Force Stree Iat on Host
+ * @param stream_num int , record the stream in GPU
+ * @param cuda_block in stress compute,used for Block nums
+ * @param atom_num_grid in force calculate,used for Block nums
+ * @param max_size Maximum size of atoms on a grid.
+ * @param ForceStressIatGlobal ForceStressIatGlobal,contains the Force Stree Iat on Host
+ */
 void cal_init(ForceStressIat& calcualte,
-                        int stream_num,
-                        int cuda_block,
-                        int atom_num_grid,
-                        int max_size,
-                        ForceStressIatGlobal& calcualteG)
+                        const int stream_num,
+                        const int cuda_block,
+                        const int atom_num_grid,
+                        const int max_size,
+                        const ForceStressIatGlobal& calcualteG)
 {
     const int iat_min = -max_size - 1;
     calcualte.stress_host = new double[6 * cuda_block];
@@ -372,10 +412,21 @@ void cal_init(ForceStressIat& calcualte,
     ModuleBase::GlobalFunc::ZEROS(calcualte.force_host,
                                   3 * atom_num_grid);
 }
+
+/**
+ * @brief GridParameter memCpy,from Host to Device
+ *
+ * parameter init,which contains the gpu task and multi matrix multiplication
+ *
+ * @param para Grid parameter in task generator,
+ * @param gridt Grid_Technique,stored the major method in the the gint.
+ * @param nbz int,stand for the number of Z-axis
+ * @param atom_num_grid in force calculate,used for Block nums
+ */
 void para_mem_copy(SGridParameter& para,
                          const Grid_Technique& gridt,
-                         int nbz,
-                         int atom_num_grid)
+                         const int nbz,
+                         const int atom_num_grid)
 {
     checkCuda(cudaMemcpyAsync(para.input_double_g,
                               para.input_dou,
@@ -482,12 +533,21 @@ void para_mem_copy(SGridParameter& para,
                               gridt.psir_size * sizeof(double),
                               gridt.streams[para.stream_num]));
 }
-
+/**
+ * @brief Force Stress Force Iat memCpy,from Host to Device
+ *
+ *  @param ForceStressIat ForceStressIat,contains the Force Stree Iat on Device
+ * and Host
+ *  @param gridt Grid_Technique,stored the major method in the the gint.
+ *  @param atom_num_grid in force calculate,used for Block nums
+ *  @param cuda_block in stress compute,used for Block nums
+ *  @param stream_num int , record the stream in GPU
+ */
 void cal_mem_cpy(ForceStressIat& calcualte,
                           const Grid_Technique& gridt,
-                          int atom_num_grid,
-                          int cuda_block,
-                          int stream_num)
+                          const int atom_num_grid,
+                          const int cuda_block,
+                          const int stream_num)
 {
     checkCuda(cudaMemcpyAsync(calcualte.iat_device,
                               calcualte.iat_host,
@@ -503,9 +563,17 @@ void cal_mem_cpy(ForceStressIat& calcualte,
                               3 * atom_num_grid * sizeof(double),
                               gridt.streams[stream_num]));
 }
-void cal_calculate_cpu(ForceStressIat& calcualte,
+/*
+ * @brief Force Calculate on Host
+ *
+ * @param ForceStressIat ForceStressIat,contains the Force Stree Iat on Device
+ * and Host
+ * @param force stored the force for each atom on each directions
+ * @param atom_num_grid in force calculate,used for Block nums
+ */
+void cal_force_add(ForceStressIat& calcualte,
                     double* force,
-                    int atom_num_grid)
+                    const int atom_num_grid)
 {
     checkCuda(cudaMemcpy(calcualte.force_host,
                          calcualte.force_device,
@@ -524,9 +592,17 @@ void cal_calculate_cpu(ForceStressIat& calcualte,
         }
     }
 }
-void cal_stress_cpu(ForceStressIat& calcualte,
+/**
+ * @brief Stress Calculate on Host
+ *
+ * @param ForceStressIat ForceStressIat,contains the Force Stree Iat on Device
+ * and Host
+ * @param stress stored the stress for each directions
+ * @param cuda_block in stress compute,used for Block nums
+ */
+void cal_stress_add(ForceStressIat& calcualte,
                      double* stress,
-                     int cuda_block)
+                     const int cuda_block)
 {
     checkCuda(cudaMemcpy(calcualte.stress_host,
                          calcualte.stress_device,
