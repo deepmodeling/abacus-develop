@@ -501,9 +501,12 @@ OBJS_LCAO=DM_gamma.o\
       fvl_dphi_k.o\
       fvnl_dbeta_k.o\
       LCAO_gen_fixedH.o\
-      LCAO_hamilt.o\
       grid_init.o\
-      sparse_format.o\
+      spar_dh.o\
+      spar_exx.o\
+      spar_hsr.o\
+      spar_st.o\
+      spar_u.o\
       LCAO_matrix.o\
       LCAO_nnr.o\
       center2_orb-orb11.o\

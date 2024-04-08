@@ -11,7 +11,7 @@
 template<>
 void ModuleIO::write_proj_band_lcao(
     const psi::Psi<double>* psi,
-    LCAO_Hamilt& uhm,
+    LCAO_Matrix& lm,
     const elecstate::ElecState* pelec,
     const K_Vectors& kv,
     const UnitCell &ucell,
@@ -20,7 +20,7 @@ void ModuleIO::write_proj_band_lcao(
     ModuleBase::TITLE("ModuleIO", "write_proj_band_lcao");
     ModuleBase::timer::tick("ModuleIO", "write_proj_band_lcao");
 
-    const Parallel_Orbitals* pv = uhm.LM->ParaV;
+    const Parallel_Orbitals* pv = lm.ParaV;
 
     int nspin0 = 1;
     if (GlobalV::NSPIN == 2)
@@ -61,7 +61,7 @@ void ModuleIO::write_proj_band_lcao(
                 &GlobalV::NLOCAL,
                 &GlobalV::NLOCAL,
                 &one_float,
-                uhm.LM->Sloc.data(),
+                lm.Sloc.data(),
                 &one_int,
                 &one_int,
                 pv->desc,
@@ -166,7 +166,7 @@ void ModuleIO::write_proj_band_lcao(
 template<>
 void ModuleIO::write_proj_band_lcao(
     const psi::Psi<std::complex<double>>* psi,
-    LCAO_Hamilt& uhm,
+    LCAO_Matrix& lm,
     const elecstate::ElecState* pelec,
     const K_Vectors& kv,
     const UnitCell& ucell,
@@ -175,7 +175,7 @@ void ModuleIO::write_proj_band_lcao(
     ModuleBase::TITLE("ModuleIO", "write_proj_band_lcao");
     ModuleBase::timer::tick("ModuleIO", "write_proj_band_lcao");
 
-    const Parallel_Orbitals* pv = uhm.LM->ParaV;
+    const Parallel_Orbitals* pv = lm.ParaV;
 
     int nspin0 = 1;
     if (GlobalV::NSPIN == 2)
@@ -210,12 +210,15 @@ void ModuleIO::write_proj_band_lcao(
                     // the target matrix is LM->Sloc2 with collumn-major
                     if (GlobalV::NSPIN == 4)
                     {
-                        dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)->updateSk(ik, uhm.LM, 1);
+                        dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)->updateSk(
+                          ik, &lm, 1);
                     }
                     else
                     {
-                        dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)->updateSk(ik, uhm.LM, 1);
+                        dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)->updateSk(
+                          ik, &lm, 1);
                     }
+
                     // calculate Mulk
                     psi->fix_k(ik);
                     psi::Psi<std::complex<double>> Dwfc(psi[0], 1);
@@ -229,16 +232,16 @@ void ModuleIO::write_proj_band_lcao(
                     {
                         const int NB = i + 1;
 
-                        const double one_float[2] = { 1.0, 0.0 }, zero_float[2] = { 0.0, 0.0 };
+                        const double one_float[2] = { 1.0, 0.0 };
+                        const double zero_float[2] = { 0.0, 0.0 };
                         const int one_int = 1;
-                        //   const int two_int=2;
-                        const char T_char = 'T'; // N_char='N',U_char='U'
+                        const char T_char = 'T';
 #ifdef __MPI
                         pzgemv_(&T_char,
                             &GlobalV::NLOCAL,
                             &GlobalV::NLOCAL,
                             &one_float[0],
-                            uhm.LM->Sloc2.data(),
+                            lm.Sloc2.data(),
                             &one_int,
                             &one_int,
                             pv->desc,
@@ -292,14 +295,16 @@ void ModuleIO::write_proj_band_lcao(
             {
                 out << "<norbitals>" << std::setw(2) << GlobalV::NLOCAL << "</norbitals>" << std::endl;
             }
+
             out << "<band_structure nkpoints=\"" << nks << "\" nbands=\"" << GlobalV::NBANDS << "\" units=\"eV\">"
                 << std::endl;
-                for (int ik = 0; ik < nks; ik++)
-                {
-                    for (int ib = 0; ib < GlobalV::NBANDS; ib++)
-                        out << " " << (pelec->ekb(ik + is * nks, ib)) * ModuleBase::Ry_to_eV;
-                    out << std::endl;
-                }
+
+			for (int ik = 0; ik < nks; ik++)
+			{
+				for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+					out << " " << (pelec->ekb(ik + is * nks, ib)) * ModuleBase::Ry_to_eV;
+				out << std::endl;
+			}
             out << "</band_structure>" << std::endl;
 
             for (int i = 0; i < ucell.nat; i++)
@@ -325,24 +330,28 @@ void ModuleIO::write_proj_band_lcao(
                     out << std::setw(2) << "z=\"" << std::setw(40) << N1 + 1 << "\"" << std::endl;
                     out << ">" << std::endl;
                     out << "<data>" << std::endl;
-                        for (int ik = 0; ik < nks; ik++)
-                        {
-                            for (int ib = 0; ib < GlobalV::NBANDS; ib++)
-                            {
-                                if (GlobalV::NSPIN == 1)
-                                    out << std::setw(13) << weight(ik, ib * GlobalV::NLOCAL + w);
-                                else if (GlobalV::NSPIN == 2)
-                                    out << std::setw(13) << weight(ik + nks * is, ib * GlobalV::NLOCAL + w);
-                                else if (GlobalV::NSPIN == 4)
-                                {
-                                    int w0 = w - s0;
-                                    out << std::setw(13)
-                                        << weight(ik, ib * GlobalV::NLOCAL + s0 + 2 * w0)
-                                        + weight(ik, ib * GlobalV::NLOCAL + s0 + 2 * w0 + 1);
-                                }
-                            }
-                            out << std::endl;
-                        }
+					for (int ik = 0; ik < nks; ik++)
+					{
+						for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+						{
+							if (GlobalV::NSPIN == 1)
+							{
+								out << std::setw(13) << weight(ik, ib * GlobalV::NLOCAL + w);
+							}
+							else if (GlobalV::NSPIN == 2)
+							{
+								out << std::setw(13) << weight(ik + nks * is, ib * GlobalV::NLOCAL + w);
+							}
+							else if (GlobalV::NSPIN == 4)
+							{
+								int w0 = w - s0;
+								out << std::setw(13)
+									<< weight(ik, ib * GlobalV::NLOCAL + s0 + 2 * w0)
+									+ weight(ik, ib * GlobalV::NLOCAL + s0 + 2 * w0 + 1);
+							}
+						}
+						out << std::endl;
+					}
                     out << "</data>" << std::endl;
                     out << "</orbital>" << std::endl;
                 } // j

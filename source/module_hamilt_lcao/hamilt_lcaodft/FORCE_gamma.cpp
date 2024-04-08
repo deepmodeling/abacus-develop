@@ -7,7 +7,6 @@
 #ifdef __DEEPKS
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h" //caoyu add for deepks on 20210813
 #endif
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_hamilt.h"
 #include "module_io/write_HS.h"
 #include "module_elecstate/elecstate_lcao.h"
 
@@ -61,8 +60,9 @@ void Force_LCAO_gamma::ftable_gamma(const bool isforce,
 
     // sum up the density matrix with different spin
     // DM->sum_DMR_spin();
-    //
+    
     this->cal_ftvnl_dphi(DM, lm, isforce, isstress, ftvnl_dphi, stvnl_dphi);
+
     this->cal_fvnl_dbeta(DM, isforce, isstress, fvnl_dbeta, svnl_dbeta);
 
     this->cal_fvl_dphi(loc.DM, isforce, isstress, pelec->pot, gint_gamma, fvl_dphi, svl_dphi);
@@ -75,8 +75,14 @@ void Force_LCAO_gamma::ftable_gamma(const bool isforce,
         GlobalC::ld.cal_projected_DM(DM, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD);
         GlobalC::ld.cal_descriptor();
         GlobalC::ld.cal_gedm(GlobalC::ucell.nat);
-        GlobalC::ld
-            .cal_f_delta_gamma(dm_gamma, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD, isstress, svnl_dalpha);
+        GlobalC::ld.cal_f_delta_gamma(
+				dm_gamma, 
+				GlobalC::ucell, 
+				GlobalC::ORB, 
+				GlobalC::GridD, 
+				isstress, 
+				svnl_dalpha);
+
 #ifdef __MPI
         Parallel_Reduce::reduce_all(GlobalC::ld.F_delta.c, GlobalC::ld.F_delta.nr * GlobalC::ld.F_delta.nc);
         if (isstress)
@@ -84,6 +90,7 @@ void Force_LCAO_gamma::ftable_gamma(const bool isforce,
             Parallel_Reduce::reduce_pool(svnl_dalpha.c, svnl_dalpha.nr * svnl_dalpha.nc);
         }
 #endif
+
         if (GlobalV::deepks_out_unittest)
         {
             GlobalC::ld.print_dm(dm_gamma[0]);
