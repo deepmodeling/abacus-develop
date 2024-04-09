@@ -125,9 +125,10 @@ void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, 
             // (2) generate Sq matrix if necessary.
             if (winput::out_spillage == 2)
             {
-                // (obsolete) compute <jY|jY> in plane-wave basis
-                //overlap_Sq[ik] = this->cal_overlap_Sq( ik, npw, static_cast<double>(derivative_order), sf, wfcpw);
-
+#ifndef __LCAO
+                // compute <jY|jY> in plane-wave basis
+                overlap_Sq[ik] = this->cal_overlap_Sq( ik, npw, static_cast<double>(derivative_order), sf, wfcpw);
+#else
                 // compute <jY|jY> with two-center integration
                 assert(derivative_order == 0 || derivative_order == 1);
                 char type = (derivative_order == 0) ? 'S' : 'T';
@@ -155,6 +156,7 @@ void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, 
                                                    INPUT.bessel_nao_sigma,
                                                    tau_cart,
                                                    NumericalBasis::indexgen(natom, lmax));
+#endif
                 ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"cal_overlap_Sq");
             }
         }
