@@ -13,6 +13,7 @@
 //--------------Temporary----------------
 #include "module_base/global_variable.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_hamilt_lcao/module_dftu/dftu.h"
 //---------------------------------------
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
@@ -443,15 +444,23 @@ void ESolver_KS<T, Device>::run(const int istep, UnitCell& ucell)
 				// mixing will restart at this->p_chgmix->mixing_restart steps
 				if (drho <= GlobalV::MIXING_RESTART 
                     && GlobalV::MIXING_RESTART > 0.0 
-                    && this->p_chgmix->mixing_restart > iter)
+                    && this->p_chgmix->mixing_restart_step > iter)
 				{
-					this->p_chgmix->mixing_restart = iter + 1;
+					this->p_chgmix->mixing_restart_step = iter + 1;
 				}
 
 				// drho will be 0 at this->p_chgmix->mixing_restart step, which is not ground state
+				bool not_restart_step = !(iter==this->p_chgmix->mixing_restart_step && GlobalV::MIXING_RESTART > 0.0);
+				// SCF will continue if U is not converged for uramping calculation
+				bool is_U_converged = true;
+				// to avoid unnecessary dependence on dft+u, refactor is needed
+#ifdef __LCAO
+				if (GlobalV::dft_plus_u) is_U_converged = GlobalC::dftu.u_converged();
+#endif
+				//
 				this->conv_elec = (drho < this->scf_thr 
-                    && !(iter==this->p_chgmix->mixing_restart 
-                    && GlobalV::MIXING_RESTART > 0.0));
+                    && not_restart_step
+					&& is_U_converged);
 
 				// If drho < hsolver_error in the first iter or drho < scf_thr, we do not change rho.
 				if (drho < hsolver_error || this->conv_elec)
@@ -466,7 +475,7 @@ void ESolver_KS<T, Device>::run(const int istep, UnitCell& ucell)
 					//----------charge mixing---------------
 					// mixing will restart after this->p_chgmix->mixing_restart steps
 					if (GlobalV::MIXING_RESTART > 0 
-                        && iter == this->p_chgmix->mixing_restart - 1)
+                        && iter == this->p_chgmix->mixing_restart_step - 1)
 					{
 						// do not mix charge density
 					}
@@ -529,10 +538,10 @@ void ESolver_KS<T, Device>::run(const int istep, UnitCell& ucell)
 
 			// notice for restart
 			if (GlobalV::MIXING_RESTART > 0 
-             && iter == this->p_chgmix->mixing_restart - 1 
+             && iter == this->p_chgmix->mixing_restart_step - 1 
              && iter != GlobalV::SCF_NMAX)
 			{
-				std::cout<<"SCF restart after this step!"<<std::endl;
+				std::cout<<" SCF restart after this step!"<<std::endl;
 			}
 		}
 #ifdef __RAPIDJSON
