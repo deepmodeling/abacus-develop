@@ -27,11 +27,11 @@ void LCAO_gen_fixedH::calculate_NL_no(double* HlocR)
 	if(GlobalV::GAMMA_ONLY_LOCAL)
 	{
 	  	//for gamma only.
-		this->build_Nonlocal_beta_new(HlocR, GlobalC::ucell);
+		this->build_Nonlocal_beta_new(HlocR, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD));
 	}
 	else
 	{
-		this->build_Nonlocal_mu_new(HlocR, false, GlobalC::ucell, GlobalC::ORB);
+		this->build_Nonlocal_mu_new(HlocR, false, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD));
 	}
 
     return;
@@ -40,7 +40,7 @@ void LCAO_gen_fixedH::calculate_NL_no(double* HlocR)
 void LCAO_gen_fixedH::calculate_T_no(double* HlocR)
 {
     ModuleBase::TITLE("LCAO_gen_fixedH","calculate_T_no");
-    this->build_ST_new('T', false, GlobalC::ucell, GlobalC::ORB, HlocR);
+    this->build_ST_new('T', false, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD), HlocR);
     return;
 }
 
@@ -48,7 +48,7 @@ void LCAO_gen_fixedH::calculate_S_no(double* SlocR)
 {
     ModuleBase::TITLE("LCAO_gen_fixedH", "calculate_S_no");
     ModuleBase::timer::tick("LCAO_gen_fixedH","calculate_S_no");
-	this->build_ST_new('S', false, GlobalC::ucell, GlobalC::ORB, SlocR);
+	this->build_ST_new('S', false, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD), SlocR);
     ModuleBase::timer::tick("LCAO_gen_fixedH","calculate_S_no");
     return;
 }
@@ -59,6 +59,8 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype,
 	const bool& calc_deri,
 	const UnitCell &ucell,
 	const LCAO_Orbitals& orb,
+	const ORB_gen_tables& uot,
+	Grid_Driver* GridD,
 	double* HSloc,
 	bool cal_syns,
 	double dmax)
@@ -95,9 +97,9 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype,
         {
 			tau1 = atom1->tau[I1];
 
-            //GlobalC::GridD.Find_atom(tau1);
+            //GridD->Find_atom(tau1);
 			AdjacentAtomInfo adjs;
-            GlobalC::GridD.Find_atom(ucell, tau1, T1, I1, &adjs);
+            GridD->Find_atom(ucell, tau1, T1, I1, &adjs);
 			// Record_adj.for_2d() may not called in some case
 			int nnr = pv->nlocstart ? pv->nlocstart[iat1] : 0;
 
@@ -168,18 +170,18 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype,
                                 switch (dtype)
                                 {
                                 case 'S':
-                                    GlobalC::UOT.two_center_bundle->overlap_orb->calculate(T1, L1, N1, M1,
+                                    uot.two_center_bundle->overlap_orb->calculate(T1, L1, N1, M1,
                                             T2, L2, N2, M2, dtau * ucell.lat0, olm);
                                     break;
                                 case 'T':
-                                    GlobalC::UOT.two_center_bundle->kinetic_orb->calculate(T1, L1, N1, M1,
+                                    uot.two_center_bundle->kinetic_orb->calculate(T1, L1, N1, M1,
                                             T2, L2, N2, M2, dtau * ucell.lat0, olm);
                                     break;
                                 default:  // not supposed to happen
 			                        ModuleBase::WARNING_QUIT("LCAO_gen_fixedH::build_ST_new","dtype must be S or T");
                                 }
 #else
-								GlobalC::UOT.snap_psipsi( orb, olm, 0, dtype, 
+								uot.snap_psipsi( orb, olm, 0, dtype,
 										tau1, T1, L1, m1, N1,                  // info of atom1
 										adjs.adjacent_tau[ad], T2, L2, m2, N2, // info of atom2 
 										cal_syns,
@@ -250,7 +252,7 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype,
                                 switch (dtype)
 								{
 									case 'S':
-										GlobalC::UOT.two_center_bundle->overlap_orb->calculate(
+										uot.two_center_bundle->overlap_orb->calculate(
 												T1, 
 												L1, 
 												N1, 
@@ -264,7 +266,7 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype,
 												olm);
 										break;
 									case 'T':
-										GlobalC::UOT.two_center_bundle->kinetic_orb->calculate(
+										uot.two_center_bundle->kinetic_orb->calculate(
 												T1, 
 												L1, 
 												N1, 
@@ -281,7 +283,7 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype,
 										ModuleBase::WARNING_QUIT("LCAO_gen_fixedH::build_ST_new","dtype must be S or T");
 								}
 #else
-								GlobalC::UOT.snap_psipsi( orb, olm, 1, dtype, 
+								uot.snap_psipsi( orb, olm, 1, dtype,
 									tau1, T1, L1, m1, N1,
 									adjs.adjacent_tau[ad], T2, L2, m2, N2
 									);
@@ -405,7 +407,7 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype,
 					for (int ad0=0; ad0 < adjs.adj_num+1; ++ad0)
 					{
 						const int T0 = adjs.ntype[ad0];
-						//const int I0 = GlobalC::GridD.getNatom(ad0);
+						//const int I0 = GridD->getNatom(ad0);
 						//const int iat0 = ucell.itia2iat(T0, I0);
 						//const int start0 = ucell.itiaiw2iwt(T0, I0, 0);
 						tau0 = adjs.adjacent_tau[ad0];
@@ -463,7 +465,12 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype,
 typedef std::tuple<int,int,int,int> key_tuple;
 
 #include "record_adj.h" //mohan add 2012-07-06
-void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri, const UnitCell &ucell, const LCAO_Orbitals &orb)
+void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc,
+	const bool &calc_deri,
+	const UnitCell &ucell,
+	const LCAO_Orbitals &orb,
+	const ORB_gen_tables &uot,
+	Grid_Driver* GridD)
 {
     ModuleBase::TITLE("LCAO_gen_fixedH","b_NL_mu_new");
     ModuleBase::timer::tick("LCAO_gen_fixedH", "b_NL_mu_new");
@@ -512,7 +519,7 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 		const double Rcut_Beta = ucell.infoNL.Beta[it].get_rcut_max();
 		const ModuleBase::Vector3<double> tau = ucell.atoms[it].tau[ia];
 		AdjacentAtomInfo adjs;
-        GlobalC::GridD.Find_atom(ucell, tau ,it, ia, &adjs);
+        GridD->Find_atom(ucell, tau ,it, ia, &adjs);
 
 		if(!calc_deri)
 		{
@@ -528,7 +535,7 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 			const int T1 = adjs.ntype[ad];
 			const int I1 = adjs.natom[ad];
 			const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
-			const double Rcut_AO1 = GlobalC::ORB.Phi[T1].getRcut();
+			const double Rcut_AO1 = orb.Phi[T1].getRcut();
 
 			const ModuleBase::Vector3<double> &tau1 = adjs.adjacent_tau[ad];
 			const Atom* atom1 = &ucell.atoms[T1];
@@ -577,11 +584,11 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
                 int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
 
                 ModuleBase::Vector3<double> dtau = tau - tau1;
-                GlobalC::UOT.two_center_bundle->overlap_orb_beta->snap(
+                uot.two_center_bundle->overlap_orb_beta->snap(
                         T1, L1, N1, M1, it, dtau * ucell.lat0, calc_deri, nlm);
 #else
-				GlobalC::UOT.snap_psibeta_half(
-					GlobalC::ORB,
+				uot.snap_psibeta_half(
+					orb,
 					ucell.infoNL,
 					nlm, tau1, T1,
 					atom1->iw2l[ iw1_0 ], // L1
@@ -650,9 +657,9 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 		const Atom* atom1 = &ucell.atoms[T1];
 		const int I1 = ucell.iat2ia[iat1];
 		{
-			//GlobalC::GridD.Find_atom( atom1->tau[I1] );
+			//GridD->Find_atom( atom1->tau[I1] );
 			AdjacentAtomInfo adjs;
-			GlobalC::GridD.Find_atom(ucell, atom1->tau[I1] ,T1, I1, &adjs);
+			GridD->Find_atom(ucell, atom1->tau[I1] ,T1, I1, &adjs);
 			const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
 			// Record_adj.for_2d() may not called in some case
 			int nnr = pv->nlocstart ? pv->nlocstart[iat1] : 0;
@@ -680,14 +687,14 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 				distance = dtau.norm2() * pow(ucell.lat0,2);
 				// this rcut is in order to make nnr consistent 
 				// with other matrix.
-				rcut = pow(GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Phi[T2].getRcut(),2);
+				rcut = pow(orb.Phi[T1].getRcut() + orb.Phi[T2].getRcut(),2);
 				if(distance < rcut) is_adj = true;
 				else if(distance >= rcut)
 				{
 					for (int ad0 = 0; ad0 < adjs.adj_num+1; ++ad0)
 					{
 						const int T0 = adjs.ntype[ad0];
-						//const int I0 = GlobalC::GridD.getNatom(ad0);
+						//const int I0 = GridD->getNatom(ad0);
 						//const int T0 = RA.info[iat1][ad0][3];
 						//const int I0 = RA.info[iat1][ad0][4];
 						//const int iat0 = ucell.itia2iat(T0, I0);
@@ -700,8 +707,8 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 						const double distance1 = dtau1.norm2() * pow(ucell.lat0,2);
 						const double distance2 = dtau2.norm2() * pow(ucell.lat0,2);
 
-						rcut1 = pow(GlobalC::ORB.Phi[T1].getRcut() + ucell.infoNL.Beta[T0].get_rcut_max(),2);
-						rcut2 = pow(GlobalC::ORB.Phi[T2].getRcut() + ucell.infoNL.Beta[T0].get_rcut_max(),2);
+						rcut1 = pow(orb.Phi[T1].getRcut() + ucell.infoNL.Beta[T0].get_rcut_max(),2);
+						rcut2 = pow(orb.Phi[T2].getRcut() + ucell.infoNL.Beta[T0].get_rcut_max(),2);
 
 						if( distance1 < rcut1 && distance2 < rcut2 )
 						{
@@ -728,7 +735,7 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 							continue;
 						}
 
-						//const int I0 = GlobalC::GridD.getNatom(ad0);
+						//const int I0 = GridD->getNatom(ad0);
 						//const int start0 = ucell.itiaiw2iwt(T0, I0, 0);
 						tau0 = adjs.adjacent_tau[ad0];
 
@@ -738,8 +745,8 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 						const double distance2 = dtau2.norm2() * pow(ucell.lat0,2);
 
 						// seems a bug here!! mohan 2011-06-17
-						rcut1 = pow(GlobalC::ORB.Phi[T1].getRcut() + ucell.infoNL.Beta[T0].get_rcut_max(),2);
-						rcut2 = pow(GlobalC::ORB.Phi[T2].getRcut() + ucell.infoNL.Beta[T0].get_rcut_max(),2);
+						rcut1 = pow(orb.Phi[T1].getRcut() + ucell.infoNL.Beta[T0].get_rcut_max(),2);
+						rcut2 = pow(orb.Phi[T2].getRcut() + ucell.infoNL.Beta[T0].get_rcut_max(),2);
 
 						if(distance1 >= rcut1 || distance2 >= rcut2)
 						{
@@ -1025,7 +1032,11 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 	return;
 }
 
-void LCAO_gen_fixedH::build_Nonlocal_beta_new(double* HSloc, const UnitCell &ucell) //update by liuyu 2021-04-07
+void LCAO_gen_fixedH::build_Nonlocal_beta_new(double* HSloc,
+	const UnitCell &ucell,
+	const LCAO_Orbitals& orb,
+	const ORB_gen_tables& uot,
+	Grid_Driver* GridD) //update by liuyu 2021-04-07
 {
     ModuleBase::TITLE("LCAO_gen_fixedH","b_NL_beta_new");
     ModuleBase::timer::tick ("LCAO_gen_fixedH","b_NL_beta_new");
@@ -1038,7 +1049,7 @@ void LCAO_gen_fixedH::build_Nonlocal_beta_new(double* HSloc, const UnitCell &uce
     mkl_set_num_threads(1);
 #endif
 
-    const std::vector<AdjacentAtomInfo> adjs_all = GlobalC::GridD.get_adjs(ucell);
+    const std::vector<AdjacentAtomInfo> adjs_all = GridD->get_adjs(ucell);
 
 #ifdef _OPENMP
     #pragma omp parallel
@@ -1076,7 +1087,7 @@ void LCAO_gen_fixedH::build_Nonlocal_beta_new(double* HSloc, const UnitCell &uce
                 const int T1 = adjs_all[iat].ntype[ad_count];
                 const int I1 = adjs_all[iat].natom[ad_count];
                 const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
-                const double Rcut_AO1 = GlobalC::ORB.Phi[T1].getRcut();
+                const double Rcut_AO1 = orb.Phi[T1].getRcut();
                 const ModuleBase::Vector3<double> tau1 = adjs_all[iat].adjacent_tau[ad_count];
                 const Atom* atom1 = &ucell.atoms[T1];
                 const int nw1_tot = atom1->nw*npol;
@@ -1122,11 +1133,11 @@ void LCAO_gen_fixedH::build_Nonlocal_beta_new(double* HSloc, const UnitCell &uce
                     int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
 
                     ModuleBase::Vector3<double> dtau = ucell.atoms[T0].tau[I0] - tau1;
-                    GlobalC::UOT.two_center_bundle->overlap_orb_beta->snap(
+                    uot.two_center_bundle->overlap_orb_beta->snap(
                             T1, L1, N1, M1, T0, dtau * ucell.lat0, false, nlm);
 #else
-                    GlobalC::UOT.snap_psibeta_half(
-                        GlobalC::ORB,
+                    uot.snap_psibeta_half(
+                        orb,
                         ucell.infoNL,
                         nlm, tau1, T1,
                         atom1->iw2l[ iw1_0 ], // L1
@@ -1159,7 +1170,7 @@ void LCAO_gen_fixedH::build_Nonlocal_beta_new(double* HSloc, const UnitCell &uce
                 const ModuleBase::Vector3<double> tau1 = adjs_all[iat].adjacent_tau[ad1_count];
                 const Atom* atom1 = &ucell.atoms[T1];
                 const int nw1_tot = atom1->nw*npol;
-                const double Rcut_AO1 = GlobalC::ORB.Phi[T1].getRcut();
+                const double Rcut_AO1 = orb.Phi[T1].getRcut();
 
                 for (int ad2_count=0; ad2_count < adjs_all[iat].adj_num + 1; ad2_count++)
                 {
@@ -1169,7 +1180,7 @@ void LCAO_gen_fixedH::build_Nonlocal_beta_new(double* HSloc, const UnitCell &uce
                     const ModuleBase::Vector3<double> tau2 = adjs_all[iat].adjacent_tau[ad2_count];
                     const Atom* atom2 = &ucell.atoms[T2];
                     const int nw2_tot = atom2->nw*npol;
-                    const double Rcut_AO2 = GlobalC::ORB.Phi[T2].getRcut();
+                    const double Rcut_AO2 = orb.Phi[T2].getRcut();
                     const double dist1 = (tau1-tau0).norm() * ucell.lat0;
                     const double dist2 = (tau2-tau0).norm() * ucell.lat0;
 

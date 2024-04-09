@@ -247,7 +247,7 @@ void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv,
     // calculate dS = <phi | dphi>
     //-----------------------------
     bool cal_deri = true;
-    gen_h.build_ST_new('S', cal_deri, GlobalC::ucell, GlobalC::ORB, gen_h.LM->SlocR.data());
+    gen_h.build_ST_new('S', cal_deri, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD), gen_h.LM->SlocR.data());
 
     //-----------------------------------------
     // (2) allocate for <phi | T + Vnl | dphi>
@@ -270,10 +270,10 @@ void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv,
 
     // calculate dT=<phi|kin|dphi> in LCAO
     // calculate T + VNL(P1) in LCAO basis
-    gen_h.build_ST_new('T', cal_deri, GlobalC::ucell, GlobalC::ORB, gen_h.LM->Hloc_fixedR.data());
+    gen_h.build_ST_new('T', cal_deri, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD), gen_h.LM->Hloc_fixedR.data());
 
     // calculate dVnl=<phi|dVnl|dphi> in LCAO
-    gen_h.build_Nonlocal_mu_new(gen_h.LM->Hloc_fixed.data(), cal_deri, GlobalC::ucell, GlobalC::ORB);
+    gen_h.build_Nonlocal_mu_new(gen_h.LM->Hloc_fixed.data(), cal_deri, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD));
 
     // calculate asynchronous S matrix to output for Hefei-NAMD
     if (INPUT.cal_syns)
@@ -285,6 +285,8 @@ void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv,
 				cal_deri, 
 				GlobalC::ucell,
                 GlobalC::ORB,
+                GlobalC::UOT,
+                &(GlobalC::GridD),
 				lm.SlocR.data(), 
 				INPUT.cal_syns, 
 				INPUT.dmax);
