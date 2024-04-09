@@ -326,6 +326,15 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 											this->LM->DHloc_fixedR_x[nnr] = olm[0];
 											this->LM->DHloc_fixedR_y[nnr] = olm[1];
 											this->LM->DHloc_fixedR_z[nnr] = olm[2];
+											if(GlobalV::CAL_STRESS)
+											{
+												this->LM->stvnl11[nnr] = olm[0] * dtau.x;
+												this->LM->stvnl12[nnr] = olm[0] * dtau.y;
+												this->LM->stvnl13[nnr] = olm[0] * dtau.z;
+												this->LM->stvnl22[nnr] = olm[1] * dtau.y;
+												this->LM->stvnl23[nnr] = olm[1] * dtau.z;
+												this->LM->stvnl33[nnr] = olm[2] * dtau.z;
+											}
 										}
 										else
 										{
@@ -335,23 +344,33 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 												this->LM->DHloc_fixedR_x[nnr] = olm[0];
 												this->LM->DHloc_fixedR_y[nnr] = olm[1];
 												this->LM->DHloc_fixedR_z[nnr] = olm[2];
+												if(GlobalV::CAL_STRESS)
+												{
+													this->LM->stvnl11[nnr] = olm[0] * dtau.x;
+													this->LM->stvnl12[nnr] = olm[0] * dtau.y;
+													this->LM->stvnl13[nnr] = olm[0] * dtau.z;
+													this->LM->stvnl22[nnr] = olm[1] * dtau.y;
+													this->LM->stvnl23[nnr] = olm[1] * dtau.z;
+													this->LM->stvnl33[nnr] = olm[2] * dtau.z;
+												}
 											}
 											else
 											{
 												this->LM->DHloc_fixedR_x[nnr] = 0.0;
 												this->LM->DHloc_fixedR_y[nnr] = 0.0;
 												this->LM->DHloc_fixedR_z[nnr] = 0.0;
+												if(GlobalV::CAL_STRESS)
+												{
+													this->LM->stvnl11[nnr] = 0.0;
+													this->LM->stvnl12[nnr] = 0.0;
+													this->LM->stvnl13[nnr] = 0.0;
+													this->LM->stvnl22[nnr] = 0.0;
+													this->LM->stvnl23[nnr] = 0.0;
+													this->LM->stvnl33[nnr] = 0.0;
+												}
 											}
 										}
-										if(GlobalV::CAL_STRESS)
-										{
-											this->LM->stvnl11[nnr] = olm[0] * dtau.x;
-											this->LM->stvnl12[nnr] = olm[0] * dtau.y;
-											this->LM->stvnl13[nnr] = olm[0] * dtau.z;
-											this->LM->stvnl22[nnr] = olm[1] * dtau.y;
-											this->LM->stvnl23[nnr] = olm[1] * dtau.z;
-											this->LM->stvnl33[nnr] = olm[2] * dtau.z;
-										}
+										
 									}
 									++total_nnr;
 									++nnr;

@@ -317,6 +317,7 @@ void Force_LCAO_k::cal_fvnl_dbeta_k(const elecstate::DensityMatrix<std::complex<
                             int nnr_inner = 0;
                             int dhsize = pv.get_row_size(iat1)*pv.get_col_size(iat2);
                             std::vector<std::vector<double>> dhvnl(3, std::vector<double>(dhsize, 0.0));
+                            std::vector<std::vector<double>> dhvnl1(3, std::vector<double>(dhsize, 0.0));
                             for (int j = 0; j < atom1->nw * GlobalV::NPOL; j++)
                             {
                                 const int j0 = j / GlobalV::NPOL; // added by zhengdy-soc
@@ -346,7 +347,6 @@ void Force_LCAO_k::cal_fvnl_dbeta_k(const elecstate::DensityMatrix<std::complex<
                                         {
                                             nlm_2[i] = nlm_tot[iat][key1][iw1_all][i + 1];
                                         }
-                                        std::complex<double> nlm[4][3] = {ModuleBase::ZERO};
                                         int is0 = (j-j0*GlobalV::NPOL) + (k-k0*GlobalV::NPOL) * 2;
                                         for (int no = 0; no < GlobalC::ucell.atoms[T0].ncpp.non_zero_count_soc[is0]; no++)
                                         {
@@ -377,6 +377,49 @@ void Force_LCAO_k::cal_fvnl_dbeta_k(const elecstate::DensityMatrix<std::complex<
                                                     dhvnl[ir][nnr_inner] += nlm_2[ir][p1]*nlm_1[p2]*
                                                             (GlobalC::ucell.atoms[T0].ncpp.d_so(0, p2, p1).real()
                                                             - GlobalC::ucell.atoms[T0].ncpp.d_so(3, p2, p1).real())*0.5;
+                                                }
+                                            }
+                                        }
+                                        if (isstress)
+                                        {
+                                            std::vector<double> nlm_1 = nlm_tot[iat][key1][iw1_all][0];
+                                            std::vector<std::vector<double>> nlm_2;
+                                            nlm_2.resize(3);
+                                            for (int i = 0; i < 3; i++)
+                                            {
+                                                nlm_2[i] = nlm_tot[iat][key2][iw2_all][i + 1];
+                                            }
+                                            int is0 = (j-j0*GlobalV::NPOL) + (k-k0*GlobalV::NPOL) * 2;
+                                            for (int no = 0; no < GlobalC::ucell.atoms[T0].ncpp.non_zero_count_soc[is0]; no++)
+                                            {
+                                                const int p1 = GlobalC::ucell.atoms[T0].ncpp.index1_soc[is0][no];
+                                                const int p2 = GlobalC::ucell.atoms[T0].ncpp.index2_soc[is0][no];
+                                                for (int ir = 0; ir < 3; ir++)
+                                                {
+                                                    if (is0 == 0)
+                                                    {
+                                                        dhvnl1[ir][nnr_inner] += nlm_2[ir][p1]*nlm_1[p2]*
+                                                                (GlobalC::ucell.atoms[T0].ncpp.d_so(0, p2, p1).real()
+                                                                + GlobalC::ucell.atoms[T0].ncpp.d_so(3, p2, p1).real())*0.5;
+                                                    }
+                                                    else if (is0 == 1)
+                                                    {
+                                                        dhvnl1[ir][nnr_inner] += nlm_2[ir][p1]*nlm_1[p2]*
+                                                                (GlobalC::ucell.atoms[T0].ncpp.d_so(1, p2, p1).real()
+                                                                + GlobalC::ucell.atoms[T0].ncpp.d_so(2, p2, p1).real())*0.5;
+                                                    }
+                                                    else if (is0 == 2)
+                                                    {
+                                                        dhvnl1[ir][nnr_inner] += nlm_2[ir][p1]*nlm_1[p2]*
+                                                                (-GlobalC::ucell.atoms[T0].ncpp.d_so(1, p2, p1).imag()
+                                                                +GlobalC::ucell.atoms[T0].ncpp.d_so(2, p2, p1).imag())*0.5;
+                                                    }
+                                                    else if (is0 == 3)
+                                                    {
+                                                        dhvnl1[ir][nnr_inner] += nlm_2[ir][p1]*nlm_1[p2]*
+                                                                (GlobalC::ucell.atoms[T0].ncpp.d_so(0, p2, p1).real()
+                                                                - GlobalC::ucell.atoms[T0].ncpp.d_so(3, p2, p1).real())*0.5;
+                                                    }
                                                 }
                                             }
                                         }
@@ -488,7 +531,21 @@ void Force_LCAO_k::cal_fvnl_dbeta_k(const elecstate::DensityMatrix<std::complex<
                                 }
                                 if (isstress)
                                 {
-                                    ModuleBase::WARNING_QUIT("Force_LCAO_k::cal_fvnl_dbeta_k", "not implemented for stress in soc calculation");
+                                    for (int ir = 0; ir < dhsize; ir++)
+                                    {
+                                        for (int jpol = 0; jpol < 3; jpol++)
+                                        {
+                                            if (isstress)
+                                            {
+                                                for (int ipol = jpol; ipol < 3; ipol++)
+                                                {
+                                                    local_svnl_dbeta(jpol, ipol)
+                                                        += tmp_matrix_ptr[0][ir]
+                                                            * (dhvnl[jpol][ir] * r1[ipol] + dhvnl1[jpol][ir] * r0[ipol]);
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }         // ad0
