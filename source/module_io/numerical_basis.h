@@ -6,7 +6,6 @@
 #ifndef NUMERICAL_BASIS_H
 #define NUMERICAL_BASIS_H
 #include <vector>
-#include <set>
 
 #include "bessel_basis.h"
 #include "module_base/complexarray.h"
@@ -33,7 +32,6 @@ class Numerical_Basis
     void start_from_file_k(const int& ik, ModuleBase::ComplexMatrix& psi, const Structure_Factor& sf, const ModulePW::PW_Basis_K* wfcpw);
     void output_overlap(const psi::Psi<std::complex<double>>& psi, const Structure_Factor& sf, const K_Vectors& kv, const ModulePW::PW_Basis_K* wfcpw);
 
-
   private:
     bool init_label = false;
 
@@ -41,13 +39,6 @@ class Numerical_Basis
 
     std::vector<ModuleBase::IntArray> mu_index;
     static std::vector<ModuleBase::IntArray> init_mu_index(void);
-
-    // a composite index has the form of (itype, iatom, l, m)
-    using index_t = std::tuple<int, int, int, int>;
-    std::vector<index_t> index_;
-    static std::vector<index_t> indexgen(const std::vector<int>& natom,
-                                         const std::vector<int>& lmax);
-    
 
     void numerical_atomic_wfc(const int& ik,
                               const ModulePW::PW_Basis_K* wfcpw,
@@ -67,18 +58,6 @@ class Numerical_Basis
                                             const double derivative_order,
                                             const Structure_Factor& sf,
                                             const ModulePW::PW_Basis_K* wfcpw) const;
-
-    // computed by two-center integration
-    ModuleBase::ComplexArray cal_overlap_Sq(
-        const char type, // 'S' or 'T'
-        const int lmax,
-        const int nbes,
-        const double rcut,
-        const double smoothing_sigma,
-        const double dr,
-        const std::vector<std::vector<ModuleBase::Vector3<double>>>& R,
-        const std::vector<index_t> mu_index
-    ) const;
 
     static ModuleBase::matrix cal_overlap_V(const ModulePW::PW_Basis_K* wfcpw,
                                             const psi::Psi<std::complex<double>>& psi,

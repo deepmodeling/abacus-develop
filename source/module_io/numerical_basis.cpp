@@ -11,8 +11,7 @@
 #include <algorithm>
 #include <vector>
 #include "module_base/timer.h"
-#include "module_basis/module_nao/two_center_integrator.h"
-
+#include "module_io/numerical_basis_jyjy.h"
 Numerical_Basis::Numerical_Basis() {}
 Numerical_Basis::~Numerical_Basis() {}
 
@@ -126,37 +125,36 @@ void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, 
             // (2) generate Sq matrix if necessary.
             if (winput::out_spillage == 2)
             {
-                // compute <jY|jY> in plane-wave basis (obsolete!)
+                // (obsolete) compute <jY|jY> in plane-wave basis
                 //overlap_Sq[ik] = this->cal_overlap_Sq( ik, npw, static_cast<double>(derivative_order), sf, wfcpw);
 
                 // compute <jY|jY> with two-center integration
                 assert(derivative_order == 0 || derivative_order == 1);
                 char type = (derivative_order == 0) ? 'S' : 'T';
-                double dr = 0.005; // grid spacing for SphbesRadials; smaller for higher precision
-
                 std::vector<int> natom;
                 std::vector<int> lmax;
-                std::vector<std::vector<ModuleBase::Vector3<double>>> R;
+                std::vector<std::vector<ModuleBase::Vector3<double>>> tau_cart;
                 for (int it = 0; it < GlobalC::ucell.ntype; ++it)
                 {
                     natom.push_back(GlobalC::ucell.atoms[it].na);
                     lmax.push_back(GlobalC::ucell.atoms[it].nwl);
-                    R.emplace_back();
+                    tau_cart.emplace_back();
 
                     for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ++ia)
                     {
-                        R[it].push_back(GlobalC::ucell.atoms[it].tau[ia] * GlobalC::ucell.lat0);
+                        tau_cart[it].push_back(GlobalC::ucell.atoms[it].tau[ia] 
+                                                * GlobalC::ucell.lat0);
                     }
                 }
 
-                overlap_Sq[ik] = cal_overlap_Sq(type,
-                                                GlobalC::ucell.lmaxmax,
-                                                this->bessel_basis.get_ecut_number(),
-                                                INPUT.bessel_nao_rcut,
-                                                INPUT.bessel_nao_sigma,
-                                                dr,
-                                                R,
-                                                indexgen(natom, lmax));
+                overlap_Sq[ik] = 
+                    NumericalBasis::cal_overlap_Sq(type,
+                                                   GlobalC::ucell.lmaxmax,
+                                                   this->bessel_basis.get_ecut_number(),
+                                                   INPUT.bessel_nao_rcut,
+                                                   INPUT.bessel_nao_sigma,
+                                                   tau_cart,
+                                                   NumericalBasis::indexgen(natom, lmax));
                 ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"cal_overlap_Sq");
             }
         }
@@ -171,7 +169,7 @@ void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, 
         for (int ik = 0; ik < kv.nks; ik++)
         {
             Parallel_Reduce::reduce_pool(overlap_Q[ik].ptr, overlap_Q[ik].getSize());
-            Parallel_Reduce::reduce_pool(overlap_Sq[ik].ptr, overlap_Sq[ik].getSize());
+            //Parallel_Reduce::reduce_pool(overlap_Sq[ik].ptr, overlap_Sq[ik].getSize());
         }
         Parallel_Reduce::reduce_pool(overlap_V.c, overlap_V.nr * overlap_V.nc);		// Peize Lin add 2020.04.23
     #endif
@@ -398,71 +396,6 @@ ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Sq(const int& ik,
     return overlap_Sq;
 }
 
-ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Sq(
-    const char type,
-    const int lmax,
-    const int nbes,
-    const double rcut,
-    const double smoothing_sigma,
-    const double dr,
-    const std::vector<std::vector<ModuleBase::Vector3<double>>>& R,
-    const std::vector<Numerical_Basis::index_t> mu_index
-) const
-{
-    ModuleBase::TITLE("Numerical_Basis","cal_overlap_Sq");
-    ModuleBase::timer::tick("Numerical_Basis","cal_overlap_Sq (two-center integration)");
-
-	GlobalV::ofs_running << " OUTPUT THE OVERLAP BETWEEN SPHERICAL BESSEL FUNCTIONS"  << std::endl;
-	GlobalV::ofs_running << " S = < J_mu,q1 | J_nu,q2 >" << std::endl;
-
-    int nlocal = mu_index.size();
-
-    ModuleBase::ComplexArray overlap_Sq(nlocal, nlocal, nbes, nbes);
-    overlap_Sq.zero_out();
-
-    RadialCollection orb;
-    orb.build(lmax, nbes, rcut, smoothing_sigma, dr);
-
-    ModuleBase::SphericalBesselTransformer sbt;
-    orb.set_transformer(sbt);
-
-    double rmax = orb.rcut_max() * 2.0;
-    int nr = static_cast<int>(rmax / dr) + 1;
-    
-    orb.set_uniform_grid(true, nr, rmax, 'i', true);
-
-    TwoCenterIntegrator intor;
-    intor.tabulate(orb, orb, type, nr, rmax);
-
-    // traverse the vector of composite index (itype, iatom, l, m)
-    int t1, a1, l1, m1, t2, a2, l2, m2;
-    for (auto it1 = mu_index.cbegin(); it1 != mu_index.end(); ++it1)
-    {
-        std::tie(t1, a1, l1, m1) = *it1;
-        for (auto it2 = mu_index.cbegin(); it2 != mu_index.end(); ++it2)
-        {
-            std::tie(t2, a2, l2, m2) = *it2;
-            ModuleBase::Vector3<double> dR = R[t2][a2] - R[t1][a1];
-            for (int zeta1 = 0; zeta1 < nbes; ++zeta1)
-            {
-                for (int zeta2 = 0; zeta2 < nbes; ++zeta2)
-                {
-                    double elem;
-                    intor.calculate(t1, l1, zeta1, m1,
-                                    t2, l2, zeta2, m2,
-                                    dR, &elem);
-                    overlap_Sq(it1 - mu_index.begin(),
-                               it2 - mu_index.begin(),
-                               zeta1, zeta2) = elem;
-                }
-            }
-        }
-    }
-
-    ModuleBase::timer::tick("Numerical_Basis","cal_overlap_Sq");
-    return overlap_Sq;
-}
-
 
 
 
@@ -518,12 +451,12 @@ std::vector<double> Numerical_Basis::cal_gpow (const std::vector<ModuleBase::Vec
     {
         if (derivative_order>=0)
         {
-            gpow[ig] = std::pow(gk[ig].norm2(),derivative_order);
+            gpow[ig] = std::pow(gk[ig].norm2() * GlobalC::ucell.tpiba2, derivative_order);
         }
         else
         {
             if (gk[ig].norm2() >= thr)
-                gpow[ig] = std::pow(gk[ig].norm2(),derivative_order);
+                gpow[ig] = std::pow(gk[ig].norm2() * GlobalC::ucell.tpiba2, derivative_order);
         }
     }
     return gpow;
@@ -568,31 +501,6 @@ std::vector<ModuleBase::IntArray> Numerical_Basis::init_mu_index(void)
         }
     }
     return mu_index_;
-}
-
-std::vector<Numerical_Basis::index_t> Numerical_Basis::indexgen(const std::vector<int>& natom,
-                                                                const std::vector<int>& lmax)
-{
-#ifdef __DEBUG
-    assert(natom.size() == lmax.size());
-#endif
-    std::vector<index_t> index;
-    for (size_t itype = 0; itype < natom.size(); ++itype)
-    {
-        for (int iatom = 0; iatom < natom[itype]; ++iatom)
-        {
-            for (int l = 0; l <= lmax[itype]; ++l)
-            {
-                for (int M = 0; M < 2*l+1; ++M)
-                {
-                    // convert the "abacus M" to the conventional m
-                    int m = (M % 2 == 0) ? -M/2 : (M+1)/2;
-                    index.emplace_back(itype, iatom, l, m);
-                }
-            }
-        }
-    }
-    return index;
 }
 
 void Numerical_Basis::numerical_atomic_wfc(const int& ik,

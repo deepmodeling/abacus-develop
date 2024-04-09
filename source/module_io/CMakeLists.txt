@@ -8,6 +8,7 @@ list(APPEND objects
     nscf_band.cpp
     write_istate_info.cpp
     numerical_basis.cpp
+    numerical_basis_jyjy.cpp
     numerical_descriptor.cpp
     output.cpp
     print_info.cpp
