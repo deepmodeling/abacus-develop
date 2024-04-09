@@ -141,8 +141,7 @@ double Grid_MeshBall::deal_with_atom_spillage(const double *pos)
 	double r2 = 100000;
 	double cell[3];
 	double dx;
-//old:for(int i=0; i<2; i++)
-//new: mohan add 2011-04-23
+
 	for(int i=-1; i<=1; i++)
 	{
 		for(int j=-1; j<=1; j++)

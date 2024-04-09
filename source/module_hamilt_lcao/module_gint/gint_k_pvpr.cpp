@@ -111,7 +111,8 @@ void Gint_k::folding_vl_k(const int &ik,
 
     auto init_pvp = [&](int num_threads, int thread_id)
     {
-        int beg, len;
+        int beg=0;
+        int len=0;
         ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, lgd * lgd, 256, beg, len);
         ModuleBase::GlobalFunc::ZEROS(pvp_base + beg, len);
         if(GlobalV::NSPIN==4)

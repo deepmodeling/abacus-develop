@@ -297,10 +297,6 @@ void Grid_BigCell::grid_expansion_index(bool f2normal, int *target)const
 {
 	ModuleBase::TITLE("Grid_BigCell","grid_expansion_index");
 	ModuleBase::timer::tick("Grid_BigCell","grid_expansion_index");
-//	std::cout << " ncx=" << ncx << " ncy=" << ncy << " ncz=" << ncz << std::endl;
-//	std::stringstream ss;
-//	ss << GlobalV::global_out_dir << "expand_grid.dat";
-//	std::ofstream ofs(ss.str().c_str());
 	
 	int ii,jj,kk,in_ext,in_normal;
 	for(int i=0; i<this->nxe; i++)
@@ -355,18 +351,12 @@ void Grid_BigCell::grid_expansion_index(bool f2normal, int *target)const
 				}
 				else
 				{
-					//std::cout << "i=" << ii << " j=" << jj << " k=" << kk << std::endl;
-					//std::cout << "box1=" << box1 << " box2=" << box2 << " box3=" << box3 << std::endl;
-
 					// if ii < 0, we need to make ii > 0.
 					// so we add 10000 layers. It should be enough.
 					// ii, jj, kk shoudl -- ?????????????
 					ii = (ii + 10000 * nbx) % nbx;
 					jj = (jj + 10000 * nby) % nby;
 					kk = (kk + 10000 * nbz) % nbz;
-
-					//std::cout << "ii=" << ii << " jj=" << jj << " kk=" << kk << std::endl;				
-					//int ok; cin >> ok;
 
 					assert(ii>=0);
 					assert(jj>=0);
@@ -380,14 +370,6 @@ void Grid_BigCell::grid_expansion_index(bool f2normal, int *target)const
 						
 						// target: index2normal
 						target[in_ext] = in_normal;
-
-						/*
-						   if(in_ext == 5816805) 
-						   {
-						   std::cout << "\n index2normal[5816805]=" << in_normal << std::endl;
-						   BLOCK_HERE("check index2normal");
-						   }
-						 */
 					}
 					else
 					{

@@ -121,20 +121,28 @@ inline int setBufferParameter(
         for(int irow=0, grow=0; grow<GlobalV::NLOCAL; ++irow)
         {
             grow=Local_Orbital_wfc::globalIndex(irow, nblk, nprows, iprow);
-            if (grow >= GlobalV::NLOCAL)
-                continue;
-            int lrow = gt.trace_lo[grow];
-            if (lrow < 0)
-                continue;
+			if (grow >= GlobalV::NLOCAL)
+			{
+				continue;
+			}
+			int lrow = gt.trace_lo[grow];
+			if (lrow < 0)
+			{
+				continue;
+			}
 
             for(int icol=0, gcol=0; gcol<GlobalV::NLOCAL; ++icol)
             {
                 gcol=Local_Orbital_wfc::globalIndex(icol,nblk, npcols, ipcol);
-                if (gcol >= GlobalV::NLOCAL)
-                    continue;
+				if (gcol >= GlobalV::NLOCAL)
+				{
+					continue;
+				}
                 int lcol = gt.trace_lo[gcol];
-                if (lcol < 0)
-                    continue;
+				if (lcol < 0)
+				{
+					continue;
+				}
                 s_global_index[pos]=grow;
                 s_global_index[pos+1]=gcol;
                 s_local_index[pos]=lrow;
@@ -236,12 +244,12 @@ void Gint_Gamma::vl_grid_to_2D(const double* vl_grid, const Parallel_2D& p2d, co
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "vlocal data are put in sender_buffer, size(M):", this->sender_size*8/1024/1024);
 #endif
 
-    // use mpi_alltoall to get local data
-    #ifdef __MPI
-    MPI_Alltoallv(this->sender_buffer, this->sender_size_process, this->sender_displacement_process, MPI_DOUBLE,
-                  this->receiver_buffer, this->receiver_size_process,
-        this->receiver_displacement_process, MPI_DOUBLE, p2d.comm_2D);
-    #endif
+	// use mpi_alltoall to get local data
+#ifdef __MPI
+	MPI_Alltoallv(this->sender_buffer, this->sender_size_process, this->sender_displacement_process, MPI_DOUBLE,
+			this->receiver_buffer, this->receiver_size_process,
+			this->receiver_displacement_process, MPI_DOUBLE, p2d.comm_2D);
+#endif
 
 #ifdef __DEBUG
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "vlocal data are exchanged, received size(M):", this->receiver_size*8/1024/1024);

@@ -375,7 +375,10 @@ void Grid_Technique::init_atoms_on_grid2(const int* index2normal)
 			
 				// mohan add 2010-07-01
 				int f = ind_bigcell[normal];
-				if(!bigcell_on_processor[normal]) continue;
+				if(!bigcell_on_processor[normal]) 
+				{
+					continue;
+				}
 				
 				// it's not the normal order to calculate which_atom
 				// and which_bigcell, especailly in 1D array. 
@@ -509,13 +512,6 @@ void Grid_Technique::cal_trace_lo(void)
 		}
 	}
 	
-	//------------
-	// for test
-	//------------
-//	for(int i=0; i<GlobalV::NLOCAL; ++i)
-//	{
-//		GlobalV::ofs_running << " i=" << i+1 << " trace_lo=" << trace_lo[i] << std::endl;
-//	}
 
 	if(GlobalV::OUT_LEVEL != "m") 
 	{

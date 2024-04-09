@@ -38,11 +38,22 @@ void Gint_k::destroy_pvdpR(void)
 {
     ModuleBase::TITLE("Gint_k","destroy_pvpR");
     
-    for(int is =0;is<GlobalV::NSPIN;is++) delete[] pvdpRx_reduced[is];
+	for(int is =0;is<GlobalV::NSPIN;is++) 
+	{
+		delete[] pvdpRx_reduced[is];
+	}
     delete[] pvdpRx_reduced;
-    for(int is =0;is<GlobalV::NSPIN;is++) delete[] pvdpRy_reduced[is];
+
+	for(int is =0;is<GlobalV::NSPIN;is++) 
+	{
+		delete[] pvdpRy_reduced[is];
+	}
     delete[] pvdpRy_reduced;
-    for(int is =0;is<GlobalV::NSPIN;is++) delete[] pvdpRz_reduced[is];
+
+	for(int is =0;is<GlobalV::NSPIN;is++) 
+	{
+		delete[] pvdpRz_reduced[is];
+	}
     delete[] pvdpRz_reduced;
 
     return;
