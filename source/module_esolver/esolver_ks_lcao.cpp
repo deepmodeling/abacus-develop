@@ -927,10 +927,15 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int iter)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "iter_finish");
 
-    // mix density matrix
-    elecstate::DensityMatrix<TK, double>* dm
-                = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
-    this->p_chgmix->mix_dmr(dm);
+    // mix density matrix if mixing_restart + mixing_dmr + not first mixing_restart at every iter
+    if (GlobalV::MIXING_RESTART > 0 
+        && this->p_chgmix->mixing_restart_count > 0 
+        && GlobalV::MIXING_DMR)
+    {
+        elecstate::DensityMatrix<TK, double>* dm
+            = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
+        this->p_chgmix->mix_dmr(dm);
+    }
 
     //-----------------------------------
     // save charge density

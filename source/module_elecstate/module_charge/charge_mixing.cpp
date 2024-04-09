@@ -796,13 +796,6 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
 
 void Charge_Mixing::mix_dmr(elecstate::DensityMatrix<double, double>* DM)
 {
-    if (GlobalV::MIXING_RESTART <= 0 
-        || this->mixing_restart_count <= 0 
-        || !GlobalV::MIXING_DMR )
-    {
-        return;
-    }
-
     // Notice that DensityMatrix object is a Template class
     ModuleBase::TITLE("Charge_Mixing", "mix_dmr");
     ModuleBase::timer::tick("Charge_Mixing", "mix_dmr");
@@ -902,13 +895,6 @@ void Charge_Mixing::mix_dmr(elecstate::DensityMatrix<double, double>* DM)
 
 void Charge_Mixing::mix_dmr(elecstate::DensityMatrix<std::complex<double>, double>* DM)
 {
-    if (GlobalV::MIXING_RESTART <= 0 
-        || this->mixing_restart_count <= 0 
-        || !GlobalV::MIXING_DMR )
-    {
-        return;
-    }
-
     // Notice that DensityMatrix object is a Template class
     ModuleBase::TITLE("Charge_Mixing", "mix_dmr");
     ModuleBase::timer::tick("Charge_Mixing", "mix_dmr");
