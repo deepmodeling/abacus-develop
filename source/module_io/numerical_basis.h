@@ -42,7 +42,12 @@ class Numerical_Basis
     std::vector<ModuleBase::IntArray> mu_index;
     static std::vector<ModuleBase::IntArray> init_mu_index(void);
 
-    std::set<std::tuple<int, int, int, int>> index_;
+    // a composite index has the form of (itype, iatom, l, m)
+    using index_t = std::tuple<int, int, int, int>;
+    std::vector<index_t> index_;
+    static std::vector<index_t> indexgen(const std::vector<int>& natom,
+                                         const std::vector<int>& lmax);
+    
 
     void numerical_atomic_wfc(const int& ik,
                               const ModulePW::PW_Basis_K* wfcpw,
@@ -71,8 +76,8 @@ class Numerical_Basis
         const double rcut,
         const double smoothing_sigma,
         const double dr,
-        const UnitCell& ucell,
-        const std::vector<ModuleBase::IntArray> mu_index
+        const std::vector<std::vector<ModuleBase::Vector3<double>>>& R,
+        const std::vector<index_t> mu_index
     ) const;
 
     static ModuleBase::matrix cal_overlap_V(const ModulePW::PW_Basis_K* wfcpw,
