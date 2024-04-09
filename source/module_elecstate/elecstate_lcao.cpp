@@ -266,12 +266,18 @@ void ElecStateLCAO<double>::dmToRho(std::vector<double*> pexsi_DM, std::vector<d
 {
     ModuleBase::timer::tick("ElecStateLCAO", "dmToRho");
 
+    int nspin = GlobalV::NSPIN;
+    if (GlobalV::NSPIN == 4)
+    {
+        nspin = 1;
+    }
+
     // old 2D-to-Grid conversion has been replaced by new Gint Refactor 2023/09/25
     if (this->loc->out_dm) // keep interface for old Output_DM until new one is ready
     {
-        for (int ik = 0; ik < GlobalV::NSPIN; ++ik)
+        for (int is = 0; is < nspin; ++is)
         {
-            this->loc->set_dm_gamma(ik, pexsi_DM[ik]);
+            this->loc->set_dm_gamma(is, pexsi_DM[is]);
         }
         this->loc->cal_dk_gamma_from_2D_pub();
     }
@@ -279,11 +285,7 @@ void ElecStateLCAO<double>::dmToRho(std::vector<double*> pexsi_DM, std::vector<d
     auto DM = this->get_DM();
     this->get_DM()->pexsi_EDM.clear();
 
-    int nspin = GlobalV::NSPIN;
-    if (GlobalV::NSPIN == 4)
-    {
-        nspin = 1;
-    }
+    
     for (int is = 0; is < nspin; is++)
     {
         this->DM->set_DMK_pointer(is, pexsi_DM[is]);
