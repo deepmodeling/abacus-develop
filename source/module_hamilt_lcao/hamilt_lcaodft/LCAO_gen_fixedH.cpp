@@ -218,23 +218,37 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype,
 									// which is a 1D array.
 									if(dtype=='S')
 									{
-                                        if (nspin == 1 || nspin ==2) HSloc[nnr] = olm[0];
-                                        else
+                                        if (nspin == 1 || nspin ==2)
+										{
+											HSloc[nnr] = olm[0];
+										}
+                                        else if (nspin == 4)
 										{//only has diagonal term here.
 											int is = (jj-jj0*npol) + (kk-kk0*npol)*2;
 											// SlocR_soc is a temporary array with complex data type, it will be refactor soon.
 											this->LM->SlocR_soc[nnr] = olm1[is];
                                         }
+										else
+										{
+											ModuleBase::WARNING_QUIT("LCAO_gen_fixedH::build_ST_new","nspin must be 1, 2 or 4");
+										}
                                     }
 									else if(dtype=='T')
 									{
-										if(nspin == 1 || nspin ==2) HSloc[nnr] = olm[0];// <phi|kin|d phi>
-										else
+										if(nspin == 1 || nspin ==2)
+										{
+											HSloc[nnr] = olm[0];// <phi|kin|d phi>
+										}
+										else if (nspin == 4)
 										{//only has diagonal term here.
 											int is = (jj-jj0*npol) + (kk-kk0*npol)*2;
 											// Hloc_fixedR_soc is a temporary array with complex data type, it will be refactor soon.
 											this->LM->Hloc_fixedR_soc[nnr] = olm1[is];
                                         }
+										else
+										{
+											ModuleBase::WARNING_QUIT("LCAO_gen_fixedH::build_ST_new","nspin must be 1, 2 or 4");
+										}
                                     }
 									++total_nnr;
 									++nnr;
@@ -324,6 +338,10 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype,
 												this->LM->DSloc_Rz[nnr] = 0.0;
 											}
 										}
+										else
+										{
+											ModuleBase::WARNING_QUIT("LCAO_gen_fixedH::build_ST_new","nspin must be 1, 2 or 4");
+										}
 										if(cal_stress)
 										{
 											this->LM->DH_r[nnr*3] = dtau.x;
@@ -387,7 +405,10 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype,
 												ModuleBase::WARNING_QUIT("LCAO_gen_fixedH::build_ST_new","is must be 0, 1, 2, 3");
 											}
 										}
-										
+										else
+										{
+											ModuleBase::WARNING_QUIT("LCAO_gen_fixedH::build_ST_new","nspin must be 1, 2 or 4");
+										}
 									}
 									++total_nnr;
 									++nnr;
@@ -912,7 +933,7 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc,
 											}
 										}
 									}
-									else
+									else if (nspin == 1 || nspin == 2)
 									{
 										if(gamma_only_local)
 										{
@@ -984,6 +1005,10 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc,
 											this->LM->DHloc_fixedR_y[nnr+nnr_inner] += nlm[1];
 											this->LM->DHloc_fixedR_z[nnr+nnr_inner] += nlm[2];
 										}
+									}
+									else
+									{
+										ModuleBase::WARNING_QUIT("LCAO_gen_fixedH::build_Nonlocal_mu_new","nspin must be 1, 2 or 4");
 									}
 								}//!calc_deri
 								nnr_inner++;
