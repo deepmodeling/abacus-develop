@@ -26,17 +26,60 @@ Grid_Technique::Grid_Technique()
 
 Grid_Technique::~Grid_Technique()
 {
-    delete[] nlocdimg;
-    delete[] nlocstartg;
-    delete[] nad;
-    delete[] how_many_atoms;
-	delete[] start_ind;
-	delete[] which_atom;
-	delete[] which_bigcell;
-	delete[] which_unitcell;
-	delete[] bcell_start;
-	delete[] in_this_processor;
-	delete[] trace_lo;
+    if(nlocdimg!=nullptr)
+	{
+		delete[] nlocdimg;
+	}
+
+	if(nlocstartg!=nullptr)
+	{
+		delete[] nlocstartg;
+	}
+
+	if(nad!=nullptr)
+	{
+		delete[] nad;
+	}
+
+	if(how_many_atoms!=nullptr)
+	{
+		delete[] how_many_atoms;
+	}
+
+    if(start_ind!=nullptr)
+	{
+		delete[] start_ind;
+	}
+  
+    if(which_atom!=nullptr)
+	{
+		delete[] which_atom;
+	}
+
+    if(which_bigcell!=nullptr)
+	{
+		delete[] which_bigcell;
+	}
+
+    if(which_unitcell!=nullptr)
+	{
+		delete[] which_unitcell;
+	}
+
+	if(bcell_start!=nullptr)
+	{
+		delete[] bcell_start;
+	}
+
+    if(in_this_processor!=nullptr)
+	{
+		delete[] in_this_processor;
+	}
+
+    if(trace_lo!=nullptr)
+	{
+		delete[] trace_lo;
+	}
     
     if (allocate_find_R2)
 	{
@@ -209,7 +252,7 @@ void Grid_Technique::init_atoms_on_grid(const int& ny, const int& nplane, const 
 	// (5) record how many atoms on
 	// each local grid point (ix,iy,iz)
 	int iat=0;
-	int normal;
+	int normal=0;
 	this->total_atoms_on_grid = 0;
 	int nat_local = 0;
 	for(int it=0; it<GlobalC::ucell.ntype; it++)
@@ -292,8 +335,12 @@ void Grid_Technique::check_bigcell(int* &ind_bigcell, bool* &bigcell_on_processo
 	const int nbyz = nby * nbz;
 	const int nz = nbzp;
 
-	int iz_now, ix, iy, iz, ind;
-	bool flag;
+	int iz_now=0;
+    int ix=0;
+    int iy=0;
+    int iz=0;
+    int ind=0;
+	bool flag=false;
 
 	ind_bigcell = new int[nbxyz];
 	bigcell_on_processor=new bool[nbxyz];
@@ -336,7 +383,7 @@ void Grid_Technique::init_atoms_on_grid2(const int* index2normal)
 	ModuleBase::Memory::record("GT::index2ucell", sizeof(int) * this->nxyze);	
 	this->grid_expansion_index(0,index2ucell);
 	
-	int *ind_bigcell;
+	int *ind_bigcell=nullptr;
 	bool *bigcell_on_processor; // normal local form.
 	this->check_bigcell(ind_bigcell, bigcell_on_processor);
 
