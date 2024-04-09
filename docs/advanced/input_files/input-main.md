@@ -2616,7 +2616,7 @@ These variables are used to control DFT+U correlated parameters
 - **Type**: Real
 - **Unit**: eV
 - **Availability**: DFT+U calculations with `mixing_restart > 0`.
-- **Description**: Once `uramping` > 0.15 eV. DFT+U calculations will start SCF with U = 0 eV, namely normal LDA/PBE calculations. Once SCF restarts when `drho<mixing_restart`, U value will increase by `uramping` eV. SCF will repeat above calcuations until U values reach target defined in `hubbard_u`.
+- **Description**: Once `uramping` > 0.15 eV. DFT+U calculations will start SCF with U = 0 eV, namely normal LDA/PBE calculations. Once SCF restarts when `drho<mixing_restart`, U value will increase by `uramping` eV. SCF will repeat above calcuations until U values reach target defined in `hubbard_u`. As for `uramping=1.0 eV`, the recommendations of `mixing_restart` is around `5e-4`.  
 - **Default**: -1.0.
 
 ### omc
