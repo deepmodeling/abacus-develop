@@ -182,8 +182,13 @@ void Grid_Technique::get_startind(const int& ny, const int& nplane, const int& s
 
 	for(int i=0;i<nbxx;i++)
 	{
-		int ibx, iby, ibz;
-		int ix, iy, iz;
+		int ibx=0;
+        int iby=0;
+        int ibz=0;
+
+		int ix=0;
+        int iy=0;
+        int iz=0;
 
 		ibx = i / ( nby * nbzp );
 		iby = ( i - ibx * nby * nbzp ) / nbzp;
@@ -499,7 +504,10 @@ void Grid_Technique::cal_grid_integration_index(void)
 	delete[] all;
 #endif
 
-	if(GlobalV::test_gridt)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"Max atom on bigcell",max_atom);
+	if(GlobalV::test_gridt)
+	{
+		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"Max atom on bigcell",max_atom);
+	}
 	return;
 }
 
