@@ -7,7 +7,7 @@
 Langevin::Langevin(MD_para& MD_para_in, UnitCell& unit_in) : MD_base(MD_para_in, unit_in)
 {
     /// convert to a.u. unit
-    assert(ModuleBase::AU_to_FS!=0.0)
+    assert(ModuleBase::AU_to_FS!=0.0);
 
     mdp.md_damp /= ModuleBase::AU_to_FS;
 
