@@ -273,7 +273,7 @@ void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv,
     gen_h.build_ST_new('T', cal_deri, GlobalC::ucell, gen_h.LM->Hloc_fixedR.data());
 
     // calculate dVnl=<phi|dVnl|dphi> in LCAO
-    gen_h.build_Nonlocal_mu_new(gen_h.LM->Hloc_fixed.data(), cal_deri);
+    gen_h.build_Nonlocal_mu_new(gen_h.LM->Hloc_fixed.data(), cal_deri, GlobalC::ucell);
 
     // calculate asynchronous S matrix to output for Hefei-NAMD
     if (INPUT.cal_syns)

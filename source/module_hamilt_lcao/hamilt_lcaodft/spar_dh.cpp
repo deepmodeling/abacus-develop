@@ -34,7 +34,7 @@ void sparse_format::cal_dH(
     {
         gen_h.build_ST_new('T', true, GlobalC::ucell, lm.Hloc_fixedR.data());
     }
-    gen_h.build_Nonlocal_mu_new (lm.Hloc_fixed.data(), true);
+    gen_h.build_Nonlocal_mu_new (lm.Hloc_fixed.data(), true, GlobalC::ucell);
     
     sparse_format::cal_dSTN_R(lm, grid, current_spin, sparse_thr);
 

@@ -35,9 +35,9 @@ class LCAO_gen_fixedH
 	// cal_syns : calculate asynchronous overlap matrix for Hefei-NAMD
 
     // can used in gamma algorithm.
-    void build_Nonlocal_beta_new(double* Hloc);
+    void build_Nonlocal_beta_new(double* Hloc, const UnitCell& ucell);
 
-    void build_Nonlocal_mu_new(double* HlocR, const bool& calc_deri);
+    void build_Nonlocal_mu_new(double* HlocR, const bool& calc_deri, const UnitCell& ucell);
 };
 
 #endif
