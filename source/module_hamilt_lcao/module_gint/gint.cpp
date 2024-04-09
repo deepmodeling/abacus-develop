@@ -16,21 +16,33 @@
 
 Gint::~Gint()
 {
-	delete this->hRGint;
-	delete this->hRGintCd;
+    // mohan add 2024-04-09
+	if(this->hRGint != nullptr)
+	{
+		delete this->hRGint;
+	}
+
+    // mohan add 2024-04-09
+	if(this->hRGint != nullptr)
+	{
+		delete this->hRGintCd;
+	}
+
 	for(int is=0;is<this->DMRGint.size();is++)
 	{
 		delete this->DMRGint[is];
 	}
 #ifdef __MPI
-	if(this->DMRGint_full != nullptr) delete this->DMRGint_full;
+	if(this->DMRGint_full != nullptr) 
+	{
+		delete this->DMRGint_full;
+	}
 #endif
 	
 }
 
 void Gint::cal_gint(Gint_inout *inout)
 {
-
 	ModuleBase::timer::tick("Gint_interface", "cal_gint");
 
 	if(inout->job==Gint_Tools::job_type::vlocal) ModuleBase::TITLE("Gint_interface","cal_gint_vlocal");
@@ -70,7 +82,8 @@ void Gint::cal_gint(Gint_inout *inout)
 			// it's a uniform grid to save orbital values, so the delta_r is a constant.
 			const double delta_r = GlobalC::ORB.dr_uniform;
 
-            if((inout->job==Gint_Tools::job_type::vlocal || inout->job==Gint_Tools::job_type::vlocal_meta) && !GlobalV::GAMMA_ONLY_LOCAL)
+            if((inout->job==Gint_Tools::job_type::vlocal 
+                || inout->job==Gint_Tools::job_type::vlocal_meta) && !GlobalV::GAMMA_ONLY_LOCAL)
             {
                 if(!pvpR_alloc_flag)
                 {
@@ -110,7 +123,9 @@ void Gint::cal_gint(Gint_inout *inout)
                 }
 			}
 
-			double *pvdpRx_thread, *pvdpRy_thread, *pvdpRz_thread;
+			double *pvdpRx_thread = nullptr;
+            double *pvdpRy_thread = nullptr;
+            double *pvdpRz_thread = nullptr;
 			if(inout->job==Gint_Tools::job_type::dvlocal)
 			{
 				pvdpRx_thread = new double[nnrg];
@@ -145,7 +160,10 @@ void Gint::cal_gint(Gint_inout *inout)
 				// get the value: how many atoms has orbital value on this grid.
 				const int na_grid = this->gridt->how_many_atoms[ grid_index ];
 
-				if(na_grid==0) continue;
+				if(na_grid==0) 
+				{
+					continue;
+				}
 
 				if(inout->job == Gint_Tools::job_type::rho)
 				{
