@@ -5,7 +5,6 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/record_adj.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_wfc.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_hamilt.h"
 // for grid integration
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
@@ -76,9 +75,6 @@ namespace ModuleESolver
         // we will get rid of this class soon, don't use it, mohan 2024-03-28
         Local_Orbital_Charge LOC;
 
-        // we will get rid of this class soon, don't use it, mohan 2024-03-28
-        LCAO_Hamilt uhm;
-
         LCAO_gen_fixedH gen_h; // mohan add 2024-04-02
 
         // used for k-dependent grid integration.
@@ -106,6 +102,7 @@ namespace ModuleESolver
         //--------------common for all calculation, not only scf-------------
         // set matrix and grid integral
         void set_matrix_grid(Record_adj& ra);
+
         void beforesolver(const int istep);
         //----------------------------------------------------------------------
 
@@ -127,11 +124,15 @@ namespace ModuleESolver
         std::shared_ptr<Exx_LRI<double>> exx_lri_double = nullptr;
         std::shared_ptr<Exx_LRI<std::complex<double>>> exx_lri_complex = nullptr;
 #endif
+
     private:
+
         // tmp interfaces  before sub-modules are refactored
         void dftu_cal_occup_m(const int& iter, const std::vector<std::vector<TK>>& dm) const;
+
 #ifdef __DEEPKS
         void dpks_cal_e_delta_band(const std::vector<std::vector<TK>>& dm) const;
+
         void dpks_cal_projected_DM(const elecstate::DensityMatrix<TK, double>* dm) const;
 #endif
 
