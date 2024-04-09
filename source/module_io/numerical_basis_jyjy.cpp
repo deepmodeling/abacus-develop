@@ -3,6 +3,7 @@
 
 namespace NumericalBasis
 {
+#ifdef __LCAO
 using index_t = std::tuple<int, int, int, int>;
 
 std::vector<index_t> indexgen(const std::vector<int>& natom,
@@ -90,5 +91,6 @@ ModuleBase::ComplexArray cal_overlap_Sq(
 
     return overlap_Sq;
 }
+#endif
 
 }
