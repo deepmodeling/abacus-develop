@@ -60,6 +60,12 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
     ModuleBase::TITLE("LCAO_gen_fixedH","build_ST_new");
     ModuleBase::timer::tick("LCAO_gen_fixedH","build_ST_new");
 
+	const int nspin = GlobalV::NSPIN;
+	const int npol = GlobalV::NPOL;
+	const bool cal_force = GlobalV::CAL_FORCE;
+	const bool cal_stress = GlobalV::CAL_STRESS;
+	const bool gamma_only_local = GlobalV::GAMMA_ONLY_LOCAL;
+
 	int total_nnr = 0;
 	const Parallel_Orbitals* pv = this->LM->ParaV;
 #ifdef _OPENMP
@@ -112,17 +118,17 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 				{
 					int iw1_all = ucell.itiaiw2iwt( T1, I1, 0) ; //iw1_all = combined index (it, ia, iw)
 
-					for(int jj=0; jj<atom1->nw*GlobalV::NPOL; ++jj)
+					for(int jj=0; jj<atom1->nw*npol; ++jj)
 					{
-						const int jj0 = jj/GlobalV::NPOL;
+						const int jj0 = jj/npol;
 						const int L1 = atom1->iw2l[jj0];
 						const int N1 = atom1->iw2n[jj0];
 						const int m1 = atom1->iw2m[jj0];
 
 						int iw2_all = ucell.itiaiw2iwt( T2, I2, 0);//zhengdy-soc
-						for(int kk=0; kk<atom2->nw*GlobalV::NPOL; ++kk)
+						for(int kk=0; kk<atom2->nw*npol; ++kk)
 						{
-							const int kk0 = kk/GlobalV::NPOL;
+							const int kk0 = kk/npol;
 							const int L2 = atom2->iw2l[kk0];
 							const int N2 = atom2->iw2n[kk0];
 							const int m2 = atom2->iw2m[kk0];
@@ -181,7 +187,7 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 								// When NSPIN == 4 , only diagonal term is calculated for T or S Operators
 								// use olm1 to store the diagonal term with complex data type.
 								std::complex<double> olm1[4];
-								if(GlobalV::NSPIN == 4)
+								if(nspin == 4)
 								{
 									olm1[0] = std::complex<double>(olm[0], 0.0);
 									olm1[1] = ModuleBase::ZERO;
@@ -205,20 +211,20 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 									// which is a 1D array.
 									if(dtype=='S')
 									{
-                                        if (GlobalV::NSPIN != 4) HSloc[nnr] = olm[0];
+                                        if (nspin == 1 || nspin ==2) HSloc[nnr] = olm[0];
                                         else
 										{//only has diagonal term here.
-											int is = (jj-jj0*GlobalV::NPOL) + (kk-kk0*GlobalV::NPOL)*2;
+											int is = (jj-jj0*npol) + (kk-kk0*npol)*2;
 											// SlocR_soc is a temporary array with complex data type, it will be refactor soon.
 											this->LM->SlocR_soc[nnr] = olm1[is];
                                         }
                                     }
 									else if(dtype=='T')
 									{
-										if(GlobalV::NSPIN!=4) HSloc[nnr] = olm[0];// <phi|kin|d phi>
+										if(nspin == 1 || nspin ==2) HSloc[nnr] = olm[0];// <phi|kin|d phi>
 										else
 										{//only has diagonal term here.
-											int is = (jj-jj0*GlobalV::NPOL) + (kk-kk0*GlobalV::NPOL)*2;
+											int is = (jj-jj0*npol) + (kk-kk0*npol)*2;
 											// Hloc_fixedR_soc is a temporary array with complex data type, it will be refactor soon.
 											this->LM->Hloc_fixedR_soc[nnr] = olm1[is];
                                         }
@@ -289,15 +295,15 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 								{
 									if(dtype=='S')
 									{
-										if (GlobalV::NSPIN != 4)
+										if (nspin == 1 || nspin ==2)
 										{
 											this->LM->DSloc_Rx[nnr] = olm[0];
 											this->LM->DSloc_Ry[nnr] = olm[1];
 											this->LM->DSloc_Rz[nnr] = olm[2];
 										}
-										else
+										else if (nspin == 4)
 										{
-											int is = (jj-jj0*GlobalV::NPOL) + (kk-kk0*GlobalV::NPOL)*2;
+											int is = (jj-jj0*npol) + (kk-kk0*npol)*2;
 											if (is == 0) // is==3 is not needed in force calculation
 											{
 												this->LM->DSloc_Rx[nnr] = olm[0];
@@ -321,7 +327,7 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 									else if(dtype=='T')
 									{
 										// notice the 'sign'
-										if (GlobalV::NSPIN != 4)
+										if (nspin == 1 || nspin ==2)
 										{
 											this->LM->DHloc_fixedR_x[nnr] = olm[0];
 											this->LM->DHloc_fixedR_y[nnr] = olm[1];
@@ -336,9 +342,9 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 												this->LM->stvnl33[nnr] = olm[2] * dtau.z;
 											}
 										}
-										else
+										else if (nspin == 4)
 										{
-											int is = (jj-jj0*GlobalV::NPOL) + (kk-kk0*GlobalV::NPOL)*2;
+											int is = (jj-jj0*npol) + (kk-kk0*npol)*2;
 											if (is == 0) // is==3 is not needed in force calculation
 											{
 												this->LM->DHloc_fixedR_x[nnr] = olm[0];
@@ -354,7 +360,7 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 													this->LM->stvnl33[nnr] = olm[2] * dtau.z;
 												}
 											}
-											else
+											else if (is == 1 || is == 2 || is == 3)
 											{
 												this->LM->DHloc_fixedR_x[nnr] = 0.0;
 												this->LM->DHloc_fixedR_y[nnr] = 0.0;
@@ -368,6 +374,10 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 													this->LM->stvnl23[nnr] = 0.0;
 													this->LM->stvnl33[nnr] = 0.0;
 												}
+											}
+											else
+											{
+												ModuleBase::WARNING_QUIT("LCAO_gen_fixedH::build_ST_new","is must be 0, 1, 2, 3");
 											}
 										}
 										
@@ -410,11 +420,11 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 
 					if( is_adj )
 					{
-						for(int jj=0; jj<atom1->nw * GlobalV::NPOL; ++jj)
+						for(int jj=0; jj<atom1->nw * npol; ++jj)
 						{
                             const int mu = pv->global2local_row(start1 + jj);
 							if(mu<0)continue; 
-							for(int kk=0; kk<atom2->nw * GlobalV::NPOL; ++kk)
+							for(int kk=0; kk<atom2->nw * npol; ++kk)
 							{
                                 const int nu = pv->global2local_col(start2 + kk);
 								if(nu<0)continue;
@@ -453,6 +463,9 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
     ModuleBase::TITLE("LCAO_gen_fixedH","b_NL_mu_new");
     ModuleBase::timer::tick("LCAO_gen_fixedH", "b_NL_mu_new");
     const Parallel_Orbitals* pv = this->LM->ParaV;
+
+	const int nspin = GlobalV::NSPIN;
+	const int npol = GlobalV::NPOL;
 
 	// < phi1 | beta > < beta | phi2 >
 	// phi1 is within the unitcell.
@@ -513,7 +526,7 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 
 			const ModuleBase::Vector3<double> &tau1 = adjs.adjacent_tau[ad];
 			const Atom* atom1 = &GlobalC::ucell.atoms[T1];
-			const int nw1_tot = atom1->nw*GlobalV::NPOL;
+			const int nw1_tot = atom1->nw*npol;
 
 			const ModuleBase::Vector3<double> dtau = tau1-tau;
 			const double dist1 = dtau.norm2() * pow(GlobalC::ucell.lat0,2);
@@ -539,7 +552,7 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
                 const int iw1_local = pv->global2local_row(iw1_all);
                 const int iw2_local = pv->global2local_col(iw1_all);
 				if(iw1_local < 0 && iw2_local < 0)continue;
-				const int iw1_0 = iw1/GlobalV::NPOL;
+				const int iw1_0 = iw1/npol;
 				std::vector<std::vector<double>> nlm;
 				//nlm is a vector of vectors, but size of outer vector is only 1 here
 				//If we are calculating force, we need also to store the gradient
@@ -751,18 +764,18 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 				
 						int nnr_inner = 0;
 						
-						for (int j=0; j<atom1->nw*GlobalV::NPOL; j++)
+						for (int j=0; j<atom1->nw*npol; j++)
 						{
-							const int j0 = j/GlobalV::NPOL;//added by zhengdy-soc
+							const int j0 = j/npol;//added by zhengdy-soc
 							const int iw1_all = start1 + j;
                             const int mu = pv->global2local_row(iw1_all);
 							if(mu < 0)continue; 
 
 							// fix a serious bug: atom2[T2] -> atom2
 							// mohan 2010-12-20
-							for (int k=0; k<atom2->nw*GlobalV::NPOL; k++)
+							for (int k=0; k<atom2->nw*npol; k++)
 							{
-								const int k0 = k/GlobalV::NPOL;
+								const int k0 = k/npol;
 								const int iw2_all = start2 + k;
                                 const int nu = pv->global2local_col(iw2_all);
 								if(nu < 0)continue;
@@ -771,10 +784,10 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 								{
 									std::vector<double> nlm_1=(*nlm_cur1_e)[iw1_all];
 									std::vector<double> nlm_2=(*nlm_cur2_e)[iw2_all];
-									if(GlobalV::NSPIN==4)
+									if(nspin == 4)
 									{
 										std::complex<double> nlm_tmp = ModuleBase::ZERO;
-										int is0 = (j-j0*GlobalV::NPOL) + (k-k0*GlobalV::NPOL)*2;
+										int is0 = (j-j0*npol) + (k-k0*npol)*2;
 										for (int no = 0; no < GlobalC::ucell.atoms[T0].ncpp.non_zero_count_soc[is0]; no++)
 										{
 											const int p1 = GlobalC::ucell.atoms[T0].ncpp.index1_soc[is0][no];
@@ -821,7 +834,7 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 								}// calc_deri
 								else // calculate the derivative
 								{
-									if (GlobalV::NSPIN == 4)
+									if (nspin == 4)
 									{
 										std::vector<double> nlm_1 = (*nlm_cur2_f)[iw2_all][0];
 										std::vector<std::vector<double>> nlm_2;
@@ -831,7 +844,7 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 											nlm_2[i] = (*nlm_cur1_f)[iw1_all][i+1];
 										}
 										std::complex<double> nlm[4][3] = {ModuleBase::ZERO};
-										int is0 = (j-j0*GlobalV::NPOL) + (k-k0*GlobalV::NPOL)*2;
+										int is0 = (j-j0*npol) + (k-k0*npol)*2;
 										for (int no=0; no < GlobalC::ucell.atoms[T0].ncpp.non_zero_count_soc[is0]; no++)
 										{
 											const int p1 = GlobalC::ucell.atoms[T0].ncpp.index1_soc[is0][no];
@@ -966,18 +979,18 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 					} // ad0
 
 					//outer circle : accumulate nnr
-					for (int j=0; j<atom1->nw*GlobalV::NPOL; j++)
+					for (int j=0; j<atom1->nw*npol; j++)
 					{
-						const int j0 = j/GlobalV::NPOL;//added by zhengdy-soc
+						const int j0 = j/npol;//added by zhengdy-soc
 						const int iw1_all = start1 + j;
                         const int mu = pv->global2local_row(iw1_all);
 						if(mu < 0)continue; 
 
 						// fix a serious bug: atom2[T2] -> atom2
 						// mohan 2010-12-20
-						for (int k=0; k<atom2->nw*GlobalV::NPOL; k++)
+						for (int k=0; k<atom2->nw*npol; k++)
 						{
-							const int k0 = k/GlobalV::NPOL;
+							const int k0 = k/npol;
 							const int iw2_all = start2 + k;
                             const int nu = pv->global2local_col(iw2_all);
 							if(nu < 0)continue;
