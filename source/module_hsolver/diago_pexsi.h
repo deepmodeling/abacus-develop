@@ -15,7 +15,6 @@ class DiagoPexsi : public DiagH<T>
 {
   private:
     using Real = typename GetTypeReal<T>::type;
-    std::vector<double> mu_buffer;
 
   public:
     DiagoPexsi(const Parallel_Orbitals* ParaV_in)
@@ -35,6 +34,7 @@ class DiagoPexsi : public DiagH<T>
     double totalEnergyS;
     double totalFreeEnergy;
     pexsi::PEXSI_Solver* ps;
+    std::vector<double> mu_buffer;
 
 };
 } // namespace hsolver
