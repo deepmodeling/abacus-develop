@@ -31,7 +31,7 @@ void LCAO_gen_fixedH::calculate_NL_no(double* HlocR)
 	}
 	else
 	{
-		this->build_Nonlocal_mu_new(HlocR, false, GlobalC::ucell);
+		this->build_Nonlocal_mu_new(HlocR, false, GlobalC::ucell, GlobalC::ORB);
 	}
 
     return;
@@ -40,7 +40,7 @@ void LCAO_gen_fixedH::calculate_NL_no(double* HlocR)
 void LCAO_gen_fixedH::calculate_T_no(double* HlocR)
 {
     ModuleBase::TITLE("LCAO_gen_fixedH","calculate_T_no");
-    this->build_ST_new('T', false, GlobalC::ucell, HlocR);
+    this->build_ST_new('T', false, GlobalC::ucell, GlobalC::ORB, HlocR);
     return;
 }
 
@@ -48,14 +48,20 @@ void LCAO_gen_fixedH::calculate_S_no(double* SlocR)
 {
     ModuleBase::TITLE("LCAO_gen_fixedH", "calculate_S_no");
     ModuleBase::timer::tick("LCAO_gen_fixedH","calculate_S_no");
-	this->build_ST_new('S', false, GlobalC::ucell, SlocR);
+	this->build_ST_new('S', false, GlobalC::ucell, GlobalC::ORB, SlocR);
     ModuleBase::timer::tick("LCAO_gen_fixedH","calculate_S_no");
     return;
 }
 
 
 //liaochen modify interface 2010-3-22
-void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, const UnitCell &ucell, double* HSloc, bool cal_syns, double dmax)
+void LCAO_gen_fixedH::build_ST_new(const char& dtype,
+	const bool& calc_deri,
+	const UnitCell &ucell,
+	const LCAO_Orbitals& orb,
+	double* HSloc,
+	bool cal_syns,
+	double dmax)
 {
     ModuleBase::TITLE("LCAO_gen_fixedH","build_ST_new");
     ModuleBase::timer::tick("LCAO_gen_fixedH","build_ST_new");
@@ -111,7 +117,7 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 				tau2 = adjs.adjacent_tau[ad];
 				dtau = tau2 - tau1;
 				double distance = dtau.norm() * ucell.lat0;
-				double rcut = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Phi[T2].getRcut();
+				double rcut = orb.Phi[T1].getRcut() + orb.Phi[T2].getRcut();
 
 				if(distance < rcut)
 				{
@@ -173,7 +179,7 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 			                        ModuleBase::WARNING_QUIT("LCAO_gen_fixedH::build_ST_new","dtype must be S or T");
                                 }
 #else
-								GlobalC::UOT.snap_psipsi( GlobalC::ORB, olm, 0, dtype, 
+								GlobalC::UOT.snap_psipsi( orb, olm, 0, dtype, 
 										tau1, T1, L1, m1, N1,                  // info of atom1
 										adjs.adjacent_tau[ad], T2, L2, m2, N2, // info of atom2 
 										cal_syns,
@@ -275,7 +281,7 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 										ModuleBase::WARNING_QUIT("LCAO_gen_fixedH::build_ST_new","dtype must be S or T");
 								}
 #else
-								GlobalC::UOT.snap_psipsi( GlobalC::ORB, olm, 1, dtype, 
+								GlobalC::UOT.snap_psipsi( orb, olm, 1, dtype, 
 									tau1, T1, L1, m1, N1,
 									adjs.adjacent_tau[ad], T2, L2, m2, N2
 									);
@@ -405,10 +411,10 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 						tau0 = adjs.adjacent_tau[ad0];
 						dtau1 = tau0 - tau1;
 						double distance1 = dtau1.norm() * ucell.lat0;
-						double rcut1 = GlobalC::ORB.Phi[T1].getRcut() + ucell.infoNL.Beta[T0].get_rcut_max();
+						double rcut1 = orb.Phi[T1].getRcut() + ucell.infoNL.Beta[T0].get_rcut_max();
 						dtau2 = tau0 - tau2;
 						double distance2 = dtau2.norm() * ucell.lat0;
-						double rcut2 = GlobalC::ORB.Phi[T2].getRcut() + ucell.infoNL.Beta[T0].get_rcut_max();
+						double rcut2 = orb.Phi[T2].getRcut() + ucell.infoNL.Beta[T0].get_rcut_max();
 						if( distance1 < rcut1 && distance2 < rcut2 )
 						{
 							is_adj = true;
@@ -457,7 +463,7 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 typedef std::tuple<int,int,int,int> key_tuple;
 
 #include "record_adj.h" //mohan add 2012-07-06
-void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri, const UnitCell &ucell)
+void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri, const UnitCell &ucell, const LCAO_Orbitals &orb)
 {
     ModuleBase::TITLE("LCAO_gen_fixedH","b_NL_mu_new");
     ModuleBase::timer::tick("LCAO_gen_fixedH", "b_NL_mu_new");
@@ -1032,7 +1038,7 @@ void LCAO_gen_fixedH::build_Nonlocal_beta_new(double* HSloc, const UnitCell &uce
     mkl_set_num_threads(1);
 #endif
 
-    const std::vector<AdjacentAtomInfo> adjs_all = GlobalC::GridD.get_adjs(GlobalC::ucell);
+    const std::vector<AdjacentAtomInfo> adjs_all = GlobalC::GridD.get_adjs(ucell);
 
 #ifdef _OPENMP
     #pragma omp parallel

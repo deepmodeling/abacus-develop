@@ -29,6 +29,7 @@ class LCAO_gen_fixedH
     void build_ST_new(const char& dtype,
                       const bool& cal_deri,
                       const UnitCell& ucell,
+                      const LCAO_Orbitals& orb,
                       double* SHlocR,
                       bool cal_syns = false,
                       double dmax = 0.0);
@@ -37,7 +38,10 @@ class LCAO_gen_fixedH
     // can used in gamma algorithm.
     void build_Nonlocal_beta_new(double* Hloc, const UnitCell& ucell);
 
-    void build_Nonlocal_mu_new(double* HlocR, const bool& calc_deri, const UnitCell& ucell);
+    void build_Nonlocal_mu_new(double* HlocR,
+                      const bool& calc_deri,
+                      const UnitCell& ucell,
+                      const LCAO_Orbitals& orb);
 };
 
 #endif
