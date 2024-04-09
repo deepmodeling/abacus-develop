@@ -297,9 +297,9 @@ void ElecStateLCAO<double>::dmToRho(std::vector<double*> pexsi_DM, std::vector<d
     }
 
     ModuleBase::GlobalFunc::NOTE("Calculate the charge on real space grid!");
-    this->uhm->GG.transfer_DM2DtoGrid(this->DM->get_DMR_vector()); // transfer DM2D to DM_grid in gint
+    this->gint_gamma->transfer_DM2DtoGrid(this->DM->get_DMR_vector()); // transfer DM2D to DM_grid in gint
     Gint_inout inout(this->loc->DM, this->charge->rho, Gint_Tools::job_type::rho);
-    this->uhm->GG.cal_gint(&inout);
+    this->gint_gamma->cal_gint(&inout);
     if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
@@ -307,7 +307,7 @@ void ElecStateLCAO<double>::dmToRho(std::vector<double*> pexsi_DM, std::vector<d
             ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[0], this->charge->nrxx);
         }
         Gint_inout inout1(this->loc->DM, this->charge->kin_r, Gint_Tools::job_type::tau);
-        this->uhm->GG.cal_gint(&inout1);
+        this->gint_gamma->cal_gint(&inout1);
     }
 
     this->charge->renormalize_rho();
