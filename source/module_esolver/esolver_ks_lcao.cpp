@@ -552,7 +552,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
     if (iter == 1)
     {
         this->p_chgmix->init_mixing(); // init mixing
-        this->p_chgmix->mixing_restart = GlobalV::SCF_NMAX + 1;
+        this->p_chgmix->mixing_restart_step = GlobalV::SCF_NMAX + 1;
         this->p_chgmix->mixing_restart_count = 0;
         // this output will be removed once the feeature is stable
         if(GlobalC::dftu.uramping > 0.01)
@@ -566,7 +566,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
         }
     }
     // for mixing restart
-    if (iter == this->p_chgmix->mixing_restart 
+    if (iter == this->p_chgmix->mixing_restart_step 
         && GlobalV::MIXING_RESTART > 0.0)
     {
         this->p_chgmix->init_mixing();
@@ -586,7 +586,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
             if(GlobalC::dftu.uramping > 0.01 
                && !GlobalC::dftu.u_converged()) 
             {
-                this->p_chgmix->mixing_restart = GlobalV::SCF_NMAX + 1;
+                this->p_chgmix->mixing_restart_step = GlobalV::SCF_NMAX + 1;
             }   
         }
         if (GlobalV::MIXING_DMR) // for mixing_dmr 
