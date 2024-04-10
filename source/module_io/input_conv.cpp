@@ -413,6 +413,7 @@ void Input_Conv::Convert(void)
         GlobalC::dftu.Yukawa = INPUT.yukawa_potential;
         GlobalC::dftu.omc = INPUT.omc;
         GlobalC::dftu.orbital_corr = INPUT.orbital_corr;
+        GlobalC::dftu.uramping = INPUT.uramping;
         GlobalC::dftu.mixing_dftu = INPUT.mixing_dftu;
         if (INPUT.yukawa_potential && INPUT.hubbard_u == nullptr)
         {
@@ -422,6 +423,11 @@ void Input_Conv::Convert(void)
             INPUT.hubbard_u = new double[GlobalC::ucell.ntype];
         }
         GlobalC::dftu.U = INPUT.hubbard_u;
+        GlobalC::dftu.U0 = std::vector<double>(INPUT.hubbard_u, INPUT.hubbard_u + GlobalC::ucell.ntype);
+        if (INPUT.uramping > 0.01) 
+        {
+            ModuleBase::GlobalFunc::ZEROS(GlobalC::dftu.U, GlobalC::ucell.ntype);
+        }
     }
     GlobalV::onsite_radius = INPUT.onsite_radius;
 #endif
