@@ -97,6 +97,10 @@ class Force_LCAO_k : public Force_LCAO_gamma
                           const bool isforce,
 						  const bool isstress, 
 						  const Parallel_Orbitals &pv,
+                          const UnitCell &ucell,
+                          const LCAO_Orbitals& orb,
+                          const ORB_gen_tables& uot,
+                          Grid_Driver* GridD,
 						  ModuleBase::matrix& fvnl_dbeta,
                           ModuleBase::matrix& svnl_dbeta);
 

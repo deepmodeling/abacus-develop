@@ -111,7 +111,11 @@ void Force_LCAO_k::ftable_k(const bool isforce,
 			DM, 
 			isforce, 
 			isstress, 
-			pv, 
+			pv,
+            GlobalC::ucell,
+            GlobalC::ORB,
+            GlobalC::UOT,
+            &(GlobalC::GridD),
 			fvnl_dbeta, 
 			svnl_dbeta);
 
