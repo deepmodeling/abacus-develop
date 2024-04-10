@@ -29,8 +29,8 @@ class Numerical_Basis
     Numerical_Basis();
     ~Numerical_Basis();
 
-    void start_from_file_k(const int& ik, ModuleBase::ComplexMatrix& psi, const Structure_Factor& sf, const ModulePW::PW_Basis_K* wfcpw);
-    void output_overlap(const psi::Psi<std::complex<double>>& psi, const Structure_Factor& sf, const K_Vectors& kv, const ModulePW::PW_Basis_K* wfcpw);
+    void start_from_file_k(const int& ik, ModuleBase::ComplexMatrix& psi, const Structure_Factor& sf, const ModulePW::PW_Basis_K* wfcpw, const UnitCell& ucell);
+    void output_overlap(const psi::Psi<std::complex<double>>& psi, const Structure_Factor& sf, const K_Vectors& kv, const ModulePW::PW_Basis_K* wfcpw, const UnitCell& ucell);
 
   private:
     bool init_label = false;
@@ -38,40 +38,46 @@ class Numerical_Basis
     Bessel_Basis bessel_basis;
 
     std::vector<ModuleBase::IntArray> mu_index;
-    static std::vector<ModuleBase::IntArray> init_mu_index(void);
+    static std::vector<ModuleBase::IntArray> init_mu_index(const UnitCell& ucell);
 
     void numerical_atomic_wfc(const int& ik,
                               const ModulePW::PW_Basis_K* wfcpw,
                               ModuleBase::ComplexMatrix& psi,
-                              const Structure_Factor& sf);
+                              const Structure_Factor& sf,
+                              const UnitCell& ucell);
 
     ModuleBase::ComplexArray cal_overlap_Q(const int& ik,
                                            const int& np,
                                            const ModulePW::PW_Basis_K* wfcpw,
                                            const psi::Psi<std::complex<double>>& psi,
                                            const double derivative_order,
-                                           const Structure_Factor& sf) const;
+                                           const Structure_Factor& sf,
+                                           const UnitCell& ucell) const;
 
     // computed in the plane-wave basis
     ModuleBase::ComplexArray cal_overlap_Sq(const int& ik,
                                             const int& np,
                                             const double derivative_order,
                                             const Structure_Factor& sf,
-                                            const ModulePW::PW_Basis_K* wfcpw) const;
+                                            const ModulePW::PW_Basis_K* wfcpw,
+                                            const UnitCell& ucell) const;
 
     static ModuleBase::matrix cal_overlap_V(const ModulePW::PW_Basis_K* wfcpw,
                                             const psi::Psi<std::complex<double>>& psi,
                                             const double derivative_order,
-                                            const K_Vectors& kv);
+                                            const K_Vectors& kv,
+                                            const double tpiba2);
 
-    ModuleBase::realArray cal_flq(const int ik, const std::vector<ModuleBase::Vector3<double>> &gk) const;
+    ModuleBase::realArray cal_flq(const int ik, const std::vector<ModuleBase::Vector3<double>> &gk, const UnitCell& ucell) const;
 
-    static ModuleBase::matrix cal_ylm(const std::vector<ModuleBase::Vector3<double>> &gk);
+    static ModuleBase::matrix cal_ylm(const std::vector<ModuleBase::Vector3<double>> &gk, const int ucell_lmax);
 
+    // the returned gpow is in atomic units
     static std::vector<double> cal_gpow(const std::vector<ModuleBase::Vector3<double>> &gk,
-                                        const double derivative_order);
+                                        const double derivative_order,
+                                        const double tpiba2);
 
-    static void output_info(std::ofstream& ofs, const Bessel_Basis& bessel_basis, const K_Vectors& kv);
+    static void output_info(std::ofstream& ofs, const Bessel_Basis& bessel_basis, const K_Vectors& kv, const UnitCell& ucell);
 
     static void output_k(std::ofstream& ofs, const K_Vectors& kv);
 
