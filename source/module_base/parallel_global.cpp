@@ -207,7 +207,7 @@ void Parallel_Global::read_mpi_parameters(int argc,char **argv)
         // the user may take their own risk by set the OMP_NUM_THREADS env var.
         if (std::getenv("OMP_NUM_THREADS") == nullptr)
         {
-            ModuleBase::WARNING_QUIT("parallel_global", mess);
+            ModuleBase::WARNING_QUIT("parallel_global", mess.str());
         }
         else
         {
