@@ -2,6 +2,7 @@
 #define COMPLEX_ARRAY_H
 
 #include <complex>
+#include <vector>
 #include <iostream>
 #include <fstream>
 #include <iomanip>
@@ -13,7 +14,7 @@ namespace ModuleBase
 class ComplexArray
 {
 public:
-	std::complex<double> *ptr=nullptr; // data array
+	std::vector<std::complex<double>> vec; // data array
 	
 	ComplexArray(const int bnd1=0, const int bnd2=1, const int bnd3=1, const int bnd4=1);
 
