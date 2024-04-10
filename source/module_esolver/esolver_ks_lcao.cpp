@@ -552,13 +552,43 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
     if (iter == 1)
     {
         this->p_chgmix->init_mixing(); // init mixing
-        this->p_chgmix->mixing_restart = GlobalV::SCF_NMAX + 1;
+        this->p_chgmix->mixing_restart_step = GlobalV::SCF_NMAX + 1;
+        this->p_chgmix->mixing_restart_count = 0;
+        // this output will be removed once the feeature is stable
+        if(GlobalC::dftu.uramping > 0.01)
+        {
+            std::cout << " U-Ramping! Current U = " ;
+            for (int i = 0; i < GlobalC::dftu.U0.size(); i++)
+            {
+                std::cout << GlobalC::dftu.U[i] * ModuleBase::Ry_to_eV << " ";
+            }
+            std::cout << " eV " << std::endl;
+        }
     }
     // for mixing restart
-    if (iter == this->p_chgmix->mixing_restart 
+    if (iter == this->p_chgmix->mixing_restart_step 
         && GlobalV::MIXING_RESTART > 0.0)
     {
         this->p_chgmix->init_mixing();
+        this->p_chgmix->mixing_restart_count++;
+        if (GlobalV::dft_plus_u)
+        {   
+            GlobalC::dftu.uramping_update(); // update U by uramping if uramping > 0.01
+            if(GlobalC::dftu.uramping > 0.01)
+            {
+                std::cout << " U-Ramping! Current U = " ;
+                for (int i = 0; i < GlobalC::dftu.U0.size(); i++)
+                {
+                    std::cout << GlobalC::dftu.U[i] * ModuleBase::Ry_to_eV << " ";
+                }
+                std::cout << " eV " << std::endl;
+            }
+            if(GlobalC::dftu.uramping > 0.01 
+               && !GlobalC::dftu.u_converged()) 
+            {
+                this->p_chgmix->mixing_restart_step = GlobalV::SCF_NMAX + 1;
+            }   
+        }
         if (GlobalV::MIXING_DMR) // for mixing_dmr 
         {
             // allocate memory for dmr_mdata
@@ -687,7 +717,9 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density(int istep, int iter, double ethr)
     // save input rho
     this->pelec->charge->save_rho_before_sum_band();
     // save density matrix for mixing
-    if (GlobalV::MIXING_RESTART > 0 && GlobalV::MIXING_DMR && iter >= this->p_chgmix->mixing_restart)
+    if (GlobalV::MIXING_RESTART > 0 
+        && GlobalV::MIXING_DMR 
+        && this->p_chgmix->mixing_restart_count > 0)
     {
         elecstate::DensityMatrix<TK, double>* dm
             = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
@@ -895,11 +927,13 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int iter)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "iter_finish");
 
-    // mix density matrix
-    if (GlobalV::MIXING_RESTART > 0 && iter >= this->p_chgmix->mixing_restart && GlobalV::MIXING_DMR )
+    // mix density matrix if mixing_restart + mixing_dmr + not first mixing_restart at every iter
+    if (GlobalV::MIXING_RESTART > 0 
+        && this->p_chgmix->mixing_restart_count > 0 
+        && GlobalV::MIXING_DMR)
     {
         elecstate::DensityMatrix<TK, double>* dm
-                    = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
+            = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
         this->p_chgmix->mix_dmr(dm);
     }
 

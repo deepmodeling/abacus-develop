@@ -557,6 +557,7 @@ void Input::Default(void)
     yukawa_potential = false;
     yukawa_lambda = -1.0;
     omc = 0;
+    uramping = -1.0; // -1.0 means no ramping
 
     //==========================================================
     //    DFT+DMFT     Xin Qu added on 2020-08
@@ -2111,14 +2112,12 @@ bool Input::Read(const std::string& fn)
         {
             read_bool(ifs, test_skip_ewald);
         }
-        //--------------
-        //----------------------------------------------------------------------------------
-        //         Xin Qu added on 2020-10-29 for DFT+U
-        //----------------------------------------------------------------------------------
+        //----------------------------------------------------------
         else if (strcmp("dft_plus_u", word) == 0)
         {
             read_value(ifs, dft_plus_u);
         }
+        // ignore to avoid error
         else if (strcmp("yukawa_potential", word) == 0)
             ifs.ignore(150, '\n');
         else if (strcmp("hubbard_u", word) == 0)
@@ -2129,6 +2128,10 @@ bool Input::Read(const std::string& fn)
             ifs.ignore(150, '\n');
         else if (strcmp("yukawa_lambda", word) == 0)
             ifs.ignore(150, '\n');
+        else if (strcmp("uramping", word) == 0)
+        {
+            ifs.ignore(150, '\n');
+        }
         //----------------------------------------------------------------------------------
         //         Xin Qu added on 2020-08 for DFT+DMFT
         //----------------------------------------------------------------------------------
@@ -2470,6 +2473,11 @@ bool Input::Read(const std::string& fn)
             else if (strcmp("yukawa_lambda", word) == 0)
             {
                 ifs >> yukawa_lambda;
+            }
+            else if (strcmp("uramping", word) == 0)
+            {
+                read_value(ifs, uramping);
+                uramping /= ModuleBase::Ry_to_eV;
             }
             else if (strcmp("hubbard_u", word) == 0)
             {
@@ -3001,7 +3009,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
                 diago_proc = GlobalV::NPROC;
             }
         }
-        else if (ks_solver == "dav")
+        else if (ks_solver == "dav" || ks_solver == "dav_subspace")
         {
             GlobalV::ofs_warning << " It's ok to use dav." << std::endl;
         }
@@ -3633,6 +3641,7 @@ void Input::Bcast()
     //-----------------------------------------------------------------------------------
     Parallel_Common::bcast_int(dft_plus_u);
     Parallel_Common::bcast_bool(yukawa_potential);
+    Parallel_Common::bcast_double(uramping);
     Parallel_Common::bcast_int(omc);
     Parallel_Common::bcast_double(yukawa_lambda);
     if (GlobalV::MY_RANK != 0)
@@ -3950,7 +3959,11 @@ void Input::Check(void)
         {
             ModuleBase::WARNING_QUIT("Input", "lapack can not be used with plane wave basis.");
         }
-        else if (ks_solver != "default" && ks_solver != "cg" && ks_solver != "dav" && ks_solver != "bpcg")
+        else if (ks_solver != "default" && 
+                 ks_solver != "cg" && 
+                 ks_solver != "dav" && 
+                 ks_solver != "dav_subspace" && 
+                 ks_solver != "bpcg")
         {
             ModuleBase::WARNING_QUIT("Input", "please check the ks_solver parameter!");
         }
