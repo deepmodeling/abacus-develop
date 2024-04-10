@@ -348,7 +348,7 @@ void para_init(SGridParameter& para,
         = &gridt.dd_left_xz_g[gridt.psir_size * para.stream_num];
     para.psir_lyy_device
         = &gridt.dd_left_yy_g[gridt.psir_size * para.stream_num];
-    para.psir_lyy_device
+    para.psir_lyz_device
         = &gridt.dd_left_yz_g[gridt.psir_size * para.stream_num];
     para.psir_lzz_device
         = &gridt.dd_left_zz_g[gridt.psir_size * para.stream_num];
@@ -524,7 +524,7 @@ void para_mem_copy(SGridParameter& para,
                               0,
                               gridt.psir_size * sizeof(double),
                               gridt.streams[para.stream_num]));
-    checkCuda(cudaMemsetAsync(para.psir_lyy_device,
+    checkCuda(cudaMemsetAsync(para.psir_lyz_device,
                               0,
                               gridt.psir_size * sizeof(double),
                               gridt.streams[para.stream_num]));
@@ -612,6 +612,7 @@ void cal_stress_add(ForceStressIat& calcualte,
     {
         for (int index = 0; index < cuda_block; index++)
         {
+            // printf("the stress is %f\n",stress[i]);
             stress[i] += calcualte.stress_host[i * cuda_block + index];
         }
     }

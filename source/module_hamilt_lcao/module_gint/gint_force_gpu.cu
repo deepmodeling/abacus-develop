@@ -148,7 +148,7 @@ void gint_gamma_force_gpu(hamilt::HContainer<double>* dm,
                                  atom_num_grid,
                                  cuda_block,
                                  para.stream_num);
-
+            checkCuda(cudaStreamSynchronize(gridt.streams[para.stream_num]));
             /* cuda stream compute and Multiplication of multinomial matrices */
             get_psi_force<<<grid_psi,
                             block_psi,
@@ -177,7 +177,7 @@ void gint_gamma_force_gpu(hamilt::HContainer<double>* dm,
                 para.psir_lxy_device,
                 para.psir_lxz_device,
                 para.psir_lyy_device,
-                para.psir_lyy_device,
+                para.psir_lyz_device,
                 para.psir_lzz_device);
             checkCudaLastError();
             gridt.fastest_matrix_mul(max_m,
@@ -195,6 +195,7 @@ void gint_gamma_force_gpu(hamilt::HContainer<double>* dm,
                                      gridt.streams[para.stream_num],
                                      nullptr);
 
+            checkCuda(cudaStreamSynchronize(gridt.streams[para.stream_num]));
             /* force compute in GPU */
             dot_product_force<<<grid_dot_force,
                                 block_dot_force,
@@ -221,7 +222,7 @@ void gint_gamma_force_gpu(hamilt::HContainer<double>* dm,
                 para.psir_lxy_device,
                 para.psir_lxz_device,
                 para.psir_lyy_device,
-                para.psir_lyy_device,
+                para.psir_lyz_device,
                 para.psir_lzz_device,
                 para.psir_dm_device,
                 calcualte.stress_device,
@@ -231,6 +232,7 @@ void gint_gamma_force_gpu(hamilt::HContainer<double>* dm,
             iter_num++;
         }
     }
+    cudaFree(calcualte.stress_device);
     /*free variables in CPU host*/
     for (int i = 0; i < gridt.nstreams; i++)
     {

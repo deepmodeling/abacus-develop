@@ -131,19 +131,19 @@ void Gint::cal_gint(Gint_inout* inout)
             {
                 const int ncyz = this->ny * this->nplane;
                 int nat = GlobalC::ucell.nat;
-                for (int is = 0; is < GlobalV::NSPIN; ++is)
-                {
-                    double* force = new double[GlobalC::ucell.nat * 3];
+                // for (int is = 0; is < GlobalV::NSPIN; ++is)
+                // {
+                    double *force = new double[GlobalC::ucell.nat * 3];
                     for (int i = 0; i < nat * 3; i++)
                     {
                         force[i] = 0.0;
                     }
-                    double* stress = new double[6];
+                    double *stress = new double[6];
                     for (int i = 0; i < 6; i++)
                     {
                         stress[i] = 0.0;
                     }
-                    GintKernel::gint_gamma_force_gpu(this->DMRGint[is],
+                    GintKernel::gint_gamma_force_gpu(this->DMRGint[inout->ispin],
                                                      GlobalC::ucell.omega
                                                          / this->ncxyz,
                                                      inout->vl,
@@ -160,13 +160,19 @@ void Gint::cal_gint(Gint_inout* inout)
                         inout->fvl_dphi[0](iat, 1) += force[iat * 3 + 1];
                         inout->fvl_dphi[0](iat, 2) += force[iat * 3 + 2];
                     }
-                    inout->svl_dphi[is](0, 0) += stress[0];
-                    inout->svl_dphi[is](0, 1) += stress[1];
-                    inout->svl_dphi[is](0, 2) += stress[2];
-                    inout->svl_dphi[is](1, 1) += stress[3];
-                    inout->svl_dphi[is](1, 2) += stress[4];
-                    inout->svl_dphi[is](2, 2) += stress[5];
-                }
+                    printf("after\n");
+                    printf("%f %f %f %f %f %f\n",stress[0],stress[1],stress[2],stress[3],stress[4],stress[5]);
+                        inout->svl_dphi[0](0, 0) += stress[0];
+                        inout->svl_dphi[0](0, 1) += stress[1];
+                        inout->svl_dphi[0](0, 2) += stress[2];
+                        inout->svl_dphi[0](1, 1) += stress[3];
+                        inout->svl_dphi[0](1, 2) += stress[4];
+                        inout->svl_dphi[0](2, 2) += stress[5];
+                    
+                    printf("finish force\n");
+                    delete[] force;
+                    delete[] stress;
+                // }
                 ModuleBase::timer::tick("Gint_interface", "cal_gint_force");
                 return;
             }
@@ -625,7 +631,6 @@ void Gint::cal_gint(Gint_inout* inout)
         }
 
     } // end of if (max_size)
-
     ModuleBase::timer::tick("Gint_interface", "cal_gint");
 
     if (inout->job == Gint_Tools::job_type::vlocal)
