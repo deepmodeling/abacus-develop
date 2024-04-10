@@ -55,8 +55,8 @@ ModuleBase::ComplexArray cal_overlap_Sq(
     ModuleBase::SphericalBesselTransformer sbt;
     orb.set_transformer(sbt);
 
-    double rmax = orb.rcut_max() * 2.0;
-    int nr = static_cast<int>(rmax / dr) + 1;
+    const double rmax = orb.rcut_max() * 2.0;
+    const int nr = static_cast<int>(rmax / dr) + 1;
     
     orb.set_uniform_grid(true, nr, rmax, 'i', true);
 
@@ -65,7 +65,8 @@ ModuleBase::ComplexArray cal_overlap_Sq(
     intor.tabulate(orb, orb, type, nr, rmax);
 
     // traverse the vector of composite index (itype, iatom, l, m)
-    int t1, a1, l1, m1, t2, a2, l2, m2;
+    int t1 = 0, a1 = 0, l1 = 0, m1 = 0;
+    int t2 = 0, a2 = 0, l2 = 0, m2 = 0;
     for (auto it1 = mu_index.cbegin(); it1 != mu_index.cend(); ++it1)
     {
         std::tie(t1, a1, l1, m1) = *it1;
@@ -77,7 +78,7 @@ ModuleBase::ComplexArray cal_overlap_Sq(
             {
                 for (int zeta2 = 0; zeta2 < nbes; ++zeta2)
                 {
-                    double elem;
+                    double elem = 0.0;
                     intor.calculate(t1, l1, zeta1, m1,
                                     t2, l2, zeta2, m2,
                                     dR, &elem);
