@@ -93,12 +93,18 @@ void psi_initializer_nao<T, Device>::read_external_orbs(std::string* orbital_fil
                     while(ifs_it.good())
                     {
                         ifs_it>>word;
-                        if(std::strcmp(word, "END")==0) break;
+						if(std::strcmp(word, "END")==0) 
+						{
+							break;
+						}
                     }
                     ModuleBase::CHECK_NAME(ifs_it, "Mesh");
                     ifs_it>>n_rgrid_ichi;
                     
-                    if(n_rgrid_ichi%2 == 0) ++n_rgrid_ichi;
+					if(n_rgrid_ichi%2 == 0) 
+					{
+						++n_rgrid_ichi;
+					}
                     GlobalV::ofs_running<<" number of radial grid = "<<n_rgrid_ichi<<std::endl;
 
                     ModuleBase::CHECK_NAME(ifs_it, "dr");
@@ -112,7 +118,9 @@ void psi_initializer_nao<T, Device>::read_external_orbs(std::string* orbital_fil
                     GlobalV::ofs_running<<" maximal radial grid point = "<<rgrid_ichi[n_rgrid_ichi-1]<<" Angstrom"<<std::endl;
                     
                     std::string title1, title2, title3;
-                    int it_read, l_read, nchi_read;
+                    int it_read=0;
+                    int l_read=0;
+                    int nchi_read=0;
                     bool find = false;
                     while(!find)
                     {
@@ -163,16 +171,28 @@ void psi_initializer_nao<T, Device>::read_external_orbs(std::string* orbital_fil
     // MPI additional implementation
     #ifdef __MPI
     // bcast fname
-    if(rank != 0) this->orbital_files_.resize(this->p_ucell_->ntype);
+	if(rank != 0) 
+	{
+		this->orbital_files_.resize(this->p_ucell_->ntype);
+	}
     Parallel_Common::bcast_string(this->orbital_files_.data(), this->p_ucell_->ntype);
+
     // bcast orbital data
     // resize
-    if(rank != 0) this->n_rgrid_.resize(this->p_ucell_->ntype);
+	if(rank != 0) 
+	{
+		this->n_rgrid_.resize(this->p_ucell_->ntype);
+	}
+
     int nchi[this->p_ucell_->ntype];
     if(rank == 0)
     {
-        for(int it = 0; it < this->p_ucell_->ntype; it++) nchi[it] = this->n_rgrid_[it].size();
+		for(int it = 0; it < this->p_ucell_->ntype; it++) 
+		{
+			nchi[it] = this->n_rgrid_[it].size();
+		}
     }
+
     // bcast
     Parallel_Common::bcast_int(nchi, this->p_ucell_->ntype);
     // resize
@@ -188,8 +208,13 @@ void psi_initializer_nao<T, Device>::read_external_orbs(std::string* orbital_fil
             this->rvalue_[it].resize(nchi[it]);
         }
     }
+
     // bcast
-    for(int it = 0; it < this->p_ucell_->ntype; it++) Parallel_Common::bcast_int(this->n_rgrid_[it].data(), nchi[it]);
+	for(int it = 0; it < this->p_ucell_->ntype; it++) 
+	{
+		Parallel_Common::bcast_int(this->n_rgrid_[it].data(), nchi[it]);
+	}
+
     // resize
     if(rank != 0)
     {
@@ -202,6 +227,7 @@ void psi_initializer_nao<T, Device>::read_external_orbs(std::string* orbital_fil
             }
         }
     }
+
     // bcast
     for(int it = 0; it < this->p_ucell_->ntype; it++)
     {
