@@ -60,6 +60,7 @@ class Force_LCAO_k : public Force_LCAO_gamma
     // calculate the force due to < dphi | beta > < beta | phi >
 	void cal_ftvnl_dphi_k(const elecstate::DensityMatrix<std::complex<double>, double>* DM,
 			const Parallel_Orbitals &pv,
+            const UnitCell &ucell,
 			LCAO_Matrix &lm,
 			const bool isforce,
 			const bool isstress,

@@ -88,7 +88,8 @@ void Force_LCAO_k::ftable_k(const bool isforce,
 
 	this->cal_ftvnl_dphi_k(
 			DM, 
-			pv, 
+			pv,
+            GlobalC::ucell,
 			lm, 
 			isforce, 
 			isstress, 
