@@ -187,7 +187,7 @@ void Parallel_Global::read_mpi_parameters(int argc,char **argv)
     const int max_thread_num = std::thread::hardware_concurrency(); // Consider Hyperthreading disabled.
 #ifdef _OPENMP
     int current_thread_num = omp_get_max_threads();
-    if (current_thread_num == max_thread_num and process_num >= 1) // Avoid oversubscribing on the number of threads not set.
+    if (current_thread_num == max_thread_num && process_num >= 1) // Avoid oversubscribing on the number of threads not set.
     {
         current_thread_num = max_thread_num / process_num;
         omp_set_num_threads(current_thread_num);
