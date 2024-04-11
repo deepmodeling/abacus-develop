@@ -639,7 +639,7 @@ class Input
 
     int count_ntype(const std::string &fn); // sunliang add 2022-12-06
 
-    std::string out_band_index_; // specify the bands to be calculated in the get_pchg calculation, formalism similar to ocp_set.
+    std::string bands_to_print_; // specify the bands to be calculated in the get_pchg calculation, formalism similar to ocp_set.
 
   public:
     template <class T> static void read_value(std::ifstream &ifs, T &var)
@@ -699,10 +699,10 @@ class Input
     void strtolower(char *sa, char *sb);
     void read_bool(std::ifstream &ifs, bool &var);
 
-    // Return the const string pointer of private member out_band_index_
-    const std::string* get_out_band_index() const
+    // Return the const string pointer of private member bands_to_print_
+    const std::string* get_bands_to_print() const
     {
-        return &out_band_index_;
+        return &bands_to_print_;
     }
 };
 

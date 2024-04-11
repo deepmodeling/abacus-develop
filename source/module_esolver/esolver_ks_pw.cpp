@@ -1024,12 +1024,12 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep)
                             this->psi[0].size());
     }
 
-    // Get out_band_index through public function of INPUT (returns a const pointer to string)
-    std::string out_band_index = *INPUT.get_out_band_index();
-    if(!out_band_index.empty())
+    // Get bands_to_print through public function of INPUT (returns a const pointer to string)
+    std::string bands_to_print = *INPUT.get_bands_to_print();
+    if(!bands_to_print.empty())
     {
         std::vector<double> out_band_kb;
-        Input_Conv::parse_expression(out_band_index, out_band_kb);
+        Input_Conv::parse_expression(bands_to_print, out_band_kb);
 
         // bands_picked is a vector of 0s and 1s, where 1 means the band is picked to output
         std::vector<int> bands_picked;
@@ -1041,7 +1041,7 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep)
         {
             ModuleBase::WARNING_QUIT(
                 "ESolver_KS_PW::after_scf",
-                "The number of bands specified by `out_band_index` in the INPUT file exceeds `nbands`!");
+                "The number of bands specified by `bands_to_print` in the INPUT file exceeds `nbands`!");
         }
 
         // Check if all elements in bands_picked are 0 or 1
@@ -1051,7 +1051,7 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep)
             {
                 ModuleBase::WARNING_QUIT(
                     "ESolver_KS_PW::after_scf",
-                    "The elements of `out_band_index` must be either 0 or 1. Invalid values found!");
+                    "The elements of `bands_to_print` must be either 0 or 1. Invalid values found!");
             }
         }
 
