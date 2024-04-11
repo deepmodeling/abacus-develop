@@ -507,7 +507,7 @@ bool toWannier90::try_read_nnkp(const K_Vectors& kv)
     if (num_exclude_bands == 0)
     {
         num_bands = GlobalV::NBANDS;
-        cal_band_index = new int[num_bands];
+        std::vector<int> cal_band_index(num_bands);
         for (int ib = 0; ib < GlobalV::NBANDS; ib++)
         {
             cal_band_index[ib] = ib;
@@ -516,7 +516,7 @@ bool toWannier90::try_read_nnkp(const K_Vectors& kv)
     else
     {
         num_bands = GlobalV::NBANDS - num_exclude_bands;
-        cal_band_index = new int[num_bands];
+        std::vector<int> cal_band_index(num_bands);
         int count = 0;
         for (int ib = 0; ib < GlobalV::NBANDS; ib++)
         {
