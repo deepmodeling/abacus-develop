@@ -261,27 +261,18 @@ void Gint::gint_kernel_force_meta(const int na_grid,
                                ddpsir_ylm_yz.ptr_2D,
                                ddpsir_ylm_zz.ptr_2D);
 
-    /*
-    for(int i=0;i<this->bxyz*LD_pool;i++)
-    {
-            double diff;
-            diff = (dpsir_ylm_x1.ptr_1D[i] - dpsir_ylm_x.ptr_1D[i]) - 0.001 *
-    ddpsir_ylm_xz.ptr_1D[i]; if(std::abs(diff)>1.0e-6) std::cout << "xdiff : "
-    << i << " " << 0.001 * ddpsir_ylm_xz.ptr_1D[i] <<" " <<
-    dpsir_ylm_x.ptr_1D[i] << " " <<  (dpsir_ylm_x1.ptr_1D[i] -
-    dpsir_ylm_x.ptr_1D[i]) <<" " << diff << std::endl; diff =
-    (dpsir_ylm_y1.ptr_1D[i] - dpsir_ylm_y.ptr_1D[i]) - 0.001 *
-    ddpsir_ylm_yz.ptr_1D[i]; if(std::abs(diff)>1.0e-6) std::cout << "ydiff : "
-    << i << " " << 0.001 * ddpsir_ylm_yz.ptr_1D[i] <<" " <<
-    dpsir_ylm_y.ptr_1D[i] << " " << (dpsir_ylm_y1.ptr_1D[i] -
-    dpsir_ylm_y.ptr_1D[i]) <<" " << diff << std::endl; diff =
-    (dpsir_ylm_z1.ptr_1D[i] - dpsir_ylm_z.ptr_1D[i]) - 0.001 *
-    ddpsir_ylm_zz.ptr_1D[i]; if(std::abs(diff)>1.0e-6) std::cout << "zdiff : "
-    << i << " " << 0.001 * ddpsir_ylm_zz.ptr_1D[i] <<" " <<
-    dpsir_ylm_z.ptr_1D[i] << " " << (dpsir_ylm_z1.ptr_1D[i] -
-    dpsir_ylm_z.ptr_1D[i]) <<" " << diff << std::endl;
-    }
-    */
+   /*
+	for(int i=0;i<this->bxyz*LD_pool;i++)
+	{
+		double diff;
+		diff = (dpsir_ylm_x1.ptr_1D[i] - dpsir_ylm_x.ptr_1D[i]) - 0.001 * ddpsir_ylm_xz.ptr_1D[i];
+		if(std::abs(diff)>1.0e-6) std::cout << "xdiff : " << i << " " << 0.001 * ddpsir_ylm_xz.ptr_1D[i] <<" " << dpsir_ylm_x.ptr_1D[i] << " " <<  (dpsir_ylm_x1.ptr_1D[i] - dpsir_ylm_x.ptr_1D[i]) <<" " << diff << std::endl; 
+		diff = (dpsir_ylm_y1.ptr_1D[i] - dpsir_ylm_y.ptr_1D[i]) - 0.001 * ddpsir_ylm_yz.ptr_1D[i];
+		if(std::abs(diff)>1.0e-6) std::cout << "ydiff : " << i << " " << 0.001 * ddpsir_ylm_yz.ptr_1D[i] <<" " << dpsir_ylm_y.ptr_1D[i] << " " << (dpsir_ylm_y1.ptr_1D[i] - dpsir_ylm_y.ptr_1D[i]) <<" " << diff << std::endl; 
+		diff = (dpsir_ylm_z1.ptr_1D[i] - dpsir_ylm_z.ptr_1D[i]) - 0.001 * ddpsir_ylm_zz.ptr_1D[i];
+		if(std::abs(diff)>1.0e-6) std::cout << "zdiff : " << i << " " << 0.001 * ddpsir_ylm_zz.ptr_1D[i] <<" " << dpsir_ylm_z.ptr_1D[i] << " " << (dpsir_ylm_z1.ptr_1D[i] - dpsir_ylm_z.ptr_1D[i]) <<" " << diff << std::endl; 
+	}
+	*/
 
     // calculating f_mu(r) = v(r)*psi_mu(r)*dv
     const Gint_Tools::Array_Pool<double> psir_vlbr3
@@ -330,18 +321,16 @@ void Gint::gint_kernel_force_meta(const int na_grid,
     // calculating g_mu(r) = sum_nu rho_mu,nu f_nu(r)
     if (GlobalV::GAMMA_ONLY_LOCAL)
     {
-        /*
-        Gint_Tools::mult_psi_DM(*this->gridt, this->bxyz, na_grid, LD_pool,
-        block_iw, block_size,	block_index, cal_flag, psir_vlbr3.ptr_2D,
-        psir_vlbr3_DM.ptr_2D, DM_in, 2); Gint_Tools::mult_psi_DM(*this->gridt,
-        this->bxyz, na_grid, LD_pool, block_iw, block_size,	block_index,
-        cal_flag, dpsir_x_vlbr3.ptr_2D, dpsirx_v_DM.ptr_2D, DM_in, 2);
-        Gint_Tools::mult_psi_DM(*this->gridt, this->bxyz, na_grid, LD_pool,
-        block_iw, block_size, block_index, cal_flag, dpsir_y_vlbr3.ptr_2D,
-        dpsiry_v_DM.ptr_2D, DM_in, 2); Gint_Tools::mult_psi_DM(*this->gridt,
-        this->bxyz, na_grid, LD_pool, block_iw, block_size,	block_index,
-        cal_flag, dpsir_z_vlbr3.ptr_2D, dpsirz_v_DM.ptr_2D, DM_in, 2);
-        */
+		/*
+		Gint_Tools::mult_psi_DM(*this->gridt, this->bxyz, na_grid, LD_pool, block_iw, block_size,	block_index, cal_flag,
+			psir_vlbr3.ptr_2D, psir_vlbr3_DM.ptr_2D, DM_in, 2);
+		Gint_Tools::mult_psi_DM(*this->gridt, this->bxyz, na_grid, LD_pool, block_iw, block_size,	block_index, cal_flag,
+			dpsir_x_vlbr3.ptr_2D, dpsirx_v_DM.ptr_2D, DM_in, 2);
+		Gint_Tools::mult_psi_DM(*this->gridt, this->bxyz, na_grid, LD_pool, block_iw, block_size, block_index, cal_flag,
+			dpsir_y_vlbr3.ptr_2D, dpsiry_v_DM.ptr_2D, DM_in, 2);
+		Gint_Tools::mult_psi_DM(*this->gridt, this->bxyz, na_grid, LD_pool, block_iw, block_size,	block_index, cal_flag,
+			dpsir_z_vlbr3.ptr_2D, dpsirz_v_DM.ptr_2D, DM_in, 2);
+		*/
         Gint_Tools::mult_psi_DM_new(*this->gridt,
                                     this->bxyz,
                                     grid_index,

@@ -253,7 +253,7 @@ __global__ void dot_product_force(double* psir_lx,
     }
 }
 void calculateInit(DensityMat& denstiy_mat,
-                   ForceStressIatGlobal& calcualteG,
+                   ForceStressIatGlobal& f_s_iat_dev,
                    hamilt::HContainer<double>* dm,
                    const Grid_Technique& gridt,
                    const UnitCell& ucell,
@@ -271,21 +271,21 @@ void calculateInit(DensityMat& denstiy_mat,
                          lgd * lgd * sizeof(double),
                          cudaMemcpyHostToDevice));
 
-    checkCuda(cudaMalloc((void**)&calcualteG.stress_global,
+    checkCuda(cudaMalloc((void**)&f_s_iat_dev.stress_global,
                          6 * cuda_block * gridt.nstreams * sizeof(double)));
-    checkCuda(cudaMemset(calcualteG.stress_global,
+    checkCuda(cudaMemset(f_s_iat_dev.stress_global,
                          0,
                          6 * cuda_block * gridt.nstreams * sizeof(double)));
 
-    checkCuda(cudaMalloc((void**)&calcualteG.force_global,
+    checkCuda(cudaMalloc((void**)&f_s_iat_dev.force_global,
                          3 * atom_num_grid * gridt.nstreams * sizeof(double)));
-    checkCuda(cudaMemset(calcualteG.force_global,
+    checkCuda(cudaMemset(f_s_iat_dev.force_global,
                          0,
                          3 * atom_num_grid * gridt.nstreams * sizeof(double)));
 
-    checkCuda(cudaMalloc((void**)&calcualteG.iat_global,
+    checkCuda(cudaMalloc((void**)&f_s_iat_dev.iat_global,
                          atom_num_grid * gridt.nstreams * sizeof(int)));
-    checkCuda(cudaMemset(calcualteG.iat_global,
+    checkCuda(cudaMemset(f_s_iat_dev.iat_global,
                          0,
                          atom_num_grid * gridt.nstreams * sizeof(int)));
 }
@@ -388,28 +388,28 @@ void para_init(SGridParameter& para,
  * @param max_size Maximum size of atoms on a grid.
  * @param ForceStressIatGlobal ForceStressIatGlobal,contains the Force Stree Iat on Host
  */
-void cal_init(ForceStressIat& calcualte,
+void cal_init(ForceStressIat& f_s_iat,
                         const int stream_num,
                         const int cuda_block,
                         const int atom_num_grid,
                         const int max_size,
-                        const ForceStressIatGlobal& calcualteG)
+                        const ForceStressIatGlobal& f_s_iat_dev)
 {
     const int iat_min = -max_size - 1;
-    calcualte.stress_host = new double[6 * cuda_block];
-    calcualte.stress_device
-        = &calcualteG.stress_global[6 * cuda_block * stream_num];
-    calcualte.force_device
-        = &calcualteG.force_global[3 * atom_num_grid * stream_num];
-    calcualte.iat_device
-        = &calcualteG.iat_global[atom_num_grid * stream_num];
-    calcualte.iat_host = new int[atom_num_grid];
+    f_s_iat.stress_host = new double[6 * cuda_block];
+    f_s_iat.stress_device
+        = &f_s_iat_dev.stress_global[6 * cuda_block * stream_num];
+    f_s_iat.force_device
+        = &f_s_iat_dev.force_global[3 * atom_num_grid * stream_num];
+    f_s_iat.iat_device
+        = &f_s_iat_dev.iat_global[atom_num_grid * stream_num];
+    f_s_iat.iat_host = new int[atom_num_grid];
     for (int index = 0; index < atom_num_grid; index++)
     {
-        calcualte.iat_host[index] = iat_min;
+        f_s_iat.iat_host[index] = iat_min;
     }
-    calcualte.force_host = new double[3 * atom_num_grid];
-    ModuleBase::GlobalFunc::ZEROS(calcualte.force_host,
+    f_s_iat.force_host = new double[3 * atom_num_grid];
+    ModuleBase::GlobalFunc::ZEROS(f_s_iat.force_host,
                                   3 * atom_num_grid);
 }
 
@@ -543,22 +543,22 @@ void para_mem_copy(SGridParameter& para,
  *  @param cuda_block in stress compute,used for Block nums
  *  @param stream_num int , record the stream in GPU
  */
-void cal_mem_cpy(ForceStressIat& calcualte,
+void cal_mem_cpy(ForceStressIat& f_s_iat,
                           const Grid_Technique& gridt,
                           const int atom_num_grid,
                           const int cuda_block,
                           const int stream_num)
 {
-    checkCuda(cudaMemcpyAsync(calcualte.iat_device,
-                              calcualte.iat_host,
+    checkCuda(cudaMemcpyAsync(f_s_iat.iat_device,
+                              f_s_iat.iat_host,
                               atom_num_grid * sizeof(int),
                               cudaMemcpyHostToDevice,
                               gridt.streams[stream_num]));
-    checkCuda(cudaMemsetAsync(calcualte.stress_device,
+    checkCuda(cudaMemsetAsync(f_s_iat.stress_device,
                               0,
                               6 * cuda_block * sizeof(double),
                               gridt.streams[stream_num]));
-    checkCuda(cudaMemsetAsync(calcualte.force_device,
+    checkCuda(cudaMemsetAsync(f_s_iat.force_device,
                               0,
                               3 * atom_num_grid * sizeof(double),
                               gridt.streams[stream_num]));
@@ -571,23 +571,23 @@ void cal_mem_cpy(ForceStressIat& calcualte,
  * @param force stored the force for each atom on each directions
  * @param atom_num_grid in force calculate,used for Block nums
  */
-void cal_force_add(ForceStressIat& calcualte,
+void cal_force_add(ForceStressIat& f_s_iat,
                     double* force,
                     const int atom_num_grid)
 {
-    checkCuda(cudaMemcpy(calcualte.force_host,
-                         calcualte.force_device,
+    checkCuda(cudaMemcpy(f_s_iat.force_host,
+                         f_s_iat.force_device,
                          3 * atom_num_grid * sizeof(double),
                          cudaMemcpyDeviceToHost));
     for (int index1 = 0; index1 < atom_num_grid; index1++)
     {
-        int iat1 = calcualte.iat_host[index1];
+        int iat1 = f_s_iat.iat_host[index1];
         if (iat1 >= 0)
         {
             for (int index2 = 0; index2 < 3; index2++)
             {
                 force[iat1 * 3 + index2]
-                    += calcualte.force_host[index1 * 3 + index2];
+                    += f_s_iat.force_host[index1 * 3 + index2];
             }
         }
     }
@@ -600,12 +600,12 @@ void cal_force_add(ForceStressIat& calcualte,
  * @param stress stored the stress for each directions
  * @param cuda_block in stress compute,used for Block nums
  */
-void cal_stress_add(ForceStressIat& calcualte,
+void cal_stress_add(ForceStressIat& f_s_iat,
                      double* stress,
                      const int cuda_block)
 {
-    checkCuda(cudaMemcpy(calcualte.stress_host,
-                         calcualte.stress_device,
+    checkCuda(cudaMemcpy(f_s_iat.stress_host,
+                         f_s_iat.stress_device,
                          6 * cuda_block * sizeof(double),
                          cudaMemcpyDeviceToHost));
     for (int i = 0; i < 6; i++)
@@ -613,7 +613,7 @@ void cal_stress_add(ForceStressIat& calcualte,
         for (int index = 0; index < cuda_block; index++)
         {
             // printf("the stress is %f\n",stress[i]);
-            stress[i] += calcualte.stress_host[i * cuda_block + index];
+            stress[i] += f_s_iat.stress_host[i * cuda_block + index];
         }
     }
 }
