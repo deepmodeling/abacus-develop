@@ -7,6 +7,7 @@
 #include "module_base/math_ylmreal.h"
 #include "module_base/parallel_reduce.h"
 #include "binstream.h"
+#include <vector>
 
 toWannier90_PW::toWannier90_PW(
     const bool &out_wannier_mmn, 
@@ -187,7 +188,7 @@ void toWannier90_PW::out_unk(
 
 #ifdef __MPI
     // which_ip: found iz belongs to which ip.
-    int* which_ip = new int[wfcpw->nz];
+    std::vector<int> which_ip(wfcpw->nz);
     ModuleBase::GlobalFunc::ZEROS(which_ip, wfcpw->nz);
     
     for (int ip = 0; ip < GlobalV::NPROC_IN_POOL; ip++)
@@ -338,7 +339,6 @@ void toWannier90_PW::out_unk(
     }
     MPI_Barrier(MPI_COMM_WORLD);
 
-    delete[] which_ip;
     delete[] porter;
     delete[] zpiece;
 
@@ -489,10 +489,10 @@ void toWannier90_PW::gen_radial_function_in_q(std::vector<ModuleBase::matrix> &r
     // 径向函数傅里叶变换到q空间中
     radial_in_q.resize(num_wannier);
 
-    double *r = new double[mesh_r];
-    double *dr = new double[mesh_r];
-    double *psi = new double[mesh_r];
-    double *psir = new double[mesh_r];
+    std::vector<double> r(mesh_r);
+    std::vector<double> dr(mesh_r);
+    std::vector<double> psi(mesh_r);
+    std::vector<double> psir(mesh_r);
 
     for (int wannier_index = 0; wannier_index < num_wannier; wannier_index++)
     {
@@ -561,11 +561,6 @@ void toWannier90_PW::gen_radial_function_in_q(std::vector<ModuleBase::matrix> &r
         }
 
     }
-
-    delete[] r;
-    delete[] dr;
-    delete[] psi;
-    delete[] psir;
 
 }
 
