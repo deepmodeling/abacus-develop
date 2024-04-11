@@ -187,7 +187,7 @@ void Force_LCAO_gamma::allocate_gamma(
     }
     // calculate dS in LCAO basis
     // ModuleBase::timer::tick("Force_LCAO_gamma","build_S_new");
-    gen_h.build_ST_new('S', cal_deri, GlobalC::ucell, lm.Sloc.data());
+    gen_h.build_ST_new('S', cal_deri, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD), lm.Sloc.data());
     // ModuleBase::timer::tick("Force_LCAO_gamma","build_S_new");
 
     // calculate dT in LCAP
@@ -204,12 +204,12 @@ void Force_LCAO_gamma::allocate_gamma(
     // calculate dT
     // calculate T + VNL(P1) in LCAO basis
     // ModuleBase::timer::tick("Force_LCAO_gamma","build_T_new");
-    gen_h.build_ST_new('T', cal_deri, GlobalC::ucell, lm.Hloc_fixed.data());
+    gen_h.build_ST_new('T', cal_deri, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD), lm.Hloc_fixed.data());
     // ModuleBase::timer::tick("Force_LCAO_gamma","build_T_new");
     // test_gamma(lm.DHloc_fixed_x, "dHloc_fixed_x T part");
 
     // ModuleBase::timer::tick("Force_LCAO_gamma","build_Nonlocal_mu");
-    gen_h.build_Nonlocal_mu_new(lm.Hloc_fixed.data(), cal_deri);
+    gen_h.build_Nonlocal_mu_new(lm.Hloc_fixed.data(), cal_deri, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD));
     // ModuleBase::timer::tick("Force_LCAO_gamma","build_Nonlocal_mu");
     // test_gamma(lm.DHloc_fixed_x, "dHloc_fixed_x Vnl part");
 
@@ -220,9 +220,7 @@ void Force_LCAO_gamma::allocate_gamma(
 
         lm.zeros_HSgamma('S');
 
-        gen_h.build_ST_new('S', cal_deri, GlobalC::ucell, 
-
-        lm.Sloc.data(), INPUT.cal_syns, INPUT.dmax);
+        gen_h.build_ST_new('S', cal_deri, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD), lm.Sloc.data(), INPUT.cal_syns, INPUT.dmax);
 
         bool bit = false; // LiuXh, 2017-03-21
 
