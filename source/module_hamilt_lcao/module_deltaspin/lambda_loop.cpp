@@ -1,5 +1,6 @@
 #include "spin_constrain.h"
 
+#include "module_base/timer.h"
 #include <iostream>
 #include <cmath>
 
@@ -35,6 +36,7 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::run_lambda_loop(int o
     // lambda loop
     for (int i_step = 0; i_step < this->nsc_; i_step++)
     {
+        ModuleBase::timer::tick("Lambda Loop", "Start Time"); // Collecting start time for one Lambda loop
         if (i_step == 0)
         {
             spin = this->Mi_;
@@ -117,4 +119,5 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::run_lambda_loop(int o
         }
         alpha_trial = alpha_trial * pow(g, 0.7);
     }
+    ModuleBase::timer::tick("Lambda Loop", "End Time"); // Collecting end time for one Lambda loop
 }
