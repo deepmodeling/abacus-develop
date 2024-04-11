@@ -6,8 +6,8 @@
 #include "module_base/global_variable.h"
 #include "module_base/matrix.h"
 #include "module_elecstate/module_dm/density_matrix.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_hamilt.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_gen_fixedH.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
 
@@ -42,7 +42,7 @@ class Force_LCAO_k : public Force_LCAO_gamma
 #else
                   ModuleBase::matrix& svl_dphi,
 #endif
-				  LCAO_Hamilt &uhm,
+                  LCAO_gen_fixedH &gen_h, // mohan add 2024-04-02
                   Gint_k &gint_k,
 				  Parallel_Orbitals &pv,
 				  LCAO_Matrix &lm,

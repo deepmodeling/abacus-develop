@@ -66,7 +66,7 @@ class SparseMatrix
     }
 
     // define the operator to index a matrix element
-    T operator()(int row, int col);
+    T operator()(int row, int col)const;
 
     // set the threshold
     void setSparseThreshold(double sparse_threshold)

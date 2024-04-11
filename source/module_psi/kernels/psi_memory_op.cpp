@@ -37,7 +37,7 @@ template <typename FPTYPE>
 struct set_memory_op<FPTYPE, psi::DEVICE_CPU> {
   void operator()(const psi::DEVICE_CPU* dev, FPTYPE* arr, const int var, const size_t size) {
     ModuleBase::OMP_PARALLEL([&](int num_thread, int thread_id) {
-      int beg, len;
+      int beg = 0, len = 0;
       ModuleBase::BLOCK_TASK_DIST_1D(num_thread, thread_id, size, (size_t)4096/sizeof(FPTYPE), beg, len);
       memset(arr + beg, var, sizeof(FPTYPE)*len);
     });
@@ -52,7 +52,7 @@ struct synchronize_memory_op<FPTYPE, psi::DEVICE_CPU, psi::DEVICE_CPU> {
                   const FPTYPE* arr_in, 
                   const size_t size) {
     ModuleBase::OMP_PARALLEL([&](int num_thread, int thread_id) {
-      int beg, len;
+      int beg = 0, len = 0;
       ModuleBase::BLOCK_TASK_DIST_1D(num_thread, thread_id, size, (size_t)4096/sizeof(FPTYPE), beg, len);
       memcpy(arr_out + beg, arr_in + beg, sizeof(FPTYPE)*len);
     });

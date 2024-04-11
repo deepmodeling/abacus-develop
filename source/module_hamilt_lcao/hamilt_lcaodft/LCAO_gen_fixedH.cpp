@@ -58,6 +58,7 @@ void LCAO_gen_fixedH::calculate_S_no(double* SlocR)
 void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, const UnitCell &ucell, double* HSloc, bool cal_syns, double dmax)
 {
     ModuleBase::TITLE("LCAO_gen_fixedH","build_ST_new");
+    ModuleBase::timer::tick("LCAO_gen_fixedH","build_ST_new");
 
 	int total_nnr = 0;
 	const Parallel_Orbitals* pv = this->LM->ParaV;
@@ -236,18 +237,38 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
                                 int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
                                 int M2 = (m2 % 2 == 0) ? -m2/2 : (m2+1)/2;
                                 switch (dtype)
-                                {
-                                case 'S':
-                                    GlobalC::UOT.two_center_bundle->overlap_orb->calculate(T1, L1, N1, M1,
-                                            T2, L2, N2, M2, dtau * ucell.lat0, nullptr, olm);
-                                    break;
-                                case 'T':
-                                    GlobalC::UOT.two_center_bundle->kinetic_orb->calculate(T1, L1, N1, M1,
-                                            T2, L2, N2, M2, dtau * ucell.lat0, nullptr, olm);
-                                    break;
-                                default:  // not supposed to happen
-			                        ModuleBase::WARNING_QUIT("LCAO_gen_fixedH::build_ST_new","dtype must be S or T");
-                                }
+								{
+									case 'S':
+										GlobalC::UOT.two_center_bundle->overlap_orb->calculate(
+												T1, 
+												L1, 
+												N1, 
+												M1,
+												T2, 
+												L2, 
+												N2, 
+												M2, 
+												dtau * ucell.lat0, 
+												nullptr, 
+												olm);
+										break;
+									case 'T':
+										GlobalC::UOT.two_center_bundle->kinetic_orb->calculate(
+												T1, 
+												L1, 
+												N1, 
+												M1,
+												T2, 
+												L2, 
+												N2, 
+												M2, 
+												dtau * ucell.lat0, 
+												nullptr, 
+												olm);
+										break;
+									default:  // not supposed to happen
+										ModuleBase::WARNING_QUIT("LCAO_gen_fixedH::build_ST_new","dtype must be S or T");
+								}
 #else
 								GlobalC::UOT.snap_psipsi( GlobalC::ORB, olm, 1, dtype, 
 									tau1, T1, L1, m1, N1,
@@ -363,6 +384,7 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype, const bool& calc_deri, con
 		}
 	}
 
+    ModuleBase::timer::tick("LCAO_gen_fixedH","build_ST_new");
     return;
 }
 
@@ -535,7 +557,8 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 	ModuleBase::Vector3<double> dtau1, dtau2, tau0;
 	double distance = 0.0;
 	double rcut = 0.0;
-	double rcut1, rcut2;
+	double rcut1 = 0.0;
+    double rcut2 = 0.0;
 		
 	//	Record_adj RA;
 	//	RA.for_2d();
@@ -624,7 +647,10 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc, const bool &calc_deri
 						const int iat = GlobalC::ucell.itia2iat(T0,I0);
 
 						// mohan add 2010-12-19
-						if( GlobalC::ucell.infoNL.nproj[T0] == 0) continue;
+						if( GlobalC::ucell.infoNL.nproj[T0] == 0) 
+						{
+							continue;
+						}
 
 						//const int I0 = GlobalC::GridD.getNatom(ad0);
 						//const int start0 = GlobalC::ucell.itiaiw2iwt(T0, I0, 0);
