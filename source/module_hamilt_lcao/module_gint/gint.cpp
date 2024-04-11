@@ -160,8 +160,6 @@ void Gint::cal_gint(Gint_inout* inout)
                         inout->fvl_dphi[0](iat, 1) += force[iat * 3 + 1];
                         inout->fvl_dphi[0](iat, 2) += force[iat * 3 + 2];
                     }
-                    printf("after\n");
-                    printf("%f %f %f %f %f %f\n",stress[0],stress[1],stress[2],stress[3],stress[4],stress[5]);
                         inout->svl_dphi[0](0, 0) += stress[0];
                         inout->svl_dphi[0](0, 1) += stress[1];
                         inout->svl_dphi[0](0, 2) += stress[2];
@@ -169,7 +167,6 @@ void Gint::cal_gint(Gint_inout* inout)
                         inout->svl_dphi[0](1, 2) += stress[4];
                         inout->svl_dphi[0](2, 2) += stress[5];
                     
-                    printf("finish force\n");
                     delete[] force;
                     delete[] stress;
                 // }
