@@ -134,8 +134,7 @@ void Diago_DavSubspace<T, Device>::diag_once(hamilt::Hamilt<T, Device>* phm_in,
                    basis, 
                    this->hphi, 
                    this->hcc, 
-                   this->scc, 
-                   true);
+                   this->scc);
 
     this->diag_zhegvx(nbase,
                       this->n_band,
@@ -175,8 +174,7 @@ void Diago_DavSubspace<T, Device>::diag_once(hamilt::Hamilt<T, Device>* phm_in,
                        basis, 
                        this->hphi, 
                        this->hcc, 
-                       this->scc, 
-                       false);
+                       this->scc);
 
         this->diag_zhegvx(nbase,
                           this->n_band,
@@ -399,84 +397,43 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
                                        const psi::Psi<T, Device>& basis,
                                        const T* hphi,
                                        T* hcc,
-                                       T* scc,
-                                       bool init)
+                                       T* scc)
 {
     ModuleBase::timer::tick("Diago_DavSubspace", "cal_elem");
 
-    if (init)
-    {
-        assert(nbase == 0);
-        assert(this->n_band == notconv);
-        gemm_op<T, Device>()(this->ctx,
-                             'C',
-                             'N',
-                             notconv,
-                             notconv,
-                             this->dim,
-                             this->one,
-                             &basis(0, 0),
-                             this->dim,
-                             hphi,
-                             this->dim,
-                             this->zero,
-                             hcc,
-                             this->nbase_x);
+    gemm_op<T, Device>()(this->ctx,
+                        'C',
+                        'N',
+                        nbase + notconv,
+                        notconv,
+                        this->dim,
+                        this->one,
+                        &basis(0, 0),
+                        this->dim,
+                        &hphi[nbase * this->dim],
+                        this->dim,
+                        this->zero,
+                        &hcc[nbase * this->nbase_x],
+                        this->nbase_x);
 
-        gemm_op<T, Device>()(this->ctx,
-                             'C',
-                             'N',
-                             notconv,
-                             notconv,
-                             this->dim,
-                             this->one,
-                             &basis(0, 0),
-                             this->dim,
-                             &basis(0, 0),
-                             this->dim,
-                             this->zero,
-                             scc,
-                             this->nbase_x);
-    }
-    else
-    {
-        gemm_op<T, Device>()(this->ctx,
-                             'C',
-                             'N',
-                             notconv,
-                             nbase + notconv,
-                             this->dim,
-                             this->one,
-                             &hphi[nbase * this->dim],
-                             this->dim,
-                             &basis(0, 0),
-                             this->dim,
-                             this->zero,
-                             hcc + nbase,
-                             this->nbase_x);
-
-        gemm_op<T, Device>()(this->ctx,
-                             'C',
-                             'N',
-                             notconv,
-                             nbase + notconv,
-                             this->dim,
-                             this->one,
-                             &basis(nbase, 0),
-                             this->dim,
-                             &basis(0, 0),
-                             this->dim,
-                             this->zero,
-                             scc + nbase,
-                             this->nbase_x);
-    }
+    gemm_op<T, Device>()(this->ctx,
+                        'C',
+                        'N',
+                        nbase + notconv,
+                        notconv,
+                        this->dim,
+                        this->one,
+                        &basis(0, 0),
+                        this->dim,
+                        &basis(nbase, 0),
+                        this->dim,
+                        this->zero,
+                        &scc[nbase * this->nbase_x],
+                        this->nbase_x);
 
 #ifdef __MPI
     if (GlobalV::NPROC_IN_POOL > 1)
     {
-        matrixTranspose_op<T, Device>()(this->ctx, this->nbase_x, this->nbase_x, hcc, hcc);
-        matrixTranspose_op<T, Device>()(this->ctx, this->nbase_x, this->nbase_x, scc, scc);
-
         auto* swap = new T[notconv * this->nbase_x];
         syncmem_complex_op()(this->ctx, this->ctx, swap, hcc + nbase * this->nbase_x, notconv * this->nbase_x);
 
@@ -532,64 +489,34 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
             }
         }
         delete[] swap;
-
-        matrixTranspose_op<T, Device>()(this->ctx, this->nbase_x, this->nbase_x, hcc, hcc);
-        matrixTranspose_op<T, Device>()(this->ctx, this->nbase_x, this->nbase_x, scc, scc);
     }
 #endif
 
-    nbase += notconv;
-    int nb1 = nbase - notconv;
-    // reset:
-    if (init)
-    {
-        for (size_t i = 0; i < nbase; i++)
-        {
+    const size_t last_nbase = nbase; // init: last_nbase = 0
+    nbase = nbase + notconv;
 
+    for (size_t i = 0; i < nbase; i++)
+    {
+        if (i >= last_nbase)
+        {
             hcc[i * this->nbase_x + i] = set_real_tocomplex(hcc[i * this->nbase_x + i]);
             scc[i * this->nbase_x + i] = set_real_tocomplex(scc[i * this->nbase_x + i]);
-
-            for (size_t j = i + 1; j < nbase; j++)
-            {
-                hcc[j * this->nbase_x + i] = get_conj(hcc[i * this->nbase_x + j]);
-                scc[j * this->nbase_x + i] = get_conj(scc[i * this->nbase_x + j]);
-            }
         }
-        for (size_t i = nbase; i < this->nbase_x; i++)
+        for (size_t j = std::max(i + 1, last_nbase); j < nbase; j++)
         {
-            for (size_t j = nbase; j < this->nbase_x; j++)
-            {
-                hcc[i * this->nbase_x + j] = cs.zero;
-                scc[i * this->nbase_x + j] = cs.zero;
-                hcc[j * this->nbase_x + i] = cs.zero;
-                scc[j * this->nbase_x + i] = cs.zero;
-            }
+            hcc[i * this->nbase_x + j] = get_conj(hcc[j * this->nbase_x + i]);
+            scc[i * this->nbase_x + j] = get_conj(scc[j * this->nbase_x + i]);
         }
     }
-    else
+
+    for (size_t i = nbase; i < this->nbase_x; i++)
     {
-        for (size_t i = 0; i < nbase; i++)
+        for (size_t j = nbase; j < this->nbase_x; j++)
         {
-            if (i >= nb1)
-            {
-                hcc[i * this->nbase_x + i] = set_real_tocomplex(hcc[i * this->nbase_x + i]);
-                scc[i * this->nbase_x + i] = set_real_tocomplex(scc[i * this->nbase_x + i]);
-            }
-            for (size_t j = std::max(i + 1, (size_t)nb1); j < nbase; j++)
-            {
-                hcc[j * this->nbase_x + i] = get_conj(hcc[i * this->nbase_x + j]);
-                scc[j * this->nbase_x + i] = get_conj(scc[i * this->nbase_x + j]);
-            }
-        }
-        for (size_t i = nbase; i < this->nbase_x; i++)
-        {
-            for (size_t j = nbase; j < this->nbase_x; j++)
-            {
-                hcc[i * this->nbase_x + j] = cs.zero;
-                scc[i * this->nbase_x + j] = cs.zero;
-                hcc[j * this->nbase_x + i] = cs.zero;
-                scc[j * this->nbase_x + i] = cs.zero;
-            }
+            hcc[i * this->nbase_x + j] = cs.zero;
+            scc[i * this->nbase_x + j] = cs.zero;
+            hcc[j * this->nbase_x + i] = cs.zero;
+            scc[j * this->nbase_x + i] = cs.zero;
         }
     }
 
