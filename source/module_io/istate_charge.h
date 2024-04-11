@@ -40,7 +40,6 @@ class IState_Charge
                const double nelec,
                const int nspin,
                const int nlocal,
-               const std::string& out_band_index,
                const std::string& global_out_dir,
                const int my_rank,
                std::ofstream& ofs_warning);

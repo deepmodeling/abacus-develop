@@ -20,7 +20,6 @@ namespace GlobalV
 //----------------------------------------------------------
 int NBANDS = 0;
 int NBANDS_ISTATE = 0; // default number.
-std::string OUT_BAND_INDEX = "none"; // default output bands index.
 int NLOCAL = 0; // total number of local basis.
 
 double  KSPACING[3] = {0.0,0.0,0.0};

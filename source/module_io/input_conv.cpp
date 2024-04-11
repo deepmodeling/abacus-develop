@@ -306,8 +306,6 @@ void Input_Conv::Convert(void)
     GlobalV::NBANDS = INPUT.nbands;
     GlobalV::NBANDS_ISTATE = INPUT.nbands_istate;
 
-    GlobalV::OUT_BAND_INDEX = INPUT.out_band_index;
-
     GlobalV::device_flag = psi::device::get_device_flag(INPUT.device, INPUT.ks_solver, INPUT.basis_type);
 
     if (GlobalV::device_flag == "gpu")

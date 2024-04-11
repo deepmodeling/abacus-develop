@@ -28,7 +28,6 @@ void IState_Charge::begin(Gint_Gamma& gg,
                           const double nelec,
                           const int nspin,
                           const int nlocal,
-                          const std::string& out_band_index,
                           const std::string& global_out_dir,
                           const int my_rank,
                           std::ofstream& ofs_warning)
@@ -42,6 +41,9 @@ void IState_Charge::begin(Gint_Gamma& gg,
         ModuleBase::WARNING_QUIT("IState_Charge::begin", "Only available for GAMMA_ONLY_LOCAL now.");
     }
 
+    // Get out_band_index through public function of INPUT (returns a const pointer to string)
+    std::string out_band_index = *INPUT.get_out_band_index();
+
     int mode = 0;
     if (nbands_istate > 0 && out_band_index.empty())
     {
@@ -49,7 +51,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
     }
     else if (!out_band_index.empty())
     {
-        // If OUT_BAND_INDEX is not empty, set mode to 2
+        // If out_band_index is not empty, set mode to 2
         mode = 2;
         std::cout << " Notice: INPUT parameter `nbands_istate` overwritten by `out_band_index`!" << std::endl;
     }
