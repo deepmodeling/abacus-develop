@@ -801,7 +801,7 @@ void Charge_Mixing::mix_dmr(elecstate::DensityMatrix<double, double>* DM)
     ModuleBase::timer::tick("Charge_Mixing", "mix_dmr");
     //
     std::vector<hamilt::HContainer<double>*> dmr = DM->get_DMR_vector();
-    std::vector<std::vector<double>> dmr_save = DM->get_DMR_save();
+    std::vector<std::vector<double>>& dmr_save = DM->get_DMR_save();
     //
     //const int dmr_nspin = (GlobalV::NSPIN == 2) ? 2 : 1;
     double* dmr_in;
@@ -900,7 +900,7 @@ void Charge_Mixing::mix_dmr(elecstate::DensityMatrix<std::complex<double>, doubl
     ModuleBase::timer::tick("Charge_Mixing", "mix_dmr");
     //
     std::vector<hamilt::HContainer<double>*> dmr = DM->get_DMR_vector();
-    std::vector<std::vector<double>> dmr_save = DM->get_DMR_save();
+    std::vector<std::vector<double>>& dmr_save = DM->get_DMR_save();
     //
     //const int dmr_nspin = (GlobalV::NSPIN == 2) ? 2 : 1;
     double* dmr_in;

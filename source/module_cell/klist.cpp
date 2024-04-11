@@ -622,7 +622,7 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
     ModuleBase::Matrix3 inv(-1, 0, 0, 0, -1, 0, 0, 0, -1);
     ModuleBase::Matrix3 ind(1, 0, 0, 0, 1, 0, 0, 0, 1);
 
-    int nrotkm;
+    int nrotkm=0;
     if(use_symm)
     {
         // bravais type of reciprocal lattice and k-lattice

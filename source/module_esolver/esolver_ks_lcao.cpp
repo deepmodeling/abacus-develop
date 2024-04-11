@@ -18,7 +18,6 @@
 #include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_elecstate/occupy.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dftu_new.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/print_info.h"
 #ifdef __EXX
@@ -111,11 +110,13 @@ void ESolver_KS_LCAO<TK, TR>::init(Input& inp, UnitCell& ucell)
     // autoset nbands in ElecState, it should before basis_init (for Psi 2d divid)
     if (this->pelec == nullptr)
     {
-        this->pelec = new elecstate::ElecStateLCAO<TK>(&(this->chr),
+        this->pelec = new elecstate::ElecStateLCAO<TK>(
+            &(this->chr),
             &(this->kv),
             this->kv.nks,
             &(this->LOC),
-            &(this->UHM),
+            &(this->GG), // mohan add 2024-04-01
+            &(this->GK), // mohan add 2024-04-01
             &(this->LOWF),
             this->pw_rho,
             this->pw_big);
@@ -129,7 +130,7 @@ void ESolver_KS_LCAO<TK, TR>::init(Input& inp, UnitCell& ucell)
     //------------------init Basis_lcao----------------------
 
     //! pass Hamilt-pointer to Operator
-    this->UHM.genH.LM = this->UHM.LM = &this->LM;
+    this->gen_h.LM = &this->LM;
 
     //! pass basis-pointer to EState and Psi
     this->LOC.ParaV = this->LOWF.ParaV = this->LM.ParaV = &(this->orb_con.ParaV);
@@ -255,7 +256,8 @@ void ESolver_KS_LCAO<TK, TR>::init_after_vc(Input& inp, UnitCell& ucell)
 				&(this->kv),
 				this->kv.nks,
 				&(this->LOC),
-				&(this->UHM),
+                &(this->GG), // mohan add 2024-04-01
+                &(this->GK), // mohan add 2024-04-01
 				&(this->LOWF),
 				this->pw_rho,
 				this->pw_big);
@@ -309,10 +311,12 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(ModuleBase::matrix& force)
 			GlobalV::TEST_STRESS,
 			this->LOC,
             this->orb_con.ParaV, 
-            this->LM,
 			this->pelec,
 			this->psi,
-			this->UHM,
+            this->LM,
+            this->gen_h, // mohan add 2024-04-02
+            this->GG, // mohan add 2024-04-01
+            this->GK, // mohan add 2024-04-01
 			force,
 			this->scs,
 			this->sf,
@@ -420,7 +424,7 @@ void ESolver_KS_LCAO<TK, TR>::post_process(void)
     {
         ModuleIO::write_proj_band_lcao(
             this->psi,
-            this->UHM,
+            this->LM,
             this->pelec,
             this->kv,
             GlobalC::ucell,
@@ -431,7 +435,8 @@ void ESolver_KS_LCAO<TK, TR>::post_process(void)
     {
 		ModuleIO::out_dos_nao(
 				this->psi,
-				this->UHM,
+                this->LM,
+                this->orb_con.ParaV,
 				this->pelec->ekb,
 				this->pelec->wg,
 				INPUT.dos_edelta_ev,
@@ -547,13 +552,43 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
     if (iter == 1)
     {
         this->p_chgmix->init_mixing(); // init mixing
-        this->p_chgmix->mixing_restart = GlobalV::SCF_NMAX + 1;
+        this->p_chgmix->mixing_restart_step = GlobalV::SCF_NMAX + 1;
+        this->p_chgmix->mixing_restart_count = 0;
+        // this output will be removed once the feeature is stable
+        if(GlobalC::dftu.uramping > 0.01)
+        {
+            std::cout << " U-Ramping! Current U = " ;
+            for (int i = 0; i < GlobalC::dftu.U0.size(); i++)
+            {
+                std::cout << GlobalC::dftu.U[i] * ModuleBase::Ry_to_eV << " ";
+            }
+            std::cout << " eV " << std::endl;
+        }
     }
     // for mixing restart
-    if (iter == this->p_chgmix->mixing_restart 
+    if (iter == this->p_chgmix->mixing_restart_step 
         && GlobalV::MIXING_RESTART > 0.0)
     {
         this->p_chgmix->init_mixing();
+        this->p_chgmix->mixing_restart_count++;
+        if (GlobalV::dft_plus_u)
+        {   
+            GlobalC::dftu.uramping_update(); // update U by uramping if uramping > 0.01
+            if(GlobalC::dftu.uramping > 0.01)
+            {
+                std::cout << " U-Ramping! Current U = " ;
+                for (int i = 0; i < GlobalC::dftu.U0.size(); i++)
+                {
+                    std::cout << GlobalC::dftu.U[i] * ModuleBase::Ry_to_eV << " ";
+                }
+                std::cout << " eV " << std::endl;
+            }
+            if(GlobalC::dftu.uramping > 0.01 
+               && !GlobalC::dftu.u_converged()) 
+            {
+                this->p_chgmix->mixing_restart_step = GlobalV::SCF_NMAX + 1;
+            }   
+        }
         if (GlobalV::MIXING_DMR) // for mixing_dmr 
         {
             // allocate memory for dmr_mdata
@@ -634,15 +669,9 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
 
     if (GlobalV::dft_plus_u)
     {
-        if(istep == 0 && iter == 1)
+        if(istep != 0 || iter != 1)
         {
-            hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::dm_in_dftu = nullptr;
-        }
-        else
-        {
-            hamilt::DFTUNew<hamilt::OperatorLCAO<TK, TR>>::dm_in_dftu =
-            dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)
-                ->get_DM();
+            GlobalC::dftu.set_dmr( dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM() );
         }
         // Calculate U and J if Yukawa potential is used
         GlobalC::dftu.cal_slater_UJ(this->pelec->charge->rho, this->pw_rho->nrxx);
@@ -665,7 +694,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
         // update Gint_K
         if (!GlobalV::GAMMA_ONLY_LOCAL)
         {
-            this->UHM.GK.renew();
+            this->GK.renew();
         }
         // update real space Hamiltonian
         this->p_hamilt->refresh();
@@ -688,7 +717,9 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density(int istep, int iter, double ethr)
     // save input rho
     this->pelec->charge->save_rho_before_sum_band();
     // save density matrix for mixing
-    if (GlobalV::MIXING_RESTART > 0 && GlobalV::MIXING_DMR && iter >= this->p_chgmix->mixing_restart)
+    if (GlobalV::MIXING_RESTART > 0 
+        && GlobalV::MIXING_DMR 
+        && this->p_chgmix->mixing_restart_count > 0)
     {
         elecstate::DensityMatrix<TK, double>* dm
             = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
@@ -803,7 +834,7 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
     {
         if (!GlobalV::GAMMA_ONLY_LOCAL && hsolver::HSolverLCAO<TK>::out_mat_hs[0])
         {
-            this->UHM.GK.renew(true);
+            this->GK.renew(true);
         }
         for (int ik = 0; ik < this->kv.nks; ++ik)
         {
@@ -896,11 +927,13 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int iter)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "iter_finish");
 
-    // mix density matrix
-    if (GlobalV::MIXING_RESTART > 0 && iter >= this->p_chgmix->mixing_restart && GlobalV::MIXING_DMR )
+    // mix density matrix if mixing_restart + mixing_dmr + not first mixing_restart at every iter
+    if (GlobalV::MIXING_RESTART > 0 
+        && this->p_chgmix->mixing_restart_count > 0 
+        && GlobalV::MIXING_DMR)
     {
         elecstate::DensityMatrix<TK, double>* dm
-                    = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
+            = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
         this->p_chgmix->mix_dmr(dm);
     }
 
@@ -1016,22 +1049,37 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     bool out_exc = true;    // tmp, add parameter!
     if (GlobalV::out_mat_xc)
     {
-        ModuleIO::write_Vxc<TK, TR>(GlobalV::NSPIN, GlobalV::NLOCAL, GlobalV::DRANK,
-            *this->psi, GlobalC::ucell, this->sf, *this->pw_rho, *this->pw_rhod, GlobalC::ppcell.vloc,
-            *this->pelec->charge, this->UHM, this->LM, this->LOC, this->kv, this->pelec->wg, GlobalC::GridD);
+		ModuleIO::write_Vxc<TK, TR>(
+				GlobalV::NSPIN, 
+				GlobalV::NLOCAL, 
+				GlobalV::DRANK,
+				*this->psi, 
+				GlobalC::ucell, 
+				this->sf, 
+				*this->pw_rho, 
+				*this->pw_rhod, 
+				GlobalC::ppcell.vloc,
+				*this->pelec->charge, 
+				this->GG,
+				this->GK,
+				this->LM, 
+				this->LOC, 
+				this->kv, 
+				this->pelec->wg, 
+				GlobalC::GridD);
     }
 
 #ifdef __EXX
     if (GlobalC::exx_info.info_global.cal_exx) // Peize Lin add if 2022.11.14
     {
-        const std::string file_name_exx = GlobalV::global_out_dir + "HexxR_" + std::to_string(GlobalV::MY_RANK);
+        const std::string file_name_exx = GlobalV::global_out_dir + "HexxR" + std::to_string(GlobalV::MY_RANK);
         if (GlobalC::exx_info.info_ri.real_number)
         {
-            this->exd->write_Hexxs(file_name_exx);
+            this->exd->write_Hexxs_csr(file_name_exx, GlobalC::ucell);
         }
         else
         {
-            this->exc->write_Hexxs(file_name_exx);
+            this->exc->write_Hexxs_csr(file_name_exx, GlobalC::ucell);
         }
     }
 #endif
@@ -1181,15 +1229,18 @@ ModuleIO::Output_DM1 ESolver_KS_LCAO<TK, TR>::create_Output_DM1(int istep)
 template <typename TK, typename TR>
 ModuleIO::Output_Mat_Sparse<TK> ESolver_KS_LCAO<TK, TR>::create_Output_Mat_Sparse(int istep)
 {
-	return ModuleIO::Output_Mat_Sparse<TK>(hsolver::HSolverLCAO<TK>::out_mat_hsR,
+	return ModuleIO::Output_Mat_Sparse<TK>(
+            hsolver::HSolverLCAO<TK>::out_mat_hsR,
 			hsolver::HSolverLCAO<TK>::out_mat_dh,
 			hsolver::HSolverLCAO<TK>::out_mat_t,
 			INPUT.out_mat_r,
 			istep,
 			this->pelec->pot->get_effective_v(),
 			*this->LOWF.ParaV,
-			this->UHM,
+            this->gen_h, // mohan add 2024-04-06
+            this->GK, // mohan add 2024-04-01
 			this->LM,
+            GlobalC::GridD, // mohan add 2024-04-06
 			this->kv,
 			this->p_hamilt);
 }
