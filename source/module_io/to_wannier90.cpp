@@ -260,9 +260,9 @@ bool toWannier90::try_read_nnkp(const K_Vectors& kv)
                 }
 
                 R_centre = new ModuleBase::Vector3<double>[num_wannier];
-                L = new int[num_wannier];
-                m = new int[num_wannier];
-                rvalue = new int[num_wannier];
+                std::vector<int> L(num_wannier);
+                std::vector<int> m(num_wannier);
+                std::vector<int> rvalue(num_wannier);
                 z_axis = new ModuleBase::Vector3<double>[num_wannier];
                 x_axis = new ModuleBase::Vector3<double>[num_wannier];
                 alfa = new double[num_wannier];
@@ -294,9 +294,9 @@ bool toWannier90::try_read_nnkp(const K_Vectors& kv)
                 }
 
                 R_centre = new ModuleBase::Vector3<double>[num_wannier];
-                L = new int[num_wannier];
-                m = new int[num_wannier];
-                rvalue = new int[num_wannier];
+                std::vector<int> L(num_wannier);
+                std::vector<int> m(num_wannier);
+                std::vector<int> rvalue(num_wannier);
                 z_axis = new ModuleBase::Vector3<double>[num_wannier];
                 x_axis = new ModuleBase::Vector3<double>[num_wannier];
                 alfa = new double[num_wannier];
