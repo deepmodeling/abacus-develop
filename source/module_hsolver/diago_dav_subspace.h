@@ -81,8 +81,7 @@ class Diago_DavSubspace : public DiagH<T, Device>
                   const psi::Psi<T, Device>& basis,
                   const T* hphi,
                   T* hcc,
-                  T* scc,
-                  bool init);
+                  T* scc);
 
     void refresh(const int& dim,
                  const int& nband,
