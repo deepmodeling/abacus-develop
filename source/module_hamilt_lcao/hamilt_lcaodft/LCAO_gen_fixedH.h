@@ -29,15 +29,27 @@ class LCAO_gen_fixedH
     void build_ST_new(const char& dtype,
                       const bool& cal_deri,
                       const UnitCell& ucell,
+                      const LCAO_Orbitals& orb,
+                      const ORB_gen_tables& uot,
+                      Grid_Driver* GridD,
                       double* SHlocR,
                       bool cal_syns = false,
                       double dmax = 0.0);
 	// cal_syns : calculate asynchronous overlap matrix for Hefei-NAMD
 
     // can used in gamma algorithm.
-    void build_Nonlocal_beta_new(double* Hloc);
+    void build_Nonlocal_beta_new(double* Hloc,
+                      const UnitCell& ucell,
+                      const LCAO_Orbitals& orb,
+                      const ORB_gen_tables& uot,
+                      Grid_Driver* GridD);
 
-    void build_Nonlocal_mu_new(double* HlocR, const bool& calc_deri);
+    void build_Nonlocal_mu_new(double* HlocR,
+                      const bool& calc_deri,
+                      const UnitCell& ucell,
+                      const LCAO_Orbitals& orb,
+                      const ORB_gen_tables& uot,
+                      Grid_Driver* GridD);
 };
 
 #endif
