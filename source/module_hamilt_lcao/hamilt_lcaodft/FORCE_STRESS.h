@@ -34,10 +34,10 @@ class Force_Stress_LCAO
         const bool istests,
 		Local_Orbital_Charge& loc,
 		Parallel_Orbitals &pv,
-		LCAO_Matrix &lm,
 		const elecstate::ElecState* pelec,
         const psi::Psi<T>* psi,
-		LCAO_Hamilt& uhm,
+		LCAO_Matrix &lm,
+        LCAO_gen_fixedH &gen_h, // mohan add 2024-04-02
 		Gint_Gamma &gint_gamma, // mohan add 2024-04-01
 		Gint_k &gint_k, // mohan add 2024-04-01
         ModuleBase::matrix& fcs,
@@ -92,7 +92,7 @@ class Force_Stress_LCAO
 #else
         ModuleBase::matrix& svl_dphi,
 #endif
-		LCAO_Hamilt &uhm,
+        LCAO_gen_fixedH &gen_h, // mohan add 2024-04-02
 		Gint_Gamma &gint_gamma,
 		Gint_k &gint_k,
 	    Parallel_Orbitals &pv,

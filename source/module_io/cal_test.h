@@ -9,7 +9,9 @@ namespace Cal_Test
 		const ModulePW::PW_Basis_K* wfcpw,
 		const std::string chr_mixing_mode,
 		const int chr_mixing_ndim);
+
 	int cal_np(const double &ggcut, const int &n1, const int &n2, const int &n3);
+
 	void print_mem(const int &nproc);
 
 	extern double mporter;

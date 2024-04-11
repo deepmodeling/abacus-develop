@@ -16,6 +16,8 @@ For magnetic calculations, `mixing_beta_mag` and `mixing_gg0_mag` are activated.
 
 An example showcasing different charge mixing methods can be found in our [repository](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/charge_mixing/pw_Al). Four INPUT files are provided, with description given in README.
 
+As for DFT+U calculations, where the hamiltonian is not only dependent on charge density, but also dependent on density matrix. You can try `mixing_restart>0` and `mixing_dmr=1` to improve convergence. For case extremely hard to converge, you can use so-called U-Ramping method by setting a finite positive `uramping` with `mixing_restart>0` and `mixing_dmr=1`.
+
 ## Smearing
 
 Thermal smearing is an efficient tool for accelerating SCF convergence by allowing fractional occupation of molecular orbitals near the band edge. It is important for metallic systems.
