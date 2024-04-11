@@ -233,6 +233,11 @@ void gint_gamma_force_gpu(hamilt::HContainer<double>* dm,
         }
     }
     cudaFree(f_s_iat.stress_device);
+    cudaFree(f_s_iat.force_device);
+    cudaFree(f_s_iat.iat_device);
+    delete[] f_s_iat.stress_host;
+    delete[] f_s_iat.force_host;
+    delete[] f_s_iat.iat_host;
     /*free variables in CPU host*/
     for (int i = 0; i < gridt.nstreams; i++)
     {
