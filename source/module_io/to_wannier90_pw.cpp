@@ -7,7 +7,6 @@
 #include "module_base/math_ylmreal.h"
 #include "module_base/parallel_reduce.h"
 #include "binstream.h"
-#include <vector>
 
 toWannier90_PW::toWannier90_PW(
     const bool &out_wannier_mmn, 
@@ -188,7 +187,7 @@ void toWannier90_PW::out_unk(
 
 #ifdef __MPI
     // which_ip: found iz belongs to which ip.
-    std::vector<int> which_ip(wfcpw->nz);
+    int* which_ip = new int[wfcpw->nz];
     ModuleBase::GlobalFunc::ZEROS(which_ip, wfcpw->nz);
     
     for (int ip = 0; ip < GlobalV::NPROC_IN_POOL; ip++)
@@ -339,6 +338,7 @@ void toWannier90_PW::out_unk(
     }
     MPI_Barrier(MPI_COMM_WORLD);
 
+    delete[] which_ip;
     delete[] porter;
     delete[] zpiece;
 
