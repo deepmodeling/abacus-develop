@@ -118,6 +118,6 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::run_lambda_loop(int o
             g = 0.5;
         }
         alpha_trial = alpha_trial * pow(g, 0.7);
+        ModuleBase::timer::tick("Lambda Loop", "End Time"); // Collecting end time for one Lambda loop
     }
-    ModuleBase::timer::tick("Lambda Loop", "End Time"); // Collecting end time for one Lambda loop
 }
