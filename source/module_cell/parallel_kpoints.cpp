@@ -91,6 +91,26 @@ void Parallel_Kpoints::get_startk_pool(const int &nkstot)
     }
     return;
 }
+
+void Parallel_Kpoints::gatherkvec(const std::vector<ModuleBase::Vector3<double>>& vec_local,
+                                  std::vector<ModuleBase::Vector3<double>>& vec_global) const
+{
+    int nks = nks_pool[GlobalV::MY_POOL];
+
+    int nks_tot = 0;
+    for (int i=0; i<GlobalV::KPAR; i++)
+    {
+        nks_tot += nks_pool[i];
+    }
+    vec_global.resize(GlobalV::KPAR*nks_tot, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
+    for(int i=0; i<nks; i++)
+    {
+        vec_global[i + startk_pool[GlobalV::MY_POOL]] = vec_local[i] / double(GlobalV::NPROC_IN_POOL); 
+    }
+
+    MPI_Allreduce(MPI_IN_PLACE, &vec_global[0], 3*nks, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    return;
+}
 #endif
 
 
