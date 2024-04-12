@@ -106,8 +106,6 @@ void Gint::cal_gint(Gint_inout* inout)
                                               rcut,
                                               *this->gridt,
                                               GlobalC::ucell);
-                ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
-                return;
             }
             else if (inout->job == Gint_Tools::job_type::rho)
             {
@@ -124,8 +122,6 @@ void Gint::cal_gint(Gint_inout* inout)
                                                    GlobalC::ucell,
                                                    inout->rho[is]);
                 }
-                ModuleBase::timer::tick("Gint_interface", "cal_gint_rho");
-                return;
             }
             else if (inout->job == Gint_Tools::job_type::force)
             {
@@ -170,8 +166,6 @@ void Gint::cal_gint(Gint_inout* inout)
                     delete[] force;
                     delete[] stress;
                 // }
-                ModuleBase::timer::tick("Gint_interface", "cal_gint_force");
-                return;
             }
         }
         else
