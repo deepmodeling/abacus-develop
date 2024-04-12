@@ -58,9 +58,6 @@ class toWannier90
     // Parameters related to trial orbitals
     int num_wannier; // Number of Wannier orbits
     ModuleBase::Vector3<double> *R_centre = nullptr;
-    int *L = nullptr;
-    int *m = nullptr;
-    int *rvalue = nullptr;
     ModuleBase::Vector3<double> *z_axis = nullptr;
     ModuleBase::Vector3<double> *x_axis = nullptr;
     double *alfa = nullptr;
