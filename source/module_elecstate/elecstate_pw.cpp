@@ -69,7 +69,7 @@ void ElecStatePW<T, Device>::init_rho_data()
         }
     }
     resmem_complex_op()(this->ctx, this->wfcr, this->basis->nmaxgr, "ElecSPW::wfcr");
-    resmem_complex_op()(this->ctx, this->wfcr_another_spin, this->charge->nrxx, "ElecSPW::wfcr_a");
+    resmem_complex_op()(this->ctx, this->wfcr_another_spin, this->basis->nrxx, "ElecSPW::wfcr_a");
     this->init_rho = true;
 }
 
@@ -184,7 +184,14 @@ void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
             if (w1 != 0.0)
             {
                 // replaced by denghui at 20221110
-                elecstate_pw_op()(this->ctx, GlobalV::DOMAG, GlobalV::DOMAG_Z, this->charge->nrxx, w1, this->rho, this->wfcr, this->wfcr_another_spin);
+                elecstate_pw_op()(this->ctx,
+                                  GlobalV::DOMAG,
+                                  GlobalV::DOMAG_Z,
+                                  this->basis->nrxx,
+                                  w1,
+                                  this->rho,
+                                  this->wfcr,
+                                  this->wfcr_another_spin);
             }
         }
     }
@@ -203,7 +210,7 @@ void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
             if (w1 != 0.0)
             {
                 // replaced by denghui at 20221110
-                elecstate_pw_op()(this->ctx,  current_spin, this->charge->nrxx, w1,  this->rho,  this->wfcr);
+                elecstate_pw_op()(this->ctx, current_spin, this->basis->nrxx, w1, this->rho, this->wfcr);
             }
 
             // kinetic energy density
