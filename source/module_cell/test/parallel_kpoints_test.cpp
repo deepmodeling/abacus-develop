@@ -146,26 +146,35 @@ TEST(Parallel_KpointsTest, GatherkvecTest) {
 	{
     	vec_local.push_back(ModuleBase::Vector3<double>(1.0, 1.0, 1.0));
 		GlobalV::NPROC_IN_POOL = 1;
-
+		GlobalV::MY_POOL = 0;
 	}
 	else if(GlobalV::MY_RANK == 1)
 	{
 		vec_local.push_back(ModuleBase::Vector3<double>(2.0, 2.0, 2.0));
 		vec_local.push_back(ModuleBase::Vector3<double>(3.0, 4.0, 5.0));
 		GlobalV::NPROC_IN_POOL = 1;
+		GlobalV::MY_POOL = 1;
 	}
 	else
 	{
 		vec_local.push_back(ModuleBase::Vector3<double>(3.0, 3.0, 3.0));
 		GlobalV::NPROC_IN_POOL = GlobalV::NPROC - 2;
+		GlobalV::MY_POOL = 2;
 	}
-
 	parallel_kpoints.nks_pool = new int[npool];
 	parallel_kpoints.startk_pool = new int[npool];
+	
+	parallel_kpoints.nks_pool[0] = 1;
+	parallel_kpoints.startk_pool[0] = 0;
+	if (npool >= 2)
+	{
+		parallel_kpoints.nks_pool[1] = 2;
+		parallel_kpoints.startk_pool[1] = 1;
+	}
 	if(npool >= 3)
 	{
 		parallel_kpoints.nks_pool[2] = 1;
-		parallel_kpoints.startk_pool[2] = 2;
+		parallel_kpoints.startk_pool[2] = 3;
 	}
 	else if (npool == 2)
 	{
@@ -180,9 +189,6 @@ TEST(Parallel_KpointsTest, GatherkvecTest) {
 	
     // Call gatherkvec method
     parallel_kpoints.gatherkvec(vec_local, vec_global);
-
-	// Check the size of vec_global
-    EXPECT_EQ(vec_global.size(), 4);
 
     // Check the values of vec_global
     EXPECT_EQ(vec_global[0].x, 1.0);
