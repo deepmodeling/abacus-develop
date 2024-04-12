@@ -2798,7 +2798,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     {
         std::string dft_functional_lower = dft_functional;
         std::transform(dft_functional.begin(), dft_functional.end(), dft_functional_lower.begin(), tolower);
-        if (dft_functional_lower == "hf" || rpa)
+        if (dft_functional_lower == "hf")
             exx_hybrid_alpha = "1";
         else if (dft_functional_lower == "pbe0" || dft_functional_lower == "hse" || dft_functional_lower == "scan0")
             exx_hybrid_alpha = "0.25";
