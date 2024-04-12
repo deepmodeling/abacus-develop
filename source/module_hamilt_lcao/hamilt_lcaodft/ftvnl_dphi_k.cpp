@@ -25,6 +25,7 @@
 
 void Force_LCAO_k::cal_ftvnl_dphi_k(const elecstate::DensityMatrix<std::complex<double>, double>* DM,
                                     const Parallel_Orbitals &pv,
+                                    const UnitCell& ucell,
                                     LCAO_Matrix &lm,
                                     const bool isforce,
                                     const bool isstress,
@@ -34,6 +35,8 @@ void Force_LCAO_k::cal_ftvnl_dphi_k(const elecstate::DensityMatrix<std::complex<
 {
     ModuleBase::TITLE("Force_LCAO_k", "cal_ftvnl_dphi_k");
     ModuleBase::timer::tick("Force_LCAO_k", "cal_ftvnl_dphi_k");
+
+    const int nspin_DMR = (GlobalV::NSPIN == 2) ? 2 : 1;
 
     int total_irr = 0;
     // get the adjacent atom's information.
@@ -50,16 +53,16 @@ void Force_LCAO_k::cal_ftvnl_dphi_k(const elecstate::DensityMatrix<std::complex<
 		ModuleBase::matrix& local_stvnl_dphi = stvnl_dphi;
 		int& local_total_irr = total_irr;
 #endif
-		for (int iat = 0; iat < GlobalC::ucell.nat; iat++)
+		for (int iat = 0; iat < ucell.nat; iat++)
         {
-            const int T1 = GlobalC::ucell.iat2it[iat];
-            Atom* atom1 = &GlobalC::ucell.atoms[T1];
-            const int I1 = GlobalC::ucell.iat2ia[iat];
+            const int T1 = ucell.iat2it[iat];
+            Atom* atom1 = &ucell.atoms[T1];
+            const int I1 = ucell.iat2ia[iat];
             // get iat1
-            int iat1 = GlobalC::ucell.itia2iat(T1, I1);
+            int iat1 = ucell.itia2iat(T1, I1);
             //
             int irr = pv.nlocstart[iat];
-            const int start1 = GlobalC::ucell.itiaiw2iwt(T1, I1, 0);
+            const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
             double* ftvnl_dphi_iat;
 			if (isforce)
 			{
@@ -77,10 +80,10 @@ void Force_LCAO_k::cal_ftvnl_dphi_k(const elecstate::DensityMatrix<std::complex<
             {
                 const int T2 = ra.info[iat][cb][3];
                 const int I2 = ra.info[iat][cb][4];
-                const int start2 = GlobalC::ucell.itiaiw2iwt(T2, I2, 0);
-                Atom* atom2 = &GlobalC::ucell.atoms[T2];
+                const int start2 = ucell.itiaiw2iwt(T2, I2, 0);
+                Atom* atom2 = &ucell.atoms[T2];
                 // get iat2
-                int iat2 = GlobalC::ucell.itia2iat(T2, I2);
+                int iat2 = ucell.itia2iat(T2, I2);
                 double Rx = ra.info[iat][cb][0];
                 double Ry = ra.info[iat][cb][1];
                 double Rz = ra.info[iat][cb][2];
@@ -90,7 +93,7 @@ void Force_LCAO_k::cal_ftvnl_dphi_k(const elecstate::DensityMatrix<std::complex<
                     continue;
                 }
                 std::vector<hamilt::BaseMatrix<double>*> tmp_matrix;
-                for (int is = 0; is < GlobalV::NSPIN; ++is)
+                for (int is = 0; is < nspin_DMR; ++is)
                 {
                     tmp_matrix.push_back(DM->get_DMR_pointer(is+1)->find_matrix(iat1, iat2, Rx, Ry, Rz));
                 }
@@ -101,7 +104,7 @@ void Force_LCAO_k::cal_ftvnl_dphi_k(const elecstate::DensityMatrix<std::complex<
                     {
                         // get value from DM
                         double dm2d1 = 0.0;
-                        for (int is = 0; is < GlobalV::NSPIN; ++is)
+                        for (int is = 0; is < nspin_DMR; ++is)
                         {
                             dm2d1 += tmp_matrix[is]->get_value(mu, nu);
                         }
@@ -157,7 +160,7 @@ void Force_LCAO_k::cal_ftvnl_dphi_k(const elecstate::DensityMatrix<std::complex<
 
     if (isstress)
     {
-        StressTools::stress_fill(GlobalC::ucell.lat0, GlobalC::ucell.omega, stvnl_dphi);
+        StressTools::stress_fill(ucell.lat0, ucell.omega, stvnl_dphi);
     }
 
     ModuleBase::timer::tick("Force_LCAO_k", "cal_ftvnl_dphi_k");
