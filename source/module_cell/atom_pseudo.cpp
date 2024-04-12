@@ -2,16 +2,16 @@
 
 Atom_pseudo::Atom_pseudo()
 {
-	for(int is=0;is<4;is++) this->index1_soc[is] = nullptr;
-	for(int is=0;is<4;is++) this->index2_soc[is] = nullptr;
+	for(int is=0;is<4;is++) this->index1_soc[is].resize(0);
+	for(int is=0;is<4;is++) this->index2_soc[is].resize(0);
 }
 
 Atom_pseudo::~Atom_pseudo()
 {
 	for(int is=0;is<4;is++) 
 	{
-		if(this->index1_soc[is] != nullptr) delete[] this->index1_soc[is];
-		if(this->index2_soc[is] != nullptr) delete[] this->index2_soc[is];
+		if(this->index1_soc[is].size()!=0) this->index1_soc[is].clear();
+		if(this->index2_soc[is].size()!=0) this->index2_soc[is].clear();
 	}
 }
 
@@ -35,10 +35,10 @@ void Atom_pseudo::set_d_so(
 	for(int is=0;is<spin_dimension;is++)
 	{
 		this->non_zero_count_soc[is] = 0;
-		delete[] this->index1_soc[is];
-		this->index1_soc[is] = new int[nproj_soc * nproj_soc];
-		delete[] this->index2_soc[is];
-		this->index2_soc[is] = new int[nproj_soc * nproj_soc];
+		this->index1_soc[is].clear();
+		this->index1_soc[is].resize(nproj_soc * nproj_soc);
+		this->index2_soc[is].clear();
+		this->index2_soc[is].resize(nproj_soc * nproj_soc);
 	}
 
 	if(!has_so)

@@ -23,8 +23,9 @@ public:
 	int nproj;
 	int nproj_soc; // dimension of D_ij^so
 	int non_zero_count_soc[4];
-	int *index1_soc[4];
-	int *index2_soc[4];
+	std::vector<int> index1_soc[4];
+	std::vector<int> index2_soc[4];
+
 
 	void set_d_so( // mohan add 2021-05-07
 		ModuleBase::ComplexMatrix &d_so_in,
