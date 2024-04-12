@@ -2803,6 +2803,8 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             exx_hybrid_alpha = "1";
         else if (dft_functional_lower == "pbe0" || dft_functional_lower == "hse" || dft_functional_lower == "scan0")
             exx_hybrid_alpha = "0.25";
+        else    // no exx in scf, but will change to non-zero in postprocess like rpa
+            exx_hybrid_alpha = "0";
     }
     if (exx_real_number == "default")
     {
@@ -2819,6 +2821,8 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             exx_ccp_rmesh_times = "5";
         else if (dft_functional_lower == "hse")
             exx_ccp_rmesh_times = "1.5";
+        else    // no exx in scf
+            exx_ccp_rmesh_times = "1";
     }
     if (symmetry == "default")
     { // deal with no-forced default value
@@ -4128,10 +4132,6 @@ void Input::Check(void)
         {
             ModuleBase::WARNING_QUIT("INPUT", "must exx_ccp_rmesh_times >= 1");
         }
-        if (rpa_ccp_rmesh_times < 1)
-        {
-            ModuleBase::WARNING_QUIT("INPUT", "must rpa_ccp_rmesh_times >= 1");
-        }
         if (exx_distribute_type != "htime" && exx_distribute_type != "kmeans2" && exx_distribute_type != "kmeans1"
             && exx_distribute_type != "order")
         {
@@ -4151,6 +4151,13 @@ void Input::Check(void)
         if (exx_opt_orb_tolerence < 0)
         {
             ModuleBase::WARNING_QUIT("INPUT", "exx_opt_orb_tolerence must >=0");
+        }
+    }
+    if (rpa)
+    {
+        if (rpa_ccp_rmesh_times < 1)
+        {
+            ModuleBase::WARNING_QUIT("INPUT", "must rpa_ccp_rmesh_times >= 1");
         }
     }
 

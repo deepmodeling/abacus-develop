@@ -1471,6 +1471,7 @@ TEST_F(InputTest, Check)
 	EXPECT_THAT(output,testing::HasSubstr("must exx_ccp_rmesh_times >= 1"));
 	INPUT.exx_ccp_rmesh_times = "1.5";
     //
+    INPUT.rpa = true;
     INPUT.rpa_ccp_rmesh_times = -1;
     testing::internal::CaptureStdout();
     EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
