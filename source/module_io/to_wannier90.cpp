@@ -47,9 +47,6 @@ toWannier90::~toWannier90()
     if (out_wannier_amn)
     {
         delete[] R_centre;
-        delete[] L;
-        delete[] m;
-        delete[] rvalue;
         delete[] z_axis;
         delete[] x_axis;
         delete[] alfa;
