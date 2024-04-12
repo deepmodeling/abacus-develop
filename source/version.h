@@ -1,3 +1,3 @@
 #ifndef VERSION
-#define VERSION "v3.6.0"
+#define VERSION "v3.6.1"
 #endif
