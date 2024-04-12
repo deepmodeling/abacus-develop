@@ -397,7 +397,7 @@ void berryphase::Berry_Phase(int nbands,
 	std::complex<double> cave = 0.0;
     std::vector<double> phik(total_string);
 	double phik_ave = 0.0;
-    std::vecotr<std::complex<double>> cphik(total_string);
+    std::vector<std::complex<double>> cphik(total_string);
     std::vector<double> wistring(total_string);
 	
 	
