@@ -437,6 +437,7 @@ void Input::Default(void)
     exx_cauchy_stress_threshold = 1E-7;
     exx_ccp_threshold = 1E-8;
     exx_ccp_rmesh_times = "default";
+    rpa_ccp_rmesh_times = 10.0;
 
     exx_distribute_type = "htime";
 
@@ -4126,6 +4127,10 @@ void Input::Check(void)
         if (exx_ccp_rmesh_times_value < 1)
         {
             ModuleBase::WARNING_QUIT("INPUT", "must exx_ccp_rmesh_times >= 1");
+        }
+        if (rpa_ccp_rmesh_times < 1)
+        {
+            ModuleBase::WARNING_QUIT("INPUT", "must rpa_ccp_rmesh_times >= 1");
         }
         if (exx_distribute_type != "htime" && exx_distribute_type != "kmeans2" && exx_distribute_type != "kmeans1"
             && exx_distribute_type != "order")
