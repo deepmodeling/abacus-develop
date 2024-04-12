@@ -47,9 +47,6 @@ toWannier90::~toWannier90()
     if (out_wannier_amn)
     {
         delete[] R_centre;
-        delete[] L;
-        delete[] m;
-        delete[] rvalue;
         delete[] z_axis;
         delete[] x_axis;
         delete[] alfa;
@@ -260,9 +257,9 @@ bool toWannier90::try_read_nnkp(const K_Vectors& kv)
                 }
 
                 R_centre = new ModuleBase::Vector3<double>[num_wannier];
-                L = new int[num_wannier];
-                m = new int[num_wannier];
-                rvalue = new int[num_wannier];
+                std::vector<int> L(num_wannier);
+                std::vector<int> m(num_wannier);
+                std::vector<int> rvalue(num_wannier);
                 z_axis = new ModuleBase::Vector3<double>[num_wannier];
                 x_axis = new ModuleBase::Vector3<double>[num_wannier];
                 alfa = new double[num_wannier];
@@ -294,9 +291,9 @@ bool toWannier90::try_read_nnkp(const K_Vectors& kv)
                 }
 
                 R_centre = new ModuleBase::Vector3<double>[num_wannier];
-                L = new int[num_wannier];
-                m = new int[num_wannier];
-                rvalue = new int[num_wannier];
+                std::vector<int> L(num_wannier);
+                std::vector<int> m(num_wannier);
+                std::vector<int> rvalue(num_wannier);
                 z_axis = new ModuleBase::Vector3<double>[num_wannier];
                 x_axis = new ModuleBase::Vector3<double>[num_wannier];
                 alfa = new double[num_wannier];
@@ -507,7 +504,7 @@ bool toWannier90::try_read_nnkp(const K_Vectors& kv)
     if (num_exclude_bands == 0)
     {
         num_bands = GlobalV::NBANDS;
-        cal_band_index = new int[num_bands];
+        std::vector<int> cal_band_index(num_bands);
         for (int ib = 0; ib < GlobalV::NBANDS; ib++)
         {
             cal_band_index[ib] = ib;
@@ -516,7 +513,7 @@ bool toWannier90::try_read_nnkp(const K_Vectors& kv)
     else
     {
         num_bands = GlobalV::NBANDS - num_exclude_bands;
-        cal_band_index = new int[num_bands];
+        std::vector<int> cal_band_index(num_bands);
         int count = 0;
         for (int ib = 0; ib < GlobalV::NBANDS; ib++)
         {

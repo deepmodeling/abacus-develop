@@ -491,8 +491,8 @@ void toWannier90_PW::gen_radial_function_in_q(std::vector<ModuleBase::matrix> &r
 
     double *r = new double[mesh_r];
     double *dr = new double[mesh_r];
-    double *psi = new double[mesh_r];
-    double *psir = new double[mesh_r];
+    double *psi= new double[mesh_r];
+    double *psir= new double[mesh_r];
 
     for (int wannier_index = 0; wannier_index < num_wannier; wannier_index++)
     {
@@ -561,12 +561,10 @@ void toWannier90_PW::gen_radial_function_in_q(std::vector<ModuleBase::matrix> &r
         }
 
     }
-
-    delete[] r;
-    delete[] dr;
-    delete[] psi;
-    delete[] psir;
-
+    delete [] r;
+    delete [] dr;
+    delete [] psi;
+    delete [] psir; 
 }
 
 void toWannier90_PW::produce_trial_in_pw(
