@@ -59,9 +59,9 @@ UnitCell::UnitCell()
     tpiba2 = 0.0;
     omega = 0.0;
 
-    atom_label = new std::string[1];
+	atom_label.resize(1);
     atom_mass = nullptr;
-    pseudo_fn = new std::string[1];
+	pseudo_fn.resize(1);
     pseudo_type = new std::string[1];
     orbital_fn = new std::string[1];
 
@@ -70,9 +70,9 @@ UnitCell::UnitCell()
 
 UnitCell::~UnitCell()
 {
-    delete[] atom_label;
+	atom_label.clear();
     delete[] atom_mass;
-    delete[] pseudo_fn;
+	pseudo_fn.clear();
     delete[] pseudo_type;
     delete[] orbital_fn;
     delete[] iat2it;
