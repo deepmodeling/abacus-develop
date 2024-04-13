@@ -44,7 +44,7 @@ class Setcell
         ucell.atoms = new Atom[ucell.ntype];
         ucell.set_atom_flag = true;
 
-        ucell.atom_label.clear();
+        std::vector<std::string>().swap(ucell.atom_label);
         delete[] ucell.atom_mass;
         ucell.atom_mass = new double[ucell.ntype];
         ucell.atom_label.resize(ucell.ntype);
