@@ -74,11 +74,18 @@ inline int setBufferParameter(const Grid_Technique& gt,
                               int& r_siz,
                               double*& r_buffer)
 {
-    //-----------------------------------------
+    const int nlocal = GlobalV::NLOCAL;
+
+	//-----------------------------------------
     // setup blacs parameters
-    //-----------------------------------------
-    int nprows, npcols, nprocs;
-    int myprow, mypcol, myproc;
+	//-----------------------------------------
+    int nprows=0;
+    int npcols=0;
+    int nprocs=0;
+
+    int myprow=0;
+    int mypcol=0;
+    int myproc=0;
 
     Cblacs_gridinfo(blacs_ctxt, &nprows, &npcols, &myprow, &mypcol);
 
@@ -122,30 +129,37 @@ inline int setBufferParameter(const Grid_Technique& gt,
         Cblacs_pcoord(blacs_ctxt, iproc, &iprow, &ipcol);
 
         // find out the global index and local index of elements
-        // in each pro based on 2D block cyclic distribution
-        for (int irow = 0, grow = 0; grow < GlobalV::NLOCAL; ++irow)
+		// in each pro based on 2D block cyclic distribution
+        for(int irow=0, grow=0; grow<nlocal; ++irow)
         {
-            grow = Local_Orbital_wfc::globalIndex(irow, nblk, nprows, iprow);
-            if (grow >= GlobalV::NLOCAL)
-                continue;
-            int lrow = gt.trace_lo[grow];
-            if (lrow < 0)
-                continue;
+            grow=Local_Orbital_wfc::globalIndex(irow, nblk, nprows, iprow);
+			if (grow >= nlocal)
+			{
+				continue;
+			}
+			int lrow = gt.trace_lo[grow];
+			if (lrow < 0)
+			{
+				continue;
+			}
 
-            for (int icol = 0, gcol = 0; gcol < GlobalV::NLOCAL; ++icol)
+            for(int icol=0, gcol=0; gcol<nlocal; ++icol)
             {
-                gcol
-                    = Local_Orbital_wfc::globalIndex(icol, nblk, npcols, ipcol);
-                if (gcol >= GlobalV::NLOCAL)
-                    continue;
+                gcol=Local_Orbital_wfc::globalIndex(icol,nblk, npcols, ipcol);
+				if (gcol >= nlocal)
+				{
+					continue;
+				}
                 int lcol = gt.trace_lo[gcol];
-                if (lcol < 0)
-                    continue;
-                s_global_index[pos] = grow;
-                s_global_index[pos + 1] = gcol;
-                s_local_index[pos] = lrow;
-                s_local_index[pos + 1] = lcol;
-                pos += 2;
+				if (lcol < 0)
+				{
+					continue;
+				}
+                s_global_index[pos]=grow;
+                s_global_index[pos+1]=gcol;
+                s_local_index[pos]=lrow;
+                s_local_index[pos+1]=lcol;
+                pos+=2;
             }
         }
         s_siz_pro[iproc] = pos - s_dis_pro[iproc];
@@ -201,13 +215,14 @@ inline int setBufferParameter(const Grid_Technique& gt,
 }
 #endif
 
+
 void Gint_Gamma::vl_grid_to_2D(
-    const double* vl_grid,
-    const Parallel_2D& p2d,
-    const int loc_grid_dim,
-    const bool new_e_iteration,
-    double* vl_2d,
-    std::function<void(const int&, const int&, const double&, double*)> setfunc)
+		const double* vl_grid, 
+		const Parallel_2D& p2d, 
+		const int loc_grid_dim, 
+		const bool new_e_iteration, 
+		double* vl_2d,
+		std::function<void(const int&, const int&, const double&, double*)> setfunc)
 {
     ModuleBase::timer::tick("Gint_Gamma", "distri_vl");
     // setup send buffer and receive buffer size
@@ -215,37 +230,22 @@ void Gint_Gamma::vl_grid_to_2D(
     // to 2D block");
     if (new_e_iteration)
     {
-        ModuleBase::timer::tick("Gint_Gamma", "distri_vl_index");
+        ModuleBase::timer::tick("Gint_Gamma","distri_vl_index");
 #ifdef __MPI
-        setBufferParameter(*this->gridt,
-                           p2d.comm_2D,
-                           p2d.blacs_ctxt,
-                           p2d.nb,
-                           this->sender_index_size,
-                           this->sender_local_index,
-                           this->sender_size_process,
-                           this->sender_displacement_process,
-                           this->sender_size,
-                           this->sender_buffer,
-                           this->receiver_index_size,
-                           this->receiver_global_index,
-                           this->receiver_size_process,
-                           this->receiver_displacement_process,
-                           this->receiver_size,
-                           this->receiver_buffer);
+		setBufferParameter(*this->gridt, p2d.comm_2D, p2d.blacs_ctxt, p2d.nb,
+				this->sender_index_size, this->sender_local_index,
+				this->sender_size_process, this->sender_displacement_process,
+				this->sender_size, this->sender_buffer,
+				this->receiver_index_size, this->receiver_global_index,
+				this->receiver_size_process, this->receiver_displacement_process,
+				this->receiver_size, this->receiver_buffer);
 #endif
 #ifdef __DEBUG
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
-                                    "vlocal exchange index is built");
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
-                                    "buffer size(M):",
-                                    (this->sender_size + this->receiver_size)
-                                        * sizeof(double) / 1024 / 1024);
-        ModuleBase::GlobalFunc::OUT(
-            GlobalV::ofs_running,
-            "buffer index size(M):",
-            (this->sender_index_size + this->receiver_index_size) * sizeof(int)
-                / 1024 / 1024);
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "vlocal exchange index is built");
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "buffer size(M):", 
+        (this->sender_size+this->receiver_size)*sizeof(double)/1024/1024);
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "buffer index size(M):", 
+        (this->sender_index_size+this->receiver_index_size)*sizeof(int)/1024/1024);
 #endif
         ModuleBase::timer::tick("Gint_Gamma", "distri_vl_index");
     }
@@ -268,29 +268,22 @@ void Gint_Gamma::vl_grid_to_2D(
     }
 
 #ifdef __DEBUG
-    ModuleBase::GlobalFunc::OUT(
-        GlobalV::ofs_running,
-        "vlocal data are put in sender_buffer, size(M):",
-        this->sender_size * 8 / 1024 / 1024);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, 
+    "vlocal data are put in sender_buffer, size(M):", 
+    this->sender_size*8/1024/1024);
 #endif
 
-// use mpi_alltoall to get local data
+	// use mpi_alltoall to get local data
 #ifdef __MPI
-    MPI_Alltoallv(this->sender_buffer,
-                  this->sender_size_process,
-                  this->sender_displacement_process,
-                  MPI_DOUBLE,
-                  this->receiver_buffer,
-                  this->receiver_size_process,
-                  this->receiver_displacement_process,
-                  MPI_DOUBLE,
-                  p2d.comm_2D);
+	MPI_Alltoallv(this->sender_buffer, this->sender_size_process, this->sender_displacement_process, MPI_DOUBLE,
+			this->receiver_buffer, this->receiver_size_process,
+			this->receiver_displacement_process, MPI_DOUBLE, p2d.comm_2D);
 #endif
 
 #ifdef __DEBUG
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
-                                "vlocal data are exchanged, received size(M):",
-                                this->receiver_size * 8 / 1024 / 1024);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, 
+    "vlocal data are exchanged, received size(M):", 
+    this->receiver_size*8/1024/1024);
 #endif
 
     // put local data to H matrix
@@ -338,8 +331,9 @@ void Gint_Gamma::transfer_pvpR(hamilt::HContainer<double>* hR)
             }
         }
     }
+
 #ifdef __MPI
-    int size;
+    int size=0;
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     if (size == 1)
     {
@@ -353,5 +347,7 @@ void Gint_Gamma::transfer_pvpR(hamilt::HContainer<double>* hR)
     hR->add(*this->hRGint);
 #endif
 
-    ModuleBase::timer::tick("Gint_Gamma", "transfer_pvpR");
+    ModuleBase::timer::tick("Gint_Gamma","transfer_pvpR");
+
+    return;
 }

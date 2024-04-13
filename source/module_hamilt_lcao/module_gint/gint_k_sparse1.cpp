@@ -380,187 +380,153 @@ void Gint_k::cal_dvlocal_R_sparseMatrix(const int& current_spin,
             double rcut = GlobalC::ORB.Phi[T1].getRcut()
                           + GlobalC::ORB.Phi[T2].getRcut();
 
-            if (distance < rcut)
-            {
-              const int start2 = GlobalC::ucell.itiaiw2iwt(T2, I2, 0);
-              Abfs::Vector3_Order<int> dR(GlobalC::GridD.getBox(ad).x,
-                                          GlobalC::GridD.getBox(ad).y,
-                                          GlobalC::GridD.getBox(ad).z);
-              int ixxx = DM_start + this->gridt->find_R2st[iat][nad2];
-              for (int iw = 0; iw < atom1->nw * GlobalV::NPOL; iw++)
-              {
-                for (int iw2 = 0; iw2 < atom2->nw * GlobalV::NPOL; iw2++)
-                {
-                  const int nw = atom2->nw;
-                  const int mug0 = iw / GlobalV::NPOL;
-                  const int nug0 = iw2 / GlobalV::NPOL;
-                  const int iw_nowg = ixxx + mug0 * nw + nug0;
+                        if(distance < rcut)
+                        {
+                            const int start2 = GlobalC::ucell.itiaiw2iwt(T2, I2, 0);
+							Abfs::Vector3_Order<int> dR(GlobalC::GridD.getBox(ad).x, 
+									GlobalC::GridD.getBox(ad).y, 
+									GlobalC::GridD.getBox(ad).z);
 
-                  if (GlobalV::NSPIN == 4)
-                  {
-                    // pvp is symmetric, only half is
-                    // calculated.
+                            int ixxx = DM_start + this->gridt->find_R2st[iat][nad2];
 
-                    if (iw % 2 == 0 && iw2 % 2 == 0)
-                    {
-                      // spin = 0;
-                      temp_value_complex = std::complex<double>(1.0, 0.0)
-                                               * pvdpRx_reduced[0][iw_nowg]
-                                           + std::complex<double>(1.0, 0.0)
-                                                 * pvdpRx_reduced[3][iw_nowg];
-                      if (std::abs(temp_value_complex) > sparse_threshold)
-                      {
-                        pvdpRx_soc_sparseMatrix[dR][start1 + iw][start2 + iw2]
-                            = temp_value_complex;
-                      }
-                      temp_value_complex = std::complex<double>(1.0, 0.0)
-                                               * pvdpRy_reduced[0][iw_nowg]
-                                           + std::complex<double>(1.0, 0.0)
-                                                 * pvdpRy_reduced[3][iw_nowg];
-                      if (std::abs(temp_value_complex) > sparse_threshold)
-                      {
-                        pvdpRy_soc_sparseMatrix[dR][start1 + iw][start2 + iw2]
-                            = temp_value_complex;
-                      }
-                      temp_value_complex = std::complex<double>(1.0, 0.0)
-                                               * pvdpRz_reduced[0][iw_nowg]
-                                           + std::complex<double>(1.0, 0.0)
-                                                 * pvdpRz_reduced[3][iw_nowg];
-                      if (std::abs(temp_value_complex) > sparse_threshold)
-                      {
-                        pvdpRz_soc_sparseMatrix[dR][start1 + iw][start2 + iw2]
-                            = temp_value_complex;
-                      }
-                    }
-                    else if (iw % 2 == 1 && iw2 % 2 == 1)
-                    {
-                      // spin = 3;
-                      temp_value_complex = std::complex<double>(1.0, 0.0)
-                                               * pvdpRx_reduced[0][iw_nowg]
-                                           - std::complex<double>(1.0, 0.0)
-                                                 * pvdpRx_reduced[3][iw_nowg];
-                      if (std::abs(temp_value_complex) > sparse_threshold)
-                      {
-                        pvdpRx_soc_sparseMatrix[dR][start1 + iw][start2 + iw2]
-                            = temp_value_complex;
-                      }
-                      temp_value_complex = std::complex<double>(1.0, 0.0)
-                                               * pvdpRy_reduced[0][iw_nowg]
-                                           - std::complex<double>(1.0, 0.0)
-                                                 * pvdpRy_reduced[3][iw_nowg];
-                      if (std::abs(temp_value_complex) > sparse_threshold)
-                      {
-                        pvdpRy_soc_sparseMatrix[dR][start1 + iw][start2 + iw2]
-                            = temp_value_complex;
-                      }
-                      temp_value_complex = std::complex<double>(1.0, 0.0)
-                                               * pvdpRz_reduced[0][iw_nowg]
-                                           - std::complex<double>(1.0, 0.0)
-                                                 * pvdpRz_reduced[3][iw_nowg];
-                      if (std::abs(temp_value_complex) > sparse_threshold)
-                      {
-                        pvdpRz_soc_sparseMatrix[dR][start1 + iw][start2 + iw2]
-                            = temp_value_complex;
-                      }
-                    }
-                    else if (iw % 2 == 0 && iw2 % 2 == 1)
-                    {
-                      // spin = 1;
-                      if (!GlobalV::DOMAG)
-                      {
-                        // do nothing
-                      }
-                      else
-                      {
-                        temp_value_complex = pvdpRx_reduced[1][iw_nowg]
-                                             - std::complex<double>(0.0, 1.0)
-                                                   * pvdpRx_reduced[2][iw_nowg];
-                        if (std::abs(temp_value_complex) > sparse_threshold)
-                        {
-                          pvdpRx_soc_sparseMatrix[dR][start1 + iw][start2 + iw2]
-                              = temp_value_complex;
-                        }
-                        temp_value_complex = pvdpRy_reduced[1][iw_nowg]
-                                             - std::complex<double>(0.0, 1.0)
-                                                   * pvdpRy_reduced[2][iw_nowg];
-                        if (std::abs(temp_value_complex) > sparse_threshold)
-                        {
-                          pvdpRy_soc_sparseMatrix[dR][start1 + iw][start2 + iw2]
-                              = temp_value_complex;
-                        }
-                        temp_value_complex = pvdpRz_reduced[1][iw_nowg]
-                                             - std::complex<double>(0.0, 1.0)
-                                                   * pvdpRz_reduced[2][iw_nowg];
-                        if (std::abs(temp_value_complex) > sparse_threshold)
-                        {
-                          pvdpRz_soc_sparseMatrix[dR][start1 + iw][start2 + iw2]
-                              = temp_value_complex;
-                        }
-                      }
-                    }
-                    else if (iw % 2 == 1 && iw2 % 2 == 0)
-                    {
-                      // spin = 2;
-                      if (!GlobalV::DOMAG)
-                      {
-                        // do nothing
-                      }
-                      else
-                      {
-                        temp_value_complex = pvdpRx_reduced[1][iw_nowg]
-                                             + std::complex<double>(0.0, 1.0)
-                                                   * pvdpRx_reduced[2][iw_nowg];
-                        if (std::abs(temp_value_complex) > sparse_threshold)
-                        {
-                          pvdpRx_soc_sparseMatrix[dR][start1 + iw][start2 + iw2]
-                              = temp_value_complex;
-                        }
-                        temp_value_complex = pvdpRy_reduced[1][iw_nowg]
-                                             + std::complex<double>(0.0, 1.0)
-                                                   * pvdpRy_reduced[2][iw_nowg];
-                        if (std::abs(temp_value_complex) > sparse_threshold)
-                        {
-                          pvdpRy_soc_sparseMatrix[dR][start1 + iw][start2 + iw2]
-                              = temp_value_complex;
-                        }
-                        temp_value_complex = pvdpRz_reduced[1][iw_nowg]
-                                             + std::complex<double>(0.0, 1.0)
-                                                   * pvdpRz_reduced[2][iw_nowg];
-                        if (std::abs(temp_value_complex) > sparse_threshold)
-                        {
-                          pvdpRz_soc_sparseMatrix[dR][start1 + iw][start2 + iw2]
-                              = temp_value_complex;
-                        }
-                      }
-                    }
-                    else
-                    {
-                      ModuleBase::WARNING_QUIT("Gint_k::folding_vl_k_nc",
-                                               "index is wrong!");
-                    }
-                  } // endif NC
-                  else
-                  {
-                    temp_value_double = pvdpRx_reduced[current_spin][iw_nowg];
-                    if (std::abs(temp_value_double) > sparse_threshold)
-                    {
-                      pvdpRx_sparseMatrix[dR][start1 + iw][start2 + iw2]
-                          = temp_value_double;
-                    }
-                    temp_value_double = pvdpRy_reduced[current_spin][iw_nowg];
-                    if (std::abs(temp_value_double) > sparse_threshold)
-                    {
-                      pvdpRy_sparseMatrix[dR][start1 + iw][start2 + iw2]
-                          = temp_value_double;
-                    }
-                    temp_value_double = pvdpRz_reduced[current_spin][iw_nowg];
-                    if (std::abs(temp_value_double) > sparse_threshold)
-                    {
-                      pvdpRz_sparseMatrix[dR][start1 + iw][start2 + iw2]
-                          = temp_value_double;
-                    }
-                  } // endif normal
-                }
+                            for(int iw=0; iw<atom1->nw * GlobalV::NPOL; iw++)
+                            {
+                                for(int iw2=0;iw2<atom2->nw * GlobalV::NPOL; iw2++)
+                                {
+                                    const int nw = atom2->nw;
+                                    const int mug0 = iw/GlobalV::NPOL;
+                                    const int nug0 = iw2/GlobalV::NPOL;
+                                    const int iw_nowg = ixxx + mug0*nw + nug0;
+
+                                    if(GlobalV::NSPIN == 4)
+                                    {		
+                                        // pvp is symmetric, only half is calculated.
+
+                                        if(iw%2==0&&iw2%2==0)
+                                        {
+                                            //spin = 0;
+                                            temp_value_complex = std::complex<double>(1.0,0.0) * 
+                                                  pvdpRx_reduced[0][iw_nowg] 
+                                                  + std::complex<double>(1.0,0.0) * pvdpRx_reduced[3][iw_nowg];
+
+                                            if(std::abs(temp_value_complex) > sparse_threshold)
+                                            {
+                                                pvdpRx_soc_sparseMatrix[dR][start1 + iw][start2 + iw2] = temp_value_complex;
+                                            }
+
+                                            temp_value_complex = std::complex<double>(1.0,0.0) * 
+                                                  pvdpRy_reduced[0][iw_nowg] 
+                                                  + std::complex<double>(1.0,0.0) * pvdpRy_reduced[3][iw_nowg];
+
+                                            if(std::abs(temp_value_complex) > sparse_threshold)
+                                            {
+                                                pvdpRy_soc_sparseMatrix[dR][start1 + iw][start2 + iw2] = temp_value_complex;
+                                            }
+                                            temp_value_complex = std::complex<double>(1.0,0.0) * 
+                                                  pvdpRz_reduced[0][iw_nowg] 
+                                                  + std::complex<double>(1.0,0.0) * pvdpRz_reduced[3][iw_nowg];
+
+                                            if(std::abs(temp_value_complex) > sparse_threshold)
+                                            {
+                                                pvdpRz_soc_sparseMatrix[dR][start1 + iw][start2 + iw2] = temp_value_complex;
+                                            }                                            
+                                        }	
+                                        else if(iw%2==1&&iw2%2==1)
+                                        {
+                                            //spin = 3;
+                                            temp_value_complex = std::complex<double>(1.0,0.0) * pvdpRx_reduced[0][iw_nowg] - std::complex<double>(1.0,0.0) * pvdpRx_reduced[3][iw_nowg];
+                                            if(std::abs(temp_value_complex) > sparse_threshold)
+                                            {
+                                                pvdpRx_soc_sparseMatrix[dR][start1 + iw][start2 + iw2] = temp_value_complex;
+                                            }
+                                            temp_value_complex = std::complex<double>(1.0,0.0) * pvdpRy_reduced[0][iw_nowg] - std::complex<double>(1.0,0.0) * pvdpRy_reduced[3][iw_nowg];
+                                            if(std::abs(temp_value_complex) > sparse_threshold)
+                                            {
+                                                pvdpRy_soc_sparseMatrix[dR][start1 + iw][start2 + iw2] = temp_value_complex;
+                                            }
+                                            temp_value_complex = std::complex<double>(1.0,0.0) * pvdpRz_reduced[0][iw_nowg] - std::complex<double>(1.0,0.0) * pvdpRz_reduced[3][iw_nowg];
+                                            if(std::abs(temp_value_complex) > sparse_threshold)
+                                            {
+                                                pvdpRz_soc_sparseMatrix[dR][start1 + iw][start2 + iw2] = temp_value_complex;
+                                            }                                                                                        
+                                        }
+                                        else if(iw%2==0&&iw2%2==1)
+                                        {
+                                            // spin = 1;
+                                            if(!GlobalV::DOMAG)
+                                            {
+                                                // do nothing
+                                            }
+                                            else
+                                            {
+                                                temp_value_complex = pvdpRx_reduced[1][iw_nowg] - std::complex<double>(0.0,1.0) * pvdpRx_reduced[2][iw_nowg];
+                                                if(std::abs(temp_value_complex) > sparse_threshold)
+                                                {
+                                                    pvdpRx_soc_sparseMatrix[dR][start1 + iw][start2 + iw2] = temp_value_complex;
+                                                }
+                                                temp_value_complex = pvdpRy_reduced[1][iw_nowg] - std::complex<double>(0.0,1.0) * pvdpRy_reduced[2][iw_nowg];
+                                                if(std::abs(temp_value_complex) > sparse_threshold)
+                                                {
+                                                    pvdpRy_soc_sparseMatrix[dR][start1 + iw][start2 + iw2] = temp_value_complex;
+                                                }
+                                                temp_value_complex = pvdpRz_reduced[1][iw_nowg] - std::complex<double>(0.0,1.0) * pvdpRz_reduced[2][iw_nowg];
+                                                if(std::abs(temp_value_complex) > sparse_threshold)
+                                                {
+                                                    pvdpRz_soc_sparseMatrix[dR][start1 + iw][start2 + iw2] = temp_value_complex;
+                                                }                                                                                            
+                                            }
+                                        }	
+                                        else if(iw%2==1&&iw2%2==0) 
+                                        {
+                                            //spin = 2;
+                                            if(!GlobalV::DOMAG)
+                                            {
+                                                // do nothing
+                                            }
+                                            else
+                                            {
+                                                temp_value_complex = pvdpRx_reduced[1][iw_nowg] + std::complex<double>(0.0,1.0) * pvdpRx_reduced[2][iw_nowg];
+                                                if(std::abs(temp_value_complex) > sparse_threshold)
+                                                {
+                                                    pvdpRx_soc_sparseMatrix[dR][start1 + iw][start2 + iw2] = temp_value_complex;
+                                                }
+                                                temp_value_complex = pvdpRy_reduced[1][iw_nowg] + std::complex<double>(0.0,1.0) * pvdpRy_reduced[2][iw_nowg];
+                                                if(std::abs(temp_value_complex) > sparse_threshold)
+                                                {
+                                                    pvdpRy_soc_sparseMatrix[dR][start1 + iw][start2 + iw2] = temp_value_complex;
+                                                }
+                                                temp_value_complex = pvdpRz_reduced[1][iw_nowg] + std::complex<double>(0.0,1.0) * pvdpRz_reduced[2][iw_nowg];
+                                                if(std::abs(temp_value_complex) > sparse_threshold)
+                                                {
+                                                    pvdpRz_soc_sparseMatrix[dR][start1 + iw][start2 + iw2] = temp_value_complex;
+                                                }                                                                                                
+                                            }
+                                        }
+                                        else
+                                        {
+                                            ModuleBase::WARNING_QUIT("Gint_k::folding_vl_k_nc","index is wrong!");
+                                        }
+                                    } //endif NC
+                                    else
+                                    {
+                                        temp_value_double = pvdpRx_reduced[current_spin][iw_nowg];
+                                        if (std::abs(temp_value_double) > sparse_threshold)
+                                        {
+                                            pvdpRx_sparseMatrix[dR][start1 + iw][start2 + iw2] = temp_value_double;
+                                        }
+                                        temp_value_double = pvdpRy_reduced[current_spin][iw_nowg];
+                                        if (std::abs(temp_value_double) > sparse_threshold)
+                                        {
+                                            pvdpRy_sparseMatrix[dR][start1 + iw][start2 + iw2] = temp_value_double;
+                                        }
+                                        temp_value_double = pvdpRz_reduced[current_spin][iw_nowg];
+                                        if (std::abs(temp_value_double) > sparse_threshold)
+                                        {
+                                            pvdpRz_sparseMatrix[dR][start1 + iw][start2 + iw2] = temp_value_double;
+                                        }                                        
+                                    } //endif normal
+
+                                }
 
                 ++lgd;
               }

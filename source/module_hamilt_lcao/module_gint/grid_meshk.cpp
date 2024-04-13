@@ -11,9 +11,20 @@ Grid_MeshK::Grid_MeshK()
 
 Grid_MeshK::~Grid_MeshK()
 {
-    delete[] ucell_index2x;
-    delete[] ucell_index2y;
-    delete[] ucell_index2z;
+    if(ucell_index2x!=nullptr)
+	{
+		delete[] ucell_index2x;
+	}
+   
+    if(ucell_index2y!=nullptr)
+	{
+		delete[] ucell_index2y;
+	}
+
+    if(ucell_index2z!=nullptr)
+	{
+		delete[] ucell_index2z;
+	}
 }
 
 int Grid_MeshK::cal_Rindex(const int& u1, const int& u2, const int& u3) const
@@ -31,8 +42,9 @@ int Grid_MeshK::cal_Rindex(const int& u1, const int& u2, const int& u3) const
                                  "x1<0 || x2<0 || x3<0 !");
     }
 
-    assert(x1 >= 0);
-    assert(x2 >= 0);
-    assert(x3 >= 0);
-    return (x3 + x2 * this->nu3 + x1 * this->nu2 * this->nu3);
+	assert(x1>=0);
+	assert(x2>=0);
+	assert(x3>=0);
+
+	return (x3 + x2 * this->nu3 + x1 * this->nu2 * this->nu3);
 }

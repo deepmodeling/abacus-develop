@@ -30,18 +30,61 @@ Grid_Technique::Grid_Technique()
 
 Grid_Technique::~Grid_Technique()
 {
-    delete[] nlocdimg;
-    delete[] nlocstartg;
-    delete[] nad;
-    delete[] how_many_atoms;
-    delete[] start_ind;
-    delete[] which_atom;
-    delete[] which_bigcell;
-    delete[] which_unitcell;
-    delete[] bcell_start;
-    delete[] in_this_processor;
-    delete[] trace_lo;
+    if(nlocdimg!=nullptr)
+	{
+		delete[] nlocdimg;
+	}
 
+	if(nlocstartg!=nullptr)
+	{
+		delete[] nlocstartg;
+	}
+
+	if(nad!=nullptr)
+	{
+		delete[] nad;
+	}
+
+	if(how_many_atoms!=nullptr)
+	{
+		delete[] how_many_atoms;
+	}
+
+    if(start_ind!=nullptr)
+	{
+		delete[] start_ind;
+	}
+  
+    if(which_atom!=nullptr)
+	{
+		delete[] which_atom;
+	}
+
+    if(which_bigcell!=nullptr)
+	{
+		delete[] which_bigcell;
+	}
+
+    if(which_unitcell!=nullptr)
+	{
+		delete[] which_unitcell;
+	}
+
+	if(bcell_start!=nullptr)
+	{
+		delete[] bcell_start;
+	}
+
+    if(in_this_processor!=nullptr)
+	{
+		delete[] in_this_processor;
+	}
+
+    if(trace_lo!=nullptr)
+	{
+		delete[] trace_lo;
+	}
+    
     if (allocate_find_R2)
     {
         for (int iat = 0; iat < GlobalC::ucell.nat; iat++)
@@ -163,10 +206,15 @@ void Grid_Technique::get_startind(const int& ny,
         return;
     }
 
-    for (int i = 0; i < nbxx; i++)
-    {
-        int ibx, iby, ibz;
-        int ix, iy, iz;
+	for(int i=0;i<nbxx;i++)
+	{
+		int ibx=0;
+        int iby=0;
+        int ibz=0;
+
+		int ix=0;
+        int iy=0;
+        int iz=0;
 
         ibx = i / (nby * nbzp);
         iby = (i - ibx * nby * nbzp) / nbzp;
@@ -234,22 +282,21 @@ void Grid_Technique::init_atoms_on_grid(const int& ny,
     ModuleBase::Memory::record("GT::index2normal", sizeof(int) * this->nxyze);
     this->grid_expansion_index(1, index2normal);
 
-    // (5) record how many atoms on
-    // each local grid point (ix,iy,iz)
-    int iat = 0;
-    int normal;
-    this->total_atoms_on_grid = 0;
-    int nat_local = 0;
-    for (int it = 0; it < GlobalC::ucell.ntype; it++)
-    {
-        for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
-        {
-            for (int im = 0; im < this->meshball_ncells; im++)
-            {
-                // bcell[iat]: which bcell iat atom is in.
-                // ball[im]: relative position of adjacent bcell.
-                normal = index2normal[this->index_atom[iat]
-                                      + this->index_ball[im]];
+	// (5) record how many atoms on
+	// each local grid point (ix,iy,iz)
+	int iat=0;
+	int normal=0;
+	this->total_atoms_on_grid = 0;
+	int nat_local = 0;
+	for(int it=0; it<GlobalC::ucell.ntype; it++)
+	{
+		for(int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
+		{
+			for(int im=0; im< this->meshball_ncells; im++)
+			{
+				// bcell[iat]: which bcell iat atom is in.
+				// ball[im]: relative position of adjacent bcell.
+				normal = index2normal[ this->index_atom[iat] + this->index_ball[im] ];
 
                 if (normal >= nbxyz)
                 {
@@ -330,8 +377,12 @@ void Grid_Technique::check_bigcell(int*& ind_bigcell,
     const int nbyz = nby * nbz;
     const int nz = nbzp;
 
-    int iz_now, ix, iy, iz, ind;
-    bool flag;
+	int iz_now=0;
+    int ix=0;
+    int iy=0;
+    int iz=0;
+    int ind=0;
+	bool flag=false;
 
     ind_bigcell = new int[nbxyz];
     bigcell_on_processor = new bool[nbxyz];
@@ -370,14 +421,14 @@ void Grid_Technique::init_atoms_on_grid2(const int* index2normal)
         return;
     }
 
-    int* index2ucell = new int[this->nxyze];
-    assert(index2ucell != NULL);
-    ModuleBase::Memory::record("GT::index2ucell", sizeof(int) * this->nxyze);
-    this->grid_expansion_index(0, index2ucell);
-
-    int* ind_bigcell;
-    bool* bigcell_on_processor; // normal local form.
-    this->check_bigcell(ind_bigcell, bigcell_on_processor);
+	int* index2ucell = new int[this->nxyze];
+	assert( index2ucell != NULL );
+	ModuleBase::Memory::record("GT::index2ucell", sizeof(int) * this->nxyze);	
+	this->grid_expansion_index(0,index2ucell);
+	
+	int *ind_bigcell=nullptr;
+	bool *bigcell_on_processor; // normal local form.
+	this->check_bigcell(ind_bigcell, bigcell_on_processor);
 
     //--------------------------------------
     // save which atom is in the bigcell.
@@ -394,62 +445,62 @@ void Grid_Technique::init_atoms_on_grid2(const int* index2normal)
     ModuleBase::Memory::record("GT::which_bigcell",
                                sizeof(int) * total_atoms_on_grid);
 
-    delete[] which_unitcell;
-    this->which_unitcell = new int[total_atoms_on_grid];
-    assert(which_unitcell != 0);
-    ModuleBase::Memory::record("GT::which_unitcell",
-                               sizeof(int) * total_atoms_on_grid);
-    // for each atom, first we need to locate which cell
-    // the atom is in, then we search meshball aroung this
-    // grid, and record each grid's atom position.
-    int count = 0;
-    int iat = 0;
-    ModuleBase::GlobalFunc::ZEROS(this->how_many_atoms, nbxx);
-    for (int it = 0; it < GlobalC::ucell.ntype; it++)
-    {
-        for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
-        {
-            // zero bigcell of meshball indicate ?
-            for (int im = 0; im < this->meshball_ncells; im++)
-            {
-                const int extgrid
-                    = this->index_atom[iat] + this->index_ball[im];
-                const int normal = index2normal[extgrid];
-
-                // mohan add 2010-07-01
-                int f = ind_bigcell[normal];
-                if (!bigcell_on_processor[normal])
-                    continue;
-
-                // it's not the normal order to calculate which_atom
-                // and which_bigcell, especailly in 1D array.
-                // Each grid's adjacent atom number is different,
-                // so, first we need to locate which grid, using
-                // bcell_start, then we need to count which adjacent atom.
-                // using how_many_atoms.
-                int index = this->bcell_start[f] + this->how_many_atoms[f];
-
-                // we save which_atom and which_bigcell in 1D array,
-                // once you want to use this in grid integration,
-                // the only information you got is the 'normal' index,
-                // so you need to use bcell_start
-                // to get the 'mesh_index', then you can you this mesh_index
-                // to use which_atom or which_bigcell.
-                this->which_atom[index] = iat;
-                this->which_bigcell[index] = im;
-                this->which_unitcell[index] = index2ucell[extgrid];
-
-                ++how_many_atoms[f];
-                ++count;
-            }
-            ++iat;
-        }
-    }
-    assert(count == total_atoms_on_grid);
-    delete[] index2ucell;
-    delete[] ind_bigcell;
-    delete[] bigcell_on_processor;
-    return;
+	delete[] which_unitcell;
+	this->which_unitcell = new int[total_atoms_on_grid];
+	assert( which_unitcell != 0);
+	ModuleBase::Memory::record("GT::which_unitcell", sizeof(int) * total_atoms_on_grid);
+	// for each atom, first we need to locate which cell
+	// the atom is in, then we search meshball aroung this
+	// grid, and record each grid's atom position.
+	int count = 0;
+	int iat = 0;
+	ModuleBase::GlobalFunc::ZEROS(this->how_many_atoms, nbxx);
+	for(int it=0; it<GlobalC::ucell.ntype; it++)
+	{
+		for(int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
+		{
+			// zero bigcell of meshball indicate ?
+			for(int im=0; im< this->meshball_ncells; im++)
+			{
+				const int extgrid = this->index_atom[iat] + this->index_ball[im];
+				const int normal = index2normal[ extgrid ];
+			
+				// mohan add 2010-07-01
+				int f = ind_bigcell[normal];
+				if(!bigcell_on_processor[normal]) 
+				{
+					continue;
+				}
+				
+				// it's not the normal order to calculate which_atom
+				// and which_bigcell, especailly in 1D array. 
+				// Each grid's adjacent atom number is different,
+				// so, first we need to locate which grid, using
+				// bcell_start, then we need to count which adjacent atom.
+				// using how_many_atoms.
+				int index = this->bcell_start[f] + this->how_many_atoms[f];
+				
+				// we save which_atom and which_bigcell in 1D array,
+				// once you want to use this in grid integration, 
+				// the only information you got is the 'normal' index, 
+				// so you need to use bcell_start
+				// to get the 'mesh_index', then you can you this mesh_index
+				// to use which_atom or which_bigcell.
+				this->which_atom[ index ] = iat;
+				this->which_bigcell[ index ] = im;
+				this->which_unitcell[ index ] = index2ucell[extgrid];
+				 
+				++how_many_atoms[f];
+				++count;
+			}
+			++iat;
+		}
+	}
+	assert( count == total_atoms_on_grid );
+	delete[] index2ucell;
+	delete[] ind_bigcell;
+	delete[] bigcell_on_processor;
+	return;
 }
 
 void Grid_Technique::cal_grid_integration_index(void)
@@ -496,11 +547,11 @@ void Grid_Technique::cal_grid_integration_index(void)
     delete[] all;
 #endif
 
-    if (GlobalV::test_gridt)
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
-                                    "Max atom on bigcell",
-                                    max_atom);
-    return;
+	if(GlobalV::test_gridt)
+	{
+		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"Max atom on bigcell",max_atom);
+	}
+	return;
 }
 
 // set 'lgd' variable
@@ -524,51 +575,41 @@ void Grid_Technique::cal_trace_lo(void)
     int iw_all = 0;
     int iw_local = 0;
 
-    for (int it = 0; it < GlobalC::ucell.ntype; it++)
-    {
-        for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
-        {
-            if (this->in_this_processor[iat])
-            {
-                ++lnat;
-                int nw0 = GlobalC::ucell.atoms[it].nw;
-                if (GlobalV::NSPIN == 4)
-                { // added by zhengdy-soc, need to be double in soc
-                    nw0 *= 2;
-                    this->lgd += nw0;
-                }
-                else
-                {
-                    this->lgd += GlobalC::ucell.atoms[it].nw;
-                }
-
-                for (int iw = 0; iw < nw0; iw++)
-                {
-                    this->trace_lo[iw_all] = iw_local;
-                    ++iw_local;
-                    ++iw_all;
-                }
-            }
-            else
-            {
-                // global index of atomic orbitals
-                iw_all += GlobalC::ucell.atoms[it].nw;
-                if (GlobalV::NSPIN == 4)
-                    iw_all += GlobalC::ucell.atoms[it].nw;
-            }
-            ++iat;
-        }
-    }
-
-    //------------
-    // for test
-    //------------
-    //	for(int i=0; i<GlobalV::NLOCAL; ++i)
-    //	{
-    //		GlobalV::ofs_running << " i=" << i+1 << " trace_lo=" <<
-    // trace_lo[i]
-    //<< std::endl;
-    //	}
+	for(int it=0; it<GlobalC::ucell.ntype; it++)
+	{
+		for(int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
+		{
+			if(this->in_this_processor[iat])
+			{
+				++lnat;
+				int nw0 = GlobalC::ucell.atoms[it].nw;
+				if(GlobalV::NSPIN==4)
+				{//added by zhengdy-soc, need to be double in soc
+					nw0 *= 2;
+					this->lgd += nw0;
+				}
+				else
+				{
+					this->lgd += GlobalC::ucell.atoms[it].nw;
+				}
+				
+				for(int iw=0; iw<nw0; iw++)
+				{
+					this->trace_lo[iw_all] = iw_local;
+					++iw_local; 
+					++iw_all;
+				}
+			}
+			else
+			{
+				// global index of atomic orbitals
+				iw_all += GlobalC::ucell.atoms[it].nw;
+				if(GlobalV::NSPIN==4) iw_all += GlobalC::ucell.atoms[it].nw;
+			}
+			++iat;
+		}
+	}
+	
 
     if (GlobalV::OUT_LEVEL != "m")
     {

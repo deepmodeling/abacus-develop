@@ -15,17 +15,12 @@ void Gint::gint_kernel_force(const int na_grid,
                              ModuleBase::matrix* fvl_dphi,
                              ModuleBase::matrix* svl_dphi)
 {
-    // prepare block information
-    int *block_iw, *block_index, *block_size;
-    bool** cal_flag;
-    Gint_Tools::get_block_info(*this->gridt,
-                               this->bxyz,
-                               na_grid,
-                               grid_index,
-                               block_iw,
-                               block_index,
-                               block_size,
-                               cal_flag);
+    //prepare block information
+	int* block_iw=nullptr;
+    int* block_index=nullptr;
+    int* block_size=nullptr;
+	bool** cal_flag;
+	Gint_Tools::get_block_info(*this->gridt, this->bxyz, na_grid, grid_index, block_iw, block_index, block_size, cal_flag);
 
     // evaluate psi and dpsi on grids
     Gint_Tools::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
@@ -172,7 +167,9 @@ void Gint::gint_kernel_force_meta(const int na_grid,
                                   ModuleBase::matrix* svl_dphi)
 {
     // prepare block information
-    int *block_iw, *block_index, *block_size;
+    int *block_iw = nullptr;
+    int *block_index = nullptr;
+    int *block_size = nullptr;
     bool** cal_flag;
     Gint_Tools::get_block_info(*this->gridt,
                                this->bxyz,

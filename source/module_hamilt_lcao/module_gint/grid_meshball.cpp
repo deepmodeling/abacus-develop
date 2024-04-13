@@ -147,30 +147,29 @@ void Grid_MeshBall::init_meshball(void)
 
 double Grid_MeshBall::deal_with_atom_spillage(const double* pos)
 {
-    double r2 = 100000;
-    double cell[3];
-    double dx;
-    // old:for(int i=0; i<2; i++)
-    // new: mohan add 2011-04-23
-    for (int i = -1; i <= 1; i++)
-    {
-        for (int j = -1; j <= 1; j++)
-        {
-            for (int k = -1; k <= 1; k++)
-            {
-                dx = 0.0;
-                for (int ip = 0; ip < 3; ip++)
-                {
-                    // change to cartesian coordinates.
-                    cell[ip] = i * this->bigcell_vec1[ip]
-                               + j * this->bigcell_vec2[ip]
-                               + k * this->bigcell_vec3[ip];
-                    dx += std::pow(cell[ip] - pos[ip], 2);
-                }
-                r2 = std::min(dx, r2);
-            }
-        }
-    }
+	double r2 = 100000;
+	double cell[3];
+	double dx;
+
+	for(int i=-1; i<=1; i++)
+	{
+		for(int j=-1; j<=1; j++)
+		{
+			for(int k=-1; k<=1; k++)
+			{
+				dx = 0.0;
+				for(int ip=0; ip<3; ip++)
+				{
+					// change to cartesian coordinates.	
+					cell[ip] = i*this->bigcell_vec1[ip] +
+						j*this->bigcell_vec2[ip] +
+						k*this->bigcell_vec3[ip];
+					dx += std::pow(cell[ip] - pos[ip], 2);
+				}
+				r2 = std::min(dx, r2);
+			}
+		}
+	}
 
     return r2;
 }

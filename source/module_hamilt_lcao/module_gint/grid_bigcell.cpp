@@ -325,25 +325,22 @@ void Grid_BigCell::init_tau_in_bigcell(void)
 // if f2normal == false, calculate the index2cell.
 void Grid_BigCell::grid_expansion_index(bool f2normal, int* target) const
 {
-    ModuleBase::TITLE("Grid_BigCell", "grid_expansion_index");
-    ModuleBase::timer::tick("Grid_BigCell", "grid_expansion_index");
-    //	std::cout << " ncx=" << ncx << " ncy=" << ncy << " ncz=" << ncz <<
-    // std::endl; 	std::stringstream ss; 	ss << GlobalV::global_out_dir <<
-    //"expand_grid.dat"; 	std::ofstream ofs(ss.str().c_str());
-
-    int ii, jj, kk, in_ext, in_normal;
-    for (int i = 0; i < this->nxe; i++)
-    {
-        for (int j = 0; j < this->nye; j++)
-        {
-            for (int k = 0; k < this->nze; k++)
-            {
-                in_ext = k + j * this->nze + i * this->nye * this->nze;
-
-                // range from [-dxe,ncx+dxe]
-                ii = i - this->dxe;
-                jj = j - this->dye;
-                kk = k - this->dze;
+	ModuleBase::TITLE("Grid_BigCell","grid_expansion_index");
+	ModuleBase::timer::tick("Grid_BigCell","grid_expansion_index");
+	
+	int ii,jj,kk,in_ext,in_normal;
+	for(int i=0; i<this->nxe; i++)
+	{
+		for(int j=0; j<this->nye; j++)
+		{
+			for(int k=0; k<this->nze; k++)
+			{
+				in_ext = k + j * this->nze + i * this->nye * this->nze;
+				
+				// range from [-dxe,ncx+dxe]
+				ii = i - this->dxe;
+				jj = j - this->dye;
+				kk = k - this->dze;
 
                 //---------------------------------------------------
                 // mohan add 2010-10-28
@@ -383,26 +380,19 @@ void Grid_BigCell::grid_expansion_index(bool f2normal, int* target) const
                 else
                     cel3 = kk / nbz;
 
-                if (!f2normal)
-                {
-                    // target: index2ucell
-                    target[in_ext] = this->cal_Rindex(cel1, cel2, cel3);
-                }
-                else
-                {
-                    // std::cout << "i=" << ii << " j=" << jj << " k=" << kk <<
-                    // std::endl; std::cout << "box1=" << box1 << " box2=" <<
-                    // box2 << " box3=" << box3 << std::endl;
-
-                    // if ii < 0, we need to make ii > 0.
-                    // so we add 10000 layers. It should be enough.
-                    // ii, jj, kk shoudl -- ?????????????
-                    ii = (ii + 10000 * nbx) % nbx;
-                    jj = (jj + 10000 * nby) % nby;
-                    kk = (kk + 10000 * nbz) % nbz;
-
-                    // std::cout << "ii=" << ii << " jj=" << jj << " kk=" << kk
-                    // << std::endl; int ok; cin >> ok;
+				if(!f2normal)
+				{
+					// target: index2ucell
+					target[in_ext] = this->cal_Rindex(cel1, cel2, cel3);
+				}
+				else
+				{
+					// if ii < 0, we need to make ii > 0.
+					// so we add 10000 layers. It should be enough.
+					// ii, jj, kk shoudl -- ?????????????
+					ii = (ii + 10000 * nbx) % nbx;
+					jj = (jj + 10000 * nby) % nby;
+					kk = (kk + 10000 * nbz) % nbz;
 
                     assert(ii >= 0);
                     assert(jj >= 0);
@@ -410,31 +400,21 @@ void Grid_BigCell::grid_expansion_index(bool f2normal, int* target) const
 
                     assert(in_ext < nxyze);
 
-                    if (ii < nbx && jj < nby && kk < nbz)
-                    {
-                        in_normal = kk + jj * nbz + ii * nby * nbz;
-
-                        // target: index2normal
-                        target[in_ext] = in_normal;
-
-                        /*
-                           if(in_ext == 5816805)
-                           {
-                           std::cout << "\n index2normal[5816805]=" << in_normal
-                           << std::endl; BLOCK_HERE("check index2normal");
-                           }
-                         */
-                    }
-                    else
-                    {
-                        ModuleBase::WARNING_QUIT(
-                            "Grid_BigCell::init_grid_expansion_index",
-                            "check ii,jj,kk!");
-                    }
-                } // f2 normal
-            }     // k
-        }         // j
-    }             // i
-    ModuleBase::timer::tick("Grid_BigCell", "grid_expansion_index");
-    return;
+					if(ii<nbx && jj<nby && kk<nbz)
+					{
+						in_normal = kk + jj * nbz + ii * nby * nbz;
+						
+						// target: index2normal
+						target[in_ext] = in_normal;
+					}
+					else
+					{
+						ModuleBase::WARNING_QUIT("Grid_BigCell::init_grid_expansion_index","check ii,jj,kk!");
+					}
+				}// f2 normal
+			}// k
+		}// j
+	}// i
+	ModuleBase::timer::tick("Grid_BigCell","grid_expansion_index");
+	return;
 }
