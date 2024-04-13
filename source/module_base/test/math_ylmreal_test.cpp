@@ -5,6 +5,7 @@
 #include"gtest/gtest.h"
 #include<math.h>
 #include "module_psi/psi.h"
+#include <vector>
 
 #define doublethreshold 1e-12
 
@@ -193,19 +194,24 @@ class YlmRealTest : public testing::Test
     void SetUp()
     {
         ylm.create(nylm,ng);
-        dylm = new ModuleBase::matrix[3];
+        std::vector<ModuleBase::matrix> dylm;
+        dylm.resize(3);
         for(int i = 0 ; i < 3 ; ++i)    dylm[i].create(nylm,ng);
-        g = new ModuleBase::Vector3<double>[ng];
+        std::vector<ModuleBase::Vector3<double>> g;
+        g.resize(ng);
         g[0].set(1.0,0.0,0.0);
         g[1].set(0.0,1.0,0.0);
         g[2].set(0.0,0.0,1.0);
         g[3].set(-1.0,-1.0,-1.0);
 
-        rly = new double[nylm];
+        std::vector<double> rly;
+        rly.resize(nylm);
         rlyvector.resize(nylm);
-        rlgy = new double[nylm][3];
+        std::vector<std::vector<double>> rlgy;
+        rlgy.resize(nylm, std::vector<double>(3));
         rlgyvector.resize(nylm,std::vector<double>(3));
-        ref = new double[64*4]{
+
+        std::vector<double> ref = {
             y00(g[0].x, g[0].y, g[0].z),  y00(g[1].x, g[1].y, g[1].z),  y00(g[2].x, g[2].y, g[2].z),  y00(g[3].x, g[3].y, g[3].z),
             y10(g[0].x, g[0].y, g[0].z),  y10(g[1].x, g[1].y, g[1].z),  y10(g[2].x, g[2].y, g[2].z),  y10(g[3].x, g[3].y, g[3].z),
             y11(g[0].x, g[0].y, g[0].z),  y11(g[1].x, g[1].y, g[1].z),  y11(g[2].x, g[2].y, g[2].z),  y11(g[3].x, g[3].y, g[3].z),
@@ -273,14 +279,7 @@ class YlmRealTest : public testing::Test
          } ;
     }
 
-    void TearDown()
-    {
-        delete [] dylm;
-        delete [] g;
-        delete [] ref;
-        delete [] rly;
-        delete [] rlgy;
-    }
+
 };
 
 TEST_F(YlmRealTest,Constructor)
