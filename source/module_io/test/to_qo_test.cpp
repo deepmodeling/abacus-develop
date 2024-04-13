@@ -53,7 +53,7 @@ void define_fcc_cell(UnitCell& ucell)
     ucell.orbital_fn = new std::string[2];
     ucell.orbital_fn[0] = "../../../../tests/PP_ORB/Si_gga_8au_100Ry_2s2p1d.orb";
     ucell.orbital_fn[1] = "../../../../tests/PP_ORB/C_gga_8au_100Ry_2s2p1d.orb";
-    ucell.pseudo_fn = new std::string[2];
+    ucell.pseudo_fn.resize(2);
     ucell.pseudo_fn[0] = "../../../../tests/PP_ORB/Si_dojo_soc.upf";
     ucell.pseudo_fn[1] = "../../../../tests/PP_ORB/C.LDA.UPF";
 
@@ -91,7 +91,7 @@ void define_sc_cell(UnitCell& ucell)
     ucell.GGT = ucell.G * ucell.GT;
     ucell.orbital_fn = new std::string[1];
     ucell.orbital_fn[0] = "../../../../tests/PP_ORB/Si_gga_8au_100Ry_2s2p1d.orb";
-    ucell.pseudo_fn = new std::string[1];
+    ucell.pseudo_fn.resize(1);
     ucell.pseudo_fn[0] = "../../../../tests/PP_ORB/Si_dojo_soc.upf";
 
     GlobalV::global_out_dir = "./";
