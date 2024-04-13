@@ -30,7 +30,7 @@ UnitCell::UnitCell()
     iwt2iw = nullptr;
 
     itia2iat.create(1, 1);
-    lc = new int[3];
+    lc.resize(3);
 
     latvec = ModuleBase::Matrix3();
     latvec_supercell = ModuleBase::Matrix3();
@@ -43,9 +43,9 @@ UnitCell::UnitCell()
     tpiba2 = 0.0;
     omega = 0.0;
 
-    atom_label = new std::string[1];
+    atom_label.resize(1);
     atom_mass = nullptr;
-    pseudo_fn = new std::string[1];
+    pseudo_fn.resize(1);
     pseudo_type = new std::string[1];
     orbital_fn = new std::string[1];
 
