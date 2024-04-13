@@ -74,11 +74,15 @@ TEST_F(gintTest, test)
     std::vector<double> ylma_cpu_dpsir(49, 0.0);
     std::vector<std::vector<double>> ylma_cpu_ddpsir(49, vector<double>(3, 0.0));
     
-    for (int i = 0; i < 3; i++)
+    nwl=3;
+    for (int i=0;i<3;i++){
+        dr[i]=i*1.0;
         distance += dr[i] * dr[i];
-    get_random_int(0, 5, nwl);
-    get_random_double(0, 10, dr, 3);
-    get_random_double(0, 10, ylmcoef, 100);
+    }
+    for (int i=0;i<100;i++)
+    {
+        ylmcoef[i]=i*0.1;
+    }
 
     cudaMalloc((void**)&ylmcoef_g, 100 * sizeof(double));
     cudaMalloc((void**)&dr_g, 3 * sizeof(double));
