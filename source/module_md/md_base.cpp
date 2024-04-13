@@ -6,7 +6,8 @@
 #endif
 #include "module_io/print_info.h"
 
-MD_base::MD_base(MD_para& MD_para_in, UnitCell& unit_in) : mdp(MD_para_in), ucell(unit_in)
+MD_base::MD_base(MD_para& MD_para_in, UnitCell& unit_in) 
+: mdp(MD_para_in), ucell(unit_in)
 {
     if (mdp.md_seed >= 0)
     {
@@ -15,6 +16,8 @@ MD_base::MD_base(MD_para& MD_para_in, UnitCell& unit_in) : mdp(MD_para_in), ucel
 
     stop = false;
 
+    assert(ucell.nat>0);
+
     allmass = new double[ucell.nat];
     pos = new ModuleBase::Vector3<double>[ucell.nat];
     vel = new ModuleBase::Vector3<double>[ucell.nat];
@@ -22,6 +25,9 @@ MD_base::MD_base(MD_para& MD_para_in, UnitCell& unit_in) : mdp(MD_para_in), ucel
     force = new ModuleBase::Vector3<double>[ucell.nat];
     virial.create(3, 3);
     stress.create(3, 3);
+
+    assert(ModuleBase::AU_to_FS!=0.0);
+    assert(ModuleBase::Hartree_to_K!=0.0);
 
     /// convert to a.u. unit
     mdp.md_dt /= ModuleBase::AU_to_FS;
@@ -40,6 +46,7 @@ MD_base::MD_base(MD_para& MD_para_in, UnitCell& unit_in) : mdp(MD_para_in), ucel
     }
 }
 
+
 MD_base::~MD_base()
 {
     delete[] allmass;
@@ -48,6 +55,7 @@ MD_base::~MD_base()
     delete[] ionmbl;
     delete[] force;
 }
+
 
 void MD_base::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir)
 {
@@ -61,18 +69,27 @@ void MD_base::setup(ModuleESolver::ESolver* p_esolver, const std::string& global
     MD_func::force_virial(p_esolver, step_, ucell, potential, force, mdp.cal_stress, virial);
     MD_func::compute_stress(ucell, vel, allmass, mdp.cal_stress, virial, stress);
     ucell.ionic_position_updated = true;
+
+    return;
 }
+
 
 void MD_base::first_half(std::ofstream& ofs)
 {
     update_vel(force);
     update_pos();
+
+    return;
 }
 
-void MD_base::second_half()
+
+void MD_base::second_half(void)
 {
     update_vel(force);
+
+    return;
 }
+
 
 void MD_base::update_pos()
 {
@@ -100,7 +117,10 @@ void MD_base::update_pos()
 #endif
 
     ucell.update_pos_taud(pos);
+
+    return;
 }
+
 
 void MD_base::update_vel(const ModuleBase::Vector3<double>* force)
 {
@@ -121,14 +141,20 @@ void MD_base::update_vel(const ModuleBase::Vector3<double>* force)
 #ifdef __MPI
     MPI_Bcast(vel, ucell.nat * 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif
+    return;
 }
+
 
 void MD_base::print_md(std::ofstream& ofs, const bool& cal_stress)
 {
     if (mdp.my_rank)
+    {
         return;
+    }
 
     t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
+
+    assert(ModuleBase::BOHR_RADIUS_SI>0.0);
 
     const double unit_transform = ModuleBase::HARTREE_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
     double press = 0.0;
@@ -141,18 +167,22 @@ void MD_base::print_md(std::ofstream& ofs, const bool& cal_stress)
               << std::endl;
     std::cout << " " << std::left << std::setw(20) << "Energy (Ry)" << std::left << std::setw(20) << "Potential (Ry)"
               << std::left << std::setw(20) << "Kinetic (Ry)" << std::left << std::setw(20) << "Temperature (K)";
+
     if (cal_stress)
     {
         std::cout << std::left << std::setw(20) << "Pressure (kbar)";
     }
+
     std::cout << std::endl;
     std::cout << " " << std::left << std::setw(20) << 2 * (potential + kinetic) << std::left << std::setw(20)
               << 2 * potential << std::left << std::setw(20) << 2 * kinetic << std::left << std::setw(20)
               << t_current * ModuleBase::Hartree_to_K;
+
     if (cal_stress)
     {
         std::cout << std::left << std::setw(20) << press * unit_transform;
     }
+
     std::cout << std::endl;
     std::cout << " ------------------------------------------------------------------------------------------------"
               << std::endl;
@@ -164,28 +194,37 @@ void MD_base::print_md(std::ofstream& ofs, const bool& cal_stress)
         << std::endl;
     ofs << " " << std::left << std::setw(20) << "Energy (Ry)" << std::left << std::setw(20) << "Potential (Ry)"
         << std::left << std::setw(20) << "Kinetic (Ry)" << std::left << std::setw(20) << "Temperature (K)";
+
     if (cal_stress)
     {
         ofs << std::left << std::setw(20) << "Pressure (kbar)";
     }
+
     ofs << std::endl;
     ofs << " " << std::left << std::setw(20) << 2 * (potential + kinetic) << std::left << std::setw(20) << 2 * potential
         << std::left << std::setw(20) << 2 * kinetic << std::left << std::setw(20)
         << t_current * ModuleBase::Hartree_to_K;
+
     if (cal_stress)
     {
         ofs << std::left << std::setw(20) << press * unit_transform;
     }
+
     ofs << std::endl;
     ofs << " ------------------------------------------------------------------------------------------------"
         << std::endl;
+
     if (cal_stress)
     {
         MD_func::print_stress(ofs, virial, stress);
     }
+
     ofs << std::endl;
     ofs << std::endl;
+
+    return;
 }
+
 
 void MD_base::write_restart(const std::string& global_out_dir)
 {
@@ -202,9 +241,14 @@ void MD_base::write_restart(const std::string& global_out_dir)
 #ifdef __MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
+
+    return;
 }
+
 
 void MD_base::restart(const std::string& global_readin_dir)
 {
     MD_func::current_md_info(mdp.my_rank, global_readin_dir, step_rst_, mdp.md_tfirst);
+
+    return;
 }

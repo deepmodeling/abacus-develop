@@ -54,7 +54,9 @@ class Gint
     void transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D);
 
     const Grid_Technique* gridt = nullptr;
+
     protected:
+
     // variables related to FFT grid
  	int nbx;
 	int nby;

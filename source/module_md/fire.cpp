@@ -33,6 +33,8 @@ void FIRE::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_re
     check_force();
 
     ModuleBase::timer::tick("FIRE", "setup");
+
+    return;
 }
 
 void FIRE::first_half(std::ofstream& ofs)
@@ -47,9 +49,12 @@ void FIRE::first_half(std::ofstream& ofs)
     MD_base::update_pos();
 
     ModuleBase::timer::tick("FIRE", "first_half");
+
+    return;
 }
 
-void FIRE::second_half()
+
+void FIRE::second_half(void)
 {
     ModuleBase::TITLE("FIRE", "second_half");
     ModuleBase::timer::tick("FIRE", "second_half");
@@ -59,7 +64,10 @@ void FIRE::second_half()
     check_force();
 
     ModuleBase::timer::tick("FIRE", "second_half");
+
+    return;
 }
+
 
 void FIRE::print_md(std::ofstream& ofs, const bool& cal_stress)
 {
@@ -67,7 +75,10 @@ void FIRE::print_md(std::ofstream& ofs, const bool& cal_stress)
 
     ofs << " LARGEST GRAD (eV/A)  : " << max * ModuleBase::Hartree_to_eV * ModuleBase::ANGSTROM_AU << std::endl;
     std::cout << " LARGEST GRAD (eV/A)  : " << max * ModuleBase::Hartree_to_eV * ModuleBase::ANGSTROM_AU << std::endl;
+
+    return;
 }
+
 
 void FIRE::write_restart(const std::string& global_out_dir)
 {
@@ -88,7 +99,10 @@ void FIRE::write_restart(const std::string& global_out_dir)
 #ifdef __MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
+
+    return;
 }
+
 
 void FIRE::restart(const std::string& global_readin_dir)
 {
@@ -129,9 +143,12 @@ void FIRE::restart(const std::string& global_readin_dir)
     MPI_Bcast(&dt_max, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Bcast(&mdp.md_dt, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif
+
+    return;
 }
 
-void FIRE::check_force()
+
+void FIRE::check_force(void)
 {
     max = 0;
 
@@ -150,17 +167,22 @@ void FIRE::check_force()
     {
         stop = true;
     }
+
+    return;
 }
 
-void FIRE::check_fire()
+
+void FIRE::check_fire(void)
 {
-    double P = 0;
-    double sumforce = 0;
-    double normvel = 0;
+    double P = 0.0;
+    double sumforce = 0.0;
+    double normvel = 0.0;
 
     /// initial dt_max
     if (dt_max < 0)
+    {
         dt_max = 2.5 * mdp.md_dt;
+    }
 
     for (int i = 0; i < ucell.nat; ++i)
     {
@@ -204,4 +226,6 @@ void FIRE::check_fire()
 
         alpha = alpha_start;
     }
+    
+    return;
 }
