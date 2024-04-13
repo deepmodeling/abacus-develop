@@ -395,13 +395,12 @@ void berryphase::Berry_Phase(int nbands,
                              const K_Vectors& kv)
 {		
 	std::complex<double> cave = 0.0;
-	std::vector<double> phik(total_string);
+  
+    std::vector<double> phik(total_string);
 	double phik_ave = 0.0;
-	// std::complex<double> *cphik = new std::complex<double>[total_string];
-	std::vector<std::complex<double>> cphik(total_string);
-	std::vector<double> wistring(total_string);
-	
-	
+    std::vector<std::complex<double>> cphik(total_string);
+    std::vector<double> wistring(total_string);
+
 	// electron polarization
 	
 	// get weight of every std::string 
@@ -453,11 +452,7 @@ void berryphase::Berry_Phase(int nbands,
 		mod_elec_tot = 1;
 	}
 	
-	
-	
-	// delete[] phik;
-	// delete[] cphik;
-	// delete[] wistring;
+
 	
 	
 	//GlobalV::ofs_running << "Berry_Phase end " << std::endl;

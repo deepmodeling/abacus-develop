@@ -187,8 +187,8 @@ void toWannier90_PW::out_unk(
 
 #ifdef __MPI
     // which_ip: found iz belongs to which ip.
-    int* which_ip = new int[wfcpw->nz];
-    ModuleBase::GlobalFunc::ZEROS(which_ip, wfcpw->nz);
+    std::vector<int> which_ip(wfcpw->nz);
+    ModuleBase::GlobalFunc::ZEROS(which_ip.data(), wfcpw->nz);
     
     for (int ip = 0; ip < GlobalV::NPROC_IN_POOL; ip++)
     {
@@ -338,7 +338,6 @@ void toWannier90_PW::out_unk(
     }
     MPI_Barrier(MPI_COMM_WORLD);
 
-    delete[] which_ip;
     delete[] porter;
     delete[] zpiece;
 
