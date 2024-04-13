@@ -29,7 +29,7 @@ class Parallel_Kpoints
 	// inforamation about kpoints //qianrui add comment
 	int* nks_pool; //number of k-points in each pool
 	int* startk_pool; //the first k-point in each pool
-	int* whichpool; //whichpool[k] : the pool which k belongs to
+	std::vector<int> whichpool; //whichpool[k] : the pool which k belongs to
 
 	private:
 

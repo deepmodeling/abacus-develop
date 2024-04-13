@@ -93,10 +93,10 @@ class NonlocalNewTest : public ::testing::Test
         delete[] ucell.atoms[0].iw2l;
         delete[] ucell.atoms[0].iw2m;
         delete[] ucell.atoms[0].iw2n;
-        ucell.atoms[0].ncpp.index1_soc[0].clear();
-        ucell.atoms[0].ncpp.index2_soc[0].clear();
-        ucell.atoms[0].ncpp.index1_soc[3].clear();
-        ucell.atoms[0].ncpp.index2_soc[3].clear();
+        std::vector<int>().swap(ucell.atoms[0].ncpp.index1_soc[0]);
+        std::vector<int>().swap(ucell.atoms[0].ncpp.index2_soc[0]);
+        std::vector<int>().swap(ucell.atoms[0].ncpp.index1_soc[3]);
+        std::vector<int>().swap(ucell.atoms[0].ncpp.index2_soc[3]);
         delete[] ucell.atoms;
         delete[] ucell.iat2it;
         delete[] ucell.iat2ia;

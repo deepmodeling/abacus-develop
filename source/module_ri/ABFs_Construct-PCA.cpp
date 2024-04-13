@@ -11,9 +11,7 @@
 #include <cassert>
 #include <limits>
 
-namespace ABFs_Construct
-{
-namespace PCA
+namespace ABFs_Construct::PCA
 {
 	void tensor_dsyev(const char jobz, const char uplo, RI::Tensor<double> & a, double*const w, int & info)
 	{
@@ -153,4 +151,3 @@ namespace PCA
 	}
 
 }	// namespace ABFs_Construct::PCA
-}	// namespace ABFs_Construct

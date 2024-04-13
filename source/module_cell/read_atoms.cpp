@@ -15,9 +15,9 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
 
 	int error = 0;//0 for correct, >0 for warning and quit
 
-	atom_label.clear();
+	std::vector<std::string>().swap(atom_label);
     delete[] atom_mass;
-    pseudo_fn.clear();
+    std::vector<std::string>().swap(pseudo_fn);
 	delete[] pseudo_type;
     delete[] orbital_fn;
 	this->atom_mass  = new double[ntype]; //atom masses

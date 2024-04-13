@@ -10,8 +10,8 @@ Atom_pseudo::~Atom_pseudo()
 {
 	for(int is=0;is<4;is++) 
 	{
-		if(this->index1_soc[is].size()!=0) this->index1_soc[is].clear();
-		if(this->index2_soc[is].size()!=0) this->index2_soc[is].clear();
+		if(this->index1_soc[is].size()!=0) std::vector<int>().swap(this->index1_soc[is]);
+		if(this->index2_soc[is].size()!=0) std::vector<int>().swap(this->index2_soc[is]);
 	}
 }
 
@@ -35,9 +35,9 @@ void Atom_pseudo::set_d_so(
 	for(int is=0;is<spin_dimension;is++)
 	{
 		this->non_zero_count_soc[is] = 0;
-		this->index1_soc[is].clear();
+		std::vector<int>().swap(this->index1_soc[is]);
 		this->index1_soc[is].resize(nproj_soc * nproj_soc);
-		this->index2_soc[is].clear();
+		std::vector<int>().swap(this->index2_soc[is]);
 		this->index2_soc[is].resize(nproj_soc * nproj_soc);
 	}
 

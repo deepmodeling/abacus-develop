@@ -70,16 +70,16 @@ UnitCell::UnitCell()
 
 UnitCell::~UnitCell()
 {
-	atom_label.clear();
+	std::vector<std::string>().swap(atom_label);;
     delete[] atom_mass;
-	pseudo_fn.clear();
+	std::vector<std::string>().swap(pseudo_fn);
     delete[] pseudo_type;
     delete[] orbital_fn;
     delete[] iat2it;
     delete[] iat2ia;
     delete[] iwt2iat;
     delete[] iwt2iw;
-    lc.clear();
+    std::vector<int>().swap(lc);
     if(set_atom_flag)
 	{
 		delete[] atoms;

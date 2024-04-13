@@ -10,15 +10,12 @@
 //	new basis:     to be constructed
 //	( all lcaos and abfs on same atom )
 
-namespace ABFs_Construct
-{
-namespace PCA
+namespace ABFs_Construct::PCA
 {
 	extern std::vector<std::vector<std::pair<std::vector<double>,RI::Tensor<double>>>> cal_PCA( 
 		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &lcaos, 
 		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs,		// abfs must be orthonormal
 		const double kmesh_times );
-}
 }
 
 #endif	// ABFS_CONSTRUCT_PCA_H

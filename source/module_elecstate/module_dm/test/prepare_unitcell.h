@@ -73,9 +73,9 @@ class UcellTestPrepare
         this->ntype = this->elements.size();
         static UnitCell ucell;
         ucell.setup(this->latname, this->ntype, this->lmaxmax, this->init_vel, this->fixed_axes);
-        ucell.atom_label.clear();
+        std::vector<std::string>().swap(ucell.atom_label);
         delete[] ucell.atom_mass;
-        ucell.pseudo_fn.clear();
+        std::vector<std::string>().swap(ucell.pseudo_fn);
         delete[] ucell.pseudo_type;
         delete[] ucell.orbital_fn;
         delete[] ucell.magnet.start_magnetization; // mag set here
