@@ -6,14 +6,14 @@ Parallel_Kpoints::Parallel_Kpoints()
 {
     nks_pool = nullptr;
     startk_pool = nullptr;
-    whichpool = nullptr;
+    whichpool.resize(0);
 }
 
 Parallel_Kpoints::~Parallel_Kpoints()
 {
     delete[] nks_pool;
     delete[] startk_pool;
-    delete[] whichpool;
+    whichpool.clear();
 }
 
 
@@ -32,8 +32,8 @@ void Parallel_Kpoints::kinfo(int &nkstot)
 #ifdef __MPI
 void Parallel_Kpoints::get_whichpool(const int &nkstot)
 {
-    delete[] whichpool;
-    this->whichpool = new int[nkstot];
+    whichpool.clear();
+    this->whichpool.resize(nkstot);
     ModuleBase::GlobalFunc::ZEROS(whichpool, nkstot);
 
 	//std::cout << " calculate : whichpool" << std::endl;
