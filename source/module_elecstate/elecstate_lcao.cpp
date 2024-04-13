@@ -282,9 +282,7 @@ void ElecStateLCAO<double>::dmToRho(std::vector<double*> pexsi_DM, std::vector<d
         this->loc->cal_dk_gamma_from_2D_pub();
     }
 
-    auto DM = this->get_DM();
     this->get_DM()->pexsi_EDM.clear();
-
     
     for (int is = 0; is < nspin; is++)
     {

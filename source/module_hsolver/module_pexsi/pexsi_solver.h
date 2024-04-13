@@ -8,7 +8,7 @@ namespace pexsi
 class PEXSI_Solver
 {
   public:
-    PEXSI_Solver(const int blacs_text,
+    void prepare(const int blacs_text,
                  const int nb,
                  const int nrow,
                  const int ncol,
@@ -17,6 +17,7 @@ class PEXSI_Solver
                  double& totalEnergyH,
                  double& totalEnergyS,
                  double& totalFreeEnergy);
+    ~PEXSI_Solver();
     int solve(double mu0);
     double* get_DM() const;
     double* get_EDM() const;

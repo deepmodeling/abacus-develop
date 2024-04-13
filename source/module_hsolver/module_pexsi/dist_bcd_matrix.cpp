@@ -1,6 +1,6 @@
 #ifdef __PEXSI
 #include "dist_bcd_matrix.h"
-
+#include <cctype>
 #include <mpi.h>
 extern "C"
 {
@@ -26,13 +26,13 @@ DistBCDMatrix::DistBCDMatrix(MPI_Comm comm,
     this->nblk = nblk;
     this->nrow = nrow;
     this->ncol = ncol;
-    if (layout == 'R' || layout == 'r' || layout == 'C' || layout == 'c')
+    if (layout == 'r' || layout == 'c')
     {
         this->layout = layout;
     }
     else
     {
-        throw("The layout must be 'R', 'r', 'C', or 'c'");
+        throw("The layout must be 'r' or 'c'");
     }
 
     if (comm != MPI_COMM_NULL)

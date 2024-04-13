@@ -170,7 +170,7 @@ inline int DistMatrixTransformer::getNonZeroIndex(char layout,
     nnz = 0;
     colidx.clear();
     rowidx.clear();
-    if (layout == 'C' || layout == 'c')
+    if (layout == 'c')
     {
         for (int i = 0; i < ncol; ++i)
         {
@@ -186,7 +186,7 @@ inline int DistMatrixTransformer::getNonZeroIndex(char layout,
             }
         }
     }
-    else if (layout == 'R' || layout == 'r')
+    else if (layout == 'r')
     {
         for (int i = 0; i < ncol; ++i)
         {

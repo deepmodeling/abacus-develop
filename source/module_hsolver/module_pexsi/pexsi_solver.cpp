@@ -40,7 +40,7 @@ double PEXSI_Solver::pexsi_mu_guard = 0.0;
 double PEXSI_Solver::pexsi_elec_thr = 0.0;
 double PEXSI_Solver::pexsi_zero_thr = 0.0;
 
-PEXSI_Solver::PEXSI_Solver(const int blacs_text,
+void PEXSI_Solver::prepare(const int blacs_text,
                            const int nb,
                            const int nrow,
                            const int ncol,
@@ -54,15 +54,27 @@ PEXSI_Solver::PEXSI_Solver(const int blacs_text,
     this->nb = nb;
     this->nrow = nrow;
     this->ncol = ncol;
+    if (this->h) { delete[] this->h;}
     this->h = new double[nrow * ncol];
+    if (this->s) { delete[] this->s;}
     this->s = new double[nrow * ncol];
     std::memcpy(this->h, h, nrow * ncol * sizeof(double));
     std::memcpy(this->s, s, nrow * ncol * sizeof(double));
+    if (this->DM) { delete[] this->DM;}
     this->DM = new double[nrow * ncol];
+    if (this->EDM) { delete[] this->EDM;}
     this->EDM = new double[nrow * ncol];
     this->totalEnergyH = 0.0;
     this->totalEnergyS = 0.0;
     this->totalFreeEnergy = 0.0;
+}
+
+PEXSI_Solver::~PEXSI_Solver()
+{
+    delete[] h;
+    delete[] s;
+    delete[] DM;
+    delete[] EDM;
 }
 
 int PEXSI_Solver::solve(double mu0)
@@ -85,7 +97,7 @@ int PEXSI_Solver::solve(double mu0)
                 this->nb,
                 this->nrow,
                 this->ncol,
-                'C',
+                'c',
                 this->h,
                 this->s,
                 GlobalV::nelec,
