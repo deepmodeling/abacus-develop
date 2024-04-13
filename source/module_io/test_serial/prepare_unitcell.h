@@ -76,7 +76,7 @@ public:
 				this->lmaxmax,
 				this->init_vel,
 				this->fixed_axes);
-		ucell->atom_labe.clear();
+		ucell->atom_label.clear();
 		delete[] ucell->atom_mass;
 		ucell->pseudo_fn.clear();
 		delete[] ucell->pseudo_type;
