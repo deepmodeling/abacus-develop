@@ -340,10 +340,10 @@ int simplePEXSI(MPI_Comm comm_PEXSI,
     // back to 2D block cyclic distribution if neccessary
     if (comm_2D != MPI_COMM_NULL)
     {
-        delete[] DM;
-        delete[] EDM;
-        DM = new double[SRC_Matrix.get_nrow() * SRC_Matrix.get_ncol()];
-        EDM = new double[SRC_Matrix.get_nrow() * SRC_Matrix.get_ncol()];
+        // delete[] DM;
+        // delete[] EDM;
+        // DM = new double[SRC_Matrix.get_nrow() * SRC_Matrix.get_ncol()];
+        // EDM = new double[SRC_Matrix.get_nrow() * SRC_Matrix.get_ncol()];
     }
     // LiuXh modify 2021-04-29, add DONE(ofs_running,"xx") for test
     ModuleBase::timer::tick("Diago_LCAO_Matrix", "TransMAT22D");

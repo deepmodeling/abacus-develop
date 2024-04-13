@@ -14,13 +14,9 @@ class PEXSI_Solver
                  const int ncol,
                  const double* h,
                  const double* s,
-                 double& totalEnergyH,
-                 double& totalEnergyS,
-                 double& totalFreeEnergy);
-    ~PEXSI_Solver();
+                 double*& DM,
+                 double*& EDM);
     int solve(double mu0);
-    double* get_DM() const;
-    double* get_EDM() const;
     const double get_totalFreeEnergy() const;
     const double get_totalEnergyH() const;
     const double get_totalEnergyS() const;

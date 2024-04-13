@@ -46,35 +46,20 @@ void PEXSI_Solver::prepare(const int blacs_text,
                            const int ncol,
                            const double* h,
                            const double* s,
-                           double& totalEnergyH,
-                           double& totalEnergyS,
-                           double& totalFreeEnergy)
+                           double*& _DM,
+                           double*& _EDM)
 {
     this->blacs_text = blacs_text;
     this->nb = nb;
     this->nrow = nrow;
     this->ncol = ncol;
-    if (this->h) { delete[] this->h;}
-    this->h = new double[nrow * ncol];
-    if (this->s) { delete[] this->s;}
-    this->s = new double[nrow * ncol];
-    std::memcpy(this->h, h, nrow * ncol * sizeof(double));
-    std::memcpy(this->s, s, nrow * ncol * sizeof(double));
-    if (this->DM) { delete[] this->DM;}
-    this->DM = new double[nrow * ncol];
-    if (this->EDM) { delete[] this->EDM;}
-    this->EDM = new double[nrow * ncol];
+    this->h = const_cast<double*>(h);
+    this->s = const_cast<double*>(s);
+    this->DM = _DM;
+    this->EDM = _EDM;
     this->totalEnergyH = 0.0;
     this->totalEnergyS = 0.0;
     this->totalFreeEnergy = 0.0;
-}
-
-PEXSI_Solver::~PEXSI_Solver()
-{
-    delete[] h;
-    delete[] s;
-    delete[] DM;
-    delete[] EDM;
 }
 
 int PEXSI_Solver::solve(double mu0)
@@ -110,16 +95,6 @@ int PEXSI_Solver::solve(double mu0)
                 mu,
                 mu0);
     return 0;
-}
-
-double* PEXSI_Solver::get_DM() const
-{
-    return DM;
-}
-
-double* PEXSI_Solver::get_EDM() const
-{
-    return EDM;
 }
 
 const double PEXSI_Solver::get_totalFreeEnergy() const

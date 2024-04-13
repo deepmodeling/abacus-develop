@@ -25,8 +25,34 @@ DiagoPexsi<T>::DiagoPexsi(const Parallel_Orbitals* ParaV_in)
     {
         mu_buffer[i] = this->ps->pexsi_mu;
     }
+
     this->ParaV = ParaV_in;
     this->ps = std::make_unique<pexsi::PEXSI_Solver>();
+
+    this->DM.resize(nspin);
+    this->EDM.resize(nspin);
+    for (int i = 0; i < nspin; i++)
+    {
+        this->DM[i] = new T[ParaV->nrow * ParaV->ncol];
+        this->EDM[i] = new T[ParaV->nrow * ParaV->ncol];
+    }
+
+}
+
+template <typename T>
+DiagoPexsi<T>::~DiagoPexsi()
+{
+    int nspin = GlobalV::NSPIN;
+    if (GlobalV::NSPIN == 4)
+    {
+        nspin = 1;
+    }
+    for (int i = 0; i < nspin; i++)
+    {
+        delete[] this->DM[i];
+        delete[] this->EDM[i];
+    }
+
 }
 
 template <>
@@ -36,20 +62,16 @@ void DiagoPexsi<double>::diag(hamilt::Hamilt<double>* phm_in, psi::Psi<double>& 
     matd h_mat, s_mat;
     phm_in->matrix(h_mat, s_mat);
     std::vector<double> eigen(GlobalV::NLOCAL, 0.0);
-    MPI_Comm COMM_DIAG = MPI_COMM_WORLD;
     int ik = psi.get_current_k();
     this->ps->prepare(this->ParaV->blacs_ctxt,
-                                                     this->ParaV->nb,
-                                                     this->ParaV->nrow,
-                                                     this->ParaV->ncol,
-                                                     h_mat.p,
-                                                     s_mat.p,
-                                                     this->totalEnergyH,
-                                                     this->totalEnergyS,
-                                                     this->totalFreeEnergy);
+                      this->ParaV->nb,
+                      this->ParaV->nrow,
+                      this->ParaV->ncol,
+                      h_mat.p,
+                      s_mat.p,
+                      DM[ik],
+                      EDM[ik]);
     this->ps->solve(mu_buffer[ik]);
-    this->EDM.push_back(this->ps->get_EDM());
-    this->DM.push_back(this->ps->get_DM());
     this->totalFreeEnergy = this->ps->get_totalFreeEnergy();
     this->totalEnergyH = this->ps->get_totalEnergyH();
     this->totalEnergyS = this->ps->get_totalEnergyS();

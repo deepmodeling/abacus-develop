@@ -28,7 +28,7 @@ class DiagoPexsi : public DiagH<T>
     double totalEnergyS;
     double totalFreeEnergy;
     std::unique_ptr<pexsi::PEXSI_Solver> ps;
-
+    ~DiagoPexsi();
 };
 } // namespace hsolver
 
