@@ -3,7 +3,7 @@
 #include "lattice_change_basic.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
-
+#include <vector>
 // the 'dim' variable is defined in Lattice_Change_Basic
 using namespace Lattice_Change_Basic;
 
@@ -80,11 +80,20 @@ void Lattice_Change_CG::start(UnitCell &ucell, const ModuleBase::matrix &stress_
     static double xa, xb, xc, xpt, steplength, fmax; // the steepest descent method
     static int nbrent;
 
-    double *lat = new double[dim];
+    /*double *lat = new double[dim];
     double *grad = new double[dim];
     double *cg_gradn = new double[dim];
     double *move = new double[dim];
-    double *cg_grad = new double[dim];
+    double *cg_grad = new double[dim];*/
+
+    std::vector<double> lat(dim);
+    std::vector<double> grad(dim);
+    std::vector<double> cg_gradn(dim);
+    std::vector<double> move(dim);
+    std::vector<double> cg_grad(dim);
+
+    // 2200011081'S modification
+
     double best_x = 0.0;
     double fmin = 0.0;
 
