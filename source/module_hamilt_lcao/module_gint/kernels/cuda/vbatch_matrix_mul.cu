@@ -74,22 +74,34 @@ static __device__ void vbatched_gemm_device(int M,
 // Zero C
 #pragma unroll
     for (n = 0; n < THR_N; n++)
+    {
 #pragma unroll
         for (m = 0; m < THR_M; m++)
+        {
             rC[n][m] = 0.0;
+        }
+    }
 
 // Load A dev->shmem
 #pragma unroll
     for (n = 0; n < BLK_M; n += DIM_YA)
+    {
 #pragma unroll
         for (m = 0; m < BLK_K; m += DIM_XA)
+        {
             sA(n + idyA, m + idxA) = fetch(A, m, n, boundA);
+        }
+    }
 
 #pragma unroll
     for (n = 0; n < BLK_N; n += DIM_YB)
+    {
 #pragma unroll
         for (m = 0; m < BLK_K; m += DIM_XB)
+        {
             sB(m + idxB, n + idyB) = fetch(B, m, n, boundB);
+        }
+    }
 
     __syncthreads();
 
@@ -104,16 +116,24 @@ static __device__ void vbatched_gemm_device(int M,
 // Load A dev->regs
 #pragma unroll
         for (n = 0; n < BLK_M / DIM_YA; n++)
+        {
 #pragma unroll
             for (m = 0; m < BLK_K / DIM_XA; m++)
+            {
                 ra[n][m] = fetch(A, m * DIM_XA, n * DIM_YA, boundA);
+            }
+        }
 
 // Load B dev->regs
 #pragma unroll
         for (n = 0; n < BLK_N / DIM_YB; n++)
+        {
 #pragma unroll
             for (m = 0; m < BLK_K / DIM_XB; m++)
+            {
                 rb[n][m] = fetch(B, m * DIM_XB, n * DIM_YB, boundB);
+            }
+        }
 
 // Multiply
 #pragma unroll
@@ -122,12 +142,16 @@ static __device__ void vbatched_gemm_device(int M,
 // Load A shmem->regs
 #pragma unroll
             for (m = 0; m < THR_M; m++)
+            {
                 rA[m] = sA(m * DIM_X + idx, k);
+            }
 
 // Load B shmem->regs
 #pragma unroll
             for (n = 0; n < THR_N; n++)
+            {
                 rB[n] = sB(k, n * DIM_Y + idy);
+            }
 
 // Compute
 #pragma unroll
@@ -146,17 +170,24 @@ static __device__ void vbatched_gemm_device(int M,
 // Load A regs->shmem
 #pragma unroll
         for (n = 0; n < BLK_M / DIM_YA; n++)
+        {
 #pragma unroll
             for (m = 0; m < BLK_K / DIM_XA; m++)
+            {
                 sA(n * DIM_YA + idyA, m * DIM_XA + idxA) = ra[n][m];
+            }
+        }
 
 // Load B regs->shmem
 #pragma unroll
         for (n = 0; n < BLK_N / DIM_YB; n++)
+        {
 #pragma unroll
             for (m = 0; m < BLK_K / DIM_XB; m++)
+            {
                 sB(m * DIM_XB + idxB, n * DIM_YB + idyB) = rb[n][m];
-
+            }
+        }
         __syncthreads();
     }
 
@@ -171,12 +202,16 @@ static __device__ void vbatched_gemm_device(int M,
 // Load A shmem->regs
 #pragma unroll
         for (m = 0; m < THR_M; m++)
+        {
             rA[m] = sA(m * DIM_X + idx, k);
+        }
 
 // Load B shmem->regs
 #pragma unroll
         for (n = 0; n < THR_N; n++)
+        {
             rB[n] = sB(k, n * DIM_Y + idy);
+        }
 
 // Compute
 #pragma unroll
