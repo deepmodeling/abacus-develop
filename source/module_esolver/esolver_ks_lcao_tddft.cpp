@@ -100,7 +100,7 @@ void ESolver_KS_LCAO_TDDFT::init(Input& inp, UnitCell& ucell)
     //------------------init Hamilt_lcao----------------------
 
     // pass Hamilt-pointer to Operator
-    this->gen_h.LM = this->uhm.LM = &this->LM;
+    this->gen_h.LM = &this->LM;
     // pass basis-pointer to EState and Psi
     this->LOC.ParaV = this->LOWF.ParaV = this->LM.ParaV;
 

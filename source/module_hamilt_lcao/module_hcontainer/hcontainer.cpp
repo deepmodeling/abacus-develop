@@ -598,6 +598,10 @@ size_t HContainer<T>::get_memory_size() const
     }
     memory += this->tmp_atom_pairs.capacity() * sizeof(AtomPair<T>*);
     memory += this->tmp_R_index.capacity() * sizeof(int);
+    if(this->allocated)
+    {
+        memory += this->get_nnr() * sizeof(T);
+    }
     return memory;
 }
 
