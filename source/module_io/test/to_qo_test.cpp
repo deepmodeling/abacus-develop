@@ -308,7 +308,7 @@ TEST_F(toQOTest, RadialCollectionIndexing)
 
     tqo.build_ao(ucell.ntype,
                  "./",
-                 ucell.pseudo_fn,
+                 &ucell.pseudo_fn[0],
                  {},
                  GlobalV::qo_thr,
                  GlobalV::ofs_running,
@@ -362,7 +362,7 @@ TEST_F(toQOTest, BuildHydrogenMinimal)
     tqo.read_structures(&ucell, kvecs_d, 0, 1);
     tqo.build_ao(ucell.ntype,
                  "./",
-                 ucell.pseudo_fn,
+                 &ucell.pseudo_fn[0],
                  {},
                  GlobalV::qo_thr,
                  GlobalV::ofs_running,
@@ -415,7 +415,7 @@ TEST_F(toQOTest, ScanSupercellForAtom)
     }
     tqo.build_ao(ucell.ntype,
                  "./",
-                 ucell.pseudo_fn,
+                 &ucell.pseudo_fn[0],
                  {},
                  GlobalV::qo_thr,
                  GlobalV::ofs_running,
@@ -464,7 +464,7 @@ TEST_F(toQOTest, ScanSupercellFCC)
                   0);
     tqo.build_ao(ucell.ntype,
                  "./",
-                 ucell.pseudo_fn,
+                 &ucell.pseudo_fn[0],
                  {},
                  GlobalV::qo_thr,
                  GlobalV::ofs_running,
@@ -490,7 +490,7 @@ TEST_F(toQOTest, ScanSupercellSC1)
     GlobalV::qo_thr = 1e-6;
     tqo.build_ao(ucell.ntype,
                  "./",
-                 ucell.pseudo_fn,
+                 &ucell.pseudo_fn[0],
                  {},
                  GlobalV::qo_thr,
                  GlobalV::ofs_running,
@@ -520,7 +520,7 @@ TEST_F(toQOTest, AllocateOvlpMinimal)
     }
     tqo.build_ao(ucell.ntype,
                  "./",
-                 ucell.pseudo_fn,
+                 &ucell.pseudo_fn[0],
                  {},
                  GlobalV::qo_thr,
                  GlobalV::ofs_running,
@@ -872,7 +872,7 @@ TEST_F(toQOTest, BuildHydrogenFull)
     GlobalV::qo_thr = 1e-10;
     tqo.build_ao(ucell.ntype,
                  "./",
-                 ucell.pseudo_fn,
+                 &ucell.pseudo_fn[0],
                  {},
                  GlobalV::qo_thr,
                  GlobalV::ofs_running,
@@ -1057,7 +1057,7 @@ TEST_F(toQOTest, BuildPswfcPartial1)
     tqo.read_structures(&ucell, kvecs_d, 0, 1);
     tqo.build_ao(ucell.ntype,
                  "./",
-                 ucell.pseudo_fn,
+                 &ucell.pseudo_fn[0],
                  GlobalV::qo_screening_coeff,
                  GlobalV::qo_thr,
                  GlobalV::ofs_running,
@@ -1077,7 +1077,7 @@ TEST_F(toQOTest, BuildPswfcPartial2)
     tqo.read_structures(&ucell, kvecs_d, 0, 1);
     tqo.build_ao(ucell.ntype,
                  "./",
-                 ucell.pseudo_fn,
+                 &ucell.pseudo_fn[0],
                  GlobalV::qo_screening_coeff,
                  GlobalV::qo_thr,
                  GlobalV::ofs_running,
@@ -1097,7 +1097,7 @@ TEST_F(toQOTest, BuildPswfcPartial3)
     tqo.read_structures(&ucell, kvecs_d, 0, 1);
     tqo.build_ao(ucell.ntype,
                  "./",
-                 ucell.pseudo_fn,
+                 &ucell.pseudo_fn[0],
                  GlobalV::qo_screening_coeff,
                  GlobalV::qo_thr,
                  GlobalV::ofs_running,
@@ -1118,7 +1118,7 @@ TEST_F(toQOTest, BuildPswfcAll)
     tqo.read_structures(&ucell, kvecs_d, 0, 1);
     tqo.build_ao(ucell.ntype,
                  "./",
-                 ucell.pseudo_fn,
+                 &ucell.pseudo_fn[0],
                  GlobalV::qo_screening_coeff,
                  GlobalV::qo_thr,
                  GlobalV::ofs_running,
@@ -1145,7 +1145,7 @@ TEST_F(toQOTest, ScanSupercellSC2)
     GlobalV::qo_thr = 1e-6;
     tqo.build_ao(ucell.ntype,
                  "./",
-                 ucell.pseudo_fn,
+                 &ucell.pseudo_fn[0],
                  GlobalV::qo_screening_coeff,
                  GlobalV::qo_thr,
                  GlobalV::ofs_running,
@@ -1171,7 +1171,7 @@ TEST_F(toQOTest, ScanSupercellSC3)
     GlobalV::qo_thr = 1e-6;
     tqo.build_ao(ucell.ntype,
                  "./",
-                 ucell.pseudo_fn,
+                 &ucell.pseudo_fn[0],
                  GlobalV::qo_screening_coeff,
                  GlobalV::qo_thr,
                  GlobalV::ofs_running,
@@ -1198,7 +1198,7 @@ TEST_F(toQOTest, ScanSupercellSC4)
     GlobalV::qo_thr = 1e-6;
     tqo.build_ao(ucell.ntype,
                  "./",
-                 ucell.pseudo_fn,
+                 &ucell.pseudo_fn[0],
                  GlobalV::qo_screening_coeff,
                  GlobalV::qo_thr,
                  GlobalV::ofs_running,
