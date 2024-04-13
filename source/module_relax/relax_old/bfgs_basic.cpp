@@ -3,6 +3,7 @@
 #include "ions_move_basic.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
+#include<vector>
 using namespace Ions_Move_Basic;
 
 double BFGS_Basic::relax_bfgs_w1 = -1.0; // default is 0.01
