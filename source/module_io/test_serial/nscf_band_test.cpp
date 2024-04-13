@@ -8,14 +8,14 @@ Parallel_Kpoints::Parallel_Kpoints()
 {
     nks_pool = nullptr;
     startk_pool = nullptr;
-    whichpool = nullptr;
+    whichpool.resize(0);
 }
 
 Parallel_Kpoints::~Parallel_Kpoints()
 {
     delete[] nks_pool;
     delete[] startk_pool;
-    delete[] whichpool;
+    whichpool.clear();
 }
 
 K_Vectors::K_Vectors()
