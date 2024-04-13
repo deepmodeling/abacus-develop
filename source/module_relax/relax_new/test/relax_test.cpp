@@ -258,7 +258,7 @@ class Test_RELAX : public testing::Test
             GlobalC::ucell.atoms[2].taud[1] = {0.5,0  ,0.479348999999274  };
             GlobalC::ucell.atoms[2].taud[2] = {0  ,0  ,0.958854000000429  };
             
-            GlobalC::ucell.lc = new int[3];
+            GlobalC::ucell.lc.resize(3);
             GlobalC::ucell.lc[0] = 1;
             GlobalC::ucell.lc[1] = 1;
             GlobalC::ucell.lc[2] = 1;
