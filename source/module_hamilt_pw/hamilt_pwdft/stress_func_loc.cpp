@@ -20,6 +20,8 @@ void Stress_Func<FPTYPE, Device>::stress_loc(ModuleBase::matrix& sigma,
     FPTYPE evloc=0.0;
 	FPTYPE fact=1.0;
 
+	const int nspin_rho = (GlobalV::NSPIN == 2) ? 2 : 1;
+
 	if (INPUT.gamma_only && is_pw) fact=2.0;
 
     
@@ -48,7 +50,7 @@ void Stress_Func<FPTYPE, Device>::stress_loc(ModuleBase::matrix& sigma,
 				aux[ir] = std::complex<FPTYPE>(chr->rho[0][ir], 0.0 );
 			}
 		}
-		for (int is = 1; is < GlobalV::NSPIN; is++)
+		for (int is = 1; is < nspin_rho; is++)
 		{
 			for (int ir = irb; ir < ir_end; ++ir)
 			{ // accumulate aux

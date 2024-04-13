@@ -26,15 +26,15 @@ void sparse_format::cal_dH(
 	{
         GlobalV::CAL_STRESS = false;
 
-        gen_h.build_ST_new('T', true, GlobalC::ucell, lm.Hloc_fixedR.data());
+        gen_h.build_ST_new('T', true, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD), lm.Hloc_fixedR.data());
 
         GlobalV::CAL_STRESS = true;
     }
     else
     {
-        gen_h.build_ST_new('T', true, GlobalC::ucell, lm.Hloc_fixedR.data());
+        gen_h.build_ST_new('T', true, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD), lm.Hloc_fixedR.data());
     }
-    gen_h.build_Nonlocal_mu_new (lm.Hloc_fixed.data(), true);
+    gen_h.build_Nonlocal_mu_new (lm.Hloc_fixed.data(), true, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD));
     
     sparse_format::cal_dSTN_R(lm, grid, current_spin, sparse_thr);
 

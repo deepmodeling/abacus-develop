@@ -8,9 +8,11 @@ namespace MD_func
 
 double gaussrand(void)
 {
-    static double V1, V2, S;
+    static double v1=0.0;
+    static double v2=0.0;
+    static double S=0.0;
     static int phase = 0;
-    double X=0.0;
+    double xx=0.0;
 
     if (phase == 0)
     {
@@ -19,21 +21,21 @@ double gaussrand(void)
             double U1 = static_cast<double>(std::rand()) / RAND_MAX;
             double U2 = static_cast<double>(std::rand()) / RAND_MAX;
 
-            V1 = 2.0 * U1 - 1.0;
-            V2 = 2.0 * U2 - 1.0;
-            S = V1 * V1 + V2 * V2;
+            v1 = 2.0 * U1 - 1.0;
+            v2 = 2.0 * U2 - 1.0;
+            S = v1 * v1 + v2 * v2;
         } while (S >= 1 || S == 0);
 
-        X = V1 * sqrt(-2.0 * log(S) / S);
+        xx = v1 * sqrt(-2.0 * log(S) / S);
     }
     else
     {
-        X = V2 * sqrt(-2.0 * log(S) / S);
+        xx = v2 * sqrt(-2.0 * log(S) / S);
     }
 
     phase = 1 - phase;
 
-    return X;
+    return xx;
 }
 
 double kinetic_energy(const int& natom, const ModuleBase::Vector3<double>* vel, const double* allmass)
@@ -69,6 +71,8 @@ void compute_stress(const UnitCell& unit_in,
             }
         }
     }
+
+    return;
 }
 
 void read_vel(const UnitCell& unit_in, ModuleBase::Vector3<double>* vel)
@@ -89,6 +93,8 @@ void read_vel(const UnitCell& unit_in, ModuleBase::Vector3<double>* vel)
         }
     }
     assert(iat == unit_in.nat);
+
+    return;
 }
 
 void rand_vel(const int& natom,
@@ -137,7 +143,7 @@ void rand_vel(const int& natom,
             }
         }
 
-        double factor;
+        double factor=0.0;
         if (3 * natom == frozen_freedom || temperature == 0)
         {
             factor = 0;
@@ -156,6 +162,7 @@ void rand_vel(const int& natom,
 #ifdef __MPI
     MPI_Bcast(vel, natom * 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif
+
     return;
 }
 
@@ -172,12 +179,18 @@ void init_vel(const UnitCell& unit_in,
     ModuleBase::Vector3<int> frozen;
     get_mass_mbl(unit_in, allmass, frozen, ionmbl);
     frozen_freedom = frozen.x + frozen.y + frozen.z;
-    if (frozen.x == 0)
-        ++frozen_freedom;
-    if (frozen.y == 0)
-        ++frozen_freedom;
-    if (frozen.z == 0)
-        ++frozen_freedom;
+	if (frozen.x == 0)
+	{
+		++frozen_freedom;
+	}
+	if (frozen.y == 0)
+	{
+		++frozen_freedom;
+	}
+	if (frozen.z == 0)
+	{
+		++frozen_freedom;
+	}
 
     if (unit_in.init_vel)
     {
@@ -254,17 +267,24 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
     }
 
     ModuleBase::timer::tick("MD_func", "force_virial");
+
+    return;
 }
+
 
 void print_stress(std::ofstream& ofs, const ModuleBase::matrix& virial, const ModuleBase::matrix& stress)
 {
-    double stress_scalar = 0.0, virial_scalar = 0.0;
+    double stress_scalar = 0.0;
+    double virial_scalar = 0.0;
+
     for (int i = 0; i < 3; i++)
     {
         stress_scalar += stress(i, i) / 3;
         virial_scalar += virial(i, i) / 3;
     }
+
     const double unit_transform = ModuleBase::HARTREE_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
+
     ofs << "Virtual Pressure is " << stress_scalar * unit_transform << " kbar " << std::endl;
     ofs << "Virial Term is " << virial_scalar * unit_transform << " kbar " << std::endl;
     ofs << "Kinetic Term is " << (stress_scalar - virial_scalar) * unit_transform << " kbar " << std::endl;
@@ -278,7 +298,10 @@ void print_stress(std::ofstream& ofs, const ModuleBase::matrix& virial, const Mo
             << std::setw(15) << stress(i, 2) * unit_transform << std::endl;
     }
     ofs << std::setiosflags(std::ios::left);
+
+    return;
 }
+
 
 void dump_info(const int& step,
                const std::string& global_out_dir,
@@ -288,8 +311,10 @@ void dump_info(const int& step,
                const ModuleBase::Vector3<double>* force,
                const ModuleBase::Vector3<double>* vel)
 {
-    if (mdp.my_rank)
-        return;
+	if (mdp.my_rank)
+	{
+		return;
+	}
 
     std::stringstream file;
     file << global_out_dir << "MD_dump";
@@ -366,6 +391,8 @@ void dump_info(const int& step,
     ofs << std::endl;
     ofs << std::endl;
     ofs.close();
+
+    return;
 }
 
 void get_mass_mbl(const UnitCell& unit_in,
@@ -391,10 +418,13 @@ void get_mass_mbl(const UnitCell& unit_in,
             ion++;
         }
     }
+
+    return;
 }
 
 double target_temp(const int& istep, const int& nstep, const double& tfirst, const double& tlast)
 {
+    assert(nstep>0);
     double delta = static_cast<double>(istep) / nstep;
     return tfirst + delta * (tlast - tfirst);
 }
@@ -407,7 +437,7 @@ double current_temp(double& kinetic,
 {
     if (3 * natom == frozen_freedom)
     {
-        return 0;
+        return 0.0;
     }
     else
     {
@@ -433,7 +463,10 @@ void temp_vector(const int& natom,
             }
         }
     }
+   
+    return;
 }
+
 
 void current_md_info(const int& my_rank, const std::string& file_dir, int& md_step, double& temperature)
 {
@@ -470,6 +503,8 @@ void current_md_info(const int& my_rank, const std::string& file_dir, int& md_st
     MPI_Bcast(&md_step, 1, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&temperature, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif
+
+    return;
 }
 
 } // namespace MD_func

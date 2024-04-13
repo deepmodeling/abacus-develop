@@ -101,7 +101,8 @@ class Charge_Mixing
     Base_Mixing::Mixing* get_mixing() const {return mixing;}
 
     // for mixing restart
-    int mixing_restart = 0; //which step to restart mixing during SCF
+    int mixing_restart_step = 0; //which step to restart mixing during SCF
+    int mixing_restart_count = 0; // the number of restart mixing during SCF. Do not set mixing_restart_count as bool since I want to keep some flexibility in the future
 
   private:
   

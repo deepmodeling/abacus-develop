@@ -289,6 +289,10 @@ void ElecState::print_etot(const bool converged,
     {
         label = "DA";
     }
+    else if (ks_solver_type == "dav_subspace")
+    {
+        label = "DS";
+    }
     else if (ks_solver_type == "scalapack_gvx")
     {
         label = "GV";

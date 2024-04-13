@@ -12,6 +12,8 @@ void Stress_Func<FPTYPE, Device>::stress_har(ModuleBase::matrix& sigma, ModulePW
 
 	std::complex<FPTYPE> *aux = new std::complex<FPTYPE>[rho_basis->nmaxgr];
 
+	const int nspin_rho = (GlobalV::NSPIN == 2) ? 2 : 1;
+
 	//  Hartree potential VH(r) from n(r)
     /*
         blocking rho_basis->nrxx for data locality.
@@ -35,7 +37,7 @@ void Stress_Func<FPTYPE, Device>::stress_har(ModuleBase::matrix& sigma, ModulePW
 				aux[ir] = std::complex<FPTYPE>( chr->rho[0][ir], 0.0 );
 			}
 		}
-		for (int is = 1; is < GlobalV::NSPIN; is++)
+		for (int is = 1; is < nspin_rho; is++)
 		{
 			for (int ir = irb; ir < ir_end; ++ir)
 			{ // accumulate aux
