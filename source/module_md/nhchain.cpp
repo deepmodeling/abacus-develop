@@ -9,6 +9,9 @@
 Nose_Hoover::Nose_Hoover(MD_para& MD_para_in, UnitCell& unit_in) : MD_base(MD_para_in, unit_in)
 {
     const double unit_transform = ModuleBase::HARTREE_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
+
+    assert(unit_transform>0.0);
+
     mdp.md_pfirst /= unit_transform;
     mdp.md_plast /= unit_transform;
     mdp.md_pfreq *= ModuleBase::AU_to_FS;
@@ -84,6 +87,8 @@ Nose_Hoover::Nose_Hoover(MD_para& MD_para_in, UnitCell& unit_in) : MD_base(MD_pa
     pdim = pflag[0] + pflag[1] + pflag[2];
 
     tdof = 3 * ucell.nat - frozen_freedom_;
+
+    assert(mdp.md_tchain>0);
 
     /// allocate thermostats coupled with particles
     mass_eta = new double[mdp.md_tchain];
@@ -202,6 +207,8 @@ void Nose_Hoover::setup(ModuleESolver::ESolver* p_esolver, const std::string& gl
     }
 
     ModuleBase::timer::tick("Nose_Hoover", "setup");
+
+    return;
 }
 
 void Nose_Hoover::first_half(std::ofstream& ofs)
@@ -259,9 +266,12 @@ void Nose_Hoover::first_half(std::ofstream& ofs)
     }
 
     ModuleBase::timer::tick("Nose_Hoover", "first_half");
+
+    return;
 }
 
-void Nose_Hoover::second_half()
+
+void Nose_Hoover::second_half(void)
 {
     ModuleBase::TITLE("Nose_Hoover", "second_half");
     ModuleBase::timer::tick("Nose_Hoover", "second_half");
@@ -300,7 +310,10 @@ void Nose_Hoover::second_half()
     }
 
     ModuleBase::timer::tick("Nose_Hoover", "second_half");
+
+    return;
 }
+
 
 void Nose_Hoover::print_md(std::ofstream& ofs, const bool& cal_stress)
 {
