@@ -64,7 +64,6 @@
     - [basis\_type](#basis_type)
     - [ks\_solver](#ks_solver)
     - [nbands](#nbands)
-    - [nbands\_istate](#nbands_istate)
     - [nspin](#nspin)
     - [smearing\_method](#smearing_method)
     - [smearing\_sigma](#smearing_sigma)
@@ -148,12 +147,12 @@
     - [out\_app\_flag](#out_app_flag)
     - [out\_ndigits](#out_ndigits)
     - [out\_interval](#out_interval)
-    - [band\_print\_num](#band_print_num)
-    - [bands\_to\_print](#bands_to_print)
     - [out\_element\_info](#out_element_info)
     - [restart\_save](#restart_save)
     - [restart\_load](#restart_load)
     - [rpa](#rpa)
+    - [nbands\_istate](#nbands_istate)
+    - [bands\_to\_print](#bands_to_print)
   - [Density of states](#density-of-states)
     - [dos\_edelta\_ev](#dos_edelta_ev)
     - [dos\_sigma](#dos_sigma)
@@ -413,7 +412,7 @@ These variables are used to control general system parameters.
   - relax: do structure relaxation calculation, one can use `relax_nmax` to decide how many ionic relaxations you want
   - cell-relax: do variable-cell relaxation calculation
   - nscf: do the non self-consistent electronic structure calculations. For this option, you need a charge density file. For nscf calculations with planewave basis set, pw_diag_thr should be <= 1e-3
-  - get_pchg: For LCAO basis. Please see the explanation for variable `nbands_istate`
+  - get_pchg: For LCAO basis. Please see the explanation for variable `nbands_istate` and `bands_to_print`
   - get_wf: Envelope function for LCAO basis. Please see the explanation for variable `nbands_istate`
   - md: molecular dynamics
   - test_memory : checks memory required for the calculation. The number is not quite reliable, please use it with care
@@ -936,13 +935,6 @@ calculations.
   - nspin=1: max(1.2\*occupied_bands, occupied_bands + 10)
   - nspin=2: max(1.2\*nelec_spin, nelec_spin + 10), in which nelec_spin = max(nelec_spin_up, nelec_spin_down)
   - nspin=4: max(1.2\*nelec, nelec + 20)
-
-### nbands_istate
-
-- **Type**: Integer
-- **Availability**: Only used when `calculation = get_wf` or `calculation = get_pchg`.
-- **Description**: The number of bands around the Fermi level you would like to calculate. `get_wf` means to calculate the envelope functions of wave functions $\Psi_{i}=\Sigma_{\mu}C_{i\mu}\Phi_{\mu}$, where $\Psi_{i}$ is the ith wave function with the band index $i$ and $\Phi_{\mu}$ is the localized atomic orbital set. `get_pchg` means to calculate the density of each wave function $|\Psi_{i}|^{2}$. Specifically, suppose we have highest occupied bands at 100th wave functions. And if you set this variable to 5, it will print five wave functions from 96th to 105th. But before all this can be carried out, the wave functions coefficients  should be first calculated and written into a file by setting the flag `out_wfc_lcao = 1`.
-- **Default**: 5
 
 ### nspin
 
@@ -1635,20 +1627,6 @@ These variables are used to control the output of properties.
 - **Description**: Control the interval for printing Mulliken population analysis, $r(R)$, $H(R)$, $S(R)$, $T(R)$, $dH(R)$, $H(k)$, $S(k)$ and $wfc(k)$ matrices during molecular dynamics calculations. Check input parameters [out_mul](#out_mul), [out_mat_r](#out_mat_r), [out_mat_hs2](#out_mat_hs2), [out_mat_t](#out_mat_t), [out_mat_dh](#out_mat_dh), [out_mat_hs](#out_mat_hs) and [out_wfc_lcao](#out_wfc_lcao) for more information, respectively.
 - **Default**: 1
 
-### band_print_num
-
-- **Type**: Integer
-- **Availability**: PW basis
-- **Description**: If you want to plot a partial charge density contributed from some chosen bands. `band_print_num` define the number of band list. The result can be found in "band*.cube".
-- **Default**: 0
-
-### bands_to_print
-
-- **Type**: vector
-- **Availability**: band_print_num > 0
-- **Description**: define which band you want to choose for partial charge density.
-- **Default**: []
-
 ### out_element_info
 
 - **Type**: Boolean
@@ -1680,6 +1658,20 @@ These variables are used to control the output of properties.
 - **Type**: Boolean
 - **Description**: Generate output files used in rpa calculations.
 - **Default**: False
+
+### nbands_istate
+
+- **Type**: Integer
+- **Availability**: Only for LCAO, used when `calculation = get_wf` or `calculation = get_pchg`.
+- **Description**: The number of bands around the Fermi level you would like to calculate. `get_wf` means to calculate the envelope functions of wave functions $\Psi_{i}=\Sigma_{\mu}C_{i\mu}\Phi_{\mu}$, where $\Psi_{i}$ is the ith wave function with the band index $i$ and $\Phi_{\mu}$ is the localized atomic orbital set. `get_pchg` means to calculate the density of each wave function $|\Psi_{i}|^{2}$. Specifically, suppose we have highest occupied bands at 100th wave functions. And if you set this variable to 5, it will print five wave functions from 96th to 105th. But before all this can be carried out, the wave functions coefficients should be first calculated and written into a file by setting the flag `out_wfc_lcao = 1`.
+- **Default**: 5
+
+### bands_to_print
+
+- **Type**: String
+- **Availability**: For both PW and LCAO. When `basis_type = lcao`, only used when `calculation = get_pchg`.
+- **Description**: Specifies the bands to calculate the charge density for, using a space-separated string of 0s and 1s, providing a more flexible selection compared to `nbands_istate`. Each digit in the string corresponds to a band, starting from the first band. A `1` indicates that the charge density should be calculated for that band, while a `0` means the band will be ignored. The parameter allows a compact and flexible notation (similar to [`ocp_set`](#ocp_set)), for example the syntax `1 4*0 5*1 0` is used to denote the selection of bands: `1` means calculate for the first band, `4*0` skips the next four bands, `5*1` means calculate for the following five bands, and the final `0` skips the next band. It's essential that the total count of bands does not exceed the total number of bands (`nbands`); otherwise, it results in an error, and the process exits. The input string must contain only numbers and the asterisk (`*`) for repetition, ensuring correct format and intention of band selection.
+- **Default**: none
 
 [back to top](#full-list-of-input-keywords)
 
