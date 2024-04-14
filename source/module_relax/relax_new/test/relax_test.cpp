@@ -41,7 +41,7 @@ class Test_SETGRAD : public testing::Test
             GlobalC::ucell.iat2ia = new int[nat];
             GlobalC::ucell.atoms[0].mbl = new ModuleBase::Vector3<int>[nat];
             GlobalC::ucell.atoms[0].taud = new ModuleBase::Vector3<double>[nat];
-            GlobalC::ucell.lc.resize(3,0);
+            GlobalC::ucell.lc.resize(3);
 
             GlobalC::ucell.iat2it[0] = 0;
             GlobalC::ucell.iat2it[1] = 0;
@@ -258,7 +258,7 @@ class Test_RELAX : public testing::Test
             GlobalC::ucell.atoms[2].taud[1] = {0.5,0  ,0.479348999999274  };
             GlobalC::ucell.atoms[2].taud[2] = {0  ,0  ,0.958854000000429  };
             
-            GlobalC::ucell.lc.resize(3,0);
+            GlobalC::ucell.lc.resize(3);
             GlobalC::ucell.lc[0] = 1;
             GlobalC::ucell.lc[1] = 1;
             GlobalC::ucell.lc[2] = 1;
