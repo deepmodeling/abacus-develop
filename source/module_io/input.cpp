@@ -162,6 +162,7 @@ void Input::Default(void)
     nbands_sto = 256;
     nbndsto_str = "256";
     nbands_istate = 5;
+    bands_to_print_ = "";
     pw_seed = 1;
     emin_sto = 0.0;
     emax_sto = 0.0;
@@ -331,8 +332,6 @@ void Input::Default(void)
     out_dm1 = 0;
 
     out_bandgap = 0; // QO added for bandgap printing
-
-    band_print_num = 0;
 
     deepks_out_labels = 0; // caoyu added 2020-11-24, mohan added 2021-01-03
     deepks_scf = 0;
@@ -557,6 +556,7 @@ void Input::Default(void)
     yukawa_potential = false;
     yukawa_lambda = -1.0;
     omc = 0;
+    uramping = -1.0; // -1.0 means no ramping
 
     //==========================================================
     //    DFT+DMFT     Xin Qu added on 2020-08
@@ -782,6 +782,10 @@ bool Input::Read(const std::string& fn)
             // Originally disabled in line 2401.
             // if (nbands_istate < 0)
             // 	ModuleBase::WARNING_QUIT("Input", "NBANDS_ISTATE must > 0");
+        }
+        else if (strcmp("bands_to_print", word) == 0)
+        {
+            getline(ifs, bands_to_print_);
         }
         else if (strcmp("nche_sto", word) == 0) // Chebyshev expansion order
         {
@@ -1349,14 +1353,6 @@ bool Input::Read(const std::string& fn)
         else if (strcmp("out_chg", word) == 0)
         {
             read_bool(ifs, out_chg);
-        }
-        else if (strcmp("band_print_num", word) == 0)
-        {
-            read_value(ifs, band_print_num);
-        }
-        else if (strcmp("bands_to_print", word) == 0)
-        {
-            ifs.ignore(150, '\n');
         }
         else if (strcmp("out_dm", word) == 0)
         {
@@ -2111,14 +2107,12 @@ bool Input::Read(const std::string& fn)
         {
             read_bool(ifs, test_skip_ewald);
         }
-        //--------------
-        //----------------------------------------------------------------------------------
-        //         Xin Qu added on 2020-10-29 for DFT+U
-        //----------------------------------------------------------------------------------
+        //----------------------------------------------------------
         else if (strcmp("dft_plus_u", word) == 0)
         {
             read_value(ifs, dft_plus_u);
         }
+        // ignore to avoid error
         else if (strcmp("yukawa_potential", word) == 0)
             ifs.ignore(150, '\n');
         else if (strcmp("hubbard_u", word) == 0)
@@ -2129,6 +2123,10 @@ bool Input::Read(const std::string& fn)
             ifs.ignore(150, '\n');
         else if (strcmp("yukawa_lambda", word) == 0)
             ifs.ignore(150, '\n');
+        else if (strcmp("uramping", word) == 0)
+        {
+            ifs.ignore(150, '\n');
+        }
         //----------------------------------------------------------------------------------
         //         Xin Qu added on 2020-08 for DFT+DMFT
         //----------------------------------------------------------------------------------
@@ -2413,29 +2411,6 @@ bool Input::Read(const std::string& fn)
         ModuleBase::WARNING_QUIT("Input", "The ntype in INPUT is not equal to the ntype counted in STRU, check it.");
     }
 
-    if(band_print_num > 0)
-    {
-        bands_to_print.resize(band_print_num);
-        ifs.clear();
-        ifs.seekg(0); // move to the beginning of the file
-        ifs.rdstate();
-        while (ifs.good())
-        {
-            ifs >> word1;
-            if (ifs.eof() != 0)
-                break;
-            strtolower(word1, word); // convert uppercase std::string to lower case; word1 --> word
-
-            if (strcmp("bands_to_print", word) == 0)
-            {
-                for(int i = 0; i < band_print_num; i ++)
-                {
-                    ifs >> bands_to_print[i];
-                }
-            }
-        }
-    }
-
     //----------------------------------------------------------
     //       DFT+U    Xin Qu  added on 2020-10-29
     //----------------------------------------------------------
@@ -2470,6 +2445,11 @@ bool Input::Read(const std::string& fn)
             else if (strcmp("yukawa_lambda", word) == 0)
             {
                 ifs >> yukawa_lambda;
+            }
+            else if (strcmp("uramping", word) == 0)
+            {
+                read_value(ifs, uramping);
+                uramping /= ModuleBase::Ry_to_eV;
             }
             else if (strcmp("hubbard_u", word) == 0)
             {
@@ -3001,7 +2981,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
                 diago_proc = GlobalV::NPROC;
             }
         }
-        else if (ks_solver == "dav")
+        else if (ks_solver == "dav" || ks_solver == "dav_subspace")
         {
             GlobalV::ofs_warning << " It's ok to use dav." << std::endl;
         }
@@ -3248,6 +3228,7 @@ void Input::Bcast()
     Parallel_Common::bcast_int(nbands);
     Parallel_Common::bcast_int(nbands_sto);
     Parallel_Common::bcast_int(nbands_istate);
+    Parallel_Common::bcast_string(bands_to_print_);
     for (int i = 0; i < 3; i++)
     {
         Parallel_Common::bcast_double(kspacing[i]);
@@ -3617,22 +3598,12 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(restart_save);  // Peize Lin add 2020.04.04
     Parallel_Common::bcast_bool(restart_load);  // Peize Lin add 2020.04.04
 
-    Parallel_Common::bcast_int(band_print_num);
-    if(GlobalV::MY_RANK != 0)
-    {
-        bands_to_print.resize(band_print_num);
-    }
-
-    for(int i = 0; i < band_print_num; i++)
-    {
-        Parallel_Common::bcast_int(bands_to_print[i]);
-    }
-
     //-----------------------------------------------------------------------------------
     // DFT+U (added by Quxin 2020-10-29)
     //-----------------------------------------------------------------------------------
     Parallel_Common::bcast_int(dft_plus_u);
     Parallel_Common::bcast_bool(yukawa_potential);
+    Parallel_Common::bcast_double(uramping);
     Parallel_Common::bcast_int(omc);
     Parallel_Common::bcast_double(yukawa_lambda);
     if (GlobalV::MY_RANK != 0)
@@ -3950,7 +3921,11 @@ void Input::Check(void)
         {
             ModuleBase::WARNING_QUIT("Input", "lapack can not be used with plane wave basis.");
         }
-        else if (ks_solver != "default" && ks_solver != "cg" && ks_solver != "dav" && ks_solver != "bpcg")
+        else if (ks_solver != "default" && 
+                 ks_solver != "cg" && 
+                 ks_solver != "dav" && 
+                 ks_solver != "dav_subspace" && 
+                 ks_solver != "bpcg")
         {
             ModuleBase::WARNING_QUIT("Input", "please check the ks_solver parameter!");
         }

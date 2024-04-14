@@ -5,7 +5,7 @@
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_cell/unitcell.h"
 #include "module_elecstate/elecstate.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_hamilt.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_psi/psi.h"
 #include "module_hamilt_general/hamilt.h"
 
@@ -14,7 +14,7 @@ namespace ModuleIO
     template <typename TK>
     void write_proj_band_lcao(
         const psi::Psi<TK>* psi,
-		LCAO_Hamilt& uhm,
+		LCAO_Matrix& lm,
 		const elecstate::ElecState* pelec,
 		const K_Vectors& kv,
 		const UnitCell &ucell, 

@@ -400,7 +400,7 @@ void ESolver_OF::print_info()
     //     if (this->pdEdphi_[0][i] < minPot) minPot = this->pdEdphi_[0][i];
     //     if (this->pdEdphi_[0][i] > maxPot) maxPot = this->pdEdphi_[0][i];
     // }
-    std::cout << std::setw(6) << this->iter_ << std::setw(22) << std::setiosflags(std::ios::scientific)
+    std::cout << std::setw(6) << this->iter_ << std::setw(22) << std::scientific
               << std::setprecision(12) << this->energy_current_ / 2. << std::setw(12) << std::setprecision(3)
               << this->mu_[0] / 2. << std::setw(12) << this->theta_[0] << std::setw(12) << this->normdLdphi_
               << std::setw(12) << (this->energy_current_ - this->energy_last_) / 2. << std::endl;

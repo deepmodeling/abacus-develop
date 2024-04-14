@@ -50,7 +50,7 @@ void Force_LCAO_k::ftable_k(const bool isforce,
 #else
                             ModuleBase::matrix& svl_dphi,
 #endif
-                            LCAO_Hamilt &uhm,
+                            LCAO_gen_fixedH &gen_h,
                             Gint_k &gint_k,
                             Parallel_Orbitals &pv,
                             LCAO_Matrix &lm,
@@ -65,7 +65,7 @@ void Force_LCAO_k::ftable_k(const bool isforce,
 	this->allocate_k(
 			pv, 
 			lm, 
-            uhm.genH,
+            gen_h,
 			kv.nks, 
 			kv.kvec_d);
 
@@ -88,7 +88,8 @@ void Force_LCAO_k::ftable_k(const bool isforce,
 
 	this->cal_ftvnl_dphi_k(
 			DM, 
-			pv, 
+			pv,
+            GlobalC::ucell,
 			lm, 
 			isforce, 
 			isstress, 
@@ -111,7 +112,11 @@ void Force_LCAO_k::ftable_k(const bool isforce,
 			DM, 
 			isforce, 
 			isstress, 
-			pv, 
+			pv,
+            GlobalC::ucell,
+            GlobalC::ORB,
+            GlobalC::UOT,
+            &(GlobalC::GridD),
 			fvnl_dbeta, 
 			svnl_dbeta);
 
@@ -148,7 +153,7 @@ void Force_LCAO_k::ftable_k(const bool isforce,
             GlobalC::ld.check_v_delta_k(pv->nnr);
             for (int ik = 0; ik < kv.nks; ik++)
             {
-                uhm.LM->folding_fixedH(ik, kv.kvec_d);
+                LM->folding_fixedH(ik, kv.kvec_d);
             }
             GlobalC::ld.cal_e_delta_band_k(dm_k, kv.nks);
             std::ofstream ofs("E_delta_bands.dat");
@@ -247,7 +252,7 @@ void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv,
     // calculate dS = <phi | dphi>
     //-----------------------------
     bool cal_deri = true;
-    gen_h.build_ST_new('S', cal_deri, GlobalC::ucell, gen_h.LM->SlocR.data());
+    gen_h.build_ST_new('S', cal_deri, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD), gen_h.LM->SlocR.data());
 
     //-----------------------------------------
     // (2) allocate for <phi | T + Vnl | dphi>
@@ -270,10 +275,10 @@ void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv,
 
     // calculate dT=<phi|kin|dphi> in LCAO
     // calculate T + VNL(P1) in LCAO basis
-    gen_h.build_ST_new('T', cal_deri, GlobalC::ucell, gen_h.LM->Hloc_fixedR.data());
+    gen_h.build_ST_new('T', cal_deri, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD), gen_h.LM->Hloc_fixedR.data());
 
     // calculate dVnl=<phi|dVnl|dphi> in LCAO
-    gen_h.build_Nonlocal_mu_new(gen_h.LM->Hloc_fixed.data(), cal_deri);
+    gen_h.build_Nonlocal_mu_new(gen_h.LM->Hloc_fixed.data(), cal_deri, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD));
 
     // calculate asynchronous S matrix to output for Hefei-NAMD
     if (INPUT.cal_syns)
@@ -283,7 +288,10 @@ void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv,
 		// INPUT.cal_syns);
 		gen_h.build_ST_new('S', 
 				cal_deri, 
-				GlobalC::ucell, 
+				GlobalC::ucell,
+                GlobalC::ORB,
+                GlobalC::UOT,
+                &(GlobalC::GridD),
 				lm.SlocR.data(), 
 				INPUT.cal_syns, 
 				INPUT.dmax);

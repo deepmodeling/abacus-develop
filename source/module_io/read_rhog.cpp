@@ -17,7 +17,10 @@ bool ModuleIO::read_rhog(const std::string& filename, const ModulePW::PW_Basis* 
 
     Binstream ifs;
     bool error = false;
-    int gamma_only_in, npwtot_in, nspin_in, size;
+    int gamma_only_in = 0;
+    int npwtot_in = 0;
+    int nspin_in = 0;
+    int size = 0;
     double b1[3], b2[3], b3[3];
 
     if (GlobalV::RANK_IN_POOL == 0)

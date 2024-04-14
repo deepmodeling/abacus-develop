@@ -11,6 +11,7 @@ Verlet::~Verlet()
 {
 }
 
+
 void Verlet::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir)
 {
     ModuleBase::TITLE("Verlet", "setup");
@@ -20,6 +21,7 @@ void Verlet::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_
 
     ModuleBase::timer::tick("Verlet", "setup");
 }
+
 
 void Verlet::first_half(std::ofstream& ofs)
 {
@@ -32,6 +34,7 @@ void Verlet::first_half(std::ofstream& ofs)
     ModuleBase::timer::tick("Verlet", "first_half");
 }
 
+
 void Verlet::second_half()
 {
     ModuleBase::TITLE("Verlet", "second_half");
@@ -43,9 +46,10 @@ void Verlet::second_half()
     ModuleBase::timer::tick("Verlet", "second_half");
 }
 
-void Verlet::apply_thermostat()
+
+void Verlet::apply_thermostat(void)
 {
-    double t_target = 0;
+    double t_target = 0.0;
     t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
 
     if (mdp.md_type == "nve")
@@ -102,9 +106,10 @@ void Verlet::apply_thermostat()
     }
 }
 
+
 void Verlet::thermalize(const int& nraise, const double& current_temp, const double& target_temp)
 {
-    double fac = 0;
+    double fac = 0.0;
     if (nraise > 0 && current_temp > 0 && target_temp > 0)
     {
         fac = sqrt(1 + (target_temp / current_temp - 1) / nraise);
@@ -120,17 +125,23 @@ void Verlet::thermalize(const int& nraise, const double& current_temp, const dou
     }
 }
 
+
 void Verlet::print_md(std::ofstream& ofs, const bool& cal_stress)
 {
     MD_base::print_md(ofs, cal_stress);
+    return;
 }
+
 
 void Verlet::write_restart(const std::string& global_out_dir)
 {
     MD_base::write_restart(global_out_dir);
+    return;
 }
+
 
 void Verlet::restart(const std::string& global_readin_dir)
 {
     MD_base::restart(global_readin_dir);
+    return;
 }
