@@ -48,6 +48,7 @@ TEST_F(InputParaTest, Bcast)
     EXPECT_EQ(INPUT.nbands, 0);
     EXPECT_EQ(INPUT.nbands_sto, 256);
     EXPECT_EQ(INPUT.nbands_istate, 5);
+    EXPECT_EQ(*INPUT.get_bands_to_print(), "");
     EXPECT_EQ(INPUT.pw_seed, 1);
     EXPECT_EQ(INPUT.emin_sto, 0.0);
     EXPECT_EQ(INPUT.emax_sto, 0.0);
