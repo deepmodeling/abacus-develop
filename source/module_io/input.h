@@ -48,6 +48,7 @@ class Input
     int ntype; // number of atom types
     int nbands; // number of bands
     int nbands_istate; // number of bands around fermi level for get_pchg calculation.
+
     int pw_seed; // random seed for initializing wave functions qianrui 2021-8-12
 
     bool init_vel;             // read velocity from STRU or not  liuyu 2021-07-14
@@ -262,8 +263,6 @@ class Input
     bool out_chg; // output charge density. 0: no; 1: yes
     bool out_dm; // output density matrix.
     bool out_dm1;
-    int band_print_num;
-    std::vector<int> bands_to_print;
     int out_pot; // yes or no
     int out_wfc_pw; // 0: no; 1: txt; 2: dat
     bool out_wfc_r; // 0: no; 1: yes
@@ -640,6 +639,8 @@ class Input
 
     int count_ntype(const std::string &fn); // sunliang add 2022-12-06
 
+    std::string bands_to_print_; // specify the bands to be calculated in the get_pchg calculation, formalism similar to ocp_set.
+
   public:
     template <class T> static void read_value(std::ifstream &ifs, T &var)
     {
@@ -697,6 +698,12 @@ class Input
     typename std::enable_if<std::is_same<T, std::string>::value, T>::type cast_string(const std::string& str) { return str; }
     void strtolower(char *sa, char *sb);
     void read_bool(std::ifstream &ifs, bool &var);
+
+    // Return the const string pointer of private member bands_to_print_
+    const std::string* get_bands_to_print() const
+    {
+        return &bands_to_print_;
+    }
 };
 
 extern Input INPUT;

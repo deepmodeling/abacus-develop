@@ -91,14 +91,14 @@ bool ModuleIO::read_wfc_pw(const std::string& filename,
     }
     MPI_Allreduce(MPI_IN_PLACE, &ip, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
     MPI_Bcast(&size, 1, MPI_INT, ip, MPI_COMM_WORLD);
-    char* swap = new char[size + 1];
+    std::vector<char> swap(size + 1);
     if (error)
     {
-        strcpy(swap, msg.c_str());
+        strcpy(swap.data(), msg.c_str());
     }
-    MPI_Bcast(swap, size + 1, MPI_CHAR, ip, MPI_COMM_WORLD);
-    msg = static_cast<std::string>(swap);
-    delete[] swap;
+    MPI_Bcast(swap.data(), size + 1, MPI_CHAR, ip, MPI_COMM_WORLD);
+    msg = static_cast<std::string>(swap.data());
+
 
     MPI_Bcast(&error, 1, MPI_C_BOOL, ip, MPI_COMM_WORLD);
 #endif
