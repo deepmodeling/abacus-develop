@@ -61,7 +61,7 @@ UnitCell::UnitCell()
 
 	atom_label.resize(1);
     atom_mass = nullptr;
-	pseudo_fn.resize(1);
+	pseudo_fn =new std::string[1];
     pseudo_type = new std::string[1];
     orbital_fn = new std::string[1];
 
@@ -72,7 +72,7 @@ UnitCell::~UnitCell()
 {
 	std::vector<std::string>().swap(atom_label);;
     delete[] atom_mass;
-	std::vector<std::string>().swap(pseudo_fn);
+	delete[] pseudo_fn;
     delete[] pseudo_type;
     delete[] orbital_fn;
     delete[] iat2it;

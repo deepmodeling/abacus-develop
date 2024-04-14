@@ -209,7 +209,7 @@ UnitCell::UnitCell()
 
     atom_label.resize(1);
     atom_mass = nullptr;
-    pseudo_fn.resize(1);
+    pseudo_fn =new std::string[1];
     pseudo_type = new std::string[1];
     orbital_fn = new std::string[1];
 
