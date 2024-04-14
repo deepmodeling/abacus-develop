@@ -52,8 +52,10 @@ class TestModuleElecstateMultiDevice : public ::testing::Test
 TEST_F(TestModuleElecstateMultiDevice, elecstate_pw_op_cpu)
 {
     std::vector<double> rho_data(expected_rho.size(), 0);
-    double ** rho = new double* [1];
-    rho[0] = rho_data.data();
+    std::vector<double*> rho_vec();
+    rho_vec.resize(1, nullptr);
+    double ** rho = rho_vec.data();
+    rho_vec[0] = rho_data.data();
     elecstate_cpu_op()(
       this->cpu_ctx, 
       this->spin, this->nrxx,
@@ -65,13 +67,14 @@ TEST_F(TestModuleElecstateMultiDevice, elecstate_pw_op_cpu)
     for (int ii = 0; ii < rho_data.size(); ii++) {
         EXPECT_LT(fabs(rho_data[ii] - expected_rho[ii]), 6e-5);
     }
-    delete [] rho;
 }
 
 TEST_F(TestModuleElecstateMultiDevice, elecstate_pw_spin_op_cpu)
 {
     std::vector<double> rho_data(expected_rho_2.size(), 0);
-    double ** rho = new double* [4];
+    std::vector<double*> rho_vec();
+    rho_vec.resize(4, nullptr);
+    double ** rho = rho_vec.data();
     rho[0] = rho_data.data();
     rho[1] = rho_data.data() + this->nrxx;
     rho[2] = rho_data.data() + this->nrxx * 2;
@@ -90,7 +93,6 @@ TEST_F(TestModuleElecstateMultiDevice, elecstate_pw_spin_op_cpu)
     for (int ii = 0; ii < rho_data.size(); ii++) {
         EXPECT_LT(fabs(rho_data[ii] - expected_rho_2[ii]), 5e-4);
     }
-    delete [] rho;
 }
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
@@ -103,7 +105,9 @@ TEST_F(TestModuleElecstateMultiDevice, elecstate_pw_op_gpu)
     resize_memory_complex_op()(gpu_ctx, d_wfcr, wfcr.size());
     syncmem_var_h2d_op()(gpu_ctx, cpu_ctx, d_rho_data, rho_data.data(), rho_data.size());
     syncmem_complex_h2d_op()(gpu_ctx, cpu_ctx, d_wfcr, wfcr.data(), wfcr.size());
-    double ** rho = new double* [1];
+    std::vector<double*> rho_vec();
+    rho_vec.resize(1, nullptr);
+    double ** rho = rho_vec.data();
     rho[0] = d_rho_data;
     elecstate_gpu_op()(
       this->gpu_ctx, 
@@ -117,7 +121,6 @@ TEST_F(TestModuleElecstateMultiDevice, elecstate_pw_op_gpu)
     for (int ii = 0; ii < rho_data.size(); ii++) {
         EXPECT_LT(fabs(rho_data[ii] - expected_rho[ii]), 6e-5);
     }
-    delete [] rho;
     delete_memory_var_op()(this->gpu_ctx, d_rho_data);
     delete_memory_complex_op()(this->gpu_ctx, d_wfcr);
 }
@@ -134,7 +137,9 @@ TEST_F(TestModuleElecstateMultiDevice, elecstate_pw_spin_op_gpu)
     syncmem_var_h2d_op()(gpu_ctx, cpu_ctx, d_rho_data_2, rho_data_2.data(), rho_data_2.size());
     syncmem_complex_h2d_op()(gpu_ctx, cpu_ctx, d_wfcr_2, wfcr_2.data(), wfcr_2.size());
     syncmem_complex_h2d_op()(gpu_ctx, cpu_ctx, d_wfcr_another_spin_2, wfcr_another_spin_2.data(), wfcr_another_spin_2.size());
-    double ** rho = new double* [4];
+    std::vector<double*> rho_vec();
+    rho_vec.resize(4, nullptr);
+    double ** rho = rho_vec.data();
     rho[0] = d_rho_data_2;
     rho[1] = d_rho_data_2 + this->nrxx;
     rho[2] = d_rho_data_2 + this->nrxx * 2;
@@ -155,7 +160,6 @@ TEST_F(TestModuleElecstateMultiDevice, elecstate_pw_spin_op_gpu)
     for (int ii = 0; ii < rho_data_2.size(); ii++) {
         EXPECT_LT(fabs(rho_data_2[ii] - expected_rho_2[ii]), 5e-4);
     }
-    delete [] rho;
     delete_memory_var_op()(this->gpu_ctx, d_rho_data_2);
     delete_memory_complex_op()(this->gpu_ctx, d_wfcr_2);
     delete_memory_complex_op()(this->gpu_ctx, d_wfcr_another_spin_2);
