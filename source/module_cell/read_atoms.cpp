@@ -22,7 +22,7 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
     delete[] orbital_fn;
 	this->atom_mass  = new double[ntype]; //atom masses
 	this->atom_label.resize(ntype); //atom labels
-	this->pseudo_fn =new std::string[ntype] //file name of pseudopotential
+	this->pseudo_fn =new std::string[ntype]; //file name of pseudopotential
 	this->pseudo_type = new std::string[ntype]; // type of pseudopotential
     this->orbital_fn = new std::string[ntype]; // filename of orbitals
 
