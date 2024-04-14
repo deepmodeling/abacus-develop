@@ -210,6 +210,8 @@ void Symmetry_rho::get_ixyz2ipw(const ModulePW::PW_Basis *rho_basis,
 
     //tmp variables
     int ixy, ixyz, ip, is, ig=0;
+    
+	ixyz = 0; //initialize ixyz, in case it is not in any core
 	
 	for (int ix=0;ix<rho_basis->fftnx;++ix)
 	{
