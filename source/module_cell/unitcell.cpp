@@ -46,7 +46,7 @@ UnitCell::UnitCell()
     iwt2iw = nullptr;
 
     itia2iat.create(1, 1);
-    lc.resize(3);
+    lc = new int[3];
 
     latvec = ModuleBase::Matrix3();
     latvec_supercell = ModuleBase::Matrix3();
@@ -79,7 +79,7 @@ UnitCell::~UnitCell()
     delete[] iat2ia;
     delete[] iwt2iat;
     delete[] iwt2iw;
-    std::vector<int>().swap(lc);
+    delete[] lc;
     if(set_atom_flag)
 	{
 		delete[] atoms;
