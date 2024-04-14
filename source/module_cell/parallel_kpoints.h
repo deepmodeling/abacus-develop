@@ -33,14 +33,20 @@ class Parallel_Kpoints
                     std::vector<ModuleBase::Vector3<double>>& vec_global) const;
 #endif
 
-	// information about pool
+	// information about pool, dim: GlobalV::KPAR
 	int *nproc_pool;
 	int *startpro_pool;
 
-	// inforamation about kpoints //qianrui add comment
+	// inforamation about kpoints, dim: GlobalV::KPAR
 	int* nks_pool; //number of k-points in each pool
 	int* startk_pool; //the first k-point in each pool
-	int* whichpool; //whichpool[k] : the pool which k belongs to
+	int kpar; //number of pools
+	
+	// information about which pool each k-point belongs to, 
+	int* whichpool; //whichpool[k] : the pool which k belongs to, dim: nkstot_np
+	int nkstot_np; //number of k-points without spin, kv.nkstot = nkstot_np * nspin(1 or 2)
+	int nks_np; //number of k-points without spin in the present pool
+
 
 	private:
 

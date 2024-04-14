@@ -19,12 +19,8 @@ void ModuleIO::nscf_band(
 	ModuleBase::timer::tick("ModuleIO", "nscf_band");
 	// number of k points without spin; nspin = 1,2, nkstot = nkstot_np * nspin; 
 	//                                  nspin = 4, nkstot = nkstot_np
-	int nkstot_np = 0;
-	for(int ip = 0; ip < GlobalV::KPAR; ip++)
-	{
-		nkstot_np += Pkpoints->nks_pool[ip];
-	}
-	int nks_np = Pkpoints->nks_pool[GlobalV::MY_POOL];
+	const int nkstot_np = Pkpoints->nkstot_np;
+	const int nks_np = Pkpoints->nks_np;
 
 #ifdef __MPI
 	if(GlobalV::MY_RANK==0)
