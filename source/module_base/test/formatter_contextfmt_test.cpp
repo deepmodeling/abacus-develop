@@ -211,15 +211,15 @@ TEST_F(ContextFmtTest, StreamOperatorLeft2VecString) {
 
 TEST_F(ContextFmtTest, StreamOperatorLeft2PtrInt) {
     formatter::ContextFmt context_fmt;
-    std::vector<int> v_nrows(3) = {3, 3, 3};
+    std::vector<int> v_nrows = {3, 3, 3};
     context_fmt.set_context("vector3d", 3, v_nrows.data());
-    std::vector<int> v1(3) = {1, 2, 3};
+    std::vector<int> v1 = {1, 2, 3};
     context_fmt<<v1;
     EXPECT_EQ(context_fmt.get_cache_title(), "");
     EXPECT_EQ(context_fmt.get_icol(), 1);
     EXPECT_EQ(context_fmt.get_title_switch()%2, 0);
-    std::vector<int> v2(3) = {4, 5, 6};
-    std::vector<int> v3(3) = {7, 8, 9};
+    std::vector<int> v2 = {4, 5, 6};
+    std::vector<int> v3 = {7, 8, 9};
     context_fmt<<v2<<v3;
     EXPECT_EQ(context_fmt.get_cache_title(), "");
     EXPECT_EQ(context_fmt.get_icol(), 3);
