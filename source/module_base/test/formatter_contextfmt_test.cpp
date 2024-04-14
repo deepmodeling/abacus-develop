@@ -211,35 +211,19 @@ TEST_F(ContextFmtTest, StreamOperatorLeft2VecString) {
 
 TEST_F(ContextFmtTest, StreamOperatorLeft2PtrInt) {
     formatter::ContextFmt context_fmt;
-    int* v_nrows = new int[3];
-    v_nrows[0] = 3;
-    v_nrows[1] = 3;
-    v_nrows[2] = 3;
-    context_fmt.set_context("vector3d", 3, v_nrows);
-    int* v1 = new int[3];
-    v1[0] = 1;
-    v1[1] = 2;
-    v1[2] = 3;
+    std::vector<int> v_nrows(3) = {3, 3, 3};
+    context_fmt.set_context("vector3d", 3, v_nrows.data());
+    std::vector<int> v1(3) = {1, 2, 3};
     context_fmt<<v1;
     EXPECT_EQ(context_fmt.get_cache_title(), "");
     EXPECT_EQ(context_fmt.get_icol(), 1);
     EXPECT_EQ(context_fmt.get_title_switch()%2, 0);
-    int* v2 = new int[3];
-    v2[0] = 4;
-    v2[1] = 5;
-    v2[2] = 6;
-    int* v3 = new int[3];
-    v3[0] = 7;
-    v3[1] = 8;
-    v3[2] = 9;
+    std::vector<int> v2(3) = {4, 5, 6};
+    std::vector<int> v3(3) = {7, 8, 9};
     context_fmt<<v2<<v3;
     EXPECT_EQ(context_fmt.get_cache_title(), "");
     EXPECT_EQ(context_fmt.get_icol(), 3);
     EXPECT_EQ(context_fmt.get_title_switch()%2, 0);
-    delete[] v_nrows;
-    delete[] v1;
-    delete[] v2;
-    delete[] v3;
     std::cout<<context_fmt.str()<<std::endl;
 }
 
