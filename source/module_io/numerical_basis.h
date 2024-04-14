@@ -66,16 +66,19 @@ class Numerical_Basis
                                             const psi::Psi<std::complex<double>>& psi,
                                             const double derivative_order,
                                             const K_Vectors& kv,
-                                            const double tpiba2);
+                                            const double tpiba);
 
-    ModuleBase::realArray cal_flq(const int ik, const std::vector<ModuleBase::Vector3<double>> &gk, const UnitCell& ucell) const;
+    // gk should be in the atomic unit (Bohr)
+    ModuleBase::realArray cal_flq(const std::vector<ModuleBase::Vector3<double>> &gk,
+                                  const int ucell_lmax) const;
 
-    static ModuleBase::matrix cal_ylm(const std::vector<ModuleBase::Vector3<double>> &gk, const int ucell_lmax);
+    // Ylm does not depend on the magnitude so unit is not important
+    static ModuleBase::matrix cal_ylm(const std::vector<ModuleBase::Vector3<double>> &gk,
+                                      const int ucell_lmax);
 
-    // the returned gpow is in atomic units
+    // gk and the returned gpow are both in the atomic unit (Bohr)
     static std::vector<double> cal_gpow(const std::vector<ModuleBase::Vector3<double>> &gk,
-                                        const double derivative_order,
-                                        const double tpiba2);
+                                        const double derivative_order);
 
     static void output_info(std::ofstream& ofs, const Bessel_Basis& bessel_basis, const K_Vectors& kv, const UnitCell& ucell);
 

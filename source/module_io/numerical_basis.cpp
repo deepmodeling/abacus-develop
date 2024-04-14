@@ -1,4 +1,6 @@
 #include "numerical_basis.h"
+#include "module_base/constants.h"
+#include "module_base/global_variable.h"
 #include "module_base/intarray.h"
 #include "module_base/vector3.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
@@ -164,7 +166,7 @@ void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, 
                                                                  psi,
                                                                  static_cast<double>(derivative_order),
                                                                  kv,
-                                                                 ucell.tpiba2); // Peize Lin add 2020.04.23
+                                                                 ucell.tpiba);
 
         // ALTHOUGH THIS FUNCTION NAMES output_overlap, IT ACTUALLY OUTPUTS THE OVERLAP MATRIX HERE
 #ifdef __MPI
@@ -221,11 +223,13 @@ ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Q(const int& ik,
 
     std::vector<ModuleBase::Vector3<double>> gk(np);
     for (int ig = 0; ig < np; ig++)
-        gk[ig] = wfcpw->getgpluskcar(ik, ig);
+    {
+        gk[ig] = wfcpw->getgpluskcar(ik, ig) * ucell.tpiba;
+    }
 
-    const std::vector<double> gpow = Numerical_Basis::cal_gpow(gk, derivative_order, ucell.tpiba2);
+    const std::vector<double> gpow = Numerical_Basis::cal_gpow(gk, derivative_order);
 
-	const ModuleBase::realArray flq = this->cal_flq(ik, gk, ucell);
+	const ModuleBase::realArray flq = this->cal_flq(gk, ucell.lmax);
 
     const ModuleBase::matrix ylm = Numerical_Basis::cal_ylm(gk, ucell.lmax);
 
@@ -301,11 +305,11 @@ ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Sq(const int& ik,
 
     std::vector<ModuleBase::Vector3<double>> gk(np);
     for (int ig = 0; ig < np; ig++)
-        gk[ig] = wfcpw->getgpluskcar(ik, ig);
+        gk[ig] = wfcpw->getgpluskcar(ik, ig) * ucell.tpiba;
 
-    const std::vector<double> gpow = Numerical_Basis::cal_gpow(gk, derivative_order, ucell.tpiba2);
+    const std::vector<double> gpow = Numerical_Basis::cal_gpow(gk, derivative_order);
 
-	const ModuleBase::realArray flq = this->cal_flq(ik, gk, ucell);
+	const ModuleBase::realArray flq = this->cal_flq(gk, ucell.lmax);
 
     const ModuleBase::matrix ylm = Numerical_Basis::cal_ylm(gk, ucell.lmax);
 
@@ -408,16 +412,16 @@ ModuleBase::matrix Numerical_Basis::cal_overlap_V(const ModulePW::PW_Basis_K* wf
                                                   const psi::Psi<std::complex<double>>& psi,
                                                   const double derivative_order,
                                                   const K_Vectors& kv,
-                                                  const double tpiba2)
+                                                  const double tpiba)
 {
     ModuleBase::matrix overlap_V(kv.nks, GlobalV::NBANDS);
     for (int ik = 0; ik < kv.nks; ++ik)
     {
         std::vector<ModuleBase::Vector3<double>> gk(kv.ngk[ik]);
         for (int ig=0; ig<gk.size(); ig++)
-            gk[ig] = wfcpw->getgpluskcar(ik,ig);
+            gk[ig] = wfcpw->getgpluskcar(ik,ig) * tpiba;
 
-        const std::vector<double> gpow = Numerical_Basis::cal_gpow(gk, derivative_order, tpiba2);
+        const std::vector<double> gpow = Numerical_Basis::cal_gpow(gk, derivative_order);
 
 		for(int ib=0; ib<GlobalV::NBANDS; ++ib)
             for (int ig = 0; ig < kv.ngk[ik]; ++ig)
@@ -426,20 +430,20 @@ ModuleBase::matrix Numerical_Basis::cal_overlap_V(const ModulePW::PW_Basis_K* wf
 	return overlap_V;
 }
 
-ModuleBase::realArray Numerical_Basis::cal_flq(const int ik, const std::vector<ModuleBase::Vector3<double>> &gk, const UnitCell& ucell) const
+ModuleBase::realArray Numerical_Basis::cal_flq(const std::vector<ModuleBase::Vector3<double>> &gk, const int ucell_lmax) const
 {
 	const int np = gk.size();
 	const int enumber = this->bessel_basis.get_ecut_number();
 
     // get flq(G) = \int f(r)jl(G*r) from interpolation table.
-    ModuleBase::realArray flq(ucell.lmax+1, enumber, np);
-    for (int il=0; il<ucell.lmax+1; il++)
+    ModuleBase::realArray flq(ucell_lmax+1, enumber, np);
+    for (int il=0; il<ucell_lmax+1; il++)
     {
         for (int ie=0; ie<enumber; ie++)
         {
             for (int ig=0; ig<np; ig++)
             {
-                flq(il,ie,ig) = this->bessel_basis.Polynomial_Interpolation2(il, ie, gk[ig].norm() * ucell.tpiba );
+                flq(il,ie,ig) = this->bessel_basis.Polynomial_Interpolation2(il, ie, gk[ig].norm());
             }
         }
     }
@@ -454,7 +458,7 @@ ModuleBase::matrix Numerical_Basis::cal_ylm(const std::vector<ModuleBase::Vector
     return ylm;
 }
 
-std::vector<double> Numerical_Basis::cal_gpow (const std::vector<ModuleBase::Vector3<double>> &gk, const double derivative_order, const double tpiba2)
+std::vector<double> Numerical_Basis::cal_gpow (const std::vector<ModuleBase::Vector3<double>> &gk, const double derivative_order)
 {
     constexpr double thr = 1E-12;
     std::vector<double> gpow(gk.size(), 0.0);
@@ -462,12 +466,12 @@ std::vector<double> Numerical_Basis::cal_gpow (const std::vector<ModuleBase::Vec
     {
         if (derivative_order>=0)
         {
-            gpow[ig] = std::pow(gk[ig].norm2() * tpiba2, derivative_order);
+            gpow[ig] = std::pow(gk[ig].norm2(), derivative_order);
         }
         else
         {
             if (gk[ig].norm2() >= thr)
-                gpow[ig] = std::pow(gk[ig].norm2() * tpiba2, derivative_order);
+                gpow[ig] = std::pow(gk[ig].norm2(), derivative_order);
         }
     }
     return gpow;
