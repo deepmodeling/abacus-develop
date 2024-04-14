@@ -46,7 +46,7 @@ UnitCell::UnitCell()
     iwt2iw = nullptr;
 
     itia2iat.create(1, 1);
-    lc.resize(3);
+    lc.resize(3,0);
 
     latvec = ModuleBase::Matrix3();
     latvec_supercell = ModuleBase::Matrix3();
