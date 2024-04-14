@@ -192,8 +192,8 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                 _gk[ig] = this->wfc_basis->getgpluskcar(ik, ig);
             }
 
-            double* kpt;
-            kpt = new double[3];
+            std::vector<double> kpt;
+            kpt.resize(3,0);
             kpt[0] = this->wfc_basis->kvec_c[ik].x;
             kpt[1] = this->wfc_basis->kvec_c[ik].y;
             kpt[2] = this->wfc_basis->kvec_c[ik].z;
@@ -217,7 +217,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
 
             GlobalC::paw_cell.set_paw_k(npw,
                                         wfc_basis->npwk_max,
-                                        kpt,
+                                        &kpt[0],
                                         this->wfc_basis->get_ig2ix(ik).data(),
                                         this->wfc_basis->get_ig2iy(ik).data(),
                                         this->wfc_basis->get_ig2iz(ik).data(),
@@ -225,7 +225,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                         GlobalC::ucell.tpiba,
                                         (const double**)gcar);
 
-            delete[] kpt;
+            std::vector<double>().swap(kpt);
             for (int ipw = 0; ipw < npw; ipw++)
             {
                 delete[] kpg[ipw];

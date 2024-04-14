@@ -128,8 +128,7 @@ void ModuleIO::write_dm(
 
 #else
     //xiaohui modify 2014-06-18
-    
-    double* tmp = new double[nlocal];
+    std::vector<double> tmp(nlocal,0);
     int* count = new int[nlocal];
     for (int i=0; i<nlocal; ++i)
     {
@@ -150,7 +149,7 @@ void ModuleIO::write_dm(
         Parallel_Reduce::reduce_all(count, nlocal);
 
         // reduce the density matrix for 'i' line.
-        ModuleBase::GlobalFunc::ZEROS(tmp, nlocal);
+        ModuleBase::GlobalFunc::ZEROS(&tmp[0], nlocal);
         if (mu >= 0)
         {
             for (int j=0; j<nlocal; j++)
@@ -163,7 +162,7 @@ void ModuleIO::write_dm(
                 }
             }
         }
-        Parallel_Reduce::reduce_all(tmp, nlocal);
+        Parallel_Reduce::reduce_all(&tmp[0], nlocal);
 
         if(my_rank==0)
         {
@@ -181,7 +180,7 @@ void ModuleIO::write_dm(
             }
         }
     }
-    delete[] tmp;
+    std::vector<double>().swap(tmp);
     delete[] count;
 #endif
 	if(my_rank==0)

@@ -184,9 +184,8 @@ void surchem::Leps2(const UnitCell& ucell,
         grad_phi[ir].y *= epsilon[ir];
         grad_phi[ir].z *= epsilon[ir];
     }
-
-    double *lp_real = new double[rho_basis->nrxx];
-    ModuleBase::GlobalFunc::ZEROS(lp_real, rho_basis->nrxx);
+    std::vector<double> lp_real(rho_basis->nrxx,0);
+    ModuleBase::GlobalFunc::ZEROS(&lp_real[0], rho_basis->nrxx);
     ModuleBase::GlobalFunc::ZEROS(lp, rho_basis->npw);
 
     double *grad_grad_phi = new double[rho_basis->nrxx];
@@ -242,12 +241,12 @@ void surchem::Leps2(const UnitCell& ucell,
     //     cout << lp_real << [i] << endl;
     // }
 
-    rho_basis->real2recip(lp_real, lp);
+    rho_basis->real2recip(&lp_real[0], lp);
     // cout<<"lp: "<<endl;
     // test_print(lp, 10);
 
     delete[] grad_phi;
-    delete[] lp_real;
+    std::vector<double>().swap(lp_real);
     delete[] grad_grad_phi;
     delete[] grad_grad_phi_G;
     delete[] tmp_vector3;
