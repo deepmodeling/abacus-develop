@@ -33,7 +33,7 @@ public:
     double& tpiba = lat.tpiba;
     double& tpiba2 = lat.tpiba2;
     double& omega = lat.omega;
-    std::vector<int> lc={*lat.lc};
+    std::vector<int> lc={*lat.lc,0,0};
 
     Lattice lat;
     ModuleBase::Matrix3& latvec = lat.latvec;
