@@ -187,7 +187,7 @@ void surchem::Leps2(const UnitCell& ucell,
     std::vector<double> lp_real(rho_basis->nrxx,0);
     ModuleBase::GlobalFunc::ZEROS(lp, rho_basis->npw);
 
-    std::vector<double> grad_grad_phi(rho_basis->nrxx,0)
+    std::vector<double> grad_grad_phi(rho_basis->nrxx,0);
     complex<double> *grad_grad_phi_G = new complex<double>[rho_basis->npw];
     ModuleBase::Vector3<double> *tmp_vector3 = new ModuleBase::Vector3<double>[rho_basis->nrxx];
 
