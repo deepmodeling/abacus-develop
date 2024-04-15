@@ -91,13 +91,13 @@ inline void CHECK_ZEROS(T &size)
     std::complex<float>* pt_cf = nullptr;
     std::complex<double>* pt_cd = nullptr;
     ModuleBase::Vector3<double>* pt_v3 = nullptr;
-    pt_b = new bool[size];
-    pt_i = new int[size];
-    pt_f = new float[size];
-    pt_d = new double[size];
-    pt_cf = new std::complex<float>[size];
-    pt_cd = new std::complex<double>[size];
-    pt_v3 = new ModuleBase::Vector3<double>[size];
+    std::vector<bool> pt_b[size];
+    std::vector<int> pt_i[size];
+    std::vector<float> pt_f[size];
+    std::vector<double> pt_d[size];
+    std::vector<std::complex<float>> pt_cf(size);
+    std::vector<std::complex<double>> pt_cd(size);
+    std::vector<ModuleBase::Vector3<double>> pt_v3(size);
     // long long size
     long long size_ll = 100;
     bool value_b = true;
@@ -140,13 +140,6 @@ inline void CHECK_ZEROS(T &size)
         EXPECT_DOUBLE_EQ(pt_v3[i].y,zero_d);
         EXPECT_DOUBLE_EQ(pt_v3[i].z,zero_d);
     }
-    delete[] pt_b;
-    delete[] pt_i;
-    delete[] pt_f;
-    delete[] pt_d;
-    delete[] pt_cf;
-    delete[] pt_cd;
-    delete[] pt_v3;
 }
 
 class GlobalFunctionTest : public testing::Test
@@ -624,8 +617,8 @@ TEST_F(GlobalFunctionTest, COPYARRAY)
     long size = 100;
     std::complex<double>* aa = nullptr;
     std::complex<double>* bb = nullptr;
-    aa = new std::complex<double>[size];
-    bb = new std::complex<double>[size];
+    std::vector<std::complex<double>> aa(size);
+    std::vector<std::complex<double>> bb(size);
     std::complex<double> value{1.1, 2.2};
     std::fill(&aa[0], &aa[size], value);
     ModuleBase::GlobalFunc::COPYARRAY(aa,bb,size);
@@ -635,18 +628,14 @@ TEST_F(GlobalFunctionTest, COPYARRAY)
     }
     double* daa = nullptr;
     double* dbb = nullptr;
-    daa = new double[size];
-    dbb = new double[size];
+    std::vector<double> daa(size);
+    std::vector<double> dbb(size);
     std::fill(&daa[0],&daa[size],3.3);
     ModuleBase::GlobalFunc::COPYARRAY(daa,dbb,size);
     for (int i = 0; i < size; ++i)
     {
         EXPECT_DOUBLE_EQ(dbb[i], 3.3);
     }
-    delete[] aa;
-    delete[] bb;
-    delete[] daa;
-    delete[] dbb;
 }
 
 TEST_F(GlobalFunctionTest,IsColumnMajor)

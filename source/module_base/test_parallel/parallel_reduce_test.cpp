@@ -139,7 +139,7 @@ TEST_F(ParaReduce,ReduceComplexAll)
 {
 	// allocate local complex vector
 	std::complex<double>* rand_array= nullptr;
-	rand_array = new std::complex<double>[num_per_process];
+	std::vector<std::complex<double>> rand_array(num_per_process);
 	// set its elements to random complex numbers
   	std::default_random_engine e(time(NULL)*(GlobalV::MY_RANK+1));
   	std::uniform_int_distribution<unsigned> u(MIN_FOR_RAND,MAX_FOR_RAND);
@@ -174,7 +174,6 @@ TEST_F(ParaReduce,ReduceComplexAll)
 	EXPECT_NEAR(global_sum_first.real(),global_sum_second.real(),1e-13);
 	EXPECT_NEAR(global_sum_first.imag(),global_sum_second.imag(),1e-13);
 
-	delete [] rand_array;
 }
 
 TEST_F(ParaReduce,GatherIntAll)

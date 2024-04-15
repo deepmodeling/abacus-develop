@@ -153,8 +153,8 @@ TEST_F(MathChebyshevTest,calfinalvec_real)
     //                 1  [ 1/e+e           -i(e-1/e) ]
     //  exp(\sigma_y)= -  [                           ], where \sigma_y = [0, -i; i, 0]
     //                 2  [ i(e-1/e)          1/e+e   ]
-    std::complex<double> *v = new std::complex<double> [4];
-    std::complex<double> *vout = new std::complex<double> [4];
+    std::vector<std::complex<double>> v(4);
+    std::vector<std::complex<double>> vout(4);
     v[0] = 1.0; v[1] = 0.0; v[2] = 0.0; v[3] = 1.0; //[1 0; 0 1]
 
     p_chetest->calcoef_real(&fun,&toolfunc::expr);
@@ -168,8 +168,6 @@ TEST_F(MathChebyshevTest,calfinalvec_real)
     EXPECT_NEAR(vout[3].real(), 0.5*(E+1/E) ,1.e-8);
     EXPECT_NEAR(vout[3].imag(), 0 ,1.e-8);
 
-    delete[] v;
-    delete[] vout;
     delete p_chetest;
 }
 
@@ -181,8 +179,8 @@ TEST_F(MathChebyshevTest,calfinalvec_complex)
     //                        [ 0           1 ]
     //  exp(i pi/2*\sigma_y)= [               ], where \sigma_y = [0, -i; i, 0]
     //                        [ -1          0 ]
-    std::complex<double> *v = new std::complex<double> [4];
-    std::complex<double> *vout = new std::complex<double> [4];
+    std::vector<std::complex<double>> v(4);
+    std::vector<std::complex<double>> vout(4);
     v[0] = 1.0; v[1] = 0.0; v[2] = 0.0; v[3] = 1.0; //[1 0; 0 1]
 
     p_chetest->calcoef_complex(&fun,&toolfunc::expi2);
@@ -196,8 +194,6 @@ TEST_F(MathChebyshevTest,calfinalvec_complex)
     EXPECT_NEAR(vout[3].real(), 0 ,1.e-8);
     EXPECT_NEAR(vout[3].imag(), 0 ,1.e-8);
 
-    delete[] v;
-    delete[] vout;
     delete p_chetest;
 }
 
@@ -209,9 +205,9 @@ TEST_F(MathChebyshevTest,calpolyvec_complex)
     //                        [ 0           1 ]
     //  exp(i pi/2*\sigma_y)= [               ], where \sigma_y = [0, -i; i, 0]
     //                        [ -1          0 ]
-    std::complex<double> *v = new std::complex<double> [4];
-    std::complex<double> *polyv = new std::complex<double> [4*norder];
-    std::complex<double> *vout = new std::complex<double> [4];
+    std::vector<std::complex<double>> v(4);
+    std::vector<std::complex<double>> polyv(4*norder);
+    std::vector<std::complex<double>> vout(4);
     v[0] = 1.0; v[1] = 0.0; v[2] = 0.0; v[3] = 1.0; //[1 0; 0 1]
     vout[0] = 0; vout[1] = 0; vout[2] = 0; vout[3] = 0;
     p_chetest->calcoef_complex(&fun,&toolfunc::expi2);
@@ -232,9 +228,6 @@ TEST_F(MathChebyshevTest,calpolyvec_complex)
     EXPECT_NEAR(vout[3].real(), 0 ,1.e-8);
     EXPECT_NEAR(vout[3].imag(), 0 ,1.e-8);
 
-    delete[] v;
-    delete[] vout;
-    delete[] polyv;
     delete p_chetest;
 }
 
@@ -244,7 +237,7 @@ TEST_F(MathChebyshevTest,tracepolyA)
     p_chetest = new ModuleBase::Chebyshev<double>(norder);
     
     //N == LDA
-    std::complex<double> *v = new std::complex<double> [4];
+    std::vector<std::complex<double>> v(4);
     v[0] = 1.0; v[1] = 0.0; v[2] = 0.0; v[3] = 1.0; //[1 0; 0 1]
 
     p_chetest->tracepolyA(&fun, &toolfunc::sigma_y, v, 2,2,2);
@@ -254,12 +247,11 @@ TEST_F(MathChebyshevTest,tracepolyA)
         if(i%2==0)  EXPECT_NEAR(p_chetest->polytrace[i], 2 ,1.e-8);
         else        EXPECT_NEAR(p_chetest->polytrace[i], 0 ,1.e-8);
     }
-    delete[] v;
 
     //N < LDA
     fun.LDA = 3;
     int LDA = fun.LDA;
-    v = new std::complex<double> [2*LDA];
+    std::vector<std::complex<double>> v(2*LDA);
     v[0] = 1.0; v[1] = 0.0; v[2] = 100.0; v[3] = 0.0; v[4] = 1.0; v[5] = 1.0; //[1 0; 0 1; 100 2]
 
     p_chetest->tracepolyA(&fun, &toolfunc::sigma_y, v, 2,LDA,2);
@@ -270,7 +262,6 @@ TEST_F(MathChebyshevTest,tracepolyA)
         else        EXPECT_NEAR(p_chetest->polytrace[i], 0 ,1.e-8);
     }
     fun.LDA = 2;
-    delete[] v;
     delete p_chetest;
 }
 
@@ -279,7 +270,7 @@ TEST_F(MathChebyshevTest,checkconverge)
     const int norder = 100;
     p_chetest = new ModuleBase::Chebyshev<double>(norder);
     
-    std::complex<double> *v = new std::complex<double> [4];
+    std::vector<std::complex<double>> v(4);
     v[0] = 1.0; v[1] = 0.0; v[2] = 0.0; v[3] = 1.0; //[1 0; 0 1]
     double tmin = -1.1;
     double tmax = 1.1;
