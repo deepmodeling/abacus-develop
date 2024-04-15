@@ -84,10 +84,6 @@ inline void EXPECT_COMPLEX_DOUBLE_EQ(const std::complex<double>& a, const std::c
 template<typename T>
 inline void CHECK_ZEROS(T &size)
 {
-    bool* pt_b = nullptr;
-    int* pt_i = nullptr;
-    float* pt_f = nullptr;
-    double* pt_d = nullptr;
     std::complex<float>* pt_cf = nullptr;
     std::complex<double>* pt_cd = nullptr;
     ModuleBase::Vector3<double>* pt_v3 = nullptr;
@@ -615,8 +611,6 @@ TEST_F(GlobalFunctionTest, VectorToPointer)
 TEST_F(GlobalFunctionTest, COPYARRAY)
 {
     long size = 100;
-    std::complex<double>* aa = nullptr;
-    std::complex<double>* bb = nullptr;
     std::vector<std::complex<double>> aa(size);
     std::vector<std::complex<double>> bb(size);
     std::complex<double> value{1.1, 2.2};
@@ -626,8 +620,6 @@ TEST_F(GlobalFunctionTest, COPYARRAY)
     {
         EXPECT_COMPLEX_DOUBLE_EQ(bb[i], value);
     }
-    double* daa = nullptr;
-    double* dbb = nullptr;
     std::vector<double> daa(size);
     std::vector<double> dbb(size);
     std::fill(&daa[0],&daa[size],3.3);
