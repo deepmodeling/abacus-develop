@@ -103,12 +103,12 @@ void Parallel_Kpoints::gatherkvec(const std::vector<ModuleBase::Vector3<double>>
                                   std::vector<ModuleBase::Vector3<double>>& vec_global) const
 {
     vec_global.resize(this->nkstot_np, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
-    for(int i=0; i<this->nks_np; i++)
+    for (int i = 0; i < this->nks_np; ++i)
     {
-        vec_global[i + startk_pool[GlobalV::MY_POOL]] = vec_local[i] / double(GlobalV::NPROC_IN_POOL); 
+        vec_global[i + startk_pool[GlobalV::MY_POOL]] = vec_local[i] / double(GlobalV::NPROC_IN_POOL);
     }
 
-    MPI_Allreduce(MPI_IN_PLACE, &vec_global[0], 3*this->nkstot_np, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, &vec_global[0], 3 * this->nkstot_np, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
     return;
 }
 #endif
