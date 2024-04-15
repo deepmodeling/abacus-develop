@@ -84,9 +84,6 @@ inline void EXPECT_COMPLEX_DOUBLE_EQ(const std::complex<double>& a, const std::c
 template<typename T>
 inline void CHECK_ZEROS(T &size)
 {
-    std::complex<float>* pt_cf = nullptr;
-    std::complex<double>* pt_cd = nullptr;
-    ModuleBase::Vector3<double>* pt_v3 = nullptr;
     std::vector<bool> pt_b[size];
     std::vector<int> pt_i[size];
     std::vector<float> pt_f[size];
