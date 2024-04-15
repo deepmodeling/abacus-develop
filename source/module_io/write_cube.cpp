@@ -1,5 +1,6 @@
 #include "module_base/element_name.h"
 #include "module_io/cube_io.h"
+#include<vector>
 
 void ModuleIO::write_cube(
 #ifdef __MPI
@@ -126,8 +127,8 @@ void ModuleIO::write_cube(
 	{
 		/// for cube file
 		int nxyz = nx * ny * nz;
-		double* data_cube = new double[nxyz];
-		ModuleBase::GlobalFunc::ZEROS(data_cube, nxyz);
+		std::vector<double> data_cube(nxyz);
+		ModuleBase::GlobalFunc::ZEROS(data_cube.data(), nxyz);
 		/// for cube file
 	
 		// num_z: how many planes on processor 'ip'
@@ -149,8 +150,8 @@ void ModuleIO::write_cube(
     		}
 
 		// which_ip: found iz belongs to which ip.
-		int *which_ip = new int[nz];
-		ModuleBase::GlobalFunc::ZEROS(which_ip, nz);
+		std::vector<int> which_ip(nz);
+		ModuleBase::GlobalFunc::ZEROS(which_ip.data(), nz);
 		for(int iz=0; iz<nz; iz++)
 		{
 			for(int ip=0; ip<GlobalV::NPROC_IN_POOL; ip++)
@@ -172,14 +173,14 @@ void ModuleIO::write_cube(
 		
 		int count=0;
 		int nxy = nx * ny;
-		double* zpiece = new double[nxy];
+		std::vector<double> zpiece(nxy);
 
 		// save the rho one z by one z.
 		for(int iz=0; iz<nz; iz++)
 		{
 			// std::cout << "\n iz=" << iz << std::endl;
 			// tag must be different for different iz.
-			ModuleBase::GlobalFunc::ZEROS(zpiece, nxy);
+			ModuleBase::GlobalFunc::ZEROS(zpiece.data(), nxy);
 			int tag = iz;
 			MPI_Status ierror;
 
@@ -205,14 +206,14 @@ void ModuleIO::write_cube(
 					zpiece[ir] = data[ir*nplane+iz-startz_current];
 					// GlobalV::ofs_running << "\n get zpiece[" << ir << "]=" << zpiece[ir] << " ir*rhopw->nplane+iz=" << ir*rhopw->nplane+iz;
 				}
-				MPI_Send(zpiece, nxy, MPI_DOUBLE, 0, tag, POOL_WORLD);
+				MPI_Send(zpiece.data(), nxy, MPI_DOUBLE, 0, tag, POOL_WORLD);
 			}
 
 			// case 2: > first part rho: processor 0 receive the rho
 			// from other processors
 			else if(GlobalV::RANK_IN_POOL==0)
 			{
-				MPI_Recv(zpiece, nxy, MPI_DOUBLE, which_ip[iz], tag, POOL_WORLD, &ierror);
+				MPI_Recv(zpiece.data(), nxy, MPI_DOUBLE, which_ip[iz], tag, POOL_WORLD, &ierror);
 				// GlobalV::ofs_running << "\n Receieve First number = " << zpiece[0];
 			}
 
@@ -226,8 +227,6 @@ void ModuleIO::write_cube(
 				/// for cube file
 			}
 		}// end iz
-		delete[] zpiece;
-		delete[] which_ip;
 		delete[] num_z;
 		delete[] start_z;
 		// for cube file
@@ -246,7 +245,6 @@ void ModuleIO::write_cube(
 				}
 			}
 		}
-		delete[] data_cube;
 		/// for cube file
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
