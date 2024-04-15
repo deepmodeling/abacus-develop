@@ -84,13 +84,13 @@ inline void EXPECT_COMPLEX_DOUBLE_EQ(const std::complex<double>& a, const std::c
 template<typename T>
 inline void CHECK_ZEROS(T &size)
 {
-    std::vector<bool>* pt_b[size];
-    std::vector<int>* pt_i[size];
-    std::vector<float>* pt_f[size];
-    std::vector<double>* pt_d[size];
-    std::vector<std::complex<float>>* pt_cf(size);
-    std::vector<std::complex<double>>* pt_cd(size);
-    std::vector<ModuleBase::Vector3<double>>* pt_v3(size);
+    std::vector<bool> pt_b(size);
+    std::vector<int> pt_i(size);
+    std::vector<float> pt_f(size);
+    std::vector<double> pt_d(size);
+    std::vector<std::complex<float>> pt_cf(size);
+    std::vector<std::complex<double>> pt_cd(size);
+    std::vector<ModuleBase::Vector3<double>> pt_v3(size);
     // long long size
     long long size_ll = 100;
     bool value_b = true;
@@ -608,8 +608,10 @@ TEST_F(GlobalFunctionTest, VectorToPointer)
 TEST_F(GlobalFunctionTest, COPYARRAY)
 {
     long size = 100;
-    std::vector<std::complex<double>>* aa(size);
-    std::vector<std::complex<double>>* bb(size);
+    std::complex<double>* aa = nullptr;
+    std::complex<double>* bb = nullptr;
+    aa = new std::complex<double>[size];
+    bb = new std::complex<double>[size];
     std::complex<double> value{1.1, 2.2};
     std::fill(&aa[0], &aa[size], value);
     ModuleBase::GlobalFunc::COPYARRAY(aa,bb,size);
@@ -617,16 +619,21 @@ TEST_F(GlobalFunctionTest, COPYARRAY)
     {
         EXPECT_COMPLEX_DOUBLE_EQ(bb[i], value);
     }
-    std::vector<double>* daa(size);
-    std::vector<double>* dbb(size);
+    double* daa = nullptr;
+    double* dbb = nullptr;
+    daa = new double[size];
+    dbb = new double[size];
     std::fill(&daa[0],&daa[size],3.3);
     ModuleBase::GlobalFunc::COPYARRAY(daa,dbb,size);
     for (int i = 0; i < size; ++i)
     {
         EXPECT_DOUBLE_EQ(dbb[i], 3.3);
     }
+    delete[] aa;
+    delete[] bb;
+    delete[] daa;
+    delete[] dbb;
 }
-
 TEST_F(GlobalFunctionTest,IsColumnMajor)
 {
 	GlobalV::KS_SOLVER = "genelpa";
