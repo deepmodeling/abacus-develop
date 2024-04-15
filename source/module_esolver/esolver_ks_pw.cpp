@@ -7,6 +7,7 @@
 #include "module_io/write_istate_info.h"
 #include "module_io/write_wfc_pw.h"
 #include "module_io/output_log.h"
+#include "module_io/input_conv.h"
 
 //--------------temporary----------------------------
 #include "module_elecstate/module_charge/symmetry_rho.h"
@@ -1023,36 +1024,81 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep)
                             this->psi[0].size());
     }
 
-    if(INPUT.band_print_num > 0)
+    // Get bands_to_print through public function of INPUT (returns a const pointer to string)
+    std::string bands_to_print = *INPUT.get_bands_to_print();
+    if(!bands_to_print.empty())
     {
-        std::complex<double> * wfcr = new std::complex<double>[this->pw_rho->nxyz];
-        double * rho_band = new double [this->pw_rho->nxyz];
-        for(int i = 0; i < this->pw_rho->nxyz; i++)
+        std::vector<double> out_band_kb;
+        Input_Conv::parse_expression(bands_to_print, out_band_kb);
+
+        // bands_picked is a vector of 0s and 1s, where 1 means the band is picked to output
+        std::vector<int> bands_picked;
+        bands_picked.resize(this->kspw_psi->get_nbands());
+        ModuleBase::GlobalFunc::ZEROS(bands_picked.data(), this->kspw_psi->get_nbands());
+
+        // Check if length of out_band_kb is valid
+        if (static_cast<int>(out_band_kb.size()) > this->kspw_psi->get_nbands())
         {
-            rho_band[i] = 0.0;
+            ModuleBase::WARNING_QUIT(
+                "ESolver_KS_PW::after_scf",
+                "The number of bands specified by `bands_to_print` in the INPUT file exceeds `nbands`!");
         }
 
-        for(int i = 0; i < INPUT.band_print_num; i++)
+        // Check if all elements in bands_picked are 0 or 1
+        for (int value: out_band_kb)
         {
-            int ib = INPUT.bands_to_print[i];
-            for(int ik = 0; ik < this->kv.nks; ik++)
+            if (value != 0 && value != 1)
+            {
+                ModuleBase::WARNING_QUIT(
+                    "ESolver_KS_PW::after_scf",
+                    "The elements of `bands_to_print` must be either 0 or 1. Invalid values found!");
+            }
+        }
+
+        // Fill bands_picked with values from out_band_kb, converting to int
+        // Remaining bands are already set to 0
+        int length = std::min(static_cast<int>(out_band_kb.size()), this->kspw_psi->get_nbands());
+        for (int i = 0; i < length; ++i)
+        {
+            // out_band_kb rely on function parse_expression from input_conv.cpp
+            // Initially designed for ocp_set, which can be double
+            bands_picked[i] = static_cast<int>(out_band_kb[i]);
+        }
+
+        std::complex<double>* wfcr = new std::complex<double>[this->pw_rho->nxyz];
+        double* rho_band = new double[this->pw_rho->nxyz];
+
+        for (int ib = 0; ib < this->kspw_psi->get_nbands(); ++ib)
+        {
+            // Skip the loop iteration if bands_picked[ib] is 0
+            if (!bands_picked[ib])
+            {
+                continue;
+            } 
+
+            for (int i = 0; i < this->pw_rho->nxyz; i++)
+            {
+                // Initialize rho_band to zero for each band
+                rho_band[i] = 0.0;
+            }
+
+            for (int ik = 0; ik < this->kv.nks; ik++)
             {
                 this->psi->fix_k(ik);
-                this->pw_wfc->recip_to_real(this->ctx,&psi[0](ib,0),wfcr,ik);
+                this->pw_wfc->recip_to_real(this->ctx, &psi[0](ib, 0), wfcr, ik);
 
                 double w1 = static_cast<double>(this->kv.wk[ik] / GlobalC::ucell.omega);
 
-                for(int i = 0; i < this->pw_rho->nxyz; i++)
+                for (int i = 0; i < this->pw_rho->nxyz; i++)
                 {
                     rho_band[i] += std::norm(wfcr[i]) * w1;
                 }
             }
 
             std::stringstream ssc;
-            ssc << GlobalV::global_out_dir << "band" << ib << ".cube";     
+            ssc << GlobalV::global_out_dir << "band" << ib + 1 << ".cube"; // band index starts from 1
 
-            ModuleIO::write_rho
-            (
+            ModuleIO::write_rho(
 #ifdef __MPI
                 this->pw_big->bz,
                 this->pw_big->nbz,

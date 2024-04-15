@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <cmath>
+#include <chrono>
 
 #include "basic_funcs.h"
 
@@ -31,10 +32,19 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::run_lambda_loop(int o
     const double zero = 0.0;
     const double one = 1.0;
 
+#ifdef __MPI
+	auto iterstart = MPI_Wtime();
+#else
+	auto iterstart = std::chrono::system_clock::now();
+#endif
+
+    double inner_loop_duration = 0.0;
+
     this->print_header();
     // lambda loop
     for (int i_step = 0; i_step < this->nsc_; i_step++)
     {
+        double duration = 0.0;
         if (i_step == 0)
         {
             spin = this->Mi_;
@@ -53,6 +63,15 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::run_lambda_loop(int o
             if (i_step >= this->nsc_min_ && GradLessThanBound)
             {
                 add_scalar_multiply_2d(initial_lambda, dnu_last_step, one, this->lambda_);
+#ifdef __MPI
+		        duration = (double)(MPI_Wtime() - iterstart);
+#else
+			    duration =
+                    (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now()
+                    - iterstart)).count() / static_cast<double>(1e6);
+#endif
+                inner_loop_duration += duration;
+                std::cout << "Total TIME(s) = " << inner_loop_duration << std::endl;
                 this->print_termination();
                 break;
             }
@@ -71,11 +90,24 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::run_lambda_loop(int o
         }
         mean_error = sum_2d(temp_1) / nat;
         rms_error = std::sqrt(mean_error);
-        if (this->check_rms_stop(outer_step, i_step, rms_error))
+#ifdef __MPI
+			duration = (double)(MPI_Wtime() - iterstart);
+#else
+			duration =
+               (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now()
+                - iterstart)).count() / static_cast<double>(1e6);
+#endif
+        inner_loop_duration += duration;
+        if (this->check_rms_stop(outer_step, i_step, rms_error, duration, inner_loop_duration))
         {
             add_scalar_multiply_2d(initial_lambda, dnu_last_step, 1.0, this->lambda_);
             break;
         }
+#ifdef __MPI
+		iterstart = MPI_Wtime();
+#else
+		iterstart = std::chrono::system_clock::now();
+#endif
         if (i_step >= 2)
         {
             beta = mean_error / mean_error_old;

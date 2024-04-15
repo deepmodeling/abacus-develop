@@ -16,7 +16,7 @@ void Stress_Func<FPTYPE, Device>::stress_loc(ModuleBase::matrix& sigma,
     ModuleBase::TITLE("Stress_Func","stress_loc");
     ModuleBase::timer::tick("Stress_Func","stress_loc");
 
-    FPTYPE *dvloc = new FPTYPE[rho_basis->npw];
+	std::vector<FPTYPE> dvloc(rho_basis->npw);
     FPTYPE evloc=0.0;
 	FPTYPE fact=1.0;
 
@@ -26,7 +26,7 @@ void Stress_Func<FPTYPE, Device>::stress_loc(ModuleBase::matrix& sigma,
 
     
 
-	std::complex<FPTYPE> *aux = new std::complex<FPTYPE> [rho_basis->nmaxgr];
+	std::vector<std::complex<FPTYPE>> aux(rho_basis->nmaxgr);
 
 	/*
 		blocking rho_basis->nrxx for data locality.
@@ -58,7 +58,7 @@ void Stress_Func<FPTYPE, Device>::stress_loc(ModuleBase::matrix& sigma,
 			}
 		}
  	}
-	rho_basis->real2recip(aux,aux);
+	rho_basis->real2recip(aux.data(),aux.data());
 
 //    if(INPUT.gamma_only==1) fact=2.0;
 //    else fact=1.0;
@@ -87,7 +87,7 @@ void Stress_Func<FPTYPE, Device>::stress_loc(ModuleBase::matrix& sigma,
 		//
 		// special case: pseudopotential is coulomb 1/r potential
 		//
-			this->dvloc_coulomb (atom->ncpp.zv, dvloc, rho_basis);
+			this->dvloc_coulomb (atom->ncpp.zv, dvloc.data(), rho_basis);
 		//
 		}
 		else
@@ -96,7 +96,7 @@ void Stress_Func<FPTYPE, Device>::stress_loc(ModuleBase::matrix& sigma,
 		// normal case: dvloc contains dV_loc(G)/dG
 		//
 			this->dvloc_of_g ( atom->ncpp.msh, atom->ncpp.rab, atom->ncpp.r,
-					atom->ncpp.vloc_at, atom->ncpp.zv, dvloc, rho_basis);
+					atom->ncpp.vloc_at, atom->ncpp.zv, dvloc.data(), rho_basis);
 		//
 		}
 #ifndef _OPENMP
@@ -156,8 +156,7 @@ void Stress_Func<FPTYPE, Device>::stress_loc(ModuleBase::matrix& sigma,
 			sigma(m,l) = sigma(l,m);
 		}
 	}
-	delete[] dvloc;
-	delete[] aux;
+
 
 
 	ModuleBase::timer::tick("Stress_Func","stress_loc");
@@ -185,14 +184,14 @@ ModulePW::PW_Basis* rho_basis
   //FPTYPE  dvloc[ngl];
   // the fourier transform dVloc/dG
   //
-	FPTYPE  *aux1;
+	
 
 	int igl0;
 	// counter on erf functions or gaussians
 	// counter on g shells vectors
 	// first shell with g != 0
-
-	aux1 = new FPTYPE[msh];
+	
+	std::vector<FPTYPE> aux1(msh);
 
 	// the  G=0 component is not computed
 	if (rho_basis->gg_uniq[0] < 1.0e-8)
@@ -223,8 +222,7 @@ ModulePW::PW_Basis* rho_basis
 		aux1[i] = r [i] * vloc_at [i] + zp * ModuleBase::e2 * erf(r[i]);
 	}
 
-	FPTYPE  *aux;
-	aux = new FPTYPE[msh];
+	std::vector<FPTYPE> aux(msh);
 	aux[0] = 0.0;
 #ifdef _OPENMP
 	#pragma omp for
@@ -247,7 +245,7 @@ ModulePW::PW_Basis* rho_basis
 		}
 		FPTYPE vlcp=0;
 		// simpson (msh, aux, rab, vlcp);
-		ModuleBase::Integral::Simpson_Integral(msh, aux, rab, vlcp );
+		ModuleBase::Integral::Simpson_Integral(msh, aux.data(), rab, vlcp );
 		// DV(g^2)/Dg^2 = (DV(g)/Dg)/2g
 		vlcp *= ModuleBase::FOUR_PI / GlobalC::ucell.omega / 2.0 / gx;
 		// subtract the long-range term
@@ -255,11 +253,11 @@ ModulePW::PW_Basis* rho_basis
 		vlcp += ModuleBase::FOUR_PI / GlobalC::ucell.omega * zp * ModuleBase::e2 * ModuleBase::libm::exp ( - g2a) * (g2a + 1) / pow(gx2 , 2);
 		dvloc [igl] = vlcp;
 	}
-	delete[] aux;
+
 #ifdef _OPENMP
 }
 #endif
-	delete[] aux1;
+	
 
 	return;
 }

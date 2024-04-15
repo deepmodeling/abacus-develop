@@ -45,7 +45,7 @@ void SpinConstrain<double, psi::DEVICE_CPU>::run_lambda_loop(int outer_step)
 }
 
 template <>
-bool SpinConstrain<double, psi::DEVICE_CPU>::check_rms_stop(int outer_step, int i_step, double rms_error)
+bool SpinConstrain<double, psi::DEVICE_CPU>::check_rms_stop(int outer_step, int i_step, double rms_error, double duration, double total_duration)
 {
     return false;
 }
