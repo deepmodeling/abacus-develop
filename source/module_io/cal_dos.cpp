@@ -69,9 +69,6 @@ bool ModuleIO::calculate_dos
 	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"min state energy (eV)",emin_ev);
 	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"max state energy (eV)",emax_ev);
 	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"delta energy interval (eV)",  de_ev);
-	
-	double *e_mod = new double[npoints];
-	ModuleBase::GlobalFunc::ZEROS(e_mod, npoints);
 
 	double sum   = 0.0;
 	double e_new = emin_ev;
@@ -157,7 +154,6 @@ bool ModuleIO::calculate_dos
 	}
 	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"number of bands",nbands);
 	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"sum up the states", sum);
-	delete[] e_mod;
 
 	return 1;
 }
