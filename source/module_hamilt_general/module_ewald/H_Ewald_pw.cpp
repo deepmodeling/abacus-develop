@@ -55,9 +55,13 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
     // used to optimize alpha
 
 	if(GlobalV::test_energy)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"mxr",mxr);
-    r  = new ModuleBase::Vector3<double>[mxr];
-    r2 = new double[mxr];
-    int* irr = new int[mxr];
+    
+    std::vector<ModuleBase::Vector3<double>> buffer1(mxr);
+    ModuleBase::Vector3<double>* r = buffer1.data();
+    std::vector<double> buffer2(mxr);
+    double* r2 = buffer2.data();
+    std::vector<int> buffer3(mxr);
+    int* irr = buffer3.data();
 
     // (1) calculate total ionic charge
     double charge = 0.0;
@@ -230,10 +234,6 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
         ModuleBase::GlobalFunc::OUT("ewaldr",ewaldr);
         ModuleBase::GlobalFunc::OUT("ewalds",ewalds);
     }
-
-    delete[] irr;
-    delete[] r;
-    delete[] r2;
 
     ModuleBase::timer::tick("H_Ewald_pw","compute_ewald");
     return ewalds;
