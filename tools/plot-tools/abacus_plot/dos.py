@@ -89,7 +89,7 @@ class DOS:
         return gap
 
 
-class :
+class DOSPlot:
     """Plot density of state(DOS)"""
 
     def __init__(self, fig: Figure = None, ax: axes.Axes = None, nspin: int = 1,  **kwargs) -> None:
