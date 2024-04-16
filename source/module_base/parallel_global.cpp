@@ -56,8 +56,7 @@ void Parallel_Global::split_diag_world(const int &diag_np)
 #ifdef __MPI
 	assert(diag_np>0);
 	// number of processors in each 'grid group'.
-	int* group_grid_np = new int[diag_np];
-	ModuleBase::GlobalFunc::ZEROS(group_grid_np, diag_np);
+	std::vector<int> group_grid_np(diag_np, 0);
 	// average processors in each 'grid group'
 	int ave = GlobalV::NPROC/diag_np;
 	// remain processors.
@@ -94,8 +93,6 @@ void Parallel_Global::split_diag_world(const int &diag_np)
 	MPI_Comm_size(DIAG_WORLD, &GlobalV::DSIZE);
 	GlobalV::DCOLOR=color;
 
-
-	delete[] group_grid_np;
 #else
 	GlobalV::DCOLOR=0; //mohan fix bug 2012-02-04
 	GlobalV::DRANK=0;
@@ -111,8 +108,7 @@ void Parallel_Global::split_grid_world(const int &diag_np)
 #ifdef __MPI
 	assert(diag_np>0);
 	// number of processors in each 'grid group'.
-	int* group_grid_np = new int[diag_np];
-	ModuleBase::GlobalFunc::ZEROS(group_grid_np, diag_np);
+	std::vector<int> group_grid_np(diag_np, 0);
 	// average processors in each 'grid group'
 	int ave = GlobalV::NPROC/diag_np;
 	// remain processors.
@@ -148,7 +144,6 @@ void Parallel_Global::split_grid_world(const int &diag_np)
 	MPI_Comm_rank(GRID_WORLD, &GlobalV::GRANK);
 	MPI_Comm_size(GRID_WORLD, &GlobalV::GSIZE);
 
-	delete[] group_grid_np;
 #else
 	GlobalV::GRANK=0;  //mohan fix bug 2012-02-04
 	GlobalV::GSIZE=1;
