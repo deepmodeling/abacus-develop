@@ -1331,9 +1331,9 @@ void ESolver_SDFT_PW::caldos(const int nche_dos,
     ModuleBase::timer::tick(this->classname, "DOS Loop");
     int n10 = ndos / 10;
     int percent = 10;
-    double* sto_dos = new double[ndos];
-    double* ks_dos = new double[ndos];
-    double* error = new double[ndos];
+    std::vector<double> sto_dos[ndos];
+    std::vector<double> ks_dos[ndos];
+    std::vector<double> error[ndos];
     for (int ie = 0; ie < ndos; ++ie)
     {
         double tmpks = 0;
@@ -1416,9 +1416,7 @@ void ESolver_SDFT_PW::caldos(const int nche_dos,
         std::cout << std::scientific << "DOS max absolute Chebyshev Error: " << maxerror << std::endl;
         ofsdos.close();
     }
-    delete[] sto_dos;
-    delete[] ks_dos;
-    delete[] error;
+    
     delete[] spolyv;
     ModuleBase::timer::tick(this->classname, "DOS Loop");
     ModuleBase::timer::tick(this->classname, "caldos");

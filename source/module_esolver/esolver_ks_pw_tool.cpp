@@ -61,9 +61,9 @@ void ESolver_KS_PW<T, Device>::KG(const int& smear_type,
     assert(nt >= 1);
     const int nk = this->kv.nks;
 
-    double* ct11 = new double[nt];
-    double* ct12 = new double[nt];
-    double* ct22 = new double[nt];
+    std::vector<double> ct11[nt];
+    std::vector<double> ct12[nt];
+    std::vector<double> ct22[nt];
     ModuleBase::GlobalFunc::ZEROS(ct11, nt);
     ModuleBase::GlobalFunc::ZEROS(ct12, nt);
     ModuleBase::GlobalFunc::ZEROS(ct22, nt);
@@ -88,9 +88,7 @@ void ESolver_KS_PW<T, Device>::KG(const int& smear_type,
     {
         calcondw(nt, dt, smear_type, fwhmin, wcut, dw_in, ct11, ct12, ct22);
     }
-    delete[] ct11;
-    delete[] ct12;
-    delete[] ct22;
+    
 }
 
 template <typename T, typename Device>

@@ -481,8 +481,8 @@ void KEDF_WT::read_kernel(std::string file_name, ModulePW::PW_Basis* pw_rho)
     ifs >> rho0_in;
     ifs >> nq_in;
 
-    double* eta_in = new double[nq_in];
-    double* w0_in = new double[nq_in];
+    std::vector<double> eta_in[nq_in];
+    std::vector<double> w0_in[nq_in];
 
     for (int iq = 0; iq < nq_in; ++iq)
     {
@@ -533,7 +533,6 @@ void KEDF_WT::read_kernel(std::string file_name, ModulePW::PW_Basis* pw_rho)
     if (maxEta > maxEta_in)
         ModuleBase::WARNING("kedf_wt.cpp", "Please increase the maximal eta value in KEDF kernel file");
 
-    delete[] eta_in;
-    delete[] w0_in;
+    
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "FILL WT KERNEL");
 }
