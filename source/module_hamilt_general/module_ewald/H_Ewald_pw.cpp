@@ -56,8 +56,7 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
 
 	if(GlobalV::test_energy)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"mxr",mxr);
     
-    std::vector<ModuleBase::Vector3<double>> buffer1(mxr);
-    ModuleBase::Vector3<double>* r = buffer1.data();
+    r = new ModuleBase::Vector3<double>[mxr];
     std::vector<double> buffer2(mxr);
     double* r2 = buffer2.data();
     std::vector<int> buffer3(mxr);
@@ -234,6 +233,8 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
         ModuleBase::GlobalFunc::OUT("ewaldr",ewaldr);
         ModuleBase::GlobalFunc::OUT("ewalds",ewalds);
     }
+
+    delete[] r;
 
     ModuleBase::timer::tick("H_Ewald_pw","compute_ewald");
     return ewalds;
