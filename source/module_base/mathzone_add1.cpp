@@ -275,10 +275,10 @@ void Mathzone_Add1::Uni_Deriv_Phi
 	// std::cout << "\n mesh=" << mesh << ", radf[8010]=" << radf[8010] <<  ", radf[8009]=" << radf[8009] ;
 	// mesh=8010, radf[8010]=4.396478951532926e-01, radf[8009]=0.000000000000000e+00
 
-    fftw_complex *fft_phir = new fftw_complex[FFT_NR];
-    fftw_complex *fft_phik = new fftw_complex[FFT_NR];
-    fftw_complex *fft_ndphik = new fftw_complex[FFT_NR];
-    fftw_complex *fft_ndphir = new fftw_complex[FFT_NR];
+    std::vector<fftw_complex> fft_phir(FFT_NR);
+	std::vector<fftw_complex> fft_phik(FFT_NR);
+	std::vector<fftw_complex> fft_ndphik(FFT_NR);
+	std::vector<fftw_complex> fft_ndphir(FFT_NR);
 	fftw_plan p1;
 	fftw_plan p2;
 
@@ -403,11 +403,6 @@ void Mathzone_Add1::Uni_Deriv_Phi
 	
 	fftw_destroy_plan (p1);
 	fftw_destroy_plan (p2);
-
-    delete [] fft_phir;
-    delete [] fft_phik;
-    delete [] fft_ndphik;
-    delete [] fft_ndphir;
 	
 	ModuleBase::timer::tick("Mathzone_Add1", "Uni_Deriv_Phi");
 }

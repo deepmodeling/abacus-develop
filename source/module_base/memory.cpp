@@ -245,7 +245,7 @@ void Memory::print_all(std::ofstream &ofs)
     
     assert(n_memory>0);
 
-	bool *print_flag = new bool[n_memory];
+	std::vector<bool> print_flag(n_memory, false);
 
 	for(int i=0; i<n_memory; i++) 
 	{
@@ -307,7 +307,6 @@ void Memory::print_all(std::ofstream &ofs)
 	ofs<<" -------------   < 1.0 MB has been ignored ----------------"<<std::endl;
     ofs<<" ----------------------------------------------------------"<<std::endl;
 
-	delete[] print_flag; //mohan fix by valgrind at 2012-04-02
 	return;
 }
 
