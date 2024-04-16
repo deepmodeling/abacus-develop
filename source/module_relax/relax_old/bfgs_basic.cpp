@@ -3,6 +3,7 @@
 #include "ions_move_basic.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
+#include<vector>
 using namespace Ions_Move_Basic;
 
 double BFGS_Basic::relax_bfgs_w1 = -1.0; // default is 0.01
@@ -66,10 +67,10 @@ void BFGS_Basic::update_inverse_hessian(const double &lat0)
     //  ModuleBase::TITLE("Ions_Move_BFGS","update_inverse_hessian");
     assert(dim > 0);
 
-    double *s = new double[dim];
-    double *y = new double[dim];
-    ModuleBase::GlobalFunc::ZEROS(s, dim);
-    ModuleBase::GlobalFunc::ZEROS(y, dim);
+    std::vector<double> s(dim);
+    std::vector<double> y(dim);
+    ModuleBase::GlobalFunc::ZEROS(s.data(), dim);
+    ModuleBase::GlobalFunc::ZEROS(y.data(), dim);
 
     for (int i = 0; i < dim; i++)
     {
@@ -94,12 +95,12 @@ void BFGS_Basic::update_inverse_hessian(const double &lat0)
         return;
     }
 
-    double *Hs = new double[dim];
-    double *Hy = new double[dim];
-    double *yH = new double[dim];
-    ModuleBase::GlobalFunc::ZEROS(Hs, dim);
-    ModuleBase::GlobalFunc::ZEROS(Hy, dim);
-    ModuleBase::GlobalFunc::ZEROS(yH, dim);
+    std::vector<double> Hs(dim);
+    std::vector<double> Hy(dim);
+    std::vector<double> yH(dim);
+    ModuleBase::GlobalFunc::ZEROS(Hs.data(), dim);
+    ModuleBase::GlobalFunc::ZEROS(Hy.data(), dim);
+    ModuleBase::GlobalFunc::ZEROS(yH.data(), dim);
 
     for (int i = 0; i < dim; i++)
     {
@@ -127,11 +128,6 @@ void BFGS_Basic::update_inverse_hessian(const double &lat0)
         }
     }
 
-    delete[] s;
-    delete[] y;
-    delete[] Hs;
-    delete[] Hy;
-    delete[] yH;
     return;
 }
 

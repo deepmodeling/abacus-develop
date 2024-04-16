@@ -162,6 +162,7 @@ void Input::Default(void)
     nbands_sto = 256;
     nbndsto_str = "256";
     nbands_istate = 5;
+    bands_to_print_ = "";
     pw_seed = 1;
     emin_sto = 0.0;
     emax_sto = 0.0;
@@ -332,8 +333,6 @@ void Input::Default(void)
 
     out_bandgap = 0; // QO added for bandgap printing
 
-    band_print_num = 0;
-
     deepks_out_labels = 0; // caoyu added 2020-11-24, mohan added 2021-01-03
     deepks_scf = 0;
     deepks_bandgap = 0;
@@ -437,6 +436,7 @@ void Input::Default(void)
     exx_cauchy_stress_threshold = 1E-7;
     exx_ccp_threshold = 1E-8;
     exx_ccp_rmesh_times = "default";
+    rpa_ccp_rmesh_times = 10.0;
 
     exx_distribute_type = "htime";
 
@@ -783,6 +783,10 @@ bool Input::Read(const std::string& fn)
             // Originally disabled in line 2401.
             // if (nbands_istate < 0)
             // 	ModuleBase::WARNING_QUIT("Input", "NBANDS_ISTATE must > 0");
+        }
+        else if (strcmp("bands_to_print", word) == 0)
+        {
+            getline(ifs, bands_to_print_);
         }
         else if (strcmp("nche_sto", word) == 0) // Chebyshev expansion order
         {
@@ -1350,14 +1354,6 @@ bool Input::Read(const std::string& fn)
         else if (strcmp("out_chg", word) == 0)
         {
             read_bool(ifs, out_chg);
-        }
-        else if (strcmp("band_print_num", word) == 0)
-        {
-            read_value(ifs, band_print_num);
-        }
-        else if (strcmp("bands_to_print", word) == 0)
-        {
-            ifs.ignore(150, '\n');
         }
         else if (strcmp("out_dm", word) == 0)
         {
@@ -2416,29 +2412,6 @@ bool Input::Read(const std::string& fn)
         ModuleBase::WARNING_QUIT("Input", "The ntype in INPUT is not equal to the ntype counted in STRU, check it.");
     }
 
-    if(band_print_num > 0)
-    {
-        bands_to_print.resize(band_print_num);
-        ifs.clear();
-        ifs.seekg(0); // move to the beginning of the file
-        ifs.rdstate();
-        while (ifs.good())
-        {
-            ifs >> word1;
-            if (ifs.eof() != 0)
-                break;
-            strtolower(word1, word); // convert uppercase std::string to lower case; word1 --> word
-
-            if (strcmp("bands_to_print", word) == 0)
-            {
-                for(int i = 0; i < band_print_num; i ++)
-                {
-                    ifs >> bands_to_print[i];
-                }
-            }
-        }
-    }
-
     //----------------------------------------------------------
     //       DFT+U    Xin Qu  added on 2020-10-29
     //----------------------------------------------------------
@@ -2806,10 +2779,12 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     {
         std::string dft_functional_lower = dft_functional;
         std::transform(dft_functional.begin(), dft_functional.end(), dft_functional_lower.begin(), tolower);
-        if (dft_functional_lower == "hf" || rpa)
+        if (dft_functional_lower == "hf")
             exx_hybrid_alpha = "1";
         else if (dft_functional_lower == "pbe0" || dft_functional_lower == "hse" || dft_functional_lower == "scan0")
             exx_hybrid_alpha = "0.25";
+        else    // no exx in scf, but will change to non-zero in postprocess like rpa
+            exx_hybrid_alpha = "0";
     }
     if (exx_real_number == "default")
     {
@@ -2826,6 +2801,8 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             exx_ccp_rmesh_times = "5";
         else if (dft_functional_lower == "hse")
             exx_ccp_rmesh_times = "1.5";
+        else    // no exx in scf
+            exx_ccp_rmesh_times = "1";
     }
     if (symmetry == "default")
     { // deal with no-forced default value
@@ -3256,6 +3233,7 @@ void Input::Bcast()
     Parallel_Common::bcast_int(nbands);
     Parallel_Common::bcast_int(nbands_sto);
     Parallel_Common::bcast_int(nbands_istate);
+    Parallel_Common::bcast_string(bands_to_print_);
     for (int i = 0; i < 3; i++)
     {
         Parallel_Common::bcast_double(kspacing[i]);
@@ -3624,17 +3602,6 @@ void Input::Bcast()
     Parallel_Common::bcast_double(cell_factor); // LiuXh add 20180619
     Parallel_Common::bcast_bool(restart_save);  // Peize Lin add 2020.04.04
     Parallel_Common::bcast_bool(restart_load);  // Peize Lin add 2020.04.04
-
-    Parallel_Common::bcast_int(band_print_num);
-    if(GlobalV::MY_RANK != 0)
-    {
-        bands_to_print.resize(band_print_num);
-    }
-
-    for(int i = 0; i < band_print_num; i++)
-    {
-        Parallel_Common::bcast_int(bands_to_print[i]);
-    }
 
     //-----------------------------------------------------------------------------------
     // DFT+U (added by Quxin 2020-10-29)
@@ -4159,6 +4126,13 @@ void Input::Check(void)
         if (exx_opt_orb_tolerence < 0)
         {
             ModuleBase::WARNING_QUIT("INPUT", "exx_opt_orb_tolerence must >=0");
+        }
+    }
+    if (rpa)
+    {
+        if (rpa_ccp_rmesh_times < 1)
+        {
+            ModuleBase::WARNING_QUIT("INPUT", "must rpa_ccp_rmesh_times >= 1");
         }
     }
 
