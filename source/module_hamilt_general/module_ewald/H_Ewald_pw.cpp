@@ -55,10 +55,8 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
     // used to optimize alpha
 
 	if(GlobalV::test_energy)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"mxr",mxr);
-    
     r = new ModuleBase::Vector3<double>[mxr];
-    std::vector<double> buffer2(mxr);
-    double* r2 = buffer2.data();
+    r2 = new double[mxr];
     std::vector<int> buffer3(mxr);
     int* irr = buffer3.data();
 
@@ -235,6 +233,7 @@ double H_Ewald_pw::compute_ewald(const UnitCell& cell,
     }
 
     delete[] r;
+    delete[] r2;
 
     ModuleBase::timer::tick("H_Ewald_pw","compute_ewald");
     return ewalds;
