@@ -37,7 +37,6 @@ ModuleBase::ComplexArray cal_overlap_Sq(
     const int lmax,
     const int nbes,
     const double rcut,
-    const double sigma,
     const std::vector<std::vector<ModuleBase::Vector3<double>>>& R,
     const std::vector<index_t> mu_index
 )
@@ -50,7 +49,7 @@ ModuleBase::ComplexArray cal_overlap_Sq(
     // build a RadialCollection of spherical Bessel functions
     double dr = 0.005; // grid spacing for SphbesRadials; smaller for higher precision
     RadialCollection orb;
-    orb.build(lmax, nbes, rcut, sigma, dr);
+    orb.build(lmax, nbes, rcut, 0.0, dr);
 
     ModuleBase::SphericalBesselTransformer sbt;
     orb.set_transformer(sbt);

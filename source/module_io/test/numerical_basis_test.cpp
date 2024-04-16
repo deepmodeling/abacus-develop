@@ -65,7 +65,6 @@ TEST_F(NumericalBasisTest, cal_overlap_Sq)
     int lmax = 3;
     int nbes = 7;
     double rcut = 7.0;
-    double sigma = 0.0;
 
     // atom-0 and 1 have overlap with each other, but neither of them
     // has overlap with atom-2
@@ -88,8 +87,8 @@ TEST_F(NumericalBasisTest, cal_overlap_Sq)
     // <jy|jy> and <jy|-\nabla^2|jy>
     double S_thr = 1e-5;
     double T_thr = 1e-3;
-    auto S = cal_overlap_Sq('S', lmax, nbes, rcut, sigma, tau_cart, index);
-    auto T = cal_overlap_Sq('T', lmax, nbes, rcut, sigma, tau_cart, index);
+    auto S = cal_overlap_Sq('S', lmax, nbes, rcut, tau_cart, index);
+    auto T = cal_overlap_Sq('T', lmax, nbes, rcut, tau_cart, index);
 
     int t1, a1, l1, m1, t2, a2, l2, m2;
     for (int i = 0; i < nao; ++i)

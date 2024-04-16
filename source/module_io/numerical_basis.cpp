@@ -154,7 +154,6 @@ void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, 
                                                    ucell.lmaxmax,
                                                    this->bessel_basis.get_ecut_number(),
                                                    INPUT.bessel_nao_rcut,
-                                                   INPUT.bessel_nao_sigma,
                                                    tau_cart,
                                                    NumericalBasis::indexgen(natom, lmax));
 #endif
@@ -254,7 +253,7 @@ ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Q(const int& ik,
 							<< std::setw(8) << L
 							<< std::endl;
                 //OUT("l",l);
-                std::complex<double> lphase = normalization * pow(ModuleBase::IMAG_UNIT, L);			// Peize Lin add normalization 2015-12-29
+                std::complex<double> lphase = normalization * pow(ModuleBase::IMAG_UNIT, -L);			// Peize Lin add normalization 2015-12-29
                 for (int ie=0; ie < this->bessel_basis.get_ecut_number(); ie++)
                 {
                     const int N = 0;

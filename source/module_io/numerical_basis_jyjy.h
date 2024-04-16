@@ -29,7 +29,6 @@ ModuleBase::ComplexArray cal_overlap_Sq(
     const int lmax,
     const int nbes,
     const double rcut,
-    const double sigma,
     const std::vector<std::vector<ModuleBase::Vector3<double>>>& tau_cart,
     const std::vector<std::tuple<int, int, int, int>> mu_index
 );
