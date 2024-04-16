@@ -405,8 +405,10 @@ void Numerical_Orbital_Lm::cal_kradial(void)
 {
 	assert( this->nr > 0);
 	assert( this->nr_uniform > 0);
-	double *jl = new double[nr];
-	double *integrated_func = new double[nr];
+	std::vector<double> vec_jl(nr);
+    double *jl = vec_jl.data();
+	std::vector<double> vec_integrated_func(nr);
+    double *integrated_func = vec_integrated_func.data();
 
 	const double pref = sqrt( 2.0 / ModuleBase::PI );
 	//Sbt method
@@ -452,9 +454,6 @@ void Numerical_Orbital_Lm::cal_kradial(void)
 		this->psik[ik] = this->psif[ik] * k_radial[ik];
 		this->psik2[ik] = this->psik[ik] * k_radial[ik];
 	}
-		
-	delete[] integrated_func;
-	delete[] jl;
 }
 
 /*
