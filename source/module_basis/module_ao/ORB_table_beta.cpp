@@ -137,8 +137,9 @@ void ORB_table_beta::cal_VNL_PhiBeta_R(
 
 	assert(kmesh > 0);
 
-	//start calc	
-    double *k1_dot_k2 = new double[kmesh];
+	//start calc
+    std::vector<double> vec_k1_dot_k2(kmesh);
+    double* k1_dot_k2 = vec_k1_dot_k2.data();
 
 	for (int ik = 0; ik < kmesh; ik++)
 	{
@@ -146,8 +147,8 @@ void ORB_table_beta::cal_VNL_PhiBeta_R(
 	}
 
 	//previous version
-	double* integrated_func = new double[kmesh];
-	
+	std::vector<double> vec_integrated_func(kmesh);
+    double* integrated_func = vec_integrated_func.data();
 	const std::vector<std::vector<double>> &jlm1 = pSB->get_jlx()[l-1];
 	const std::vector<std::vector<double>> &jl = pSB->get_jlx()[l];
 	const std::vector<std::vector<double>> &jlp1 = pSB->get_jlx()[l+1];	
@@ -212,9 +213,6 @@ void ORB_table_beta::cal_VNL_PhiBeta_R(
 		ModuleBase::Integral::Simpson_Integral(kmesh,integrated_func,kab,temp);
 		rs[0] = ModuleBase::FOUR_PI / ModuleBase::Mathzone_Add1::dualfac (2*l+1) * temp;
 	}
-	
-	delete [] integrated_func;
-	delete[] k1_dot_k2;
 
 	ModuleBase::timer::tick ("ORB_table_beta", "VNL_PhiBeta_R");
 	return;
