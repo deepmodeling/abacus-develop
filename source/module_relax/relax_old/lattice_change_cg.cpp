@@ -80,11 +80,12 @@ void Lattice_Change_CG::start(UnitCell &ucell, const ModuleBase::matrix &stress_
     static double xa, xb, xc, xpt, steplength, fmax; // the steepest descent method
     static int nbrent;
 
-    double *lat = new double[dim];
-    double *grad = new double[dim];
-    double *cg_gradn = new double[dim];
-    double *move = new double[dim];
-    double *cg_grad = new double[dim];
+    std::vector<double> buffer(dim);
+    double* lat = buffer.data();
+    double* grad = buffer.data();
+    double* cg_gradn = buffer.data();
+    double* move = buffer.data();
+    double* cg_grad = buffer.data();
     double best_x = 0.0;
     double fmin = 0.0;
 
@@ -284,12 +285,6 @@ CG_begin:
             }
         }
     }
-
-    delete[] cg_grad;
-    delete[] grad;
-    delete[] cg_gradn;
-    delete[] lat;
-    delete[] move;
 
     return;
 }

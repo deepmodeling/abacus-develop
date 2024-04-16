@@ -334,7 +334,8 @@ void Exx_Lip::wf_wg_cal()
 
 void Exx_Lip::phi_cal(k_package *kq_pack, int ikq)
 {
-	std::complex<double> *porter = new std::complex<double> [wfc_basis->nrxx];
+    std::vector<std::complex<double>> buffer(wfc_basis->nrxx);
+    std::complex<double>* porter = buffer.data();
 	for( int iw=0; iw< GlobalV::NLOCAL; ++iw)
 	{
 		wfc_basis->recip2real(&kq_pack->wf_ptr->wanf2[ikq](iw,0), porter, ikq);
@@ -355,7 +356,6 @@ void Exx_Lip::phi_cal(k_package *kq_pack, int ikq)
 			}
 		}
 	}
-	delete [] porter;
 }
 
 // void Exx_Lip::psi_cal()
@@ -480,7 +480,9 @@ void Exx_Lip::b_cal( int ik, int iq, int ib)
 		}
 	}
 
-	std::complex<double> * const porter = new std::complex<double> [rho_basis->nrxx];
+	// std::complex<double> * const porter = new std::complex<double> [rho_basis->nrxx];
+	std::vector<std::complex<double>> buffer(rho_basis->nrxx);
+    std::complex<double>* const porter = buffer.data();
 
 	for(size_t iw=0; iw< GlobalV::NLOCAL; ++iw)
 	{
@@ -499,7 +501,7 @@ void Exx_Lip::b_cal( int ik, int iq, int ib)
 		for( size_t ig=0; ig<rho_basis->npw; ++ig)
 			b_w[ig] *= recip_qkg2[ig];
 	}
-	delete [] porter;
+	// delete [] porter;
 }
 
 
