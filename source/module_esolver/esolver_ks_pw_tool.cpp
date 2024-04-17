@@ -61,9 +61,9 @@ void ESolver_KS_PW<T, Device>::KG(const int& smear_type,
     assert(nt >= 1);
     const int nk = this->kv.nks;
 
-    std::vector<double> ct11[nt];
-    std::vector<double> ct12[nt];
-    std::vector<double> ct22[nt];
+    double* ct11=new double[nt];
+    double* ct12=new double[nt];
+    double* ct22=new double[nt];
     ModuleBase::GlobalFunc::ZEROS(ct11, nt);
     ModuleBase::GlobalFunc::ZEROS(ct12, nt);
     ModuleBase::GlobalFunc::ZEROS(ct22, nt);
@@ -249,13 +249,13 @@ void ESolver_KS_PW<T, Device>::calcondw(const int nt,
                 << winfunc[it] << std::endl;
     }
     ofscond.close();
-    double* cw11 = new double[nw];
-    double* cw12 = new double[nw];
-    double* cw22 = new double[nw];
+    std::vector<double> cw11[nw];
+    std::vector<double> cw11[nw];
+    std::vector<double> cw11[nw];
     double* kappa = new double[nw];
-    ModuleBase::GlobalFunc::ZEROS(cw11, nw);
-    ModuleBase::GlobalFunc::ZEROS(cw12, nw);
-    ModuleBase::GlobalFunc::ZEROS(cw22, nw);
+    ModuleBase::GlobalFunc::ZEROS(cw11.data, nw);
+    ModuleBase::GlobalFunc::ZEROS(cw12.data, nw);
+    ModuleBase::GlobalFunc::ZEROS(cw22.data, nw);
     for (int iw = 0; iw < nw; ++iw)
     {
         for (int it = 0; it < nt; ++it)
@@ -288,9 +288,7 @@ void ESolver_KS_PW<T, Device>::calcondw(const int nt,
     std::cout << std::setprecision(6) << "Lorenz number: "<<Lorent0<<" k_B^2/e^2"<<std::endl;
     ofscond.close();
 
-    delete[] cw11;
-    delete[] cw12;
-    delete[] cw22;
+    
     delete[] winfunc;
     delete[] kappa;
 }
