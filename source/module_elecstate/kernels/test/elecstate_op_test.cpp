@@ -54,13 +54,13 @@ TEST_F(TestModuleElecstateMultiDevice, elecstate_pw_op_cpu)
     std::vector<double> rho_data(expected_rho.size(), 0);
     std::vector<double*> rho_vec;
     rho_vec.resize(1, nullptr);
-    // double ** rho = rho_vec.data();
+    double ** rho = rho_vec.data();
     rho_vec[0] = rho_data.data();
     elecstate_cpu_op()(
       this->cpu_ctx, 
       this->spin, this->nrxx,
       this->w1, 
-      &rho_vec[0], 
+      rho, 
       this->wfcr.data());
     
     // check the result 
@@ -74,7 +74,7 @@ TEST_F(TestModuleElecstateMultiDevice, elecstate_pw_spin_op_cpu)
     std::vector<double> rho_data(expected_rho_2.size(), 0);
     std::vector<double*> rho_vec;
     rho_vec.resize(4, nullptr);
-    // double ** rho = rho_vec.data();
+    double ** rho = rho_vec.data();
     rho[0] = rho_data.data();
     rho[1] = rho_data.data() + this->nrxx;
     rho[2] = rho_data.data() + this->nrxx * 2;
@@ -85,7 +85,7 @@ TEST_F(TestModuleElecstateMultiDevice, elecstate_pw_spin_op_cpu)
       this->DOMAG_Z,
       this->nrxx,
       this->w1, 
-      &rho_vec[0], 
+      rho, 
       this->wfcr_2.data(),
       this->wfcr_another_spin_2.data());
     
@@ -107,13 +107,13 @@ TEST_F(TestModuleElecstateMultiDevice, elecstate_pw_op_gpu)
     syncmem_complex_h2d_op()(gpu_ctx, cpu_ctx, d_wfcr, wfcr.data(), wfcr.size());
     std::vector<double*> rho_vec;
     rho_vec.resize(1, nullptr);
-    // double ** rho = rho_vec.data();
+    double ** rho = rho_vec.data();
     rho[0] = d_rho_data;
     elecstate_gpu_op()(
       this->gpu_ctx, 
       this->spin, this->nrxx,
       this->w1,
-      &rho_vec[0], 
+      rho, 
       d_wfcr);
     
     syncmem_var_d2h_op()(cpu_ctx, gpu_ctx, rho_data.data(), d_rho_data, rho_data.size());
@@ -139,7 +139,7 @@ TEST_F(TestModuleElecstateMultiDevice, elecstate_pw_spin_op_gpu)
     syncmem_complex_h2d_op()(gpu_ctx, cpu_ctx, d_wfcr_another_spin_2, wfcr_another_spin_2.data(), wfcr_another_spin_2.size());
     std::vector<double*> rho_vec;
     rho_vec.resize(4, nullptr);
-    // double ** rho = rho_vec.data();
+    double ** rho = rho_vec.data();
     rho[0] = d_rho_data_2;
     rho[1] = d_rho_data_2 + this->nrxx;
     rho[2] = d_rho_data_2 + this->nrxx * 2;
@@ -151,7 +151,7 @@ TEST_F(TestModuleElecstateMultiDevice, elecstate_pw_spin_op_gpu)
       this->DOMAG_Z,
       this->nrxx,
       this->w1, 
-      &rho_vec[0], 
+      rho, 
       d_wfcr_2,
       d_wfcr_another_spin_2);
     
