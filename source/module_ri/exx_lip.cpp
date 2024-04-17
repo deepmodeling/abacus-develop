@@ -480,10 +480,7 @@ void Exx_Lip::b_cal( int ik, int iq, int ib)
 		}
 	}
 
-	// std::complex<double> * const porter = new std::complex<double> [rho_basis->nrxx];
-	std::vector<std::complex<double>> buffer(rho_basis->nrxx);
-    std::complex<double>* const porter = buffer.data();
-
+	std::complex<double> * const porter = new std::complex<double> [rho_basis->nrxx];
 	for(size_t iw=0; iw< GlobalV::NLOCAL; ++iw)
 	{
 		const std::complex<double> * const phi_w = phi[iw];
@@ -501,7 +498,7 @@ void Exx_Lip::b_cal( int ik, int iq, int ib)
 		for( size_t ig=0; ig<rho_basis->npw; ++ig)
 			b_w[ig] *= recip_qkg2[ig];
 	}
-	// delete [] porter;
+	delete [] porter;
 }
 
 
