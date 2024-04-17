@@ -23,6 +23,8 @@
  *      to call another three functions: get_nks_pool(),
  *      get_startk_pool(), get_whichpool(), which divide all kpoints
  *      into KPAR groups.
+ *   iii.Parallel_Kpoints::gatherkvec() is an interface to gather kpoints
+ *      vectors from all processors.
  * The default number of processes is set to 4 in parallel_kpoints_test.sh.
  * One may modify it to do more tests, or adapt this unittest to local
  * environment.
@@ -119,6 +121,88 @@ void ParaPrepare::test_init_pools()
 class ParaKpoints : public ::testing::TestWithParam<ParaPrepare>
 {
 };
+
+TEST(Parallel_KpointsTest, GatherkvecTest) {
+    // Initialize Parallel_Kpoints object
+    Parallel_Kpoints parallel_kpoints;
+    
+    // Initialize local and global vectors
+    std::vector<ModuleBase::Vector3<double>> vec_local;
+    std::vector<ModuleBase::Vector3<double>> vec_global;
+
+    // Populate vec_local with some data
+	int npool = 1;
+	if(GlobalV::NPROC > 2)
+	{
+		npool = 3;
+	}
+	else if(GlobalV::NPROC == 2)
+	{
+		npool = 2;
+	}
+	GlobalV::KPAR = npool;
+
+	if(GlobalV::MY_RANK == 0)
+	{
+    	vec_local.push_back(ModuleBase::Vector3<double>(1.0, 1.0, 1.0));
+		GlobalV::NPROC_IN_POOL = 1;
+		GlobalV::MY_POOL = 0;
+		parallel_kpoints.nks_np = 1;
+	}
+	else if(GlobalV::MY_RANK == 1)
+	{
+		vec_local.push_back(ModuleBase::Vector3<double>(2.0, 2.0, 2.0));
+		vec_local.push_back(ModuleBase::Vector3<double>(3.0, 4.0, 5.0));
+		GlobalV::NPROC_IN_POOL = 1;
+		GlobalV::MY_POOL = 1;
+		parallel_kpoints.nks_np = 2;
+	}
+	else
+	{
+		vec_local.push_back(ModuleBase::Vector3<double>(3.0, 3.0, 3.0));
+		GlobalV::NPROC_IN_POOL = GlobalV::NPROC - 2;
+		GlobalV::MY_POOL = 2;
+		parallel_kpoints.nks_np = 1;
+	}
+
+	parallel_kpoints.startk_pool = new int[npool];
+	parallel_kpoints.nkstot_np = 1;
+	parallel_kpoints.startk_pool[0] = 0;
+	if (npool >= 2)
+	{
+		parallel_kpoints.nkstot_np += 2;
+		parallel_kpoints.startk_pool[1] = 1;
+	}
+	if(npool >= 3)
+	{
+		parallel_kpoints.nkstot_np += 1;
+		parallel_kpoints.startk_pool[2] = 3;
+	}
+	
+    // Call gatherkvec method
+    parallel_kpoints.gatherkvec(vec_local, vec_global);
+
+    // Check the values of vec_global
+    EXPECT_EQ(vec_global[0].x, 1.0);
+	EXPECT_EQ(vec_global[0].y, 1.0);
+	EXPECT_EQ(vec_global[0].z, 1.0);
+
+	if(npool >= 2)
+	{
+		EXPECT_EQ(vec_global[1].x, 2.0);
+		EXPECT_EQ(vec_global[1].y, 2.0);
+		EXPECT_EQ(vec_global[1].z, 2.0);
+		EXPECT_EQ(vec_global[2].x, 3.0);
+		EXPECT_EQ(vec_global[2].y, 4.0);
+		EXPECT_EQ(vec_global[2].z, 5.0);
+	}
+	if(npool >= 3)
+	{
+		EXPECT_EQ(vec_global[3].x, 3.0);
+		EXPECT_EQ(vec_global[3].y, 3.0);
+		EXPECT_EQ(vec_global[3].z, 3.0);
+	}
+}
 
 TEST_P(ParaKpoints,DividePools)
 {
