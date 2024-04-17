@@ -1271,6 +1271,10 @@ void input_parameters_set(std::map<std::string, InputParameter> input_parameters
     {
         INPUT.exx_opt_orb_tolerence = *static_cast<double*>(input_parameters["exx_opt_orb_tolerence"].get());
     }
+    else if (input_parameters.count("rpa_ccp_rmesh_times") != 0)
+    {
+        INPUT.rpa_ccp_rmesh_times = *static_cast<double*>(input_parameters["rpa_ccp_rmesh_times"].get());
+    }
     else if (input_parameters.count("td_force_dt") != 0)
     {
         INPUT.td_force_dt = *static_cast<double*>(input_parameters["td_force_dt"].get());

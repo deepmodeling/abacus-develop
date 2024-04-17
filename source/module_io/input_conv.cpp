@@ -594,10 +594,6 @@ void Input_Conv::Convert(void)
         GlobalC::exx_info.info_global.cal_exx = false;
         Exx_Abfs::Jle::generate_matrix = true;
     }
-    else if (INPUT.rpa)
-    {
-        GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf;
-    }
     else
     {
         GlobalC::exx_info.info_global.cal_exx = false;

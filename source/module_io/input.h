@@ -393,6 +393,7 @@ class Input
     double exx_cauchy_stress_threshold;
     double exx_ccp_threshold;
     std::string exx_ccp_rmesh_times;
+    double rpa_ccp_rmesh_times;
 
     std::string exx_distribute_type;
 
