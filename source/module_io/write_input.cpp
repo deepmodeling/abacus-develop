@@ -60,6 +60,7 @@ void Input::Print(const std::string &fn) const
                                  "nbands_istate",
                                  nbands_istate,
                                  "number of bands around Fermi level for get_pchg calulation");
+    ModuleBase::GlobalFunc::OUTP(ofs, "bands_to_print", bands_to_print_, "specify the bands to be calculated in the get_pchg calculation");
     ModuleBase::GlobalFunc::OUTP(ofs, "symmetry", symmetry, "the control of symmetry");
     ModuleBase::GlobalFunc::OUTP(ofs, "init_vel", init_vel, "read velocity from STRU or not");
     ModuleBase::GlobalFunc::OUTP(ofs,
@@ -398,6 +399,7 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_opt_orb_lmax", exx_opt_orb_lmax, "the maximum l of the spherical Bessel functions for opt ABFs");
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_opt_orb_ecut", exx_opt_orb_ecut, "the cut-off of plane wave expansion for opt ABFs");
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_opt_orb_tolerence", exx_opt_orb_tolerence, "the threshold when solving for the zeros of spherical Bessel functions for opt ABFs");
+    ModuleBase::GlobalFunc::OUTP(ofs, "rpa_ccp_rmesh_times", rpa_ccp_rmesh_times, "how many times larger the radial mesh required for calculating Columb potential is to that of atomic orbitals");
 
     ofs << "\n#Parameters (16.tddft)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs, "td_force_dt", td_force_dt, "time of force change");

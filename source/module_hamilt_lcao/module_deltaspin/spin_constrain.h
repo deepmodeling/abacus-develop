@@ -61,7 +61,7 @@ public:
   void run_lambda_loop(int outer_step);
 
   /// lambda loop helper functions
-  bool check_rms_stop(int outer_step, int i_step, double rms_error);
+  bool check_rms_stop(int outer_step, int i_step, double rms_error, double duration, double total_duration);
 
   /// apply restriction
   void check_restriction(const std::vector<ModuleBase::Vector3<double>>& search, double& alpha_trial);

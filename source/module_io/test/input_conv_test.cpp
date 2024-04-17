@@ -442,7 +442,7 @@ TEST_F(InputConvTest,parse )
     EXPECT_EQ(module_tddft::Evolve_elec::td_vext_dire_case.size(), 0);
 }
 
-TEST_F(InputConvTest,parse2 )
+TEST_F(InputConvTest, parse2)
 {
 	INPUT.Default();
 	std::string input_file = "./support/INPUT";

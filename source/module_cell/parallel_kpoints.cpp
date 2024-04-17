@@ -25,6 +25,13 @@ void Parallel_Kpoints::kinfo(int &nkstot)
     this->get_nks_pool(nkstot);
     this->get_startk_pool(nkstot);
     this->get_whichpool(nkstot);
+    this->kpar = GlobalV::KPAR;
+    this->nkstot_np = nkstot;
+    this->nks_np = this->nks_pool[GlobalV::MY_POOL];
+#else
+    this->kpar = 1;
+    this->nkstot_np = nkstot;
+    this->nks_np = nkstot;
 #endif
     return;
 }
@@ -89,6 +96,19 @@ void Parallel_Kpoints::get_startk_pool(const int &nkstot)
         startk_pool[i] = startk_pool[i-1] + nks_pool[i-1];
         //GlobalV::ofs_running << "\n startk_pool[i] = " << startk_pool[i];
     }
+    return;
+}
+
+void Parallel_Kpoints::gatherkvec(const std::vector<ModuleBase::Vector3<double>>& vec_local,
+                                  std::vector<ModuleBase::Vector3<double>>& vec_global) const
+{
+    vec_global.resize(this->nkstot_np, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
+    for (int i = 0; i < this->nks_np; ++i)
+    {
+        vec_global[i + startk_pool[GlobalV::MY_POOL]] = vec_local[i] / double(GlobalV::NPROC_IN_POOL);
+    }
+
+    MPI_Allreduce(MPI_IN_PLACE, &vec_global[0], 3 * this->nkstot_np, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
     return;
 }
 #endif

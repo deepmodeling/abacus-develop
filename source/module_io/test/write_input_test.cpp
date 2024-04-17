@@ -663,14 +663,14 @@ TEST_F(write_input, Exx14)
         testing::HasSubstr(
             "exx_cauchy_force_threshold     1e-07 #threshold to screen exx force using Cauchy-Schwartz inequality"));
     EXPECT_THAT(output,
-                testing::HasSubstr("exx_ccp_rmesh_times            default #how many times larger the radial mesh "
+        testing::HasSubstr("exx_ccp_rmesh_times            default #how many times larger the radial mesh "
                                    "required for calculating Columb potential is to that of atomic orbitals"));
     EXPECT_THAT(
         output,
         testing::HasSubstr(
             "exx_cauchy_stress_threshold    1e-07 #threshold to screen exx stress using Cauchy-Schwartz inequality"));
     EXPECT_THAT(output,
-                testing::HasSubstr("exx_ccp_rmesh_times            default #how many times larger the radial mesh "
+        testing::HasSubstr("rpa_ccp_rmesh_times            10 #how many times larger the radial mesh "
                                    "required for calculating Columb potential is to that of atomic orbitals"));
     EXPECT_THAT(output,
                 testing::HasSubstr(
