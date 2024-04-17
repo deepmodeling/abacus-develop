@@ -586,8 +586,8 @@ void Propagator::compute_propagator_etrs(const int nlocal,
     std::vector<std::complex<double>> U1(this->ParaV->nloc);
     std::vector<std::complex<double>> U2(this->ParaV->nloc);
     int tag = 2;
-    compute_propagator_taylor(nlocal, Stmp, Htmp, U1, print_matrix, tag);
-    compute_propagator_taylor(nlocal, Stmp, H_laststep, U2, print_matrix, tag);
+    compute_propagator_taylor(nlocal, Stmp, Htmp, U1.data(), print_matrix, tag);
+    compute_propagator_taylor(nlocal, Stmp, H_laststep, U2.data(), print_matrix, tag);
     ScalapackConnector::gemm('N',
                              'N',
                              nlocal,
