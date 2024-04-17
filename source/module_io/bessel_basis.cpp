@@ -208,7 +208,7 @@ void Bessel_Basis::init_TableOne(
     std::vector<double> jlk(rmesh);
     std::vector<double> g(rmesh);
     std::vector<double> function(rmesh);
-    std::vector<double> en(rmesh);
+    std::vector<double> en(ecut_number);
 
 	for(int ir=0; ir<rmesh; ir++)
 	{
