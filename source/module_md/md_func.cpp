@@ -463,7 +463,7 @@ void temp_vector(const int& natom,
             }
         }
     }
-   
+
     return;
 }
 
@@ -491,7 +491,7 @@ void current_md_info(const int& my_rank, const std::string& file_dir, int& md_st
     }
 
 #ifdef __MPI
-    MPI_Bcast(&ok, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&ok, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
 #endif
 
     if (!ok)

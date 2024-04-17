@@ -35,7 +35,9 @@ void Stress_PW<FPTYPE, Device>::stress_us(ModuleBase::matrix& sigma,
     ModuleBase::matrix ylmk0(ppcell_in->lmaxq * ppcell_in->lmaxq, npw);
     ModuleBase::YlmReal::Ylm_Real(ppcell_in->lmaxq * ppcell_in->lmaxq, npw, rho_basis->gcar, ylmk0);
 
-    double* qnorm = new double[npw];
+    //double* qnorm = new double[npw];
+    std::vector<double> qnorm_vec(npw);
+    double* qnorm = qnorm_vec.data();
     for (int ig = 0; ig < npw; ig++)
     {
         qnorm[ig] = rho_basis->gcar[ig].norm() * ucell.tpiba;
@@ -174,8 +176,6 @@ void Stress_PW<FPTYPE, Device>::stress_us(ModuleBase::matrix& sigma,
         }
     }
     sigma += stressus;
-
-    delete[] qnorm;
 
     ModuleBase::timer::tick("Stress_Func", "stress_us");
     return;
