@@ -548,7 +548,7 @@ bool UnitCell::judge_parallel(const double a[3], const ModuleBase::Vector3<doubl
 //==============================================================
 void UnitCell::setup_cell(const std::string &fn, std::ofstream &log)
 {
-	ModuleBase::TITLE("UnitCell","setup_cell");	
+	ModuleBase::TITLE("UnitCell","setup_cell");
 	// (1) init mag
 	assert(ntype>0);
 	delete[] magnet.start_magnetization;
@@ -607,7 +607,7 @@ void UnitCell::setup_cell(const std::string &fn, std::ofstream &log)
 #ifdef __MPI
 	Parallel_Common::bcast_bool(ok);
 	Parallel_Common::bcast_bool(ok2);
-	if(GlobalV::NSPIN==4) 
+	if(GlobalV::NSPIN==4)
 	{
 		Parallel_Common::bcast_bool(GlobalV::DOMAG);
 		Parallel_Common::bcast_bool(GlobalV::DOMAG_Z);
@@ -638,16 +638,16 @@ void UnitCell::setup_cell(const std::string &fn, std::ofstream &log)
 		}
 		GlobalV::ofs_running<<" The readin total magnetization is "<<GlobalV::nupdown<<std::endl;
 	}
-	
+
 	//========================================================
 	// Calculate unit cell volume
-	// the reason to calculate volume here is 
+	// the reason to calculate volume here is
 	// Firstly, latvec must be read in.
 	//========================================================
 	assert(lat0 > 0.0);
 	this->omega = std::abs( latvec.Det() ) * this->lat0 * lat0 * lat0 ;
 	if(this->omega<=0)
-	{	
+	{
 		std::cout << "The volume is negative: " << this->omega<<std::endl;
 		ModuleBase::WARNING_QUIT("setup_cell","omega <= 0 .");
 	}
@@ -657,7 +657,7 @@ void UnitCell::setup_cell(const std::string &fn, std::ofstream &log)
 		ModuleBase::GlobalFunc::OUT(log,"Volume (Bohr^3)", this->omega);
 		ModuleBase::GlobalFunc::OUT(log,"Volume (A^3)", this->omega * pow(ModuleBase::BOHR_TO_A, 3));
 	}
-		
+
 	//==========================================================
 	// Calculate recip. lattice vectors and dot products
 	// latvec have the unit of lat0, but G has the unit 2Pi/lat0
@@ -674,7 +674,7 @@ void UnitCell::setup_cell(const std::string &fn, std::ofstream &log)
     this->invGGT0 = GGT.Inverse();
 
 	log << std::endl;
-	output::printM3(log,"Lattice vectors: (Cartesian coordinate: in unit of a_0)",latvec); 
+	output::printM3(log,"Lattice vectors: (Cartesian coordinate: in unit of a_0)",latvec);
 	output::printM3(log,"Reciprocal vectors: (Cartesian coordinate: in unit of 2 pi/a_0)",G);
 //	OUT(log,"lattice center x",latcenter.x);
 //	OUT(log,"lattice center y",latcenter.y);
@@ -684,6 +684,40 @@ void UnitCell::setup_cell(const std::string &fn, std::ofstream &log)
     // set index for iat2it, iat2ia
     //===================================
     this->set_iat2itia();
+
+#ifdef USE_PAW
+	if(GlobalV::use_paw)
+	{
+		GlobalC::paw_cell.set_libpaw_cell(latvec, lat0);
+
+		int * typat;
+		double * xred;
+
+		typat = new int[nat];
+		xred = new double[nat*3];
+
+		int iat = 0;
+		for(int it = 0; it < ntype; it ++)
+		{
+			for(int ia = 0; ia < atoms[it].na; ia ++)
+			{
+				typat[iat] = it + 1; //Fortran index starts from 1 !!!!
+				xred[iat*3+0] = atoms[it].taud[ia].x;
+				xred[iat*3+1] = atoms[it].taud[ia].y;
+				xred[iat*3+2] = atoms[it].taud[ia].z;
+				iat ++;
+			}
+		}
+
+		GlobalC::paw_cell.set_libpaw_atom(nat,ntype,typat,xred);
+		delete[] typat;
+		delete[] xred;
+
+		GlobalC::paw_cell.set_libpaw_files();
+
+		GlobalC::paw_cell.set_nspin(GlobalV::NSPIN);
+	}
+#endif
 }
 
 void UnitCell::read_pseudo(std::ofstream &ofs)
@@ -720,7 +754,7 @@ void UnitCell::read_pseudo(std::ofstream &ofs)
         }
 
         if(GlobalV::out_element_info)
-        { 
+        {
             for(int i=0;i<this->ntype;i++)
             {
             	ModuleBase::Global_File::make_dir_atom( this->atoms[i].label );
@@ -729,51 +763,51 @@ void UnitCell::read_pseudo(std::ofstream &ofs)
             {
                 Atom* atom = &atoms[it];
                 std::stringstream ss;
-                ss << GlobalV::global_out_dir << atom->label 
+                ss << GlobalV::global_out_dir << atom->label
                     << "/" << atom->label
                     << ".NONLOCAL";
                 std::ofstream ofs(ss.str().c_str());
-    
+
                 ofs << "<HEADER>" << std::endl;
                 ofs << std::setw(10) << atom->label << "\t" << "label" << std::endl;
                 ofs << std::setw(10) << atom->ncpp.pp_type << "\t" << "pseudopotential type" << std::endl;
                 ofs << std::setw(10) << atom->ncpp.lmax << "\t" << "lmax" << std::endl;
                 ofs << "</HEADER>" << std::endl;
-    
+
                 ofs << "\n<DIJ>" << std::endl;
                 ofs << std::setw(10) << atom->ncpp.nbeta << "\t" << "nummber of projectors." << std::endl;
                 for(int ib=0; ib<atom->ncpp.nbeta; ib++)
                 {
                     for(int ib2=0; ib2<atom->ncpp.nbeta; ib2++)
                     {
-                        ofs << std::setw(10) << atom->ncpp.lll[ib] 
+                        ofs << std::setw(10) << atom->ncpp.lll[ib]
                             << " " << atom->ncpp.lll[ib2]
                             << " " << atom->ncpp.dion(ib,ib2)<<std::endl;
                     }
                 }
                 ofs << "</DIJ>" << std::endl;
-    
+
                 for(int i=0; i<atom->ncpp.nbeta; i++)
                 {
                     ofs << "<PP_BETA>" << std::endl;
                     ofs << std::setw(10) << i << "\t" << "the index of projectors." <<std::endl;
                     ofs << std::setw(10) << atom->ncpp.lll[i] << "\t" << "the angular momentum." <<std::endl;
-    
+
                     // mohan add
                     // only keep the nonzero part.
-                    int cut_mesh = atom->ncpp.mesh; 
+                    int cut_mesh = atom->ncpp.mesh;
                     for(int j=atom->ncpp.mesh-1; j>=0; --j)
                     {
                         if( std::abs( atom->ncpp.betar(i,j) ) > 1.0e-10 )
                         {
-                            cut_mesh = j; 
+                            cut_mesh = j;
                             break;
                         }
                     }
                     if(cut_mesh %2 == 0) ++cut_mesh;
-    
+
                     ofs << std::setw(10) << cut_mesh << "\t" << "the number of mesh points." << std::endl;
-    
+
                     for(int j=0; j<cut_mesh; ++j)
                     {
                         ofs << std::setw(15) << atom->ncpp.r[j]
@@ -782,7 +816,7 @@ void UnitCell::read_pseudo(std::ofstream &ofs)
                     }
                     ofs << "</PP_BETA>" << std::endl;
                 }
-    
+
                 ofs.close();
             }
         }
@@ -796,10 +830,10 @@ void UnitCell::read_pseudo(std::ofstream &ofs)
     {
         if(atoms[0].ncpp.xc_func !=atoms[it].ncpp.xc_func)
         {
-            GlobalV::ofs_warning << "\n type " << atoms[0].label << " functional is " 
+            GlobalV::ofs_warning << "\n type " << atoms[0].label << " functional is "
                 << atoms[0].ncpp.xc_func;
 
-            GlobalV::ofs_warning << "\n type " << atoms[it].label << " functional is " 
+            GlobalV::ofs_warning << "\n type " << atoms[it].label << " functional is "
                 << atoms[it].ncpp.xc_func << std::endl;
 
             ModuleBase::WARNING_QUIT("setup_cell","All DFT functional must consistent.");
@@ -818,7 +852,7 @@ void UnitCell::read_pseudo(std::ofstream &ofs)
     // setup GlobalV::NLOCAL
     cal_nwfc(ofs);
 
-    // Check whether the number of valence is minimum 
+    // Check whether the number of valence is minimum
     if(GlobalV::MY_RANK==0)
     {
         int abtype = 0;
@@ -896,7 +930,7 @@ void UnitCell::cal_nwfc(std::ofstream &log)
 	assert(namax>0);
 // for tests
 //		OUT(GlobalV::ofs_running,"max input atom number",namax);
-//		OUT(GlobalV::ofs_running,"max wave function number",nwmax);	
+//		OUT(GlobalV::ofs_running,"max wave function number",nwmax);
 
 	//===========================
 	// (3) set nwfc and stapos_wf
@@ -906,11 +940,11 @@ void UnitCell::cal_nwfc(std::ofstream &log)
 	{
 		atoms[it].stapos_wf = GlobalV::NLOCAL;
 		const int nlocal_it = atoms[it].nw * atoms[it].na;
-		if(GlobalV::NSPIN!=4) 
+		if(GlobalV::NSPIN!=4)
 		{
 			GlobalV::NLOCAL += nlocal_it;
 		}
-		else 
+		else
 		{
 			GlobalV::NLOCAL += nlocal_it * 2;//zhengdy-soc
 		}
@@ -919,7 +953,7 @@ void UnitCell::cal_nwfc(std::ofstream &log)
 //		OUT(GlobalV::ofs_running,ss1.str(),nlocal_it);
 //		OUT(GlobalV::ofs_running,"start position of local orbitals",atoms[it].stapos_wf);
 	}
-	
+
 	//OUT(GlobalV::ofs_running,"NLOCAL",GlobalV::NLOCAL);
 	log << " " << std::setw(40) << "NLOCAL" << " = " << GlobalV::NLOCAL <<std::endl;
 	//========================================================
@@ -952,13 +986,13 @@ void UnitCell::cal_nwfc(std::ofstream &log)
 				++iwt;
 			}
 			++iat;
-		}	
+		}
 	}
 
 	//========================
 	// (5) set lmax and nmax
 	//========================
-	this->lmax = 0;	
+	this->lmax = 0;
 	this->nmax = 0;
 	for(int it=0; it<ntype; it++)
 	{
@@ -986,7 +1020,7 @@ void UnitCell::cal_nwfc(std::ofstream &log)
 		{
 			if( lmax_ppwf < atoms[it].ncpp.lchi[ic] )
 			{
-				this->lmax_ppwf = atoms[it].ncpp.lchi[ic]; 
+				this->lmax_ppwf = atoms[it].ncpp.lchi[ic];
 			}
 		}
 	}
@@ -1051,7 +1085,7 @@ void UnitCell::set_iat2iwt(const int& npol_in)
 			this->iat2iwt[iat] = iwt;
 			iwt += atoms[it].nw * this->npol;
 			++iat;
-		}	
+		}
 	}
 	}
 
@@ -1171,7 +1205,7 @@ void UnitCell::setup_cell_after_vc(std::ofstream &log)
             atom->tau[ia] = atom->taud[ia] * latvec;
         }
     }
-    
+
 #ifdef __MPI
     this->bcast_unitcell();
 #endif
@@ -1303,7 +1337,7 @@ void UnitCell::check_structure(double factor)
 	bool all_pass = true;
 	bool no_warning = true;
 	for (int it1 = 0;it1 < ntype; it1++)
-	{ 
+	{
 		std::string symbol1 = this->atoms[it1].ncpp.psd;
 		double symbol1_covalent_radius;
 		if (ModuleBase::CovalentRadius.find(symbol1) != ModuleBase::CovalentRadius.end())
@@ -1319,7 +1353,7 @@ void UnitCell::check_structure(double factor)
 			std::cout << mess.str() ;
 			symbol1_covalent_radius = 0.0;
 		}
- 
+
 		for (int ia1 =0;ia1 <this->atoms[it1].na;ia1++)
 		{
 			double x1 = this->atoms[it1].taud[ia1].x;
@@ -1354,22 +1388,22 @@ void UnitCell::check_structure(double factor)
 								if (it1==it2 && ia1 > ia2)
 									continue;
 								else if(it1==it2 && ia1==ia2 && a==0 && b==0 && c==0)
-									continue;	
+									continue;
 
 								double x2 = this->atoms[it2].taud[ia2].x + a;
 								double y2 = this->atoms[it2].taud[ia2].y + b;
 								double z2 = this->atoms[it2].taud[ia2].z + c;
 
-								double bond_length = sqrt(pow((x2-x1)*this->a1.x + (y2-y1)*this->a2.x + (z2-z1)*this->a3.x,2) + 
+								double bond_length = sqrt(pow((x2-x1)*this->a1.x + (y2-y1)*this->a2.x + (z2-z1)*this->a3.x,2) +
 														  pow((x2-x1)*this->a1.y + (y2-y1)*this->a2.y + (z2-z1)*this->a3.y,2) +
 														  pow((x2-x1)*this->a1.z + (y2-y1)*this->a2.z + (z2-z1)*this->a3.z,2) ) * this->lat0;
 
 								if (bond_length < covalent_length*factor || bond_length < covalent_length*warning_coef)
 								{
 									errorlog.setf(std::ios_base::fixed, std::ios_base::floatfield);
-									errorlog << std::setw(3) << ia1+1 << "-th " << std::setw(3) << this->atoms[it1].label << ", "; 
+									errorlog << std::setw(3) << ia1+1 << "-th " << std::setw(3) << this->atoms[it1].label << ", ";
 									errorlog << std::setw(3) << ia2+1 << "-th " << std::setw(3) << this->atoms[it2].label;
-									errorlog << " (cell:" << std::setw(2) << a << " " << std::setw(2) << b << " " << std::setw(2) << c << ")"; 
+									errorlog << " (cell:" << std::setw(2) << a << " " << std::setw(2) << b << " " << std::setw(2) << c << ")";
 									errorlog << ", distance= " << std::setprecision(3) << bond_length << " Bohr (";
 									errorlog << bond_length*ModuleBase::BOHR_TO_A << " Angstrom)" << std::endl;
 
@@ -1387,7 +1421,7 @@ void UnitCell::check_structure(double factor)
 					}//a
 				}//ia2
 			}//it2
-		}//ia1	
+		}//ia1
 	}//it1
 
 	if (!all_pass || !no_warning)
@@ -1416,8 +1450,8 @@ void UnitCell::check_structure(double factor)
 			std::cout << mess.str();
 			ModuleBase::WARNING_QUIT("Input", "The structure is unreasonable!");
 		}
-		
-		
+
+
 	}
 }
 
@@ -1436,14 +1470,14 @@ void UnitCell::remake_cell()
 	else if(latName == "sc") //ibrav = 1
 	{
 		double celldm = std::sqrt(pow(latvec.e11,2)+pow(latvec.e12,2)+pow(latvec.e13,2));
-		
+
 		latvec.Zero();
 		latvec.e11 = latvec.e22 = latvec.e33 = celldm;
 	}
 	else if(latName == "fcc") //ibrav = 2
 	{
 		double celldm = std::sqrt(pow(latvec.e11,2)+pow(latvec.e12,2)+pow(latvec.e13,2)) / std::sqrt(2.0);
-		
+
 		latvec.e11 =-celldm; latvec.e12 = 0.0;    latvec.e13 = celldm;
 		latvec.e21 = 0.0;    latvec.e22 = celldm; latvec.e23 = celldm;
 		latvec.e31 =-celldm; latvec.e32 = celldm; latvec.e33 = 0.0;
@@ -1451,7 +1485,7 @@ void UnitCell::remake_cell()
 	else if(latName == "bcc") //ibrav = 3
 	{
 		double celldm = std::sqrt(pow(latvec.e11,2)+pow(latvec.e12,2)+pow(latvec.e13,2)) / std::sqrt(3.0);
-		
+
 		latvec.e11 = celldm; latvec.e12 = celldm; latvec.e13 = celldm;
 		latvec.e21 =-celldm; latvec.e22 = celldm; latvec.e23 = celldm;
 		latvec.e31 =-celldm; latvec.e32 =-celldm; latvec.e33 = celldm;
@@ -1484,10 +1518,10 @@ void UnitCell::remake_cell()
 		double e12 = -celldm1 * t2 / sqrt(6.0);
 		double e13 =  celldm1 * t1 / sqrt(3.0);
 		double e22 =  celldm1 * sqrt(2.0) * t2 / sqrt(3.0);
-	
+
 		latvec.e11 = e11; latvec.e12 = e12; latvec.e13 = e13;
 		latvec.e21 = 0.0; latvec.e22 = e22;	latvec.e23 = e13;
-		latvec.e31 =-e11; latvec.e32 = e12;	latvec.e33 = e13;		
+		latvec.e31 =-e11; latvec.e32 = e12;	latvec.e33 = e13;
 	}
 	else if(latName == "st") //ibrav = 6
 	{
@@ -1501,17 +1535,17 @@ void UnitCell::remake_cell()
 	{
 		double celldm1 = std::abs(latvec.e11);
 		double celldm2 = std::abs(latvec.e13);
-			
+
 		latvec.e11 = celldm1; latvec.e12 =-celldm1; latvec.e13 = celldm2;
 		latvec.e21 = celldm1; latvec.e22 = celldm1; latvec.e23 = celldm2;
-		latvec.e31 =-celldm1; latvec.e32 =-celldm1;	latvec.e33 = celldm2;	
+		latvec.e31 =-celldm1; latvec.e32 =-celldm1;	latvec.e33 = celldm2;
 	}
 	else if(latName == "so") //ibrav = 8
 	{
 		double celldm1 = std::sqrt(pow(latvec.e11,2)+pow(latvec.e12,2)+pow(latvec.e13,2));
 		double celldm2 = std::sqrt(pow(latvec.e21,2)+pow(latvec.e22,2)+pow(latvec.e23,2));
 		double celldm3 = std::sqrt(pow(latvec.e31,2)+pow(latvec.e32,2)+pow(latvec.e33,2));
-		
+
 		latvec.e11 = celldm1; latvec.e12 = 0.0;     latvec.e13 = 0.0;
 		latvec.e21 = 0.0;     latvec.e22 = celldm2;	latvec.e23 = 0.0;
 		latvec.e31 = 0.0;     latvec.e32 = 0.0;     latvec.e33 = celldm3;
@@ -1544,7 +1578,7 @@ void UnitCell::remake_cell()
 
 		latvec.e11 = celldm1; latvec.e12 = celldm2; latvec.e13 = celldm3;
 		latvec.e21 =-celldm1; latvec.e22 = celldm2;	latvec.e23 = celldm3;
-		latvec.e31 =-celldm1; latvec.e32 =-celldm2;	latvec.e33 = celldm3;		
+		latvec.e31 =-celldm1; latvec.e32 =-celldm2;	latvec.e33 = celldm3;
 	}
 	else if(latName == "sm") //ibrav = 12
 	{
@@ -1578,7 +1612,7 @@ void UnitCell::remake_cell()
 
 		latvec.e11 = celldm1; latvec.e12 = 0.0; latvec.e13 =-celldm3;
 		latvec.e21 = e21;     latvec.e22 = e22;	latvec.e23 = 0.0;
-		latvec.e31 = celldm1; latvec.e32 = 0.0;	latvec.e33 = celldm3;		
+		latvec.e31 = celldm1; latvec.e32 = 0.0;	latvec.e33 = celldm3;
 	}
 	else if(latName == "triclinic") //ibrav = 14
 	{
@@ -1608,7 +1642,7 @@ void UnitCell::remake_cell()
 		term = sqrt(term)/sin12;
 		latvec.e33 = celldm3 * term;
 	}
-	else{ 
+	else{
 		std::cout << "latname is : " << latName << std::endl;
 		ModuleBase::WARNING_QUIT("UnitCell::read_atom_species","latname not supported!");
 	}
@@ -1633,7 +1667,7 @@ void UnitCell::cal_nelec(double& nelec)
 				ss2 << "total electron number of element " << GlobalC::paw_cell.get_zat(it);
 
 				ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, ss1.str(), GlobalC::paw_cell.get_val(it));
-				ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, ss2.str(), nelec_it);				
+				ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, ss2.str(), nelec_it);
 			}
 #endif
 		}
@@ -1664,7 +1698,7 @@ void UnitCell::cal_nelec(double& nelec)
 void UnitCell::compare_atom_labels(std::string label1, std::string label2)
 {
     if (label1 != label2) //'!( "Ag" == "Ag" || "47" == "47" || "Silver" == Silver" )'
-    {	
+    {
         atom_in ai;
         if (!(std::to_string(ai.atom_Z[label1]) == label2 ||   // '!( "Ag" == "47" )'
 			  ai.atom_symbol[label1] == label2 ||              // '!( "Ag" == "Silver" )'
@@ -1672,7 +1706,7 @@ void UnitCell::compare_atom_labels(std::string label1, std::string label2)
 		      label1 == std::to_string(ai.symbol_Z[label2]) || // '!( "47" == "Silver" )'
 			  label1 == ai.atom_symbol[label2] ||              // '!( "Silver" == "Ag" )'
 			  std::to_string(ai.symbol_Z[label1]) == label2 )) // '!( "Silver" == "47" )'
-	    {		
+	    {
 	    	std::string stru_label;
             std::string psuedo_label;
             for (int ip = 0; ip < label1.length(); ip++)
@@ -1687,7 +1721,7 @@ void UnitCell::compare_atom_labels(std::string label1, std::string label2)
 	    		}
             }
 	    	stru_label[0] = toupper(stru_label[0]);
-    
+
 	    	for (int ip = 0; ip < label2.length(); ip++)
             {
                 if (!(isdigit(label2[ip]) || label2[ip]=='_'))
@@ -1700,7 +1734,7 @@ void UnitCell::compare_atom_labels(std::string label1, std::string label2)
 	    		}
             }
 	    	psuedo_label[0] = toupper(psuedo_label[0]);
-    
+
             if (!(stru_label == psuedo_label || //' !("Ag1" == "ag_locpsp" || "47" == "47" || "Silver" == Silver" )'
 			      std::to_string(ai.atom_Z[stru_label]) == psuedo_label ||   // ' !("Ag1" == "47" )'
 			      ai.atom_symbol[stru_label] == psuedo_label ||              // ' !("Ag1" == "Silver")'
@@ -1708,9 +1742,9 @@ void UnitCell::compare_atom_labels(std::string label1, std::string label2)
 		          stru_label == std::to_string(ai.symbol_Z[psuedo_label]) || // ' !("47" == "Silver1" )'
 			      stru_label == ai.atom_symbol[psuedo_label] ||              // ' !("Silver1" == "Ag" )'
 			      std::to_string(ai.symbol_Z[stru_label]) == psuedo_label )) // ' !("Silver1" == "47" )'
-            
-				
-			{	
+
+
+			{
 				std::string atom_label_in_orbtial = "atom label in orbital file ";
 				std::string mismatch_with_pseudo = " mismatch with pseudo file of ";
                 ModuleBase::WARNING_QUIT("UnitCell::read_pseudo", atom_label_in_orbtial + label1 + mismatch_with_pseudo +label2);
