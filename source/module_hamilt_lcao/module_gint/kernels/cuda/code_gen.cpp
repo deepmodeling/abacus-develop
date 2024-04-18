@@ -1,3 +1,6 @@
+// Generate and test the efficiency of matrix multiplication functions with different parameters
+// This file takes a long time to compile
+
 gemm_time_measure<double, 2, 16, 16, 32, 2, 2, 16, 2, 16>(max_m,
                                                           max_n,
                                                           d_m,
