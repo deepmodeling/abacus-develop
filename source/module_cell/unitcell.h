@@ -22,7 +22,7 @@ public:
     bool set_atom_flag;//added on 2009-3-8 by mohan
     Magnetism magnet;  // magnetism Yu Liu 2021-07-03
     void cal_ux();
-    static bool judge_parallel(const double a[3],const ModuleBase::Vector3<double>& b);
+    bool judge_parallel(const double a[3],const ModuleBase::Vector3<double>& b);
 	double *atom_mag{};
 	int n_mag_at{};
 
@@ -64,7 +64,7 @@ public:
     // where the npol is the number of polarizations, 1 for non-magnetic(NSPIN=1 or 2), 2 for magnetic(only NSPIN=4)
     // this part only used for Atomic Orbital based calculation
     // ========================================================
-  public: 
+  public:
     // indexing tool for find orbital global index from it,ia,iw
     template<typename Tiait>
     inline Tiait itiaiw2iwt(const Tiait &it, const Tiait &ia, const Tiait &iw) const
@@ -172,7 +172,7 @@ public:
     ModuleBase::Matrix3 GT0;
     ModuleBase::Matrix3 GGT0;
     ModuleBase::Matrix3 invGGT0;
-	
+
     //I'm doing a bad thing here! Will change later
     bool ionic_position_updated = false; //whether the ionic position has been updated
     bool cell_parameter_updated = false; //whether the cell parameters are updated
@@ -220,7 +220,7 @@ public:
     double *atom_mass;
     std::string *atom_label;
     std::string *pseudo_fn;
-    std::string *pseudo_type; // pseudopotential types for each elements, sunliang added 2022-09-15. 
+    std::string *pseudo_type; // pseudopotential types for each elements, sunliang added 2022-09-15.
     std::string *orbital_fn;   // filenames of orbitals, liuyu add 2022-10-19
     std::string descriptor_file;  // filenames of descriptor_file, liuyu add 2023-04-06
 
@@ -252,7 +252,7 @@ public:
 	void print_stru_file(const std::string &fn, const int &type=1, const int &level=0)const; // mohan add 2011-03-22
 	void check_dtau(void);
     void setup_cell_after_vc(std::ofstream &log); //LiuXh add 20180515
-	
+
 	//for constrained vc-relaxation where type of lattice
 	//is fixed, adjust the lattice vectors
 	void remake_cell();
@@ -267,7 +267,7 @@ public:
 	//================================================================
 	void cal_nwfc(std::ofstream &log);
 	void cal_meshx();
-	void cal_natomwfc(std::ofstream &log); 
+	void cal_natomwfc(std::ofstream &log);
 	void print_unitcell_pseudo(const std::string &fn);
 	bool check_tau(void)const; //mohan add 2011-03-03
 	bool if_atoms_can_move()const;
@@ -282,7 +282,7 @@ public:
 
     /// @brief calculate the total number of electrons in system (GlobalV::nelec)
     void cal_nelec(double& nelec);
-  
+
     /// @brief check consistency between two atom labels from STRU and pseudo or orb file
     static void compare_atom_labels(std::string label1, std::string label2);
     /// @brief get atomCounts, which is a map from element type to atom number

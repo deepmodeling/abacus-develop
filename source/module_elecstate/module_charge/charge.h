@@ -62,14 +62,14 @@ class Charge
 
     /**
      * @brief Init charge density from file or atomic pseudo-wave-functions
-     * 
+     *
      * @param eferm_iout fermi energy to be initialized
-     * @param strucFac [in] structure factor 
+     * @param strucFac [in] structure factor
      * @param nbz [in] number of big grids in z direction
      * @param bz [in] number of small grids in big grids for z dirction
      */
     void init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMatrix& strucFac, const int& nbz, const int& bz);
-    
+
     void allocate(const int &nspin_in);
 
     void atomic_rho(const int spin_number_need,
@@ -79,7 +79,7 @@ class Charge
                     const UnitCell& ucell) const;
 
     void set_rho_core(const ModuleBase::ComplexMatrix &structure_factor);
-    static void set_rho_core_paw();
+    void set_rho_core_paw();
 
     void renormalize_rho(void);
 
@@ -105,7 +105,7 @@ class Charge
 	public:
     /**
      * @brief init some arrays for mpi_inter_pools, rho_mpi
-     * 
+     *
      * @param nbz number of bigz in big grids
      * @param bz  number of z for each bigz
      */
@@ -118,10 +118,10 @@ class Charge
     void rho_mpi();
 
 	  /**
-	   * @brief 	Reduce among different pools 
+	   * @brief 	Reduce among different pools
      *          If NPROC_IN_POOLs are all the same, use GlobalV::INTER_POOL
      *          else, gather rho in a POOL, and then reduce among different POOLs
-	   * 
+	   *
 	   * @param array_rho f(rho): an array [nrxx]
 	   */
 	  void reduce_diff_pools(double* array_rho) const;
@@ -145,7 +145,7 @@ class Charge
     int *rec = nullptr; //The number of elements each process should receive into the receive buffer.
     int *dis = nullptr; //The displacement (relative to recvbuf) for each process in the receive buffer.
 #endif
-    
+
 };
 
 #endif // charge

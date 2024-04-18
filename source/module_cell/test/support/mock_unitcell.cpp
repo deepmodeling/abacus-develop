@@ -5,7 +5,7 @@
     endless compile troubles like undefined behavior"
 */
 void UnitCell::cal_ux() {}
-bool UnitCell::judge_parallel(double a[3], ModuleBase::Vector3<double> b) {return true;}
+bool UnitCell::judge_parallel(const double a[3], const ModuleBase::Vector3<double>& b) {return true;}
 void UnitCell::set_iat2iwt(const int& npol_in) {}
 UnitCell::UnitCell()
 {
@@ -72,7 +72,7 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running) 
 void UnitCell::read_cell_pseudopots(const std::string &pp_dir, std::ofstream &log) {}
 bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_running, std::ofstream &ofs_warning) {return true;}
 void UnitCell::update_pos_tau(const double* pos) {}
-void UnitCell::update_pos_taud(double* posd_in) {}
+void UnitCell::update_pos_taud(const double* posd_in) {}
 void UnitCell::update_pos_taud(const ModuleBase::Vector3<double>* posd_in) {}
 void UnitCell::update_vel(const ModuleBase::Vector3<double>* vel_in) {}
 void UnitCell::periodic_boundary_adjustment() {}
