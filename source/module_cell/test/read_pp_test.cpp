@@ -373,7 +373,7 @@ TEST_F(ReadPPTest, HeaderErr2015)
     // 4th
     GlobalV::ofs_warning.open("warning.log");
     ifs.open("./support/HeaderError5");
-    upf->read_pseudo_upf201(ifs);
+	EXPECT_DEATH(upf->read_pseudo_upf201(ifs),"");
     GlobalV::ofs_warning.close();
     ifs.close();
     ifs.open("warning.log");
