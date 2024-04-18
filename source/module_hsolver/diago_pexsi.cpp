@@ -1,5 +1,6 @@
 #include <mpi.h>
 #include <complex>
+#include <memory>
 #ifdef __PEXSI
 #include "diago_pexsi.h"
 #include "module_base/global_variable.h"
