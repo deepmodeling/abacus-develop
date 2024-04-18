@@ -60,6 +60,7 @@
     - [search\_radius](#search_radius)
     - [search\_pbc](#search_pbc)
     - [bx, by, bz](#bx-by-bz)
+    - [num\_stream] (#num_stream)
   - [Electronic structure](#electronic-structure)
     - [basis\_type](#basis_type)
     - [ks\_solver](#ks_solver)
@@ -652,10 +653,8 @@ If only one value is set (such as `kspacing 0.5`), then kspacing values of a/b/c
   - cpu: for CPUs via Intel, AMD, or Other supported CPU devices
   - gpu: for GPUs via CUDA or ROCm.
 
-  Known limitations:
+  Known limitations: If using the pw basis, the ks_solver must be cg/bpcg/dav to support `gpu` acceleration. If using the lcao basis, `gamma_only` must be set to `1`, as multi-k calculation is currently not supported for `gpu`. lcao_in_pw also does not support `gpu`.
 
-  - pw basis: required by the `gpu` acceleration options
-  - cg/bpcg/dav ks_solver: required by the `gpu` acceleration options
 - **Default**: cpu
 
 ### precision
@@ -886,6 +885,12 @@ These variables are used to control the numerical atomic orbitals related parame
 - **Description**: In the matrix operation of grid integral, bx/by/bz grids (in x, y, z directions) are treated as a whole as a matrix element. A different value will affect the calculation speed. The default is 0, which means abacus will automatically calculate these values.
 - **Default**: 0
 
+### num_stream
+
+- **Type** :int
+- **Description**: choose the number of streams in GPU when we compute the `LCAO`. According to different devices , we may have different effects.For most devices,the stream is
+enough when the number is bigger then 2.
+- **Default** : "4" 
 [back to top](#full-list-of-input-keywords)
 
 ## Electronic structure

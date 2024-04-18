@@ -80,7 +80,7 @@ void HSolverLCAO<T, Device>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
         }
         if (this->pdiagh == nullptr)
         {
-            this->pdiagh = new DiagoCusolver<T>();
+            this->pdiagh = new DiagoCusolver<T>(this->ParaV);
             this->pdiagh->method = this->method;
         }
     }
