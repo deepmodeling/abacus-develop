@@ -240,7 +240,6 @@ void Paw_Cell::set_isk(const int nk, const int * isk_in)
 void Paw_Cell::set_currentk(const int ik)
 {
     current_k = ik;
-    isk.reserve(ik+1); //FIXME: where did isk initialized?
     current_spin = isk[ik];
 }
 

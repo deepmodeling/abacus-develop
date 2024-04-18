@@ -163,6 +163,12 @@ void K_Vectors::set(
     this->set_kup_and_kdw();
 
     this->print_klists(GlobalV::ofs_running);
+
+	//std::cout << " NUMBER OF K-POINTS   : " << nkstot << std::endl;
+
+#ifdef USE_PAW
+    GlobalC::paw_cell.set_isk(nks,isk.data());
+#endif
 }
 
 void K_Vectors::renew(const int &kpoint_number)
@@ -395,7 +401,7 @@ bool K_Vectors::read_kpoints(const std::string &fn)
 			//std::cout << " count = " << count << std::endl;
 			assert(count == nkstot);
             assert(kl_segids.size() == nkstot); /* ISSUE#3482: to distinguish different kline segments */
-			
+
             std::for_each(wk.begin(), wk.end(), [](double& d){d = 1.0;});
 
             this->kc_done = true;
@@ -627,7 +633,7 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS TYPE", bbrav);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS LATTICE NAME", bbrav_name);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ibrav", bbrav);
-        
+
         // the map of bravis lattice from real to reciprocal space
         // for example, 3(fcc) in real space matches 2(bcc) in reciprocal space
         std::vector<int> ibrav_a2b{ 1, 3, 2, 4, 5, 6, 7, 8, 10, 9, 11, 12, 13, 14 };
@@ -662,7 +668,7 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
         ModuleBase::Matrix3 b_optlat_new(gb1.x, gb1.y, gb1.z, gb2.x, gb2.y, gb2.z, gb3.x, gb3.y, gb3.z);
         symm.setgroup(bsymop, bnop, bbrav);
         symm.gmatrix_convert(bsymop, bsymop, bnop, b_optlat_new, ucell.G);
-        
+
         //check if all the kgmatrix are in bsymop
         auto matequal = [&symm] (ModuleBase::Matrix3 a, ModuleBase::Matrix3 b)
         {
@@ -673,7 +679,7 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
         for(int i=0;i<symm.nrotk;++i)
         {
             match = false;
-            for(int j=0;j<bnop;++j) 
+            for(int j=0;j<bnop;++j)
             {
                 if (matequal(symm.kgmatrix[i], bsymop[j])) {match=true; break;}
             }
@@ -907,7 +913,7 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
     skpt = ss.str();
 
 	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nkstot_ibz",nkstot_ibz);
-    
+
     fmt.set_context({"int_w8", "double_w12_f8", "double_w12_f8", "double_w12_f8", "double_w6_f4", "int_w4"});
     fmt.set_titles({"IBZ", "DIRECT_X", "DIRECT_Y", "DIRECT_Z", "WEIGHT", "ibz2bz"});
     fmt.set_overall_title("K-POINTS REDUCTION ACCORDING TO SYMMETRY");
@@ -1322,7 +1328,7 @@ void K_Vectors::set_after_vc(
     //this->set_both_kvec(reciprocal_vec, latvec);
 
     //Since the number of kpoints is not changed, we do not need to do the following.
-    // this->mpi_k_after_vc(); 
+    // this->mpi_k_after_vc();
 
     // this->set_kup_and_kdw_after_vc();
 
