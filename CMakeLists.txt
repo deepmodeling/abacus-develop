@@ -627,13 +627,11 @@ if(BUILD_TESTING)
     endif()
 
     # dependencies & link library
+    target_link_libraries(${UT_TARGET} ${UT_LIBS} Threads::Threads
+                          GTest::gtest_main GTest::gmock_main)
     if(ENABLE_GOOGLEBENCH)
       target_link_libraries(
-        ${UT_TARGET} ${UT_LIBS} Threads::Threads GTest::gtest_main
-        GTest::gmock_main benchmark::benchmark)
-    else()
-      target_link_libraries(${UT_TARGET} ${UT_LIBS} Threads::Threads
-                            GTest::gtest_main GTest::gmock_main)
+        ${UT_TARGET} benchmark::benchmark)
     endif()
 
     if(USE_OPENMP)
