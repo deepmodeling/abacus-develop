@@ -205,7 +205,7 @@ void Paw_Cell::set_paw_k(
     }
 
     this -> set_ylm(npw, kpg);
-    
+
     gnorm.resize(npw);
     for(int ipw = 0; ipw < npw; ipw ++)
     {
@@ -240,6 +240,7 @@ void Paw_Cell::set_isk(const int nk, const int * isk_in)
 void Paw_Cell::set_currentk(const int ik)
 {
     current_k = ik;
+    isk.reserve(ik+1); //FIXME: where did isk initialized?
     current_spin = isk[ik];
 }
 
@@ -248,7 +249,7 @@ void Paw_Cell::map_paw_proj()
     ModuleBase::TITLE("Paw_Element","map_paw_proj");
 
     nproj_tot = 0;
-    
+
     for(int ia = 0; ia < nat; ia ++)
     {
         int it = atom_type[ia];
@@ -349,7 +350,7 @@ std::vector<double> Paw_Cell::calc_ylm(const int lmax, const double * r)
             cphi = xx/(rr*stheta); // cos (phi)
             sphi = yy/(rr*stheta); // sin (phi)
         }
-        
+
         for(int m = 1; m < lmax + 1; m ++)
         {
             std::complex<double> tmp(cphi,sphi);
@@ -361,10 +362,10 @@ std::vector<double> Paw_Cell::calc_ylm(const int lmax, const double * r)
             const int l0 = l*l + l;
             double fact  = 1.0/double(l*(l+1));
             const double ylmcst = std::sqrt(double(2*l+1)/fourpi);
-            
+
             // m = 0
             ylm[l0] = ylmcst*Paw_Cell::ass_leg_pol(l,0,ctheta);
-            
+
             // m > 0
             double onem = 1.0;
             for(int m = 1; m < l + 1; m ++)
@@ -514,7 +515,7 @@ void Paw_Cell::get_vkb()
                     vkb[ip+proj_start][ipw] = fact * ptilde[ip] * ylm * sk;
                 }
             }
-            
+
             ind_at += na;
         }
         assert(ind_at == nat);
@@ -550,7 +551,7 @@ void Paw_Cell::accumulate_rhoij(const std::complex<double> * psi, const double w
         for(int iproj = 0; iproj < nproj; iproj ++)
         {
             ca[iproj] = 0.0;
-            
+
             // consider use blas subroutine for this part later
             for(int ipw = 0; ipw < npw; ipw ++)
             {
@@ -613,7 +614,7 @@ void Paw_Cell::paw_nl_psi(const int mode, const std::complex<double> * psi, std:
         for(int ipw = 0; ipw < npw; ipw ++)
         {
             vnlpsi[ipw] = psi[ipw];
-        }        
+        }
     }
     else
     {
@@ -640,7 +641,7 @@ void Paw_Cell::paw_nl_psi(const int mode, const std::complex<double> * psi, std:
         for(int iproj = 0; iproj < nproj; iproj ++)
         {
             ca[iproj] = 0.0;
-            
+
             // consider use blas subroutine for this part later
             for(int ipw = 0; ipw < npw; ipw ++)
             {
@@ -722,7 +723,7 @@ void Paw_Cell::paw_nl_force(const std::complex<double> * psi, const double * eps
                 dca[0][iproj] = 0.0;
                 dca[1][iproj] = 0.0;
                 dca[2][iproj] = 0.0;
-                
+
                 // consider use blas subroutine for this part later
                 for(int ipw = 0; ipw < npw; ipw ++)
                 {
