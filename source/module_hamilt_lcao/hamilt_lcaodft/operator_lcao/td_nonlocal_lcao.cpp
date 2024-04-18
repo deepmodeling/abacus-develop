@@ -44,7 +44,7 @@ hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::~TDNonlocal()
     }
 }
 template <typename TK, typename TR>
-void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::init_td(void)
+void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::init_td()
 {
     //calculate At in cartesian coorinates.
 	double l_norm[3]={GlobalC::ucell.a1.norm() ,GlobalC::ucell.a2.norm() ,GlobalC::ucell.a3.norm()};
@@ -362,13 +362,11 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         this->hR_tmp_done = true;
     }
     ModuleBase::timer::tick("TDNonlocal", "contributeHR");
-    return;
 }
 template<typename TK, typename TR>
 void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
 {
-    return;
-}
+    }
 template<>
 void hamilt::TDNonlocal<hamilt::OperatorLCAO<std::complex<double>, double>>::contributeHk(int ik)
 {
@@ -376,7 +374,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<std::complex<double>, double>>::con
     {
         return;
     }
-    else{        
+           
         ModuleBase::TITLE("TDNonlocal", "contributeHk");
         ModuleBase::timer::tick("TDNonlocal", "contributeHk");
         //folding inside HR to HK
@@ -392,7 +390,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<std::complex<double>, double>>::con
         }
         
         ModuleBase::timer::tick("TDNonlocal", "contributeHk");
-    }
+   
 }
 template class hamilt::TDNonlocal<hamilt::OperatorLCAO<double, double>>;
 template class hamilt::TDNonlocal<hamilt::OperatorLCAO<std::complex<double>, double>>;

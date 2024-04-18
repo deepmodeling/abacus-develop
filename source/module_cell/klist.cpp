@@ -85,8 +85,8 @@ void K_Vectors::set(
 	}
 
     // output kpoints file
-    std::string skpt1="";
-    std::string skpt2="";
+    std::string skpt1;
+    std::string skpt2;
 
     // (2)
     //only berry phase need all kpoints including time-reversal symmetry!
@@ -163,14 +163,6 @@ void K_Vectors::set(
     this->set_kup_and_kdw();
 
     this->print_klists(GlobalV::ofs_running);
-
-	//std::cout << " NUMBER OF K-POINTS   : " << nkstot << std::endl;
-
-#ifdef USE_PAW
-    GlobalC::paw_cell.set_isk(nks,isk.data());
-#endif
-
-    return;
 }
 
 void K_Vectors::renew(const int &kpoint_number)
@@ -180,20 +172,12 @@ void K_Vectors::renew(const int &kpoint_number)
     wk.resize(kpoint_number);
     isk.resize(kpoint_number);
     ngk.resize(kpoint_number);
-
-    /*ModuleBase::Memory::record("KV::kvec_c",sizeof(double) * kpoint_number*3);
-    ModuleBase::Memory::record("KV::kvec_d",sizeof(double) * kpoint_number*3);
-    ModuleBase::Memory::record("KV::wk",sizeof(double) * kpoint_number*3);
-    ModuleBase::Memory::record("KV::isk",sizeof(int) * kpoint_number*3);
-    ModuleBase::Memory::record("KV::ngk",sizeof(int) * kpoint_number*3);*/
-
-    return;
 }
 
 bool K_Vectors::read_kpoints(const std::string &fn)
 {
     ModuleBase::TITLE("K_Vectors", "read_kpoints");
-    if (GlobalV::MY_RANK != 0) return 1;
+    if (GlobalV::MY_RANK != 0) return true;
 
 	// mohan add 2010-09-04
 	if(GlobalV::GAMMA_ONLY_LOCAL)
@@ -233,7 +217,7 @@ bool K_Vectors::read_kpoints(const std::string &fn)
     if (!ifk)
 	{
 		GlobalV::ofs_warning << " Can't find File name : " << fn << std::endl;
-		return 0;
+		return false;
     }
 
     ifk >> std::setiosflags(std::ios::uppercase);
@@ -264,7 +248,7 @@ bool K_Vectors::read_kpoints(const std::string &fn)
     if (ierr == 0)
     {
 		GlobalV::ofs_warning << " symbol K_POINTS not found." << std::endl;
-		return 0;
+		return false;
     }
 
     //input k-points are in 2pi/a units
@@ -282,7 +266,7 @@ bool K_Vectors::read_kpoints(const std::string &fn)
     if (nkstot > 100000)
     {
 		GlobalV::ofs_warning << " nkstot > MAX_KPOINTS" << std::endl;
-        return 0;
+        return false;
     }
 
     int k_type = 0;
@@ -303,7 +287,7 @@ bool K_Vectors::read_kpoints(const std::string &fn)
         else
         {
 			GlobalV::ofs_warning << " Error: neither Gamma nor Monkhorst-Pack." << std::endl;
-			return 0;
+			return false;
         }
 
         ifk >> nmp[0] >> nmp[1] >> nmp[2];
@@ -340,7 +324,7 @@ bool K_Vectors::read_kpoints(const std::string &fn)
 			if(ModuleSymmetry::Symmetry::symm_flag == 1)
 			{
 				ModuleBase::WARNING("K_Vectors::read_kpoints","Line mode of k-points is open, please set symmetry to 0 or -1.");
-				return 0;
+				return false;
 			}
 
 
@@ -424,7 +408,7 @@ bool K_Vectors::read_kpoints(const std::string &fn)
 			if(ModuleSymmetry::Symmetry::symm_flag == 1)
 			{
 				ModuleBase::WARNING("K_Vectors::read_kpoints","Line mode of k-points is open, please set symmetry to 0 or -1.");
-				return 0;
+				return false;
 			}
 
 
@@ -504,14 +488,14 @@ bool K_Vectors::read_kpoints(const std::string &fn)
         else
         {
 			GlobalV::ofs_warning << " Error : neither Cartesian nor Direct kpoint." << std::endl;
-			return 0;
+			return false;
         }
     }
 
     this->nkstot_full = this->nks = this->nkstot;
 
 	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nkstot",nkstot);
-    return 1;
+    return true;
 } // END SUBROUTINE
 
 
@@ -561,11 +545,9 @@ void K_Vectors::Monkhorst_Pack(const int *nmp_in, const double *koffset_in, cons
         wk[ik] = weight;
     }
     this->kd_done = true;
-
-    return;
 }
 
-void K_Vectors::update_use_ibz( void )
+void K_Vectors::update_use_ibz( )
 {
     if (GlobalV::MY_RANK!=0) return;
     ModuleBase::TITLE("K_Vectors","update_use_ibz");
@@ -588,7 +570,6 @@ void K_Vectors::update_use_ibz( void )
 
     this->kd_done = true;
     this->kc_done = false;
-    return;
 }
 
 void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,std::string& skpt, const UnitCell &ucell, bool& match)
@@ -767,8 +748,7 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
         if(std::abs(kvec.x) < symm.epsilon) kvec.x = 0.0;
         if(std::abs(kvec.y) < symm.epsilon) kvec.y = 0.0;
         if(std::abs(kvec.z) < symm.epsilon) kvec.z = 0.0;
-        return;
-    };
+   };
     // for output in kpoints file
     int ibz_index[nkstot];
 	// search in all k-poins.
@@ -960,8 +940,6 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
     }
     fmt << _ibz << _direct_x << _direct_y << _direct_z << _weights << _ibz2bz;
     GlobalV::ofs_running << fmt.str() << std::endl;
-
-    return;
 }
 
 
@@ -1090,8 +1068,7 @@ void K_Vectors::set_both_kvec(const ModuleBase::Matrix3 &G, const ModuleBase::Ma
         skpt = ss.str();
 	}
 
-    return;
-}
+    }
 
 
 void K_Vectors::normalize_wk(const int &degspin)
@@ -1115,11 +1092,10 @@ void K_Vectors::normalize_wk(const int &degspin)
         this->wk[ik] *= degspin;
     }
 
-    return;
-}
+    }
 
 #ifdef __MPI
-void K_Vectors::mpi_k(void)
+void K_Vectors::mpi_k()
 {
 	ModuleBase::TITLE("K_Vectors","mpi_k");
 
@@ -1209,7 +1185,7 @@ void K_Vectors::mpi_k(void)
 // This routine sets the k vectors for the up and down spin
 //----------------------------------------------------------
 // from set_kup_and_kdw.f90
-void K_Vectors::set_kup_and_kdw(void)
+void K_Vectors::set_kup_and_kdw()
 {
     ModuleBase::TITLE("K_Vectors", "setup_kup_and_kdw");
 
@@ -1256,8 +1232,7 @@ void K_Vectors::set_kup_and_kdw(void)
         break;
     }
 
-    return;
-} // end subroutine set_kup_and_kdw
+    } // end subroutine set_kup_and_kdw
 
 
 void K_Vectors::print_klists(std::ofstream &ofs)
@@ -1326,7 +1301,6 @@ void K_Vectors::print_klists(std::ofstream &ofs)
 	}
     fmt << _kpoints << _direct_x << _direct_y << _direct_z << _weights;
     GlobalV::ofs_running << "\n" << fmt.str() << std::endl;
-    return;
 }
 
 //LiuXh add a new function here,
@@ -1353,14 +1327,12 @@ void K_Vectors::set_after_vc(
     // this->set_kup_and_kdw_after_vc();
 
     this->print_klists(GlobalV::ofs_running);
-
-    return;
 }
 
 //LiuXh add a new function here,
 //20180515
 //Useless now, it has bugs in it.
-void K_Vectors::mpi_k_after_vc(void)
+void K_Vectors::mpi_k_after_vc()
 {
 #ifdef __MPI
     ModuleBase::TITLE("K_Vectors","mpi_k_after_vc");
@@ -1503,11 +1475,10 @@ void K_Vectors::set_both_kvec_after_vc(const ModuleBase::Matrix3 &G, const Modul
 	}
     fmt << _kpoints << _direct_x << _direct_y << _direct_z << _weights;
     GlobalV::ofs_running << fmt.str() << std::endl;
-    return;
 }
 
 //Useless now
-void K_Vectors::set_kup_and_kdw_after_vc(void)
+void K_Vectors::set_kup_and_kdw_after_vc()
 {
     ModuleBase::TITLE("K_Vectors", "setup_kup_and_kdw_after_vc");
 
@@ -1557,5 +1528,4 @@ void K_Vectors::set_kup_and_kdw_after_vc(void)
 
     }
 
-    return;
-} // end subroutine set_kup_and_kdw
+    } // end subroutine set_kup_and_kdw

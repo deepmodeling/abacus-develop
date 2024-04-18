@@ -84,6 +84,5 @@ void Evolve_elec::solve_psi(const int& istep,
     } // end k
 
     ModuleBase::timer::tick("Evolve_elec", "evolve_psi");
-    return;
 }
 } // namespace module_tddft

@@ -191,8 +191,8 @@ class CubicSpline
                              const double* const s,
                              const int n_interp,
                              const double* const x_interp,
-                             double* const y_interp,
-                             double* const dy_interp);
+                             const double* const y_interp,
+                             const double* const dy_interp);
 
     //! Solves a cyclic tridiagonal linear system.
     /*!
@@ -215,8 +215,8 @@ class CubicSpline
      *                                                                              */
     static void solve_cyctri(const int n,     //!< [in] size of the linear system
                              double* const D, //!< [in] main diagonal
-                             double* const U, //!< [in] superdiagonal
-                             double* const L, //!< [in] subdiagonal
+                             double* const supdiag, //!< [in] superdiagonal
+                             double* const subdiag, //!< [in] subdiagonal
                              double* const b  //!< [in,out] right hand side of the linear system;
                                               //!< will be overwritten by the solution on finish.
     );
@@ -262,7 +262,7 @@ class CubicSpline
                                                         //!<       must be within [x_[0], x_[n-1]]
                       double* const y_interp,           //!< [out] interpolated values
                       double* const dy_interp,          //!< [out] derivatives at x_interp
-                      std::function<int(double)> search //!< [in]  a function that returns the index of the left
+                      const std::function<int(double)>& search //!< [in]  a function that returns the index of the left
                                                         //         knot of the spline polynomial to be evaluated
     );
 };

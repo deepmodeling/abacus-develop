@@ -175,7 +175,7 @@ void ModuleIO::write_dm_sparse(
     ModuleBase::GlobalFunc::ZEROS(DMR_nonzero_num, total_R_num);
 
     int count = 0;
-    for (auto &R_coor : all_R_coor)
+    for (const auto &R_coor : all_R_coor)
     {
         auto iter = DMR_sparse.find(R_coor);
         if (iter != DMR_sparse.end())
@@ -226,7 +226,7 @@ void ModuleIO::write_dm_sparse(
     }
 
     count = 0;
-    for (auto &R_coor : all_R_coor)
+    for (const auto &R_coor : all_R_coor)
     {
         int dRx = R_coor.x;
         int dRy = R_coor.y;

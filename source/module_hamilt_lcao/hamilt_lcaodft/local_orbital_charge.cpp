@@ -69,7 +69,6 @@ void Local_Orbital_Charge::allocate_dm_wfc(const Grid_Technique& gt,
     this->LOWF->gridt = &gt;
     // here we reset the density matrix dimension.
     this->allocate_gamma(gt.lgd, psi, pelec, kv.nks, istep);
-    return;
 }
 
 void Local_Orbital_Charge::allocate_dm_wfc(const Grid_Technique &gt,
@@ -86,7 +85,6 @@ void Local_Orbital_Charge::allocate_dm_wfc(const Grid_Technique &gt,
     // here we reset the density matrix dimension.
     lowf.allocate_k(gt.lgd, psi, pelec, kv.nks, kv.nkstot, kv.kvec_c, istep);
     this->allocate_DM_k(kv.nks, gt.nnrg);
-    return;
 }
 
 void Local_Orbital_Charge::set_dm_k(int ik, std::complex<double>* dm_k_in)
@@ -100,10 +98,9 @@ void Local_Orbital_Charge::set_dm_k(int ik, std::complex<double>* dm_k_in)
             dm_k[ik](i, j) = dm_k_in[i * ParaV->nrow + j];
         }
     }
-    return;
-}
+    }
 
-void Local_Orbital_Charge::set_dm_gamma(int is, double* dm_gamma_in)
+void Local_Orbital_Charge::set_dm_gamma(int is, const double* dm_gamma_in)
 {
     ModuleBase::TITLE("Local_Orbital_Charge", "set_dm_gamma");
     dm_gamma[is].create(ParaV->ncol, ParaV->nrow);
@@ -114,5 +111,4 @@ void Local_Orbital_Charge::set_dm_gamma(int is, double* dm_gamma_in)
             dm_gamma[is](i, j) = dm_gamma_in[i * ParaV->nrow + j];
         }
     }
-    return;
-}
+    }

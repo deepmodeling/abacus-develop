@@ -481,7 +481,7 @@ bool ESolver_OF::check_exit()
         return true;
     }
     // ============ temporary solution of potential convergence ===========
-    else if (this->of_conv_ == "potential" && potHold)
+    if (this->of_conv_ == "potential" && potHold)
     {
         GlobalV::ofs_warning << "ESolver_OF WARNING: "
                              << "The convergence of potential has not been reached, but the norm of potential nearly "

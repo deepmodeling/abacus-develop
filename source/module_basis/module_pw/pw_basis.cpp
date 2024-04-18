@@ -97,7 +97,6 @@ void PW_Basis::getstartgr()
 	// startr record the starting 'numr' position
 	this->startr[0] = 0;
 	for (int ip = 1;ip < poolnproc; ++ip) this->startr[ip] = this->startr[ip-1] + this->numr[ip-1];
-    return;
 }
 
 ///
@@ -133,8 +132,7 @@ void PW_Basis::collect_local_pw()
         this->gcar[ig] = f * this->G;
         if(this->gg[ig] < 1e-8) this->ig_gge0 = ig;
     }
-    return;
-}
+    }
 
 ///
 /// Collect modulus of planewaves on current cores
@@ -233,4 +231,4 @@ void PW_Basis::set_precision(std::string precision_) {
     this->precision = std::move(precision_);
 }
 
-}
+}  // namespace ModulePW

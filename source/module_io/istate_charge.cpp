@@ -238,8 +238,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
         }
     }
 
-    return;
-}
+    }
 
 #ifdef __MPI
 void IState_Charge::idmatrix(const int& ib,

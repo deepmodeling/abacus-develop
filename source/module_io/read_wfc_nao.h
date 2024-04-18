@@ -35,7 +35,7 @@ namespace ModuleIO
         const int& nbands_g,
         const int& nlocal_g,
         const std::string& global_readin_dir,
-        const ModuleBase::Vector3<double> kvec_c,
+        const ModuleBase::Vector3<double>& kvec_c,
         const Parallel_Orbitals* ParaV, 
         psi::Psi<std::complex<double>>* psi,
         elecstate::ElecState* pelec);

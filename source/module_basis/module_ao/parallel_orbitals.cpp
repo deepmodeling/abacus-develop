@@ -228,10 +228,9 @@ int Parallel_Orbitals::set_nloc_wfc_Eij(
         {
             return 1;
         }
-        else
-        {
-            ModuleBase::WARNING_QUIT("Parallel_Orbitals::set_nloc_wfc_Eij", "some processor has no bands-row-blocks.");
-        }
+        
+                    ModuleBase::WARNING_QUIT("Parallel_Orbitals::set_nloc_wfc_Eij", "some processor has no bands-row-blocks.");
+       
     }
     int col_b_bands = block / dim1;
     if (coord[1] < block % dim1)

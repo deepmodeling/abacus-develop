@@ -34,7 +34,7 @@ struct CellSet
 {
 	AtomLink* address;
 	int length;
-	int in_grid[3];
+	int in_grid[3]{};
 	CellSet();
 };
 
@@ -73,21 +73,21 @@ public:
 	static const char* const ERROR[3];
 
 	//Data
-	int natom;// Total atoms.
-	bool pbc; // periodic boundary condition
-	bool expand_flag;
-	double sradius;// searching radius
-	double d_minX;// origin of all cells
-	double d_minY;
-	double d_minZ;
-	int dx;
-	int dy;
-	int dz;
-	int layer;
-	double cell_x_length;
-	double cell_y_length;
-	double cell_z_length;
-	CellSet ***Cell; //dx , dy ,dz is cell number in each direction,respectly.
+	int natom{};// Total atoms.
+	bool pbc{}; // periodic boundary condition
+	bool expand_flag{};
+	double sradius{};// searching radius
+	double d_minX{};// origin of all cells
+	double d_minY{};
+	double d_minZ{};
+	int dx{};
+	int dy{};
+	int dz{};
+	int layer{};
+	double cell_x_length{};
+	double cell_y_length{};
+	double cell_z_length{};
+	CellSet ***Cell{}; //dx , dy ,dz is cell number in each direction,respectly.
 	void delete_Cell() //it will replace by container soon!
 	{
 		if (this->init_cell_flag)
@@ -110,11 +110,11 @@ public:
 		}
 	}
 
-	double grid_length[3];
-	double vec1[3];
-	double vec2[3];
-	double vec3[3];
-	double lat_now;
+	double grid_length[3]{};
+	double vec1[3]{};
+	double vec2[3]{};
+	double vec3[3]{};
+	double lat_now{};
 	bool init_cell_flag;
     //LiuXh add 2019-07-15
     const double& getD_minX(void) const {return d_minX;}
@@ -130,7 +130,7 @@ protected:
 	AtomLink* getHashCode(const UnitCell &ucell, const FAtom &atom)const;		// Peize Lin delete const 2018-07-14
 //	AtomLink* const getHashCode(const FAtom &atom)const;
 	AtomLink* atomlink;
-	AtomLink* cordon_p;// Warning! A guard! Don't delete it!
+	AtomLink* cordon_p{};// Warning! A guard! Don't delete it!
 
 private:
 

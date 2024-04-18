@@ -233,8 +233,7 @@ void Velocity::act
 
 
     ModuleBase::timer::tick("Operator", "Velocity");
-    return;
 }
 
 
-}
+}  // namespace hamilt

@@ -6,7 +6,7 @@ bool ModuleIO::read_cube(
     Parallel_Grid* Pgrid,
 #endif
     int my_rank,
-    std::string esolver_type,
+    const std::string& esolver_type,
     int rank_in_stogroup,
     const int& is,
     std::ofstream& ofs_running,
@@ -30,10 +30,9 @@ bool ModuleIO::read_cube(
 		ofs_running << tmp_warning_info << std::endl;
 		return false;
 	}
-	else
-	{
-    	ofs_running << " Find the file, try to read charge from file." << std::endl;
-	}
+	
+	    	ofs_running << " Find the file, try to read charge from file." << std::endl;
+
 
 	bool quit=false;
 
@@ -93,7 +92,7 @@ bool ModuleIO::read_cube(
         ifs >> temp >> temp >> temp;
     }
 
-    const bool same = (nx == nx_read && ny == ny_read && nz == nz_read) ? true : false;
+    const bool same = nx == nx_read && ny == ny_read && nz == nz_read;
 
     for (int it = 0; it < ucell->ntype; it++)
     {

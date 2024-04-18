@@ -14,12 +14,12 @@
 namespace ModuleESolver
 {
 
-void ESolver::printname(void)
+void ESolver::printname()
 {
     std::cout << classname << std::endl;
 }
 
-std::string determine_type(void)
+std::string determine_type()
 {
 	std::string esolver_type = "none";
 	if (GlobalV::BASIS_TYPE == "pw")
@@ -182,4 +182,4 @@ void clean_esolver(ESolver*& pesolver)
 	delete pesolver;
 }
 
-}
+}  // namespace ModuleESolver

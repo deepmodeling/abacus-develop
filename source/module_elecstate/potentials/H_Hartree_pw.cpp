@@ -126,7 +126,6 @@ void PotHartree::cal_v_eff(const Charge* chg, const UnitCell* ucell, ModuleBase:
     {
         v_eff += H_Hartree_pw::v_hartree(*ucell, const_cast<ModulePW::PW_Basis*>(this->rho_basis_), v_eff.nr, chg->rho);
     }
-    return;
-}
+    }
 
 } // namespace elecstate

@@ -98,8 +98,7 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
 
         //will do rho symmetry and energy calculation in esolver
         ModuleBase::timer::tick(this->classname, "solve");
-        return;
-    }
+   }
 	
     double HSolverPW_SDFT::set_diagethr(const int istep, const int iter, const double drho)
 	{
@@ -126,4 +125,4 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
     	}
 		return this->diag_ethr;
 	}
-}
+}  // namespace hsolver

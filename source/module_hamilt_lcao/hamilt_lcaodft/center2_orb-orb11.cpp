@@ -23,7 +23,7 @@ Center2_Orb::Orb11::Orb11(
 	 MGT(MGT_in)
 {}
 
-void Center2_Orb::Orb11::init_radial_table(void)
+void Center2_Orb::Orb11::init_radial_table()
 {
 	const int LA = this->nA.getL();
 	const int LB = this->nB.getL();
@@ -48,8 +48,7 @@ void Center2_Orb::Orb11::init_radial_table(void)
 			this->Table_r[LAB].data(),
 			this->Table_dr[LAB].data());
 	}
-	return;
-}
+	}
 
 void Center2_Orb::Orb11::init_radial_table( const std::set<size_t> &radials )
 {
@@ -116,12 +115,12 @@ double Center2_Orb::Orb11::cal_overlap(
 		{
 			const double Gaunt_real_A_B_AB =
 				this->MGT.Gaunt_Coefficients (
-					this->MGT.get_lm_index(LA,mA),
-					this->MGT.get_lm_index(LB,mB),
-					this->MGT.get_lm_index(LAB,mAB));
+					ORB_gaunt_table::get_lm_index(LA,mA),
+					ORB_gaunt_table::get_lm_index(LB,mB),
+					ORB_gaunt_table::get_lm_index(LAB,mAB));
 			if( 0==Gaunt_real_A_B_AB )	continue;
 
-			const double ylm_solid = rly[ this->MGT.get_lm_index(LAB, mAB) ];
+			const double ylm_solid = rly[ ORB_gaunt_table::get_lm_index(LAB, mAB) ];
 			if( 0==ylm_solid ) continue;
 			const double ylm_real =
 				(distance > tiny2) ?
@@ -193,18 +192,18 @@ ModuleBase::Vector3<double> Center2_Orb::Orb11::cal_grad_overlap(    //caoyu add
 		{
 			const double Gaunt_real_A_B_AB =
 				this->MGT.Gaunt_Coefficients (
-					this->MGT.get_lm_index(LA,mA),
-					this->MGT.get_lm_index(LB,mB),
-					this->MGT.get_lm_index(LAB,mAB));
+					ORB_gaunt_table::get_lm_index(LA,mA),
+					ORB_gaunt_table::get_lm_index(LB,mB),
+					ORB_gaunt_table::get_lm_index(LAB,mAB));
 			if( 0==Gaunt_real_A_B_AB )	continue;
 
-			const double ylm_solid = rly[ this->MGT.get_lm_index(LAB, mAB) ];
+			const double ylm_solid = rly[ ORB_gaunt_table::get_lm_index(LAB, mAB) ];
 			const double ylm_real =
 				(distance > tiny2) ?
 				ylm_solid / pow(distance,LAB) :
                 ylm_solid;
 
-            const ModuleBase::Vector3<double> gylm_solid = grly[ this->MGT.get_lm_index(LAB, mAB) ];
+            const ModuleBase::Vector3<double> gylm_solid = grly[ ORB_gaunt_table::get_lm_index(LAB, mAB) ];
 			const ModuleBase::Vector3<double> gylm_real =
 				(distance > tiny2)
 				? gylm_solid / pow(distance,LAB)

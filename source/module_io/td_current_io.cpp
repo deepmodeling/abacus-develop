@@ -36,7 +36,6 @@ void ModuleIO::Init_DS_tmp(
     gen_h.build_ST_new('S', cal_deri, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD), lm.SlocR.data());
 
     ModuleBase::timer::tick("ModuleIO", "Init_DS_tmp");
-    return;
 }
 
 
@@ -49,7 +48,6 @@ void ModuleIO::destory_DS_tmp(LCAO_Matrix &lm)
     delete[] lm.DSloc_Ry;
     delete[] lm.DSloc_Rz;
     ModuleBase::timer::tick("ModuleIO", "destory_DS_tmp");
-    return;
 }
 
 
@@ -251,6 +249,5 @@ void ModuleIO::write_current(const int istep,
         ModuleBase::timer::tick("ModuleIO", "write_current");
     }//end nks
     destory_DS_tmp(lm);
-    return;
 }
 #endif //__LCAO

@@ -70,7 +70,6 @@ void ElecStateLCAO_TDDFT::psiToRho_td(const psi::Psi<std::complex<double>>& psi)
     this->charge->renormalize_rho();
 
     ModuleBase::timer::tick("ElecStateLCAO", "psiToRho");
-    return;
 }
 
 void ElecStateLCAO_TDDFT::calculate_weights_td()
@@ -106,8 +105,7 @@ void ElecStateLCAO_TDDFT::calculate_weights_td()
             }
         }
     }
-    return;
-}
+    }
 
 
 } // namespace elecstate

@@ -20,7 +20,7 @@ void ModuleIO::write_dipole(const double* rho_save,
 
     if (GlobalV::MY_RANK == 0)
     {
-        start = time(NULL);
+        start = time(nullptr);
 
         ofs.open(fn.c_str(), std::ofstream::app);
         if (!ofs)
@@ -130,13 +130,12 @@ void ModuleIO::write_dipole(const double* rho_save,
 
     if (GlobalV::MY_RANK == 0)
     {
-        end = time(NULL);
+        end = time(nullptr);
         ModuleBase::GlobalFunc::OUT_TIME("write_dipole", start, end);
         ofs.close();
     }
 
-    return;
-}
+    }
 
 double ModuleIO::prepare(const UnitCell &cell, int &dir)
 {

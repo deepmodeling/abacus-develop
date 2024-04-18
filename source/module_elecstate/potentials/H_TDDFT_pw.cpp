@@ -123,7 +123,6 @@ void H_TDDFT_pw::cal_fixed_v(double *vl_pseudo)
     }
 
     ModuleBase::timer::tick("H_TDDFT_pw", "cal_fixed_v");
-    return;
 }
 
 void H_TDDFT_pw::cal_v_space(std::vector<double> &vext_space, int direc)
@@ -142,7 +141,6 @@ void H_TDDFT_pw::cal_v_space(std::vector<double> &vext_space, int direc)
     }
 
     ModuleBase::timer::tick("H_TDDFT_pw", "cal_v_space");
-    return;
 }
 
 void H_TDDFT_pw::cal_v_space_length(std::vector<double> &vext_space, int direc)
@@ -182,7 +180,6 @@ void H_TDDFT_pw::cal_v_space_length(std::vector<double> &vext_space, int direc)
     }
 
     ModuleBase::timer::tick("H_TDDFT_pw", "cal_v_space_length");
-    return;
 }
 
 double H_TDDFT_pw::cal_v_space_length_potential(double i)
@@ -233,7 +230,7 @@ int H_TDDFT_pw::check_ncut(int t_type)
     }
     return ncut;
 }
-void H_TDDFT_pw::update_At(void)
+void H_TDDFT_pw::update_At()
 {
     std::cout << "calculate electric potential" << std::endl;
     // time evolve
@@ -296,8 +293,7 @@ void H_TDDFT_pw::update_At(void)
         delete[] vext_time;
         count++;
     }
-    return;
-}
+    }
 
 double H_TDDFT_pw::cal_v_time(int t_type, const bool last)
 {

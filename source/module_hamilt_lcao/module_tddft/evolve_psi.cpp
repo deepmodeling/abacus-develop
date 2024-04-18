@@ -28,13 +28,13 @@ void evolve_psi(const int nband,
                 int propagator)
 {
     ModuleBase::TITLE("Evolve_psi", "evolve_psi");
-    time_t time_start = time(NULL);
+    time_t time_start = time(nullptr);
     GlobalV::ofs_running << " Start Time : " << ctime(&time_start);
 
 #ifdef __MPI
 
     int print_matrix = 0;
-    hamilt::MatrixBlock<std::complex<double>> h_mat, s_mat;
+    hamilt::MatrixBlock<std::complex<double>> h_mat{}, s_mat{};
     p_hamilt->matrix(h_mat, s_mat);
 
     std::complex<double>* Stmp = new std::complex<double>[pv->nloc];
@@ -98,9 +98,7 @@ void evolve_psi(const int nband,
 
 #endif
 
-    time_t time_end = time(NULL);
+    time_t time_end = time(nullptr);
     ModuleBase::GlobalFunc::OUT_TIME("evolve(std::complex)", time_start, time_end);
-
-    return;
 }
 } // namespace module_tddft

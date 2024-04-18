@@ -10,13 +10,13 @@ class Grid_MeshCell: public Grid_MeshK
 	public:
 
 	// vectors of meshcell.
-	double meshcell_vec1[3];
-	double meshcell_vec2[3];
-	double meshcell_vec3[3];
+	double meshcell_vec1[3]{};
+	double meshcell_vec2[3]{};
+	double meshcell_vec3[3]{};
 	ModuleBase::Matrix3 meshcell_latvec0;
 	ModuleBase::Matrix3 meshcell_GT;
 	
-	double** meshcell_pos;
+	double** meshcell_pos{};
 	bool allocate_pos;
 	
 	protected:
@@ -46,11 +46,11 @@ class Grid_MeshCell: public Grid_MeshK
 
 	public:
 
-	int ncx,ncy,ncz,ncxyz;
+	int ncx{},ncy{},ncz{},ncxyz{};
 	int bx,by,bz,bxyz;
-	int nbx,nby,nbz,nbxyz;
-	int nbxx;
-	int nbzp_start,nbzp;
+	int nbx{},nby{},nbz{},nbxyz{};
+	int nbxx{};
+	int nbzp_start{},nbzp{};
 
 };
 

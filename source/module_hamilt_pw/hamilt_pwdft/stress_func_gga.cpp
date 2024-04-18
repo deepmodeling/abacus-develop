@@ -55,7 +55,6 @@ void Stress_Func<FPTYPE, Device>::stress_gga(ModuleBase::matrix& sigma,
 	}
 
 	ModuleBase::timer::tick("Stress_Func","stress_gga");
-	return;
 }
 
 template class Stress_Func<double, psi::DEVICE_CPU>;

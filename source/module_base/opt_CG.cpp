@@ -19,9 +19,9 @@ Opt_CG::~Opt_CG()
  *
  * @param pinp_b b in the linear equation Ax = b
  */
-void Opt_CG::init_b(double* pinp_b)
+void Opt_CG::init_b(const double* pinp_b)
 {
-    if (this->pb_ != nullptr)
+    
         delete[] this->pb_;
     this->pb_ = new double[this->nx_];
     for (int i = 0; i < this->nx_; ++i)
@@ -139,7 +139,7 @@ double Opt_CG::step_length(double* pAd, double* pdirect, int& ifPD)
         this->alpha_ = 0;
         return 0;
     }
-    else if (dAd < 0)
+    if (dAd < 0)
     {
         if (this->iter_ == 1)
         {
@@ -160,7 +160,7 @@ double Opt_CG::step_length(double* pAd, double* pdirect, int& ifPD)
  * @param [in] pAd Ad for Ax=b
  * @param [out] rdirect the next direction
  */
-void Opt_CG::stantard_CGdirect(double* pAd, double* rdirect)
+void Opt_CG::stantard_CGdirect(const double* pAd, double* rdirect)
 {
     if (this->iter_ == 0)
     {

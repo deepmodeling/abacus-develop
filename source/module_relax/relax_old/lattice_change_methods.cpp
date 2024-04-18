@@ -13,8 +13,6 @@ void Lattice_Change_Methods::allocate()
 {
     Lattice_Change_Basic::dim = 9;
     lccg.allocate();
-
-    return;
 }
 
 void Lattice_Change_Methods::cal_lattice_change(const int &istep,
@@ -28,6 +26,4 @@ void Lattice_Change_Methods::cal_lattice_change(const int &istep,
     Lattice_Change_Basic::stress_step = stress_step;
 
     lccg.start(ucell, stress, etot);
-
-    return;
 }

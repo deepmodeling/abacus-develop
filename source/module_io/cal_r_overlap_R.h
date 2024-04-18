@@ -69,7 +69,7 @@ private:
                         std::map<size_t,
                         Center2_Orb::Orb21>>>>>> center2_orb21_r;
 
-    const Parallel_Orbitals* ParaV;
+    const Parallel_Orbitals* ParaV{};
     
 };
 #endif

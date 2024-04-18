@@ -41,7 +41,6 @@ void surchem::allocate(const int &nrxx, const int &nspin)
     ModuleBase::GlobalFunc::ZEROS(delta_phi, nrxx);
     ModuleBase::GlobalFunc::ZEROS(TOTN_real, nrxx);
     ModuleBase::GlobalFunc::ZEROS(epspot, nrxx);
-    return;
 }
 
 void surchem::clear()

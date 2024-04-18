@@ -205,14 +205,12 @@ void Memory::record
 		}
 	}
 
-	return;
-}
+	}
 
 void Memory::print(const int find)
 {
 	GlobalV::ofs_running <<"\n Warning_Memory_Consuming allocated: "
 	<<" "<<name[find]<<" "<<consume[find]<<" MB" << std::endl;
-	return;
 }
 
 
@@ -226,8 +224,7 @@ void Memory::finish(std::ofstream &ofs)
 		delete[] consume;
 		init_flag = false;
 	}
-	return;
-}
+	}
 
 void Memory::print_all(std::ofstream &ofs)
 {
@@ -285,7 +282,7 @@ void Memory::print_all(std::ofstream &ofs)
 			{
 				continue;
 			}
-			else if(tmp < consume[j])
+			if(tmp < consume[j])
 			{
 				k = j;
 				tmp = consume[j];
@@ -296,19 +293,16 @@ void Memory::print_all(std::ofstream &ofs)
         {
 			continue;
 		}
-		else
-		{
-			ofs << std::setw(30) << name[k]
+		
+					ofs << std::setw(30) << name[k]
             << std::setw(15) << consume[k] << std::endl;
-		}
+	
 
 	}
 
 	ofs<<" -------------   < 1.0 MB has been ignored ----------------"<<std::endl;
     ofs<<" ----------------------------------------------------------"<<std::endl;
 
-	delete[] print_flag; //mohan fix by valgrind at 2012-04-02
-	return;
-}
+	delete[] print_flag; }
 
-}
+}  // namespace ModuleBase

@@ -39,6 +39,4 @@ void ModuleIO::write_rho(
 		ucell,
 		precision,
 		1);
-
-    return;
 }

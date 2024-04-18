@@ -22,7 +22,7 @@ class BaseMatrix
     // copy constructor
     BaseMatrix(const BaseMatrix<T>& matrix);
     // move constructor
-    BaseMatrix(BaseMatrix<T>&& matrix);
+    BaseMatrix(BaseMatrix<T>&& matrix) noexcept;
     // Destructor of class BaseMatrix
     ~BaseMatrix();
 

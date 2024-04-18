@@ -170,5 +170,4 @@ void ModuleIO::read_dm(
     GlobalV::ofs_running << " Finish reading density matrix." << std::endl;
 
     ModuleBase::timer::tick("ModuleIO","read_dm");
-    return;
 }

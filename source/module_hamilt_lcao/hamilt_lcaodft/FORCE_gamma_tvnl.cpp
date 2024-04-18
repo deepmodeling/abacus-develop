@@ -40,7 +40,7 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
             const Atom* atom1 = &GlobalC::ucell.atoms[T1];
             const int I1 = GlobalC::GridD.getNatom (ad1);
             const int start1 = GlobalC::ucell.itiaiw2iwt(T1, I1, 0);
-			const ModuleBase::Vector3<double> tau1 = GlobalC::GridD.getAdjacentTau (ad1);
+			const ModuleBase::Vector3<double>& tau1 = GlobalC::GridD.getAdjacentTau (ad1);
 			const double Rcut_AO1 = GlobalC::ORB.Phi[T1].getRcut();
 
             nlm_tot[ad1].clear();
@@ -98,7 +98,7 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
             const Atom* atom1 = &GlobalC::ucell.atoms[T1];
             const int I1 = GlobalC::GridD.getNatom (ad1);
             const int start1 = GlobalC::ucell.itiaiw2iwt(T1, I1, 0);
-			const ModuleBase::Vector3<double> tau1 = GlobalC::GridD.getAdjacentTau (ad1);
+			const ModuleBase::Vector3<double>& tau1 = GlobalC::GridD.getAdjacentTau (ad1);
 			const double Rcut_AO1 = GlobalC::ORB.Phi[T1].getRcut();
 
             for (int ad2=0; ad2 < GlobalC::GridD.getAdjacentNum()+1 ; ad2++)
@@ -107,7 +107,7 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
                 const Atom* atom2 = &GlobalC::ucell.atoms[T2];
                 const int I2 = GlobalC::GridD.getNatom (ad2);
                 const int start2 = GlobalC::ucell.itiaiw2iwt(T2, I2, 0);
-                const ModuleBase::Vector3<double> tau2 = GlobalC::GridD.getAdjacentTau (ad2);
+                const ModuleBase::Vector3<double>& tau2 = GlobalC::GridD.getAdjacentTau (ad2);
                 const double Rcut_AO2 = GlobalC::ORB.Phi[T2].getRcut();
 
                 const double dist1 = (tau1-tau0).norm() * GlobalC::ucell.lat0;
@@ -290,5 +290,4 @@ void Force_LCAO_gamma::cal_ftvnl_dphi(
 		StressTools::stress_fill(GlobalC::ucell.lat0, GlobalC::ucell.omega, stvnl_dphi);
 	}
     ModuleBase::timer::tick("Force_LCAO_gamma","cal_ftvnl_dphi");
-    return;
 }

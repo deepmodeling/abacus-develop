@@ -14,9 +14,9 @@ Output_Potential::Output_Potential(const ModulePW::PW_Basis_Big* pw_big,
                                    const UnitCell* ucell,
                                    const Charge* const charge,
                                    int precision,
-                                   const std::string directory,
-                                   const std::string tag,
-                                   const std::string prefix)
+                                   const std::string& directory,
+                                   const std::string& tag,
+                                   const std::string& prefix)
     : _pw_big(pw_big),
       _pw_rho(pw_rho),
       _nspin(nspin),

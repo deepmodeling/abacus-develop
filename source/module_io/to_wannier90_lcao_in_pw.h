@@ -78,9 +78,9 @@ class toWannier90_LCAO_IN_PW : public toWannier90_PW
     }
 
   protected:
-    const Parallel_Orbitals* ParaV;
+    const Parallel_Orbitals* ParaV{};
     /// @brief psi initializer for expanding nao in planewave basis
-    psi_initializer<std::complex<double>, psi::DEVICE_CPU>* psi_init_;
+    psi_initializer<std::complex<double>, psi::DEVICE_CPU>* psi_init_{};
 
     /// @brief get Bloch function from LCAO wavefunction
     /// @param psi_in 
@@ -100,7 +100,7 @@ class toWannier90_LCAO_IN_PW : public toWannier90_PW
     /// @param psi [out] data carrier, storing the expanded wavefunction
     void nao_G_expansion(
       const int& ik,
-      const ModulePW::PW_Basis_K* wfc_basis,
+      const ModulePW::PW_Basis_K* wfcpw,
       ModuleBase::ComplexMatrix& psi
     );
 

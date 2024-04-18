@@ -75,10 +75,10 @@ class LCAO_Orbitals
 	Numerical_Orbital* Alpha;
 
 	// initialized in input.cpp
-	double ecutwfc;
-	double dk;
-	double dR;
-	double Rmax;
+	double ecutwfc{};
+	double dk{};
+	double dR{};
+	double Rmax{};
 	
 	double dr_uniform;
 
@@ -91,10 +91,10 @@ class LCAO_Orbitals
 
 private:
 
-	int ntype; // number of elements
-	int kmesh; // number of points on kmesh
+	int ntype{}; // number of elements
+	int kmesh{}; // number of points on kmesh
 
-	int lmax;
+	int lmax{};
 	int nchimax;
 
 	int lmax_d;	//max l of descriptor orbitals

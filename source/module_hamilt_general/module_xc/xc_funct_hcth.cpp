@@ -124,7 +124,6 @@ void XC_Functional::hcth(const double rho, const double grho, double &sx, double
           + dffaa_drho * gaa + ffaa * dgaa_drho
           + dffab_drho * gab + ffab * dgab_drho;
     v2x = (ex * dgx_dgr + ffaa * dgaa_dgr + ffab * dgab_dgr) / gr;
-    return;
 } //end subroutine hcth
 
 void XC_Functional::pwcorr(const double r, const double c[], double &g, double &dg)
@@ -142,6 +141,4 @@ void XC_Functional::pwcorr(const double r, const double c[], double &g, double &
     g = -2.00 * c[1] * (1.00 + c[2] * r) * log(sb);
     drb = c[3] / (2.00 * r12) + c[4] + 1.50 * c[5] * r12 + 2.00 * c[6] * r;
     dg = (1.00 + c[2] * r) * drb / (rb * rb * sb) - 2.00 * c[1] * c[2] * log(sb);
-
-    return;
 } //end subroutine pwcorr

@@ -1,9 +1,9 @@
 #include "sto_wf.h"
 
-#include <cassert>
-
 #include "module_base/memory.h"
-#include "time.h"
+
+#include <cassert>
+#include <ctime>
 
 //---------Temporary------------------------------------
 #include "module_base/complexmatrix.h"

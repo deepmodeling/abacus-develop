@@ -27,8 +27,8 @@ void Ions_Move_Basic::setup_gradient(const UnitCell &ucell, const ModuleBase::ma
     ModuleBase::TITLE("Ions_Move_Basic", "setup_gradient");
 
     assert(ucell.ntype > 0);
-    assert(pos != NULL);
-    assert(grad != NULL);
+    assert(pos != nullptr);
+    assert(grad != nullptr);
     assert(dim == 3 * ucell.nat);
 
     ModuleBase::GlobalFunc::ZEROS(pos, dim);
@@ -56,15 +56,14 @@ void Ions_Move_Basic::setup_gradient(const UnitCell &ucell, const ModuleBase::ma
         }
     }
 
-    return;
-}
+    }
 
 void Ions_Move_Basic::move_atoms(UnitCell &ucell, double *move, double *pos)
 {
     ModuleBase::TITLE("Ions_Move_Basic", "move_atoms");
 
-    assert(move != NULL);
-    assert(pos != NULL);
+    assert(move != nullptr);
+    assert(pos != nullptr);
 
     //------------------------
     // for test only
@@ -109,8 +108,6 @@ void Ions_Move_Basic::move_atoms(UnitCell &ucell, double *move, double *pos)
     // Print out the structure file.
     //--------------------------------------------
     ucell.print_tau();
-
-    return;
 }
 
 void Ions_Move_Basic::check_converged(const UnitCell &ucell, const double *grad)
@@ -178,8 +175,7 @@ void Ions_Move_Basic::check_converged(const UnitCell &ucell, const double *grad)
         Ions_Move_Basic::converged = false;
     }
 
-    return;
-}
+    }
 
 void Ions_Move_Basic::terminate(const UnitCell &ucell)
 {
@@ -212,9 +208,6 @@ void Ions_Move_Basic::terminate(const UnitCell &ucell)
     // Print the structure.
     //-----------------------------------------------------------
     ucell.print_tau();
-    // xiaohui modify 2015-03-15, cancel outputfile "STRU_NOW.xyz"
-    // ucell.print_cell_xyz("STRU_NOW.xyz");
-    return;
 }
 
 void Ions_Move_Basic::setup_etot(const double &energy_in, const bool judgement)
@@ -254,8 +247,7 @@ void Ions_Move_Basic::setup_etot(const double &energy_in, const bool judgement)
         }
     }
 
-    return;
-}
+    }
 
 double Ions_Move_Basic::dot_func(const double *a, const double *b, const int &dim_in)
 {

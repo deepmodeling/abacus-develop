@@ -14,8 +14,7 @@ REAL Sto_Func<REAL>:: root_fd(REAL e)
     REAL e_mu = (e - mu) / this->tem ;
     if(e_mu > 72)
         return 0;
-    else
-        return 1 / sqrt(1 + exp(e_mu));
+            return 1 / sqrt(1 + exp(e_mu));
 }
 
 template<typename REAL>
@@ -26,8 +25,7 @@ REAL Sto_Func<REAL>:: nroot_fd(REAL e)
     REAL ne_mu = (e * DeltaE + Ebar - mu) / this->tem ;
     if(ne_mu > 72)
         return 0;
-    else
-        return 1 / sqrt(1 + exp(ne_mu));
+            return 1 / sqrt(1 + exp(ne_mu));
 }
 
 template<typename REAL>
@@ -36,8 +34,7 @@ REAL Sto_Func<REAL>:: fd(REAL e)
     REAL e_mu = (e - mu) / this->tem ;
     if(e_mu > 36)
         return 0;
-    else
-        return 1 / (1 + exp(e_mu));
+            return 1 / (1 + exp(e_mu));
 }
 
 template<typename REAL>
@@ -48,8 +45,7 @@ REAL Sto_Func<REAL>:: nfd(REAL e)
     REAL ne_mu = (e * DeltaE + Ebar - mu) / this->tem ;
     if(ne_mu > 36)
         return 0;
-    else
-        return 1 / (1 + exp(ne_mu));
+            return 1 / (1 + exp(ne_mu));
 }
 
 template<typename REAL>
@@ -61,8 +57,7 @@ REAL Sto_Func<REAL>:: nxfd(REAL rawe)
     REAL ne_mu = (e - mu) / this->tem ;
     if(ne_mu > 36)
         return 0;
-    else
-        return e / (1 + exp(ne_mu));
+            return e / (1 + exp(ne_mu));
 }
 
 template<typename REAL>
@@ -71,7 +66,7 @@ REAL Sto_Func<REAL>:: fdlnfd(REAL e)
     REAL e_mu = (e - mu) / this->tem;
     if (e_mu > 36)
         return 0;
-    else if (e_mu < -36)
+    if (e_mu < -36)
         return 0;
     else
     {
@@ -91,7 +86,7 @@ REAL Sto_Func<REAL>:: nfdlnfd(REAL rawe)
     REAL ne_mu = (rawe * DeltaE + Ebar - mu) / this->tem;
     if (ne_mu > 36)
         return 0;
-    else if (ne_mu < -36)
+    if (ne_mu < -36)
         return 0;
     else
     {
@@ -111,7 +106,7 @@ REAL Sto_Func<REAL>:: n_root_fdlnfd(REAL rawe)
     REAL ne_mu = (rawe * DeltaE + Ebar - mu) / this->tem ;
     if(ne_mu > 36)
         return 0;
-    else if(ne_mu < -36)
+    if(ne_mu < -36)
         return 0;
     else
     {
@@ -131,8 +126,7 @@ REAL Sto_Func<REAL>::nroot_mfd(REAL rawe)
     REAL ne_mu = (rawe * DeltaE + Ebar - mu) / this->tem ;
     if(ne_mu < -72)
         return 0;
-    else
-        return 1 / sqrt(1 + exp(-ne_mu));
+            return 1 / sqrt(1 + exp(-ne_mu));
 }
 
 template<typename REAL>
@@ -168,8 +162,7 @@ REAL Sto_Func<REAL>::gauss(REAL e)
     REAL a = pow((targ_e-e),2)/2.0/pow(sigma,2);
     if(a > 72)
         return 0;
-    else
-        return  exp(-a) /sqrt(TWOPI) / sigma ;
+            return  exp(-a) /sqrt(TWOPI) / sigma ;
 }
 
 template<typename REAL>
@@ -181,8 +174,7 @@ REAL Sto_Func<REAL>::ngauss(REAL rawe)
     REAL a = pow((targ_e-e),2)/2.0/pow(sigma,2);
     if(a > 72)
         return 0;
-    else
-        return  exp(-a) /sqrt(TWOPI) / sigma ;
+            return  exp(-a) /sqrt(TWOPI) / sigma ;
 }
 
 template<typename REAL>
@@ -194,8 +186,7 @@ REAL Sto_Func<REAL>::nroot_gauss(REAL rawe)
     REAL a = pow((targ_e-e),2)/4.0/pow(sigma,2);
     if(a > 72)
         return 0;
-    else
-        return  exp(-a) /sqrt(sqrt(TWOPI) * sigma) ;
+            return  exp(-a) /sqrt(sqrt(TWOPI) * sigma) ;
 }
 
 //we only have two examples: double and float.

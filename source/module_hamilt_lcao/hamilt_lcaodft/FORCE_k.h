@@ -55,10 +55,10 @@ class Force_LCAO_k : public Force_LCAO_gamma
                     const int& nks,
                     const std::vector<ModuleBase::Vector3<double>>& kvec_d);
 
-    void finish_k(LCAO_Matrix &lm);
+    static void finish_k(LCAO_Matrix &lm);
 
     // calculate the force due to < dphi | beta > < beta | phi >
-	void cal_ftvnl_dphi_k(const elecstate::DensityMatrix<std::complex<double>, double>* DM,
+	static void cal_ftvnl_dphi_k(const elecstate::DensityMatrix<std::complex<double>, double>* DM,
 			const Parallel_Orbitals &pv,
             const UnitCell &ucell,
 			LCAO_Matrix &lm,
@@ -69,7 +69,7 @@ class Force_LCAO_k : public Force_LCAO_gamma
 			ModuleBase::matrix& stvnl_dphi);
 
     // calculate the overlap force
-    void cal_foverlap_k(const bool isforce,
+    static void cal_foverlap_k(const bool isforce,
                         const bool isstress,
                         Record_adj &ra,
                         const psi::Psi<std::complex<double>> *psi,
@@ -84,7 +84,7 @@ class Force_LCAO_k : public Force_LCAO_gamma
                         const K_Vectors &kv);
 
     // calculate the force due to < phi | Vlocal | dphi >
-	void cal_fvl_dphi_k(const bool isforce,
+	static void cal_fvl_dphi_k(const bool isforce,
 		  	const bool isstress,
 			LCAO_Matrix &lm,
             Gint_k &gint_k,
@@ -94,7 +94,7 @@ class Force_LCAO_k : public Force_LCAO_gamma
 			double** DM_R);
 
     // new method to calculate the force due to < phi | dbeta > < beta | phi > , developed by wenfei-li
-    void cal_fvnl_dbeta_k(const elecstate::DensityMatrix<std::complex<double>, double>* DM,
+    static void cal_fvnl_dbeta_k(const elecstate::DensityMatrix<std::complex<double>, double>* DM,
                           const bool isforce,
 						  const bool isstress, 
 						  const Parallel_Orbitals &pv,
@@ -105,9 +105,9 @@ class Force_LCAO_k : public Force_LCAO_gamma
 						  ModuleBase::matrix& fvnl_dbeta,
                           ModuleBase::matrix& svnl_dbeta);
 
-	void test(
+	static void test(
 			Parallel_Orbitals &pv,
-			double* mm, 
+			const double* mm, 
 			const std::string& name);
 };
 

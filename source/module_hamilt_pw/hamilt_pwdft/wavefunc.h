@@ -23,8 +23,8 @@ class wavefunc : public WF_atomic
 
     // init_wfc : "random",or "atomic" or "file"
     std::string init_wfc;
-    int nkstot;    // total number of k-points for all pools
-    int mem_saver; // 1: save evc when doing nscf calculation.
+    int nkstot{};    // total number of k-points for all pools
+    int mem_saver{}; // 1: save evc when doing nscf calculation.
     void wfcinit(psi::Psi<std::complex<double>>* psi_in, ModulePW::PW_Basis_K* wfc_basis);
     int get_starting_nw(void)const;
 
@@ -41,14 +41,14 @@ class wavefunc : public WF_atomic
 
     int get_R(int ix, int iy, int iz);     // pengfei 2016-11-23
 
-    int iw2it(int iw);
-    int iw2ia(int iw);
+    static int iw2it(int iw);
+    static int iw2ia(int iw);
 
     void init_after_vc(const int nks); //LiuXh 20180515
 
   private: // pengfei 2016-11-23
-    ModuleBase::Vector3<int> ***R;
-    int **Rmax;
+    ModuleBase::Vector3<int> ***R{};
+    int **Rmax{};
 };
 
 namespace hamilt

@@ -25,17 +25,17 @@ private:
     // Buffer parameters for tranforming 2D block-cyclic distributed DM matrix 
 // to grid distributed DM matrix
     int* sender_2D_index;
-    int sender_size;
+    int sender_size{};
     int* sender_size_process;
     int* sender_displacement_process;
     double* sender_buffer;
 
     int* receiver_local_index;
-    int receiver_size;
+    int receiver_size{};
     int* receiver_size_process;
     int* receiver_displacement_process;
     double* receiver_buffer;
 #ifdef __MPI
-    MPI_Comm comm_2D;
+    MPI_Comm comm_2D{};
 #endif
 };

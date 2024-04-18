@@ -65,7 +65,7 @@ void ModuleIO::write_dm(
 
 	if(my_rank==0)
 	{
-		start = time(NULL);
+		start = time(nullptr);
 
 		ofs.open(fn.c_str());
 		if (!ofs)
@@ -185,11 +185,9 @@ void ModuleIO::write_dm(
 #endif
 	if(my_rank==0)
 	{
-		end = time(NULL);
+		end = time(nullptr);
 		ModuleBase::GlobalFunc::OUT_TIME("write_dm",start,end);
 		ofs.close();
 	}
 	ModuleBase::timer::tick("ModuleIO","write_dm");
-
-    return;
 }

@@ -229,7 +229,6 @@ void Charge_Extra::extrapolate_charge(
         delete[] rho_atom[is];
     }
     delete[] rho_atom;
-    return;
 
 }
 
@@ -289,8 +288,6 @@ void Charge_Extra::find_alpha_and_beta(const int& natom)
 
     GlobalV::ofs_running << " alpha = " << alpha << std::endl;
     GlobalV::ofs_running << " beta = " << beta << std::endl;
-
-    return;
 }
 
 void Charge_Extra::update_all_dis(const UnitCell& ucell)
@@ -312,8 +309,7 @@ void Charge_Extra::update_all_dis(const UnitCell& ucell)
         }
         assert(iat == ucell.nat);
     }
-    return;
-}
+    }
 
 void Charge_Extra::save_files(const int& istep,
                               const UnitCell& ucell,

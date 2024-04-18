@@ -63,8 +63,7 @@ void XC_Functional::xc(const double &rho, double &exc, double &vxc)
         exc += e;
         vxc += v;
     }
-	return;
-}
+	}
 
 void XC_Functional::xc_spin(const double &rho, const double &zeta,
 		double &exc, double &vxcup, double &vxcdw)
@@ -120,8 +119,7 @@ void XC_Functional::xc_spin(const double &rho, const double &zeta,
         vxcup += vup;
         vxcdw += vdw;
 	}
-	return;
-}
+	}
 
 void XC_Functional::xc_spin_libxc(const double &rhoup, const double &rhodw,
 		double &exc, double &vxcup, double &vxcdw)

@@ -96,7 +96,7 @@ public:
                const double* const value,
                const int p = 0,
                const int izeta = 0,
-               const std::string symbol = "",
+               const std::string& symbol = "",
                const int itype = 0,
                const bool init_sbt = true
     );
@@ -127,7 +127,7 @@ public:
      *                      *  1: calls a forward transform;
      *                      * -1: calls a backward transform.
      */
-    void set_transformer(ModuleBase::SphericalBesselTransformer sbt, int update = 0);
+    void set_transformer(const ModuleBase::SphericalBesselTransformer& sbt, int update = 0);
 
     /**
      * @brief Sets up a grid.
@@ -384,7 +384,7 @@ private:
     // are all close to machine precision
 
     /// Checks whether a grid is uniform.
-    static bool is_uniform(const int n, const double* const grid, const double tol = 1e-15);
+    static bool is_uniform(const int n, const double* const x, const double tol = 1e-15);
 
     /**
      * @brief Checks whether the given two grids are FFT-compliant.

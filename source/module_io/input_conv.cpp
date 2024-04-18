@@ -72,12 +72,12 @@ void Input_Conv::parse_expression(const std::string &fn, std::vector<T> &vec)
     const size_t nmatch = 1;
     for (size_t i = 0; i < str.size(); ++i)
     {
-        if (str[i] == "")
+        if (str[i].empty())
         {
             continue;
         }
         int status = regexec(&reg, str[i].c_str(), nmatch, pmatch, 0);
-        std::string sub_str = "";
+        std::string sub_str;
         for (size_t j = pmatch[0].rm_so; j != pmatch[0].rm_eo; ++j)
         {
             sub_str += str[i][j];
@@ -89,7 +89,7 @@ void Input_Conv::parse_expression(const std::string &fn, std::vector<T> &vec)
         const size_t sub_nmatch = 1;
         if (regexec(&sub_reg, sub_str.c_str(), sub_nmatch, sub_pmatch, 0) == 0)
         {
-            int pos = sub_str.find("*");
+            int pos = sub_str.find('*');
             int num = stoi(sub_str.substr(0, pos));
             T occ = stof(sub_str.substr(pos + 1, sub_str.size()));
             // std::vector<double> ocp_temp(num, occ);
@@ -115,12 +115,13 @@ void Input_Conv::parse_expression(const std::string &fn, std::vector<T> &vec)
 }
 
 #ifdef __LCAO
-std::vector<double> Input_Conv::convert_units(std::string params, double c)
+std::vector<double> Input_Conv::convert_units(const std::string& params, double c)
 {
     std::vector<double> params_ori;
     std::vector<double> params_out;
     parse_expression(params, params_ori);
-    for (auto param: params_ori)
+    params_out.reserve(params_ori.size());
+for (auto param: params_ori)
         params_out.emplace_back(param * c);
 
     return params_out;
@@ -220,13 +221,10 @@ void Input_Conv::read_td_efield()
     // Heaviside
     elecstate::H_TDDFT_pw::heavi_t0 = convert_units(INPUT.td_heavi_t0, 1.0);
     elecstate::H_TDDFT_pw::heavi_amp
-        = convert_units(INPUT.td_heavi_amp, ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV); // Ry/bohr
-
-    return;
-}
+        = convert_units(INPUT.td_heavi_amp, ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV); }
 #endif
 
-void Input_Conv::Convert(void)
+void Input_Conv::Convert()
 {
     ModuleBase::TITLE("Input_Conv", "Convert");
     ModuleBase::timer::tick("Input_Conv", "Convert");
@@ -259,16 +257,16 @@ void Input_Conv::Convert(void)
             GlobalV::stru_file = INPUT.stru_file = GlobalV::global_readin_dir + "STRU_MD_" + std::to_string(istep);
         }
     }
-    else if (INPUT.stru_file != "")
+    else if (!INPUT.stru_file.empty())
     {
         GlobalV::stru_file = INPUT.stru_file;
     }
     GlobalV::global_wannier_card = INPUT.wannier_card;
-    if (INPUT.kpoint_file != "")
+    if (!INPUT.kpoint_file.empty())
         GlobalV::global_kpoint_card = INPUT.kpoint_file;
-    if (INPUT.pseudo_dir != "")
+    if (!INPUT.pseudo_dir.empty())
         GlobalV::global_pseudo_dir = INPUT.pseudo_dir + "/";
-    if (INPUT.orbital_dir != "")
+    if (!INPUT.orbital_dir.empty())
         GlobalV::global_orbital_dir = INPUT.orbital_dir + "/";
     // GlobalV::global_pseudo_type = INPUT.pseudo_type;
     GlobalC::ucell.setup(INPUT.latname, INPUT.ntype, INPUT.lmaxmax, INPUT.init_vel, INPUT.fixed_axes);
@@ -812,5 +810,4 @@ void Input_Conv::Convert(void)
     GlobalV::qo_thr = INPUT.qo_thr;
     GlobalV::qo_screening_coeff = INPUT.qo_screening_coeff;
     ModuleBase::timer::tick("Input_Conv", "Convert");
-    return;
 }

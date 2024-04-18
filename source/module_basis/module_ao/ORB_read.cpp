@@ -103,8 +103,7 @@ void LCAO_Orbitals::bcast_files(
 		GlobalV::ofs_running << " orbital file: " << orbital_file[it] << std::endl;
 //		GlobalV::ofs_running << " nonlocal file: " << nonlocal_file[it] << std::endl;
 	}
-	return;
-}
+	}
 #endif
 
 
@@ -230,7 +229,6 @@ void LCAO_Orbitals::Read_Orbitals(
 	}
 
 	ModuleBase::timer::tick("LCAO_Orbitals","Read_Orbitals");
-	return;
 }
 
 
@@ -287,7 +285,6 @@ void LCAO_Orbitals::Read_PAO(
 	this->nchimax = std::max(this->nchimax, nchimaxt);
 	
 	in_ao.close();
-	return;
 }
 
 
@@ -330,8 +327,6 @@ void LCAO_Orbitals::Read_Descriptor(
 	this->read_orb_file(ofs_in, in_de, 0, this->lmax_d, this->nchimax_d, this->Alpha, force_flag, my_rank);
 
 	in_de.close();
-
-	return;
 }
 
 
@@ -585,5 +580,4 @@ void LCAO_Orbitals::read_orb_file(
 		total_nchi); //copy twice !
 	
 	delete[] nchi;
-	return;
 }

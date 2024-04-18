@@ -65,8 +65,7 @@ void LCAO_Matrix::divide_HS_in_frag(const bool isGamma, Parallel_Orbitals &pv, c
         }
 	}
 #endif
-	return;
-}
+	}
 
 
 void LCAO_Matrix::allocate_HS_gamma(const long &nloc)
@@ -91,8 +90,6 @@ void LCAO_Matrix::allocate_HS_gamma(const long &nloc)
     ModuleBase::GlobalFunc::ZEROS(Sloc.data(),nloc);
     ModuleBase::GlobalFunc::ZEROS(Hloc_fixed.data(),nloc);
     ModuleBase::GlobalFunc::ZEROS(Hloc.data(),nloc);
-
-    return;
 }
 
 
@@ -117,8 +114,6 @@ void LCAO_Matrix::allocate_HS_k(const long &nloc)
     ModuleBase::GlobalFunc::ZEROS(Sloc2.data(),nloc);
     ModuleBase::GlobalFunc::ZEROS(Hloc_fixed2.data(),nloc);
     ModuleBase::GlobalFunc::ZEROS(Hloc2.data(),nloc);
-    
-    return;
 }
 
 void LCAO_Matrix::allocate_HS_R(const int &nnR)
@@ -155,13 +150,11 @@ void LCAO_Matrix::allocate_HS_R(const int &nnR)
 
     }
 
-    return;
-}
+    }
 
 void LCAO_Matrix::set_HSgamma(const int& iw1_all, const int& iw2_all, const double& v, double* HSloc)
 {
     LCAO_Matrix::set_mat2d<double>(iw1_all, iw2_all, v, *this->ParaV, HSloc);
-    return;
 }
 
 
@@ -183,8 +176,7 @@ void LCAO_Matrix::set_HSk(const int& iw1_all, const int& iw2_all, const std::com
 	{
 		ModuleBase::WARNING_QUIT("LCAO_Matrix", "set_HSk");
 	}
-    return;
-}
+    }
 
 void LCAO_Matrix::set_force
 (
@@ -232,8 +224,7 @@ void LCAO_Matrix::set_force
         this->DHloc_fixed_z[index] += vz;
     }
 
-    return;
-}
+    }
 
 void LCAO_Matrix::set_stress
 (
@@ -291,8 +282,7 @@ void LCAO_Matrix::set_stress
         this->DHloc_fixed_33[index] += vz * dtau.z;
     }
 
-    return;
-}
+    }
 
 void LCAO_Matrix::zeros_HSgamma(const char &mtype)
 {
@@ -337,7 +327,6 @@ void LCAO_Matrix::zeros_HSgamma(const char &mtype)
         }
     };
     ModuleBase::OMP_PARALLEL(zeros_HSgamma_ker);
-    return;
 }
 
 void LCAO_Matrix::zeros_HSk(const char &mtype)
@@ -362,7 +351,6 @@ void LCAO_Matrix::zeros_HSk(const char &mtype)
         }
     };
     ModuleBase::OMP_PARALLEL(zeros_HSk_ker);
-    return;
 }
 
 void LCAO_Matrix::zeros_HSR(const char &mtype)
@@ -398,7 +386,6 @@ void LCAO_Matrix::zeros_HSR(const char &mtype)
         }
     };
     ModuleBase::OMP_PARALLEL(zeros_HSR_ker);
-    return;
 }
 
 // Peize Lin add vtype='A' 2018-11-30
@@ -471,7 +458,6 @@ void LCAO_Matrix::print_HSk(const char &mtype, const char &vtype, const double &
     }
     os << std::endl;
     os << std::setprecision(6) << std::endl;
-    return;
 }
 
 
@@ -546,11 +532,10 @@ void LCAO_Matrix::print_HSgamma(const char &mtype, std::ostream &os)
         }//end i
     }
 
-    return;
-}
+    }
 
 // becareful! Update Hloc, we add new members to it.
-void LCAO_Matrix::update_Hloc(void)
+void LCAO_Matrix::update_Hloc()
 {
     ModuleBase::TITLE("LCAO_Matrix","update_Hloc");
 #ifdef _OPENMP
@@ -560,8 +545,7 @@ void LCAO_Matrix::update_Hloc(void)
     {
         Hloc[i] += Hloc_fixed[i];
     }
-    return;
-}
+    }
 
 void LCAO_Matrix::update_Hloc2(const int &ik)
 {
@@ -580,8 +564,7 @@ void LCAO_Matrix::update_Hloc2(const int &ik)
 #endif
 	}
 
-	return;
-}
+	}
 
 
 void LCAO_Matrix::output_HSk(const char &mtype, std::string &fn)
@@ -602,10 +585,9 @@ void LCAO_Matrix::output_HSk(const char &mtype, std::string &fn)
         }
     }
     ofs.close();
-    return;
 }
 
-void LCAO_Matrix::allocate_Hloc_fixedR_tr(void)
+void LCAO_Matrix::allocate_Hloc_fixedR_tr()
 {
     ModuleBase::TITLE("LCAO_Matrix","allocate_Hloc_fixedR_tr");
 
@@ -648,10 +630,9 @@ void LCAO_Matrix::allocate_Hloc_fixedR_tr(void)
         }
     }
 
-    return;
-}
+    }
 
-void LCAO_Matrix::allocate_HR_tr(void)
+void LCAO_Matrix::allocate_HR_tr()
 {
     ModuleBase::TITLE("LCAO_Matrix","allocate_HR_tr");
 
@@ -694,10 +675,9 @@ void LCAO_Matrix::allocate_HR_tr(void)
         }
     }
 
-    return;
-}
+    }
 
-void LCAO_Matrix::allocate_SlocR_tr(void)
+void LCAO_Matrix::allocate_SlocR_tr()
 {
     ModuleBase::TITLE("LCAO_Matrix","allocate_SlocR_tr");
 
@@ -740,10 +720,9 @@ void LCAO_Matrix::allocate_SlocR_tr(void)
         }
     }
 
-    return;
-}
+    }
 
-void LCAO_Matrix::destroy_Hloc_fixedR_tr(void)
+void LCAO_Matrix::destroy_Hloc_fixedR_tr()
 {
     ModuleBase::TITLE("LCAO_Matrix","destroy_Hloc_fixed2_R");
 
@@ -800,8 +779,7 @@ void LCAO_Matrix::destroy_Hloc_fixedR_tr(void)
         delete[] SlocR_tr_soc;
     }
 
-    return;
-}
+    }
 
 void LCAO_Matrix::set_HR_tr(const int &Rx, const int &Ry, const int &Rz, const int &iw1_all, const int &iw2_all, const double &v)
 {
@@ -830,11 +808,6 @@ void LCAO_Matrix::set_HR_tr(const int &Rx, const int &Ry, const int &Rz, const i
 //std::cout<<"Hloc_fixedR_tr: "<<Hloc_fixedR_tr[Rx][Ry][Rz][index]<<std::endl;
 //std::cout<<"v: "<<v<<std::endl;
     HR_tr[Rx][Ry][Rz][index] = Hloc_fixedR_tr[Rx][Ry][Rz][index] + v; 
-    //HR_tr[Rx][Ry][Rz][index] = Hloc_fixedR_tr[Rx][Ry][Rz][index]; 
-    //HR_tr[Rx][Ry][Rz][index] = v; 
-    //HR_tr[Rx][Ry][Rz][index] = index; 
-
-    return;
 }
 
 //LiuXh add 2019-07-16
@@ -861,11 +834,9 @@ void LCAO_Matrix::set_HR_tr_soc(
 
     assert(index < this->ParaV->nloc);
     HR_tr_soc[Rx][Ry][Rz][index] = Hloc_fixedR_tr_soc[Rx][Ry][Rz][index] + v; 
-
-    return;
 }
 
-void LCAO_Matrix::destroy_HS_R_sparse(void)
+void LCAO_Matrix::destroy_HS_R_sparse()
 {
     ModuleBase::TITLE("LCAO_Matrix","destroy_HS_R_sparse");
 
@@ -890,10 +861,9 @@ void LCAO_Matrix::destroy_HS_R_sparse(void)
     // std::set<Abfs::Vector3_Order<int>> empty_all_R_coor;
     // all_R_coor.swap(empty_all_R_coor);
 
-    return;
-}
+    }
 
-void LCAO_Matrix::destroy_T_R_sparse(void)
+void LCAO_Matrix::destroy_T_R_sparse()
 {
     ModuleBase::TITLE("LCAO_Matrix","destroy_T_R_sparse");
 
@@ -907,10 +877,9 @@ void LCAO_Matrix::destroy_T_R_sparse(void)
         std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> empty_TR_soc_sparse;
         TR_soc_sparse.swap(empty_TR_soc_sparse);
     }
-    return;
-}
+    }
 
-void LCAO_Matrix::destroy_dH_R_sparse(void)
+void LCAO_Matrix::destroy_dH_R_sparse()
 {
     ModuleBase::TITLE("LCAO_Matrix","destroy_dH_R_sparse");
 
@@ -941,5 +910,4 @@ void LCAO_Matrix::destroy_dH_R_sparse(void)
         dHRz_soc_sparse.swap(empty_dHRz_soc_sparse);
     }
 
-    return;
-}
+    }

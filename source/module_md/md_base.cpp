@@ -6,7 +6,7 @@
 #endif
 #include "module_io/print_info.h"
 
-MD_base::MD_base(MD_para& MD_para_in, UnitCell& unit_in) 
+MD_base::MD_base(MD_para& MD_para_in, UnitCell& unit_in)
 : mdp(MD_para_in), ucell(unit_in)
 {
     if (mdp.md_seed >= 0)
@@ -69,8 +69,6 @@ void MD_base::setup(ModuleESolver::ESolver* p_esolver, const std::string& global
     MD_func::force_virial(p_esolver, step_, ucell, potential, force, mdp.cal_stress, virial);
     MD_func::compute_stress(ucell, vel, allmass, mdp.cal_stress, virial, stress);
     ucell.ionic_position_updated = true;
-
-    return;
 }
 
 
@@ -78,16 +76,12 @@ void MD_base::first_half(std::ofstream& ofs)
 {
     update_vel(force);
     update_pos();
-
-    return;
 }
 
 
-void MD_base::second_half(void)
+void MD_base::second_half()
 {
     update_vel(force);
-
-    return;
 }
 
 
@@ -117,8 +111,6 @@ void MD_base::update_pos()
 #endif
 
     ucell.update_pos_taud(pos);
-
-    return;
 }
 
 
@@ -141,7 +133,6 @@ void MD_base::update_vel(const ModuleBase::Vector3<double>* force)
 #ifdef __MPI
     MPI_Bcast(vel, ucell.nat * 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif
-    return;
 }
 
 
@@ -221,8 +212,6 @@ void MD_base::print_md(std::ofstream& ofs, const bool& cal_stress)
 
     ofs << std::endl;
     ofs << std::endl;
-
-    return;
 }
 
 
@@ -241,14 +230,10 @@ void MD_base::write_restart(const std::string& global_out_dir)
 #ifdef __MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
-
-    return;
 }
 
 
 void MD_base::restart(const std::string& global_readin_dir)
 {
     MD_func::current_md_info(mdp.my_rank, global_readin_dir, step_rst_, mdp.md_tfirst);
-
-    return;
 }

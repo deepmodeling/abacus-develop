@@ -21,10 +21,10 @@ void Vdwd2::cal_energy()
                       double R0_sum,
                       double C6_product,
                       double r_sqr,
-                      int,
-                      int,
-                      const ModuleBase::Vector3<double> &,
-                      const ModuleBase::Vector3<double> &) {
+                      int /*unused*/,
+                      int /*unused*/,
+                      const ModuleBase::Vector3<double> & /*unused*/,
+                      const ModuleBase::Vector3<double> & /*unused*/) {
         const double tmp_damp_recip = 1 + exp(-para_.damping() * (r / R0_sum - 1));
         energy_ -= C6_product / pow(r_sqr, 3) / tmp_damp_recip / 2;
     };

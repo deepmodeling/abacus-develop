@@ -36,7 +36,7 @@ HContainer<T>::HContainer(const HContainer<T>& HR_in, T* data_array)
 // move constructor
 template <typename T>
 HContainer<T>::HContainer(HContainer<T>&& HR_in)
-{
+ noexcept {
     this->atom_pairs = std::move(HR_in.atom_pairs);
     this->sparse_ap = std::move(HR_in.sparse_ap);
     this->sparse_ap_index = std::move(HR_in.sparse_ap_index);
@@ -203,10 +203,9 @@ AtomPair<T>* HContainer<T>::find_pair(int atom_i, int atom_j) const
         AtomPair<T>* tmp_pointer = const_cast<AtomPair<T>*>(&this->atom_pairs[this->sparse_ap_index[atom_i][it-this->sparse_ap[atom_i].begin()]]);
         return tmp_pointer;
     }
-    else
-    {
-        return nullptr;
-    }
+    
+            return nullptr;
+   
 }
 
 // find_matrix
@@ -218,9 +217,8 @@ const BaseMatrix<T>* HContainer<T>::find_matrix(int atom_i, int atom_j, int rx, 
     {
         return nullptr;
     }
-    else
-    {
-        if(this->gamma_only)
+    
+            if(this->gamma_only)
         {
             return tmp->find_matrix(0, 0, 0);
         }
@@ -228,7 +226,7 @@ const BaseMatrix<T>* HContainer<T>::find_matrix(int atom_i, int atom_j, int rx, 
         {
             return tmp->find_matrix(rx, ry, rz);
         }
-    }
+   
 }
 
 template <typename T>
@@ -239,9 +237,8 @@ BaseMatrix<T>* HContainer<T>::find_matrix(int atom_i, int atom_j, int rx, int ry
     {
         return nullptr;
     }
-    else
-    {
-        if(this->gamma_only)
+    
+            if(this->gamma_only)
         {
             return tmp->find_matrix(0, 0, 0);
         }
@@ -249,7 +246,7 @@ BaseMatrix<T>* HContainer<T>::find_matrix(int atom_i, int atom_j, int rx, int ry
         {
             return tmp->find_matrix(rx, ry, rz);
         }
-    }
+   
 }
 
 // get_atom_pair with atom_ij
@@ -267,11 +264,10 @@ AtomPair<T>& HContainer<T>::get_atom_pair(int atom_i, int atom_j) const
         AtomPair<T>* tmp = const_cast<AtomPair<T>*>(&this->atom_pairs[this->sparse_ap_index[atom_i][it-this->sparse_ap[atom_i].begin()]]);
         return *tmp;
     }
-    else
-    {
-        ModuleBase::WARNING_QUIT("HContainer", "atom pair not found in get_atom_pair");
+    
+            ModuleBase::WARNING_QUIT("HContainer", "atom pair not found in get_atom_pair");
         return const_cast<AtomPair<T>&>(this->atom_pairs[0]);
-    }
+   
 }
 
 // get_atom_pair with index
@@ -300,10 +296,9 @@ AtomPair<T>& HContainer<T>::get_atom_pair(int index) const
     {
         return const_cast<AtomPair<T>&>(*this->tmp_atom_pairs[index]);
     }
-    else
-    {
-        return const_cast<AtomPair<T>&>(this->atom_pairs[index]);
-    }
+    
+            return const_cast<AtomPair<T>&>(this->atom_pairs[index]);
+   
 }
 
 // add function
@@ -343,13 +338,12 @@ bool HContainer<T>::fix_R(int rx_in, int ry_in, int rz_in) const
         this->current_R = -1;
         return false;
     }
-    else
-    {
-        //set current_R
+    
+            //set current_R
         this->current_R = this->find_R(rx_in, ry_in, rz_in);
         this->tmp_atom_pairs.resize(iter);
         return true;
-    }
+   
 }
 
 // unfix_R
@@ -456,7 +450,6 @@ void HContainer<T>::loop_R(const size_t& index, int& rx, int& ry, int& rz) const
     rx = this->tmp_R_index[index * 3];
     ry = this->tmp_R_index[index * 3 + 1];
     rz = this->tmp_R_index[index * 3 + 2];
-    return;
 }
 
 // get_AP_size
@@ -469,10 +462,9 @@ size_t HContainer<T>::size_atom_pairs() const
         return this->tmp_atom_pairs.size();
     }
     // R index is not fixed
-    else
-    {
-        return this->atom_pairs.size();
-    }
+    
+            return this->atom_pairs.size();
+   
 }
 
 // data() interface with atom_i and atom_j
@@ -484,11 +476,10 @@ T* HContainer<T>::data(int atom_i, int atom_j) const
     {
         return atom_ij->get_pointer();
     }
-    else
-    {
-        std::cout << "Error: atom pair not found in data()" << std::endl;
+    
+            std::cout << "Error: atom pair not found in data()" << std::endl;
         return nullptr;
-    }
+   
 }
 
 // data() interface with atom_i and atom_j ad R_pointer
@@ -500,11 +491,10 @@ T* HContainer<T>::data(int atom_i, int atom_j, int* R_pointer) const
     {
         return atom_ij->get_HR_values(R_pointer[0], R_pointer[1], R_pointer[2]).get_pointer();
     }
-    else
-    {
-        std::cout << "Error: atom pair not found in data()" << std::endl;
+    
+            std::cout << "Error: atom pair not found in data()" << std::endl;
         return nullptr;
-    }
+   
 }
 
 // insert_pair

@@ -20,8 +20,8 @@ class Numerical_Nonlocal_Lm
 
 	public:
 
-	double* beta_uniform;
-	double* dbeta_uniform;
+	double* beta_uniform{};
+	double* dbeta_uniform{};
 	int nr_uniform;
 	double dr_uniform;
 
@@ -73,7 +73,7 @@ class Numerical_Nonlocal_Lm
 	std::string label;
 	int index_atom_type;
 	int angular_momentum_l;
-	int index_proj;
+	int index_proj{};
 
 	int nr;
 	int nk;
@@ -82,12 +82,12 @@ class Numerical_Nonlocal_Lm
 	double kcut;
 	double dk;
 
-	double* r_radial; //points of r
-	double* k_radial;
+	double* r_radial{}; //points of r
+	double* k_radial{};
 
-	double* rab;
-	double* beta_r; // |beta(r) * r>
-	double* beta_k;
+	double* rab{};
+	double* beta_r{}; // |beta(r) * r>
+	double* beta_k{};
 };
 
 #endif

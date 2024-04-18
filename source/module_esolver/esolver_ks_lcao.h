@@ -116,7 +116,7 @@ namespace ModuleESolver
         ModuleIO::Output_Mat_Sparse<TK> create_Output_Mat_Sparse(int istep);
 
         /// @brief check if skip the corresponding output in md calculation
-        bool md_skip_out(std::string calculation, int istep, int interval);
+        bool md_skip_out(const std::string& calculation, int istep, int interval);
 
 #ifdef __EXX
         std::shared_ptr<Exx_LRI_Interface<TK, double>> exd = nullptr;

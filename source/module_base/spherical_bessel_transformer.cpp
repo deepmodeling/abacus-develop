@@ -34,39 +34,39 @@ public:
     Impl(Impl const&) = delete;
     Impl& operator=(Impl const&) = delete;
 
-    void radrfft(const int l,
-                 const int ngrid,
-                 const double cutoff,
-                 const double* const in,
-                 double* const out,
-                 const int p = 0,
-                 const bool deriv = false
+    void radrfft(int l,
+                 int ngrid,
+                 double cutoff,
+                 const double* in,
+                 double* out,
+                 int p = 0,
+                 bool deriv = false
     );
 
-    void direct(const int l,
-                const int ngrid_in,
-                const double* const grid_in,
-                const double* const in,
-                const int ngrid_out,
-                const double* const grid_out,
-                double* const out,
-                const int p = 0,
-                const bool deriv = false
+    void direct(int l,
+                int ngrid_in,
+                const double* grid_in,
+                const double* in,
+                int ngrid_out,
+                const double* grid_out,
+                double* out,
+                int p = 0,
+                bool deriv = false
     );
 
-    void set_fftw_plan_flag(const unsigned new_flag);
+    void set_fftw_plan_flag(unsigned new_flag);
     void fft_clear();
 
 private:
     Impl() = default;
 
     /// core function for FFT-based transform
-    void radrfft_base(const int l,
-                       const int ngrid,
-                       const double cutoff,
-                       const double* const in,
-                       double* const out,
-                       const int p = 0
+    void radrfft_base(int l,
+                       int ngrid,
+                       double cutoff,
+                       const double* in,
+                       double* out,
+                       int p = 0
     );
 
     /// Internal buffer used for in-place real-input FFT (interpreted as double* on input)
@@ -85,7 +85,7 @@ private:
     void rfft_in_place();
 
     /// Buffer allocation and plan creation for a real-input FFT of size N.
-    void rfft_prepare(const int N);
+    void rfft_prepare(int sz);
 
     /**
      * @brief Polynomial coefficients in the sin & cos expression of the spherical Bessel function.
@@ -111,15 +111,15 @@ private:
      *          since some coefficients exceed 2^63-1 for l >= 18.
      *
      */
-    long long int polycoef(const bool of_sine, const int l, const int n);
+    long long int polycoef(bool of_sine, int l, int n);
 
     /// Computes & stores the values of spherical Bessel function on the given transform grid
-    void cache(const int l,
-               const int ngrid_in,
-               const double* const grid_in,
-               const int ngrid_out,
-               const double* const grid_out,
-               const bool deriv);
+    void cache(int l,
+               int ngrid_in,
+               const double* grid_in,
+               int ngrid_out,
+               const double* grid_out,
+               bool deriv);
 
     /**
      * @name Cached function values for direct integration

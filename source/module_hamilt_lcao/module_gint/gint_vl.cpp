@@ -68,8 +68,6 @@ void Gint::gint_kernel_vlocal(
 		delete[] cal_flag[ib];
 	}
 	delete[] cal_flag;
-
-	return;
 }
 
 void Gint::gint_kernel_dvlocal(
@@ -121,8 +119,6 @@ void Gint::gint_kernel_dvlocal(
 		delete[] cal_flag[ib];
 	}
 	delete[] cal_flag;
-
-	return;
 }
 
 void Gint::gint_kernel_vlocal_meta(
@@ -213,8 +209,6 @@ void Gint::gint_kernel_vlocal_meta(
 		delete[] cal_flag[ib];
 	}
 	delete[] cal_flag;
-
-	return;
 }
 
 void Gint::cal_meshball_vlocal_gamma(
@@ -311,8 +305,8 @@ void Gint::cal_meshball_vlocal_k(
 	int na_grid,
 	int LD_pool,
 	int grid_index, 
-	int* block_size,
-	int* block_index,
+	const int* block_size,
+	const int* block_index,
 	int* block_iw,
 	bool** cal_flag,  
 	double** psir_ylm,

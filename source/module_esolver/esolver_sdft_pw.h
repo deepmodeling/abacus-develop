@@ -73,8 +73,8 @@ class ESolver_SDFT_PW : public ESolver_KS_PW<std::complex<double>>
                 const int npart);
 
   private:
-    int nche_sto;   ///< norder of Chebyshev
-    int method_sto; ///< method of SDFT
+    int nche_sto{};   ///< norder of Chebyshev
+    int method_sto{}; ///< method of SDFT
 
     /**
      * @brief Check if Emin and Emax are converged

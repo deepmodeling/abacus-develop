@@ -51,7 +51,7 @@ void ORB_table_beta::allocate
 	this->lmax = lmax_in;
 	this->kmesh = kmesh_in;
 	this->Rmax = Rmax_in;
-	this->dr = dr_in;
+	ORB_table_beta::dr = dr_in;
 	this->dk = dk_in;
 
 	assert(ntype > 0);
@@ -99,8 +99,7 @@ void ORB_table_beta::allocate
 	}
 
 //	OUT(GlobalV::ofs_running,"allocate kpoint, r, rab, kab","Done");
-	return;
-}
+	}
 
 
 int ORB_table_beta::get_rmesh(const double &R1, const double &R2)
@@ -217,7 +216,6 @@ void ORB_table_beta::cal_VNL_PhiBeta_R(
 	delete[] k1_dot_k2;
 
 	ModuleBase::timer::tick ("ORB_table_beta", "VNL_PhiBeta_R");
-	return;
 }
 
 
@@ -331,7 +329,6 @@ void ORB_table_beta::init_Table_Beta(
 
 //	OUT(GlobalV::ofs_running,"allocate non-local potential matrix","Done");
 	ModuleBase::timer::tick("ORB_table_beta", "init_Table_Beta");
-	return;
 }
 
 
@@ -368,7 +365,6 @@ void ORB_table_beta::Destroy_Table_Beta(
 		delete[] Table_NR[ir];
 	}
 	delete[] Table_NR;
-	return;
 }
 
 
@@ -410,8 +406,7 @@ void ORB_table_beta::init_NL_Tpair(
 			 }
 		}
 	}
-	return;
-}
+	}
 
 
 
@@ -462,5 +457,4 @@ void ORB_table_beta::init_NL_Opair(
 		}
 	}
 
-	return;
-}
+	}

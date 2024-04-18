@@ -42,9 +42,9 @@ void Force_LCAO_k::cal_fvl_dphi_k(const bool isforce,
         return;
     }
 
-    assert(lm.DHloc_fixedR_x != NULL);
-    assert(lm.DHloc_fixedR_y != NULL);
-    assert(lm.DHloc_fixedR_z != NULL);
+    assert(lm.DHloc_fixedR_x != nullptr);
+    assert(lm.DHloc_fixedR_y != nullptr);
+    assert(lm.DHloc_fixedR_z != nullptr);
 
     int istep = 1;
 
@@ -92,5 +92,4 @@ void Force_LCAO_k::cal_fvl_dphi_k(const bool isforce,
     }
 
     ModuleBase::timer::tick("Force_LCAO_k", "cal_fvl_dphi_k");
-    return;
 }

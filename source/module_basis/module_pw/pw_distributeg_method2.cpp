@@ -99,7 +99,6 @@ void PW_Basis::distribution_method2()
 
     delete[] st_bottom2D;
     delete[] st_length2D;
-    return;
 }
 
 /// 
@@ -130,7 +129,7 @@ void PW_Basis::divide_sticks_2()
 // output: this->fftixy2ip, this->istot2ixy, npw_per
 // 
 void PW_Basis::create_maps(
-    int* st_length2D  // the number of planewaves that belong to the stick located on (x, y), stored in 2d x-y plane.
+    const int* st_length2D  // the number of planewaves that belong to the stick located on (x, y), stored in 2d x-y plane.
 )
 {
     ModuleBase::GlobalFunc::ZEROS(this->istot2ixy, this->nstot);
@@ -153,4 +152,4 @@ void PW_Basis::create_maps(
         }
     }
 }
-}
+}  // namespace ModulePW

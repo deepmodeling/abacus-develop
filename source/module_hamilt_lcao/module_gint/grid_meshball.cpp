@@ -25,7 +25,7 @@ Grid_MeshBall::~Grid_MeshBall()
 	delete[] index_ball;
 }
 
-void Grid_MeshBall::init_meshball(void)
+void Grid_MeshBall::init_meshball()
 {	
 	ModuleBase::TITLE("Grid_MeshBall","init_meshball");
 
@@ -133,7 +133,6 @@ void Grid_MeshBall::init_meshball(void)
 	}
 
 	assert(count == this->meshball_ncells);
-	return;
 }
 
 double Grid_MeshBall::deal_with_atom_spillage(const double *pos)
@@ -166,7 +165,7 @@ double Grid_MeshBall::deal_with_atom_spillage(const double *pos)
 }
 
 //LiuXh add 2018-12-14
-void Grid_MeshBall::delete_meshball_positions(void)
+void Grid_MeshBall::delete_meshball_positions()
 {	
 	ModuleBase::TITLE("Grid_MeshBall","delete_meshball_positions");
 	if(flag_mp)
@@ -178,5 +177,4 @@ void Grid_MeshBall::delete_meshball_positions(void)
 		delete[] meshball_positions;
 		flag_mp = false;
 	}
-	return;
-}
+	}

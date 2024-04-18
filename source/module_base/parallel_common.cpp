@@ -20,14 +20,12 @@ void Parallel_Common::bcast_string(std::string &object) // Peize Lin fix bug 201
     if (0 != GlobalV::MY_RANK)
         object = static_cast<std::string>(swap);
     delete[] swap;
-    return;
 }
 
 void Parallel_Common::bcast_string(std::string *object, const int n) // Peize Lin fix bug 2019-03-18
 {
     for (int i = 0; i < n; i++)
         bcast_string(object[i]);
-    return;
 }
 
 void Parallel_Common::bcast_complex_double(std::complex<double> &object)

@@ -16,9 +16,9 @@ public:
     ~Parallel_2D();
 
     /// local size (nloc = nrow * ncol)
-    int nrow;
-    int ncol;
-    long nloc;
+    int nrow{};
+    int ncol{};
+    long nloc{};
 
     /// block size,
     /// the default value of nb is 1,
@@ -26,13 +26,13 @@ public:
     int nb = 1;
 
     /// the number of processors in each dimension of MPI_Cart structure
-    int dim0;
-    int dim1;
+    int dim0{};
+    int dim1{};
     /// the coordinate of current processor in each dimension of MPI_Cart structure
-    int coord[2];
+    int coord[2]{};
 
     /// test parameter
-    int testpb;
+    int testpb{};
 
     /// total number of columns of matrix in this processor
     int get_col_size()const { return this->ncol; };
@@ -81,9 +81,9 @@ public:
     void set_proc_dim(const int& dsize, bool mode = 0);
 
 #ifdef __MPI
-    int blacs_ctxt;    ///< blacs info
-    int desc[9];    ///<for matrix, nlocal*nlocal    
-    MPI_Comm comm_2D;   ///<communicator for 2D-block
+    int blacs_ctxt{};    ///< blacs info
+    int desc[9]{};    ///<for matrix, nlocal*nlocal    
+    MPI_Comm comm_2D{};   ///<communicator for 2D-block
 
     /// create the 'comm_2D' stratege.
     void mpi_create_cart(const MPI_Comm& diag_world);

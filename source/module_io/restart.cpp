@@ -8,19 +8,19 @@
 
 #include "module_base/global_function.h"
 
-void Restart::write_file1(const std::string &file_name, const void*const ptr, const size_t size) const
+void Restart::write_file1(const std::string &file_name, const void*const ptr, const size_t size) 
 {
 	std::ofstream ofs(file_name, std::ofstream::binary|std::ofstream::trunc);
 	ofs.write(static_cast<const char*>(ptr),size);
 }
 
-void Restart::read_file1(const std::string &file_name, void*const ptr, const size_t size) const
+void Restart::read_file1(const std::string &file_name, void*const ptr, const size_t size) 
 {
 	std::ifstream ifs(file_name, std::ifstream::binary);
 	ifs.read(static_cast<char*>(ptr),size);
 }
 
-bool Restart::write_file2(const std::string& file_name, const void* const ptr, const size_t size, const bool error_quit) const
+bool Restart::write_file2(const std::string& file_name, const void* const ptr, const size_t size, const bool error_quit) 
 {
 	const int file = open(file_name.c_str(), O_WRONLY|O_CREAT|O_TRUNC, S_IRUSR|S_IWUSR);
     if (-1 == file)
@@ -36,7 +36,7 @@ bool Restart::write_file2(const std::string& file_name, const void* const ptr, c
     return true;
 }
 
-bool Restart::read_file2(const std::string& file_name, void* const ptr, const size_t size, const bool error_quit) const
+bool Restart::read_file2(const std::string& file_name, void* const ptr, const size_t size, const bool error_quit) 
 {
 	const int file = open(file_name.c_str(), O_RDONLY);
     if (-1 == file)

@@ -411,18 +411,18 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
 
     if (GlobalV::TEST_FORCE)
     {
-        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "LOCAL    FORCE (eV/Angstrom)", forcelc, 0);
-        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "NONLOCAL FORCE (eV/Angstrom)", forcenl, 0);
-        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "NLCC     FORCE (eV/Angstrom)", forcecc, 0);
-        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "ION      FORCE (eV/Angstrom)", forceion, 0);
-        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "SCC      FORCE (eV/Angstrom)", forcescc, 0);
+        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "LOCAL    FORCE (eV/Angstrom)", forcelc, false);
+        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "NONLOCAL FORCE (eV/Angstrom)", forcenl, false);
+        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "NLCC     FORCE (eV/Angstrom)", forcecc, false);
+        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "ION      FORCE (eV/Angstrom)", forceion, false);
+        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "SCC      FORCE (eV/Angstrom)", forcescc, false);
         if(GlobalV::use_paw)
         {
-            ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "PAW      FORCE (eV/Angstrom)", forcepaw, 0);
+            ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "PAW      FORCE (eV/Angstrom)", forcepaw, false);
         }
 		if (GlobalV::EFIELD_FLAG)
 		{
-			ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "EFIELD   FORCE (eV/Angstrom)", force_e, 0);
+			ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "EFIELD   FORCE (eV/Angstrom)", force_e, false);
 		}
 		if (GlobalV::GATE_FLAG)
 		{
@@ -430,16 +430,14 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
 					GlobalC::ucell,
 					"GATEFIELD   FORCE (eV/Angstrom)",
 					force_gate,
-					0);
+					false);
 		}
 		if (GlobalV::imp_sol)
 		{
-			ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "IMP_SOL   FORCE (eV/Angstrom)", forcesol, 0);
+			ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "IMP_SOL   FORCE (eV/Angstrom)", forcesol, false);
 		}
     }
-    ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "TOTAL-FORCE (eV/Angstrom)", force, 0);
-
-    return;
+    ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "TOTAL-FORCE (eV/Angstrom)", force, false);
 }
 
 template <typename FPTYPE, typename Device>
@@ -516,7 +514,6 @@ void Forces<FPTYPE, Device>::cal_force_loc(ModuleBase::matrix& forcelc,
     Parallel_Reduce::reduce_pool(forcelc.c, forcelc.nr * forcelc.nc);
     delete[] aux;
     ModuleBase::timer::tick("Forces", "cal_force_loc");
-    return;
 }
 
 template <typename FPTYPE, typename Device>
@@ -784,8 +781,6 @@ Parallel_Reduce::reduce_pool(forceion.c, forceion.nr* forceion.nc);
     ModuleBase::timer::tick("Forces", "cal_force_ew");
 
     delete[] aux;
-
-    return;
 }
 
 template <typename FPTYPE, typename Device>
@@ -943,7 +938,6 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
     delete[] psiv;                                                           // mohan fix bug 2012-03-22
     Parallel_Reduce::reduce_pool(forcecc.c, forcecc.nr * forcecc.nc); // qianrui fix a bug for kpar > 1
     ModuleBase::timer::tick("Forces", "cal_force_cc");
-    return;
 }
 
 template <typename FPTYPE, typename Device>
@@ -965,7 +959,7 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
 
     // There is a contribution for jh<>ih in US case or multi projectors case
     // Actually, the judge of nondiagonal should be done on every atom type
-    const bool nondiagonal = (GlobalV::use_uspp || GlobalC::ppcell.multi_proj) ? true : false;
+    const bool nondiagonal = GlobalV::use_uspp || GlobalC::ppcell.multi_proj;
 
     // dbecp: conj( -iG * <Beta(nkb,npw)|psi(nbnd,npw)> )
     // ModuleBase::ComplexArray dbecp(3, GlobalV::NBANDS, nkb);
@@ -1304,7 +1298,6 @@ void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc,
     delete[] rhocgnt; // mohan fix bug 2012-03-22
 
     ModuleBase::timer::tick("Forces", "cal_force_scc");
-    return;
 }
 
 template class Forces<double, psi::DEVICE_CPU>;

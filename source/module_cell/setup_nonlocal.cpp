@@ -166,7 +166,6 @@ void InfoNonlocal::Set_NonLocal(
 	delete[] tmpBeta_lm;
 
 	log << " SET NONLOCAL PSEUDOPOTENTIAL PROJECTORS" << std::endl;
-	return;
 }
 
 
@@ -325,7 +324,7 @@ void InfoNonlocal::Read_NonLocal(
 		int meshr_ps = 0;
 		if(my_rank==0)
 		{
-			if(ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_BETA>", 0))
+			if(ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_BETA>", false))
 			{
 				int iproj;
 				ModuleBase::GlobalFunc::READ_VALUE(ifs, iproj);
@@ -421,8 +420,6 @@ void InfoNonlocal::Read_NonLocal(
 
 	delete[] LfromBeta;
 	delete[] tmpBeta_lm;
-
-	return;
 }
 
 void InfoNonlocal::setupNonlocal(
@@ -489,7 +486,6 @@ void InfoNonlocal::setupNonlocal(
 
 		log << " max number of nonlocal projetors among all species is " << this->nprojmax << std::endl; 
 	}
-    return;
-}
+    }
 
 #endif

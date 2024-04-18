@@ -61,8 +61,6 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
 #endif
     }
     ModuleBase::timer::tick("elecstate", "cal_dm");
-
-    return;
 }
 
 void cal_dm_psi(const Parallel_Orbitals* ParaV,
@@ -134,7 +132,6 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
     }
 
     ModuleBase::timer::tick("elecstate", "cal_dm");
-    return;
 }
 
 // #ifdef __MPI

@@ -19,7 +19,7 @@ class Driver
      * This function read the parameter in "INPUT", "STRU" etc,
      * and split the MPI world into different groups.
      */
-    void reading();
+    static void reading();
 
     /**
      * @brief An interface function.
@@ -29,7 +29,7 @@ class Driver
     void atomic_world();
 
     // the actual calculations
-    void driver_run();
+    static void driver_run();
 };
 
 #endif

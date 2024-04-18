@@ -26,9 +26,9 @@ public:
     int nks;						// number of k points in this pool(processor, up+dw)
     int nkstot;						/// total number of k points, equal to nkstot_ibz after reducing k points
     int nkstot_ibz;             /// number of k points in IBZ
-    int nkstot_full;    /// number of k points in full k mesh
+    int nkstot_full{};    /// number of k points in full k mesh
 
-    int nmp[3];						// Number of Monhorst-Pack
+    int nmp[3]{};						// Number of Monhorst-Pack
     std::vector<int> kl_segids;	// index of kline segment
 
     K_Vectors();
@@ -56,7 +56,7 @@ private:
     int nspin;
     bool kc_done;
     bool kd_done;
-    double koffset[3];     			// used only in automatic k-points.
+    double koffset[3]{};     			// used only in automatic k-points.
     std::string k_kword; //LiuXh add 20180619
     int k_nkstot; //LiuXh add 20180619
     bool is_mp = false; //Monkhorst-Pack
@@ -65,8 +65,8 @@ private:
 
     // step 1 : generate kpoints
     bool read_kpoints(const std::string &fn); // return 0: something wrong.
-    void Monkhorst_Pack(const int *nmp_in,const double *koffset_in,const int tipo);
-    double Monkhorst_Pack_formula( const int &k_type, const double &offset,
+    void Monkhorst_Pack(const int *nmp_in,const double *koffset_in,const int k_type);
+    static double Monkhorst_Pack_formula( const int &k_type, const double &offset,
                                    const int& n, const int &dim);
 
     // step 2 : set both kvec and kved; normalize weight

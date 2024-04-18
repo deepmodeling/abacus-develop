@@ -102,7 +102,7 @@ class TwoCenterTable
     container::Tensor index_map_{container::DataType::DT_INT, container::TensorShape({0})};
 
     /// returns the row-index of the table corresponding to the given two radial functions and l
-    int& table_index(const NumericalRadial* ptr_rad1, const NumericalRadial* ptr_rad2, const int l);
+    int& table_index(const NumericalRadial* it1, const NumericalRadial* it2, const int l);
 
     /// deallocates memory and reset variables to default.
     void cleanup();
@@ -117,7 +117,7 @@ class TwoCenterTable
                     const int l) const;
 
     /// double factorial
-    double dfact(int l) const;
+    static double dfact(int l) ;
 
     typedef void(TwoCenterTable::*looped_func)(const NumericalRadial*, const NumericalRadial*, const int l);
 

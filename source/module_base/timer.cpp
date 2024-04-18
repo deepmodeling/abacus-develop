@@ -5,7 +5,7 @@
 //==========================================================
 #include "timer.h"
 
-#include <math.h>
+#include <cmath>
 
 #ifdef __MPI
 #include <mpi.h>
@@ -39,13 +39,13 @@ void timer::finish(std::ofstream &ofs,const bool print_flag)
 //----------------------------------------------------------
 //
 //----------------------------------------------------------
-void timer::start(void)
+void timer::start()
 {
 	// first init ,then we can use tick
 	timer::tick("","total");
 }
 
-double timer::cpu_time(void)
+double timer::cpu_time()
 {
 //----------------------------------------------------------
 // EXPLAIN : here static is important !!
@@ -130,7 +130,7 @@ void timer::tick(const std::string &class_name,const std::string &name)
 	} // end if(!omp_get_thread_num())
 }
 
-long double timer::print_until_now(void)
+long double timer::print_until_now()
 {
 	// stop the clock
 	timer::tick("","total");
@@ -139,7 +139,7 @@ long double timer::print_until_now(void)
 	return timer_pool[""]["total"].cpu_second;
 }
 
-void timer::write_to_json(std::string file_name)
+void timer::write_to_json(const std::string& file_name)
 {
 #ifdef __MPI
     // in some unit test, the mpi is not initialized, so we need to check it
@@ -162,10 +162,9 @@ void timer::write_to_json(std::string file_name)
         {
 			return "Infinity";
         }
-		else
-        {
-			return fmt.format(d);
-        }
+		
+        			return fmt.format(d);
+       
 	};
 
 	// The output json file format is like this:
@@ -197,7 +196,7 @@ void timer::write_to_json(std::string file_name)
 	{
 		order_a ++;
 		// if calss_name == "", it means total time, so we skip it
-		if(timer_pool_A.first == "")
+		if(timer_pool_A.first.empty())
 			continue;
 		int order_b = 0;
 		const std::string class_name = timer_pool_A.first;
@@ -282,7 +281,7 @@ void timer::print_all(std::ofstream &ofs)
 	ofs<<table<<std::endl;
 	write_to_json("time.json");
 }
-}
+}  // namespace ModuleBase
 
 /*
 void timer::print_all(std::ofstream &ofs)

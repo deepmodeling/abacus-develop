@@ -18,7 +18,7 @@ class Grid_Technique : public Grid_MeshBall
 	// record how many atoms on each grid.
 	int* how_many_atoms;
 	// max atom on grid
-	int max_atom;
+	int max_atom{};
 	// sum of how_many_atoms
 	int total_atoms_on_grid;
 
@@ -46,8 +46,8 @@ class Grid_Technique : public Grid_MeshBall
 	//------------------------------------
 	bool* in_this_processor;
 	std::vector<int> trace_iat;
-	int lnat; // local nat.
-	int lgd; // local grid dimension.  lgd * lgd symmetry matrix. 
+	int lnat{}; // local nat.
+	int lgd{}; // local grid dimension.  lgd * lgd symmetry matrix. 
 	int* trace_lo; // trace local orbital.
 
     //---------------------------------------
@@ -55,14 +55,14 @@ class Grid_Technique : public Grid_MeshBall
 	// each processor's real space grid.
 	// use: GridT.in_this_processor
 	//---------------------------------------
-	int nnrg;
+	int nnrg{};
 	int *nlocdimg;
 	int *nlocstartg;
     
     int* nad; // number of adjacent atoms for each atom.
-	int **find_R2;
-	int **find_R2_sorted_index;
-	int **find_R2st;
+	int **find_R2{};
+	int **find_R2_sorted_index{};
+	int **find_R2st{};
     bool allocate_find_R2;
 	int binary_search_find_R2_offset(int val, int iat) const;
 
@@ -101,19 +101,19 @@ private:
 
     void cal_max_box_index(void);
     
-    int maxB1;
-    int maxB2;
-	int maxB3;
+    int maxB1{};
+    int maxB2{};
+	int maxB3{};
 
-	int minB1;
-	int minB2;
-	int minB3;
+	int minB1{};
+	int minB2{};
+	int minB3{};
 
-	int nB1;
-	int nB2;
-	int nB3;
+	int nB1{};
+	int nB2{};
+	int nB3{};
 
-    int nbox;
+    int nbox{};
 
 	// atoms on meshball
 	void init_atoms_on_grid(const int& ny, const int& nplane, const int& startz_current);

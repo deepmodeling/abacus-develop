@@ -394,5 +394,4 @@ void H_Ewald_pw::rgen(
 		}	
 	}
 
-    return;
-} //end subroutine rgen
+    } //end subroutine rgen

@@ -234,7 +234,6 @@ void YlmReal::rlylm
 	}
 
 	ModuleBase::timer::tick("YlmReal","rlylm");
-	return;
 }
 
 
@@ -286,8 +285,7 @@ void YlmReal::Ylm_Real2
 		}
 	}
 
-	return;
-}
+	}
 
 //==========================================================
 // MEMBER FUNCTION :
@@ -612,8 +610,7 @@ void YlmReal::Ylm_Real
     */
 
 
-    return;
-} // end subroutine ylmr2
+    } // end subroutine ylmr2
 
 void YlmReal::grad_Ylm_Real
     (
@@ -664,8 +661,7 @@ void YlmReal::grad_Ylm_Real
 			
 		}
 	}
-	return;
-}
+	}
 
 
 //==========================================================

@@ -26,9 +26,9 @@ public:
 //==========================================================
 	void set_FAtom(const UnitCell &ucell, FAtom& a)const ;
 
-	double vec1[3];
-	double vec2[3];
-	double vec3[3];
+	double vec1[3]{};
+	double vec2[3]{};
+	double vec3[3]{};
 
 public:
 	bool getExpandFlag(void)const {return expand_flag;}
@@ -154,14 +154,14 @@ private:
 // NAME : Expand_Grid
 //==========================================================
 	void Expand_Grid(const UnitCell& ucell, const int ntype);
-	double* store_x;
-	double* store_y;
-	double* store_z;
-	int* store_cell_x;
-	int* store_cell_y;
-	int* store_cell_z;
-	int* store_type;
-	int* store_natom;
+	double* store_x{};
+	double* store_y{};
+	double* store_z{};
+	int* store_cell_x{};
+	int* store_cell_y{};
+	int* store_cell_z{};
+	int* store_type{};
+	int* store_natom{};
 	double x_min_expand;
 	double y_min_expand;
 	double z_min_expand;
@@ -173,18 +173,18 @@ private:
 // NAME : Expand_Grid
 //==========================================================
 	void calculate_cells(void);
-	int cell_nx;
-	int cell_ny;
-	int cell_nz;
+	int cell_nx{};
+	int cell_ny{};
+	int cell_nz{};
 //==========================================================
 // MEMBRE FUNCTION :
 // NAME : Load_atom
 //==========================================================
 	void Load_atom(const UnitCell& ucell)const;
 	mutable int d_current;
-	mutable double x;
-	mutable double y;
-	mutable double z;
+	mutable double x{};
+	mutable double y{};
+	mutable double z{};
 	mutable int type;
 	mutable int natom;
 };

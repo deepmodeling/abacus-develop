@@ -53,8 +53,8 @@ class Local_Orbital_Charge
 
 	// liaochen modify on 2010-3-23 
 	// change its state from private to public
-	double*** DM;	
-	double** DM_R;
+	double*** DM{};	
+	double** DM_R{};
 
 	// whether to printout density matrix
     static int out_dm; // output density matrix or not.
@@ -78,10 +78,10 @@ class Local_Orbital_Charge
         const K_Vectors& kv);     //output, dm2d[NSPIN][LNNR]
 
 	// wavefunctions' pointer
-    Local_Orbital_wfc* LOWF;
+    Local_Orbital_wfc* LOWF{};
 
 	// Parallel Variables' pointer
-    const Parallel_Orbitals* ParaV;
+    const Parallel_Orbitals* ParaV{};
 
     //temporary set it to public for ElecStateLCAO class, would be refactor later
     void cal_dk_k(const Grid_Technique &gt, const ModuleBase::matrix& wg_in, const K_Vectors& kv);
@@ -90,7 +90,7 @@ class Local_Orbital_Charge
 
     void set_dm_k(int ik, std::complex<double>* dm_k_in); // set dm_k from a pointer
 
-    void set_dm_gamma(int is, double* dm_gamma_in); // set dm_gamma from a pointer
+    void set_dm_gamma(int is, const double* dm_gamma_in); // set dm_gamma from a pointer
 
 private:
 
@@ -105,12 +105,12 @@ private:
 	int lgd_now;// sub-FFT-mesh orbitals number in this step.
 
 	int nnrg_last = 0;// sub-FFT-mesh orbtials number in previous step, with k.
-	int nnrg_now; // sub-FFT-mesh orbitals number in this step, with k.
+	int nnrg_now{}; // sub-FFT-mesh orbitals number in this step, with k.
 
 	// add by yshen on 9/22/2014
 	// these variables are memory pool for DM series matrixes, 
 	// so that these matrixes will be storaged continuously in the memory.
-    double** DM_pool;
+    double** DM_pool{};
 
     DMgamma_2dtoGrid dm2g;
 

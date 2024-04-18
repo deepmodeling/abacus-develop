@@ -151,7 +151,7 @@ void TwoCenterIntegrator::snap(const int itype1,
     }
 }
 
-int TwoCenterIntegrator::ylm_index(const int l, const int m) const
+int TwoCenterIntegrator::ylm_index(const int l, const int m) 
 {
     return l * l + (m > 0 ? 2 * m - 1 : -2 * m);
 }

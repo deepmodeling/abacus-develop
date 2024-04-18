@@ -8,22 +8,22 @@
 #include "module_base/global_function.h"
 #include "module_base/inverse_matrix.h"
 #include "module_base/memory.h"
+#include "module_base/scalapack_connector.h"
 #include "module_base/timer.h"
 #include "module_basis/module_ao/ORB_gen_tables.h"
-#include "module_elecstate/module_charge/charge.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_elecstate/magnetism.h"
+#include "module_elecstate/module_charge/charge.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
-#include "module_base/scalapack_connector.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 #include <cmath>
 #include <complex>
+#include <cstdio>
+#include <cstring>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
-#include <stdio.h>
-#include <string.h>
 
 namespace GlobalC
 {
@@ -216,7 +216,6 @@ void DFTU::init(UnitCell& cell, // unitcell class
     }
 
     ModuleBase::Memory::record("DFTU::locale", sizeof(double) * num_locale);
-    return;
 }
 
 void DFTU::cal_energy_correction(const int istep)
@@ -329,14 +328,14 @@ void DFTU::cal_energy_correction(const int istep)
                                         for (int is = 0; is < 2; is++)
                                         {
                                             double VU = 0.0;
-                                            VU = get_onebody_eff_pot(T, iat, l, n, is, m1_all, m2_all, 0);
+                                            VU = get_onebody_eff_pot(T, iat, l, n, is, m1_all, m2_all, false);
                                             EU_dc += VU * this->locale[iat][l][n][is](m1_all, m2_all);
                                         }
                                     }
                                     else if (GlobalV::NSPIN == 4) // SOC
                                     {
                                         double VU = 0.0;
-                                        VU = get_onebody_eff_pot(T, iat, l, n, 0, m1_all, m2_all, 0);
+                                        VU = get_onebody_eff_pot(T, iat, l, n, 0, m1_all, m2_all, false);
                                         EU_dc += VU * this->locale[iat][l][n][0](m1_all, m2_all);
                                     }
                                 }
@@ -352,7 +351,6 @@ void DFTU::cal_energy_correction(const int istep)
     this->EU -= EU_dc;
 
     ModuleBase::timer::tick("DFTU", "cal_energy_correction");
-    return;
 }
 
 void DFTU::uramping_update()
@@ -388,13 +386,11 @@ bool DFTU::u_converged()
 void DFTU::set_dmr(const elecstate::DensityMatrix<std::complex<double>, double>* dmr)
 {
     this->dm_in_dftu_cd = dmr;
-    return;
 }
 
 void DFTU::set_dmr(const elecstate::DensityMatrix<double, double>* dmr)
 {
     this->dm_in_dftu_d = dmr;
-    return;
 }
 
 const hamilt::HContainer<double>* DFTU::get_dmr(int ispin) const
@@ -403,7 +399,7 @@ const hamilt::HContainer<double>* DFTU::get_dmr(int ispin) const
     {
         return this->dm_in_dftu_d->get_DMR_pointer(ispin+1);
     }
-    else if(this->dm_in_dftu_cd != nullptr)
+    if(this->dm_in_dftu_cd != nullptr)
     {
         return this->dm_in_dftu_cd->get_DMR_pointer(ispin+1);
     }

@@ -164,8 +164,7 @@ void PW_Basis_K::setupIndGk()
         syncmem_int_h2d_op()(gpu_ctx, cpu_ctx, this->d_igl2isz_k, this->igl2isz_k, this->npwk_max * this->nks);
     }
 #endif
-    return;
-}
+    }
 
 /// 
 /// distribute plane wave basis and real-space grids to different processors

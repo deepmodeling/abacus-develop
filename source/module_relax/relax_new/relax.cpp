@@ -332,8 +332,6 @@ void Relax::perform_line_search()
 
     brent_done = this->ls.line_search(restart_brent, x, y, f, xnew, force_thr_eva);
     dmove  = xnew;
-
-    return;
 }
 
 void Relax::new_direction()
@@ -411,7 +409,7 @@ void Relax::new_direction()
     //prepare for line search
     bool restart = true;
     double x=0, y=etot;
-    //TODO: add a certain threshold for the progress.
+    // TODO(root): add a certain threshold for the progress.
     double xnew, yd = 1e-8;
 
     this->ls.line_search(restart, x, y, f, xnew, yd);
@@ -419,8 +417,6 @@ void Relax::new_direction()
     dmovel = 1.0;
     ltrial = true;
     cg_step ++;
-
-    return;
 }
 
 void Relax::move_cell_ions(const bool is_new_dir)

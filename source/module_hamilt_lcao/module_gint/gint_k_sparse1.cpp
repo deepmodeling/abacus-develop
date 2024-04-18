@@ -26,12 +26,12 @@ void Gint_k::distribute_pvdpR_sparseMatrix(
     ModuleBase::GlobalFunc::ZEROS(nonzero_num, total_R_num);
     ModuleBase::GlobalFunc::ZEROS(minus_nonzero_num, total_R_num);
     int count = 0;
-    for (auto &R_coor : LM->all_R_coor)
+    for (const auto &R_coor : LM->all_R_coor)
     {
         auto iter = pvdpR_sparseMatrix.find(R_coor);
         if (iter != pvdpR_sparseMatrix.end())
         {
-            for (auto &row_loop : iter->second)
+            for (const auto &row_loop : iter->second)
             {
                 nonzero_num[count] += row_loop.second.size();
             }
@@ -42,7 +42,7 @@ void Gint_k::distribute_pvdpR_sparseMatrix(
         iter = pvdpR_sparseMatrix.find(minus_R_coor);
         if (iter != pvdpR_sparseMatrix.end())
         {
-            for (auto &row_loop : iter->second)
+            for (const auto &row_loop : iter->second)
             {
                 minus_nonzero_num[count] += row_loop.second.size();
             }
@@ -60,7 +60,7 @@ void Gint_k::distribute_pvdpR_sparseMatrix(
     tmp = new double[GlobalV::NLOCAL];
 
     count = 0;
-    for (auto &R_coor : LM->all_R_coor)
+    for (const auto &R_coor : LM->all_R_coor)
     {
         if (nonzero_num[count] != 0 || minus_nonzero_num[count] != 0)
         {
@@ -79,7 +79,7 @@ void Gint_k::distribute_pvdpR_sparseMatrix(
                         auto row_iter = iter->second.find(row);
                         if (row_iter != iter->second.end())
                         {
-                            for (auto &value : row_iter->second)
+                            for (const auto &value : row_iter->second)
                             {
                                 tmp[value.first] = value.second;
                             }
@@ -163,8 +163,6 @@ void Gint_k::distribute_pvdpR_sparseMatrix(
     minus_nonzero_num = nullptr;
     tmp = nullptr;
 
-    return;
-
 }
 
 void Gint_k::distribute_pvdpR_soc_sparseMatrix(
@@ -183,12 +181,12 @@ void Gint_k::distribute_pvdpR_soc_sparseMatrix(
     ModuleBase::GlobalFunc::ZEROS(nonzero_num, total_R_num);
     ModuleBase::GlobalFunc::ZEROS(minus_nonzero_num, total_R_num);
     int count = 0;
-    for (auto &R_coor : LM->all_R_coor)
+    for (const auto &R_coor : LM->all_R_coor)
     {
         auto iter = pvdpR_soc_sparseMatrix.find(R_coor);
         if (iter != pvdpR_soc_sparseMatrix.end())
         {
-            for (auto &row_loop : iter->second)
+            for (const auto &row_loop : iter->second)
             {
                 nonzero_num[count] += row_loop.second.size();
             }
@@ -199,7 +197,7 @@ void Gint_k::distribute_pvdpR_soc_sparseMatrix(
         iter = pvdpR_soc_sparseMatrix.find(minus_R_coor);
         if (iter != pvdpR_soc_sparseMatrix.end())
         {
-            for (auto &row_loop : iter->second)
+            for (const auto &row_loop : iter->second)
             {
                 minus_nonzero_num[count] += row_loop.second.size();
             }
@@ -217,7 +215,7 @@ void Gint_k::distribute_pvdpR_soc_sparseMatrix(
     tmp_soc = new std::complex<double>[GlobalV::NLOCAL];
 
     count = 0;
-    for (auto &R_coor : LM->all_R_coor)
+    for (const auto &R_coor : LM->all_R_coor)
     {
         if (nonzero_num[count] != 0 || minus_nonzero_num[count] != 0)
         {
@@ -235,7 +233,7 @@ void Gint_k::distribute_pvdpR_soc_sparseMatrix(
                         auto row_iter = iter->second.find(row);
                         if (row_iter != iter->second.end())
                         {
-                            for (auto &value : row_iter->second)
+                            for (const auto &value : row_iter->second)
                             {
                                 tmp_soc[value.first] = value.second;
                             }
@@ -319,8 +317,6 @@ void Gint_k::distribute_pvdpR_soc_sparseMatrix(
     nonzero_num = nullptr;
     minus_nonzero_num = nullptr;
     tmp_soc = nullptr;
-
-    return;
 
 }
 
@@ -539,5 +535,4 @@ void Gint_k::cal_dvlocal_R_sparseMatrix(const int &current_spin, const double &s
         distribute_pvdpR_soc_sparseMatrix(2, sparse_threshold, pvdpRz_soc_sparseMatrix, LM);
     }
 
-    return;
-}
+    }

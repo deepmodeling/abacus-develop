@@ -113,9 +113,9 @@ private:
 	std::string label;
 	
 	int type;
-	int lmax;
+	int lmax{};
 	int* nchi;
-	int total_nchi;
+	int total_nchi{};
 	int max_nchi;
 	ModuleBase::IntArray find_chi;
 	double rcut;

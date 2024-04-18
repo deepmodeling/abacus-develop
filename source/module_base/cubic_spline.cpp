@@ -86,8 +86,8 @@ void CubicSpline::check_interp(const int n,
                                const double* const s,
                                const int n_interp,
                                const double* const x_interp,
-                               double* const y_interp,
-                               double* const dy_interp)
+                               const double* const y_interp,
+                               const double* const dy_interp)
 {
     assert(n > 1 && x && y && s);     // make sure the interpolant exists
     assert(n_interp > 0 && x_interp); // make sure the interpolation points exist
@@ -273,10 +273,9 @@ std::function<int(double)> CubicSpline::_gen_search(const int n, const double* c
         double dx = x[1] - x[0];
         return [dx, n, x](double xi) -> int { return xi == x[n - 1] ? n - 2 : xi / dx; };
     }
-    else
-    {
-        return [n, x](double xi) -> int { return (std::upper_bound(x, x + n, xi) - x) - 1; };
-    }
+    
+            return [n, x](double xi) -> int { return (std::upper_bound(x, x + n, xi) - x) - 1; };
+   
 }
 
 void CubicSpline::_eval(const double* const x,
@@ -286,7 +285,7 @@ void CubicSpline::_eval(const double* const x,
                         const double* const x_interp,
                         double* const y_interp,
                         double* const dy_interp,
-                        std::function<int(double)> search)
+                        const std::function<int(double)>& search)
 {
     void (*poly_eval)(double, double, double, double, double, double*, double*) =
         y_interp ? (dy_interp ? _poly_eval<true, true>: _poly_eval<true, false>) : _poly_eval<false, true>;

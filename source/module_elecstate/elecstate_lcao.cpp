@@ -24,13 +24,12 @@ void ElecStateLCAO<double>::print_psi(const psi::Psi<double>& psi_in, const int 
 #ifdef __MPI
     this->lowf->wfc_2d_to_grid(istep, out_wfc_flag, psi_in.get_pointer(), wfc_grid, this->ekb, this->wg);
 #endif
-    return;
 }
 
 template <>
 void ElecStateLCAO<std::complex<double>>::print_psi(const psi::Psi<std::complex<double>>& psi_in, const int istep)
 {
-	if (!ElecStateLCAO<std::complex<double>>::out_wfc_lcao 
+	if (!ElecStateLCAO<std::complex<double>>::out_wfc_lcao
 			&& !ElecStateLCAO<std::complex<double>>::need_psi_grid)
 	{
 		return;
@@ -82,8 +81,7 @@ void ElecStateLCAO<std::complex<double>>::print_psi(const psi::Psi<std::complex<
         }
     }
 
-    return;
-}
+    }
 
 // multi-k case
 template <>
@@ -115,7 +113,7 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
             this->loc->dm_k.resize(kv->nks);
             for (int ik = 0; ik < kv->nks; ++ik)
             {
-                this->loc->set_dm_k(ik, this->DM->get_DMK_pointer(ik));         
+                this->loc->set_dm_k(ik, this->DM->get_DMK_pointer(ik));
             }
         }
 #endif
@@ -159,7 +157,6 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
     this->charge->renormalize_rho();
 
     ModuleBase::timer::tick("ElecStateLCAO", "psiToRho");
-    return;
 }
 
 // Gamma_only case
@@ -180,7 +177,7 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
         //cal_dm(this->loc->ParaV, this->wg, psi, this->loc->dm_gamma);
         elecstate::cal_dm_psi(this->DM->get_paraV_pointer(), this->wg, psi, *(this->DM));
         this->DM->cal_DMR();
-        if (this->loc->out_dm) // keep interface for old Output_DM until new one is ready
+        if (Local_Orbital_Charge::out_dm) // keep interface for old Output_DM until new one is ready
         {
             this->loc->dm_gamma.resize(GlobalV::NSPIN);
             for (int is = 0; is < GlobalV::NSPIN; ++is)
@@ -200,7 +197,7 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
                 this->print_psi(psi);
             }
             // old 2D-to-Grid conversion has been replaced by new Gint Refactor 2023/09/25
-            if (this->loc->out_dm) // keep interface for old Output_DM until new one is ready
+            if (Local_Orbital_Charge::out_dm) // keep interface for old Output_DM until new one is ready
             {
                 this->loc->cal_dk_gamma_from_2D_pub();
             }
@@ -236,7 +233,6 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
     this->charge->renormalize_rho();
 
     ModuleBase::timer::tick("ElecStateLCAO", "psiToRho");
-    return;
 }
 
 template <typename TK>

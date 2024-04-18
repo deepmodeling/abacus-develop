@@ -126,7 +126,7 @@ void toWannier90_LCAO::calculate(
         {
             ModuleBase::Vector3<double> delta_k(delta_k_all[i].x, delta_k_all[i].y, delta_k_all[i].z);
 
-            fr_ptr[i] = [delta_k](ModuleBase::Vector3<double> r) -> std::complex<double>
+            fr_ptr[i] = [delta_k](const ModuleBase::Vector3<double>& r) -> std::complex<double>
                 {
                     double phase = delta_k * r;
                     std::complex<double> exp_idkr = std::exp(-1.0*ModuleBase::IMAG_UNIT*phase);
@@ -162,7 +162,7 @@ void toWannier90_LCAO::cal_Mmn(const K_Vectors& kv, const psi::Psi<std::complex<
         std::string fileaddress = GlobalV::global_out_dir + wannier_file_name + ".mmn";
         mmn_file.open(fileaddress.c_str(), std::ios::out);
 
-        time_t time_now = time(NULL);
+        time_t time_now = time(nullptr);
         mmn_file << " Created on " << ctime(&time_now);
         mmn_file << std::setw(12) << num_bands << std::setw(12) << cal_num_kpts << std::setw(12) << nntot << std::endl;
     }
@@ -215,7 +215,7 @@ void toWannier90_LCAO::cal_Amn(const K_Vectors& kv, const psi::Psi<std::complex<
 
     if (GlobalV::MY_RANK == 0)
     {
-        time_t time_now = time(NULL);
+        time_t time_now = time(nullptr);
         std::string fileaddress = GlobalV::global_out_dir + wannier_file_name + ".amn";
         Amn_file.open(fileaddress.c_str(), std::ios::out);
         Amn_file << " Created on " << ctime(&time_now);
@@ -334,7 +334,7 @@ void toWannier90_LCAO::count_delta_k(const K_Vectors& kv)
     delta_k_all.resize(delta_k_all_tmp.size());
 
     int index = 0;
-    for (auto &delta_k : delta_k_all_tmp)
+    for (const auto &delta_k : delta_k_all_tmp)
     {
         delta_k_all_index[delta_k] = index;
         delta_k_all[index] = delta_k;
@@ -347,7 +347,7 @@ void toWannier90_LCAO::unkdotkb(
     const psi::Psi<std::complex<double>>& psi_in, 
     const int& ik, 
     const int& ikb, 
-    const ModuleBase::Vector3<double> G, 
+    const ModuleBase::Vector3<double>& G, 
     ModuleBase::ComplexMatrix &Mmn
 )
 {

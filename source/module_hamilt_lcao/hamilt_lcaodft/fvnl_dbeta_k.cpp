@@ -545,15 +545,14 @@ void Force_LCAO_k::cal_fvnl_dbeta_k(const elecstate::DensityMatrix<std::complex<
                                     {
                                         for (int jpol = 0; jpol < 3; jpol++)
                                         {
-                                            if (isstress)
-                                            {
+                                            
                                                 for (int ipol = jpol; ipol < 3; ipol++)
                                                 {
                                                     local_svnl_dbeta(jpol, ipol)
                                                         += tmp_matrix_ptr[0][ir]
                                                             * (dhvnl[jpol][ir] * r1[ipol] + dhvnl1[jpol][ir] * r0[ipol]);
                                                 }
-                                            }
+                                            
                                         }
                                     }
                                 }
@@ -645,6 +644,5 @@ void Force_LCAO_k::cal_fvnl_dbeta_k(const elecstate::DensityMatrix<std::complex<
     }
 
     ModuleBase::timer::tick("Force_LCAO_k", "cal_fvnl_dbeta_k_new");
-    return;
 }
 

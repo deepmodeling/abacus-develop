@@ -25,7 +25,7 @@ namespace formatter
             /// @param context context name, see this->predefined_phys_fmt
             /// @note this function is mostly used for inputing data in 0 dimension one-by-one
             /// @attention for pointer pass to << operator, you MUST NOT USE THIS but to provide another int* nrows!
-            void set_context(std::string context); // most simple case, rely on default values pre-defined
+            void set_context(const std::string& context); // most simple case, rely on default values pre-defined
             /// @brief (pointer overloaded version) set context by context name, , if it is already a predefined type, then directly initialize phys_fmt_ vector, set number of columns and title.
             /// @param context context name, see this->predefined_phys_fmt
             /// @param ncol number of columns, needed to tranverse the last param nrows

@@ -55,4 +55,4 @@ void TITLE(std::ofstream &ofs,const std::string &class_name,const std::string &f
 #endif
 }
 
-}
+}  // namespace ModuleBase

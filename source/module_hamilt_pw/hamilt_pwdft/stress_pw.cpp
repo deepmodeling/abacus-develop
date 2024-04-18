@@ -145,7 +145,6 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
         ModuleIO::print_stress("TOTAL    STRESS", sigmatot, GlobalV::TEST_STRESS, ry);
     }
     ModuleBase::timer::tick("Stress_PW", "cal_stress");
-    return;
 }
 
 template <typename FPTYPE, typename Device>
@@ -156,8 +155,7 @@ void Stress_PW<FPTYPE, Device>::stress_vdw(ModuleBase::matrix& sigma, UnitCell& 
     {
     sigma = vdw_solver->get_stress().to_matrix();
     }
-	return;
-}
+	}
 
 template class Stress_PW<double, psi::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))

@@ -1,14 +1,13 @@
 #include "read_pp.h"
 
-#include <math.h>
+#include "module_base/math_integral.h" // for numerical integration
 
+#include <cmath>
 #include <cstring> // Peize Lin fix bug about strcpy 2016-08-02
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <string>
-
-#include "module_base/math_integral.h" // for numerical integration
 
 Pseudopot_upf::Pseudopot_upf()
 {
@@ -66,7 +65,7 @@ int Pseudopot_upf::init_pseudo_reader(const std::string &fn, std::string &type)
 	}
 	// read in the .vwr type of pseudopotentials
 	// else if(GlobalV::global_pseudo_type=="vwr")
-	else if (type == "vwr")
+	if (type == "vwr")
 	{
 		int info = read_pseudo_vwr(ifs);
 		return info;
@@ -294,12 +293,11 @@ int Pseudopot_upf::average_p(const double& lambda)
 			}
 			this->lchi[nb] = this->lchi[old_nwfc]; //reset lchi index
 		}
-		this->has_so = 0;	
+		this->has_so = false;	
 		return error;
 	}
-	else//lambda_ != 0, modulate the soc effect in pseudopotential
-	{
-		for(int nb=0; nb<this->nbeta; nb++)
+	//lambda_ != 0, modulate the soc effect in pseudopotential
+			for(int nb=0; nb<this->nbeta; nb++)
 		{
 			int l = this->lll[nb];
 			int ind=0, ind1=0;
@@ -387,11 +385,11 @@ int Pseudopot_upf::average_p(const double& lambda)
 			}
 		}
 		return error;
-	}
+
 }
 
 // Peize Lin add for bsse 2021.04.07
-void Pseudopot_upf::set_empty_element(void)
+void Pseudopot_upf::set_empty_element()
 {
 	this->zp = 0;
 	for(int ir=0; ir<mesh; ++ir)
@@ -409,8 +407,7 @@ void Pseudopot_upf::set_empty_element(void)
 	{
 		this->rho_at[ir] = 0;
 	}
-	return;
-}
+	}
 
 /**
  * For USPP we set the augmentation charge as an l-dependent array in all

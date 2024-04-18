@@ -159,7 +159,6 @@ void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma,
     delete[] kfac;
 		
 	ModuleBase::timer::tick("Stress_Func","stress_kin");
-	return;
 }
 
 template class Stress_Func<double, psi::DEVICE_CPU>;

@@ -150,23 +150,22 @@ void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
     
 	if(GlobalV::TEST_FORCE)
 	{
-        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "LOCAL    FORCE (eV/Angstrom)", forcelc, 0);
-        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "NONLOCAL FORCE (eV/Angstrom)", forcenl, 0);
-        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "NLCC     FORCE (eV/Angstrom)", forcecc, 0);
-        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "ION      FORCE (eV/Angstrom)", forceion, 0);
-        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "SCC      FORCE (eV/Angstrom)", forcescc, 0);
+        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "LOCAL    FORCE (eV/Angstrom)", forcelc, false);
+        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "NONLOCAL FORCE (eV/Angstrom)", forcenl, false);
+        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "NLCC     FORCE (eV/Angstrom)", forcecc, false);
+        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "ION      FORCE (eV/Angstrom)", forceion, false);
+        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "SCC      FORCE (eV/Angstrom)", forcescc, false);
         if (GlobalV::EFIELD_FLAG)
-            ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "EFIELD   FORCE (eV/Angstrom)", force_e, 0);
+            ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "EFIELD   FORCE (eV/Angstrom)", force_e, false);
         if (GlobalV::GATE_FLAG)
             ModuleIO::print_force(GlobalV::ofs_running,
                                   GlobalC::ucell,
                                   "GATEFIELD   FORCE (eV/Angstrom)",
                                   force_gate,
-                                  0);
+                                  false);
     }
-    ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "TOTAL-FORCE (eV/Angstrom)", force, 0);
+    ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "TOTAL-FORCE (eV/Angstrom)", force, false);
     ModuleBase::timer::tick("Sto_Force", "cal_force");
-    return;
 }
 
 void Sto_Forces::cal_sto_force_nl(ModuleBase::matrix& forcenl,
@@ -340,7 +339,6 @@ void Sto_Forces::cal_sto_force_nl(ModuleBase::matrix& forcenl,
     Parallel_Reduce::reduce_all(forcenl.c, forcenl.nr* forcenl.nc);
 
 	ModuleBase::timer::tick("Sto_Forces","cal_force_nl");
-    return;
 }
 
 

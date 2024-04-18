@@ -99,5 +99,4 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_h_lambda(
         }
     }
     ModuleBase::timer::tick("SpinConstrain", "cal_h_lambda");
-    return;
 }

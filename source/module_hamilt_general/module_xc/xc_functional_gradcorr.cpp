@@ -588,8 +588,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 		delete[] gdr2;
 	}
 
-	return;
-}
+	}
 
 template <typename T, typename Device, typename Real>
 void XC_Functional::grad_wfc(
@@ -660,7 +659,6 @@ void XC_Functional::grad_rho(const std::complex<double>* rhog,
 	}
 
 	delete[] gdrtmp;
-	return;
 }
 
 
@@ -708,7 +706,6 @@ void XC_Functional::grad_dot(const ModuleBase::Vector3<double> *h, double *dh, M
 	
 	delete[] aux;	
 	delete[] gaux;
-	return;
 }
 
 void XC_Functional::noncolin_rho(double *rhoout1, double *rhoout2, double *neg,
@@ -745,8 +742,7 @@ void XC_Functional::noncolin_rho(double *rhoout1, double *rhoout2, double *neg,
 		rhoout1[ir] = 0.5 * (rho[0][ir] + neg[ir] * amag);
 		rhoout2[ir] = 0.5 * (rho[0][ir] - neg[ir] * amag);
 	}
-	return;
-}
+	}
 
 template void XC_Functional::grad_wfc<std::complex<double>, psi::DEVICE_CPU, double>(const int ik, const double tpiba, const ModulePW::PW_Basis_K* wfc_basis, const std::complex<double>* rhog, std::complex<double>* grad);
 #if __CUDA || __ROCM

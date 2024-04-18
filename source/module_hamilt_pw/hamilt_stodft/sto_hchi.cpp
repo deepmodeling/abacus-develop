@@ -151,8 +151,6 @@ void Stochastic_hchi:: hchi(complex<double> *chig, complex<double> *hchig, const
 		}
 	}
 	ModuleBase::timer::tick("Stochastic_hchi","vnl");
-
-	return;
 }
 void Stochastic_hchi:: hchi_norm(complex<double> *chig, complex<double> *hchig, const int m)
 {

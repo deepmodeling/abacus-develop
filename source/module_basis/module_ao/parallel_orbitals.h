@@ -12,17 +12,17 @@ public:
 
     /// local size of bands, used for 2d wavefunction
     /// must divided on dim1 because of elpa interface
-    int ncol_bands;
-    int nrow_bands;
+    int ncol_bands{};
+    int nrow_bands{};
     
     /// ncol_bands*nrow
-    long nloc_wfc;
+    long nloc_wfc{};
 
     //ncol_bands*ncol_bands
-    long nloc_Eij;
+    long nloc_Eij{};
 
-    int lastband_in_proc;
-	int lastband_number; 
+    int lastband_in_proc{};
+	int lastband_number{}; 
 
     ///---------------------------------------
     /// number of elements(basis-pairs) in this processon
@@ -33,9 +33,9 @@ public:
 	int *nlocstart;
     
 #ifdef __MPI
-    int desc_wfc[9]; //for wfc, nlocal*nbands
-    int desc_Eij[9]; // for Eij in TDDFT, nbands*nbands
-    int desc_wfc1[9]; // for wfc^T in TDDFT, nbands*nlocal
+    int desc_wfc[9]{}; //for wfc, nlocal*nbands
+    int desc_Eij[9]{}; // for Eij in TDDFT, nbands*nbands
+    int desc_wfc1[9]{}; // for wfc^T in TDDFT, nbands*nlocal
 
     /// set the local size of wavefunction and Eij
     int set_nloc_wfc_Eij(const int& N_A/**< global row size*/,
@@ -50,7 +50,7 @@ public:
 
     int nspin = 1;
     int* loc_sizes;
-    int loc_size;
+    int loc_size{};
 
     /**
      * @brief set row and col begin index for each atom

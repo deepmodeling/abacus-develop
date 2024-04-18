@@ -79,7 +79,7 @@ class Charge
                     const UnitCell& ucell) const;
 
     void set_rho_core(const ModuleBase::ComplexMatrix &structure_factor);
-    void set_rho_core_paw();
+    static void set_rho_core_paw();
 
     void renormalize_rho(void);
 
@@ -127,10 +127,10 @@ class Charge
 	  void reduce_diff_pools(double* array_rho) const;
 
     // mohan add 2021-02-20
-    int nrxx; // number of r vectors in this processor
-    int nxyz; // total nuber of r vectors
-    int ngmc; // number of g vectors in this processor
-    int nspin; // number of spins
+    int nrxx{}; // number of r vectors in this processor
+    int nxyz{}; // total nuber of r vectors
+    int ngmc{}; // number of g vectors in this processor
+    int nspin{}; // number of spins
     ModulePW::PW_Basis* rhopw = nullptr;// When double_grid is used, rhopw = rhodpw (dense grid)
   private:
 

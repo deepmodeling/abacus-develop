@@ -288,7 +288,6 @@ void pseudopot_cell_vnl::init(const int ntype,
     }
 
     ModuleBase::timer::tick("ppcell_vnl", "init");
-    return;
 }
 
 //----------------------------------------------------------
@@ -395,8 +394,6 @@ void pseudopot_cell_vnl::getvnl(const int& ik, ModuleBase::ComplexMatrix& vkb_in
     delete[] vq;
     delmem_complex_op()(ctx, sk);
     ModuleBase::timer::tick("pp_cell_vnl", "getvnl");
-
-    return;
 } // end subroutine getvnl
 
 template <typename FPTYPE, typename Device>
@@ -876,7 +873,6 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
     }
 	ModuleBase::timer::tick("ppcell_vnl","init_vnl");
 	GlobalV::ofs_running << "\n Init Non-Local-Pseudopotential done." << std::endl;
-	return;
 }
 
 void pseudopot_cell_vnl::compute_qrad(UnitCell& cell)
@@ -937,7 +933,7 @@ void pseudopot_cell_vnl::radial_fft_q(const int ng,
                                       const int jh,
                                       const int itype,
                                       const double* qnorm,
-                                      const ModuleBase::matrix ylm,
+                                      const ModuleBase::matrix& ylm,
                                       std::complex<double>* qg) const
 {
     // computes the indices which correspond to ih,jh
@@ -1266,7 +1262,7 @@ double pseudopot_cell_vnl::CG(int l1, int m1, int l2, int m2, int L, int M)     
 // } 
 #endif
 
-void pseudopot_cell_vnl::init_vnl_alpha(void)          // pengfei Li 2018-3-23
+void pseudopot_cell_vnl::init_vnl_alpha()          // pengfei Li 2018-3-23
 {
 	if(GlobalV::test_pp) ModuleBase::TITLE("pseudopot_cell_vnl","init_vnl_alpha");
 	ModuleBase::timer::tick("ppcell_vnl","init_vnl_alpha");
@@ -1336,7 +1332,6 @@ void pseudopot_cell_vnl::init_vnl_alpha(void)          // pengfei Li 2018-3-23
 	}
 	ModuleBase::timer::tick("ppcell_vnl","init_vnl_alpha");
 	GlobalV::ofs_running << "\n Init Non-Local-Pseudopotential done(including L)." << std::endl;
-	return;
 }
 
 

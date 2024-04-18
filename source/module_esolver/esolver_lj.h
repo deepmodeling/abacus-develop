@@ -31,7 +31,7 @@ namespace ModuleESolver
         double LJ_energy(const double d);
 
         ModuleBase::Vector3<double> LJ_force(const double d,
-            const ModuleBase::Vector3<double> dr);
+            const ModuleBase::Vector3<double>& dr);
 
         void LJ_virial(const ModuleBase::Vector3<double>& force,
             const ModuleBase::Vector3<double>& dtau);

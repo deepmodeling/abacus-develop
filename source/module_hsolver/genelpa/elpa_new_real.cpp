@@ -354,7 +354,7 @@ int ELPA_Solver::composeEigenVector(int DecomposedState, double* B, double* Eige
 // D: Diaganal matrix of eigenvalue
 // maxError: maximum error
 // meanError: mean error
-void ELPA_Solver::verify(double* A, double* EigenValue, double* EigenVector, double& maxError, double& meanError)
+void ELPA_Solver::verify(double* A, const double* EigenValue, double* EigenVector, double& maxError, double& meanError)
 {
     double* V = EigenVector;
     const std::size_t naloc = static_cast<std::size_t>(narows) * nacols;
@@ -408,7 +408,7 @@ void ELPA_Solver::verify(double* A, double* EigenValue, double* EigenVector, dou
 // meanError: mean absolute value of error
 void ELPA_Solver::verify(double* A,
                          double* B,
-                         double* EigenValue,
+                         const double* EigenValue,
                          double* EigenVector,
                          double& maxError,
                          double& meanError)

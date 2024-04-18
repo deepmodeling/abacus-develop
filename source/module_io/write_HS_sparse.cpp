@@ -47,7 +47,7 @@ void ModuleIO::save_HSR_sparse(
     }
 
     int count = 0;
-    for (auto &R_coor : all_R_coor_ptr)
+    for (const auto &R_coor : all_R_coor_ptr)
     {
         if (GlobalV::NSPIN != 4)
         {
@@ -205,7 +205,7 @@ void ModuleIO::save_HSR_sparse(
     output_R_coor_ptr.clear();
 
     count = 0;
-    for (auto &R_coor : all_R_coor_ptr)
+    for (const auto &R_coor : all_R_coor_ptr)
     {
         int dRx = R_coor.x;
         int dRy = R_coor.y;
@@ -338,7 +338,6 @@ void ModuleIO::save_HSR_sparse(
     S_nonzero_num = nullptr;
 
     ModuleBase::timer::tick("ModuleIO","save_HSR_sparse");
-    return;
 }
 
 
@@ -385,7 +384,7 @@ void ModuleIO::save_dH_sparse(
     }
 
     int count = 0;
-    for (auto &R_coor : all_R_coor_ptr)
+    for (const auto &R_coor : all_R_coor_ptr)
     {
         if (GlobalV::NSPIN != 4)
         {
@@ -556,7 +555,7 @@ void ModuleIO::save_dH_sparse(
     output_R_coor_ptr.clear();
 
     count = 0;
-    for (auto &R_coor : all_R_coor_ptr)
+    for (const auto &R_coor : all_R_coor_ptr)
     {
         int dRx = R_coor.x;
         int dRy = R_coor.y;
@@ -684,7 +683,6 @@ void ModuleIO::save_dH_sparse(
     }
 
     ModuleBase::timer::tick("ModuleIO","save_dH_sparse");
-    return;
 }
 
 
@@ -706,7 +704,7 @@ void ModuleIO::save_sparse(
     int total_R_num = all_R_coor.size();
     std::vector<int> nonzero_num(total_R_num, 0);
     int count = 0;
-    for (auto& R_coor : all_R_coor)
+    for (const auto& R_coor : all_R_coor)
     {
         auto iter = smat.find(R_coor);
 		if (iter != smat.end())
@@ -768,7 +766,7 @@ void ModuleIO::save_sparse(
     }
 
     count = 0;
-    for (auto& R_coor : all_R_coor)
+    for (const auto& R_coor : all_R_coor)
     {
         int dRx = R_coor.x;
         int dRy = R_coor.y;

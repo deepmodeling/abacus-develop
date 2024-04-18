@@ -6,7 +6,7 @@
 namespace MD_func
 {
 
-double gaussrand(void)
+double gaussrand()
 {
     static double v1=0.0;
     static double v2=0.0;
@@ -72,8 +72,7 @@ void compute_stress(const UnitCell& unit_in,
         }
     }
 
-    return;
-}
+    }
 
 void read_vel(const UnitCell& unit_in, ModuleBase::Vector3<double>* vel)
 {
@@ -93,15 +92,13 @@ void read_vel(const UnitCell& unit_in, ModuleBase::Vector3<double>* vel)
         }
     }
     assert(iat == unit_in.nat);
-
-    return;
 }
 
 void rand_vel(const int& natom,
               const double& temperature,
               const double* allmass,
               const int& frozen_freedom,
-              const ModuleBase::Vector3<int> frozen,
+              const ModuleBase::Vector3<int>& frozen,
               const ModuleBase::Vector3<int>* ionmbl,
               const int& my_rank,
               ModuleBase::Vector3<double>* vel)
@@ -162,8 +159,6 @@ void rand_vel(const int& natom,
 #ifdef __MPI
     MPI_Bcast(vel, natom * 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif
-
-    return;
 }
 
 void init_vel(const UnitCell& unit_in,
@@ -267,8 +262,6 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
     }
 
     ModuleBase::timer::tick("MD_func", "force_virial");
-
-    return;
 }
 
 
@@ -298,8 +291,6 @@ void print_stress(std::ofstream& ofs, const ModuleBase::matrix& virial, const Mo
             << std::setw(15) << stress(i, 2) * unit_transform << std::endl;
     }
     ofs << std::setiosflags(std::ios::left);
-
-    return;
 }
 
 
@@ -391,8 +382,6 @@ void dump_info(const int& step,
     ofs << std::endl;
     ofs << std::endl;
     ofs.close();
-
-    return;
 }
 
 void get_mass_mbl(const UnitCell& unit_in,
@@ -419,8 +408,7 @@ void get_mass_mbl(const UnitCell& unit_in,
         }
     }
 
-    return;
-}
+    }
 
 double target_temp(const int& istep, const int& nstep, const double& tfirst, const double& tlast)
 {
@@ -439,11 +427,10 @@ double current_temp(double& kinetic,
     {
         return 0.0;
     }
-    else
-    {
-        kinetic = kinetic_energy(natom, vel, allmass);
+
+            kinetic = kinetic_energy(natom, vel, allmass);
         return 2 * kinetic / (3 * natom - frozen_freedom);
-    }
+
 }
 
 void temp_vector(const int& natom,
@@ -464,8 +451,7 @@ void temp_vector(const int& natom,
         }
     }
 
-    return;
-}
+    }
 
 
 void current_md_info(const int& my_rank, const std::string& file_dir, int& md_step, double& temperature)
@@ -503,8 +489,6 @@ void current_md_info(const int& my_rank, const std::string& file_dir, int& md_st
     MPI_Bcast(&md_step, 1, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&temperature, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif
-
-    return;
 }
 
 } // namespace MD_func

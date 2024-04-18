@@ -11,7 +11,7 @@ Operator<T, Device>::Operator(){}
 template<typename T, typename Device>
 Operator<T, Device>::~Operator() 
 {
-    if(this->hpsi != nullptr) delete this->hpsi;
+    delete this->hpsi;
     Operator* last = this->next_op;
     Operator* last_sub = this->next_sub_op;
     while(last != nullptr || last_sub != nullptr)
@@ -124,10 +124,9 @@ void Operator<T, Device>::add(Operator* next)
         sub_last->next_sub_op = next;
         return;
     }
-    else
-    {
-        last->next_op = next;
-    }
+    
+            last->next_op = next;
+   
 }
 
 template<typename T, typename Device>
@@ -177,4 +176,4 @@ template class Operator<std::complex<float>, psi::DEVICE_GPU>;
 template class Operator<double, psi::DEVICE_GPU>;
 template class Operator<std::complex<double>, psi::DEVICE_GPU>;
 #endif
-}
+}  // namespace hamilt

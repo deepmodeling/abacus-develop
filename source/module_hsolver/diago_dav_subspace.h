@@ -25,7 +25,7 @@ class Diago_DavSubspace : public DiagH<T, Device>
 
     // this is the override function diag() for CG method
     void diag(hamilt::Hamilt<T, Device>* phm_in,
-              psi::Psi<T, Device>& phi,
+              psi::Psi<T, Device>& psi,
               Real* eigenvalue_in,
               std::vector<bool>& is_occupied);
 

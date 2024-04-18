@@ -22,9 +22,9 @@ public:
 
   private:
 
-    const Parallel_Orbitals* ParaV;
+    const Parallel_Orbitals* ParaV{};
 
-    elecstate::Potential* pot;
+    elecstate::Potential* pot{};
 
     // orthonormal force + contribution from T and VNL
     void ftable_gamma(const bool isforce,
@@ -57,11 +57,11 @@ public:
             LCAO_gen_fixedH &gen_h,
 			LCAO_Matrix &lm);
 
-    void finish_ftable_gamma(LCAO_Matrix &lm);
+    static void finish_ftable_gamma(LCAO_Matrix &lm);
 
     void average_force(double* fm);
 
-    void test_gamma(double* mm, const std::string& name);
+    static void test_gamma(double* mm, const std::string& name);
 
     //-------------------------------------------------------------
     // forces reated to overlap matrix
@@ -95,7 +95,7 @@ public:
     //-------------------------------------------
     // forces related to local pseudopotentials
     //-------------------------------------------
-    void cal_fvl_dphi(double*** DM_in,
+    static void cal_fvl_dphi(double*** DM_in,
                       const bool isforce,
                       const bool isstress,
                       const elecstate::Potential* pot_in,

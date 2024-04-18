@@ -85,5 +85,4 @@ void ModuleIO::nscf_fermi_surface(const std::string &out_band_dir,
 
 #endif
 	ModuleBase::timer::tick("ModuleIO", "nscf_fermi_surface");
-	return;
 }

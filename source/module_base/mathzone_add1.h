@@ -69,7 +69,7 @@ class Mathzone_Add1
      * @param R         f(R) is to be calculated
      * @return double   f(R)
      */
-    static double Uni_RadialF(const double* rad_f, const int& msh, const double& dr, const double& R);
+    static double Uni_RadialF(const double* old_phi, const int& msh, const double& dr, const double& R);
 
     static void Uni_Deriv_Phi(const double* radf, const int& mesh, const double& dr, const int& nd, double* phind);
 

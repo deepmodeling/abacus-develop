@@ -41,9 +41,9 @@ bool ModuleIO::calculate_dos
 	if(de_ev <= 0)
 	{
 		ModuleBase::WARNING("ModuleIO::calculate_dos","de <= 0 ");
-		return 0; 
+		return false; 
 	}
-	else if(emax_ev < emin_ev)
+	if(emax_ev < emin_ev)
 	{
 		ModuleBase::WARNING("ModuleIO::calculate_dos","emax_ev < emin_ev");
 		return 0;
@@ -57,7 +57,7 @@ bool ModuleIO::calculate_dos
 	{
 		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"npoints",npoints);
 		ModuleBase::WARNING("ModuleIO::calculate_dos","npoints <= 0");
-		return 0;
+		return false;
 	}
 	if(GlobalV::MY_RANK==0)
 	{
@@ -159,5 +159,5 @@ bool ModuleIO::calculate_dos
 	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"sum up the states", sum);
 	delete[] e_mod;
 
-	return 1;
+	return true;
 }

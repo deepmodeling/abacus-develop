@@ -97,8 +97,7 @@ void XC_Functional::gcxc(const double &rho, const double &grho, double &sxc,
         v2xc += v2;
     }
 
-    return;
-}
+    }
 
 //-----------------------------------------------------------------------
 void XC_Functional::gcx_spin(double rhoup, double rhodw, double grhoup2, double grhodw2,
@@ -212,9 +211,6 @@ void XC_Functional::gcx_spin(double rhoup, double rhodw, double grhoup2, double 
         sx = 0.50 * (sxup + sxdw);
         v2xup = 2.0 * v2xup;
         v2xdw = 2.0 * v2xdw;       
-    //}
-
-    return;
 } //end subroutine gcx_spin
 
 //
@@ -253,9 +249,8 @@ void XC_Functional::gcc_spin(double rho, double &zeta, double grho, double &sc,
     {
         return;
     }
-    else
-    {
-        // ... ( - 1.0 + epsr )  <  zeta  <  ( 1.0 - epsr )
+    
+            // ... ( - 1.0 + epsr )  <  zeta  <  ( 1.0 - epsr )
         // zeta = SIGN( MIN( ABS( zeta ), ( 1.D0 - epsr ) ) , zeta )
         x = std::min(std::abs(zeta), (1.0 - epsr));
 		if(zeta>0)
@@ -266,7 +261,7 @@ void XC_Functional::gcc_spin(double rho, double &zeta, double grho, double &sc,
 		{
 			zeta = -x;
 		}
-    } //endif
+    //endif
 
     if(func_id[0]==XC_HYB_GGA_XC_PBEH)
     {
@@ -291,8 +286,7 @@ void XC_Functional::gcc_spin(double rho, double &zeta, double grho, double &sc,
         }
 
     //}
-    return;
-} //end subroutine gcc_spin
+    } //end subroutine gcc_spin
 
 void XC_Functional::gcxc_libxc(const double &rho, const double &grho, double &sxc,
           double &v1xc, double &v2xc)
@@ -329,7 +323,7 @@ void XC_Functional::gcxc_libxc(const double &rho, const double &grho, double &sx
 } // end subroutine gcxc_libxc
 
 void XC_Functional::gcxc_spin_libxc(double rhoup, double rhodw, 
-        ModuleBase::Vector3<double> gdr1, ModuleBase::Vector3<double> gdr2,
+        const ModuleBase::Vector3<double>& gdr1, const ModuleBase::Vector3<double>& gdr2,
         double &sxc, double &v1xcup, double &v1xcdw, double &v2xcup, double &v2xcdw, double &v2xcud)
 {
 #ifdef USE_LIBXC

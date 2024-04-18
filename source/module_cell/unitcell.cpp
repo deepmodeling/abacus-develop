@@ -88,7 +88,7 @@ UnitCell::~UnitCell()
 
 #include "module_base/parallel_common.h"
 #ifdef __MPI
-void UnitCell::bcast_unitcell(void)
+void UnitCell::bcast_unitcell()
 {
     if (GlobalV::test_unitcell)
         ModuleBase::TITLE("UnitCell", "bcast_unitcell");
@@ -158,17 +158,15 @@ void UnitCell::bcast_unitcell(void)
 #ifdef __EXX
     ModuleBase::bcast_data_cereal(GlobalC::exx_info.info_ri.files_abfs, MPI_COMM_WORLD, 0);
 #endif
-    return;
-}
+    }
 
-void UnitCell::bcast_unitcell2(void)
+void UnitCell::bcast_unitcell2()
 {
     for (int i = 0; i < ntype; i++)
     {
         atoms[i].bcast_atom2();
     }
-    return;
-}
+    }
 #endif
 
 void UnitCell::print_cell(std::ofstream& ofs) const
@@ -192,7 +190,6 @@ void UnitCell::print_cell(std::ofstream& ofs) const
     output::printM3(ofs, "GGT : ", GGT);
 
     ofs << std::endl;
-    return;
 }
 
 void UnitCell::print_cell_cif(const std::string& fn) const
@@ -281,7 +278,7 @@ void UnitCell::print_cell_xyz(const std::string& fn) const
 }
 */
 
-void UnitCell::set_iat2itia(void)
+void UnitCell::set_iat2itia()
 {
     assert(nat > 0);
     delete[] iat2it;
@@ -298,8 +295,7 @@ void UnitCell::set_iat2itia(void)
             ++iat;
         }
     }
-    return;
-}
+    }
 
 std::map<int, int> UnitCell::get_atomCounts() const
 {
@@ -370,7 +366,7 @@ void UnitCell::update_pos_tau(const double* pos)
     this->bcast_atoms_tau();
 }
 
-void UnitCell::update_pos_taud(double* posd_in)
+void UnitCell::update_pos_taud(const double* posd_in)
 {
     int iat = 0;
     for (int it = 0; it < this->ntype; it++)
@@ -468,8 +464,7 @@ void UnitCell::periodic_boundary_adjustment()
             atom->tau[ia] = atom->taud[ia] * this->latvec;
         }
     }
-    return;
-}
+    }
 
 void UnitCell::bcast_atoms_tau()
 {
@@ -536,10 +531,9 @@ void UnitCell::cal_ux()
         //       std::cout<<"    Fixed quantization axis for GGA: "
         //<<std::setw(10)<<ux[0]<<"  "<<std::setw(10)<<ux[1]<<"  "<<std::setw(10)<<ux[2]<<std::endl;
     }
-    return;
-}
+    }
 
-bool UnitCell::judge_parallel(double a[3], ModuleBase::Vector3<double> b)
+bool UnitCell::judge_parallel(const double a[3], const ModuleBase::Vector3<double>& b)
 {
     bool jp = false;
     double cross;
@@ -690,42 +684,6 @@ void UnitCell::setup_cell(const std::string &fn, std::ofstream &log)
     // set index for iat2it, iat2ia
     //===================================
     this->set_iat2itia();
-
-#ifdef USE_PAW
-	if(GlobalV::use_paw)
-	{
-		GlobalC::paw_cell.set_libpaw_cell(latvec, lat0);
-
-		int * typat;
-		double * xred;
-
-		typat = new int[nat];
-		xred = new double[nat*3];
-
-		int iat = 0;
-		for(int it = 0; it < ntype; it ++)
-		{
-			for(int ia = 0; ia < atoms[it].na; ia ++)
-			{
-				typat[iat] = it + 1; //Fortran index starts from 1 !!!!
-				xred[iat*3+0] = atoms[it].taud[ia].x;
-				xred[iat*3+1] = atoms[it].taud[ia].y;
-				xred[iat*3+2] = atoms[it].taud[ia].z;
-				iat ++;
-			}
-		}
-
-		GlobalC::paw_cell.set_libpaw_atom(nat,ntype,typat,xred);
-		delete[] typat;
-		delete[] xred;
-
-		GlobalC::paw_cell.set_libpaw_files();
-
-		GlobalC::paw_cell.set_nspin(GlobalV::NSPIN);
-	}
-#endif
-
-    return;
 }
 
 void UnitCell::read_pseudo(std::ofstream &ofs)
@@ -1073,8 +1031,7 @@ void UnitCell::cal_nwfc(std::ofstream &log)
 		//}
 	}
 
-	return;
-}
+	}
 
 void UnitCell::set_iat2iwt(const int& npol_in)
 {
@@ -1096,8 +1053,7 @@ void UnitCell::set_iat2iwt(const int& npol_in)
 			++iat;
 		}	
 	}
-	return;
-}
+	}
 
 //======================
 // Target : meshx
@@ -1115,8 +1071,7 @@ void UnitCell::cal_meshx()
 			this->meshx = mesh;
 		}
 	}
-	return;
-}
+	}
 
 //=========================
 // Target : natomwfc
@@ -1160,7 +1115,6 @@ void UnitCell::cal_natomwfc(std::ofstream &log)
 		natomwfc += tmp * atoms[it].na;
 	}
 	ModuleBase::GlobalFunc::OUT(log,"initial pseudo atomic orbital number",natomwfc);
-	return;
 }
 
 
@@ -1225,8 +1179,6 @@ void UnitCell::setup_cell_after_vc(std::ofstream &log)
     log << std::endl;
     output::printM3(log,"Lattice vectors: (Cartesian coordinate: in unit of a_0)",latvec);
     output::printM3(log,"Reciprocal vectors: (Cartesian coordinate: in unit of 2 pi/a_0)",G);
-
-    return;
 }
 
 //check if any atom can be moved
@@ -1237,10 +1189,10 @@ bool UnitCell::if_atoms_can_move()const
         Atom* atom = &atoms[it];
         for(int ia =0;ia< atom->na;ia++)
         {
-            if(atom->mbl[ia].x||atom->mbl[ia].y||atom->mbl[ia].z) return 1;
+            if(atom->mbl[ia].x||atom->mbl[ia].y||atom->mbl[ia].z) return true;
 		}
 	}
-	return 0;
+	return false;
 }
 
 //check if lattice vector can be changed
@@ -1249,9 +1201,9 @@ bool UnitCell::if_cell_can_change()const
 	//need to be fixed next
 	if(this->lc[0]||this->lc[1]||this->lc[2])
 	{
-		return 1;
+		return true;
 	}
-	return 0;
+	return false;
 }
 
 void UnitCell::setup(const std::string &latname_in,
@@ -1337,8 +1289,7 @@ void UnitCell::setup(const std::string &latname_in,
 	{
 		ModuleBase::WARNING_QUIT("Input", "fixed_axes should be None,volume,shape,a,b,c,ab,ac,bc or abc!");
 	}
-	return;
-}
+	}
 
 void UnitCell::check_structure(double factor)
 {
@@ -1400,7 +1351,7 @@ void UnitCell::check_structure(double factor)
 							{
 								if (it1 > it2)
 									continue;
-								else if (it1==it2 && ia1 > ia2)
+								if (it1==it2 && ia1 > ia2)
 									continue;
 								else if(it1==it2 && ia1==ia2 && a==0 && b==0 && c==0)
 									continue;	
@@ -1708,8 +1659,7 @@ void UnitCell::cal_nelec(double& nelec)
 		nelec += GlobalV::nelec_delta;
 		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "nelec now: ", nelec);
 	}
-    return;
-}
+    }
 
 void UnitCell::compare_atom_labels(std::string label1, std::string label2)
 {
@@ -1723,8 +1673,8 @@ void UnitCell::compare_atom_labels(std::string label1, std::string label2)
 			  label1 == ai.atom_symbol[label2] ||              // '!( "Silver" == "Ag" )'
 			  std::to_string(ai.symbol_Z[label1]) == label2 )) // '!( "Silver" == "47" )'
 	    {		
-	    	std::string stru_label = "";
-            std::string psuedo_label = "";
+	    	std::string stru_label;
+            std::string psuedo_label;
             for (int ip = 0; ip < label1.length(); ip++)
             {
                 if (!(isdigit(label1[ip]) || label1[ip]=='_'))

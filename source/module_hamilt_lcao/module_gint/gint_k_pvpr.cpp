@@ -12,7 +12,7 @@
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
-void Gint_k::allocate_pvpR(void)
+void Gint_k::allocate_pvpR()
 {
     ModuleBase::TITLE("Gint_k","allocate_pvpR");
 
@@ -34,10 +34,9 @@ void Gint_k::allocate_pvpR(void)
     ModuleBase::Memory::record("pvpR_reduced", sizeof(double) * this->gridt->nnrg * GlobalV::NSPIN);
 
     this->pvpR_alloc_flag = true;
-    return;
 }
 
-void Gint_k::destroy_pvpR(void)
+void Gint_k::destroy_pvpR()
 {
     ModuleBase::TITLE("Gint_k","destroy_pvpR");
     
@@ -53,7 +52,6 @@ void Gint_k::destroy_pvpR(void)
     delete[] pvpR_reduced;
 
     this->pvpR_alloc_flag = false;
-    return;
 }
 
 // folding the matrix for 'ik' k-point.
@@ -211,9 +209,9 @@ void Gint_k::folding_vl_k(const int &ik,
                                     int iw2_lo = this->gridt->trace_lo[start2]/GlobalV::NPOL;
                                     for(int spin = 0;spin<4;spin++) 
                                     {
-                                        auto vij = pvp_nc[spin][this->gridt->trace_lo[start1]/GlobalV::NPOL + iw];
-                                        auto vijR = &pvpR_reduced[spin][ixxx];
-                                        auto vijs = &vij[iw2_lo];
+                                        auto *vij = pvp_nc[spin][this->gridt->trace_lo[start1]/GlobalV::NPOL + iw];
+                                        auto *vijR = &pvpR_reduced[spin][ixxx];
+                                        auto *vijs = &vij[iw2_lo];
                                         for(int iw2 = 0; iw2<atom2->nw; ++iw2)
                                         {
                                             vijs[iw2] += vijR[iw2] * phase; 
@@ -415,7 +413,6 @@ void Gint_k::folding_vl_k(const int &ik,
     ModuleBase::timer::tick("Gint_k","Distri");
 
     ModuleBase::timer::tick("Gint_k","folding_vl_k");
-    return;
 }
 
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
@@ -542,8 +539,6 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<double> *hR)
     hR->add(*this->hRGint);
 #endif
     ModuleBase::timer::tick("Gint_k","transfer_pvpR");
-    
-    return;
 }
 
 //transfer_pvpR, NSPIN = 4
@@ -702,5 +697,4 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>> *hR)
 #endif
     
     ModuleBase::timer::tick("Gint_k","transfer_pvpR");
-    return;
 }

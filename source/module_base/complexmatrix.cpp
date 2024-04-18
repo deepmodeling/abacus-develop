@@ -27,7 +27,7 @@ ComplexMatrix::ComplexMatrix(const int nrows, const int ncols, const bool flag_z
 }
 
 // zero out the ComplexMatrix
-void ComplexMatrix::zero_out(void)
+void ComplexMatrix::zero_out()
 {
 	for (int i=0; i<size; i++) c[i] = std::complex<double>(0.0,0.0);
 }
@@ -56,7 +56,7 @@ ComplexMatrix::ComplexMatrix(const ComplexMatrix &m1)
 
 // Peize Lin add 2016-08-05
 ComplexMatrix::ComplexMatrix( ComplexMatrix && m1 )
-	:nr(m1.nr),
+ noexcept 	:nr(m1.nr),
 	 nc(m1.nc),
 	 size(m1.size),
 	 c(m1.c)
@@ -118,7 +118,7 @@ void ComplexMatrix::create(const int nr_in, const int nc_in, const bool flag_zer
 	}
 	else
 	{
-		if(c)	delete[] c;
+			delete[] c;
 		c = nullptr;
 		nr = nr_in;
 		nc = nc_in;
@@ -126,7 +126,7 @@ void ComplexMatrix::create(const int nr_in, const int nc_in, const bool flag_zer
 	}
 }
 
-void ComplexMatrix::set_as_identity_matrix(void)
+void ComplexMatrix::set_as_identity_matrix()
 {
 	for(int i=0; i<nr; i++)
 	{
@@ -136,8 +136,7 @@ void ComplexMatrix::set_as_identity_matrix(void)
 			else c[nc * i + j] = std::complex<double>(0.0, 0.0);
 		}
 	}
-	return;
-}
+	}
 
 // Adding matrices, as a friend
 ComplexMatrix operator+(const ComplexMatrix &m1, const ComplexMatrix &m2)
@@ -232,9 +231,9 @@ ComplexMatrix& ComplexMatrix::operator=(const ComplexMatrix &m)
 
 // Peize Lin add 2016-08-05
 ComplexMatrix& ComplexMatrix::operator=( ComplexMatrix && m )
-{
+ noexcept {
 	nr = m.nr;		nc = m.nc;		size = m.size;
-	if(c)	delete[] c;		
+		delete[] c;		
 	c  = m.c;
 	m.nr = m.nc = m.size = 0;
 	m.c = nullptr;
@@ -289,8 +288,7 @@ void scale_accumulate(const std::complex<double> &s,
 	{
 		mout.c[j] += s * min.c[j];
 	}
-	return;
-}
+	}
 
 // Do mout[i] += s*min[i]
 void scale_accumulate(const int &nmat,
@@ -303,8 +301,7 @@ void scale_accumulate(const int &nmat,
 	{
 		scale_accumulate(s, *min[i], *mout[i]);
 	}
-	return;
-}
+	}
 
 // Do mout = s1*m1 + s2*m2
 void scaled_sum(const std::complex<double> &s1,
@@ -322,8 +319,7 @@ void scaled_sum(const std::complex<double> &s1,
 	{
 		mout.c[i] = s1 * m1.c[i] + s2 * m2.c[i];
 	}
-	return;
-}
+	}
 
 // Does mout[i] = s1*m1[i] + s2*m2[i]
 void scaled_sum(const int &nmat,
@@ -338,8 +334,7 @@ void scaled_sum(const int &nmat,
 	{
 		scaled_sum(s1, *m1[i], s2, *m2[i], *mout[i]);
 	}
-	return;
-}
+	}
 
 
 double abs2_row(const ComplexMatrix &m,const int ir)
@@ -438,7 +433,7 @@ std::ostream & ComplexMatrix::print( std::ostream & os, const double threshold_a
 	return os;
 }
 
-bool ComplexMatrix::checkreal(void)
+bool ComplexMatrix::checkreal()
 {
 	const double tiny = 1e-12;
 	for(int i=0;i<this->nr;i++)
@@ -447,11 +442,11 @@ bool ComplexMatrix::checkreal(void)
 		{
 			if(std::imag((*this)(i,j)) > tiny)
 			{
-				return 0;
+				return false;
 			}
 		}
 	}
-	return 1;
+	return true;
 }
 
-}
+}  // namespace ModuleBase

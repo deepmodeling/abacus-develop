@@ -1,10 +1,11 @@
 #include "./kedf_wt.h"
 
-#include <iostream>
-
 #include "module_base/global_variable.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/tool_quit.h"
+
+#include <iostream>
+#include <utility>
 
 /**
  * @brief Set the parameters of WT KEDF, and initialize kernel
@@ -58,7 +59,7 @@ void KEDF_WT::set_para(double dV,
     this->kernel_ = new double[pw_rho->npw];
 
     if (read_kernel)
-        this->read_kernel(kernel_file, pw_rho);
+        this->read_kernel(std::move(kernel_file), pw_rho);
     else
         this->fill_kernel(tf_weight, vw_weight, pw_rho);
 }
@@ -267,12 +268,11 @@ void KEDF_WT::get_stress(const double* const* prho, ModulePW::PW_Basis* pw_rho, 
                     {
                         continue;
                     }
-                    else
-                    {
-                        this->stress(a, b) += -diff * pw_rho->gcar[ip][a] * pw_rho->gcar[ip][b] / pw_rho->gg[ip];
+                    
+                                            this->stress(a, b) += -diff * pw_rho->gcar[ip][a] * pw_rho->gcar[ip][b] / pw_rho->gg[ip];
                         if (a == b)
                             this->stress(a, b) += diff * coef;
-                    }
+                   
                 }
             }
         }
@@ -335,7 +335,7 @@ double KEDF_WT::wt_kernel(double eta, double tf_weight, double vw_weight)
         return 0.;
     }
     // limit for small eta
-    else if (eta < 1e-10)
+    if (eta < 1e-10)
     {
         return 1. - tf_weight + eta * eta * (1. / 3. - 3. * vw_weight);
     }
@@ -388,7 +388,7 @@ double KEDF_WT::diff_linhard(double eta, double vw_weight)
     {
         return 0.;
     }
-    else if (eta < 1e-10)
+    if (eta < 1e-10)
     {
         return 2. * eta * (1. / 3. - 3. * vw_weight);
     }
@@ -462,7 +462,7 @@ void KEDF_WT::fill_kernel(double tf_weight, double vw_weight, ModulePW::PW_Basis
  * @param file_name the name of the kernel file
  * @param pw_rho pw basis
  */
-void KEDF_WT::read_kernel(std::string file_name, ModulePW::PW_Basis* pw_rho)
+void KEDF_WT::read_kernel(const std::string& file_name, ModulePW::PW_Basis* pw_rho)
 {
     std::ifstream ifs(file_name.c_str(), std::ios::in);
 

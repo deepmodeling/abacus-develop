@@ -108,7 +108,6 @@ void PW_Basis::distribution_method1()
 
     delete[] st_bottom2D;
     delete[] st_length2D;
-    return;
 }
 
 ///        
@@ -120,8 +119,8 @@ void PW_Basis::distribution_method1()
 /// output: st_i, st_j, st_length
 ///
 void PW_Basis::collect_st(
-    int* st_length2D,                               // the number of planewaves that belong to the stick located on (x, y), stored in 2d x-y plane.
-    int* st_bottom2D,                               // the z-coordinate of the bottom of stick on (x, y), stored in 2d x-y plane.
+    const int* st_length2D,                               // the number of planewaves that belong to the stick located on (x, y), stored in 2d x-y plane.
+    const int* st_bottom2D,                               // the z-coordinate of the bottom of stick on (x, y), stored in 2d x-y plane.
     int* st_i,                                      // x or x + fftnx (if x < 0) of stick.
     int* st_j,                                      // y or y + fftny (if y < 0) of stick.
     int* st_length                                  // number of planewaves in stick, stored in 1d array with this->nstot elements.
@@ -233,7 +232,6 @@ void PW_Basis::collect_st(
     delete[] temp_st_j;
     delete[] temp_st_length;
     delete[] st_sorted_index;
-    return;
 }
 
 ///
@@ -245,9 +243,9 @@ void PW_Basis::collect_st(
 /// output: npw_per, nst_per, this->fftixy2ip, this->startnsz_per
 ///
 void PW_Basis::divide_sticks_1(
-    int* st_i,          // x or x + fftnx (if x < 0) of stick.
-    int* st_j,          // y or y + fftny (if y < 0) of stick.
-    int* st_length     // the stick on (x, y) consists of st_length[x*fftny+y] planewaves.
+    const int* st_i,          // x or x + fftnx (if x < 0) of stick.
+    const int* st_j,          // y or y + fftny (if y < 0) of stick.
+    const int* st_length     // the stick on (x, y) consists of st_length[x*fftny+y] planewaves.
 )
 {
     ModuleBase::GlobalFunc::ZEROS(this->nst_per, poolnproc);
@@ -268,7 +266,7 @@ void PW_Basis::divide_sticks_1(
                 ipmin = ip;
                 break;
             }
-            else if (npw_ip < npwmin)
+            if (npw_ip < npwmin)
             {
                 ipmin = ip;
             }
@@ -287,8 +285,7 @@ void PW_Basis::divide_sticks_1(
     {
         this->startnsz_per[ip] = this->startnsz_per[ip - 1] + this->nst_per[ip - 1] * this->nz;
     }
-    return;
-}
+    }
 
 ///
 /// (3-2) Rearrange sticks in the order of the ip of core increasing, in each core, sticks are sorted in the order of ixy increasing.
@@ -317,7 +314,6 @@ void PW_Basis::get_istot2ixy(
         }
     }
     delete[] st_move;
-    return;
 }
 
-}
+}  // namespace ModulePW

@@ -70,10 +70,9 @@ void Magnetism::compute_magnetization(const int& nrxx, const int& nxyz, const do
 		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"absolute magnetism (Bohr mag/cell)",this->abs_magnetization);
 	}
 
-    return;
-}
+    }
 
-bool Magnetism::judge_parallel(double a[3], ModuleBase::Vector3<double> b)
+bool Magnetism::judge_parallel(const double a[3], const ModuleBase::Vector3<double>& b)
 {
    bool jp=false;
    double cross;

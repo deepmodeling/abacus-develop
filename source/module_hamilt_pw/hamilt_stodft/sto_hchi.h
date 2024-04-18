@@ -34,13 +34,13 @@ class Stochastic_hchi
 		std::complex<double> *wfout, 
 		const int& ikk); //wfin & wfout are wavefunctions in reciprocal space
 	void hchi(
-		std::complex<double> *wfin, 
-		std::complex<double> *wfout, 
+		std::complex<double> *chig, 
+		std::complex<double> *hchig, 
 		const int m = 1); //wfin & wfout are wavefunctions in reciprocal space
 
 	void hchi_norm(
-		std::complex<double> *wfin, 
-		std::complex<double> *wfout, 
+		std::complex<double> *chig, 
+		std::complex<double> *hchig, 
 		const int m = 1); //wfin & wfout are wavefunctions in reciprocal space
 
 	public:

@@ -18,11 +18,10 @@ void Sph_Bessel_Recursive::D1::set_dx( const double dx_in )
 {
 	if(finish_set_dx && dx_in!=dx)	
 		throw std::runtime_error("Sph_Bessel_Recursive::set_dx, dx can only set once");
-	else
-	{
-		dx = dx_in;
+	
+			dx = dx_in;
 		finish_set_dx = true;
-	}
+
 }
 
 const std::vector<std::vector<double>> & Sph_Bessel_Recursive::D1::cal_jlx( const int lmax, const size_t ix_size )
@@ -42,7 +41,7 @@ void Sph_Bessel_Recursive::D1::cal_jlx_0( const int l_size )
 	
 	for( int l=0; l!=l_size; ++l )
 	{
-		if(jlx[l].size()<1)
+		if(jlx[l].empty())
 		{
 			jlx[l].resize(1);
 			if(0==l)
@@ -120,7 +119,7 @@ void Sph_Bessel_Recursive::D1::cal_jlx_recursive( const int l_size, const size_t
 	}
 }
 
-}
+}  // namespace ModuleBase
 
 /*
 void Sph_Bessel_Recursive::cal_jlx_preset(const int l_size, const size_t ix_size)

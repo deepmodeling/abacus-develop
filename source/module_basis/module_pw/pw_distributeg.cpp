@@ -27,7 +27,6 @@ void PW_Basis::distribute_g()
     }
     ModuleBase::CHECK_WARNING_QUIT((this->npw == 0), "pw_distributeg.cpp", "Current core has no plane waves! Please reduce the cores.");
     ModuleBase::timer::tick(this->classname, "distributeg");
-    return;
 }
 
 ///
@@ -128,7 +127,6 @@ void PW_Basis::count_pw_st(
     }
     riy += this->ny;
     rix += this->nx;
-    return;
 }
 
 ///
@@ -140,8 +138,8 @@ void PW_Basis::count_pw_st(
 /// output: ig2isz, is2fftixy
 /// 
 void PW_Basis::get_ig2isz_is2fftixy(
-    int* st_bottom2D,     // minimum z of stick, stored in 1d array with this->nstot elements.
-    int* st_length2D     // the stick on (x, y) consists of st_length[x*fftny+y] planewaves.
+    const int* st_bottom2D,     // minimum z of stick, stored in 1d array with this->nstot elements.
+    const int* st_length2D     // the stick on (x, y) consists of st_length[x*fftny+y] planewaves.
 )
 {
     if (this->npw == 0)
@@ -191,6 +189,5 @@ void PW_Basis::get_ig2isz_is2fftixy(
         syncmem_int_h2d_op()(gpu_ctx, cpu_ctx, this->d_is2fftixy, this->is2fftixy, this->nst);
     }
 #endif
-    return;
-}
-}
+    }
+}  // namespace ModulePW

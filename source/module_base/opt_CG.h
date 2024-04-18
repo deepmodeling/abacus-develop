@@ -27,7 +27,7 @@ class Opt_CG
     Opt_CG();
     ~Opt_CG();
 
-    void init_b(double* pinp_b // b in the linear equation Ax = b
+    void init_b(const double* pinp_b // b in the linear equation Ax = b
     );
     void allocate(int nx // length of the solution array x
     );
@@ -73,7 +73,7 @@ class Opt_CG
     double alpha_ = 0.;    // step length in standard CG
     double* pb_ = nullptr; // b in Ax=b, only for standard CG
 
-    void stantard_CGdirect(double* pAd,    // Ad for Ax=b
+    void stantard_CGdirect(const double* pAd,    // Ad for Ax=b
                            double* rdirect // next direct
     );
     void PR_beta(double* pgradient // df(x)/dx

@@ -40,7 +40,7 @@ public:
 			const std::string& type_ps_in,
 			const int& lmax_in,
 			const int& nproj_in,
-			const Numerical_Nonlocal_Lm* ps_orbital_in);
+			const Numerical_Nonlocal_Lm* Proj_in);
 
 	Numerical_Nonlocal_Lm* Proj; ///< length: nproj(only store radial function )
 
@@ -55,7 +55,7 @@ public:
 
 	int lmax; ///< max value of L angular momentum
 
-	double rcut_max;
+	double rcut_max{};
 
 	std::string type_ps; ///<local or nonlocal
 

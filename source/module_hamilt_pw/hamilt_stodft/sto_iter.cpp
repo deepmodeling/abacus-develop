@@ -132,7 +132,7 @@ void Stochastic_Iter::checkemm(const int& ik, const int istep, const int iter, S
         {
             pchi = &stowf.chi0->operator()(ik, ichi, 0);
         }
-        while (1)
+        while (true)
         {
             bool converge;
             converge = p_che->checkconverge(
@@ -169,7 +169,7 @@ void Stochastic_Iter::checkemm(const int& ik, const int istep, const int iter, S
     }
 }
 
-void Stochastic_Iter::check_precision(const double ref, const double thr, const std::string info)
+void Stochastic_Iter::check_precision(const double ref, const double thr, const std::string& info)
 {
     //==============================
     //precision check
@@ -297,7 +297,6 @@ void Stochastic_Iter::itermu(const int iter, elecstate::ElecState* pes)
         }
     }
     ModuleBase::timer::tick("Stochastic_Iter", "itermu");
-    return;
 }
 
 void Stochastic_Iter::calPn(const int& ik, Stochastic_WF& stowf)
@@ -350,7 +349,6 @@ void Stochastic_Iter::calPn(const int& ik, Stochastic_WF& stowf)
         dgemm_(&trans,&normal, &N,&N,&M,&kweight,vec_all,&LDA,vec_all,&LDA,&one,spolyv,&N);
     }
     ModuleBase::timer::tick("Stochastic_Iter", "calPn");
-    return;
 }
 
 double Stochastic_Iter::calne(elecstate::ElecState* pes)
@@ -584,7 +582,6 @@ void Stochastic_Iter::sum_stoband(Stochastic_WF& stowf, elecstate::ElecState* pe
     delete[] sto_rho;
     delete[] ksrho;
     ModuleBase::timer::tick("Stochastic_Iter", "sum_stoband");
-    return;
 }
 
 void Stochastic_Iter::calTnchi_ik(const int& ik, Stochastic_WF& stowf)

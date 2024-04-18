@@ -15,7 +15,7 @@ class Grid_MeshBall : public Grid_BigCell
 	int meshball_ncells;
 
 	// cartesian coordinates of meshball.
-	double** meshball_positions;
+	double** meshball_positions{};
 
 	bool flag_mp;
 	

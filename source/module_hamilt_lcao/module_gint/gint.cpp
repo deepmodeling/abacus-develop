@@ -360,8 +360,6 @@ void Gint::cal_gint(Gint_inout *inout)
 	if(inout->job==Gint_Tools::job_type::tau) ModuleBase::timer::tick("Gint_interface","cal_gint_tau");
 	if(inout->job==Gint_Tools::job_type::force) ModuleBase::timer::tick("Gint_interface","cal_gint_force");
 	if(inout->job==Gint_Tools::job_type::force_meta) ModuleBase::timer::tick("Gint_interface","cal_gint_force_meta");
-
-	return;
 }
 
 void Gint::prep_grid(
@@ -410,8 +408,6 @@ void Gint::prep_grid(
     assert(startz_current >= 0);
 
 	assert( GlobalC::ucell.omega > 0.0);
-
-	return;
 }
 
 void Gint::initialize_pvpR(
@@ -422,25 +418,25 @@ void Gint::initialize_pvpR(
 
 	int npol = 1;
 	// there is the only resize code of DMRGint
-	if(this->DMRGint.size() == 0)
+	if(this->DMRGint.empty())
 	{
 		this->DMRGint.resize(GlobalV::NSPIN);
 	}
 	if(GlobalV::NSPIN!=4)
 	{
-		if(this->hRGint != nullptr)
-		{
+		
+		
 			delete this->hRGint;
-		}
+		
 		this->hRGint = new hamilt::HContainer<double>(ucell_in.nat);
 	}
 	else
 	{
 		npol = 2;
-		if(this->hRGintCd != nullptr)
-		{
+		
+		
 			delete this->hRGintCd;
-		}
+		
 		this->hRGintCd = new hamilt::HContainer<std::complex<double>>(ucell_in.nat);
 		for (int is = 0; is < GlobalV::NSPIN; is++)
 		{
@@ -451,10 +447,10 @@ void Gint::initialize_pvpR(
 			this->DMRGint[is] = new hamilt::HContainer<double>(ucell_in.nat);
 		}
 #ifdef __MPI
-		if(this->DMRGint_full != nullptr)
-		{
+		
+		
 			delete this->DMRGint_full;
-		}
+		
 		this->DMRGint_full = new hamilt::HContainer<double>(ucell_in.nat);
 #endif
 	}
@@ -526,7 +522,7 @@ void Gint::initialize_pvpR(
 						if(distance < rcut - 1.0e-15)
 						{
 							// calculate R index
-							auto& R_index = gd->getBox(ad);
+							const auto& R_index = gd->getBox(ad);
 							// insert this atom-pair into this->hRGint
 							if(npol == 1)
 							{
@@ -558,7 +554,7 @@ void Gint::initialize_pvpR(
 	}// end T1
 	if(npol == 1)
 	{
-		this->hRGint->allocate(nullptr, 0);
+		this->hRGint->allocate(nullptr, false);
 		ModuleBase::Memory::record("Gint::hRGint",this->hRGint->get_memory_size());
 		// initialize DMRGint with hRGint when NSPIN != 4
 		for (int is = 0; is < this->DMRGint.size(); is++)
@@ -573,15 +569,15 @@ void Gint::initialize_pvpR(
 	}
 	else
 	{
-		this->hRGintCd->allocate(nullptr, 0);
+		this->hRGintCd->allocate(nullptr, false);
 		ModuleBase::Memory::record("Gint::hRGintCd",this->hRGintCd->get_memory_size());
 		for (int is = 0; is < this->DMRGint.size(); is++)
 		{
-			this->DMRGint[is]->allocate(nullptr, 0);
+			this->DMRGint[is]->allocate(nullptr, false);
 		}
 		ModuleBase::Memory::record("Gint::DMRGint",this->DMRGint[0]->get_memory_size() * this->DMRGint.size());
 #ifdef __MPI
-		this->DMRGint_full->allocate(nullptr, 0);
+		this->DMRGint_full->allocate(nullptr, false);
 		ModuleBase::Memory::record("Gint::DMRGint_full",this->DMRGint_full->get_memory_size());
 #endif
 	}

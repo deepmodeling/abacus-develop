@@ -16,7 +16,7 @@ Output_DM1::Output_DM1(
 {
 }
 
-void Output_DM1::write(void)
+void Output_DM1::write()
 {
     double** dm2d;
     dm2d = new double*[_nspin];

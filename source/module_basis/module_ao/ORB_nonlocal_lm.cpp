@@ -33,7 +33,7 @@ Numerical_Nonlocal_Lm::~Numerical_Nonlocal_Lm()
 	this->freemem();
 }
 
-void Numerical_Nonlocal_Lm::renew(void)
+void Numerical_Nonlocal_Lm::renew()
 {
 	assert(nr_uniform>0);
 	assert(nr>0);
@@ -54,7 +54,7 @@ void Numerical_Nonlocal_Lm::renew(void)
 	ModuleBase::GlobalFunc::ZEROS(beta_k, nk);
 }
 
-void Numerical_Nonlocal_Lm::freemem(void)
+void Numerical_Nonlocal_Lm::freemem()
 {
 	delete[] this->r_radial;
 	delete[] this->rab;
@@ -172,8 +172,6 @@ void Numerical_Nonlocal_Lm::set_NL_proj(
 	//this->extra_uniform(dr_uniform);
 	// (2) get the beta_k
 	this->get_kradial();
-
-	return;
 }
 
 /*
@@ -245,7 +243,7 @@ void Numerical_Nonlocal_Lm::extra_uniform(const double &dr_uniform_in)
 }
 */
 
-void Numerical_Nonlocal_Lm::get_kradial(void)
+void Numerical_Nonlocal_Lm::get_kradial()
 {
     //ModuleBase::TITLE("Numerical_Nonlocal_Lm","get_kradial");
     double *jl = new double[nr];
@@ -341,5 +339,4 @@ void Numerical_Nonlocal_Lm::plot(const int &my_rank)const
 		ofsru.close();
 	}
 #endif
-	return;
-}
+	}

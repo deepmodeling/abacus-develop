@@ -18,7 +18,6 @@ void XC_Functional::slater(const double &rs, double &ex, double &vx)
 	const double alpha = 2.00 / 3.00;
 	ex = f * alpha / rs;
 	vx = 4.0 / 3.0 * f * alpha / rs;
-	return;
 }
 
 //Slater exchange with alpha=1, corresponding to -1.374/r_s Ry
@@ -29,7 +28,6 @@ void XC_Functional::slater1(const double &rs, double &ex, double &vx)
 	const double alpha = 1.0;
 	ex = f * alpha / rs;
 	vx = 4.0 / 3.0 * f * alpha / rs;
-	return;
 }
 
 // Slater exchange with alpha=2/3 and Relativistic exchange
@@ -53,7 +51,6 @@ void XC_Functional::slater_rxc(const double &rs, double &ex, double &vx)
     exp = exp * (1.0 - 1.5 * x * x);
     vx = vxp;
     ex = exp;
-	return;	
 }
 
 // Slater exchange with alpha=2/3, spin-polarized case
@@ -73,8 +70,6 @@ void XC_Functional::slater_spin( const double &rho, const double &zeta,
     double exdw = f * alpha * rho13;
     vxdw = p43 * f * alpha * rho13;
     ex = 0.50 * ((1.0 + zeta) * exup + (1.0 - zeta) * exdw);
-
-    return;
 }
 
 // Slater exchange with alpha=2/3, spin-polarized case
@@ -93,8 +88,6 @@ void XC_Functional::slater1_spin( const double &rho, const double &zeta, double 
     double exdw = f * alpha * rho13;
     vxdw = p43 * f * alpha * rho13;
     ex = 0.50 * ((1.0 + zeta) * exup + (1.0 - zeta) * exdw);
-
-    return;
 } // end subroutine slater1_spin
 
 // Slater exchange with alpha=2/3, relativistic exchange case
@@ -143,6 +136,4 @@ void XC_Functional::slater_rxc_spin( const double &rho, const double &z,
     vxdw  = vxp + fz * (vxf - vxp) - (1 + z) * fzp * (exf - exp);
 
     ex    = exp + fz * (exf - exp);
-
-    return;
 }

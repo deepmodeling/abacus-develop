@@ -53,8 +53,8 @@ class PW_Basis_Sup : public PW_Basis
                          const int& ny_s         // ny of smooth grids
     );
 
-    void get_ig2isz_is2fftixy(int* st_bottom2D, // minimum z of stick, stored in 1d array with this->nstot elements.
-                              int* st_length2D, // the stick on (x, y) consists of st_length[x*fftny+y] planewaves.
+    void get_ig2isz_is2fftixy(const int* st_bottom2D, // minimum z of stick, stored in 1d array with this->nstot elements.
+                              const int* st_length2D, // the stick on (x, y) consists of st_length[x*fftny+y] planewaves.
                               const ModulePW::PW_Basis* pw_rho);
 }; // class PW_Basis_Sup
 

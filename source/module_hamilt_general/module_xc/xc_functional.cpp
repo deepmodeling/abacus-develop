@@ -26,7 +26,7 @@ int XC_Functional::get_func_type()
 
 // The setting values of functional id according to the index in LIBXC
 // for detail, refer to https://www.tddft.org/programs/libxc/functionals/
-void XC_Functional::set_xc_type(const std::string xc_func_in)
+void XC_Functional::set_xc_type(const std::string& xc_func_in)
 {
     //Note : due to the separation of gcx_spin and gcc_spin,
     //when you are adding new GGA functionals,

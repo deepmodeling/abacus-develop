@@ -229,10 +229,9 @@ void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv)
 		}
 	}
 
-	return;
-}
+	}
 
-void Grid_Technique::cal_max_box_index(void)
+void Grid_Technique::cal_max_box_index()
 {
 	ModuleBase::TITLE("LCAO_nnr","cal_max_box_index");
 	this->maxB1 = this->maxB2 = this->maxB3 = -10000;
@@ -262,10 +261,6 @@ void Grid_Technique::cal_max_box_index(void)
 	nB3 = maxB3-minB3+1;
 
 	nbox = nB1 * nB2 * nB3;
-	
-	//ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nbox",nbox);
-
-	return;
 }
 
 int Grid_Technique::cal_RindexAtom(const int &u1, const int &u2, const int &u3, const int &iat2) const
@@ -291,8 +286,8 @@ int Grid_Technique::cal_RindexAtom(const int &u1, const int &u2, const int &u3, 
 
 int Grid_Technique::binary_search_find_R2_offset(int val, int iat) const
 {
-    auto findR2 = this->find_R2[iat];
-	auto findR2_index = this->find_R2_sorted_index[iat];
+    auto *findR2 = this->find_R2[iat];
+	auto *findR2_index = this->find_R2_sorted_index[iat];
 
 	int left = 0;
     int right = nad[iat] - 1;
@@ -535,5 +530,4 @@ void LCAO_Matrix::folding_fixedH(
 	assert(tot_index==this->ParaV->nnr);
 
 	ModuleBase::timer::tick("LCAO_nnr","folding_fixedH");
-	return;
 }

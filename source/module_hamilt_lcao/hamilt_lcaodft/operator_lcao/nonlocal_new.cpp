@@ -335,7 +335,6 @@ void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         this->hR->add(*(this->HR_fixed));
     }
     ModuleBase::timer::tick("NonlocalNew", "contributeHR");
-    return;
 }
 
 template class hamilt::NonlocalNew<hamilt::OperatorLCAO<double, double>>;

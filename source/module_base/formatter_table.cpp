@@ -2,7 +2,7 @@
 #include <iomanip>
 #include <sstream>
 
-int formatter::Table::add_col(std::string new_title, std::vector<std::string> new_col) {
+int formatter::Table::add_col(const std::string& new_title, const std::vector<std::string>& new_col) {
     this->ncol_++;
     this->titles_.push_back(new_title);
     this->data_.push_back(new_col);
@@ -16,7 +16,7 @@ void formatter::Table::adjust_col_width() {
     for (int icol = 0; icol < this->ncol_; ++icol) {
         int s1 = this->titles_[icol].size();
         int s2 = 0;
-        for (auto row : this->data_[icol]) {
+        for (const auto& row : this->data_[icol]) {
             if (row.size() > s2) {
                 s2 = row.size();
             }
@@ -65,7 +65,7 @@ void formatter::Table::centerize_title() {
         int n = this->col_widths_[icol];
         int n1 = (n-s)/2;
         int n2 = n-s-n1;
-        std::string title = "";
+        std::string title;
         for (int i = 0; i < n1; ++i) {
             title += " ";
         }
@@ -122,7 +122,7 @@ std::string formatter::Table::print_table() {
         }
     }
     if (this->mode_ != 1) {
-        if (this->overall_title.size() > 0) {
+        if (!this->overall_title.empty()) {
             ss << this->overall_title << std::endl;
         }
         // print the top frame

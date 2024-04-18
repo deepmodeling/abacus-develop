@@ -111,4 +111,4 @@ namespace ModuleESolver
             this->kv.kvec_d);
     }
 #endif
-}
+}  // namespace ModuleESolver

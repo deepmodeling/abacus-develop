@@ -28,7 +28,7 @@ class LCAO_Matrix
                         const std::vector<ModuleBase::Vector3<double>>& kvec_d, 
                         bool cal_syns = false);
 
-    Parallel_Orbitals *ParaV;
+    Parallel_Orbitals *ParaV{};
     
 #ifdef __EXX
     using TAC = std::pair<int, std::array<int, 3>>;
@@ -91,14 +91,14 @@ private:
     std::vector<std::complex<double>> Hloc_fixedR_soc;
 
     //LiuXh add 2019-07-15
-    double ****Hloc_fixedR_tr;
-    double ****SlocR_tr;
-    double ****HR_tr;
+    double ****Hloc_fixedR_tr{};
+    double ****SlocR_tr{};
+    double ****HR_tr{};
 
 
-    std::complex<double> ****Hloc_fixedR_tr_soc;
-    std::complex<double> ****SlocR_tr_soc;
-    std::complex<double> ****HR_tr_soc;
+    std::complex<double> ****Hloc_fixedR_tr_soc{};
+    std::complex<double> ****SlocR_tr_soc{};
+    std::complex<double> ****HR_tr_soc{};
 
     // jingan add 2021-6-4, modify 2021-12-2
     // Sparse form of HR and SR, the format is [R_direct_coor][orbit_row][orbit_col]
@@ -136,61 +136,61 @@ private:
     // force in LCAO
     // used in gamma only algorithm.
     //-----------------------------------------
-    double* DSloc_x;
-    double* DSloc_y;
-    double* DSloc_z;
+    double* DSloc_x{};
+    double* DSloc_y{};
+    double* DSloc_z{};
 
     //-----------------------------------------
     // force in LCAO
     // used in k-points algorithm.
     //-----------------------------------------
-    double* DSloc_Rx;
-    double* DSloc_Ry;
-    double* DSloc_Rz;
+    double* DSloc_Rx{};
+    double* DSloc_Ry{};
+    double* DSloc_Rz{};
 
     //-----------------------------------------
     // dT + part of dVNL
     // used in gamma only algorithm.
     //-----------------------------------------
-    double* DHloc_fixed_x;
-    double* DHloc_fixed_y;
-    double* DHloc_fixed_z;
+    double* DHloc_fixed_x{};
+    double* DHloc_fixed_y{};
+    double* DHloc_fixed_z{};
 
     //-----------------------------------------
     // dT + part of dVNL
     // used in kpoint algorithm.
     //-----------------------------------------
-    double* DHloc_fixedR_x;
-    double* DHloc_fixedR_y;
-    double* DHloc_fixedR_z;
+    double* DHloc_fixedR_x{};
+    double* DHloc_fixedR_y{};
+    double* DHloc_fixedR_z{};
 
     //----------------------------------------
     // r_mu - r_nu
     //----------------------------------------
 
-    double* DH_r;//zhengdy added 2017-07
+    double* DH_r{};//zhengdy added 2017-07
 
 
-    double* stvnl11;
-    double* stvnl12;
-    double* stvnl13;
-    double* stvnl22;
-    double* stvnl23;
-    double* stvnl33;
+    double* stvnl11{};
+    double* stvnl12{};
+    double* stvnl13{};
+    double* stvnl22{};
+    double* stvnl23{};
+    double* stvnl33{};
 
-    double* DSloc_11;
-    double* DSloc_12;
-    double* DSloc_13;
-    double* DSloc_22;
-    double* DSloc_23;
-    double* DSloc_33;
+    double* DSloc_11{};
+    double* DSloc_12{};
+    double* DSloc_13{};
+    double* DSloc_22{};
+    double* DSloc_23{};
+    double* DSloc_33{};
 
-    double* DHloc_fixed_11;
-    double* DHloc_fixed_12;
-    double* DHloc_fixed_13;
-    double* DHloc_fixed_22;
-    double* DHloc_fixed_23;
-    double* DHloc_fixed_33;
+    double* DHloc_fixed_11{};
+    double* DHloc_fixed_12{};
+    double* DHloc_fixed_13{};
+    double* DHloc_fixed_22{};
+    double* DHloc_fixed_23{};
+    double* DHloc_fixed_33{};
 
 	template <typename T>
 		static void set_mat2d(

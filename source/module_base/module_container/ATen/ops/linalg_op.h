@@ -137,7 +137,7 @@ struct inflate_op {
      */
     void operator()(
         const Tensor& input,
-        const std::vector<int64_t>& stride,
+        const std::vector<int64_t>& inflate,
         Tensor& output);
 };
 

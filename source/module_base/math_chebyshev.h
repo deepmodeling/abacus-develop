@@ -187,7 +187,7 @@ public:
 
 public:
 	//Members:
-    int norder;   // order of Chebyshev expansion
+    int norder{};   // order of Chebyshev expansion
     int norder2;  // 2 * norder * EXTEND
 
     REAL* coef_real; // expansion coefficient of each order

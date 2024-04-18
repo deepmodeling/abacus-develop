@@ -19,14 +19,14 @@ WF_atomic::~WF_atomic()
 	{
 		std::cout << " ~WF_atomic()" << std::endl;
 	}
-    if(this->wanf2!= nullptr)
-    {
+    
+    
         delete[] wanf2;
-    }
-    if(this->psi != nullptr)
-    {
+    
+    
+    
         delete psi;
-    }
+    
 }
 
 //==========================================================
@@ -213,10 +213,9 @@ void WF_atomic::init_at_1(Structure_Factor *sf_in)
     delete [] aux;
     delete [] vchi;
     ModuleBase::timer::tick("WF_atomic","init_at_1");
-    return;
 }// end init_at_1
 
-void WF_atomic::print_PAOs(void)const
+void WF_atomic::print_PAOs()
 {
     if (GlobalV::MY_RANK!=0) return;
     for (int it=0; it<GlobalC::ucell.ntype; it++)
@@ -243,8 +242,7 @@ void WF_atomic::print_PAOs(void)const
         }
         // end out put
     }
-    return;
-}
+    }
 
 void WF_atomic::atomic_wfc(const int ik,
                            const int np,
@@ -489,7 +487,6 @@ void WF_atomic::atomic_wfc(const int ik,
     delete [] aux;
     delete[] chiaux;
     ModuleBase::timer::tick("WF_atomic","atomic_wfc");
-    return;
 } // end subroutine atomic_wfc
 
 #ifdef __MPI
@@ -520,8 +517,7 @@ void WF_atomic::stick_to_pool(float* stick, const int& ir, float* out, const Mod
 		MPI_Send(stick, nz, MPI_FLOAT, ip, ir, POOL_WORLD);
 	}
 
-	return;	
-}
+	}
 void WF_atomic::stick_to_pool(double* stick, const int& ir, double* out, const ModulePW::PW_Basis_K* wfc_basis) const
 {	
 	MPI_Status ierror;
@@ -549,8 +545,7 @@ void WF_atomic::stick_to_pool(double* stick, const int& ir, double* out, const M
 		MPI_Send(stick, nz, MPI_DOUBLE, ip, ir, POOL_WORLD);
 	}
 
-	return;	
-}
+	}
 #endif
 
 void WF_atomic::random(std::complex<double>* psi,
@@ -751,5 +746,4 @@ void WF_atomic::atomicrandom(ModuleBase::ComplexMatrix& psi,
     }
 #endif
 
-    return;
-}
+    }

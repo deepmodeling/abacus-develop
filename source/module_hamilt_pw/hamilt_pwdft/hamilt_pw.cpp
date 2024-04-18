@@ -70,7 +70,7 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K
             pot_register_in.push_back("gatefield");
         }
         //only Potential is not empty, Veff and Meta are available
-        if(pot_register_in.size()>0)
+        if(!pot_register_in.empty())
         {
             //register Potential by gathered operator
             pot_in->pot_register(pot_register_in);
@@ -109,16 +109,15 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K
             this->ops->add(nonlocal);
         }
     }
-    return;
-}
+    }
 
 template<typename T, typename Device>
 HamiltPW<T, Device>::~HamiltPW()
 {
-    if(this->ops!= nullptr)
-    {
+    
+    
         delete this->ops;
-    }
+    
 }
 
 template<typename T, typename Device>

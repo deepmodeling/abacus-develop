@@ -34,7 +34,7 @@ void Convert(void);
  *            [1, 1, 1, 0, 0.5, 0.5, 1.5]
  */
 template <typename T>
-void parse_expression(const std::string& fn, std::vector<T>& arr);
+void parse_expression(const std::string& fn, std::vector<T>& vec);
 
 #ifdef __LCAO
 /**
@@ -44,7 +44,7 @@ void parse_expression(const std::string& fn, std::vector<T>& arr);
  * @param c coefficients of unit conversion
  * @return parame*c : parameter after unit vonversion
  */
-std::vector<double> convert_units(std::string params, double c);
+std::vector<double> convert_units(const std::string& params, double c);
 
 /**
  * @brief read paramers of electric field for tddft and convert units

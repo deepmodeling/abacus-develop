@@ -116,12 +116,11 @@ void Veff<OperatorLCAO<TK, TR>>::contributeHR()
     this->GK->transfer_pvpR(this->hR);
 
     ModuleBase::timer::tick("Veff", "contributeHR");
-    return;
 }
 
 // special case of gamma-only
 template<>
-void Veff<OperatorLCAO<double, double>>::contributeHR(void)
+void Veff<OperatorLCAO<double, double>>::contributeHR()
 {
     ModuleBase::TITLE("Veff", "contributeHR");
     ModuleBase::timer::tick("Veff", "contributeHR");
@@ -160,4 +159,4 @@ template class Veff<OperatorLCAO<double, double>>;
 template class Veff<OperatorLCAO<std::complex<double>, double>>;
 
 template class Veff<OperatorLCAO<std::complex<double>, std::complex<double>>>;
-}
+}  // namespace hamilt

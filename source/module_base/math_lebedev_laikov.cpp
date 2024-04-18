@@ -38,7 +38,7 @@ Lebedev_laikov_grid::~Lebedev_laikov_grid()
     }
 }
 
-void Lebedev_laikov_grid::print_grid_and_weight(std::string filename)
+void Lebedev_laikov_grid::print_grid_and_weight(const std::string& filename)
 {
     std::stringstream ss;
     ss << filename << "_degree" << degree;

@@ -34,10 +34,9 @@ void WARNING(const std::string &file,const std::string &description)
         GlobalV::ofs_warning << " " << file <<"  warning : "<< description<<std::endl;
     }
 #endif
-    return;
-}
+    }
 
-void QUIT(void)
+void QUIT()
 {
 	QUIT(0);
 }
@@ -172,7 +171,6 @@ void CHECK_WARNING_QUIT(const bool error_in, const std::string &file,const std::
 		exit(1);
 	}
 #endif
-	return;
-}
+	}
 
-}
+}  // namespace ModuleBase

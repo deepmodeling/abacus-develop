@@ -1,7 +1,7 @@
 #include "opt_DCsrch.h"
 
-#include <math.h>
-#include <string.h>
+#include <cmath>
+#include <cstring>
 
 // This file is translated from fortran codes dcstep.f of scipy.
 // The structure and all annotation of the original file have been retained.
@@ -171,18 +171,18 @@ int dcsrch(double& stp,
     double ginit = 0.0, gtest = 0.0, gm = 0.0, gx = 0.0, gxm = 0.0, gy = 0.0, gym = 0.0;
     double stx = 0.0, sty = 0.0, stmin = 0.0, stmax = 0.0, width = 0.0, width1 = 0.0;
 
-    extern /* Subroutine */ void dcstep(double&,
-                                        double&,
-                                        double&,
-                                        double&,
-                                        double&,
-                                        double&,
-                                        double&,
-                                        double&,
-                                        double&,
-                                        bool&,
-                                        double&,
-                                        double&);
+    extern /* Subroutine */ void dcstep(double& /*stx*/,
+                                        double& /*fx*/,
+                                        double& /*dx*/,
+                                        double& /*sty*/,
+                                        double& /*fy*/,
+                                        double& /*dy*/,
+                                        double& /*stp*/,
+                                        double& /*fp*/,
+                                        double& /*dp*/,
+                                        bool& /*brackt*/,
+                                        double& /*stpmin*/,
+                                        double& /*stpmax*/);
     // c     Initialization block.
     if (strncmp(task, "START", 5) == 0)
     {
@@ -258,14 +258,7 @@ int dcsrch(double& stp,
 
         // c        Restore local variables.
 
-        if (isave[1] == 1)
-        {
-            brackt = true;
-        }
-        else
-        {
-            brackt = false;
-        }
+        brackt = isave[1] == 1;
         stage = isave[2];
         ginit = dsave[1];
         gtest = dsave[2];

@@ -47,10 +47,10 @@ public:
             error_quit);
     }
 private:
-	void write_file1(const std::string &file_name, const void*const ptr, const size_t size) const;
-	void read_file1(const std::string &file_name, void*const ptr, const size_t size) const;
-    bool write_file2(const std::string& file_name, const void* const ptr, const size_t size, const bool error_quit = true) const;
-    bool read_file2(const std::string& file_name, void* const ptr, const size_t size, const bool error_quit = true) const;
+	static void write_file1(const std::string &file_name, const void*const ptr, const size_t size) ;
+	static void read_file1(const std::string &file_name, void*const ptr, const size_t size) ;
+    static bool write_file2(const std::string& file_name, const void* const ptr, const size_t size, const bool error_quit = true) ;
+    static bool read_file2(const std::string& file_name, void* const ptr, const size_t size, const bool error_quit = true) ;
 };
 
 #endif

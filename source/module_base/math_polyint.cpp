@@ -37,7 +37,6 @@ void PolyInt::Polynomial_Interpolation
         table(dim1, dim2, iq+3) * x1 * x2 * x0 / 6.0 ;
 
     ModuleBase::timer::tick("PolyInt","Poly_Interpo_1");
-    return;
 }
 
 double PolyInt::Polynomial_Interpolation
@@ -172,10 +171,9 @@ double PolyInt::Polynomial_Interpolation_xy
         {
             break;
         }
-        else
-        {
-            position ++;
-        }
+        
+                    position ++;
+       
     }
 
     assert(position >= 0);
@@ -225,11 +223,10 @@ double PolyInt::Polynomial_Interpolation_xy
         // 	ModuleBase::timer::tick("PolyInt","Poly_Inter_xy");
         return part1 + part2 + part3 + part4 + part5 + part6;
     }
-    else
-    {
-        // 	ModuleBase::timer::tick("PolyInt","Poly_Inter_xy");
+    
+            // 	ModuleBase::timer::tick("PolyInt","Poly_Inter_xy");
         return ypoint[position];
-    }
+   
 }
 
-}
+}  // namespace ModuleBase

@@ -119,7 +119,7 @@ namespace ModuleESolver
         ModuleIO::print_stress("TOTAL-STRESS", stress, true, false);
     }
 
-    void ESolver_LJ::post_process(void)
+    void ESolver_LJ::post_process()
     {
         GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
         GlobalV::ofs_running << std::setprecision(16);
@@ -133,7 +133,7 @@ namespace ModuleESolver
         return 4 * lj_epsilon * (temp - 1) * temp;
     }
 
-    ModuleBase::Vector3<double> ESolver_LJ::LJ_force(const double d, const ModuleBase::Vector3<double> dr)
+    ModuleBase::Vector3<double> ESolver_LJ::LJ_force(const double d, const ModuleBase::Vector3<double>& dr)
     {
         double temp = pow(lj_sigma / d, 6);
         double coff = 24 * lj_epsilon * (2 * temp - 1) * temp / pow(d, 2);
@@ -152,4 +152,4 @@ namespace ModuleESolver
         }
     }
 
-}
+}  // namespace ModuleESolver

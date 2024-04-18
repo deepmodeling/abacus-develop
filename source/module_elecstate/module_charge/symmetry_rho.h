@@ -14,24 +14,24 @@ class Symmetry_rho
 
     void begin(const int& spin_now,
                const Charge& CHR,
-               const ModulePW::PW_Basis* pw,
+               const ModulePW::PW_Basis* rho_basis,
                Parallel_Grid& Pgrid,
                ModuleSymmetry::Symmetry& symm) const;
 
   private:
 	// in real space:
-	void psymm(double *rho_part, const ModulePW::PW_Basis *pw, Parallel_Grid &Pgrid, ModuleSymmetry::Symmetry &symm) const;
+	static void psymm(double *rho_part, const ModulePW::PW_Basis *rho_basis, Parallel_Grid &Pgrid, ModuleSymmetry::Symmetry &symm) ;
 	// in reciprocal space:
 	void psymmg(std::complex<double>* rhog_part, const ModulePW::PW_Basis *rho_basis, 
 			Parallel_Grid &Pgrid, ModuleSymmetry::Symmetry &symm) const;
 #ifdef __MPI
-	void reduce_to_fullrhog(const ModulePW::PW_Basis *rho_basis, std::complex<double>* rhogtot, 
-			std::complex<double>* rhogin, int* ig2isztot, const int* ig2iszin, int max_npw) const;
-	void rhog_piece_to_all(const ModulePW::PW_Basis *rho_basis,
-			std::complex<double>* rhogtot, std::complex<double>* rhog_part) const;
+	static void reduce_to_fullrhog(const ModulePW::PW_Basis *rho_basis, std::complex<double>* rhogtot, 
+			std::complex<double>* rhogin, int* ig2isztot, const int* ig2iszin, int max_npw) ;
+	static void rhog_piece_to_all(const ModulePW::PW_Basis *rho_basis,
+			std::complex<double>* rhogtot, std::complex<double>* rhog_part) ;
 #endif
-	void get_ixyz2ipw(const ModulePW::PW_Basis *rho_basis, const int* ig2isztot, 
-			const int* fftixy2is, int* ixyz2ipw) const;	//(ix, iy, iz) -> (ip, ig)
+	static void get_ixyz2ipw(const ModulePW::PW_Basis *rho_basis, const int* ig2isztot, 
+			const int* fftixy2is, int* ixyz2ipw) ;	//(ix, iy, iz) -> (ip, ig)
 };
 
 #endif

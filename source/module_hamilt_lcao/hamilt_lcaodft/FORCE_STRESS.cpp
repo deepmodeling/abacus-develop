@@ -450,20 +450,20 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
             // regular force terms test.
             //-----------------------------
             // this->print_force("OVERLAP    FORCE",foverlap,1,ry);
-            ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "OVERLAP    FORCE", foverlap, 0);
+            ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "OVERLAP    FORCE", foverlap, false);
             //  this->print_force("TVNL_DPHI  force",ftvnl_dphi,GlobalV::TEST_FORCE);
             //  this->print_force("VNL_DBETA  force",fvnl_dbeta,GlobalV::TEST_FORCE);
             // this->print_force("T_VNL      FORCE",ftvnl,1,ry);
-            ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "T_VNL      FORCE", ftvnl, 0);
-            ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "VL_dPHI    FORCE", fvl_dphi, 0);
+            ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "T_VNL      FORCE", ftvnl, false);
+            ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "VL_dPHI    FORCE", fvl_dphi, false);
             // this->print_force("VL_dPHI    FORCE",fvl_dphi,1,ry);
             // this->print_force("VL_dVL     FORCE",fvl_dvl,1,ry);
-            ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "VL_dVL     FORCE", fvl_dvl, 0);
-            ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "EWALD      FORCE", fewalds, 0);
+            ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "VL_dVL     FORCE", fvl_dvl, false);
+            ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "EWALD      FORCE", fewalds, false);
             // 	this->print_force("VLOCAL     FORCE",fvlocal,GlobalV::TEST_FORCE);
             // this->print_force("EWALD      FORCE",fewalds,1,ry);
-            ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "NLCC       FORCE", fcc, 0);
-            ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "SCC        FORCE", fscc, 0);
+            ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "NLCC       FORCE", fcc, false);
+            ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "SCC        FORCE", fscc, false);
             // this->print_force("NLCC       FORCE",fcc,1,ry);
             // this->print_force("SCC        FORCE",fscc,1,ry);
             //-------------------------------
@@ -471,32 +471,32 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
             //-------------------------------
             if (GlobalV::EFIELD_FLAG)
             {
-                ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "EFIELD     FORCE", fefield, 0);
+                ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "EFIELD     FORCE", fefield, false);
                 // this->print_force("EFIELD     FORCE",fefield,1,ry);
             }
             if (GlobalV::ESOLVER_TYPE == "TDDFT")
             {
-                ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "EFIELD_TDDFT     FORCE", fefield_tddft, 0);
+                ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "EFIELD_TDDFT     FORCE", fefield_tddft, false);
                 // this->print_force("EFIELD_TDDFT     FORCE",fefield_tddft,1,ry);
             }
             if (GlobalV::GATE_FLAG)
             {
-                ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "GATEFIELD     FORCE", fgate, 0);
+                ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "GATEFIELD     FORCE", fgate, false);
                 // this->print_force("GATEFIELD     FORCE",fgate,1,ry);
             }
             if (GlobalV::imp_sol)
             {
-                ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "IMP_SOL     FORCE", fsol, 0);
+                ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "IMP_SOL     FORCE", fsol, false);
                 // this->print_force("IMP_SOL     FORCE",fsol,1,ry);
             }
             if (vdw_solver != nullptr)
             {
-                ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "VDW        FORCE", force_vdw, 0);
+                ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "VDW        FORCE", force_vdw, false);
                 // this->print_force("VDW        FORCE",force_vdw,1,ry);
             }
             if (GlobalV::dft_plus_u)
             {
-                ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "DFT+U      FORCE", force_dftu, 0);
+                ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "DFT+U      FORCE", force_dftu, false);
             }
 #ifdef __DEEPKS
             // caoyu add 2021-06-03
@@ -511,7 +511,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
         GlobalV::ofs_running << std::setiosflags(std::ios::left);
 
         // this->printforce_total(ry, istestf, fcs);
-        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "TOTAL-FORCE (eV/Angstrom)", fcs, 0);
+        ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "TOTAL-FORCE (eV/Angstrom)", fcs, false);
         if (istestf)
         {
             GlobalV::ofs_running << "\n FORCE INVALID TABLE." << std::endl;
@@ -684,7 +684,6 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
     } // end of stress calculation
 
     ModuleBase::timer::tick("Force_Stress_LCAO", "getForceStress");
-    return;
 }
 
 // local pseudopotential, ewald, core correction, scc terms in force
@@ -719,7 +718,6 @@ void Force_Stress_LCAO<T>::calForcePwPart(ModuleBase::matrix& fvl_dvl,
     // force due to self-consistent charge.
     //--------------------------------------------------------
     f_pw.cal_force_scc(fscc, rhopw, vnew, vnew_exist);
-    return;
 }
 
 // overlap, kinetic, nonlocal pseudopotential, Local potential terms in force and stress
@@ -773,7 +771,6 @@ void Force_Stress_LCAO<double>::integral_part(
         gen_h,
         gint_gamma,
         lm);
-    return;
 }
 
 
@@ -829,7 +826,6 @@ void Force_Stress_LCAO<std::complex<double>>::integral_part(
 					 pv,
 					 lm,
                      kv);
-    return;
 }
 
 // vlocal, hartree, ewald, core correction, exchange-correlation terms in stress
@@ -849,22 +845,22 @@ void Force_Stress_LCAO<T>::calStressPwPart(ModuleBase::matrix& sigmadvl,
     // local pseudopotential stress:
     // use charge density; plane wave; local pseudopotential;
     //--------------------------------------------------------
-    sc_pw.stress_loc(sigmadvl, rhopw, &sf, 0, chr);
+    sc_pw.stress_loc(sigmadvl, rhopw, &sf, false, chr);
 
     //--------------------------------------------------------
     // hartree term
     //--------------------------------------------------------
-    sc_pw.stress_har(sigmahar, rhopw, 0, chr);
+    sc_pw.stress_har(sigmahar, rhopw, false, chr);
 
     //--------------------------------------------------------
     // ewald stress: use plane wave only.
     //--------------------------------------------------------
-    sc_pw.stress_ewa(sigmaewa, rhopw, 0); // remain problem
+    sc_pw.stress_ewa(sigmaewa, rhopw, false); // remain problem
 
     //--------------------------------------------------------
     // stress due to core correlation.
     //--------------------------------------------------------
-    sc_pw.stress_cc(sigmacc, rhopw, &sf, 0, chr);
+    sc_pw.stress_cc(sigmacc, rhopw, &sf, false, chr);
 
     //--------------------------------------------------------
     // stress due to self-consistent charge.
@@ -875,8 +871,6 @@ void Force_Stress_LCAO<T>::calStressPwPart(ModuleBase::matrix& sigmadvl,
     }
     // Exchange-correlation for PBE
     sc_pw.stress_gga(sigmaxc, rhopw, chr);
-
-    return;
 }
 
 #include "module_base/mathzone.h"
@@ -930,8 +924,7 @@ void Force_Stress_LCAO<T>::forceSymmetry(ModuleBase::matrix& fcs, ModuleSymmetry
         fcs(iat, 1) = d2;
         fcs(iat, 2) = d3;
     }
-    return;
-}
+    }
 
 template class Force_Stress_LCAO<double>;
 template class Force_Stress_LCAO<std::complex<double>>;

@@ -61,9 +61,9 @@ class csrFileReader : public FileReader
   private:
     std::vector<std::vector<int>> RCoordinates;
     std::vector<SparseMatrix<T>> sparse_matrices;
-    int step;
-    int matrixDimension;
-    int numberOfR;
+    int step{};
+    int matrixDimension{};
+    int numberOfR{};
 };
 
 } // namespace ModuleIO

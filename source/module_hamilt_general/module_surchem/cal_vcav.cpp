@@ -26,7 +26,6 @@ void lapl_rho(const std::complex<double>* rhog, double* lapn, const ModulePW::PW
 
     delete[] gdrtmpg;
     delete[] aux;
-    return;
 }
 
 // calculates first derivative of the shape function in realspace

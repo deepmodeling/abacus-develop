@@ -183,4 +183,4 @@ void write_psi_r_1(const psi::Psi<std::complex<double>>& wfc_g,
 #endif
 		ModuleBase::timer::tick("ModuleIO", "write_chg_r_1");
 	}
-};
+}  // namespace ModuleIO;

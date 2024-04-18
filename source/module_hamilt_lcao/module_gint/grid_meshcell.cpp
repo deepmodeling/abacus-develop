@@ -67,13 +67,12 @@ void Grid_MeshCell::set_grid_dim(
 		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"meshcell numbers in big cell",bx,by,bz); // is small integer, typical number 2*2*2
 	}
 
-    return;
-}
+    }
 
 
 
 // (1)
-void Grid_MeshCell::init_latvec(void)
+void Grid_MeshCell::init_latvec()
 {
 	ModuleBase::TITLE("Grid_MeshCell","init_latvec");
 	// initialize the mesh cell vectors.
@@ -138,10 +137,9 @@ void Grid_MeshCell::init_latvec(void)
 			<< ")" << std::endl;
 	}
 	
-	return;
-}
+	}
 
-void Grid_MeshCell::init_meshcell_pos(void)
+void Grid_MeshCell::init_meshcell_pos()
 {
 	assert(bx>0);
 	assert(by>0);
@@ -173,8 +171,6 @@ void Grid_MeshCell::init_meshcell_pos(void)
 		}
 	}
 	allocate_pos = true;
-
-	return;
 }
 
 void Grid_MeshCell::cal_extended_cell(const int &dxe, const int &dye, const int &dze)
@@ -237,5 +233,4 @@ void Grid_MeshCell::cal_extended_cell(const int &dxe, const int &dye, const int 
 		}
 	}
 
-	return;
-}
+	}

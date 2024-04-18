@@ -32,19 +32,18 @@ void Symmetry_rho::begin(const int& spin_now,
 		psymmg(CHR.rhog[spin_now], rho_basis, Pgrid, symm);	//need to modify
 		rho_basis->recip2real(CHR.rhog[spin_now], CHR.rho[spin_now]);
 
-		if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) 
+		if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
 		{
 			std::complex<double>* kin_g = new std::complex<double>[CHR.ngmc];
 			rho_basis->real2recip(CHR.kin_r[spin_now], kin_g);
 			psymmg(kin_g,  rho_basis,Pgrid,symm);
 			rho_basis->recip2real(kin_g, CHR.kin_r[spin_now]);
 			delete[] kin_g;
-		}	
+		}
 	}
-	return;
-}
+	}
 
-void Symmetry_rho::psymm(double* rho_part, const ModulePW::PW_Basis *rho_basis, Parallel_Grid &Pgrid, ModuleSymmetry::Symmetry &symm) const
+void Symmetry_rho::psymm(double* rho_part, const ModulePW::PW_Basis *rho_basis, Parallel_Grid &Pgrid, ModuleSymmetry::Symmetry &symm)
 {
 #ifdef __MPI
 	// (1) reduce all rho from the first pool.
@@ -108,5 +107,4 @@ void Symmetry_rho::psymm(double* rho_part, const ModulePW::PW_Basis *rho_basis, 
 	if(GlobalV::MY_RANK==0)		delete[] rhotot;
 	delete[] zpiece;
 #endif
-	return;
 }

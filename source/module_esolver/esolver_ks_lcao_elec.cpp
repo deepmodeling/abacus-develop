@@ -80,7 +80,6 @@ void ESolver_KS_LCAO<TK, TR>::set_matrix_grid(Record_adj& ra)
     }
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "set_matrix_grid");
-    return;
 }
 
 template <typename TK, typename TR>
@@ -347,7 +346,6 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(int istep)
     this->p_hamilt->non_first_scf = istep;
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "before_scf");
-    return;
 }
 
 template <typename TK, typename TR>
@@ -384,7 +382,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                              GlobalC::ucell,
                              GlobalV::SEARCH_RADIUS,
                              GlobalV::test_atom_input,
-                             1);
+                             true);
         return;
     }
 
@@ -455,12 +453,11 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
     }
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "others");
-    return;
 }
 
 
 template <>
-void ESolver_KS_LCAO<double, double>::get_S(void)
+void ESolver_KS_LCAO<double, double>::get_S()
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "get_S");
     ModuleBase::WARNING_QUIT("ESolver_KS_LCAO<double,double>::get_S", "not implemented for");
@@ -468,7 +465,7 @@ void ESolver_KS_LCAO<double, double>::get_S(void)
 
 
 template <>
-void ESolver_KS_LCAO<std::complex<double>, double>::get_S(void)
+void ESolver_KS_LCAO<std::complex<double>, double>::get_S()
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "get_S");
     // (1) Find adjacent atoms for each atom.
@@ -496,13 +493,11 @@ void ESolver_KS_LCAO<std::complex<double>, double>::get_S(void)
     }
 
     ModuleIO::output_SR(orb_con.ParaV, this->LM, GlobalC::GridD, this->p_hamilt, "SR.csr");
-
-    return;
 }
 
 
 template <>
-void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S(void)
+void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S()
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "get_S");
     // (1) Find adjacent atoms for each atom.
@@ -530,19 +525,17 @@ void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S(void)
     }
 
     ModuleIO::output_SR(orb_con.ParaV, this->LM, GlobalC::GridD, this->p_hamilt, "SR.csr");
-
-    return;
 }
 
 
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::nscf(void)
+void ESolver_KS_LCAO<TK, TR>::nscf()
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "nscf");
 
     std::cout << " NON-SELF CONSISTENT CALCULATIONS" << std::endl;
 
-    time_t time_start = std::time(NULL);
+    time_t time_start = std::time(nullptr);
 
 #ifdef __EXX
 #ifdef __MPI
@@ -584,7 +577,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf(void)
         ModuleBase::WARNING_QUIT("ESolver_KS_PW", "HSolver has not been initialed!");
     }
 
-    time_t time_finish = std::time(NULL);
+    time_t time_finish = std::time(nullptr);
     ModuleBase::GlobalFunc::OUT_TIME("cal_bands", time_start, time_finish);
 
     GlobalV::ofs_running << " end of band structure calculation " << std::endl;
@@ -693,8 +686,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf(void)
         GlobalC::ld.cal_gedm(GlobalC::ucell.nat);
     }
 #endif
-    return;
-}
+    }
 
 template class ESolver_KS_LCAO<double, double>;
 template class ESolver_KS_LCAO<std::complex<double>, double>;

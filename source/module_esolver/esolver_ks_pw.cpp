@@ -126,10 +126,10 @@ void ESolver_KS_PW<T, Device>::Init_GlobalC(Input& inp, UnitCell& cell)
     // to organize information stored in classes above, please feel free to discuss with
     // issue or pull request.
 
-    if (this->psi != nullptr)
-    {
+    
+    
         delete this->psi;
-    }
+    
 
     // allocate memory for std::complex<double> datatype psi
     // New psi initializer in ABACUS, Developer's note:
@@ -579,7 +579,6 @@ void ESolver_KS_PW<T, Device>::others(const int istep)
     }
 
     ModuleBase::timer::tick("ESolver_KS_PW", "others");
-    return;
 }
 
 template <typename T, typename Device>
@@ -681,7 +680,7 @@ void ESolver_KS_PW<T, Device>::allocate_psi_init()
 //! Although ESolver_KS_PW supports template, but in this function it has no relationship with
 //! heterogeneous calculation, so all templates function are specialized to double
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::initialize_psi(void)
+void ESolver_KS_PW<T, Device>::initialize_psi()
 {
     ModuleBase::timer::tick("ESolver_KS_PW", "initialize_psi");
     if (GlobalV::psi_initializer)
@@ -737,7 +736,7 @@ void ESolver_KS_PW<T, Device>::initialize_psi(void)
 						);
                     continue;
                 }
-				else if ((GlobalV::KS_SOLVER == "lapack") 
+				if ((GlobalV::KS_SOLVER == "lapack") 
 						&& (GlobalV::BASIS_TYPE == "lcao_in_pw"))
 				{
 					if(ik == 0) 
@@ -799,7 +798,7 @@ void ESolver_KS_PW<T, Device>::hamilt2density(
         // choose if psi should be diag in subspace
         // be careful that istep start from 0 and iter start from 1
         // if (iter == 1)
-        hsolver::DiagoIterAssist<T, Device>::need_subspace = ((istep == 0 || istep == 1) && iter == 1)? false : true;
+        hsolver::DiagoIterAssist<T, Device>::need_subspace = !((istep == 0 || istep == 1) && iter == 1);
         hsolver::DiagoIterAssist<T, Device>::SCF_ITER = iter;
         hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR = ethr;
         hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
@@ -1196,7 +1195,7 @@ void ESolver_KS_PW<T, Device>::cal_stress(ModuleBase::matrix& stress)
 
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::post_process(void)
+void ESolver_KS_PW<T, Device>::post_process()
 {
 
     GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
@@ -1401,7 +1400,7 @@ void ESolver_KS_PW<T, Device>::hamilt2estates(const double ethr)
 }
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::nscf(void)
+void ESolver_KS_PW<T, Device>::nscf()
 {
     ModuleBase::TITLE("ESolver_KS_PW", "nscf");
     ModuleBase::timer::tick("ESolver_KS_PW", "nscf");
@@ -1523,7 +1522,6 @@ void ESolver_KS_PW<T, Device>::nscf(void)
 	}
 
     ModuleBase::timer::tick("ESolver_KS_PW", "nscf");
-    return;
 }
 
 template class ESolver_KS_PW<std::complex<float>, psi::DEVICE_CPU>;

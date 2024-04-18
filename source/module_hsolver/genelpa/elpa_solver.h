@@ -35,8 +35,8 @@ class ELPA_Solver
     void setKernel(bool isReal, int Kernel);
     void setQR(int useQR);
     void outputParameters();
-    void verify(double* A, double* EigenValue, double* EigenVector, double& maxRemain, double& meanRemain);
-    void verify(double* A, double* B, double* EigenValue, double* EigenVector, double& maxRemain, double& meanRemain);
+    void verify(double* A, const double* EigenValue, double* EigenVector, double& maxError, double& meanError);
+    void verify(double* A, double* B, const double* EigenValue, double* EigenVector, double& maxError, double& meanError);
     void verify(std::complex<double>* A,
                 double* EigenValue,
                 std::complex<double>* EigenVector,
@@ -58,32 +58,32 @@ class ELPA_Solver
     int nev;
     int narows;
     int nacols;
-    int desc[9];
-    int method;
+    int desc[9]{};
+    int method{};
     int kernel_id;
     int cblacs_ctxt;
     int nblk;
     int lda;
     std::vector<double> dwork;
     std::vector<std::complex<double>> zwork;
-    int myid;
-    int nprows;
-    int npcols;
-    int myprow;
-    int mypcol;
-    int useQR;
-    int wantDebug;
-    int loglevel;
+    int myid{};
+    int nprows{};
+    int npcols{};
+    int myprow{};
+    int mypcol{};
+    int useQR{};
+    int wantDebug{};
+    int loglevel{};
     std::ofstream logfile;
     // for legacy interface
-    int comm_f;
-    int mpi_comm_rows;
-    int mpi_comm_cols;
+    int comm_f{};
+    int mpi_comm_rows{};
+    int mpi_comm_cols{};
     // for new elpa handle
     int handle_id;
 
     // toolbox
-    int read_cpuflag();
+    static int read_cpuflag();
     int read_real_kernel();
     int read_complex_kernel();
     int allocate_work();

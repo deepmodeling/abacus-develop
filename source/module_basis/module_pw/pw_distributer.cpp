@@ -30,7 +30,6 @@ void PW_Basis::distribute_r()
         }
     }
     this->nrxx = this->numz[this->poolrank] * this->nxy;
-    return;
 }
 
-}
+}  // namespace ModulePW

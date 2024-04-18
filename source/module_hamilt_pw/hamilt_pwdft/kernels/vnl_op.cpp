@@ -1,5 +1,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/kernels/vnl_op.h"
 
+#include <cmath>
+
 namespace hamilt {
 
 template <typename FPTYPE>
@@ -76,7 +78,7 @@ struct cal_vnl_op<FPTYPE, psi::DEVICE_CPU> {
                 #pragma omp for
 #endif
                 for (int ig = 0; ig < npw; ig++) {
-                    const FPTYPE gnorm = sqrt(gk[ig * 3 + 0] * gk[ig * 3 + 0] + gk[ig * 3 + 1] * gk[ig * 3 + 1] +
+                    const FPTYPE gnorm = std::sqrt(gk[ig * 3 + 0] * gk[ig * 3 + 0] + gk[ig * 3 + 1] * gk[ig * 3 + 1] +
                                               gk[ig * 3 + 2] * gk[ig * 3 + 2]) * tpiba;
 
                     vq = _polynomial_interpolation(

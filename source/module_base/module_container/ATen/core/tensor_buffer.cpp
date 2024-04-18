@@ -45,9 +45,9 @@ TensorBuffer::~TensorBuffer() {
     if (this->OwnsMemory() && data_ != nullptr) {
         alloc_->free(data_);
     }
-    if (alloc_ != nullptr) {
+    
         delete alloc_;
-    }
+    
 }
 
 // Get the raw data pointer.

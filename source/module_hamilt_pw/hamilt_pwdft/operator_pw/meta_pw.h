@@ -26,7 +26,7 @@ class Meta<OperatorPW<T, Device>> : public OperatorPW<T, Device>
   private:
     using Real = typename GetTypeReal<T>::type;
     public:
-      Meta(Real tpiba2_in,
+      Meta(Real tpiba_in,
            const int* isk_in,
            const Real* vk_in,
            const int vk_row,

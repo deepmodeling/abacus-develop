@@ -32,10 +32,10 @@ void Sto_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
     sto_stress_kin(sigmakin, wg, p_symm, p_kv, wfc_basis, psi_in, stowf);
 
     // hartree contribution
-    stress_har(sigmahar, rho_basis, 1, chr);
+    stress_har(sigmahar, rho_basis, true, chr);
 
     // ewald contribution
-    stress_ewa(sigmaewa, rho_basis, 1);
+    stress_ewa(sigmaewa, rho_basis, true);
 
     // xc contribution: add gradient corrections(non diagonal)
     for (int i = 0; i < 3; ++i)
@@ -45,10 +45,10 @@ void Sto_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
     stress_gga(sigmaxc, rho_basis, chr);
 
     // local contribution
-    stress_loc(sigmaloc, rho_basis, p_sf, 1, chr);
+    stress_loc(sigmaloc, rho_basis, p_sf, true, chr);
 
     // nlcc
-    stress_cc(sigmaxcc, rho_basis, p_sf, 1, chr);
+    stress_cc(sigmaxcc, rho_basis, p_sf, true, chr);
 
     // nonlocal
     sto_stress_nl(sigmanl, wg, p_sf, p_symm, p_kv, wfc_basis, psi_in, stowf);
@@ -86,7 +86,6 @@ void Sto_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
         ModuleIO::print_stress("TOTAL    STRESS", sigmatot, GlobalV::TEST_STRESS, ry);
     }
     ModuleBase::timer::tick("Sto_Stress_PW", "cal_stress");
-    return;
 }
 
 void Sto_Stress_PW::sto_stress_kin(ModuleBase::matrix& sigma,
@@ -204,8 +203,6 @@ void Sto_Stress_PW::sto_stress_kin(ModuleBase::matrix& sigma,
     delete[] gk;
     delete[] kfac;
     ModuleBase::timer::tick("Sto_Stress_PW", "cal_stress");
-
-    return;
 }
 
 void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma,
@@ -466,5 +463,4 @@ void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma,
 
     //  this->print(ofs_running, "nonlocal stress", stresnl);
     ModuleBase::timer::tick("Sto_Stress_Func", "stres_nl");
-    return;
 }

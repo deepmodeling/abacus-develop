@@ -111,11 +111,9 @@ void Parallel_Grid::init(
 
 	this->allocate = true;
 	this->z_distribution();
-	
-	return;
 }
 
-void Parallel_Grid::z_distribution(void)
+void Parallel_Grid::z_distribution()
 {
 	assert(allocate);	
 
@@ -162,7 +160,7 @@ void Parallel_Grid::z_distribution(void)
 					whichpro[ip][iz] = startp[ip] + nproc-1;
 					break;
 				}
-				else if(iz>=startz[ip][proc] && iz<startz[ip][proc+1])
+				if(iz>=startz[ip][proc] && iz<startz[ip][proc+1])
 				{
 					whichpro[ip][iz] = startp[ip] + proc;
 					break;
@@ -177,7 +175,6 @@ void Parallel_Grid::z_distribution(void)
 	}
 
 	delete[] startp;
-	return;
 }
 
 
@@ -251,8 +248,7 @@ void Parallel_Grid::zpiece_to_all(double *zpiece, const int &iz, double *rho)
 	}
 
 	//GlobalV::ofs_running << "\n iz = " << iz << " Done.";
-	return;	
-}
+	}
 #endif
 
 #ifdef __MPI
@@ -320,10 +316,9 @@ void Parallel_Grid::zpiece_to_stogroup(double *zpiece, const int &iz, double *rh
 	}
 
 	//ofs_running << "\n iz = " << iz << " Done.";
-	return;	
-
+	
 }
-void Parallel_Grid::reduce_to_fullrho(double *rhotot, double *rhoin)
+void Parallel_Grid::reduce_to_fullrho(double *rhotot, const double *rhoin)
 {
 	//ModuleBase::TITLE("Parallel_Grid","reduce_to_fullrho");
 
@@ -388,8 +383,6 @@ void Parallel_Grid::reduce_to_fullrho(double *rhotot, double *rhoin)
 	delete[] zpiece;	
 
 	MPI_Barrier(MPI_COMM_WORLD);
-
-	return;
 }
 #endif
 
@@ -453,6 +446,4 @@ const int &nrxx_in, const int &nbz_in, const int &bz_in)
 
 	this->allocate_final_scf = true;
 	this->z_distribution();
-	
-	return;
 }

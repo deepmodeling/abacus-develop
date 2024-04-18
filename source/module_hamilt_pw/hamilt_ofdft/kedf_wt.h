@@ -46,10 +46,10 @@ class KEDF_WT
     ModuleBase::matrix stress;
 
   private:
-    double wt_kernel(double eta, double tf_weight, double vw_weight);
-    double diff_linhard(double eta, double vw_weight);
+    static double wt_kernel(double eta, double tf_weight, double vw_weight);
+    static double diff_linhard(double eta, double vw_weight);
     void multi_kernel(const double* const* prho, double** rkernel_rho, double exponent, ModulePW::PW_Basis* pw_rho);
-    void read_kernel(std::string file_name, ModulePW::PW_Basis* pw_rho);
+    void read_kernel(const std::string& file_name, ModulePW::PW_Basis* pw_rho);
     void fill_kernel(double tf_weight, double vw_weight, ModulePW::PW_Basis* pw_rho);
 
     double dV_ = 0.;

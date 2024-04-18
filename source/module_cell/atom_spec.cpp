@@ -49,7 +49,7 @@ Atom::~Atom()
 
 }
 
-void Atom::set_index(void)
+void Atom::set_index()
 {
     assert(nw!=0);
     delete[] iw2l;
@@ -87,8 +87,7 @@ void Atom::set_index(void)
             }
         }
     }
-    return;
-}
+    }
 
 void Atom::print_Atom(std::ofstream &ofs)
 {
@@ -113,13 +112,11 @@ void Atom::print_Atom(std::ofstream &ofs)
     }
     */
     ofs << std::endl;
-
-    return;
 }
 
 #include "module_base/parallel_common.h"
 #ifdef __MPI
-void Atom::bcast_atom(void)
+void Atom::bcast_atom()
 {
     if (GlobalV::test_atom) ModuleBase::TITLE("Atom","bcast_atom");
 
@@ -188,8 +185,7 @@ void Atom::bcast_atom(void)
 		Parallel_Common::bcast_int( mbl[i].z );
     }
 
-    return;
-}
+    }
 
 void Atom::bcast_atom2()
 {

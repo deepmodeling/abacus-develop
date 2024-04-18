@@ -48,7 +48,7 @@ double Cal_Test::mtot=0.0;
 void Cal_Test::test_memory(
 		const ModulePW::PW_Basis* rhopw, 
 		const ModulePW::PW_Basis_K* wfcpw, 
-		const std::string chr_mixing_mode, 
+		const std::string& chr_mixing_mode, 
 		const int chr_mixing_ndim)
 {
 	ModuleBase::TITLE("Cal_Test","test_memory");
@@ -124,16 +124,6 @@ void Cal_Test::test_memory(
 		<< mwf << " MB" << std::endl;
 
 	print_mem(1);
-//	print_mem(8);
-//	print_mem(16);
-
-//	if(GlobalC::ucell.nat > 200)
-//	{
-//		print_mem(32);
-//		print_mem(64);
-//	}
-
-	return;
 }
 
 //! compute the number of plane waves

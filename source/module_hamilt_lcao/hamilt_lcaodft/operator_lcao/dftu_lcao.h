@@ -83,7 +83,7 @@ class DFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                 const Parallel_Orbitals* paraV,
                 const std::unordered_map<int, std::vector<double>>& nlm1_all,
                 const std::unordered_map<int, std::vector<double>>& nlm2_all,
-                const double* data_pointer,
+                const double* dm_pointer,
                 std::vector<double>& occupations);
 
     /// transfer VU format from pauli matrix to normal for non-collinear spin case

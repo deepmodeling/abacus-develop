@@ -144,7 +144,7 @@ static BCast prepare_bcast(
             // equal to the current non-one state.
             continue;
         }
-        else if (x_current_is_one == x_prev_is_one && y_current_is_one == y_prev_is_one && set_one) {
+        if (x_current_is_one == x_prev_is_one && y_current_is_one == y_prev_is_one && set_one) {
             // fewer_dims_optimization
             // If the previous state is the same as the current state, we can skip
             // broadcasting / reshaping. This is because we can ignore dimensions of
@@ -399,7 +399,7 @@ static EinsumDimensionType GetDimensionType(bool is_removed, bool is_unique)
 {
     if (!is_removed && !is_unique)
         return kBatch;
-    else if (!is_removed && is_unique)
+    if (!is_removed && is_unique)
         return kFree;
     else if (is_removed && !is_unique)
         return kContract;
@@ -463,7 +463,7 @@ bool ValidateEinsumEquation(
     if (delimiter_pos == std::string::npos) {
         throw std::invalid_argument("No '->' in einsum equation: " + equation_no_space);
     }
-    else if (equation_no_space.find("->", delimiter_pos + 1) != std::string::npos) {
+    if (equation_no_space.find("->", delimiter_pos + 1) != std::string::npos) {
         throw std::invalid_argument("Expecting exactly one '->' in einsum equation: " + equation_no_space);
     }
     inputs_and_output_subscripts.push_back(equation_no_space.substr(0, delimiter_pos));
@@ -830,10 +830,12 @@ static void DoContract(
     else {
         std::vector<T*> x_device_memory = {};
         std::vector<T*> y_device_memory = {};
-        for (int ii = 0; ii < bcast.x_batch_size; ii++) {
+        x_device_memory.reserve(bcast.x_batch_size);
+for (int ii = 0; ii < bcast.x_batch_size; ii++) {
             x_device_memory.push_back(x_base_ptr + ii * m * k);
         }
-        for (int ii = 0; ii < bcast.y_batch_size; ii++) {
+        y_device_memory.reserve(bcast.y_batch_size);
+for (int ii = 0; ii < bcast.y_batch_size; ii++) {
             y_device_memory.push_back(y_base_ptr + ii * k * n);
         }
         for (int ii = 0; ii < bcast.z_batch_size; ii++) {
@@ -849,13 +851,13 @@ static void DoContract(
     // C' = B' x A', where ' stands for transpose (not adjoint).
     if (batch_size == 1) {
         // Dot product
-        if (m == 1 && n == 1 && option.conj_x != true && option.conj_y != true) {
+        if (m == 1 && n == 1 && !option.conj_x && !option.conj_y) {
             // Dot product
-            // TODO: implement the Conjugate version of Dot product.
+            // TODO(root): implement the Conjugate version of Dot product.
             kernels::blas_dot<T, Device>()(k, x_device_memory_ptrs[0], 1, y_device_memory_ptrs[0], 1, z_device_memory_ptrs[0]);
         }
         // Gemv
-        else if (n == 1 && option.conj_x != true) {
+        else if (n == 1 && !option.conj_x) {
             // This is a matrix*vector multiply so use GEMV to compute A * x.
             // Here we are multiplying in the natural order, so we have to flip
             // the transposition flag to compensate for the tensor being stored
@@ -886,7 +888,7 @@ static void DoContract(
         }
         return;
     }
-    else if (use_strided_batched) {
+    if (use_strided_batched) {
         kernels::blas_gemm_batched_strided<T, Device>()(
             option.conj_y ? 'C' : trans_y ? 'T' : 'N', 
             option.conj_x ? 'C' : trans_x ? 'T' : 'N', 
@@ -926,7 +928,7 @@ bool ContractOperands(
     }
     BCast bcast = prepare_bcast(inputs[0].shape().dims(), inputs[1].shape().dims());
 
-    if (bcast.valid == false) {
+    if (!bcast.valid) {
         throw std::invalid_argument("Invalid broadcast shape");
     }
     Tensor lhs, rhs;
@@ -996,7 +998,7 @@ void ProcessOutput(
     }
 
     // If the output is a zero dimensional scalar, use a 1 dimention vector instead.
-    // TODO: Use a scalar constructor in Tensor Object.
+    // TODO(root): Use a scalar constructor in Tensor Object.
     if (result_shape.ndim() == 0 && input.NumElements() == 1) {
         result_shape.add_dim(1);
     }
@@ -1044,5 +1046,5 @@ void ProcessOutput(
     TransposeOperand(output_inflated, output_permutation, output);
 }
 
-}   // namespace utils
+}  // namespace einsum_utils
 }   // namespace container

@@ -39,7 +39,7 @@ class ESolver_KS : public ESolver_FP
 
 		int niter;        // iter steps actually used in scf
 
-		bool conv_elec;   // If electron density is converged in scf.
+		bool conv_elec{};   // If electron density is converged in scf.
 
 		int out_freq_elec;// frequency for output
 

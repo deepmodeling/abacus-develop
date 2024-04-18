@@ -29,9 +29,9 @@ namespace hsolver
     bool isReal=false;
     const MPI_Comm COMM_DIAG=MPI_COMM_WORLD; // use all processes
     ELPA_Solver es((const bool)isReal, COMM_DIAG, (const int)GlobalV::NBANDS, (const int)h_mat.row, (const int)h_mat.col, (const int*)h_mat.desc);
-    this->DecomposedState=0; // for k pointer, the decomposed s_mat can not be reused
+    hsolver::DiagoElpa<std::complex<double>>::DecomposedState=0; // for k pointer, the decomposed s_mat can not be reused
     ModuleBase::timer::tick("DiagoElpa", "elpa_solve");
-    es.generalized_eigenvector(h_mat.p, s_mat.p, this->DecomposedState, eigen.data(), psi.get_pointer());
+    es.generalized_eigenvector(h_mat.p, s_mat.p, hsolver::DiagoElpa<std::complex<double>>::DecomposedState, eigen.data(), psi.get_pointer());
     ModuleBase::timer::tick("DiagoElpa", "elpa_solve");
     es.exit();
 
@@ -57,7 +57,7 @@ namespace hsolver
     //ELPA_Solver es(isReal, COMM_DIAG, GlobalV::NBANDS, h_mat.row, h_mat.col, h_mat.desc);
     ELPA_Solver es((const bool)isReal, COMM_DIAG, (const int)GlobalV::NBANDS, (const int)h_mat.row, (const int)h_mat.col, (const int*)h_mat.desc);
     ModuleBase::timer::tick("DiagoElpa", "elpa_solve");
-    es.generalized_eigenvector(h_mat.p, s_mat.p, this->DecomposedState, eigen.data(), psi.get_pointer());
+    es.generalized_eigenvector(h_mat.p, s_mat.p, hsolver::DiagoElpa<double>::DecomposedState, eigen.data(), psi.get_pointer());
     ModuleBase::timer::tick("DiagoElpa", "elpa_solve");
     es.exit();
 

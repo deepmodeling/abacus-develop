@@ -49,7 +49,7 @@ class Gint_Gamma : public Gint
 
 private:
 
-    double*** DM;   //pointer to LOC.DM
+    double*** DM{};   //pointer to LOC.DM
 
     ///------------------------------------------------------
     /// in gint_gamma_vl.cpp 
@@ -62,7 +62,7 @@ private:
         const int loc_grid_dim,
         const bool new_e_iteration,
         double* vl_2d,
-        std::function<void(const int&, const int&, const double&, double*)> setfunc);
+        const std::function<void(const int&, const int&, const double&, double*)>& setfunc);
 
     ///===============================
     /// Use MPI_Alltoallv to convert a grid distributed matrix

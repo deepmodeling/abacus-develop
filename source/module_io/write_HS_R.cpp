@@ -18,7 +18,7 @@ void ModuleIO::output_HSR(const int& istep,
                            hamilt::Hamilt<std::complex<double>>* p_ham,
                            const std::string& SR_filename,
                            const std::string& HR_filename_up,
-                           const std::string HR_filename_down,
+                           const std::string& HR_filename_down,
                            const bool& binary,
                            const double& sparse_thr)
 {
@@ -94,7 +94,6 @@ void ModuleIO::output_HSR(const int& istep,
 	lm.destroy_HS_R_sparse();
 
     ModuleBase::timer::tick("ModuleIO","output_HSR"); 
-    return;
 }
 
 
@@ -175,7 +174,6 @@ void ModuleIO::output_dHR(const int &istep,
     gint_k.destroy_pvdpR();
 
     ModuleBase::timer::tick("ModuleIO","output_dHR"); 
-    return;
 }
 
 void ModuleIO::output_SR(
@@ -215,7 +213,6 @@ void ModuleIO::output_SR(
     lm.destroy_HS_R_sparse();
 
     ModuleBase::timer::tick("ModuleIO","output_SR");
-    return;
 }
 
 void ModuleIO::output_TR(
@@ -256,7 +253,7 @@ void ModuleIO::output_TR(
 			lm.all_R_coor,
 			sparse_thr, 
 			binary, 
-		    sst.str().c_str(),
+		    sst.str(),
 			*(lm.ParaV), 
 			"T", 
 			istep
@@ -265,5 +262,4 @@ void ModuleIO::output_TR(
     lm.destroy_T_R_sparse();
 
     ModuleBase::timer::tick("ModuleIO","output_TR");
-    return;
 }

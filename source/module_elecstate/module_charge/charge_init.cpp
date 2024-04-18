@@ -89,7 +89,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout, const ModuleBase::ComplexMa
                             read_error = true;
                             break;
                         }
-                        else if (is == 2)
+                        if (is == 2)
                         {
                             GlobalV::ofs_running << " Didn't read in the charge density but would rearrange it later. "
                                                  << std::endl;
@@ -301,7 +301,6 @@ void Charge::set_rho_core(
     delete [] rhocg;
     delete [] vg;
     ModuleBase::timer::tick("Charge","set_rho_core");
-    return;
 } // end subroutine set_rhoc
 
 void Charge::set_rho_core_paw()
@@ -391,6 +390,4 @@ void Charge::non_linear_core_correction
 	// it is called in parallel block in Forces::cal_force_cc,
 	// but not in other funtcion such as Stress_Func::stress_cc.
 	ModuleBase::TRY_OMP_PARALLEL(kernel);
-
-    return;
 }

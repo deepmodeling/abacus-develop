@@ -113,7 +113,7 @@ void Local_Orbital_wfc::allocate_k(const int& lgd,
 
 	// mohan add the flag 2011-03-02
 	// allocate the first part (only once!).
-	if(this->wfck_flag == false)
+	if(!this->wfck_flag)
 	{
 		this->wfc_k_grid = new std::complex<double>**[nks];
 		for(int ik=0; ik<nks; ik++)
@@ -201,8 +201,7 @@ void Local_Orbital_wfc::allocate_k(const int& lgd,
 		ModuleBase::WARNING_QUIT("Local_Orbital_wfc","check the parameter: init_wfc");
 	}
 
-	return;
-}
+	}
 
 
 int Local_Orbital_wfc::globalIndex(int localindex, int nblk, int nprocs, int myproc)

@@ -32,7 +32,7 @@ double Assoc_Laguerre::laguerre(const int &n, const double x)
     {
         return 1;
     }
-    else if(n == 1)
+    if(n == 1)
     {
         return -x + 1;
     }
@@ -67,7 +67,7 @@ double Assoc_Laguerre::associate_laguerre(const int &n, const double x, const in
     {
         return 1;
     }
-    else if(n == 1)
+    if(n == 1)
     {
         return -x + 1 + a_;
     }
@@ -98,7 +98,7 @@ int Assoc_Laguerre::factorial(const int &n)
     {
         return 1;
     }
-    else if(n > 0)
+    if(n > 0)
     {
         return n * this->factorial(n-1);
     }

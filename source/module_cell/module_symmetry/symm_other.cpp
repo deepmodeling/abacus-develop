@@ -104,8 +104,7 @@ void Symm_Other::print1(const int &ibrav, const double *cel_const, std::ofstream
 	{
 		ModuleBase::WARNING_QUIT("Symm_Other::print1","ibrav is wrong.");
 	}
-	return;
-}
+	}
 
 bool Symm_Other::right_hand_sense(ModuleBase::Vector3<double> &v1,ModuleBase::Vector3<double> &v2,ModuleBase::Vector3<double> &v3)
 {
@@ -128,5 +127,5 @@ const ModuleBase::Vector3<double> &b, const ModuleBase::Vector3<double> &c)
 	return a.x * ( b.y * c.z - b.z * c.y ) + a.y * ( b.z * c.x - b.x * c.z ) 
 	+ a.z * ( b.x * c.y - b.y * c.x );
 }
-}
+}  // namespace ModuleSymmetry
 

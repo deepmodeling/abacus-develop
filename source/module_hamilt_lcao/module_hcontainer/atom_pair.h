@@ -57,7 +57,7 @@ class AtomPair
              const int& ry,                   // y coordinate of cell
              const int& rz,                   // z coordinate of cell
              const Parallel_Orbitals* paraV_, // information for 2d-block parallel
-             T* existed_array
+             T* existed_matrix
              = nullptr // if nullptr, new memory will be allocated, otherwise this class is a data wrapper
     );
     // This constructor used for initialize a atom-pair local Hamiltonian with only center cell
@@ -96,7 +96,7 @@ class AtomPair
     /**
      * @brief allocate memory for all the BaseMatrix
     */
-    void allocate(T* data_array = nullptr, bool if_zero = false);
+    void allocate(T* data_array = nullptr, bool is_zero = false);
 
     /**
      * @brief set values in every BaseMatrix to zero

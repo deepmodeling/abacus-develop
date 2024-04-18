@@ -15,8 +15,8 @@ class WF_atomic
 
     WF_atomic();
     ~WF_atomic();
-    int npwx;
-    int npw;
+    int npwx{};
+    int npw{};
     // ModuleBase::IntArray igk;
 #ifdef __CUDA
     double *d_g2kin;
@@ -31,7 +31,7 @@ class WF_atomic
 
     void init_at_1(Structure_Factor *sf_in); // from init_at_1.f90
 
-    void print_PAOs(void)const;
+    static void print_PAOs(void);
 
     public: //template change to public, will be refactor later. added by zhengdy 20230302
     int *irindex = nullptr;
@@ -78,7 +78,7 @@ class WF_atomic
     void stick_to_pool(float* stick, const int& ir, float* out, const ModulePW::PW_Basis_K* wfc_basis) const;
 #endif
   private:
-    Structure_Factor *psf;
+    Structure_Factor *psf{};
 };
 
 #endif 

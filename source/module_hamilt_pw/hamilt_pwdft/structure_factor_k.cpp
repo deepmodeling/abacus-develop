@@ -141,7 +141,7 @@ std::complex<double>* Structure_Factor::get_skq(int ik,
                                                 const int it,
                                                 const int ia,
                                                 const ModulePW::PW_Basis_K* wfc_basis,
-                                                ModuleBase::Vector3<double> q) // pengfei 2016-11-23
+                                                const ModuleBase::Vector3<double>& q) // pengfei 2016-11-23
 {
     const int npw = wfc_basis->npwk[ik];
     std::complex<double> *skq = new std::complex<double>[npw];

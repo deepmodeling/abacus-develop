@@ -1,13 +1,15 @@
-#include <math.h>
-#include <cassert>
 #include "ORB_gaunt_table.h"
-#include "module_base/timer.h"
-#include "module_base/memory.h"
-#include "module_base/mathzone.h"
-#include "module_base/global_function.h"
-#include "module_base/vector3.h"
+
 #include "module_base/constants.h"
+#include "module_base/global_function.h"
 #include "module_base/math_ylmreal.h"
+#include "module_base/mathzone.h"
+#include "module_base/memory.h"
+#include "module_base/timer.h"
+#include "module_base/vector3.h"
+
+#include <cassert>
+#include <cmath>
 
 ORB_gaunt_table::ORB_gaunt_table(){}
 ORB_gaunt_table::~ORB_gaunt_table(){}
@@ -29,17 +31,17 @@ void ORB_gaunt_table::init_Gaunt(const int &lmax)
 		// m order is ( 0,0,1,-1,0,1,-1,2,-2...)
         for (int m = 0; m < 2*L + 1 ; m++)
         {
-            const int dim = this->get_lm_index(L,m);
+            const int dim = ORB_gaunt_table::get_lm_index(L,m);
             for (int L1 = 0; L1 < lmax + 1; L1++)
             {
                 for (int m1 = 0; m1 < 2*L1+1 ; m1++)
                 {
-                    const int dim1 = this->get_lm_index(L1,m1);
+                    const int dim1 = ORB_gaunt_table::get_lm_index(L1,m1);
                     for (int L2 = 0; L2 < lmax + 1; L2++)
                     {
                         for (int m2 = 0; m2 < 2*L2+1 ; m2++)
                         {
-                            const int dim2 = this->get_lm_index(L2,m2);
+                            const int dim2 = ORB_gaunt_table::get_lm_index(L2,m2);
                             /////////////////////
                             ///call Calculate::Cal_G
                             ////////////////////
@@ -54,7 +56,6 @@ void ORB_gaunt_table::init_Gaunt(const int &lmax)
     }// L
 
     ModuleBase::timer::tick("ORB_gaunt_table", "init_Gaunt");
-    return;
 }
 
 /*
@@ -176,7 +177,7 @@ int ORB_gaunt_table::get_lm_index(
 int ORB_gaunt_table::EP_EL(const int& L)
 {
 	if(L % 2 == 0) return (L+2) * (L+4) * (3*L*L+14*L+24) / 192;
-	else return (L+1) * (L+3) * (L+5) * (3*L+5) / 192;
+	return (L+1) * (L+3) * (L+5) * (3*L+5) / 192;
 }
 
 
@@ -254,7 +255,6 @@ void ORB_gaunt_table::init_Gaunt_CH(const int& Lmax)
 	} // l1
 
 	ModuleBase::timer::tick("ORB_gaunt_table","init_Gaunt_CH");
-	return;
 }
 
 
@@ -388,7 +388,7 @@ double ORB_gaunt_table::Get_Gaunt_SH
 		{
 			if(m1 == m2 + m3) return pow(-1.0, m1) * sqrt(2.0) / 2.0 
 											* Get_Gaunt_CH(l1, -m1, l2, m2, l3, m3);
-			else if(m2 == m1 + m3) return pow(-1.0, m2) * sqrt(2.0) / 2.0
+			if(m2 == m1 + m3) return pow(-1.0, m2) * sqrt(2.0) / 2.0
 												* Get_Gaunt_CH(l1, m1, l2, -m2, l3, m3);
 			else if(m3 == m1 + m2) return pow(-1.0, m3) * sqrt(2.0) / 2.0 
 												* Get_Gaunt_CH(l1, m1, l2, m2, l3, -m3);
@@ -397,7 +397,7 @@ double ORB_gaunt_table::Get_Gaunt_SH
 		else
 		{
 			if(m1 == 0 && m2 == 0 && m3 == 0) return Get_Gaunt_CH(l1, 0, l2, 0, l3, 0);
-			else if( (m1 == 0) && (m2 == m3)) return pow(-1.0, m2) * Get_Gaunt_CH(l1, 0, l2, m2, l3, -m2);
+			if( (m1 == 0) && (m2 == m3)) return pow(-1.0, m2) * Get_Gaunt_CH(l1, 0, l2, m2, l3, -m2);
 			else if( (m2 == 0) && (m3 == m1)) return pow(-1.0, m1) * Get_Gaunt_CH(l2, 0, l1, m1, l3, -m1);
 			else if( (m3 == 0) && (m1 == m2)) return pow(-1.0, m2) * Get_Gaunt_CH(l3, 0, l2, m2, l1, -m2);
 			else return 0.0;
@@ -408,7 +408,7 @@ double ORB_gaunt_table::Get_Gaunt_SH
 		if(m1 >= 0 && m2 < 0 && m3 < 0) 
 		{
 			if((m1 == 0) && (m2 == m3)) return pow(-1.0, m2) * Get_Gaunt_CH(l1, 0, l2, m2, l3, -m2);
-			else if(m1 > 0 && (m2 == m1+m3)) 
+			if(m1 > 0 && (m2 == m1+m3)) 
 				return pow(-1.0, m3) * sqrt(2.0) / 2.0 * Get_Gaunt_CH(l1, m1, l2, -m2, l3, m3);
 			else if(m1 > 0 && (m3 == m1+m2)) 
 				return pow(-1.0, m2) * sqrt(2.0) / 2.0 * Get_Gaunt_CH(l1, m1, l2, m2, l3, -m3);
@@ -419,7 +419,7 @@ double ORB_gaunt_table::Get_Gaunt_SH
 		else if(m2 >= 0 && m1 < 0 && m3 < 0)
 		{
 			if((m2 == 0) && (m1 == m3)) return pow(-1.0, m1) * Get_Gaunt_CH(l2, 0, l1, m1, l3, -m1);
-			else if(m2 > 0 && (m1 == (m2 + m3))) 
+			if(m2 > 0 && (m1 == (m2 + m3))) 
 				return pow(-1.0, m3) * sqrt(2.0) / 2.0 * Get_Gaunt_CH(l2, m2, l1, -m1, l3, m3);
 			else if(m2 > 0 && (m3 == (m2 + m1))) 
 				return pow(-1.0, m1) * sqrt(2.0) / 2.0 * Get_Gaunt_CH(l2, m2, l1, m1, l3, -m3);
@@ -431,7 +431,7 @@ double ORB_gaunt_table::Get_Gaunt_SH
 		else if(m3 >= 0 && m1 < 0 && m2 < 0)
 		{
 			if((m3 == 0) && (m1 == m2)) return pow(-1.0, m1) * Get_Gaunt_CH(l3, 0, l1, m1, l2, -m1);
-			else if(m3 > 0 && (m1 == m3+m2)) 
+			if(m3 > 0 && (m1 == m3+m2)) 
 				return pow(-1.0, m2) * sqrt(2.0) / 2.0 * Get_Gaunt_CH(l3, m3, l1, -m1, l2, m2);
 			else if(m3 > 0 && (m2 == m3+m1)) 
 				return pow(-1.0, m1) * sqrt(2.0) / 2.0 * Get_Gaunt_CH(l3, m3, l1, m1, l2, -m2);
@@ -465,9 +465,8 @@ void ORB_gaunt_table::Swap(
 {
 	int tmp1=0, tmp2=0;
 	if(l1 >= l2) return;
-	else
-	{
-		tmp1 = l2;
+	
+			tmp1 = l2;
 		tmp2 = m2;
 		
 		l2 = l1;
@@ -475,13 +474,12 @@ void ORB_gaunt_table::Swap(
 
 		l1 = tmp1;
 		m1 = tmp2;
+
 	}
-	return;
-}
 
 
 int ORB_gaunt_table::Index_M(const int& m)
 {
 	if(m % 2 == 0) return (- m / 2);
-	else return ((m+1) / 2);
+	return ((m+1) / 2);
 }

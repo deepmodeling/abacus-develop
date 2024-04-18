@@ -65,7 +65,7 @@ class DiagoBPCG : public DiagH<T, Device>
      * @param psi The input wavefunction psi matrix with [dim: n_basis x n_band, column major].
      * @param eigenvalue_in Pointer to the eigen array with [dim: n_band, column major].
      */
-    void diag(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Device> &psi, Real *eigenvalue_in) override;
+    void diag(hamilt::Hamilt<T, Device> *hamilt_in, psi::Psi<T, Device> &psi, Real *eigenvalue_in) override;
 
 
   private:

@@ -142,7 +142,6 @@ void atom_arrange::search(
     }
 
     ModuleBase::timer::tick("atom_arrange", "search");
-    return;
 }
 
 
@@ -186,5 +185,4 @@ void atom_arrange::delete_vector(
 		delete[] grid_d.Cell;
 		grid_d.init_cell_flag = false;
 	}
-	return;
-}
+	}

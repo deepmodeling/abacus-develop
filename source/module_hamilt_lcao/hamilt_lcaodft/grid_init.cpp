@@ -57,7 +57,6 @@ void grid_prepare(
 	}
 
     ModuleBase::timer::tick("LCAO_domain","grid_prepare");
-    return;
 }
 
-}
+}  // namespace LCAO_domain

@@ -165,7 +165,6 @@ void Ylm::get_ylm_real( const int &Lmax, const ModuleBase::Vector3<double> &vec,
 	}// end do
 
 	ModuleBase::timer::tick ("Ylm", "get_ylm_real");
-	return;
 }
 
 void Ylm::get_ylm_real( const int &Lmax, const ModuleBase::Vector3<double> &vec, double ylmr[], double dylmdr[][3] )
@@ -315,8 +314,7 @@ void Ylm::get_ylm_real( const int &Lmax, const ModuleBase::Vector3<double> &vec,
 		}
 	}// end do
 
-	return;
-}
+	}
 
 /***************************
  * Solid Spherical Harmonic
@@ -522,8 +520,7 @@ void Ylm::rlylm
 	}
 
 //	ModuleBase::timer::tick("Ylm", "rlylm");
-	return;
-}
+	}
 
 //return ylm, not rlylm
 void Ylm::sph_harm
@@ -661,8 +658,7 @@ void Ylm::sph_harm
 	}
 
 
-	return;
-}
+	}
 
 // Peize Lin change rly 2016-08-26
 void Ylm::rl_sph_harm
@@ -801,8 +797,7 @@ void Ylm::rl_sph_harm
 		rly[istart+2*il] = (bl3*rly[istart+2*il-4]-bl2*rly[istart2+2*il-4]*radius2-2.0*x*rly[istart1+2*il-2]) / bl1;
 	}
 
-	return;
-}
+	}
 
 void Ylm::grad_rl_sph_harm
 (
@@ -1094,8 +1089,7 @@ void Ylm::grad_rl_sph_harm
 	}
 
 
-	return;
-}
+	}
 
 void Ylm::hes_rl_sph_harm
 (
@@ -1320,9 +1314,6 @@ void Ylm::hes_rl_sph_harm
 			 L > 4
 	***************************/
 	ModuleBase::WARNING_QUIT("hes_rl_sph_harm","l>4 not implemented!");
-
-
-	return;
 }
 void Ylm::set_coefficients (){};
 /*
@@ -1741,8 +1732,7 @@ void Ylm::rlylm
 		}
 	}
 
-	return;
-}
+	}
 
 /*
 void Ylm::test(void)
@@ -1839,8 +1829,7 @@ void Ylm::ZEROS(double u[], const int& n)
 	{
 		u[i] = 0.0;
 	}
-	return;
-}
+	}
 
 
 //==========================================================
@@ -1877,4 +1866,4 @@ double Ylm::sgn(const double x)
 	return 0.0;
 }
 
-}
+}  // namespace ModuleBase

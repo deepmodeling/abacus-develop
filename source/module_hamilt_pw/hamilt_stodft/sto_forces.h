@@ -31,7 +31,7 @@ class Sto_Forces : public Forces<double>
                       Stochastic_WF& stowf);
 
   private:
-    void cal_sto_force_nl(ModuleBase::matrix& forcenl,
+    static void cal_sto_force_nl(ModuleBase::matrix& forcenl,
                           const ModuleBase::matrix& wg,
                           K_Vectors* p_kv,
                           ModulePW::PW_Basis_K* wfc_basis,

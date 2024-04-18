@@ -149,7 +149,7 @@ private:
 
     static void BESCHB(double x, double *gam1, double *gam2, double *gampl, double *gammi);
 
-    static double CHEBEV(double a, double b, double c[], int m, double x);
+    static double CHEBEV(double a, double b, const double c[], int m, double x);
 
     static int IMAX(int a, int b);
 
@@ -158,7 +158,7 @@ private:
     static double _sphbesj_series(int l, double x);
 
     // Regula falsi with Illinois anti-stalling variation
-    static double illinois(std::function<double(double)> func,
+    static double illinois(const std::function<double(double)>& func,
                            double x0,
                            double x1,
                            const double tol = 1e-12,

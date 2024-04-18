@@ -23,7 +23,7 @@ public:
 		const double &dk_in);
 
 	/// overlap between lcao basis phi and descriptor basis alpha
-	double *****Table_DSR;
+	double *****Table_DSR{};
 
 	bool table_allocated;
 
@@ -77,7 +77,7 @@ private:
 	//------------------------------
 	// sizes of table
 	//int ntype_; // table is created with this->ntype
-	int lmax_d_;
+	int lmax_d_{};
 	std::vector<int> lmax_;
 	std::vector<int> nchi_pairs_;
 

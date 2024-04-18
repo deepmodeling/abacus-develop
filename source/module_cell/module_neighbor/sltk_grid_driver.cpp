@@ -66,7 +66,6 @@ void Grid_Driver::Find_atom(
 	this->Find_adjacent_atom(offset, this->atomlink[offset].fatom.getAdjacentSet(), *local_adjs);
 
 	if (!in_parallel) ModuleBase::timer::tick("Grid_Driver","Find_atom");
-	return;
 }
 
 
@@ -118,7 +117,7 @@ int Grid_Driver::Locate_offset(
 
 }
 
-void Grid_Driver::Find_adjacent_atom(const int offset, std::shared_ptr<AdjacentSet> as, AdjacentAtomInfo &adjs) const
+void Grid_Driver::Find_adjacent_atom(const int offset, const std::shared_ptr<AdjacentSet>& as, AdjacentAtomInfo &adjs) const
 {
 //	if (test_grid_driver) ModuleBase::TITLE(GlobalV::ofs_running, "Grid_Driver", "Find_adjacent_atom");
 
@@ -273,13 +272,12 @@ void Grid_Driver::Find_adjacent_atom(const int offset, std::shared_ptr<AdjacentS
 		}//end if expand_flag
 	}// end adjacent number
 
-	return;
-}
+	}
 
 //==========================================================
 // For expand case
 //==========================================================
-double Grid_Driver::Distance(const AtomLink& a1, const AtomLink& a2)const
+double Grid_Driver::Distance(const AtomLink& a1, const AtomLink& a2)
 {
 	const double dx = a1.fatom.x() - a2.fatom.x();
 	const double dy = a1.fatom.y() - a2.fatom.y();
@@ -290,7 +288,7 @@ double Grid_Driver::Distance(const AtomLink& a1, const AtomLink& a2)const
 //==========================================================
 // For not_expand case
 //==========================================================
-double Grid_Driver::Distance(const AtomLink& a1, const ModuleBase::Vector3<double> &adjacent_site)const
+double Grid_Driver::Distance(const AtomLink& a1, const ModuleBase::Vector3<double> &adjacent_site)
 {
 	const double dx = a1.fatom.x() - adjacent_site.x;
 	const double dy = a1.fatom.y() - adjacent_site.y;

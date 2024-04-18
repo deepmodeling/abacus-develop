@@ -93,8 +93,7 @@ void DFTU::fold_dSR_gamma(const int dim1, const int dim2, double* dSR_gamma)
         } // I1
     } // T1
 
-    return;
-}
+    }
 
 void DFTU::folding_matrix_k(const int ik, const int dim1, const int dim2, std::complex<double>* mat_k, std::vector<ModuleBase::Vector3<double>> kvec_d)
 {
@@ -228,8 +227,6 @@ void DFTU::folding_matrix_k(const int ik, const int dim1, const int dim2, std::c
         } // I1
     } // T1
     ModuleBase::timer::tick("DFTU", "folding_matrix_k");
-
-    return;
 }
 
 void DFTU::folding_matrix_k_new(const int ik,

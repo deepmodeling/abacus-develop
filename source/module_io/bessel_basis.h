@@ -101,20 +101,20 @@ private:
 	ModuleBase::realArray TableOne;
 
 	/// @brief mesh of k vector, k is in j_l(k*r)
-	int kmesh;
+	int kmesh{};
 	/// @brief grid of k
 	double Dk;
 	/// @brief number of q vector, q is in j_l(q*r)
 	int Ecut_number;
 	/// @brief Cutoff radius (in a.u.) of SBFs, for any SBF j_l(qr), r>=rcut, j_l(q*r) = 0 (if not smoothed)
-	double rcut;
+	double rcut{};
 	/// @brief energy cutoff for determining kmesh and number of SBFs
-	double ecut;
-	double tolerence;
+	double ecut{};
+	double tolerence{};
 	/// @brief whether smooth SBFs around cutoff radius, resulting in non-zero values. For importance of smooth of SBFs, see J. Phys.: Condens. Matter 22 (2010) 445501, eqn 6. (mohan add 2009-01-18)
-	bool smooth;
+	bool smooth{};
 	/// @brief stddev of smooth function (Gaussian function, centered at rcut)
-	double sigma;
+	double sigma{};
 
 	/// @brief Allocate memory for C4 matrix and initialize all elements to one.
 	/// @param ntype number of atom types
@@ -162,7 +162,7 @@ private:
 		);
 	
 	/// @brief number of localized wave functions
-	int nwfc;
+	int nwfc{};
 
 	/// @brief calculate element value of TableOne matrix
 	/// @details (be called in Bessel_Basis::init(), used for outputing overlap Q matrix) initialize the table whose matrix element is the result of integral int{dr r^2 jle(r)*jlk(r)}, TableOne has three subscript (l, ie, ik), the first runs over orbitals' angular momentum and ie, ik run over ecut_number and kmesh SBFs

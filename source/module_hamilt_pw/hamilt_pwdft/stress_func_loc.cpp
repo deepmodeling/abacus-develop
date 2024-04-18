@@ -160,7 +160,6 @@ void Stress_Func<FPTYPE, Device>::stress_loc(ModuleBase::matrix& sigma,
 
 
 	ModuleBase::timer::tick("Stress_Func","stress_loc");
-	return;
 }
 
 template<typename FPTYPE, typename Device>
@@ -259,8 +258,7 @@ ModulePW::PW_Basis* rho_basis
 #endif
 	
 
-	return;
-}
+	}
 
 template <typename FPTYPE, typename Device>
 void Stress_Func<FPTYPE, Device>::dvloc_coulomb(const FPTYPE& zp, FPTYPE* dvloc, ModulePW::PW_Basis* rho_basis)
@@ -285,8 +283,7 @@ void Stress_Func<FPTYPE, Device>::dvloc_coulomb(const FPTYPE& zp, FPTYPE* dvloc,
                    / pow((GlobalC::ucell.tpiba2 * rho_basis->gg_uniq[i]), 2);
     }
 
-    return;
-}
+    }
 
 template class Stress_Func<double, psi::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))

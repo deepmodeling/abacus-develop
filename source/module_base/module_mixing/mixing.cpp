@@ -1,6 +1,8 @@
 #include "mixing.h"
 
 #include "module_base/module_container/base/third_party/blas.h"
+
+#include <utility>
 namespace Base_Mixing
 {
 
@@ -15,7 +17,7 @@ void Mixing::push_data(Mixing_Data& mdata,
         mdata,
         data_in,
         data_out,
-        screen,
+        std::move(screen),
         [this, length](double* out, const double* in, const double* sres) {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
@@ -26,7 +28,6 @@ void Mixing::push_data(Mixing_Data& mdata,
             }
         },
         need_calcoef);
-    return;
 }
 
 void Mixing::push_data(Mixing_Data& mdata,
@@ -40,7 +41,7 @@ void Mixing::push_data(Mixing_Data& mdata,
         mdata,
         data_in,
         data_out,
-        screen,
+        std::move(screen),
         [this, length](std::complex<double>* out, const std::complex<double>* in, const std::complex<double>* sres) {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 256)
@@ -51,7 +52,6 @@ void Mixing::push_data(Mixing_Data& mdata,
             }
         },
         need_calcoef);
-    return;
 }
 
 void Mixing::mix_data(const Mixing_Data& mdata, double* data_mix)

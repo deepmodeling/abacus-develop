@@ -134,7 +134,7 @@ void where_fill_scalar_else_2d(const std::vector<ModuleBase::Vector3<int>>& arra
     }
 }
 
-void print_2d(std::string info, const std::vector<ModuleBase::Vector3<double>> &array, int nspin, std::ostream& ofs)
+void print_2d(const std::string& info, const std::vector<ModuleBase::Vector3<double>> &array, int nspin, std::ostream& ofs)
 {
     ofs << info << std::endl;
     int iat = 0;

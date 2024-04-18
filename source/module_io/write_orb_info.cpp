@@ -33,6 +33,4 @@ void ModuleIO::write_orb_info(const UnitCell* ucell)
     out << std::setw(5) << "#z" << std::setw(2) << "=" << std::setw(2) << "Zeta index of orbital" << std::endl;
     out << std::setw(5) << "#sym" << std::setw(2) << "=" << std::setw(2) << "Symmetry name of real orbital" << std::endl;
     out.close();
-
-    return;
 }

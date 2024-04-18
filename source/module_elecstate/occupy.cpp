@@ -107,8 +107,7 @@ void Occupy::decision(const std::string &name, const std::string &smearing_metho
     {
         ModuleBase::WARNING_QUIT("occupy_decision", "occupations, not implemented");
     }
-    return;
-}
+    }
 
 /**
  * @brief calculates weights and fermi energy for semiconductors and insulators
@@ -175,8 +174,6 @@ void Occupy::iweights(const int nks,
 #ifdef __MPI
     Parallel_Reduce::gather_max_double_all(ef);
 #endif
-
-    return;
 }
 
 /**
@@ -240,8 +237,7 @@ void Occupy::gweights(const int nks,
         }
     }
 
-    return;
-} // end subroutine gweights
+    } // end subroutine gweights
 
 /**
  * @brief Finds the Fermi energy
@@ -354,7 +350,7 @@ sumkg:
         {
             return;
         }
-        else if ((sumkmid - nelec) < -eps)
+        if ((sumkmid - nelec) < -eps)
         {
             elw = ef;
         }
@@ -363,8 +359,7 @@ sumkg:
             eup = ef;
         }
     }
-    return;
-}
+    }
 
 /**
  * @brief This function computes the number of states under a given energy e

@@ -17,7 +17,7 @@ namespace hamilt
  *   <Psi_{mu_I,0}|H|Psi_{nu_J,R}>
  * ----------------------------------------
  * template T can be double or complex<double>
- * 
+ *
  * examples for using this class:
  * 1. initialize a HContainer
  *    a. use unitcell to initialize atom_pairs
@@ -81,7 +81,7 @@ namespace hamilt
  *     ```
  *       // HR is a const HContainer object, which has been initialized
  *       int rx, ry, rz;
- *       // call size_R_loop() to get number of different R indexes, 
+ *       // call size_R_loop() to get number of different R indexes,
  *       // be careful, it will cost some time to loop all atom-pairs to gather R indexes
  *       int size_for_loop_R = HR.size_R_loop();
  *       for (int iR = 0; iR < size_for_loop_R ; iR++)
@@ -116,7 +116,7 @@ namespace hamilt
  *           for (int iR = 0; iR < atom_ij.size_R(); iR++)
  *           {
  *               const int* r_index = atom_ij.get_R_index(iR);
- *               auto tmp_matrix = atom_ij.get_HR_values(r_index[0], r_index[1], r_index[2]);              
+ *               auto tmp_matrix = atom_ij.get_HR_values(r_index[0], r_index[1], r_index[2]);
  *               // do something with tmp_matrix
  *               ...
  *           }
@@ -126,7 +126,7 @@ namespace hamilt
  *     ```
  *       ...
  *       HR.fix_gamma();
- *       // HR is a const HContainer object, which has been initialized and fixed to gamma       
+ *       // HR is a const HContainer object, which has been initialized and fixed to gamma
  *       // loop atom-pairs directly without R index
  *       for (int i = 0; i < HR.size_atom_pairs(); i++)
  *       {
@@ -136,7 +136,7 @@ namespace hamilt
  *           ...
  *       }
  *     ```
- * 
+ *
 */
 template <typename T>
 class HContainer
@@ -153,7 +153,7 @@ class HContainer
     HContainer(const HContainer<T>& HR_in, T* data_array = nullptr);
 
     // move constructor
-    HContainer(HContainer<T>&& HR_in);
+    HContainer(HContainer<T>&& HR_in) noexcept;
 
     // simple constructor
     HContainer(int natom);
@@ -168,20 +168,20 @@ class HContainer
      * this case will forbit inserting empty atom_pair
     */
     HContainer(
-      const Parallel_Orbitals* paraV, 
-      T* data_pointer = nullptr, 
+      const Parallel_Orbitals* paraV,
+      T* data_pointer = nullptr,
       const std::vector<int>* ijr_info = nullptr);
 
     /**
      * @brief allocate memory for all <IJR> matrix
-     * if data_array is not nullptr, 
+     * if data_array is not nullptr,
      *     use memory after data_array for each BaseMatrix;
-     *     if BaseMatrix has memory allocated before, it will be freed first. 
+     *     if BaseMatrix has memory allocated before, it will be freed first.
      * if data_array is nullptr, allocate memory for each BaseMatrix
      * @param data_array pointer of data array
      * @param if_zero if true, set all values to zero
     */
-    void allocate(T* data_array = nullptr, bool if_zero = false);
+    void allocate(T* data_array = nullptr, bool is_zero = false);
 
     /**
      * @brief set values of all <IJR> matrix to zero
@@ -350,7 +350,7 @@ class HContainer
     size_t get_memory_size() const;
 
     /**
-     * @brief calculate total size of data in HContainer, 
+     * @brief calculate total size of data in HContainer,
      * named nnr inherited from history
      * all AtomPairs and BaseMatrixs are counted
     */
@@ -373,7 +373,7 @@ class HContainer
     /**
      * @brief use infomation of IJ pairs to expand HContainer
      * the input vector format is {size_IJ_pairs, I1, J1, size_R, R1x, R1y, R1z, ..., I2, J2, ...}
-     * HContainer has not been allocated after this function, 
+     * HContainer has not been allocated after this function,
      * user should call allocate(...) to allocate memory.
     */
     void insert_ijrs(const std::vector<int>* ijrs);
@@ -437,7 +437,7 @@ class HContainer
 
     /**
      * @brief if wrapper_pointer is not nullptr, this HContainer is a wrapper
-     * there is only one case that "wrapper_pointer == nullptr": 
+     * there is only one case that "wrapper_pointer == nullptr":
      *     HContainer is constructed by allocated AtomPairs by insert_pair()
      * in other cases, wrapper_pointer is not nullptr and is memory pool of AtomPairs
     */

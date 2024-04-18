@@ -18,7 +18,7 @@ public:
     // Part 4: G vectors in reciprocal FFT box
     //===============================================
   public:
-    int nbspline;
+    int nbspline{};
 
 	// structure factor (ntype, ngmc)
     ModuleBase::ComplexMatrix strucFac;
@@ -27,7 +27,7 @@ public:
         const int,
         UnitCell* Ucell,
         const ModulePW::PW_Basis* rho_basis); // calculate structure factors through Cardinal B-spline interpolation
-    void bsplinecoef(std::complex<double> *b1, std::complex<double> *b2, std::complex<double> *b3, 
+    static void bsplinecoef(std::complex<double> *b1, std::complex<double> *b2, std::complex<double> *b3, 
                     const int nx, const int ny, const int nz, const int norder);
 
 
@@ -46,11 +46,11 @@ public:
     std::complex<double>* get_sk(const int ik, const int it, const int ia, const ModulePW::PW_Basis_K* wfc_basis) const;
     template <typename FPTYPE, typename Device>
     void get_sk(Device* ctx, const int ik, const ModulePW::PW_Basis_K* wfc_basis, std::complex<FPTYPE>* sk) const;
-    std::complex<double>* get_skq(int ik,
+    static std::complex<double>* get_skq(int ik,
                                   int it,
                                   int ia,
                                   const ModulePW::PW_Basis_K* wfc_basis,
-                                  ModuleBase::Vector3<double> q);
+                                  const ModuleBase::Vector3<double>& q);
 
   private:
     std::complex<float> * c_eigts1 = nullptr, * c_eigts2 = nullptr, * c_eigts3 = nullptr;

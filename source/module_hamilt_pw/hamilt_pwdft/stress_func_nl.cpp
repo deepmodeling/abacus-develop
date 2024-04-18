@@ -30,7 +30,7 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
 
     // There is a contribution for jh<>ih in US case or multi projectors case
     // Actually, the judge of nondiagonal should be done on every atom type
-    const bool nondiagonal = (GlobalV::use_uspp || GlobalC::ppcell.multi_proj) ? true : false;
+    const bool nondiagonal = GlobalV::use_uspp || GlobalC::ppcell.multi_proj;
 
     // FPTYPE sigmanlc[3][3];
     // for(int l=0;l<3;l++)
@@ -434,7 +434,6 @@ void Stress_Func<FPTYPE, Device>::get_dvnl1(ModuleBase::ComplexMatrix &vkb,
 	} // enddo
 	delete [] gk;
 	delete [] vq;
-	return;
 }//end get_dvnl1
 
 template <typename FPTYPE, typename Device>
@@ -539,9 +538,6 @@ void Stress_Func<FPTYPE, Device>::get_dvnl2(ModuleBase::ComplexMatrix &vkb,
 
 	delete [] gk;
 	delete [] vq;
-//	ModuleBase::timer::tick("Stress","get_dvnl2");
-
-	return;
 }
 
 
@@ -706,8 +702,6 @@ void Stress_Func<FPTYPE, Device>::dylmr2 (
 	delete[] gx;
 	delete[] dg;
 	delete[] dgi;
-
-	return;
 }
 
 template class Stress_Func<double, psi::DEVICE_CPU>;

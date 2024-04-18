@@ -82,6 +82,5 @@ void Gint_Gamma::cal_env(const double* wfc, double* rho)
 		}
 	}
 
-    return;
-}
+    }
 

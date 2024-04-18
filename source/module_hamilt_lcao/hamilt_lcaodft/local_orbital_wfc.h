@@ -22,11 +22,11 @@ public:
     /// which is got after the diagonalization of
     /// std::complex Hamiltonian matrix.
     ///=========================================
-    std::complex<double>*** wfc_k_grid; // [NK, GlobalV::NBANDS, GlobalV::NLOCAL]
-    std::complex<double>* wfc_k_grid2;  // [NK*GlobalV::NBANDS*GlobalV::NLOCAL]
+    std::complex<double>*** wfc_k_grid{}; // [NK, GlobalV::NBANDS, GlobalV::NLOCAL]
+    std::complex<double>* wfc_k_grid2{};  // [NK*GlobalV::NBANDS*GlobalV::NLOCAL]
 
-    const Parallel_Orbitals* ParaV;
-    const Grid_Technique* gridt;
+    const Parallel_Orbitals* ParaV{};
+    const Grid_Technique* gridt{};
 
     /// read wavefunction coefficients: LOWF_*.txt
     void gamma_file(psi::Psi<double>* psid, elecstate::ElecState* pelec);

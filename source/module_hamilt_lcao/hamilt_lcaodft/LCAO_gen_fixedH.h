@@ -15,7 +15,7 @@ class LCAO_gen_fixedH
 {
 
   public:
-    LCAO_Matrix* LM;
+    LCAO_Matrix* LM{};
 
     LCAO_gen_fixedH();
     ~LCAO_gen_fixedH();
@@ -27,12 +27,12 @@ class LCAO_gen_fixedH
     void calculate_S_no(double* SlocR);
     // void calculate_S_no(std::complex<double>* SlocR);
     void build_ST_new(const char& dtype,
-                      const bool& cal_deri,
+                      const bool& calc_deri,
                       const UnitCell& ucell,
                       const LCAO_Orbitals& orb,
                       const ORB_gen_tables& uot,
                       Grid_Driver* GridD,
-                      double* SHlocR,
+                      double* HSloc,
                       bool cal_syns = false,
                       double dmax = 0.0);
 	// cal_syns : calculate asynchronous overlap matrix for Hefei-NAMD
@@ -44,7 +44,7 @@ class LCAO_gen_fixedH
                       const ORB_gen_tables& uot,
                       Grid_Driver* GridD);
 
-    void build_Nonlocal_mu_new(double* HlocR,
+    void build_Nonlocal_mu_new(double* NLloc,
                       const bool& calc_deri,
                       const UnitCell& ucell,
                       const LCAO_Orbitals& orb,

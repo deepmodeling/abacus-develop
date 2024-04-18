@@ -28,10 +28,9 @@ PotBase* Potential::get_pot_type(const std::string& pot_type)
         {
             return new PotLocal(this->vloc_, &(this->structure_factors_->strucFac), this->rho_basis_);
         }
-        else
-        {
-            return new PotLocal_PAW();
-        }
+        
+                    return new PotLocal_PAW();
+       
     }
     else if (pot_type == "hartree")
     {

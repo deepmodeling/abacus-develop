@@ -146,7 +146,7 @@ template void mul_op::operator()<double>(const double&, const container::Tensor&
 template void mul_op::operator()<std::complex<float> >(const std::complex<float>&, const container::Tensor&, container::Tensor&);
 template void mul_op::operator()<std::complex<double>>(const std::complex<double>&, const container::Tensor&, container::Tensor&);
 
-} // namespace kernels
+}  // namespace op
 } // namespace container
 
 ct::Tensor operator+(const ct::Tensor& self, const ct::Tensor& other) {

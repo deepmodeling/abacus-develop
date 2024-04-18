@@ -39,7 +39,7 @@ public:
                    ModuleSymmetry::Symmetry* p_symm,
                    Structure_Factor* p_sf,
                    K_Vectors* pkv = nullptr,
-                   ModulePW::PW_Basis_K* psi_basis = nullptr,
+                   ModulePW::PW_Basis_K* wfc_basis = nullptr,
                    const psi::Psi<std::complex<FPTYPE>, Device>* psi_in = nullptr);
 
   protected:
@@ -53,11 +53,11 @@ public:
                       const ModuleBase::matrix& wg,
                       const ModuleBase::matrix& ekb,
                       K_Vectors* p_kv,
-                      ModulePW::PW_Basis_K* psi_basis,
+                      ModulePW::PW_Basis_K* wfc_basis,
                       const psi::Psi<std::complex<FPTYPE>, Device>* psi_in = nullptr);
     void cal_force_scc(ModuleBase::matrix& forcescc,
                        ModulePW::PW_Basis* rho_basis,
-                       const ModuleBase::matrix& v_current,
+                       const ModuleBase::matrix& vnew,
                        const bool vnew_exist);
     void cal_force_us(ModuleBase::matrix& forcenl,
                       ModulePW::PW_Basis* rho_basis,

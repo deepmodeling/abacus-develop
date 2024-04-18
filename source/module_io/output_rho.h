@@ -20,10 +20,10 @@ class Output_Rho : public Output_Interface
                int iter,
                double ef,
                const UnitCell* ucell,
-               const std::string directory,
+               const std::string& directory,
                int precision,
-               const std::string tag,
-               const std::string prefix);
+               const std::string& tag,
+               const std::string& prefix);
     void write() override;
 
   private:

@@ -41,7 +41,6 @@ void NEW_PART(const std::string &words)
     GlobalV::ofs_running << "\n ><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><" << std::endl;
     GlobalV::ofs_running << "\n " << words << std::endl;
     GlobalV::ofs_running << "\n ><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><\n" << std::endl;
-    return;
 }
 
 //==========================================================
@@ -51,7 +50,6 @@ void NEW_PART(const std::string &words)
 void OUT(std::ofstream &ofs, const std::string &name)
 {
     ofs << "\n" << std::setw(18) << name << std::endl;
-    return;
 }
 
 //==========================================================
@@ -73,8 +71,7 @@ void MAKE_DIR(const std::string &fn)
             ModuleBase::WARNING_QUIT("MAKE_DIR", fn);
         }
     }
-    return;
-}
+    }
 
 void DONE(std::ofstream &ofs, const std::string &description, const bool only_rank0)
 {
@@ -100,8 +97,6 @@ void DONE(std::ofstream &ofs, const std::string &description, const bool only_ra
     //   	std::cout << "\n---------------------------------------------------------------------------------\n";
     std::cout << " DONE(" << std::setw(10) << ModuleBase::timer::print_until_now() << " SEC) : " << description
               << std::endl;
-    //   	std::cout << "\n---------------------------------------------------------------------------------\n";
-    return;
 }
 
 //==========================================================
@@ -143,8 +138,7 @@ void TEST_LEVEL(const std::string &name, bool disable=true)
         GlobalV::test_pw = 1;
     }
 
-    return;
-}
+    }
 
 bool SCAN_BEGIN(std::ifstream &ifs, const std::string &TargetName, const bool restart, const bool ifwarn)
 {
@@ -180,8 +174,7 @@ void SCAN_END(std::ifstream &ifs, const std::string &TargetName, const bool ifwa
     {
         GlobalV::ofs_warning << " In SCAN_END, can't find: " << TargetName << " block." << std::endl;
     }
-    return;
-}
+    }
 
 void BLOCK_HERE(const std::string &description)
 {
@@ -208,10 +201,9 @@ void BLOCK_HERE(const std::string &description)
     {
         return;
     }
-    else
-    {
-        ModuleBase::QUIT();
-    }
+    
+            ModuleBase::QUIT();
+   
 }
 
 void OUT_TIME(const std::string &name, time_t &start, time_t &end)
@@ -243,7 +235,7 @@ size_t MemAvailable()
         ifs >> label >> size >> kB;
         if (label == "MemAvailable:")
             return std::stol(size);
-        else if (label == "MemFree:" || label == "Buffers:" || label == "Cached:")
+        if (label == "MemFree:" || label == "Buffers:" || label == "Cached:")
         {
             mem_sum += std::stol(size);
             ++i;

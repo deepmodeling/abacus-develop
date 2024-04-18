@@ -1,5 +1,6 @@
-#include <stdio.h>
 #include "binstream.h"
+
+#include <cstdio>
 
 /**
  * @brief Construct a new Binstream:: Binstream object
@@ -9,26 +10,25 @@
  *           "a": add
  *           "w": write 
  */
-Binstream::Binstream(const std::string filename,const char *op)
+Binstream::Binstream(const std::string& filename,const char *op)
 {
 	fileptr=fopen(filename.c_str(),op);
 }
 
 Binstream::~Binstream()
 {
-	if(fileptr != NULL)	fclose(fileptr);
+	if(fileptr != nullptr)	fclose(fileptr);
 }
 
 // close file
 void Binstream:: close()
 {
 	fclose(fileptr);
-	fileptr = NULL;
-	return;
+	fileptr = nullptr;
 }
 
 // open a file
-void Binstream::open(const std::string filename,const char *op)
+void Binstream::open(const std::string& filename,const char *op)
 {
 	fileptr=fopen(filename.c_str(),op);
 }
@@ -37,18 +37,12 @@ void Binstream::open(const std::string filename,const char *op)
 // we can use if(!Binstream) ...
 bool Binstream::operator!() const
 {
-	if (fileptr==NULL)
-		return true;
-	else
-		return false;
+	return fileptr==NULL;
 }
 
 // bool operator
 // we can use if(Binstream) ...
 Binstream::operator bool() const
 {
-	if (fileptr==NULL)
-		return false;
-	else
-		return true;
+	return fileptr != NULL;
 }

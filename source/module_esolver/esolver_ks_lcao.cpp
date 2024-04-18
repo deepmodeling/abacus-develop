@@ -237,7 +237,6 @@ void ESolver_KS_LCAO<TK, TR>::init(Input& inp, UnitCell& ucell)
 	}
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "init");
-	return;
 }
 
 
@@ -283,7 +282,6 @@ void ESolver_KS_LCAO<TK, TR>::init_after_vc(Input& inp, UnitCell& ucell)
 	}
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "init_after_vc");
-	return;
 }
 
 
@@ -357,7 +355,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_stress(ModuleBase::matrix& stress)
 
 
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::post_process(void)
+void ESolver_KS_LCAO<TK, TR>::post_process()
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "post_process");
     ModuleBase::timer::tick("ESolver_KS_LCAO", "post_process");
@@ -489,7 +487,7 @@ void ESolver_KS_LCAO<TK, TR>::init_basis_lcao(
     two_center_bundle->build_orb_onsite(ucell.ntype, GlobalV::onsite_radius);
     // currently deepks only use one descriptor file, so cast bool to int is fine
 
-    // TODO Due to the omnipresence of GlobalC::ORB, we still have to rely
+    // TODO(root): Due to the omnipresence of GlobalC::ORB, we still have to rely
     // on the old interface for now.
     two_center_bundle->to_LCAO_Orbitals(GlobalC::ORB,
             inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax);
@@ -529,8 +527,7 @@ void ESolver_KS_LCAO<TK, TR>::init_basis_lcao(
         this->orb_con.ParaV.set_atomic_trace(GlobalC::ucell.get_iat2iwt(), GlobalC::ucell.nat, GlobalV::NLOCAL);
     }
 
-    return;
-}
+    }
 
 
 template <typename TK, typename TR>
@@ -835,7 +832,7 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
             // if set bit = true, there would be error in soc-multi-core calculation, noted by zhengdy-soc
             if (this->psi != nullptr && (istep % GlobalV::out_interval == 0))
             {
-                hamilt::MatrixBlock<TK> h_mat, s_mat;
+                hamilt::MatrixBlock<TK> h_mat{}, s_mat{};
                 this->p_hamilt->matrix(h_mat, s_mat);
                 if (hsolver::HSolverLCAO<TK>::out_mat_hs[0])
                 {
@@ -1236,7 +1233,7 @@ ModuleIO::Output_Mat_Sparse<TK> ESolver_KS_LCAO<TK, TR>::create_Output_Mat_Spars
 
 
 template <typename TK, typename TR>
-bool ESolver_KS_LCAO<TK, TR>::md_skip_out(std::string calculation, int istep, int interval)
+bool ESolver_KS_LCAO<TK, TR>::md_skip_out(const std::string& calculation, int istep, int interval)
 {
     if (calculation == "md")
     {

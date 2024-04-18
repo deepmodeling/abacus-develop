@@ -33,7 +33,7 @@ int omp_number=0;
 }
 
 
-void Parallel_Global::myProd(std::complex<double> *in,std::complex<double> *inout,int *len,MPI_Datatype *dptr)
+void Parallel_Global::myProd(std::complex<double> *in,std::complex<double> *inout,const int *len,MPI_Datatype *dptr)
 {
 	for(int i=0;i<*len;i++)
 	{
@@ -46,8 +46,7 @@ void Parallel_Global::myProd(std::complex<double> *in,std::complex<double> *inou
 		in++;
 		inout++;
 	}
-	return;
-}
+	}
 #endif
 
 
@@ -101,7 +100,6 @@ void Parallel_Global::split_diag_world(const int &diag_np)
 	GlobalV::DRANK=0;
 	GlobalV::DSIZE=1;
 #endif
-	return;
 }
 
 
@@ -153,7 +151,6 @@ void Parallel_Global::split_grid_world(const int &diag_np)
 	GlobalV::GRANK=0;  //mohan fix bug 2012-02-04
 	GlobalV::GSIZE=1;
 #endif
-	return;
 }
 
 void Parallel_Global::read_mpi_parameters(int argc,char **argv)
@@ -197,7 +194,7 @@ void Parallel_Global::read_mpi_parameters(int argc,char **argv)
         std::stringstream mess;
         mess << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
         mess << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
-        mess << "%% WARNING: Total thread number(" << current_thread_num * process_num <<  ") " 
+        mess << "%% WARNING: Total thread number(" << current_thread_num * process_num <<  ") "
              << "is larger than hardware availability(" << max_thread_num << ")." << std::endl;
         mess << "%% WARNING: The results may be INCORRECT. Please be sure what you are doing." << std::endl;
         mess << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
@@ -241,7 +238,7 @@ void Parallel_Global::read_mpi_parameters(int argc,char **argv)
             << "                              https://github.com/deepmodeling/abacus-develop         " << std::endl
             << "                      Commit: " << commit << std::endl
             << std::endl;
-        time_t time_now = time(NULL);
+        time_t time_now = time(nullptr);
         std::cout << " " << ctime(&time_now);
     }
 
@@ -266,8 +263,7 @@ void Parallel_Global::read_mpi_parameters(int argc,char **argv)
     }
 	// end test
 #endif //__MPI
-    return;
-}
+    }
 
 #ifdef __MPI
 void Parallel_Global::finalize_mpi()
@@ -285,52 +281,18 @@ void Parallel_Global::finalize_mpi()
 }
 #endif
 
-void Parallel_Global::init_pools(void)
+void Parallel_Global::init_pools()
 {
 #ifdef __MPI
 //----------------------------------------------------------
 // CALL Function : divide_pools
 //----------------------------------------------------------
     Parallel_Global::divide_pools();
-
-// for test
-// turn on when you want to check the index of pools.
-/*
-    if (GlobalV::MY_RANK==0)
-    {
-        std::cout << "\n     " << std::setw(8) << "MY_RANK"
-             << std::setw(8) << "MY_POOL"
-             << std::setw(13) << "RANK_IN_POOL"
-             << std::setw(6) << "NPROC"
-             << std::setw(6) << "KPAR"
-             << std::setw(14) << "NPROC_IN_POOL" << std::endl;
-    }
-    for (int i=0; i<GlobalV::NPROC; i++)
-    {
-        if (GlobalV::MY_RANK == i)
-        {
-            std::cout << " I'm " << std::setw(8) << GlobalV::MY_RANK
-                 << std::setw(8) << GlobalV::MY_POOL
-                 << std::setw(13) << GlobalV::RANK_IN_POOL
-                 << std::setw(6) << GlobalV::NPROC
-                 << std::setw(6) << GlobalV::KPAR
-                 << std::setw(14) << GlobalV::NPROC_IN_POOL << std::endl;
-        }
-        MPI_Barrier(MPI_COMM_WORLD);
-    }
-
-    if (GlobalV::MY_RANK != 0 )
-    {
-        std::cout.rdbuf(NULL);
-    }
-*/
-
-    return;
 #endif
 }
 
 #ifdef __MPI
-void Parallel_Global::divide_pools(void)
+void Parallel_Global::divide_pools()
 {
     if (GlobalV::NPROC < GlobalV::KPAR)
     {
@@ -351,7 +313,7 @@ void Parallel_Global::divide_pools(void)
     GlobalV::RANK_IN_STOGROUP = GlobalV::MY_RANK%GlobalV::NPROC_IN_STOGROUP;
     if (GlobalV::NPROC_IN_STOGROUP < GlobalV::KPAR)
     {
-        std::cout<<"\n Error! NPROC_IN_BNDGROUP=" << GlobalV::NPROC_IN_STOGROUP 
+        std::cout<<"\n Error! NPROC_IN_BNDGROUP=" << GlobalV::NPROC_IN_STOGROUP
             <<" is smaller than"<< " KPAR=" << GlobalV::KPAR<<std::endl;
         std::cout<<" Please reduce KPAR or reduce BNDPAR"<<std::endl;
         exit(0);
@@ -370,7 +332,7 @@ void Parallel_Global::divide_pools(void)
         GlobalV::MY_POOL = int( (GlobalV::RANK_IN_STOGROUP-GlobalV::NPROC_IN_STOGROUP%GlobalV::KPAR) / GlobalV::NPROC_IN_POOL);
         GlobalV::RANK_IN_POOL = (GlobalV::RANK_IN_STOGROUP-GlobalV::NPROC_IN_STOGROUP%GlobalV::KPAR)%GlobalV::NPROC_IN_POOL;
     }
-    
+
 
 
 
@@ -391,7 +353,5 @@ void Parallel_Global::divide_pools(void)
 
     int color = GlobalV::MY_RANK % GlobalV::NPROC_IN_STOGROUP;
 	MPI_Comm_split(MPI_COMM_WORLD, color, key, &PARAPW_WORLD);
-
-    return;
 }
 #endif

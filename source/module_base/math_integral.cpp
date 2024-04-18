@@ -1,10 +1,12 @@
 #include "math_integral.h"
-#include <stddef.h> // use size_t
-#include <cassert>
-#include <algorithm>
-#include <functional>
-#include <cmath>
+
 #include "constants.h"
+
+#include <algorithm>
+#include <cassert>
+#include <cmath>
+#include <cstddef> // use size_t
+#include <functional>
 
 namespace ModuleBase
 {
@@ -98,7 +100,6 @@ void Integral::Simpson_Integral
 	asum += asum;
 	asum += func[0]*rab[0] + func[mesh-1]*rab[mesh-1];
 	asum /= 3.0;
-    return;
 }// end subroutine simpson
 
 
@@ -139,7 +140,6 @@ void Integral::Simpson_Integral
 	asum += asum;
 	asum += func[0] + func[mesh-1];
 	asum *= dr/3.0;
-    return;
 }// end subroutine simpson
 
 
@@ -168,8 +168,7 @@ void Integral::Simpson_Integral_0toall
             asum[i+1] = asum[i-1] + r3*( f1 + 4.00*f2 + f3 );
         }
     }
-    return;
-}
+    }
 
 
 // Peize Lin add 2016-02-14
@@ -223,8 +222,7 @@ void Integral::Simpson_Integral_alltoinf
 	{
         asum[i] = asum_all - asum[i];
 	}
-	return;
-}
+	}
 
 double Integral::simpson(const int n, const double* const f, const double dx) 
 {
@@ -251,10 +249,10 @@ double Integral::simpson(const int n, const double* const f, const double dx)
         sum += f[0] + f[n-1];
         return sum * dx / 3.0;
     }
-    else
-    { // composite Simpson's 1/3 rule for the first n-4 intervals plus Simpson's 3/8 rule for the last 3 intervals
+    
+    // composite Simpson's 1/3 rule for the first n-4 intervals plus Simpson's 3/8 rule for the last 3 intervals
         return simpson(n-3, f, dx) + simpson(4, &f[n-4], dx);
-    }
+   
 }
 
 double Integral::simpson(const int n, const double* const f, const double* const h)
@@ -289,10 +287,9 @@ double Integral::simpson(const int n, const double* const f, const double* const
         }
         return sum;
     }
-    else
-    {
-        return simpson(n-3, f, h) + simpson(4, &f[n-4], &h[n-4]);
-    }
+    
+            return simpson(n-3, f, h) + simpson(4, &f[n-4], &h[n-4]);
+   
 }
 
 void Integral::Gauss_Legendre_grid_and_weight(const int n, double *x, double *weights)
@@ -451,4 +448,4 @@ const double Integral::Lebedev_Laikov_grid110_w[110] = {
    0.121830917385521,   0.121830917385521,   0.121830917385521,   0.121830917385521,   0.121830917385521,   0.121830917385521,   0.121830917385521,   0.121830917385521,
    0.121830917385521,   0.121830917385521,   0.121830917385521,   0.121830917385521,   0.121830917385521,   0.121830917385521
 };
-}
+}  // namespace ModuleBase

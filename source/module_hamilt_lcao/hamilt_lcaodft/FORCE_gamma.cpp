@@ -130,7 +130,6 @@ void Force_LCAO_gamma::ftable_gamma(const bool isforce,
     this->finish_ftable_gamma(lm);
 
     ModuleBase::timer::tick("Force_LCAO_gamma", "ftable_gamma");
-    return;
 }
 
 void Force_LCAO_gamma::allocate_gamma(
@@ -229,7 +228,7 @@ void Force_LCAO_gamma::allocate_gamma(
 				GlobalV::NLOCAL, 
 				bit, 
 				GlobalV::out_ndigits, 
-				0, 
+				false, 
 				GlobalV::out_app_flag, 
 				"H", 
 				"data-" + std::to_string(0), 
@@ -241,7 +240,7 @@ void Force_LCAO_gamma::allocate_gamma(
 				GlobalV::NLOCAL, 
 				bit, 
 				GlobalV::out_ndigits, 
-				0, 
+				false, 
 				GlobalV::out_app_flag, 
 				"S", 
 				"data-" + std::to_string(0), 
@@ -250,7 +249,6 @@ void Force_LCAO_gamma::allocate_gamma(
 	}
 
     ModuleBase::timer::tick("Force_LCAO_gamma", "allocate_gamma");
-    return;
 }
 
 void Force_LCAO_gamma::finish_ftable_gamma(LCAO_Matrix &lm)
@@ -276,8 +274,7 @@ void Force_LCAO_gamma::finish_ftable_gamma(LCAO_Matrix &lm)
         delete[] lm.DHloc_fixed_23;
         delete[] lm.DHloc_fixed_33;
     }
-    return;
-}
+    }
 
 void Force_LCAO_gamma::test_gamma(double* mm, const std::string& name)
 {
@@ -298,8 +295,7 @@ void Force_LCAO_gamma::test_gamma(double* mm, const std::string& name)
         }
         std::cout << std::endl;
     }
-    return;
-}
+    }
 
 namespace StressTools
 {

@@ -111,7 +111,8 @@ void psi_initializer_nao<T, Device>::read_external_orbs(std::string* orbital_fil
                     ifs_it>>dr;
                     GlobalV::ofs_running<<" dr = "<<dr<<std::endl;
 
-                    for(int ir = 0; ir < n_rgrid_ichi; ir++)
+                    rgrid_ichi.reserve(n_rgrid_ichi);
+for(int ir = 0; ir < n_rgrid_ichi; ir++)
                     {
                         rgrid_ichi.push_back(ir*dr);
                     }
@@ -410,9 +411,8 @@ void psi_initializer_nao<T, Device>::proj_ao_onkG(int ik)
 							{
 								continue;
 							}
-							else
-							{
-                                const double j = fabs(double(L+is_N) - 0.5);
+							
+							                                const double j = fabs(double(L+is_N) - 0.5);
                                 double alpha, gamma;
                                 std::complex<double> fup,fdown;
                                 if(fabs(j - L + 0.5) < 1e-4)
@@ -457,7 +457,7 @@ void psi_initializer_nao<T, Device>::proj_ao_onkG(int ik)
                                     ibasis++;
                                 }
                                 ibasis += 2*L +1;
-							}
+						
                         } // end for is_N
                     } // end if GlobalV::NONCOLIN
                     else{//LSDA and nomagnet case

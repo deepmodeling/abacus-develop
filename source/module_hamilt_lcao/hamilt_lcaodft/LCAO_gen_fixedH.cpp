@@ -34,14 +34,12 @@ void LCAO_gen_fixedH::calculate_NL_no(double* HlocR)
 		this->build_Nonlocal_mu_new(HlocR, false, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD));
 	}
 
-    return;
-}
+    }
 
 void LCAO_gen_fixedH::calculate_T_no(double* HlocR)
 {
     ModuleBase::TITLE("LCAO_gen_fixedH","calculate_T_no");
     this->build_ST_new('T', false, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD), HlocR);
-    return;
 }
 
 void LCAO_gen_fixedH::calculate_S_no(double* SlocR)
@@ -50,7 +48,6 @@ void LCAO_gen_fixedH::calculate_S_no(double* SlocR)
     ModuleBase::timer::tick("LCAO_gen_fixedH","calculate_S_no");
 	this->build_ST_new('S', false, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD), SlocR);
     ModuleBase::timer::tick("LCAO_gen_fixedH","calculate_S_no");
-    return;
 }
 
 
@@ -480,7 +477,6 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype,
 	}
 
     ModuleBase::timer::tick("LCAO_gen_fixedH","build_ST_new");
-    return;
 }
 
 typedef std::tuple<int,int,int,int> key_tuple;
@@ -1054,7 +1050,6 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc,
 	}
 
 	ModuleBase::timer::tick ("LCAO_gen_fixedH","b_NL_mu_new");
-	return;
 }
 
 void LCAO_gen_fixedH::build_Nonlocal_beta_new(double* HSloc,
@@ -1299,5 +1294,4 @@ void LCAO_gen_fixedH::build_Nonlocal_beta_new(double* HSloc,
 #endif
 	
     ModuleBase::timer::tick ("LCAO_gen_fixedH","b_NL_beta_new");
-	return;
 }

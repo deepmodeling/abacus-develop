@@ -27,7 +27,7 @@ public:
         return weight;
     };
 
-    void print_grid_and_weight(std::string filename);
+    void print_grid_and_weight(const std::string& filename);
 
     // degree: can only take the following values
     // degree = { 6, 14, 26, 38, 50, 74, 86, 110, 146, 170, 194, 230, 266, 302, 350, 434, 590, 770, 974, 

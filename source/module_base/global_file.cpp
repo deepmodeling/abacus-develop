@@ -197,8 +197,7 @@ void ModuleBase::Global_File::make_dir_out(
     open_log(GlobalV::ofs_info, "math_info_" + std::to_string(rank), calculation, restart);
 #endif
 
-    return;
-}
+    }
 
 void ModuleBase::Global_File::make_dir_atom(const std::string &label)
 {
@@ -208,7 +207,6 @@ void ModuleBase::Global_File::make_dir_atom(const std::string &label)
     std::stringstream ss;
     ss << GlobalV::global_out_dir << label << "/";
     ModuleBase::GlobalFunc::MAKE_DIR(ss.str());
-    return;
 }
 
 void ModuleBase::Global_File::open_log(std::ofstream &ofs, const std::string &fn, const std::string &calculation, const bool &restart)
@@ -230,8 +228,7 @@ void ModuleBase::Global_File::open_log(std::ofstream &ofs, const std::string &fn
     }
 //	ofs << " WELCOME TO MESIA PROGRAM." << std::endl;
 //	ofs << " OPEN "<<fn<<".log"<<" DONE."<<std::endl;
-    return;
-}
+    }
 
 void ModuleBase::Global_File::close_log( std::ofstream &ofs,const std::string &fn)
 {
@@ -240,8 +237,7 @@ void ModuleBase::Global_File::close_log( std::ofstream &ofs,const std::string &f
     	ofs.close();
 	}
     //ofs << "CLOSE "<<fn<<".log"<<" DONE."<<std::endl;
-    return;
-}
+    }
 
 void ModuleBase::Global_File::close_all_log(const int rank, const bool out_alllog)
 {
@@ -284,8 +280,7 @@ void ModuleBase::Global_File::close_all_log(const int rank, const bool out_alllo
 #ifdef GATHER_INFO
     close_log(GlobalV::ofs_info, "math_info");
 #endif
-    return;
-}
+    }
 
 void ModuleBase::Global_File::delete_tmp_files()
 {
@@ -312,4 +307,4 @@ void ModuleBase::Global_File::delete_tmp_files()
         }
     }
 }
-}
+}  // namespace ModuleBase

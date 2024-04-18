@@ -149,13 +149,12 @@ void Atom_pseudo::set_d_so(
 	}
 	//2016-07-19 end, LiuXh
 	
-	return;
-}
+	}
 
 #include "module_base/parallel_common.h"
 #ifdef __MPI
 
-void Atom_pseudo::bcast_atom_pseudo(void)
+void Atom_pseudo::bcast_atom_pseudo()
 {
 	ModuleBase::TITLE("Atom_pseudo","bcast_atom_pseudo");
 // == pseudo_h ==
@@ -292,7 +291,6 @@ void Atom_pseudo::bcast_atom_pseudo(void)
         Parallel_Common::bcast_double(qqq.c, nbeta * nbeta);
     }
 
-    return;
-}
+    }
 
 #endif

@@ -141,7 +141,7 @@ void psi_initializer_atomic<T, Device>::tabulate()
 std::complex<double> phase_factor(double arg, int mode)
 {
     if(mode == 1) return std::complex<double>(cos(arg),0);
-    else if (mode == -1) return std::complex<double>(0, sin(arg));
+    if (mode == -1) return std::complex<double>(0, sin(arg));
     else if (mode == 0) return std::complex<double>(cos(arg), sin(arg));
     else return std::complex<double>(1,0);
 }

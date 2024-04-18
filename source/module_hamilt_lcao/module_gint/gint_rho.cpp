@@ -91,7 +91,7 @@ void Gint::gint_kernel_rho(
 void Gint::cal_meshball_rho(
 	const int na_grid,
 	int* block_index,
-	int* vindex,
+	const int* vindex,
 	double** psir_ylm,
 	double** psir_DMR,
 	double* rho)

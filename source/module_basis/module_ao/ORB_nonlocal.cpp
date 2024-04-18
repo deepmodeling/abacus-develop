@@ -61,6 +61,5 @@ void Numerical_Nonlocal::set_type_info
 	{
 		this->rcut_max = std::max( this->Proj[p1].getRcut(), rcut_max ); 
 	}
-	return;
-}
+	}
 

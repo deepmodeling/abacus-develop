@@ -124,7 +124,7 @@ class RadialCollection
      */
     ///@{
     /// Sets a spherical Bessel transformers for all RadialSet objects.
-    void set_transformer(ModuleBase::SphericalBesselTransformer sbt, const int update = 0);
+    void set_transformer(const ModuleBase::SphericalBesselTransformer& sbt, const int update = 0);
 
     /// Sets a common grid for all RadialSet objects.
     void set_grid(const bool for_r_space, const int ngrid, const double* grid, const char mode = 'i');
@@ -184,7 +184,7 @@ class RadialCollection
      *
      * Only rank-0 performs the check; the result is broadcasted to all ranks.
      */
-    char check_file_type(const std::string& file) const;
+    static char check_file_type(const std::string& file) ;
 };
 
 #endif

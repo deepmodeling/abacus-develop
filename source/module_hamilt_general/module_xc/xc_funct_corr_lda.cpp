@@ -62,8 +62,7 @@ void XC_Functional::pw(const double &rs, const int &iflag, double &ec, double &v
              * olog - 2.0 / 3.0 * a * (1.0 + a1 [iflag] * rs) * dom /
              (om * (om + 1.0));
     }
-	return;
-}
+	}
 
 //LDA parameterization form Monte Carlo data
 //iflag=0: J.P. Perdew and A. Zunger, PRB 23, 5048 (1981)
@@ -98,8 +97,7 @@ void XC_Functional::pz(const double &rs, const int &iflag, double &ec, double &v
         ec = gc [iflag] / ox;
         vc = ec * dox / ox;
     }
-    return;
-}
+    }
 
 // C. Lee, W. Yang, and R.G. Parr, PRB 37, 785 (1988)
 // LDA part only
@@ -117,8 +115,6 @@ void XC_Functional::lyp(const double &rs, double &ec, double &vc)
     ox = 1.0 / (1.0 + d * rs);
     ec = - a * ox * (1.0 + ecrs);
     vc = ec - rs / 3.0 * a * ox * (d * ox + ecrs * (d * ox + c));
-
-    return;
 }
 
 // S.H. Vosko, L. Wilk, and M. Nusair, Can. J. Phys. 58, 1200 (1980)
@@ -147,8 +143,6 @@ void XC_Functional::vwn(const double &rs, double &ec, double &vc)
 
     vc = ec - rs12 * a / 6.0 * (2.0 / rs12 - tx / fx - 4.0 * b /
 	tt - f2 * (2.0 / (rs12 - x0) - tx / fx - 4.0 * (2.0 * x0 + b)/ tt));
-
-    return;
 }
 
 void XC_Functional::wigner( const double &rs, double &ec, double &vc)
@@ -160,7 +154,6 @@ void XC_Functional::wigner( const double &rs, double &ec, double &vc)
     double x = 1.0 + 12.570 * rho13;
     vc = - rho13 * ((0.9436560 + 8.89630 * rho13) / (x * x));
     ec = - 0.7380 * rho13 * (0.9590 / (1.0 + 12.570 * rho13));
-    return;
 }
 
 // L. Hedin and  B.I. Lundqvist,  J. Phys. C 4, 2064 (1971)
@@ -172,7 +165,6 @@ void XC_Functional::hl( const double &rs, double &ec, double &vc)
     ec = a + (pow(x, 3) * a - x * x) + x / 2.0 - 1.00 / 3.00;
     ec = - 0.02250 * ec;
     vc = - 0.02250 * a;
-    return;
 }
 
 // O. Gunnarsson and B. I. Lundqvist, PRB 13, 4274 (1976)
@@ -185,7 +177,6 @@ void XC_Functional::gl( const double &rs, double &ec, double &vc)
     vc = - c * log(1.0 + 1.0 / x);
     ec = - c * ((1.0 + pow(x, 3)) * log(1.0 + 1.0 / x) - 1.00 /
                 3.00 + x * (0.50 - x));
-	return;	
 }
 
 // J.P. Perdew and Y. Wang, PRB 45, 13244 (1992)
@@ -293,7 +284,6 @@ void XC_Functional::pw_spin( const double &rs, const double &zeta,
 	+ (vpwcp - vpwc) * fz * zeta4 
 	- (alpha / fz0 * (dfz * (1.0 - zeta4) - 4.0 * fz * zeta3) 
 	+ (epwcp - epwc) * (dfz * zeta4 + 4.0 * fz * zeta3)) * (1.0 + zeta);
-	return;
 }
 
 // J.P. Perdew and Y. Wang, PRB 45, 13244 (1992)
@@ -323,8 +313,6 @@ void XC_Functional::pz_spin( const double &rs, const double &zeta,
     vcup = vcu + fz * (vcp - vcu) + (ecp - ecu) * dfz * (1.0 - zeta);
 	// spin down correlation potential
     vcdw = vcu + fz * (vcp - vcu) + (ecp - ecu) * dfz * (- 1.0 - zeta);
-
-    return;
 }
 
 // J.P. Perdew and A. Zunger, PRB 23, 5048 (1981)
@@ -355,5 +343,4 @@ void XC_Functional::pz_polarized( const double &rs, double &ec, double &vc)
 		ec = gc / ox;
 		vc = ec * dox / ox;
 	}
-	return;
-}
+	}

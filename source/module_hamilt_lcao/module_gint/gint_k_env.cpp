@@ -122,5 +122,4 @@ void Gint_k::cal_env_k(int ik,
 
     }
     ModuleBase::timer::tick("Gint_k", "cal_env_k");
-    return;
 }

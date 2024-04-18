@@ -26,60 +26,60 @@ Grid_Technique::Grid_Technique()
 
 Grid_Technique::~Grid_Technique()
 {
-    if(nlocdimg!=nullptr)
-	{
+    
+	
 		delete[] nlocdimg;
-	}
+	
 
-	if(nlocstartg!=nullptr)
-	{
+	
+	
 		delete[] nlocstartg;
-	}
+	
 
-	if(nad!=nullptr)
-	{
+	
+	
 		delete[] nad;
-	}
+	
 
-	if(how_many_atoms!=nullptr)
-	{
+	
+	
 		delete[] how_many_atoms;
-	}
+	
 
-    if(start_ind!=nullptr)
-	{
+    
+	
 		delete[] start_ind;
-	}
+	
   
-    if(which_atom!=nullptr)
-	{
+    
+	
 		delete[] which_atom;
-	}
+	
 
-    if(which_bigcell!=nullptr)
-	{
+    
+	
 		delete[] which_bigcell;
-	}
+	
 
-    if(which_unitcell!=nullptr)
-	{
+    
+	
 		delete[] which_unitcell;
-	}
+	
 
-	if(bcell_start!=nullptr)
-	{
+	
+	
 		delete[] bcell_start;
-	}
+	
 
-    if(in_this_processor!=nullptr)
-	{
+    
+	
 		delete[] in_this_processor;
-	}
+	
 
-    if(trace_lo!=nullptr)
-	{
+    
+	
 		delete[] trace_lo;
-	}
+	
     
     if (allocate_find_R2)
 	{
@@ -156,7 +156,6 @@ void Grid_Technique::set_pbc_grid(
 	this->cal_trace_lo();
 
 	ModuleBase::timer::tick("Grid_Technique","init");
-	return;
 }
 
 void Grid_Technique::get_startind(const int& ny, const int& nplane, const int& startz_current)
@@ -203,8 +202,7 @@ void Grid_Technique::get_startind(const int& ny, const int& nplane, const int& s
 		start_ind[i] = ind;
 	}
 
-	return;
-}
+	}
 
 // PLEASE update this 'init_atoms_on_grid' to make
 // it adapted to 'cuboid' shape of grid
@@ -250,9 +248,9 @@ void Grid_Technique::init_atoms_on_grid(const int& ny, const int& nplane, const 
 	// init atoms on grid	
 	assert( this->nxyze > 0);
 	int* index2normal = new int[this->nxyze];
-	assert( index2normal != NULL );
+	assert( index2normal != nullptr );
 	ModuleBase::Memory::record("GT::index2normal", sizeof(int) * this->nxyze);
-	this->grid_expansion_index(1,index2normal); 
+	this->grid_expansion_index(true,index2normal); 
 
 	// (5) record how many atoms on
 	// each local grid point (ix,iy,iz)
@@ -329,7 +327,6 @@ void Grid_Technique::init_atoms_on_grid(const int& ny, const int& nplane, const 
 	// bcell_start is needed.
 	this->init_atoms_on_grid2(index2normal);
 	delete[] index2normal;	
-	return;
 }
 
 void Grid_Technique::check_bigcell(int* &ind_bigcell, bool* &bigcell_on_processor)
@@ -370,8 +367,7 @@ void Grid_Technique::check_bigcell(int* &ind_bigcell, bool* &bigcell_on_processo
 		ind_bigcell[i]=ind;
 		bigcell_on_processor[i]=flag;
 	}			
-	return;
-}
+	}
 
 void Grid_Technique::init_atoms_on_grid2(const int* index2normal)
 {	
@@ -384,9 +380,9 @@ void Grid_Technique::init_atoms_on_grid2(const int* index2normal)
 	}
 
 	int* index2ucell = new int[this->nxyze];
-	assert( index2ucell != NULL );
+	assert( index2ucell != nullptr );
 	ModuleBase::Memory::record("GT::index2ucell", sizeof(int) * this->nxyze);	
-	this->grid_expansion_index(0,index2ucell);
+	this->grid_expansion_index(false,index2ucell);
 	
 	int *ind_bigcell=nullptr;
 	bool *bigcell_on_processor; // normal local form.
@@ -397,17 +393,17 @@ void Grid_Technique::init_atoms_on_grid2(const int* index2normal)
 	//--------------------------------------
 	delete[] which_atom;
 	this->which_atom = new int[total_atoms_on_grid];
-	assert( which_atom != 0);
+	assert( which_atom != nullptr);
 	ModuleBase::Memory::record("GT::which_atom", sizeof(int) * total_atoms_on_grid);
 
 	delete[] which_bigcell;
 	this->which_bigcell = new int[total_atoms_on_grid];
-	assert( which_bigcell != 0);
+	assert( which_bigcell != nullptr);
 	ModuleBase::Memory::record("GT::which_bigcell", sizeof(int) * total_atoms_on_grid);
 
 	delete[] which_unitcell;
 	this->which_unitcell = new int[total_atoms_on_grid];
-	assert( which_unitcell != 0);
+	assert( which_unitcell != nullptr);
 	ModuleBase::Memory::record("GT::which_unitcell", sizeof(int) * total_atoms_on_grid);
 	// for each atom, first we need to locate which cell
 	// the atom is in, then we search meshball aroung this
@@ -460,10 +456,9 @@ void Grid_Technique::init_atoms_on_grid2(const int* index2normal)
 	delete[] index2ucell;
 	delete[] ind_bigcell;
 	delete[] bigcell_on_processor;
-	return;
 }
 
-void Grid_Technique::cal_grid_integration_index(void)
+void Grid_Technique::cal_grid_integration_index()
 {
 	// save the start 
 	delete[] this->bcell_start;
@@ -508,11 +503,10 @@ void Grid_Technique::cal_grid_integration_index(void)
 	{
 		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"Max atom on bigcell",max_atom);
 	}
-	return;
-}
+	}
 
 // set 'lgd' variable
-void Grid_Technique::cal_trace_lo(void)
+void Grid_Technique::cal_trace_lo()
 {	
 	ModuleBase::TITLE("Grid_Technique","cal_trace_lo");
 	// save the atom information in trace_lo,
@@ -576,5 +570,4 @@ void Grid_Technique::cal_trace_lo(void)
 
 	assert(iw_local == lgd);
 	assert(iw_all == GlobalV::NLOCAL);
-	return;
 }

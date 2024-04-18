@@ -43,8 +43,6 @@ void sparse_format::cal_dH(
     delete[] lm.DHloc_fixedR_z;
 
     gint_k.cal_dvlocal_R_sparseMatrix(current_spin, sparse_thr, &lm);
-
-    return;
 }
 
 
@@ -72,8 +70,7 @@ void sparse_format::set_R_range(
         }
     }
 
-    return;
-}
+    }
 
 
 void sparse_format::cal_dSTN_R(
@@ -201,5 +198,4 @@ void sparse_format::cal_dSTN_R(
         }
     }
 
-    return;
-}
+    }

@@ -25,7 +25,7 @@ void Driver::init()
 {
     ModuleBase::TITLE("Driver", "init");
 
-    time_t time_start = std::time(NULL);
+    time_t time_start = std::time(nullptr);
     ModuleBase::timer::start();
 
     // (1) read the input parameters.
@@ -35,7 +35,7 @@ void Driver::init()
     this->atomic_world();
 
     // (3) output information
-    time_t time_finish = std::time(NULL);
+    time_t time_finish = std::time(nullptr);
     Print_Info::print_time(time_start, time_finish);
 
     // (4) close all of the running logs
@@ -44,10 +44,9 @@ void Driver::init()
     // (5) output the json file
     //Json::create_Json(&GlobalC::ucell.symm,GlobalC::ucell.atoms,&INPUT);
     Json::create_Json(&GlobalC::ucell,&INPUT);
-    return;
 }
 
-void Driver::reading(void)
+void Driver::reading()
 {
     ModuleBase::timer::tick("Driver", "reading");
 
@@ -81,10 +80,9 @@ void Driver::reading(void)
     // ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"READING CARDS");
 
     ModuleBase::timer::tick("Driver", "reading");
-    return;
 }
 
-void Driver::atomic_world(void)
+void Driver::atomic_world()
 {
     ModuleBase::TITLE("Driver", "atomic_world");
     //--------------------------------------------------
@@ -99,6 +97,4 @@ void Driver::atomic_world(void)
 
     ModuleBase::timer::finish(GlobalV::ofs_running);
     ModuleBase::Memory::print_all(GlobalV::ofs_running);
-
-    return;
 }

@@ -288,9 +288,8 @@ bool Line_Search::brent(
 
         return false;
     }//end bracked
-    else
-    {
-        if(!( (xa<=xb && xb<=xc) || (xc<=xb && xb<=xa) ))
+    
+            if(!( (xa<=xb && xb<=xc) || (xc<=xb && xb<=xa) ))
         {
             ModuleBase::WARNING_QUIT("Brent","something wrong with Brent line search!");
         }
@@ -388,5 +387,5 @@ bool Line_Search::brent(
             //ModuleBase::WARNING_QUIT("Brent","too many steps in line search, something wrong");
         }
         return false;
-    }//end ibrack
+   //end ibrack
 }

@@ -64,7 +64,7 @@ public:
     void initparameters(
         const bool gamma_only_in,
         const double ecut_in,
-        const int nk_in, //number of k points in this pool
+        const int nks_in, //number of k points in this pool
         const ModuleBase::Vector3<double> *kvec_d, // Direct coordinates of k points
         const int distribution_type_in = 1,
         const bool xprime_in = true
@@ -93,9 +93,9 @@ public:
     double *gk2=nullptr; // modulus (G+K)^2 of G vectors [npwk_max*nks]
 
     // liuyu add 2023-09-06
-    double erf_ecut;   // the value of the constant energy cutoff
-    double erf_height; // the height of the energy step for reciprocal vectors
-    double erf_sigma;  // the width of the energy step for reciprocal vectors
+    double erf_ecut{};   // the value of the constant energy cutoff
+    double erf_height{}; // the height of the energy step for reciprocal vectors
+    double erf_sigma{};  // the width of the energy step for reciprocal vectors
 
     //collect gdirect, gcar, gg
     void collect_local_pw(const double& erf_ecut_in = 0.0,

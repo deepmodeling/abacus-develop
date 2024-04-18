@@ -52,14 +52,14 @@ class ORB_table_phi
 	 * L should be 2*Lmax, which is max L of all type
 	 */
 	// Peize Lin update 2016-01-26
-	void init_Lmax(
+	static void init_Lmax(
 		const int orb_num, 
 		const int mode, 
 		int &Lmax_used, 
 		int &Lmax,
 		const int &Lmax_exx,
 		const LCAO_Orbitals &orb,
-		const Numerical_Nonlocal* beta_) const;
+		const Numerical_Nonlocal* beta_) ;
 
 	void init_Table_Spherical_Bessel(
 		const int orb_num, 
@@ -71,8 +71,8 @@ class ORB_table_phi
 		const Numerical_Nonlocal* beta_);
 
 	//Wenfei 2021-8-26, plot table elements against R
-	void plot_table(
-		const std::string filename,
+	static void plot_table(
+		const std::string& filename,
 		const int rmesh,
 		double* column);
 
@@ -94,7 +94,7 @@ class ORB_table_phi
 	///
 	void init_OV_Opair(LCAO_Orbitals& orb);
 
-	int OV_nTpairs;
+	int OV_nTpairs{};
     ModuleBase::IntArray OV_Tpair;
     ModuleBase::IntArray OV_Opair;
     ModuleBase::IntArray OV_L2plus1;
@@ -150,7 +150,7 @@ class ORB_table_phi
 
 	//------------------------------
 	// sizes of table
-	int nelem_; // number of elements
+	int nelem_{}; // number of elements
 	std::vector<int> lmax_; // lmax of each element
 	std::vector<int> nchi_tot_; // total nchi of each element
 

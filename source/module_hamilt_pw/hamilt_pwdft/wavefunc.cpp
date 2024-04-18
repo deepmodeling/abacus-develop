@@ -69,7 +69,7 @@ psi::Psi<std::complex<double>>* wavefunc::allocate(const int nkstot, const int n
     {
         if ((GlobalV::BASIS_TYPE == "lcao" || GlobalV::BASIS_TYPE == "lcao_in_pw") || winput::out_spillage == 2)
         { // for lcao_in_pw
-            if(this->wanf2 != nullptr) delete[] this->wanf2;
+            delete[] this->wanf2;
             this->wanf2 = new ModuleBase::ComplexMatrix [nks2];
 			for (int ik = 0; ik < nks2; ik++)
 			{
@@ -103,7 +103,7 @@ void wavefunc::wfcinit(psi::Psi<std::complex<double>> *psi_in, ModulePW::PW_Basi
     ModuleBase::timer::tick("wavefunc", "wfcinit");
     if (GlobalV::BASIS_TYPE == "pw")
     {
-        if (this->irindex != nullptr)
+        
             delete[] this->irindex;
         this->irindex = new int[wfc_basis->fftnxy];
         wfc_basis->getfftixy2is(this->irindex);
@@ -115,16 +115,15 @@ void wavefunc::wfcinit(psi::Psi<std::complex<double>> *psi_in, ModulePW::PW_Basi
 #endif
     }
     ModuleBase::timer::tick("wavefunc","wfcinit");
-    return;
 }
 
-int wavefunc::get_starting_nw(void)const
+int wavefunc::get_starting_nw()const
 {
     if (init_wfc == "file")
     {
         return GlobalV::NBANDS;
     }
-    else if (init_wfc.substr(0,6) == "atomic")
+    if (init_wfc.substr(0,6) == "atomic")
     {
         if (GlobalC::ucell.natomwfc >= GlobalV::NBANDS)
         {
@@ -190,10 +189,9 @@ void diago_PAO_in_pw_k2(const int &ik,
                                                                                        etfile.data());
                     return;
                 }
-                else
-                {
-                    ModuleBase::WARNING_QUIT("wavefunc", "Psi does not exist!");
-                }
+                
+                                    ModuleBase::WARNING_QUIT("wavefunc", "Psi does not exist!");
+               
             }
 
             assert(nbands <= wfcatom.nr);
@@ -206,10 +204,9 @@ void diago_PAO_in_pw_k2(const int &ik,
             }
             return;
         }
-        else
-        {
-            p_wf->init_wfc = "atomic+random";
-        }
+        
+                    p_wf->init_wfc = "atomic+random";
+       
     }
 
     const int starting_nw = p_wf->get_starting_nw();
@@ -246,10 +243,9 @@ void diago_PAO_in_pw_k2(const int &ik,
 				hsolver::DiagoIterAssist<std::complex<float>>::diagH_subspace(phm_in, wvf, wvf, etatom.data());
 				return;
 			}
-			else
-			{
-				ModuleBase::WARNING_QUIT("wavefunc","Hamiltonian does not exist!");
-			}
+			
+							ModuleBase::WARNING_QUIT("wavefunc","Hamiltonian does not exist!");
+		
 		}
 	}
 	else if(p_wf->init_wfc.substr(0,6)=="atomic")
@@ -289,12 +285,11 @@ void diago_PAO_in_pw_k2(const int &ik,
 																	etatom.data());
 				return;
 			}
-			else
-			{
-				ModuleBase::WARNING_QUIT("wavefunc","Psi does not exist!");
+			
+							ModuleBase::WARNING_QUIT("wavefunc","Psi does not exist!");
 				//this diagonalization method is obsoleted now
 				//GlobalC::hm.diagH_subspace(ik ,starting_nw, nbands, wfcatom, wfcatom, etatom.data());
-			}
+		
 		}
 
 		assert(nbands <= wfcatom.nr);
@@ -342,10 +337,9 @@ void diago_PAO_in_pw_k2(const int &ik,
                                                                                         etfile.data());
                     return;
                 }
-                else
-                {
-                    ModuleBase::WARNING_QUIT("wavefunc", "Hamiltonian does not exist!");
-                }
+                
+                                    ModuleBase::WARNING_QUIT("wavefunc", "Hamiltonian does not exist!");
+               
             }
 
             assert(nbands <= wfcatom.nr);
@@ -358,10 +352,9 @@ void diago_PAO_in_pw_k2(const int &ik,
             }
             return;
         }
-        else
-        {
-            p_wf->init_wfc = "atomic+random";
-        }
+        
+                    p_wf->init_wfc = "atomic+random";
+       
     }
 
     // special case here! use Psi(k-1) for the initialization of Psi(k)
@@ -397,10 +390,9 @@ void diago_PAO_in_pw_k2(const int &ik,
                 hsolver::DiagoIterAssist<std::complex<double>>::diagH_subspace(phm_in, wvf, wvf, etatom.data());
                 return;
             }
-            else
-            {
-                ModuleBase::WARNING_QUIT("wavefunc", "Hamiltonian does not exist!");
-            }
+            
+                            ModuleBase::WARNING_QUIT("wavefunc", "Hamiltonian does not exist!");
+           
         }
     }
     else if (p_wf->init_wfc.substr(0, 6) == "atomic")
@@ -443,10 +435,9 @@ void diago_PAO_in_pw_k2(const int &ik,
 							etatom.data());
 				return;
 			}
-			else
-			{
-				ModuleBase::WARNING_QUIT("wavefunc","Hamiltonian does not exist!");
-			}
+			
+							ModuleBase::WARNING_QUIT("wavefunc","Hamiltonian does not exist!");
+		
 		}
 
 		assert(nbands <= wfcatom.nr);
@@ -849,7 +840,7 @@ void wavefunc::init_after_vc(const int nks)
 
 	if((GlobalV::BASIS_TYPE=="lcao" || GlobalV::BASIS_TYPE=="lcao_in_pw") || winput::out_spillage==2)
 	{
-		if(wanf2 != nullptr)delete[] wanf2;
+		delete[] wanf2;
 		this->wanf2 = new ModuleBase::ComplexMatrix [nks2];
 		for (int ik = 0; ik < nks2; ik++)
 		{
@@ -866,5 +857,4 @@ void wavefunc::init_after_vc(const int nks)
         }
     }
 
-    return;
-}
+    }

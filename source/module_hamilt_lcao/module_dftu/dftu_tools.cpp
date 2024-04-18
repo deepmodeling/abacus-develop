@@ -58,8 +58,7 @@ void DFTU::cal_VU_pot_mat_complex(const int spin, const bool newlocale, std::com
         } // ia
     } // it
 
-    return;
-}
+    }
 
 void DFTU::cal_VU_pot_mat_real(const int spin, const bool newlocale, double* VU)
 {
@@ -114,8 +113,7 @@ void DFTU::cal_VU_pot_mat_real(const int spin, const bool newlocale, double* VU)
         } // ia
     } // it
 
-    return;
-}
+    }
 
 double DFTU::get_onebody_eff_pot(const int T,
                                  const int iat,

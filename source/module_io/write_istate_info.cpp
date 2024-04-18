@@ -81,5 +81,4 @@ void ModuleIO::write_istate_info(const ModuleBase::matrix &ekb,const ModuleBase:
 #endif
     }
 	ModuleBase::timer::tick("ModuleIO", "write_istate_info");
-	return;
 }

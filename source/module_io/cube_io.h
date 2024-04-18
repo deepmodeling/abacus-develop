@@ -13,7 +13,7 @@ bool read_cube(
     Parallel_Grid* Pgrid,
 #endif
     int my_rank,
-    std::string esolver_type,
+    const std::string& esolver_type,
     int rank_in_stogroup,
     const int& is,
     std::ofstream& ofs_running,

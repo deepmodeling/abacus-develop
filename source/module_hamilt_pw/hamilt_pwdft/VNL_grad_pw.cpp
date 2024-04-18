@@ -179,6 +179,4 @@ void pseudopot_cell_vnl::getgradq_vnl(const int ik)
     delete [] dylm;
 
 	ModuleBase::timer::tick("pp_cell_vnl","getvnl");
-
-	return;
 }

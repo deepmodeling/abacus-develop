@@ -94,15 +94,15 @@ class Charge_Extra
 
   private:
     int istep = 0; ///< the current step
-    int pot_order; ///< the specified charge extrapolation method
-    int rho_extr;  ///< the actually used method
+    int pot_order{}; ///< the specified charge extrapolation method
+    int rho_extr{};  ///< the actually used method
 
     ModuleBase::Vector3<double>* dis_old1 = nullptr; ///< dis_old2 = pos_old1 - pos_old2
     ModuleBase::Vector3<double>* dis_old2 = nullptr; ///< dis_old1 = pos_now - pos_old1
     ModuleBase::Vector3<double>* dis_now = nullptr;  ///< dis_now = pos_next - pos_now
 
-    double alpha; ///< parameter used in the second order extrapolation
-    double beta;  ///< parameter used in the second order extrapolation
+    double alpha{}; ///< parameter used in the second order extrapolation
+    double beta{};  ///< parameter used in the second order extrapolation
 
     /**
      * @brief determine alpha and beta
@@ -122,7 +122,7 @@ class Charge_Extra
      * @param tag determine the index of files
      * @param data the data read from files
      */
-    void read_files(
+    static void read_files(
 #ifdef __MPI
         Parallel_Grid* Pgrid,
 #endif

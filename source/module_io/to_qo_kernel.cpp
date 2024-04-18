@@ -40,7 +40,7 @@ void toQO::initialize(const std::string& out_dir,
         init_info += "qo_basis: " + qo_basis_ + "\n";
         init_info += "qo_thr: " + std::to_string(qo_thr_) + "\n";
         init_info += "qo_strategies: ";
-        for(auto s: strategies_) init_info += s + " ";
+        for(const auto& s: strategies_) init_info += s + " ";
         init_info += "\n";
         init_info += "Output directory: " + out_dir + "\n";
         init_info += "Pseudopotential directory: " + pseudo_dir + "\n";
@@ -101,7 +101,7 @@ void toQO::initialize(const std::string& out_dir,
 }
 
 void toQO::build_nao(const int ntype, 
-                     const std::string orbital_dir,
+                     const std::string& orbital_dir,
                      const std::string* const orbital_fn,
                      const int rank)
 {
@@ -157,7 +157,7 @@ bool toQO::orbital_filter_out(const int& itype,
         // s, p, d, and f orbitals
         // default is `all` for all types, and for each type, all orbitals are used
         if(strategies_[itype] == "all") return false;
-        else if(l >= l2symbol.size()) return true;
+        if(l >= l2symbol.size()) return true;
         else if(strategies_[itype].find_first_of(l2symbol[l]) != std::string::npos) return false;
         else return true;
     }
@@ -166,7 +166,7 @@ bool toQO::orbital_filter_out(const int& itype,
         // use two individual logic branch allows them have different orbital filtering logic,
         // although presently they are almost the same
         if(izeta != 0) return true; // filter out
-        else if(strategies_[itype] == "all") return false; // keep
+        if(strategies_[itype] == "all") return false; // keep
         else if(l >= l2symbol.size()) return true; // filter out
         else if(strategies_[itype].find_first_of(l2symbol[l]) != std::string::npos) return false; // keep
         else return true; // filter out
@@ -194,7 +194,7 @@ void toQO::build_hydrogen(const int ntype,
 }
 
 void toQO::build_pswfc(const int ntype, 
-                       const std::string pseudo_dir,
+                       const std::string& pseudo_dir,
                        const std::string* const pspot_fn, 
                        const double* const screening_coeffs,
                        const double qo_thr,
@@ -242,9 +242,9 @@ void toQO::build_szv()
 }
 
 void toQO::build_ao(const int ntype, 
-                    const std::string pseudo_dir,
+                    const std::string& pseudo_dir,
                     const std::string* const pspot_fn,
-                    const std::vector<double> screening_coeffs,
+                    const std::vector<double>& screening_coeffs,
                     const double qo_thr,
                     const std::ofstream& ofs_running,
                     const int rank)

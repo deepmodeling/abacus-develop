@@ -178,7 +178,6 @@ void Stress_PW<FPTYPE, Device>::stress_us(ModuleBase::matrix& sigma,
     sigma += stressus;
 
     ModuleBase::timer::tick("Stress_Func", "stress_us");
-    return;
 }
 
 template <typename FPTYPE, typename Device>

@@ -223,7 +223,6 @@ void cal_r_overlap_R::init(const Parallel_Orbitals &pv)
     construct_orbs_and_orb_r();
     
     ModuleBase::timer::tick("cal_r_overlap_R", "init");
-    return;
 }
 
 
@@ -278,7 +277,7 @@ void cal_r_overlap_R::out_rR(const int &istep)
         }
     }
 
-    for (auto &R_coor : all_R_coor)
+    for (const auto &R_coor : all_R_coor)
     {
         std::map<size_t, std::map<size_t, double>> psi_r_psi_sparse[3];
 
@@ -479,7 +478,6 @@ void cal_r_overlap_R::out_rR(const int &istep)
 
 
     ModuleBase::timer::tick("cal_r_overlap_R", "out_rR");
-    return;
 }
 
 
@@ -538,7 +536,7 @@ void cal_r_overlap_R::out_rR_other(const int &istep, const std::set<Abfs::Vector
         }
     }
 
-    for (auto &R_coor : output_R_coor)
+    for (const auto &R_coor : output_R_coor)
     {
         std::map<size_t, std::map<size_t, double>> psi_r_psi_sparse[3];
 
@@ -682,5 +680,4 @@ void cal_r_overlap_R::out_rR_other(const int &istep, const std::set<Abfs::Vector
 
 
     ModuleBase::timer::tick("cal_r_overlap_R", "out_rR_other");
-    return;
 }

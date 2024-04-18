@@ -16,7 +16,7 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
 {
     const double MAX_EPS = std::max(1e-3, epsilon_input * 1.001);
     const double MULT_EPS = 2.0;
-    if (available == false) return;
+    if (!available) return;
     ModuleBase::TITLE("Symmetry","init");
 	ModuleBase::timer::tick("Symmetry","analy_sys");
 
@@ -285,7 +285,6 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
     delete[] rotpos;
     delete[] index;
     delete[] istart;
-    return;
 }
 
 //---------------------------------------------------
@@ -806,7 +805,6 @@ void Symmetry::lattice_type(
         }
     }*/
     bravname = get_brav_name(real_brav);
-    return;
 }
 
 
@@ -911,8 +909,7 @@ void Symmetry::getgroup(int& nrot, int& nrotk, std::ofstream& ofs_running, doubl
             gtrans[i].z = 0;
         }
     }
-    return;
-}
+    }
 
 void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtrans, double* pos)
 {
@@ -921,7 +918,7 @@ void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtr
 	// is a valid symmetry operation on a supercell
 	//----------------------------------------------
     // the start atom index.
-    bool no_diff = 0;
+    bool no_diff = false;
     ModuleBase::Vector3<double> trans(2.0, 2.0, 2.0);
     s_flag = 0;
 
@@ -1040,13 +1037,13 @@ void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtr
                 diff.y = this->check_diff( pos[ia*3+1], rotpos[ia*3+1]);
                 diff.z = this->check_diff( pos[ia*3+2], rotpos[ia*3+2]);
                 //only if all "diff" are zero vectors, flag will remain "1"
-                if (	no_diff == false||
+                if (	!no_diff||
                         !equal(diff.x,0.0)||
                         !equal(diff.y,0.0)||
                         !equal(diff.z,0.0)
                    )
                 {
-                    no_diff = 0;
+                    no_diff = false;
                 }
             }
         }
@@ -1062,7 +1059,7 @@ void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtr
 		//BLOCK_HERE("check symm");
 
         //the current test is successful
-        if (no_diff == true)
+        if (no_diff)
         {
             s_flag = 1;
             //save the detected translation std::vector temporarily
@@ -1089,12 +1086,11 @@ void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtr
         gtrans.y = trans.y;
         gtrans.z = trans.z;
     }
-    return;
-}
+    }
 
 void Symmetry::pricell(double* pos, const Atom* atoms)
 {
-    bool no_diff = 0;
+    bool no_diff = false;
     s_flag = 0;
     ptrans.clear();
 
@@ -1394,8 +1390,7 @@ void Symmetry::pricell(double* pos, const Atom* atoms)
         std::cout<<"Try to change symmetry_prec in INPUT." << std::endl;
         reset_pcell();
     }
-    return;
-}
+    }
 
 
 //modified by shu on 2010.01.20
@@ -1457,7 +1452,7 @@ void Symmetry::rho_symmetry( double *rho,
 
 
 void Symmetry::rhog_symmetry(std::complex<double> *rhogtot, 
-    int* ixyz2ipw, const int &nx, const int &ny, const int &nz, 
+    const int* ixyz2ipw, const int &nx, const int &ny, const int &nz, 
     const int &fftnx, const int &fftny, const int &fftnz)
 {
 //  if (GlobalV::test_symmetry)ModuleBase::TITLE("Symmetry","rho_symmetry");
@@ -1516,8 +1511,7 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
             kk += 10 * nz;
         }
         kk = kk%nz;
-        return;
-    };
+   };
 
 // -------------------------------------------
 /* 
@@ -1761,7 +1755,6 @@ void Symmetry::symmetrize_vec3_nat(double* v)const   // pengfei 2016-12-20
     }
     delete[] vtot;
     delete[] n;
-	return;
 }
 
 void Symmetry::symmetrize_mat3(ModuleBase::matrix& sigma, const Lattice& lat)const   //zhengdy added 2017
@@ -1775,11 +1768,10 @@ void Symmetry::symmetrize_mat3(ModuleBase::matrix& sigma, const Lattice& lat)con
     for (int k = 0; k < nrotk; ++k)
         tot_sigma += invA * gmatrix[k].to_matrix() * sigma * gmatrix[k].Transpose().to_matrix() * invAT;
     sigma = tot_sigma * static_cast<double>(1.0 / nrotk);
-	return;
 }
 
 void Symmetry::gmatrix_convert_int(const ModuleBase::Matrix3* sa, ModuleBase::Matrix3* sb, 
-        const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b) const
+        const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b) 
 {
     auto round = [](double x){return (x>0.0)?floor(x+0.5):ceil(x-0.5);};
     ModuleBase::Matrix3 ai = a.Inverse();
@@ -1800,7 +1792,7 @@ void Symmetry::gmatrix_convert_int(const ModuleBase::Matrix3* sa, ModuleBase::Ma
     }
 }
 void Symmetry::gmatrix_convert(const ModuleBase::Matrix3* sa, ModuleBase::Matrix3* sb, 
-        const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b)const
+        const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b)
 {
     ModuleBase::Matrix3 ai = a.Inverse();
     ModuleBase::Matrix3 bi = b.Inverse();
@@ -1810,7 +1802,7 @@ void Symmetry::gmatrix_convert(const ModuleBase::Matrix3* sa, ModuleBase::Matrix
     }
 }
 void Symmetry::gtrans_convert(const ModuleBase::Vector3<double>* va, ModuleBase::Vector3<double>* vb, 
-        const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b)const
+        const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b)
 {
     ModuleBase::Matrix3 bi = b.Inverse();
     for (int i=0;i<n;++i)
@@ -1869,8 +1861,7 @@ void Symmetry::get_shortest_latvec(ModuleBase::Vector3<double> &a1,
             fb=true;
         }
         if(fa || fb) flag=true;
-        return;
-    };
+   };
     while(flag) //iter
     {
         flag=false;
@@ -1883,8 +1874,7 @@ void Symmetry::get_shortest_latvec(ModuleBase::Vector3<double> &a1,
         loop(a3, a1, len3);
         loop(a3, a2, len3);
     }
-    return;
-}
+    }
 
 void Symmetry::get_optlat(ModuleBase::Vector3<double> &v1, ModuleBase::Vector3<double> &v2, 
         ModuleBase::Vector3<double> &v3, ModuleBase::Vector3<double> &w1, 
@@ -2011,8 +2001,7 @@ void Symmetry::get_optlat(ModuleBase::Vector3<double> &v1, ModuleBase::Vector3<d
             }
         }
     }
-    return;
-}
+    }
 
 void Symmetry::hermite_normal_form(const ModuleBase::Matrix3 &s3, ModuleBase::Matrix3 &h3, ModuleBase::Matrix3 &b3) const
 {
@@ -2046,8 +2035,7 @@ void Symmetry::hermite_normal_form(const ModuleBase::Matrix3 &s3, ModuleBase::Ma
             i2_to_min = i1_to_max;
             i1_to_max = tmp;
         }
-        return;
-    };
+           };
     auto max_min_index_row1 = [&max_min_index, &h, this](int &imax, int &imin)
     {
         int imid=1;
@@ -2057,8 +2045,7 @@ void Symmetry::hermite_normal_form(const ModuleBase::Matrix3 &s3, ModuleBase::Ma
         max_min_index(0, imid, imin);
         if(equal(h(0, imin), 0)) imin=imid;
         else if (equal(h(0, imax), 0)) imax=imid;
-        return;
-    };
+   };
     auto swap_col = [&h, &b](int c1, int c2)
     {
         double tmp;
@@ -2071,8 +2058,7 @@ void Symmetry::hermite_normal_form(const ModuleBase::Matrix3 &s3, ModuleBase::Ma
             b(r, c2)=b(r, c1);
             b(r, c1)=tmp;
         }
-        return;
-    };
+           };
     // row 1 
     int imax, imin;
     while(int(equal(h(0, 0), 0)) + int(equal(h(0, 1), 0)) + int(equal(h(0, 2), 0)) < 2)
@@ -2126,8 +2112,7 @@ void Symmetry::hermite_normal_form(const ModuleBase::Matrix3 &s3, ModuleBase::Ma
         for(int j=0;j<3;++j)
             assert(near_equal(check_zeros(i, j), 0));
 #endif
-    return;
-}
+    }
 
 bool Symmetry::magmom_same_check(const Atom* atoms)const
 {
@@ -2150,7 +2135,7 @@ bool Symmetry::magmom_same_check(const Atom* atoms)const
     return pricell_loop;
 }
 
-bool Symmetry::is_all_movable(const Atom* atoms, const Statistics& st)const
+bool Symmetry::is_all_movable(const Atom* atoms, const Statistics& st)
 {
     bool all_mbl = true;
     for (int iat = 0;iat < st.nat;++iat)
@@ -2165,4 +2150,4 @@ bool Symmetry::is_all_movable(const Atom* atoms, const Statistics& st)const
     }
     return all_mbl;
 }
-}
+}  // namespace ModuleSymmetry

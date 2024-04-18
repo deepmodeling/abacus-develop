@@ -130,7 +130,7 @@ class toWannier90_LCAO : public toWannier90
     std::vector<int> iw2im;
     std::vector<int> iw2iorb;
 
-    const Parallel_Orbitals* ParaV;
+    const Parallel_Orbitals* ParaV{};
 
     void initialize_orb_table();
     void produce_basis_orb();
@@ -145,7 +145,7 @@ class toWannier90_LCAO : public toWannier90
       const psi::Psi<std::complex<double>>& psi_in, 
       const int& ik, 
       const int& ikb, 
-      const ModuleBase::Vector3<double> G, 
+      const ModuleBase::Vector3<double>& G, 
       ModuleBase::ComplexMatrix &Mmn
     );
 

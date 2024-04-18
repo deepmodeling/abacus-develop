@@ -112,8 +112,7 @@ void smoothgen(const int nr, const double* r, const double* chi, const double rc
         {
             alpha[i] /= std::sqrt(overlap);
         }
-        return;
-    };
+           };
 
     // cubic spline interpolation
     ModuleBase::CubicSpline cubspl;

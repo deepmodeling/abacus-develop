@@ -30,11 +30,11 @@ public:
               const ModulePW::PW_Basis_K* wfc_basis = nullptr,
               const bool allocate_vkb = 1);
 
-    double cell_factor; //LiuXh add 20180619
+    double cell_factor{}; //LiuXh add 20180619
 
-	int nkb; // total number of beta functions considering all atoms
+	int nkb{}; // total number of beta functions considering all atoms
 
-	int lmaxkb; // max angular momentum for non-local projectors
+	int lmaxkb{}; // max angular momentum for non-local projectors
 
     void init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_basis);
 
@@ -61,10 +61,10 @@ public:
     //===============================================================
     // private:
 
-    int nhm;
-    int nbetam; // max number of beta functions
+    int nhm{};
+    int nbetam{}; // max number of beta functions
 
-    int lmaxq;
+    int lmaxq{};
 
 	ModuleBase::matrix indv;		// indes linking  atomic beta's to beta's in the solid
 	ModuleBase::matrix nhtol;      	// correspondence n <-> angular momentum l
@@ -106,8 +106,8 @@ public:
 
     mutable ModuleBase::ComplexMatrix vkb;    // all beta functions in reciprocal space
     mutable ModuleBase::ComplexArray gradvkb; // gradient of beta functions
-    std::complex<double>*** vkb1_alpha;
-    std::complex<double>*** vkb_alpha;
+    std::complex<double>*** vkb1_alpha{};
+    std::complex<double>*** vkb_alpha{};
     Structure_Factor* psf = nullptr;
 
     // other variables
@@ -139,7 +139,7 @@ public:
                       const int jh,
                       const int itype,
                       const double* qnorm,
-                      const ModuleBase::matrix ylm,
+                      const ModuleBase::matrix& ylm,
                       std::complex<double>* qg) const;
     template <typename FPTYPE, typename Device>
     void radial_fft_q(Device* ctx,

@@ -12,10 +12,10 @@ Output_Rho::Output_Rho(const ModulePW::PW_Basis_Big* pw_big,
                        int iter,
                        double ef,
                        const UnitCell* ucell,
-                       const std::string directory,
+                       const std::string& directory,
                        int precision,
-                       const std::string tag,
-                       const std::string prefix)
+                       const std::string& tag,
+                       const std::string& prefix)
     : _pw_big(pw_big),
       _pw_rho(pw_rho),
       _is(is),

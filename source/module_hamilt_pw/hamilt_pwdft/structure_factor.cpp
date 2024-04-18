@@ -46,7 +46,6 @@ void Structure_Factor::set(const ModulePW::PW_Basis* rho_basis_in, const int& nb
     ModuleBase::TITLE("PW_Basis","set");
     this->rho_basis = rho_basis_in;
     this->nbspline = nbspline_in;
-    return;
 }
 
 // Peize Lin optimize and add OpenMP 2021.04.01
@@ -64,8 +63,7 @@ void Structure_Factor::setup_structure_factor(UnitCell* Ucell, const ModulePW::P
 //	outstr = GlobalV::global_out_dir + "strucFac.dat"; 
 //	std::ofstream ofs( outstr.c_str() ) ;
     bool usebspline;
-    if(nbspline > 0)   usebspline = true;
-    else    usebspline = false;
+    usebspline = nbspline > 0;
     
     if(usebspline)
     {
@@ -178,7 +176,6 @@ void Structure_Factor::setup_structure_factor(UnitCell* Ucell, const ModulePW::P
         // There's no need to delete double precision pointers while in a CPU environment.
     }
     ModuleBase::timer::tick("PW_Basis","setup_struc_factor"); 
-    return;
 }
 
 //
@@ -291,8 +288,6 @@ void Structure_Factor::bspline_sf(const int norder, UnitCell* Ucell, const Modul
     delete[] b1;
     delete[] b2;
     delete[] b3;
-
-    return;
 }
 
 void Structure_Factor:: bsplinecoef(std::complex<double> *b1, std::complex<double> *b2, std::complex<double> *b3, 

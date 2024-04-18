@@ -55,8 +55,6 @@ void Local_Orbital_Charge::allocate_DM_k(const int& nks, const int& nnrg)
 
     // Peize Lin test 2019-01-16
     this->init_dm_2d(nks);
-
-    return;
 }
 
 #include "module_hamilt_lcao/hamilt_lcaodft/record_adj.h"
@@ -139,8 +137,7 @@ inline void cal_DM_ATOM(const Grid_Technique &gt,
             atom2start += nw1 * nw2;
         } // ia2
     } // ik
-    return;
-}
+    }
 
 // added by zhengdy-soc, for non-collinear case
 inline void cal_DM_ATOM_nc(const Grid_Technique &gt,
@@ -235,8 +232,7 @@ inline void cal_DM_ATOM_nc(const Grid_Technique &gt,
             ispin++;
         } // is2
     } // is1
-    return;
-}
+    }
 
 void Local_Orbital_Charge::cal_dk_k(const Grid_Technique &gt, const ModuleBase::matrix &wg_in, const K_Vectors& kv)
 {
@@ -416,5 +412,4 @@ void Local_Orbital_Charge::cal_dk_k(const Grid_Technique &gt, const ModuleBase::
     RA.delete_grid(); // xiaohui add 2015-02-04
 
     ModuleBase::timer::tick("LCAO_Charge", "cal_dk_k");
-    return;
 }

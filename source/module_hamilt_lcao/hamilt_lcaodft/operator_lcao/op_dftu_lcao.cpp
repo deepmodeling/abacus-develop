@@ -17,8 +17,7 @@ template<typename TK, typename TR>
 void OperatorDFTU<OperatorLCAO<TK, TR>>::contributeHR()
 {
     //no calculation of HR yet for DFTU operator
-    return;
-}
+    }
 
 template<>
 void OperatorDFTU<OperatorLCAO<double, double>>::contributeHk(int ik)
@@ -71,4 +70,4 @@ void OperatorDFTU<OperatorLCAO<std::complex<double>, std::complex<double>>>::con
     ModuleBase::timer::tick("OperatorDFTU", "contributeHk");
 }
 
-}
+}  // namespace hamilt

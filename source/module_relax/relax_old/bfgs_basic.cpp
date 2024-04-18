@@ -31,7 +31,7 @@ BFGS_Basic::~BFGS_Basic()
     delete[] move_p;
 }
 
-void BFGS_Basic::allocate_basic(void)
+void BFGS_Basic::allocate_basic()
 {
     assert(dim > 0);
 
@@ -58,8 +58,6 @@ void BFGS_Basic::allocate_basic(void)
 
     // init inverse Hessien matrix.
     inv_hess.create(dim, dim);
-
-    return;
 }
 
 void BFGS_Basic::update_inverse_hessian(const double &lat0)
@@ -128,21 +126,20 @@ void BFGS_Basic::update_inverse_hessian(const double &lat0)
         }
     }
 
-    return;
-}
+    }
 
-void BFGS_Basic::check_wolfe_conditions(void)
+void BFGS_Basic::check_wolfe_conditions()
 {
     double dot_p = dot_func(grad_p, move_p, dim);
     double dot = dot_func(grad, move_p, dim);
 
     // if the total energy falls rapidly, enlarge the trust radius.
-    bool wolfe1 = (etot - etot_p) < this->relax_bfgs_w1 * dot_p;
+    bool wolfe1 = (etot - etot_p) < BFGS_Basic::relax_bfgs_w1 * dot_p;
 
     // if the force is still very large, enlarge the trust radius,
     // otherwise the dot should be very small, in this case,
     // enlarge trst radius is not good.
-    bool wolfe2 = std::abs(dot) > -this->relax_bfgs_w2 * dot_p;
+    bool wolfe2 = std::abs(dot) > -BFGS_Basic::relax_bfgs_w2 * dot_p;
 
     if (GlobalV::test_relax_method)
     {
@@ -177,10 +174,9 @@ void BFGS_Basic::check_wolfe_conditions(void)
     //  ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"dot = ",dot);
     //  ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"dot_p = ",dot_p);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "wolfe condition satisfied", wolfe_flag);
-    return;
 }
 
-void BFGS_Basic::reset_hessian(void)
+void BFGS_Basic::reset_hessian()
 {
     for (int i = 0; i < dim; i++)
     {
@@ -192,10 +188,9 @@ void BFGS_Basic::reset_hessian(void)
                 inv_hess(i, j) = 0.0;
         }
     }
-    return;
-}
+    }
 
-void BFGS_Basic::save_bfgs(void)
+void BFGS_Basic::save_bfgs()
 {
     this->save_flag = true;
     for (int i = 0; i < dim; i++)
@@ -204,8 +199,7 @@ void BFGS_Basic::save_bfgs(void)
         this->grad_p[i] = this->grad[i];
         this->move_p[i] = this->move[i];
     }
-    return;
-}
+    }
 
 // a new bfgs step is done
 // we have already done well in the previous direction
@@ -302,18 +296,17 @@ void BFGS_Basic::new_step(const double &lat0)
         this->compute_trust_radius();
     }
     // std::cout<<"trust_radius ="<<" "<<trust_radius;
-    return;
-}
+    }
 
 // trust radius is computed in this function
 // trust radius determine the step length
-void BFGS_Basic::compute_trust_radius(void)
+void BFGS_Basic::compute_trust_radius()
 {
     ModuleBase::TITLE("BFGS_Basic", "compute_trust_radius");
 
     // (1) judge 1
     double dot = dot_func(grad_p, move_p, dim);
-    bool ltest = (etot - etot_p) < this->relax_bfgs_w1 * dot;
+    bool ltest = (etot - etot_p) < BFGS_Basic::relax_bfgs_w1 * dot;
 
     // (2) judge 2
     // calculate the norm of move, which
@@ -385,8 +378,7 @@ void BFGS_Basic::compute_trust_radius(void)
         tr_min_hit = false;
     }
 
-    return;
-}
+    }
 
 double BFGS_Basic::check_move(const double &lat0, const double &pos, const double &pos_p)
 {

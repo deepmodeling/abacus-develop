@@ -96,8 +96,7 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
         }
         ofs << std::endl;
     } // end ik
-    return;
-}
+    }
 
 /// @brief function for printing eigenvalues : ekb
 /// @param ik: index of kpoints
@@ -140,8 +139,7 @@ void ElecState::print_band(const int& ik, const int& printe, const int& iter)
             }
         }
     }
-    return;
-}
+    }
 
 /// @brief print total free energy and other energies
 /// @param converged: if converged
@@ -249,7 +247,8 @@ void ElecState::print_etot(const bool converged,
             titles.push_back("E_bandgap_dw"); energies_Ry.push_back(this->bandgap_dw);
         }
     }
-    for (int i = 0; i < titles.size(); ++i)
+    energies_eV.reserve(titles.size());
+for (int i = 0; i < titles.size(); ++i)
     {
         energies_eV.push_back(energies_Ry[i] * ModuleBase::Ry_to_eV);
     }
@@ -397,7 +396,6 @@ void ElecState::print_etot(const bool converged,
     }
 
     this->f_en.etot_old = this->f_en.etot;
-    return;
 }
 
 /// @brief function to print name, value and value*Ry_to_eV
@@ -411,7 +409,6 @@ void ElecState::print_format(const std::string& name, const double& value)
     GlobalV::ofs_running << " " << std::setw(16) << name2.str() << std::setw(30) << value << std::setw(30)
                          << value * ModuleBase::Ry_to_eV << std::endl;
     GlobalV::ofs_running << std::resetiosflags(std::ios::showpos);
-    return;
 }
 
 } // namespace elecstate

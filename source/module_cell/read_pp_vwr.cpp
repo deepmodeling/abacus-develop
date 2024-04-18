@@ -30,7 +30,7 @@ int Pseudopot_upf::read_pseudo_vwr(std::ifstream &ifs)
     // (1) read in mesh
 	std::string value;
 	int length=0;
-	ifs >> value; length = value.find(","); value.erase(length,1);
+	ifs >> value; length = value.find(','); value.erase(length,1);
 	mesh = std::atoi( value.c_str() );
 	//the mesh should be odd, which is forced in Simpson integration
 	if(mesh%2==0) 
@@ -40,28 +40,28 @@ int Pseudopot_upf::read_pseudo_vwr(std::ifstream &ifs)
 	}
 	GlobalV::ofs_running << std::setw(15) << "MESH" << std::setw(15) << mesh << std::endl;
 	// (2) read in nlcc: nonlinear core correction
-	ifs >> value; length = value.find(","); value.erase(length,1);
+	ifs >> value; length = value.find(','); value.erase(length,1);
 	nlcc = std::atoi( value.c_str() );
 	GlobalV::ofs_running << std::setw(15) << "NLCC" << std::setw(15) << nlcc << std::endl;
 	// (3) iatom : index for atom 
-	ifs >> value; length = value.find(","); value.erase(length,1);
+	ifs >> value; length = value.find(','); value.erase(length,1);
 	psd = value;
 	GlobalV::ofs_running << std::setw(15) << "ATOM" << std::setw(15) << psd << std::endl;
 	// (4) valence electron number
-	ifs >> value; length = value.find(","); value.erase(length,1);
+	ifs >> value; length = value.find(','); value.erase(length,1);
 	zp = std::atoi( value.c_str() );
 	GlobalV::ofs_running << std::setw(15) << "Z(VALENCE)" << std::setw(15) << zp << std::endl;
 	// (5) spd_loc, which local pseudopotential should I choose
-	ifs >> value; length = value.find(","); value.erase(length,1);
+	ifs >> value; length = value.find(','); value.erase(length,1);
 	spd_loc = std::atoi( value.c_str() );
 	GlobalV::ofs_running << std::setw(15) << "LOC(spd)" << std::setw(15) << spd_loc << std::endl;
 	// (6) read in the occupations
 	double* tmp_oc = new double[3];
-	ifs >> value; length = value.find(","); value.erase(length,1);
+	ifs >> value; length = value.find(','); value.erase(length,1);
 	tmp_oc[0]= std::atoi( value.c_str() );
-	ifs >> value; length = value.find(","); value.erase(length,1);
+	ifs >> value; length = value.find(','); value.erase(length,1);
 	tmp_oc[1]= std::atoi( value.c_str() );
-	ifs >> value; length = value.find(","); value.erase(length,1);
+	ifs >> value; length = value.find(','); value.erase(length,1);
 	tmp_oc[2]= std::atoi( value.c_str() );
 	GlobalV::ofs_running << std::setw(15) << "OCCUPATION" << std::setw(15) << tmp_oc[0] 
 	<< std::setw(15) << tmp_oc[1] << std::setw(15) << tmp_oc[2] << std::endl;

@@ -101,8 +101,6 @@ void Gint::gint_kernel_force(
 		delete[] cal_flag[ib];
 	}
 	delete[] cal_flag;
-
-    return;
 }
 
 void Gint::gint_kernel_force_meta(
@@ -356,8 +354,7 @@ void Gint::cal_meshball_force(
         }
     }
 	
-	return;
-}
+	}
 
 void Gint::cal_meshball_stress(
     const int na_grid,  					    // how many atoms on this (i,j,k) grid
@@ -387,5 +384,4 @@ void Gint::cal_meshball_stress(
         const double rzz = ddot_(&block_index[na_grid], psir_vlbr3_DMR[ib], &inc, dpsir_zz[ib], &inc);
         stress[0](2,2)+=rzz*2.0;
     }
-    return;
-}
+    }

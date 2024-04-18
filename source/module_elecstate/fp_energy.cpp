@@ -101,7 +101,7 @@ double& efermi::get_ef(const int& is)
     {
         return this->ef;
     }
-    else if (is == 0)
+    if (is == 0)
     {
         return this->ef_up;
     }
@@ -125,7 +125,7 @@ double efermi::get_efval(const int& is) const
     {
         return this->ef;
     }
-    else if (is == 0)
+    if (is == 0)
     {
         return this->ef_up;
     }

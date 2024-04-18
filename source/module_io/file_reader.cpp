@@ -6,7 +6,7 @@ namespace ModuleIO
 {
 
 // Constructor
-FileReader::FileReader(std::string filename)
+FileReader::FileReader(const std::string& filename)
 {
     ifs.open(filename.c_str());
     if (!ifs.is_open())

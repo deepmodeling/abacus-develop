@@ -21,7 +21,7 @@ class ORB_table_beta
 		const double &dR_in,
 		const double &dk_in);
 
-	double***** Table_NR;
+	double***** Table_NR{};
 	bool destroy_nr;
 	
 	///
@@ -39,7 +39,7 @@ class ORB_table_beta
 		const int nprojmax,
 		const int* nproj);
 
-	int NL_nTpairs;
+	int NL_nTpairs{};
 	ModuleBase::IntArray NL_Tpair;
 	ModuleBase::IntArray NL_Opair;
 	ModuleBase::IntArray NL_L2plus1;

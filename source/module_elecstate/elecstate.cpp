@@ -166,8 +166,7 @@ void ElecState::calculate_weights()
         ModuleBase::WARNING_QUIT("calculate_weights", "other occupations, not implemented");
     }
 
-    return;
-}
+    }
 
 void ElecState::calEBand()
 {
@@ -195,8 +194,7 @@ void ElecState::calEBand()
         Parallel_Reduce::reduce_all(this->f_en.eband);
 #endif
     }
-    return;
-}
+    }
 
 void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& strucfac)
 {

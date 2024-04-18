@@ -54,8 +54,6 @@ void XC_Functional::perdew86(const double rho, const double grho, double &sc, do
     v1c = sc * ((1.0 + phi) * dcn / cn - ((4.0 / 3.0) - (7.0 /
                                           6.0) * phi) / rho);
     v2c = cn * ephi / rho43 * (2.0 - phi);
-
-    return;
 } //end subroutine perdew86
 
 void XC_Functional::ggac(const double &rho,const double &grho, double &sc, double &v1c, double &v2c)
@@ -128,8 +126,6 @@ void XC_Functional::ggac(const double &rho,const double &grho, double &sc, doubl
     sc = rho * (h0 + h1);
     v1c = h0 + h1 + dh0 + dh1;
     v2c = ddh0 + ddh1;
-
-    return;
 } //end subroutine ggac
 
 void XC_Functional::pbec(const double &rho, const double &grho, const int &iflag, double &sc, double &v1c, double &v2c)
@@ -171,8 +167,6 @@ void XC_Functional::pbec(const double &rho, const double &grho, const int &iflag
 	sc = rho * h0;
 	v1c = h0 + dh0;
     v2c = ddh0;
-
-	return;
 }
 
 void XC_Functional::glyp(const double &rho, const double &grho, double &sc, double &v1c, double &v2c)
@@ -204,8 +198,6 @@ void XC_Functional::glyp(const double &rho, const double &grho, double &sc, doub
     v1c = - ff * rhom43 / 3.0 * (5.0 * rhom43 * om * xl + rhom53 *
                                  dom * xl + rhom53 * om * dxl);
     v2c = 2.0 * sc / grho;
-
-    return;
 } // end subroutine glyp
 
 //-----------------------------------------------------------------------
@@ -266,8 +258,6 @@ void XC_Functional::perdew86_spin(double rho, double zeta, double grho, double &
                                             (7.0 / 6.0) * phi) / rho) + sc * ddd / dd * (1.0 + zeta)
             / rho;
     v2c = cn * ephi / rho43 * (2.0 - phi) / dd;
-
-    return;
 } //end subroutine perdew86_spin
 
 // There seems to be something wrong with it
@@ -434,5 +424,4 @@ void XC_Functional::pbec_spin(double rho, double zeta, double grho, const int &i
     v1cup = h0 + dh0up + dh0zup;
     v1cdw = h0 + dh0dw + dh0zdw;
     v2c = ddh0;
-    return;
 } // end subroutine pbec_spin

@@ -16,12 +16,11 @@ Numerical_Descriptor::Numerical_Descriptor()
 
 Numerical_Descriptor::~Numerical_Descriptor() 
 {
-	if(init_label==true)
+	if(init_label)
 	{
 		delete[] mu_index;
 	}
-	return;
-}
+	}
 
 
 void Numerical_Descriptor::output_descriptor(const psi::Psi<std::complex<double>> &psi, const int &lmax_in, const double &rcut_in, const double &tol_in, const int nks_in)
@@ -46,7 +45,7 @@ void Numerical_Descriptor::output_descriptor(const psi::Psi<std::complex<double>
 	// Peize Lin change 2022.12.15
     // 0 stands for : 'Faln' is not used.
     this->bessel_basis.init(
-		0,
+		false,
 		std::stod(INPUT.bessel_descriptor_ecut),
 		GlobalC::ucell.ntype,
 		this->lmax,
@@ -61,11 +60,6 @@ void Numerical_Descriptor::output_descriptor(const psi::Psi<std::complex<double>
     this->init_label = true;
 
 	assert(nmax>0);
-
-	// Currently we are not considering doing DeePKS in PW basis
-	// hence this subroutine is used only for generating projectors and save to jle.orb
-	// As a result, I will return here and the rest of the code is saved for future use
-	return;
 
 /*
 	//-----------------------------------
@@ -335,7 +329,7 @@ normalization 2015-12-29 for (int ie=0; ie < nmax; ie++)
 }
 */
 
-void Numerical_Descriptor::init_mu_index(void)
+void Numerical_Descriptor::init_mu_index()
 {
 	GlobalV::ofs_running << " Initialize the mu index for deepks" << std::endl;
 	GlobalV::ofs_running << " lmax = " << this->lmax << std::endl;
@@ -379,6 +373,4 @@ void Numerical_Descriptor::init_mu_index(void)
 
 	this->nlocal = mu;
 	GlobalV::ofs_running << " total number of atomic orbitals " << nlocal << std::endl;
-
-	return;
 }

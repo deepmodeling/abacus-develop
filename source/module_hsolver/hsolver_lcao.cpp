@@ -24,7 +24,7 @@ template <typename T, typename Device>
 void HSolverLCAO<T, Device>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
                                 psi::Psi<T>& psi,
                                 elecstate::ElecState* pes,
-                                const std::string method_in,
+                                const std::string& method_in,
                                 const bool skip_charge)
 {
     ModuleBase::TITLE("HSolverLCAO", "solve");
@@ -228,7 +228,7 @@ void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>&
         using ct_Device = typename ct::PsiToContainer<psi::DEVICE_CPU>::type;
         auto cg = reinterpret_cast<DiagoCG<T>*>(this->pdiagh);
 
-        hamilt::MatrixBlock<T> h_mat, s_mat;
+        hamilt::MatrixBlock<T> h_mat{}, s_mat{};
         hm->matrix(h_mat, s_mat);
 
         // set h_mat & s_mat
@@ -333,7 +333,7 @@ void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>&
         
         cg->diag(hpsi_func, spsi_func, psi_tensor, eigen_tensor, prec_tensor);
 
-        // TODO: Double check tensormap's potential problem
+        // TODO(root): Double check tensormap's potential problem
         ct::TensorMap(psi.get_pointer(), psi_tensor, {psi.get_nbands(), psi.get_nbasis()}).sync(psi_tensor);
     }
 

@@ -338,8 +338,7 @@ void ModuleIO::write_dos_lcao(
             wg);
     }
 
-    return;
-}
+    }
 
 
 template<>
@@ -688,5 +687,4 @@ void ModuleIO::write_dos_lcao(
             wg);
     }
 
-    return;
-}
+    }

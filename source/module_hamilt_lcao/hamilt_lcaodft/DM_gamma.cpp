@@ -83,10 +83,9 @@ void Local_Orbital_Charge::allocate_gamma(
     {
         this->LOWF->gamma_file(psid, pelec);
     }
-    return;
-}
+    }
 
-void Local_Orbital_Charge::cal_dk_gamma_from_2D_pub(void)
+void Local_Orbital_Charge::cal_dk_gamma_from_2D_pub()
 {
     ModuleBase::TITLE("Local_Orbital_Charge","cal_dk_gamma_from_2D_pub");
 

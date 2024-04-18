@@ -153,7 +153,7 @@ namespace hsolver
 
     if (info == 0)
         return std::make_pair(info, std::vector<int>{});
-    else if (info < 0)
+    if (info < 0)
         return std::make_pair(info, std::vector<int>{});
     else if (info % 2)
         return std::make_pair(info, ifail);
@@ -287,7 +287,7 @@ namespace hsolver
 
     if (info == 0)
         return std::make_pair(info, std::vector<int>{});
-    else if (info < 0)
+    if (info < 0)
         return std::make_pair(info, std::vector<int>{});
     else if (info % 2)
         return std::make_pair(info, ifail);
@@ -350,7 +350,7 @@ namespace hsolver
     {
         return;
     }
-    else if (info < 0)
+    if (info < 0)
     {
         const int info_negative = -info;
         const std::string str_index

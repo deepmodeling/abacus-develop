@@ -42,7 +42,7 @@ class FIRE : public MD_base
      */
     void check_fire(void);
 
-    double max;         ///< max force
+    double max{};         ///< max force
     double alpha_start; ///< alpha_start begin
     double alpha;       ///< alpha begin
     double finc;        ///< finc begin

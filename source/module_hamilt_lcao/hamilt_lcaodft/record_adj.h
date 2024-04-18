@@ -31,8 +31,8 @@ class Record_adj
 
 	void delete_grid();
 
-	int na_proc;
-	int* na_each;
+	int na_proc{};
+	int* na_each{};
 
 	//--------------------------------------------
 	// record sparse atom index in for_grid(const Grid_Technique &gt);
@@ -52,7 +52,7 @@ class Record_adj
 	//------------------------------------------------
 	// info will identify each atom in each unitcell.
 	//------------------------------------------------
-	int*** info;
+	int*** info{};
 
 	private:
 

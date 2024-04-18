@@ -6,7 +6,7 @@
 #endif
 #include "module_base/timer.h"
 
-MSST::MSST(MD_para& MD_para_in, UnitCell& unit_in) 
+MSST::MSST(MD_para& MD_para_in, UnitCell& unit_in)
 : MD_base(MD_para_in, unit_in)
 {
     mdp.msst_qmass = mdp.msst_qmass / pow(ModuleBase::ANGSTROM_AU, 4) / pow(ModuleBase::AU_to_MASS, 2);
@@ -70,8 +70,6 @@ void MSST::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_re
     }
 
     ModuleBase::timer::tick("MSST", "setup");
-
-    return;
 }
 
 void MSST::first_half(std::ofstream& ofs)
@@ -125,11 +123,9 @@ void MSST::first_half(std::ofstream& ofs)
     rescale(ofs, vol);
 
     ModuleBase::timer::tick("MSST", "first_half");
-
-    return;
 }
 
-void MSST::second_half(void)
+void MSST::second_half()
 {
     ModuleBase::TITLE("MSST", "second_half");
     ModuleBase::timer::tick("MSST", "second_half");
@@ -152,16 +148,12 @@ void MSST::second_half(void)
     lag_pos -= mdp.msst_vel * ucell.omega / v0 * mdp.md_dt;
 
     ModuleBase::timer::tick("MSST", "second_half");
-
-    return;
 }
 
 
 void MSST::print_md(std::ofstream& ofs, const bool& cal_stress)
 {
     MD_base::print_md(ofs, cal_stress);
-
-    return;
 }
 
 void MSST::write_restart(const std::string& global_out_dir)
@@ -185,8 +177,6 @@ void MSST::write_restart(const std::string& global_out_dir)
 #ifdef __MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
-
-    return;
 }
 
 
@@ -230,11 +220,9 @@ void MSST::restart(const std::string& global_readin_dir)
     MPI_Bcast(&p0, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Bcast(&lag_pos, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif
-
-    return;
 }
 
-double MSST::vel_sum(void)
+double MSST::vel_sum()
 {
     double vsum = 0;
 
@@ -267,7 +255,7 @@ void MSST::rescale(std::ofstream& ofs, const double& volume)
 }
 
 
-void MSST::propagate_vel(void)
+void MSST::propagate_vel()
 {
     if (mdp.my_rank == 0)
     {
@@ -302,12 +290,10 @@ void MSST::propagate_vel(void)
 #ifdef __MPI
     MPI_Bcast(vel, ucell.nat * 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif
-
-    return;
 }
 
 
-void MSST::propagate_voldot(void)
+void MSST::propagate_voldot()
 {
     const int sd = mdp.msst_direction;
     const double dthalf = 0.5 * mdp.md_dt;
@@ -334,5 +320,4 @@ void MSST::propagate_voldot(void)
                      + 0.5 * (const_B * const_B * omega[sd] - const_A * const_B) * dthalf * dthalf;
     }
 
-    return;
-}
+    }

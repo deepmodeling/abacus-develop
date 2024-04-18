@@ -44,7 +44,7 @@ class Gint
      * size of BaseMatrix with be the non-parallel version
     */
     void initialize_pvpR(
-        const UnitCell& unitcell,
+        const UnitCell& ucell_in,
         Grid_Driver* gd
     );
     
@@ -79,7 +79,7 @@ class Gint
         const double delta_r,
         double* vldr3,
         const int LD_pool,
-        double* pvpR_reduced,
+        double* pvpR_in,
         hamilt::HContainer<double>* hR = nullptr);
 
     // calculate < phi_0 | vlocal | dphi_R >
@@ -100,7 +100,7 @@ class Gint
         double* vldr3,
         double* vkdr3,
         const int LD_pool,
-        double* pvpR_reduced,
+        double* pvpR_in,
         hamilt::HContainer<double>* hR = nullptr);
 
 	void cal_meshball_vlocal_gamma(
@@ -119,8 +119,8 @@ class Gint
         int na_grid,
         int LD_pool,
         int grid_index, 
-        int* block_size,
-        int* block_index,
+        const int* block_size,
+        const int* block_index,
         int* block_iw,
         bool** cal_flag, 
         double** psir_ylm,
@@ -137,7 +137,7 @@ class Gint
         const double delta_r,
         double* vldr3,
         const int LD_pool,
-        double** DM_R,
+        double** DM_in,
         const int is,
         const bool isforce,
         const bool isstress,
@@ -196,7 +196,7 @@ class Gint
     void cal_meshball_rho(
         const int na_grid,
         int* block_index,
-        int* vindex,
+        const int* vindex,
         double** psir_ylm,
         double** psir_DMR,
         double* rho);
@@ -212,7 +212,7 @@ class Gint
     void cal_meshball_tau(
         const int na_grid,
         int* block_index,
-        int* vindex,
+        const int* vindex,
         double** dpsix,
         double** dpsiy,
         double** dpsiz,

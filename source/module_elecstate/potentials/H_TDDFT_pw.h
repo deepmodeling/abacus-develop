@@ -128,7 +128,7 @@ class H_TDDFT_pw : public PotBase
     //get ncut number for At integral
     static int check_ncut(int t_type);
 
-    void prepare(const UnitCell& cell, int& dir);
+    static void prepare(const UnitCell& cell, int& dir);
 };
 
 } // namespace elecstate

@@ -84,8 +84,7 @@ void HTransPara<T>::cal_orb_indexes(int irank, std::vector<int>* orb_indexes)
 #ifdef __DEBUG
     assert(data - orb_indexes->data() == size_orb_indexes);
 #endif
-    return;
-}
+    }
 
 // receive_ap_indexes
 template <typename T>
@@ -131,10 +130,6 @@ void HTransPara<T>::receive_ap_indexes(int irank, const int* ap_indexes_in, cons
     // revert atom_set to atom_i_index[irank]
     this->atom_i_index[irank].resize(atom_set.size());
     std::copy(atom_set.begin(), atom_set.end(), this->atom_i_index[irank].begin());
-#ifdef __DEBUG
-    assert(ap_data - this->ap_indexes[irank].data() == this->ap_indexes[irank].size());
-#endif
-    return;
 }
 
 // send_orb_indexes
@@ -232,8 +227,7 @@ void HTransPara<T>::pack_data(int irank, T* values)
 #ifdef __DEBUG
     assert(value_data - values == this->size_values[irank]);
 #endif
-    return;
-}
+    }
 
 template <typename T>
 void HTransPara<T>::unpack_data(int irank, const T* values)
@@ -293,8 +287,7 @@ void HTransPara<T>::get_value_size(int* out) const
     {
         out[i] = this->size_values[i];
     }
-    return;
-}
+    }
 
 // ------------------------------------------------
 // HTransSerial
@@ -372,8 +365,7 @@ void HTransSerial<T>::cal_ap_indexes(int irank, std::vector<int>* ap_indexes)
     assert(data - ap_indexes->data() == size_ap_indexes);
 #endif
     // size of atom
-    return;
-}
+    }
 
 template <typename T>
 void HTransSerial<T>::send_ap_indexes(int irank, MPI_Request* request)
@@ -562,8 +554,7 @@ void HTransSerial<T>::pack_data(int irank, T* values)
 #ifdef __DEBUG
     //assert(value_data - values == this->size_values[irank]);
 #endif
-    return;
-}
+    }
 
 template <typename T>
 void HTransSerial<T>::unpack_data(int irank, const T* values)
@@ -643,8 +634,7 @@ void HTransSerial<T>::unpack_data(int irank, const T* values)
 #ifdef __DEBUG
     //assert(value_data - values == this->size_values[irank]);
 #endif
-    return;
-}
+    }
 
 template <typename T>
 long HTransSerial<T>::get_max_size() const
@@ -658,8 +648,7 @@ void HTransSerial<T>::get_value_size(int* out) const
     {
         out[i] = this->size_values[i];
     }
-    return;
-}
+    }
 
 template class HTransPara<double>;
 template class HTransPara<std::complex<double>>;

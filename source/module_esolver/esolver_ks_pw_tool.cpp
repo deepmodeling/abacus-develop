@@ -204,7 +204,6 @@ void ESolver_KS_PW<T, Device>::jjcorr_ks(const int ik,
     delete[] pij;
     delete[] prevc;
     delete[] pij2;
-    return;
 }
 
 template <typename T, typename Device>
@@ -214,9 +213,9 @@ void ESolver_KS_PW<T, Device>::calcondw(const int nt,
                                         const double fwhmin,
                                         const double wcut,
                                         const double dw_in,
-                                        double* ct11,
-                                        double* ct12,
-                                        double* ct22)
+                                        const double* ct11,
+                                        const double* ct12,
+                                        const double* ct22)
 {
     double factor = FACTOR;
     const int ndim = 3;

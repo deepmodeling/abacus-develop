@@ -141,7 +141,6 @@ void Stress_Func<FPTYPE, Device>::stress_har(ModuleBase::matrix& sigma, ModulePW
 
 	delete[] aux;
 	ModuleBase::timer::tick("Stress_Func","stress_har");
-	return;
 }
 
 template class Stress_Func<double, psi::DEVICE_CPU>;

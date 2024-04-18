@@ -1,8 +1,7 @@
-#include <iostream>
-#include <complex>
-#include <string.h>
-
 #include <ATen/kernels/memory.h>
+#include <complex>
+#include <cstring>
+#include <iostream>
 
 namespace container {
 namespace kernels {

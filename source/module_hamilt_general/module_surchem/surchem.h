@@ -32,7 +32,7 @@ class surchem
 
     void clear();
 
-    void cal_epsilon(const ModulePW::PW_Basis* rho_basis, const double* PS_TOTN_real, double* epsilon, double* epsilon0);
+    static void cal_epsilon(const ModulePW::PW_Basis* rho_basis, const double* PS_TOTN_real, double* epsilon, double* epsilon0);
 
     void cal_pseudo(const UnitCell& cell,
                     const ModulePW::PW_Basis* rho_basis,
@@ -42,7 +42,7 @@ class surchem
 
     void gauss_charge(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, complex<double>* N, Structure_Factor* sf);
 
-    void cal_totn(const UnitCell& cell,
+    static void cal_totn(const UnitCell& cell,
                   const ModulePW::PW_Basis* rho_basis,
                   const complex<double>* Porter_g,
                   complex<double>* N,
@@ -84,10 +84,10 @@ class surchem
                      complex<double>* phi,
                      int& ncgsol);
 
-    void Leps2(const UnitCell& ucell,
+    static void Leps2(const UnitCell& ucell,
                const ModulePW::PW_Basis* rho_basis,
                complex<double>* phi,
-               double* epsilon,            // epsilon from shapefunc, dim=nrxx
+               const double* epsilon,            // epsilon from shapefunc, dim=nrxx
                complex<double>* gradphi_x, // dim=ngmc
                complex<double>* gradphi_y,
                complex<double>* gradphi_z,
@@ -106,7 +106,7 @@ class surchem
                      const ModulePW::PW_Basis* rho_basis,
                      const double* const* const rho);
 
-    void cal_force_sol(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, ModuleBase::matrix& forcesol);
+    static void cal_force_sol(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, ModuleBase::matrix& forcesol);
 
     void get_totn_reci(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, complex<double>* totn_reci);
 

@@ -267,9 +267,8 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
                 ModuleBase::timer::tick("DiagoDavid", "last");
                 break;
             }
-            else
-            {
-                // if the dimension of the reduced basis set is becoming too large,
+            
+                            // if the dimension of the reduced basis set is becoming too large,
                 // then replace the first N (=nband) basis vectors with the current
                 // estimate of the eigenvectors and set the basis dimension to N;
 
@@ -285,17 +284,15 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
                               this->scc,
                               this->vcc);
                 ModuleBase::timer::tick("DiagoDavid", "last");
-            }
+           
 
         } // end of if
 
-    } while (1);
+    } while (true);
 
     DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(dav_iter);
 
     ModuleBase::timer::tick("DiagoDavid", "diag_mock");
-
-    return;
 }
 
 template <typename T, typename Device>
@@ -527,7 +524,7 @@ void DiagoDavid<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
     }
     // calculate H|psi> for not convergence bands
     hpsi_info dav_hpsi_in(&basis,
-                          psi::Range(1, 0, nbase, nbase + notconv - 1),
+                          psi::Range(true, 0, nbase, nbase + notconv - 1),
                           &hphi[nbase * this->dim]); // &hp(nbase, 0)
     phm_in->ops->hPsi(dav_hpsi_in);
 
@@ -535,7 +532,6 @@ void DiagoDavid<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
     delmem_complex_op()(this->ctx, vc_ev_vector);
 
     ModuleBase::timer::tick("DiagoDavid", "cal_grad");
-    return;
 }
 
 template <typename T, typename Device>
@@ -626,7 +622,6 @@ void DiagoDavid<T, Device>::cal_elem(const int& dim,
 
     nbase += notconv;
     ModuleBase::timer::tick("DiagoDavid", "cal_elem");
-    return;
 }
 
 //==============================================================================
@@ -687,7 +682,6 @@ void DiagoDavid<T, Device>::diag_zhegvx(const int& nbase,
 #endif
 
     ModuleBase::timer::tick("DiagoDavid", "diag_zhegvx");
-    return;
 }
 
 template <typename T, typename Device>
@@ -827,7 +821,6 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
         }
     }
     ModuleBase::timer::tick("DiagoDavid", "refresh");
-    return;
 }
 
 template <typename T, typename Device>
@@ -956,7 +949,6 @@ void DiagoDavid<T, Device>::SchmitOrth(const int& dim,
 
     // delete[] lagrange;
     ModuleBase::timer::tick("DiagoDavid", "SchmitOrth");
-    return;
 }
 
 template <typename T, typename Device>
@@ -1048,8 +1040,7 @@ void DiagoDavid<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
         std::cout << "\n notconv = " << this->notconv;
         std::cout << "\n DiagoDavid::diag', too many bands are not converged! \n";
     }
-    return;
-}
+    }
 
 namespace hsolver {
 template class DiagoDavid<std::complex<float>, psi::DEVICE_CPU>;

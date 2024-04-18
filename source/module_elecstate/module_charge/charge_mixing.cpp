@@ -74,8 +74,6 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
     }
     GlobalV::ofs_running<<"mixing_ndim: "<< this->mixing_ndim <<std::endl;
     GlobalV::ofs_running<<"----------- Double Check Mixing Parameters End ------------"<<std::endl;
-
-    return;
 }
 
 void Charge_Mixing::init_mixing()
@@ -164,8 +162,6 @@ void Charge_Mixing::init_mixing()
 #endif
 
     ModuleBase::timer::tick("Charge_Mixing", "init_mixing");
-
-    return;
 }
 
 void Charge_Mixing::allocate_mixing_dmr(int nnr)
@@ -189,8 +185,6 @@ void Charge_Mixing::allocate_mixing_dmr(int nnr)
 
     this->dmr_mdata.reset();
     ModuleBase::timer::tick("Charge_Mixing", "allocate_mixing_dmr");
-
-    return;
 }
 
 void Charge_Mixing::set_rhopw(ModulePW::PW_Basis* rhopw_in, ModulePW::PW_Basis* rhodpw_in)
@@ -504,7 +498,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         {
             chr->rhog[0][ig] = rhog_magabs[ig]; // rhog
             double norm = std::sqrt(chr->rho[1][ig] * chr->rho[1][ig] + chr->rho[2][ig] * chr->rho[2][ig] + chr->rho[3][ig] * chr->rho[3][ig]);
-            if (abs(norm) < 1e-10) continue;
+            if (std::abs(norm) < 1e-10) continue;
             double rescale_tmp = rho_magabs[npw + ig] / norm; 
             chr->rho[1][ig] *= rescale_tmp;
             chr->rho[2][ig] *= rescale_tmp;
@@ -605,8 +599,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
     }
 #endif
 
-    return;
-}
+    }
 
 void Charge_Mixing::mix_rho_real(Charge* chr)
 {
@@ -889,8 +882,6 @@ void Charge_Mixing::mix_dmr(elecstate::DensityMatrix<double, double>* DM)
     }
 
     ModuleBase::timer::tick("Charge_Mixing", "mix_dmr");
-
-    return;
 }
 
 void Charge_Mixing::mix_dmr(elecstate::DensityMatrix<std::complex<double>, double>* DM)
@@ -988,8 +979,6 @@ void Charge_Mixing::mix_dmr(elecstate::DensityMatrix<std::complex<double>, doubl
     }
 
     ModuleBase::timer::tick("Charge_Mixing", "mix_dmr");
-
-    return;
 }
 
 void Charge_Mixing::mix_reset()
@@ -1124,7 +1113,6 @@ void Charge_Mixing::mix_rho(Charge* chr)
     if (new_e_iteration)
         new_e_iteration = false;
     ModuleBase::timer::tick("Charge", "mix_rho");
-    return;
 }
 
 void Charge_Mixing::Kerker_screen_recip(std::complex<double>* drhog)
@@ -1175,8 +1163,7 @@ void Charge_Mixing::Kerker_screen_recip(std::complex<double>* drhog)
             drhog[is * this->rhopw->npw + ig] *= filter_g;
         }
     }
-    return;
-}
+    }
 
 void Charge_Mixing::Kerker_screen_real(double* drhor)
 {
@@ -1587,7 +1574,7 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
     return sum;
 }
 
-double Charge_Mixing::inner_product_real(double* rho1, double* rho2)
+double Charge_Mixing::inner_product_real(const double* rho1, const double* rho2)
 {
     double rnorm = 0.0;
     // consider a resize for mixing_angle
@@ -1646,9 +1633,8 @@ void Charge_Mixing::combine_data(std::complex<double>* data_d,
         data_hf = nullptr;
         return;
     }
-    else
-    {
-        const int ndimd = this->rhodpw->npw;
+    
+            const int ndimd = this->rhodpw->npw;
         const int ndims = this->rhopw->npw;
         const int ndimhf = ndimd - ndims;
         for (int is = 0; is < GlobalV::NSPIN; ++is)
@@ -1660,7 +1646,7 @@ void Charge_Mixing::combine_data(std::complex<double>* data_d,
         delete[] data_hf;
         data_s = nullptr;
         data_hf = nullptr;
-    }
+   
 }
 
 void Charge_Mixing::clean_data(std::complex<double>*& data_s, std::complex<double>*& data_hf)
@@ -1672,11 +1658,10 @@ void Charge_Mixing::clean_data(std::complex<double>*& data_s, std::complex<doubl
         data_hf = nullptr;
         return;
     }
-    else
-    {
-        delete[] data_s;
+    
+            delete[] data_s;
         delete[] data_hf;
         data_s = nullptr;
         data_hf = nullptr;
-    }
+   
 }

@@ -35,7 +35,7 @@ void DFTU::cal_eff_pot_mat_complex(const int ik, std::complex<double>* eff_pot, 
 #ifdef __MPI
 	pzgemm_(&transN, &transN,
             &GlobalV::NLOCAL, &GlobalV::NLOCAL, &GlobalV::NLOCAL,
-            &half, 
+            &half,
             ModuleBase::GlobalFunc::VECTOR_TO_PTR(VU), &one_int, &one_int, this->LM->ParaV->desc,
             this->LM->Sloc2.data(), &one_int, &one_int, this->LM->ParaV->desc,
             &zero,
@@ -46,15 +46,14 @@ void DFTU::cal_eff_pot_mat_complex(const int ik, std::complex<double>* eff_pot, 
         VU[irc] = eff_pot[irc];
 
 #ifdef __MPI
-  	pztranc_(&GlobalV::NLOCAL, &GlobalV::NLOCAL, 
-            &one, 
-            &VU[0], &one_int, &one_int, this->LM->ParaV->desc, 
-            &one, 
+  	pztranc_(&GlobalV::NLOCAL, &GlobalV::NLOCAL,
+            &one,
+            &VU[0], &one_int, &one_int, this->LM->ParaV->desc,
+            &one,
             eff_pot, &one_int, &one_int, this->LM->ParaV->desc);
 #endif
 
     ModuleBase::timer::tick("DFTU", "cal_eff_pot_mat");
-    return;
 }
 
 void DFTU::cal_eff_pot_mat_real(const int ik, double* eff_pot, const std::vector<int>& isk)
@@ -79,13 +78,13 @@ void DFTU::cal_eff_pot_mat_real(const int ik, double* eff_pot, const std::vector
     double alpha = 1.0, beta = 0.0, half = 0.5, one = 1.0;
 
     std::vector<double> VU(this->LM->ParaV->nloc);
-    this->cal_VU_pot_mat_real(spin, 1, &VU[0]);
+    this->cal_VU_pot_mat_real(spin, true, &VU[0]);
 
 #ifdef __MPI
 	pdgemm_(&transN, &transN,
             &GlobalV::NLOCAL, &GlobalV::NLOCAL, &GlobalV::NLOCAL,
-            &half, 
-            ModuleBase::GlobalFunc::VECTOR_TO_PTR(VU), &one_int, &one_int, this->LM->ParaV->desc, 
+            &half,
+            ModuleBase::GlobalFunc::VECTOR_TO_PTR(VU), &one_int, &one_int, this->LM->ParaV->desc,
             this->LM->Sloc.data(), &one_int, &one_int, this->LM->ParaV->desc,
             &beta,
             eff_pot, &one_int, &one_int, this->LM->ParaV->desc);
@@ -95,15 +94,14 @@ void DFTU::cal_eff_pot_mat_real(const int ik, double* eff_pot, const std::vector
         VU[irc] = eff_pot[irc];
 
 #ifdef __MPI
-	pdtran_(&GlobalV::NLOCAL, &GlobalV::NLOCAL, 
-            &one, 
-            &VU[0], &one_int, &one_int, this->LM->ParaV->desc, 
-            &one, 
+	pdtran_(&GlobalV::NLOCAL, &GlobalV::NLOCAL,
+            &one,
+            &VU[0], &one_int, &one_int, this->LM->ParaV->desc,
+            &one,
             eff_pot, &one_int, &one_int, this->LM->ParaV->desc);
 #endif
 
     ModuleBase::timer::tick("DFTU", "cal_eff_pot_mat");
-    return;
 }
 
 void DFTU::cal_eff_pot_mat_R_double(const int ispin, double* SR, double* HR)
@@ -113,27 +111,25 @@ void DFTU::cal_eff_pot_mat_R_double(const int ispin, double* SR, double* HR)
     const double alpha = 1.0, beta = 0.0, one = 1.0, half = 0.5;
 
     std::vector<double> VU(this->LM->ParaV->nloc);
-    this->cal_VU_pot_mat_real(ispin, 1, &VU[0]);
+    this->cal_VU_pot_mat_real(ispin, true, &VU[0]);
 
 #ifdef __MPI
     pdgemm_(&transN, &transN,
             &GlobalV::NLOCAL, &GlobalV::NLOCAL, &GlobalV::NLOCAL,
-            &half, 
-            ModuleBase::GlobalFunc::VECTOR_TO_PTR(VU), &one_int, &one_int, this->LM->ParaV->desc, 
+            &half,
+            ModuleBase::GlobalFunc::VECTOR_TO_PTR(VU), &one_int, &one_int, this->LM->ParaV->desc,
             SR, &one_int, &one_int, this->LM->ParaV->desc,
             &beta,
             HR, &one_int, &one_int, this->LM->ParaV->desc);
 
     pdgemm_(&transN, &transN,
             &GlobalV::NLOCAL, &GlobalV::NLOCAL, &GlobalV::NLOCAL,
-            &half, 
-            SR, &one_int, &one_int, this->LM->ParaV->desc, 
+            &half,
+            SR, &one_int, &one_int, this->LM->ParaV->desc,
             ModuleBase::GlobalFunc::VECTOR_TO_PTR(VU), &one_int, &one_int, this->LM->ParaV->desc,
             &one,
             HR, &one_int, &one_int, this->LM->ParaV->desc);
 #endif
-
-    return;
 }
 
 void DFTU::cal_eff_pot_mat_R_complex_double(const int ispin, std::complex<double>* SR, std::complex<double>* HR)
@@ -143,12 +139,12 @@ void DFTU::cal_eff_pot_mat_R_complex_double(const int ispin, std::complex<double
     const std::complex<double> zero = 0.0, one = 1.0, half = 0.5;
 
     std::vector<std::complex<double>> VU(this->LM->ParaV->nloc);
-    this->cal_VU_pot_mat_complex(ispin, 1, &VU[0]);
+    this->cal_VU_pot_mat_complex(ispin, true, &VU[0]);
 
 #ifdef __MPI
     pzgemm_(&transN, &transN,
             &GlobalV::NLOCAL, &GlobalV::NLOCAL, &GlobalV::NLOCAL,
-            &half, 
+            &half,
             ModuleBase::GlobalFunc::VECTOR_TO_PTR(VU), &one_int, &one_int, this->LM->ParaV->desc,
             SR, &one_int, &one_int, this->LM->ParaV->desc,
             &zero,
@@ -156,14 +152,12 @@ void DFTU::cal_eff_pot_mat_R_complex_double(const int ispin, std::complex<double
 
     pzgemm_(&transN, &transN,
             &GlobalV::NLOCAL, &GlobalV::NLOCAL, &GlobalV::NLOCAL,
-            &half, 
-            SR, &one_int, &one_int, this->LM->ParaV->desc, 
+            &half,
+            SR, &one_int, &one_int, this->LM->ParaV->desc,
             ModuleBase::GlobalFunc::VECTOR_TO_PTR(VU), &one_int, &one_int, this->LM->ParaV->desc,
             &one,
             HR, &one_int, &one_int, this->LM->ParaV->desc);
 #endif
-
-    return;
 }
 
-}
+}  // namespace ModuleDFTU

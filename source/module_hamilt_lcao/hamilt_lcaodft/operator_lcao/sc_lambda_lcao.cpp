@@ -9,8 +9,7 @@ namespace hamilt
 template <typename TK, typename TR>
 void OperatorScLambda<OperatorLCAO<TK, TR>>::contributeHR()
 {
-    return;
-}
+    }
 
 // contribute to Hk
 template <>

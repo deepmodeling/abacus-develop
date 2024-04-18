@@ -211,7 +211,7 @@ void Gint_Gamma::vl_grid_to_2D(
 		const int loc_grid_dim, 
 		const bool new_e_iteration, 
 		double* vl_2d,
-		std::function<void(const int&, const int&, const double&, double*)> setfunc)
+		const std::function<void(const int&, const int&, const double&, double*)>& setfunc)
 {
     ModuleBase::timer::tick("Gint_Gamma","distri_vl");
     // setup send buffer and receive buffer size
@@ -335,6 +335,4 @@ void Gint_Gamma::transfer_pvpR(hamilt::HContainer<double>* hR)
 #endif
 
     ModuleBase::timer::tick("Gint_Gamma","transfer_pvpR");
-
-    return;
 }

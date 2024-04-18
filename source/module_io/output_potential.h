@@ -25,9 +25,9 @@ class Output_Potential : public Output_Interface
                      const UnitCell* ucell,
                      const Charge* const charge,
                      int precision,
-                     const std::string directory,
-                     const std::string tag,
-                     const std::string prefix = "None");
+                     const std::string& directory,
+                     const std::string& tag,
+                     const std::string& prefix = "None");
     void write() override;
 
   private:

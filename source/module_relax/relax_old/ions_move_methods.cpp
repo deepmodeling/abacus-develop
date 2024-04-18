@@ -36,8 +36,7 @@ void Ions_Move_Methods::allocate(const int &natom)
     {
         ModuleBase::WARNING("Ions_Move_Methods::init", "the parameter GlobalV::RELAX_METHOD is not correct.");
     }
-    return;
-}
+    }
 
 // void Ions_Move_Methods::cal_movement(const int &istep, const ModuleBase::matrix &f, const double &etot)
 void Ions_Move_Methods::cal_movement(const int &istep,
@@ -74,5 +73,4 @@ void Ions_Move_Methods::cal_movement(const int &istep,
     {
         ModuleBase::WARNING("Ions_Move_Methods::init", "the parameter GlobalV::RELAX_METHOD is not correct.");
     }
-    return;
-}
+    }

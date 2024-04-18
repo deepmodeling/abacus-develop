@@ -17,14 +17,14 @@
 class UnitCell
 {
 public:
-    Atom *atoms;
+    Atom *atoms{};
 
     bool set_atom_flag;//added on 2009-3-8 by mohan
     Magnetism magnet;  // magnetism Yu Liu 2021-07-03
     void cal_ux();
-    bool judge_parallel(double a[3],ModuleBase::Vector3<double> b);
-	double *atom_mag;
-	int n_mag_at;
+    static bool judge_parallel(const double a[3],const ModuleBase::Vector3<double>& b);
+	double *atom_mag{};
+	int n_mag_at{};
 
     std::string& Coordinate = lat.Coordinate;
     std::string& latName = lat.latName;
@@ -186,14 +186,14 @@ public:
 	// nelec : total number of electrons
 	// lmaxmax : revert from INPUT
 	//============================================================
-	int meshx;
-	int natomwfc;
-	int lmax;
-	int nmax;
-	int nmax_total;//mohan add 2009-09-10
-	int lmax_ppwf;
-	int lmaxmax; // liuyu 2021-07-04
-	bool init_vel; // liuyu 2021-07-15
+	int meshx{};
+	int natomwfc{};
+	int lmax{};
+	int nmax{};
+	int nmax_total{};//mohan add 2009-09-10
+	int lmax_ppwf{};
+	int lmaxmax{}; // liuyu 2021-07-04
+	bool init_vel{}; // liuyu 2021-07-15
 	// double nelec;
 
 private:
@@ -208,7 +208,7 @@ public:
 
     void update_pos_tau(const double* pos);
     void update_pos_taud(const ModuleBase::Vector3<double>* posd_in);
-    void update_pos_taud(double* posd_in);
+    void update_pos_taud(const double* posd_in);
     void update_vel(const ModuleBase::Vector3<double>* vel_in);
     void periodic_boundary_adjustment();
     void bcast_atoms_tau();
@@ -242,7 +242,7 @@ public:
     /// @param orb_file orbital filename
     /// @param ofs_running ofstream
     /// @param atom Atom instance stored in UnitCell
-    void read_orb_file(int it, std::string &orb_file, std::ofstream &ofs_running, Atom *atom);
+    static void read_orb_file(int it, std::string &orb_file, std::ofstream &ofs_running, Atom *atom);
 	int read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running); // read in the atom information for each type of atom
 	bool read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_running, std::ofstream &ofs_warning); // read in atomic positions
 
@@ -258,7 +258,7 @@ public:
 	void remake_cell();
 
 	// read in pseudopotential from files for each type of atom
-	void read_cell_pseudopots(const std::string &fn, std::ofstream &log);
+	void read_cell_pseudopots(const std::string &pp_dir, std::ofstream &log);
 
 	//================================================================
 	// cal_natomwfc : calculate total number of atomic wavefunctions
@@ -284,7 +284,7 @@ public:
     void cal_nelec(double& nelec);
   
     /// @brief check consistency between two atom labels from STRU and pseudo or orb file
-    void compare_atom_labels(std::string label1, std::string label2);
+    static void compare_atom_labels(std::string label1, std::string label2);
     /// @brief get atomCounts, which is a map from element type to atom number
     std::map<int, int> get_atomCounts() const;
     /// @brief get orbitalCounts, which is a map from element type to orbital number

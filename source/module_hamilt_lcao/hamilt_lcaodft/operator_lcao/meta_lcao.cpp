@@ -31,40 +31,34 @@ Meta<OperatorLCAO<std::complex<double>, std::complex<double>>>::~Meta()
 template<>
 void Meta<OperatorLCAO<double, double>>::contributeHR()
 {
-    return;
-}
+    }
 
 //nothing to do in LCAO base for meta operator
 template<>
 void Meta<OperatorLCAO<std::complex<double>, double>>::contributeHR()
 {
-    return;
-}
+    }
 //nothing to do in LCAO base for meta operator
 template<>
 void Meta<OperatorLCAO<std::complex<double>, std::complex<double>>>::contributeHR()
 {
-    return;
-}
+    }
 
 //nothing to do in LCAO base for meta operator
 template<>
 void Meta<OperatorLCAO<double, double>>::contributeHk(int ik)
 {
-    return;
-}
+    }
 
 //nothing to do in LCAO base for meta operator
 template<>
 void Meta<OperatorLCAO<std::complex<double>, double>>::contributeHk(int ik)
 {
-    return;
-}
+    }
 
 template<>
 void Meta<OperatorLCAO<std::complex<double>, std::complex<double>>>::contributeHk(int ik)
 {
-    return;
-}
+    }
 
-}
+}  // namespace hamilt

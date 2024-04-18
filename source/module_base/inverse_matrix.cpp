@@ -49,8 +49,6 @@ void Inverse_Matrix_Complex::init(const int &dim_in)
 	this->EA.create(dim, dim);
 
 	this->allocate = true;
-
-	return;
 }
 
 
@@ -71,7 +69,6 @@ void Inverse_Matrix_Complex::using_zheev( const ModuleBase::ComplexMatrix &Sin, 
 
     Sout = this->A * this->EA;
 	ModuleBase::timer::tick("Inverse","using_zheev");
-    return;
 }
 
 void Inverse_Matrix_Real(const int dim, const double* in, double* out)
@@ -106,4 +103,4 @@ void Inverse_Matrix_Real(const int dim, const double* in, double* out)
     delete[] ipiv;
     delete[] work;
 }
-}
+}  // namespace ModuleBase

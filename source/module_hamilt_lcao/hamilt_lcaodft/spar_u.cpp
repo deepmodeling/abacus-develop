@@ -20,7 +20,7 @@ void sparse_format::cal_HR_dftu(
     ModuleBase::GlobalFunc::ZEROS(nonzero_num, total_R_num);
 
     int count = 0;
-    for (auto &R_coor : all_R_coor)
+    for (const auto &R_coor : all_R_coor)
     {
         auto iter = SR_sparse.find(R_coor);
         if (iter != SR_sparse.end())
@@ -44,7 +44,7 @@ void sparse_format::cal_HR_dftu(
     auto &temp_HR_sparse = HR_sparse[current_spin];
 
     count = 0;
-    for (auto &R_coor : all_R_coor)
+    for (const auto &R_coor : all_R_coor)
     {
         if (nonzero_num[count] != 0)
         {
@@ -121,8 +121,6 @@ void sparse_format::cal_HR_dftu(
     SR_tmp = nullptr;
 
     ModuleBase::timer::tick("sparse_format","cal_HR_dftu_sparse");
-
-    return;
 }
 
 
@@ -141,7 +139,7 @@ void sparse_format::cal_HR_dftu_soc(
     int *nonzero_num = new int[total_R_num]();
     ModuleBase::GlobalFunc::ZEROS(nonzero_num, total_R_num);
     int count = 0;
-    for (auto &R_coor : all_R_coor)
+    for (const auto &R_coor : all_R_coor)
     {
         auto iter = SR_soc_sparse.find(R_coor);
         if (iter != SR_soc_sparse.end())
@@ -164,7 +162,7 @@ void sparse_format::cal_HR_dftu_soc(
     int iic=0;
 
     count = 0;
-    for (auto &R_coor : all_R_coor)
+    for (const auto &R_coor : all_R_coor)
     {
         if (nonzero_num[count] != 0)
         {
@@ -241,6 +239,4 @@ void sparse_format::cal_HR_dftu_soc(
     SR_soc_tmp = nullptr;
 
     ModuleBase::timer::tick("sparse_format","calculat_HR_dftu_soc");
-
-    return;
 }

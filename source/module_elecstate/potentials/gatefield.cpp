@@ -157,7 +157,7 @@ double Gatefield::mopopla(double &zgate, double z, bool flag)
     {
         return z * z;
     }
-    else if (z <= 0)
+    if (z <= 0)
     {
         return z;
     }

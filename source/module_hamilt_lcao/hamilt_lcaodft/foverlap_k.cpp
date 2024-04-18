@@ -66,7 +66,7 @@ void Force_LCAO_k::cal_foverlap_k(const bool isforce,
     std::vector<ModuleBase::ComplexMatrix> edm_k(nks);
 
     // use the original formula (Hamiltonian matrix) to calculate energy density matrix
-    if (DM->EDMK.size())
+    if (!DM->EDMK.empty())
     {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 1024)
@@ -246,5 +246,4 @@ void Force_LCAO_k::cal_foverlap_k(const bool isforce,
     }
 
     ModuleBase::timer::tick("Force_LCAO_k", "cal_foverlap_k");
-    return;
 }

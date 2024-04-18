@@ -28,11 +28,11 @@ class Numerical_Descriptor
 
 	int lmax; // lmax for descriptor
 	int nmax; // nmax for descriptor
-	int nlocal; // total number of atomic orbitals
+	int nlocal{}; // total number of atomic orbitals
 
 	Bessel_Basis bessel_basis;
 
-	ModuleBase::IntArray *mu_index;
+	ModuleBase::IntArray *mu_index{};
 	void init_mu_index(void);//mohan added 2021-01-03
 
 	// void jlq3d_overlap(ModuleBase::realArray &overlap_Q1, ModuleBase::realArray &overlap_Q2,

@@ -12,21 +12,21 @@ Matrix3::Matrix3(const double &r11, const double &r12, const double &r13,
 	e31 = r31;e32 = r32;e33 = r33;
 }
 
-void Matrix3::Identity(void)
+void Matrix3::Identity()
 {
 	e11 = 1;e12 = 0;e13 = 0;
 	e21 = 0;e22 = 1;e23 = 0;
 	e31 = 0;e32 = 0;e33 = 1;
 }
 
-void Matrix3::Zero(void)
+void Matrix3::Zero()
 {
 	e11 = 0;e12 = 0;e13 = 0;
 	e21 = 0;e22 = 0;e23 = 0;
 	e31 = 0;e32 = 0;e33 = 0;
 }
 
-double Matrix3::Det(void) const 
+double Matrix3::Det() const 
 {
 	return	e11*e22*e33 -
 	        e11*e32*e23 +
@@ -36,12 +36,12 @@ double Matrix3::Det(void) const
 	        e31*e22*e13;
 }
 
-Matrix3 Matrix3::Transpose(void) const
+Matrix3 Matrix3::Transpose() const
 {
 	return Matrix3(e11, e21, e31, e12, e22, e32, e13, e23, e33);
 }
 
-Matrix3 Matrix3::Inverse(void) const
+Matrix3 Matrix3::Inverse() const
 {
 	double d = this->Det();
 
@@ -167,7 +167,7 @@ Matrix3 operator *(const double &s, const Matrix3 &m)
 // whether m1==m2
 bool operator==(const Matrix3 &m1, const Matrix3 &m2)
 {
-	if(m1.e11 == m2.e11 &&
+	return m1.e11 == m2.e11 &&
 	   m1.e12 == m2.e12 &&
 	   m1.e13 == m2.e13 &&
 	   m1.e21 == m2.e21 &&
@@ -175,11 +175,7 @@ bool operator==(const Matrix3 &m1, const Matrix3 &m2)
 	   m1.e23 == m2.e23 &&
 	   m1.e31 == m2.e31 &&
 	   m1.e32 == m2.e32 &&
-	   m1.e33 == m2.e33)
-	{
-		return true;
-	}
-	return false;
+	   m1.e33 == m2.e33;
 }
 
 //whether m1 != m2
@@ -189,15 +185,14 @@ bool operator!=(const Matrix3 &m1, const Matrix3 &m2)
 }
 
 
-void Matrix3::print(void)const
+void Matrix3::print()const
 {
 	std::cout << e11 << std::setw(15) << e12 << std::setw(15) << e13 << std::endl ;
 	std::cout << e21 << std::setw(15) << e22 << std::setw(15) << e23 << std::endl ;
 	std::cout << e31 << std::setw(15) << e32 << std::setw(15) << e33 << std::endl ;
-	return;
 }
 
-ModuleBase::matrix Matrix3::to_matrix(void)const			// Peize Lin add 2021.03.09
+ModuleBase::matrix Matrix3::to_matrix()const			// Peize Lin add 2021.03.09
 {
 	ModuleBase::matrix m(3,3);
 	m(0,0)=e11;	m(0,1)=e12;	m(0,2)=e13;
@@ -206,4 +201,4 @@ ModuleBase::matrix Matrix3::to_matrix(void)const			// Peize Lin add 2021.03.09
 	return m;
 }
 
-}
+}  // namespace ModuleBase

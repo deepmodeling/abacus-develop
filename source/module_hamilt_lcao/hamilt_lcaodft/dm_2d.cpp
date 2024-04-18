@@ -90,5 +90,4 @@ void Local_Orbital_Charge::cal_dm_R(
         }//T1
     }//ik
     ModuleBase::timer::tick("Local_Orbital_Charge", "cal_dm_R");
-    return;
 }

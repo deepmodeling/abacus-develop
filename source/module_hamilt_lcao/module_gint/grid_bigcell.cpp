@@ -37,7 +37,7 @@ Grid_BigCell::~Grid_BigCell()
 	delete[] index_atom;
 }
 
-void Grid_BigCell::init_big_latvec(void)
+void Grid_BigCell::init_big_latvec()
 {
 	ModuleBase::TITLE("Grid_BigCell","init_big_latvec");
 	// initialize the mesh cell vectors.
@@ -101,11 +101,10 @@ void Grid_BigCell::init_big_latvec(void)
 			<< std::setw(15) << bigcell_vec3[2]
 			<< ")" << std::endl;
 	}
-	return;
-}
+	}
 
 
-void Grid_BigCell::init_grid_expansion(void)
+void Grid_BigCell::init_grid_expansion()
 {
 	ModuleBase::TITLE("Grid_BigCell","init_grid_expansion");
 
@@ -156,11 +155,10 @@ void Grid_BigCell::init_grid_expansion(void)
 	this->nxyze = this->nxe * this->nye * this->nze;
 
 	if(GlobalV::OUT_LEVEL != "m") ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"dimension of extened grid",nxe,nye,nze);
-	return;
 }
 
 
-void Grid_BigCell::init_tau_in_bigcell(void)
+void Grid_BigCell::init_tau_in_bigcell()
 {
 	ModuleBase::TITLE("Grid_BigCell","init_tau_in_bigcell");
 	
@@ -287,8 +285,7 @@ void Grid_BigCell::init_tau_in_bigcell(void)
 		}
 	}
 
-	return;
-}
+	}
 
 // (3)
 // if f2normal == true, calculate the index2normal.
@@ -380,5 +377,4 @@ void Grid_BigCell::grid_expansion_index(bool f2normal, int *target)const
 		}// j
 	}// i
 	ModuleBase::timer::tick("Grid_BigCell","grid_expansion_index");
-	return;
 }

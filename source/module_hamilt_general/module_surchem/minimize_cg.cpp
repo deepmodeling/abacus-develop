@@ -164,7 +164,7 @@ void surchem::minimize_cg(const UnitCell& ucell,
 void surchem::Leps2(const UnitCell& ucell,
                     const ModulePW::PW_Basis* rho_basis,
                     complex<double>* phi,
-                    double* epsilon,            // epsilon from shapefunc, dim=nrxx
+                    const double* epsilon,            // epsilon from shapefunc, dim=nrxx
                     complex<double>* gradphi_x, // dim=ngmc
                     complex<double>* gradphi_y,
                     complex<double>* gradphi_z,

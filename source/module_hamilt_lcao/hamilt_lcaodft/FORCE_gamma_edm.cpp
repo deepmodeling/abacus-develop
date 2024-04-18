@@ -86,5 +86,4 @@ void Force_LCAO_gamma::cal_foverlap(
 		StressTools::stress_fill(GlobalC::ucell.lat0, GlobalC::ucell.omega, soverlap);
     }
     ModuleBase::timer::tick("Force_LCAO_gamma","cal_foverlap");
-    return;
 }

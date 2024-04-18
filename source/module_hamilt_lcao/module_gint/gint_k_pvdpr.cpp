@@ -10,7 +10,7 @@
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
-void Gint_k::allocate_pvdpR(void)
+void Gint_k::allocate_pvdpR()
 {
     ModuleBase::TITLE("Gint_k","allocate_pvpR");
 
@@ -33,11 +33,9 @@ void Gint_k::allocate_pvdpR(void)
     }
 
     ModuleBase::Memory::record("pvdpR_reduced", 3 * sizeof(double) * this->gridt->nnrg * nspin);
-
-    return;
 }
 
-void Gint_k::destroy_pvdpR(void)
+void Gint_k::destroy_pvdpR()
 {
     ModuleBase::TITLE("Gint_k","destroy_pvpR");
 
@@ -61,6 +59,4 @@ void Gint_k::destroy_pvdpR(void)
 		delete[] pvdpRz_reduced[is];
 	}
     delete[] pvdpRz_reduced;
-
-    return;
 }

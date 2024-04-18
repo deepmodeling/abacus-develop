@@ -9,7 +9,7 @@ Record_adj::~Record_adj(){
 		this->delete_grid();
 }
 
-void Record_adj::delete_grid(void)
+void Record_adj::delete_grid()
 {
 	for(int i=0; i<na_proc; i++)
 	{
@@ -23,7 +23,7 @@ void Record_adj::delete_grid(void)
 	}
 	delete[] info;
 	delete[] na_each;
-	if (iat2ca) delete[] iat2ca;
+	delete[] iat2ca;
 	info_modified=false;
 }
 
@@ -252,7 +252,6 @@ void Record_adj::for_2d(Parallel_Orbitals &pv, bool gamma_only)
 #endif
 	ModuleBase::timer::tick("Record_adj","for_2d");
 	info_modified=true;
-	return;
 }
 
 
@@ -469,7 +468,5 @@ void Record_adj::for_grid(const Grid_Technique &gt)
 #endif
 	ModuleBase::timer::tick("Record_adj","for_grid");
 	info_modified=true;
-//	std::cout << " after for_grid" << std::endl;
-	return;
 }
 

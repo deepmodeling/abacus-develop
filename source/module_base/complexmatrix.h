@@ -23,13 +23,13 @@ public:
 	ComplexMatrix(): nr(0), nc(0), size(0), c(nullptr){}
 	ComplexMatrix(const int nrows,const int ncols,const bool flag_zero=true);		// Peize Lin add flag_zero 2019-05-13
 	ComplexMatrix(const ComplexMatrix &m1);
-	ComplexMatrix(ComplexMatrix && m1);						// Peize Lin add 2016-08-05
+	ComplexMatrix(ComplexMatrix && m1) noexcept;						// Peize Lin add 2016-08-05
 	explicit ComplexMatrix(const matrix &m);							// Peize Lin add 2017-03-29
 	~ComplexMatrix();
-	
-	void create(const int nrow,const int ncol,const bool flag_zero=true);		// Peize Lin add flag_zero 2019-05-13
+
+	void create(const int nr_in,const int nc_in,const bool flag_zero=true);		// Peize Lin add flag_zero 2019-05-13
 	ComplexMatrix& operator=(const ComplexMatrix &m);
-	ComplexMatrix& operator=(ComplexMatrix && m);			// Peize Lin add 2016-08-05
+	ComplexMatrix& operator=(ComplexMatrix && m) noexcept;			// Peize Lin add 2016-08-05
 
 	//============
 	// Operators
@@ -44,13 +44,13 @@ public:
 		assert(ir>=0);	assert(ir<nr);	assert(ic>=0);	assert(ic<nc);
 		return c[ir*nc+ic];//mohan modify in-line 2007-10-13
 	}
-	
+
 	ComplexMatrix& operator*=(const std::complex<double> &s);
 	ComplexMatrix& operator+=(const ComplexMatrix &m);
 	ComplexMatrix& operator-=(const ComplexMatrix &m);
 	//return a matrix whose element is the real part of element of the ComplexMatrix.
 	matrix real() const;						// Peize Lin add 2017-03-29
-	
+
 	//==================
 	// member function:
 	//==================
@@ -70,19 +70,19 @@ public:
 ComplexMatrix operator+(const ComplexMatrix &m1,  const ComplexMatrix &m2);
 ComplexMatrix operator-(const ComplexMatrix &m1,  const ComplexMatrix &m2);
 ComplexMatrix operator*(const ComplexMatrix &m1,  const ComplexMatrix &m2);
-ComplexMatrix operator*(const std::complex<double> &s, const ComplexMatrix &m);
-ComplexMatrix operator*(const ComplexMatrix &m,   const std::complex<double> &s);
-ComplexMatrix operator*(const double &s,          const ComplexMatrix &m);
-ComplexMatrix operator*(const ComplexMatrix &m,   const double &s);
+ComplexMatrix operator*(const std::complex<double> &c, const ComplexMatrix &m);
+ComplexMatrix operator*(const ComplexMatrix &m,   const std::complex<double> &c);
+ComplexMatrix operator*(const double &r,          const ComplexMatrix &m);
+ComplexMatrix operator*(const ComplexMatrix &m,   const double &r);
 
-//calculate the trace	
+//calculate the trace
 std::complex<double> trace(const ComplexMatrix &m);
 
 //calculate the sum of the square of the modulus of the elements in ir row.
-double abs2_row(const ComplexMatrix &m,const int ir);		// mohan add 2008-7-1	
+double abs2_row(const ComplexMatrix &m,const int ir);		// mohan add 2008-7-1
 
 //calculate the sum of the square of the modulus of the elements in ic-th column.
-double abs2_column(const ComplexMatrix &m,const int ic);	// mohan add 2008-7-1 
+double abs2_column(const ComplexMatrix &m,const int ic);	// mohan add 2008-7-1
 
 // calculate the sum of the square of the modulus of all elements.
 double abs2(const ComplexMatrix &m);
@@ -95,32 +95,32 @@ ComplexMatrix conj(const ComplexMatrix &m);						// Peize Lin add 2019-05-13
 
 //do mout += s*min
 void scale_accumulate(
-		const std::complex<double> &s, 
-		const ComplexMatrix &min, 
+		const std::complex<double> &s,
+		const ComplexMatrix &min,
 		ComplexMatrix &mout);
 
 //do (*mout[i]) += s * (*min[i]); int i<nmat
 void scale_accumulate(
-		const int &nmat, 
-		const std::complex<double> &s, 
-		ComplexMatrix **min, 
+		const int &nmat,
+		const std::complex<double> &s,
+		ComplexMatrix **min,
 		ComplexMatrix **mout);
 
 // Do mout = s1*m1 + s2*m2
 void scaled_sum(
-		const std::complex<double> &s1, 
-		const ComplexMatrix &m1, 
-		const std::complex<double> &s2, 
-		const ComplexMatrix &m2, 
+		const std::complex<double> &s1,
+		const ComplexMatrix &m1,
+		const std::complex<double> &s2,
+		const ComplexMatrix &m2,
 		ComplexMatrix &mout);
 
 // Do (*mout[i]) = s1 * (*m1[i]) + s2 * (*m2[i])
 void scaled_sum(
 		const int &nmat,
-		const std::complex<double> &s1, 
-		ComplexMatrix **m1, 
+		const std::complex<double> &s1,
+		ComplexMatrix **m1,
 		const std::complex<double> &s2,
-		ComplexMatrix **m2, 
+		ComplexMatrix **m2,
 		ComplexMatrix **mout);
 }
 #endif

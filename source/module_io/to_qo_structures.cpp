@@ -48,7 +48,8 @@ void toQO::read_structures(const UnitCell* p_ucell,
         {
             int nks_this_rank = nks_perrank + int(i < nks_remain);
             std::vector<int> nks_this_rank_indices;
-            for(int j = 0; j < nks_this_rank; j++)
+            nks_this_rank_indices.reserve(nks_this_rank);
+for(int j = 0; j < nks_this_rank; j++)
             {
                 nks_this_rank_indices.push_back(start_ik + j);
             }
@@ -93,7 +94,8 @@ void toQO::eliminate_duplicate_vector3(std::vector<ModuleBase::Vector3<T>> &v)
 {
     std::vector<std::vector<T>> v_;
     // convert vector3 to vector
-    for(int i = 0; i < v.size(); i++)
+    v_.reserve(v.size());
+for(int i = 0; i < v.size(); i++)
     {
         v_.push_back(std::vector<T>{v[i].x, v[i].y, v[i].z});
     }
@@ -152,7 +154,7 @@ std::vector<ModuleBase::Vector3<int>> toQO::scan_supercell_for_atom(int it, int 
     return n1n2n3;
 }
 
-double cosine_between_vector3(ModuleBase::Vector3<double> v1, ModuleBase::Vector3<double> v2)
+double cosine_between_vector3(const ModuleBase::Vector3<double>& v1, const ModuleBase::Vector3<double>& v2)
 {
     double f = v1 * v2;
     f /= v1.norm();
@@ -160,7 +162,7 @@ double cosine_between_vector3(ModuleBase::Vector3<double> v1, ModuleBase::Vector
     return f;
 }
 
-std::vector<int> toQO::rcut_to_supercell_index(double rcut, ModuleBase::Vector3<double> a, ModuleBase::Vector3<double> b, ModuleBase::Vector3<double> c)
+std::vector<int> toQO::rcut_to_supercell_index(double rcut, const ModuleBase::Vector3<double>& a, const ModuleBase::Vector3<double>& b, const ModuleBase::Vector3<double>& c)
 {
     double fab = std::sqrt(1-std::pow(cosine_between_vector3(a, b), 2));
     double fac = std::sqrt(1-std::pow(cosine_between_vector3(a, c), 2));
@@ -175,7 +177,7 @@ std::vector<int> toQO::rcut_to_supercell_index(double rcut, ModuleBase::Vector3<
     return n1n2n3;
 }
 
-double toQO::norm2_rij_supercell(ModuleBase::Vector3<double> rij, int n1, int n2, int n3)
+double toQO::norm2_rij_supercell(const ModuleBase::Vector3<double>& rij, int n1, int n2, int n3)
 {
     double f = rij * rij;
     f += n1*n1*(p_ucell_->a1*p_ucell_->a1);
@@ -234,7 +236,8 @@ void toQO::scan_supercell(const int& rank, const int& nranks)
         {
             int nR_this_rank = nRs_perrank + int(i < nRs_remain);
             std::vector<int> nR_this_rank_indices;
-            for(int j = 0; j < nR_this_rank; j++)
+            nR_this_rank_indices.reserve(nR_this_rank);
+for(int j = 0; j < nR_this_rank; j++)
             {
                 nR_this_rank_indices.push_back(start_iR + j);
             }
@@ -264,8 +267,8 @@ void toQO::scan_supercell(const int& rank, const int& nranks)
 #endif
 }
 
-ModuleBase::Vector3<double> toQO::cal_two_center_vector(ModuleBase::Vector3<double> rij,
-                                                        ModuleBase::Vector3<int> R)
+ModuleBase::Vector3<double> toQO::cal_two_center_vector(const ModuleBase::Vector3<double>& rij,
+                                                        const ModuleBase::Vector3<int>& R)
 {
     ModuleBase::Vector3<double> Rij;
     Rij.x = rij.x + R.x * p_ucell_->a1.x 

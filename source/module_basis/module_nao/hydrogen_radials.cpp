@@ -81,8 +81,8 @@ std::vector<double> HydrogenRadials::generate_hydrogen_radial_segment(const doub
     return rvalue;
 }
 
-double HydrogenRadials::radial_norm(const std::vector<double> rgrid,
-                                    const std::vector<double> rvalue)
+double HydrogenRadials::radial_norm(const std::vector<double>& rgrid,
+                                    const std::vector<double>& rvalue)
 {
     std::vector<double> integrand(rvalue.size());
     for(int ir = 0; ir != rvalue.size(); ++ir)
@@ -141,7 +141,7 @@ double HydrogenRadials::generate_hydrogen_radial_toconv(const double charge,
         std::vector<double> rvalue_segment = generate_hydrogen_radial_segment(
             charge, with_slater_screening, n, l, rmin_, rmax_, dr, rank, ptr_log);
         // before push back, pop back the last element
-        if(rgrid.size() != 0)
+        if(!rgrid.empty())
         {
             rgrid.pop_back();
             rvalue.pop_back();
@@ -163,7 +163,7 @@ double HydrogenRadials::generate_hydrogen_radial_toconv(const double charge,
 }
 
 std::vector<std::pair<int, int>> HydrogenRadials::unzip_strategy(const int nmax,
-                                                                 const std::string strategy)
+                                                                 const std::string& strategy)
 {
     if(strategy.substr(0, 6) != "energy")
     {
@@ -288,7 +288,7 @@ HydrogenRadials::generate_orb(const double charge,
                               const double dr,
                               const double conv_thr,
                               const int rank,
-                              const std::string strategy,
+                              const std::string& strategy,
                               std::ofstream* ptr_log)
 {
     // create space for storing all generated orbitals
@@ -347,7 +347,7 @@ HydrogenRadials::generate_orb(const double charge,
 
 std::map<std::pair<int, int>, std::pair<int, int>>
 HydrogenRadials::mapping_nl_lzeta(const int nmax,
-                                  const std::string strategy)
+                                  const std::string& strategy)
 {
     std::map<std::pair<int, int>, std::pair<int, int>> nl_lzeta;
     std::vector<std::pair<int, int>> nl_pairs = unzip_strategy(nmax, strategy);
@@ -385,7 +385,7 @@ void HydrogenRadials::hydrogen(const double charge,
                                const double dr,
                                const double conv_thr,
                                const int rank,
-                               const std::string strategy,
+                               const std::string& strategy,
                                std::ofstream* ptr_log)
 {
     std::map<std::pair<int, int>, std::pair<std::vector<double>, std::vector<double>>> orbitals = 
@@ -410,7 +410,7 @@ void HydrogenRadials::hydrogen(const double charge,
     }
 }
 
-double HydrogenRadials::slater_screening(const std::string symbol,
+double HydrogenRadials::slater_screening(const std::string& symbol,
                                          const int n,
                                          const int l)
 {
@@ -432,7 +432,7 @@ double HydrogenRadials::slater_screening(const std::string symbol,
     }
     // special case for 1s: for H and He, use 0.30 for 1s screening constant
     if(symbol == "H") return 0.0; // only one 1s electron, no screening by "other electrons"
-    else if(symbol == "He") return 0.30; // only two 1s electrons, one screening the other
+    if(symbol == "He") return 0.30; // only two 1s electrons, one screening the other
     else if(n == 1) return 0.30;
     for(int n_ = 1; n_ <= n; ++n_)
     {

@@ -37,7 +37,7 @@ bool Parallel_2D::in_this_processor(const int& iw1_all, const int& iw2_all) cons
 {
     if (global2local_row(iw1_all) == -1)
         return false;
-    else if (global2local_col(iw2_all) == -1)
+    if (global2local_col(iw2_all) == -1)
         return false;
     return true;
 }
@@ -73,8 +73,7 @@ void Parallel_2D::set_global2local(const int& M_A, const int& N_A,
         }
     }
 
-    return;
-}
+    }
 
 void Parallel_2D::init_global2local(const int& M_A, const int& N_A, std::ofstream& ofs_running)
 {
@@ -96,7 +95,6 @@ void Parallel_2D::init_global2local(const int& M_A, const int& N_A, std::ofstrea
 
     ModuleBase::Memory::record("trace_row_col", sizeof(int) * M_A);
     ModuleBase::Memory::record("trace_row_col", sizeof(int) * N_A);
-    return;
 }
 
 #ifdef __MPI
@@ -118,7 +116,6 @@ void Parallel_2D::mpi_create_cart(const MPI_Comm& diag_world)
     int dim[2] = { this->dim0, this->dim1 };
     int reorder = 0;
     MPI_Cart_create(diag_world, 2, dim, period, reorder, &this->comm_2D);
-    return;
 }
 
 void Parallel_2D::set_desc(const int& gr, const int& gc, const int& lld, bool first_time)
@@ -197,10 +194,9 @@ int Parallel_2D::set_local2global(
         {
             return 1;
         }
-        else
-        {
-            ModuleBase::WARNING_QUIT("Parallel_2D::set_local2global", "some processor has no row blocks, try a smaller 'nb2d' parameter.");
-        }
+        
+                    ModuleBase::WARNING_QUIT("Parallel_2D::set_local2global", "some processor has no row blocks, try a smaller 'nb2d' parameter.");
+       
     }
 
     // (2.1) row_b : how many blocks for this processor. (at least)
@@ -270,10 +266,9 @@ int Parallel_2D::set_local2global(
         {
             return 1;
         }
-        else
-        {
-            ModuleBase::WARNING_QUIT("Parallel_2D::set_local2global", "some processor has no column blocks.");
-        }
+        
+                    ModuleBase::WARNING_QUIT("Parallel_2D::set_local2global", "some processor has no column blocks.");
+       
     }
 
     col_b = block / dim[1];

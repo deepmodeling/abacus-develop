@@ -35,8 +35,8 @@ class Velocity
      */
     void act(const psi::Psi<std::complex<double>>* psi_in,
              const int n_npwx,
-             const std::complex<double>* tmpsi_in,
-             std::complex<double>* tmhpsi,
+             const std::complex<double>* psi0,
+             std::complex<double>* vpsi,
              const bool add = false) const;
     
     bool nonlocal = true;
@@ -50,7 +50,7 @@ class Velocity
 
     const UnitCell* ucell = nullptr;
 
-    int ik;
+    int ik{};
 
     double tpiba;
 };

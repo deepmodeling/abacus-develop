@@ -206,7 +206,7 @@ namespace Gint_Tools
 			{
 				if ( atom->iw2_new[iw] )
 				{
-					auto philn = &OrbPhi.PhiLN(atom->iw2l[iw], atom->iw2n[iw]);
+					const auto *philn = &OrbPhi.PhiLN(atom->iw2l[iw], atom->iw2n[iw]);
 					it_psi_uniform[iw] = &philn->psi_uniform[0];
 					it_dpsi_uniform[iw] = &philn->dpsi_uniform[0];
 				}
@@ -272,8 +272,8 @@ namespace Gint_Tools
 					{
 						if ( atom->iw2_new[iw] )
 						{
-							auto psi_uniform = it_psi_uniform[iw];
-							auto dpsi_uniform = it_dpsi_uniform[iw];
+							const auto *psi_uniform = it_psi_uniform[iw];
+							const auto *dpsi_uniform = it_dpsi_uniform[iw];
 							phi = c1*psi_uniform[ip] + c2*dpsi_uniform[ip]			 // radial wave functions
 								+ c3*psi_uniform[ip+1] + c4*dpsi_uniform[ip+1];
 						}
@@ -283,7 +283,6 @@ namespace Gint_Tools
 			}// end ib
 		}// end id
 		ModuleBase::timer::tick("Gint_Tools", "cal_psir_ylm");
-		return;
 	}
 
     void cal_dpsir_ylm(
@@ -407,7 +406,6 @@ namespace Gint_Tools
 			}
 		}
 		ModuleBase::timer::tick("Gint_Tools", "cal_dpsir_ylm");
-		return;
 	}
 
     void cal_ddpsir_ylm(
@@ -699,7 +697,6 @@ namespace Gint_Tools
 			}//end ib
 		}//end id(atom)
 		ModuleBase::timer::tick("Gint_Tools", "cal_ddpsir_ylm");
-		return;
 	}
 
     void cal_dpsirr_ylm(
@@ -776,7 +773,6 @@ namespace Gint_Tools
 			}
 		}
 		ModuleBase::timer::tick("Gint_Tools", "cal_dpsirr_ylm");
-		return;
 	}
 
 	// atomic basis sets
@@ -1373,4 +1369,4 @@ namespace Gint_Tools
 		delete[] all_out_of_range;
 
 	}
-}
+}  // namespace Gint_Tools

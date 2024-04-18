@@ -98,17 +98,17 @@ class ORB_gaunt_table
 	
 	//int P_EL(const int& L);
 
-	int EP_EL(const int& L);
+	static int EP_EL(const int& L);
 
-	int index_func(
+	static int index_func(
 			const int& l1,
 			const int& l2,
 			const int& l3,
 			const int& m3	);
 	
-	double Fact(const int& n);
+	static double Fact(const int& n);
 
-	void Swap(
+	static void Swap(
 			int& l1,
 			int& m1,
 			int& l2,

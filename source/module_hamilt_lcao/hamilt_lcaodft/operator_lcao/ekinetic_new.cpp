@@ -273,7 +273,6 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
     }
 
     ModuleBase::timer::tick("EkineticNew", "contributeHR");
-    return;
 }
 
 template class hamilt::EkineticNew<hamilt::OperatorLCAO<double, double>>;

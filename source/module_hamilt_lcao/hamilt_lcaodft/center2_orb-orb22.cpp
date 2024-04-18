@@ -117,9 +117,9 @@ double Center2_Orb::Orb22::cal_overlap(
 		{
 			const double Gaunt_real_B1_B2_B12 =
 				this->MGT.Gaunt_Coefficients (
-					this->MGT.get_lm_index(LB1,mB1),
-					this->MGT.get_lm_index(LB2,mB2),
-					this->MGT.get_lm_index(LB,mB));
+					ORB_gaunt_table::get_lm_index(LB1,mB1),
+					ORB_gaunt_table::get_lm_index(LB2,mB2),
+					ORB_gaunt_table::get_lm_index(LB,mB));
 			if( 0==Gaunt_real_B1_B2_B12 )	continue;
 
 			overlap += Gaunt_real_B1_B2_B12 * orb21.second.cal_overlap(RA, RB, mA1, mA2, mB);
@@ -147,9 +147,9 @@ ModuleBase::Vector3<double> Center2_Orb::Orb22::cal_grad_overlap(
 		{
 			const double Gaunt_real_B1_B2_B12 =
 				this->MGT.Gaunt_Coefficients (
-					this->MGT.get_lm_index(LB1,mB1),
-					this->MGT.get_lm_index(LB2,mB2),
-					this->MGT.get_lm_index(LB,mB));
+					ORB_gaunt_table::get_lm_index(LB1,mB1),
+					ORB_gaunt_table::get_lm_index(LB2,mB2),
+					ORB_gaunt_table::get_lm_index(LB,mB));
 			if( 0==Gaunt_real_B1_B2_B12 )	continue;
 
 			grad_overlap += Gaunt_real_B1_B2_B12 * orb21.second.cal_grad_overlap(RA, RB, mA1, mA2, mB);

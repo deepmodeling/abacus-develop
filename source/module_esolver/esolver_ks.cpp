@@ -1,5 +1,6 @@
 #include "esolver_ks.h"
-#include <time.h>
+
+#include <ctime>
 #ifdef __MPI
 #include <mpi.h>
 #else
@@ -564,12 +565,11 @@ void ESolver_KS<T, Device>::run(const int istep, UnitCell& ucell)
 	int Jnkstot_ibz = this->pelec->klist->nkstot_ibz;
 	Json::add_nkstot(Jnkstot,Jnkstot_ibz);
 #endif //__RAPIDJSON          
-	return;
-};
+	};
 
 
 template<typename T, typename Device>
-void ESolver_KS<T, Device>::print_head(void)
+void ESolver_KS<T, Device>::print_head()
 {
 	std::cout << " " << std::setw(7) << "ITER";
 
@@ -700,4 +700,4 @@ template class ESolver_KS<std::complex<double>, psi::DEVICE_GPU>;
 #ifdef __LCAO
 template class ESolver_KS<double, psi::DEVICE_CPU>;
 #endif
-}
+}  // namespace ModuleESolver

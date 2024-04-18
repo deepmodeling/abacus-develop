@@ -21,7 +21,7 @@ FAtom::~FAtom()
 {
 }
 
-void FAtom::delete_vector(void)
+void FAtom::delete_vector()
 {
 	if (as) { as->delete_vector(); }
 }

@@ -276,7 +276,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
             // if set bit = true, there would be error in soc-multi-core calculation, noted by zhengdy-soc
             if (this->psi != nullptr && (istep % GlobalV::out_interval == 0))
             {
-                hamilt::MatrixBlock<complex<double>> h_mat, s_mat;
+                hamilt::MatrixBlock<complex<double>> h_mat{}, s_mat{};
                 this->p_hamilt->matrix(h_mat, s_mat);
                 if (hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs[0])
                 {
@@ -285,7 +285,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
 							GlobalV::NLOCAL,
 							bit,
 							hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs[1],
-							1,
+							true,
 							GlobalV::out_app_flag,
 							"H",
 							"data-" + std::to_string(ik),
@@ -297,7 +297,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
 							GlobalV::NLOCAL,
 							bit,
 							hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs[1],
-							1,
+							true,
 							GlobalV::out_app_flag,
 							"S",
 							"data-" + std::to_string(ik),
@@ -392,7 +392,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
             if (td_htype == 1)
             {
                 this->p_hamilt->updateHk(ik);
-                hamilt::MatrixBlock<complex<double>> h_mat, s_mat;
+                hamilt::MatrixBlock<complex<double>> h_mat{}, s_mat{};
                 this->p_hamilt->matrix(h_mat, s_mat);
                 BlasConnector::copy(this->LOC.ParaV->nloc, h_mat.p, 1, Hk_laststep[ik], 1);
                 BlasConnector::copy(this->LOC.ParaV->nloc, s_mat.p, 1, Sk_laststep[ik], 1);
@@ -463,7 +463,7 @@ void ESolver_KS_LCAO_TDDFT::after_scf(const int istep)
 
 
 // use the original formula (Hamiltonian matrix) to calculate energy density matrix
-void ESolver_KS_LCAO_TDDFT::cal_edm_tddft(void)
+void ESolver_KS_LCAO_TDDFT::cal_edm_tddft()
 {
     // mohan add 2024-03-27
 	const int nlocal = GlobalV::NLOCAL;
@@ -509,8 +509,8 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft(void)
         int nrow = this->LOC.ParaV->nrow;
         int ncol = this->LOC.ParaV->ncol;
 
-        hamilt::MatrixBlock<complex<double>> h_mat;
-        hamilt::MatrixBlock<complex<double>> s_mat;
+        hamilt::MatrixBlock<complex<double>> h_mat{};
+        hamilt::MatrixBlock<complex<double>> s_mat{};
 
         p_hamilt->matrix(h_mat, s_mat);
         zcopy_(&nloc, h_mat.p, &inc, Htmp, &inc);
@@ -702,6 +702,5 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft(void)
         delete[] work;
 #endif
     }
-    return;
-}
+    }
 } // namespace ModuleESolver

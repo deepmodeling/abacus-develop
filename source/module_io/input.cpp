@@ -5,17 +5,6 @@
 // #include "global.h"
 #include "module_io/input.h"
 
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-
-#include <algorithm>
-#include <fstream>
-#include <iomanip>
-#include <iostream>
-#include <sstream>
-#include <vector>
-
 #include "module_base/constants.h"
 #include "module_base/global_file.h"
 #include "module_base/global_function.h"
@@ -23,6 +12,16 @@
 #include "module_base/parallel_common.h"
 #include "module_base/timer.h"
 #include "version.h"
+
+#include <algorithm>
+#include <cstdio>
+#include <cstring>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+#include <unistd.h>
+#include <vector>
 Input INPUT;
 
 void Input::Init(const std::string& fn)
@@ -81,7 +80,7 @@ void Input::Init(const std::string& fn)
 #else
     const char* commit = "unknown";
 #endif
-    time_t time_now = time(NULL);
+    time_t time_now = time(nullptr);
     start_time = time_now;
     GlobalV::ofs_running << "                                                                                     "
                          << std::endl;
@@ -131,10 +130,9 @@ void Input::Init(const std::string& fn)
     //     pseudo_type); // mohan add 2013-05-20 (xiaohui add 2013-06-23, GlobalV::global_pseudo_type -> pseudo_type)
 
     ModuleBase::timer::tick("Input", "Init");
-    return;
 }
 
-void Input::Default(void)
+void Input::Default()
 {
     ModuleBase::TITLE("Input", "Default");
     //----------------------------------------------------------
@@ -220,7 +218,7 @@ void Input::Default(void)
     ref_cell_factor = 1.0;
     symmetry_prec = 1.0e-6;    // LiuXh add 2021-08-12, accuracy for symmetry
     symmetry_autoclose = true; // whether to close symmetry automatically when error occurs in symmetry analysis
-    cal_force = 0;
+    cal_force = false;
     force_thr = 1.0e-3;
     force_thr_ev2 = 0;
     stress_thr = 0.5; // LiuXh add 20180515 liuyu update 2023-05-10
@@ -279,14 +277,14 @@ void Input::Default(void)
     pw_diag_thr = 1.0e-2;
     nb2d = 0;
     nurse = 0;
-    colour = 0;
-    t_in_h = 1;
-    vl_in_h = 1;
-    vnl_in_h = 1;
-    vh_in_h = 1;
-    vion_in_h = 1;
-    test_force = 0;
-    test_stress = 0;
+    colour = false;
+    t_in_h = true;
+    vl_in_h = true;
+    vnl_in_h = true;
+    vh_in_h = true;
+    vion_in_h = true;
+    test_force = false;
+    test_stress = false;
     //----------------------------------------------------------
     // iteration
     //----------------------------------------------------------
@@ -294,7 +292,7 @@ void Input::Default(void)
     scf_thr_type = -1; // the default value (1 for pw, and 2 for lcao) will be set in Default_2
     scf_nmax = 100;
     relax_nmax = 0;
-    out_stru = 0;
+    out_stru = false;
     //----------------------------------------------------------
     // occupation
     //----------------------------------------------------------
@@ -327,34 +325,34 @@ void Input::Default(void)
     chg_extrap = "default"; // xiaohui modify 2015-02-01
     out_freq_elec = 0;
     out_freq_ion = 0;
-    out_chg = 0;
-    out_dm = 0;
-    out_dm1 = 0;
+    out_chg = false;
+    out_dm = false;
+    out_dm1 = false;
 
-    out_bandgap = 0; // QO added for bandgap printing
+    out_bandgap = false; // QO added for bandgap printing
 
-    deepks_out_labels = 0; // caoyu added 2020-11-24, mohan added 2021-01-03
-    deepks_scf = 0;
-    deepks_bandgap = 0;
-    deepks_out_unittest = 0;
+    deepks_out_labels = false; // caoyu added 2020-11-24, mohan added 2021-01-03
+    deepks_scf = false;
+    deepks_bandgap = false;
+    deepks_out_unittest = false;
 
     out_pot = 0;
     out_wfc_pw = 0;
-    out_wfc_r = 0;
+    out_wfc_r = false;
     out_dos = 0;
     out_band = {0, 8};
-    out_proj_band = 0;
+    out_proj_band = false;
     out_mat_hs = {0, 8};
-    out_mat_xc = 0;
-    cal_syns = 0;
+    out_mat_xc = false;
+    cal_syns = false;
     dmax = 0.01;
-    out_mat_hs2 = 0; // LiuXh add 2019-07-15
-    out_mat_t = 0;
+    out_mat_hs2 = false; // LiuXh add 2019-07-15
+    out_mat_t = false;
     out_interval = 1;
     out_app_flag = true;
     out_ndigits = 8;
-    out_mat_r = 0; // jingan add 2019-8-14
-    out_mat_dh = 0;
+    out_mat_r = false; // jingan add 2019-8-14
+    out_mat_dh = false;
     out_wfc_lcao = 0;
     out_alllog = false;
     dos_emin_ev = -15;    //(ev)
@@ -450,7 +448,7 @@ void Input::Default(void)
     soc_lambda = 1.0;
 
     // xiaohui add 2015-09-16
-    input_error = 0;
+    input_error = false;
 
     //----------------------------------------------------------			//Fuxiang He add 2016-10-26
     // tddft
@@ -573,7 +571,7 @@ void Input::Default(void)
     //==========================================================
     //    implicit solvation model       sunml added on 2022-04-04
     //==========================================================
-    imp_sol = 0;
+    imp_sol = false;
     eb_k = 80.0;
     tau = 1.0798 * 1e-5;
     sigma_k = 0.6;
@@ -627,7 +625,7 @@ void Input::Default(void)
     //==========================================================
     // variables for deltaspin
     //==========================================================
-    sc_mag_switch = 0;
+    sc_mag_switch = false;
     decay_grad_switch = false;
     sc_thr = 1e-6;
     nsc = 100;
@@ -644,8 +642,6 @@ void Input::Default(void)
     qo_strategy = {};
     qo_thr = 1e-6;
     qo_screening_coeff = {};
-
-    return;
 }
 
 bool Input::Read(const std::string& fn)
@@ -2353,7 +2349,7 @@ bool Input::Read(const std::string& fn)
             // xiaohui add 2015-09-15
             if (word[0] != '#' && word[0] != '/')
             {
-                input_error = 1;
+                input_error = true;
                 std::cout << " THE PARAMETER NAME '" << word << "' IS NOT USED!" << std::endl;
             }
             // mohan screen this 2012-06-30
@@ -2375,7 +2371,7 @@ bool Input::Read(const std::string& fn)
         {
             break;
         }
-        else if (ifs.bad() != 0)
+        if (ifs.bad() != 0)
         {
             std::cout << " Bad input parameters. " << std::endl;
             return false;
@@ -2396,7 +2392,7 @@ bool Input::Read(const std::string& fn)
     // sunliang added on 2022-12-06
     // To check if ntype in INPUT is equal to the atom species in STRU, if ntype is not set in INPUT, we will set it
     // according to STRU.
-    if (this->stru_file == "")
+    if (this->stru_file.empty())
     {
         this->stru_file = "STRU";
     }
@@ -2499,11 +2495,11 @@ bool Input::Read(const std::string& fn)
             }
         }
 
-        bool close_plus_u = 1;
+        bool close_plus_u = true;
         for (int i = 0; i < ntype; i++)
         {
             if (orbital_corr[i] != -1)
-                close_plus_u = 0;
+                close_plus_u = false;
         }
         if(close_plus_u)
         {
@@ -2612,7 +2608,7 @@ bool Input::Read(const std::string& fn)
 
     if (basis_type == "pw" && gamma_only != 0) // pengfei Li add 2015-1-31
     {
-        gamma_only = 0;
+        gamma_only = false;
         GlobalV::ofs_running << " WARNING : gamma_only has not been implemented for pw yet" << std::endl;
         GlobalV::ofs_running << " the INPUT parameter gamma_only has been reset to 0" << std::endl;
         GlobalV::ofs_running << " and a new KPT is generated with gamma point as the only k point" << std::endl;
@@ -2629,12 +2625,12 @@ bool Input::Read(const std::string& fn)
     }
     else if ((basis_type == "lcao" || basis_type == "lcao_in_pw") && (gamma_only == 1))
     {
-        gamma_only_local = 1;
+        gamma_only_local = true;
         // std::cout << "gamma_only_local =" << gamma_only_local << std::endl;
         if (esolver_type == "tddft")
         {
             GlobalV::ofs_running << " WARNING : gamma_only is not applicable for tddft" << std::endl;
-            gamma_only_local = 0;
+            gamma_only_local = false;
         }
     }
     if ((out_mat_r || out_mat_hs2 || out_mat_t || out_mat_dh) && gamma_only_local)
@@ -2650,7 +2646,7 @@ bool Input::Read(const std::string& fn)
     return true;
 } // end read_parameters
 
-void Input::Default_2(void) // jiyy add 2019-08-04
+void Input::Default_2() // jiyy add 2019-08-04
 {
     if (GlobalV::MY_RANK != 0)
         return;
@@ -2848,7 +2844,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             mem_saver = 0;
             ModuleBase::GlobalFunc::AUTO_SET("mem_saver", "0");
         }
-        cal_force = 1;
+        cal_force = true;
         if (!this->relax_nmax)
             this->relax_nmax = 50;
     }
@@ -2856,7 +2852,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     {
         GlobalV::CALCULATION = "nscf";
         this->relax_nmax = 1;
-        out_stru = 0;
+        out_stru = false;
 
         if (basis_type == "pw"
             && calculation == "get_S") // xiaohui add 2013-09-01. Attention! maybe there is some problem
@@ -2881,41 +2877,41 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     {
         GlobalV::CALCULATION = "get_pchg";
         this->relax_nmax = 1;
-        out_stru = 0;
+        out_stru = false;
         out_dos = 0;
         out_band[0] = 0;
-        out_proj_band = 0;
-        cal_force = 0;
+        out_proj_band = false;
+        cal_force = false;
         init_wfc = "file";
         init_chg = "atomic";   // useless,
         chg_extrap = "atomic"; // xiaohui modify 2015-02-01
-        out_chg = 1;           // this leads to the calculation of state charge.
-        out_dm = 0;
-        out_dm1 = 0;
+        out_chg = true;           // this leads to the calculation of state charge.
+        out_dm = false;
+        out_dm1 = false;
         out_pot = 0;
     }
     else if (calculation == "get_wf")
     {
         GlobalV::CALCULATION = "get_wf"; // mohan fix 2011-11-04
         this->relax_nmax = 1;
-        out_stru = 0;
+        out_stru = false;
         out_dos = 0;
         out_band[0] = 0;
-        out_proj_band = 0;
-        cal_force = 0;
+        out_proj_band = false;
+        cal_force = false;
         init_wfc = "file";
         init_chg = "atomic";
         chg_extrap = "atomic"; // xiaohui modify 2015-02-01
-        out_chg = 1;
-        out_dm = 0;
-        out_dm1 = 0;
+        out_chg = true;
+        out_dm = false;
+        out_dm1 = false;
         out_pot = 0;
     }
     else if (calculation == "md") // mohan add 2011-11-04
     {
         GlobalV::CALCULATION = "md";
         symmetry = "0";
-        cal_force = 1;
+        cal_force = true;
         if (mdp.md_nstep == 0)
         {
             GlobalV::ofs_running << "md_nstep should be set. Autoset md_nstep to 50!" << std::endl;
@@ -2934,11 +2930,11 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         }
         if (mdp.md_tfirst < 0 || mdp.md_restart)
         {
-            init_vel = 1;
+            init_vel = true;
         }
         if (esolver_type == "lj" || esolver_type == "dp" || mdp.md_type == "msst" || mdp.md_type == "npt")
         {
-            cal_stress = 1;
+            cal_stress = true;
         }
 
         // md_prec_level only used in vc-md  liuyu 2023-03-27
@@ -2949,8 +2945,8 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     }
     else if (calculation == "cell-relax") // mohan add 2011-11-04
     {
-        cal_force = 1;
-        cal_stress = 1;
+        cal_force = true;
+        cal_stress = true;
         if (!this->relax_nmax)
             this->relax_nmax = 50;
     }
@@ -3064,7 +3060,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
         if (gamma_only_local)
         {
             // means you can use > 1 number of k points.
-            gamma_only_local = 0;
+            gamma_only_local = false;
             ModuleBase::GlobalFunc::AUTO_SET("gamma_only_local", "0");
         }
     }
@@ -3714,11 +3710,10 @@ void Input::Bcast()
         qo_screening_coeff.resize(ntype);
         Parallel_Common::bcast_double(qo_screening_coeff.data(), ntype);
     }
-    return;
-}
+    }
 #endif
 
-void Input::Check(void)
+void Input::Check()
 {
     ModuleBase::TITLE("Input", "Check");
 
@@ -4308,10 +4303,9 @@ void Input::Check(void)
         if(qo_strategy.size() != ntype) ModuleBase::WARNING_QUIT("INPUT", "qo_strategy.size() != ntype");
     }
 
-    return;
-}
+    }
 
-void Input::close_log(void) const
+void Input::close_log() const
 {
 
     ModuleBase::Global_File::close_all_log(GlobalV::MY_RANK, this->out_alllog);
@@ -4357,7 +4351,6 @@ void Input::read_bool(std::ifstream& ifs, bool& var)
         ModuleBase::WARNING_QUIT("Input", warningstr);
     }
     ifs.ignore(150, '\n');
-    return;
 }
 
 void Input::strtolower(char* sa, char* sb)
@@ -4420,7 +4413,7 @@ int Input::count_ntype(const std::string& fn)
             {
                 break;
             }
-            else if (isalpha(temp[0]))
+            if (isalpha(temp[0]))
             {
                 ntype_stru += 1;
             }

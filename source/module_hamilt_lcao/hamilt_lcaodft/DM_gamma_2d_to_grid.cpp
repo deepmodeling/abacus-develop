@@ -286,5 +286,4 @@ void DMgamma_2dtoGrid::cal_dk_gamma_from_2D(
 
     }
     ModuleBase::timer::tick("LCAO_Charge", "dm_2dTOgrid");
-    return;
 }

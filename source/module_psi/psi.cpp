@@ -12,7 +12,7 @@ namespace psi
 
 Range::Range(const size_t range_in)
 {
-    k_first = 1;
+    k_first = true;
     index_1 = 0;
     range_1 = range_in;
     range_2 = range_in;
@@ -367,7 +367,7 @@ template <typename T, typename Device> std::tuple<const T*, int> Psi<T, Device>:
     {
         return std::tuple<const T*, int>(nullptr, 0);
     }
-    else if (i1 < 0)    // [r1, r2] is the range of index1 with length m
+    if (i1 < 0)    // [r1, r2] is the range of index1 with length m
     {
         const T* p = &this->psi[r1 * (k_first ? this->nbands : this->nk) * this->nbasis];
         int m = (r2 - r1 + 1) * this->npol;

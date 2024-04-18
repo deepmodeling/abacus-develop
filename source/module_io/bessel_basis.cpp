@@ -75,8 +75,7 @@ void Bessel_Basis::init(
 		this->init_Faln(ntype, lmax_in, ucell.nmax, Ecut_number, ucell);
 	}
 
-	return;
-}
+	}
 
 double Bessel_Basis::Polynomial_Interpolation2
 	(const int &l, const int &ie, const double &gnorm)const
@@ -156,7 +155,6 @@ void Bessel_Basis::init_Faln(
 	ModuleBase::GlobalFunc::OUT("nwfc = ",nwfc);
 
 	ModuleBase::timer::tick("Spillage","init_Faln");
-	return;
 }
 
 // be called in Bessel_Basis::init()
@@ -334,7 +332,6 @@ void Bessel_Basis::init_TableOne(
 	delete[] r;
 	delete[] function;
 	ModuleBase::timer::tick("Spillage","TableONe");
-	return;
 }
 
 void Bessel_Basis::readin_C4(
@@ -445,7 +442,6 @@ void Bessel_Basis::readin_C4(
 		ModuleBase::GlobalFunc::SCAN_END(ifs, "</FILE>");
 	}
 	ifs.close();
-	return;
 }
 
 void Bessel_Basis::allocate_C4(
@@ -472,5 +468,4 @@ void Bessel_Basis::allocate_C4(
 			}
 		}
 	}
-	return;
-}
+	}

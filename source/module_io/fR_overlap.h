@@ -19,9 +19,9 @@ public:
     FR_overlap();
 
     void set_parameters(
-        fr_ptr fr_in, 
-        const UnitCell* ucell_in, 
-        Grid_Driver* GridD_in, 
+        fr_ptr fr_in,
+        const UnitCell* ucell_in,
+        Grid_Driver* GridD_in,
         const Parallel_Orbitals* paraV,
         int radial_grid_num = 140,
         int degree = 110
@@ -29,7 +29,7 @@ public:
 
     FR_overlap(const FR_overlap<T>& FR_in);
 
-    FR_overlap(FR_overlap<T>&& FR_in);
+    FR_overlap(FR_overlap<T>&& FR_in) noexcept;
 
     ~FR_overlap();
 
@@ -51,7 +51,7 @@ protected:
         const double *psi_r,
         const int &mesh_r,
         const double &dr,
-        const double &x	
+        const double &x
     );
 
     fr_ptr fr = nullptr;

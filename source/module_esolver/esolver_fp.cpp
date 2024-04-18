@@ -98,8 +98,6 @@ void ESolver_FP::init(Input& inp, UnitCell& cell)
 	}
 
 	this->print_rhofft(inp, GlobalV::ofs_running);
-
-    return;
 }
 
 
@@ -168,8 +166,6 @@ void ESolver_FP::init_after_vc(Input& inp, UnitCell& cell)
 
 	kv.set_after_vc(cell.symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, cell.G, cell.latvec);
 	ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
-
-    return;
 }
 
 
@@ -284,4 +280,4 @@ void ESolver_FP::print_rhofft(Input&inp, std::ofstream &ofs)
 	}
 }
 
-} //! end of namespace ModuleESolver
+}  // namespace ModuleESolver

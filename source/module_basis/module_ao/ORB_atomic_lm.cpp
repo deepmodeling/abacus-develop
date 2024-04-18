@@ -154,8 +154,7 @@ void Numerical_Orbital_Lm::set_orbital_info
 	{
 		this->plot();			// Peize Lin add flag_plot 2016-08-31
 	}
-	return;
-}
+	}
 
 void Numerical_Orbital_Lm::copy_parameter(
  	const std::string &label_in,
@@ -401,7 +400,7 @@ void Numerical_Orbital_Lm::use_uniform(const double &dr_uniform_in)
 
 //liaochen modify on 2010/4/7
 //use Sbt_new
-void Numerical_Orbital_Lm::cal_kradial(void)
+void Numerical_Orbital_Lm::cal_kradial()
 {
 	assert( this->nr > 0);
 	assert( this->nr_uniform > 0);
@@ -508,7 +507,7 @@ void Numerical_Orbital_Lm::cal_kradial_sbpool(void)
 */
 
 // Peize Lin add 2017-10-27
-void Numerical_Orbital_Lm::cal_kradial_sbpool(void)
+void Numerical_Orbital_Lm::cal_kradial_sbpool()
 {
 	assert( this->nr > 0);
 	assert( this->nr_uniform > 0);
@@ -576,11 +575,10 @@ void Numerical_Orbital_Lm::cal_kradial_sbpool(void)
 		this->psik[ik] = psi_f_tmp * k_radial[ik];
 		this->psik2[ik] = this->psik[ik] * k_radial[ik];
 	}
-	return;
-}
+	}
 
 // Peize Lin add 2017-12-11
-void Numerical_Orbital_Lm::cal_rradial_sbpool(void)
+void Numerical_Orbital_Lm::cal_rradial_sbpool()
 {
 	// dr must be all the same for Sph_Bessel_Recursive_Pool
 	const double dr = this->rab[0];
@@ -687,7 +685,7 @@ void Numerical_Orbital_Lm::norm_test(void)const
 }
 */
 
-void Numerical_Orbital_Lm::plot(void)const
+void Numerical_Orbital_Lm::plot()const
 {
 	ModuleBase::TITLE("Numerical_Orbital_Lm","plot");
 	
@@ -707,11 +705,11 @@ void Numerical_Orbital_Lm::plot(void)const
 	}
 	else if( 3<=this->angular_momentum_l && this->angular_momentum_l<=6 )
 	{
-		orbital_type = 'f' + this->angular_momentum_l - 3;
+		orbital_type = std::to_string('f' + this->angular_momentum_l - 3);
 	}
 	else if( 7<=this->angular_momentum_l && this->angular_momentum_l<=11 )
 	{
-		orbital_type = 'k' + this->angular_momentum_l - 7;
+		orbital_type = std::to_string('k' + this->angular_momentum_l - 7);
 	}
 	else
 	{
@@ -768,5 +766,4 @@ void Numerical_Orbital_Lm::plot(void)const
 		ofsdru.close(); // 13-08-10 pengfei
 	}
 
-	return;
-}
+	}

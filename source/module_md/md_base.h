@@ -71,7 +71,7 @@ class MD_base
     double t_current;                   ///< current temperature
     int step_;                          ///< the MD step finished in current calculation
     int step_rst_;                      ///< the MD step finished in previous calculations
-    int frozen_freedom_;                ///< the fixed freedom of the system
+    int frozen_freedom_{};                ///< the fixed freedom of the system
     double* allmass;                    ///< atom mass
     ModuleBase::Vector3<double>* pos;   ///< atom displacements  liuyu modify 2023-03-22
     ModuleBase::Vector3<double>* vel;   ///< atom velocity
@@ -79,13 +79,13 @@ class MD_base
     ModuleBase::Vector3<double>* force; ///< force of each atom
     ModuleBase::matrix virial;          ///< virial for this lattice
     ModuleBase::matrix stress;          ///< stress for this lattice
-    double potential;                   ///< potential energy
-    double kinetic;                     ///< kinetic energy
+    double potential{};                   ///< potential energy
+    double kinetic{};                     ///< kinetic energy
 
   protected:
     MD_para& mdp;    ///< input parameters used in md
     UnitCell& ucell; ///< unitcell information
-    double energy_;  ///< total energy of the system
+    double energy_{};  ///< total energy of the system
 };
 
 #endif // MD_BASE_H

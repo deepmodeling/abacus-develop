@@ -72,7 +72,7 @@ class Vdwd3Parameters : public VdwParameters
     void init_rcov();
     void init_r0ab();
 
-    int limit(int &i);
+    static int limit(int &i);
 };
 
 } // namespace vdw

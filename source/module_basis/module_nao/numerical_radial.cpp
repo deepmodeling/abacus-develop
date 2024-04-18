@@ -109,7 +109,7 @@ void NumericalRadial::build(const int l,
                             const double* const value,
                             const int p,
                             const int izeta,
-                            const std::string symbol,
+                            const std::string& symbol,
                             const int itype,
                             const bool init_sbt)
 {
@@ -176,7 +176,7 @@ void NumericalRadial::to_numerical_orbital_lm(Numerical_Orbital_Lm& orbital_lm, 
     delete[] rab;
 }
 
-void NumericalRadial::set_transformer(ModuleBase::SphericalBesselTransformer sbt, int update)
+void NumericalRadial::set_transformer(const ModuleBase::SphericalBesselTransformer& sbt, int update)
 {
     sbt_ = sbt;
 

@@ -44,11 +44,11 @@ class Stochastic_Iter
 
     void itermu(const int iter, elecstate::ElecState* pes);
 
-    void orthog(const int &ik, psi::Psi<std::complex<double>>& psi, Stochastic_WF& stowf);
+    static void orthog(const int &ik, psi::Psi<std::complex<double>>& psi, Stochastic_WF& stowf);
 
     void checkemm(const int &ik, const int istep, const int iter, Stochastic_WF& stowf);
 
-    void check_precision(const double ref,const double thr, const std::string info);
+    void check_precision(const double ref,const double thr, const std::string& info);
 
     ModuleBase::Chebyshev<double>* p_che = nullptr;
 
@@ -57,15 +57,15 @@ class Stochastic_Iter
 
 	double mu0; // chemical potential; unit in Ry
     bool change;
-    double targetne;
+    double targetne{};
     double *spolyv = nullptr;
 
 	public:
     
     int * nchip = nullptr;
     bool check = false;
-    double th_ne;
-    double KS_ne;
+    double th_ne{};
+    double KS_ne{};
     public:
     int method; //different methods 1: slow, less memory  2: fast, more memory
     ModuleBase::ComplexMatrix* chiallorder = nullptr;
@@ -78,9 +78,9 @@ class Stochastic_Iter
     //cal Tnchi = \sum_n C_n*T_n(\hat{h})|\chi>
     void calTnchi_ik(const int& ik, Stochastic_WF& stowf);
     //cal v^T*M*v
-    double vTMv(const double *v, const double * M, const int n);
+    static double vTMv(const double *v, const double * M, const int n);
   private:
-    K_Vectors* pkv;
+    K_Vectors* pkv{};
 
 };
 

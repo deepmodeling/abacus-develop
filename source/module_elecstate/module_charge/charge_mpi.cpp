@@ -137,6 +137,5 @@ void Charge::rho_mpi()
     }
 
     ModuleBase::timer::tick("Charge", "rho_mpi");
-    return;
 }
 #endif

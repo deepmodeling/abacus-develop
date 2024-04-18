@@ -34,8 +34,7 @@ void sparse_format::cal_SR(
         sparse_format::cal_HContainer_cd(pv, cspin, sparse_thr, *(p_ham_lcao->getSR()), SR_soc_sparse);
     }
 
-    return;
-}
+    }
 
 
 void sparse_format::cal_TR(
@@ -52,7 +51,7 @@ void sparse_format::cal_TR(
     lm.Hloc_fixedR.resize(lm.ParaV->nnr);
     lm.zeros_HSR('T');
 
-    gen_h.build_ST_new('T', 0, ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD), lm.Hloc_fixedR.data());
+    gen_h.build_ST_new('T', false, ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD), lm.Hloc_fixedR.data());
 
     sparse_format::set_R_range(lm.all_R_coor, grid);
 
@@ -62,8 +61,6 @@ void sparse_format::cal_TR(
 			lm, 
 			grid, 
 			sparse_thr);
-
-    return;
 }
 
 
@@ -191,5 +188,4 @@ void sparse_format::cal_STN_R_for_T(
         }
     }
 
-    return;
-}
+    }

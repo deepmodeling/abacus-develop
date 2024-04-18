@@ -10,20 +10,20 @@ Grid_MeshK::Grid_MeshK()
 
 Grid_MeshK::~Grid_MeshK()
 {
-    if(ucell_index2x!=nullptr)
-	{
+    
+	
 		delete[] ucell_index2x;
-	}
+	
    
-    if(ucell_index2y!=nullptr)
-	{
+    
+	
 		delete[] ucell_index2y;
-	}
+	
 
-    if(ucell_index2z!=nullptr)
-	{
+    
+	
 		delete[] ucell_index2z;
-	}
+	
 }
 
 int Grid_MeshK::cal_Rindex(const int &u1, const int &u2, const int &u3)const

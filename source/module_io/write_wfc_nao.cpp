@@ -75,7 +75,6 @@ void ModuleIO::write_wfc_nao(const std::string &name, double **ctot, const Modul
     }
 
     ModuleBase::timer::tick("ModuleIO", "write_wfc_nao");
-    return;
 }
 
 void ModuleIO::write_wfc_nao_complex(const std::string &name, std::complex<double> **ctot, const int &ik, const ModuleBase::Vector3<double> &kvec_c, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg, bool writeBinary)
@@ -154,5 +153,4 @@ void ModuleIO::write_wfc_nao_complex(const std::string &name, std::complex<doubl
     }
 
     ModuleBase::timer::tick("ModuleIO","write_wfc_nao_complex");
-    return;
 }

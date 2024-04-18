@@ -31,7 +31,7 @@ realArray::realArray(const int d1,const int d2,const int d3)
 	ptr = new double[size];
 	std::set_new_handler(handler_old);
 	zero_out();
-	assert(ptr != 0);
+	assert(ptr != nullptr);
 
 	++arrayCount;
 }
@@ -83,7 +83,7 @@ realArray ::~realArray()
 void realArray::freemem()
 {
 		delete [] ptr;
-		ptr = NULL;
+		ptr = nullptr;
 }
 
 void realArray::create(const int d1,const int d2,const int d3,const int d4)
@@ -103,7 +103,7 @@ void realArray::create(const int d1,const int d2,const int d3,const int d4)
 
 	zero_out(); // mohan modify 2009-09-17
 	
-	assert(ptr != 0);
+	assert(ptr != nullptr);
 }
 
 void realArray::create(const int d1,const int d2,const int d3)
@@ -121,7 +121,7 @@ void realArray::create(const int d1,const int d2,const int d3)
 	delete [] ptr;
     ptr = new double[size];
     zero_out();
-    assert(ptr != 0);
+    assert(ptr != nullptr);
 }
 
 const realArray &realArray::operator=(const realArray &right)
@@ -184,11 +184,10 @@ double &realArray::operator()(const int ind1,const int ind2,const int ind3,const
 //****************************
 // zeroes out the whole array
 //****************************
-void realArray::zero_out(void)
+void realArray::zero_out()
 {
 	if (size <= 0) return;
 	for (int i = 0;i < size; i++) ptr[i] = 0;
-	return;
 }
 
-}
+}  // namespace ModuleBase

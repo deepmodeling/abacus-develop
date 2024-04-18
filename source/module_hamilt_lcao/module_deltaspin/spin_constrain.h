@@ -201,12 +201,12 @@ public:
     /// @brief set orbital parallel info
     void set_ParaV(Parallel_Orbitals* ParaV_in);
     /// @brief set parameters for solver
-    void set_solver_parameters(K_Vectors kv_in,
+    void set_solver_parameters(const K_Vectors& kv_in,
                                hsolver::HSolver<FPTYPE, Device>* phsol_in,
                                hamilt::Hamilt<FPTYPE, Device>* p_hamilt_in,
                                psi::Psi<FPTYPE>* psi_in,
                                elecstate::ElecState* pelec_in,
-                               std::string KS_SOLVER_in,
+                               const std::string& KS_SOLVER_in,
                                LCAO_Matrix* LM_in);
     /// bcast sc data read from json file
     void bcast_ScData(std::string sc_file, int nat, int ntype);

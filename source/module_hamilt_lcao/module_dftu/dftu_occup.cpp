@@ -341,7 +341,6 @@ void DFTU::cal_occup_m_k(const int iter,
 
     this->initialed_locale = true;
     ModuleBase::timer::tick("DFTU", "cal_occup_m_k");
-    return;
 }
 
 void DFTU::cal_occup_m_gamma(const int iter, const std::vector<std::vector<double>> &dm_gamma, const double& mixing_beta)
@@ -489,6 +488,5 @@ void DFTU::cal_occup_m_gamma(const int iter, const std::vector<std::vector<doubl
 
     this->initialed_locale = true;
     ModuleBase::timer::tick("DFTU", "cal_occup_m_gamma");
-    return;
 }
 } // namespace ModuleDFTU

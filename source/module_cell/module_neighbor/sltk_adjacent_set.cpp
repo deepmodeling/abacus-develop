@@ -62,7 +62,6 @@ void AdjacentSet::set
 
 	//std::cout << "\n length = " << length << std::endl;
 	call_times++;
-	return;
 }
 
 void AdjacentSet::assertCoordinateIsRight(const int x, const int y, const int z, const char* const s)
@@ -110,10 +109,9 @@ void AdjacentSet::getBox
 //		BLOCK_HERE("get box");
 	}
 
-	return;
-}
+	}
 //2015-05-07
-void AdjacentSet::delete_vector(void)
+void AdjacentSet::delete_vector()
 {
 	std::vector<int>().swap(box);
 	std::vector<int>().swap(offset);

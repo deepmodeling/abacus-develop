@@ -60,7 +60,7 @@ matrix::matrix( const matrix &m_in )
 
 // Peize Lin add 2016-08-05
 matrix::matrix( matrix && m_in )
-	:nr(m_in.nr),
+ noexcept 	:nr(m_in.nr),
 	 nc(m_in.nc)
 {
 	c = m_in.c;
@@ -78,9 +78,9 @@ matrix& matrix::operator=( const matrix & m_in )
 
 // Peize Lin add 2016-08-05
 matrix& matrix::operator=( matrix && m_in )
-{
+ noexcept {
 	nr = m_in.nr;		nc = m_in.nc;
-	if(c)	delete[] c;
+		delete[] c;
 	c = m_in.c;
 	m_in.nr = m_in.nc = 0;
 	m_in.c = nullptr;
@@ -147,7 +147,7 @@ void matrix::create( const int nrow, const int ncol, const bool flag_zero )
 	}
 	else
 	{
-		if(c)	delete[] c;
+			delete[] c;
 		c = nullptr;
 		nr = nrow;
 		nc = ncol;
@@ -278,7 +278,7 @@ void matrix::operator-=(const matrix & m)
 }
 
 /* zero out the matrix */
-void matrix::zero_out(void)
+void matrix::zero_out()
 {
 	const int size = nr*nc;
 	if(size == 0)
@@ -310,7 +310,7 @@ matrix transpose(const matrix &m)
 	return tm;
 }
 
-double matrix::trace_on(void) const
+double matrix::trace_on() const
 {
     assert(nr == nc);
     int inch = nc + 1;
@@ -472,4 +472,4 @@ double matrix::norm() const
 #endif
 }
 
-}
+}  // namespace ModuleBase

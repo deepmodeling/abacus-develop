@@ -188,7 +188,6 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
 	delete[] psic;
 
 	ModuleBase::timer::tick("Stress_Func","stress_cc");
-	return;
 }
 
 
@@ -252,8 +251,7 @@ void Stress_Func<FPTYPE, Device>::deriv_drhoc
 #ifdef _OPENMP
 }
 #endif
-	return;
-}
+	}
 
 template class Stress_Func<double, psi::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))

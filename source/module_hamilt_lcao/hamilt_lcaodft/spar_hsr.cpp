@@ -110,8 +110,6 @@ void sparse_format::cal_HSR(
 #endif // __EXX
 
     sparse_format::clear_zero_elements(lm, current_spin, sparse_thr);
-
-    return;
 }
 
 
@@ -155,8 +153,7 @@ void sparse_format::cal_HContainer_d(
         }
     }
 
-    return;
-}
+    }
 
 void sparse_format::cal_HContainer_cd(
         const Parallel_Orbitals &pv,
@@ -199,8 +196,7 @@ void sparse_format::cal_HContainer_cd(
         }
     }
 
-    return;
-}
+    }
 
 
 // in case there are elements smaller than the threshold
@@ -297,5 +293,4 @@ void sparse_format::clear_zero_elements(
         }// end R_loop
     }
 
-    return;
-}
+    }

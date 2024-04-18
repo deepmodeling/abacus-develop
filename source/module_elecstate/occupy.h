@@ -67,7 +67,7 @@ public:
 
 private:
   static void efermig(const ModuleBase::matrix& ekb,
-                      const int nbnd,
+                      const int nband,
                       const int nks,
                       const double& nelec,
                       const std::vector<double>& wk,

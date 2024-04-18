@@ -26,7 +26,7 @@ class Sto_Stress_PW : public Stress_Func<double>
                     const Charge* const chr);
 
   private:
-    void sto_stress_kin(ModuleBase::matrix& sigma,
+    static void sto_stress_kin(ModuleBase::matrix& sigma,
                         const ModuleBase::matrix& wg,
                         ModuleSymmetry::Symmetry* p_symm,
                         K_Vectors* p_kv,

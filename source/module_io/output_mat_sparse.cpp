@@ -38,13 +38,13 @@ namespace ModuleIO
 }
 
 template<>
-void Output_Mat_Sparse<double>::write(void) 
+void Output_Mat_Sparse<double>::write() 
 {
 }
 
 
 template<>
-void Output_Mat_Sparse<std::complex<double>>::write(void)
+void Output_Mat_Sparse<std::complex<double>>::write()
 {
     //! generate a file containing the Hamiltonian and S(overlap) matrices 
     if (_out_mat_hsR)
@@ -99,8 +99,7 @@ void Output_Mat_Sparse<std::complex<double>>::write(void)
         }
     }
 
-    return;
-}
+    }
 
 template class Output_Mat_Sparse<double>;
 template class Output_Mat_Sparse<std::complex<double>>;

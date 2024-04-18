@@ -19,7 +19,7 @@
  * Esolver::Run takes in a configuration and provides force and stress, 
  * the configuration-changing subroutine takes force and stress and updates the configuration
  */
-void Driver::driver_run(void)
+void Driver::driver_run()
 {
     ModuleBase::TITLE("Driver", "driver_line");
     ModuleBase::timer::tick("Driver", "driver_line");
@@ -69,5 +69,4 @@ void Driver::driver_run(void)
     ModuleESolver::clean_esolver(p_esolver);
 
     ModuleBase::timer::tick("Driver", "driver_line");
-    return;
 }

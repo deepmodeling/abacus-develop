@@ -50,7 +50,7 @@ bool ModuleIO::read_wfc_pw(const std::string& filename,
     std::ifstream ifs;
     bool error = false;
     int size = 0;
-    std::string msg = "";
+    std::string msg;
     std::string filetype = filename.substr(filename.length() - 3, 3);
 
     // whether can open the file

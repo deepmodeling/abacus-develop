@@ -207,8 +207,6 @@ void Nose_Hoover::setup(ModuleESolver::ESolver* p_esolver, const std::string& gl
     }
 
     ModuleBase::timer::tick("Nose_Hoover", "setup");
-
-    return;
 }
 
 void Nose_Hoover::first_half(std::ofstream& ofs)
@@ -266,12 +264,10 @@ void Nose_Hoover::first_half(std::ofstream& ofs)
     }
 
     ModuleBase::timer::tick("Nose_Hoover", "first_half");
-
-    return;
 }
 
 
-void Nose_Hoover::second_half(void)
+void Nose_Hoover::second_half()
 {
     ModuleBase::TITLE("Nose_Hoover", "second_half");
     ModuleBase::timer::tick("Nose_Hoover", "second_half");
@@ -310,8 +306,6 @@ void Nose_Hoover::second_half(void)
     }
 
     ModuleBase::timer::tick("Nose_Hoover", "second_half");
-
-    return;
 }
 
 

@@ -72,7 +72,7 @@ std::complex<double> unkOverlap_pw::unkdotp_G0(const ModulePW::PW_Basis* rhopw,
                                                const int iband_L,
                                                const int iband_R,
                                                const psi::Psi<std::complex<double>>* evc,
-                                               const ModuleBase::Vector3<double> G)
+                                               const ModuleBase::Vector3<double>& G)
 {
 	// (1) set value
 	std::complex<double> result(0.0,0.0);
@@ -185,7 +185,7 @@ std::complex<double> unkOverlap_pw::unkdotp_soc_G0(const ModulePW::PW_Basis* rho
                                                    const int iband_L,
                                                    const int iband_R,
                                                    const psi::Psi<std::complex<double>>* evc,
-                                                   const ModuleBase::Vector3<double> G)
+                                                   const ModuleBase::Vector3<double>& G)
 {
 	// (1) set value
 	std::complex<double> result(0.0,0.0);

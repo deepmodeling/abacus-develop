@@ -117,8 +117,7 @@ void UnitCell::read_cell_pseudopots(const std::string &pp_dir, std::ofstream &lo
             }
         }
     }
-    return;
-}
+    }
 
 
 void UnitCell::print_unitcell_pseudo(const std::string &fn)
@@ -133,5 +132,4 @@ void UnitCell::print_unitcell_pseudo(const std::string &fn)
 	}
 
 	ofs.close();
-	return;
 }

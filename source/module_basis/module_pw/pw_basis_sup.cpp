@@ -59,7 +59,6 @@ void PW_Basis_Sup::distribute_g(const ModulePW::PW_Basis* pw_rho)
                                    "pw_distributeg.cpp",
                                    "Current core has no plane waves! Please reduce the cores.");
     ModuleBase::timer::tick(this->classname, "distributeg");
-    return;
 }
 
 ///
@@ -176,7 +175,6 @@ void PW_Basis_Sup::distribution_method3(const ModulePW::PW_Basis* pw_rho)
 
     delete[] st_bottom2D;
     delete[] st_length2D;
-    return;
 }
 
 ///
@@ -262,7 +260,7 @@ void PW_Basis_Sup::divide_sticks_3(
                 ipmin = ip;
                 break;
             }
-            else if (npw_ip < npwmin)
+            if (npw_ip < npwmin)
             {
                 ipmin = ip;
             }
@@ -281,8 +279,7 @@ void PW_Basis_Sup::divide_sticks_3(
     {
         this->startnsz_per[ip] = this->startnsz_per[ip - 1] + this->nst_per[ip - 1] * this->nz;
     }
-    return;
-}
+    }
 
 ///
 /// (5) Construct ig2isz, and is2fftixy.
@@ -294,8 +291,8 @@ void PW_Basis_Sup::divide_sticks_3(
 /// output: ig2isz, is2fftixy
 ///
 void PW_Basis_Sup::get_ig2isz_is2fftixy(
-    int* st_bottom2D, // minimum z of stick, stored in 1d array with this->nstot elements.
-    int* st_length2D, // the stick on (x, y) consists of st_length[x*fftny+y] planewaves.
+    const int* st_bottom2D, // minimum z of stick, stored in 1d array with this->nstot elements.
+    const int* st_length2D, // the stick on (x, y) consists of st_length[x*fftny+y] planewaves.
     const ModulePW::PW_Basis* pw_rho)
 {
     if (this->npw == 0)
@@ -411,15 +408,6 @@ void PW_Basis_Sup::get_ig2isz_is2fftixy(
 
     delete[] fftixy2is;
     delete[] found;
-
-#if defined(__CUDA) || defined(__ROCM)
-    if (this->device == "gpu")
-    {
-        resmem_int_op()(gpu_ctx, d_is2fftixy, this->nst);
-        syncmem_int_h2d_op()(gpu_ctx, cpu_ctx, this->d_is2fftixy, this->is2fftixy, this->nst);
-    }
-#endif
-    return;
 }
 
 } // namespace ModulePW

@@ -37,9 +37,9 @@ Potential::Potential(const ModulePW::PW_Basis* rho_basis_in,
 
 Potential::~Potential()
 {
-    if (this->components.size() > 0)
+    if (!this->components.empty())
     {
-        for (auto comp: this->components)
+        for (auto *comp: this->components)
         {
             delete comp;
         }
@@ -67,9 +67,9 @@ void Potential::pot_register(std::vector<std::string>& components_list)
 {
     ModuleBase::TITLE("Potential", "pot_register");
     // delete old components first.
-    if (this->components.size() > 0)
+    if (!this->components.empty())
     {
-        for (auto comp: this->components)
+        for (auto *comp: this->components)
         {
             delete comp;
         }
@@ -80,7 +80,7 @@ void Potential::pot_register(std::vector<std::string>& components_list)
     //---------------------------
     // mapping for register
     //---------------------------
-    for (auto comp: components_list)
+    for (const auto& comp: components_list)
     {
         PotBase* tmp = this->get_pot_type(comp);
         this->components.push_back(tmp);
@@ -89,8 +89,6 @@ void Potential::pot_register(std::vector<std::string>& components_list)
 
     // after register, reset fixed_done to false
     this->fixed_done = false;
-
-    return;
 }
 
 void Potential::allocate()
@@ -289,7 +287,6 @@ void Potential::init_pot(int istep, const Charge* chg)
     // plots
     // figure::picture(this->vr_eff1,GlobalC::rhopw->nx,GlobalC::rhopw->ny,GlobalC::rhopw->nz);
     ModuleBase::timer::tick("Potential", "init_pot");
-    return;
 }
 
 void Potential::get_vnew(const Charge* chg, ModuleBase::matrix& vnew)
@@ -305,8 +302,7 @@ void Potential::get_vnew(const Charge* chg, ModuleBase::matrix& vnew)
         vnew.c[iter] = this->v_effective.c[iter] - vnew.c[iter];
     }
 
-    return;
-}
+    }
 
 void Potential::interpolate_vrs()
 {

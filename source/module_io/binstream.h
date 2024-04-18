@@ -17,11 +17,11 @@ class Binstream
 		Binstream(){
 			fileptr=NULL; //we should use NULL (not nullptr) here because FILE use NULL.
 		};
-		Binstream(const std::string,const char*);
+		Binstream(const std::string&,const char*);
 		~Binstream();
 		FILE* fileptr;
 		void close();
-		void open(const std::string,const char*);
+		void open(const std::string&,const char*);
 		bool operator!() const;
 		operator bool() const;
 

@@ -145,7 +145,6 @@ void PW_Basis:: initgrids(
     this->nxyz = this->nxy * this->nz;
 
     delete[] ibox;    
-    return;
 }
 
 /// 
@@ -206,7 +205,6 @@ void PW_Basis:: initgrids(
     this->gridecut_lat -= 1e-6;
 
     delete[] ibox;
-    return;
 }
 
 
@@ -253,4 +251,4 @@ void PW_Basis::setfullpw(
     this->full_pw_dim = inpt_full_pw_dim;
     if (!this->full_pw) this->full_pw_dim = 0;
 }
-}
+}  // namespace ModulePW

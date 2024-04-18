@@ -4,7 +4,7 @@
 
 inline int CTOT2q(
 	int myid,
-	int naroc[2],
+	const int naroc[2],
 	int nb,
 	int dim0,
 	int dim1,
@@ -30,7 +30,7 @@ inline int CTOT2q(
 
 inline int CTOT2q_c(
 	int myid,
-	int naroc[2],
+	const int naroc[2],
 	int nb,
 	int dim0,
 	int dim1,
@@ -56,15 +56,15 @@ inline int CTOT2q_c(
 
 // be called in local_orbital_wfc::allocate_k
 int ModuleIO::read_wfc_nao_complex(
-    std::complex<double>** ctot, 
+    std::complex<double>** ctot,
     const int& ik,
     const int& nb2d,
     const int& nbands_g,
     const int& nlocal_g,
     const std::string& global_readin_dir,
-    const ModuleBase::Vector3<double> kvec_c,
-    const Parallel_Orbitals* ParaV, 
-    psi::Psi<std::complex<double>>* psi, 
+    const ModuleBase::Vector3<double>& kvec_c,
+    const Parallel_Orbitals* ParaV,
+    psi::Psi<std::complex<double>>* psi,
     elecstate::ElecState* pelec)
 {
     ModuleBase::TITLE("ModuleIO","read_wfc_nao_complex");
@@ -113,17 +113,17 @@ int ModuleIO::read_wfc_nao_complex(
 			GlobalV::ofs_warning << " k index is not correct" << std::endl;
 			error = 4;
 		}
-		else if ( 
+		else if (
 			std::abs(kx-kvec_c.x)>1.0e-5 ||
 			std::abs(ky-kvec_c.y)>1.0e-5 ||
 			std::abs(kz-kvec_c.z)>1.0e-5 )
-		{	
+		{
 			GlobalV::ofs_warning << " k std::vector is not correct" << std::endl;
 			GlobalV::ofs_warning << " Read in kx=" << kx << " ky = " << ky << " kz = " << kz << std::endl;
-			GlobalV::ofs_warning << " In fact, kx=" << kvec_c.x 
+			GlobalV::ofs_warning << " In fact, kx=" << kvec_c.x
 			 << " ky=" << kvec_c.y
 			 << " kz=" << kvec_c.z << std::endl;
-			 error = 4; 
+			 error = 4;
 		}
         else if (nbands!=nbands_g)
         {
@@ -173,9 +173,9 @@ int ModuleIO::read_wfc_nao_complex(
 	if(error==2) return 2;
 	if(error==3) return 3;
 	if(error==4) return 4;
-	
+
 	ModuleIO::distri_wfc_nao_complex(ctot, ik, nb2d, nbands_g, ParaV, psi);
-	
+
 	// mohan add 2012-02-15,
 	// still have bugs, but can solve it later.
 	// distribute the wave functions again.
@@ -211,20 +211,20 @@ int ModuleIO::read_wfc_nao_complex(
 }
 
 int ModuleIO::read_wfc_nao(
-    double** ctot, 
+    double** ctot,
     const int& is,
     const bool& gamma_only_local,
     const int& nb2d,
     const int& nbands_g,
     const int& nlocal_g,
     const std::string& global_readin_dir,
-    const Parallel_Orbitals* ParaV, 
-    psi::Psi<double>* psid, 
+    const Parallel_Orbitals* ParaV,
+    psi::Psi<double>* psid,
     elecstate::ElecState* pelec)
 {
     ModuleBase::TITLE("ModuleIO","read_wfc_nao");
     ModuleBase::timer::tick("ModuleIO", "read_wfc_nao");
-    
+
     std::stringstream ss;
 	if(GlobalV::GAMMA_ONLY_LOCAL)
 	{
@@ -312,7 +312,7 @@ int ModuleIO::read_wfc_nao(
 	if(error==3) return 3;
 
 	ModuleIO::distri_wfc_nao(ctot, is, nb2d, nbands_g, nlocal_g,ParaV, psid);
-	
+
 	// mohan add 2012-02-15,
 	// still have bugs, but can solve it later.
 	// distribute the wave functions again.
@@ -344,7 +344,7 @@ void ModuleIO::distri_wfc_nao(double** ctot, const int& is, const int& nb2d, con
     MPI_Reduce(&ParaV->nloc_wfc, &maxnloc, 1, MPI_LONG, MPI_MAX, 0, ParaV->comm_2D);
 	MPI_Bcast(&maxnloc, 1, MPI_LONG, 0, ParaV->comm_2D);
 	//reduce and bcast could be replaced by allreduce
-	
+
     int nprocs, myid;
     MPI_Comm_size(ParaV->comm_2D, &nprocs);
     MPI_Comm_rank(ParaV->comm_2D, &myid);
@@ -352,11 +352,11 @@ void ModuleIO::distri_wfc_nao(double** ctot, const int& is, const int& nb2d, con
 	double *work=new double[maxnloc]; // work/buffer matrix
 #ifdef __DEBUG
 assert(nb2d > 0);
-#endif	
+#endif
 	int nb = nb2d;
 	int info;
 	int naroc[2]; // maximum number of row or column
-	
+
 //2. copy from ctot to psi
 	for(int iprow=0; iprow<ParaV->dim0; ++iprow)
 	{
@@ -416,7 +416,7 @@ void ModuleIO::distri_wfc_nao_complex(std::complex<double>** ctot, const int& ik
 	MPI_Reduce(&ParaV->nloc_wfc, &maxnloc, 1, MPI_LONG, MPI_MAX, 0, ParaV->comm_2D);
 	MPI_Bcast(&maxnloc, 1, MPI_LONG, 0, ParaV->comm_2D);
 	//reduce and bcast could be replaced by allreduce
-	
+
     int nprocs, myid;
     MPI_Comm_size(ParaV->comm_2D, &nprocs);
     MPI_Comm_rank(ParaV->comm_2D, &myid);
@@ -424,11 +424,11 @@ void ModuleIO::distri_wfc_nao_complex(std::complex<double>** ctot, const int& ik
 	std::complex<double> *work=new std::complex<double>[maxnloc]; // work/buffer matrix
 #ifdef __DEBUG
 assert(nb2d > 0);
-#endif	
+#endif
 	int nb = nb2d;
 	int info;
 	int naroc[2]; // maximum number of row or column
-	
+
 //2. copy from ctot to psi
 	for(int iprow=0; iprow<ParaV->dim0; ++iprow)
 	{
@@ -467,5 +467,4 @@ assert(nb2d > 0);
 #else
 	ModuleBase::WARNING_QUIT("ModuleIO::distri_wfc_nao","check the code without MPI.");
 #endif
-    return;
 }

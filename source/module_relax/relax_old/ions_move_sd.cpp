@@ -19,7 +19,7 @@ Ions_Move_SD::~Ions_Move_SD()
     delete[] pos_saved;
 }
 
-void Ions_Move_SD::allocate(void)
+void Ions_Move_SD::allocate()
 {
     ModuleBase::TITLE("Ions_Move_SD", "allocate");
     assert(dim > 0);
@@ -36,8 +36,8 @@ void Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const
     ModuleBase::TITLE("Ions_Move_SD", "start");
 
     assert(dim > 0);
-    assert(grad_saved != 0);
-    assert(pos_saved != 0);
+    assert(grad_saved != nullptr);
+    assert(pos_saved != nullptr);
 
     std::vector<double> pos(dim);
     std::vector<double> grad(dim);
@@ -48,7 +48,7 @@ void Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const
 
     // 1: ediff = 0
     // 0: ediff < 0
-    bool judgement = 0;
+    bool judgement = false;
     setup_etot(etot_in, judgement);
     setup_gradient(ucell, force, pos.data(), grad.data());
 
@@ -87,10 +87,9 @@ void Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const
         Ions_Move_Basic::update_iter++;
     }
 
-    return;
-}
+    }
 
-void Ions_Move_SD::cal_tradius_sd(void) const
+void Ions_Move_SD::cal_tradius_sd() 
 {
     static int accepted_number = 0;
 
@@ -122,5 +121,4 @@ void Ions_Move_SD::cal_tradius_sd(void) const
     {
         std::cout << " SD RADIUS (Bohr)     : " << trust_radius << std::endl;
     }
-    return;
-}
+    }

@@ -34,8 +34,6 @@ void XC_Functional::becke88(const double &rho, const double &grho, double &sx, d
     sx = two13 * grho / rho43 * (- beta / dd);
     v1x = - (4.0 / 3.0) / two13 * xs2 * beta * rho13 * ee / dd2;
     v2x = two13 * beta * (ee - dd) / (rho43 * dd2);
-
-    return;
 } // end subroutine becke88
 
 void XC_Functional::ggax(const double &rho, const double &grho, double &sx, double &v1x, double &v2x)
@@ -71,8 +69,6 @@ void XC_Functional::ggax(const double &rho, const double &grho, double &sx, doub
 	sx = fp1 * grho * rhom43 * as / bs;
 	v1x = - 4.0 / 3.0 * sx / rho * (1.0 + s * dls);
     v2x = fp1 * rhom43 * as / bs * (2.0 + s * dls);
-
-    return;
 } //end subroutine ggax
 
 void XC_Functional::pbex(const double &rho, const double &grho, const int &iflag, 
@@ -127,8 +123,6 @@ double &sx, double &v1x, double &v2x)
 	v1x = sx + dxunif * fx + exunif * dfx * ds;
     v2x = exunif * dfx * dsg / agrho;
     sx = sx * rho;
-
-	return;
 }
 
 void XC_Functional::optx(const double rho, const double grho, double &sx, double &v1x, double &v2x)
@@ -180,8 +174,7 @@ void XC_Functional::optx(const double rho, const double grho, double &sx, double
         v2x = -two53 * uden / gr;
     } //endif
 
-    return;
-} // end subroutine optx
+    } // end subroutine optx
 
 void XC_Functional::wcx(const double &rho,const double &grho, double &sx, double &v1x, double &v2x)
 {
@@ -243,7 +236,6 @@ void XC_Functional::wcx(const double &rho,const double &grho, double &sx, double
   v2x = exunif * dfx * dsg / agrho;
 
   sx = sx * rho;
-  return;
 }
 
 void XC_Functional::becke88_spin(double rho, double grho, double &sx, double &v1x, double &v2x)
@@ -278,6 +270,4 @@ void XC_Functional::becke88_spin(double rho, double grho, double &sx, double &v1
     sx = grho / rho43 * (- beta / dd);
     v1x = - (4.0 / 3.0) * xs2 * beta * rho13 * ee / dd2;
     v2x = beta * (ee - dd) / (rho43 * dd2);
-
-    return;
 } //end subroutine becke88_spin

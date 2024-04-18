@@ -1,9 +1,11 @@
 #include "formatter_physfmt.h"
-#include <cstring>
+
 #include <cassert>
+#include <cstring>
+#include <utility>
 
 formatter::PhysicalFmt::PhysicalFmt(std::string context, Fmt* p_formatter) {
-    context_ = context;
+    context_ = std::move(context);
     if (p_formatter != nullptr) {
         this->p_formatter_ = p_formatter;
         this->decorator_mode_ = true;
@@ -24,11 +26,11 @@ formatter::PhysicalFmt::~PhysicalFmt() {
 
 void formatter::PhysicalFmt::adjust_formatter(bool left) {
 
-    auto context = this->context_.c_str();
+    const auto *context = this->context_.c_str();
     if (strcmp(context, "none") == 0) {
         return;
     }
-    else if (
+    if (
         (strcmp(context, "int_w2") == 0)
       ||(strcmp(context, "kmesh") == 0)
       ||(strcmp(context, "constraint") == 0)
@@ -196,7 +198,7 @@ void formatter::PhysicalFmt::adjust_formatter_flexible(const int& decisive_lengt
 }
 
 void formatter::PhysicalFmt::set_context(std::string context) {
-    context_ = context;
+    context_ = std::move(context);
     this->adjust_formatter();
 }
 

@@ -30,7 +30,6 @@ void Ions_Move_BFGS::allocate()
     // be set in save_bfgs() function.
     this->save_flag = false;
     this->init_done = true;
-    return;
 }
 
 void Ions_Move_BFGS::start(UnitCell& ucell, const ModuleBase::matrix& force, const double& energy_in)
@@ -52,7 +51,7 @@ void Ions_Move_BFGS::start(UnitCell& ucell, const ModuleBase::matrix& force, con
         Ions_Move_Basic::setup_gradient(ucell, force, pos_tmp.data(), this->grad);
     }
     // use energy_in and istep to setup etot and etot_old.
-    Ions_Move_Basic::setup_etot(energy_in, 0);
+    Ions_Move_Basic::setup_etot(energy_in, false);
     // use gradient and etot and etot_old to check
     // if the result is converged.
     Ions_Move_Basic::check_converged(ucell, this->grad);
@@ -84,8 +83,7 @@ void Ions_Move_BFGS::start(UnitCell& ucell, const ModuleBase::matrix& force, con
 
         Ions_Move_Basic::move_atoms(ucell, move, pos);
     }
-    return;
-}
+    }
 
 void Ions_Move_BFGS::restart_bfgs(const double& lat0)
 {
@@ -160,8 +158,7 @@ void Ions_Move_BFGS::restart_bfgs(const double& lat0)
 
         this->tr_min_hit = false;
     }
-    return;
-}
+    }
 
 void Ions_Move_BFGS::bfgs_routine(const double& lat0)
 {
@@ -317,5 +314,4 @@ void Ions_Move_BFGS::bfgs_routine(const double& lat0)
         }
     }
 
-    return;
-}
+    }

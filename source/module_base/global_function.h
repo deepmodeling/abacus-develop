@@ -86,7 +86,7 @@ void OUT_TIME(const std::string &name, time_t &start, time_t &end);
 // GLOBAL FUNCTION :
 // NAME : MAKE_DIR( make dir ,using system function)
 //==========================================================
-void MAKE_DIR( const std::string &file );
+void MAKE_DIR( const std::string &fn );
 
 //==========================================================
 // GLOBAL FUNCTION :

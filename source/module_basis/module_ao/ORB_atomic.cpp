@@ -86,6 +86,4 @@ void Numerical_Orbital::set_orbital_info
 		}
 	}
 	assert(ichi == total_nchi);
-
-	return;
 }

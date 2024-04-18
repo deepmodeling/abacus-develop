@@ -170,7 +170,7 @@ Tensor Tensor::slice(const std::vector<int> &start, const std::vector<int> &size
     }
     Tensor output(this->data_type_, this->device_, output_shape);
 
-    // TODO: implement the data copy.
+    // TODO(root): implement the data copy.
     // copy the data from the input tensor to the output tensor
     unsigned int ndim = shape_.ndim();
     if (ndim == 1) {
@@ -316,7 +316,7 @@ Tensor Tensor::operator[](const int& index) const {
         // If the output shape is empty, we need to add a dimension of size 1
         output_shape.add_dim(1);
     }
-    auto data_ = reinterpret_cast<char*>(this->data()) + index * shape_.strides()[0] * SizeOfType(this->data_type_);
+    auto *data_ = reinterpret_cast<char*>(this->data()) + index * shape_.strides()[0] * SizeOfType(this->data_type_);
     
     return TensorMap(data_, this->data_type_, this->device_, output_shape);
 }

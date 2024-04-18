@@ -241,7 +241,7 @@ double Efield::saw_function(const double &a, const double &b, const double &x)
     {
         return x - a + 0.5 * fac;
     }
-    else if (x > (a + b))
+    if (x > (a + b))
     {
         return x - a - 1 + 0.5 * fac;
     }

@@ -18,20 +18,20 @@ public:
 
     // tot_magnetization : majority spin - minority spin (nelup - neldw).
     double tot_magnetization;
-    double tot_magnetization_nc[3];
+    double tot_magnetization_nc[3]{};
     double abs_magnetization;
 
     void compute_magnetization(const int& nrxx, const int& nxyz, const double* const * rho, double* nelec_spin = nullptr);
 
-    ModuleBase::Vector3<double> *m_loc_;   //magnetization for each element along c-axis
-	double *angle1_;           //angle between c-axis and real spin std::vector
-	double *angle2_;           //angle between a-axis and real spin std::vector projection in ab-plane
+    ModuleBase::Vector3<double> *m_loc_{};   //magnetization for each element along c-axis
+	double *angle1_{};           //angle between c-axis and real spin std::vector
+	double *angle2_{};           //angle between a-axis and real spin std::vector projection in ab-plane
     //void cal_ux(const int ntype);
-    double ux_[3];
-	bool lsign_;
+    double ux_[3]{};
+	bool lsign_{};
 
 private:
-    bool judge_parallel(double a[3],ModuleBase::Vector3<double> b);
+    static bool judge_parallel(const double a[3],const ModuleBase::Vector3<double>& b);
 
 };
 

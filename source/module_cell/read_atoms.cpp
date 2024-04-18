@@ -87,8 +87,7 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
 				// Peize Lin test for bsse 2021.04.07
 				const std::string bsse_label = "empty";
 				this->atoms[i].flag_empty_element = 
-					(search( atom_label[i].begin(), atom_label[i].end(), bsse_label.begin(), bsse_label.end() ) != atom_label[i].end())
-					? true : false;
+					search( atom_label[i].begin(), atom_label[i].end(), bsse_label.begin(), bsse_label.end() ) != atom_label[i].end();
 			}
 		}
 	}
@@ -174,7 +173,7 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
 	// Read in latticies vector
 	//===========================
 	if(latName=="none"){	
-		if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_PARAMETERS", 1, false) )
+		if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_PARAMETERS", true, false) )
 		{
 			ModuleBase::WARNING_QUIT("UnitCell::read_atom_species","do not use LATTICE_PARAMETERS without explicit specification of lattice type");
 		}
@@ -196,7 +195,7 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
 		}
 	}//supply lattice vectors
 	else{
-		if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_VECTORS", 1, false) )
+		if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "LATTICE_VECTORS", true, false) )
 		{
 			ModuleBase::WARNING_QUIT("UnitCell::read_atom_species","do not use LATTICE_VECTORS along with explicit specification of lattice type");
 		}
@@ -413,7 +412,7 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
 			ofs_warning << " Cartesian_angstrom_center_xz" << std::endl;
 			ofs_warning << " Cartesian_angstrom_center_yz" << std::endl;
 			ofs_warning << " Cartesian_angstrom_center_xyz" << std::endl;
-			return 0; // means something wrong
+			return false; // means something wrong
 		}
 
 		ModuleBase::Vector3<double> v;
@@ -440,7 +439,7 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
 				ofs_warning << " Label orders in ATOMIC_POSITIONS and ATOMIC_SPECIES sections do not match!" << std::endl;
 				ofs_warning << " Label read from ATOMIC_POSITIONS is " << this->atoms[it].label << std::endl; 
 				ofs_warning << " Label from ATOMIC_SPECIES is " << this->atom_label[it] << std::endl;
-				return 0;
+				return false;
 			}
 			ModuleBase::GlobalFunc::OUT(ofs_running, "atom label",atoms[it].label);
 
@@ -509,7 +508,7 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
             if (na < 0)
             {
                 ModuleBase::WARNING("read_atom_positions", " atom number < 0.");
-                return 0;
+                return false;
             }
             if (na > 0)
             {
@@ -547,7 +546,7 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
 					atoms[it].m_loc_[ia].set(0,0,0);
 
 					std::string tmpid;
-					tmpid = ifpos.get();
+					tmpid = std::to_string(ifpos.get());
 
 					if( (int)tmpid[0] < 0 )
 					{
@@ -560,7 +559,7 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
 					// read if catch goodbit before "\n" and "#"
 					while ( (tmpid != "\n") && (ifpos.good()) && (tmpid !="#") )
 					{
-						tmpid = ifpos.get() ;
+						tmpid = std::to_string(ifpos.get()) ;
 						// old method of reading frozen ions
 						char tmp = (char)tmpid[0];
 						if ( tmp >= 48 && tmp <= 57 )
@@ -628,7 +627,7 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
 					// move to next line
 					while ( (tmpid != "\n") && (ifpos.good()) )
 					{
-							tmpid = ifpos.get();
+							tmpid = std::to_string(ifpos.get());
 					}
 					std::string mags;
 					//cout<<"mag"<<atoms[it].mag[ia]<<"angle1"<<atoms[it].angle1[ia]<<"angle2"<<atoms[it].angle2[ia]<<'\n';
@@ -856,7 +855,7 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
 	if(!this->if_atoms_can_move() && GlobalV::CALCULATION=="md" && GlobalV::ESOLVER_TYPE!="tddft")
 	{
 		ModuleBase::WARNING("read_atoms", "no atom can move in MD!");
-		return 0;
+		return false;
 	} 
 
 	ofs_running << std::endl;
@@ -873,17 +872,17 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
 	}
 	else
 	{
-		return 0;
+		return false;
 	}
 	this->print_tau();
 	//xiaohui modify 2015-03-15, cancel outputfile "STRU_READIN.xyz"
 	//this->print_cell_xyz("STRU_READIN_ADJUST.xyz");
 	this->print_cell_cif("STRU_READIN_ADJUST.cif");
 
-	return 1;
+	return true;
 }//end read_atom_positions
 
-bool UnitCell::check_tau(void)const
+bool UnitCell::check_tau()const
 {
 	ModuleBase::TITLE("UnitCell","check_tau");
 	ModuleBase::timer::tick("UnitCell","check_tau");
@@ -930,7 +929,7 @@ bool UnitCell::check_tau(void)const
 							GlobalV::ofs_warning << " type:" << this->atoms[T1].label << " atom " << I1 + 1 << std::endl; 
 							GlobalV::ofs_warning << " type:" << this->atoms[T2].label << " atom " << I2 + 1 << std::endl; 
 							GlobalV::ofs_warning << " distance = " << norm << " Bohr" << std::endl;
-							return 0;
+							return false;
 						}
 					}
 				}
@@ -942,7 +941,7 @@ bool UnitCell::check_tau(void)const
 	}
 
 	ModuleBase::timer::tick("UnitCell","check_tau");
-	return 1;
+	return true;
 }
 
 void UnitCell::print_stru_file(const std::string &fn, const int &type, const int &level)const
@@ -1097,12 +1096,10 @@ void UnitCell::print_stru_file(const std::string &fn, const int &type, const int
 	}
 
 	ofs.close();
-
-	return;
 }
 
 
-void UnitCell::print_tau(void)const
+void UnitCell::print_tau()const
 {
     ModuleBase::TITLE("UnitCell","print_tau");
     if(Coordinate == "Cartesian" || Coordinate == "Cartesian_angstrom")
@@ -1183,7 +1180,6 @@ void UnitCell::print_tau(void)const
     }
 
 	GlobalV::ofs_running << std::endl;
-	return;
 }	
 
 
@@ -1205,7 +1201,7 @@ int UnitCell::find_type(const std::string &label)
 */
 
 
-void UnitCell::check_dtau(void)
+void UnitCell::check_dtau()
 {
 	for(int it=0; it<ntype; it++)
 	{
@@ -1274,8 +1270,7 @@ void UnitCell::check_dtau(void)
 			
 		}
 	}
-	return;
-}
+	}
 
 void UnitCell::read_orb_file(int it, std::string &orb_file, std::ofstream &ofs_running, Atom* atom)
 {

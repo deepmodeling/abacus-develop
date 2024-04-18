@@ -116,9 +116,9 @@ class ElecState
 #endif //__LCAO
 #endif //__EXX
  
-    double get_hartree_energy();
-    double get_etot_efield();
-    double get_etot_gatefield();
+    static double get_hartree_energy();
+    static double get_etot_efield();
+    static double get_etot_gatefield();
 
     double get_solvent_model_Ael();
     double get_solvent_model_Acav();
@@ -128,7 +128,7 @@ class ElecState
     }
 
 #ifdef __LCAO
-    double get_dftu_energy();
+    static double get_dftu_energy();
 #endif
 
 #ifdef __DEEPKS
@@ -158,7 +158,7 @@ class ElecState
                     const double& pw_diag_thr = 0,
                     const double& avg_iter = 0,
                     bool print = true);
-    void print_format(const std::string& name, const double& value);
+    static void print_format(const std::string& name, const double& value);
 
     void print_band(const int& ik, const int& printe, const int& iter);
 

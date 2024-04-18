@@ -19,7 +19,7 @@ namespace ModuleIO
  * @return true if read successfully
  * @return false if read failed
  */
-bool read_wfc_pw(const std::string& filedir,
+bool read_wfc_pw(const std::string& filename,
                  const ModulePW::PW_Basis_K* pw_wfc,
                  const int& ik,
                  const int& nkstot,

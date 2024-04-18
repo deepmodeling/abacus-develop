@@ -66,14 +66,13 @@ void Symmetry_rho::psymmg(std::complex<double>* rhog_part, const ModulePW::PW_Ba
 	}
 #endif
 	delete[] fftixy2is;
-	return;
 }
 
 #ifdef __MPI
 
 void Symmetry_rho::reduce_to_fullrhog(const ModulePW::PW_Basis *rho_basis, 
 	std::complex<double>* rhogtot, std::complex<double>* rhogin, 
-	int* ig2isztot, const int* ig2iszin, int max_npw) const
+	int* ig2isztot, const int* ig2iszin, int max_npw) 
 {
 	ModuleBase::TITLE("Symmetry_rho","reduce_to_fullrhog");
 
@@ -134,12 +133,10 @@ void Symmetry_rho::reduce_to_fullrhog(const ModulePW::PW_Basis *rho_basis,
 	delete[] ig2isz_piece;
 
 	MPI_Barrier(MPI_COMM_WORLD);
-
-	return;
 }
 
 void Symmetry_rho::rhog_piece_to_all(const ModulePW::PW_Basis *rho_basis, 
-	std::complex<double>* rhogtot, std::complex<double>* rhog_part) const
+	std::complex<double>* rhogtot, std::complex<double>* rhog_part) 
 {	
 	ModuleBase::TITLE(" Symmetry_rho","rhog_piece_to_all");
 
@@ -165,14 +162,13 @@ void Symmetry_rho::rhog_piece_to_all(const ModulePW::PW_Basis *rho_basis,
 	{
 		MPI_Recv(rhog_part, rho_basis->npw_per[GlobalV::RANK_IN_POOL], MPI_DOUBLE_COMPLEX, 0, GlobalV::RANK_IN_POOL, POOL_WORLD, &ierror);
 	}
-	return;	
-}
+	}
 
 #endif
 
 // only for MYRANK==0
 void Symmetry_rho::get_ixyz2ipw(const ModulePW::PW_Basis *rho_basis, 
-	const int* ig2isztot, const int* fftixy2is, int* ixyz2ipw) const
+	const int* ig2isztot, const int* fftixy2is, int* ixyz2ipw) 
 {
 	//step 1: get ipsz2ipw
 	
@@ -233,5 +229,4 @@ void Symmetry_rho::get_ixyz2ipw(const ModulePW::PW_Basis *rho_basis,
 
 	delete[] nstnz_start;
 	delete[] ipsz2ipw;
-	return;
 }

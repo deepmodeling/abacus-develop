@@ -2,16 +2,6 @@
 // Author:Xin Qu
 // DATE : 2019-12-10
 //==========================================================
-#include <stdio.h>
-#include <string.h>
-
-#include <cmath>
-#include <complex>
-#include <fstream>
-#include <iomanip>
-#include <iostream>
-#include <sstream>
-
 #include "dftu.h"
 #include "module_base/constants.h"
 #include "module_base/global_function.h"
@@ -19,11 +9,20 @@
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
 #include "module_basis/module_ao/ORB_gen_tables.h"
+#include "module_elecstate/elecstate_lcao.h"
 #include "module_elecstate/magnetism.h"
 #include "module_elecstate/module_charge/charge.h"
-#include "module_elecstate/elecstate_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+
+#include <cmath>
+#include <complex>
+#include <cstdio>
+#include <cstring>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
 
 extern "C"
 {
@@ -172,8 +171,6 @@ void DFTU::force_stress(const elecstate::ElecState* pelec,
         }
     }
     ModuleBase::timer::tick("DFTU", "force_stress");
-
-    return;
 }
 
 void DFTU::cal_force_k(const int ik, 
@@ -267,8 +264,6 @@ void DFTU::cal_force_k(const int ik,
         } // it
     } // end dim
     ModuleBase::timer::tick("DFTU", "cal_force_k");
-
-    return;
 }
 
 void DFTU::cal_stress_k(const int ik,
@@ -316,8 +311,6 @@ void DFTU::cal_stress_k(const int ik,
         } // end dim2
     } // end dim1
     ModuleBase::timer::tick("DFTU", "cal_stress_k");
-
-    return;
 }
 
 void DFTU::cal_force_gamma(const double* rho_VU, ModuleBase::matrix& force_dftu)
@@ -412,8 +405,6 @@ void DFTU::cal_force_gamma(const double* rho_VU, ModuleBase::matrix& force_dftu)
 
     } // end dim
     ModuleBase::timer::tick("DFTU", "cal_force_gamma");
-
-    return;
 }
 
 void DFTU::cal_stress_gamma(const double* rho_VU, ModuleBase::matrix& stress_dftu)
@@ -459,6 +450,5 @@ void DFTU::cal_stress_gamma(const double* rho_VU, ModuleBase::matrix& stress_dft
         } // end dim2
     } // end dim1
     ModuleBase::timer::tick("DFTU", "cal_stress_gamma");
-    return;
 }
 } // namespace ModuleDFTU

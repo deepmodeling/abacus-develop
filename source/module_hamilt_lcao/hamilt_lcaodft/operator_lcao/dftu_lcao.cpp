@@ -206,15 +206,14 @@ template <typename TK, typename TR>
 void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 {
     ModuleBase::TITLE("DFTU", "contributeHR");
-    if(this->dftu->get_dmr(0) == nullptr && this->dftu->initialed_locale == false)
+    if(this->dftu->get_dmr(0) == nullptr && !static_cast<bool>(this->dftu->initialed_locale))
     {// skip the calculation if dm_in_dftu is nullptr
         return;
     }
-    else
-    {
-        //will update this->dftu->locale and this->dftu->EU
+    
+            //will update this->dftu->locale and this->dftu->EU
         if(this->current_spin == 0) this->dftu->EU = 0.0;
-    }
+   
     ModuleBase::timer::tick("DFTU", "contributeHR");
 
     const Parallel_Orbitals* paraV = this->hR->get_atom_pair(0).get_paraV();
@@ -238,7 +237,7 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         //first iteration to calculate occupation matrix
         const int spin_fold = (this->nspin == 4) ? 4 : 1;
         std::vector<double> occ(tlp1 * tlp1 * spin_fold, 0.0);
-        if(this->dftu->initialed_locale == false)
+        if(!static_cast<bool>(this->dftu->initialed_locale))
         {
             const hamilt::HContainer<double>* dmR_current = this->dftu->get_dmr(this->current_spin);
             for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)

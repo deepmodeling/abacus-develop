@@ -120,13 +120,13 @@ class RealGauntTable
     container::Tensor real_gaunt_table_{container::DataType::DT_DOUBLE, container::TensorShape({0})};
 
     /// selection rule of standard & real Gaunt coefficients regarding l1, l2, l3
-    bool gaunt_select_l(const int l1, const int l2, const int l3) const;
+    static bool gaunt_select_l(const int l1, const int l2, const int l3) ;
 
     /// selection rule of standard Gaunt coefficients regarding m1, m2, m3
     bool gaunt_select_m(const int m1, const int m2, const int m3) const { return m1 + m2 + m3 == 0; }
 
     /// selection rule of real Gaunt coefficients regarding m1, m2, m3
-    bool real_gaunt_select_m(const int m1, const int m2, const int m3) const;
+    static bool real_gaunt_select_m(const int m1, const int m2, const int m3) ;
 
     /*!
      * @brief Returns whether the given l & m are valid quantum numbers.
@@ -134,7 +134,7 @@ class RealGauntTable
      * This function checks whether abs(mi) <= li (i=1,2,3) is satisfied.
      * This implies li >= 0.
      *                                                                                  */
-    bool is_valid_lm(const int l1, const int l2, const int l3, const int m1, const int m2, const int m3) const;
+    static bool is_valid_lm(const int l1, const int l2, const int l3, const int m1, const int m2, const int m3) ;
 
     /// Get a Gaunt coefficient by looking up the table
     double gaunt_lookup(const int l1, const int l2, const int l3, const int m1, const int m2, const int m3) const;
@@ -160,10 +160,10 @@ class RealGauntTable
     std::array<int, 6> gaunt_key(const int l1, const int l2, const int l3, const int m1, const int m2, const int m3) const;
 
     /// swap (l1,m1) <--> (l2,m2) if l1 < l2; do nothing otherwise
-    void arrange(int& l1, int& l2, int& m1, int& m2) const;
+    static void arrange(int& l1, int& l2, int& m1, int& m2) ;
 
     /// returns n! as a double
-    double factorial(const int n) const;
+    static double factorial(const int n) ;
 
     /*!
      * @brief Returns the linearized index of Y(l,m).
@@ -172,7 +172,7 @@ class RealGauntTable
      *      m       0  -1   0   1  -2  -1   0   1   2  -3 ...
      *    index     0   1   2   3   4   5   6   7   8   9 ...
      *                                                                                  */
-    int index_map(int l, int m) const;
+    static int index_map(int l, int m) ;
 
     /// returns pow(-1, m)
     int minus_1_pow(int m) const { return m % 2 ? -1 : 1; }

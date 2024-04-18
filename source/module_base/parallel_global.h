@@ -30,7 +30,7 @@ extern int omp_number;
 //---------------------------
 void read_mpi_parameters(int argc, char** argv);
 #ifdef __MPI
-void myProd(std::complex<double>* in, std::complex<double>* inout, int* len, MPI_Datatype* dptr);
+void myProd(std::complex<double>* in, std::complex<double>* inout, const int* len, MPI_Datatype* dptr);
 #endif
 
 /**-------------------------------------------

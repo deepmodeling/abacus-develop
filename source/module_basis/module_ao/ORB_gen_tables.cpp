@@ -135,7 +135,6 @@ void ORB_gen_tables::gen_tables(
 	MGT.init_Gaunt(lmax);
 
 	ModuleBase::timer::tick("ORB_gen_tables", "gen_tables");
-	return;
 }
 
 void ORB_gen_tables::snap_psibeta_half(
@@ -223,7 +222,7 @@ void ORB_gen_tables::snap_psibeta_half(
 			all_out = false;
 			calproj[ip] = true;
 			//length of table for interpolation
-			rmesh1[ip] = tbeta.get_rmesh(Rcut1, Rcut0);
+			rmesh1[ip] = ORB_table_beta::get_rmesh(Rcut1, Rcut0);
 		}
 	}
 
@@ -236,7 +235,7 @@ void ORB_gen_tables::snap_psibeta_half(
 	//FOR INTERPOLATION
 	double *curr; //current pointer
 
-	double psa = distance10 / tbeta.dr;
+	double psa = distance10 / ORB_table_beta::dr;
 	int iqa = static_cast<int>(psa);
 	double x0a = psa - static_cast<double>(iqa);
 	double x1a = 1.0 - x0a;
@@ -397,7 +396,7 @@ void ORB_gen_tables::snap_psibeta_half(
 					{
 						tmpGaunt = this->MGT.Gaunt_Coefficients(gindex0, gindex1, gindexa);
 					}
-					const int lm = MGT.get_lm_index(L, m);
+					const int lm = ORB_gaunt_table::get_lm_index(L, m);
 					
 					term_a += tmpGaunt * Interp_Vnla * rlya[lm];
 					if(calc_deri)
@@ -436,8 +435,6 @@ void ORB_gen_tables::snap_psibeta_half(
 
 	assert(index == natomwfc);
 	ModuleBase::timer::tick("ORB_gen_tables", "snap_psibeta_half");
-
-	return;
 }	
 void ORB_gen_tables::snap_psibeta_half_tddft(
 	const LCAO_Orbitals &orb,
@@ -451,7 +448,7 @@ void ORB_gen_tables::snap_psibeta_half_tddft(
 	const ModuleBase::Vector3<double> &R0, // The projector.
 	const int &T0,
 	const ModuleBase::Vector3<double> &A,
-	const bool &calc_deri)const // mohan add 2021-04-25)
+	const bool &calc_deri) // mohan add 2021-04-25)
 {
 	ModuleBase::timer::tick("ORB_gen_tables", "snap_psibeta_half_tddft");
 
@@ -547,7 +544,7 @@ void ORB_gen_tables::snap_psibeta_half_tddft(
 				right = mid;
 				return psi_r[mid];
 			}
-			else if (r_radial[mid] < x)
+			if (r_radial[mid] < x)
 			{
 				left = mid + 1;
 			}
@@ -690,8 +687,6 @@ void ORB_gen_tables::snap_psibeta_half_tddft(
     delete[] weights_ridial;
 	assert(index == natomwfc);
 	ModuleBase::timer::tick("ORB_gen_tables", "snap_psibeta_half_tddft");
-
-	return;
 }
 
 void ORB_gen_tables::snap_psipsi(
@@ -873,7 +868,7 @@ void ORB_gen_tables::snap_psipsi(
 				{
 				case 0: // calculate overlap.
 				{
-					olm[0] += tmpOlm0 * rly[MGT.get_lm_index(L, m)];
+					olm[0] += tmpOlm0 * rly[ORB_gaunt_table::get_lm_index(L, m)];
 
 					/*
 						if( abs ( tmpOlm0 * rly[ MGT.get_lm_index(L, m) ] ) > 1.0e-3 )
@@ -890,8 +885,8 @@ void ORB_gen_tables::snap_psipsi(
 				{
 					for (int ir = 0; ir < 3; ir++)
 					{
-						olm[ir] += tmpOlm0 * grly[MGT.get_lm_index(L, m)][ir]
-							+ tmpOlm1 * rly[MGT.get_lm_index(L, m)] * arr_dR[ir] / distance;
+						olm[ir] += tmpOlm0 * grly[ORB_gaunt_table::get_lm_index(L, m)][ir]
+							+ tmpOlm1 * rly[ORB_gaunt_table::get_lm_index(L, m)] * arr_dR[ir] / distance;
 					}
 					break;
 				}
@@ -955,14 +950,14 @@ void ORB_gen_tables::snap_psipsi(
 				{
 				case 0:
 				{
-					olm[0] += tmpKem0 * rly[MGT.get_lm_index(L, m)];
+					olm[0] += tmpKem0 * rly[ORB_gaunt_table::get_lm_index(L, m)];
 					break;
 				}
 				case 1:
 				{
 					for (int ir = 0; ir < 3; ir++)
 					{
-						olm[ir] += tmpKem0 * grly[MGT.get_lm_index(L, m)][ir] + tmpKem1 * rly[MGT.get_lm_index(L, m)] * arr_dR[ir] / distance;
+						olm[ir] += tmpKem0 * grly[ORB_gaunt_table::get_lm_index(L, m)][ir] + tmpKem1 * rly[ORB_gaunt_table::get_lm_index(L, m)] * arr_dR[ir] / distance;
 					}
 					break;
 				}
@@ -974,8 +969,7 @@ void ORB_gen_tables::snap_psipsi(
 		break;
 	}
 	//	ModuleBase::timer::tick ("ORB_gen_tables", "snap_psipsi");
-	return;
-}
+	}
 
 double ORB_gen_tables::get_distance(const ModuleBase::Vector3<double> &R1, const ModuleBase::Vector3<double> &R2) const
 {

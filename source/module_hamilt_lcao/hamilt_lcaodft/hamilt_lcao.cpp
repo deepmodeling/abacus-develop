@@ -173,7 +173,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
         if(GlobalV::VL_IN_H)
         {
             //only Potential is not empty, Veff and Meta are available
-            if(pot_register_in.size()>0)
+            if(!pot_register_in.empty())
             {
                 //register Potential by gathered operator
                 pot_in->pot_register(pot_register_in);
@@ -249,7 +249,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
         if(GlobalV::VL_IN_H)
         {
             //only Potential is not empty, Veff and Meta are available
-            if(pot_register_in.size()>0)
+            if(!pot_register_in.empty())
             {
                 //register Potential by gathered operator
                 pot_in->pot_register(pot_register_in);
@@ -448,8 +448,6 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
 
     ModuleBase::Memory::record("HamiltLCAO::hR", this->hR->get_memory_size() * memory_fold);
     ModuleBase::Memory::record("HamiltLCAO::sR", this->sR->get_memory_size());
-    
-    return;
 }
 
 // case for multi-k-points

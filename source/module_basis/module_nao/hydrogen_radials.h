@@ -88,13 +88,13 @@ class HydrogenRadials : public RadialSet
         /// @param nmax maxmium principal quantum number
         /// @param strategy strategy string
         /// @return a vector of n, l pairs
-        std::vector<std::pair<int, int>> unzip_strategy(const int nmax = 0,
-                                                        const std::string strategy = "minimal-valence");
+        static std::vector<std::pair<int, int>> unzip_strategy(const int nmax = 0,
+                                                        const std::string& strategy = "minimal-valence");
         /// @brief smooth the radial function to avoid high frequency noise in FFT-spherical bessel transform
         /// @param rgrid radial grid
         /// @param rvalue radial function
         /// @param sigma sigma of the Gaussian kernel
-        void smooth(std::vector<double>& rgrid,
+        static void smooth(std::vector<double>& rgrid,
                     std::vector<double>& rvalue,
                     const double sigma = 0.1);
         /// @brief generate hydrogen-like radial functions for a given n, l, from 0.0 to a radius where the norm of radial function is converged
@@ -120,8 +120,8 @@ class HydrogenRadials : public RadialSet
         /// @param rgrid radial grid
         /// @param rvalue radial function
         /// @return norm of the radial function
-        double radial_norm(const std::vector<double> rgrid,
-                           const std::vector<double> rvalue);
+        static double radial_norm(const std::vector<double>& rgrid,
+                           const std::vector<double>& rvalue);
 
         /// @brief generate set of hydrogen-like radial functions for a given charge, nmax, dr, rank, strategy
         /// @param charge charge of the nucleus
@@ -137,7 +137,7 @@ class HydrogenRadials : public RadialSet
                      const double dr = 0.01,
                      const double conv_thr = 1e-6,
                      const int rank = 0,
-                     const std::string strategy = "minimal-valence",
+                     const std::string& strategy = "minimal-valence",
                      std::ofstream* ptr_log = nullptr);
         /// @brief mapping the n, l pairs to the l, zeta pairs
         /// @param nmax maxmium principal quantum number
@@ -145,7 +145,7 @@ class HydrogenRadials : public RadialSet
         /// @return a map of n, l pairs to l, zeta pairs
         std::map<std::pair<int, int>, std::pair<int, int>>
         mapping_nl_lzeta(const int nmax = 0,
-                         const std::string strategy = "minimal-valence");
+                         const std::string& strategy = "minimal-valence");
         /// @brief kernel function of hydrogen-like radial functions
         /// @param charge charge of the nucleus
         /// @param nmax maxmium principal quantum number
@@ -160,14 +160,14 @@ class HydrogenRadials : public RadialSet
                       const double dr = 0.01,
                       const double conv_thr = 1e-6,
                       const int rank = 0,
-                      const std::string strategy = "minimal-valence",
+                      const std::string& strategy = "minimal-valence",
                       std::ofstream* ptr_log = nullptr);
         /// @brief return the Slater screening constant for calculating effective nuclear charge
         /// @note hoping to get a more accurate estimation of hydrogen-like atom radial function, by including many-electron effect in this way
         /// @details algorithm: https://laney.edu/pinar-alscher/wp-content/uploads/sites/219/2016/04/Slater-rules-revised.pdf
         /// @param n principal quantum number
         /// @param l angular momentum quantum number
-        double slater_screening(const std::string symbol,
+        static double slater_screening(const std::string& symbol,
                                 const int n,
                                 const int l);
     private:

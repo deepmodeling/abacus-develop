@@ -178,14 +178,7 @@ void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
     this->pelec->f_en.demet = 0.0;
     // choose if psi should be diag in subspace
     // be careful that istep start from 0 and iter start from 1
-    if (istep == 0 && iter == 1)
-    {
-        hsolver::DiagoIterAssist<std::complex<double>>::need_subspace = false;
-    }
-    else
-    {
-        hsolver::DiagoIterAssist<std::complex<double>>::need_subspace = true;
-    }
+    hsolver::DiagoIterAssist<std::complex<double>>::need_subspace = !(istep == 0 && iter == 1);
 
     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR = ethr;
 
@@ -260,7 +253,7 @@ void ESolver_SDFT_PW::cal_stress(ModuleBase::matrix& stress)
 }
 
 
-void ESolver_SDFT_PW::post_process(void)
+void ESolver_SDFT_PW::post_process()
 {
 
     GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
@@ -353,11 +346,10 @@ void ESolver_SDFT_PW::others(const int istep)
         ModuleBase::WARNING_QUIT("ESolver_SDFT_PW::others", "CALCULATION type not supported");
     }
     ModuleBase::timer::tick("ESolver_SDFT_PW", "others");
-    return;
 }
 
 
-void ESolver_SDFT_PW::nscf(void)
+void ESolver_SDFT_PW::nscf()
 {
     ModuleBase::TITLE("ESolver_SDFT_PW", "nscf");
     ModuleBase::timer::tick("ESolver_SDFT_PW", "nscf");
@@ -377,6 +369,5 @@ void ESolver_SDFT_PW::nscf(void)
     this->pelec->cal_energies(2);
 
     ModuleBase::timer::tick("ESolver_SDFT_PW", "nscf");
-    return;
 }
 } // namespace ModuleESolver

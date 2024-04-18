@@ -537,7 +537,7 @@ int get_node_rank() {
         {
             break;
         }
-        if(strcmp(host_names[n], host_names[n+1]))
+        if(strcmp(host_names[n], host_names[n+1]) != 0)
         {
             color++;
         }
@@ -583,8 +583,7 @@ std::string get_device_flag(const std::string& device, const std::string& ks_sol
     if (str == device) {
         return str;
     }
-    else {
-        std::string msg = "INPUT device setting does not match the request!";
+            std::string msg = "INPUT device setting does not match the request!";
         msg += "\n Input device = " + device;
         msg += "\n Input basis_type = " + basis_type;
         msg += "\n Input ks_solver = " + ks_solver;
@@ -592,7 +591,7 @@ std::string get_device_flag(const std::string& device, const std::string& ks_sol
         msg += "\n Environment device_num = " + std::to_string(device_num) + "\n";
         ModuleBase::WARNING_QUIT("device", msg);
         return "unknown";
-    }
+   
 }
 
 int get_device_kpar(const int& kpar) {
@@ -613,7 +612,7 @@ int get_device_kpar(const int& kpar) {
     return kpar;
 }
 
-std::string get_device_info(std::string device_flag) 
+std::string get_device_info(const std::string& device_flag) 
 {
     std::string device_info = "Unknown";
 
@@ -634,19 +633,19 @@ std::string get_device_info(std::string device_flag)
 #endif
     if (device_flag == "cpu") {
         std::ifstream cpuinfo("/proc/cpuinfo");
-        std::string line = "", cpu_name = "";
+        std::string line, cpu_name;
 
         while (std::getline(cpuinfo, line)) {
             if (line.find("model name") != std::string::npos) {
                 // Extract the CPU name from the line
-                size_t colonPos = line.find(":");
+                size_t colonPos = line.find(':');
                 if (colonPos != std::string::npos) {
                     cpu_name = line.substr(colonPos + 2); // Skip the colon and space
                     break; // Stop after the first match
                 }
             }
         }
-        if (cpu_name != "") {
+        if (!cpu_name.empty()) {
             device_info = cpu_name;
         }
         cpuinfo.close();

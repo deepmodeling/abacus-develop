@@ -92,13 +92,13 @@ class SphbesRadials : public RadialSet
     void build_radset(const bool normalize = true);
 
     /// Extracts a substring (VALUE) from a string of the form KEYWORD=" VALUE ".
-    std::string extract(std::string const& str, std::string const& keyword);
+    static std::string extract(std::string const& str, std::string const& keyword);
 
     /// Splits a string into a vector of substrings with given delimiters.
-    std::vector<std::string> split(std::string const& str, const char* delim = " \n\t");
+    static std::vector<std::string> split(std::string const& str, const char* delim = " \n\t");
 
     /// Computes the combination of spherical Bessel functions on a uniform grid.
-    std::vector<double> sphbes_comb(const int l,
+    static std::vector<double> sphbes_comb(const int l,
                                     std::vector<double> const& coeff_q, 
                                     double rcut,
                                     double dr,
@@ -106,7 +106,7 @@ class SphbesRadials : public RadialSet
     );
 
     /// Smoothing function.
-    double smooth(double r, double rcut, double sigma);
+    static double smooth(double r, double rcut, double sigma);
 
 };
 

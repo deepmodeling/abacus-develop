@@ -24,7 +24,7 @@ class H_Ewald_pw
         const ModuleBase::Vector3<double> &dtau,
         const double &rmax,
         int *irr,
-        const ModuleBase::Matrix3 &at,
+        const ModuleBase::Matrix3 &latvec,
         const ModuleBase::Matrix3 &bg,
         ModuleBase::Vector3<double> *r,
         double *r2,

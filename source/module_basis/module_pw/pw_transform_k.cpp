@@ -134,7 +134,6 @@ void PW_Basis_K::real2recip(const FPTYPE* in,
         }
     }
     ModuleBase::timer::tick(this->classname, "real2recip");
-    return;
 }
 
 /**
@@ -456,4 +455,4 @@ template void PW_Basis_K::recip2real<double>(const std::complex<double>* in,
                                              const int ik,
                                              const bool add,
                                              const double factor) const; // in:(nz, ns)  ; out(nplane,nx*ny)
-}
+}  // namespace ModulePW

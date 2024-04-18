@@ -111,7 +111,6 @@ void ORB_control::read_orb_first(
         my_rank);
 
     ModuleBase::timer::tick("ORB_control", "read_orb_first");
-    return;
 }
 
 void ORB_control::set_orb_tables(
@@ -155,7 +154,6 @@ void ORB_control::set_orb_tables(
     OGT.set_unit(lat0);
 
     ModuleBase::timer::tick("ORB_control", "set_orb_tables");
-    return;
 }
 
 void ORB_control::clear_after_ions(
@@ -173,8 +171,7 @@ void ORB_control::clear_after_ions(
     {
         OGT.talpha.Destroy_Table_Alpha(orb);
     }
-    return;
-}
+    }
 
 
 void ORB_control::setup_2d_division(std::ofstream& ofs_running,
@@ -316,8 +313,6 @@ void ORB_control::set_parameters(std::ofstream& ofs_running,
 
     if (pv->testpb)ModuleBase::GlobalFunc::OUT(ofs_running, "lastband_in_proc", pv->lastband_in_proc);
     if (pv->testpb)ModuleBase::GlobalFunc::OUT(ofs_running, "lastband_number", pv->lastband_number);
-
-    return;
 }
 
 // divide the H&S matrix using 2D block algorithms.
@@ -399,5 +394,4 @@ assert(nb2d > 0);
         ModuleBase::GlobalFunc::OUT(ofs_running, "this->ncol", pv->ncol);
     if (pv->testpb)
         ModuleBase::GlobalFunc::OUT(ofs_running, "nloc", pv->nloc);
-    return;
 }

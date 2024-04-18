@@ -7,11 +7,11 @@ bool operator< ( const Abfs::Vector3_Order<double> &v1, const Abfs::Vector3_Orde
 	// but a strange bug occurs at LRI_CV::dVws.
 	// Peize Lin change at 2023.04.29
 	if      ( v1.x < v2.x ) return true;
-	else if ( v1.x > v2.x ) return false;
+	if ( v1.x > v2.x ) return false;
 	if      ( v1.y < v2.y ) return true;
-	else if ( v1.y > v2.y ) return false;
+	if ( v1.y > v2.y ) return false;
 	if      ( v1.z < v2.z ) return true;
-	else if ( v1.z > v2.z ) return false;
+	if ( v1.z > v2.z ) return false;
 	return false;
 	//constexpr double threshold = 1E-8;
 	//if      ( v1.x < v2.x - threshold ) return true;
@@ -27,10 +27,10 @@ template<>
 bool operator< ( const Abfs::Vector3_Order<int> &v1, const Abfs::Vector3_Order<int> &v2 )
 {
 	if      ( v1.x < v2.x ) return true;
-	else if ( v1.x > v2.x ) return false;
+	if ( v1.x > v2.x ) return false;
 	if      ( v1.y < v2.y ) return true;
-	else if ( v1.y > v2.y ) return false;
+	if ( v1.y > v2.y ) return false;
 	if      ( v1.z < v2.z ) return true;
-	else if ( v1.z > v2.z ) return false;
+	if ( v1.z > v2.z ) return false;
 	return false;
 }

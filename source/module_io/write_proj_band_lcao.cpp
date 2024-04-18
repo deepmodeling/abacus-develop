@@ -160,7 +160,6 @@ void ModuleIO::write_proj_band_lcao(
     ModuleIO::write_orb_info(&ucell);
 
     ModuleBase::timer::tick("ModuleIO", "write_proj_band_lcao");
-    return;
 }
 
 template<>
@@ -364,5 +363,4 @@ void ModuleIO::write_proj_band_lcao(
     ModuleIO::write_orb_info(&ucell);
 
     ModuleBase::timer::tick("ModuleIO", "write_proj_band_lcao");
-    return;
 }

@@ -38,7 +38,7 @@ Lattice_Change_CG::~Lattice_Change_CG()
     delete[] move0;
 }
 
-void Lattice_Change_CG::allocate(void)
+void Lattice_Change_CG::allocate()
 {
     ModuleBase::TITLE("Lattice_Change_CG", "allocate");
     // mohan add 2021-02-07
@@ -65,10 +65,10 @@ void Lattice_Change_CG::start(UnitCell &ucell, const ModuleBase::matrix &stress_
 {
     ModuleBase::TITLE("Lattice_Change_CG", "start");
 
-    assert(lat0 != 0);
-    assert(grad0 != 0);
-    assert(cg_grad0 != 0);
-    assert(move0 != 0);
+    assert(lat0 != nullptr);
+    assert(grad0 != nullptr);
+    assert(cg_grad0 != nullptr);
+    assert(move0 != nullptr);
 
     static bool
         sd; // sd , trial are two parameters, when sd=trial=true ,a new direction begins, when sd = false trial =true
@@ -119,7 +119,7 @@ CG_begin:
     ModuleBase::matrix stress(stress_in);
     Lattice_Change_Basic::setup_gradient(ucell, lat, grad, stress);
     // use energy_in and istep to setup etot and etot_old.
-    Lattice_Change_Basic::setup_etot(etot_in, 0);
+    Lattice_Change_Basic::setup_etot(etot_in, false);
     // use gradient and etot and etot_old to check
     // if the result is converged.
 
@@ -290,11 +290,9 @@ CG_begin:
     delete[] cg_gradn;
     delete[] lat;
     delete[] move;
-
-    return;
 }
 
-void Lattice_Change_CG::setup_cg_grad(double *grad,
+void Lattice_Change_CG::setup_cg_grad(const double *grad,
                                       const double *grad0,
                                       double *cg_grad,
                                       const double *cg_grad0,
@@ -351,8 +349,7 @@ void Lattice_Change_CG::setup_cg_grad(double *grad,
             cg_grad[i] = grad[i] + gamma * cg_grad0[i];
         }
     }
-    return;
-}
+    }
 
 void Lattice_Change_CG::third_order(const double &e0,
                                     const double &e1,
@@ -392,7 +389,6 @@ void Lattice_Change_CG::third_order(const double &e0,
     }
 
     best_x = dmove;
-    return;
 }
 
 void Lattice_Change_CG::Brent(double &fa,
@@ -463,8 +459,6 @@ void Lattice_Change_CG::Brent(double &fa,
     best_x = dmove - xpt;
     xpt = dmove;
     xc = dmove;
-
-    return;
 }
 
 void Lattice_Change_CG::f_cal(const double *g0, const double *g1, const int &dim, double &f_value)
@@ -482,15 +476,13 @@ void Lattice_Change_CG::f_cal(const double *g0, const double *g1, const int &dim
     }
 
     f_value = hel / sqrt(hv0);
-    return;
 }
 
-void Lattice_Change_CG::setup_move(double *move, double *cg_gradn, const double &trust_radius)
+void Lattice_Change_CG::setup_move(double *move, const double *cg_gradn, const double &trust_radius)
 {
     // movement using gradient and trust_radius.
     for (int i = 0; i < dim; ++i)
     {
         move[i] = -cg_gradn[i] * trust_radius;
     }
-    return;
-}
+    }

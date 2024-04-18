@@ -80,7 +80,7 @@ class XC_Functional
 // 4. init_func : which converts func_id into corresponding xc_func_type vector
 
 	static int get_func_type();
-	static void set_xc_type(const std::string xc_func_in);
+	static void set_xc_type(const std::string& xc_func_in);
 	static void get_hybrid_alpha(const double alpha_in);
 #ifdef USE_LIBXC
 	static void set_xc_type_libxc(const std::string xc_func_in);
@@ -162,7 +162,7 @@ class XC_Functional
             double &v1cup, double &v1cdw, double &v2c);
 
 	static void gcxc_spin_libxc(double rhoup, double rhodw, 
-		ModuleBase::Vector3<double> gdr1, ModuleBase::Vector3<double> gdr2,
+		const ModuleBase::Vector3<double>& gdr1, const ModuleBase::Vector3<double>& gdr2,
         double &sxc, double &v1xcup, double &v1xcdw, double &v2xcup, double &v2xcdw, double &v2xcud);
 
 //-------------------
@@ -228,7 +228,7 @@ class XC_Functional
                          const double tpiba);
     static void noncolin_rho(double* rhoout1,
                              double* rhoout2,
-                             double* seg,
+                             double* neg,
                              const double* const* const rho,
                              const int nrxx,
                              const double* ux_,

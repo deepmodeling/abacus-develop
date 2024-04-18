@@ -1,5 +1,7 @@
-#include "module_io/rho_io.h"
 #include "module_io/cube_io.h"
+#include "module_io/rho_io.h"
+
+#include <utility>
 
 
 bool ModuleIO::read_rho(
@@ -26,7 +28,7 @@ bool ModuleIO::read_rho(
 		Pgrid,
 #endif
 		my_rank,
-		esolver_type,
+		std::move(esolver_type),
 		rank_in_stogroup,
 		is,
 		ofs_running,

@@ -361,7 +361,7 @@ void DensityMatrix<TK, TR>::save_DMR()
     
     const int nnr = this->_DMR[0]->get_nnr();
     // allocate if _DMR_save is empty 
-    if(_DMR_save.size() == 0)
+    if(_DMR_save.empty())
     {
         _DMR_save.resize(this->_DMR.size());
     }
@@ -711,7 +711,7 @@ void DensityMatrix<TK, TR>::sum_DMR_spin()
 
 // read *.dmk into density matrix dm(k)
 template <typename TK, typename TR>
-void DensityMatrix<TK, TR>::read_DMK(const std::string directory, const int ispin, const int ik)
+void DensityMatrix<TK, TR>::read_DMK(const std::string& directory, const int ispin, const int ik)
 {
     ModuleBase::TITLE("DensityMatrix", "read_DMK");
 #ifdef __DEBUG

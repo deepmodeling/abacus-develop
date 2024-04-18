@@ -100,7 +100,7 @@ void Charge::allocate(const int& nspin_in)
     this->nxyz = this->rhopw->nxyz;
     this->ngmc = this->rhopw->npw;
 
-    if (allocate_rho == true)
+    if (allocate_rho)
     {
         this->destroy();
         allocate_rho = false;
@@ -192,10 +192,9 @@ void Charge::allocate(const int& nspin_in)
     ModuleBase::Memory::record("Chg::rhog_core", sizeof(double) * ngmc);
 
     this->allocate_rho = true;
-    return;
 }
 
-double Charge::sum_rho(void) const
+double Charge::sum_rho() const
 {
     ModuleBase::TITLE("Charge", "sum_rho");
 
@@ -235,7 +234,7 @@ double Charge::sum_rho(void) const
     return sum_rho;
 }
 
-void Charge::renormalize_rho(void)
+void Charge::renormalize_rho()
 {
     ModuleBase::TITLE("Charge", "renormalize_rho");
 
@@ -255,7 +254,6 @@ void Charge::renormalize_rho(void)
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "charge after normalized", this->sum_rho());
 
     GlobalV::ofs_running << std::setprecision(6);
-    return;
 }
 
 //-------------------------------------------------------
@@ -682,10 +680,9 @@ void Charge::atomic_rho(const int spin_number_need,
     }
 
     ModuleBase::timer::tick("Charge", "atomic_rho");
-    return;
 }
 
-void Charge::save_rho_before_sum_band(void)
+void Charge::save_rho_before_sum_band()
 {
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
@@ -697,8 +694,7 @@ void Charge::save_rho_before_sum_band(void)
             ModuleBase::GlobalFunc::DCOPY(nhat[is], nhat_save[is], this->rhopw->nrxx);
 #endif
     }
-    return;
-}
+    }
 
 double Charge::check_ne(const double* rho_in) const
 {
@@ -761,5 +757,4 @@ void Charge::init_final_scf()
     ModuleBase::Memory::record("Chg::rhog_core", sizeof(double) * this->rhopw->npw);
 
     this->allocate_rho_final_scf = true;
-    return;
 }

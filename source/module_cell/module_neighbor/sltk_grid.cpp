@@ -71,8 +71,6 @@ void Grid::init(
 	this->setMemberVariables(ofs_in, input);
 	this->setAtomLinkArray(ucell, input);
 	this->setBoundaryAdjacent(ofs_in, input);
-
-	return;
 }
 
 //==========================================================
@@ -161,8 +159,6 @@ void Grid::setMemberVariables(
 		}
 	}
 	this->init_cell_flag = true;
-
-	return;
 }
 
 void Grid::setAtomLinkArray(const UnitCell &ucell, const Atom_input &input)
@@ -247,8 +243,6 @@ void Grid::setAtomLinkArray(const UnitCell &ucell, const Atom_input &input)
 //        <<std::setw(12)<<atomlink[i].fatom.z();
 //  }
 	delete[] pointCache;
-
-	return;
 }
 
 void Grid::setBoundaryAdjacent(
@@ -270,10 +264,6 @@ void Grid::setBoundaryAdjacent(
 	}
 
 	if(test_grid)ModuleBase::GlobalFunc::OUT(ofs_in,"Adjacent_set call times",AdjacentSet::call_times);
-
-	//if (test_grid)ModuleBase::GlobalFunc::DONE(ofs_in, "Construct_Adjacent");
-
-	return;
 }
 
 bool Grid::Push(const UnitCell &ucell, const FAtom &atom)
@@ -299,11 +289,10 @@ bool Grid::Push(const UnitCell &ucell, const FAtom &atom)
 //		if(test_grid) ofs_running << std::setw(10) << this->Cell[a][b][c].length << std::endl;
 		return true;
 	}
-	else
-	{
-//		if(test_grid) ofs_running << std::setw(10) << " no cell in" << std::endl; 
+	
+	//		if(test_grid) ofs_running << std::setw(10) << " no cell in" << std::endl; 
 		return false;
-	}
+
 }
 
 
@@ -340,7 +329,7 @@ AtomLink* Grid::Build_Cache(const UnitCell &ucell, const Atom_input &input)
 	return start;
 }
 
-void Grid::Build_Cell(void)
+void Grid::Build_Cell()
 {
 	ModuleBase::TITLE("SLTK_Grid", "Build_Cell");
 
@@ -378,8 +367,7 @@ void Grid::Build_Cell(void)
 		}
 	}
 
-	return;
-}
+	}
 
 #include "module_base/mathzone.h"
 void Grid::In_Which_Cell(const UnitCell &ucell, int &a, int &b, int &c, const FAtom &atom)const
@@ -474,8 +462,7 @@ void Grid::In_Which_Cell(const UnitCell &ucell, int &a, int &b, int &c, const FA
 		*/
 	}
 
-	return;
-}
+	}
 
 AtomLink* Grid::getHashCode(const UnitCell &ucell, const FAtom& atom)const
 {
@@ -542,8 +529,7 @@ void Grid::Build_Hash_Table(const UnitCell &ucell, AtomLink* const pointCache)
 
 //	if(test_grid)OUT(ofs_running,"Hash one hit number",Hash_one_hit);
 //	if(test_grid)OUT(ofs_running,"One hit on target percentage(%)",static_cast<double>(Hash_one_hit) / static_cast<double>(natom)*100);
-	return;
-}
+	}
 
 void Grid::Fold_Hash_Table()
 {
@@ -559,7 +545,7 @@ void Grid::Fold_Hash_Table()
 		//=============================
 		// Constructors and destructor
 		//=============================
-		AtomLinkPointStack(const int Natom): top(-1)
+		explicit AtomLinkPointStack(const int Natom): top(-1)
 		{
 			tmp = new AtomLink*[Natom];
 		}
@@ -622,7 +608,7 @@ void Grid::Fold_Hash_Table()
 
 				for (; current < end; ++ current)
 				{
-					if (push_i[count_i] == true)
+					if (push_i[count_i])
 					{
 						//============================
 						// The push_i position didn't
@@ -690,8 +676,7 @@ void Grid::Fold_Hash_Table()
 		}//j
 	}//i
 
-	return;
-}
+	}
 
 void Grid::Construct_Adjacent_expand(
 	const int true_i, 
@@ -765,8 +750,7 @@ void Grid::Construct_Adjacent_expand(
 			ModuleBase::WARNING_QUIT("Construct_Adjacent_expand", "\n Expand case, must use periodic boundary.");
 		}
 	}
-	return;
-}
+	}
 
 void Grid::Construct_Adjacent_expand_periodic(
     const int true_i, 
@@ -790,10 +774,9 @@ void Grid::Construct_Adjacent_expand_periodic(
 		}
 	}
 
-	return;
-}
+	}
 
-void Grid::Construct_Adjacent_begin(void)
+void Grid::Construct_Adjacent_begin()
 {
 //	if (test_grid)ModuleBase::TITLE(ofs_running, "Grid", "Construct_Adjacent_begin");
 
@@ -847,8 +830,7 @@ void Grid::Construct_Adjacent_begin(void)
 		}//j
 	}//i
 
-	return;
-}
+	}
 
 void Grid::Construct_Adjacent_nature
 (
@@ -882,8 +864,7 @@ void Grid::Construct_Adjacent_nature
 		}
 	}//2
 
-	return;
-}
+	}
 
 void Grid::Construct_Adjacent_periodic
 (
@@ -1002,8 +983,7 @@ void Grid::Construct_Adjacent_periodic
 		}//j2
 	}//i2
 
-	return;
-}
+	}
 
 void Grid::Construct_Adjacent_final
 (const int i, const int j, const int k, const int ia,
@@ -1088,8 +1068,7 @@ void Grid::Construct_Adjacent_final
 		}
 	}
 
-	return;
-}
+	}
 //2015-05-07
 void Grid::delete_vector(const Atom_input &input)
 {

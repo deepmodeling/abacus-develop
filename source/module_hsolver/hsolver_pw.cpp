@@ -1,11 +1,9 @@
 #include "hsolver_pw.h"
 
-#include <algorithm>
-
 #include "diago_bpcg.h"
 #include "diago_cg.h"
-#include "diago_david.h"
 #include "diago_dav_subspace.h"
+#include "diago_david.h"
 #include "module_base/timer.h"
 #include "module_base/tool_quit.h"
 #include "module_elecstate/elecstate_pw.h"
@@ -13,6 +11,9 @@
 #include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 #include "module_hsolver/diago_iter_assist.h"
+
+#include <algorithm>
+#include <cmath>
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
 #endif
@@ -158,7 +159,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
 
     std::vector<Real> eigenvalues(pes->ekb.nr * pes->ekb.nc, 0);
 
-    if (this->is_first_scf == true)
+    if (static_cast<bool>(this->is_first_scf))
     {
         is_occupied.resize(psi.get_nk() * psi.get_nbands(), true);
     }
@@ -381,7 +382,6 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     }
 #endif
     ModuleBase::timer::tick("HSolverPW", "solve");
-    return;
 }
 
 /*
@@ -604,7 +604,6 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt, // ESolver_
     }
 #endif
     ModuleBase::timer::tick("HSolverPW", "solve");
-    return;
 }
 
 template <typename T, typename Device>
@@ -757,7 +756,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::P
                            .slice({0}, {psi.get_current_nbas()});
 
     cg->diag(hpsi_func, spsi_func, psi_tensor, eigen_tensor, prec_tensor);
-    // TODO: Double check tensormap's potential problem
+    // TODO(root): Double check tensormap's potential problem
     ct::TensorMap(psi.get_pointer(), psi_tensor, {psi.get_nbands(), psi.get_nbasis()}).sync(psi_tensor);
 }
 
@@ -793,7 +792,7 @@ void HSolverPW<T, Device>::update_precondition(std::vector<Real>& h_diag, const 
             }
             else
             {
-                h_diag[ig] = 1 + g2kin + sqrt(1 + (g2kin - 1) * (g2kin - 1));
+                h_diag[ig] = 1 + g2kin + std::sqrt(1 + (g2kin - 1) * (g2kin - 1));
             }
         }
     }

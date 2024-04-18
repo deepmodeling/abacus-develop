@@ -1,6 +1,8 @@
 #include "formatter_contextfmt.h"
-#include <iostream>
+
 #include <cstring>
+#include <iostream>
+#include <utility>
 
 formatter::ContextFmt::ContextFmt() {
     this->p_phys_fmt_ = new formatter::PhysicalFmt("none", &(this->fmt_));
@@ -12,7 +14,7 @@ formatter::ContextFmt::~ContextFmt() {
     delete this->p_phys_fmt_;
 }
 
-void formatter::ContextFmt::set_context(std::string context) {
+void formatter::ContextFmt::set_context(const std::string& context) {
     int iterative = this->iterative_;
     if (strcmp(context.c_str(), this->context_.c_str()) == 0) {
         this->iterative_ = iterative;
@@ -22,7 +24,7 @@ void formatter::ContextFmt::set_context(std::string context) {
     auto it = this->predefined_phys_fmt.find(context);
     if (it != this->predefined_phys_fmt.end()) {
         this->known_context_ = true;
-        for (auto fmt : it->second.second) {
+        for (const auto& fmt : it->second.second) {
             this->phys_fmt_.push_back(fmt);
             this->ncol_++;
         }
@@ -65,7 +67,7 @@ void formatter::ContextFmt::set_context(int ncol, std::string* phys_fmt, int* nr
 }
 
 void formatter::ContextFmt::set_context(std::string context, int ncol, int* &nrows) {
-    this->set_context(context);
+    this->set_context(std::move(context));
     this->ncol_ = ncol;
     for (int i = 0; i < ncol; ++i) {
         this->nrows_.push_back(nrows[i]);
@@ -188,7 +190,7 @@ void formatter::ContextFmt::print_status() const {
     }
     std::cout << std::endl;
     std::cout << "phys_fmt: ";
-    for (auto fmt : this->phys_fmt_) {
+    for (const auto& fmt : this->phys_fmt_) {
         std::cout << fmt << " ";
     }
     std::cout << std::endl;

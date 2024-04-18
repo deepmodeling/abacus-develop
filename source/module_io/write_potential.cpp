@@ -67,7 +67,6 @@ void write_potential(
         out_fermi);
 
     ModuleBase::timer::tick("Potential", "write_potential");
-    return;
 }
 
 void write_elecstat_pot(
@@ -154,7 +153,6 @@ void write_elecstat_pot(
     delete[] v_elecstat;
 
     ModuleBase::timer::tick("Potential", "write_elecstat_pot");
-    return;
 }
 
 } // namespace ModuleIO

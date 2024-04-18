@@ -103,10 +103,9 @@ T SparseMatrix<T>::operator()(int row, int col) const
     {
         return it->second;
     }
-    else
-    {
-        return static_cast<T>(0);
-    }
+    
+            return static_cast<T>(0);
+   
 }
 
 // Explicit instantiation of template classes

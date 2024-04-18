@@ -44,7 +44,7 @@ FR_overlap<T>::FR_overlap(const FR_overlap<T>& FR_in)
 
 template <typename T>
 FR_overlap<T>::FR_overlap(FR_overlap<T>&& FR_in)
-{
+ noexcept {
     this->fr = std::move(FR_in.fr);
     this->ucell = FR_in.ucell;
     this->FR_container = std::move(FR_in.FR_container);
@@ -56,15 +56,15 @@ FR_overlap<T>::FR_overlap(FR_overlap<T>&& FR_in)
 template <typename T>
 FR_overlap<T>::~FR_overlap()
 {
-    if (this->Leb_grid)
-    {
-        delete this->Leb_grid;
-    }
     
-    if (this->FR_container)
-    {
+    
+        delete this->Leb_grid;
+    
+    
+    
+    
         delete this->FR_container;
-    }
+    
 }
 
 template <typename T>

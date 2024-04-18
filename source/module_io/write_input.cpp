@@ -504,5 +504,4 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "qo_thr", qo_thr, "accuracy for evaluating cutoff radius of QO basis function");
   
     ofs.close();
-    return;
 }

@@ -250,7 +250,7 @@ std::ostream& operator<<(std::ostream& os, const DataType& data_type);
  *
  * @return The output stream.
  */
-std::ostream& operator<<(std::ostream& os, const DeviceType& memory_type);
+std::ostream& operator<<(std::ostream& os, const DeviceType& device_type);
 
 } // namespace container
 #endif // ATEN_CORE_TENSOR_TYPES_H_

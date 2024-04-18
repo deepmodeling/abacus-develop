@@ -37,7 +37,6 @@ void PotLocal::cal_fixed_v(double *vl_pseudo // store the local pseudopotential
 
     // GlobalV::ofs_running <<" set local pseudopotential done." << std::endl;
     ModuleBase::timer::tick("PotLocal", "cal_fixed_v");
-    return;
 }
 
 } // namespace elecstate

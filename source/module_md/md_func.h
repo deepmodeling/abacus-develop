@@ -63,7 +63,7 @@ void rand_vel(const int& natom,
               const double& temperature,
               const double* allmass,
               const int& frozen_freedom,
-              const ModuleBase::Vector3<int> frozen,
+              const ModuleBase::Vector3<int>& frozen,
               const ModuleBase::Vector3<int>* ionmbl,
               const int& my_rank,
               ModuleBase::Vector3<double>* vel);

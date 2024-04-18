@@ -50,9 +50,9 @@ class Soc
     Soc(){};
     ~Soc();
 
-    double spinor(const int l, const double j, const int m, const int spin);
+    static double spinor(const int l, const double j, const int m, const int spin);
 
-    int sph_ind(const int l, const double j, const int m, const int spin);
+    static int sph_ind(const int l, const double j, const int m, const int spin);
 
     void rot_ylm(const int lmax);
     // std::complex<double> **rotylm;

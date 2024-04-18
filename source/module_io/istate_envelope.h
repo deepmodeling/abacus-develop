@@ -59,7 +59,7 @@ public:
                Local_Orbital_wfc& lowf,
                Gint_k& gk,
                int& out_wfc_pw,
-               int& out_wfc_r,
+               int& out_wf_r,
                const K_Vectors& kv,
                const double nelec,
                const int nbands_istate,
@@ -91,7 +91,7 @@ public:
     bool* bands_picked = nullptr;
     const elecstate::ElecState* pes = nullptr;
 
-    void set_pw_wfc(const ModulePW::PW_Basis_K* wfcpw,
+    static void set_pw_wfc(const ModulePW::PW_Basis_K* wfcpw,
                     const int& ik,
                     const int& ib,
                     const int& nspin,

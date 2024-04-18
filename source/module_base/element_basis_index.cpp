@@ -35,4 +35,4 @@ Element_Basis_Index::IndexLNM Element_Basis_Index::construct_index( const Range 
 	return index;
 }
 
-}
+}  // namespace ModuleBase

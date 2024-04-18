@@ -26,11 +26,11 @@ class toWannier90
     toWannier90();
 
     toWannier90(
-      const bool &out_wannier_mmn, 
-      const bool &out_wannier_amn, 
-      const bool &out_wannier_unk, 
+      const bool &out_wannier_mmn,
+      const bool &out_wannier_amn,
+      const bool &out_wannier_unk,
       const bool &out_wannier_eig,
-      const bool &out_wannier_wvfn_formatted, 
+      const bool &out_wannier_wvfn_formatted,
       const std::string &nnkpfile,
       const std::string &wannier_spin
     );
@@ -48,15 +48,15 @@ class toWannier90
     bool try_read_nnkp(const K_Vectors& kv);
 
     // Parameters related to k point
-    int num_kpts;
-    int cal_num_kpts;
+    int num_kpts{};
+    int cal_num_kpts{};
     std::vector<std::vector<int>> nnlist;
     std::vector<std::vector<ModuleBase::Vector3<double>>> nncell;
     int nntot = 0;
     int start_k_index = 0;
 
     // Parameters related to trial orbitals
-    int num_wannier; // Number of Wannier orbits
+    int num_wannier{}; // Number of Wannier orbits
     ModuleBase::Vector3<double> *R_centre = nullptr;
     int *L = nullptr;
     int *m = nullptr;
@@ -87,7 +87,7 @@ class toWannier90
     int num_bands = 0;
     int *cal_band_index = nullptr;
     bool gamma_only_wannier = false;
-    
+
 
 };
 

@@ -14,7 +14,7 @@ class ComplexArray
 {
 public:
 	std::complex<double> *ptr=nullptr; // data array
-	
+
 	ComplexArray(const int bnd1=0, const int bnd2=1, const int bnd3=1, const int bnd4=1);
 
 	~ComplexArray();
@@ -24,12 +24,12 @@ public:
 	void create(const int bnd1=0, const int bnd2=1, const int bnd3=1, const int bnd4=1);
 
 	ComplexArray(const ComplexArray &cd);
-	ComplexArray(ComplexArray &&cd);
+	ComplexArray(ComplexArray &&cd) noexcept;
 
 	/****************************************************
  	* OPERATOR FUNCTIONS
  	***************************************************/
-	ComplexArray& operator=(ComplexArray &&cd);
+	ComplexArray& operator=(ComplexArray &&cd) noexcept;
 	ComplexArray &operator=(const ComplexArray &cd);
 	/// Assignment of scalar:  all entries set to c.
 	void operator=(std::complex <double> c);
@@ -83,7 +83,7 @@ public:
 	int getSize()const{ return bound1*bound2*bound3*bound4; }
 
 private:
-	int bound1, bound2, bound3, bound4;	
+	int bound1, bound2, bound3, bound4;
 	void init(const int size);
 };
 /// Scale a ComplexArray cd by real r
@@ -117,7 +117,7 @@ void scaled_sum(std::complex <double> c1, const ComplexArray &cd1,
            ComplexArray &cd3);
 
 /// out[i] = a1[i] * in2[i]
-void point_mult(ComplexArray &a1, ComplexArray &in2, ComplexArray &out);
+void point_mult(ComplexArray &in1, ComplexArray &in2, ComplexArray &out);
 
 /// set elements of u as zero which u is 1_d std::complex array
 template <class T>

@@ -234,9 +234,6 @@ void unkOverlap_lcao::init(const Grid_Technique& gt, std::complex<double>*** wfc
 					for( auto &co5 : co4.second )
 						for( auto &co6 : co5.second )
 							co6.second.init_radial_table();
-	
-	//std::cout << "unkOverlap_lcao::init end" << std::endl; 
-	return;
 }
 
 //REMARK: the code next seemed to duplicate with those in 
@@ -439,8 +436,7 @@ void unkOverlap_lcao::cal_R_number()
 		
 	} // end T1
 
-	return;
-}
+	}
 
 void unkOverlap_lcao::cal_orb_overlap()
 {
@@ -488,15 +484,14 @@ void unkOverlap_lcao::cal_orb_overlap()
 	}
 	
 	//std::cout << "the cal_orb_overlap is end" << std::endl;
-	return;
-}
+	}
 
 // dk 's unit is GlobalC::ucell.tpiba
 std::complex<double> unkOverlap_lcao::unkdotp_LCAO(const int ik_L,
                                                    const int ik_R,
                                                    const int iband_L,
                                                    const int iband_R,
-                                                   const ModuleBase::Vector3<double> dk,
+                                                   const ModuleBase::Vector3<double>& dk,
                                                    const K_Vectors& kv)
 {	
 	//std::cout << "unkdotp_LCAO start" << std::endl;
@@ -687,12 +682,11 @@ void unkOverlap_lcao::get_lcao_wfc_global_ik(const Grid_Technique& gt, std::comp
 	}
 
 	delete[] ctot_send;
-	return;
 }
 
 void unkOverlap_lcao::prepare_midmatrix_pblas(const int ik_L,
                                               const int ik_R,
-                                              const ModuleBase::Vector3<double> dk,
+                                              const ModuleBase::Vector3<double>& dk,
                                               std::complex<double>*& midmatrix,
                                               const Parallel_Orbitals& pv,
                                               const K_Vectors& kv)
@@ -726,7 +720,7 @@ void unkOverlap_lcao::prepare_midmatrix_pblas(const int ik_L,
 
 std::complex<double> unkOverlap_lcao::det_berryphase(const int ik_L,
                                                      const int ik_R,
-                                                     const ModuleBase::Vector3<double> dk,
+                                                     const ModuleBase::Vector3<double>& dk,
                                                      const int occ_bands,
                                                      Local_Orbital_wfc& lowf,
                                                      const psi::Psi<std::complex<double>>* psi_in,
@@ -734,7 +728,7 @@ std::complex<double> unkOverlap_lcao::det_berryphase(const int ik_L,
 {
 	const std::complex<double> minus = std::complex<double>(-1.0,0.0);
 	std::complex<double> det = std::complex<double>(1.0,0.0);
-	std::complex<double> *midmatrix = NULL;
+	std::complex<double> *midmatrix = nullptr;
 	std::complex<double> *C_matrix = new std::complex<double>[lowf.ParaV->nloc];
 	std::complex<double> *out_matrix = new std::complex<double>[lowf.ParaV->nloc];
 	ModuleBase::GlobalFunc::ZEROS(C_matrix,lowf.ParaV->nloc);

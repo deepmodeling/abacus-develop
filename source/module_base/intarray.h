@@ -62,7 +62,7 @@ class IntArray
      * @param right
      * @return const IntArray&
      */
-    const IntArray &operator=(const int &right);
+    const IntArray &operator=(const int &value);
 
     /**
      * @brief Access elements by using operator "()"
@@ -143,7 +143,7 @@ class IntArray
   private:
     int size;
     int dim;
-    int bound1, bound2, bound3, bound4, bound5, bound6;
+    int bound1, bound2, bound3, bound4, bound5, bound6{};
     static int arrayCount;
     void freemem();
 };

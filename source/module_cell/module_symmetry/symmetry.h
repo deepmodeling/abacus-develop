@@ -82,7 +82,7 @@ public:
 
     bool all_mbl = true;    ///< whether all the atoms are movable in all the directions
 
-    int standard_lat(ModuleBase::Vector3<double>& a, ModuleBase::Vector3<double>& b, ModuleBase::Vector3<double>& c, double* celconst)const;
+    int standard_lat(ModuleBase::Vector3<double>& a, ModuleBase::Vector3<double>& b, ModuleBase::Vector3<double>& c, double* cel_const)const;
 
 	void lattice_type(ModuleBase::Vector3<double> &v1,ModuleBase::Vector3<double> &v2,ModuleBase::Vector3<double> &v3, 
         ModuleBase::Vector3<double>& v01, ModuleBase::Vector3<double>& v02, ModuleBase::Vector3<double>& v03,
@@ -106,7 +106,7 @@ public:
     /// @brief  primitive cell analysis
     void pricell(double* pos, const Atom* atoms);
 	void rho_symmetry(double *rho, const int &nr1, const int &nr2, const int &nr3);
-	void rhog_symmetry(std::complex<double> *rhogtot, int* ixyz2ipw, const int &nx, 
+	void rhog_symmetry(std::complex<double> *rhogtot, const int* ixyz2ipw, const int &nx, 
 			const int &ny, const int &nz, const int & fftnx, const int &fftny, const int &fftnz);
 
     /// symmetrize a vector3 with nat elements, which can be forces or variation of atom positions in relax
@@ -119,13 +119,13 @@ public:
 	void print_pos(const double* pos, const int &nat);
 
 	//convert n rotation-matrices from sa on basis {a1, a2, a3} to sb on basis {b1, b2, b3}
-	void gmatrix_convert(const ModuleBase::Matrix3* sa, ModuleBase::Matrix3* sb, 
-			const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b)const;
-	void gmatrix_convert_int(const ModuleBase::Matrix3* sa, ModuleBase::Matrix3* sb, 
-			const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b)const;
+	static void gmatrix_convert(const ModuleBase::Matrix3* sa, ModuleBase::Matrix3* sb, 
+			const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b);
+	static void gmatrix_convert_int(const ModuleBase::Matrix3* sa, ModuleBase::Matrix3* sb, 
+			const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b);
 	//convert n translation-vectors from va on basis {a1, a2, a3} to vb on basis {b1, b2, b3}
-	void gtrans_convert(const ModuleBase::Vector3<double>* va, ModuleBase::Vector3<double>* vb, 
-			const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b)const;
+	static void gtrans_convert(const ModuleBase::Vector3<double>* va, ModuleBase::Vector3<double>* vb, 
+			const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b);
 	void gmatrix_invmap(const ModuleBase::Matrix3* s, const int n, int* invmap);
 	void hermite_normal_form(const ModuleBase::Matrix3 &s, ModuleBase::Matrix3 &H, ModuleBase::Matrix3 &b) const;
 	private:
@@ -142,7 +142,7 @@ public:
     void set_atom_map(const Atom* atoms);
     /// @brief check if all the atoms are movable
     ///  delta_pos symmetrization in relax is only meaningful when all the atoms are movable in all the directions.
-    bool is_all_movable(const Atom* atoms, const Statistics& st)const;
+    static bool is_all_movable(const Atom* atoms, const Statistics& st);
 
     // to be called in lattice_type
 	void get_shortest_latvec(ModuleBase::Vector3<double> &a1, 

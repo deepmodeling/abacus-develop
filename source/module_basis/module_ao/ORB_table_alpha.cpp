@@ -102,8 +102,7 @@ void ORB_table_alpha::allocate(
 	//}
 
 	//	OUT(GlobalV::ofs_running,"allocate kpoint, r, rab, kab","Done");
-	return;
-}
+	}
 
 int ORB_table_alpha::get_rmesh(const double &R1, const double &R2) const
 {
@@ -237,7 +236,6 @@ void ORB_table_alpha::cal_S_PhiAlpha_R(
 	delete[] k1_dot_k2;
 
 	ModuleBase::timer::tick("ORB_table_alpha", "S_PhiAlpha_R");
-	return;
 }
 
 void ORB_table_alpha::init_Table_Alpha(
@@ -357,7 +355,6 @@ void ORB_table_alpha::init_Table_Alpha(
 
 	//	OUT(GlobalV::ofs_running,"allocate non-local potential matrix","Done");
 	ModuleBase::timer::tick("ORB_table_alpha", "init_Table_Alpha");
-	return;
 }
 
 
@@ -391,7 +388,6 @@ void ORB_table_alpha::_destroy_table() {
 	delete[] Table_DSR;
 	Table_DSR = nullptr;
 	table_allocated = false;
-	return;
 }
 
 
@@ -433,7 +429,6 @@ void ORB_table_alpha::Destroy_Table_Alpha(LCAO_Orbitals &orb)
 	delete[] Table_DSR;
     Table_DSR = nullptr;
 	table_allocated = false;
-	return;
 }
 
 void ORB_table_alpha::init_DS_2Lplus1(LCAO_Orbitals &orb)
@@ -448,8 +443,7 @@ void ORB_table_alpha::init_DS_2Lplus1(LCAO_Orbitals &orb)
 	{
 		this->DS_2Lplus1[T1] = std::max(orb.Phi[T1].getLmax(), orb.Alpha[0].getLmax()) * 2 + 1;
 	}
-	return;
-}
+	}
 
 void ORB_table_alpha::init_DS_Opair(LCAO_Orbitals &orb)
 {
@@ -484,8 +478,7 @@ void ORB_table_alpha::init_DS_Opair(LCAO_Orbitals &orb)
 			}
 		}
 	}
-	return;
-}
+	}
 
 
 //caoyu add 2021-03-20
@@ -545,6 +538,5 @@ void ORB_table_alpha::print_Table_DSR(LCAO_Orbitals &orb)
 			}// N1
 		}// L1
 	}// T1
-	return;
-}
+	}
 

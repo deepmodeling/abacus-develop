@@ -638,7 +638,7 @@ class Input
     void Bcast(void);
 #endif
 
-    int count_ntype(const std::string &fn); // sunliang add 2022-12-06
+    static int count_ntype(const std::string &fn); // sunliang add 2022-12-06
 
     std::string bands_to_print_; // specify the bands to be calculated in the get_pchg calculation, formalism similar to ocp_set.
 
@@ -697,8 +697,8 @@ class Input
     typename std::enable_if<std::is_same<T, bool>::value, T>::type cast_string(const std::string& str) { return (str == "true" || str == "1"); }
     template <typename T>
     typename std::enable_if<std::is_same<T, std::string>::value, T>::type cast_string(const std::string& str) { return str; }
-    void strtolower(char *sa, char *sb);
-    void read_bool(std::ifstream &ifs, bool &var);
+    static void strtolower(char *sa, char *sb);
+    static void read_bool(std::ifstream &ifs, bool &var);
 
     // Return the const string pointer of private member bands_to_print_
     const std::string* get_bands_to_print() const

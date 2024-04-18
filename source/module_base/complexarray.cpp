@@ -26,7 +26,7 @@ void ComplexArray::init(const int size){
 	assert(size>=0);
 	if(size>0){
 		ptr = new std::complex<double> [size];
-		assert(ptr != 0);}
+		assert(ptr != nullptr);}
 	else
 	{ptr = nullptr;}
 }
@@ -59,7 +59,7 @@ ComplexArray::ComplexArray(const ComplexArray &cd){
 	this->bound3 = cd.bound3;
 	this->bound4 = cd.bound4;
 }
-ComplexArray::ComplexArray(ComplexArray &&cd){
+ComplexArray::ComplexArray(ComplexArray &&cd) noexcept {
 	delete [] this->ptr;
 	this->ptr   =cd.ptr;	cd.ptr   =nullptr;
 	this->bound1=cd.bound1;	cd.bound1=0;
@@ -67,7 +67,7 @@ ComplexArray::ComplexArray(ComplexArray &&cd){
 	this->bound3=cd.bound3;	cd.bound3=0;
 	this->bound4=cd.bound4;	cd.bound4=0;
 }
-ComplexArray& ComplexArray::operator=(ComplexArray &&cd){
+ComplexArray& ComplexArray::operator=(ComplexArray &&cd) noexcept {
 	delete [] this->ptr;
 	this->ptr   =cd.ptr;	cd.ptr   =nullptr;
 	this->bound1=cd.bound1;	cd.bound1=0;
@@ -187,17 +187,17 @@ bool ComplexArray::operator!=(const ComplexArray &cd2)const{
     	if (b14 != b24) {return true;}
     	for ( int i = 0;i <size1;++i) {if (this->ptr[i] != cd2.ptr[i]) {return true;} }
     	return false;}
-void ComplexArray::zero_out(void){
+void ComplexArray::zero_out(){
 	const int size = this->getSize();
 	for (int i = 0;i < size; i++)
 		ptr[i] = std::complex < double> (0.0, 0.0);
 }
-void ComplexArray::negate(void){
+void ComplexArray::negate(){
 	const int size = this->getSize();
 	for (int i = 0;i < size; i++){
 		ptr[i] = -ptr[i];}
 }
-void ComplexArray::randomize(void){
+void ComplexArray::randomize(){
 	const int size = this->getSize();
 	for (int i = 0;i < size; i++){
 		ptr[i] = std::complex < double> (rand() / (RAND_MAX + 1.) - .5,
@@ -276,4 +276,4 @@ std::complex<double>& ComplexArray::operator()(const int ind1,const int ind2,con
 	assert(ind4>=0);	assert(ind4<bound4);
 	const int ind = ((ind1 * bound2 + ind2) * bound3 + ind3) * bound4 + ind4;
 	return ptr[ind];}
-}
+}  // namespace ModuleBase

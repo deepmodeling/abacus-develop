@@ -62,10 +62,10 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
     }
 
     // hartree contribution
-    stress_har(sigmahar, this->rhopw, 1, pelec->charge);
+    stress_har(sigmahar, this->rhopw, true, pelec->charge);
 
     // ewald contribution
-    stress_ewa(sigmaewa, this->rhopw, 1);
+    stress_ewa(sigmaewa, this->rhopw, true);
 
     // xc contribution: add gradient corrections(non diagonal)
     for (int i = 0; i < 3; i++)
@@ -75,10 +75,10 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
     stress_gga(sigmaxc, this->rhopw, pelec->charge);
 
     // local contribution
-    stress_loc(sigmaloc, this->rhopw, p_sf, 1, pelec->charge);
+    stress_loc(sigmaloc, this->rhopw, p_sf, true, pelec->charge);
 
     // nlcc
-    stress_cc(sigmaxcc, this->rhopw, p_sf, 1, pelec->charge);
+    stress_cc(sigmaxcc, this->rhopw, p_sf, true, pelec->charge);
 
     // vdw term
     stress_vdw(sigmavdw, ucell);
@@ -116,7 +116,6 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
         ModuleIO::print_stress("TOTAL    STRESS", sigmatot, GlobalV::TEST_STRESS, ry);
     }
     ModuleBase::timer::tick("OF_Stress_PW", "cal_stress");
-    return;
 }
 
 void OF_Stress_PW::stress_vdw(ModuleBase::matrix& sigma, UnitCell& ucell)
@@ -126,5 +125,4 @@ void OF_Stress_PW::stress_vdw(ModuleBase::matrix& sigma, UnitCell& ucell)
     {
         sigma = vdw_solver->get_stress().to_matrix();
     }
-    return;
-}
+    }

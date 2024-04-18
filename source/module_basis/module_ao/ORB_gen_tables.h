@@ -45,12 +45,12 @@ class ORB_gen_tables
 		const int &job, ///<[in]0 for matrix element of either S or T, 1 for its derivatives
 	    const char &dtype, ///<[in] derivative type, 'S' for overlap, 'T' for kinetic energy, 'D' for descriptor in deepks
 		const ModuleBase::Vector3<double> &R1,
-    	const int &I1,
+    	const int &T1,
     	const int &l1,
     	const int &m1,
     	const int &n1,
     	const ModuleBase::Vector3<double> &R2,
-    	const int &I2,
+    	const int &T2,
     	const int &l2,
     	const int &m2,
 		const int &n2,
@@ -71,7 +71,7 @@ class ORB_gen_tables
 		const bool &calc_deri)const; // mohan add 2021-04-25);
 	/// set as public because in hamilt_linear,
 	//func to calculate the tddft nonlocal potential term
-	void snap_psibeta_half_tddft(
+	static void snap_psibeta_half_tddft(
 		const LCAO_Orbitals &orb,
 		const InfoNonlocal &infoNL_,
 		std::vector<std::vector<std::complex<double>>> &nlm,
@@ -83,7 +83,7 @@ class ORB_gen_tables
 		const ModuleBase::Vector3<double> &R0, // The projector.
 		const int &T0,
 		const ModuleBase::Vector3<double> &A,
-		const bool &calc_deri)const; // 
+		const bool &calc_deri); // 
 #ifdef __DEEPKS
     void snap_psialpha_half(
 			const LCAO_Orbitals& orb,
@@ -118,7 +118,7 @@ class ORB_gen_tables
 
 	double get_distance(const ModuleBase::Vector3<double> &R1, const ModuleBase::Vector3<double> &R2)const;
 
-	double lat0;
+	double lat0{};
 
 };
 

@@ -33,10 +33,10 @@ DeePKS<OperatorLCAO<TK, TR>>::DeePKS(Local_Orbital_Charge* loc_in,
 template <typename TK, typename TR>
 DeePKS<OperatorLCAO<TK, TR>>::~DeePKS()
 {
-    if (this->H_V_delta != nullptr)
-    {
+    
+    
         delete this->H_V_delta;
-    }
+    
 }
 
 #ifdef __DEEPKS
@@ -543,4 +543,4 @@ template class DeePKS<OperatorLCAO<std::complex<double>, double>>;
 
 template class DeePKS<OperatorLCAO<std::complex<double>, std::complex<double>>>;
 
-}
+}  // namespace hamilt

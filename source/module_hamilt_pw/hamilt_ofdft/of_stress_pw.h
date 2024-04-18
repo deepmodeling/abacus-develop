@@ -20,7 +20,7 @@ class OF_Stress_PW : public Stress_Func<double>
 
   protected:
     // call the vdw stress
-    void stress_vdw(ModuleBase::matrix& smearing_sigma,
+    static void stress_vdw(ModuleBase::matrix& smearing_sigma,
                     UnitCell& ucell); // force and stress calculated in vdw together.
 
     const elecstate::ElecState* pelec = nullptr;

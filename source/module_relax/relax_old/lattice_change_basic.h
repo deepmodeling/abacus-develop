@@ -27,7 +27,7 @@ void setup_gradient(const UnitCell &ucell, double *lat, double *grad, ModuleBase
 //----------------------------------------------------------------------------
 // move the atom positions, considering the periodic boundary condition.
 //----------------------------------------------------------------------------
-void change_lattice(UnitCell &ucell, double *move, double *lat);
+void change_lattice(UnitCell &ucell, double *move, const double *lat);
 
 //----------------------------------------------------------------------------
 // check the converged conditions ( if largest gradient is smaller than

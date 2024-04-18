@@ -21,13 +21,13 @@ template<typename T> struct ShiftRealComplex
 };
 
 template<>
-struct ShiftRealComplex<double> 
+struct ShiftRealComplex<double>
 {
 	using type = std::complex<double>;
 };
 
 template<>
-struct ShiftRealComplex<std::complex<double>> 
+struct ShiftRealComplex<std::complex<double>>
 {
 	using type = double;
 };
@@ -49,14 +49,14 @@ class DensityMatrix
      * @param _paraV pointer of Parallel_Orbitals object
      * @param nspin spin setting (1 - none spin; 2 - spin; 4 - SOC)
      */
-    DensityMatrix(const K_Vectors* _kv, const Parallel_Orbitals* _paraV, const int nspin);
+    DensityMatrix(const K_Vectors* kv_in, const Parallel_Orbitals* paraV_in, const int nspin);
 
     /**
      * @brief Constructor of class DensityMatrix for gamma-only calculation, where kvector is not required
      * @param _paraV pointer of Parallel_Orbitals object
      * @param nspin spin setting (1 - none spin; 2 - spin; 4 - SOC)
      */
-    DensityMatrix(const Parallel_Orbitals* _paraV, const int nspin);
+    DensityMatrix(const Parallel_Orbitals* paraV_in, const int nspin);
 
     /**
      * @brief initialize density matrix DMR from UnitCell
@@ -80,10 +80,10 @@ class DensityMatrix
     void init_DMR(const hamilt::HContainer<TR>& _DMR_in);
 
     /// @brief initialize density matrix DMR from another HContainer
-    /// this is a temprory function for NSPIN=4 case 
+    /// this is a temprory function for NSPIN=4 case
     /// since copy HContainer from another HContainer with different TR is not supported yet
     /// would be refactor in the future
-    /// @param _DMR_in 
+    /// @param _DMR_in
     // the old input type ``:HContainer<complex<double>` causes redefination error if TR = complex<double>
     void init_DMR(const hamilt::HContainer<TRShift>& _DMR_in);
 
@@ -101,7 +101,7 @@ class DensityMatrix
      * @brief set _DMK element to zero
     */
     void set_DMK_zero();
-    
+
     /**
      * @brief get a matrix element of density matrix dm(k)
      * @param ispin spin index (1 - spin up (support SOC) or 2 - spin down)
@@ -200,13 +200,13 @@ class DensityMatrix
      * @param ispin spin index (1 - spin up (support SOC) or 2 - spin down)
      * @param ik k-point index
      */
-    void read_DMK(const std::string directory, const int ispin, const int ik);
+    void read_DMK(const std::string& directory, const int ispin, const int ik);
 
     /**
      * @brief save _DMR into _DMR_save
      */
     void save_DMR();
-    
+
     std::vector<ModuleBase::ComplexMatrix> EDMK; // for TD-DFT
 
   private:
@@ -236,7 +236,7 @@ class DensityMatrix
     /**
      * @brief K_Vectors object, which is used to get k-point information
      */
-    const K_Vectors* _kv;
+    const K_Vectors* _kv{};
 
     /**
      * @brief Parallel_Orbitals object, which contain all information of 2D block cyclic distribution

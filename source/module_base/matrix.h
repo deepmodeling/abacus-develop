@@ -27,13 +27,13 @@ public:
 	/* Constructors and destructor */
 	matrix(): nr(0), nc(0), c(nullptr){}
 	matrix( const int nrows, const int ncols, const bool flag_zero=true );		// Peize Lin add flag_zero 2018-07-02
-	matrix( const matrix &m1 ); /* copy constructor */
-	matrix( matrix && m1 );			// Peize Lin add 2016-08-05
+	matrix( const matrix &m_in ); /* copy constructor */
+	matrix( matrix && m_in ) noexcept;			// Peize Lin add 2016-08-05
 	~matrix();
 
 	void create( const int nrow, const int ncol, const bool flag_zero=true );			// Peize Lin add flag_zero 2018-07-02
-	matrix& operator=(const matrix &m1); // Peize Lin change 2018-03-12
-	matrix& operator=( matrix && m1 );	// Peize Lin add 2016-08-05
+	matrix& operator=(const matrix &m_in); // Peize Lin change 2018-03-12
+	matrix& operator=( matrix && m_in ) noexcept;	// Peize Lin add 2016-08-05
 
 	double &operator()(const int ir,const int ic)
 	{
@@ -64,7 +64,7 @@ public:
 
 	/* zero out all the entries */
 	void zero_out(void);
-	
+
 	/* fill all entries with number */
 	void fill_out(const double x);
 

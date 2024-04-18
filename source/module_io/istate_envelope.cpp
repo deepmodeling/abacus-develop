@@ -162,8 +162,7 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
             delete[] wfc_gamma_grid[is][ib];
         delete[] wfc_gamma_grid[is];
     }
-    return;
-}
+    }
 
 void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
                             const ModulePW::PW_Basis* rhopw,
@@ -311,7 +310,6 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
     }
 
     delete[] bands_picked;
-    return;
 }
 
 //for each band

@@ -32,43 +32,43 @@ Gint_Gamma::Gint_Gamma()
 Gint_Gamma::~Gint_Gamma()
 {
     // mohan add if 2024-04-09
-	if(sender_local_index != nullptr)
-	{
+	
+	
 		delete[] sender_local_index;
-	}
+	
 
-	if(sender_size_process != nullptr)
-	{
+	
+	
 		delete[] sender_size_process;
-	}
+	
 
-	if(sender_displacement_process != nullptr)
-	{
+	
+	
 		delete[] sender_displacement_process;
-	}
+	
 
-	if(sender_buffer != nullptr)
-	{
+	
+	
 		delete[] sender_buffer;
-	}
+	
 
-    if(receiver_global_index != nullptr)
-	{
+    
+	
 		delete[] receiver_global_index;
-	}
+	
 
-    if(receiver_size_process != nullptr)
-	{
+    
+	
 		delete[] receiver_size_process;
-	}
+	
 
-    if(receiver_displacement_process != nullptr)
-	{
+    
+	
 		delete[] receiver_displacement_process;
-	}
+	
 
-    if(receiver_buffer != nullptr)
-	{
+    
+	
 		delete[] receiver_buffer;
-	}
+	
 }

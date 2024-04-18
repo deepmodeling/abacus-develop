@@ -71,13 +71,13 @@ class toWannier90_PW : public toWannier90
       const ModulePW::PW_Basis_K* wfcpw, 
       const int& ik, 
       const int& ikb, 
-      const ModuleBase::Vector3<double> G, 
+      const ModuleBase::Vector3<double>& G, 
       ModuleBase::ComplexMatrix &Mmn
     );
 
     void gen_radial_function_in_q(std::vector<ModuleBase::matrix> &radial_in_q);
 
-    void integral(
+    static void integral(
       const int meshr,
       const double *psir,
       const double *r,
@@ -94,7 +94,7 @@ class toWannier90_PW : public toWannier90
       ModuleBase::ComplexMatrix& trial_orbitals_k
     );
 
-    void get_trial_orbitals_lm_k(
+    static void get_trial_orbitals_lm_k(
       const int &orbital_L,
       const int &orbital_m,
       const ModuleBase::matrix &ylm,

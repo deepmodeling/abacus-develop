@@ -41,13 +41,13 @@ Mathzone_Add1::~Mathzone_Add1()
 double Mathzone_Add1::factorial (const int& l)
 {
 	if (l == 0 || l == 1) return 1.0;	
-	else return l*factorial(l-1);
+	return l*factorial(l-1);
 }
 
 double Mathzone_Add1::dualfac (const int& l)
 {
 	if (l == -1 || l == 0) return 1.0;
-	else return l * dualfac (l-2); 
+	return l * dualfac (l-2); 
 }
 
 
@@ -197,7 +197,7 @@ double Mathzone_Add1::Uni_RadialF
 		throw std::runtime_error("newr should >= 0. "+ModuleBase::GlobalFunc::TO_STRING(__FILE__)+" line "+ModuleBase::GlobalFunc::TO_STRING(__LINE__));
 
   	}
-  	else if ( rmax <= newr	) 
+  	if ( rmax <= newr	) 
 	{
 		f = 0.0;
 	}
@@ -412,4 +412,4 @@ void Mathzone_Add1::Uni_Deriv_Phi
 	ModuleBase::timer::tick("Mathzone_Add1", "Uni_Deriv_Phi");
 }
 
-}
+}  // namespace ModuleBase

@@ -70,7 +70,7 @@ bool PswfcRadials::startswith(std::string word, std::string pattern)
     return bool(score);
 }
 
-std::string PswfcRadials::steal_from_quotes(std::string word)
+std::string PswfcRadials::steal_from_quotes(const std::string& word)
 {
     // first make sure there are even number of quotes in this word
     int num_quote = 0;
@@ -81,8 +81,8 @@ std::string PswfcRadials::steal_from_quotes(std::string word)
     assert(num_quote % 2 == 0);
     // then steal from quotes
     std::string result;
-    size_t _left = word.find_first_of("\"");
-    size_t _right = word.find_last_of("\"");
+    size_t _left = word.find_first_of('\"');
+    size_t _right = word.find_last_of('\"');
     result = word.substr(_left+1, _right-_left-1);
     // then remove all spaces ahead
     while(result[0] == ' ')
@@ -92,12 +92,12 @@ std::string PswfcRadials::steal_from_quotes(std::string word)
     return result;
 }
 
-std::string PswfcRadials::steal_from_quotes(std::ifstream& ifs, std::string word)
+std::string PswfcRadials::steal_from_quotes(std::ifstream& ifs, const std::string& word)
 {
     // concatenate all words until the second quote, no matter how many lines and spaces between
     std::string concatenated = word.substr(
-        word.find_first_of("\"")+1, 
-        word.size()-word.find_first_of("\"")-1
+        word.find_first_of('\"')+1, 
+        word.size()-word.find_first_of('\"')-1
         );
     int num_quote = 1;
     while(num_quote < 2)
@@ -119,7 +119,7 @@ std::string PswfcRadials::steal_from_quotes(std::ifstream& ifs, std::string word
     return concatenated;
 }
 
-std::string PswfcRadials::read_keyword_value(std::ifstream& ifs, std::string word)
+std::string PswfcRadials::read_keyword_value(std::ifstream& ifs, const std::string& word)
 {
     // count the number of quotes, only 1 or 2 cases are considered for pseudopotential reading
     int num_quote = 0;
@@ -129,11 +129,11 @@ std::string PswfcRadials::read_keyword_value(std::ifstream& ifs, std::string wor
     }
     assert(num_quote == 1 || num_quote == 2);
     if(num_quote == 1) return steal_from_quotes(ifs, word);
-    else return steal_from_quotes(word);
+    return steal_from_quotes(word);
 }
 
-double PswfcRadials::radial_norm(const std::vector<double> rgrid,
-                                 const std::vector<double> rvalue)
+double PswfcRadials::radial_norm(const std::vector<double>& rgrid,
+                                 const std::vector<double>& rvalue)
 {
     std::vector<double> integrand(rvalue.size());
     for(int ir = 0; ir != rvalue.size(); ++ir)
@@ -262,7 +262,7 @@ void PswfcRadials::read_upf_pswfc(std::ifstream& ifs,
         // ls, izetas, rgrid and rvalues std::vectors and broadcast
         std::map<std::pair<int, int>, std::vector<double>> result;
 
-        std::string line = "";
+        std::string line;
         // read element
         while(!startswith(line, "element=")&&!ifs.eof()) ifs >> line;
         symbol_ = read_keyword_value(ifs, line);
@@ -303,7 +303,7 @@ void PswfcRadials::read_upf_pswfc(std::ifstream& ifs,
             assert(startswith(line, "</PP_CHI."));
         }
         
-        if(result.size() == 0)
+        if(result.empty())
         {
             ModuleBase::WARNING_QUIT("PswfcRadials::read", "pseudowavefunction information is absent in pseudopotential.");
         }

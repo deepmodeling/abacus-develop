@@ -46,7 +46,7 @@ void Numerical_Basis::start_from_file_k(const int& ik, ModuleBase::ComplexMatrix
 			INPUT.bessel_nao_tolerence,
             GlobalC::ucell
             );
-        this->mu_index = this->init_mu_index();
+        this->mu_index = Numerical_Basis::init_mu_index();
         this->init_label = true;
     }
     this->numerical_atomic_wfc(ik, wfcpw, psi, sf);
@@ -76,7 +76,7 @@ void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, 
 			INPUT.bessel_nao_tolerence,
             GlobalC::ucell
             );
-        this->mu_index = this->init_mu_index();
+        this->mu_index = Numerical_Basis::init_mu_index();
         this->init_label = true;
     }
     ModuleBase::GlobalFunc::MAKE_DIR(winput::spillage_outdir);
@@ -127,7 +127,7 @@ void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, 
             }
         }
 
-        const ModuleBase::matrix overlap_V = this->cal_overlap_V(wfcpw,
+        const ModuleBase::matrix overlap_V = Numerical_Basis::cal_overlap_V(wfcpw,
                                                                  psi,
                                                                  static_cast<double>(derivative_order),
                                                                  kv); // Peize Lin add 2020.04.23
@@ -142,29 +142,28 @@ void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, 
         Parallel_Reduce::reduce_pool(overlap_V.c, overlap_V.nr * overlap_V.nc);		// Peize Lin add 2020.04.23
     #endif
         // exception handling following, for FileNotOpenFailure
-        if(ofs.good()) this->output_info(ofs, bessel_basis, kv); // header of orb_matrix* file
+        if(ofs.good()) Numerical_Basis::output_info(ofs, bessel_basis, kv); // header of orb_matrix* file
         else ModuleBase::WARNING_QUIT("Numerical_Basis","Failed to open file for writing the overlap matrix.");
         // because one stage of file io complete, re-check the file status.
-        if(ofs.good()) this->output_k(ofs, kv); // <WEIGHTS_OF_KPOINTS>...</WEIGHTS_OF_KPOINTS>
+        if(ofs.good()) Numerical_Basis::output_k(ofs, kv); // <WEIGHTS_OF_KPOINTS>...</WEIGHTS_OF_KPOINTS>
         else ModuleBase::WARNING_QUIT("Numerical_Basis","Failed to write k-points to file.");
         // because one stage of file io complete, re-check the file status.
-        if(ofs.good()) this->output_overlap_Q(ofs, overlap_Q, kv); // <OVERLAP_Q>...</OVERLAP_Q>
+        if(ofs.good()) Numerical_Basis::output_overlap_Q(ofs, overlap_Q, kv); // <OVERLAP_Q>...</OVERLAP_Q>
         else ModuleBase::WARNING_QUIT("Numerical_Basis","Failed to write overlap Q to file.");
         // because one stage of file io complete, re-check the file status.
         if(winput::out_spillage == 2)
         {
             // caution: this is the largest matrix to be output, always flush
-            if(ofs.good()) this->output_overlap_Sq(ss.str(), ofs, overlap_Sq, kv); // <OVERLAP_Sq>...</OVERLAP_Sq>
+            if(ofs.good()) Numerical_Basis::output_overlap_Sq(ss.str(), ofs, overlap_Sq, kv); // <OVERLAP_Sq>...</OVERLAP_Sq>
             else ModuleBase::WARNING_QUIT("Numerical_Basis","Failed to write overlap S to file.");
         }
         // because one stage of file io complete, re-check the file status.
-        if(ofs.good()) this->output_overlap_V(ofs, overlap_V); // <OVERLAP_V>...</OVERLAP_V>
+        if(ofs.good()) Numerical_Basis::output_overlap_V(ofs, overlap_V); // <OVERLAP_V>...</OVERLAP_V>
                                                                // Peize Lin add 2020.04.23
         else ModuleBase::WARNING_QUIT("Numerical_Basis","Failed to write overlap V to file.");
         if (GlobalV::MY_RANK==0) ofs.close();
     }
-    return;
-}
+    }
 
 ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Q(const int& ik,
                                                         const int& np,
@@ -427,7 +426,7 @@ std::vector<double> Numerical_Basis::cal_gpow (const std::vector<ModuleBase::Vec
     return gpow;
 }
 
-std::vector<ModuleBase::IntArray> Numerical_Basis::init_mu_index(void)
+std::vector<ModuleBase::IntArray> Numerical_Basis::init_mu_index()
 {
 	GlobalV::ofs_running << " Initialize the mu index" << std::endl;
     std::vector<ModuleBase::IntArray> mu_index_(GlobalC::ucell.ntype);

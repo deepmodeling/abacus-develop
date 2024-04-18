@@ -130,7 +130,7 @@ class TwoCenterIntegrator
      *   l    0   1   1   1   2   2   2   2   2   3   3   3   3 ...
      *   m    0   0   1  -1   0   1  -1   2  -2   0   1  -1   2 ...
      *                                                                                  */
-    int ylm_index(const int l, const int m) const;
+    static int ylm_index(const int l, const int m) ;
 };
 
 #endif

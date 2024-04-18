@@ -19,7 +19,7 @@ class FileReader
 {
   public:
     // Default constructor
-    FileReader(std::string filename);
+    FileReader(const std::string& filename);
     ~FileReader();
 
     // Check if file is open

@@ -20,4 +20,4 @@ void ElecState::set_exx(const double& Eexx)
 #endif //__LCAO
 #endif //__EXX
 
-}
+}  // namespace elecstate

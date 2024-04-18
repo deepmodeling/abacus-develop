@@ -24,8 +24,7 @@ void CHECK_NAME(std::ifstream &ifs,const std::string &name_in,bool quit)
         	std::cout <<"\n Can not match : "<<name<<"(readin)  "<<name_in<<std::endl;
 		}
     }
-    return;
-}
+    }
 
 void CHECK_INT(std::ifstream &ifs,const int &v,bool quit)
 {
@@ -44,8 +43,7 @@ void CHECK_INT(std::ifstream &ifs,const int &v,bool quit)
 			std::cout <<"\n Can not match well: "<<v_in<<"(readin)  "<<v<<std::endl;
 		}
 	}
-	return;
-}
+	}
 
 void CHECK_DOUBLE(std::ifstream &ifs,const double &v,bool quit)
 {
@@ -65,8 +63,7 @@ void CHECK_DOUBLE(std::ifstream &ifs,const double &v,bool quit)
 			std::cout <<" can not match well (1.0e-5): "<< v_in <<"(readin)  "<<v<<std::endl;
 		}
 	}
-	return;
-}
+	}
 
 void CHECK_STRING(std::ifstream &ifs,const std::string &v,bool quit)
 {
@@ -85,7 +82,6 @@ void CHECK_STRING(std::ifstream &ifs,const std::string &v,bool quit)
 			std::cout <<" can not match well : "<<v_in<<"(readin)  "<<v<<std::endl;
 		}
 	}
-	return;
-}
+	}
 
-}
+}  // namespace ModuleBase

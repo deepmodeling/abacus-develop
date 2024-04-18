@@ -304,7 +304,7 @@ void RadialCollection::build(const int lmax, const int nbes, const double rcut, 
     set_rcut_max();
 }
 
-void RadialCollection::set_transformer(ModuleBase::SphericalBesselTransformer sbt, const int update)
+void RadialCollection::set_transformer(const ModuleBase::SphericalBesselTransformer& sbt, const int update)
 {
     for (int itype = 0; itype < ntype_; ++itype)
     {
@@ -334,7 +334,7 @@ void RadialCollection::set_uniform_grid(const bool for_r_space,
     set_rcut_max();
 }
 
-char RadialCollection::check_file_type(const std::string& file) const
+char RadialCollection::check_file_type(const std::string& file) 
 {
     // currently we only support ABACUS numerical atomic orbital file and
     // SIAB/PTG-generated orbital coefficient file. The latter contains a

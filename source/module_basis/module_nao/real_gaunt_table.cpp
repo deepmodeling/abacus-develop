@@ -18,7 +18,7 @@ void RealGauntTable::build(const int lmax)
         return;
     }
 
-    // TODO
+    // TODO(root): 
     // If the table already exists and lmax is larger than the current lmax_,
     // we should extend the table instead of rebuilding it from scratch.
 
@@ -107,7 +107,7 @@ double RealGauntTable::real_gaunt_lookup(const int l1, const int l2, const int l
         m_absmax = -m_absmax;
         return minus_1_pow(m_absmax) * gaunt_lookup(l1, l2, l3, m[0], m[1], m[2]);
     }
-    else if ( m1 + m2 + m3 == 0 )
+    if ( m1 + m2 + m3 == 0 )
     {
         return ModuleBase::SQRT2 / 2.0 * minus_1_pow(m_absmax + 1) * gaunt_lookup(l1, l2, l3, m1, m2, m3);
     }
@@ -160,17 +160,17 @@ double RealGauntTable::gaunt(const int l1, const int l2, const int l3, const int
     return pref * wigner1 * wigner2;
 }
 
-bool RealGauntTable::is_valid_lm(const int l1, const int l2, const int l3, const int m1, const int m2, const int m3) const
+bool RealGauntTable::is_valid_lm(const int l1, const int l2, const int l3, const int m1, const int m2, const int m3) 
 {
     return std::abs(m1) <= l1 && std::abs(m2) <= l2 && std::abs(m3) <= l3;
 }
 
-bool RealGauntTable::gaunt_select_l(const int l1, const int l2, const int l3) const
+bool RealGauntTable::gaunt_select_l(const int l1, const int l2, const int l3) 
 {
     return l1 + l2 >= l3 && l1 + l3 >= l2 && l2 + l3 >= l1 && (l1 + l2 + l3) % 2 == 0;
 }
 
-bool RealGauntTable::real_gaunt_select_m(const int m1, const int m2, const int m3) const
+bool RealGauntTable::real_gaunt_select_m(const int m1, const int m2, const int m3) 
 {
     return  ( ( (m1 < 0) + (m2 < 0) + (m3 < 0) ) % 2 == 0 ) &&
             ( std::abs(m1) + std::abs(m2) == std::abs(m3) || 
@@ -209,7 +209,7 @@ std::array<int, 6> RealGauntTable::gaunt_key(const int l1, const int l2, const i
     return key;
 }
 
-void RealGauntTable::arrange(int& l1, int& l2, int& m1, int& m2) const
+void RealGauntTable::arrange(int& l1, int& l2, int& m1, int& m2) 
 {
     if ( l1 < l2 )
     {
@@ -218,7 +218,7 @@ void RealGauntTable::arrange(int& l1, int& l2, int& m1, int& m2) const
     }
 }
 
-double RealGauntTable::factorial(const int n) const
+double RealGauntTable::factorial(const int n) 
 {
 #ifdef __DEBUG
     assert( n >= 0 );
@@ -231,7 +231,7 @@ double RealGauntTable::factorial(const int n) const
     return val;
 }
 
-int RealGauntTable::index_map(int l, int m) const
+int RealGauntTable::index_map(int l, int m) 
 {
 #ifdef __DEBUG
     assert( std::abs(m) <= l );

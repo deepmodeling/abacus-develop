@@ -175,8 +175,7 @@ void Wavefunc_in_pw::make_table_q(
 		}
 	}
 
-	return;
-}
+	}
 
 double Wavefunc_in_pw::smearing(const double &energy_x,
                                const double &ecut,
@@ -244,7 +243,6 @@ const double *rab, const int &l, double* table)
 	}
 	delete[] aux;
 	delete[] vchi;
-	return;
 }
 
 void Wavefunc_in_pw::produce_local_basis_in_pw(const int& ik,

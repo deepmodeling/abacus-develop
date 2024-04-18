@@ -101,8 +101,7 @@ void ORB_table_phi::allocate
 		rab[ir] = dr;
 	}
 
-	return;
-}
+	}
 
 int ORB_table_phi::get_rmesh(const double &R1, const double &R2) const
 {
@@ -380,8 +379,6 @@ void ORB_table_phi::cal_ST_Phi12_R
 	}
 
 	ModuleBase::timer::tick("ORB_table_phi", "cal_ST_Phi12_R");
-
-	return;
 }
 
 
@@ -544,7 +541,6 @@ void ORB_table_phi::init_Table(LCAO_Orbitals &orb)
 	ModuleBase::Memory::record("ORB::Table_SR&TR", sizeof(double) * memory_cost);
 
 	ModuleBase::timer::tick("ORB_table_phi", "init_Table");
-	return;
 }
 
 
@@ -597,8 +593,6 @@ void ORB_table_phi::Destroy_Table(LCAO_Orbitals &orb)
 
 	overlap_table_allocated = false;
 	kinetic_table_allocated = false;
-
-	return;
 }
 
 
@@ -657,8 +651,6 @@ void ORB_table_phi::_destroy_table() {
 
 	Table_SR = nullptr;
 	Table_TR = nullptr;
-
-	return;
 }
 
 
@@ -690,8 +682,7 @@ void ORB_table_phi::init_OV_Tpair(LCAO_Orbitals &orb)
 			this->OV_L2plus1(T2,T1) = this->OV_L2plus1(T1,T2);
         }
     }
-    return;
-}
+    }
 
 
 
@@ -729,8 +720,7 @@ void ORB_table_phi::init_OV_Opair(LCAO_Orbitals &orb)
             }// L1
         }// T2
     }// T1
-    return;
-}
+    }
 
 // Peize Lin update 2016-01-26
 void ORB_table_phi::init_Lmax (
@@ -740,7 +730,7 @@ void ORB_table_phi::init_Lmax (
 	int &Lmax,
 	const int &Lmax_exx,
 	const LCAO_Orbitals &orb,
-	const Numerical_Nonlocal* beta_) const
+	const Numerical_Nonlocal* beta_) 
 {
 
 	auto cal_Lmax_Phi = [](int &Lmax,const LCAO_Orbitals &orb)
@@ -868,7 +858,7 @@ void ORB_table_phi::init_Table_Spherical_Bessel (
 }
 
 void ORB_table_phi::plot_table(
-	const std::string filename,
+	const std::string& filename,
 	const int rmesh,
 	double* column)
 {

@@ -133,9 +133,9 @@ void Pseudopot_upf::getnameval(std::ifstream& ifs, int& n, std::string* name, st
     // count number of parameters according to "="
     size_t pos = 0;
     n = 0;
-    while (1)
+    while (true)
     {
-        pos = txt.find("=", pos);
+        pos = txt.find('=', pos);
         if (pos == std::string::npos)
             break;
         pos++;
@@ -147,7 +147,7 @@ void Pseudopot_upf::getnameval(std::ifstream& ifs, int& n, std::string* name, st
     size_t pos2, ll;
     for (int i = 0; i < n; ++i)
     {
-        pos2 = txt.find("=", pos);
+        pos2 = txt.find('=', pos);
         for (; pos2 > pos; --pos2) // There may be a space before "=";
         {
             if (txt.substr(pos2 - 1, 1) != " ")
@@ -188,8 +188,7 @@ void Pseudopot_upf::getnameval(std::ifstream& ifs, int& n, std::string* name, st
         }
         // std::cout<<name[i]<<"=\""<<val[i]<<"\""<<std::endl;
     }
-    return;
-}
+    }
 
 void Pseudopot_upf::read_pseudo_upf201_header(std::ifstream& ifs)
 {
@@ -234,14 +233,7 @@ void Pseudopot_upf::read_pseudo_upf201_header(std::ifstream& ifs)
         }
         else if (name[ip] == "is_ultrasoft")
         {
-            if (val[ip] == "T" || val[ip] == "TRUE" || val[ip] == "True" || val[ip] == "true")
-            {
-                tvanp = true;
-            }
-            else
-            {
-                tvanp = false;
-            }
+            tvanp = val[ip] == "T" || val[ip] == "TRUE" || val[ip] == "True" || val[ip] == "true";
         }
         else if (name[ip] == "is_paw")
         {
@@ -259,10 +251,7 @@ void Pseudopot_upf::read_pseudo_upf201_header(std::ifstream& ifs)
         }
         else if (name[ip] == "has_so")
         {
-            if (val[ip] == "T" || val[ip] == "TRUE" || val[ip] == "True" || val[ip] == "true")
-                has_so = true;
-            else
-                has_so = false;
+            has_so = val[ip] == "T" || val[ip] == "TRUE" || val[ip] == "True" || val[ip] == "true";
         }
         else if (name[ip] == "has_wfc")
         {
@@ -283,10 +272,7 @@ void Pseudopot_upf::read_pseudo_upf201_header(std::ifstream& ifs)
         }
         else if (name[ip] == "core_correction")
         {
-            if (val[ip] == "T" || val[ip] == "TRUE" || val[ip] == "True" || val[ip] == "true")
-                nlcc = true;
-            else
-                nlcc = false;
+            nlcc = val[ip] == "T" || val[ip] == "TRUE" || val[ip] == "True" || val[ip] == "true";
         }
         else if (name[ip] == "functional")
         {
@@ -538,14 +524,7 @@ void Pseudopot_upf::read_pseudo_upf201_nonlocal(std::ifstream& ifs)
         {
             if (name[ip] == "q_with_l")
             {
-                if (val[ip] == "T" || val[ip] == "TRUE" || val[ip] == "True" || val[ip] == "true")
-                {
-                    q_with_l = true;
-                }
-                else
-                {
-                    q_with_l = false;
-                }
+                q_with_l = val[ip] == "T" || val[ip] == "TRUE" || val[ip] == "True" || val[ip] == "true";
             }
             else if (name[ip] == "nqf")
             {

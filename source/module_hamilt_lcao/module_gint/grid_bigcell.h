@@ -15,16 +15,16 @@ class Grid_BigCell: public Grid_MeshCell
 
 	// save the relative cartesian position
 	// to bigcell of each atom.
-	double** tau_in_bigcell;
+	double** tau_in_bigcell{};
 
 	protected:
 
 	//---------------------------------
 	void init_big_latvec(void);
 
-	double bigcell_vec1[3];
-	double bigcell_vec2[3];
-	double bigcell_vec3[3];
+	double bigcell_vec1[3]{};
+	double bigcell_vec2[3]{};
+	double bigcell_vec3[3]{};
 
 	ModuleBase::Matrix3 bigcell_latvec0;
 	ModuleBase::Matrix3 bigcell_GT;

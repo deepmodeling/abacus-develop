@@ -49,7 +49,7 @@ void DiagoBPCG<T, Device>::init_iter(const psi::Psi<T, Device> &psi_in) {
 
     this->prec          = std::move(ct::Tensor(r_type, device_type, {this->n_basis}));
 
-    //TODO: Remove class Psi, using ct::Tensor instead!
+    // TODO(root): Remove class Psi, using ct::Tensor instead!
     this->grad_wrapper  = new psi::Psi<T, Device>(1, this->n_band, this->n_basis, psi_in.get_ngk_pointer());
     this->grad          = std::move(ct::TensorMap(grad_wrapper->get_pointer(), t_type, device_type, {this->n_band, this->n_basis}));
 }
@@ -151,8 +151,6 @@ void DiagoBPCG<T, Device>::orth_projection(
     option = ct::EinsumOption(
         /*conj_x=*/false, /*conj_y=*/false, /*alpha=*/-1.0, /*beta=*/1.0, /*Tensor out=*/&grad_out);
     grad_out = ct::op::einsum("ij,jk->ik", hsub_in, psi_in, option);
-
-    return;
 }
 
 template<typename T, typename Device>
@@ -166,8 +164,6 @@ void DiagoBPCG<T, Device>::rotate_wf(
     workspace_in = ct::op::einsum("ij,jk->ik", hsub_in, psi_out, option);
 
     syncmem_complex_op()(psi_out.template data<T>(), workspace_in.template data<T>(), this->n_band * this->n_basis);
-
-    return;
 }
 
 template<typename T, typename Device>
@@ -180,8 +176,6 @@ void DiagoBPCG<T, Device>::calc_hpsi_with_block(
     psi::Range all_bands_range(1, psi_in.get_current_k(), 0, psi_in.get_nbands() - 1);
     hpsi_info info(&psi_in, all_bands_range, hpsi_out.data<T>());
     hamilt_in->ops->hPsi(info);
-
-    return;
 }
 
 template<typename T, typename Device>
@@ -199,8 +193,6 @@ void DiagoBPCG<T, Device>::diag_hsub(
     hsub_out = ct::op::einsum("ij,kj->ik", psi_in, hpsi_in, option);
 
     ct::kernels::lapack_dnevd<T, ct_Device>()('V', 'U', hsub_out.data<T>(), this->n_band, eigenvalue_out.data<Real>());
-
-    return;
 }
 
 template<typename T, typename Device>
@@ -224,8 +216,6 @@ void DiagoBPCG<T, Device>::calc_hsub_with_block(
     // hpsi_out[n_basis, n_band] = psi_out[n_basis, n_band] x hsub_out[n_band, n_band]
     this->rotate_wf(hsub_out, psi_out, workspace_in);
     this->rotate_wf(hsub_out, hpsi_out, workspace_in);
- 
-    return;
 }
 
 template<typename T, typename Device>
@@ -242,8 +232,6 @@ void DiagoBPCG<T, Device>::calc_hsub_with_block_exit(
     // inplace matmul to get the initial guessed wavefunction psi.
     // psi_out[n_basis, n_band] = psi_out[n_basis, n_band] x hsub_out[n_band, n_band]
     this->rotate_wf(hsub_out, psi_out, workspace_in);
-
-    return;
 }
 
 template<typename T, typename Device>
@@ -310,8 +298,6 @@ void DiagoBPCG<T, Device>::diag(
     this->calc_hsub_with_block_exit(this->psi, this->hpsi, this->hsub, this->work, this->eigen);
 
     syncmem_var_d2h_op()(eigenvalue_in, this->eigen.template data<Real>(), this->n_band);
-
-    return;
 }
 
 template class DiagoBPCG<std::complex<float>, psi::DEVICE_CPU>;

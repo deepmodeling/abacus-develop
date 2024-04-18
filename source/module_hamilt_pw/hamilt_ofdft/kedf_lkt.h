@@ -36,8 +36,8 @@ class KEDF_LKT
     ModuleBase::matrix stress;
 
   private:
-    void nabla(const double* pinput, ModulePW::PW_Basis* pw_rho, double** routput);
-    void divergence(const double* const* pinput, ModulePW::PW_Basis* pw_rho, double* routput);
+    static void nabla(const double* pinput, ModulePW::PW_Basis* pw_rho, double** routput);
+    static void divergence(const double* const* pinput, ModulePW::PW_Basis* pw_rho, double* routput);
     void get_as(const double* prho, const double* const* pnabla_rho, const int nrxx, double* as);
 
     double dV_ = 0.; // volume element = V/nxyz

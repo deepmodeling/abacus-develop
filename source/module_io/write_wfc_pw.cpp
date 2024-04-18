@@ -208,5 +208,4 @@ void ModuleIO::write_wfc_pw(const std::string& fn,
 
 
     delete [] wfilename;
-	return;
 }

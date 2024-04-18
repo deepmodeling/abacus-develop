@@ -26,7 +26,6 @@ void output::printrm(std::ofstream &ofs,const std::string &s, const ModuleBase::
         }
     }
 	ofs << std::endl;
-    return;
 }
 
 void output::printrm(const std::string &s, const ModuleBase::matrix &m, const double &limit)
@@ -52,7 +51,6 @@ void output::printrm(const std::string &s, const ModuleBase::matrix &m, const do
     }
 
 	std::cout << std::endl;
-    return;
 }
 
 /*
@@ -238,8 +236,7 @@ void output::printr3_d(std::ofstream &ofs, const std::string &s,const ModuleBase
                 }
                 ofs << std::setw(18) << u(i, j, k);
             }
-    return;
-}//end printr3_d
+    }//end printr3_d
 
 /*
 void output::printr4_d(std::ofstream &ofs, const std::string &s,const ModuleBase::realArray &u)
@@ -275,7 +272,6 @@ void output::printM3(std::ofstream &ofs,const std::string &description, const Mo
 	<< "\n " << std::setw(20) << m.e21 << std::setw(20) << m.e22 << std::setw(20) << m.e23
 	<< "\n " << std::setw(20) << m.e31 << std::setw(20) << m.e32 << std::setw(20) << m.e33 << std::endl;
 	ofs << std::resetiosflags(std::ios::showpos);
-    return;
 }
 
 void output::printM3(const std::string &description, const ModuleBase::Matrix3 &m)
@@ -284,5 +280,4 @@ void output::printM3(const std::string &description, const ModuleBase::Matrix3 &
     std::cout << std::setw(20) << m.e11 << std::setw(20) << m.e12 << std::setw(20) << m.e13 << "\n"
          << std::setw(20) << m.e21 << std::setw(20) << m.e22 << std::setw(20) << m.e23 << "\n"
          << std::setw(20) << m.e31 << std::setw(20) << m.e32 << std::setw(20) << m.e33 << std::endl;
-    return;
 }

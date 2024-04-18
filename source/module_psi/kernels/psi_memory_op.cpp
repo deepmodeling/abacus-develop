@@ -1,10 +1,11 @@
-#include <iostream>
-#include <complex>
-#include <string.h>
-#include "module_psi/kernels/types.h"
-#include "module_psi/kernels/memory_op.h"
 #include "module_base/memory.h"
 #include "module_base/tool_threading.h"
+#include "module_psi/kernels/memory_op.h"
+#include "module_psi/kernels/types.h"
+
+#include <complex>
+#include <cstring>
+#include <iostream>
 
 namespace psi{
 namespace memory{
@@ -245,5 +246,5 @@ template struct delete_memory_op<std::complex<float>, psi::DEVICE_GPU>;
 template struct delete_memory_op<std::complex<double>, psi::DEVICE_GPU>;
 #endif
 
-}
-}
+}  // namespace memory
+}  // namespace psi

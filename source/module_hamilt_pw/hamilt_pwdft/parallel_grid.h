@@ -24,7 +24,7 @@ class Parallel_Grid
 	void zpiece_to_all(double *zpiece, const int &iz, double *rho);
 	void zpiece_to_stogroup(double *zpiece, const int &iz, double *rho); //qainrui add for sto-dft 2021-7-21
 	
-	void reduce_to_fullrho(double *rhotot, double *rhoin);
+	void reduce_to_fullrho(double *rhotot, const double *rhoin);
 #endif
 	
 	private:
@@ -36,15 +36,15 @@ class Parallel_Grid
     int **startz = nullptr;
     int **whichpro = nullptr;
 
-	int ncx;
-	int ncy;
-	int ncz;
-	int ncxy;
-	int ncxyz;
-	int nczp; // different processors have different values.
-	int nrxx;
-	int nbz;
-	int bz;
+	int ncx{};
+	int ncy{};
+	int ncz{};
+	int ncxy{};
+	int ncxyz{};
+	int nczp{}; // different processors have different values.
+	int nrxx{};
+	int nbz{};
+	int bz{};
 
 	bool allocate;
     bool allocate_final_scf; //LiuXh add 20180619

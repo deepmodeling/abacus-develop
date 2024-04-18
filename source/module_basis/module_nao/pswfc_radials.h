@@ -42,27 +42,27 @@ class PswfcRadials : public RadialSet {
         /// @param rgrid radial grid
         /// @param rvalue radial function
         /// @return norm of the radial function
-        double radial_norm(const std::vector<double> rgrid,
-                           const std::vector<double> rvalue);
+        static double radial_norm(const std::vector<double>& rgrid,
+                           const std::vector<double>& rvalue);
         /// @brief python-like startswith function
         /// @param word as it is
         /// @param pattern pattern to be matched
         /// @return true if word starts with pattern
-        bool startswith(std::string word, std::string pattern);
+        static bool startswith(std::string word, std::string pattern);
         /// @brief read value from attributes in HTML-like format
         /// @param ifs input file stream
         /// @param word as it is
         /// @return value of the attribute
-        std::string read_keyword_value(std::ifstream& ifs, std::string word);
+        std::string read_keyword_value(std::ifstream& ifs, const std::string& word);
         /// @brief steal string from quotes
         /// @param word as it is
         /// @return string between quotes
-        std::string steal_from_quotes(std::string word);
+        static std::string steal_from_quotes(const std::string& word);
         /// @brief steal string from quotes
         /// @param ifs input file stream
         /// @param word as it is
         /// @return string between quotes
-        std::string steal_from_quotes(std::ifstream& ifs, std::string word);
+        static std::string steal_from_quotes(std::ifstream& ifs, const std::string& word);
 
         /// @brief cut radial function to convergence
         /// @param rgrid radial grid
@@ -76,13 +76,13 @@ class PswfcRadials : public RadialSet {
         /// @param rgrid radial grid
         /// @param rvalue radial function
         /// @param sigma sigma of the Gaussian kernel
-        void smooth(std::vector<double>& rgrid,
+        static void smooth(std::vector<double>& rgrid,
                     std::vector<double>& rvalue,
                     const double sigma = 0.1);
         /// @brief call cut_to_convergence for each (l,zeta) corresponding orbital in std::map, then zero-padding to the maximal r, generate a grid
         /// @param pswfc_map a map of (l,zeta) corresponding orbital
         /// @return a vector of radial grid
-        std::vector<double> pswfc_prepossess(std::map<std::pair<int, int>, std::vector<double>>& pswfc_map,
+        std::vector<double> pswfc_prepossess(std::map<std::pair<int, int>, std::vector<double>>& lzeta_rvalues,
                                              const double conv_thr = 1e-6);
     private:
 

@@ -47,7 +47,7 @@ void Verlet::second_half()
 }
 
 
-void Verlet::apply_thermostat(void)
+void Verlet::apply_thermostat()
 {
     double t_target = 0.0;
     t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
@@ -129,19 +129,16 @@ void Verlet::thermalize(const int& nraise, const double& current_temp, const dou
 void Verlet::print_md(std::ofstream& ofs, const bool& cal_stress)
 {
     MD_base::print_md(ofs, cal_stress);
-    return;
 }
 
 
 void Verlet::write_restart(const std::string& global_out_dir)
 {
     MD_base::write_restart(global_out_dir);
-    return;
 }
 
 
 void Verlet::restart(const std::string& global_readin_dir)
 {
     MD_base::restart(global_readin_dir);
-    return;
 }

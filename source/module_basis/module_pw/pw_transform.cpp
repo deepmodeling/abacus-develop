@@ -311,4 +311,4 @@ template void PW_Basis::recip2real<double>(const std::complex<double>* in,
                                            std::complex<double>* out,
                                            const bool add,
                                            const double factor) const;
-}
+}  // namespace ModulePW

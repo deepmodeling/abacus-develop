@@ -18,23 +18,23 @@ class Lattice_Change_CG
     double *grad0;
     double *cg_grad0;
     double *move0;
-    double e0;
+    double e0{};
 
     // setup gradients.
-    void setup_cg_grad(double *grad,
+    static void setup_cg_grad(const double *grad,
                        const double *grad0,
                        double *cg_grad,
                        const double *cg_grad0,
                        const int &ncggrad,
                        int &flag);
 
-    void setup_move(double *move, double *cg_gradn, const double &trust_radius);
+    static void setup_move(double *move, const double *cg_gradn, const double &trust_radius);
 
-    void Brent(double &fa, double &fb, double &fc, double &xa, double &xb, double &xc, double &best_x, double &xpt);
+    static void Brent(double &fa, double &fb, double &fc, double &xa, double &xb, double &xc, double &best_x, double &xpt);
 
-    void f_cal(const double *g0, const double *g1, const int &dim, double &f_value);
+    static void f_cal(const double *g0, const double *g1, const int &dim, double &f_value);
 
-    void third_order(const double &e0,
+    static void third_order(const double &e0,
                      const double &e1,
                      const double &fa,
                      const double &fb,

@@ -122,5 +122,4 @@ void ModuleIO::nscf_band(
 #endif
 
 	ModuleBase::timer::tick("ModuleIO", "nscf_band");
-	return;
 }

@@ -23,7 +23,7 @@ bool winput::b_out_wf;
 bool winput::b_fftwan;//add 2008-07-20
 bool winput::b_plot_build;//add 2008-06-04
 bool winput::b_plot_atomic;//add 2008-06-04
-std::string winput::trial;//"atomic" or "gauss" 
+std::string winput::trial;//"atomic" or "gauss"
 double winput::bs;//parameters for gauss orbit
 double winput::bp;
 double winput::px;
@@ -67,7 +67,7 @@ int winput::sum_lm;
 bool winput::compare_atomic;
 int winput::out_spillage;
 std::string winput::spillage_outdir = "./"; // mohan add 2010-06-07
-	
+
 winput::winput()
 {
 }
@@ -92,13 +92,12 @@ void winput::Init(const std::string &fn)
 #ifdef __MPI
 	Bcast();
 #endif
-	return;
 }
 
 void winput::Read(const std::string &fn)
 {
 	ModuleBase::TITLE("winput","Read");
-	
+
 	if(GlobalV::MY_RANK!=0) return;
 
 	std::ifstream ifs(fn.c_str(), std::ios::in);
@@ -108,10 +107,9 @@ void winput::Read(const std::string &fn)
 		//ModuleBase::WARNING("winput::Read","Can't find wannier input file.");
 		return;
 	}
-	else
-	{
-		GlobalV::ofs_running << "Open file : " << fn << std::endl;
-	}
+
+			GlobalV::ofs_running << "Open file : " << fn << std::endl;
+
 
 	ifs.clear();
 	ifs.seekg(0);
@@ -206,7 +204,7 @@ void winput::Read(const std::string &fn)
 		else if (strcmp("compare_atomic",word) == 0)	{read_value(ifs,  compare_atomic);}
 		//add 2008-1-26
 		else if (strcmp("plot_wanq",	word) == 0)	{read_value(ifs,  plot_wanq);}
-		
+
 
 		//add 2008-3-10
 		else if (strcmp("cal_bands",	word) == 0)	{read_value(ifs,  cal_bands);}
@@ -240,7 +238,7 @@ void winput::Read(const std::string &fn)
 		ifs.rdstate();
 
 		if (ifs.eof() != 0){break;}
-		else if (ifs.bad() != 0){std::cout << "bad parameter. " << std::endl;break;}
+		if (ifs.bad() != 0){std::cout << "bad parameter. " << std::endl;break;}
 		else if (ifs.fail() != 0){std::cout << " bad parameter. " << std::endl;break;}
 		else if (ifs.good() == 0){break;}
 	}
@@ -265,7 +263,7 @@ void winput::Default()
 	//	part2 : Build wf
 	//=======================
 	wf_type		      = "V";
-	build_wf	      = 0;
+	build_wf	      = false;
 	imp_pao			  = 0;
 	b_out_wf		  = false;
 	b_fftwan		  = false;
@@ -275,9 +273,9 @@ void winput::Default()
 		// part2.1 select trial wf
 		//=========================
 		trial 		= "atomic";//atomic || gauss
-		bs			= 2.5; // 
-		bp			= 2.0; //  gausss para,eters 
-		px			= 2.0; // 
+		bs			= 2.5; //
+		bp			= 2.0; //  gausss para,eters
+		px			= 2.0; //
 		g1			= 3.0; // D orbital center
 		g2 			= 3.0; // D orbital center
 		//=======================
@@ -292,16 +290,16 @@ void winput::Default()
 	//========================
 	no_center   = false;
 	sph_proj	= 0;
-	sph_type	= 0;//Rewrite mode
-	b_recon		= 0;
-	speed_mode	= 1;
-	recon_wanq  = 0;
-	b_mix_wf	= 0;
+	sph_type	= false;//Rewrite mode
+	b_recon		= false;
+	speed_mode	= true;
+	recon_wanq  = false;
+	b_mix_wf	= false;
 	mix_wf		= 0;
 		//===============================
 		//	part2.1: multi-center shperi
 		//===============================
-		b_near_atom	= 0;
+		b_near_atom	= false;
 		range0		= 0;
 		range1		= 0;
 		//==========================
@@ -324,7 +322,7 @@ void winput::Default()
 	//==============================
 	//	part3 : Plot wavefunction
 	//==============================
-	plot_wanq = 0;//add 2008-1-26
+	plot_wanq = false;//add 2008-1-26
 	plot_option	= "(110)";
 	n_unitcell	= 2;
 
@@ -332,19 +330,19 @@ void winput::Default()
 	//===============================
 	// part4 : out_all || out_charge
 	//===============================
-	out_all		= 0;
-	out_chg  = 0;
-	compare_atomic = 0;
+	out_all		= false;
+	out_chg  = false;
+	compare_atomic = false;
 
 
 	//=======================================
 	//	part5 : other functions: bands & dos
 	//=======================================
 	//	add 2008-3-10
-	cal_bands = 0;
-	cal_bands2= 0;
+	cal_bands = false;
+	cal_bands2= false;
 	charge_type = "planewave";
-	cal_dos = 0;
+	cal_dos = false;
 
 	out_spillage = 0;
 	spillage_outdir = "./";
@@ -355,11 +353,9 @@ void winput::Default()
 	//=========================================
 	mesh = 999;
 	dr = 0.01;
-
-	return;
 }
 
-void winput::Check(void)
+void winput::Check()
 {
 	if(GlobalV::test_winput) ModuleBase::TITLE("winput","Check");
 
@@ -459,7 +455,7 @@ void winput::Check(void)
 	//		ModuleBase::GlobalFunc::AUTO_SET("recon_wanq",recon_wanq);
 	//		recon_wanq = 0;
 	//	}
-	//	// if turn on 
+	//	// if turn on
 	//	if(after_iter == true)
 	//	{
 	//		if(imp_pao == 2)
@@ -489,12 +485,12 @@ void winput::Check(void)
 	//			ModuleBase::WARNING("winput::Check","Auto build localized wave functions.");
 	//			build_wf = true;
 	//			ModuleBase::GlobalFunc::AUTO_SET("build_wf",build_wf);
-	//			if(sph_proj == 1) 
+	//			if(sph_proj == 1)
 	//			{
 	//				no_center = false;
 	//				ModuleBase::GlobalFunc::AUTO_SET("no_center",no_center);
 	//			}
-	//			else if(sph_proj == 2) 
+	//			else if(sph_proj == 2)
 	//			{
 	//				ModuleBase::WARNING("winput::Check","Searching Adjacent without self site.");
 	//				no_center = true;
@@ -520,16 +516,16 @@ void winput::Check(void)
 	//	}// end after_iter
 	//}
 
-	if(out_chg == true || cal_bands == true || 
-			out_all == true || cal_bands2 == true || 
-			cal_dos == true)
+	if(out_chg || cal_bands ||
+			out_all || cal_bands2 ||
+			cal_dos)
 	{
 		end_flag=true;
 	}
 
-	if(b_plot_build == true || b_plot_atomic == true)
+	if(b_plot_build || b_plot_atomic)
 	{
-		if(b_plot_build == true && b_plot_atomic == true)
+		if(b_plot_build && b_plot_atomic)
 		{
 			ModuleBase::WARNING_QUIT("winput::Check()","Plot atomic or plot build wannier functions?");
 		}
@@ -540,15 +536,14 @@ void winput::Check(void)
 		}
 	}
 
-	return;
-}
+	}
 
 void winput::Print(const std::string &fn)
 {
 	if(GlobalV::test_winput) ModuleBase::TITLE("winput","Print");
 
 	if(GlobalV::MY_RANK!=0) return;
- 
+
 	std::ofstream ofs(fn.c_str());
 	ofs << std::setiosflags(std::ios::left);
 	ofs << "WANNIER_PARAMETERS" << std::endl;
@@ -561,7 +556,7 @@ void winput::Print(const std::string &fn)
 	ModuleBase::GlobalFunc::OUTP(ofs,"after_iter",after_iter);
 	ModuleBase::GlobalFunc::OUTP(ofs,"begin_stop_flag",begin_stop_flag);
 	ModuleBase::GlobalFunc::OUTP(ofs,"end_flag",end_flag);
-	
+
 	ofs << "#Parameters (Build Wannier Functions)" << std::endl;
 	ModuleBase::GlobalFunc::OUTP(ofs,"wf_type",wf_type);
 	ModuleBase::GlobalFunc::OUTP(ofs,"build_wf",build_wf);
@@ -570,7 +565,7 @@ void winput::Print(const std::string &fn)
 	ModuleBase::GlobalFunc::OUTP(ofs,"b_fftwan",b_fftwan);
 	ModuleBase::GlobalFunc::OUTP(ofs,"b_plot_build",b_plot_build);
 	ModuleBase::GlobalFunc::OUTP(ofs,"b_plot_atomic",b_plot_atomic);
-	
+
 	ofs << "#Parameters (Select trial wave functions)" << std::endl;
 	ModuleBase::GlobalFunc::OUTP(ofs,"trial",trial);
 	ModuleBase::GlobalFunc::OUTP(ofs,"bs",bs);
@@ -584,7 +579,7 @@ void winput::Print(const std::string &fn)
 	ModuleBase::GlobalFunc::OUTP(ofs,"bloch_end",bloch_end);
 
 	ofs << "#Parameters (Spheri & recon)" << std::endl;
-	ModuleBase::GlobalFunc::OUTP(ofs,"no_center",no_center);	
+	ModuleBase::GlobalFunc::OUTP(ofs,"no_center",no_center);
 	ModuleBase::GlobalFunc::OUTP(ofs,"sph_proj",sph_proj);
 	ModuleBase::GlobalFunc::OUTP(ofs,"sph_type",sph_type);
 	ModuleBase::GlobalFunc::OUTP(ofs,"b_recon",b_recon);
@@ -628,20 +623,19 @@ void winput::Print(const std::string &fn)
 	ModuleBase::GlobalFunc::OUTP(ofs,"cal_dos",cal_dos);
 	ModuleBase::GlobalFunc::OUTP(ofs,"out_spillage",out_spillage);
 	ModuleBase::GlobalFunc::OUTP(ofs,"spillage_outdir",spillage_outdir);
-	
+
 	ofs << "#Parameters (Uniform mesh)" << std::endl;
 	ModuleBase::GlobalFunc::OUTP(ofs,"mesh",mesh);
 	ModuleBase::GlobalFunc::OUTP(ofs,"dr",dr);
 
-	ModuleBase::GlobalFunc::OUTP(ofs,"sum_lm",sum_lm);	
+	ModuleBase::GlobalFunc::OUTP(ofs,"sum_lm",sum_lm);
 
 	ofs.close();
-	return;
 }
 
 #include "module_base/parallel_common.h"
 #ifdef __MPI
-void winput::Bcast(void)
+void winput::Bcast()
 {
 	if(GlobalV::test_winput) ModuleBase::TITLE("winput","Bcast");
 
@@ -655,7 +649,7 @@ void winput::Bcast(void)
 	Parallel_Common::bcast_double( trunc_ao );
 	Parallel_Common::bcast_double( trunc_wlmr );
 	Parallel_Common::bcast_double( trunc_wan );
-	
+
 	Parallel_Common::bcast_string( wlmr_dir );
 	Parallel_Common::bcast_string( wf_type );
 	Parallel_Common::bcast_bool( build_wf );
@@ -715,7 +709,5 @@ void winput::Bcast(void)
 	Parallel_Common::bcast_bool( no_center );
 	Parallel_Common::bcast_int( sum_lm );
 	Parallel_Common::bcast_bool( compare_atomic );
-
-	return;
 }
 #endif

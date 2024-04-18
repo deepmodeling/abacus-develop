@@ -75,15 +75,14 @@ void print_force(std::ofstream& ofs_running,
     {
         std::cout << table << std::endl;
     }
-    return;
-}
+    }
 
 void print_stress(const std::string& name, const ModuleBase::matrix& scs, const bool screen, const bool ry)
 {
     const double output_acc = 1.0e-8;
     double unit_transform = 1;
     std::string title = name;
-    std::string unit = "";
+    std::string unit;
     if (ry)
     {
         title += " (a.u.)";
@@ -133,7 +132,6 @@ void print_stress(const std::string& name, const ModuleBase::matrix& scs, const 
                       << std::endl;
         }
     }
-    return;
-}
+    }
 
 }// namespace ModuleIO

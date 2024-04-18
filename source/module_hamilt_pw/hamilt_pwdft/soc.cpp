@@ -2,10 +2,10 @@
 
 Fcoef::~Fcoef()
 {
-    if (this->p != nullptr)
-    {
+    
+    
         delete[] p;
-    }
+    
 }
 
 void Fcoef::create(const int i1, const int i2, const int i3)
@@ -30,15 +30,14 @@ void Fcoef::create(const int i1, const int i2, const int i3)
         std::cout << "not allowed!" << std::endl;
     }
 
-    return;
-}
+    }
 
 Soc::~Soc()
 {
-    if (this->p_rot != nullptr)
-    {
+    
+    
         delete[] p_rot;
-    }
+    
 }
 
 double Soc::spinor(const int l, const double j, const int m, const int spin)
@@ -113,8 +112,7 @@ void Soc::rot_ylm(const int lmax)
         this->p_rot[l2plus1_ * i + n] = std::complex<double>(1.0 / sqrt(2), 0.0);
         this->p_rot[l2plus1_ * (i + 1) + n] = std::complex<double>(0.0, 1.0 / sqrt(2));
     }
-    return;
-}
+    }
 
 int Soc::sph_ind(const int l, const double j, const int m, const int spin)
 {

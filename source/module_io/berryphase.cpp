@@ -46,7 +46,6 @@ void berryphase::lcao_init(const K_Vectors& kv)
 	lcao_method.init(*this->lowf->gridt, this->lowf->wfc_k_grid, kv.nkstot);
 	lcao_method.cal_R_number();
 	lcao_method.cal_orb_overlap();
-	return;
 }
 #endif
 
@@ -698,10 +697,9 @@ void berryphase::Macroscopic_polarization(const int npwx,
 
 	//GlobalV::ofs_running << "the Macroscopic_polarization is over" << std::endl;
 	
-	return;
-}
+	}
 
-std::string berryphase::outFormat(const double polarization, const double modulus, const ModuleBase::Vector3<double> project)
+std::string berryphase::outFormat(const double polarization, const double modulus, const ModuleBase::Vector3<double>& project)
 {
 	std::stringstream outStr;
 	outStr << std::setw(12) << std::fixed << std::setprecision(7) << polarization << "  (mod " ;

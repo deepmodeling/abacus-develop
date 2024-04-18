@@ -182,7 +182,6 @@ Atom_input::Atom_input
 //----------------------------------------------------------
 	this->calculate_cells();
 	if(test_atom_input) ModuleBase::GlobalFunc::OUT(ofs_in, "CellDim", cell_nx, cell_ny, cell_nz);
-	return;
 }
 
 Atom_input::~Atom_input()
@@ -390,8 +389,7 @@ void Atom_input::Check_Expand_Condition(const UnitCell &ucell)
 	{
 		this->expand_flag = false;
 	}
-	return;
-}
+	}
 
 void Atom_input::Expand_Grid(const UnitCell &ucell, const int ntype)
 {
@@ -559,10 +557,9 @@ void Atom_input::Expand_Grid(const UnitCell &ucell, const int ntype)
 	delete[] z_old;
 	delete[] type_old;
 	delete[] natom_old;
-	return;
 }
 
-void Atom_input::calculate_cells(void)
+void Atom_input::calculate_cells()
 {
 	ModuleBase::TITLE("Atom_input", "calculate_cells");
 //----------------------------------------------------------
@@ -603,8 +600,7 @@ void Atom_input::calculate_cells(void)
 	// Not need because if int_nx = real_nx,
 	// the position belong to the next cell
 	//=======================================
-	return;
-}
+	}
 
 void Atom_input::set_FAtom(const UnitCell &ucell, FAtom &a)const
 {
@@ -644,8 +640,7 @@ void Atom_input::set_FAtom(const UnitCell &ucell, FAtom &a)const
 //		GlobalV::ofs_running<<"\n natom = "<<natom;
 	}
 
-	return;
-}
+	}
 
 void Atom_input::Load_atom(const UnitCell& ucell)const
 {
@@ -662,11 +657,4 @@ void Atom_input::Load_atom(const UnitCell& ucell)const
 
 	y = ucell.atoms[type].tau[natom].y;
 	z = ucell.atoms[type].tau[natom].z;
-
-//	std::cout<<" x = "<<ucell.atoms[type].tau[natom].x
-//		<<" y = "<<ucell.atoms[type].tau[natom].y
-//		<<" z = "<<ucell.atoms[type].tau[natom].z
-//		<<" type = "<<type
-//		<<" natom = "<<natom;
-	return;
 }

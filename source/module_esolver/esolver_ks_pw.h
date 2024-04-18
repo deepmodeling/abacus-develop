@@ -111,9 +111,9 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
                       const double fwhmin,
                       const double wcut,
                       const double dw_in,
-                      double* ct11,
-                      double* ct12,
-                      double* ct22);
+                      const double* ct11,
+                      const double* ct12,
+                      const double* ct22);
 
         /// @brief allocate psi_init the new psi_initializer
         void allocate_psi_init();

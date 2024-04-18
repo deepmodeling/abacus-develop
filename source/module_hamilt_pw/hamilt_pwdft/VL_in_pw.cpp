@@ -43,7 +43,7 @@ void pseudopot_cell_vl::init_vloc(ModuleBase::matrix& vloc_in, const ModulePW::P
 		{
 			this->vloc_coulomb(this->zp[it], vloc1d, rho_basis);
 		}
-		else if(numeric[it]==true)
+		else if(numeric[it])
 		{
 			this->vloc_of_g(
 					atom->ncpp.msh, // after cutoff 
@@ -71,7 +71,6 @@ void pseudopot_cell_vl::init_vloc(ModuleBase::matrix& vloc_in, const ModulePW::P
 	this->print_vloc(rho_basis);
 
 	ModuleBase::timer::tick("ppcell_vl","init_vloc");
-	return;
 }
 
 
@@ -97,11 +96,9 @@ void pseudopot_cell_vl::allocate(const int ngg)
 	delete[] zp; 
 	this->zp = new double[npsx];
 	ModuleBase::GlobalFunc::ZEROS(zp, npsx);
-
-	return;
 }
 
-void pseudopot_cell_vl::vloc_coulomb(const double& zp_in, double* vloc_1d, const ModulePW::PW_Basis* rho_basis) const
+void pseudopot_cell_vl::vloc_coulomb(const double& zp_in, double* vloc_1d, const ModulePW::PW_Basis* rho_basis) 
 {
     int igl0 = 0;
     // start from |G|=0 or not.
@@ -124,8 +121,7 @@ void pseudopot_cell_vl::vloc_coulomb(const double& zp_in, double* vloc_1d, const
         double gx2 = rho_basis->gg_uniq[ig] * GlobalC::ucell.tpiba2;
         vloc_1d[ig] = fac / gx2;
     }
-    return;
-}
+    }
 
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 !
@@ -142,7 +138,7 @@ void pseudopot_cell_vl::vloc_of_g(const int& msh,
                                   const double* vloc_at,
                                   const double& zp_in,
                                   double* vloc_1d,
-                                  const ModulePW::PW_Basis* rho_basis) const
+                                  const ModulePW::PW_Basis* rho_basis) 
 {
 	//----------------------------------------------------------------
 	//    This routine computes the Fourier transform of the local
@@ -247,7 +243,6 @@ void pseudopot_cell_vl::vloc_of_g(const int& msh,
 #endif
 
 	delete [] aux1;
-	return;
 } // end subroutine vloc_of_g
 
 void pseudopot_cell_vl::print_vloc(const ModulePW::PW_Basis* rho_basis) const
@@ -269,5 +264,4 @@ void pseudopot_cell_vl::print_vloc(const ModulePW::PW_Basis* rho_basis) const
 			ofs_vg.close();
 		}
 	}
-	return;
-}
+	}

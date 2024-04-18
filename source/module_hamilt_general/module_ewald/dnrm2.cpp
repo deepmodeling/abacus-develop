@@ -1,6 +1,6 @@
 #include "dnrm2.h"
 
-#include<math.h>
+#include<cmath>
 #include <iostream>
 
 double dnrm2(const int n, const double *x, const int incx)

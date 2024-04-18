@@ -1,5 +1,5 @@
-#ifndef ORB_CONTROL_H 
-#define ORB_CONTROL_H 
+#ifndef ORB_CONTROL_H
+#define ORB_CONTROL_H
 
 #include "module_io/input.h"
 #include "module_cell/unitcell.h"
@@ -26,7 +26,7 @@ public:
         const std::string& calculation_in,
         const std::string& ks_solver_in);
 
-    /// use this when only need to calculate 
+    /// use this when only need to calculate
     /// 2-center-integral of read orbitals
     ORB_control();
 
@@ -35,14 +35,14 @@ public:
     void Init(Input& inp, UnitCell& ucell);
 
     //first step: read orbital file
-    void read_orb_first(
+    static void read_orb_first(
         std::ofstream& ofs_in,
         LCAO_Orbitals& orb,
         const int& ntype, // mohan add 2021-04-26
         const std::string& orbital_dir,  // liuyu add 2023-04-06
         const std::string* orbital_file,  // liuyu add 2023-04-06
         const std::string& descriptor_file,  // liuyu add 2023-04-06
-        const int& lmax, // mohan add 2021-04-26 
+        const int& lmax, // mohan add 2021-04-26
         const double& lcao_ecut_in, // mohan add 2021-04-16
         const double& lcao_dk_in, // mohan add 2021-04-16
         const double& lcao_dr_in, // mohan add 2021-04-16
@@ -64,7 +64,7 @@ public:
         const int* nproj,
         const Numerical_Nonlocal* beta_);
 
-    void clear_after_ions(
+    static void clear_after_ions(
         ORB_gen_tables& OGT,
         LCAO_Orbitals& orb,
         const bool& deepks_setorb,
@@ -85,7 +85,7 @@ public:
     // -------------------------------------------------------------------------
     // note: ORB_control orb_con is now a member in ESolver_KS_LCAO
     // ("friend class ESolver_KS_LCAO;" will cause not-defined problem).
-    // These variables is set in in ESolver_KS_LCAO 
+    // These variables is set in in ESolver_KS_LCAO
     // and can only be visited in ESolver_KS_LCAO.
     // -------------------------------------------------------------------------
     bool gamma_only = 1;
@@ -112,7 +112,7 @@ private:
         std::ofstream& ofs_warning);
 
 #ifdef __MPI
-    int mpi_comm_rows, mpi_comm_cols;
+    int mpi_comm_rows{}, mpi_comm_cols{};
 #endif
 
     void set_parameters(std::ofstream& ofs_running,

@@ -77,8 +77,7 @@ void convert_psi(const psi::Psi<std::complex<double>>& psi_in, psi::Psi<std::com
     {
         psi_out.get_pointer()[i] = static_cast<std::complex<float>>(psi_in.get_pointer()[i]);
     }
-    return;
-}
+    }
 
 
 psi::Psi<std::complex<float>>* gatherchi(psi::Psi<std::complex<float>>& chi,
@@ -163,7 +162,7 @@ void ESolver_SDFT_PW::check_che(const int nche_in, const double try_emin, const 
             {
                 pchi = &stowf.chi0[0](ik, i, 0);
             }
-            while (1)
+            while (true)
             {
                 bool converge;
                 converge = chetest.checkconverge(&stohchi,
@@ -566,7 +565,7 @@ void ESolver_SDFT_PW::cal_jmatrix(const psi::Psi<std::complex<float>>& kspsi_all
             {
                 for (int j = 0; j < allbands_sto; ++j)
                 {
-                    j2mat[j] = 0.5f * j2mat[j] + (0.5f * ei - mu) * j1mat[j];
+                    j2mat[j] = 0.5F * j2mat[j] + (0.5F * ei - mu) * j1mat[j];
                 }
             }
             else
@@ -574,7 +573,7 @@ void ESolver_SDFT_PW::cal_jmatrix(const psi::Psi<std::complex<float>>& kspsi_all
                 const std::complex<float> jfac = static_cast<std::complex<float>>(leftfact[i]);
                 for (int j = 0; j < allbands_sto; ++j)
                 {
-                    j2mat[j] = jfac * (0.5f * j2mat[j] + (0.5f * ei - mu) * j1mat[j]);
+                    j2mat[j] = jfac * (0.5F * j2mat[j] + (0.5F * ei - mu) * j1mat[j]);
                     j1mat[j] *= jfac;
                 }
             }
@@ -590,7 +589,7 @@ void ESolver_SDFT_PW::cal_jmatrix(const psi::Psi<std::complex<float>>& kspsi_all
             {
                 for (int j = 0; j < perbands_sto; ++j)
                 {
-                    j2mat[j] = 0.5f * j2mat[j] + (0.5f * ei - mu) * j1mat[j];
+                    j2mat[j] = 0.5F * j2mat[j] + (0.5F * ei - mu) * j1mat[j];
                 }
             }
             else
@@ -598,7 +597,7 @@ void ESolver_SDFT_PW::cal_jmatrix(const psi::Psi<std::complex<float>>& kspsi_all
                 const std::complex<float> jfac = static_cast<std::complex<float>>(rightf_all[i]);
                 for (int j = 0; j < perbands_sto; ++j)
                 {
-                    j2mat[j] = jfac * (0.5f * j2mat[j] + (0.5f * ei - mu) * j1mat[j]);
+                    j2mat[j] = jfac * (0.5F * j2mat[j] + (0.5F * ei - mu) * j1mat[j]);
                     j1mat[j] *= jfac;
                 }
             }
@@ -612,7 +611,7 @@ void ESolver_SDFT_PW::cal_jmatrix(const psi::Psi<std::complex<float>>& kspsi_all
 
         for (int j = 0; j < ed; ++j)
         {
-            j2mat[j] = 0.5f * (j2mat[j] + tmpjmat[j]) - mu * j1mat[j];
+            j2mat[j] = 0.5F * (j2mat[j] + tmpjmat[j]) - mu * j1mat[j];
         }
     }
 
@@ -623,8 +622,6 @@ void ESolver_SDFT_PW::cal_jmatrix(const psi::Psi<std::complex<float>>& kspsi_all
     delete[] tmprightf_all;
 
     ModuleBase::timer::tick(this->classname, "cal_jmatrix");
-
-    return;
 }
 
 void ESolver_SDFT_PW::sKG(const int nche_KG,
@@ -1422,7 +1419,6 @@ void ESolver_SDFT_PW::caldos(const int nche_dos,
     delete[] spolyv;
     ModuleBase::timer::tick(this->classname, "DOS Loop");
     ModuleBase::timer::tick(this->classname, "caldos");
-    return;
 }
 
 } // namespace ModuleESolver

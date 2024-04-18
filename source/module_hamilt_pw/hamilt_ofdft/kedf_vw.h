@@ -36,7 +36,7 @@ class KEDF_vW
     ModuleBase::matrix stress;
 
   private:
-    void laplacian_phi(const double* const* pphi, double** rLapPhi, ModulePW::PW_Basis* pw_rho);
+    static void laplacian_phi(const double* const* pphi, double** rLapPhi, ModulePW::PW_Basis* pw_rho);
 
     double dV_ = 0.;
     double vw_weight_ = 1.;

@@ -93,7 +93,8 @@ void Force_LCAO_k::cal_ftvnl_dphi_k(const elecstate::DensityMatrix<std::complex<
                     continue;
                 }
                 std::vector<hamilt::BaseMatrix<double>*> tmp_matrix;
-                for (int is = 0; is < nspin_DMR; ++is)
+                tmp_matrix.reserve(nspin_DMR);
+for (int is = 0; is < nspin_DMR; ++is)
                 {
                     tmp_matrix.push_back(DM->get_DMR_pointer(is+1)->find_matrix(iat1, iat2, Rx, Ry, Rz));
                 }
@@ -164,5 +165,4 @@ void Force_LCAO_k::cal_ftvnl_dphi_k(const elecstate::DensityMatrix<std::complex<
     }
 
     ModuleBase::timer::tick("Force_LCAO_k", "cal_ftvnl_dphi_k");
-    return;
 }

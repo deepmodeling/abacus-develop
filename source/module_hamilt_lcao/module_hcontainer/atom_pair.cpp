@@ -271,7 +271,7 @@ bool AtomPair<T>::operator<(const AtomPair<T>& other) const
     {
         return true;
     }
-    else if (atom_i == other.atom_i)
+    if (atom_i == other.atom_i)
     {
         return atom_j < other.atom_j;
     }
@@ -328,28 +328,14 @@ const Parallel_Orbitals* AtomPair<T>::get_paraV() const
 template <typename T>
 bool AtomPair<T>::identify(const AtomPair<T>& other) const
 {
-    if (this->atom_i == other.atom_i && this->atom_j == other.atom_j)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    return static_cast<bool>(this->atom_i == other.atom_i && this->atom_j == other.atom_j);
 }
 
 // identify
 template <typename T>
 bool AtomPair<T>::identify(const int& atom_i_, const int& atom_j_) const
 {
-    if (this->atom_i == atom_i_ && this->atom_j == atom_j_)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    return static_cast<bool>(this->atom_i == atom_i_ && this->atom_j == atom_j_);
 }
 
 // get_HR_values for no-const AtomPair
@@ -385,10 +371,9 @@ const BaseMatrix<T>& AtomPair<T>::get_HR_values(int rx_in, int ry_in, int rz_in)
         return this->values[r_index];
     }
     // if not found, throw a error message
-    else
-    {
-        throw std::string("AtomPair::get_HR_values: R index not found");
-    }
+    
+            throw std::string("AtomPair::get_HR_values: R index not found");
+   
 }
 
 // get_HR_values with index
@@ -426,10 +411,9 @@ const BaseMatrix<T>* AtomPair<T>::find_matrix(const int& rx_in, const int& ry_in
     {
         return nullptr;
     }
-    else
-    {
-        return &(this->values[r_index]);
-    }
+    
+            return &(this->values[r_index]);
+   
 }
 
 // find_matrix
@@ -441,10 +425,9 @@ BaseMatrix<T>* AtomPair<T>::find_matrix(const int& rx_in, const int& ry_in, cons
     {
         return nullptr;
     }
-    else
-    {
-        return &(this->values[r_index]);
-    }
+    
+            return &(this->values[r_index]);
+   
 }
 
 template <typename T>
@@ -724,12 +707,11 @@ int* AtomPair<T>::get_R_index(const int& index) const
         std::cout << "Error: index out of range in get_R_index" << std::endl;
         return nullptr;
     }
-    else
-    {
-        // return the (int*) pointer of R_index[index*3]
+    
+            // return the (int*) pointer of R_index[index*3]
         int* ptr = const_cast<int*>(&(R_index[index * 3]));
         return ptr;
-    }
+   
 }
 
 template <typename T>

@@ -200,8 +200,6 @@ void Stress_Func<FPTYPE, Device>::stress_ewa(ModuleBase::matrix& sigma, ModulePW
 
 	// this->print(GlobalV::ofs_running, "ewald stress", stression);
 	ModuleBase::timer::tick("Stress_Func","stress_ewa");
-
-	return;
 }
 
 template class Stress_Func<double, psi::DEVICE_CPU>;

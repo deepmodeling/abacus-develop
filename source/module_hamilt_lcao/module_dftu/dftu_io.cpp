@@ -47,7 +47,7 @@ void DFTU::output()
     }
 
     GlobalV::ofs_running << "Local occupation matrices" << std::endl;
-    this->write_occup_m(GlobalV::ofs_running, 1);
+    this->write_occup_m(GlobalV::ofs_running, true);
     GlobalV::ofs_running << "//=======================================================//" << std::endl;
     
     //Write onsite.dm
@@ -63,8 +63,6 @@ void DFTU::output()
     } 
     this->write_occup_m(ofdftu);
     ofdftu.close();
-
-    return;
 }
 
 // define the function calculate the eigenvalues of a matrix
@@ -209,8 +207,7 @@ void DFTU::write_occup_m(std::ofstream &ofs, bool diag)
         } // I
     } // T
 
-    return;
-}
+    }
 
 void DFTU::read_occup_m(const std::string &fn)
 {
@@ -369,8 +366,7 @@ void DFTU::read_occup_m(const std::string &fn)
         }
     }
 
-    return;
-}
+    }
 
 void DFTU::local_occup_bcast()
 {
@@ -441,8 +437,7 @@ void DFTU::local_occup_bcast()
             }
         }
     }
-    return;
-}
+    }
 
 inline void JacobiRotate(std::vector<std::vector<double>>& A, int p, int q, int n) {
     if (std::abs(A[p][q]) > 1e-10) {

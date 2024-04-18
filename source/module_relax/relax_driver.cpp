@@ -34,7 +34,7 @@ void Relax_Driver<FPTYPE, Device>::relax_driver(ModuleESolver::ESolver *p_esolve
 
     while (istep <= GlobalV::RELAX_NMAX && !stop)
     {
-        time_t estart = time(NULL);
+        time_t estart = time(nullptr);
 
         if (GlobalV::OUT_LEVEL == "ie"
             && (GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax" || GlobalV::CALCULATION == "scf"
@@ -50,8 +50,8 @@ void Relax_Driver<FPTYPE, Device>::relax_driver(ModuleESolver::ESolver *p_esolve
         // mohan added eiter to count for the electron iteration number, 2021-01-28
         p_esolver->run(istep - 1, GlobalC::ucell);
 
-        time_t eend = time(NULL);
-        time_t fstart = time(NULL);
+        time_t eend = time(nullptr);
+        time_t fstart = time(nullptr);
         ModuleBase::matrix force;
         ModuleBase::matrix stress;
         if (GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax")
@@ -137,7 +137,7 @@ void Relax_Driver<FPTYPE, Device>::relax_driver(ModuleESolver::ESolver *p_esolve
             stress,unit_transform);
 #endif //__RAPIDJSON 
     
-        time_t fend = time(NULL);
+        time_t fend = time(nullptr);
 
         ++istep;
     }
@@ -153,7 +153,6 @@ void Relax_Driver<FPTYPE, Device>::relax_driver(ModuleESolver::ESolver *p_esolve
     }
 
     ModuleBase::timer::tick("Ions", "opt_ions");
-    return;
 }
 
 template class Relax_Driver<float, psi::DEVICE_CPU>;

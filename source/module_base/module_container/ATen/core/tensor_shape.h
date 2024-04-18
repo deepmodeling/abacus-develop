@@ -110,7 +110,7 @@ private:
     /**
      * @brief Compute the strides of the tensor.
      */
-    std::vector<int64_t> get_strides_(const std::vector<int64_t>& dim);
+    static std::vector<int64_t> get_strides_(const std::vector<int64_t>& dim);
 };
 
 /**

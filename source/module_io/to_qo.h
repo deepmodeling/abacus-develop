@@ -66,8 +66,8 @@ class toQO
         // import structure, including supercell and kvectors are read in this function
         void read_structures(const UnitCell* p_ucell,                                   //< interface to the unitcell
                              const std::vector<ModuleBase::Vector3<double>>& kvecs_d,   //< kpoints
-                             const int& iproc,                                          //< rank of present processor
-                             const int& nprocs);                                        //< total number of processors
+                             const int& rank,                                          //< rank of present processor
+                             const int& nranks);                                        //< total number of processors
         
         // Two-center integral
         // QO is just one kind of representation, here it is representation from numerical 
@@ -76,14 +76,14 @@ class toQO
         // atomic orbitals and numerical atomic orbitals
         // for |>: to build RadialCollection filled with AtomicRadials
         void build_nao(const int ntype,                             //< number of atom types
-                       const std::string orbital_dir,               //< directory of numerical atomic orbitals
+                       const std::string& orbital_dir,               //< directory of numerical atomic orbitals
                        const std::string* const orbital_fn,         //< filenames of numerical atomic orbitals
                        const int rank);                             //< rank of present processor
         // for <|: to build RadialCollection filled with PswfcRadials or HydrogenRadials
         void build_ao(const int ntype,                                                      //< number of atom types
-                      const std::string pseudo_dir,                                         //< directory of pseudopotentials
+                      const std::string& pseudo_dir,                                         //< directory of pseudopotentials
                       const std::string* const pspot_fn = nullptr,                          //< filenames of pseudopotentials
-                      const std::vector<double> screening_coeffs = std::vector<double>(),   //< screening coefficients of pseudopotentials
+                      const std::vector<double>& screening_coeffs = std::vector<double>(),   //< screening coefficients of pseudopotentials
                       const double qo_thr = 1e-10,                                          //< threshold for QO
                       const std::ofstream& ofs = std::ofstream(),                           //< output stream for running information
                       const int rank = 0);                                                  //< rank of present processor
@@ -96,7 +96,7 @@ class toQO
                             const int rank);                    //< rank of present processor
         // for <|: to build RadialCollection filled with PswfcRadials
         void build_pswfc(const int ntype,                           //< number of atom types
-                         const std::string pseudo_dir,              //< directory of pseudopotentials
+                         const std::string& pseudo_dir,              //< directory of pseudopotentials
                          const std::string* const pspot_fn,         //< filenames of pseudopotentials
                          const double* const screening_coeffs,      //< screening coefficients of pseudopotentials, appears like a factor (exp[-s*r]) scaling the pswfc
                          const double qo_thr,                       //< threshold for QO
@@ -112,7 +112,7 @@ class toQO
         // S to file
         template <typename T>
         void write_ovlp(const std::string& dir,             //< directory of output files
-                        const std::vector<T>& matrix,       //< matrix to write
+                        const std::vector<T>& ovlp,       //< matrix to write
                         const int& nrows,                   //< number of rows
                         const int& ncols,                   //< number of columns
                         const bool& is_R = false,           //< whether it is in real space
@@ -122,7 +122,7 @@ class toQO
                        const int& nrows,                    //< number of rows
                        const int& ncols,                    //< number of columns
                        const bool& is_R = false,            //< whether it is in real space
-                       const int& imat = 0);                //< index of matrix
+                       const int& ik = 0);                //< index of matrix
         /// @brief build bidirectional map indexing for one single RadialCollection object, which is an axis of two-center-integral table.
         /// @details from (it,ia,l,zeta,m) to index and vice versa
         void radialcollection_indexing(const RadialCollection&,                             //< [in] instance of RadialCollection
@@ -131,8 +131,8 @@ class toQO
                                        std::map<std::tuple<int,int,int,int,int>,int>&,      //< [out] mapping from (it,ia,l,zeta,m) to index
                                        std::map<int,std::tuple<int,int,int,int,int>>&);     //< [out] mapping from index to (it,ia,l,zeta,m)
         /// @brief calculate vectors connecting all atom pairs that needed to calculate their overlap
-        ModuleBase::Vector3<double> cal_two_center_vector(ModuleBase::Vector3<double> rij,      //< vector connecting atom i and atom j
-                                                          ModuleBase::Vector3<int> R);          //< supercell vector
+        ModuleBase::Vector3<double> cal_two_center_vector(const ModuleBase::Vector3<double>& rij,      //< vector connecting atom i and atom j
+                                                          const ModuleBase::Vector3<int>& R);          //< supercell vector
         /// @brief when indexing, select where one orbital is really included in the two-center integral
         bool orbital_filter_out(const int& itype,       //< itype
                                 const int& l,           //< angular momentum
@@ -150,8 +150,8 @@ class toQO
 
         // Neighboring list
         /// @brief get all possible (n1n2n3) defining supercell and scatter if MPI enabled
-        void scan_supercell(const int& iproc,       //< rank of present processor
-                            const int& nprocs);     //< total number of processors
+        void scan_supercell(const int& rank,       //< rank of present processor
+                            const int& nranks);     //< total number of processors
         /// @brief this is a basic functional for scanning (ijR) pair for one certain i, return Rs
         /// @attention an algorithm loop over (i,)j,R, and return Rs
         /// @return a vector collects (n1, n2, n3) for present atom
@@ -161,13 +161,13 @@ class toQO
                                                                       int start_ia = 0);    //< starting scan index of atom
         /// @brief core algorithm to scan supercells, find the maximal supercell according to present cutoff radius
         /// @return a vector of (n1n2n3) defining supercell
-        std::vector<int> rcut_to_supercell_index(double rcut,                       //< sum of cutoff radius of orbitals of atom i and atom j
-                                                 ModuleBase::Vector3<double> a,     //< cell vector a (in Bohr)
-                                                 ModuleBase::Vector3<double> b,     //< cell vector b (in Bohr)
-                                                 ModuleBase::Vector3<double> c);    //< cell vector c (in Bohr)
+        static std::vector<int> rcut_to_supercell_index(double rcut,                       //< sum of cutoff radius of orbitals of atom i and atom j
+                                                 const ModuleBase::Vector3<double>& a,     //< cell vector a (in Bohr)
+                                                 const ModuleBase::Vector3<double>& b,     //< cell vector b (in Bohr)
+                                                 const ModuleBase::Vector3<double>& c);    //< cell vector c (in Bohr)
         /// @brief get vector squared norm in supercell
         /// @return (rij + n1R1 + n2R2 + n3R3)^2
-        double norm2_rij_supercell(ModuleBase::Vector3<double> rij,     //< vector connecting atom i and atom j in unitcell
+        double norm2_rij_supercell(const ModuleBase::Vector3<double>& rij,     //< vector connecting atom i and atom j in unitcell
                                    int n1,                              //< supercell index 1
                                    int n2,                              //< supercell index 2
                                    int n3);                             //< supercell index 3

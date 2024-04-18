@@ -1,7 +1,6 @@
 #include "math_bspline.h"
 
-#include <assert.h>
-
+#include <cassert>
 #include <cstdlib>
 
 namespace ModuleBase
@@ -55,6 +54,6 @@ namespace ModuleBase
             this->bezier[0] = (x - this->xi)*this->bezier[0] / (k*this->Dx);
         }
     }
-}
+}  // namespace ModuleBase
 
 

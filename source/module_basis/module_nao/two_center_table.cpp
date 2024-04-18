@@ -127,7 +127,7 @@ bool TwoCenterTable::is_present(const int itype1,
            && index_map_.get_value<int>(itype1, l1, izeta1, itype2, l2, izeta2, l) >= 0;
 }
 
-double TwoCenterTable::dfact(int l) const
+double TwoCenterTable::dfact(int l) 
 {
     double result = 1.0;
     for (int i = l; i > 1; i -= 2)

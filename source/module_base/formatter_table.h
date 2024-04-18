@@ -85,7 +85,7 @@ namespace formatter
             /// @param new_title title of the new column
             /// @param new_col data, stored in std::vector<std::string>
             /// @return return the index of the new column
-            int add_col(std::string new_title, std::vector<std::string> new_col);
+            int add_col(const std::string& new_title, const std::vector<std::string>& new_col);
             int add_cols(std::vector<std::string> new_titles, std::vector<std::vector<std::string>> new_cols); // later
             void del_col(int col);  // not implemented
             void del_col(std::string title); // not implemented

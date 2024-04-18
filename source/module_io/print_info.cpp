@@ -218,8 +218,7 @@ void Print_Info::setup_parameters(UnitCell &ucell, K_Vectors &kv)
 
 	}
 
-	return;
-}
+	}
 
 void Print_Info::print_time(time_t &time_start, time_t &time_finish)
 {

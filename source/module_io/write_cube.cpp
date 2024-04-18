@@ -29,7 +29,7 @@ void ModuleIO::write_cube(
   
 	if(GlobalV::MY_RANK==0)
 	{
-		start = time(NULL);
+		start = time(nullptr);
 
 		ofs_cube.open(fn.c_str());
 		
@@ -77,7 +77,7 @@ void ModuleIO::write_cube(
 			<< " " << fac*ucell->latvec.e32/double(nz) 
 			<< " " << fac*ucell->latvec.e33/double(nz) << std::endl;
 
-		std::string element = "";
+		std::string element;
 		for(int it=0; it<ucell->ntype; it++)
 		{
 			// erase the number in label, such as Fe1.
@@ -161,7 +161,7 @@ void ModuleIO::write_cube(
 					which_ip[iz] = GlobalV::NPROC_IN_POOL-1;
 					break;
 				}
-				else if(iz>=start_z[ip] && iz<start_z[ip+1])
+				if(iz>=start_z[ip] && iz<start_z[ip+1])
 				{
 					which_ip[iz] = ip;
 					break;
@@ -266,12 +266,11 @@ void ModuleIO::write_cube(
 
 	if(GlobalV::MY_RANK==0) 
 	{
-		end = time(NULL);
+		end = time(nullptr);
 		ModuleBase::GlobalFunc::OUT_TIME("write_cube",start,end);
 		// ofs.close();
 		/// for cube file
 		ofs_cube.close();
 	}
 
-    return;
-}
+    }

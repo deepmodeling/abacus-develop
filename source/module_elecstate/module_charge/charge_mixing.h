@@ -155,7 +155,7 @@ class Charge_Mixing
      * @brief Kerker screen method for real space
      * @param rho charge density in real space
      */
-    void Kerker_screen_real(double* rho);
+    void Kerker_screen_real(double* drhor);
 
     /**
      * @brief Inner product of two complex vectors
@@ -166,13 +166,13 @@ class Charge_Mixing
      */
     double inner_product_recip_rho(std::complex<double>* rho1, std::complex<double>* rho2);
     double inner_product_recip_simple(std::complex<double>* rho1, std::complex<double>* rho2);
-    double inner_product_recip_hartree(std::complex<double>* rho1, std::complex<double>* rho2);
+    double inner_product_recip_hartree(std::complex<double>* rhog1, std::complex<double>* rhog2);
 
     /**
      * @brief Inner product of two double vectors
      *
      */
-    double inner_product_real(double* rho1, double* rho2);
+    double inner_product_real(const double* rho1, const double* rho2);
 
     /**
      * @brief divide rho/tau to smooth and high frequency parts
@@ -197,7 +197,7 @@ class Charge_Mixing
      * @param data_hf high frequency data = dense data - smooth data
      *
      */
-    void clean_data(std::complex<double>*& data_s, std::complex<double>*& data_hf);
+    static void clean_data(std::complex<double>*& data_s, std::complex<double>*& data_hf);
 };
 
 #endif

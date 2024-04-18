@@ -86,7 +86,7 @@ void toWannier90_PW::cal_Mmn(
         std::string fileaddress = GlobalV::global_out_dir + wannier_file_name + ".mmn";
         mmn_file.open(fileaddress.c_str(), std::ios::out);
 
-        time_t time_now = time(NULL);
+        time_t time_now = time(nullptr);
         mmn_file << " Created on " << ctime(&time_now);
         mmn_file << std::setw(12) << num_bands << std::setw(12) << cal_num_kpts << std::setw(12) << nntot << std::endl;
     }
@@ -142,7 +142,7 @@ void toWannier90_PW::cal_Amn(
 
     if (GlobalV::MY_RANK == 0)
     {
-        time_t time_now = time(NULL);
+        time_t time_now = time(nullptr);
         std::string fileaddress = GlobalV::global_out_dir + wannier_file_name + ".amn";
         Amn_file.open(fileaddress.c_str(), std::ios::out);
         Amn_file << " Created on " << ctime(&time_now);
@@ -351,7 +351,7 @@ void toWannier90_PW::unkdotkb(
     const ModulePW::PW_Basis_K* wfcpw,
     const int& cal_ik,
     const int& cal_ikb,
-    const ModuleBase::Vector3<double> G,
+    const ModuleBase::Vector3<double>& G,
     ModuleBase::ComplexMatrix &Mmn
 )
 {
@@ -957,8 +957,7 @@ void toWannier90_PW::get_trial_orbitals_lm_k(
         orbital_in_G_single[ig] = lphase * ylm(index, ig) * orbital_in_G_single[ig];
     }
 
-    return;
-}
+    }
 
 void toWannier90_PW::integral(
     const int meshr,
@@ -999,7 +998,6 @@ void toWannier90_PW::integral(
     }
     delete[] aux;
     delete[] vchi;
-    return;
 }
 
 void toWannier90_PW::unkdotW_A(

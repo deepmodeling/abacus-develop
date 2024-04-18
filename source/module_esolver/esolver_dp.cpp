@@ -148,7 +148,7 @@ namespace ModuleESolver
         ModuleIO::print_stress("TOTAL-STRESS", stress, true, false);
     }
 
-    void ESolver_DP::post_process(void)
+    void ESolver_DP::post_process()
     {
         GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
         GlobalV::ofs_running << std::setprecision(16);
@@ -243,4 +243,4 @@ namespace ModuleESolver
         }
         return find_type;
     }
-}
+}  // namespace ModuleESolver

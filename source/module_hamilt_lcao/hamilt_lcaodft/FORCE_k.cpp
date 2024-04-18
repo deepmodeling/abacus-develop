@@ -184,7 +184,6 @@ void Force_LCAO_k::ftable_k(const bool isforce,
     }
 
     ModuleBase::timer::tick("Force_LCAO_k", "ftable_k");
-    return;
 }
 
 void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv,
@@ -299,14 +298,14 @@ void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv,
         for (int ik = 0; ik < nks; ik++)
         {
             lm.zeros_HSk('S');
-            lm.folding_fixedH(ik, kvec_d, 1);
+            lm.folding_fixedH(ik, kvec_d, true);
             bool bit = false; // LiuXh, 2017-03-21
 			ModuleIO::save_mat(0, 
 					lm.Hloc2.data(), 
 					GlobalV::NLOCAL, 
 					bit, 
 					GlobalV::out_ndigits, 
-					0, 
+					false, 
 					GlobalV::out_app_flag, 
 					"H", 
 					"data-" + std::to_string(ik), 
@@ -318,7 +317,7 @@ void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv,
 					GlobalV::NLOCAL, 
 					bit, 
 					GlobalV::out_ndigits, 
-					0, 
+					false, 
 					GlobalV::out_app_flag, 
 					"S", 
 					"data-" + std::to_string(ik), 
@@ -328,7 +327,6 @@ void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv,
     }
 
     ModuleBase::timer::tick("Force_LCAO_k", "allocate_k");
-    return;
 }
 
 
@@ -351,13 +349,12 @@ void Force_LCAO_k::finish_k(LCAO_Matrix &lm)
         delete[] lm.stvnl23;
         delete[] lm.stvnl33;
     }
-    return;
-}
+    }
 
 
 void Force_LCAO_k::test(
 		Parallel_Orbitals &pv,
-		double* mmm, 
+		const double* mmm, 
 		const std::string& name)
 {
     // mohan remove 'const' for pv, 2024-03-31
@@ -430,9 +427,7 @@ void Force_LCAO_k::test(
     }
     delete[] test;
 
-    RA.delete_grid(); // xiaohui add 2015-02-04
-    return;
-}
+    RA.delete_grid(); }
 
 
 

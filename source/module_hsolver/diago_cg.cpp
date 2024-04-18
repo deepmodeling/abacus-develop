@@ -1,17 +1,15 @@
-#include <module_hsolver/diago_cg.h>
-
+#include <ATen/core/tensor_map.h>
+#include <ATen/core/tensor_utils.h>
+#include <ATen/kernels/lapack.h>
+#include <ATen/kernels/memory.h>
+#include <ATen/ops/einsum_op.h>
+#include <ATen/ops/linalg_op.h>
+#include <cmath>
+#include <module_base/constants.h>
 #include <module_base/memory.h>
 #include <module_base/parallel_reduce.h>
 #include <module_base/timer.h>
-#include <module_base/constants.h>
-
-#include <ATen/kernels/lapack.h>
-#include <ATen/kernels/memory.h>
-#include <ATen/core/tensor_map.h>
-#include <ATen/core/tensor_utils.h>
-
-#include <ATen/ops/einsum_op.h>
-#include <ATen/ops/linalg_op.h>
+#include <module_hsolver/diago_cg.h>
 
 using namespace hsolver;
 
@@ -213,7 +211,7 @@ void DiagoCG<T, Device>::calc_grad(
     //     this->pphi[i] = this->sphi[i] / this->precondition[i];
     // }
     // denghui replace this at 20221106
-    // TODO: use GPU precondition to initialize CG class
+    // TODO(root): use GPU precondition to initialize CG class
     vector_div_vector_op<T, Device>()(ctx_, this->n_basis_, grad.data<T>(), hphi.data<T>(), prec.data<Real>());
     vector_div_vector_op<T, Device>()(ctx_, this->n_basis_, pphi.data<T>(), sphi.data<T>(), prec.data<Real>());
 
@@ -328,7 +326,7 @@ void DiagoCG<T, Device>::calc_gamma_cg(
     //     g0[i] = this->precondition[i] * this->scg[i];
     // }
     // denghui replace this 20221106
-    // TODO: use GPU precondition instead
+    // TODO(root): use GPU precondition instead
     vector_mul_vector_op<T, Device>()(ctx_, this->n_basis_, g0.data<T>(), scg.data<T>(), prec.data<Real>());
 
     // (3) Update gg_now!
@@ -397,7 +395,7 @@ bool DiagoCG<T, Device>::update_psi(
         = hsolver::dot_real_op<T, Device>()(ctx_, this->n_basis_, cg.data<T>(), pphi.data<T>()) / (cg_norm * cg_norm);
 
     const Real e0 = eigen;
-    theta = atan(a0 / (e0 - b0)) / 2.0;
+    theta = std::atan(a0 / (e0 - b0)) / 2.0;
 
     const Real new_e = (e0 - b0) * cos(2.0 * theta) + a0 * sin(2.0 * theta);
 
@@ -425,8 +423,7 @@ bool DiagoCG<T, Device>::update_psi(
         // ModuleBase::timer::tick("DiagoCG","update");
         return true;
     }
-    else {
-        // for (int i = 0; i < this->n_basis_; i++)
+            // for (int i = 0; i < this->n_basis_; i++)
         // {
         //     this->sphi[i] = this->sphi[i] * cost + sint_norm * this->scg[i];
         //     this->hphi[i] = this->hphi[i] * cost + sint_norm * this->pphi[i];
@@ -436,7 +433,7 @@ bool DiagoCG<T, Device>::update_psi(
         constantvector_addORsub_constantVector_op<T, Device>()(ctx_, this->n_basis_, sphi.data<T>(), sphi.data<T>(), cost, scg.data<T>(),  sint_norm);
         constantvector_addORsub_constantVector_op<T, Device>()(ctx_, this->n_basis_, hphi.data<T>(), hphi.data<T>(), cost, pphi.data<T>(), sint_norm);
         return false;
-    }
+   
 }
 
 

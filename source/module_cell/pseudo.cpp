@@ -34,7 +34,7 @@ void pseudo::set_pseudo(const Pseudopot_upf& upf)
 		return;
 	delete[] lll;
 	lll = new int[nbeta];
-	assert(lll != 0);
+	assert(lll != nullptr);
 
 	for (int i = 0;i < nbeta;i++)
 	{
@@ -59,8 +59,7 @@ void pseudo::set_pseudo(const Pseudopot_upf& upf)
 		nh += 2 * lll [nb] + 1;
 	} 
 
-	return;
-} // end subroutine set_pseudo_upf
+	} // end subroutine set_pseudo_upf
 
 void pseudo::print_pseudo(std::ofstream& ofs)
 {
@@ -112,15 +111,15 @@ void pseudo::set_pseudo_h(const Pseudopot_upf &upf)
 
     delete[] els;
     this->els = new std::string[nchi];
-    assert(this->els != 0);
+    assert(this->els != nullptr);
 
     delete[] lchi;
     this->lchi = new int[this->nchi];
-    assert(this->lchi != 0);
+    assert(this->lchi != nullptr);
 
     delete[] oc;
     this->oc = new double[nchi];
-    assert(this->oc != 0);
+    assert(this->oc != nullptr);
 
     for (int i = 0; i < nchi; i++)
     {
@@ -131,15 +130,15 @@ void pseudo::set_pseudo_h(const Pseudopot_upf &upf)
 
     delete[] jjj;
     this->jjj = new double[nbeta];
-    assert(this->jjj != 0);
+    assert(this->jjj != nullptr);
 
     delete[] nn;
 	this->nn = new int[nchi];
-	assert(this->nn != 0);
+	assert(this->nn != nullptr);
 
 	delete[] jchi;
 	this->jchi = new double[nchi];
-	assert(this->jchi != 0);
+	assert(this->jchi != nullptr);
 
 	this->has_so = upf.has_so;//added by zhengdy-soc
 
@@ -177,8 +176,7 @@ void pseudo::set_pseudo_h(const Pseudopot_upf &upf)
         this->qqq.create(nbeta, nbeta);
         this->qqq = upf.qqq;
     }
-    return;
-} // end subroutine set_pseudo_upf
+    } // end subroutine set_pseudo_upf
 
 
 void pseudo::set_pseudo_atom(const Pseudopot_upf &upf)
@@ -203,22 +201,22 @@ void pseudo::set_pseudo_atom(const Pseudopot_upf &upf)
 
 	delete[] r;
 	r = new double[mesh];
-	assert(r != 0);
+	assert(r != nullptr);
 	ModuleBase::GlobalFunc::ZEROS(r, mesh);
 
 	delete[] rab;
 	rab = new double[mesh];
-	assert(rab != 0);
+	assert(rab != nullptr);
 	ModuleBase::GlobalFunc::ZEROS(rab, mesh);
 
 	delete[] rho_at;
 	rho_at  = new double[mesh];
-	assert(rho_at != 0);
+	assert(rho_at != nullptr);
 	ModuleBase::GlobalFunc::ZEROS(rho_at,mesh);
 
 	delete[] rho_atc;
 	rho_atc = new double[mesh];
-	assert(rho_atc != 0);
+	assert(rho_atc != nullptr);
 
 	for (int i = 0;i < nchi;i++)
 	{
@@ -277,8 +275,7 @@ void pseudo::set_pseudo_atom(const Pseudopot_upf &upf)
 		msh = mesh ;
 	}
 
-	return;
-} // end subroutine set_pseudo
+	} // end subroutine set_pseudo
 
 
 
@@ -290,7 +287,7 @@ void pseudo::set_pseudo_vl(const Pseudopot_upf &upf)
 
 	delete[] vloc_at;
 	vloc_at = new double[mesh];
-	assert(vloc_at != 0);
+	assert(vloc_at != nullptr);
 
     if (upf.coulomb_potential)
         return;
@@ -300,8 +297,7 @@ void pseudo::set_pseudo_vl(const Pseudopot_upf &upf)
 		vloc_at[i] = upf.vloc[i];
 	}
 
-	return;
-} 
+	} 
 
 
 void pseudo::print_pseudo_atom(std::ofstream &ofs)

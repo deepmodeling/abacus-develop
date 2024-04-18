@@ -54,7 +54,7 @@ void ESolver_OF::init_elecstate(UnitCell& ucell)
         pot_register_in.push_back("gatefield");
     }
     // only Potential is not empty, Veff and Meta are available
-    if (pot_register_in.size() > 0)
+    if (!pot_register_in.empty())
     {
         // register Potential by gathered operator
         this->pelec->pot->pot_register(pot_register_in);
@@ -500,7 +500,8 @@ void ESolver_OF::print_info()
         titles.push_back("E_Fermi");
         energies_Ry.push_back(this->mu_[0]);
     }
-    for (int i = 0; i < titles.size(); ++i)
+    energies_eV.reserve(titles.size());
+for (int i = 0; i < titles.size(); ++i)
     {
         energies_eV.push_back(energies_Ry[i] * ModuleBase::Ry_to_eV);
     }

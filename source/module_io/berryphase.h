@@ -25,14 +25,14 @@ public:
 	unkOverlap_pw pw_method;
 #ifdef __LCAO
 	unkOverlap_lcao lcao_method;
-	Local_Orbital_wfc* lowf;
+	Local_Orbital_wfc* lowf{};
 #endif
 
-	int total_string;
+	int total_string{};
 	std::vector<std::vector<int>> k_index;
-	int nppstr;
-	int direction;
-	int occ_nbands;
+	int nppstr{};
+	int direction{};
+	int occ_nbands{};
     int GDIR;
 
 	void get_occupation_bands();
@@ -71,8 +71,8 @@ public:
         const ModulePW::PW_Basis_K* wfcpw,
         const K_Vectors& kv);
 
-    std::string outFormat(const double polarization, const double modulus, const ModuleBase::Vector3<double> project);
-	
+    static std::string outFormat(const double polarization, const double modulus, const ModuleBase::Vector3<double>& project);
+
 };
 
 #endif

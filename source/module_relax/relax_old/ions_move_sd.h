@@ -17,7 +17,7 @@ class Ions_Move_SD
     double* pos_saved;
     double* grad_saved;
 
-    void cal_tradius_sd(void) const;
+    static void cal_tradius_sd(void) ;
 };
 
 #endif

@@ -140,8 +140,7 @@ void FFT:: setupFFT()
         // }
 	}
 #endif
-	return;
-}
+	}
 	
 void FFT :: initplan(const unsigned int& flag)
 {
@@ -331,18 +330,18 @@ void FFT :: initplanf(const unsigned int& flag)
 
 void FFT:: cleanFFT()
 {
-	if(planzfor ){fftw_destroy_plan(planzfor ); planzfor  = NULL;}
-    if(planzbac ){fftw_destroy_plan(planzbac ); planzbac  = NULL;}
-	if(planxfor1){fftw_destroy_plan(planxfor1); planxfor1 = NULL;}
-	if(planxbac1){fftw_destroy_plan(planxbac1); planxbac1 = NULL;}
-	if(planxfor2){fftw_destroy_plan(planxfor2); planxfor2 = NULL;}
-	if(planxbac2){fftw_destroy_plan(planxbac2); planxbac2 = NULL;}
-	if(planyfor ){fftw_destroy_plan(planyfor ); planyfor  = NULL;}
-	if(planybac ){fftw_destroy_plan(planybac ); planybac  = NULL;}
-	if(planxr2c ){fftw_destroy_plan(planxr2c ); planxr2c  = NULL;}
-	if(planxc2r ){fftw_destroy_plan(planxc2r ); planxc2r  = NULL;}
-	if(planyr2c ){fftw_destroy_plan(planyr2c ); planyr2c  = NULL;}
-	if(planyc2r ){fftw_destroy_plan(planyc2r ); planyc2r  = NULL;}
+	if(planzfor ){fftw_destroy_plan(planzfor ); planzfor  = nullptr;}
+    if(planzbac ){fftw_destroy_plan(planzbac ); planzbac  = nullptr;}
+	if(planxfor1){fftw_destroy_plan(planxfor1); planxfor1 = nullptr;}
+	if(planxbac1){fftw_destroy_plan(planxbac1); planxbac1 = nullptr;}
+	if(planxfor2){fftw_destroy_plan(planxfor2); planxfor2 = nullptr;}
+	if(planxbac2){fftw_destroy_plan(planxbac2); planxbac2 = nullptr;}
+	if(planyfor ){fftw_destroy_plan(planyfor ); planyfor  = nullptr;}
+	if(planybac ){fftw_destroy_plan(planybac ); planybac  = nullptr;}
+	if(planxr2c ){fftw_destroy_plan(planxr2c ); planxr2c  = nullptr;}
+	if(planxc2r ){fftw_destroy_plan(planxc2r ); planxc2r  = nullptr;}
+	if(planyr2c ){fftw_destroy_plan(planyr2c ); planyr2c  = nullptr;}
+	if(planyc2r ){fftw_destroy_plan(planyc2r ); planyc2r  = nullptr;}
 
 	// fftw_destroy_plan(this->plan3dforward);
     // fftw_destroy_plan(this->plan3dbackward);

@@ -105,11 +105,11 @@ private:
 
 	void Find_adjacent_atom(
 		const int offset, 
-		std::shared_ptr<AdjacentSet> as,
+		const std::shared_ptr<AdjacentSet>& as,
 		AdjacentAtomInfo &adjs)const;
 
-	double Distance(const AtomLink& a1, const ModuleBase::Vector3<double> &adjacent_site)const;
-	double Distance(const AtomLink& a1, const AtomLink& a2)const;
+	static double Distance(const AtomLink& a1, const ModuleBase::Vector3<double> &adjacent_site);
+	static double Distance(const AtomLink& a1, const AtomLink& a2);
 
 //==========================================================
 // MEMBER FUNCTIONS :

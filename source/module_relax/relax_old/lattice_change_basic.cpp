@@ -64,15 +64,14 @@ void Lattice_Change_Basic::setup_gradient(const UnitCell &ucell, double *lat, do
     // grad[3] = -stress(1,0);   grad[4] = -stress(1,1);  grad[5] = -stress(1,2);
     // grad[6] = -stress(2,0);   grad[7] = -stress(2,1);  grad[8] = -stress(2,2);
 
-    return;
-}
+    }
 
-void Lattice_Change_Basic::change_lattice(UnitCell &ucell, double *move, double *lat)
+void Lattice_Change_Basic::change_lattice(UnitCell &ucell, double *move, const double *lat)
 {
     ModuleBase::TITLE("Lattice_Change_Basic", "change_lattice");
 
-    assert(move != NULL);
-    assert(lat != NULL);
+    assert(move != nullptr);
+    assert(lat != nullptr);
 
     /*
         std::cout<<" LATTICE CONSTANT  OLD:"<<std::endl;
@@ -151,8 +150,6 @@ void Lattice_Change_Basic::change_lattice(UnitCell &ucell, double *move, double 
     Parallel_Common::bcast_double(ucell.a3.y);
     Parallel_Common::bcast_double(ucell.a3.z);
 #endif
-
-    return;
 }
 
 void Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::matrix &stress, double *grad)
@@ -238,10 +235,9 @@ void Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::ma
         }
     }
 
-    return;
-}
+    }
 
-void Lattice_Change_Basic::terminate(void)
+void Lattice_Change_Basic::terminate()
 {
     ModuleBase::TITLE("Lattice_Change_Basic", "terminate");
     if (Lattice_Change_Basic::converged)
@@ -268,8 +264,7 @@ void Lattice_Change_Basic::terminate(void)
         GlobalV::ofs_running << " end of lattice optimization." << std::endl;
     }
 
-    return;
-}
+    }
 
 void Lattice_Change_Basic::setup_etot(const double &energy_in, const bool judgement)
 {
@@ -304,5 +299,4 @@ void Lattice_Change_Basic::setup_etot(const double &energy_in, const bool judgem
         }
     }
 
-    return;
-}
+    }

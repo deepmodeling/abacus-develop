@@ -35,6 +35,5 @@ namespace elecstate
             this->parallelK();
         }
         ModuleBase::timer::tick(this->classname, "psiToRho");
-        return;
-    }
-}
+   }
+}  // namespace elecstate

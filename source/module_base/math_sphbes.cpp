@@ -258,7 +258,7 @@ void Sphbes::BESSJY(double x, double xnu, double *rj, double *ry, double *rjp, d
 int Sphbes::IMAX(int a, int b)
 {
     if (a > b) return a;
-    else return b;
+    return b;
 }
 
 
@@ -282,7 +282,7 @@ void Sphbes::BESCHB(double x, double *gam1, double *gam2, double *gampl, double 
     *gammi = *gam2 + x * (*gam1);
 }
 
-double Sphbes::CHEBEV(double a, double b, double c[], int m, double x)
+double Sphbes::CHEBEV(double a, double b, const double c[], int m, double x)
 {
     double d = 0.0;
 	double dd = 0.0;
@@ -612,8 +612,7 @@ void Sphbes::Spherical_Bessel
         }
     }
 
-    return;
-}
+    }
 
 
 void Sphbes::Spherical_Bessel
@@ -634,8 +633,7 @@ void Sphbes::Spherical_Bessel
 	{
 		sjp[ir] = 1.0;
 	}
-	return;
-}
+	}
 
 void Sphbes::dSpherical_Bessel_dx
 (
@@ -693,8 +691,7 @@ void Sphbes::dSpherical_Bessel_dx
         }
         delete[] jl;
     }
-    return;
-}
+    }
 
 double Sphbes::_sphbesj_ascending_recurrence(int l, double x) {
 
@@ -757,9 +754,8 @@ double Sphbes::sphbesj(const int l, const double x)
     {
         return _sphbesj_series(l, x);
     }
-    else
-    {
-        double invx = 1.0 / x;
+    
+            double invx = 1.0 / x;
         switch (l)
         {
           case 0:
@@ -784,7 +780,7 @@ double Sphbes::sphbesj(const int l, const double x)
           default:
             return _sphbesj_ascending_recurrence(l, x);
         }
-    }
+   
 }
 
 double Sphbes::dsphbesj(const int l, const double x)
@@ -884,7 +880,7 @@ void Sphbes::sphbes_zeros(const int l, const int n, double* const zeros, const b
     delete[] buffer;
 }
 
-double Sphbes::illinois(std::function<double(double)> func, double x0, double x1, const double tol, const int max_iter)
+double Sphbes::illinois(const std::function<double(double)>& func, double x0, double x1, const double tol, const int max_iter)
 {
     assert(tol > 0.0 && max_iter > 0);
 
@@ -927,4 +923,4 @@ double Sphbes::illinois(std::function<double(double)> func, double x0, double x1
     return x1;
 }
 
-}
+}  // namespace ModuleBase

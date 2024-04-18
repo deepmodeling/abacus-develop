@@ -169,14 +169,7 @@ void Pseudopot_upf::read_pseudo_header(std::ifstream &ifs)
 	std::string nlc;
 	ModuleBase::GlobalFunc::READ_VALUE(ifs, nlc);
 
-	if (nlc == "T")
-	{
-		this->nlcc = true;
-	}
-	else
-	{
-		this->nlcc = false;
-	}
+	this->nlcc = nlc == "T";
 
 	// mohan modify 2009-12-15
 	std::string junk;
@@ -216,8 +209,7 @@ void Pseudopot_upf::read_pseudo_header(std::ifstream &ifs)
         this->lmax = 0;
         this->lloc = 0;
 	}
-	return;
-}
+	}
 
 void Pseudopot_upf::read_pseudo_mesh(std::ifstream &ifs)
 {
@@ -249,8 +241,7 @@ void Pseudopot_upf::read_pseudo_mesh(std::ifstream &ifs)
 		}
 		ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_RAB>");
 	}
-	return;
-}
+	}
 
 void Pseudopot_upf::read_pseudo_nlcc(std::ifstream &ifs)
 {
@@ -262,8 +253,7 @@ void Pseudopot_upf::read_pseudo_nlcc(std::ifstream &ifs)
 	{
 		ifs >> this->rho_atc[ir];
 	}
-	return;
-}
+	}
 
 void Pseudopot_upf::read_pseudo_local(std::ifstream &ifs)
 {
@@ -277,8 +267,7 @@ void Pseudopot_upf::read_pseudo_local(std::ifstream &ifs)
 		ifs >> this->vloc[ir];
 	}
 	
-	return;
-}
+	}
 
 void Pseudopot_upf::read_pseudo_nl(std::ifstream &ifs)
 {
@@ -296,9 +285,8 @@ void Pseudopot_upf::read_pseudo_nl(std::ifstream &ifs)
         kkbeta = 0;
         return;
     }
-    else
-    {
-        delete[] kbeta;
+    
+            delete[] kbeta;
         delete[] lll;
         this->kbeta = new int[nbeta];
         this->lll = new int[nbeta]; 
@@ -346,9 +334,8 @@ void Pseudopot_upf::read_pseudo_nl(std::ifstream &ifs)
 		else // not tvanp
 		{
 		}
+   
     }
-    return;
-}
 
 void Pseudopot_upf::read_pseudo_pswfc(std::ifstream &ifs)
 {
@@ -365,8 +352,7 @@ void Pseudopot_upf::read_pseudo_pswfc(std::ifstream &ifs)
 			ifs >> this->chi(i, ir);
 		}
 	}
-	return;
-}
+	}
 
 void Pseudopot_upf::read_pseudo_rhoatom(std::ifstream &ifs)
 {
@@ -377,8 +363,7 @@ void Pseudopot_upf::read_pseudo_rhoatom(std::ifstream &ifs)
 	{
 		ifs >> this->rho_at[ir];
 	}
-	return;
-}
+	}
 
 void Pseudopot_upf::read_pseudo_so(std::ifstream &ifs)
 {
@@ -400,7 +385,7 @@ void Pseudopot_upf::read_pseudo_so(std::ifstream &ifs)
              if(this->lchi[nw]-this->jchi[nw]-0.5>1e-7 && this->lchi[nw]-this->jchi[nw]-0.5<1e-7)
              {
                   std::cout<<"Ignore ADDINFO section"<<std::endl;
-                  this->has_so = 0;
+                  this->has_so = false;
              }
        }
        //RELBETA
@@ -410,11 +395,10 @@ void Pseudopot_upf::read_pseudo_so(std::ifstream &ifs)
              if(this->lll[nb]-this->jjj[nb]-0.5>1e-7 && this->lll[nb]-this->jjj[nb]-0.5<1e-7)
              {
                   std::cout<<"Ignore ADDINFO section"<<std::endl;
-                  this->has_so = 0;
+                  this->has_so = false;
              }
        }
-       return;
-}
+       }
 
 
 void Pseudopot_upf::print_pseudo_upf(std::ofstream &ofs)
@@ -444,7 +428,5 @@ void Pseudopot_upf::print_pseudo_upf(std::ofstream &ofs)
 	}
 
 	ofs << " End of pseudopot_upf." << std::endl;
-
-	return;
 
 }

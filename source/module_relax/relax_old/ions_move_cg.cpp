@@ -39,7 +39,7 @@ Ions_Move_CG::~Ions_Move_CG()
     delete[] move0;
 }
 
-void Ions_Move_CG::allocate(void)
+void Ions_Move_CG::allocate()
 {
     ModuleBase::TITLE("Ions_Move_CG", "allocate");
     assert(dim > 0);
@@ -62,10 +62,10 @@ void Ions_Move_CG::start(UnitCell &ucell, const ModuleBase::matrix &force, const
 {
     ModuleBase::TITLE("Ions_Move_CG", "start");
     assert(dim > 0);
-    assert(pos0 != 0);
-    assert(grad0 != 0);
-    assert(cg_grad0 != 0);
-    assert(move0 != 0);
+    assert(pos0 != nullptr);
+    assert(grad0 != nullptr);
+    assert(cg_grad0 != nullptr);
+    assert(move0 != nullptr);
 
     static bool
         sd; // sd , trial are two parameters, when sd=trial=true ,a new direction begins, when sd = false trial =true
@@ -114,7 +114,7 @@ CG_begin:
 
     Ions_Move_Basic::setup_gradient(ucell, force, pos, grad);
     // use energy_in and istep to setup etot and etot_old.
-    Ions_Move_Basic::setup_etot(etot_in, 0);
+    Ions_Move_Basic::setup_etot(etot_in, false);
     // use gradient and etot and etot_old to check
     // if the result is converged.
 
@@ -295,11 +295,9 @@ CG_begin:
     delete[] cg_gradn;
     delete[] pos;
     delete[] move;
-
-    return;
 }
 
-void Ions_Move_CG::setup_cg_grad(double *grad,
+void Ions_Move_CG::setup_cg_grad(const double *grad,
                                  const double *grad0,
                                  double *cg_grad,
                                  const double *cg_grad0,
@@ -356,8 +354,7 @@ void Ions_Move_CG::setup_cg_grad(double *grad,
             cg_grad[i] = grad[i] + gamma * cg_grad0[i];
         }
     }
-    return;
-}
+    }
 
 void Ions_Move_CG::third_order(const double &e0,
                                const double &e1,
@@ -397,7 +394,6 @@ void Ions_Move_CG::third_order(const double &e0,
     }
 
     best_x = dmove;
-    return;
 }
 
 void Ions_Move_CG::Brent(double &fa,
@@ -468,8 +464,6 @@ void Ions_Move_CG::Brent(double &fa,
     best_x = dmove - xpt;
     xpt = dmove;
     xc = dmove;
-
-    return;
 }
 
 void Ions_Move_CG::f_cal(const double *g0, const double *g1, const int &dim, double &f_value)
@@ -487,15 +481,13 @@ void Ions_Move_CG::f_cal(const double *g0, const double *g1, const int &dim, dou
     }
 
     f_value = hel / sqrt(hv0);
-    return;
 }
 
-void Ions_Move_CG::setup_move(double *move, double *cg_gradn, const double &trust_radius)
+void Ions_Move_CG::setup_move(double *move, const double *cg_gradn, const double &trust_radius)
 {
     // movement using gradient and trust_radius.
     for (int i = 0; i < dim; ++i)
     {
         move[i] = -cg_gradn[i] * trust_radius;
     }
-    return;
-}
+    }

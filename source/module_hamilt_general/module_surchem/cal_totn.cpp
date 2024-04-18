@@ -30,7 +30,6 @@ void surchem::cal_totn(const UnitCell& cell,
     }
 
     delete[] vloc_g;
-    return;
 }
 
 void surchem::induced_charge(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, double* induced_rho)
@@ -45,16 +44,14 @@ void surchem::induced_charge(const UnitCell& cell, const ModulePW::PW_Basis* rho
         {
             continue;
         }
-        else
-        {
-            const double fac = ModuleBase::e2 * ModuleBase::FOUR_PI /(cell.tpiba2 * rho_basis->gg[ig]);
+        
+                    const double fac = ModuleBase::e2 * ModuleBase::FOUR_PI /(cell.tpiba2 * rho_basis->gg[ig]);
             induced_rhog[ig] = -delta_phig[ig] / fac;
-        }
+       
     }
 
     rho_basis->recip2real(induced_rhog, induced_rho);
 
     delete[] delta_phig;
     delete[] induced_rhog;
-    return;
 }

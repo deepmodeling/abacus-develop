@@ -4,12 +4,12 @@
 //==========================================================
 #include "symmetry.h"
 #include "module_base/mymath.h"
-bool ModuleSymmetry::test_brav = 0;
+bool ModuleSymmetry::test_brav = false;
 
 namespace ModuleSymmetry
 {
 // Find the type of bravais lattice.
-std::string Symmetry_Basic::get_brav_name(const int ibrav) const
+std::string Symmetry_Basic::get_brav_name(const int ibrav) 
 {
 	switch(ibrav)
 	{
@@ -47,7 +47,6 @@ bool Symmetry_Basic::equal(const double &m,const double &n)const
 void Symmetry_Basic::check_boundary(double &x)const
 {
 	if(equal(x,-0.5) || equal(x,0.5)) x=-0.5;
-	return;
 }
 
 double Symmetry_Basic::get_translation_vector(const double &x1, const double &x2)
@@ -59,12 +58,11 @@ double Symmetry_Basic::get_translation_vector(const double &x1, const double &x2
 	return t;
 }
 
-void Symmetry_Basic::check_translation(double &x, const double &t) const
+void Symmetry_Basic::check_translation(double &x, const double &t) 
 {
 	x += t;
 	//impose the periodic boundary condition
 	x = fmod(x + 100.5,1) - 0.5;
-	return;
 }
 
 double Symmetry_Basic::check_diff(const double &x1, const double &x2)
@@ -80,7 +78,7 @@ double Symmetry_Basic::check_diff(const double &x1, const double &x2)
 }
 
 
-void Symmetry_Basic::order_atoms(double* pos, const int& nat, const int* index) const
+void Symmetry_Basic::order_atoms(double* pos, const int& nat, const int* index) 
 {
 	double** tmp = new double*[nat];
 	for(int ia=0; ia<nat; ia++)
@@ -107,8 +105,6 @@ void Symmetry_Basic::order_atoms(double* pos, const int& nat, const int* index) 
 		delete[] tmp[ia];
 	}
 	delete[] tmp;
-
-	return;
 }
 /*
 // atom ordering for each atom type.
@@ -269,7 +265,7 @@ void Symmetry_Basic::order_z(double* pos2, const int &oldpos2, const int &newpos
 //convert a set of vectors (va) represented in the basis vectors old1, old2, old3 
 //to a set of vectors (vb) represented in the basis vectors new1, new2, new3
 void Symmetry_Basic::veccon(
-		double *carpos, 
+		const double *carpos, 
 		double *rotpos, 
 		const int num, 
 		const ModuleBase::Vector3<double> &old1, 
@@ -339,12 +335,11 @@ void Symmetry_Basic::veccon(
 		rotpos[i * 3 + 1] = direct_new.y;
 		rotpos[i * 3 + 2] = direct_new.z;
 	}
-	return;
-}
+	}
 
 
 //generate all point group symmetry operations from the generation group
-void Symmetry_Basic::matrigen(ModuleBase::Matrix3 *symgen, const int ngen, ModuleBase::Matrix3* symop, int &nop) const
+void Symmetry_Basic::matrigen(ModuleBase::Matrix3 *symgen, const int ngen, ModuleBase::Matrix3* symop, int &nop) 
 {
 	int m1, m2;
 	int n;
@@ -352,7 +347,7 @@ void Symmetry_Basic::matrigen(ModuleBase::Matrix3 *symgen, const int ngen, Modul
 	ModuleBase::Matrix3 sig(1,0,0,0,1,0,0,0,1);
 	ModuleBase::Matrix3 temp1(1,0,0,0,1,0,0,0,1);
 	ModuleBase::Matrix3 temp2(1,0,0,0,1,0,0,0,1);
-	bool flag = 0;
+	bool flag = false;
 	int order = 0;
 	int now = 0;
 
@@ -364,12 +359,12 @@ void Symmetry_Basic::matrigen(ModuleBase::Matrix3 *symgen, const int ngen, Modul
 	{
 //		std::cout<<"\n symgen = "<<i<<std::endl;
 		sig = symgen[i];
-		flag = 1;
+		flag = true;
 		for(int j = 0; j < nop; ++j)
 		{
 			if(symop[j] ==  sig)
 			{
-				flag = 0;
+				flag = false;
 				break;
 			}
 		}
@@ -417,12 +412,12 @@ void Symmetry_Basic::matrigen(ModuleBase::Matrix3 *symgen, const int ngen, Modul
 				//	std::cout<<"\n l = "<<l<<std::endl<<"================================================="<<std::endl;
 				//	out.printM3("temp1",temp1);
 				//	out.printM3("temp2",temp2);
-					flag = 1;
+					flag = true;
 					for(int m = 0; m < now; ++m)
 					{
 						if(symop[m] == temp2)
 						{
-							flag = 0;
+							flag = false;
 							break;
 						}
 					}
@@ -465,12 +460,12 @@ void Symmetry_Basic::matrigen(ModuleBase::Matrix3 *symgen, const int ngen, Modul
 				for(int m = m1; m < m2; ++m)
 				{	
 					temp1 = symop[k] * symop[m];
-					flag = 1;
+					flag = true;
 					for(int l = 0; l < now; ++l)	
 					{
 						if(symop[l] == temp1)
 						{
-							flag = 0;
+							flag = false;
 							break;
 						}
 					}
@@ -651,8 +646,7 @@ void Symmetry_Basic::setgroup(ModuleBase::Matrix3* symop, int &nop, const int &i
 		}
 	}
 
-	return;
-}
+	}
 
 int Symmetry_Basic::subgroup(const int& nrot, const int& ninv, const int& nc2, const int& nc3, const int& nc4, const int& nc6,
     const int& ns1, const int& ns3, const int& ns4, const int& ns6)
@@ -1038,7 +1032,6 @@ void Symmetry_Basic::pointgroup(const int& nrot, int& pgnumber, std::string& pgn
     pgnumber = this->subgroup(nrot, ninv, nc2, nc3, nc4, nc6, ns1, ns3, ns4, ns6);
     pgname = pgdict[pgnumber];
     this->valid_group = false;
-    return;
 }
 
 
@@ -1076,7 +1069,6 @@ void Symmetry_Basic::rotate( ModuleBase::Matrix3 &gmatrix, ModuleBase::Vector3<d
 		rk += 10 * nr3;
 	}
 	rk = rk%nr3;
-	return;
 }
 
 // atom ordering for each atom type 
@@ -1145,7 +1137,6 @@ void Symmetry_Basic::atom_ordering_new(double *posi, const int natom, int *subin
 	}
 	
 	delete[] weighted_func;
-	return;
 }
 
 void Symmetry_Basic::test_atom_ordering(double *posi, const int natom, int *subindex) const
@@ -1153,4 +1144,4 @@ void Symmetry_Basic::test_atom_ordering(double *posi, const int natom, int *subi
 	//an interface to test a protected function
 	this->atom_ordering_new(posi, natom, subindex);
 }
-}
+}  // namespace ModuleSymmetry
