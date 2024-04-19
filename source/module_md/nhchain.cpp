@@ -441,9 +441,9 @@ void Nose_Hoover::restart(const std::string& global_readin_dir)
     }
 
 #ifdef __MPI
-    MPI_Bcast(&ok, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&ok2, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&ok3, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&ok, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&ok2, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&ok3, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
 #endif
 
     if (!ok)

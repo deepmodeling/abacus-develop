@@ -12,7 +12,6 @@ namespace module_tddft
 Propagator::~Propagator()
 {
 }
-
 #ifdef __MPI
 
 inline int globalIndex(int localindex, int nblk, int nprocs, int myproc)
@@ -584,24 +583,22 @@ void Propagator::compute_propagator_etrs(const int nlocal,
                                          std::complex<double>* U_operator,
                                          const int print_matrix) const
 {
-    std::complex<double>* U1 = new std::complex<double>[this->ParaV->nloc];
-    std::complex<double>* U2 = new std::complex<double>[this->ParaV->nloc];
-    ModuleBase::GlobalFunc::ZEROS(U1, this->ParaV->nloc);
-    ModuleBase::GlobalFunc::ZEROS(U2, this->ParaV->nloc);
+    std::vector<std::complex<double>> U1(this->ParaV->nloc);
+    std::vector<std::complex<double>> U2(this->ParaV->nloc);
     int tag = 2;
-    compute_propagator_taylor(nlocal, Stmp, Htmp, U1, print_matrix, tag);
-    compute_propagator_taylor(nlocal, Stmp, H_laststep, U2, print_matrix, tag);
+    compute_propagator_taylor(nlocal, Stmp, Htmp, U1.data(), print_matrix, tag);
+    compute_propagator_taylor(nlocal, Stmp, H_laststep, U2.data(), print_matrix, tag);
     ScalapackConnector::gemm('N',
                              'N',
                              nlocal,
                              nlocal,
                              nlocal,
                              1.0,
-                             U1,
+                             U1.data(),
                              1,
                              1,
                              this->ParaV->desc,
-                             U2,
+                             U2.data(),
                              1,
                              1,
                              this->ParaV->desc,
