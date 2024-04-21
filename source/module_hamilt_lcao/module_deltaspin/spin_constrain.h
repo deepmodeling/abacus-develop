@@ -87,6 +87,9 @@ public:
   /// print mi
   void print_Mi(bool print = false);
 
+  /// print magnetic force, defined as \frac{\delta{L}}/{\delta{Mi}} = -lambda[iat])
+  void print_Mag_Force();
+
   /// collect_mw from matrix multiplication result
   void collect_MW(ModuleBase::matrix& MecMulP, const ModuleBase::ComplexMatrix& mud, int nw, int isk);
 
