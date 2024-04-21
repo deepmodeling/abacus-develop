@@ -137,4 +137,46 @@ void dnevx_op<std::complex<double>, psi::DEVICE_GPU>::operator()(const psi::DEVI
     hipErrcheck(hipMemcpy(_eigenvalue, eigenvalue.data(), sizeof(double) * eigenvalue.size(), hipMemcpyHostToDevice));
 }
 
+
+template <>
+void dngvx_op<std::complex<float>, psi::DEVICE_GPU>::operator()(
+                const psi::DEVICE_GPU* d,
+                const int nbase,
+                const int ldh,
+                std::complex<float>* hcc,
+                std::complex<float>* scc,
+                const int m,
+                float* eigenvalue,
+                std::complex<float>* vcc)
+{
+}
+
+template <>
+void dngvx_op<std::complex<double>, psi::DEVICE_GPU>::operator()(
+                const psi::DEVICE_GPU* d,
+                const int nbase,
+                const int ldh,
+                std::complex<double>* hcc,
+                std::complex<double>* scc,
+                const int m,
+                double* eigenvalue,
+                std::complex<double>* vcc)
+{
+}
+
+#ifdef __LCAO
+template <>
+void dngvx_op<double, psi::DEVICE_GPU>::operator()(
+                const psi::DEVICE_GPU* d,
+                const int nbase,
+                const int ldh,
+                double* hcc,
+                double* scc,
+                const int m,
+                double* eigenvalue,
+                double* vcc)
+{
+}
+#endif // __LCAO
+
 } // namespace hsolver

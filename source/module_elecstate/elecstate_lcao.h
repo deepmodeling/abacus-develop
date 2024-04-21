@@ -21,7 +21,6 @@ class ElecStateLCAO : public ElecState
                   Local_Orbital_Charge* loc_in ,
                   Gint_Gamma* gint_gamma_in,  //mohan add 2024-04-01
                   Gint_k* gint_k_in, //mohan add 2024-04-01
-                  LCAO_Hamilt* uhm_in ,
                   Local_Orbital_wfc* lowf_in ,
                   ModulePW::PW_Basis* rhopw_in ,
                   ModulePW::PW_Basis_Big* bigpw_in )
@@ -77,7 +76,6 @@ class ElecStateLCAO : public ElecState
     Local_Orbital_Charge* loc = nullptr;
     Gint_Gamma* gint_gamma = nullptr; // mohan add 2024-04-01
     Gint_k* gint_k = nullptr; // mohan add 2024-04-01
-    //LCAO_Hamilt* uhm = nullptr; // mohan modify 2024-04-01
     Local_Orbital_wfc* lowf = nullptr;
     DensityMatrix<TK,double>* DM = nullptr;
     

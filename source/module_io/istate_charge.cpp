@@ -6,6 +6,7 @@
 #include "module_base/parallel_common.h"
 #include "module_base/scalapack_connector.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_io/input_conv.h"
 #include "module_io/rho_io.h"
 
 IState_Charge::IState_Charge(psi::Psi<double>* psi_gamma_in, Local_Orbital_Charge& loc_in)
@@ -26,6 +27,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
                           const int nbands,
                           const double nelec,
                           const int nspin,
+                          const int nlocal,
                           const std::string& global_out_dir,
                           const int my_rank,
                           std::ofstream& ofs_warning)
@@ -39,26 +41,38 @@ void IState_Charge::begin(Gint_Gamma& gg,
         ModuleBase::WARNING_QUIT("IState_Charge::begin", "Only available for GAMMA_ONLY_LOCAL now.");
     }
 
+    // Get bands_to_print through public function of INPUT (returns a const pointer to string)
+    std::string bands_to_print = *INPUT.get_bands_to_print();
+
     int mode = 0;
-    if (nbands_istate > 0)
+    if (nbands_istate > 0 && bands_to_print.empty())
+    {
         mode = 1;
-    else
+    }
+    else if (!bands_to_print.empty())
+    {
+        // If bands_to_print is not empty, set mode to 2
         mode = 2;
+        std::cout << " Notice: INPUT parameter `nbands_istate` overwritten by `bands_to_print`!" << std::endl;
+    }
+    else
+    {
+        mode = 3;
+    }
 
     int fermi_band = 0;
     int bands_below = 0;
     int bands_above = 0;
+    std::vector<double> out_band_kb;
+    Input_Conv::parse_expression(bands_to_print, out_band_kb);
 
     // (2) cicle:
-    // (2.1) calculate the selected density matrix
-    // from wave functions.
-    // (2.2) carry out the grid integration to
-    // get the charge density.
-    this->bands_picked = new int[nbands];
-    ModuleBase::GlobalFunc::ZEROS(bands_picked, nbands);
+    // (2.1) calculate the selected density matrix from wave functions.
+    // (2.2) carry out the grid integration to get the charge density.
+    this->bands_picked_.resize(nbands);
+    ModuleBase::GlobalFunc::ZEROS(bands_picked_.data(), nbands);
 
     // (1)
-
     // (1.2) read in LOWF_GAMMA.dat
     std::cout << " number of electrons = " << nelec << std::endl;
 
@@ -74,24 +88,72 @@ void IState_Charge::begin(Gint_Gamma& gg,
         bands_below = nbands_istate;
         bands_above = nbands_istate;
 
-        std::cout << " plot band decomposed charge density below fermi surface with " << bands_below << " bands."
+        std::cout << " Plot band decomposed charge density below Fermi surface with " << bands_below << " bands."
                   << std::endl;
 
-        std::cout << " plot band decomposed charge density above fermi surface with " << bands_above << " bands."
+        std::cout << " Plot band decomposed charge density above Fermi surface with " << bands_above << " bands."
                   << std::endl;
 
-        for (int ib = 0; ib < nbands; ib++)
+        for (int ib = 0; ib < nbands; ++ib)
         {
             if (ib >= fermi_band - bands_below)
             {
                 if (ib < fermi_band + bands_above)
                 {
-                    bands_picked[ib] = 1;
+                    bands_picked_[ib] = 1;
                 }
             }
         }
     }
     else if (mode == 2)
+    {
+        // Check if length of out_band_kb is valid
+        if (static_cast<int>(out_band_kb.size()) > nbands)
+        {
+            ModuleBase::WARNING_QUIT(
+                "IState_Charge::begin",
+                "The number of bands specified by `bands_to_print` in the INPUT file exceeds `nbands`!");
+        }
+        // Check if all elements in bands_picked_ are 0 or 1
+        for (int value: out_band_kb)
+        {
+            if (value != 0 && value != 1)
+            {
+                ModuleBase::WARNING_QUIT(
+                    "IState_Charge::begin",
+                    "The elements of `bands_to_print` must be either 0 or 1. Invalid values found!");
+            }
+        }
+        // Fill bands_picked_ with values from out_band_kb, converting to int
+        // Remaining bands are already set to 0
+        int length = std::min(static_cast<int>(out_band_kb.size()), nbands);
+        for (int i = 0; i < length; ++i)
+        {
+            // out_band_kb rely on function parse_expression from input_conv.cpp
+            // Initially designed for ocp_set, which can be double
+            bands_picked_[i] = static_cast<int>(out_band_kb[i]);
+        }
+
+        std::cout << " Plot band decomposed charge density below the Fermi surface: band ";
+        for (int i = 0; i + 1 <= fermi_band; ++i)
+        {
+            if (bands_picked_[i] == 1)
+            {
+                std::cout << i + 1 << " ";
+            }
+        }
+        std::cout << std::endl;
+        std::cout << " Plot band decomposed charge density above the Fermi surface: band ";
+        for (int i = fermi_band; i < nbands; ++i)
+        {
+            if (bands_picked_[i] == 1)
+            {
+                std::cout << i + 1 << " ";
+            }
+        }
+        std::cout << std::endl;
+    }
+    else if (mode == 3)
     {
         bool stop = false;
         std::stringstream ss;
@@ -109,14 +171,14 @@ void IState_Charge::begin(Gint_Gamma& gg,
                 // int band_index;
                 for (int ib = 0; ib < nbands; ++ib)
                 {
-                    ModuleBase::GlobalFunc::READ_VALUE(ifs, bands_picked[ib]);
+                    ModuleBase::GlobalFunc::READ_VALUE(ifs, bands_picked_[ib]);
                 }
             }
         }
 
 #ifdef __MPI
         Parallel_Common::bcast_bool(stop);
-        Parallel_Common::bcast_int(bands_picked, GlobalV::NBANDS);
+        Parallel_Common::bcast_int(bands_picked_.data(), nbands);
 #endif
         if (stop)
         {
@@ -125,9 +187,9 @@ void IState_Charge::begin(Gint_Gamma& gg,
         }
     }
 
-    for (int ib = 0; ib < nbands; ib++)
+    for (int ib = 0; ib < nbands; ++ib)
     {
-        if (bands_picked[ib])
+        if (bands_picked_[ib])
         {
             std::cout << " Perform band decomposed charge density for band " << ib + 1 << std::endl;
 
@@ -135,10 +197,10 @@ void IState_Charge::begin(Gint_Gamma& gg,
             // band, whenever it is occupied or not.
 
 #ifdef __MPI
-            this->idmatrix(ib, pelec, GlobalV::NSPIN, GlobalV::nelec, GlobalV::NLOCAL);
+            this->idmatrix(ib, pelec, nspin, nelec, nlocal);
 #endif
             // (2) zero out of charge density array.
-            for (int is = 0; is < nspin; is++)
+            for (int is = 0; is < nspin; ++is)
             {
                 ModuleBase::GlobalFunc::ZEROS(pelec->charge->rho[is], rhopw->nrxx);
             }
@@ -151,7 +213,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
             std::stringstream ssc;
             ssc << global_out_dir << "BAND" << ib + 1;
             // 0 means definitely output charge density.
-            for (int is = 0; is < nspin; is++)
+            for (int is = 0; is < nspin; ++is)
             {
                 ssc << "_SPIN" << is << "_CHG.cube";
                 const double ef_tmp = pelec->eferm.get_efval(is);
@@ -176,7 +238,6 @@ void IState_Charge::begin(Gint_Gamma& gg,
         }
     }
 
-    delete[] bands_picked;
     return;
 }
 

@@ -5,6 +5,7 @@
 #include <cmath>
 #include <cstring>
 #include <functional>
+#include <vector>
 
 namespace ModuleBase
 {
@@ -124,13 +125,18 @@ void CubicSpline::build(const int n,
     }
     else
     {
-        double* dx = new double[n - 1];
-        double* dd = new double[n - 1];
+        // double* dx = new double[n - 1];
+        // double* dd = new double[n - 1];
+        std::vector<double> dx(n - 1);
+        std::vector<double> dd(n - 1);
 
         // tridiagonal linear system (cyclic if using the periodic boundary condition)
-        double* diag = new double[n];
-        double* subdiag = new double[n - 1];
-        double* supdiag = new double[n - 1];
+        // double* diag = new double[n];
+        // double* subdiag = new double[n - 1];
+        // double* supdiag = new double[n - 1];
+        std::vector<double> diag(n);
+        std::vector<double> subdiag(n - 1);
+        std::vector<double> supdiag(n - 1);
 
         for (int i = 0; i != n - 1; ++i)
         {
@@ -154,7 +160,7 @@ void CubicSpline::build(const int n,
             supdiag[0] = dx[n - 2];
             subdiag[n - 2] = dx[0];
             s[0] = 3.0 * (dd[0] * dx[n - 2] + dd[n - 2] * dx[0]);
-            solve_cyctri(n - 1, diag, supdiag, subdiag, s);
+            solve_cyctri(n - 1, diag.data(), supdiag.data(), subdiag.data(), s);
             s[n - 1] = s[0];
         }
         else
@@ -202,14 +208,8 @@ void CubicSpline::build(const int n,
             int INFO = 0;
             int N = n;
 
-            dgtsv_(&N, &NRHS, subdiag, diag, supdiag, s, &LDB, &INFO);
+            dgtsv_(&N, &NRHS, subdiag.data(), diag.data(), supdiag.data(), s, &LDB, &INFO);
         }
-
-        delete[] diag;
-        delete[] subdiag;
-        delete[] supdiag;
-        delete[] dx;
-        delete[] dd;
     }
 }
 

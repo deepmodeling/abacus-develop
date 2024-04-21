@@ -11,7 +11,9 @@
 #include <cassert>
 #include <limits>
 
-namespace ABFs_Construct::PCA
+namespace ABFs_Construct
+{
+namespace PCA
 {
 	void tensor_dsyev(const char jobz, const char uplo, RI::Tensor<double> & a, double*const w, int & info)
 	{
@@ -21,7 +23,7 @@ namespace ABFs_Construct::PCA
 		const int nr = a.shape[0];
 		const int nc = a.shape[1];
 
-		double work_tmp;
+		double work_tmp=0.0;
 		constexpr int minus_one = -1;
 		dsyev_(&jobz, &uplo, &nr, a.ptr(), &nc, w, &work_tmp, &minus_one, &info);		// get best lwork
 
@@ -117,7 +119,7 @@ namespace ABFs_Construct::PCA
 				RI::Tensor<double> mm = A_sub.transpose() * A_sub;
 				std::vector<double> eig_value(mm.shape[0]);
 				
-				int info;
+				int info=1;
 
 				tensor_dsyev('V', 'L', mm, eig_value.data(), info);
 
@@ -151,3 +153,4 @@ namespace ABFs_Construct::PCA
 	}
 
 }	// namespace ABFs_Construct::PCA
+}	// namespace ABFs_Construct

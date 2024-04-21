@@ -8,6 +8,8 @@ calculation             cell-relax
 #Parameters (Accuracy)
 ecutwfc			20
 scf_nmax			20
+kpar  2
+nspin 2
 
 basis_type		pw
 relax_nmax                   2

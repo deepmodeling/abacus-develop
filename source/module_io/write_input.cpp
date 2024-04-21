@@ -60,6 +60,7 @@ void Input::Print(const std::string &fn) const
                                  "nbands_istate",
                                  nbands_istate,
                                  "number of bands around Fermi level for get_pchg calulation");
+    ModuleBase::GlobalFunc::OUTP(ofs, "bands_to_print", bands_to_print_, "specify the bands to be calculated in the get_pchg calculation");
     ModuleBase::GlobalFunc::OUTP(ofs, "symmetry", symmetry, "the control of symmetry");
     ModuleBase::GlobalFunc::OUTP(ofs, "init_vel", init_vel, "read velocity from STRU or not");
     ModuleBase::GlobalFunc::OUTP(ofs,
@@ -398,6 +399,7 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_opt_orb_lmax", exx_opt_orb_lmax, "the maximum l of the spherical Bessel functions for opt ABFs");
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_opt_orb_ecut", exx_opt_orb_ecut, "the cut-off of plane wave expansion for opt ABFs");
     ModuleBase::GlobalFunc::OUTP(ofs, "exx_opt_orb_tolerence", exx_opt_orb_tolerence, "the threshold when solving for the zeros of spherical Bessel functions for opt ABFs");
+    ModuleBase::GlobalFunc::OUTP(ofs, "rpa_ccp_rmesh_times", rpa_ccp_rmesh_times, "how many times larger the radial mesh required for calculating Columb potential is to that of atomic orbitals");
 
     ofs << "\n#Parameters (16.tddft)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs, "td_force_dt", td_force_dt, "time of force change");
@@ -454,6 +456,7 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "dft_plus_u", dft_plus_u, "1/2:new/old DFT+U correction method; 0: standard DFT calcullation(default)");
     ModuleBase::GlobalFunc::OUTP(ofs, "yukawa_lambda", yukawa_lambda, "default:0.0");
     ModuleBase::GlobalFunc::OUTP(ofs, "yukawa_potential", yukawa_potential, "default: false");
+    ModuleBase::GlobalFunc::OUTP(ofs, "uramping", uramping, "increasing U values during SCF");
     ModuleBase::GlobalFunc::OUTP(ofs, "omc", omc, "the mode of occupation matrix control");
     ModuleBase::GlobalFunc::OUTP(ofs, "onsite_radius", onsite_radius, "radius of the sphere for onsite projection (Bohr)");
     ofs << std::setw(20) << "hubbard_u ";

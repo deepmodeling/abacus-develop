@@ -166,7 +166,7 @@ namespace ModuleESolver
             std::ifstream ifs(dp_file);
             std::string word;
             int ntype_dp = 0;
-            std::string* label = nullptr;
+            //std::string* label = nullptr;
 
             if (ifs)
             {
@@ -200,7 +200,9 @@ namespace ModuleESolver
                     GlobalV::ofs_running << "Determine the type map from DP model" << std::endl;
                     GlobalV::ofs_running << "ntype read from DP model: " << ntype_dp << std::endl;
 
-                    label = new std::string[ntype_dp];
+                    //label = new std::string[ntype_dp];
+                    std::vector<std::string> label_vec(ntype_dp);
+                    std::string* label = label_vec.data();
                     for (int it = 0; it < ntype_dp; ++it)
                     {
                         ss >> label[it];
@@ -224,7 +226,6 @@ namespace ModuleESolver
                             ModuleBase::WARNING_QUIT("ESolver_DP", "Unsupported atom types for the DP model");
                         }
                     }
-                    delete[] label;
                 }
             }
             ifs.close();

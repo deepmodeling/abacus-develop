@@ -17,19 +17,6 @@
 
 using namespace hsolver;
 
-inline double get_real(const double& x)
-{
-    return x;
-}
-inline double get_real(const std::complex<double>& x)
-{
-    return x.real();
-}
-inline float get_real(const std::complex<float>& x)
-{
-    return x.real();
-}
-
 template <typename T, typename Device> DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in)
 {
     this->device = psi::device::get_device_type<Device>(this->ctx);
