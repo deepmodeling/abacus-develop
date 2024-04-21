@@ -156,12 +156,16 @@ namespace ModuleIO
         const std::vector<T>& mat_mo,
         const Parallel_2D& p2d)
     {
+#ifdef __DEBUG
+        assert(nbands >= 0);
+#endif
         std::vector<double> e(nbands, 0.0);
         for (int i = 0;i < nbands;++i)
         {
             if (p2d.in_this_processor(i, i))
             {
-                e[i] = get_real(mat_mo[p2d.global2local_col(i) * p2d.get_row_size() + p2d.global2local_row(i)]);
+                const int index = p2d.global2local_col(i) * p2d.get_row_size() + p2d.global2local_row(i);
+                e[i] = get_real(mat_mo[index]);
             }
         }
         Parallel_Reduce::reduce_all(e.data(), nbands);
