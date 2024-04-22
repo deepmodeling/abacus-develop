@@ -25,111 +25,6 @@
 #include "module_hamilt_lcao/module_hcontainer/atom_pair.h"
 #include "module_base/libm/libm.h"
 
-void LCAO_Deepks::cal_projected_DM_equiv(const elecstate::DensityMatrix<double, double>* dm, 
-    const UnitCell &ucell,
-    const LCAO_Orbitals &orb,
-    Grid_Driver& GridD)
-{
-    const double Rcut_Alpha = orb.Alpha[0].getRcut();
-    int nrow = this->pv->nrow;
-    int nproj = 0;
-    for(int il = 0; il < this->lmaxd + 1; il++)
-    {
-        nproj += (2 * il + 1) * orb.Alpha[0].getNchi(il);
-    }
-
-    for (int T0 = 0; T0 < ucell.ntype; T0++)
-    {
-		Atom* atom0 = &ucell.atoms[T0]; 
-        for (int I0 =0; I0< atom0->na; I0++)
-        {
-            const int iat = ucell.itia2iat(T0,I0);
-            const ModuleBase::Vector3<double> tau0 = atom0->tau[I0];
-            GridD.Find_atom(ucell, atom0->tau[I0] ,T0, I0);
-
-            for (int ad1=0; ad1<GridD.getAdjacentNum()+1 ; ++ad1)
-            {
-                const int T1 = GridD.getType(ad1);
-                const int I1 = GridD.getNatom(ad1);
-                const int ibt1 = ucell.itia2iat(T1,I1);
-                const ModuleBase::Vector3<double> tau1 = GridD.getAdjacentTau(ad1);
-				const Atom* atom1 = &ucell.atoms[T1];
-				const int nw1_tot = atom1->nw*GlobalV::NPOL;
-				const double Rcut_AO1 = orb.Phi[T1].getRcut(); 
-                const double dist1 = (tau1-tau0).norm() * ucell.lat0;
-                if (dist1 >= Rcut_Alpha + Rcut_AO1)
-                {
-                    continue;
-                }
-
-                auto row_indexes = pv->get_indexes_row(ibt1);
-                const int row_size = row_indexes.size();
-                if(row_size == 0) continue;
-
-				for (int ad2=0; ad2 < GridD.getAdjacentNum()+1 ; ad2++)
-				{
-					const int T2 = GridD.getType(ad2);
-					const int I2 = GridD.getNatom(ad2);
-                    const int ibt2 = ucell.itia2iat(T2,I2);
-					const ModuleBase::Vector3<double> tau2 = GridD.getAdjacentTau(ad2);
-					const Atom* atom2 = &ucell.atoms[T2];
-					const int nw2_tot = atom2->nw*GlobalV::NPOL;
-					
-					const double Rcut_AO2 = orb.Phi[T2].getRcut();
-                	const double dist2 = (tau2-tau0).norm() * ucell.lat0;
-
-					if (dist2 >= Rcut_Alpha + Rcut_AO2)
-					{
-						continue;
-					}
-
-                    auto col_indexes = pv->get_indexes_col(ibt2);
-                    const int col_size = col_indexes.size();
-                    if(col_size == 0) continue;
-
-                    std::vector<double> dm_array(row_size*col_size, 0.0);
-                    const double* dm_current = nullptr;
-                    for(int is=0;is<dm->get_DMR_vector().size();is++)
-                    {
-                        auto* tmp = dm->get_DMR_vector()[is]->find_matrix(ibt1, ibt2, 0, 0, 0);
-#ifdef __DEBUG
-                        assert(tmp != nullptr);
-#endif
-                        dm_current = tmp->get_pointer();
-                        for(int idm=0;idm<row_size*col_size;idm++)
-                        {
-                            dm_array[idm] += dm_current[idm];
-                        }
-                    }
-                    if(dm_current == nullptr) continue;
-
-                    for(int iproj = 0; iproj < nproj; iproj ++)
-                    {
-                        for(int jproj = 0; jproj < nproj; jproj ++)
-                        {
-                            for(int irow = 0; irow < row_size; irow ++)
-                            {
-                                for(int icol = 0; icol < col_size; icol ++)
-                                {
-                                    pdm[iat][iproj * nproj + jproj] += 
-                                        dm_array[irow * col_size + icol] * nlm_save[iat][ad1][row_indexes[irow]][0][iproj] * nlm_save[iat][ad2][col_indexes[icol]][0][jproj];
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-#ifdef __MPI
-    allsum_deepks(this->inlmax,nproj*nproj,this->pdm);
-#endif
-
-    return;
-
-}
-
 //this subroutine performs the calculation of projected density matrices
 //pdm_m,m'=\sum_{mu,nu} rho_{mu,nu} <chi_mu|alpha_m><alpha_m'|chi_nu>
 void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<double, double>* dm, 
@@ -139,13 +34,20 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<double, double
 {
     ModuleBase::TITLE("LCAO_Deepks", "cal_projected_DM");
 
-    if(if_equiv)
+    int pdm_size;
+    if(!if_equiv)
     {
-        this->cal_projected_DM_equiv(dm,ucell,orb,GridD);
-        return;
+        pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);
     }
-
-    const int pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);
+    else
+    {
+        int nproj = 0;
+        for(int il = 0; il < this->lmaxd + 1; il++)
+        {
+            nproj += (2 * il + 1) * orb.Alpha[0].getNchi(il);
+        }
+        pdm_size = nproj * nproj;
+    }
     if (GlobalV::init_chg == "file" && !this->init_pdm) //for DeePKS NSCF calculation 
     {
         std::ifstream ifs("pdm.dat");
@@ -191,23 +93,42 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<double, double
             //trace alpha orbital
             std::vector<int> trace_alpha_row;
             std::vector<int> trace_alpha_col;
-            int ib=0;
-            for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)
+            if(!if_equiv)
             {
-                for (int N0 = 0;N0 < orb.Alpha[0].getNchi(L0);++N0)
+                int ib=0;
+                for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)
                 {
-                    const int inl = this->inl_index[T0](I0, L0, N0);
-                    const int nm = 2*L0+1;
-            
-                    for (int m1=0; m1<nm; ++m1) // m1 = 1 for s, 3 for p, 5 for d
+                    for (int N0 = 0;N0 < orb.Alpha[0].getNchi(L0);++N0)
                     {
-                        for (int m2=0; m2<nm; ++m2) // m1 = 1 for s, 3 for p, 5 for d
+                        const int inl = this->inl_index[T0](I0, L0, N0);
+                        const int nm = 2*L0+1;
+                
+                        for (int m1=0; m1<nm; ++m1) // m1 = 1 for s, 3 for p, 5 for d
                         {
-                            trace_alpha_row.push_back(ib+m1);
-                            trace_alpha_col.push_back(ib+m2);
+                            for (int m2=0; m2<nm; ++m2) // m1 = 1 for s, 3 for p, 5 for d
+                            {
+                                trace_alpha_row.push_back(ib+m1);
+                                trace_alpha_col.push_back(ib+m2);
+                            }
                         }
+                        ib+=nm;
                     }
-                    ib+=nm;
+                }
+            }
+            else
+            {
+                int nproj = 0;
+                for(int il = 0; il < this->lmaxd + 1; il++)
+                {
+                    nproj += (2 * il + 1) * orb.Alpha[0].getNchi(il);
+                }
+                for(int iproj = 0; iproj < nproj; iproj ++)
+                {
+                    for(int jproj = 0; jproj < nproj; jproj ++)
+                    {
+                        trace_alpha_row.push_back(iproj);
+                        trace_alpha_col.push_back(jproj);
+                    }
                 }
             }
             const int trace_alpha_size = trace_alpha_row.size();
@@ -310,25 +231,46 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<double, double
                         &row_size);
 				}//ad2
                 // do dot of g_1dmt and s_1t to get orbital_pdm_shell
-                int ib=0, index=0, inc=1;
-                for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)
+                if(!if_equiv)
                 {
-                    for (int N0 = 0;N0 < orb.Alpha[0].getNchi(L0);++N0)
+                    int ib=0, index=0, inc=1;
+                    for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)
                     {
-                        const int inl = this->inl_index[T0](I0, L0, N0);
-                        const int nm = 2*L0+1;
-                
-                        for (int m1=0; m1<nm; ++m1) // m1 = 1 for s, 3 for p, 5 for d
+                        for (int N0 = 0;N0 < orb.Alpha[0].getNchi(L0);++N0)
                         {
-                            for (int m2=0; m2<nm; ++m2) // m1 = 1 for s, 3 for p, 5 for d
+                            const int inl = this->inl_index[T0](I0, L0, N0);
+                            const int nm = 2*L0+1;
+                    
+                            for (int m1=0; m1<nm; ++m1) // m1 = 1 for s, 3 for p, 5 for d
                             {
-                                int ind = m1*nm + m2;
-                                pdm[inl][ind] += 
-                                    ddot_(&row_size, g_1dmt.data()+index*row_size, &inc, s_1t.data()+index*row_size, &inc);
-                                index++;
+                                for (int m2=0; m2<nm; ++m2) // m1 = 1 for s, 3 for p, 5 for d
+                                {
+                                    int ind = m1*nm + m2;
+                                    pdm[inl][ind] += 
+                                        ddot_(&row_size, g_1dmt.data()+index*row_size, &inc, s_1t.data()+index*row_size, &inc);
+                                    index++;
+                                }
                             }
+                            ib+=nm;
                         }
-                        ib+=nm;
+                    }
+                }
+                else
+                {
+                    int index = 0, inc=1;
+                    int nproj = 0;
+                    for(int il = 0; il < this->lmaxd + 1; il++)
+                    {
+                        nproj += (2 * il + 1) * orb.Alpha[0].getNchi(il);
+                    }
+                    for(int iproj = 0; iproj < nproj; iproj ++)
+                    {
+                        for(int jproj = 0; jproj < nproj; jproj ++)
+                        {
+                            pdm[iat][iproj * nproj + jproj] += 
+                                ddot_(&row_size, g_1dmt.data()+index*row_size, &inc, s_1t.data()+index*row_size, &inc);
+                            index ++;
+                        }
                     }
                 }
 			}//ad1
