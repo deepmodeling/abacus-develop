@@ -37,7 +37,7 @@ void Binstream::open(const std::string& filename,const char *op)
 // we can use if(!Binstream) ...
 bool Binstream::operator!() const
 {
-	return fileptr==NULL;
+	return fileptr==nullptr;
 }
 
 // bool operator
