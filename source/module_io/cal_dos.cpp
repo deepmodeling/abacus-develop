@@ -46,7 +46,7 @@ bool ModuleIO::calculate_dos
 	if(emax_ev < emin_ev)
 	{
 		ModuleBase::WARNING("ModuleIO::calculate_dos","emax_ev < emin_ev");
-		return 0;
+		return false;
 	}
 
 	// mohan fixed bug 2010-1-18
