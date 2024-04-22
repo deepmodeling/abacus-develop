@@ -270,6 +270,7 @@ TEST_F(InputParaTest, Bcast)
     EXPECT_DOUBLE_EQ(INPUT.exx_cauchy_stress_threshold, 1E-7);
     EXPECT_DOUBLE_EQ(INPUT.exx_ccp_threshold, 1E-8);
     EXPECT_EQ(INPUT.exx_ccp_rmesh_times, "default");
+    EXPECT_DOUBLE_EQ(INPUT.rpa_ccp_rmesh_times, 10.0);
     EXPECT_EQ(INPUT.exx_distribute_type, "htime");
     EXPECT_EQ(INPUT.exx_opt_orb_lmax, 0);
     EXPECT_DOUBLE_EQ(INPUT.exx_opt_orb_ecut, 0.0);

@@ -233,6 +233,7 @@
     - [exx\_opt\_orb\_ecut](#exx_opt_orb_ecut)
     - [exx\_opt\_orb\_tolerence](#exx_opt_orb_tolerence)
     - [exx\_real\_number](#exx_real_number)
+    - [rpa\_ccp\_rmesh\_times](#rpa_ccp_rmesh_times)
   - [Molecular dynamics](#molecular-dynamics)
     - [md\_type](#md_type)
     - [md\_nstep](#md_nstep)
@@ -2275,6 +2276,12 @@ These variables are relevant when using hybrid functionals.
 - **Default**: depends on the [gamma_only](#gamma_only) option
   - True: if gamma_only 
   - False: else 
+
+### rpa_ccp_rmesh_times
+
+- **Type**: Real
+- **Description**: How many times larger the radial mesh required is to that of atomic orbitals in the postprocess calculation of the **bare** Coulomb matrix for RPA, GW, etc.
+- **Default**: 10
 
 [back to top](#full-list-of-input-keywords)
 

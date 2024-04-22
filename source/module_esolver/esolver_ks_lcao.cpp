@@ -393,16 +393,6 @@ void ESolver_KS_LCAO<TK, TR>::post_process(void)
 
     if (INPUT.out_band[0]) // pengfei 2014-10-13
     {
-        int nks = 0;
-        if (nspin0 == 1)
-        {
-            nks = this->kv.nkstot;
-        }
-        else if (nspin0 == 2)
-        {
-            nks = this->kv.nkstot / 2;
-        }
-
         for (int is = 0; is < nspin0; is++)
         {
             std::stringstream ss2;
@@ -410,7 +400,6 @@ void ESolver_KS_LCAO<TK, TR>::post_process(void)
             GlobalV::ofs_running << "\n Output bands in file: " << ss2.str() << std::endl;
             ModuleIO::nscf_band(is, 
                                 ss2.str(), 
-                                nks, 
                                 GlobalV::NBANDS, 
                                 0.0, 
                                 INPUT.out_band[1],
@@ -1142,6 +1131,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     {
         SpinConstrain<TK, psi::DEVICE_CPU>& sc = SpinConstrain<TK, psi::DEVICE_CPU>::getScInstance();
         sc.cal_MW(istep, &(this->LM), true);
+        sc.print_Mag_Force();
     }
 
     if (!GlobalV::CAL_FORCE && !GlobalV::CAL_STRESS)
