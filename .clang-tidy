@@ -21,6 +21,7 @@ Checks: '
     performance-*,
     -performance-avoid-endl,
     readability-*,
+    -readability-else-after-return,
     -readability-magic-numbers,
     -readability-isolate-declaration,
     -readability-braces-around-statements,

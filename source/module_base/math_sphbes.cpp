@@ -258,7 +258,7 @@ void Sphbes::BESSJY(double x, double xnu, double *rj, double *ry, double *rjp, d
 int Sphbes::IMAX(int a, int b)
 {
     if (a > b) return a;
-    return b;
+    else return b;
 }
 
 
@@ -754,7 +754,7 @@ double Sphbes::sphbesj(const int l, const double x)
     {
         return _sphbesj_series(l, x);
     }
-    
+
             double invx = 1.0 / x;
         switch (l)
         {
@@ -780,7 +780,7 @@ double Sphbes::sphbesj(const int l, const double x)
           default:
             return _sphbesj_ascending_recurrence(l, x);
         }
-   
+
 }
 
 double Sphbes::dsphbesj(const int l, const double x)
