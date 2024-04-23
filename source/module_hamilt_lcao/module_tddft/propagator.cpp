@@ -566,13 +566,14 @@ void Propagator::compute_propagator_taylor(const int nlocal,
             GlobalV::ofs_running << std::endl;
         }
     }
-
+    delete[] A_matrix;
     delete[] rank0;
     delete[] rank2;
     delete[] rank3;
     delete[] rank4;
     delete[] tmp1;
     delete[] tmp2;
+    delete[] Sinv;
     delete[] ipiv;
 }
 

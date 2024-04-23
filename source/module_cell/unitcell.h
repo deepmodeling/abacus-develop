@@ -22,9 +22,9 @@ public:
     bool set_atom_flag;//added on 2009-3-8 by mohan
     Magnetism magnet;  // magnetism Yu Liu 2021-07-03
     void cal_ux();
-    bool judge_parallel(const double a[3],const ModuleBase::Vector3<double>& b);
-	double *atom_mag{};
-	int n_mag_at{};
+    bool judge_parallel(const double a[3], const ModuleBase::Vector3<double>& b);
+    std::vector<std::vector<double>> atom_mulliken;  //[nat][nspin]
+	  int n_mag_at{};
 
     std::string& Coordinate = lat.Coordinate;
     std::string& latName = lat.latName;
