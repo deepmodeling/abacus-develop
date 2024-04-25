@@ -24,7 +24,14 @@ class ABACUSFormatter
 public:
     ABACUSFormatter(const std::string& fmt): fmt_(fmt) {};
     ~ABACUSFormatter() {};
-
+    /**
+     * @brief static function to format data
+     * 
+     * @tparam Ts datatype of the data
+     * @param fmt format string
+     * @param args data to format
+     * @return std::string 
+     */
     template<typename... Ts>
     static inline std::string format(const char* fmt, const Ts&... args)
     {
@@ -45,11 +52,29 @@ public:
         delete[] buf;
         return str;
     }
-    
+    /**
+     * @brief reset the format string (const char* overloads)
+     * 
+     * @param fmt 
+     */
     void reset(const char* fmt) { fmt_ = fmt; }
+    /**
+     * @brief reset the format string (std::string overloads)
+     * 
+     * @param fmt 
+     */
     void reset(const std::string& fmt) { fmt_ = fmt; }
+    /**
+     * @brief clear the format string
+     * 
+     */
     void reset() { fmt_.clear(); }
-    std::string fmt() { return fmt_; }
+    /**
+     * @brief get the format string
+     * 
+     * @return std::string 
+     */
+    std::string fmt() const { return fmt_; }
 
 private:
     std::string fmt_;
@@ -83,6 +108,8 @@ public:
         else if(attrb == "rfrm") rfrm_ = value;
         else if(attrb == "hdlmt") hdlmt_ = value;
         else if(attrb == "vdlmt") vdlmt_ = value;
+        else if(attrb == "valign") valign_ = value;
+        else if(attrb == "talign") talign_ = value;
     }
     /**
      * @brief relax the column width to the maximal width of the elements in the column
@@ -96,7 +123,7 @@ public:
     std::vector<std::string> relax_col_width(const std::vector<std::string>& col,
                                              const std::string& title = "",
                                              const char& vlyot = 'r',
-                                             const char& tlyot = 'c')
+                                             const char& tlyot = 'c') const
     {
         size_t max_width = 0;
         for(const std::string& s : col) max_width = std::max(max_width, s.size());
@@ -134,33 +161,68 @@ public:
         }
         return new_col;
     }
-
-    std::string row()
+    /**
+     * @brief insert frame and delimiters on given row
+     * 
+     * @param src source data
+     * @param pos position of present row, 't' for top, 'b' for bottom, omit otherwise
+     * @return std::string 
+     */
+    std::string row (const std::vector<std::string>& src,
+                     const char& pos) const
     {
+        std::string dst = "";
+        size_t width = std::accumulate(src.begin(), src.end(), 0, [](const size_t& acc, const std::string& s) { return acc + s.size(); });
+        width += src.size() - 1;
+        if(pos == 't') dst += upfrm(width) + "\n";
+        for(size_t i = 0; i < src.size(); i++)
+        {
+            dst += lfrm() + src[i] + rfrm();
+            if(i != src.size() - 1) dst += vdlmt();
+        }
+        if(pos == 'b') dst += "\n" + dwfrm(width);
+        dst += "\n";
+        return dst;
     }
-    std::string col()
+    /**
+     * @brief insert frame and delimiters on given column
+     * 
+     * @param src source data
+     * @param pos position of present column, 'l' for left, 'r' for right, omit otherwise
+     * @return std::string 
+     */
+    std::string col(const std::vector<std::string>& src,
+                    const std::string& title,
+                    const char& pos = 'n') const
     {
+        std::string dst = "";
+        throw std::runtime_error("Not implemented yet.");
+        return dst;
     }
-    char upfrm() const { return upfrm_; }
+    char valign() const { return valign_; } // value alignment, 'l' for left, 'r' for right, 'c' for center
+    char talign() const { return talign_; } // title alignment, 'l' for left, 'r' for right, 'c' for center
+    char upfrm() const { return upfrm_; } // upframe, the frame above title
     std::string upfrm(const size_t& n) const { return std::string(n, upfrm_); }
-    char mdfrm() const { return mdfrm_; }
+    char mdfrm() const { return mdfrm_; } // midframe, the frame between title and content
     std::string mdfrm(const size_t& n) const { return std::string(n, mdfrm_); }
-    char dwfrm() const { return dwfrm_; }
+    char dwfrm() const { return dwfrm_; } // downframe, the frame at the end of table
     std::string dwfrm(const size_t& n) const { return std::string(n, dwfrm_); }
-    char lfrm() const { return lfrm_; }
-    char rfrm() const { return rfrm_; }
-    char hdlmt() const { return hdlmt_; }
+    char lfrm() const { return lfrm_; } // leftframe, the frame at the left of the table
+    char rfrm() const { return rfrm_; } // rightframe, the frame at the right of the table
+    char hdlmt() const { return hdlmt_; } // horizontal delimiter, between lines of content
     std::string hdlmt(const size_t& n) const { return std::string(n, hdlmt_); }
-    char vdlmt() const { return vdlmt_; }
+    char vdlmt() const { return vdlmt_; } // vertical delimiter, between columns of content
 private:
     ABACUSTableStyle() {};
-
+    // alignment
+    char valign_ = 'r';
+    char talign_ = 'c';
     // table style control
     char upfrm_ = '-';
     char mdfrm_ = '-';
     char dwfrm_ = '-';
-    char lfrm_ = '|';
-    char rfrm_ = '|';
+    char lfrm_ = ' ';
+    char rfrm_ = ' ';
     char hdlmt_ = '-';
     char vdlmt_ = ' ';
 };
@@ -322,7 +384,10 @@ public:
     // unify column width. First calculate the maximal length of elements in each column
     // then for titles and table, fill the elements with spaces to make them have the same width
     
-    std::string str();
+    std::string str()
+    {
+
+    }
     void str(const std::string& s) {};
 private:
     size_t icol_t_ = 0;
