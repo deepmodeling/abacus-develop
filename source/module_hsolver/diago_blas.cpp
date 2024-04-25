@@ -63,7 +63,7 @@ namespace hsolver
     const int itype = 1, il = 1, iu = GlobalV::NBANDS, one = 1;
     int M = 0, NZ = 0, lwork = -1, liwork = -1, info = 0;
     double vl = 0, vu = 0;
-    const double abstol = 0, orfac = -1;
+    const double abstol = 0, orfac = 0.01;
     std::vector<double> work(3, 0);
     std::vector<int> iwork(1, 0);
     std::vector<int> ifail(GlobalV::NLOCAL, 0);
@@ -110,6 +110,9 @@ namespace hsolver
                                  + ModuleBase::GlobalFunc::TO_STRING(__LINE__));
 
     //	GlobalV::ofs_running<<"lwork="<<work[0]<<"\t"<<"liwork="<<iwork[0]<<std::endl;
+    work[0] *= 10;
+    iwork[0] *= 10;
+
     lwork = work[0];
     work.resize(std::max(lwork,3), 0);
     liwork = iwork[0];
@@ -185,7 +188,7 @@ namespace hsolver
     const char jobz = 'V', range = 'I', uplo = 'U';
     const int itype = 1, il = 1, iu = GlobalV::NBANDS, one = 1;
     int M = 0, NZ = 0, lwork = -1, lrwork = -1, liwork = -1, info = 0;
-    const double abstol = 0, orfac = -1;
+    const double abstol = 0, orfac = 0.01;
     //Note: pzhegvx_ has a bug
     //      We must give vl,vu a value, although we do not use range 'V'
     //      We must give rwork at least a memory of sizeof(double) * 3
@@ -239,6 +242,10 @@ namespace hsolver
                                  + ModuleBase::GlobalFunc::TO_STRING(__LINE__));
 
     //	GlobalV::ofs_running<<"lwork="<<work[0]<<"\t"<<"lrwork="<<rwork[0]<<"\t"<<"liwork="<<iwork[0]<<std::endl;
+    work[0] *= 10;
+    iwork[0] *= 10;
+    rwork[0] *= 10;
+
     lwork = work[0].real();
     work.resize(lwork, 0);
     lrwork = rwork[0] + this->degeneracy_max * GlobalV::NLOCAL;
