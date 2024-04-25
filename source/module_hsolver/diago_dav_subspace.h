@@ -31,7 +31,7 @@ class Diago_DavSubspace : public DiagH<T, Device>
 
     static int PW_DIAG_NDIM;
 
-    static double PW_DAV_BIG_THR;
+    static double DAV_BIG_THR;
 
   private:
     bool is_subspace = false;
@@ -140,7 +140,7 @@ template <typename Real, typename Device>
 int Diago_DavSubspace<Real, Device>::PW_DIAG_NDIM = 4;
 
 template <typename Real, typename Device>
-double Diago_DavSubspace<Real, Device>::PW_DAV_BIG_THR = 1e-7;
+double Diago_DavSubspace<Real, Device>::DAV_BIG_THR = 1e-5;
 
 } // namespace hsolver
 
