@@ -723,7 +723,7 @@ void Charge::check_rho()
         ne = this->cal_rho2ne(rho[0]);
         if (std::abs(ne - GlobalV::nelec) > 1.0e-6)
         {
-            ModuleBase::WARNING_QUIT("Charge", "Charge is not correct!");
+            ModuleBase::WARNING("Charge", "Charge is not equal to the number of electrons!");
         }
     }
     else if (this->nspin == 2)
@@ -745,7 +745,7 @@ void Charge::check_rho()
         // for total charge
         if (std::abs(ne_up + ne_dn - GlobalV::nelec) > 1.0e-6)
         {
-            ModuleBase::WARNING_QUIT("Charge", "Charge is not correct");
+            ModuleBase::WARNING("Charge", "Charge is not equal to the number of electrons!");
         }
     }
 }
