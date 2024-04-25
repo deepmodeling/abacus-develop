@@ -1,0 +1,278 @@
+/**
+ * @file NDArray.h
+ * @author your name (you@domain.com)
+ * @brief under the restriction of C++11, a simple alternative to std::vector<T> + std::mdspan. In module_base/module_container/ATen/tensor.h, tensor class provides a cross-device container, but std::string is not supported. Therefore, this class is to provide a general (but CPU-only) container for multi-dimensional data. It can easily convert to ontainer::Tensor.
+ * @version 0.1
+ * @date 2024-04-24
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
+#ifndef NDARRAY_H
+#define NDARRAY_H
+
+#include <vector>
+#include <cassert>
+#include <iostream>
+#include <algorithm>
+#include <type_traits>
+#include <numeric>
+// for heterogeneous computing, we can use ATen::Tensor
+//#include "./module_container/ATen/tensor.h"
+
+/**
+ * @brief under the restriction of C++11, a simple alternative to std::vector<T> + std::mdspan. In module_base/module_container/ATen/tensor.h, tensor class provides a cross-device container, but std::string is not supported. Therefore, this class is to provide a general (but CPU-only) container for multi-dimensional data. It can easily convert to container::Tensor.
+ * 
+ * @tparam T 
+ */
+template<typename T>
+class NDArray
+{
+    // align with STL container implementation, there are several functions compulsory to be implemented
+    // constructor: default, copy, move, initializer_list
+    // operator: =, ==, !=, <, <=, >, >=
+    // iterator: begin, cbegin, end, cend
+    // capacity: size, empty, max_size, reserve, shrink_to_fit
+    // element access: [], at, front, back, data
+    // modifiers: clear, insert, erase, push_back, pop_back, resize, swap
+    // allocator: get_allocator
+public:
+    // constructors
+    /**
+     * @brief Construct a new NDArray object
+     * 
+     */
+    NDArray() : data_(), shape_() {}
+    // initializer_list constructor
+    NDArray(std::initializer_list<size_t> il) : shape_(il), data_(std::accumulate(shape_.begin(), shape_.end(), 1, std::multiplies<size_t>())) {}
+    // variadic template constructor, (delegate constructor)
+    template<typename... Args>
+    NDArray(Args... args) : NDArray({args...}) {}
+    // copy constructor
+    NDArray(const NDArray& other) : data_(other.data_), shape_(other.shape_) {}
+    // move constructor
+    NDArray(NDArray&& other) : data_(std::move(other.data_)), shape_(std::move(other.shape_)) {}
+
+    // destructor
+    ~NDArray() {}
+
+    // operators
+    /**
+     * @brief = operator, copy assignment
+     * 
+     * @param other 
+     * @return NDArray& 
+     */
+    NDArray& operator=(const NDArray& other)
+    {
+        if (this != &other)
+        {
+            data_ = other.data_;
+            shape_ = other.shape_;
+        }
+        return *this;
+    }
+    /**
+     * @brief = operator, move assignment
+    */
+    NDArray& operator=(NDArray&& other)
+    {
+        if (this != &other)
+        {
+            data_ = std::move(other.data_);
+            shape_ = std::move(other.shape_);
+        }
+        return *this;
+    }
+
+    /**
+     * @brief == operator
+     * 
+     * @param other 
+     * @return true if the data and shape are the same
+     * @return false otherwise
+     */
+    bool operator==(const NDArray& other) const
+    {
+        return data_ == other.data_ && shape_ == other.shape_;
+    }
+    /**
+     * @brief != operator
+     * 
+     * @param other 
+     * @return true if the data and shape are different
+     * @return false otherwise
+     */
+    bool operator!=(const NDArray& other) const
+    {
+        return !(*this == other);
+    }
+    // other operators are not generally supported
+
+    // element access
+    /**
+     * @brief [] operator
+     * 
+     * @tparam Args 
+     * @param args indices of the element
+     * @return T& 
+     */
+    template<typename... Args>
+    T& operator[](Args... args)
+    {
+        size_t idx = get_index(args...);
+        return data_[idx];
+    }
+    /**
+     * @brief const [] operator
+     * 
+     * @tparam Args 
+     * @param args indices of the element
+     * @return const T& 
+     */
+    template<typename... Args>
+    const T& operator[](Args... args) const
+    {
+        size_t idx = get_index(args...);
+        return data_[idx];
+    }
+    /**
+     * @brief at function
+     * 
+     * @tparam Args 
+     * @param args indices of the element
+     * @return T& 
+     */
+    template<typename... Args>
+    T& at(Args... args)
+    {
+        size_t idx = get_index(args...);
+        return data_.at(idx);
+    }
+    template<typename... Args>
+    const T& at(Args... args) const
+    {
+        size_t idx = get_index(args...);
+        return data_.at(idx);
+    }
+    // front
+    T& front() { return data_.front(); }
+    const T& front() const { return data_.front(); }
+    // back
+    T& back() { return data_.back(); }
+    const T& back() const { return data_.back(); }
+    // data
+    T* data() { return data_.data(); }
+    const T* data() const { return data_.data(); }
+
+    // iterators
+    // iterators on the whole data
+    T* begin() { return data_.data(); }
+    T* end() { return data_.data() + data_.size(); }
+    const T* cbegin() const { return data_.data(); }
+    const T* cend() const { return data_.data() + data_.size(); }
+    // iterators on different dimensions
+    
+    // capacity
+    // size
+    size_t size() const { return data_.size(); }
+    size_t size(const size_t& dim) const
+    {
+        assert(dim < shape_.size());
+        return shape_[dim];
+    }
+    /**
+     * @brief change the capacity of the data
+     * 
+     * @param new_cap new capacity
+     */
+    void reserve(size_t new_cap) { data_.reserve(new_cap); }
+    /**
+     * @brief change the capacity of the data and fill the new elements with val
+     * 
+     * @param new_cap new capacity
+     * @param val default value
+     */
+    void reserve(size_t new_cap, const T& val)
+    {
+        data_.reserve(new_cap);
+        data_.resize(new_cap, val);
+    }
+    // empty
+    bool empty() const { return data_.empty(); }
+    // max_size
+    size_t max_size() const { return data_.max_size(); }
+    // multi-dimensional specific
+    // shape
+    const std::vector<size_t>& shape() const { return shape_; }
+    // reshape
+    template<typename... Args>
+    void reshape(Args... args)
+    {
+        // DEVELP WARNING: what if arg = -2? :)
+        // save args into a vector
+        std::vector<size_t> dims = {args...};
+        // assert number of -1 in dims is at most 1
+        // -1 is not type-safe!!!
+        size_t count = std::count_if(dims.begin(), dims.end(), [](size_t i) { return i == -1; });
+        assert(count <= 1);
+        // if there is -1, calculate the size
+        if (count == 1)
+        {
+            size_t size = 1;
+            for (size_t i = 0; i < dims.size(); ++i)
+            {
+                if (dims[i] != -1)
+                {
+                    size *= dims[i];
+                }
+            }
+            size_t idx = std::find(dims.begin(), dims.end(), -1) - dims.begin();
+            dims[idx] = data_.size() / size;
+        }
+        // calculate the size
+        size_t size = std::accumulate(dims.begin(), dims.end(), 1, std::multiplies<size_t>());
+        // assert size is the same
+        assert(size == data_.size());
+        // assign dims to shape_
+        shape_ = dims;
+    }
+
+    // interface to ATen::Tensor, but constraint to int, double, float, std::complex<float>, std::complex<double>
+    /**
+     * @brief SFINAE (Substitution Failure Is Not An Error) to_tensor function, only if T is int, double, float, std::complex<float>, std::complex<double>, otherwise there is no such function
+     * 
+     * @return container::Tensor, only if T is int, double, float, std::complex<float>, std::complex<double>
+     */
+    // std::enable_if<
+    //     std::is_same<T, int>::value 
+    //  || std::is_same<T, double>::value 
+    //  || std::is_same<T, float>::value 
+    //  || std::is_same<T, std::complex<float>>::value 
+    //  || std::is_same<T, std::complex<double>>::value, container::Tensor
+    // >::type to_tensor() const
+    // {
+    //     container::TensorShape shape(shape_);
+    //     container::Tensor result = container::Tensor(container::DataTypeToEnum<T>::value, shape);
+    //     std::memcpy(result.data<T>(), data_.data(), data_.size() * sizeof(T));
+    //     return result;
+    // }
+
+private:
+    std::vector<size_t> shape_;
+    // for GPU data container, will be replaced by raw pointer
+    std::vector<T> data_;
+
+    template<typename... Args>
+    size_t get_index(size_t idx, Args... args) const
+    {
+        return idx + shape_[sizeof...(args)] * get_index(args...);
+    }
+    size_t get_index(size_t idx) const
+    {
+        return idx;
+    }
+};
+
+#endif // NDARRAY_H
