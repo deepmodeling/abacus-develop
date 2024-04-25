@@ -158,6 +158,8 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
 
     std::vector<Real> eigenvalues(pes->ekb.nr * pes->ekb.nc, 0);
 
+    std::cout << "GlobalV::diago_full_acc: " << GlobalV::DIAGO_FULL_ACC << std::endl;
+
     if (this->is_first_scf == true)
     {
         is_occupied.resize(psi.get_nk() * psi.get_nbands(), true);

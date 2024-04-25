@@ -86,7 +86,8 @@ extern double soc_lambda; // soc modulator factor, from 0 to 1
 extern int DIAGO_PROC; // 12.1 number of processors used to diag.
 extern int PW_DIAG_NMAX; // 13
 extern int DIAGO_CG_PREC; // 13.1
-extern int PW_DIAG_NDIM; // 14
+extern int PW_DIAG_NDIM;  // 14
+extern bool DIAGO_FULL_ACC;  
 extern double PW_DIAG_THR; // 15 pw_diag_thr
 extern int NB2D; // 16.5 dividsion of 2D_matrix.
 
