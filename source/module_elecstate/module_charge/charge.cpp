@@ -740,7 +740,7 @@ void Charge::check_rho()
         ne_dn = this->cal_rho2ne(rho[1]);
         if (ne_dn < 0.0)
         {
-            ModuleBase::WARNING_QUIT("Charge", "Spin-Down Charge is negative! Please set the initial magnetic moment correctly!");
+            ModuleBase::WARNING_QUIT("Charge", "Number of spin-up electrons set in starting magnetization exceeds all available.");
         }
         // for total charge
         if (std::abs(ne_up + ne_dn - GlobalV::nelec) > 1.0e-6)
