@@ -32,7 +32,7 @@ CubicSpline::CubicSpline(
     const double* y,
     const BoundaryCondition& bc_start,
     const BoundaryCondition& bc_end
-): n_(n), x_(x, x + n), y_(2 * n)
+): n_spline_(1), n_(n), x_(x, x + n), y_(2 * n)
 {
     std::copy(y, y + n, y_.begin());
     build(n, x, y, bc_start, bc_end, &y_[n]);
@@ -46,7 +46,7 @@ CubicSpline::CubicSpline(
     const double* y,
     const BoundaryCondition& bc_start,
     const BoundaryCondition& bc_end
-): n_(n), x0_(x0), dx_(dx), y_(2 * n)
+): n_spline_(1), n_(n), x0_(x0), dx_(dx), y_(2 * n)
 {
     std::copy(y, y + n, y_.begin());
     build(n, dx, y, bc_start, bc_end, &y_[n]);
@@ -59,10 +59,11 @@ void CubicSpline::add(
     const BoundaryCondition& bc_end
 )
 {
-    y_.resize(y_.size() + 2 * n_);
-    std::copy(y, y + n_, &y_[y_.size() - 2 * n_]);
+    int offset = n_spline_ * 2 * n_;
+    y_.resize(offset + 2 * n_);
 
-    double* dy = &y_[y_.size() - n_];
+    std::copy(y, y + n_, &y_[offset]);
+    double* dy = &y_[offset + n_];
     if (x_.empty()) // evenly spaced knots
     {
         build(n_, dx_, y, bc_start, bc_end, dy);
@@ -71,6 +72,7 @@ void CubicSpline::add(
     {
         build(n_, x_.data(), y, bc_start, bc_end, dy);
     }
+    ++n_spline_;
 }
 
 
@@ -80,16 +82,13 @@ void CubicSpline::eval(
     double* y_interp,
     double* dy_interp,
     double* d2y_interp,
-    int ind
+    int i_spline
 ) const
 {
-    assert(0 <= ind && ind < static_cast<int>(y_.size() / (2 * n_)));
+    assert(0 <= i_spline && i_spline < n_spline_);
 
-    int offset = ind * n_ * 2;
-
-    const double* y = &y_[offset];
+    const double* y = &y_[i_spline * 2 * n_];
     const double* dy = y + n_;
-
     if (x_.empty()) // evenly spaced knots
     {
         eval(n_, x0_, dx_, y, dy, n_interp, x_interp, y_interp, dy_interp, d2y_interp);
@@ -103,18 +102,18 @@ void CubicSpline::eval(
 
 void CubicSpline::multi_eval(
     int n_spline,
-    const int* ind,
+    const int* i_spline,
     double x_interp,
     double* y_interp,
     double* dy_interp,
     double* d2y_interp
 ) const
 {
-    assert(std::all_of(ind, ind + n_spline, [this](int i)
-        { return 0 <= i && i < static_cast<int>(y_.size() / (2 * n_)); }));
+    assert(std::all_of(i_spline, i_spline + n_spline,
+        [this](int i) { return 0 <= i && i < n_spline_; }));
 
-    double r = 0.0, dx = 0.0; 
     int p = 0;
+    double dx = 0.0, r = 0.0; 
     if (x_.empty()) // evenly spaced knots
     {
         p = _index(n_, x0_, dx_, x_interp);
@@ -141,7 +140,7 @@ void CubicSpline::multi_eval(
         ws1 = (r3 - r2) * dx;
         for (int i = 0; i < n_spline; ++i)
         {
-            offset = ind[i] * n_ * 2 + p;
+            offset = i_spline[i] * 2 * n_ + p;
             y_interp[i] = wy0 * y_[offset] + wy1 * y_[offset + 1]
                 + ws0 * y_[offset + n_] + ws1 * y_[offset + n_ + 1];
         }
@@ -154,7 +153,7 @@ void CubicSpline::multi_eval(
         ws1 = 3.0 * r2 - 2.0 * r;
         for (int i = 0; i < n_spline; ++i)
         {
-            offset = ind[i] * n_ * 2 + p;
+            offset = i_spline[i] * 2 * n_ + p;
             dy_interp[i] = wy1 * (y_[offset + 1] - y_[offset])
                 + ws0 * y_[offset + n_] + ws1 * y_[offset + n_ + 1];
         }
@@ -167,7 +166,7 @@ void CubicSpline::multi_eval(
         ws1 = (6.0 * r - 2.0) / dx;
         for (int i = 0; i < n_spline; ++i)
         {
-            offset = ind[i] * n_ * 2 + p;
+            offset = i_spline[i] * 2 * n_ + p;
             d2y_interp[i] = wy1 * (y_[offset + 1] - y_[offset])
                 + ws0 * y_[offset + n_] + ws1 * y_[offset + n_ + 1];
         }
@@ -182,9 +181,9 @@ void CubicSpline::multi_eval(
     double* d2y
 ) const
 {
-    std::vector<int> ind(y_.size() / (2 * n_));
-    std::iota(ind.begin(), ind.end(), 0);
-    multi_eval(ind.size(), ind.data(), x, y, dy, d2y);
+    std::vector<int> i_spline(n_spline_);
+    std::iota(i_spline.begin(), i_spline.end(), 0);
+    multi_eval(i_spline.size(), i_spline.data(), x, y, dy, d2y);
 }
 
 
@@ -199,7 +198,7 @@ void CubicSpline::build(
 {
     std::vector<double> dx(n);
     std::adjacent_difference(x, x + n, dx.begin());
-    _build(n, dx.data() + 1, y, bc_start, bc_end, dy);
+    _build(n, &dx[1], y, bc_start, bc_end, dy);
 }
 
 
@@ -231,9 +230,6 @@ void CubicSpline::eval(
 {
     _validate_eval(n, x, 0.0, 0.0, y, dy, n_interp, x_interp);
 
-    // local variables start with a leading underscore have length n_interp
-    // and are related to the segments that contain x_interp
-
     // indices of the polynomial segments that contain x_interp
     std::vector<int> _ind(n_interp);
     std::transform(x_interp, x_interp + n_interp, _ind.begin(),
@@ -251,11 +247,9 @@ void CubicSpline::eval(
 
     std::transform(_ind.begin(), _ind.end(), x_interp, _w,
         [x](int p, double x_i) { return x_i - x[p]; });
-
     std::transform(_ind.begin(), _ind.end(), _c0, [y](int p) { return y[p]; });
     std::transform(_ind.begin(), _ind.end(), _c1, [dy](int p) { return dy[p]; });
     std::transform(_ind.begin(), _ind.end(), _c1p, [dy](int p) { return dy[p + 1]; });
-
     std::transform(_ind.begin(), _ind.end(), _dx, [x](int p) { return x[p + 1] - x[p]; });
     std::transform(_ind.begin(), _ind.end(), _dx, _dd,
         [y](int p, double dx_p) { return (y[p + 1] - y[p]) / dx_p; });
@@ -268,7 +262,6 @@ void CubicSpline::eval(
 
     _cubic_eval(n_interp, _w, _c0, _c1, _c2, _c3, y_interp, dy_interp, d2y_interp);
 }
-
 
 
 void CubicSpline::eval(
@@ -286,9 +279,6 @@ void CubicSpline::eval(
 {
     _validate_eval(n, nullptr, x0, dx, y, dy, n_interp, x_interp);
 
-    // local variables start with a leading underscore have length n_interp
-    // and are related to the segments that contain x_interp
-
     // indices of the polynomial segments that contain x_interp
     std::vector<int> _ind(n_interp);
     std::transform(x_interp, x_interp + n_interp, _ind.begin(),
@@ -305,11 +295,9 @@ void CubicSpline::eval(
 
     std::transform(_ind.begin(), _ind.end(), x_interp, _w,
         [x0, dx](int p, double x_i) { return x_i - x0 - p * dx; });
-
     std::transform(_ind.begin(), _ind.end(), _c0, [y](int p) { return y[p]; });
     std::transform(_ind.begin(), _ind.end(), _c1, [dy](int p) { return dy[p]; });
     std::transform(_ind.begin(), _ind.end(), _c1p, [dy](int p) { return dy[p + 1]; });
-
     std::transform(_ind.begin(), _ind.end(), _dd,
         [dx, y](int p) { return (y[p + 1] - y[p]) / dx; });
 
@@ -356,13 +344,13 @@ void CubicSpline::_validate_eval(
     const double* x,
     double x0,
     double dx,
-    const double* c0,
-    const double* c1,
+    const double* y,
+    const double* dy,
     int n_interp,
     const double* x_interp
 )
 {
-    assert(n > 1 && c0 && c1);
+    assert(n > 1 && y && dy);
     assert((x && std::is_sorted(x, x + n, std::less_equal<double>())) || dx > 0.0);
 
     assert(n_interp >= 0 && x_interp);

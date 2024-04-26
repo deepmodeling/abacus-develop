@@ -15,16 +15,20 @@
  * with continuous first and second derivatives. (p_i(x) is defined on the
  * interval [x[i], x[i+1]])
  *
- * There are two ways to use this class. The first way uses the class as an
- * interpolant object; the second way uses static member functions.
+ * There are two ways to use this class. The first way treats class objects as
+ * interpolants; the second way uses static member functions.
  *
- * Usage-1: interpolant object
+ * Usage-1: object as interpolant
  *
+ *      //---------------------------------------------------------------------
+ *      //                          basic usage
+ *      //---------------------------------------------------------------------
  *      // build the interpolant object
  *      // n is the number of data points (x[i], y[i]) (i=0,...,n-1)
  *      CubicSpline cubspl(n, x, y);
  *
- *      // evaluates the interpolant at x_interp
+ *      // evaluates the interpolant at multiple places (x_interp)
+ *      // n_interp is the number of places to evaluate the interpolant
  *      cubspl.eval(n_interp, x_interp, y_interp); // values are returned in y_interp
  *
  *      // evaluates both the interpolant and its derivative at x_interp
@@ -33,42 +37,59 @@
  *      // evaluates the derivative only
  *      cubspl.eval(n_interp, x_interp, nullptr, dy_interp);
  *
- *      // Build an interpolant with evenly spaced x (equivalent to x[i] = x0 + i*dx)
- *      CubicSpline cubspl2(n, x0, dx, y);
+ *      //---------------------------------------------------------------------
+ *      //                      evenly spaced knots
+ *      //---------------------------------------------------------------------
+ *      // Interpolants with evenly spaced knots can be built by a different
+ *      // constructor, which allows faster evaluation due to easier index lookup.
  *
- *      // "not-a-knot" boundary condition is used by default at both ends.
- *      // Other supported boundary conditions include first/second derivatives and
- *      // periodic boundary condition.
+ *      // build an interpolant with evenly spaced knots x[i] = x0 + i*dx
+ *      CubicSpline cubspl(n, x0, dx, y);
  *
- *      // f''(start) = 1.0 and f'(end) = 3.0
- *      CubicSpline cubspl3(n, x0, dx, y,
- *                          {CubicSpline::BoundaryType::second_deriv, 1.0},
- *                          {CubicSpline::BoundaryType::first_deriv, 3.0});
+ *      //---------------------------------------------------------------------
+ *      //                      boundary conditions
+ *      //---------------------------------------------------------------------
+ *      // By default "not-a-knot" boundary condition is applied to both ends.
+ *      // Other supported boundary conditions include first/second derivatives
+ *      // and periodic boundary condition.
+ *
+ *      // build an interpolant with f''(start) = 1.0 and f'(end) = 3.0
+ *      CubicSpline cubspl(n, x, y,
+ *                         {CubicSpline::BoundaryType::second_deriv, 1.0},
+ *                         {CubicSpline::BoundaryType::first_deriv, 3.0});
  *
  *      // applying periodic boundary condition requires that
  *      // 1. it be specified at both ends;
- *      // 2. y[0] must equal y[n-1]
- *      CubicSpline cubspl4(n, x0, dx, y,
- *                          {CubicSpline::BoundaryType::periodic},
- *                          {CubicSpline::BoundaryType::periodic});
+ *      // 2. y[0] equals y[n-1]
+ *      CubicSpline cubspl(n, x, y,
+ *                         {CubicSpline::BoundaryType::periodic},
+ *                         {CubicSpline::BoundaryType::periodic});
  *
- *      // an objects supports holding multiple interpolants with the same knots
+ *      //---------------------------------------------------------------------
+ *      //                      multiple interpolants
+ *      //---------------------------------------------------------------------
+ *      // An object supports holding multiple interpolants with the same knots.
+ *      // Once the first interpolant is contructed by the constructor, more
+ *      // interpolants sharing the same knots can be added. Such interpolants
+ *      // can be evaluated simultaneously at a single place.
+ *
+ *      // build an object with 5 interpolants
  *      CubicSpline cubspl5(n, x, y);
+ *      cubspl5.reserve(5); // reduce memory reallocations & data copies
  *      cubspl5.add(y2);
- *      cubspl5.add(y3);
+ *      cubspl5.add(y3, {CubicSpline::BoundaryType::first_deriv, 1.0}, {});
+ *      cubspl5.add(y4, {}, {CubicSpline::BoundaryType::second_deriv, 2.0});
+ *      cubspl5.add(y5);
  *
- *      // now cubspl5 holds three interpolants
- *      // such multiple interpolants can be evaluated simultaneously at a single place
+ *      // evaluates the five interpolants simultaneously at a single place
+ *      cubspl5.multi_eval(x_interp, y_interp)
  *
- *      // evaluate all interpolants and their first derivatives at x_interp
- *      cubspl5.multi_eval(x_interp, y, dy)
- *
- *      // evaluate the first and third interpolants at x_interp
+ *      // evaluate the first and third interpolants at a single place
  *      std::vector<int> ind = {0, 2};
- *      cubspl5.multi_eval(ind.size(), ind.data(), x_interp, y)
+ *      cubspl5.multi_eval(ind.size(), ind.data(), x_interp, y_interp)
  *
- *      // evaluate the third interpolant (ind == 2) at many places (x_interp)
- *      cubspl5.eval(n_interp, x_interp, y_interp, nullptr, nullptr, 2)
+ *      // evaluate the last interpolant (i_spline == 4) at multiple places
+ *      cubspl5.eval(n_interp, x_interp, y_interp, nullptr, nullptr, 4)
  *
  *
  * Usage-2: static member functions
@@ -77,8 +98,8 @@
  *      // boundary conditions defaulted to "not-a-knot"
  *      CubicSpline::build(n, x, y, {}, {}, dy);
  *
- *      // Various boundary conditions and explicitly specified evenly spaced
- *      // knots are supported in the same way as the interpolant object.
+ *      // various boundary conditions and evenly spaced knots are supported
+ *      // in the same way as the interpolant object
  *
  *      // step-2: interpolates with knots, values & derivatives
  *      CubicSpline::eval(n, x, y, dy, n_interp, x_interp, y_interp, dy_interp);
@@ -151,13 +172,13 @@ public:
     /**
      * @brief Builds the interpolant object.
      *
-     * Constructing a cubic spline interpolant from the given set of data points
+     * Constructing a cubic spline interpolant from a set of data points
      * (x[i], y[i]) (i=0,1,...,n-1) and boundary conditions.
      *
      * @param[in]   n               number of data points
-     * @param[in]   x               x coordinates of data points ("knots")
-     *                              (must be strictly increasing)
-     * @param[in]   y               y coordiates of data points
+     * @param[in]   x               x coordinates of data points
+     *                              ("knots", must be strictly increasing)
+     * @param[in]   y               y coordinates of data points
      * @param[in]   bc_start        boundary condition at start
      * @param[in]   bc_end          boundary condition at end
      *
@@ -174,13 +195,13 @@ public:
     /**
      * @brief Builds the interpolant object with evenly-spaced knots.
      *
-     * Constructing a cubic spline interpolant from the given set of data points
+     * Constructing a cubic spline interpolant from a set of data points
      * (x0+i*dx, y[i]) (i=0,1,...,n-1) and boundary conditions.
      *
      * @param[in]   n               number of data points
      * @param[in]   x0              starting x coordinate (first knot)
      * @param[in]   dx              spacing between knots (must be positive)
-     * @param[in]   y               y coordiates of data points
+     * @param[in]   y               y coordinates of data points
      * @param[in]   bc_start        boundary condition at start
      * @param[in]   bc_end          boundary condition at end
      *
@@ -202,7 +223,7 @@ public:
      * Once the first interpolant is contructed by the constructor, more interpolants can
      * be added by this function.
      *
-     * @param[in]   y               y coordiates of data points
+     * @param[in]   y               y coordinates of data points
      * @param[in]   bc_start        boundary condition at start
      * @param[in]   bc_end          boundary condition at end
      *
@@ -220,12 +241,12 @@ public:
      * @param[in]   n_interp        number of places to evaluate the interpolant
      * @param[in]   x_interp        places where an interpolant is evaluated
      *                              (must be within the range of knots)
-     * @param[out]  y_interp        interpolated values
-     * @param[out]  dy_interp       first derivatives at x
-     * @param[out]  d2y_interp      second derivatives at x
+     * @param[out]  y_interp        values at x_interp
+     * @param[out]  dy_interp       first derivatives at x_interp
+     * @param[out]  d2y_interp      second derivatives at x_interp
      * @param[in]   i_spline        index of the interpolant to evaluate
      *
-     * @note pass nullptr to y/dy/d2y_interp would suppress the corresponding calculation
+     * @note pass nullptr to any of the output would suppress the corresponding calculation
      *
      */
     void eval(
@@ -245,11 +266,11 @@ public:
      * @param[in]   i_spline        indices of interpolants to evaluate
      * @param[in]   x_interp        place where interpolants are evaluated
      *                              (must be within the range of knots)
-     * @param[out]  y_interp        interpolated values
+     * @param[out]  y_interp        values at x_interp
      * @param[out]  dy_interp       first derivatives at x_interp
      * @param[out]  d2y_interp      second derivatives at x_interp
      *
-     * @note pass nullptr to y/dy/d2y_interp would suppress the corresponding calculation
+     * @note pass nullptr to any of the output would suppress the corresponding calculation
      *
      */
     void multi_eval(
@@ -267,11 +288,11 @@ public:
      *
      * @param[in]   x_interp        place where interpolants are evaluated
      *                              (must be within the range of knots)
-     * @param[out]  y_interp        interpolated values
+     * @param[out]  y_interp        values at x_interp
      * @param[out]  dy_interp       first derivatives at x_interp
      * @param[out]  d2y_interp      second derivatives at x_interp
      *
-     * @note pass nullptr to y/dy/d2y_interp would suppress the corresponding calculation
+     * @note pass nullptr to any of the output would suppress the corresponding calculation
      *
      */
     void multi_eval(
@@ -285,17 +306,18 @@ public:
     /**
      * @brief Reserves memory for multiple interpolants.
      *
-     * This class does not reserve memory for multiple interpolants by default.
-     * Memory is reallocated and old data copied whenever a new interpolant is added,
-     * which could be slow if the number of interpolants to be added is large.
+     * By default this class does not reserve memory for multiple interpolants.
+     * Without reservation, whenever a new interpolant is added, memory has to
+     * be reallocated and old data copied, which could waste a lot of time if
+     * there's a large number of interpolants to add.
      *
-     * This function can help avoid repetitive memory reallocations and data copies
-     * by one-shot reserving a sufficient amount of memory in advance.
+     * This function help avoid repetitive memory reallocations and data copies
+     * by a one-shot reservation of memory.
      *
      * @param[in]   n               expected total number of interpolants
      *
      */
-    void reserve(int n) { y_.reserve(n * n_ * 2); }
+    void reserve(int n_spline) { y_.reserve(n_spline * n_ * 2); }
 
 
     /// heap memory usage in bytes
@@ -304,10 +326,13 @@ public:
 
 private:
 
+    /// number of cubic spline interpolants
+    int n_spline_ = 0;
+
     /// number of knots
     int n_ = 0;
 
-    /// starting x coordinate (first knot)
+    /// first knot (used for evenly-spaced knots only)
     double x0_ = 0.0;
 
     /// spacing between knots (used for evenly-space knots only)
@@ -327,12 +352,13 @@ private:
 public:
 
     /**
-     * @brief Computes the first derivatives at knots for cubic spline interpolation.
+     * @brief Computes the first derivatives at knots for cubic spline
+     * interpolation.
      *
      * @param[in]   n               number of data points
-     * @param[in]   x               x coordinates of data points ("knots")
-     *                              (must be strictly increasing)
-     * @param[in]   y               y coordiates of data points
+     * @param[in]   x               x coordinates of data points
+     *                              ("knots", must be strictly increasing)
+     * @param[in]   y               y coordinates of data points
      * @param[in]   bc_start        boundary condition at start
      * @param[in]   bc_end          boundary condition at end
      * @param[out]  dy              first derivatives at knots
@@ -349,12 +375,12 @@ public:
 
 
     /**
-     * @brief Computes the first derivatives at evenly-spaced knots for cubic
-     * spline interpolation
+     * @brief Computes the first derivatives at evenly-spaced knots for
+     * cubic spline interpolation.
      *
      * @param[in]   n               number of data points
      * @param[in]   dx              spacing between knots (must be positive)
-     * @param[in]   y               y coordiates of data points
+     * @param[in]   y               y coordinates of data points
      * @param[in]   bc_start        boundary condition at start
      * @param[in]   bc_end          boundary condition at end
      * @param[out]  dy              first derivatives at knots
@@ -371,21 +397,20 @@ public:
 
 
     /**
-     * @brief Evaluates a cubic spline polynomial.
+     * @brief Evaluates a cubic spline polynomial at multiple places.
      *
      * @param[in]   n               number of knots
-     * @param[in]   x               x coordinates of data points ("knots")
-     *                              (must be strictly increasing)
-     * @param[in]   y               y coordiates of data points
+     * @param[in]   x               knots (must be strictly increasing)
+     * @param[in]   y               values at knots
      * @param[in]   dy              first derivatives at knots
-     * @param[in]   n_interp        number of points to evaluate the spline polynomial
-     * @param[in]   x_interp        places where the spline polynomial is evaluated
+     * @param[in]   n_interp        number of places to evaluate the interpolant
+     * @param[in]   x_interp        places where the interpolant is evaluated
      *                              (must be within the range of knots)
-     * @param[out]  y_interp        interpolated values at x_interp
-     * @param[out]  dy_interp       interpolated first derivatives at x_interp
-     * @param[out]  d2y_interp      interpolated second derivatives at x_interp
+     * @param[out]  y_interp        values at x_interp
+     * @param[out]  dy_interp       first derivatives at x_interp
+     * @param[out]  d2y_interp      second derivatives at x_interp
      *
-     * @note pass nullptr to any of the y's would suppress the corresponding calculation
+     * @note pass nullptr to any of the output would suppress the corresponding calculation
      *
      */
     static void eval(
@@ -405,18 +430,18 @@ public:
      * @brief Evaluates a cubic spline polynomial with evenly spaced knots.
      *
      * @param[in]   n               number of knots
-     * @param[in]   x0              starting x coordinate (first knot)
+     * @param[in]   x0              first knot
      * @param[in]   dx              spacing between knots
-     * @param[in]   y               y coordiates of data points
+     * @param[in]   y               values at knots
      * @param[in]   dy              first derivatives at knots
-     * @param[in]   n_interp        number of points to evaluate the spline polynomial
-     * @param[in]   x_interp        places where the spline polynomial is evaluated,
+     * @param[in]   n_interp        number of places to evaluate the interpolant
+     * @param[in]   x_interp        places where the interpolant is evaluated
      *                              (must be within the range of knots)
-     * @param[out]  y_interp        interpolated values at x_interp
-     * @param[out]  dy_interp       interpolated first derivatives at x_interp
-     * @param[out]  d2y_interp      interpolated second derivatives at x_interp
+     * @param[out]  y_interp        values at x_interp
+     * @param[out]  dy_interp       first derivatives at x_interp
+     * @param[out]  d2y_interp      second derivatives at x_interp
      *
-     * @note pass nullptr to any of the y's would suppress the corresponding calculation
+     * @note pass nullptr to any of the output would suppress the corresponding calculation
      *
      */
     static void eval(
