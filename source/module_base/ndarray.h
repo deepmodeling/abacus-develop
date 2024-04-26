@@ -44,8 +44,10 @@ public:
      * 
      */
     NDArray() : data_(), shape_() {}
-    // initializer_list constructor
+    // initializer_list constructor, size_t
     NDArray(std::initializer_list<size_t> il) : shape_(il), data_(std::accumulate(shape_.begin(), shape_.end(), 1, std::multiplies<size_t>())) {}
+    // initializer_list constructor, int, cast to size_t
+    NDArray(std::initializer_list<int> il) : shape_(il.begin(), il.end()), data_(std::accumulate(shape_.begin(), shape_.end(), 1, std::multiplies<size_t>())) {}
     // variadic template constructor, (delegate constructor)
     template<typename... Args>
     NDArray(Args... args) : NDArray({args...}) {}
@@ -112,32 +114,6 @@ public:
 
     // element access
     /**
-     * @brief [] operator
-     * 
-     * @tparam Args 
-     * @param args indices of the element
-     * @return T& 
-     */
-    template<typename... Args>
-    T& operator[](Args... args)
-    {
-        size_t idx = get_index(args...);
-        return data_[idx];
-    }
-    /**
-     * @brief const [] operator
-     * 
-     * @tparam Args 
-     * @param args indices of the element
-     * @return const T& 
-     */
-    template<typename... Args>
-    const T& operator[](Args... args) const
-    {
-        size_t idx = get_index(args...);
-        return data_[idx];
-    }
-    /**
      * @brief at function
      * 
      * @tparam Args 
@@ -147,13 +123,39 @@ public:
     template<typename... Args>
     T& at(Args... args)
     {
-        size_t idx = get_index(args...);
+        size_t idx = index(args...);
         return data_.at(idx);
     }
     template<typename... Args>
     const T& at(Args... args) const
     {
-        size_t idx = get_index(args...);
+        size_t idx = index(args...);
+        return data_.at(idx);
+    }
+    /**
+     * @brief [] operator
+     * 
+     * @tparam Args 
+     * @param args indices of the element
+     * @return T& 
+     */
+    template<typename... Args>
+    T& operator()(Args... args)
+    {
+        size_t idx = index(args...);
+        return data_.at(idx);
+    }
+    /**
+     * @brief const [] operator
+     * 
+     * @tparam Args 
+     * @param args indices of the element
+     * @return const T& 
+     */
+    template<typename... Args>
+    const T& operator()(Args... args) const
+    {
+        size_t idx = index(args...);
         return data_.at(idx);
     }
     // front
@@ -201,8 +203,6 @@ public:
     }
     // empty
     bool empty() const { return data_.empty(); }
-    // max_size
-    size_t max_size() const { return data_.max_size(); }
     // multi-dimensional specific
     // shape
     const std::vector<size_t>& shape() const { return shape_; }
@@ -234,7 +234,9 @@ public:
         // calculate the size
         size_t size = std::accumulate(dims.begin(), dims.end(), 1, std::multiplies<size_t>());
         // assert size is the same
+        #ifdef __DEBUG
         assert(size == data_.size());
+        #endif
         // assign dims to shape_
         shape_ = dims;
     }
@@ -258,21 +260,25 @@ public:
     //     std::memcpy(result.data<T>(), data_.data(), data_.size() * sizeof(T));
     //     return result;
     // }
-
-private:
-    std::vector<size_t> shape_;
-    // for GPU data container, will be replaced by raw pointer
-    std::vector<T> data_;
-
     template<typename... Args>
-    size_t get_index(size_t idx, Args... args) const
+    size_t index(Args... args) const
     {
-        return idx + shape_[sizeof...(args)] * get_index(args...);
-    }
-    size_t get_index(size_t idx) const
-    {
+        // assert the number of args is the same as shape_.size()
+        assert (sizeof...(args) == shape_.size());
+        // calculate the index
+        size_t idx = 0;
+        size_t idxs[] = {static_cast<size_t>(args)...};
+        for (size_t i = 0; i < shape_.size(); ++i)
+        {
+            assert(idxs[i] < shape_[i]);
+            idx = idx * shape_[i] + idxs[i];
+        }
         return idx;
     }
+private:
+    std::vector<size_t> shape_;
+    // for GPU-compatible data container, will be replaced by raw pointer
+    std::vector<T> data_;
 };
 
 #endif // NDARRAY_H

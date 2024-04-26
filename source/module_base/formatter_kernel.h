@@ -10,6 +10,8 @@
 
 #include <string>
 #include "./ndarray.h"
+#include <iostream>
+
 /**
  * @brief 
  * 
@@ -35,7 +37,7 @@ public:
     template<typename... Ts>
     static inline std::string format(const char* fmt, const Ts&... args)
     {
-        int buf_size = snprintf(nullptr, 0, fmt, args...);
+        size_t buf_size = snprintf(nullptr, 0, fmt, args...);
         char* buf = new char[buf_size + 1];
         snprintf(buf, buf_size + 1, fmt, args...);
         std::string str(buf);
@@ -120,10 +122,10 @@ public:
      * @param tlyot optional, title layout, 'l' for left, 'r' for right, 'c' for center
      * @return std::vector<std::string> 
      */
-    std::vector<std::string> relax_col_width(const std::vector<std::string>& col,
-                                             const std::string& title = "",
-                                             const char& vlyot = 'r',
-                                             const char& tlyot = 'c') const
+    static std::vector<std::string> relax_col_width(const std::vector<std::string>& col,
+                                                    const std::string& title = "",
+                                                    const char& vlyot = 'r',
+                                                    const char& tlyot = 'c')
     {
         size_t max_width = 0;
         for(const std::string& s : col) max_width = std::max(max_width, s.size());
@@ -161,6 +163,23 @@ public:
         }
         return new_col;
     }
+    std::string title(const std::vector<std::string>& titles,
+                      const bool& dlmt = false) const
+    {
+        std::string dst = "";
+        size_t width = std::accumulate(titles.begin(), titles.end(), 0, [](const size_t& acc, const std::string& s) { return acc + s.size(); });
+        width += titles.size() - 1; // for the delimiters
+        width += 2; // for the left and right frame
+        dst += upfrm(width) + "\n";
+        for(size_t i = 0; i < titles.size(); i++)
+        {
+            dst += lfrm() + titles[i] + rfrm();
+            if(i != titles.size() - 1) dst += dlmt? vdlmt(): ' ';
+        }
+        dst += "\n" + mdfrm(width) + "\n";
+        return dst;
+    }
+    
     /**
      * @brief insert frame and delimiters on given row
      * 
@@ -168,12 +187,13 @@ public:
      * @param pos position of present row, 't' for top, 'b' for bottom, omit otherwise
      * @return std::string 
      */
-    std::string row (const std::vector<std::string>& src,
-                     const char& pos) const
+    std::string row(const std::vector<std::string>& src,
+                    const char& pos) const
     {
         std::string dst = "";
         size_t width = std::accumulate(src.begin(), src.end(), 0, [](const size_t& acc, const std::string& s) { return acc + s.size(); });
         width += src.size() - 1;
+        width += 2; // for the left and right frame
         if(pos == 't') dst += upfrm(width) + "\n";
         for(size_t i = 0; i < src.size(); i++)
         {
@@ -237,14 +257,7 @@ class ABACUSTableContainer
 {
 public:
     // pass-key idiom constructor, RAII
-    ABACUSTableContainer(const ABACUSTable& table, const size_t nrows, const size_t ncols)
-    {
-        nrows_ = nrows;
-        ncols_ = ncols;
-        table_.reserve(nrows_ * ncols_);
-        table_.reshape(nrows_, ncols_);
-        titles_.resize(ncols_);
-    }
+    ABACUSTableContainer(const ABACUSTable& table, const size_t nrows, const size_t ncols): nrows_(nrows), ncols_(ncols), titles_(ncols), table_(nrows, ncols) {};
     ~ABACUSTableContainer() {};
     /**
      * @brief set one title of the table
@@ -252,20 +265,20 @@ public:
      * @param title title contents
      * @param i optional, the index of the title, default is 0
      */
-    void assign_title(const std::string& title, const size_t i = 0) { titles_[i] = title; }
+    void assign_title(const std::string& title, const size_t j = 0) { titles_[j] = title; }
     /**
      * @brief set multiple titles of the table
      * 
      * @param titles title contents
      * @param i starting index of the titles, default is 0
      */
-    void assign_title(const std::vector<std::string>& titles, const size_t i = 0)
+    void assign_title(const std::vector<std::string>& titles, const size_t j = 0)
     {
-        // starting from i, to overwrite the titles
+        // starting from j, to overwrite the titles
         #ifdef __DEBUG
-        assert(i + titles.size() <= ncols_);
+        assert(j + titles.size() <= ncols_);
         #endif
-        std::transform(titles.begin(), titles.end(), titles_.begin() + i, [](const std::string& title) { return title; });
+        std::transform(titles.begin(), titles.end(), titles_.begin() + j, [](const std::string& title) { return title; });
     }
     /**
      * @brief assign a value to the table
@@ -274,54 +287,52 @@ public:
      * @param i row index
      * @param j column index
      */
-    void assign_value(const std::string& value, const size_t i = 0, const size_t j = 0) { table_[i, j] = value; }
+    void assign_value(const std::string& value, const size_t i = 0, const size_t j = 0) { table_(i, j) = value; }
     /**
      * @brief assign multiple values to the table
      * 
      * @param values values
+     * @param direction 'v' for vertical, 'h' for horizontal
      * @param i starting row index
      * @param j column index
      */
-    void assign_value(const std::vector<std::string>& values, const size_t i = 0, const size_t j = 0)
+    void assign_value(const std::vector<std::string>& values, const char& direction, const size_t i = 0, const size_t j = 0)
     {
-        // starting from i, j, to overwrite the values
-        #ifdef __DEBUG
-        assert(i + values.size() <= nrows_);
-        assert(j < ncols_);
-        #endif
-        std::transform(values.begin(), values.end(), table_.begin() + i * ncols_ + j, [](const std::string& value) { return value; });
-    }
-
-    /**
-     * @brief get the maximal width of a column
-     * 
-     * @param j column index
-     * @param include_title whether to include the title in the calculation
-     * @return int maximal width of the column
-     */
-    int column_max_width(const size_t j, const bool& include_title = false) const
-    {
-        size_t max_width = 0;
-        for(size_t i = 0; i < nrows_; i++)
+        // if direction is v, means vertical, will update values to one column
+        // if direction is h, means horizontal, will update values to one row
+        // (i, j) defines the starting position
+        if(direction == 'v')
         {
-            max_width = std::max(max_width, table_[i, j].size());
+            // should assert i + values.size() <= nrows_
+            #ifdef __DEBUG
+            assert(i + values.size() <= nrows_);
+            #endif
+            for(size_t k = 0; k < values.size(); k++) { table_(i + k, j) = values[k]; }
         }
-        if(include_title) max_width = std::max(max_width, titles_[j].size());
-        return max_width;
+        else if(direction == 'h')
+        {
+            // should assert j + values.size() <= ncols_
+            #ifdef __DEBUG
+            assert(j + values.size() <= ncols_);
+            #endif
+            for(size_t k = 0; k < values.size(); k++) { table_(i, j + k) = values[k]; }
+        }
     }
 
     std::string title(const size_t i) const { return titles_[i]; }
-    std::string value(const size_t i, const size_t j) const { return table_[i, j]; }
+    std::vector<std::string> titles() const { return titles_; }
+    std::string value(const size_t i, const size_t j) const { return table_(i, j); }
+
     std::vector<std::string> row(const size_t i) const
     {
         std::vector<std::string> row;
-        for(size_t j = 0; j < ncols_; j++) { row.push_back(table_[i, j]); }
+        for(size_t j = 0; j < ncols_; j++) { row.push_back(table_(i, j)); }
         return row;
     }
     std::vector<std::string> col(const size_t j) const
     {
         std::vector<std::string> col;
-        for(size_t i = 0; i < nrows_; i++) { col.push_back(table_[i, j]); }
+        for(size_t i = 0; i < nrows_; i++) { col.push_back(table_(i, j)); }
         return col;
     }
     size_t nrows() const { return nrows_; }
@@ -345,37 +356,41 @@ private:
 
 class ABACUSTable
 {
+private:
+    // name is too long, use alias
+    typedef ABACUSFormatter f;
+    typedef ABACUSTableStyle stylizer;
 public:
     ABACUSTable(const size_t& nrows, const size_t& ncols): table_(*this, nrows, ncols), style_(*this), fmts_(ncols) {};
+    ABACUSTable(): table_(*this, 0, 0), style_(*this)
+    {
+        #ifdef __DEBUG
+        printf("Default un-parameterized constructor is called.\n");
+        assert(false);
+        #endif
+    };
     ~ABACUSTable() {};
     // step 1: set format
     // use a varadic parameter list to dynamically set format of each column, change value of fmts_
     template<typename... Ts>
-    std::enable_if<std::is_same<Ts..., std::string>::value, void> fix_fmt(const Ts&... fmts) { fmts_ = {fmts...}; }
+    void fix_fmt(const Ts&... fmts) { fmts_ = {fmts...}; }
     void fix_fmt(const std::vector<std::string>& fmts) { fmts_ = fmts; }
-    // step 2: import data and import
+    // step 2: import data and titles
     template<typename T>
     ABACUSTable& operator<<(const std::vector<T>& data)
     {
-        #ifdef __DEBUG
-        assert(icol_v_ < fmts_.size());
-        assert(icol_v_ < table_.ncols());
-        #endif
         for(size_t i = 0; i < data.size(); i++) // i is forever the row index
         {
-            table_.assign_value(ABACUSFormatter::format(fmts_[icol_v_], data[i]), i, icol_v_);
+            std::string s = f::format(fmts_[jval_].c_str(), data[i]);
+            table_.assign_value(s, i, jval_);
         }
-        icol_v_++;
+        jval_ = (jval_ + 1) % table_.ncols();
         return *this;
     }
     ABACUSTable& operator<<(const std::string& title)
     {
-        #ifdef __DEBUG
-        assert(icol_t_ < fmts_.size());
-        assert(icol_t_ < table_.ncols());
-        #endif
-        table_.assign_title(title, icol_t_);
-        icol_t_++;
+        table_.assign_title(title, jtitle_);
+        jtitle_ = (jtitle_ + 1) % table_.ncols();
         return *this;
     }
     // step 3: set table frame, style, delimiters, ...
@@ -383,18 +398,41 @@ public:
     // step 4: output the table
     // unify column width. First calculate the maximal length of elements in each column
     // then for titles and table, fill the elements with spaces to make them have the same width
-    
     std::string str()
     {
-
+        std::string dst = "";
+        // first to relax each column
+        for(size_t j = 0; j < table_.ncols(); j++)
+        {
+            std::vector<std::string> col = table_.col(j);
+            col = stylizer::relax_col_width(col, table_.title(j), style_.valign(), style_.talign());
+            std::string title = (table_.title(j).empty())? "": col[size_t(0)];
+            std::vector<std::string> col_new(col.begin() + static_cast<int>(!title.empty()), col.end());
+            table_.assign_value(col_new, 'v', size_t(0), j);
+            table_.assign_title(title, j);
+        }
+        // if not all titles are empty, then with_title boolean will be true
+        bool with_title = false;
+        for(auto& title : table_.titles()) if(!title.empty()) { with_title = true; break; }
+        if(with_title) dst += style_.title(table_.titles());
+        // then print contents
+        for(size_t i = 0; i < table_.nrows(); i++)
+        {
+            dst += style_.row(table_.row(i), ((i == 0)&&!with_title)? 't': (i == table_.nrows() - 1)? 'b': 'n');
+        }
+        return dst;
     }
     void str(const std::string& s) {};
+    // reuse
+    void iter_reset() { jtitle_ = 0; jval_ = 0; }
 private:
-    size_t icol_t_ = 0;
-    size_t icol_v_ = 0;
-    ABACUSTableContainer table_;
-    ABACUSTableStyle style_;
-    std::vector<std::string> fmts_;
+    // iterator support indices
+    size_t jtitle_ = 0;
+    size_t jval_ = 0;
+    // members
+    ABACUSTableContainer table_; // container
+    ABACUSTableStyle style_; // table formatting
+    std::vector<std::string> fmts_; // format strings for each column
 };
 
 #endif
