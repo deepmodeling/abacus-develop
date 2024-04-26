@@ -8,13 +8,15 @@ int main()
 {
     typedef ABACUSTable t;
 
-    t table(3, 3);
+    t table(3, 4);
     std::vector<int> col1 = {1, 2, 3};
-    std::vector<std::string> col2 = {"a", "b", "c"};
+    // const char* will not trigger the bug
+    // std::string will trigger the bug
+    std::vector<std::string> col2 = {"a123", "b234", "c345"};
     
-    table.fix_fmt("%10d", "%10s");
-    table<<"title1"<<"title2";
-    table<<col1<<col2;
+    table.fix_fmt("%10d", "%10s", "%10d", "%10s");
+    table<<"title1"<<"title2"<<"title3"<<"title4";
+    table<<col1<<col2<<col1<<col2;
     std::cout << table.str() << std::endl;
     return 0;
 }

@@ -37,12 +37,25 @@ public:
     template<typename... Ts>
     static inline std::string format(const char* fmt, const Ts&... args)
     {
+        // for there will not explicit fault can be detected by compiler,
+        // but there seems some incompatilibility between std::string and const char*
         size_t buf_size = snprintf(nullptr, 0, fmt, args...);
         char* buf = new char[buf_size + 1];
         snprintf(buf, buf_size + 1, fmt, args...);
         std::string str(buf);
         delete[] buf;
         return str;
+    }
+    /**
+     * @brief std::string overload of the varadic template function
+     * 
+     * @param fmt 
+     * @param arg 
+     * @return std::string 
+     */
+    static inline std::string format(const char* fmt, const std::string& arg)
+    {
+        return format(fmt, arg.c_str());
     }
     template<typename... Ts>
     std::string format(const Ts&... args)
@@ -167,16 +180,24 @@ public:
                       const bool& dlmt = false) const
     {
         std::string dst = "";
+        // first sum width of all titles
         size_t width = std::accumulate(titles.begin(), titles.end(), 0, [](const size_t& acc, const std::string& s) { return acc + s.size(); });
-        width += titles.size() - 1; // for the delimiters
-        width += 2; // for the left and right frame
-        dst += upfrm(width) + "\n";
+        // for the delimiters
+        width += titles.size() - 1;
+        // for the left and right frame
+        width += 2;
+        dst += upfrm(width);
+        dst += "\n";
+        dst += lfrm();
         for(size_t i = 0; i < titles.size(); i++)
         {
-            dst += lfrm() + titles[i] + rfrm();
+            dst += titles[i];
             if(i != titles.size() - 1) dst += dlmt? vdlmt(): ' ';
         }
-        dst += "\n" + mdfrm(width) + "\n";
+        dst += rfrm();
+        dst += "\n";
+        dst += mdfrm(width);
+        dst += "\n";
         return dst;
     }
     
@@ -191,17 +212,22 @@ public:
                     const char& pos) const
     {
         std::string dst = "";
+        // first sum width of all elements of the row
         size_t width = std::accumulate(src.begin(), src.end(), 0, [](const size_t& acc, const std::string& s) { return acc + s.size(); });
+        // for the delimiters
         width += src.size() - 1;
-        width += 2; // for the left and right frame
+        // for the left and right frame
+        width += 2;
         if(pos == 't') dst += upfrm(width) + "\n";
+        dst += lfrm();
         for(size_t i = 0; i < src.size(); i++)
         {
-            dst += lfrm() + src[i] + rfrm();
+            dst += src[i];
             if(i != src.size() - 1) dst += vdlmt();
         }
-        if(pos == 'b') dst += "\n" + dwfrm(width);
+        dst += rfrm();
         dst += "\n";
+        if(pos == 'b') dst += dwfrm(width) + "\n";
         return dst;
     }
     /**
@@ -323,12 +349,24 @@ public:
     std::vector<std::string> titles() const { return titles_; }
     std::string value(const size_t i, const size_t j) const { return table_(i, j); }
 
+    /**
+     * @brief get copy of row indiced by i of the table
+     * 
+     * @param i row index
+     * @return std::vector<std::string> 
+     */
     std::vector<std::string> row(const size_t i) const
     {
         std::vector<std::string> row;
         for(size_t j = 0; j < ncols_; j++) { row.push_back(table_(i, j)); }
         return row;
     }
+    /**
+     * @brief get copy of column indiced by j of the table
+     * 
+     * @param j column index
+     * @return std::vector<std::string> 
+     */
     std::vector<std::string> col(const size_t j) const
     {
         std::vector<std::string> col;
@@ -381,7 +419,7 @@ public:
     {
         for(size_t i = 0; i < data.size(); i++) // i is forever the row index
         {
-            std::string s = f::format(fmts_[jval_].c_str(), data[i]);
+            std::string s = f::format(fmts_[jval_].c_str(), data[i]); // need to cast std::string to const char*
             table_.assign_value(s, i, jval_);
         }
         jval_ = (jval_ + 1) % table_.ncols();
@@ -406,9 +444,9 @@ public:
         {
             std::vector<std::string> col = table_.col(j);
             col = stylizer::relax_col_width(col, table_.title(j), style_.valign(), style_.talign());
-            std::string title = (table_.title(j).empty())? "": col[size_t(0)];
+            std::string title = (table_.title(j).empty())? "": col[0UL];
             std::vector<std::string> col_new(col.begin() + static_cast<int>(!title.empty()), col.end());
-            table_.assign_value(col_new, 'v', size_t(0), j);
+            table_.assign_value(col_new, 'v', 0UL, j);
             table_.assign_title(title, j);
         }
         // if not all titles are empty, then with_title boolean will be true
@@ -425,6 +463,7 @@ public:
     void str(const std::string& s) {};
     // reuse
     void iter_reset() { jtitle_ = 0; jval_ = 0; }
+    void iter_set(const char& domain, const size_t val) { if(domain == 't') jtitle_ = val; else jval_ = val; }
 private:
     // iterator support indices
     size_t jtitle_ = 0;
