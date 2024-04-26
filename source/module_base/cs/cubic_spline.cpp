@@ -3,6 +3,7 @@
 #include <cassert>
 #include <algorithm>
 #include <numeric>
+#include <functional>
 
 extern "C"
 {
@@ -114,7 +115,7 @@ void CubicSpline::multi_eval(
 
     double r = 0.0, dx = 0.0; 
     int p = 0;
-    if (x_.empty())
+    if (x_.empty()) // evenly spaced knots
     {
         p = _index(n_, x0_, dx_, x_interp);
         dx = dx_;
@@ -523,6 +524,19 @@ void CubicSpline::_cubic_eval(
     }
 }
 
+
+int CubicSpline::_index(int n, const double* knots, double x)
+{
+    int i = (std::upper_bound(knots, knots + n, x) - knots) - 1;
+    return i - (i == n - 1);
+}
+
+
+int CubicSpline::_index(int n, double x0, double dx, double x)
+{
+    int i = (x - x0) / dx;
+    return i - (i == n - 1);
+}
 
 
 void CubicSpline::_solve_cyctri(int n, double* d, double* u, double* l, double* b)
