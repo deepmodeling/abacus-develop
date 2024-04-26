@@ -170,15 +170,18 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         }
         else
         {
-            for (size_t i = 0; i < psi.get_nk(); i++)
+            for (int i = 0; i < psi.get_nk(); i++)
             {
-                for (size_t j = 0; j < psi.get_nbands(); j++)
+                if (pes->klist->wk[i] > 0.0)
                 {
-                    if (pes->wg(i, j) < 0.01)
+                    for (int j = 0; j < psi.get_nbands(); j++)
                     {
-                        is_occupied[i * psi.get_nbands() + j] = false;
+                        if (pes->wg(i, j) / pes->klist->wk[i] < 0.01)
+                        {
+                            is_occupied[i * psi.get_nbands() + j] = false;
+                        }
                     }
-                }
+                }    
             }
         }
     }
