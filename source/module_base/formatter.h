@@ -13,6 +13,7 @@
 #include <iostream>
 #include <type_traits>
 #include <complex>
+#include <utility>
 /**
  * @brief 
  * 
@@ -38,8 +39,6 @@ public:
     template<typename... Ts>
     static inline std::string format(const char* fmt, const Ts&... args)
     {
-        // for there will not explicit fault can be detected by compiler,
-        // but there seems some incompatilibility between std::string and const char*
         size_t buf_size = snprintf(nullptr, 0, fmt, FmtCore::filter(args)...);
         char* buf = new char[buf_size + 1];
         snprintf(buf, buf_size + 1, fmt, FmtCore::filter(args)...);
@@ -47,13 +46,26 @@ public:
         delete[] buf;
         return str;
     }
-    // std::complex is a compound type, so it should be handled separately
-    template<typename... Ts>
-    static inline std::string format(const char* fmt, const std::complex<Ts>&... args)
+    /**
+     * @brief std::complex is a compound type, so we need to overload the function. But keep the interface unchanged, so that the user can use the same interface like 
+     * ```
+     * std::complex<double> a = {1.0, 2.0};
+     * std::cout << FmtCore::format("(%20.10f, %20.10f)", a) << std::endl;
+     * ```
+     * 
+     * @tparam T datatype of the data
+     * @tparam Ts varargin
+     * @param fmt format string
+     * @param c complex number
+     * @param args varargin
+     * @return std::string formatted string
+     */
+    template<typename T, typename... Ts>
+    static inline std::string format(const char* fmt, const std::complex<T>& c, const Ts&... args)
     {
-        size_t buf_size = snprintf(nullptr, 0, fmt, args.real()..., args.imag()...);
+        size_t buf_size = snprintf(nullptr, 0, fmt, c.real(), c.imag(), FmtCore::filter(args)...);
         char* buf = new char[buf_size + 1];
-        snprintf(buf, buf_size + 1, fmt, args.real()..., args.imag()...);
+        snprintf(buf, buf_size + 1, fmt, c.real(), c.imag(), FmtCore::filter(args)...);
         std::string str(buf);
         delete[] buf;
         return str;
@@ -66,15 +78,7 @@ public:
      * @return std::string 
      */
     template<typename... Ts>
-    std::string format(const Ts&... args)
-    {
-        int buf_size = snprintf(nullptr, 0, fmt().c_str(), FmtCore::filter(args)...);
-        char* buf = new char[buf_size + 1];
-        snprintf(buf, buf_size + 1, fmt().c_str(), FmtCore::filter(args)...);
-        std::string str(buf);
-        delete[] buf;
-        return str;
-    }
+    std::string format(const Ts&... args) { return FmtCore::format(fmt_.c_str(), args...); }
     /**
      * @brief reset the format string (std::string overloads)
      * 
