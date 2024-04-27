@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "./ndarray.h"
+#include "module_base/ndarray.h"
 #include <iostream>
 
 TEST(NDArray, Constructor)

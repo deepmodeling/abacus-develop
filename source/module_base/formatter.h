@@ -12,7 +12,7 @@
 #include "./ndarray.h"
 #include <iostream>
 #include <type_traits>
-
+#include <complex>
 /**
  * @brief 
  * 
@@ -47,6 +47,17 @@ public:
         delete[] buf;
         return str;
     }
+    // std::complex is a compound type, so it should be handled separately
+    template<typename... Ts>
+    static inline std::string format(const char* fmt, const std::complex<Ts>&... args)
+    {
+        size_t buf_size = snprintf(nullptr, 0, fmt, args.real()..., args.imag()...);
+        char* buf = new char[buf_size + 1];
+        snprintf(buf, buf_size + 1, fmt, args.real()..., args.imag()...);
+        std::string str(buf);
+        delete[] buf;
+        return str;
+    }
     /**
      * @brief std::string overload of the varadic template function
      * 
@@ -72,15 +83,15 @@ public:
     void reset(const std::string& fmt = "") { fmt_ = fmt; }
     /**
      * @brief get the format string
-     * 
+     *  
      * @return std::string 
      */
     const std::string& fmt() { return fmt_; }
 
 private:
-    template<typename T>
+    template<typename T> // SFINAE: Substitution Failure Is Not An Error, used to filter out std::string
     static typename std::enable_if<std::is_same<T, std::string>::value, const char*>::type filter(const T& src) {return src.c_str();}
-    template<typename T>
+    template<typename T> // SFINAE: fall back
     static typename std::enable_if<!std::is_same<T, std::string>::value, T>::type filter(const T& src) {return src;}
     std::string fmt_;
 };
@@ -183,7 +194,8 @@ public:
         for(size_t i = 0; i < col.size(); i++)
         {
             const std::string src = col[i];
-            std::string dst = src;
+            // delete all whitespaces at left and right of src
+            std::string dst = src.substr(src.find_first_not_of(' '), src.find_last_not_of(' ') + 1);
             const size_t nwhitespaces = max_width - src.size();
             if(vlyot == 'r') dst = std::string(nwhitespaces, ' ') + src;
             else if(vlyot == 'l') dst = src + std::string(nwhitespaces, ' ');

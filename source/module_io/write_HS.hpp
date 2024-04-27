@@ -4,7 +4,6 @@
 #include "module_base/timer.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_base/formatter_physfmt.h"
 
 /*
 void ModuleIO::save_HS_ccf(const int &iter, const int &Hnnz, const int *colptr_H, const int *rowind_H,
@@ -104,6 +103,8 @@ void ModuleIO::save_mat(const int istep,
     std::stringstream ss;
 
     formatter::PhysicalFmt physfmt;
+    const int width = precision + 4;
+    const std::string fmtstr = "%" + std::to_string(width) + "." + std::to_string(precision) + "f";
     physfmt.adjust_formatter_flexible(precision, -1, true);
     if (bit)ss << GlobalV::global_out_dir << file_name + "-" + label + "-bit";
     else

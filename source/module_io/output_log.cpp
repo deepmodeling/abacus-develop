@@ -42,12 +42,7 @@ void print_force(std::ofstream& ofs_running,
         fac = ModuleBase::Ry_to_eV / 0.529177;
     }
 
-    std::vector<std::string> atom_label;
-    std::vector<double> force_x;
-    std::vector<double> force_y;
-    std::vector<double> force_z;
     std::string table;
-    context.set_context({"short_title", "force", "force", "force"});
     int iat = 0;
     for (int it = 0; it < cell.ntype; it++)
     {
@@ -57,19 +52,10 @@ void print_force(std::ofstream& ofs_running,
             double fx = std::abs(force(iat, 0)) > output_acc ? force(iat, 0) * fac : 0.0;
             double fy = std::abs(force(iat, 1)) > output_acc ? force(iat, 1) * fac : 0.0;
             double fz = std::abs(force(iat, 2)) > output_acc ? force(iat, 2) * fac : 0.0;
-            atom_label.push_back(atom_labels);
-            force_x.push_back(fx);
-            force_y.push_back(fy);
-            force_z.push_back(fz);
-
+            table += FmtCore::format("%-10s %20.10f %20.10f %20.10f\n", atom_labels, fx, fy, fz);
             iat++;
         }
     }
-
-    context.enable_title();
-    context << name.c_str() << atom_label << "" << force_x << "" << force_y << "" << force_z;
-    context.center_title();
-    table = context.str();
     ofs_running << table << std::endl;
     if (GlobalV::TEST_FORCE)
     {
@@ -96,27 +82,15 @@ void print_stress(const std::string& name, const ModuleBase::matrix& scs, const 
         unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
     }
 
-    std::vector<double> stress_x;
-    std::vector<double> stress_y;
-    std::vector<double> stress_z;
     std::string table;
-    context.set_context({"double_w20_f10", "double_w20_f10", "double_w20_f10"});
     for (int i = 0; i < 3; i++)
     {
         double sx = scs(i, 0) * unit_transform;
         double sy = scs(i, 1) * unit_transform;
         double sz = scs(i, 2) * unit_transform;
-        stress_x.push_back(sx);
-        stress_y.push_back(sy);
-        stress_z.push_back(sz);
+        table += FmtCore::format("%20.10f %20.10f %20.10f\n", sx, sy, sz);
     }
-
     double pressure = (scs(0, 0) + scs(1, 1) + scs(2, 2)) / 3.0 * unit_transform;
-
-    context.enable_title();
-    context << title.c_str() << stress_x << " " << stress_y << " " << stress_z;
-    context.center_title();
-    table = context.str();
     GlobalV::ofs_running << table << std::endl;
     if (name == "TOTAL-STRESS")
     {

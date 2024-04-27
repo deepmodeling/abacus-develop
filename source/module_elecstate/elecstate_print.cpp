@@ -177,7 +177,6 @@ void ElecState::print_etot(const bool converged,
     std::vector<std::string> titles;
     std::vector<double> energies_Ry;
     std::vector<double> energies_eV;
-    context.set_context({"title", "energy", "energy"});
     if (printe > 0 && ((iter + 1) % printe == 0 || converged || iter == GlobalV::SCF_NMAX))
     {
         int n_order = std::max(0, Occupy::gaussian_type);
@@ -253,10 +252,10 @@ void ElecState::print_etot(const bool converged,
     {
         energies_eV.push_back(energies_Ry[i] * ModuleBase::Ry_to_eV);
     }
-    context.enable_title();
-    context << "Energy" << titles << "Rydberg" << energies_Ry << "eV" << energies_eV;
-    context.center_title();
-    GlobalV::ofs_running << context.str() << std::endl;
+    FmtTable table({"Energy", "Rydberg", "eV"}, 
+    titles.size(), {"%20s",   "%20.10f", "%20.10f"});
+    table << titles << energies_Ry << energies_eV;
+    GlobalV::ofs_running << table.str() << std::endl;
     if (iter_in == 1) // pengfei Li added 2015-1-31
     {
         this->f_en.etot_old = this->f_en.etot;
