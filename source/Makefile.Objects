@@ -217,12 +217,12 @@ OBJS_ESOLVER=esolver.o\
     esolver_of.o\
     esolver_of_tool.o\
     esolver_of_interface.o\
-    io_npz.o\
 
 OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
       esolver_ks_lcao_elec.o\
       esolver_ks_lcao_tddft.o\
       esolver_ks_lcao_tmpfunc.o\
+      io_npz.o\
 
 OBJS_GINT=gint.o\
       gint_gamma.o\
