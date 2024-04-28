@@ -261,7 +261,7 @@ void CubicSpline::eval(
         _c3[i] = (_c1[i] + _c1p[i] - 2.0 * _dd[i]) / (_dx[i] * _dx[i]);
     }
 
-    _cubic_eval(n_interp, _w, _c0, _c1, _c2, _c3, y_interp, dy_interp, d2y_interp);
+    _cubic(n_interp, _w, _c0, _c1, _c2, _c3, y_interp, dy_interp, d2y_interp);
 }
 
 
@@ -309,7 +309,7 @@ void CubicSpline::eval(
         _c3[i] = (_c1[i] + _c1p[i] - 2.0 * _dd[i]) * inv_dx2;
     }
 
-    _cubic_eval(n_interp, _w, _c0, _c1, _c2, _c3, y_interp, dy_interp, d2y_interp);
+    _cubic(n_interp, _w, _c0, _c1, _c2, _c3, y_interp, dy_interp, d2y_interp);
 }
 
 
@@ -467,16 +467,16 @@ void CubicSpline::_build(
                              + dd[n - 3] * dx[n - 2] * dx[n - 2]) / (dx[n - 3] + dx[n - 2]);
             }
 
-            int NRHS = 1;
-            int LDB = n;
-            int INFO = 0;
-            dgtsv_(&n, &NRHS, l, d, u, dy, &LDB, &INFO);
+            int nrhs = 1;
+            int ldb = n;
+            int info = 0;
+            dgtsv_(&n, &nrhs, l, d, u, dy, &ldb, &info);
         }
     }
 }
 
 
-void CubicSpline::_cubic_eval(
+void CubicSpline::_cubic(
     int n,
     const double* w,
     const double* c0,
@@ -530,11 +530,6 @@ int CubicSpline::_index(int n, double x0, double dx, double x)
 
 void CubicSpline::_solve_cyctri(int n, double* d, double* u, double* l, double* b)
 {
-    // This function uses the Sherman-Morrison formula to convert a cyclic tridiagonal
-    // linear system into a tridiagonal one.
-
-    // *NOTE* all the input arrays will be overwritten in this function!
-
     // flexible non-zero parameters that can affect the condition number of the
     // tridiagonal linear system
     double alpha = 1.0;

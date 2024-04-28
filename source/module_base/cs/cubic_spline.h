@@ -41,7 +41,7 @@
  *      //                      evenly spaced knots
  *      //---------------------------------------------------------------------
  *      // Interpolants with evenly spaced knots can be built by a different
- *      // constructor, which allows faster evaluation due to easier index lookup.
+ *      // constructor, which allows faster evaluation due to quicker index lookup.
  *
  *      // build an interpolant with evenly spaced knots x[i] = x0 + i*dx
  *      CubicSpline cubspl(n, x0, dx, y);
@@ -66,13 +66,13 @@
  *      //---------------------------------------------------------------------
  *      //                      multiple interpolants
  *      //---------------------------------------------------------------------
- *      // An object can hold multiple interpolants with the same knots.
- *      // Once constructed, more interpolants sharing the same knots can be added.
+ *      // Once an object is constructed, more interpolants that share the same
+ *      // knots can be added.
  *      // Such interpolants can be evaluated simultaneously at a single place.
  *
  *      // build an object with 5 interpolants
  *      CubicSpline cubspl5(n, x, y);
- *      cubspl5.reserve(5); // reserve to reduce memory reallocations & data copies
+ *      cubspl5.reserve(5); // reduce memory reallocations & data copies
  *      cubspl5.add(y2);
  *      cubspl5.add(y3, {CubicSpline::BoundaryType::first_deriv, 1.0}, {});
  *      cubspl5.add(y4, {}, {CubicSpline::BoundaryType::second_deriv, 2.0});
@@ -95,13 +95,14 @@
  *      // boundary conditions defaulted to "not-a-knot"
  *      CubicSpline::build(n, x, y, {}, {}, dy);
  *
- *      // various boundary conditions and evenly spaced knots are supported
- *      // in the same way as the interpolant object
+ *      // Various boundary conditions and evenly spaced knots are supported
+ *      // in the same way as the interpolant object.
  *
  *      // step-2: computes the interpolated values & derivatives
  *      CubicSpline::eval(n, x, y, dy, n_interp, x_interp, y_interp, dy_interp);
  *
- *      // Interpolating multiple interpolants are not supported for static functions.
+ *      // Simultaneous evaluation of multiple interpolants are not supported
+ *      // for static functions.
  *
  */
 class CubicSpline
@@ -307,7 +308,7 @@ public:
 
 
     /**
-     * @brief Reserves memory for multiple interpolants.
+     * @brief Reserves memory for holding more interpolants.
      *
      * By default this class does not reserve memory for multiple interpolants.
      * Without reservation, whenever a new interpolant is added, memory has to
@@ -315,7 +316,7 @@ public:
      * there's a large number of interpolants to add.
      *
      * This function help avoid repetitive memory reallocations and data copies
-     * by a one-shot reservation of memory.
+     * by a one-shot reservation.
      *
      * @param[in]   n_spline        expected total number of interpolants
      *
@@ -477,32 +478,20 @@ private:
     /**
      * @brief Segment index lookup.
      *
-     * Given a strictly increasing array x (knots) and a target place xt within
-     * the range of x, this function returns an index i such that x[i] <= xt < x[i+1]
-     * if xt != x[n-1], or n-2 if xt == x[n-1].
-     *
-     * @param[in]   n           number of knots
-     * @param[in]   knots       x coordinates of interpolant's data points
-     * @param[in]   x           target x coordinate
+     * Given a strictly increasing array x and a target within the range of
+     * x, this function returns an index i such that x[i] <= target < x[i+1]
+     * if target != x[n-1], or n-2 if t == x[n-1].
      *
      */
-    static inline int _index(int n, const double* x, double xt);
+    static inline int _index(int n, const double* x, double target);
 
 
-    /**
-     * @brief Segment index lookup (evenly spaced knots).
-     *
-     * @param[in]   n           number of knots
-     * @param[in]   x0          coordinate of the first knot
-     * @param[in]   dx          spacing between knots
-     * @param[in]   x           target x coordinate
-     *
-     */
-    static inline int _index(int n, double x0, double dx, double x);
+    /// Segment index lookup (evenly spaced knots).
+    static inline int _index(int n, double x0, double dx, double target);
 
 
     /// Evaluates a batch of cubic polynomials.
-    static inline void _cubic_eval(
+    static inline void _cubic(
         int n,
         const double* w,
         const double* c0,

@@ -457,7 +457,7 @@ TEST_F(CubicSplineTest, ErrorBound)
         // be interpolated exactly by a cubic spline. However, in practice,
         // the presence of floating-point rounding errors would lead to some
         // discrepancy between the interpolant and the original function.
-        // Such error is not carefully considered in this test and the threshold
+        // Such error is difficult to estimate and the tolerance for comparison
         // is simply set to 1e-12 below.
         {
             [](double x) { return x * x * x; },
@@ -482,18 +482,24 @@ TEST_F(CubicSplineTest, ErrorBound)
         }
     };
 
-    // knots
+    // knots (logspace)
     int n = 100;
-    double x0 = 0.1;
+    double xmin = 0.1;
     double xmax = 10;
-    double dx = (xmax - x0) / (n - 1);
-    std::for_each(x_, x_ + n, [this, x0, dx](double& x) { x = (&x - x_) * dx + x0; });
+
+    double rho0 = std::log(xmin);
+    double drho = (std::log(xmax) - rho0) / (n - 1);
+    std::for_each(x_, x_ + n, [&](double& x) { x = std::exp(rho0 + (&x - x_) * drho); });
 
     // places to evaluate the interpolant
     int n_interp = 777;
-    double dx_interp = (xmax - x0) / (n_interp - 1);
+    double dx_interp = (xmax - xmin) / (n_interp - 1);
     std::for_each(x_interp_, x_interp_ + n_interp,
-        [this, x0, dx_interp](double& x) { x = (&x - x_interp_) * dx_interp + x0; });
+        [&](double& x) { x = (&x - x_interp_) * dx_interp + xmin; });
+
+    // make sure x_interp is inside the range of x with floating-point errors
+    x_interp_[0] += 1e-12;
+    x_interp_[n_interp - 1] -= 1e-12;
 
     for (size_t i = 0; i < f.size(); ++i)
     {
