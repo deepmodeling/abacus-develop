@@ -267,12 +267,13 @@ namespace ModuleIO
             GlobalV::CURRENT_SPIN = is; //caution: Veff::contributeHR depends on GlobalV::CURRENT_SPIN
             vxcs_op_ao[is]->contributeHR();
         }
-        std::vector<std::vector<double>> e_orb_locxc; // orbital energy
+        std::vector<std::vector<double>> e_orb_locxc; // orbital energy (local XC)
+        std::vector<std::vector<double>> e_orb_tot; // orbital energy (total)
 #ifdef __EXX
         hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>> vexx_op_ao(&lm, nullptr, &vxc_k_ao, kv);
         std::vector<TK> vexxonly_k_ao(pv->nloc);
         hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>> vexxonly_op_ao(&lm, nullptr, &vexxonly_k_ao, kv);
-        std::vector<std::vector<double>> e_orb_exx;
+        std::vector<std::vector<double>> e_orb_exx; // orbital energy (EXX)
 #endif
         hamilt::OperatorDFTU<hamilt::OperatorLCAO<TK, TR>> vdftu_op_ao(&lm, kv.kvec_d, nullptr, &vxc_k_ao, kv.isk);
 
@@ -290,15 +291,13 @@ namespace ModuleIO
             int is = GlobalV::CURRENT_SPIN = kv.isk[ik];
             dynamic_cast<hamilt::OperatorLCAO<TK, TR>*>(vxcs_op_ao[is])->contributeHk(ik);
             const std::vector<TK>& vlocxc_k_mo = cVc(vxc_k_ao.data(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d);
-            e_orb_locxc.emplace_back(orbital_energy(ik, nbands, vlocxc_k_mo, p2d));
+
 #ifdef __EXX
-			if (GlobalC::exx_info.info_global.cal_exx) 
-			{
-				vexx_op_ao.contributeHk(ik);
-			}
-            ModuleBase::GlobalFunc::ZEROS(vexxonly_k_ao.data(), pv->nloc);
             if (GlobalC::exx_info.info_global.cal_exx)
             {
+                e_orb_locxc.emplace_back(orbital_energy(ik, nbands, vlocxc_k_mo, p2d));
+                ModuleBase::GlobalFunc::ZEROS(vexxonly_k_ao.data(), pv->nloc);
+                vexx_op_ao.contributeHk(ik);
                 vexxonly_op_ao.contributeHk(ik);
                 std::vector<TK> vexx_k_mo = cVc(vexxonly_k_ao.data(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d);
                 e_orb_exx.emplace_back(orbital_energy(ik, nbands, vexx_k_mo, p2d));
@@ -312,6 +311,7 @@ namespace ModuleIO
 				vdftu_op_ao.contributeHk(ik);
 			}
             const std::vector<TK>& vxc_tot_k_mo = cVc(vxc_k_ao.data(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d);
+            e_orb_tot.emplace_back(orbital_energy(ik, nbands, vxc_tot_k_mo, p2d));
             // write
             ModuleIO::save_mat(-1, vxc_tot_k_mo.data(), nbands,
                 false/*binary*/, GlobalV::out_ndigits, true/*triangle*/, false/*append*/,
@@ -333,28 +333,36 @@ namespace ModuleIO
 		{
 			delete vxcs_op_ao[is];
         }
-        // write the orbital energy for xc and exx
-        auto write_orb_energy = [](const std::vector<std::vector<double>>& e_orb, const std::string& label, const bool app = false)
+        // write the orbital energy for xc and exx in LibRPA format
+        auto write_orb_energy = [&kv, &nspin0, &nbands](const std::vector<std::vector<double>>& e_orb,
+            const std::string& label, const bool app = false)
             {
+                assert(e_orb.size() == kv.nks);
+                const int nk = kv.nks / nspin0;
                 std::ofstream ofs;
-                ofs.open(GlobalV::global_out_dir + "orbital_energy", app ? std::ios::app : std::ios::out);
-                ofs << "Orbital energy (" << label << ") for each k-point / spin  (row: k-point / spin, col: band):\n";
-                for (int iks = 0;iks < e_orb.size();++iks)
+                ofs.open(GlobalV::global_out_dir + "vxc_" + (label == "" ? "out" : label + "_out"),
+                    app ? std::ios::app : std::ios::out);
+                ofs << nk << "\n" << nspin0 << "\n" << nbands << "\n";
+                ofs << std::scientific << std::setprecision(16);
+                for (int ik = 0;ik < nk;++ik)
                 {
-                    for (auto e : e_orb[iks])
+                    for (int is = 0;is < nspin0;++is)
                     {
-                        ofs << e << " ";
+                        for (auto e : e_orb[is * nk + ik])
+                        {   // Hartree and eV
+                            ofs << e / 2. << "\t" << e * ModuleBase::Ry_to_eV << "\n";
+                        }
                     }
-                    ofs << "\n";
                 }
             };
         if (GlobalV::MY_RANK == 0)
         {
-            write_orb_energy(e_orb_locxc, "local XC");
+            write_orb_energy(e_orb_tot, "");
 #ifdef __EXX
             if (GlobalC::exx_info.info_global.cal_exx)
             {
-                write_orb_energy(e_orb_exx, "EXX", true);
+                write_orb_energy(e_orb_locxc, "local");
+                write_orb_energy(e_orb_exx, "exx");
             }
 #endif
         }

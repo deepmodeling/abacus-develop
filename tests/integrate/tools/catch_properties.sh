@@ -221,8 +221,8 @@ if ! test -z "$has_xc"  && [  $has_xc == 1 ]; then
 			xcref=k-1-Vxc.ref
 			xccal=OUT.autotest/k-1-Vxc
 	fi
-	oeref=orbital_energy.ref
-	oecal=OUT.autotest/orbital_energy
+	oeref=vxc_out.ref
+	oecal=OUT.autotest/vxc_out
 	python3 ../tools/CompareFile.py $xcref $xccal 4
 	python3 ../tools/CompareFile.py $oeref $oecal 6
     echo "CompareXC_pass $?" >>$1
