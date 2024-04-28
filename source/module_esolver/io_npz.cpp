@@ -1,6 +1,6 @@
 //Deals with io of dm(r)/h(r) in npz format
 
-#include "hamilt_lcao.h"
+#include "module_esolver/esolver_ks_lcao.h"
 
 #include "module_base/parallel_reduce.h"
 #include "module_cell/module_neighbor/sltk_atom_arrange.h"
@@ -25,11 +25,15 @@
 
 #include "module_base/element_name.h"
 
-void LCAO_Hamilt::read_mat_npz(std::string& zipname, hamilt::HContainer<double>& hR)
+namespace ModuleESolver
+{
+
+template <typename TK, typename TR>
+void ESolver_KS_LCAO<TK, TR>::read_mat_npz(std::string& zipname, hamilt::HContainer<double>& hR)
 {
     ModuleBase::TITLE("LCAO_Hamilt","read_mat_npz");
 
-    const Parallel_Orbitals* paraV = this->LM->ParaV;
+    const Parallel_Orbitals* paraV = this->LOWF.ParaV;
 
 #ifdef __USECNPY
 
@@ -337,7 +341,8 @@ void LCAO_Hamilt::read_mat_npz(std::string& zipname, hamilt::HContainer<double>&
 #endif
 }
 
-void LCAO_Hamilt::output_mat_npz(std::string& zipname, const hamilt::HContainer<double>& hR)
+template <typename TK, typename TR>
+void ESolver_KS_LCAO<TK, TR>::output_mat_npz(std::string& zipname, const hamilt::HContainer<double>& hR)
 {
     ModuleBase::TITLE("LCAO_Hamilt","output_mat_npz");
 
@@ -486,4 +491,9 @@ void LCAO_Hamilt::output_mat_npz(std::string& zipname, const hamilt::HContainer<
     }
 #endif
 #endif
+}
+
+template class ESolver_KS_LCAO<double, double>;
+template class ESolver_KS_LCAO<std::complex<double>, double>;
+template class ESolver_KS_LCAO<std::complex<double>, std::complex<double>>;
 }

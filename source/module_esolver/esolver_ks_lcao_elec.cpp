@@ -334,11 +334,11 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(int istep)
         std::string zipname = "output_DM0.npz";
         elecstate::DensityMatrix<TK, double>* dm
             = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
-        this->UHM.read_mat_npz(zipname,*(dm->get_DMR_pointer(1)));
+        this->read_mat_npz(zipname,*(dm->get_DMR_pointer(1)));
         if(GlobalV::NSPIN == 2)
         {
             zipname = "output_DM1.npz";
-            this->UHM.read_mat_npz(zipname,*(dm->get_DMR_pointer(2)));
+            this->read_mat_npz(zipname,*(dm->get_DMR_pointer(2)));
         }
 
         this->pelec->psiToRho(*this->psi);

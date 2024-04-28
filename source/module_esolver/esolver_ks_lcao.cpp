@@ -1122,7 +1122,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
         hamilt::HamiltLCAO<std::complex<double>, double>* p_ham_lcao 
             = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(this->p_hamilt);
         std::string zipname = "output_HR0.npz";
-        this->UHM.output_mat_npz(zipname,*(p_ham_lcao->getHR()));
+        this->output_mat_npz(zipname,*(p_ham_lcao->getHR()));
 
         if(GlobalV::NSPIN==2)
         {
@@ -1130,7 +1130,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
             hamilt::HamiltLCAO<std::complex<double>, double>* p_ham_lcao 
                 = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(this->p_hamilt);
             zipname = "output_HR1.npz";
-            this->UHM.output_mat_npz(zipname,*(p_ham_lcao->getHR()));            
+            this->output_mat_npz(zipname,*(p_ham_lcao->getHR()));            
         }
     }
 
@@ -1139,12 +1139,12 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
         const elecstate::DensityMatrix<TK, double>* dm
             = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
         std::string zipname = "output_DM0.npz";
-        this->UHM.output_mat_npz(zipname,*(dm->get_DMR_pointer(1)));
+        this->output_mat_npz(zipname,*(dm->get_DMR_pointer(1)));
 
         if(GlobalV::NSPIN==2)
         {
             zipname = "output_DM1.npz";
-            this->UHM.output_mat_npz(zipname,*(dm->get_DMR_pointer(2)));       
+            this->output_mat_npz(zipname,*(dm->get_DMR_pointer(2)));       
         }
     }
 

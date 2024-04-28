@@ -466,27 +466,27 @@ if(ENABLE_DEEPKS)
   endif()
   include_directories(${libnpy_SOURCE_DIR}/include)
   add_compile_definitions(__DEEPKS)
-else()
-  if (ENABLE_CNPY)
-    find_path(cnpy_SOURCE_DIR
-      cnpy.h
-      HINTS ${libnpy_INCLUDE_DIR}
+endif()
+
+if (ENABLE_CNPY)
+  find_path(cnpy_SOURCE_DIR
+    cnpy.h
+    HINTS ${libnpy_INCLUDE_DIR}
+  )
+  if(NOT cnpy_SOURCE_DIR)
+    include(FetchContent)
+    FetchContent_Declare(
+      cnpy
+      GIT_REPOSITORY https://github.com/rogersce/cnpy.git
+      GIT_PROGRESS TRUE
     )
-    if(NOT cnpy_SOURCE_DIR)
-      include(FetchContent)
-      FetchContent_Declare(
-        cnpy
-        GIT_REPOSITORY https://github.com/rogersce/cnpy.git
-        GIT_PROGRESS TRUE
-      )
-      FetchContent_MakeAvailable(cnpy)
-    else()
-      include_directories(${cnpy_INCLUDE_DIR})
-    endif()
-    include_directories(${cnpy_SOURCE_DIR})
-    target_link_libraries(${ABACUS_BIN_NAME} cnpy)
-    add_compile_definitions(__USECNPY)
+    FetchContent_MakeAvailable(cnpy)
+  else()
+    include_directories(${cnpy_INCLUDE_DIR})
   endif()
+  include_directories(${cnpy_SOURCE_DIR})
+  target_link_libraries(${ABACUS_BIN_NAME} cnpy)
+  add_compile_definitions(__USECNPY)
 endif()
 
 function(git_submodule_update)

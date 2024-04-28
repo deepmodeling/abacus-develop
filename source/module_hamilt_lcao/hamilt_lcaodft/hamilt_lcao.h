@@ -79,9 +79,6 @@ class HamiltLCAO : public Hamilt<TK>
     // void matrix(MatrixBlock<std::complex<double>> &hk_in, MatrixBlock<std::complex<double>> &sk_in) override;
     void matrix(MatrixBlock<TK>& hk_in, MatrixBlock<TK>& sk_in) override;
 
-    void read_mat_npz(std::string& zipname, hamilt::HContainer<double>& hR);
-    void output_mat_npz(std::string& zipname, const hamilt::HContainer<double>& hR);
-
   private:
     const K_Vectors *kv = nullptr;
 

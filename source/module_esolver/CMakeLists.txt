@@ -11,6 +11,7 @@ list(APPEND objects
     esolver_of.cpp
     esolver_of_interface.cpp
     esolver_of_tool.cpp
+    io_npz.cpp
 )
 if(ENABLE_LCAO)
   list(APPEND objects
