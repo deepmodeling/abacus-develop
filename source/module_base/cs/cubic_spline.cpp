@@ -369,14 +369,14 @@ void CubicSpline::_build(
     const double* y,
     const BoundaryCondition& bc_start,
     const BoundaryCondition& bc_end,
-    double* c1
+    double* dy
 )
 {
     _validate_build(n, dx, y, bc_start, bc_end);
 
     if (n == 2 && bc_start.type == BoundaryType::periodic)
     { // in this case the polynomial is a constant
-        c1[0] = c1[1] = 0.0;
+        dy[0] = dy[1] = 0.0;
     }
     else if (n == 3 && bc_start.type == BoundaryType::not_a_knot
             && bc_end.type == BoundaryType::not_a_knot)
@@ -385,9 +385,9 @@ void CubicSpline::_build(
         double idx21 = 1.0 / dx[1];
         double idx20 = 1.0 / (dx[0] + dx[1]);
 
-        c1[0] = -y[0] * (idx10 + idx20) + y[1] * (idx21 + idx10) + y[2] * (idx20 - idx21);
-        c1[1] = -y[1] * (-idx10 + idx21) + y[0] * (idx20 - idx10) + y[2] * (idx21 - idx20);
-        c1[2] = c1[1] + 2.0 * (-y[1] * idx10 + y[2] * idx20) + 2.0 * y[0] * idx10 * idx20 * dx[1];
+        dy[0] = -y[0] * (idx10 + idx20) + y[1] * (idx21 + idx10) + y[2] * (idx20 - idx21);
+        dy[1] = -y[1] * (-idx10 + idx21) + y[0] * (idx20 - idx10) + y[2] * (idx21 - idx20);
+        dy[2] = dy[1] + 2.0 * (-y[1] * idx10 + y[2] * idx20) + 2.0 * y[0] * idx10 * idx20 * dx[1];
     }
     else
     {
@@ -412,7 +412,7 @@ void CubicSpline::_build(
         for (int i = 1; i != n - 1; ++i)
         {
             d[i] = 2.0 * (dx[i - 1] + dx[i]);
-            c1[i] = 3.0 * (dd[i - 1] * dx[i] + dd[i] * dx[i - 1]);
+            dy[i] = 3.0 * (dd[i - 1] * dx[i] + dd[i] * dx[i - 1]);
         }
 
         //***********************************************
@@ -424,9 +424,9 @@ void CubicSpline::_build(
             d[0] = 2.0 * (dx[n - 2] + dx[0]);
             u[0] = dx[n - 2];
             l[n - 2] = dx[0];
-            c1[0] = 3.0 * (dd[0] * dx[n - 2] + dd[n - 2] * dx[0]);
-            _solve_cyctri(n - 1, d, u, l, c1);
-            c1[n - 1] = c1[0];
+            dy[0] = 3.0 * (dd[0] * dx[n - 2] + dd[n - 2] * dx[0]);
+            _solve_cyctri(n - 1, d, u, l, dy);
+            dy[n - 1] = dy[0];
         }
         else
         {
@@ -435,17 +435,17 @@ void CubicSpline::_build(
             case BoundaryType::first_deriv:
                 d[0] = 1.0 * dx[0];
                 u[0] = 0.0;
-                c1[0] = bc_start.val * dx[0];
+                dy[0] = bc_start.val * dx[0];
                 break;
             case BoundaryType::second_deriv:
                 d[0] = 2.0 * dx[0];
                 u[0] = 1.0 * dx[0];
-                c1[0] = (3.0 * dd[0] - 0.5 * bc_start.val * dx[0]) * dx[0];
+                dy[0] = (3.0 * dd[0] - 0.5 * bc_start.val * dx[0]) * dx[0];
                 break;
             default: // BoundaryCondition::not_a_knot
                 d[0] = dx[1];
                 u[0] = dx[0] + dx[1];
-                c1[0] = (dd[0] * dx[1] * (dx[0] + 2 * (dx[0] + dx[1])) + dd[1] * dx[0] * dx[0]) / (dx[0] + dx[1]);
+                dy[0] = (dd[0] * dx[1] * (dx[0] + 2 * (dx[0] + dx[1])) + dd[1] * dx[0] * dx[0]) / (dx[0] + dx[1]);
             }
 
             switch (bc_end.type)
@@ -453,24 +453,24 @@ void CubicSpline::_build(
             case BoundaryType::first_deriv:
                 d[n - 1] = 1.0 * dx[n - 2];
                 l[n - 2] = 0.0;
-                c1[n - 1] = bc_end.val * dx[n - 2];
+                dy[n - 1] = bc_end.val * dx[n - 2];
                 break;
             case BoundaryType::second_deriv:
                 d[n - 1] = 2.0 * dx[n - 2];
                 l[n - 2] = 1.0 * dx[n - 2];
-                c1[n - 1] = (3.0 * dd[n - 2] + 0.5 * bc_end.val * dx[n - 2]) * dx[n - 2];
+                dy[n - 1] = (3.0 * dd[n - 2] + 0.5 * bc_end.val * dx[n - 2]) * dx[n - 2];
                 break;
             default: // BoundaryCondition::not_a_knot
                 d[n - 1] = dx[n - 3];
                 l[n - 2] = dx[n - 3] + dx[n - 2];
-                c1[n - 1] = (dd[n - 2] * dx[n - 3] * (dx[n - 2] + 2 * (dx[n - 3] + dx[n - 2]))
+                dy[n - 1] = (dd[n - 2] * dx[n - 3] * (dx[n - 2] + 2 * (dx[n - 3] + dx[n - 2]))
                              + dd[n - 3] * dx[n - 2] * dx[n - 2]) / (dx[n - 3] + dx[n - 2]);
             }
 
             int NRHS = 1;
             int LDB = n;
             int INFO = 0;
-            dgtsv_(&n, &NRHS, l, d, u, c1, &LDB, &INFO);
+            dgtsv_(&n, &NRHS, l, d, u, dy, &LDB, &INFO);
         }
     }
 }
