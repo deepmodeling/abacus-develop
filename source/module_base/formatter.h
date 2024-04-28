@@ -61,15 +61,7 @@ public:
      * @return std::string formatted string
      */
     template<typename T, typename... Ts>
-    static inline std::string format(const char* fmt, const std::complex<T>& c, const Ts&... args)
-    {
-        size_t buf_size = snprintf(nullptr, 0, fmt, c.real(), c.imag(), FmtCore::filter(args)...);
-        char* buf = new char[buf_size + 1];
-        snprintf(buf, buf_size + 1, fmt, c.real(), c.imag(), FmtCore::filter(args)...);
-        std::string str(buf);
-        delete[] buf;
-        return str;
-    }
+    static inline std::string format(const char* fmt, const std::complex<T>& c, const Ts&... args) { return format(fmt, c.real(), c.imag(), args...); }
     /**
      * @brief std::string overload of the varadic template function
      * 
@@ -79,6 +71,17 @@ public:
      */
     template<typename... Ts>
     std::string format(const Ts&... args) { return FmtCore::format(fmt_.c_str(), args...); }
+    /**
+     * @brief std::complex overload of the varadic template function
+     * 
+     * @tparam T 
+     * @tparam Ts 
+     * @param c 
+     * @param args 
+     * @return std::string 
+     */
+    template<typename T, typename...Ts>
+    std::string format(const std::complex<T>& c, const Ts&... args) { return FmtCore::format(fmt_.c_str(), c.real(), c.imag(), args...); }
     /**
      * @brief reset the format string (std::string overloads)
      * 
