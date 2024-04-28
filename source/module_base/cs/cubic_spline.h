@@ -31,11 +31,11 @@
  *      // n_interp is the number of places to evaluate the interpolant
  *      cubspl.eval(n_interp, x_interp, y_interp); // values are returned in y_interp
  *
- *      // evaluates both the interpolant and its derivative at x_interp
+ *      // evaluates both the values and first derivatives at x_interp
  *      cubspl.eval(n_interp, x_interp, y_interp, dy_interp);
  *
- *      // evaluates the derivative only
- *      cubspl.eval(n_interp, x_interp, nullptr, dy_interp);
+ *      // evaluates the second derivative only
+ *      cubspl.eval(n_interp, x_interp, nullptr, nullptr, d2y_interp);
  *
  *      //---------------------------------------------------------------------
  *      //                      evenly spaced knots
@@ -58,24 +58,21 @@
  *                         {CubicSpline::BoundaryType::second_deriv, 1.0},
  *                         {CubicSpline::BoundaryType::first_deriv, 3.0});
  *
- *      // applying periodic boundary condition requires that
- *      // 1. it be specified at both ends;
- *      // 2. y[0] equals y[n-1]
- *      CubicSpline cubspl(n, x, y,
+ *      // build an interpolant with periodic boundary condition
+ *      CubicSpline cubspl(n, x, y, // y[0] must equal y[n-1]
  *                         {CubicSpline::BoundaryType::periodic},
  *                         {CubicSpline::BoundaryType::periodic});
  *
  *      //---------------------------------------------------------------------
  *      //                      multiple interpolants
  *      //---------------------------------------------------------------------
- *      // An object supports holding multiple interpolants with the same knots.
- *      // Once the first interpolant is contructed by the constructor, more
- *      // interpolants sharing the same knots can be added. Such interpolants
- *      // can be evaluated simultaneously at a single place.
+ *      // An object can hold multiple interpolants with the same knots.
+ *      // Once constructed, more interpolants sharing the same knots can be added.
+ *      // Such interpolants can be evaluated simultaneously at a single place.
  *
  *      // build an object with 5 interpolants
  *      CubicSpline cubspl5(n, x, y);
- *      cubspl5.reserve(5); // reduce memory reallocations & data copies
+ *      cubspl5.reserve(5); // reserve to reduce memory reallocations & data copies
  *      cubspl5.add(y2);
  *      cubspl5.add(y3, {CubicSpline::BoundaryType::first_deriv, 1.0}, {});
  *      cubspl5.add(y4, {}, {CubicSpline::BoundaryType::second_deriv, 2.0});
@@ -101,30 +98,19 @@
  *      // various boundary conditions and evenly spaced knots are supported
  *      // in the same way as the interpolant object
  *
- *      // step-2: interpolates with knots, values & derivatives
+ *      // step-2: computes the interpolated values & derivatives
  *      CubicSpline::eval(n, x, y, dy, n_interp, x_interp, y_interp, dy_interp);
  *
  *      // Interpolating multiple interpolants are not supported for static functions.
  *
  */
 class CubicSpline
-{
-
+{    
     //*****************************************************************
-    //                      interpolant object
+    //                      boundary condition
     //*****************************************************************
 
 public:
-
-    CubicSpline()                   = delete;
-    CubicSpline(CubicSpline const&) = default;
-    CubicSpline(CubicSpline &&)     = default;
-
-    CubicSpline& operator=(CubicSpline const&)  = default;
-    CubicSpline& operator=(CubicSpline &&)      = default;
-
-    ~CubicSpline() = default; 
-
 
     /**
      * @brief Types of cubic spline boundary conditions.
@@ -169,8 +155,24 @@ public:
     };
 
 
+    //*****************************************************************
+    //                      interpolant object
+    //*****************************************************************
+
+public:
+
+    CubicSpline()                   = delete;
+    CubicSpline(CubicSpline const&) = default;
+    CubicSpline(CubicSpline &&)     = default;
+
+    CubicSpline& operator=(CubicSpline const&)  = default;
+    CubicSpline& operator=(CubicSpline &&)      = default;
+
+    ~CubicSpline() = default; 
+
+
     /**
-     * @brief Builds the interpolant object.
+     * @brief Builds an interpolant object.
      *
      * Constructing a cubic spline interpolant from a set of data points
      * (x[i], y[i]) (i=0,1,...,n-1) and boundary conditions.
@@ -193,7 +195,7 @@ public:
 
 
     /**
-     * @brief Builds the interpolant object with evenly-spaced knots.
+     * @brief Builds an interpolant object with evenly-spaced knots.
      *
      * Constructing a cubic spline interpolant from a set of data points
      * (x0+i*dx, y[i]) (i=0,1,...,n-1) and boundary conditions.
@@ -217,11 +219,12 @@ public:
 
 
     /**
-     * @brief Adds more interpolants of the same knots to an existing object.
+     * @brief Add an interpolant that shares the same knots.
      *
-     * An object of this class supports holding multiple interpolants with the same knots.
-     * Once the first interpolant is contructed by the constructor, more interpolants can
-     * be added by this function.
+     * An object of this class can hold multiple interpolants with the same knots.
+     * Once constructed, more interpolants sharing the same knots can be added by
+     * this function. Multiple interpolants can be evaluated simultaneously at a
+     * single place by multi_eval.
      *
      * @param[in]   y               y coordinates of data points
      * @param[in]   bc_start        boundary condition at start
@@ -260,7 +263,7 @@ public:
 
 
     /**
-     * @brief Evaluates selected multiple interpolants at a single place.
+     * @brief Evaluates multiple interpolants at a single place.
      *
      * @param[in]   n_spline        number of interpolants to evaluate
      * @param[in]   i_spline        indices of interpolants to evaluate
@@ -314,7 +317,7 @@ public:
      * This function help avoid repetitive memory reallocations and data copies
      * by a one-shot reservation of memory.
      *
-     * @param[in]   n               expected total number of interpolants
+     * @param[in]   n_spline        expected total number of interpolants
      *
      */
     void reserve(int n_spline) { y_.reserve(n_spline * n_ * 2); }
@@ -541,12 +544,12 @@ private:
      * A cyclic tridiagonal linear system A*x=b where b is a vector and
      *
      *        --                                             --   
-     *        |  d[0]   u[0]                            l[0]  |
-     *        |  l[1]   d[1]   u[1]                           |
-     *   A =  |         l[2]   d[2]   u[2]                    |
+     *        |  d[0]   u[0]                           l[n-1] |
+     *        |  l[0]   d[1]   u[1]                           |
+     *   A =  |         l[1]   d[2]   u[2]                    |
      *        |                ...    ...      ...            |
-     *        |                      l[n-2]   d[n-2]   u[n-2] |
-     *        |  u[n-1]                       l[n-1]   d[n-1] |
+     *        |                      l[n-3]   d[n-2]   u[n-2] |
+     *        |  u[n-1]                       l[n-2]   d[n-1] |
      *        --                                             --
      *
      * is transformed to a tridiagonal linear system by the Sherman-Morrison

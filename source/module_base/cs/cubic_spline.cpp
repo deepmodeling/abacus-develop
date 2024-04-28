@@ -111,6 +111,7 @@ void CubicSpline::multi_eval(
 {
     assert(std::all_of(i_spline, i_spline + n_spline,
         [this](int i) { return 0 <= i && i < n_spline_; }));
+    _validate_eval(n_, x_.data(), x0_, dx_, y_.data(), y_.data() + n_, 1, &x_interp);
 
     int p = 0;
     double dx = 0.0, r = 0.0; 
@@ -353,7 +354,7 @@ void CubicSpline::_validate_eval(
     assert(n > 1 && y && dy);
     assert((x && std::is_sorted(x, x + n, std::less_equal<double>())) || dx > 0.0);
 
-    assert(n_interp >= 0 && x_interp);
+    assert((n_interp > 0 && x_interp) || n_interp == 0);
 
     double xmin = x ? x[0] : x0;
     double xmax = x ? x[n - 1] : x0 + (n - 1) * dx;
@@ -545,15 +546,15 @@ void CubicSpline::_solve_cyctri(int n, double* d, double* u, double* l, double* 
     bp[2 * n - 1] = 1. / beta;
 
     d[0] -= u[n - 1] * beta / alpha;
-    d[n - 1] -= l[0] * alpha / beta;
+    d[n - 1] -= l[n - 1] * alpha / beta;
 
     int nrhs = 2;
     int info = 0;
     int ldb = n;
     dgtsv_(&n, &nrhs, l, d, u, bp.data(), &ldb, &info);
 
-    double fac = (beta * u[n - 1] * bp[0] + alpha * l[0] * bp[n - 1])
-                 / (1. + beta * u[n - 1] * bp[n] + alpha * l[0] * bp[2 * n - 1]);
+    double fac = (beta * u[n - 1] * bp[0] + alpha * l[n - 1] * bp[n - 1])
+                 / (1. + beta * u[n - 1] * bp[n] + alpha * l[n - 1] * bp[2 * n - 1]);
 
     std::transform(bp.begin(), bp.begin() + n, bp.begin() + n, b,
             [fac](double yi, double zi) { return yi - fac * zi; });
