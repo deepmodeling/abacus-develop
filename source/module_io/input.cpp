@@ -636,7 +636,7 @@ void Input::Default(void)
     nsc = 100;
     nsc_min = 2;
     sc_scf_nmin = 2;
-    sc_scf_start = 1e-3;
+    sc_scf_start = 0.1;
     alpha_trial = 0.01;
     sccut = 3.0;
     sc_file = "none";
