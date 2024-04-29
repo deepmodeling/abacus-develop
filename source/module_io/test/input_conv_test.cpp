@@ -89,7 +89,7 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_EQ(GlobalV::PW_DIAG_NMAX,50);
 	EXPECT_EQ(GlobalV::DIAGO_CG_PREC,1);
     EXPECT_EQ(GlobalV::PW_DIAG_NDIM, 4);
-    EXPECT_EQ(GlobalV::DIAGO_FULL_ACC, false);
+    EXPECT_EQ(hsolver::HSolverPW<std::complex<double>, psi::DEVICE_CPU>::diago_full_acc, false);
 	EXPECT_DOUBLE_EQ(GlobalV::PW_DIAG_THR,0.01);
 	EXPECT_EQ(GlobalV::NB2D,0);
 	EXPECT_EQ(GlobalV::NURSE,0);
