@@ -376,6 +376,7 @@
     - [nsc](#nsc)
     - [nsc\_min](#nsc_min)
     - [sc\_scf\_nmin](#sc_scf_nmin)
+    - [sc\_scf\_start](#sc_scf_start)
     - [alpha\_trial](#alpha_trial)
     - [sccut](#sccut)
     - [sc\_file](#sc_file)
@@ -3496,8 +3497,14 @@ These variables are used to control the usage of deltaspin functionality.
 ### sc_scf_nmin
 
 - **Type**: Integer
-- **Description**: the minimum number of outer scf loop before initializing lambda loop
+- **Description**: the minimum number of outer scf loop before initializing lambda loop. Both `sc_scf_nmin` and `sc_scf_start` are used to control the deltaspin loop. They should be fulfilled both to invoke the deltaspin loop.
 - **Default**: 2
+
+### sc_scf_start
+
+- **Type**: double
+- **Description**: If the density difference between input and output `drho` is smaller than `sc_scf_start`, the deltaspin loop will be invoked. Both `sc_scf_nmin` and `sc_scf_start` are used to control the deltaspin loop. They should be fulfilled both to invoke the deltaspin loop. 
+- **Default**: 0.1
 
 ### alpha_trial
 
