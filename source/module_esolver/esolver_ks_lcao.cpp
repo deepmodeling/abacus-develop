@@ -690,7 +690,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
     }
 
     // run the inner lambda loop to contrain atomic moments with the DeltaSpin method
-    if (GlobalV::sc_mag_switch && iter > GlobalV::sc_scf_nmin)
+    if (GlobalV::sc_mag_switch && iter > GlobalV::sc_scf_nmin && this->drho < GlobalV::sc_scf_start)
     {
         SpinConstrain<TK, psi::DEVICE_CPU>& sc = SpinConstrain<TK, psi::DEVICE_CPU>::getScInstance();
         sc.run_lambda_loop(iter-1);

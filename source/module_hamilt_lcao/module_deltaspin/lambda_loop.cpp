@@ -47,6 +47,7 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::run_lambda_loop(int o
         double duration = 0.0;
         if (i_step == 0)
         {
+            this->cal_mw_from_lambda(i_step);
             spin = this->Mi_;
             where_fill_scalar_else_2d(this->constrain_, 0, zero, this->lambda_, initial_lambda);
             print_2d("initial lambda: ", initial_lambda, this->nspin_);

@@ -324,6 +324,7 @@ extern double sc_thr;
 extern int nsc;
 extern int nsc_min;
 extern int sc_scf_nmin;
+extern double sc_scf_start;
 extern double alpha_trial;
 extern double sccut;
 extern std::string sc_file;
