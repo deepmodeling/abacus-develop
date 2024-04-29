@@ -76,7 +76,6 @@ int DIAGO_PROC = 0;
 int PW_DIAG_NMAX = 30;
 int DIAGO_CG_PREC = 1; // mohan add 2012-03-31
 int PW_DIAG_NDIM = 4;
-bool DIAGO_FULL_ACC = false;
 double PW_DIAG_THR = 1.0e-2;
 int NB2D = 1;
 
