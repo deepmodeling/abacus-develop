@@ -375,12 +375,14 @@ void CubicSpline::_build(
     _validate_build(n, dx, y, bc_start, bc_end);
 
     if (n == 2 && bc_start.type == BoundaryType::periodic)
-    { // in this case the polynomial is a constant
-        dy[0] = dy[1] = 0.0;
+    {
+        dy[0] = dy[1] = 0.0; // the only possible solution: constant
     }
     else if (n == 3 && bc_start.type == BoundaryType::not_a_knot
             && bc_end.type == BoundaryType::not_a_knot)
-    { // in this case two conditions coincide; simply build a parabola that passes through the three data points
+    {
+        // in this case two conditions coincide
+        // simply build a parabola that passes through the three data points
         double idx10 = 1.0 / dx[0];
         double idx21 = 1.0 / dx[1];
         double idx20 = 1.0 / (dx[0] + dx[1]);
