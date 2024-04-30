@@ -438,7 +438,7 @@ These variables are used to control general system parameters.
 
 - **Type**: Integer
 - **Description**: takes value 1, 0 or -1.
-  - -1: No symmetry will be considered.
+  - -1: No symmetry will be considered. It is recommended to set -1 for non-colinear + soc calculations, where time reversal symmetry is broken sometimes.
   - 0: Only time reversal symmetry would be considered in symmetry operations, which implied k point and -k point would be treated as a single k point with twice the weight.
   - 1: Symmetry analysis will be performed to determine the type of Bravais lattice and associated symmetry operations. (point groups, space groups, primitive cells, and irreducible k-points)
 - **Default**: 
