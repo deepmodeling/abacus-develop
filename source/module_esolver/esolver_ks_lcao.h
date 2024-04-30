@@ -115,6 +115,9 @@ namespace ModuleESolver
         /// @brief create ModuleIO::Output_Mat_Sparse object to output sparse density matrix of H, S, T, r
         ModuleIO::Output_Mat_Sparse<TK> create_Output_Mat_Sparse(int istep);
 
+        void read_mat_npz(std::string& zipname, hamilt::HContainer<double>& hR);
+        void output_mat_npz(std::string& zipname, const hamilt::HContainer<double>& hR);
+
         /// @brief check if skip the corresponding output in md calculation
         bool md_skip_out(std::string calculation, int istep, int interval);
 
