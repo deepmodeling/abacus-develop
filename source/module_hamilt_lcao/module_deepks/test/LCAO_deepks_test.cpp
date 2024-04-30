@@ -129,9 +129,7 @@ void test_deepks::check_pdm(void)
 		this->ld.cal_projected_DM_k(dm_k_new,
 			ucell,
 			ORB,
-            Test_Deepks::GridD,
-			kv.nkstot,
-			kv.kvec_d);		
+            Test_Deepks::GridD);		
 	}
 	this->ld.check_projected_dm();
 	this->compare_with_ref("pdm.dat","pdm_ref.dat");
@@ -187,7 +185,7 @@ void test_deepks::check_gdmx(void)
 
 void test_deepks::check_descriptor(void)
 {
-	this->ld.cal_descriptor();
+	this->ld.cal_descriptor(ucell.nat);
 	this->ld.check_descriptor(ucell);
 	this->compare_with_ref("descriptor.dat","descriptor_ref.dat");
 }

@@ -312,6 +312,16 @@ void ModuleIO::out_mulliken(const int& step, LCAO_Matrix* LM, const elecstate::E
 		os << "Decomposed Mulliken populations" << std::endl;
         GlobalV::ofs_running << std::endl <<std::endl;
 
+        // alloacte space for ucell.atom_mulliken
+        if (GlobalC::ucell.atom_mulliken.empty())
+        {
+            GlobalC::ucell.atom_mulliken.resize(GlobalC::ucell.nat);
+            for (int iat = 0; iat < GlobalC::ucell.nat; iat++)
+            {
+                GlobalC::ucell.atom_mulliken[iat].resize(GlobalV::NSPIN);
+            }
+        }
+
         for (size_t i = 0; i != GlobalC::ucell.nat; ++i)
         {
             double total_charge = 0.0, atom_mag = 0.0;
@@ -428,6 +438,8 @@ void ModuleIO::out_mulliken(const int& step, LCAO_Matrix* LM, const elecstate::E
                 os << "Total Charge on atom:  " << GlobalC::ucell.atoms[t].label <<  std::setw(20) << total_charge <<std::endl;
                 os << "Total Magnetism on atom:  " << GlobalC::ucell.atoms[t].label <<  std::setw(20) << ModuleIO::output_cut(atom_mag) <<std::endl;
                 GlobalV::ofs_running << "Total Magnetism on atom:  " << GlobalC::ucell.atoms[t].label <<  std::setw(20) << std::setprecision(10) << atom_mag <<std::endl;
+                GlobalC::ucell.atom_mulliken[i][0] = total_charge;
+                GlobalC::ucell.atom_mulliken[i][1] = atom_mag;
             }
             else if (GlobalV::NSPIN==4)
             {
@@ -443,6 +455,10 @@ void ModuleIO::out_mulliken(const int& step, LCAO_Matrix* LM, const elecstate::E
                 GlobalV::ofs_running << "Total Magnetism on atom:  " << GlobalC::ucell.atoms[t].label <<  std::setw(10)
                 << "("  << std::setprecision(10) << spin2 << ", " << std::setprecision(10) << spin3 << ", " << std::setprecision(10) << spin4 << ")"
                 <<std::endl;
+                GlobalC::ucell.atom_mulliken[i][0] = spin1;
+                GlobalC::ucell.atom_mulliken[i][1] = spin2;
+                GlobalC::ucell.atom_mulliken[i][2] = spin3;
+                GlobalC::ucell.atom_mulliken[i][3] = spin4;
             }
             os << std::endl <<std::endl;
         }

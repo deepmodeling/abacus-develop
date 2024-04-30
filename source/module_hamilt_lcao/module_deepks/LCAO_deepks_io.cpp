@@ -65,19 +65,39 @@ void LCAO_Deepks::save_npy_d(const int nat)
     ModuleBase::TITLE("LCAO_Deepks", "save_npy_d");
     if(GlobalV::MY_RANK!=0) return;
     //save descriptor in .npy format
-    vector<double> npy_des;
-    for (int inl = 0;inl < inlmax;++inl)
+    if(!if_equiv)
     {
-        int nm = 2*inl_l[inl] + 1;
-        for(int im=0;im<nm;im++)
+        vector<double> npy_des;
+        for (int inl = 0;inl < inlmax;++inl)
         {
-            npy_des.push_back(this->d_tensor[inl].index({im}).item().toDouble());
+            int nm = 2*inl_l[inl] + 1;
+            for(int im=0;im<nm;im++)
+            {
+                npy_des.push_back(this->d_tensor[inl].index({im}).item().toDouble());
+            }
+        }
+        const long unsigned dshape[] = {static_cast<unsigned long>(nat), static_cast<unsigned long>(this->des_per_atom)};
+        if (GlobalV::MY_RANK == 0)
+        {
+            npy::SaveArrayAsNumpy("dm_eig.npy", false, 2, dshape, npy_des);
         }
     }
-    const long unsigned dshape[] = {static_cast<unsigned long>(nat), static_cast<unsigned long>(this->des_per_atom)};
-    if (GlobalV::MY_RANK == 0)
+    else
     {
-        npy::SaveArrayAsNumpy("dm_eig.npy", false, 2, dshape, npy_des);
+        // a rather unnecessary way of writing this, but I'll do it for now
+        std::vector<double> npy_des;
+        for(int iat = 0; iat < nat; iat ++)
+        {
+            for(int i = 0; i < this->des_per_atom; i++)
+            {
+                npy_des.push_back(this->d_tensor[iat].index({i}).item().toDouble());
+            }
+        }
+        const long unsigned dshape[] = {static_cast<unsigned long>(nat), static_cast<unsigned long>(this->des_per_atom)};
+        if (GlobalV::MY_RANK == 0)
+        {
+            npy::SaveArrayAsNumpy("dm_eig.npy", false, 2, dshape, npy_des);
+        }        
     }
     return;
 }

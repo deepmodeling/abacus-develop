@@ -23,7 +23,7 @@ public:
     Magnetism magnet;  // magnetism Yu Liu 2021-07-03
     void cal_ux();
     bool judge_parallel(double a[3],ModuleBase::Vector3<double> b);
-	double *atom_mag;
+    std::vector<std::vector<double>> atom_mulliken;  //[nat][nspin]
 	int n_mag_at;
 
     std::string& Coordinate = lat.Coordinate;
