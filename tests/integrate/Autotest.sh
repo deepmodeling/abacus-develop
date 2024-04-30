@@ -11,7 +11,7 @@ stress_threshold=0.001
 # check accuracy
 ca=8
 # regex of case name
-case="^[^#].*_.*$"
+case='^[^#].*_.*(?<!GPU)$'
 # enable AddressSanitizer
 sanitize=false
 
@@ -167,7 +167,7 @@ check_out(){
 test -e CASES || (echo "Plese specify tests." && exit 1)
 which $abacus > /dev/null || (echo "No ABACUS executable was found." && exit 1)
 
-testdir=`cat CASES | grep -E $case`
+testdir=`cat CASES | grep -P $case`
 failed=0
 failed_case_list=()
 ok=0
