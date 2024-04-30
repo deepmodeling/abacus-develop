@@ -4,26 +4,28 @@
 template <>
 void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::print_termination()
 {
-    print_2d("after-optimization spin: (print in the inner loop): ", this->Mi_, this->nspin_);
-    print_2d("after-optimization lambda: (print in the inner loop): ", this->lambda_, this->nspin_);
+    print_2d("after-optimization spin (uB): (print in the inner loop): ", this->Mi_, this->nspin_);
+    print_2d("after-optimization lambda (Ry/uB): (print in the inner loop): ", this->lambda_, this->nspin_);
     std::cout << "Inner optimization for lambda ends." << std::endl;
     std::cout << "===============================================================================" << std::endl;
 }
 
 template <>
-bool SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::check_rms_stop(int outer_step, int i_step, double rms_error)
+bool SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::check_rms_stop(int outer_step, int i_step, double rms_error, double duration, double total_duration)
 {
     std::cout << "Step (Outer -- Inner) =  " << outer_step << " -- " << std::left << std::setw(5) << i_step + 1
-              << "       RMS = " << rms_error << std::endl;
+              << "       RMS = " << rms_error << "     TIME(s) = " << std::setw(11) << duration << std::endl;
     if (rms_error < this->sc_thr_ || i_step == this->nsc_ - 1)
     {
         if (rms_error < this->sc_thr_)
         {
-            std::cout << "Meet convergence criterion ( < " << this->sc_thr_ << " ), exit." << std::endl;
+            std::cout << "Meet convergence criterion ( < " << this->sc_thr_ << " ), exit.";
+            std::cout << "       Total TIME(s) = " << total_duration << std::endl;
         }
         else if (i_step == this->nsc_ - 1)
         {
-            std::cout << "Reach maximum number of steps ( " << this->nsc_ << " ), exit." << std::endl;
+            std::cout << "Reach maximum number of steps ( " << this->nsc_ << " ), exit.";
+            std::cout << "              Total TIME(s) = " << total_duration << std::endl;
         }
         this->print_termination();
         return true;

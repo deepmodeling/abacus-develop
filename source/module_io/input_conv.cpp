@@ -305,6 +305,7 @@ void Input_Conv::Convert(void)
     GlobalV::MIN_DIST_COEF = INPUT.min_dist_coef;
     GlobalV::NBANDS = INPUT.nbands;
     GlobalV::NBANDS_ISTATE = INPUT.nbands_istate;
+
     GlobalV::device_flag = psi::device::get_device_flag(INPUT.device, INPUT.ks_solver, INPUT.basis_type);
 
     if (GlobalV::device_flag == "gpu")
@@ -413,6 +414,7 @@ void Input_Conv::Convert(void)
         GlobalC::dftu.Yukawa = INPUT.yukawa_potential;
         GlobalC::dftu.omc = INPUT.omc;
         GlobalC::dftu.orbital_corr = INPUT.orbital_corr;
+        GlobalC::dftu.uramping = INPUT.uramping;
         GlobalC::dftu.mixing_dftu = INPUT.mixing_dftu;
         if (INPUT.yukawa_potential && INPUT.hubbard_u == nullptr)
         {
@@ -422,6 +424,11 @@ void Input_Conv::Convert(void)
             INPUT.hubbard_u = new double[GlobalC::ucell.ntype];
         }
         GlobalC::dftu.U = INPUT.hubbard_u;
+        GlobalC::dftu.U0 = std::vector<double>(INPUT.hubbard_u, INPUT.hubbard_u + GlobalC::ucell.ntype);
+        if (INPUT.uramping > 0.01) 
+        {
+            ModuleBase::GlobalFunc::ZEROS(GlobalC::dftu.U, GlobalC::ucell.ntype);
+        }
     }
     GlobalV::onsite_radius = INPUT.onsite_radius;
 #endif
@@ -443,12 +450,6 @@ void Input_Conv::Convert(void)
         GlobalV::DOMAG_Z = true;
         GlobalV::LSPINORB = INPUT.lspinorb;
         GlobalV::soc_lambda = INPUT.soc_lambda;
-
-        if (INPUT.cal_force || INPUT.cal_stress)
-        {
-            ModuleBase::WARNING_QUIT("input_conv", "force & stress not ready for nspin=4(soc or noncollinear-spin) yet!");
-        }
-
         if(INPUT.gamma_only_local)
         {
             ModuleBase::WARNING_QUIT("input_conv", "nspin=4(soc or noncollinear-spin) does not support gamma only calculation");
@@ -593,10 +594,6 @@ void Input_Conv::Convert(void)
         GlobalC::exx_info.info_global.cal_exx = false;
         Exx_Abfs::Jle::generate_matrix = true;
     }
-    else if (INPUT.rpa)
-    {
-        GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf;
-    }
     else
     {
         GlobalC::exx_info.info_global.cal_exx = false;
@@ -687,6 +684,9 @@ void Input_Conv::Convert(void)
     hsolver::HSolverLCAO<std::complex<double>>::out_mat_t = INPUT.out_mat_t;
     hsolver::HSolverLCAO<std::complex<double>>::out_mat_dh = INPUT.out_mat_dh;
     GlobalV::out_mat_xc = INPUT.out_mat_xc;
+    GlobalV::out_hr_npz = INPUT.out_hr_npz;
+    GlobalV::out_dm_npz = INPUT.out_dm_npz;
+    GlobalV::dm_to_rho = INPUT.dm_to_rho;
     if (GlobalV::GAMMA_ONLY_LOCAL)
     {
         elecstate::ElecStateLCAO<double>::out_wfc_lcao = INPUT.out_wfc_lcao;

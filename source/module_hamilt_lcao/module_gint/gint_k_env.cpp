@@ -32,9 +32,14 @@ void Gint_k::cal_env_k(int ik,
 
             // get the value: how many atoms has orbital value on this grid.
             const int size = this->gridt->how_many_atoms[ grid_index ];
-            if(size==0) continue;
+			if(size==0) 
+			{
+				continue;
+			}
 
-            int * block_iw, * block_index, * block_size;
+            int* block_iw=nullptr;
+            int* block_index=nullptr;
+            int* block_size=nullptr;
             bool** cal_flag;
             Gint_Tools::get_block_info(*this->gridt, this->bxyz, size, grid_index, block_iw, block_index, block_size, cal_flag);
 
@@ -77,23 +82,28 @@ void Gint_k::cal_env_k(int ik,
                 {
                     if (cal_flag[ib][ia1])
                     {
-                        int iw1_lo;
+                        int iw1_lo=0;
                         double* psi1 = &psir_ylm.ptr_2D[ib][block_index[ia1]];
                         std::complex<double> tmp {0.0, 0.0};
                         if (GlobalV::NSPIN == 4) // is it a simple add of 2 spins?
                         {
                             for (int is = 0;is < 2;++is)
                             {
-                                iw1_lo = this->gridt->trace_lo[start1] / GlobalV::NPOL + this->gridt->lgd / GlobalV::NPOL * is;
-                                for (int iw = 0;iw < atom1->nw;++iw, ++iw1_lo)
-                                    tmp += std::complex<double>(psi1[iw], 0.0) * psi_k[iw1_lo] * kphase;
+                                iw1_lo = this->gridt->trace_lo[start1] / GlobalV::NPOL 
+                                + this->gridt->lgd / GlobalV::NPOL * is;
+								for (int iw = 0;iw < atom1->nw;++iw, ++iw1_lo)
+								{
+									tmp += std::complex<double>(psi1[iw], 0.0) * psi_k[iw1_lo] * kphase;
+								}
                             }
                         }
                         else
                         {
                             iw1_lo = this->gridt->trace_lo[start1];
                             for (int iw = 0; iw < atom1->nw; ++iw, ++iw1_lo)
-                                tmp += std::complex<double>(psi1[iw], 0.0) * psi_k[iw1_lo] * kphase;
+							{
+								tmp += std::complex<double>(psi1[iw], 0.0) * psi_k[iw1_lo] * kphase;
+							}
                         }
                         rho[vindex[ib]] += tmp.real();
                     }// cal_flag

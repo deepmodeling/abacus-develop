@@ -324,6 +324,9 @@ TEST_F(write_input, LCAO5)
                 testing::HasSubstr("lcao_rmax                      30 #max R for 1D two-center integration table"));
     EXPECT_THAT(output, testing::HasSubstr("out_mat_hs                     0 #output H and S matrix"));
     EXPECT_THAT(output, testing::HasSubstr("out_mat_xc                     0 #output exchange-correlation matrix in KS-orbital representation"));
+    EXPECT_THAT(output, testing::HasSubstr("out_hr_npz                     0 #output hr(I0,JR) submatrices in npz format"));
+    EXPECT_THAT(output, testing::HasSubstr("out_dm_npz                     0 #output dmr(I0,JR) submatrices in npz format"));
+    EXPECT_THAT(output, testing::HasSubstr("dm_to_rho                      0 #reads dmr in npz format and calculates electron density"));
     EXPECT_THAT(output, testing::HasSubstr("out_mat_hs2                    0 #output H(R) and S(R) matrix"));
     EXPECT_THAT(output, testing::HasSubstr("out_mat_dh                     0 #output of derivative of H(R) matrix"));
     EXPECT_THAT(
@@ -663,14 +666,14 @@ TEST_F(write_input, Exx14)
         testing::HasSubstr(
             "exx_cauchy_force_threshold     1e-07 #threshold to screen exx force using Cauchy-Schwartz inequality"));
     EXPECT_THAT(output,
-                testing::HasSubstr("exx_ccp_rmesh_times            default #how many times larger the radial mesh "
+        testing::HasSubstr("exx_ccp_rmesh_times            default #how many times larger the radial mesh "
                                    "required for calculating Columb potential is to that of atomic orbitals"));
     EXPECT_THAT(
         output,
         testing::HasSubstr(
             "exx_cauchy_stress_threshold    1e-07 #threshold to screen exx stress using Cauchy-Schwartz inequality"));
     EXPECT_THAT(output,
-                testing::HasSubstr("exx_ccp_rmesh_times            default #how many times larger the radial mesh "
+        testing::HasSubstr("rpa_ccp_rmesh_times            10 #how many times larger the radial mesh "
                                    "required for calculating Columb potential is to that of atomic orbitals"));
     EXPECT_THAT(output,
                 testing::HasSubstr(
@@ -839,6 +842,7 @@ TEST_F(write_input, DFTU20)
         testing::HasSubstr(
             "dft_plus_u                     0 #1/2:new/old DFT+U correction method; 0: standard DFT calcullation(default)"));
     EXPECT_THAT(output, testing::HasSubstr("yukawa_lambda                  -1 #default:0.0"));
+    EXPECT_THAT(output, testing::HasSubstr("uramping                       -1 #increasing U values during SCF"));
     EXPECT_THAT(output, testing::HasSubstr("yukawa_potential               0 #default: false"));
     EXPECT_THAT(output, testing::HasSubstr("omc                            0 #the mode of occupation matrix control"));
     EXPECT_THAT(output, testing::HasSubstr("hubbard_u           0 #Hubbard Coulomb interaction parameter U(ev)"));

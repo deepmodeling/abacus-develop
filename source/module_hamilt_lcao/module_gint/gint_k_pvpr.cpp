@@ -46,7 +46,10 @@ void Gint_k::destroy_pvpR(void)
         return;
     }
     
-    for(int is =0;is<GlobalV::NSPIN;is++) delete[] pvpR_reduced[is];
+	for(int is =0;is<GlobalV::NSPIN;is++) 
+	{
+		delete[] pvpR_reduced[is];
+	}
     delete[] pvpR_reduced;
 
     this->pvpR_alloc_flag = false;
@@ -82,7 +85,7 @@ void Gint_k::folding_vl_k(const int &ik,
     // matrix element < phi_0 | Vlocal | phi_R >
     //#################################################################
 
-    int lgd = this->gridt->lgd;
+    const int lgd = this->gridt->lgd;
     std::complex<double>** pvp = new std::complex<double>*[lgd];
     std::complex<double>* pvp_base = new std::complex<double>[lgd * lgd];
     for(int i=0; i<lgd; i++)
@@ -108,7 +111,8 @@ void Gint_k::folding_vl_k(const int &ik,
 
     auto init_pvp = [&](int num_threads, int thread_id)
     {
-        int beg, len;
+        int beg=0;
+        int len=0;
         ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, lgd * lgd, 256, beg, len);
         ModuleBase::GlobalFunc::ZEROS(pvp_base + beg, len);
         if(GlobalV::NSPIN==4)
@@ -177,8 +181,10 @@ void Gint_k::folding_vl_k(const int &ik,
                             dR.z = adjs.box[ad].z;
 
                             // calculate the phase factor exp(ikR).
-                            const double arg = (kvec_d[ik] * dR) * ModuleBase::TWO_PI;
-                            double sinp, cosp;
+							const double arg = (kvec_d[ik] * dR) * ModuleBase::TWO_PI;
+							double sinp=0.0;
+							double cosp=0.0;
+
                             ModuleBase::libm::sincos(arg, &sinp, &cosp);
                             const std::complex<double> phase = std::complex<double>(cosp, sinp);
                             int ixxx = DM_start + this->gridt->find_R2st[iat][nad];
@@ -194,8 +200,6 @@ void Gint_k::folding_vl_k(const int &ik,
                                     for(int iw2 = 0; iw2<atom2->nw; ++iw2)
                                     {
                                         vij[iw2_lo[iw2]] += vijR[iw2] * phase; 
-                                        //if(((start1+iw == 238 ) && ( start2+iw2 == 1089 )))
-                                        //    GlobalV::ofs_running<<__FILE__<<__LINE__<<" "<<iat<<" "<<iat2<<" "<<ixxx<<" "<<start1+iw<<" "<<start2+iw2<<" "<<vijR[iw2]<<" "<<iw2_lo[iw2]<<" "<<vij[iw2_lo[iw2]]<<std::endl;
                                     }
                                     ixxx += atom2->nw;
                                 }

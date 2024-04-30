@@ -1003,6 +1003,7 @@ void UnitCell::print_stru_file(const std::string &fn, const int &type, const int
 
 	if(type==1)
 	{
+		int nat_tmp = 0;
 		ofs << "Cartesian" << std::endl;
 		for(int it=0; it<ntype; it++)
 		{
@@ -1028,28 +1029,31 @@ void UnitCell::print_stru_file(const std::string &fn, const int &type, const int
                     ofs << context.str();
                 }
 
-                if (GlobalV::NSPIN == 2)
+                if (GlobalV::NSPIN == 2 && GlobalV::out_mul)
                 {
                     // output magnetic information
                     ofs << " mag ";
                     context.set_context("double_w6_f2");
-                    context << atoms[it].mag[ia];
+                    context << atom_mulliken[nat_tmp][1];
                     ofs << context.str();
                 }
-                else if (GlobalV::NSPIN == 4)
+                else if (GlobalV::NSPIN == 4 && GlobalV::out_mul)
                 {
                     // output magnetic information
                     ofs << " mag ";
-                    context.set_context("vector3d");
-                    context << atoms[it].m_loc_[ia].x << " " << atoms[it].m_loc_[ia].y << " " << atoms[it].m_loc_[ia].z;
-                    ofs << context.str();
+					ofs << std::fixed << std::setprecision(5);
+                    ofs << std::setw(8) << atom_mulliken[nat_tmp][1] 
+						<< std::setw(8) << atom_mulliken[nat_tmp][2] 
+						<< std::setw(8) << atom_mulliken[nat_tmp][3];
                 }
                 ofs << std::endl;
+				nat_tmp++;
 			}
 		}
 	}
 	else if(type==2)
 	{
+		int nat_tmp = 0;
 		ofs << "Direct" << std::endl;
 		for(int it=0; it<ntype; it++)
 		{
@@ -1075,23 +1079,25 @@ void UnitCell::print_stru_file(const std::string &fn, const int &type, const int
                     ofs << context.str();
                 }
 
-                if (GlobalV::NSPIN == 2)
+                if (GlobalV::NSPIN == 2 && GlobalV::out_mul)
                 {
                     // output magnetic information
                     ofs << " mag ";
                     context.set_context("double_w6_f2");
-                    context << atoms[it].mag[ia];
+                    context << atom_mulliken[nat_tmp][1];
                     ofs << context.str();
                 }
-                else if (GlobalV::NSPIN == 4)
+                else if (GlobalV::NSPIN == 4 && GlobalV::out_mul)
                 {
                     // output magnetic information
                     ofs << " mag ";
-                    context.set_context("vector3d");
-                    context << atoms[it].m_loc_[ia].x << " " << atoms[it].m_loc_[ia].y << " " << atoms[it].m_loc_[ia].z;
-                    ofs << context.str();
+					ofs << std::fixed << std::setprecision(5);
+                    ofs << std::setw(8) << atom_mulliken[nat_tmp][1] 
+						<< std::setw(8) << atom_mulliken[nat_tmp][2] 
+						<< std::setw(8) << atom_mulliken[nat_tmp][3];
                 }
                 ofs << std::endl;
+				nat_tmp++;
 			}
 		}
 	}

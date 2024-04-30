@@ -66,7 +66,8 @@ TEST_F(SpinConstrainTest, CalculateMW)
     testing::internal::CaptureStdout();
     sc.print_Mi(true);
     std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("Total Magnetism on atom: 0  (2, 3, 4)"));
+    EXPECT_THAT(output, testing::HasSubstr("Total Magnetism (uB):"));
+    EXPECT_THAT(output, testing::HasSubstr("ATOM 0         2.0000000000e+00    3.0000000000e+00    4.0000000000e+00"));
 }
 
 TEST_F(SpinConstrainTest, CollectMW)
@@ -141,7 +142,8 @@ TEST_F(SpinConstrainTest, CalculateMWS2)
     testing::internal::CaptureStdout();
     sc.print_Mi(true);
     std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("Total Magnetism on atom: 0  (-1)"));
+    EXPECT_THAT(output, testing::HasSubstr("Total Magnetism (uB):"));
+    EXPECT_THAT(output, testing::HasSubstr("ATOM 0        -1.0000000000e+00"));
 }
 
 TEST_F(SpinConstrainTest, CollectMWS2)

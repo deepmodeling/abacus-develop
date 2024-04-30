@@ -5,6 +5,7 @@
 #include "module_base/parallel_common.h"
 #include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include <vector>
 
 Bessel_Basis::Bessel_Basis()
 {
@@ -194,13 +195,20 @@ void Bessel_Basis::init_TableOne(
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "dr",dr);
 
 	// allocate rmesh and Jlk and eigenvalue of Jlq
-	double *r = new double[rmesh];
-	double *rab = new double[rmesh];
-	double *jle = new double[rmesh];
-	double *jlk = new double[rmesh];
-	double *g = new double[rmesh]; // smooth function
-	double *function = new double[rmesh];
-	double *en = new double[ecut_number];
+	// double *r = new double[rmesh];
+	// double *rab = new double[rmesh];
+	// double *jle = new double[rmesh];
+	// double *jlk = new double[rmesh];
+	// double *g = new double[rmesh]; // smooth function
+	// double *function = new double[rmesh];
+	// double *en = new double[ecut_number];
+    std::vector<double> r(rmesh);
+    std::vector<double> rab(rmesh);
+    std::vector<double> jle(rmesh);
+    std::vector<double> jlk(rmesh);
+    std::vector<double> g(rmesh);
+    std::vector<double> function(rmesh);
+    std::vector<double> en(ecut_number);
 
 	for(int ir=0; ir<rmesh; ir++)
 	{
@@ -250,12 +258,12 @@ void Bessel_Basis::init_TableOne(
 	// init eigenvalue of Jl
 	for(int l=0; l<lmax+1; l++)
 	{
-		ModuleBase::GlobalFunc::ZEROS(en, ecut_number);
-		ModuleBase::GlobalFunc::ZEROS(jle, rmesh);
-		ModuleBase::GlobalFunc::ZEROS(jlk, rmesh);
+		ModuleBase::GlobalFunc::ZEROS(en.data(), ecut_number);
+		ModuleBase::GlobalFunc::ZEROS(jle.data(), rmesh);
+		ModuleBase::GlobalFunc::ZEROS(jlk.data(), rmesh);
 
 		// calculate eigenvalue for l
-		ModuleBase::Sphbes::Spherical_Bessel_Roots(ecut_number, l, tolerence, en, rcut);
+		ModuleBase::Sphbes::Spherical_Bessel_Roots(ecut_number, l, tolerence, en.data(), rcut);
 //		for (int ie=0; ie<ecut_number; ie++)
 //		{
 //			std::cout << "\n en[" << ie << "]=" << en[ie];
@@ -265,7 +273,7 @@ void Bessel_Basis::init_TableOne(
 		for (int ie=0; ie<ecut_number; ie++)
 		{
 			// calculate J_{l}( en[ir]*r)
-			ModuleBase::Sphbes::Spherical_Bessel(rmesh, r, en[ie], l, jle);
+			ModuleBase::Sphbes::Spherical_Bessel(rmesh, r.data(), en[ie], l, jle.data());
 
 			//caoyu add 2021-3-10
 			//=========output .orb format=============
@@ -306,7 +314,8 @@ void Bessel_Basis::init_TableOne(
 			for(int ik=0; ik<kmesh; ik++)
 			{
 				// calculate J_{l}( ik*dk*r )
-				ModuleBase::Sphbes::Spherical_Bessel(rmesh, r, ik*dk, l, jlk);
+				// ModuleBase::Sphbes::Spherical_Bessel(rmesh, r, ik*dk, l, jlk);
+				ModuleBase::Sphbes::Spherical_Bessel(rmesh, r.data(), ik*dk, l, jlk.data());
 
 				// calculate the function will be integrated
 				for(int ir=0; ir<rmesh; ir++)
@@ -315,7 +324,7 @@ void Bessel_Basis::init_TableOne(
 				}
 
 				// make table value
-				ModuleBase::Integral::Simpson_Integral(rmesh, function, rab, this->TableOne(l, ie, ik) );
+				ModuleBase::Integral::Simpson_Integral(rmesh, function.data(), rab.data(), this->TableOne(l, ie, ik) );
 			}
 
 		}// end ie
@@ -326,13 +335,13 @@ void Bessel_Basis::init_TableOne(
 		ofs.close();	//caoyu add 2020-3-10
 	}
 
-	delete[] en;
-	delete[] jle;
-	delete[] jlk;
-	delete[] rab;
-	delete[] g;
-	delete[] r;
-	delete[] function;
+	// delete[] en;
+	// delete[] jle;
+	// delete[] jlk;
+	// delete[] rab;
+	// delete[] g;
+	// delete[] r;
+	// delete[] function;
 	ModuleBase::timer::tick("Spillage","TableONe");
 	return;
 }

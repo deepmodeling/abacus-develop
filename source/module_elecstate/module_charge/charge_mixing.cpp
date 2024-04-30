@@ -504,7 +504,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         {
             chr->rhog[0][ig] = rhog_magabs[ig]; // rhog
             double norm = std::sqrt(chr->rho[1][ig] * chr->rho[1][ig] + chr->rho[2][ig] * chr->rho[2][ig] + chr->rho[3][ig] * chr->rho[3][ig]);
-            if (abs(norm) < 1e-10) continue;
+            if (std::abs(norm) < 1e-10) continue;
             double rescale_tmp = rho_magabs[npw + ig] / norm; 
             chr->rho[1][ig] *= rescale_tmp;
             chr->rho[2][ig] *= rescale_tmp;
@@ -801,7 +801,7 @@ void Charge_Mixing::mix_dmr(elecstate::DensityMatrix<double, double>* DM)
     ModuleBase::timer::tick("Charge_Mixing", "mix_dmr");
     //
     std::vector<hamilt::HContainer<double>*> dmr = DM->get_DMR_vector();
-    std::vector<std::vector<double>> dmr_save = DM->get_DMR_save();
+    std::vector<std::vector<double>>& dmr_save = DM->get_DMR_save();
     //
     //const int dmr_nspin = (GlobalV::NSPIN == 2) ? 2 : 1;
     double* dmr_in;
@@ -900,7 +900,7 @@ void Charge_Mixing::mix_dmr(elecstate::DensityMatrix<std::complex<double>, doubl
     ModuleBase::timer::tick("Charge_Mixing", "mix_dmr");
     //
     std::vector<hamilt::HContainer<double>*> dmr = DM->get_DMR_vector();
-    std::vector<std::vector<double>> dmr_save = DM->get_DMR_save();
+    std::vector<std::vector<double>>& dmr_save = DM->get_DMR_save();
     //
     //const int dmr_nspin = (GlobalV::NSPIN == 2) ? 2 : 1;
     double* dmr_in;

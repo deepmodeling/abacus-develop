@@ -222,6 +222,7 @@ OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
       esolver_ks_lcao_elec.o\
       esolver_ks_lcao_tddft.o\
       esolver_ks_lcao_tmpfunc.o\
+      io_npz.o\
 
 OBJS_GINT=gint.o\
       gint_gamma.o\
@@ -286,6 +287,7 @@ OBJS_HCONTAINER=base_matrix.o\
 
 OBJS_HSOLVER=diago_cg.o\
     diago_david.o\
+    diago_dav_subspace.o\
     diagh_consts.o\
     diago_bpcg.o\
     hsolver_pw.o\
@@ -501,9 +503,12 @@ OBJS_LCAO=DM_gamma.o\
       fvl_dphi_k.o\
       fvnl_dbeta_k.o\
       LCAO_gen_fixedH.o\
-      LCAO_hamilt.o\
       grid_init.o\
-      sparse_format.o\
+      spar_dh.o\
+      spar_exx.o\
+      spar_hsr.o\
+      spar_st.o\
+      spar_u.o\
       LCAO_matrix.o\
       LCAO_nnr.o\
       center2_orb-orb11.o\

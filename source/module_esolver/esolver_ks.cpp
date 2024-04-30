@@ -1,30 +1,24 @@
 #include "esolver_ks.h"
-
 #include <time.h>
 #ifdef __MPI
 #include <mpi.h>
 #else
 #include <chrono>
 #endif
-
 #include <iostream>
-
 #include "module_io/print_info.h"
 #include "module_base/timer.h"
 #include "module_io/input.h"
 #include "module_io/json_output/init_info.h"
-
-
 //--------------Temporary----------------
 #include "module_base/global_variable.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_hamilt_lcao/module_dftu/dftu.h"
 //---------------------------------------
-
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
 #include "module_base/parallel_common.h"
 #endif
-
 #include "module_io/json_output/output_info.h"
 
 namespace ModuleESolver
@@ -75,6 +69,8 @@ ESolver_KS<T, Device>::~ESolver_KS()
 template<typename T, typename Device>
 void ESolver_KS<T, Device>::init(Input& inp, UnitCell& ucell)
 {
+	ModuleBase::TITLE("ESolver_KS", "init");
+
 	ESolver_FP::init(inp,ucell);
 
 	//------------------Charge Mixing------------------
@@ -380,6 +376,8 @@ void ESolver_KS<T, Device>::print_wfcfft(Input& inp, std::ofstream &ofs)
 template<typename T, typename Device>
 void ESolver_KS<T, Device>::run(const int istep, UnitCell& ucell)
 {
+	ModuleBase::TITLE("ESolver_KS", "run");
+    
 	if (!(GlobalV::CALCULATION == "scf" 
        || GlobalV::CALCULATION == "md"
        || GlobalV::CALCULATION == "relax" 
@@ -392,6 +390,7 @@ void ESolver_KS<T, Device>::run(const int istep, UnitCell& ucell)
 		ModuleBase::timer::tick(this->classname, "run");
 
 		this->before_scf(istep); //Something else to do before the iter loop
+		if(GlobalV::dm_to_rho) return; //nothing further is needed
 
 		ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT SCF");
 
@@ -446,15 +445,23 @@ void ESolver_KS<T, Device>::run(const int istep, UnitCell& ucell)
 				// mixing will restart at this->p_chgmix->mixing_restart steps
 				if (drho <= GlobalV::MIXING_RESTART 
                     && GlobalV::MIXING_RESTART > 0.0 
-                    && this->p_chgmix->mixing_restart > iter)
+                    && this->p_chgmix->mixing_restart_step > iter)
 				{
-					this->p_chgmix->mixing_restart = iter + 1;
+					this->p_chgmix->mixing_restart_step = iter + 1;
 				}
 
 				// drho will be 0 at this->p_chgmix->mixing_restart step, which is not ground state
+				bool not_restart_step = !(iter==this->p_chgmix->mixing_restart_step && GlobalV::MIXING_RESTART > 0.0);
+				// SCF will continue if U is not converged for uramping calculation
+				bool is_U_converged = true;
+				// to avoid unnecessary dependence on dft+u, refactor is needed
+#ifdef __LCAO
+				if (GlobalV::dft_plus_u) is_U_converged = GlobalC::dftu.u_converged();
+#endif
+				//
 				this->conv_elec = (drho < this->scf_thr 
-                    && !(iter==this->p_chgmix->mixing_restart 
-                    && GlobalV::MIXING_RESTART > 0.0));
+                    && not_restart_step
+					&& is_U_converged);
 
 				// If drho < hsolver_error in the first iter or drho < scf_thr, we do not change rho.
 				if (drho < hsolver_error || this->conv_elec)
@@ -469,7 +476,7 @@ void ESolver_KS<T, Device>::run(const int istep, UnitCell& ucell)
 					//----------charge mixing---------------
 					// mixing will restart after this->p_chgmix->mixing_restart steps
 					if (GlobalV::MIXING_RESTART > 0 
-                        && iter == this->p_chgmix->mixing_restart - 1)
+                        && iter == this->p_chgmix->mixing_restart_step - 1)
 					{
 						// do not mix charge density
 					}
@@ -532,10 +539,10 @@ void ESolver_KS<T, Device>::run(const int istep, UnitCell& ucell)
 
 			// notice for restart
 			if (GlobalV::MIXING_RESTART > 0 
-             && iter == this->p_chgmix->mixing_restart - 1 
+             && iter == this->p_chgmix->mixing_restart_step - 1 
              && iter != GlobalV::SCF_NMAX)
 			{
-				std::cout<<"SCF restart after this step!"<<std::endl;
+				std::cout<<" SCF restart after this step!"<<std::endl;
 			}
 		}
 #ifdef __RAPIDJSON
@@ -625,6 +632,21 @@ ModuleIO::Output_Rho ESolver_KS<T, Device>::create_Output_Rho(
 {
 	const int precision = 3;
 	std::string tag = "CHG";
+	if(GlobalV::dm_to_rho)
+	{
+		return ModuleIO::Output_Rho(this->pw_big,
+								this->pw_rhod,
+								is,
+								GlobalV::NSPIN,
+								pelec->charge->rho[is],
+								iter,
+								this->pelec->eferm.get_efval(is),
+								&(GlobalC::ucell),
+								GlobalV::global_out_dir,
+								precision,
+								tag,
+								prefix);
+	}
 	return ModuleIO::Output_Rho(this->pw_big,
 			this->pw_rhod,
 			is,

@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <numeric>
 #include <functional>
+#include <vector>
 
 using ModuleBase::CubicSpline;
 

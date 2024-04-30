@@ -44,9 +44,13 @@ class DFTU
     // calculate the energy correction
     void cal_energy_correction(const int istep);
     double get_energy(){return EU;}
+    void uramping_update(); // update U by uramping
+    bool u_converged(); // check if U is converged
 
     double* U; // U (Hubbard parameter U)
+    std::vector<double> U0; // U0 (target Hubbard parameter U0)
     int* orbital_corr; //
+    double uramping; // increase U by uramping, default is -1.0
     int omc; // occupation matrix control
     int mixing_dftu; //whether to mix locale
 

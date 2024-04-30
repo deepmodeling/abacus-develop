@@ -23,7 +23,7 @@ void projgen(const int l,
     assert(rcut < r[nr - 1]);
     assert(std::is_sorted(r, r + nr));
 
-    std::vector<double> dr(nr - 1);
+    std::vector<double> dr(nr);
     std::adjacent_difference(r, r + nr, dr.begin());
 
     // lower_bound returns the first element that is equal or larger than rcut
@@ -82,7 +82,7 @@ void smoothgen(const int nr, const double* r, const double* chi, const double rc
     assert(rcut < r[nr - 1]);
     assert(std::is_sorted(r, r + nr));
 
-    std::vector<double> dr(nr - 1);
+    std::vector<double> dr(nr);
     std::adjacent_difference(r, r + nr, dr.begin());
 
     // lower_bound returns the first element that is equal or larger than rcut

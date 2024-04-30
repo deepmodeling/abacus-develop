@@ -6,8 +6,8 @@
 #include "module_base/global_variable.h"
 #include "module_base/matrix.h"
 #include "module_elecstate/module_dm/density_matrix.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_hamilt.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_gen_fixedH.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
 
@@ -60,6 +60,7 @@ class Force_LCAO_k : public Force_LCAO_gamma
     // calculate the force due to < dphi | beta > < beta | phi >
 	void cal_ftvnl_dphi_k(const elecstate::DensityMatrix<std::complex<double>, double>* DM,
 			const Parallel_Orbitals &pv,
+            const UnitCell &ucell,
 			LCAO_Matrix &lm,
 			const bool isforce,
 			const bool isstress,
@@ -97,6 +98,10 @@ class Force_LCAO_k : public Force_LCAO_gamma
                           const bool isforce,
 						  const bool isstress, 
 						  const Parallel_Orbitals &pv,
+                          const UnitCell &ucell,
+                          const LCAO_Orbitals& orb,
+                          const ORB_gen_tables& uot,
+                          Grid_Driver* GridD,
 						  ModuleBase::matrix& fvnl_dbeta,
                           ModuleBase::matrix& svnl_dbeta);
 

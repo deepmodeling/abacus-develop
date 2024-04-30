@@ -87,8 +87,8 @@ private:
     void print_klists(std::ofstream &fn);
     //bool read_kpoints_after_vc(const std::string &fn); //LiuXh add 20180515
     //void Monkhorst_Pack_after_vc(const int *nmp_in,const double *koffset_in,const int tipo); //LiuXh add 20180515
-    void mpi_k_after_vc(); //LiuXh add 20180515
-    void set_both_kvec_after_vc(const ModuleBase::Matrix3 &G,const ModuleBase::Matrix3 &R);
+    void mpi_k_after_vc(); //LiuXh add 20180515 //Useless now, it should be removed after several versions' testing.
+    void set_both_kvec_after_vc(const ModuleBase::Matrix3 &G,const ModuleBase::Matrix3 &R); //Useless now, it should be removed after several versions' testing.
     void set_kup_and_kdw_after_vc();
 };
 
