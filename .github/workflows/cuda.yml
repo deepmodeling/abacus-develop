@@ -21,4 +21,8 @@ jobs:
           cmake -B build -DUSE_CUDA=ON -DBUILD_TESTING=ON
           cmake --build build -j4
           cmake --install build
+      - name: Test
+        run: |
+          cd tests/gpu
+          bash Autotest.sh -n 2 -s true
       # TODO: add tests
