@@ -202,7 +202,7 @@ public:
      * (x0+i*dx, y[i]) (i=0,1,...,n-1) and boundary conditions.
      *
      * @param[in]   n               number of data points
-     * @param[in]   x0              starting x coordinate (first knot)
+     * @param[in]   x0              x coordinate of the first data point (first knot)
      * @param[in]   dx              spacing between knots (must be positive)
      * @param[in]   y               y coordinates of data points
      * @param[in]   bc_start        boundary condition at start
@@ -327,6 +327,12 @@ public:
     /// heap memory usage in bytes
     size_t heap_usage() const { return (x_.capacity() + y_.capacity()) * sizeof(double); }
 
+    /// first knot
+    double xmin() const { return xmin_; }
+
+    /// last knot
+    double xmax() const { return xmax_; }
+
 
 private:
 
@@ -336,8 +342,11 @@ private:
     /// number of knots
     int n_ = 0;
 
-    /// first knot (used for evenly-spaced knots only)
-    double x0_ = 0.0;
+    /// first knot
+    double xmin_ = 0.0;
+
+    /// last knot
+    double xmax_ = 0.0;
 
     /// spacing between knots (used for evenly-space knots only)
     double dx_ = 0.0;
@@ -517,9 +526,10 @@ private:
     /// Asserts that the input arguments are valid for interpolating a cubic spline.
     static void _validate_eval(
         int n,
-        const double* x,
-        double x0,
+        double xmin,
+        double xmax,
         double dx,
+        const double* x,
         const double* y,
         const double* dy,
         int n_interp,

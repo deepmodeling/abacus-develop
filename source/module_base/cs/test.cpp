@@ -35,6 +35,9 @@ using BoundaryType = CubicSpline::BoundaryType;
  *  - heap_usage
  *      Returns the heap usage of the object.
  *
+ *  - xmin, xmax
+ *      Returns the first and last knots.
+ *
  */
 class CubicSplineTest : public ::testing::Test
 {
@@ -366,7 +369,7 @@ TEST_F(CubicSplineTest, ErrorBound)
 }
 
 
-TEST_F(CubicSplineTest, Reserve)
+TEST_F(CubicSplineTest, ReserveAndGet)
 {
     int n_spline = 20;
     int n = 1000;
@@ -384,6 +387,9 @@ TEST_F(CubicSplineTest, Reserve)
     cubspl = CubicSpline(n, x_, y_);
     cubspl.reserve(n_spline);
     EXPECT_EQ(cubspl.heap_usage(), (1 + n_spline * 2) * n * sizeof(double));
+
+    EXPECT_EQ(cubspl.xmin(), x_[0]);
+    EXPECT_EQ(cubspl.xmax(), x_[n - 1]);
 }
 
 

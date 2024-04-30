@@ -32,7 +32,7 @@ CubicSpline::CubicSpline(
     const double* y,
     const BoundaryCondition& bc_start,
     const BoundaryCondition& bc_end
-): n_spline_(1), n_(n), x_(x, x + n), y_(2 * n)
+): n_spline_(1), n_(n), xmin_(x[0]), xmax_(x[n - 1]), x_(x, x + n), y_(2 * n)
 {
     std::copy(y, y + n, y_.begin());
     build(n, x, y, bc_start, bc_end, &y_[n]);
@@ -46,7 +46,7 @@ CubicSpline::CubicSpline(
     const double* y,
     const BoundaryCondition& bc_start,
     const BoundaryCondition& bc_end
-): n_spline_(1), n_(n), x0_(x0), dx_(dx), y_(2 * n)
+): n_spline_(1), n_(n), xmin_(x0), xmax_(x0 + (n - 1) * dx), dx_(dx), y_(2 * n)
 {
     std::copy(y, y + n, y_.begin());
     build(n, dx, y, bc_start, bc_end, &y_[n]);
@@ -91,7 +91,7 @@ void CubicSpline::eval(
     const double* dy = y + n_;
     if (x_.empty()) // evenly spaced knots
     {
-        eval(n_, x0_, dx_, y, dy, n_interp, x_interp, y_interp, dy_interp, d2y_interp);
+        eval(n_, xmin_, dx_, y, dy, n_interp, x_interp, y_interp, dy_interp, d2y_interp);
     }
     else
     {
@@ -111,15 +111,15 @@ void CubicSpline::multi_eval(
 {
     assert(std::all_of(i_spline, i_spline + n_spline,
         [this](int i) { return 0 <= i && i < n_spline_; }));
-    _validate_eval(n_, x_.data(), x0_, dx_, y_.data(), y_.data() + n_, 1, &x_interp);
+    _validate_eval(n_, xmin_, xmax_, dx_, x_.data(), y_.data(), &y_[n_], 1, &x_interp);
 
     int p = 0;
     double dx = 0.0, r = 0.0; 
     if (x_.empty()) // evenly spaced knots
     {
-        p = _index(n_, x0_, dx_, x_interp);
+        p = _index(n_, xmin_, dx_, x_interp);
         dx = dx_;
-        r = (x_interp - x0_) / dx - p;
+        r = (x_interp - xmin_) / dx - p;
     }
     else
     {
@@ -229,7 +229,7 @@ void CubicSpline::eval(
     double* d2y_interp
 )
 {
-    _validate_eval(n, x, 0.0, 0.0, y, dy, n_interp, x_interp);
+    _validate_eval(n, x[0], x[n - 1], 0.0, x, y, dy, n_interp, x_interp);
 
     // indices of the polynomial segments that contain x_interp
     std::vector<int> _ind(n_interp);
@@ -278,7 +278,7 @@ void CubicSpline::eval(
     double* d2y_interp
 )
 {
-    _validate_eval(n, nullptr, x0, dx, y, dy, n_interp, x_interp);
+    _validate_eval(n, x0, x0 + (n - 1) * dx, dx, nullptr, y, dy, n_interp, x_interp);
 
     // indices of the polynomial segments that contain x_interp
     std::vector<int> _ind(n_interp);
@@ -342,9 +342,10 @@ void CubicSpline::_validate_build(
 
 void CubicSpline::_validate_eval(
     int n,
-    const double* x,
-    double x0,
+    double xmin,
+    double xmax,
     double dx,
+    const double* x,
     const double* y,
     const double* dy,
     int n_interp,
@@ -356,8 +357,8 @@ void CubicSpline::_validate_eval(
 
     assert((n_interp > 0 && x_interp) || n_interp == 0);
 
-    double xmin = x ? x[0] : x0;
-    double xmax = x ? x[n - 1] : x0 + (n - 1) * dx;
+    //double xmin = x ? x[0] : x0;
+    //double xmax = x ? x[n - 1] : x0 + (n - 1) * dx;
     assert(std::all_of(x_interp, x_interp + n_interp,
                        [xmin, xmax](double x_i) { return xmin <= x_i && x_i <= xmax; }));
 }
@@ -379,17 +380,17 @@ void CubicSpline::_build(
         dy[0] = dy[1] = 0.0; // the only possible solution: constant
     }
     else if (n == 3 && bc_start.type == BoundaryType::not_a_knot
-            && bc_end.type == BoundaryType::not_a_knot)
+                    && bc_end.type == BoundaryType::not_a_knot)
     {
         // in this case two conditions coincide
         // simply build a parabola that passes through the three data points
-        double idx10 = 1.0 / dx[0];
-        double idx21 = 1.0 / dx[1];
-        double idx20 = 1.0 / (dx[0] + dx[1]);
+        double dd01 = (y[1] - y[0]) / dx[0]; // divided difference f[x0,x1]
+        double dd12 = (y[2] - y[1]) / dx[1]; // f[x1,x2]
+        double dd012 = (dd12 - dd01) / (dx[0] + dx[1]); // f[x0,x1,x2]
 
-        dy[0] = -y[0] * (idx10 + idx20) + y[1] * (idx21 + idx10) + y[2] * (idx20 - idx21);
-        dy[1] = -y[1] * (-idx10 + idx21) + y[0] * (idx20 - idx10) + y[2] * (idx21 - idx20);
-        dy[2] = dy[1] + 2.0 * (-y[1] * idx10 + y[2] * idx20) + 2.0 * y[0] * idx10 * idx20 * dx[1];
+        dy[0] = dd01 - dd012 * dx[0];
+        dy[1] = 2.0 * dd01 - dy[0];
+        dy[2] = dd01 + dd012 * (dx[0] + 2.0 * dx[1]);
     }
     else
     {
@@ -447,7 +448,7 @@ void CubicSpline::_build(
             default: // BoundaryCondition::not_a_knot
                 d[0] = dx[1];
                 u[0] = dx[0] + dx[1];
-                dy[0] = (dd[0] * dx[1] * (dx[0] + 2 * (dx[0] + dx[1])) + dd[1] * dx[0] * dx[0]) / (dx[0] + dx[1]);
+                dy[0] = (dd[0] * dx[1] * (dx[0] + 2 * u[0]) + dd[1] * dx[0] * dx[0]) / u[0];
             }
 
             switch (bc_end.type)
@@ -465,8 +466,8 @@ void CubicSpline::_build(
             default: // BoundaryCondition::not_a_knot
                 d[n - 1] = dx[n - 3];
                 l[n - 2] = dx[n - 3] + dx[n - 2];
-                dy[n - 1] = (dd[n - 2] * dx[n - 3] * (dx[n - 2] + 2 * (dx[n - 3] + dx[n - 2]))
-                             + dd[n - 3] * dx[n - 2] * dx[n - 2]) / (dx[n - 3] + dx[n - 2]);
+                dy[n - 1] = (dd[n - 2] * dx[n - 3] * (dx[n - 2] + 2 * l[n - 2])
+                             + dd[n - 3] * dx[n - 2] * dx[n - 2]) / l[n - 2];
             }
 
             int nrhs = 1;
