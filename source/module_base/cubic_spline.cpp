@@ -239,29 +239,24 @@ void CubicSpline::eval(
     std::transform(x_interp, x_interp + n_interp, _ind.begin(),
         [n, x](double x_i) { return _index(n, x, x_i); });
 
-    std::vector<double> buffer(n_interp * 8);
+    std::vector<double> buffer(n_interp * 5);
     double* _w = buffer.data();
     double* _c0 = _w + n_interp;
     double* _c1 = _c0 + n_interp;
     double* _c2 = _c1 + n_interp;
     double* _c3 = _c2 + n_interp;
-    double* _dx = _c3 + n_interp;
-    double* _dd = _dx + n_interp;
-    double* _c1p = _dd + n_interp;
-
-    std::transform(_ind.begin(), _ind.end(), x_interp, _w,
-        [x](int p, double x_i) { return x_i - x[p]; });
-    std::transform(_ind.begin(), _ind.end(), _c0, [y](int p) { return y[p]; });
-    std::transform(_ind.begin(), _ind.end(), _c1, [dy](int p) { return dy[p]; });
-    std::transform(_ind.begin(), _ind.end(), _c1p, [dy](int p) { return dy[p + 1]; });
-    std::transform(_ind.begin(), _ind.end(), _dx, [x](int p) { return x[p + 1] - x[p]; });
-    std::transform(_ind.begin(), _ind.end(), _dx, _dd,
-        [y](int p, double dx_p) { return (y[p + 1] - y[p]) / dx_p; });
 
     for (int i = 0; i < n_interp; ++i)
     {
-        _c2[i] = (3.0 * _dd[i] - 2.0 * _c1[i] - _c1p[i]) / _dx[i];
-        _c3[i] = (_c1[i] + _c1p[i] - 2.0 * _dd[i]) / (_dx[i] * _dx[i]);
+        int p = _ind[i];
+        double dx = x[p + 1] - x[p];
+        double inv_dx = 1.0 / dx;
+        double dd = (y[p + 1] - y[p]) * inv_dx;
+        _w[i] = x_interp[i] - x[p];
+        _c0[i] = y[p];
+        _c1[i] = dy[p];
+        _c3[i] = (_c1[i] + dy[p + 1] - 2.0 * dd) * inv_dx * inv_dx;
+        _c2[i] = (dd - _c1[i]) * inv_dx - _c3[i] * dx;
     }
 
     _cubic(n_interp, _w, _c0, _c1, _c2, _c3, y_interp, dy_interp, d2y_interp);
@@ -288,28 +283,24 @@ void CubicSpline::eval(
     std::transform(x_interp, x_interp + n_interp, _ind.begin(),
         [n, x0, dx](double x_i) { return _index(n, x0, dx, x_i); });
 
-    std::vector<double> buffer(n_interp * 7);
+    std::vector<double> buffer(n_interp * 5);
     double* _w = buffer.data();
     double* _c0 = _w + n_interp;
     double* _c1 = _c0 + n_interp;
     double* _c2 = _c1 + n_interp;
     double* _c3 = _c2 + n_interp;
-    double* _dd = _c3 + n_interp;
-    double* _c1p = _dd + n_interp;
 
-    std::transform(_ind.begin(), _ind.end(), x_interp, _w,
-        [x0, dx](int p, double x_i) { return x_i - x0 - p * dx; });
-    std::transform(_ind.begin(), _ind.end(), _c0, [y](int p) { return y[p]; });
-    std::transform(_ind.begin(), _ind.end(), _c1, [dy](int p) { return dy[p]; });
-    std::transform(_ind.begin(), _ind.end(), _c1p, [dy](int p) { return dy[p + 1]; });
-    std::transform(_ind.begin(), _ind.end(), _dd,
-        [dx, y](int p) { return (y[p + 1] - y[p]) / dx; });
-
-    double inv_dx = 1.0 / dx, inv_dx2 = inv_dx * inv_dx;
+    double inv_dx = 1.0 / dx;
+    double inv_dx2 = inv_dx * inv_dx;
     for (int i = 0; i < n_interp; ++i)
     {
-        _c2[i] = (3.0 * _dd[i] - 2.0 * _c1[i] - _c1p[i]) * inv_dx;
-        _c3[i] = (_c1[i] + _c1p[i] - 2.0 * _dd[i]) * inv_dx2;
+        int p = _ind[i];
+        double dd = (y[p + 1] - y[p]) * inv_dx;
+        _w[i] = x_interp[i] - x0 - p * dx;
+        _c0[i] = y[p];
+        _c1[i] = dy[p];
+        _c3[i] = (_c1[i] + dy[p + 1] - 2.0 * dd) * inv_dx2;
+        _c2[i] = (dd - _c1[i]) * inv_dx - _c3[i] * dx;
     }
 
     _cubic(n_interp, _w, _c0, _c1, _c2, _c3, y_interp, dy_interp, d2y_interp);
