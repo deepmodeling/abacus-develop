@@ -351,7 +351,7 @@ private:
     /// last knot
     double xmax_ = 0.0;
 
-    /// spacing between knots (used for evenly-space knots only)
+    /// spacing between knots (only used for evenly-spaced knots)
     double dx_ = 0.0;
 
     /// knots of the spline polynomial (remains empty for evenly-spaced knots)
@@ -529,9 +529,7 @@ private:
     /// Asserts that the input arguments are valid for interpolating a cubic spline.
     static void _validate_eval(
         int n,
-        double xmin,
-        double xmax,
-        double dx,
+        const double (&u)[2],
         const double* x,
         const double* y,
         const double* dy,
@@ -570,6 +568,6 @@ private:
     static void _solve_cyctri(int n, double* d, double* u, double* l, double* b);
 };
 
-}
+} // namespace ModuleBase
 
 #endif

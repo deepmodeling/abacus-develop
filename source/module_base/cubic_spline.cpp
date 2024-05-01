@@ -114,7 +114,8 @@ void CubicSpline::multi_eval(
 {
     assert(std::all_of(i_spline, i_spline + n_spline,
         [this](int i) { return 0 <= i && i < n_spline_; }));
-    _validate_eval(n_, xmin_, xmax_, dx_, x_.data(), y_.data(), &y_[n_], 1, &x_interp);
+    _validate_eval(n_, {xmin_, dx_}, x_.empty() ? nullptr : x_.data(),
+                   y_.data(), &y_[n_], 1, &x_interp);
 
     int p = 0;
     double dx = 0.0, r = 0.0; 
@@ -131,8 +132,8 @@ void CubicSpline::multi_eval(
         r = (x_interp - x_[p]) / dx;
     }
 
-    double r2 = r * r;
-    double r3 = r2 * r;
+    const double r2 = r * r;
+    const double r3 = r2 * r;
     double wy0 = 0.0, wy1 = 0.0, ws0 = 0.0, ws1 = 0.0;
     int offset = 0;
 
@@ -232,7 +233,7 @@ void CubicSpline::eval(
     double* d2y_interp
 )
 {
-    _validate_eval(n, x[0], x[n - 1], 0.0, x, y, dy, n_interp, x_interp);
+    _validate_eval(n, {}, x, y, dy, n_interp, x_interp);
 
     // indices of the polynomial segments that contain x_interp
     std::vector<int> _ind(n_interp);
@@ -276,7 +277,7 @@ void CubicSpline::eval(
     double* d2y_interp
 )
 {
-    _validate_eval(n, x0, x0 + (n - 1) * dx, dx, nullptr, y, dy, n_interp, x_interp);
+    _validate_eval(n, {x0, dx}, nullptr, y, dy, n_interp, x_interp);
 
     // indices of the polynomial segments that contain x_interp
     std::vector<int> _ind(n_interp);
@@ -336,9 +337,7 @@ void CubicSpline::_validate_build(
 
 void CubicSpline::_validate_eval(
     int n,
-    double xmin,
-    double xmax,
-    double dx,
+    const double (&u)[2],
     const double* x,
     const double* y,
     const double* dy,
@@ -347,12 +346,12 @@ void CubicSpline::_validate_eval(
 )
 {
     assert(n > 1 && y && dy);
-    assert((x && std::is_sorted(x, x + n, std::less_equal<double>())) || dx > 0.0);
+    assert((x && std::is_sorted(x, x + n, std::less_equal<double>())) || u[1] > 0.0);
 
     assert((n_interp > 0 && x_interp) || n_interp == 0);
 
-    //double xmin = x ? x[0] : x0;
-    //double xmax = x ? x[n - 1] : x0 + (n - 1) * dx;
+    double xmin = x ? x[0] : u[0];
+    double xmax = x ? x[n - 1] : u[0] + (n - 1) * u[1];
     assert(std::all_of(x_interp, x_interp + n_interp,
                        [xmin, xmax](double x_i) { return xmin <= x_i && x_i <= xmax; }));
 }
