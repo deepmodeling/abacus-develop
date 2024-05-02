@@ -2,6 +2,7 @@ name: CUDA Test
 
 on:
   workflow_dispatch:
+  pull_request:
 
 jobs:
   test:
@@ -23,6 +24,6 @@ jobs:
           cmake --install build
       - name: Test
         run: |
-          cd tests/gpu
-          bash Autotest.sh -n 2 -s true
+          cd tests/integrate
+          bash Autotest.sh -n 2 -r '^[^#].*_.*(?<=GPU)'
       # TODO: add tests
