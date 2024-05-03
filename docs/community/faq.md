@@ -80,6 +80,8 @@ If the program prompt something like "KILLED BY SIGNAL: 9 (Killed)", it may be c
 
 If the error message is "Segmentation fault", or there is no enough information on the error, please feel free to submit an issue.
 
+**4. Error "Read -1" when using mpirun in docker environment**
+This is a [known issue](https://github.com/open-mpi/ompi/issues/4948) of OpenMPI running in a docker container. In this case, please set environment variable `OMPI_MCA_btl_vader_single_copy_mechanism=none`.
 ## Miscellaneous
 
 **1. How to visualize charge density file?**

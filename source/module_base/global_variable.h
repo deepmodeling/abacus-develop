@@ -313,6 +313,9 @@ extern bool out_bandgap;
 extern int out_interval;
 
 extern bool out_mat_xc; // output Vxc in KS-wfc representation for GW calculation
+extern bool out_hr_npz; //writes h(r) in npz format
+extern bool out_dm_npz; //writes dm(r) in npz format
+extern bool dm_to_rho; //reads in dm(r) and creates density
 
 // Deltaspin related
 extern bool sc_mag_switch; // 0: no deltaspin; 1: constrain atomic magnetic moments;
