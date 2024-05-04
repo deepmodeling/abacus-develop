@@ -1,3 +1,8 @@
+'''
+This script generates reference data for the cross-check in cubic_spline_test.cpp.
+To add more tests, append a new Case object to the cases list.
+
+'''
 import numpy as np
 from scipy.interpolate import CubicSpline
 
