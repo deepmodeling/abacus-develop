@@ -19,16 +19,16 @@
  * @param CTOT Global matrix from which the submatrix is extracted.
  * @return int Always returns 0 as a success indicator.
  */
-inline int CTOT2q(int myid,
-                  int naroc[2],
-                  int nb,
-                  int dim0,
-                  int dim1,
-                  int iprow,
-                  int ipcol,
+inline int CTOT2q(const int myid,
+                  const int naroc[2],
+                  const int nb,
+                  const int dim0,
+                  const int dim1,
+                  const int iprow,
+                  const int ipcol,
                   const int nbands,
                   double* work,
-                  double** CTOT)
+                  double** const CTOT)
 {
     for (int j = 0; j < naroc[1]; ++j)
     {
@@ -40,7 +40,7 @@ inline int CTOT2q(int myid,
         for (int i = 0; i < naroc[0]; ++i)
         {
             int igrow = Local_Orbital_wfc::globalIndex(i, nb, dim0, iprow);
-            // GlobalV::ofs_running << "i,j,igcol,igrow" << i<<" "<<j<<" "<<igcol<<" "<<igrow<<std::endl;
+            // GlobalV::ofs_running << "i,j,igcol,igrow" << i << " " << j << " " << igcol << " " << igrow << std::endl;
             if (myid == 0)
             {
                 work[j * naroc[0] + i] = CTOT[igcol][igrow];
@@ -66,16 +66,16 @@ inline int CTOT2q(int myid,
  * @param CTOT Global matrix from which the submatrix is extracted.
  * @return int Always returns 0 as a success indicator.
  */
-inline int CTOT2q_c(int myid,
-                    int naroc[2],
-                    int nb,
-                    int dim0,
-                    int dim1,
-                    int iprow,
-                    int ipcol,
+inline int CTOT2q_c(const int myid,
+                    const int naroc[2],
+                    const int nb,
+                    const int dim0,
+                    const int dim1,
+                    const int iprow,
+                    const int ipcol,
                     const int nbands,
                     std::complex<double>* work,
-                    std::complex<double>** CTOT)
+                    std::complex<double>** const CTOT)
 {
     for (int j = 0; j < naroc[1]; ++j)
     {
@@ -87,7 +87,7 @@ inline int CTOT2q_c(int myid,
         for (int i = 0; i < naroc[0]; ++i)
         {
             int igrow = Local_Orbital_wfc::globalIndex(i, nb, dim0, iprow);
-            // ofs_running << "i,j,igcol,igrow" << i<<" "<<j<<" "<<igcol<<" "<<igrow<<std::endl;
+            // ofs_running << "i,j,igcol,igrow" << i << " " << j << " " << igcol << " " << igrow << std::endl;
             if (myid == 0)
             {
                 work[j * naroc[0] + i] = CTOT[igcol][igrow];
@@ -118,7 +118,6 @@ int ModuleIO::read_wfc_nao_complex(std::complex<double>** ctot,
     //	std::cout << " name is = " << ss.str() << std::endl;
 
     std::ifstream ifs;
-
     int error = 0;
 
     if (GlobalV::DRANK == 0)
@@ -144,9 +143,9 @@ int ModuleIO::read_wfc_nao_complex(std::complex<double>** ctot,
 
     if (GlobalV::MY_RANK == 0)
     {
-        int ikr;
-        double kx, ky, kz;
-        int nbands, nlocal;
+        int ikr = 0;
+        double kx = 0.0, ky = 0.0, kz = 0.0;
+        int nbands = 0, nlocal = 0;
         ModuleBase::GlobalFunc::READ_VALUE(ifs, ikr);
         ifs >> kx >> ky >> kz;
         ModuleBase::GlobalFunc::READ_VALUE(ifs, nbands);
@@ -162,7 +161,7 @@ int ModuleIO::read_wfc_nao_complex(std::complex<double>** ctot,
                  || std::abs(kz - kvec_c.z) > 1.0e-5)
         {
             GlobalV::ofs_warning << " k std::vector is not correct" << std::endl;
-            GlobalV::ofs_warning << " Read in kx=" << kx << " ky = " << ky << " kz = " << kz << std::endl;
+            GlobalV::ofs_warning << " Read in kx=" << kx << " ky=" << ky << " kz=" << kz << std::endl;
             GlobalV::ofs_warning << " In fact, kx=" << kvec_c.x << " ky=" << kvec_c.y << " kz=" << kvec_c.z
                                  << std::endl;
             error = 4;
@@ -188,7 +187,7 @@ int ModuleIO::read_wfc_nao_complex(std::complex<double>** ctot,
 
         for (int i = 0; i < nbands_g; ++i)
         {
-            int ib;
+            int ib = 0;
             ModuleBase::GlobalFunc::READ_VALUE(ifs, ib);
             ib -= 1; // because in C++, ib should start from 0
             //------------------------------------------------
@@ -198,7 +197,7 @@ int ModuleIO::read_wfc_nao_complex(std::complex<double>** ctot,
             ModuleBase::GlobalFunc::READ_VALUE(ifs, pelec->ekb(ik, ib));
             ModuleBase::GlobalFunc::READ_VALUE(ifs, pelec->wg(ik, ib));
             assert(i == ib);
-            double a, b;
+            double a = 0.0, b = 0.0;
             for (int j = 0; j < nlocal_g; ++j)
             {
                 ifs >> a >> b;
@@ -212,6 +211,7 @@ int ModuleIO::read_wfc_nao_complex(std::complex<double>** ctot,
     Parallel_Common::bcast_int(error);
     Parallel_Common::bcast_double(&pelec->wg.c[ik * pelec->wg.nc], pelec->wg.nc);
 #endif
+
     if (error == 2)
     {
         return 2;
@@ -313,7 +313,7 @@ int ModuleIO::read_wfc_nao(double** ctot,
 
     if (GlobalV::MY_RANK == 0)
     {
-        int nbands, nlocal;
+        int nbands = 0, nlocal = 0;
         ModuleBase::GlobalFunc::READ_VALUE(ifs, nbands);
         ModuleBase::GlobalFunc::READ_VALUE(ifs, nlocal);
 
@@ -342,7 +342,7 @@ int ModuleIO::read_wfc_nao(double** ctot,
 
         for (int i = 0; i < nbands_g; i++)
         {
-            int ib;
+            int ib = 0;
             ModuleBase::GlobalFunc::READ_VALUE(ifs, ib);
             ModuleBase::GlobalFunc::READ_VALUE(ifs, pelec->ekb(is, i));
             ModuleBase::GlobalFunc::READ_VALUE(ifs, pelec->wg(is, i));
@@ -405,12 +405,12 @@ void ModuleIO::distri_wfc_nao(double** ctot,
 
     // 1. alloc work array; set some parameters
 
-    long maxnloc; // maximum number of elements in local matrix
+    long maxnloc = 0; // maximum number of elements in local matrix
     MPI_Reduce(&ParaV->nloc_wfc, &maxnloc, 1, MPI_LONG, MPI_MAX, 0, ParaV->comm_2D);
     MPI_Bcast(&maxnloc, 1, MPI_LONG, 0, ParaV->comm_2D);
     // reduce and bcast could be replaced by allreduce
 
-    int nprocs, myid;
+    int nprocs = 0, myid = 0;
     MPI_Comm_size(ParaV->comm_2D, &nprocs);
     MPI_Comm_rank(ParaV->comm_2D, &myid);
 
@@ -418,8 +418,8 @@ void ModuleIO::distri_wfc_nao(double** ctot,
 #ifdef __DEBUG
     assert(nb2d > 0);
 #endif
-    int nb = nb2d;
-    int info;
+    const int nb = nb2d;
+    int info = 0;
     int naroc[2]; // maximum number of row or column
 
     // 2. copy from ctot to psi
@@ -429,7 +429,7 @@ void ModuleIO::distri_wfc_nao(double** ctot,
         {
             // 2.1 get and bcast local 2d matrix info
             const int coord[2] = {iprow, ipcol};
-            int src_rank;
+            int src_rank = 0;
             MPI_Cart_rank(ParaV->comm_2D, coord, &src_rank);
             if (myid == src_rank)
             {
@@ -481,12 +481,12 @@ void ModuleIO::distri_wfc_nao_complex(std::complex<double>** ctot,
 
     // 1. alloc work array; set some parameters
 
-    long maxnloc; // maximum number of elements in local matrix
+    long maxnloc = 0; // maximum number of elements in local matrix
     MPI_Reduce(&ParaV->nloc_wfc, &maxnloc, 1, MPI_LONG, MPI_MAX, 0, ParaV->comm_2D);
     MPI_Bcast(&maxnloc, 1, MPI_LONG, 0, ParaV->comm_2D);
     // reduce and bcast could be replaced by allreduce
 
-    int nprocs, myid;
+    int nprocs = 0, myid = 0;
     MPI_Comm_size(ParaV->comm_2D, &nprocs);
     MPI_Comm_rank(ParaV->comm_2D, &myid);
 
@@ -494,8 +494,8 @@ void ModuleIO::distri_wfc_nao_complex(std::complex<double>** ctot,
 #ifdef __DEBUG
     assert(nb2d > 0);
 #endif
-    int nb = nb2d;
-    int info;
+    const int nb = nb2d;
+    int info = 0;
     int naroc[2]; // maximum number of row or column
 
     // 2. copy from ctot to psi
@@ -505,7 +505,7 @@ void ModuleIO::distri_wfc_nao_complex(std::complex<double>** ctot,
         {
             // 2.1 get and bcast local 2d matrix info
             const int coord[2] = {iprow, ipcol};
-            int src_rank;
+            int src_rank = 0;
             MPI_Cart_rank(ParaV->comm_2D, coord, &src_rank);
             if (myid == src_rank)
             {
