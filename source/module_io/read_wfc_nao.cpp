@@ -3,6 +3,22 @@
 #include "module_base/parallel_common.h"
 #include "module_base/timer.h"
 
+/**
+ * @brief Extracts a submatrix from a global orbital coefficient matrix and stores it in a linear array.
+ *        This function is designed for real-valued matrices.
+ *
+ * @param myid The rank of the current MPI process.
+ * @param naroc Array with two elements: number of rows and columns this process is responsible for.
+ * @param nb Block size used in the global index calculation.
+ * @param dim0 Global number of rows in the matrix.
+ * @param dim1 Global number of columns in the matrix.
+ * @param iprow The row index in the process grid.
+ * @param ipcol The column index in the process grid.
+ * @param nbands Total number of bands (relevant matrix columns) involved in the computation.
+ * @param work Output array where the submatrix will be stored linearly.
+ * @param CTOT Global matrix from which the submatrix is extracted.
+ * @return int Always returns 0 as a success indicator.
+ */
 inline int CTOT2q(int myid,
                   int naroc[2],
                   int nb,
@@ -18,18 +34,38 @@ inline int CTOT2q(int myid,
     {
         int igcol = Local_Orbital_wfc::globalIndex(j, nb, dim1, ipcol);
         if (igcol >= nbands)
+        {
             continue;
+        }
         for (int i = 0; i < naroc[0]; ++i)
         {
             int igrow = Local_Orbital_wfc::globalIndex(i, nb, dim0, iprow);
             // GlobalV::ofs_running << "i,j,igcol,igrow" << i<<" "<<j<<" "<<igcol<<" "<<igrow<<std::endl;
             if (myid == 0)
+            {
                 work[j * naroc[0] + i] = CTOT[igcol][igrow];
+            }
         }
     }
     return 0;
 }
 
+/**
+ * @brief Extracts a submatrix from a global orbital coefficient matrix and stores it in a linear array.
+ *        This function is designed for complex-valued matrices.
+ *
+ * @param myid The rank of the current MPI process.
+ * @param naroc Array with two elements: number of rows and columns this process is responsible for.
+ * @param nb Block size used in the global index calculation.
+ * @param dim0 Global number of rows in the matrix.
+ * @param dim1 Global number of columns in the matrix.
+ * @param iprow The row index in the process grid.
+ * @param ipcol The column index in the process grid.
+ * @param nbands Total number of bands (relevant matrix columns) involved in the computation.
+ * @param work Output array where the submatrix will be stored linearly.
+ * @param CTOT Global matrix from which the submatrix is extracted.
+ * @return int Always returns 0 as a success indicator.
+ */
 inline int CTOT2q_c(int myid,
                     int naroc[2],
                     int nb,
@@ -45,13 +81,17 @@ inline int CTOT2q_c(int myid,
     {
         int igcol = Local_Orbital_wfc::globalIndex(j, nb, dim1, ipcol);
         if (igcol >= nbands)
+        {
             continue;
+        }
         for (int i = 0; i < naroc[0]; ++i)
         {
             int igrow = Local_Orbital_wfc::globalIndex(i, nb, dim0, iprow);
             // ofs_running << "i,j,igcol,igrow" << i<<" "<<j<<" "<<igcol<<" "<<igrow<<std::endl;
             if (myid == 0)
+            {
                 work[j * naroc[0] + i] = CTOT[igcol][igrow];
+            }
         }
     }
     return 0;
@@ -96,7 +136,9 @@ int ModuleIO::read_wfc_nao_complex(std::complex<double>** ctot,
 #endif
 
     if (error == 1)
+    {
         return 1;
+    }
 
     // otherwise, find the file.
 
@@ -171,11 +213,17 @@ int ModuleIO::read_wfc_nao_complex(std::complex<double>** ctot,
     Parallel_Common::bcast_double(&pelec->wg.c[ik * pelec->wg.nc], pelec->wg.nc);
 #endif
     if (error == 2)
+    {
         return 2;
+    }
     if (error == 3)
+    {
         return 3;
+    }
     if (error == 4)
+    {
         return 4;
+    }
 
     ModuleIO::distri_wfc_nao_complex(ctot, ik, nb2d, nbands_g, ParaV, psi);
 
@@ -257,7 +305,9 @@ int ModuleIO::read_wfc_nao(double** ctot,
 #endif
 
     if (error == 1)
+    {
         return 1;
+    }
 
     // otherwise, find the file.
 
@@ -313,9 +363,13 @@ int ModuleIO::read_wfc_nao(double** ctot,
     Parallel_Common::bcast_double(&(pelec->wg(is, 0)), nbands_g);
 #endif
     if (error == 2)
+    {
         return 2;
+    }
     if (error == 3)
+    {
         return 3;
+    }
 
     ModuleIO::distri_wfc_nao(ctot, is, nb2d, nbands_g, nlocal_g, ParaV, psid);
 
@@ -384,7 +438,7 @@ void ModuleIO::distri_wfc_nao(double** ctot,
             }
             info = MPI_Bcast(naroc, 2, MPI_INT, src_rank, ParaV->comm_2D);
 
-            // 2.2 copy from ctot to work, then bcast work
+            // 2.2 copy from nctot to work, then bcast work
             info = CTOT2q(myid, naroc, nb, ParaV->dim0, ParaV->dim1, iprow, ipcol, nbands_g, work, ctot);
             info = MPI_Bcast(work, maxnloc, MPI_DOUBLE, 0, ParaV->comm_2D);
             // GlobalV::ofs_running << "iprow, ipcow : " << iprow << ipcol << std::endl;
