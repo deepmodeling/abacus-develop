@@ -6,7 +6,6 @@
 #include "module_base/parallel_common.h"
 #include "module_base/scalapack_connector.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_io/input_conv.h"
 #include "module_io/rho_io.h"
 
 IState_Charge::IState_Charge(psi::Psi<double>* psi_gamma_in, Local_Orbital_Charge& loc_in)
@@ -19,11 +18,20 @@ IState_Charge::~IState_Charge()
 }
 
 void IState_Charge::begin(Gint_Gamma& gg,
-                          elecstate::ElecState* pelec,
-                          const ModulePW::PW_Basis* rhopw,
-                          const ModulePW::PW_Basis_Big* bigpw,
+                          double** rho,
+                          const ModuleBase::matrix& wg,
+                          const std::vector<double>& ef_all_spin,
+                          const int rhopw_nrxx,
+                          const int rhopw_nplane,
+                          const int rhopw_startz_current,
+                          const int rhopw_nx,
+                          const int rhopw_ny,
+                          const int rhopw_nz,
+                          const int bigpw_bz,
+                          const int bigpw_nbz,
                           const bool gamma_only_local,
                           const int nbands_istate,
+                          const std::vector<int>& out_band_kb,
                           const int nbands,
                           const double nelec,
                           const int nspin,
@@ -41,17 +49,14 @@ void IState_Charge::begin(Gint_Gamma& gg,
         ModuleBase::WARNING_QUIT("IState_Charge::begin", "Only available for GAMMA_ONLY_LOCAL now.");
     }
 
-    // Get bands_to_print through public function of INPUT (returns a const pointer to string)
-    std::string bands_to_print = *INPUT.get_bands_to_print();
-
     int mode = 0;
-    if (nbands_istate > 0 && bands_to_print.empty())
+    if (nbands_istate > 0 && static_cast<int>(out_band_kb.size()) == 0)
     {
         mode = 1;
     }
-    else if (!bands_to_print.empty())
+    else if (static_cast<int>(out_band_kb.size()) > 0)
     {
-        // If bands_to_print is not empty, set mode to 2
+        // If out_band_kb (bands_to_print) is not empty, set mode to 2
         mode = 2;
         std::cout << " Notice: INPUT parameter `nbands_istate` overwritten by `bands_to_print`!" << std::endl;
     }
@@ -63,8 +68,6 @@ void IState_Charge::begin(Gint_Gamma& gg,
     int fermi_band = 0;
     int bands_below = 0;
     int bands_above = 0;
-    std::vector<double> out_band_kb;
-    Input_Conv::parse_expression(bands_to_print, out_band_kb);
 
     // (2) cicle:
     // (2.1) calculate the selected density matrix from wave functions.
@@ -124,14 +127,13 @@ void IState_Charge::begin(Gint_Gamma& gg,
                     "The elements of `bands_to_print` must be either 0 or 1. Invalid values found!");
             }
         }
-        // Fill bands_picked_ with values from out_band_kb, converting to int
+        // Fill bands_picked_ with values from out_band_kb
         // Remaining bands are already set to 0
         int length = std::min(static_cast<int>(out_band_kb.size()), nbands);
         for (int i = 0; i < length; ++i)
         {
             // out_band_kb rely on function parse_expression from input_conv.cpp
-            // Initially designed for ocp_set, which can be double
-            bands_picked_[i] = static_cast<int>(out_band_kb[i]);
+            bands_picked_[i] = out_band_kb[i];
         }
 
         std::cout << " Plot band decomposed charge density below the Fermi surface: band ";
@@ -197,44 +199,64 @@ void IState_Charge::begin(Gint_Gamma& gg,
             // band, whenever it is occupied or not.
 
 #ifdef __MPI
-            this->idmatrix(ib, pelec, nspin, nelec, nlocal);
+            this->idmatrix(ib, nspin, nelec, nlocal, wg);
 #endif
             // (2) zero out of charge density array.
             for (int is = 0; is < nspin; ++is)
             {
-                ModuleBase::GlobalFunc::ZEROS(pelec->charge->rho[is], rhopw->nrxx);
+                ModuleBase::GlobalFunc::ZEROS(rho[is], rhopw_nrxx);
             }
 
             // (3) calculate charge density for a particular
             // band.
-            Gint_inout inout(this->loc->DM, pelec->charge->rho, Gint_Tools::job_type::rho);
+            Gint_inout inout(this->loc->DM, rho, Gint_Tools::job_type::rho);
             gg.cal_gint(&inout);
-            pelec->charge->save_rho_before_sum_band(); // xiaohui add 2014-12-09
+
+            // A solution to replace the original implementation of the following code:
+            // pelec->charge->save_rho_before_sum_band();
+            double** rho_save = new double*[nspin]; // Initialize an array of pointers
+            for (int is = 0; is < nspin; is++)
+            {
+                rho_save[is] = new double[rhopw_nrxx]; // Allocate memory for each internal array
+                ModuleBase::GlobalFunc::DCOPY(rho[is], rho_save[is],
+                                              rhopw_nrxx); // Copy data after allocation
+            }
+
             std::stringstream ssc;
             ssc << global_out_dir << "BAND" << ib + 1;
             // 0 means definitely output charge density.
             for (int is = 0; is < nspin; ++is)
             {
                 ssc << "_SPIN" << is << "_CHG.cube";
-                const double ef_tmp = pelec->eferm.get_efval(is);
+
+                // Use a const vector to store efermi for all spins, replace the original implementation:
+                // const double ef_tmp = pelec->eferm.get_efval(is);
+                double ef_spin = ef_all_spin[is];
                 ModuleIO::write_rho(
 #ifdef __MPI
-                    bigpw->bz,
-                    bigpw->nbz,
-                    rhopw->nplane,
-                    rhopw->startz_current,
+                    bigpw_bz,
+                    bigpw_nbz,
+                    rhopw_nplane,
+                    rhopw_startz_current,
 #endif
-                    pelec->charge->rho_save[is],
+                    rho_save[is],
                     is,
                     nspin,
                     0,
                     ssc.str(),
-                    rhopw->nx,
-                    rhopw->ny,
-                    rhopw->nz,
-                    ef_tmp,
+                    rhopw_nx,
+                    rhopw_ny,
+                    rhopw_nz,
+                    ef_spin,
                     &(GlobalC::ucell));
             }
+
+            // Release memory of rho_save
+            for (int is = 0; is < nspin; is++)
+            {
+                delete[] rho_save[is]; // Release memory of each internal array
+            }
+            delete[] rho_save; // Release memory of the array of pointers
         }
     }
 
@@ -243,54 +265,48 @@ void IState_Charge::begin(Gint_Gamma& gg,
 
 #ifdef __MPI
 void IState_Charge::idmatrix(const int& ib,
-                             elecstate::ElecState* pelec,
                              const int nspin,
                              const double nelec,
-                             const int nlocal)
+                             const int nlocal,
+                             const ModuleBase::matrix& wg)
 {
     ModuleBase::TITLE("IState_Charge", "idmatrix");
+    assert(wg.nr == nspin);
 
-    assert(pelec->wg.nr == nspin);
-    for (int is = 0; is != nspin; ++is)
+    int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
+
+    for (int is = 0; is < nspin; ++is)
     {
         std::vector<double> wg_local(this->loc->ParaV->ncol, 0.0);
         const int ib_local = this->loc->ParaV->global2local_col(ib);
 
-        int fermi_band = 0;
-        fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
-
         if (ib_local >= 0)
         {
-            if (ib < fermi_band)
-            {
-                wg_local[ib_local] = pelec->wg(is, ib);
-            }
-            else
-            {
-                wg_local[ib_local] = pelec->wg(is, fermi_band - 1);
-            } // unoccupied bands, use occupation of homo
+            // For unoccupied bands, use occupation of HOMO
+            wg_local[ib_local] = (ib < fermi_band) ? wg(is, ib) : wg(is, fermi_band - 1);
         }
 
-        // wg_wfc(ib,iw) = pelec->wg[ib] * wfc(ib,iw);
+        // wg_wfc(ib,iw) = wg[ib] * wfc(ib,iw);
         this->psi_gamma->fix_k(is);
-        psi::Psi<double> wg_wfc(this->psi_gamma[0], 1);
+        psi::Psi<double> wg_wfc(*this->psi_gamma, 1);
 
-        for (int ir = 0; ir != wg_wfc.get_nbands(); ++ir)
+        for (int ir = 0; ir < wg_wfc.get_nbands(); ++ir)
         {
             BlasConnector::scal(wg_wfc.get_nbasis(), wg_local[ir], wg_wfc.get_pointer() + ir * wg_wfc.get_nbasis(), 1);
         }
 
-        // C++: dm(iw1,iw2) = wfc(ib,iw1).T * wg_wfc(ib,iw2)
+        // dm(iw1,iw2) = wfc(ib,iw1).T * wg_wfc(ib,iw2)
         const double one_float = 1.0, zero_float = 0.0;
         const int one_int = 1;
         const char N_char = 'N', T_char = 'T';
+
         this->loc->dm_gamma.at(is).create(wg_wfc.get_nbands(), wg_wfc.get_nbasis());
 
         pdgemm_(&N_char,
                 &T_char,
                 &nlocal,
                 &nlocal,
-                &pelec->wg.nc,
+                &wg.nc,
                 &one_float,
                 wg_wfc.get_pointer(),
                 &one_int,
@@ -307,10 +323,8 @@ void IState_Charge::idmatrix(const int& ib,
                 this->loc->ParaV->desc);
     }
 
-    std::cout << " finished calc dm_2d : " << std::endl;
-
+    std::cout << " Finished calculating dm_2d." << std::endl;
     this->loc->cal_dk_gamma_from_2D_pub();
-
-    std::cout << " finished convert : " << std::endl;
+    std::cout << " Finished converting dm_2d to dk_gamma." << std::endl;
 }
 #endif
