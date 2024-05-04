@@ -144,6 +144,9 @@ void Charge::set_rhopw(ModulePW::PW_Basis*)
 void Charge::renormalize_rho()
 {
 }
+void Charge::check_rho()
+{
+}
 
 void Set_GlobalV_Default()
 {

@@ -438,7 +438,7 @@ These variables are used to control general system parameters.
 
 - **Type**: Integer
 - **Description**: takes value 1, 0 or -1.
-  - -1: No symmetry will be considered.
+  - -1: No symmetry will be considered. It is recommended to set -1 for non-colinear + soc calculations, where time reversal symmetry is broken sometimes.
   - 0: Only time reversal symmetry would be considered in symmetry operations, which implied k point and -k point would be treated as a single k point with twice the weight.
   - 1: Symmetry analysis will be performed to determine the type of Bravais lattice and associated symmetry operations. (point groups, space groups, primitive cells, and irreducible k-points)
 - **Default**: 
@@ -1605,6 +1605,20 @@ These variables are used to control the output of properties.
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis
 - **Description**: Whether to print the upper triangular part of the exchange-correlation matrices in **Kohn-Sham orbital representation** (unit: Ry): $\braket{\psi_i|V_\text{xc}^\text{(semi-)local}+V_\text{exx}+V_\text{DFTU}|\psi_j}$ for each k point into files in the directory `OUT.${suffix}`, which is useful for the subsequent GW calculation. (Note that currently DeePKS term is not included. ) The files are named `k-$k-Vxc`, the meaning of `$k`corresponding to k point and spin  is same as [hs_matrix.md](../elec_properties/hs_matrix.md#out_mat_hs).
+- **Default**: False
+
+### out_hr_npz/out_dm_npz
+
+- **Type**: Boolean
+- **Availability**: Numerical atomic orbital basis
+- **Description**: Whether to print Hamiltonian matrices H(R)/density matrics DM(R) in npz format. This feature does not work for gamma-only calculations. Currently only intended for internal usage.
+- **Default**: False
+
+### dm_to_rho
+
+- **Type**: Boolean
+- **Availability**: Numerical atomic orbital basis
+- **Description**: Reads density matrix DM(R) in npz format and creates electron density on grids. This feature does not work for gamma-only calculations. Only supports serial calculations. Currently only intended for internal usage.
 - **Default**: False
 
 ### out_app_flag

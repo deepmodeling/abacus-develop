@@ -271,6 +271,9 @@ class Input
     bool out_proj_band; // projected band structure calculation jiyy add 2022-05-11
     std::vector<int> out_mat_hs; // output H matrix and S matrix in local basis.
     bool out_mat_xc; // output exchange-correlation matrix in KS-orbital representation.
+    bool out_hr_npz;// output exchange-correlation matrix in KS-orbital representation.
+    bool out_dm_npz;
+    bool dm_to_rho;
     bool cal_syns; // calculate asynchronous S matrix to output
     double dmax; // maximum displacement of all atoms in one step (bohr)
     bool out_mat_hs2; // LiuXh add 2019-07-16, output H(R) matrix and S(R) matrix in local basis.

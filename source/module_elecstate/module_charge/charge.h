@@ -98,9 +98,11 @@ class Charge
         double *rhocg
     ) const;
 
-	double check_ne(const double *rho_in) const;
+	double cal_rho2ne(const double *rho_in) const;
 
-    void init_final_scf(); //LiuXh add 20180619
+  void check_rho(); // to check whether the charge density is normal
+
+  void init_final_scf(); //LiuXh add 20180619
 
 	public:
     /**
