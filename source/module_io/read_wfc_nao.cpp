@@ -273,7 +273,7 @@ int ModuleIO::read_wfc_nao(double** ctot,
             GlobalV::ofs_warning << " NBANDS=" << nbands_g << std::endl;
             error = 2;
             ModuleBase::WARNING_QUIT("ModuleIO::read_wfc_nao",
-                                     "The nbands read in from file do not match the global NBANDS!");
+                                     "The nbands read in from file do not match the global parameter NBANDS!");
         }
         else if (nlocal != nlocal_g)
         {
@@ -281,7 +281,7 @@ int ModuleIO::read_wfc_nao(double** ctot,
             GlobalV::ofs_warning << " NLOCAL=" << nlocal_g << std::endl;
             error = 3;
             ModuleBase::WARNING_QUIT("ModuleIO::read_wfc_nao",
-                                     "The nlocal read in from file do not match the global NLOCAL!");
+                                     "The nlocal read in from file do not match the global parameter NLOCAL!");
         }
 
         ctot = new double*[nbands_g];
