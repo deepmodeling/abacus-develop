@@ -7,7 +7,7 @@ on:
 
 jobs:
   build_container_and_push:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     if: github.repository_owner == 'deepmodeling'
     strategy:
       matrix:
