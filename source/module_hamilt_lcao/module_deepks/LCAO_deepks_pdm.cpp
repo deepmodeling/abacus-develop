@@ -34,7 +34,20 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<double, double
 {
     ModuleBase::TITLE("LCAO_Deepks", "cal_projected_DM");
 
-    const int pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);
+    int pdm_size;
+    if(!if_equiv)
+    {
+        pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);
+    }
+    else
+    {
+        int nproj = 0;
+        for(int il = 0; il < this->lmaxd + 1; il++)
+        {
+            nproj += (2 * il + 1) * orb.Alpha[0].getNchi(il);
+        }
+        pdm_size = nproj * nproj;
+    }
     if (GlobalV::init_chg == "file" && !this->init_pdm) //for DeePKS NSCF calculation 
     {
         std::ifstream ifs("pdm.dat");
@@ -80,23 +93,42 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<double, double
             //trace alpha orbital
             std::vector<int> trace_alpha_row;
             std::vector<int> trace_alpha_col;
-            int ib=0;
-            for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)
+            if(!if_equiv)
             {
-                for (int N0 = 0;N0 < orb.Alpha[0].getNchi(L0);++N0)
+                int ib=0;
+                for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)
                 {
-                    const int inl = this->inl_index[T0](I0, L0, N0);
-                    const int nm = 2*L0+1;
-            
-                    for (int m1=0; m1<nm; ++m1) // m1 = 1 for s, 3 for p, 5 for d
+                    for (int N0 = 0;N0 < orb.Alpha[0].getNchi(L0);++N0)
                     {
-                        for (int m2=0; m2<nm; ++m2) // m1 = 1 for s, 3 for p, 5 for d
+                        const int inl = this->inl_index[T0](I0, L0, N0);
+                        const int nm = 2*L0+1;
+                
+                        for (int m1=0; m1<nm; ++m1) // m1 = 1 for s, 3 for p, 5 for d
                         {
-                            trace_alpha_row.push_back(ib+m1);
-                            trace_alpha_col.push_back(ib+m2);
+                            for (int m2=0; m2<nm; ++m2) // m1 = 1 for s, 3 for p, 5 for d
+                            {
+                                trace_alpha_row.push_back(ib+m1);
+                                trace_alpha_col.push_back(ib+m2);
+                            }
                         }
+                        ib+=nm;
                     }
-                    ib+=nm;
+                }
+            }
+            else
+            {
+                int nproj = 0;
+                for(int il = 0; il < this->lmaxd + 1; il++)
+                {
+                    nproj += (2 * il + 1) * orb.Alpha[0].getNchi(il);
+                }
+                for(int iproj = 0; iproj < nproj; iproj ++)
+                {
+                    for(int jproj = 0; jproj < nproj; jproj ++)
+                    {
+                        trace_alpha_row.push_back(iproj);
+                        trace_alpha_col.push_back(jproj);
+                    }
                 }
             }
             const int trace_alpha_size = trace_alpha_row.size();
@@ -199,25 +231,46 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<double, double
                         &row_size);
 				}//ad2
                 // do dot of g_1dmt and s_1t to get orbital_pdm_shell
-                int ib=0, index=0, inc=1;
-                for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)
+                if(!if_equiv)
                 {
-                    for (int N0 = 0;N0 < orb.Alpha[0].getNchi(L0);++N0)
+                    int ib=0, index=0, inc=1;
+                    for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)
                     {
-                        const int inl = this->inl_index[T0](I0, L0, N0);
-                        const int nm = 2*L0+1;
-                
-                        for (int m1=0; m1<nm; ++m1) // m1 = 1 for s, 3 for p, 5 for d
+                        for (int N0 = 0;N0 < orb.Alpha[0].getNchi(L0);++N0)
                         {
-                            for (int m2=0; m2<nm; ++m2) // m1 = 1 for s, 3 for p, 5 for d
+                            const int inl = this->inl_index[T0](I0, L0, N0);
+                            const int nm = 2*L0+1;
+                    
+                            for (int m1=0; m1<nm; ++m1) // m1 = 1 for s, 3 for p, 5 for d
                             {
-                                int ind = m1*nm + m2;
-                                pdm[inl][ind] += 
-                                    ddot_(&row_size, g_1dmt.data()+index*row_size, &inc, s_1t.data()+index*row_size, &inc);
-                                index++;
+                                for (int m2=0; m2<nm; ++m2) // m1 = 1 for s, 3 for p, 5 for d
+                                {
+                                    int ind = m1*nm + m2;
+                                    pdm[inl][ind] += 
+                                        ddot_(&row_size, g_1dmt.data()+index*row_size, &inc, s_1t.data()+index*row_size, &inc);
+                                    index++;
+                                }
                             }
+                            ib+=nm;
                         }
-                        ib+=nm;
+                    }
+                }
+                else
+                {
+                    int index = 0, inc=1;
+                    int nproj = 0;
+                    for(int il = 0; il < this->lmaxd + 1; il++)
+                    {
+                        nproj += (2 * il + 1) * orb.Alpha[0].getNchi(il);
+                    }
+                    for(int iproj = 0; iproj < nproj; iproj ++)
+                    {
+                        for(int jproj = 0; jproj < nproj; jproj ++)
+                        {
+                            pdm[iat][iproj * nproj + jproj] += 
+                                ddot_(&row_size, g_1dmt.data()+index*row_size, &inc, s_1t.data()+index*row_size, &inc);
+                            index ++;
+                        }
                     }
                 }
 			}//ad1
@@ -234,11 +287,23 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<double, double
 void LCAO_Deepks::cal_projected_DM_k(const elecstate::DensityMatrix<std::complex<double>, double>* dm,
     const UnitCell &ucell,
     const LCAO_Orbitals &orb,
-    Grid_Driver& GridD,
-    const int nks,
-    const std::vector<ModuleBase::Vector3<double>> &kvec_d)
+    Grid_Driver& GridD)
 {
-    const int pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);
+
+    int pdm_size;
+    if(!if_equiv)
+    {
+        pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);
+    }
+    else
+    {
+        int nproj = 0;
+        for(int il = 0; il < this->lmaxd + 1; il++)
+        {
+            nproj += (2 * il + 1) * orb.Alpha[0].getNchi(il);
+        }
+        pdm_size = nproj * nproj;        
+    }
 
     if (GlobalV::init_chg == "file" && !this->init_pdm) //for DeePKS NSCF calculation 
     {
@@ -285,24 +350,43 @@ void LCAO_Deepks::cal_projected_DM_k(const elecstate::DensityMatrix<std::complex
             //trace alpha orbital
             std::vector<int> trace_alpha_row;
             std::vector<int> trace_alpha_col;
-            int ib=0;
-            for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)
+            if(!if_equiv)
             {
-                for (int N0 = 0;N0 < orb.Alpha[0].getNchi(L0);++N0)
+                int ib=0;
+                for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)
                 {
-                    const int inl = this->inl_index[T0](I0, L0, N0);
-                    const int nm = 2*L0+1;
-            
-                    for (int m1=0; m1<nm; ++m1) // m1 = 1 for s, 3 for p, 5 for d
+                    for (int N0 = 0;N0 < orb.Alpha[0].getNchi(L0);++N0)
                     {
-                        for (int m2=0; m2<nm; ++m2) // m1 = 1 for s, 3 for p, 5 for d
+                        const int inl = this->inl_index[T0](I0, L0, N0);
+                        const int nm = 2*L0+1;
+                
+                        for (int m1=0; m1<nm; ++m1) // m1 = 1 for s, 3 for p, 5 for d
                         {
-                            trace_alpha_row.push_back(ib+m1);
-                            trace_alpha_col.push_back(ib+m2);
+                            for (int m2=0; m2<nm; ++m2) // m1 = 1 for s, 3 for p, 5 for d
+                            {
+                                trace_alpha_row.push_back(ib+m1);
+                                trace_alpha_col.push_back(ib+m2);
+                            }
                         }
+                        ib+=nm;
                     }
-                    ib+=nm;
                 }
+            }
+            else
+            {
+                int nproj = 0;
+                for(int il = 0; il < this->lmaxd + 1; il++)
+                {
+                    nproj += (2 * il + 1) * orb.Alpha[0].getNchi(il);
+                }
+                for(int iproj = 0; iproj < nproj; iproj ++)
+                {
+                    for(int jproj = 0; jproj < nproj; jproj ++)
+                    {
+                        trace_alpha_row.push_back(iproj);
+                        trace_alpha_col.push_back(jproj);
+                    }
+                }                
             }
             const int trace_alpha_size = trace_alpha_row.size();
 
@@ -411,26 +495,47 @@ void LCAO_Deepks::cal_projected_DM_k(const elecstate::DensityMatrix<std::complex
                         &row_size);
 				}//ad2
                 // do dot of g_1dmt and s_1t to get orbital_pdm_shell
-                int ib=0, index=0, inc=1;
-                for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)
+                if(!if_equiv)
                 {
-                    for (int N0 = 0;N0 < orb.Alpha[0].getNchi(L0);++N0)
+                    int ib=0, index=0, inc=1;
+                    for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)
                     {
-                        const int inl = this->inl_index[T0](I0, L0, N0);
-                        const int nm = 2*L0+1;
-                
-                        for (int m1=0; m1<nm; ++m1) // m1 = 1 for s, 3 for p, 5 for d
+                        for (int N0 = 0;N0 < orb.Alpha[0].getNchi(L0);++N0)
                         {
-                            for (int m2=0; m2<nm; ++m2) // m1 = 1 for s, 3 for p, 5 for d
+                            const int inl = this->inl_index[T0](I0, L0, N0);
+                            const int nm = 2*L0+1;
+                    
+                            for (int m1=0; m1<nm; ++m1) // m1 = 1 for s, 3 for p, 5 for d
                             {
-                                int ind = m1*nm + m2;
-                                pdm[inl][ind] += 
-                                    ddot_(&row_size, g_1dmt.data()+index*row_size, &inc, s_1t.data()+index*row_size, &inc);
-                                index++;
+                                for (int m2=0; m2<nm; ++m2) // m1 = 1 for s, 3 for p, 5 for d
+                                {
+                                    int ind = m1*nm + m2;
+                                    pdm[inl][ind] += 
+                                        ddot_(&row_size, g_1dmt.data()+index*row_size, &inc, s_1t.data()+index*row_size, &inc);
+                                    index++;
+                                }
                             }
+                            ib+=nm;
                         }
-                        ib+=nm;
                     }
+                }
+                else
+                {
+                    int index = 0, inc=1;
+                    int nproj = 0;
+                    for(int il = 0; il < this->lmaxd + 1; il++)
+                    {
+                        nproj += (2 * il + 1) * orb.Alpha[0].getNchi(il);
+                    }
+                    for(int iproj = 0; iproj < nproj; iproj ++)
+                    {
+                        for(int jproj = 0; jproj < nproj; jproj ++)
+                        {
+                            pdm[iat][iproj * nproj + jproj] += 
+                                ddot_(&row_size, g_1dmt.data()+index*row_size, &inc, s_1t.data()+index*row_size, &inc);
+                            index ++;
+                        }
+                    }                    
                 }
 			}//ad1
         }//I0

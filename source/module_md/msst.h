@@ -44,13 +44,13 @@ class MSST : public MD_base
      * @brief propagate atomic velocities
      *
      */
-    void propagate_vel();
+    void propagate_vel(void);
 
     /**
      * @brief propagate the volume change rate
      *
      */
-    void propagate_voldot();
+    void propagate_voldot(void);
 
     ModuleBase::Vector3<double>* old_v;   ///< old atomic velocities
     ModuleBase::Vector3<double> dilation; ///< dilation scale

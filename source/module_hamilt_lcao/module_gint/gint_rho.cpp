@@ -66,8 +66,7 @@ void Gint::gint_kernel_rho(
 				block_index, block_size,
 				cal_flag, 
 				psir_ylm.ptr_2D,
-				psir_DM.ptr_2D,
-				inout->DM_R[is],
+                psir_DM.ptr_2D,
 				this->DMRGint[is],
                 inout->if_symm);
 		}

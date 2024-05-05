@@ -237,8 +237,7 @@ void NumericalRadial::set_grid(const bool for_r_space, const int ngrid, const do
 #endif
 
         // cubic spline interpolation
-        ModuleBase::CubicSpline cubspl;
-        cubspl.build(ngrid_tbu, grid_tbu, value_tbu); // not-a-knot boundary condition
+        ModuleBase::CubicSpline cubspl(ngrid_tbu, grid_tbu, value_tbu); // not-a-knot boundary condition
 
         double* grid_new = new double[ngrid];
         double* value_new = new double[ngrid];

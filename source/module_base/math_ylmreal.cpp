@@ -4,6 +4,7 @@
 #include "tool_quit.h"
 #include "realarray.h"
 #include <cassert>
+#include <vector>
 #include "ylm.h"
 #include "module_base/kernels/math_op.h"
 #include "module_psi/kernels/memory_op.h"
@@ -273,19 +274,17 @@ void YlmReal::Ylm_Real2
 //----------------------------------------------------------
 //	Start CALC
 //----------------------------------------------------------
-	double* rly = new double[lmax2];
+	std::vector<double> rly(lmax2);
 	
 	for (int ig = 0; ig < ng; ig++)
 	{
-		rlylm (lmax, g[ig].x, g[ig].y, g[ig].z, rly);
+		rlylm (lmax, g[ig].x, g[ig].y, g[ig].z, rly.data());
 		
 		for (int lm = 0; lm < lmax2; lm++)
 		{
 			ylm (lm, ig) = rly[lm];
 		}
 	}
-
-	delete [] rly;
 
 	return;
 }
@@ -405,8 +404,8 @@ void YlmReal::Ylm_Real
 // NAME : cost = cos(theta),theta and phi are polar angles
 // NAME : phi
 //----------------------------------------------------------
-    double *cost = new double[ng];
-    double *phi = new double[ng];
+	std::vector <double> cost(ng);
+	std::vector <double> phi(ng);
 
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -612,9 +611,6 @@ void YlmReal::Ylm_Real
     	GlobalV::ofs_running<<std::endl;
     */
 
-
-    delete [] cost;
-    delete [] phi;
 
     return;
 } // end subroutine ylmr2

@@ -64,7 +64,7 @@ void Set_GlobalV_Default()
  *     - calculate \sum_{is}^nspin \sum_{ir}^nrxx rho[is][ir]
  *   - RenormalizeRho: Charge::renormalize_rho()
  *     - renormalize rho so as to ensure the sum of rho equals to total number of electrons
- *   - CheckNe: Charge::check_ne()
+ *   - CheckNe: Charge::cal_rho2ne()
  *     - check the total number of electrons summed from rho[is]
  *   - SaveRhoBeforeSumBand: Charge::save_rho_before_sum_band()
  *     - meaning as the function name
@@ -185,7 +185,7 @@ TEST_F(ChargeTest, CheckNe)
     elecstate::tmp_ucell_omega = ucell->omega;
     charge->renormalize_rho();
     EXPECT_NEAR(charge->sum_rho(), 8.0, 1e-10);
-    EXPECT_NEAR(charge->check_ne(charge->rho[0]), 8.0, 1e-10);
+    EXPECT_NEAR(charge->cal_rho2ne(charge->rho[0]), 8.0, 1e-10);
 }
 
 TEST_F(ChargeTest, SaveRhoBeforeSumBand)
@@ -207,7 +207,7 @@ TEST_F(ChargeTest, SaveRhoBeforeSumBand)
     elecstate::tmp_ucell_omega = ucell->omega;
     charge->renormalize_rho();
     charge->save_rho_before_sum_band();
-    EXPECT_NEAR(charge->check_ne(charge->rho_save[0]), 8.0, 1e-10);
+    EXPECT_NEAR(charge->cal_rho2ne(charge->rho_save[0]), 8.0, 1e-10);
 }
 
 TEST_F(ChargeTest, InitFinalScf)
