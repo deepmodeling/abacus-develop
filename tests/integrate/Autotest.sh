@@ -168,7 +168,7 @@ check_out(){
 # the file name that contains all of the tests
 #---------------------------------------------
 
-test -e $cases_file || (echo "Plese specify tests." && exit 1)
+test -e $cases_file || (echo "Please specify test cases file by -f option." && exit 1)
 which $abacus > /dev/null || (echo "No ABACUS executable was found." && exit 1)
 
 testdir=`cat $cases_file | grep -E $case`
