@@ -10,7 +10,7 @@ concurrency:
 jobs:
   test:
     name: Test
-    runs-on: self-hosted
+    runs-on: X64
     if: github.repository_owner == 'deepmodeling'
     container:
       image: ghcr.io/deepmodeling/abacus-gnu
