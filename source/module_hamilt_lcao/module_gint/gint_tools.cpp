@@ -1131,8 +1131,7 @@ namespace Gint_Tools
 		const int*const block_size,
 		bool** cal_flag,
 		double** psi,
-		double ** psi_DMR,
-		double* DMR,
+        double** psi_DMR,
 		const hamilt::HContainer<double>* DM,
         const bool if_symm)
 	{

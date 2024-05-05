@@ -102,8 +102,7 @@ void Gint::gint_kernel_tau(
 				block_index, block_size,
 				cal_flag, 
 				dpsir_ylm_x.ptr_2D,
-				dpsix_DM.ptr_2D,
-				inout->DM_R[is],
+                dpsix_DM.ptr_2D,
 				this->DMRGint[is],
 				1);
 			Gint_Tools::mult_psi_DMR(
@@ -111,8 +110,7 @@ void Gint::gint_kernel_tau(
 				block_index, block_size,
 				cal_flag,
 				dpsir_ylm_y.ptr_2D,
-				dpsiy_DM.ptr_2D,
-				inout->DM_R[is], 
+                dpsiy_DM.ptr_2D,
 				this->DMRGint[is],
 				1);
 			Gint_Tools::mult_psi_DMR(
@@ -120,8 +118,7 @@ void Gint::gint_kernel_tau(
 				block_index, block_size,
 				cal_flag, 
 				dpsir_ylm_z.ptr_2D,
-				dpsiz_DM.ptr_2D,
-				inout->DM_R[is], 
+                dpsiz_DM.ptr_2D,
 				this->DMRGint[is],
 				1);
 		}
