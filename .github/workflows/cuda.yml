@@ -25,4 +25,4 @@ jobs:
       - name: Test
         run: |
           cd tests/integrate
-          bash Autotest.sh -n 2 -f 'CASES_GPU'
+          bash Autotest.sh -n 2 -f 'CASES_GPU.txt'
