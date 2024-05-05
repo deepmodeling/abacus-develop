@@ -4,10 +4,13 @@ on:
   push:
     branches:
       - develop
+    tags:
+      - 'v*'
+  workflow_dispatch:
 
 jobs:
   build_container_and_push:
-    runs-on: ubuntu-latest
+    runs-on: X64
     if: github.repository_owner == 'deepmodeling'
     strategy:
       matrix:
@@ -15,6 +18,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/deepmodeling/abacus-${{ matrix.dockerfile }}
+            registry.dp.tech/deepmodeling/abacus-${{ matrix.dockerfile }}
+          tags: |
+            type=semver,pattern={{version}},enable=${{ github.ref_type == 'tag' }}
+            type=raw,value=latest
 
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -36,10 +50,9 @@ jobs:
       - name: Build and Push Container
         uses: docker/build-push-action@v5
         with:
-          tags: |
-            ghcr.io/deepmodeling/abacus-${{ matrix.dockerfile }}:latest
-            registry.dp.tech/deepmodeling/abacus-${{ matrix.dockerfile }}:latest
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           file: Dockerfile.${{ matrix.dockerfile }}
+          push: true
           cache-from: type=registry,ref=ghcr.io/deepmodeling/abacus-${{ matrix.dockerfile }}:latest
           cache-to: type=inline
-          push: true
