@@ -16,6 +16,7 @@ RUN apt update && apt install -y --no-install-recommends \
 
 ENV GIT_SSL_NO_VERIFY=true TERM=xterm-256color \
     OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 OMPI_MCA_btl_vader_single_copy_mechanism=none
+    # The above environment variables are for using OpenMPI in Docker.
 
 RUN git clone https://github.com/llohse/libnpy.git && \
     cp libnpy/include/npy.hpp /usr/local/include && \
@@ -23,10 +24,9 @@ RUN git clone https://github.com/llohse/libnpy.git && \
 
 RUN wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-2.0.0%2Bcpu.zip \
         --no-check-certificate --quiet -O libtorch.zip && \
-    unzip -q libtorch.zip -d /opt  && rm libtorch.zip
+    unzip -q libtorch.zip -d /opt && rm libtorch.zip
 
 ENV CMAKE_PREFIX_PATH=/opt/libtorch/share/cmake
-
 
 ADD https://api.github.com/repos/deepmodeling/abacus-develop/git/refs/heads/develop /dev/null
     # This will fetch the latest commit info, and store in docker building cache.
