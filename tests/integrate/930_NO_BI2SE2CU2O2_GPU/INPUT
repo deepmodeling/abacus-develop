@@ -6,8 +6,8 @@ calculation    scf
 symmetry		1
 
 #Parameters (2.Iteration)
-ecutwfc			100
-scf_thr				1e-6
+ecutwfc			30
+scf_thr				1e-5
 scf_nmax			100
 cal_force    1
 cal_stress    1
