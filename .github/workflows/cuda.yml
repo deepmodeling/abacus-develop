@@ -25,5 +25,4 @@ jobs:
       - name: Test
         run: |
           cd tests/integrate
-          bash Autotest.sh -n 2 -r '^[^#].*_.*(?<=GPU)'
-      # TODO: add tests
+          bash Autotest.sh -n 2 -f CASES_GPU.txt
