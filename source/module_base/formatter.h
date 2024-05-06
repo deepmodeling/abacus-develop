@@ -36,15 +36,15 @@ public:
      * @param args data to format
      * @return std::string 
      */
-    template<typename... Ts>
-    static inline std::string format(const char* fmt, const Ts&... args)
+    template<typename T, typename... Ts>
+    static inline std::string format(const char* fmt, const T& arg, const Ts&... args)
     {
-        size_t buf_size = snprintf(nullptr, 0, fmt, FmtCore::filter(args)...);
-        char* buf = new char[buf_size + 1];
-        snprintf(buf, buf_size + 1, fmt, FmtCore::filter(args)...);
-        std::string str(buf);
-        delete[] buf;
-        return str;
+        int size = snprintf(nullptr, 0, fmt, arg, args...);
+        if(size <= 0) return "";
+        std::string dst(size + 1, '\0');
+        snprintf(&dst[0], size + 1, fmt, arg, args...);
+        dst.pop_back();
+        return dst;
     }
     /**
      * @brief std::complex is a compound type, so we need to overload the function. But keep the interface unchanged, so that the user can use the same interface like 
@@ -62,6 +62,10 @@ public:
      */
     template<typename T, typename... Ts>
     static inline std::string format(const char* fmt, const std::complex<T>& c, const Ts&... args) { return format(fmt, c.real(), c.imag(), args...); }
+    template<typename... Ts>
+    static inline std::string format(const char* fmt, const bool& arg, const Ts&... args) { return format(fmt, arg? "true": "false", args...); }
+    template<typename... Ts>
+    static inline std::string format(const char* fmt, const std::string& arg, const Ts&... args) { return format(fmt, arg.c_str(), args...); }
     /**
      * @brief std::string overload of the varadic template function
      * 
@@ -96,10 +100,6 @@ public:
     const std::string& fmt() { return fmt_; }
 
 private:
-    template<typename T> // SFINAE: Substitution Failure Is Not An Error, used to filter out std::string
-    static typename std::enable_if<std::is_same<T, std::string>::value, const char*>::type filter(const T& src) {return src.c_str();}
-    template<typename T> // SFINAE: fall back
-    static typename std::enable_if<!std::is_same<T, std::string>::value, T>::type filter(const T& src) {return src;}
     std::string fmt_;
 };
 

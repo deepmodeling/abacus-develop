@@ -203,6 +203,11 @@ AddTest(
   LIBS ${math_libs}
 )
 
+AddTest(
+  TARGET formatter_test
+  SOURCES formatter_test.cpp
+)
+
 if(ENABLE_GOOGLEBENCH)
   AddTest(
     TARGET perf_sphbes

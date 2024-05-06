@@ -51,7 +51,7 @@ void ModuleIO::nscf_band(
                     std::ofstream ofs(out_band_dir.c_str(), std::ios::app);
                     ofs << FmtCore::format("%4d", ik+1);
                     int width = precision + 4;
-                    const char* fmtstr = "%" + std::to_string(width) + "." + std::to_string(precision) + "f";
+                    std::string fmtstr = "%" + std::to_string(width) + "." + std::to_string(precision) + "f";
                     ofs << FmtCore::format(fmtstr.c_str(), klength[ik]);
                     for(int ib = 0; ib < nband; ib++) { ofs << FmtCore::format(fmtstr.c_str(), (ekb(ik_now+is*nks, ib)-fermie) * ModuleBase::Ry_to_eV); }
                     ofs << std::endl;
