@@ -330,6 +330,7 @@ endif()
 # version. Use cmake with AMD-ROCm:
 # https://rocmdocs.amd.com/en/latest/Installation_Guide/Using-CMake-with-AMD-ROCm.html
 if(USE_ROCM)
+  cmake_minimum_required(VERSION 3.18)
   if(NOT DEFINED ROCM_PATH)
     set(ROCM_PATH
         "/opt/rocm"

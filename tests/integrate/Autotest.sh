@@ -10,12 +10,14 @@ force_threshold=0.0001
 stress_threshold=0.001
 # check accuracy
 ca=8
+# specify the test cases file
+cases_file=CASES_CPU.txt
 # regex of case name
-case="^[^#].*_.*$"
+case='^[^#].*_.*$'
 # enable AddressSanitizer
 sanitize=false
 
-while getopts a:n:t:c:s:r:g flag
+while getopts a:n:t:c:s:r:g:f flag
 do
     case "${flag}" in
         a) abacus=${OPTARG};;
@@ -25,6 +27,7 @@ do
         s) sanitize=${OPTARG};;
         r) case=${OPTARG};;
         g) g=true;; #generate test reference
+        f) cases_file=${OPTARG};;
     esac
 done
 
@@ -43,7 +46,8 @@ echo "Test accuracy totenergy: $threshold eV"
 echo "Test accuracy force: $force_threshold"
 echo "Test accuracy stress: $stress_threshold"
 echo "Check accuaracy: $ca"
-echo "Test cases: $case"
+echo "Test cases file: $cases_file"
+echo "Test cases regex: $case"
 echo "Generate reference: $g"
 echo "--------------------------------"
 echo ""
@@ -164,10 +168,10 @@ check_out(){
 # the file name that contains all of the tests
 #---------------------------------------------
 
-test -e CASES || (echo "Plese specify tests." && exit 1)
+test -e $cases_file || (echo "Please specify test cases file by -f option." && exit 1)
 which $abacus > /dev/null || (echo "No ABACUS executable was found." && exit 1)
 
-testdir=`cat CASES | grep -E $case`
+testdir=`cat $cases_file | grep -E $case`
 failed=0
 failed_case_list=()
 ok=0
