@@ -28,7 +28,7 @@ extern "C"
     void Cblacs_pcoord(int icontxt, int pnum, int *prow, int *pcol);
 }
 
-void Gint_Gamma::cal_vlocal(Gint_inout* inout, LCAO_Matrix* lm, bool new_e_iteration)
+void Gint_Gamma::cal_vlocal(Gint_inout* inout,bool new_e_iteration)
 {
 	const int max_size = this->gridt->max_atom;
 	const int lgd = this->gridt->lgd;
