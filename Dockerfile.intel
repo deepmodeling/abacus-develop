@@ -16,7 +16,7 @@ RUN apt-get update && \
         intel-oneapi-compiler-dpcpp-cpp \
         intel-oneapi-compiler-fortran \
         intel-oneapi-mkl-devel \
-        intel-oneapi-mpi-devel="2021.11.*" \
+        intel-oneapi-mpi-devel \
         intel-oneapi-vtune
 ENV I_MPI_ROOT=/opt/intel/oneapi/mpi/latest \
     LIBRARY_PATH=/opt/intel/oneapi/tbb/latest/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/mpi/latest/lib:/opt/intel/oneapi/mkl/latest/lib/:/opt/intel/oneapi/ippcp/latest/lib/:/opt/intel/oneapi/ipp/latest/lib:/opt/intel/oneapi/dpl/latest/lib:/opt/intel/oneapi/dnnl/latest/lib:/opt/intel/oneapi/dal/latest/lib:/opt/intel/oneapi/compiler/latest/lib:/opt/intel/oneapi/ccl/latest/lib/ \

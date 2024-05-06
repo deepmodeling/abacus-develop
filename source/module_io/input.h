@@ -9,6 +9,7 @@
 
 #include "module_base/vector3.h"
 #include "module_md/md_para.h"
+#include "input_conv.h"
 
 class Input
 {
@@ -704,9 +705,17 @@ class Input
     void read_bool(std::ifstream &ifs, bool &var);
 
     // Return the const string pointer of private member bands_to_print_
+    // Not recommended to use this function directly, use get_out_band_kb() instead
     const std::string* get_bands_to_print() const
     {
         return &bands_to_print_;
+    }
+    // Return parsed bands_to_print_ as a vector of integers
+    std::vector<int> get_out_band_kb() const
+    {
+        std::vector<int> out_band_kb;
+        Input_Conv::parse_expression(bands_to_print_, out_band_kb);
+        return out_band_kb;
     }
 };
 

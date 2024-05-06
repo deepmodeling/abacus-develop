@@ -222,8 +222,10 @@ void TwoCenterTable::_tabulate(const NumericalRadial* it1, const NumericalRadial
     // than two spherical Bessel transforms. By doing so, we achieve a good
     // consistency between the table and its derivative during interpolation.
     using ModuleBase::CubicSpline;
-    CubicSpline::build(nr_, rgrid_, table_.inner_most_ptr<double>(itab), dtable_.inner_most_ptr<double>(itab),
-            CubicSpline::BoundaryCondition::first_deriv, CubicSpline::BoundaryCondition::first_deriv,
-            0.0, 0.0);
+    CubicSpline::build(
+            nr_, rgrid_, table_.inner_most_ptr<double>(itab),
+            {CubicSpline::BoundaryType::first_deriv, 0.0},
+            {CubicSpline::BoundaryType::first_deriv, 0.0},
+            dtable_.inner_most_ptr<double>(itab));
 }
 
