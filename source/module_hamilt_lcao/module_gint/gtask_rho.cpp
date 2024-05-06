@@ -98,7 +98,9 @@ void gtask_rho(const Grid_Technique& gridt,
                             int pos_temp_int = pos_temp_double * 2;
                             pos_temp_double *= 5;
                             if (distance < 1.0E-9)
+                            {
                                 distance += 1.0E-9;
+                            }
                             input_double[pos_temp_double]
                                 = dr_temp[0] / distance;
                             input_double[pos_temp_double + 1]

@@ -113,7 +113,9 @@ void gpu_task_generator_force(const Grid_Technique& gridt,
                             int pos_temp_int = pos_temp_double * 2;
                             pos_temp_double *= 5;
                             if (distance < 1.0E-9)
+                            {
                                 distance += 1.0E-9;
+                            }
                             para.input_dou[pos_temp_double] = dr_temp[0];
                             para.input_dou[pos_temp_double + 1] = dr_temp[1];
                             para.input_dou[pos_temp_double + 2] = dr_temp[2];
@@ -237,7 +239,9 @@ void allocateDm(double* matrixHost,
                 = dm->find_pair(iatRow, iatColumn);
             int orbitIndex = 0;
             if (tmpAtomPair == NULL)
+            {
                 continue;
+            }
             for (int orbitRow = 0; orbitRow < tmpAtomPair->get_row_size();
                  orbitRow++)
             {

@@ -27,20 +27,20 @@ namespace GintKernel
  * @param psi_u
  * @param psir_ylm
  */
-__global__ void get_psi(double* ylmcoef,
+__global__ void get_psi(const double* const ylmcoef,
                         double delta_r_g,
                         int bxyz_g,
                         double nwmax_g,
-                        double* input_double,
-                        int* input_int,
-                        int* num_psir,
+                        const double* const input_double,
+                        const int* const input_int,
+                        const int* const num_psir,
                         int psi_size_max,
-                        int* ucell_atom_nwl,
-                        bool* atom_iw2_new,
-                        int* atom_iw2_ylm,
-                        int* atom_nw,
+                        const int* const ucell_atom_nwl,
+                        const bool* const atom_iw2_new,
+                        const int* const atom_iw2_ylm,
+                        const int* const atom_nw,
                         int nr_max,
-                        double* psi_u,
+                        const double* const psi_u,
                         double* psir_ylm);
 
 /**
@@ -54,10 +54,10 @@ __global__ void get_psi(double* ylmcoef,
  * @param results_g     dot product results.
  * @param batchcount    total count of dot products to compute.
  */
-__global__ void psir_dot(int* n,
-                         double** vec_l_g,
+__global__ void psir_dot(const int* n,
+                         const double** vec_l_g,
                          int incl,
-                         double** vec_r_g,
+                         const double** vec_r_g,
                          int incr,
                          double** results_g,
                          int batchcount);

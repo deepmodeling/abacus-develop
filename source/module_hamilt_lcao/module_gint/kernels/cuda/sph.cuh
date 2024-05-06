@@ -7,11 +7,11 @@
 namespace GintKernel
 {
 
-static __device__ void spherical_harmonics(double* dr,
+static __device__ void spherical_harmonics(const double* const dr,
                                            double distance,
                                            int nwl,
                                            double (&ylma)[49],
-                                           double* ylmcoef)
+                                           const double* const ylmcoef)
 {
     /***************************
     L = 0
@@ -155,12 +155,12 @@ static __device__ void spherical_harmonics(double* dr,
     }*/
 }
 
-static __device__ void spherical_harmonics_d(double* dr,
+static __device__ void spherical_harmonics_d(const double* const dr,
                                              double distance,
                                              double (&grly)[49][3],
                                              int nwl,
                                              double (&ylma)[49],
-                                             double* ylmcoef)
+                                             const double* const ylmcoef)
 {
     double tmp0;
     double tx = 2.0 * dr[0];

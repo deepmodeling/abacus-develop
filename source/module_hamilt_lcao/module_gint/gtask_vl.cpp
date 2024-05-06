@@ -37,8 +37,9 @@ void gtask_vlocal(const Grid_Technique& gridt,
     const int nwmax = ucell.nwmax;
     bool* gpu_matrix_calc_flag = new bool[max_size * gridt.nbzp];
     for (int i = 0; i < max_size * gridt.nbzp; i++)
+    {
         gpu_matrix_calc_flag[i] = false;
-
+    }
     for (int z_index = 0; z_index < gridt.nbzp; z_index++)
     {
         int num_get_psi = 0;
@@ -82,7 +83,9 @@ void gtask_vlocal(const Grid_Technique& gridt,
                             int pos_temp_int = pos_temp_double * 2;
                             pos_temp_double *= 5;
                             if (distance < 1.0E-9)
+                            {
                                 distance += 1.0E-9;
+                            }
                             input_double[pos_temp_double]
                                 = dr_temp[0] / distance;
                             input_double[pos_temp_double + 1]
@@ -130,8 +133,9 @@ void gtask_vlocal(const Grid_Technique& gridt,
             int lo1
                 = gridt.trace_lo[ucell.itiaiw2iwt(it1, ucell.iat2ia[iat1], 0)];
             if (gpu_matrix_calc_flag[calc_flag_index + atom1] == false)
+            {
                 continue;
-
+            }
             for (int atom2 = 0; atom2 < atom_num; atom2++)
             {
                 if (gpu_matrix_calc_flag[calc_flag_index + atom2] == false)

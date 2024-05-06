@@ -13,13 +13,13 @@ namespace GintKernel
 {
 
 void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
-                       int lgd_now,
+                       const int lgd_now,
                        const int max_size,
                        double vfactor,
                        const double* vlocal,
                        const double* ylmcoef_now,
-                       int pwnczp,
-                       int nbxx,
+                       const int pwnczp,
+                       const int nbxx,
                        const double dr,
                        const double* rcut,
                        const Grid_Technique& gridt,
