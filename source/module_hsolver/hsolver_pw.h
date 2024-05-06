@@ -20,6 +20,13 @@ class HSolverPW: public HSolver<T, Device>
     using Real = typename GetTypeReal<T>::type;
 
   public:
+    /**
+     * @brief diago_full_acc 
+     * If .TRUE. all the empty states are diagonalized at the same level of accuracy of the occupied ones. 
+     * Otherwise the empty states are diagonalized using a larger threshold 
+     * (this should not affect total energy, forces, and other ground-state properties).
+     * 
+     */
     static bool diago_full_acc;
     
     HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in, wavefunc* pwf_in);

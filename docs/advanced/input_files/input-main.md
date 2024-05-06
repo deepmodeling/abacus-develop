@@ -791,7 +791,7 @@ These variables are used to control the plane wave related parameters.
 ### diago_full_acc
 
 - **Type**: bool
-- **Description**: Only useful when you use `ks_solver = dav_subspace`. If `TRUE`, all the empty states are diagonalized at the same level of accuracy of the occupied ones. Otherwise the empty states are diagonalized using a larger threshold (this should not affect total energy, forces, and other ground-state properties).
+- **Description**: Only useful when you use `ks_solver = dav_subspace`. If `TRUE`, all the empty states are diagonalized at the same level of accuracy of the occupied ones. Otherwise the empty states are diagonalized using a larger threshold (10-5) (this should not affect total energy, forces, and other ground-state properties).
 - **Default**: false
 
 ### erf_ecut
