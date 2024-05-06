@@ -204,14 +204,11 @@ void Parallel_Global::read_mpi_parameters(int argc,char **argv)
              << "is larger than hardware availability(" << max_thread_num << ")." << std::endl
              << "The results may be INCORRECT. Please set the environment variable OMP_NUM_THREADS to a proper value."
              << std::endl;
+        std::cerr << mess.str() << std::endl;
         // the user may take their own risk by set the OMP_NUM_THREADS env var.
         if (std::getenv("OMP_NUM_THREADS") == nullptr)
         {
-            ModuleBase::WARNING_QUIT("parallel_global", mess.str());
-        }
-        else
-        {
-            std::cerr << mess.str() << std::endl;
+            exit(1);
         }
     }
     else if (current_thread_num * process_num < max_thread_num && local_rank==0)
@@ -344,7 +341,7 @@ void Parallel_Global::divide_pools(void)
     {
         std::cout<<"\n NPROC=" << GlobalV::NPROC << " KPAR=" << GlobalV::KPAR;
         std::cout<<"Error : Too many pools !"<<std::endl;
-        exit(0);
+        exit(1);
     }
 
     // (1) per process in each stogroup
@@ -352,7 +349,7 @@ void Parallel_Global::divide_pools(void)
     {
         std::cout<<"\n Error! NPROC="<<GlobalV::NPROC
         <<" must be divided evenly by BNDPAR="<<GlobalV::NSTOGROUP<<std::endl;
-        exit(0);
+        exit(1);
     }
     GlobalV::NPROC_IN_STOGROUP = GlobalV::NPROC/GlobalV::NSTOGROUP;
     GlobalV::MY_STOGROUP = int(GlobalV::MY_RANK / GlobalV::NPROC_IN_STOGROUP);
@@ -362,7 +359,7 @@ void Parallel_Global::divide_pools(void)
         std::cout<<"\n Error! NPROC_IN_BNDGROUP=" << GlobalV::NPROC_IN_STOGROUP
             <<" is smaller than"<< " KPAR=" << GlobalV::KPAR<<std::endl;
         std::cout<<" Please reduce KPAR or reduce BNDPAR"<<std::endl;
-        exit(0);
+        exit(1);
     }
 
     // (2) per process in each pool
