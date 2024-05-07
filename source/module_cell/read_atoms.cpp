@@ -990,7 +990,7 @@ void UnitCell::print_stru_file(const std::string &fn, const int &type, const int
         //modified by zhengdy 2015-07-24
     ofs << lat0 << std::endl;
 
-    FmtCore fmt("%20.12f %20.12f %20.12f");
+    FmtCore fmt("%20.12f%20.12f%20.12f");
     ofs << "\nLATTICE_VECTORS" << std::endl;
     ofs << fmt.format(latvec.e11, latvec.e12, latvec.e13) << std::endl;
     ofs << fmt.format(latvec.e21, latvec.e22, latvec.e23) << std::endl;
@@ -1011,21 +1011,21 @@ void UnitCell::print_stru_file(const std::string &fn, const int &type, const int
             {
                 // output position and mobility
                 ofs << fmt.format(atoms[it].tau[ia].x, atoms[it].tau[ia].y, atoms[it].tau[ia].z) << " m ";
-                fmt.reset("%2d %2d %2d");
+                fmt.reset("%2d%2d%2d");
                 ofs << fmt.format(atoms[it].mbl[ia].x, atoms[it].mbl[ia].y, atoms[it].mbl[ia].z) << std::endl;
                 if (GlobalV::CALCULATION == "md") // output velocity
                 {
-                    fmt.reset("%20.10f %20.10f %20.10f");
+                    fmt.reset("%20.10f%20.10f%20.10f");
                     ofs << " v " << fmt.format(atoms[it].vel[ia].x, atoms[it].vel[ia].y, atoms[it].vel[ia].z) << std::endl;
                 }
                 if (GlobalV::NSPIN == 2 && GlobalV::out_mul) // output magnetic information
                 {
-                    fmt.reset("%20.10f");
+                    fmt.reset("%8.4f");
                     ofs << " mag " << fmt.format(atom_mulliken[nat_tmp][1]) << std::endl;
                 }
                 else if (GlobalV::NSPIN == 4 && GlobalV::out_mul) // output magnetic information
                 {
-                    fmt.reset("%20.10f %20.10f %20.10f");
+                    fmt.reset("%8.4f%8.4f%8.4f");
                     ofs << " mag " << fmt.format(atom_mulliken[nat_tmp][1], atom_mulliken[nat_tmp][2], atom_mulliken[nat_tmp][3]) << std::endl;
                 }
                 ofs << std::endl;
@@ -1051,17 +1051,17 @@ void UnitCell::print_stru_file(const std::string &fn, const int &type, const int
                 ofs << fmt.format(atoms[it].mbl[ia].x, atoms[it].mbl[ia].y, atoms[it].mbl[ia].z) << std::endl;
                 if (GlobalV::CALCULATION == "md") // output velocity
                 {
-                    fmt.reset("%20.10f %20.10f %20.10f");
+                    fmt.reset("%20.10f%20.10f%20.10f");
                     ofs << " v " << fmt.format(atoms[it].vel[ia].x, atoms[it].vel[ia].y, atoms[it].vel[ia].z) << std::endl;
                 }
                 if (GlobalV::NSPIN == 2 && GlobalV::out_mul) // output magnetic information
                 {
-                    fmt.reset("%20.10f");
+                    fmt.reset("%8.4f");
                     ofs << " mag " << fmt.format(atom_mulliken[nat_tmp][1]) << std::endl;
                 }
-                else if (GlobalV::NSPIN == 4) // output magnetic information
+                else if (GlobalV::NSPIN == 4 && GlobalV::out_mul) // output magnetic information
                 {
-                    fmt.reset("%20.10f %20.10f %20.10f");
+                    fmt.reset("%8.4f%8.4f%8.4f");
                     ofs << " mag " << fmt.format(atom_mulliken[nat_tmp][1], atom_mulliken[nat_tmp][2], atom_mulliken[nat_tmp][3]) << std::endl;
                 }
                 ofs << std::endl;
