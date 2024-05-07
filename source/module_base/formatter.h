@@ -12,7 +12,6 @@
 #include "./ndarray.h"
 #include <iostream>
 #include <type_traits>
-#include <complex>
 #include <utility>
 /**
  * @brief 
@@ -46,22 +45,6 @@ public:
         dst.pop_back();
         return dst;
     }
-    /**
-     * @brief std::complex is a compound type, so we need to overload the function. But keep the interface unchanged, so that the user can use the same interface like 
-     * ```
-     * std::complex<double> a = {1.0, 2.0};
-     * std::cout << FmtCore::format("(%20.10f, %20.10f)", a) << std::endl;
-     * ```
-     * 
-     * @tparam T datatype of the data
-     * @tparam Ts varargin
-     * @param fmt format string
-     * @param c complex number
-     * @param args varargin
-     * @return std::string formatted string
-     */
-    template<typename T, typename... Ts>
-    static inline std::string format(const char* fmt, const std::complex<T>& c, const Ts&... args) { return format(fmt, c.real(), c.imag(), args...); }
     template<typename... Ts>
     static inline std::string format(const char* fmt, const bool& arg, const Ts&... args) { return format(fmt, arg? "true": "false", args...); }
     template<typename... Ts>
@@ -75,17 +58,6 @@ public:
      */
     template<typename... Ts>
     std::string format(const Ts&... args) { return FmtCore::format(fmt_.c_str(), args...); }
-    /**
-     * @brief std::complex overload of the varadic template function
-     * 
-     * @tparam T 
-     * @tparam Ts 
-     * @param c 
-     * @param args 
-     * @return std::string 
-     */
-    template<typename T, typename...Ts>
-    std::string format(const std::complex<T>& c, const Ts&... args) { return FmtCore::format(fmt_.c_str(), c.real(), c.imag(), args...); }
     /**
      * @brief reset the format string (std::string overloads)
      * 
@@ -107,16 +79,16 @@ class FmtTable
 {
 private:
     typedef FmtCore core;
-    struct TableFrames{
-        TableFrames(char upfrm = '-', char mdfrm = '-', char dwfrm = '-', char lfrm = ' ', char rfrm = ' '): upfrm_(upfrm), mdfrm_(mdfrm), dwfrm_(dwfrm), lfrm_(lfrm), rfrm_(rfrm) {};
+    struct Frames{
+        Frames(char upfrm = '-', char mdfrm = '-', char dwfrm = '-', char lfrm = ' ', char rfrm = ' '): upfrm_(upfrm), mdfrm_(mdfrm), dwfrm_(dwfrm), lfrm_(lfrm), rfrm_(rfrm) {};
         char upfrm_, mdfrm_ , dwfrm_, lfrm_, rfrm_;
     } frames_; 
-    struct TableDelimiters{
-        TableDelimiters(char hdlmt = '-', char vdlmt = ' '): hdlmt_(hdlmt), vdlmt_(vdlmt) {};
+    struct Delimiters{
+        Delimiters(char hdlmt = '-', char vdlmt = ' '): hdlmt_(hdlmt), vdlmt_(vdlmt) {};
         char hdlmt_, vdlmt_;
     } delimiters_;
-    struct TableAlignments{
-        TableAlignments(char valign = 'r', char talign = 'c'): valign_(valign), talign_(talign) {};
+    struct Alignments{
+        Alignments(char valign = 'r', char talign = 'c'): valign_(valign), talign_(talign) {};
         char valign_, talign_;
     } aligns_;
 
@@ -126,16 +98,16 @@ public:
      * 
      * @param titles titles, its size should be the same as the number of columns
      * @param nrows number of rows
-     * @param aligns TableAlignments instance, can be constructed with initializer_list<char> like {'r', 'c'}, for right and center alignment for values and titles
-     * @param frames TableFrames instance, can be constructed with initializer_list<char> like {'-', '-', '-', ' ', ' '}, for up, middle, down, left and right frames
-     * @param delimiters TableDelimiters instance, can be constructed with initializer_list<char> like {'-', ' '}, for horizontal and vertical delimiters
+     * @param aligns Alignments instance, can be constructed with initializer_list<char> like {'r', 'c'}, for right and center alignment for values and titles
+     * @param frames Frames instance, can be constructed with initializer_list<char> like {'-', '-', '-', ' ', ' '}, for up, middle, down, left and right frames
+     * @param delimiters Delimiters instance, can be constructed with initializer_list<char> like {'-', ' '}, for horizontal and vertical delimiters
      */
     FmtTable(const std::vector<std::string>& titles, 
              const size_t& nrows, 
              const std::vector<std::string>& fmts,
-             const TableAlignments& aligns = {},
-             const TableFrames& frames = {},
-             const TableDelimiters& delimiters = {}): titles_(titles), fmts_(fmts), data_(nrows, titles.size()), aligns_(aligns), frames_(frames), delimiters_(delimiters)
+             const Alignments& aligns = {},
+             const Frames& frames = {},
+             const Delimiters& delimiters = {}): titles_(titles), fmts_(fmts), data_(nrows, titles.size()), aligns_(aligns), frames_(frames), delimiters_(delimiters)
     { assert(titles.size() == fmts.size()); };
     ~FmtTable() {};
     /**
