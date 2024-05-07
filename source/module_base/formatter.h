@@ -35,20 +35,15 @@ public:
      * @param args data to format
      * @return std::string 
      */
-    template<typename T, typename... Ts>
-    static inline std::string format(const char* fmt, const T& arg, const Ts&... args)
+    template<typename... Ts>
+    static inline std::string format(const char* fmt, const Ts&... args)
     {
-        int size = snprintf(nullptr, 0, fmt, arg, args...);
-        if(size <= 0) return "";
-        std::string dst(size + 1, '\0');
-        snprintf(&dst[0], size + 1, fmt, arg, args...);
+        int size = snprintf(nullptr, 0, fmt, FmtCore::filter(args)...) + 1;
+        std::string dst(size, '\0');
+        snprintf(&dst[0], size, fmt, FmtCore::filter(args)...);
         dst.pop_back();
         return dst;
     }
-    template<typename... Ts>
-    static inline std::string format(const char* fmt, const bool& arg, const Ts&... args) { return format(fmt, arg? "true": "false", args...); }
-    template<typename... Ts>
-    static inline std::string format(const char* fmt, const std::string& arg, const Ts&... args) { return format(fmt, arg.c_str(), args...); }
     /**
      * @brief std::string overload of the varadic template function
      * 
@@ -73,6 +68,10 @@ public:
 
 private:
     std::string fmt_;
+    template<typename T>
+    static typename std::enable_if<std::is_same<T, std::string>::value, const char*>::type filter(const T& s) { return s.c_str(); }
+    template<typename T>
+    static typename std::enable_if<!std::is_same<T, std::string>::value, const T&>::type filter(const T& s) { return s; }
 };
 
 class FmtTable
@@ -174,7 +173,11 @@ public:
         {
             const std::string src = col[i];
             // delete all whitespaces at left and right of src
-            std::string dst = src.substr(src.find_first_not_of(' '), src.find_last_not_of(' ') + 1);
+            size_t ltr = src.find_first_not_of(' ');
+            size_t rtr = src.find_last_not_of(' ');
+            if(ltr == std::string::npos) ltr = 0;
+            if(rtr == std::string::npos) rtr = src.size() - 1;
+            std::string dst = src.substr(ltr, rtr - ltr + 1);
             const size_t nwhitespaces = max_width - src.size();
             if(vlyot == 'r') dst = std::string(nwhitespaces, ' ') + src;
             else if(vlyot == 'l') dst = src + std::string(nwhitespaces, ' ');
