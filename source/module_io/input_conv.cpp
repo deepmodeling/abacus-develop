@@ -13,9 +13,11 @@
 #include "module_io/input.h"
 #include "module_relax/relax_old/ions_move_basic.h"
 #include "module_relax/relax_old/lattice_change_basic.h"
+
 #ifdef __EXX
 #include "module_ri/exx_abfs-jle.h"
 #endif
+
 #ifdef __LCAO
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_elecstate/potentials/H_TDDFT_pw.h"
@@ -30,6 +32,7 @@
 #include "module_elecstate/potentials/efield.h"
 #include "module_elecstate/potentials/gatefield.h"
 #include "module_hsolver/hsolver_lcao.h"
+#include "module_hsolver/hsolver_pw.h"
 #include "module_md/md_func.h"
 #include "module_psi/kernels/device.h"
 
@@ -388,6 +391,15 @@ void Input_Conv::Convert(void)
     GlobalV::PW_DIAG_NMAX = INPUT.pw_diag_nmax;
     GlobalV::DIAGO_CG_PREC = INPUT.diago_cg_prec;
     GlobalV::PW_DIAG_NDIM = INPUT.pw_diag_ndim;
+
+    hsolver::HSolverPW<std::complex<float>, psi::DEVICE_CPU>::diago_full_acc = INPUT.diago_full_acc;
+    hsolver::HSolverPW<std::complex<double>, psi::DEVICE_CPU>::diago_full_acc = INPUT.diago_full_acc;
+
+#if ((defined __CUDA) || (defined __ROCM))
+    hsolver::HSolverPW<std::complex<float>, psi::DEVICE_GPU>::diago_full_acc = INPUT.diago_full_acc;
+    hsolver::HSolverPW<std::complex<double>, psi::DEVICE_GPU>::diago_full_acc = INPUT.diago_full_acc;
+#endif
+
     GlobalV::PW_DIAG_THR = INPUT.pw_diag_thr;
     GlobalV::NB2D = INPUT.nb2d;
     GlobalV::NURSE = INPUT.nurse;

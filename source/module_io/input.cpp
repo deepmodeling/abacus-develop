@@ -276,6 +276,7 @@ void Input::Default(void)
     pw_diag_nmax = 50;
     diago_cg_prec = 1; // mohan add 2012-03-31
     pw_diag_ndim = 4;
+    diago_full_acc = false;
     pw_diag_thr = 1.0e-2;
     nb2d = 0;
     nurse = 0;
@@ -1171,6 +1172,10 @@ bool Input::Read(const std::string& fn)
         else if (strcmp("pw_diag_ndim", word) == 0)
         {
             read_value(ifs, pw_diag_ndim);
+        }
+        else if (strcmp("diago_full_acc", word) == 0)
+        {
+            read_value(ifs, diago_full_acc);
         }
         else if (strcmp("pw_diag_thr", word) == 0)
         {
@@ -3365,6 +3370,7 @@ void Input::Bcast()
     Parallel_Common::bcast_int(pw_diag_nmax);
     Parallel_Common::bcast_int(diago_cg_prec);
     Parallel_Common::bcast_int(pw_diag_ndim);
+    Parallel_Common::bcast_bool(diago_full_acc);
     Parallel_Common::bcast_double(pw_diag_thr);
     Parallel_Common::bcast_int(nb2d);
     Parallel_Common::bcast_int(nurse);
