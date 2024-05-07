@@ -28,17 +28,17 @@ namespace GintKernel
  * \param atom_iw2_l Array of atom_iw2 l values
  * \param atom_nw Array of atom_nw values
  * \param nr_max Maximum nr value
- * \param psi_u Array for psi_u values
- * \param psir_r Array for psir_r values
- * \param psir_lx Array for psir_lx values
- * \param psir_ly Array for psir_ly values
- * \param psir_lz Array for psir_lz values
- * \param psir_lxx Array for psir_lxx values
- * \param psir_lxy Array for psir_lxy values
- * \param psir_lxz Array for psir_lxz values
- * \param psir_lyy Array for psir_lyy values
- * \param psir_lyz Array for psir_lyz values
- * \param psir_lzz Array for psir_lzz values
+ * \param psi_u Array for psi_u values,recording the Spherical Harmonics from psi
+ * \param psir_r Array for psir_r values,recored the distance from psi
+ * \param psir_lx Array for psir_lx values,recored the force left in x
+ * \param psir_ly Array for psir_ly values,recored the force left in y
+ * \param psir_lz Array for psir_lz values,recored the force left in z
+ * \param psir_lxx Array for psir_lxx values,recored the stress left in xx
+ * \param psir_lxy Array for psir_lxy values,recored the stress left in xy
+ * \param psir_lxz Array for psir_lxz values,recored the stress left in xz
+ * \param psir_lyy Array for psir_lyy values,recored the stress left in yy
+ * \param psir_lyz Array for psir_lyz values,recored the stress left in yz
+ * \param psir_lzz Array for psir_lzz values,recored the stress left in zz
  */
 
 __global__ void get_psi_force(double* ylmcoef,
@@ -572,7 +572,7 @@ void cal_mem_cpy(ForceStressIat& f_s_iat,
  * @param atom_num_grid in force calculate,used for Block nums
  */
 void cal_force_add(ForceStressIat& f_s_iat,
-                    double* force,
+                    const double* force,
                     const int atom_num_grid)
 {
     checkCuda(cudaMemcpy(f_s_iat.force_host,
@@ -601,7 +601,7 @@ void cal_force_add(ForceStressIat& f_s_iat,
  * @param cuda_block in stress compute,used for Block nums
  */
 void cal_stress_add(ForceStressIat& f_s_iat,
-                     double* stress,
+                     const double* stress,
                      const int cuda_block)
 {
     checkCuda(cudaMemcpy(f_s_iat.stress_host,

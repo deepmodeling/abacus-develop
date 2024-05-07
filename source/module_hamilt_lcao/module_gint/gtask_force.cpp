@@ -159,7 +159,7 @@ void gpu_task_generator_force(const Grid_Technique& gridt,
             {
                 continue;
             }
-            int mcell_index1 = bcell_start_index + atom1;
+            const int mcell_index1 = bcell_start_index + atom1;
             int iat1 = gridt.which_atom[mcell_index1];
             int it1 = ucell.iat2it[iat1];
             int lo1
@@ -173,7 +173,7 @@ void gpu_task_generator_force(const Grid_Technique& gridt,
                 {
                     continue;
                 }
-                int mcell_index2 = bcell_start_index + atom2;
+                const int mcell_index2 = bcell_start_index + atom2;
                 int iat2 = gridt.which_atom[mcell_index2];
                 int it2 = ucell.iat2it[iat2];
                 int lo2 = gridt.trace_lo[ucell.itiaiw2iwt(it2,
@@ -237,7 +237,9 @@ void allocateDm(double* matrixHost,
                 = dm->find_pair(iatRow, iatColumn);
             int orbitIndex = 0;
             if (tmpAtomPair == NULL)
+            {
                 continue;
+            }
             for (int orbitRow = 0; orbitRow < tmpAtomPair->get_row_size();
                  orbitRow++)
             {
