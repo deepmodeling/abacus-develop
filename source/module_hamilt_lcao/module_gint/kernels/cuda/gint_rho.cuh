@@ -55,9 +55,9 @@ __global__ void get_psi(const double* const ylmcoef,
  * @param batchcount    total count of dot products to compute.
  */
 __global__ void psir_dot(const int* n,
-                         const double** vec_l_g,
+                         double** vec_l_g,
                          int incl,
-                         const double** vec_r_g,
+                         double** vec_r_g,
                          int incr,
                          double** results_g,
                          int batchcount);

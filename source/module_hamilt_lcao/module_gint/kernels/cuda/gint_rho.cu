@@ -59,9 +59,9 @@ __global__ void get_psi(const double* const ylmcoef,
 }
 
 __global__ void psir_dot(const int* n,
-                         const double** vec_l_g,
+                         double** vec_l_g,
                          int incl,
-                         const double** vec_r_g,
+                         double** vec_r_g,
                          int incr,
                          double** results_g,
                          int batchcount)
@@ -71,8 +71,8 @@ __global__ void psir_dot(const int* n,
     for (int i = id; i < batchcount; i += stride)
     {
         double* sum = results_g[i];
-        const double* x = vec_l_g[i];
-        const double* y = vec_r_g[i];
+        double* x = vec_l_g[i];
+        double* y = vec_r_g[i];
 
         for (int j = 0; j < n[i]; j++)
         {
