@@ -895,11 +895,11 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
     
     table.clear();
     table += "K-POINTS REDUCTION ACCORDING TO SYMMETRY\n";
-    table += FmtCore::format("%8s%12s%12s%12s%6s%4s\n",
+    table += FmtCore::format("%8s%12s%12s%12s%8s%8s\n",
                              "IBZ", "DIRECT_X", "DIRECT_Y", "DIRECT_Z", "WEIGHT", "ibz2bz");
     for (int ik=0; ik<nkstot_ibz; ik++)
     {
-        table += FmtCore::format("%8d%12.8f%12.8f%12.8f%6.4f%4d\n",
+        table += FmtCore::format("%8d%12.8f%12.8f%12.8f%8.4f%8d\n",
                                  ik+1, this->kvec_d_ibz[ik].x, this->kvec_d_ibz[ik].y, this->kvec_d_ibz[ik].z,
                                  this->wk_ibz[ik], this->ibz2bz[ik]);
     }
@@ -976,11 +976,11 @@ void K_Vectors::set_both_kvec(const ModuleBase::Matrix3 &G, const ModuleBase::Ma
     }
     std::string table;
     table += "K-POINTS DIRECT COORDINATES\n";
-    table += FmtCore::format("%8s%12s%12s%12s%6s\n",
+    table += FmtCore::format("%8s%12s%12s%12s%8s\n",
                              "KPOINTS", "DIRECT_X", "DIRECT_Y", "DIRECT_Z", "WEIGHT");
 	for(int i=0; i<nkstot; i++)
 	{
-        table += FmtCore::format("%8d%12.8f%12.8f%12.8f%6.4f\n",
+        table += FmtCore::format("%8d%12.8f%12.8f%12.8f%8.4f\n",
                                  i+1, this->kvec_d[i].x, this->kvec_d[i].y, this->kvec_d[i].z, this->wk[i]);
 	}
     GlobalV::ofs_running << table << std::endl;
@@ -1173,22 +1173,22 @@ void K_Vectors::print_klists(std::ofstream &ofs)
     }
     std::string table;
     table += "K-POINTS CARTESIAN COORDINATES\n";
-    table += FmtCore::format("%8s%12s%12s%12s%6s\n",
+    table += FmtCore::format("%8s%12s%12s%12s%8s\n",
                              "KPOINTS", "CARTESIAN_X", "CARTESIAN_Y", "CARTESIAN_Z", "WEIGHT");
 	for(int i=0; i<nks; i++)
 	{
-        table += FmtCore::format("%8d%12.8f%12.8f%12.8f%6.4f\n",
+        table += FmtCore::format("%8d%12.8f%12.8f%12.8f%8.4f\n",
                                  i+1, this->kvec_c[i].x, this->kvec_c[i].y, this->kvec_c[i].z, this->wk[i]);
 	}
     GlobalV::ofs_running << "\n" << table << std::endl;
 
     table.clear();
     table += "K-POINTS DIRECT COORDINATES\n";
-    table += FmtCore::format("%8s%12s%12s%12s%6s\n",
+    table += FmtCore::format("%8s%12s%12s%12s%8s\n",
                              "KPOINTS", "DIRECT_X", "DIRECT_Y", "DIRECT_Z", "WEIGHT");
 	for(int i=0; i<nks; i++)
 	{
-        table += FmtCore::format("%8d%12.8f%12.8f%12.8f%6.4f\n",
+        table += FmtCore::format("%8d%12.8f%12.8f%12.8f%8.4f\n",
                                  i+1, this->kvec_d[i].x, this->kvec_d[i].y, this->kvec_d[i].z, this->wk[i]);
 	}
     GlobalV::ofs_running << "\n" << table << std::endl;
@@ -1338,11 +1338,11 @@ void K_Vectors::set_both_kvec_after_vc(const ModuleBase::Matrix3 &G, const Modul
     }
     std::string table;
     table += "K-POINTS DIRECT COORDINATES\n";
-    table += FmtCore::format("%8s%12s%12s%12s%6s\n",
+    table += FmtCore::format("%8s%12s%12s%12s%8s\n",
                              "KPOINTS", "DIRECT_X", "DIRECT_Y", "DIRECT_Z", "WEIGHT");
 	for(int i=0; i<nks; i++)
 	{
-        table += FmtCore::format("%8d%12.8f%12.8f%12.8f%6.4f\n",
+        table += FmtCore::format("%8d%12.8f%12.8f%12.8f%8.4f\n",
                                  i+1, this->kvec_d[i].x, this->kvec_d[i].y, this->kvec_d[i].z, this->wk[i]);
 	}
     GlobalV::ofs_running << table << std::endl;

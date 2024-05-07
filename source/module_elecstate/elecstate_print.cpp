@@ -253,7 +253,7 @@ void ElecState::print_etot(const bool converged,
         energies_eV.push_back(energies_Ry[i] * ModuleBase::Ry_to_eV);
     }
     FmtTable table({"Energy", "Rydberg", "eV"}, 
-    titles.size(), {"%20s",   "%20.10f", "%20.10f"});
+    titles.size(), {"%-14s",   "%20.10f", "%20.10f"}, {'l', 'c'});
     table << titles << energies_Ry << energies_eV;
     GlobalV::ofs_running << table.str() << std::endl;
     if (iter_in == 1) // pengfei Li added 2015-1-31
