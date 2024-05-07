@@ -572,7 +572,7 @@ void cal_mem_cpy(ForceStressIat& f_s_iat,
  * @param atom_num_grid in force calculate,used for Block nums
  */
 void cal_force_add(ForceStressIat& f_s_iat,
-                    const double* force,
+                     double* force,
                     const int atom_num_grid)
 {
     checkCuda(cudaMemcpy(f_s_iat.force_host,
@@ -601,7 +601,7 @@ void cal_force_add(ForceStressIat& f_s_iat,
  * @param cuda_block in stress compute,used for Block nums
  */
 void cal_stress_add(ForceStressIat& f_s_iat,
-                     const double* stress,
+                     double* stress,
                      const int cuda_block)
 {
     checkCuda(cudaMemcpy(f_s_iat.stress_host,
