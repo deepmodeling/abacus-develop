@@ -30,6 +30,7 @@ void Atom_pseudo::set_d_so(
 	this->nproj = nproj_in;
 	this->nproj_soc = nproj_in_so;
 	int spin_dimension = 4;
+	std::cout << "nproj=" << nproj << " nproj_soc=" << nproj_soc << std::endl;
 
 	// optimize
 	for(int is=0;is<spin_dimension;is++)
