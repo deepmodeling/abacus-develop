@@ -257,13 +257,20 @@ void psi_initializer_atomic<T, Device>::proj_ao_onkG(int ik)
                             else
                             {
     /* NONCONLINEAR CASE, will use [[cos(a/2)*exp(-ib/2), sin(a/2)*exp(ib/2)], [-sin(a/2)*exp(-ib/2), cos(a/2)*exp(ib/2)]] to rotate */
-                                int ipswfc_noncolin_soc;
+                                int ipswfc_noncolin_soc=0;
         /* J = L - 1/2 -> continue */
         /* J = L + 1/2 */
-                                if(fabs(j - l + 0.5) < 1e-4) continue;
-                                chiaux.clear(); chiaux.resize(npw);
+								if(fabs(j - l + 0.5) < 1e-4) 
+								{
+									continue;
+								}
+								chiaux.clear(); 
+								chiaux.resize(npw);
         /* L == 0 */
-                                if(l == 0) std::memcpy(chiaux.data(), ovlp_pswfcjlg.data(), npw * sizeof(double));
+								if(l == 0) 
+								{
+									std::memcpy(chiaux.data(), ovlp_pswfcjlg.data(), npw * sizeof(double));
+								}
                                 else
                                 {
         /* L != 0, scan pswfcs that have the same L and satisfy J(pswfc) = L - 0.5 */
@@ -289,7 +296,8 @@ void psi_initializer_atomic<T, Device>::proj_ao_onkG(int ik)
                                     }
                                 }
             /* ROTATE ACCORDING TO NONCOLINEAR */
-                                double alpha, gamma;
+                                double alpha=0.0;
+                                double gamma=0.0;
                                 std::complex<double> fup, fdw;
                                 alpha = this->p_ucell_->atoms[it].angle1[ia];
                                 gamma = -1 * this->p_ucell_->atoms[it].angle2[ia] + 0.5 * ModuleBase::PI;
@@ -333,7 +341,8 @@ void psi_initializer_atomic<T, Device>::proj_ao_onkG(int ik)
                         }
                         else
                         {//atomic_wfc_nc
-                            double alpha, gamman;
+                            double alpha=0.0;
+                            double gamman=0.0;
                             std::complex<double> fup, fdown;
                             //alpha = this->p_ucell_->magnet.angle1_[it];
                             //gamman = -this->p_ucell_->magnet.angle2_[it] + 0.5*ModuleBase::PI;

@@ -87,8 +87,12 @@ protected:
 
 TEST_F(BandTest, nscf_band)
 {
+    Pkpoints->nks_pool = new int[1];
+    Pkpoints->nks_pool[0] = nks;
+    Pkpoints->nkstot_np = nks;
+    Pkpoints->nks_np = nks;
     // Call the function to be tested
-    ModuleIO::nscf_band(is, out_band_dir, nks, nband, fermie, 8, ekb, *kv, Pkpoints);
+    ModuleIO::nscf_band(is, out_band_dir, nband, fermie, 8, ekb, *kv, Pkpoints);
 
     // Check the output file
     std::ifstream ifs(out_band_dir);

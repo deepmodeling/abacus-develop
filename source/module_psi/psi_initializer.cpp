@@ -60,8 +60,14 @@ psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate(bool only_p
                             rotate basis, nbands_local*=4 for p, d, f,... orbitals, and nbands_local*=2 for s orbitals
                             risky when NSPIN = 4, problematic psi value, needed to be checked
                         */
-                        if(l == 0) nbands_local += this->p_ucell_->atoms[it].l_nchi[l] * GlobalV::NPOL;
-                        else nbands_local += this->p_ucell_->atoms[it].l_nchi[l]*(2*l+1) * GlobalV::NPOL;
+                        if(l == 0) 
+						{
+							nbands_local += this->p_ucell_->atoms[it].l_nchi[l] * GlobalV::NPOL;
+						}
+						else 
+						{
+							nbands_local += this->p_ucell_->atoms[it].l_nchi[l]*(2*l+1) * GlobalV::NPOL;
+						}
                     }
                 }
             }

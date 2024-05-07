@@ -72,7 +72,7 @@ void Diago_DavSubspace<T, Device>::diag_once(hamilt::Hamilt<T, Device>* phm_in,
     this->n_band = psi.get_nbands();
 
     // maximum dimension of the reduced basis set
-    this->nbase_x = 2 * this->n_band;
+    this->nbase_x = Diago_DavSubspace::PW_DIAG_NDIM * this->n_band;
 
     psi::Psi<T, Device> basis(1, this->nbase_x, this->dim, &(psi.get_ngk(0)));
     ModuleBase::Memory::record("DAV::basis", this->nbase_x * this->dim * sizeof(T));
@@ -199,7 +199,7 @@ void Diago_DavSubspace<T, Device>::diag_once(hamilt::Hamilt<T, Device>* phm_in,
             }
             else
             {
-                double empty_ethr = std::max(DiagoIterAssist<T, Device>::PW_DIAG_THR * 5.0, 1e-5);
+                const double empty_ethr = std::max(DiagoIterAssist<T, Device>::PW_DIAG_THR * 5.0, Diago_DavSubspace::dav_large_thr);
                 convflag[m] = (std::abs(this->eigenvalue_in_dav[m] - eigenvalue_in_hsolver[m]) < empty_ethr);
             }
 

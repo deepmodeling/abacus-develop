@@ -6,11 +6,14 @@
 #endif
 #include "module_base/timer.h"
 
-MSST::MSST(MD_para& MD_para_in, UnitCell& unit_in) : MD_base(MD_para_in, unit_in)
+MSST::MSST(MD_para& MD_para_in, UnitCell& unit_in) 
+: MD_base(MD_para_in, unit_in)
 {
     mdp.msst_qmass = mdp.msst_qmass / pow(ModuleBase::ANGSTROM_AU, 4) / pow(ModuleBase::AU_to_MASS, 2);
     mdp.msst_vel = mdp.msst_vel * ModuleBase::ANGSTROM_AU * ModuleBase::AU_to_FS;
     mdp.msst_vis = mdp.msst_vis / ModuleBase::AU_to_MASS / ModuleBase::ANGSTROM_AU * ModuleBase::AU_to_FS;
+
+    assert(ucell.nat>0);
 
     old_v = new ModuleBase::Vector3<double>[ucell.nat];
     dilation.set(1, 1, 1);
@@ -67,6 +70,8 @@ void MSST::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_re
     }
 
     ModuleBase::timer::tick("MSST", "setup");
+
+    return;
 }
 
 void MSST::first_half(std::ofstream& ofs)
@@ -120,9 +125,11 @@ void MSST::first_half(std::ofstream& ofs)
     rescale(ofs, vol);
 
     ModuleBase::timer::tick("MSST", "first_half");
+
+    return;
 }
 
-void MSST::second_half()
+void MSST::second_half(void)
 {
     ModuleBase::TITLE("MSST", "second_half");
     ModuleBase::timer::tick("MSST", "second_half");
@@ -145,11 +152,16 @@ void MSST::second_half()
     lag_pos -= mdp.msst_vel * ucell.omega / v0 * mdp.md_dt;
 
     ModuleBase::timer::tick("MSST", "second_half");
+
+    return;
 }
+
 
 void MSST::print_md(std::ofstream& ofs, const bool& cal_stress)
 {
     MD_base::print_md(ofs, cal_stress);
+
+    return;
 }
 
 void MSST::write_restart(const std::string& global_out_dir)
@@ -173,7 +185,10 @@ void MSST::write_restart(const std::string& global_out_dir)
 #ifdef __MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
+
+    return;
 }
+
 
 void MSST::restart(const std::string& global_readin_dir)
 {
@@ -215,9 +230,11 @@ void MSST::restart(const std::string& global_readin_dir)
     MPI_Bcast(&p0, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     MPI_Bcast(&lag_pos, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif
+
+    return;
 }
 
-double MSST::vel_sum()
+double MSST::vel_sum(void)
 {
     double vsum = 0;
 
@@ -233,6 +250,8 @@ void MSST::rescale(std::ofstream& ofs, const double& volume)
 {
     int sd = mdp.msst_direction;
 
+    assert(ucell.omega>0.0);
+
     dilation[sd] = volume / ucell.omega;
     ucell.latvec.e11 *= dilation[0];
     ucell.latvec.e22 *= dilation[1];
@@ -247,7 +266,8 @@ void MSST::rescale(std::ofstream& ofs, const double& volume)
     }
 }
 
-void MSST::propagate_vel()
+
+void MSST::propagate_vel(void)
 {
     if (mdp.my_rank == 0)
     {
@@ -282,9 +302,12 @@ void MSST::propagate_vel()
 #ifdef __MPI
     MPI_Bcast(vel, ucell.nat * 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif
+
+    return;
 }
 
-void MSST::propagate_voldot()
+
+void MSST::propagate_voldot(void)
 {
     const int sd = mdp.msst_direction;
     const double dthalf = 0.5 * mdp.md_dt;
@@ -310,4 +333,6 @@ void MSST::propagate_voldot()
         omega[sd] += (const_A - const_B * omega[sd]) * dthalf
                      + 0.5 * (const_B * const_B * omega[sd] - const_A * const_B) * dthalf * dthalf;
     }
+
+    return;
 }

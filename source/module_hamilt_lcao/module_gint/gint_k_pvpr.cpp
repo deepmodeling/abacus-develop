@@ -85,7 +85,7 @@ void Gint_k::folding_vl_k(const int &ik,
     // matrix element < phi_0 | Vlocal | phi_R >
     //#################################################################
 
-    int lgd = this->gridt->lgd;
+    const int lgd = this->gridt->lgd;
     std::complex<double>** pvp = new std::complex<double>*[lgd];
     std::complex<double>* pvp_base = new std::complex<double>[lgd * lgd];
     for(int i=0; i<lgd; i++)
@@ -111,7 +111,8 @@ void Gint_k::folding_vl_k(const int &ik,
 
     auto init_pvp = [&](int num_threads, int thread_id)
     {
-        int beg, len;
+        int beg=0;
+        int len=0;
         ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, lgd * lgd, 256, beg, len);
         ModuleBase::GlobalFunc::ZEROS(pvp_base + beg, len);
         if(GlobalV::NSPIN==4)
@@ -180,8 +181,10 @@ void Gint_k::folding_vl_k(const int &ik,
                             dR.z = adjs.box[ad].z;
 
                             // calculate the phase factor exp(ikR).
-                            const double arg = (kvec_d[ik] * dR) * ModuleBase::TWO_PI;
-                            double sinp, cosp;
+							const double arg = (kvec_d[ik] * dR) * ModuleBase::TWO_PI;
+							double sinp=0.0;
+							double cosp=0.0;
+
                             ModuleBase::libm::sincos(arg, &sinp, &cosp);
                             const std::complex<double> phase = std::complex<double>(cosp, sinp);
                             int ixxx = DM_start + this->gridt->find_R2st[iat][nad];

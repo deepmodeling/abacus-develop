@@ -46,6 +46,7 @@
     - [pw\_diag\_thr](#pw_diag_thr)
     - [pw\_diag\_nmax](#pw_diag_nmax)
     - [pw\_diag\_ndim](#pw_diag_ndim)
+    - [diago_full_acc](#diago_full_acc)
     - [erf\_ecut](#erf_ecut)
     - [fft\_mode](#fft_mode)
     - [erf\_height](#erf_height)
@@ -64,7 +65,6 @@
     - [basis\_type](#basis_type)
     - [ks\_solver](#ks_solver)
     - [nbands](#nbands)
-    - [nbands\_istate](#nbands_istate)
     - [nspin](#nspin)
     - [smearing\_method](#smearing_method)
     - [smearing\_sigma](#smearing_sigma)
@@ -148,12 +148,12 @@
     - [out\_app\_flag](#out_app_flag)
     - [out\_ndigits](#out_ndigits)
     - [out\_interval](#out_interval)
-    - [band\_print\_num](#band_print_num)
-    - [bands\_to\_print](#bands_to_print)
     - [out\_element\_info](#out_element_info)
     - [restart\_save](#restart_save)
     - [restart\_load](#restart_load)
     - [rpa](#rpa)
+    - [nbands\_istate](#nbands_istate)
+    - [bands\_to\_print](#bands_to_print)
   - [Density of states](#density-of-states)
     - [dos\_edelta\_ev](#dos_edelta_ev)
     - [dos\_sigma](#dos_sigma)
@@ -234,6 +234,7 @@
     - [exx\_opt\_orb\_ecut](#exx_opt_orb_ecut)
     - [exx\_opt\_orb\_tolerence](#exx_opt_orb_tolerence)
     - [exx\_real\_number](#exx_real_number)
+    - [rpa\_ccp\_rmesh\_times](#rpa_ccp_rmesh_times)
   - [Molecular dynamics](#molecular-dynamics)
     - [md\_type](#md_type)
     - [md\_nstep](#md_nstep)
@@ -413,7 +414,7 @@ These variables are used to control general system parameters.
   - relax: do structure relaxation calculation, one can use `relax_nmax` to decide how many ionic relaxations you want
   - cell-relax: do variable-cell relaxation calculation
   - nscf: do the non self-consistent electronic structure calculations. For this option, you need a charge density file. For nscf calculations with planewave basis set, pw_diag_thr should be <= 1e-3
-  - get_pchg: For LCAO basis. Please see the explanation for variable `nbands_istate`
+  - get_pchg: For LCAO basis. Please see the explanation for variable `nbands_istate` and `bands_to_print`
   - get_wf: Envelope function for LCAO basis. Please see the explanation for variable `nbands_istate`
   - md: molecular dynamics
   - test_memory : checks memory required for the calculation. The number is not quite reliable, please use it with care
@@ -438,7 +439,7 @@ These variables are used to control general system parameters.
 
 - **Type**: Integer
 - **Description**: takes value 1, 0 or -1.
-  - -1: No symmetry will be considered.
+  - -1: No symmetry will be considered. It is recommended to set -1 for non-colinear + soc calculations, where time reversal symmetry is broken sometimes.
   - 0: Only time reversal symmetry would be considered in symmetry operations, which implied k point and -k point would be treated as a single k point with twice the weight.
   - 1: Symmetry analysis will be performed to determine the type of Bravais lattice and associated symmetry operations. (point groups, space groups, primitive cells, and irreducible k-points)
 - **Default**: 
@@ -772,20 +773,26 @@ These variables are used to control the plane wave related parameters.
 ### pw_diag_thr
 
 - **Type**: Real
-- **Description**: Only used when you use `diago_type = cg` or `diago_type = david`. It indicates the threshold for the first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. **For nscf calculations with planewave basis set, pw_diag_thr should be <= 1e-3.**
+- **Description**: Only used when you use `ks_solver = cg/dav/dav_subspace/bpcg`. It indicates the threshold for the first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. **For nscf calculations with planewave basis set, pw_diag_thr should be <= 1e-3.**
 - **Default**: 0.01
 
 ### pw_diag_nmax
 
 - **Type**: Integer
-- **Description**: Only useful when you use `ks_solver = cg` or `ks_solver = dav`. It indicates the maximal iteration number for cg/david method.
+- **Description**: Only useful when you use `ks_solver = cg/dav/dav_subspace/bpcg`. It indicates the maximal iteration number for cg/david/dav_subspace/bpcg method.
 - **Default**: 40
 
 ### pw_diag_ndim
 
 - **Type**: Integer
-- **Description**: Only useful when you use `ks_solver = dav`. It indicates the maximal dimension for the Davidson method.
+- **Description**: Only useful when you use `ks_solver = dav` or `ks_solver = dav_subspace`. It indicates dimension of workspace(number of wavefunction packets, at least 2 needed) for the Davidson method. A larger value may yield a smaller number of iterations in the algorithm but uses more memory and more CPU time in subspace diagonalization.
 - **Default**: 4
+
+### diago_full_acc
+
+- **Type**: bool
+- **Description**: Only useful when you use `ks_solver = dav_subspace`. If `TRUE`, all the empty states are diagonalized at the same level of accuracy of the occupied ones. Otherwise the empty states are diagonalized using a larger threshold (10-5) (this should not affect total energy, forces, and other ground-state properties).
+- **Default**: false
 
 ### erf_ecut
 
@@ -936,13 +943,6 @@ calculations.
   - nspin=1: max(1.2\*occupied_bands, occupied_bands + 10)
   - nspin=2: max(1.2\*nelec_spin, nelec_spin + 10), in which nelec_spin = max(nelec_spin_up, nelec_spin_down)
   - nspin=4: max(1.2\*nelec, nelec + 20)
-
-### nbands_istate
-
-- **Type**: Integer
-- **Availability**: Only used when `calculation = get_wf` or `calculation = get_pchg`.
-- **Description**: The number of bands around the Fermi level you would like to calculate. `get_wf` means to calculate the envelope functions of wave functions $\Psi_{i}=\Sigma_{\mu}C_{i\mu}\Phi_{\mu}$, where $\Psi_{i}$ is the ith wave function with the band index $i$ and $\Phi_{\mu}$ is the localized atomic orbital set. `get_pchg` means to calculate the density of each wave function $|\Psi_{i}|^{2}$. Specifically, suppose we have highest occupied bands at 100th wave functions. And if you set this variable to 5, it will print five wave functions from 96th to 105th. But before all this can be carried out, the wave functions coefficients  should be first calculated and written into a file by setting the flag `out_wfc_lcao = 1`.
-- **Default**: 5
 
 ### nspin
 
@@ -1612,6 +1612,22 @@ These variables are used to control the output of properties.
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis
 - **Description**: Whether to print the upper triangular part of the exchange-correlation matrices in **Kohn-Sham orbital representation** (unit: Ry): $\braket{\psi_i|V_\text{xc}^\text{(semi-)local}+V_\text{exx}+V_\text{DFTU}|\psi_j}$ for each k point into files in the directory `OUT.${suffix}`, which is useful for the subsequent GW calculation. (Note that currently DeePKS term is not included. ) The files are named `k-$k-Vxc`, the meaning of `$k`corresponding to k point and spin  is same as [hs_matrix.md](../elec_properties/hs_matrix.md#out_mat_hs).
+The band (KS orbital) energy for each (k-point, spin, band) will be printed in the file `OUT.${suffix}/vxc_out`. If EXX is calculated, the local and EXX part of band energy will also be printed in `OUT.${suffix}/vxc_local_out`and `OUT.${suffix}/vxc_exx_out`, respectively. All the `vxc*_out` files contains 3 integers (nk, nspin, nband) followed by nk\*nspin\*nband lines of energy Hartree and eV.
+```
+- **Default**: False
+
+### out_hr_npz/out_dm_npz
+
+- **Type**: Boolean
+- **Availability**: Numerical atomic orbital basis
+- **Description**: Whether to print Hamiltonian matrices H(R)/density matrics DM(R) in npz format. This feature does not work for gamma-only calculations. Currently only intended for internal usage.
+- **Default**: False
+
+### dm_to_rho
+
+- **Type**: Boolean
+- **Availability**: Numerical atomic orbital basis
+- **Description**: Reads density matrix DM(R) in npz format and creates electron density on grids. This feature does not work for gamma-only calculations. Only supports serial calculations. Currently only intended for internal usage.
 - **Default**: False
 
 ### out_app_flag
@@ -1634,20 +1650,6 @@ These variables are used to control the output of properties.
 - **Availability**: Numerical atomic orbital basis
 - **Description**: Control the interval for printing Mulliken population analysis, $r(R)$, $H(R)$, $S(R)$, $T(R)$, $dH(R)$, $H(k)$, $S(k)$ and $wfc(k)$ matrices during molecular dynamics calculations. Check input parameters [out_mul](#out_mul), [out_mat_r](#out_mat_r), [out_mat_hs2](#out_mat_hs2), [out_mat_t](#out_mat_t), [out_mat_dh](#out_mat_dh), [out_mat_hs](#out_mat_hs) and [out_wfc_lcao](#out_wfc_lcao) for more information, respectively.
 - **Default**: 1
-
-### band_print_num
-
-- **Type**: Integer
-- **Availability**: PW basis
-- **Description**: If you want to plot a partial charge density contributed from some chosen bands. `band_print_num` define the number of band list. The result can be found in "band*.cube".
-- **Default**: 0
-
-### bands_to_print
-
-- **Type**: vector
-- **Availability**: band_print_num > 0
-- **Description**: define which band you want to choose for partial charge density.
-- **Default**: []
 
 ### out_element_info
 
@@ -1680,6 +1682,20 @@ These variables are used to control the output of properties.
 - **Type**: Boolean
 - **Description**: Generate output files used in rpa calculations.
 - **Default**: False
+
+### nbands_istate
+
+- **Type**: Integer
+- **Availability**: Only for LCAO, used when `calculation = get_wf` or `calculation = get_pchg`.
+- **Description**: The number of bands around the Fermi level you would like to calculate. `get_wf` means to calculate the envelope functions of wave functions $\Psi_{i}=\Sigma_{\mu}C_{i\mu}\Phi_{\mu}$, where $\Psi_{i}$ is the ith wave function with the band index $i$ and $\Phi_{\mu}$ is the localized atomic orbital set. `get_pchg` means to calculate the density of each wave function $|\Psi_{i}|^{2}$. Specifically, suppose we have highest occupied bands at 100th wave functions. And if you set this variable to 5, it will print five wave functions from 96th to 105th. But before all this can be carried out, the wave functions coefficients should be first calculated and written into a file by setting the flag `out_wfc_lcao = 1`.
+- **Default**: 5
+
+### bands_to_print
+
+- **Type**: String
+- **Availability**: For both PW and LCAO. When `basis_type = lcao`, only used when `calculation = get_pchg`.
+- **Description**: Specifies the bands to calculate the charge density for, using a space-separated string of 0s and 1s, providing a more flexible selection compared to `nbands_istate`. Each digit in the string corresponds to a band, starting from the first band. A `1` indicates that the charge density should be calculated for that band, while a `0` means the band will be ignored. The parameter allows a compact and flexible notation (similar to [`ocp_set`](#ocp_set)), for example the syntax `1 4*0 5*1 0` is used to denote the selection of bands: `1` means calculate for the first band, `4*0` skips the next four bands, `5*1` means calculate for the following five bands, and the final `0` skips the next band. It's essential that the total count of bands does not exceed the total number of bands (`nbands`); otherwise, it results in an error, and the process exits. The input string must contain only numbers and the asterisk (`*`) for repetition, ensuring correct format and intention of band selection.
+- **Default**: none
 
 [back to top](#full-list-of-input-keywords)
 
@@ -2283,6 +2299,12 @@ These variables are relevant when using hybrid functionals.
 - **Default**: depends on the [gamma_only](#gamma_only) option
   - True: if gamma_only 
   - False: else 
+
+### rpa_ccp_rmesh_times
+
+- **Type**: Real
+- **Description**: How many times larger the radial mesh required is to that of atomic orbitals in the postprocess calculation of the **bare** Coulomb matrix for RPA, GW, etc.
+- **Default**: 10
 
 [back to top](#full-list-of-input-keywords)
 

@@ -999,14 +999,15 @@ void UnitCell::print_stru_file(const std::string &fn, const int &type, const int
 
     if(type == 1)
     {
+        int nat_tmp = 0;
         ofs << "Cartesian" << std::endl;
-        for(int it=0; it<ntype; it++)
+        for(int it = 0; it < ntype; it++)
         {
             ofs << std::endl;
             ofs << atoms[it].label << " #label" << std::endl;
             ofs << magnet.start_magnetization[it] << " #magnetism" << std::endl;
             ofs << atoms[it].na << " #number of atoms" << std::endl;
-            for(int ia=0; ia<atoms[it].na; ia++)
+            for(int ia = 0; ia < atoms[it].na; ia++)
             {
                 // output position and mobility
                 ofs << fmt.format(atoms[it].tau[ia].x, atoms[it].tau[ia].y, atoms[it].tau[ia].z) << " m ";
@@ -1017,22 +1018,24 @@ void UnitCell::print_stru_file(const std::string &fn, const int &type, const int
                     fmt.reset("%20.10f %20.10f %20.10f");
                     ofs << " v " << fmt.format(atoms[it].vel[ia].x, atoms[it].vel[ia].y, atoms[it].vel[ia].z) << std::endl;
                 }
-                if (GlobalV::NSPIN == 2) // output magnetic information
+                if (GlobalV::NSPIN == 2 && GlobalV::out_mul) // output magnetic information
                 {
                     fmt.reset("%20.10f");
-                    ofs << " mag " << fmt.format(atoms[it].mag[ia]) << std::endl;
+                    ofs << " mag " << fmt.format(atom_mulliken[nat_tmp][1]) << std::endl;
                 }
-                else if (GlobalV::NSPIN == 4) // output magnetic information
+                else if (GlobalV::NSPIN == 4 && GlobalV::out_mul) // output magnetic information
                 {
                     fmt.reset("%20.10f %20.10f %20.10f");
-                    ofs << " mag " << fmt.format(atoms[it].m_loc_[ia].x, atoms[it].m_loc_[ia].y, atoms[it].m_loc_[ia].z) << std::endl;
+                    ofs << " mag " << fmt.format(atom_mulliken[nat_tmp][1], atom_mulliken[nat_tmp][2], atom_mulliken[nat_tmp][3]) << std::endl;
                 }
                 ofs << std::endl;
+                nat_tmp++;
             }
         }
     }
     else if(type == 2)
     {
+        int nat_tmp = 0;
         ofs << "Direct" << std::endl;
         for(int it=0; it<ntype; it++)
         {
@@ -1051,23 +1054,22 @@ void UnitCell::print_stru_file(const std::string &fn, const int &type, const int
                     fmt.reset("%20.10f %20.10f %20.10f");
                     ofs << " v " << fmt.format(atoms[it].vel[ia].x, atoms[it].vel[ia].y, atoms[it].vel[ia].z) << std::endl;
                 }
-                if (GlobalV::NSPIN == 2) // output magnetic information
+                if (GlobalV::NSPIN == 2 && GlobalV::out_mul) // output magnetic information
                 {
                     fmt.reset("%20.10f");
-                    ofs << " mag " << fmt.format(atoms[it].mag[ia]) << std::endl;
+                    ofs << " mag " << fmt.format(atom_mulliken[nat_tmp][1]) << std::endl;
                 }
                 else if (GlobalV::NSPIN == 4) // output magnetic information
                 {
                     fmt.reset("%20.10f %20.10f %20.10f");
-                    ofs << " mag " << fmt.format(atoms[it].m_loc_[ia].x, atoms[it].m_loc_[ia].y, atoms[it].m_loc_[ia].z) << std::endl;
+                    ofs << " mag " << fmt.format(atom_mulliken[nat_tmp][1], atom_mulliken[nat_tmp][2], atom_mulliken[nat_tmp][3]) << std::endl;
                 }
                 ofs << std::endl;
+                nat_tmp++;
             }
         }
     }
-
     ofs.close();
-
     return;
 }
 

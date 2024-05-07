@@ -260,8 +260,9 @@ TEST_F(InputTest, Default)
         EXPECT_DOUBLE_EQ(INPUT.exx_cauchy_force_threshold,1E-7);
         EXPECT_DOUBLE_EQ(INPUT.exx_cauchy_stress_threshold,1E-7);
         EXPECT_DOUBLE_EQ(INPUT.exx_ccp_threshold,1E-8);
-        EXPECT_EQ(INPUT.exx_ccp_rmesh_times,"default");
-        EXPECT_EQ(INPUT.exx_distribute_type,"htime");
+        EXPECT_EQ(INPUT.exx_ccp_rmesh_times, "default");
+        EXPECT_DOUBLE_EQ(INPUT.rpa_ccp_rmesh_times, 10.0);
+        EXPECT_EQ(INPUT.exx_distribute_type, "htime");
         EXPECT_EQ(INPUT.exx_opt_orb_lmax,0);
         EXPECT_DOUBLE_EQ(INPUT.exx_opt_orb_ecut,0.0);
         EXPECT_DOUBLE_EQ(INPUT.exx_opt_orb_tolerence,0.0);
@@ -625,8 +626,9 @@ TEST_F(InputTest, Read)
         EXPECT_DOUBLE_EQ(INPUT.exx_cauchy_force_threshold,0);
         EXPECT_DOUBLE_EQ(INPUT.exx_cauchy_stress_threshold,0);
         EXPECT_DOUBLE_EQ(INPUT.exx_ccp_threshold,1E-8);
-        EXPECT_EQ(INPUT.exx_ccp_rmesh_times,"default");
-        EXPECT_EQ(INPUT.exx_distribute_type,"htime");
+        EXPECT_EQ(INPUT.exx_ccp_rmesh_times, "default");
+        EXPECT_DOUBLE_EQ(INPUT.rpa_ccp_rmesh_times, 10.0);
+        EXPECT_EQ(INPUT.exx_distribute_type, "htime");
         EXPECT_EQ(INPUT.exx_opt_orb_lmax,0);
         EXPECT_DOUBLE_EQ(INPUT.exx_opt_orb_ecut,0.0);
         EXPECT_DOUBLE_EQ(INPUT.exx_opt_orb_tolerence,0.0);
@@ -1468,6 +1470,14 @@ TEST_F(InputTest, Check)
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("must exx_ccp_rmesh_times >= 1"));
 	INPUT.exx_ccp_rmesh_times = "1.5";
+    //
+    INPUT.rpa = true;
+    INPUT.rpa_ccp_rmesh_times = -1;
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(INPUT.Check(), ::testing::ExitedWithCode(0), "");
+    output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr("must rpa_ccp_rmesh_times >= 1"));
+    INPUT.rpa_ccp_rmesh_times = 10.0;
 	//
 	INPUT.exx_distribute_type = "arbitrary";
 	testing::internal::CaptureStdout();

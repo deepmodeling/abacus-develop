@@ -390,6 +390,7 @@ void ESolver_KS<T, Device>::run(const int istep, UnitCell& ucell)
 		ModuleBase::timer::tick(this->classname, "run");
 
 		this->before_scf(istep); //Something else to do before the iter loop
+		if(GlobalV::dm_to_rho) return; //nothing further is needed
 
 		ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT SCF");
 
@@ -631,6 +632,21 @@ ModuleIO::Output_Rho ESolver_KS<T, Device>::create_Output_Rho(
 {
 	const int precision = 3;
 	std::string tag = "CHG";
+	if(GlobalV::dm_to_rho)
+	{
+		return ModuleIO::Output_Rho(this->pw_big,
+								this->pw_rhod,
+								is,
+								GlobalV::NSPIN,
+								pelec->charge->rho[is],
+								iter,
+								this->pelec->eferm.get_efval(is),
+								&(GlobalC::ucell),
+								GlobalV::global_out_dir,
+								precision,
+								tag,
+								prefix);
+	}
 	return ModuleIO::Output_Rho(this->pw_big,
 			this->pw_rhod,
 			is,
