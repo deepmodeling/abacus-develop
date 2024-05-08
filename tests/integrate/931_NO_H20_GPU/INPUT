@@ -7,7 +7,7 @@ symmetry         0
                  
 #Parameters (2.Iteration)
 ecutwfc          100
-scf_thr          1e-6
+scf_thr          1e-7
 scf_nmax         50
                  
 #Parameters (3.Basis)
