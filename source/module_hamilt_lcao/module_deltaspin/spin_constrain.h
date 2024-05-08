@@ -270,6 +270,10 @@ public:
     {
         sc_file_ = sc_file;
     }
+    static void set_drho_condition(bool drho_condition)
+    {
+        drho_condition_ = drho_condition;
+    }
     /// @brief getters for control parameters
     static double get_sc_thr()
     {

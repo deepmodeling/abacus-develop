@@ -691,8 +691,14 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
 
     // run the inner lambda loop to contrain atomic moments with the DeltaSpin method
     if (SpinConstrain<TK, psi::DEVICE_CPU>::get_sc_mag_switch() && 
-            iter > SpinConstrain<TK, psi::DEVICE_CPU>::get_sc_scf_nmin())
+        iter > SpinConstrain<TK, psi::DEVICE_CPU>::get_sc_scf_nmin() &&
+        (this->drho < SpinConstrain<TK, psi::DEVICE_CPU>::get_sc_scf_drho() ||
+        SpinConstrain<TK, psi::DEVICE_CPU>::get_drho_condition()))
     {
+        if (this->drho < SpinConstrain<TK, psi::DEVICE_CPU>::get_sc_scf_drho())
+        {
+            SpinConstrain<TK, psi::DEVICE_CPU>::set_drho_condition(true);
+        }
         SpinConstrain<TK, psi::DEVICE_CPU>& sc = SpinConstrain<TK, psi::DEVICE_CPU>::getScInstance();
         sc.run_lambda_loop(iter-1);
     }
