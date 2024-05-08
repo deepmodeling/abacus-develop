@@ -199,7 +199,7 @@ void Diago_DavSubspace<T, Device>::diag_once(hamilt::Hamilt<T, Device>* phm_in,
             }
             else
             {
-                double empty_ethr = std::max(DiagoIterAssist<T, Device>::PW_DIAG_THR * 5.0, 1e-5);
+                const double empty_ethr = std::max(DiagoIterAssist<T, Device>::PW_DIAG_THR * 5.0, Diago_DavSubspace::dav_large_thr);
                 convflag[m] = (std::abs(this->eigenvalue_in_dav[m] - eigenvalue_in_hsolver[m]) < empty_ethr);
             }
 

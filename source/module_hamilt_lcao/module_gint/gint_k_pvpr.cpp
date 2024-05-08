@@ -60,6 +60,7 @@ void Gint_k::destroy_pvpR(void)
 // H(k)=\sum{R} H(R)exp(ikR) 
 void Gint_k::folding_vl_k(const int &ik, 
                         LCAO_Matrix *LM, 
+                         Parallel_Orbitals *pv,
                         const std::vector<ModuleBase::Vector3<double>>& kvec_d)
 {
     ModuleBase::TITLE("Gint_k","folding_vl_k");
@@ -388,7 +389,7 @@ void Gint_k::folding_vl_k(const int &ik,
 #endif
         for (int j=0; j<nlocal; j++)
         {
-            if (!LM->ParaV->in_this_processor(i,j))
+            if (!pv->in_this_processor(i,j))
             {
                 continue;
             }
