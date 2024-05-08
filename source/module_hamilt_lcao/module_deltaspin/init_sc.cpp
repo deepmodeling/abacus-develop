@@ -18,7 +18,7 @@ void SpinConstrain<FPTYPE, Device>::init_sc(const UnitCell& ucell,
     this->set_orbitalCounts(ucell.get_orbitalCounts());
     this->set_lnchiCounts(ucell.get_lnchiCounts());
     this->set_nspin(nspin_in);
-    this->bcast_ScData(this->sc_file, this->get_nat(), this->get_ntype());
+    this->bcast_ScData(this->sc_file_, this->get_nat(), this->get_ntype());
     this->set_npol(NPOL);
     this->set_ParaV(ParaV_in);
     this->set_solver_parameters(kv_in, phsol_in, p_hamilt_in, psi_in, pelec_in, KS_SOLVER_in, LM_in);

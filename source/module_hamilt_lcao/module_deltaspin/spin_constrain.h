@@ -222,9 +222,9 @@ public:
     static double restrict_current_; // in unit of Ry/uB = 3 eV/uB
     static bool decay_grad_switch_;
     static bool sc_mag_switch_;
-    static int sc_scf_nmin;
-    static double sc_scf_drho;
-    static std::string sc_file;
+    static int sc_scf_nmin_;
+    static double sc_scf_drho_;
+    static std::string sc_file_;
 public:
     /**
      * setters and getters for control parameters
@@ -259,15 +259,15 @@ public:
     }
     static void set_sc_scf_nmin(int sc_scf_nmin)
     {
-        sc_scf_nmin = sc_scf_nmin;
+        sc_scf_nmin_ = sc_scf_nmin;
     }
     static void set_sc_scf_drho(double sc_scf_drho)
     {
-        sc_scf_drho = sc_scf_drho;
+        sc_scf_drho_ = sc_scf_drho;
     }
-    static void set_sc_file(std::string sc_file_in)
+    static void set_sc_file(std::string sc_file)
     {
-        sc_file = sc_file_in;
+        sc_file_ = sc_file;
     }
     /// @brief getters for control parameters
     static double get_sc_thr()
@@ -300,15 +300,15 @@ public:
     }
     static int get_sc_scf_nmin()
     {
-        return sc_scf_nmin;
+        return sc_scf_nmin_;
     }
     static double get_sc_scf_drho()
     {
-        return sc_scf_drho;
+        return sc_scf_drho_;
     }
     static std::string get_sc_file()
     {
-        return sc_file;
+        return sc_file_;
     }
 };
 
@@ -345,10 +345,10 @@ bool SpinConstrain<FPTYPE, Device>::decay_grad_switch_ = false;
 template<typename FPTYPE, typename Device>
 bool SpinConstrain<FPTYPE, Device>::sc_mag_switch_ = false;
 template<typename FPTYPE, typename Device>
-int SpinConstrain<FPTYPE, Device>::sc_scf_nmin = 2;
+int SpinConstrain<FPTYPE, Device>::sc_scf_nmin_ = 2;
 template<typename FPTYPE, typename Device>
-double SpinConstrain<FPTYPE, Device>::sc_scf_drho = 0.1;
+double SpinConstrain<FPTYPE, Device>::sc_scf_drho_ = 0.1;
 template<typename FPTYPE, typename Device>
-std::string SpinConstrain<FPTYPE, Device>::sc_file = "sc.json";
+std::string SpinConstrain<FPTYPE, Device>::sc_file_ = "sc.json";
 
 #endif // SPIN_CONSTRAIN_H
