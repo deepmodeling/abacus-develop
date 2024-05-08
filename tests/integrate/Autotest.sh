@@ -17,7 +17,7 @@ case='^[^#].*_.*$'
 # enable AddressSanitizer
 sanitize=false
 
-while getopts a:n:t:c:s:r:g:f flag
+while getopts a:n:t:c:s:r:f:g flag
 do
     case "${flag}" in
         a) abacus=${OPTARG};;
@@ -26,8 +26,8 @@ do
         c) ca=${OPTARG};;
         s) sanitize=${OPTARG};;
         r) case=${OPTARG};;
-        g) g=true;; #generate test reference
         f) cases_file=${OPTARG};;
+        g) g=true;; #generate test reference
     esac
 done
 
