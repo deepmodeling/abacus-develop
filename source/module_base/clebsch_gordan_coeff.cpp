@@ -30,6 +30,7 @@ void Clebsch_Gordan::clebsch_gordan(const int& lli,
     ModuleBase::matrix ylm(llx, llx);
     ModuleBase::matrix mly(llx, llx);
 
+    ModuleBase::Memory::record("Clebsch_Gordan::matrix",sizeof(double)*llx*llx*2+sizeof(ModuleBase::Vector3<double>)*llx);
     // generate an array of random vectors (uniform deviate on unitary sphere)
     gen_rndm_r(llx, r);
 

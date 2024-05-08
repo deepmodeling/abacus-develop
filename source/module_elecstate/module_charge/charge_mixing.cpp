@@ -8,6 +8,7 @@
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_base/memory.h"
 
 Charge_Mixing::Charge_Mixing()
 {
@@ -343,6 +344,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         // allocate rhog_mag[is*ngmc] and rhog_mag_save[is*ngmc]
         rhog_mag = new std::complex<double>[npw * GlobalV::NSPIN];
         rhog_mag_save = new std::complex<double>[npw * GlobalV::NSPIN];
+        ModuleBase::Memory::record("Charge_Mixing::rhog_mag*",sizeof(std::complex<double>)*npw * GlobalV::NSPIN*2);
         ModuleBase::GlobalFunc::ZEROS(rhog_mag, npw * GlobalV::NSPIN);
         ModuleBase::GlobalFunc::ZEROS(rhog_mag_save, npw * GlobalV::NSPIN);
         // get rhog_mag[is*ngmc] and rhog_mag_save[is*ngmc]
@@ -447,6 +449,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         const int nrxx = this->rhopw->nrxx;
         double* rho_magabs = new double[nrxx];
         double* rho_magabs_save = new double[nrxx];
+        ModuleBase::Memory::record("Charge_Mixing::rho_magabs*",sizeof(double)*nrxx*2);
         ModuleBase::GlobalFunc::ZEROS(rho_magabs, nrxx);
         ModuleBase::GlobalFunc::ZEROS(rho_magabs_save, nrxx);
         // calculate rho_magabs and rho_magabs_save
@@ -461,6 +464,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         const int npw = this->rhopw->npw;
         std::complex<double>* rhog_magabs = new std::complex<double>[npw * 2];
         std::complex<double>* rhog_magabs_save = new std::complex<double>[npw * 2];
+        ModuleBase::Memory::record("Charge_Mixing::rhog_magabs_2*",sizeof(std::complex<double>)*npw*4);
         ModuleBase::GlobalFunc::ZEROS(rhog_magabs, npw * 2);
         ModuleBase::GlobalFunc::ZEROS(rhog_magabs_save, npw * 2);
         // calculate rhog_magabs and rhog_magabs_save
@@ -632,6 +636,7 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
         // allocate rho_mag[is*nnrx] and rho_mag_save[is*nnrx]
         rho_mag = new double[nrxx * GlobalV::NSPIN];
         rho_mag_save = new double[nrxx * GlobalV::NSPIN];
+        ModuleBase::Memory::record("Charge_Mixing::rho_mag_2*",sizeof(double)*nrxx * GlobalV::NSPIN*2);
         ModuleBase::GlobalFunc::ZEROS(rho_mag, nrxx * GlobalV::NSPIN);
         ModuleBase::GlobalFunc::ZEROS(rho_mag_save, nrxx * GlobalV::NSPIN);
         // get rho_mag[is*nnrx] and rho_mag_save[is*nnrx]
@@ -726,6 +731,7 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
         // allocate memory for rho_magabs and rho_magabs_save
         double* rho_magabs = new double[nrxx * 2];
         double* rho_magabs_save = new double[nrxx * 2];
+        ModuleBase::Memory::record("Charge_Mixing::rho_magabs_real*",sizeof(double)*nrxx*4);
         ModuleBase::GlobalFunc::ZEROS(rho_magabs, nrxx * 2);
         ModuleBase::GlobalFunc::ZEROS(rho_magabs_save, nrxx * 2);
         // calculate rho_magabs and rho_magabs_save
@@ -822,6 +828,7 @@ void Charge_Mixing::mix_dmr(elecstate::DensityMatrix<double, double>* DM)
         // allocate dmr_mag[is*nnrx] and dmr_mag_save[is*nnrx]
         dmr_mag = new double[nnr * GlobalV::NSPIN];
         dmr_mag_save = new double[nnr * GlobalV::NSPIN];
+        ModuleBase::Memory::record("Charge_Mixing::dmr_mag*",sizeof(double)*nnr*GlobalV::NSPIN*2);
         ModuleBase::GlobalFunc::ZEROS(dmr_mag, nnr * GlobalV::NSPIN);
         ModuleBase::GlobalFunc::ZEROS(dmr_mag_save, nnr * GlobalV::NSPIN);
         double* dmr_up;
@@ -921,6 +928,7 @@ void Charge_Mixing::mix_dmr(elecstate::DensityMatrix<std::complex<double>, doubl
         // allocate dmr_mag[is*nnrx] and dmr_mag_save[is*nnrx]
         dmr_mag = new double[nnr * GlobalV::NSPIN];
         dmr_mag_save = new double[nnr * GlobalV::NSPIN];
+        ModuleBase::Memory::record("Charge_Mixing::dmr_mag_2*",sizeof(double)*nnr*GlobalV::NSPIN*2);
         ModuleBase::GlobalFunc::ZEROS(dmr_mag, nnr * GlobalV::NSPIN);
         ModuleBase::GlobalFunc::ZEROS(dmr_mag_save, nnr * GlobalV::NSPIN);
         double* dmr_up;
@@ -1015,6 +1023,7 @@ void Charge_Mixing::mix_rho(Charge* chr)
     // the charge before mixing.
     const int nrxx = chr->rhopw->nrxx;
     std::vector<double> rho123(GlobalV::NSPIN * nrxx);
+    ModuleBase::Memory::record("Charge_Mixing::rho123",sizeof(double)*GlobalV::NSPIN * nrxx);
     for (int is = 0; is < GlobalV::NSPIN; ++is)
     {
         if (is == 0 || is == 3 || !GlobalV::DOMAG_Z)
@@ -1262,6 +1271,7 @@ double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::c
 
     std::complex<double>** rhog1 = new std::complex<double>*[GlobalV::NSPIN];
     std::complex<double>** rhog2 = new std::complex<double>*[GlobalV::NSPIN];
+    ModuleBase::Memory::record("Charge_Mixing::rhog1&2",sizeof(std::complex<double>)*GlobalV::NSPIN*2);
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
         rhog1[is] = rho1 + is * this->rhopw->npw;
@@ -1623,10 +1633,13 @@ void Charge_Mixing::divide_data(std::complex<double>* data_d,
         const int ndims = this->rhopw->npw;
         const int ndimhf = ndimd - ndims;
         data_s = new std::complex<double>[GlobalV::NSPIN * ndims];
+        ModuleBase::Memory::record("Charge_Mixing::data_s",sizeof(std::complex<double>)*GlobalV::NSPIN * ndims);
         data_hf = nullptr;
         if (ndimhf > 0)
         {
             data_hf = new std::complex<double>[GlobalV::NSPIN * ndimhf];
+            
+            ModuleBase::Memory::record("Charge_Mixing::data_hf",sizeof(std::complex<double>)*GlobalV::NSPIN * ndimhf);
         }
         for (int is = 0; is < GlobalV::NSPIN; ++is)
         {

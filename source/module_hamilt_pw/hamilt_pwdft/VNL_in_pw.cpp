@@ -443,6 +443,7 @@ void pseudopot_cell_vnl::getvnl(Device* ctx, const int& ik, std::complex<FPTYPE>
     resmem_var_op()(ctx, vkb1, nhm * npw, "VNL::vkb1");
 
     ModuleBase::Vector3<double>* _gk = new ModuleBase::Vector3<double>[npw];
+    ModuleBase::Memory::record("pseudopot_cell_vnl::getvnl",sizeof(ModuleBase::Vector3<double>)*npw+sizeof(int)*GlobalC::ucell.ntype*3);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
 #endif
@@ -569,6 +570,7 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
     this->dvan_so.zero_out(); // added by zhengdy-soc
     delete[] indv_ijkb0;
     this->indv_ijkb0 = new int[GlobalC::ucell.nat];
+    ModuleBase::Memory::record("pseudopot_cell_vnl::indv_ijkb0",sizeof(int)*GlobalC::ucell.nat);
     int ijkb0 = 0;
     for (int it = 0; it < cell.ntype; it++)
     {
@@ -820,6 +822,7 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
 
         double* jl = new double[kkbeta];
         double* aux = new double[kkbeta];
+        ModuleBase::Memory::record("pseudopot_cell_vnl::jl&aux",sizeof(double)*kkbeta*2);
 
         for (int ib = 0; ib < nbeta; ib++)
         {
@@ -897,6 +900,7 @@ void pseudopot_cell_vnl::compute_qrad(UnitCell& cell)
             double* aux = new double[kkbeta];
             double* besr = new double[kkbeta];
 
+            ModuleBase::Memory::record("pseudopot_cell_vnl::besr&aux",sizeof(double)*kkbeta*2);
             for (int l = 0; l < upf->nqlc; l++)
             {
                 for (int iq = 0; iq < GlobalV::NQXQ; iq++)
@@ -1311,6 +1315,7 @@ void pseudopot_cell_vnl::init_vnl_alpha(void)          // pengfei Li 2018-3-23
 		double *jl = new double[kkbeta];
 		double *aux  = new double[kkbeta];
 
+        ModuleBase::Memory::record("pseudopot_cell_vnl::jl&aux_2",sizeof(double)*kkbeta*2);
 		for (int ib = 0;ib < nbeta;ib++)
 		{
 			for (int L = 0; L <= lmaxkb+1; L++)
@@ -1512,6 +1517,7 @@ void pseudopot_cell_vnl::newq(const ModuleBase::matrix& veff, const ModulePW::PW
     ModuleBase::YlmReal::Ylm_Real(lmaxq * lmaxq, npw, rho_basis->gcar, ylmk0);
 
     double* qnorm = new double[npw];
+    ModuleBase::Memory::record("pseudopot_cell_vnl::qnorm",sizeof(double)*npw);
     for (int ig = 0; ig < npw; ig++)
     {
         qnorm[ig] = rho_basis->gcar[ig].norm() * cell.tpiba;

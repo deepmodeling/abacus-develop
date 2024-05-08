@@ -16,6 +16,8 @@
 #include <ATen/core/tensor_map.h>
 #include <ATen/core/tensor_types.h>
 #include <module_hamilt_general/module_xc/kernels/xc_functional_op.h>
+#include <cstddef>
+#include "module_base/memory.h"
 
 // from gradcorr.f90
 void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
@@ -71,6 +73,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 	// calculate the gradient of (rho_core+rho) in reciprocal space.
 	rhotmp1 = new double[rhopw->nrxx];
 	rhogsum1 = new std::complex<double>[rhopw->npw];
+	ModuleBase::Memory::record("XC_Functional::rho*",sizeof(std::complex<double>)*rhopw->npw+sizeof(double)*rhopw->nrxx);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 1024)
 #endif
@@ -88,6 +91,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 
 	gdr1 = new ModuleBase::Vector3<double>[rhopw->nrxx];
 	if(!is_stress)	h1 = new ModuleBase::Vector3<double>[rhopw->nrxx];
+	ModuleBase::Memory::record("XC_Functional::gdr1",sizeof(ModuleBase::Vector3<double>)*rhopw->nrxx);
 	
 	XC_Functional::grad_rho( rhogsum1 , gdr1, rhopw, ucell->tpiba);
 
@@ -97,6 +101,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 	{
 		rhotmp2 = new double[rhopw->nrxx];
 		rhogsum2 = new std::complex<double>[rhopw->npw];
+		ModuleBase::Memory::record("XC_Functional::rho2*",sizeof(std::complex<double>)*rhopw->npw+sizeof(double)*rhopw->nrxx);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 1024)
 #endif
@@ -113,6 +118,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 		}
 
 		gdr2 = new ModuleBase::Vector3<double>[rhopw->nrxx];
+		ModuleBase::Memory::record("XC_Functional::gdr2",sizeof(ModuleBase::Vector3<double>)*rhopw->nrxx);
 		if(!is_stress) h2 = new ModuleBase::Vector3<double>[rhopw->nrxx];
 		
 		XC_Functional::grad_rho( rhogsum2 , gdr2, rhopw, ucell->tpiba);
@@ -123,6 +129,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 		rhotmp2 = new double[rhopw->nrxx];
 		rhogsum2 = new std::complex<double>[rhopw->npw];
  		neg = new double [rhopw->nrxx];
+		ModuleBase::Memory::record("XC_Functional::rho*&neg",sizeof(std::complex<double>)*rhopw->npw+sizeof(double)*rhopw->nrxx*2)
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 1024)
 #endif
@@ -146,6 +153,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 			for(int is = 0;is<GlobalV::NSPIN;is++) {
 				vsave[is]= new double [rhopw->nrxx];
 			}
+		ModuleBase::Memory::record("XC_Functional::vsave",sizeof(double)*GlobalV::NSPIN*rhopw->nrxx);
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 1024)
 #endif
@@ -157,6 +165,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 			}
 			vgg = new double* [nspin0];
 			for(int is = 0;is<nspin0;is++)vgg[is] = new double[rhopw->nrxx];
+			ModuleBase::Memory::record("XC_Functional::vgg",sizeof(double)*nspin0*rhopw->nrxx);
 		}
 		noncolin_rho(rhotmp1,rhotmp2,neg,chr->rho,rhopw->nrxx,ucell->magnet.ux_,ucell->magnet.lsign_);
 		rhopw->real2recip(rhotmp1, rhogsum1);
@@ -181,6 +190,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 		gdr2 = new ModuleBase::Vector3<double>[rhopw->nrxx];
 		h2 = new ModuleBase::Vector3<double>[rhopw->nrxx];
 
+			ModuleBase::Memory::record("XC_Functional::gdr2&h2",sizeof(ModuleBase::Vector3<double>)*2*rhopw->nrxx);
 		XC_Functional::grad_rho( rhogsum1 , gdr1, rhopw, ucell->tpiba);
 		XC_Functional::grad_rho( rhogsum2 , gdr2, rhopw, ucell->tpiba);
 
@@ -638,6 +648,7 @@ void XC_Functional::grad_rho(const std::complex<double>* rhog,
 {
 	std::complex<double> *gdrtmp = new std::complex<double>[rho_basis->nmaxgr];
 
+	ModuleBase::Memory::record("XC_Functional::gdrtmp",sizeof(std::complex<double>)*rho_basis->nmaxgr);
 	// the formula is : rho(r)^prime = \int iG * rho(G)e^{iGr} dG
 	for(int i = 0 ; i < 3 ; ++i)
 	{
@@ -668,6 +679,7 @@ void XC_Functional::grad_dot(const ModuleBase::Vector3<double> *h, double *dh, M
 {
 	std::complex<double> *aux = new std::complex<double>[rho_basis->nmaxgr];
 	std::complex<double> *gaux = new std::complex<double>[rho_basis->npw];
+	ModuleBase::Memory::record("XC_Functional::aux",sizeof(std::complex<double>)*(rho_basis->npw + rho_basis->nmaxgr));
 
 	for(int i = 0 ; i < 3 ; ++i)
 	{

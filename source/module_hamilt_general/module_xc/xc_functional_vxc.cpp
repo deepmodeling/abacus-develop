@@ -8,6 +8,8 @@
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
 
+#include "module_base/memory.h"
+
 // [etxc, vtxc, v] = XC_Functional::v_xc(...)
 std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc(
 	const int &nrxx, // number of real-space grid
@@ -31,6 +33,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc(
     double vtxc = 0.0;
     ModuleBase::matrix v(GlobalV::NSPIN, nrxx);
 
+    ModuleBase::Memory::record("xc_functional_vxc::matrix",sizeof(double)*GlobalV::NSPIN*nrxx);
     // the square of the e charge
     // in Rydeberg unit, so * 2.0.
     double e2 = 2.0;
