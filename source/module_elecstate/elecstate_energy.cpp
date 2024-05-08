@@ -4,6 +4,9 @@
 #include "elecstate_getters.h"
 #include "module_base/global_variable.h"
 #include "module_base/parallel_reduce.h"
+#ifdef __LCAO
+#include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
+#endif
 #ifdef USE_PAW
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
@@ -274,7 +277,7 @@ void ElecState::cal_energies(const int type)
         this->f_en.esol_cav = get_solvent_model_Acav();
     }
 #ifdef __LCAO
-    if (GlobalV::sc_mag_switch)
+    if (SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::get_sc_mag_switch())
     {
         this->f_en.escon = get_spin_constrain_energy();
     }
