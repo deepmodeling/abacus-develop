@@ -317,17 +317,6 @@ extern bool out_hr_npz; //writes h(r) in npz format
 extern bool out_dm_npz; //writes dm(r) in npz format
 extern bool dm_to_rho; //reads in dm(r) and creates density
 
-// Deltaspin related
-extern bool sc_mag_switch; // 0: no deltaspin; 1: constrain atomic magnetic moments;
-extern bool decay_grad_switch; // 0: decay grad will be set to zero; 1: with decay grad set for some elements
-extern double sc_thr;
-extern int nsc;
-extern int nsc_min;
-extern int sc_scf_nmin;
-extern double alpha_trial;
-extern double sccut;
-extern std::string sc_file;
-
 // Quasiatomic orbital related
 extern bool qo_switch;
 extern std::string qo_basis;

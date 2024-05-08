@@ -3,6 +3,7 @@
 #include "module_io/input_conv.h"
 #include "module_base/global_variable.h"
 #include "module_hsolver/hsolver_pw.h"
+#include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include "for_testing_input_conv.h"
 
 /************************************************
@@ -186,10 +187,24 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_EQ(GlobalV::of_read_kernel,false);
 	EXPECT_EQ(GlobalV::of_kernel_file,"WTkernel.txt");
 	EXPECT_EQ(GlobalV::global_readin_dir,GlobalV::global_out_dir);
-	EXPECT_EQ(GlobalV::sc_mag_switch,0);
-	
-    EXPECT_TRUE(GlobalV::decay_grad_switch);
-    EXPECT_EQ(GlobalV::sc_file, "sc.json");
+	double sc_thr = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::get_sc_thr();
+	int nsc = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::get_nsc();
+	int nsc_min = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::get_nsc_min();
+	double alpha_trial = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::get_alpha_trial();
+	double restrict_current = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::get_restrict_current();
+	bool decay_grad_switch = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::get_decay_grad_switch();
+	bool sc_mag_switch = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::get_sc_mag_switch();
+	int sc_scf_nmin = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::get_sc_scf_nmin();
+	std::string sc_file = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::get_sc_file();
+	EXPECT_DOUBLE_EQ(sc_thr,0.0001);
+	EXPECT_EQ(nsc,50);
+	EXPECT_EQ(nsc_min,4);
+	EXPECT_DOUBLE_EQ(alpha_trial,0.02/13.605698);
+	EXPECT_DOUBLE_EQ(restrict_current,4.0/13.605698);
+	EXPECT_TRUE(decay_grad_switch);
+	EXPECT_FALSE(sc_mag_switch);
+	EXPECT_EQ(sc_scf_nmin,2);
+	EXPECT_EQ(sc_file, "sc.json");
 	EXPECT_EQ(GlobalV::MIXING_RESTART,0.0);
 	EXPECT_EQ(GlobalV::MIXING_DMR,false);
 }

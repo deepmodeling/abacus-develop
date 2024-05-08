@@ -25,6 +25,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_lcao/module_tddft/evolve_elec.h"
+#include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #endif
 
 #include "module_base/timer.h"
@@ -795,15 +796,15 @@ void Input_Conv::Convert(void)
     //-----------------------------------------------
     // Deltaspin related parameters
     //-----------------------------------------------
-    GlobalV::sc_mag_switch = INPUT.sc_mag_switch;
-    GlobalV::decay_grad_switch = INPUT.decay_grad_switch;
-    GlobalV::sc_thr = INPUT.sc_thr;
-    GlobalV::nsc = INPUT.nsc;
-    GlobalV::nsc_min = INPUT.nsc_min;
-    GlobalV::sc_scf_nmin = INPUT.sc_scf_nmin;
-    GlobalV::alpha_trial = INPUT.alpha_trial;
-    GlobalV::sccut = INPUT.sccut;
-    GlobalV::sc_file = INPUT.sc_file;
+    SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::set_sc_thr(INPUT.sc_thr);
+    SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::set_nsc(INPUT.nsc);
+    SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::set_nsc_min(INPUT.nsc_min);
+    SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::set_alpha_trial(INPUT.alpha_trial);
+    SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::set_restrict_current(INPUT.sccut);
+    SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::set_decay_grad_switch(INPUT.decay_grad_switch);
+    SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::set_sc_mag_switch(INPUT.sc_mag_switch);
+    SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::set_sc_scf_nmin(INPUT.sc_scf_nmin);
+    SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::set_sc_file(INPUT.sc_file);
 
     // mixing parameters
     GlobalV::MIXING_MODE = INPUT.mixing_mode;

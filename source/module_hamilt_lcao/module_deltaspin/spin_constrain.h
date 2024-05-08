@@ -231,6 +231,7 @@ public:
     static bool sc_mag_switch_;
     static int sc_scf_nmin;
     static double sc_scf_drho;
+    static std::string sc_file;
 public:
     /**
      * setters and getters for control parameters
@@ -271,6 +272,10 @@ public:
     {
         sc_scf_drho = sc_scf_drho;
     }
+    static void set_sc_file(std::string sc_file_in)
+    {
+        sc_file = sc_file_in;
+    }
     /// @brief getters for control parameters
     static double get_sc_thr()
     {
@@ -307,6 +312,10 @@ public:
     static double get_sc_scf_drho()
     {
         return sc_scf_drho;
+    }
+    static std::string get_sc_file()
+    {
+        return sc_file;
     }
 };
 
@@ -346,5 +355,7 @@ template<typename FPTYPE, typename Device>
 int SpinConstrain<FPTYPE, Device>::sc_scf_nmin = 2;
 template<typename FPTYPE, typename Device>
 double SpinConstrain<FPTYPE, Device>::sc_scf_drho = 0.1;
+template<typename FPTYPE, typename Device>
+std::string SpinConstrain<FPTYPE, Device>::sc_file = "sc.json";
 
 #endif // SPIN_CONSTRAIN_H
