@@ -61,25 +61,13 @@ TYPED_TEST_SUITE(SpinConstrainTest, MyTypes);
 
 TYPED_TEST(SpinConstrainTest, InitSc)
 {
-    double sc_thr = 1e-6;
-    int nsc = 100;
-    int nsc_min = 2;
-    double alpha_trial = 0.01;
-    double sccut = 3.0;
-    bool decay_grad_switch = 1;
     K_Vectors kv;
     Parallel_Orbitals paraV;
     paraV.nloc = 2;
     std::string sc_file = "./support/sc_f2.json";
+    SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::set_sc_file(sc_file);
     std::string KS_SOLVER = "genelpa";
-    this->sc.init_sc(sc_thr,
-                     nsc,
-                     nsc_min,
-                     alpha_trial,
-                     sccut,
-                     decay_grad_switch,
-                     *(this->ucell),
-                     sc_file,
+    this->sc.init_sc(*(this->ucell),
                      2,
                      &paraV,
                      4,

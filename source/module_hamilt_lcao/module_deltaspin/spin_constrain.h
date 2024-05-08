@@ -24,14 +24,7 @@ public:
      * pubic interface for spin-constrained DFT
     */
     /// initialize spin-constrained DFT
-  void init_sc(double sc_thr_in,
-               int nsc_in,
-               int nsc_min_in,
-               double alpha_trial_in,
-               double sccut_in,
-               bool decay_grad_switch_in,
-               const UnitCell& ucell,
-               std::string sc_file,
+  void init_sc(const UnitCell& ucell,
                int NPOL,
                Parallel_Orbitals* ParaV_in,
                int nspin_in,

@@ -30,6 +30,7 @@
 #include "module_hsolver/hsolver_lcao.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
+#include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include "module_elecstate/potentials/H_TDDFT_pw.h"
 
 namespace hamilt
@@ -410,7 +411,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
             }
             this->getOperator()->add(dftu);
         }
-        if (GlobalV::sc_mag_switch)
+        if (SpinConstrain<TK, psi::DEVICE_CPU>::get_sc_mag_switch())
         {
             Operator<TK>* sc_lambda = new OperatorScLambda<OperatorLCAO<TK, TR>>(
                 LM_in,
