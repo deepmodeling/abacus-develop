@@ -597,6 +597,7 @@ class Input
     int nsc; // maximum number of inner lambda loop
     int nsc_min; // minimum number of inner lambda loop
     int sc_scf_nmin; // minimum number of outer scf loop before initial lambda loop
+    double sc_scf_drho; // threshold of drho for starting lambda loop
     double alpha_trial; // initial trial step size for lambda in eV/uB^2
     double sccut; // restriction of step size in eV/uB
     std::string sc_file; // file name for Deltaspin (json format)

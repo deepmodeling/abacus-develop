@@ -637,6 +637,7 @@ void Input::Default(void)
     nsc = 100;
     nsc_min = 2;
     sc_scf_nmin = 2;
+    sc_scf_drho = 0.1;
     alpha_trial = 0.01;
     sccut = 3.0;
     sc_file = "none";
@@ -2341,6 +2342,10 @@ bool Input::Read(const std::string& fn)
         {
             read_value(ifs, sc_scf_nmin);
         }
+        else if (strcmp("sc_scf_drho", word) == 0)
+        {
+            read_value(ifs, sc_scf_drho);
+        }
         else if (strcmp("alpha_trial", word) == 0)
         {
             read_value(ifs, alpha_trial);
@@ -3733,6 +3738,7 @@ void Input::Bcast()
     Parallel_Common::bcast_int(nsc);
     Parallel_Common::bcast_int(nsc_min);
     Parallel_Common::bcast_int(sc_scf_nmin);
+    Parallel_Common::bcast_double(sc_scf_drho);
     Parallel_Common::bcast_string(sc_file);
     Parallel_Common::bcast_double(alpha_trial);
     Parallel_Common::bcast_double(sccut);
@@ -4299,6 +4305,10 @@ void Input::Check(void)
         if (sc_scf_nmin < 2)
         {
             ModuleBase::WARNING_QUIT("INPUT", "sc_scf_nmin must >= 2");
+        }
+        if (sc_scf_drho <= 0)
+        {
+            ModuleBase::WARNING_QUIT("INPUT", "sc_scf_drho must > 0");
         }
         if (alpha_trial <= 0)
         {

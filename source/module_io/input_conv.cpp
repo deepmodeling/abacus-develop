@@ -805,6 +805,7 @@ void Input_Conv::Convert(void)
     SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::set_sc_mag_switch(INPUT.sc_mag_switch);
     SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::set_sc_scf_nmin(INPUT.sc_scf_nmin);
     SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::set_sc_file(INPUT.sc_file);
+    SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::set_sc_scf_drho(INPUT.sc_scf_drho);
 
     // mixing parameters
     GlobalV::MIXING_MODE = INPUT.mixing_mode;

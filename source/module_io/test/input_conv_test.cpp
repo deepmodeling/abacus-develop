@@ -195,6 +195,7 @@ TEST_F(InputConvTest, Conv)
 	bool decay_grad_switch = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::get_decay_grad_switch();
 	bool sc_mag_switch = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::get_sc_mag_switch();
 	int sc_scf_nmin = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::get_sc_scf_nmin();
+	double sc_scf_drho = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::get_sc_scf_drho();
 	std::string sc_file = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::get_sc_file();
 	EXPECT_DOUBLE_EQ(sc_thr,0.0001);
 	EXPECT_EQ(nsc,50);
@@ -203,7 +204,8 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_DOUBLE_EQ(restrict_current,4.0/13.605698);
 	EXPECT_TRUE(decay_grad_switch);
 	EXPECT_FALSE(sc_mag_switch);
-	EXPECT_EQ(sc_scf_nmin,2);
+	EXPECT_EQ(sc_scf_nmin,4);
+	EXPECT_DOUBLE_EQ(sc_scf_drho, 0.2);
 	EXPECT_EQ(sc_file, "sc.json");
 	EXPECT_EQ(GlobalV::MIXING_RESTART,0.0);
 	EXPECT_EQ(GlobalV::MIXING_DMR,false);

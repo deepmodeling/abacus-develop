@@ -383,6 +383,7 @@ TEST_F(InputTest, Default)
     EXPECT_EQ(INPUT.nsc, 100);
     EXPECT_EQ(INPUT.nsc_min, 2);
 	EXPECT_EQ(INPUT.sc_scf_nmin, 2);
+	EXPECT_DOUBLE_EQ(INPUT.sc_scf_drho, 0.1);
     EXPECT_DOUBLE_EQ(INPUT.alpha_trial, 0.01);
     EXPECT_DOUBLE_EQ(INPUT.sccut, 3.0);
     EXPECT_EQ(INPUT.sc_file, "none");
@@ -752,6 +753,7 @@ TEST_F(InputTest, Read)
     EXPECT_EQ(INPUT.nsc, 50);
 	EXPECT_EQ(INPUT.nsc_min, 4);
 	EXPECT_EQ(INPUT.sc_scf_nmin, 4);
+	EXPECT_DOUBLE_EQ(INPUT.sc_scf_drho, 0.2);
     EXPECT_DOUBLE_EQ(INPUT.alpha_trial, 0.02);
 	EXPECT_DOUBLE_EQ(INPUT.sccut, 4.0);
     EXPECT_EQ(INPUT.sc_file, "sc.json");
@@ -1646,6 +1648,13 @@ TEST_F(InputTest, Check)
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("nupdown should not be set when sc_mag_switch > 0"));
 	INPUT.nupdown = 0;
+	// warning 11 of Deltapsin
+    INPUT.sc_scf_drho = -1;
+	testing::internal::CaptureStdout();
+	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
+	output = testing::internal::GetCapturedStdout();
+	EXPECT_THAT(output,testing::HasSubstr("sc_scf_drho must > 0"));
+	INPUT.sc_scf_drho = 0.01;
     // restore to default values
     INPUT.nspin = 1;
 	INPUT.sc_file = "none";

@@ -224,6 +224,7 @@ public:
     static bool sc_mag_switch_;
     static int sc_scf_nmin_;
     static double sc_scf_drho_;
+    static bool drho_condition_;
     static std::string sc_file_;
 public:
     /**
@@ -310,6 +311,10 @@ public:
     {
         return sc_file_;
     }
+    static bool get_drho_condition()
+    {
+        return drho_condition_;
+    }
 };
 
 
@@ -350,5 +355,7 @@ template<typename FPTYPE, typename Device>
 double SpinConstrain<FPTYPE, Device>::sc_scf_drho_ = 0.1;
 template<typename FPTYPE, typename Device>
 std::string SpinConstrain<FPTYPE, Device>::sc_file_ = "sc.json";
+template<typename FPTYPE, typename Device>
+bool SpinConstrain<FPTYPE, Device>::drho_condition_ = false;
 
 #endif // SPIN_CONSTRAIN_H
