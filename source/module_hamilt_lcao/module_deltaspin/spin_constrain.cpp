@@ -455,55 +455,6 @@ void SpinConstrain<FPTYPE, Device>::set_input_parameters(double sc_thr_in,
     this->decay_grad_switch_ = decay_grad_switch_in;
 }
 
-/// get sc_thr
-template <typename FPTYPE, typename Device>
-double SpinConstrain<FPTYPE, Device>::get_sc_thr()
-{
-    return this->sc_thr_;
-}
-
-/// get nsc
-template <typename FPTYPE, typename Device>
-int SpinConstrain<FPTYPE, Device>::get_nsc()
-{
-    return this->nsc_;
-}
-
-/// get nsc_min
-template <typename FPTYPE, typename Device>
-int SpinConstrain<FPTYPE, Device>::get_nsc_min()
-{
-    return this->nsc_min_;
-}
-
-/// get alpha_trial
-template <typename FPTYPE, typename Device>
-double SpinConstrain<FPTYPE, Device>::get_alpha_trial()
-{
-    return this->alpha_trial_;
-}
-
-/// get sccut
-template <typename FPTYPE, typename Device>
-double SpinConstrain<FPTYPE, Device>::get_sccut()
-{
-    return this->restrict_current_;
-}
-
-/// set decay_grad_switch
-template <typename FPTYPE, typename Device>
-void SpinConstrain<FPTYPE, Device>::set_decay_grad_switch(bool decay_grad_switch_in)
-{
-    this->decay_grad_switch_ = decay_grad_switch_in;
-}
-
-/// get decay_grad_switch
-template <typename FPTYPE, typename Device>
-bool SpinConstrain<FPTYPE, Device>::get_decay_grad_switch()
-{
-    return this->decay_grad_switch_;
-}
-
 template <typename FPTYPE, typename Device>
 void SpinConstrain<FPTYPE, Device>::set_solver_parameters(K_Vectors kv_in,
                                                           hsolver::HSolver<FPTYPE, Device>* phsol_in,

@@ -180,8 +180,6 @@ public:
     const std::vector<double>& get_decay_grad();
     /// set decay_grad from variable
     void set_decay_grad(const double* decay_grad_in, int ntype_in);
-    /// set decay grad switch
-    void set_decay_grad_switch(bool decay_grad_switch_in);
     /// set input parameters
     void set_input_parameters(double sc_thr_in,
                               int nsc_in,
@@ -189,18 +187,6 @@ public:
                               double alpha_trial_in,
                               double sccut_in,
                               bool decay_grad_switch_in);
-    /// get sc_thr
-    double get_sc_thr();
-    /// get nsc
-    int get_nsc();
-    /// get nsc_min
-    int get_nsc_min();
-    /// get alpha_trial
-    double get_alpha_trial();
-    /// get sccut
-    double get_sccut();
-    /// get decay_grad_switch
-    bool get_decay_grad_switch();
     /// @brief set orbital parallel info
     void set_ParaV(Parallel_Orbitals* ParaV_in);
     /// @brief set parameters for solver
@@ -231,17 +217,97 @@ public:
     double escon_ = 0.0;
     int nspin_ = 0;
     int npol_ = 1;
+    std::vector<ModuleBase::Vector3<int>> constrain_;
+    bool debug = false;
     /**
      * input parameters for lambda-loop
      */
-    int nsc_;
-    int nsc_min_;
-    bool decay_grad_switch_ = false;
-    double sc_thr_; // in unit of uB
-    std::vector<ModuleBase::Vector3<int>> constrain_;
-    bool debug = false;
-    double alpha_trial_; // in unit of Ry/uB^2 = 0.01 eV/uB^2
-    double restrict_current_; // in unit of Ry/uB = 3 eV/uB
+    static double sc_thr_; // in unit of uB
+    static int nsc_;
+    static int nsc_min_;
+    static double alpha_trial_; // in unit of Ry/uB^2 = 0.01 eV/uB^2
+    static double restrict_current_; // in unit of Ry/uB = 3 eV/uB
+    static bool decay_grad_switch_;
+    static bool sc_mag_switch_;
+    static int sc_scf_nmin;
+    static double sc_scf_drho;
+public:
+    /**
+     * setters and getters for control parameters
+    */
+    static void set_sc_thr(double sc_thr)
+    {
+        sc_thr_ = sc_thr;
+    }
+    static void set_nsc(int nsc)
+    {
+        nsc_ = nsc;
+    }
+    static void set_nsc_min(int nsc_min)
+    {
+        nsc_min_ = nsc_min;
+    }
+    static void set_alpha_trial(double alpha_trial)
+    {
+        alpha_trial_ = alpha_trial / ModuleBase::Ry_to_eV;
+    }
+    static void set_restrict_current(double sccut)
+    {
+        restrict_current_ = sccut / ModuleBase::Ry_to_eV;
+    }
+    static void set_decay_grad_switch(bool decay_grad_switch)
+    {
+        decay_grad_switch_ = decay_grad_switch;
+    }
+    static void set_sc_mag_switch(bool sc_mag_switch)
+    {
+        sc_mag_switch_ = sc_mag_switch;
+    }
+    static void set_sc_scf_nmin(int sc_scf_nmin)
+    {
+        sc_scf_nmin = sc_scf_nmin;
+    }
+    static void set_sc_scf_drho(double sc_scf_drho)
+    {
+        sc_scf_drho = sc_scf_drho;
+    }
+    /// @brief getters for control parameters
+    static double get_sc_thr()
+    {
+        return sc_thr_;
+    }
+    static int get_nsc()
+    {
+        return nsc_;
+    }
+    static int get_nsc_min()
+    {
+        return nsc_min_;
+    }
+    static double get_alpha_trial()
+    {
+        return alpha_trial_;
+    }
+    static double get_restrict_current()
+    {
+        return restrict_current_;
+    }
+    static bool get_decay_grad_switch()
+    {
+        return decay_grad_switch_;
+    }
+    static bool get_sc_mag_switch()
+    {
+        return sc_mag_switch_;
+    }
+    static int get_sc_scf_nmin()
+    {
+        return sc_scf_nmin;
+    }
+    static double get_sc_scf_drho()
+    {
+        return sc_scf_drho;
+    }
 };
 
 
@@ -258,5 +324,27 @@ struct ScAtomData {
     double target_mag_angle1;
     double target_mag_angle2;
 };
+
+/**
+ * setting default values for control parameters
+ */
+template<typename FPTYPE, typename Device>
+double SpinConstrain<FPTYPE, Device>::sc_thr_ = 1.0e-6;
+template<typename FPTYPE, typename Device>
+int SpinConstrain<FPTYPE, Device>::nsc_ = 100;
+template<typename FPTYPE, typename Device>
+int SpinConstrain<FPTYPE, Device>::nsc_min_ = 2;
+template<typename FPTYPE, typename Device>
+double SpinConstrain<FPTYPE, Device>::alpha_trial_ = 0.01;
+template<typename FPTYPE, typename Device>
+double SpinConstrain<FPTYPE, Device>::restrict_current_ = 3.0;
+template<typename FPTYPE, typename Device>
+bool SpinConstrain<FPTYPE, Device>::decay_grad_switch_ = false;
+template<typename FPTYPE, typename Device>
+bool SpinConstrain<FPTYPE, Device>::sc_mag_switch_ = false;
+template<typename FPTYPE, typename Device>
+int SpinConstrain<FPTYPE, Device>::sc_scf_nmin = 2;
+template<typename FPTYPE, typename Device>
+double SpinConstrain<FPTYPE, Device>::sc_scf_drho = 0.1;
 
 #endif // SPIN_CONSTRAIN_H

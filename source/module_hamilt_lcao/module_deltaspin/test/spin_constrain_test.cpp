@@ -355,7 +355,7 @@ TYPED_TEST(SpinConstrainTest, SetInputParameters)
     EXPECT_EQ(this->sc.get_nsc(), nsc);
     EXPECT_EQ(this->sc.get_nsc_min(), nsc_min);
     EXPECT_DOUBLE_EQ(this->sc.get_alpha_trial(), alpha_trial / 13.605698);
-    EXPECT_DOUBLE_EQ(this->sc.get_sccut(), sccut / 13.605698);
+    EXPECT_DOUBLE_EQ(this->sc.get_restrict_current(), sccut / 13.605698);
     EXPECT_EQ(this->sc.get_decay_grad_switch(), decay_grad_switch);
 }
 
