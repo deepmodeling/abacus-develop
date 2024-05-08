@@ -793,6 +793,7 @@ void Input_Conv::Convert(void)
     GlobalV::of_read_kernel = INPUT.of_read_kernel;
     GlobalV::of_kernel_file = INPUT.of_kernel_file;
 
+#ifdef __LCAO
     //-----------------------------------------------
     // Deltaspin related parameters
     //-----------------------------------------------
@@ -806,6 +807,7 @@ void Input_Conv::Convert(void)
     SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::set_sc_scf_nmin(INPUT.sc_scf_nmin);
     SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::set_sc_file(INPUT.sc_file);
     SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::set_sc_scf_drho(INPUT.sc_scf_drho);
+#endif
 
     // mixing parameters
     GlobalV::MIXING_MODE = INPUT.mixing_mode;
