@@ -15,6 +15,8 @@
 #include "module_hamilt_general/module_surchem/surchem.h"
 #include "module_hamilt_general/module_vdw/vdw.h"
 #include "module_psi/kernels/device.h"
+#include "module_base/memory.h"
+
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -46,6 +48,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
     ModuleBase::matrix forcescc(nat, 3);
     ModuleBase::matrix forcepaw(nat,3);
 
+    ModuleBase::Memory::record("Forces::matrix",sizeof(double)*nat*3*6);
     // Force due to local ionic potential
     // For PAW, calculated together in paw_cell.calculate_force
     if(!GlobalV::use_paw)

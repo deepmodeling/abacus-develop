@@ -4,6 +4,7 @@
 //==========================================================
 #include "symmetry.h"
 #include "module_base/mymath.h"
+#include "module_base/memory.h"
 bool ModuleSymmetry::test_brav = 0;
 
 namespace ModuleSymmetry
@@ -1111,6 +1112,7 @@ void Symmetry_Basic::atom_ordering_new(double *posi, const int natom, int *subin
 
 	double*  weighted_func = new double[natom];
 	
+	ModuleBase::Memory::record("Symmetry_Basic::tmp*",sizeof(double)*natom*4);
 	//the first time: f(x, y, z)
 	for(int i=0; i<natom; i++)
 	{

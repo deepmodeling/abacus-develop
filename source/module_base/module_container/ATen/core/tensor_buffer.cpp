@@ -2,6 +2,7 @@
 
 #include <base/core/cpu_allocator.h>
 #include <base/macros/macros.h>
+#include "module_base/memory.h"
 
 #if defined(__CUDA) || defined(__ROCM)
 #include <base/core/gpu_allocator.h>
@@ -22,6 +23,7 @@ TensorBuffer::TensorBuffer(base::core::Allocator* alloc, size_t size) {
     alloc_ = alloc; 
     if (size > 0) {
         data_ = alloc_->allocate(size);
+        ModuleBase::Memory::record("TensorBuffer::data_",sizeof(size_t)*size);
         owns_memory_ = true;
         allocated_bytes_ = size;
     }

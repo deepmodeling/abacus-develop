@@ -2,6 +2,7 @@
 #define BROYDEN_MIXING_H_
 #include "mixing.h"
 #include "module_base/matrix.h"
+#include "module_base/memory.h"
 
 namespace Base_Mixing
 {
