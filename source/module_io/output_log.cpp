@@ -111,7 +111,7 @@ void print_stress(const std::string& name, const ModuleBase::matrix& scs, const 
     FmtTable fmt(titles, 3, {"%20.10f", "%20.10f", "%20.10f"});
     fmt << stress_x << stress_y << stress_z;
     table = fmt.str();
-    GlobalV::ofs_running << table << std::endl;
+    GlobalV::ofs_running << table;
     if (name == "TOTAL-STRESS")
     {
         GlobalV::ofs_running << " TOTAL-PRESSURE: " << std::fixed << std::setprecision(6) << pressure << unit
@@ -120,7 +120,7 @@ void print_stress(const std::string& name, const ModuleBase::matrix& scs, const 
     }
     if (screen)
     {
-        std::cout << table << std::endl;
+        std::cout << table;
         if (name == "TOTAL-STRESS")
         {
             std::cout << " TOTAL-PRESSURE: " << std::fixed << std::setprecision(6) << pressure << unit << std::endl

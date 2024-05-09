@@ -90,7 +90,14 @@ void UnitCell::read_orb_file(int it, std::string &orb_file, std::ofstream &ofs_r
 void UnitCell::read_pseudo(std::ofstream &ofs) {}
 int UnitCell::find_type(const std::string &label) {return 0;}
 void UnitCell::print_tau(void) const {}
-void UnitCell::print_stru_file(const std::string &fn, const int &type, const int &level)const {}
+void UnitCell::print_stru_file(const std::string& fn, 
+                               const int& nspin,
+                               const bool& direct,
+                               const bool& vel,
+                               const bool& magmom,
+                               const bool& orb,
+                               const bool& dpks_desc,
+                               const int& iproc) const {}
 void UnitCell::check_dtau(void) {}
 void UnitCell::setup_cell_after_vc(std::ofstream &log) {}
 void UnitCell::remake_cell() {}

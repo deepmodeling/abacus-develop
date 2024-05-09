@@ -7,7 +7,7 @@
 #include "../module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/formatter.h"
 #include <cstring>        // Peize Lin fix bug about strcmp 2016-08-02
-
+#include <cassert>
 
 int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
 {
@@ -945,130 +945,71 @@ bool UnitCell::check_tau(void)const
     return 1;
 }
 
-void UnitCell::print_stru_file(const std::string &fn, const int &type, const int &level)const
+void UnitCell::print_stru_file(const std::string& fn, 
+                               const int& nspin,
+                               const bool& direct,
+                               const bool& vel,
+                               const bool& magmom,
+                               const bool& orb,
+                               const bool& dpks_desc,
+                               const int& iproc) const
 {
     ModuleBase::TITLE("UnitCell","print_stru_file");
-    
-    if(GlobalV::MY_RANK!=0) return;
-
+    if(iproc != 0) return; // old: if(GlobalV::MY_RANK != 0) return;
+    // ATOMIC_SPECIES
+    std::string str = "ATOMIC_SPECIES\n";
+    for(int it=0; it<ntype; it++){ str += FmtCore::format("%s %8.4f %s %s\n", atom_label[it], atom_mass[it], pseudo_fn[it], pseudo_type[it]); }
+    // NUMERICAL_ORBITAL
+    if(orb)
+    {
+        str += "\nNUMERICAL_ORBITAL\n";
+        for(int it = 0; it < ntype; it++) { str += orbital_fn[it] + "\n"; }
+    }
+    // NUMERICAL_DESCRIPTOR
+    if(dpks_desc) { str += "\nNUMERICAL_DESCRIPTOR\n" + descriptor_file + "\n"; }
+    // LATTICE_CONSTANT
+    str += "\nLATTICE_CONSTANT\n" + FmtCore::format("%-.10f\n", lat0);
+    // LATTICE_VECTORS
+    str += "\nLATTICE_VECTORS\n";
+    str += FmtCore::format("%20.10f%20.10f%20.10f\n", latvec.e11, latvec.e12, latvec.e13);
+    str += FmtCore::format("%20.10f%20.10f%20.10f\n", latvec.e21, latvec.e22, latvec.e23);
+    str += FmtCore::format("%20.10f%20.10f%20.10f\n", latvec.e31, latvec.e32, latvec.e33);
+    // ATOMIC_POSITIONS
+    str += "\nATOMIC_POSITIONS\n";
+    const std::string scale = direct? "Direct": "Cartesian";
+    int nat_ = 0; // counter iat, for printing out Mulliken magmom who is indexed by iat
+    str += scale + "\n";
+    for(int it = 0; it < ntype; it++)
+    {
+        str += "\n" + atoms[it].label + " #label\n";
+        str += FmtCore::format("%-8.4f #magnetism\n", magnet.start_magnetization[it]);
+        str += FmtCore::format("%d #number of atoms\n", atoms[it].na);
+        for(int ia = 0; ia < atoms[it].na; ia++)
+        {
+            // output position
+            const double& x = direct? atoms[it].taud[ia].x: atoms[it].tau[ia].x;
+            const double& y = direct? atoms[it].taud[ia].y: atoms[it].tau[ia].y;
+            const double& z = direct? atoms[it].taud[ia].z: atoms[it].tau[ia].z;
+            str += FmtCore::format("%20.10f%20.10f%20.10f", x, y, z);
+            str += FmtCore::format(" m%2d%2d%2d", atoms[it].mbl[ia].x, atoms[it].mbl[ia].y, atoms[it].mbl[ia].z);
+            if (vel) // output velocity
+            {
+                str += FmtCore::format(" v%20.10f%20.10f%20.10f", atoms[it].vel[ia].x, atoms[it].vel[ia].y, atoms[it].vel[ia].z);
+            }
+            if (nspin == 2 && magmom) // output magnetic information
+            {
+                str += FmtCore::format(" mag%8.4f", atom_mulliken[nat_][1]);
+            }
+            else if (nspin == 4 && magmom) // output magnetic information
+            {
+                str += FmtCore::format(" mag%8.4f%8.4f%8.4f", atom_mulliken[nat_][1], atom_mulliken[nat_][2], atom_mulliken[nat_][3]);
+            }
+            str += "\n";
+            nat_++;
+        }
+    }
     std::ofstream ofs(fn.c_str());
-
-    ofs << "ATOMIC_SPECIES" << std::endl;
-    ofs << std::setprecision(12);
-
-    for(int it=0; it<ntype; it++)
-    {
-                //modified by zhengdy 2015-07-24
-        ofs << atom_label[it] << " " << atom_mass[it] << " " << pseudo_fn[it] << " " << pseudo_type[it] << std::endl;
-    }
-
-    if(
-        (GlobalV::BASIS_TYPE=="lcao") 
-      ||(GlobalV::BASIS_TYPE=="lcao_in_pw") // lcao_in_pw is forever deprecated
-      ||(//we also plan to output numerical orbital information if use init_wfc = nao
-            (GlobalV::BASIS_TYPE=="pw")
-          &&(GlobalV::psi_initializer)
-          &&(GlobalV::init_wfc.substr(0, 3)=="nao")
-        )
-      ) //xiaohui add 2013-09-02. Attention...
-    {    
-        ofs << "\nNUMERICAL_ORBITAL" << std::endl;
-        for(int it=0; it<ntype; it++)
-        {
-            ofs << orbital_fn[it] << std::endl;
-        }
-
-        // liuyu add 2023-06-25
-        if (GlobalV::deepks_setorb)
-        {
-            ofs << "\nNUMERICAL_DESCRIPTOR" << std::endl;
-            ofs << descriptor_file << std::endl;
-        }
-    }
-
-    ofs << "\nLATTICE_CONSTANT" << std::endl;
-        //modified by zhengdy 2015-07-24
-    ofs << lat0 << std::endl;
-
-    FmtCore fmt("%20.12f%20.12f%20.12f");
-    ofs << "\nLATTICE_VECTORS" << std::endl;
-    ofs << fmt.format(latvec.e11, latvec.e12, latvec.e13) << std::endl;
-    ofs << fmt.format(latvec.e21, latvec.e22, latvec.e23) << std::endl;
-    ofs << fmt.format(latvec.e31, latvec.e32, latvec.e33) << std::endl;
-    ofs << "\nATOMIC_POSITIONS" << std::endl;
-
-    if(type == 1)
-    {
-        int nat_tmp = 0;
-        ofs << "Cartesian" << std::endl;
-        for(int it = 0; it < ntype; it++)
-        {
-            ofs << std::endl;
-            ofs << atoms[it].label << " #label" << std::endl;
-            ofs << magnet.start_magnetization[it] << " #magnetism" << std::endl;
-            ofs << atoms[it].na << " #number of atoms" << std::endl;
-            for(int ia = 0; ia < atoms[it].na; ia++)
-            {
-                // output position and mobility
-                ofs << fmt.format(atoms[it].tau[ia].x, atoms[it].tau[ia].y, atoms[it].tau[ia].z) << " m ";
-                fmt.reset("%2d%2d%2d");
-                ofs << fmt.format(atoms[it].mbl[ia].x, atoms[it].mbl[ia].y, atoms[it].mbl[ia].z) << std::endl;
-                if (GlobalV::CALCULATION == "md") // output velocity
-                {
-                    fmt.reset("%20.10f%20.10f%20.10f");
-                    ofs << " v " << fmt.format(atoms[it].vel[ia].x, atoms[it].vel[ia].y, atoms[it].vel[ia].z) << std::endl;
-                }
-                if (GlobalV::NSPIN == 2 && GlobalV::out_mul) // output magnetic information
-                {
-                    fmt.reset("%8.4f");
-                    ofs << " mag " << fmt.format(atom_mulliken[nat_tmp][1]) << std::endl;
-                }
-                else if (GlobalV::NSPIN == 4 && GlobalV::out_mul) // output magnetic information
-                {
-                    fmt.reset("%8.4f%8.4f%8.4f");
-                    ofs << " mag " << fmt.format(atom_mulliken[nat_tmp][1], atom_mulliken[nat_tmp][2], atom_mulliken[nat_tmp][3]) << std::endl;
-                }
-                ofs << std::endl;
-                nat_tmp++;
-            }
-        }
-    }
-    else if(type == 2)
-    {
-        int nat_tmp = 0;
-        ofs << "Direct" << std::endl;
-        for(int it=0; it<ntype; it++)
-        {
-            ofs << std::endl;
-            ofs << atoms[it].label << " #label" << std::endl;
-            ofs << magnet.start_magnetization[it] << " #magnetism" << std::endl;
-            ofs << atoms[it].na << " #number of atoms" << std::endl;
-            for(int ia=0; ia<atoms[it].na; ia++)
-            {
-                // output position and mobility
-                ofs << fmt.format(atoms[it].taud[ia].x, atoms[it].taud[ia].y, atoms[it].taud[ia].z) << " m ";
-                fmt.reset("%2d %2d %2d");
-                ofs << fmt.format(atoms[it].mbl[ia].x, atoms[it].mbl[ia].y, atoms[it].mbl[ia].z) << std::endl;
-                if (GlobalV::CALCULATION == "md") // output velocity
-                {
-                    fmt.reset("%20.10f%20.10f%20.10f");
-                    ofs << " v " << fmt.format(atoms[it].vel[ia].x, atoms[it].vel[ia].y, atoms[it].vel[ia].z) << std::endl;
-                }
-                if (GlobalV::NSPIN == 2 && GlobalV::out_mul) // output magnetic information
-                {
-                    fmt.reset("%8.4f");
-                    ofs << " mag " << fmt.format(atom_mulliken[nat_tmp][1]) << std::endl;
-                }
-                else if (GlobalV::NSPIN == 4 && GlobalV::out_mul) // output magnetic information
-                {
-                    fmt.reset("%8.4f%8.4f%8.4f");
-                    ofs << " mag " << fmt.format(atom_mulliken[nat_tmp][1], atom_mulliken[nat_tmp][2], atom_mulliken[nat_tmp][3]) << std::endl;
-                }
-                ofs << std::endl;
-                nat_tmp++;
-            }
-        }
-    }
+    ofs << str;
     ofs.close();
     return;
 }
@@ -1077,45 +1018,25 @@ void UnitCell::print_stru_file(const std::string &fn, const int &type, const int
 void UnitCell::print_tau(void) const
 {
     ModuleBase::TITLE("UnitCell", "print_tau");
-    if(Coordinate == "Cartesian" || Coordinate == "Cartesian_angstrom")
+    bool direct = (Coordinate == "Direct");
+    assert (direct || Coordinate == "Cartesian" || Coordinate == "Cartesian_angstrom");
+    std::string table;
+    table += direct? "DIRECT COORDINATES\n": FmtCore::format("CARTESIAN COORDINATES ( UNIT = %20.12f Bohr ).\n", lat0);
+    table += FmtCore::format("%8s%20s%20s%20s%8s%20s%20s%20s\n", "atom", "x", "y", "z", "mag", "vx", "vy", "vz");
+    for(int it = 0; it < ntype; it++)
     {
-        std::string table;
-        table += FmtCore::format("CARTESIAN COORDINATES ( UNIT = %20.12f Bohr ).\n", lat0);
-        table += FmtCore::format("%13s%20s%20s%20s%20s%20s%20s%20s\n", "atom", "x", "y", "z", "mag", "vx", "vy", "vz");
-        int iat = 0;
-        for(int it = 0; it < ntype; it++)
+        for (int ia = 0; ia < atoms[it].na; ia++)
         {
-            for (int ia = 0; ia < atoms[it].na; ia++)
-            {
-                table += FmtCore::format("%13s%20.12f%20.12f%20.12f%20.12f%20.12f%20.12f%20.12f\n", 
-                                          "tauc_" + atoms[it].label + std::to_string(ia+1),
-                                          atoms[it].tau[ia].x, atoms[it].tau[ia].y, atoms[it].tau[ia].z, atoms[it].mag[ia], 
-                                          atoms[it].vel[ia].x, atoms[it].vel[ia].y, atoms[it].vel[ia].z);
-                ++iat;
-            }
+            const double& x = direct? atoms[it].taud[ia].x: atoms[it].tau[ia].x;
+            const double& y = direct? atoms[it].taud[ia].y: atoms[it].tau[ia].y;
+            const double& z = direct? atoms[it].taud[ia].z: atoms[it].tau[ia].z;
+            table += FmtCore::format("%3s%-5d%20.10f%20.10f%20.10f%8.4f%20.10f%20.10f%20.10f\n", 
+                                      atoms[it].label, ia+1, x, y, z, atoms[it].mag[ia], 
+                                      atoms[it].vel[ia].x, atoms[it].vel[ia].y, atoms[it].vel[ia].z);
         }
-        GlobalV::ofs_running << table << std::endl;
     }
-    if(Coordinate == "Direct")
-    {
-        std::string table;
-        table += "DIRECT COORDINATES\n";
-        table += FmtCore::format("%13s%20s%20s%20s%20s%20s%20s%20s\n", "atom", "x", "y", "z", "mag", "vx", "vy", "vz");
-        int iat=0;
-        for(int it=0; it<ntype; it++)
-        {
-            for (int ia = 0; ia < atoms[it].na; ia++)
-            {
-                table += FmtCore::format("%13s%20.12f%20.12f%20.12f%20.12f%20.12f%20.12f%20.12f\n",
-                                          "taud_" + atoms[it].label + std::to_string(ia+1),
-                                          atoms[it].taud[ia].x, atoms[it].taud[ia].y, atoms[it].taud[ia].z, atoms[it].mag[ia],
-                                          atoms[it].vel[ia].x, atoms[it].vel[ia].y, atoms[it].vel[ia].z);
-                ++iat;
-            }
-        }
-        GlobalV::ofs_running<<table<<std::endl;
-    }
-    GlobalV::ofs_running << std::endl;
+    table += "\n";
+    GlobalV::ofs_running << table << std::endl;
     return;
 }    
 
