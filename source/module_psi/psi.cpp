@@ -381,27 +381,27 @@ template <typename T, typename Device> std::tuple<const T*, int> Psi<T, Device>:
     }
 }
 
-template class Psi<float, DEVICE_CPU>;
-template class Psi<std::complex<float>, DEVICE_CPU>;
-template class Psi<double, DEVICE_CPU>;
-template class Psi<std::complex<double>, DEVICE_CPU>;
-template Psi<std::complex<float>, DEVICE_CPU>::Psi(const Psi<std::complex<double>, DEVICE_CPU>&);
-template Psi<std::complex<double>, DEVICE_CPU>::Psi(const Psi<std::complex<float>, DEVICE_CPU>&);
+template class Psi<float, psi::DEVICE_CPU>;
+template class Psi<std::complex<float>, psi::DEVICE_CPU>;
+template class Psi<double, psi::DEVICE_CPU>;
+template class Psi<std::complex<double>, psi::DEVICE_CPU>;
+template Psi<std::complex<float>, psi::DEVICE_CPU>::Psi(const Psi<std::complex<double>, psi::DEVICE_CPU>&);
+template Psi<std::complex<double>, psi::DEVICE_CPU>::Psi(const Psi<std::complex<float>, psi::DEVICE_CPU>&);
 #if ((defined __CUDA) || (defined __ROCM))
-template class Psi<float, DEVICE_GPU>;
-template class Psi<std::complex<float>, DEVICE_GPU>;
-template Psi<float, DEVICE_CPU>::Psi(const Psi<float, DEVICE_GPU>&);
-template Psi<float, DEVICE_GPU>::Psi(const Psi<float, DEVICE_CPU>&);
-template Psi<std::complex<float>, DEVICE_CPU>::Psi(const Psi<std::complex<float>, DEVICE_GPU>&);
-template Psi<std::complex<float>, DEVICE_GPU>::Psi(const Psi<std::complex<float>, DEVICE_CPU>&);
+template class Psi<float, psi::DEVICE_GPU>;
+template class Psi<std::complex<float>, psi::DEVICE_GPU>;
+template Psi<float, psi::DEVICE_CPU>::Psi(const Psi<float, psi::DEVICE_GPU>&);
+template Psi<float, psi::DEVICE_GPU>::Psi(const Psi<float, psi::DEVICE_CPU>&);
+template Psi<std::complex<float>, psi::DEVICE_CPU>::Psi(const Psi<std::complex<float>, psi::DEVICE_GPU>&);
+template Psi<std::complex<float>, psi::DEVICE_GPU>::Psi(const Psi<std::complex<float>, psi::DEVICE_CPU>&);
 
-template class Psi<double, DEVICE_GPU>;
-template class Psi<std::complex<double>, DEVICE_GPU>;
-template Psi<double, DEVICE_CPU>::Psi(const Psi<double, DEVICE_GPU>&);
-template Psi<double, DEVICE_GPU>::Psi(const Psi<double, DEVICE_CPU>&);
-template Psi<std::complex<double>, DEVICE_CPU>::Psi(const Psi<std::complex<double>, DEVICE_GPU>&);
-template Psi<std::complex<double>, DEVICE_GPU>::Psi(const Psi<std::complex<double>, DEVICE_CPU>&);
-template Psi<std::complex<float>, DEVICE_GPU>::Psi(const Psi<std::complex<double>, DEVICE_CPU>&);
-template Psi<std::complex<double>, DEVICE_GPU>::Psi(const Psi<std::complex<float>, DEVICE_GPU>&);
+template class Psi<double, psi::DEVICE_GPU>;
+template class Psi<std::complex<double>, psi::DEVICE_GPU>;
+template Psi<double, psi::DEVICE_CPU>::Psi(const Psi<double, psi::DEVICE_GPU>&);
+template Psi<double, psi::DEVICE_GPU>::Psi(const Psi<double, psi::DEVICE_CPU>&);
+template Psi<std::complex<double>, psi::DEVICE_CPU>::Psi(const Psi<std::complex<double>, psi::DEVICE_GPU>&);
+template Psi<std::complex<double>, psi::DEVICE_GPU>::Psi(const Psi<std::complex<double>, psi::DEVICE_CPU>&);
+template Psi<std::complex<float>, psi::DEVICE_GPU>::Psi(const Psi<std::complex<double>, psi::DEVICE_CPU>&);
+template Psi<std::complex<double>, psi::DEVICE_GPU>::Psi(const Psi<std::complex<float>, psi::DEVICE_GPU>&);
 #endif
 } // namespace psi

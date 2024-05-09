@@ -26,7 +26,7 @@ namespace device{
 static bool is_init = false;
 
 // functions used in custom ops
-template<> AbacusDevice_t get_device_type <DEVICE_CPU> (const DEVICE_CPU* dev) {
+template<> AbacusDevice_t get_device_type <psi::DEVICE_CPU> (const psi::DEVICE_CPU* dev) {
     return CpuDevice;
 }
 template<> std::string get_current_precision(const double* var) {
@@ -40,7 +40,7 @@ template<> std::string get_current_precision (const std::complex<double> * var) 
 }
 
 #if ((defined __CUDA) || (defined __ROCM))
-template<> AbacusDevice_t get_device_type <DEVICE_GPU> (const DEVICE_GPU* dev) {
+template<> AbacusDevice_t get_device_type <psi::DEVICE_GPU> (const psi::DEVICE_GPU* dev) {
     return GpuDevice;
 }
 
@@ -64,7 +64,7 @@ int get_device_num() {
 #endif
 
 #if defined(__CUDA)
-template<> void print_device_info <DEVICE_GPU> (const DEVICE_GPU* ctx, std::ofstream& ofs_device) {
+template<> void print_device_info <psi::DEVICE_GPU> (const psi::DEVICE_GPU* ctx, std::ofstream& ofs_device) {
   if (is_init) {return;}
   int deviceCount = 0;
   cudaError_t error_id = cudaGetDeviceCount(&deviceCount);
@@ -283,14 +283,14 @@ template<> void print_device_info <DEVICE_GPU> (const DEVICE_GPU* ctx, std::ofst
   ofs_device << "End of device informations." << std::endl << std::endl;
 }
 
-template<> void record_device_memory<DEVICE_GPU> (const DEVICE_GPU* ctx, std::ofstream& ofs_device, std::string str, size_t size) {
+template<> void record_device_memory<psi::DEVICE_GPU> (const psi::DEVICE_GPU* ctx, std::ofstream& ofs_device, std::string str, size_t size) {
   ofs_device << "Allocate " << static_cast<double>(size) / 8 / 1024 / 1024 << " \tMB device memory\t" 
              << "from " << str
              << std::endl << std::endl;
 }
 
 #elif defined(__ROCM)
-template<> void print_device_info <DEVICE_GPU> (const DEVICE_GPU* ctx, std::ofstream& ofs_device) {
+template<> void print_device_info <psi::DEVICE_GPU> (const psi::DEVICE_GPU* ctx, std::ofstream& ofs_device) {
   if (is_init) {return;}
   int deviceCount = 0;
   hipError_t error_id = hipGetDeviceCount(&deviceCount);
@@ -482,7 +482,7 @@ template<> void print_device_info <DEVICE_GPU> (const DEVICE_GPU* ctx, std::ofst
   ofs_device << "End of device informations." << std::endl << std::endl;
 }
 
-template<> void record_device_memory<DEVICE_GPU> (const DEVICE_GPU* ctx, std::ofstream& ofs_device, std::string str, size_t size) {
+template<> void record_device_memory<psi::DEVICE_GPU> (const psi::DEVICE_GPU* ctx, std::ofstream& ofs_device, std::string str, size_t size) {
   ofs_device << "Allocate " << static_cast<double>(size) / 8 / 1024 / 1024 << " \tMB device memory\t" 
              << "from " << str
              << std::endl << std::endl;

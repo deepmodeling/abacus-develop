@@ -31,7 +31,7 @@ struct Range
 
 // there is the structure of electric wavefunction coefficient
 // the basic operations defined in the Operator Class
-template <typename T, typename Device = DEVICE_CPU> class Psi
+template <typename T, typename Device = psi::DEVICE_CPU> class Psi
 {
   public:
     // Constructor 1: basic
