@@ -129,8 +129,8 @@ std::string get_device_flag(const std::string& device, const std::string& ks_sol
 {
     std::string str = "gpu";
     std::string env = "host";
-#if ((defined __CUDA) || (defined __ROCM))
     int device_num = -1;
+#if ((defined __CUDA) || (defined __ROCM))
 #if defined(__CUDA)
     cudaGetDeviceCount(&device_num);
 #elif defined(__ROCM)
