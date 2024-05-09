@@ -1,7 +1,7 @@
 #include <iostream>
 #include <complex>
 #include <string.h>
-#include "module_psi/kernels/types.h"
+#include "module_base/module_device/types.h"
 #include "module_psi/kernels/memory_op.h"
 #include "module_base/memory.h"
 #include "module_base/tool_threading.h"

@@ -1,7 +1,7 @@
 #include <complex>
 #include <iostream>
 #include <gtest/gtest.h>
-#include "module_psi/kernels/types.h"
+#include "module_base/module_device/types.h"
 #include "module_psi/kernels/device.h"
 
 class TestModulePsiDevice : public ::testing::Test

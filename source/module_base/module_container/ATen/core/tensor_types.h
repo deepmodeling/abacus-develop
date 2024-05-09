@@ -18,7 +18,7 @@
 #include <unordered_map>
 #include <initializer_list>
 
-#include <module_psi/kernels/types.h>
+#include "module_base/module_device/types.h"
 
 #if defined(__CUDACC__)
 #include <base/macros/cuda.h>

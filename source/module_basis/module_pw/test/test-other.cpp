@@ -9,7 +9,7 @@
 #endif
 #include "module_base/constants.h"
 #include "module_base/global_function.h"
-#include "module_psi/kernels/types.h"
+#include "module_base/module_device/types.h"
 #include "pw_test.h"
 #include "gmock/gmock.h"
 
