@@ -18,19 +18,19 @@
 #include <hip/hip_runtime.h>
 #endif
 
-namespace device
+namespace base_device
 {
 
 // for device
 template <>
-AbacusDevice_t get_device_type<CPU>(const CPU* dev)
+base_device::AbacusDevice_t get_device_type<base_device::DEVICE_CPU>(const base_device::DEVICE_CPU* dev)
 {
-    return CpuDevice;
+    return base_device::CpuDevice;
 }
 template <>
-AbacusDevice_t get_device_type<GPU>(const GPU* dev)
+base_device::AbacusDevice_t get_device_type<base_device::DEVICE_GPU>(const base_device::DEVICE_GPU* dev)
 {
-    return GpuDevice;
+    return base_device::GpuDevice;
 }
 
 // for precision

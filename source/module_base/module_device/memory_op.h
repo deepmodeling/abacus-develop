@@ -7,7 +7,7 @@
 #include <stddef.h>
 #include <vector>
 
-namespace device
+namespace base_device
 {
 
 namespace memory
@@ -94,79 +94,91 @@ struct delete_memory_op
     void operator()(const Device* dev, FPTYPE* arr);
 };
 } // end of namespace memory
-} // end of namespace device
+} // end of namespace base_device
 
-using resmem_sh_op = device::memory::resize_memory_op<float, device::CPU>;
-using resmem_dh_op = device::memory::resize_memory_op<double, device::CPU>;
-using resmem_ch_op = device::memory::resize_memory_op<std::complex<float>, device::CPU>;
-using resmem_zh_op = device::memory::resize_memory_op<std::complex<double>, device::CPU>;
+using resmem_sh_op = base_device::memory::resize_memory_op<float, base_device::DEVICE_CPU>;
+using resmem_dh_op = base_device::memory::resize_memory_op<double, base_device::DEVICE_CPU>;
+using resmem_ch_op = base_device::memory::resize_memory_op<std::complex<float>, base_device::DEVICE_CPU>;
+using resmem_zh_op = base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_CPU>;
 
-using resmem_sd_op = device::memory::resize_memory_op<float, device::GPU>;
-using resmem_dd_op = device::memory::resize_memory_op<double, device::GPU>;
-using resmem_cd_op = device::memory::resize_memory_op<std::complex<float>, device::GPU>;
-using resmem_zd_op = device::memory::resize_memory_op<std::complex<double>, device::GPU>;
+using resmem_sd_op = base_device::memory::resize_memory_op<float, base_device::DEVICE_GPU>;
+using resmem_dd_op = base_device::memory::resize_memory_op<double, base_device::DEVICE_GPU>;
+using resmem_cd_op = base_device::memory::resize_memory_op<std::complex<float>, base_device::DEVICE_GPU>;
+using resmem_zd_op = base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
 
-using setmem_sh_op = device::memory::set_memory_op<float, device::CPU>;
-using setmem_dh_op = device::memory::set_memory_op<double, device::CPU>;
-using setmem_ch_op = device::memory::set_memory_op<std::complex<float>, device::CPU>;
-using setmem_zh_op = device::memory::set_memory_op<std::complex<double>, device::CPU>;
+using setmem_sh_op = base_device::memory::set_memory_op<float, base_device::DEVICE_CPU>;
+using setmem_dh_op = base_device::memory::set_memory_op<double, base_device::DEVICE_CPU>;
+using setmem_ch_op = base_device::memory::set_memory_op<std::complex<float>, base_device::DEVICE_CPU>;
+using setmem_zh_op = base_device::memory::set_memory_op<std::complex<double>, base_device::DEVICE_CPU>;
 
-using setmem_sd_op = device::memory::set_memory_op<float, device::GPU>;
-using setmem_dd_op = device::memory::set_memory_op<double, device::GPU>;
-using setmem_cd_op = device::memory::set_memory_op<std::complex<float>, device::GPU>;
-using setmem_zd_op = device::memory::set_memory_op<std::complex<double>, device::GPU>;
+using setmem_sd_op = base_device::memory::set_memory_op<float, base_device::DEVICE_GPU>;
+using setmem_dd_op = base_device::memory::set_memory_op<double, base_device::DEVICE_GPU>;
+using setmem_cd_op = base_device::memory::set_memory_op<std::complex<float>, base_device::DEVICE_GPU>;
+using setmem_zd_op = base_device::memory::set_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
 
-using delmem_sh_op = device::memory::delete_memory_op<float, device::CPU>;
-using delmem_dh_op = device::memory::delete_memory_op<double, device::CPU>;
-using delmem_ch_op = device::memory::delete_memory_op<std::complex<float>, device::CPU>;
-using delmem_zh_op = device::memory::delete_memory_op<std::complex<double>, device::CPU>;
+using delmem_sh_op = base_device::memory::delete_memory_op<float, base_device::DEVICE_CPU>;
+using delmem_dh_op = base_device::memory::delete_memory_op<double, base_device::DEVICE_CPU>;
+using delmem_ch_op = base_device::memory::delete_memory_op<std::complex<float>, base_device::DEVICE_CPU>;
+using delmem_zh_op = base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_CPU>;
 
-using delmem_sd_op = device::memory::delete_memory_op<float, device::GPU>;
-using delmem_dd_op = device::memory::delete_memory_op<double, device::GPU>;
-using delmem_cd_op = device::memory::delete_memory_op<std::complex<float>, device::GPU>;
-using delmem_zd_op = device::memory::delete_memory_op<std::complex<double>, device::GPU>;
+using delmem_sd_op = base_device::memory::delete_memory_op<float, base_device::DEVICE_GPU>;
+using delmem_dd_op = base_device::memory::delete_memory_op<double, base_device::DEVICE_GPU>;
+using delmem_cd_op = base_device::memory::delete_memory_op<std::complex<float>, base_device::DEVICE_GPU>;
+using delmem_zd_op = base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
 
-using syncmem_s2s_h2h_op = device::memory::synchronize_memory_op<float, device::CPU, device::CPU>;
-using syncmem_s2s_h2d_op = device::memory::synchronize_memory_op<float, device::GPU, device::CPU>;
-using syncmem_s2s_d2h_op = device::memory::synchronize_memory_op<float, device::CPU, device::GPU>;
-using syncmem_d2d_h2h_op = device::memory::synchronize_memory_op<double, device::CPU, device::CPU>;
-using syncmem_d2d_h2d_op = device::memory::synchronize_memory_op<double, device::GPU, device::CPU>;
-using syncmem_d2d_d2h_op = device::memory::synchronize_memory_op<double, device::CPU, device::GPU>;
+using syncmem_s2s_h2h_op
+    = base_device::memory::synchronize_memory_op<float, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
+using syncmem_s2s_h2d_op
+    = base_device::memory::synchronize_memory_op<float, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+using syncmem_s2s_d2h_op
+    = base_device::memory::synchronize_memory_op<float, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
+using syncmem_d2d_h2h_op
+    = base_device::memory::synchronize_memory_op<double, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
+using syncmem_d2d_h2d_op
+    = base_device::memory::synchronize_memory_op<double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+using syncmem_d2d_d2h_op
+    = base_device::memory::synchronize_memory_op<double, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
 
 using syncmem_c2c_h2h_op
-    = device::memory::synchronize_memory_op<std::complex<float>, device::CPU, device::CPU>;
+    = base_device::memory::synchronize_memory_op<std::complex<float>, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
 using syncmem_c2c_h2d_op
-    = device::memory::synchronize_memory_op<std::complex<float>, device::GPU, device::CPU>;
+    = base_device::memory::synchronize_memory_op<std::complex<float>, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
 using syncmem_c2c_d2h_op
-    = device::memory::synchronize_memory_op<std::complex<float>, device::CPU, device::GPU>;
+    = base_device::memory::synchronize_memory_op<std::complex<float>, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
 using syncmem_z2z_h2h_op
-    = device::memory::synchronize_memory_op<std::complex<double>, device::CPU, device::CPU>;
+    = base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
 using syncmem_z2z_h2d_op
-    = device::memory::synchronize_memory_op<std::complex<double>, device::GPU, device::CPU>;
+    = base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
 using syncmem_z2z_d2h_op
-    = device::memory::synchronize_memory_op<std::complex<double>, device::CPU, device::GPU>;
+    = base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
 
-using castmem_s2d_h2h_op = device::memory::cast_memory_op<double, float, device::CPU, device::CPU>;
-using castmem_s2d_h2d_op = device::memory::cast_memory_op<double, float, device::GPU, device::CPU>;
-using castmem_s2d_d2h_op = device::memory::cast_memory_op<double, float, device::CPU, device::GPU>;
-using castmem_d2s_h2h_op = device::memory::cast_memory_op<float, double, device::CPU, device::CPU>;
-using castmem_d2s_h2d_op = device::memory::cast_memory_op<float, double, device::GPU, device::CPU>;
-using castmem_d2s_d2h_op = device::memory::cast_memory_op<float, double, device::CPU, device::GPU>;
+using castmem_s2d_h2h_op
+    = base_device::memory::cast_memory_op<double, float, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
+using castmem_s2d_h2d_op
+    = base_device::memory::cast_memory_op<double, float, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+using castmem_s2d_d2h_op
+    = base_device::memory::cast_memory_op<double, float, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
+using castmem_d2s_h2h_op
+    = base_device::memory::cast_memory_op<float, double, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
+using castmem_d2s_h2d_op
+    = base_device::memory::cast_memory_op<float, double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+using castmem_d2s_d2h_op
+    = base_device::memory::cast_memory_op<float, double, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
 
-using castmem_c2z_h2h_op
-    = device::memory::cast_memory_op<std::complex<double>, std::complex<float>, device::CPU, device::CPU>;
-using castmem_c2z_h2d_op
-    = device::memory::cast_memory_op<std::complex<double>, std::complex<float>, device::GPU, device::CPU>;
-using castmem_c2z_d2h_op
-    = device::memory::cast_memory_op<std::complex<double>, std::complex<float>, device::CPU, device::GPU>;
-using castmem_z2c_h2h_op
-    = device::memory::cast_memory_op<std::complex<float>, std::complex<double>, device::CPU, device::CPU>;
-using castmem_z2c_h2d_op
-    = device::memory::cast_memory_op<std::complex<float>, std::complex<double>, device::GPU, device::CPU>;
-using castmem_z2c_d2h_op
-    = device::memory::cast_memory_op<std::complex<float>, std::complex<double>, device::CPU, device::GPU>;
+using castmem_c2z_h2h_op = base_device::memory::
+    cast_memory_op<std::complex<double>, std::complex<float>, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
+using castmem_c2z_h2d_op = base_device::memory::
+    cast_memory_op<std::complex<double>, std::complex<float>, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+using castmem_c2z_d2h_op = base_device::memory::
+    cast_memory_op<std::complex<double>, std::complex<float>, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
+using castmem_z2c_h2h_op = base_device::memory::
+    cast_memory_op<std::complex<float>, std::complex<double>, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
+using castmem_z2c_h2d_op = base_device::memory::
+    cast_memory_op<std::complex<float>, std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+using castmem_z2c_d2h_op = base_device::memory::
+    cast_memory_op<std::complex<float>, std::complex<double>, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
 
-static device::CPU* cpu_ctx = {};
-static device::GPU* gpu_ctx = {};
+static base_device::DEVICE_CPU* cpu_ctx = {};
+static base_device::DEVICE_GPU* gpu_ctx = {};
 
 #endif // MODULE_DEVICE_MEMORY_H_

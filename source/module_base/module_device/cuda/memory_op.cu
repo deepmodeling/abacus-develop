@@ -6,7 +6,7 @@
 
 #define THREADS_PER_BLOCK 256
 
-namespace device
+namespace base_device
 {
 namespace memory
 {
@@ -36,31 +36,31 @@ __global__ void cast_memory(std::complex<FPTYPE_out>* out, const std::complex<FP
 }
 
 template <typename FPTYPE>
-void resize_memory_op<FPTYPE, device::GPU>::operator()(const device::GPU* dev,
-                                                              FPTYPE*& arr,
-                                                              const size_t size,
-                                                              const char* record_in)
+void resize_memory_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* dev,
+                                                                   FPTYPE*& arr,
+                                                                   const size_t size,
+                                                                   const char* record_in)
 {
     if (arr != nullptr)
     {
-        delete_memory_op<FPTYPE, device::GPU>()(dev, arr);
+        delete_memory_op<FPTYPE, base_device::DEVICE_GPU>()(dev, arr);
     }
     cudaErrcheck(cudaMalloc((void**)&arr, sizeof(FPTYPE) * size));
 }
 
 template <typename FPTYPE>
-void set_memory_op<FPTYPE, device::GPU>::operator()(const device::GPU* dev,
-                                                           FPTYPE* arr,
-                                                           const int var,
-                                                           const size_t size)
+void set_memory_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* dev,
+                                                                FPTYPE* arr,
+                                                                const int var,
+                                                                const size_t size)
 {
     cudaErrcheck(cudaMemset(arr, var, sizeof(FPTYPE) * size));
 }
 
 template <typename FPTYPE>
-void synchronize_memory_op<FPTYPE, device::CPU, device::GPU>::operator()(
-    const device::CPU* dev_out,
-    const device::GPU* dev_in,
+void synchronize_memory_op<FPTYPE, base_device::DEVICE_CPU, base_device::DEVICE_GPU>::operator()(
+    const base_device::DEVICE_CPU* dev_out,
+    const base_device::DEVICE_GPU* dev_in,
     FPTYPE* arr_out,
     const FPTYPE* arr_in,
     const size_t size)
@@ -69,9 +69,9 @@ void synchronize_memory_op<FPTYPE, device::CPU, device::GPU>::operator()(
 }
 
 template <typename FPTYPE>
-void synchronize_memory_op<FPTYPE, device::GPU, device::CPU>::operator()(
-    const device::GPU* dev_out,
-    const device::CPU* dev_in,
+void synchronize_memory_op<FPTYPE, base_device::DEVICE_GPU, base_device::DEVICE_CPU>::operator()(
+    const base_device::DEVICE_GPU* dev_out,
+    const base_device::DEVICE_CPU* dev_in,
     FPTYPE* arr_out,
     const FPTYPE* arr_in,
     const size_t size)
@@ -80,9 +80,9 @@ void synchronize_memory_op<FPTYPE, device::GPU, device::CPU>::operator()(
 }
 
 template <typename FPTYPE>
-void synchronize_memory_op<FPTYPE, device::GPU, device::GPU>::operator()(
-    const device::GPU* dev_out,
-    const device::GPU* dev_in,
+void synchronize_memory_op<FPTYPE, base_device::DEVICE_GPU, base_device::DEVICE_GPU>::operator()(
+    const base_device::DEVICE_GPU* dev_out,
+    const base_device::DEVICE_GPU* dev_in,
     FPTYPE* arr_out,
     const FPTYPE* arr_in,
     const size_t size)
@@ -91,10 +91,10 @@ void synchronize_memory_op<FPTYPE, device::GPU, device::GPU>::operator()(
 }
 
 template <typename FPTYPE_out, typename FPTYPE_in>
-struct cast_memory_op<FPTYPE_out, FPTYPE_in, device::GPU, device::GPU>
+struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_GPU, base_device::DEVICE_GPU>
 {
-    void operator()(const device::GPU* dev_out,
-                    const device::GPU* dev_in,
+    void operator()(const base_device::DEVICE_GPU* dev_out,
+                    const base_device::DEVICE_GPU* dev_in,
                     FPTYPE_out* arr_out,
                     const FPTYPE_in* arr_in,
                     const size_t size)
@@ -112,10 +112,10 @@ struct cast_memory_op<FPTYPE_out, FPTYPE_in, device::GPU, device::GPU>
 };
 
 template <typename FPTYPE_out, typename FPTYPE_in>
-struct cast_memory_op<FPTYPE_out, FPTYPE_in, device::GPU, device::CPU>
+struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_GPU, base_device::DEVICE_CPU>
 {
-    void operator()(const device::GPU* dev_out,
-                    const device::CPU* dev_in,
+    void operator()(const base_device::DEVICE_GPU* dev_out,
+                    const base_device::DEVICE_CPU* dev_in,
                     FPTYPE_out* arr_out,
                     const FPTYPE_in* arr_in,
                     const size_t size)
@@ -137,10 +137,10 @@ struct cast_memory_op<FPTYPE_out, FPTYPE_in, device::GPU, device::CPU>
 };
 
 template <typename FPTYPE_out, typename FPTYPE_in>
-struct cast_memory_op<FPTYPE_out, FPTYPE_in, device::CPU, device::GPU>
+struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_CPU, base_device::DEVICE_GPU>
 {
-    void operator()(const device::CPU* dev_out,
-                    const device::GPU* dev_in,
+    void operator()(const base_device::DEVICE_CPU* dev_out,
+                    const base_device::DEVICE_GPU* dev_in,
                     FPTYPE_out* arr_out,
                     const FPTYPE_in* arr_in,
                     const size_t size)
@@ -156,69 +156,105 @@ struct cast_memory_op<FPTYPE_out, FPTYPE_in, device::CPU, device::GPU>
 };
 
 template <typename FPTYPE>
-void delete_memory_op<FPTYPE, device::GPU>::operator()(const device::GPU* dev, FPTYPE* arr)
+void delete_memory_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* dev, FPTYPE* arr)
 {
     cudaErrcheck(cudaFree(arr));
 }
 
-template struct resize_memory_op<int, device::GPU>;
-template struct resize_memory_op<float, device::GPU>;
-template struct resize_memory_op<double, device::GPU>;
-template struct resize_memory_op<std::complex<float>, device::GPU>;
-template struct resize_memory_op<std::complex<double>, device::GPU>;
+template struct resize_memory_op<int, base_device::DEVICE_GPU>;
+template struct resize_memory_op<float, base_device::DEVICE_GPU>;
+template struct resize_memory_op<double, base_device::DEVICE_GPU>;
+template struct resize_memory_op<std::complex<float>, base_device::DEVICE_GPU>;
+template struct resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
 
-template struct set_memory_op<int, device::GPU>;
-template struct set_memory_op<float, device::GPU>;
-template struct set_memory_op<double, device::GPU>;
-template struct set_memory_op<std::complex<float>, device::GPU>;
-template struct set_memory_op<std::complex<double>, device::GPU>;
+template struct set_memory_op<int, base_device::DEVICE_GPU>;
+template struct set_memory_op<float, base_device::DEVICE_GPU>;
+template struct set_memory_op<double, base_device::DEVICE_GPU>;
+template struct set_memory_op<std::complex<float>, base_device::DEVICE_GPU>;
+template struct set_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
 
-template struct synchronize_memory_op<int, device::CPU, device::GPU>;
-template struct synchronize_memory_op<int, device::GPU, device::CPU>;
-template struct synchronize_memory_op<int, device::GPU, device::GPU>;
-template struct synchronize_memory_op<float, device::CPU, device::GPU>;
-template struct synchronize_memory_op<float, device::GPU, device::CPU>;
-template struct synchronize_memory_op<float, device::GPU, device::GPU>;
-template struct synchronize_memory_op<double, device::CPU, device::GPU>;
-template struct synchronize_memory_op<double, device::GPU, device::CPU>;
-template struct synchronize_memory_op<double, device::GPU, device::GPU>;
-template struct synchronize_memory_op<std::complex<float>, device::CPU, device::GPU>;
-template struct synchronize_memory_op<std::complex<float>, device::GPU, device::CPU>;
-template struct synchronize_memory_op<std::complex<float>, device::GPU, device::GPU>;
-template struct synchronize_memory_op<std::complex<double>, device::CPU, device::GPU>;
-template struct synchronize_memory_op<std::complex<double>, device::GPU, device::CPU>;
-template struct synchronize_memory_op<std::complex<double>, device::GPU, device::GPU>;
+template struct synchronize_memory_op<int, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
+template struct synchronize_memory_op<int, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+template struct synchronize_memory_op<int, base_device::DEVICE_GPU, base_device::DEVICE_GPU>;
+template struct synchronize_memory_op<float, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
+template struct synchronize_memory_op<float, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+template struct synchronize_memory_op<float, base_device::DEVICE_GPU, base_device::DEVICE_GPU>;
+template struct synchronize_memory_op<double, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
+template struct synchronize_memory_op<double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+template struct synchronize_memory_op<double, base_device::DEVICE_GPU, base_device::DEVICE_GPU>;
+template struct synchronize_memory_op<std::complex<float>, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
+template struct synchronize_memory_op<std::complex<float>, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+template struct synchronize_memory_op<std::complex<float>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>;
+template struct synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
+template struct synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+template struct synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>;
 
-template struct cast_memory_op<float, float, device::GPU, device::GPU>;
-template struct cast_memory_op<double, double, device::GPU, device::GPU>;
-template struct cast_memory_op<float, double, device::GPU, device::GPU>;
-template struct cast_memory_op<double, float, device::GPU, device::GPU>;
-template struct cast_memory_op<std::complex<float>, std::complex<float>, device::GPU, device::GPU>;
-template struct cast_memory_op<std::complex<double>, std::complex<double>, device::GPU, device::GPU>;
-template struct cast_memory_op<std::complex<float>, std::complex<double>, device::GPU, device::GPU>;
-template struct cast_memory_op<std::complex<double>, std::complex<float>, device::GPU, device::GPU>;
-template struct cast_memory_op<float, float, device::GPU, device::CPU>;
-template struct cast_memory_op<double, double, device::GPU, device::CPU>;
-template struct cast_memory_op<float, double, device::GPU, device::CPU>;
-template struct cast_memory_op<double, float, device::GPU, device::CPU>;
-template struct cast_memory_op<std::complex<float>, std::complex<float>, device::GPU, device::CPU>;
-template struct cast_memory_op<std::complex<double>, std::complex<double>, device::GPU, device::CPU>;
-template struct cast_memory_op<std::complex<float>, std::complex<double>, device::GPU, device::CPU>;
-template struct cast_memory_op<std::complex<double>, std::complex<float>, device::GPU, device::CPU>;
-template struct cast_memory_op<float, float, device::CPU, device::GPU>;
-template struct cast_memory_op<double, double, device::CPU, device::GPU>;
-template struct cast_memory_op<float, double, device::CPU, device::GPU>;
-template struct cast_memory_op<double, float, device::CPU, device::GPU>;
-template struct cast_memory_op<std::complex<float>, std::complex<float>, device::CPU, device::GPU>;
-template struct cast_memory_op<std::complex<double>, std::complex<double>, device::CPU, device::GPU>;
-template struct cast_memory_op<std::complex<float>, std::complex<double>, device::CPU, device::GPU>;
-template struct cast_memory_op<std::complex<double>, std::complex<float>, device::CPU, device::GPU>;
+template struct cast_memory_op<float, float, base_device::DEVICE_GPU, base_device::DEVICE_GPU>;
+template struct cast_memory_op<double, double, base_device::DEVICE_GPU, base_device::DEVICE_GPU>;
+template struct cast_memory_op<float, double, base_device::DEVICE_GPU, base_device::DEVICE_GPU>;
+template struct cast_memory_op<double, float, base_device::DEVICE_GPU, base_device::DEVICE_GPU>;
+template struct cast_memory_op<std::complex<float>,
+                               std::complex<float>,
+                               base_device::DEVICE_GPU,
+                               base_device::DEVICE_GPU>;
+template struct cast_memory_op<std::complex<double>,
+                               std::complex<double>,
+                               base_device::DEVICE_GPU,
+                               base_device::DEVICE_GPU>;
+template struct cast_memory_op<std::complex<float>,
+                               std::complex<double>,
+                               base_device::DEVICE_GPU,
+                               base_device::DEVICE_GPU>;
+template struct cast_memory_op<std::complex<double>,
+                               std::complex<float>,
+                               base_device::DEVICE_GPU,
+                               base_device::DEVICE_GPU>;
+template struct cast_memory_op<float, float, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+template struct cast_memory_op<double, double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+template struct cast_memory_op<float, double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+template struct cast_memory_op<double, float, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+template struct cast_memory_op<std::complex<float>,
+                               std::complex<float>,
+                               base_device::DEVICE_GPU,
+                               base_device::DEVICE_CPU>;
+template struct cast_memory_op<std::complex<double>,
+                               std::complex<double>,
+                               base_device::DEVICE_GPU,
+                               base_device::DEVICE_CPU>;
+template struct cast_memory_op<std::complex<float>,
+                               std::complex<double>,
+                               base_device::DEVICE_GPU,
+                               base_device::DEVICE_CPU>;
+template struct cast_memory_op<std::complex<double>,
+                               std::complex<float>,
+                               base_device::DEVICE_GPU,
+                               base_device::DEVICE_CPU>;
+template struct cast_memory_op<float, float, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
+template struct cast_memory_op<double, double, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
+template struct cast_memory_op<float, double, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
+template struct cast_memory_op<double, float, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
+template struct cast_memory_op<std::complex<float>,
+                               std::complex<float>,
+                               base_device::DEVICE_CPU,
+                               base_device::DEVICE_GPU>;
+template struct cast_memory_op<std::complex<double>,
+                               std::complex<double>,
+                               base_device::DEVICE_CPU,
+                               base_device::DEVICE_GPU>;
+template struct cast_memory_op<std::complex<float>,
+                               std::complex<double>,
+                               base_device::DEVICE_CPU,
+                               base_device::DEVICE_GPU>;
+template struct cast_memory_op<std::complex<double>,
+                               std::complex<float>,
+                               base_device::DEVICE_CPU,
+                               base_device::DEVICE_GPU>;
 
-template struct delete_memory_op<int, device::GPU>;
-template struct delete_memory_op<float, device::GPU>;
-template struct delete_memory_op<double, device::GPU>;
-template struct delete_memory_op<std::complex<float>, device::GPU>;
-template struct delete_memory_op<std::complex<double>, device::GPU>;
+template struct delete_memory_op<int, base_device::DEVICE_GPU>;
+template struct delete_memory_op<float, base_device::DEVICE_GPU>;
+template struct delete_memory_op<double, base_device::DEVICE_GPU>;
+template struct delete_memory_op<std::complex<float>, base_device::DEVICE_GPU>;
+template struct delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
 
 } // namespace memory
-} // end of namespace device
+} // end of namespace base_device

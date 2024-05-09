@@ -39,8 +39,8 @@ class TestModulePsiMemory : public ::testing::Test
 
     const int z_dim = z_xx.size();
 
-    const device::CPU* cpu_ctx = {};
-    const device::GPU* gpu_ctx = {};
+    const base_device::DEVICE_CPU* cpu_ctx = {};
+    const base_device::DEVICE_GPU* gpu_ctx = {};
 
     void SetUp() override
     {
@@ -49,36 +49,42 @@ class TestModulePsiMemory : public ::testing::Test
     {
     }
 
-    using set_memory_double_cpu_op = device::memory::set_memory_op<double, device::CPU>;
-    using set_memory_complex_double_cpu_op = device::memory::set_memory_op<std::complex<double>, device::CPU>;
-    using resize_memory_double_cpu_op = device::memory::resize_memory_op<double, device::CPU>;
-    using resize_memory_comlex_double_cpu_op = device::memory::resize_memory_op<std::complex<double>, device::CPU>;
+    using set_memory_double_cpu_op = base_device::memory::set_memory_op<double, base_device::DEVICE_CPU>;
+    using set_memory_complex_double_cpu_op
+        = base_device::memory::set_memory_op<std::complex<double>, base_device::DEVICE_CPU>;
+    using resize_memory_double_cpu_op = base_device::memory::resize_memory_op<double, base_device::DEVICE_CPU>;
+    using resize_memory_comlex_double_cpu_op
+        = base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_CPU>;
     using synchronize_memory_double_cpu_to_cpu_op
-        = device::memory::synchronize_memory_op<double, device::CPU, device::CPU>;
+        = base_device::memory::synchronize_memory_op<double, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
     using synchronize_memory_complex_double_cpu_to_cpu_op
-        = device::memory::synchronize_memory_op<std::complex<double>, device::CPU, device::CPU>;
-    using delete_memory_double_cpu_op = device::memory::delete_memory_op<double, device::CPU>;
-    using delete_memory_complex_double_cpu_op = device::memory::delete_memory_op<std::complex<double>, device::CPU>;
+        = base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
+    using delete_memory_double_cpu_op = base_device::memory::delete_memory_op<double, base_device::DEVICE_CPU>;
+    using delete_memory_complex_double_cpu_op
+        = base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_CPU>;
 
 #if __UT_USE_CUDA || __UT_USE_ROCM
-    using set_memory_double_gpu_op = device::memory::set_memory_op<double, device::GPU>;
-    using set_memory_complex_double_gpu_op = device::memory::set_memory_op<std::complex<double>, device::GPU>;
-    using resize_memory_double_gpu_op = device::memory::resize_memory_op<double, device::GPU>;
-    using resize_memory_comlex_double_gpu_op = device::memory::resize_memory_op<std::complex<double>, device::GPU>;
+    using set_memory_double_gpu_op = base_device::memory::set_memory_op<double, base_device::DEVICE_GPU>;
+    using set_memory_complex_double_gpu_op
+        = base_device::memory::set_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
+    using resize_memory_double_gpu_op = base_device::memory::resize_memory_op<double, base_device::DEVICE_GPU>;
+    using resize_memory_comlex_double_gpu_op
+        = base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
     using synchronize_memory_double_cpu_to_gpu_op
-        = device::memory::synchronize_memory_op<double, device::GPU, device::CPU>;
+        = base_device::memory::synchronize_memory_op<double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
     using synchronize_memory_double_gpu_to_cpu_op
-        = device::memory::synchronize_memory_op<double, device::CPU, device::GPU>;
+        = base_device::memory::synchronize_memory_op<double, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
     using synchronize_memory_double_gpu_to_gpu_op
-        = device::memory::synchronize_memory_op<double, device::GPU, device::GPU>;
+        = base_device::memory::synchronize_memory_op<double, base_device::DEVICE_GPU, base_device::DEVICE_GPU>;
     using synchronize_memory_complex_double_cpu_to_gpu_op
-        = device::memory::synchronize_memory_op<std::complex<double>, device::GPU, device::CPU>;
+        = base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
     using synchronize_memory_complex_double_gpu_to_cpu_op
-        = device::memory::synchronize_memory_op<std::complex<double>, device::CPU, device::GPU>;
+        = base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
     using synchronize_memory_complex_double_gpu_to_gpu_op
-        = device::memory::synchronize_memory_op<std::complex<double>, device::GPU, device::GPU>;
-    using delete_memory_double_gpu_op = device::memory::delete_memory_op<double, device::GPU>;
-    using delete_memory_complex_double_gpu_op = device::memory::delete_memory_op<std::complex<double>, device::GPU>;
+        = base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>;
+    using delete_memory_double_gpu_op = base_device::memory::delete_memory_op<double, base_device::DEVICE_GPU>;
+    using delete_memory_complex_double_gpu_op
+        = base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
 #endif // __UT_USE_CUDA || __UT_USE_ROCM
 };
 

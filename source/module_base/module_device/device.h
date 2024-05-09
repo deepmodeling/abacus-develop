@@ -1,24 +1,26 @@
 #ifndef MODULE_DEVICE_H_
 #define MODULE_DEVICE_H_
 
+#include "types.h"
+
 #include <complex>
 #include <iostream>
 
-namespace device
+namespace base_device
 {
 
-struct CPU;
-struct GPU;
+// struct CPU;
+// struct GPU;
 
-enum AbacusDevice_t
-{
-    UnKnown,
-    CpuDevice,
-    GpuDevice
-};
+// enum AbacusDevice_t
+// {
+//     UnKnown,
+//     CpuDevice,
+//     GpuDevice
+// };
 
 template <typename Device>
-AbacusDevice_t get_device_type(const Device* dev);
+base_device::AbacusDevice_t get_device_type(const Device* dev);
 
 template <typename T>
 std::string get_current_precision(const T* var);
@@ -56,7 +58,7 @@ int stringCmp(const void* a, const void* b);
 // void record_device_memory(const Device* dev, std::ofstream& ofs_device, std::string str, size_t size);
 
 } // end of namespace information
-} // end of namespace device
+} // end of namespace base_device
 
 /**
  * @brief for compatibility with __CUDA_ARCH__ 600 and earlier

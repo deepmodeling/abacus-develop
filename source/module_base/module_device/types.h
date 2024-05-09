@@ -14,6 +14,6 @@ enum AbacusDevice_t
     GpuDevice,
 };
 
-} // namespace psi
+} // namespace base_device
 
 #endif // MODULE_TYPES_H_
