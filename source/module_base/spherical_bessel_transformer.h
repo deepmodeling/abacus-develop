@@ -160,8 +160,17 @@ public:
     ) const;
 
 
+    /// total heap usage (in bytes) from the FFTW buffer and tabulated jl
+    size_t heap_usage() const;
+
+
+    /// clear the FFTW plan & buffer as well as the tabulated jl
+    void clear();
+
+
 private:
-    class Impl; // forward declaration for detailed implementation class
+
+    class Impl; // forward declaration
     std::shared_ptr<Impl> impl_;
 };
 

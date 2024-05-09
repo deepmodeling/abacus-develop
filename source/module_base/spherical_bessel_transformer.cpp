@@ -15,11 +15,9 @@
 namespace ModuleBase
 {
 
-//======================================================================
-//
-//                      Implementation Class
-//
-//======================================================================
+//**********************************************************************
+//                          Implementation
+//**********************************************************************
 class SphericalBesselTransformer::Impl
 {
 
@@ -34,7 +32,7 @@ public:
     Impl& operator=(Impl const&) = delete;
     Impl& operator=(Impl&&) = delete;
 
-
+    // see the interface class for details
     void radrfft(
         int l,
         int ngrid,
@@ -44,7 +42,7 @@ public:
         int p = 0
     );
 
-
+    // see the interface class for details
     void direct(
         int l,
         int ngrid_in,
@@ -56,24 +54,21 @@ public:
         int p = 0
     );
 
+    // total heap usage (in bytes) from the FFTW buffer and tabulated jl
+    size_t heap_usage() const;
+
+    // clear the FFTW plan & buffer as well as the tabulated jl
+    void clear();
+
 
 private:
 
-    /// core function for FFT-based transform
-    void _radrfft_base(
-        int l,
-        int ngrid,
-        double cutoff,
-        const double* in,
-        double* out,
-        int p = 0
-    );
+    // NOTE: the reason of using a raw pointer to handle the buffer below is because
+    // FFTW suggests using its own memory (de)allocation utilities, which imposes
+    // some strong requirements on memory alignment.
 
-    // NOTE: FFTW suggests using fftw_malloc and fftw_free for memory (de)allocation
-    // in order to enforce some strong requirements for memory alignment.
-
-    /// internal buffer used for in-place real-input FFT
-    fftw_complex* f_ = nullptr;
+    /// buffer used for in-place real-input FFT
+    double* f_ = nullptr;
 
     /// FFTW plan
     fftw_plan rfft_plan_ = nullptr;
@@ -88,43 +83,7 @@ private:
     void _rfft_clear();
 
 
-    /**
-     * @brief Polynomial coefficients in the sin & cos expression of spherical Bessel function.
-     *
-     * The l-th order spherical Bessel function of the first kind can be expressed as
-     *
-     *                          sin(x)*P(x) + cos(x)*Q(x)
-     *                  j (x) = -------------------------
-     *                   l               l+1
-     *                                  x
-     *
-     * where P(x) and Q(x) are polynomials of degree no more than l. This function
-     * returns the coefficients within those polynomials.
-     *
-     * @param[in]   of_sine     if true, compute the coefficients of polynomials attached to sin
-     * @param[in]   l           order of the spherical Bessel function
-     * @param[in]   n           degree of the polynomial term whose coefficient is computed
-     *
-     * @return  The polynomial coefficient of the n-th power term in the sin & cos expression
-     *          of the l-th order spherical Bessel functions of the first kind.
-     *
-     * @note    Coefficients grow very quickly as l increases. Currently l is capped at 17
-     *          since some coefficients exceed 2^63-1 for l >= 18.
-     *
-     */
-    long long int _polycoef(bool of_sine, int l, int n);
-
-
-    /// tabulate spherical Bessel function on the given transform grid
-    void _tabulate(
-        int l,
-        size_t ngrid_in,
-        const double* grid_in,
-        size_t ngrid_out,
-        const double* grid_out
-    );
-
-    /// if true, tabulated j_l(grid_out[j] * grid_in[i]) will be cached
+    /// if true, tabulated jl(grid_out[j] * grid_in[i]) will be cached
     bool cache_enabled_ = false;
 
     /// order of the cached spherical Bessel function
@@ -138,122 +97,21 @@ private:
 
     /// cached spherical Bessel function values
     std::vector<double> jl_;
-    // jl_[j*ngrid_in_ + i] = sphbesj(l, grid_out_[j] * grid_in_[i])
+
+    /// tabulate spherical Bessel function on the given transform grid
+    void _tabulate(
+        int l,
+        int ngrid_in,
+        const double* grid_in,
+        int ngrid_out,
+        const double* grid_out
+    );
+
+    /// clear the tabulated jl
+    void _table_clear();
 
 }; // class SphericalBesselTransformer::Impl
 
-
-long long int SphericalBesselTransformer::Impl::_polycoef(bool of_sine, int l, int n)
-{
-    /*
-     * The sin & cos coefficients follow the same recurrence relation
-     *
-     *        c(l,n) = (2l-1) * c(l-1,n) - c(l-2,n-2)
-     *
-     * with different initial conditions:
-     *
-     *          cos             sin
-     *
-     *      c(0,0) =  0     c(0,0) = 1
-     *      c(1,0) =  0     c(1,0) = 1
-     *      c(1,1) = -1     c(1,1) = 0
-     *                                                              */
-    assert(l >= 0 && n >= 0);
-    assert(l <= 17 && "Impl::_polycoef: some coefficients exceed LLONG_MAX (2^63-1) for l >= 18");
-
-    if (of_sine)
-    {
-        if (n % 2 == 1 || n > l)
-        {
-            return 0;
-        }
-        if (l == 0 && n == 0)
-        {
-            return 1;
-        }
-        if (l == 1 && n == 0)
-        {
-            return 1;
-        }
-    }
-    else
-    {
-        if (n % 2 == 0 || n > l)
-        {
-            return 0;
-        }
-        if (l == 1 && n == 1)
-        {
-            return -1;
-        }
-    }
-
-    return (2 * l - 1) * _polycoef(of_sine, l - 1, n)
-        - (n >= 2 ? _polycoef(of_sine, l - 2, n - 2) : 0);
-}
-
-
-void SphericalBesselTransformer::Impl::_radrfft_base(
-    int l,
-    int ngrid,
-    double cutoff,
-    const double* in,
-    double* out,
-    int p
-)
-{
-    // this function does not support in-place transform (but radrfft does)
-    assert(in != out);
-
-    double pi = std::acos(-1.0);
-    int n = ngrid - 1;
-    double dx = cutoff / n;
-    double dy = pi / cutoff;
-    double pref = dx / std::sqrt(2. * pi);
-
-    std::fill(out, out + ngrid, 0.0);
-
-    // rfft buffer (f_) allocation and plan creation
-    _rfft_prepare(2 * n);
-
-    // introduced to help manipulate f_ ( double(*)[2] ) as an array of double
-    double* f = &f_[0][0];
-
-    for (int m = 0; m <= l; ++m)
-    {
-        // m even --> sin; f[2*n-i] = -f[i]; out += -imag(rfft(f)) / y^(l+1-m)
-        // m odd  --> cos; f[2*n-i] = +f[i]; out += +real(rfft(f)) / y^(l+1-m)
-        bool flag = (m % 2 == 0);
-
-        long long int sincos_coef = _polycoef(flag, l, m);
-
-        f[0] = f[n] = 0.0;
-        for (int i = 1; i != n; ++i)
-        {
-            f[i] = pref * sincos_coef * in[i] * std::pow(i * dx, m + 1 - l - p);
-            f[2 * n - i] = flag ? -f[i] : f[i];
-        }
-
-        fftw_execute(rfft_plan_); // perform in-place rfft on f_
-
-        // summing up the series by ( ... ( ( g0/y + g1 )/y + g2 )/y + ... + gl )/y
-        // out[0] is handled independently
-        for (int j = 1; j <= n; ++j)
-        {
-            out[j] = (out[j] + (flag ? -f_[j][1] : f_[j][0])) / (j * dy);
-        }
-    }
-
-    // out[0] is done by direct integration
-    // note that only the zeroth order spherical Bessel function is nonzero at 0
-    if (l == 0)
-    {
-        for (int i = 0; i <= n; ++i)
-        {
-            out[0] += 2. * pref * in[i] * std::pow(i * dx, 2 - p); // p <= 2 is required!
-        }
-    }
-}
 
 void SphericalBesselTransformer::Impl::radrfft(
     int l,
@@ -265,61 +123,138 @@ void SphericalBesselTransformer::Impl::radrfft(
 )
 {
     /*
-     * An l-th order spherical Bessel transform F(x) -> G(y) can be expressed in terms of Fourier transforms:
+     * An l-th order spherical Bessel transform F(x) -> G(y) can be expressed
+     * in terms of Fourier transforms:
      *
-     *           l
-     *          ---    1        / +inf            -iyx
-     * G(y) =   \   -------  Re |      dr f(n,x) e
-     *          /     l+1-n     / -inf
-     *          ---  y
-     *          n=0
+     *                l
+     *               ---    1        / +inf            -iyx
+     *      G(y) =   \   -------  Re |      dr f(n,x) e
+     *               /     l+1-n     / -inf
+     *               ---  y
+     *               n=0
      *
      * where
      *
-     *              1                              F(x)
-     * f(n,x) = ---------- [ c(l,n) + i*s(l,n) ] --------
-     *          sqrt(2*pi)                         l-n-1   ,
-     *                                            x
+     *                   1                              F(x)
+     *      f(n,x) = ---------- [ q(l,n) + i*p(l,n) ] --------
+     *               sqrt(2*pi)                         l-n-1
+     *                                                 x
      *
-     * c(l,n) / s(l,n) are sin / cos coefficients from polycoef, and
-     * the domain of F(x) is extended to negative values by defining F(-x) = pow(-1,l)*F(x).
+     * q(l,n) / p(l,n) are polynomial coefficients associated with sin/cos in the
+     * trigonometric representation of spherical Bessel function, and the domain
+     * of F(x) is extended to negative values by letting F(-x) = pow(-1,l)*F(x).
      *
-     * With an appropriate grid, the Fourier transform can be approximated by a discrete Fourier transform.
-     * Note that given l & n, c(l,n) and s(l,n) cannot be both non-zero. Therefore, each FFT input
-     * array is either purely real or purely imaginary, which suggests the use of real-input FFT.
+     * Note that given l & n, c(l,n) and s(l,n) cannot be both non-zero. Therefore,
+     * each FFT input array is either purely real or purely imaginary, which suggests
+     * the use of real-input FFT.
      *
-     * If deriv == true, dG(y)/dy is calculated instead of G(y). This is done by using the recurrence
-     * relation of j_l(x) to convert the original transform to two Spherical Bessel transforms of order
-     * l-1 and l+1 respectively.
-     *                                                                                                  */
+     */
     assert(l >= 0);
     assert(ngrid > 1);
     assert(p <= 2);
 
-    std::vector<double> out_tmp(ngrid);
-    _radrfft_base(l, ngrid, cutoff, in, out_tmp.data(), p);
+    const double pi = std::acos(-1.0);
+    const int n = ngrid - 1;
+    const double dx = cutoff / n;
+    const double dy = pi / cutoff;
+    const double pref = dx / std::sqrt(2. * pi);
+
+    // temporary storage for the output (in order to support in-place transform)
+    std::vector<double> tmp(ngrid);
+
+    // The l-th order spherical Bessel function of the first kind can be expressed as
+    //
+    //                          sin(x)*P(x) + cos(x)*Q(x)
+    //                  j (x) = -------------------------
+    //                   l               l+1
+    //                                  x
+    //
+    // where P(x) and Q(x) are polynomials of degree no more than l. Their polynomial
+    // coefficients follow the same recurrence relation
+    //
+    //        c(l,n) = (2l-1) * c(l-1,n) - c(l-2,n-2)
+    //
+    // with different initial conditions:
+    //
+    //          cos             sin
+    //
+    //      c(0,0) =  0     c(0,0) = 1
+    //      c(1,0) =  0     c(1,0) = 1
+    //      c(1,1) = -1     c(1,1) = 0
+    //
+    std::vector<double[2]> c((l+1) * (l+1));
+    auto idx = [](int l, int m) { return (l+1)*l/2 + m; };
+
+    c[idx(0, 0)][0] = 0;
+    c[idx(1, 0)][0] = 0;
+    c[idx(1, 1)][0] = -1;
+
+    c[idx(0, 0)][1] = 1;
+    c[idx(1, 0)][1] = 1;
+    c[idx(1, 1)][1] = 0;
+
+    for (int ll = 2; ll <= l; ++ll) {
+        for (int m = 0; m <= ll; ++m) {
+            c[idx(ll,m)][0] = (ll>m) * (2*ll-1) * c[idx(ll-1,m)][0] - (m>=2) * c[idx(ll-2,m-2)][0];
+            c[idx(ll,m)][1] = (ll>m) * (2*ll-1) * c[idx(ll-1,m)][1] - (m>=2) * c[idx(ll-2,m-2)][1];
+        }
+    }
+
+    _rfft_prepare(2 * n);
+
+    for (int m = 0; m <= l; ++m)
+    {
+        // m even --> sin; f[2*n-i] = -f[i]; out += -imag(rfft(f)) / y^(l+1-m)
+        // m odd  --> cos; f[2*n-i] = +f[i]; out += +real(rfft(f)) / y^(l+1-m)
+        const bool is_even = (m % 2 == 0);
+        const double coef = c[idx(l, m)][is_even];
+        const int sign = is_even ? -1 : 1;
+
+        f_[0] = f_[n] = 0.0;
+        for (int i = 1; i != n; ++i)
+        {
+            f_[i] = pref * coef * in[i] * std::pow(i * dx, m + 1 - l - p);
+            f_[2 * n - i] = sign * f_[i];
+        }
+
+        fftw_execute(rfft_plan_); // perform in-place rfft on f_
+
+        // sum up the series by ( ... ( ( g0/y + g1 )/y + g2 )/y + ... + gl )/y
+        // out[0] is handled later by direct integration
+        for (int j = 1; j <= n; ++j)
+        {
+            tmp[j] = (tmp[j] + sign * f_[2*j+is_even]) / (j * dy);
+        }
+    }
+
+    // out[0] is done by direct integration
+    // note that only the zeroth order spherical Bessel function is nonzero at 0
+    if (l == 0)
+    {
+        for (int i = 0; i <= n; ++i)
+        {
+            tmp[0] += 2.0 * pref * in[i] * std::pow(i*dx, 2-p); // p <= 2 is required here
+        }
+    }
 
     // FFT-based method does not yield accurate results for small y at high l
     // use numerical integration in this case
-    int n_direct = (l == 0) ? 0 : static_cast<int>(ngrid * std::pow(1e-8, 1. / l));
+    const int n_direct = (l == 0) ? 0 : static_cast<int>(ngrid * std::pow(1e-8, 1.0/l));
     if (n_direct > 0)
     {
         std::vector<double> buffer(ngrid + n_direct);
         double* grid_in = buffer.data();
         double* grid_out = grid_in + ngrid;
 
-        double dx = cutoff / (ngrid - 1);
-        double dy = std::acos(-1.0) / cutoff;
-
         std::for_each(grid_in, grid_in + ngrid,
             [&](double& x) { x = (&x - grid_in) * dx; });
         std::for_each(grid_out, grid_out + n_direct,
             [&](double& y) { y = ((&y - grid_out) + 1) * dy; });
 
-        direct(l, ngrid, grid_in, in, n_direct, grid_out, &out_tmp[1], p);
+        direct(l, ngrid, grid_in, in, n_direct, grid_out, &tmp[1], p);
     }
 
-    std::copy(out_tmp.begin(), out_tmp.end(), out);
+    std::copy(tmp.begin(), tmp.end(), out);
 }
 
 
@@ -356,19 +291,17 @@ void SphericalBesselTransformer::Impl::direct(
 
     for (int j = 0; j < ngrid_out; ++j)
     {
-        std::transform(tmp, tmp + ngrid_in, &jl_[j * grid_in_.size()], integrand,
-                       std::multiplies<double>());
+        double* jl = &jl_[j * grid_in_.size()];
+        std::transform(tmp, tmp + ngrid_in, jl, integrand, std::multiplies<double>());
         out[j] = ModuleBase::Integral::simpson(ngrid_in, integrand, &rab[1]);
     }
 
-    double pref = std::sqrt(2.0 / std::acos(-1.0));
+    const double pref = std::sqrt(2.0 / std::acos(-1.0));
     std::for_each(out, out + ngrid_out, [pref](double& x) { x *= pref; });
 
     if (!cache_enabled_)
     {
-        std::vector<double>().swap(grid_in_);
-        std::vector<double>().swap(grid_out_);
-        std::vector<double>().swap(jl_);
+        _table_clear();
     }
 }
 
@@ -378,26 +311,32 @@ void SphericalBesselTransformer::Impl::_rfft_prepare(int n)
     if (n != sz_planned_)
     {
         fftw_free(f_);
-        f_ = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * (n / 2 + 1));
-        sz_planned_ = n;
+        f_ = fftw_alloc_real(sizeof(double) * 2 * (n/2 + 1));
+        // see FFTW documentation "one-dimensional DFTs of real data"
+
         fftw_destroy_plan(rfft_plan_);
-        rfft_plan_ = fftw_plan_dft_r2c_1d(n, &f_[0][0], f_, FFTW_ESTIMATE);
+        auto* out = reinterpret_cast<fftw_complex*>(f_); // in-place transform
+        rfft_plan_ = fftw_plan_dft_r2c_1d(n, f_, out, FFTW_ESTIMATE);
+
+        sz_planned_ = n;
     }
 }
 
 
 void SphericalBesselTransformer::Impl::_tabulate(
     int l,
-    size_t ngrid_in,
+    int ngrid_in,
     const double* grid_in,
-    size_t ngrid_out,
+    int ngrid_out,
     const double* grid_out
 )
 {
-    bool is_cached = cache_enabled_ && l == l_
-                     && ngrid_in <= grid_in_.size() && ngrid_out <= grid_out_.size() 
-                     && std::equal(grid_in, grid_in + ngrid_in, grid_in_.begin())
-                     && std::equal(grid_out, grid_out + ngrid_out, grid_out_.begin());
+    const bool is_cached =
+        cache_enabled_ && l == l_
+        && ngrid_in <= grid_in_.size() && ngrid_out <= grid_out_.size()
+        && std::equal(grid_in, grid_in + ngrid_in, grid_in_.begin())
+        && std::equal(grid_out, grid_out + ngrid_out, grid_out_.begin());
+
     if (is_cached)
     {
         return;
@@ -407,7 +346,8 @@ void SphericalBesselTransformer::Impl::_tabulate(
     grid_in_ = std::vector<double>(grid_in, grid_in + ngrid_in);
     grid_out_ = std::vector<double>(grid_out, grid_out + ngrid_out);
     jl_.resize(grid_in_.size() * grid_out_.size());
-    for (size_t j = 0; j != ngrid_out; ++j)
+
+    for (int j = 0; j < ngrid_out; ++j)
     {
         ModuleBase::Sphbes::sphbesj(ngrid_in, grid_in, grid_out[j], l, &jl_[j * ngrid_in]);
     }
@@ -431,11 +371,32 @@ void SphericalBesselTransformer::Impl::_rfft_clear()
     sz_planned_ = -1;
 }
 
-//======================================================================
-//
-//                      Interface Class
-//
-//======================================================================
+
+void SphericalBesselTransformer::Impl::_table_clear()
+{
+    std::vector<double>().swap(grid_in_);
+    std::vector<double>().swap(grid_out_);
+    std::vector<double>().swap(jl_);
+}
+
+
+size_t SphericalBesselTransformer::Impl::heap_usage() const
+{
+    return (sz_planned_ + grid_in_.capacity() + grid_out_.capacity() + jl_.capacity())
+            * sizeof(double);
+}
+
+
+void SphericalBesselTransformer::Impl::clear()
+{
+    _rfft_clear();
+    _table_clear();
+}
+
+
+//**********************************************************************
+//                          Interface
+//**********************************************************************
 SphericalBesselTransformer::SphericalBesselTransformer(bool cache_enabled)
     : impl_(new Impl(cache_enabled))
 {}
@@ -466,6 +427,18 @@ void SphericalBesselTransformer::direct(
 ) const
 {
     impl_->direct(l, ngrid_in, grid_in, in, ngrid_out, grid_out, out, p);
+}
+
+
+size_t SphericalBesselTransformer::heap_usage() const
+{
+    return impl_->heap_usage();
+}
+
+
+void SphericalBesselTransformer::clear()
+{
+    impl_->clear();
 }
 
 
