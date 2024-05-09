@@ -444,7 +444,7 @@ These variables are used to control general system parameters.
   - 1: Symmetry analysis will be performed to determine the type of Bravais lattice and associated symmetry operations. (point groups, space groups, primitive cells, and irreducible k-points)
 - **Default**:
   - 0:
-    - if *[calculation](#calculation)==md/nscf/get_pchg/get_wf/get_S* or *[gamma_only]==True*;
+    - if *[calculation](#calculation)==md/nscf/get_pchg/get_wf/get_S* or *[gamma_only](#gamma_only)==True*;
     - If (*[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*). Currently *symmetry==1* is not supported in EXX (exact exchange) calculation.
   - 1: else
 
@@ -928,7 +928,7 @@ calculations.
 
   If you set ks_solver=`genelpa` for basis_type=`pw`, the program will be stopped with an error message:
 
-  ```
+  ```text
   genelpa can not be used with plane wave basis.
   ```
 
@@ -975,7 +975,7 @@ calculations.
 ### smearing_sigma_temp
 
 - **Type**: Real
-- **Description**: Energy range for smearing, `smearing_sigma` = 1/2 * kB * `smearing_sigma_temp`.
+- **Description**: Energy range for smearing, `smearing_sigma` = 1/2 *kB* `smearing_sigma_temp`.
 - **Default**: 2 * `smearing_sigma` / kB.
 - **Unit**: K
 
@@ -1039,8 +1039,8 @@ Note that `mixing_beta_mag` is not euqal to `mixing_beta` means that $\rho_{up}$
 
 - **Type**: Real
 - **Description**: Whether to perfom Kerker scaling for charge density.
-  -  **>0**: The high frequency wave vectors will be suppressed by multiplying a scaling factor $\frac{k^2}{k^2+gg0^2}$. Setting `mixing_gg0 = 1.0` is normally a good starting point. Kerker preconditioner will be automatically turned off if `mixing_beta <= 0.1`.
-  -  **0**: No Kerker scaling is performed.
+  - **>0**: The high frequency wave vectors will be suppressed by multiplying a scaling factor $\frac{k^2}{k^2+gg0^2}$. Setting `mixing_gg0 = 1.0` is normally a good starting point. Kerker preconditioner will be automatically turned off if `mixing_beta <= 0.1`.
+  - **0**: No Kerker scaling is performed.
 
   For systems that are difficult to converge, particularly metallic systems, enabling Kerker scaling may aid in achieving convergence.
 - **Default**: 1.0
@@ -1470,6 +1470,7 @@ These variables are used to control the output of properties.
 
     Please note that the total local potential refers to the local component of the self-consistent potential, excluding the non-local pseudopotential. The distinction between the local potential and the electrostatic potential is as follows: local potential = electrostatic potential + XC potential.
 - **Default**: 0
+
 ### out_dm
 
 - **Type**: Boolean
@@ -1796,7 +1797,7 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Description**: print energy and force labels and descriptors for DeePKS training
 - **Note**: In `LCAO` calculation, the path of a numerical descriptor (an `orb` file) is needed to be specified under the `NUMERICAL_DESCRIPTOR` tag in the `STRU` file. For example:
 
-  ```
+  ```text
   NUMERICAL_ORBITAL
   H_gga_8au_60Ry_2s1p.orb
   O_gga_7au_60Ry_2s2p1d.orb
@@ -1804,6 +1805,7 @@ Warning: this function is not robust enough for the current version. Please try 
   NUMERICAL_DESCRIPTOR
   jle.orb
   ```
+
 - **Default**: False
 
 ### deepks_scf
@@ -2044,7 +2046,9 @@ These variables are relevant to electric field and dipole correction
 - **Description**: Added a dipole correction to the bare ionic potential.
   - True：A dipole correction is also added to the bare ionic potential.
   - False: A dipole correction is not added to the bare ionic potential.
+
 > Note: If you want no electric field, parameter efield_amp  should be zero. Must be used ONLY in a slab geometry for surface alculations, with the discontinuity FALLING IN THE EMPTY SPACE.
+
 - **Default**: False
 
 ### efield_dir
@@ -2076,7 +2080,9 @@ These variables are relevant to electric field and dipole correction
 - **Type**: Real
 - **Availability**: with efield_flag = True.
 - **Description**: Amplitude of the electric field. The saw-like potential increases with slope efield_amp  in the region from  efield_pos_max+efield_pos_dec-1) to (efield_pos_max), then decreases until (efield_pos_max+efield_pos_dec), in units of the crystal vector efield_dir.
+
 > Note: The change of slope of this potential must be located in the empty region, or else unphysical forces will result.
+
 - **Default**: 0.0
 - **Unit**: a.u., 1 a.u. = 51.4220632*10^10 V/m.
 
@@ -2360,7 +2366,6 @@ These variables are used to control molecular dynamics calculations. For more in
 
   If `md_tfirst` is set to a positive value and [init_vel](#init_vel) is `true` simultaneously, please make sure they are consistent, otherwise abacus will exit immediately.
 
-
   Note that `md_tlast` is only used in NVT/NPT simulations. If `md_tlast` is unset or less than zero, `md_tlast` is set to `md_tfirst`. If `md_tlast` is set to be different from `md_tfirst`, ABACUS will automatically change the temperature from `md_tfirst` to `md_tlast`.
 - **Default**: No default
 - **Unit**: K
@@ -2402,6 +2407,7 @@ These variables are used to control molecular dynamics calculations. For more in
 - **Type**: Boolean
 - **Description**: Whether to output lattice virials into the file `OUT.${suffix}/MD_dump`.
 - **Default**: True
+
 ### md_seed
 
 - **Type**: Integer
@@ -2647,6 +2653,7 @@ These variables are used to control DFT+U correlated parameters
   - 0: No occupation matrix control is performed, and the onsite density matrix will be calculated from wavefunctions in each SCF step.
   - 1: The first SCF step will use an initial density matrix read from a file named `[initial_onsite.dm](http://initial_onsite.dm/)`, but for later steps, the onsite density matrix will be updated.
   - 2: The same onsite density matrix from `initial_onsite.dm` will be used throughout the entire calculation.
+
 > Note : The easiest way to create `initial_onsite.dm` is to run a DFT+U calculation, look for a file named `onsite.dm` in the OUT.prefix directory, and make replacements there. The format of the file is rather straight-forward.
 
 - **Default**: 0
@@ -2699,10 +2706,10 @@ These variables are used to control vdW-corrected related parameters.
 
 - **Type**: String
 - **Description**: Specifies the method used for Van der Waals (VdW) correction. Available options are:
-	- `d2`: [Grimme's D2](https://onlinelibrary.wiley.com/doi/abs/10.1002/jcc.20495) dispersion correction method
-	- `d3_0`: [Grimme's DFT-D3(0)](https://aip.scitation.org/doi/10.1063/1.3382344) dispersion correction method
-	- `d3_bj`: [Grimme's DFTD3(BJ)](https://onlinelibrary.wiley.com/doi/abs/10.1002/jcc.21759) dispersion correction method
-	- `none`: no vdW correction
+  - `d2`: [Grimme's D2](https://onlinelibrary.wiley.com/doi/abs/10.1002/jcc.20495) dispersion correction method
+  - `d3_0`: [Grimme's DFT-D3(0)](https://aip.scitation.org/doi/10.1063/1.3382344) dispersion correction method
+  - `d3_bj`: [Grimme's DFTD3(BJ)](https://onlinelibrary.wiley.com/doi/abs/10.1002/jcc.21759) dispersion correction method
+  - `none`: no vdW correction
 - **Default**: none
 
 ### vdw_s6
@@ -2762,10 +2769,12 @@ These variables are used to control vdW-corrected related parameters.
 - **Type**: String
 - **Availability**: `vdw_method` is set to `d2`
 - **Description**: Specifies the name of the file containing $C_6$ parameters for each element when using the D2 method. If not set, ABACUS uses the default $C_6$ parameters (Jnm6/mol) stored in the [program](https://github.com/deepmodeling/abacus-develop/blob/develop/source/module_hamilt_general/module_vdw/vdwd2_parameters.cpp). To manually set the $C_6$ parameters, provide a file containing the parameters. An example is given by:
-  ```
+
+  ```text
   H  0.1
   Si 9.0
   ```
+
   Namely, each line contains the element name and the corresponding $C_6$ parameter.
 - **Default**: default
 
@@ -2783,10 +2792,12 @@ These variables are used to control vdW-corrected related parameters.
 - **Type**: String
 - **Availability**: `vdw_method` is set to `d2`
 - **Description**: Specifies the name of the file containing $R_0$ parameters for each element when using the D2 method. If not set, ABACUS uses the default $R_0$ parameters (Angstrom) stored in the [program](https://github.com/deepmodeling/abacus-develop/blob/develop/source/module_hamilt_general/module_vdw/vdwd2_parameters.cpp). To manually set the $R_0$ parameters, provide a file containing the parameters. An example is given by:
-  ```
+
+  ```text
   Li 1.0
   Cl 2.0
   ```
+
   Namely, each line contains the element name and the corresponding $R_0$ parameter.
 - **Default**: default
 
@@ -3265,56 +3276,56 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: Boolean
 - **Description**: Specify whether to include non-local pseudopotential term in obtaining the Hamiltonian matrix.
-	- 0: No.
-	- 1: Yes.
+  - 0: No.
+  - 1: Yes.
 - **Default**: 1
 
 ### vh_in_h
 
 - **Type**: Boolean
 - **Description**: Specify whether to include Hartree potential term in obtaining the Hamiltonian matrix.
-	- 0: No.
-	- 1: Yes.
+  - 0: No.
+  - 1: Yes.
 - **Default**: 1
 
 ### vion_in_h
 
 - **Type**: Boolean
 - **Description**: Specify whether to include local ionic potential term in obtaining the Hamiltonian matrix.
-	- 0: No.
-	- 1: Yes.
+  - 0: No.
+  - 1: Yes.
 - **Default**: 1
 
 ### test_force
 
 - **Type**: Boolean
 - **Description**: Specify whether to output the detailed components in forces.
-	- 0: No.
-	- 1: Yes.
+  - 0: No.
+  - 1: Yes.
 - **Default**: 0
 
 ### test_stress
 
 - **Type**: Boolean
 - **Description**: Specify whether to output the detailed components in stress.
-	- 0: No.
-	- 1: Yes.
+  - 0: No.
+  - 1: Yes.
 - **Default**: 0
 
 ### colour
 
 - **Type**: Boolean
 - **Description**: Specify whether to set the colorful output in terminal.
-	- 0: No.
-	- 1: Yes.
+  - 0: No.
+  - 1: Yes.
 - **Default**: 0
 
 ### test_skip_ewald
 
 - **Type**: Boolean
 - **Description**: Specify whether to skip the calculation of the ewald energy.
-	- 0: No.
-	- 1: Yes.
+  - 0: No.
+  - 1: Yes.
 - **Default**: 0
 
 [back to top](#full-list-of-input-keywords)
@@ -3398,6 +3409,7 @@ Thermal conductivities: $\kappa = \lim_{\omega\to 0}\kappa(\omega)$.
 - **Default**: 0
 
 ### cond_smear
+
 - **Type**: Integer
 - **Description**: Smearing method for conductivities
   - 1: Gaussian smearing
@@ -3417,8 +3429,8 @@ Thermal conductivities: $\kappa = \lim_{\omega\to 0}\kappa(\omega)$.
 - **Type**: Boolean
 - **Availability**: [basis_type](#basis_type) = `pw`
 - **Description**: Whether to consider nonlocal potential correction when calculating velocity matrix $\bra{\psi_i}\hat{v}\ket{\psi_j}$.
- 	- True:  $m\hat{v}=\hat{p}+\frac{im}{\hbar}[\hat{V}_{NL},\hat{r}]$.
-	- False: $m\hat{v}\approx\hat{p}$.
+  - True:  $m\hat{v}=\hat{p}+\frac{im}{\hbar}[\hat{V}_{NL},\hat{r}]$.
+  - False: $m\hat{v}\approx\hat{p}$.
 - **Default**: True
 
 [back to top](#full-list-of-input-keywords)
@@ -3525,6 +3537,7 @@ These variables are used to control the usage of deltaspin functionality.
 
 - **Type**: String
 - **Description**: the file in json format to specify atomic constraining parameters. An example of the sc_file json file is shown below for the `nspin 4` case:
+
 ```json
 [
     {
@@ -3550,7 +3563,9 @@ These variables are used to control the usage of deltaspin functionality.
     }
 ]
 ```
+
 and
+
 ```json
 [
     {
@@ -3574,6 +3589,7 @@ and
     }
 ]
 ```
+
 for `nspin 2` case. The difference is that `lambda`, `target_mag`, and `constrain` are scalars in `nspin 2` case, and are vectors in `nspin 4` case.
 
 - **Default**: none
@@ -3640,6 +3656,5 @@ These variables are used to control the usage of QO analysis. QO further compres
 - **Type**: Real
 - **Description**: the convergence threshold determining the cutoff of generated orbital. Lower threshold will yield orbital with larger cutoff radius.
 - **Default**: 1.0e-6
-
 
 [back to top](#full-list-of-input-keywords)
