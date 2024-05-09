@@ -167,14 +167,14 @@ T* Operator<T, Device>::get_hpsi(const hpsi_info& info) const
 }
 
 namespace hamilt {
-template class Operator<float, psi::DEVICE_CPU>;
-template class Operator<std::complex<float>, psi::DEVICE_CPU>;
-template class Operator<double, psi::DEVICE_CPU>;
-template class Operator<std::complex<double>, psi::DEVICE_CPU>;
+template class Operator<float, base_device::DEVICE_CPU>;
+template class Operator<std::complex<float>, base_device::DEVICE_CPU>;
+template class Operator<double, base_device::DEVICE_CPU>;
+template class Operator<std::complex<double>, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class Operator<float, psi::DEVICE_GPU>;
-template class Operator<std::complex<float>, psi::DEVICE_GPU>;
-template class Operator<double, psi::DEVICE_GPU>;
-template class Operator<std::complex<double>, psi::DEVICE_GPU>;
+template class Operator<float, base_device::DEVICE_GPU>;
+template class Operator<std::complex<float>, base_device::DEVICE_GPU>;
+template class Operator<double, base_device::DEVICE_GPU>;
+template class Operator<std::complex<double>, base_device::DEVICE_GPU>;
 #endif
 }

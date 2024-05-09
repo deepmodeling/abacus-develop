@@ -80,7 +80,7 @@ void xc_functional_grad_wfc_op<T, Device>::operator()(
     cudaErrcheck(cudaDeviceSynchronize());
 }
 
-template struct xc_functional_grad_wfc_op<std::complex<float> , psi::DEVICE_GPU>;
-template struct xc_functional_grad_wfc_op<std::complex<double>, psi::DEVICE_GPU>;
+template struct xc_functional_grad_wfc_op<std::complex<float>, base_device::DEVICE_GPU>;
+template struct xc_functional_grad_wfc_op<std::complex<double>, base_device::DEVICE_GPU>;
 
 } // namespace hamilt   

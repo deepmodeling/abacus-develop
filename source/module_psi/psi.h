@@ -31,7 +31,8 @@ struct Range
 
 // there is the structure of electric wavefunction coefficient
 // the basic operations defined in the Operator Class
-template <typename T, typename Device = psi::DEVICE_CPU> class Psi
+template <typename T, typename Device = base_device::DEVICE_CPU>
+class Psi
 {
   public:
     // Constructor 1: basic
@@ -119,7 +120,7 @@ template <typename T, typename Device = psi::DEVICE_CPU> class Psi
   private:
     T* psi = nullptr; // avoid using C++ STL
 
-    AbacusDevice_t device = {}; // track the device type (CPU, GPU and SYCL are supported currented)
+    base_device::AbacusDevice_t device = {}; // track the device type (CPU, GPU and SYCL are supported currented)
     Device* ctx = {}; // an context identifier for obtaining the device variable
 
     // dimensions

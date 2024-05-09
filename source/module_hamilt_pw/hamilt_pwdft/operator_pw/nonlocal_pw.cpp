@@ -322,14 +322,18 @@ hamilt::Nonlocal<OperatorPW<T, Device>>::Nonlocal(const Nonlocal<OperatorPW<T_in
     }
 }
 
-template class Nonlocal<OperatorPW<std::complex<float>, psi::DEVICE_CPU>>;
-template class Nonlocal<OperatorPW<std::complex<double>, psi::DEVICE_CPU>>;
-// template Nonlocal<OperatorPW<std::complex<double>, psi::DEVICE_CPU>>::Nonlocal(const Nonlocal<OperatorPW<std::complex<double>, psi::DEVICE_CPU>> *nonlocal);
+template class Nonlocal<OperatorPW<std::complex<float>, base_device::DEVICE_CPU>>;
+template class Nonlocal<OperatorPW<std::complex<double>, base_device::DEVICE_CPU>>;
+// template Nonlocal<OperatorPW<std::complex<double>, base_device::DEVICE_CPU>>::Nonlocal(const
+// Nonlocal<OperatorPW<std::complex<double>, base_device::DEVICE_CPU>> *nonlocal);
 #if ((defined __CUDA) || (defined __ROCM))
-template class Nonlocal<OperatorPW<std::complex<float>, psi::DEVICE_GPU>>;
-template class Nonlocal<OperatorPW<std::complex<double>, psi::DEVICE_GPU>>;
-// template Nonlocal<OperatorPW<std::complex<double>, psi::DEVICE_CPU>>::Nonlocal(const Nonlocal<OperatorPW<std::complex<double>, psi::DEVICE_GPU>> *nonlocal);
-// template Nonlocal<OperatorPW<std::complex<double>, psi::DEVICE_GPU>>::Nonlocal(const Nonlocal<OperatorPW<std::complex<double>, psi::DEVICE_CPU>> *nonlocal);
-// template Nonlocal<OperatorPW<std::complex<double>, psi::DEVICE_GPU>>::Nonlocal(const Nonlocal<OperatorPW<std::complex<double>, psi::DEVICE_GPU>> *nonlocal);
+template class Nonlocal<OperatorPW<std::complex<float>, base_device::DEVICE_GPU>>;
+template class Nonlocal<OperatorPW<std::complex<double>, base_device::DEVICE_GPU>>;
+// template Nonlocal<OperatorPW<std::complex<double>, base_device::DEVICE_CPU>>::Nonlocal(const
+// Nonlocal<OperatorPW<std::complex<double>, base_device::DEVICE_GPU>> *nonlocal); template
+// Nonlocal<OperatorPW<std::complex<double>, base_device::DEVICE_GPU>>::Nonlocal(const
+// Nonlocal<OperatorPW<std::complex<double>, base_device::DEVICE_CPU>> *nonlocal); template
+// Nonlocal<OperatorPW<std::complex<double>, base_device::DEVICE_GPU>>::Nonlocal(const
+// Nonlocal<OperatorPW<std::complex<double>, base_device::DEVICE_GPU>> *nonlocal);
 #endif
 } // namespace hamilt

@@ -9,7 +9,7 @@
 // struct DEVICE_GPU;
 // struct DEVICE_SYCL;
 
-// enum AbacusDevice_t {UnKnown, CpuDevice, GpuDevice, SyclDevice};
+// enum base_device::AbacusDevice_t {UnKnown, CpuDevice, GpuDevice, SyclDevice};
 
 // }  // end of namespace psi
 

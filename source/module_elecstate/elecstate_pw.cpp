@@ -31,7 +31,8 @@ ElecStatePW<T, Device>::ElecStatePW(ModulePW::PW_Basis_K* wfc_basis_in,
 template<typename T, typename Device>
 ElecStatePW<T, Device>::~ElecStatePW() 
 {
-    if (psi::device::get_device_type<Device>(this->ctx) == psi::GpuDevice) {
+    if (psi::device::get_device_type<Device>(this->ctx) == base_device::GpuDevice)
+    {
         delmem_var_op()(this->ctx, this->rho_data);
         if (get_xc_func_type() == 3)
         {
@@ -520,11 +521,11 @@ void ElecStatePW<T, Device>::addusdens_g(const Real* becsum, T* rhog)
     delmem_var_op()(this->ctx, ylmk0);
 }
 
-template class ElecStatePW<std::complex<float>, psi::DEVICE_CPU>;
-template class ElecStatePW<std::complex<double>, psi::DEVICE_CPU>;
+template class ElecStatePW<std::complex<float>, base_device::DEVICE_CPU>;
+template class ElecStatePW<std::complex<double>, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class ElecStatePW<std::complex<float>, psi::DEVICE_GPU>;
-template class ElecStatePW<std::complex<double>, psi::DEVICE_GPU>;
+template class ElecStatePW<std::complex<float>, base_device::DEVICE_GPU>;
+template class ElecStatePW<std::complex<double>, base_device::DEVICE_GPU>;
 #endif 
 
 } // namespace elecstate

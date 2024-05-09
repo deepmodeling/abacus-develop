@@ -91,48 +91,54 @@ struct delete_memory_op {
 };
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
-// Partially specialize operator for psi::GpuDevice.
-template <typename FPTYPE> 
-struct resize_memory_op<FPTYPE, psi::DEVICE_GPU> {
-  void operator()(const psi::DEVICE_GPU* dev, FPTYPE*& arr, const size_t size, const char* record_in = nullptr);
-};
-
-template <typename FPTYPE> 
-struct set_memory_op<FPTYPE, psi::DEVICE_GPU> {
-  void operator()(const psi::DEVICE_GPU* dev, FPTYPE* arr, const int var, const size_t size);
-};
-
-template <typename FPTYPE> 
-struct synchronize_memory_op<FPTYPE, psi::DEVICE_CPU, psi::DEVICE_GPU> {
-  void operator()(
-      const psi::DEVICE_CPU* dev_out, 
-      const psi::DEVICE_GPU* dev_in, 
-      FPTYPE* arr_out, 
-      const FPTYPE* arr_in, 
-      const size_t size);
-};
-template <typename FPTYPE> 
-struct synchronize_memory_op<FPTYPE, psi::DEVICE_GPU, psi::DEVICE_CPU> {
-  void operator()(
-      const psi::DEVICE_GPU* dev_out, 
-      const psi::DEVICE_CPU* dev_in, 
-      FPTYPE* arr_out, 
-      const FPTYPE* arr_in, 
-      const size_t size);
-};
-template <typename FPTYPE> 
-struct synchronize_memory_op<FPTYPE, psi::DEVICE_GPU, psi::DEVICE_GPU> {
-  void operator()(
-      const psi::DEVICE_GPU* dev_out, 
-      const psi::DEVICE_GPU* dev_in, 
-      FPTYPE* arr_out, 
-      const FPTYPE* arr_in, 
-      const size_t size);
+// Partially specialize operator for base_device::GpuDevice.
+template <typename FPTYPE>
+struct resize_memory_op<FPTYPE, base_device::DEVICE_GPU>
+{
+    void operator()(const base_device::DEVICE_GPU* dev,
+                    FPTYPE*& arr,
+                    const size_t size,
+                    const char* record_in = nullptr);
 };
 
 template <typename FPTYPE>
-struct delete_memory_op<FPTYPE, psi::DEVICE_GPU> {
-  void operator()(const psi::DEVICE_GPU* dev, FPTYPE* arr);
+struct set_memory_op<FPTYPE, base_device::DEVICE_GPU>
+{
+    void operator()(const base_device::DEVICE_GPU* dev, FPTYPE* arr, const int var, const size_t size);
+};
+
+template <typename FPTYPE>
+struct synchronize_memory_op<FPTYPE, base_device::DEVICE_CPU, base_device::DEVICE_GPU>
+{
+    void operator()(const base_device::DEVICE_CPU* dev_out,
+                    const base_device::DEVICE_GPU* dev_in,
+                    FPTYPE* arr_out,
+                    const FPTYPE* arr_in,
+                    const size_t size);
+};
+template <typename FPTYPE>
+struct synchronize_memory_op<FPTYPE, base_device::DEVICE_GPU, base_device::DEVICE_CPU>
+{
+    void operator()(const base_device::DEVICE_GPU* dev_out,
+                    const base_device::DEVICE_CPU* dev_in,
+                    FPTYPE* arr_out,
+                    const FPTYPE* arr_in,
+                    const size_t size);
+};
+template <typename FPTYPE>
+struct synchronize_memory_op<FPTYPE, base_device::DEVICE_GPU, base_device::DEVICE_GPU>
+{
+    void operator()(const base_device::DEVICE_GPU* dev_out,
+                    const base_device::DEVICE_GPU* dev_in,
+                    FPTYPE* arr_out,
+                    const FPTYPE* arr_in,
+                    const size_t size);
+};
+
+template <typename FPTYPE>
+struct delete_memory_op<FPTYPE, base_device::DEVICE_GPU>
+{
+    void operator()(const base_device::DEVICE_GPU* dev, FPTYPE* arr);
 };
 #endif
 // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM 
@@ -140,65 +146,77 @@ struct delete_memory_op<FPTYPE, psi::DEVICE_GPU> {
 } // end of namespace memory
 } // end of namespace psi
 
-using resmem_sh_op = psi::memory::resize_memory_op<float, psi::DEVICE_CPU>;
-using resmem_dh_op = psi::memory::resize_memory_op<double, psi::DEVICE_CPU>;
-using resmem_ch_op = psi::memory::resize_memory_op<std::complex<float>, psi::DEVICE_CPU>;
-using resmem_zh_op = psi::memory::resize_memory_op<std::complex<double>, psi::DEVICE_CPU>;
+using resmem_sh_op = psi::memory::resize_memory_op<float, base_device::DEVICE_CPU>;
+using resmem_dh_op = psi::memory::resize_memory_op<double, base_device::DEVICE_CPU>;
+using resmem_ch_op = psi::memory::resize_memory_op<std::complex<float>, base_device::DEVICE_CPU>;
+using resmem_zh_op = psi::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_CPU>;
 
-using resmem_sd_op = psi::memory::resize_memory_op<float, psi::DEVICE_GPU>;
-using resmem_dd_op = psi::memory::resize_memory_op<double, psi::DEVICE_GPU>;
-using resmem_cd_op = psi::memory::resize_memory_op<std::complex<float>, psi::DEVICE_GPU>;
-using resmem_zd_op = psi::memory::resize_memory_op<std::complex<double>, psi::DEVICE_GPU>;
+using resmem_sd_op = psi::memory::resize_memory_op<float, base_device::DEVICE_GPU>;
+using resmem_dd_op = psi::memory::resize_memory_op<double, base_device::DEVICE_GPU>;
+using resmem_cd_op = psi::memory::resize_memory_op<std::complex<float>, base_device::DEVICE_GPU>;
+using resmem_zd_op = psi::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
 
-using setmem_sh_op = psi::memory::set_memory_op<float, psi::DEVICE_CPU>;
-using setmem_dh_op = psi::memory::set_memory_op<double, psi::DEVICE_CPU>;
-using setmem_ch_op = psi::memory::set_memory_op<std::complex<float>, psi::DEVICE_CPU>;
-using setmem_zh_op = psi::memory::set_memory_op<std::complex<double>, psi::DEVICE_CPU>;
+using setmem_sh_op = psi::memory::set_memory_op<float, base_device::DEVICE_CPU>;
+using setmem_dh_op = psi::memory::set_memory_op<double, base_device::DEVICE_CPU>;
+using setmem_ch_op = psi::memory::set_memory_op<std::complex<float>, base_device::DEVICE_CPU>;
+using setmem_zh_op = psi::memory::set_memory_op<std::complex<double>, base_device::DEVICE_CPU>;
 
-using setmem_sd_op = psi::memory::set_memory_op<float, psi::DEVICE_GPU>;
-using setmem_dd_op = psi::memory::set_memory_op<double, psi::DEVICE_GPU>;
-using setmem_cd_op = psi::memory::set_memory_op<std::complex<float>, psi::DEVICE_GPU>;
-using setmem_zd_op = psi::memory::set_memory_op<std::complex<double>, psi::DEVICE_GPU>;
+using setmem_sd_op = psi::memory::set_memory_op<float, base_device::DEVICE_GPU>;
+using setmem_dd_op = psi::memory::set_memory_op<double, base_device::DEVICE_GPU>;
+using setmem_cd_op = psi::memory::set_memory_op<std::complex<float>, base_device::DEVICE_GPU>;
+using setmem_zd_op = psi::memory::set_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
 
-using delmem_sh_op = psi::memory::delete_memory_op<float, psi::DEVICE_CPU>;
-using delmem_dh_op = psi::memory::delete_memory_op<double, psi::DEVICE_CPU>;
-using delmem_ch_op = psi::memory::delete_memory_op<std::complex<float>, psi::DEVICE_CPU>;
-using delmem_zh_op = psi::memory::delete_memory_op<std::complex<double>, psi::DEVICE_CPU>;
+using delmem_sh_op = psi::memory::delete_memory_op<float, base_device::DEVICE_CPU>;
+using delmem_dh_op = psi::memory::delete_memory_op<double, base_device::DEVICE_CPU>;
+using delmem_ch_op = psi::memory::delete_memory_op<std::complex<float>, base_device::DEVICE_CPU>;
+using delmem_zh_op = psi::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_CPU>;
 
-using delmem_sd_op = psi::memory::delete_memory_op<float, psi::DEVICE_GPU>;
-using delmem_dd_op = psi::memory::delete_memory_op<double, psi::DEVICE_GPU>;
-using delmem_cd_op = psi::memory::delete_memory_op<std::complex<float>, psi::DEVICE_GPU>;
-using delmem_zd_op = psi::memory::delete_memory_op<std::complex<double>, psi::DEVICE_GPU>;
+using delmem_sd_op = psi::memory::delete_memory_op<float, base_device::DEVICE_GPU>;
+using delmem_dd_op = psi::memory::delete_memory_op<double, base_device::DEVICE_GPU>;
+using delmem_cd_op = psi::memory::delete_memory_op<std::complex<float>, base_device::DEVICE_GPU>;
+using delmem_zd_op = psi::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
 
-using syncmem_s2s_h2h_op = psi::memory::synchronize_memory_op<float, psi::DEVICE_CPU, psi::DEVICE_CPU>;
-using syncmem_s2s_h2d_op = psi::memory::synchronize_memory_op<float, psi::DEVICE_GPU, psi::DEVICE_CPU>;
-using syncmem_s2s_d2h_op = psi::memory::synchronize_memory_op<float, psi::DEVICE_CPU, psi::DEVICE_GPU>;
-using syncmem_d2d_h2h_op = psi::memory::synchronize_memory_op<double, psi::DEVICE_CPU, psi::DEVICE_CPU>;
-using syncmem_d2d_h2d_op = psi::memory::synchronize_memory_op<double, psi::DEVICE_GPU, psi::DEVICE_CPU>;
-using syncmem_d2d_d2h_op = psi::memory::synchronize_memory_op<double, psi::DEVICE_CPU, psi::DEVICE_GPU>;
+using syncmem_s2s_h2h_op = psi::memory::synchronize_memory_op<float, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
+using syncmem_s2s_h2d_op = psi::memory::synchronize_memory_op<float, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+using syncmem_s2s_d2h_op = psi::memory::synchronize_memory_op<float, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
+using syncmem_d2d_h2h_op = psi::memory::synchronize_memory_op<double, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
+using syncmem_d2d_h2d_op = psi::memory::synchronize_memory_op<double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+using syncmem_d2d_d2h_op = psi::memory::synchronize_memory_op<double, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
 
-using syncmem_c2c_h2h_op = psi::memory::synchronize_memory_op<std::complex<float>, psi::DEVICE_CPU, psi::DEVICE_CPU>;
-using syncmem_c2c_h2d_op = psi::memory::synchronize_memory_op<std::complex<float>, psi::DEVICE_GPU, psi::DEVICE_CPU>;
-using syncmem_c2c_d2h_op = psi::memory::synchronize_memory_op<std::complex<float>, psi::DEVICE_CPU, psi::DEVICE_GPU>;
-using syncmem_z2z_h2h_op = psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_CPU, psi::DEVICE_CPU>;
-using syncmem_z2z_h2d_op = psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_GPU, psi::DEVICE_CPU>;
-using syncmem_z2z_d2h_op = psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_CPU, psi::DEVICE_GPU>;
+using syncmem_c2c_h2h_op
+    = psi::memory::synchronize_memory_op<std::complex<float>, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
+using syncmem_c2c_h2d_op
+    = psi::memory::synchronize_memory_op<std::complex<float>, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+using syncmem_c2c_d2h_op
+    = psi::memory::synchronize_memory_op<std::complex<float>, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
+using syncmem_z2z_h2h_op
+    = psi::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
+using syncmem_z2z_h2d_op
+    = psi::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+using syncmem_z2z_d2h_op
+    = psi::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
 
-using castmem_s2d_h2h_op = psi::memory::cast_memory_op<double, float, psi::DEVICE_CPU, psi::DEVICE_CPU>;
-using castmem_s2d_h2d_op = psi::memory::cast_memory_op<double, float, psi::DEVICE_GPU, psi::DEVICE_CPU>;
-using castmem_s2d_d2h_op = psi::memory::cast_memory_op<double, float, psi::DEVICE_CPU, psi::DEVICE_GPU>;
-using castmem_d2s_h2h_op = psi::memory::cast_memory_op<float, double, psi::DEVICE_CPU, psi::DEVICE_CPU>;
-using castmem_d2s_h2d_op = psi::memory::cast_memory_op<float, double, psi::DEVICE_GPU, psi::DEVICE_CPU>;
-using castmem_d2s_d2h_op = psi::memory::cast_memory_op<float, double, psi::DEVICE_CPU, psi::DEVICE_GPU>;
+using castmem_s2d_h2h_op = psi::memory::cast_memory_op<double, float, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
+using castmem_s2d_h2d_op = psi::memory::cast_memory_op<double, float, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+using castmem_s2d_d2h_op = psi::memory::cast_memory_op<double, float, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
+using castmem_d2s_h2h_op = psi::memory::cast_memory_op<float, double, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
+using castmem_d2s_h2d_op = psi::memory::cast_memory_op<float, double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+using castmem_d2s_d2h_op = psi::memory::cast_memory_op<float, double, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
 
-using castmem_c2z_h2h_op = psi::memory::cast_memory_op<std::complex<double>, std::complex<float>, psi::DEVICE_CPU, psi::DEVICE_CPU>;
-using castmem_c2z_h2d_op = psi::memory::cast_memory_op<std::complex<double>, std::complex<float>, psi::DEVICE_GPU, psi::DEVICE_CPU>;
-using castmem_c2z_d2h_op = psi::memory::cast_memory_op<std::complex<double>, std::complex<float>, psi::DEVICE_CPU, psi::DEVICE_GPU>;
-using castmem_z2c_h2h_op = psi::memory::cast_memory_op<std::complex<float>, std::complex<double>, psi::DEVICE_CPU, psi::DEVICE_CPU>;
-using castmem_z2c_h2d_op = psi::memory::cast_memory_op<std::complex<float>, std::complex<double>, psi::DEVICE_GPU, psi::DEVICE_CPU>;
-using castmem_z2c_d2h_op = psi::memory::cast_memory_op<std::complex<float>, std::complex<double>, psi::DEVICE_CPU, psi::DEVICE_GPU>;
+using castmem_c2z_h2h_op = psi::memory::
+    cast_memory_op<std::complex<double>, std::complex<float>, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
+using castmem_c2z_h2d_op = psi::memory::
+    cast_memory_op<std::complex<double>, std::complex<float>, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+using castmem_c2z_d2h_op = psi::memory::
+    cast_memory_op<std::complex<double>, std::complex<float>, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
+using castmem_z2c_h2h_op = psi::memory::
+    cast_memory_op<std::complex<float>, std::complex<double>, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
+using castmem_z2c_h2d_op = psi::memory::
+    cast_memory_op<std::complex<float>, std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+using castmem_z2c_d2h_op = psi::memory::
+    cast_memory_op<std::complex<float>, std::complex<double>, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
 
-static psi::DEVICE_CPU * cpu_ctx = {};
-static psi::DEVICE_GPU * gpu_ctx = {};
+static base_device::DEVICE_CPU* cpu_ctx = {};
+static base_device::DEVICE_GPU* gpu_ctx = {};
 
 #endif // MODULE_PSI_MEMORY_H_

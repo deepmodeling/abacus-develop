@@ -1,7 +1,7 @@
 #ifndef MODULE_TYPES_H_
 #define MODULE_TYPES_H_
 
-namespace psi
+namespace base_device
 {
 
 struct DEVICE_CPU;
@@ -12,7 +12,6 @@ enum AbacusDevice_t
     UnKnown,
     CpuDevice,
     GpuDevice,
-    SyclDevice
 };
 
 } // namespace psi

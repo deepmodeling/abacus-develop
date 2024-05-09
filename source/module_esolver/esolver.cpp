@@ -119,24 +119,24 @@ void init_esolver(ESolver*& p_esolver)
 		{
 			if (GlobalV::precision_flag == "single") 
 			{
-				p_esolver = new ESolver_KS_PW<std::complex<float>, psi::DEVICE_GPU>();
-			}
+                p_esolver = new ESolver_KS_PW<std::complex<float>, base_device::DEVICE_GPU>();
+            }
 			else 
 			{
-				p_esolver = new ESolver_KS_PW<std::complex<double>, psi::DEVICE_GPU>();
-			}
+                p_esolver = new ESolver_KS_PW<std::complex<double>, base_device::DEVICE_GPU>();
+            }
 			return;
 		}
 #endif
 		if (GlobalV::precision_flag == "single") 
 		{
-			p_esolver = new ESolver_KS_PW<std::complex<float>, psi::DEVICE_CPU>();
-		}
-		else 
+            p_esolver = new ESolver_KS_PW<std::complex<float>, base_device::DEVICE_CPU>();
+        }
+        else 
 		{
-			p_esolver = new ESolver_KS_PW<std::complex<double>, psi::DEVICE_CPU>();
-		}
-	}
+            p_esolver = new ESolver_KS_PW<std::complex<double>, base_device::DEVICE_CPU>();
+        }
+    }
 #ifdef __LCAO
 	else if (esolver_type == "ksdft_lcao")
 	{

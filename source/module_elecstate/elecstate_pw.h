@@ -12,7 +12,7 @@
 namespace elecstate
 {
 
-template<typename T, typename Device = psi::DEVICE_CPU>
+template <typename T, typename Device = base_device::DEVICE_CPU>
 class ElecStatePW : public ElecState
 {
   private:
@@ -72,7 +72,7 @@ class ElecStatePW : public ElecState
     using setmem_var_op = psi::memory::set_memory_op<Real, Device>;
     using resmem_var_op = psi::memory::resize_memory_op<Real, Device>;
     using delmem_var_op = psi::memory::delete_memory_op<Real, Device>;
-    using castmem_var_d2h_op = psi::memory::cast_memory_op<double, Real, psi::DEVICE_CPU, Device>;
+    using castmem_var_d2h_op = psi::memory::cast_memory_op<double, Real, base_device::DEVICE_CPU, Device>;
 
     using setmem_complex_op = psi::memory::set_memory_op<T, Device>;
     using resmem_complex_op = psi::memory::resize_memory_op<T, Device>;

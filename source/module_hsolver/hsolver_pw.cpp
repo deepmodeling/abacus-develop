@@ -896,11 +896,11 @@ typename HSolverPW<T, Device>::Real HSolverPW<T, Device>::reset_diagethr(std::of
     return this->diag_ethr;
 }
 
-template class HSolverPW<std::complex<float>, psi::DEVICE_CPU>;
-template class HSolverPW<std::complex<double>, psi::DEVICE_CPU>;
+template class HSolverPW<std::complex<float>, base_device::DEVICE_CPU>;
+template class HSolverPW<std::complex<double>, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class HSolverPW<std::complex<float>, psi::DEVICE_GPU>;
-template class HSolverPW<std::complex<double>, psi::DEVICE_GPU>;
+template class HSolverPW<std::complex<float>, base_device::DEVICE_GPU>;
+template class HSolverPW<std::complex<double>, base_device::DEVICE_GPU>;
 #endif
 
 } // namespace hsolver

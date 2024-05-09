@@ -392,12 +392,12 @@ void Input_Conv::Convert(void)
     GlobalV::DIAGO_CG_PREC = INPUT.diago_cg_prec;
     GlobalV::PW_DIAG_NDIM = INPUT.pw_diag_ndim;
 
-    hsolver::HSolverPW<std::complex<float>, psi::DEVICE_CPU>::diago_full_acc = INPUT.diago_full_acc;
-    hsolver::HSolverPW<std::complex<double>, psi::DEVICE_CPU>::diago_full_acc = INPUT.diago_full_acc;
+    hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU>::diago_full_acc = INPUT.diago_full_acc;
+    hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU>::diago_full_acc = INPUT.diago_full_acc;
 
 #if ((defined __CUDA) || (defined __ROCM))
-    hsolver::HSolverPW<std::complex<float>, psi::DEVICE_GPU>::diago_full_acc = INPUT.diago_full_acc;
-    hsolver::HSolverPW<std::complex<double>, psi::DEVICE_GPU>::diago_full_acc = INPUT.diago_full_acc;
+    hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_GPU>::diago_full_acc = INPUT.diago_full_acc;
+    hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_GPU>::diago_full_acc = INPUT.diago_full_acc;
 #endif
 
     GlobalV::PW_DIAG_THR = INPUT.pw_diag_thr;

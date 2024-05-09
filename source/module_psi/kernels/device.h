@@ -26,7 +26,8 @@ static __inline__ __device__ double atomicAdd(double *address, double val) {
 namespace psi {
 namespace device {
 
-template<typename Device> AbacusDevice_t get_device_type (const Device* dev);
+template <typename Device>
+base_device::AbacusDevice_t get_device_type(const Device* dev);
 
 template<typename T> std::string get_current_precision(const T* var);
 

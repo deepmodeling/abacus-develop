@@ -73,14 +73,18 @@ hamilt::Ekinetic<OperatorPW<T, Device>>::Ekinetic(const Ekinetic<OperatorPW<T_in
     }
 }
 
-template class Ekinetic<OperatorPW<std::complex<float>, psi::DEVICE_CPU>>;
-template class Ekinetic<OperatorPW<std::complex<double>, psi::DEVICE_CPU>>;
-// template Ekinetic<OperatorPW<std::complex<double>, psi::DEVICE_CPU>>::Ekinetic(const Ekinetic<OperatorPW<std::complex<double>, psi::DEVICE_CPU>> *ekinetic);
+template class Ekinetic<OperatorPW<std::complex<float>, base_device::DEVICE_CPU>>;
+template class Ekinetic<OperatorPW<std::complex<double>, base_device::DEVICE_CPU>>;
+// template Ekinetic<OperatorPW<std::complex<double>, base_device::DEVICE_CPU>>::Ekinetic(const
+// Ekinetic<OperatorPW<std::complex<double>, base_device::DEVICE_CPU>> *ekinetic);
 #if ((defined __CUDA) || (defined __ROCM))
-template class Ekinetic<OperatorPW<std::complex<float>, psi::DEVICE_GPU>>;
-template class Ekinetic<OperatorPW<std::complex<double>, psi::DEVICE_GPU>>;
-// template Ekinetic<OperatorPW<std::complex<double>, psi::DEVICE_CPU>>::Ekinetic(const Ekinetic<OperatorPW<std::complex<double>, psi::DEVICE_GPU>> *ekinetic);
-// template Ekinetic<OperatorPW<std::complex<double>, psi::DEVICE_GPU>>::Ekinetic(const Ekinetic<OperatorPW<std::complex<double>, psi::DEVICE_CPU>> *ekinetic);
-// template Ekinetic<OperatorPW<std::complex<double>, psi::DEVICE_GPU>>::Ekinetic(const Ekinetic<OperatorPW<std::complex<double>, psi::DEVICE_GPU>> *ekinetic);
+template class Ekinetic<OperatorPW<std::complex<float>, base_device::DEVICE_GPU>>;
+template class Ekinetic<OperatorPW<std::complex<double>, base_device::DEVICE_GPU>>;
+// template Ekinetic<OperatorPW<std::complex<double>, base_device::DEVICE_CPU>>::Ekinetic(const
+// Ekinetic<OperatorPW<std::complex<double>, base_device::DEVICE_GPU>> *ekinetic); template
+// Ekinetic<OperatorPW<std::complex<double>, base_device::DEVICE_GPU>>::Ekinetic(const
+// Ekinetic<OperatorPW<std::complex<double>, base_device::DEVICE_CPU>> *ekinetic); template
+// Ekinetic<OperatorPW<std::complex<double>, base_device::DEVICE_GPU>>::Ekinetic(const
+// Ekinetic<OperatorPW<std::complex<double>, base_device::DEVICE_GPU>> *ekinetic);
 #endif
 } // namespace hamilt
