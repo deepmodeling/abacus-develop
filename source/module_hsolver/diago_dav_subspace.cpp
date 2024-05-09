@@ -715,18 +715,18 @@ void Diago_DavSubspace<T, Device>::refresh(const int& dim,
         T* hcc_cpu = nullptr;
         T* scc_cpu = nullptr;
         T* vcc_cpu = nullptr;
-        psi::memory::resize_memory_op<T, base_device::DEVICE_CPU>()(this->cpu_ctx,
-                                                                    hcc_cpu,
-                                                                    this->nbase_x * this->nbase_x,
-                                                                    "DAV::hcc");
-        psi::memory::resize_memory_op<T, base_device::DEVICE_CPU>()(this->cpu_ctx,
-                                                                    scc_cpu,
-                                                                    this->nbase_x * this->nbase_x,
-                                                                    "DAV::scc");
-        psi::memory::resize_memory_op<T, base_device::DEVICE_CPU>()(this->cpu_ctx,
-                                                                    vcc_cpu,
-                                                                    this->nbase_x * this->nbase_x,
-                                                                    "DAV::vcc");
+        base_device::memory::resize_memory_op<T, base_device::DEVICE_CPU>()(this->cpu_ctx,
+                                                                            hcc_cpu,
+                                                                            this->nbase_x * this->nbase_x,
+                                                                            "DAV::hcc");
+        base_device::memory::resize_memory_op<T, base_device::DEVICE_CPU>()(this->cpu_ctx,
+                                                                            scc_cpu,
+                                                                            this->nbase_x * this->nbase_x,
+                                                                            "DAV::scc");
+        base_device::memory::resize_memory_op<T, base_device::DEVICE_CPU>()(this->cpu_ctx,
+                                                                            vcc_cpu,
+                                                                            this->nbase_x * this->nbase_x,
+                                                                            "DAV::vcc");
 
         syncmem_d2h_op()(this->cpu_ctx, this->ctx, hcc_cpu, hcc, this->nbase_x * this->nbase_x);
         syncmem_d2h_op()(this->cpu_ctx, this->ctx, scc_cpu, scc, this->nbase_x * this->nbase_x);
@@ -743,9 +743,9 @@ void Diago_DavSubspace<T, Device>::refresh(const int& dim,
         syncmem_h2d_op()(this->ctx, this->cpu_ctx, scc, scc_cpu, this->nbase_x * this->nbase_x);
         syncmem_h2d_op()(this->ctx, this->cpu_ctx, vcc, vcc_cpu, this->nbase_x * this->nbase_x);
 
-        psi::memory::delete_memory_op<T, base_device::DEVICE_CPU>()(this->cpu_ctx, hcc_cpu);
-        psi::memory::delete_memory_op<T, base_device::DEVICE_CPU>()(this->cpu_ctx, scc_cpu);
-        psi::memory::delete_memory_op<T, base_device::DEVICE_CPU>()(this->cpu_ctx, vcc_cpu);
+        base_device::memory::delete_memory_op<T, base_device::DEVICE_CPU>()(this->cpu_ctx, hcc_cpu);
+        base_device::memory::delete_memory_op<T, base_device::DEVICE_CPU>()(this->cpu_ctx, scc_cpu);
+        base_device::memory::delete_memory_op<T, base_device::DEVICE_CPU>()(this->cpu_ctx, vcc_cpu);
 #endif
     }
     else

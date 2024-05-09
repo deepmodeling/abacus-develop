@@ -87,10 +87,10 @@ class Nonlocal<OperatorPW<T, Device>> : public OperatorPW<T, Device>
     using gemv_op = hsolver::gemv_op<T, Device>;
     using gemm_op = hsolver::gemm_op<T, Device>;
     using nonlocal_op = nonlocal_pw_op<Real, Device>;
-    using setmem_complex_op = psi::memory::set_memory_op<T, Device>;
-    using resmem_complex_op = psi::memory::resize_memory_op<T, Device>;
-    using delmem_complex_op = psi::memory::delete_memory_op<T, Device>;
-    using syncmem_complex_h2d_op = psi::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>;
+    using setmem_complex_op = base_device::memory::set_memory_op<T, Device>;
+    using resmem_complex_op = base_device::memory::resize_memory_op<T, Device>;
+    using delmem_complex_op = base_device::memory::delete_memory_op<T, Device>;
+    using syncmem_complex_h2d_op = base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>;
 
     T one{1, 0};
     T zero{0, 0};

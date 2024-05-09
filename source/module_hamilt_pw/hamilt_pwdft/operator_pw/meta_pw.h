@@ -81,8 +81,8 @@ class Meta<OperatorPW<T, Device>> : public OperatorPW<T, Device>
     T *porter = nullptr;
     using meta_op = meta_pw_op<Real, Device>;
     using vector_mul_vector_op = hsolver::vector_mul_vector_op<T, Device>;
-    using resmem_complex_op = psi::memory::resize_memory_op<T, Device>;
-    using delmem_complex_op = psi::memory::delete_memory_op<T, Device>;
+    using resmem_complex_op = base_device::memory::resize_memory_op<T, Device>;
+    using delmem_complex_op = base_device::memory::delete_memory_op<T, Device>;
 };
 
 } // namespace hamilt

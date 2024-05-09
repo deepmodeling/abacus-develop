@@ -69,14 +69,14 @@ class ElecStatePW : public ElecState
     using meta_op = hamilt::meta_pw_op<Real, Device>;
     using elecstate_pw_op = elecstate::elecstate_pw_op<Real, Device>;
 
-    using setmem_var_op = psi::memory::set_memory_op<Real, Device>;
-    using resmem_var_op = psi::memory::resize_memory_op<Real, Device>;
-    using delmem_var_op = psi::memory::delete_memory_op<Real, Device>;
-    using castmem_var_d2h_op = psi::memory::cast_memory_op<double, Real, base_device::DEVICE_CPU, Device>;
+    using setmem_var_op = base_device::memory::set_memory_op<Real, Device>;
+    using resmem_var_op = base_device::memory::resize_memory_op<Real, Device>;
+    using delmem_var_op = base_device::memory::delete_memory_op<Real, Device>;
+    using castmem_var_d2h_op = base_device::memory::cast_memory_op<double, Real, base_device::DEVICE_CPU, Device>;
 
-    using setmem_complex_op = psi::memory::set_memory_op<T, Device>;
-    using resmem_complex_op = psi::memory::resize_memory_op<T, Device>;
-    using delmem_complex_op = psi::memory::delete_memory_op<T, Device>;
+    using setmem_complex_op = base_device::memory::set_memory_op<T, Device>;
+    using resmem_complex_op = base_device::memory::resize_memory_op<T, Device>;
+    using delmem_complex_op = base_device::memory::delete_memory_op<T, Device>;
 
     using gemv_op = hsolver::gemv_op<T, Device>;
     using gemm_op = hsolver::gemm_op<T, Device>;

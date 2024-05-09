@@ -40,7 +40,7 @@ template <typename T, typename Device> DiagoDavid<T, Device>::~DiagoDavid()
     delmem_complex_op()(this->ctx, this->scc);
     delmem_complex_op()(this->ctx, this->vcc);
     delmem_complex_op()(this->ctx, this->lagrange_matrix);
-    psi::memory::delete_memory_op<Real, base_device::DEVICE_CPU>()(this->cpu_ctx, this->eigenvalue);
+    base_device::memory::delete_memory_op<Real, base_device::DEVICE_CPU>()(this->cpu_ctx, this->eigenvalue);
     if (this->device == base_device::GpuDevice)
     {
         delmem_var_op()(this->ctx, this->d_precondition);
@@ -77,11 +77,14 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
     this->nbase_x = DiagoDavid::PW_DIAG_NDIM * this->n_band; // maximum dimension of the reduced basis set
 
     // the lowest N eigenvalues
-    psi::memory::resize_memory_op<Real, base_device::DEVICE_CPU>()(this->cpu_ctx,
-                                                                   this->eigenvalue,
-                                                                   this->nbase_x,
-                                                                   "DAV::eig");
-    psi::memory::set_memory_op<Real, base_device::DEVICE_CPU>()(this->cpu_ctx, this->eigenvalue, 0, this->nbase_x);
+    base_device::memory::resize_memory_op<Real, base_device::DEVICE_CPU>()(this->cpu_ctx,
+                                                                           this->eigenvalue,
+                                                                           this->nbase_x,
+                                                                           "DAV::eig");
+    base_device::memory::set_memory_op<Real, base_device::DEVICE_CPU>()(this->cpu_ctx,
+                                                                        this->eigenvalue,
+                                                                        0,
+                                                                        this->nbase_x);
 
     psi::Psi<T, Device> basis(1,
                                                  this->nbase_x,
@@ -786,18 +789,18 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
         T* hcc_cpu = nullptr;
         T* scc_cpu = nullptr;
         T* vcc_cpu = nullptr;
-        psi::memory::resize_memory_op<T, base_device::DEVICE_CPU>()(this->cpu_ctx,
-                                                                    hcc_cpu,
-                                                                    this->nbase_x * this->nbase_x,
-                                                                    "DAV::hcc");
-        psi::memory::resize_memory_op<T, base_device::DEVICE_CPU>()(this->cpu_ctx,
-                                                                    scc_cpu,
-                                                                    this->nbase_x * this->nbase_x,
-                                                                    "DAV::scc");
-        psi::memory::resize_memory_op<T, base_device::DEVICE_CPU>()(this->cpu_ctx,
-                                                                    vcc_cpu,
-                                                                    this->nbase_x * this->nbase_x,
-                                                                    "DAV::vcc");
+        base_device::memory::resize_memory_op<T, base_device::DEVICE_CPU>()(this->cpu_ctx,
+                                                                            hcc_cpu,
+                                                                            this->nbase_x * this->nbase_x,
+                                                                            "DAV::hcc");
+        base_device::memory::resize_memory_op<T, base_device::DEVICE_CPU>()(this->cpu_ctx,
+                                                                            scc_cpu,
+                                                                            this->nbase_x * this->nbase_x,
+                                                                            "DAV::scc");
+        base_device::memory::resize_memory_op<T, base_device::DEVICE_CPU>()(this->cpu_ctx,
+                                                                            vcc_cpu,
+                                                                            this->nbase_x * this->nbase_x,
+                                                                            "DAV::vcc");
 
         syncmem_d2h_op()(this->cpu_ctx, this->ctx, hcc_cpu, hcc, this->nbase_x * this->nbase_x);
         syncmem_d2h_op()(this->cpu_ctx, this->ctx, scc_cpu, scc, this->nbase_x * this->nbase_x);
@@ -814,9 +817,9 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
         syncmem_h2d_op()(this->ctx, this->cpu_ctx, scc, scc_cpu, this->nbase_x * this->nbase_x);
         syncmem_h2d_op()(this->ctx, this->cpu_ctx, vcc, vcc_cpu, this->nbase_x * this->nbase_x);
 
-        psi::memory::delete_memory_op<T, base_device::DEVICE_CPU>()(this->cpu_ctx, hcc_cpu);
-        psi::memory::delete_memory_op<T, base_device::DEVICE_CPU>()(this->cpu_ctx, scc_cpu);
-        psi::memory::delete_memory_op<T, base_device::DEVICE_CPU>()(this->cpu_ctx, vcc_cpu);
+        base_device::memory::delete_memory_op<T, base_device::DEVICE_CPU>()(this->cpu_ctx, hcc_cpu);
+        base_device::memory::delete_memory_op<T, base_device::DEVICE_CPU>()(this->cpu_ctx, scc_cpu);
+        base_device::memory::delete_memory_op<T, base_device::DEVICE_CPU>()(this->cpu_ctx, vcc_cpu);
 #endif
     }
     else

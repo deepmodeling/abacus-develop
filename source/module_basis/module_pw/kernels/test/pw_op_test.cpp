@@ -1,8 +1,10 @@
-#include <complex>
-#include <gtest/gtest.h>
-#include "module_psi/kernels/memory_op.h"
 #include "module_basis/module_pw/kernels/pw_op.h"
 
+#include "module_base/module_device/memory_op.h"
+#include "module_psi/kernels/memory_op.h"
+
+#include <complex>
+#include <gtest/gtest.h>
 
 class TestModulePWPWMultiDevice : public ::testing::Test
 {
@@ -32,24 +34,26 @@ class TestModulePWPWMultiDevice : public ::testing::Test
     using set_real_to_recip_output_cpu_op = ModulePW::set_real_to_recip_output_op<double, base_device::DEVICE_CPU>;
     using set_real_to_recip_output_gpu_op = ModulePW::set_real_to_recip_output_op<double, base_device::DEVICE_GPU>;
 
-    using resize_memory_complex_gpu_op = psi::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
-    using delete_memory_complex_gpu_op = psi::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
-    using synchronize_memory_complex_h2d_op
-        = psi::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
-    using synchronize_memory_complex_d2h_op
-        = psi::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
+    using resize_memory_complex_gpu_op
+        = base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
+    using delete_memory_complex_gpu_op
+        = base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
+    using synchronize_memory_complex_h2d_op = base_device::memory::
+        synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+    using synchronize_memory_complex_d2h_op = base_device::memory::
+        synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
 
-    using resize_memory_double_gpu_op = psi::memory::resize_memory_op<double, base_device::DEVICE_GPU>;
-    using delete_memory_double_gpu_op = psi::memory::delete_memory_op<double, base_device::DEVICE_GPU>;
+    using resize_memory_double_gpu_op = base_device::memory::resize_memory_op<double, base_device::DEVICE_GPU>;
+    using delete_memory_double_gpu_op = base_device::memory::delete_memory_op<double, base_device::DEVICE_GPU>;
     using synchronize_memory_double_h2d_op
-        = psi::memory::synchronize_memory_op<double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+        = base_device::memory::synchronize_memory_op<double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
     using synchronize_memory_double_d2h_op
-        = psi::memory::synchronize_memory_op<double, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
+        = base_device::memory::synchronize_memory_op<double, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
 
-    using delete_memory_int_gpu_op = psi::memory::delete_memory_op<int, base_device::DEVICE_GPU>;
-    using resize_memory_int_gpu_op = psi::memory::resize_memory_op<int, base_device::DEVICE_GPU>;
+    using delete_memory_int_gpu_op = base_device::memory::delete_memory_op<int, base_device::DEVICE_GPU>;
+    using resize_memory_int_gpu_op = base_device::memory::resize_memory_op<int, base_device::DEVICE_GPU>;
     using synchronize_memory_int_h2d_op
-        = psi::memory::synchronize_memory_op<int, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+        = base_device::memory::synchronize_memory_op<int, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
 
     void SetUp() override {
     }

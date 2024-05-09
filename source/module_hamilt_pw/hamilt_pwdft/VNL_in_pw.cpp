@@ -327,8 +327,8 @@ void pseudopot_cell_vnl::getvnl(const int& ik, ModuleBase::ComplexMatrix& vkb_in
 
     using Device = base_device::DEVICE_CPU;
     Device* ctx = {};
-    using resmem_complex_op = psi::memory::resize_memory_op<std::complex<double>, Device>;
-    using delmem_complex_op = psi::memory::delete_memory_op<std::complex<double>, Device>;
+    using resmem_complex_op = base_device::memory::resize_memory_op<std::complex<double>, Device>;
+    using delmem_complex_op = base_device::memory::delete_memory_op<std::complex<double>, Device>;
     std::complex<double>* sk = nullptr;
     resmem_complex_op()(ctx, sk, GlobalC::ucell.nat * npw, "VNL::sk");
     this->psf->get_sk(ctx, ik, this->wfcpw, sk);
@@ -408,16 +408,16 @@ void pseudopot_cell_vnl::getvnl(Device* ctx, const int& ik, std::complex<FPTYPE>
     ModuleBase::timer::tick("pp_cell_vnl", "getvnl");
 
     using cal_vnl_op = hamilt::cal_vnl_op<FPTYPE, Device>;
-    using resmem_int_op = psi::memory::resize_memory_op<int, Device>;
-    using delmem_int_op = psi::memory::delete_memory_op<int, Device>;
-    using syncmem_int_op = psi::memory::synchronize_memory_op<int, Device, base_device::DEVICE_CPU>;
-    using resmem_var_op = psi::memory::resize_memory_op<FPTYPE, Device>;
-    using delmem_var_op = psi::memory::delete_memory_op<FPTYPE, Device>;
-    using castmem_var_h2d_op = psi::memory::cast_memory_op<FPTYPE, double, Device, base_device::DEVICE_CPU>;
+    using resmem_int_op = base_device::memory::resize_memory_op<int, Device>;
+    using delmem_int_op = base_device::memory::delete_memory_op<int, Device>;
+    using syncmem_int_op = base_device::memory::synchronize_memory_op<int, Device, base_device::DEVICE_CPU>;
+    using resmem_var_op = base_device::memory::resize_memory_op<FPTYPE, Device>;
+    using delmem_var_op = base_device::memory::delete_memory_op<FPTYPE, Device>;
+    using castmem_var_h2d_op = base_device::memory::cast_memory_op<FPTYPE, double, Device, base_device::DEVICE_CPU>;
     using castmem_var_h2h_op
-        = psi::memory::cast_memory_op<FPTYPE, double, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
-    using resmem_complex_op = psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
-    using delmem_complex_op = psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
+        = base_device::memory::cast_memory_op<FPTYPE, double, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
+    using resmem_complex_op = base_device::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
+    using delmem_complex_op = base_device::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
 
     if (lmaxkb < 0)
     {
@@ -1031,7 +1031,7 @@ void pseudopot_cell_vnl::radial_fft_q(Device* ctx,
                                       const FPTYPE* ylm,
                                       std::complex<FPTYPE>* qg) const
 {
-    using setmem_complex_op = psi::memory::set_memory_op<std::complex<FPTYPE>, Device>;
+    using setmem_complex_op = base_device::memory::set_memory_op<std::complex<FPTYPE>, Device>;
 
     // computes the indices which correspond to ih,jh
     const int nb = indv(itype, ih);

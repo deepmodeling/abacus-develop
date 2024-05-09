@@ -1,5 +1,6 @@
 #include "module_base/blas_connector.h"
 #include "module_base/constants.h"
+#include "module_base/module_device/memory_op.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
 #include "module_psi/kernels/memory_op.h"
 
@@ -54,21 +55,21 @@ class TestModuleHsolverMathKernel : public ::testing::Test
     using zdot_real_cpu_op = hsolver::dot_real_op<std::complex<double>, base_device::DEVICE_CPU>;
     using zdot_real_gpu_op = hsolver::dot_real_op<std::complex<double>, base_device::DEVICE_GPU>;
 
-    using resize_memory_op = psi::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
-    using delete_memory_op = psi::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
+    using resize_memory_op = base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
+    using delete_memory_op = base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
     // from CPU to GPU
-    using synchronize_memory_op
-        = psi::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+    using synchronize_memory_op = base_device::memory::
+        synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
 
     // form GPU to CPU by haozhihan
-    using synchronize_memory_op_gpu
-        = psi::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
+    using synchronize_memory_op_gpu = base_device::memory::
+        synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
 
     // about double operator by haozhihan
-    using resize_memory_op_double = psi::memory::resize_memory_op<double, base_device::DEVICE_GPU>;
-    using delete_memory_op_double = psi::memory::delete_memory_op<double, base_device::DEVICE_GPU>;
+    using resize_memory_op_double = base_device::memory::resize_memory_op<double, base_device::DEVICE_GPU>;
+    using delete_memory_op_double = base_device::memory::delete_memory_op<double, base_device::DEVICE_GPU>;
     using synchronize_memory_op_double
-        = psi::memory::synchronize_memory_op<double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+        = base_device::memory::synchronize_memory_op<double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
 
     // haozhihan add
     // cpu operator
@@ -654,22 +655,22 @@ TEST_F(TestModuleHsolverMathKernel, matrixSetToAnother_op_gpu)
     int LDB = 4;
 
     std::complex<double>* device_A = nullptr;
-    psi::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(gpu_ctx, device_A, A.size());
-    psi::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
-        gpu_ctx,
-        cpu_ctx,
-        device_A,
-        A.data(),
-        A.size());
+    base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(gpu_ctx, device_A, A.size());
+    base_device::memory::
+        synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(gpu_ctx,
+                                                                                                        cpu_ctx,
+                                                                                                        device_A,
+                                                                                                        A.data(),
+                                                                                                        A.size());
 
     std::complex<double>* device_B = nullptr;
-    psi::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(gpu_ctx, device_B, B.size());
-    psi::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(
-        gpu_ctx,
-        cpu_ctx,
-        device_B,
-        B.data(),
-        B.size());
+    base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(gpu_ctx, device_B, B.size());
+    base_device::memory::
+        synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(gpu_ctx,
+                                                                                                        cpu_ctx,
+                                                                                                        device_B,
+                                                                                                        B.data(),
+                                                                                                        B.size());
 
     // run
     hsolver::matrixSetToAnother<std::complex<double>, base_device::DEVICE_GPU>()(gpu_ctx,
@@ -680,12 +681,13 @@ TEST_F(TestModuleHsolverMathKernel, matrixSetToAnother_op_gpu)
                                                                                  LDB);
 
     std::vector<std::complex<double>> B_gpu2cpu(8);
-    psi::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(
-        cpu_ctx,
-        gpu_ctx,
-        B_gpu2cpu.data(),
-        device_B,
-        B_gpu2cpu.size());
+    base_device::memory::synchronize_memory_op<std::complex<double>,
+                                               base_device::DEVICE_CPU,
+                                               base_device::DEVICE_GPU>()(cpu_ctx,
+                                                                          gpu_ctx,
+                                                                          B_gpu2cpu.data(),
+                                                                          device_B,
+                                                                          B_gpu2cpu.size());
 
     std::vector<std::complex<double>> B_cpu(8);
     hsolver::matrixSetToAnother<std::complex<double>, base_device::DEVICE_CPU>()(cpu_ctx,

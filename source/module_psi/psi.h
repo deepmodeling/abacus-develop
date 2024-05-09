@@ -1,8 +1,9 @@
 #ifndef PSI_H
 #define PSI_H
 
-#include "module_psi/kernels/memory_op.h"
+#include "module_base/module_device/memory_op.h"
 #include "module_base/module_device/types.h"
+#include "module_psi/kernels/memory_op.h"
 
 #include <tuple>
 
@@ -143,10 +144,10 @@ class Psi
 
     bool allocate_inside = true;  ///<whether allocate psi inside Psi class
 
-    using set_memory_op = psi::memory::set_memory_op<T, Device>;
-    using delete_memory_op = psi::memory::delete_memory_op<T, Device>;
-    using resize_memory_op = psi::memory::resize_memory_op<T, Device>;
-    using synchronize_memory_op = psi::memory::synchronize_memory_op<T, Device, Device>;
+    using set_memory_op = base_device::memory::set_memory_op<T, Device>;
+    using delete_memory_op = base_device::memory::delete_memory_op<T, Device>;
+    using resize_memory_op = base_device::memory::resize_memory_op<T, Device>;
+    using synchronize_memory_op = base_device::memory::synchronize_memory_op<T, Device, Device>;
 };
 
 } // end of namespace psi

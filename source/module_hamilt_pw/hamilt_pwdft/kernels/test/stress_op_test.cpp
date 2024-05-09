@@ -1,8 +1,11 @@
-#include <vector>
+#include "module_hamilt_pw/hamilt_pwdft/kernels/stress_op.h"
+
+#include "module_base/module_device/memory_op.h"
+#include "module_psi/kernels/memory_op.h"
+
 #include <complex>
 #include <gtest/gtest.h>
-#include "module_psi/kernels/memory_op.h"
-#include "module_hamilt_pw/hamilt_pwdft/kernels/stress_op.h"
+#include <vector>
 
 TEST(TestSrcPWStressMultiDevice, cal_dbecp_noevc_nl_op_cpu)
 {
@@ -251,10 +254,10 @@ TEST(TestSrcPWStressMultiDevice, cal_stress_nl_op_gpu)
     syncmem_d2d_h2d_op()(gpu_ctx, cpu_ctx, d_ekb, ekb.data(), ekb.size());
     syncmem_d2d_h2d_op()(gpu_ctx, cpu_ctx, d_qq_nt, qq_nt.data(), qq_nt.size());
 
-    using delmem_int_op = psi::memory::delete_memory_op<int, base_device::DEVICE_GPU>;
-    using resmem_int_op = psi::memory::resize_memory_op<int, base_device::DEVICE_GPU>;
+    using delmem_int_op = base_device::memory::delete_memory_op<int, base_device::DEVICE_GPU>;
+    using resmem_int_op = base_device::memory::resize_memory_op<int, base_device::DEVICE_GPU>;
     using syncmem_int_h2d_op
-        = psi::memory::synchronize_memory_op<int, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+        = base_device::memory::synchronize_memory_op<int, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
 
     resmem_int_op()(gpu_ctx, d_atom_nh, atom_nh.size());
     resmem_int_op()(gpu_ctx, d_atom_na, atom_na.size());

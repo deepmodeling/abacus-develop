@@ -87,10 +87,10 @@ class HSolverPW : public HSolver<T, Device>
     hamilt::Hamilt<T, Device>* hamilt_ = nullptr;
 
     Device * ctx = {};
-    using resmem_var_op = psi::memory::resize_memory_op<Real, base_device::DEVICE_CPU>;
-    using delmem_var_op = psi::memory::delete_memory_op<Real, base_device::DEVICE_CPU>;
+    using resmem_var_op = base_device::memory::resize_memory_op<Real, base_device::DEVICE_CPU>;
+    using delmem_var_op = base_device::memory::delete_memory_op<Real, base_device::DEVICE_CPU>;
     using castmem_2d_2h_op
-        = psi::memory::cast_memory_op<double, Real, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
+        = base_device::memory::cast_memory_op<double, Real, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
 };
 
 template <typename T, typename Device>

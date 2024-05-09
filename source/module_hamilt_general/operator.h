@@ -102,8 +102,7 @@ protected:
     T* get_hpsi(const hpsi_info& info)const;
 
     Device *ctx = {};
-    using set_memory_op = psi::memory::set_memory_op<T, Device>;
-
+    using set_memory_op = base_device::memory::set_memory_op<T, Device>;
 };
 
 }//end namespace hamilt

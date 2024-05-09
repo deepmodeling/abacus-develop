@@ -739,7 +739,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::P
         }
         else
         {
-            psi::memory::synchronize_memory_op<T, Device, Device>()(
+            base_device::memory::synchronize_memory_op<T, Device, Device>()(
                 this->ctx,
                 this->ctx,
                 spsi_out.data<T>(),

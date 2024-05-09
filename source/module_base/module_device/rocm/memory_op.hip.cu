@@ -1,4 +1,4 @@
-#include "../memory_op.h"
+#include "module_base/module_device/memory_op.h"
 
 #include <base/macros/macros.h>
 #include <hip/hip_runtime.h>

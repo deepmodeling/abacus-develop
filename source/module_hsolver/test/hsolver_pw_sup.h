@@ -168,7 +168,7 @@ template <typename T, typename Device> DiagoDavid<T, Device>::~DiagoDavid()
     delmem_complex_op()(this->ctx, this->scc);
     delmem_complex_op()(this->ctx, this->vcc);
     delmem_complex_op()(this->ctx, this->lagrange_matrix);
-    psi::memory::delete_memory_op<Real, base_device::DEVICE_CPU>()(this->cpu_ctx, this->eigenvalue);
+    base_device::memory::delete_memory_op<Real, base_device::DEVICE_CPU>()(this->cpu_ctx, this->eigenvalue);
     if (this->device == base_device::GpuDevice)
     {
         delmem_var_op()(this->ctx, this->d_precondition);

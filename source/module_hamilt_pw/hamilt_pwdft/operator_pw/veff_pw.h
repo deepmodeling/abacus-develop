@@ -70,9 +70,8 @@ class Veff<OperatorPW<T, Device>> : public OperatorPW<T, Device>
     base_device::AbacusDevice_t device = {};
     using veff_op = veff_pw_op<Real, Device>;
 
-
-    using resmem_complex_op = psi::memory::resize_memory_op<T, Device>;
-    using delmem_complex_op = psi::memory::delete_memory_op<T, Device>;
+    using resmem_complex_op = base_device::memory::resize_memory_op<T, Device>;
+    using delmem_complex_op = base_device::memory::delete_memory_op<T, Device>;
 };
 
 } // namespace hamilt

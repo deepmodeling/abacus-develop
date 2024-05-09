@@ -1,13 +1,13 @@
+#include "module_base/module_device/memory_op.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
-#include "module_psi/psi.h"
 #include "module_psi/kernels/memory_op.h"
+#include "module_psi/psi.h"
 
-#include <thrust/complex.h>
-#include <thrust/inner_product.h>
-#include <thrust/execution_policy.h>
 #include <base/macros/macros.h>
-
 #include <cuda_runtime.h>
+#include <thrust/complex.h>
+#include <thrust/execution_policy.h>
+#include <thrust/inner_product.h>
 
 #define WARP_SIZE 32
 #define FULL_MASK 0xffffffff
@@ -870,7 +870,7 @@ void matrixTranspose_op<double, base_device::DEVICE_GPU>::operator()(const base_
                                                                      double* output_matrix)
 {
     double* device_temp = nullptr;
-    psi::memory::resize_memory_op<double, base_device::DEVICE_GPU>()(d, device_temp, row * col);
+    base_device::memory::resize_memory_op<double, base_device::DEVICE_GPU>()(d, device_temp, row * col);
 
     if (row == col)
     {
@@ -889,13 +889,14 @@ void matrixTranspose_op<double, base_device::DEVICE_GPU>::operator()(const base_
         cudaErrcheck(cudaDeviceSynchronize());
     }
 
-    psi::memory::synchronize_memory_op<double, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(d,
-                                                                                                   d,
-                                                                                                   output_matrix,
-                                                                                                   device_temp,
-                                                                                                   row * col);
+    base_device::memory::synchronize_memory_op<double, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(
+        d,
+        d,
+        output_matrix,
+        device_temp,
+        row * col);
 
-    psi::memory::delete_memory_op<double, base_device::DEVICE_GPU>()(d, device_temp);
+    base_device::memory::delete_memory_op<double, base_device::DEVICE_GPU>()(d, device_temp);
 }
 
 template <>
@@ -907,7 +908,7 @@ void matrixTranspose_op<std::complex<float>, base_device::DEVICE_GPU>::operator(
     std::complex<float>* output_matrix)
 {
     std::complex<float>* device_temp = nullptr;
-    psi::memory::resize_memory_op<std::complex<float>, base_device::DEVICE_GPU>()(d, device_temp, row * col);
+    base_device::memory::resize_memory_op<std::complex<float>, base_device::DEVICE_GPU>()(d, device_temp, row * col);
 
     if (row == col)
     {
@@ -930,14 +931,14 @@ void matrixTranspose_op<std::complex<float>, base_device::DEVICE_GPU>::operator(
         cudaErrcheck(cudaDeviceSynchronize());
     }
 
-    psi::memory::synchronize_memory_op<std::complex<float>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(
+    base_device::memory::synchronize_memory_op<std::complex<float>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(
         d,
         d,
         output_matrix,
         device_temp,
         row * col);
 
-    psi::memory::delete_memory_op<std::complex<float>, base_device::DEVICE_GPU>()(d, device_temp);
+    base_device::memory::delete_memory_op<std::complex<float>, base_device::DEVICE_GPU>()(d, device_temp);
 
     cudaErrcheck(cudaGetLastError());
     cudaErrcheck(cudaDeviceSynchronize());
@@ -953,7 +954,7 @@ void matrixTranspose_op<std::complex<double>, base_device::DEVICE_GPU>::operator
     std::complex<double>* output_matrix)
 {
     std::complex<double>* device_temp = nullptr;
-    psi::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(d, device_temp, row * col);
+    base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(d, device_temp, row * col);
 
     if (row == col)
     {
@@ -974,14 +975,11 @@ void matrixTranspose_op<std::complex<double>, base_device::DEVICE_GPU>::operator
         cudaErrcheck(cudaDeviceSynchronize());
     }
 
-    psi::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(
-        d,
-        d,
-        output_matrix,
-        device_temp,
-        row * col);
+    base_device::memory::synchronize_memory_op<std::complex<double>,
+                                               base_device::DEVICE_GPU,
+                                               base_device::DEVICE_GPU>()(d, d, output_matrix, device_temp, row * col);
 
-    psi::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(d, device_temp);
+    base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(d, device_temp);
 }
 
 template <>

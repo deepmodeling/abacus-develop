@@ -212,27 +212,27 @@ class Stress_Func
     using cal_stress_nl_op = hamilt::cal_stress_nl_op<FPTYPE, Device>;
     using cal_dbecp_noevc_nl_op = hamilt::cal_dbecp_noevc_nl_op<FPTYPE, Device>;
 
-    using resmem_complex_op = psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
-    using resmem_complex_h_op = psi::memory::resize_memory_op<std::complex<FPTYPE>, base_device::DEVICE_CPU>;
-    using setmem_complex_op = psi::memory::set_memory_op<std::complex<FPTYPE>, Device>;
-    using delmem_complex_op = psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
-    using delmem_complex_h_op = psi::memory::delete_memory_op<std::complex<FPTYPE>, base_device::DEVICE_CPU>;
+    using resmem_complex_op = base_device::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
+    using resmem_complex_h_op = base_device::memory::resize_memory_op<std::complex<FPTYPE>, base_device::DEVICE_CPU>;
+    using setmem_complex_op = base_device::memory::set_memory_op<std::complex<FPTYPE>, Device>;
+    using delmem_complex_op = base_device::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
+    using delmem_complex_h_op = base_device::memory::delete_memory_op<std::complex<FPTYPE>, base_device::DEVICE_CPU>;
     using syncmem_complex_h2d_op
-        = psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, base_device::DEVICE_CPU>;
+        = base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, base_device::DEVICE_CPU>;
     using syncmem_complex_d2h_op
-        = psi::memory::synchronize_memory_op<std::complex<FPTYPE>, base_device::DEVICE_CPU, Device>;
+        = base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, base_device::DEVICE_CPU, Device>;
 
-    using resmem_var_op = psi::memory::resize_memory_op<FPTYPE, Device>;
-    using resmem_var_h_op = psi::memory::resize_memory_op<FPTYPE, base_device::DEVICE_CPU>;
-    using setmem_var_op = psi::memory::set_memory_op<FPTYPE, Device>;
-    using delmem_var_op = psi::memory::delete_memory_op<FPTYPE, Device>;
-    using delmem_var_h_op = psi::memory::delete_memory_op<FPTYPE, base_device::DEVICE_CPU>;
-    using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<FPTYPE, Device, base_device::DEVICE_CPU>;
-    using syncmem_var_d2h_op = psi::memory::synchronize_memory_op<FPTYPE, base_device::DEVICE_CPU, Device>;
+    using resmem_var_op = base_device::memory::resize_memory_op<FPTYPE, Device>;
+    using resmem_var_h_op = base_device::memory::resize_memory_op<FPTYPE, base_device::DEVICE_CPU>;
+    using setmem_var_op = base_device::memory::set_memory_op<FPTYPE, Device>;
+    using delmem_var_op = base_device::memory::delete_memory_op<FPTYPE, Device>;
+    using delmem_var_h_op = base_device::memory::delete_memory_op<FPTYPE, base_device::DEVICE_CPU>;
+    using syncmem_var_h2d_op = base_device::memory::synchronize_memory_op<FPTYPE, Device, base_device::DEVICE_CPU>;
+    using syncmem_var_d2h_op = base_device::memory::synchronize_memory_op<FPTYPE, base_device::DEVICE_CPU, Device>;
 
-    using resmem_int_op = psi::memory::resize_memory_op<int, Device>;
-    using delmem_int_op = psi::memory::delete_memory_op<int, Device>;
-    using syncmem_int_h2d_op = psi::memory::synchronize_memory_op<int, Device, base_device::DEVICE_CPU>;
+    using resmem_int_op = base_device::memory::resize_memory_op<int, Device>;
+    using delmem_int_op = base_device::memory::delete_memory_op<int, Device>;
+    using syncmem_int_h2d_op = base_device::memory::synchronize_memory_op<int, Device, base_device::DEVICE_CPU>;
 };
 
 #endif

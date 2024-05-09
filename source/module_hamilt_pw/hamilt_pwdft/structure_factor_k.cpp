@@ -53,13 +53,13 @@ void Structure_Factor::get_sk(Device* ctx,
     base_device::DEVICE_CPU* cpu_ctx = {};
     base_device::AbacusDevice_t device = base_device::get_device_type<Device>(ctx);
     using cal_sk_op = hamilt::cal_sk_op<FPTYPE, Device>;
-    using resmem_int_op = psi::memory::resize_memory_op<int, Device>;
-    using delmem_int_op = psi::memory::delete_memory_op<int, Device>;
-    using syncmem_int_op = psi::memory::synchronize_memory_op<int, Device, base_device::DEVICE_CPU>;
+    using resmem_int_op = base_device::memory::resize_memory_op<int, Device>;
+    using delmem_int_op = base_device::memory::delete_memory_op<int, Device>;
+    using syncmem_int_op = base_device::memory::synchronize_memory_op<int, Device, base_device::DEVICE_CPU>;
 
-    using resmem_var_op = psi::memory::resize_memory_op<FPTYPE, Device>;
-    using delmem_var_op = psi::memory::delete_memory_op<FPTYPE, Device>;
-    using syncmem_var_op = psi::memory::synchronize_memory_op<FPTYPE, Device, base_device::DEVICE_CPU>;
+    using resmem_var_op = base_device::memory::resize_memory_op<FPTYPE, Device>;
+    using delmem_var_op = base_device::memory::delete_memory_op<FPTYPE, Device>;
+    using syncmem_var_op = base_device::memory::synchronize_memory_op<FPTYPE, Device, base_device::DEVICE_CPU>;
 
     int iat = 0, _npw = wfc_basis->npwk[ik], eigts1_nc = this->eigts1.nc, eigts2_nc = this->eigts2.nc,
             eigts3_nc = this->eigts3.nc;

@@ -138,7 +138,7 @@ template <typename T, typename Device> Psi<T, Device>::Psi(const Psi& psi_in)
     // this function will copy psi_in.psi to this->psi no matter the device types of each other.
     this->device = base_device::get_device_type<Device>(this->ctx);
     this->resize(psi_in.get_nk(), psi_in.get_nbands(), psi_in.get_nbasis());
-    memory::synchronize_memory_op<T, Device, Device>()(this->ctx,
+    base_device::memory::synchronize_memory_op<T, Device, Device>()(this->ctx,
                                                        psi_in.get_device(),
                                                        this->psi,
                                                        psi_in.get_pointer() - psi_in.get_psi_bias(),
@@ -163,7 +163,7 @@ Psi<T, Device>::Psi(const Psi<T_in, Device_in>& psi_in)
     // this function will copy psi_in.psi to this->psi no matter the device types of each other.
     this->device = base_device::get_device_type<Device>(this->ctx);
     this->resize(psi_in.get_nk(), psi_in.get_nbands(), psi_in.get_nbasis());
-    memory::cast_memory_op<T, T_in, Device, Device_in>()(this->ctx,
+    base_device::memory::cast_memory_op<T, T_in, Device, Device_in>()(this->ctx,
                                                          psi_in.get_device(),
                                                          this->psi,
                                                          psi_in.get_pointer() - psi_in.get_psi_bias(),

@@ -38,7 +38,7 @@ Operator<T, Device>::~Operator()
 template<typename T, typename Device>
 typename Operator<T, Device>::hpsi_info Operator<T, Device>::hPsi(hpsi_info& input) const
 {
-    using syncmem_op = psi::memory::synchronize_memory_op<T, Device, Device>;
+    using syncmem_op = base_device::memory::synchronize_memory_op<T, Device, Device>;
     auto psi_input = std::get<0>(input);
     std::tuple<const T*, int> psi_info = psi_input->to_range(std::get<1>(input));
     int nbands = std::get<1>(psi_info);

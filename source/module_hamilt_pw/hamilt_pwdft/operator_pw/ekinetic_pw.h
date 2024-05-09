@@ -63,9 +63,9 @@ class Ekinetic<OperatorPW<T, Device>> : public OperatorPW<T, Device>
     base_device::AbacusDevice_t device = {};
 
     using ekinetic_op = ekinetic_pw_op<Real, Device>;
-    using resmem_var_op = psi::memory::resize_memory_op<Real, Device>;
-    using delmem_var_op = psi::memory::delete_memory_op<Real, Device>;
-    using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<Real, Device, base_device::DEVICE_CPU>;
+    using resmem_var_op = base_device::memory::resize_memory_op<Real, Device>;
+    using delmem_var_op = base_device::memory::delete_memory_op<Real, Device>;
+    using syncmem_var_h2d_op = base_device::memory::synchronize_memory_op<Real, Device, base_device::DEVICE_CPU>;
 };
 
 } // namespace hamilt

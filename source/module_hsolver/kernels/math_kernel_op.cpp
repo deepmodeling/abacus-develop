@@ -291,7 +291,7 @@ struct matrixTranspose_op<T, base_device::DEVICE_CPU>
                     T* output_matrix)
     {
         T* temp = nullptr;
-        psi::memory::resize_memory_op<T, base_device::DEVICE_CPU>()(d, temp, row * col, "MTransOp");
+        base_device::memory::resize_memory_op<T, base_device::DEVICE_CPU>()(d, temp, row * col, "MTransOp");
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 8192 / sizeof(T))
 #endif
@@ -309,7 +309,7 @@ struct matrixTranspose_op<T, base_device::DEVICE_CPU>
         {
             output_matrix[i] = temp[i];
         }
-        psi::memory::delete_memory_op<T, base_device::DEVICE_CPU>()(d, temp);
+        base_device::memory::delete_memory_op<T, base_device::DEVICE_CPU>()(d, temp);
     }
 };
 
