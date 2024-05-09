@@ -184,7 +184,7 @@ int get_device_kpar(const int& kpar)
     }
     // GlobalV::KPAR = temp_nproc;
     // band the CPU processor to the devices
-    int node_rank = device::device::get_node_rank();
+    int node_rank = base_device::information::get_node_rank();
 
     int device_num = -1;
 #if defined(__CUDA)
@@ -247,13 +247,12 @@ std::string get_device_info(std::string device_flag)
     return device_info;
 }
 
-/*
+
 #if defined(__CUDA)
 
 static bool is_init = false;
-
 template <>
-void print_device_info<GPU>(const GPU* ctx, std::ofstream& ofs_device)
+void print_device_info<base_device::DEVICE_GPU>(const base_device::DEVICE_GPU* ctx, std::ofstream& ofs_device)
 {
     if (is_init)
     {
@@ -337,7 +336,7 @@ void print_device_info<GPU>(const GPU* ctx, std::ofstream& ofs_device)
     ofs_device << msg << std::endl;
     sprintf(msg, "  Total number of registers available per block: %d\n", deviceProp.regsPerBlock);
     ofs_device << msg << std::endl;
-    sprintf(msg, "  Warp size:                                     %d\n", deviceProp.wardeviceze);
+    sprintf(msg, "  Warp size:                                     %d\n", deviceProp.warpSize);
     ofs_device << msg << std::endl;
     sprintf(msg, "  Maximum number of threads per multiprocessor:  %d\n", deviceProp.maxThreadsPerMultiProcessor);
     ofs_device << msg << std::endl;
@@ -488,7 +487,7 @@ void print_device_info<GPU>(const GPU* ctx, std::ofstream& ofs_device)
 }
 
 template <>
-void record_device_memory<GPU>(const GPU* ctx, std::ofstream& ofs_device, std::string str, size_t size)
+void record_device_memory<base_device::DEVICE_GPU>(const base_device::DEVICE_GPU* ctx, std::ofstream& ofs_device, std::string str, size_t size)
 {
     ofs_device << "Allocate " << static_cast<double>(size) / 8 / 1024 / 1024 << " \tMB device memory\t"
                << "from " << str << std::endl
@@ -498,9 +497,8 @@ void record_device_memory<GPU>(const GPU* ctx, std::ofstream& ofs_device, std::s
 #elif defined(__ROCM)
 
 static bool is_init = false;
-
 template <>
-void print_device_info<GPU>(const GPU* ctx, std::ofstream& ofs_device)
+void print_device_info<base_device::DEVICE_GPU>(const base_device::DEVICE_GPU* ctx, std::ofstream& ofs_device)
 {
     if (is_init)
     {
@@ -707,15 +705,15 @@ void print_device_info<GPU>(const GPU* ctx, std::ofstream& ofs_device)
 }
 
 template <>
-void record_device_memory<GPU>(const GPU* ctx, std::ofstream& ofs_device, std::string str, size_t size)
+void record_device_memory<base_device::DEVICE_GPU>(const base_device::DEVICE_GPU* ctx, std::ofstream& ofs_device, std::string str, size_t size)
 {
     ofs_device << "Allocate " << static_cast<double>(size) / 8 / 1024 / 1024 << " \tMB device memory\t"
                << "from " << str << std::endl
                << std::endl;
 }
+
 #endif
 
-*/
 
 } // end of namespace information
-} // end of namespace device
+} // end of namespace base_device

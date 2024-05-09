@@ -51,11 +51,11 @@ int get_node_rank();
 int stringCmp(const void* a, const void* b);
 #endif
 
-// template <typename Device>
-// void print_device_info(const Device* dev, std::ofstream& ofs_device);
+template <typename Device>
+void print_device_info(const Device* dev, std::ofstream& ofs_device) {return;}
 
-// template <typename Device>
-// void record_device_memory(const Device* dev, std::ofstream& ofs_device, std::string str, size_t size);
+template <typename Device>
+void record_device_memory(const Device* dev, std::ofstream& ofs_device, std::string str, size_t size) {return;}
 
 } // end of namespace information
 } // end of namespace base_device

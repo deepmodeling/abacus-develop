@@ -1,5 +1,6 @@
 #include <module_hamilt_general/module_xc/kernels/xc_functional_op.h>
-#include <module_psi/kernels/device.h>
+// #include <module_psi/kernels/device.h>
+#include "module_base/module_device/types.h"
 #include <thrust/complex.h>
 #include <base/macros/macros.h>
 

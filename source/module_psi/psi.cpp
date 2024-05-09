@@ -2,7 +2,6 @@
 
 #include "module_base/global_variable.h"
 #include "module_base/tool_quit.h"
-#include "module_psi/kernels/device.h"
 #include "module_base/module_device/device.h"
 
 #include <cassert>
@@ -55,8 +54,8 @@ template <typename T, typename Device> Psi<T, Device>::Psi(const int nk_in, cons
     this->device = base_device::get_device_type<Device>(this->ctx);
     this->resize(nk_in, nbd_in, nbs_in);
     // Currently only GPU's implementation is supported for device recording!
-    device::print_device_info<Device>(this->ctx, GlobalV::ofs_device);
-    device::record_device_memory<Device>(this->ctx,
+    base_device::information::print_device_info<Device>(this->ctx, GlobalV::ofs_device);
+    base_device::information::record_device_memory<Device>(this->ctx,
                                          GlobalV::ofs_device,
                                          "Psi->resize()",
                                          sizeof(T) * nk_in * nbd_in * nbs_in);
@@ -77,7 +76,7 @@ template <typename T, typename Device> Psi<T, Device>::Psi(T* psi_pointer, const
     this->psi_current = this->psi = psi_pointer;
     this->allocate_inside = false;
     // Currently only GPU's implementation is supported for device recording!
-    device::print_device_info<Device>(this->ctx, GlobalV::ofs_device);
+    base_device::information::print_device_info<Device>(this->ctx, GlobalV::ofs_device);
 }
 
 template <typename T, typename Device> Psi<T, Device>::Psi(const Psi& psi_in, const int nk_in, int nband_in)

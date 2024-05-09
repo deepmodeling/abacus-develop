@@ -2,7 +2,6 @@
 #include <iostream>
 #include <cstring>
 #include "module_base/module_device/types.h"
-#include "module_psi/kernels/device.h"
 #include "module_base/tool_quit.h"
 
 #include <base/macros/macros.h>

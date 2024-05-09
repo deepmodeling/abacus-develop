@@ -34,7 +34,7 @@ list(APPEND device_srcs
   module_elecstate/kernels/elecstate_op.cpp
 
   module_psi/kernels/psi_memory_op.cpp
-  module_psi/kernels/device.cpp
+  # module_psi/kernels/device.cpp
 
   module_base/module_device/device.cpp
   module_base/module_device/memory_op.cpp

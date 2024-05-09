@@ -93,6 +93,60 @@ struct delete_memory_op
     /// \param arr : the input array
     void operator()(const Device* dev, FPTYPE* arr);
 };
+
+
+#if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
+// Partially specialize operator for base_device::GpuDevice.
+template <typename FPTYPE>
+struct resize_memory_op<FPTYPE, base_device::DEVICE_GPU>
+{
+    void operator()(const base_device::DEVICE_GPU* dev,
+                    FPTYPE*& arr,
+                    const size_t size,
+                    const char* record_in = nullptr);
+};
+
+template <typename FPTYPE>
+struct set_memory_op<FPTYPE, base_device::DEVICE_GPU>
+{
+    void operator()(const base_device::DEVICE_GPU* dev, FPTYPE* arr, const int var, const size_t size);
+};
+
+template <typename FPTYPE>
+struct synchronize_memory_op<FPTYPE, base_device::DEVICE_CPU, base_device::DEVICE_GPU>
+{
+    void operator()(const base_device::DEVICE_CPU* dev_out,
+                    const base_device::DEVICE_GPU* dev_in,
+                    FPTYPE* arr_out,
+                    const FPTYPE* arr_in,
+                    const size_t size);
+};
+template <typename FPTYPE>
+struct synchronize_memory_op<FPTYPE, base_device::DEVICE_GPU, base_device::DEVICE_CPU>
+{
+    void operator()(const base_device::DEVICE_GPU* dev_out,
+                    const base_device::DEVICE_CPU* dev_in,
+                    FPTYPE* arr_out,
+                    const FPTYPE* arr_in,
+                    const size_t size);
+};
+template <typename FPTYPE>
+struct synchronize_memory_op<FPTYPE, base_device::DEVICE_GPU, base_device::DEVICE_GPU>
+{
+    void operator()(const base_device::DEVICE_GPU* dev_out,
+                    const base_device::DEVICE_GPU* dev_in,
+                    FPTYPE* arr_out,
+                    const FPTYPE* arr_in,
+                    const size_t size);
+};
+
+template <typename FPTYPE>
+struct delete_memory_op<FPTYPE, base_device::DEVICE_GPU>
+{
+    void operator()(const base_device::DEVICE_GPU* dev, FPTYPE* arr);
+};
+#endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
+
 } // end of namespace memory
 } // end of namespace base_device
 
