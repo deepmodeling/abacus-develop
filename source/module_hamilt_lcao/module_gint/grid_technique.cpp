@@ -860,52 +860,52 @@ void Grid_Technique::init_gpu_gint_variables()
 
     checkCudaErrors(cudaMallocHost((void**)&lda_info_global,
                                    atom_pair_nbz * nstreams * sizeof(int)));
-    checkCudaErrors(cudaMalloc((void**)&lda_info_global_g,
+    checkCudaErrors(cudaMalloc((void**)&lda_info_gbl_g,
                                atom_pair_nbz * nstreams * sizeof(int)));
 
     checkCudaErrors(cudaMallocHost((void**)&ldb_info_global,
                                    atom_pair_nbz * nstreams * sizeof(int)));
-    checkCudaErrors(cudaMalloc((void**)&ldb_info_global_g,
+    checkCudaErrors(cudaMalloc((void**)&ldb_info_gbl_g,
                                atom_pair_nbz * nstreams * sizeof(int)));
 
     checkCudaErrors(cudaMallocHost((void**)&ldc_info_global,
                                    atom_pair_nbz * nstreams * sizeof(int)));
-    checkCudaErrors(cudaMalloc((void**)&ldc_info_global_g,
+    checkCudaErrors(cudaMalloc((void**)&ldc_info_gbl_g,
                                atom_pair_nbz * nstreams * sizeof(int)));
 
-    checkCudaErrors(cudaMallocHost((void**)&ap_left_glo,
+    checkCudaErrors(cudaMallocHost((void**)&ap_left_gbl,
                                    atom_pair_nbz * nstreams * sizeof(double*)));
-    checkCudaErrors(cudaMallocHost((void**)&ap_right_glo,
+    checkCudaErrors(cudaMallocHost((void**)&ap_right_gbl,
                                    atom_pair_nbz * nstreams * sizeof(double*)));
-    checkCudaErrors(cudaMallocHost((void**)&ap_output_glo,
+    checkCudaErrors(cudaMallocHost((void**)&ap_output_gbl,
                                    atom_pair_nbz * nstreams * sizeof(double*)));
 
-    checkCudaErrors(cudaMalloc((void**)&ap_left_glo_g,
+    checkCudaErrors(cudaMalloc((void**)&ap_left_gbl_g,
                                atom_pair_nbz * nstreams * sizeof(double*)));
-    checkCudaErrors(cudaMalloc((void**)&ap_right_glo_g,
+    checkCudaErrors(cudaMalloc((void**)&ap_right_gbl_g,
                                atom_pair_nbz * nstreams * sizeof(double*)));
 
-    checkCudaErrors(cudaMalloc((void**)&ap_output_glo_g,
+    checkCudaErrors(cudaMalloc((void**)&ap_output_gbl_g,
                                atom_pair_nbz * nstreams * sizeof(double*)));
 
     psi_size_max = max_atom * bxyz * nbzp;
     psi_size_max_z = max_atom * bxyz;
 
     checkCudaErrors(
-        cudaMallocHost((void**)&psi_dou_glo,
+        cudaMallocHost((void**)&psi_dbl_gbl,
                        psi_size_max * nstreams * 5 * sizeof(double)));
-    checkCudaErrors(cudaMalloc((void**)&psi_dou_glo_g,
+    checkCudaErrors(cudaMalloc((void**)&psi_dbl_gbl_g,
                                psi_size_max * nstreams * 5 * sizeof(double)));
 
-    checkCudaErrors(cudaMallocHost((void**)&psi_int_glo,
+    checkCudaErrors(cudaMallocHost((void**)&psi_int_gbl,
                                    psi_size_max * nstreams * 2 * sizeof(int)));
-    checkCudaErrors(cudaMalloc((void**)&psi_int_glo_g,
+    checkCudaErrors(cudaMalloc((void**)&psi_int_gbl_g,
                                psi_size_max * nstreams * 2 * sizeof(int)));
 
     checkCudaErrors(
-        cudaMallocHost((void**)&num_psir_glo, nbzp * nstreams * sizeof(int)));
+        cudaMallocHost((void**)&num_psir_gbl, nbzp * nstreams * sizeof(int)));
     checkCudaErrors(
-        cudaMalloc((void**)&num_psir_glo_g, nbzp * nstreams * sizeof(int)));
+        cudaMalloc((void**)&num_psir_gbl_g, nbzp * nstreams * sizeof(int)));
 
     num_mcell = nbzp * bxyz;
     checkCudaErrors(cudaMalloc((void**)&rho_g, this->ncxyz * sizeof(double)));
@@ -958,13 +958,13 @@ void Grid_Technique::free_gpu_gint_variables()
     checkCudaErrors(cudaFree(atom_nw_g));
     checkCudaErrors(cudaFree(atom_l_g));
 
-    checkCudaErrors(cudaFreeHost(psi_dou_glo));
-    checkCudaErrors(cudaFreeHost(psi_int_glo));
-    checkCudaErrors(cudaFreeHost(num_psir_glo));
+    checkCudaErrors(cudaFreeHost(psi_dbl_gbl));
+    checkCudaErrors(cudaFreeHost(psi_int_gbl));
+    checkCudaErrors(cudaFreeHost(num_psir_gbl));
 
-    checkCudaErrors(cudaFree(psi_dou_glo_g));
-    checkCudaErrors(cudaFree(psi_int_glo_g));
-    checkCudaErrors(cudaFree(num_psir_glo_g));
+    checkCudaErrors(cudaFree(psi_dbl_gbl_g));
+    checkCudaErrors(cudaFree(psi_int_gbl_g));
+    checkCudaErrors(cudaFree(num_psir_gbl_g));
     checkCudaErrors(cudaFree(left_global_g));
     checkCudaErrors(cudaFree(right_global_g));
 
@@ -981,19 +981,19 @@ void Grid_Technique::free_gpu_gint_variables()
     checkCudaErrors(cudaFree(k_info_global_g));
 
     checkCudaErrors(cudaFreeHost(lda_info_global));
-    checkCudaErrors(cudaFree(lda_info_global_g));
+    checkCudaErrors(cudaFree(lda_info_gbl_g));
 
     checkCudaErrors(cudaFreeHost(ldb_info_global));
-    checkCudaErrors(cudaFree(ldb_info_global_g));
+    checkCudaErrors(cudaFree(ldb_info_gbl_g));
 
     checkCudaErrors(cudaFreeHost(ldc_info_global));
-    checkCudaErrors(cudaFree(ldc_info_global_g));
+    checkCudaErrors(cudaFree(ldc_info_gbl_g));
 
-    checkCudaErrors(cudaFreeHost(ap_left_glo));
-    checkCudaErrors(cudaFreeHost(ap_right_glo));
-    checkCudaErrors(cudaFreeHost(ap_output_glo));
+    checkCudaErrors(cudaFreeHost(ap_left_gbl));
+    checkCudaErrors(cudaFreeHost(ap_right_gbl));
+    checkCudaErrors(cudaFreeHost(ap_output_gbl));
 
-    checkCudaErrors(cudaFree(ap_left_glo_g));
+    checkCudaErrors(cudaFree(ap_left_gbl_g));
     checkCudaErrors(cudaFree(d_left_x_g));
     checkCudaErrors(cudaFree(d_left_y_g));
     checkCudaErrors(cudaFree(d_left_z_g));
@@ -1003,9 +1003,9 @@ void Grid_Technique::free_gpu_gint_variables()
     checkCudaErrors(cudaFree(dd_left_yy_g));
     checkCudaErrors(cudaFree(dd_left_yz_g));
     checkCudaErrors(cudaFree(dd_left_zz_g));
-    checkCudaErrors(cudaFree(ap_right_glo_g));
+    checkCudaErrors(cudaFree(ap_right_gbl_g));
     checkCudaErrors(cudaFree(dm_global_g));
-    checkCudaErrors(cudaFree(ap_output_glo_g));
+    checkCudaErrors(cudaFree(ap_output_gbl_g));
 
     checkCudaErrors(cudaFreeHost(vec_len));
     checkCudaErrors(cudaFreeHost(vec_l));

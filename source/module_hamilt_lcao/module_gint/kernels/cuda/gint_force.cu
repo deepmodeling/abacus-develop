@@ -310,10 +310,10 @@ void para_init(SGridParameter& para,
     para.stream_num = iter_num % gridt.nstreams;
     //input_dou and input _int used for the Spherical Harmonics
     para.input_dou
-        = &gridt.psi_dou_glo[gridt.psi_size_max * para.stream_num * 5];
+        = &gridt.psi_dbl_gbl[gridt.psi_size_max * para.stream_num * 5];
     para.input_int
-        = &gridt.psi_int_glo[gridt.psi_size_max * para.stream_num * 2];
-    para.num_psir = &gridt.num_psir_glo[nbz * para.stream_num];
+        = &gridt.psi_int_gbl[gridt.psi_size_max * para.stream_num * 2];
+    para.num_psir = &gridt.num_psir_gbl[nbz * para.stream_num];
     //one dimension,record the length and the leading dimension of three matrix
     para.atom_pair_A_m
         = &gridt.l_info_global[gridt.atom_pair_nbz * para.stream_num];
@@ -329,10 +329,10 @@ void para_init(SGridParameter& para,
         = &gridt.ldc_info_global[gridt.atom_pair_nbz * para.stream_num];
     //input_double_g and input_int_g used for the Spherical Harmonics on GPU
     para.input_double_g
-        = &gridt.psi_dou_glo_g[gridt.psi_size_max * para.stream_num * 5];
+        = &gridt.psi_dbl_gbl_g[gridt.psi_size_max * para.stream_num * 5];
     para.input_int_g
-        = &gridt.psi_int_glo_g[gridt.psi_size_max * para.stream_num * 2];
-    para.num_psir_g = &gridt.num_psir_glo_g[nbz * para.stream_num];
+        = &gridt.psi_int_gbl_g[gridt.psi_size_max * para.stream_num * 2];
+    para.num_psir_g = &gridt.num_psir_gbl_g[nbz * para.stream_num];
     para.psir_dm_device = &gridt.dm_global_g[gridt.psir_size * para.stream_num];
     para.psir_r_device
         = &gridt.right_global_g[gridt.psir_size * para.stream_num];
@@ -360,21 +360,21 @@ void para_init(SGridParameter& para,
     para.K_device
         = &gridt.k_info_global_g[gridt.atom_pair_nbz * para.stream_num];
     para.lda_device
-        = &gridt.lda_info_global_g[gridt.atom_pair_nbz * para.stream_num];
+        = &gridt.lda_info_gbl_g[gridt.atom_pair_nbz * para.stream_num];
     para.ldb_device
-        = &gridt.ldb_info_global_g[gridt.atom_pair_nbz * para.stream_num];
+        = &gridt.ldb_info_gbl_g[gridt.atom_pair_nbz * para.stream_num];
     para.ldc_device
-        = &gridt.ldc_info_global_g[gridt.atom_pair_nbz * para.stream_num];
+        = &gridt.ldc_info_gbl_g[gridt.atom_pair_nbz * para.stream_num];
     //two dimension,record number to compute
-    para.matrix_A = &gridt.ap_left_glo[gridt.atom_pair_nbz * para.stream_num];
-    para.matrix_B = &gridt.ap_right_glo[gridt.atom_pair_nbz * para.stream_num];
-    para.matrix_C = &gridt.ap_output_glo[gridt.atom_pair_nbz * para.stream_num];
+    para.matrix_A = &gridt.ap_left_gbl[gridt.atom_pair_nbz * para.stream_num];
+    para.matrix_B = &gridt.ap_right_gbl[gridt.atom_pair_nbz * para.stream_num];
+    para.matrix_C = &gridt.ap_output_gbl[gridt.atom_pair_nbz * para.stream_num];
     para.matrix_A_device
-        = &gridt.ap_left_glo_g[gridt.atom_pair_nbz * para.stream_num];
+        = &gridt.ap_left_gbl_g[gridt.atom_pair_nbz * para.stream_num];
     para.matrix_B_device
-        = &gridt.ap_right_glo_g[gridt.atom_pair_nbz * para.stream_num];
+        = &gridt.ap_right_gbl_g[gridt.atom_pair_nbz * para.stream_num];
     para.matrix_C_device
-        = &gridt.ap_output_glo_g[gridt.atom_pair_nbz * para.stream_num];
+        = &gridt.ap_output_gbl_g[gridt.atom_pair_nbz * para.stream_num];
 }
 /**
  * @brief ForceStressIat on host and device Init

@@ -180,28 +180,28 @@ class Grid_Technique : public Grid_MeshBall
     int* k_info_global_g;
 
     int* lda_info_global;
-    int* lda_info_global_g;
+    int* lda_info_gbl_g;
     int* ldb_info_global;
-    int* ldb_info_global_g;
+    int* ldb_info_gbl_g;
     int* ldc_info_global;
-    int* ldc_info_global_g;
+    int* ldc_info_gbl_g;
 
-    double** ap_left_glo;
-    double** ap_right_glo;
-    double** ap_output_glo;
+    double** ap_left_gbl;
+    double** ap_right_gbl;
+    double** ap_output_gbl;
 
-    double** ap_left_glo_g;
-    double** ap_right_glo_g;
-    double** ap_output_glo_g;
+    double** ap_left_gbl_g;
+    double** ap_right_gbl_g;
+    double** ap_output_gbl_g;
 
-    double* psi_dou_glo;
-    double* psi_dou_glo_g;
+    double* psi_dbl_gbl;
+    double* psi_dbl_gbl_g;
 
-    int* psi_int_glo;
-    int* psi_int_glo_g;
+    int* psi_int_gbl;
+    int* psi_int_gbl_g;
 
-    int* num_psir_glo;
-    int* num_psir_glo_g;
+    int* num_psir_gbl;
+    int* num_psir_gbl_g;
 
     // additional variables for rho calculating
     int num_mcell;
