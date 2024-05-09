@@ -1,7 +1,7 @@
 #ifndef MODULE_DEVICE_MEMORY_H_
 #define MODULE_DEVICE_MEMORY_H_
 
-#include "device.h"
+#include "types.h"
 
 #include <complex>
 #include <stddef.h>

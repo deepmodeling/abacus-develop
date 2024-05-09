@@ -1,6 +1,5 @@
 #include "memory_op.h"
 
-#include "device.h"
 #include "module_base/memory.h"
 #include "module_base/tool_threading.h"
 

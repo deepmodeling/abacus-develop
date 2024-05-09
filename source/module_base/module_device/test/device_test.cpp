@@ -1,4 +1,4 @@
-#include "../device.h"
+#include "module_base/module_device/device.h"
 
 #include <complex>
 #include <gtest/gtest.h>

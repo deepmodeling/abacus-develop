@@ -1,5 +1,4 @@
 #include "module_hamilt_pw/hamilt_pwdft/kernels/stress_op.h"
-// #include "module_psi/kernels/device.h"
 #include "module_base/module_device/types.h"
 
 #include <complex>
