@@ -9,7 +9,7 @@
 #include "module_base/parallel_reduce.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
 #include "module_hsolver/kernels/dngvd_op.h"
-#include "module_psi/kernels/device.h"
+#include "module_base/module_device/device.h"
 
 namespace hsolver{
 
@@ -404,14 +404,14 @@ void DiagoIterAssist<T, Device>::diagH_LAPACK(
 
     dngvd_op<T, Device>()(ctx, nstart, ldh, hcc, scc, eigenvalues, vcc);
 
-    if (psi::device::get_device_type<Device>(ctx) == base_device::GpuDevice)
+    if (base_device::get_device_type<Device>(ctx) == base_device::GpuDevice)
     {
 #if ((defined __CUDA) || (defined __ROCM))
         // set eigenvalues in GPU to e in CPU
         syncmem_var_d2h_op()(cpu_ctx, gpu_ctx, e, eigenvalues, nbands);
 #endif
     }
-    else if (psi::device::get_device_type<Device>(ctx) == base_device::CpuDevice)
+    else if (base_device::get_device_type<Device>(ctx) == base_device::CpuDevice)
     {
         // set eigenvalues in CPU to e in CPU
         syncmem_var_op()(ctx, ctx, e, eigenvalues, nbands);

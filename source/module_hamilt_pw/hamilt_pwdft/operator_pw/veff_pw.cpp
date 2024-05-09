@@ -2,7 +2,6 @@
 
 #include "module_base/timer.h"
 #include "module_base/tool_quit.h"
-#include "module_psi/kernels/device.h"
 
 namespace hamilt {
 

@@ -13,7 +13,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/vnl_op.h"
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
-#include "module_psi/kernels/device.h"
+#include "module_base/module_device/device.h"
 
 pseudopot_cell_vnl::pseudopot_cell_vnl()
 {
@@ -516,7 +516,7 @@ void pseudopot_cell_vnl::getvnl(Device* ctx, const int& ik, std::complex<FPTYPE>
     delmem_var_op()(ctx, ylm);
     delmem_var_op()(ctx, vkb1);
     delmem_complex_op()(ctx, sk);
-    if (psi::device::get_device_type<Device>(ctx) == base_device::GpuDevice)
+    if (base_device::get_device_type<Device>(ctx) == base_device::GpuDevice)
     {
         delmem_var_op()(ctx, gk);
         delmem_int_op()(ctx, atom_nh);

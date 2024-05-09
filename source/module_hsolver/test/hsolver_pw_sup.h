@@ -147,7 +147,7 @@ template class DiagoCG<std::complex<double>, base_device::DEVICE_CPU>;
 
 template <typename T, typename Device> DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in)
 {
-    this->device = psi::device::get_device_type<Device>(this->ctx);
+    this->device = base_device::get_device_type<Device>(this->ctx);
     this->precondition = precondition_in;
 
     test_david = 2;

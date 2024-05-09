@@ -4,7 +4,6 @@
 #include "module_base/timer.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/tool_quit.h"
-#include "module_psi/kernels/device.h"
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
 #endif

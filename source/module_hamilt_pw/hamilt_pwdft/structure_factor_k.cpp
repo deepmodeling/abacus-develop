@@ -2,7 +2,7 @@
 #include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/wf_op.h"
-#include "module_psi/kernels/device.h"
+#include "module_base/module_device/device.h"
 #include "structure_factor.h"
 std::complex<double>* Structure_Factor::get_sk(const int ik,
                                                const int it,
@@ -51,7 +51,7 @@ void Structure_Factor::get_sk(Device* ctx,
     ModuleBase::timer::tick("Structure_Factor", "get_sk");
 
     base_device::DEVICE_CPU* cpu_ctx = {};
-    base_device::AbacusDevice_t device = psi::device::get_device_type<Device>(ctx);
+    base_device::AbacusDevice_t device = base_device::get_device_type<Device>(ctx);
     using cal_sk_op = hamilt::cal_sk_op<FPTYPE, Device>;
     using resmem_int_op = psi::memory::resize_memory_op<int, Device>;
     using delmem_int_op = psi::memory::delete_memory_op<int, Device>;

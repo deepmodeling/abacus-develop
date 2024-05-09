@@ -3,7 +3,7 @@
 #include "module_base/math_ylmreal.h"
 #include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_psi/kernels/device.h"
+#include "module_base/module_device/device.h"
 
 //calculate the nonlocal pseudopotential stress in PW
 template <typename FPTYPE, typename Device>
@@ -26,7 +26,7 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
         return;
     }
 
-    this->device = psi::device::get_device_type<Device>(this->ctx);
+    this->device = base_device::get_device_type<Device>(this->ctx);
 
     // There is a contribution for jh<>ih in US case or multi projectors case
     // Actually, the judge of nondiagonal should be done on every atom type

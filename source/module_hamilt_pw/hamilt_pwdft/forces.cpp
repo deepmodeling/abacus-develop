@@ -14,7 +14,7 @@
 #include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
 #include "module_hamilt_general/module_surchem/surchem.h"
 #include "module_hamilt_general/module_vdw/vdw.h"
-#include "module_psi/kernels/device.h"
+#include "module_base/module_device/device.h"
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -33,7 +33,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
                                        const psi::Psi<std::complex<FPTYPE>, Device>* psi_in)
 {
     ModuleBase::TITLE("Forces", "init");
-    this->device = psi::device::get_device_type<Device>(this->ctx);
+    this->device = base_device::get_device_type<Device>(this->ctx);
     const ModuleBase::matrix& wg = elec.wg;
     const ModuleBase::matrix& ekb = elec.ekb;
     const Charge* const chr = elec.charge;

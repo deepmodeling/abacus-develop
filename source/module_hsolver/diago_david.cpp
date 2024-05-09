@@ -19,7 +19,7 @@ using namespace hsolver;
 
 template <typename T, typename Device> DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in)
 {
-    this->device = psi::device::get_device_type<Device>(this->ctx);
+    this->device = base_device::get_device_type<Device>(this->ctx);
     this->precondition = precondition_in;
 
     test_david = 2;
@@ -604,14 +604,14 @@ void DiagoDavid<T, Device>::cal_elem(const int& dim,
         }
         else
         {
-            if (psi::device::get_current_precision(swap) == "single") {
+            if (base_device::get_current_precision(swap) == "single") {
                 MPI_Reduce(swap, hcc + nbase * this->nbase_x, notconv * this->nbase_x, MPI_COMPLEX, MPI_SUM, 0, POOL_WORLD);
             }
             else {
                 MPI_Reduce(swap, hcc + nbase * this->nbase_x, notconv * this->nbase_x, MPI_DOUBLE_COMPLEX, MPI_SUM, 0, POOL_WORLD);
             }
             syncmem_complex_op()(this->ctx, this->ctx, swap, scc + nbase * this->nbase_x, notconv * this->nbase_x);
-            if (psi::device::get_current_precision(swap) == "single") {
+            if (base_device::get_current_precision(swap) == "single") {
                 MPI_Reduce(swap, scc + nbase * this->nbase_x, notconv * this->nbase_x, MPI_COMPLEX, MPI_SUM, 0, POOL_WORLD);
             }
             else {
