@@ -3,18 +3,15 @@
 #include "module_hamilt_lcao/module_gint/kernels/cuda/cuda_tools.cuh"
 cudaError_t checkCuda(cudaError_t result)
 {
-#if defined(__DEBUG)
     if (result != cudaSuccess)
     {
         fprintf(stderr, "CUDA Runtime Error: %s\n", cudaGetErrorString(result));
         assert(result == cudaSuccess);
     }
-#endif
     return result;
 }
 cudaError_t checkCudaLastError()
 {
-#if defined(__DEBUG)
     cudaError_t result = cudaGetLastError();
     if (result != cudaSuccess)
     {
@@ -22,9 +19,6 @@ cudaError_t checkCudaLastError()
         assert(result == cudaSuccess);
     }
     return result;
-#else
-    return cudaSuccess;
-#endif
 }
 
 void dump_cuda_array_to_file(double* cuda_array,
@@ -110,14 +104,12 @@ Cuda_Mem_Wrapper<T>::~Cuda_Mem_Wrapper()
 template <typename T>
 void Cuda_Mem_Wrapper<T>::copy_host_to_device_sync(int stream_id)
 {
-#if defined(__DEBUG)
     if (this->host_pointer == nullptr || this->device_pointer == nullptr)
     {
         std::cerr << "host_pointer is nullptr, can not copy host to device"
                   << std::endl;
         exit(1);
     }
-#endif
     checkCuda(cudaMemcpy(
         this->device_pointer + stream_id * this->one_stream_size_aligned,
         this->host_pointer + stream_id * this->one_stream_size_aligned,
@@ -129,14 +121,12 @@ template <typename T>
 void Cuda_Mem_Wrapper<T>::copy_host_to_device_async(cudaStream_t stream,
                                                     int stream_id)
 {
-#if defined(__DEBUG)
     if (this->host_pointer == nullptr || this->device_pointer == nullptr)
     {
         std::cerr << "host_pointer is nullptr, can not copy host to device"
                   << std::endl;
         exit(1);
     }
-#endif
     checkCuda(cudaMemcpyAsync(
         this->device_pointer + stream_id * this->one_stream_size_aligned,
         this->host_pointer + stream_id * this->one_stream_size_aligned,
@@ -148,14 +138,12 @@ void Cuda_Mem_Wrapper<T>::copy_host_to_device_async(cudaStream_t stream,
 template <typename T>
 void Cuda_Mem_Wrapper<T>::copy_device_to_host_sync(int stream_id)
 {
-#if defined(__DEBUG)
     if (this->host_pointer == nullptr || this->device_pointer == nullptr)
     {
         std::cerr << "host_pointer is nullptr, can not copy device to host"
                   << std::endl;
         exit(1);
     }
-#endif
     checkCuda(cudaMemcpy(
         this->host_pointer + stream_id * this->one_stream_size_aligned,
         this->device_pointer + stream_id * this->one_stream_size_aligned,
@@ -167,14 +155,12 @@ template <typename T>
 void Cuda_Mem_Wrapper<T>::copy_device_to_host_async(cudaStream_t stream,
                                                     int stream_id)
 {
-#if defined(__DEBUG)
     if (this->host_pointer == nullptr || this->device_pointer == nullptr)
     {
         std::cerr << "host_pointer is nullptr, can not copy device to host"
                   << std::endl;
         exit(1);
     }
-#endif
     checkCuda(cudaMemcpyAsync(
         this->host_pointer + stream_id * this->one_stream_size_aligned,
         this->device_pointer + stream_id * this->one_stream_size_aligned,
