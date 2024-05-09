@@ -53,7 +53,6 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
     rotpos = new double[3*nat];
 	ModuleBase::GlobalFunc::ZEROS(newpos, 3*nat);
     ModuleBase::GlobalFunc::ZEROS(rotpos, 3*nat);
-    ModuleBase::Memory::record("Symmetry::analy_sys",sizeof(int)*(ntype*2+nat+2)+sizeof(double)*(nat*6));
 
     this->a1 = lat.a1;
     this->a2 = lat.a2;
@@ -1415,7 +1414,6 @@ void Symmetry::rho_symmetry( double *rho,
 
 	// allocate flag for each FFT grid.
     bool* symflag = new bool[nr1 * nr2 * nr3];
-    ModuleBase::Memory::record("Symmetry::symflag",sizeof(bool) *nr1*nr2*nr3);
     for (int i=0; i<nr1*nr2*nr3; i++)
     {
         symflag[i] = false;
@@ -1482,12 +1480,7 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
     int(*isymflag)[48] = new int[fftnx*fftny*fftnz][48];//which rotration operation the grid corresponds to
     int(*table_xyz)[48] = new int[fftnx * fftny * fftnz][48];// group information
     int* count_xyz = new int[fftnx * fftny * fftnz];// how many symmetry operations has been covered
-    // ModuleBase::Memory::record("Symmetry::rhog_symmetry",sizeof(int) *fftnx*fftny*fftnz*98);
-    ModuleBase::Memory::record("Symmetry::symflag",sizeof(int) *fftnx*fftny*fftnz);
-    ModuleBase::Memory::record("Symmetry::isymflag",sizeof(int) *fftnx*fftny*fftnz*48);
-    ModuleBase::Memory::record("Symmetry::table_xyz",sizeof(int) *fftnx*fftny*fftnz*48);
-    ModuleBase::Memory::record("Symmetry::count_xyz",sizeof(int) *fftnx*fftny*fftnz);
-    // ModuleBase::TITLE("Symmetry", "rhog_symmetry2");
+    ModuleBase::Memory::record("Symmetry::rhog_symmetry",sizeof(int) *fftnx*fftny*fftnz*98);
     for (int i = 0; i < fftnx * fftny * fftnz; i++)
     {
         symflag[i] = -1;
@@ -1499,7 +1492,6 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
 
     //map the gmatrix to inv
     int* invmap = new int[nrotk];
-    ModuleBase::Memory::record("Symmetry::invmap",sizeof(int)*nrotk);
     this->gmatrix_invmap(kgmatrix, nrotk, invmap);
 
 // ---------------------------------------------------
@@ -1618,7 +1610,6 @@ for (int g_index = 0; g_index < group_index; g_index++)
     int *ipw_record = new int[nrotk];
     int *ixyz_record = new int[nrotk];
     std::complex<double>* gphase_record = new std::complex<double> [nrotk];
-    ModuleBase::Memory::record("Symmetry::*_record",sizeof(int) *nrotk*2 + sizeof(std::complex<double>)*nrotk);
     std::complex<double> sum(0, 0);
     int rot_count=0;
 
@@ -1758,7 +1749,6 @@ void Symmetry::symmetrize_vec3_nat(double* v)const   // pengfei 2016-12-20
     vtot = new double[nat * 3]; ModuleBase::GlobalFunc::ZEROS(vtot, nat * 3);
     n = new int[nat]; ModuleBase::GlobalFunc::ZEROS(n, nat);
 
-    ModuleBase::Memory::record("Symmetry::vtot&n",sizeof(int)*nat + sizeof(double)*nat*3);
     for (int j = 0;j < nat; ++j)
     {
         const int jx = j * 3; const int jy = j * 3 + 1; const int jz = j * 3 + 2;

@@ -3,7 +3,6 @@
 #include "module_base/constants.h"
 #include "module_base/inverse_matrix.h"
 #include "module_base/math_ylmreal.h"
-#include "module_base/memory.h"
 
 namespace ModuleBase
 {
@@ -31,7 +30,6 @@ void Clebsch_Gordan::clebsch_gordan(const int& lli,
     ModuleBase::matrix ylm(llx, llx);
     ModuleBase::matrix mly(llx, llx);
 
-    ModuleBase::Memory::record("Clebsch_Gordan::matrix",sizeof(double)*llx*llx*2+sizeof(ModuleBase::Vector3<double>)*llx);
     // generate an array of random vectors (uniform deviate on unitary sphere)
     gen_rndm_r(llx, r);
 
