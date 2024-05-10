@@ -109,6 +109,7 @@ class TDEkinetic<OperatorLCAO<TK,TR>> : public OperatorLCAO<TK, TR>
 
     bool hR_tmp_done = false;
     bool allocated = false;
+    int output_hR_done = 0;
 };
 
 } // namespace hamilt

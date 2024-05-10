@@ -8,6 +8,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_elecstate/module_dm/cal_dm_psi.h"
 #include "module_base/parallel_reduce.h"
+#include "module_elecstate/potentials/H_TDDFT_pw.h"
 
 #ifdef __LCAO
 //init DSloc_R for current calculation

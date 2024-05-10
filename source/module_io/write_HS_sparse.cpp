@@ -4,6 +4,7 @@
 #include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "single_R_io.h"
+#include "module_elecstate/potentials/H_TDDFT_pw.h"
 
 void ModuleIO::save_HSR_sparse(
     const int &istep,
@@ -24,6 +25,8 @@ void ModuleIO::save_HSR_sparse(
     auto &SR_sparse_ptr = lm.SR_sparse;
     auto &HR_soc_sparse_ptr = lm.HR_soc_sparse;
     auto &SR_soc_sparse_ptr = lm.SR_soc_sparse;
+    //added for tddft HR output
+    auto &HR_sparse_td_vel_ptr = lm.HR_sparse_td_vel;
 
     int total_R_num = all_R_coor_ptr.size();
     int output_R_number = 0;
@@ -53,12 +56,26 @@ void ModuleIO::save_HSR_sparse(
         {
             for (int ispin = 0; ispin < spin_loop; ++ispin)
             {
-                auto iter = HR_sparse_ptr[ispin].find(R_coor);
-                if (iter != HR_sparse_ptr[ispin].end())
+                if(GlobalV::ESOLVER_TYPE == "tddft" && elecstate::H_TDDFT_pw::stype ==1)
                 {
-                    for (auto &row_loop : iter->second)
+                    auto iter = HR_sparse_td_vel_ptr[ispin].find(R_coor);
+                    if (iter != HR_sparse_td_vel_ptr[ispin].end())
                     {
-                        H_nonzero_num[ispin][count] += row_loop.second.size();
+                        for (auto &row_loop : iter->second)
+                        {
+                            H_nonzero_num[ispin][count] += row_loop.second.size();
+                        }
+                    }
+                }
+                else
+                {
+                    auto iter = HR_sparse_ptr[ispin].find(R_coor);
+                    if (iter != HR_sparse_ptr[ispin].end())
+                    {
+                        for (auto &row_loop : iter->second)
+                        {
+                            H_nonzero_num[ispin][count] += row_loop.second.size();
+                        }
                     }
                 }
             }
@@ -279,7 +296,14 @@ void ModuleIO::save_HSR_sparse(
             {
                 if (GlobalV::NSPIN != 4)
                 {
-                    output_single_R(g1[ispin], HR_sparse_ptr[ispin][R_coor], sparse_thr, binary, *lm.ParaV);
+                    if(GlobalV::ESOLVER_TYPE == "tddft" && elecstate::H_TDDFT_pw::stype ==1)
+                    {
+                        output_single_R(g1[ispin], HR_sparse_td_vel_ptr[ispin][R_coor], sparse_thr, binary, *lm.ParaV);
+                    }
+                    else
+                    {
+                        output_single_R(g1[ispin], HR_sparse_ptr[ispin][R_coor], sparse_thr, binary, *lm.ParaV);
+                    }
                 }
                 else
                 {

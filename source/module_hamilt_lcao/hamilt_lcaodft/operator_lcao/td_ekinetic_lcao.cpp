@@ -5,6 +5,8 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb11.h"
 #include "module_elecstate/potentials/H_TDDFT_pw.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
+#include "module_hsolver/hsolver_lcao.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/spar_hsr.h"
 
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_base/libm/libm.h"
@@ -369,6 +371,18 @@ void TDEkinetic<OperatorLCAO<std::complex<double>, double>>::contributeHk(int ik
         ModuleBase::TITLE("TDEkinetic", "contributeHk");
         ModuleBase::timer::tick("TDEkinetic", "contributeHk");
         //folding inside HR to HK
+        if(output_hR_done <GlobalV::NSPIN && hsolver::HSolverLCAO<std::complex<double>>::out_mat_hsR == 1 && GlobalV::NSPIN!=4)
+        {
+            const int spin_now = GlobalV::CURRENT_SPIN;
+            //save_td_HR_data
+            sparse_format::cal_HContainer_cd(
+            *(this->LM->ParaV),
+            spin_now, 
+            1e-10, 
+            *hR_tmp, 
+            this->LM->HR_sparse_td_vel[spin_now]);
+            output_hR_done++;
+        }
         if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
         {
             const int nrow = this->LM->ParaV->get_row_size();
