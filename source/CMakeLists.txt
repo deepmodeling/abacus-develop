@@ -58,7 +58,7 @@ if(USE_CUDA)
     module_hsolver/kernels/cuda/math_kernel_op.cu
     module_elecstate/kernels/cuda/elecstate_op.cu
 
-    module_psi/kernels/cuda/memory_op.cu
+    # module_psi/kernels/cuda/memory_op.cu
     module_base/module_device/cuda/memory_op.cu
 
     module_hamilt_pw/hamilt_pwdft/kernels/cuda/force_op.cu
@@ -81,7 +81,7 @@ if(USE_ROCM)
     module_hsolver/kernels/rocm/math_kernel_op.hip.cu
     module_elecstate/kernels/rocm/elecstate_op.hip.cu
 
-    module_psi/kernels/rocm/memory_op.hip.cu
+    # module_psi/kernels/rocm/memory_op.hip.cu
     module_base/module_device/rocm/memory_op.hip.cu
 
     module_hamilt_pw/hamilt_pwdft/kernels/rocm/force_op.hip.cu

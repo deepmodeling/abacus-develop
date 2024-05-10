@@ -1,7 +1,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/kernels/stress_op.h"
 
 #include "module_base/module_device/memory_op.h"
-#include "module_psi/kernels/memory_op.h"
+// #include "module_psi/kernels/memory_op.h"
 
 #include <complex>
 #include <gtest/gtest.h>
