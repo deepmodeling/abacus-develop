@@ -2,6 +2,7 @@
 #include "gmock/gmock.h"
 #include "module_io/input_conv.h"
 #include "module_base/global_variable.h"
+#include "module_hsolver/hsolver_pw.h"
 #include "for_testing_input_conv.h"
 
 /************************************************
@@ -88,7 +89,9 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_EQ(GlobalV::DIAGO_PROC,4);
 	EXPECT_EQ(GlobalV::PW_DIAG_NMAX,50);
 	EXPECT_EQ(GlobalV::DIAGO_CG_PREC,1);
-	EXPECT_EQ(GlobalV::PW_DIAG_NDIM,4);
+    EXPECT_EQ(GlobalV::PW_DIAG_NDIM, 4);
+    EXPECT_EQ(hsolver::HSolverPW<std::complex<float>>::diago_full_acc, false);
+    EXPECT_EQ(hsolver::HSolverPW<std::complex<double>>::diago_full_acc, false);
 	EXPECT_DOUBLE_EQ(GlobalV::PW_DIAG_THR,0.01);
 	EXPECT_EQ(GlobalV::NB2D,0);
 	EXPECT_EQ(GlobalV::NURSE,0);

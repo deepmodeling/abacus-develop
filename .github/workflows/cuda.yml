@@ -2,6 +2,7 @@ name: CUDA Test
 
 on:
   workflow_dispatch:
+  pull_request:
 
 jobs:
   test:
@@ -21,4 +22,7 @@ jobs:
           cmake -B build -DUSE_CUDA=ON -DBUILD_TESTING=ON
           cmake --build build -j4
           cmake --install build
-      # TODO: add tests
+      - name: Test
+        run: |
+          cd tests/integrate
+          bash Autotest.sh -n 2 -f CASES_GPU.txt

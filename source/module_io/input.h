@@ -187,6 +187,7 @@ class Input
     int pw_diag_nmax;
     int diago_cg_prec; // mohan add 2012-03-31
     int pw_diag_ndim;
+    bool diago_full_acc;
     double pw_diag_thr; // used in cg method
 
     int nb2d; // matrix 2d division.

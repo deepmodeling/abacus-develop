@@ -59,7 +59,7 @@ class Gint_k : public Gint
     // <phi_0i | V | phi_0j>
     // V is (Vl + Vh + Vxc) if no Vna is used,
     // and is (Vna + delta_Vh + Vxc) if Vna is used.
-    void folding_vl_k(const int &ik, LCAO_Matrix* LM, const std::vector<ModuleBase::Vector3<double>>& kvec_d);
+    void folding_vl_k(const int &ik, LCAO_Matrix* LM, Parallel_Orbitals *pv,const std::vector<ModuleBase::Vector3<double>>& kvec_d);
 
     /**
      * @brief transfer pvpR to this->hRGint
@@ -88,19 +88,23 @@ class Gint_k : public Gint
         const double &sparse_threshold, 
         const std::map<Abfs::Vector3_Order<int>,
         std::map<size_t, std::map<size_t, double>>> &pvpR_sparseMatrix,
-        LCAO_Matrix *LM);
+        LCAO_Matrix *LM,
+        Parallel_Orbitals *pv);
 
     void distribute_pvpR_soc_sparseMatrix(
         const double &sparse_threshold, 
         const std::map<Abfs::Vector3_Order<int>,
         std::map<size_t,
         std::map<size_t, std::complex<double>>>> &pvpR_soc_sparseMatrix,
-        LCAO_Matrix *LM);
+        LCAO_Matrix *LM,
+        Parallel_Orbitals *pv
+        );
 
     void cal_vlocal_R_sparseMatrix(
         const int &current_spin,
         const double &sparse_threshold,
-        LCAO_Matrix *LM);
+        LCAO_Matrix *LM,
+        Parallel_Orbitals *pv);
 
     //------------------------------------------------------
     // in gint_k_sparse1.cpp 
@@ -112,19 +116,22 @@ class Gint_k : public Gint
         const double &sparse_threshold, 
         const std::map<Abfs::Vector3_Order<int>,
         std::map<size_t, std::map<size_t, double>>> &pvdpR_sparseMatrix,
-        LCAO_Matrix *LM);
+        LCAO_Matrix *LM,
+        Parallel_Orbitals *pv);
 
     void distribute_pvdpR_soc_sparseMatrix(
         const int dim,
         const double &sparse_threshold, 
         const std::map<Abfs::Vector3_Order<int>,
         std::map<size_t, std::map<size_t, std::complex<double>>>> &pvdpR_soc_sparseMatrix,
-        LCAO_Matrix *LM);
+        LCAO_Matrix *LM,
+        Parallel_Orbitals *pv);
 
     void cal_dvlocal_R_sparseMatrix(
         const int &current_spin,
         const double &sparse_threshold,
-        LCAO_Matrix *LM);
+        LCAO_Matrix *LM,
+        Parallel_Orbitals *pv);
 
     private:
 
