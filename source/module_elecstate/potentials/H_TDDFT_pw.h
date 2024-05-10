@@ -4,6 +4,7 @@
 #include "module_io/input.h"
 #include "module_io/input_conv.h"
 #include "pot_base.h"
+#include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 
 namespace elecstate
 {
