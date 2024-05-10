@@ -370,7 +370,7 @@ void TDEkinetic<OperatorLCAO<std::complex<double>, double>>::contributeHk(int ik
     else{        
         ModuleBase::TITLE("TDEkinetic", "contributeHk");
         ModuleBase::timer::tick("TDEkinetic", "contributeHk");
-        //folding inside HR to HK
+        //Save HR_data of tddft if HR output is needed
         if(output_hR_done <GlobalV::NSPIN && hsolver::HSolverLCAO<std::complex<double>>::out_mat_hsR == 1 && GlobalV::NSPIN!=4)
         {
             const int spin_now = GlobalV::CURRENT_SPIN;
@@ -383,6 +383,7 @@ void TDEkinetic<OperatorLCAO<std::complex<double>, double>>::contributeHk(int ik
             this->LM->HR_sparse_td_vel[spin_now]);
             output_hR_done++;
         }
+        //folding inside HR to HK
         if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
         {
             const int nrow = this->LM->ParaV->get_row_size();
