@@ -929,7 +929,7 @@ calculations.
 
   - **genelpa**: This method should be used if you choose localized orbitals.
   - **scalapack_gvx**: Scalapack can also be used for localized orbitals.
-  - **cusolver**: (Unavailable currently, it will be fixed in future versions) This method needs building with the cusolver component for lcao and at least one gpu is available.
+  - **cusolver**: This method needs building with CUDA and at least one gpu is available.
 
   If you set ks_solver=`genelpa` for basis_type=`pw`, the program will be stopped with an error message:
 
