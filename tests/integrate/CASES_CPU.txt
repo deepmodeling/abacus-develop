@@ -9,6 +9,7 @@
 101_PW_lps8_pseudopots
 101_PW_OU_pseudopots
 101_PW_upf100_Al_pseudopots
+101_PW_upf100_uspp_Fe
 101_PW_upf201_Al_pseudopots
 101_PW_upf201_Eu_pseudopots
 101_PW_upf201_blps_pseudopots
