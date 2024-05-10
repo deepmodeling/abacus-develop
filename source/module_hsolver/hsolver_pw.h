@@ -13,11 +13,22 @@ class HSolverPW: public HSolver<T, Device>
 {
   private:
     bool is_first_scf = true;
+
     // Note GetTypeReal<T>::type will 
     // return T if T is real type(float, double), 
     // otherwise return the real type of T(complex<float>, complex<double>)
     using Real = typename GetTypeReal<T>::type;
+
   public:
+    /**
+     * @brief diago_full_acc 
+     * If .TRUE. all the empty states are diagonalized at the same level of accuracy of the occupied ones. 
+     * Otherwise the empty states are diagonalized using a larger threshold 
+     * (this should not affect total energy, forces, and other ground-state properties).
+     * 
+     */
+    static bool diago_full_acc;
+    
     HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in, wavefunc* pwf_in);
 
     /*void init(
@@ -79,8 +90,10 @@ class HSolverPW: public HSolver<T, Device>
     using resmem_var_op = psi::memory::resize_memory_op<Real, psi::DEVICE_CPU>;
     using delmem_var_op = psi::memory::delete_memory_op<Real, psi::DEVICE_CPU>;
     using castmem_2d_2h_op = psi::memory::cast_memory_op<double, Real, psi::DEVICE_CPU, psi::DEVICE_CPU>;
-    
 };
+
+template <typename T, typename Device>
+bool HSolverPW<T, Device>::diago_full_acc = false;
 
 } // namespace hsolver
 
