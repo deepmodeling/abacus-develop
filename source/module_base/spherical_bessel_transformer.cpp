@@ -1,13 +1,11 @@
 #include "module_base/spherical_bessel_transformer.h"
 
 #include <vector>
-#include <fftw3.h>
 #include <algorithm>
-#include <cassert>
 #include <cmath>
-#include <cstring>
-#include <functional>
 #include <numeric>
+#include <cassert>
+#include <fftw3.h>
 
 #include "module_base/math_integral.h"
 #include "module_base/math_sphbes.h"
@@ -140,13 +138,13 @@ void SphericalBesselTransformer::Impl::radrfft(
      *               sqrt(2*pi)                         l-n-1
      *                                                 x
      *
-     * q(l,n) / p(l,n) are polynomial coefficients associated with sin/cos in the
-     * trigonometric representation of spherical Bessel function, and the domain
-     * of F(x) is extended to negative values by letting F(-x) = pow(-1,l)*F(x).
+     * p,q are polynomial coefficients in Rayleigh's formula (see below),
+     * and the domain of F(x) is extended to negative values by letting
+     * F(-x) = pow(-1,l)*F(x).
      *
-     * Note that given l & n, c(l,n) and s(l,n) cannot be both non-zero. Therefore,
-     * each FFT input array is either purely real or purely imaginary, which suggests
-     * the use of real-input FFT.
+     * Note that given l & n, q(l,n) and p(l,n) cannot be both non-zero.
+     * Therefore, each FFT input array is either purely real or purely
+     * imaginary, which suggests the use of real-input FFT.
      *
      */
     assert(l >= 0);
@@ -164,15 +162,15 @@ void SphericalBesselTransformer::Impl::radrfft(
 
     // The l-th order spherical Bessel function of the first kind can be expressed as
     //
-    //                          sin(x)*P(x) + cos(x)*Q(x)
-    //                  j (x) = -------------------------
+    //                          sin(x)*P(l,x) + cos(x)*Q(l,x)
+    //                  j (x) = -----------------------------
     //                   l               l+1
     //                                  x
     //
-    // where P(x) and Q(x) are polynomials of degree no more than l. Their polynomial
+    // where P(l,x) and Q(l,x) are polynomials of degree no more than l. Their polynomial
     // coefficients follow the same recurrence relation
     //
-    //        c(l,n) = (2l-1) * c(l-1,n) - c(l-2,n-2)
+    //        c(l,m) = (2l-1) * c(l-1,m) - c(l-2,m-2)
     //
     // with different initial conditions:
     //
@@ -270,6 +268,7 @@ void SphericalBesselTransformer::Impl::direct(
 )
 {
     assert(p <= 2);
+    assert(ngrid_in > 1 && ngrid_out > 0);
     assert(grid_in[0] >= 0.0 && grid_out[0] >= 0.0);
     assert(std::is_sorted(grid_in, grid_in + ngrid_in, std::less_equal<double>()));
     assert(std::is_sorted(grid_out, grid_out + ngrid_out, std::less_equal<double>()));

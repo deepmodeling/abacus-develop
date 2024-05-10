@@ -9,8 +9,9 @@ namespace ModuleBase
 /**
  * @brief A class that provides spherical Bessel transforms.
  *
- * @note This class is an opaque shared pointer. Copy-construction and copy-assignment
- * are allowed, but the underlying implementation class object is shared among all copies.
+ * @note This class is an opaque shared pointer. The underlying object of
+ * the implementation class, which may cache some tabulated function values,
+ * is shared via copy-construction and copy-assignment.
  *
  * The spherical Bessel transform of a function F(x) is defined as
  *
