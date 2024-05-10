@@ -293,7 +293,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
 							GlobalV::DRANK);
 
 					ModuleIO::save_mat(istep,
-							h_mat.p,
+							s_mat.p,
 							GlobalV::NLOCAL,
 							bit,
 							hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs[1],
