@@ -6,6 +6,7 @@
 #include <memory>
 
 #include "module_base/spherical_bessel_transformer.h"
+
 #include "module_basis/module_ao/ORB_atomic_lm.h"
 
 /**
@@ -64,13 +65,15 @@
 class NumericalRadial
 {
 public:
-    NumericalRadial() = default;
-    NumericalRadial(NumericalRadial const&); ///< Deep-copy grid & values
 
-    /// Deep-copy grid & values
-    NumericalRadial& operator=(NumericalRadial const&);
+    enum class Space { r, k };
+    enum class Operation { Interpolate, Transform };
 
-    ~NumericalRadial();
+    NumericalRadial() = delete;
+    ~NumericalRadial() = default;
+
+    NumericalRadial(NumericalRadial const&) = default;
+    NumericalRadial(NumericalRadial&&) = default;
 
     /**
      * @brief Initializes the object by providing the grid & values in one space.
@@ -89,29 +92,19 @@ public:
      * @note init_sbt is only useful when the internal SphericalBesselTransformer (sbt_) is
      *       null-initialized; The function will NOT reset sbt_ if it is already usable.
      */
-    void build(const int l,
-               const bool for_r_space,
-               const int ngrid,
-               const double* const grid,
-               const double* const value,
-               const int p = 0,
-               const int izeta = 0,
-               const std::string symbol = "",
-               const int itype = 0,
-               const bool init_sbt = true
+    NumericalRadial(
+        int l,
+        Space space,
+        std::vector<double> grid,
+        std::vector<double> value,
+        int p = 0,
+        const ModuleBase::SphericalBesselTransformer& sbt = {}
     );
 
-    /**
-     * @brief Overwrites the content of a Numerical_Orbital_Lm object with the current object.
-     *
-     * This function provides an interface to the corresponding object in module_ao.
-     * Due to algorithmic difference (FFT vs. Simpson's integration), it is inappropriate to
-     * use the k grid of NumericalRadial (which is FFT-compliant with r grid) to initialize
-     * the k grid of Numerical_Orbital_Lm.
-     */
-    void to_numerical_orbital_lm(Numerical_Orbital_Lm& orbital_lm, 
-                                 const int nk_legacy = 4005, // equivalent to lcao_ecut = 1600
-                                 const double lcao_dk = 0.01) const;
+    // FIXME SBT should have to modes: cached and non-cached. The non-cached mode should be the default
+
+    NumericalRadial& operator=(NumericalRadial const&);
+    NumericalRadial& operator=(NumericalRadial&&) = default;
 
     /** 
      * @brief Sets a SphericalBesselTransformer.
@@ -123,11 +116,14 @@ public:
      * @param[in] sbt       An external transformer.
      * @param[in] update    Specifies whether and how values are recomputed with the new transformer.
      *                      Accepted values are:
-     *                      *  0: does not recompute values;
-     *                      *  1: calls a forward transform;
-     *                      * -1: calls a backward transform.
+     *                      *  0: does nothing;
+     *                      *  1: performs an r -> k transform;
+     *                      * -1: performs a k -> r transform.
      */
-    void set_transformer(ModuleBase::SphericalBesselTransformer sbt, int update = 0);
+    void set_transformer(
+        const ModuleBase::SphericalBesselTransformer& sbt,
+        int update = 0
+    );
 
     /**
      * @brief Sets up a grid.
@@ -147,7 +143,12 @@ public:
      *                                 With this option, it is an error if the other space does not
      *                                 have a grid.
      */
-    void set_grid(const bool for_r_space, const int ngrid, const double* const grid, const char mode = 'i');
+    void set_grid(
+        Space space,
+        int ngrid,
+        std::vector<double> grid,
+        Operation op
+    );
 
     /**
      * @brief Sets up a uniform grid.
@@ -167,11 +168,13 @@ public:
      * the r & k grids are FFT-compliant (and updates values via a FFT-based spherical
      * Bessel transform).
      */
-    void set_uniform_grid(const bool for_r_space,
-                          const int ngrid,
-                          const double cutoff,
-                          const char mode = 'i',
-                          const bool enable_fft = false);
+    void set_uniform_grid(
+        Space space,
+        int ngrid,
+        double cutoff,
+        char mode = 'i',
+        bool enable_fft = false
+    );
 
     /**
      * @brief Updates values on an existing grid.
@@ -182,13 +185,12 @@ public:
      *
      * @note This function does not check the index bound; use with care!
      */
-    void set_value(const bool for_r_space,
-                   const double* const value,
-                   const int p
+    void set_value(
+        bool for_r_space,
+        std::vector<double> value,
+        int p
     );
 
-    /// Removes the grid & values in r or k space.
-    void wipe(const bool r_space = true, const bool k_space = true);
 
     //! Computes the radial table for two-center integrals.
     /*!
@@ -256,48 +258,67 @@ public:
      * where x is r or k. The integral is evaluated with Simpson's rule. Values in the other space
      * are updated automatically via a spherical Bessel transform.
      */
-    void normalize(bool for_r_space = true);
+    void normalize(Space which);
 
     /**
      * @name Getters
      */
     ///@{
-    std::string const& symbol() const { return symbol_; }
-    int itype() const { return itype_; }
-    int izeta() const { return izeta_; }
     int l() const { return l_; }
-    int nr() const { return nr_; } // paired with rmax(), not rcut!
-    int nk() const { return nk_; }
-    double rcut() const { return rgrid_[std::min(ircut_, nr_-1)]; } ///< padded zeros ignored
-    double kcut() const { return kgrid_[std::min(ikcut_, nk_-1)]; }
-    double rmax() const { return rgrid_[nr_-1]; } ///< padded zeros considered
-    double kmax() const { return kgrid_[nk_-1]; }
-    const double* rgrid() const { return rgrid_; }
-    const double* kgrid() const { return kgrid_; }
-    const double* rvalue() const { return rvalue_; }
-    const double* kvalue() const { return kvalue_; }
+
+    size_t nr() const { return nr_; }
+    size_t nk() const { return nk_; }
+
+    /// cutoff radii (padding zeros excluded)
+    double rcut() const { return nr_ ? rgrid_[std::min(ircut_, nr() - 1)] : 0.0; }
+    double kcut() const { return nk_ ? kgrid_[std::min(ikcut_, nk() - 1)] : 0.0; }
+
+    /// maximum radii (padding zeros included)
+    double rmax() const { return rgrid_.back(); }
+    double kmax() const { return kgrid_.back(); }
+
+    const std::vector<double>& rvalue() const { return rvalue_; }
+    const std::vector<double>& kvalue() const { return kvalue_; }
+
     double pr() const { return pr_; }
     double pk() const { return pk_; }
-    bool is_fft_compliant() const { return is_fft_compliant_; }
-    ModuleBase::SphericalBesselTransformer sbt() const { return sbt_; }
 
-    double rgrid(int ir) const { return rgrid_[ir]; }
-    double kgrid(int ik) const { return kgrid_[ik]; }
     double rvalue(int ir) const { return rvalue_[ir]; }
     double kvalue(int ik) const { return kvalue_[ik]; }
     ///@}
 
+
+    /**
+     * @brief Overwrites the content of a Numerical_Orbital_Lm object with the current object.
+     *
+     * This function provides an interface to the corresponding object in module_ao.
+     * Due to algorithmic difference (FFT vs. Simpson's integration), it is inappropriate to
+     * use the k grid of NumericalRadial (which is FFT-compliant with r grid) to initialize
+     * the k grid of Numerical_Orbital_Lm.
+     */
+    void to_numerical_orbital_lm(Numerical_Orbital_Lm& orbital_lm, 
+                                 const int nk_legacy = 4005, // equivalent to lcao_ecut = 1600
+                                 const double lcao_dk = 0.01) const;
+
+
 private:
-    std::string symbol_ = "";   ///< chemical symbol
-    int itype_ = 0;             ///< element index in calculation
-    int l_ = -1;                ///< angular momentum
-    int izeta_ = 0;             ///< further index for NumericalRadial objects with the same itype_and l_
+    /// angular momentum
+    int l_ = -1;
 
-    int nr_ = 0;                ///< number of r-space grid points
-    int nk_ = 0;                ///< number of k-space grid points
+    size_t nr_ = 0;
+    size_t nk_ = 0;
 
-    double* rgrid_ = nullptr;   ///< r-space grid
-    double* kgrid_ = nullptr;   ///< k-space grid
+    /// r space grid parameters
+    double rgrid_params[2] = {};
+
+    /// k space grid parameters
+    double kgrid_params[2] = {};
+
+    /// r space values
+    std::vector<double> rvalue_;
+
+    /// k space values
+    std::vector<double> kvalue_;
 
     /**
      * @brief Index of the first trailing zero.
@@ -312,26 +333,9 @@ private:
      * rvalues_ = {1, 2, 3, 4, 5, 6} -> ircut_ = 6
      * rvalues_ = {0, 0, 0, 0, 0, 0} -> ircut_ = 0
      */
-    int ircut_ = 0;
-    int ikcut_ = 0;
+    size_t ircut_ = 0;
+    size_t ikcut_ = 0;
 
-    double* rvalue_ = nullptr;  ///< r-space value
-    double* kvalue_ = nullptr;  ///< k-space value
-
-    /**
-     * @brief A flag that tells whether the r & k grids are FFT-compliant.
-     *
-     * r & k grids are considered FFT-compliant if they
-     * -# have the same number of grid points;
-     * -# are both uniform;
-     * -# both starts from 0;
-     * -# satisfy dr*dk = pi/(N-1) where N >= 2 is the number of each grid points.
-     *
-     * If the grids are FFT-compliant, spherical Bessel transforms are performed
-     * with an FFT-based algorithm. Otherwise, the transforms are performed with
-     * numerical integration (Simpson's rule).
-     */
-    bool is_fft_compliant_ = false;
 
     /**
      * @name Implicit exponents in values
@@ -364,7 +368,7 @@ private:
     ///@}
 
     /// An object that provides spherical Bessel transforms
-    ModuleBase::SphericalBesselTransformer sbt_;
+    ModuleBase::SphericalBesselTransformer sbt_ = {};
 
     /**
      * @brief Transforms the r-space values to get k-space values, or vice versa.
@@ -375,7 +379,7 @@ private:
      * forward : r to k
      * backward: k to r
      */
-    void transform(const bool forward);
+    void _transform(const bool forward);
 
     /// Updates ircut_ and/or ikcut_.
     void set_icut(const bool for_r_space, const bool for_k_space, const double tol = 1e-15);

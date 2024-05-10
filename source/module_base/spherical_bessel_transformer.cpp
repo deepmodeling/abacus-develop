@@ -61,6 +61,9 @@ public:
 
 private:
 
+    //*****************************************************************
+    //                      FFT-based algorithm
+    //*****************************************************************
     // NOTE: the reason of using a raw pointer to handle the buffer below is because
     // FFTW suggests using its own memory (de)allocation utilities, which imposes
     // some strong requirements on memory alignment.
@@ -81,6 +84,9 @@ private:
     void _rfft_clear();
 
 
+    //*****************************************************************
+    //                      numerical integration
+    //*****************************************************************
     /// if true, tabulated jl(grid_out[j] * grid_in[i]) will be cached
     bool cache_enabled_ = false;
 
@@ -180,21 +186,28 @@ void SphericalBesselTransformer::Impl::radrfft(
     //      c(1,0) =  0     c(1,0) = 1
     //      c(1,1) = -1     c(1,1) = 0
     //
-    std::vector<double[2]> c((l+1) * (l+1));
-    auto idx = [](int l, int m) { return (l+1)*l/2 + m; };
+    //std::vector<double[2]> c((l+1) * (l+1));
+    std::vector<std::array<int64_t, 2>> c((l+1) * (l+1));
+    auto idx = [](int ll, int m) { return (ll+1)*ll/2 + m; };
 
     c[idx(0, 0)][0] = 0;
-    c[idx(1, 0)][0] = 0;
-    c[idx(1, 1)][0] = -1;
-
     c[idx(0, 0)][1] = 1;
-    c[idx(1, 0)][1] = 1;
-    c[idx(1, 1)][1] = 0;
+
+    if (l > 0)
+    {
+        c[idx(1, 0)][0] = 0;
+        c[idx(1, 1)][0] = -1;
+
+        c[idx(1, 0)][1] = 1;
+        c[idx(1, 1)][1] = 0;
+    }
 
     for (int ll = 2; ll <= l; ++ll) {
         for (int m = 0; m <= ll; ++m) {
-            c[idx(ll,m)][0] = (ll>m) * (2*ll-1) * c[idx(ll-1,m)][0] - (m>=2) * c[idx(ll-2,m-2)][0];
-            c[idx(ll,m)][1] = (ll>m) * (2*ll-1) * c[idx(ll-1,m)][1] - (m>=2) * c[idx(ll-2,m-2)][1];
+            c[idx(ll,m)][0] = (ll > m ? (2*ll-1) * c[idx(ll-1,m)][0] : 0)
+                            - (m >= 2 ? c[idx(ll-2,m-2)][0] : 0);
+            c[idx(ll,m)][1] = (ll > m ? (2*ll-1) * c[idx(ll-1,m)][1] : 0)
+                            - (m >= 2 ? c[idx(ll-2,m-2)][1] : 0);
         }
     }
 
@@ -309,11 +322,17 @@ void SphericalBesselTransformer::Impl::_rfft_prepare(int n)
 {
     if (n != sz_planned_)
     {
-        fftw_free(f_);
+        if (f_)
+        {
+            fftw_free(f_);
+        }
         f_ = fftw_alloc_real(sizeof(double) * 2 * (n/2 + 1));
         // see FFTW documentation "one-dimensional DFTs of real data"
 
-        fftw_destroy_plan(rfft_plan_);
+        if (rfft_plan_)
+        {
+            fftw_destroy_plan(rfft_plan_);
+        }
         auto* out = reinterpret_cast<fftw_complex*>(f_); // in-place transform
         rfft_plan_ = fftw_plan_dft_r2c_1d(n, f_, out, FFTW_ESTIMATE);
 

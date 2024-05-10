@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <fftw3.h>
 
 #include "gtest/gtest.h"
 #include "module_base/constants.h"
@@ -43,7 +44,7 @@ class SphericalBesselTransformTest : public ::testing::Test
     void TearDown();
 
     /// Gets the maximum absolute element-wise difference between two arrays
-    double max_diff(const int sz, const double* const arr1, const double* const arr2);
+    static double max_diff(int sz, const double* arr1, const double* arr2);
 
     int sz_max = 10000;         ///< size of each buffer
     double* buffer = nullptr;   ///< buffer for all arrays below
@@ -73,7 +74,7 @@ void SphericalBesselTransformTest::TearDown()
     delete[] buffer;
 }
 
-double SphericalBesselTransformTest::max_diff(const int sz, const double* const arr1, const double* const arr2)
+double SphericalBesselTransformTest::max_diff(int sz, const double* arr1, const double* arr2)
 {
     double diff = 0.0;
     double tmp = 0.0;
@@ -161,8 +162,7 @@ TEST_F(SphericalBesselTransformTest, RadrfftImplicitExponent)
     double dk = PI / rcut;
     double pref = std::sqrt(2. / PI) * 48.;
 
-    SphericalBesselTransformer sbt;
-    sbt.set_fftw_plan_flag(FFTW_MEASURE);
+    SphericalBesselTransformer sbt(true);
 
     for (int i = 0; i != sz; ++i)
     {
@@ -195,7 +195,6 @@ TEST_F(SphericalBesselTransformTest, RadrfftVariableSize)
     double pref = std::sqrt(2. / PI) * 48.;
 
     SphericalBesselTransformer sbt;
-    sbt.set_fftw_plan_flag(FFTW_ESTIMATE);
 
     for (int sz = 5000; sz <= sz_max; sz += 1000)
     {
@@ -231,7 +230,6 @@ TEST_F(SphericalBesselTransformTest, RadrfftInPlace)
     double pref = std::sqrt(2.) / 16.;
 
     SphericalBesselTransformer sbt;
-    sbt.set_fftw_plan_flag(FFTW_ESTIMATE);
 
     double sz = 10000;
     double rcut = dr * (sz - 1);
@@ -333,7 +331,7 @@ TEST_F(SphericalBesselTransformTest, DirectImplicitExponent)
         y = pref * k * k / std::pow(k * k + 1, 4);
     });
 
-    SphericalBesselTransformer sbt;
+    SphericalBesselTransformer sbt(true);
 
     for (int p = -2; p <= 2; ++p)
     {

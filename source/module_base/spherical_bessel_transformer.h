@@ -2,6 +2,7 @@
 #define SPHERICAL_BESSEL_TRANSFORMER_H_
 
 #include <memory>
+#include <fftw3.h>
 
 namespace ModuleBase
 {
@@ -9,9 +10,9 @@ namespace ModuleBase
 /**
  * @brief A class that provides spherical Bessel transforms.
  *
- * @note This class is an opaque shared pointer. The underlying object of
- * the implementation class, which may cache some tabulated function values,
- * is shared via copy-construction and copy-assignment.
+ * @note This class is implemented as an opaque shared pointer. The underlying
+ * object of the implementation class, which may cache some tabulated function
+ * values, is shared via copy-construction and copy-assignment.
  *
  * The spherical Bessel transform of a function F(x) is defined as
  *
@@ -168,6 +169,9 @@ public:
     /// clear the FFTW plan & buffer as well as the tabulated jl
     void clear();
 
+
+    /// check if two objects share the same underlying implementation object
+    bool operator==(const SphericalBesselTransformer& rhs) const { return impl_ == rhs.impl_; }
 
 private:
 
