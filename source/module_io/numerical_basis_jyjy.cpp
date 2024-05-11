@@ -22,7 +22,7 @@ std::vector<index_t> indexgen(const std::vector<int>& natom,
                 for (int M = 0; M < 2*l+1; ++M)
                 {
                     // convert the "abacus M" to the conventional m
-                    int m = (M % 2 == 0) ? -M/2 : (M+1)/2;
+                    const int m = (M % 2 == 0) ? -M/2 : (M+1)/2;
                     index.emplace_back(itype, iatom, l, m);
                 }
             }
@@ -38,16 +38,16 @@ ModuleBase::ComplexArray cal_overlap_Sq(
     const int nbes,
     const double rcut,
     const std::vector<std::vector<ModuleBase::Vector3<double>>>& R,
-    const std::vector<index_t> mu_index
+    const std::vector<index_t>& mu_index
 )
 {
     // allocate output array
-    int nlocal = mu_index.size();
+    const int nlocal = mu_index.size();
     ModuleBase::ComplexArray overlap_Sq(nlocal, nlocal, nbes, nbes);
     overlap_Sq.zero_out();
 
     // build a RadialCollection of spherical Bessel functions
-    double dr = 0.005; // grid spacing for SphbesRadials; smaller for higher precision
+    const double dr = 0.005; // grid spacing for SphbesRadials; smaller for higher precision
     RadialCollection orb;
     orb.build(lmax, nbes, rcut, 0.0, dr);
 
@@ -93,4 +93,4 @@ ModuleBase::ComplexArray cal_overlap_Sq(
 }
 #endif
 
-}
+} // end of namespace NumericalBasis

@@ -37,10 +37,10 @@ void NumericalBasisTest::TearDown()
 
 TEST_F(NumericalBasisTest, indexgen)
 {
-    std::vector<int> natom = {1, 2, 3};
-    std::vector<int> lmax = {2, 1, 2};
+    const std::vector<int> natom = {1, 2, 3};
+    const std::vector<int> lmax = {2, 1, 2};
 
-    auto index = indexgen(natom, lmax);
+    const auto index = indexgen(natom, lmax);
     size_t idx = 0;
 
     for (size_t it = 0; it < natom.size(); ++it)
@@ -51,7 +51,8 @@ TEST_F(NumericalBasisTest, indexgen)
             {
                 for (int M = 0; M < 2*l+1; ++M)
                 {
-                    int m = (M % 2 == 0) ? -M/2 : (M+1)/2;
+                    // convert the "abacus M" to the conventional m
+                    const int m = (M % 2 == 0) ? -M/2 : (M+1)/2;
                     EXPECT_EQ(index[idx], std::make_tuple(int(it), ia, l, m));
                     ++idx;
                 }
@@ -62,9 +63,9 @@ TEST_F(NumericalBasisTest, indexgen)
 
 TEST_F(NumericalBasisTest, cal_overlap_Sq)
 {
-    int lmax = 3;
-    int nbes = 7;
-    double rcut = 7.0;
+    const int lmax = 3;
+    const int nbes = 7;
+    const double rcut = 7.0;
 
     // atom-0 and 1 have overlap with each other, but neither of them
     // has overlap with atom-2
@@ -74,10 +75,10 @@ TEST_F(NumericalBasisTest, cal_overlap_Sq)
     tau_cart[0].emplace_back(1.0, 1.0, 1.0);
     tau_cart[0].emplace_back(0.0, 0.0, 20.0);
 
-    std::vector<int> natom = {int(tau_cart[0].size())};
-    std::vector<int> lmax_v = {lmax};
-    auto index = indexgen(natom, lmax_v);
-    int nao = index.size();
+    const std::vector<int> natom = {int(tau_cart[0].size())};
+    const std::vector<int> lmax_v = {lmax};
+    const auto index = indexgen(natom, lmax_v);
+    const int nao = index.size();
 
 
     // zeros of sperical Bessel functions
@@ -85,12 +86,12 @@ TEST_F(NumericalBasisTest, cal_overlap_Sq)
     ModuleBase::Sphbes::sphbes_zeros(lmax, nbes, zeros.data(), true);
 
     // <jy|jy> and <jy|-\nabla^2|jy>
-    double S_thr = 1e-5;
-    double T_thr = 1e-3;
-    auto S = cal_overlap_Sq('S', lmax, nbes, rcut, tau_cart, index);
-    auto T = cal_overlap_Sq('T', lmax, nbes, rcut, tau_cart, index);
+    const double S_thr = 1e-5;
+    const double T_thr = 1e-3;
+    const auto S = cal_overlap_Sq('S', lmax, nbes, rcut, tau_cart, index);
+    const auto T = cal_overlap_Sq('T', lmax, nbes, rcut, tau_cart, index);
 
-    int t1, a1, l1, m1, t2, a2, l2, m2;
+    int t1, a1, l1, m1, t2, a2, l2, m2; // values will be updated in the loop
     for (int i = 0; i < nao; ++i)
     {
         std::tie(t1, a1, l1, m1) = index[i];
