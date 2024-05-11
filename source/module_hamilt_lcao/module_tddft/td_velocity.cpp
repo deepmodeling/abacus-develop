@@ -3,6 +3,7 @@
 
 
 bool TD_Velocity::tddft_velocity = false;
+bool TD_Velocity::out_mat_R = false;
 TD_Velocity* TD_Velocity::td_vel_op = nullptr;
 
 TD_Velocity::TD_Velocity()

@@ -11,11 +11,11 @@ class TD_Velocity
     TD_Velocity();
     ~TD_Velocity();
 
-    /// @brief init two center integrals and vector potential
-    void init_orb(void);
-
     /// @brief Judge if in tddft calculation or not 
     static bool tddft_velocity;
+
+    /// @brief switch to control the output of HR
+    static bool out_mat_R;
 
     /// @brief pointer to the only TD_Velocity object itself
     static TD_Velocity* td_vel_op;
