@@ -38,7 +38,7 @@ public:
     template<typename... Ts>
     static inline std::string format(const char* fmt, const Ts&... args)
     {
-        int size = snprintf(nullptr, 0, fmt, FmtCore::filter(args)...) + 1;
+        const int size = snprintf(nullptr, 0, fmt, FmtCore::filter(args)...) + 1;
         std::string dst(size, '\0');
         snprintf(&dst[0], size, fmt, FmtCore::filter(args)...);
         dst.pop_back();
@@ -121,7 +121,7 @@ public:
     {
         // create a copy of source data, then format
         std::vector<std::string> data(src.size());
-        for(size_t i = 0UL; i < src.size(); i++) data[i] = core::format(fmts_[j_].c_str(), src[i]);
+        for(size_t i = 0UL; i < src.size(); i++) { data[i] = core::format(fmts_[j_].c_str(), src[i]); }
         set_value(0, j_, 'v', data);
         j_ = (j_ + 1) % titles_.size();
         return *this;
@@ -151,8 +151,8 @@ public:
                                              const char& tlyot = 'c')
     {
         size_t max_width = 0;
-        for(const std::string& s : col) max_width = std::max(max_width, s.size());
-        if(!title.empty()) max_width = std::max(max_width, title.size());
+        for(const std::string& s : col) { max_width = std::max(max_width, s.size()); }
+        if(!title.empty()) { max_width = std::max(max_width, title.size()); }
         std::vector<std::string> new_col(col.size() + static_cast<int>(!title.empty()));
         if(!title.empty())
         {
