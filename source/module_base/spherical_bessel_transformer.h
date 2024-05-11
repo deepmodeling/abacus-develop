@@ -22,7 +22,7 @@ namespace ModuleBase
  *
  * where
  *
- *          j 
+ *          j
  *           l
  *
  * is the l-th order spherical Bessel function of the first kind.
@@ -97,7 +97,7 @@ public:
      *          y[j] = j * ------           j = 0, 1, 2,..., ngrid-1.
      *                     cutoff
      *
-     * @param[in]   l           order off the transform
+     * @param[in]   l           order of the transform
      * @param[in]   ngrid       number of grid points (same for input and output)
      * @param[in]   cutoff      cutoff distance of input grid
      * @param[in]   in          input values
@@ -149,6 +149,7 @@ public:
      *          could be a bad approximation.
      * @note    p is restricted to p <= 2 in order to avoid the situation that one has to
      *          determine x^2*F(x) at x = 0 from x[i]^p*F(x[i]).
+     *
      */
     void direct(
         int l,
@@ -165,13 +166,12 @@ public:
     /// total heap usage (in bytes) from the FFTW buffer and tabulated jl
     size_t heap_usage() const;
 
-
     /// clear the FFTW plan & buffer as well as the tabulated jl
     void clear();
 
-
     /// check if two objects share the same underlying implementation object
     bool operator==(const SphericalBesselTransformer& rhs) const { return impl_ == rhs.impl_; }
+
 
 private:
 

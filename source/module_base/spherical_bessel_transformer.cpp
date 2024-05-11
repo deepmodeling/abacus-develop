@@ -5,7 +5,7 @@
 #include <cmath>
 #include <numeric>
 #include <cassert>
-#include <fftw3.h>
+#include <complex>
 
 #include "module_base/math_integral.h"
 #include "module_base/math_sphbes.h"
@@ -21,7 +21,7 @@ class SphericalBesselTransformer::Impl
 
 public:
 
-    explicit Impl(bool cache_enabled): cache_enabled_(cache_enabled) {}
+    explicit Impl(bool cache_enabled = false);
     ~Impl() { _rfft_clear(); };
 
     Impl(Impl const&) = delete;
@@ -64,9 +64,10 @@ private:
     //*****************************************************************
     //                      FFT-based algorithm
     //*****************************************************************
-    // NOTE: the reason of using a raw pointer to handle the buffer below is because
-    // FFTW suggests using its own memory (de)allocation utilities, which imposes
-    // some strong requirements on memory alignment.
+    // NOTE: The reason of using a raw pointer to handle the FFT buffer is because
+    // FFTW suggests using its own memory allocation utility, which guarantee that
+    // the returned pointer obeys any special alignment restrictions imposed by any
+    // algorithm in FFTW.
 
     /// buffer used for in-place real-input FFT
     double* f_ = nullptr;
@@ -77,7 +78,10 @@ private:
     /// size of the planned FFT
     int sz_planned_ = -1;
 
-    /// buffer allocation and plan creation for a real-input FFT of size n.
+    /// planner flag used to create rfft_plan_
+    const unsigned fftw_plan_flag_;
+
+    /// buffer allocation and plan creation for in-place real-input FFT
     void _rfft_prepare(int n);
 
     /// clear the FFTW plan and buffer
@@ -87,8 +91,8 @@ private:
     //*****************************************************************
     //                      numerical integration
     //*****************************************************************
-    /// if true, tabulated jl(grid_out[j] * grid_in[i]) will be cached
-    bool cache_enabled_ = false;
+    /// if true, jl values used in numerical integration will be cached
+    const bool cache_enabled_ = false;
 
     /// order of the cached spherical Bessel function
     int l_ = -1;
@@ -102,7 +106,7 @@ private:
     /// cached spherical Bessel function values
     std::vector<double> jl_;
 
-    /// tabulate spherical Bessel function on the given transform grid
+    /// tabulate spherical Bessel function on the mesh grid
     void _tabulate(
         int l,
         int ngrid_in,
@@ -115,6 +119,12 @@ private:
     void _table_clear();
 
 }; // class SphericalBesselTransformer::Impl
+
+
+SphericalBesselTransformer::Impl::Impl(bool cache_enabled):
+    fftw_plan_flag_(cache_enabled ? FFTW_MEASURE : FFTW_ESTIMATE),
+    cache_enabled_(cache_enabled)
+{}
 
 
 void SphericalBesselTransformer::Impl::radrfft(
@@ -186,40 +196,34 @@ void SphericalBesselTransformer::Impl::radrfft(
     //      c(1,0) =  0     c(1,0) = 1
     //      c(1,1) = -1     c(1,1) = 0
     //
-    //std::vector<double[2]> c((l+1) * (l+1));
-    std::vector<std::array<int64_t, 2>> c((l+1) * (l+1));
+    std::vector<std::complex<double>> c((l+1) * (l+2) / 2); // cos->real; sin->imag
     auto idx = [](int ll, int m) { return (ll+1)*ll/2 + m; };
 
-    c[idx(0, 0)][0] = 0;
-    c[idx(0, 0)][1] = 1;
-
+    c[idx(0, 0)] = {0, 1};
     if (l > 0)
     {
-        c[idx(1, 0)][0] = 0;
-        c[idx(1, 1)][0] = -1;
-
-        c[idx(1, 0)][1] = 1;
-        c[idx(1, 1)][1] = 0;
+        c[idx(1, 0)] = {0, 1};
+        c[idx(1, 1)] = {-1, 0};
     }
 
-    for (int ll = 2; ll <= l; ++ll) {
-        for (int m = 0; m <= ll; ++m) {
-            c[idx(ll,m)][0] = (ll > m ? (2*ll-1) * c[idx(ll-1,m)][0] : 0)
-                            - (m >= 2 ? c[idx(ll-2,m-2)][0] : 0);
-            c[idx(ll,m)][1] = (ll > m ? (2*ll-1) * c[idx(ll-1,m)][1] : 0)
-                            - (m >= 2 ? c[idx(ll-2,m-2)][1] : 0);
+    for (int ll = 2; ll <= l; ++ll)
+    {
+        for (int m = 0; m < ll; ++m)
+        {
+            c[idx(ll,m)] = (2*ll-1.0) * c[idx(ll-1, m)] - (m >= 2 ? c[idx(ll-2, m-2)] : 0);
         }
+        c[idx(ll,ll)] = - c[idx(ll-2, ll-2)];
     }
 
     _rfft_prepare(2 * n);
 
+    bool is_imag = true;
+    int sign = -1;
     for (int m = 0; m <= l; ++m)
     {
         // m even --> sin; f[2*n-i] = -f[i]; out += -imag(rfft(f)) / y^(l+1-m)
         // m odd  --> cos; f[2*n-i] = +f[i]; out += +real(rfft(f)) / y^(l+1-m)
-        const bool is_even = (m % 2 == 0);
-        const double coef = c[idx(l, m)][is_even];
-        const int sign = is_even ? -1 : 1;
+        double coef = reinterpret_cast<double(&)[2]>(c[idx(l,m)])[is_imag];
 
         f_[0] = f_[n] = 0.0;
         for (int i = 1; i != n; ++i)
@@ -234,8 +238,11 @@ void SphericalBesselTransformer::Impl::radrfft(
         // out[0] is handled later by direct integration
         for (int j = 1; j <= n; ++j)
         {
-            tmp[j] = (tmp[j] + sign * f_[2*j+is_even]) / (j * dy);
+            tmp[j] = (tmp[j] + sign * f_[2*j + is_imag]) / (j * dy);
         }
+
+        is_imag = !is_imag;
+        sign = -sign;
     }
 
     // out[0] is done by direct integration
@@ -334,7 +341,7 @@ void SphericalBesselTransformer::Impl::_rfft_prepare(int n)
             fftw_destroy_plan(rfft_plan_);
         }
         auto* out = reinterpret_cast<fftw_complex*>(f_); // in-place transform
-        rfft_plan_ = fftw_plan_dft_r2c_1d(n, f_, out, FFTW_ESTIMATE);
+        rfft_plan_ = fftw_plan_dft_r2c_1d(n, f_, out, fftw_plan_flag_);
 
         sz_planned_ = n;
     }
@@ -400,8 +407,8 @@ void SphericalBesselTransformer::Impl::_table_clear()
 
 size_t SphericalBesselTransformer::Impl::heap_usage() const
 {
-    return (sz_planned_ + grid_in_.capacity() + grid_out_.capacity() + jl_.capacity())
-            * sizeof(double);
+    return (grid_in_.capacity() + grid_out_.capacity() + jl_.capacity()
+            + sz_planned_) * sizeof(double);
 }
 
 
