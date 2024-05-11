@@ -342,7 +342,10 @@ void Pseudopot_upf::read_pseudo_nl(std::ifstream &ifs)
 		// QIJ
 		if (tvanp)
 		{
-            ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_QIJ>", false);
+            if (!ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_QIJ>", false))
+            {
+                ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_QIJ_WITH_L>", false);
+            }
             // If nqf is not zero, Qij's inside rinner are computed using qfcoef's
             ModuleBase::GlobalFunc::READ_VALUE(ifs, this->nqf);
             this->nqlc = 2 * this->lmax + 1;
