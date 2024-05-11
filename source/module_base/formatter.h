@@ -299,8 +299,8 @@ private:
     // iterator support indices
     size_t j_ = 0;
 
-    std::vector<std::string> fmts_; // format strings for each column
     std::vector<std::string> titles_;
+    std::vector<std::string> fmts_; // format strings for each column
     NDArray<std::string> data_; // data
 };
 
