@@ -31,7 +31,7 @@ TDEkinetic<OperatorLCAO<TK, TR>>::TDEkinetic(LCAO_Matrix* LM_in,
         this->init_td();
         // initialize HR to get adjs info.
         this->initialize_HR(Grid,this->LM->ParaV);
-        if(hsolver::HSolverLCAO<std::complex<double>>::out_mat_hsR == 1)
+        if(TD_Velocity::out_mat_R == true)
         {
             out_mat_R = true;
         }

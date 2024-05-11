@@ -141,7 +141,14 @@ void Input_Conv::read_td_efield()
     {
         TD_Velocity::tddft_velocity = false;
     }
-
+    if(INPUT.out_mat_hs2==1)
+    {
+        TD_Velocity::out_mat_R = true;
+    }
+    else
+    {
+        TD_Velocity::out_mat_R = false;
+    }
     parse_expression(INPUT.td_ttype, elecstate::H_TDDFT_pw::ttype);
 
     elecstate::H_TDDFT_pw::tstart = INPUT.td_tstart;

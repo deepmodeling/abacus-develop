@@ -75,6 +75,7 @@ double elecstate::H_TDDFT_pw::lcut2;
 // time domain parameters
 
 bool TD_Velocity::tddft_velocity;
+bool TD_Velocity::out_mat_R;
 
 // Gauss
 int elecstate::H_TDDFT_pw::gauss_count;
