@@ -5,6 +5,8 @@
 #include "module_psi/kernels/device.h"
 #include "module_base/tool_quit.h"
 
+#include <base/macros/macros.h>
+
 #if defined(__CUDA)
 #include <cuda_runtime.h>
 #endif
@@ -44,18 +46,18 @@ template<> AbacusDevice_t get_device_type <DEVICE_GPU> (const DEVICE_GPU* dev) {
 
 void set_device(const int rank) {
 #if defined (__CUDA)
-    cudaSetDevice(rank);
+    cudaErrcheck(cudaSetDevice(rank));
 #elif defined (__ROCM)
-    hipSetDevice(rank);
+    hipErrcheck(hipSetDevice(rank));
 #endif
 }
 
 int get_device_num() {
     int device_num = -1;
 #if defined (__CUDA)
-    cudaGetDeviceCount(&device_num);
+    cudaErrcheck(cudaGetDeviceCount(&device_num));
 #elif defined (__ROCM)
-    hipGetDeviceCount(&device_num);
+    hipErrcheck(hipGetDeviceCount(&device_num));
 #endif
     return device_num;
 }
@@ -69,7 +71,7 @@ template<> void print_device_info <DEVICE_GPU> (const DEVICE_GPU* ctx, std::ofst
   if (error_id != cudaSuccess) {
     ofs_device << "cudaGetDeviceCount returned "
                << static_cast<int>(error_id) << "\n-> "
-               << cudaGetErrorString(error_id) << std::endl;
+               <<  cudaGetErrorString(error_id) << std::endl;
     ModuleBase::WARNING_QUIT("device", "GPU returned is without cudaSuccess");
   }
   // This function call returns 0 if there are no CUDA capable devices.
@@ -79,13 +81,13 @@ template<> void print_device_info <DEVICE_GPU> (const DEVICE_GPU* ctx, std::ofst
     ofs_device << "Detected " << deviceCount << " CUDA Capable device(s)\n";
   }
   int dev = 0, driverVersion = 0, runtimeVersion = 0;
-  cudaSetDevice(dev);
+  cudaErrcheck(cudaSetDevice(dev));
   cudaDeviceProp deviceProp;
-  cudaGetDeviceProperties(&deviceProp, dev);
+  cudaErrcheck(cudaGetDeviceProperties(&deviceProp, dev));
   ofs_device << "\nDevice " << dev << ":\t " << deviceProp.name << std::endl;
   // Console log
-  cudaDriverGetVersion(&driverVersion);
-  cudaRuntimeGetVersion(&runtimeVersion);
+  cudaErrcheck(cudaDriverGetVersion(&driverVersion));
+  cudaErrcheck(cudaRuntimeGetVersion(&runtimeVersion));
   char msg[1024];
   sprintf(msg,
           "  CUDA Driver Version / Runtime Version          %d.%d / %d.%d\n",
@@ -223,7 +225,7 @@ template<> void print_device_info <DEVICE_GPU> (const DEVICE_GPU* ctx, std::ofst
     int gpu_p2p_count = 0;
 
     for (int i = 0; i < deviceCount; i++) {
-      cudaGetDeviceProperties(&prop[i], i);
+      cudaErrcheck(cudaGetDeviceProperties(&prop[i], i));
 
       // Only boards based on Fermi or later can support P2P
       if (prop[i].major >= 2) {
@@ -241,7 +243,7 @@ template<> void print_device_info <DEVICE_GPU> (const DEVICE_GPU* ctx, std::ofst
           if (gpuid[i] == gpuid[j]) {
             continue;
           }
-          cudaDeviceCanAccessPeer(&can_access_peer, gpuid[i], gpuid[j]);
+          cudaErrcheck(cudaDeviceCanAccessPeer(&can_access_peer, gpuid[i], gpuid[j]));
           sprintf(msg, "> Peer access from %s (GPU%d) -> %s (GPU%d) : %s\n",
                  prop[gpuid[i]].name, gpuid[i], prop[gpuid[j]].name, gpuid[j],
                  can_access_peer ? "Yes" : "No");
@@ -305,13 +307,13 @@ template<> void print_device_info <DEVICE_GPU> (const DEVICE_GPU* ctx, std::ofst
     ofs_device << "Detected " << deviceCount << " CUDA Capable device(s)\n";
   }
   int dev = 0, driverVersion = 0, runtimeVersion = 0;
-  hipSetDevice(dev);
+  hipErrcheck(hipSetDevice(dev));
   hipDeviceProp_t deviceProp;
-  hipGetDeviceProperties(&deviceProp, dev);
+  hipErrcheck(hipGetDeviceProperties(&deviceProp, dev));
   ofs_device << "\nDevice " << dev << ":\t " << deviceProp.name << std::endl;
   // Console log
-  hipDriverGetVersion(&driverVersion);
-  hipRuntimeGetVersion(&runtimeVersion);
+  hipErrcheck(hipDriverGetVersion(&driverVersion));
+  hipErrcheck(hipRuntimeGetVersion(&runtimeVersion));
   char msg[1024];
   sprintf(msg,
           "  CUDA Driver Version / Runtime Version          %d.%d / %d.%d\n",
@@ -422,7 +424,7 @@ template<> void print_device_info <DEVICE_GPU> (const DEVICE_GPU* ctx, std::ofst
     int gpu_p2p_count = 0;
 
     for (int i = 0; i < deviceCount; i++) {
-      hipGetDeviceProperties(&prop[i], i);
+      hipErrcheck(hipGetDeviceProperties(&prop[i], i));
 
       // Only boards based on Fermi or later can support P2P
       if (prop[i].major >= 2) {
@@ -440,7 +442,7 @@ template<> void print_device_info <DEVICE_GPU> (const DEVICE_GPU* ctx, std::ofst
           if (gpuid[i] == gpuid[j]) {
             continue;
           }
-          hipDeviceCanAccessPeer(&can_access_peer, gpuid[i], gpuid[j]);
+          hipErrcheck(hipDeviceCanAccessPeer(&can_access_peer, gpuid[i], gpuid[j]));
           sprintf(msg, "> Peer access from %s (GPU%d) -> %s (GPU%d) : %s\n",
                  prop[gpuid[i]].name, gpuid[i], prop[gpuid[j]].name, gpuid[j],
                  can_access_peer ? "Yes" : "No");
@@ -621,14 +623,14 @@ std::string get_device_info(std::string device_flag)
     if (device_flag == "gpu") {
         int dev = 0;
         cudaDeviceProp deviceProp;
-        cudaGetDeviceProperties(&deviceProp, dev);
+        cudaErrcheck(cudaGetDeviceProperties(&deviceProp, dev));
         device_info = deviceProp.name;
     }
 #elif defined(__ROCM)
     if (device_flag == "gpu") {
         int dev = 0;
         hipDeviceProp_t deviceProp;
-        hipGetDeviceProperties(&deviceProp, dev);
+        hipErrcheck(hipGetDeviceProperties(&deviceProp, dev));
         device_info = deviceProp.name;
     }
 #endif
