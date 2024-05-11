@@ -25,6 +25,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_lcao/module_tddft/evolve_elec.h"
+#include "module_hamilt_lcao/module_tddft/td_velocity.h"
 #endif
 
 #include "module_base/timer.h"
@@ -132,6 +133,14 @@ std::vector<double> Input_Conv::convert_units(std::string params, double c)
 void Input_Conv::read_td_efield()
 {
     elecstate::H_TDDFT_pw::stype = INPUT.td_stype;
+    if(INPUT.esolver_type == "tddft" && elecstate::H_TDDFT_pw::stype == 1)
+    {
+        TD_Velocity::tddft_velocity = true;
+    }
+    else
+    {
+        TD_Velocity::tddft_velocity = false;
+    }
 
     parse_expression(INPUT.td_ttype, elecstate::H_TDDFT_pw::ttype);
 

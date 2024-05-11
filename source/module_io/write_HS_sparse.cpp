@@ -4,7 +4,7 @@
 #include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "single_R_io.h"
-#include "module_elecstate/potentials/H_TDDFT_pw.h"
+#include "module_hamilt_lcao/module_tddft/td_velocity.h"
 
 void ModuleIO::save_HSR_sparse(
     const int &istep,
@@ -25,8 +25,6 @@ void ModuleIO::save_HSR_sparse(
     auto &SR_sparse_ptr = lm.SR_sparse;
     auto &HR_soc_sparse_ptr = lm.HR_soc_sparse;
     auto &SR_soc_sparse_ptr = lm.SR_soc_sparse;
-    //added for tddft HR output
-    auto &HR_sparse_td_vel_ptr = lm.HR_sparse_td_vel;
 
     int total_R_num = all_R_coor_ptr.size();
     int output_R_number = 0;
@@ -56,10 +54,10 @@ void ModuleIO::save_HSR_sparse(
         {
             for (int ispin = 0; ispin < spin_loop; ++ispin)
             {
-                if(GlobalV::ESOLVER_TYPE == "tddft" && elecstate::H_TDDFT_pw::stype ==1)
+                if(TD_Velocity::tddft_velocity)
                 {
-                    auto iter = HR_sparse_td_vel_ptr[ispin].find(R_coor);
-                    if (iter != HR_sparse_td_vel_ptr[ispin].end())
+                    auto iter = TD_Velocity::td_vel_op->HR_sparse_td_vel[ispin].find(R_coor);
+                    if (iter != TD_Velocity::td_vel_op->HR_sparse_td_vel[ispin].end())
                     {
                         for (auto &row_loop : iter->second)
                         {
@@ -296,9 +294,9 @@ void ModuleIO::save_HSR_sparse(
             {
                 if (GlobalV::NSPIN != 4)
                 {
-                    if(GlobalV::ESOLVER_TYPE == "tddft" && elecstate::H_TDDFT_pw::stype ==1)
+                    if(TD_Velocity::tddft_velocity)
                     {
-                        output_single_R(g1[ispin], HR_sparse_td_vel_ptr[ispin][R_coor], sparse_thr, binary, *lm.ParaV);
+                        output_single_R(g1[ispin], TD_Velocity::td_vel_op->HR_sparse_td_vel[ispin][R_coor], sparse_thr, binary, *lm.ParaV);
                     }
                     else
                     {
