@@ -76,6 +76,8 @@ class TDEkinetic<OperatorLCAO<TK,TR>> : public OperatorLCAO<TK, TR>
     void calculate_HR(void);
     virtual void set_HR_fixed(void*)override;
 
+    TD_Velocity td_velocity;
+
   private:
     const UnitCell* ucell = nullptr;
     

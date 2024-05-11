@@ -74,6 +74,8 @@ double elecstate::H_TDDFT_pw::lcut2;
 
 // time domain parameters
 
+bool TD_Velocity::tddft_velocity;
+
 // Gauss
 int elecstate::H_TDDFT_pw::gauss_count;
 std::vector<double> elecstate::H_TDDFT_pw::gauss_omega; // time(a.u.)^-1

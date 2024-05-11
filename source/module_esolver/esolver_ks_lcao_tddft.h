@@ -40,8 +40,6 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, doubl
 
     virtual void update_pot(const int istep, const int iter) override;
 
-    virtual void before_scf(const int istep) override;
-
     virtual void after_scf(const int istep) override;
 
     void cal_edm_tddft();
