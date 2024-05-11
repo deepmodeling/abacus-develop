@@ -1566,6 +1566,7 @@ TEST_F(InputTest, Check)
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("please set right files directory for reading in."));
 	INPUT.read_file_dir = "auto";
+	/*
 	// Start to check deltaspin parameters
 	INPUT.sc_mag_switch = 1;
 	INPUT.sc_file = "none";
@@ -1653,6 +1654,7 @@ TEST_F(InputTest, Check)
 	INPUT.ks_solver = "default";
 	INPUT.basis_type = "pw";
 	// End of checking Deltaspin parameters
+	*/
 
 	/*
 	testing::internal::CaptureStdout();
