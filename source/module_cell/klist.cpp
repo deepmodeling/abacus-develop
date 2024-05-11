@@ -307,8 +307,15 @@ bool K_Vectors::read_kpoints(const std::string &fn)
         }
 
         ifk >> nmp[0] >> nmp[1] >> nmp[2];
+        
+        koffset[0] = 0;
+        koffset[1] = 0;
+        koffset[2] = 0;
+        if (!(ifk >> koffset[0] >> koffset[1] >> koffset[2]))
+        {
+            ModuleBase::WARNING("K_Vectors::read_kpoints", "Missing k-point offsets in the k-points file.");
+        }
 
-        ifk >> koffset[0] >> koffset[1] >> koffset[2];
         this->Monkhorst_Pack(nmp, koffset, k_type);
     }
     else if (nkstot > 0)
