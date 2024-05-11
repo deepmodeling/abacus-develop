@@ -45,7 +45,7 @@ class SphericalBesselTransformTest : public ::testing::Test
     /// Gets the maximum absolute element-wise difference between two arrays
     static double max_diff(int sz, const double* arr1, const double* arr2);
 
-    int sz_max = 10000;         ///< size of each buffer
+    const int sz_max = 10000;   ///< size of each buffer
     double* buffer = nullptr;   ///< buffer for all arrays below
 
     double* f = nullptr;        ///< input array
@@ -54,7 +54,7 @@ class SphericalBesselTransformTest : public ::testing::Test
     double* grid_in = nullptr;  ///< input grid
     double* grid_out = nullptr; ///< output grid
 
-    double tol = 1e-9; ///< tolerance for element-wise numerical error
+    const double tol = 1e-9; ///< tolerance for element-wise numerical error
 };
 
 void SphericalBesselTransformTest::SetUp()
@@ -99,13 +99,13 @@ TEST_F(SphericalBesselTransformTest, RadrfftBasic)
      * first :  2*sqrt(2/pi) *   4k    / (k^2+1)^3.
      * second:  2*sqrt(2/pi) *   4k^2  / (k^2+1)^3.
      *                                                              */
-    int sz = 10000;
+    const int sz = 10000;
     assert(sz <= sz_max);
 
-    double dr = 0.01;
-    double rcut = dr * (sz - 1);
-    double dk = PI / rcut;
-    double pref = std::sqrt(2. / PI) * 2.;
+    const double dr = 0.01;
+    const double rcut = dr * (sz - 1);
+    const double dk = PI / rcut;
+    const double pref = std::sqrt(2. / PI) * 2.;
 
     SphericalBesselTransformer sbt;
 
@@ -153,13 +153,13 @@ TEST_F(SphericalBesselTransformTest, RadrfftImplicitExponent)
      *
      *      48*sqrt(2/pi) * k^2  / (k^2+1)^4.
      *                                                          */
-    int sz = 5000;
+    const int sz = 5000;
     assert(sz <= sz_max);
 
-    double dr = 0.02;
-    double rcut = dr * (sz - 1);
-    double dk = PI / rcut;
-    double pref = std::sqrt(2. / PI) * 48.;
+    const double dr = 0.02;
+    const double rcut = dr * (sz - 1);
+    const double dk = PI / rcut;
+    const double pref = std::sqrt(2. / PI) * 48.;
 
     SphericalBesselTransformer sbt(true);
 
@@ -190,22 +190,22 @@ TEST_F(SphericalBesselTransformTest, RadrfftVariableSize)
      *
      *      48*sqrt(2/pi) * k^2  / (k^2+1)^4.
      *                                                          */
-    double dr = 0.02;
-    double pref = std::sqrt(2. / PI) * 48.;
+    const double dr = 0.02;
+    const double pref = std::sqrt(2. / PI) * 48.;
 
     SphericalBesselTransformer sbt;
 
     for (int sz = 5000; sz <= sz_max; sz += 1000)
     {
 
-        double rcut = dr * (sz - 1);
         for (int i = 0; i != sz; ++i)
         {
             double r = i * dr;
             f[i] = r * r * std::exp(-r);
         }
 
-        double dk = PI / rcut;
+        const double rcut = dr * (sz - 1);
+        const double dk = PI / rcut;
         for (int i = 0; i != sz; ++i)
         {
             double k = dk * i;
@@ -225,13 +225,13 @@ TEST_F(SphericalBesselTransformTest, RadrfftInPlace)
      *
      *      sqrt(2)/16 * k^2 * exp(-k^2/4)
      *                                                          */
-    double dr = 0.02;
-    double pref = std::sqrt(2.) / 16.;
+    const double dr = 0.02;
+    const double pref = std::sqrt(2.) / 16.;
 
     SphericalBesselTransformer sbt;
 
-    double sz = 10000;
-    double rcut = dr * (sz - 1);
+    const double sz = 10000;
+    const double rcut = dr * (sz - 1);
     for (int i = 0; i != sz; ++i)
     {
         double r = i * dr;
@@ -259,16 +259,16 @@ TEST_F(SphericalBesselTransformTest, DirectBasic)
      * first :  2*sqrt(2/pi) *   4k    / (k^2+1)^3.
      * second:  2*sqrt(2/pi) *   4k^2  / (k^2+1)^3.
      *                                                              */
-    int sz_in = 7000;
-    int sz_out = 5000;
+    const int sz_in = 7000;
+    const int sz_out = 5000;
     assert(sz_in <= sz_max && sz_out <= sz_max);
 
-    double dr = 0.007;
-    double dk = 0.013;
+    const double dr = 0.007;
+    const double dk = 0.013;
     std::for_each(grid_in, grid_in + sz_in, [&](double& x) { x = (&x - grid_in) * dr; });
     std::for_each(grid_out, grid_out + sz_out, [&](double& x) { x = (&x - grid_out) * dk; });
 
-    double pref = std::sqrt(2. / PI) * 2.;
+    const double pref = std::sqrt(2. / PI) * 2.;
 
     std::for_each(f, f + sz_in, [&](double& x) {
         double r = (&x - f) * dr;
@@ -315,16 +315,16 @@ TEST_F(SphericalBesselTransformTest, DirectImplicitExponent)
      *
      *      48*sqrt(2/pi) * k^2  / (k^2+1)^4.
      *                                                          */
-    int sz_in = 7000;
-    int sz_out = 6000;
+    const int sz_in = 7000;
+    const int sz_out = 6000;
     assert(sz_in <= sz_max && sz_out <= sz_max);
 
-    double dr = 0.007;
-    double dk = 0.011;
+    const double dr = 0.007;
+    const double dk = 0.011;
     std::for_each(grid_in, grid_in + sz_in, [&](double& x) { x = (&x - grid_in) * dr; });
     std::for_each(grid_out, grid_out + sz_out, [&](double& x) { x = (&x - grid_out) * dk; });
 
-    double pref = std::sqrt(2. / PI) * 48.;
+    const double pref = std::sqrt(2. / PI) * 48.;
     std::for_each(g_ref, g_ref + sz_out, [&](double& y) {
         double k = (&y - g_ref) * dk;
         y = pref * k * k / std::pow(k * k + 1, 4);
@@ -353,12 +353,12 @@ TEST_F(SphericalBesselTransformTest, DirectInPlace)
      *
      *      sqrt(2)/16 * k^2 * exp(-k^2/4)
      *                                                          */
-    int sz_in = 7000;
-    int sz_out = 7000;
+    const int sz_in = 7000;
+    const int sz_out = 7000;
     assert(sz_in <= sz_max && sz_out == sz_in);
 
-    double dr = 0.011;
-    double dk = 0.007;
+    const double dr = 0.011;
+    const double dk = 0.007;
     std::for_each(grid_in, grid_in + sz_in, [&](double& x) { x = (&x - grid_in) * dr; });
     std::for_each(grid_out, grid_out + sz_out, [&](double& x) { x = (&x - grid_out) * dk; });
 
@@ -367,7 +367,7 @@ TEST_F(SphericalBesselTransformTest, DirectInPlace)
         x = r * r * std::exp(-r * r);
     });
 
-    double pref = std::sqrt(2.) / 16.;
+    const double pref = std::sqrt(2.) / 16.;
     std::for_each(g_ref, g_ref + sz_out, [&](double& y) {
         double k = (&y - g_ref) * dk;
         y = pref * k * k * std::exp(-k * k / 4);
@@ -386,13 +386,13 @@ TEST_F(SphericalBesselTransformTest, HighOrder)
      * r^l*exp(-r^2) using radrfft and direct with some high l,
      * and check the consistency between their results.
      *                                                              */
-    int l = 6;
-    int sz = 5000;
+    const int l = 6;
+    const int sz = 5000;
     assert(sz <= sz_max);
 
-    double dr = 0.01;
-    double rcut = dr * (sz - 1);
-    double dk = PI / rcut;
+    const double dr = 0.01;
+    const double rcut = dr * (sz - 1);
+    const double dk = PI / rcut;
 
     std::for_each(grid_in, grid_in + sz, [&](double& x) { x = (&x - grid_in) * dr; });
     std::for_each(grid_out, grid_out + sz, [&](double& x) { x = (&x - grid_out) * dk; });
@@ -413,6 +413,52 @@ TEST_F(SphericalBesselTransformTest, HighOrder)
     // is of order 1. So we only compare the results for relatively small k.
     EXPECT_LT(max_diff(sz / 2, g_ref, g), tol);
 }
+
+TEST_F(SphericalBesselTransformTest, HeapUsage)
+{
+    /*
+     * Tests the setter and getter of the planner flag for FFTW plan
+     * creation.
+     *                                                              */
+    const int sz = 2000;
+    assert(sz <= sz_max);
+
+    const double dr = 0.01;
+    const double rcut = dr * (sz - 1);
+
+    SphericalBesselTransformer sbt_no_cache(false);
+    SphericalBesselTransformer sbt_cached(true);
+
+    EXPECT_EQ(sbt_no_cache.heap_usage(), 0);
+    EXPECT_EQ(sbt_cached.heap_usage(), 0);
+
+    for (int i = 0; i != sz; ++i)
+    {
+        f[i] = std::exp(-i * dr);
+    }
+
+    sbt_no_cache.radrfft(0, sz, rcut, f, g, 0);
+    sbt_cached.radrfft(0, sz, rcut, f, g, 0);
+
+    // zeroth-order transform does not involve tabulating jl
+    // but FFT needs to allocate memory
+    EXPECT_EQ(sbt_no_cache.heap_usage(), 0);
+    EXPECT_EQ(sbt_cached.heap_usage(), 2*(sz-1)*sizeof(double));
+
+    // higher-order transforms involve tabulating jl
+    sbt_no_cache.radrfft(5, sz, rcut, f, g, 0);
+    sbt_cached.radrfft(5, sz, rcut, f, g, 0);
+
+    EXPECT_EQ(sbt_no_cache.heap_usage(), 0);
+    EXPECT_GT(sbt_cached.heap_usage(), 2*(sz-1)*sizeof(double));
+
+    sbt_no_cache.clear();
+    sbt_cached.clear();
+
+    EXPECT_EQ(sbt_no_cache.heap_usage(), 0);
+    EXPECT_EQ(sbt_cached.heap_usage(), 0);
+}
+
 
 int main(int argc, char** argv)
 {

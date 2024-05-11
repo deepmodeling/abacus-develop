@@ -76,7 +76,7 @@ private:
     fftw_plan rfft_plan_ = nullptr;
 
     /// size of the planned FFT
-    int sz_planned_ = -1;
+    int sz_planned_ = 0;
 
     /// planner flag used to create rfft_plan_
     const unsigned fftw_plan_flag_;
@@ -273,6 +273,11 @@ void SphericalBesselTransformer::Impl::radrfft(
     }
 
     std::copy(tmp.begin(), tmp.end(), out);
+
+    if (!cache_enabled_)
+    {
+        _rfft_clear();
+    }
 }
 
 
@@ -393,7 +398,7 @@ void SphericalBesselTransformer::Impl::_rfft_clear()
         f_ = nullptr;
     }
 
-    sz_planned_ = -1;
+    sz_planned_ = 0;
 }
 
 
