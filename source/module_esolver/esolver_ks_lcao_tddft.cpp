@@ -434,15 +434,6 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
     }
 }
 
-void ESolver_KS_LCAO_TDDFT::before_scf(const int istep)
-{
-    ESolver_KS_LCAO<std::complex<double>, double>::before_scf(istep);
-    
-    if(TD_Velocity::td_vel_op == nullptr && TD_Velocity::tddft_velocity)
-    {
-        TD_Velocity::td_vel_op = new TD_Velocity();
-    }
-}
 void ESolver_KS_LCAO_TDDFT::after_scf(const int istep)
 {
     for (int is = 0; is < GlobalV::NSPIN; is++)
@@ -468,12 +459,6 @@ void ESolver_KS_LCAO_TDDFT::after_scf(const int istep)
 						this->gen_h); // mohan add 2024-02
 	}
     ESolver_KS_LCAO<std::complex<double>, double>::after_scf(istep);
-
-    if(TD_Velocity::td_vel_op!=nullptr)
-    {
-        delete TD_Velocity::td_vel_op;
-        TD_Velocity::td_vel_op = nullptr;
-    }
 }
 
 

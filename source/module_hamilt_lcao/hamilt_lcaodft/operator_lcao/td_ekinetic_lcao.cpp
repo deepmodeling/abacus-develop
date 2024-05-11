@@ -43,6 +43,7 @@ TDEkinetic<OperatorLCAO<TK, TR>>::~TDEkinetic()
     {
         delete this->hR_tmp;
     }
+    TD_Velocity::td_vel_op = nullptr;
 }
 //term A^2*S
 template <typename TK, typename TR>
@@ -191,6 +192,7 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1,
 template <typename TK, typename TR>
 void TDEkinetic<OperatorLCAO<TK, TR>>::init_td(void)
 {
+    TD_Velocity::td_vel_op = &td_velocity;
     //calculate At in cartesian coorinates.
 	double l_norm[3]={GlobalC::ucell.a1.norm() ,GlobalC::ucell.a2.norm() ,GlobalC::ucell.a3.norm()};
     double (&A)[3] = elecstate::H_TDDFT_pw::At;
@@ -374,31 +376,32 @@ void TDEkinetic<OperatorLCAO<std::complex<double>, double>>::contributeHk(int ik
     else{        
         ModuleBase::TITLE("TDEkinetic", "contributeHk");
         ModuleBase::timer::tick("TDEkinetic", "contributeHk");
+        const Parallel_Orbitals* paraV = this->hR_tmp->get_atom_pair(0).get_paraV();
         //save HR data for output
-        int spin_tot = this->LM->ParaV->nspin;
+        int spin_tot = paraV->nspin;
         if(spin_tot==4);
         else if(!output_hR_done && out_mat_R)
         {
             for(int spin_now = 0;spin_now < spin_tot;spin_now++)
             {
                 sparse_format::cal_HContainer_cd(
-                    *(this->LM->ParaV),
+                    *(paraV),
                     spin_now, 
                     1e-10, 
                     *hR_tmp, 
-                    TD_Velocity::td_vel_op->HR_sparse_td_vel[spin_now]);
+                    td_velocity.HR_sparse_td_vel[spin_now]);
             }
             output_hR_done = true;
         }
         //folding inside HR to HK
         if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
         {
-            const int nrow = this->LM->ParaV->get_row_size();
+            const int nrow = paraV->get_row_size();
             hamilt::folding_HR(*this->hR_tmp, this->hK->data(), this->kvec_d[ik], nrow, 1);
         }
         else
         {
-            const int ncol = this->LM->ParaV->get_col_size();
+            const int ncol = paraV->get_col_size();
             hamilt::folding_HR(*this->hR_tmp, this->hK->data(), this->kvec_d[ik], ncol, 0);
         }
         
