@@ -130,9 +130,8 @@ void ESolver_KS_LCAO_TDDFT::init(Input& inp, UnitCell& ucell)
     this->pelec_td = dynamic_cast<elecstate::ElecStateLCAO_TDDFT*>(this->pelec);
 }
 
-void ESolver_KS_LCAO_TDDFT::hamilt2density(int istep, int iter, double ethr)
+void ESolver_KS_LCAO_TDDFT::hamilt2density(const int istep, const int iter, const double ethr)
 {
-
     pelec->charge->save_rho_before_sum_band();
 
     if (wf.init_wfc == "file")
