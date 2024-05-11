@@ -819,7 +819,7 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
     ModuleBase::TITLE("ESolver_KS_LCAO", "update_pot");
 
     // print Hamiltonian and Overlap matrix
-    if (this->conv_elec)
+    if (this->conv_elec || iter == GlobalV::SCF_NMAX)
     {
         if (!GlobalV::GAMMA_ONLY_LOCAL && hsolver::HSolverLCAO<TK>::out_mat_hs[0])
         {
