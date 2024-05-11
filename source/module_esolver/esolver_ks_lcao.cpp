@@ -45,6 +45,10 @@ namespace ModuleESolver
 {
 
 
+//------------------------------------------------------------------------------
+//! the 1st function of ESolver_KS_LCAO: constructor
+//! mohan add 2024-05-11
+//------------------------------------------------------------------------------
 template <typename TK, typename TR>
 ESolver_KS_LCAO<TK, TR>::ESolver_KS_LCAO()
 {
@@ -69,6 +73,10 @@ ESolver_KS_LCAO<TK, TR>::ESolver_KS_LCAO()
 }
 
 
+//------------------------------------------------------------------------------
+//! the 2nd function of ESolver_KS_LCAO: deconstructor
+//! mohan add 2024-05-11
+//------------------------------------------------------------------------------
 template <typename TK, typename TR>
 ESolver_KS_LCAO<TK, TR>::~ESolver_KS_LCAO()
 {
@@ -78,6 +86,10 @@ ESolver_KS_LCAO<TK, TR>::~ESolver_KS_LCAO()
 }
 
 
+//------------------------------------------------------------------------------
+//! the 3rd function of ESolver_KS_LCAO: init
+//! mohan add 2024-05-11
+//------------------------------------------------------------------------------
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::init(Input& inp, UnitCell& ucell)
 {
@@ -242,6 +254,10 @@ void ESolver_KS_LCAO<TK, TR>::init(Input& inp, UnitCell& ucell)
 }
 
 
+//------------------------------------------------------------------------------
+//! the 4th function of ESolver_KS_LCAO: init_after_vc
+//! mohan add 2024-05-11
+//------------------------------------------------------------------------------
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::init_after_vc(Input& inp, UnitCell& ucell)
 {
@@ -288,6 +304,10 @@ void ESolver_KS_LCAO<TK, TR>::init_after_vc(Input& inp, UnitCell& ucell)
 }
 
 
+//------------------------------------------------------------------------------
+//! the 5th function of ESolver_KS_LCAO: cal_energy
+//! mohan add 2024-05-11
+//------------------------------------------------------------------------------
 template <typename TK, typename TR>
 double ESolver_KS_LCAO<TK, TR>::cal_energy()
 {
@@ -297,6 +317,10 @@ double ESolver_KS_LCAO<TK, TR>::cal_energy()
 }
 
 
+//------------------------------------------------------------------------------
+//! the 6th function of ESolver_KS_LCAO: cal_force
+//! mohan add 2024-05-11
+//------------------------------------------------------------------------------
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::cal_force(ModuleBase::matrix& force)
 {
@@ -339,6 +363,10 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(ModuleBase::matrix& force)
 }
 
 
+//------------------------------------------------------------------------------
+//! the 7th function of ESolver_KS_LCAO: cal_stress
+//! mohan add 2024-05-11
+//------------------------------------------------------------------------------
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::cal_stress(ModuleBase::matrix& stress)
 {
@@ -357,6 +385,10 @@ void ESolver_KS_LCAO<TK, TR>::cal_stress(ModuleBase::matrix& stress)
 }
 
 
+//------------------------------------------------------------------------------
+//! the 8th function of ESolver_KS_LCAO: post_process
+//! mohan add 2024-05-11
+//------------------------------------------------------------------------------
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::post_process(void)
 {
@@ -443,6 +475,10 @@ void ESolver_KS_LCAO<TK, TR>::post_process(void)
 }
 
 
+//------------------------------------------------------------------------------
+//! the 9th function of ESolver_KS_LCAO: init_basis_lcao
+//! mohan add 2024-05-11
+//------------------------------------------------------------------------------
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::init_basis_lcao(
 		ORB_control& orb_con, 
@@ -534,6 +570,10 @@ void ESolver_KS_LCAO<TK, TR>::init_basis_lcao(
 }
 
 
+//------------------------------------------------------------------------------
+//! the 10th function of ESolver_KS_LCAO: iter_init
+//! mohan add 2024-05-11
+//------------------------------------------------------------------------------
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
 {
@@ -700,6 +740,8 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
 
 
 //------------------------------------------------------------------------------
+//! the 11th function of ESolver_KS_LCAO: hamilt2density 
+//! mohan add 2024-05-11
 //! 1) save input rho
 //! 2) save density matrix DMR for mixing
 //! 3) solve the Hamiltonian and output band gap
@@ -836,7 +878,8 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density(int istep, int iter, double ethr)
 
 
 //------------------------------------------------------------------------------
-//! mohan 2024-05-11
+//! the 12th function of ESolver_KS_LCAO: update_pot
+//! mohan add 2024-05-11
 //! 1) print Hamiltonian and Overlap matrix (why related to update_pot()?)
 //! 2) print wavefunctions (why related to update_pot()?) 
 //! 3) print potential
@@ -941,12 +984,22 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
 }
 
 
+//------------------------------------------------------------------------------
+//! the 13th function of ESolver_KS_LCAO: iter_finish
+//! mohan add 2024-05-11
+//! 1) mix density matrix
+//! 2) output charge density
+//! 3) output exx matrix
+//! 4) output charge density and density matrix
+//! 5) cal_MW? (why put it here?)
+//! 6) calculate the total energy?
+//------------------------------------------------------------------------------
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::iter_finish(int iter)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "iter_finish");
 
-    // mix density matrix if mixing_restart + mixing_dmr + not first mixing_restart at every iter
+    // 1) mix density matrix if mixing_restart + mixing_dmr + not first mixing_restart at every iter
     if (GlobalV::MIXING_RESTART > 0 
         && this->p_chgmix->mixing_restart_count > 0 
         && GlobalV::MIXING_DMR)
@@ -956,9 +1009,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int iter)
         this->p_chgmix->mix_dmr(dm);
     }
 
-    //-----------------------------------
-    // save charge density
-    //-----------------------------------
+    // 2) save charge density
     // Peize Lin add 2020.04.04
     if (GlobalC::restart.info_save.save_charge)
     {
@@ -967,8 +1018,12 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int iter)
             GlobalC::restart.save_disk("charge", is, this->pelec->charge->nrxx, this->pelec->charge->rho[is]);
         }
     }
+
+
 #ifdef __EXX
+    // 3) save exx matrix
     int two_level_step = GlobalC::exx_info.info_ri.real_number ? this->exd->two_level_step : this->exc->two_level_step;
+
     if (GlobalC::restart.info_save.save_H && two_level_step > 0 &&
         (!GlobalC::exx_info.info_global.separate_loop || iter == 1)) // to avoid saving the same value repeatedly
     {
@@ -989,9 +1044,8 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int iter)
 		}
     }
 #endif
-    //-----------------------------------
-    // output charge density for tmp
-    //-----------------------------------
+
+    // 4) output charge density and density matrix
     bool print = false;
     if (this->out_freq_elec && iter % this->out_freq_elec == 0)
     {
@@ -1011,6 +1065,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int iter)
         }
     }
 
+    // 5) cal_MW?
     // escon: energy of spin constraint depends on Mi, so cal_energies should be called after cal_MW
     if (GlobalV::sc_mag_switch)
     {
@@ -1018,11 +1073,15 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int iter)
         sc.cal_MW(iter, &(this->LM));
     }
 
-    // (11) calculate the total energy.
+    // 6) calculate the total energy.
     this->pelec->cal_energies(2);
 }
 
 
+//------------------------------------------------------------------------------
+//! the 14th function of ESolver_KS_LCAO: after_scf
+//! mohan add 2024-05-11
+//------------------------------------------------------------------------------
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
 {
@@ -1216,6 +1275,10 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
 }
 
 
+//------------------------------------------------------------------------------
+//! the 15th function of ESolver_KS_LCAO: do_after_converge
+//! mohan add 2024-05-11
+//------------------------------------------------------------------------------
 template <typename TK, typename TR>
 bool ESolver_KS_LCAO<TK, TR>::do_after_converge(int& iter)
 {
@@ -1251,6 +1314,10 @@ bool ESolver_KS_LCAO<TK, TR>::do_after_converge(int& iter)
 }
 
 
+//------------------------------------------------------------------------------
+//! the 16th function of ESolver_KS_LCAO: create_Output_DM
+//! mohan add 2024-05-11
+//------------------------------------------------------------------------------
 template <typename TK, typename TR>
 ModuleIO::Output_DM ESolver_KS_LCAO<TK, TR>::create_Output_DM(int is, int iter)
 {
@@ -1269,6 +1336,10 @@ ModuleIO::Output_DM ESolver_KS_LCAO<TK, TR>::create_Output_DM(int is, int iter)
 }
 
 
+//------------------------------------------------------------------------------
+//! the 17th function of ESolver_KS_LCAO: create_Output_DM1
+//! mohan add 2024-05-11
+//------------------------------------------------------------------------------
 template <typename TK, typename TR>
 ModuleIO::Output_DM1 ESolver_KS_LCAO<TK, TR>::create_Output_DM1(int istep)
 {
@@ -1278,6 +1349,10 @@ ModuleIO::Output_DM1 ESolver_KS_LCAO<TK, TR>::create_Output_DM1(int istep)
 }
 
 
+//------------------------------------------------------------------------------
+//! the 18th function of ESolver_KS_LCAO: create_Output_Mat_Sparse
+//! mohan add 2024-05-11
+//------------------------------------------------------------------------------
 template <typename TK, typename TR>
 ModuleIO::Output_Mat_Sparse<TK> ESolver_KS_LCAO<TK, TR>::create_Output_Mat_Sparse(int istep)
 {
@@ -1298,6 +1373,10 @@ ModuleIO::Output_Mat_Sparse<TK> ESolver_KS_LCAO<TK, TR>::create_Output_Mat_Spars
 }
 
 
+//------------------------------------------------------------------------------
+//! the 19th function of ESolver_KS_LCAO: md_skip_out
+//! mohan add 2024-05-11
+//------------------------------------------------------------------------------
 template <typename TK, typename TR>
 bool ESolver_KS_LCAO<TK, TR>::md_skip_out(std::string calculation, int istep, int interval)
 {
@@ -1312,6 +1391,10 @@ bool ESolver_KS_LCAO<TK, TR>::md_skip_out(std::string calculation, int istep, in
 }
 
 
+//------------------------------------------------------------------------------
+//! the 20th,21th,22th functions of ESolver_KS_LCAO
+//! mohan add 2024-05-11
+//------------------------------------------------------------------------------
 template class ESolver_KS_LCAO<double, double>;
 template class ESolver_KS_LCAO<std::complex<double>, double>;
 template class ESolver_KS_LCAO<std::complex<double>, std::complex<double>>;
