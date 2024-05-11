@@ -440,7 +440,7 @@ void ESolver_KS_LCAO_TDDFT::before_scf(const int istep)
     
     if(TD_Velocity::td_vel_op == nullptr && TD_Velocity::tddft_velocity)
     {
-        TD_Velocity::td_vel_op = new TD_Velocity::TD_Velocity();
+        TD_Velocity::td_vel_op = new TD_Velocity();
     }
 }
 void ESolver_KS_LCAO_TDDFT::after_scf(const int istep)
