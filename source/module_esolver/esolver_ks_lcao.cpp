@@ -50,6 +50,8 @@ ESolver_KS_LCAO<TK, TR>::ESolver_KS_LCAO()
 {
 	this->classname = "ESolver_KS_LCAO";
 	this->basisname = "LCAO";
+
+// the following EXX code should be removed to other places, mohan 2024/05/11
 #ifdef __EXX
 	if (GlobalC::exx_info.info_ri.real_number)
 	{
@@ -84,7 +86,6 @@ void ESolver_KS_LCAO<TK, TR>::init(Input& inp, UnitCell& ucell)
 
     // if we are only calculating S, then there is no need
     // to prepare for potentials and so on
-
     if (GlobalV::CALCULATION == "get_S")
     {
         ucell.read_pseudo(GlobalV::ofs_running);
@@ -391,7 +392,7 @@ void ESolver_KS_LCAO<TK, TR>::post_process(void)
 
     const int nspin0 = (GlobalV::NSPIN == 2) ? 2 : 1;
 
-    if (INPUT.out_band[0]) // pengfei 2014-10-13
+    if (INPUT.out_band[0])
     {
         for (int is = 0; is < nspin0; is++)
         {
@@ -698,14 +699,29 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
 }
 
 
+//------------------------------------------------------------------------------
+//! 1) save input rho
+//! 2) save density matrix DMR for mixing
+//! 3) solve the Hamiltonian and output band gap
+//! 4) print bands for each k-point and each band 
+//! 5) EXX: 
+//! 6) DFT+U: compute local occupation number matrix and energy correction
+//! 7) DeePKS: compute delta_e
+//! 8) DeltaSpin: 
+//! 9) use new charge density to calculate energy
+//! 10) symmetrize the charge density
+//! 11) compute magnetization, only for spin==2
+//! 12) calculate delta energy
+//------------------------------------------------------------------------------
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::hamilt2density(int istep, int iter, double ethr)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "hamilt2density");
 
-    // save input rho
+    // 1) save input rho
     this->pelec->charge->save_rho_before_sum_band();
-    // save density matrix for mixing
+
+    // 2) save density matrix DMR for mixing
     if (GlobalV::MIXING_RESTART > 0 
         && GlobalV::MIXING_DMR 
         && this->p_chgmix->mixing_restart_count > 0)
@@ -715,7 +731,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density(int istep, int iter, double ethr)
         dm->save_DMR();
     }
 
-        // using HSolverLCAO<TK>::solve()
+    // 3) solve the Hamiltonian and output band gap
     if (this->phsol != nullptr)
     {
         // reset energy
@@ -741,12 +757,14 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density(int istep, int iter, double ethr)
         ModuleBase::WARNING_QUIT("ESolver_KS_PW", "HSolver has not been initialed!");
     }
 
-    // print ekb for each k point and each band
+
+    // 4) print bands for each k-point and each band 
     for (int ik = 0; ik < this->kv.nks; ++ik)
     {
         this->pelec->print_band(ik, INPUT.printe, iter);
     }
 
+    // 5) what's the exd used for?
 #ifdef __EXX
     if (GlobalC::exx_info.info_ri.real_number)
     {
@@ -758,11 +776,11 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density(int istep, int iter, double ethr)
     }
 #endif
 
-    // if DFT+U calculation is needed, this function will calculate
-    // the local occupation number matrix and energy correction
+    // 6) calculate the local occupation number matrix and energy correction in DFT+U
     if (GlobalV::dft_plus_u)
     {
-        // only old DFT+U method should calculated energy correction in esolver, new DFT+U method will calculate energy in calculating Hamiltonian
+        // only old DFT+U method should calculated energy correction in esolver, 
+        // new DFT+U method will calculate energy in calculating Hamiltonian
         if(GlobalV::dft_plus_u == 2) 
         {
             if (GlobalC::dftu.omc != 2)
@@ -776,49 +794,59 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density(int istep, int iter, double ethr)
         GlobalC::dftu.output();
     }
 
+    // (7) for deepks, calculate delta_e
 #ifdef __DEEPKS
     if (GlobalV::deepks_scf)
     {
         const Parallel_Orbitals* pv = this->LOWF.ParaV;
+
         const std::vector<std::vector<TK>>& dm = 
         dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMK_vector();
+
         this->dpks_cal_e_delta_band(dm);
     }
 #endif
+
+    // 8) for delta spin
     if (GlobalV::sc_mag_switch)
     {
         SpinConstrain<TK, psi::DEVICE_CPU>& sc = SpinConstrain<TK, psi::DEVICE_CPU>::getScInstance();
         sc.cal_MW(iter, &(this->LM));
     }
 
-    // (4) mohan add 2010-06-24
-    // using new charge density.
+    // 9) use new charge density to calculate energy
     this->pelec->cal_energies(1);
 
-    // (5) symmetrize the charge density
+    // 10) symmetrize the charge density
     Symmetry_rho srho;
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
         srho.begin(is, *(this->pelec->charge), this->pw_rho, GlobalC::Pgrid, GlobalC::ucell.symm);
     }
 
-    // (6) compute magnetization, only for spin==2
+    // 11) compute magnetization, only for spin==2
     GlobalC::ucell.magnet.compute_magnetization(this->pelec->charge->nrxx,
                                                 this->pelec->charge->nxyz,
                                                 this->pelec->charge->rho,
                                                 this->pelec->nelec_spin.data());
 
-    // (7) calculate delta energy
+    // 12) calculate delta energy
     this->pelec->f_en.deband = this->pelec->cal_delta_eband();
 }
 
 
+//------------------------------------------------------------------------------
+//! mohan 2024-05-11
+//! 1) print Hamiltonian and Overlap matrix (why related to update_pot()?)
+//! 2) print wavefunctions (why related to update_pot()?) 
+//! 3) print potential
+//------------------------------------------------------------------------------
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "update_pot");
 
-    // print Hamiltonian and Overlap matrix
+    // 1) print Hamiltonian and Overlap matrix
     if (this->conv_elec || iter == GlobalV::SCF_NMAX)
     {
         if (!GlobalV::GAMMA_ONLY_LOCAL && hsolver::HSolverLCAO<TK>::out_mat_hs[0])
@@ -865,7 +893,8 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
             }
         }
     }
-    // print wavefunctions
+
+    // 2) print wavefunctions
     if (this->conv_elec)
     {
         if (elecstate::ElecStateLCAO<TK>::out_wfc_lcao)
@@ -886,8 +915,8 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
             elecstate::ElecStateLCAO<TK>::out_wfc_flag = 0;
         }
     }
-    // (9) Calculate new potential according to new Charge Density.
 
+    // 3) print potential
     if (this->conv_elec || iter == GlobalV::SCF_NMAX)
     {
         if (GlobalV::out_pot < 0) // mohan add 2011-10-10
@@ -895,6 +924,7 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
             GlobalV::out_pot = -2;
         }
     }
+
     if (!this->conv_elec)
     {
         if (GlobalV::NSPIN == 4)
