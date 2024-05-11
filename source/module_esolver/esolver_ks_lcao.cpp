@@ -89,26 +89,41 @@ ESolver_KS_LCAO<TK, TR>::~ESolver_KS_LCAO()
 //------------------------------------------------------------------------------
 //! the 3rd function of ESolver_KS_LCAO: init
 //! mohan add 2024-05-11
+//! 1) calculate overlap matrix S or initialize
+//! 2) init ElecState
+//! 3) init LCAO basis
+//! 4) redundant ParaV and LM pointers
+//! 5) initialize Density Matrix
+//! 6) initialize Hamilt in LCAO
+//! 7) initialize exx
+//! 8) Quxin added for DFT+U
+//! 9) ppcell
+//! 10) init HSolver
+//! 11) inititlize the charge density.
+//! 12) initialize the potential.
+//! 13) initialize deepks
+//! 14) set occupations?
 //------------------------------------------------------------------------------
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::init(Input& inp, UnitCell& ucell)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "init");
     ModuleBase::timer::tick("ESolver_KS_LCAO", "init");
-
-    // if we are only calculating S, then there is no need
-    // to prepare for potentials and so on
+ 
+    // 1) calculate overlap matrix S
     if (GlobalV::CALCULATION == "get_S")
     {
+        // 1.1) read pseudopotentials
         ucell.read_pseudo(GlobalV::ofs_running);
 
+        // 1.2) symmetrize things
         if (ModuleSymmetry::Symmetry::symm_flag == 1)
         {
             ucell.symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running);
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
         }
 
-        // Setup the k points according to symmetry.
+        // 1.3) Setup k-points according to symmetry.
         this->kv.set(ucell.symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, ucell.G, ucell.latvec);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
@@ -116,40 +131,43 @@ void ESolver_KS_LCAO<TK, TR>::init(Input& inp, UnitCell& ucell)
     }
     else
     {
+        // 1) else, call init() in ESolver_KS
         ESolver_KS<TK>::init(inp, ucell);
     } // end ifnot get_S
 
-    // init ElecState
+
+    // 2) init ElecState
     // autoset nbands in ElecState, it should before basis_init (for Psi 2d divid)
     if (this->pelec == nullptr)
     {
+        // TK stands for double and complex<double>?
         this->pelec = new elecstate::ElecStateLCAO<TK>(
-            &(this->chr),
+            &(this->chr), // use which parameter?
             &(this->kv),
             this->kv.nks,
-            &(this->LOC),
+            &(this->LOC), // use which parameter?
             &(this->GG), // mohan add 2024-04-01
             &(this->GK), // mohan add 2024-04-01
-            &(this->LOWF),
-            this->pw_rho,
+            &(this->LOWF), // use which parameter?
+            this->pw_rho, 
             this->pw_big);
     }
 
-    //------------------init Basis_lcao----------------------
-    // Init Basis should be put outside of Ensolver.
-    // * reading the localized orbitals/projectors
-    // * construct the interpolation tables.
+    // 3) init LCAO basis
+    // reading the localized orbitals/projectors
+    // construct the interpolation tables.
     this->init_basis_lcao(this->orb_con, inp, ucell);
     //------------------init Basis_lcao----------------------
 
-    //! pass Hamilt-pointer to Operator
+    // 4) redundant ParaV and LM pointers
     this->gen_h.LM = &this->LM;
 
     //! pass basis-pointer to EState and Psi
     this->LOC.ParaV = this->LOWF.ParaV = this->LM.ParaV = &(this->orb_con.ParaV);
 
-    //! initialize DensityMatrix
+    // 5) initialize Density Matrix
     dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->init_DM(&this->kv, this->LM.ParaV, GlobalV::NSPIN);
+
 
     if (GlobalV::CALCULATION == "get_S")
     {
@@ -157,13 +175,13 @@ void ESolver_KS_LCAO<TK, TR>::init(Input& inp, UnitCell& ucell)
         return;
     }
 
-    //------------------init Hamilt_lcao----------------------
+    // 6) initialize Hamilt in LCAO
     // * allocate H and S matrices according to computational resources
     // * set the 'trace' between local H/S and global H/S
     this->LM.divide_HS_in_frag(GlobalV::GAMMA_ONLY_LOCAL, orb_con.ParaV, this->kv.nks);
-    //------------------init Hamilt_lcao----------------------
 
 #ifdef __EXX
+    // 7) initialize exx
     // PLEASE simplify the Exx_Global interface
     if (GlobalV::CALCULATION == "scf" 
         || GlobalV::CALCULATION == "relax" 
@@ -199,29 +217,30 @@ void ESolver_KS_LCAO<TK, TR>::init(Input& inp, UnitCell& ucell)
     }
 #endif
 
-    // Quxin added for DFT+U
+    // 8) Quxin added for DFT+U
     if (GlobalV::dft_plus_u)
     {
         GlobalC::dftu.init(ucell, this->LM, this->kv.nks);
     }
 
+    // 9) ppcell
     // output is GlobalC::ppcell.vloc 3D local pseudopotentials
     // without structure factors
     // this function belongs to cell LOOP
     GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, this->pw_rho);
 
-    // init HSolver
+    // 10) init HSolver
     if (this->phsol == nullptr)
     {
         this->phsol = new hsolver::HSolverLCAO<TK>(this->LOWF.ParaV);
         this->phsol->method = GlobalV::KS_SOLVER;
     }
 
-    // Inititlize the charge density.
+    // 11) inititlize the charge density.
     this->pelec->charge->allocate(GlobalV::NSPIN);
     this->pelec->omega = GlobalC::ucell.omega;
 
-    // Initialize the potential.
+    // 12) initialize the potential.
     if (this->pelec->pot == nullptr)
     {
         this->pelec->pot = new elecstate::Potential(this->pw_rhod,
@@ -234,6 +253,7 @@ void ESolver_KS_LCAO<TK, TR>::init(Input& inp, UnitCell& ucell)
     }
 
 #ifdef __DEEPKS
+    // 13) initialize deepks
     // wenfei 2021-12-19
     // if we are performing DeePKS calculations, we need to load a model
     if (GlobalV::deepks_scf)
@@ -243,6 +263,7 @@ void ESolver_KS_LCAO<TK, TR>::init(Input& inp, UnitCell& ucell)
     }
 #endif
 
+    // 14) set occupations?
     // Fix this->pelec->wg by ocp_kb
     if (GlobalV::ocp)
     {
@@ -1082,7 +1103,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int iter)
 //! the 14th function of ESolver_KS_LCAO: after_scf
 //! mohan add 2024-05-11
 //! 1) write charge difference into files for charge extrapolation
-//! 2) write density matrix
+//! 2) write density matrix for sparse matrix
 //! 3) write charge density
 //! 4) write density matrix
 //! 5) write Vxc
@@ -1117,7 +1138,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
                             &this->sf);
     }
 
-    // 2) write density matrix
+    // 2) write density matrix for sparse matrix
     if (this->LOC.out_dm1 == 1)
     {
         this->create_Output_DM1(istep).write();
