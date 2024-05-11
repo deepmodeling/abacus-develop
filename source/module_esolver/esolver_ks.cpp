@@ -24,6 +24,10 @@
 namespace ModuleESolver
 {
 
+//------------------------------------------------------------------------------
+//! the 1st function of ESolver_KS: constructor
+//! mohan add 2024-05-11
+//------------------------------------------------------------------------------
 template<typename T, typename Device>
 ESolver_KS<T, Device>::ESolver_KS()
 {
@@ -56,6 +60,10 @@ ESolver_KS<T, Device>::ESolver_KS()
 	this->wf.out_wfc_r = INPUT.out_wfc_r;
 }
 
+//------------------------------------------------------------------------------
+//! the 2nd function of ESolver_KS: deconstructor
+//! mohan add 2024-05-11
+//------------------------------------------------------------------------------
 template<typename T, typename Device>
 ESolver_KS<T, Device>::~ESolver_KS()
 {
@@ -66,6 +74,10 @@ ESolver_KS<T, Device>::~ESolver_KS()
     delete this->p_chgmix;
 }
 
+//------------------------------------------------------------------------------
+//! the 3rd function of ESolver_KS: init
+//! mohan add 2024-05-11
+//------------------------------------------------------------------------------
 template<typename T, typename Device>
 void ESolver_KS<T, Device>::init(Input& inp, UnitCell& ucell)
 {
@@ -287,6 +299,10 @@ void ESolver_KS<T, Device>::init(Input& inp, UnitCell& ucell)
 }
 
 
+//------------------------------------------------------------------------------
+//! the 4th function of ESolver_KS: init_after_vc
+//! mohan add 2024-05-11
+//------------------------------------------------------------------------------
 template<typename T, typename Device>
 void ESolver_KS<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
 {
@@ -312,6 +328,10 @@ void ESolver_KS<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
 }
 
 
+//------------------------------------------------------------------------------
+//! the 5th function of ESolver_KS: hamilt2density
+//! mohan add 2024-05-11
+//------------------------------------------------------------------------------
 template<typename T, typename Device>
 void ESolver_KS<T, Device>::hamilt2density(const int istep, const int iter, const double ethr)
 {
@@ -325,6 +345,10 @@ void ESolver_KS<T, Device>::hamilt2density(const int istep, const int iter, cons
 }
 
 
+//------------------------------------------------------------------------------
+//! the 6th function of ESolver_KS: print_wfcfft
+//! mohan add 2024-05-11
+//------------------------------------------------------------------------------
 template<typename T, typename Device>
 void ESolver_KS<T, Device>::print_wfcfft(Input& inp, std::ofstream &ofs)
 {
@@ -373,6 +397,10 @@ void ESolver_KS<T, Device>::print_wfcfft(Input& inp, std::ofstream &ofs)
 }
 
 
+//------------------------------------------------------------------------------
+//! the 7th function of ESolver_KS: run
+//! mohan add 2024-05-11
+//------------------------------------------------------------------------------
 template<typename T, typename Device>
 void ESolver_KS<T, Device>::run(const int istep, UnitCell& ucell)
 {

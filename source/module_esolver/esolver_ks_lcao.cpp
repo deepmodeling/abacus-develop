@@ -1081,13 +1081,31 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int iter)
 //------------------------------------------------------------------------------
 //! the 14th function of ESolver_KS_LCAO: after_scf
 //! mohan add 2024-05-11
+//! 1) write charge difference into files for charge extrapolation
+//! 2) write density matrix
+//! 3) write charge density
+//! 4) write density matrix
+//! 5) write Vxc
+//! 6) write Exx matrix
+//! 7) write potential
+//! 8) write convergence
+//! 9) write fermi energy
+//! 10) write eigenvalues
+//! 11) write deepks information
+//! 12) write rpa information
+//! 13) write HR in npz format
+//! 14) write dm in npz format
+//! 15) write md related 
+//! 16) write spin constrian MW?
+//! 17) delete grid
+//! 18) write quasi-orbitals
 //------------------------------------------------------------------------------
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "after_scf");
 
-    // save charge difference into files for charge extrapolation
+    // 1) write charge difference into files for charge extrapolation
     if (GlobalV::CALCULATION != "scf")
     {
         this->CE.save_files(istep,
@@ -1099,11 +1117,13 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
                             &this->sf);
     }
 
+    // 2) write density matrix
     if (this->LOC.out_dm1 == 1)
     {
         this->create_Output_DM1(istep).write();
     }
 
+    // 3) write charge density
     if (GlobalV::out_chg)
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
@@ -1116,6 +1136,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
         }
     }
 
+    // 4) write density matrix
     if (this->LOC.out_dm)
     {
         for (int is = 0; is < GlobalV::NSPIN; is++)
@@ -1124,6 +1145,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
         }
     }
 
+    // 5) write Vxc
     bool out_exc = true;    // tmp, add parameter!
     if (GlobalV::out_mat_xc)
     {
@@ -1148,6 +1170,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     }
 
 #ifdef __EXX
+    // 6) write Exx matrix
     if (GlobalC::exx_info.info_global.cal_exx) // Peize Lin add if 2022.11.14
     {
         const std::string file_name_exx = GlobalV::global_out_dir + "HexxR" + std::to_string(GlobalV::MY_RANK);
@@ -1162,16 +1185,22 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     }
 #endif
 
+    // 7) write potential
     this->create_Output_Potential(istep).write();
 
+    // 8) write convergence
     ModuleIO::output_convergence_after_scf(this->conv_elec, this->pelec->f_en.etot);
+
+    // 9) write fermi energy
     ModuleIO::output_efermi(this->conv_elec, this->pelec->eferm.ef);
 
+    // 10) write eigenvalues
     if (GlobalV::OUT_LEVEL != "m")
     {
         this->pelec->print_eigenvalue(GlobalV::ofs_running);
     }
 
+    // 11) write deepks information
 #ifdef __DEEPKS
     std::shared_ptr<LCAO_Deepks> ld_shared_ptr(&GlobalC::ld,[](LCAO_Deepks*){});
     LCAO_Deepks_Interface LDI = LCAO_Deepks_Interface(ld_shared_ptr);
@@ -1189,10 +1218,10 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
             dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM());
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "out_deepks_labels");
-
 #endif
-    // 3. some outputs
+
 #ifdef __EXX
+    // 12) write rpa information
     if (INPUT.rpa)
     {
         // ModuleRPA::DFT_RPA_interface rpa_interface(GlobalC::exx_info.info_global);
@@ -1205,6 +1234,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     }
 #endif
 
+    // 13) write HR in npz format
     if(GlobalV::out_hr_npz)
     {
         this->p_hamilt->updateHk(0); // first k point, up spin
@@ -1223,6 +1253,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
         }
     }
 
+    // 14) write dm in npz format
     if(GlobalV::out_dm_npz)
     {
         const elecstate::DensityMatrix<TK, double>* dm
@@ -1237,6 +1268,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
         }
     }
 
+    // 15) write md related 
     if (!md_skip_out(GlobalV::CALCULATION, istep, GlobalV::out_interval))
     {
         this->create_Output_Mat_Sparse(istep).write();
@@ -1247,6 +1279,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
         } // qifeng add 2019/9/10, jiyy modify 2023/2/27, liuyu move here 2023-04-18
     }
 
+    // 16) write spin constrian MW?
     // spin constrain calculations, added by Tianqi Zhao.
     if (GlobalV::sc_mag_switch)
     {
@@ -1255,12 +1288,13 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
         sc.print_Mag_Force();
     }
 
+    // 17) delete grid
     if (!GlobalV::CAL_FORCE && !GlobalV::CAL_STRESS)
     {
         RA.delete_grid();
     }
 
-    // quasi-orbitals, added by Yike Huang.
+    // 18) write quasi-orbitals, added by Yike Huang.
     if(GlobalV::qo_switch)
     {
         toQO tqo(GlobalV::qo_basis, GlobalV::qo_strategy, GlobalV::qo_thr, GlobalV::qo_screening_coeff);
