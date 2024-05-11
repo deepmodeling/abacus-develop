@@ -8,7 +8,7 @@
 #include "module_base/formatter.h"
 #include <cstring>        // Peize Lin fix bug about strcmp 2016-08-02
 #include <cassert>
-
+#include <regex>
 int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
 {
     ModuleBase::TITLE("UnitCell","read_atom_species");
@@ -1018,8 +1018,13 @@ void UnitCell::print_stru_file(const std::string& fn,
 void UnitCell::print_tau(void) const
 {
     ModuleBase::TITLE("UnitCell", "print_tau");
+    // assert (direct || Coordinate == "Cartesian" || Coordinate == "Cartesian_angstrom"); // this line causes abort in unittest ReadAtomPositionsCACXY.
+    // previously there are two if-statements, the first is `if(Coordinate == "Direct")` and the second is `if(Coordinate == "Cartesian" || Coordiante == "Cartesian_angstrom")`
+    // however the Coordinate can also be value among Cartesian_angstrom_center_xy, Cartesian_angstrom_center_xz, Cartesian_angstrom_center_yz and Cartesian_angstrom_center_xyz
+    // if Coordinate has value one of them, this print_tau will not print anything.
+    std::regex pattern("Direct|Cartesian(_angstrom)?(_center_(xy|xz|yz|xyz))?");
+    assert(std::regex_search(Coordinate, pattern));
     bool direct = (Coordinate == "Direct");
-    assert (direct || Coordinate == "Cartesian" || Coordinate == "Cartesian_angstrom");
     std::string table;
     table += direct? "DIRECT COORDINATES\n": FmtCore::format("CARTESIAN COORDINATES ( UNIT = %20.12f Bohr ).\n", lat0);
     table += FmtCore::format("%8s%20s%20s%20s%8s%20s%20s%20s\n", "atom", "x", "y", "z", "mag", "vx", "vy", "vz");
