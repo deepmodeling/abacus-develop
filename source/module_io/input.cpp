@@ -4261,6 +4261,13 @@ void Input::Check(void)
         }
     }
 
+    if (sc_mag_switch)
+    {
+        std::stringstream ss;
+        ss << "This feature is not stable yet and might lead to erroneous results.\n"
+           << " Please wait for the official release version.";
+        ModuleBase::WARNING_QUIT("Input", ss.str());
+    }
     // Deltaspin variables checking
     if (sc_mag_switch)
     {
