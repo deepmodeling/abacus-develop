@@ -156,14 +156,14 @@ class Band:
         band_vbm = e_T[band_vbm_index]
         evbm = np.max(band_vbm)
         k_vbm_index = np.where(band_vbm == evbm)[1]
-        vb = Band(band_vbm_index, band_vbm-evbm, evbm-evbm, k_vbm_index)
+        vb = Band(band_vbm_index, band_vbm, evbm, k_vbm_index)
 
         # conduct band
         band_cbm_index = np.where(num_gt_Ef != 0)[0]
         band_cbm = e_T[band_cbm_index]
         ecbm = np.min(band_cbm)
         k_cbm_index = np.where(band_cbm == ecbm)[1]
-        cb = Band(band_cbm_index, band_cbm-evbm, ecbm-evbm, k_cbm_index)
+        cb = Band(band_cbm_index, band_cbm, ecbm, k_cbm_index)
 
         return vb, cb
 
