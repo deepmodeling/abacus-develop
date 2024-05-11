@@ -104,7 +104,7 @@ void ModuleIO::cal_tmp_DM(elecstate::DensityMatrix<std::complex<double>, double>
                 std::complex<double> kphase = std::complex<double>(cosp, sinp);
                 // set DMR element
                 double* tmp_DMR_pointer = tmp_matrix->get_pointer();
-                std::complex<double>* tmp_DMK_pointer = DM.get_DMK_vector()[ik + ik_begin].data();
+                std::complex<double>* tmp_DMK_pointer = DM.get_DMK_pointer(ik + ik_begin);
                 double* DMK_real_pointer = nullptr;
                 double* DMK_imag_pointer = nullptr;
                 // jump DMK to fill DMR

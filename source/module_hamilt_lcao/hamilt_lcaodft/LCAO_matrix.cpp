@@ -878,13 +878,6 @@ void LCAO_Matrix::destroy_HS_R_sparse(void)
         HR_sparse[0].swap(empty_HR_sparse_up);
         HR_sparse[1].swap(empty_HR_sparse_down);
         SR_sparse.swap(empty_SR_sparse);
-        if(GlobalV::ESOLVER_TYPE == "tddft" && elecstate::H_TDDFT_pw::stype ==1)
-        {
-            std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> empty_HR_sparse_td_vel_up;
-            std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> empty_HR_sparse_td_vel_down;
-            HR_sparse_td_vel[0].swap(empty_HR_sparse_td_vel_up);
-            HR_sparse_td_vel[1].swap(empty_HR_sparse_td_vel_down);
-        }
     }
     else
     {

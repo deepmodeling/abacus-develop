@@ -31,6 +31,10 @@ TDEkinetic<OperatorLCAO<TK, TR>>::TDEkinetic(LCAO_Matrix* LM_in,
         this->init_td();
         // initialize HR to get adjs info.
         this->initialize_HR(Grid,this->LM->ParaV);
+        if(hsolver::HSolverLCAO<std::complex<double>>::out_mat_hsR == 1)
+        {
+            out_mat_R = true;
+        }
     }
 template <typename TK, typename TR>
 TDEkinetic<OperatorLCAO<TK, TR>>::~TDEkinetic()
@@ -370,19 +374,23 @@ void TDEkinetic<OperatorLCAO<std::complex<double>, double>>::contributeHk(int ik
     else{        
         ModuleBase::TITLE("TDEkinetic", "contributeHk");
         ModuleBase::timer::tick("TDEkinetic", "contributeHk");
-        //folding inside HR to HK
-        if(output_hR_done <GlobalV::NSPIN && hsolver::HSolverLCAO<std::complex<double>>::out_mat_hsR == 1 && GlobalV::NSPIN!=4)
+        //save HR data for output
+        int spin_tot = this->LM->ParaV->nspin;
+        if(spin_tot==4);
+        else if(!output_hR_done && out_mat_R)
         {
-            const int spin_now = GlobalV::CURRENT_SPIN;
-            //save_td_HR_data
-            sparse_format::cal_HContainer_cd(
-            *(this->LM->ParaV),
-            spin_now, 
-            1e-10, 
-            *hR_tmp, 
-            this->LM->HR_sparse_td_vel[spin_now]);
-            output_hR_done++;
+            for(int spin_now = 0;spin_now < spin_tot;spin_now++)
+            {
+                sparse_format::cal_HContainer_cd(
+                    *(this->LM->ParaV),
+                    spin_now, 
+                    1e-10, 
+                    *hR_tmp, 
+                    TD_Velocity::td_vel_op->HR_sparse_td_vel[spin_now]);
+            }
+            output_hR_done = true;
         }
+        //folding inside HR to HK
         if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
         {
             const int nrow = this->LM->ParaV->get_row_size();

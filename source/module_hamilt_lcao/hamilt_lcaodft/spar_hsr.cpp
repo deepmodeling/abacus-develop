@@ -3,7 +3,7 @@
 #include "spar_u.h"
 #include "spar_exx.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
-#include "module_elecstate/potentials/H_TDDFT_pw.h"
+#include "module_hamilt_lcao/module_tddft/td_velocity.h"
 
 void sparse_format::cal_HSR(
         const Parallel_Orbitals &pv,
@@ -26,14 +26,14 @@ void sparse_format::cal_HSR(
         hamilt::HamiltLCAO<std::complex<double>, double>* p_ham_lcao = 
         dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham);
 
-        if(GlobalV::ESOLVER_TYPE == "tddft" && elecstate::H_TDDFT_pw::stype ==1)
+        if(TD_Velocity::tddft_velocity)
         {
             sparse_format::cal_HContainer_td(
                 pv,
                 current_spin, 
 				sparse_thr, 
 				*(p_ham_lcao->getHR()), 
-				lm.HR_sparse_td_vel[current_spin]);
+				TD_Velocity::td_vel_op->HR_sparse_td_vel[current_spin]);
         }
         else
         {
@@ -288,9 +288,9 @@ void sparse_format::clear_zero_elements(
                 }
             }
         }
-        if(GlobalV::ESOLVER_TYPE == "tddft" && elecstate::H_TDDFT_pw::stype ==1)
+        if(TD_Velocity::tddft_velocity)
         {
-            for (auto &R_loop : lm.HR_sparse_td_vel[current_spin])
+            for (auto &R_loop : TD_Velocity::td_vel_op->HR_sparse_td_vel[current_spin])
         {
             for (auto &row_loop : R_loop.second)
             {
