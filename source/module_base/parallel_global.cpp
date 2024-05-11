@@ -172,21 +172,29 @@ void Parallel_Global::read_mpi_parameters(int argc,char **argv)
 
     //  GlobalV::KPAR = atoi(argv[1]); // mohan abandon 2010-06-09
 
-	// get the size --> GlobalV::NPROC
-	// get the rank --> GlobalV::MY_RANK
-	MPI_Comm_size(MPI_COMM_WORLD,&GlobalV::NPROC);
+    // get world size --> GlobalV::NPROC
+    // get global rank --> GlobalV::MY_RANK
+    MPI_Comm_size(MPI_COMM_WORLD,&GlobalV::NPROC);
     MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
+    int process_num = 0; // number of processes in the current node
+    int local_rank = 0;  // rank of the process in the current node
     MPI_Comm shmcomm;
     MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, 0, MPI_INFO_NULL, &shmcomm);
-    int process_num = 0, local_rank = 0;
     MPI_Comm_size(shmcomm, &process_num);
     MPI_Comm_rank(shmcomm, &local_rank);
     MPI_Comm_free(&shmcomm);
 
-    // determining appropriate thread number for OpenMP
+    // Determining appropriate thread number for OpenMP:
+    // 1. If the number of threads is set by the user by `OMP_NUM_THREADS`, use it.
+    // 2. Otherwise, set to number of CPU cores / number of processes.
+    // 3. If the number of threads is larger than the hardware availability (should only happens if route 1 taken),
+    //  output a warning message.
+    // 4. If the number of threads is smaller than the hardware availability, output an info message.
+    // CAVEAT: The user should set the number of threads properly to avoid oversubscribing.
+    // This mechanism only handles the worst case for the default setting (not setting number of threads at all, causing oversubscribing and extremely slow performance), not guaranteed to be optimal.
     const int max_thread_num = std::thread::hardware_concurrency(); // Consider Hyperthreading disabled.
 #ifdef _OPENMP
-    int current_thread_num = omp_get_max_threads();
+    int current_thread_num = omp_get_max_threads(); // Get the number of threads set by the user.
     if (current_thread_num == max_thread_num && process_num >= 1) // Avoid oversubscribing on the number of threads not set.
     {
         current_thread_num = max_thread_num / process_num;
