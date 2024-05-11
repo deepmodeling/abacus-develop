@@ -15,7 +15,8 @@ void Gint_k::distribute_pvpR_sparseMatrix(
     const double &sparse_threshold, 
     const std::map<Abfs::Vector3_Order<int>,
     std::map<size_t, std::map<size_t, double>>> &pvpR_sparseMatrix,
-    LCAO_Matrix *LM
+    LCAO_Matrix *LM,
+    Parallel_Orbitals *pv
 )
 {
     ModuleBase::TITLE("Gint_k","distribute_pvpR_sparseMatrix");
@@ -110,11 +111,11 @@ void Gint_k::distribute_pvpR_sparseMatrix(
                 
                 Parallel_Reduce::reduce_pool(tmp, GlobalV::NLOCAL);
 
-                if (LM->ParaV->global2local_row(row) >= 0)
+                if (pv->global2local_row(row) >= 0)
                 {
                     for(int col = 0; col < GlobalV::NLOCAL; ++col)
                     {
-                        if(LM->ParaV->global2local_col(col) >= 0)
+                        if(pv->global2local_col(col) >= 0)
                         {
                             if (std::abs(tmp[col]) > sparse_threshold)
                             {
@@ -150,7 +151,8 @@ void Gint_k::distribute_pvpR_soc_sparseMatrix(
     const double &sparse_threshold, 
     const std::map<Abfs::Vector3_Order<int>,
     std::map<size_t, std::map<size_t, std::complex<double>>>> &pvpR_soc_sparseMatrix,
-    LCAO_Matrix *LM
+    LCAO_Matrix *LM,
+    Parallel_Orbitals *pv
 )
 {
     ModuleBase::TITLE("Gint_k","distribute_pvpR_soc_sparseMatrix");
@@ -244,11 +246,11 @@ void Gint_k::distribute_pvpR_soc_sparseMatrix(
                 
                 Parallel_Reduce::reduce_pool(tmp_soc, GlobalV::NLOCAL);
 
-                if (LM->ParaV->global2local_row(row) >= 0)
+                if (pv->global2local_row(row) >= 0)
                 {
                     for(int col = 0; col < GlobalV::NLOCAL; ++col)
                     {
-                        if(LM->ParaV->global2local_col(col) >= 0)
+                        if(pv->global2local_col(col) >= 0)
                         {
                             if (std::abs(tmp_soc[col]) > sparse_threshold)
                             {
@@ -281,7 +283,7 @@ void Gint_k::distribute_pvpR_soc_sparseMatrix(
 
 }
 
-void Gint_k::cal_vlocal_R_sparseMatrix(const int &current_spin, const double &sparse_threshold, LCAO_Matrix *LM)
+void Gint_k::cal_vlocal_R_sparseMatrix(const int &current_spin, const double &sparse_threshold, LCAO_Matrix *LM,Parallel_Orbitals *pv)
 {
     ModuleBase::TITLE("Gint_k","cal_vlocal_R_sparseMatrix");
 
@@ -418,11 +420,11 @@ void Gint_k::cal_vlocal_R_sparseMatrix(const int &current_spin, const double &sp
 
     if (GlobalV::NSPIN != 4)
     {
-        distribute_pvpR_sparseMatrix(current_spin, sparse_threshold, pvpR_sparseMatrix, LM);
+        distribute_pvpR_sparseMatrix(current_spin, sparse_threshold, pvpR_sparseMatrix, LM,pv);
     }
     else
     {
-        distribute_pvpR_soc_sparseMatrix(sparse_threshold, pvpR_soc_sparseMatrix, LM);
+        distribute_pvpR_soc_sparseMatrix(sparse_threshold, pvpR_soc_sparseMatrix, LM,pv);
     }
 
     return;

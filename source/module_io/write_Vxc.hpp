@@ -25,7 +25,7 @@ namespace ModuleIO
 			Gint_inout& io, 
 			LCAO_Matrix& lm) 
 	{ 
-		gg.cal_vlocal(&io, &lm, false); 
+		gg.cal_vlocal(&io, false); 
 	};
 
 	inline void gint_vl(
