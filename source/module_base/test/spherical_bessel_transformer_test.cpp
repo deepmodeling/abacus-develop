@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <memory>
-#include <fftw3.h>
 
 #include "gtest/gtest.h"
 #include "module_base/constants.h"

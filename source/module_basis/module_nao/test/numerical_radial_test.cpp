@@ -446,7 +446,6 @@ TEST_F(NumericalRadialTest, RadialTable)
      *      T(l=0, R) = c * (x^4-10*x^2+15)/32 * exp(-R^2/2)
      *      U(l=0, R) = c * 1/32 * exp(-R*R/2)
      *
-     * as well as their derivatives.
      *                                                                      */
     double pref = std::sqrt(2) / 16;
     int sz = 5000;
@@ -505,35 +504,6 @@ TEST_F(NumericalRadialTest, RadialTable)
         double R = i * dr;
         EXPECT_NEAR(table[i], table_pref * 1. / 32 * std::exp(-R * R / 2), tol);
     }
-
-    // derivative of radial tables
-    //chi1.radtab('S', chi2, 0, table, chi1.nr(), rmax_tab, true);
-    //for (int i = 0; i != sz; ++i)
-    //{
-    //    double R = i * dr;
-    //    EXPECT_NEAR(table[i], table_pref * (std::pow(R, 3) - 5 * R) / 32 * std::exp(-R * R / 2), tol);
-    //}
-
-    //chi1.radtab('S', chi2, 2, table, chi1.nr(), rmax_tab, true);
-    //for (int i = 0; i != sz; ++i)
-    //{
-    //    double R = i * dr;
-    //    EXPECT_NEAR(table[i], table_pref * (2 * R - std::pow(R, 3)) / 32 * std::exp(-R * R / 2), tol);
-    //}
-
-    //chi1.radtab('T', chi2, 0, table, chi1.nr(), rmax_tab, true);
-    //for (int i = 0; i != sz; ++i)
-    //{
-    //    double R = i * dr;
-    //    EXPECT_NEAR(table[i], table_pref * (-std::pow(R, 5) + 14 * std::pow(R, 3) - 35 * R) / 32 * std::exp(-R * R / 2), tol);
-    //}
-
-    //chi1.radtab('U', chi2, 0, table, chi1.nr(), rmax_tab, true);
-    //for (int i = 0; i != sz; ++i)
-    //{
-    //    double R = i * dr;
-    //    EXPECT_NEAR(table[i], table_pref * -R / 32 * std::exp(-R * R / 2), tol);
-    //}
 
     delete[] table;
 }
