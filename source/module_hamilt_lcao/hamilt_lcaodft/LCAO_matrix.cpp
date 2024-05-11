@@ -6,7 +6,6 @@
 #ifdef __DEEPKS
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #endif
-#include "module_elecstate/potentials/H_TDDFT_pw.h"
 
 LCAO_Matrix::LCAO_Matrix()
 {
