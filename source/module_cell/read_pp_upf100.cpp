@@ -288,7 +288,11 @@ void Pseudopot_upf::read_pseudo_local(std::ifstream &ifs)
 void Pseudopot_upf::read_pseudo_nl(std::ifstream &ifs)
 {
     //	int nb, mb, n, ir, idum, ldum, lp, i, ikk;
-    int nb, mb, ir, idum, ldum;
+    int nb = 0;
+    int mb = 0;
+    int ir = 0;
+    int idum = 0;
+    int ldum = 0;
 
     if (nbeta == 0)
     {
