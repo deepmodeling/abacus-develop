@@ -21,7 +21,7 @@ if(ENABLE_LCAO)
     )
   endif ()
 
-  if(USE_CUSOLVER_LCAO AND USE_CUDA)
+  if(USE_CUDA)
       list(APPEND objects
           ./kernels/math_kernel_op.cpp
           ./kernels/dngvd_op.cpp

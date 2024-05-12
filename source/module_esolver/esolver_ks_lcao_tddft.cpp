@@ -4,9 +4,9 @@
 #include "module_io/dipole_io.h"
 #include "module_io/dm_io.h"
 #include "module_io/rho_io.h"
+#include "module_io/td_current_io.h"
 #include "module_io/write_HS.h"
 #include "module_io/write_HS_R.h"
-#include "module_io/td_current_io.h"
 
 //--------------temporary----------------------------
 #include "module_base/blas_connector.h"
@@ -38,7 +38,6 @@ ESolver_KS_LCAO_TDDFT::ESolver_KS_LCAO_TDDFT()
     classname = "ESolver_KS_LCAO_TDDFT";
     basisname = "LCAO";
 }
-
 
 ESolver_KS_LCAO_TDDFT::~ESolver_KS_LCAO_TDDFT()
 {
@@ -79,8 +78,8 @@ void ESolver_KS_LCAO_TDDFT::init(Input& inp, UnitCell& ucell)
         this->pelec = new elecstate::ElecStateLCAO_TDDFT(&(this->chr),
                                                          &(kv),
                                                          kv.nks,
-														 &(this->LOC),
-														 &(this->GK), // mohan add 2024-04-01
+                                                         &(this->LOC),
+                                                         &(this->GK), // mohan add 2024-04-01
                                                          &(this->LOWF),
                                                          this->pw_rho,
                                                          pw_big);
@@ -105,7 +104,8 @@ void ESolver_KS_LCAO_TDDFT::init(Input& inp, UnitCell& ucell)
     this->LOC.ParaV = this->LOWF.ParaV = this->LM.ParaV;
 
     // init DensityMatrix
-    dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->init_DM(&kv, this->LM.ParaV, GlobalV::NSPIN);
+    dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)
+        ->init_DM(&kv, this->LM.ParaV, GlobalV::NSPIN);
 
     // init Psi, HSolver, ElecState, Hamilt
     if (this->phsol == nullptr)
@@ -130,12 +130,8 @@ void ESolver_KS_LCAO_TDDFT::init(Input& inp, UnitCell& ucell)
     this->pelec_td = dynamic_cast<elecstate::ElecStateLCAO_TDDFT*>(this->pelec);
 }
 
-void ESolver_KS_LCAO_TDDFT::hamilt2density(
-		int istep,
-		int iter,
-		double ethr)
+void ESolver_KS_LCAO_TDDFT::hamilt2density(const int istep, const int iter, const double ethr)
 {
-
     pelec->charge->save_rho_before_sum_band();
 
     if (wf.init_wfc == "file")
@@ -184,12 +180,8 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(
         this->pelec->f_en.demet = 0.0;
         if (this->psi != nullptr)
         {
-			this->phsol->solve(
-					this->p_hamilt,
-					this->psi[0],
-					this->pelec_td,
-					GlobalV::KS_SOLVER);
-		}
+            this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec_td, GlobalV::KS_SOLVER);
+        }
     }
     else
     {
@@ -211,13 +203,9 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(
             for (int ib = 0; ib < GlobalV::NBANDS; ib++)
             {
                 std::setprecision(6);
-				GlobalV::ofs_running << ik + 1
-					<< "     "
-					<< ib + 1
-					<< "      "
-					<< this->pelec_td->wg(ik, ib)
-					<< std::endl;
-			}
+                GlobalV::ofs_running << ik + 1 << "     " << ib + 1 << "      " << this->pelec_td->wg(ik, ib)
+                                     << std::endl;
+            }
         }
         GlobalV::ofs_running << std::endl;
         GlobalV::ofs_running
@@ -239,12 +227,8 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(
         Symmetry_rho srho;
         for (int is = 0; is < GlobalV::NSPIN; is++)
         {
-			srho.begin(is,
-					*(pelec->charge),
-					pw_rho,
-					GlobalC::Pgrid,
-					GlobalC::ucell.symm);
-		}
+            srho.begin(is, *(pelec->charge), pw_rho, GlobalC::Pgrid, GlobalC::ucell.symm);
+        }
     }
 
     // (6) compute magnetization, only for spin==2
@@ -280,29 +264,29 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
                 this->p_hamilt->matrix(h_mat, s_mat);
                 if (hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs[0])
                 {
-					ModuleIO::save_mat(istep,
-							h_mat.p,
-							GlobalV::NLOCAL,
-							bit,
-							hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs[1],
-							1,
-							GlobalV::out_app_flag,
-							"H",
-							"data-" + std::to_string(ik),
-							*this->LOWF.ParaV,
-							GlobalV::DRANK);
+                    ModuleIO::save_mat(istep,
+                                       h_mat.p,
+                                       GlobalV::NLOCAL,
+                                       bit,
+                                       hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs[1],
+                                       1,
+                                       GlobalV::out_app_flag,
+                                       "H",
+                                       "data-" + std::to_string(ik),
+                                       *this->LOWF.ParaV,
+                                       GlobalV::DRANK);
 
-					ModuleIO::save_mat(istep,
-							h_mat.p,
-							GlobalV::NLOCAL,
-							bit,
-							hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs[1],
-							1,
-							GlobalV::out_app_flag,
-							"S",
-							"data-" + std::to_string(ik),
-							*this->LOWF.ParaV,
-							GlobalV::DRANK);
+                    ModuleIO::save_mat(istep,
+                                       s_mat.p,
+                                       GlobalV::NLOCAL,
+                                       bit,
+                                       hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs[1],
+                                       1,
+                                       GlobalV::out_app_flag,
+                                       "S",
+                                       "data-" + std::to_string(ik),
+                                       *this->LOWF.ParaV,
+                                       GlobalV::DRANK);
                 }
             }
         }
@@ -313,14 +297,14 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
         if (elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_lcao)
         {
             elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_flag
-            = elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_lcao;
+                = elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_lcao;
         }
         for (int ik = 0; ik < kv.nks; ik++)
         {
             if (istep % GlobalV::out_interval == 0)
             {
-                    this->psi[0].fix_k(ik);
-                    this->pelec->print_psi(this->psi[0], istep);
+                this->psi[0].fix_k(ik);
+                this->pelec->print_psi(this->psi[0], istep);
             }
         }
         elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_flag = 0;
@@ -329,11 +313,11 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
     // Calculate new potential according to new Charge Density
     if (!this->conv_elec)
     {
-		if (GlobalV::NSPIN == 4)
-		{
-			GlobalC::ucell.cal_ux();
-		}
-		this->pelec->pot->update_from_charge(this->pelec->charge, &GlobalC::ucell);
+        if (GlobalV::NSPIN == 4)
+        {
+            GlobalC::ucell.cal_ux();
+        }
+        this->pelec->pot->update_from_charge(this->pelec->charge, &GlobalC::ucell);
         this->pelec->f_en.descf = this->pelec->cal_delta_escf();
     }
     else
@@ -344,19 +328,19 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
     // store wfc and Hk laststep
     if (istep >= (wf.init_wfc == "file" ? 0 : 1) && this->conv_elec)
     {
-		if (this->psi_laststep == nullptr)
-		{
+        if (this->psi_laststep == nullptr)
+        {
 #ifdef __MPI
-			this->psi_laststep = new psi::Psi<std::complex<double>>(kv.nks,
-					this->LOWF.ParaV->ncol_bands,
-					this->LOWF.ParaV->nrow,
-					nullptr);
+            this->psi_laststep = new psi::Psi<std::complex<double>>(kv.nks,
+                                                                    this->LOWF.ParaV->ncol_bands,
+                                                                    this->LOWF.ParaV->nrow,
+                                                                    nullptr);
 #else
-			this->psi_laststep = new psi::Psi<std::complex<double>>(kv.nks, GlobalV::NBANDS, GlobalV::NLOCAL, nullptr);
+            this->psi_laststep = new psi::Psi<std::complex<double>>(kv.nks, GlobalV::NBANDS, GlobalV::NLOCAL, nullptr);
 #endif
-		}
+        }
 
-		if (td_htype == 1)
+        if (td_htype == 1)
         {
             if (this->Hk_laststep == nullptr)
             {
@@ -383,10 +367,10 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
             this->psi->fix_k(ik);
             this->psi_laststep->fix_k(ik);
             int size0 = psi->get_nbands() * psi->get_nbasis();
-			for (int index = 0; index < size0; ++index)
-			{
-				psi_laststep[0].get_pointer()[index] = psi[0].get_pointer()[index];
-			}
+            for (int index = 0; index < size0; ++index)
+            {
+                psi_laststep[0].get_pointer()[index] = psi[0].get_pointer()[index];
+            }
 
             // store Hamiltonian
             if (td_htype == 1)
@@ -400,9 +384,8 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
         }
 
         // calculate energy density matrix for tddft
-		if (istep >= (wf.init_wfc == "file" ? 0 : 2)
-				&& module_tddft::Evolve_elec::td_edm == 0)
-		{
+        if (istep >= (wf.init_wfc == "file" ? 0 : 2) && module_tddft::Evolve_elec::td_edm == 0)
+        {
             this->cal_edm_tddft();
         }
     }
@@ -433,7 +416,6 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
     }
 }
 
-
 void ESolver_KS_LCAO_TDDFT::after_scf(const int istep)
 {
     for (int is = 0; is < GlobalV::NSPIN; is++)
@@ -445,42 +427,41 @@ void ESolver_KS_LCAO_TDDFT::after_scf(const int istep)
             ModuleIO::write_dipole(pelec->charge->rho_save[is], pelec->charge->rhopw, is, istep, ss_dipole.str());
         }
     }
-    if(module_tddft::Evolve_elec::out_current == 1)
+    if (module_tddft::Evolve_elec::out_current == 1)
     {
-        elecstate::DensityMatrix<std::complex<double>, double>* tmp_DM =
-        dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->get_DM();
+        elecstate::DensityMatrix<std::complex<double>, double>* tmp_DM
+            = dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->get_DM();
         ModuleIO::write_current(istep,
-                        this->psi,
-                        pelec,
-                        kv,
-                        tmp_DM->get_paraV_pointer(),
-                        this->RA,
-						this->LM, // mohan add 2024-04-02
-						this->gen_h); // mohan add 2024-02
-	}
+                                this->psi,
+                                pelec,
+                                kv,
+                                tmp_DM->get_paraV_pointer(),
+                                this->RA,
+                                this->LM,     // mohan add 2024-04-02
+                                this->gen_h); // mohan add 2024-02
+    }
     ESolver_KS_LCAO<std::complex<double>, double>::after_scf(istep);
 }
-
 
 // use the original formula (Hamiltonian matrix) to calculate energy density matrix
 void ESolver_KS_LCAO_TDDFT::cal_edm_tddft(void)
 {
     // mohan add 2024-03-27
-	const int nlocal = GlobalV::NLOCAL;
-    assert(nlocal>=0);
+    const int nlocal = GlobalV::NLOCAL;
+    assert(nlocal >= 0);
 
-    //this->LOC.edm_k_tddft.resize(kv.nks);
+    // this->LOC.edm_k_tddft.resize(kv.nks);
     dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->get_DM()->EDMK.resize(kv.nks);
     for (int ik = 0; ik < kv.nks; ++ik)
     {
-        std::complex<double>* tmp_dmk =
-        dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->get_DM()->get_DMK_pointer(ik);
+        std::complex<double>* tmp_dmk
+            = dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->get_DM()->get_DMK_pointer(ik);
 
-        ModuleBase::ComplexMatrix& tmp_edmk =
-        dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->get_DM()->EDMK[ik];
+        ModuleBase::ComplexMatrix& tmp_edmk
+            = dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->get_DM()->EDMK[ik];
 
-        const Parallel_Orbitals* tmp_pv =
-        dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->get_DM()->get_paraV_pointer();
+        const Parallel_Orbitals* tmp_pv
+            = dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->get_DM()->get_paraV_pointer();
 
 #ifdef __MPI
 
@@ -489,7 +470,7 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft(void)
         //! whether the long type is safe, needs more discussion
         const long nloc = this->LOC.ParaV->nloc;
 
-        //this->LOC.edm_k_tddft[ik].create(this->LOC.ParaV->ncol, this->LOC.ParaV->nrow);
+        // this->LOC.edm_k_tddft[ik].create(this->LOC.ParaV->ncol, this->LOC.ParaV->nrow);
         tmp_edmk.create(this->LOC.ParaV->ncol, this->LOC.ParaV->nrow);
         complex<double>* Htmp = new complex<double>[nloc];
         complex<double>* Sinv = new complex<double>[nloc];
@@ -651,7 +632,7 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft(void)
                  &one_int,
                  this->LOC.ParaV->desc);
         zcopy_(&nloc, tmp4, &inc, tmp_edmk.c, &inc);
-        //zcopy_(&nloc, tmp4, &inc, this->LOC.edm_k_tddft[ik].c, &inc);
+        // zcopy_(&nloc, tmp4, &inc, this->LOC.edm_k_tddft[ik].c, &inc);
         delete[] Htmp;
         delete[] Sinv;
         delete[] tmp1;
@@ -661,7 +642,7 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft(void)
         delete[] ipiv;
 #else
         // for serial version
-        //this->LOC.edm_k_tddft[ik].create(this->LOC.ParaV->ncol, this->LOC.ParaV->nrow);
+        // this->LOC.edm_k_tddft[ik].create(this->LOC.ParaV->ncol, this->LOC.ParaV->nrow);
         tmp_edmk.create(this->LOC.ParaV->ncol, this->LOC.ParaV->nrow);
         ModuleBase::ComplexMatrix Sinv(nlocal, nlocal);
         ModuleBase::ComplexMatrix Htmp(nlocal, nlocal);
@@ -679,7 +660,7 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft(void)
                 Sinv(i, j) = s_mat.p[i * nlocal + j];
             }
         }
-        int INFO=0;
+        int INFO = 0;
 
         int lwork = 3 * nlocal - 1; // tmp
         std::complex<double>* work = new std::complex<double>[lwork];
