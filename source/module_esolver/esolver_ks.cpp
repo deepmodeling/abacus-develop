@@ -27,22 +27,32 @@ namespace ModuleESolver
 //------------------------------------------------------------------------------
 //! the 1st function of ESolver_KS: constructor
 //! mohan add 2024-05-11
+// in future, the initialize of ESolver_KS should not be based on the 
+// assumption that INPUT has been initialized, mohan 2024-05-12
 //------------------------------------------------------------------------------
 template<typename T, typename Device>
 ESolver_KS<T, Device>::ESolver_KS()
 {
 	classname = "ESolver_KS";
 	basisname = "PLEASE ADD BASISNAME FOR CURRENT ESOLVER.";
+
+    // should not use GlobalV here, mohan 2024-05-12
 	scf_thr = GlobalV::SCF_THR;
 	drho = 0.0;
+
+    // should not use GlobalV here, mohan 2024-05-12
 	maxniter = GlobalV::SCF_NMAX;
 	niter = maxniter;
+
+    // should not use GlobalV here, mohan 2024-05-12
 	out_freq_elec = GlobalV::OUT_FREQ_ELEC;
 
 	// pw_rho = new ModuleBase::PW_Basis();
 	//temporary, it will be removed
 	pw_wfc = new ModulePW::PW_Basis_K_Big(GlobalV::device_flag, GlobalV::precision_flag);
 	ModulePW::PW_Basis_K_Big* tmp = static_cast<ModulePW::PW_Basis_K_Big*>(pw_wfc);
+
+    // should not use INPUT here, mohan 2024-05-12
 	tmp->setbxyz(INPUT.bx,INPUT.by,INPUT.bz);
 
 	///----------------------------------------------------------
@@ -75,15 +85,15 @@ ESolver_KS<T, Device>::~ESolver_KS()
 }
 
 //------------------------------------------------------------------------------
-//! the 3rd function of ESolver_KS: before_runner
+//! the 3rd function of ESolver_KS: before_all_runners
 //! mohan add 2024-05-11
 //------------------------------------------------------------------------------
 template<typename T, typename Device>
-void ESolver_KS<T, Device>::before_runner(Input& inp, UnitCell& ucell)
+void ESolver_KS<T, Device>::before_all_runners(Input& inp, UnitCell& ucell)
 {
-	ModuleBase::TITLE("ESolver_KS", "before_runner");
+	ModuleBase::TITLE("ESolver_KS", "before_all_runners");
 
-	ESolver_FP::before_runner(inp,ucell);
+	ESolver_FP::before_all_runners(inp,ucell);
 
 	//------------------Charge Mixing------------------
 	p_chgmix->set_mixing(GlobalV::MIXING_MODE,
@@ -155,7 +165,7 @@ void ESolver_KS<T, Device>::before_runner(Input& inp, UnitCell& ucell)
 		}
 #endif
 
-		GlobalC::paw_cell.init_paw_cell(INPUT.ecutwfc, INPUT.cell_factor,
+		GlobalC::paw_cell.init_paw_cell(inp.ecutwfc, inp.cell_factor,
 				ucell.omega,ucell.nat,ucell.ntype,
 				atom_type,(const double **) atom_coord,
 				filename_list);
@@ -172,7 +182,7 @@ void ESolver_KS<T, Device>::before_runner(Input& inp, UnitCell& ucell)
 
 	ucell.cal_nelec(GlobalV::nelec);
 
-	/* it has been established that that
+	/* it has been established that 
 	   xc_func is same for all elements, therefore
 	   only the first one if used*/
 	if(GlobalV::use_paw)
@@ -185,6 +195,7 @@ void ESolver_KS<T, Device>::before_runner(Input& inp, UnitCell& ucell)
 	}
 	ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
 
+    // ESolver depends on the Symmetry module
 	// symmetry analysis should be performed every time the cell is changed
 	if (ModuleSymmetry::Symmetry::symm_flag == 1)
 	{
@@ -200,9 +211,6 @@ void ESolver_KS<T, Device>::before_runner(Input& inp, UnitCell& ucell)
 	// mohan add 2021-01-30
 	Print_Info::setup_parameters(ucell, this->kv);
 
-	//if(GlobalV::BASIS_TYPE=="pw" || GlobalV::CALCULATION=="get_wf")
-	//{
-	//Envelope function is calculated as lcao_in_pw
 	//new plane wave basis
 #ifdef __MPI
 	this->pw_wfc->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
@@ -215,8 +223,9 @@ void ESolver_KS<T, Device>::before_runner(Input& inp, UnitCell& ucell)
 			this->pw_rho->nz);
 	this->pw_wfc->initparameters(false, inp.ecutwfc, this->kv.nks, this->kv.kvec_d.data());
 
+    // the MPI allreduce should not be here, mohan 2024-05-12
 #ifdef __MPI
-	if (INPUT.pw_seed > 0)
+	if (inp.pw_seed > 0)
 	{
 		MPI_Allreduce(MPI_IN_PLACE, &this->pw_wfc->ggecut, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
 	}
@@ -255,7 +264,7 @@ void ESolver_KS<T, Device>::before_runner(Input& inp, UnitCell& ucell)
 #ifdef USE_PAW
 	if(GlobalV::use_paw)
 	{
-		GlobalC::paw_cell.set_libpaw_ecut(INPUT.ecutwfc/2.0,INPUT.ecutwfc/2.0); //in Hartree
+		GlobalC::paw_cell.set_libpaw_ecut(inp.ecutwfc/2.0, inp.ecutwfc/2.0); //in Hartree
 		GlobalC::paw_cell.set_libpaw_fft(this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz,
 				this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz,
 				this->pw_wfc->startz,this->pw_wfc->numz);
@@ -365,7 +374,8 @@ void ESolver_KS<T, Device>::print_wfcfft(Input& inp, std::ofstream &ofs)
 	ofs << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
 	ofs << "\n\n\n\n";
 	ofs << "\n SETUP PLANE WAVES FOR WAVE FUNCTIONS" << std::endl;
-	double ecut = INPUT.ecutwfc;
+
+	double ecut = inp.ecutwfc;
 	if(std::abs(ecut-this->pw_wfc->gk_ecut * this->pw_wfc->tpiba2) > 1e-6)
 	{
 		ecut = this->pw_wfc->gk_ecut * this->pw_wfc->tpiba2;
@@ -380,7 +390,7 @@ void ESolver_KS<T, Device>::print_wfcfft(Input& inp, std::ofstream &ofs)
 	ofs << "\n PARALLEL PW FOR WAVE FUNCTIONS" << std::endl;
 	ofs <<" "<< std::setw(8)  << "PROC"<< std::setw(15) << "COLUMNS(POT)"<< std::setw(15) << "PW" << std::endl;
 
-	for (int i = 0; i < GlobalV::NPROC_IN_POOL ; ++i)
+	for (int i = 0; i < GlobalV::NPROC_IN_POOL; ++i)
 	{
 		ofs <<" "<<std::setw(8)<< i+1 << std::setw(15) 
             << this->pw_wfc->nst_per[i] 

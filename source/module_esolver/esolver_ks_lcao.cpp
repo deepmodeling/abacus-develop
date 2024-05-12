@@ -105,10 +105,10 @@ ESolver_KS_LCAO<TK, TR>::~ESolver_KS_LCAO()
 //! 14) set occupations?
 //------------------------------------------------------------------------------
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::before_runner(Input& inp, UnitCell& ucell)
+void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
 {
-    ModuleBase::TITLE("ESolver_KS_LCAO", "before_runner");
-    ModuleBase::timer::tick("ESolver_KS_LCAO", "before_runner");
+    ModuleBase::TITLE("ESolver_KS_LCAO", "before_all_runners");
+    ModuleBase::timer::tick("ESolver_KS_LCAO", "before_all_runners");
  
     // 1) calculate overlap matrix S
     if (GlobalV::CALCULATION == "get_S")
@@ -131,8 +131,8 @@ void ESolver_KS_LCAO<TK, TR>::before_runner(Input& inp, UnitCell& ucell)
     }
     else
     {
-        // 1) else, call before_runner() in ESolver_KS
-        ESolver_KS<TK>::before_runner(inp, ucell);
+        // 1) else, call before_all_runners() in ESolver_KS
+        ESolver_KS<TK>::before_all_runners(inp, ucell);
     } // end ifnot get_S
 
 
@@ -270,7 +270,7 @@ void ESolver_KS_LCAO<TK, TR>::before_runner(Input& inp, UnitCell& ucell)
         this->pelec->fixed_weights(GlobalV::ocp_kb);
 	}
 
-    ModuleBase::timer::tick("ESolver_KS_LCAO", "before_runner");
+    ModuleBase::timer::tick("ESolver_KS_LCAO", "before_all_runners");
 	return;
 }
 

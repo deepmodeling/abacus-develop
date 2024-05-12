@@ -25,7 +25,7 @@
 namespace ModuleESolver
 {
 
-    void ESolver_DP::before_runner(Input& inp, UnitCell& ucell)
+    void ESolver_DP::before_all_runners(Input& inp, UnitCell& ucell)
     {
         ucell_ = &ucell;
         dp_potential = 0;

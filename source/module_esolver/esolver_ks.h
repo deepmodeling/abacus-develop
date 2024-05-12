@@ -43,7 +43,7 @@ class ESolver_KS : public ESolver_FP
 
 		int out_freq_elec;// frequency for output
 
-		virtual void before_runner(Input& inp, UnitCell& cell) override;
+		virtual void before_all_runners(Input& inp, UnitCell& cell) override;
 
 		virtual void init_after_vc(Input& inp, UnitCell& cell) override;    // liuyu add 2023-03-09
 

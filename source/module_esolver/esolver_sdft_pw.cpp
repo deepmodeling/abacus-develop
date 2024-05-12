@@ -36,12 +36,12 @@ ESolver_SDFT_PW::~ESolver_SDFT_PW()
 {
 }
 
-void ESolver_SDFT_PW::before_runner(Input& inp, UnitCell& ucell)
+void ESolver_SDFT_PW::before_all_runners(Input& inp, UnitCell& ucell)
 {
     this->nche_sto = inp.nche_sto;
     this->method_sto = inp.method_sto;
 
-    ESolver_KS::before_runner(inp, ucell);
+    ESolver_KS::before_all_runners(inp, ucell);
 
     this->pelec = new elecstate::ElecStatePW_SDFT(pw_wfc,
                                                   &(chr),

@@ -57,9 +57,9 @@ ESolver_OF::~ESolver_OF()
     delete this->opt_cg_mag_;
 }
 
-void ESolver_OF::before_runner(Input& inp, UnitCell& ucell)
+void ESolver_OF::before_all_runners(Input& inp, UnitCell& ucell)
 {
-    ESolver_FP::before_runner(inp, ucell);
+    ESolver_FP::before_all_runners(inp, ucell);
 
     // save necessary parameters
     this->of_kinetic_ = inp.of_kinetic;

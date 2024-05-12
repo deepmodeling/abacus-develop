@@ -20,7 +20,7 @@ class ESolver_OF : public ESolver_FP
     ESolver_OF();
     ~ESolver_OF();
 
-    virtual void before_runner(Input& inp, UnitCell& ucell) override;
+    virtual void before_all_runners(Input& inp, UnitCell& ucell) override;
 
     virtual void init_after_vc(Input& inp, UnitCell& ucell) override;
 

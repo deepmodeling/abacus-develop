@@ -20,7 +20,7 @@ class ESolver
     }
 
     //! initialize the energy solver by using input parameters and cell modules
-    virtual void before_runner(Input& inp, UnitCell& cell) = 0;
+    virtual void before_all_runners(Input& inp, UnitCell& cell) = 0;
 
     //! run energy solver
     virtual void runner(const int istep, UnitCell& cell) = 0;
@@ -28,7 +28,7 @@ class ESolver
     //! perform post processing calculations
     virtual void after_all_runners(){};
 
-    //! deal with exx and other calculation than scf/md/relax:
+    //! deal with exx and other calculation than scf/md/relax/cell-relax:
     //! such as nscf, get_wf and get_pchg
     virtual void others(const int istep){};
 

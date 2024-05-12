@@ -220,17 +220,18 @@ void ESolver_KS_PW<T, Device>::Init_GlobalC(Input& inp, UnitCell& cell)
 
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::before_runner(Input& inp, UnitCell& ucell)
+void ESolver_KS_PW<T, Device>::before_all_runners(Input& inp, UnitCell& ucell)
 {
-    ESolver_KS<T, Device>::before_runner(inp, ucell);
+    // 1) call before_all_runners() of ESolver_KS
+    ESolver_KS<T, Device>::before_all_runners(inp, ucell);
 
-    // init HSolver
+    // 2) initialize HSolver
     if (this->phsol == nullptr)
     {
         this->phsol = new hsolver::HSolverPW<T, Device>(this->pw_wfc, &this->wf);
     }
 
-    // init ElecState,
+    // 3) initialize ElecState,
     if (this->pelec == nullptr)
     {
         this->pelec = new elecstate::ElecStatePW<T, Device>(this->pw_wfc,

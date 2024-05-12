@@ -28,7 +28,7 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
 
         ~ESolver_KS_PW();
 
-        void before_runner(Input& inp, UnitCell& cell) override;
+        void before_all_runners(Input& inp, UnitCell& cell) override;
 
         void init_after_vc(Input& inp, UnitCell& cell) override;
 

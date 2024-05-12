@@ -7,7 +7,7 @@
 namespace ModuleESolver
 {
 
-    void ESolver_LJ::before_runner(Input& inp, UnitCell& ucell)
+    void ESolver_LJ::before_all_runners(Input& inp, UnitCell& ucell)
     {
         ucell_ = &ucell;
         lj_potential = 0;
