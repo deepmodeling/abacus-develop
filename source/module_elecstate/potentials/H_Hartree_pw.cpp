@@ -45,7 +45,6 @@ ModuleBase::matrix H_Hartree_pw::v_hartree(const UnitCell &cell,
     double ehart = 0.0;
 
     std::vector<std::complex<double>> vh_g(rho_basis->npw);
-    ModuleBase::Memory::record("H_Hartree_pw::vh_g",sizeof(std::complex<double>)*rho_basis->npw);
 #ifdef _OPENMP
 #pragma omp parallel for reduction(+:ehart)
 #endif
@@ -74,6 +73,7 @@ ModuleBase::matrix H_Hartree_pw::v_hartree(const UnitCell &cell,
     // Add hartree potential to the xc potential
     //==========================================
     ModuleBase::matrix v(nspin, rho_basis->nrxx);
+    ModuleBase::Memory::record("H_Hartree_pw::v_hartree",sizeof(double)*nspin*rho_basis->nrxx + sizeof(std::complex<double>)*rho_basis->npw);
     if (nspin == 4)
     {
 #ifdef _OPENMP

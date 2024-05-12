@@ -124,12 +124,14 @@ void Charge_Mixing::init_mixing()
             this->mixing->init_mixing_data(this->rho_mdata,
                                         this->rhopw->npw * 2,
                                         sizeof(std::complex<double>));
+            ModuleBase::Memory::record("Charge_Mixing::init_mixing_data",sizeof(std::complex<double>)*this->rhopw->npw * 2);
         }
         else
         {
             this->mixing->init_mixing_data(this->rho_mdata,
                                         this->rhopw->npw * GlobalV::NSPIN,
                                         sizeof(std::complex<double>));
+            ModuleBase::Memory::record("Charge_Mixing::init_mixing_data",sizeof(std::complex<double>)*this->rhopw->npw * GlobalV::NSPIN);
         }
     }
     else
@@ -137,10 +139,12 @@ void Charge_Mixing::init_mixing()
         if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0 )
         {
             this->mixing->init_mixing_data(this->rho_mdata, this->rhopw->nrxx * 2, sizeof(double));
+            ModuleBase::Memory::record("Charge_Mixing::init_mixing_data",sizeof(double)*this->rhopw->nrxx * 2);
         }
         else
         {
             this->mixing->init_mixing_data(this->rho_mdata, this->rhopw->nrxx * GlobalV::NSPIN, sizeof(double));
+            ModuleBase::Memory::record("Charge_Mixing::init_mixing_data",sizeof(double)*this->rhopw->nrxx * GlobalV::NSPIN);
         }
     }
     
@@ -152,10 +156,12 @@ void Charge_Mixing::init_mixing()
             this->mixing->init_mixing_data(this->tau_mdata,
                                            this->rhopw->npw * GlobalV::NSPIN,
                                            sizeof(std::complex<double>));
+            ModuleBase::Memory::record("Charge_Mixing::init_mixing_data",sizeof(std::complex<double>)*this->rhopw->npw * GlobalV::NSPIN);
         }
         else
         {
             this->mixing->init_mixing_data(this->tau_mdata, this->rhopw->nrxx * GlobalV::NSPIN, sizeof(double));
+            ModuleBase::Memory::record("Charge_Mixing::init_mixing_data",sizeof(double)*this->rhopw->nrxx * GlobalV::NSPIN);
         }
     }
 
@@ -186,6 +192,7 @@ void Charge_Mixing::allocate_mixing_dmr(int nnr)
     else if (GlobalV::SCF_THR_TYPE == 2)
     {
         this->mixing->init_mixing_data(this->dmr_mdata, nnr * dmr_nspin, sizeof(double));
+        ModuleBase::Memory::record("Charge_Mixing::init_mixing_dat_dmr",sizeof(double)*nnr * dmr_nspin);
     }
 
     this->dmr_mdata.reset();
@@ -219,6 +226,7 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
 
         ModuleBase::GlobalFunc::NOTE("Calculate the charge difference between rho(G) and rho_save(G)");
         std::vector<std::complex<double>> drhog(GlobalV::NSPIN * this->rhopw->npw);
+        ModuleBase::Memory::record("Charge_Mixing::drhog",sizeof(std::complex<double>)*GlobalV::NSPIN * this->rhopw->npw);
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 512)
 #endif
