@@ -8,7 +8,7 @@
 #ifdef __ELPA
 #include "module_hsolver/diago_elpa.h"
 #endif
-#ifdef __CUSOLVER_LCAO
+#ifdef __CUDA
 #include "module_hsolver/diago_cusolver.h"
 #endif
 
@@ -77,7 +77,7 @@ class DiagoPrepare
 
         if (ks_solver == "scalapack_gvx")
             dh = new hsolver::DiagoBlas<T>;
-#ifdef __CUSOLVER_LCAO
+#ifdef __CUDA
         else if (ks_solver == "cusolver")
             dh = new hsolver::DiagoCusolver<T>;
 #endif
@@ -303,7 +303,7 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Values( // int nlocal, int nbands, int nb2d, int sparsity, std::string ks_solver_in, std::string hfname,
                        // std::string sfname DiagoPrepare<double>(0, 0, 1, 0, "genelpa", "H-GammaOnly-Si2.dat",
                        // "S-GammaOnly-Si2.dat")
-#ifdef __CUSOLVER_LCAO
+#ifdef __CUDA
         DiagoPrepare<double>(0, 0, 32, 0, "cusolver", "H-GammaOnly-Si64.dat", "S-GammaOnly-Si64.dat"),
 #endif
         DiagoPrepare<double>(0, 0, 1, 0, "scalapack_gvx", "H-GammaOnly-Si2.dat", "S-GammaOnly-Si2.dat"),
@@ -332,7 +332,7 @@ INSTANTIATE_TEST_SUITE_P(
     DiagoKPointsTest,
     ::testing::Values( // int nlocal, int nbands, int nb2d, int sparsity, std::string ks_solver_in, std::string hfname,
                        // std::string sfname DiagoPrepare<std::complex<double>>(800, 400, 32, 7, "genelpa", "", ""),
-#ifdef __CUSOLVER_LCAO
+#ifdef __CUDA
         DiagoPrepare<std::complex<double>>(0, 0, 1, 0, "cusolver", "H-KPoints-Si2.dat", "S-KPoints-Si2.dat"),
 #endif
         // DiagoPrepare<std::complex<double>>(0, 0, 32, 0, "genelpa", "H-KPoints-Si64.dat", "S-KPoints-Si64.dat"),

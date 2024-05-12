@@ -4,75 +4,78 @@
 //  Pseudopot_upfpotential Format
 int Pseudopot_upf::read_pseudo_upf(std::ifstream &ifs)
 {
-	std::string dummy;
-	int ierr = 0;
-	this->has_so = false;
+    std::string dummy;
+    this->has_so = false;
+    this->q_with_l = false;
 
-	//addinfo_loop
-	ifs.rdstate();
+    // addinfo_loop
+    ifs.rdstate();
 
-	while (ifs.good())
-	{
-		ifs >> dummy;
-		if(dummy=="<PP_ADDINFO>")
-		{
-			ierr = 1;
-			break;
-		}
-		ifs.rdstate();
-	}
+    while (ifs.good())
+    {
+        ifs >> dummy;
+        if (dummy == "<PP_ADDINFO>")
+        {
+            this->has_so = true;
+        }
+        else if (dummy == "<PP_QIJ_WITH_L>")
+        {
+            this->q_with_l = true;
+        }
 
-	if (ierr == 1) 
-	{
-		has_so = true;
-	}
-	
-	// Search for Header
-	// This version doesn't use the new routine SCAN_BEGIN
-	// because this search must set extra flags for
-	// compatibility with other pp format reading
+        if (has_so && q_with_l)
+        {
+            break;
+        }
+        ifs.rdstate();
+    }
 
-	ierr = 0;
+    // Search for Header
+    // This version doesn't use the new routine SCAN_BEGIN
+    // because this search must set extra flags for
+    // compatibility with other pp format reading
 
-	ifs.clear();
-	ifs.seekg(0);
-	ifs.rdstate();
+    int ierr = 0;
 
-	// header_loop:
-	while (ifs.good())
-	{
-		ifs >> dummy;
-		if(dummy=="<PP_HEADER>")
-		{
-			ierr = 1;
-			//---------------------
-			// call member function
-			//---------------------
-			read_pseudo_header(ifs);
-			ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_HEADER>");
-			break;
-		}
-	}
+    ifs.clear();
+    ifs.seekg(0);
+    ifs.rdstate();
 
-	if (ierr == 0) 
-	{
-		// 2: something in pseudopotential file not match.
-		return 2;
-	}
+    // header_loop:
+    while (ifs.good())
+    {
+        ifs >> dummy;
+        if (dummy == "<PP_HEADER>")
+        {
+            ierr = 1;
+            //---------------------
+            // call member function
+            //---------------------
+            read_pseudo_header(ifs);
+            ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_HEADER>");
+            break;
+        }
+    }
 
-	// Search for mesh information
-	if ( ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_MESH>") )
-	{
-		//---------------------
-		// call member function
-		//---------------------
-		read_pseudo_mesh(ifs);
-		ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_MESH>");
-	}
+    if (ierr == 0)
+    {
+        // 2: something in pseudopotential file not match.
+        return 2;
+    }
 
-	// If  present, search for nlcc
-	if (this->nlcc)
-	{
+    // Search for mesh information
+    if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_MESH>"))
+    {
+        //---------------------
+        // call member function
+        //---------------------
+        read_pseudo_mesh(ifs);
+        ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_MESH>");
+    }
+
+    // If  present, search for nlcc
+    if (this->nlcc)
+    {
 		ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_NLCC>"); 
 		//---------------------
 		// call member function
@@ -148,29 +151,31 @@ void Pseudopot_upf::read_pseudo_header(std::ifstream &ifs)
 	if(pp_type=="US")
 	{
 		this->tvanp = true;
-	}
-	else if(pp_type=="NC")
-	{
-		this->tvanp = false;
-	}
-	else if(pp_type == "1/r")
-	{
-		this->tvanp = false;
-		this->coulomb_potential = true;
-	}
-	else
-	{
-		// A bug here!!! can't quit together.
-		std::cout << " pp_type=" << pp_type << std::endl;
-		ModuleBase::WARNING_QUIT("Pseudopot_upf::read_pseudo_header","unknown pseudo type");
-	}
+        this->coulomb_potential = false;
+    }
+    else if (pp_type == "NC")
+    {
+        this->tvanp = false;
+        this->coulomb_potential = false;
+    }
+    else if (pp_type == "1/r")
+    {
+        this->tvanp = false;
+        this->coulomb_potential = true;
+    }
+    else
+    {
+        // A bug here!!! can't quit together.
+        std::cout << " pp_type=" << pp_type << std::endl;
+        ModuleBase::WARNING_QUIT("Pseudopot_upf::read_pseudo_header", "unknown pseudo type");
+    }
 
-	// If use nlcc
-	std::string nlc;
-	ModuleBase::GlobalFunc::READ_VALUE(ifs, nlc);
+    // If use nlcc
+    std::string nlc;
+    ModuleBase::GlobalFunc::READ_VALUE(ifs, nlc);
 
-	if (nlc == "T")
-	{
+    if (nlc == "T")
+    {
 		this->nlcc = true;
 	}
 	else
@@ -282,18 +287,18 @@ void Pseudopot_upf::read_pseudo_local(std::ifstream &ifs)
 
 void Pseudopot_upf::read_pseudo_nl(std::ifstream &ifs)
 {
-//	int nb, mb, n, ir, idum, ldum, lp, i, ikk;
-	int nb, mb, ir, idum;
+    //	int nb, mb, n, ir, idum, ldum, lp, i, ikk;
+    int nb = 0;
+    int mb = 0;
+    int ir = 0;
+    int idum = 0;
+    int ldum = 0;
 
-	if (nbeta == 0)
-	{
-        delete[] kbeta;
-        delete[] lll;
-        this->kbeta = nullptr;
-        this->lll = nullptr;
-        this->beta.create(1, 1);
-        this->dion.create(1, 1);
-        kkbeta = 0;
+    if (nbeta == 0)
+    {
+        this->nqf = 0;
+        this->nqlc = 0;
+        this->kkbeta = 0;
         return;
     }
     else
@@ -301,9 +306,9 @@ void Pseudopot_upf::read_pseudo_nl(std::ifstream &ifs)
         delete[] kbeta;
         delete[] lll;
         this->kbeta = new int[nbeta];
-        this->lll = new int[nbeta]; 
-		this->beta.create(nbeta , mesh);
-		this->dion.create(nbeta , nbeta);
+        this->lll = new int[nbeta];
+        this->beta.create(nbeta, mesh);
+        this->dion.create(nbeta, nbeta);
         kkbeta = 0;
 
         for (int i = 0; i < nbeta; i++)
@@ -341,11 +346,98 @@ void Pseudopot_upf::read_pseudo_nl(std::ifstream &ifs)
 		// QIJ
 		if (tvanp)
 		{
-			ModuleBase::WARNING_QUIT("read_pseudo_nl","Ultra Soft Pseudopotential not available yet.");
-		}
-		else // not tvanp
-		{
-		}
+            if (!ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_QIJ>", false))
+            {
+                ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_QIJ_WITH_L>", false);
+            }
+            // If nqf is not zero, Qij's inside rinner are computed using qfcoef's
+            ModuleBase::GlobalFunc::READ_VALUE(ifs, this->nqf);
+            this->nqlc = 2 * this->lmax + 1;
+            delete[] rinner;
+            this->rinner = new double[nqlc];
+            qqq.create(nbeta, nbeta);
+            if (q_with_l)
+            {
+                this->qfuncl.create(2 * lmax + 1, nbeta * (nbeta + 1) / 2, mesh);
+            }
+            else
+            {
+                this->qfunc.create(nbeta * (nbeta + 1) / 2, mesh);
+            }
+
+            if (nqf <= 0)
+            {
+                ModuleBase::GlobalFunc::ZEROS(rinner, nqlc);
+                this->qfcoef.create(1, 1, 1, 1);
+            }
+            else
+            {
+                this->qfcoef.create(nbeta, nbeta, nqlc, nqf);
+                ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_RINNER>", false);
+                for (int i = 0; i < nqlc; i++)
+                {
+                    ifs >> idum >> rinner[i];
+                }
+                ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_RINNER>");
+            }
+
+            for (int nb = 0; nb < nbeta; nb++)
+            {
+                int ln = lll[nb];
+                for (int mb = nb; mb < nbeta; mb++)
+                {
+                    int lm = lll[mb];
+                    int nmb = mb * (mb + 1) / 2 + nb;
+                    ifs >> idum >> idum >> ldum; // i  j  (l(j))
+                    ifs.ignore(75, '\n');
+
+                    if (ldum != lm)
+                    {
+                        ModuleBase::WARNING_QUIT("Pseudopot_upf::read_pseudo_nl",
+                                                 "inconsistent angular momentum for Q_ij");
+                    }
+
+                    ModuleBase::GlobalFunc::READ_VALUE(ifs, this->qqq(nb, mb));
+                    this->qqq(mb, nb) = this->qqq(nb, mb);
+
+                    if (q_with_l)
+                    {
+                        for (int l = std::abs(ln - lm); l <= ln + lm; l += 2)
+                        {
+                            for (int ir = 0; ir < mesh; ir++)
+                            {
+                                ifs >> qfuncl(l, nmb, ir);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        for (int ir = 0; ir < mesh; ir++)
+                        {
+                            ifs >> qfunc(nmb, ir);
+                        }
+                    }
+
+                    if (this->nqf > 0)
+                    {
+                        ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_QFCOEF>", false);
+                        for (int k = 0; k < nqlc; k++)
+                        {
+                            for (int l = 0; l < nqf; l++)
+                            {
+                                ifs >> qfcoef(nb, mb, k, l);
+                                qfcoef(mb, nb, k, l) = qfcoef(nb, mb, k, l);
+                            }
+                        }
+                        ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_QFCOEF>");
+                    }
+                }
+            }
+            ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_QIJ>");
+        }
+        else // not tvanp
+        {
+        }
     }
     return;
 }
