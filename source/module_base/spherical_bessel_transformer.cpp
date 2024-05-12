@@ -21,7 +21,7 @@ class SphericalBesselTransformer::Impl
 
 public:
 
-    explicit Impl(bool cache_enabled = false);
+    explicit Impl(const bool cache_enabled = false);
     ~Impl() { _rfft_clear(); };
 
     Impl(Impl const&) = delete;
@@ -32,24 +32,24 @@ public:
 
     // see the interface class for details
     void radrfft(
-        int l,
-        int ngrid,
-        double cutoff,
-        const double* in,
-        double* out,
-        int p = 0
+        const int l,
+        const int ngrid,
+        const double cutoff,
+        const double* const in,
+        double* const out,
+        const int p = 0
     );
 
     // see the interface class for details
     void direct(
-        int l,
-        int ngrid_in,
-        const double* grid_in,
-        const double* in,
-        int ngrid_out,
-        const double* grid_out,
-        double* out,
-        int p = 0
+        const int l,
+        const int ngrid_in,
+        const double* const grid_in,
+        const double* const in,
+        const int ngrid_out,
+        const double* const grid_out,
+        double* const out,
+        const int p = 0
     );
 
     // total heap usage (in bytes) from the FFTW buffer and tabulated jl
@@ -82,7 +82,7 @@ private:
     const unsigned fftw_plan_flag_;
 
     /// buffer allocation and plan creation for in-place real-input FFT
-    void _rfft_prepare(int n);
+    void _rfft_prepare(const int n);
 
     /// clear the FFTW plan and buffer
     void _rfft_clear();
@@ -108,11 +108,11 @@ private:
 
     /// tabulate spherical Bessel function on the mesh grid
     void _tabulate(
-        int l,
-        int ngrid_in,
-        const double* grid_in,
-        int ngrid_out,
-        const double* grid_out
+        const int l,
+        const int ngrid_in,
+        const double* const grid_in,
+        const int ngrid_out,
+        const double* const grid_out
     );
 
     /// clear the tabulated jl
@@ -121,20 +121,24 @@ private:
 }; // class SphericalBesselTransformer::Impl
 
 
-SphericalBesselTransformer::Impl::Impl(bool cache_enabled):
+SphericalBesselTransformer::Impl::Impl(const bool cache_enabled):
+    // NOTE: For the current usage of this class, the performance gain
+    // by using FFTW_MEASURE instead of FFTW_ESTIMATE usually does not
+    // worth the extra overhead, and may cause a timeout of the integrated
+    // test. This might need more investigation and change in the future.
     //fftw_plan_flag_(cache_enabled ? FFTW_MEASURE : FFTW_ESTIMATE),
-    fftw_plan_flag_(cache_enabled ? FFTW_ESTIMATE : FFTW_ESTIMATE),
+    fftw_plan_flag_(FFTW_ESTIMATE),
     cache_enabled_(cache_enabled)
 {}
 
 
 void SphericalBesselTransformer::Impl::radrfft(
-    int l,
-    int ngrid,
-    double cutoff,
-    const double* in,
-    double* out,
-    int p
+    const int l,
+    const int ngrid,
+    const double cutoff,
+    const double* const in,
+    double* const out,
+    const int p
 )
 {
     /*
@@ -224,7 +228,7 @@ void SphericalBesselTransformer::Impl::radrfft(
     {
         // m even --> sin; f[2*n-i] = -f[i]; out += -imag(rfft(f)) / y^(l+1-m)
         // m odd  --> cos; f[2*n-i] = +f[i]; out += +real(rfft(f)) / y^(l+1-m)
-        double coef = reinterpret_cast<double(&)[2]>(c[idx(l,m)])[is_imag];
+        const double coef = reinterpret_cast<double(&)[2]>(c[idx(l,m)])[is_imag];
 
         f_[0] = f_[n] = 0.0;
         for (int i = 1; i != n; ++i)
@@ -283,14 +287,14 @@ void SphericalBesselTransformer::Impl::radrfft(
 
 
 void SphericalBesselTransformer::Impl::direct(
-    int l,
-    int ngrid_in,
-    const double* grid_in,
-    const double* in,
-    int ngrid_out,
-    const double* grid_out,
-    double* out,
-    int p
+    const int l,
+    const int ngrid_in,
+    const double* const grid_in,
+    const double* const in,
+    const int ngrid_out,
+    const double* const grid_out,
+    double* const out,
+    const int p
 )
 {
     assert(p <= 2);
@@ -331,7 +335,7 @@ void SphericalBesselTransformer::Impl::direct(
 }
 
 
-void SphericalBesselTransformer::Impl::_rfft_prepare(int n)
+void SphericalBesselTransformer::Impl::_rfft_prepare(const int n)
 {
     if (n != sz_planned_)
     {
@@ -355,11 +359,11 @@ void SphericalBesselTransformer::Impl::_rfft_prepare(int n)
 
 
 void SphericalBesselTransformer::Impl::_tabulate(
-    int l,
-    int ngrid_in,
-    const double* grid_in,
-    int ngrid_out,
-    const double* grid_out
+    const int l,
+    const int ngrid_in,
+    const double* const grid_in,
+    const int ngrid_out,
+    const double* const grid_out
 )
 {
     const bool is_cached =
@@ -428,18 +432,18 @@ void SphericalBesselTransformer::Impl::clear()
 //**********************************************************************
 //                          Interface
 //**********************************************************************
-SphericalBesselTransformer::SphericalBesselTransformer(bool cache_enabled)
+SphericalBesselTransformer::SphericalBesselTransformer(const bool cache_enabled)
     : impl_(new Impl(cache_enabled))
 {}
 
 
 void SphericalBesselTransformer::radrfft(
-    int l,
-    int ngrid,
-    double cutoff,
-    const double* in,
-    double* out,
-    int p
+    const int l,
+    const int ngrid,
+    const double cutoff,
+    const double* const in,
+    double* const out,
+    const int p
 ) const
 {
     impl_->radrfft(l, ngrid, cutoff, in, out, p);
@@ -447,14 +451,14 @@ void SphericalBesselTransformer::radrfft(
 
 
 void SphericalBesselTransformer::direct(
-    int l,
-    int ngrid_in,
-    const double* grid_in,
-    const double* in,
-    int ngrid_out,
-    const double* grid_out,
-    double* out,
-    int p
+    const int l,
+    const int ngrid_in,
+    const double* const grid_in,
+    const double* const in,
+    const int ngrid_out,
+    const double* const grid_out,
+    double* const out,
+    const int p
 ) const
 {
     impl_->direct(l, ngrid_in, grid_in, in, ngrid_out, grid_out, out, p);

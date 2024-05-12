@@ -68,7 +68,7 @@ namespace ModuleBase
 class SphericalBesselTransformer
 {
 public:
-    explicit SphericalBesselTransformer(bool cache_enabled = false);
+    explicit SphericalBesselTransformer(const bool cache_enabled = false);
     ~SphericalBesselTransformer() = default;
 
     SphericalBesselTransformer(SphericalBesselTransformer const&) = default;
@@ -114,12 +114,12 @@ public:
      *          determine x^2*F(x) at x = 0 from x[i]^p*F(x[i]).
      */
     void radrfft(
-        int l,
-        int ngrid,
-        double cutoff,
-        const double* in,
-        double* out,
-        int p = 0
+        const int l,
+        const int ngrid,
+        const double cutoff,
+        const double* const in,
+        double* const out,
+        const int p = 0
     ) const;
 
 
@@ -152,14 +152,14 @@ public:
      *
      */
     void direct(
-        int l,
-        int ngrid_in,
-        const double* grid_in,
-        const double* in,
-        int ngrid_out,
-        const double* grid_out,
-        double* out,
-        int p = 0
+        const int l,
+        const int ngrid_in,
+        const double* const grid_in,
+        const double* const in,
+        const int ngrid_out,
+        const double* const grid_out,
+        double* const out,
+        const int p = 0
     ) const;
 
 
