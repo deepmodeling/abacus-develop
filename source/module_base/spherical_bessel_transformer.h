@@ -68,7 +68,7 @@ namespace ModuleBase
 class SphericalBesselTransformer
 {
 public:
-    explicit SphericalBesselTransformer(const bool cache_enabled = false);
+    SphericalBesselTransformer(const bool cache_enabled = false);
     ~SphericalBesselTransformer() = default;
 
     SphericalBesselTransformer(SphericalBesselTransformer const&) = default;

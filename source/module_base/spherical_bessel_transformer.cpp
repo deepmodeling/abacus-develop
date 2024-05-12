@@ -21,7 +21,7 @@ class SphericalBesselTransformer::Impl
 
 public:
 
-    explicit Impl(const bool cache_enabled = false);
+    Impl(const bool cache_enabled = false);
     ~Impl() { _rfft_clear(); };
 
     Impl(Impl const&) = delete;
