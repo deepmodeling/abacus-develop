@@ -1,0 +1,16 @@
+930_NO_BI2SE2CU2O2_GPU
+931_NO_H20_GPU
+932_NO_H2_dzp_GPU
+932_NO_H2_dzp_ns2_GPU
+932_NO_H2_sz_GPU
+932_NO_H2_sz_ns2_GPU
+933_NO_H_dzp_GPU
+933_NO_H_dzp_ns2_GPU
+934_NO_Si2_dzp_GPU
+934_NO_Si2_dzp_neq_GPU
+934_NO_Si2_dzp_neq_ns2_GPU
+934_NO_Si2_dzp_ns2_GPU
+934_NO_Si2_tzdp_GPU
+934_NO_Si2_tzdp_neq_GPU
+934_NO_Si2_tzdp_neq_ns2_GPU
+934_NO_Si2_tzdp_ns2_GPU

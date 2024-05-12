@@ -94,7 +94,7 @@ if(ENABLE_LCAO)
     )
   endif()
 endif()
-if (USE_CUDA AND USE_CUSOLVER_LCAO)
+if (USE_CUDA)
 AddTest(
   TARGET HSolver_LCAO_cusolver
   LIBS ${math_libs}  base psi device 
