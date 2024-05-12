@@ -192,6 +192,8 @@ TEST_F(InputConvTest, Conv)
     EXPECT_EQ(GlobalV::sc_file, "sc.json");
 	EXPECT_EQ(GlobalV::MIXING_RESTART,0.0);
 	EXPECT_EQ(GlobalV::MIXING_DMR,false);
+
+	EXPECT_EQ(GlobalV::NUM_STREAM,4);
 }
 
 TEST_F(InputConvTest, ConvRelax)
@@ -267,13 +269,7 @@ TEST_F(InputConvTest, ConvRelax)
 		testing::internal::CaptureStdout();
 		EXPECT_EXIT(Input_Conv::Convert(), ::testing::ExitedWithCode(0),"");
 		output2 = testing::internal::GetCapturedStdout();
-		EXPECT_THAT(output2,testing::HasSubstr("INPUT device setting does not match the request!"
-			"\n Input device = gpu"
-			"\n Input basis_type = pw"
-			"\n Input ks_solver = cg"
-			"\n Compile setting = host"
-			"\n Environment device_num = -1"
-			"\n"));
+		EXPECT_THAT(output2,testing::HasSubstr("The GPU is not supported in this build!"));
   }
 
 TEST_F(InputConvTest, dftplus)

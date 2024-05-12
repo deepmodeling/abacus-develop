@@ -61,6 +61,7 @@
     - [search\_radius](#search_radius)
     - [search\_pbc](#search_pbc)
     - [bx, by, bz](#bx-by-bz)
+    - [num\_stream] (#num_stream)
   - [Electronic structure](#electronic-structure)
     - [basis\_type](#basis_type)
     - [ks\_solver](#ks_solver)
@@ -370,16 +371,6 @@
     - [tau](#tau)
     - [sigma\_k](#sigma_k)
     - [nc\_k](#nc_k)
-  - [Deltaspin](#deltaspin)
-    - [sc\_mag\_switch](#sc_mag_switch)
-    - [decay\_grad\_switch](#decay_grad_switch)
-    - [sc\_thr](#sc_thr)
-    - [nsc](#nsc)
-    - [nsc\_min](#nsc_min)
-    - [sc\_scf\_nmin](#sc_scf_nmin)
-    - [alpha\_trial](#alpha_trial)
-    - [sccut](#sccut)
-    - [sc\_file](#sc_file)
   - [Quasiatomic Orbital (QO) analysis](#quasiatomic-orbital-qo-analysis)
     - [qo\_switch](#qo_switch)
     - [qo\_basis](#qo_basis)
@@ -653,10 +644,8 @@ If only one value is set (such as `kspacing 0.5`), then kspacing values of a/b/c
   - cpu: for CPUs via Intel, AMD, or Other supported CPU devices
   - gpu: for GPUs via CUDA or ROCm.
 
-  Known limitations:
+  Known limitations: If using the pw basis, the ks_solver must be cg/bpcg/dav to support `gpu` acceleration. If using the lcao basis, `gamma_only` must be set to `1`, as multi-k calculation is currently not supported for `gpu`. lcao_in_pw also does not support `gpu`.
 
-  - pw basis: required by the `gpu` acceleration options
-  - cg/bpcg/dav ks_solver: required by the `gpu` acceleration options
 - **Default**: cpu
 
 ### precision
@@ -893,6 +882,12 @@ These variables are used to control the numerical atomic orbitals related parame
 - **Description**: In the matrix operation of grid integral, bx/by/bz grids (in x, y, z directions) are treated as a whole as a matrix element. A different value will affect the calculation speed. The default is 0, which means abacus will automatically calculate these values.
 - **Default**: 0
 
+### num_stream
+
+- **Type** :int
+- **Description**: choose the number of streams in GPU when we compute the `LCAO`. According to different devices , we may have different effects.For most devices,the stream is
+enough when the number is bigger then 2.
+- **Default** : "4" 
 [back to top](#full-list-of-input-keywords)
 
 ## Electronic structure
@@ -924,7 +919,7 @@ calculations.
 
   - **genelpa**: This method should be used if you choose localized orbitals.
   - **scalapack_gvx**: Scalapack can also be used for localized orbitals.
-  - **cusolver**: (Unavailable currently, it will be fixed in future versions) This method needs building with the cusolver component for lcao and at least one gpu is available.
+  - **cusolver**: This method needs building with CUDA and at least one gpu is available.
 
   If you set ks_solver=`genelpa` for basis_type=`pw`, the program will be stopped with an error message:
 
@@ -3471,128 +3466,6 @@ These variables are used to control the usage of implicit solvation model. This 
 - **Description**: the value of the electron density at which the dielectric cavity forms
 - **Default**: 0.00037
 - **Unit**: $Bohr^{-3}$
-
-[back to top](#full-list-of-input-keywords)
-
-## Deltaspin
-
-These variables are used to control the usage of deltaspin functionality.
-
-### sc_mag_switch
-
-- **Type**: boolean
-- **Description**: the switch of deltaspin functionality
-  - 0: no deltaspin
-  - 1: use the deltaspin method to constrain atomic magnetic moments
-- **Default**: 0
-
-### decay_grad_switch
-
-- **Type**: boolean
-- **Description**: the switch of decay gradient method
-  - 0: no decay gradient method
-  - 1: use the decay gradient method and set ScDecayGrad in the file specified by `sc_file`. ScDecayGrad is an element dependent parameter, which is used to control the decay rate of the gradient of the magnetic moment.
-- **Default**: 0
-
-### sc_thr
-
-- **Type**: Real
-- **Description**: the threshold of the spin constraint atomic magnetic moment
-- **Default**: 1e-6
-- **Unit**: Bohr Mag (\muB)
-
-### nsc
-
-- **Type**: Integer
-- **Description**: the maximum number of steps in the inner lambda loop
-- **Default**: 100
-
-### nsc_min
-
-- **Type**: Integer
-- **Description**: the minimum number of steps in the inner lambda loop
-- **Default**: 2
-
-### sc_scf_nmin
-
-- **Type**: Integer
-- **Description**: the minimum number of outer scf loop before initializing lambda loop
-- **Default**: 2
-
-### alpha_trial
-
-- **Type**: Real
-- **Description**: initial trial step size for lambda in eV/uB^2
-- **Default**: 0.01
-- **Unit**: eV/uB^2
-
-### sccut
-
-- **Type**: Real
-- **Description**: restriction of step size in eV/uB
-- **Default**: 3
-- **Unit**: eV/uB
-
-### sc_file
-
-- **Type**: String
-- **Description**: the file in json format to specify atomic constraining parameters. An example of the sc_file json file is shown below for the `nspin 4` case:
-
-```json
-[
-    {
-        "element": "Fe",
-        "itype": 0,
-        "ScDecayGrad": 0.9,
-        "ScAtomData": [
-            {
-                "index": 0,
-                "lambda": [0, 0, 0],
-                "target_mag": [2.0, 0.0, 0.0],
-                "constrain": [1,1,1]
-            },
-            {
-                "index": 1,
-                "lambda": [0, 0, 0],
-                "target_mag_val": 2.0,
-                "target_mag_angle1": 80.0,
-                "target_mag_angle2": 0.0,
-                "constrain": [1,1,1]
-            }
-        ]
-    }
-]
-```
-
-and
-
-```json
-[
-    {
-        "element": "Fe",
-        "itype": 0,
-        "ScDecayGrad": 0.9,
-        "ScAtomData": [
-            {
-                "index": 0,
-                "lambda": 0.0,
-                "target_mag": 2.0,
-                "constrain": 1
-            },
-            {
-                "index": 1,
-                "lambda": 0,
-                "target_mag": 2.0,
-                "constrain": 1
-            }
-        ]
-    }
-]
-```
-
-for `nspin 2` case. The difference is that `lambda`, `target_mag`, and `constrain` are scalars in `nspin 2` case, and are vectors in `nspin 4` case.
-
-- **Default**: none
 
 [back to top](#full-list-of-input-keywords)
 
