@@ -122,7 +122,8 @@ private:
 
 
 SphericalBesselTransformer::Impl::Impl(bool cache_enabled):
-    fftw_plan_flag_(cache_enabled ? FFTW_MEASURE : FFTW_ESTIMATE),
+    //fftw_plan_flag_(cache_enabled ? FFTW_MEASURE : FFTW_ESTIMATE),
+    fftw_plan_flag_(cache_enabled ? FFTW_ESTIMATE : FFTW_ESTIMATE),
     cache_enabled_(cache_enabled)
 {}
 
