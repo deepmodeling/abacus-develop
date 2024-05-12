@@ -241,7 +241,7 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
     ModuleBase::TITLE("MD_func", "force_virial");
     ModuleBase::timer::tick("MD_func", "force_virial");
 
-    p_esolver->run(istep, unit_in);
+    p_esolver->runner(istep, unit_in);
 
     potential = p_esolver->cal_energy();
 

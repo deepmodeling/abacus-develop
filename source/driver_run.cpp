@@ -38,7 +38,7 @@ void Driver::driver_run(void)
     GlobalC::ucell.setup_cell(GlobalV::stru_file, GlobalV::ofs_running);
 
     //! 3: initialize Esolver and fill json-structure 
-    p_esolver->init(INPUT, GlobalC::ucell);
+    p_esolver->before_runner(INPUT, GlobalC::ucell);
 
 
 #ifdef __RAPIDJSON
@@ -65,7 +65,7 @@ void Driver::driver_run(void)
     }
 
     //! 5: clean up esolver
-    p_esolver->post_process();
+    p_esolver->after_all_runners();
     ModuleESolver::clean_esolver(p_esolver);
 
     ModuleBase::timer::tick("Driver", "driver_line");

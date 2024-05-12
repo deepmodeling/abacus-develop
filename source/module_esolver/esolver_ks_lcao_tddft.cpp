@@ -62,9 +62,9 @@ ESolver_KS_LCAO_TDDFT::~ESolver_KS_LCAO_TDDFT()
     }
 }
 
-void ESolver_KS_LCAO_TDDFT::init(Input& inp, UnitCell& ucell)
+void ESolver_KS_LCAO_TDDFT::before_runner(Input& inp, UnitCell& ucell)
 {
-    ESolver_KS::init(inp, ucell);
+    ESolver_KS::before_runner(inp, ucell);
 
     // Initialize the FFT.
     // this function belongs to cell LOOP

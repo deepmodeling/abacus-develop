@@ -75,15 +75,15 @@ ESolver_KS<T, Device>::~ESolver_KS()
 }
 
 //------------------------------------------------------------------------------
-//! the 3rd function of ESolver_KS: init
+//! the 3rd function of ESolver_KS: before_runner
 //! mohan add 2024-05-11
 //------------------------------------------------------------------------------
 template<typename T, typename Device>
-void ESolver_KS<T, Device>::init(Input& inp, UnitCell& ucell)
+void ESolver_KS<T, Device>::before_runner(Input& inp, UnitCell& ucell)
 {
-	ModuleBase::TITLE("ESolver_KS", "init");
+	ModuleBase::TITLE("ESolver_KS", "before_runner");
 
-	ESolver_FP::init(inp,ucell);
+	ESolver_FP::before_runner(inp,ucell);
 
 	//------------------Charge Mixing------------------
 	p_chgmix->set_mixing(GlobalV::MIXING_MODE,
@@ -418,9 +418,9 @@ void ESolver_KS<T, Device>::print_wfcfft(Input& inp, std::ofstream &ofs)
 //! 16) Json again
 //------------------------------------------------------------------------------
 template<typename T, typename Device>
-void ESolver_KS<T, Device>::run(const int istep, UnitCell& ucell)
+void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
 {
-	ModuleBase::TITLE("ESolver_KS", "run");
+	ModuleBase::TITLE("ESolver_KS", "runner");
     
     // 1) run others except scf, md, relax, cell-relax
 	if (!(GlobalV::CALCULATION == "scf" 
@@ -432,7 +432,7 @@ void ESolver_KS<T, Device>::run(const int istep, UnitCell& ucell)
 	}
 	else
 	{
-		ModuleBase::timer::tick(this->classname, "run");
+		ModuleBase::timer::tick(this->classname, "runner");
 
         // 2) before_scf (electronic iteration loops)
 		this->before_scf(istep); 
@@ -626,7 +626,7 @@ void ESolver_KS<T, Device>::run(const int istep, UnitCell& ucell)
         // 15) after scf
 		this->after_scf(istep);
 
-		ModuleBase::timer::tick(this->classname, "run");
+		ModuleBase::timer::tick(this->classname, "runner");
 	}// end scf, md, relax, cell-relax
 
 

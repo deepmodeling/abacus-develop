@@ -220,9 +220,9 @@ void ESolver_KS_PW<T, Device>::Init_GlobalC(Input& inp, UnitCell& cell)
 
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::init(Input& inp, UnitCell& ucell)
+void ESolver_KS_PW<T, Device>::before_runner(Input& inp, UnitCell& ucell)
 {
-    ESolver_KS<T, Device>::init(inp, ucell);
+    ESolver_KS<T, Device>::before_runner(inp, ucell);
 
     // init HSolver
     if (this->phsol == nullptr)
@@ -1196,7 +1196,7 @@ void ESolver_KS_PW<T, Device>::cal_stress(ModuleBase::matrix& stress)
 
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::post_process(void)
+void ESolver_KS_PW<T, Device>::after_all_runners(void)
 {
 
     GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;

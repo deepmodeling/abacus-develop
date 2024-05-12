@@ -105,10 +105,10 @@ ESolver_KS_LCAO<TK, TR>::~ESolver_KS_LCAO()
 //! 14) set occupations?
 //------------------------------------------------------------------------------
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::init(Input& inp, UnitCell& ucell)
+void ESolver_KS_LCAO<TK, TR>::before_runner(Input& inp, UnitCell& ucell)
 {
-    ModuleBase::TITLE("ESolver_KS_LCAO", "init");
-    ModuleBase::timer::tick("ESolver_KS_LCAO", "init");
+    ModuleBase::TITLE("ESolver_KS_LCAO", "before_runner");
+    ModuleBase::timer::tick("ESolver_KS_LCAO", "before_runner");
  
     // 1) calculate overlap matrix S
     if (GlobalV::CALCULATION == "get_S")
@@ -131,8 +131,8 @@ void ESolver_KS_LCAO<TK, TR>::init(Input& inp, UnitCell& ucell)
     }
     else
     {
-        // 1) else, call init() in ESolver_KS
-        ESolver_KS<TK>::init(inp, ucell);
+        // 1) else, call before_runner() in ESolver_KS
+        ESolver_KS<TK>::before_runner(inp, ucell);
     } // end ifnot get_S
 
 
@@ -270,7 +270,7 @@ void ESolver_KS_LCAO<TK, TR>::init(Input& inp, UnitCell& ucell)
         this->pelec->fixed_weights(GlobalV::ocp_kb);
 	}
 
-    ModuleBase::timer::tick("ESolver_KS_LCAO", "init");
+    ModuleBase::timer::tick("ESolver_KS_LCAO", "before_runner");
 	return;
 }
 
@@ -407,14 +407,14 @@ void ESolver_KS_LCAO<TK, TR>::cal_stress(ModuleBase::matrix& stress)
 
 
 //------------------------------------------------------------------------------
-//! the 8th function of ESolver_KS_LCAO: post_process
+//! the 8th function of ESolver_KS_LCAO: after_all_runners
 //! mohan add 2024-05-11
 //------------------------------------------------------------------------------
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::post_process(void)
+void ESolver_KS_LCAO<TK, TR>::after_all_runners(void)
 {
-    ModuleBase::TITLE("ESolver_KS_LCAO", "post_process");
-    ModuleBase::timer::tick("ESolver_KS_LCAO", "post_process");
+    ModuleBase::TITLE("ESolver_KS_LCAO", "after_all_runners");
+    ModuleBase::timer::tick("ESolver_KS_LCAO", "after_all_runners");
 
     GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
     GlobalV::ofs_running << std::setprecision(16);
@@ -492,7 +492,7 @@ void ESolver_KS_LCAO<TK, TR>::post_process(void)
 				GlobalV::NBANDS,
 				this->p_hamilt);
 	}
-    ModuleBase::timer::tick("ESolver_KS_LCAO", "post_process");
+    ModuleBase::timer::tick("ESolver_KS_LCAO", "after_all_runners");
 }
 
 

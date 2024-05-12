@@ -20,10 +20,13 @@ class ESolver
     }
 
     //! initialize the energy solver by using input parameters and cell modules
-    virtual void init(Input& inp, UnitCell& cell) = 0;
+    virtual void before_runner(Input& inp, UnitCell& cell) = 0;
 
     //! run energy solver
-    virtual void run(int istep, UnitCell& cell) = 0;
+    virtual void runner(const int istep, UnitCell& cell) = 0;
+
+    //! perform post processing calculations
+    virtual void after_all_runners(){};
 
     //! deal with exx and other calculation than scf/md/relax:
     //! such as nscf, get_wf and get_pchg
@@ -38,8 +41,6 @@ class ESolver
     //! calcualte stress of given cell
     virtual void cal_stress(ModuleBase::matrix& stress) = 0;
 
-    //! perform post processing calculations
-    virtual void post_process(){};
 
     // Print current classname.
     void printname();
