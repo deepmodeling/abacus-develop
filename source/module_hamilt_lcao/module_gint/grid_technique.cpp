@@ -88,7 +88,7 @@ Grid_Technique::~Grid_Technique()
     
     if (allocate_find_R2)
     {
-        for (int iat = 0; iat < GlobalC::ucell.nat; iat++)
+        for (int iat = 0; iat < this->nat; iat++)
         {
             delete[] find_R2[iat];
             delete[] find_R2st[iat];
@@ -102,7 +102,7 @@ Grid_Technique::~Grid_Technique()
 #if ((defined __CUDA) /* || (defined __ROCM) */)
     if(GlobalV::device_flag == "gpu")
     {
-        free_gpu_gint_variables(GlobalC::ucell);
+        free_gpu_gint_variables(this->nat);
     }
 #endif
 }
@@ -641,7 +641,7 @@ void Grid_Technique::init_gpu_gint_variables(const UnitCell& ucell,const LCAO_Or
 {
     if (is_malloced)
     {
-        free_gpu_gint_variables(ucell);
+        free_gpu_gint_variables(this->nat);
     }
     double ylmcoef[100];
     ModuleBase::GlobalFunc::ZEROS(ylmcoef, 100);
@@ -950,7 +950,7 @@ void Grid_Technique::init_gpu_gint_variables(const UnitCell& ucell,const LCAO_Or
     free(atom_iw2_ylm_now);
 }
 
-void Grid_Technique::free_gpu_gint_variables(const UnitCell& ucell)
+void Grid_Technique::free_gpu_gint_variables(int nat)
 {
     if (!is_malloced)
     {
@@ -1027,7 +1027,7 @@ void Grid_Technique::free_gpu_gint_variables(const UnitCell& ucell)
     checkCudaErrors(cudaFree(dot_product_g));
     checkCudaErrors(cudaFree(rho_g));
 
-    const int max_atom_pair_number = ucell.nat * ucell.nat;
+    const int max_atom_pair_number = nat * nat;
     for (int i = 0; i < max_atom_pair_number; i++)
     {
         if (grid_vlocal_g[i] != nullptr)

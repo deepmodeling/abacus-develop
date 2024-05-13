@@ -226,7 +226,7 @@ class Grid_Technique : public Grid_MeshBall
 
   private:
     void init_gpu_gint_variables(const UnitCell& ucell,const LCAO_Orbitals &orb);
-    void free_gpu_gint_variables(const UnitCell& ucell);
+    void free_gpu_gint_variables(int nat);
 
 #endif
 };

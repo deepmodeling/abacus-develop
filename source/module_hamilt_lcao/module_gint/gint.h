@@ -37,7 +37,9 @@ class Gint
         const int& nbxx_in,
         const int& ny_in,
         const int& nplane_in,
-        const int& startz_current_in);
+        const int& startz_current_in,
+        const UnitCell* ucell_in,
+        const LCAO_Orbitals* orb_in);
     
     /**
      * @brief calculate the neighbor atoms of each atom in this processor
@@ -54,7 +56,8 @@ class Gint
     void transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D);
 
     const Grid_Technique* gridt = nullptr;
-
+    const UnitCell* ucell;
+    const LCAO_Orbitals* orb ;
     protected:
 
     // variables related to FFT grid

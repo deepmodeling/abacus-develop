@@ -28,7 +28,7 @@ Grid_BigCell::~Grid_BigCell()
 	// delete tau positions.
 	if(this->flag_tib)
 	{
-		for(int i=0; i<GlobalC::ucell.nat; i++)
+		for(int i=0; i<this->nat; i++)
 		{
 			delete[] tau_in_bigcell[i];
 		}
@@ -45,6 +45,7 @@ void Grid_BigCell::init_big_latvec(const UnitCell& ucell)
 	assert(nby>0);
 	assert(nbz>=0);
 
+	this->nat=ucell.nat;
 	//size of each big room (same shape with unitcell)
 	this->bigcell_vec1[0]= ucell.a1.x / (double)nbx * ucell.lat0;
 	this->bigcell_vec1[1]= ucell.a1.y / (double)nbx * ucell.lat0;

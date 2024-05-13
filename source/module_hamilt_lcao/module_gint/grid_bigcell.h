@@ -16,7 +16,7 @@ class Grid_BigCell: public Grid_MeshCell
 	// save the relative cartesian position
 	// to bigcell of each atom.
 	double** tau_in_bigcell;
-
+	int nat;
 	protected:
 
 	//---------------------------------
