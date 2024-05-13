@@ -9,6 +9,7 @@
 101_PW_lps8_pseudopots
 101_PW_OU_pseudopots
 101_PW_upf100_Al_pseudopots
+101_PW_upf100_uspp_Fe
 101_PW_upf201_Al_pseudopots
 101_PW_upf201_Eu_pseudopots
 101_PW_upf201_blps_pseudopots
@@ -136,8 +137,6 @@
 204_NO_KP_FM
 204_NO_KP_NC
 204_NO_NC_magnetic
-204_NO_KP_NC_deltaspin
-204_NO_KP_S2_deltaspin
 205_NO_FD_smearing
 205_NO_FX_smearing
 205_NO_GA_smearing

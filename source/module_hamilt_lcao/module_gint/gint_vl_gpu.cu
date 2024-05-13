@@ -109,10 +109,10 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
             int stream_num = omp_get_thread_num();
             checkCuda(cudaStreamSynchronize(gridt.streams[stream_num]));
             double* input_double
-                = &gridt.psi_dou_glo[gridt.psi_size_max * stream_num * 5];
+                = &gridt.psi_dbl_gbl[gridt.psi_size_max * stream_num * 5];
             int* input_int
-                = &gridt.psi_int_glo[gridt.psi_size_max * stream_num * 2];
-            int* num_psir = &gridt.num_psir_glo[nbz * stream_num];
+                = &gridt.psi_int_gbl[gridt.psi_size_max * stream_num * 2];
+            int* num_psir = &gridt.num_psir_gbl[nbz * stream_num];
             int* atom_pair_A_m
                 = &gridt.l_info_global[gridt.atom_pair_nbz * stream_num];
             int* atom_pair_B_n
@@ -127,10 +127,10 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
                 = &gridt.ldc_info_global[gridt.atom_pair_nbz * stream_num];
 
             double* input_double_g
-                = &gridt.psi_dou_glo_g[gridt.psi_size_max * stream_num * 5];
+                = &gridt.psi_dbl_gbl_g[gridt.psi_size_max * stream_num * 5];
             int* input_int_g
-                = &gridt.psi_int_glo_g[gridt.psi_size_max * stream_num * 2];
-            int* num_psir_g = &gridt.num_psir_glo_g[nbz * stream_num];
+                = &gridt.psi_int_gbl_g[gridt.psi_size_max * stream_num * 2];
+            int* num_psir_g = &gridt.num_psir_gbl_g[nbz * stream_num];
             double* psir_ylm_left_g
                 = &gridt.left_global_g[gridt.psir_size * stream_num];
             double* psir_r_g
@@ -144,25 +144,25 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
                 = &gridt.k_info_global_g[gridt.atom_pair_nbz * stream_num];
 
             int* atom_pair_lda_g
-                = &gridt.lda_info_global_g[gridt.atom_pair_nbz * stream_num];
+                = &gridt.lda_info_gbl_g[gridt.atom_pair_nbz * stream_num];
             int* atom_pair_ldb_g
-                = &gridt.ldb_info_global_g[gridt.atom_pair_nbz * stream_num];
+                = &gridt.ldb_info_gbl_g[gridt.atom_pair_nbz * stream_num];
             int* atom_pair_ldc_g
-                = &gridt.ldc_info_global_g[gridt.atom_pair_nbz * stream_num];
+                = &gridt.ldc_info_gbl_g[gridt.atom_pair_nbz * stream_num];
 
             double** matrix_A
-                = &gridt.ap_left_glo[gridt.atom_pair_nbz * stream_num];
+                = &gridt.ap_left_gbl[gridt.atom_pair_nbz * stream_num];
             double** matrix_B
-                = &gridt.ap_right_glo[gridt.atom_pair_nbz * stream_num];
+                = &gridt.ap_right_gbl[gridt.atom_pair_nbz * stream_num];
             double** matrix_C
-                = &gridt.ap_output_glo[gridt.atom_pair_nbz * stream_num];
+                = &gridt.ap_output_gbl[gridt.atom_pair_nbz * stream_num];
 
             double** matrix_A_g
-                = &gridt.ap_left_glo_g[gridt.atom_pair_nbz * stream_num];
+                = &gridt.ap_left_gbl_g[gridt.atom_pair_nbz * stream_num];
             double** matrix_B_g
-                = &gridt.ap_right_glo_g[gridt.atom_pair_nbz * stream_num];
+                = &gridt.ap_right_gbl_g[gridt.atom_pair_nbz * stream_num];
             double** matrix_C_g
-                = &gridt.ap_output_glo_g[gridt.atom_pair_nbz * stream_num];
+                = &gridt.ap_output_gbl_g[gridt.atom_pair_nbz * stream_num];
             int atom_pair_num = 0;
             int max_m = 0;
             int max_n = 0;

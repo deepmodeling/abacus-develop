@@ -3062,6 +3062,13 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     {
         if (ks_solver == "default")
         {
+            if(device == "gpu")
+            {
+                ks_solver = "cusolver";
+                ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "cusolver");
+            }
+            else
+            {
 #ifdef __ELPA
             ks_solver = "genelpa";
             ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "genelpa");
@@ -3069,6 +3076,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             ks_solver = "scalapack_gvx";
             ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "scalapack_gvx");
 #endif
+            }
         }
         if (lcao_ecut == 0)
         {
@@ -4267,6 +4275,13 @@ void Input::Check(void)
         }
     }
 
+    if (sc_mag_switch)
+    {
+        std::stringstream ss;
+        ss << "This feature is not stable yet and might lead to erroneous results.\n"
+           << " Please wait for the official release version.";
+        ModuleBase::WARNING_QUIT("Input", ss.str());
+    }
     // Deltaspin variables checking
     if (sc_mag_switch)
     {
