@@ -135,16 +135,24 @@ TEST(NDArray, IndexOperatorMultiIndex)
 TEST(NDArray, Reshape)
 {
     NDArray<int> a(1, 2, 3); /* 1 * 2 * 3, 3d array */
-    a.reshape(2UL, 3UL, 1UL); /* 2 * 3 * 1, 3d array */
+    a.reshape(2, 3, 1); /* 2 * 3 * 1, 3d array */
     EXPECT_EQ(a.size(), 6);
     EXPECT_EQ(a.empty(), false);
     // expect assert error if the size is not the same
-    EXPECT_DEATH(a.reshape(2UL, 3UL, 2UL), "");
+    EXPECT_DEATH(a.reshape(2, 3, 2), "");
 }
 
 TEST(NDArray, ReshapeValue)
 {
     NDArray<int> a(1, 2, 3); /* 1 * 2 * 3, 3d array */
+    /*
+    [
+        [
+            [1, 2, 3],
+            [4, 5, 6]
+        ]
+    ] // in sequence of 1, 2, 3, 4, 5, 6
+    */
     a(0, 0, 0) = 1;
     a(0, 0, 1) = 2;
     a(0, 0, 2) = 3;
@@ -152,12 +160,26 @@ TEST(NDArray, ReshapeValue)
     a(0, 1, 1) = 5;
     a(0, 1, 2) = 6;
     a.reshape(2UL, 3UL, 1UL); /* 2 * 3 * 1, 3d array */
+    /*
+    [
+        [
+            [1],
+            [2],
+            [3]
+        ],
+        [
+            [4],
+            [5],
+            [6]
+        ]
+    ]
+    */
     EXPECT_EQ(a(0, 0, 0), 1);
     EXPECT_EQ(a(0, 1, 0), 2);
-    EXPECT_EQ(a(1, 0, 0), 3);
-    EXPECT_EQ(a(1, 1, 0), 4);
-    EXPECT_EQ(a(2, 0, 0), 5);
-    EXPECT_EQ(a(2, 1, 0), 6);
+    EXPECT_EQ(a(0, 2, 0), 3);
+    EXPECT_EQ(a(1, 0, 0), 4);
+    EXPECT_EQ(a(1, 1, 0), 5);
+    EXPECT_EQ(a(1, 2, 0), 6);
 }
 
 TEST(NDArray, ReshapeInfer)

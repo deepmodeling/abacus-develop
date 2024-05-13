@@ -1,6 +1,7 @@
 #include "module_base/formatter.h"
 #include <iostream>
 #include <gtest/gtest.h>
+#include <vector>
 
 TEST(FormatterTest, FmtCoreStaticFormat) {
     // const char*
@@ -56,6 +57,99 @@ TEST(FormatterTest, FmtCoreDynamic)
     EXPECT_EQ(result, "Hello, world, 123, 123.456000, a!");
 }
 
+TEST(FormatterTest, FmtPyStrFuncSplit)
+{
+    std::string fmt = "Hello, %s, %d, %f, %c!";
+    std::vector<std::string> result = FmtCore::split(fmt);
+    std::vector<std::string> ref = {"Hello,", "%s,", "%d,", "%f,", "%c!"};
+    for(int i = 0; i < result.size(); i++)
+    {
+        EXPECT_EQ(result[i], ref[i]);
+    }
+    fmt = "Hello, %s, %d, %f, %c";
+    result = FmtCore::split(fmt, "%");
+    ref = {"Hello, ", "s, ", "d, ", "f, ", "c"};
+    for(int i = 0; i < result.size(); i++)
+    {
+        EXPECT_EQ(result[i], ref[i]);
+    }
+}
+
+TEST(FormatterTest, FmtPyStrFuncStartswith)
+{
+    const std::string fmt = "Hello, %s, %d, %f, %c!";
+    EXPECT_TRUE(FmtCore::startswith(fmt, "Hello"));
+    EXPECT_FALSE(FmtCore::startswith(fmt, "world"));
+}
+
+TEST(FormatterTest, FmtPyStrFuncEndswith)
+{
+    const std::string fmt = "Hello, %s, %d, %f, %c!";
+    EXPECT_TRUE(FmtCore::endswith(fmt, "!"));
+    EXPECT_FALSE(FmtCore::endswith(fmt, "world"));
+}
+
+TEST(FormatterTest, FmtPyStrFuncStrip)
+{
+    std::string fmt = "  Hello, %s, %d, %f, %c!  ";
+    std::string result = FmtCore::strip(fmt);
+    std::string ref = "Hello, %s, %d, %f, %c!";
+    EXPECT_EQ(result, ref);
+    fmt = "  Hello, %s, %d, %f, %c!  ";
+    result = FmtCore::strip(fmt, " ");
+    ref = "Hello, %s, %d, %f, %c!";
+    EXPECT_EQ(result, ref);
+}
+
+TEST(FormatterTest, FmtPyStrFuncCenter)
+{
+    std::string fmt = "Hello, %s, %d, %f, %c!";
+    std::string result = FmtCore::center(fmt, 30);
+    std::string ref = "    Hello, %s, %d, %f, %c!    ";
+    EXPECT_EQ(result, ref);
+    result = FmtCore::center(fmt, 30, '*');
+    ref = "****Hello, %s, %d, %f, %c!****";
+    fmt = "Hello, %s, %d, %f, %c"; // length 21
+    result = FmtCore::center(fmt, 30, '*');
+    ref = "****Hello, %s, %d, %f, %c*****";
+    EXPECT_EQ(result, ref);
+}
+
+TEST(FormatterTest, FmtPyStrFuncReplace)
+{
+    const std::string fmt = "Hello, %s, %d, %f, %c!";
+    std::string result = FmtCore::replace(fmt, "%s", "world");
+    std::string ref = "Hello, world, %d, %f, %c!";
+    EXPECT_EQ(result, ref);
+    result = FmtCore::replace(fmt, "%d", "world");
+    ref = "Hello, %s, world, %f, %c!";
+    EXPECT_EQ(result, ref);
+    result = FmtCore::replace(fmt, "%f", "world");
+    ref = "Hello, %s, %d, world, %c!";
+    EXPECT_EQ(result, ref);
+    result = FmtCore::replace(fmt, "%c", "world");
+    ref = "Hello, %s, %d, %f, world!";
+    EXPECT_EQ(result, ref);
+    result = FmtCore::replace(fmt, "%z", "world");
+    ref = "Hello, %s, %d, %f, %c!";
+    result = FmtCore::replace(fmt, "%", "world");
+    ref = "Hello, worlds, worldd, worldf, worldc!";
+    EXPECT_EQ(result, ref);
+}
+
+TEST(FormatterTest, FmtPyStrFuncJoin)
+{
+    const std::vector<std::string> strs = {"Hello", "world", "!"};
+    std::string result = FmtCore::join("", strs);
+    std::string ref = "Helloworld!";
+    EXPECT_EQ(result, ref);
+    result = FmtCore::join(" ", strs);
+    ref = "Hello world !";
+    EXPECT_EQ(result, ref);
+    result = FmtCore::join("__", strs);
+    ref = "Hello__world__!";
+}
+
 TEST(FormatterTest, FmtTableDefaultArgs)
 {
     std::vector<std::string> titles = {"title1", "t i t l e 2", "t-i-t-l-e-3"};
@@ -88,7 +182,7 @@ TEST(FormatterTest, FmtTableCustomArgsAlign)
     std::vector<int> col2 = {1, 2, 3, 4, 5};
     std::vector<float> col3 = {1.1, 2.2, 3.3, 4.4, 5.5};
     // align: l and l
-    FmtTable table(titles, 5, fmts, {'l', 'l'});
+    FmtTable table(titles, 5, fmts, {FmtTable::Align::LEFT, FmtTable::Align::LEFT});
     table << col1 << col2 << col3;
     std::string result = table.str();
     std::string ref = "";
@@ -104,7 +198,7 @@ TEST(FormatterTest, FmtTableCustomArgsAlign)
     EXPECT_EQ(result, ref);
 
     // align: r and r
-    FmtTable table2(titles, 5, fmts, {'r', 'r'});
+    FmtTable table2(titles, 5, fmts, {FmtTable::Align::RIGHT, FmtTable::Align::RIGHT});
     table2 << col1 << col2 << col3;
     result = table2.str();
     ref = "";
@@ -120,7 +214,7 @@ TEST(FormatterTest, FmtTableCustomArgsAlign)
     EXPECT_EQ(result, ref);
 
     // align: l and r
-    FmtTable table3(titles, 5, fmts, {'r', 'l'});
+    FmtTable table3(titles, 5, fmts, {FmtTable::Align::RIGHT, FmtTable::Align::LEFT});
     table3 << col1 << col2 << col3;
     result = table3.str();
     ref = "";
@@ -136,7 +230,7 @@ TEST(FormatterTest, FmtTableCustomArgsAlign)
     EXPECT_EQ(result, ref);
 
     // align: r and l
-    FmtTable table4(titles, 5, fmts, {'l', 'r'});
+    FmtTable table4(titles, 5, fmts, {FmtTable::Align::LEFT, FmtTable::Align::RIGHT});
     table4 << col1 << col2 << col3;
     result = table4.str();
     ref = "";
@@ -161,7 +255,7 @@ TEST(FormatterTest, FmtTableCustomArgsAlignFrame)
     std::vector<int> col2 = {1, 2, 3, 4, 5};
     std::vector<float> col3 = {1.1, 2.2, 3.3, 4.4, 5.5};
 
-    FmtTable table1(titles, 5, fmts, {'l', 'l'}, {'+', '?', '*', '.', '^'});
+    FmtTable table1(titles, 5, fmts, {FmtTable::Align::LEFT, FmtTable::Align::LEFT}, {'+', '?', '*', '.', '^'});
     table1 << col1 << col2 << col3;
     std::string result = table1.str();
     std::string ref = "";
@@ -186,7 +280,7 @@ TEST(FormatterTest, FmtTableCustomArgsAlignFrameDelim)
     std::vector<int> col2 = {1, 2, 3, 4, 5};
     std::vector<float> col3 = {1.1, 2.2, 3.3, 4.4, 5.5};
     FmtTable table1(titles, 5, fmts, 
-                    {'l', 'l'}, 
+                    {FmtTable::Align::LEFT, FmtTable::Align::LEFT}, 
                     {'=', '/', '&', '#', '%'},
                     {'"', ']'});
     table1 << col1 << col2 << col3;

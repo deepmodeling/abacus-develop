@@ -44,13 +44,12 @@ public:
      * 
      */
     NDArray() : data_(), shape_() {}
-    // initializer_list constructor, size_t
+    // initializer_list constructor
     NDArray(std::initializer_list<size_t> il) : shape_(il), data_(std::accumulate(shape_.begin(), shape_.end(), 1, std::multiplies<size_t>())) {}
-    // initializer_list constructor, int, cast to size_t
     NDArray(std::initializer_list<int> il) : shape_(il.begin(), il.end()), data_(std::accumulate(shape_.begin(), shape_.end(), 1, std::multiplies<size_t>())) {}
     // variadic template constructor, (delegate constructor)
-    template<typename... Args>
-    NDArray(Args... args) : NDArray({args...}) {}
+    template<typename... Args> NDArray(const size_t idx, Args... args) : NDArray({idx, static_cast<size_t>(args)...}) {}
+    template<typename... Args> NDArray(const int& idx, Args... args) : NDArray({idx, static_cast<int>(args)...}) {} // not happy with this because size_t can have larger range
     // copy constructor
     NDArray(const NDArray& other) : data_(other.data_), shape_(other.shape_) {}
     // move constructor
@@ -95,10 +94,7 @@ public:
      * @return true if the data and shape are the same
      * @return false otherwise
      */
-    bool operator==(const NDArray& other) const
-    {
-        return data_ == other.data_ && shape_ == other.shape_;
-    }
+    bool operator==(const NDArray& other) const { return data_ == other.data_ && shape_ == other.shape_; }
     /**
      * @brief != operator
      * 
@@ -106,10 +102,7 @@ public:
      * @return true if the data and shape are different
      * @return false otherwise
      */
-    bool operator!=(const NDArray& other) const
-    {
-        return !(*this == other);
-    }
+    bool operator!=(const NDArray& other) const { return !(*this == other); }
     // other operators are not generally supported
 
     // element access
@@ -118,46 +111,19 @@ public:
      * 
      * @tparam Args 
      * @param args indices of the element
-     * @return T& 
+     * @return T& or const T&
      */
-    template<typename... Args>
-    T& at(Args... args)
-    {
-        size_t idx = index(args...);
-        return data_.at(idx);
-    }
-    template<typename... Args>
-    const T& at(Args... args) const
-    {
-        size_t idx = index(args...);
-        return data_.at(idx);
-    }
+    template<typename... Args> T& at(const size_t idx, Args... args) { return data_[index(idx, args...)]; }
+    template<typename... Args> const T& at(const size_t idx, Args... args) const { return data_[index(idx, args...)]; }
     /**
      * @brief [] operator
      * 
      * @tparam Args 
      * @param args indices of the element
-     * @return T& 
+     * @return T& or const T&
      */
-    template<typename... Args>
-    T& operator()(Args... args)
-    {
-        size_t idx = index(args...);
-        return data_.at(idx);
-    }
-    /**
-     * @brief const [] operator
-     * 
-     * @tparam Args 
-     * @param args indices of the element
-     * @return const T& 
-     */
-    template<typename... Args>
-    const T& operator()(Args... args) const
-    {
-        size_t idx = index(args...);
-        return data_.at(idx);
-    }
+    template<typename... Args> T& operator()(const size_t idx, Args... args) { return data_[index(idx, args...)]; }
+    template<typename... Args> const T& operator()(const size_t idx, Args... args) const { return data_[index(idx, args...)]; }
     // front
     T& front() { return data_.front(); }
     const T& front() const { return data_.front(); }
@@ -179,28 +145,7 @@ public:
     // capacity
     // size
     size_t size() const { return data_.size(); }
-    size_t size(const size_t& dim) const
-    {
-        assert(dim < shape_.size());
-        return shape_[dim];
-    }
-    /**
-     * @brief change the capacity of the data
-     * 
-     * @param new_cap new capacity
-     */
-    void reserve(size_t new_cap) { data_.reserve(new_cap); }
-    /**
-     * @brief change the capacity of the data and fill the new elements with val
-     * 
-     * @param new_cap new capacity
-     * @param val default value
-     */
-    void reserve(size_t new_cap, const T& val)
-    {
-        data_.reserve(new_cap);
-        data_.resize(new_cap, val);
-    }
+    size_t size(const size_t& dim) const { return shape_.at(dim); }
     // empty
     bool empty() const { return data_.empty(); }
     // multi-dimensional specific
@@ -212,7 +157,7 @@ public:
     {
         // DEVELP WARNING: what if arg = -2? :)
         // save args into a vector
-        std::vector<size_t> dims = {args...};
+        std::vector<int64_t> dims = {static_cast<int64_t>(args)...};
         // assert number of -1 in dims is at most 1
         // -1 is not type-safe!!!
         size_t count = std::count_if(dims.begin(), dims.end(), [](size_t i) { return i == -1; });
@@ -234,11 +179,9 @@ public:
         // calculate the size
         size_t size = std::accumulate(dims.begin(), dims.end(), 1, std::multiplies<size_t>());
         // assert size is the same
-        #ifdef __DEBUG
         assert(size == data_.size());
-        #endif
         // assign dims to shape_
-        shape_ = dims;
+        std::copy(dims.begin(), dims.end(), shape_.begin());
     }
 
     // interface to ATen::Tensor, but constraint to int, double, float, std::complex<float>, std::complex<double>
@@ -261,19 +204,17 @@ public:
     //     return result;
     // }
     template<typename... Args>
-    size_t index(Args... args) const
+    size_t index(const size_t idx, Args... args) const
     {
-        // assert the number of args is the same as shape_.size()
-        assert (sizeof...(args) == shape_.size());
-        // calculate the index
-        size_t idx = 0;
-        size_t idxs[] = {static_cast<size_t>(args)...};
+        assert(sizeof...(args) == shape_.size() - 1); // assert the indices are the same as the shape
+        size_t indices[] = {idx, static_cast<size_t>(args)...};
+        size_t index = 0;
         for (size_t i = 0; i < shape_.size(); ++i)
         {
-            assert(idxs[i] < shape_[i]);
-            idx = idx * shape_[i] + idxs[i];
+            index += indices[i] * std::accumulate(shape_.begin() + i + 1, shape_.end(), 1, std::multiplies<size_t>());
         }
-        return idx;
+        assert(index < data_.size()); // assert the index is within the data
+        return index;
     }
 private:
     std::vector<size_t> shape_;

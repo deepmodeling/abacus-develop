@@ -248,12 +248,10 @@ void ElecState::print_etot(const bool converged,
             titles.push_back("E_bandgap_dw"); energies_Ry.push_back(this->bandgap_dw);
         }
     }
-    for (int i = 0; i < titles.size(); ++i)
-    {
-        energies_eV.push_back(energies_Ry[i] * ModuleBase::Ry_to_eV);
-    }
+    energies_eV.resize(energies_Ry.size());
+    std::transform(energies_Ry.begin(), energies_Ry.end(), energies_eV.begin(), [](double ener) { return ener * ModuleBase::Ry_to_eV; });
     FmtTable table({"Energy", "Rydberg", "eV"}, 
-    titles.size(), {"%-14s",   "%20.10f", "%20.10f"}, {'l', 'c'});
+    titles.size(), {"%-14s",   "%20.10f", "%20.10f"}, {FmtTable::Align::LEFT, FmtTable::Align::CENTER});
     table << titles << energies_Ry << energies_eV;
     GlobalV::ofs_running << table.str() << std::endl;
     if (iter_in == 1) // pengfei Li added 2015-1-31

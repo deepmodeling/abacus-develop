@@ -65,6 +65,70 @@ public:
      * @return std::string 
      */
     const std::string& fmt() { return fmt_; }
+    /**
+     * Python-style string functions will be implemented here as toolbox
+     */
+
+    static std::vector<std::string> split(const std::string& in, const std::string& delim = " ")
+    {
+        std::vector<std::string> dst;
+        std::string::size_type beg = 0;
+        std::string::size_type end = in.find(delim);
+        while(end != std::string::npos)
+        {
+            dst.push_back(in.substr(beg, end - beg));
+            beg = end + delim.size();
+            end = in.find(delim, beg);
+        }
+        dst.push_back(in.substr(beg));
+        return dst;
+    }
+    static bool startswith(const std::string& in, const std::string& prefix)
+    {
+        if(in.size() < prefix.size()) return false;
+        return in.substr(0, prefix.size()) == prefix;
+    }
+    static bool endswith(const std::string& in, const std::string& suffix)
+    {
+        if(in.size() < suffix.size()) return false;
+        return in.substr(in.size() - suffix.size()) == suffix;
+    }
+    static std::string strip(const std::string& in, const std::string& chars = " ")
+    {
+        std::string::size_type beg = in.find_first_not_of(chars);
+        std::string::size_type end = in.find_last_not_of(chars);
+        if(beg == std::string::npos) return "";
+        return in.substr(beg, end - beg + 1);
+    }
+    static std::string center(const std::string& in, const size_t& width, const char& fillchar = ' ')
+    {
+        if(in.size() >= width) return in;
+        const size_t nwhitespaces = width - in.size();
+        const size_t nleft = nwhitespaces / 2;
+        const size_t nright = nwhitespaces - nleft;
+        return std::string(nleft, fillchar) + in + std::string(nright, fillchar);
+    }
+    static std::string replace(const std::string& in, const std::string& old, const std::string& new_)
+    {
+        std::string dst = in;
+        std::string::size_type pos = dst.find(old);
+        while(pos != std::string::npos)
+        {
+            dst.replace(pos, old.size(), new_);
+            pos = dst.find(old, pos + new_.size());
+        }
+        return dst;
+    }
+    static std::string join(const std::string& delim, const std::vector<std::string>& src)
+    {
+        std::string dst = "";
+        for(size_t i = 0; i < src.size(); i++)
+        {
+            dst += src[i];
+            if(i != src.size() - 1) dst += delim;
+        }
+        return dst;
+    }
 
 private:
     std::string fmt_;
@@ -76,21 +140,22 @@ private:
 
 class FmtTable
 {
+public:
+    enum class Align{LEFT, RIGHT, CENTER};
 private:
     typedef FmtCore core;
     struct Frames{
-        Frames(char upfrm = '-', char mdfrm = '-', char dwfrm = '-', char lfrm = ' ', char rfrm = ' '): upfrm_(upfrm), mdfrm_(mdfrm), dwfrm_(dwfrm), lfrm_(lfrm), rfrm_(rfrm) {};
-        char upfrm_, mdfrm_ , dwfrm_, lfrm_, rfrm_;
-    } frames_; 
+        Frames(char up = '-', char mid = '-', char dw = '-', char l = ' ', char r = ' '): up_(up), mid_(mid), dw_(dw), l_(l), r_(r) {};
+        char up_, mid_ , dw_, l_, r_; // up, middle, down, left, right frames. up: the frame above title, middle: the one between title and data
+    } frames_;                        // down: the frame below data, left: the frame at left, right: the frame at right
     struct Delimiters{
-        Delimiters(char hdlmt = '-', char vdlmt = ' '): hdlmt_(hdlmt), vdlmt_(vdlmt) {};
-        char hdlmt_, vdlmt_;
+        Delimiters(char h = '-', char v = ' '): h_(h), v_(v) {};
+        char h_, v_; // horizontal and vertical delimiters
     } delimiters_;
     struct Alignments{
-        Alignments(char valign = 'r', char talign = 'c'): valign_(valign), talign_(talign) {};
-        char valign_, talign_;
+        Alignments(const Align& val = Align::RIGHT, const Align& title = Align::CENTER): val_(val), title_(title) {};
+        Align val_, title_; // value and title alignments
     } aligns_;
-
 public:
     /**
      * @brief Construct a new Fmt Table object
@@ -141,14 +206,14 @@ public:
      * 
      * @param col col to relax, organized as std::vector<std::string>
      * @param title title of the column
-     * @param vlyot value layout, can be 'l', 'r', 'c' for left, right and center
-     * @param tlyot title layout, can be 'l', 'r', 'c' for left, right and center
+     * @param vlyot value layout, can be Align::LEFT, Align::RIGHT, Align::CENTER
+     * @param tlyot title layout, can be Align::LEFT, Align::RIGHT, Align::CENTER
      * @return std::vector<std::string> newly relaxed column
      */
     std::vector<std::string> relax_col_width(const std::vector<std::string>& col,
                                              const std::string& title = "",
-                                             const char& vlyot = 'r',
-                                             const char& tlyot = 'c')
+                                             const Align& valign = Align::RIGHT,
+                                             const Align& talign = Align::CENTER)
     {
         size_t max_width = 0;
         for(const std::string& s : col) { max_width = std::max(max_width, s.size()); }
@@ -157,36 +222,19 @@ public:
         if(!title.empty())
         {
             const size_t nwhitespaces = max_width - title.size();
-            const char tl_ = (tlyot == 'u') ? 'c' : tlyot;
-            std::string dst = title;
-            if(tl_ == 'r') dst = std::string(nwhitespaces, ' ') + title;
-            else if(tl_ == 'l') dst = title + std::string(nwhitespaces, ' ');
-            else if(tl_ == 'c')
-            {
-                const size_t nleft = nwhitespaces / 2;
-                const size_t nright = nwhitespaces - nleft;
-                dst = std::string(nleft, ' ') + title + std::string(nright, ' ');
-            }
+            std::string dst = FmtCore::strip(title);
+            if(talign == Align::RIGHT) dst = std::string(nwhitespaces, ' ') + title;
+            else if(talign == Align::LEFT) dst = title + std::string(nwhitespaces, ' ');
+            else if(talign == Align::CENTER) dst = FmtCore::center(title, nwhitespaces);
             new_col[0] = dst;
         }
         for(size_t i = 0; i < col.size(); i++)
         {
-            const std::string src = col[i];
-            // delete all whitespaces at left and right of src
-            size_t ltr = src.find_first_not_of(' ');
-            size_t rtr = src.find_last_not_of(' ');
-            if(ltr == std::string::npos) ltr = 0;
-            if(rtr == std::string::npos) rtr = src.size() - 1;
-            std::string dst = src.substr(ltr, rtr - ltr + 1);
-            const size_t nwhitespaces = max_width - src.size();
-            if(vlyot == 'r') dst = std::string(nwhitespaces, ' ') + src;
-            else if(vlyot == 'l') dst = src + std::string(nwhitespaces, ' ');
-            else if(vlyot == 'c')
-            {
-                const size_t nleft = nwhitespaces / 2;
-                const size_t nright = nwhitespaces - nleft;
-                dst = std::string(nleft, ' ') + src + std::string(nright, ' ');
-            }
+            const size_t nwhitespaces = max_width - col[i].size();
+            std::string dst = FmtCore::strip(col[i]);
+            if(valign == Align::RIGHT) dst = std::string(nwhitespaces, ' ') + dst;
+            else if(valign == Align::LEFT) dst = dst + std::string(nwhitespaces, ' ');
+            else if(valign == Align::CENTER) dst = FmtCore::center(dst, nwhitespaces);
             new_col[i + static_cast<int>(!title.empty())] = dst;
         }
         return new_col;
@@ -207,13 +255,13 @@ public:
         width += titles.size() - 1;
         // for the left and right frame
         width += 2;
-        dst += std::string(width, frames_.upfrm_) + "\n" + std::string(1, frames_.lfrm_);
+        dst += std::string(width, frames_.up_) + "\n" + std::string(1, frames_.l_);
         for(size_t i = 0; i < titles.size(); i++)
         {
             dst += titles[i];
-            if(i != titles.size() - 1) dst += delimiters_.vdlmt_;
+            if(i != titles.size() - 1) dst += delimiters_.v_;
         }
-        dst += std::string(1, frames_.rfrm_) + "\n" + std::string(width, frames_.mdfrm_) + "\n";
+        dst += std::string(1, frames_.r_) + "\n" + std::string(width, frames_.mid_) + "\n";
         return dst;
     }
     /**
@@ -232,15 +280,15 @@ public:
         width += row.size() - 1;
         // for the left and right frame
         width += 2;
-        if(pos == 't') dst += std::string(width, frames_.upfrm_) + "\n";
-        dst += std::string(1, frames_.lfrm_);
+        if(pos == 't') dst += std::string(width, frames_.up_) + "\n";
+        dst += std::string(1, frames_.l_);
         for(size_t i = 0; i < row.size(); i++)
         {
             dst += row[i];
-            if(i != row.size() - 1) dst += delimiters_.vdlmt_;
+            if(i != row.size() - 1) dst += delimiters_.v_;
         }
-        dst += std::string(1, frames_.rfrm_) + "\n";
-        if(pos == 'b') dst += std::string(width, frames_.dwfrm_) + "\n";
+        dst += std::string(1, frames_.r_) + "\n";
+        if(pos == 'b') dst += std::string(width, frames_.dw_) + "\n";
         return dst;
     }
     /**
@@ -258,7 +306,7 @@ public:
         {
             std::vector<std::string> col(nrows);
             for(size_t i = 0UL; i < nrows; i++) col[i] = data_(i, j);
-            col = relax_col_width(col, titles_[j], aligns_.valign_, aligns_.talign_);
+            col = relax_col_width(col, titles_[j], aligns_.val_, aligns_.title_);
             std::string title = (titles_[j].empty())? "": col[0UL];
             titles_[j] = title;
             std::vector<std::string> col_new(col.begin() + static_cast<int>(!title.empty()), col.end());

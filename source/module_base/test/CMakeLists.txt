@@ -204,6 +204,11 @@ AddTest(
 )
 
 AddTest(
+  TARGET ndarray_test
+  SOURCES ndarray_test.cpp
+)
+
+AddTest(
   TARGET formatter_test
   SOURCES formatter_test.cpp
 )

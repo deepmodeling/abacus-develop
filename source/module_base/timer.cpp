@@ -277,7 +277,7 @@ void timer::print_all(std::ofstream &ofs)
 	assert(class_names.size() == pers.size());
 	std::vector<std::string> titles = {"CLASS_NAME", "NAME", "TIME(Sec)", "CALLS", "AVG(Sec)", "PER(%)"};
 	std::vector<std::string> formats = {"%-10s", "%-10s", "%6.2f", "%8d", "%6.2f", "%6.2f"};
-	FmtTable time_statistics(titles, pers.size(), formats, {'l', 'c'});
+	FmtTable time_statistics(titles, pers.size(), formats, {FmtTable::Align::LEFT, FmtTable::Align::CENTER});
 	time_statistics << class_names << names << times << calls << avgs << pers;
 	const std::string table = "TIME STATISTICS\n" + time_statistics.str();
 	std::cout<<table<<std::endl;
