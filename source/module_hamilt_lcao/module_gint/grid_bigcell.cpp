@@ -105,7 +105,7 @@ void Grid_BigCell::init_big_latvec(const UnitCell& ucell)
 }
 
 
-void Grid_BigCell::init_grid_expansion(const UnitCell& ucell,const LCAO_Orbitals &orb)
+void Grid_BigCell::init_grid_expansion(const UnitCell& ucell,const LCAO_Orbitals& orb)
 {
 	ModuleBase::TITLE("Grid_BigCell","init_grid_expansion");
 
