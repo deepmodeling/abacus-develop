@@ -375,6 +375,7 @@ void Input::Default(void)
     lcao_dr = 0.01;
     lcao_rmax = 30; // (a.u.)
     onsite_radius = 0; // (a.u.)
+    nstream=4;
     //----------------------------------------------------------
     // efield and dipole correction     Yu Liu add 2022-05-18
     //----------------------------------------------------------
@@ -1534,6 +1535,10 @@ bool Input::Read(const std::string& fn)
         {
             read_value(ifs, onsite_radius);
         }
+	    else if (strcmp("num_stream",word)==0)
+		{
+	    	read_value(ifs,nstream);
+		}
         //----------------------------------------------------------
         // Molecule Dynamics
         // Yu Liu add 2021-07-30
@@ -3057,6 +3062,13 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     {
         if (ks_solver == "default")
         {
+            if(device == "gpu")
+            {
+                ks_solver = "cusolver";
+                ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "cusolver");
+            }
+            else
+            {
 #ifdef __ELPA
             ks_solver = "genelpa";
             ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "genelpa");
@@ -3064,6 +3076,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             ks_solver = "scalapack_gvx";
             ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "scalapack_gvx");
 #endif
+            }
         }
         if (lcao_ecut == 0)
         {
@@ -3311,6 +3324,7 @@ void Input::Bcast()
 
     Parallel_Common::bcast_string(basis_type); // xiaohui add 2013-09-01
     Parallel_Common::bcast_string(ks_solver);  // xiaohui add 2013-09-01
+    Parallel_Common::bcast_int(nstream);
     Parallel_Common::bcast_double(search_radius);
     Parallel_Common::bcast_bool(search_pbc);
     Parallel_Common::bcast_double(search_radius);
