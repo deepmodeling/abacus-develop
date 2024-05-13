@@ -47,7 +47,7 @@ void print_force(std::ofstream& ofs_running,
     std::vector<double> force_y;
     std::vector<double> force_z;
     std::string table;
-    std::vector<std::string> titles({name, " ", " ", " "});
+    std::vector<std::string> titles({name, "", "", ""});
     int iat = 0;
     for (int it = 0; it < cell.ntype; it++)
     {
@@ -71,7 +71,6 @@ void print_force(std::ofstream& ofs_running,
     table = fmt.str();
     ofs_running << table << std::endl;
     if (GlobalV::TEST_FORCE) std::cout << table << std::endl;
-    return;
 }
 
 void print_stress(const std::string& name, const ModuleBase::matrix& scs, const bool screen, const bool ry)
@@ -95,7 +94,7 @@ void print_stress(const std::string& name, const ModuleBase::matrix& scs, const 
     std::vector<double> stress_y;
     std::vector<double> stress_z;
     std::string table;
-    std::vector<std::string> titles({title, " ", " "});
+    std::vector<std::string> titles({title, "", ""});
     for (int i = 0; i < 3; i++)
     {
         double sx = scs(i, 0) * unit_transform;

@@ -1,32 +1,32 @@
 #include <gtest/gtest.h>
 #include "module_base/ndarray.h"
-#include <iostream>
+#include <utility>
 
-TEST(NDArray, Constructor)
-{
-    NDArray<int> a;
-    EXPECT_EQ(a.size(), 0);
-    EXPECT_EQ(a.empty(), true);
-}
+// TEST(NDArray, Constructor)
+// {
+//     const NDArray<int> a;
+//     EXPECT_EQ(a.size(), 0);
+//     EXPECT_EQ(a.empty(), true);
+// }
 
 TEST(NDArray, InitializerListConstructor)
 {
-    NDArray<int> a({1, 2, 3}); /* 1 * 2 * 3, 3d array */
+    const NDArray<int> a({1, 2, 3}); /* 1 * 2 * 3, 3d array */
     EXPECT_EQ(a.size(), 6);
     EXPECT_EQ(a.empty(), false);
 }
 
 TEST(NDArray, VariadicTemplateConstructor)
 {
-    NDArray<int> a(1, 2, 3); /* 1 * 2 * 3, 3d array */
+    const NDArray<int> a(1, 2, 3); /* 1 * 2 * 3, 3d array */
     EXPECT_EQ(a.size(), 6);
     EXPECT_EQ(a.empty(), false);
 }
 
 TEST(NDArray, CopyConstructor)
 {
-    NDArray<int> a(1, 2, 3); /* 1 * 2 * 3, 3d array */
-    NDArray<int> b(a);
+    const NDArray<int> a(1, 2, 3); /* 1 * 2 * 3, 3d array */
+    const NDArray<int> b(a);
     EXPECT_EQ(b.size(), 6);
     EXPECT_EQ(b.empty(), false);
     // and a will be the same as b
@@ -37,7 +37,7 @@ TEST(NDArray, CopyConstructor)
 TEST(NDArray, MoveConstructor)
 {
     NDArray<int> a(1, 2, 3); /* 1 * 2 * 3, 3d array */
-    NDArray<int> b(std::move(a));
+    const NDArray<int> b(std::move(a));
     EXPECT_EQ(b.size(), 6);
     EXPECT_EQ(b.empty(), false);
     // and a will be empty, but still valid (principle of std::move)
@@ -47,8 +47,8 @@ TEST(NDArray, MoveConstructor)
 
 TEST(NDArray, CopyAssignment)
 {
-    NDArray<int> a(1, 2, 3); /* 1 * 2 * 3, 3d array */
-    NDArray<int> b;
+    const NDArray<int> a(1, 2, 3); /* 1 * 2 * 3, 3d array */
+    NDArray<int> b(1);
     b = a;
     EXPECT_EQ(b.size(), 6);
     EXPECT_EQ(b.empty(), false);
@@ -60,7 +60,7 @@ TEST(NDArray, CopyAssignment)
 TEST(NDArray, MoveAssignment)
 {
     NDArray<int> a(1, 2, 3); /* 1 * 2 * 3, 3d array */
-    NDArray<int> b;
+    NDArray<int> b(1);
     b = std::move(a);
     EXPECT_EQ(b.size(), 6);
     EXPECT_EQ(b.empty(), false);
@@ -71,25 +71,25 @@ TEST(NDArray, MoveAssignment)
 
 TEST(NDArray, EqualityOperator)
 {
-    NDArray<int> a(1, 2, 3); /* 1 * 2 * 3, 3d array */
-    NDArray<int> b(1, 2, 3); /* 1 * 2 * 3, 3d array */
-    NDArray<int> c(1, 2, 4); /* 1 * 2 * 4, 3d array */
+    const NDArray<int> a(1, 2, 3); /* 1 * 2 * 3, 3d array */
+    const NDArray<int> b(1, 2, 3); /* 1 * 2 * 3, 3d array */
+    const NDArray<int> c(1, 2, 4); /* 1 * 2 * 4, 3d array */
     EXPECT_EQ(a == b, true);
     EXPECT_EQ(a == c, false);
 }
 
 TEST(NDArray, InequalityOperator)
 {
-    NDArray<int> a(1, 2, 3); /* 1 * 2 * 3, 3d array */
-    NDArray<int> b(1, 2, 3); /* 1 * 2 * 3, 3d array */
-    NDArray<int> c(1, 2, 4); /* 1 * 2 * 4, 3d array */
+    const NDArray<int> a(1, 2, 3); /* 1 * 2 * 3, 3d array */
+    const NDArray<int> b(1, 2, 3); /* 1 * 2 * 3, 3d array */
+    const NDArray<int> c(1, 2, 4); /* 1 * 2 * 4, 3d array */
     EXPECT_EQ(a != b, false);
     EXPECT_EQ(a != c, true);
 }
 
 TEST(NDArray, Index)
 {
-    NDArray<int> a(1, 2, 3); /* 1 * 2 * 3, 3d array */
+    const NDArray<int> a(1, 2, 3); /* 1 * 2 * 3, 3d array */
     EXPECT_EQ(a.index(0, 0, 0), 0);
     EXPECT_EQ(a.index(0, 0, 1), 1);
     EXPECT_EQ(a.index(0, 0, 2), 2);
@@ -159,7 +159,7 @@ TEST(NDArray, ReshapeValue)
     a(0, 1, 0) = 4;
     a(0, 1, 1) = 5;
     a(0, 1, 2) = 6;
-    a.reshape(2UL, 3UL, 1UL); /* 2 * 3 * 1, 3d array */
+    a.reshape(2, 3, 1); /* 2 * 3 * 1, 3d array */
     /*
     [
         [
@@ -184,7 +184,7 @@ TEST(NDArray, ReshapeValue)
 
 TEST(NDArray, ReshapeInfer)
 {
-    NDArray<int> a(1, 2, 3); /* 1 * 2 * 3, 3d array */
+    const NDArray<int> a(1, 2, 3); /* 1 * 2 * 3, 3d array */
     // infer the first dimension
     // infer the second dimension
     // infer the last dimension

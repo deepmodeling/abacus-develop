@@ -43,7 +43,7 @@ public:
      * @brief Construct a new NDArray object
      * 
      */
-    NDArray() : data_(), shape_() {}
+    NDArray()= delete;
     // initializer_list constructor
     NDArray(std::initializer_list<size_t> il) : shape_(il), data_(std::accumulate(shape_.begin(), shape_.end(), 1, std::multiplies<size_t>())) {}
     NDArray(std::initializer_list<int> il) : shape_(il.begin(), il.end()), data_(std::accumulate(shape_.begin(), shape_.end(), 1, std::multiplies<size_t>())) {}
@@ -157,7 +157,8 @@ public:
     {
         // DEVELP WARNING: what if arg = -2? :)
         // save args into a vector
-        std::vector<int64_t> dims = {static_cast<int64_t>(args)...};
+        //std::vector<int64_t> dims = {static_cast<int64_t>(args)...};
+        std::vector<int64_t> dims = {args...};
         // assert number of -1 in dims is at most 1
         // -1 is not type-safe!!!
         size_t count = std::count_if(dims.begin(), dims.end(), [](size_t i) { return i == -1; });

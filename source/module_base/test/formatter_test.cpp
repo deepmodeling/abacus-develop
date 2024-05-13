@@ -99,6 +99,14 @@ TEST(FormatterTest, FmtPyStrFuncStrip)
     result = FmtCore::strip(fmt, " ");
     ref = "Hello, %s, %d, %f, %c!";
     EXPECT_EQ(result, ref);
+    fmt = "";
+    result = FmtCore::strip(fmt);
+    ref = "";
+    EXPECT_EQ(result, ref);
+    fmt = "   ";
+    result = FmtCore::strip(fmt);
+    ref = "";
+    EXPECT_EQ(result, ref);
 }
 
 TEST(FormatterTest, FmtPyStrFuncCenter)
@@ -112,6 +120,10 @@ TEST(FormatterTest, FmtPyStrFuncCenter)
     fmt = "Hello, %s, %d, %f, %c"; // length 21
     result = FmtCore::center(fmt, 30, '*');
     ref = "****Hello, %s, %d, %f, %c*****";
+    EXPECT_EQ(result, ref);
+    fmt = "";
+    result = FmtCore::center(fmt, 30, '*');
+    ref = "******************************";
     EXPECT_EQ(result, ref);
 }
 
@@ -152,14 +164,15 @@ TEST(FormatterTest, FmtPyStrFuncJoin)
 
 TEST(FormatterTest, FmtTableDefaultArgs)
 {
-    std::vector<std::string> titles = {"title1", "t i t l e 2", "t-i-t-l-e-3"};
-    std::vector<std::string> fmts = {"%s", "%d", "%f"};
+    const std::vector<std::string> titles = {"title1", "t i t l e 2", "t-i-t-l-e-3"};
+    const std::vector<std::string> fmts = {"%s", "%d", "%f"};
     FmtTable table(titles, 5, fmts);
-    std::vector<std::string> col1 = {"row1", "row2", "row3", "row4", "row5"};
-    std::vector<int> col2 = {1, 2, 3, 4, 5};
-    std::vector<float> col3 = {1.1, 2.2, 3.3, 4.4, 5.5};
+    const std::vector<std::string> col1 = {"row1", "row2", "row3", "row4", "row5"};
+    const std::vector<int> col2 = {1, 2, 3, 4, 5};
+    const std::vector<float> col3 = {1.1, 2.2, 3.3, 4.4, 5.5};
     table << col1 << col2 << col3;
-    std::string result = table.str();
+    const std::string result = table.str();
+    std::cout << result << std::endl;
     std::string ref = "";
     ref += "--------------------------------\n";
     ref += " title1 t i t l e 2 t-i-t-l-e-3 \n";
@@ -185,6 +198,7 @@ TEST(FormatterTest, FmtTableCustomArgsAlign)
     FmtTable table(titles, 5, fmts, {FmtTable::Align::LEFT, FmtTable::Align::LEFT});
     table << col1 << col2 << col3;
     std::string result = table.str();
+    std::cout << result << std::endl;
     std::string ref = "";
     ref += "--------------------------------\n";
     ref += " title1 t i t l e 2 t-i-t-l-e-3 \n";
@@ -201,6 +215,7 @@ TEST(FormatterTest, FmtTableCustomArgsAlign)
     FmtTable table2(titles, 5, fmts, {FmtTable::Align::RIGHT, FmtTable::Align::RIGHT});
     table2 << col1 << col2 << col3;
     result = table2.str();
+    std::cout << result << std::endl;
     ref = "";
     ref += "--------------------------------\n";
     ref += " title1 t i t l e 2 t-i-t-l-e-3 \n";
@@ -217,6 +232,7 @@ TEST(FormatterTest, FmtTableCustomArgsAlign)
     FmtTable table3(titles, 5, fmts, {FmtTable::Align::RIGHT, FmtTable::Align::LEFT});
     table3 << col1 << col2 << col3;
     result = table3.str();
+    std::cout << result << std::endl;
     ref = "";
     ref += "--------------------------------\n";
     ref += " title1 t i t l e 2 t-i-t-l-e-3 \n";
@@ -233,6 +249,7 @@ TEST(FormatterTest, FmtTableCustomArgsAlign)
     FmtTable table4(titles, 5, fmts, {FmtTable::Align::LEFT, FmtTable::Align::RIGHT});
     table4 << col1 << col2 << col3;
     result = table4.str();
+    std::cout << result << std::endl;
     ref = "";
     ref += "--------------------------------\n";
     ref += " title1 t i t l e 2 t-i-t-l-e-3 \n";
@@ -258,6 +275,7 @@ TEST(FormatterTest, FmtTableCustomArgsAlignFrame)
     FmtTable table1(titles, 5, fmts, {FmtTable::Align::LEFT, FmtTable::Align::LEFT}, {'+', '?', '*', '.', '^'});
     table1 << col1 << col2 << col3;
     std::string result = table1.str();
+    std::cout << result << std::endl;
     std::string ref = "";
     ref += "++++++++++++++++++++++++++++++++\n";
     ref += ".title1 t i t l e 2 t-i-t-l-e-3^\n";
@@ -285,6 +303,7 @@ TEST(FormatterTest, FmtTableCustomArgsAlignFrameDelim)
                     {'"', ']'});
     table1 << col1 << col2 << col3;
     std::string result = table1.str();
+    std::cout << result << std::endl;
     std::string ref = "";
     ref += "================================\n";
     ref += "#title1]t i t l e 2]t-i-t-l-e-3%\n";

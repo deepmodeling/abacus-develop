@@ -9,10 +9,11 @@
 #define FORMATTER_H
 
 #include <string>
-#include "./ndarray.h"
 #include <iostream>
 #include <type_traits>
 #include <utility>
+#include <cstdio>
+#include "module_base/ndarray.h"
 /**
  * @brief 
  * 
@@ -212,30 +213,22 @@ public:
      */
     std::vector<std::string> relax_col_width(const std::vector<std::string>& col,
                                              const std::string& title = "",
-                                             const Align& valign = Align::RIGHT,
-                                             const Align& talign = Align::CENTER)
+                                             const Align valign = Align::RIGHT,  // because enum type would be the smallest integral type, so it is safe to pass by value
+                                             const Align talign = Align::CENTER)
     {
-        size_t max_width = 0;
+        size_t max_width = title.size();
         for(const std::string& s : col) { max_width = std::max(max_width, s.size()); }
-        if(!title.empty()) { max_width = std::max(max_width, title.size()); }
-        std::vector<std::string> new_col(col.size() + static_cast<int>(!title.empty()));
-        if(!title.empty())
+        std::vector<std::string> new_col(col.size() + 1); // the first is column title
+        for(size_t i = 0; i < col.size() + 1; i++)
         {
-            const size_t nwhitespaces = max_width - title.size();
-            std::string dst = FmtCore::strip(title);
-            if(talign == Align::RIGHT) dst = std::string(nwhitespaces, ' ') + title;
-            else if(talign == Align::LEFT) dst = title + std::string(nwhitespaces, ' ');
-            else if(talign == Align::CENTER) dst = FmtCore::center(title, nwhitespaces);
-            new_col[0] = dst;
-        }
-        for(size_t i = 0; i < col.size(); i++)
-        {
-            const size_t nwhitespaces = max_width - col[i].size();
-            std::string dst = FmtCore::strip(col[i]);
-            if(valign == Align::RIGHT) dst = std::string(nwhitespaces, ' ') + dst;
-            else if(valign == Align::LEFT) dst = dst + std::string(nwhitespaces, ' ');
-            else if(valign == Align::CENTER) dst = FmtCore::center(dst, nwhitespaces);
-            new_col[i + static_cast<int>(!title.empty())] = dst;
+            new_col[i] = (i == 0)? FmtCore::strip(title): FmtCore::strip(col[i - 1]);
+            const size_t nwhitespaces = max_width - new_col[i].size();
+            switch((i == 0)? talign: valign)
+            {
+                case Align::RIGHT: new_col[i] = std::string(nwhitespaces, ' ') + new_col[i]; break;
+                case Align::LEFT: new_col[i] += std::string(nwhitespaces, ' '); break;
+                case Align::CENTER: new_col[i] = FmtCore::center(new_col[i], max_width); break;
+            }
         }
         return new_col;
     }
@@ -248,12 +241,12 @@ public:
      */
     std::string concat_title(const std::vector<std::string>& titles) const
     {
-        std::string dst = "";
+        std::string dst;
         // first sum width of all titles
         size_t width = std::accumulate(titles.begin(), titles.end(), 0, [](const size_t& acc, const std::string& s) { return acc + s.size(); });
-        // for the delimiters
+        // add width of delimiters
         width += titles.size() - 1;
-        // for the left and right frame
+        // add width of left and right frames
         width += 2;
         dst += std::string(width, frames_.up_) + "\n" + std::string(1, frames_.l_);
         for(size_t i = 0; i < titles.size(); i++)
@@ -301,20 +294,20 @@ public:
         std::string dst = "";
         const size_t nrows = data_.shape()[0];
         const size_t ncols = data_.shape()[1];
+        // if not all titles are empty, then with_title boolean will be true
+        bool with_title = false;
+        for(auto& title : titles_) if(!title.empty()) { with_title = true; break; }
         // first to relax each column
         for(size_t j = 0UL; j < ncols; j++)
         {
             std::vector<std::string> col(nrows);
             for(size_t i = 0UL; i < nrows; i++) col[i] = data_(i, j);
             col = relax_col_width(col, titles_[j], aligns_.val_, aligns_.title_);
-            std::string title = (titles_[j].empty())? "": col[0UL];
-            titles_[j] = title;
-            std::vector<std::string> col_new(col.begin() + static_cast<int>(!title.empty()), col.end());
+            titles_[j] = col[0UL];
+            std::vector<std::string> col_new(col.begin() + 1, col.end());
             set_value(0UL, j, 'v', col_new);
         }
-        // if not all titles are empty, then with_title boolean will be true
-        bool with_title = false;
-        for(auto& title : titles_) if(!title.empty()) { with_title = true; break; }
+        // then print titles
         if(with_title) dst += concat_title(titles_);
         // then print contents
         for(size_t i = 0UL; i < nrows; i++)
