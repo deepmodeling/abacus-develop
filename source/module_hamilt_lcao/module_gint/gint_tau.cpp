@@ -36,8 +36,7 @@ void Gint::gint_kernel_tau(
 		psir_ylm.ptr_2D,
 		dpsir_ylm_x.ptr_2D,
 		dpsir_ylm_y.ptr_2D,
-		dpsir_ylm_z.ptr_2D,
-		ucell);
+		dpsir_ylm_z.ptr_2D);
 
 	for(int is=0; is<GlobalV::NSPIN; ++is)
 	{

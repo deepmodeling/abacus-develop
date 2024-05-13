@@ -74,6 +74,10 @@ class Grid_Technique : public Grid_MeshBall
     bool allocate_find_R2;
     int binary_search_find_R2_offset(int val, int iat) const;
 
+    //UnitCell and LCAO_Obrbitals
+    const UnitCell* ucell;
+    const LCAO_Orbitals* orb;
+
     // indexes for nnrg -> orbital index + R index
     std::vector<gridIntegral::gridIndex> nnrg_index;
 
@@ -98,7 +102,7 @@ class Grid_Technique : public Grid_MeshBall
                       const int& nplane,
                       const int& startz_current,
                       const UnitCell& ucell,
-                      const LCAO_Orbitals &orb);
+                      const LCAO_Orbitals& orb);
 
     /// number of elements(basis-pairs) in this processon
     /// on all adjacent atoms-pairs(Grid division)

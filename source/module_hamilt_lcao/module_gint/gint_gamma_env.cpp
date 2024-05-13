@@ -40,8 +40,7 @@ void Gint_Gamma::cal_env(const double* wfc, double* rho,LCAO_Orbitals &orb,UnitC
                 size, grid_index, delta_r,
 				block_index, block_size, 
 				cal_flag,
-				psir_ylm.ptr_2D,
-				ucell);
+				psir_ylm.ptr_2D);
 
             int* vindex = Gint_Tools::get_vindex(this->bxyz, this->bx, this->by, this->bz,
                 this->nplane, this->gridt->start_ind[grid_index], ncyz);

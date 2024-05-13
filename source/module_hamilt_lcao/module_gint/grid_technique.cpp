@@ -127,7 +127,7 @@ void Grid_Technique::set_pbc_grid(const int& ncx_in,
                                   const int& nplane,
                                   const int& startz_current,
                                   const UnitCell& ucell,
-                                  const LCAO_Orbitals &orb)
+                                  const LCAO_Orbitals& orb)
 {
     ModuleBase::TITLE("Grid_Technique", "init");
     ModuleBase::timer::tick("Grid_Technique", "init");
@@ -152,7 +152,8 @@ void Grid_Technique::set_pbc_grid(const int& ncx_in,
                        nbxx_in,
                        nbzp_start_in,
                        nbzp_in);
-
+    this->ucell=&ucell;
+    this->orb=&orb;
     this->init_latvec(ucell);
 
     this->init_big_latvec(ucell);
@@ -941,7 +942,7 @@ void Grid_Technique::init_gpu_gint_variables(const UnitCell& ucell,const LCAO_Or
         checkCudaErrors(cudaStreamCreate(&streams[i]));
     }
 
-    gemm_algo_selector(bxyz, fastest_matrix_mul);
+    gemm_algo_selector(bxyz, fastest_matrix_mul,ucell);
 
     is_malloced = true;
 

@@ -29,8 +29,7 @@ void Gint::gint_kernel_rho(
 		this->bxyz, na_grid, grid_index, delta_r,
 		block_index, block_size, 
 		cal_flag,
-		psir_ylm.ptr_2D,
-		ucell);
+		psir_ylm.ptr_2D);
 
 	for(int is=0; is<GlobalV::NSPIN; ++is)
 	{
