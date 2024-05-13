@@ -225,7 +225,7 @@ class Grid_Technique : public Grid_MeshBall
     matrix_multiple_func_type fastest_matrix_mul;
 
   private:
-    void init_gpu_gint_variables(const UnitCell& ucell,LCAO_Orbitals &orb);
+    void init_gpu_gint_variables(const UnitCell& ucell,const LCAO_Orbitals &orb);
     void free_gpu_gint_variables(const UnitCell& ucell);
 
 #endif

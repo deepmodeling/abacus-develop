@@ -183,7 +183,7 @@ void Grid_Technique::set_pbc_grid(const int& ncx_in,
 #if ((defined __CUDA) /* || (defined __ROCM) */)
     if(GlobalV::device_flag == "gpu")
     {
-        this->init_gpu_gint_variables(ucell,LCAO_Orbitals &orb);
+        this->init_gpu_gint_variables(ucell,orb);
     }
 #endif
 
@@ -637,7 +637,7 @@ void Grid_Technique::cal_trace_lo(const UnitCell& ucell)
 
 #if ((defined __CUDA) /* || (defined __ROCM) */)
 
-void Grid_Technique::init_gpu_gint_variables(const UnitCell& ucell,LCAO_Orbitals &orb)
+void Grid_Technique::init_gpu_gint_variables(const UnitCell& ucell,const LCAO_Orbitals &orb)
 {
     if (is_malloced)
     {
