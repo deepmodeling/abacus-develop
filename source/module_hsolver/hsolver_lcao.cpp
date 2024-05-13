@@ -13,7 +13,7 @@
 #ifdef __ELPA
 #include "diago_elpa.h"
 #endif
-#ifdef __CUSOLVER_LCAO
+#ifdef __CUDA
 #include "diago_cusolver.h"
 #endif
 
@@ -67,7 +67,7 @@ void HSolverLCAO<T, Device>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
         }
     }
 #endif
-#ifdef __CUSOLVER_LCAO
+#ifdef __CUDA
     else if (this->method == "cusolver")
     {
         if (this->pdiagh != nullptr)
@@ -80,7 +80,7 @@ void HSolverLCAO<T, Device>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
         }
         if (this->pdiagh == nullptr)
         {
-            this->pdiagh = new DiagoCusolver<T>();
+            this->pdiagh = new DiagoCusolver<T>(this->ParaV);
             this->pdiagh->method = this->method;
         }
     }

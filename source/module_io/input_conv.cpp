@@ -308,10 +308,9 @@ void Input_Conv::Convert(void)
     GlobalV::MIN_DIST_COEF = INPUT.min_dist_coef;
     GlobalV::NBANDS = INPUT.nbands;
     GlobalV::NBANDS_ISTATE = INPUT.nbands_istate;
+    GlobalV::device_flag = psi::device::get_device_flag(INPUT.device, INPUT.ks_solver, INPUT.basis_type, INPUT.gamma_only_local);
 
-    GlobalV::device_flag = psi::device::get_device_flag(INPUT.device, INPUT.ks_solver, INPUT.basis_type);
-
-    if (GlobalV::device_flag == "gpu")
+    if (GlobalV::device_flag == "gpu" && INPUT.basis_type == "pw")
     {
         GlobalV::KPAR = psi::device::get_device_kpar(INPUT.kpar);
     }
@@ -362,6 +361,8 @@ void Input_Conv::Convert(void)
     Lattice_Change_Basic::fixed_axes = INPUT.fixed_axes;
 
     GlobalV::CAL_STRESS = INPUT.cal_stress;
+
+    GlobalV::NUM_STREAM = INPUT.nstream;
 
     GlobalV::RELAX_METHOD = INPUT.relax_method;
     GlobalV::relax_scale_force = INPUT.relax_scale_force;
