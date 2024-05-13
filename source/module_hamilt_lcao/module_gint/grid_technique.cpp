@@ -160,7 +160,12 @@ void Grid_Technique::set_pbc_grid(const int& ncx_in,
     this->init_meshcell_pos();
 
     // (2) expand the grid
-    this->init_grid_expansion(ucell,orb);
+    double* rcut=new double[ucell.ntype];
+    for(int T=0; T<ucell.ntype; T++)
+	{
+		rcut[T]=orb.Phi[T].getRcut();
+	}
+    this->init_grid_expansion(ucell,rcut);
 
     // (3) calculate the extended grid.
     this->cal_extended_cell(this->dxe, this->dye, this->dze);

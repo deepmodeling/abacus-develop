@@ -456,7 +456,7 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<double> *hR,const UnitCell* ucell_
                 auto& tau1 = ucell.atoms[T1].tau[I1];
                 //gd.Find_atom(tau1);	
                 AdjacentAtomInfo adjs;
-                gd->Find_atom(GlobalC::ucell, tau1, T1, I1, &adjs);	
+                gd->Find_atom(ucell, tau1, T1, I1, &adjs);	
                 // search for the adjacent atoms.
                 int nad = 0;
 
@@ -582,7 +582,7 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>> *hR,const Un
                 auto& tau1 = ucell.atoms[T1].tau[I1];
                 //gd.Find_atom(tau1);	
                 AdjacentAtomInfo adjs;
-                gd->Find_atom(GlobalC::ucell, tau1, T1, I1, &adjs);	
+                gd->Find_atom(ucell, tau1, T1, I1, &adjs);	
                 // search for the adjacent atoms.
                 int nad = 0;
 

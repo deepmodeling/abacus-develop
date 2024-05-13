@@ -32,7 +32,7 @@ class Grid_BigCell: public Grid_MeshCell
 
 
 	//---------------------------------
-	void init_grid_expansion(const UnitCell& ucell,const LCAO_Orbitals& orb);
+	void init_grid_expansion(const UnitCell& ucell,double* rcut);
 
 	// get the max radius of all orbitals.
 	// which will use to generate grid expansion,

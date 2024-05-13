@@ -105,15 +105,16 @@ void Grid_BigCell::init_big_latvec(const UnitCell& ucell)
 }
 
 
-void Grid_BigCell::init_grid_expansion(const UnitCell& ucell,const LCAO_Orbitals& orb)
+void Grid_BigCell::init_grid_expansion(const UnitCell& ucell,double* rcut)
 {
 	ModuleBase::TITLE("Grid_BigCell","init_grid_expansion");
 
 	// calculate the max cutoff radius among all orbitals.
 	// then we will use this parameter to generate grid expansion.
+
 	for(int T=0; T<ucell.ntype; T++)
 	{
-		this->orbital_rmax = std::max( orb.Phi[T].getRcut(), this->orbital_rmax);
+		this->orbital_rmax = std::max( rcut[T], this->orbital_rmax);
 	}
 	if(GlobalV::test_gridt)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"rmax of periodic grid (bohr)",orbital_rmax);
 
