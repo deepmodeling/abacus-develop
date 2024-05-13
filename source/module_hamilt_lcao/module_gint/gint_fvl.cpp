@@ -14,7 +14,8 @@ void Gint::gint_kernel_force(
     const bool isforce,
     const bool isstress,
     ModuleBase::matrix* fvl_dphi,
-    ModuleBase::matrix* svl_dphi)
+    ModuleBase::matrix* svl_dphi,
+	const UnitCell& ucell)
 {
     //prepare block information
 	int* block_iw=nullptr;
@@ -30,7 +31,7 @@ void Gint::gint_kernel_force(
 	Gint_Tools::Array_Pool<double> dpsir_ylm_z(this->bxyz, LD_pool);
 
 	Gint_Tools::cal_dpsir_ylm(*this->gridt, this->bxyz, na_grid, grid_index, delta_r,	block_index, block_size, cal_flag,
-		psir_ylm.ptr_2D, dpsir_ylm_x.ptr_2D, dpsir_ylm_y.ptr_2D, dpsir_ylm_z.ptr_2D);
+		psir_ylm.ptr_2D, dpsir_ylm_x.ptr_2D, dpsir_ylm_y.ptr_2D, dpsir_ylm_z.ptr_2D,ucell);
 
     //calculating f_mu(r) = v(r)*psi_mu(r)*dv
 	const Gint_Tools::Array_Pool<double> psir_vlbr3 
@@ -117,7 +118,8 @@ void Gint::gint_kernel_force_meta(
     const bool isforce,
     const bool isstress,
     ModuleBase::matrix* fvl_dphi,
-    ModuleBase::matrix* svl_dphi)
+    ModuleBase::matrix* svl_dphi,
+	const UnitCell& ucell)
 {
     //prepare block information
 	int* block_iw=nullptr;
@@ -168,7 +170,7 @@ void Gint::gint_kernel_force_meta(
 
 	//psi and gradient of psi
 	Gint_Tools::cal_dpsir_ylm(*this->gridt, this->bxyz, na_grid, grid_index, delta_r,	block_index, block_size, cal_flag,
-		psir_ylm.ptr_2D, dpsir_ylm_x.ptr_2D, dpsir_ylm_y.ptr_2D, dpsir_ylm_z.ptr_2D);
+		psir_ylm.ptr_2D, dpsir_ylm_x.ptr_2D, dpsir_ylm_y.ptr_2D, dpsir_ylm_z.ptr_2D,ucell);
 	/*
 	Gint_Tools::cal_dpsir_ylm(na_grid, grid_index, delta_r,	block_index, block_size, cal_flag,
 		psir_ylm.ptr_2D, dpsir_ylm_x.ptr_2D, dpsir_ylm_y.ptr_2D, dpsir_ylm_z.ptr_2D, displ1);

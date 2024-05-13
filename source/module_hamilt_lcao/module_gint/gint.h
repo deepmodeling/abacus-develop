@@ -12,7 +12,7 @@
 #include "gint_tools.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
-
+#include "module_hamilt_lcao/module_gint/grid_technique.h"
 class Gint
 {
     public:
@@ -80,6 +80,7 @@ class Gint
         double* vldr3,
         const int LD_pool,
         double* pvpR_reduced,
+        const UnitCell& ucell,
         hamilt::HContainer<double>* hR = nullptr);
 
     // calculate < phi_0 | vlocal | dphi_R >
@@ -91,7 +92,8 @@ class Gint
         const int LD_pool,
         double* pvdpRx_reduced,
         double* pvdpRy_reduced,
-        double* pvdpRz_reduced);
+        double* pvdpRz_reduced,
+        const UnitCell& ucell);
 
     void gint_kernel_vlocal_meta(
         const int na_grid,
@@ -101,6 +103,7 @@ class Gint
         double* vkdr3,
         const int LD_pool,
         double* pvpR_reduced,
+        const UnitCell& ucell,
         hamilt::HContainer<double>* hR = nullptr);
 
 	void cal_meshball_vlocal_gamma(
@@ -125,7 +128,8 @@ class Gint
         bool** cal_flag, 
         double** psir_ylm,
         double** psir_vlbr3,
-        double* pvpR);
+        double* pvpR,
+        const UnitCell& ucell);
 
     //------------------------------------------------------
     // in gint_fvl.cpp 
@@ -142,7 +146,8 @@ class Gint
         const bool isforce,
         const bool isstress,
         ModuleBase::matrix* fvl_dphi,
-        ModuleBase::matrix* svl_dphi);
+        ModuleBase::matrix* svl_dphi,
+        const UnitCell& ucell);
 
     void gint_kernel_force_meta(
         const int na_grid,
@@ -156,7 +161,8 @@ class Gint
         const bool isforce,
         const bool isstress,
         ModuleBase::matrix* fvl_dphi,
-        ModuleBase::matrix* svl_dphi);
+        ModuleBase::matrix* svl_dphi,
+        const UnitCell& ucell);
 
     void cal_meshball_force(
         const int grid_index,
@@ -191,6 +197,7 @@ class Gint
         const double delta_r,
         int* vindex,
         const int LD_pool,
+        const UnitCell& ucell,
         Gint_inout *inout);
 
     void cal_meshball_rho(
@@ -207,7 +214,8 @@ class Gint
         const double delta_r,
         int* vindex,
         const int LD_pool,
-        Gint_inout *inout);
+        Gint_inout *inout,
+        const UnitCell& ucell);
 
     void cal_meshball_tau(
         const int na_grid,
@@ -221,7 +229,6 @@ class Gint
         double** dpsiz_dm,
         double* rho);
 
-    // dimension: [GlobalC::LNNR.nnrg] 
     // save the < phi_0i | V | phi_Rj > in sparse H matrix.
     bool pvpR_alloc_flag = false;
     double** pvpR_reduced = nullptr; //stores Hamiltonian in reduced format, for multi-l

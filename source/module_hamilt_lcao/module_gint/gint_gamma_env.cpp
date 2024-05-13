@@ -5,14 +5,14 @@
 #include "module_base/ylm.h"
 #include "module_base/timer.h"
 
-void Gint_Gamma::cal_env(const double* wfc, double* rho)
+void Gint_Gamma::cal_env(const double* wfc, double* rho,LCAO_Orbitals &orb,UnitCell &ucell)
 {
     ModuleBase::TITLE("Grid_Integral","cal_env");
 
     // it's a uniform grid to save orbital values, so the delta_r is a constant.
-    const double delta_r = GlobalC::ORB.dr_uniform;
+    const double delta_r = orb.dr_uniform;
 	const int max_size = this->gridt->max_atom;
-	const int LD_pool = max_size*GlobalC::ucell.nwmax;
+	const int LD_pool = max_size*ucell.nwmax;
 
 	if(max_size!=0) 
 	{
@@ -40,7 +40,8 @@ void Gint_Gamma::cal_env(const double* wfc, double* rho)
                 size, grid_index, delta_r,
 				block_index, block_size, 
 				cal_flag,
-				psir_ylm.ptr_2D);
+				psir_ylm.ptr_2D,
+				ucell);
 
             int* vindex = Gint_Tools::get_vindex(this->bxyz, this->bx, this->by, this->bz,
                 this->nplane, this->gridt->start_ind[grid_index], ncyz);
@@ -49,11 +50,11 @@ void Gint_Gamma::cal_env(const double* wfc, double* rho)
 			{
 				const int mcell_index1 = this->gridt->bcell_start[grid_index] + ia1;
 				const int iat = this->gridt->which_atom[mcell_index1];
-				const int T1 = GlobalC::ucell.iat2it[iat];
-				Atom *atom1 = &GlobalC::ucell.atoms[T1];
-				const int I1 = GlobalC::ucell.iat2ia[iat];
+				const int T1 = ucell.iat2it[iat];
+				Atom *atom1 = &ucell.atoms[T1];
+				const int I1 = ucell.iat2ia[iat];
 				// get the start index of local orbitals.
-				const int start1 = GlobalC::ucell.itiaiw2iwt(T1, I1, 0);
+				const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
 				for (int ib=0; ib<this->bxyz; ib++)
 				{
 					if(cal_flag[ib][ia1])

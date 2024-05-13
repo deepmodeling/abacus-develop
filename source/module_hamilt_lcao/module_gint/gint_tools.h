@@ -203,7 +203,8 @@ namespace Gint_Tools
 		const int*const block_index,  // count total number of atomis orbitals
 		const int*const block_size, 
 		const bool*const*const cal_flag,
-		double*const*const psir_ylm); // whether the atom-grid distance is larger than cutoff
+		double*const*const psir_ylm,
+        const UnitCell& ucell); // whether the atom-grid distance is larger than cutoff
 
 	// psir_ylm and dpsir_ylm, both[pw.bxyz][LD_pool]
     void cal_dpsir_ylm(
@@ -218,7 +219,8 @@ namespace Gint_Tools
 		double*const*const psir_ylm,
 		double*const*const dpsir_ylm_x,
 		double*const*const dpsir_ylm_y,
-		double*const*const dpsir_ylm_z);
+		double*const*const dpsir_ylm_z,
+        const UnitCell& ucell);
 
 	// dpsir_ylm * (r-R), R is the atomic position
     void cal_dpsirr_ylm(

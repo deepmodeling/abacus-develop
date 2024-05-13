@@ -8,14 +8,15 @@
 #include "module_base/blas_connector.h"
 #include "module_base/timer.h"
 #include "gint_tools.h"
-
+#include "module_hamilt_lcao/module_gint/grid_technique.h"
 void Gint::gint_kernel_tau(
 	const int na_grid,
 	const int grid_index,
 	const double delta_r,
 	int* vindex,
 	const int LD_pool,
-	Gint_inout *inout)
+	Gint_inout *inout,
+	const UnitCell &ucell)
 {
 	//prepare block information
 	int * block_iw, * block_index, * block_size;
@@ -35,8 +36,8 @@ void Gint::gint_kernel_tau(
 		psir_ylm.ptr_2D,
 		dpsir_ylm_x.ptr_2D,
 		dpsir_ylm_y.ptr_2D,
-		dpsir_ylm_z.ptr_2D
-	);
+		dpsir_ylm_z.ptr_2D,
+		ucell);
 
 	for(int is=0; is<GlobalV::NSPIN; ++is)
 	{

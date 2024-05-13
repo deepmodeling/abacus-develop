@@ -293,14 +293,14 @@ void Gint::cal_gint(Gint_inout* inout)
 					//int* vindex = Gint_Tools::get_vindex(ncyz, ibx, jby, kbz);
                     int* vindex = Gint_Tools::get_vindex(this->bxyz, this->bx, this->by, this->bz,
                         this->nplane, this->gridt->start_ind[grid_index], ncyz);
-                    this->gint_kernel_rho(na_grid, grid_index, delta_r, vindex, LD_pool, inout);
+                    this->gint_kernel_rho(na_grid, grid_index, delta_r, vindex, LD_pool, GlobalC::ucell,inout);
 					delete[] vindex;
 				}
 				else if(inout->job == Gint_Tools::job_type::tau)
 				{
                     int* vindex = Gint_Tools::get_vindex(this->bxyz, this->bx, this->by, this->bz,
                         this->nplane, this->gridt->start_ind[grid_index], ncyz);
-                    this->gint_kernel_tau(na_grid, grid_index, delta_r, vindex, LD_pool, inout);
+                    this->gint_kernel_tau(na_grid, grid_index, delta_r, vindex, LD_pool, inout,GlobalC::ucell);
 					delete[] vindex;
 				}
 				else if(inout->job == Gint_Tools::job_type::force)
@@ -322,11 +322,11 @@ void Gint::cal_gint(Gint_inout* inout)
 #ifdef _OPENMP
 						this->gint_kernel_force(na_grid, grid_index, delta_r, vldr3, LD_pool,
 							DM_in, inout->ispin, inout->isforce, inout->isstress,
-							&fvl_dphi_thread, &svl_dphi_thread);
+							&fvl_dphi_thread, &svl_dphi_thread,GlobalC::ucell);
 #else
 						this->gint_kernel_force(na_grid, grid_index, delta_r, vldr3, LD_pool,
 							DM_in, inout->ispin, inout->isforce, inout->isstress,
-							inout->fvl_dphi, inout->svl_dphi);
+							inout->fvl_dphi, inout->svl_dphi,GlobalC::ucell);
 #endif
 					delete[] vldr3;
 				}
@@ -338,17 +338,17 @@ void Gint::cal_gint(Gint_inout* inout)
 					if((GlobalV::GAMMA_ONLY_LOCAL && lgd>0) || !GlobalV::GAMMA_ONLY_LOCAL)
 					{
 						this->gint_kernel_vlocal(na_grid, grid_index, delta_r, vldr3, LD_pool,
-								pvpR_thread, hRGint_thread);
+								pvpR_thread,GlobalC::ucell,hRGint_thread);
 					}
 #else
 					if(GlobalV::GAMMA_ONLY_LOCAL && lgd>0)
 					{
-						this->gint_kernel_vlocal(na_grid, grid_index, delta_r, vldr3, LD_pool, nullptr);
+						this->gint_kernel_vlocal(na_grid, grid_index, delta_r, vldr3, LD_pool,GlobalC::ucell,nullptr);
 					}
 					if(!GlobalV::GAMMA_ONLY_LOCAL)
 					{
 						this->gint_kernel_vlocal(na_grid, grid_index, delta_r, vldr3, LD_pool,
-								this->pvpR_reduced[inout->ispin]);
+								GlobalC::ucell,this->pvpR_reduced[inout->ispin]);
 					}
 #endif
 					delete[] vldr3;
@@ -359,12 +359,13 @@ void Gint::cal_gint(Gint_inout* inout)
 							this->nplane, this->gridt->start_ind[grid_index], ncyz, dv);
 #ifdef _OPENMP
 					this->gint_kernel_dvlocal(na_grid, grid_index, delta_r, vldr3, LD_pool,
-							pvdpRx_thread, pvdpRy_thread, pvdpRz_thread);
+							pvdpRx_thread, pvdpRy_thread, pvdpRz_thread,GlobalC::ucell);
 #else
 					this->gint_kernel_dvlocal(na_grid, grid_index, delta_r, vldr3, LD_pool,
 							this->pvdpRx_reduced[inout->ispin],
                             this->pvdpRy_reduced[inout->ispin],
-                            this->pvdpRz_reduced[inout->ispin]);
+                            this->pvdpRz_reduced[inout->ispin],
+                            GlobalC::ucell);
 #endif
 					delete[] vldr3;
 				}
@@ -378,16 +379,16 @@ void Gint::cal_gint(Gint_inout* inout)
 					if((GlobalV::GAMMA_ONLY_LOCAL && lgd>0) || !GlobalV::GAMMA_ONLY_LOCAL)
 					{
 						this->gint_kernel_vlocal_meta(na_grid, grid_index, delta_r, vldr3, vkdr3, LD_pool,
-								pvpR_thread, hRGint_thread);
+								pvpR_thread, GlobalC::ucell,hRGint_thread);
 					}
 #else
 					if(GlobalV::GAMMA_ONLY_LOCAL && lgd>0)
 					{
-						this->gint_kernel_vlocal_meta(na_grid, grid_index, delta_r, vldr3, vkdr3, LD_pool, nullptr);
+						this->gint_kernel_vlocal_meta(na_grid, grid_index, delta_r, vldr3, vkdr3, LD_pool, GlobalC::ucell,nullptr);
 					}
 					if(!GlobalV::GAMMA_ONLY_LOCAL)
 					{
-						this->gint_kernel_vlocal_meta(na_grid, grid_index, delta_r, vldr3, vkdr3, LD_pool,
+						this->gint_kernel_vlocal_meta(na_grid, grid_index, delta_r, vldr3, vkdr3, LD_pool,GlobalC::ucell,
 								this->pvpR_reduced[inout->ispin]);
 					}
 #endif
@@ -415,11 +416,11 @@ void Gint::cal_gint(Gint_inout* inout)
 #ifdef _OPENMP
 					this->gint_kernel_force_meta(na_grid, grid_index, delta_r, vldr3, vkdr3, LD_pool,
 							DM_in, inout->ispin, inout->isforce, inout->isstress,
-							&fvl_dphi_thread, &svl_dphi_thread);
+							&fvl_dphi_thread, &svl_dphi_thread,GlobalC::ucell);
 #else
 					this->gint_kernel_force_meta(na_grid, grid_index, delta_r, vldr3, vkdr3, LD_pool,
 							DM_in, inout->ispin, inout->isforce, inout->isstress,
-							inout->fvl_dphi, inout->svl_dphi);
+							inout->fvl_dphi, inout->svl_dphi,GlobalC::ucell);
 #endif
 					delete[] vldr3;
 					delete[] vkdr3;

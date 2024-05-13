@@ -184,7 +184,8 @@ namespace Gint_Tools
 		const int*const block_index,  		// block_index[na_grid+1], count total number of atomis orbitals
 		const int*const block_size, 		// block_size[na_grid],	number of columns of a band
 		const bool*const*const cal_flag,
-		double*const*const psir_ylm) 	// cal_flag[bxyz][na_grid],	whether the atom-grid distance is larger than cutoff
+		double*const*const psir_ylm,
+		const UnitCell& ucell) 	// cal_flag[bxyz][na_grid],	whether the atom-grid distance is larger than cutoff
     {
 		ModuleBase::timer::tick("Gint_Tools", "cal_psir_ylm");
         std::vector<double> ylma;
@@ -298,7 +299,8 @@ namespace Gint_Tools
 		double*const*const psir_ylm,
 		double*const*const dpsir_ylm_x,
 		double*const*const dpsir_ylm_y,
-		double*const*const dpsir_ylm_z)
+		double*const*const dpsir_ylm_z,
+		const UnitCell& ucell)
 	{
 		ModuleBase::timer::tick("Gint_Tools", "cal_dpsir_ylm");
 		for (int id=0; id<na_grid; id++)
