@@ -71,7 +71,7 @@ public:
      * Python-style string functions will be implemented here as toolbox
      */
     /**
-     * @brief split a string with a delimiter, return unclapsed vector
+     * @brief split a string with a delimiter, return uncollapse vector
      * @param in string to split
      * @param delim delimiter
      * @return std::vector<std::string> 
