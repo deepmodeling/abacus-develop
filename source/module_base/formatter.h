@@ -13,6 +13,7 @@
 #include <type_traits>
 #include <utility>
 #include <cstdio>
+#include <numeric>
 #include "module_base/ndarray.h"
 /**
  * @brief 
@@ -69,37 +70,53 @@ public:
     /**
      * Python-style string functions will be implemented here as toolbox
      */
-
-    static std::vector<std::string> split(const std::string& in, const std::string& delim = " ")
+    /**
+     * @brief split a string with a delimiter, return unclapsed vector
+     * @param in string to split
+     * @param delim delimiter
+     * @return std::vector<std::string> 
+    */
+    static std::vector<std::string> split(const std::string& in, const std::string& delim)
     {
         std::vector<std::string> dst;
-        std::string::size_type beg = 0;
-        std::string::size_type end = in.find(delim);
-        while(end != std::string::npos)
+        std::string::size_type beg = 0, end;
+        while((end = in.find(delim, beg)) != std::string::npos)
         {
             dst.push_back(in.substr(beg, end - beg));
             beg = end + delim.size();
-            end = in.find(delim, beg);
         }
         dst.push_back(in.substr(beg));
         return dst;
     }
+    /**
+     * @brief split a string with a delimiter, return only non-empty elements
+     * 
+     * @param in string to split
+     * @return std::vector<std::string> 
+     */
+    static std::vector<std::string> split(const std::string& in)
+    {
+        std::vector<std::string> dst;
+        std::string::size_type beg = 0, end = 0;
+        while((beg = in.find_first_not_of(" ", end)) != std::string::npos)
+        {
+            end = in.find_first_of(" ", beg);
+            dst.push_back(in.substr(beg, end - beg));
+        }
+        return dst;
+    }
     static bool startswith(const std::string& in, const std::string& prefix)
     {
-        if(in.size() < prefix.size()) return false;
-        return in.substr(0, prefix.size()) == prefix;
+        return (in.size() >= prefix.size()) && (in.substr(0, prefix.size()) == prefix);
     }
     static bool endswith(const std::string& in, const std::string& suffix)
     {
-        if(in.size() < suffix.size()) return false;
-        return in.substr(in.size() - suffix.size()) == suffix;
+        return (in.size() >= suffix.size()) && (in.substr(in.size() - suffix.size()) == suffix);
     }
     static std::string strip(const std::string& in, const std::string& chars = " ")
     {
         std::string::size_type beg = in.find_first_not_of(chars);
-        std::string::size_type end = in.find_last_not_of(chars);
-        if(beg == std::string::npos) return "";
-        return in.substr(beg, end - beg + 1);
+        return (beg == std::string::npos)? "": in.substr(beg, in.find_last_not_of(chars) - beg + 1);
     }
     static std::string center(const std::string& in, const size_t& width, const char& fillchar = ' ')
     {
@@ -122,13 +139,8 @@ public:
     }
     static std::string join(const std::string& delim, const std::vector<std::string>& src)
     {
-        std::string dst = "";
-        for(size_t i = 0; i < src.size(); i++)
-        {
-            dst += src[i];
-            if(i != src.size() - 1) dst += delim;
-        }
-        return dst;
+        return (src.empty())? "": std::accumulate(src.begin() + 1, src.end(), src[0], 
+            [&delim](const std::string& acc, const std::string& s) { return acc + delim + s; });
     }
 
 private:

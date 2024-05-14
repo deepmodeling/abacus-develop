@@ -60,6 +60,7 @@ TEST(FormatterTest, FmtCoreDynamic)
 TEST(FormatterTest, FmtPyStrFuncSplit)
 {
     std::string fmt = "Hello, %s, %d, %f, %c!";
+    // default delimiter, whitespace
     std::vector<std::string> result = FmtCore::split(fmt);
     std::vector<std::string> ref = {"Hello,", "%s,", "%d,", "%f,", "%c!"};
     for(int i = 0; i < result.size(); i++)
@@ -67,8 +68,37 @@ TEST(FormatterTest, FmtPyStrFuncSplit)
         EXPECT_EQ(result[i], ref[i]);
     }
     fmt = "Hello, %s, %d, %f, %c";
+    // other delimiter
     result = FmtCore::split(fmt, "%");
     ref = {"Hello, ", "s, ", "d, ", "f, ", "c"};
+    for(int i = 0; i < result.size(); i++)
+    {
+        EXPECT_EQ(result[i], ref[i]);
+    }
+    // really string case, multiple chars
+    result = FmtCore::split(fmt, ", %");
+    ref = {"Hello", "s", "d", "f", "c"};
+    for(int i = 0; i < result.size(); i++)
+    {
+        EXPECT_EQ(result[i], ref[i]);
+    }
+    // no such delimiter
+    result = FmtCore::split(fmt, "z");
+    ref = {"Hello, %s, %d, %f, %c"};
+    for(int i = 0; i < result.size(); i++)
+    {
+        EXPECT_EQ(result[i], ref[i]);
+    }
+    // multiple delimiters exist
+    fmt = "Hello,       %s,  %d,    %f,  %c!";
+    result = FmtCore::split(fmt);
+    ref = {"Hello,", "%s,", "%d,", "%f,", "%c!"};
+    for(int i = 0; i < result.size(); i++)
+    {
+        EXPECT_EQ(result[i], ref[i]);
+    }
+    result = FmtCore::split(fmt, " ");
+    ref = {"Hello,", "", "", "", "", "", "", "%s,", "", "%d,", "", "", "", "%f,", "", "%c!"};
     for(int i = 0; i < result.size(); i++)
     {
         EXPECT_EQ(result[i], ref[i]);
