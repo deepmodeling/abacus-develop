@@ -700,7 +700,7 @@ void Charge::save_rho_before_sum_band(void)
     return;
 }
 
-double Charge::check_ne(const double* rho_in) const
+double Charge::cal_rho2ne(const double* rho_in) const
 {
     double ne = 0.0;
     for (int ir = 0; ir < this->rhopw->nrxx; ir++)
@@ -711,10 +711,43 @@ double Charge::check_ne(const double* rho_in) const
     Parallel_Reduce::reduce_pool(ne);
 #endif
     ne = ne * elecstate::get_ucell_omega() / (double)this->rhopw->nxyz;
-    std::cout << std::setprecision(10);
-    std::cout << " check the electrons number from rho, ne =" << ne << std::endl;
-    std::cout << std::setprecision(6);
+
     return ne;
+}
+
+void Charge::check_rho()
+{
+    if (this->nspin==1 || this->nspin==4)
+    {
+        double ne = 0.0;
+        ne = this->cal_rho2ne(rho[0]);
+        if (std::abs(ne - GlobalV::nelec) > 1.0e-6)
+        {
+            ModuleBase::WARNING("Charge", "Charge is not equal to the number of electrons!");
+        }
+    }
+    else if (this->nspin == 2)
+    {
+        // for spin up
+        double ne_up = 0.0;
+        ne_up = this->cal_rho2ne(rho[0]);
+        if (ne_up < 0.0)
+        {
+            ModuleBase::WARNING_QUIT("Charge", "Number of spin-down electrons set in starting magnetization exceeds all available.");
+        }
+        // for spin down
+        double ne_dn = 0.0;
+        ne_dn = this->cal_rho2ne(rho[1]);
+        if (ne_dn < 0.0)
+        {
+            ModuleBase::WARNING_QUIT("Charge", "Number of spin-up electrons set in starting magnetization exceeds all available.");
+        }
+        // for total charge
+        if (std::abs(ne_up + ne_dn - GlobalV::nelec) > 1.0e-6)
+        {
+            ModuleBase::WARNING("Charge", "Charge is not equal to the number of electrons!");
+        }
+    }
 }
 
 // LiuXh add 20180619

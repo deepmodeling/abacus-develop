@@ -9,6 +9,7 @@
 
 #include "module_base/vector3.h"
 #include "module_md/md_para.h"
+#include "input_conv.h"
 
 class Input
 {
@@ -136,7 +137,7 @@ class Input
     double press2;
     double press3;
     bool cal_stress; // calculate the stress
-
+    int nstream;
     std::string fixed_axes; // which axes are fixed
     bool fixed_ibrav; //whether to keep type of lattice; must be used along with latname
     bool fixed_atoms; //whether to fix atoms during vc-relax
@@ -186,6 +187,7 @@ class Input
     int pw_diag_nmax;
     int diago_cg_prec; // mohan add 2012-03-31
     int pw_diag_ndim;
+    bool diago_full_acc;
     double pw_diag_thr; // used in cg method
 
     int nb2d; // matrix 2d division.
@@ -271,6 +273,9 @@ class Input
     bool out_proj_band; // projected band structure calculation jiyy add 2022-05-11
     std::vector<int> out_mat_hs; // output H matrix and S matrix in local basis.
     bool out_mat_xc; // output exchange-correlation matrix in KS-orbital representation.
+    bool out_hr_npz;// output exchange-correlation matrix in KS-orbital representation.
+    bool out_dm_npz;
+    bool dm_to_rho;
     bool cal_syns; // calculate asynchronous S matrix to output
     double dmax; // maximum displacement of all atoms in one step (bohr)
     bool out_mat_hs2; // LiuXh add 2019-07-16, output H(R) matrix and S(R) matrix in local basis.
@@ -701,9 +706,17 @@ class Input
     void read_bool(std::ifstream &ifs, bool &var);
 
     // Return the const string pointer of private member bands_to_print_
+    // Not recommended to use this function directly, use get_out_band_kb() instead
     const std::string* get_bands_to_print() const
     {
         return &bands_to_print_;
+    }
+    // Return parsed bands_to_print_ as a vector of integers
+    std::vector<int> get_out_band_kb() const
+    {
+        std::vector<int> out_band_kb;
+        Input_Conv::parse_expression(bands_to_print_, out_band_kb);
+        return out_band_kb;
     }
 };
 

@@ -36,12 +36,12 @@ ESolver_SDFT_PW::~ESolver_SDFT_PW()
 {
 }
 
-void ESolver_SDFT_PW::init(Input& inp, UnitCell& ucell)
+void ESolver_SDFT_PW::before_all_runners(Input& inp, UnitCell& ucell)
 {
     this->nche_sto = inp.nche_sto;
     this->method_sto = inp.method_sto;
 
-    ESolver_KS::init(inp, ucell);
+    ESolver_KS::before_all_runners(inp, ucell);
 
     this->pelec = new elecstate::ElecStatePW_SDFT(pw_wfc,
                                                   &(chr),
@@ -260,7 +260,7 @@ void ESolver_SDFT_PW::cal_stress(ModuleBase::matrix& stress)
 }
 
 
-void ESolver_SDFT_PW::post_process(void)
+void ESolver_SDFT_PW::after_all_runners(void)
 {
 
     GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;

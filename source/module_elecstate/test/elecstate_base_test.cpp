@@ -74,6 +74,9 @@ void Charge::set_rhopw(ModulePW::PW_Basis*)
 void Charge::renormalize_rho()
 {
 }
+void Charge::check_rho()
+{
+}
 
 /************************************************
  *  unit test of elecstate.cpp

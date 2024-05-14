@@ -324,6 +324,9 @@ TEST_F(write_input, LCAO5)
                 testing::HasSubstr("lcao_rmax                      30 #max R for 1D two-center integration table"));
     EXPECT_THAT(output, testing::HasSubstr("out_mat_hs                     0 #output H and S matrix"));
     EXPECT_THAT(output, testing::HasSubstr("out_mat_xc                     0 #output exchange-correlation matrix in KS-orbital representation"));
+    EXPECT_THAT(output, testing::HasSubstr("out_hr_npz                     0 #output hr(I0,JR) submatrices in npz format"));
+    EXPECT_THAT(output, testing::HasSubstr("out_dm_npz                     0 #output dmr(I0,JR) submatrices in npz format"));
+    EXPECT_THAT(output, testing::HasSubstr("dm_to_rho                      0 #reads dmr in npz format and calculates electron density"));
     EXPECT_THAT(output, testing::HasSubstr("out_mat_hs2                    0 #output H(R) and S(R) matrix"));
     EXPECT_THAT(output, testing::HasSubstr("out_mat_dh                     0 #output of derivative of H(R) matrix"));
     EXPECT_THAT(
@@ -739,6 +742,7 @@ TEST_F(write_input, BerryWannier17)
     EXPECT_THAT(
         output,
         testing::HasSubstr("out_wannier_wvfn_formatted     1 #output UNK. file in text format or in binary format"));
+
     EXPECT_THAT(output, testing::HasSubstr(""));
     ifs.close();
     remove("write_input_test.log");

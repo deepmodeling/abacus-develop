@@ -276,6 +276,7 @@ void Input::Default(void)
     pw_diag_nmax = 50;
     diago_cg_prec = 1; // mohan add 2012-03-31
     pw_diag_ndim = 4;
+    diago_full_acc = false;
     pw_diag_thr = 1.0e-2;
     nb2d = 0;
     nurse = 0;
@@ -346,6 +347,9 @@ void Input::Default(void)
     out_proj_band = 0;
     out_mat_hs = {0, 8};
     out_mat_xc = 0;
+    out_hr_npz = 0;
+    out_dm_npz = 0;
+    dm_to_rho = 0;
     cal_syns = 0;
     dmax = 0.01;
     out_mat_hs2 = 0; // LiuXh add 2019-07-15
@@ -371,6 +375,7 @@ void Input::Default(void)
     lcao_dr = 0.01;
     lcao_rmax = 30; // (a.u.)
     onsite_radius = 0; // (a.u.)
+    nstream=4;
     //----------------------------------------------------------
     // efield and dipole correction     Yu Liu add 2022-05-18
     //----------------------------------------------------------
@@ -1169,6 +1174,10 @@ bool Input::Read(const std::string& fn)
         {
             read_value(ifs, pw_diag_ndim);
         }
+        else if (strcmp("diago_full_acc", word) == 0)
+        {
+            read_value(ifs, diago_full_acc);
+        }
         else if (strcmp("pw_diag_thr", word) == 0)
         {
             read_value(ifs, pw_diag_thr);
@@ -1435,6 +1444,18 @@ bool Input::Read(const std::string& fn)
         {
             read_bool(ifs, out_mat_xc);
         }
+        else if (strcmp("out_hr_npz", word) == 0)
+        {
+            read_bool(ifs, out_hr_npz);
+        }
+        else if (strcmp("out_dm_npz", word) == 0)
+        {
+            read_bool(ifs, out_dm_npz);
+        }
+        else if (strcmp("dm_to_rho", word) == 0)
+        {
+            read_bool(ifs, dm_to_rho);
+        }
         else if (strcmp("out_interval", word) == 0)
         {
             read_value(ifs, out_interval);
@@ -1514,6 +1535,10 @@ bool Input::Read(const std::string& fn)
         {
             read_value(ifs, onsite_radius);
         }
+	    else if (strcmp("num_stream",word)==0)
+		{
+	    	read_value(ifs,nstream);
+		}
         //----------------------------------------------------------
         // Molecule Dynamics
         // Yu Liu add 2021-07-30
@@ -2637,10 +2662,20 @@ bool Input::Read(const std::string& fn)
             gamma_only_local = 0;
         }
     }
-    if ((out_mat_r || out_mat_hs2 || out_mat_t || out_mat_dh) && gamma_only_local)
+    if ((out_mat_r || out_mat_hs2 || out_mat_t || out_mat_dh || out_hr_npz || out_dm_npz || dm_to_rho) && gamma_only_local)
     {
         ModuleBase::WARNING_QUIT("Input",
-                                 "printing of H(R)/S(R)/dH(R)/T(R) is not available for gamma only calculations");
+                                 "printing of H(R)/S(R)/dH(R)/T(R)/DM(R) is not available for gamma only calculations");
+    }
+    if(dm_to_rho && GlobalV::NPROC > 1)
+    {
+        ModuleBase::WARNING_QUIT("Input", "dm_to_rho is not available for parallel calculations");
+    }
+    if(out_hr_npz || out_dm_npz || dm_to_rho)
+    {
+#ifndef __USECNPY
+        ModuleBase::WARNING_QUIT("Input", "to write in npz format, please recompile with -DENABLE_CNPY=1");
+#endif
     }
     if (out_mat_dh && nspin == 4)
     {
@@ -3027,6 +3062,13 @@ void Input::Default_2(void) // jiyy add 2019-08-04
     {
         if (ks_solver == "default")
         {
+            if(device == "gpu")
+            {
+                ks_solver = "cusolver";
+                ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "cusolver");
+            }
+            else
+            {
 #ifdef __ELPA
             ks_solver = "genelpa";
             ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "genelpa");
@@ -3034,6 +3076,7 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             ks_solver = "scalapack_gvx";
             ModuleBase::GlobalFunc::AUTO_SET("ks_solver", "scalapack_gvx");
 #endif
+            }
         }
         if (lcao_ecut == 0)
         {
@@ -3281,6 +3324,7 @@ void Input::Bcast()
 
     Parallel_Common::bcast_string(basis_type); // xiaohui add 2013-09-01
     Parallel_Common::bcast_string(ks_solver);  // xiaohui add 2013-09-01
+    Parallel_Common::bcast_int(nstream);
     Parallel_Common::bcast_double(search_radius);
     Parallel_Common::bcast_bool(search_pbc);
     Parallel_Common::bcast_double(search_radius);
@@ -3340,6 +3384,7 @@ void Input::Bcast()
     Parallel_Common::bcast_int(pw_diag_nmax);
     Parallel_Common::bcast_int(diago_cg_prec);
     Parallel_Common::bcast_int(pw_diag_ndim);
+    Parallel_Common::bcast_bool(diago_full_acc);
     Parallel_Common::bcast_double(pw_diag_thr);
     Parallel_Common::bcast_int(nb2d);
     Parallel_Common::bcast_int(nurse);
@@ -3411,6 +3456,9 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(out_mat_t);
     Parallel_Common::bcast_bool(out_mat_dh);
     Parallel_Common::bcast_bool(out_mat_xc);
+    Parallel_Common::bcast_bool(out_hr_npz);
+    Parallel_Common::bcast_bool(out_dm_npz);
+    Parallel_Common::bcast_bool(dm_to_rho);
     Parallel_Common::bcast_bool(out_mat_r); // jingan add 2019-8-14
     Parallel_Common::bcast_int(out_wfc_lcao);
     Parallel_Common::bcast_bool(out_alllog);
@@ -4227,6 +4275,13 @@ void Input::Check(void)
         }
     }
 
+    if (sc_mag_switch)
+    {
+        std::stringstream ss;
+        ss << "This feature is not stable yet and might lead to erroneous results.\n"
+           << " Please wait for the official release version.";
+        ModuleBase::WARNING_QUIT("Input", ss.str());
+    }
     // Deltaspin variables checking
     if (sc_mag_switch)
     {

@@ -93,9 +93,7 @@ namespace ModuleESolver
         GlobalC::ld.cal_projected_DM_k(dm,
             GlobalC::ucell,
             GlobalC::ORB,
-            GlobalC::GridD,
-            this->kv.nks,
-            this->kv.kvec_d);
+            GlobalC::GridD);
     }
 
 
@@ -106,9 +104,7 @@ namespace ModuleESolver
         GlobalC::ld.cal_projected_DM_k(dm,
             GlobalC::ucell,
             GlobalC::ORB,
-            GlobalC::GridD,
-            this->kv.nks,
-            this->kv.kvec_d);
+            GlobalC::GridD);
     }
 #endif
 }
