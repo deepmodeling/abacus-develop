@@ -9,6 +9,7 @@
 #include "module_base/ylm.h"
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_base/memory.h"
 
 namespace Gint_Tools
 {
@@ -791,6 +792,7 @@ namespace Gint_Tools
 		const double*const*const psir_ylm)		    // psir_ylm[bxyz][LD_pool]
 	{
 		Gint_Tools::Array_Pool<double> psir_vlbr3(bxyz, LD_pool);
+		ModuleBase::Memory::record("Gint_Tools::psir_vlbr3",sizeof(double)*bxyz*(LD_pool+1));
 		for(int ib=0; ib<bxyz; ++ib)
 		{
 			for(int ia=0; ia<na_grid; ++ia)

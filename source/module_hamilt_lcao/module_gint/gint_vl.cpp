@@ -7,6 +7,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/blas_connector.h"
 #include "module_base/timer.h"
+#include "module_base/memory.h"
 //#include <mkl_cblas.h>
 
 #ifdef _OPENMP
@@ -33,6 +34,7 @@ void Gint::gint_kernel_vlocal(
 	
 	//evaluate psi and dpsi on grids
 	Gint_Tools::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
+	ModuleBase::Memory::record("Gint_Tools::_psir_ylm",sizeof(double)*this->bxyz*(LD_pool+1));
 	Gint_Tools::cal_psir_ylm(*this->gridt, 
 		this->bxyz, na_grid, grid_index, delta_r,
 		block_index, block_size, 
