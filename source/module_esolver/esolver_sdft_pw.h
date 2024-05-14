@@ -16,7 +16,7 @@ class ESolver_SDFT_PW : public ESolver_KS_PW<std::complex<double>>
     ESolver_SDFT_PW();
     ~ESolver_SDFT_PW();
 
-    void init(Input& inp, UnitCell& cell) override;
+    void before_all_runners(Input& inp, UnitCell& cell) override;
 
     double cal_energy() override;
 
@@ -41,7 +41,7 @@ class ESolver_SDFT_PW : public ESolver_KS_PW<std::complex<double>>
 
     virtual void after_scf(const int istep) override;
 
-    virtual void post_process() override;
+    virtual void after_all_runners() override;
 
   public:
     /**
