@@ -174,6 +174,7 @@ TEST(FormatterTest, FmtPyStrFuncReplace)
     EXPECT_EQ(result, ref);
     result = FmtCore::replace(fmt, "%z", "world");
     ref = "Hello, %s, %d, %f, %c!";
+    EXPECT_EQ(result, ref);
     result = FmtCore::replace(fmt, "%", "world");
     ref = "Hello, worlds, worldd, worldf, worldc!";
     EXPECT_EQ(result, ref);
