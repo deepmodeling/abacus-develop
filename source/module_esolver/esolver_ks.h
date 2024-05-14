@@ -43,11 +43,11 @@ class ESolver_KS : public ESolver_FP
 
 		int out_freq_elec;// frequency for output
 
-		virtual void init(Input& inp, UnitCell& cell) override;
+		virtual void before_all_runners(Input& inp, UnitCell& cell) override;
 
 		virtual void init_after_vc(Input& inp, UnitCell& cell) override;    // liuyu add 2023-03-09
 
-		virtual void run(const int istep, UnitCell& cell) override;
+		virtual void runner(const int istep, UnitCell& cell) override;
 
 		// calculate electron density from a specific Hamiltonian
 		virtual void hamilt2density(const int istep, const int iter, const double ethr);
