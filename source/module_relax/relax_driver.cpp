@@ -48,7 +48,7 @@ void Relax_Driver<FPTYPE, Device>::relax_driver(ModuleESolver::ESolver *p_esolve
 #endif //__RAPIDJSON 
 
         // mohan added eiter to count for the electron iteration number, 2021-01-28
-        p_esolver->run(istep - 1, GlobalC::ucell);
+        p_esolver->runner(istep - 1, GlobalC::ucell);
 
         time_t eend = time(NULL);
         time_t fstart = time(NULL);

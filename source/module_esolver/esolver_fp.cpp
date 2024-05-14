@@ -40,9 +40,9 @@ ESolver_FP::~ESolver_FP()
 }
 
 
-void ESolver_FP::init(Input& inp, UnitCell& cell)
+void ESolver_FP::before_all_runners(Input& inp, UnitCell& cell)
 {
-	ModuleBase::TITLE("ESolver_FP", "init");
+	ModuleBase::TITLE("ESolver_FP", "before_all_runners");
 
 	if(!GlobalV::use_paw)
 	{
