@@ -22,7 +22,7 @@
  *      - vector_div_vector_op_cpu
  *      - constantvector_addORsub_constantVector_op_cpu
  *      - axpy_cpu
-*       - scal_cpu
+ *      - scal_cpu
 
  *      - zdot_real_gpu_op
  *      - vector_div_constant_op_gpu
@@ -215,6 +215,8 @@ BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_scal_op_cpu)->RangeMultipli
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 
+// If you want to use manual timer, you can refer to this.
+/*
 BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_zdot_real_gpu_op)(benchmark::State& state) {
     for (auto _ : state) {
         auto start = std::chrono::high_resolution_clock::now();
@@ -226,88 +228,60 @@ BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_zdot_real_gpu_op)(benchmark::
         state.SetIterationTime(elapsed_seconds.count());
     }
 }
+*/
 
+BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_zdot_real_gpu_op)(benchmark::State& state) {
+    for (auto _ : state) {
+        double result = zdot_real_gpu_op()(gpu_ctx, dim_vector, test_zvector_a_gpu, test_zvector_b_gpu, false);
+    }
+}
 
 BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_vector_div_constant_op_gpu)(benchmark::State& state) {
     for (auto _ : state) {
-        auto start = std::chrono::high_resolution_clock::now();
-
         vector_div_constant_op_gpu()(gpu_ctx, dim_vector, result_zvector_gpu, test_zvector_a_gpu, dconstant_a);
-
-        auto end = std::chrono::high_resolution_clock::now();
-        auto elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
-        state.SetIterationTime(elapsed_seconds.count());
     }
 }
 
 BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_vector_mul_vector_op_gpu)(benchmark::State& state) {
     for (auto _ : state) {
-        auto start = std::chrono::high_resolution_clock::now();
-
         vector_mul_vector_op_gpu()(gpu_ctx, dim_vector, result_zvector_gpu, test_zvector_a_gpu, test_dvector_a_gpu);
-
-        auto end = std::chrono::high_resolution_clock::now();
-        auto elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
-        state.SetIterationTime(elapsed_seconds.count());
     }
 }
 
 BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_vector_div_vector_op_gpu)(benchmark::State& state) {
     for (auto _ : state) {
-        auto start = std::chrono::high_resolution_clock::now();
-
         vector_div_vector_op_gpu()(gpu_ctx, dim_vector, result_zvector_gpu, test_zvector_a_gpu, test_dvector_a_gpu);
-
-        auto end = std::chrono::high_resolution_clock::now();
-        auto elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
-        state.SetIterationTime(elapsed_seconds.count());
     }
 }
 
 BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_constantvector_addORsub_constantVector_op_gpu)(benchmark::State& state) {
     for (auto _ : state) {
-        auto start = std::chrono::high_resolution_clock::now();
-
         constantvector_addORsub_constantVector_op_gpu()(gpu_ctx, dim_vector, result_zvector_gpu, test_zvector_a_gpu, dconstant_a ,test_zvector_b_gpu, dconstant_b);
-
-        auto end = std::chrono::high_resolution_clock::now();
-        auto elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
-        state.SetIterationTime(elapsed_seconds.count());
     }
 }
 
 BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_axpy_op_gpu)(benchmark::State& state) {
     for (auto _ : state) {
-        auto start = std::chrono::high_resolution_clock::now();
-
         axpy_op_gpu()(gpu_ctx, dim_vector, &zconstant_a, test_zvector_a_gpu, 1 ,test_zvector_b_gpu, 1);
-
-        auto end = std::chrono::high_resolution_clock::now();
-        auto elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
-        state.SetIterationTime(elapsed_seconds.count());
     }
 }
 
 BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_scal_op_gpu)(benchmark::State& state) {
     for (auto _ : state) {
-        auto start = std::chrono::high_resolution_clock::now();
-
         scal_op_gpu()(gpu_ctx, dim_vector, &zconstant_a, test_zvector_a_gpu, 1);
-
-        auto end = std::chrono::high_resolution_clock::now();
-        auto elapsed_seconds = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
-        state.SetIterationTime(elapsed_seconds.count());
     }
 }
 
+// If you want to use manual timer, you can refer to this.
+// BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_zdot_real_gpu_op)->RangeMultiplier(10)->Range(1,10e6)->UseManualTime()->Unit(benchmark::kMicrosecond);
 
-BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_zdot_real_gpu_op)->RangeMultiplier(10)->Range(1,10e6)->UseManualTime()->Unit(benchmark::kMicrosecond);
-BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_vector_div_constant_op_gpu)->RangeMultiplier(10)->Range(1,10e6)->UseManualTime()->Unit(benchmark::kMicrosecond);
-BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_vector_mul_vector_op_gpu)->RangeMultiplier(10)->Range(1,10e6)->UseManualTime()->Unit(benchmark::kMicrosecond);
-BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_vector_div_vector_op_gpu)->RangeMultiplier(10)->Range(1,10e6)->UseManualTime()->Unit(benchmark::kMicrosecond);
-BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_constantvector_addORsub_constantVector_op_gpu)->RangeMultiplier(10)->Range(1,10e6)->UseManualTime()->Unit(benchmark::kMicrosecond);
-BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_axpy_op_gpu)->RangeMultiplier(10)->Range(1,10e6)->UseManualTime()->Unit(benchmark::kMicrosecond);
-BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_scal_op_gpu)->RangeMultiplier(10)->Range(1,10e6)->UseManualTime()->Unit(benchmark::kMicrosecond);
+BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_zdot_real_gpu_op)->RangeMultiplier(10)->Range(1,10e6)->Unit(benchmark::kMicrosecond);
+BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_vector_div_constant_op_gpu)->RangeMultiplier(10)->Range(1,10e6)->Unit(benchmark::kMicrosecond);
+BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_vector_mul_vector_op_gpu)->RangeMultiplier(10)->Range(1,10e6)->Unit(benchmark::kMicrosecond);
+BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_vector_div_vector_op_gpu)->RangeMultiplier(10)->Range(1,10e6)->Unit(benchmark::kMicrosecond);
+BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_constantvector_addORsub_constantVector_op_gpu)->RangeMultiplier(10)->Range(1,10e6)->Unit(benchmark::kMicrosecond);
+BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_axpy_op_gpu)->RangeMultiplier(10)->Range(1,10e6)->Unit(benchmark::kMicrosecond);
+BENCHMARK_REGISTER_F(PerfModuleHsolverMathKernel, BM_scal_op_gpu)->RangeMultiplier(10)->Range(1,10e6)->Unit(benchmark::kMicrosecond);
 
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 
