@@ -219,7 +219,7 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
 
     ofs << "\n#Parameters (5.LCAO)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs, "basis_type", basis_type, "PW; LCAO in pw; LCAO");
-    if (ks_solver == "HPSEPS" || ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "cusolver")
+    if (ks_solver == "HPSEPS" || ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "cusolver" || ks_solver == "pexsi")
     {
         ModuleBase::GlobalFunc::OUTP(ofs, "nb2d", nb2d, "2d distribution of atoms");
     }
@@ -511,7 +511,32 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     ModuleBase::GlobalFunc::OUTP(ofs, "qo_switch", qo_switch, "0: no QO analysis; 1: QO analysis");
     ModuleBase::GlobalFunc::OUTP(ofs, "qo_basis", qo_basis, "type of QO basis function: hydrogen: hydrogen-like basis, pswfc: read basis from pseudopotential");
     ModuleBase::GlobalFunc::OUTP(ofs, "qo_thr", qo_thr, "accuracy for evaluating cutoff radius of QO basis function");
-  
+
+    ofs << "\n#Parameters (24.PEXSI)" << std::endl;
+    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_npole", pexsi_npole, "Number of poles in expansion");
+    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_inertia", pexsi_inertia, "Whether inertia counting is used at the very beginning of PEXSI process");
+    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_nmax", pexsi_nmax, "Maximum number of PEXSI iterations after each inertia counting procedure.");
+    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_comm", pexsi_comm, "Whether to construct PSelInv communication pattern");
+    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_storage", pexsi_storage, "Storage space used by the Selected Inversion algorithm for symmetric matrices.");
+    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_ordering", pexsi_ordering, "Ordering strategy for factorization and selected inversion");
+    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_row_ordering", pexsi_row_ordering, "Row permutation strategy for factorization and selected inversion, 0: NoRowPerm, 1: LargeDiag");
+    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_nproc", pexsi_nproc, "Number of processors for parmetis");
+    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_symm", pexsi_symm, "Matrix symmetry");
+    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_trans", pexsi_trans, "Whether to transpose");
+    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_method", pexsi_method, "pole expansion method, 1: Cauchy Contour Integral, 2: Moussa optimized method");
+    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_nproc_pole", pexsi_nproc_pole, "Number of processes used by each pole");
+    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_temp", pexsi_temp, "Temperature, in the same unit as H");
+    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_gap", pexsi_gap, "Spectral gap");
+    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_delta_e", pexsi_delta_e, "An upper bound for the spectral radius of \\f$S^{-1} H\\f$");
+    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_mu_lower", pexsi_mu_lower, "Initial guess of lower bound for mu");
+    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_mu_upper", pexsi_mu_upper, "Initial guess of upper bound for mu");
+    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_mu", pexsi_mu, "Initial guess for mu (for the solver)");
+    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_mu_thr", pexsi_mu_thr, "Stopping criterion in terms of the chemical potential for the inertia counting procedure");
+    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_mu_expand", pexsi_mu_expand, "If the chemical potential is not in the initial interval, the interval is expanded by muInertiaExpansion");
+    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_mu_guard", pexsi_mu_guard, "Safe guard criterion in terms of the chemical potential to reinvoke the inertia counting procedure");
+    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_elec_thr", pexsi_elec_thr, "Stopping criterion of the PEXSI iteration in terms of the number of electrons compared to numElectronExact");
+    ModuleBase::GlobalFunc::OUTP(ofs, "pexsi_zero_thr", pexsi_zero_thr, "if the absolute value of matrix element is less than ZERO_Limit, it will be considered as 0");
+
     ofs.close();
     return;
 }

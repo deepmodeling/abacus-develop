@@ -37,6 +37,7 @@ option(ENABLE_FFT_TWO_CENTER "Enable FFT-based two-center integral method." ON)
 option(ENABLE_GOOGLEBENCH "Enable GOOGLE-benchmark usage." OFF)
 option(ENABLE_RAPIDJSON "Enable rapid-json usage." OFF)
 option(ENABLE_CNPY "Enable cnpy usage." OFF)
+option(ENABLE_PEXSI "Enable support for PEXSI." OFF)
 
 # enable json support
 if(ENABLE_RAPIDJSON)
@@ -210,6 +211,14 @@ if(ENABLE_LCAO)
 
   if(ENABLE_FFT_TWO_CENTER)
     add_compile_definitions(USE_NEW_TWO_CENTER)
+  endif()
+  
+  if(ENABLE_PEXSI)
+    find_package(PEXSI REQUIRED)
+    target_link_libraries(${ABACUS_BIN_NAME} ${PEXSI_LIBRARY} ${SuperLU_DIST_LIBRARY} ${ParMETIS_LIBRARY} ${METIS_LIBRARY} pexsi)
+    include_directories(${PEXSI_INCLUDE_DIR} ${ParMETIS_INCLUDE_DIR})
+    add_compile_definitions(__PEXSI)
+    set(CMAKE_CXX_STANDARD 14)
   endif()
 else()
   set(ENABLE_DEEPKS OFF)
