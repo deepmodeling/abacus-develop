@@ -2,6 +2,7 @@ list(APPEND objects
     diagh_consts.cpp
     diago_cg.cpp
     diago_david.cpp
+    diago_dav_subspace.cpp
     diago_bpcg.cpp
     hsolver_pw.cpp
     hsolver_pw_sdft.cpp
@@ -20,7 +21,7 @@ if(ENABLE_LCAO)
     )
   endif ()
 
-  if(USE_CUSOLVER_LCAO AND USE_CUDA)
+  if(USE_CUDA)
       list(APPEND objects
           ./kernels/math_kernel_op.cpp
           ./kernels/dngvd_op.cpp

@@ -47,6 +47,7 @@ int CURRENT_K = 0;
 int CAL_FORCE = 0; // if cal_force >1, means do the grid integration 'cal_force' times.
 double FORCE_THR = 1.0e-3;
 bool CAL_STRESS = false;
+int NUM_STREAM = 4;
 double PRESS1 = 0.0;
 double PRESS2 = 0.0;
 double PRESS3 = 0.0;
@@ -283,6 +284,9 @@ bool out_bandgap = false; // QO added for bandgap printing
 int out_interval = 1;    // convert from out_hsR_interval liuyu 2023-04-18
 
 bool out_mat_xc = false; // output Vxc in KS-wfc representation for GW calculation
+bool out_hr_npz = false;
+bool out_dm_npz = false;
+bool dm_to_rho = false; // reads dm in npz format, then prints density in cube format
 
 //==========================================================
 // Deltaspin related

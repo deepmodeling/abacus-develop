@@ -57,9 +57,9 @@ ESolver_OF::~ESolver_OF()
     delete this->opt_cg_mag_;
 }
 
-void ESolver_OF::init(Input& inp, UnitCell& ucell)
+void ESolver_OF::before_all_runners(Input& inp, UnitCell& ucell)
 {
-    ESolver_FP::init(inp, ucell);
+    ESolver_FP::before_all_runners(inp, ucell);
 
     // save necessary parameters
     this->of_kinetic_ = inp.of_kinetic;
@@ -217,9 +217,9 @@ void ESolver_OF::init_after_vc(Input& inp, UnitCell& ucell)
     }
 }
 
-void ESolver_OF::run(int istep, UnitCell& ucell)
+void ESolver_OF::runner(int istep, UnitCell& ucell)
 {
-    ModuleBase::timer::tick("ESolver_OF", "run");
+    ModuleBase::timer::tick("ESolver_OF", "runner");
     // get Ewald energy, initial rho and phi if necessary
     this->before_opt(istep, ucell);
     this->iter_ = 0;
@@ -251,7 +251,7 @@ void ESolver_OF::run(int istep, UnitCell& ucell)
 
     this->after_opt(istep, ucell);
 
-    ModuleBase::timer::tick("ESolver_OF", "run");
+    ModuleBase::timer::tick("ESolver_OF", "runner");
 }
 
 /**
@@ -587,7 +587,7 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell)
 /**
  * @brief Output the FINAL_ETOT
  */
-void ESolver_OF::post_process()
+void ESolver_OF::after_all_runners()
 {
 
     GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;

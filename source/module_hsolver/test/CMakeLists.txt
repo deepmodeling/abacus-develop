@@ -70,13 +70,13 @@ AddTest(
 AddTest(
   TARGET HSolver_pw
   LIBS ${math_libs} psi device base container
-  SOURCES test_hsolver_pw.cpp ../hsolver_pw.cpp ../diago_bpcg.cpp ../diago_iter_assist.cpp
+  SOURCES test_hsolver_pw.cpp ../hsolver_pw.cpp ../diago_bpcg.cpp ../diago_dav_subspace.cpp ../diagh_consts.cpp ../diago_iter_assist.cpp
 )
 
 AddTest(
   TARGET HSolver_sdft
   LIBS ${math_libs} psi device base container
-  SOURCES test_hsolver_sdft.cpp ../hsolver_pw_sdft.cpp ../hsolver_pw.cpp ../diago_bpcg.cpp ../diago_iter_assist.cpp
+  SOURCES test_hsolver_sdft.cpp ../hsolver_pw_sdft.cpp ../hsolver_pw.cpp ../diago_bpcg.cpp ../diago_dav_subspace.cpp ../diagh_consts.cpp ../diago_iter_assist.cpp
 )
 
 if(ENABLE_LCAO)
@@ -102,7 +102,7 @@ if(ENABLE_LCAO)
   )
   endif()
 endif()
-if (USE_CUDA AND USE_CUSOLVER_LCAO)
+if (USE_CUDA)
 AddTest(
   TARGET HSolver_LCAO_cusolver
   LIBS ${math_libs}  base psi device 

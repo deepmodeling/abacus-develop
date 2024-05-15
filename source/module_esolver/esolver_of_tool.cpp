@@ -417,7 +417,6 @@ void ESolver_OF::print_info()
     std::vector<std::string> titles;
     std::vector<double> energies_Ry;
     std::vector<double> energies_eV;
-    context.set_context({"title", "energy", "energy"});
     if (INPUT.printe > 0 && ((this->iter_ + 1) % INPUT.printe == 0 || this->conv_ || this->iter_ == GlobalV::SCF_NMAX))
     {
         titles.push_back("E_Total");
@@ -500,13 +499,11 @@ void ESolver_OF::print_info()
         titles.push_back("E_Fermi");
         energies_Ry.push_back(this->mu_[0]);
     }
-    for (int i = 0; i < titles.size(); ++i)
-    {
-        energies_eV.push_back(energies_Ry[i] * ModuleBase::Ry_to_eV);
-    }
-    context.enable_title();
-    context << "Energy" << titles << "Rydberg" << energies_Ry << "eV" << energies_eV;
-    context.center_title();
-    GlobalV::ofs_running << context.str() << std::endl;
+    energies_eV.resize(energies_Ry.size());
+    std::transform(energies_Ry.begin(), energies_Ry.end(), energies_eV.begin(), [](double energy) { return energy * ModuleBase::Ry_to_eV; });
+    FmtTable table({"Energy", "Rydberg", "eV"},
+    titles.size(), {"%20s",   "%20.12f", "%20.12f"});
+    table << titles << energies_Ry << energies_eV;
+    GlobalV::ofs_running << table.str() << std::endl;
 }
 } // namespace ModuleESolver

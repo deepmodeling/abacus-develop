@@ -350,6 +350,8 @@ class Tensor {
      */
     void resize(const TensorShape& new_shape);
 
+    void resize(const TensorShape& new_shape, const std::string& record_str); 
+
     /**
      * @brief Get the Allocator object according to the given device type.
      *

@@ -1,3 +1,4 @@
+#include <complex>
 #include <memory>
 #include <array>
 #include "symmetry.h"
@@ -5,6 +6,7 @@
 #include "module_base/mathzone.h"
 #include "module_base/constants.h"
 #include "module_base/timer.h"
+#include "module_base/memory.h"
 
 namespace ModuleSymmetry
 {
@@ -300,6 +302,7 @@ int Symmetry::standard_lat(
     ModuleBase::Vector3<double> &c,
     double *cel_const) const
 {
+    // ModuleBase::TITLE("Symmetry", "standard_lat");
     static bool first = true;
     // there are only 14 types of Bravais lattice.
     int type = 15;
@@ -921,6 +924,7 @@ void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtr
 	// is a valid symmetry operation on a supercell
 	//----------------------------------------------
     // the start atom index.
+    ModuleBase::TITLE("Symmetry", "checksym");
     bool no_diff = 0;
     ModuleBase::Vector3<double> trans(2.0, 2.0, 2.0);
     s_flag = 0;
@@ -1094,6 +1098,7 @@ void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtr
 
 void Symmetry::pricell(double* pos, const Atom* atoms)
 {
+    ModuleBase::TITLE("Symmetry", "pricell");
     bool no_diff = 0;
     s_flag = 0;
     ptrans.clear();
@@ -1209,6 +1214,7 @@ void Symmetry::pricell(double* pos, const Atom* atoms)
 
     //sort ptrans:
     double* ptrans_array = new double[ntrans*3];
+    ModuleBase::Memory::record("Symmetry::ptrans_array",sizeof(double)*ntrans*3);
     for(int i=0;i<ntrans;++i)
     {
         ptrans_array[i*3]=ptrans[i].x;
@@ -1402,6 +1408,7 @@ void Symmetry::pricell(double* pos, const Atom* atoms)
 void Symmetry::rho_symmetry( double *rho,
                              const int &nr1, const int &nr2, const int &nr3)
 {
+    ModuleBase::TITLE("Symmetry", "rho_symmetry");
 //  if (GlobalV::test_symmetry)ModuleBase::TITLE("Symmetry","rho_symmetry");
     ModuleBase::timer::tick("Symmetry","rho_symmetry");
 
@@ -1460,6 +1467,7 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
     int* ixyz2ipw, const int &nx, const int &ny, const int &nz, 
     const int &fftnx, const int &fftny, const int &fftnz)
 {
+    ModuleBase::TITLE("Symmetry", "rhog_symmetry");
 //  if (GlobalV::test_symmetry)ModuleBase::TITLE("Symmetry","rho_symmetry");
     ModuleBase::timer::tick("Symmetry","rhog_symmetry");
 // ----------------------------------------------------------------------
@@ -1472,6 +1480,7 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
     int(*isymflag)[48] = new int[fftnx*fftny*fftnz][48];//which rotration operation the grid corresponds to
     int(*table_xyz)[48] = new int[fftnx * fftny * fftnz][48];// group information
     int* count_xyz = new int[fftnx * fftny * fftnz];// how many symmetry operations has been covered
+    ModuleBase::Memory::record("Symmetry::rhog_symmetry",sizeof(int) *fftnx*fftny*fftnz*98);
     for (int i = 0; i < fftnx * fftny * fftnz; i++)
     {
         symflag[i] = -1;
@@ -1766,6 +1775,7 @@ void Symmetry::symmetrize_vec3_nat(double* v)const   // pengfei 2016-12-20
 
 void Symmetry::symmetrize_mat3(ModuleBase::matrix& sigma, const Lattice& lat)const   //zhengdy added 2017
 {
+    ModuleBase::TITLE("Symmetry", "symmetrize_mat3");
     ModuleBase::matrix A = lat.latvec.to_matrix();
     ModuleBase::matrix AT = lat.latvec.Transpose().to_matrix();
     ModuleBase::matrix invA = lat.GT.to_matrix();
@@ -1781,6 +1791,7 @@ void Symmetry::symmetrize_mat3(ModuleBase::matrix& sigma, const Lattice& lat)con
 void Symmetry::gmatrix_convert_int(const ModuleBase::Matrix3* sa, ModuleBase::Matrix3* sb, 
         const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b) const
 {
+    ModuleBase::TITLE("Symmetry", "gmatrix_convert_int");
     auto round = [](double x){return (x>0.0)?floor(x+0.5):ceil(x-0.5);};
     ModuleBase::Matrix3 ai = a.Inverse();
     ModuleBase::Matrix3 bi = b.Inverse();
@@ -1802,6 +1813,7 @@ void Symmetry::gmatrix_convert_int(const ModuleBase::Matrix3* sa, ModuleBase::Ma
 void Symmetry::gmatrix_convert(const ModuleBase::Matrix3* sa, ModuleBase::Matrix3* sb, 
         const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b)const
 {
+    ModuleBase::TITLE("Symmetry", "gmatrix_convert");
     ModuleBase::Matrix3 ai = a.Inverse();
     ModuleBase::Matrix3 bi = b.Inverse();
     for (int i=0;i<n;++i)
@@ -1820,6 +1832,7 @@ void Symmetry::gtrans_convert(const ModuleBase::Vector3<double>* va, ModuleBase:
 }
 void Symmetry::gmatrix_invmap(const ModuleBase::Matrix3* s, const int n, int* invmap)
 {
+    ModuleBase::TITLE("Symmetry", "gmatrix_invmap");
     ModuleBase::Matrix3 eig(1, 0, 0, 0, 1, 0, 0, 0, 1);
     ModuleBase::Matrix3 tmp;
     for (int i=0;i<n;++i)
@@ -1842,6 +1855,7 @@ void Symmetry::gmatrix_invmap(const ModuleBase::Matrix3* s, const int n, int* in
 void Symmetry::get_shortest_latvec(ModuleBase::Vector3<double> &a1, 
         ModuleBase::Vector3<double> &a2, ModuleBase::Vector3<double> &a3) const
 {
+    ModuleBase::TITLE("Symmetry", "get_shortest_latvec");
     double len1=a1.norm();
     double len2=a2.norm();
     double len3=a3.norm();
@@ -1891,6 +1905,7 @@ void Symmetry::get_optlat(ModuleBase::Vector3<double> &v1, ModuleBase::Vector3<d
         ModuleBase::Vector3<double> &w2, ModuleBase::Vector3<double> &w3, 
         int& real_brav, double* cel_const, double* tmp_const) const
 {
+    ModuleBase::TITLE("Symmetry", "get_optlat");
     ModuleBase::Vector3<double> r1, r2, r3;
     double cos1 = 1;
     double cos2 = 1;
@@ -2152,6 +2167,7 @@ bool Symmetry::magmom_same_check(const Atom* atoms)const
 
 bool Symmetry::is_all_movable(const Atom* atoms, const Statistics& st)const
 {
+    ModuleBase::TITLE("Symmetry", "is_all_movable");
     bool all_mbl = true;
     for (int iat = 0;iat < st.nat;++iat)
     {

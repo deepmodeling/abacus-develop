@@ -2,6 +2,7 @@
 #define DIGAOPEXSI_H
 
 #include <vector>
+#include <memory>
 #include "diagh.h"
 #include "module_base/global_variable.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
@@ -18,15 +19,7 @@ class DiagoPexsi : public DiagH<T>
     std::vector<double> mu_buffer;
 
   public:
-    DiagoPexsi(const Parallel_Orbitals* ParaV_in)
-    {
-        mu_buffer.resize(GlobalV::NSPIN);
-        for (int i = 0; i < GlobalV::NSPIN; i++)
-        {
-            mu_buffer[i] = this->ps->pexsi_mu;
-        }
-        this->ParaV = ParaV_in;
-    }
+    DiagoPexsi(const Parallel_Orbitals* ParaV_in);
     void diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in) override;
     const Parallel_Orbitals* ParaV;
     std::vector<T*> DM;
@@ -34,8 +27,8 @@ class DiagoPexsi : public DiagH<T>
     double totalEnergyH;
     double totalEnergyS;
     double totalFreeEnergy;
-    pexsi::PEXSI_Solver* ps;
-
+    std::unique_ptr<pexsi::PEXSI_Solver> ps;
+    ~DiagoPexsi();
 };
 } // namespace hsolver
 

@@ -68,7 +68,7 @@ void ModuleBase::Global_File::make_dir_out(
 			}
 			else
 			{
-				std::cout << " PROC " << rank << " CAN NOT MAKE THE DIR !!! " << std::endl;
+				std::cout << " PROC " << rank << " Please delete the file named by OUT.suffix !!! " << std::endl;
 				make_dir = 0;
 			}
         }

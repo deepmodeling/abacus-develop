@@ -37,7 +37,7 @@ template<typename Device> void record_device_memory (const Device* dev, std::ofs
 std::string get_device_info(std::string device_flag);
 
 int get_device_kpar(const int& kpar);
-std::string get_device_flag(const std::string& device, const std::string& ks_solver, const std::string& basis_type);
+std::string get_device_flag(const std::string& device, const std::string& ks_solver, const std::string& basis_type, const bool& gamma_only);
 
 #if __MPI
 int get_node_rank();

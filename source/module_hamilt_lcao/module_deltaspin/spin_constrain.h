@@ -61,7 +61,7 @@ public:
   void run_lambda_loop(int outer_step);
 
   /// lambda loop helper functions
-  bool check_rms_stop(int outer_step, int i_step, double rms_error);
+  bool check_rms_stop(int outer_step, int i_step, double rms_error, double duration, double total_duration);
 
   /// apply restriction
   void check_restriction(const std::vector<ModuleBase::Vector3<double>>& search, double& alpha_trial);
@@ -86,6 +86,9 @@ public:
 
   /// print mi
   void print_Mi(bool print = false);
+
+  /// print magnetic force, defined as \frac{\delta{L}}/{\delta{Mi}} = -lambda[iat])
+  void print_Mag_Force();
 
   /// collect_mw from matrix multiplication result
   void collect_MW(ModuleBase::matrix& MecMulP, const ModuleBase::ComplexMatrix& mud, int nw, int isk);

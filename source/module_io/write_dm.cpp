@@ -128,13 +128,12 @@ void ModuleIO::write_dm(
 
 #else
     //xiaohui modify 2014-06-18
-    
-    double* tmp = new double[nlocal];
-    int* count = new int[nlocal];
+    std::vector<double> tmp(nlocal,0);
+    std::vector<int> count(nlocal,0);
     for (int i=0; i<nlocal; ++i)
     {
         // when reduce, there may be 'redundance', we need to count them.
-        ModuleBase::GlobalFunc::ZEROS(count, nlocal);
+        count.assign(count.size(),0);
         const int mu = trace_lo[i];
         if (mu >= 0)
         {
@@ -147,10 +146,10 @@ void ModuleIO::write_dm(
                 }
             }
         }
-        Parallel_Reduce::reduce_all(count, nlocal);
+        Parallel_Reduce::reduce_all(count.data(), nlocal);
 
         // reduce the density matrix for 'i' line.
-        ModuleBase::GlobalFunc::ZEROS(tmp, nlocal);
+        tmp.assign(tmp.size(),0);
         if (mu >= 0)
         {
             for (int j=0; j<nlocal; j++)
@@ -163,7 +162,7 @@ void ModuleIO::write_dm(
                 }
             }
         }
-        Parallel_Reduce::reduce_all(tmp, nlocal);
+        Parallel_Reduce::reduce_all(tmp.data(), nlocal);
 
         if(my_rank==0)
         {
@@ -181,8 +180,8 @@ void ModuleIO::write_dm(
             }
         }
     }
-    delete[] tmp;
-    delete[] count;
+    std::vector<double>().swap(tmp);
+    std::vector<int>().swap(count);
 #endif
 	if(my_rank==0)
 	{

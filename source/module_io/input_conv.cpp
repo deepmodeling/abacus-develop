@@ -13,9 +13,11 @@
 #include "module_io/input.h"
 #include "module_relax/relax_old/ions_move_basic.h"
 #include "module_relax/relax_old/lattice_change_basic.h"
+
 #ifdef __EXX
 #include "module_ri/exx_abfs-jle.h"
 #endif
+
 #ifdef __LCAO
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_elecstate/potentials/H_TDDFT_pw.h"
@@ -33,6 +35,7 @@
 #include "module_elecstate/potentials/efield.h"
 #include "module_elecstate/potentials/gatefield.h"
 #include "module_hsolver/hsolver_lcao.h"
+#include "module_hsolver/hsolver_pw.h"
 #include "module_md/md_func.h"
 #include "module_psi/kernels/device.h"
 
@@ -308,9 +311,9 @@ void Input_Conv::Convert(void)
     GlobalV::MIN_DIST_COEF = INPUT.min_dist_coef;
     GlobalV::NBANDS = INPUT.nbands;
     GlobalV::NBANDS_ISTATE = INPUT.nbands_istate;
-    GlobalV::device_flag = psi::device::get_device_flag(INPUT.device, INPUT.ks_solver, INPUT.basis_type);
+    GlobalV::device_flag = psi::device::get_device_flag(INPUT.device, INPUT.ks_solver, INPUT.basis_type, INPUT.gamma_only_local);
 
-    if (GlobalV::device_flag == "gpu")
+    if (GlobalV::device_flag == "gpu" && INPUT.basis_type == "pw")
     {
         GlobalV::KPAR = psi::device::get_device_kpar(INPUT.kpar);
     }
@@ -362,6 +365,8 @@ void Input_Conv::Convert(void)
 
     GlobalV::CAL_STRESS = INPUT.cal_stress;
 
+    GlobalV::NUM_STREAM = INPUT.nstream;
+
     GlobalV::RELAX_METHOD = INPUT.relax_method;
     GlobalV::relax_scale_force = INPUT.relax_scale_force;
     GlobalV::relax_new = INPUT.relax_new;
@@ -390,6 +395,15 @@ void Input_Conv::Convert(void)
     GlobalV::PW_DIAG_NMAX = INPUT.pw_diag_nmax;
     GlobalV::DIAGO_CG_PREC = INPUT.diago_cg_prec;
     GlobalV::PW_DIAG_NDIM = INPUT.pw_diag_ndim;
+
+    hsolver::HSolverPW<std::complex<float>, psi::DEVICE_CPU>::diago_full_acc = INPUT.diago_full_acc;
+    hsolver::HSolverPW<std::complex<double>, psi::DEVICE_CPU>::diago_full_acc = INPUT.diago_full_acc;
+
+#if ((defined __CUDA) || (defined __ROCM))
+    hsolver::HSolverPW<std::complex<float>, psi::DEVICE_GPU>::diago_full_acc = INPUT.diago_full_acc;
+    hsolver::HSolverPW<std::complex<double>, psi::DEVICE_GPU>::diago_full_acc = INPUT.diago_full_acc;
+#endif
+
     GlobalV::PW_DIAG_THR = INPUT.pw_diag_thr;
     GlobalV::NB2D = INPUT.nb2d;
     GlobalV::NURSE = INPUT.nurse;
@@ -416,6 +430,7 @@ void Input_Conv::Convert(void)
         GlobalC::dftu.Yukawa = INPUT.yukawa_potential;
         GlobalC::dftu.omc = INPUT.omc;
         GlobalC::dftu.orbital_corr = INPUT.orbital_corr;
+        GlobalC::dftu.uramping = INPUT.uramping;
         GlobalC::dftu.mixing_dftu = INPUT.mixing_dftu;
         if (INPUT.yukawa_potential && INPUT.hubbard_u == nullptr)
         {
@@ -425,6 +440,11 @@ void Input_Conv::Convert(void)
             INPUT.hubbard_u = new double[GlobalC::ucell.ntype];
         }
         GlobalC::dftu.U = INPUT.hubbard_u;
+        GlobalC::dftu.U0 = std::vector<double>(INPUT.hubbard_u, INPUT.hubbard_u + GlobalC::ucell.ntype);
+        if (INPUT.uramping > 0.01) 
+        {
+            ModuleBase::GlobalFunc::ZEROS(GlobalC::dftu.U, GlobalC::ucell.ntype);
+        }
     }
     GlobalV::onsite_radius = INPUT.onsite_radius;
 #endif
@@ -446,12 +466,6 @@ void Input_Conv::Convert(void)
         GlobalV::DOMAG_Z = true;
         GlobalV::LSPINORB = INPUT.lspinorb;
         GlobalV::soc_lambda = INPUT.soc_lambda;
-
-        if (INPUT.cal_force || INPUT.cal_stress)
-        {
-            ModuleBase::WARNING_QUIT("input_conv", "force & stress not ready for nspin=4(soc or noncollinear-spin) yet!");
-        }
-
         if(INPUT.gamma_only_local)
         {
             ModuleBase::WARNING_QUIT("input_conv", "nspin=4(soc or noncollinear-spin) does not support gamma only calculation");
@@ -596,10 +610,6 @@ void Input_Conv::Convert(void)
         GlobalC::exx_info.info_global.cal_exx = false;
         Exx_Abfs::Jle::generate_matrix = true;
     }
-    else if (INPUT.rpa)
-    {
-        GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf;
-    }
     else
     {
         GlobalC::exx_info.info_global.cal_exx = false;
@@ -690,6 +700,9 @@ void Input_Conv::Convert(void)
     hsolver::HSolverLCAO<std::complex<double>>::out_mat_t = INPUT.out_mat_t;
     hsolver::HSolverLCAO<std::complex<double>>::out_mat_dh = INPUT.out_mat_dh;
     GlobalV::out_mat_xc = INPUT.out_mat_xc;
+    GlobalV::out_hr_npz = INPUT.out_hr_npz;
+    GlobalV::out_dm_npz = INPUT.out_dm_npz;
+    GlobalV::dm_to_rho = INPUT.dm_to_rho;
     if (GlobalV::GAMMA_ONLY_LOCAL)
     {
         elecstate::ElecStateLCAO<double>::out_wfc_lcao = INPUT.out_wfc_lcao;

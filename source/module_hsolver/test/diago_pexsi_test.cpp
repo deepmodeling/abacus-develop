@@ -174,7 +174,32 @@ template<class T> class PexsiPrepare
 
     void set_pexsi_vars()
     {
-        pexsi::PEXSI_Solver::set_pexsi_vars();
+        // pexsi::PEXSI_Solver::set_pexsi_vars();
+        pexsi::PEXSI_Solver::pexsi_npole = 40;
+        pexsi::PEXSI_Solver::pexsi_inertia = true;
+        pexsi::PEXSI_Solver::pexsi_nmax = 80;
+        // pexsi_symbolic = 1;
+        pexsi::PEXSI_Solver::pexsi_comm = true;
+        pexsi::PEXSI_Solver::pexsi_storage = true;
+        pexsi::PEXSI_Solver::pexsi_ordering = 0;
+        pexsi::PEXSI_Solver::pexsi_row_ordering = 1;
+        pexsi::PEXSI_Solver::pexsi_nproc = 1;
+        pexsi::PEXSI_Solver::pexsi_symm = true;
+        pexsi::PEXSI_Solver::pexsi_trans = false;
+        pexsi::PEXSI_Solver::pexsi_method = 1;
+        pexsi::PEXSI_Solver::pexsi_nproc_pole = 1;
+        // pexsi_spin = 2;
+        pexsi::PEXSI_Solver::pexsi_temp = 0.015;
+        pexsi::PEXSI_Solver::pexsi_gap = 0;
+        pexsi::PEXSI_Solver::pexsi_delta_e = 20.0;
+        pexsi::PEXSI_Solver::pexsi_mu_lower = -10;
+        pexsi::PEXSI_Solver::pexsi_mu_upper = 10;
+        pexsi::PEXSI_Solver::pexsi_mu = 0.0;
+        pexsi::PEXSI_Solver::pexsi_mu_thr = 0.05;
+        pexsi::PEXSI_Solver::pexsi_mu_expand = 0.3;
+        pexsi::PEXSI_Solver::pexsi_mu_guard = 0.2;
+        pexsi::PEXSI_Solver::pexsi_elec_thr = 0.001;
+        pexsi::PEXSI_Solver::pexsi_zero_thr = 1e-10;
         pexsi::PEXSI_Solver::pexsi_mu = mu;
     }
 

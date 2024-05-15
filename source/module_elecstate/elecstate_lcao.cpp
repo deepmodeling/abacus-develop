@@ -94,6 +94,12 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
     ModuleBase::timer::tick("ElecStateLCAO", "psiToRho");
 
     this->calculate_weights();
+
+// the calculations of dm, and dm -> rho are, technically, two separate functionalities, as we cannot
+// rule out the possibility that we may have a dm from other sources, such as read from file.
+// However, since we are not separating them now, I opt to add a flag to control how dm is obtained as of now
+if(!GlobalV::dm_to_rho)
+{
     this->calEBand();
 
     ModuleBase::GlobalFunc::NOTE("Calculate the density matrix.");
@@ -131,6 +137,7 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
             this->print_psi(psi);
         }
     }
+}
     // old 2D-to-Grid conversion has been replaced by new Gint Refactor 2023/09/25
     //this->loc->cal_dk_k(*this->lowf->gridt, this->wg, (*this->klist));
     for (int is = 0; is < GlobalV::NSPIN; is++)
@@ -282,14 +289,11 @@ void ElecStateLCAO<double>::dmToRho(std::vector<double*> pexsi_DM, std::vector<d
         this->loc->cal_dk_gamma_from_2D_pub();
     }
 
-    auto DM = this->get_DM();
-    this->get_DM()->pexsi_EDM.clear();
-
+    this->get_DM()->pexsi_EDM = pexsi_EDM;
     
     for (int is = 0; is < nspin; is++)
     {
         this->DM->set_DMK_pointer(is, pexsi_DM[is]);
-        this->get_DM()->pexsi_EDM.push_back(pexsi_EDM[is]);
     }
     DM->cal_DMR();
     

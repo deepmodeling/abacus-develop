@@ -12,8 +12,8 @@ DistCCSMatrix::DistCCSMatrix(void)
     this->nnz = 0;
     this->nnzLocal = 0;
     this->numColLocal = 0;
-    this->colptrLocal = NULL;
-    this->rowindLocal = NULL;
+    this->colptrLocal = nullptr;
+    this->rowindLocal = nullptr;
 }
 
 DistCCSMatrix::DistCCSMatrix(MPI_Comm comm_in)
@@ -23,8 +23,8 @@ DistCCSMatrix::DistCCSMatrix(MPI_Comm comm_in)
     this->nnz = 0;
     this->nnzLocal = 0;
     this->numColLocal = 0;
-    this->colptrLocal = NULL;
-    this->rowindLocal = NULL;
+    this->colptrLocal = nullptr;
+    this->rowindLocal = nullptr;
 }
 
 DistCCSMatrix::DistCCSMatrix(int size_in, int nnzLocal_in)
@@ -65,21 +65,21 @@ DistCCSMatrix::DistCCSMatrix(MPI_Comm comm_in, int nproc_data_in, int size_in)
             this->numColLocal = size / nproc_data;
             this->firstCol = size / nproc_data * myproc;
             this->colptrLocal = new int[this->numColLocal + 1];
-            this->rowindLocal = NULL;
+            this->rowindLocal = nullptr;
         }
         else if (myproc == nproc_data - 1)
         {
             this->numColLocal = size - myproc * (size / nproc_data);
             this->firstCol = size / nproc_data * myproc;
             this->colptrLocal = new int[this->numColLocal + 1];
-            this->rowindLocal = NULL;
+            this->rowindLocal = nullptr;
         }
         else
         {
             this->numColLocal = 0;
             this->firstCol = size - 1;
             this->colptrLocal = new int[this->numColLocal + 1];
-            this->rowindLocal = NULL;
+            this->rowindLocal = nullptr;
         }
     }
 }

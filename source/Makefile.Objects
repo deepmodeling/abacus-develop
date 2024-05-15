@@ -146,10 +146,6 @@ OBJS_BASE=abfs-vector3_order.o\
     ylm.o\
     opt_CG.o\
     opt_DCsrch.o\
-    formatter_fmt.o\
-    formatter_physfmt.o\
-    formatter_table.o\
-    formatter_contextfmt.o\
 	cubic_spline.o\
 	spherical_bessel_transformer.o\
     mixing_data.o\
@@ -224,6 +220,7 @@ OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
       esolver_ks_lcao_elec.o\
       esolver_ks_lcao_tddft.o\
       esolver_ks_lcao_tmpfunc.o\
+      io_npz.o\
 
 OBJS_GINT=gint.o\
       gint_gamma.o\
@@ -288,6 +285,7 @@ OBJS_HCONTAINER=base_matrix.o\
 
 OBJS_HSOLVER=diago_cg.o\
     diago_david.o\
+    diago_dav_subspace.o\
     diagh_consts.o\
     diago_bpcg.o\
     hsolver_pw.o\

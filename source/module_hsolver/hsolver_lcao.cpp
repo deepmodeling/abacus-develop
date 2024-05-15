@@ -13,7 +13,7 @@
 #ifdef __ELPA
 #include "diago_elpa.h"
 #endif
-#ifdef __CUSOLVER_LCAO
+#ifdef __CUDA
 #include "diago_cusolver.h"
 #endif
 #ifdef __PEXSI
@@ -71,7 +71,7 @@ void HSolverLCAO<T, Device>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
         }
     }
 #endif
-#ifdef __CUSOLVER_LCAO
+#ifdef __CUDA
     else if (this->method == "cusolver")
     {
         if (this->pdiagh != nullptr)
@@ -84,7 +84,7 @@ void HSolverLCAO<T, Device>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
         }
         if (this->pdiagh == nullptr)
         {
-            this->pdiagh = new DiagoCusolver<T>();
+            this->pdiagh = new DiagoCusolver<T>(this->ParaV);
             this->pdiagh->method = this->method;
         }
     }
@@ -154,8 +154,6 @@ void HSolverLCAO<T, Device>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
                 this->pdiagh = nullptr;
             }
             auto tem = dynamic_cast<DiagoPexsi<T>*>(this->pdiagh);
-            tem->DM.clear();
-            tem->EDM.clear();
         }
         if (this->pdiagh == nullptr)
         {
@@ -232,6 +230,7 @@ void HSolverLCAO<T, Device>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
         if (tem==nullptr) ModuleBase::WARNING_QUIT("HSolverLCAO", "pexsi need debug!");
         elecstate::ElecStateLCAO<T>* _pes = dynamic_cast<elecstate::ElecStateLCAO<T>*>(pes);
         pes->f_en.eband = tem->totalFreeEnergy;
+        // maybe eferm could be dealt with in the future
         _pes->dmToRho(tem->DM, tem->EDM);
     }
     else

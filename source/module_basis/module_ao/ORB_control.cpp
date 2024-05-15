@@ -203,7 +203,7 @@ void ORB_control::setup_2d_division(std::ofstream& ofs_running,
 
     // determine whether 2d-division or not according to ks_solver
     bool div_2d;
-    if (ks_solver == "lapack" || ks_solver == "cg" || ks_solver == "dav") div_2d = false;
+    if (ks_solver == "lapack" || ks_solver == "cg" || ks_solver == "dav" || ks_solver == "dav_subspace") div_2d = false;
 #ifdef __MPI
     else if (ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "cusolver" || ks_solver == "cg_in_lcao" || ks_solver == "pexsi") div_2d = true;
 #endif
@@ -340,12 +340,7 @@ void ORB_control::divide_HS_2d(
     pv->dim0 = (int)sqrt((double)dsize); // mohan update 2012/01/13
     // while (GlobalV::NPROC_IN_POOL%dim0!=0)
 
-    if (ks_solver == "cusolver")
-    {
-        pv->dim0 = 1; pv->dim1 = dsize;
-    } // Xu Shu add 2022-03-25
-    else
-        pv->set_proc_dim(dsize);
+    pv->set_proc_dim(dsize);
 
     if (pv->testpb)
         ModuleBase::GlobalFunc::OUT(ofs_running, "dim0", pv->dim0);
@@ -359,8 +354,6 @@ assert(nb2d > 0);
 #endif
     pv->set_block_size(nb2d); // mohan add 2010-06-28
 
-    if (ks_solver == "cusolver")
-        pv->set_block_size(1); // Xu Shu add 2022-03-25
     ModuleBase::GlobalFunc::OUT(ofs_running, "nb2d", pv->get_block_size());
 
     this->set_parameters(ofs_running, ofs_warning);

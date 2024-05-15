@@ -23,7 +23,7 @@ void projgen(const int l,
     assert(rcut < r[nr - 1]);
     assert(std::is_sorted(r, r + nr));
 
-    std::vector<double> dr(nr - 1);
+    std::vector<double> dr(nr);
     std::adjacent_difference(r, r + nr, dr.begin());
 
     // lower_bound returns the first element that is equal or larger than rcut
@@ -82,7 +82,7 @@ void smoothgen(const int nr, const double* r, const double* chi, const double rc
     assert(rcut < r[nr - 1]);
     assert(std::is_sorted(r, r + nr));
 
-    std::vector<double> dr(nr - 1);
+    std::vector<double> dr(nr);
     std::adjacent_difference(r, r + nr, dr.begin());
 
     // lower_bound returns the first element that is equal or larger than rcut
@@ -116,16 +116,14 @@ void smoothgen(const int nr, const double* r, const double* chi, const double rc
     };
 
     // cubic spline interpolation
-    ModuleBase::CubicSpline cubspl;
-    cubspl.build(nr_proj, r, chi);
+    ModuleBase::CubicSpline cubspl(nr_proj, r, chi);
     std::vector<double> dchi(nr_proj);
     cubspl.eval(nr_proj, r, nullptr, dchi.data());
 
     // function for calculating the overlap between dalpha and dchi
     auto overlap_dalpha_dchi = [&]() {
         // calculate dalpha first
-        ModuleBase::CubicSpline cubspl_alpha;
-        cubspl_alpha.build(nr_proj, r, alpha.data());
+        ModuleBase::CubicSpline cubspl_alpha(nr_proj, r, alpha.data());
         std::vector<double> dalpha(nr_proj);
         cubspl_alpha.eval(nr_proj, r, nullptr, dalpha.data());
         for (int i = 0; i < nr_proj; i++)
