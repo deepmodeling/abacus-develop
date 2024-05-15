@@ -25,12 +25,6 @@ class TD_Velocity
     /// @brief switch to control the source of At
     static bool init_vecpot_file;
 
-    /// @brief store the read in At_data
-    static std::vector<ModuleBase::Vector3<double>> At_from_file;
-
-    /// @brief total steps of read in At
-    static int max_istep;
-
     /// @brief Store the vector potential for tddft calculation
     ModuleBase::Vector3<double> cart_At;
 
@@ -40,17 +34,22 @@ class TD_Velocity
                      ModuleBase::Vector3<double> a2,
                      ModuleBase::Vector3<double> At);
 
-    /// @brief read At from output file
-    void read_cart_At(void);
-
 
   private:
+    /// @brief read At from output file
+    void read_cart_At(void);
 
     /// @brief output cart_At to output file
     void output_cart_At(const std::string &out_dir);
 
     /// @brief store isteps now
     static int istep;
+
+    /// @brief total steps of read in At
+    static int max_istep;
+
+    /// @brief store the read in At_data
+    static std::vector<ModuleBase::Vector3<double>> At_from_file;
 
 };
 
