@@ -15,6 +15,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_lcao/module_tddft/evolve_elec.h"
+#include "module_hamilt_lcao/module_tddft/td_velocity.h"
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
