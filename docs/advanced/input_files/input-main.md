@@ -3259,7 +3259,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: Boolean
 - **Description**: output TDDFT Vector potential or not(a.u.)
-  - True: output Vector potential.
+  - True: output Vector potential in file "OUT.suffix/At.dat"
   - False: do not output Vector potential.
 - **Default**: False
 
@@ -3267,7 +3267,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: Boolean
 - **Description**: Init vector potential through file or not
-  - True: init vector potential from file
+  - True: init vector potential from file "At.dat".(a.u.) It consists of four columns, representing istep and vector potential on each direction.
   - False: calculate vector potential by integral of Efield
 - **Default**: False
 
