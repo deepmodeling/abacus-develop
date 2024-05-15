@@ -612,6 +612,34 @@ class Input
     double qo_thr = 1e-6;
     std::vector<std::string> qo_strategy = {};
     std::vector<double> qo_screening_coeff = {};
+    //==========================================================
+    // variables for PEXSI
+    //==========================================================
+    int pexsi_npole = 40;
+    bool pexsi_inertia = true;
+    int pexsi_nmax = 80;
+    // int pexsi_symbolic = 1;
+    bool pexsi_comm = true;
+    bool pexsi_storage = true;
+    int pexsi_ordering = 0;
+    int pexsi_row_ordering = 1;
+    int pexsi_nproc = 1;
+    bool pexsi_symm = true;
+    bool pexsi_trans = false;
+    int pexsi_method = 1;
+    int pexsi_nproc_pole = 1;
+    // double pexsi_spin = 2;
+    double pexsi_temp = 0.015;
+    double pexsi_gap = 0;
+    double pexsi_delta_e = 20.0;
+    double pexsi_mu_lower = -10;
+    double pexsi_mu_upper = 10;
+    double pexsi_mu = 0.0;
+    double pexsi_mu_thr = 0.05;
+    double pexsi_mu_expand = 0.3;
+    double pexsi_mu_guard = 0.2;
+    double pexsi_elec_thr = 0.001;
+    double pexsi_zero_thr = 1e-10;
     
     std::time_t get_start_time(void) const
     {

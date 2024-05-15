@@ -1,6 +1,7 @@
 #ifndef ELECSTATELCAO_H
 #define ELECSTATELCAO_H
 
+#include <vector>
 #include "elecstate.h"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
@@ -63,6 +64,17 @@ class ElecStateLCAO : public ElecState
     static bool need_psi_grid;
 
     double get_spin_constrain_energy() override;
+
+#ifdef __PEXSI
+    // use for pexsi
+
+    /** 
+     * @brief calculate electronic charge density from pointers of density matrix calculated by pexsi
+     * @param pexsi_DM: pointers of density matrix (DMK) calculated by pexsi
+     * @param pexsi_EDM: pointers of energy-weighed density matrix (EDMK) calculated by pexsi, needed by MD, will be stored in DensityMatrix::pexsi_EDM
+     */
+    void dmToRho(std::vector<TK*> pexsi_DM, std::vector<TK*> pexsi_EDM);
+#endif
 
   protected:
     // calculate electronic charge density on grid points or density matrix in real space

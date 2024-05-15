@@ -523,6 +523,40 @@ TEST_F(InputConvTest, ReadTdEfieldTest)
     EXPECT_EQ(elecstate::H_TDDFT_pw::heavi_t0[0], 100);
     EXPECT_NEAR(elecstate::H_TDDFT_pw::heavi_amp[0], 1.00 * ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV, 1e-8);
 }
+
+#ifdef __PEXSI
+TEST_F(InputConvTest, PEXSI)
+{
+	INPUT.Default();
+	std::string input_file = "./support/INPUT";
+	INPUT.Read(input_file);
+	Input_Conv::Convert();
+	EXPECT_EQ(pexsi::PEXSI_Solver::pexsi_npole, 40);
+	EXPECT_TRUE(pexsi::PEXSI_Solver::pexsi_inertia);
+	EXPECT_EQ(pexsi::PEXSI_Solver::pexsi_nmax, 80);
+	EXPECT_TRUE(pexsi::PEXSI_Solver::pexsi_comm);
+	EXPECT_TRUE(pexsi::PEXSI_Solver::pexsi_storage);
+	EXPECT_EQ(pexsi::PEXSI_Solver::pexsi_ordering, 0);
+	EXPECT_EQ(pexsi::PEXSI_Solver::pexsi_row_ordering, 1);
+	EXPECT_EQ(pexsi::PEXSI_Solver::pexsi_nproc, 1);
+	EXPECT_TRUE(pexsi::PEXSI_Solver::pexsi_symm);
+	EXPECT_FALSE(pexsi::PEXSI_Solver::pexsi_trans);
+	EXPECT_EQ(pexsi::PEXSI_Solver::pexsi_method, 1);
+	EXPECT_EQ(pexsi::PEXSI_Solver::pexsi_nproc_pole, 1);
+	EXPECT_DOUBLE_EQ(pexsi::PEXSI_Solver::pexsi_temp, 0.015);
+	EXPECT_DOUBLE_EQ(pexsi::PEXSI_Solver::pexsi_gap, 0);
+	EXPECT_DOUBLE_EQ(pexsi::PEXSI_Solver::pexsi_delta_e, 20);
+	EXPECT_DOUBLE_EQ(pexsi::PEXSI_Solver::pexsi_mu_lower, -10);
+	EXPECT_DOUBLE_EQ(pexsi::PEXSI_Solver::pexsi_mu_upper, 10);
+	EXPECT_DOUBLE_EQ(pexsi::PEXSI_Solver::pexsi_mu, 0);
+	EXPECT_DOUBLE_EQ(pexsi::PEXSI_Solver::pexsi_mu_thr, 0.05);
+	EXPECT_DOUBLE_EQ(pexsi::PEXSI_Solver::pexsi_mu_expand, 0.3);
+	EXPECT_DOUBLE_EQ(pexsi::PEXSI_Solver::pexsi_mu_guard, 0.2);
+	EXPECT_DOUBLE_EQ(pexsi::PEXSI_Solver::pexsi_elec_thr, 0.001);
+	EXPECT_DOUBLE_EQ(pexsi::PEXSI_Solver::pexsi_zero_thr, 1e-10);
+}
+#endif
+
 #endif
 
 #undef private

@@ -109,7 +109,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
         {
             nsk = GlobalV::NSPIN;
             ncol = this->LOWF.ParaV->ncol_bands;
-            if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "lapack_gvx"
+            if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "lapack_gvx" || GlobalV::KS_SOLVER=="pexsi"
                 || GlobalV::KS_SOLVER == "cusolver")
             {
                 ncol = this->LOWF.ParaV->ncol;
@@ -712,6 +712,9 @@ void ESolver_KS_LCAO<TK, TR>::nscf(void)
         GlobalC::ld.cal_gedm(GlobalC::ucell.nat);
     }
 #endif
+
+    this->create_Output_Mat_Sparse(0).write();
+
     return;
 }
 

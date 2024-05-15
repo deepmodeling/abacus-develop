@@ -26,6 +26,9 @@
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_lcao/module_tddft/evolve_elec.h"
 #endif
+#ifdef __PEXSI
+#include "module_hsolver/module_pexsi/pexsi_solver.h"
+#endif
 
 #include "module_base/timer.h"
 #include "module_elecstate/elecstate_lcao.h"
@@ -827,6 +830,37 @@ void Input_Conv::Convert(void)
     GlobalV::qo_strategy = INPUT.qo_strategy;
     GlobalV::qo_thr = INPUT.qo_thr;
     GlobalV::qo_screening_coeff = INPUT.qo_screening_coeff;
+
+    //-----------------------------------------------
+    // PEXSI related parameters
+    //-----------------------------------------------
+#ifdef __PEXSI
+    pexsi::PEXSI_Solver::pexsi_npole = INPUT.pexsi_npole;
+    pexsi::PEXSI_Solver::pexsi_inertia = INPUT.pexsi_inertia;
+    pexsi::PEXSI_Solver::pexsi_nmax = INPUT.pexsi_nmax;
+    // pexsi::PEXSI_Solver::pexsi_symbolic = INPUT.pexsi_symbolic;
+    pexsi::PEXSI_Solver::pexsi_comm = INPUT.pexsi_comm;
+    pexsi::PEXSI_Solver::pexsi_storage = INPUT.pexsi_storage;
+    pexsi::PEXSI_Solver::pexsi_ordering = INPUT.pexsi_ordering;
+    pexsi::PEXSI_Solver::pexsi_row_ordering = INPUT.pexsi_row_ordering;
+    pexsi::PEXSI_Solver::pexsi_nproc = INPUT.pexsi_nproc;
+    pexsi::PEXSI_Solver::pexsi_symm = INPUT.pexsi_symm;
+    pexsi::PEXSI_Solver::pexsi_trans = INPUT.pexsi_trans;
+    pexsi::PEXSI_Solver::pexsi_method = INPUT.pexsi_method;
+    pexsi::PEXSI_Solver::pexsi_nproc_pole = INPUT.pexsi_nproc_pole;
+    // pexsi::PEXSI_Solver::pexsi_spin = INPUT.pexsi_spin;
+    pexsi::PEXSI_Solver::pexsi_temp = INPUT.pexsi_temp;
+    pexsi::PEXSI_Solver::pexsi_gap = INPUT.pexsi_gap;
+    pexsi::PEXSI_Solver::pexsi_delta_e = INPUT.pexsi_delta_e;
+    pexsi::PEXSI_Solver::pexsi_mu_lower = INPUT.pexsi_mu_lower;
+    pexsi::PEXSI_Solver::pexsi_mu_upper = INPUT.pexsi_mu_upper;
+    pexsi::PEXSI_Solver::pexsi_mu = INPUT.pexsi_mu;
+    pexsi::PEXSI_Solver::pexsi_mu_thr = INPUT.pexsi_mu_thr;
+    pexsi::PEXSI_Solver::pexsi_mu_expand = INPUT.pexsi_mu_expand;
+    pexsi::PEXSI_Solver::pexsi_mu_guard = INPUT.pexsi_mu_guard;
+    pexsi::PEXSI_Solver::pexsi_elec_thr = INPUT.pexsi_elec_thr;
+    pexsi::PEXSI_Solver::pexsi_zero_thr = INPUT.pexsi_zero_thr;
+#endif
     ModuleBase::timer::tick("Input_Conv", "Convert");
     return;
 }

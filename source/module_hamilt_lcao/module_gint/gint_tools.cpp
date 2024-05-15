@@ -9,6 +9,7 @@
 #include "module_base/ylm.h"
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_base/memory.h"
 
 namespace Gint_Tools
 {
