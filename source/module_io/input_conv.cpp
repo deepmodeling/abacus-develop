@@ -541,6 +541,8 @@ void Input_Conv::Convert(void)
     module_tddft::Evolve_elec::out_current = INPUT.out_current;
     module_tddft::Evolve_elec::td_print_eij = INPUT.td_print_eij;
     module_tddft::Evolve_elec::td_edm = INPUT.td_edm;
+    TD_Velocity::out_vecpot = INPUT.out_vecpot;
+    TD_Velocity::init_vecpot_file = INPUT.init_vecpot_file;
     read_td_efield();
 #endif
 

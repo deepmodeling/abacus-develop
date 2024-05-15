@@ -37,6 +37,8 @@ std::vector<int> module_tddft::Evolve_elec::td_vext_dire_case;
 bool module_tddft::Evolve_elec::out_dipole;
 bool module_tddft::Evolve_elec::out_efield;
 bool module_tddft::Evolve_elec::out_current;
+bool TD_Velocity::out_vecpot;
+bool TD_Velocity::init_vecpot_file;
 double module_tddft::Evolve_elec::td_print_eij;
 int module_tddft::Evolve_elec::td_edm;
 double elecstate::Gatefield::zgate = 0.5;

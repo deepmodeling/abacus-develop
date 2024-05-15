@@ -468,6 +468,8 @@ void Input::Default(void)
     out_dipole = false;
     out_efield = false;
     out_current = false;
+    out_vecpot = false;
+    init_vecpot_file = false;
 
     td_print_eij = -1.0;
     td_edm = 0;
@@ -1774,6 +1776,14 @@ bool Input::Read(const std::string& fn)
         else if (strcmp("out_efield", word) == 0)
         {
             read_value(ifs, out_efield);
+        }
+        else if (strcmp("out_vecpot", word) == 0)
+        {
+            read_value(ifs, out_vecpot);
+        }
+        else if (strcmp("init_vecpot_file", word) == 0)
+        {
+            read_value(ifs, init_vecpot_file);
         }
         else if (strcmp("td_print_eij", word) == 0)
         {
@@ -3596,6 +3606,8 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(out_dipole);
     Parallel_Common::bcast_bool(out_efield);
     Parallel_Common::bcast_bool(out_current);
+    Parallel_Common::bcast_bool(out_vecpot);
+    Parallel_Common::bcast_bool(init_vecpot_file);
     Parallel_Common::bcast_double(td_print_eij);
     Parallel_Common::bcast_int(td_edm);
     Parallel_Common::bcast_bool(test_skip_ewald);
