@@ -125,15 +125,21 @@ int get_node_rank()
 }
 #endif
 
-std::string get_device_flag(const std::string& device, const std::string& ks_solver,
-                            const std::string& basis_type, const bool& gamma_only) {
-    if (device == "cpu") {
+std::string get_device_flag(const std::string& device,
+                            const std::string& ks_solver,
+                            const std::string& basis_type,
+                            const bool& gamma_only)
+{
+    if (device == "cpu")
+    {
         return "cpu";
     }
-    else if (device == "gpu") {
+    else if (device == "gpu")
+    {
 #if ((defined __CUDA) || (defined __ROCM))
         int device_num = device::get_device_num();
-        if (device_num <= 0) {
+        if (device_num <= 0)
+        {
             std::string msg = "Cannot find GPU on this computer!";
             ModuleBase::WARNING_QUIT("device", msg);
             return "unknown";
@@ -143,21 +149,26 @@ std::string get_device_flag(const std::string& device, const std::string& ks_sol
         ModuleBase::WARNING_QUIT("device", msg);
         return "unknown";
 #endif
-        if (basis_type == "lcao_in_pw") {
+        if (basis_type == "lcao_in_pw")
+        {
             std::string msg = "The GPU currently does not support the basis type \"lcao_in_pw\"!";
             ModuleBase::WARNING_QUIT("device", msg);
             return "unknown";
         }
-        else if (basis_type == "lcao" && gamma_only == false) {
-            std::string msg = "The GPU currently does not support the basis type \"lcao\" with \"gamma_only\" set to \"0\"!";
+        else if (basis_type == "lcao" && gamma_only == false)
+        {
+            std::string msg
+                = "The GPU currently does not support the basis type \"lcao\" with \"gamma_only\" set to \"0\"!";
             ModuleBase::WARNING_QUIT("device", msg);
             return "unknow";
         }
-        else {
+        else
+        {
             return "gpu";
         }
     }
-    else {
+    else
+    {
         std::string msg = "INPUT device can only be set to \"cpu\" or \"gpu\"!";
         ModuleBase::WARNING_QUIT("device", msg);
         return "unknown";
@@ -199,7 +210,7 @@ std::string get_device_info(std::string device_flag)
     {
         int dev = 0;
         cudaDeviceProp deviceProp;
-        cudaGetDeviceProperties(&deviceProp, dev);
+        cudaErrcheck(cudaGetDeviceProperties(&deviceProp, dev));
         device_info = deviceProp.name;
     }
 #elif defined(__ROCM)
@@ -207,7 +218,7 @@ std::string get_device_info(std::string device_flag)
     {
         int dev = 0;
         hipDeviceProp_t deviceProp;
-        hipGetDeviceProperties(&deviceProp, dev);
+        hipErrcheck(hipGetDeviceProperties(&deviceProp, dev));
         device_info = deviceProp.name;
     }
 #endif
@@ -238,10 +249,10 @@ std::string get_device_info(std::string device_flag)
     return device_info;
 }
 
-
 #if defined(__CUDA)
 
 static bool is_init = false;
+
 template <>
 void print_device_info<base_device::DEVICE_GPU>(const base_device::DEVICE_GPU* ctx, std::ofstream& ofs_device)
 {
@@ -267,13 +278,13 @@ void print_device_info<base_device::DEVICE_GPU>(const base_device::DEVICE_GPU* c
         ofs_device << "Detected " << deviceCount << " CUDA Capable device(s)\n";
     }
     int dev = 0, driverVersion = 0, runtimeVersion = 0;
-    cudaSetDevice(dev);
+    cudaErrcheck(cudaSetDevice(dev));
     cudaDeviceProp deviceProp;
-    cudaGetDeviceProperties(&deviceProp, dev);
+    cudaErrcheck(cudaGetDeviceProperties(&deviceProp, dev));
     ofs_device << "\nDevice " << dev << ":\t " << deviceProp.name << std::endl;
     // Console log
-    cudaDriverGetVersion(&driverVersion);
-    cudaRuntimeGetVersion(&runtimeVersion);
+    cudaErrcheck(cudaDriverGetVersion(&driverVersion));
+    cudaErrcheck(cudaRuntimeGetVersion(&runtimeVersion));
     char msg[1024];
     sprintf(msg,
             "  CUDA Driver Version / Runtime Version          %d.%d / %d.%d\n",
@@ -412,7 +423,7 @@ void print_device_info<base_device::DEVICE_GPU>(const base_device::DEVICE_GPU* c
 
         for (int i = 0; i < deviceCount; i++)
         {
-            cudaGetDeviceProperties(&prop[i], i);
+            cudaErrcheck(cudaGetDeviceProperties(&prop[i], i));
 
             // Only boards based on Fermi or later can support P2P
             if (prop[i].major >= 2)
@@ -435,7 +446,7 @@ void print_device_info<base_device::DEVICE_GPU>(const base_device::DEVICE_GPU* c
                     {
                         continue;
                     }
-                    cudaDeviceCanAccessPeer(&can_access_peer, gpuid[i], gpuid[j]);
+                    cudaErrcheck(cudaDeviceCanAccessPeer(&can_access_peer, gpuid[i], gpuid[j]));
                     sprintf(msg,
                             "> Peer access from %s (GPU%d) -> %s (GPU%d) : %s\n",
                             prop[gpuid[i]].name,
@@ -478,7 +489,10 @@ void print_device_info<base_device::DEVICE_GPU>(const base_device::DEVICE_GPU* c
 }
 
 template <>
-void record_device_memory<base_device::DEVICE_GPU>(const base_device::DEVICE_GPU* ctx, std::ofstream& ofs_device, std::string str, size_t size)
+void record_device_memory<base_device::DEVICE_GPU>(const base_device::DEVICE_GPU* ctx,
+                                                   std::ofstream& ofs_device,
+                                                   std::string str,
+                                                   size_t size)
 {
     ofs_device << "Allocate " << static_cast<double>(size) / 8 / 1024 / 1024 << " \tMB device memory\t"
                << "from " << str << std::endl
@@ -488,6 +502,7 @@ void record_device_memory<base_device::DEVICE_GPU>(const base_device::DEVICE_GPU
 #elif defined(__ROCM)
 
 static bool is_init = false;
+
 template <>
 void print_device_info<base_device::DEVICE_GPU>(const base_device::DEVICE_GPU* ctx, std::ofstream& ofs_device)
 {
@@ -513,13 +528,13 @@ void print_device_info<base_device::DEVICE_GPU>(const base_device::DEVICE_GPU* c
         ofs_device << "Detected " << deviceCount << " CUDA Capable device(s)\n";
     }
     int dev = 0, driverVersion = 0, runtimeVersion = 0;
-    hipSetDevice(dev);
+    hipErrcheck(hipSetDevice(dev));
     hipDeviceProp_t deviceProp;
-    hipGetDeviceProperties(&deviceProp, dev);
+    hipErrcheck(hipGetDeviceProperties(&deviceProp, dev));
     ofs_device << "\nDevice " << dev << ":\t " << deviceProp.name << std::endl;
     // Console log
-    hipDriverGetVersion(&driverVersion);
-    hipRuntimeGetVersion(&runtimeVersion);
+    hipErrcheck(hipDriverGetVersion(&driverVersion));
+    hipErrcheck(hipRuntimeGetVersion(&runtimeVersion));
     char msg[1024];
     sprintf(msg,
             "  CUDA Driver Version / Runtime Version          %d.%d / %d.%d\n",
@@ -559,7 +574,7 @@ void print_device_info<base_device::DEVICE_GPU>(const base_device::DEVICE_GPU* c
     ofs_device << msg << std::endl;
     sprintf(msg, "  Total number of registers available per block: %d\n", deviceProp.regsPerBlock);
     ofs_device << msg << std::endl;
-    sprintf(msg, "  Warp size:                                     %d\n", deviceProp.wardeviceze);
+    sprintf(msg, "  Warp size:                                     %d\n", deviceProp.warpSize);
     ofs_device << msg << std::endl;
     sprintf(msg, "  Maximum number of threads per multiprocessor:  %d\n", deviceProp.maxThreadsPerMultiProcessor);
     ofs_device << msg << std::endl;
@@ -630,7 +645,7 @@ void print_device_info<base_device::DEVICE_GPU>(const base_device::DEVICE_GPU* c
 
         for (int i = 0; i < deviceCount; i++)
         {
-            hipGetDeviceProperties(&prop[i], i);
+            hipErrcheck(hipGetDeviceProperties(&prop[i], i));
 
             // Only boards based on Fermi or later can support P2P
             if (prop[i].major >= 2)
@@ -653,7 +668,7 @@ void print_device_info<base_device::DEVICE_GPU>(const base_device::DEVICE_GPU* c
                     {
                         continue;
                     }
-                    hipDeviceCanAccessPeer(&can_access_peer, gpuid[i], gpuid[j]);
+                    hipErrcheck(hipDeviceCanAccessPeer(&can_access_peer, gpuid[i], gpuid[j]));
                     sprintf(msg,
                             "> Peer access from %s (GPU%d) -> %s (GPU%d) : %s\n",
                             prop[gpuid[i]].name,
@@ -696,7 +711,10 @@ void print_device_info<base_device::DEVICE_GPU>(const base_device::DEVICE_GPU* c
 }
 
 template <>
-void record_device_memory<base_device::DEVICE_GPU>(const base_device::DEVICE_GPU* ctx, std::ofstream& ofs_device, std::string str, size_t size)
+void record_device_memory<base_device::DEVICE_GPU>(const base_device::DEVICE_GPU* ctx,
+                                                   std::ofstream& ofs_device,
+                                                   std::string str,
+                                                   size_t size)
 {
     ofs_device << "Allocate " << static_cast<double>(size) / 8 / 1024 / 1024 << " \tMB device memory\t"
                << "from " << str << std::endl
@@ -704,7 +722,6 @@ void record_device_memory<base_device::DEVICE_GPU>(const base_device::DEVICE_GPU
 }
 
 #endif
-
 
 } // end of namespace information
 } // end of namespace base_device
