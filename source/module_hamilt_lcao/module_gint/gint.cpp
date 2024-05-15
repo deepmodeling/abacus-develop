@@ -1,11 +1,16 @@
 #include "gint.h"
 
+#if ((defined __CUDA))
+#include "gint_force.h"
+#include "gint_rho.h"
+#include "gint_vl.h"
+#endif
+
 #include "module_base/memory.h"
 #include "module_base/timer.h"
 #include "module_basis/module_ao/ORB_read.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
-
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -28,7 +33,7 @@ Gint::~Gint()
 #endif
 }
 
-void Gint::cal_gint(Gint_inout *inout)
+void Gint::cal_gint(Gint_inout* inout)
 {
 	ModuleBase::timer::tick("Gint_interface", "cal_gint");
 
@@ -63,28 +68,130 @@ void Gint::cal_gint(Gint_inout *inout)
         ModuleBase::timer::tick("Gint_interface","cal_gint_force_meta");
 	}
 
-	const int max_size = this->gridt->max_atom;
-	const int LD_pool = max_size*GlobalC::ucell.nwmax;
+    const int max_size = this->gridt->max_atom;
+    const int LD_pool = max_size * GlobalC::ucell.nwmax;
     const int lgd = this->gridt->lgd;
     const int nnrg = this->gridt->nnrg;
 
-    if(max_size!=0)
+    if (max_size != 0)
     {
+#ifdef __CUDA
+        if (GlobalV::device_flag == "gpu" && GlobalV::GAMMA_ONLY_LOCAL
+            && lgd > 0)
+        {
+            double ylmcoef[100];
+            ModuleBase::GlobalFunc::ZEROS(ylmcoef, 100);
+            for (int i = 0; i < 100; i++)
+            {
+                ylmcoef[i] = ModuleBase::Ylm::ylmcoef[i];
+            }
+
+            const int ntype = GlobalC::ORB.get_ntype();
+            double* rcut = new double[ntype];
+            for (int it = 0; it < ntype; it++)
+            {
+                rcut[it] = GlobalC::ORB.Phi[it].getRcut();
+            }
+
+            const double dr = GlobalC::ORB.dr_uniform;
+
+            if (inout->job == Gint_Tools::job_type::vlocal)
+            {
+                GintKernel::gint_gamma_vl_gpu(this->hRGint,
+                                              lgd,
+                                              max_size,
+                                              GlobalC::ucell.omega
+                                                  / this->ncxyz,
+                                              inout->vl,
+                                              ylmcoef,
+                                              this->nplane,
+                                              this->nbxx,
+                                              dr,
+                                              rcut,
+                                              *this->gridt,
+                                              GlobalC::ucell);
+            }
+            else if (inout->job == Gint_Tools::job_type::rho)
+            {
+                int nrxx = this->gridt->ncx * this->gridt->ncy * this->nplane;
+                for (int is = 0; is < GlobalV::NSPIN; ++is)
+                {
+                    ModuleBase::GlobalFunc::ZEROS(inout->rho[is], nrxx);
+                    GintKernel::gint_gamma_rho_gpu(this->DMRGint[is],
+                                                   this->nplane,
+                                                   ylmcoef,
+                                                   dr,
+                                                   rcut,
+                                                   *this->gridt,
+                                                   GlobalC::ucell,
+                                                   inout->rho[is]);
+                }
+            }
+            else if (inout->job == Gint_Tools::job_type::force)
+            {
+                const int ncyz = this->ny * this->nplane;
+                int nat = GlobalC::ucell.nat;
+                // for (int is = 0; is < GlobalV::NSPIN; ++is)
+                // {
+                    double *force = new double[GlobalC::ucell.nat * 3];
+                    for (int i = 0; i < nat * 3; i++)
+                    {
+                        force[i] = 0.0;
+                    }
+                    double *stress = new double[6];
+                    for (int i = 0; i < 6; i++)
+                    {
+                        stress[i] = 0.0;
+                    }
+                    GintKernel::gint_gamma_force_gpu(this->DMRGint[inout->ispin],
+                                                     GlobalC::ucell.omega
+                                                         / this->ncxyz,
+                                                     inout->vl,
+                                                     force,
+                                                     stress,
+                                                     this->nplane,
+                                                     dr,
+                                                     rcut,
+                                                     *this->gridt,
+                                                     GlobalC::ucell);
+                    for (int iat = 0; iat < nat; iat++)
+                    {
+                        inout->fvl_dphi[0](iat, 0) += force[iat * 3];
+                        inout->fvl_dphi[0](iat, 1) += force[iat * 3 + 1];
+                        inout->fvl_dphi[0](iat, 2) += force[iat * 3 + 2];
+                    }
+                        inout->svl_dphi[0](0, 0) += stress[0];
+                        inout->svl_dphi[0](0, 1) += stress[1];
+                        inout->svl_dphi[0](0, 2) += stress[2];
+                        inout->svl_dphi[0](1, 1) += stress[3];
+                        inout->svl_dphi[0](1, 2) += stress[4];
+                        inout->svl_dphi[0](2, 2) += stress[5];
+                    
+                    delete[] force;
+                    delete[] stress;
+                // }
+            }
+        }
+        else
+#endif
+        {
 #ifdef __MKL
-		const int mkl_threads = mkl_get_max_threads();
-		mkl_set_num_threads(1);
+            const int mkl_threads = mkl_get_max_threads();
+            mkl_set_num_threads(1);
 #endif
 
 #ifdef _OPENMP
-    	#pragma omp parallel
+#pragma omp parallel
 #endif
-		{
-            //prepare some constants
-			const int ncyz = this->ny*this->nplane; // mohan add 2012-03-25
-			const double dv = GlobalC::ucell.omega/this->ncxyz;
+            {
+                // prepare some constants
+                const int ncyz
+                    = this->ny * this->nplane; // mohan add 2012-03-25
+                const double dv = GlobalC::ucell.omega / this->ncxyz;
 
-			// it's a uniform grid to save orbital values, so the delta_r is a constant.
-			const double delta_r = GlobalC::ORB.dr_uniform;
+                // it's a uniform grid to save orbital values, so the delta_r is
+                // a constant.
+                const double delta_r = GlobalC::ORB.dr_uniform;
 
             if((inout->job==Gint_Tools::job_type::vlocal
                 || inout->job==Gint_Tools::job_type::vlocal_meta)
@@ -100,18 +207,25 @@ void Gint::cal_gint(Gint_inout *inout)
                 }
             }
 
-			if(inout->job==Gint_Tools::job_type::dvlocal)
-			{
-				if(GlobalV::GAMMA_ONLY_LOCAL)
-				{
-					ModuleBase::WARNING_QUIT("Gint_interface::cal_gint","dvlocal only for k point!");
-				}
-				ModuleBase::GlobalFunc::ZEROS(this->pvdpRx_reduced[inout->ispin], nnrg);
-				ModuleBase::GlobalFunc::ZEROS(this->pvdpRy_reduced[inout->ispin], nnrg);
-				ModuleBase::GlobalFunc::ZEROS(this->pvdpRz_reduced[inout->ispin], nnrg);
-			}
+                if (inout->job == Gint_Tools::job_type::dvlocal)
+                {
+                    if (GlobalV::GAMMA_ONLY_LOCAL)
+                    {
+                        ModuleBase::WARNING_QUIT("Gint_interface::cal_gint",
+                                                 "dvlocal only for k point!");
+                    }
+                    ModuleBase::GlobalFunc::ZEROS(
+                        this->pvdpRx_reduced[inout->ispin],
+                        nnrg);
+                    ModuleBase::GlobalFunc::ZEROS(
+                        this->pvdpRy_reduced[inout->ispin],
+                        nnrg);
+                    ModuleBase::GlobalFunc::ZEROS(
+                        this->pvdpRz_reduced[inout->ispin],
+                        nnrg);
+                }
 
-            //perpare auxiliary arrays to store thread-specific values
+                // perpare auxiliary arrays to store thread-specific values
 #ifdef _OPENMP
 			double* pvpR_thread = nullptr;
 			hamilt::HContainer<double>* hRGint_thread = nullptr;// auxiliary pointer for multi-threading
@@ -160,13 +274,14 @@ void Gint::cal_gint(Gint_inout *inout)
 				}
 			}
 
-    		#pragma omp for
+#pragma omp for
 #endif
-            // entering the main loop of grid points
-			for(int grid_index = 0; grid_index < this->nbxx; grid_index++)
-			{
-				// get the value: how many atoms has orbital value on this grid.
-				const int na_grid = this->gridt->how_many_atoms[ grid_index ];
+                // entering the main loop of grid points
+                for (int grid_index = 0; grid_index < this->nbxx; grid_index++)
+                {
+                    // get the value: how many atoms has orbital value on this
+                    // grid.
+                    const int na_grid = this->gridt->how_many_atoms[grid_index];
 
 				if(na_grid==0)
 				{
@@ -312,47 +427,59 @@ void Gint::cal_gint(Gint_inout *inout)
 			} // int grid_index
 
 #ifdef _OPENMP
-			if(inout->job==Gint_Tools::job_type::vlocal || inout->job==Gint_Tools::job_type::vlocal_meta)
-			{
-                if(GlobalV::GAMMA_ONLY_LOCAL && lgd>0)
+                if (inout->job == Gint_Tools::job_type::vlocal
+                    || inout->job == Gint_Tools::job_type::vlocal_meta)
                 {
-                    #pragma omp critical(gint_gamma)
+                    if (GlobalV::GAMMA_ONLY_LOCAL && lgd > 0)
                     {
-                        BlasConnector::axpy(this->hRGint->get_nnr(), 1.0, hRGint_thread->get_wrapper(), 1, this->hRGint->get_wrapper(), 1);
+#pragma omp critical(gint_gamma)
+                        {
+                            BlasConnector::axpy(this->hRGint->get_nnr(),
+                                                1.0,
+                                                hRGint_thread->get_wrapper(),
+                                                1,
+                                                this->hRGint->get_wrapper(),
+                                                1);
+                        }
+                        delete hRGint_thread;
                     }
-                    delete hRGint_thread;
+                    if (!GlobalV::GAMMA_ONLY_LOCAL)
+                    {
+#pragma omp critical(gint_k)
+                        {
+                            BlasConnector::axpy(nnrg,
+                                                1.0,
+                                                pvpR_thread,
+                                                1,
+                                                pvpR_reduced[inout->ispin],
+                                                1);
+                        }
+                        delete[] pvpR_thread;
+                    }
                 }
-                if(!GlobalV::GAMMA_ONLY_LOCAL)
+
+#pragma omp critical(gint)
+                if (inout->job == Gint_Tools::job_type::force
+                    || inout->job == Gint_Tools::job_type::force_meta)
                 {
-                    #pragma omp critical(gint_k)
-					{
-						BlasConnector::axpy(nnrg, 1.0, pvpR_thread, 1, pvpR_reduced[inout->ispin], 1);
-					}
-                    delete[] pvpR_thread;
+                    if (inout->isforce)
+                    {
+                        inout->fvl_dphi[0] += fvl_dphi_thread;
+                    }
+                    if (inout->isstress)
+                    {
+                        inout->svl_dphi[0] += svl_dphi_thread;
+                    }
                 }
-			}
-
-			#pragma omp critical(gint)
-			if(inout->job==Gint_Tools::job_type::force  || inout->job==Gint_Tools::job_type::force_meta)
-			{
-				if(inout->isforce)
-				{
-					inout->fvl_dphi[0]+=fvl_dphi_thread;
-				}
-				if(inout->isstress)
-				{
-					inout->svl_dphi[0]+=svl_dphi_thread;
-				}
-			}
 #endif
-		} // end of #pragma omp parallel
-
+            } // end of #pragma omp parallel
 #ifdef __MKL
-    mkl_set_num_threads(mkl_threads);
+            mkl_set_num_threads(mkl_threads);
 #endif
-    } // end of if (max_size)
+        }
 
-	ModuleBase::timer::tick("Gint_interface", "cal_gint");
+    } // end of if (max_size)
+    ModuleBase::timer::tick("Gint_interface", "cal_gint");
 
 	if(inout->job==Gint_Tools::job_type::vlocal) ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
 	if(inout->job==Gint_Tools::job_type::vlocal_meta) ModuleBase::timer::tick("Gint_interface","cal_gint_vlocal_meta");
@@ -364,29 +491,28 @@ void Gint::cal_gint(Gint_inout *inout)
 	return;
 }
 
-void Gint::prep_grid(
-    const Grid_Technique& gt,
-    const int& nbx_in,
-	const int &nby_in,
-	const int &nbz_in,
-	const int &nbz_start_in,
-    const int& ncxyz_in,
-    const int& bx_in,
-    const int& by_in,
-    const int& bz_in,
-    const int& bxyz_in,
-    const int& nbxx_in,
-    const int& ny_in,
-    const int& nplane_in,
-    const int& startz_current_in)
+void Gint::prep_grid(const Grid_Technique& gt,
+                     const int& nbx_in,
+                     const int& nby_in,
+                     const int& nbz_in,
+                     const int& nbz_start_in,
+                     const int& ncxyz_in,
+                     const int& bx_in,
+                     const int& by_in,
+                     const int& bz_in,
+                     const int& bxyz_in,
+                     const int& nbxx_in,
+                     const int& ny_in,
+                     const int& nplane_in,
+                     const int& startz_current_in)
 {
-	ModuleBase::TITLE(GlobalV::ofs_running,"Gint_k","prep_grid");
+    ModuleBase::TITLE(GlobalV::ofs_running, "Gint_k", "prep_grid");
 
     this->gridt = &gt;
     this->nbx = nbx_in;
-	this->nby = nby_in;
-	this->nbz = nbz_in;
-	this->ncxyz = ncxyz_in;
+    this->nby = nby_in;
+    this->nbz = nbz_in;
+    this->ncxyz = ncxyz_in;
     this->nbz_start = nbz_start_in;
     this->bx = bx_in;
     this->by = by_in;
@@ -397,8 +523,8 @@ void Gint::prep_grid(
     this->nplane = nplane_in;
     this->startz_current = startz_current_in;
     assert(nbx > 0);
-	assert(nby>0);
-	assert(nbz>=0);
+    assert(nby > 0);
+    assert(nbz >= 0);
     assert(ncxyz > 0);
     assert(bx > 0);
     assert(by > 0);
@@ -409,16 +535,14 @@ void Gint::prep_grid(
     assert(nplane >= 0);
     assert(startz_current >= 0);
 
-	assert( GlobalC::ucell.omega > 0.0);
+    assert(GlobalC::ucell.omega > 0.0);
 
-	return;
+    return;
 }
 
-void Gint::initialize_pvpR(
-	const UnitCell& ucell_in,
-	Grid_Driver* gd)
+void Gint::initialize_pvpR(const UnitCell& ucell_in, Grid_Driver* gd)
 {
-	ModuleBase::TITLE("Gint","initialize_pvpR");
+    ModuleBase::TITLE("Gint", "initialize_pvpR");
 
 	int npol = 1;
 	// there is the only resize code of DMRGint
@@ -457,45 +581,47 @@ void Gint::initialize_pvpR(
 		}
 		this->DMRGint_full = new hamilt::HContainer<double>(ucell_in.nat);
 #endif
-	}
+    }
 
-	// prepare the row_index and col_index for construct AtomPairs, they are same, name as orb_index
-	std::vector<int> orb_index(ucell_in.nat + 1);
-	orb_index[0] = 0;
-	for(int i=1;i<orb_index.size();i++)
-	{
-		int type = ucell_in.iat2it[i-1];
-		orb_index[i] = orb_index[i-1] + ucell_in.atoms[type].nw;
-	}
-	std::vector<int> orb_index_npol;
-	if(npol == 2)
-	{
-		orb_index_npol.resize(ucell_in.nat + 1);
-		orb_index_npol[0] = 0;
-		for(int i=1;i<orb_index_npol.size();i++)
-		{
-			int type = ucell_in.iat2it[i-1];
-			orb_index_npol[i] = orb_index_npol[i-1] + ucell_in.atoms[type].nw * npol;
-		}
-	}
+    // prepare the row_index and col_index for construct AtomPairs, they are
+    // same, name as orb_index
+    std::vector<int> orb_index(ucell_in.nat + 1);
+    orb_index[0] = 0;
+    for (int i = 1; i < orb_index.size(); i++)
+    {
+        int type = ucell_in.iat2it[i - 1];
+        orb_index[i] = orb_index[i - 1] + ucell_in.atoms[type].nw;
+    }
+    std::vector<int> orb_index_npol;
+    if (npol == 2)
+    {
+        orb_index_npol.resize(ucell_in.nat + 1);
+        orb_index_npol[0] = 0;
+        for (int i = 1; i < orb_index_npol.size(); i++)
+        {
+            int type = ucell_in.iat2it[i - 1];
+            orb_index_npol[i]
+                = orb_index_npol[i - 1] + ucell_in.atoms[type].nw * npol;
+        }
+    }
 
-	if(GlobalV::GAMMA_ONLY_LOCAL && GlobalV::NSPIN != 4)
-	{
-		this->hRGint->fix_gamma();
-	}
-	for (int T1 = 0; T1 < ucell_in.ntype; ++T1)
-	{
-		const Atom* atom1 = &(ucell_in.atoms[T1]);
-		for (int I1 = 0; I1 < atom1->na; ++I1)
-		{
-			auto& tau1 = atom1->tau[I1];
+    if (GlobalV::GAMMA_ONLY_LOCAL && GlobalV::NSPIN != 4)
+    {
+        this->hRGint->fix_gamma();
+    }
+    for (int T1 = 0; T1 < ucell_in.ntype; ++T1)
+    {
+        const Atom* atom1 = &(ucell_in.atoms[T1]);
+        for (int I1 = 0; I1 < atom1->na; ++I1)
+        {
+            auto& tau1 = atom1->tau[I1];
 
-			gd->Find_atom(ucell_in, tau1, T1, I1);
+            gd->Find_atom(ucell_in, tau1, T1, I1);
 
-			const int iat1 = ucell_in.itia2iat(T1,I1);
+            const int iat1 = ucell_in.itia2iat(T1, I1);
 
-			// for grid integration (on FFT box),
-			// we only need to consider <phi_i | phi_j>,
+            // for grid integration (on FFT box),
+            // we only need to consider <phi_i | phi_j>,
 
 			// whether this atom is in this processor.
 			if(this->gridt->in_this_processor[iat1])
@@ -584,20 +710,19 @@ void Gint::initialize_pvpR(
 		this->DMRGint_full->allocate(nullptr, 0);
 		ModuleBase::Memory::record("Gint::DMRGint_full",this->DMRGint_full->get_memory_size());
 #endif
-	}
-
+    }
 }
 
 void Gint::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D)
 {
-    ModuleBase::TITLE("Gint","transfer_DMR");
-    ModuleBase::timer::tick("Gint","transfer_DMR");
-	if(GlobalV::NSPIN != 4)
-	{
-		for (int is = 0; is < this->DMRGint.size(); is++)
-		{
+    ModuleBase::TITLE("Gint", "transfer_DMR");
+    ModuleBase::timer::tick("Gint", "transfer_DMR");
+    if (GlobalV::NSPIN != 4)
+    {
+        for (int is = 0; is < this->DMRGint.size(); is++)
+        {
 #ifdef __MPI
-        	hamilt::transferParallels2Serials(*DM2D[is], DMRGint[is]);
+            hamilt::transferParallels2Serials(*DM2D[is], DMRGint[is]);
 #else
 			this->DMRGint[is]->set_zero();
 			this->DMRGint[is]->add(*DM2D[is]);
@@ -607,7 +732,7 @@ void Gint::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D)
 	else // NSPIN=4 case
 	{
 #ifdef __MPI
-		hamilt::transferParallels2Serials(*DM2D[0], this->DMRGint_full);
+        hamilt::transferParallels2Serials(*DM2D[0], this->DMRGint_full);
 #else
 		this->DMRGint_full = DM2D[0];
 #endif

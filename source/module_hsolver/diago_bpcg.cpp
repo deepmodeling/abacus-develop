@@ -1,3 +1,5 @@
+#include <limits>
+
 #include "module_hsolver/diago_bpcg.h"
 
 #include <ATen/kernels/blas.h>
@@ -264,7 +266,7 @@ void DiagoBPCG<T, Device>::diag(
 
     setmem_complex_op()(this->grad_old.template data<T>(), 0, this->n_basis * this->n_band);
 
-    setmem_var_op()(this->beta.template data<Real>(), 1E+40, this->n_band);
+    setmem_var_op()(this->beta.template data<Real>(), std::numeric_limits<Real>::infinity(), this->n_band);
 
     int ntry = 0;
     int max_iter = current_scf_iter > 1 ?

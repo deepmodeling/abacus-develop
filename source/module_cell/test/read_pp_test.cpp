@@ -8,6 +8,7 @@
 /**
  * - Tested Functions:
  *   - ReadUPF100
+ *   - ReadUPF100USPP
  *     - read_pseudo_upf
  *       - read 1.0.0 version of upf pseudopotential file
  *     - read_pseudo_header
@@ -28,10 +29,6 @@
  *     - read_pseudo_upf201_nonlocal
  *     - read_pseudo_upf201_pswfc
  *     - void read_pseudo_upf201_so
- *   - ReadUSppErr100
- *     - read_pseudo_nl
- *     - read_pseudo_nlcc
- *     - ultrasoft is not supported
  *   - HeaderErr201
  *     - coulomb and paw pp are not supported
  *     - no pp_header
@@ -167,19 +164,120 @@ TEST_F(ReadPPTest, ReadUPF100)
 	ifs.close();
 }
 
-TEST_F(ReadPPTest, ReadUSppErr100)
+TEST_F(ReadPPTest, ReadUPF100USPP)
 {
-	std::ifstream ifs;
-	ifs.open("./support/Zn.pw91-n-van.UPF");
-	//upf->read_pseudo_upf(ifs);
-	testing::internal::CaptureStdout();
-	EXPECT_EXIT(upf->read_pseudo_upf(ifs),
-			::testing::ExitedWithCode(0),"");
-	output = testing::internal::GetCapturedStdout();
-	// test output on screening
-	// EXPECT_THAT(output,testing::HasSubstr("this function is called")); // read_pseudo_nlcc
-	EXPECT_THAT(output,testing::HasSubstr("Ultra Soft Pseudopotential not available yet."));
-	ifs.close();
+    std::ifstream ifs;
+    ifs.open("./support/fe_pbe_v1.5.uspp.F.UPF");
+    upf->read_pseudo_upf(ifs);
+    EXPECT_FALSE(upf->has_so);                                        // has soc info
+    EXPECT_FALSE(upf->q_with_l);                                      // q_with_l
+    EXPECT_EQ(upf->nv, 0);                                            // number of version
+    EXPECT_EQ(upf->psd, "Fe");                                        // element label
+    EXPECT_EQ(upf->pp_type, "US");                                    // pp_type
+    EXPECT_TRUE(upf->tvanp);                                          // not ultrasoft
+    EXPECT_TRUE(upf->nlcc);                                           // no Nonlinear core correction
+    EXPECT_EQ(upf->xc_func, "PBE");                                   // Exchange-Correlation functional
+    EXPECT_EQ(upf->zp, 16);                                           // Z valence
+    EXPECT_DOUBLE_EQ(upf->etotps, -248.63387366200);                  // total energy
+    EXPECT_DOUBLE_EQ(upf->ecutwfc, 0.0);                              // suggested cutoff for wfc
+    EXPECT_DOUBLE_EQ(upf->ecutrho, 0.0);                              // suggested cutoff for rho
+    EXPECT_EQ(upf->lmax, 2);                                          // max angular momentum component
+    EXPECT_EQ(upf->mesh, 861);                                        // Number of points in mesh
+    EXPECT_EQ(upf->nwfc, 5);                                          // Number of wavefunctions
+    EXPECT_EQ(upf->nbeta, 6);                                         // Number of projectors
+    EXPECT_EQ(upf->els[0], "3S");                                     // label for i-th atomic orbital
+    EXPECT_EQ(upf->els[1], "3P");                                     // label for i-th atomic orbital
+    EXPECT_EQ(upf->els[2], "3D");                                     // label for i-th atomic orbital
+    EXPECT_EQ(upf->els[3], "4S");                                     // label for i-th atomic orbital
+    EXPECT_EQ(upf->els[4], "4P");                                     // label for i-th atomic orbital
+    EXPECT_EQ(upf->lchi[0], 0);                                       // angluar momentum of each atomic orbital
+    EXPECT_EQ(upf->lchi[1], 1);                                       // angluar momentum of each atomic orbital
+    EXPECT_EQ(upf->lchi[2], 2);                                       // angluar momentum of each atomic orbital
+    EXPECT_EQ(upf->lchi[3], 0);                                       // angluar momentum of each atomic orbital
+    EXPECT_EQ(upf->lchi[4], 1);                                       // angluar momentum of each atomic orbital
+    EXPECT_DOUBLE_EQ(upf->oc[0], 2.0);                                // occupation of each atomic orbital
+    EXPECT_DOUBLE_EQ(upf->oc[1], 6.0);                                // occupation of each atomic orbital
+    EXPECT_DOUBLE_EQ(upf->oc[2], 5.0);                                // occupation of each atomic orbital
+    EXPECT_DOUBLE_EQ(upf->oc[3], 2.0);                                // occupation of each atomic orbital
+    EXPECT_DOUBLE_EQ(upf->oc[4], 0.0);                                // occupation of each atomic orbital
+    EXPECT_DOUBLE_EQ(upf->r[0], 0.00000000000E+00);                   // r
+    EXPECT_DOUBLE_EQ(upf->r[upf->mesh - 1], 2.04011054501E+02);       // r
+    EXPECT_DOUBLE_EQ(upf->rab[0], 1.61587495219E-06);                 // rab
+    EXPECT_DOUBLE_EQ(upf->rab[upf->mesh - 1], 3.45781609895E+00);     // rab
+    EXPECT_DOUBLE_EQ(upf->rho_atc[1], 3.48284864470E+00);             // nlcc
+    EXPECT_DOUBLE_EQ(upf->rho_atc[upf->mesh - 1], 0.00000000000E+00); // nlcc
+    EXPECT_DOUBLE_EQ(upf->vloc[0], -5.13189996435E+01);               // vloc
+    EXPECT_DOUBLE_EQ(upf->vloc[upf->mesh - 1], -1.56854245366E-01);   // vloc
+    EXPECT_EQ(upf->lll[0], 0);                                        // BETA
+    EXPECT_EQ(upf->kbeta[0], 607);
+    EXPECT_DOUBLE_EQ(upf->beta(0, 0), 0.00000000000E+00);
+    EXPECT_DOUBLE_EQ(upf->beta(0, upf->kbeta[0] - 1), 0.00000000000E+00);
+    EXPECT_EQ(upf->lll[1], 0); // BETA
+    EXPECT_EQ(upf->kbeta[1], 607);
+    EXPECT_DOUBLE_EQ(upf->beta(1, 0), 0.00000000000E+00);
+    EXPECT_DOUBLE_EQ(upf->beta(1, upf->kbeta[0] - 1), 0.00000000000E+00);
+    EXPECT_EQ(upf->lll[2], 1); // BETA
+    EXPECT_EQ(upf->kbeta[2], 607);
+    EXPECT_DOUBLE_EQ(upf->beta(2, 1), 5.76970159520E-12);
+    EXPECT_DOUBLE_EQ(upf->beta(2, upf->kbeta[2] - 1), 0.00000000000E+00);
+    EXPECT_EQ(upf->lll[5], 2); // BETA
+    EXPECT_EQ(upf->kbeta[5], 607);
+    EXPECT_DOUBLE_EQ(upf->beta(5, 2), -3.30692076673E-11);
+    EXPECT_DOUBLE_EQ(upf->beta(5, upf->kbeta[2] - 1), 0.00000000000E+00);
+    EXPECT_EQ(upf->nd, 9); // DIJ
+    EXPECT_DOUBLE_EQ(upf->dion(0, 0), -2.44502386412E-02);
+    EXPECT_DOUBLE_EQ(upf->dion(0, 1), 1.88646719481E+00);
+    EXPECT_DOUBLE_EQ(upf->dion(1, 1), 2.82162386984E+00);
+    EXPECT_DOUBLE_EQ(upf->dion(2, 2), 9.10650114165E+00);
+    EXPECT_DOUBLE_EQ(upf->dion(2, 3), -1.66542402638E+01);
+    EXPECT_DOUBLE_EQ(upf->dion(3, 3), 2.82741263018E+01);
+    EXPECT_DOUBLE_EQ(upf->dion(4, 4), 5.48893904730E+01);
+    EXPECT_DOUBLE_EQ(upf->dion(4, 5), 6.28094728901E+01);
+    EXPECT_DOUBLE_EQ(upf->dion(5, 5), 7.17648258086E+01);
+    EXPECT_EQ(upf->nqf, 8);                // QIJ
+    EXPECT_EQ(upf->nqlc, 5);               // nqlc
+    EXPECT_DOUBLE_EQ(upf->rinner[0], 1.0); // rinner
+    EXPECT_DOUBLE_EQ(upf->rinner[1], 1.0);
+    EXPECT_DOUBLE_EQ(upf->rinner[2], 1.0);
+    EXPECT_DOUBLE_EQ(upf->rinner[3], 1.0);
+    EXPECT_DOUBLE_EQ(upf->rinner[4], 1.0);
+    EXPECT_DOUBLE_EQ(upf->qqq(0, 0), 9.61156723771E-02);
+    EXPECT_DOUBLE_EQ(upf->qfunc(0, 1), -2.94880294140E-11);
+    EXPECT_DOUBLE_EQ(upf->qfunc(0, upf->mesh - 1), 0.00000000000E+00);
+    EXPECT_DOUBLE_EQ(upf->qfcoef(0, 0, 0, 0), -1.11034753554E+01);
+    EXPECT_DOUBLE_EQ(upf->qfcoef(0, 0, 4, 7), 0.00000000000E+00);
+    EXPECT_DOUBLE_EQ(upf->qqq(0, 1), 6.30706989525E-02);
+    EXPECT_DOUBLE_EQ(upf->qfunc(1, 1), -9.73254487126E-12);
+    EXPECT_DOUBLE_EQ(upf->qfunc(0, upf->mesh - 1), 0.00000000000E+00);
+    EXPECT_DOUBLE_EQ(upf->qfcoef(0, 1, 0, 0), -3.66470985929E+00);
+    EXPECT_DOUBLE_EQ(upf->qfcoef(0, 1, 4, 7), 0.00000000000E+00);
+    EXPECT_DOUBLE_EQ(upf->qqq(5, 5), 4.88172232559E+00);
+    EXPECT_DOUBLE_EQ(upf->qfunc(20, 1), 1.69461625558E-10);
+    EXPECT_DOUBLE_EQ(upf->qfunc(0, upf->mesh - 1), 0.00000000000E+00);
+    EXPECT_DOUBLE_EQ(upf->qfcoef(5, 5, 0, 0), 6.38093836870E+01);
+    EXPECT_DOUBLE_EQ(upf->qfcoef(5, 5, 4, 7), 8.40128670914E+03);
+    EXPECT_DOUBLE_EQ(upf->chi(0, 1), 4.36429934825E-06); // PSWFC
+    EXPECT_DOUBLE_EQ(upf->chi(0, upf->mesh - 1), 0.00000000000E+00);
+    EXPECT_DOUBLE_EQ(upf->chi(1, 1), 6.46349114028E-12);
+    EXPECT_DOUBLE_EQ(upf->chi(1, upf->mesh - 1), 0.00000000000E+00);
+    EXPECT_DOUBLE_EQ(upf->chi(2, 1), 7.06492930658E-18);
+    EXPECT_DOUBLE_EQ(upf->chi(2, upf->mesh - 1), 0.00000000000E+00);
+    EXPECT_DOUBLE_EQ(upf->chi(3, 1), 1.45872860322E-06);
+    EXPECT_DOUBLE_EQ(upf->chi(3, upf->mesh - 1), 0.00000000000E+00);
+    EXPECT_DOUBLE_EQ(upf->chi(4, 1), 1.27728623256E-12);
+    EXPECT_DOUBLE_EQ(upf->chi(4, upf->mesh - 1), 0.00000000000E+00);
+    EXPECT_DOUBLE_EQ(upf->rho_at[1], 7.94937989763E-11); // RhoAtom
+    EXPECT_DOUBLE_EQ(upf->rho_at[upf->mesh - 1], 0.00000000000E+00);
+    // EXPECT_EQ
+    ifs.close();
+    std::ofstream ofs;
+    ofs.open("tmp");
+    upf->print_pseudo_upf(ofs);
+    ofs.close();
+    ifs.open("tmp");
+    getline(ifs, output);
+    EXPECT_THAT(output, testing::HasSubstr("==== read_pseudo_upf ==="));
+    ifs.close();
 }
 
 TEST_F(ReadPPTest, ReadUPF201_Coulomb)

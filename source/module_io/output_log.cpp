@@ -47,7 +47,7 @@ void print_force(std::ofstream& ofs_running,
     std::vector<double> force_y;
     std::vector<double> force_z;
     std::string table;
-    context.set_context({"short_title", "force", "force", "force"});
+    std::vector<std::string> titles({name, "", "", ""});
     int iat = 0;
     for (int it = 0; it < cell.ntype; it++)
     {
@@ -66,16 +66,11 @@ void print_force(std::ofstream& ofs_running,
         }
     }
 
-    context.enable_title();
-    context << name.c_str() << atom_label << "" << force_x << "" << force_y << "" << force_z;
-    context.center_title();
-    table = context.str();
+    FmtTable fmt(titles, atom_label.size(), {"%10s", "%20.10f", "%20.10f", "%20.10f"});
+    fmt << atom_label << force_x << force_y << force_z;
+    table = fmt.str();
     ofs_running << table << std::endl;
-    if (GlobalV::TEST_FORCE)
-    {
-        std::cout << table << std::endl;
-    }
-    return;
+    if (GlobalV::TEST_FORCE) std::cout << table << std::endl;
 }
 
 void print_stress(const std::string& name, const ModuleBase::matrix& scs, const bool screen, const bool ry)
@@ -95,12 +90,11 @@ void print_stress(const std::string& name, const ModuleBase::matrix& scs, const 
         unit = " KBAR";
         unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
     }
-
     std::vector<double> stress_x;
     std::vector<double> stress_y;
     std::vector<double> stress_z;
     std::string table;
-    context.set_context({"double_w20_f10", "double_w20_f10", "double_w20_f10"});
+    std::vector<std::string> titles({title, "", ""});
     for (int i = 0; i < 3; i++)
     {
         double sx = scs(i, 0) * unit_transform;
@@ -113,11 +107,10 @@ void print_stress(const std::string& name, const ModuleBase::matrix& scs, const 
 
     double pressure = (scs(0, 0) + scs(1, 1) + scs(2, 2)) / 3.0 * unit_transform;
 
-    context.enable_title();
-    context << title.c_str() << stress_x << " " << stress_y << " " << stress_z;
-    context.center_title();
-    table = context.str();
-    GlobalV::ofs_running << table << std::endl;
+    FmtTable fmt(titles, 3, {"%20.10f", "%20.10f", "%20.10f"});
+    fmt << stress_x << stress_y << stress_z;
+    table = fmt.str();
+    GlobalV::ofs_running << table;
     if (name == "TOTAL-STRESS")
     {
         GlobalV::ofs_running << " TOTAL-PRESSURE: " << std::fixed << std::setprecision(6) << pressure << unit
@@ -126,7 +119,7 @@ void print_stress(const std::string& name, const ModuleBase::matrix& scs, const 
     }
     if (screen)
     {
-        std::cout << table << std::endl;
+        std::cout << table;
         if (name == "TOTAL-STRESS")
         {
             std::cout << " TOTAL-PRESSURE: " << std::fixed << std::setprecision(6) << pressure << unit << std::endl

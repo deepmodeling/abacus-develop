@@ -4,6 +4,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/ylm.h"
 #include "module_base/timer.h"
+#include "module_base/memory.h"
 
 void Gint_Gamma::cal_env(const double* wfc, double* rho)
 {
@@ -35,6 +36,7 @@ void Gint_Gamma::cal_env(const double* wfc, double* rho)
 
 			//evaluate psi on grids
 			Gint_Tools::Array_Pool<double> psir_ylm(this->bxyz, LD_pool);
+			ModuleBase::Memory::record("Gint_Gamma::cal_env",sizeof(double)*this->bxyz*(LD_pool+1));
             Gint_Tools::cal_psir_ylm(*this->gridt, 
                 this->bxyz,
                 size, grid_index, delta_r,

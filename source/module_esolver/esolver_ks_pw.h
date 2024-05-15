@@ -28,7 +28,7 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
 
         ~ESolver_KS_PW();
 
-        void init(Input& inp, UnitCell& cell) override;
+        void before_all_runners(Input& inp, UnitCell& cell) override;
 
         void init_after_vc(Input& inp, UnitCell& cell) override;
 
@@ -44,7 +44,7 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
 
         virtual void nscf() override;
 
-        void post_process() override;
+        void after_all_runners() override;
 
         /**
          * @brief calculate Onsager coefficients Lmn(\omega) and conductivities with Kubo-Greenwood formula

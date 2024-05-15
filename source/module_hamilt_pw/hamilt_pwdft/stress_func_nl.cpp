@@ -56,6 +56,7 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
     std::complex<FPTYPE> *dbecp = nullptr, *becp = nullptr, *dbecp_noevc = nullptr, *vkb = nullptr, *pvkb0 = nullptr,
                          *vkb1 = nullptr, *pvkb2 = nullptr;
     std::complex<FPTYPE> *_vkb0[3] = {nullptr, nullptr, nullptr};
+    ModuleBase::Memory::record("Stree_func::ComplexMatrix",sizeof(double)*nkb*npwx*4);
     resmem_complex_op()(this->ctx, becp, GlobalV::NBANDS * nkb, "Stress::becp");
     resmem_complex_op()(this->ctx, dbecp, GlobalV::NBANDS * nkb, "Stress::dbecp");
     resmem_complex_op()(this->ctx, dbecp_noevc, nkb * npwx, "Stress::dbecp_noevc");
