@@ -8,6 +8,7 @@
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
 
+
 // [etxc, vtxc, v] = XC_Functional::v_xc(...)
 std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc(
 	const int &nrxx, // number of real-space grid

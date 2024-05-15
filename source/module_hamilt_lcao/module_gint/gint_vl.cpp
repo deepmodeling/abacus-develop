@@ -7,6 +7,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/blas_connector.h"
 #include "module_base/timer.h"
+#include "module_base/memory.h"
 //#include <mkl_cblas.h>
 
 #ifdef _OPENMP
@@ -42,7 +43,7 @@ void Gint::gint_kernel_vlocal(
 	//calculating f_mu(r) = v(r)*psi_mu(r)*dv
 	const Gint_Tools::Array_Pool<double> psir_vlbr3 = Gint_Tools::get_psir_vlbr3(
 			this->bxyz, na_grid, LD_pool, block_index, cal_flag, vldr3, psir_ylm.ptr_2D);
-
+	ModuleBase::Memory::record("Gint::gint_kernel_vlocal",sizeof(double)*this->bxyz*(LD_pool+1)*2);
 	//integrate (psi_mu*v(r)*dv) * psi_nu on grid
 	//and accumulates to the corresponding element in Hamiltonian
     if(GlobalV::GAMMA_ONLY_LOCAL)
@@ -99,7 +100,7 @@ void Gint::gint_kernel_dvlocal(
 	//calculating f_mu(r) = v(r)*psi_mu(r)*dv
 	const Gint_Tools::Array_Pool<double> psir_vlbr3 = Gint_Tools::get_psir_vlbr3(
 			this->bxyz, na_grid, LD_pool, block_index, cal_flag, vldr3, psir_ylm.ptr_2D);
-
+	ModuleBase::Memory::record("Gint::gint_kernel_dvlocal",sizeof(double)*this->bxyz*(LD_pool+1)*5);
 	//integrate (psi_mu*v(r)*dv) * psi_nu on grid
 	//and accumulates to the corresponding element in Hamiltonian
 	this->cal_meshball_vlocal_k(
@@ -167,6 +168,7 @@ void Gint::gint_kernel_vlocal_meta(
 			this->bxyz, na_grid, LD_pool, block_index, cal_flag, vkdr3, dpsir_ylm_y.ptr_2D);	
 	const Gint_Tools::Array_Pool<double> dpsiz_vlbr3 = Gint_Tools::get_psir_vlbr3(
 			this->bxyz, na_grid, LD_pool, block_index, cal_flag, vkdr3, dpsir_ylm_z.ptr_2D);
+	ModuleBase::Memory::record("Gint::gint_kernel_vlocal_meta",sizeof(double)*this->bxyz*(LD_pool+1)*8);
 
     if(GlobalV::GAMMA_ONLY_LOCAL)
     {

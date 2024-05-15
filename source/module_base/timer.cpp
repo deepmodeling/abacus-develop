@@ -157,14 +157,13 @@ void timer::write_to_json(std::string file_name)
     // check if a double is inf, if so, return "null", else return a string of the input double
 	auto double_to_string = [](double d) -> std::string
 	{
-		formatter::Fmt fmt(0, 15, ' ', false, false, false);
 		if(std::isinf(d))
         {
 			return "Infinity";
         }
 		else
         {
-			return fmt.format(d);
+			return FmtCore::format("%.15f", d);
         }
 	};
 
@@ -256,8 +255,6 @@ void timer::print_all(std::ofstream &ofs)
 	std::vector<int> calls;
 	std::vector<double> avgs;
 	std::vector<double> pers;
-	std::string table;
-	context.set_context({"mid_title", "mid_title", "time", "int_w8", "time", "percentage"});
 	for(auto &timer_pool_order_A : timer_pool_order)
 	{
 		const std::string &class_name = timer_pool_order_A.first.first;
@@ -273,11 +270,16 @@ void timer::print_all(std::ofstream &ofs)
 		avgs.push_back(timer_one.cpu_second/timer_one.calls);
 		pers.push_back(timer_one.cpu_second / timer_pool_order[0].second.cpu_second * 100);
 	}
-	context.enable_title();
-	context<<"CLASS_NAME"<<class_names<<"NAME"<<names<<"TIME(Sec)"<<times<<"CALLS"<<calls<<"AVG(Sec)"<<avgs<<"PER(%)"<<pers;
-	context.center_title();
-	context.set_overall_title("TIME STATISTICS");
-	table = context.str();
+	assert(class_names.size() == names.size());
+	assert(class_names.size() == times.size());
+	assert(class_names.size() == calls.size());
+	assert(class_names.size() == avgs.size());
+	assert(class_names.size() == pers.size());
+	std::vector<std::string> titles = {"CLASS_NAME", "NAME", "TIME(Sec)", "CALLS", "AVG(Sec)", "PER(%)"};
+	std::vector<std::string> formats = {"%-10s", "%-10s", "%6.2f", "%8d", "%6.2f", "%6.2f"};
+	FmtTable time_statistics(titles, pers.size(), formats, {FmtTable::Align::LEFT, FmtTable::Align::CENTER});
+	time_statistics << class_names << names << times << calls << avgs << pers;
+	const std::string table = "TIME STATISTICS\n" + time_statistics.str();
 	std::cout<<table<<std::endl;
 	ofs<<table<<std::endl;
 	write_to_json("time.json");

@@ -45,6 +45,7 @@ void Broyden_Mixing::tem_push_data(Mixing_Data& mdata,
 
     // container::Tensor data = data_in + mixing_beta * F;
     std::vector<FPTYPE> data(length);
+    ModuleBase::Memory::record("Broyden_Mixing::F_tmp&data",sizeof(FPTYPE)*length*2);
     mix(data.data(), data_in, F_tmp.data());
 
     mdata.push(data.data());
@@ -70,6 +71,7 @@ void Broyden_Mixing::tem_push_data(Mixing_Data& mdata,
         if (dF != nullptr)
             free(dF);
         dF = malloc(sizeof(FPTYPE) * length * mixing_ndim);
+        ModuleBase::Memory::record("Broyden_Mixing::F&DF",sizeof(FPTYPE)*length*(mixing_ndim+1));
         FP_dF = static_cast<FPTYPE*>(dF);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))

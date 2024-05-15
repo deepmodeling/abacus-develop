@@ -46,7 +46,7 @@ class MSST_test : public testing::Test
         Setcell::parameters();
 
         ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
-        p_esolver->init(INPUT, ucell);
+        p_esolver->before_all_runners(INPUT, ucell);
 
         mdrun = new MSST(INPUT.mdp, ucell);
         mdrun->setup(p_esolver, GlobalV::global_readin_dir);

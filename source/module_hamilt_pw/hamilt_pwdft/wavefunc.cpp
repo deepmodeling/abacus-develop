@@ -168,6 +168,7 @@ void diago_PAO_in_pw_k2(const int &ik,
     if (p_wf->init_wfc == "file")
     {
         ModuleBase::ComplexMatrix wfcatom(nbands, nbasis);
+        ModuleBase::Memory::record("wavefunc::wfcatom",nbands * nbasis * sizeof(std::complex<double>));
         std::stringstream filename;
         filename << GlobalV::global_readin_dir << "WAVEFUNC" << ik + 1 << ".dat";
         bool result = ModuleIO::read_wfc_pw(filename.str(), wfc_basis, ik, p_wf->nkstot, wfcatom);
@@ -175,6 +176,7 @@ void diago_PAO_in_pw_k2(const int &ik,
         if (result)
         {
             std::vector<std::complex<float>> s_wfcatom(nbands * nbasis);
+            ModuleBase::Memory::record("wavefunc::s_wfcatom",nbands * nbasis * sizeof(std::complex<float>));
             castmem_z2c_h2h_op()(cpu_ctx, cpu_ctx, s_wfcatom.data(), wfcatom.c, nbands * nbasis);
 
             if (GlobalV::KS_SOLVER == "cg")
@@ -255,6 +257,7 @@ void diago_PAO_in_pw_k2(const int &ik,
 	else if(p_wf->init_wfc.substr(0,6)=="atomic")
 	{
 		ModuleBase::ComplexMatrix wfcatom(starting_nw, nbasis);//added by zhengdy-soc
+        ModuleBase::Memory::record("wavefunc::wfcatom",starting_nw * nbasis * sizeof(std::complex<double>));
 		if(GlobalV::test_wf)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "starting_nw", starting_nw);
 
 		p_wf->atomic_wfc(ik, current_nbasis, GlobalC::ucell.lmax_ppwf, wfc_basis, wfcatom, GlobalC::ppcell.tab_at, GlobalV::NQX, GlobalV::DQ);
@@ -271,6 +274,7 @@ void diago_PAO_in_pw_k2(const int &ik,
 
 		// (7) Diago with cg method.
 		std::vector<std::complex<float>> s_wfcatom(starting_nw * nbasis);
+        ModuleBase::Memory::record("wavefunc::s_wfcatom",starting_nw  * nbasis * sizeof(std::complex<float>));
 		castmem_z2c_h2h_op()(cpu_ctx, cpu_ctx, s_wfcatom.data(), wfcatom.c, starting_nw * nbasis);
 		//if(GlobalV::DIAGO_TYPE == "cg") xiaohui modify 2013-09-02
 		if(GlobalV::KS_SOLVER=="cg") //xiaohui add 2013-09-02
@@ -323,6 +327,7 @@ void diago_PAO_in_pw_k2(const int &ik,
     if (p_wf->init_wfc == "file")
     {
         ModuleBase::ComplexMatrix wfcatom(nbands, nbasis);
+        ModuleBase::Memory::record("wavefunc::wfcatom",nbands * nbasis * sizeof(std::complex<double>));
         std::stringstream filename;
         filename << GlobalV::global_readin_dir << "WAVEFUNC" << ik + 1 << ".dat";
         bool result = ModuleIO::read_wfc_pw(filename.str(), wfc_basis, ik, p_wf->nkstot, wfcatom);
@@ -406,6 +411,7 @@ void diago_PAO_in_pw_k2(const int &ik,
     else if (p_wf->init_wfc.substr(0, 6) == "atomic")
     {
         ModuleBase::ComplexMatrix wfcatom(starting_nw, nbasis); // added by zhengdy-soc
+        ModuleBase::Memory::record("wavefunc::wfcatom",starting_nw * nbasis * sizeof(std::complex<double>));
         if (GlobalV::test_wf)
             ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "starting_nw", starting_nw);
 
