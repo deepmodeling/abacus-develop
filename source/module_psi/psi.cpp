@@ -181,8 +181,8 @@ Psi<T, Device>::Psi(const Psi<T_in, Device_in>& psi_in)
     // We first malloc a memory in CPU, then cast the memory from T_in to T in CPU.
     // Finally, synchronize the memory from CPU to GPU.
     // This could help to reduce the peak memory usage of device.
-    else if (std::is_same<Device, DEVICE_GPU>::value && 
-             std::is_same<Device_in, DEVICE_CPU>::value) 
+    else if (std::is_same<Device, base_device::DEVICE_GPU>::value && 
+             std::is_same<Device_in, base_device::DEVICE_CPU>::value) 
     {
         auto * arr = (T*) malloc(sizeof(T) * psi_in.size());
         // cast the memory from T_in to T in CPU

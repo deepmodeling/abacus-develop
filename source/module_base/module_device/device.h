@@ -44,7 +44,7 @@ int get_device_kpar(const int& kpar);
  * @brief Get the device flag object
  * for module_io GlobalV::device_flag
  */
-std::string get_device_flag(const std::string& device, const std::string& ks_solver, const std::string& basis_type);
+std::string get_device_flag(const std::string& device, const std::string& ks_solver, const std::string& basis_type, const bool& gamma_only);
 
 #if __MPI
 int get_node_rank();
