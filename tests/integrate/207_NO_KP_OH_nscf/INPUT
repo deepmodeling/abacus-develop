@@ -1,0 +1,37 @@
+INPUT_PARAMETERS
+#Parameters (1.General)
+suffix			autotest
+calculation     nscf
+
+nbands			6
+symmetry		0
+pseudo_dir	../../PP_ORB
+orbital_dir	../../PP_ORB
+read_file_dir   ./
+gamma_only      0
+
+#Parameters (2.Iteration)
+ecutwfc			20
+scf_thr				1e-8
+scf_nmax			100
+
+#out_chg      1
+init_chg     file
+out_mat_hs2         1
+out_mat_r           1
+out_mat_t           1
+pw_diag_thr             0.00001
+
+#Parameters (3.Basis)
+basis_type		lcao
+
+#Parameters (4.Smearing)
+smearing_method		gauss
+smearing_sigma			0.002
+
+#Parameters (5.Mixing)
+mixing_type		broyden
+mixing_beta		0.7
+mixing_gg0      1.5
+
+ks_solver       scalapack_gvx

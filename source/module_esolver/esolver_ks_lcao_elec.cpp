@@ -710,6 +710,9 @@ void ESolver_KS_LCAO<TK, TR>::nscf(void)
         GlobalC::ld.cal_gedm(GlobalC::ucell.nat);
     }
 #endif
+
+    this->create_Output_Mat_Sparse(0).write();
+
     return;
 }
 
