@@ -4,7 +4,6 @@
 #include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "single_R_io.h"
-#include "module_hamilt_lcao/module_tddft/td_velocity.h"
 
 void ModuleIO::save_HSR_sparse(
     const int &istep,
@@ -54,26 +53,12 @@ void ModuleIO::save_HSR_sparse(
         {
             for (int ispin = 0; ispin < spin_loop; ++ispin)
             {
-                if(TD_Velocity::tddft_velocity)
+                auto iter = HR_sparse_ptr[ispin].find(R_coor);
+                if (iter != HR_sparse_ptr[ispin].end())
                 {
-                    auto iter = TD_Velocity::td_vel_op->HR_sparse_td_vel[ispin].find(R_coor);
-                    if (iter != TD_Velocity::td_vel_op->HR_sparse_td_vel[ispin].end())
+                    for (auto &row_loop : iter->second)
                     {
-                        for (auto &row_loop : iter->second)
-                        {
-                            H_nonzero_num[ispin][count] += row_loop.second.size();
-                        }
-                    }
-                }
-                else
-                {
-                    auto iter = HR_sparse_ptr[ispin].find(R_coor);
-                    if (iter != HR_sparse_ptr[ispin].end())
-                    {
-                        for (auto &row_loop : iter->second)
-                        {
-                            H_nonzero_num[ispin][count] += row_loop.second.size();
-                        }
+                        H_nonzero_num[ispin][count] += row_loop.second.size();
                     }
                 }
             }
@@ -294,14 +279,7 @@ void ModuleIO::save_HSR_sparse(
             {
                 if (GlobalV::NSPIN != 4)
                 {
-                    if(TD_Velocity::tddft_velocity)
-                    {
-                        output_single_R(g1[ispin], TD_Velocity::td_vel_op->HR_sparse_td_vel[ispin][R_coor], sparse_thr, binary, *lm.ParaV);
-                    }
-                    else
-                    {
-                        output_single_R(g1[ispin], HR_sparse_ptr[ispin][R_coor], sparse_thr, binary, *lm.ParaV);
-                    }
+                    output_single_R(g1[ispin], HR_sparse_ptr[ispin][R_coor], sparse_thr, binary, *lm.ParaV);
                 }
                 else
                 {

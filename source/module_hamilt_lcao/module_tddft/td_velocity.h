@@ -16,9 +16,6 @@ class TD_Velocity
     /// @brief Judge if in tddft calculation or not 
     static bool tddft_velocity;
 
-    /// @brief switch to control the output of HR
-    static bool out_mat_R;
-
     /// @brief pointer to the only TD_Velocity object itself
     static TD_Velocity* td_vel_op;
 
@@ -34,9 +31,6 @@ class TD_Velocity
     /// @brief total steps of read in At
     static int max_istep;
 
-    //For TDDFT velocity gague, to fix the output of HR
-    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> HR_sparse_td_vel[2];
-
     /// @brief Store the vector potential for tddft calculation
     ModuleBase::Vector3<double> cart_At;
 
@@ -51,9 +45,6 @@ class TD_Velocity
 
 
   private:
-
-    /// @brief destory HSR data stored
-    void destroy_HS_R_td_sparse(void);
 
     /// @brief output cart_At to output file
     void output_cart_At(const std::string &out_dir);
