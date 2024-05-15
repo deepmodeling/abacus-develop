@@ -38,6 +38,14 @@ if(ENABLE_LCAO)
       add_coverage(diag_cusolver)
     endif()
   endif()
+
+  if(ENABLE_PEXSI)
+  list(APPEND objects
+      diago_pexsi.cpp
+    )
+    add_subdirectory(module_pexsi)
+  endif()
+
 endif()
 
 add_library(
@@ -57,4 +65,5 @@ endif()
 IF (BUILD_TESTING)
   add_subdirectory(test)
   add_subdirectory(kernels/test)
+  message(STATUS "Building tests")
 endif()

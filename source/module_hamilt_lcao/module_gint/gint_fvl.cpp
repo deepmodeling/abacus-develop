@@ -2,6 +2,7 @@
 #include "module_base/timer.h"
 #include "module_base/ylm.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_base/memory.h"
 
 void Gint::gint_kernel_force(
 	const int na_grid,
@@ -91,6 +92,10 @@ void Gint::gint_kernel_force(
 			dpsir_ylm_xx.ptr_2D, dpsir_ylm_xy.ptr_2D, dpsir_ylm_xz.ptr_2D,
 			dpsir_ylm_yy.ptr_2D, dpsir_ylm_yz.ptr_2D, dpsir_ylm_zz.ptr_2D, svl_dphi);
 	}
+
+	size_t record_data = sizeof(double)*this->bxyz*(LD_pool+1)*6;
+	if(isstress) record_data += sizeof(double)*this->bxyz*(LD_pool+1)*6;
+	ModuleBase::Memory::record("Gint::gint_kernel_force",record_data);
 
     //release memories
 	delete[] block_iw;
@@ -307,6 +312,10 @@ void Gint::gint_kernel_force_meta(
 			array_yy.ptr_2D, array_yz.ptr_2D, array_zz.ptr_2D,
 			svl_dphi);
 	}
+
+	size_t record_data = sizeof(double)*this->bxyz*(LD_pool+1)*18;
+	if(isstress) record_data += sizeof(double)*this->bxyz*(LD_pool+1)*6;
+	ModuleBase::Memory::record("Gint::gint_kernel_force_meta",record_data);
 
     //release memories
 	delete[] block_iw;

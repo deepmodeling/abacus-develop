@@ -249,7 +249,27 @@ public:
     void read_pseudo(std::ofstream &ofs);
 	int find_type(const std::string &label);
 	void print_tau(void)const;
-	void print_stru_file(const std::string &fn, const int &type=1, const int &level=0)const; // mohan add 2011-03-22
+    /**
+     * @brief UnitCell class is too heavy, this function would be moved elsewhere. Print STRU file respect to given setting
+     * 
+     * @param fn STRU file name
+     * @param nspin GlobalV::NSPIN feed in
+     * @param direct true for direct coords, false for cartesian coords
+     * @param vol true for printing velocities
+     * @param magmom true for printing Mulliken population analysis produced magmom
+     * @param orb true for printing NUMERICAL_ORBITAL section
+     * @param dpks_desc true for printing NUMERICAL_DESCRIPTOR section
+     * @param iproc GlobalV::MY_RANK feed in
+     */
+	void print_stru_file(const std::string& fn,
+                         const int& nspin = 1,
+                         const bool& direct = false,
+                         const bool& vel = false,
+                         const bool& magmom = false,
+                         const bool& orb = false,
+                         const bool& dpks_desc = false,
+                         const int& iproc = 0
+                         ) const;
 	void check_dtau(void);
     void setup_cell_after_vc(std::ofstream &log); //LiuXh add 20180515
 	

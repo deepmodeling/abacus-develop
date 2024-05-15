@@ -92,15 +92,25 @@ void Relax_Driver<FPTYPE, Device>::relax_driver(ModuleESolver::ESolver *p_esolve
                                              stress_step); // pengfei Li 2018-05-14
                 }
                 // print structure
+                // changelog 20240509
+                // because I move out the dependence on GlobalV from UnitCell::print_stru_file
+                // so its parameter is calculated here
+                bool need_orb = GlobalV::BASIS_TYPE=="pw";
+                need_orb = need_orb && GlobalV::psi_initializer;
+                need_orb = need_orb && GlobalV::init_wfc.substr(0, 3)=="nao";
+                need_orb = need_orb || GlobalV::BASIS_TYPE=="lcao";
+                need_orb = need_orb || GlobalV::BASIS_TYPE=="lcao_in_pw";
                 std::stringstream ss, ss1;
                 ss << GlobalV::global_out_dir << "STRU_ION_D";
-                GlobalC::ucell.print_stru_file(ss.str(), 2, 0);
+                GlobalC::ucell.print_stru_file(ss.str(), GlobalV::NSPIN, true, GlobalV::CALCULATION == "md",
+                    GlobalV::out_mul, need_orb, GlobalV::deepks_setorb, GlobalV::MY_RANK);
 
                 if (Ions_Move_Basic::out_stru)
                 {
                     ss1 << GlobalV::global_out_dir << "STRU_ION";
                     ss1 << istep << "_D";
-                    GlobalC::ucell.print_stru_file(ss1.str(), 2, 0);
+                    GlobalC::ucell.print_stru_file(ss.str(), GlobalV::NSPIN, true, GlobalV::CALCULATION == "md",
+                        GlobalV::out_mul, need_orb, GlobalV::deepks_setorb, GlobalV::MY_RANK);
 
                     GlobalC::ucell.print_cell_cif("STRU_NOW.cif");
                 }
