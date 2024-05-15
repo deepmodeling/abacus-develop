@@ -137,7 +137,12 @@ std::string get_device_flag(const std::string& device,
     else if (device == "gpu")
     {
 #if ((defined __CUDA) || (defined __ROCM))
-        int device_num = device::get_device_num();
+        int device_num = -1;
+    #if defined(__CUDA)
+        cudaGetDeviceCount(&device_num);
+    #elif defined(__ROCM)
+        hipGetDeviceCount(&device_num);
+    #endif
         if (device_num <= 0)
         {
             std::string msg = "Cannot find GPU on this computer!";
