@@ -20,13 +20,13 @@ class ESolver_OF : public ESolver_FP
     ESolver_OF();
     ~ESolver_OF();
 
-    virtual void init(Input& inp, UnitCell& ucell) override;
+    virtual void before_all_runners(Input& inp, UnitCell& ucell) override;
 
     virtual void init_after_vc(Input& inp, UnitCell& ucell) override;
 
-    virtual void run(int istep, UnitCell& ucell) override;
+    virtual void runner(const int istep, UnitCell& ucell) override;
 
-    virtual void post_process() override;
+    virtual void after_all_runners() override;
 
     virtual double cal_energy() override;
 

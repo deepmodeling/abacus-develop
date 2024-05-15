@@ -29,7 +29,7 @@ namespace ModuleESolver
         ESolver_KS_LCAO();
         ~ESolver_KS_LCAO();
 
-        void init(Input& inp, UnitCell& cell) override;
+        void before_all_runners(Input& inp, UnitCell& cell) override;
 
         void init_after_vc(Input& inp, UnitCell& cell) override;
 
@@ -39,7 +39,7 @@ namespace ModuleESolver
 
         void cal_stress(ModuleBase::matrix &stress) override;
 
-        void post_process() override;
+        void after_all_runners() override;
 
         void nscf() override;
 

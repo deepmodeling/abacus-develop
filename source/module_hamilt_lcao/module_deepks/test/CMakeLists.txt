@@ -31,7 +31,7 @@ if(USE_ELPA)
       genelpa
   )
 endif()
-if(USE_CUSOLVER_LCAO)
+if(USE_CUDA)
   target_link_libraries(diag_cusolver)
 endif()
 
