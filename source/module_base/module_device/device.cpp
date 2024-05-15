@@ -3,6 +3,7 @@
 
 #include "module_base/tool_quit.h"
 
+#include <base/macros/macros.h>
 #include <cstring>
 #include <iostream>
 
