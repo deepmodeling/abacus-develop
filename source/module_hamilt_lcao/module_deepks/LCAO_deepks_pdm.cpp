@@ -34,7 +34,7 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<double, double
 {
     ModuleBase::TITLE("LCAO_Deepks", "cal_projected_DM");
 
-    int pdm_size;
+    int pdm_size = 0;
     if(!if_equiv)
     {
         pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);
@@ -290,7 +290,7 @@ void LCAO_Deepks::cal_projected_DM_k(const elecstate::DensityMatrix<std::complex
     Grid_Driver& GridD)
 {
 
-    int pdm_size;
+    int pdm_size = 0;
     if(!if_equiv)
     {
         pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);

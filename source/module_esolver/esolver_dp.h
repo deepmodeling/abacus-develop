@@ -36,7 +36,7 @@ class ESolver_DP : public ESolver
      * @param inp input parameters
      * @param cell unitcell information
      */
-    void init(Input& inp, UnitCell& cell) override;
+    void before_all_runners(Input& inp, UnitCell& cell) override;
 
     /**
      * @brief Run the DP solver for a given ion/md step and unit cell
@@ -44,7 +44,7 @@ class ESolver_DP : public ESolver
      * @param istep the current ion/md step
      * @param cell unitcell information
      */
-    void run(const int istep, UnitCell& cell) override;
+    void runner(const int istep, UnitCell& cell) override;
 
     /**
      * @brief get the total energy without ion kinetic energy
@@ -73,7 +73,7 @@ class ESolver_DP : public ESolver
      *
      * This function prints the final total energy of the DP model in eV to the output file along with some formatting.
      */
-    void post_process() override;
+    void after_all_runners() override;
 
   private:
     /**

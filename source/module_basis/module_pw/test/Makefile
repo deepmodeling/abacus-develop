@@ -110,10 +110,6 @@ matrix3.o\
 tool_quit.o\
 mymath.o\
 timer.o\
-formatter_fmt.o\
-formatter_physfmt.o\
-formatter_table.o\
-formatter_contextfmt.o\
 pw_basis.o\
 pw_distributer.o\
 pw_init.o\
