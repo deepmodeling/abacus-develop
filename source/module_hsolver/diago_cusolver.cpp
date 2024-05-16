@@ -117,15 +117,15 @@ namespace hsolver
         hamilt::MatrixBlock<T> h_mat_g, s_mat_g;
 
         // global psi for distribute
-        T* psi_g;
+        T* psi_g = nullptr;
 
         // get the context and process information
         int ctxt = ParaV->blacs_ctxt;
         int nprows, npcols, myprow, mypcol;
         Cblacs_gridinfo(ctxt, &nprows, &npcols, &myprow, &mypcol);
+        int num_procs = nprows * npcols;
         int myid = Cblacs_pnum(ctxt, myprow, mypcol);
         const int root_proc = Cblacs_pnum(ctxt, ParaV->desc[6], ParaV->desc[7]);
-
 #endif
 
         // Allocate memory for eigenvalues
@@ -135,29 +135,40 @@ namespace hsolver
         ModuleBase::timer::tick("DiagoCusolver", "cusolver");
 
 #ifdef __MPI
-        // gather matrices from processes to root process
-        gatherMatrix(myid, root_proc, h_mat, h_mat_g);
-        gatherMatrix(myid, root_proc, s_mat, s_mat_g);
+        if(num_procs > 1)
+        {
+            // gather matrices from processes to root process
+            gatherMatrix(myid, root_proc, h_mat, h_mat_g);
+            gatherMatrix(myid, root_proc, s_mat, s_mat_g);
+        }
 #endif
 
         // Call the dense diagonalization routine
 #ifdef __MPI
-        MPI_Barrier(MPI_COMM_WORLD);
-        if (myid == root_proc)
+        if(num_procs > 1)
         {
-            psi_g = new T[h_mat_g.row * h_mat_g.col];
-            this->dc.Dngvd(h_mat_g.col, h_mat_g.row, h_mat_g.p, s_mat_g.p, eigen.data(), psi_g);
+            MPI_Barrier(MPI_COMM_WORLD);
+            if (myid == root_proc)
+            {
+                psi_g = new T[h_mat_g.row * h_mat_g.col];
+                this->dc.Dngvd(h_mat_g.col, h_mat_g.row, h_mat_g.p, s_mat_g.p, eigen.data(), psi_g);
+            }
+            else
+            {
+                psi_g = new T[1];
+            }
+            MPI_Barrier(MPI_COMM_WORLD);
+            
+            // broadcast eigenvalues to all processes
+            MPI_Bcast(eigen.data(), GlobalV::NBANDS, MPI_DOUBLE, root_proc, MPI_COMM_WORLD);
+
+            // distribute psi to all processes
+            distributePsi(this->ParaV->desc_wfc, psi.get_pointer(), psi_g);
         }
         else
         {
-            psi_g = new T[1];
+            this->dc.Dngvd(h_mat.row, h_mat.col, h_mat.p, s_mat.p, eigen.data(), psi.get_pointer());
         }
-        MPI_Barrier(MPI_COMM_WORLD);
-        // broadcast eigenvalues to all processes
-        MPI_Bcast(eigen.data(), GlobalV::NBANDS, MPI_DOUBLE, root_proc, MPI_COMM_WORLD);
-
-        // distribute psi to all processes
-        distributePsi(this->ParaV->desc_wfc, psi.get_pointer(), psi_g);
 #else
         // Call the dense diagonalization routine
         this->dc.Dngvd(h_mat.row, h_mat.col, h_mat.p, s_mat.p, eigen.data(), psi.get_pointer());
@@ -165,15 +176,18 @@ namespace hsolver
         // Stop the timer for the cusolver operation
         ModuleBase::timer::tick("DiagoCusolver", "cusolver");
 
-        // Copy the eigenvalues and eigenvectors to the output arrays
+        // Copy the eigenvalues to the output arrays
         const int inc = 1;
         BlasConnector::copy(GlobalV::NBANDS, eigen.data(), inc, eigenvalue_in, inc);
 
         // Free allocated memory
 #ifdef __MPI
-        delete[] h_mat_g.p;
-        delete[] s_mat_g.p;
-        delete[] psi_g;
+        if(num_procs > 1)
+        {
+            delete[] h_mat_g.p;
+            delete[] s_mat_g.p;
+            delete[] psi_g;
+        }
 #endif
     }
 
