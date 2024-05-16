@@ -100,7 +100,6 @@ void Gint::gint_kernel_dvlocal(
 	//calculating f_mu(r) = v(r)*psi_mu(r)*dv
 	const Gint_Tools::Array_Pool<double> psir_vlbr3 = Gint_Tools::get_psir_vlbr3(
 			this->bxyz, na_grid, LD_pool, block_index, cal_flag, vldr3, psir_ylm.ptr_2D);
-	ModuleBase::Memory::record("Gint::gint_kernel_dvlocal",sizeof(double)*this->bxyz*(LD_pool+1)*5);
 	//integrate (psi_mu*v(r)*dv) * psi_nu on grid
 	//and accumulates to the corresponding element in Hamiltonian
 	this->cal_meshball_vlocal_k(

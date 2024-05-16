@@ -45,8 +45,8 @@ void TwoCenterTable::build(const RadialCollection& bra,
     ntab_ = 0;
     two_center_loop(bra, ket, &TwoCenterTable::_indexing);
 
-    table_.resize({ntab_, nr_},"TwoCenterTable::table_");
-    dtable_.resize({ntab_, nr_},"TwoCenterTable::dtable_");
+    table_.resize({ntab_, nr_});
+    dtable_.resize({ntab_, nr_});
     two_center_loop(bra, ket, &TwoCenterTable::_tabulate);
 }
 

@@ -217,21 +217,6 @@ void Tensor::resize(const TensorShape& new_shape) {
     shape_ = new_shape;
 }
 
-// Resize tensor object with the given tensor_shape ( Using for ModuleBase::Memory::record ) 
-void Tensor::resize(const TensorShape& new_shape, const std::string& record_str) {
-    if (shape_ == new_shape) {
-        return;
-    }
-    REQUIRES_OK(buffer_->OwnsMemory() || this->NumElements() == 0,
-        "Cannot resize a tensor that mapped from a given data buffer")
-    if (buffer_ && buffer_->GetAllocatedBytes() < new_shape.NumElements() * SizeOfType(data_type_)) {
-        buffer_->unref();
-        this->buffer_ = new TensorBuffer(GetAllocator(device_), new_shape.NumElements() * SizeOfType(data_type_));
-        ModuleBase::Memory::record(record_str,new_shape.NumElements() * SizeOfType(data_type_));
-    }
-    shape_ = new_shape;
-}
-
 Tensor& Tensor::operator=(const Tensor& other) {
     if (this == &other) {
         return *this;
