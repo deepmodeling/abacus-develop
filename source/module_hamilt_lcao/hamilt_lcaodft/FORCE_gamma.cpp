@@ -97,8 +97,6 @@ void Force_LCAO_gamma::ftable_gamma(const bool isforce,
             GlobalC::ld.check_projected_dm();
             GlobalC::ld.check_descriptor(GlobalC::ucell);
             GlobalC::ld.check_gedm();
-            GlobalC::ld.add_v_delta(GlobalC::ucell, GlobalC::ORB, GlobalC::GridD);
-            GlobalC::ld.check_v_delta();
 
             GlobalC::ld.cal_e_delta_band(dm_gamma);
             std::ofstream ofs("E_delta_bands.dat");

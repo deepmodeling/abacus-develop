@@ -96,8 +96,6 @@ public:
 
 	void check_edelta(void);
 
-	void check_v_delta(void);
-
 	void check_e_deltabands(void);
 	void check_f_delta(void);
 

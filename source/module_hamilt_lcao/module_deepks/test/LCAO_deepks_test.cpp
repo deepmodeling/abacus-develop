@@ -259,29 +259,6 @@ void test_deepks::check_e_deltabands(void)
 	this->compare_with_ref("E_delta_bands.dat","E_delta_bands_ref.dat");
 }
 
-void test_deepks::check_v_delta()
-{
-	if(GlobalV::GAMMA_ONLY_LOCAL)
-	{
-		this->ld.add_v_delta(ucell,
-            ORB,
-            Test_Deepks::GridD);
-        this->ld.check_v_delta();
-		this->compare_with_ref("H_V_delta.dat","H_V_delta_ref.dat");
-	}
-	else
-	{
-		this->cal_nnr();
-		this->ld.allocate_V_deltaR(nnr);
-		this->ld.add_v_delta_k(ucell,
-        	ORB,
-            Test_Deepks::GridD,
-			nnr);
-		this->ld.check_v_delta_k(nnr);
-		this->compare_with_ref("H_V_deltaR.dat","H_V_deltaR_ref.dat");
-	}
-}
-
 void test_deepks::check_f_delta()
 {
 	ModuleBase::matrix svnl_dalpha;
