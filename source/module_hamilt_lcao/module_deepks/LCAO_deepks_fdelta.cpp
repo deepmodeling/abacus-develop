@@ -133,27 +133,48 @@ void LCAO_Deepks::cal_f_delta_gamma(const std::vector<std::vector<double>>& dm,
 
                             assert(nlm1.size()==nlm2[0].size());
 
-                            int ib=0;
-                            for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)
+                            if(!if_equiv)
                             {
-                                for (int N0 = 0;N0 < orb.Alpha[0].getNchi(L0);++N0)
+                                int ib=0;
+                                for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)
                                 {
-                                    const int inl = this->inl_index[T0](I0, L0, N0);
-                                    const int nm = 2*L0+1;
-                                    for (int m1 = 0;m1 < nm; ++m1)
+                                    for (int N0 = 0;N0 < orb.Alpha[0].getNchi(L0);++N0)
                                     {
-                                        for (int m2 = 0; m2 < nm; ++m2)
+                                        const int inl = this->inl_index[T0](I0, L0, N0);
+                                        const int nm = 2*L0+1;
+                                        for (int m1 = 0;m1 < nm; ++m1)
                                         {
-                                            for(int dim=0;dim<3;dim++)
-                                            {                                            
-                                                nlm[dim] += this->gedm[inl][m1*nm+m2]*nlm1[ib+m1]*nlm2[dim][ib+m2];
+                                            for (int m2 = 0; m2 < nm; ++m2)
+                                            {
+                                                for(int dim=0;dim<3;dim++)
+                                                {                                            
+                                                    nlm[dim] += this->gedm[inl][m1*nm+m2]*nlm1[ib+m1]*nlm2[dim][ib+m2];
+                                                }
                                             }
                                         }
+                                        ib+=nm;
                                     }
-                                    ib+=nm;
                                 }
+                                assert(ib==nlm1.size());
                             }
-                            assert(ib==nlm1.size());
+                            else
+                            {
+                                int nproj = 0;
+                                for(int il = 0; il < this->lmaxd + 1; il++)
+                                {
+                                    nproj += (2 * il + 1) * orb.Alpha[0].getNchi(il);
+                                }
+                                for(int iproj = 0; iproj < nproj; iproj ++)
+                                {
+                                    for(int jproj = 0; jproj < nproj; jproj ++)
+                                    {
+                                        for(int dim=0;dim<3;dim++)
+                                        {
+                                            nlm[dim] += this->gedm[iat][iproj*nproj+jproj] * nlm1[iproj] * nlm2[dim][jproj];
+                                        }
+                                    }
+                                }                    
+                            }
 
                             // HF term is minus, only one projector for each atom force.
                             this->F_delta(iat, 0) -= 2 * *dm_current * nlm[0];
@@ -175,27 +196,48 @@ void LCAO_Deepks::cal_f_delta_gamma(const std::vector<std::vector<double>>& dm,
 
                                 assert(nlm1.size()==nlm2[0].size());                                
 
-                                int ib=0;
-                                for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)
+                                if(!if_equiv)
                                 {
-                                    for (int N0 = 0;N0 < orb.Alpha[0].getNchi(L0);++N0)
+                                    int ib=0;
+                                    for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)
                                     {
-                                        const int inl = this->inl_index[T0](I0, L0, N0);
-                                        const int nm = 2*L0+1;
-                                        for (int m1 = 0;m1 < nm; ++m1)
+                                        for (int N0 = 0;N0 < orb.Alpha[0].getNchi(L0);++N0)
                                         {
-                                            for (int m2 = 0; m2 < nm; ++m2)
+                                            const int inl = this->inl_index[T0](I0, L0, N0);
+                                            const int nm = 2*L0+1;
+                                            for (int m1 = 0;m1 < nm; ++m1)
                                             {
-                                                for(int dim=0;dim<3;dim++)
-                                                {                                            
-                                                    nlm_t[dim] += this->gedm[inl][m1*nm+m2]*nlm1[ib+m1]*nlm2[dim][ib+m2];
+                                                for (int m2 = 0; m2 < nm; ++m2)
+                                                {
+                                                    for(int dim=0;dim<3;dim++)
+                                                    {                                            
+                                                        nlm_t[dim] += this->gedm[inl][m1*nm+m2]*nlm1[ib+m1]*nlm2[dim][ib+m2];
+                                                    }
                                                 }
                                             }
+                                            ib+=nm;
                                         }
-                                        ib+=nm;
+                                    }
+                                    assert(ib==nlm1.size());
+                                }
+                                else
+                                {
+                                    int nproj = 0;
+                                    for(int il = 0; il < this->lmaxd + 1; il++)
+                                    {
+                                        nproj += (2 * il + 1) * orb.Alpha[0].getNchi(il);
+                                    }
+                                    for(int iproj = 0; iproj < nproj; iproj ++)
+                                    {
+                                        for(int jproj = 0; jproj < nproj; jproj ++)
+                                        {
+                                            for(int dim=0;dim<3;dim++)
+                                            {
+                                                nlm_t[dim] += this->gedm[iat][iproj*nproj+jproj] * nlm1[iproj] * nlm2[dim][jproj];
+                                            }
+                                        }
                                     }
                                 }
-                                assert(ib==nlm1.size());
 
                                 for(int ipol=0;ipol<3;ipol++)
                                 {
@@ -336,27 +378,48 @@ void LCAO_Deepks::cal_f_delta_k(const std::vector<std::vector<std::complex<doubl
 
                             assert(nlm1.size()==nlm2[0].size());
 
-                            int ib=0;
-                            for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)
+                            if(!if_equiv)
                             {
-                                for (int N0 = 0;N0 < orb.Alpha[0].getNchi(L0);++N0)
+                                int ib=0;
+                                for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)
                                 {
-                                    const int inl = this->inl_index[T0](I0, L0, N0);
-                                    const int nm = 2*L0+1;
-                                    for (int m1 = 0;m1 < nm; ++m1)
+                                    for (int N0 = 0;N0 < orb.Alpha[0].getNchi(L0);++N0)
                                     {
-                                        for (int m2 = 0; m2 < nm; ++m2)
+                                        const int inl = this->inl_index[T0](I0, L0, N0);
+                                        const int nm = 2*L0+1;
+                                        for (int m1 = 0;m1 < nm; ++m1)
                                         {
-                                            for(int dim=0;dim<3;dim++)
-                                            {                                            
-                                                nlm[dim] += this->gedm[inl][m1*nm+m2]*nlm1[ib+m1]*nlm2[dim][ib+m2];
+                                            for (int m2 = 0; m2 < nm; ++m2)
+                                            {
+                                                for(int dim=0;dim<3;dim++)
+                                                {                                            
+                                                    nlm[dim] += this->gedm[inl][m1*nm+m2]*nlm1[ib+m1]*nlm2[dim][ib+m2];
+                                                }
                                             }
                                         }
+                                        ib+=nm;
                                     }
-                                    ib+=nm;
+                                }
+                                assert(ib==nlm1.size());
+                            }
+                            else
+                            {
+                                int nproj = 0;
+                                for(int il = 0; il < this->lmaxd + 1; il++)
+                                {
+                                    nproj += (2 * il + 1) * orb.Alpha[0].getNchi(il);
+                                }
+                                for(int iproj = 0; iproj < nproj; iproj ++)
+                                {
+                                    for(int jproj = 0; jproj < nproj; jproj ++)
+                                    {
+                                        for(int dim=0;dim<3;dim++)
+                                        {
+                                            nlm[dim] += this->gedm[iat][iproj*nproj+jproj] * nlm1[iproj] * nlm2[dim][jproj];
+                                        }
+                                    }
                                 }
                             }
-                            assert(ib==nlm1.size());
 
                             // Pulay term is plus
                             this->F_delta(ibt2, 0) += 2.0 * *dm_current * nlm[0];
@@ -378,27 +441,48 @@ void LCAO_Deepks::cal_f_delta_k(const std::vector<std::vector<std::complex<doubl
 
                                 assert(nlm1.size()==nlm2[0].size());                                
 
-                                int ib=0;
-                                for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)
+                                if(!if_equiv)
                                 {
-                                    for (int N0 = 0;N0 < orb.Alpha[0].getNchi(L0);++N0)
+                                    int ib=0;
+                                    for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)
                                     {
-                                        const int inl = this->inl_index[T0](I0, L0, N0);
-                                        const int nm = 2*L0+1;
-                                        for (int m1 = 0;m1 < nm; ++m1)
+                                        for (int N0 = 0;N0 < orb.Alpha[0].getNchi(L0);++N0)
                                         {
-                                            for (int m2 = 0; m2 < nm; ++m2)
+                                            const int inl = this->inl_index[T0](I0, L0, N0);
+                                            const int nm = 2*L0+1;
+                                            for (int m1 = 0;m1 < nm; ++m1)
                                             {
-                                                for(int dim=0;dim<3;dim++)
-                                                {                                            
-                                                    nlm_t[dim] += this->gedm[inl][m1*nm+m2]*nlm1[ib+m1]*nlm2[dim][ib+m2];
+                                                for (int m2 = 0; m2 < nm; ++m2)
+                                                {
+                                                    for(int dim=0;dim<3;dim++)
+                                                    {                                            
+                                                        nlm_t[dim] += this->gedm[inl][m1*nm+m2]*nlm1[ib+m1]*nlm2[dim][ib+m2];
+                                                    }
                                                 }
                                             }
+                                            ib+=nm;
                                         }
-                                        ib+=nm;
+                                    }
+                                    assert(ib==nlm1.size());
+                                }
+                                else
+                                {
+                                    int nproj = 0;
+                                    for(int il = 0; il < this->lmaxd + 1; il++)
+                                    {
+                                        nproj += (2 * il + 1) * orb.Alpha[0].getNchi(il);
+                                    }
+                                    for(int iproj = 0; iproj < nproj; iproj ++)
+                                    {
+                                        for(int jproj = 0; jproj < nproj; jproj ++)
+                                        {
+                                            for(int dim=0;dim<3;dim++)
+                                            {
+                                                nlm_t[dim] += this->gedm[iat][iproj*nproj+jproj] * nlm1[iproj] * nlm2[dim][jproj];
+                                            }
+                                        }
                                     }
                                 }
-                                assert(ib==nlm1.size());
                                    
                                 for(int ipol=0;ipol<3;ipol++)
                                 {
