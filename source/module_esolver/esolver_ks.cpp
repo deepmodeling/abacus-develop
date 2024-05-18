@@ -455,16 +455,17 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
 		ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT SCF");
 
         // 3) print head
-		if(this->maxniter > 0)  
-		{
-			this->print_head(); //print the headline on the screen.
-		}
+		// if(this->maxniter > 0)  
+		// {
+		// 	this->print_head(); //print the headline on the screen.
+		// }
 
 		bool firstscf = true;
 		this->conv_elec = false;
 		this->niter = this->maxniter;
 
         // 4) SCF iterations
+		std::cout << " * * * * * *\n << Start SCF iteration." << std::endl;
 		for (int iter = 1; iter <= this->maxniter; ++iter)
 		{
             // 5) write head
@@ -622,7 +623,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
 				std::cout<<" SCF restart after this step!"<<std::endl;
 			}
 		}// end scf iterations
-
+		std::cout << " >> Leave SCF iteration.\n * * * * * *" << std::endl;
 
 #ifdef __RAPIDJSON
 		// 14) add Json of efermi energy converge
