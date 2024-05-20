@@ -8,7 +8,6 @@
 #include "module_base/blas_connector.h"
 #include "module_base/timer.h"
 #include "gint_tools.h"
-#include "module_base/memory.h"
 
 void Gint::gint_kernel_tau(
 	const int na_grid,
@@ -44,7 +43,6 @@ void Gint::gint_kernel_tau(
 		Gint_Tools::Array_Pool<double> dpsix_DM(this->bxyz, LD_pool);
 		Gint_Tools::Array_Pool<double> dpsiy_DM(this->bxyz, LD_pool);
 		Gint_Tools::Array_Pool<double> dpsiz_DM(this->bxyz, LD_pool);
-		ModuleBase::Memory::record("Gint::gint_kernel_tau",sizeof(double)*this->bxyz*(LD_pool+1)*7);
 		ModuleBase::GlobalFunc::ZEROS(dpsix_DM.ptr_1D, this->bxyz*LD_pool);
 		ModuleBase::GlobalFunc::ZEROS(dpsiy_DM.ptr_1D, this->bxyz*LD_pool);
 		ModuleBase::GlobalFunc::ZEROS(dpsiz_DM.ptr_1D, this->bxyz*LD_pool);
