@@ -818,17 +818,17 @@ ModuleIO::Output_Potential ESolver_KS<T, Device>::create_Output_Potential(int it
 //! mohan add 2024-05-12
 //------------------------------------------------------------------------------
 //! This is for mixed-precision pw/LCAO basis sets.
-template class ESolver_KS<std::complex<float>, psi::DEVICE_CPU>;
-template class ESolver_KS<std::complex<double>, psi::DEVICE_CPU>;
+template class ESolver_KS<std::complex<float>, base_device::DEVICE_CPU>;
+template class ESolver_KS<std::complex<double>, base_device::DEVICE_CPU>;
 
 //! This is for GPU codes.
 #if ((defined __CUDA) || (defined __ROCM))
-template class ESolver_KS<std::complex<float>, psi::DEVICE_GPU>;
-template class ESolver_KS<std::complex<double>, psi::DEVICE_GPU>;
+template class ESolver_KS<std::complex<float>, base_device::DEVICE_GPU>;
+template class ESolver_KS<std::complex<double>, base_device::DEVICE_GPU>;
 #endif
 
 //! This is for LCAO basis set.
 #ifdef __LCAO
-template class ESolver_KS<double, psi::DEVICE_CPU>;
+template class ESolver_KS<double, base_device::DEVICE_CPU>;
 #endif
 }

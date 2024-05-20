@@ -297,10 +297,10 @@ void ESolver_KS_PW<T, Device>::calcondw(const int nt,
     delete[] kappa;
 }
 
-template class ESolver_KS_PW<std::complex<float>, psi::DEVICE_CPU>;
-template class ESolver_KS_PW<std::complex<double>, psi::DEVICE_CPU>;
+template class ESolver_KS_PW<std::complex<float>, base_device::DEVICE_CPU>;
+template class ESolver_KS_PW<std::complex<double>, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class ESolver_KS_PW<std::complex<float>, psi::DEVICE_GPU>;
-template class ESolver_KS_PW<std::complex<double>, psi::DEVICE_GPU>;
+template class ESolver_KS_PW<std::complex<float>, base_device::DEVICE_GPU>;
+template class ESolver_KS_PW<std::complex<double>, base_device::DEVICE_GPU>;
 #endif
 } // namespace ModuleESolver

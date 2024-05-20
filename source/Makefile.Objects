@@ -23,6 +23,7 @@ VPATH=./src_global:\
 ./module_base/module_container/ATen/core:\
 ./module_base/module_container/ATen/kernels:\
 ./module_base/module_container/ATen/ops:\
+./module_base/module_device:\
 ./module_base/module_mixing:\
 ./module_md:\
 ./module_basis/module_pw:\
@@ -153,6 +154,8 @@ OBJS_BASE=abfs-vector3_order.o\
     plain_mixing.o\
     pulay_mixing.o\
     broyden_mixing.o\
+    memory_op.o\
+    device.o\
 
 
 OBJS_CELL=atom_pseudo.o\
@@ -353,8 +356,6 @@ OBJS_ORBITAL=ORB_atomic.o\
       projgen.o\
 
 OBJS_PSI=psi.o\
-    psi_memory_op.o\
-    device.o\
 
 OBJS_PSI_INITIALIZER=psi_initializer.o\
                      psi_initializer_random.o\

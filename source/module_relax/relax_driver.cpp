@@ -166,5 +166,5 @@ void Relax_Driver<FPTYPE, Device>::relax_driver(ModuleESolver::ESolver *p_esolve
     return;
 }
 
-template class Relax_Driver<float, psi::DEVICE_CPU>;
-template class Relax_Driver<double, psi::DEVICE_CPU>;
+template class Relax_Driver<float, base_device::DEVICE_CPU>;
+template class Relax_Driver<double, base_device::DEVICE_CPU>;

@@ -139,7 +139,7 @@ void Forces<FPTYPE, Device>::cal_force_us(ModuleBase::matrix& forcenl,
     ModuleBase::timer::tick("Forces", "cal_force_us");
 }
 
-template class Forces<double, psi::DEVICE_CPU>;
+template class Forces<double, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class Forces<double, psi::DEVICE_GPU>;
+template class Forces<double, base_device::DEVICE_GPU>;
 #endif

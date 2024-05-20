@@ -6,10 +6,10 @@ namespace hsolver
 {
 
 template <typename T>
-struct dngvd_op<T, psi::DEVICE_CPU>
+struct dngvd_op<T, base_device::DEVICE_CPU>
 {
     using Real = typename GetTypeReal<T>::type;
-    void operator()(const psi::DEVICE_CPU* d,
+    void operator()(const base_device::DEVICE_CPU* d,
                     const int nstart,
                     const int ldh,
                     const T* hcc,
@@ -81,10 +81,10 @@ struct dngvd_op<T, psi::DEVICE_CPU>
 };
 
 template <typename T>
-struct dngv_op<T, psi::DEVICE_CPU>
+struct dngv_op<T, base_device::DEVICE_CPU>
 {
     using Real = typename GetTypeReal<T>::type;
-    void operator()(const psi::DEVICE_CPU* d,
+    void operator()(const base_device::DEVICE_CPU* d,
                     const int nbase,
                     const int ldh,
                     const T* hcc,
@@ -138,10 +138,10 @@ struct dngv_op<T, psi::DEVICE_CPU>
 };
 
 template <typename T>
-struct dnevx_op<T, psi::DEVICE_CPU>
+struct dnevx_op<T, base_device::DEVICE_CPU>
 {
     using Real = typename GetTypeReal<T>::type;
-    void operator()(const psi::DEVICE_CPU* /*ctx*/,
+    void operator()(const base_device::DEVICE_CPU* /*ctx*/,
                     const int nstart,
                     const int ldh,
                     const T* hcc,     // hcc
@@ -233,10 +233,10 @@ struct dnevx_op<T, psi::DEVICE_CPU>
 };
 
 template <typename T>
-struct dngvx_op<T, psi::DEVICE_CPU>
+struct dngvx_op<T, base_device::DEVICE_CPU>
 {
     using Real = typename GetTypeReal<T>::type;
-    void operator()(const psi::DEVICE_CPU* d,
+    void operator()(const base_device::DEVICE_CPU* d,
                     const int nbase,
                     const int ldh,
                     T* hcc,
@@ -319,21 +319,21 @@ struct dngvx_op<T, psi::DEVICE_CPU>
     }
 };
 
-template struct dngvd_op<std::complex<float>, psi::DEVICE_CPU>;
-template struct dngvd_op<std::complex<double>, psi::DEVICE_CPU>;
+template struct dngvd_op<std::complex<float>, base_device::DEVICE_CPU>;
+template struct dngvd_op<std::complex<double>, base_device::DEVICE_CPU>;
 
-template struct dnevx_op<std::complex<float>, psi::DEVICE_CPU>;
-template struct dnevx_op<std::complex<double>, psi::DEVICE_CPU>;
+template struct dnevx_op<std::complex<float>, base_device::DEVICE_CPU>;
+template struct dnevx_op<std::complex<double>, base_device::DEVICE_CPU>;
 
-template struct dngvx_op<std::complex<float>, psi::DEVICE_CPU>;
-template struct dngvx_op<std::complex<double>, psi::DEVICE_CPU>;
+template struct dngvx_op<std::complex<float>, base_device::DEVICE_CPU>;
+template struct dngvx_op<std::complex<double>, base_device::DEVICE_CPU>;
 
-template struct dngv_op<std::complex<float>, psi::DEVICE_CPU>;
-template struct dngv_op<std::complex<double>, psi::DEVICE_CPU>;
+template struct dngv_op<std::complex<float>, base_device::DEVICE_CPU>;
+template struct dngv_op<std::complex<double>, base_device::DEVICE_CPU>;
 #ifdef __LCAO
-template struct dngvd_op<double, psi::DEVICE_CPU>;
-template struct dnevx_op<double, psi::DEVICE_CPU>;
-template struct dngvx_op<double, psi::DEVICE_CPU>;
-template struct dngv_op<double, psi::DEVICE_CPU>;
+template struct dngvd_op<double, base_device::DEVICE_CPU>;
+template struct dnevx_op<double, base_device::DEVICE_CPU>;
+template struct dngvx_op<double, base_device::DEVICE_CPU>;
+template struct dngv_op<double, base_device::DEVICE_CPU>;
 #endif
 } // namespace hsolver

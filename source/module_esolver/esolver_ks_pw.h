@@ -15,7 +15,7 @@
 namespace ModuleESolver
 {
 
-template<typename T, typename Device = psi::DEVICE_CPU>
+template <typename T, typename Device = base_device::DEVICE_CPU>
 class ESolver_KS_PW : public ESolver_KS<T, Device>
 {
 	private:
@@ -124,7 +124,7 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
     protected:
 
         //! hide the psi in ESolver_KS for tmp use
-        psi::Psi<std::complex<double>, psi::DEVICE_CPU>* psi = nullptr;
+      psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi = nullptr;
 
     private:
 
@@ -136,13 +136,14 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
 
         Device * ctx = {};
 
-        psi::AbacusDevice_t device = {};
+        base_device::AbacusDevice_t device = {};
 
         psi::Psi<T, Device>* kspw_psi = nullptr;
 
         psi::Psi<std::complex<double>, Device>* __kspw_psi = nullptr;
 
-        using castmem_2d_d2h_op = psi::memory::cast_memory_op<std::complex<double>, T, psi::DEVICE_CPU, Device>;
+        using castmem_2d_d2h_op
+            = base_device::memory::cast_memory_op<std::complex<double>, T, base_device::DEVICE_CPU, Device>;
     };
 }  // namespace ModuleESolver
 #endif

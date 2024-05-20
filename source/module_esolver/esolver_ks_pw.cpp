@@ -36,7 +36,7 @@
 #include "module_io/to_wannier90_pw.h"
 #include "module_io/winput.h"
 #include "module_io/write_wfc_r.h"
-#include "module_psi/kernels/device.h"
+#include "module_base/module_device/device.h"
 //---------------------------------------------------
 #include "module_psi/psi_initializer_atomic.h"
 #include "module_psi/psi_initializer_nao.h"
@@ -58,9 +58,9 @@ ESolver_KS_PW<T, Device>::ESolver_KS_PW()
 {
     this->classname = "ESolver_KS_PW";
     this->basisname = "PW";
-    this->device = psi::device::get_device_type<Device>(this->ctx);
+    this->device = base_device::get_device_type<Device>(this->ctx);
 #if ((defined __CUDA) || (defined __ROCM))
-    if (this->device == psi::GpuDevice)
+    if (this->device == base_device::GpuDevice)
     {
         hsolver::createGpuBlasHandle();
         hsolver::createGpuSolverHandle();
@@ -90,7 +90,7 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
         delete reinterpret_cast<hamilt::HamiltPW<T, Device>*>(this->p_hamilt);
         this->p_hamilt = nullptr;
     }
-    if (this->device == psi::GpuDevice)
+    if (this->device == base_device::GpuDevice)
     {
 #if defined(__CUDA) || defined(__ROCM)
         hsolver::destoryBLAShandle();
@@ -1016,7 +1016,7 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep)
         this->pelec->print_eigenvalue(GlobalV::ofs_running);
     }
 
-    if (this->device == psi::GpuDevice)
+    if (this->device == base_device::GpuDevice)
     {
         castmem_2d_d2h_op()(this->psi[0].get_device(),
                             this->kspw_psi[0].get_device(),
@@ -1527,10 +1527,10 @@ void ESolver_KS_PW<T, Device>::nscf(void)
     return;
 }
 
-template class ESolver_KS_PW<std::complex<float>, psi::DEVICE_CPU>;
-template class ESolver_KS_PW<std::complex<double>, psi::DEVICE_CPU>;
+template class ESolver_KS_PW<std::complex<float>, base_device::DEVICE_CPU>;
+template class ESolver_KS_PW<std::complex<double>, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class ESolver_KS_PW<std::complex<float>, psi::DEVICE_GPU>;
-template class ESolver_KS_PW<std::complex<double>, psi::DEVICE_GPU>;
+template class ESolver_KS_PW<std::complex<float>, base_device::DEVICE_GPU>;
+template class ESolver_KS_PW<std::complex<double>, base_device::DEVICE_GPU>;
 #endif
 } // namespace ModuleESolver
