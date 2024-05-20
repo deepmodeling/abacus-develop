@@ -1,7 +1,7 @@
 #include "spin_constrain.h"
 
 template <>
-std::vector<std::vector<std::vector<double>>> SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::convert(
+std::vector<std::vector<std::vector<double>>> SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::convert(
     const ModuleBase::matrix& orbMulP)
 {
     std::vector<std::vector<std::vector<double>>> AorbMulP;
@@ -32,7 +32,7 @@ std::vector<std::vector<std::vector<double>>> SpinConstrain<std::complex<double>
 }
 
 template <>
-void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::calculate_MW(
+void SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::calculate_MW(
     const std::vector<std::vector<std::vector<double>>>& AorbMulP)
 {
     size_t nw = this->get_nw();
@@ -101,10 +101,10 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::calculate_MW(
 }
 
 template <>
-void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::collect_MW(ModuleBase::matrix& MecMulP,
-                                                                      const ModuleBase::ComplexMatrix& mud,
-                                                                      int nw,
-                                                                      int isk)
+void SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::collect_MW(ModuleBase::matrix& MecMulP,
+                                                                              const ModuleBase::ComplexMatrix& mud,
+                                                                              int nw,
+                                                                              int isk)
 {
     if (this->nspin_ == 2)
     {

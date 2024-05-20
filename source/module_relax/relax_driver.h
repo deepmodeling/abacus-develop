@@ -6,7 +6,7 @@
 #include "relax_new/relax.h"
 #include "relax_old/relax_old.h"
 
-template<typename FPTYPE, typename Device = psi::DEVICE_CPU>
+template <typename FPTYPE, typename Device = base_device::DEVICE_CPU>
 class Relax_Driver
 {
 

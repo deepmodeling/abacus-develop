@@ -24,8 +24,8 @@ K_Vectors::~K_Vectors()
 class SpinConstrainTest : public testing::Test
 {
   protected:
-    SpinConstrain<std::complex<double>, psi::DEVICE_CPU>& sc
-        = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::getScInstance();
+    SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>& sc
+        = SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::getScInstance();
 };
 
 TEST_F(SpinConstrainTest, PrintTermination)
@@ -43,12 +43,12 @@ TEST_F(SpinConstrainTest, PrintTermination)
     sc.print_Mag_Force();
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Inner optimization for lambda ends."));
-    EXPECT_THAT(output, testing::HasSubstr("ATOM 1         0.0000000000e+00    0.0000000000e+00    0.0000000000e+00"));
-    EXPECT_THAT(output, testing::HasSubstr("ATOM 1         1.0000000000e+00    2.0000000000e+00    3.0000000000e+00"));
+    EXPECT_THAT(output, testing::HasSubstr("ATOM      1         0.0000000000         0.0000000000         0.0000000000"));
+    EXPECT_THAT(output, testing::HasSubstr("ATOM      1         1.0000000000         2.0000000000         3.0000000000"));
     EXPECT_THAT(output, testing::HasSubstr("Final optimal lambda (Ry/uB):"));
-    EXPECT_THAT(output, testing::HasSubstr("ATOM 1         1.0000000000e+00    2.0000000000e+00    3.0000000000e+00"));
+    EXPECT_THAT(output, testing::HasSubstr("ATOM      1         1.0000000000         2.0000000000         3.0000000000"));
     EXPECT_THAT(output, testing::HasSubstr("Magnetic force (Ry/uB):"));
-    EXPECT_THAT(output, testing::HasSubstr("ATOM 0        -1.0000000000e+00   -2.0000000000e+00   -3.0000000000e+00"));
+    EXPECT_THAT(output, testing::HasSubstr("ATOM      0        -1.0000000000        -2.0000000000        -3.0000000000"));
 }
 
 TEST_F(SpinConstrainTest, CheckRmsStop)

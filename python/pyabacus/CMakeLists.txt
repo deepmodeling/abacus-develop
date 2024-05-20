@@ -91,7 +91,8 @@ list(APPEND _naos
     ${NAO_PATH}/projgen.cpp
     # dependency
     ${ABACUS_SOURCE_DIR}/module_base/kernels/math_op.cpp
-    ${ABACUS_SOURCE_DIR}/module_psi/kernels/psi_memory_op.cpp
+    # ${ABACUS_SOURCE_DIR}/module_psi/kernels/psi_memory_op.cpp
+    ${ABACUS_SOURCE_DIR}/module_base/module_device/memory_op.cpp
     )
 add_library(naopack SHARED 
     ${_naos}

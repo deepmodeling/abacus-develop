@@ -1,5 +1,5 @@
 #include <module_hamilt_general/module_xc/kernels/xc_functional_op.h>
-#include <module_psi/kernels/device.h>
+#include "module_base/module_device/types.h"
 #include <thrust/complex.h>
 
 #include <base/macros/macros.h>
@@ -81,7 +81,7 @@ void xc_functional_grad_wfc_op<T, Device>::operator()(
     hipErrcheck(hipDeviceSynchronize());
 }
 
-template struct xc_functional_grad_wfc_op<std::complex<float> , psi::DEVICE_GPU>;
-template struct xc_functional_grad_wfc_op<std::complex<double>, psi::DEVICE_GPU>;
+template struct xc_functional_grad_wfc_op<std::complex<float>, base_device::DEVICE_GPU>;
+template struct xc_functional_grad_wfc_op<std::complex<double>, base_device::DEVICE_GPU>;
 
 } // namespace hamilt   

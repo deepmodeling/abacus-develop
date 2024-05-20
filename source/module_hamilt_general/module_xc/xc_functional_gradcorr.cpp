@@ -748,7 +748,17 @@ void XC_Functional::noncolin_rho(double *rhoout1, double *rhoout2, double *neg,
 	return;
 }
 
-template void XC_Functional::grad_wfc<std::complex<double>, psi::DEVICE_CPU, double>(const int ik, const double tpiba, const ModulePW::PW_Basis_K* wfc_basis, const std::complex<double>* rhog, std::complex<double>* grad);
+template void XC_Functional::grad_wfc<std::complex<double>, base_device::DEVICE_CPU, double>(
+    const int ik,
+    const double tpiba,
+    const ModulePW::PW_Basis_K* wfc_basis,
+    const std::complex<double>* rhog,
+    std::complex<double>* grad);
 #if __CUDA || __ROCM
-template void XC_Functional::grad_wfc<std::complex<double>, psi::DEVICE_GPU, double>(const int ik, const double tpiba, const ModulePW::PW_Basis_K* wfc_basis, const std::complex<double>* rhog, std::complex<double>* grad);
+template void XC_Functional::grad_wfc<std::complex<double>, base_device::DEVICE_GPU, double>(
+    const int ik,
+    const double tpiba,
+    const ModulePW::PW_Basis_K* wfc_basis,
+    const std::complex<double>* rhog,
+    std::complex<double>* grad);
 #endif // __CUDA || __ROCM
