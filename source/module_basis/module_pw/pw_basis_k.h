@@ -3,6 +3,7 @@
 
 #include "pw_basis.h"
 #include "module_psi/psi.h"
+#include "module_base/module_device/device.h"
 namespace ModulePW
 {
 

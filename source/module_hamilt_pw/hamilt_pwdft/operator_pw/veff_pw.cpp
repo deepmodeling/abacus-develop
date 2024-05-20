@@ -2,7 +2,6 @@
 
 #include "module_base/timer.h"
 #include "module_base/tool_quit.h"
-#include "module_psi/kernels/device.h"
 
 namespace hamilt {
 
@@ -127,12 +126,14 @@ hamilt::Veff<OperatorPW<T, Device>>::Veff(const Veff<OperatorPW<T_in, Device_in>
     }
 }
 
-template class Veff<OperatorPW<std::complex<float>, psi::DEVICE_CPU>>;
-template class Veff<OperatorPW<std::complex<double>, psi::DEVICE_CPU>>;
-// template Veff<OperatorPW<std::complex<double>, psi::DEVICE_CPU>>::Veff(const Veff<OperatorPW<std::complex<double>, psi::DEVICE_CPU>> *veff);
+template class Veff<OperatorPW<std::complex<float>, base_device::DEVICE_CPU>>;
+template class Veff<OperatorPW<std::complex<double>, base_device::DEVICE_CPU>>;
+// template Veff<OperatorPW<std::complex<double>, base_device::DEVICE_CPU>>::Veff(const
+// Veff<OperatorPW<std::complex<double>, base_device::DEVICE_CPU>> *veff);
 #if ((defined __CUDA) || (defined __ROCM))
-template class Veff<OperatorPW<std::complex<float>, psi::DEVICE_GPU>>;
-template class Veff<OperatorPW<std::complex<double>, psi::DEVICE_GPU>>;
-// template Veff<OperatorPW<std::complex<double>, psi::DEVICE_GPU>>::Veff(const Veff<OperatorPW<std::complex<double>, psi::DEVICE_GPU>> *veff);
+template class Veff<OperatorPW<std::complex<float>, base_device::DEVICE_GPU>>;
+template class Veff<OperatorPW<std::complex<double>, base_device::DEVICE_GPU>>;
+// template Veff<OperatorPW<std::complex<double>, base_device::DEVICE_GPU>>::Veff(const
+// Veff<OperatorPW<std::complex<double>, base_device::DEVICE_GPU>> *veff);
 #endif
 } // namespace hamilt

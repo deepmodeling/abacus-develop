@@ -4,7 +4,7 @@
 #include "module_elecstate/elecstate.h"
 #include "stress_func.h"
 
-template <typename FPTYPE, typename Device = psi::DEVICE_CPU>
+template <typename FPTYPE, typename Device = base_device::DEVICE_CPU>
 class Stress_PW : public Stress_Func<FPTYPE, Device>
 {
   public:

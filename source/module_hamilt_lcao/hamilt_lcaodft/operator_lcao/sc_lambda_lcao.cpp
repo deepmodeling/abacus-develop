@@ -18,7 +18,8 @@ void OperatorScLambda<OperatorLCAO<std::complex<double>, std::complex<double>>>:
 {
     ModuleBase::TITLE("OperatorScLambda", "contributeHk");
     ModuleBase::timer::tick("OperatorScLambda", "contributeHk");
-    SpinConstrain<std::complex<double>, psi::DEVICE_CPU>& sc = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::getScInstance();
+    SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>& sc
+        = SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::getScInstance();
     std::vector<std::complex<double>> h_lambda(this->LM->ParaV->nloc);
     std::fill(h_lambda.begin(), h_lambda.end(), std::complex<double>(0, 0));
     sc.cal_h_lambda(&h_lambda[0], this->LM->Sloc2, ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(), this->isk[ik]);
@@ -36,7 +37,8 @@ void OperatorScLambda<OperatorLCAO<std::complex<double>, double>>::contributeHk(
 {
     ModuleBase::TITLE("OperatorScLambda", "contributeHk");
     ModuleBase::timer::tick("OperatorScLambda", "contributeHk");
-    SpinConstrain<std::complex<double>, psi::DEVICE_CPU>& sc = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::getScInstance();
+    SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>& sc
+        = SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::getScInstance();
     std::vector<std::complex<double>> h_lambda(this->LM->ParaV->nloc);
     std::fill(h_lambda.begin(), h_lambda.end(), std::complex<double>(0, 0));
     sc.cal_h_lambda(&h_lambda[0], this->LM->Sloc2, ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(), this->isk[ik]);

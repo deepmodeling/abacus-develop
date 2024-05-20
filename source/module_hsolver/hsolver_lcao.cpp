@@ -264,7 +264,7 @@ void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>&
     else 
     {
 
-        using ct_Device = typename ct::PsiToContainer<psi::DEVICE_CPU>::type;
+        using ct_Device = typename ct::PsiToContainer<base_device::DEVICE_CPU>::type;
         auto cg = reinterpret_cast<DiagoCG<T>*>(this->pdiagh);
 
         hamilt::MatrixBlock<T> h_mat, s_mat;
