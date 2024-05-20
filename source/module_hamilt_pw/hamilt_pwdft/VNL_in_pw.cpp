@@ -444,7 +444,6 @@ void pseudopot_cell_vnl::getvnl(Device* ctx, const int& ik, std::complex<FPTYPE>
     resmem_var_op()(ctx, vkb1, nhm * npw, "VNL::vkb1");
 
     ModuleBase::Vector3<double>* _gk = new ModuleBase::Vector3<double>[npw];
-    ModuleBase::Memory::record("pseudopot_cell_vnl::_gk&atom",sizeof(ModuleBase::Vector3<double>)*npw+sizeof(int)*GlobalC::ucell.ntype*3);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096 / sizeof(FPTYPE))
 #endif
@@ -1514,7 +1513,6 @@ void pseudopot_cell_vnl::newq(const ModuleBase::matrix& veff, const ModulePW::PW
     ModuleBase::YlmReal::Ylm_Real(lmaxq * lmaxq, npw, rho_basis->gcar, ylmk0);
 
     double* qnorm = new double[npw];
-    ModuleBase::Memory::record("pseudopot_cell_vnl::ylmk0&qnorm",sizeof(double)*lmaxq*lmaxq*npw + sizeof(double)*npw);
     for (int ig = 0; ig < npw; ig++)
     {
         qnorm[ig] = rho_basis->gcar[ig].norm() * cell.tpiba;

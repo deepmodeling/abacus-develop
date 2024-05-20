@@ -3,7 +3,6 @@
 #include "module_base/constants.h"
 #include "module_base/timer.h"
 #include "module_base/parallel_reduce.h"
-#include "module_base/memory.h"
 
 namespace elecstate
 {
@@ -23,7 +22,6 @@ ModuleBase::matrix H_Hartree_pw::v_hartree(const UnitCell &cell,
 
     //  Hartree potential VH(r) from n(r)
     std::vector<std::complex<double>> Porter(rho_basis->nmaxgr);
-    ModuleBase::Memory::record("H_Hartree_pw::Porter",sizeof(std::complex<double>)*rho_basis->nmaxgr);
     const int nspin0 = (nspin == 2) ? 2 : 1;
     for (int is = 0; is < nspin0; is++)
     {
@@ -73,7 +71,6 @@ ModuleBase::matrix H_Hartree_pw::v_hartree(const UnitCell &cell,
     // Add hartree potential to the xc potential
     //==========================================
     ModuleBase::matrix v(nspin, rho_basis->nrxx);
-    ModuleBase::Memory::record("H_Hartree_pw::v_hartree",sizeof(double)*nspin*rho_basis->nrxx + sizeof(std::complex<double>)*rho_basis->npw);
     if (nspin == 4)
     {
 #ifdef _OPENMP
@@ -117,7 +114,6 @@ void PotHartree::cal_v_eff(const Charge* chg, const UnitCell* ucell, ModuleBase:
                 rho_tmp[is][ir] = chg->rho[is][ir] + chg->nhat[is][ir];
             }
         }
-        ModuleBase::Memory::record("PotHartree::rho_tmp",sizeof(double)*chg->nspin*rho_basis_->nrxx);
         v_eff += H_Hartree_pw::v_hartree(*ucell, const_cast<ModulePW::PW_Basis*>(this->rho_basis_), v_eff.nr, rho_tmp);
 
         for(int is = 0; is < chg->nspin; is++)

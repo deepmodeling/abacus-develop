@@ -16,8 +16,6 @@
 #include <ATen/core/tensor_map.h>
 #include <ATen/core/tensor_types.h>
 #include <module_hamilt_general/module_xc/kernels/xc_functional_op.h>
-#include <cstddef>
-#include "module_base/memory.h"
 
 // from gradcorr.f90
 void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
@@ -90,10 +88,6 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 
 	gdr1 = new ModuleBase::Vector3<double>[rhopw->nrxx];
 	if(!is_stress)	h1 = new ModuleBase::Vector3<double>[rhopw->nrxx];
-	// ModuleBase::Memory::record
-	size_t record_num = sizeof(ModuleBase::Vector3<double>)*rhopw->nrxx + sizeof(std::complex<double>)*rhopw->npw + sizeof(double)*rhopw->nrxx;
-	if(!is_stress) record_num += sizeof(ModuleBase::Vector3<double>)*rhopw->nrxx;
-	ModuleBase::Memory::record("XC_Functional::gradcorr", record_num);
 	
 	XC_Functional::grad_rho( rhogsum1 , gdr1, rhopw, ucell->tpiba);
 
@@ -120,11 +114,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 
 		gdr2 = new ModuleBase::Vector3<double>[rhopw->nrxx];
 		if(!is_stress) h2 = new ModuleBase::Vector3<double>[rhopw->nrxx];
-		// ModuleBase::Memory::record
-		record_num = sizeof(std::complex<double>)*rhopw->npw + sizeof(double)*rhopw->nrxx + sizeof(ModuleBase::Vector3<double>)*rhopw->nrxx;
-		if(!is_stress) record_num += sizeof(ModuleBase::Vector3<double>)*rhopw->nrxx;
-		ModuleBase::Memory::record("XC_Functional::gradcorr_2", record_num);
-
+		
 		XC_Functional::grad_rho( rhogsum2 , gdr2, rhopw, ucell->tpiba);
 	}
 
@@ -190,10 +180,6 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 
 		gdr2 = new ModuleBase::Vector3<double>[rhopw->nrxx];
 		h2 = new ModuleBase::Vector3<double>[rhopw->nrxx];
-		// ModuleBase::Memory::record
-		record_num = sizeof(std::complex<double>)*rhopw->npw + sizeof(double)*rhopw->nrxx*2 + sizeof(ModuleBase::Vector3<double>)*2*rhopw->nrxx;
-		if(!is_stress) record_num = record_num + sizeof(double)*GlobalV::NSPIN*rhopw->nrxx + sizeof(double)*nspin0*rhopw->nrxx;
-		ModuleBase::Memory::record("XC_Functional::gradcorr_4",record_num);
 
 		XC_Functional::grad_rho( rhogsum1 , gdr1, rhopw, ucell->tpiba);
 		XC_Functional::grad_rho( rhogsum2 , gdr2, rhopw, ucell->tpiba);
@@ -652,7 +638,6 @@ void XC_Functional::grad_rho(const std::complex<double>* rhog,
 {
 	std::complex<double> *gdrtmp = new std::complex<double>[rho_basis->nmaxgr];
 
-	ModuleBase::Memory::record("XC_Functional::gdrtmp",sizeof(std::complex<double>)*rho_basis->nmaxgr);
 	// the formula is : rho(r)^prime = \int iG * rho(G)e^{iGr} dG
 	for(int i = 0 ; i < 3 ; ++i)
 	{
@@ -683,7 +668,6 @@ void XC_Functional::grad_dot(const ModuleBase::Vector3<double> *h, double *dh, M
 {
 	std::complex<double> *aux = new std::complex<double>[rho_basis->nmaxgr];
 	std::complex<double> *gaux = new std::complex<double>[rho_basis->npw];
-	ModuleBase::Memory::record("XC_Functional::aux&gaux",sizeof(std::complex<double>)*(rho_basis->npw + rho_basis->nmaxgr));
 
 	for(int i = 0 ; i < 3 ; ++i)
 	{

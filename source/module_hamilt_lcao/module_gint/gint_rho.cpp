@@ -8,8 +8,6 @@
 #include "module_base/blas_connector.h"
 #include "module_base/timer.h"
 #include "gint_tools.h"
-#include "module_base/memory.h"
-
 
 void Gint::gint_kernel_rho(
 	const int na_grid,
@@ -35,7 +33,6 @@ void Gint::gint_kernel_rho(
 	for(int is=0; is<GlobalV::NSPIN; ++is)
 	{
 		Gint_Tools::Array_Pool<double> psir_DM(this->bxyz, LD_pool);
-		ModuleBase::Memory::record("Gint_Tools::gint_kernel_rho",sizeof(double)*this->bxyz*(LD_pool+1)*2);
 		ModuleBase::GlobalFunc::ZEROS(psir_DM.ptr_1D, this->bxyz*LD_pool);
 		if(GlobalV::GAMMA_ONLY_LOCAL)
 		{
