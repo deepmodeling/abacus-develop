@@ -37,7 +37,7 @@
 #include "module_hsolver/hsolver_lcao.h"
 #include "module_hsolver/hsolver_pw.h"
 #include "module_md/md_func.h"
-#include "module_psi/kernels/device.h"
+#include "module_base/module_device/device.h"
 
 template <typename T>
 void Input_Conv::parse_expression(const std::string &fn, std::vector<T> &vec)
@@ -311,11 +311,12 @@ void Input_Conv::Convert(void)
     GlobalV::MIN_DIST_COEF = INPUT.min_dist_coef;
     GlobalV::NBANDS = INPUT.nbands;
     GlobalV::NBANDS_ISTATE = INPUT.nbands_istate;
-    GlobalV::device_flag = psi::device::get_device_flag(INPUT.device, INPUT.ks_solver, INPUT.basis_type, INPUT.gamma_only_local);
+    
+    GlobalV::device_flag = base_device::information::get_device_flag(INPUT.device, INPUT.ks_solver, INPUT.basis_type, INPUT.gamma_only_local);
 
     if (GlobalV::device_flag == "gpu" && INPUT.basis_type == "pw")
     {
-        GlobalV::KPAR = psi::device::get_device_kpar(INPUT.kpar);
+        GlobalV::KPAR = base_device::information::get_device_kpar(INPUT.kpar);
     }
     else
     {
@@ -396,12 +397,12 @@ void Input_Conv::Convert(void)
     GlobalV::DIAGO_CG_PREC = INPUT.diago_cg_prec;
     GlobalV::PW_DIAG_NDIM = INPUT.pw_diag_ndim;
 
-    hsolver::HSolverPW<std::complex<float>, psi::DEVICE_CPU>::diago_full_acc = INPUT.diago_full_acc;
-    hsolver::HSolverPW<std::complex<double>, psi::DEVICE_CPU>::diago_full_acc = INPUT.diago_full_acc;
+    hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU>::diago_full_acc = INPUT.diago_full_acc;
+    hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU>::diago_full_acc = INPUT.diago_full_acc;
 
 #if ((defined __CUDA) || (defined __ROCM))
-    hsolver::HSolverPW<std::complex<float>, psi::DEVICE_GPU>::diago_full_acc = INPUT.diago_full_acc;
-    hsolver::HSolverPW<std::complex<double>, psi::DEVICE_GPU>::diago_full_acc = INPUT.diago_full_acc;
+    hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_GPU>::diago_full_acc = INPUT.diago_full_acc;
+    hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_GPU>::diago_full_acc = INPUT.diago_full_acc;
 #endif
 
     GlobalV::PW_DIAG_THR = INPUT.pw_diag_thr;

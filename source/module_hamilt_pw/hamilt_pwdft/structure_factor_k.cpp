@@ -2,7 +2,7 @@
 #include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/wf_op.h"
-#include "module_psi/kernels/device.h"
+#include "module_base/module_device/device.h"
 #include "structure_factor.h"
 std::complex<double>* Structure_Factor::get_sk(const int ik,
                                                const int it,
@@ -50,16 +50,16 @@ void Structure_Factor::get_sk(Device* ctx,
 {
     ModuleBase::timer::tick("Structure_Factor", "get_sk");
 
-    psi::DEVICE_CPU *cpu_ctx = {};
-    psi::AbacusDevice_t device = psi::device::get_device_type<Device>(ctx);
+    base_device::DEVICE_CPU* cpu_ctx = {};
+    base_device::AbacusDevice_t device = base_device::get_device_type<Device>(ctx);
     using cal_sk_op = hamilt::cal_sk_op<FPTYPE, Device>;
-    using resmem_int_op = psi::memory::resize_memory_op<int, Device>;
-    using delmem_int_op = psi::memory::delete_memory_op<int, Device>;
-    using syncmem_int_op = psi::memory::synchronize_memory_op<int, Device, psi::DEVICE_CPU>;
+    using resmem_int_op = base_device::memory::resize_memory_op<int, Device>;
+    using delmem_int_op = base_device::memory::delete_memory_op<int, Device>;
+    using syncmem_int_op = base_device::memory::synchronize_memory_op<int, Device, base_device::DEVICE_CPU>;
 
-    using resmem_var_op = psi::memory::resize_memory_op<FPTYPE, Device>;
-    using delmem_var_op = psi::memory::delete_memory_op<FPTYPE, Device>;
-    using syncmem_var_op = psi::memory::synchronize_memory_op<FPTYPE, Device, psi::DEVICE_CPU>;
+    using resmem_var_op = base_device::memory::resize_memory_op<FPTYPE, Device>;
+    using delmem_var_op = base_device::memory::delete_memory_op<FPTYPE, Device>;
+    using syncmem_var_op = base_device::memory::synchronize_memory_op<FPTYPE, Device, base_device::DEVICE_CPU>;
 
     int iat = 0, _npw = wfc_basis->npwk[ik], eigts1_nc = this->eigts1.nc, eigts2_nc = this->eigts2.nc,
             eigts3_nc = this->eigts3.nc;
@@ -83,7 +83,7 @@ void Structure_Factor::get_sk(Device* ctx,
         h_atom_tau[iat * 3 + 1] = static_cast<FPTYPE>(tau[ia * 3 + 1]);
         h_atom_tau[iat * 3 + 2] = static_cast<FPTYPE>(tau[ia * 3 + 2]);
     }
-    if (device == psi::GpuDevice)
+    if (device == base_device::GpuDevice)
     {
         resmem_int_op()(ctx, atom_na, GlobalC::ucell.ntype);
         syncmem_int_op()(ctx, cpu_ctx, atom_na, h_atom_na, GlobalC::ucell.ntype);
@@ -127,7 +127,7 @@ void Structure_Factor::get_sk(Device* ctx,
                 eigts2,
                 eigts3,
                 sk);
-    if (device == psi::GpuDevice)
+    if (device == base_device::GpuDevice)
     {
         delmem_int_op()(ctx, atom_na);
         delmem_var_op()(ctx, atom_tau);
@@ -156,21 +156,21 @@ std::complex<double>* Structure_Factor::get_skq(int ik,
     return skq;
 }
 
-template void Structure_Factor::get_sk<float, psi::DEVICE_CPU>(psi::DEVICE_CPU*,
-                                                               int,
-                                                               const ModulePW::PW_Basis_K*,
-                                                               std::complex<float>*) const;
-template void Structure_Factor::get_sk<double, psi::DEVICE_CPU>(psi::DEVICE_CPU*,
-                                                                int,
-                                                                const ModulePW::PW_Basis_K*,
-                                                                std::complex<double>*) const;
+template void Structure_Factor::get_sk<float, base_device::DEVICE_CPU>(base_device::DEVICE_CPU*,
+                                                                       int,
+                                                                       const ModulePW::PW_Basis_K*,
+                                                                       std::complex<float>*) const;
+template void Structure_Factor::get_sk<double, base_device::DEVICE_CPU>(base_device::DEVICE_CPU*,
+                                                                        int,
+                                                                        const ModulePW::PW_Basis_K*,
+                                                                        std::complex<double>*) const;
 #if defined(__CUDA) || defined(__ROCM)
-template void Structure_Factor::get_sk<float, psi::DEVICE_GPU>(psi::DEVICE_GPU*,
-                                                               int,
-                                                               const ModulePW::PW_Basis_K*,
-                                                               std::complex<float>*) const;
-template void Structure_Factor::get_sk<double, psi::DEVICE_GPU>(psi::DEVICE_GPU*,
-                                                                int,
-                                                                const ModulePW::PW_Basis_K*,
-                                                                std::complex<double>*) const;
+template void Structure_Factor::get_sk<float, base_device::DEVICE_GPU>(base_device::DEVICE_GPU*,
+                                                                       int,
+                                                                       const ModulePW::PW_Basis_K*,
+                                                                       std::complex<float>*) const;
+template void Structure_Factor::get_sk<double, base_device::DEVICE_GPU>(base_device::DEVICE_GPU*,
+                                                                        int,
+                                                                        const ModulePW::PW_Basis_K*,
+                                                                        std::complex<double>*) const;
 #endif

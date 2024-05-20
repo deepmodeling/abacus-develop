@@ -14,12 +14,12 @@
 #include "module_base/complexmatrix.h"
 #include "module_base/macros.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
-#include "module_psi/kernels/device.h"
+#include "module_base/module_device/device.h"
 
 namespace hsolver
 {
 
-template <typename T = std::complex<double>, typename Device = psi::DEVICE_CPU> 
+template <typename T = std::complex<double>, typename Device = base_device::DEVICE_CPU>
 class DiagoDavid : public DiagH<T, Device>
 {
   private:
@@ -73,8 +73,8 @@ class DiagoDavid : public DiagH<T, Device>
 
     /// device type of psi
     Device* ctx = {};
-    psi::DEVICE_CPU* cpu_ctx = {};
-    psi::AbacusDevice_t device = {};
+    base_device::DEVICE_CPU* cpu_ctx = {};
+    base_device::AbacusDevice_t device = {};
 
     void cal_grad(hamilt::Hamilt<T, Device>* phm_in,
                   const int& dim,
@@ -131,19 +131,19 @@ class DiagoDavid : public DiagH<T, Device>
                    psi::Psi<T, Device>& psi,
                    Real* eigenvalue_in);
 
-    using resmem_complex_op = psi::memory::resize_memory_op<T, Device>;
-    using delmem_complex_op = psi::memory::delete_memory_op<T, Device>;
-    using setmem_complex_op = psi::memory::set_memory_op<T, Device>;
-    using resmem_var_op = psi::memory::resize_memory_op<Real, Device>;
-    using delmem_var_op = psi::memory::delete_memory_op<Real, Device>;
-    using setmem_var_op = psi::memory::set_memory_op<Real, Device>;
+    using resmem_complex_op = base_device::memory::resize_memory_op<T, Device>;
+    using delmem_complex_op = base_device::memory::delete_memory_op<T, Device>;
+    using setmem_complex_op = base_device::memory::set_memory_op<T, Device>;
+    using resmem_var_op = base_device::memory::resize_memory_op<Real, Device>;
+    using delmem_var_op = base_device::memory::delete_memory_op<Real, Device>;
+    using setmem_var_op = base_device::memory::set_memory_op<Real, Device>;
 
-    using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<Real, Device, psi::DEVICE_CPU>;
-    using syncmem_var_d2h_op = psi::memory::synchronize_memory_op<Real, psi::DEVICE_CPU, Device>;
-    using syncmem_complex_op = psi::memory::synchronize_memory_op<T, Device, Device>;
-    using castmem_complex_op = psi::memory::cast_memory_op<std::complex<double>, T, Device, Device>;
-    using syncmem_h2d_op = psi::memory::synchronize_memory_op<T, Device, psi::DEVICE_CPU>;
-    using syncmem_d2h_op = psi::memory::synchronize_memory_op<T, psi::DEVICE_CPU, Device>;
+    using syncmem_var_h2d_op = base_device::memory::synchronize_memory_op<Real, Device, base_device::DEVICE_CPU>;
+    using syncmem_var_d2h_op = base_device::memory::synchronize_memory_op<Real, base_device::DEVICE_CPU, Device>;
+    using syncmem_complex_op = base_device::memory::synchronize_memory_op<T, Device, Device>;
+    using castmem_complex_op = base_device::memory::cast_memory_op<std::complex<double>, T, Device, Device>;
+    using syncmem_h2d_op = base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>;
+    using syncmem_d2h_op = base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>;
 
     using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
 

@@ -29,6 +29,7 @@
 #include "module_hamilt_lcao/module_hcontainer/atom_pair.h"
 #include "module_base/libm/libm.h"
 #include "module_base/blas_connector.h"
+#include "module_io/input.h"
 
 void LCAO_Deepks::cal_descriptor_equiv(const int nat)
 {
@@ -404,9 +405,78 @@ void LCAO_Deepks::load_model(const std::string& deepks_model)
 	return;
 }
 
+inline void generate_py_files(const int lmaxd, const int nmaxd)
+{
+    if(GlobalV::MY_RANK!=0) return;
+    std::ofstream ofs("cal_gedm.py");
+    ofs << "import torch" << std::endl;
+    ofs << "import numpy as np" << std::endl << std::endl;
+    ofs << "import sys" << std::endl;
+
+    ofs << "from deepks.scf.enn.scf import BasisInfo" << std::endl;
+    ofs << "from deepks.iterate.template_abacus import t_make_pdm" << std::endl;
+    ofs << "from deepks.utils import load_yaml" << std::endl << std::endl;
+    
+    ofs << "basis = load_yaml('basis.yaml')['proj_basis']" << std::endl;
+    ofs << "model = torch.jit.load(sys.argv[1])" << std::endl;
+    ofs << "dm_eig = np.expand_dims(np.load('dm_eig.npy'),0)" << std::endl;
+    ofs << "dm_eig = torch.tensor(dm_eig, dtype=torch.float64,requires_grad=True)" << std::endl << std::endl;
+    
+    ofs << "dm_flat,basis_info = t_make_pdm(dm_eig,basis)" << std::endl;
+    ofs << "ec = model(dm_flat.double())" << std::endl;
+    ofs << "gedm = torch.autograd.grad(ec,dm_eig,grad_outputs=torch.ones_like(ec))[0]" << std::endl << std::endl;
+
+    ofs << "np.save('ec.npy',ec.double().detach().numpy())" << std::endl;
+    ofs << "np.save('gedm.npy',gedm.double().numpy())" << std::endl;
+    ofs.close();
+
+    ofs.open("basis.yaml");
+    ofs << "proj_basis:" << std::endl;
+    for(int l = 0; l < lmaxd+1; l++)
+    {
+        ofs << "  - - " << l << std::endl;
+        ofs << "    - [";
+        for (int i = 0; i < nmaxd+1; i++)
+        {
+            ofs << "0";
+            if (i != nmaxd)
+            {
+                ofs << ", ";
+            }
+        }
+        ofs << "]" << std::endl;
+    }
+
+}
+
+void LCAO_Deepks::cal_gedm_equiv(const int nat)
+{
+    ModuleBase::TITLE("LCAO_Deepks", "cal_gedm_equiv");
+
+    this->save_npy_d(nat);
+    generate_py_files(this->lmaxd, this->nmaxd);
+    if(GlobalV::MY_RANK==0)
+    {
+        std::string cmd = "python cal_gedm.py " + INPUT.deepks_model;
+        int stat = std::system(cmd.c_str());
+        assert(stat == 0);
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    this->load_npy_gedm(nat);
+    std::string cmd = "rm -f cal_gedm.py basis.yaml";
+    std::system(cmd.c_str());
+}
+
 //obtain from the machine learning model dE_delta/dDescriptor
 void LCAO_Deepks::cal_gedm(const int nat)
 {
+    if(if_equiv)
+    {
+        this->cal_gedm_equiv(nat);
+        return;
+    }
+
     //using this->pdm_tensor
     ModuleBase::TITLE("LCAO_Deepks", "cal_gedm");
 

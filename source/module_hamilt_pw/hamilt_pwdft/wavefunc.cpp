@@ -467,34 +467,34 @@ void diago_PAO_in_pw_k2(const int &ik,
 }
 
 template <>
-void diago_PAO_in_pw_k2(const psi::DEVICE_CPU *ctx,
-                        const int &ik,
-                        psi::Psi<std::complex<float>, psi::DEVICE_CPU> &wvf,
-                        ModulePW::PW_Basis_K *wfc_basis,
-                        wavefunc *p_wf,
-                        hamilt::Hamilt<std::complex<float>, psi::DEVICE_CPU> *phm_in)
+void diago_PAO_in_pw_k2(const base_device::DEVICE_CPU* ctx,
+                        const int& ik,
+                        psi::Psi<std::complex<float>, base_device::DEVICE_CPU>& wvf,
+                        ModulePW::PW_Basis_K* wfc_basis,
+                        wavefunc* p_wf,
+                        hamilt::Hamilt<std::complex<float>, base_device::DEVICE_CPU>* phm_in)
 {
     diago_PAO_in_pw_k2(ik, wvf, wfc_basis, p_wf, phm_in);
 }
 template <>
-void diago_PAO_in_pw_k2(const psi::DEVICE_CPU *ctx,
-                        const int &ik,
-                        psi::Psi<std::complex<double>, psi::DEVICE_CPU> &wvf,
-                        ModulePW::PW_Basis_K *wfc_basis,
-                        wavefunc *p_wf,
-                        hamilt::Hamilt<std::complex<double>, psi::DEVICE_CPU> *phm_in)
+void diago_PAO_in_pw_k2(const base_device::DEVICE_CPU* ctx,
+                        const int& ik,
+                        psi::Psi<std::complex<double>, base_device::DEVICE_CPU>& wvf,
+                        ModulePW::PW_Basis_K* wfc_basis,
+                        wavefunc* p_wf,
+                        hamilt::Hamilt<std::complex<double>, base_device::DEVICE_CPU>* phm_in)
 {
     diago_PAO_in_pw_k2(ik, wvf, wfc_basis, p_wf, phm_in);
 }
 
 #if ((defined __CUDA) || (defined __ROCM))
 template <>
-void diago_PAO_in_pw_k2(const psi::DEVICE_GPU *ctx,
-                        const int &ik,
-                        psi::Psi<std::complex<float>, psi::DEVICE_GPU> &wvf,
-                        ModulePW::PW_Basis_K *wfc_basis,
-                        wavefunc *p_wf,
-                        hamilt::Hamilt<std::complex<float>, psi::DEVICE_GPU> *phm_in)
+void diago_PAO_in_pw_k2(const base_device::DEVICE_GPU* ctx,
+                        const int& ik,
+                        psi::Psi<std::complex<float>, base_device::DEVICE_GPU>& wvf,
+                        ModulePW::PW_Basis_K* wfc_basis,
+                        wavefunc* p_wf,
+                        hamilt::Hamilt<std::complex<float>, base_device::DEVICE_GPU>* phm_in)
 {
     ModuleBase::TITLE("wavefunc", "diago_PAO_in_pw_k2");
 
@@ -566,13 +566,12 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_GPU *ctx,
         if(phm_in!= nullptr)
         {
             std::vector<float> etatom(starting_nw, 0.0);
-            hsolver::DiagoIterAssist<std::complex<float>, psi::DEVICE_GPU>::diagH_subspace_init(
-                    phm_in,
-                    c_wfcatom,
-                    wfcatom.nr,
-                    wfcatom.nc,
-                    wvf,
-                    etatom.data());
+            hsolver::DiagoIterAssist<std::complex<float>, base_device::DEVICE_GPU>::diagH_subspace_init(phm_in,
+                                                                                                        c_wfcatom,
+                                                                                                        wfcatom.nr,
+                                                                                                        wfcatom.nc,
+                                                                                                        wvf,
+                                                                                                        etatom.data());
         }
         else
         {
@@ -584,14 +583,12 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_GPU *ctx,
     {
         assert(nbands <= wfcatom.nr);
         // replace by haozhihan 2022-11-23
-        hsolver::matrixSetToAnother<std::complex<float>, psi::DEVICE_GPU>()(
-                gpu_ctx,
-                nbands,
-                c_wfcatom,
-                wfcatom.nc,
-                &wvf(0,0),
-                nbasis
-        );
+        hsolver::matrixSetToAnother<std::complex<float>, base_device::DEVICE_GPU>()(gpu_ctx,
+                                                                                    nbands,
+                                                                                    c_wfcatom,
+                                                                                    wfcatom.nc,
+                                                                                    &wvf(0, 0),
+                                                                                    nbasis);
     }
     else if (GlobalV::KS_SOLVER=="bpcg") {
         castmem_z2c_h2d_op()(gpu_ctx, cpu_ctx, &wvf(0,0), wfcatom.c, wfcatom.nr * wfcatom.nc);
@@ -601,12 +598,12 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_GPU *ctx,
     }
 }
 template <>
-void diago_PAO_in_pw_k2(const psi::DEVICE_GPU *ctx,
-                        const int &ik,
-                        psi::Psi<std::complex<double>, psi::DEVICE_GPU> &wvf,
-                        ModulePW::PW_Basis_K *wfc_basis,
-                        wavefunc *p_wf,
-                        hamilt::Hamilt<std::complex<double>, psi::DEVICE_GPU> *phm_in)
+void diago_PAO_in_pw_k2(const base_device::DEVICE_GPU* ctx,
+                        const int& ik,
+                        psi::Psi<std::complex<double>, base_device::DEVICE_GPU>& wvf,
+                        ModulePW::PW_Basis_K* wfc_basis,
+                        wavefunc* p_wf,
+                        hamilt::Hamilt<std::complex<double>, base_device::DEVICE_GPU>* phm_in)
 {
     ModuleBase::TITLE("wavefunc", "diago_PAO_in_pw_k2");
 
@@ -677,14 +674,13 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_GPU *ctx,
 		if(phm_in!= nullptr)
 		{
 			std::vector<double> etatom(starting_nw, 0.0);
-			hsolver::DiagoIterAssist<std::complex<double>, psi::DEVICE_GPU>::diagH_subspace_init(
-					     phm_in,
-                         z_wfcatom,
-						 wfcatom.nr,
-						 wfcatom.nc,
-                         wvf,
-                         etatom.data());
-		}
+            hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::diagH_subspace_init(phm_in,
+                                                                                                         z_wfcatom,
+                                                                                                         wfcatom.nr,
+                                                                                                         wfcatom.nc,
+                                                                                                         wvf,
+                                                                                                         etatom.data());
+        }
 		else
 		{
 			//this diagonalization method is obsoleted now
@@ -695,15 +691,13 @@ void diago_PAO_in_pw_k2(const psi::DEVICE_GPU *ctx,
     {
 		assert(nbands <= wfcatom.nr);
 		// replace by haozhihan 2022-11-23
-        hsolver::matrixSetToAnother<std::complex<double>, psi::DEVICE_GPU>()(
-			gpu_ctx,
-			nbands,
-			z_wfcatom,
-			wfcatom.nc,
-			&wvf(0,0),
-			nbasis
-		);
-	}
+        hsolver::matrixSetToAnother<std::complex<double>, base_device::DEVICE_GPU>()(gpu_ctx,
+                                                                                     nbands,
+                                                                                     z_wfcatom,
+                                                                                     wfcatom.nc,
+                                                                                     &wvf(0, 0),
+                                                                                     nbasis);
+    }
     else if(GlobalV::KS_SOLVER=="bpcg") {
         syncmem_z2z_h2d_op()(gpu_ctx, cpu_ctx, &wvf(0,0), wfcatom.c, wfcatom.nr * wfcatom.nc);
     }

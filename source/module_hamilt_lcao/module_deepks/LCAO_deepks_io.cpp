@@ -59,6 +59,43 @@ void LCAO_Deepks::print_dm_k(const int nks, const std::vector<std::vector<std::c
     }
 }
 
+void LCAO_Deepks::load_npy_gedm(const int nat)
+{
+    ModuleBase::TITLE("LCAO_Deepks", "load_npy_gedm");
+
+    if(GlobalV::MY_RANK==0)
+    {
+        //load gedm.npy
+        std::vector<double> npy_gedm;
+        std::vector<unsigned long> dshape = {static_cast<unsigned long>(nat), static_cast<unsigned long>(this->des_per_atom)};
+        std::string gedm_file = "gedm.npy";
+        npy::LoadArrayFromNumpy(gedm_file, dshape, npy_gedm);
+
+        for (int iat = 0; iat < nat; iat++)
+        {
+            for(int ides = 0; ides < this->des_per_atom; ides++)
+            {
+                this->gedm[iat][ides] = npy_gedm[iat*this->des_per_atom + ides] * 2.0; //Ha to Ry
+            }
+        }
+
+        //load ec.npy
+        std::vector<double> npy_ec;
+        std::vector<unsigned long> eshape = { 1ul };
+        std::string ec_file = "ec.npy";
+        npy::LoadArrayFromNumpy(ec_file, eshape, npy_ec);
+        this->E_delta = npy_ec[0] * 2.0; //Ha to Ry
+    }
+
+#ifdef __MPI
+    for(int iat = 0; iat < nat; iat++)
+    {
+        MPI_Bcast(this->gedm[iat], this->des_per_atom, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    }
+    MPI_Bcast(&this->E_delta, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+#endif
+}
+
 //saves descriptor into dm_eig.npy
 void LCAO_Deepks::save_npy_d(const int nat)
 {

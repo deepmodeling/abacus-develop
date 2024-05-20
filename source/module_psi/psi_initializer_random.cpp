@@ -64,15 +64,15 @@ void psi_initializer_random<T, Device>::proj_ao_onkG(int ik)
     ModuleBase::timer::tick("psi_initializer_random", "initialize");
 }
 
-template class psi_initializer_random<std::complex<double>, psi::DEVICE_CPU>;
-template class psi_initializer_random<std::complex<float>, psi::DEVICE_CPU>;
+template class psi_initializer_random<std::complex<double>, base_device::DEVICE_CPU>;
+template class psi_initializer_random<std::complex<float>, base_device::DEVICE_CPU>;
 // gamma point calculation
-template class psi_initializer_random<double, psi::DEVICE_CPU>;
-template class psi_initializer_random<float, psi::DEVICE_CPU>;
+template class psi_initializer_random<double, base_device::DEVICE_CPU>;
+template class psi_initializer_random<float, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class psi_initializer_random<std::complex<double>, psi::DEVICE_GPU>;
-template class psi_initializer_random<std::complex<float>, psi::DEVICE_GPU>;
+template class psi_initializer_random<std::complex<double>, base_device::DEVICE_GPU>;
+template class psi_initializer_random<std::complex<float>, base_device::DEVICE_GPU>;
 // gamma point calculation
-template class psi_initializer_random<double, psi::DEVICE_GPU>;
-template class psi_initializer_random<float, psi::DEVICE_GPU>;
+template class psi_initializer_random<double, base_device::DEVICE_GPU>;
+template class psi_initializer_random<float, base_device::DEVICE_GPU>;
 #endif

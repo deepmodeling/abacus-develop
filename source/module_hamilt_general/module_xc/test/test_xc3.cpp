@@ -182,7 +182,7 @@ class XCTest_GRADWFC : public testing::Test
 
             grad = new std::complex<double>[15];
 
-            XC_Functional::grad_wfc<std::complex<double>, psi::DEVICE_CPU>(0, tpiba, &rhopw, rhog, grad);
+            XC_Functional::grad_wfc<std::complex<double>, base_device::DEVICE_CPU>(0, tpiba, &rhopw, rhog, grad);
         }
 };
 
