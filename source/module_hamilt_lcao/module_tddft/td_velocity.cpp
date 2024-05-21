@@ -62,10 +62,10 @@ void TD_Velocity::output_cart_At(const std::string &out_dir)
   return;
 }
 
-void TD_Velocity::cal_cart_At(ModuleBase::Vector3<double> a0, 
-                              ModuleBase::Vector3<double> a1, 
-                              ModuleBase::Vector3<double> a2,
-                              ModuleBase::Vector3<double> At)
+void TD_Velocity::cal_cart_At(const ModuleBase::Vector3<double> a0, 
+                              const ModuleBase::Vector3<double> a1, 
+                              const ModuleBase::Vector3<double> a2,
+                              const ModuleBase::Vector3<double> At)
 {
   istep++;
   if(init_vecpot_file)
@@ -74,7 +74,7 @@ void TD_Velocity::cal_cart_At(ModuleBase::Vector3<double> a0,
   }
   else
   {
-    double l_norm[3]={a0.norm() ,a1.norm() ,a2.norm()};
+    const double l_norm[3]={a0.norm() ,a1.norm() ,a2.norm()};
 	  this->cart_At = a0*At[0]/l_norm[0] + a1*At[1]/l_norm[1] + a2*At[2]/l_norm[2];
   }
   //output the vector potential if needed
