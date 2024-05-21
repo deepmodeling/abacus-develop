@@ -739,7 +739,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::P
         }
         else
         {
-            psi::memory::synchronize_memory_op<T, Device, Device>()(
+            base_device::memory::synchronize_memory_op<T, Device, Device>()(
                 this->ctx,
                 this->ctx,
                 spsi_out.data<T>(),
@@ -896,11 +896,11 @@ typename HSolverPW<T, Device>::Real HSolverPW<T, Device>::reset_diagethr(std::of
     return this->diag_ethr;
 }
 
-template class HSolverPW<std::complex<float>, psi::DEVICE_CPU>;
-template class HSolverPW<std::complex<double>, psi::DEVICE_CPU>;
+template class HSolverPW<std::complex<float>, base_device::DEVICE_CPU>;
+template class HSolverPW<std::complex<double>, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class HSolverPW<std::complex<float>, psi::DEVICE_GPU>;
-template class HSolverPW<std::complex<double>, psi::DEVICE_GPU>;
+template class HSolverPW<std::complex<float>, base_device::DEVICE_GPU>;
+template class HSolverPW<std::complex<double>, base_device::DEVICE_GPU>;
 #endif
 
 } // namespace hsolver

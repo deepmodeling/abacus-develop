@@ -1,5 +1,5 @@
 #include "esolver.h"
-#include "module_psi/kernels/device.h"
+#include "module_base/module_device/device.h"
 #include "esolver_ks_pw.h"
 #include "esolver_sdft_pw.h"
 #ifdef __LCAO
@@ -95,11 +95,11 @@ std::string determine_type(void)
 	if (GlobalV::MY_RANK == 0) 
 	{
 		std::cout << " RUNNING WITH DEVICE  : " << device_info << " / "
-			<< psi::device::get_device_info(GlobalV::device_flag) << std::endl;
+			<< base_device::information::get_device_info(GlobalV::device_flag) << std::endl;
 	}
 
 	GlobalV::ofs_running << "\n RUNNING WITH DEVICE  : " << device_info << " / "
-		<< psi::device::get_device_info(GlobalV::device_flag) << std::endl;
+		<< base_device::information::get_device_info(GlobalV::device_flag) << std::endl;
 
 	return esolver_type;
 }
@@ -119,24 +119,24 @@ void init_esolver(ESolver*& p_esolver)
 		{
 			if (GlobalV::precision_flag == "single") 
 			{
-				p_esolver = new ESolver_KS_PW<std::complex<float>, psi::DEVICE_GPU>();
-			}
+                p_esolver = new ESolver_KS_PW<std::complex<float>, base_device::DEVICE_GPU>();
+            }
 			else 
 			{
-				p_esolver = new ESolver_KS_PW<std::complex<double>, psi::DEVICE_GPU>();
-			}
+                p_esolver = new ESolver_KS_PW<std::complex<double>, base_device::DEVICE_GPU>();
+            }
 			return;
 		}
 #endif
 		if (GlobalV::precision_flag == "single") 
 		{
-			p_esolver = new ESolver_KS_PW<std::complex<float>, psi::DEVICE_CPU>();
-		}
-		else 
+            p_esolver = new ESolver_KS_PW<std::complex<float>, base_device::DEVICE_CPU>();
+        }
+        else 
 		{
-			p_esolver = new ESolver_KS_PW<std::complex<double>, psi::DEVICE_CPU>();
-		}
-	}
+            p_esolver = new ESolver_KS_PW<std::complex<double>, base_device::DEVICE_CPU>();
+        }
+    }
 #ifdef __LCAO
 	else if (esolver_type == "ksdft_lcao")
 	{

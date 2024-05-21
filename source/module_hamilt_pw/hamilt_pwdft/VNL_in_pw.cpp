@@ -13,7 +13,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/vnl_op.h"
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
-#include "module_psi/kernels/device.h"
+#include "module_base/module_device/device.h"
 
 pseudopot_cell_vnl::pseudopot_cell_vnl()
 {
@@ -325,10 +325,10 @@ void pseudopot_cell_vnl::getvnl(const int& ik, ModuleBase::ComplexMatrix& vkb_in
 
     ModuleBase::YlmReal::Ylm_Real(cpu_ctx, x1, npw, reinterpret_cast<double*>(gk), ylm.c);
 
-    using Device = psi::DEVICE_CPU;
+    using Device = base_device::DEVICE_CPU;
     Device* ctx = {};
-    using resmem_complex_op = psi::memory::resize_memory_op<std::complex<double>, Device>;
-    using delmem_complex_op = psi::memory::delete_memory_op<std::complex<double>, Device>;
+    using resmem_complex_op = base_device::memory::resize_memory_op<std::complex<double>, Device>;
+    using delmem_complex_op = base_device::memory::delete_memory_op<std::complex<double>, Device>;
     std::complex<double>* sk = nullptr;
     resmem_complex_op()(ctx, sk, GlobalC::ucell.nat * npw, "VNL::sk");
     this->psf->get_sk(ctx, ik, this->wfcpw, sk);
@@ -408,15 +408,16 @@ void pseudopot_cell_vnl::getvnl(Device* ctx, const int& ik, std::complex<FPTYPE>
     ModuleBase::timer::tick("pp_cell_vnl", "getvnl");
 
     using cal_vnl_op = hamilt::cal_vnl_op<FPTYPE, Device>;
-    using resmem_int_op = psi::memory::resize_memory_op<int, Device>;
-    using delmem_int_op = psi::memory::delete_memory_op<int, Device>;
-    using syncmem_int_op = psi::memory::synchronize_memory_op<int, Device, psi::DEVICE_CPU>;
-    using resmem_var_op = psi::memory::resize_memory_op<FPTYPE, Device>;
-    using delmem_var_op = psi::memory::delete_memory_op<FPTYPE, Device>;
-    using castmem_var_h2d_op = psi::memory::cast_memory_op<FPTYPE, double, Device, psi::DEVICE_CPU>;
-    using castmem_var_h2h_op = psi::memory::cast_memory_op<FPTYPE, double, psi::DEVICE_CPU, psi::DEVICE_CPU>;
-    using resmem_complex_op = psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
-    using delmem_complex_op = psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
+    using resmem_int_op = base_device::memory::resize_memory_op<int, Device>;
+    using delmem_int_op = base_device::memory::delete_memory_op<int, Device>;
+    using syncmem_int_op = base_device::memory::synchronize_memory_op<int, Device, base_device::DEVICE_CPU>;
+    using resmem_var_op = base_device::memory::resize_memory_op<FPTYPE, Device>;
+    using delmem_var_op = base_device::memory::delete_memory_op<FPTYPE, Device>;
+    using castmem_var_h2d_op = base_device::memory::cast_memory_op<FPTYPE, double, Device, base_device::DEVICE_CPU>;
+    using castmem_var_h2h_op
+        = base_device::memory::cast_memory_op<FPTYPE, double, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
+    using resmem_complex_op = base_device::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
+    using delmem_complex_op = base_device::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
 
     if (lmaxkb < 0)
     {
@@ -515,7 +516,7 @@ void pseudopot_cell_vnl::getvnl(Device* ctx, const int& ik, std::complex<FPTYPE>
     delmem_var_op()(ctx, ylm);
     delmem_var_op()(ctx, vkb1);
     delmem_complex_op()(ctx, sk);
-    if (psi::device::get_device_type<Device>(ctx) == psi::GpuDevice)
+    if (base_device::get_device_type<Device>(ctx) == base_device::GpuDevice)
     {
         delmem_var_op()(ctx, gk);
         delmem_int_op()(ctx, atom_nh);
@@ -1030,7 +1031,7 @@ void pseudopot_cell_vnl::radial_fft_q(Device* ctx,
                                       const FPTYPE* ylm,
                                       std::complex<FPTYPE>* qg) const
 {
-    using setmem_complex_op = psi::memory::set_memory_op<std::complex<FPTYPE>, Device>;
+    using setmem_complex_op = base_device::memory::set_memory_op<std::complex<FPTYPE>, Device>;
 
     // computes the indices which correspond to ih,jh
     const int nb = indv(itype, ih);
@@ -1795,52 +1796,52 @@ std::complex<double>* pseudopot_cell_vnl::get_qq_so_data() const
     return this->z_qq_so;
 }
 
-    template void pseudopot_cell_vnl::getvnl<float, psi::DEVICE_CPU>(psi::DEVICE_CPU*,
-                                                                     int const&,
-                                                                     std::complex<float>*) const;
-    template void pseudopot_cell_vnl::getvnl<double, psi::DEVICE_CPU>(psi::DEVICE_CPU*,
-                                                                      int const&,
-                                                                      std::complex<double>*) const;
+template void pseudopot_cell_vnl::getvnl<float, base_device::DEVICE_CPU>(base_device::DEVICE_CPU*,
+                                                                         int const&,
+                                                                         std::complex<float>*) const;
+template void pseudopot_cell_vnl::getvnl<double, base_device::DEVICE_CPU>(base_device::DEVICE_CPU*,
+                                                                          int const&,
+                                                                          std::complex<double>*) const;
 #if defined(__CUDA) || defined(__ROCM)
-    template void pseudopot_cell_vnl::getvnl<float, psi::DEVICE_GPU>(psi::DEVICE_GPU*,
-                                                                     int const&,
-                                                                     std::complex<float>*) const;
-    template void pseudopot_cell_vnl::getvnl<double, psi::DEVICE_GPU>(psi::DEVICE_GPU*,
-                                                                      int const&,
-                                                                      std::complex<double>*) const;
+template void pseudopot_cell_vnl::getvnl<float, base_device::DEVICE_GPU>(base_device::DEVICE_GPU*,
+                                                                         int const&,
+                                                                         std::complex<float>*) const;
+template void pseudopot_cell_vnl::getvnl<double, base_device::DEVICE_GPU>(base_device::DEVICE_GPU*,
+                                                                          int const&,
+                                                                          std::complex<double>*) const;
 #endif
 
-    template void pseudopot_cell_vnl::radial_fft_q<float, psi::DEVICE_CPU>(psi::DEVICE_CPU*,
-                                                                           const int,
-                                                                           const int,
-                                                                           const int,
-                                                                           const int,
-                                                                           const float*,
-                                                                           const float*,
-                                                                           std::complex<float>*) const;
-    template void pseudopot_cell_vnl::radial_fft_q<double, psi::DEVICE_CPU>(psi::DEVICE_CPU*,
-                                                                            const int,
-                                                                            const int,
-                                                                            const int,
-                                                                            const int,
-                                                                            const double*,
-                                                                            const double*,
-                                                                            std::complex<double>*) const;
+template void pseudopot_cell_vnl::radial_fft_q<float, base_device::DEVICE_CPU>(base_device::DEVICE_CPU*,
+                                                                               const int,
+                                                                               const int,
+                                                                               const int,
+                                                                               const int,
+                                                                               const float*,
+                                                                               const float*,
+                                                                               std::complex<float>*) const;
+template void pseudopot_cell_vnl::radial_fft_q<double, base_device::DEVICE_CPU>(base_device::DEVICE_CPU*,
+                                                                                const int,
+                                                                                const int,
+                                                                                const int,
+                                                                                const int,
+                                                                                const double*,
+                                                                                const double*,
+                                                                                std::complex<double>*) const;
 #if defined(__CUDA) || defined(__ROCM)
-    template void pseudopot_cell_vnl::radial_fft_q<float, psi::DEVICE_GPU>(psi::DEVICE_GPU*,
-                                                                           const int,
-                                                                           const int,
-                                                                           const int,
-                                                                           const int,
-                                                                           const float*,
-                                                                           const float*,
-                                                                           std::complex<float>*) const;
-    template void pseudopot_cell_vnl::radial_fft_q<double, psi::DEVICE_GPU>(psi::DEVICE_GPU*,
-                                                                            const int,
-                                                                            const int,
-                                                                            const int,
-                                                                            const int,
-                                                                            const double*,
-                                                                            const double*,
-                                                                            std::complex<double>*) const;
+    template void pseudopot_cell_vnl::radial_fft_q<float, base_device::DEVICE_GPU>(base_device::DEVICE_GPU*,
+                                                                                   const int,
+                                                                                   const int,
+                                                                                   const int,
+                                                                                   const int,
+                                                                                   const float*,
+                                                                                   const float*,
+                                                                                   std::complex<float>*) const;
+    template void pseudopot_cell_vnl::radial_fft_q<double, base_device::DEVICE_GPU>(base_device::DEVICE_GPU*,
+                                                                                    const int,
+                                                                                    const int,
+                                                                                    const int,
+                                                                                    const int,
+                                                                                    const double*,
+                                                                                    const double*,
+                                                                                    std::complex<double>*) const;
 #endif

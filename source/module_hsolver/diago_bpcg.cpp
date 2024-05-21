@@ -316,11 +316,11 @@ void DiagoBPCG<T, Device>::diag(
     return;
 }
 
-template class DiagoBPCG<std::complex<float>, psi::DEVICE_CPU>;
-template class DiagoBPCG<std::complex<double>, psi::DEVICE_CPU>;
+template class DiagoBPCG<std::complex<float>, base_device::DEVICE_CPU>;
+template class DiagoBPCG<std::complex<double>, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class DiagoBPCG<std::complex<float>, psi::DEVICE_GPU>;
-template class DiagoBPCG<std::complex<double>, psi::DEVICE_GPU>;
+template class DiagoBPCG<std::complex<float>, base_device::DEVICE_GPU>;
+template class DiagoBPCG<std::complex<double>, base_device::DEVICE_GPU>;
 #endif
 
 } // namespace hsolver

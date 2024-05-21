@@ -9,7 +9,7 @@
 #endif
 #include "module_base/constants.h"
 #include "module_base/global_function.h"
-#include "module_psi/kernels/types.h"
+#include "module_base/module_device/types.h"
 #include "pw_test.h"
 #include "gmock/gmock.h"
 
@@ -53,7 +53,7 @@ TEST_F(PWTEST,test_other)
     complex<float> * rhofr1 = new complex<float> [nrxx];
     complex<float> * rhofr2 = new complex<float> [nrxx];
 #endif
-    const psi::DEVICE_CPU * ctx;
+    const base_device::DEVICE_CPU* ctx;
     for(int ik = 0; ik < nks; ++ik)
     {
         const int npwk = pwktest.npwk[ik];

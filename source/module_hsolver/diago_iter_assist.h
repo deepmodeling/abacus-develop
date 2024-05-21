@@ -9,7 +9,7 @@
 namespace hsolver
 {
 
-template<typename T, typename Device = psi::DEVICE_CPU>
+template <typename T, typename Device = base_device::DEVICE_CPU>
 class DiagoIterAssist
 {
   private:
@@ -67,19 +67,21 @@ class DiagoIterAssist
 
     using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
 
-    using setmem_var_op = psi::memory::set_memory_op<Real, Device>;
-    using resmem_var_op = psi::memory::resize_memory_op<Real, Device>;
-    using delmem_var_op = psi::memory::delete_memory_op<Real, Device>;
-    using syncmem_var_op = psi::memory::synchronize_memory_op<Real, Device, Device>;
-    using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<Real, psi::DEVICE_GPU, psi::DEVICE_CPU>;
-    using syncmem_var_d2h_op = psi::memory::synchronize_memory_op<Real, psi::DEVICE_CPU, psi::DEVICE_GPU>;
+    using setmem_var_op = base_device::memory::set_memory_op<Real, Device>;
+    using resmem_var_op = base_device::memory::resize_memory_op<Real, Device>;
+    using delmem_var_op = base_device::memory::delete_memory_op<Real, Device>;
+    using syncmem_var_op = base_device::memory::synchronize_memory_op<Real, Device, Device>;
+    using syncmem_var_h2d_op
+        = base_device::memory::synchronize_memory_op<Real, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+    using syncmem_var_d2h_op
+        = base_device::memory::synchronize_memory_op<Real, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
 
-    using setmem_complex_op = psi::memory::set_memory_op<T, Device>;
-    using resmem_complex_op = psi::memory::resize_memory_op<T, Device>;
-    using delmem_complex_op = psi::memory::delete_memory_op<T, Device>;
-    using syncmem_complex_op = psi::memory::synchronize_memory_op<T, Device, Device>;
-    using syncmem_complex_h2d_op = psi::memory::synchronize_memory_op<T, Device, psi::DEVICE_CPU>;
-    using syncmem_complex_d2h_op = psi::memory::synchronize_memory_op<T, psi::DEVICE_CPU, Device>;
+    using setmem_complex_op = base_device::memory::set_memory_op<T, Device>;
+    using resmem_complex_op = base_device::memory::resize_memory_op<T, Device>;
+    using delmem_complex_op = base_device::memory::delete_memory_op<T, Device>;
+    using syncmem_complex_op = base_device::memory::synchronize_memory_op<T, Device, Device>;
+    using syncmem_complex_h2d_op = base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>;
+    using syncmem_complex_d2h_op = base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>;
 
     static T one;
     static T zero;

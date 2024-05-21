@@ -2,7 +2,7 @@
 #include "spin_constrain.h"
 
 template <>
-void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::print_termination()
+void SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::print_termination()
 {
     print_2d("after-optimization spin (uB): (print in the inner loop): ", this->Mi_, this->nspin_);
     print_2d("after-optimization lambda (Ry/uB): (print in the inner loop): ", this->lambda_, this->nspin_);
@@ -11,7 +11,11 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::print_termination()
 }
 
 template <>
-bool SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::check_rms_stop(int outer_step, int i_step, double rms_error, double duration, double total_duration)
+bool SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::check_rms_stop(int outer_step,
+                                                                                  int i_step,
+                                                                                  double rms_error,
+                                                                                  double duration,
+                                                                                  double total_duration)
 {
     std::cout << "Step (Outer -- Inner) =  " << outer_step << " -- " << std::left << std::setw(5) << i_step + 1
               << "       RMS = " << rms_error << "     TIME(s) = " << std::setw(11) << duration << std::endl;
@@ -35,7 +39,7 @@ bool SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::check_rms_stop(int ou
 
 /// print header
 template <>
-void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::print_header()
+void SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::print_header()
 {
     std::cout << "===============================================================================" << std::endl;
     std::cout << "Inner optimization for lambda begins ..." << std::endl;
@@ -44,7 +48,7 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::print_header()
 
 /// check restriction
 template <>
-void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::check_restriction(
+void SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::check_restriction(
     const std::vector<ModuleBase::Vector3<double>>& search,
     double& alpha_trial)
 {
@@ -61,7 +65,7 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::check_restriction(
 
 /// calculate alpha_opt
 template <>
-double SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_alpha_opt(
+double SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::cal_alpha_opt(
     std::vector<ModuleBase::Vector3<double>> spin,
     std::vector<ModuleBase::Vector3<double>> spin_plus,
     const double alpha_trial)
@@ -93,7 +97,7 @@ double SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_alpha_opt(
 
 /// check gradient decay
 template <>
-bool SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::check_gradient_decay(
+bool SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::check_gradient_decay(
     std::vector<ModuleBase::Vector3<double>> new_spin,
     std::vector<ModuleBase::Vector3<double>> spin,
     std::vector<ModuleBase::Vector3<double>> delta_lambda,

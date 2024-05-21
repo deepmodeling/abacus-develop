@@ -30,8 +30,8 @@ enum calculation_type
 // Basic class for operator module, 
 // it is designed for "O|psi>" and "<psi|O|psi>"
 // Operator "O" might have several different types, which should be calculated one by one.
-// In basic class , function add() is designed for combine all operators together with a chain. 
-template<typename T, typename Device = psi::DEVICE_CPU>
+// In basic class , function add() is designed for combine all operators together with a chain.
+template <typename T, typename Device = base_device::DEVICE_CPU>
 class Operator
 {
     public:
@@ -102,8 +102,7 @@ protected:
     T* get_hpsi(const hpsi_info& info)const;
 
     Device *ctx = {};
-    using set_memory_op = psi::memory::set_memory_op<T, Device>;
-
+    using set_memory_op = base_device::memory::set_memory_op<T, Device>;
 };
 
 }//end namespace hamilt

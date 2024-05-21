@@ -736,6 +736,17 @@ TEST_F(UcellTest,PrintCellCif)
 	remove("printcell.cif");
 }
 
+// Comments and suggestions on the refactor of UnitCell class
+// the test of this function may relies on a ABACUS STRU parser to fully rationally proceed.
+// however the parser is not easy to be ready cause the structure of STRU may need to be 
+// re-designed for being better-orgnized.
+// based on present situation, the unittest can only be feasibly written with substr check,
+// but will time and time again raise error if format change even a little bit.
+// if allow user to change the precision of quantities printed out, then this unittest cannot
+// cover these kind of cases.
+// In summmary, there are two cents:
+// 1. STRU file needed to be re-designed to be more well-organized
+// 2. STRU file parser can therefore be programmed more succinctly
 TEST_F(UcellTest,PrintSTRU)
 {
 	UcellTestPrepare utp = UcellTestLib["C1H2-Index"];
@@ -743,37 +754,105 @@ TEST_F(UcellTest,PrintSTRU)
 	ucell = utp.SetUcellInfo();
 	//Cartesian type of coordinates
 	std::string fn = "C1H2_STRU";
-	int type = 1; // for Cartesian
-	int level = 1;
-    GlobalV::CALCULATION = "md"; // print velocity in STRU
-	ucell->print_stru_file(fn,type,level);
+    GlobalV::CALCULATION = "md"; // print velocity in STRU, not needed anymore after refactor of this function
+
+	/**
+	 * CASE: nspin1|Cartesian|no vel|no mag|no orb|no dpks_desc|rank0
+	 * 
+	 */
+	ucell->print_stru_file(fn, 1, false, false, false, false, false, 0);
 	std::ifstream ifs;
 	ifs.open("C1H2_STRU");
-    	std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
-    	EXPECT_THAT(str, testing::HasSubstr("C 12 C.upf upf201"));
-    	EXPECT_THAT(str, testing::HasSubstr("H 1 H.upf upf201"));
-    	EXPECT_THAT(str, testing::HasSubstr("Cartesian"));
-    	EXPECT_THAT(str, testing::HasSubstr("H #label"));
-    	EXPECT_THAT(str, testing::HasSubstr("0 #magnetism"));
-    	EXPECT_THAT(str, testing::HasSubstr("2 #number of atoms"));
-    	EXPECT_THAT(str, testing::HasSubstr("1.5000000000     1.5000000000     1.5000000000 m  0  0  0 v     0.1000000000     0.1000000000     0.1000000000"));
-    	EXPECT_THAT(str, testing::HasSubstr("0.5000000000     0.5000000000     0.5000000000 m  0  0  1 v     0.1000000000     0.1000000000     0.1000000000"));
+    std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
+    EXPECT_THAT(str, testing::HasSubstr("ATOMIC_SPECIES"));
+    EXPECT_THAT(str, testing::HasSubstr("C  12.0000 C.upf upf201"));
+    EXPECT_THAT(str, testing::HasSubstr("H   1.0000 H.upf upf201"));
+	EXPECT_THAT(str, testing::HasSubstr("LATTICE_CONSTANT"));
+	EXPECT_THAT(str, testing::HasSubstr("1.8897261255"));
+	EXPECT_THAT(str, testing::HasSubstr("LATTICE_VECTORS"));
+	EXPECT_THAT(str, testing::HasSubstr("10.0000000000        0.0000000000        0.0000000000"));
+	EXPECT_THAT(str, testing::HasSubstr(" 0.0000000000       10.0000000000        0.0000000000"));
+	EXPECT_THAT(str, testing::HasSubstr(" 0.0000000000        0.0000000000       10.0000000000"));
+	EXPECT_THAT(str, testing::HasSubstr("ATOMIC_POSITIONS"));
+    EXPECT_THAT(str, testing::HasSubstr("Cartesian"));
+	EXPECT_THAT(str, testing::HasSubstr("C #label"));
+	EXPECT_THAT(str, testing::HasSubstr("0.0000   #magnetism"));
+	EXPECT_THAT(str, testing::HasSubstr("1 #number of atoms"));
+	EXPECT_THAT(str, testing::HasSubstr("        1.0000000000        1.0000000000        1.0000000000 m 1 1 1"));
+    EXPECT_THAT(str, testing::HasSubstr("H #label"));
+    EXPECT_THAT(str, testing::HasSubstr("0.0000   #magnetism"));
+    EXPECT_THAT(str, testing::HasSubstr("2 #number of atoms"));
+    EXPECT_THAT(str, testing::HasSubstr("        1.5000000000        1.5000000000        1.5000000000 m 0 0 0"));
+    EXPECT_THAT(str, testing::HasSubstr("        0.5000000000        0.5000000000        0.5000000000 m 0 0 1"));
 	str.clear();
 	ifs.close();
 	remove("C1H2_STRU");
-	//direct type of coordinates
-	type = 2; //for direct
-	ucell->print_stru_file(fn,type,level);
+	/**
+	 * CASE: nspin2|Direct|vel|no mag|no orb|no dpks_desc|rank0
+	 * 
+	 */
+	ucell->print_stru_file(fn, 2, true, true, false, false, false, 0);
 	ifs.open("C1H2_STRU");
-	str= {(std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>()};
-    	EXPECT_THAT(str, testing::HasSubstr("C 12 C.upf upf201"));
-    	EXPECT_THAT(str, testing::HasSubstr("H 1 H.upf upf201"));
-    	EXPECT_THAT(str, testing::HasSubstr("Direct"));
-    	EXPECT_THAT(str, testing::HasSubstr("H #label"));
-    	EXPECT_THAT(str, testing::HasSubstr("0 #magnetism"));
-    	EXPECT_THAT(str, testing::HasSubstr("2 #number of atoms"));
-    	EXPECT_THAT(str, testing::HasSubstr("0.1500000000     0.1500000000     0.1500000000 m  0  0  0 v     0.1000000000     0.1000000000     0.1000000000"));
-    	EXPECT_THAT(str, testing::HasSubstr("0.0500000000     0.0500000000     0.0500000000 m  0  0  1 v     0.1000000000     0.1000000000     0.1000000000"));
+	str = {(std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>()};
+    EXPECT_THAT(str, testing::HasSubstr("ATOMIC_SPECIES"));
+    EXPECT_THAT(str, testing::HasSubstr("C  12.0000 C.upf upf201"));
+    EXPECT_THAT(str, testing::HasSubstr("H   1.0000 H.upf upf201"));
+	EXPECT_THAT(str, testing::HasSubstr("LATTICE_CONSTANT"));
+	EXPECT_THAT(str, testing::HasSubstr("1.8897261255"));
+	EXPECT_THAT(str, testing::HasSubstr("LATTICE_VECTORS"));
+	EXPECT_THAT(str, testing::HasSubstr("10.0000000000        0.0000000000        0.0000000000"));
+	EXPECT_THAT(str, testing::HasSubstr(" 0.0000000000       10.0000000000        0.0000000000"));
+	EXPECT_THAT(str, testing::HasSubstr(" 0.0000000000        0.0000000000       10.0000000000"));
+	EXPECT_THAT(str, testing::HasSubstr("ATOMIC_POSITIONS"));
+    EXPECT_THAT(str, testing::HasSubstr("Direct"));
+	EXPECT_THAT(str, testing::HasSubstr("C #label"));
+	EXPECT_THAT(str, testing::HasSubstr("0.0000   #magnetism"));
+	EXPECT_THAT(str, testing::HasSubstr("1 #number of atoms"));
+	EXPECT_THAT(str, testing::HasSubstr("        0.1000000000        0.1000000000        0.1000000000 m 1 1 1 v        0.1000000000        0.1000000000        0.1000000000"));
+    EXPECT_THAT(str, testing::HasSubstr("H #label"));
+    EXPECT_THAT(str, testing::HasSubstr("0.0000   #magnetism"));
+    EXPECT_THAT(str, testing::HasSubstr("2 #number of atoms"));
+    EXPECT_THAT(str, testing::HasSubstr("        0.1500000000        0.1500000000        0.1500000000 m 0 0 0 v        0.1000000000        0.1000000000        0.1000000000"));
+    EXPECT_THAT(str, testing::HasSubstr("        0.0500000000        0.0500000000        0.0500000000 m 0 0 1 v        0.1000000000        0.1000000000        0.1000000000"));
+	str.clear();
+	ifs.close();
+	remove("C1H2_STRU");
+	/**
+	 * CASE: nspin2|Direct|no vel|mag|orb|dpks_desc|rank0
+	 * 
+	 */
+	ucell->descriptor_file = "__unittest_numerical_descriptor__";
+	ucell->orbital_fn[0] = "__unittest_orbital_fn_0__";
+	ucell->orbital_fn[1] = "__unittest_orbital_fn_1__";
+	ucell->atom_mulliken = {{-1, 0.5}, {-1, 0.4}, {-1, 0.3}}; // first index is iat, the second is components, starts seems from 1
+	ucell->print_stru_file(fn, 2, true, false, true, true, true, 0);
+	ifs.open("C1H2_STRU");
+	str = {(std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>()};
+    EXPECT_THAT(str, testing::HasSubstr("ATOMIC_SPECIES"));
+    EXPECT_THAT(str, testing::HasSubstr("C  12.0000 C.upf upf201"));
+    EXPECT_THAT(str, testing::HasSubstr("H   1.0000 H.upf upf201"));
+	EXPECT_THAT(str, testing::HasSubstr("NUMERICAL_ORBITAL"));
+	EXPECT_THAT(str, testing::HasSubstr("__unittest_orbital_fn_0__"));
+	EXPECT_THAT(str, testing::HasSubstr("__unittest_orbital_fn_1__"));
+	EXPECT_THAT(str, testing::HasSubstr("NUMERICAL_DESCRIPTOR"));
+	EXPECT_THAT(str, testing::HasSubstr("__unittest_numerical_descriptor__"));
+	EXPECT_THAT(str, testing::HasSubstr("LATTICE_CONSTANT"));
+	EXPECT_THAT(str, testing::HasSubstr("1.8897261255"));
+	EXPECT_THAT(str, testing::HasSubstr("LATTICE_VECTORS"));
+	EXPECT_THAT(str, testing::HasSubstr("10.0000000000        0.0000000000        0.0000000000"));
+	EXPECT_THAT(str, testing::HasSubstr(" 0.0000000000       10.0000000000        0.0000000000"));
+	EXPECT_THAT(str, testing::HasSubstr(" 0.0000000000        0.0000000000       10.0000000000"));
+	EXPECT_THAT(str, testing::HasSubstr("ATOMIC_POSITIONS"));
+    EXPECT_THAT(str, testing::HasSubstr("Direct"));
+	EXPECT_THAT(str, testing::HasSubstr("C #label"));
+	EXPECT_THAT(str, testing::HasSubstr("0.0000   #magnetism"));
+	EXPECT_THAT(str, testing::HasSubstr("1 #number of atoms"));
+	EXPECT_THAT(str, testing::HasSubstr("        0.1000000000        0.1000000000        0.1000000000 m 1 1 1 mag  0.5000"));
+    EXPECT_THAT(str, testing::HasSubstr("H #label"));
+    EXPECT_THAT(str, testing::HasSubstr("0.0000   #magnetism"));
+    EXPECT_THAT(str, testing::HasSubstr("2 #number of atoms"));
+    EXPECT_THAT(str, testing::HasSubstr("        0.1500000000        0.1500000000        0.1500000000 m 0 0 0 mag  0.4000"));
+    EXPECT_THAT(str, testing::HasSubstr("        0.0500000000        0.0500000000        0.0500000000 m 0 0 1 mag  0.3000"));
 	ifs.close();
 	remove("C1H2_STRU");
 }
@@ -789,9 +868,9 @@ TEST_F(UcellTest,PrintTauDirect)
 	GlobalV::ofs_running.close();
 	std::ifstream ifs;
 	ifs.open("print_tau_direct");
-    	std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
-    	EXPECT_THAT(str, testing::HasSubstr("DIRECT COORDINATES"));
-    	EXPECT_THAT(str, testing::HasSubstr("taud_C1        0.1000000000     0.1000000000     0.1000000000"));
+    std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
+    EXPECT_THAT(str, testing::HasSubstr("DIRECT COORDINATES"));
+    EXPECT_THAT(str, testing::HasSubstr("  C1            0.1000000000        0.1000000000        0.1000000000"));
 	ifs.close();
 	remove("print_tau_direct");
 }
@@ -809,7 +888,7 @@ TEST_F(UcellTest,PrintTauCartesian)
 	ifs.open("print_tau_Cartesian");
     	std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
     	EXPECT_THAT(str, testing::HasSubstr("CARTESIAN COORDINATES"));
-    	EXPECT_THAT(str, testing::HasSubstr("tauc_C1                   1                   1                   1"));
+    	EXPECT_THAT(str, testing::HasSubstr("  C1            1.0000000000        1.0000000000        1.0000000000"));
 	ifs.close();
 	remove("print_tau_Cartesian");
 }

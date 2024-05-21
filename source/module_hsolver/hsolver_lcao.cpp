@@ -16,6 +16,10 @@
 #ifdef __CUDA
 #include "diago_cusolver.h"
 #endif
+#ifdef __PEXSI
+#include "diago_pexsi.h"
+#include "module_elecstate/elecstate_lcao.h"
+#endif
 
 namespace hsolver
 {
@@ -139,6 +143,27 @@ void HSolverLCAO<T, Device>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
             this->pdiagh->method = this->method;
         }
     }
+#ifdef __PEXSI
+    else if (this->method == "pexsi")
+    {
+        if (this->pdiagh != nullptr)
+        {
+            if (this->pdiagh->method != this->method)
+            {
+                delete[] this->pdiagh;
+                this->pdiagh = nullptr;
+            }
+            auto tem = dynamic_cast<DiagoPexsi<T>*>(this->pdiagh);
+        }
+        if (this->pdiagh == nullptr)
+        {
+            DiagoPexsi<T>* tem = new DiagoPexsi<T>(this->ParaV);
+            this->pdiagh = tem;
+            // this->pdiagh = dynamic_cast<DiagoPexsi<T>*>(tem);
+            this->pdiagh->method = this->method;
+        }
+    }
+#endif
     else
     {
         ModuleBase::WARNING_QUIT("HSolverLCAO::solve", "This method of DiagH is not supported!");
@@ -183,7 +208,7 @@ void HSolverLCAO<T, Device>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
 
 
     if (this->method != "genelpa" && this->method != "scalapack_gvx" && this->method != "lapack"
-                        && this->method != "cusolver" && this->method != "cg_in_lcao")
+                        && this->method != "cusolver" && this->method != "cg_in_lcao" && this->method != "pexsi")
     {
         delete this->pdiagh;
         this->pdiagh = nullptr;
@@ -198,7 +223,21 @@ void HSolverLCAO<T, Device>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
 
     // calculate charge by psi
     // called in scf calculation
-    pes->psiToRho(psi);
+#ifdef __PEXSI
+    if (this->method == "pexsi")
+    {
+        DiagoPexsi<T>* tem = dynamic_cast<DiagoPexsi<T>*>(this->pdiagh);
+        if (tem==nullptr) ModuleBase::WARNING_QUIT("HSolverLCAO", "pexsi need debug!");
+        elecstate::ElecStateLCAO<T>* _pes = dynamic_cast<elecstate::ElecStateLCAO<T>*>(pes);
+        pes->f_en.eband = tem->totalFreeEnergy;
+        // maybe eferm could be dealt with in the future
+        _pes->dmToRho(tem->DM, tem->EDM);
+    }
+    else
+#endif
+    {
+        pes->psiToRho(psi);
+    }
     ModuleBase::timer::tick("HSolverLCAO", "solve");
 }
 
@@ -225,7 +264,7 @@ void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>&
     else 
     {
 
-        using ct_Device = typename ct::PsiToContainer<psi::DEVICE_CPU>::type;
+        using ct_Device = typename ct::PsiToContainer<base_device::DEVICE_CPU>::type;
         auto cg = reinterpret_cast<DiagoCG<T>*>(this->pdiagh);
 
         hamilt::MatrixBlock<T> h_mat, s_mat;

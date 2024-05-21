@@ -101,30 +101,29 @@ __global__ void cal_vnl(
 }
 
 template <typename FPTYPE>
-void cal_vnl_op<FPTYPE, psi::DEVICE_GPU>::operator() (
-    const psi::DEVICE_GPU *ctx,
-    const int &ntype,
-    const int &npw,
-    const int &npwx,
-    const int &nhm,
-    const int &NQX,
-    const int &tab_2,
-    const int &tab_3,
-    const int * atom_na,
-    const int * atom_nb,
-    const int * atom_nh,
-    const FPTYPE &DQ,
-    const FPTYPE &tpiba,
-    const std::complex<FPTYPE> &NEG_IMAG_UNIT,
-    const FPTYPE *gk,
-    const FPTYPE *ylm,
-    const FPTYPE *indv,
-    const FPTYPE *nhtol,
-    const FPTYPE *nhtolm,
-    const FPTYPE *tab,
-    FPTYPE *vkb1,
-    const std::complex<FPTYPE> *sk,
-    std::complex<FPTYPE> *vkb_in)
+void cal_vnl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* ctx,
+                                                             const int& ntype,
+                                                             const int& npw,
+                                                             const int& npwx,
+                                                             const int& nhm,
+                                                             const int& NQX,
+                                                             const int& tab_2,
+                                                             const int& tab_3,
+                                                             const int* atom_na,
+                                                             const int* atom_nb,
+                                                             const int* atom_nh,
+                                                             const FPTYPE& DQ,
+                                                             const FPTYPE& tpiba,
+                                                             const std::complex<FPTYPE>& NEG_IMAG_UNIT,
+                                                             const FPTYPE* gk,
+                                                             const FPTYPE* ylm,
+                                                             const FPTYPE* indv,
+                                                             const FPTYPE* nhtol,
+                                                             const FPTYPE* nhtolm,
+                                                             const FPTYPE* tab,
+                                                             FPTYPE* vkb1,
+                                                             const std::complex<FPTYPE>* sk,
+                                                             std::complex<FPTYPE>* vkb_in)
 {
     int block = (npw + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     hipLaunchKernelGGL(HIP_KERNEL_NAME(cal_vnl<FPTYPE>), dim3(block), dim3(THREADS_PER_BLOCK), 0, 0, 
@@ -140,7 +139,7 @@ void cal_vnl_op<FPTYPE, psi::DEVICE_GPU>::operator() (
     hipErrcheck(hipDeviceSynchronize());
 }
 
-template struct cal_vnl_op<float, psi::DEVICE_GPU>;
-template struct cal_vnl_op<double, psi::DEVICE_GPU>;
+template struct cal_vnl_op<float, base_device::DEVICE_GPU>;
+template struct cal_vnl_op<double, base_device::DEVICE_GPU>;
 
 }  // namespace hamilt

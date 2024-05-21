@@ -43,7 +43,7 @@ template <typename T>
 class SpinConstrainTest : public testing::Test
 {
   protected:
-    SpinConstrain<T, psi::DEVICE_CPU>& sc = SpinConstrain<T, psi::DEVICE_CPU>::getScInstance();
+    SpinConstrain<T, base_device::DEVICE_CPU>& sc = SpinConstrain<T, base_device::DEVICE_CPU>::getScInstance();
 };
 
 using MyTypes = ::testing::Types<double, std::complex<double>>;
@@ -399,11 +399,11 @@ TYPED_TEST(SpinConstrainTest, PrintMi)
     this->sc.print_Mi(true);
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Total Magnetism (uB):"));
-    EXPECT_THAT(output, testing::HasSubstr("ATOM 0         0.0000000000e+00    0.0000000000e+00    0.0000000000e+00"));
+    EXPECT_THAT(output, testing::HasSubstr("ATOM      0         0.0000000000         0.0000000000         0.0000000000"));
     this->sc.set_nspin(2);
      testing::internal::CaptureStdout();
     this->sc.print_Mi(true);
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Total Magnetism (uB):"));
-    EXPECT_THAT(output, testing::HasSubstr("ATOM 0         0.0000000000e+00"));
+    EXPECT_THAT(output, testing::HasSubstr("ATOM      0         0.0000000000"));
 }

@@ -26,7 +26,8 @@ K_Vectors::~K_Vectors()
 class SpinConstrainTest : public testing::Test
 {
   protected:
-    SpinConstrain<double, psi::DEVICE_CPU>& sc = SpinConstrain<double, psi::DEVICE_CPU>::getScInstance();
+    SpinConstrain<double, base_device::DEVICE_CPU>& sc
+        = SpinConstrain<double, base_device::DEVICE_CPU>::getScInstance();
 };
 
 TEST_F(SpinConstrainTest, TemplatHelpers)

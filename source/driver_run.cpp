@@ -61,12 +61,12 @@ void Driver::driver_run(void)
         // DEVICE should not depend on psi
         if (GlobalV::precision_flag == "single")
         {
-            Relax_Driver<float, psi::DEVICE_CPU> rl_driver;
+            Relax_Driver<float, base_device::DEVICE_CPU> rl_driver;
             rl_driver.relax_driver(p_esolver);
         }
         else
         {
-            Relax_Driver<double, psi::DEVICE_CPU> rl_driver;
+            Relax_Driver<double, base_device::DEVICE_CPU> rl_driver;
             rl_driver.relax_driver(p_esolver);
         }
     }
