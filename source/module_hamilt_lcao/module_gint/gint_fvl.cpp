@@ -14,7 +14,8 @@ void Gint::gint_kernel_force(
     const bool isforce,
     const bool isstress,
     ModuleBase::matrix* fvl_dphi,
-    ModuleBase::matrix* svl_dphi)
+    ModuleBase::matrix* svl_dphi,
+	const UnitCell& ucell)
 {
     //prepare block information
 	int* block_iw=nullptr;
@@ -117,7 +118,8 @@ void Gint::gint_kernel_force_meta(
     const bool isforce,
     const bool isstress,
     ModuleBase::matrix* fvl_dphi,
-    ModuleBase::matrix* svl_dphi)
+    ModuleBase::matrix* svl_dphi,
+	const UnitCell& ucell)
 {
     //prepare block information
 	int* block_iw=nullptr;

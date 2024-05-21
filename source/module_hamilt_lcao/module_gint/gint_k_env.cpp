@@ -9,15 +9,16 @@ void Gint_k::cal_env_k(int ik,
                        const std::complex<double>* psi_k, 
                        double* rho, 
                        const std::vector<ModuleBase::Vector3<double>>& kvec_c, 
-                       const std::vector<ModuleBase::Vector3<double>>& kvec_d)
+                       const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                       LCAO_Orbitals &orb,UnitCell &ucell)
 {
     ModuleBase::TITLE("Gint_k", "cal_env_k");
     ModuleBase::timer::tick("Gint_k", "cal_env_k");
 
     // it's a uniform grid to save orbital values, so the delta_r is a constant.
-    const double delta_r = GlobalC::ORB.dr_uniform;
+    const double delta_r = orb.dr_uniform;
 	const int max_size = this->gridt->max_atom;
-	const int LD_pool = max_size*GlobalC::ucell.nwmax;
+	const int LD_pool = max_size*ucell.nwmax;
 
     if (max_size != 0)
     {
@@ -58,9 +59,9 @@ void Gint_k::cal_env_k(int ik,
             {
                 const int mcell_index1 = this->gridt->bcell_start[grid_index] + ia1;
                 const int iat = this->gridt->which_atom[mcell_index1];
-                const int T1 = GlobalC::ucell.iat2it[iat];
-                Atom* atom1 = &GlobalC::ucell.atoms[T1];
-                const int I1 = GlobalC::ucell.iat2ia[iat];
+                const int T1 = ucell.iat2it[iat];
+                Atom* atom1 = &ucell.atoms[T1];
+                const int I1 = ucell.iat2ia[iat];
 
                 //find R by which_unitcell and cal kphase
                 const int id_ucell = this->gridt->which_unitcell[mcell_index1];
@@ -72,12 +73,12 @@ void Gint_k::cal_env_k(int ik,
                 //std::cout << "kvec_c: " << kvec_c[ik].x << " " << kvec_c[ik].y << " " << kvec_c[ik].z << std::endl;
                 //std::cout << "R: " << R.x << " " << R.y << " " << R.z << std::endl;
                 const double arg = (kvec_d[ik] * R) * ModuleBase::TWO_PI;
-                const double arg1 = (kvec_c[ik] * (R.x * GlobalC::ucell.a1 + R.y * GlobalC::ucell.a2 + R.z * GlobalC::ucell.a3)) * ModuleBase::TWO_PI;
+                const double arg1 = (kvec_c[ik] * (R.x * ucell.a1 + R.y * ucell.a2 + R.z * ucell.a3)) * ModuleBase::TWO_PI;
                 //std::cout << "arg0=" << arg << ", arg1=" << arg1 << std::endl;
                 const std::complex<double> kphase = std::complex <double>(cos(arg), sin(arg));
 
                 // get the start index of local orbitals.
-                const int start1 = GlobalC::ucell.itiaiw2iwt(T1, I1, 0);
+                const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
                 for (int ib = 0; ib < this->bxyz; ib++)
                 {
                     if (cal_flag[ib][ia1])

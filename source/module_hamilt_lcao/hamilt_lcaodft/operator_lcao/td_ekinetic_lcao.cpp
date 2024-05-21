@@ -5,6 +5,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb11.h"
 #include "module_elecstate/potentials/H_TDDFT_pw.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/spar_hsr.h"
 
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_base/libm/libm.h"
@@ -29,6 +30,10 @@ TDEkinetic<OperatorLCAO<TK, TR>>::TDEkinetic(LCAO_Matrix* LM_in,
         this->init_td();
         // initialize HR to get adjs info.
         this->initialize_HR(Grid,this->LM->ParaV);
+        if(TD_Velocity::out_mat_R == true)
+        {
+            out_mat_R = true;
+        }
     }
 template <typename TK, typename TR>
 TDEkinetic<OperatorLCAO<TK, TR>>::~TDEkinetic()
@@ -37,6 +42,7 @@ TDEkinetic<OperatorLCAO<TK, TR>>::~TDEkinetic()
     {
         delete this->hR_tmp;
     }
+    TD_Velocity::td_vel_op = nullptr;
 }
 //term A^2*S
 template <typename TK, typename TR>
@@ -185,22 +191,24 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1,
 template <typename TK, typename TR>
 void TDEkinetic<OperatorLCAO<TK, TR>>::init_td(void)
 {
+    TD_Velocity::td_vel_op = &td_velocity;
     //calculate At in cartesian coorinates.
-	double l_norm[3]={GlobalC::ucell.a1.norm() ,GlobalC::ucell.a2.norm() ,GlobalC::ucell.a3.norm()};
+	double l_norm[3]={this->ucell->a1.norm() ,this->ucell->a2.norm() ,this->ucell->a3.norm()};
     double (&A)[3] = elecstate::H_TDDFT_pw::At;
-	cart_At = GlobalC::ucell.a1*A[0]/l_norm[0] + GlobalC::ucell.a2*A[1]/l_norm[1] + GlobalC::ucell.a3*A[2]/l_norm[2];
+	cart_At = this->ucell->a1*A[0]/l_norm[0] + this->ucell->a2*A[1]/l_norm[1] + this->ucell->a3*A[2]/l_norm[2];
     std::cout << "cart_At: " << cart_At[0] << " " <<cart_At[1]<< " " << cart_At[2] << std::endl;
-	
+
     //init MOT,MGT
+    const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
     this->MOT.allocate(
-		GlobalC::ORB.get_ntype(),	// number of atom types
-		GlobalC::ORB.get_lmax(),	// max L used to calculate overlap
-		static_cast<int>(GlobalC::ORB.get_kmesh()) | 1,				// kpoints, for integration in k space
-		GlobalC::ORB.get_Rmax(),				// max value of radial table
-		GlobalC::ORB.get_dR(),								// delta R, for making radial table
-		GlobalC::ORB.get_dk());											// Peize Lin change 2017-04-16
+		orb.get_ntype(),	                                // number of atom types
+		orb.get_lmax(),	                                    // max L used to calculate overlap
+		static_cast<int>(orb.get_kmesh()) | 1,				// kpoints, for integration in k space
+		orb.get_Rmax(),				                        // max value of radial table
+		orb.get_dR(),								        // delta R, for making radial table
+		orb.get_dk());                                      // Peize Lin change 2017-04-16
 	int Lmax_used, Lmax;
-	this->MOT.init_Table_Spherical_Bessel (2, 1, Lmax_used, Lmax, 1, GlobalC::ORB, GlobalC::ucell.infoNL.Beta);
+	this->MOT.init_Table_Spherical_Bessel (2, 1, Lmax_used, Lmax, 1, orb, this->ucell->infoNL.Beta);
 
 	//=========================================
 	// (2) init Ylm Coef
@@ -214,17 +222,17 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::init_td(void)
 	this->MGT.init_Gaunt( Lmax );
 
     //init_radial table
-    for( size_t TA=0; TA!=GlobalC::ORB.get_ntype(); ++TA )
-		for( size_t TB=0; TB!=GlobalC::ORB.get_ntype(); ++TB )
-			for( int LA=0; LA<=GlobalC::ORB.Phi[TA].getLmax(); ++LA )
-				for( size_t NA=0; NA!=GlobalC::ORB.Phi[TA].getNchi(LA); ++NA )
-					for( int LB=0; LB<=GlobalC::ORB.Phi[TB].getLmax(); ++LB )
-						for( size_t NB=0; NB!=GlobalC::ORB.Phi[TB].getNchi(LB); ++NB )
+    for( size_t TA=0; TA!=orb.get_ntype(); ++TA )
+		for( size_t TB=0; TB!=orb.get_ntype(); ++TB )
+			for( int LA=0; LA<=orb.Phi[TA].getLmax(); ++LA )
+				for( size_t NA=0; NA!=orb.Phi[TA].getNchi(LA); ++NA )
+					for( int LB=0; LB<=orb.Phi[TB].getLmax(); ++LB )
+						for( size_t NB=0; NB!=orb.Phi[TB].getNchi(LB); ++NB )
 							center2_orb11_s[TA][TB][LA][NA][LB].insert(
 								std::make_pair(NB, 
                                 Center2_Orb::Orb11(
-									GlobalC::ORB.Phi[TA].PhiLN(LA,NA),
-									GlobalC::ORB.Phi[TB].PhiLN(LB,NB),
+									orb.Phi[TA].PhiLN(LA,NA),
+									orb.Phi[TB].PhiLN(LB,NB),
 									this->MOT, this->MGT)));
 	for( auto &coA : center2_orb11_s )
 		for( auto &coB : coA.second )
@@ -361,22 +369,39 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::contributeHk(int ik)
 template<>
 void TDEkinetic<OperatorLCAO<std::complex<double>, double>>::contributeHk(int ik)
 {
-    if (GlobalV::ESOLVER_TYPE != "tddft" || elecstate::H_TDDFT_pw::stype != 1)
+    if (TD_Velocity::tddft_velocity == false)
     {
         return;
     }
     else{        
         ModuleBase::TITLE("TDEkinetic", "contributeHk");
         ModuleBase::timer::tick("TDEkinetic", "contributeHk");
+        const Parallel_Orbitals* paraV = this->hR_tmp->get_atom_pair(0).get_paraV();
+        //save HR data for output
+        int spin_tot = paraV->nspin;
+        if(spin_tot==4);
+        else if(!output_hR_done && out_mat_R)
+        {
+            for(int spin_now = 0;spin_now < spin_tot;spin_now++)
+            {
+                sparse_format::cal_HContainer_cd(
+                    *(paraV),
+                    spin_now, 
+                    1e-10, 
+                    *hR_tmp, 
+                    td_velocity.HR_sparse_td_vel[spin_now]);
+            }
+            output_hR_done = true;
+        }
         //folding inside HR to HK
         if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
         {
-            const int nrow = this->LM->ParaV->get_row_size();
+            const int nrow = paraV->get_row_size();
             hamilt::folding_HR(*this->hR_tmp, this->hK->data(), this->kvec_d[ik], nrow, 1);
         }
         else
         {
-            const int ncol = this->LM->ParaV->get_col_size();
+            const int ncol = paraV->get_col_size();
             hamilt::folding_HR(*this->hR_tmp, this->hK->data(), this->kvec_d[ik], ncol, 0);
         }
         

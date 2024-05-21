@@ -534,17 +534,17 @@ void gemm_time_measure(int max_m,
  * in compilation time (TODO: so in the future, it will be necessary to split
  * this large section of code into multiple files, multiple compilation units).
  */
-void gemm_algo_selector(int matrix_k, matrix_multiple_func_type& fastest_algo)
+void gemm_algo_selector(int matrix_k, matrix_multiple_func_type& fastest_algo,const UnitCell& ucell)
 {
     int batchCount_per_type = 32;
     int batchCount
-        = batchCount_per_type * GlobalC::ucell.ntype * GlobalC::ucell.ntype;
+        = batchCount_per_type * ucell.ntype * ucell.ntype;
 
     Cuda_Mem_Wrapper<int> m(batchCount);
     Cuda_Mem_Wrapper<int> n(batchCount);
     Cuda_Mem_Wrapper<int> k(batchCount);
 
-    int max_m = GlobalC::ucell.nwmax, max_n = GlobalC::ucell.nwmax;
+    int max_m = ucell.nwmax, max_n = ucell.nwmax;
 
     Cuda_Mem_Wrapper<double> A(batchCount * max_m * matrix_k);
     Cuda_Mem_Wrapper<double> B(batchCount * max_n * matrix_k);
@@ -572,17 +572,17 @@ void gemm_algo_selector(int matrix_k, matrix_multiple_func_type& fastest_algo)
     int index = 0;
     for (int i = 0; i < batchCount_per_type; ++i)
     {
-        for (int j = 0; j < GlobalC::ucell.ntype; j++)
+        for (int j = 0; j < ucell.ntype; j++)
         {
-            for (int l = 0; l < GlobalC::ucell.ntype; l++)
+            for (int l = 0; l < ucell.ntype; l++)
             {
-                m.get_host_pointer()[index] = GlobalC::ucell.atoms[j].nw;
-                n.get_host_pointer()[index] = GlobalC::ucell.atoms[l].nw;
+                m.get_host_pointer()[index] = ucell.atoms[j].nw;
+                n.get_host_pointer()[index] = ucell.atoms[l].nw;
                 k.get_host_pointer()[index] = matrix_k;
 
                 lda.get_host_pointer()[index] = matrix_k;
                 ldb.get_host_pointer()[index] = matrix_k;
-                ldc.get_host_pointer()[index] = GlobalC::ucell.atoms[l].nw;
+                ldc.get_host_pointer()[index] = ucell.atoms[l].nw;
 
                 A_array.get_host_pointer()[index]
                     = &A.get_device_pointer()[index * max_m * matrix_k];

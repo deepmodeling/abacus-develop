@@ -4,7 +4,7 @@
 #include "module_base/global_variable.h"
 #include "module_base/matrix3.h"
 #include "grid_meshk.h"
-
+#include "module_cell/unitcell.h"
 class Grid_MeshCell: public Grid_MeshK
 {
 	public:
@@ -39,7 +39,7 @@ class Grid_MeshCell: public Grid_MeshK
 			const int &nbzp_in);
 
 
-	void init_latvec(void);
+	void init_latvec(const UnitCell &ucell);
     void init_meshcell_pos(void);
 
     void cal_extended_cell(const int &dxe, const int &dye, const int &dze);

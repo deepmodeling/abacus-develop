@@ -25,6 +25,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_lcao/module_tddft/evolve_elec.h"
+#include "module_hamilt_lcao/module_tddft/td_velocity.h"
 #endif
 #ifdef __PEXSI
 #include "module_hsolver/module_pexsi/pexsi_solver.h"
@@ -135,7 +136,22 @@ std::vector<double> Input_Conv::convert_units(std::string params, double c)
 void Input_Conv::read_td_efield()
 {
     elecstate::H_TDDFT_pw::stype = INPUT.td_stype;
-
+    if(INPUT.esolver_type == "tddft" && elecstate::H_TDDFT_pw::stype == 1)
+    {
+        TD_Velocity::tddft_velocity = true;
+    }
+    else
+    {
+        TD_Velocity::tddft_velocity = false;
+    }
+    if(INPUT.out_mat_hs2==1)
+    {
+        TD_Velocity::out_mat_R = true;
+    }
+    else
+    {
+        TD_Velocity::out_mat_R = false;
+    }
     parse_expression(INPUT.td_ttype, elecstate::H_TDDFT_pw::ttype);
 
     elecstate::H_TDDFT_pw::tstart = INPUT.td_tstart;

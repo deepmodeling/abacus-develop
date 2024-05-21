@@ -9,6 +9,7 @@
 #include "module_elecstate/module_charge/charge_mixing.h"
 #include "module_elecstate/occupy.h"
 #include "module_elecstate/potentials/H_TDDFT_pw.h"
+#include "module_hamilt_lcao/module_tddft/td_velocity.h"
 #include "module_elecstate/potentials/efield.h"
 #include "module_elecstate/potentials/gatefield.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"
@@ -76,6 +77,9 @@ double elecstate::H_TDDFT_pw::lcut1;
 double elecstate::H_TDDFT_pw::lcut2;
 
 // time domain parameters
+
+bool TD_Velocity::tddft_velocity;
+bool TD_Velocity::out_mat_R;
 
 // Gauss
 int elecstate::H_TDDFT_pw::gauss_count;

@@ -47,7 +47,19 @@ class ESolver
 
     // temporarily
     // get iterstep used in current scf
-    virtual int getniter()
+    virtual int get_niter()
+    {
+        return 0;
+    }
+
+    // get maxniter used in current scf
+    virtual int get_maxniter()
+    {
+        return 0;
+    }
+
+    // get conv_elec used in current scf
+    virtual bool get_conv_elec()
     {
         return 0;
     }
