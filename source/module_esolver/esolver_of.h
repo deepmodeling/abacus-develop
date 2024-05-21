@@ -34,7 +34,7 @@ class ESolver_OF : public ESolver_FP
 
     virtual void cal_stress(ModuleBase::matrix& stress) override;
 
-    virtual int getniter() override
+    virtual int get_niter() override
     {
         return this->iter_;
     }

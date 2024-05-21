@@ -9,7 +9,6 @@
 #include "module_base/constants.h"
 #include "module_base/math_integral.h"
 #include "module_base/cubic_spline.h"
-#include "module_base/memory.h"
 
 void TwoCenterTable::build(const RadialCollection& bra,
                            const RadialCollection& ket,
@@ -45,8 +44,8 @@ void TwoCenterTable::build(const RadialCollection& bra,
     ntab_ = 0;
     two_center_loop(bra, ket, &TwoCenterTable::_indexing);
 
-    table_.resize({ntab_, nr_},"TwoCenterTable::table_");
-    dtable_.resize({ntab_, nr_},"TwoCenterTable::dtable_");
+    table_.resize({ntab_, nr_});
+    dtable_.resize({ntab_, nr_});
     two_center_loop(bra, ket, &TwoCenterTable::_tabulate);
 }
 

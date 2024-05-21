@@ -5,6 +5,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb11.h"
 #include "module_elecstate/potentials/H_TDDFT_pw.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/spar_hsr.h"
 
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_base/libm/libm.h"
@@ -29,6 +30,10 @@ TDEkinetic<OperatorLCAO<TK, TR>>::TDEkinetic(LCAO_Matrix* LM_in,
         this->init_td();
         // initialize HR to get adjs info.
         this->initialize_HR(Grid,this->LM->ParaV);
+        if(TD_Velocity::out_mat_R == true)
+        {
+            out_mat_R = true;
+        }
     }
 template <typename TK, typename TR>
 TDEkinetic<OperatorLCAO<TK, TR>>::~TDEkinetic()
@@ -191,7 +196,6 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::init_td(void)
     td_velocity.cal_cart_At(this->ucell->a1, this->ucell->a2, this->ucell->a3, elecstate::H_TDDFT_pw::At);
     this->cart_At = td_velocity.cart_At;
     std::cout<<"cart_At: "<<cart_At[0]<< " "<<cart_At[1]<< " "<<cart_At[2]<<std::endl;
-    
 
     //init MOT,MGT
     const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
@@ -372,6 +376,22 @@ void TDEkinetic<OperatorLCAO<std::complex<double>, double>>::contributeHk(int ik
         ModuleBase::TITLE("TDEkinetic", "contributeHk");
         ModuleBase::timer::tick("TDEkinetic", "contributeHk");
         const Parallel_Orbitals* paraV = this->hR_tmp->get_atom_pair(0).get_paraV();
+        //save HR data for output
+        int spin_tot = paraV->nspin;
+        if(spin_tot==4);
+        else if(!output_hR_done && out_mat_R)
+        {
+            for(int spin_now = 0;spin_now < spin_tot;spin_now++)
+            {
+                sparse_format::cal_HContainer_cd(
+                    *(paraV),
+                    spin_now, 
+                    1e-10, 
+                    *hR_tmp, 
+                    td_velocity.HR_sparse_td_vel[spin_now]);
+            }
+            output_hR_done = true;
+        }
         //folding inside HR to HK
         if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
         {

@@ -48,15 +48,15 @@ void psi_initializer_atomic_random<T, Device>::proj_ao_onkG(int ik)
     }
 }
 
-template class psi_initializer_atomic_random<std::complex<double>, psi::DEVICE_CPU>;
-template class psi_initializer_atomic_random<std::complex<float>, psi::DEVICE_CPU>;
+template class psi_initializer_atomic_random<std::complex<double>, base_device::DEVICE_CPU>;
+template class psi_initializer_atomic_random<std::complex<float>, base_device::DEVICE_CPU>;
 // gamma point calculation
-template class psi_initializer_atomic_random<double, psi::DEVICE_CPU>;
-template class psi_initializer_atomic_random<float, psi::DEVICE_CPU>;
+template class psi_initializer_atomic_random<double, base_device::DEVICE_CPU>;
+template class psi_initializer_atomic_random<float, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class psi_initializer_atomic_random<std::complex<double>, psi::DEVICE_GPU>;
-template class psi_initializer_atomic_random<std::complex<float>, psi::DEVICE_GPU>;
+template class psi_initializer_atomic_random<std::complex<double>, base_device::DEVICE_GPU>;
+template class psi_initializer_atomic_random<std::complex<float>, base_device::DEVICE_GPU>;
 // gamma point calculation
-template class psi_initializer_atomic_random<double, psi::DEVICE_GPU>;
-template class psi_initializer_atomic_random<float, psi::DEVICE_GPU>;
+template class psi_initializer_atomic_random<double, base_device::DEVICE_GPU>;
+template class psi_initializer_atomic_random<float, base_device::DEVICE_GPU>;
 #endif

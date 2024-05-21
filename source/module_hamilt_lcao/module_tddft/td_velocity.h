@@ -15,6 +15,9 @@ class TD_Velocity
 
     /// @brief Judge if in tddft calculation or not 
     static bool tddft_velocity;
+  
+    /// @brief switch to control the output of HR
+    static bool out_mat_R;
 
     /// @brief pointer to the only TD_Velocity object itself
     static TD_Velocity* td_vel_op;
@@ -33,6 +36,9 @@ class TD_Velocity
                      ModuleBase::Vector3<double> a1, 
                      ModuleBase::Vector3<double> a2,
                      ModuleBase::Vector3<double> At);
+  
+    //For TDDFT velocity gague, to fix the output of HR
+    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> HR_sparse_td_vel[2];
 
 
   private:
@@ -50,7 +56,11 @@ class TD_Velocity
 
     /// @brief store the read in At_data
     static std::vector<ModuleBase::Vector3<double>> At_from_file;
+  
+    /// @brief destory HSR data stored
+    void destroy_HS_R_td_sparse(void);
 
 };
 
 #endif
+

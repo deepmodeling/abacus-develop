@@ -31,31 +31,31 @@ static inline FPTYPE _polynomial_interpolation(
 }
 
 template <typename FPTYPE>
-struct cal_vnl_op<FPTYPE, psi::DEVICE_CPU> {
-    void operator()(
-        const psi::DEVICE_CPU *ctx,
-        const int &ntype,
-        const int &npw,
-        const int &npwx,
-        const int &nhm,
-        const int &NQX,
-        const int &tab_2,
-        const int &tab_3,
-        const int * atom_na,
-        const int * atom_nb,
-        const int * atom_nh,
-        const FPTYPE &DQ,
-        const FPTYPE &tpiba,
-        const std::complex<FPTYPE> &NEG_IMAG_UNIT,
-        const FPTYPE *gk,
-        const FPTYPE *ylm,
-        const FPTYPE *indv,
-        const FPTYPE *nhtol,
-        const FPTYPE *nhtolm,
-        const FPTYPE *tab,
-        FPTYPE *vkb1,
-        const std::complex<FPTYPE> *sk,
-        std::complex<FPTYPE> *vkb_in)
+struct cal_vnl_op<FPTYPE, base_device::DEVICE_CPU>
+{
+    void operator()(const base_device::DEVICE_CPU* ctx,
+                    const int& ntype,
+                    const int& npw,
+                    const int& npwx,
+                    const int& nhm,
+                    const int& NQX,
+                    const int& tab_2,
+                    const int& tab_3,
+                    const int* atom_na,
+                    const int* atom_nb,
+                    const int* atom_nh,
+                    const FPTYPE& DQ,
+                    const FPTYPE& tpiba,
+                    const std::complex<FPTYPE>& NEG_IMAG_UNIT,
+                    const FPTYPE* gk,
+                    const FPTYPE* ylm,
+                    const FPTYPE* indv,
+                    const FPTYPE* nhtol,
+                    const FPTYPE* nhtolm,
+                    const FPTYPE* tab,
+                    FPTYPE* vkb1,
+                    const std::complex<FPTYPE>* sk,
+                    std::complex<FPTYPE>* vkb_in)
     {
         const int imag_pow_period = 4;
         // result table of pow(0-1i, int)
@@ -116,8 +116,8 @@ struct cal_vnl_op<FPTYPE, psi::DEVICE_CPU> {
     }
 };
 
-template struct cal_vnl_op<float, psi::DEVICE_CPU>;
-template struct cal_vnl_op<double, psi::DEVICE_CPU>;
+template struct cal_vnl_op<float, base_device::DEVICE_CPU>;
+template struct cal_vnl_op<double, base_device::DEVICE_CPU>;
 
 }  // namespace hamilt
 

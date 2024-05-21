@@ -99,9 +99,9 @@ double Bessel_Basis::Polynomial_Interpolation2
 	const double x3 = 3.0 - x0;
 	const double y=
 		this->TableOne(l, ie, iq) * x1 * x2 * x3 / 6.0 +
-        this->TableOne(l, ie, iq) * x0 * x2 * x3 / 2.0 -
-        this->TableOne(l, ie, iq) * x1 * x0 * x3 / 2.0 +
-        this->TableOne(l, ie, iq) * x1 * x2 * x0 / 6.0 ;
+        this->TableOne(l, ie, iq+1) * x0 * x2 * x3 / 2.0 -
+        this->TableOne(l, ie, iq+2) * x1 * x0 * x3 / 2.0 +
+        this->TableOne(l, ie, iq+3) * x1 * x2 * x0 / 6.0 ;
 	return y;
 }
 
@@ -117,9 +117,9 @@ double Bessel_Basis::Polynomial_Interpolation(
 	const double x3 = 3.0 - x0;
 	const double y=
 		this->Faln(it, l, ic, iq) * x1 * x2 * x3 / 6.0 +
-        this->Faln(it, l, ic, iq) * x0 * x2 * x3 / 2.0 -
-        this->Faln(it, l, ic, iq) * x1 * x0 * x3 / 2.0 +
-        this->Faln(it, l, ic, iq) * x1 * x2 * x0 / 6.0 ;
+        this->Faln(it, l, ic, iq+1) * x0 * x2 * x3 / 2.0 -
+        this->Faln(it, l, ic, iq+2) * x1 * x0 * x3 / 2.0 +
+        this->Faln(it, l, ic, iq+3) * x1 * x2 * x0 / 6.0 ;
 	return y;
 }
 

@@ -32,5 +32,5 @@ void SpinConstrain<FPTYPE, Device>::init_sc(double sc_thr_in,
     this->set_solver_parameters(kv_in, phsol_in, p_hamilt_in, psi_in, pelec_in, KS_SOLVER_in, LM_in);
 }
 
-template class SpinConstrain<std::complex<double>, psi::DEVICE_CPU>;
-template class SpinConstrain<double, psi::DEVICE_CPU>;
+template class SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>;
+template class SpinConstrain<double, base_device::DEVICE_CPU>;
