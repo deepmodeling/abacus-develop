@@ -1036,7 +1036,7 @@ void UnitCell::print_tau(void) const
             const double& x = direct? atoms[it].taud[ia].x: atoms[it].tau[ia].x;
             const double& y = direct? atoms[it].taud[ia].y: atoms[it].tau[ia].y;
             const double& z = direct? atoms[it].taud[ia].z: atoms[it].tau[ia].z;
-            table += FmtCore::format("%5s%-s%-5d%20.10f%20.10f%20.10f%8.4f%20.10f%20.10f%20.10f\n", // I really don't like the prefix "taud" but some codes have been hard-coded for this
+            table += FmtCore::format("%5s%-s%-5d%20.10f%20.10f%20.10f%8.4f%20.10f%20.10f%20.10f\n", // I dont know why there must be a redundant "tau[c|d]_" in the output. So ugly, it should be removed!
                                      redundant_header, atoms[it].label, ia+1, x, y, z, atoms[it].mag[ia], 
                                      atoms[it].vel[ia].x, atoms[it].vel[ia].y, atoms[it].vel[ia].z);
         }
