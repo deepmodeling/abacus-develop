@@ -56,7 +56,13 @@ class ESolver_KS : public ESolver_FP
 		virtual void hamilt2estates(const double ethr){};
 
 		// get current step of Ionic simulation
-		virtual int getniter() override;
+		virtual int get_niter() override;
+
+		// get maxniter used in current scf
+		virtual int get_maxniter() override;
+
+		// get conv_elec used in current scf
+		virtual bool get_conv_elec() override;
 
 	protected:
 		//! Something to do before SCF iterations.
