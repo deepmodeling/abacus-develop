@@ -2,10 +2,6 @@
 #define DIAGO_NEW_DAV_H
 
 #include "diagh.h"
-#include "module_base/complexmatrix.h"
-#include "module_base/macros.h"
-#include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
-#include "module_base/module_device/device.h"
 
 namespace hsolver
 {
