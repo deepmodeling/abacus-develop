@@ -1,5 +1,6 @@
 #include "module_base/blas_connector.h"
 #include "module_base/constants.h"
+#include "module_base/module_device/memory_op.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
 #include "module_psi/kernels/memory_op.h"
 
@@ -37,7 +38,7 @@ class PerfModuleHsolverMathKernel : public benchmark::Fixture {
     public:
 
     // DEVICE SYMBOL
-    const psi::DEVICE_CPU* cpu_ctx = {};
+    const base_device::DEVICE_CPU* cpu_ctx = {};
 
     int dim_vector = 1;
 
@@ -53,24 +54,24 @@ class PerfModuleHsolverMathKernel : public benchmark::Fixture {
     std::complex<double> zconstant_a = {1.0,1.0};
 
  #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
-    const psi::DEVICE_GPU * gpu_ctx = {};
+    const base_device::DEVICE_GPU * gpu_ctx = {};
 
     // from CPU to GPU
     using synchronize_memory_op
-        = psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_GPU, psi::DEVICE_CPU>;
+        = base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
 
     // form GPU to CPU
     using synchronize_memory_op_gpu
-        = psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_CPU, psi::DEVICE_GPU>;
+        = base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
 
-    using resize_memory_op = psi::memory::resize_memory_op<std::complex<double>, psi::DEVICE_GPU>;
-    using delete_memory_op = psi::memory::delete_memory_op<std::complex<double>, psi::DEVICE_GPU>;
-    using resize_memory_op_double = psi::memory::resize_memory_op<double, psi::DEVICE_GPU>;
-    using delete_memory_op_double = psi::memory::delete_memory_op<double, psi::DEVICE_GPU>;
-    using synchronize_memory_op_double = psi::memory::synchronize_memory_op<double, psi::DEVICE_GPU, psi::DEVICE_CPU>;
+    using resize_memory_op = base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
+    using delete_memory_op = base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
+    using resize_memory_op_double = base_device::memory::resize_memory_op<double, base_device::DEVICE_GPU>;
+    using delete_memory_op_double = base_device::memory::delete_memory_op<double, base_device::DEVICE_GPU>;
+    using synchronize_memory_op_double = base_device::memory::synchronize_memory_op<double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
 
-    using set_memory_op = psi::memory::set_memory_op<std::complex<double>, psi::DEVICE_GPU>;
-    using set_memory_op_double = psi::memory::set_memory_op<double, psi::DEVICE_GPU>;
+    using set_memory_op = base_device::memory::set_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
+    using set_memory_op_double = base_device::memory::set_memory_op<double, base_device::DEVICE_GPU>;
 
     std::complex<double>* test_zvector_a_gpu = nullptr;
     std::complex<double>* test_zvector_b_gpu = nullptr;
@@ -132,29 +133,29 @@ class PerfModuleHsolverMathKernel : public benchmark::Fixture {
 
     // OPs need benchmark
     // CPU operator
-    using zdot_real_cpu_op = hsolver::dot_real_op<std::complex<double>, psi::DEVICE_CPU>;
+    using zdot_real_cpu_op = hsolver::dot_real_op<std::complex<double>, base_device::DEVICE_CPU>;
     
-    using vector_div_constant_op_cpu = hsolver::vector_div_constant_op<std::complex<double>, psi::DEVICE_CPU>;
-    using vector_mul_vector_op_cpu = hsolver::vector_mul_vector_op<std::complex<double>, psi::DEVICE_CPU>;
-    using vector_div_vector_op_cpu = hsolver::vector_div_vector_op<std::complex<double>, psi::DEVICE_CPU>;
+    using vector_div_constant_op_cpu = hsolver::vector_div_constant_op<std::complex<double>, base_device::DEVICE_CPU>;
+    using vector_mul_vector_op_cpu = hsolver::vector_mul_vector_op<std::complex<double>, base_device::DEVICE_CPU>;
+    using vector_div_vector_op_cpu = hsolver::vector_div_vector_op<std::complex<double>, base_device::DEVICE_CPU>;
     using constantvector_addORsub_constantVector_op_cpu
-        = hsolver::constantvector_addORsub_constantVector_op<std::complex<double>, psi::DEVICE_CPU>;
-    using axpy_op_cpu = hsolver::axpy_op<std::complex<double>, psi::DEVICE_CPU>;
-    using scal_op_cpu = hsolver::scal_op<double, psi::DEVICE_CPU>;
-    using gemv_op_cpu = hsolver::gemv_op<std::complex<double>, psi::DEVICE_CPU>;
+        = hsolver::constantvector_addORsub_constantVector_op<std::complex<double>, base_device::DEVICE_CPU>;
+    using axpy_op_cpu = hsolver::axpy_op<std::complex<double>, base_device::DEVICE_CPU>;
+    using scal_op_cpu = hsolver::scal_op<double, base_device::DEVICE_CPU>;
+    using gemv_op_cpu = hsolver::gemv_op<std::complex<double>, base_device::DEVICE_CPU>;
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 
     // GPU operator
-    using zdot_real_gpu_op = hsolver::dot_real_op<std::complex<double>, psi::DEVICE_GPU>;
+    using zdot_real_gpu_op = hsolver::dot_real_op<std::complex<double>, base_device::DEVICE_GPU>;
 
-    using vector_div_constant_op_gpu = hsolver::vector_div_constant_op<std::complex<double>, psi::DEVICE_GPU>;
-    using vector_mul_vector_op_gpu = hsolver::vector_mul_vector_op<std::complex<double>, psi::DEVICE_GPU>;
-    using vector_div_vector_op_gpu = hsolver::vector_div_vector_op<std::complex<double>, psi::DEVICE_GPU>;
+    using vector_div_constant_op_gpu = hsolver::vector_div_constant_op<std::complex<double>, base_device::DEVICE_GPU>;
+    using vector_mul_vector_op_gpu = hsolver::vector_mul_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
+    using vector_div_vector_op_gpu = hsolver::vector_div_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
     using constantvector_addORsub_constantVector_op_gpu
-        = hsolver::constantvector_addORsub_constantVector_op<std::complex<double>, psi::DEVICE_GPU>;
-    using axpy_op_gpu = hsolver::axpy_op<std::complex<double>, psi::DEVICE_GPU>;
-    using scal_op_gpu = hsolver::scal_op<double, psi::DEVICE_GPU>;
+        = hsolver::constantvector_addORsub_constantVector_op<std::complex<double>, base_device::DEVICE_GPU>;
+    using axpy_op_gpu = hsolver::axpy_op<std::complex<double>, base_device::DEVICE_GPU>;
+    using scal_op_gpu = hsolver::scal_op<double, base_device::DEVICE_GPU>;
 
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 };
