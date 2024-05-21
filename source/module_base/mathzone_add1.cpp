@@ -5,7 +5,6 @@
 #include "constants.h"
 #include "global_function.h"
 #include "math_sphbes.h"
-#include "module_base/memory.h"
 
 #if defined __FFTW2
 #include "fftw.h"
@@ -280,7 +279,6 @@ void Mathzone_Add1::Uni_Deriv_Phi
     fftw_complex *fft_phik = new fftw_complex[FFT_NR];
     fftw_complex *fft_ndphik = new fftw_complex[FFT_NR];
     fftw_complex *fft_ndphir = new fftw_complex[FFT_NR];
-	ModuleBase::Memory::record("Mathzone_Add1::Uni_Deriv_Phi",sizeof(fftw_complex) * FFT_NR * 4);
 	fftw_plan p1;
 	fftw_plan p2;
 
