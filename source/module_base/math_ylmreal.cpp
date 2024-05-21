@@ -1,14 +1,17 @@
 #include "math_ylmreal.h"
-#include "timer.h"
+
 #include "constants.h"
-#include "tool_quit.h"
+#include "module_base/kernels/math_op.h"
+#include "module_base/libm/libm.h"
+#include "module_base/module_device/memory_op.h"
+// #include "module_psi/kernels/memory_op.h"
 #include "realarray.h"
+#include "timer.h"
+#include "tool_quit.h"
+#include "ylm.h"
+
 #include <cassert>
 #include <vector>
-#include "ylm.h"
-#include "module_base/kernels/math_op.h"
-#include "module_psi/kernels/memory_op.h"
-#include "module_base/libm/libm.h"
 
 namespace ModuleBase
 {
@@ -299,8 +302,8 @@ void YlmReal::Ylm_Real2
 template <typename FPTYPE, typename Device>
 void YlmReal::Ylm_Real(Device * ctx, const int lmax2, const int ng, const FPTYPE *g, FPTYPE * ylm)
 {
-    using resmem_var_op = psi::memory::resize_memory_op<FPTYPE, Device>;
-    using delmem_var_op = psi::memory::delete_memory_op<FPTYPE, Device>;
+    using resmem_var_op = base_device::memory::resize_memory_op<FPTYPE, Device>;
+    using delmem_var_op = base_device::memory::delete_memory_op<FPTYPE, Device>;
     using cal_ylm_real_op = ModuleBase::cal_ylm_real_op<FPTYPE, Device>;
 
     if (ng < 1 || lmax2 < 1) {
@@ -693,10 +696,26 @@ int YlmReal::Semi_Fact(const int n)
     return semif;
 }
 
-template void YlmReal::Ylm_Real<float, psi::DEVICE_CPU>(psi::DEVICE_CPU*, int, int, const float *, float*);
-template void YlmReal::Ylm_Real<double, psi::DEVICE_CPU>(psi::DEVICE_CPU*, int, int, const double *, double*);
+template void YlmReal::Ylm_Real<float, base_device::DEVICE_CPU>(base_device::DEVICE_CPU*,
+                                                                int,
+                                                                int,
+                                                                const float*,
+                                                                float*);
+template void YlmReal::Ylm_Real<double, base_device::DEVICE_CPU>(base_device::DEVICE_CPU*,
+                                                                 int,
+                                                                 int,
+                                                                 const double*,
+                                                                 double*);
 #if ((defined __CUDA) || (defined __ROCM))
-template void YlmReal::Ylm_Real<float, psi::DEVICE_GPU>(psi::DEVICE_GPU*, int, int, const float *, float*);
-template void YlmReal::Ylm_Real<double, psi::DEVICE_GPU>(psi::DEVICE_GPU*, int, int, const double *, double*);
+template void YlmReal::Ylm_Real<float, base_device::DEVICE_GPU>(base_device::DEVICE_GPU*,
+                                                                int,
+                                                                int,
+                                                                const float*,
+                                                                float*);
+template void YlmReal::Ylm_Real<double, base_device::DEVICE_GPU>(base_device::DEVICE_GPU*,
+                                                                 int,
+                                                                 int,
+                                                                 const double*,
+                                                                 double*);
 #endif
 }  // namespace ModuleBase

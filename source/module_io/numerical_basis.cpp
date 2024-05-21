@@ -1,4 +1,8 @@
 #include "numerical_basis.h"
+#include "module_base/constants.h"
+#include "module_base/global_variable.h"
+#include "module_base/intarray.h"
+#include "module_base/vector3.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_cell/module_symmetry/symmetry.h"
 #include "winput.h"
@@ -7,8 +11,9 @@
 #include <cstring>
 #include <functional>
 #include <algorithm>
+#include <vector>
 #include "module_base/timer.h"
-
+#include "module_io/numerical_basis_jyjy.h"
 Numerical_Basis::Numerical_Basis() {}
 Numerical_Basis::~Numerical_Basis() {}
 
@@ -28,7 +33,7 @@ Numerical_Basis::~Numerical_Basis() {}
 // to generate TableOne
 // Secondly output overlap, use psi(evc) and jlq3d.
 //============================================================
-void Numerical_Basis::start_from_file_k(const int& ik, ModuleBase::ComplexMatrix& psi, const Structure_Factor& sf, const ModulePW::PW_Basis_K* wfcpw)
+void Numerical_Basis::start_from_file_k(const int& ik, ModuleBase::ComplexMatrix& psi, const Structure_Factor& sf, const ModulePW::PW_Basis_K* wfcpw, const UnitCell& ucell)
 {
     ModuleBase::TITLE("Numerical_Basis","start_from_file_k");
 
@@ -38,22 +43,22 @@ void Numerical_Basis::start_from_file_k(const int& ik, ModuleBase::ComplexMatrix
         this->bessel_basis.init(
 			true,
 			std::stod(INPUT.bessel_nao_ecut),
-			GlobalC::ucell.ntype,
-			GlobalC::ucell.lmax,
+			ucell.ntype,
+			ucell.lmax,
 			INPUT.bessel_nao_smooth,
 			INPUT.bessel_nao_sigma,
 			INPUT.bessel_nao_rcut,
 			INPUT.bessel_nao_tolerence,
-            GlobalC::ucell
+            ucell
             );
-        this->mu_index = this->init_mu_index();
+        this->mu_index = this->init_mu_index(ucell);
         this->init_label = true;
     }
-    this->numerical_atomic_wfc(ik, wfcpw, psi, sf);
+    this->numerical_atomic_wfc(ik, wfcpw, psi, sf, ucell);
 }
 
 // The function is called in run_fp.cpp.
-void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, const Structure_Factor& sf, const K_Vectors& kv, const ModulePW::PW_Basis_K* wfcpw)
+void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, const Structure_Factor& sf, const K_Vectors& kv, const ModulePW::PW_Basis_K* wfcpw, const UnitCell& ucell)
 {
     ModuleBase::TITLE("Numerical_Basis","output_overlap");
     ModuleBase::GlobalFunc::NEW_PART("Overlap Data For Spillage Minimization");
@@ -68,15 +73,15 @@ void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, 
         this->bessel_basis.init(
 			false,
 			std::stod(INPUT.bessel_nao_ecut),
-			GlobalC::ucell.ntype,
-			GlobalC::ucell.lmax,
+			ucell.ntype,
+			ucell.lmax,
 			INPUT.bessel_nao_smooth,
 			INPUT.bessel_nao_sigma,
 			INPUT.bessel_nao_rcut,
 			INPUT.bessel_nao_tolerence,
-            GlobalC::ucell
+            ucell
             );
-        this->mu_index = this->init_mu_index();
+        this->mu_index = this->init_mu_index(ucell);
         this->init_label = true;
     }
     ModuleBase::GlobalFunc::MAKE_DIR(winput::spillage_outdir);
@@ -116,13 +121,42 @@ void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, 
             // search for all k-points.
             psi.fix_k(ik);
             overlap_Q[ik]
-                = this->cal_overlap_Q(ik, npw, wfcpw, psi, static_cast<double>(derivative_order), sf);
+                = this->cal_overlap_Q(ik, npw, wfcpw, psi, static_cast<double>(derivative_order), sf, ucell);
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"cal_overlap_Q");
 
             // (2) generate Sq matrix if necessary.
             if (winput::out_spillage == 2)
             {
-                overlap_Sq[ik] = this->cal_overlap_Sq( ik, npw, static_cast<double>(derivative_order), sf, wfcpw);
+#ifndef __LCAO
+                // compute <jY|jY> in plane-wave basis
+                overlap_Sq[ik] = this->cal_overlap_Sq( ik, npw, static_cast<double>(derivative_order), sf, wfcpw, ucell);
+#else
+                // compute <jY|jY> with two-center integration
+                assert(derivative_order == 0 || derivative_order == 1);
+                char type = (derivative_order == 0) ? 'S' : 'T';
+                std::vector<int> natom;
+                std::vector<int> lmax;
+                std::vector<std::vector<ModuleBase::Vector3<double>>> tau_cart;
+                for (int it = 0; it < ucell.ntype; ++it)
+                {
+                    natom.push_back(ucell.atoms[it].na);
+                    lmax.push_back(ucell.atoms[it].nwl);
+                    tau_cart.emplace_back();
+
+                    for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
+                    {
+                        tau_cart[it].push_back(ucell.atoms[it].tau[ia] * ucell.lat0);
+                    }
+                }
+
+                overlap_Sq[ik] = 
+                    NumericalBasis::cal_overlap_Sq(type,
+                                                   ucell.lmaxmax,
+                                                   this->bessel_basis.get_ecut_number(),
+                                                   INPUT.bessel_nao_rcut,
+                                                   tau_cart,
+                                                   NumericalBasis::indexgen(natom, lmax));
+#endif
                 ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"cal_overlap_Sq");
             }
         }
@@ -130,19 +164,20 @@ void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, 
         const ModuleBase::matrix overlap_V = this->cal_overlap_V(wfcpw,
                                                                  psi,
                                                                  static_cast<double>(derivative_order),
-                                                                 kv); // Peize Lin add 2020.04.23
+                                                                 kv,
+                                                                 ucell.tpiba);
 
         // ALTHOUGH THIS FUNCTION NAMES output_overlap, IT ACTUALLY OUTPUTS THE OVERLAP MATRIX HERE
 #ifdef __MPI
         for (int ik = 0; ik < kv.nks; ik++)
         {
             Parallel_Reduce::reduce_pool(overlap_Q[ik].ptr, overlap_Q[ik].getSize());
-            Parallel_Reduce::reduce_pool(overlap_Sq[ik].ptr, overlap_Sq[ik].getSize());
+            //Parallel_Reduce::reduce_pool(overlap_Sq[ik].ptr, overlap_Sq[ik].getSize());
         }
         Parallel_Reduce::reduce_pool(overlap_V.c, overlap_V.nr * overlap_V.nc);		// Peize Lin add 2020.04.23
     #endif
         // exception handling following, for FileNotOpenFailure
-        if(ofs.good()) this->output_info(ofs, bessel_basis, kv); // header of orb_matrix* file
+        if(ofs.good()) this->output_info(ofs, bessel_basis, kv, ucell); // header of orb_matrix* file
         else ModuleBase::WARNING_QUIT("Numerical_Basis","Failed to open file for writing the overlap matrix.");
         // because one stage of file io complete, re-check the file status.
         if(ofs.good()) this->output_k(ofs, kv); // <WEIGHTS_OF_KPOINTS>...</WEIGHTS_OF_KPOINTS>
@@ -171,7 +206,8 @@ ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Q(const int& ik,
                                                         const ModulePW::PW_Basis_K* wfcpw,
                                                         const psi::Psi<std::complex<double>>& psi,
                                                         const double derivative_order,
-                                                        const Structure_Factor& sf) const
+                                                        const Structure_Factor& sf,
+                                                        const UnitCell& ucell) const
 {
     ModuleBase::TITLE("Numerical_Basis","cal_overlap_Q");
     ModuleBase::timer::tick("Numerical_Basis","cal_overlap_Q");
@@ -182,17 +218,19 @@ ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Q(const int& ik,
     ModuleBase::ComplexArray overlap_Q(GlobalV::NBANDS, GlobalV::NLOCAL, this->bessel_basis.get_ecut_number() );
     overlap_Q.zero_out();
 
-	const double normalization = (4 * ModuleBase::PI) / sqrt(GlobalC::ucell.omega);			// Peize Lin add normalization 2015-12-29
+	const double normalization = (4 * ModuleBase::PI) / sqrt(ucell.omega);			// Peize Lin add normalization 2015-12-29
 
     std::vector<ModuleBase::Vector3<double>> gk(np);
     for (int ig = 0; ig < np; ig++)
-        gk[ig] = wfcpw->getgpluskcar(ik, ig);
+    {
+        gk[ig] = wfcpw->getgpluskcar(ik, ig) * ucell.tpiba;
+    }
 
     const std::vector<double> gpow = Numerical_Basis::cal_gpow(gk, derivative_order);
 
-	const ModuleBase::realArray flq = this->cal_flq(ik, gk);
+	const ModuleBase::realArray flq = this->cal_flq(gk, ucell.lmax);
 
-    const ModuleBase::matrix ylm = Numerical_Basis::cal_ylm(gk);
+    const ModuleBase::matrix ylm = Numerical_Basis::cal_ylm(gk, ucell.lmax);
 
     GlobalV::ofs_running << "\n " << std::setw(5)
         << "ik" << std::setw(8)
@@ -200,26 +238,26 @@ ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Q(const int& ik,
         << "Atom1" << std::setw(8)
         << "L" << std::endl;
 
-    for (int T = 0; T < GlobalC::ucell.ntype; T++)
+    for (int T = 0; T < ucell.ntype; T++)
     {
         //OUT("T",T);
-        for (int I = 0; I < GlobalC::ucell.atoms[T].na; I++)
+        for (int I = 0; I < ucell.atoms[T].na; I++)
         {
             //OUT("I",I);
             std::complex<double>* sk = sf.get_sk(ik, T, I, wfcpw);
-            for (int L=0; L< GlobalC::ucell.atoms[T].nwl+1; L++)
+            for (int L=0; L< ucell.atoms[T].nwl+1; L++)
             {
                 GlobalV::ofs_running << " " << std::setw(5) << ik+1
-                            << std::setw(8) << GlobalC::ucell.atoms[T].label
+                            << std::setw(8) << ucell.atoms[T].label
                             << std::setw(8) << I+1
 							<< std::setw(8) << L
 							<< std::endl;
                 //OUT("l",l);
-                std::complex<double> lphase = normalization * pow(ModuleBase::IMAG_UNIT, L);			// Peize Lin add normalization 2015-12-29
+                std::complex<double> lphase = normalization * pow(ModuleBase::IMAG_UNIT, -L);			// Peize Lin add normalization 2015-12-29
                 for (int ie=0; ie < this->bessel_basis.get_ecut_number(); ie++)
                 {
                     const int N = 0;
-                    assert( GlobalC::ucell.nmax == 1);
+                    assert( ucell.nmax == 1);
                     for (int m=0; m<2*L+1; m++)
                     {
                         const int lm = L*L+m;
@@ -249,7 +287,8 @@ ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Sq(const int& ik,
                                                          const int& np,
                                                          const double derivative_order,
                                                          const Structure_Factor& sf,
-                                                         const ModulePW::PW_Basis_K* wfcpw) const
+                                                         const ModulePW::PW_Basis_K* wfcpw,
+                                                         const UnitCell& ucell) const
 {
     ModuleBase::TITLE("Numerical_Basis","cal_overlap_Sq");
     ModuleBase::timer::tick("Numerical_Basis","cal_overlap_Sq");
@@ -261,17 +300,17 @@ ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Sq(const int& ik,
     ModuleBase::ComplexArray overlap_Sq( GlobalV::NLOCAL, GlobalV::NLOCAL, enumber, enumber );
     overlap_Sq.zero_out();
 
-	const double normalization = (4 * ModuleBase::PI) * (4 * ModuleBase::PI) / GlobalC::ucell.omega;			// Peize Lin add normalization 2015-12-29
+	const double normalization = (4 * ModuleBase::PI) * (4 * ModuleBase::PI) / ucell.omega;			// Peize Lin add normalization 2015-12-29
 
     std::vector<ModuleBase::Vector3<double>> gk(np);
     for (int ig = 0; ig < np; ig++)
-        gk[ig] = wfcpw->getgpluskcar(ik, ig);
+        gk[ig] = wfcpw->getgpluskcar(ik, ig) * ucell.tpiba;
 
     const std::vector<double> gpow = Numerical_Basis::cal_gpow(gk, derivative_order);
 
-	const ModuleBase::realArray flq = this->cal_flq(ik, gk);
+	const ModuleBase::realArray flq = this->cal_flq(gk, ucell.lmax);
 
-    const ModuleBase::matrix ylm = Numerical_Basis::cal_ylm(gk);
+    const ModuleBase::matrix ylm = Numerical_Basis::cal_ylm(gk, ucell.lmax);
 
     GlobalV::ofs_running << "\n " << std::setw(5)
         << "ik" << std::setw(8)
@@ -282,34 +321,34 @@ ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Sq(const int& ik,
         << "Atom2" << std::setw(8)
         << "L2" << std::endl;
 
-    for (int T1 = 0; T1 < GlobalC::ucell.ntype; T1++) // 1.1
+    for (int T1 = 0; T1 < ucell.ntype; T1++) // 1.1
     {
-        for (int I1 = 0; I1 < GlobalC::ucell.atoms[T1].na; I1++) // 1.2
+        for (int I1 = 0; I1 < ucell.atoms[T1].na; I1++) // 1.2
         {
             std::complex<double>* sk1 = sf.get_sk(ik, T1, I1, wfcpw);
-            for (int T2=0; T2<GlobalC::ucell.ntype; T2++) // 2.1
+            for (int T2=0; T2<ucell.ntype; T2++) // 2.1
             {
-                for (int I2=0; I2<GlobalC::ucell.atoms[T2].na; I2++) // 2.2
+                for (int I2=0; I2<ucell.atoms[T2].na; I2++) // 2.2
                 {
                     std::complex<double>* sk2 = sf.get_sk(ik, T2, I2, wfcpw);
-                    for (int l1 = 0; l1 < GlobalC::ucell.atoms[T1].nwl+1; l1++) // 1.3
+                    for (int l1 = 0; l1 < ucell.atoms[T1].nwl+1; l1++) // 1.3
                     {
                         const std::complex<double> lphase1 = normalization * pow(ModuleBase::IMAG_UNIT, l1);			// Peize Lin add normalization 2015-12-29
-                        for (int l2 = 0; l2 < GlobalC::ucell.atoms[T2].nwl+1; l2++) // 2.3
+                        for (int l2 = 0; l2 < ucell.atoms[T2].nwl+1; l2++) // 2.3
                         {
                             GlobalV::ofs_running << " " << std::setw(5)
                                 << ik+1 << std::setw(8)
-                                << GlobalC::ucell.atoms[T1].label << std::setw(8)
+                                << ucell.atoms[T1].label << std::setw(8)
                                 << I1+1 << std::setw(8)
                                 << l1 << std::setw(8)
-                                << GlobalC::ucell.atoms[T2].label << std::setw(8)
+                                << ucell.atoms[T2].label << std::setw(8)
                                 << I2+1 << std::setw(8)
                                 << l2 << std::setw(8) << std::endl;
 
                             const std::complex<double> lphase2 = pow(ModuleBase::IMAG_UNIT, l2);
-                            for (int ic1=0; ic1 < GlobalC::ucell.nmax; ic1++) // 1.5
+                            for (int ic1=0; ic1 < ucell.nmax; ic1++) // 1.5
                             {
-                                for (int ic2=0; ic2 < GlobalC::ucell.nmax; ic2++) // 2.5
+                                for (int ic2=0; ic2 < ucell.nmax; ic2++) // 2.5
                                 {
                                     for (int m1=0; m1<2*l1+1; m1++) // 1.6
                                     {
@@ -364,18 +403,22 @@ ModuleBase::ComplexArray Numerical_Basis::cal_overlap_Sq(const int& ik,
     return overlap_Sq;
 }
 
+
+
+
 // Peize Lin add for dpsi 2020.04.23
 ModuleBase::matrix Numerical_Basis::cal_overlap_V(const ModulePW::PW_Basis_K* wfcpw,
                                                   const psi::Psi<std::complex<double>>& psi,
                                                   const double derivative_order,
-                                                  const K_Vectors& kv)
+                                                  const K_Vectors& kv,
+                                                  const double tpiba)
 {
     ModuleBase::matrix overlap_V(kv.nks, GlobalV::NBANDS);
     for (int ik = 0; ik < kv.nks; ++ik)
     {
         std::vector<ModuleBase::Vector3<double>> gk(kv.ngk[ik]);
         for (int ig=0; ig<gk.size(); ig++)
-            gk[ig] = wfcpw->getgpluskcar(ik,ig);
+            gk[ig] = wfcpw->getgpluskcar(ik,ig) * tpiba;
 
         const std::vector<double> gpow = Numerical_Basis::cal_gpow(gk, derivative_order);
 
@@ -386,23 +429,29 @@ ModuleBase::matrix Numerical_Basis::cal_overlap_V(const ModulePW::PW_Basis_K* wf
 	return overlap_V;
 }
 
-ModuleBase::realArray Numerical_Basis::cal_flq(const int ik, const std::vector<ModuleBase::Vector3<double>> &gk) const
+ModuleBase::realArray Numerical_Basis::cal_flq(const std::vector<ModuleBase::Vector3<double>> &gk, const int ucell_lmax) const
 {
 	const int np = gk.size();
 	const int enumber = this->bessel_basis.get_ecut_number();
 
     // get flq(G) = \int f(r)jl(G*r) from interpolation table.
-    ModuleBase::realArray flq(GlobalC::ucell.lmax+1, enumber, np);
-    for (int il=0; il<GlobalC::ucell.lmax+1; il++)
+    ModuleBase::realArray flq(ucell_lmax+1, enumber, np);
+    for (int il=0; il<ucell_lmax+1; il++)
+    {
         for (int ie=0; ie<enumber; ie++)
+        {
             for (int ig=0; ig<np; ig++)
-                flq(il,ie,ig) = this->bessel_basis.Polynomial_Interpolation2(il, ie, gk[ig].norm() * GlobalC::ucell.tpiba );
+            {
+                flq(il,ie,ig) = this->bessel_basis.Polynomial_Interpolation2(il, ie, gk[ig].norm());
+            }
+        }
+    }
 	return flq;
 }
 
-ModuleBase::matrix Numerical_Basis::cal_ylm(const std::vector<ModuleBase::Vector3<double>> &gk)
+ModuleBase::matrix Numerical_Basis::cal_ylm(const std::vector<ModuleBase::Vector3<double>> &gk, const int ucell_lmax)
 {
-    const int total_lm = ( GlobalC::ucell.lmax + 1) * ( GlobalC::ucell.lmax + 1);
+    const int total_lm = ( ucell_lmax + 1) * ( ucell_lmax + 1);
     ModuleBase::matrix ylm(total_lm, gk.size());
     ModuleBase::YlmReal::Ylm_Real(total_lm, gk.size(), gk.data(), ylm);
     return ylm;
@@ -416,43 +465,45 @@ std::vector<double> Numerical_Basis::cal_gpow (const std::vector<ModuleBase::Vec
     {
         if (derivative_order>=0)
         {
-            gpow[ig] = std::pow(gk[ig].norm2(),derivative_order);
+            gpow[ig] = std::pow(gk[ig].norm2(), derivative_order);
         }
         else
         {
             if (gk[ig].norm2() >= thr)
-                gpow[ig] = std::pow(gk[ig].norm2(),derivative_order);
+                gpow[ig] = std::pow(gk[ig].norm2(), derivative_order);
         }
     }
     return gpow;
 }
 
-std::vector<ModuleBase::IntArray> Numerical_Basis::init_mu_index(void)
+std::vector<ModuleBase::IntArray> Numerical_Basis::init_mu_index(const UnitCell& ucell)
 {
 	GlobalV::ofs_running << " Initialize the mu index" << std::endl;
-    std::vector<ModuleBase::IntArray> mu_index_(GlobalC::ucell.ntype);
+    std::vector<ModuleBase::IntArray> mu_index_(ucell.ntype);
 
     int mu = 0;
-    for (int it=0; it<GlobalC::ucell.ntype; it++)
+    for (int it=0; it<ucell.ntype; it++)
     {
         mu_index_[it].create(
-            GlobalC::ucell.atoms[it].na,
-            GlobalC::ucell.atoms[it].nwl+1,
-            GlobalC::ucell.nmax,
-            2*(GlobalC::ucell.atoms[it].nwl+1)+1); // m ==> 2*l+1
+            ucell.atoms[it].na,
+            ucell.atoms[it].nwl+1,
+            ucell.nmax,
+            2*(ucell.atoms[it].nwl+1)+1); // m ==> 2*l+1
+
+        mu_index_[it].zero_out();
 
 		// mohan added 2021-01-03
 		GlobalV::ofs_running << "Type " << it+1
-            << " number_of_atoms " << GlobalC::ucell.atoms[it].na
-            << " number_of_L " << GlobalC::ucell.atoms[it].nwl+1
-            << " number_of_n " << GlobalC::ucell.nmax
-            << " number_of_m " << 2*(GlobalC::ucell.atoms[it].nwl+1)+1 << std::endl;
+            << " number_of_atoms " << ucell.atoms[it].na
+            << " number_of_L " << ucell.atoms[it].nwl+1
+            << " number_of_n " << ucell.nmax
+            << " number_of_m " << 2*(ucell.atoms[it].nwl+1)+1 << std::endl;
 
-        for (int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
+        for (int ia=0; ia<ucell.atoms[it].na; ia++)
         {
-            for (int l=0; l< GlobalC::ucell.atoms[it].nwl+1; l++)
+            for (int l=0; l< ucell.atoms[it].nwl+1; l++)
             {
-                for (int n=0; n< GlobalC::ucell.atoms[it].l_nchi[l]; n++)
+                for (int n=0; n< ucell.atoms[it].l_nchi[l]; n++)
                 {
                     for (int m=0; m<2*l+1; m++)
                     {
@@ -469,7 +520,8 @@ std::vector<ModuleBase::IntArray> Numerical_Basis::init_mu_index(void)
 void Numerical_Basis::numerical_atomic_wfc(const int& ik,
                                            const ModulePW::PW_Basis_K* wfcpw,
                                            ModuleBase::ComplexMatrix& psi,
-                                           const Structure_Factor& sf)
+                                           const Structure_Factor& sf,
+                                           const UnitCell& ucell)
 {
     ModuleBase::TITLE("Numerical_Basis", "numerical_atomic_wfc");
     const int np = wfcpw->npwk[ik];
@@ -477,29 +529,29 @@ void Numerical_Basis::numerical_atomic_wfc(const int& ik,
     for (int ig = 0; ig < np; ig++)
         gk[ig] = wfcpw->getgpluskcar(ik, ig);
 
-    const int total_lm = ( GlobalC::ucell.lmax + 1) * ( GlobalC::ucell.lmax + 1);
+    const int total_lm = ( ucell.lmax + 1) * ( ucell.lmax + 1);
     ModuleBase::matrix ylm(total_lm, np);
     ModuleBase::YlmReal::Ylm_Real(total_lm, np, gk.data(), ylm);
 
     std::vector<double> flq(np);
-    for (int it = 0; it < GlobalC::ucell.ntype; it++)
+    for (int it = 0; it < ucell.ntype; it++)
     {
         //OUT("it",it);
-        for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
+        for (int ia = 0; ia < ucell.atoms[it].na; ia++)
         {
             //OUT("ia",ia);
             std::complex<double>* sk = sf.get_sk(ik, it, ia, wfcpw);
-            for (int l = 0; l < GlobalC::ucell.atoms[it].nwl+1; l++)
+            for (int l = 0; l < ucell.atoms[it].nwl+1; l++)
             {
                 //OUT("l",l);
                 std::complex<double> lphase = pow(ModuleBase::IMAG_UNIT, l);
-                for (int ic=0; ic < GlobalC::ucell.atoms[it].l_nchi[l]; ic++)
+                for (int ic=0; ic < ucell.atoms[it].l_nchi[l]; ic++)
                 {
                     //OUT("ic",ic);
                     for (int ig=0; ig<np; ig++)
                     {
                         flq[ig] = this->bessel_basis.
-                                  Polynomial_Interpolation(it, l, ic, gk[ig].norm() * GlobalC::ucell.tpiba );
+                                  Polynomial_Interpolation(it, l, ic, gk[ig].norm() * ucell.tpiba );
                     }
 
                     for (int m=0; m<2*l+1; m++)
@@ -519,28 +571,28 @@ void Numerical_Basis::numerical_atomic_wfc(const int& ik,
     }
 }
 
-void Numerical_Basis::output_info(std::ofstream& ofs, const Bessel_Basis& bessel_basis, const K_Vectors& kv)
+void Numerical_Basis::output_info(std::ofstream& ofs, const Bessel_Basis& bessel_basis, const K_Vectors& kv, const UnitCell& ucell)
 {
     // only print out to the information by the first processor
     if (GlobalV::MY_RANK==0)
     {
         ofs.precision(10);
-        ofs << GlobalC::ucell.lat0 << std::endl;
+        ofs << ucell.lat0 << std::endl;
 
-        ofs << GlobalC::ucell.latvec.e11 << " " << GlobalC::ucell.latvec.e12 << " " << GlobalC::ucell.latvec.e13 << std::endl;
-        ofs << GlobalC::ucell.latvec.e21 << " " << GlobalC::ucell.latvec.e22 << " " << GlobalC::ucell.latvec.e23 << std::endl;
-        ofs << GlobalC::ucell.latvec.e31 << " " << GlobalC::ucell.latvec.e32 << " " << GlobalC::ucell.latvec.e33 << std::endl;
+        ofs << ucell.latvec.e11 << " " << ucell.latvec.e12 << " " << ucell.latvec.e13 << std::endl;
+        ofs << ucell.latvec.e21 << " " << ucell.latvec.e22 << " " << ucell.latvec.e23 << std::endl;
+        ofs << ucell.latvec.e31 << " " << ucell.latvec.e32 << " " << ucell.latvec.e33 << std::endl;
 
-        ofs << GlobalC::ucell.ntype << " ntype" << std::endl;
-        for (int it=0; it<GlobalC::ucell.ntype; it++)
+        ofs << ucell.ntype << " ntype" << std::endl;
+        for (int it=0; it<ucell.ntype; it++)
         {
-            ofs << GlobalC::ucell.atoms[it].label << " label" << std::endl; // mohan add 2009-07-23
-            ofs << GlobalC::ucell.atoms[it].na << " na" << std::endl;
-            for (int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
+            ofs << ucell.atoms[it].label << " label" << std::endl; // mohan add 2009-07-23
+            ofs << ucell.atoms[it].na << " na" << std::endl;
+            for (int ia=0; ia<ucell.atoms[it].na; ia++)
             {
-                ofs << GlobalC::ucell.atoms[it].tau[ia].x << " "
-                    << GlobalC::ucell.atoms[it].tau[ia].y << " "
-                    << GlobalC::ucell.atoms[it].tau[ia].z << std::endl;
+                ofs << ucell.atoms[it].tau[ia].x << " "
+                    << ucell.atoms[it].tau[ia].y << " "
+                    << ucell.atoms[it].tau[ia].z << std::endl;
             }
         }
         // ecutwfc_jlq determine the jlq corresponding to plane wave calculation.
@@ -556,7 +608,7 @@ void Numerical_Basis::output_info(std::ofstream& ofs, const Bessel_Basis& bessel
 
         ofs << bessel_basis.get_tolerence() << " tolerence" << std::endl;
 
-        ofs << GlobalC::ucell.lmax << " lmax" << std::endl;
+        ofs << ucell.lmax << " lmax" << std::endl;
     }
 
     ofs << std::scientific;

@@ -640,7 +640,7 @@ void FFT::fftxyc2r(std::complex<double> * in, double * out) const
 
 #if defined(__CUDA) || defined(__ROCM)
 template <>
-void FFT::fft3D_forward(const psi::DEVICE_GPU * /*ctx*/, std::complex<float> * in, std::complex<float> * out) const
+void FFT::fft3D_forward(const base_device::DEVICE_GPU* /*ctx*/, std::complex<float>* in, std::complex<float>* out) const
 {
 #if defined(__CUDA)
     cufftExecC2C(this->c_handle,
@@ -657,7 +657,9 @@ void FFT::fft3D_forward(const psi::DEVICE_GPU * /*ctx*/, std::complex<float> * i
 #endif
 }
 template <>
-void FFT::fft3D_forward(const psi::DEVICE_GPU * /*ctx*/, std::complex<double> * in, std::complex<double> * out) const
+void FFT::fft3D_forward(const base_device::DEVICE_GPU* /*ctx*/,
+                        std::complex<double>* in,
+                        std::complex<double>* out) const
 {
 #if defined(__CUDA)
     cufftExecZ2Z(this->z_handle,
@@ -675,7 +677,9 @@ void FFT::fft3D_forward(const psi::DEVICE_GPU * /*ctx*/, std::complex<double> * 
 }
 
 template <>
-void FFT::fft3D_backward(const psi::DEVICE_GPU * /*ctx*/, std::complex<float>* in, std::complex<float>* out) const
+void FFT::fft3D_backward(const base_device::DEVICE_GPU* /*ctx*/,
+                         std::complex<float>* in,
+                         std::complex<float>* out) const
 {
 #if defined(__CUDA)
     cufftExecC2C(this->c_handle,
@@ -692,7 +696,9 @@ void FFT::fft3D_backward(const psi::DEVICE_GPU * /*ctx*/, std::complex<float>* i
 #endif
 }
 template <>
-void FFT::fft3D_backward(const psi::DEVICE_GPU * /*ctx*/, std::complex<double>* in, std::complex<double>* out) const
+void FFT::fft3D_backward(const base_device::DEVICE_GPU* /*ctx*/,
+                         std::complex<double>* in,
+                         std::complex<double>* out) const
 {
 #if defined(__CUDA)
     cufftExecZ2Z(this->z_handle,

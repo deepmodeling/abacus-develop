@@ -14,3 +14,11 @@ elseif()
         SOURCES math_kernel_test.cpp 
     )
 endif()
+
+if(ENABLE_GOOGLEBENCH)
+    AddTest(
+        TARGET Perf_Hsolver_Kernels
+        LIBS ${math_libs} base device
+        SOURCES perf_math_kernel.cpp
+    )
+endif()

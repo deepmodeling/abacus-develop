@@ -289,11 +289,11 @@ void Gint_Gamma::vl_grid_to_2D(
 #ifdef __MPI
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
 #endif
-void Gint_Gamma::transfer_pvpR(hamilt::HContainer<double>* hR)
+void Gint_Gamma::transfer_pvpR(hamilt::HContainer<double>* hR,const UnitCell* ucell,const LCAO_Orbitals& orb)
 {
     ModuleBase::TITLE("Gint_Gamma","transfer_pvpR");
     ModuleBase::timer::tick("Gint_Gamma","transfer_pvpR");
-
+    
     for(int iap=0;iap<this->hRGint->size_atom_pairs();iap++)
     {
         auto& ap = this->hRGint->get_atom_pair(iap);

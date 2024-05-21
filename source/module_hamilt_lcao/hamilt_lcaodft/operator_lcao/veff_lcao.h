@@ -48,6 +48,8 @@ class Veff<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
         : GK(GK_in),
           loc(loc_in),
           pot(pot_in),
+          ucell(ucell_in),
+          gd(GridD_in),
           OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in)
     {
         this->cal_type = lcao_gint;
@@ -74,7 +76,6 @@ class Veff<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
         OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in)
     {
         this->cal_type = lcao_gint;
-
         this->initialize_HR(ucell_in, GridD_in, paraV);
 
         GG_in->initialize_pvpR(*ucell_in, GridD_in);
@@ -89,7 +90,9 @@ class Veff<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * grid integration is used to calculate the contribution Hamiltonian of effective potential
      */
     virtual void contributeHR() override;
-
+  
+  const UnitCell* ucell;
+  Grid_Driver* gd;
   private:
     // used for k-dependent grid integration.
     Gint_k* GK = nullptr;

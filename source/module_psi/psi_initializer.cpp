@@ -273,15 +273,15 @@ void psi_initializer<T, Device>::stick_to_pool(Real* stick, const int& ir, Real*
 #endif
 
 // explicit instantiation
-template class psi_initializer<std::complex<double>, psi::DEVICE_CPU>;
-template class psi_initializer<std::complex<float>, psi::DEVICE_CPU>;
+template class psi_initializer<std::complex<double>, base_device::DEVICE_CPU>;
+template class psi_initializer<std::complex<float>, base_device::DEVICE_CPU>;
 // gamma point calculation
-template class psi_initializer<double, psi::DEVICE_CPU>;
-template class psi_initializer<float, psi::DEVICE_CPU>;
+template class psi_initializer<double, base_device::DEVICE_CPU>;
+template class psi_initializer<float, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class psi_initializer<std::complex<double>, psi::DEVICE_GPU>;
-template class psi_initializer<std::complex<float>, psi::DEVICE_GPU>;
+template class psi_initializer<std::complex<double>, base_device::DEVICE_GPU>;
+template class psi_initializer<std::complex<float>, base_device::DEVICE_GPU>;
 // gamma point calculation
-template class psi_initializer<double, psi::DEVICE_GPU>;
-template class psi_initializer<float, psi::DEVICE_GPU>;
+template class psi_initializer<double, base_device::DEVICE_GPU>;
+template class psi_initializer<float, base_device::DEVICE_GPU>;
 #endif

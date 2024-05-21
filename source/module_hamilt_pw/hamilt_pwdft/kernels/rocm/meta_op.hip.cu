@@ -38,18 +38,17 @@ __global__ void meta_pw(
 }
 
 template <typename FPTYPE>
-void meta_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
-        const psi::DEVICE_GPU* dev,
-        const int& ik,
-        const int& pol,
-        const int& npw,
-        const int& npwx,
-        const FPTYPE& tpiba,
-        const FPTYPE* gcar,
-        const FPTYPE* kvec_c,
-        const std::complex<FPTYPE>* in,
-        std::complex<FPTYPE>* out,
-        const bool add)
+void meta_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* dev,
+                                                             const int& ik,
+                                                             const int& pol,
+                                                             const int& npw,
+                                                             const int& npwx,
+                                                             const FPTYPE& tpiba,
+                                                             const FPTYPE* gcar,
+                                                             const FPTYPE* kvec_c,
+                                                             const std::complex<FPTYPE>* in,
+                                                             std::complex<FPTYPE>* out,
+                                                             const bool add)
 {
     const int block = (npw + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     hipLaunchKernelGGL(HIP_KERNEL_NAME(meta_pw<FPTYPE>), dim3(block), dim3(THREADS_PER_BLOCK), 0, 0, 
@@ -64,7 +63,7 @@ void meta_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
     hipErrcheck(hipDeviceSynchronize());
 }
 
-template struct meta_pw_op<float, psi::DEVICE_GPU>;
-template struct meta_pw_op<double, psi::DEVICE_GPU>;
+template struct meta_pw_op<float, base_device::DEVICE_GPU>;
+template struct meta_pw_op<double, base_device::DEVICE_GPU>;
 
 }  // namespace hamilt
