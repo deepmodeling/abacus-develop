@@ -150,6 +150,7 @@ void gint_gamma_force_gpu(hamilt::HContainer<double>* dm,
                                  para.stream_num);
             checkCuda(cudaStreamSynchronize(gridt.streams[para.stream_num]));
             /* cuda stream compute and Multiplication of multinomial matrices */
+            
             get_psi_force<<<grid_psi,
                             block_psi,
                             0,
@@ -197,6 +198,7 @@ void gint_gamma_force_gpu(hamilt::HContainer<double>* dm,
 
             
             /* force compute in GPU */
+            if (isforce){
             dot_product_force<<<grid_dot_force,
                                 block_dot_force,
                                 0,
@@ -210,10 +212,12 @@ void gint_gamma_force_gpu(hamilt::HContainer<double>* dm,
                 nwmax,
                 max_size,
                 gridt.psir_size / nwmax);
+            }
             // /* force compute in CPU*/
             
 
             /*stress compute in GPU*/
+            if (isstress){
             dot_product_stress<<<grid_dot,
                                  block_dot,
                                  0,
@@ -227,10 +231,14 @@ void gint_gamma_force_gpu(hamilt::HContainer<double>* dm,
                 para.psir_dm_device,
                 f_s_iat.stress_device,
                 gridt.psir_size);
+            }
             /* stress compute in CPU*/
+            if (isstress){
             cal_stress_add(f_s_iat, stress, cuda_block);
+            }
+            if (isforce){
             cal_force_add(f_s_iat, force, atom_num_grid);
-            
+            }
             iter_num++;
         }
     }
