@@ -52,7 +52,8 @@ void TD_Velocity::output_cart_At(const std::string &out_dir)
     //output the vector potential
     ofs << std::left <<std::setw(8) << istep;
     // divide by 2.0 to get the atomic unit
-    for(int i=0; i<3; i++){
+    for(int i=0; i<3; i++)
+    {
         ofs << std::scientific << std::setprecision(4)<< std::setw(15) << cart_At[i]/2.0;
     }
     ofs << std::endl;
