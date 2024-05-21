@@ -1,5 +1,6 @@
 #include "module_hamilt_pw/hamilt_pwdft/kernels/force_op.h"
-#include "module_psi/kernels/device.h"
+// #include "module_psi/kernels/device.h"
+#include "module_base/module_device/types.h"
 
 #include <complex>
 
@@ -106,19 +107,18 @@ __global__ void cal_force_nl(
 }
 
 template <typename FPTYPE>
-void cal_vkb1_nl_op<FPTYPE, psi::DEVICE_GPU>::operator() (
-        const psi::DEVICE_GPU *ctx,
-        const int &nkb,
-        const int &npwx,
-        const int &npwk_max,
-        const int &vkb_nc,
-        const int &nbasis,
-        const int &ik,
-        const int &ipol,
-        const std::complex<FPTYPE> &NEG_IMAG_UNIT,
-        const std::complex<FPTYPE> *vkb,
-        const FPTYPE *gcar,
-        std::complex<FPTYPE> *vkb1)
+void cal_vkb1_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* ctx,
+                                                                 const int& nkb,
+                                                                 const int& npwx,
+                                                                 const int& npwk_max,
+                                                                 const int& vkb_nc,
+                                                                 const int& nbasis,
+                                                                 const int& ik,
+                                                                 const int& ipol,
+                                                                 const std::complex<FPTYPE>& NEG_IMAG_UNIT,
+                                                                 const std::complex<FPTYPE>* vkb,
+                                                                 const FPTYPE* gcar,
+                                                                 std::complex<FPTYPE>* vkb1)
 {
     cal_vkb1_nl<FPTYPE><<<nkb, THREADS_PER_BLOCK>>>(
             npwx,
@@ -137,30 +137,29 @@ void cal_vkb1_nl_op<FPTYPE, psi::DEVICE_GPU>::operator() (
 }
 
 template <typename FPTYPE>
-void cal_force_nl_op<FPTYPE, psi::DEVICE_GPU>::operator() (
-        const psi::DEVICE_GPU *ctx,
-        const bool &nondiagonal,
-        const int &nbands_occ,
-        const int &wg_nc,
-        const int &ntype,
-        const int &spin,
-        const int &deeq_2,
-        const int &deeq_3,
-        const int &deeq_4,
-        const int &forcenl_nc,
-        const int &nbands,
-        const int &ik,
-        const int &nkb,
-        const int *atom_nh,
-        const int *atom_na,
-        const FPTYPE &tpiba,
-        const FPTYPE *d_wg,
-        const FPTYPE* d_ekb,
-        const FPTYPE* qq_nt,
-        const FPTYPE *deeq,
-        const std::complex<FPTYPE> *becp,
-        const std::complex<FPTYPE> *dbecp,
-        FPTYPE *force)
+void cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* ctx,
+                                                                  const bool& nondiagonal,
+                                                                  const int& nbands_occ,
+                                                                  const int& wg_nc,
+                                                                  const int& ntype,
+                                                                  const int& spin,
+                                                                  const int& deeq_2,
+                                                                  const int& deeq_3,
+                                                                  const int& deeq_4,
+                                                                  const int& forcenl_nc,
+                                                                  const int& nbands,
+                                                                  const int& ik,
+                                                                  const int& nkb,
+                                                                  const int* atom_nh,
+                                                                  const int* atom_na,
+                                                                  const FPTYPE& tpiba,
+                                                                  const FPTYPE* d_wg,
+                                                                  const FPTYPE* d_ekb,
+                                                                  const FPTYPE* qq_nt,
+                                                                  const FPTYPE* deeq,
+                                                                  const std::complex<FPTYPE>* becp,
+                                                                  const std::complex<FPTYPE>* dbecp,
+                                                                  FPTYPE* force)
 {
     cal_force_nl<FPTYPE><<<nbands_occ * ntype, THREADS_PER_BLOCK>>>(
             nondiagonal,
@@ -178,10 +177,10 @@ void cal_force_nl_op<FPTYPE, psi::DEVICE_GPU>::operator() (
     cudaErrcheck(cudaDeviceSynchronize());
 }
 
-template struct cal_vkb1_nl_op<float, psi::DEVICE_GPU>;
-template struct cal_force_nl_op<float, psi::DEVICE_GPU>;
+template struct cal_vkb1_nl_op<float, base_device::DEVICE_GPU>;
+template struct cal_force_nl_op<float, base_device::DEVICE_GPU>;
 
-template struct cal_vkb1_nl_op<double, psi::DEVICE_GPU>;
-template struct cal_force_nl_op<double, psi::DEVICE_GPU>;
+template struct cal_vkb1_nl_op<double, base_device::DEVICE_GPU>;
+template struct cal_force_nl_op<double, base_device::DEVICE_GPU>;
 
 }  // namespace hamilt

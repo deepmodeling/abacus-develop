@@ -12,7 +12,7 @@
 
 namespace hsolver {
 
-template<typename T, typename Device = psi::DEVICE_CPU>
+template <typename T, typename Device = base_device::DEVICE_CPU>
 class DiagoCG final : public DiagH<T, Device>
 {
     // private: accessibility within class is private by default

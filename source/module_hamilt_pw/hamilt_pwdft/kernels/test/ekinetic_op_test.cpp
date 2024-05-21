@@ -1,9 +1,12 @@
-#include <vector>
-#include <complex>
-#include <iostream>
-#include <gtest/gtest.h>
-#include "module_psi/kernels/memory_op.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/ekinetic_op.h"
+
+#include "module_base/module_device/memory_op.h"
+// #include "module_psi/kernels/memory_op.h"
+
+#include <complex>
+#include <gtest/gtest.h>
+#include <iostream>
+#include <vector>
 
 class TestModuleHamiltEkinetic : public ::testing::Test
 {
@@ -39,24 +42,30 @@ class TestModuleHamiltEkinetic : public ::testing::Test
       {0.232721,-1.42501e-17}, {0,0}, {0.232721,1.42501e-17}, {0,-0.154796}, {-0.232721,-1.42501e-17}, {0,0}, {0,0}, {-0.232721,1.42501e-17}, {0,0.154796}, {0,0}, {0.232721,1.42501e-17}, {4.53049e-17,-0.369943}, {0,0}, {-0.232721,-4.27502e-17}, {-3.7914e-17,0.154796}, {0,0}, {0,0.154796}, {-3.7914e-17,0.154796}, {-3.7914e-17,-0.154796}, {4.53049e-17,0.369943}, {0.232721,-1.42501e-17}, {0,1.8957e-17}, {0,-0.154796}, {4.64312e-33,1.8957e-17}, {-3.7914e-17,-0.154796}, {-0.232721,4.27502e-17}, {-5.54825e-33,-4.53049e-17}
     };
 
-    const psi::DEVICE_CPU * cpu_ctx = {};
-    const psi::DEVICE_GPU * gpu_ctx = {};
+    const base_device::DEVICE_CPU* cpu_ctx = {};
+    const base_device::DEVICE_GPU* gpu_ctx = {};
 
     void SetUp() override {
     }
     void TearDown() override {
     }
 
-    using ekinetic_cpu_op = hamilt::ekinetic_pw_op<double, psi::DEVICE_CPU>;
-    using ekinetic_gpu_op = hamilt::ekinetic_pw_op<double, psi::DEVICE_GPU>;
-    using set_memory_complex_double_op = psi::memory::set_memory_op<std::complex<double>, psi::DEVICE_GPU>;
-    using delete_memory_double_op = psi::memory::delete_memory_op<double, psi::DEVICE_GPU>;
-    using delete_memory_complex_double_op = psi::memory::delete_memory_op<std::complex<double>, psi::DEVICE_GPU>;
-    using resize_memory_double_op = psi::memory::resize_memory_op<double, psi::DEVICE_GPU>;
-    using resize_memory_complex_double_op = psi::memory::resize_memory_op<std::complex<double>, psi::DEVICE_GPU>;
-    using syncmem_d_h2d_op = psi::memory::synchronize_memory_op<double, psi::DEVICE_GPU, psi::DEVICE_CPU>;
-    using syncmem_cd_h2d_op = psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_GPU, psi::DEVICE_CPU>;
-    using syncmem_cd_d2h_op = psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_CPU, psi::DEVICE_GPU>;
+    using ekinetic_cpu_op = hamilt::ekinetic_pw_op<double, base_device::DEVICE_CPU>;
+    using ekinetic_gpu_op = hamilt::ekinetic_pw_op<double, base_device::DEVICE_GPU>;
+    using set_memory_complex_double_op
+        = base_device::memory::set_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
+    using delete_memory_double_op = base_device::memory::delete_memory_op<double, base_device::DEVICE_GPU>;
+    using delete_memory_complex_double_op
+        = base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
+    using resize_memory_double_op = base_device::memory::resize_memory_op<double, base_device::DEVICE_GPU>;
+    using resize_memory_complex_double_op
+        = base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
+    using syncmem_d_h2d_op
+        = base_device::memory::synchronize_memory_op<double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+    using syncmem_cd_h2d_op = base_device::memory::
+        synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+    using syncmem_cd_d2h_op = base_device::memory::
+        synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
 };
 
 TEST_F(TestModuleHamiltEkinetic, ekinetic_pw_op_cpu)

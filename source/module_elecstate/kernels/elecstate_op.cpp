@@ -2,15 +2,15 @@
 
 namespace elecstate{
 
-template <typename FPTYPE> 
-struct elecstate_pw_op<FPTYPE, psi::DEVICE_CPU> {
-  void operator()(
-    const psi::DEVICE_CPU * /*ctx*/,
-    const int& spin,
-    const int& nrxx,
-    const FPTYPE& w1,
-    FPTYPE** rho,
-    const std::complex<FPTYPE>* wfcr) 
+template <typename FPTYPE>
+struct elecstate_pw_op<FPTYPE, base_device::DEVICE_CPU>
+{
+    void operator()(const base_device::DEVICE_CPU* /*ctx*/,
+                    const int& spin,
+                    const int& nrxx,
+                    const FPTYPE& w1,
+                    FPTYPE** rho,
+                    const std::complex<FPTYPE>* wfcr)
     {
       // for (int ir = 0; ir < nrxx; ir++)
       // {
@@ -25,15 +25,14 @@ struct elecstate_pw_op<FPTYPE, psi::DEVICE_CPU> {
       }
     }
 
-   void operator()(
-    const psi::DEVICE_CPU * ctx,
-    const bool& DOMAG,
-    const bool& DOMAG_Z,
-    const int& nrxx,
-    const FPTYPE& w1,
-    FPTYPE** rho,
-    const std::complex<FPTYPE>* wfcr,
-    const std::complex<FPTYPE>* wfcr_another_spin) 
+    void operator()(const base_device::DEVICE_CPU* ctx,
+                    const bool& DOMAG,
+                    const bool& DOMAG_Z,
+                    const int& nrxx,
+                    const FPTYPE& w1,
+                    FPTYPE** rho,
+                    const std::complex<FPTYPE>* wfcr,
+                    const std::complex<FPTYPE>* wfcr_another_spin)
     {
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -79,9 +78,9 @@ struct elecstate_pw_op<FPTYPE, psi::DEVICE_CPU> {
                   rho[is][ir] = 0;
           }
       }
-    } 
+    }
 };
 
-template struct elecstate_pw_op<float, psi::DEVICE_CPU>;
-template struct elecstate_pw_op<double, psi::DEVICE_CPU>;
+template struct elecstate_pw_op<float, base_device::DEVICE_CPU>;
+template struct elecstate_pw_op<double, base_device::DEVICE_CPU>;
 }  // namespace elecstate

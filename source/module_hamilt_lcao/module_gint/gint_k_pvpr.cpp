@@ -60,8 +60,12 @@ void Gint_k::destroy_pvpR(void)
 // H(k)=\sum{R} H(R)exp(ikR) 
 void Gint_k::folding_vl_k(const int &ik, 
                         LCAO_Matrix *LM, 
-                         Parallel_Orbitals *pv,
-                        const std::vector<ModuleBase::Vector3<double>>& kvec_d)
+                        Parallel_Orbitals *pv,
+                        const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                        const UnitCell& ucell,
+                        const LCAO_Orbitals& orb,
+                        Grid_Driver& gd
+                        )
 {
     ModuleBase::TITLE("Gint_k","folding_vl_k");
     ModuleBase::timer::tick("Gint_k","folding_vl_k");
@@ -131,25 +135,25 @@ void Gint_k::folding_vl_k(const int &ik,
 #ifdef _OPENMP
 #pragma omp for schedule(dynamic)
 #endif
-    for(int iat=0; iat<GlobalC::ucell.nat; ++iat)
+    for(int iat=0; iat<ucell.nat; ++iat)
     {
-        const int T1 = GlobalC::ucell.iat2it[iat];
-        const int I1 = GlobalC::ucell.iat2ia[iat];
+        const int T1 = ucell.iat2it[iat];
+        const int I1 = ucell.iat2ia[iat];
         {
             // atom in this grid piece.
             if(this->gridt->in_this_processor[iat])
             {
-                Atom* atom1 = &GlobalC::ucell.atoms[T1];
-                const int start1 = GlobalC::ucell.itiaiw2iwt(T1, I1, 0);
+                Atom* atom1 = &ucell.atoms[T1];
+                const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
 
                 // get the start positions of elements.
                 const int DM_start = this->gridt->nlocstartg[iat];
 
                 // get the coordinates of adjacent atoms.
-                tau1 = GlobalC::ucell.atoms[T1].tau[I1];
-                //GlobalC::GridD.Find_atom(tau1);	
+                tau1 = ucell.atoms[T1].tau[I1];
+                //GridD.Find_atom(tau1);	
                 AdjacentAtomInfo adjs;
-                GlobalC::GridD.Find_atom(GlobalC::ucell, tau1, T1, I1, &adjs);	
+                gd.Find_atom(ucell, tau1, T1, I1, &adjs);	
                 // search for the adjacent atoms.
                 int nad = 0;
 
@@ -158,25 +162,25 @@ void Gint_k::folding_vl_k(const int &ik,
                     // get iat2
                     const int T2 = adjs.ntype[ad];
                     const int I2 = adjs.natom[ad];
-                    const int iat2 = GlobalC::ucell.itia2iat(T2, I2);
+                    const int iat2 = ucell.itia2iat(T2, I2);
 
 
                     // adjacent atom is also on the grid.
                     if(this->gridt->in_this_processor[iat2])
                     {
-                        Atom* atom2 = &GlobalC::ucell.atoms[T2];
+                        Atom* atom2 = &ucell.atoms[T2];
                         dtau = adjs.adjacent_tau[ad] - tau1;
-                        double distance = dtau.norm() * GlobalC::ucell.lat0;
-                        double rcut = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Phi[T2].getRcut();
+                        double distance = dtau.norm() * ucell.lat0;
+                        double rcut = orb.Phi[T1].getRcut() + orb.Phi[T2].getRcut();
 
                         // for the local part, only need to calculate <phi_i | phi_j> within range
                         // mohan note 2012-07-06
                         if(distance < rcut)
                         {
-                            const int start2 = GlobalC::ucell.itiaiw2iwt(T2, I2, 0); 
+                            const int start2 = ucell.itiaiw2iwt(T2, I2, 0); 
 
                             // calculate the distance between iat1 and iat2.
-                            // ModuleBase::Vector3<double> dR = GlobalC::GridD.getAdjacentTau(ad) - tau1;
+                            // ModuleBase::Vector3<double> dR = GridD.getAdjacentTau(ad) - tau1;
                             dR.x = adjs.box[ad].x;
                             dR.y = adjs.box[ad].y;
                             dR.z = adjs.box[ad].z;
@@ -422,7 +426,7 @@ void Gint_k::folding_vl_k(const int &ik,
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
 
 //transfer_pvpR, NSPIN = 1 or 2
-void Gint_k::transfer_pvpR(hamilt::HContainer<double> *hR)
+void Gint_k::transfer_pvpR(hamilt::HContainer<double> *hR,const UnitCell* ucell_in,const LCAO_Orbitals& orb,Grid_Driver* gd)
 {
     ModuleBase::TITLE("Gint_k","transfer_pvpR");
     ModuleBase::timer::tick("Gint_k","transfer_pvpR");
@@ -434,25 +438,25 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<double> *hR)
     this->hRGint->set_zero();
 
     const int npol = GlobalV::NPOL;
-
-    for(int iat=0; iat<GlobalC::ucell.nat; ++iat)
+    const UnitCell& ucell = *ucell_in;
+    for(int iat=0; iat<ucell.nat; ++iat)
     {
-        const int T1 = GlobalC::ucell.iat2it[iat];
-        const int I1 = GlobalC::ucell.iat2ia[iat];
+        const int T1 = ucell.iat2it[iat];
+        const int I1 = ucell.iat2ia[iat];
         {
             // atom in this grid piece.
             if(this->gridt->in_this_processor[iat])
             {
-                Atom* atom1 = &GlobalC::ucell.atoms[T1];
+                Atom* atom1 = &ucell.atoms[T1];
 
                 // get the start positions of elements.
                 const int DM_start = this->gridt->nlocstartg[iat];
 
                 // get the coordinates of adjacent atoms.
-                auto& tau1 = GlobalC::ucell.atoms[T1].tau[I1];
-                //GlobalC::GridD.Find_atom(tau1);	
+                auto& tau1 = ucell.atoms[T1].tau[I1];
+                //gd.Find_atom(tau1);	
                 AdjacentAtomInfo adjs;
-                GlobalC::GridD.Find_atom(GlobalC::ucell, tau1, T1, I1, &adjs);	
+                gd->Find_atom(ucell, tau1, T1, I1, &adjs);	
                 // search for the adjacent atoms.
                 int nad = 0;
 
@@ -461,16 +465,16 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<double> *hR)
                     // get iat2
                     const int T2 = adjs.ntype[ad];
                     const int I2 = adjs.natom[ad];
-                    const int iat2 = GlobalC::ucell.itia2iat(T2, I2);
+                    const int iat2 = ucell.itia2iat(T2, I2);
 
 
                     // adjacent atom is also on the grid.
                     if(this->gridt->in_this_processor[iat2])
                     {
-                        Atom* atom2 = &GlobalC::ucell.atoms[T2];
+                        Atom* atom2 = &ucell.atoms[T2];
                         auto dtau = adjs.adjacent_tau[ad] - tau1;
-                        double distance = dtau.norm() * GlobalC::ucell.lat0;
-                        double rcut = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Phi[T2].getRcut();
+                        double distance = dtau.norm() * ucell.lat0;
+                        double rcut = orb.Phi[T1].getRcut() + orb.Phi[T2].getRcut();
 
                         if(distance < rcut)
                         {
@@ -480,7 +484,7 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<double> *hR)
                                 continue;
                             }
                             // calculate the distance between iat1 and iat2.
-                            // ModuleBase::Vector3<double> dR = GlobalC::GridD.getAdjacentTau(ad) - tau1;
+                            // ModuleBase::Vector3<double> dR = gd.getAdjacentTau(ad) - tau1;
                             auto& dR = adjs.box[ad];
                             //dR.x = adjs.box[ad].x;
                             //dR.y = adjs.box[ad].y;
@@ -548,11 +552,10 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<double> *hR)
 }
 
 //transfer_pvpR, NSPIN = 4
-void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>> *hR)
+void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>> *hR,const UnitCell* ucell_in,const LCAO_Orbitals& orb,Grid_Driver* gd)
 {
     ModuleBase::TITLE("Gint_k","transfer_pvpR");
     ModuleBase::timer::tick("Gint_k","transfer_pvpR");
-
     if(!pvpR_alloc_flag || this->hRGintCd == nullptr)
     {
         ModuleBase::WARNING_QUIT("Gint_k::destroy_pvpR","pvpR hasnot been allocated yet!");
@@ -560,25 +563,26 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>> *hR)
     this->hRGintCd->set_zero();
 
     const int npol = GlobalV::NPOL;
-
-    for(int iat=0; iat<GlobalC::ucell.nat; ++iat)
+    const UnitCell& ucell = *ucell_in;
+    
+    for(int iat=0; iat<ucell.nat; ++iat)
     {
-        const int T1 = GlobalC::ucell.iat2it[iat];
-        const int I1 = GlobalC::ucell.iat2ia[iat];
+        const int T1 = ucell.iat2it[iat];
+        const int I1 = ucell.iat2ia[iat];
         {
             // atom in this grid piece.
             if(this->gridt->in_this_processor[iat])
             {
-                Atom* atom1 = &GlobalC::ucell.atoms[T1];
+                Atom* atom1 = &ucell.atoms[T1];
 
                 // get the start positions of elements.
                 const int DM_start = this->gridt->nlocstartg[iat];
 
                 // get the coordinates of adjacent atoms.
-                auto& tau1 = GlobalC::ucell.atoms[T1].tau[I1];
-                //GlobalC::GridD.Find_atom(tau1);	
+                auto& tau1 = ucell.atoms[T1].tau[I1];
+                //gd.Find_atom(tau1);	
                 AdjacentAtomInfo adjs;
-                GlobalC::GridD.Find_atom(GlobalC::ucell, tau1, T1, I1, &adjs);	
+                gd->Find_atom(ucell, tau1, T1, I1, &adjs);	
                 // search for the adjacent atoms.
                 int nad = 0;
 
@@ -587,15 +591,15 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>> *hR)
                     // get iat2
                     const int T2 = adjs.ntype[ad];
                     const int I2 = adjs.natom[ad];
-                    const int iat2 = GlobalC::ucell.itia2iat(T2, I2);
+                    const int iat2 = ucell.itia2iat(T2, I2);
 
                     // adjacent atom is also on the grid.
                     if(this->gridt->in_this_processor[iat2])
                     {
-                        Atom* atom2 = &GlobalC::ucell.atoms[T2];
+                        Atom* atom2 = &ucell.atoms[T2];
                         auto dtau = adjs.adjacent_tau[ad] - tau1;
-                        double distance = dtau.norm() * GlobalC::ucell.lat0;
-                        double rcut = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Phi[T2].getRcut();
+                        double distance = dtau.norm() * ucell.lat0;
+                        double rcut = orb.Phi[T1].getRcut() + orb.Phi[T2].getRcut();
 
                         if(distance < rcut)
                         {
@@ -605,7 +609,7 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>> *hR)
                                 continue;
                             }
                             // calculate the distance between iat1 and iat2.
-                            // ModuleBase::Vector3<double> dR = GlobalC::GridD.getAdjacentTau(ad) - tau1;
+                            // ModuleBase::Vector3<double> dR = gd.getAdjacentTau(ad) - tau1;
                             auto& dR = adjs.box[ad];
                             //dR.x = adjs.box[ad].x;
                             //dR.y = adjs.box[ad].y;

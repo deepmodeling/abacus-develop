@@ -159,7 +159,7 @@ void Stress_PW<FPTYPE, Device>::stress_vdw(ModuleBase::matrix& sigma, UnitCell& 
 	return;
 }
 
-template class Stress_PW<double, psi::DEVICE_CPU>;
+template class Stress_PW<double, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class Stress_PW<double, psi::DEVICE_GPU>;
+template class Stress_PW<double, base_device::DEVICE_GPU>;
 #endif
