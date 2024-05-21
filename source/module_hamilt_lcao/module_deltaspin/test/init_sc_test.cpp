@@ -53,7 +53,7 @@ class SpinConstrainTest : public testing::Test
     {
         ucell = utp.SetUcellInfo();
     }
-    SpinConstrain<T, psi::DEVICE_CPU>& sc = SpinConstrain<T, psi::DEVICE_CPU>::getScInstance();
+    SpinConstrain<T, base_device::DEVICE_CPU>& sc = SpinConstrain<T, base_device::DEVICE_CPU>::getScInstance();
 };
 
 using MyTypes = ::testing::Types<double, std::complex<double>>;

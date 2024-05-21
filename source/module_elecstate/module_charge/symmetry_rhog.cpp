@@ -24,7 +24,6 @@ void Symmetry_rho::psymmg(std::complex<double>* rhog_part, const ModulePW::PW_Ba
 		ModuleBase::GlobalFunc::ZEROS(rhogtot, rho_basis->npwtot);
 		ig2isztot = new int[rho_basis->npwtot];
 		ModuleBase::GlobalFunc::ZEROS(rhogtot, rho_basis->npwtot);
-		ModuleBase::Memory::record("Symmetry_rho::psymmg",sizeof(std::complex<double>)*rho_basis->npwtot + sizeof(int)*(rho_basis->npwtot+rho_basis->fftnxy));
 	}
 	// find max_npw
 	int max_npw=0;

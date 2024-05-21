@@ -3,6 +3,7 @@
 #include "spar_u.h"
 #include "spar_exx.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
+#include "module_hamilt_lcao/module_tddft/td_velocity.h"
 
 void sparse_format::cal_HSR(
         const Parallel_Orbitals &pv,
@@ -25,12 +26,24 @@ void sparse_format::cal_HSR(
         hamilt::HamiltLCAO<std::complex<double>, double>* p_ham_lcao = 
         dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham);
 
-		sparse_format::cal_HContainer_d(
+        if(TD_Velocity::tddft_velocity)
+        {
+            sparse_format::cal_HContainer_td(
+                pv,
+                current_spin, 
+				sparse_thr, 
+				*(p_ham_lcao->getHR()), 
+				TD_Velocity::td_vel_op->HR_sparse_td_vel[current_spin]);
+        }
+        else
+        {
+            sparse_format::cal_HContainer_d(
                 pv,
                 current_spin, 
 				sparse_thr, 
 				*(p_ham_lcao->getHR()), 
 				lm.HR_sparse[current_spin]);
+        }
 
 		sparse_format::cal_HContainer_d(
 				pv,
@@ -202,6 +215,49 @@ void sparse_format::cal_HContainer_cd(
     return;
 }
 
+void sparse_format::cal_HContainer_td(
+        const Parallel_Orbitals &pv,
+		const int &current_spin, 
+		const double &sparse_thr, 
+		const hamilt::HContainer<double>& hR, 
+		std::map<Abfs::Vector3_Order<int>, 
+		std::map<size_t, std::map<size_t, std::complex<double>>>>& target)
+{
+    ModuleBase::TITLE("sparse_format","cal_HContainer_td");
+
+    auto row_indexes = pv.get_indexes_row();
+    auto col_indexes = pv.get_indexes_col();
+    for(int iap=0;iap<hR.size_atom_pairs();++iap)
+    {
+        int atom_i = hR.get_atom_pair(iap).get_atom_i();
+        int atom_j = hR.get_atom_pair(iap).get_atom_j();
+        int start_i = pv.atom_begin_row[atom_i];
+        int start_j = pv.atom_begin_col[atom_j];
+        int row_size = pv.get_row_size(atom_i);
+        int col_size = pv.get_col_size(atom_j);
+        for(int iR=0;iR<hR.get_atom_pair(iap).get_R_size();++iR)
+        {
+            auto& matrix = hR.get_atom_pair(iap).get_HR_values(iR);
+            int* r_index = hR.get_atom_pair(iap).get_R_index(iR);
+            Abfs::Vector3_Order<int> dR(r_index[0], r_index[1], r_index[2]);
+            for(int i=0;i<row_size;++i)
+            {
+                int mu = row_indexes[start_i+i];
+                for(int j=0;j<col_size;++j)
+                {
+                    int nu = col_indexes[start_j+j];
+                    const auto& value_tmp = std::complex<double>(matrix.get_value(i,j) , 0.0);
+                    if(std::abs(value_tmp)>sparse_thr)
+                    {
+                        target[dR][mu][nu] += value_tmp;
+                    }
+                }
+            }
+        }
+    }
+
+    return;
+}
 
 // in case there are elements smaller than the threshold
 void sparse_format::clear_zero_elements(
@@ -231,6 +287,28 @@ void sparse_format::clear_zero_elements(
                     }
                 }
             }
+        }
+        if(TD_Velocity::tddft_velocity)
+        {
+            for (auto &R_loop : TD_Velocity::td_vel_op->HR_sparse_td_vel[current_spin])
+        {
+            for (auto &row_loop : R_loop.second)
+            {
+                auto &col_map = row_loop.second;
+                auto iter = col_map.begin();
+                while (iter != col_map.end())
+                {
+                    if (std::abs(iter->second) <= sparse_thr)
+                    {
+                        col_map.erase(iter++);
+                    }
+                    else
+                    {
+                        iter++;
+                    }
+                }
+            }
+        }
         }
 
         for (auto &R_loop : lm.SR_sparse)

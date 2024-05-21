@@ -589,5 +589,5 @@ void SpinConstrain<FPTYPE, Device>::print_Mag_Force()
     }
 }
 
-template class SpinConstrain<std::complex<double>, psi::DEVICE_CPU>;
-template class SpinConstrain<double, psi::DEVICE_CPU>;
+template class SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>;
+template class SpinConstrain<double, base_device::DEVICE_CPU>;

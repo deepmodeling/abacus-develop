@@ -283,7 +283,7 @@ void Stress_Func<FPTYPE, Device>::dqvan2(const pseudopot_cell_vnl* ppcell_in,
     }
 }
 
-template class Stress_PW<double, psi::DEVICE_CPU>;
+template class Stress_PW<double, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class Stress_PW<double, psi::DEVICE_GPU>;
+template class Stress_PW<double, base_device::DEVICE_GPU>;
 #endif

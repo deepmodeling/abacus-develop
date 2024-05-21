@@ -7,7 +7,7 @@
 #include <stdio.h> // for fprintf and stderr
 
 #include <functional>
-
+#include "module_cell/unitcell.h"
 /**
  * Performs a batched matrix multiplication using the vbatched_gemm_impl
  * function.
@@ -111,5 +111,5 @@ typedef std::function<void(int,
                            double* alpha)>
     matrix_multiple_func_type;
 
-void gemm_algo_selector(int k, matrix_multiple_func_type& func);
+void gemm_algo_selector(int k, matrix_multiple_func_type& func,const UnitCell& ucell);
 #endif // VBATCH_MATRIX_MUL_H

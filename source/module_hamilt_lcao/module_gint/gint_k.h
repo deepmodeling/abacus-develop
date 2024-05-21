@@ -59,14 +59,16 @@ class Gint_k : public Gint
     // <phi_0i | V | phi_0j>
     // V is (Vl + Vh + Vxc) if no Vna is used,
     // and is (Vna + delta_Vh + Vxc) if Vna is used.
-    void folding_vl_k(const int &ik, LCAO_Matrix* LM, Parallel_Orbitals *pv,const std::vector<ModuleBase::Vector3<double>>& kvec_d);
+    void folding_vl_k(const int &ik, LCAO_Matrix* LM, Parallel_Orbitals *pv,
+                    const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                    const UnitCell& ucell,const LCAO_Orbitals& orb,Grid_Driver& gd);
 
     /**
      * @brief transfer pvpR to this->hRGint
      * then pass this->hRGint to Veff<OperatorLCAO>::hR
     */
-    void transfer_pvpR(hamilt::HContainer<double> *hR);
-    void transfer_pvpR(hamilt::HContainer<std::complex<double>> *hR);
+    void transfer_pvpR(hamilt::HContainer<double> *hR,const UnitCell* ucell_in,const LCAO_Orbitals& orb,Grid_Driver* gd);
+    void transfer_pvpR(hamilt::HContainer<std::complex<double>> *hR,const UnitCell* ucell_in,const LCAO_Orbitals& orb,Grid_Driver* gd);
 
     //------------------------------------------------------
     // in gint_k_env.cpp 
@@ -76,7 +78,8 @@ class Gint_k : public Gint
                    const std::complex<double>* psi_k,
                    double* rho,
                    const std::vector<ModuleBase::Vector3<double>>& kvec_c,
-                   const std::vector<ModuleBase::Vector3<double>>& kvec_d);
+                   const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                   LCAO_Orbitals &orb,UnitCell &ucell);
 
     //------------------------------------------------------
     // in gint_k_sparse.cpp 
@@ -104,7 +107,9 @@ class Gint_k : public Gint
         const int &current_spin,
         const double &sparse_threshold,
         LCAO_Matrix *LM,
-        Parallel_Orbitals *pv);
+        Parallel_Orbitals *pv,
+        LCAO_Orbitals &orb,UnitCell &ucell,
+        Grid_Driver &gdriver);
 
     //------------------------------------------------------
     // in gint_k_sparse1.cpp 
@@ -131,7 +136,9 @@ class Gint_k : public Gint
         const int &current_spin,
         const double &sparse_threshold,
         LCAO_Matrix *LM,
-        Parallel_Orbitals *pv);
+        Parallel_Orbitals *pv,
+        LCAO_Orbitals &orb,UnitCell &ucell,
+        Grid_Driver &gdriver);
 
     private:
 

@@ -25,6 +25,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_lcao/module_tddft/evolve_elec.h"
+#include "module_hamilt_lcao/module_tddft/td_velocity.h"
 #endif
 #ifdef __PEXSI
 #include "module_hsolver/module_pexsi/pexsi_solver.h"
@@ -37,7 +38,7 @@
 #include "module_hsolver/hsolver_lcao.h"
 #include "module_hsolver/hsolver_pw.h"
 #include "module_md/md_func.h"
-#include "module_psi/kernels/device.h"
+#include "module_base/module_device/device.h"
 
 template <typename T>
 void Input_Conv::parse_expression(const std::string &fn, std::vector<T> &vec)
@@ -135,7 +136,22 @@ std::vector<double> Input_Conv::convert_units(std::string params, double c)
 void Input_Conv::read_td_efield()
 {
     elecstate::H_TDDFT_pw::stype = INPUT.td_stype;
-
+    if(INPUT.esolver_type == "tddft" && elecstate::H_TDDFT_pw::stype == 1)
+    {
+        TD_Velocity::tddft_velocity = true;
+    }
+    else
+    {
+        TD_Velocity::tddft_velocity = false;
+    }
+    if(INPUT.out_mat_hs2==1)
+    {
+        TD_Velocity::out_mat_R = true;
+    }
+    else
+    {
+        TD_Velocity::out_mat_R = false;
+    }
     parse_expression(INPUT.td_ttype, elecstate::H_TDDFT_pw::ttype);
 
     elecstate::H_TDDFT_pw::tstart = INPUT.td_tstart;
@@ -311,11 +327,12 @@ void Input_Conv::Convert(void)
     GlobalV::MIN_DIST_COEF = INPUT.min_dist_coef;
     GlobalV::NBANDS = INPUT.nbands;
     GlobalV::NBANDS_ISTATE = INPUT.nbands_istate;
-    GlobalV::device_flag = psi::device::get_device_flag(INPUT.device, INPUT.ks_solver, INPUT.basis_type, INPUT.gamma_only_local);
+    
+    GlobalV::device_flag = base_device::information::get_device_flag(INPUT.device, INPUT.ks_solver, INPUT.basis_type, INPUT.gamma_only_local);
 
     if (GlobalV::device_flag == "gpu" && INPUT.basis_type == "pw")
     {
-        GlobalV::KPAR = psi::device::get_device_kpar(INPUT.kpar);
+        GlobalV::KPAR = base_device::information::get_device_kpar(INPUT.kpar);
     }
     else
     {
@@ -396,12 +413,12 @@ void Input_Conv::Convert(void)
     GlobalV::DIAGO_CG_PREC = INPUT.diago_cg_prec;
     GlobalV::PW_DIAG_NDIM = INPUT.pw_diag_ndim;
 
-    hsolver::HSolverPW<std::complex<float>, psi::DEVICE_CPU>::diago_full_acc = INPUT.diago_full_acc;
-    hsolver::HSolverPW<std::complex<double>, psi::DEVICE_CPU>::diago_full_acc = INPUT.diago_full_acc;
+    hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU>::diago_full_acc = INPUT.diago_full_acc;
+    hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU>::diago_full_acc = INPUT.diago_full_acc;
 
 #if ((defined __CUDA) || (defined __ROCM))
-    hsolver::HSolverPW<std::complex<float>, psi::DEVICE_GPU>::diago_full_acc = INPUT.diago_full_acc;
-    hsolver::HSolverPW<std::complex<double>, psi::DEVICE_GPU>::diago_full_acc = INPUT.diago_full_acc;
+    hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_GPU>::diago_full_acc = INPUT.diago_full_acc;
+    hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_GPU>::diago_full_acc = INPUT.diago_full_acc;
 #endif
 
     GlobalV::PW_DIAG_THR = INPUT.pw_diag_thr;
