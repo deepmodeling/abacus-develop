@@ -53,7 +53,9 @@ void TD_Velocity::output_cart_At(const std::string &out_dir)
     ofs << std::left <<std::setw(8) << istep;
     // divide by 2.0 to get the atomic unit
     for(int i=0; i<3; i++)
-      ofs << std::scientific << std::setprecision(4)<< std::setw(15) << cart_At[i]/2.0;
+    {
+        ofs << std::scientific << std::setprecision(4)<< std::setw(15) << cart_At[i]/2.0;
+    }
     ofs << std::endl;
     ofs.close();
   }
@@ -137,3 +139,4 @@ void TD_Velocity::destroy_HS_R_td_sparse(void)
   std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> empty_HR_sparse_td_vel_down;
   HR_sparse_td_vel[0].swap(empty_HR_sparse_td_vel_up);
   HR_sparse_td_vel[1].swap(empty_HR_sparse_td_vel_down);
+}
