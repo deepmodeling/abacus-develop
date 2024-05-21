@@ -92,6 +92,8 @@ void gint_gamma_force_gpu(hamilt::HContainer<double>* dm,
                           const int nczp,
                           double dr,
                           double* rcut,
+                          int isforce,
+                          int isstress,
                           const Grid_Technique& gridt,
                           const UnitCell& ucell);
 
@@ -208,7 +210,7 @@ void cal_init(ForceStressIat& f_s_iat,
                         const int cuda_block,
                         const int atom_num_grid,
                         const int max_size,
-                        const ForceStressIatGlobal& f_s_iatg);
+                        ForceStressIatGlobal& f_s_iatg);
 /**
  * @brief GridParameter memCpy,from Host to Device
  *

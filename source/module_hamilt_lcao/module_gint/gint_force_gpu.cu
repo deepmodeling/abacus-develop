@@ -63,6 +63,8 @@ void gint_gamma_force_gpu(hamilt::HContainer<double>* dm,
                           const int nczp,
                           double dr,
                           double* rcut,
+                          int isforce,
+                          int isstress,
                           const Grid_Technique& gridt,
                           const UnitCell& ucell)
 {
@@ -110,7 +112,7 @@ void gint_gamma_force_gpu(hamilt::HContainer<double>* dm,
             dim3 block_dot_force(cuda_threads);
             dim3 grid_dot(cuda_block);
             dim3 block_dot(cuda_threads);
-
+            
             para_init(para, iter_num, nbz, gridt);
             cal_init(f_s_iat,
                                para.stream_num,
@@ -118,8 +120,6 @@ void gint_gamma_force_gpu(hamilt::HContainer<double>* dm,
                                atom_num_grid,
                                max_size,
                                f_s_iat_dev);
-            checkCuda(cudaStreamSynchronize(gridt.streams[para.stream_num]));
-
             /*gpu task compute in CPU */
             gpu_task_generator_force(gridt,
                                      ucell,
@@ -195,7 +195,7 @@ void gint_gamma_force_gpu(hamilt::HContainer<double>* dm,
                                      gridt.streams[para.stream_num],
                                      nullptr);
 
-            checkCuda(cudaStreamSynchronize(gridt.streams[para.stream_num]));
+            
             /* force compute in GPU */
             dot_product_force<<<grid_dot_force,
                                 block_dot_force,
@@ -210,8 +210,8 @@ void gint_gamma_force_gpu(hamilt::HContainer<double>* dm,
                 nwmax,
                 max_size,
                 gridt.psir_size / nwmax);
-            /* force compute in CPU*/
-            cal_force_add(f_s_iat, force, atom_num_grid);
+            // /* force compute in CPU*/
+            
 
             /*stress compute in GPU*/
             dot_product_stress<<<grid_dot,
@@ -229,12 +229,11 @@ void gint_gamma_force_gpu(hamilt::HContainer<double>* dm,
                 gridt.psir_size);
             /* stress compute in CPU*/
             cal_stress_add(f_s_iat, stress, cuda_block);
+            cal_force_add(f_s_iat, force, atom_num_grid);
+            
             iter_num++;
         }
     }
-    // cudaFree(f_s_iat.stress_device);
-    // cudaFree(f_s_iat.force_device);
-    // cudaFree(f_s_iat.iat_device);
     delete[] f_s_iat.stress_host;
     delete[] f_s_iat.force_host;
     delete[] f_s_iat.iat_host;

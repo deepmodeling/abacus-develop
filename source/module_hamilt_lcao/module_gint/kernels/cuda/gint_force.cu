@@ -393,7 +393,7 @@ void cal_init(ForceStressIat& f_s_iat,
                         const int cuda_block,
                         const int atom_num_grid,
                         const int max_size,
-                        const ForceStressIatGlobal& f_s_iat_dev)
+                        ForceStressIatGlobal& f_s_iat_dev)
 {
     const int iat_min = -max_size - 1;
     f_s_iat.stress_host = new double[6 * cuda_block];
