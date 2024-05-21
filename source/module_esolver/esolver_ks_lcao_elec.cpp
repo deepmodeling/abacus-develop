@@ -583,13 +583,6 @@ void ESolver_KS_LCAO<TK, TR>::nscf(void)
         {
             this->exc->read_Hexxs_csr(file_name_exx, GlobalC::ucell);
         }
-
-        hamilt::HamiltLCAO<TK, TR>* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
-        auto exx = new hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>>(&this->LM,
-                                                                         hamilt_lcao->getHR(),
-                                                                         &(hamilt_lcao->getHk(&this->LM)),
-                                                                         this->kv);
-        hamilt_lcao->getOperator()->add(exx);
     }
 #endif // __MPI
 #endif // __EXX

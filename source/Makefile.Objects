@@ -429,6 +429,7 @@ OBJS_IO=input.o\
     dos_nao.o\
     numerical_descriptor.o\
     numerical_basis.o\
+    numerical_basis_jyjy.o\
     output.o\
     print_info.o\
     read_cube.o\
@@ -497,6 +498,7 @@ OBJS_LCAO=DM_gamma.o\
       middle_hamilt.o\
       norm_psi.o\
       propagator.o\
+      td_velocity.o\
       upsi.o\
       FORCE_STRESS.o\
       FORCE_gamma.o\

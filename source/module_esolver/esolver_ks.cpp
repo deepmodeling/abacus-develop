@@ -716,14 +716,33 @@ void ESolver_KS<T, Device>::write_head(std::ofstream& ofs_running, const int ist
 //! mohan add 2024-05-12
 //------------------------------------------------------------------------------
 template<typename T, typename Device>
-int ESolver_KS<T, Device>::getniter()
+int ESolver_KS<T, Device>::get_niter()
 {
 	return this->niter;
 }
 
+//------------------------------------------------------------------------------
+//! the 11th function of ESolver_KS: get_maxniter
+//! tqzhao add 2024-05-15
+//------------------------------------------------------------------------------
+template<typename T, typename Device>
+int ESolver_KS<T, Device>::get_maxniter()
+{
+	return this->maxniter;
+}
 
 //------------------------------------------------------------------------------
-//! the 11th function of ESolver_KS: create_Output_Rho
+//! the 12th function of ESolver_KS: get_conv_elec
+//! tqzhao add 2024-05-15
+//------------------------------------------------------------------------------
+template<typename T, typename Device>
+bool ESolver_KS<T, Device>::get_conv_elec()
+{
+	return this->conv_elec;
+}
+
+//------------------------------------------------------------------------------
+//! the 13th function of ESolver_KS: create_Output_Rho
 //! mohan add 2024-05-12
 //------------------------------------------------------------------------------
 template<typename T, typename Device>
@@ -765,7 +784,7 @@ ModuleIO::Output_Rho ESolver_KS<T, Device>::create_Output_Rho(
 
 
 //------------------------------------------------------------------------------
-//! the 12th function of ESolver_KS: create_Output_Kin
+//! the 14th function of ESolver_KS: create_Output_Kin
 //! mohan add 2024-05-12
 //------------------------------------------------------------------------------
 template<typename T, typename Device>
@@ -789,7 +808,7 @@ ModuleIO::Output_Rho ESolver_KS<T, Device>::create_Output_Kin(int is, int iter, 
 
 
 //------------------------------------------------------------------------------
-//! the 13th function of ESolver_KS: create_Output_Potential
+//! the 15th function of ESolver_KS: create_Output_Potential
 //! mohan add 2024-05-12
 //------------------------------------------------------------------------------
 template<typename T, typename Device>
@@ -814,7 +833,7 @@ ModuleIO::Output_Potential ESolver_KS<T, Device>::create_Output_Potential(int it
 
 
 //------------------------------------------------------------------------------
-//! the 14th-18th functions of ESolver_KS
+//! the 16th-20th functions of ESolver_KS
 //! mohan add 2024-05-12
 //------------------------------------------------------------------------------
 //! This is for mixed-precision pw/LCAO basis sets.
