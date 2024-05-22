@@ -1,6 +1,7 @@
 // #include "module_psi/kernels/memory_op.h"
 
 // #include <complex>
+// #include <type_traits>
 
 // #include <hip/hip_runtime.h>
 // #include <thrust/complex.h>
@@ -90,14 +91,14 @@
 // }
 
 // template <typename FPTYPE_out, typename FPTYPE_in>
-// struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_GPU, base_device::DEVICE_GPU>
-// {
-//     void operator()(const base_device::DEVICE_GPU* dev_out,
-//                     const base_device::DEVICE_GPU* dev_in,
+// struct cast_memory_op<FPTYPE_out, FPTYPE_in, psi::DEVICE_GPU, psi::DEVICE_GPU> {
+//     void operator()(const psi::DEVICE_GPU* dev_out,
+//                     const psi::DEVICE_GPU* dev_in,
 //                     FPTYPE_out* arr_out,
 //                     const FPTYPE_in* arr_in,
-//                     const size_t size)
-//     {
+//                     const size_t size) {
+        
+//         if (size == 0) {return;}
 //         const int block = (size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
 //         hipLaunchKernelGGL(cast_memory, dim3(block), dim3(THREADS_PER_BLOCK), 0, 0, arr_out, arr_in, size);
 //         hipErrcheck(hipGetLastError());
@@ -106,14 +107,24 @@
 // };
 
 // template <typename FPTYPE_out, typename FPTYPE_in>
-// struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_GPU, base_device::DEVICE_CPU>
-// {
-//     void operator()(const base_device::DEVICE_GPU* dev_out,
-//                     const base_device::DEVICE_CPU* dev_in,
+// struct cast_memory_op<FPTYPE_out, FPTYPE_in, psi::DEVICE_GPU, psi::DEVICE_CPU> {
+//     void operator()(const psi::DEVICE_GPU* dev_out,
+//                     const psi::DEVICE_CPU* dev_in,
 //                     FPTYPE_out* arr_out,
 //                     const FPTYPE_in* arr_in,
-//                     const size_t size)
-//     {
+//                     const size_t size) {
+
+//         if (size == 0) {return;}
+//         // No need to cast the memory if the data types are the same.
+//         if (std::is_same<FPTYPE_out, FPTYPE_in>::value) 
+//         {
+//             synchronize_memory_op<FPTYPE_out, psi::DEVICE_GPU, psi::DEVICE_CPU>()(dev_out,
+//                                                                                   dev_in,
+//                                                                                   arr_out,
+//                                                                                   reinterpret_cast<const FPTYPE_out*>(arr_in),
+//                                                                                   size);
+//             return;
+//         }
 //         FPTYPE_in * arr = nullptr;
 //         hipErrcheck(hipMalloc((void **)&arr, sizeof(FPTYPE_in) * size));
 //         hipErrcheck(hipMemcpy(arr, arr_in, sizeof(FPTYPE_in) * size, hipMemcpyHostToDevice));
@@ -126,14 +137,24 @@
 // };
 
 // template <typename FPTYPE_out, typename FPTYPE_in>
-// struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_CPU, base_device::DEVICE_GPU>
-// {
-//     void operator()(const base_device::DEVICE_CPU* dev_out,
-//                     const base_device::DEVICE_GPU* dev_in,
+// struct cast_memory_op<FPTYPE_out, FPTYPE_in, psi::DEVICE_CPU, psi::DEVICE_GPU> {
+//     void operator()(const psi::DEVICE_CPU* dev_out,
+//                     const psi::DEVICE_GPU* dev_in,
 //                     FPTYPE_out* arr_out,
 //                     const FPTYPE_in* arr_in,
-//                     const size_t size)
-//     {
+//                     const size_t size) {
+        
+//         if (size == 0) {return;}
+//         // No need to cast the memory if the data types are the same.
+//         if (std::is_same<FPTYPE_out, FPTYPE_in>::value) 
+//         {
+//             synchronize_memory_op<FPTYPE_out, psi::DEVICE_CPU, psi::DEVICE_GPU>()(dev_out,
+//                                                                                   dev_in,
+//                                                                                   arr_out,
+//                                                                                   reinterpret_cast<const FPTYPE_out*>(arr_in),
+//                                                                                   size);
+//             return;
+//         }
 //         auto * arr = (FPTYPE_in*) malloc(sizeof(FPTYPE_in) * size);
 //         hipErrcheck(hipMemcpy(arr, arr_in, sizeof(FPTYPE_in) * size, hipMemcpyDeviceToHost));
 //         for (int ii = 0; ii < size; ii++) {

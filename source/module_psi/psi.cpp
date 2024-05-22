@@ -166,23 +166,14 @@ Psi<T, Device>::Psi(const Psi<T_in, Device_in>& psi_in)
     // this function will copy psi_in.psi to this->psi no matter the device types of each other.
     this->device = base_device::get_device_type<Device>(this->ctx);
     this->resize(psi_in.get_nk(), psi_in.get_nbands(), psi_in.get_nbasis());
-  
-    // No need to cast the memory if the data types are the same.
-    if (std::is_same<T, T_in>::value) 
-    {
-        base_device::memory::synchronize_memory_op<T, Device, Device_in>()(this->ctx,
-                                                                psi_in.get_device(),
-                                                                this->psi,
-                                                                reinterpret_cast<T*>(psi_in.get_pointer()) - psi_in.get_psi_bias(),
-                                                                psi_in.size());
-    }
-    // Specifically, if the Device_in type is CPU and the Device type is GPU:
+
+    // Specifically, if the Device_in type is CPU and the Device type is GPU.
     // Which means we need to initialize a GPU psi from a given CPU psi.
     // We first malloc a memory in CPU, then cast the memory from T_in to T in CPU.
     // Finally, synchronize the memory from CPU to GPU.
     // This could help to reduce the peak memory usage of device.
-    else if (std::is_same<Device, base_device::DEVICE_GPU>::value && 
-             std::is_same<Device_in, base_device::DEVICE_CPU>::value) 
+    if (std::is_same<Device, base_device::DEVICE_GPU>::value && 
+        std::is_same<Device_in, base_device::DEVICE_CPU>::value) 
     {
         auto * arr = (T*) malloc(sizeof(T) * psi_in.size());
         // cast the memory from T_in to T in CPU
