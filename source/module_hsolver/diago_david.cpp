@@ -4,7 +4,6 @@
 
 #include "module_base/memory.h"
 #include "module_base/timer.h"
-#include "module_base/parallel_global.h" 
 #include "module_base/module_device/device.h"
 
 #include "module_hsolver/kernels/dngvd_op.h"
@@ -31,10 +30,20 @@ template <typename T, typename Device> DiagoDavid<T, Device>::DiagoDavid(const R
     // default: no check
 }
 
-template <typename T, typename Device> DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in, bool use_paw)
+#ifdef __MPI
+template <typename T, typename Device> DiagoDavid<T, Device>::DiagoDavid(
+                    const Real* precondition_in, 
+                    bool use_paw, 
+                    MPI_Comm comm_in_diag,
+                    int nproc_in_commdiag,
+                    int rank_in_commdiag)
 {
-
     this->use_paw = use_paw;
+    
+    this->comm_diag = comm_in_diag;
+    this->rank_in_commdiag = rank_in_commdiag;
+    this->nproc_in_commdiag = nproc_in_commdiag;
+
 
     this->device = base_device::get_device_type<Device>(this->ctx);
     this->precondition = precondition_in;
@@ -48,14 +57,11 @@ template <typename T, typename Device> DiagoDavid<T, Device>::DiagoDavid(const R
     // 3: check the eigenvalues and errors of the last result
     // default: no check
 }
-#ifdef __MPI
-template <typename T, typename Device> DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in, bool use_paw, MPI_Comm comm_in_diag)
+#else
+template <typename T, typename Device> DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in, bool use_paw)
 {
+
     this->use_paw = use_paw;
-    
-    this->comm_diag = comm_in_diag;
-    MPI_Comm_rank(this->comm_diag, &this->rank_in_commdiag);
-    MPI_Comm_size(this->comm_diag, &this->nproc_in_commdiag);
 
     this->device = base_device::get_device_type<Device>(this->ctx);
     this->precondition = precondition_in;

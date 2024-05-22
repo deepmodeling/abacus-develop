@@ -29,10 +29,15 @@ class DiagoDavid : public DiagH<T, Device>
     using Real = typename GetTypeReal<T>::type;
   public:
     DiagoDavid(const Real* precondition_in);
-    DiagoDavid(const Real* precondition_in, bool use_paw);
 
 #ifdef __MPI
-    DiagoDavid(const Real* precondition_in, bool use_paw, MPI_Comm comm_in_diag);
+    DiagoDavid(const Real* precondition_in, 
+               bool use_paw, 
+               MPI_Comm comm_in_diag,
+               int nproc_in_commdiag,
+               int rank_in_commdiag);
+#else
+    DiagoDavid(const Real* precondition_in, bool use_paw);
 #endif
 
     ~DiagoDavid();

@@ -90,9 +90,14 @@ void HSolverPW<T, Device>::initDiagh(const psi::Psi<T, Device>& psi)
             {
                 delete (DiagoDavid<T, Device>*)this->pdiagh;
 #ifdef __MPI
-                this->pdiagh = new DiagoDavid<T, Device>(precondition.data(), GlobalV::use_paw);
+                this->pdiagh = new DiagoDavid<T, Device>(
+                                precondition.data(), 
+                                GlobalV::use_paw, 
+                                POOL_WORLD,
+                                GlobalV::NPROC_IN_POOL,
+                                GlobalV::RANK_IN_POOL);
 #else
-                this->pdiagh = new DiagoDavid<T, Device>(precondition.data(), GlobalV::use_paw, POOL_WORLD);
+                this->pdiagh = new DiagoDavid<T, Device>(precondition.data(), GlobalV::use_paw);
 #endif
                 this->pdiagh->method = this->method;
             }
