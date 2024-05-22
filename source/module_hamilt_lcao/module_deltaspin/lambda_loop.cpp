@@ -6,8 +6,8 @@
 
 #include "basic_funcs.h"
 
-template<>
-void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::run_lambda_loop(int outer_step)
+template <>
+void SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::run_lambda_loop(int outer_step)
 {
     // init controlling parameters
     int nat = this->get_nat();

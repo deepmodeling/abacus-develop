@@ -7,7 +7,7 @@ namespace hsolver
 {
 
 template <typename T>
-struct line_minimize_with_block_op<T, psi::DEVICE_CPU>
+struct line_minimize_with_block_op<T, base_device::DEVICE_CPU>
 {
     using Real = typename GetTypeReal<T>::type;
     void operator()(T* grad_out,
@@ -48,7 +48,7 @@ struct line_minimize_with_block_op<T, psi::DEVICE_CPU>
 };
 
 template <typename T>
-struct calc_grad_with_block_op<T, psi::DEVICE_CPU>
+struct calc_grad_with_block_op<T, base_device::DEVICE_CPU>
 {
     using Real = typename GetTypeReal<T>::type;
     void operator()(const Real* prec_in,
@@ -100,9 +100,9 @@ struct calc_grad_with_block_op<T, psi::DEVICE_CPU>
 };
 
 template <typename FPTYPE>
-struct dot_real_op<FPTYPE, psi::DEVICE_CPU>
+struct dot_real_op<FPTYPE, base_device::DEVICE_CPU>
 {
-    FPTYPE operator()(const psi::DEVICE_CPU* d,
+    FPTYPE operator()(const base_device::DEVICE_CPU* d,
                       const int& dim,
                       const FPTYPE* psi_L,
                       const FPTYPE* psi_R,
@@ -119,9 +119,9 @@ struct dot_real_op<FPTYPE, psi::DEVICE_CPU>
 
 // CPU specialization of actual computation.
 template <typename FPTYPE>
-struct dot_real_op<std::complex<FPTYPE>, psi::DEVICE_CPU>
+struct dot_real_op<std::complex<FPTYPE>, base_device::DEVICE_CPU>
 {
-    FPTYPE operator()(const psi::DEVICE_CPU* d,
+    FPTYPE operator()(const base_device::DEVICE_CPU* d,
                       const int& dim,
                       const std::complex<FPTYPE>* psi_L,
                       const std::complex<FPTYPE>* psi_R,
@@ -142,10 +142,10 @@ struct dot_real_op<std::complex<FPTYPE>, psi::DEVICE_CPU>
 };
 
 template <typename T>
-struct vector_div_constant_op<T, psi::DEVICE_CPU>
+struct vector_div_constant_op<T, base_device::DEVICE_CPU>
 {
     using Real = typename GetTypeReal<T>::type;
-    void operator()(const psi::DEVICE_CPU* d, const int dim, T* result, const T* vector, const Real constant)
+    void operator()(const base_device::DEVICE_CPU* d, const int dim, T* result, const T* vector, const Real constant)
     {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096 / sizeof(Real))
@@ -158,10 +158,10 @@ struct vector_div_constant_op<T, psi::DEVICE_CPU>
 };
 
 template <typename T>
-struct vector_mul_vector_op<T, psi::DEVICE_CPU>
+struct vector_mul_vector_op<T, base_device::DEVICE_CPU>
 {
     using Real = typename GetTypeReal<T>::type;
-    void operator()(const psi::DEVICE_CPU* d, const int& dim, T* result, const T* vector1, const Real* vector2)
+    void operator()(const base_device::DEVICE_CPU* d, const int& dim, T* result, const T* vector1, const Real* vector2)
     {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096 / sizeof(Real))
@@ -174,10 +174,10 @@ struct vector_mul_vector_op<T, psi::DEVICE_CPU>
 };
 
 template <typename T>
-struct vector_div_vector_op<T, psi::DEVICE_CPU>
+struct vector_div_vector_op<T, base_device::DEVICE_CPU>
 {
     using Real = typename GetTypeReal<T>::type;
-    void operator()(const psi::DEVICE_CPU* d, const int& dim, T* result, const T* vector1, const Real* vector2)
+    void operator()(const base_device::DEVICE_CPU* d, const int& dim, T* result, const T* vector1, const Real* vector2)
     {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096 / sizeof(Real))
@@ -190,10 +190,10 @@ struct vector_div_vector_op<T, psi::DEVICE_CPU>
 };
 
 template <typename T>
-struct constantvector_addORsub_constantVector_op<T, psi::DEVICE_CPU>
+struct constantvector_addORsub_constantVector_op<T, base_device::DEVICE_CPU>
 {
     using Real = typename GetTypeReal<T>::type;
-    void operator()(const psi::DEVICE_CPU* d,
+    void operator()(const base_device::DEVICE_CPU* d,
                     const int& dim,
                     T* result,
                     const T* vector1,
@@ -212,9 +212,9 @@ struct constantvector_addORsub_constantVector_op<T, psi::DEVICE_CPU>
 };
 
 template <typename FPTYPE>
-struct scal_op<FPTYPE, psi::DEVICE_CPU>
+struct scal_op<FPTYPE, base_device::DEVICE_CPU>
 {
-    void operator()(const psi::DEVICE_CPU* /*ctx*/,
+    void operator()(const base_device::DEVICE_CPU* /*ctx*/,
                     const int& N,
                     const std::complex<FPTYPE>* alpha,
                     std::complex<FPTYPE>* X,
@@ -225,9 +225,9 @@ struct scal_op<FPTYPE, psi::DEVICE_CPU>
 };
 
 template <typename T>
-struct gemv_op<T, psi::DEVICE_CPU>
+struct gemv_op<T, base_device::DEVICE_CPU>
 {
-    void operator()(const psi::DEVICE_CPU* d,
+    void operator()(const base_device::DEVICE_CPU* d,
                     const char& trans,
                     const int& m,
                     const int& n,
@@ -245,9 +245,9 @@ struct gemv_op<T, psi::DEVICE_CPU>
 };
 
 template <typename T>
-struct axpy_op<T, psi::DEVICE_CPU>
+struct axpy_op<T, base_device::DEVICE_CPU>
 {
-    void operator()(const psi::DEVICE_CPU* /*ctx*/,
+    void operator()(const base_device::DEVICE_CPU* /*ctx*/,
                     const int& dim,
                     const T* alpha,
                     const T* X,
@@ -260,9 +260,9 @@ struct axpy_op<T, psi::DEVICE_CPU>
 };
 
 template <typename T>
-struct gemm_op<T, psi::DEVICE_CPU>
+struct gemm_op<T, base_device::DEVICE_CPU>
 {
-    void operator()(const psi::DEVICE_CPU* /*ctx*/,
+    void operator()(const base_device::DEVICE_CPU* /*ctx*/,
                     const char& transa,
                     const char& transb,
                     const int& m,
@@ -282,12 +282,16 @@ struct gemm_op<T, psi::DEVICE_CPU>
 };
 
 template <typename T>
-struct matrixTranspose_op<T, psi::DEVICE_CPU>
+struct matrixTranspose_op<T, base_device::DEVICE_CPU>
 {
-    void operator()(const psi::DEVICE_CPU* d, const int& row, const int& col, const T* input_matrix, T* output_matrix)
+    void operator()(const base_device::DEVICE_CPU* d,
+                    const int& row,
+                    const int& col,
+                    const T* input_matrix,
+                    T* output_matrix)
     {
         T* temp = nullptr;
-        psi::memory::resize_memory_op<T, psi::DEVICE_CPU>()(d, temp, row * col, "MTransOp");
+        base_device::memory::resize_memory_op<T, base_device::DEVICE_CPU>()(d, temp, row * col, "MTransOp");
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 8192 / sizeof(T))
 #endif
@@ -305,14 +309,14 @@ struct matrixTranspose_op<T, psi::DEVICE_CPU>
         {
             output_matrix[i] = temp[i];
         }
-        psi::memory::delete_memory_op<T, psi::DEVICE_CPU>()(d, temp);
+        base_device::memory::delete_memory_op<T, base_device::DEVICE_CPU>()(d, temp);
     }
 };
 
 template <typename T>
-struct matrixSetToAnother<T, psi::DEVICE_CPU>
+struct matrixSetToAnother<T, base_device::DEVICE_CPU>
 {
-    void operator()(const psi::DEVICE_CPU* d, const int& n, const T* A, const int& LDA, T* B, const int& LDB)
+    void operator()(const base_device::DEVICE_CPU* d, const int& n, const T* A, const int& LDA, T* B, const int& LDB)
     {
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 8192 / sizeof(T))
@@ -328,44 +332,44 @@ struct matrixSetToAnother<T, psi::DEVICE_CPU>
 };
 
 // Explicitly instantiate functors for the types of functor registered.
-template struct scal_op<float, psi::DEVICE_CPU>;
-template struct axpy_op<std::complex<float>, psi::DEVICE_CPU>;
-template struct gemv_op<std::complex<float>, psi::DEVICE_CPU>;
-template struct gemm_op<std::complex<float>, psi::DEVICE_CPU>;
-template struct dot_real_op<std::complex<float>, psi::DEVICE_CPU>;
-template struct vector_div_constant_op<std::complex<float>, psi::DEVICE_CPU>;
-template struct vector_mul_vector_op<std::complex<float>, psi::DEVICE_CPU>;
-template struct vector_div_vector_op<std::complex<float>, psi::DEVICE_CPU>;
-template struct constantvector_addORsub_constantVector_op<std::complex<float>, psi::DEVICE_CPU>;
-template struct matrixTranspose_op<std::complex<float>, psi::DEVICE_CPU>;
-template struct matrixSetToAnother<std::complex<float>, psi::DEVICE_CPU>;
-template struct calc_grad_with_block_op<std::complex<float>, psi::DEVICE_CPU>;
-template struct line_minimize_with_block_op<std::complex<float>, psi::DEVICE_CPU>;
+template struct scal_op<float, base_device::DEVICE_CPU>;
+template struct axpy_op<std::complex<float>, base_device::DEVICE_CPU>;
+template struct gemv_op<std::complex<float>, base_device::DEVICE_CPU>;
+template struct gemm_op<std::complex<float>, base_device::DEVICE_CPU>;
+template struct dot_real_op<std::complex<float>, base_device::DEVICE_CPU>;
+template struct vector_div_constant_op<std::complex<float>, base_device::DEVICE_CPU>;
+template struct vector_mul_vector_op<std::complex<float>, base_device::DEVICE_CPU>;
+template struct vector_div_vector_op<std::complex<float>, base_device::DEVICE_CPU>;
+template struct constantvector_addORsub_constantVector_op<std::complex<float>, base_device::DEVICE_CPU>;
+template struct matrixTranspose_op<std::complex<float>, base_device::DEVICE_CPU>;
+template struct matrixSetToAnother<std::complex<float>, base_device::DEVICE_CPU>;
+template struct calc_grad_with_block_op<std::complex<float>, base_device::DEVICE_CPU>;
+template struct line_minimize_with_block_op<std::complex<float>, base_device::DEVICE_CPU>;
 
-template struct scal_op<double, psi::DEVICE_CPU>;
-template struct axpy_op<std::complex<double>, psi::DEVICE_CPU>;
-template struct gemv_op<std::complex<double>, psi::DEVICE_CPU>;
-template struct gemm_op<std::complex<double>, psi::DEVICE_CPU>;
-template struct dot_real_op<std::complex<double>, psi::DEVICE_CPU>;
-template struct vector_div_constant_op<std::complex<double>, psi::DEVICE_CPU>;
-template struct vector_mul_vector_op<std::complex<double>, psi::DEVICE_CPU>;
-template struct vector_div_vector_op<std::complex<double>, psi::DEVICE_CPU>;
-template struct constantvector_addORsub_constantVector_op<std::complex<double>, psi::DEVICE_CPU>;
-template struct matrixTranspose_op<std::complex<double>, psi::DEVICE_CPU>;
-template struct matrixSetToAnother<std::complex<double>, psi::DEVICE_CPU>;
-template struct calc_grad_with_block_op<std::complex<double>, psi::DEVICE_CPU>;
-template struct line_minimize_with_block_op<std::complex<double>, psi::DEVICE_CPU>;
+template struct scal_op<double, base_device::DEVICE_CPU>;
+template struct axpy_op<std::complex<double>, base_device::DEVICE_CPU>;
+template struct gemv_op<std::complex<double>, base_device::DEVICE_CPU>;
+template struct gemm_op<std::complex<double>, base_device::DEVICE_CPU>;
+template struct dot_real_op<std::complex<double>, base_device::DEVICE_CPU>;
+template struct vector_div_constant_op<std::complex<double>, base_device::DEVICE_CPU>;
+template struct vector_mul_vector_op<std::complex<double>, base_device::DEVICE_CPU>;
+template struct vector_div_vector_op<std::complex<double>, base_device::DEVICE_CPU>;
+template struct constantvector_addORsub_constantVector_op<std::complex<double>, base_device::DEVICE_CPU>;
+template struct matrixTranspose_op<std::complex<double>, base_device::DEVICE_CPU>;
+template struct matrixSetToAnother<std::complex<double>, base_device::DEVICE_CPU>;
+template struct calc_grad_with_block_op<std::complex<double>, base_device::DEVICE_CPU>;
+template struct line_minimize_with_block_op<std::complex<double>, base_device::DEVICE_CPU>;
 
 #ifdef __LCAO
-template struct axpy_op<double, psi::DEVICE_CPU>;
-template struct gemv_op<double, psi::DEVICE_CPU>;
-template struct gemm_op<double, psi::DEVICE_CPU>;
-template struct dot_real_op<double, psi::DEVICE_CPU>;
-template struct vector_mul_vector_op<double, psi::DEVICE_CPU>;
-template struct vector_div_constant_op<double, psi::DEVICE_CPU>;
-template struct vector_div_vector_op<double, psi::DEVICE_CPU>;
-template struct matrixTranspose_op<double, psi::DEVICE_CPU>;
-template struct matrixSetToAnother<double, psi::DEVICE_CPU>;
-template struct constantvector_addORsub_constantVector_op<double, psi::DEVICE_CPU>;
+template struct axpy_op<double, base_device::DEVICE_CPU>;
+template struct gemv_op<double, base_device::DEVICE_CPU>;
+template struct gemm_op<double, base_device::DEVICE_CPU>;
+template struct dot_real_op<double, base_device::DEVICE_CPU>;
+template struct vector_mul_vector_op<double, base_device::DEVICE_CPU>;
+template struct vector_div_constant_op<double, base_device::DEVICE_CPU>;
+template struct vector_div_vector_op<double, base_device::DEVICE_CPU>;
+template struct matrixTranspose_op<double, base_device::DEVICE_CPU>;
+template struct matrixSetToAnother<double, base_device::DEVICE_CPU>;
+template struct constantvector_addORsub_constantVector_op<double, base_device::DEVICE_CPU>;
 #endif
 } // namespace hsolver

@@ -9,7 +9,7 @@
 #include "spin_constrain.h"
 
 template <>
-ModuleBase::matrix SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_MW_k(
+ModuleBase::matrix SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::cal_MW_k(
     LCAO_Matrix* LM,
     const std::vector<std::vector<std::complex<double>>>& dm)
 {
@@ -63,9 +63,7 @@ ModuleBase::matrix SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_MW_
 }
 
 template <>
-void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_MW(const int& step,
-                                                                  LCAO_Matrix* LM,
-                                                                  bool print)
+void SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::cal_MW(const int& step, LCAO_Matrix* LM, bool print)
 {
     ModuleBase::TITLE("module_deltaspin", "cal_MW");
     const std::vector<std::vector<std::complex<double>>>& dm

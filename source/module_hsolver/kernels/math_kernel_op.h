@@ -383,7 +383,7 @@ struct matrixSetToAnother
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 
 template <typename T>
-struct line_minimize_with_block_op<T, psi::DEVICE_GPU>
+struct line_minimize_with_block_op<T, base_device::DEVICE_GPU>
 {
     using Real = typename GetTypeReal<T>::type;
     void operator()(T* grad_out,
@@ -396,7 +396,7 @@ struct line_minimize_with_block_op<T, psi::DEVICE_GPU>
 };
 
 template <typename T>
-struct calc_grad_with_block_op<T, psi::DEVICE_GPU>
+struct calc_grad_with_block_op<T, base_device::DEVICE_GPU>
 {
     using Real = typename GetTypeReal<T>::type;
     void operator()(const Real* prec_in,
@@ -411,44 +411,48 @@ struct calc_grad_with_block_op<T, psi::DEVICE_GPU>
                     const int& n_band);
 };
 
-// Partially specialize functor for psi::GpuDevice.
+// Partially specialize functor for base_device::GpuDevice.
 template <typename T>
-struct dot_real_op<T, psi::DEVICE_GPU>
+struct dot_real_op<T, base_device::DEVICE_GPU>
 {
     using Real = typename GetTypeReal<T>::type;
-    Real operator()(const psi::DEVICE_GPU* d, const int& dim, const T* psi_L, const T* psi_R, const bool reduce = true);
+    Real operator()(const base_device::DEVICE_GPU* d,
+                    const int& dim,
+                    const T* psi_L,
+                    const T* psi_R,
+                    const bool reduce = true);
 };
 
 // vector operator: result[i] = vector[i] / constant
 template <typename T>
-struct vector_div_constant_op<T, psi::DEVICE_GPU>
+struct vector_div_constant_op<T, base_device::DEVICE_GPU>
 {
     using Real = typename GetTypeReal<T>::type;
-    void operator()(const psi::DEVICE_GPU* d, const int dim, T* result, const T* vector, const Real constant);
+    void operator()(const base_device::DEVICE_GPU* d, const int dim, T* result, const T* vector, const Real constant);
 };
 
 // vector operator: result[i] = vector1[i](complex) * vector2[i](not complex)
 template <typename T>
-struct vector_mul_vector_op<T, psi::DEVICE_GPU>
+struct vector_mul_vector_op<T, base_device::DEVICE_GPU>
 {
     using Real = typename GetTypeReal<T>::type;
-    void operator()(const psi::DEVICE_GPU* d, const int& dim, T* result, const T* vector1, const Real* vector2);
+    void operator()(const base_device::DEVICE_GPU* d, const int& dim, T* result, const T* vector1, const Real* vector2);
 };
 
 // vector operator: result[i] = vector1[i](complex) / vector2[i](not complex)
 template <typename T>
-struct vector_div_vector_op<T, psi::DEVICE_GPU>
+struct vector_div_vector_op<T, base_device::DEVICE_GPU>
 {
     using Real = typename GetTypeReal<T>::type;
-    void operator()(const psi::DEVICE_GPU* d, const int& dim, T* result, const T* vector1, const Real* vector2);
+    void operator()(const base_device::DEVICE_GPU* d, const int& dim, T* result, const T* vector1, const Real* vector2);
 };
 
 // vector operator: result[i] = vector1[i] * constant1 + vector2[i] * constant2
 template <typename T>
-struct constantvector_addORsub_constantVector_op<T, psi::DEVICE_GPU>
+struct constantvector_addORsub_constantVector_op<T, base_device::DEVICE_GPU>
 {
     using Real = typename GetTypeReal<T>::type;
-    void operator()(const psi::DEVICE_GPU* d,
+    void operator()(const base_device::DEVICE_GPU* d,
                     const int& dim,
                     T* result,
                     const T* vector1,
@@ -458,9 +462,9 @@ struct constantvector_addORsub_constantVector_op<T, psi::DEVICE_GPU>
 };
 
 template <typename T>
-struct matrixSetToAnother<T, psi::DEVICE_GPU>
+struct matrixSetToAnother<T, base_device::DEVICE_GPU>
 {
-    void operator()(const psi::DEVICE_GPU* d,
+    void operator()(const base_device::DEVICE_GPU* d,
                     const int& n,
                     const T* A, // input
                     const int& LDA,

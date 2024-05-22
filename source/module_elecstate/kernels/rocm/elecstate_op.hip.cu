@@ -58,13 +58,12 @@ __global__ void elecstate_pw(
 }
 
 template <typename FPTYPE>
-void elecstate_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
-    const psi::DEVICE_GPU* ctx,
-    const int& spin,
-    const int& nrxx,
-    const FPTYPE& w1,
-    FPTYPE** rho,
-    const std::complex<FPTYPE>* wfcr)
+void elecstate_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* ctx,
+                                                                  const int& spin,
+                                                                  const int& nrxx,
+                                                                  const FPTYPE& w1,
+                                                                  FPTYPE** rho,
+                                                                  const std::complex<FPTYPE>* wfcr)
 {
   const int block = (nrxx + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
   hipLaunchKernelGGL(HIP_KERNEL_NAME(elecstate_pw<FPTYPE>), dim3(block), dim3(THREADS_PER_BLOCK), 0, 0, 
@@ -77,15 +76,14 @@ void elecstate_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
 }
 
 template <typename FPTYPE>
-void elecstate_pw_op<FPTYPE, psi::DEVICE_GPU>::operator()(
-    const psi::DEVICE_GPU* ctx,
-    const bool& DOMAG,
-    const bool& DOMAG_Z,
-    const int& nrxx,
-    const FPTYPE& w1,
-    FPTYPE** rho,
-    const std::complex<FPTYPE>* wfcr,
-    const std::complex<FPTYPE>* wfcr_another_spin)
+void elecstate_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* ctx,
+                                                                  const bool& DOMAG,
+                                                                  const bool& DOMAG_Z,
+                                                                  const int& nrxx,
+                                                                  const FPTYPE& w1,
+                                                                  FPTYPE** rho,
+                                                                  const std::complex<FPTYPE>* wfcr,
+                                                                  const std::complex<FPTYPE>* wfcr_another_spin)
 {
   const int block = (nrxx + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
   hipLaunchKernelGGL(HIP_KERNEL_NAME(elecstate_pw<FPTYPE>), dim3(block), dim3(THREADS_PER_BLOCK), 0, 0, 
@@ -98,6 +96,6 @@ void elecstate_pw_op<FPTYPE, psi::DEVICE_GPU>::operator()(
   hipErrcheck(hipDeviceSynchronize());
 }
 
-template struct elecstate_pw_op<float, psi::DEVICE_GPU>;
-template struct elecstate_pw_op<double, psi::DEVICE_GPU>;
+template struct elecstate_pw_op<float, base_device::DEVICE_GPU>;
+template struct elecstate_pw_op<double, base_device::DEVICE_GPU>;
 }

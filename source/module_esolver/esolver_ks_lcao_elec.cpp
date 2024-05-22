@@ -64,7 +64,9 @@ void ESolver_KS_LCAO<TK, TR>::set_matrix_grid(Record_adj& ra)
                              this->pw_big->nbzp,
                              this->pw_rho->ny,
                              this->pw_rho->nplane,
-                             this->pw_rho->startz_current);
+                             this->pw_rho->startz_current,
+                             GlobalC::ucell,
+                             GlobalC::ORB);
 
     // (2)For each atom, calculate the adjacent atoms in different cells
     // and allocate the space for H(R) and S(R).
@@ -242,7 +244,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
 #endif
     if (GlobalV::sc_mag_switch)
     {
-        SpinConstrain<TK, psi::DEVICE_CPU>& sc = SpinConstrain<TK, psi::DEVICE_CPU>::getScInstance();
+        SpinConstrain<TK, base_device::DEVICE_CPU>& sc = SpinConstrain<TK, base_device::DEVICE_CPU>::getScInstance();
         sc.init_sc(GlobalV::sc_thr,
                    GlobalV::nsc,
                    GlobalV::nsc_min,
@@ -581,13 +583,6 @@ void ESolver_KS_LCAO<TK, TR>::nscf(void)
         {
             this->exc->read_Hexxs_csr(file_name_exx, GlobalC::ucell);
         }
-
-        hamilt::HamiltLCAO<TK, TR>* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
-        auto exx = new hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>>(&this->LM,
-                                                                         hamilt_lcao->getHR(),
-                                                                         &(hamilt_lcao->getHk(&this->LM)),
-                                                                         this->kv);
-        hamilt_lcao->getOperator()->add(exx);
     }
 #endif // __MPI
 #endif // __EXX

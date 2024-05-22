@@ -2,7 +2,6 @@
 #include <ATen/core/tensor_map.h>
 #include <ATen/core/tensor_utils.h>
 #include <base/core/cpu_allocator.h>
-#include "module_base/memory.h"
 #if defined(__CUDA) || defined(__ROCM)
 #include <base/core/gpu_allocator.h>
 #endif // __CUDA || __ROCM

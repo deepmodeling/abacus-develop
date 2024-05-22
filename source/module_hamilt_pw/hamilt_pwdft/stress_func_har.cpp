@@ -144,7 +144,7 @@ void Stress_Func<FPTYPE, Device>::stress_har(ModuleBase::matrix& sigma, ModulePW
 	return;
 }
 
-template class Stress_Func<double, psi::DEVICE_CPU>;
+template class Stress_Func<double, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class Stress_Func<double, psi::DEVICE_GPU>;
+template class Stress_Func<double, base_device::DEVICE_GPU>;
 #endif

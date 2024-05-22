@@ -18,8 +18,8 @@ K_Vectors::~K_Vectors(){}
 class SpinConstrainTest : public testing::Test
 {
   protected:
-    SpinConstrain<std::complex<double>, psi::DEVICE_CPU>& sc
-        = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::getScInstance();
+    SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>& sc
+        = SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::getScInstance();
 };
 
 TEST_F(SpinConstrainTest, CalHLambda)
