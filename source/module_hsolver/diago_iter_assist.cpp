@@ -240,7 +240,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(
     // std::vector<T> hpsi(psi_temp.get_nbands() * psi_temp.get_nbasis());
 
     // do hPsi for all bands
-    if (psi::device::get_device_type(ctx) == psi::GpuDevice)
+    if (base_device::get_device_type(ctx) == base_device::GpuDevice)
     {
         for (int i = 0; i < psi_temp.get_nbands(); i++)
         {
@@ -263,7 +263,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(
             pHamilt->ops->hPsi(hpsi_in);
         }
     }
-    else if (psi::device::get_device_type(ctx) == psi::CpuDevice)
+    else if (base_device::get_device_type(ctx) == base_device::CpuDevice)
     {
         psi::Range all_bands_range(1, psi_temp.get_current_k(), 0, psi_temp.get_nbands()-1);
         hpsi_info hpsi_in(&psi_temp, all_bands_range, hpsi);
