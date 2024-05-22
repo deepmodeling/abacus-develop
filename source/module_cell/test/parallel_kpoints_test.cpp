@@ -125,7 +125,7 @@ class ParaKpoints : public ::testing::TestWithParam<ParaPrepare>
 TEST(Parallel_KpointsTest, GatherkvecTest) {
     // Initialize Parallel_Kpoints object
     Parallel_Kpoints parallel_kpoints;
-    
+
     // Initialize local and global vectors
     std::vector<ModuleBase::Vector3<double>> vec_local;
     std::vector<ModuleBase::Vector3<double>> vec_global;
@@ -178,7 +178,7 @@ TEST(Parallel_KpointsTest, GatherkvecTest) {
 		parallel_kpoints.nkstot_np += 1;
 		parallel_kpoints.startk_pool[2] = 3;
 	}
-	
+
     // Call gatherkvec method
     parallel_kpoints.gatherkvec(vec_local, vec_global);
 
@@ -214,7 +214,7 @@ TEST_P(ParaKpoints,DividePools)
 	{
 		std::string output;
 		testing::internal::CaptureStdout();
-		EXPECT_EXIT(Parallel_Global::init_pools(),testing::ExitedWithCode(0),"");
+		EXPECT_EXIT(Parallel_Global::init_pools(),testing::ExitedWithCode(1),"");
 		output = testing::internal::GetCapturedStdout();
 		EXPECT_THAT(output,testing::HasSubstr("Too many pools"));
 	}
