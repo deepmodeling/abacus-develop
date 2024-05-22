@@ -15,52 +15,39 @@
 
 using namespace hsolver;
 
+
+template <typename T, typename Device>
+DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
+                                  int diago_david_ndim,
 #ifdef __MPI
-template <typename T, typename Device> DiagoDavid<T, Device>::DiagoDavid(
-                    const Real* precondition_in, 
-                    bool use_paw, 
-                    MPI_Comm comm_in_diag)
+                                  MPI_Comm comm_in_diag,
+#endif
+                                  bool use_paw)
+    : diago_david_ndim(diago_david_ndim), use_paw(use_paw)
 {
-    this->use_paw = use_paw;
-    
+#ifdef __MPI
     this->comm_diag = comm_in_diag;
     // this->rank_in_commdiag = rank_in_commdiag;
     // this->nproc_in_commdiag = nproc_in_commdiag;
     MPI_Comm_rank(this->comm_diag, &this->rank_in_commdiag);
     MPI_Comm_size(this->comm_diag, &this->nproc_in_commdiag);
-
-
-    this->device = base_device::get_device_type<Device>(this->ctx);
-    this->precondition = precondition_in;
-
-    test_david = 2;
-    this->one = &this->cs.one;
-    this->zero = &this->cs.zero;
-    this->neg_one = &this->cs.neg_one;
-    // 1: check which function is called and which step is executed
-    // 2: check the eigenvalues of the result of each iteration
-    // 3: check the eigenvalues and errors of the last result
-    // default: no check
-}
-#else
-template <typename T, typename Device> DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in, bool use_paw)
-{
-
-    this->use_paw = use_paw;
-
-    this->device = base_device::get_device_type<Device>(this->ctx);
-    this->precondition = precondition_in;
-
-    test_david = 2;
-    this->one = &this->cs.one;
-    this->zero = &this->cs.zero;
-    this->neg_one = &this->cs.neg_one;
-    // 1: check which function is called and which step is executed
-    // 2: check the eigenvalues of the result of each iteration
-    // 3: check the eigenvalues and errors of the last result
-    // default: no check
-}
 #endif
+
+    this->device = base_device::get_device_type<Device>(this->ctx);
+    this->precondition = precondition_in;
+
+    this->one = &this->cs.one;
+    this->zero = &this->cs.zero;
+    this->neg_one = &this->cs.neg_one;
+
+    test_david = 2;
+    // 1: check which function is called and which step is executed
+    // 2: check the eigenvalues of the result of each iteration
+    // 3: check the eigenvalues and errors of the last result
+    // default: no check
+}
+
+
 
 template <typename T, typename Device> DiagoDavid<T, Device>::~DiagoDavid()
 {
@@ -83,15 +70,19 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
                                            Real* eigenvalue_in)
 {
     if (test_david == 1)
+    {
         ModuleBase::TITLE("DiagoDavid", "diag_mock");
+    }
     ModuleBase::timer::tick("DiagoDavid", "diag_mock");
 
-    assert(DiagoDavid::PW_DIAG_NDIM > 1);
+    assert(this->diago_david_ndim > 1);
+
 #ifdef __MPI
-    assert(DiagoDavid::PW_DIAG_NDIM * psi.get_nbands() < psi.get_current_nbas() * nproc_in_commdiag);
+    assert(this->diago_david_ndim * psi.get_nbands() < psi.get_current_nbas() * nproc_in_commdiag);
 #else
-    assert(DiagoDavid::PW_DIAG_NDIM * psi.get_nbands() < psi.get_current_nbas());
+    assert(this->diago_david_ndim * psi.get_nbands() < psi.get_current_nbas());
 #endif
+
     // qianrui change it 2021-7-25.
     // In strictly speaking, it shoule be PW_DIAG_NDIM*nband < npw sum of all pools. We roughly estimate it here.
     // However, in most cases, total number of plane waves should be much larger than nband*PW_DIAG_NDIM
@@ -105,10 +96,10 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
     /// - "band" means the superscript I : the number of excited states to be solved
     /// - k : k-points, the same meaning as the ground state
     /// - "basis" : number of occupied ks-orbitals(subscripts i,j) * number of unoccupied ks-orbitals(subscripts a,b), corresponding to "bands" of the ground state
+    
     this->dim = psi.get_k_first() ? psi.get_current_nbas() : psi.get_nk() * psi.get_nbasis();
-    this->dmx = psi.get_k_first() ? psi.get_nbasis() : psi.get_nk() * psi.get_nbasis();
     this->n_band = psi.get_nbands();
-    this->nbase_x = DiagoDavid::PW_DIAG_NDIM * this->n_band; // maximum dimension of the reduced basis set
+    this->nbase_x = this->diago_david_ndim * this->n_band; // maximum dimension of the reduced basis set
 
     // the lowest N eigenvalues
     base_device::memory::resize_memory_op<Real, base_device::DEVICE_CPU>()(this->cpu_ctx,
@@ -121,9 +112,9 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
                                                                         this->nbase_x);
 
     psi::Psi<T, Device> basis(1,
-                                                 this->nbase_x,
-                                                 this->dim,
-                                                 &(psi.get_ngk(0))); // the reduced basis set
+                              this->nbase_x,
+                              this->dim,
+                              &(psi.get_ngk(0))); // the reduced basis set
     ModuleBase::Memory::record("DAV::basis", this->nbase_x * this->dim * sizeof(T));
 
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -282,7 +273,7 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
             // updata eigenvectors of Hamiltonian
 
             // ModuleBase::GlobalFunc::ZEROS(psi.get_pointer(), n_band * this->dmx);
-            setmem_complex_op()(this->ctx, psi.get_pointer(), 0, n_band * this->dmx);
+            setmem_complex_op()(this->ctx, psi.get_pointer(), 0, n_band * psi.get_nbasis());
             //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             // haozhihan repalce 2022-10-18
             gemm_op<T, Device>()(this->ctx,
@@ -298,7 +289,7 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
                                       this->nbase_x,
                                       this->zero,
                                       psi.get_pointer(),   // C dim * n_band
-                                      this->dmx
+                                      psi.get_nbasis()
             );
 
             if (!this->notconv || (dav_iter == DiagoIterAssist<T, Device>::PW_DIAG_NMAX))

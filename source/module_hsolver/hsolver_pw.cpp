@@ -83,35 +83,34 @@ void HSolverPW<T, Device>::initDiagh(const psi::Psi<T, Device>& psi)
     }
     else if (this->method == "dav")
     {
-        DiagoDavid<T>::PW_DIAG_NDIM = GlobalV::PW_DIAG_NDIM;
+        // DiagoDavid<T>::PW_DIAG_NDIM = GlobalV::PW_DIAG_NDIM;
         if (this->pdiagh != nullptr)
         {
             if (this->pdiagh->method != this->method)
             {
                 delete (DiagoDavid<T, Device>*)this->pdiagh;
 
-#ifdef __MPI
+
                 this->pdiagh = new DiagoDavid<T, Device>(
-                                precondition.data(), 
-                                GlobalV::use_paw, 
-                                POOL_WORLD);
-#else
-                this->pdiagh = new DiagoDavid<T, Device>(precondition.data(), GlobalV::use_paw);
+                                precondition.data(),
+                                GlobalV::PW_DIAG_NDIM,
+#ifdef __MPI                     
+                                POOL_WORLD,
 #endif
+                                GlobalV::use_paw);
 
                 this->pdiagh->method = this->method;
             }
         }
         else
         {
-#ifdef __MPI
-                this->pdiagh = new DiagoDavid<T, Device>(
-                                precondition.data(), 
-                                GlobalV::use_paw, 
-                                POOL_WORLD);
-#else
-                this->pdiagh = new DiagoDavid<T, Device>(precondition.data(), GlobalV::use_paw);
+            this->pdiagh = new DiagoDavid<T, Device>(
+                                precondition.data(),
+                                GlobalV::PW_DIAG_NDIM,
+#ifdef __MPI                     
+                                POOL_WORLD,
 #endif
+                                GlobalV::use_paw);
 
             this->pdiagh->method = this->method;
         }
