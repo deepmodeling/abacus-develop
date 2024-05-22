@@ -176,7 +176,16 @@ Use 4 MPI processes to run, for example:
 mpirun -n 4 abacus
 ```
 
-> The total thread count(i.e. OpenMP per-process thread count * MPI process count) should not exceed the number of cores in your machine.
+The total thread count (i.e. OpenMP per-process thread count * MPI process count) should not exceed the number of cores in your machine.
+To use 4 threads and 4 MPI processes, set the environment variable `OMP_NUM_THREADS` before running `mpirun`:
+
+```bash
+OMP_NUM_THREADS=4 mpirun -n 4 abacus
+```
+
+In this case, the total thread count is 16.
+
+ABACUS will try to determine the number of threads used by each process if `OMP_NUM_THREADS` is not set. However, it is **required** to set `OMP_NUM_THREADS` before running `mpirun` to avoid potential performance issues.
 
 Please refer to [hands-on guide](./hands_on.md) for more instructions.
 
