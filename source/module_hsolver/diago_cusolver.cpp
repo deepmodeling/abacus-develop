@@ -109,22 +109,27 @@ namespace hsolver
         ModuleBase::TITLE("DiagoCusolver", "diag");
 
         // Create matrices for the Hamiltonian and overlap
-        hamilt::MatrixBlock<T> h_mat, s_mat;
+        hamilt::MatrixBlock<T> h_mat;
+        hamilt::MatrixBlock<T> s_mat;
         phm_in->matrix(h_mat, s_mat);
 
 #ifdef __MPI
         // global matrix
-        hamilt::MatrixBlock<T> h_mat_g, s_mat_g;
+        hamilt::MatrixBlock<T> h_mat_g;
+        hamilt::MatrixBlock<T> s_mat_g;
 
         // global psi for distribute
         T* psi_g = nullptr;
 
         // get the context and process information
         int ctxt = ParaV->blacs_ctxt;
-        int nprows, npcols, myprow, mypcol;
+        int nprows = 0;
+        int npcols = 0;
+        int myprow = 0;
+        int mypcol = 0;
         Cblacs_gridinfo(ctxt, &nprows, &npcols, &myprow, &mypcol);
-        int num_procs = nprows * npcols;
-        int myid = Cblacs_pnum(ctxt, myprow, mypcol);
+        const int num_procs = nprows * npcols;
+        const int myid = Cblacs_pnum(ctxt, myprow, mypcol);
         const int root_proc = Cblacs_pnum(ctxt, ParaV->desc[6], ParaV->desc[7]);
 #endif
 
