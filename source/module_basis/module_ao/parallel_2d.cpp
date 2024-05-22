@@ -163,6 +163,23 @@ int Parallel_2D::set_local2global(
     ncol = numroc_(&N_A, &nb, &coord[1], &zero, &dim1);
     nloc = nrow * ncol;
 
+    // mohan add 2010-09-12
+    if (nrow == 0 || ncol == 0)
+    {
+        ofs_warning << " cpu 2D distribution : " << dim[0] << "*" << dim[1] << std::endl;
+        ofs_warning << " but, the number of row and column blocks are "
+                    << M_A / nb + (M_A % nb != 0) << "*" << N_A / nb + (N_A % nb != 0)
+                    << std::endl;
+        if (nb > 1)
+        {
+            return 1;
+        }
+        else
+        {
+            ModuleBase::WARNING_QUIT("Parallel_2D::set_local2global", "some processor has no blocks, try a smaller 'nb2d' parameter or reduce the number of mpi processes.");
+        }
+    }
+
     local2global_row_.resize(nrow);
     for (int i = 0; i < nrow; ++i)
     {
