@@ -26,6 +26,9 @@
 //====================================8<----------------------------------------
 // blacs
     // Initialization
+
+#include <mpi.h>
+
 extern "C"
 {
 	void Cblacs_pinfo(int *myid, int *nprocs);
@@ -37,4 +40,6 @@ extern "C"
     int Cblacs_pnum(int icontxt, int prow, int pcol);
     void Cblacs_pcoord(int icontxt, int pnum, int *prow, int *pcol);
 	void Cblacs_exit(int icontxt);
+
+    int Csys2blacs_handle(MPI_Comm SysCtxt);
 }
