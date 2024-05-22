@@ -4,6 +4,9 @@
 #include <hip/hip_runtime.h>
 #include <thrust/complex.h>
 
+#include <complex>
+#include <type_traits>
+
 #define THREADS_PER_BLOCK 256
 
 namespace base_device
@@ -91,14 +94,14 @@ void synchronize_memory_op<FPTYPE, base_device::DEVICE_GPU, base_device::DEVICE_
 }
 
 template <typename FPTYPE_out, typename FPTYPE_in>
-struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_GPU, base_device::DEVICE_GPU>
-{
+struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_GPU, base_device::DEVICE_GPU> {
     void operator()(const base_device::DEVICE_GPU* dev_out,
                     const base_device::DEVICE_GPU* dev_in,
                     FPTYPE_out* arr_out,
                     const FPTYPE_in* arr_in,
-                    const size_t size)
-    {
+                    const size_t size) {
+        
+        if (size == 0) {return;}
         const int block = (size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
         hipLaunchKernelGGL(cast_memory, dim3(block), dim3(THREADS_PER_BLOCK), 0, 0, arr_out, arr_in, size);
         hipErrcheck(hipGetLastError());
@@ -107,16 +110,26 @@ struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_GPU, base_devic
 };
 
 template <typename FPTYPE_out, typename FPTYPE_in>
-struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_GPU, base_device::DEVICE_CPU>
-{
+struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_GPU, base_device::DEVICE_CPU> {
     void operator()(const base_device::DEVICE_GPU* dev_out,
                     const base_device::DEVICE_CPU* dev_in,
                     FPTYPE_out* arr_out,
                     const FPTYPE_in* arr_in,
-                    const size_t size)
-    {
-        FPTYPE_in* arr = nullptr;
-        hipErrcheck(hipMalloc((void**)&arr, sizeof(FPTYPE_in) * size));
+                    const size_t size) {
+
+        if (size == 0) {return;}
+        // No need to cast the memory if the data types are the same.
+        if (std::is_same<FPTYPE_out, FPTYPE_in>::value) 
+        {
+            synchronize_memory_op<FPTYPE_out, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(dev_out,
+                                                                                                  dev_in,
+                                                                                                  arr_out,
+                                                                                                  reinterpret_cast<const FPTYPE_out*>(arr_in),
+                                                                                                  size);
+            return;
+        }
+        FPTYPE_in * arr = nullptr;
+        hipErrcheck(hipMalloc((void **)&arr, sizeof(FPTYPE_in) * size));
         hipErrcheck(hipMemcpy(arr, arr_in, sizeof(FPTYPE_in) * size, hipMemcpyHostToDevice));
         const int block = (size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
         hipLaunchKernelGGL(cast_memory, dim3(block), dim3(THREADS_PER_BLOCK), 0, 0, arr_out, arr, size);
@@ -127,18 +140,27 @@ struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_GPU, base_devic
 };
 
 template <typename FPTYPE_out, typename FPTYPE_in>
-struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_CPU, base_device::DEVICE_GPU>
-{
+struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_CPU, base_device::DEVICE_GPU> {
     void operator()(const base_device::DEVICE_CPU* dev_out,
                     const base_device::DEVICE_GPU* dev_in,
                     FPTYPE_out* arr_out,
                     const FPTYPE_in* arr_in,
-                    const size_t size)
-    {
-        auto* arr = (FPTYPE_in*)malloc(sizeof(FPTYPE_in) * size);
-        hipErrcheck(hipMemcpy(arr, arr_in, sizeof(FPTYPE_in) * size, hipMemcpyDeviceToHost));
-        for (int ii = 0; ii < size; ii++)
+                    const size_t size) {
+        
+        if (size == 0) {return;}
+        // No need to cast the memory if the data types are the same.
+        if (std::is_same<FPTYPE_out, FPTYPE_in>::value) 
         {
+            synchronize_memory_op<FPTYPE_out, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(dev_out,
+                                                                                                  dev_in,
+                                                                                                  arr_out,
+                                                                                                  reinterpret_cast<const FPTYPE_out*>(arr_in),
+                                                                                                  size);
+            return;
+        }
+        auto * arr = (FPTYPE_in*) malloc(sizeof(FPTYPE_in) * size);
+        hipErrcheck(hipMemcpy(arr, arr_in, sizeof(FPTYPE_in) * size, hipMemcpyDeviceToHost));
+        for (int ii = 0; ii < size; ii++) {
             arr_out[ii] = static_cast<FPTYPE_out>(arr[ii]);
         }
         free(arr);
