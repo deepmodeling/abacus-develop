@@ -28,14 +28,10 @@ class DiagoDavid : public DiagH<T, Device>
     // otherwise return the real type of T(complex<float>, complex<double>)
     using Real = typename GetTypeReal<T>::type;
   public:
-    DiagoDavid(const Real* precondition_in);
-
 #ifdef __MPI
     DiagoDavid(const Real* precondition_in, 
                bool use_paw, 
-               MPI_Comm comm_in_diag,
-               int nproc_in_commdiag,
-               int rank_in_commdiag);
+               MPI_Comm comm_in_diag);
 #else
     DiagoDavid(const Real* precondition_in, bool use_paw);
 #endif

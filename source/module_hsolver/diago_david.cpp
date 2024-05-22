@@ -15,34 +15,19 @@
 
 using namespace hsolver;
 
-template <typename T, typename Device> DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in)
-{
-    this->device = base_device::get_device_type<Device>(this->ctx);
-    this->precondition = precondition_in;
-
-    test_david = 2;
-    this->one = &this->cs.one;
-    this->zero = &this->cs.zero;
-    this->neg_one = &this->cs.neg_one;
-    // 1: check which function is called and which step is executed
-    // 2: check the eigenvalues of the result of each iteration
-    // 3: check the eigenvalues and errors of the last result
-    // default: no check
-}
-
 #ifdef __MPI
 template <typename T, typename Device> DiagoDavid<T, Device>::DiagoDavid(
                     const Real* precondition_in, 
                     bool use_paw, 
-                    MPI_Comm comm_in_diag,
-                    int nproc_in_commdiag,
-                    int rank_in_commdiag)
+                    MPI_Comm comm_in_diag)
 {
     this->use_paw = use_paw;
     
     this->comm_diag = comm_in_diag;
-    this->rank_in_commdiag = rank_in_commdiag;
-    this->nproc_in_commdiag = nproc_in_commdiag;
+    // this->rank_in_commdiag = rank_in_commdiag;
+    // this->nproc_in_commdiag = nproc_in_commdiag;
+    MPI_Comm_rank(this->comm_diag, &this->rank_in_commdiag);
+    MPI_Comm_size(this->comm_diag, &this->nproc_in_commdiag);
 
 
     this->device = base_device::get_device_type<Device>(this->ctx);
