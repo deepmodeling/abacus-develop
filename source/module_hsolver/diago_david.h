@@ -28,7 +28,7 @@ class DiagoDavid : public DiagH<T, Device>
 #endif
                bool use_paw);
 
-    virtual ~DiagoDavid() override;
+    virtual ~DiagoDavid() override{};
 
     // this is the override function diag() for CG method
     virtual void diag(hamilt::Hamilt<T, Device>* phm_in,

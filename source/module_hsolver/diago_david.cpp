@@ -47,23 +47,6 @@ DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
     // default: no check
 }
 
-
-
-template <typename T, typename Device> DiagoDavid<T, Device>::~DiagoDavid()
-{
-    delmem_complex_op()(this->ctx, this->hphi);
-    delmem_complex_op()(this->ctx, this->sphi);
-    delmem_complex_op()(this->ctx, this->hcc);
-    delmem_complex_op()(this->ctx, this->scc);
-    delmem_complex_op()(this->ctx, this->vcc);
-    delmem_complex_op()(this->ctx, this->lagrange_matrix);
-    base_device::memory::delete_memory_op<Real, base_device::DEVICE_CPU>()(this->cpu_ctx, this->eigenvalue);
-    if (this->device == base_device::GpuDevice)
-    {
-        delmem_var_op()(this->ctx, this->d_precondition);
-    }
-}
-
 template <typename T, typename Device>
 void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
                                            psi::Psi<T, Device>& psi,
@@ -102,14 +85,10 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
     this->nbase_x = this->diago_david_ndim * this->n_band; // maximum dimension of the reduced basis set
 
     // the lowest N eigenvalues
-    base_device::memory::resize_memory_op<Real, base_device::DEVICE_CPU>()(this->cpu_ctx,
-                                                                           this->eigenvalue,
-                                                                           this->nbase_x,
-                                                                           "DAV::eig");
-    base_device::memory::set_memory_op<Real, base_device::DEVICE_CPU>()(this->cpu_ctx,
-                                                                        this->eigenvalue,
-                                                                        0,
-                                                                        this->nbase_x);
+    base_device::memory::resize_memory_op<Real, base_device::DEVICE_CPU>()(
+                        this->cpu_ctx, this->eigenvalue, this->nbase_x, "DAV::eig");
+    base_device::memory::set_memory_op<Real, base_device::DEVICE_CPU>()(
+                        this->cpu_ctx, this->eigenvalue, 0, this->nbase_x);
 
     psi::Psi<T, Device> basis(1,
                               this->nbase_x,
@@ -324,6 +303,14 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
     } while (1);
 
     DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(dav_iter);
+
+    delmem_complex_op()(this->ctx, this->hphi);
+    delmem_complex_op()(this->ctx, this->sphi);
+    delmem_complex_op()(this->ctx, this->hcc);
+    delmem_complex_op()(this->ctx, this->scc);
+    delmem_complex_op()(this->ctx, this->vcc);
+    delmem_complex_op()(this->ctx, this->lagrange_matrix);
+    base_device::memory::delete_memory_op<Real, base_device::DEVICE_CPU>()(this->cpu_ctx, this->eigenvalue);
 
     ModuleBase::timer::tick("DiagoDavid", "diag_mock");
 
@@ -1080,6 +1067,13 @@ void DiagoDavid<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
         std::cout << "\n notconv = " << this->notconv;
         std::cout << "\n DiagoDavid::diag', too many bands are not converged! \n";
     }
+
+#if defined(__CUDA) || defined(__ROCM)
+    if (this->device == base_device::GpuDevice)
+    {
+        delmem_var_op()(this->ctx, this->d_precondition);
+    }
+#endif
     return;
 }
 
