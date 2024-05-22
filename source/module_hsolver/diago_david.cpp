@@ -31,6 +31,46 @@ template <typename T, typename Device> DiagoDavid<T, Device>::DiagoDavid(const R
     // default: no check
 }
 
+template <typename T, typename Device> DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in, bool use_paw)
+{
+
+    this->use_paw = use_paw;
+
+    this->device = base_device::get_device_type<Device>(this->ctx);
+    this->precondition = precondition_in;
+
+    test_david = 2;
+    this->one = &this->cs.one;
+    this->zero = &this->cs.zero;
+    this->neg_one = &this->cs.neg_one;
+    // 1: check which function is called and which step is executed
+    // 2: check the eigenvalues of the result of each iteration
+    // 3: check the eigenvalues and errors of the last result
+    // default: no check
+}
+#ifdef __MPI
+template <typename T, typename Device> DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in, bool use_paw, MPI_Comm comm_in_diag)
+{
+    this->use_paw = use_paw;
+    
+    this->comm_diag = comm_in_diag;
+    MPI_Comm_rank(this->comm_diag, &this->rank_in_commdiag);
+    MPI_Comm_size(this->comm_diag, &this->nproc_in_commdiag);
+
+    this->device = base_device::get_device_type<Device>(this->ctx);
+    this->precondition = precondition_in;
+
+    test_david = 2;
+    this->one = &this->cs.one;
+    this->zero = &this->cs.zero;
+    this->neg_one = &this->cs.neg_one;
+    // 1: check which function is called and which step is executed
+    // 2: check the eigenvalues of the result of each iteration
+    // 3: check the eigenvalues and errors of the last result
+    // default: no check
+}
+#endif
+
 template <typename T, typename Device> DiagoDavid<T, Device>::~DiagoDavid()
 {
     delmem_complex_op()(this->ctx, this->hphi);
@@ -56,7 +96,11 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
     ModuleBase::timer::tick("DiagoDavid", "diag_mock");
 
     assert(DiagoDavid::PW_DIAG_NDIM > 1);
-    assert(DiagoDavid::PW_DIAG_NDIM * psi.get_nbands() < psi.get_current_nbas() * GlobalV::NPROC_IN_POOL);
+#ifdef __MPI
+    assert(DiagoDavid::PW_DIAG_NDIM * psi.get_nbands() < psi.get_current_nbas() * nproc_in_commdiag);
+#else
+    assert(DiagoDavid::PW_DIAG_NDIM * psi.get_nbands() < psi.get_current_nbas());
+#endif
     // qianrui change it 2021-7-25.
     // In strictly speaking, it shoule be PW_DIAG_NDIM*nband < npw sum of all pools. We roughly estimate it here.
     // However, in most cases, total number of plane waves should be much larger than nband*PW_DIAG_NDIM
@@ -140,7 +184,7 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
 
     for (int m = 0; m < this->n_band; m++)
     {
-        if(GlobalV::use_paw)
+        if(this->use_paw)
         {
 #ifdef USE_PAW
 #ifdef __DEBUG
@@ -173,7 +217,7 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
                          &this->lagrange_matrix[m * this->n_band],
                          pre_matrix_mm_m[m],
                          pre_matrix_mv_m[m]);
-        if(GlobalV::use_paw)
+        if(this->use_paw)
         {
 #ifdef USE_PAW
             GlobalC::paw_cell.paw_nl_psi(1,reinterpret_cast<const std::complex<double>*> (&basis(m, 0)),
@@ -476,7 +520,7 @@ void DiagoDavid<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
     this->planSchmitOrth(notconv, pre_matrix_mm_m.data(), pre_matrix_mv_m.data());
     for (int m = 0; m < notconv; m++)
     {
-        if(GlobalV::use_paw)
+        if(this->use_paw)
         {
 #ifdef USE_PAW
             GlobalC::paw_cell.paw_nl_psi(1,reinterpret_cast<const std::complex<double>*> (&basis(nbase + m, 0)),
@@ -519,7 +563,7 @@ void DiagoDavid<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
                          &lagrange[m * (nbase + notconv)],
                          pre_matrix_mm_m[m],
                          pre_matrix_mv_m[m]);
-        if(GlobalV::use_paw)
+        if(this->use_paw)
         {
 #ifdef USE_PAW
             GlobalC::paw_cell.paw_nl_psi(1,reinterpret_cast<const std::complex<double>*> (&basis(nbase + m, 0)),
@@ -593,7 +637,7 @@ void DiagoDavid<T, Device>::cal_elem(const int& dim,
 
 
 #ifdef __MPI
-    if (GlobalV::NPROC_IN_POOL > 1)
+    if (nproc_in_commdiag > 1)
     {
         matrixTranspose_op<T, Device>()(this->ctx, this->nbase_x, this->nbase_x, hcc, hcc);
         matrixTranspose_op<T, Device>()(this->ctx, this->nbase_x, this->nbase_x, scc, scc);
@@ -607,17 +651,17 @@ void DiagoDavid<T, Device>::cal_elem(const int& dim,
         else
         {
             if (base_device::get_current_precision(swap) == "single") {
-                MPI_Reduce(swap, hcc + nbase * this->nbase_x, notconv * this->nbase_x, MPI_COMPLEX, MPI_SUM, 0, POOL_WORLD);
+                MPI_Reduce(swap, hcc + nbase * this->nbase_x, notconv * this->nbase_x, MPI_COMPLEX, MPI_SUM, 0, this->comm_diag);
             }
             else {
-                MPI_Reduce(swap, hcc + nbase * this->nbase_x, notconv * this->nbase_x, MPI_DOUBLE_COMPLEX, MPI_SUM, 0, POOL_WORLD);
+                MPI_Reduce(swap, hcc + nbase * this->nbase_x, notconv * this->nbase_x, MPI_DOUBLE_COMPLEX, MPI_SUM, 0, this->comm_diag);
             }
             syncmem_complex_op()(this->ctx, this->ctx, swap, scc + nbase * this->nbase_x, notconv * this->nbase_x);
             if (base_device::get_current_precision(swap) == "single") {
-                MPI_Reduce(swap, scc + nbase * this->nbase_x, notconv * this->nbase_x, MPI_COMPLEX, MPI_SUM, 0, POOL_WORLD);
+                MPI_Reduce(swap, scc + nbase * this->nbase_x, notconv * this->nbase_x, MPI_COMPLEX, MPI_SUM, 0, this->comm_diag);
             }
             else {
-                MPI_Reduce(swap, scc + nbase * this->nbase_x, notconv * this->nbase_x, MPI_DOUBLE_COMPLEX, MPI_SUM, 0, POOL_WORLD);
+                MPI_Reduce(swap, scc + nbase * this->nbase_x, notconv * this->nbase_x, MPI_DOUBLE_COMPLEX, MPI_SUM, 0, this->comm_diag);
             }
         }
         delete[] swap;
@@ -657,7 +701,7 @@ void DiagoDavid<T, Device>::diag_zhegvx(const int& nbase,
 {
     //	ModuleBase::TITLE("DiagoDavid","diag_zhegvx");
     ModuleBase::timer::tick("DiagoDavid", "diag_zhegvx");
-    if (GlobalV::RANK_IN_POOL == 0)
+    if (rank_in_commdiag == 0)
     {
         assert(nbase_x >= std::max(1, nbase));
 
@@ -681,14 +725,14 @@ void DiagoDavid<T, Device>::diag_zhegvx(const int& nbase,
     }
 
 #ifdef __MPI
-    if (GlobalV::NPROC_IN_POOL > 1)
+    if (nproc_in_commdiag > 1)
     {
         // vcc: nbase * nband
         for (int i = 0; i < nband; i++)
         {
-            MPI_Bcast(&vcc[i * this->nbase_x], nbase, MPI_DOUBLE_COMPLEX, 0, POOL_WORLD);
+            MPI_Bcast(&vcc[i * this->nbase_x], nbase, MPI_DOUBLE_COMPLEX, 0, this->comm_diag);
         }
-        MPI_Bcast(this->eigenvalue, nband, MPI_DOUBLE, 0, POOL_WORLD);
+        MPI_Bcast(this->eigenvalue, nband, MPI_DOUBLE, 0, this->comm_diag);
     }
 #endif
 

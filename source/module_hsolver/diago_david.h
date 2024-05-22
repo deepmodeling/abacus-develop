@@ -12,6 +12,9 @@
 
 #include "diagh.h"
 
+#ifdef __MPI
+#include "mpi.h"
+#endif
 
 namespace hsolver
 {
@@ -26,6 +29,12 @@ class DiagoDavid : public DiagH<T, Device>
     using Real = typename GetTypeReal<T>::type;
   public:
     DiagoDavid(const Real* precondition_in);
+    DiagoDavid(const Real* precondition_in, bool use_paw);
+
+#ifdef __MPI
+    DiagoDavid(const Real* precondition_in, bool use_paw, MPI_Comm comm_in_diag);
+#endif
+
     ~DiagoDavid();
 
     // this is the override function diag() for CG method
@@ -36,6 +45,13 @@ class DiagoDavid : public DiagH<T, Device>
     static int PW_DIAG_NDIM;
 
   private:
+    bool use_paw = false;
+#ifdef __MPI
+    MPI_Comm comm_diag = MPI_COMM_WORLD;
+    int nproc_in_commdiag = 1;
+    int rank_in_commdiag = 0;
+#endif
+
     int test_david = 0;
 
     /// record for how many bands not have convergence eigenvalues

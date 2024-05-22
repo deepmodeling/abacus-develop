@@ -6,6 +6,8 @@
 #include "diago_cg.h"
 #include "diago_david.h"
 #include "diago_dav_subspace.h"
+#include "module_base/global_variable.h"
+#include "module_base/parallel_global.h" // for MPI
 #include "module_base/timer.h"
 #include "module_base/tool_quit.h"
 #include "module_elecstate/elecstate_pw.h"
@@ -87,7 +89,11 @@ void HSolverPW<T, Device>::initDiagh(const psi::Psi<T, Device>& psi)
             if (this->pdiagh->method != this->method)
             {
                 delete (DiagoDavid<T, Device>*)this->pdiagh;
-                this->pdiagh = new DiagoDavid<T, Device>(precondition.data());
+#ifdef __MPI
+                this->pdiagh = new DiagoDavid<T, Device>(precondition.data(), GlobalV::use_paw);
+#else
+                this->pdiagh = new DiagoDavid<T, Device>(precondition.data(), GlobalV::use_paw, POOL_WORLD);
+#endif
                 this->pdiagh->method = this->method;
             }
         }
