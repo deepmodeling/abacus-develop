@@ -65,18 +65,18 @@ namespace elecstate
 		{
 			case 2: 
 			titles = {"ITER", FmtCore::center("TMAG", wmag), FmtCore::center("AMAG", wmag), 
-                      FmtCore::center("ETOT (eV)", wener), FmtCore::center("EDIFF (eV)", wener), FmtCore::center("DRHO", wrho)}; 
+                      FmtCore::center("ETOT/eV", wener), FmtCore::center("EDIFF/eV", wener), FmtCore::center("DRHO", wrho)}; 
 			values = {double(istep), mag[0], mag[1], etot, ediff, drho[0]}; break;
 			case 4:
 			titles = {"ITER", FmtCore::center("TMAGX", wmag), FmtCore::center("TMAGY", wmag), FmtCore::center("TMAGZ", wmag), 
-                      FmtCore::center("AMAG", wmag), FmtCore::center("ETOT (eV)", wener), FmtCore::center("EDIFF (eV)", wener), FmtCore::center("DRHO", wrho)}; 
+                      FmtCore::center("AMAG", wmag), FmtCore::center("ETOT/eV", wener), FmtCore::center("EDIFF/eV", wener), FmtCore::center("DRHO", wrho)}; 
 			values = {double(istep), mag[0], mag[1], mag[2], mag[3], etot, ediff, drho[0]}; break;
 			default:
-			titles = {"ITER", FmtCore::center("ETOT (eV)", wener), FmtCore::center("EDIFF (eV)", wener), FmtCore::center("DRHO", wrho)};
+			titles = {"ITER", FmtCore::center("ETOT/eV", wener), FmtCore::center("EDIFF/eV", wener), FmtCore::center("DRHO", wrho)};
 			values = {double(istep), etot, ediff, drho[0]}; break;
 		}
 		if(drho.size() > 1) {titles.push_back(FmtCore::center("DKIN", wrho)); values.push_back(drho[1]);}
-		titles.push_back(FmtCore::center("TIME (s)", wtime)); values.push_back(time);
+		titles.push_back(FmtCore::center("TIME/s", wtime)); values.push_back(time);
 		std::string buf;
 		if(istep == 1) { for(int i = 0; i < titles.size(); i++) {buf += FmtCore::format(th_fmt[i].c_str(), titles[i]);} }
 		for(int i = 0; i < values.size(); i++) {buf += FmtCore::format(td_fmt[i].c_str(), values[i]);}
