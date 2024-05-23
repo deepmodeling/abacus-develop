@@ -154,7 +154,6 @@ class DiagoDavid : public DiagH<T, Device>
     consts<T> cs;
     const T* one = nullptr, * zero = nullptr, * neg_one = nullptr;
 };
-// template <typename Real, typename Device> int DiagoDavid<Real, Device>::PW_DIAG_NDIM = 4;
 } // namespace hsolver
 
 #endif

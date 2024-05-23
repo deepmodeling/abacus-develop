@@ -80,8 +80,11 @@ public:
 		float* en = new float[npw];		
 		hamilt::Hamilt<std::complex<float>> *phm;
 		phm = new hamilt::HamiltPW<std::complex<float>>(nullptr, nullptr, nullptr);
-		hsolver::DiagoDavid<std::complex<float>> dav(precondition);
-		hsolver::DiagoDavid<std::complex<float>>::PW_DIAG_NDIM = order;
+#ifdef __MPI	
+		hsolver::DiagoDavid<std::complex<double>> dav(precondition, order, MPI_COMM_WORLD, false);
+#else
+		hsolver::DiagoDavid<std::complex<double>> dav(precondition, order, false);
+#endif
 		hsolver::DiagoIterAssist<std::complex<float>>::PW_DIAG_NMAX = maxiter;
 		hsolver::DiagoIterAssist<std::complex<float>>::PW_DIAG_THR = eps;
 		GlobalV::NPROC_IN_POOL = nprocs;

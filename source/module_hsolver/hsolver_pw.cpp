@@ -83,7 +83,6 @@ void HSolverPW<T, Device>::initDiagh(const psi::Psi<T, Device>& psi)
     }
     else if (this->method == "dav")
     {
-        // DiagoDavid<T>::PW_DIAG_NDIM = GlobalV::PW_DIAG_NDIM;
         if (this->pdiagh != nullptr)
         {
             if (this->pdiagh->method != this->method)
@@ -647,17 +646,17 @@ void HSolverPW<T, Device>::endDiagh()
     }
     if (this->method == "dav")
     {
-        delete (DiagoDavid<T, Device>*)this->pdiagh;
+        delete reinterpret_cast<DiagoDavid<T, Device>*>(this->pdiagh);
         this->pdiagh = nullptr;
     }
     if (this->method == "dav_subspace")
     {
-        delete (Diago_DavSubspace<T, Device>*)this->pdiagh;
+        delete reinterpret_cast<Diago_DavSubspace<T, Device>*>(this->pdiagh);
         this->pdiagh = nullptr;
     }
     if (this->method == "bpcg")
     {
-        delete (DiagoBPCG<T, Device>*)this->pdiagh;
+        delete reinterpret_cast<DiagoBPCG<T, Device>*>(this->pdiagh);
         this->pdiagh = nullptr;
     }
 
