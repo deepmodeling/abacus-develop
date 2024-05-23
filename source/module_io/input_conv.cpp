@@ -507,6 +507,10 @@ void Input_Conv::Convert(void)
     elecstate::Efield::efield_pos_dec = INPUT.efield_pos_dec;
     elecstate::Efield::efield_amp = INPUT.efield_amp;
 
+    // efield does not support symmetry=1
+    if (INPUT.efield_flag && INPUT.symmetry == "1")
+        ModuleSymmetry::Symmetry::symm_flag = 0;
+
     //----------------------------------------------------------
     // Yu Liu add 2022-09-13
     //----------------------------------------------------------
