@@ -59,10 +59,10 @@ void TD_Velocity::output_cart_At(const std::string& out_dir)
     return;
 }
 
-void TD_Velocity::cal_cart_At(const ModuleBase::Vector3<double> a0,
-                              const ModuleBase::Vector3<double> a1,
-                              const ModuleBase::Vector3<double> a2,
-                              const ModuleBase::Vector3<double> At)
+void TD_Velocity::cal_cart_At(const ModuleBase::Vector3<double>& a0,
+                              const ModuleBase::Vector3<double>& a1,
+                              const ModuleBase::Vector3<double>& a2,
+                              const ModuleBase::Vector3<double>& At)
 {
     istep++;
     if (init_vecpot_file)
@@ -83,7 +83,6 @@ void TD_Velocity::cal_cart_At(const ModuleBase::Vector3<double> a0,
 
 void TD_Velocity::read_cart_At(void)
 {
-
     std::string in_file;
     // generate the input file name
     in_file = "At.dat";
@@ -102,7 +101,9 @@ void TD_Velocity::read_cart_At(void)
         // A tmporary vector3 to store the data of this line
         ModuleBase::Vector3<double> At;
         if (line[0] == '#')
+        {
             continue;
+        }
         std::istringstream iss(line);
         // skip the istep number
         if (!(iss >> tmp))
@@ -110,7 +111,7 @@ void TD_Velocity::read_cart_At(void)
             ModuleBase::WARNING_QUIT("TD_Velocity::read_cart_At", "Error reading istep!");
         }
         // read the vector potential
-        double component;
+        double component = 0;
         // Read three components
         for (int i = 0; i < 3; i++)
         {
