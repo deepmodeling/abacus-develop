@@ -2,6 +2,7 @@
 #include "module_hsolver/kernels/math_kernel_op.h"
 #include "module_psi/kernels/memory_op.h"
 #include "module_psi/psi.h"
+#include "module_base/tool_quit.h"
 
 #include <base/macros/macros.h>
 #include <cuda_runtime.h>
@@ -669,6 +670,9 @@ void gemv_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DEV
     else if (trans == 'T') {
         cutrans = CUBLAS_OP_T;
     }
+    else {
+        ModuleBase::WARNING_QUIT("gemv_op", std::string("Unknown trans type ") + trans + std::string(" !"));
+    }
     cublasErrcheck(cublasDgemv(cublas_handle, cutrans, m, n, alpha, A, lda, X, incx, beta, Y, incx));
 }
 
@@ -696,6 +700,9 @@ void gemv_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const bas
     else if (trans == 'C'){
         cutrans = CUBLAS_OP_C;
     }
+    else {
+        ModuleBase::WARNING_QUIT("gemv_op", std::string("Unknown trans type ") + trans + std::string(" !"));
+    }
     cublasErrcheck(cublasCgemv(cublas_handle, cutrans, m, n, (float2*)alpha, (float2*)A, lda, (float2*)X, incx, (float2*)beta, (float2*)Y, incx));
 }
 
@@ -722,6 +729,9 @@ void gemv_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const ba
     } 
     else if (trans == 'C'){
         cutrans = CUBLAS_OP_C;
+    }
+    else {
+        ModuleBase::WARNING_QUIT("gemv_op", std::string("Unknown trans type ") + trans + std::string(" !"));
     }
     cublasErrcheck(cublasZgemv(cublas_handle, cutrans, m, n, (double2*)alpha, (double2*)A, lda, (double2*)X, incx, (double2*)beta, (double2*)Y, incx));
 }
@@ -771,12 +781,18 @@ void gemm_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DEV
     else if (transa == 'T') {
         cutransA = CUBLAS_OP_T;
     }
+    else {
+        ModuleBase::WARNING_QUIT("gemm_op", std::string("Unknown transa type ") + transa + std::string(" !"));
+    }
     // cutransB
     if (transb == 'N') {
         cutransB = CUBLAS_OP_N;
     }
     else if (transb == 'T') {
         cutransB = CUBLAS_OP_T;
+    }
+    else {
+        ModuleBase::WARNING_QUIT("gemm_op", std::string("Unknown transb type ") + transb + std::string(" !"));
     }
     cublasErrcheck(cublasDgemm(cublas_handle, cutransA, cutransB, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc));
 }
@@ -808,6 +824,9 @@ void gemm_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const bas
     else if (transa == 'C'){
         cutransA = CUBLAS_OP_C;
     } 
+    else {
+        ModuleBase::WARNING_QUIT("gemm_op", std::string("Unknown transa type ") + transa + std::string(" !"));
+    }
     // cutransB
     if (transb == 'N'){
         cutransB = CUBLAS_OP_N;
@@ -817,6 +836,9 @@ void gemm_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const bas
     } 
     else if (transb == 'C'){
         cutransB = CUBLAS_OP_C;
+    }
+    else {
+        ModuleBase::WARNING_QUIT("gemm_op", std::string("Unknown transb type ") + transb + std::string(" !"));
     }
     cublasErrcheck(cublasCgemm(cublas_handle, cutransA, cutransB, m, n ,k, (float2*)alpha, (float2*)a , lda, (float2*)b, ldb, (float2*)beta, (float2*)c, ldc));
 }
@@ -849,6 +871,9 @@ void gemm_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const ba
     else if (transa == 'C'){
         cutransA = CUBLAS_OP_C;
     } 
+    else {
+        ModuleBase::WARNING_QUIT("gemm_op", std::string("Unknown transa type ") + transa + std::string(" !"));
+    }
     // cutransB
     if (transb == 'N'){
         cutransB = CUBLAS_OP_N;
@@ -858,6 +883,9 @@ void gemm_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const ba
     } 
     else if (transb == 'C'){
         cutransB = CUBLAS_OP_C;
+    }
+    else {
+        ModuleBase::WARNING_QUIT("gemm_op", std::string("Unknown transb type ") + transb + std::string(" !"));
     }
     cublasErrcheck(cublasZgemm(cublas_handle, cutransA, cutransB, m, n ,k, (double2*)alpha, (double2*)a , lda, (double2*)b, ldb, (double2*)beta, (double2*)c, ldc));
 }

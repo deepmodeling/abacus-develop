@@ -870,7 +870,7 @@ TEST_F(UcellTest,PrintTauDirect)
 	ifs.open("print_tau_direct");
     std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
     EXPECT_THAT(str, testing::HasSubstr("DIRECT COORDINATES"));
-    EXPECT_THAT(str, testing::HasSubstr("  C1            0.1000000000        0.1000000000        0.1000000000"));
+    EXPECT_THAT(str, testing::HasSubstr("taud_C1            0.1000000000        0.1000000000        0.1000000000"));
 	ifs.close();
 	remove("print_tau_direct");
 }
@@ -888,7 +888,7 @@ TEST_F(UcellTest,PrintTauCartesian)
 	ifs.open("print_tau_Cartesian");
     	std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
     	EXPECT_THAT(str, testing::HasSubstr("CARTESIAN COORDINATES"));
-    	EXPECT_THAT(str, testing::HasSubstr("  C1            1.0000000000        1.0000000000        1.0000000000"));
+    	EXPECT_THAT(str, testing::HasSubstr("tauc_C1            1.0000000000        1.0000000000        1.0000000000"));
 	ifs.close();
 	remove("print_tau_Cartesian");
 }
