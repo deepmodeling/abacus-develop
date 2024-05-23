@@ -217,7 +217,7 @@ void pseudopot_cell_vnl::init(const int ntype,
     if (nkb > 0 && allocate_vkb)
     {
         vkb.create(nkb, npwx);
-        ModuleBase::Memory::record("VNL::vkb", nkb * npwx * sizeof(double));
+        ModuleBase::Memory::record("VNL::vkb", nkb * npwx * sizeof(std::complex<double>));
     }
 
     // this->nqx = 10000;		// calculted in allocate_nlpot.f90

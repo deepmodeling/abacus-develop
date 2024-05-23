@@ -461,6 +461,7 @@ These variables are used to control general system parameters.
   - 0:
     - if *[calculation](#calculation)==md/nscf/get_pchg/get_wf/get_S* or *[gamma_only](#gamma_only)==True*;
     - If (*[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*). Currently *symmetry==1* is not supported in EXX (exact exchange) calculation.
+    - If *[efield_flag](#efield_flag)==1*
   - 1: else
 
 ### symmetry_prec
