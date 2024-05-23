@@ -32,10 +32,10 @@ class TD_Velocity
     ModuleBase::Vector3<double> cart_At;
 
     /// @brief calculate the At in cartesian coordinate
-    void cal_cart_At(ModuleBase::Vector3<double> a0,
-                     ModuleBase::Vector3<double> a1,
-                     ModuleBase::Vector3<double> a2,
-                     ModuleBase::Vector3<double> At);
+    void cal_cart_At(ModuleBase::Vector3<double>& a0,
+                     ModuleBase::Vector3<double>& a1,
+                     ModuleBase::Vector3<double>& a2,
+                     ModuleBase::Vector3<double>& At);
 
     // For TDDFT velocity gague, to fix the output of HR
     std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> HR_sparse_td_vel[2];
