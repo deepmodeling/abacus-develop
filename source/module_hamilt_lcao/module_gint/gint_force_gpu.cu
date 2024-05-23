@@ -240,11 +240,12 @@ void gint_gamma_force_gpu(hamilt::HContainer<double>* dm,
             cal_force_add(f_s_iat, force, atom_num_grid);
             }
             iter_num++;
+            delete[] f_s_iat.stress_host;
+            delete[] f_s_iat.force_host;
+            delete[] f_s_iat.iat_host;
         }
     }
-    delete[] f_s_iat.stress_host;
-    delete[] f_s_iat.force_host;
-    delete[] f_s_iat.iat_host;
+    delete[] denstiy_mat.density_mat_h;
     /*free variables in CPU host*/
     for (int i = 0; i < gridt.nstreams; i++)
     {
