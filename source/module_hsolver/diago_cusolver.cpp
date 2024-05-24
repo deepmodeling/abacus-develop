@@ -5,12 +5,23 @@
 #include "module_base/scalapack_connector.h"
 
 #include <type_traits>
+#include <vector>
+#include <memory>
 
 using complex = std::complex<double>;
 
 // Namespace for the diagonalization solver
 namespace hsolver
 {
+    // this struct is used for collecting matrices from all processes to root process
+    template <typename T> struct Matrix_g
+    {
+        std::shared_ptr<T> p;
+        size_t row;
+        size_t col;
+        std::shared_ptr<int> desc;
+    };
+
     // Initialize the DecomposedState variable for real and complex numbers
     template <typename T>
     int DiagoCusolver<T>::DecomposedState = 0;
@@ -52,33 +63,30 @@ namespace hsolver
     }
 
     // Use Cpxgemr2d to collect matrices from all processes to root process
-    template <typename mat>
+    template <typename mat, typename matg>
     static void gatherMatrix(const int myid,
                              const int root_proc,
                              const mat& mat_l,
-                             mat& mat_g)
+                             matg& mat_g)
     {
         auto a = mat_l.p;
-        decltype(a) b;
         const int* desca = mat_l.desc;
         int ctxt = desca[1];
         int nrows = desca[2];
         int ncols = desca[3];
 
         if (myid == root_proc)
-            b = new typename std::remove_reference<decltype(*a)>::type[nrows * ncols];
+            mat_g.p.reset(new typename std::remove_reference<decltype(*a)>::type[nrows * ncols]);
         else
-            b = new typename std::remove_reference<decltype(*a)>::type[1];
+            mat_g.p.reset(new typename std::remove_reference<decltype(*a)>::type[1]);
 
         // Set descb, which has all elements in the only block in the root process
-        int descb[9] = {1, ctxt, nrows, ncols, nrows, ncols, 0, 0, nrows};
+        mat_g.desc.reset(new int[9]{1, ctxt, nrows, ncols, nrows, ncols, 0, 0, nrows});
 
-        mat_g.desc = descb;
         mat_g.row = nrows;
         mat_g.col = ncols;
-        mat_g.p = b;
 
-        Cpxgemr2d(nrows, ncols, a, 1, 1, desca, b, 1, 1, descb, ctxt);
+        Cpxgemr2d(nrows, ncols, a, 1, 1, desca, mat_g.p.get(), 1, 1, mat_g.desc.get(), ctxt);
     }
 
     // Convert the Psi to a 2D block storage format
@@ -115,11 +123,8 @@ namespace hsolver
 
 #ifdef __MPI
         // global matrix
-        hamilt::MatrixBlock<T> h_mat_g;
-        hamilt::MatrixBlock<T> s_mat_g;
-
-        // global psi for distribute
-        T* psi_g = nullptr;
+        Matrix_g<T> h_mat_g;
+        Matrix_g<T> s_mat_g;
 
         // get the context and process information
         int ctxt = ParaV->blacs_ctxt;
@@ -153,22 +158,21 @@ namespace hsolver
         if(num_procs > 1)
         {
             MPI_Barrier(MPI_COMM_WORLD);
+            // global psi for distribute
+            int psi_len = myid == root_proc ? h_mat_g.row * h_mat_g.col : 1;
+            std::vector<T> psi_g(psi_len);
             if (myid == root_proc)
             {
-                psi_g = new T[h_mat_g.row * h_mat_g.col];
-                this->dc.Dngvd(h_mat_g.col, h_mat_g.row, h_mat_g.p, s_mat_g.p, eigen.data(), psi_g);
+                this->dc.Dngvd(h_mat_g.col, h_mat_g.row, h_mat_g.p.get(), s_mat_g.p.get(), eigen.data(), psi_g.data());
             }
-            else
-            {
-                psi_g = new T[1];
-            }
+
             MPI_Barrier(MPI_COMM_WORLD);
             
             // broadcast eigenvalues to all processes
             MPI_Bcast(eigen.data(), GlobalV::NBANDS, MPI_DOUBLE, root_proc, MPI_COMM_WORLD);
 
             // distribute psi to all processes
-            distributePsi(this->ParaV->desc_wfc, psi.get_pointer(), psi_g);
+            distributePsi(this->ParaV->desc_wfc, psi.get_pointer(), psi_g.data());
         }
         else
         {
@@ -184,16 +188,6 @@ namespace hsolver
         // Copy the eigenvalues to the output arrays
         const int inc = 1;
         BlasConnector::copy(GlobalV::NBANDS, eigen.data(), inc, eigenvalue_in, inc);
-
-        // Free allocated memory
-#ifdef __MPI
-        if(num_procs > 1)
-        {
-            delete[] h_mat_g.p;
-            delete[] s_mat_g.p;
-            delete[] psi_g;
-        }
-#endif
     }
 
     // Explicit instantiation of the DiagoCusolver class for real and complex numbers
