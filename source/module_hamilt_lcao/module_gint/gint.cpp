@@ -160,7 +160,6 @@ void Gint::cal_gint(Gint_inout* inout)
                             inout->fvl_dphi[0](iat, 1) += force[iat * 3 + 1];
                             inout->fvl_dphi[0](iat, 2) += force[iat * 3 + 2];
                         }
-                        
                     }
                     if (inout->isstress){
                         inout->svl_dphi[0](0, 0) += stress[0];

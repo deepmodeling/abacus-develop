@@ -58,8 +58,8 @@ namespace GintKernel
 void gint_gamma_force_gpu(hamilt::HContainer<double>* dm,
                           const double vfactor,
                           const double* vlocal,
-                          std::vector<double> force,
-                          std::vector<double> stress,
+                          std::vector<double>& force,
+                          std::vector<double>& stress,
                           const int nczp,
                           double dr,
                           double* rcut,
@@ -195,8 +195,6 @@ void gint_gamma_force_gpu(hamilt::HContainer<double>* dm,
                                      atom_pair_num,
                                      gridt.streams[para.stream_num],
                                      nullptr);
-
-            
             /* force compute in GPU */
             if (isforce){
             dot_product_force<<<grid_dot_force,
@@ -213,9 +211,6 @@ void gint_gamma_force_gpu(hamilt::HContainer<double>* dm,
                 max_size,
                 gridt.psir_size / nwmax);
             }
-            // /* force compute in CPU*/
-            
-
             /*stress compute in GPU*/
             if (isstress){
             dot_product_stress<<<grid_dot,
@@ -234,10 +229,10 @@ void gint_gamma_force_gpu(hamilt::HContainer<double>* dm,
             }
             /* stress compute in CPU*/
             if (isstress){
-            cal_stress_add(f_s_iat, stress, cuda_block);
+                cal_stress_add(f_s_iat, stress, cuda_block);
             }
             if (isforce){
-            cal_force_add(f_s_iat, force, atom_num_grid);
+                cal_force_add(f_s_iat, force, atom_num_grid);
             }
             iter_num++;
             delete[] f_s_iat.stress_host;
