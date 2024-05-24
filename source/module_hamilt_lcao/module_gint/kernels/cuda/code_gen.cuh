@@ -1,7 +1,7 @@
 #ifndef CODE_GEN_CUH
 #define CODE_GEN_CUH
 
-#include "module_hamilt_lcao/module_gint/kernels/cuda/gemm_selector.cuh"
+#include "gemm_selector.cuh"
 #include <cuda_runtime.h>
 
 extern template void gemm_time_measure<double, 2, 16, 16, 32, 2, 2, 16, 2, 16>(int, int, int*, int*, int*, double**, int*, double**, int*, double**, int*, int, cudaStream_t, float&, matrix_multiple_func_type&, double*, double*, double*);

@@ -1,4 +1,4 @@
-#include "module_hamilt_lcao/module_gint/kernels/cuda/vbatch_matrix_mul.cuh"
+#include "vbatch_matrix_mul.cuh"
 
 template void gemm_time_measure<double, 8, 4, 16, 16, 8, 8, 4, 8, 4>(int,int,int*,int*,int*,double**,int*,double**,int*,double**,int*,int,cudaStream_t,float&,matrix_multiple_func_type&,double*,double*,double*);
 

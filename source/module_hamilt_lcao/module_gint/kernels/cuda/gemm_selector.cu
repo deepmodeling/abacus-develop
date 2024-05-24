@@ -4,7 +4,7 @@
 #include "vbatch_matrix_mul.cuh"
 #include "cuda_tools.cuh"
 #include "module_base/blas_connector.h"
-#include "module_hamilt_lcao/module_gint/kernels/cuda/code_gen/code_gen.cuh"
+#include "code_gen.cuh"
 
 /*
  * Here we have utilized a very straightforward and brute-force method to select
