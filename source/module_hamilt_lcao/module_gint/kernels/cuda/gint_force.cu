@@ -601,7 +601,7 @@ void cal_force_add(ForceStressIat& f_s_iat,
  * @param cuda_block in stress compute,used for Block nums
  */
 void cal_stress_add(ForceStressIat& f_s_iat,
-                     std::vector<double> stress,
+                     std::vector<double>& stress,
                      const int cuda_block)
 {
     checkCuda(cudaMemcpy(f_s_iat.stress_host,
