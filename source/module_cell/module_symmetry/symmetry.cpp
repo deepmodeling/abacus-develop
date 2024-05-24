@@ -285,6 +285,7 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
     delete[] rotpos;
     delete[] index;
     delete[] istart;
+    ModuleBase::timer::tick("Symmetry","analy_sys");
     return;
 }
 
