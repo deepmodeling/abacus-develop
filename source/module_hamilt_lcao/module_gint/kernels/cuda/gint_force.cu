@@ -572,7 +572,7 @@ void cal_mem_cpy(ForceStressIat& f_s_iat,
  * @param atom_num_grid in force calculate,used for Block nums
  */
 void cal_force_add(ForceStressIat& f_s_iat,
-                     std::vector<double& force,
+                     std::vector<double>& force,
                     const int atom_num_grid)
 {
     checkCuda(cudaMemcpy(f_s_iat.force_host,
