@@ -32,12 +32,11 @@ jobs:
           cmake -B build -DBUILD_TESTING=ON -DENABLE_DEEPKS=ON -DENABLE_LIBXC=ON -DENABLE_LIBRI=ON -DENABLE_PAW=ON -DENABLE_GOOGLEBENCH=ON -DENABLE_RAPIDJSON=ON  -DCMAKE_EXPORT_COMPILE_COMMANDS=1
           cmake --build build -j8
           cmake --install build
-
+      - uses: actions/setup-python@v3
+      - uses: pre-commit/action@v3.0.1
       - name: Test
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
           cmake --build build --target test ARGS="-V --timeout 1700"
-      - uses: actions/setup-python@v3
-      - uses: pre-commit/action@v3.0.1
