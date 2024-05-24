@@ -22,10 +22,10 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install Ccache
+      - name: Install CI tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y ccache
+          sudo apt-get install -y ccache clang-format clang-tidy
 
       - name: Build
         run: |
