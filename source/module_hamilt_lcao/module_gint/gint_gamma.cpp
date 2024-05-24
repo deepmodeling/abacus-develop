@@ -13,16 +13,11 @@
 
 Gint_Gamma::Gint_Gamma()
 {
-   
-    sender_index_size = 1;
-	sender_local_index = nullptr;
     sender_size_process = nullptr;
     sender_displacement_process = nullptr;
     sender_size=1;
     sender_buffer=nullptr;
 
-    receiver_index_size=1;
-    receiver_global_index = nullptr;
     receiver_size_process = nullptr;
     receiver_displacement_process = nullptr;
     receiver_size=1;
@@ -32,10 +27,6 @@ Gint_Gamma::Gint_Gamma()
 Gint_Gamma::~Gint_Gamma()
 {
     // mohan add if 2024-04-09
-	if(sender_local_index != nullptr)
-	{
-		delete[] sender_local_index;
-	}
 
 	if(sender_size_process != nullptr)
 	{
@@ -52,10 +43,6 @@ Gint_Gamma::~Gint_Gamma()
 		delete[] sender_buffer;
 	}
 
-    if(receiver_global_index != nullptr)
-	{
-		delete[] receiver_global_index;
-	}
 
     if(receiver_size_process != nullptr)
 	{
