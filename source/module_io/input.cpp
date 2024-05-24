@@ -3381,6 +3381,11 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             }
         }
     }
+
+    if (efield_flag)
+    {
+        symmetry = "0";
+    }
 }
 #ifdef __MPI
 void Input::Bcast()
