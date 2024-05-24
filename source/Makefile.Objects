@@ -226,7 +226,6 @@ OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
       io_npz.o\
 
 OBJS_GINT=gint.o\
-      gint_gamma.o\
       gint_gamma_env.o\
       gint_gamma_vl.o\
       gint_fvl.o\

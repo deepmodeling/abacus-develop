@@ -24,8 +24,8 @@ class Gint_Gamma : public Gint
 {
 	public:
 
-	Gint_Gamma();
-	~Gint_Gamma();
+	// Gint_Gamma();
+	// ~Gint_Gamma();
 
     //------------------------------------------------------
     // in gint_gamma_vl.cpp 
@@ -50,20 +50,6 @@ class Gint_Gamma : public Gint
 private:
 
     double*** DM = nullptr;   //pointer to LOC.DM
-
-    ///===============================
-    /// Use MPI_Alltoallv to convert a grid distributed matrix
-    /// to 2D - block cyclic distributed matrix.
-    ///===============================
-    int sender_size;
-    int *sender_size_process;
-    int *sender_displacement_process;
-    double* sender_buffer;
-
-    int receiver_size;
-    int *receiver_size_process;
-    int *receiver_displacement_process;
-    double* receiver_buffer;
 
 };
 
