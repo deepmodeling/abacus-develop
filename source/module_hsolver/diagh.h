@@ -8,6 +8,10 @@
 #include "module_hamilt_general/hamilt.h"
 #include "module_psi/psi.h"
 
+#ifdef __MPI
+#include "mpi.h"
+#endif
+
 template<typename T> struct consts
 {
     consts();
@@ -18,6 +22,22 @@ template<typename T> struct consts
 
 namespace hsolver
 {
+
+
+struct diag_comm_info
+{
+#ifdef __MPI
+
+    MPI_Comm comm;
+    int rank;
+    int nproc;
+
+    diag_comm_info(MPI_Comm comm_in, int rank_in, int nproc_in) : comm(comm_in), rank(rank_in), nproc(nproc_in) {}
+#else
+    int rank = 0;
+#endif
+};
+
 
 template <typename T, typename Device = base_device::DEVICE_CPU>
 class DiagH

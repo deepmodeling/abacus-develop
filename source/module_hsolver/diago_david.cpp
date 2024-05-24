@@ -17,22 +17,12 @@ using namespace hsolver;
 
 
 template <typename T, typename Device>
-DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
-                                  int diago_david_ndim,
-#ifdef __MPI
-                                  MPI_Comm comm_in_diag,
-#endif
-                                  bool use_paw)
-    : diago_david_ndim(diago_david_ndim), use_paw(use_paw)
+DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in, 
+                                  int diago_david_ndim_in,
+                                  bool use_paw_in,
+                                  diag_comm_info diag_comm_in)
+    : diago_david_ndim(diago_david_ndim_in), use_paw(use_paw_in), diag_comm(diag_comm_in)
 {
-#ifdef __MPI
-    this->comm_diag = comm_in_diag;
-    // this->rank_in_commdiag = rank_in_commdiag;
-    // this->nproc_in_commdiag = nproc_in_commdiag;
-    MPI_Comm_rank(this->comm_diag, &this->rank_in_commdiag);
-    MPI_Comm_size(this->comm_diag, &this->nproc_in_commdiag);
-#endif
-
     this->device = base_device::get_device_type<Device>(this->ctx);
     this->precondition = precondition_in;
 
@@ -61,7 +51,7 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
     assert(this->diago_david_ndim > 1);
 
 #ifdef __MPI
-    assert(this->diago_david_ndim * psi.get_nbands() < psi.get_current_nbas() * nproc_in_commdiag);
+    assert(this->diago_david_ndim * psi.get_nbands() < psi.get_current_nbas() * diag_comm.nproc);
 #else
     assert(this->diago_david_ndim * psi.get_nbands() < psi.get_current_nbas());
 #endif
@@ -606,7 +596,7 @@ void DiagoDavid<T, Device>::cal_elem(const int& dim,
 
 
 #ifdef __MPI
-    if (nproc_in_commdiag > 1)
+    if (diag_comm.nproc > 1)
     {
         matrixTranspose_op<T, Device>()(this->ctx, this->nbase_x, this->nbase_x, hcc, hcc);
         matrixTranspose_op<T, Device>()(this->ctx, this->nbase_x, this->nbase_x, scc, scc);
@@ -620,17 +610,17 @@ void DiagoDavid<T, Device>::cal_elem(const int& dim,
         else
         {
             if (base_device::get_current_precision(swap) == "single") {
-                MPI_Reduce(swap, hcc + nbase * this->nbase_x, notconv * this->nbase_x, MPI_COMPLEX, MPI_SUM, 0, this->comm_diag);
+                MPI_Reduce(swap, hcc + nbase * this->nbase_x, notconv * this->nbase_x, MPI_COMPLEX, MPI_SUM, 0, diag_comm.comm);
             }
             else {
-                MPI_Reduce(swap, hcc + nbase * this->nbase_x, notconv * this->nbase_x, MPI_DOUBLE_COMPLEX, MPI_SUM, 0, this->comm_diag);
+                MPI_Reduce(swap, hcc + nbase * this->nbase_x, notconv * this->nbase_x, MPI_DOUBLE_COMPLEX, MPI_SUM, 0, diag_comm.comm);
             }
             syncmem_complex_op()(this->ctx, this->ctx, swap, scc + nbase * this->nbase_x, notconv * this->nbase_x);
             if (base_device::get_current_precision(swap) == "single") {
-                MPI_Reduce(swap, scc + nbase * this->nbase_x, notconv * this->nbase_x, MPI_COMPLEX, MPI_SUM, 0, this->comm_diag);
+                MPI_Reduce(swap, scc + nbase * this->nbase_x, notconv * this->nbase_x, MPI_COMPLEX, MPI_SUM, 0, diag_comm.comm);
             }
             else {
-                MPI_Reduce(swap, scc + nbase * this->nbase_x, notconv * this->nbase_x, MPI_DOUBLE_COMPLEX, MPI_SUM, 0, this->comm_diag);
+                MPI_Reduce(swap, scc + nbase * this->nbase_x, notconv * this->nbase_x, MPI_DOUBLE_COMPLEX, MPI_SUM, 0, diag_comm.comm);
             }
         }
         delete[] swap;
@@ -670,7 +660,7 @@ void DiagoDavid<T, Device>::diag_zhegvx(const int& nbase,
 {
     //	ModuleBase::TITLE("DiagoDavid","diag_zhegvx");
     ModuleBase::timer::tick("DiagoDavid", "diag_zhegvx");
-    if (rank_in_commdiag == 0)
+    if (diag_comm.rank == 0)
     {
         assert(nbase_x >= std::max(1, nbase));
 
@@ -694,14 +684,14 @@ void DiagoDavid<T, Device>::diag_zhegvx(const int& nbase,
     }
 
 #ifdef __MPI
-    if (nproc_in_commdiag > 1)
+    if (diag_comm.nproc > 1)
     {
         // vcc: nbase * nband
         for (int i = 0; i < nband; i++)
         {
-            MPI_Bcast(&vcc[i * this->nbase_x], nbase, MPI_DOUBLE_COMPLEX, 0, this->comm_diag);
+            MPI_Bcast(&vcc[i * this->nbase_x], nbase, MPI_DOUBLE_COMPLEX, 0, diag_comm.comm);
         }
-        MPI_Bcast(this->eigenvalue, nband, MPI_DOUBLE, 0, this->comm_diag);
+        MPI_Bcast(this->eigenvalue, nband, MPI_DOUBLE, 0, diag_comm.comm);
     }
 #endif
 

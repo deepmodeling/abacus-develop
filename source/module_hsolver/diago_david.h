@@ -3,9 +3,6 @@
 
 #include "diagh.h"
 
-#ifdef __MPI
-#include "mpi.h"
-#endif
 
 namespace hsolver
 {
@@ -22,15 +19,12 @@ class DiagoDavid : public DiagH<T, Device>
   public:
 
     DiagoDavid(const Real* precondition_in, 
-               int diago_david_ndim,
-#ifdef __MPI
-               MPI_Comm comm_in_diag,
-#endif
-               bool use_paw);
+               int diago_david_ndim_in,
+               bool use_paw_in,
+               diag_comm_info diag_comm_in);
 
     virtual ~DiagoDavid() override{};
 
-    // this is the override function diag() for CG method
     virtual void diag(hamilt::Hamilt<T, Device>* phm_in,
                       psi::Psi<T, Device>& phi,
                       Real* eigenvalue_in) override ;
@@ -40,11 +34,7 @@ class DiagoDavid : public DiagH<T, Device>
     bool use_paw = false;
     int test_david = 0;
 
-#ifdef __MPI
-    MPI_Comm comm_diag = MPI_COMM_WORLD;
-    int nproc_in_commdiag = 1;
-    int rank_in_commdiag = 0;
-#endif
+    diag_comm_info diag_comm;
 
     /// row size for input psi matrix
     int n_band = 0;
