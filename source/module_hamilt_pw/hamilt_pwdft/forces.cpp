@@ -14,7 +14,7 @@
 #include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
 #include "module_hamilt_general/module_surchem/surchem.h"
 #include "module_hamilt_general/module_vdw/vdw.h"
-#include "module_psi/kernels/device.h"
+
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -33,7 +33,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
                                        const psi::Psi<std::complex<FPTYPE>, Device>* psi_in)
 {
     ModuleBase::TITLE("Forces", "init");
-    this->device = psi::device::get_device_type<Device>(this->ctx);
+    this->device = base_device::get_device_type<Device>(this->ctx);
     const ModuleBase::matrix& wg = elec.wg;
     const ModuleBase::matrix& ekb = elec.ekb;
     const Charge* const chr = elec.charge;
@@ -992,7 +992,7 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
         h_atom_nh[ii] = GlobalC::ucell.atoms[ii].ncpp.nh;
         h_atom_na[ii] = GlobalC::ucell.atoms[ii].na;
     }
-    if (this->device == psi::GpuDevice)
+    if (this->device == base_device::GpuDevice)
     {
         resmem_var_op()(this->ctx, d_wg, wg.nr * wg.nc);
         resmem_var_op()(this->ctx, d_ekb, ekb.nr * ekb.nc);
@@ -1069,7 +1069,7 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
                   &ModuleBase::ZERO,
                   becp,
                   nkb);
-        if (this->device == psi::GpuDevice)
+        if (this->device == base_device::GpuDevice)
         {
             std::complex<FPTYPE>* h_becp = nullptr;
             resmem_complex_h_op()(this->cpu_ctx, h_becp, GlobalV::NBANDS * nkb);
@@ -1145,7 +1145,7 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
                           force);
     } // end ik
 
-    if (this->device == psi::GpuDevice)
+    if (this->device == base_device::GpuDevice)
     {
         syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, forcenl.c, force, forcenl.nr * forcenl.nc);
     }
@@ -1157,7 +1157,7 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
     delmem_complex_op()(this->ctx, vkb1);
     delmem_complex_op()(this->ctx, becp);
     delmem_complex_op()(this->ctx, dbecp);
-    if (this->device == psi::GpuDevice)
+    if (this->device == base_device::GpuDevice)
     {
         delmem_var_op()(this->ctx, d_wg);
         delmem_var_op()(this->ctx, d_ekb);
@@ -1307,7 +1307,7 @@ void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc,
     return;
 }
 
-template class Forces<double, psi::DEVICE_CPU>;
+template class Forces<double, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class Forces<double, psi::DEVICE_GPU>;
+template class Forces<double, base_device::DEVICE_GPU>;
 #endif

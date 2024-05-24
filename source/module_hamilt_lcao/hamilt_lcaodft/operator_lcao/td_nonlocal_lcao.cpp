@@ -47,9 +47,9 @@ template <typename TK, typename TR>
 void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::init_td(void)
 {
     //calculate At in cartesian coorinates.
-	double l_norm[3]={GlobalC::ucell.a1.norm() ,GlobalC::ucell.a2.norm() ,GlobalC::ucell.a3.norm()};
+	double l_norm[3]={this->ucell->a1.norm() ,this->ucell->a2.norm() ,this->ucell->a3.norm()};
     double (&A)[3] = elecstate::H_TDDFT_pw::At;
-	cart_At = -(GlobalC::ucell.a1*A[0]/l_norm[0] + GlobalC::ucell.a2*A[1]/l_norm[1] + GlobalC::ucell.a3*A[2]/l_norm[2]);
+	cart_At = -(this->ucell->a1*A[0]/l_norm[0] + this->ucell->a2*A[1]/l_norm[1] + this->ucell->a3*A[2]/l_norm[2]);
     std::cout << "cart_At: " << cart_At[0] << " " <<cart_At[1]<< " " << cart_At[2] << std::endl;
 }
 // initialize_HR()
@@ -372,7 +372,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
 template<>
 void hamilt::TDNonlocal<hamilt::OperatorLCAO<std::complex<double>, double>>::contributeHk(int ik)
 {
-    if (GlobalV::ESOLVER_TYPE != "tddft" || elecstate::H_TDDFT_pw::stype != 1)
+    if (TD_Velocity::tddft_velocity == false)
     {
         return;
     }

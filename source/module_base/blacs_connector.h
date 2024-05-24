@@ -38,3 +38,11 @@ extern "C"
     void Cblacs_pcoord(int icontxt, int pnum, int *prow, int *pcol);
 	void Cblacs_exit(int icontxt);
 }
+
+#ifdef __MPI
+#include <mpi.h>
+extern "C"
+{
+    int Csys2blacs_handle(MPI_Comm SysCtxt);
+}
+#endif

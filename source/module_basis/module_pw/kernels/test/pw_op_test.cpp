@@ -1,8 +1,10 @@
-#include <complex>
-#include <gtest/gtest.h>
-#include "module_psi/kernels/memory_op.h"
 #include "module_basis/module_pw/kernels/pw_op.h"
 
+#include "module_base/module_device/memory_op.h"
+// #include "module_psi/kernels/memory_op.h"
+
+#include <complex>
+#include <gtest/gtest.h>
 
 class TestModulePWPWMultiDevice : public ::testing::Test
 {
@@ -22,30 +24,36 @@ class TestModulePWPWMultiDevice : public ::testing::Test
     const std::vector<std::complex<double> > out_3 = {{-0.199195, -0.0194965}, {-0.419867, -0.250833}, {-1.11264, 0}, {-0.419867, 0.250833}, {-0.199195, 0.0194965}, {-0.418409, -5.00654e-18}, {-0.419867, 0.250833}, {-0.18608, 3.44375e-17}, {-0.267653, -0.0667649}, {-0.199195, 0.0194965}, {-0.267653, -0.0667649}, {-0.267653, 0.0667649}, {-0.199195, -0.0194965}, {-0.267653, 0.0667649}, {-0.18608, -1.83156e-17}, {-0.419867, -0.250833}, {-0.418409, 6.16791e-18}, {-0.418409, 1.14412e-17}, {-0.419867, 0.250833}, {-0.18608, 4.36893e-17}, {-0.267653, -0.0667649}, {-0.267653, 0.0667649}, {-0.18608, 1.64477e-17}, {-0.419867, -0.250833}, {-0.418409, -2.87836e-17}, {-0.267653, -0.0667649}, {-0.418409, -1.43756e-17}, {-0.267653, 0.0667649}, {-0.267653, -0.0667649}, {-0.418409, -9.49474e-18}, {-0.267653, 0.0667649}, {-0.199195, 0.0194965}, {-0.267653, -0.0667649}, {-0.267653, -0.0667649}, {-0.418409, -3.75741e-17}, {-0.267653, 0.0667649}, {-0.267653, 0.0667649}, {-0.199195, -0.0194965}, {-0.267653, 0.0667649}, {-0.199195, -0.0194965}, {-0.199195, 0.0194965}, {-0.267653, -0.0667649}, {-0.267653, -0.0667649}, {-0.418409, 4.70188e-17}, {-0.267653, 0.0667649}, {-0.267653, 0.0667649}, {-0.18608, -4.29872e-17}, {-0.419867, -0.250833}, {-0.418409, -1.85037e-17}, {-0.267653, -0.0667649}, {-0.418409, -2.89121e-18}, {-0.267653, 0.0667649}, {-0.267653, -0.0667649}, {-0.418409, 4.58838e-18}, {-0.267653, 0.0667649}, {-0.418409, 1.03394e-17}, {-0.419867, 0.250833}, {-0.18608, -3.28955e-17}, {-0.267653, -0.0667649}};
     const std::vector<std::complex<double> > out_3_init = {{-0.0719135, 0}, {0.15981, 0}, {0, 0}, {0.15981, 0}, {-0.0719135, 0}, {-0.0185867, 0}, {0.15981, 0}, {0.113268, 0}, {-0.0634128, 0}, {-0.0719135, 0}, {-0.0634128, 0}, {-0.0634128, 0}, {-0.0719135, 0}, {-0.0634128, 0}, {0.113268, 0}, {0.15981, 0}, {-0.0185867, 0}, {-0.0185867, 0}, {0.15981, 0}, {0.113268, 0}, {-0.0634128, 0}, {-0.0634128, 0}, {0.113268, 0}, {0.15981, 0}, {-0.0185867, 0}, {-0.0634128, 0}, {-0.0185867, 0}, {-0.0634128, 0}, {-0.0634128, 0}, {-0.0185867, 0}, {-0.0634128, 0}, {-0.0719135, 0}, {-0.0634128, 0}, {-0.0634128, 0}, {-0.0185867, 0}, {-0.0634128, 0}, {-0.0634128, 0}, {-0.0719135, 0}, {-0.0634128, 0}, {-0.0719135, 0}, {-0.0719135, 0}, {-0.0634128, 0}, {-0.0634128, 0}, {-0.0185867, 0}, {-0.0634128, 0}, {-0.0634128, 0}, {0.113268, 0}, {0.15981, 0}, {-0.0185867, 0}, {-0.0634128, 0}, {-0.0185867, 0}, {-0.0634128, 0}, {-0.0634128, 0}, {-0.0185867, 0}, {-0.0634128, 0}, {-0.0185867, 0}, {0.15981, 0}, {0.113268, 0}, {-0.0634128, 0}};
 
-    const psi::DEVICE_CPU * cpu_ctx = {};
-    const psi::DEVICE_GPU * gpu_ctx = {};
+    const base_device::DEVICE_CPU* cpu_ctx = {};
+    const base_device::DEVICE_GPU* gpu_ctx = {};
 
-    using set_3d_fft_box_cpu_op = ModulePW::set_3d_fft_box_op<double, psi::DEVICE_CPU>;
-    using set_3d_fft_box_gpu_op = ModulePW::set_3d_fft_box_op<double, psi::DEVICE_GPU>;
-    using set_recip_to_real_output_cpu_op = ModulePW::set_recip_to_real_output_op<double, psi::DEVICE_CPU>;
-    using set_recip_to_real_output_gpu_op = ModulePW::set_recip_to_real_output_op<double, psi::DEVICE_GPU>;
-    using set_real_to_recip_output_cpu_op = ModulePW::set_real_to_recip_output_op<double, psi::DEVICE_CPU>;
-    using set_real_to_recip_output_gpu_op = ModulePW::set_real_to_recip_output_op<double, psi::DEVICE_GPU>;
+    using set_3d_fft_box_cpu_op = ModulePW::set_3d_fft_box_op<double, base_device::DEVICE_CPU>;
+    using set_3d_fft_box_gpu_op = ModulePW::set_3d_fft_box_op<double, base_device::DEVICE_GPU>;
+    using set_recip_to_real_output_cpu_op = ModulePW::set_recip_to_real_output_op<double, base_device::DEVICE_CPU>;
+    using set_recip_to_real_output_gpu_op = ModulePW::set_recip_to_real_output_op<double, base_device::DEVICE_GPU>;
+    using set_real_to_recip_output_cpu_op = ModulePW::set_real_to_recip_output_op<double, base_device::DEVICE_CPU>;
+    using set_real_to_recip_output_gpu_op = ModulePW::set_real_to_recip_output_op<double, base_device::DEVICE_GPU>;
 
-    using resize_memory_complex_gpu_op = psi::memory::resize_memory_op<std::complex<double>, psi::DEVICE_GPU>;
-    using delete_memory_complex_gpu_op = psi::memory::delete_memory_op<std::complex<double>, psi::DEVICE_GPU>;
-    using synchronize_memory_complex_h2d_op = psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_GPU, psi::DEVICE_CPU>;
-    using synchronize_memory_complex_d2h_op = psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_CPU, psi::DEVICE_GPU>;
+    using resize_memory_complex_gpu_op
+        = base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
+    using delete_memory_complex_gpu_op
+        = base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
+    using synchronize_memory_complex_h2d_op = base_device::memory::
+        synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+    using synchronize_memory_complex_d2h_op = base_device::memory::
+        synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
 
-    using resize_memory_double_gpu_op = psi::memory::resize_memory_op<double, psi::DEVICE_GPU>;
-    using delete_memory_double_gpu_op = psi::memory::delete_memory_op<double, psi::DEVICE_GPU>;
-    using synchronize_memory_double_h2d_op = psi::memory::synchronize_memory_op<double, psi::DEVICE_GPU, psi::DEVICE_CPU>;
-    using synchronize_memory_double_d2h_op = psi::memory::synchronize_memory_op<double, psi::DEVICE_CPU, psi::DEVICE_GPU>;
+    using resize_memory_double_gpu_op = base_device::memory::resize_memory_op<double, base_device::DEVICE_GPU>;
+    using delete_memory_double_gpu_op = base_device::memory::delete_memory_op<double, base_device::DEVICE_GPU>;
+    using synchronize_memory_double_h2d_op
+        = base_device::memory::synchronize_memory_op<double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+    using synchronize_memory_double_d2h_op
+        = base_device::memory::synchronize_memory_op<double, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
 
-    using delete_memory_int_gpu_op = psi::memory::delete_memory_op<int, psi::DEVICE_GPU>;
-    using resize_memory_int_gpu_op = psi::memory::resize_memory_op<int, psi::DEVICE_GPU>;
-    using synchronize_memory_int_h2d_op = psi::memory::synchronize_memory_op<int, psi::DEVICE_GPU, psi::DEVICE_CPU>;
-
+    using delete_memory_int_gpu_op = base_device::memory::delete_memory_op<int, base_device::DEVICE_GPU>;
+    using resize_memory_int_gpu_op = base_device::memory::resize_memory_op<int, base_device::DEVICE_GPU>;
+    using synchronize_memory_int_h2d_op
+        = base_device::memory::synchronize_memory_op<int, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
 
     void SetUp() override {
     }

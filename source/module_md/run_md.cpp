@@ -99,7 +99,22 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, MD_para& md_p
             unit_in.update_vel(mdrun->vel);
             std::stringstream file;
             file << GlobalV::global_stru_dir << "STRU_MD_" << mdrun->step_ + mdrun->step_rst_;
-            unit_in.print_stru_file(file.str(), 1, 1);
+            // changelog 20240509
+            // because I move out the dependence on GlobalV from UnitCell::print_stru_file
+            // so its parameter is calculated here
+            bool need_orb = GlobalV::BASIS_TYPE=="pw";
+            need_orb = need_orb && GlobalV::psi_initializer;
+            need_orb = need_orb && GlobalV::init_wfc.substr(0, 3)=="nao";
+            need_orb = need_orb || GlobalV::BASIS_TYPE=="lcao";
+            need_orb = need_orb || GlobalV::BASIS_TYPE=="lcao_in_pw";
+            unit_in.print_stru_file(file.str(), 
+                                    GlobalV::NSPIN, 
+                                    false, // Cartesian coordinates
+                                    GlobalV::CALCULATION == "md", 
+                                    GlobalV::out_mul,
+                                    need_orb,
+                                    GlobalV::deepks_setorb,
+                                    GlobalV::MY_RANK);
             mdrun->write_restart(GlobalV::global_out_dir);
         }
 

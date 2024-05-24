@@ -57,7 +57,7 @@ void TwoCenterBundle::build_orb_onsite(int ntype, double radius)
 
 void TwoCenterBundle::tabulate()
 {
-    ModuleBase::SphericalBesselTransformer sbt;
+    ModuleBase::SphericalBesselTransformer sbt(true);
     orb_->set_transformer(sbt);
     beta_->set_transformer(sbt);
     if (alpha_) alpha_->set_transformer(sbt);
@@ -109,7 +109,7 @@ void TwoCenterBundle::tabulate()
     // init Ylm (this shall be done by Ylm automatically! to be done later...)
     ModuleBase::Ylm::set_coefficients();
 
-    sbt.fft_clear();
+    sbt.clear();
 }
 
 void TwoCenterBundle::to_LCAO_Orbitals(LCAO_Orbitals& ORB, const double lcao_ecut, const double lcao_dk, const double lcao_dr, const double lcao_rmax) const

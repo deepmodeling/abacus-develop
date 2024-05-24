@@ -4,17 +4,18 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/matrix.h"
+#include "module_base/module_device/memory_op.h"
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_cell/klist.h"
 #include "module_cell/module_symmetry/symmetry.h"
 #include "module_elecstate/elecstate.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/force_op.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
-#include "module_psi/kernels/memory_op.h"
+// #include "module_psi/kernels/memory_op.h"
 #include "module_psi/psi.h"
 #include "structure_factor.h"
 
-template <typename FPTYPE, typename Device = psi::DEVICE_CPU>
+template <typename FPTYPE, typename Device = base_device::DEVICE_CPU>
 class Forces
 {
 public:
@@ -67,27 +68,29 @@ public:
 
   private:
     Device* ctx = {};
-    psi::DEVICE_CPU* cpu_ctx = {};
-    psi::AbacusDevice_t device = {};
+    base_device::DEVICE_CPU* cpu_ctx = {};
+    base_device::AbacusDevice_t device = {};
     using gemm_op = hsolver::gemm_op<std::complex<FPTYPE>, Device>;
     using cal_vkb1_nl_op = hamilt::cal_vkb1_nl_op<FPTYPE, Device>;
     using cal_force_nl_op = hamilt::cal_force_nl_op<FPTYPE, Device>;
 
-    using resmem_complex_op = psi::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
-    using resmem_complex_h_op = psi::memory::resize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU>;
-    using delmem_complex_op = psi::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
-    using delmem_complex_h_op = psi::memory::delete_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU>;
-    using syncmem_complex_h2d_op = psi::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, psi::DEVICE_CPU>;
-    using syncmem_complex_d2h_op = psi::memory::synchronize_memory_op<std::complex<FPTYPE>, psi::DEVICE_CPU, Device>;
+    using resmem_complex_op = base_device::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
+    using resmem_complex_h_op = base_device::memory::resize_memory_op<std::complex<FPTYPE>, base_device::DEVICE_CPU>;
+    using delmem_complex_op = base_device::memory::delete_memory_op<std::complex<FPTYPE>, Device>;
+    using delmem_complex_h_op = base_device::memory::delete_memory_op<std::complex<FPTYPE>, base_device::DEVICE_CPU>;
+    using syncmem_complex_h2d_op
+        = base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, Device, base_device::DEVICE_CPU>;
+    using syncmem_complex_d2h_op
+        = base_device::memory::synchronize_memory_op<std::complex<FPTYPE>, base_device::DEVICE_CPU, Device>;
 
-    using resmem_var_op = psi::memory::resize_memory_op<FPTYPE, Device>;
-    using delmem_var_op = psi::memory::delete_memory_op<FPTYPE, Device>;
-    using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<FPTYPE, Device, psi::DEVICE_CPU>;
-    using syncmem_var_d2h_op = psi::memory::synchronize_memory_op<FPTYPE, psi::DEVICE_CPU, Device>;
+    using resmem_var_op = base_device::memory::resize_memory_op<FPTYPE, Device>;
+    using delmem_var_op = base_device::memory::delete_memory_op<FPTYPE, Device>;
+    using syncmem_var_h2d_op = base_device::memory::synchronize_memory_op<FPTYPE, Device, base_device::DEVICE_CPU>;
+    using syncmem_var_d2h_op = base_device::memory::synchronize_memory_op<FPTYPE, base_device::DEVICE_CPU, Device>;
 
-    using resmem_int_op = psi::memory::resize_memory_op<int, Device>;
-    using delmem_int_op = psi::memory::delete_memory_op<int, Device>;
-    using syncmem_int_h2d_op = psi::memory::synchronize_memory_op<int, Device, psi::DEVICE_CPU>;
+    using resmem_int_op = base_device::memory::resize_memory_op<int, Device>;
+    using delmem_int_op = base_device::memory::delete_memory_op<int, Device>;
+    using syncmem_int_h2d_op = base_device::memory::synchronize_memory_op<int, Device, base_device::DEVICE_CPU>;
 };
 
 #endif

@@ -139,18 +139,19 @@ namespace Gint_Tools
 		{
 			cal_flag[ib] = new bool[na_grid];
 		}
-
+		const UnitCell& ucell=*gt.ucell;
+		const LCAO_Orbitals& orb=*gt.orb;
 		block_index[0] = 0;
 		for (int id=0; id<na_grid; id++)
 		{
 			const int mcell_index=gt.bcell_start[grid_index] + id;
 			const int iat=gt.which_atom[mcell_index]; // index of atom
-			const int it=GlobalC::ucell.iat2it[ iat ]; // index of atom type
-			const int ia=GlobalC::ucell.iat2ia[ iat ]; // index of atoms within each type
-			const int start=GlobalC::ucell.itiaiw2iwt(it, ia, 0); // the index of the first wave function for atom (it,ia)
+			const int it=ucell.iat2it[ iat ]; // index of atom type
+			const int ia=ucell.iat2ia[ iat ]; // index of atoms within each type
+			const int start=ucell.itiaiw2iwt(it, ia, 0); // the index of the first wave function for atom (it,ia)
 			block_iw[id]=gt.trace_lo[start];
-			block_index[id+1] = block_index[id]+GlobalC::ucell.atoms[it].nw;
-			block_size[id]=GlobalC::ucell.atoms[it].nw;
+			block_index[id+1] = block_index[id]+ucell.atoms[it].nw;
+			block_size[id]=ucell.atoms[it].nw;
 
 			const int imcell=gt.which_bigcell[mcell_index];
 			const double mt[3] = {
@@ -167,7 +168,7 @@ namespace Gint_Tools
 					gt.meshcell_pos[ib][2] + mt[2]};
 				const double distance = std::sqrt(dr[0]*dr[0] + dr[1]*dr[1] + dr[2]*dr[2]);	// distance between atom and grid
 
-				if(distance > GlobalC::ORB.Phi[it].getRcut() - 1.0e-10)
+				if(distance > orb.Phi[it].getRcut() - 1.0e-10)
 					cal_flag[ib][id]=false;
 				else
 					cal_flag[ib][id]=true;
@@ -188,6 +189,8 @@ namespace Gint_Tools
     {
 		ModuleBase::timer::tick("Gint_Tools", "cal_psir_ylm");
         std::vector<double> ylma;
+		const UnitCell& ucell=*gt.ucell;
+		const LCAO_Orbitals& orb=*gt.orb;
         for (int id=0; id<na_grid; id++)
 		{
 			// there are two parameters we want to know here:
@@ -196,9 +199,9 @@ namespace Gint_Tools
 			const int mcell_index=gt.bcell_start[grid_index] + id;
 
 			const int iat=gt.which_atom[mcell_index]; // index of atom
-			const int it=GlobalC::ucell.iat2it[iat]; // index of atom type
-			const Atom*const atom=&GlobalC::ucell.atoms[it];
-			auto &OrbPhi = GlobalC::ORB.Phi[it];
+			const int it=ucell.iat2it[iat]; // index of atom type
+			const Atom*const atom=&ucell.atoms[it];
+			auto &OrbPhi = orb.Phi[it];
 			std::vector<const double*> it_psi_uniform(atom->nw);
 			std::vector<const double*> it_dpsi_uniform(atom->nw);
 			// preprocess index
@@ -247,7 +250,7 @@ namespace Gint_Tools
 					// spherical harmonic functions Ylm
 					//------------------------------------------------------
 					//	Ylm::get_ylm_real(this->nnn[it], this->dr[id], ylma);
-					ModuleBase::Ylm::sph_harm ( GlobalC::ucell.atoms[it].nwl,
+					ModuleBase::Ylm::sph_harm ( ucell.atoms[it].nwl,
 							dr[0] / distance,
 							dr[1] / distance,
 							dr[2] / distance,
@@ -279,7 +282,7 @@ namespace Gint_Tools
 						}
 						p[iw]=phi * ylma[atom->iw2_ylm[iw]];
 					} // end iw
-				}// end distance<=(GlobalC::ORB.Phi[it].getRcut()-1.0e-15)
+				}// end distance<=(orb.Phi[it].getRcut()-1.0e-15)
 			}// end ib
 		}// end id
 		ModuleBase::timer::tick("Gint_Tools", "cal_psir_ylm");
@@ -301,14 +304,16 @@ namespace Gint_Tools
 		double*const*const dpsir_ylm_z)
 	{
 		ModuleBase::timer::tick("Gint_Tools", "cal_dpsir_ylm");
+		const UnitCell& ucell=*gt.ucell;
+		const LCAO_Orbitals& orb=*gt.orb;
 		for (int id=0; id<na_grid; id++)
 		{
 			const int mcell_index = gt.bcell_start[grid_index] + id;
 			const int imcell = gt.which_bigcell[mcell_index];
 			int iat = gt.which_atom[mcell_index];
-			const int it = GlobalC::ucell.iat2it[iat];
-			const int ia = GlobalC::ucell.iat2ia[iat];
-			Atom *atom = &GlobalC::ucell.atoms[it];
+			const int it = ucell.iat2it[iat];
+			const int ia = ucell.iat2ia[iat];
+			Atom *atom = &ucell.atoms[it];
 
 			const double mt[3]={
 				gt.meshball_positions[imcell][0] - gt.tau_in_bigcell[iat][0],
@@ -339,7 +344,7 @@ namespace Gint_Tools
 					//array to store spherical harmonics and its derivatives
 					std::vector<double> rly;
 					std::vector<std::vector<double>> grly;
-					ModuleBase::Ylm::grad_rl_sph_harm(GlobalC::ucell.atoms[it].nwl, dr[0], dr[1], dr[2], rly, grly);
+					ModuleBase::Ylm::grad_rl_sph_harm(ucell.atoms[it].nwl, dr[0], dr[1], dr[2], rly, grly);
 					if(distance < 1e-9)  distance = 1e-9;
 
 					const double position = distance / delta_r;
@@ -360,7 +365,7 @@ namespace Gint_Tools
 						// function from interpolation method.
 						if ( atom->iw2_new[iw] )
 						{
-							const Numerical_Orbital_Lm &philn = GlobalC::ORB.Phi[it].PhiLN(
+							const Numerical_Orbital_Lm &philn = orb.Phi[it].PhiLN(
 									atom->iw2l[iw],
 									atom->iw2n[iw]);
 
@@ -427,14 +432,16 @@ namespace Gint_Tools
 		double*const*const ddpsir_ylm_zz)
 	{
 		ModuleBase::timer::tick("Gint_Tools", "cal_ddpsir_ylm");
+		const UnitCell& ucell=*gt.ucell;
+		const LCAO_Orbitals& orb=*gt.orb;
 		for (int id=0; id<na_grid; id++)
 		{
 			const int mcell_index = gt.bcell_start[grid_index] + id;
 			const int imcell = gt.which_bigcell[mcell_index];
 			int iat = gt.which_atom[mcell_index];
-			const int it = GlobalC::ucell.iat2it[iat];
-			const int ia = GlobalC::ucell.iat2ia[iat];
-			Atom *atom = &GlobalC::ucell.atoms[it];
+			const int it = ucell.iat2it[iat];
+			const int ia = ucell.iat2ia[iat];
+			Atom *atom = &ucell.atoms[it];
 
 			const double mt[3]={
 				gt.meshball_positions[imcell][0] - gt.tau_in_bigcell[iat][0],
@@ -507,7 +514,7 @@ namespace Gint_Tools
 							//array to store spherical harmonics and its derivatives
 							std::vector<double> rly;
 							std::vector<std::vector<double>> grly;
-							ModuleBase::Ylm::grad_rl_sph_harm(GlobalC::ucell.atoms[it].nwl, dr1[0], dr1[1], dr1[2], rly, grly);
+							ModuleBase::Ylm::grad_rl_sph_harm(ucell.atoms[it].nwl, dr1[0], dr1[1], dr1[2], rly, grly);
 
 							double distance1 = std::sqrt(dr1[0]*dr1[0] + dr1[1]*dr1[1] + dr1[2]*dr1[2]);
 							if(distance1 < 1e-9)  distance1 = 1e-9;
@@ -530,7 +537,7 @@ namespace Gint_Tools
 								// function from interpolation method.
 								if ( atom->iw2_new[iw] )
 								{
-									const Numerical_Orbital_Lm &philn = GlobalC::ORB.Phi[it].PhiLN(
+									const Numerical_Orbital_Lm &philn = orb.Phi[it].PhiLN(
 											atom->iw2l[iw],
 											atom->iw2n[iw]);
 
@@ -607,8 +614,8 @@ namespace Gint_Tools
 						std::vector<double> rly;
 						std::vector<std::vector<double>> grly;
 						std::vector<std::vector<double>> hrly;
-						ModuleBase::Ylm::grad_rl_sph_harm(GlobalC::ucell.atoms[it].nwl, dr[0], dr[1], dr[2], rly, grly);
-						ModuleBase::Ylm::hes_rl_sph_harm(GlobalC::ucell.atoms[it].nwl, dr[0], dr[1], dr[2], hrly);
+						ModuleBase::Ylm::grad_rl_sph_harm(ucell.atoms[it].nwl, dr[0], dr[1], dr[2], rly, grly);
+						ModuleBase::Ylm::hes_rl_sph_harm(ucell.atoms[it].nwl, dr[0], dr[1], dr[2], hrly);
 						const double position = distance / delta_r;
 
 						const double iq = static_cast<int>(position);
@@ -627,7 +634,7 @@ namespace Gint_Tools
 							// function from interpolation method.
 							if ( atom->iw2_new[iw] )
 							{
-								const Numerical_Orbital_Lm &philn = GlobalC::ORB.Phi[it].PhiLN(
+								const Numerical_Orbital_Lm &philn = orb.Phi[it].PhiLN(
 										atom->iw2l[iw],
 										atom->iw2n[iw]);
 
@@ -721,13 +728,15 @@ namespace Gint_Tools
 		double*const*const dpsir_ylm_zz)
 	{
 		ModuleBase::timer::tick("Gint_Tools", "cal_dpsirr_ylm");
+		const UnitCell& ucell=*gt.ucell;
+		const LCAO_Orbitals& orb=*gt.orb;
 		for (int id=0; id<na_grid; id++)
 		{
 			const int mcell_index = gt.bcell_start[grid_index] + id;
 			const int imcell = gt.which_bigcell[mcell_index];
 			int iat = gt.which_atom[mcell_index];
-			const int it = GlobalC::ucell.iat2it[iat];
-			Atom *atom = &GlobalC::ucell.atoms[it];
+			const int it = ucell.iat2it[iat];
+			Atom *atom = &ucell.atoms[it];
 
 			const double mt[3]={
 				gt.meshball_positions[imcell][0] - gt.tau_in_bigcell[iat][0],
@@ -1137,8 +1146,9 @@ namespace Gint_Tools
 	{
 		double *psi2, *psi2_dmr;
 		int iwi, iww;
-		const int LD_pool = gt.max_atom*GlobalC::ucell.nwmax;
-
+		const UnitCell& ucell=*gt.ucell;
+		const LCAO_Orbitals& orb=*gt.orb;
+		const int LD_pool = gt.max_atom*ucell.nwmax;
 		bool *all_out_of_range = new bool[na_grid];
 		for(int ia=0; ia<na_grid; ++ia) //number of atoms
 		{
@@ -1166,9 +1176,9 @@ namespace Gint_Tools
 
 			const int mcell_index1 = gt.bcell_start[grid_index] + ia1;
 			const int iat = gt.which_atom[mcell_index1];
-			const int T1 = GlobalC::ucell.iat2it[iat];
-			const int I1 = GlobalC::ucell.iat2ia[iat];
-			Atom *atom1 = &GlobalC::ucell.atoms[T1];
+			const int T1 = ucell.iat2it[iat];
+			const int I1 = ucell.iat2ia[iat];
+			Atom *atom1 = &ucell.atoms[T1];
 
 			//~~~~~~~~~~~~~~~~
 			// get cell R1.
@@ -1272,10 +1282,10 @@ namespace Gint_Tools
 				if(!same_flag) continue;
 
 				const int bcell2 = gt.bcell_start[grid_index] + ia2;
-				const int T2 = GlobalC::ucell.iat2it[ gt.which_atom[bcell2]];
+				const int T2 = ucell.iat2it[ gt.which_atom[bcell2]];
 				const int iat2 = gt.which_atom[bcell2];
 
-				Atom *atom2 = &GlobalC::ucell.atoms[T2];
+				Atom *atom2 = &ucell.atoms[T2];
 
 				//---------------
 				// get cell R2.

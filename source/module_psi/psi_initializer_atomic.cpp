@@ -421,15 +421,15 @@ void psi_initializer_atomic<T, Device>::proj_ao_onkG(int ik)
     ModuleBase::timer::tick("psi_initializer_atomic", "proj_ao_onkG");
 }
 
-template class psi_initializer_atomic<std::complex<double>, psi::DEVICE_CPU>;
-template class psi_initializer_atomic<std::complex<float>, psi::DEVICE_CPU>;
+template class psi_initializer_atomic<std::complex<double>, base_device::DEVICE_CPU>;
+template class psi_initializer_atomic<std::complex<float>, base_device::DEVICE_CPU>;
 // gamma point calculation
-template class psi_initializer_atomic<double, psi::DEVICE_CPU>;
-template class psi_initializer_atomic<float, psi::DEVICE_CPU>;
+template class psi_initializer_atomic<double, base_device::DEVICE_CPU>;
+template class psi_initializer_atomic<float, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class psi_initializer_atomic<std::complex<double>, psi::DEVICE_GPU>;
-template class psi_initializer_atomic<std::complex<float>, psi::DEVICE_GPU>;
+template class psi_initializer_atomic<std::complex<double>, base_device::DEVICE_GPU>;
+template class psi_initializer_atomic<std::complex<float>, base_device::DEVICE_GPU>;
 // gamma point calculation
-template class psi_initializer_atomic<double, psi::DEVICE_GPU>;
-template class psi_initializer_atomic<float, psi::DEVICE_GPU>;
+template class psi_initializer_atomic<double, base_device::DEVICE_GPU>;
+template class psi_initializer_atomic<float, base_device::DEVICE_GPU>;
 #endif

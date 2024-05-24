@@ -8,8 +8,8 @@
 
 namespace hsolver {
 
-template<typename T, typename Device = psi::DEVICE_CPU>
-class HSolverPW: public HSolver<T, Device>
+template <typename T, typename Device = base_device::DEVICE_CPU>
+class HSolverPW : public HSolver<T, Device>
 {
   private:
     bool is_first_scf = true;
@@ -87,9 +87,10 @@ class HSolverPW: public HSolver<T, Device>
     hamilt::Hamilt<T, Device>* hamilt_ = nullptr;
 
     Device * ctx = {};
-    using resmem_var_op = psi::memory::resize_memory_op<Real, psi::DEVICE_CPU>;
-    using delmem_var_op = psi::memory::delete_memory_op<Real, psi::DEVICE_CPU>;
-    using castmem_2d_2h_op = psi::memory::cast_memory_op<double, Real, psi::DEVICE_CPU, psi::DEVICE_CPU>;
+    using resmem_var_op = base_device::memory::resize_memory_op<Real, base_device::DEVICE_CPU>;
+    using delmem_var_op = base_device::memory::delete_memory_op<Real, base_device::DEVICE_CPU>;
+    using castmem_2d_2h_op
+        = base_device::memory::cast_memory_op<double, Real, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
 };
 
 template <typename T, typename Device>

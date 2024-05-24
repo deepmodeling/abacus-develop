@@ -15,6 +15,7 @@ void Gint::gint_kernel_rho(
 	const double delta_r,
 	int* vindex,
 	const int LD_pool,
+	const UnitCell& ucell,
 	Gint_inout *inout)
 {
 	//prepare block information

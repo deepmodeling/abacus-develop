@@ -754,7 +754,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
     // run the inner lambda loop to contrain atomic moments with the DeltaSpin method
     if (GlobalV::sc_mag_switch && iter > GlobalV::sc_scf_nmin)
     {
-        SpinConstrain<TK, psi::DEVICE_CPU>& sc = SpinConstrain<TK, psi::DEVICE_CPU>::getScInstance();
+        SpinConstrain<TK, base_device::DEVICE_CPU>& sc = SpinConstrain<TK, base_device::DEVICE_CPU>::getScInstance();
         sc.run_lambda_loop(iter-1);
     }
 }
@@ -873,7 +873,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density(int istep, int iter, double ethr)
     // 8) for delta spin
     if (GlobalV::sc_mag_switch)
     {
-        SpinConstrain<TK, psi::DEVICE_CPU>& sc = SpinConstrain<TK, psi::DEVICE_CPU>::getScInstance();
+        SpinConstrain<TK, base_device::DEVICE_CPU>& sc = SpinConstrain<TK, base_device::DEVICE_CPU>::getScInstance();
         sc.cal_MW(iter, &(this->LM));
     }
 
@@ -1090,7 +1090,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int iter)
     // escon: energy of spin constraint depends on Mi, so cal_energies should be called after cal_MW
     if (GlobalV::sc_mag_switch)
     {
-        SpinConstrain<TK, psi::DEVICE_CPU>& sc = SpinConstrain<TK, psi::DEVICE_CPU>::getScInstance();
+        SpinConstrain<TK, base_device::DEVICE_CPU>& sc = SpinConstrain<TK, base_device::DEVICE_CPU>::getScInstance();
         sc.cal_MW(iter, &(this->LM));
     }
 
@@ -1304,7 +1304,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     // spin constrain calculations, added by Tianqi Zhao.
     if (GlobalV::sc_mag_switch)
     {
-        SpinConstrain<TK, psi::DEVICE_CPU>& sc = SpinConstrain<TK, psi::DEVICE_CPU>::getScInstance();
+        SpinConstrain<TK, base_device::DEVICE_CPU>& sc = SpinConstrain<TK, base_device::DEVICE_CPU>::getScInstance();
         sc.cal_MW(istep, &(this->LM), true);
         sc.print_Mag_Force();
     }

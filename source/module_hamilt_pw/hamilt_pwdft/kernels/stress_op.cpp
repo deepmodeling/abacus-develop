@@ -6,24 +6,24 @@
 namespace hamilt{
 
 template <typename FPTYPE>
-struct cal_dbecp_noevc_nl_op<FPTYPE, psi::DEVICE_CPU> {
-    void operator()(
-            const psi::DEVICE_CPU *ctx,
-            const int &ipol,
-            const int &jpol,
-            const int &nkb,
-            const int &npw,
-            const int &npwx,
-            const int &ik,
-            const FPTYPE &tpiba,
-            const FPTYPE *gcar,
-            const FPTYPE *kvec_c,
-            std::complex<FPTYPE> *vkbi,
-            std::complex<FPTYPE> *vkbj,
-            std::complex<FPTYPE> *vkb,
-            std::complex<FPTYPE> *vkb1,
-            std::complex<FPTYPE> *vkb2,
-            std::complex<FPTYPE> *dbecp_noevc)
+struct cal_dbecp_noevc_nl_op<FPTYPE, base_device::DEVICE_CPU>
+{
+    void operator()(const base_device::DEVICE_CPU* ctx,
+                    const int& ipol,
+                    const int& jpol,
+                    const int& nkb,
+                    const int& npw,
+                    const int& npwx,
+                    const int& ik,
+                    const FPTYPE& tpiba,
+                    const FPTYPE* gcar,
+                    const FPTYPE* kvec_c,
+                    std::complex<FPTYPE>* vkbi,
+                    std::complex<FPTYPE>* vkbj,
+                    std::complex<FPTYPE>* vkb,
+                    std::complex<FPTYPE>* vkb1,
+                    std::complex<FPTYPE>* vkb2,
+                    std::complex<FPTYPE>* dbecp_noevc)
     {
         // npwx >= npw
 #ifdef _OPENMP
@@ -61,8 +61,9 @@ struct cal_dbecp_noevc_nl_op<FPTYPE, psi::DEVICE_CPU> {
 };
 
 template <typename FPTYPE>
-struct cal_stress_nl_op<FPTYPE, psi::DEVICE_CPU> {
-    void operator()(const psi::DEVICE_CPU* ctx,
+struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
+{
+    void operator()(const base_device::DEVICE_CPU* ctx,
                     const bool& nondiagonal,
                     const int& ipol,
                     const int& jpol,
@@ -156,14 +157,14 @@ void cal_stress_mgga_op<T, Device>::operator()(
     }
 }
 
-template struct cal_stress_mgga_op<std::complex<float>,  psi::DEVICE_CPU>;
-template struct cal_stress_mgga_op<std::complex<double>, psi::DEVICE_CPU>;
+template struct cal_stress_mgga_op<std::complex<float>, base_device::DEVICE_CPU>;
+template struct cal_stress_mgga_op<std::complex<double>, base_device::DEVICE_CPU>;
 
-template struct cal_dbecp_noevc_nl_op<float, psi::DEVICE_CPU>;
-template struct cal_stress_nl_op<float, psi::DEVICE_CPU>;
+template struct cal_dbecp_noevc_nl_op<float, base_device::DEVICE_CPU>;
+template struct cal_stress_nl_op<float, base_device::DEVICE_CPU>;
 
-template struct cal_dbecp_noevc_nl_op<double, psi::DEVICE_CPU>;
-template struct cal_stress_nl_op<double, psi::DEVICE_CPU>;
+template struct cal_dbecp_noevc_nl_op<double, base_device::DEVICE_CPU>;
+template struct cal_stress_nl_op<double, base_device::DEVICE_CPU>;
 
 }  // namespace hamilt
 

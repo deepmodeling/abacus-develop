@@ -16,17 +16,14 @@ AddTest(
 )
 AddTest(
   TARGET base_timer
-  LIBS formatter
   SOURCES timer_test.cpp ../timer.cpp  ../global_variable.cpp
 )
 AddTest(
   TARGET base_tool_quit
-  LIBS formatter
   SOURCES tool_quit_test.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp 
 )
 AddTest(
   TARGET base_tool_check
-  LIBS formatter
   SOURCES tool_check_test.cpp ../tool_check.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp 
 )
 AddTest(
@@ -35,7 +32,7 @@ AddTest(
 )
 ADDTest(
   TARGET base_global_function
-  LIBS ${math_libs} formatter
+  LIBS ${math_libs}
   SOURCES global_function_test.cpp ../global_function.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../memory.cpp ../timer.cpp 
 )
 AddTest(
@@ -44,7 +41,7 @@ AddTest(
 )
 AddTest(
   TARGET base_matrix3
-  LIBS ${math_libs} formatter
+  LIBS ${math_libs}
   SOURCES matrix3_test.cpp ../matrix3.cpp ../matrix.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp 
 )
 AddTest(
@@ -57,12 +54,11 @@ AddTest(
 )
 AddTest(
  TARGET base_matrix
-  LIBS ${math_libs} formatter
+  LIBS ${math_libs}
   SOURCES matrix_test.cpp ../matrix.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp 
 )
 AddTest(
   TARGET base_complexarray
-  LIBS formatter
   SOURCES complexarray_test.cpp ../complexarray.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp 
 )
 AddTest(
@@ -80,29 +76,27 @@ AddTest(
 )
 AddTest(
   TARGET base_ylmreal
-  LIBS ${math_libs} device formatter
+  LIBS ${math_libs} device
   SOURCES math_ylmreal_test.cpp ../math_ylmreal.cpp ../complexmatrix.cpp ../global_variable.cpp ../ylm.cpp ../realarray.cpp ../timer.cpp  ../matrix.cpp ../vector3.h
           ../parallel_reduce.cpp ../parallel_global.cpp ../parallel_common.cpp
           ../memory.cpp ../libm/branred.cpp ../libm/sincos.cpp
 )
 AddTest(
   TARGET base_math_sphbes
-  LIBS formatter
   SOURCES math_sphbes_test.cpp ../math_sphbes.cpp ../timer.cpp 
 )
 AddTest(
   TARGET base_mathzone
-  LIBS ${math_libs} formatter
+  LIBS ${math_libs}
   SOURCES mathzone_test.cpp ../matrix3.cpp ../matrix.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp 
 )
 AddTest(
   TARGET base_mathzone_add1
-  LIBS ${math_libs} formatter
+  LIBS ${math_libs}
   SOURCES mathzone_add1_test.cpp ../mathzone_add1.cpp ../math_sphbes.cpp ../matrix3.cpp ../matrix.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp 
 )
 AddTest(
   TARGET base_math_polyint
-  LIBS formatter
   SOURCES math_polyint_test.cpp ../math_polyint.cpp ../realarray.cpp ../timer.cpp 
 )
 AddTest(
@@ -116,12 +110,12 @@ AddTest(
 )
 AddTest(
   TARGET base_inverse_matrix
-  LIBS ${math_libs} formatter
+  LIBS ${math_libs}
   SOURCES inverse_matrix_test.cpp ../inverse_matrix.cpp ../complexmatrix.cpp ../matrix.cpp ../timer.cpp 
 )
 AddTest(
   TARGET base_mymath
-  LIBS formatter
+  LIBS
   SOURCES mymath_test.cpp ../mymath.cpp ../timer.cpp 
 )
 AddTest(
@@ -131,7 +125,7 @@ AddTest(
 
 AddTest(
   TARGET base_math_chebyshev
-  LIBS ${math_libs} formatter
+  LIBS ${math_libs}
   SOURCES math_chebyshev_test.cpp ../math_chebyshev.cpp ../tool_quit.cpp ../global_variable.cpp ../timer.cpp  ../global_file.cpp ../global_function.cpp ../memory.cpp
 )
 
@@ -155,7 +149,6 @@ AddTest(
 
 AddTest(
   TARGET base_ylm
-  LIBS formatter
   SOURCES ylm_test.cpp  ../ylm.cpp  ../timer.cpp   ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp
 )
 
@@ -166,13 +159,11 @@ AddTest(
 
 AddTest(
   TARGET base_global_file
-  LIBS formatter
   SOURCES global_file_test.cpp ../global_file.cpp ../global_function.cpp ../tool_quit.cpp ../global_variable.cpp ../memory.cpp ../timer.cpp 
 )
 
 AddTest(
   TARGET base_tool_title
-  LIBS formatter
   SOURCES tool_title_test.cpp ../tool_title.cpp  ../global_variable.cpp ../global_function.cpp ../timer.cpp  ../tool_quit.cpp  ../global_file.cpp ../memory.cpp
 )
 
@@ -189,7 +180,7 @@ AddTest(
 AddTest(
   TARGET spherical_bessel_transformer
   SOURCES spherical_bessel_transformer_test.cpp ../spherical_bessel_transformer.cpp ../math_sphbes.cpp ../math_integral.cpp ../timer.cpp 
-  LIBS ${math_libs} formatter
+  LIBS ${math_libs}
 )
 
 AddTest(
@@ -199,29 +190,32 @@ AddTest(
 )
 
 AddTest(
-  TARGET formatter_test
-  LIBS formatter
-  SOURCES formatter_fmt_test.cpp formatter_physfmt_test.cpp formatter_table_test.cpp formatter_contextfmt_test.cpp
-)
-
-AddTest(
   TARGET clebsch_gordan_coeff_test
   SOURCES clebsch_gordan_coeff_test.cpp ../clebsch_gordan_coeff.cpp ../intarray.cpp ../realarray.cpp ../complexmatrix.cpp ../matrix.cpp ../timer.cpp  
   ../math_ylmreal.cpp  ../global_variable.cpp ../ylm.cpp  ../timer.cpp  ../vector3.h ../parallel_reduce.cpp ../parallel_global.cpp ../parallel_common.cpp
   ../memory.cpp ../libm/branred.cpp ../libm/sincos.cpp ../inverse_matrix.cpp ../lapack_connector.h
-  LIBS ${math_libs} formatter device
+  LIBS ${math_libs} device
 )
 
 AddTest(
   TARGET assoc_laguerre_test
   SOURCES assoc_laguerre_test.cpp ../assoc_laguerre.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp
-  LIBS ${math_libs} formatter
+  LIBS ${math_libs}
+)
+
+AddTest(
+  TARGET ndarray_test
+  SOURCES ndarray_test.cpp
+)
+
+AddTest(
+  TARGET formatter_test
+  SOURCES formatter_test.cpp
 )
 
 if(ENABLE_GOOGLEBENCH)
   AddTest(
     TARGET perf_sphbes
-    LIBS formatter
     SOURCES perf_sphbes_test.cpp ../math_sphbes.cpp ../timer.cpp 
   )
 endif()

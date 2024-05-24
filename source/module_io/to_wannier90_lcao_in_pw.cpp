@@ -42,8 +42,8 @@ void toWannier90_LCAO_IN_PW::calculate(
 
     Structure_Factor* sf_ptr = const_cast<Structure_Factor*>(&sf);
     ModulePW::PW_Basis_K* wfcpw_ptr = const_cast<ModulePW::PW_Basis_K*>(wfcpw);
-    this->psi_init_ = new psi_initializer_nao<std::complex<double>, psi::DEVICE_CPU>();
-    #ifdef __MPI
+    this->psi_init_ = new psi_initializer_nao<std::complex<double>, base_device::DEVICE_CPU>();
+#ifdef __MPI
     this->psi_init_->initialize(sf_ptr, wfcpw_ptr, &(GlobalC::ucell), &(GlobalC::Pkpoints), 1, nullptr, GlobalV::MY_RANK);
     #else
     this->psi_init_->initialize(sf_ptr, wfcpw_ptr, &(GlobalC::ucell), 1, nullptr);
