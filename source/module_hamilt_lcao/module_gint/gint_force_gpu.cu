@@ -58,13 +58,13 @@ namespace GintKernel
 void gint_gamma_force_gpu(hamilt::HContainer<double>* dm,
                           const double vfactor,
                           const double* vlocal,
-                          double* force,
-                          double* stress,
+                          std::vector<double> force,
+                          std::vector<double> stress,
                           const int nczp,
                           double dr,
                           double* rcut,
-                          int isforce,
-                          int isstress,
+                          const int isforce,
+                          const int isstress,
                           const Grid_Technique& gridt,
                           const UnitCell& ucell)
 {

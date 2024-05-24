@@ -87,13 +87,13 @@ typedef struct
 void gint_gamma_force_gpu(hamilt::HContainer<double>* dm,
                           const double vfactor,
                           const double* vlocal,
-                          double* force,
-                          double* stress,
+                          std::vector<double> force,
+                          std::vector<double> stress,
                           const int nczp,
                           double dr,
                           double* rcut,
-                          int isforce,
-                          int isstress,
+                          const int isforce,
+                          const int isstress,
                           const Grid_Technique& gridt,
                           const UnitCell& ucell);
 
@@ -249,7 +249,7 @@ void cal_mem_cpy(ForceStressIat& f_s_iat,
  * @param atom_num_grid in force calculate,used for Block nums
  */
 void cal_force_add(ForceStressIat& f_s_iat,
-                    double* force,
+                    std::vector<double> force,
                     const int atom_num_grid);
 /**
  * @brief Stress Calculate on Host
@@ -260,7 +260,7 @@ void cal_force_add(ForceStressIat& f_s_iat,
  * @param cuda_block in stress compute,used for Block nums
  */
 void cal_stress_add(ForceStressIat& f_s_iat,
-                     double* stress,
+                     std::vector<double> stress,
                      const int cuda_block);
 } // namespace GintKernel
 #endif
