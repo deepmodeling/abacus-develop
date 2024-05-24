@@ -8,6 +8,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "module_elecstate/potentials/H_TDDFT_pw.h"
+#include "module_hamilt_lcao/module_tddft/td_velocity.h"
 
 namespace hamilt
 {

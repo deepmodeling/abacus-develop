@@ -8,6 +8,7 @@
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "module_basis/module_ao/ORB_table_phi.h"
 #include "module_basis/module_ao/ORB_gaunt_table.h"
+#include "module_hamilt_lcao/module_tddft/td_velocity.h"
 
 
 namespace hamilt
@@ -75,6 +76,8 @@ class TDEkinetic<OperatorLCAO<TK,TR>> : public OperatorLCAO<TK, TR>
     void calculate_HR(void);
     virtual void set_HR_fixed(void*)override;
 
+    TD_Velocity td_velocity;
+
   private:
     const UnitCell* ucell = nullptr;
     
@@ -109,6 +112,8 @@ class TDEkinetic<OperatorLCAO<TK,TR>> : public OperatorLCAO<TK, TR>
 
     bool hR_tmp_done = false;
     bool allocated = false;
+    bool output_hR_done = false;
+    bool out_mat_R = false;
 };
 
 } // namespace hamilt

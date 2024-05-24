@@ -4,7 +4,6 @@
 #include <base/core/refcount.h>
 #include <base/core/allocator.h>
 #include <ATen/core/tensor_types.h>
-#include "module_base/memory.h"
 
 namespace container {
 

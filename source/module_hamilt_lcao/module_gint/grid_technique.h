@@ -4,6 +4,9 @@
 #include "grid_index.h"
 #include "grid_meshball.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
+#include  "module_cell/unitcell.h"
+#include "module_basis/module_ao/ORB_read.h"
+#include "module_cell/module_neighbor/sltk_grid_driver.h"
 #if ((defined __CUDA) /* || (defined __ROCM) */)
 #include <cuda_runtime.h>
 
@@ -71,6 +74,10 @@ class Grid_Technique : public Grid_MeshBall
     bool allocate_find_R2;
     int binary_search_find_R2_offset(int val, int iat) const;
 
+    //UnitCell and LCAO_Obrbitals
+    const UnitCell* ucell;
+    const LCAO_Orbitals* orb;
+
     // indexes for nnrg -> orbital index + R index
     std::vector<gridIntegral::gridIndex> nnrg_index;
 
@@ -93,7 +100,9 @@ class Grid_Technique : public Grid_MeshBall
                       const int& nbzp_in,
                       const int& ny,
                       const int& nplane,
-                      const int& startz_current);
+                      const int& startz_current,
+                      const UnitCell& ucell,
+                      const LCAO_Orbitals& orb);
 
     /// number of elements(basis-pairs) in this processon
     /// on all adjacent atoms-pairs(Grid division)
@@ -123,10 +132,12 @@ class Grid_Technique : public Grid_MeshBall
     // atoms on meshball
     void init_atoms_on_grid(const int& ny,
                             const int& nplane,
-                            const int& startz_current);
-    void init_atoms_on_grid2(const int* index2normal);
+                            const int& startz_current,
+                            const UnitCell& ucell);
+    void init_atoms_on_grid2(const int* index2normal,
+                            const UnitCell& ucell);
     void cal_grid_integration_index(void);
-    void cal_trace_lo(void);
+    void cal_trace_lo(const UnitCell& ucell);
     void check_bigcell(int*& ind_bigcell, bool*& bigcell_on_processor);
     void get_startind(const int& ny,
                       const int& nplane,
@@ -218,8 +229,8 @@ class Grid_Technique : public Grid_MeshBall
     matrix_multiple_func_type fastest_matrix_mul;
 
   private:
-    void init_gpu_gint_variables();
-    void free_gpu_gint_variables();
+    void init_gpu_gint_variables(const UnitCell& ucell,const LCAO_Orbitals &orb);
+    void free_gpu_gint_variables(int nat);
 
 #endif
 };

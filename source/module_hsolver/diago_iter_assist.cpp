@@ -9,7 +9,7 @@
 #include "module_base/parallel_reduce.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
 #include "module_hsolver/kernels/dngvd_op.h"
-#include "module_psi/kernels/device.h"
+#include "module_base/module_device/device.h"
 
 namespace hsolver{
 
@@ -240,23 +240,49 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(
     // std::vector<T> hpsi(psi_temp.get_nbands() * psi_temp.get_nbasis());
 
     // do hPsi for all bands
-    psi::Range all_bands_range(1, psi_temp.get_current_k(), 0, psi_temp.get_nbands()-1);
-    hpsi_info hpsi_in(&psi_temp, all_bands_range, hpsi);
-    if(pHamilt->ops == nullptr)
+    if (base_device::get_device_type(ctx) == base_device::GpuDevice)
     {
-        ModuleBase::WARNING("DiagoIterAssist::diagH_subspace_init",
-         "Severe warning: Operators in Hamilt are not allocated yet, will return value of psi to evc directly\n");
-        for(int iband = 0; iband < evc.get_nbands(); iband++)
+        for (int i = 0; i < psi_temp.get_nbands(); i++)
         {
-            for(int ig = 0; ig < evc.get_nbasis(); ig++)
+            psi::Range band_by_band_range(1, psi_temp.get_current_k(), i, i);
+            hpsi_info hpsi_in(&psi_temp, band_by_band_range, hpsi + i * psi_temp.get_nbasis());
+            if(pHamilt->ops == nullptr)
             {
-                evc(iband, ig) = psi[iband * evc.get_nbasis() + ig];
+                ModuleBase::WARNING("DiagoIterAssist::diagH_subspace_init",
+                "Severe warning: Operators in Hamilt are not allocated yet, will return value of psi to evc directly\n");
+                for(int iband = 0; iband < evc.get_nbands(); iband++)
+                {
+                    for(int ig = 0; ig < evc.get_nbasis(); ig++)
+                    {
+                        evc(iband, ig) = psi[iband * evc.get_nbasis() + ig];
+                    }
+                    en[iband] = 0.0;
+                }
+                return;
             }
-            en[iband] = 0.0;
+            pHamilt->ops->hPsi(hpsi_in);
         }
-        return;
     }
-    pHamilt->ops->hPsi(hpsi_in);
+    else if (base_device::get_device_type(ctx) == base_device::CpuDevice)
+    {
+        psi::Range all_bands_range(1, psi_temp.get_current_k(), 0, psi_temp.get_nbands()-1);
+        hpsi_info hpsi_in(&psi_temp, all_bands_range, hpsi);
+        if(pHamilt->ops == nullptr)
+        {
+            ModuleBase::WARNING("DiagoIterAssist::diagH_subspace_init",
+            "Severe warning: Operators in Hamilt are not allocated yet, will return value of psi to evc directly\n");
+            for(int iband = 0; iband < evc.get_nbands(); iband++)
+            {
+                for(int ig = 0; ig < evc.get_nbasis(); ig++)
+                {
+                    evc(iband, ig) = psi[iband * evc.get_nbasis() + ig];
+                }
+                en[iband] = 0.0;
+            }
+            return;
+        }
+        pHamilt->ops->hPsi(hpsi_in);
+    }
 
     gemm_op<T, Device>()(
         ctx,
@@ -404,13 +430,14 @@ void DiagoIterAssist<T, Device>::diagH_LAPACK(
 
     dngvd_op<T, Device>()(ctx, nstart, ldh, hcc, scc, eigenvalues, vcc);
 
-    if (psi::device::get_device_type<Device>(ctx) == psi::GpuDevice) {
+    if (base_device::get_device_type<Device>(ctx) == base_device::GpuDevice)
+    {
 #if ((defined __CUDA) || (defined __ROCM))
         // set eigenvalues in GPU to e in CPU
         syncmem_var_d2h_op()(cpu_ctx, gpu_ctx, e, eigenvalues, nbands);
 #endif
     }
-    else if (psi::device::get_device_type<Device>(ctx) == psi::CpuDevice)
+    else if (base_device::get_device_type<Device>(ctx) == base_device::CpuDevice)
     {
         // set eigenvalues in CPU to e in CPU
         syncmem_var_op()(ctx, ctx, e, eigenvalues, nbands);
@@ -461,18 +488,17 @@ bool DiagoIterAssist<T, Device>::test_exit_cond(const int &ntry, const int &notc
     return (f1 && (f2 || f3));
 }
 
-
-template class DiagoIterAssist<std::complex<float>, psi::DEVICE_CPU>;
-template class DiagoIterAssist<std::complex<double>, psi::DEVICE_CPU>;
+template class DiagoIterAssist<std::complex<float>, base_device::DEVICE_CPU>;
+template class DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class DiagoIterAssist<std::complex<float>, psi::DEVICE_GPU>;
-template class DiagoIterAssist<std::complex<double>, psi::DEVICE_GPU>;
+template class DiagoIterAssist<std::complex<float>, base_device::DEVICE_GPU>;
+template class DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>;
 #endif
 
 #ifdef __LCAO
-template class DiagoIterAssist<double, psi::DEVICE_CPU>;
+template class DiagoIterAssist<double, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class DiagoIterAssist<double, psi::DEVICE_GPU>;
+template class DiagoIterAssist<double, base_device::DEVICE_GPU>;
 #endif
 #endif
 } // namespace hsolver
