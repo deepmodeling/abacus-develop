@@ -1529,6 +1529,10 @@ void input_parameters_set(std::map<std::string, InputParameter> input_parameters
     {
         INPUT.deepks_scf = *static_cast<bool*>(input_parameters["deepks_scf"].get());
     }
+    else if (input_parameters.count("deepks_equiv") != 0)
+    {
+        INPUT.deepks_equiv = *static_cast<bool*>(input_parameters["deepks_equiv"].get());
+    }
     else if (input_parameters.count("deepks_bandgap") != 0)
     {
         INPUT.deepks_bandgap = *static_cast<bool*>(input_parameters["deepks_bandgap"].get());

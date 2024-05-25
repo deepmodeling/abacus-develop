@@ -1,6 +1,6 @@
 #include "hsolver_lcao.h"
 
-#include "diago_blas.h"
+#include "diago_scalapack.h"
 #include "diago_cg.h"
 #include <ATen/core/tensor.h>
 #include <ATen/core/tensor_types.h>
@@ -49,7 +49,7 @@ void HSolverLCAO<T, Device>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
         }
         if (this->pdiagh == nullptr)
         {
-            this->pdiagh = new DiagoBlas<T>();
+            this->pdiagh = new DiagoScalapack<T>();
             this->pdiagh->method = this->method;
         }
     }

@@ -210,6 +210,7 @@ ModuleBase::GlobalFunc::OUTP(ofs, "out_bandgap", out_bandgap, "if true, print ou
     // for deepks
     ModuleBase::GlobalFunc::OUTP(ofs, "deepks_out_labels", deepks_out_labels, ">0 compute descriptor for deepks");
     ModuleBase::GlobalFunc::OUTP(ofs, "deepks_scf", deepks_scf, ">0 add V_delta to Hamiltonian");
+    ModuleBase::GlobalFunc::OUTP(ofs, "deepks_equiv", deepks_equiv, "whether to use equivariant version of DeePKS");
     ModuleBase::GlobalFunc::OUTP(ofs, "deepks_bandgap", deepks_bandgap, ">0 for bandgap label");
     ModuleBase::GlobalFunc::OUTP(ofs,
                                  "deepks_out_unittest",

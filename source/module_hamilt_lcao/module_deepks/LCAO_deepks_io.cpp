@@ -102,7 +102,7 @@ void LCAO_Deepks::save_npy_d(const int nat)
     ModuleBase::TITLE("LCAO_Deepks", "save_npy_d");
     if(GlobalV::MY_RANK!=0) return;
     //save descriptor in .npy format
-    if(!if_equiv)
+    if(!GlobalV::deepks_equiv)
     {
         vector<double> npy_des;
         for (int inl = 0;inl < inlmax;++inl)
