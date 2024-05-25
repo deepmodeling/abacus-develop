@@ -82,7 +82,6 @@ public:
     int get_inl(const int& T0, const int& I0, const int& L0, const int& N0) { return inl_index[T0](I0, L0, N0); }
     const double* get_gedms(const int& inl){ return gedm[inl]; }
 
-    bool get_if_equiv(){return if_equiv;}
     int get_lmaxd(){return lmaxd;}
 //-------------------
 // private variables
@@ -96,8 +95,6 @@ private:
     int nks_V_delta = 0;
 
     bool init_pdm = false; //for DeePKS NSCF calculation
-
-    bool if_equiv = false; //equivariant version
     
 	// deep neural network module that provides corrected Hamiltonian term and
 	// related derivatives.

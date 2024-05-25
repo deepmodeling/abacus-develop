@@ -16,7 +16,6 @@
 #include "module_io/cal_test.h"
 #include "module_io/output_potential.h"
 #include "module_io/output_rho.h"
-
 namespace ModuleESolver
 {
 
@@ -101,7 +100,6 @@ class ESolver_KS : public ESolver_FP
 				const double duration, 
 				const double ethr);
 
-
 		// Write the headline in the running_log file
 		// "PW/LCAO" ALGORITHM --------------- ION=   1  ELEC=   1--------------------------------
 		void write_head(
@@ -140,7 +138,6 @@ class ESolver_KS : public ESolver_FP
 		std::string basisname; //PW or LCAO
 
 		void print_wfcfft(Input& inp, std::ofstream &ofs);
-};
-
+};	
 } // end of namespace
 #endif

@@ -1,7 +1,7 @@
 #include <vector>
 
 #include "gtest/gtest.h"
-#include "module_hsolver/diago_blas.h"
+#include "module_hsolver/diago_scalapack.h"
 #include "module_hsolver/test/diago_elpa_utils.h"
 #include "mpi.h"
 #include "string.h"
@@ -24,7 +24,7 @@
 /**
  * Tested function:
  *  - hsolver::DiagoElpa::diag (for ELPA)
- *  - hsolver::DiagoBlas::diag (for Scalapack)
+ *  - hsolver::DiagoScalapack::diag (for Scalapack)
  *
  * The 2d block cyclic distribution of H/S matrix is done by
  * self-realized functions in module_hsolver/test/diago_elpa_utils.h
@@ -76,7 +76,7 @@ class DiagoPrepare
         MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
         if (ks_solver == "scalapack_gvx")
-            dh = new hsolver::DiagoBlas<T>;
+            dh = new hsolver::DiagoScalapack<T>;
 #ifdef __CUDA
         else if (ks_solver == "cusolver")
             dh = new hsolver::DiagoCusolver<T>;

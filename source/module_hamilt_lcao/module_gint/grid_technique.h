@@ -11,7 +11,7 @@
 #include <cuda_runtime.h>
 
 #include "kernels/cuda/cuda_tools.cuh"
-#include "kernels/cuda/vbatch_matrix_mul.cuh"
+#include "kernels/cuda/gemm_selector.cuh"
 #endif
 
 // Author: mohan
