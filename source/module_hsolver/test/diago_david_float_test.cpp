@@ -81,9 +81,9 @@ public:
 		hamilt::Hamilt<std::complex<float>> *phm;
 		phm = new hamilt::HamiltPW<std::complex<float>>(nullptr, nullptr, nullptr);
 #ifdef __MPI	
-		hsolver::DiagoDavid<std::complex<double>> dav(precondition, order, false, {MPI_COMM_WORLD, mypnum, nprocs});
+		hsolver::DiagoDavid<std::complex<float>> dav(precondition, order, false, {MPI_COMM_WORLD, mypnum, nprocs});
 #else
-		hsolver::DiagoDavid<std::complex<double>> dav(precondition, order, false, {});
+		hsolver::DiagoDavid<std::complex<float>> dav(precondition, order, false, {});
 #endif
 		hsolver::DiagoIterAssist<std::complex<float>>::PW_DIAG_NMAX = maxiter;
 		hsolver::DiagoIterAssist<std::complex<float>>::PW_DIAG_THR = eps;
