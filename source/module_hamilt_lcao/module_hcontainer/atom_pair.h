@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <complex>
+#include <tuple>
 
 namespace hamilt
 {
