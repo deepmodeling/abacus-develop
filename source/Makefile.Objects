@@ -297,7 +297,7 @@ OBJS_HSOLVER=diago_cg.o\
     dngvd_op.o\
     
 OBJS_HSOLVER_LCAO=hsolver_lcao.o\
-      diago_blas.o\
+      diago_scalapack.o\
       diago_elpa.o\
       elpa_new.o\
       elpa_new_real.o\

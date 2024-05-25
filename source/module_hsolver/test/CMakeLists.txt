@@ -84,13 +84,13 @@ if(ENABLE_LCAO)
   AddTest(
     TARGET HSolver_LCAO
     LIBS ${math_libs} ELPA::ELPA base genelpa psi device
-    SOURCES diago_lcao_test.cpp ../diago_elpa.cpp ../diago_blas.cpp 
+    SOURCES diago_lcao_test.cpp ../diago_elpa.cpp ../diago_scalapack.cpp 
   )
   else()
     AddTest(
       TARGET HSolver_LCAO
       LIBS ${math_libs} base psi device
-      SOURCES diago_lcao_test.cpp ../diago_blas.cpp 
+      SOURCES diago_lcao_test.cpp ../diago_scalapack.cpp 
     )
   endif()
 
@@ -106,7 +106,7 @@ if (USE_CUDA)
 AddTest(
   TARGET HSolver_LCAO_cusolver
   LIBS ${math_libs}  base psi device 
-  SOURCES diago_lcao_cusolver_test.cpp ../diago_cusolver.cpp ../diago_blas.cpp 
+  SOURCES diago_lcao_cusolver_test.cpp ../diago_cusolver.cpp ../diago_scalapack.cpp 
   ../kernels/math_kernel_op.cpp
   ../kernels/dngvd_op.cpp
   ../kernels/cuda/diag_cusolver.cu
