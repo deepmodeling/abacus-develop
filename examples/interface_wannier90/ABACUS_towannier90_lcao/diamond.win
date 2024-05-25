@@ -1,15 +1,17 @@
 num_bands         =   12
 num_wann          =   8 
 
-Begin Projections
+dis_win_min       =  -7.2
+dis_win_max       =  45
+dis_froz_min      =  -7.2
+dis_froz_max      =  20
+dis_num_iter      =  200
+
+begin projections
 C:s;px;py;pz
-End Projections  
+end projections 
 
-dis_num_iter      = 5000
-num_iter          = 5000
-num_print_cycles  = 50 
-
-wannier_plot=.true.
+wannier_plot=.false.
 wannier_plot_supercell = 3
 wvfn_formatted = .true.
 
@@ -25,6 +27,14 @@ begin unit_cell_cart
  0.000000   1.613990   1.613990
 -1.613990   1.613990   0.000000
 end unit_cell_cart
+
+bands_plot = true
+
+begin kpoint_path
+G 0.0000000000  0.0000000000    0.0000000000     L 0.5000000000 0.5000000000    0.5000000000
+L 0.5000000000  0.5000000000    0.5000000000     W 0.5000000000 0.2500000000    0.7500000000
+W 0.5000000000  0.2500000000    0.7500000000     X 0.5000000000 0.0000000000    0.5000000000
+end kpoint_path
 
 mp_grid : 4 4 4
 
