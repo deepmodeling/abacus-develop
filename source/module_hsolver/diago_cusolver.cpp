@@ -76,9 +76,13 @@ namespace hsolver
         int ncols = desca[3];
 
         if (myid == root_proc)
-            mat_g.p.reset(new typename std::remove_reference<decltype(*a)>::type[nrows * ncols]);
+            {
+                mat_g.p.reset(new typename std::remove_reference<decltype(*a)>::type[nrows * ncols]);
+            }
         else
-            mat_g.p.reset(new typename std::remove_reference<decltype(*a)>::type[1]);
+            {
+                mat_g.p.reset(new typename std::remove_reference<decltype(*a)>::type[1]);
+            }
 
         // Set descb, which has all elements in the only block in the root process
         mat_g.desc.reset(new int[9]{1, ctxt, nrows, ncols, nrows, ncols, 0, 0, nrows});
