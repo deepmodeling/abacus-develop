@@ -60,7 +60,7 @@ void TDEkinetic<OperatorLCAO<std::complex<double>, double>>::td_ekinetic_scalar(
 template <typename TK, typename TR>
 void TDEkinetic<OperatorLCAO<TK, TR>>::td_ekinetic_grad(std::complex<double>* Hloc, int nnr, ModuleBase::Vector3<double> grad_overlap){
 	std::complex<double> tmp= {0, grad_overlap*cart_At};
-	Hloc[nnr] += tmp;
+	Hloc[nnr] -= tmp;
 	return;
 }
 
@@ -193,10 +193,9 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::init_td(void)
 {
     TD_Velocity::td_vel_op = &td_velocity;
     //calculate At in cartesian coorinates.
-	double l_norm[3]={this->ucell->a1.norm() ,this->ucell->a2.norm() ,this->ucell->a3.norm()};
-    double (&A)[3] = elecstate::H_TDDFT_pw::At;
-	cart_At = this->ucell->a1*A[0]/l_norm[0] + this->ucell->a2*A[1]/l_norm[1] + this->ucell->a3*A[2]/l_norm[2];
-    std::cout << "cart_At: " << cart_At[0] << " " <<cart_At[1]<< " " << cart_At[2] << std::endl;
+    td_velocity.cal_cart_At(this->ucell->a1, this->ucell->a2, this->ucell->a3, elecstate::H_TDDFT_pw::At);
+    this->cart_At = td_velocity.cart_At;
+    std::cout<<"cart_At: "<<cart_At[0]<< " "<<cart_At[1]<< " "<<cart_At[2]<<std::endl;
 
     //init MOT,MGT
     const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();

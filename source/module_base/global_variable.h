@@ -231,6 +231,8 @@ extern bool
     deepks_scf; //(need libnpy and libtorch) if set 1, a trained model would be needed to cal V_delta and F_delta
 extern bool deepks_bandgap; // for bandgap label. QO added 2021-12-15
 
+extern bool deepks_equiv; //whether to use equviariant version of DeePKS
+
 extern bool deepks_setorb;
 
 extern bool deepks_out_unittest; // if set 1, prints intermediate quantities that shall be used for making unit test

@@ -89,7 +89,7 @@ void LCAO_Deepks::init(
     
     int tot_inl = tot_inl_per_atom * nat;
 
-    if(if_equiv) tot_inl = nat;
+    if(GlobalV::deepks_equiv) tot_inl = nat;
 
     this->lmaxd = lm;
     this->nmaxd = nm;
@@ -99,7 +99,7 @@ void LCAO_Deepks::init(
 
     int pdm_size = 0;
     this->inlmax = tot_inl;
-    if(!if_equiv)
+    if(!GlobalV::deepks_equiv)
     {
         GlobalV::ofs_running << " total basis (all atoms) for descriptor= " << std::endl;
 
@@ -125,7 +125,7 @@ void LCAO_Deepks::init(
     }
 
     // cal n(descriptor) per atom , related to Lmax, nchi(L) and m. (not total_nchi!)
-    if(!if_equiv)
+    if(!GlobalV::deepks_equiv)
     {
         this->des_per_atom=0; // mohan add 2021-04-21
         for (int l = 0; l <= this->lmaxd; l++)
@@ -215,7 +215,7 @@ void LCAO_Deepks::init_gdmx(const int nat)
     this->gdmy = new double** [nat];
     this->gdmz = new double** [nat];
     int pdm_size = 0;
-    if(!if_equiv)
+    if(!GlobalV::deepks_equiv)
     {
         pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);
     }
@@ -269,7 +269,7 @@ void LCAO_Deepks::init_gdmepsl()
     this->gdm_epsl = new double** [6];
     
     int pdm_size = 0;
-    if(!if_equiv)
+    if(!GlobalV::deepks_equiv)
     {
         pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);
     }
@@ -328,7 +328,7 @@ void LCAO_Deepks::allocate_V_delta(const int nat, const int nks)
 
     //init gedm**
     int pdm_size = 0;
-    if(!if_equiv)
+    if(!GlobalV::deepks_equiv)
     {
         pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);
     }
