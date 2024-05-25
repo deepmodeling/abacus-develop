@@ -416,6 +416,8 @@ class Input
     bool out_dipole; // output the dipole or not
     bool out_efield; // output the efield or not
     bool out_current; //output the current or not
+    bool out_vecpot; // output the vector potential or not
+    bool init_vecpot_file; // initialize the vector potential, though file or integral
 
     double td_print_eij; // threshold to output Eij elements
     int td_edm; //0: new edm method   1: old edm method
@@ -517,7 +519,7 @@ class Input
                             // 2022-1-12
     bool deepks_scf; //(need libnpy and libtorch) if set 1, a trained model would be needed to cal V_delta and F_delta
     bool deepks_bandgap; // for bandgap label. QO added 2021-12-15
-
+    bool deepks_equiv;
     bool deepks_out_unittest; // if set 1, prints intermediate quantities that shall be used for making unit test
 
     std::string deepks_model; // needed when deepks_scf=1

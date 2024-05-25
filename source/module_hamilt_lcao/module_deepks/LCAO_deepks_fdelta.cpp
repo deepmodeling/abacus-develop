@@ -133,7 +133,7 @@ void LCAO_Deepks::cal_f_delta_gamma(const std::vector<std::vector<double>>& dm,
 
                             assert(nlm1.size()==nlm2[0].size());
 
-                            if(!if_equiv)
+                            if(!GlobalV::deepks_equiv)
                             {
                                 int ib=0;
                                 for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)
@@ -196,7 +196,7 @@ void LCAO_Deepks::cal_f_delta_gamma(const std::vector<std::vector<double>>& dm,
 
                                 assert(nlm1.size()==nlm2[0].size());                                
 
-                                if(!if_equiv)
+                                if(!GlobalV::deepks_equiv)
                                 {
                                     int ib=0;
                                     for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)
@@ -378,7 +378,7 @@ void LCAO_Deepks::cal_f_delta_k(const std::vector<std::vector<std::complex<doubl
 
                             assert(nlm1.size()==nlm2[0].size());
 
-                            if(!if_equiv)
+                            if(!GlobalV::deepks_equiv)
                             {
                                 int ib=0;
                                 for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)
@@ -441,7 +441,7 @@ void LCAO_Deepks::cal_f_delta_k(const std::vector<std::vector<std::complex<doubl
 
                                 assert(nlm1.size()==nlm2[0].size());                                
 
-                                if(!if_equiv)
+                                if(!GlobalV::deepks_equiv)
                                 {
                                     int ib=0;
                                     for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)

@@ -5,8 +5,8 @@
 // DATE : 2022-04-14
 //=====================
 
-#ifndef DIAGOBLAS_H
-#define DIAGOBLAS_H
+#ifndef DIAGO_SCALAPACK_H
+#define DIAGO_SCALAPACK_H
 
 #include <complex>
 #include <utility>
@@ -20,7 +20,7 @@
 namespace hsolver
 {
     template<typename T>
-    class DiagoBlas : public DiagH<T>
+    class DiagoScalapack : public DiagH<T>
 {
 private:
     using Real = typename GetTypeReal<T>::type;

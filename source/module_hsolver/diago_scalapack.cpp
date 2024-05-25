@@ -5,7 +5,7 @@
 // DATE : 2022-04-14
 //=====================
 
-#include "diago_blas.h"
+#include "diago_scalapack.h"
 
 #include <cassert>
 #include <cstring>
@@ -21,9 +21,9 @@ typedef hamilt::MatrixBlock<std::complex<double>> matcd;
 namespace hsolver
 {
     template<>
-    void DiagoBlas<double>::diag(hamilt::Hamilt<double>* phm_in, psi::Psi<double>& psi, Real* eigenvalue_in)
+    void DiagoScalapack<double>::diag(hamilt::Hamilt<double>* phm_in, psi::Psi<double>& psi, Real* eigenvalue_in)
 {
-    ModuleBase::TITLE("DiagoElpa", "diag");
+    ModuleBase::TITLE("DiagoScalapack", "diag");
     matd h_mat, s_mat;
     phm_in->matrix(h_mat, s_mat);
     assert(h_mat.col == s_mat.col && h_mat.row == s_mat.row && h_mat.desc == s_mat.desc);
@@ -33,9 +33,9 @@ namespace hsolver
     BlasConnector::copy(GlobalV::NBANDS, eigen.data(), inc, eigenvalue_in, inc);
 }
     template<>
-    void DiagoBlas<std::complex<double>>::diag(hamilt::Hamilt<std::complex<double>>* phm_in, psi::Psi<std::complex<double>>& psi, Real* eigenvalue_in)
+    void DiagoScalapack<std::complex<double>>::diag(hamilt::Hamilt<std::complex<double>>* phm_in, psi::Psi<std::complex<double>>& psi, Real* eigenvalue_in)
 {
-    ModuleBase::TITLE("DiagoElpa", "diag");
+    ModuleBase::TITLE("DiagoScalapack", "diag");
     matcd h_mat, s_mat;
     phm_in->matrix(h_mat, s_mat);
     assert(h_mat.col == s_mat.col && h_mat.row == s_mat.row && h_mat.desc == s_mat.desc);
@@ -46,7 +46,7 @@ namespace hsolver
 }
 
     template<typename T>
-    std::pair<int, std::vector<int>> DiagoBlas<T>::pdsygvx_once(const int* const desc,
+    std::pair<int, std::vector<int>> DiagoScalapack<T>::pdsygvx_once(const int* const desc,
                                                          const int ncol,
                                                          const int nrow,
                                                          const double *const h_mat,
@@ -169,7 +169,7 @@ namespace hsolver
                                  + ModuleBase::GlobalFunc::TO_STRING(__LINE__));
 }
     template<typename T>
-    std::pair<int, std::vector<int>> DiagoBlas<T>::pzhegvx_once(const int* const desc,
+    std::pair<int, std::vector<int>> DiagoScalapack<T>::pzhegvx_once(const int* const desc,
                                                          const int ncol,
                                                          const int nrow,
                                                          const std::complex<double> *const h_mat,
@@ -303,7 +303,7 @@ namespace hsolver
                                  + ModuleBase::GlobalFunc::TO_STRING(__LINE__));
 }
     template<typename T>
-    void DiagoBlas<T>::pdsygvx_diag(const int* const desc,
+    void DiagoScalapack<T>::pdsygvx_diag(const int* const desc,
                              const int ncol,
                              const int nrow,
                              const double *const h_mat,
@@ -321,7 +321,7 @@ namespace hsolver
 }
 
     template<typename T>
-    void DiagoBlas<T> ::pzhegvx_diag(const int* const desc,
+    void DiagoScalapack<T> ::pzhegvx_diag(const int* const desc,
                              const int ncol,
                              const int nrow,
                              const std::complex<double> *const h_mat,
@@ -339,7 +339,7 @@ namespace hsolver
 }
 
     template<typename T>
-    void DiagoBlas<T>::post_processing(const int info, const std::vector<int>& vec)
+    void DiagoScalapack<T>::post_processing(const int info, const std::vector<int>& vec)
 {
     const std::string str_info = "info = " + ModuleBase::GlobalFunc::TO_STRING(info) + ".\n";
     const std::string str_FILE

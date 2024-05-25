@@ -13,7 +13,7 @@ list(APPEND objects
 if(ENABLE_LCAO)
   list(APPEND objects
       hsolver_lcao.cpp
-      diago_blas.cpp
+      diago_scalapack.cpp
   )
   if (USE_ELPA)
     list(APPEND objects
