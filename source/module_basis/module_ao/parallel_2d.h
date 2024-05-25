@@ -1,8 +1,8 @@
-#include <fstream>
 #ifndef _PARALLEL_2D_H_
 #define _PARALLEL_2D_H_
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
+
+#include <vector>
+#include <cstdint>
 
 #ifdef __MPI
 #include <mpi.h>
@@ -16,13 +16,13 @@ public:
     Parallel_2D() = default;
     ~Parallel_2D() = default;
 
-    /// local number of columns
-    int get_col_size()const { return ncol; };
+    /// number of local rows
+    int get_row_size() const { return nrow; };
 
-    /// local number of rows
-    int get_row_size()const { return nrow; };
+    /// number of local columns
+    int get_col_size() const { return ncol; };
 
-    /// local number of matrix elements
+    /// number of local matrix elements
     int64_t get_local_size() const { return nloc; };
 
     /// get the local index of a global index (row)
@@ -43,22 +43,31 @@ public:
     /// side length of 2d square block
     int get_block_size() const { return nb; };
 
-    //void set_block_size(const int& nb_in) { this->nb = nb_in; };
+#ifdef __MPI
+    /**
+     * @brief Initialize a BLACS grid with the given MPI communicator
+     * and set up the info of a block-cyclic distribution.
+     *
+     */
+    int init(
+        const int mg,
+        const int ng,
+        const int nb, // square block is assumed
+        const MPI_Comm comm,
+        bool mode = 0
+    );
 
-    /// Set the 2D-structure of processors in each dimension.
-    /// dim0 and dim1 will be set as close to sqrt(nproc) as possible.
-    /// For example: nproc = 12,
-    /// if mode==0, d dim0 = 3, dim1 = 4; else, dim0 = 3, dim1 = 3.
-    //void set_proc_dim(const int& dsize, bool mode = 0);
-
-#ifndef __MPI
-    void set_serial(int mg, int ng);
-#else
+    /**
+     * @brief Set up the info of a block-cyclic distribution using given
+     * MPI communicator and BLACS context.
+     *
+     */
     int set(
         const int mg,
         const int ng,
-        const int nb, // block is assumed to be square
-        const MPI_Comm comm
+        const int nb, // square block is assumed
+        const MPI_Comm comm_2D,
+        const int blacs_ctxt
     );
 
     /// BLACS context
@@ -71,27 +80,11 @@ public:
     MPI_Comm comm_2D = MPI_COMM_NULL;
 #endif
 
-    ///// set the map from local index to global index,
-    ///// and set local sizes (nrow, ncol, nloc) by the way
-    //int set_local2global(const int& M_A/**< global row size*/,
-    //    const int& N_A/**< global col size*/,
-    //    std::ofstream& ofs_running,
-    //    std::ofstream& ofs_warning);
-
-    /////@brief set the desc[9] of the 2D-block-cyclic distribution
-    //void set_desc(const int& gr/**< global row size*/,
-    //    const int& gc/**< global col size*/,
-    //    const int& lld/**< leading local dimension*/,
-    //    bool first_time = true/**< true: call `Cblacs_get`; false: use `this->blacs_ctxt`*/);
-
-    //void set_global2local(const int& M_A,
-    //    const int& N_A,
-    //    const bool& div_2d,
-    //    std::ofstream& ofs_running);
+    void set_serial(const int mg, const int ng);
 
     // FIXME the following variables should be private, but they are
-    // currently widely used in the code. Public visibility is kept
-    // for now, and might be changed in the future.
+    // widely used in the code currently. Public visibility is kept
+    // for now, but might be changed in the future.
 
     /// local size (nloc = nrow * ncol)
     int nrow = 0;
@@ -101,11 +94,11 @@ public:
     /// block size
     int nb = 1;
 
-    /// number of processes in each dimension of MPI_Cart structure
+    /// number of processes in each dimension of the MPI Cartesian grid
     int dim0 = 0;
     int dim1 = 0;
 
-    /// process coordinate in the MPI_Cart structure
+    /// process coordinate in the MPI Cartesian grid
     int coord[2] = {-1, -1};
 
     /// test parameter
@@ -123,12 +116,9 @@ protected:
     std::vector<int> local2global_col_;
     // Peize Lin change int* to vector 2022.08.03
 
-    /// set the map from local index to global index
-    //void init_global2local(const int& M_A/**< global row size*/,
-    //    const int& N_A/**< global col size*/,
-    //    std::ofstream& ofs_running);
-
-    /// factorizes n = p * q such that p, q are closest and p <= q
-    static void _fact(int n, int& p, int& q);
+#ifdef __MPI
+    void _init_proc_grid(const MPI_Comm comm, const bool mode);
+    void _set_dist_info(const int mg, const int ng, const int nb);
+#endif
 };
 #endif

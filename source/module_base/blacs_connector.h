@@ -26,11 +26,9 @@
 //====================================8<----------------------------------------
 // blacs
     // Initialization
-#ifdef BLACS_CONNECTOR_H
+#ifndef BLACS_CONNECTOR_H
 #define BLACS_CONNECTOR_H
 
-#ifdef __MPI
-#include <mpi.h>
 
 extern "C"
 {
@@ -45,9 +43,14 @@ extern "C"
     void Cblacs_pcoord(int icontxt, int pnum, int *prow, int *pcol);
 	void Cblacs_exit(int icontxt);
 
-    int Csys2blacs_handle(MPI_Comm SysCtxt);
 }
 
+#ifdef __MPI
+#include <mpi.h>
+extern "C"
+{
+    int Csys2blacs_handle(MPI_Comm SysCtxt);
+}
 #endif // __MPI
 
 #endif
