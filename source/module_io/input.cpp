@@ -338,6 +338,7 @@ void Input::Default(void)
     deepks_scf = 0;
     deepks_bandgap = 0;
     deepks_out_unittest = 0;
+    deepks_equiv = 0;
 
     out_pot = 0;
     out_wfc_pw = 0;
@@ -469,6 +470,8 @@ void Input::Default(void)
     out_dipole = false;
     out_efield = false;
     out_current = false;
+    out_vecpot = false;
+    init_vecpot_file = false;
 
     td_print_eij = -1.0;
     td_edm = 0;
@@ -1412,6 +1415,10 @@ bool Input::Read(const std::string& fn)
         {
             read_bool(ifs, deepks_scf);
         }
+        else if (strcmp("deepks_equiv", word) == 0)
+        {
+            read_bool(ifs, deepks_equiv);
+        }
         else if (strcmp("deepks_bandgap", word) == 0) // caoyu added 2020-11-24, mohan modified 2021-01-03
         {
             read_bool(ifs, deepks_bandgap);
@@ -1807,6 +1814,14 @@ bool Input::Read(const std::string& fn)
         else if (strcmp("out_efield", word) == 0)
         {
             read_value(ifs, out_efield);
+        }
+        else if (strcmp("out_vecpot", word) == 0)
+        {
+            read_value(ifs, out_vecpot);
+        }
+        else if (strcmp("init_vecpot_file", word) == 0)
+        {
+            read_value(ifs, init_vecpot_file);
         }
         else if (strcmp("td_print_eij", word) == 0)
         {
@@ -3381,6 +3396,11 @@ void Input::Default_2(void) // jiyy add 2019-08-04
             }
         }
     }
+
+    if (efield_flag)
+    {
+        symmetry = "0";
+    }
 }
 #ifdef __MPI
 void Input::Bcast()
@@ -3573,6 +3593,7 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(deepks_bandgap);
     Parallel_Common::bcast_bool(deepks_out_unittest);
     Parallel_Common::bcast_string(deepks_model);
+    Parallel_Common::bcast_bool(deepks_equiv);
 
     Parallel_Common::bcast_int(out_pot);
     Parallel_Common::bcast_int(out_wfc_pw);
@@ -3741,6 +3762,8 @@ void Input::Bcast()
     Parallel_Common::bcast_bool(out_dipole);
     Parallel_Common::bcast_bool(out_efield);
     Parallel_Common::bcast_bool(out_current);
+    Parallel_Common::bcast_bool(out_vecpot);
+    Parallel_Common::bcast_bool(init_vecpot_file);
     Parallel_Common::bcast_double(td_print_eij);
     Parallel_Common::bcast_int(td_edm);
     Parallel_Common::bcast_bool(test_skip_ewald);

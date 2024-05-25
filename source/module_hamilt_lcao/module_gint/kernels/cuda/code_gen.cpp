@@ -1,6 +1,3 @@
-// Generate and test the efficiency of matrix multiplication functions with different parameters
-// This file takes a long time to compile
-
 gemm_time_measure<double, 2, 16, 16, 32, 2, 2, 16, 2, 16>(max_m,
                                                           max_n,
                                                           d_m,
@@ -4144,25 +4141,6 @@ gemm_time_measure<double, 16, 24, 48, 48, 32, 16, 24, 16, 24>(max_m,
                                                               d_global_C);
 
 gemm_time_measure<double, 16, 32, 64, 64, 16, 16, 32, 16, 32>(max_m,
-                                                              max_n,
-                                                              d_m,
-                                                              d_n,
-                                                              d_k,
-                                                              d_global_A_array,
-                                                              d_global_lda,
-                                                              d_global_B_array,
-                                                              d_global_ldb,
-                                                              d_global_C_array,
-                                                              d_global_ldc,
-                                                              batchCount,
-                                                              temp_stream,
-                                                              fastest_time,
-                                                              fastest_algo,
-                                                              cpu_result,
-                                                              h_global_C,
-                                                              d_global_C);
-
-gemm_time_measure<double, 16, 32, 64, 64, 32, 16, 32, 16, 32>(max_m,
                                                               max_n,
                                                               d_m,
                                                               d_n,

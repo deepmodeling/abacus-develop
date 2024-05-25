@@ -47,10 +47,7 @@ template <typename TK, typename TR>
 void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::init_td(void)
 {
     //calculate At in cartesian coorinates.
-	double l_norm[3]={this->ucell->a1.norm() ,this->ucell->a2.norm() ,this->ucell->a3.norm()};
-    double (&A)[3] = elecstate::H_TDDFT_pw::At;
-	cart_At = -(this->ucell->a1*A[0]/l_norm[0] + this->ucell->a2*A[1]/l_norm[1] + this->ucell->a3*A[2]/l_norm[2]);
-    std::cout << "cart_At: " << cart_At[0] << " " <<cart_At[1]<< " " << cart_At[2] << std::endl;
+	this->cart_At=TD_Velocity::td_vel_op->cart_At;
 }
 // initialize_HR()
 template <typename TK, typename TR>
@@ -207,7 +204,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                                             atom1->iw2n[iw1],
                                             tau0 * this->ucell->lat0,
                                             T0,
-                                            -cart_At,
+                                            -cart_At/2.0,
                                             0);
 #else
                 uot.snap_psibeta_half_tddft(orb,
@@ -220,7 +217,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                                             atom1->iw2n[iw1],
                                             tau0 * this->ucell->lat0,
                                             T0,
-                                            -cart_At,
+                                            -cart_At/2.0,
                                             0);
 #endif
                 nlm_tot[ad].insert({all_indexes[iw1l], nlm[0]});
