@@ -82,7 +82,7 @@ public:
 		phm = new hamilt::HamiltPW<std::complex<float>>(nullptr, nullptr, nullptr);
 
 #ifdef __MPI 
-        const hsolver::diag_comm_info comm_info = {MPI_COMM_WORLD, mypnum, nprocs}
+        const hsolver::diag_comm_info comm_info = {MPI_COMM_WORLD, mypnum, nprocs};
 #else
        	const hsolver::diag_comm_info comm_info = {mypnum, nprocs};
 #endif
