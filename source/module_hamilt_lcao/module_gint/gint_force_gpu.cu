@@ -105,7 +105,7 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
             int max_m = 0;
             int max_n = 0;
             int atom_pair_num = 0;
-            dim3 grid_psi(nbz, 8);
+            dim3 grid_psi(nbz, 32);
             dim3 block_psi(64);
             dim3 grid_dot_force(cuda_block);
             dim3 block_dot_force(cuda_threads);
