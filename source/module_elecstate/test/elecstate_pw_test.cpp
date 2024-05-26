@@ -207,7 +207,7 @@ class ElecStatePWTest : public ::testing::Test
         wfcpw = new ModulePW::PW_Basis_K;
         chg = new Charge;
         klist = new K_Vectors;
-        klist->nks = 5;
+        klist->get_nks() = 5;
         ucell = new UnitCell;
         ppcell = new pseudopot_cell_vnl;
         rhodpw = new ModulePW::PW_Basis;

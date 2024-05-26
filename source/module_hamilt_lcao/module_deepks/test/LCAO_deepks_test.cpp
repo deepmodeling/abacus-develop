@@ -124,7 +124,7 @@ void test_deepks::check_pdm(void)
 	}
 	else
 	{
-		this->read_dm_k(kv.nkstot);
+		this->read_dm_k(kv.get_nkstot());
 		this->set_dm_k_new();
 		this->ld.cal_projected_DM_k(dm_k_new,
 			ucell,
@@ -152,7 +152,7 @@ void test_deepks::check_gdmx(void)
 			ucell,
 			ORB,
             Test_Deepks::GridD,
-			kv.nkstot,
+			kv.get_nkstot(),
 			kv.kvec_d,
 			0);			
 	}
@@ -228,7 +228,7 @@ void test_deepks::check_edelta(void)
 	}
 	else
 	{
-        this->ld.allocate_V_delta(ucell.nat, kv.nkstot);
+        this->ld.allocate_V_delta(ucell.nat, kv.get_nkstot());
 	}
 	this->ld.cal_gedm(ucell.nat);
 
@@ -250,7 +250,7 @@ void test_deepks::check_e_deltabands(void)
 	else
 	{
 		this->folding_nnr(kv);
-        this->ld.cal_e_delta_band_k(dm_k_new, kv.nkstot);
+        this->ld.cal_e_delta_band_k(dm_k_new, kv.get_nkstot());
 	}
 
 	std::ofstream ofs("E_delta_bands.dat");
@@ -277,7 +277,7 @@ void test_deepks::check_f_delta()
 			ucell,
             ORB,
             Test_Deepks::GridD,
-			kv.nkstot,
+			kv.get_nkstot(),
 			kv.kvec_d,
 			1,svnl_dalpha);
 	}

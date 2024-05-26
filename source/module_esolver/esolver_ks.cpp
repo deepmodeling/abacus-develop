@@ -221,7 +221,7 @@ void ESolver_KS<T, Device>::before_all_runners(Input& inp, UnitCell& ucell)
 			this->pw_rho->nx,
 			this->pw_rho->ny,
 			this->pw_rho->nz);
-	this->pw_wfc->initparameters(false, inp.ecutwfc, this->kv.nks, this->kv.kvec_d.data());
+	this->pw_wfc->initparameters(false, inp.ecutwfc, this->kv.get_nks(), this->kv.kvec_d.data());
 
     // the MPI allreduce should not be here, mohan 2024-05-12
 #ifdef __MPI
@@ -236,7 +236,7 @@ void ESolver_KS<T, Device>::before_all_runners(Input& inp, UnitCell& ucell)
 
 	this->pw_wfc->setuptransform();
 
-	for (int ik = 0; ik < this->kv.nks; ++ik)
+	for (int ik = 0; ik < this->kv.get_nks(); ++ik)
 	{
 		this->kv.ngk[ik] = this->pw_wfc->npwk[ik];
 	}
@@ -644,8 +644,8 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
     // 16) Json again
 #ifdef __RAPIDJSON
 	// add nkstot,nkstot_ibz to output json
-	int Jnkstot = this->pelec->klist->nkstot;
-	int Jnkstot_ibz = this->pelec->klist->nkstot_ibz;
+	int Jnkstot = this->pelec->klist->get_nkstot();
+	int Jnkstot_ibz = this->pelec->klist->get_nkstot_ibz();
 	Json::add_nkstot(Jnkstot,Jnkstot_ibz);
 #endif //__RAPIDJSON          
 	return;

@@ -106,7 +106,7 @@ class DMTest : public testing::Test
         ucell->set_iat2iwt(1);
         // initalize a kvectors
         kv = new K_Vectors;
-        kv->nks = nks;
+        kv->get_nks() = nks;
         kv->kvec_d.resize(nks);
         kv->kvec_d[1].x = 0.5;
         // set paraV
@@ -155,7 +155,7 @@ TEST_F(DMTest, DMConstructor1)
     std::string directory = "./support/";
     for (int is = 1; is <= nspin; ++is)
     {
-        for (int ik = 0; ik < kv->nks / nspin; ++ik)
+        for (int ik = 0; ik < kv->get_nks() / nspin; ++ik)
         {
             DM.read_DMK(directory, is, ik);
         }
@@ -164,7 +164,7 @@ TEST_F(DMTest, DMConstructor1)
     directory = "./support/output";
     for (int is = 1; is <= nspin; ++is)
     {
-        for (int ik = 0; ik < kv->nks / nspin; ++ik)
+        for (int ik = 0; ik < kv->get_nks() / nspin; ++ik)
         {
             DM.write_DMK(directory, is, ik);
         }
@@ -174,7 +174,7 @@ TEST_F(DMTest, DMConstructor1)
     directory = "./support/output";
     for (int is = 1; is <= nspin; ++is)
     {
-        for (int ik = 0; ik < kv->nks / nspin; ++ik)
+        for (int ik = 0; ik < kv->get_nks() / nspin; ++ik)
         {
             DM1.read_DMK(directory, is, ik);
         }

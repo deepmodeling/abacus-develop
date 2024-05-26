@@ -394,18 +394,18 @@ TEST_F(ElecStateTest,FixedWeights)
     EXPECT_EQ(GlobalV::NBANDS, 6);
     GlobalV::nelec = 30;
     K_Vectors* klist = new K_Vectors;
-    klist->nks = 5;
+    klist->get_nks() = 5;
     elecstate->klist = klist;
-    elecstate->wg.create(klist->nks, GlobalV::NBANDS);
+    elecstate->wg.create(klist->get_nks(), GlobalV::NBANDS);
     std::vector<double> ocp_kb;
-    ocp_kb.resize(GlobalV::NBANDS*elecstate->klist->nks);
+    ocp_kb.resize(GlobalV::NBANDS*elecstate->klist->get_nks());
     for (int i = 0; i < ocp_kb.size(); ++i)
     {
         ocp_kb[i] = 1.0;
     }
     elecstate->fixed_weights(ocp_kb);
     EXPECT_EQ(elecstate->wg(0, 0), 1.0);
-    EXPECT_EQ(elecstate->wg(klist->nks-1, GlobalV::NBANDS-1), 1.0);
+    EXPECT_EQ(elecstate->wg(klist->get_nks()-1, GlobalV::NBANDS-1), 1.0);
     EXPECT_TRUE(elecstate->skip_weights);
 }
 
@@ -414,11 +414,11 @@ TEST_F(ElecStateDeathTest,FixedWeightsWarning1)
     EXPECT_EQ(GlobalV::NBANDS, 6);
     GlobalV::nelec = 30;
     K_Vectors* klist = new K_Vectors;
-    klist->nks = 5;
+    klist->get_nks() = 5;
     elecstate->klist = klist;
-    elecstate->wg.create(klist->nks, GlobalV::NBANDS);
+    elecstate->wg.create(klist->get_nks(), GlobalV::NBANDS);
     std::vector<double> ocp_kb;
-    ocp_kb.resize(GlobalV::NBANDS*elecstate->klist->nks-1);
+    ocp_kb.resize(GlobalV::NBANDS*elecstate->klist->get_nks()-1);
     for (int i = 0; i < ocp_kb.size(); ++i)
     {
         ocp_kb[i] = 1.0;
@@ -434,11 +434,11 @@ TEST_F(ElecStateDeathTest,FixedWeightsWarning2)
     EXPECT_EQ(GlobalV::NBANDS, 6);
     GlobalV::nelec = 29;
     K_Vectors* klist = new K_Vectors;
-    klist->nks = 5;
+    klist->get_nks() = 5;
     elecstate->klist = klist;
-    elecstate->wg.create(klist->nks, GlobalV::NBANDS);
+    elecstate->wg.create(klist->get_nks(), GlobalV::NBANDS);
     std::vector<double> ocp_kb;
-    ocp_kb.resize(GlobalV::NBANDS*elecstate->klist->nks);
+    ocp_kb.resize(GlobalV::NBANDS*elecstate->klist->get_nks());
     for (int i = 0; i < ocp_kb.size(); ++i)
     {
         ocp_kb[i] = 1.0;
@@ -490,7 +490,7 @@ TEST_F(ElecStateTest, CalculateWeightsIWeights)
     EXPECT_FALSE(elecstate->skip_weights);
     int nks = 5;
     K_Vectors* klist = new K_Vectors;
-    klist->nks = nks;
+    klist->get_nks() = nks;
     klist->wk.resize(nks);
     for (int ik = 0; ik < nks; ++ik)
     {
@@ -532,7 +532,7 @@ TEST_F(ElecStateTest, CalculateWeightsIWeightsTwoFermi)
     EXPECT_FALSE(elecstate->skip_weights);
     int nks = 5*GlobalV::NSPIN;
     K_Vectors* klist = new K_Vectors;
-    klist->nks = nks;
+    klist->get_nks() = nks;
     klist->wk.resize(nks);
     for (int ik = 0; ik < nks; ++ik)
     {
@@ -591,7 +591,7 @@ TEST_F(ElecStateTest, CalculateWeightsGWeights)
     EXPECT_FALSE(elecstate->skip_weights);
     int nks = 5;
     K_Vectors* klist = new K_Vectors;
-    klist->nks = nks;
+    klist->get_nks() = nks;
     klist->wk.resize(nks);
     for (int ik = 0; ik < nks; ++ik)
     {
@@ -639,7 +639,7 @@ TEST_F(ElecStateTest, CalculateWeightsGWeightsTwoFermi)
     EXPECT_FALSE(elecstate->skip_weights);
     int nks = 5*GlobalV::NSPIN;
     K_Vectors* klist = new K_Vectors;
-    klist->nks = nks;
+    klist->get_nks() = nks;
     klist->wk.resize(nks);
     for (int ik = 0; ik < nks; ++ik)
     {
