@@ -23,7 +23,7 @@ class DiagoDavid : public DiagH<T, Device>
                bool use_paw_in,
                diag_comm_info diag_comm_in);
 
-    virtual ~DiagoDavid() override{};
+    virtual ~DiagoDavid() override;
 
     virtual void diag(hamilt::Hamilt<T, Device>* phm_in,
                       psi::Psi<T, Device>& phi,

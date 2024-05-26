@@ -38,6 +38,18 @@ DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
 }
 
 template <typename T, typename Device>
+DiagoDavid<T, Device>::~DiagoDavid()
+{
+    delmem_complex_op()(this->ctx, this->hphi);
+    delmem_complex_op()(this->ctx, this->sphi);
+    delmem_complex_op()(this->ctx, this->hcc);
+    delmem_complex_op()(this->ctx, this->scc);
+    delmem_complex_op()(this->ctx, this->vcc);
+    delmem_complex_op()(this->ctx, this->lagrange_matrix);
+    base_device::memory::delete_memory_op<Real, base_device::DEVICE_CPU>()(this->cpu_ctx, this->eigenvalue);
+}
+
+template <typename T, typename Device>
 void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
                                            psi::Psi<T, Device>& psi,
                                            Real* eigenvalue_in)
@@ -293,14 +305,6 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
     } while (1);
 
     DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(dav_iter);
-
-    delmem_complex_op()(this->ctx, this->hphi);
-    delmem_complex_op()(this->ctx, this->sphi);
-    delmem_complex_op()(this->ctx, this->hcc);
-    delmem_complex_op()(this->ctx, this->scc);
-    delmem_complex_op()(this->ctx, this->vcc);
-    delmem_complex_op()(this->ctx, this->lagrange_matrix);
-    base_device::memory::delete_memory_op<Real, base_device::DEVICE_CPU>()(this->cpu_ctx, this->eigenvalue);
 
     ModuleBase::timer::tick("DiagoDavid", "diag_mock");
 
