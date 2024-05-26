@@ -138,7 +138,7 @@ void Gint::cal_gint(Gint_inout* inout)
                     if (isforce || isstress){
                         std::vector<double> force(nat * 3, 0.0);
                         std::vector<double> stress(6, 0.0);
-                        GintKernel::gint_gamma_force_gpu(this->DMRGint[inout->ispin],
+                        GintKernel::gint_fvl_gamma_gpu(this->DMRGint[inout->ispin],
                                                         ucell.omega
                                                             / this->ncxyz,
                                                         inout->vl,

@@ -14,7 +14,7 @@ namespace GintKernel
 
 // Function to calculate forces using GPU-accelerated gamma point Gint
 /**
- * @brief Calculate forces and stresses for the `gint_gamma_force_gpu` function.
+ * @brief Calculate forces and stresses for the `gint_fvl_gamma_gpu` function.
  *
  * This function calculates forces and stresses based on given parameters.
  *
@@ -30,7 +30,7 @@ namespace GintKernel
  */
 /**
  * Function to calculate forces using GPU-accelerated gamma point Gint
- * @brief Calculate forces and stresses for the `gint_gamma_force_gpu` function.
+ * @brief Calculate forces and stresses for the `gint_fvl_gamma_gpu` function.
  *
  * This function calculates forces and stresses based on given parameters.
  *
@@ -55,7 +55,7 @@ namespace GintKernel
  * 6. force dot on the GPU.
  * 7. Copy the results back to the host.
  */
-void gint_gamma_force_gpu(hamilt::HContainer<double>* dm,
+void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
                           const double vfactor,
                           const double* vlocal,
                           std::vector<double>& force,
@@ -79,9 +79,9 @@ void gint_gamma_force_gpu(hamilt::HContainer<double>* dm,
         = std::min(64, (gridt.psir_size + cuda_threads - 1) / cuda_threads);
     int iter_num = 0;
     DensityMat denstiy_mat;
-    ForceStressIatGlobal f_s_iat_dev;
-    SGridParameter para;
-    ForceStressIat f_s_iat;
+    frc_strs_iat_gbl f_s_iat_dev;
+    grid_para para;
+    frc_strs_iat f_s_iat;
 
     calculateInit(denstiy_mat,
                   f_s_iat_dev,
