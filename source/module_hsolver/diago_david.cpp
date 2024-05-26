@@ -18,8 +18,8 @@ using namespace hsolver;
 
 template <typename T, typename Device>
 DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in, 
-                                  int david_ndim_in,
-                                  bool use_paw_in,
+                                  const int david_ndim_in,
+                                  const bool use_paw_in,
                                   const diag_comm_info& diag_comm_in)
     : david_ndim(david_ndim_in), use_paw(use_paw_in), diag_comm(diag_comm_in)
 {
@@ -61,12 +61,7 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
     ModuleBase::timer::tick("DiagoDavid", "diag_mock");
 
     assert(this->david_ndim > 1);
-
-#ifdef __MPI
     assert(this->david_ndim * psi.get_nbands() < psi.get_current_nbas() * diag_comm.nproc);
-#else
-    assert(this->david_ndim * psi.get_nbands() < psi.get_current_nbas());
-#endif
 
     // qianrui change it 2021-7-25.
     // In strictly speaking, it shoule be PW_DIAG_NDIM*nband < npw sum of all pools. We roughly estimate it here.
