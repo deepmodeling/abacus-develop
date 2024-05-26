@@ -8,6 +8,7 @@
 #include "module_base/blas_connector.h"
 #include "module_base/timer.h"
 #include "gint_tools.h"
+#include "module_base/memory.h"
 
 void Gint::gint_kernel_rho(
 	const int na_grid,
@@ -78,6 +79,7 @@ void Gint::gint_kernel_rho(
 			vindex, psir_ylm.ptr_2D,
 			psir_DM.ptr_2D, inout->rho[is]);
 	}
+	ModuleBase::Memory::record("Gint_Tools::gint_kernel_rho",sizeof(double)*this->bxyz*(LD_pool+1)*2);
 	delete[] block_iw;
 	delete[] block_index;
 	delete[] block_size;

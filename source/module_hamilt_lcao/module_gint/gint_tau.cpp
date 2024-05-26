@@ -10,6 +10,7 @@
 #include "gint_tools.h"
 #include "module_base/memory.h"
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
+#include "module_base/memory.h"
 
 
 void Gint::gint_kernel_tau(
@@ -137,6 +138,7 @@ void Gint::gint_kernel_tau(
 				inout->rho[is]);
 		}
 	}
+	ModuleBase::Memory::record("Gint::gint_kernel_tau",sizeof(double)*this->bxyz*(LD_pool+1)*7);
 
 	delete[] block_iw;
 	delete[] block_index;

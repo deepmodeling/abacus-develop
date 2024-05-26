@@ -5,6 +5,7 @@
 #include "module_base/mathzone.h"
 #include "module_base/constants.h"
 #include "module_base/timer.h"
+#include "module_base/memory.h"
 
 namespace ModuleSymmetry
 {
@@ -1473,6 +1474,7 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
     int(*isymflag)[48] = new int[fftnx*fftny*fftnz][48];//which rotration operation the grid corresponds to
     int(*table_xyz)[48] = new int[fftnx * fftny * fftnz][48];// group information
     int* count_xyz = new int[fftnx * fftny * fftnz];// how many symmetry operations has been covered
+    ModuleBase::Memory::record("Symmetry::rhog_symmetry",sizeof(int) *fftnx*fftny*fftnz*98);
     for (int i = 0; i < fftnx * fftny * fftnz; i++)
     {
         symflag[i] = -1;
