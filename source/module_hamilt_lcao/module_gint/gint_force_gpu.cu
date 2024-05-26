@@ -8,7 +8,6 @@
 #include "kernels/cuda/gint_force.cuh"
 #include "module_base/ylm.h"
 #include "module_hamilt_lcao/module_gint/gint_tools.h"
-
 namespace GintKernel
 {
 

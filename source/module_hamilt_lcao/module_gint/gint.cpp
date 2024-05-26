@@ -133,48 +133,45 @@ void Gint::cal_gint(Gint_inout* inout)
                 int nat = ucell.nat;
                 const int isforce = inout->isforce;
                 const int isstress =inout->isstress;
-                // for (int is = 0; is < GlobalV::NSPIN; ++is)
-                // {
-                    if (isforce || isstress){
-                        std::vector<double> force(nat * 3, 0.0);
-                        std::vector<double> stress(6, 0.0);
-                        GintKernel::gint_fvl_gamma_gpu(this->DMRGint[inout->ispin],
-                                                        ucell.omega
-                                                            / this->ncxyz,
-                                                        inout->vl,
-                                                        force,
-                                                        stress,
-                                                        this->nplane,
-                                                        dr,
-                                                        rcut,
-                                                        isforce,
-                                                        isstress,
-                                                        *this->gridt,
-                                                        ucell);
-                    
-                    if (inout->isforce)
+                ModuleBase::TITLE("Gint_interface","cal_force_gpu");
+                ModuleBase::timer::tick("Gint_interface","cal_force_gpu");
+                if (isforce || isstress){
+                    std::vector<double> force(nat * 3, 0.0);
+                    std::vector<double> stress(6, 0.0);
+                    GintKernel::gint_fvl_gamma_gpu(this->DMRGint[inout->ispin],
+                                                    ucell.omega
+                                                        / this->ncxyz,
+                                                    inout->vl,
+                                                    force,
+                                                    stress,
+                                                    this->nplane,
+                                                    dr,
+                                                    rcut,
+                                                    isforce,
+                                                    isstress,
+                                                    *this->gridt,
+                                                    ucell);
+                if (inout->isforce)
+                {
+                    for (int iat = 0; iat < nat; iat++)
                     {
-                        for (int iat = 0; iat < nat; iat++)
-                        {
-                            inout->fvl_dphi[0](iat, 0) += force[iat * 3];
-                            inout->fvl_dphi[0](iat, 1) += force[iat * 3 + 1];
-                            inout->fvl_dphi[0](iat, 2) += force[iat * 3 + 2];
-                        }
+                        inout->fvl_dphi[0](iat, 0) = force[iat * 3];
+                        inout->fvl_dphi[0](iat, 1) = force[iat * 3 + 1];
+                        inout->fvl_dphi[0](iat, 2) = force[iat * 3 + 2];
                     }
-                    if (inout->isstress){
-                        inout->svl_dphi[0](0, 0) += stress[0];
-                        inout->svl_dphi[0](0, 1) += stress[1];
-                        inout->svl_dphi[0](0, 2) += stress[2];
-                        inout->svl_dphi[0](1, 1) += stress[3];
-                        inout->svl_dphi[0](1, 2) += stress[4];
-                        inout->svl_dphi[0](2, 2) += stress[5];
-                        
-                    }
-                    force.clear();
-                    stress.clear();
-                    }
-                    
-                // }
+                }
+                if (inout->isstress){
+                    inout->svl_dphi[0](0, 0) = stress[0];
+                    inout->svl_dphi[0](0, 1) = stress[1];
+                    inout->svl_dphi[0](0, 2) = stress[2];
+                    inout->svl_dphi[0](1, 1) = stress[3];
+                    inout->svl_dphi[0](1, 2) = stress[4];
+                    inout->svl_dphi[0](2, 2) = stress[5];
+                }
+                force.clear();
+                stress.clear();
+                }
+                ModuleBase::timer::tick("Gint_interface","cal_force_gpu");   
             }
         }
         else
