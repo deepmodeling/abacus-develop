@@ -247,52 +247,52 @@ void DiagoCG<T, Device>::orth_grad(
     ct::Tensor& lagrange)
 {
     this->spsi_func_(grad, scg); // scg = S|grad>
-    gemv_op<T, Device>()(
-        ctx_,
-        'C',
-        this->n_basis_,
-        m,
-        this->one_,
-        psi.data<T>(),
-        this->n_basis_,
-        scg.data<T>(),
-        1,
-        this->zero_,
-        lagrange.data<T>(),
-        1);
+    gemv_op<T, Device>()({
+        .d = ctx_,
+        .trans = 'C',
+        .m = this->n_basis_,
+        .n = m,
+        .alpha = this->one_,
+        .A = psi.data<T>(),
+        .lda = this->n_basis_,
+        .X = scg.data<T>(),
+        .incx = 1,
+        .beta = this->zero_,
+        .Y = lagrange.data<T>(),
+        .incy = 1});
 
     Parallel_Reduce::reduce_pool(lagrange.data<T>(), m);
 
     // (3) orthogonal |g> and |scg> to all states (0~m-1)
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // haozhihan replace 2022-10-07
-    gemv_op<T, Device>()(
-        ctx_,
-        'N',
-        this->n_basis_,
-        m,
-        this->neg_one_,
-        psi.data<T>(),
-        this->n_basis_,
-        lagrange.data<T>(),
-        1,
-        this->one_,
-        grad.data<T>(),
-        1);
+    gemv_op<T, Device>()({
+        .d = ctx_,
+        .trans = 'N',
+        .m = this->n_basis_,
+        .n = m,
+        .alpha = this->neg_one_,
+        .A = psi.data<T>(),
+        .lda = this->n_basis_,
+        .X = lagrange.data<T>(),
+        .incx = 1,
+        .beta = this->one_,
+        .Y = grad.data<T>(),
+        .incy = 1});
 
-    gemv_op<T, Device>()(
-        ctx_,
-        'N',
-        this->n_basis_,
-        m,
-        this->neg_one_,
-        psi.data<T>(),
-        this->n_basis_,
-        lagrange.data<T>(),
-        1,
-        this->one_,
-        scg.data<T>(),
-        1);
+    gemv_op<T, Device>()({
+        .d = ctx_,
+        .trans = 'N',
+        .m = this->n_basis_,
+        .n = m,
+        .alpha = this->neg_one_,
+        .A = psi.data<T>(),
+        .lda = this->n_basis_,
+        .X = lagrange.data<T>(),
+        .incx = 1,
+        .beta = this->one_,
+        .Y = scg.data<T>(),
+        .incy = 1});
 }
 
 template<typename T, typename Device>
@@ -465,38 +465,38 @@ void DiagoCG<T, Device>::schmit_orth(
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // haozhihan replace 2022-10-6
     int inc = 1;
-    gemv_op<T, Device>()(
-        ctx_,
-        'C',
-        this->n_basis_,
-        m + 1,
-        this->one_,
-        psi.data<T>(),
-        this->n_basis_,
-        sphi.data<T>(),
-        inc,
-        this->zero_,
-        lagrange_so.data<T>(),
-        inc);
+    gemv_op<T, Device>()({
+        .d = ctx_,
+        .trans = 'C',
+        .m = this->n_basis_,
+        .n = m + 1,
+        .alpha = this->one_,
+        .A = psi.data<T>(),
+        .lda = this->n_basis_,
+        .X = sphi.data<T>(),
+        .incx = inc,
+        .beta = this->zero_,
+        .Y = lagrange_so.data<T>(),
+        .incy = inc});
 
     // be careful , here reduce m+1
     Parallel_Reduce::reduce_pool(lagrange_so.data<T>(), m + 1);
 
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // haozhihan replace 2022-10-6
-    gemv_op<T, Device>()(
-        ctx_,
-        'N',
-        this->n_basis_,
-        m,
-        this->neg_one_,
-        psi.data<T>(),
-        this->n_basis_,
-        lagrange_so.data<T>(),
-        inc,
-        this->one_,
-        phi_m.data<T>(),
-        inc);
+    gemv_op<T, Device>()({
+        .d = ctx_,
+        .trans = 'N',
+        .m = this->n_basis_,
+        .n = m,
+        .alpha = this->neg_one_,
+        .A = psi.data<T>(),
+        .lda = this->n_basis_,
+        .X = lagrange_so.data<T>(),
+        .incx = inc,
+        .beta = this->one_,
+        .Y = phi_m.data<T>(),
+        .incy = inc});
 
     //======================================================================
     /*for (int j = 0; j < m; j++)

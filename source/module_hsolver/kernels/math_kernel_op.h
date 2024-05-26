@@ -271,40 +271,58 @@ struct axpy_op
     void operator()(const Device* d, const int& N, const T* alpha, const T* X, const int& incX, T* Y, const int& incY);
 };
 
+// Edit: For function calls with numerous arguments(typically > 10), it is suggested
+// that we use a struct to pass the arguments.
+// It has been tested that this method may result in loading data from memory,
+// but as the data is most likely to be stored in L1 cache, the performance impact is negligible.
+
+/// This struct describes the arguments for the gemv_op function.
+template <typename T, typename Device>
+struct gemv_op_args
+{
+    const Device* d; /// the type of computing device
+    const char& trans; /// whether to transpose A
+    const int& m; /// first dimension of matrix
+    const int& n; /// second dimension of matrix
+    const T* alpha; /// input constant alpha
+    const T* A; /// input matrix A
+    const int& lda; /// leading dimension of A
+    const T* X; /// input array X
+    const int& incx; /// computing strip of X
+    const T* beta; /// input constant beta
+    T* Y; /// input/output array Y
+    const int& incy; /// computing strip of Y
+};
+
 // compute y = alpha * op(A) * x + beta * y
 template <typename T, typename Device>
 struct gemv_op
 {
     /// @brief y = alpha * op(A) * x + beta * y
     ///
-    /// Input Parameters
-    /// \param d : the type of computing device
-    /// \param trans : whether to transpose A
-    /// \param m : first dimension of matrix
-    /// \param n : second dimension of matrix
-    /// \param alpha : input constant alpha
-    /// \param A : input matrix A
-    /// \param lda : leading dimention of A
-    /// \param X : input array X
-    /// \param incx : computing strip of X
-    /// \param beta : input constant beta
-    /// \param Y : input array Y
-    /// \param incy : computing strip of Y
-    ///
-    /// Output Parameters
-    /// \param Y : output array Y
-    void operator()(const Device* d,
-                    const char& trans,
-                    const int& m,
-                    const int& n,
-                    const T* alpha,
-                    const T* A,
-                    const int& lda,
-                    const T* X,
-                    const int& incx,
-                    const T* beta,
-                    T* Y,
-                    const int& incy);
+    /// Parameters
+    /// \param args: the arguments for the gemv_op function
+
+    void operator()(gemv_op_args<T, Device> args);
+};
+
+template <typename T, typename Device>
+struct gemm_op_args
+{
+    const Device* d; /// the type of computing device
+    const char& transa; /// whether to transpose matrix A
+    const char& transb; /// whether to transpose matrix B
+    const int& m; /// first dimension of matrix mulplication
+    const int& n; /// second dimension of matrix mulplication
+    const int& k; /// third dimension of matrix mulplication
+    const T* alpha; /// input constant alpha
+    const T* a; /// input matrix A
+    const int& lda; /// leading dimention of A
+    const T* b; /// input matrix B
+    const int& ldb; /// leading dimention of B
+    const T* beta; /// input constant beta
+    T* c; /// input/output matrix C
+    const int& ldc; /// leading dimention of C
 };
 
 // compute C = alpha * op(A) * op(B) + beta * C
@@ -313,38 +331,9 @@ struct gemm_op
 {
     /// @brief C = alpha * op(A) * op(B) + beta * C
     ///
-    /// Input Parameters
-    /// \param d : the type of computing device
-    /// \param transa : whether to transpose matrix A
-    /// \param transb : whether to transpose matrix B
-    /// \param m : first dimension of matrix mulplication
-    /// \param n : second dimension of matrix mulplication
-    /// \param k : third dimension of matrix mulplication
-    /// \param alpha : input constant alpha
-    /// \param a : input matrix A
-    /// \param lda : leading dimention of A
-    /// \param b : input matrix B
-    /// \param ldb : leading dimention of A
-    /// \param beta : input constant beta
-    /// \param c : input matrix C
-    /// \param ldc : leading dimention of C
-    ///
-    /// Output Parameters
-    /// \param c : output matrix C
-    void operator()(const Device* d,
-                    const char& transa,
-                    const char& transb,
-                    const int& m,
-                    const int& n,
-                    const int& k,
-                    const T* alpha,
-                    const T* a,
-                    const int& lda,
-                    const T* b,
-                    const int& ldb,
-                    const T* beta,
-                    T* c,
-                    const int& ldc);
+    /// Parameters
+    /// \param args: the arguments for the gemm_op function
+    void operator()(gemm_op_args<T, Device> args);
 };
 
 template <typename T, typename Device>

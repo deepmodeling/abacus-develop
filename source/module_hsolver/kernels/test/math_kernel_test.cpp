@@ -334,18 +334,19 @@ TEST_F(TestModuleHsolverMathKernel, scal_op_cpu)
 
 TEST_F(TestModuleHsolverMathKernel, gemv_op_cpu)
 {
-    gemv_op_cpu()(cpu_ctx,
-                  'C',
-                  2,
-                  3,
-                  &ModuleBase::ONE,
-                  A_gemv.data(),
-                  2,
-                  X_gemv.data(),
-                  1,
-                  &ModuleBase::ONE,
-                  Y_gemv.data(),
-                  1);
+    gemv_op_cpu()({
+        .d = cpu_ctx,
+        .trans = 'C',
+        .m = 2,
+        .n = 3,
+        .alpha = &ModuleBase::ONE,
+        .A = A_gemv.data(),
+        .lda = 2,
+        .X = X_gemv.data(),
+        .incx = 1,
+        .beta = &ModuleBase::ONE,
+        .Y = Y_gemv.data(),
+        .incy = 1});
     char trans = 'C';
     int inc = 1;
     int row = 2;
@@ -601,7 +602,19 @@ TEST_F(TestModuleHsolverMathKernel, gemv_op_gpu)
 
     // run
     hsolver::createGpuBlasHandle();
-    gemv_op_gpu()(gpu_ctx, 'C', 2, 3, &ModuleBase::ONE, A_gemv_dev, 2, X_gemv_dev, 1, &ModuleBase::ONE, Y_gemv_dev, 1);
+    gemv_op_gpu()({
+        .d = gpu_ctx, 
+        .trans = 'C', 
+        .m = 2, 
+        .n = 3, 
+        .alpha = &ModuleBase::ONE, 
+        .A = A_gemv_dev, 
+        .lda = 2, 
+        .X = X_gemv_dev, 
+        .incx = 1, 
+        .beta = &ModuleBase::ONE, 
+        .Y = Y_gemv_dev, 
+        .incy = 1});
     hsolver::destoryBLAShandle();
     // syn the output data in GPU to CPU
     synchronize_memory_op_gpu()(cpu_ctx, gpu_ctx, Y_gemv.data(), Y_gemv_dev, Y_gemv.size());

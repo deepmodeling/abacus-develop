@@ -1055,20 +1055,21 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
             }
         }
         int npm = GlobalV::NPOL * nbands_occ;
-        gemm_op()(this->ctx,
-                  transa,
-                  transb,
-                  nkb,
-                  npm,
-                  nbasis,
-                  &ModuleBase::ONE,
-                  vkb,
-                  this->npwx,
-                  psi_in[0].get_pointer(),
-                  this->npwx,
-                  &ModuleBase::ZERO,
-                  becp,
-                  nkb);
+        gemm_op()({
+            .d = this->ctx,
+            .transa = transa,
+            .transb = transb,
+            .m = nkb,
+            .n = npm,
+            .k = nbasis,
+            .alpha = &ModuleBase::ONE,
+            .a = vkb,
+            .lda = this->npwx,
+            .b = psi_in[0].get_pointer(),
+            .ldb = this->npwx,
+            .beta = &ModuleBase::ZERO,
+            .c = becp,
+            .ldc = nkb});
         if (this->device == base_device::GpuDevice)
         {
             std::complex<FPTYPE>* h_becp = nullptr;
@@ -1101,20 +1102,21 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
                              gcar,
                              vkb1);
             std::complex<double>* pdbecp = dbecp + ipol * GlobalV::NBANDS * nkb;
-            gemm_op()(this->ctx,
-                      transa,
-                      transb,
-                      nkb,
-                      npm,
-                      nbasis,
-                      &ModuleBase::ONE,
-                      vkb1,
-                      this->npwx,
-                      psi_in[0].get_pointer(),
-                      this->npwx,
-                      &ModuleBase::ZERO,
-                      pdbecp,
-                      nkb);
+            gemm_op()({
+                .d = this->ctx,
+                .transa = transa,
+                .transb = transb,
+                .m = nkb,
+                .n = npm,
+                .k = nbasis,
+                .alpha = &ModuleBase::ONE,
+                .a = vkb1,
+                .lda = this->npwx,
+                .b = psi_in[0].get_pointer(),
+                .ldb = this->npwx,
+                .beta = &ModuleBase::ZERO,
+                .c = pdbecp,
+                .ldc = nkb});
         } // end ipol
 
         //		don't need to reduce here, keep dbecp different in each processor,

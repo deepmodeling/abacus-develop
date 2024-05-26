@@ -276,35 +276,37 @@ void ElecStatePW<T, Device>::add_usrho(const psi::Psi<T, Device>& psi)
         if (nbands == 1)
         {
             int inc = 1;
-            gemv_op()(this->ctx,
-                      transa,
-                      npw,
-                      this->ppcell->nkb,
-                      &one,
-                      this->vkb,
-                      this->ppcell->vkb.nc,
-                      psi_now,
-                      inc,
-                      &zero,
-                      becp,
-                      inc);
+            gemv_op()({
+                .d = this->ctx,
+                .trans = transa,
+                .m = npw,
+                .n = this->ppcell->nkb,
+                .alpha = &one,
+                .A = this->vkb,
+                .lda = this->ppcell->vkb.nc,
+                .X = psi_now,
+                .incx = inc,
+                .beta = &zero,
+                .Y = becp,
+                .incy = inc});
         }
         else
         {
-            gemm_op()(this->ctx,
-                      transa,
-                      transb,
-                      this->ppcell->nkb,
-                      nbands,
-                      npw,
-                      &one,
-                      this->vkb,
-                      this->ppcell->vkb.nc,
-                      psi_now,
-                      npwx,
-                      &zero,
-                      becp,
-                      this->ppcell->nkb);
+            gemm_op()({
+                .d = this->ctx,
+                .transa = transa,
+                .transb = transb,
+                .m = this->ppcell->nkb,
+                .n = nbands,
+                .k = npw,
+                .alpha = &one,
+                .a = this->vkb,
+                .lda = this->ppcell->vkb.nc,
+                .b = psi_now,
+                .ldb = npwx,
+                .beta = &zero,
+                .c = becp,
+                .ldc = this->ppcell->nkb});
         }
         Parallel_Reduce::reduce_pool(becp, this->ppcell->nkb * nbands);
 
@@ -343,20 +345,21 @@ void ElecStatePW<T, Device>::add_usrho(const psi::Psi<T, Device>& psi)
 
                         char transa = 'C';
                         char transb = 'N';
-                        gemm_op()(this->ctx,
-                                  transa,
-                                  transb,
-                                  atom->ncpp.nh,
-                                  atom->ncpp.nh,
-                                  nbands,
-                                  &one,
-                                  auxk1,
-                                  nbands,
-                                  auxk2,
-                                  nbands,
-                                  &zero,
-                                  aux_gk,
-                                  atom->ncpp.nh);
+                        gemm_op()({
+                            .d = this->ctx,
+                            .transa = transa,
+                            .transb = transb,
+                            .m = atom->ncpp.nh,
+                            .n = atom->ncpp.nh,
+                            .k = nbands,
+                            .alpha = &one,
+                            .a = auxk1,
+                            .lda = nbands,
+                            .b = auxk2,
+                            .ldb = nbands,
+                            .beta = &zero,
+                            .c = aux_gk,
+                            .ldc = atom->ncpp.nh});
                     }
 
                     // copy output from GEMM into desired format
@@ -480,20 +483,21 @@ void ElecStatePW<T, Device>::addusdens_g(const Real* becsum, T* rhog)
                 // sum over atoms
                 char transa = 'N';
                 char transb = 'T';
-                gemm_op()(this->ctx,
-                          transa,
-                          transb,
-                          npw,
-                          nij,
-                          atom->na,
-                          &one,
-                          skk,
-                          npw,
-                          &tbecsum[is * atom->na * nij],
-                          nij,
-                          &zero,
-                          aux2,
-                          npw);
+                gemm_op()({
+                    .d = this->ctx,
+                    .transa = transa,
+                    .transb = transb,
+                    .m = npw,
+                    .n = nij,
+                    .k = atom->na,
+                    .alpha = &one,
+                    .a = skk,
+                    .lda = npw,
+                    .b = &tbecsum[is * atom->na * nij],
+                    .ldb = nij,
+                    .beta = &zero,
+                    .c = aux2,
+                    .ldc = npw});
 
                 // sum over lm indices of Q_{lm}
                 int ijh = 0;

@@ -1,4 +1,5 @@
 #include "module_hsolver/kernels/math_kernel_op.h"
+#include "math_kernel_op.h"
 
 #include <iomanip>
 #include <iostream>
@@ -227,20 +228,19 @@ struct scal_op<FPTYPE, base_device::DEVICE_CPU>
 template <typename T>
 struct gemv_op<T, base_device::DEVICE_CPU>
 {
-    void operator()(const base_device::DEVICE_CPU* d,
-                    const char& trans,
-                    const int& m,
-                    const int& n,
-                    const T* alpha,
-                    const T* A,
-                    const int& lda,
-                    const T* X,
-                    const int& incx,
-                    const T* beta,
-                    T* Y,
-                    const int& incy)
+    void operator()(gemv_op_args<T, base_device::DEVICE_CPU> args)
     {
-        BlasConnector::gemv(trans, m, n, *alpha, A, lda, X, incx, *beta, Y, incy);
+        BlasConnector::gemv(args.trans, 
+                            args.m, 
+                            args.n, 
+                            *(args.alpha), 
+                            args.A, 
+                            args.lda, 
+                            args.X, 
+                            args.incx, 
+                            *(args.beta), 
+                            args.Y, 
+                            args.incy);
     }
 };
 
@@ -262,22 +262,21 @@ struct axpy_op<T, base_device::DEVICE_CPU>
 template <typename T>
 struct gemm_op<T, base_device::DEVICE_CPU>
 {
-    void operator()(const base_device::DEVICE_CPU* /*ctx*/,
-                    const char& transa,
-                    const char& transb,
-                    const int& m,
-                    const int& n,
-                    const int& k,
-                    const T* alpha,
-                    const T* a,
-                    const int& lda,
-                    const T* b,
-                    const int& ldb,
-                    const T* beta,
-                    T* c,
-                    const int& ldc)
+    void operator()(gemm_op_args<T, base_device::DEVICE_CPU> args)
     {
-        BlasConnector::gemm(transb, transa, n, m, k, *alpha, b, ldb, a, lda, *beta, c, ldc);
+        BlasConnector::gemm(args.transb, 
+                            args.transa, 
+                            args.n, 
+                            args.m, 
+                            args.k, 
+                            *(args.alpha), 
+                            args.b, 
+                            args.ldb, 
+                            args.a, 
+                            args.lda, 
+                            *(args.beta), 
+                            args.c, 
+                            args.ldc);
     }
 };
 

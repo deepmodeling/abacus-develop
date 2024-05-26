@@ -293,19 +293,19 @@ void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>&
 
             Device * ctx = {};
 
-            gemv_op<T, Device>()(
-                ctx,
-                'N',
-                h_mat.row,
-                h_mat.col,
-                one_,
-                h_mat.p,
-                h_mat.row,
-                psi_in.data<T>(),
-                1,
-                zero_,
-                hpsi_out.data<T>(),
-                1);
+            gemv_op<T, Device>()({
+                .d = ctx,
+                .trans = 'N',
+                .m =  h_mat.row,
+                .n = h_mat.col,
+                .alpha = one_,
+                .A = h_mat.p,
+                .lda = h_mat.row,
+                .X = psi_in.data<T>(),
+                .incx = 1,
+                .beta = zero_,
+                .Y = hpsi_out.data<T>(),
+                .incy = 1});
 
             ModuleBase::timer::tick("DiagoCG_New", "hpsi_func");
         };
@@ -319,19 +319,19 @@ void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>&
 
             Device * ctx = {};
             
-            gemv_op<T, Device>()(
-                ctx,
-                'N',
-                s_mat.row,
-                s_mat.col,
-                one_,
-                s_mat.p,
-                s_mat.row,
-                psi_in.data<T>(),
-                1,
-                zero_,
-                spsi_out.data<T>(),
-                1);
+            gemv_op<T, Device>()({
+                .d = ctx,
+                .trans = 'N',
+                .m = s_mat.row,
+                .n = s_mat.col,
+                .alpha = one_,
+                .A = s_mat.p,
+                .lda = s_mat.row,
+                .X = psi_in.data<T>(),
+                .incx = 1,
+                .beta = zero_,
+                .Y = spsi_out.data<T>(),
+                .incy = 1});
             
             ModuleBase::timer::tick("DiagoCG_New", "spsi_func");
         };

@@ -146,20 +146,21 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
             }
         }
         int npm = GlobalV::NPOL * nbands_occ;
-        gemm_op()(this->ctx,
-                  transa,
-                  transb,
-                  nkb,
-                  npm,
-                  npw,
-                  &ModuleBase::ONE,
-                  vkb,
-                  npwx,
-                  ppsi,
-                  npwx,
-                  &ModuleBase::ZERO,
-                  becp,
-                  nkb);
+        gemm_op()({
+            .d = this->ctx,
+            .transa = transa,
+            .transb = transb,
+            .m = nkb,
+            .n = npm,
+            .k = npw,
+            .alpha = &ModuleBase::ONE,
+            .a = vkb,
+            .lda = npwx,
+            .b = ppsi,
+            .ldb = npwx,
+            .beta = &ModuleBase::ZERO,
+            .c = becp,
+            .ldc = nkb});
         // becp calculate is over , now we should broadcast this data.
         if (this->device == base_device::GpuDevice)
         {
@@ -214,20 +215,21 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
                                         vkb1,
                                         pvkb2,
                                         dbecp_noevc);
-                gemm_op()(this->ctx,
-                          transa,
-                          transb,
-                          nkb,
-                          npm,
-                          npw,
-                          &ModuleBase::ONE,
-                          dbecp_noevc,
-                          npwx,
-                          ppsi,
-                          npwx,
-                          &ModuleBase::ZERO,
-                          dbecp,
-                          nkb);
+                gemm_op()({
+                    .d = this->ctx,
+                    .transa = transa,
+                    .transb = transb,
+                    .m = nkb,
+                    .n = npm,
+                    .k = npw,
+                    .alpha = &ModuleBase::ONE,
+                    .a = dbecp_noevc,
+                    .lda = npwx,
+                    .b = ppsi,
+                    .ldb = npwx,
+                    .beta = &ModuleBase::ZERO,
+                    .c = dbecp,
+                    .ldc = nkb});
                 //              don't need to reduce here, keep
 				//              dbecp different in each
 				//              processor, and at last sum up

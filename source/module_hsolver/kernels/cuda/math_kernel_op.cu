@@ -5,6 +5,7 @@
 #include "module_base/tool_quit.h"
 
 #include <base/macros/macros.h>
+#include <complex>
 #include <cuda_runtime.h>
 #include <thrust/complex.h>
 #include <thrust/execution_policy.h>
@@ -650,90 +651,90 @@ void axpy_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const ba
 }
 
 template <>
-void gemv_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
-                                                          const char& trans,
-                                                          const int& m,
-                                                          const int& n,
-                                                          const double* alpha,
-                                                          const double* A,
-                                                          const int& lda,
-                                                          const double* X,
-                                                          const int& incx,
-                                                          const double* beta,
-                                                          double* Y,
-                                                          const int& incy)
+void gemv_op<double, base_device::DEVICE_GPU>::operator()(gemv_op_args<double, base_device::DEVICE_GPU> args)
 {
     cublasOperation_t cutrans = {};
-    if (trans == 'N') {
+    if (args.trans == 'N') {
         cutrans = CUBLAS_OP_N;
     }
-    else if (trans == 'T') {
+    else if (args.trans == 'T') {
         cutrans = CUBLAS_OP_T;
     }
     else {
-        ModuleBase::WARNING_QUIT("gemv_op", std::string("Unknown trans type ") + trans + std::string(" !"));
+        ModuleBase::WARNING_QUIT("gemv_op", std::string("Unknown trans type ") + args.trans + std::string(" !"));
     }
-    cublasErrcheck(cublasDgemv(cublas_handle, cutrans, m, n, alpha, A, lda, X, incx, beta, Y, incx));
+    cublasErrcheck(cublasDgemv(cublas_handle, 
+                               cutrans, 
+                               args.m, 
+                               args.n, 
+                               args.alpha, 
+                               args.A, 
+                               args.lda, 
+                               args.X, 
+                               args.incx, 
+                               args.beta, 
+                               args.Y, 
+                               args.incx));
 }
 
 template <>
-void gemv_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
-                                                                       const char& trans,
-                                                                       const int& m,
-                                                                       const int& n,
-                                                                       const std::complex<float>* alpha,
-                                                                       const std::complex<float>* A,
-                                                                       const int& lda,
-                                                                       const std::complex<float>* X,
-                                                                       const int& incx,
-                                                                       const std::complex<float>* beta,
-                                                                       std::complex<float>* Y,
-                                                                       const int& incy)
+void gemv_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(gemv_op_args<std::complex<float>, base_device::DEVICE_GPU> args)
 {
     cublasOperation_t cutrans = {};
-    if (trans == 'N'){
+    if (args.trans == 'N'){
         cutrans = CUBLAS_OP_N;
     } 
-    else if (trans == 'T'){
+    else if (args.trans == 'T'){
         cutrans = CUBLAS_OP_T;
     } 
-    else if (trans == 'C'){
+    else if (args.trans == 'C'){
         cutrans = CUBLAS_OP_C;
     }
     else {
-        ModuleBase::WARNING_QUIT("gemv_op", std::string("Unknown trans type ") + trans + std::string(" !"));
+        ModuleBase::WARNING_QUIT("gemv_op", std::string("Unknown trans type ") + args.trans + std::string(" !"));
     }
-    cublasErrcheck(cublasCgemv(cublas_handle, cutrans, m, n, (float2*)alpha, (float2*)A, lda, (float2*)X, incx, (float2*)beta, (float2*)Y, incx));
+    cublasErrcheck(cublasCgemv(cublas_handle, 
+                               cutrans, 
+                               args.m, 
+                               args.n, 
+                               (float2*)args.alpha, 
+                               (float2*)args.A, 
+                               args.lda, 
+                               (float2*)args.X, 
+                               args.incx, 
+                               (float2*)args.beta, 
+                               (float2*)args.Y, 
+                               args.incx));
 }
 
 template <>
-void gemv_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
-                                                                        const char& trans,
-                                                                        const int& m,
-                                                                        const int& n,
-                                                                        const std::complex<double>* alpha,
-                                                                        const std::complex<double>* A,
-                                                                        const int& lda,
-                                                                        const std::complex<double>* X,
-                                                                        const int& incx,
-                                                                        const std::complex<double>* beta,
-                                                                        std::complex<double>* Y,
-                                                                        const int& incy)
+void gemv_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(gemv_op_args<std::complex<double>, base_device::DEVICE_GPU> args)
 {
     cublasOperation_t cutrans = {};
-    if (trans == 'N'){
+    if (args.trans == 'N'){
         cutrans = CUBLAS_OP_N;
     } 
-    else if (trans == 'T'){
+    else if (args.trans == 'T'){
         cutrans = CUBLAS_OP_T;
     } 
-    else if (trans == 'C'){
+    else if (args.trans == 'C'){
         cutrans = CUBLAS_OP_C;
     }
     else {
-        ModuleBase::WARNING_QUIT("gemv_op", std::string("Unknown trans type ") + trans + std::string(" !"));
+        ModuleBase::WARNING_QUIT("gemv_op", std::string("Unknown trans type ") + args.trans + std::string(" !"));
     }
-    cublasErrcheck(cublasZgemv(cublas_handle, cutrans, m, n, (double2*)alpha, (double2*)A, lda, (double2*)X, incx, (double2*)beta, (double2*)Y, incx));
+    cublasErrcheck(cublasZgemv(cublas_handle, 
+                               cutrans, 
+                               args.m, 
+                               args.n, 
+                               (double2*)args.alpha, 
+                               (double2*)args.A, 
+                               args.lda, 
+                               (double2*)args.X, 
+                               args.incx, 
+                               (double2*)args.beta, 
+                               (double2*)args.Y, 
+                               args.incx));
 }
 
 template <>
@@ -757,137 +758,137 @@ void scal_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DEV
 }
 
 template <>
-void gemm_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
-                                                          const char& transa,
-                                                          const char& transb,
-                                                          const int& m,
-                                                          const int& n,
-                                                          const int& k,
-                                                          const double* alpha,
-                                                          const double* a,
-                                                          const int& lda,
-                                                          const double* b,
-                                                          const int& ldb,
-                                                          const double* beta,
-                                                          double* c,
-                                                          const int& ldc)
+void gemm_op<double, base_device::DEVICE_GPU>::operator()(gemm_op_args<double, base_device::DEVICE_GPU> args)
 {
     cublasOperation_t cutransA;
     cublasOperation_t cutransB;
     // cutransA
-    if (transa == 'N') {
+    if (args.transa == 'N') {
         cutransA = CUBLAS_OP_N;
     }
-    else if (transa == 'T') {
+    else if (args.transa == 'T') {
         cutransA = CUBLAS_OP_T;
     }
     else {
-        ModuleBase::WARNING_QUIT("gemm_op", std::string("Unknown transa type ") + transa + std::string(" !"));
+        ModuleBase::WARNING_QUIT("gemm_op", std::string("Unknown transa type ") + args.transa + std::string(" !"));
     }
     // cutransB
-    if (transb == 'N') {
+    if (args.transb == 'N') {
         cutransB = CUBLAS_OP_N;
     }
-    else if (transb == 'T') {
+    else if (args.transb == 'T') {
         cutransB = CUBLAS_OP_T;
     }
     else {
-        ModuleBase::WARNING_QUIT("gemm_op", std::string("Unknown transb type ") + transb + std::string(" !"));
+        ModuleBase::WARNING_QUIT("gemm_op", std::string("Unknown transb type ") + args.transb + std::string(" !"));
     }
-    cublasErrcheck(cublasDgemm(cublas_handle, cutransA, cutransB, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc));
+    cublasErrcheck(cublasDgemm(cublas_handle, 
+                               cutransA, 
+                               cutransB, 
+                               args.m, 
+                               args.n, 
+                               args.k, 
+                               args.alpha, 
+                               args.a, 
+                               args.lda, 
+                               args.b, 
+                               args.ldb, 
+                               args.beta, 
+                               args.c, 
+                               args.ldc));
 }
 template <>
-void gemm_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
-                                                                       const char& transa,
-                                                                       const char& transb,
-                                                                       const int& m,
-                                                                       const int& n,
-                                                                       const int& k,
-                                                                       const std::complex<float>* alpha,
-                                                                       const std::complex<float>* a,
-                                                                       const int& lda,
-                                                                       const std::complex<float>* b,
-                                                                       const int& ldb,
-                                                                       const std::complex<float>* beta,
-                                                                       std::complex<float>* c,
-                                                                       const int& ldc)
+void gemm_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(gemm_op_args<std::complex<float>, base_device::DEVICE_GPU> args)
 {
     cublasOperation_t cutransA = {};
     cublasOperation_t cutransB = {};
     // cutransA
-    if (transa == 'N'){
+    if (args.transa == 'N'){
         cutransA = CUBLAS_OP_N;
     } 
-    else if (transa == 'T'){
+    else if (args.transa == 'T'){
         cutransA = CUBLAS_OP_T;
     } 
-    else if (transa == 'C'){
+    else if (args.transa == 'C'){
         cutransA = CUBLAS_OP_C;
     } 
     else {
-        ModuleBase::WARNING_QUIT("gemm_op", std::string("Unknown transa type ") + transa + std::string(" !"));
+        ModuleBase::WARNING_QUIT("gemm_op", std::string("Unknown transa type ") + args.transa + std::string(" !"));
     }
     // cutransB
-    if (transb == 'N'){
+    if (args.transb == 'N'){
         cutransB = CUBLAS_OP_N;
     } 
-    else if (transb == 'T'){
+    else if (args.transb == 'T'){
         cutransB = CUBLAS_OP_T;
     } 
-    else if (transb == 'C'){
+    else if (args.transb == 'C'){
         cutransB = CUBLAS_OP_C;
     }
     else {
-        ModuleBase::WARNING_QUIT("gemm_op", std::string("Unknown transb type ") + transb + std::string(" !"));
+        ModuleBase::WARNING_QUIT("gemm_op", std::string("Unknown transb type ") + args.transb + std::string(" !"));
     }
-    cublasErrcheck(cublasCgemm(cublas_handle, cutransA, cutransB, m, n ,k, (float2*)alpha, (float2*)a , lda, (float2*)b, ldb, (float2*)beta, (float2*)c, ldc));
+    cublasErrcheck(cublasCgemm(cublas_handle, 
+                               cutransA, 
+                               cutransB, 
+                               args.m, 
+                               args.n,
+                               args.k, 
+                               (float2*)args.alpha, 
+                               (float2*)args.a, 
+                               args.lda, 
+                               (float2*)args.b, 
+                               args.ldb, 
+                               (float2*)args.beta, 
+                               (float2*)args.c, 
+                               args.ldc));
 }
 
 template <>
-void gemm_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
-                                                                        const char& transa,
-                                                                        const char& transb,
-                                                                        const int& m,
-                                                                        const int& n,
-                                                                        const int& k,
-                                                                        const std::complex<double>* alpha,
-                                                                        const std::complex<double>* a,
-                                                                        const int& lda,
-                                                                        const std::complex<double>* b,
-                                                                        const int& ldb,
-                                                                        const std::complex<double>* beta,
-                                                                        std::complex<double>* c,
-                                                                        const int& ldc)
+void gemm_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(gemm_op_args<std::complex<double>, base_device::DEVICE_GPU> args)
 {
-    cublasOperation_t cutransA;
-    cublasOperation_t cutransB;
+    cublasOperation_t cutransA = {};
+    cublasOperation_t cutransB = {};
     // cutransA
-    if (transa == 'N'){
+    if (args.transa == 'N'){
         cutransA = CUBLAS_OP_N;
     } 
-    else if (transa == 'T'){
+    else if (args.transa == 'T'){
         cutransA = CUBLAS_OP_T;
     } 
-    else if (transa == 'C'){
+    else if (args.transa == 'C'){
         cutransA = CUBLAS_OP_C;
     } 
     else {
-        ModuleBase::WARNING_QUIT("gemm_op", std::string("Unknown transa type ") + transa + std::string(" !"));
+        ModuleBase::WARNING_QUIT("gemm_op", std::string("Unknown transa type ") + args.transa + std::string(" !"));
     }
     // cutransB
-    if (transb == 'N'){
+    if (args.transb == 'N'){
         cutransB = CUBLAS_OP_N;
     } 
-    else if (transb == 'T'){
+    else if (args.transb == 'T'){
         cutransB = CUBLAS_OP_T;
     } 
-    else if (transb == 'C'){
+    else if (args.transb == 'C'){
         cutransB = CUBLAS_OP_C;
     }
     else {
-        ModuleBase::WARNING_QUIT("gemm_op", std::string("Unknown transb type ") + transb + std::string(" !"));
+        ModuleBase::WARNING_QUIT("gemm_op", std::string("Unknown transb type ") + args.transb + std::string(" !"));
     }
-    cublasErrcheck(cublasZgemm(cublas_handle, cutransA, cutransB, m, n ,k, (double2*)alpha, (double2*)a , lda, (double2*)b, ldb, (double2*)beta, (double2*)c, ldc));
+    cublasErrcheck(cublasZgemm(cublas_handle, 
+                               cutransA, 
+                               cutransB, 
+                               args.m, 
+                               args.n,
+                               args.k, 
+                               (double2*)args.alpha, 
+                               (double2*)args.a, 
+                               args.lda, 
+                               (double2*)args.b, 
+                               args.ldb, 
+                               (double2*)args.beta, 
+                               (double2*)args.c, 
+                               args.ldc));
 }
 
 template <>

@@ -62,22 +62,21 @@ void DiagoIterAssist<T, Device>::diagH_subspace(
     hpsi_info hpsi_in(&psi, all_bands_range, hphi);
     pHamilt->ops->hPsi(hpsi_in);
 
-    gemm_op<T, Device>()(
-        ctx,
-        'C',
-        'N',
-        nstart,
-        nstart,
-        dmin,
-        &one,
-        ppsi,
-        dmax,
-        hphi,
-        dmax,
-        &zero,
-        hcc,
-        nstart
-    );
+    gemm_op<T, Device>()({
+        .d = ctx,
+        .transa = 'C',
+        .transb = 'N',
+        .m = nstart,
+        .n = nstart,
+        .k = dmin,
+        .alpha = &one,
+        .a = ppsi,
+        .lda = dmax, 
+        .b = hphi,
+        .ldb = dmax, 
+        .beta = &zero,
+        .c = hcc,
+        .ldc = nstart}); 
     delmem_complex_op()(ctx, hphi);
 
     // allocated spsi
@@ -87,7 +86,21 @@ void DiagoIterAssist<T, Device>::diagH_subspace(
     // do sPsi for all bands
     pHamilt->sPsi(ppsi, sphi, dmax, dmin, nstart);
 
-    gemm_op<T, Device>()(ctx, 'C', 'N', nstart, nstart, dmin, &one, ppsi, dmax, sphi, dmax, &zero, scc, nstart);
+    gemm_op<T, Device>()({
+        .d = ctx,
+        .transa = 'C',
+        .transb = 'N',
+        .m = nstart,
+        .n = nstart,
+        .k = dmin,
+        .alpha = &one,
+        .a = ppsi,
+        .lda = dmax, 
+        .b = sphi,
+        .ldb = dmax, 
+        .beta = &zero,
+        .c = scc,
+        .ldc = nstart}); 
     delmem_complex_op()(ctx, sphi);
 
     if (GlobalV::NPROC_IN_POOL > 1)
@@ -127,22 +140,21 @@ void DiagoIterAssist<T, Device>::diagH_subspace(
         // because psi and evc are different here,
         // I think if psi and evc are the same,
         // there may be problems, mohan 2011-01-01
-        gemm_op<T, Device>()(
-            ctx,
-            'N',
-            'N',
-            dmax,
-            n_band,
-            nstart,
-            &one,
-            ppsi, // dmax * nstart
-            dmax,
-            vcc,  // nstart * n_band
-            nstart,
-            &zero,
-            evc.get_pointer(),
-            dmax
-        );
+        gemm_op<T, Device>()({
+            .d = ctx,
+            .transa = 'N',
+            .transb = 'N',
+            .m = dmax,
+            .n = n_band,
+            .k = nstart,
+            .alpha = &one,
+            .a = ppsi,
+            .lda = dmax, 
+            .b = vcc,
+            .ldb = nstart, 
+            .beta = &zero,
+            .c = evc.get_pointer(),
+            .ldc = dmax}); 
     }
     else
     {
@@ -152,23 +164,21 @@ void DiagoIterAssist<T, Device>::diagH_subspace(
         T* evctemp = nullptr;
         resmem_complex_op()(ctx, evctemp, n_band * dmin, "DiagSub::evctemp");
         setmem_complex_op()(ctx, evctemp, 0, n_band * dmin);
-
-        gemm_op<T, Device>()(
-            ctx,
-            'N',
-            'N',
-            dmin,
-            n_band,
-            nstart,
-            &one,
-            ppsi, // dmin * nstart
-            dmax,
-            vcc,  // nstart * n_band
-            nstart,
-            &zero,
-            evctemp,
-            dmin
-        );
+        gemm_op<T, Device>()({
+            .d = ctx,
+            .transa = 'N',
+            .transb = 'N',
+            .m = dmin,
+            .n = n_band,
+            .k = nstart,
+            .alpha = &one,
+            .a = ppsi,
+            .lda = dmax, 
+            .b = vcc,
+            .ldb = nstart, 
+            .beta = &zero,
+            .c = evctemp,
+            .ldc = dmin}); 
 
         matrixSetToAnother<T, Device>()(ctx, n_band, evctemp, dmin, evc.get_pointer(), dmax);
         // for (int ib = 0; ib < n_band; ib++)
@@ -284,22 +294,22 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(
         pHamilt->ops->hPsi(hpsi_in);
     }
 
-    gemm_op<T, Device>()(
-        ctx,
-        'C',
-        'N',
-        nstart,
-        nstart,
-        dmin,
-        &one,
-        ppsi,
-        dmax,
-        hpsi,
-        dmax,
-        &zero,
-        hcc,
-        nstart
-    );
+    gemm_op<T, Device>()({
+        .d = ctx,
+        .transa = 'C',
+        .transb = 'N',
+        .m = nstart,
+        .n = nstart,
+        .k = dmin,
+        .alpha = &one,
+        .a = ppsi,
+        .lda = dmax, 
+        .b = hpsi,
+        .ldb = dmax, 
+        .beta = &zero,
+        .c = hcc,
+        .ldc = nstart}); 
+
     delmem_complex_op()(ctx, hpsi);
 
     // allocated spsi
@@ -309,7 +319,21 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(
     // do sPsi for all bands
     pHamilt->sPsi(ppsi, spsi, psi_temp.get_nbasis(), psi_temp.get_current_nbas(), psi_temp.get_nbands());
 
-    gemm_op<T, Device>()(ctx, 'C', 'N', nstart, nstart, dmin, &one, ppsi, dmax, spsi, dmax, &zero, scc, nstart);
+    gemm_op<T, Device>()({
+        .d = ctx,
+        .transa = 'C',
+        .transb = 'N',
+        .m = nstart,
+        .n = nstart,
+        .k = dmin,
+        .alpha = &one,
+        .a = ppsi,
+        .lda = dmax, 
+        .b = spsi,
+        .ldb = dmax, 
+        .beta = &zero,
+        .c = scc,
+        .ldc = nstart}); 
     delmem_complex_op()(ctx, spsi);
 
     if (GlobalV::NPROC_IN_POOL > 1)
@@ -357,22 +381,21 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(
         // because psi and evc are different here,
         // I think if psi and evc are the same,
         // there may be problems, mohan 2011-01-01
-        gemm_op<T, Device>()(
-            ctx,
-            'N',
-            'N',
-            dmax,
-            n_band,
-            nstart,
-            &one,
-            ppsi, // dmax * nstart
-            dmax,
-            vcc,  // nstart * n_band
-            nstart,
-            &zero,
-            evc.get_pointer(),
-            dmax
-        );
+        gemm_op<T, Device>()({
+            .d = ctx,
+            .transa = 'N',
+            .transb = 'N',
+            .m = dmax,
+            .n = n_band,
+            .k = nstart,
+            .alpha = &one,
+            .a = ppsi,
+            .lda = dmax, 
+            .b = vcc,
+            .ldb = nstart, 
+            .beta = &zero,
+            .c = evc.get_pointer(),
+            .ldc = dmax}); 
     }
     else
     {
@@ -383,22 +406,21 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(
         resmem_complex_op()(ctx, evctemp, n_band * dmin, "DiagSub::evctemp");
         setmem_complex_op()(ctx, evctemp, 0, n_band * dmin);
 
-        gemm_op<T, Device>()(
-            ctx,
-            'N',
-            'N',
-            dmin,
-            n_band,
-            nstart,
-            &one,
-            ppsi, // dmin * nstart
-            dmax,
-            vcc,  // nstart * n_band
-            nstart,
-            &zero,
-            evctemp,
-            dmin
-        );
+        gemm_op<T, Device>()({
+            .d = ctx,
+            .transa = 'N',
+            .transb = 'N',
+            .m = dmin,
+            .n = n_band,
+            .k = nstart,
+            .alpha = &one,
+            .a = ppsi,
+            .lda = dmax, 
+            .b = vcc,
+            .ldb = nstart, 
+            .beta = &zero,
+            .c = evctemp,
+            .ldc = dmin}); 
 
         matrixSetToAnother<T, Device>()(ctx, n_band, evctemp, dmin, evc.get_pointer(), dmax);
 

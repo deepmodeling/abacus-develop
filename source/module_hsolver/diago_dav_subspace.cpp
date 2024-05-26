@@ -224,20 +224,21 @@ void Diago_DavSubspace<T, Device>::diag_once(hamilt::Hamilt<T, Device>* phm_in,
             setmem_complex_op()(this->ctx, psi.get_pointer(), 0, n_band * psi.get_nbasis());
             //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             // haozhihan repalce 2022-10-18
-            gemm_op<T, Device>()(this->ctx,
-                                 'N',
-                                 'N',
-                                 this->dim,    // m: row of A,C
-                                 this->n_band, // n: col of B,C
-                                 nbase,        // k: col of A, row of B
-                                 this->one,
-                                 basis.get_pointer(), // A dim * nbase
-                                 this->dim,
-                                 this->vcc, // B nbase * n_band
-                                 this->nbase_x,
-                                 this->zero,
-                                 psi.get_pointer(), // C dim * n_band
-                                 psi.get_nbasis());
+            gemm_op<T, Device>()({
+                .d = this->ctx,
+                .transa = 'N',
+                .transb = 'N',
+                .m = this->dim,
+                .n = this->n_band,
+                .k = nbase,
+                .alpha = this->one,
+                .a = basis.get_pointer(),
+                .lda = this->dim,
+                .b = this->vcc,
+                .ldb = this->nbase_x,
+                .beta = this->zero,
+                .c = psi.get_pointer(),
+                .ldc = psi.get_nbasis()});
 
             if (!this->notconv || (dav_iter == DiagoIterAssist<T, Device>::PW_DIAG_NMAX))
             {
@@ -305,21 +306,21 @@ void Diago_DavSubspace<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
         }
     }
 
-    gemm_op<T, Device>()(this->ctx,
-                         'N',
-                         'N',
-                         this->dim,        // m: row of A,C
-                         notconv,          // n: col of B,C
-                         nbase,            // k: col of A, row of B
-                         this->one,        // alpha
-                         &basis(0, 0),     // A
-                         this->dim,        // LDA
-                         vcc,              // B
-                         this->nbase_x,    // LDB
-                         this->zero,       // belta
-                         &basis(nbase, 0), // C dim * notconv
-                         this->dim         // LDC
-    );
+    gemm_op<T, Device>()({
+        .d = this->ctx,
+        .transa = 'N',
+        .transb = 'N',
+        .m = this->dim,
+        .n = notconv,
+        .k = nbase,
+        .alpha = this->one,
+        .a = &basis(0, 0),
+        .lda = this->dim,
+        .b = vcc,
+        .ldb = this->nbase_x,
+        .beta = this->zero,
+        .c = &basis(nbase, 0),
+        .ldc = this->dim});
 
     for (int m = 0; m < notconv; m++)
     {
@@ -333,21 +334,21 @@ void Diago_DavSubspace<T, Device>::cal_grad(hamilt::Hamilt<T, Device>* phm_in,
                                           e_temp_cpu.data());
     }
 
-    gemm_op<T, Device>()(this->ctx,
-                         'N',
-                         'N',
-                         this->dim,        // m: row of A,C
-                         notconv,          // n: col of B,C
-                         nbase,            // k: col of A, row of B
-                         this->one,        // alpha
-                         hphi,             // A dim * nbase
-                         this->dim,        // LDA
-                         vcc,              // B nbase * notconv
-                         this->nbase_x,    // LDB
-                         this->one,        // belta
-                         &basis(nbase, 0), // C dim * notconv
-                         this->dim         // LDC
-    );
+    gemm_op<T, Device>()({
+        .d = this->ctx,
+        .transa = 'N',
+        .transb = 'N',
+        .m = this->dim,
+        .n = notconv,
+        .k = nbase,
+        .alpha = this->one,
+        .a = hphi,
+        .lda = this->dim,
+        .b = vcc,
+        .ldb = this->nbase_x,
+        .beta = this->one,
+        .c = &basis(nbase, 0),
+        .ldc = this->dim});
 
     // "precondition!!!"
     std::vector<Real> pre(this->dim, 0.0);
@@ -400,36 +401,37 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
                                        T* scc)
 {
     ModuleBase::timer::tick("Diago_DavSubspace", "cal_elem");
+    gemm_op<T, Device>()({
+        .d = this->ctx,
+        .transa = 'C',
+        .transb = 'N',
+        .m = nbase + notconv,
+        .n = notconv,
+        .k = this->dim,
+        .alpha = this->one,
+        .a = &basis(0, 0),
+        .lda = this->dim,
+        .b = &hphi[nbase * this->dim],
+        .ldb = this->dim,
+        .beta = this->zero,
+        .c = &hcc[nbase * this->nbase_x],
+        .ldc = this->nbase_x});
 
-    gemm_op<T, Device>()(this->ctx,
-                        'C',
-                        'N',
-                        nbase + notconv,
-                        notconv,
-                        this->dim,
-                        this->one,
-                        &basis(0, 0),
-                        this->dim,
-                        &hphi[nbase * this->dim],
-                        this->dim,
-                        this->zero,
-                        &hcc[nbase * this->nbase_x],
-                        this->nbase_x);
-
-    gemm_op<T, Device>()(this->ctx,
-                        'C',
-                        'N',
-                        nbase + notconv,
-                        notconv,
-                        this->dim,
-                        this->one,
-                        &basis(0, 0),
-                        this->dim,
-                        &basis(nbase, 0),
-                        this->dim,
-                        this->zero,
-                        &scc[nbase * this->nbase_x],
-                        this->nbase_x);
+    gemm_op<T, Device>()({
+        .d = this->ctx,
+        .transa = 'C',
+        .transb = 'N',
+        .m = nbase + notconv,
+        .n = notconv,
+        .k = this->dim,
+        .alpha = this->one,
+        .a = &basis(0, 0),
+        .lda = this->dim,
+        .b = &basis(nbase, 0),
+        .ldb = this->dim,
+        .beta = this->zero,
+        .c = &scc[nbase * this->nbase_x],
+        .ldc = this->nbase_x});
 
 #ifdef __MPI
     if (GlobalV::NPROC_IN_POOL > 1)
@@ -681,20 +683,21 @@ void Diago_DavSubspace<T, Device>::refresh(const int& dim,
     {
         syncmem_complex_op()(this->ctx, this->ctx, &basis(i, 0), &psi(i, 0), this->dim);
     }
-    gemm_op<T, Device>()(this->ctx,
-                         'N',
-                         'N',
-                         this->dim,
-                         nband,
-                         nbase,
-                         this->one,
-                         this->hphi,
-                         this->dim,
-                         this->vcc,
-                         this->nbase_x,
-                         this->zero,
-                         &basis(nband, 0),
-                         this->dim);
+    gemm_op<T, Device>()({
+        .d = this->ctx,
+        .transa = 'N',
+        .transb = 'N',
+        .m = nbase + notconv,
+        .n = notconv,
+        .k = this->dim,
+        .alpha = this->one,
+        .a = this->hphi,
+        .lda = this->dim,
+        .b = this->vcc,
+        .ldb = this->nbase_x,
+        .beta = this->zero,
+        .c = &basis(nband, 0),
+        .ldc = this->dim});
 
     // update hphi
     syncmem_complex_op()(this->ctx, this->ctx, hphi, &basis(nband, 0), this->dim * nband);
@@ -802,20 +805,21 @@ void Diago_DavSubspace<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
         setmem_complex_op()(this->ctx, this->scc, 0, this->nbase_x * this->nbase_x);
 
         std::cout << "before dav 111" << std::endl;
-        gemm_op<T, Device>()(this->ctx,
-                             'C',
-                             'N',
-                             psi.get_nbands(),
-                             psi.get_nbands(),
-                             psi.get_current_nbas(),
-                             this->one,
-                             &psi(0, 0),
-                             psi.get_current_nbas(),
-                             &psi(0, 0),
-                             psi.get_current_nbas(),
-                             this->zero,
-                             this->scc,
-                             this->nbase_x);
+        gemm_op<T, Device>()({
+            .d = this->ctx,
+            .transa = 'C',
+            .transb = 'N',
+            .m = psi.get_nbands(),
+            .n = psi.get_nbands(),
+            .k = psi.get_current_nbas(),
+            .alpha = this->one,
+            .a = &psi(0, 0),
+            .lda = psi.get_current_nbas(),
+            .b = &psi(0, 0),
+            .ldb = psi.get_current_nbas(),
+            .beta = this->zero,
+            .c = this->scc,
+            .ldc = this->nbase_x});
         // output scc
         for (size_t i = 0; i < psi.get_nbands(); i++)
         {
@@ -868,20 +872,21 @@ void Diago_DavSubspace<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
     if (outputscc)
     {
         std::cout << "after dav 222 " << std::endl;
-        gemm_op<T, Device>()(this->ctx,
-                             'C',
-                             'N',
-                             psi.get_nbands(),
-                             psi.get_nbands(),
-                             psi.get_current_nbas(),
-                             this->one,
-                             &psi(0, 0),
-                             psi.get_current_nbas(),
-                             &psi(0, 0),
-                             psi.get_current_nbas(),
-                             this->zero,
-                             this->scc,
-                             this->nbase_x);
+        gemm_op<T, Device>()({
+            .d = this->ctx,
+            .transa = 'C',
+            .transb = 'N',
+            .m = psi.get_nbands(),
+            .n = psi.get_nbands(),
+            .k = psi.get_current_nbas(),
+            .alpha = this->one,
+            .a = &psi(0, 0),
+            .lda = psi.get_current_nbas(),
+            .b = &psi(0, 0),
+            .ldb = psi.get_current_nbas(),
+            .beta = this->zero,
+            .c = this->scc,
+            .ldc = this->nbase_x});
         // output scc
         for (size_t i = 0; i < psi.get_nbands(); i++)
         {

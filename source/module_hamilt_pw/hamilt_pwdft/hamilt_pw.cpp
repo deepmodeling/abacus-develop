@@ -237,35 +237,37 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
             if (nbands == 1)
             {
                 int inc = 1;
-                gemv_op()(this->ctx,
-                          transa,
-                          npw,
-                          this->ppcell->nkb,
-                          &one,
-                          this->vkb,
-                          this->ppcell->vkb.nc,
-                          psi_in,
-                          inc,
-                          &zero,
-                          becp,
-                          inc);
+                gemv_op()({
+                    .d = this->ctx,
+                    .trans = transa,
+                    .m = npw,
+                    .n = this->ppcell->nkb,
+                    .alpha = &one,
+                    .A = this->vkb,
+                    .lda = this->ppcell->vkb.nc,
+                    .X = psi_in,
+                    .incx = inc,
+                    .beta = &zero,
+                    .Y = becp,
+                    .incy = inc});
             }
             else
             {
-                gemm_op()(this->ctx,
-                          transa,
-                          transb,
-                          this->ppcell->nkb,
-                          nbands,
-                          npw,
-                          &one,
-                          this->vkb,
-                          this->ppcell->vkb.nc,
-                          psi_in,
-                          nrow,
-                          &zero,
-                          becp,
-                          this->ppcell->nkb);
+                gemm_op()({
+                    .d = this->ctx,
+                    .transa = transa,
+                    .transb = transb,
+                    .m = this->ppcell->nkb,
+                    .n = nbands,
+                    .k = npw,
+                    .alpha = &one,
+                    .a = this->vkb,
+                    .lda = this->ppcell->vkb.nc,
+                    .b = psi_in,
+                    .ldb = nrow,
+                    .beta = &zero,
+                    .c = becp,
+                    .ldc = this->ppcell->nkb});
             }
 
             Parallel_Reduce::reduce_pool(becp, this->ppcell->nkb * nbands);
@@ -306,20 +308,21 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
                     for (int ia = 0; ia < atoms->na; ia++)
                     {
                         const int iat = GlobalC::ucell.itia2iat(it, ia);
-                        gemm_op()(this->ctx,
-                                  transa,
-                                  transb,
-                                  nh,
-                                  nbands,
-                                  nh,
-                                  &one,
-                                  qqc,
-                                  nh,
-                                  &becp[this->ppcell->indv_ijkb0[iat]],
-                                  this->ppcell->nkb,
-                                  &zero,
-                                  &ps[this->ppcell->indv_ijkb0[iat]],
-                                  this->ppcell->nkb);
+                        gemm_op()({
+                            .d = this->ctx,
+                            .transa = transa,
+                            .transb = transb,
+                            .m = nh,
+                            .n = nbands,
+                            .k = nh,
+                            .alpha = &one,
+                            .a = qqc,
+                            .lda = nh,
+                            .b = &becp[this->ppcell->indv_ijkb0[iat]],
+                            .ldb = this->ppcell->nkb,
+                            .beta = &zero,
+                            .c = &ps[this->ppcell->indv_ijkb0[iat]],
+                            .ldc = this->ppcell->nkb});
                     }
                     delmem_complex_op()(ctx, qqc);
                 }
@@ -328,35 +331,38 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
             if (nbands == 1)
             {
                 const int inc = 1;
-                gemv_op()(this->ctx,
-                          transa,
-                          npw,
-                          this->ppcell->nkb,
-                          &one,
-                          this->vkb,
-                          this->ppcell->vkb.nc,
-                          ps,
-                          inc,
-                          &one,
-                          spsi,
-                          inc);
+                gemv_op()({
+                    .d = this->ctx,
+                    .trans = transa,
+                    .m = npw,
+                    .n = this->ppcell->nkb,
+                    .alpha = &one,
+                    .A = this->vkb,
+                    .lda = this->ppcell->vkb.nc,
+                    .X = ps,
+                    .incx = inc,
+                    .beta = &one,
+                    .Y = spsi,
+                    .incy = inc});
+                
             }
             else
             {
-                gemm_op()(this->ctx,
-                          transa,
-                          transb,
-                          npw,
-                          nbands,
-                          this->ppcell->nkb,
-                          &one,
-                          this->vkb,
-                          this->ppcell->vkb.nc,
-                          ps,
-                          this->ppcell->nkb,
-                          &one,
-                          spsi,
-                          nrow);
+                gemm_op()({
+                    .d = this->ctx,
+                    .transa = transa,
+                    .transb = transb,
+                    .m = npw,
+                    .n = nbands,
+                    .k = this->ppcell->nkb,
+                    .alpha = &one,
+                    .a = this->vkb,
+                    .lda = this->ppcell->vkb.nc,
+                    .b = ps,
+                    .ldb = this->ppcell->nkb,
+                    .beta = &one,
+                    .c = spsi,
+                    .ldc = nrow});
             }
         }
         delmem_complex_op()(this->ctx, ps);

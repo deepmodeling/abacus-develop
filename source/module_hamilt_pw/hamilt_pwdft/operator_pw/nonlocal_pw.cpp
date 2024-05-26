@@ -167,41 +167,40 @@ void Nonlocal<OperatorPW<T, Device>>::add_nonlocal_pp(T *hpsi_in, const T *becp,
         int inc = 1;
         // denghui replace 2022-10-20
         // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        gemv_op()(
-            this->ctx,
-            transa,
-            this->npw,
-            this->ppcell->nkb,
-            &this->one,
-            this->vkb,
-            this->ppcell->vkb.nc,
-            this->ps,
-            inc,
-            &this->one,
-            hpsi_in,
-            inc);
+        gemv_op()({
+            .d = this->ctx,
+            .trans = transa,
+            .m = npw,
+            .n = this->ppcell->nkb,
+            .alpha = &this->one,
+            .A = this->vkb,
+            .lda = this->ppcell->vkb.nc,
+            .X = ps,
+            .incx = inc,
+            .beta = &this->one,
+            .Y = hpsi_in,
+            .incy = inc});
     }
     else
     {
         int npm = m;
         //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         // denghui replace 2022-10-20
-        gemm_op()(
-            this->ctx,
-            transa,
-            transb,
-            this->npw,
-            npm,
-            this->ppcell->nkb,
-            &this->one,
-            this->vkb,
-            this->ppcell->vkb.nc,
-            this->ps,
-            npm,
-            &this->one,
-            hpsi_in,
-            this->max_npw
-        );
+        gemm_op()({
+            .d = this->ctx,
+            .transa = transa,
+            .transb = transb,
+            .m = this->npw,
+            .n = npm,
+            .k = this->ppcell->nkb,
+            .alpha = &this->one,
+            .a = this->vkb,
+            .lda = this->ppcell->vkb.nc,
+            .b = this->ps,
+            .ldb = npm,
+            .beta = &this->one,
+            .c = hpsi_in,
+            .ldc = this->max_npw});
     }
     ModuleBase::timer::tick("Nonlocal", "add_nonlocal_pp");
 }
@@ -238,41 +237,40 @@ void Nonlocal<OperatorPW<T, Device>>::act(
                 int inc = 1;
                 // denghui replace 2022-10-20
                 // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-                gemv_op()(
-                    this->ctx,
-                    transa,
-                    this->npw,
-                    nkb,
-                    &this->one,
-                    this->vkb,
-                    this->ppcell->vkb.nc,
-                    tmpsi_in,
-                    inc,
-                    &this->zero,
-                    this->becp,
-                    inc);
+                gemv_op()({
+                    .d = this->ctx,
+                    .trans = transa,
+                    .m = this->npw,
+                    .n = nkb,
+                    .alpha = &this->one,
+                    .A = this->vkb,
+                    .lda = this->ppcell->vkb.nc,
+                    .X = tmpsi_in,
+                    .incx = inc,
+                    .beta = &this->zero,
+                    .Y = this->becp,
+                    .incy = inc});
             }
             else
             {
                 int npm = nbands;
                 //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
                 // denghui replace 2022-10-20
-                gemm_op()(
-                    this->ctx,
-                    transa,
-                    transb,
-                    nkb,
-                    npm,
-                    this->npw,
-                    &this->one,
-                    this->vkb,
-                    this->ppcell->vkb.nc,
-                    tmpsi_in,
-                    max_npw,
-                    &this->zero,
-                    this->becp,
-                    nkb
-                );
+                gemm_op()({
+                    .d = this->ctx,
+                    .transa = transa,
+                    .transb = transb,
+                    .m = nkb,
+                    .n = npm,
+                    .k = this->npw,
+                    .alpha = &this->one,
+                    .a = this->vkb,
+                    .lda = this->ppcell->vkb.nc,
+                    .b = tmpsi_in,
+                    .ldb = max_npw,
+                    .beta = &this->zero,
+                    .c = this->becp,
+                    .ldc = nkb});
             }
 
             Parallel_Reduce::reduce_pool(becp, nkb * nbands);
