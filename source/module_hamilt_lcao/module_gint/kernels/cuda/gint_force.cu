@@ -612,7 +612,6 @@ void cal_stress_add(frc_strs_iat& f_s_iat,
     {
         for (int index = 0; index < cuda_block; index++)
         {
-            // printf("the stress is %f\n",stress[i]);
             stress[i] += f_s_iat.stress_host[i * cuda_block + index];
         }
     }
