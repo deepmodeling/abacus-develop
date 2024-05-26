@@ -1412,3 +1412,23 @@ void K_Vectors::set_kup_and_kdw_after_vc(void)
 
     return;
 } // end subroutine set_kup_and_kdw
+
+int K_Vectors::get_nks(void)
+{
+    return this->nks;
+}
+
+int K_Vectors::get_nkstot(void)
+{
+    return this->nkstot;
+}
+
+int K_Vectors::get_nkstot_ibz(void)
+{
+    return this->nkstot_ibz;
+}
+
+int K_Vectors::get_nkstot_full(void)
+{
+    return this->nkstot_full;
+}
