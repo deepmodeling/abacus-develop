@@ -550,6 +550,8 @@ void Input_Conv::Convert(void)
     module_tddft::Evolve_elec::out_current = INPUT.out_current;
     module_tddft::Evolve_elec::td_print_eij = INPUT.td_print_eij;
     module_tddft::Evolve_elec::td_edm = INPUT.td_edm;
+    TD_Velocity::out_vecpot = INPUT.out_vecpot;
+    TD_Velocity::init_vecpot_file = INPUT.init_vecpot_file;
     read_td_efield();
 #endif
 
@@ -769,6 +771,12 @@ void Input_Conv::Convert(void)
     GlobalV::deepks_bandgap = INPUT.deepks_bandgap; // QO added for bandgap label 2021-12-15
     GlobalV::deepks_out_unittest = INPUT.deepks_out_unittest;
     GlobalV::deepks_out_labels = INPUT.deepks_out_labels;
+    GlobalV::deepks_equiv = INPUT.deepks_equiv;
+
+    if(GlobalV::deepks_equiv && GlobalV::deepks_bandgap)
+    {
+        ModuleBase::WARNING_QUIT("Input_conv", "deepks_equiv and deepks_bandgap cannot be used together");
+    }
     if (GlobalV::deepks_out_unittest)
     {
         GlobalV::deepks_out_labels = 1;

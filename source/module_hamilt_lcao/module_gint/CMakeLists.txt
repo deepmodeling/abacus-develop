@@ -24,13 +24,23 @@ list(APPEND objects
 if(USE_CUDA)
   list(APPEND objects
       kernels/cuda/cuda_tools.cu
-      kernels/cuda/vbatch_matrix_mul.cu
       kernels/cuda/gint_vl.cu
       kernels/cuda/gint_rho.cu
       kernels/cuda/gint_force.cu
       gint_vl_gpu.cu
       gint_rho_gpu.cu
       gint_force_gpu.cu
+      kernels/cuda/gemm_selector.cu
+      kernels/cuda/code_gen_00.cu
+      kernels/cuda/code_gen_01.cu
+      kernels/cuda/code_gen_02.cu
+      kernels/cuda/code_gen_03.cu
+      kernels/cuda/code_gen_04.cu
+      kernels/cuda/code_gen_05.cu
+      kernels/cuda/code_gen_06.cu
+      kernels/cuda/code_gen_07.cu
+      kernels/cuda/code_gen_08.cu
+      kernels/cuda/code_gen_09.cu
       gtask_vl.cpp
       gtask_rho.cpp
       gtask_force.cpp

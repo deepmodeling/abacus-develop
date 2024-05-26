@@ -337,7 +337,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
         std::vector<int> trace_alpha_row;
         std::vector<int> trace_alpha_col;
         std::vector<double> gedms;
-        if(!GlobalC::ld.get_if_equiv())
+        if(!GlobalV::deepks_equiv)
         {
             int ib=0;
             for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)

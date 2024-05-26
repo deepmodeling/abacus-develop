@@ -4,6 +4,7 @@
 #include <complex>
 #include <thrust/complex.h>
 #include <base/macros/macros.h>
+#include <module_base/module_device/device.h>
 
 #include <cuda_runtime.h>
 

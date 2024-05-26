@@ -7,6 +7,7 @@
 #include <thrust/complex.h>
 #include <cuda_runtime.h>
 #include <base/macros/macros.h>
+#include <module_base/module_device/device.h>
 
 #define THREADS_PER_BLOCK 256
 
