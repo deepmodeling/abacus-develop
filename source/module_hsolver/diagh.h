@@ -28,13 +28,16 @@ struct diag_comm_info
 {
 #ifdef __MPI
 
-    MPI_Comm comm;
-    int rank;
-    int nproc;
+    const MPI_Comm comm;
+    const int rank;
+    const int nproc;
 
-    diag_comm_info(MPI_Comm comm_in, int rank_in, int nproc_in) : comm(comm_in), rank(rank_in), nproc(nproc_in) {}
+    diag_comm_info(const MPI_Comm &comm_in, const int rank_in, const int nproc_in) : comm(comm_in), rank(rank_in), nproc(nproc_in) {}
 #else
-    int rank = 0;
+    const int rank;
+    const int nproc;
+
+    diag_comm_info(const int rank_in, const int nproc_in) : rank(rank_in), nproc(nproc_in) {}
 #endif
 };
 

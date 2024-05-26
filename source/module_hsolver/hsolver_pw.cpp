@@ -14,6 +14,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
+#include "module_hsolver/diagh.h"
 #include "module_hsolver/diago_iter_assist.h"
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
@@ -83,22 +84,23 @@ void HSolverPW<T, Device>::initDiagh(const psi::Psi<T, Device>& psi)
     }
     else if (this->method == "dav")
     {
+#ifdef __MPI 
+        const diag_comm_info comm_info = {POOL_WORLD, GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL};
+#else
+        const diag_comm_info comm_info = {GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL};
+#endif
+
         if (this->pdiagh != nullptr)
         {
             if (this->pdiagh->method != this->method)
             {
                 delete (DiagoDavid<T, Device>*)this->pdiagh;
 
-
                 this->pdiagh = new DiagoDavid<T, Device>(
                                 precondition.data(),
                                 GlobalV::PW_DIAG_NDIM,
                                 GlobalV::use_paw,
-#ifdef __MPI                     
-                                {POOL_WORLD, GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL}
-#else
-                                {}
-#endif
+                                comm_info
                                 );
 
                 this->pdiagh->method = this->method;
@@ -110,11 +112,7 @@ void HSolverPW<T, Device>::initDiagh(const psi::Psi<T, Device>& psi)
                                 precondition.data(),
                                 GlobalV::PW_DIAG_NDIM,
                                 GlobalV::use_paw,
-#ifdef __MPI                     
-                                {POOL_WORLD, GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL}
-#else
-                                {}
-#endif
+                                comm_info
                                 );
 
             this->pdiagh->method = this->method;

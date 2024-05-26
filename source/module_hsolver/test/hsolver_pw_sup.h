@@ -149,8 +149,8 @@ template <typename T, typename Device>
 DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in, 
                                   int diago_david_ndim_in,
                                   bool use_paw_in,
-                                  diag_comm_info diag_comm_in)
-    : diago_david_ndim(diago_david_ndim_in), use_paw(use_paw_in), diag_comm(diag_comm_in)
+                                  const diag_comm_info& diag_comm_in)
+    : david_ndim(diago_david_ndim_in), use_paw(use_paw_in), diag_comm(diag_comm_in)
 {
     this->device = base_device::get_device_type<Device>(this->ctx);
     this->precondition = precondition_in;

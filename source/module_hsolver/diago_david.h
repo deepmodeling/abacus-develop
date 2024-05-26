@@ -19,9 +19,9 @@ class DiagoDavid : public DiagH<T, Device>
   public:
 
     DiagoDavid(const Real* precondition_in, 
-               int diago_david_ndim_in,
+               int david_ndim_in,
                bool use_paw_in,
-               diag_comm_info diag_comm_in);
+               const diag_comm_info& diag_comm_in);
 
     virtual ~DiagoDavid() override;
 
@@ -30,7 +30,7 @@ class DiagoDavid : public DiagH<T, Device>
                       Real* eigenvalue_in) override ;
 
   private:
-    int diago_david_ndim = 4;
+    int david_ndim = 4;
     bool use_paw = false;
     int test_david = 0;
 

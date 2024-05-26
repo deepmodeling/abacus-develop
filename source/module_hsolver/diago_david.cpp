@@ -18,10 +18,10 @@ using namespace hsolver;
 
 template <typename T, typename Device>
 DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in, 
-                                  int diago_david_ndim_in,
+                                  int david_ndim_in,
                                   bool use_paw_in,
-                                  diag_comm_info diag_comm_in)
-    : diago_david_ndim(diago_david_ndim_in), use_paw(use_paw_in), diag_comm(diag_comm_in)
+                                  const diag_comm_info& diag_comm_in)
+    : david_ndim(david_ndim_in), use_paw(use_paw_in), diag_comm(diag_comm_in)
 {
     this->device = base_device::get_device_type<Device>(this->ctx);
     this->precondition = precondition_in;
@@ -60,12 +60,12 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
     }
     ModuleBase::timer::tick("DiagoDavid", "diag_mock");
 
-    assert(this->diago_david_ndim > 1);
+    assert(this->david_ndim > 1);
 
 #ifdef __MPI
-    assert(this->diago_david_ndim * psi.get_nbands() < psi.get_current_nbas() * diag_comm.nproc);
+    assert(this->david_ndim * psi.get_nbands() < psi.get_current_nbas() * diag_comm.nproc);
 #else
-    assert(this->diago_david_ndim * psi.get_nbands() < psi.get_current_nbas());
+    assert(this->david_ndim * psi.get_nbands() < psi.get_current_nbas());
 #endif
 
     // qianrui change it 2021-7-25.
@@ -84,7 +84,7 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
     
     this->dim = psi.get_k_first() ? psi.get_current_nbas() : psi.get_nk() * psi.get_nbasis();
     this->n_band = psi.get_nbands();
-    this->nbase_x = this->diago_david_ndim * this->n_band; // maximum dimension of the reduced basis set
+    this->nbase_x = this->david_ndim * this->n_band; // maximum dimension of the reduced basis set
 
     // the lowest N eigenvalues
     base_device::memory::resize_memory_op<Real, base_device::DEVICE_CPU>()(
