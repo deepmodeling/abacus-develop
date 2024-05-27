@@ -163,7 +163,7 @@ class Grid_Technique : public Grid_MeshBall
     int atom_pair_mesh;
     int atom_pair_nbz;
 
-    int nstreams ;
+    int nstreams=4 ;
     cudaStream_t* streams;
     // streams[nstreams]
     // TODO it needs to be implemented through configuration files
