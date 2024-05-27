@@ -63,6 +63,7 @@ private:
 
     // step 1 : generate kpoints
     bool read_kpoints(const std::string &fn); // return 0: something wrong.
+    void Linely_add_k_between(std::ifstream& ifk, std::vector<ModuleBase::Vector3<double>>& kvec);
     void Monkhorst_Pack(const int *nmp_in,const double *koffset_in,const int tipo);
     double Monkhorst_Pack_formula( const int &k_type, const double &offset,
                                    const int& n, const int &dim);

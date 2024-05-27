@@ -343,82 +343,14 @@ bool K_Vectors::read_kpoints(const std::string &fn)
         }
 		else if (kword == "Line_Cartesian" )
 		{
-			//std::cout << " kword = " << kword << std::endl;
 			if(ModuleSymmetry::Symmetry::symm_flag == 1)
 			{
 				ModuleBase::WARNING("K_Vectors::read_kpoints","Line mode of k-points is open, please set symmetry to 0 or -1.");
 				return 0;
 			}
 
+            Linely_add_k_between(ifk, kvec_c);
 
-			// how many special points.
-			int nks_special = this->nkstot;
-			//std::cout << " nks_special = " << nks_special << std::endl;
-
-			//------------------------------------------
-			// number of points to the next k points
-			//------------------------------------------
-			std::vector<int> nkl(nks_special,0);
-
-			//------------------------------------------
-			// cartesian coordinates of special points.
-			//------------------------------------------
-			std::vector<double> ksx(nks_special);
-			std::vector<double> ksy(nks_special);
-			std::vector<double> ksz(nks_special);
-
-			//recalculate nkstot.
-			nkstot = 0;
-            /* ISSUE#3482: to distinguish different kline segments */
-            std::vector<int> kpt_segids;
-            kl_segids.clear(); kl_segids.shrink_to_fit();
-            int kpt_segid = 0;
-			for(int iks=0; iks<nks_special; iks++)
-			{
-				ifk >> ksx[iks];
-				ifk >> ksy[iks];
-				ifk >> ksz[iks];
-				ModuleBase::GlobalFunc::READ_VALUE( ifk, nkl[iks] );
-				//std::cout << " nkl[" << iks << "]=" << nkl[iks] << std::endl;
-				assert(nkl[iks] >= 0);
-				nkstot += nkl[iks];
-                /* ISSUE#3482: to distinguish different kline segments */
-                if((nkl[iks] == 1)&&(iks!=(nks_special-1))) kpt_segid++;
-                kpt_segids.push_back(kpt_segid);
-			}
-			assert( nkl[nks_special-1] == 1);
-
-			//std::cout << " nkstot = " << nkstot << std::endl;
-        	this->renew(nkstot * nspin);//mohan fix bug 2009-09-01
-
-			int count = 0;
-			for(int iks=1; iks<nks_special; iks++)
-			{
-				double dx = (ksx[iks] - ksx[iks-1]) / nkl[iks-1];
-				double dy = (ksy[iks] - ksy[iks-1]) / nkl[iks-1];
-				double dz = (ksz[iks] - ksz[iks-1]) / nkl[iks-1];
-//				GlobalV::ofs_running << " dx=" << dx << " dy=" << dy << " dz=" << dz << std::endl;
-				for(int is=0; is<nkl[iks-1]; is++)
-				{
-					kvec_c[count].x = ksx[iks-1] + is*dx;
-					kvec_c[count].y = ksy[iks-1] + is*dy;
-					kvec_c[count].z = ksz[iks-1] + is*dz;
-                    kl_segids.push_back(kpt_segids[iks-1]); /* ISSUE#3482: to distinguish different kline segments */
-					++count;
-				}
-			}
-
-			// deal with the last special k point.
-			kvec_c[count].x = ksx[nks_special-1];
-			kvec_c[count].y = ksy[nks_special-1];
-			kvec_c[count].z = ksz[nks_special-1];
-            kl_segids.push_back(kpt_segids[nks_special-1]); /* ISSUE#3482: to distinguish different kline segments */
-			++count;
-
-			//std::cout << " count = " << count << std::endl;
-			assert(count == nkstot);
-            assert(kl_segids.size() == nkstot); /* ISSUE#3482: to distinguish different kline segments */
-			
             std::for_each(wk.begin(), wk.end(), [](double& d){d = 1.0;});
 
             this->kc_done = true;
@@ -427,81 +359,13 @@ bool K_Vectors::read_kpoints(const std::string &fn)
 
 		else if (kword == "Line_Direct" || kword == "L" || kword == "Line" )
 		{
-			//std::cout << " kword = " << kword << std::endl;
 			if(ModuleSymmetry::Symmetry::symm_flag == 1)
 			{
 				ModuleBase::WARNING("K_Vectors::read_kpoints","Line mode of k-points is open, please set symmetry to 0 or -1.");
 				return 0;
 			}
 
-
-			// how many special points.
-			int nks_special = this->nkstot;
-			//std::cout << " nks_special = " << nks_special << std::endl;
-
-			//------------------------------------------
-			// number of points to the next k points
-			//------------------------------------------
-			std::vector<int> nkl(nks_special,0);
-
-			//------------------------------------------
-			// cartesian coordinates of special points.
-			//------------------------------------------
-			std::vector<double> ksx(nks_special);
-			std::vector<double> ksy(nks_special);
-			std::vector<double> ksz(nks_special);
-
-			//recalculate nkstot.
-			nkstot = 0;
-            /* ISSUE#3482: to distinguish different kline segments */
-            std::vector<int> kpt_segids;
-            kl_segids.clear(); kl_segids.shrink_to_fit();
-            int kpt_segid = 0;
-			for(int iks=0; iks<nks_special; iks++)
-			{
-				ifk >> ksx[iks];
-				ifk >> ksy[iks];
-				ifk >> ksz[iks];
-				ModuleBase::GlobalFunc::READ_VALUE( ifk, nkl[iks] ); /* so ifk is ifstream for kpoint, then nkl is number of kpoints on line */
-				//std::cout << " nkl[" << iks << "]=" << nkl[iks] << std::endl;
-				assert(nkl[iks] >= 0);
-				nkstot += nkl[iks];
-                /* ISSUE#3482: to distinguish different kline segments */
-                if((nkl[iks] == 1)&&(iks!=(nks_special-1))) kpt_segid++;
-                kpt_segids.push_back(kpt_segid);
-			}
-			assert( nkl[nks_special-1] == 1);
-
-			//std::cout << " nkstot = " << nkstot << std::endl;
-        	this->renew(nkstot * nspin);//mohan fix bug 2009-09-01
-
-			int count = 0;
-			for(int iks=1; iks<nks_special; iks++)
-			{
-				double dx = (ksx[iks] - ksx[iks-1]) / nkl[iks-1];
-				double dy = (ksy[iks] - ksy[iks-1]) / nkl[iks-1];
-				double dz = (ksz[iks] - ksz[iks-1]) / nkl[iks-1];
-//				GlobalV::ofs_running << " dx=" << dx << " dy=" << dy << " dz=" << dz << std::endl;
-				for(int is=0; is<nkl[iks-1]; is++)
-				{
-					kvec_d[count].x = ksx[iks-1] + is*dx;
-					kvec_d[count].y = ksy[iks-1] + is*dy;
-					kvec_d[count].z = ksz[iks-1] + is*dz;
-                    kl_segids.push_back(kpt_segids[iks-1]); /* ISSUE#3482: to distinguish different kline segments */
-					++count;
-				}
-			}
-
-			// deal with the last special k point.
-			kvec_d[count].x = ksx[nks_special-1];
-			kvec_d[count].y = ksy[nks_special-1];
-			kvec_d[count].z = ksz[nks_special-1];
-            kl_segids.push_back(kpt_segids[nks_special-1]); /* ISSUE#3482: to distinguish different kline segments */
-			++count;
-
-			//std::cout << " count = " << count << std::endl;
-			assert(count == nkstot );
-            assert(kl_segids.size() == nkstot); /* ISSUE#3482: to distinguish different kline segments */
+            Linely_add_k_between(ifk, kvec_d);
 
 			std::for_each(wk.begin(), wk.end(), [](double& d){d = 1.0;});
 
@@ -521,6 +385,68 @@ bool K_Vectors::read_kpoints(const std::string &fn)
     return 1;
 } // END SUBROUTINE
 
+void K_Vectors::Linely_add_k_between(std::ifstream& ifk,
+                                        std::vector<ModuleBase::Vector3<double>>& kvec) {
+    // how many special points.
+    int nks_special = this->nkstot;
+
+    // number of points to the next k points
+    std::vector<int> nkl(nks_special,0);
+
+    // coordinates of special points.
+    std::vector<ModuleBase::Vector3<double>> ks(nks_special);
+
+    //recalculate nkstot.
+    nkstot = 0;
+    /* ISSUE#3482: to distinguish different kline segments */
+    std::vector<int> kpt_segids;
+    kl_segids.clear(); kl_segids.shrink_to_fit();
+    int kpt_segid = 0;
+    for(int iks=0; iks<nks_special; iks++)
+    {
+        ifk >> ks[iks].x;
+        ifk >> ks[iks].y;
+        ifk >> ks[iks].z;
+        ModuleBase::GlobalFunc::READ_VALUE( ifk, nkl[iks] );
+
+        assert(nkl[iks] >= 0);
+        nkstot += nkl[iks];
+        /* ISSUE#3482: to distinguish different kline segments */
+        if((nkl[iks] == 1)&&(iks!=(nks_special-1))) kpt_segid++;
+        kpt_segids.push_back(kpt_segid);
+    }
+    assert( nkl[nks_special-1] == 1);
+
+    //std::cout << " nkstot = " << nkstot << std::endl;
+    this->renew(nkstot * nspin);//mohan fix bug 2009-09-01
+
+    int count = 0;
+    for(int iks=1; iks<nks_special; iks++)
+    {
+        double dxs = (ks[iks].x - ks[iks-1].x) / nkl[iks-1];
+        double dys = (ks[iks].y - ks[iks-1].y) / nkl[iks-1];
+        double dzs = (ks[iks].z - ks[iks-1].z) / nkl[iks-1];
+        for(int is=0; is<nkl[iks-1]; is++)
+        {
+            kvec[count].x = ks[iks-1].x + is*dxs;
+            kvec[count].y = ks[iks-1].y + is*dys;
+            kvec[count].z = ks[iks-1].z + is*dzs;
+            kl_segids.push_back(kpt_segids[iks-1]); /* ISSUE#3482: to distinguish different kline segments */
+            ++count;
+        }
+    }
+
+    // deal with the last special k point.
+    kvec[count].x = ks[nks_special-1].x;
+    kvec[count].y = ks[nks_special-1].y;
+    kvec[count].z = ks[nks_special-1].z;
+    kl_segids.push_back(kpt_segids[nks_special-1]); /* ISSUE#3482: to distinguish different kline segments */
+    ++count;
+
+    assert(count == nkstot);
+    assert(kl_segids.size() == nkstot); /* ISSUE#3482: to distinguish different kline segments */
+
+}
 
 double K_Vectors::Monkhorst_Pack_formula( const int &k_type, const double &offset,
                                       const int& n, const int &dim)
