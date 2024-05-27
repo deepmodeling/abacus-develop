@@ -54,7 +54,7 @@ class H_TDDFT_pw : public PotBase
     static double lcut2;
 
     //velocity gauge, vector magnetic potential
-    static double At[3];
+    static ModuleBase::Vector3<double> At;
 
     // time domain parameters
 

@@ -24,8 +24,8 @@ class Gint_Gamma : public Gint
 {
 	public:
 
-	Gint_Gamma();
-	~Gint_Gamma();
+	// Gint_Gamma();
+	// ~Gint_Gamma();
 
     //------------------------------------------------------
     // in gint_gamma_vl.cpp 
@@ -50,37 +50,6 @@ class Gint_Gamma : public Gint
 private:
 
     double*** DM = nullptr;   //pointer to LOC.DM
-
-    ///------------------------------------------------------
-    /// in gint_gamma_vl.cpp 
-    ///------------------------------------------------------
-    /// method for redistributing the Hamiltonian
-    /// from grid to 2D format
-    /// pass a setter function to customize row/col major and outputs
-    void vl_grid_to_2D(const double* vl_grid,
-        const Parallel_2D& p2d,
-        const int loc_grid_dim,
-        const bool new_e_iteration,
-        double* vl_2d,
-        std::function<void(const int&, const int&, const double&, double*)> setfunc);
-
-    ///===============================
-    /// Use MPI_Alltoallv to convert a grid distributed matrix
-    /// to 2D - block cyclic distributed matrix.
-    ///===============================
-    int sender_index_size;
-    int *sender_local_index;
-    int sender_size;
-    int *sender_size_process;
-    int *sender_displacement_process;
-    double* sender_buffer;
-
-    int receiver_index_size;
-    int *receiver_global_index;
-    int receiver_size;
-    int *receiver_size_process;
-    int *receiver_displacement_process;
-    double* receiver_buffer;
 
 };
 

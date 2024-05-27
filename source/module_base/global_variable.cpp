@@ -207,6 +207,8 @@ bool deepks_scf = false; // caoyu add 2021-10-16 for DeePKS, wenfei 2022-1-16
 bool deepks_bandgap = false; // for bandgap label. QO added 2021-12-15
 bool deepks_out_unittest = false;
 
+bool deepks_equiv = false;
+
 bool deepks_setorb = false;
 
 bool out_element_info = false; // added by zhengdy 2021-11-26

@@ -343,6 +343,8 @@
     - [td\_heavi\_amp](#td_heavi_amp)
     - [out\_dipole](#out_dipole)
     - [out\_efield](#out_efield)
+    - [out\_vecpot](#out_vecpot)
+    - [init\_vecpot\_file](#init_vecpot_file)
     - [ocp](#ocp)
     - [ocp\_set](#ocp_set)
   - [Variables useful for debugging](#variables-useful-for-debugging)
@@ -1836,6 +1838,14 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Note**: A trained, traced model file is needed.
 - **Default**: False
 
+### deepks_equiv
+
+- **Type**: Boolean
+- **Availability**: numerical atomic orbital basis
+- **Description**: whether to use equivariant version of DeePKS
+- **Note**: the equivariant version of DeePKS-kit is still under development, so this feature is currently only intended for internal usage.
+- **Default**: False
+
 ### deepks_model
 
 - **Type**: String
@@ -3252,6 +3262,22 @@ These variables are used to control berry phase and wannier90 interface paramete
 - **Description**: output TDDFT Efield or not(V/Angstrom)
   - True: output efield.
   - False: do not output efield.
+- **Default**: False
+
+### out_vecpot
+
+- **Type**: Boolean
+- **Description**: output TDDFT Vector potential or not(a.u.)
+  - True: output Vector potential in file "OUT.suffix/At.dat"
+  - False: do not output Vector potential.
+- **Default**: False
+
+### init_vecpot_file
+
+- **Type**: Boolean
+- **Description**: Init vector potential through file or not
+  - True: init vector potential from file "At.dat".(a.u.) It consists of four columns, representing istep and vector potential on each direction.
+  - False: calculate vector potential by integral of Efield
 - **Default**: False
 
 ### ocp
