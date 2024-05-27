@@ -86,7 +86,7 @@ void K_Vectors::set_nkstot_ibz(int value) {
 
 void K_Vectors::set_nkstot_full(int value) {
     this->nkstot_full = value;
-}s
+}
 
 
 /***************************************************************
