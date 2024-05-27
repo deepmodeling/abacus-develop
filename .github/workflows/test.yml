@@ -16,6 +16,8 @@ jobs:
       image: ghcr.io/deepmodeling/abacus-gnu
       volumes:
         - /tmp/ccache:/github/home/.ccache
+    permissions:
+      contents: write # applying pre-commit fixes
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,15 +30,25 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ccache clang-format clang-tidy
 
-      - name: Build
+      - name: Configure
         run: |
           cmake -B build -DBUILD_TESTING=ON -DENABLE_DEEPKS=ON -DENABLE_LIBXC=ON -DENABLE_LIBRI=ON -DENABLE_PAW=ON -DENABLE_GOOGLEBENCH=ON -DENABLE_RAPIDJSON=ON  -DCMAKE_EXPORT_COMPILE_COMMANDS=1
-          cmake --build build -j8
-          cmake --install build
+
       - uses: actions/setup-python@v3
       - uses: pre-commit/action@v3.0.1
         with:
-            extra_args: --color=always --from-ref ${{ github.event.pull_request.base.sha }} --to-ref ${{ github.event.pull_request.head.sha }}
+            extra_args: --from-ref ${{ github.event.pull_request.base.sha }} --to-ref ${{ github.event.pull_request.head.sha }}
+        id: pre-commit
+        continue-on-error: true
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "style: apply pre-commit fixes"
+        if: github.event_name == 'pull_request' && steps.pre-commit.outcome != 'success'
+
+      - name: Build
+        run: |
+          cmake --build build -j8
+          cmake --install build
       - name: Test
         env:
           GTEST_COLOR: 'yes'
