@@ -127,7 +127,8 @@ void Grid_Technique::set_pbc_grid(const int& ncx_in,
                                   const int& nplane,
                                   const int& startz_current,
                                   const UnitCell& ucell,
-                                  const LCAO_Orbitals& orb)
+                                  const LCAO_Orbitals& orb,
+                                  const int num_stream)
 {
     ModuleBase::TITLE("Grid_Technique", "init");
     ModuleBase::timer::tick("Grid_Technique", "init");
@@ -184,7 +185,7 @@ void Grid_Technique::set_pbc_grid(const int& ncx_in,
 #if ((defined __CUDA) /* || (defined __ROCM) */)
     if(GlobalV::device_flag == "gpu")
     {
-        this->init_gpu_gint_variables(ucell,orb);
+        this->init_gpu_gint_variables(ucell,orb,num_stream);
     }
 #endif
 
@@ -638,12 +639,14 @@ void Grid_Technique::cal_trace_lo(const UnitCell& ucell)
 
 #if ((defined __CUDA) /* || (defined __ROCM) */)
 
-void Grid_Technique::init_gpu_gint_variables(const UnitCell& ucell,const LCAO_Orbitals &orb)
+void Grid_Technique::init_gpu_gint_variables(const UnitCell& ucell,const LCAO_Orbitals &orb,const int num_stream)
 {
     if (is_malloced)
     {
         free_gpu_gint_variables(this->nat);
     }
+    nstreams = num_stream;
+    streams=new cudaStream_t[nstreams];
     double ylmcoef[100];
     ModuleBase::GlobalFunc::ZEROS(ylmcoef, 100);
     for (int i = 0; i < 100; i++)

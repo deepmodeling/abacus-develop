@@ -36,7 +36,6 @@ Gint::~Gint()
 void Gint::cal_gint(Gint_inout* inout)
 {
 	ModuleBase::timer::tick("Gint_interface", "cal_gint");
-
 	if(inout->job==Gint_Tools::job_type::vlocal)
 	{
 		ModuleBase::TITLE("Gint_interface","cal_gint_vlocal");
@@ -132,45 +131,47 @@ void Gint::cal_gint(Gint_inout* inout)
             {
                 const int ncyz = this->ny * this->nplane;
                 int nat = ucell.nat;
-                // for (int is = 0; is < GlobalV::NSPIN; ++is)
-                // {
-                    double *force = new double[ucell.nat * 3];
-                    for (int i = 0; i < nat * 3; i++)
-                    {
-                        force[i] = 0.0;
-                    }
-                    double *stress = new double[6];
-                    for (int i = 0; i < 6; i++)
-                    {
-                        stress[i] = 0.0;
-                    }
-                    GintKernel::gint_gamma_force_gpu(this->DMRGint[inout->ispin],
-                                                     ucell.omega
-                                                         / this->ncxyz,
-                                                     inout->vl,
-                                                     force,
-                                                     stress,
-                                                     this->nplane,
-                                                     dr,
-                                                     rcut,
-                                                     *this->gridt,
-                                                     ucell);
+                const int isforce = inout->isforce;
+                const int isstress =inout->isstress;
+                ModuleBase::TITLE("Gint_interface","cal_force_gpu");
+                ModuleBase::timer::tick("Gint_interface","cal_force_gpu");
+                if (isforce || isstress){
+                    std::vector<double> force(nat * 3, 0.0);
+                    std::vector<double> stress(6, 0.0);
+                    GintKernel::gint_fvl_gamma_gpu(this->DMRGint[inout->ispin],
+                                                    ucell.omega
+                                                        / this->ncxyz,
+                                                    inout->vl,
+                                                    force,
+                                                    stress,
+                                                    this->nplane,
+                                                    dr,
+                                                    rcut,
+                                                    isforce,
+                                                    isstress,
+                                                    *this->gridt,
+                                                    ucell);
+                if (inout->isforce)
+                {
                     for (int iat = 0; iat < nat; iat++)
                     {
                         inout->fvl_dphi[0](iat, 0) += force[iat * 3];
                         inout->fvl_dphi[0](iat, 1) += force[iat * 3 + 1];
                         inout->fvl_dphi[0](iat, 2) += force[iat * 3 + 2];
                     }
-                        inout->svl_dphi[0](0, 0) += stress[0];
-                        inout->svl_dphi[0](0, 1) += stress[1];
-                        inout->svl_dphi[0](0, 2) += stress[2];
-                        inout->svl_dphi[0](1, 1) += stress[3];
-                        inout->svl_dphi[0](1, 2) += stress[4];
-                        inout->svl_dphi[0](2, 2) += stress[5];
-                    
-                    delete[] force;
-                    delete[] stress;
-                // }
+                }
+                if (inout->isstress){
+                    inout->svl_dphi[0](0, 0) += stress[0];
+                    inout->svl_dphi[0](0, 1) += stress[1];
+                    inout->svl_dphi[0](0, 2) += stress[2];
+                    inout->svl_dphi[0](1, 1) += stress[3];
+                    inout->svl_dphi[0](1, 2) += stress[4];
+                    inout->svl_dphi[0](2, 2) += stress[5];
+                }
+                force.clear();
+                stress.clear();
+                }
+                ModuleBase::timer::tick("Gint_interface","cal_force_gpu");   
             }
         }
         else
@@ -310,7 +311,6 @@ void Gint::cal_gint(Gint_inout* inout)
                         this->nplane, this->gridt->start_ind[grid_index], ncyz, dv);
 
                     double** DM_in;
-
 					if(GlobalV::GAMMA_ONLY_LOCAL)
 					{
 						DM_in = inout->DM[GlobalV::CURRENT_SPIN];

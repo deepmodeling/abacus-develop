@@ -1,20 +1,8 @@
-//==========================================================
-// AUTHOR : wangjp
-// Data :2009-04
-// Last Update:
-//
-// 09-05-10 modify SchmitOrth() diag_zhegvx() as static
-// member function
-//==========================================================
-
 #ifndef DIAGODAVID_H
 #define DIAGODAVID_H
 
 #include "diagh.h"
-#include "module_base/complexmatrix.h"
-#include "module_base/macros.h"
-#include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
-#include "module_base/module_device/device.h"
+
 
 namespace hsolver
 {
@@ -27,31 +15,37 @@ class DiagoDavid : public DiagH<T, Device>
     // return T if T is real type(float, double), 
     // otherwise return the real type of T(complex<float>, complex<double>)
     using Real = typename GetTypeReal<T>::type;
+  
   public:
-    DiagoDavid(const Real* precondition_in);
-    ~DiagoDavid();
 
-    // this is the override function diag() for CG method
-    void diag(hamilt::Hamilt<T, Device>* phm_in,
-              psi::Psi<T, Device>& phi,
-              Real* eigenvalue_in);
+    DiagoDavid(const Real* precondition_in, 
+               const int david_ndim_in,
+               const bool use_paw_in,
+               const diag_comm_info& diag_comm_in);
 
-    static int PW_DIAG_NDIM;
+    virtual ~DiagoDavid() override;
+
+    virtual void diag(hamilt::Hamilt<T, Device>* phm_in,
+                      psi::Psi<T, Device>& phi,
+                      Real* eigenvalue_in) override ;
 
   private:
+    int david_ndim = 4;
+    bool use_paw = false;
     int test_david = 0;
 
-    /// record for how many bands not have convergence eigenvalues
-    int notconv = 0;
+    diag_comm_info diag_comm;
 
     /// row size for input psi matrix
     int n_band = 0;
-    /// col size for input psi matrix
-    int dmx = 0;
     /// non-zero col size for inputted psi matrix
     int dim = 0;
     // maximum dimension of the reduced basis set
     int nbase_x = 0;
+
+    /// record for how many bands not have convergence eigenvalues
+    int notconv = 0;
+
     /// precondition for cg diag
     const Real* precondition = nullptr;
     Real* d_precondition = nullptr;
@@ -150,7 +144,6 @@ class DiagoDavid : public DiagH<T, Device>
     consts<T> cs;
     const T* one = nullptr, * zero = nullptr, * neg_one = nullptr;
 };
-template <typename Real, typename Device> int DiagoDavid<Real, Device>::PW_DIAG_NDIM = 4;
 } // namespace hsolver
 
 #endif

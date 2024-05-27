@@ -61,7 +61,7 @@
     - [search\_radius](#search_radius)
     - [search\_pbc](#search_pbc)
     - [bx, by, bz](#bx-by-bz)
-    - [num\_stream] (#num_stream)
+    - [num\_stream](#num_stream)
   - [Electronic structure](#electronic-structure)
     - [basis\_type](#basis_type)
     - [ks\_solver](#ks_solver)
@@ -915,6 +915,7 @@ These variables are used to control the numerical atomic orbitals related parame
 - **Description**: choose the number of streams in GPU when we compute the `LCAO`. According to different devices , we may have different effects.For most devices,the stream is
 enough when the number is bigger then 2.
 - **Default** : "4" 
+
 [back to top](#full-list-of-input-keywords)
 
 ## Electronic structure
