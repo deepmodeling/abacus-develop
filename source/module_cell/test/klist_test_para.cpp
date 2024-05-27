@@ -232,7 +232,7 @@ TEST_F(KlistParaTest,SetAfterVC)
 	}
 	//call set_after_vc here
 	kv->kc_done = 0;
-	kv->set_after_vc(symm,k_file,kv->nspin,GlobalC::ucell.G,GlobalC::ucell.latvec);
+	kv->set_after_vc(kv->nspin,GlobalC::ucell.G,GlobalC::ucell.latvec);
 	EXPECT_TRUE(kv->kc_done);
 	EXPECT_TRUE(kv->kd_done);
 	//clear
