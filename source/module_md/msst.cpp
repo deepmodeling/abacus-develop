@@ -300,7 +300,7 @@ void MSST::propagate_vel(void)
     
 #ifdef __MPI
     int size;
-    MPI__Comm_size(MPI_COM_WORLD, &size);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
     const int sd = mdp.msst_direction;
     const double dthalf = 0.5 * mdp.md_dt;
     const double fac = mdp.msst_vis * pow(omega[sd], 2) / (vsum * ucell.omega);
