@@ -38,6 +38,41 @@ K_Vectors::K_Vectors()
 K_Vectors::~K_Vectors()
 {
 }
+int K_Vectors::get_nks() const
+{
+    return this->nks;
+}
+
+int K_Vectors::get_nkstot() const
+{
+    return this->nkstot;
+}
+
+int K_Vectors::get_nkstot_ibz() const
+{
+    return this->nkstot_ibz;
+}
+
+int K_Vectors::get_nkstot_full() const
+{
+    return this->nkstot_full;
+}
+
+void K_Vectors::set_nks(int value) {
+    this->nks = value;
+}
+
+void K_Vectors::set_nkstot(int value) {
+    this->nkstot = value;
+}
+
+void K_Vectors::set_nkstot_ibz(int value) {
+    this->nkstot_ibz = value;
+}
+
+void K_Vectors::set_nkstot_full(int value) {
+    this->nkstot_full = value;
+}
 
 ModulePW::PW_Basis::PW_Basis()
 {
