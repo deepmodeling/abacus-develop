@@ -125,7 +125,7 @@ AtomPair<T>::AtomPair(const int& atom_i_,
     this->row_size = row_atom_begin[atom_i + 1] - row_atom_begin[atom_i];
     this->col_size = col_atom_begin[atom_j + 1] - col_atom_begin[atom_j];
     this->R_index.resize(0);
-    this->R_index.push_back(ModuleBase::Vector3<int>(rx, ry, rz))
+    this->R_index.push_back(ModuleBase::Vector3<int>(rx, ry, rz));
     this->current_R = 0;
     if (existed_matrix != nullptr)
     {
