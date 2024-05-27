@@ -79,8 +79,15 @@ public:
         double* en = new double[npw];
         hamilt::Hamilt<double>* phm;
         phm = new hamilt::HamiltPW<double>(nullptr, nullptr, nullptr);
-        hsolver::DiagoDavid<double> dav(precondition);
-        hsolver::DiagoDavid<double>::PW_DIAG_NDIM = order;
+
+#ifdef __MPI 
+        const hsolver::diag_comm_info comm_info = {MPI_COMM_WORLD, mypnum, nprocs};
+#else
+        const hsolver::diag_comm_info comm_info = {mypnum, nprocs};
+#endif
+
+		hsolver::DiagoDavid<double> dav(precondition, order, false, comm_info);
+
         hsolver::DiagoIterAssist<double>::PW_DIAG_NMAX = maxiter;
         hsolver::DiagoIterAssist<double>::PW_DIAG_THR = eps;
         GlobalV::NPROC_IN_POOL = nprocs;

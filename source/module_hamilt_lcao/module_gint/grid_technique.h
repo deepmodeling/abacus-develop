@@ -102,7 +102,8 @@ class Grid_Technique : public Grid_MeshBall
                       const int& nplane,
                       const int& startz_current,
                       const UnitCell& ucell,
-                      const LCAO_Orbitals& orb);
+                      const LCAO_Orbitals& orb,
+                      const int num_stream);
 
     /// number of elements(basis-pairs) in this processon
     /// on all adjacent atoms-pairs(Grid division)
@@ -162,8 +163,8 @@ class Grid_Technique : public Grid_MeshBall
     int atom_pair_mesh;
     int atom_pair_nbz;
 
-    const int nstreams = 4;
-    cudaStream_t streams[4];
+    int nstreams=4 ;
+    cudaStream_t* streams;
     // streams[nstreams]
     // TODO it needs to be implemented through configuration files
 
@@ -229,7 +230,7 @@ class Grid_Technique : public Grid_MeshBall
     matrix_multiple_func_type fastest_matrix_mul;
 
   private:
-    void init_gpu_gint_variables(const UnitCell& ucell,const LCAO_Orbitals &orb);
+    void init_gpu_gint_variables(const UnitCell& ucell,const LCAO_Orbitals &orb,const int num_stream);
     void free_gpu_gint_variables(int nat);
 
 #endif

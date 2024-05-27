@@ -1,16 +1,12 @@
 #include "diago_dav_subspace.h"
 
-#include <algorithm>
-#include <type_traits>
-
 #include "diago_iter_assist.h"
-#include "module_base/blas_connector.h"
-#include "module_base/constants.h"
-#include "module_base/lapack_connector.h"
+
 #include "module_base/memory.h"
-#include "module_base/parallel_common.h"
-#include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
+#include "module_base/parallel_global.h" 
+#include "module_base/module_device/device.h"
+
 #include "module_hsolver/kernels/dngvd_op.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
 

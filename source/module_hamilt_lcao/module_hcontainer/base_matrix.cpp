@@ -109,8 +109,11 @@ assert(this->value_begin != nullptr);
 template <typename T>
 void BaseMatrix<T>::add_array(T* array)
 {
-    // if allocated, save data from array into matrix
-    // if whole matrix and 2d-block format, save data from array into matrix either
+#ifdef __DEBUG
+assert(this->value_begin != nullptr);
+#endif
+    // if allocated, add data from array into matrix
+    // if whole matrix and 2d-block format, add data from array into matrix either
     for (int i = 0; i < nrow_local * ncol_local; ++i)
     {
         value_begin[i] += array[i];
@@ -120,6 +123,9 @@ void BaseMatrix<T>::add_array(T* array)
 template <typename T>
 void BaseMatrix<T>::add_element(int mu, int nu, const T& value)
 {
+#ifdef __DEBUG
+assert(this->value_begin != nullptr);
+#endif
     int index = mu * this->ncol_local + nu;
     value_begin[index] += value;
 }
@@ -127,6 +133,9 @@ void BaseMatrix<T>::add_element(int mu, int nu, const T& value)
 template <typename T>
 T& BaseMatrix<T>::get_value(const size_t& i_row, const size_t& j_col) const
 {
+#ifdef __DEBUG
+assert(this->value_begin != nullptr);
+#endif
     int index = i_row * this->ncol_local + j_col;
     return value_begin[index];
 }
@@ -145,6 +154,12 @@ BaseMatrix<T>& BaseMatrix<T>::operator=(const BaseMatrix<T>& other)
     {
         this->nrow_local = other.nrow_local;
         this->ncol_local = other.ncol_local;
+
+        if (this->allocated)
+        {
+            delete[] this->value_begin;
+        }
+
         if (other.allocated)
         {
             this->value_begin = new T[nrow_local * ncol_local];
@@ -172,6 +187,12 @@ BaseMatrix<T>& BaseMatrix<T>::operator=(BaseMatrix<T>&& other) noexcept
     {
         this->nrow_local = other.nrow_local;
         this->ncol_local = other.ncol_local;
+
+        if (this->allocated)
+        {
+            delete[] this->value_begin;
+        }
+
         this->value_begin = other.value_begin;
         this->allocated = other.allocated;
         if (other.allocated)
