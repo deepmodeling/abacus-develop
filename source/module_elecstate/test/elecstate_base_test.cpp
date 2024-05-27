@@ -394,7 +394,7 @@ TEST_F(ElecStateTest,FixedWeights)
     EXPECT_EQ(GlobalV::NBANDS, 6);
     GlobalV::nelec = 30;
     K_Vectors* klist = new K_Vectors;
-    klist->get_nks() = 5;
+    klist->set_nks(5);
     elecstate->klist = klist;
     elecstate->wg.create(klist->get_nks(), GlobalV::NBANDS);
     std::vector<double> ocp_kb;
@@ -414,7 +414,7 @@ TEST_F(ElecStateDeathTest,FixedWeightsWarning1)
     EXPECT_EQ(GlobalV::NBANDS, 6);
     GlobalV::nelec = 30;
     K_Vectors* klist = new K_Vectors;
-    klist->get_nks() = 5;
+    klist->set_nks(5);
     elecstate->klist = klist;
     elecstate->wg.create(klist->get_nks(), GlobalV::NBANDS);
     std::vector<double> ocp_kb;
@@ -434,7 +434,7 @@ TEST_F(ElecStateDeathTest,FixedWeightsWarning2)
     EXPECT_EQ(GlobalV::NBANDS, 6);
     GlobalV::nelec = 29;
     K_Vectors* klist = new K_Vectors;
-    klist->get_nks() = 5;
+    klist->set_nks(5);
     elecstate->klist = klist;
     elecstate->wg.create(klist->get_nks(), GlobalV::NBANDS);
     std::vector<double> ocp_kb;
@@ -490,7 +490,7 @@ TEST_F(ElecStateTest, CalculateWeightsIWeights)
     EXPECT_FALSE(elecstate->skip_weights);
     int nks = 5;
     K_Vectors* klist = new K_Vectors;
-    klist->get_nks() = nks;
+    klist->set_nks(nks);
     klist->wk.resize(nks);
     for (int ik = 0; ik < nks; ++ik)
     {
@@ -532,7 +532,7 @@ TEST_F(ElecStateTest, CalculateWeightsIWeightsTwoFermi)
     EXPECT_FALSE(elecstate->skip_weights);
     int nks = 5*GlobalV::NSPIN;
     K_Vectors* klist = new K_Vectors;
-    klist->get_nks() = nks;
+    klist->set_nks(nks);
     klist->wk.resize(nks);
     for (int ik = 0; ik < nks; ++ik)
     {
@@ -591,7 +591,7 @@ TEST_F(ElecStateTest, CalculateWeightsGWeights)
     EXPECT_FALSE(elecstate->skip_weights);
     int nks = 5;
     K_Vectors* klist = new K_Vectors;
-    klist->get_nks() = nks;
+    klist->set_nks(nks);
     klist->wk.resize(nks);
     for (int ik = 0; ik < nks; ++ik)
     {
@@ -639,7 +639,7 @@ TEST_F(ElecStateTest, CalculateWeightsGWeightsTwoFermi)
     EXPECT_FALSE(elecstate->skip_weights);
     int nks = 5*GlobalV::NSPIN;
     K_Vectors* klist = new K_Vectors;
-    klist->get_nks() = nks;
+    klist->set_nks(nks);
     klist->wk.resize(nks);
     for (int ik = 0; ik < nks; ++ik)
     {

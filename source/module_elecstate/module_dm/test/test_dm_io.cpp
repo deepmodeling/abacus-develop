@@ -106,7 +106,7 @@ class DMTest : public testing::Test
         ucell->set_iat2iwt(1);
         // initalize a kvectors
         kv = new K_Vectors;
-        kv->get_nks() = nks;
+        kv->set_nks(nks);
         kv->kvec_d.resize(nks);
         kv->kvec_d[1].x = 0.5;
         // set paraV

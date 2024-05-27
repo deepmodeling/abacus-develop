@@ -57,6 +57,11 @@ public:
     int get_nkstot_ibz() const;
     int get_nkstot_full() const;
 
+    void set_nks(int value);
+    void set_nkstot(int value);
+    void set_nkstot_ibz(int value);
+    void set_nkstot_full(int value);
+
 private:
     int nks;						// number of k points in this pool(processor, up+dw)
     int nkstot;						/// total number of k points, equal to nkstot_ibz after reducing k points

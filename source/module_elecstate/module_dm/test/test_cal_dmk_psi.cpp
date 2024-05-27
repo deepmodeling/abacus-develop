@@ -107,7 +107,7 @@ TEST_F(DMTest, cal_dmk_psi_nspin1)
     K_Vectors* kv = nullptr;
     int nks = 2;
     kv = new K_Vectors;
-    kv->get_nks() = nks;
+    kv->set_nks(nks);
     kv->kvec_d.resize(nks);
     kv->kvec_d[1].x = 0.5;
     // construct DM

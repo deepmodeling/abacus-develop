@@ -582,7 +582,7 @@ TEST_F(KlistTest, SetKupKdownAfterVC)
 TEST_F(KlistTest, SetBothKvecAfterVC)
 {
 	kv->nspin = 1;
-	kv->get_nkstot() = 1;
+	kv->set_nkstot(1);
 	GlobalV::ofs_running.open("tmp_klist_1");
 	kv->renew(kv->get_nkstot());
 	kv->kvec_c[0].x = 0;
@@ -601,8 +601,8 @@ TEST_F(KlistTest, SetBothKvecAfterVC)
 TEST_F(KlistTest, PrintKlists)
 {
 	kv->nspin = 1;
-	kv->get_nkstot() = 1;
-	kv->get_nks() = 1;
+	kv->set_nkstot(1);
+	kv->set_nks(1);
 	GlobalV::ofs_running.open("tmp_klist_2");
 	kv->renew(kv->get_nkstot());
 	kv->kvec_c[0].x = 0;
@@ -618,8 +618,8 @@ TEST_F(KlistTest, PrintKlists)
 TEST_F(KlistTest, PrintKlistsWarnigQuit)
 {
 	kv->nspin = 1;
-	kv->get_nkstot() = 1;
-	kv->get_nks() = 2;
+	kv->set_nkstot(1);
+	kv->set_nks(2);
 	kv->renew(kv->get_nkstot());
 	kv->kvec_c[0].x = 0;
 	kv->kvec_c[0].y = 0;
@@ -634,8 +634,8 @@ TEST_F(KlistTest, PrintKlistsWarnigQuit)
 TEST_F(KlistTest, SetBothKvecFinalSCF)
 {
 	kv->nspin = 1;
-	kv->get_nkstot() = 1;
-	kv->get_nks() = 1;
+	kv->set_nkstot(1);
+	kv->set_nks(1);
 	kv->renew(kv->get_nkstot());
 	kv->kvec_d[0].x = 0.0;
 	kv->kvec_d[0].y = 0.0;
@@ -678,8 +678,8 @@ TEST_F(KlistTest, SetBothKvecFinalSCF)
 TEST_F(KlistTest, SetBothKvec)
 {
 	kv->nspin = 1;
-	kv->get_nkstot() = 1;
-	kv->get_nks() = 1;
+	kv->set_nkstot(1);
+	kv->set_nks(1);
 	kv->renew(kv->get_nkstot());
 	kv->kvec_d[0].x = 0.0;
 	kv->kvec_d[0].y = 0.0;
@@ -699,8 +699,8 @@ TEST_F(KlistTest, SetBothKvec)
 TEST_F(KlistTest, NormalizeWk)
 {
 	kv->nspin = 1;
-	kv->get_nkstot() = 2;
-	kv->get_nks() = 2;
+	kv->set_nkstot(2);
+	kv->set_nks(2);
 	kv->renew(kv->get_nkstot());
 	kv->wk[0] = 1.0;
 	kv->wk[1] = 1.0;
@@ -713,10 +713,10 @@ TEST_F(KlistTest, NormalizeWk)
 TEST_F(KlistTest, UpdateUseIBZ)
 {
 	kv->nspin = 1;
-	kv->get_nkstot() = 3;
-	kv->get_nks() = 3;
+	kv->set_nkstot(3);
+	kv->set_nks(3);
 	kv->renew(kv->get_nkstot());
-	kv->get_nkstot_ibz() = 2;
+	kv->set_nkstot_ibz(2);
 	kv->kvec_d_ibz.resize(kv->get_nkstot_ibz());
 	kv->wk_ibz.resize(kv->get_nkstot_ibz());
 	kv->update_use_ibz();

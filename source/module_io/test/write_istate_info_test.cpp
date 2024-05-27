@@ -49,12 +49,12 @@ TEST_F(IstateInfoTest,OutIstateInfoS1)
 	GlobalV::global_out_dir = "./";
 	//mpi setting
 	Parallel_Global::init_pools();
-	kv->get_nkstot() = 100;
+	kv->set_nkstot(100);
 	Pkpoints->kinfo(kv->get_nkstot());
 	//std::cout<<"my_rank "<<GlobalV::MY_RANK<<" pool rank/size: "
 	//	<<GlobalV::RANK_IN_POOL<<"/"<<GlobalV::NPROC_IN_POOL<<std::endl;
 	//std::cout<<"MY_POOL "<<GlobalV::MY_POOL<<std::endl;
-	kv->get_nks() = Pkpoints->nks_pool[GlobalV::MY_POOL];
+	kv->set_nks(Pkpoints->nks_pool[GlobalV::MY_POOL]);
 	//std::cout<<"nks "<<kv->get_nks()<<std::endl;
 	ekb.create(kv->get_nks(),GlobalV::NBANDS);
 	wg.create(kv->get_nks(),GlobalV::NBANDS);
@@ -86,12 +86,12 @@ TEST_F(IstateInfoTest,OutIstateInfoS2)
 	GlobalV::global_out_dir = "./";
 	//mpi setting
 	Parallel_Global::init_pools();
-	kv->get_nkstot() = 100;
+	kv->set_nkstot(100);
 	Pkpoints->kinfo(kv->get_nkstot());
 	//std::cout<<"my_rank "<<GlobalV::MY_RANK<<" pool rank/size: "
 	//	<<GlobalV::RANK_IN_POOL<<"/"<<GlobalV::NPROC_IN_POOL<<std::endl;
 	//std::cout<<"MY_POOL "<<GlobalV::MY_POOL<<std::endl;
-	kv->get_nks() = Pkpoints->nks_pool[GlobalV::MY_POOL];
+	kv->set_nks(Pkpoints->nks_pool[GlobalV::MY_POOL]);
 	//std::cout<<"nks "<<kv->get_nks()<<std::endl;
 	ekb.create(kv->get_nks(),GlobalV::NBANDS);
 	wg.create(kv->get_nks(),GlobalV::NBANDS);

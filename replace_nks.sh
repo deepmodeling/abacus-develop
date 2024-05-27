@@ -44,3 +44,8 @@ find ./source -type f -exec sed -i 's/kv_in->nkstot_full/kv_in->get_nkstot_full\
 find ./source -type f -exec sed -i 's/kv_in->nkstot_ibz/kv_in->get_nkstot_ibz\(\)/g' {} +
 find ./source -type f -exec sed -i 's/kv_in->nkstot/kv_in->get_nkstot\(\)/g' {} +
 find ./source -type f -exec sed -i 's/kv_in->nks\([^_[:alnum:]]\)/kv_in->get_nks\(\)\1/g' {} +
+
+find ./source -type f -exec sed -i 's/get_nkstot_full()\s*=\s*\([^ ;]*[^ ;]\)/set_nkstot_full\1)/g' {} +
+find ./source -type f -exec sed -i 's/get_nkstot_ibz()\s*=\s*\([^ ;]*[^ ;]\)/set_nkstot_ibz(\1)/g' {} +
+find ./source -type f -exec sed -i 's/get_nkstot()\s*=\s*\([^ ;]*[^ ;]\)/set_nkstot(\1)/g' {} +
+find ./source -type f -exec sed -i 's/get_nks()\s*=\s*\([^ ;]*[^ ;]\)/set_nks(\1)/g' {} +

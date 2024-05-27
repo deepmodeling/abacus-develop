@@ -93,7 +93,7 @@ class ElecStatePrintTest : public ::testing::Test
     void SetUp()
     {
         p_klist = new K_Vectors;
-        p_klist->get_nks() = 2;
+        p_klist->set_nks(2);
         p_klist->isk = {0, 1};
         p_klist->ngk = {100, 101};
         p_klist->kvec_c.resize(2);

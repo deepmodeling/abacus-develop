@@ -124,7 +124,7 @@ TEST_F(DMTest, cal_DMR_test)
     int nspin = 2;
     int nks = 2; // since nspin = 2
     kv = new K_Vectors;
-    kv->get_nks() = nks;
+    kv->set_nks(nks);
     kv->kvec_d.resize(nks);
     // construct DM
     elecstate::DensityMatrix<double, double> DM(kv, paraV, nspin);
@@ -193,7 +193,7 @@ TEST_F(DMTest, cal_DMR_blas_double)
     int nspin = 2;
     int nks = 2; // since nspin = 2
     kv = new K_Vectors;
-    kv->get_nks() = nks;
+    kv->set_nks(nks);
     kv->kvec_d.resize(nks);
     // construct DM
     elecstate::DensityMatrix<double, double> DM(kv, paraV, nspin);
@@ -262,7 +262,7 @@ TEST_F(DMTest, cal_DMR_blas_complex)
     int nspin = 2;
     int nks = 4; // since nspin = 2
     kv = new K_Vectors;
-    kv->get_nks() = nks;
+    kv->set_nks(nks);
     kv->kvec_d.resize(nks);
     kv->kvec_d[1].x = 0.5;
     kv->kvec_d[3].x = 0.5;
