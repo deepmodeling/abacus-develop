@@ -114,7 +114,6 @@ protected:
     /// map from local index to global index
     std::vector<int> local2global_row_;
     std::vector<int> local2global_col_;
-    // Peize Lin change int* to vector 2022.08.03
 
 #ifdef __MPI
     void _init_proc_grid(const MPI_Comm comm, const bool mode);

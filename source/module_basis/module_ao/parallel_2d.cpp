@@ -1,6 +1,7 @@
 #include "parallel_2d.h"
 
 #include <numeric>
+#include <cassert>
 
 #include "module_base/blacs_connector.h"
 #include "module_base/scalapack_connector.h"
@@ -107,6 +108,8 @@ int Parallel_2D::set(
 
 void Parallel_2D::set_serial(const int mg, const int ng)
 {
+    assert(mg > 0 && ng > 0);
+
     nb = 1;
     dim0 = dim1 = 1;
     coord[0] = coord[1] = 0;
