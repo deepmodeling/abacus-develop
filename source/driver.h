@@ -24,7 +24,7 @@ class Driver
     /**
      * @brief An interface function.
      * This function calls "this->driver_run()" to do calculation,
-	 * and log the time and  memory consumed during calculation.
+     * and log the time and  memory consumed during calculation.
      */
     void atomic_world();
 

@@ -31,7 +31,7 @@ void Driver::init()
     // (1) read the input parameters.
     // INPUT should be initalized here and then pass to atomic world, mohan 2024-05-12
     // INPUT should not be GlobalC, mohan 2024-05-12
-    this->reading();
+    Driver::reading();
 
     // (2) welcome to the atomic world!
     this->atomic_world();
