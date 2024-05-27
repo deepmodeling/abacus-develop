@@ -55,6 +55,7 @@ std::string get_ks_solver_type()
 }
 } // namespace elecstate
 
+#include "module_cell/klist.h"
 K_Vectors::K_Vectors()
 {
 }

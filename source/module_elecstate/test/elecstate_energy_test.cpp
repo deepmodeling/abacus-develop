@@ -44,6 +44,8 @@ double ElecState::get_dftu_energy()
 }
 #endif
 } // namespace elecstate
+
+#include "module_cell/klist.h"
 K_Vectors::K_Vectors()
 {
 }

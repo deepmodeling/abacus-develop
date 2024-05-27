@@ -7,6 +7,7 @@
 #include "module_elecstate/elecstate.h"
 #include "module_elecstate/occupy.h"
 
+
 // Mock functions for testing elecstate.cpp
 namespace elecstate
 {
@@ -29,12 +30,15 @@ Charge::Charge()
 Charge::~Charge()
 {
 }
+
+#include "module_cell/klist.h"
 K_Vectors::K_Vectors()
 {
 }
 K_Vectors::~K_Vectors()
 {
 }
+
 ModulePW::PW_Basis::PW_Basis()
 {
 }
