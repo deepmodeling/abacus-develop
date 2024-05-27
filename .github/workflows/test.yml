@@ -16,8 +16,6 @@ jobs:
       image: ghcr.io/deepmodeling/abacus-gnu
       volumes:
         - /tmp/ccache:/github/home/.ccache
-    permissions:
-      contents: write # applying pre-commit fixes
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -38,12 +36,8 @@ jobs:
       - uses: pre-commit/action@v3.0.1
         with:
             extra_args: --from-ref ${{ github.event.pull_request.base.sha }} --to-ref ${{ github.event.pull_request.head.sha }}
-        id: pre-commit
         continue-on-error: true
-      - uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "style: apply pre-commit fixes"
-        if: github.event_name == 'pull_request' && steps.pre-commit.outcome != 'success'
+      - uses: pre-commit-ci/lite-action@v1.0.2
 
       - name: Build
         run: |
