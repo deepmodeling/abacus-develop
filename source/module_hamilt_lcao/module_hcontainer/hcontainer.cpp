@@ -393,10 +393,10 @@ int HContainer<T>::find_R(const int& rx_in, const int& ry_in, const int& rz_in) 
     {
         return -1;
     }
-    for (int i = 0; i < this->tmp_R_index.size() / 3; i++)
+    for (int i = 0; i < this->tmp_R_index.size(); i++)
     {
-        if (this->tmp_R_index[i * 3] == rx_in && this->tmp_R_index[i * 3 + 1] == ry_in
-            && this->tmp_R_index[i * 3 + 2] == rz_in)
+        if (this->tmp_R_index[i].x == rx_in && this->tmp_R_index[i].y == ry_in
+            && this->tmp_R_index[i].z == rz_in)
         {
             return i;
         }
@@ -409,9 +409,9 @@ template <typename T>
 size_t HContainer<T>::size_R_loop() const
 {
     // R index is fixed
-    if (this->current_R > -1 && this->tmp_R_index.size() > 2)
+    if (this->current_R > -1 && this->tmp_R_index.size() > 0)
     {
-        return this->tmp_R_index.size()/3;
+        return this->tmp_R_index.size();
     }
     /**
      * start a new iteration of loop_R
@@ -422,40 +422,38 @@ size_t HContainer<T>::size_R_loop() const
     for (auto it = this->atom_pairs.begin(); it != this->atom_pairs.end(); ++it)
     {
         /**
-         * search (rx, ry, rz) with (it->R_values[i*3+0], it->R_values[i*3+1], it->R_values[i*3+2])
+         * search (rx, ry, rz) with (it->R_values[i].x, it->R_values[i].y, it->R_values[i].z)
          * if (rx, ry, rz) not found in this->tmp_R_index,
          * insert the (rx, ry, rz) into end of this->tmp_R_index
          * no need to sort this->tmp_R_index, using find_R() to find the (rx, ry, rz) -> int in tmp_R_index
          */
         for (int iR = 0; iR < it->get_R_size(); iR++)
         {
-            int* R_pointer = it->get_R_index(iR);
-            int it_tmp = this->find_R(R_pointer[0], R_pointer[1], R_pointer[2]);
+            ModuleBase::Vector3<int> r_vec = it->get_R_index(iR);
+            int it_tmp = this->find_R(r_vec.x, r_vec.y, r_vec.z);
             if (it_tmp == -1)
             {
-                this->tmp_R_index.push_back(R_pointer[0]);
-                this->tmp_R_index.push_back(R_pointer[1]);
-                this->tmp_R_index.push_back(R_pointer[2]);
+                this->tmp_R_index.push_back(ModuleBase::Vector3<int>(r_vec))
             }
         }
     }
-    return this->tmp_R_index.size() / 3;
+    return this->tmp_R_index.size();
 }
 
 template <typename T>
 void HContainer<T>::loop_R(const size_t& index, int& rx, int& ry, int& rz) const
 {
 #ifdef __DEBUG
-    if (index >= this->tmp_R_index.size() / 3)
+    if (index >= this->tmp_R_index.size())
     {
         std::cout << "Error: index out of range in loop_R" << std::endl;
         exit(1);
     }
 #endif
     // set rx, ry, rz
-    rx = this->tmp_R_index[index * 3];
-    ry = this->tmp_R_index[index * 3 + 1];
-    rz = this->tmp_R_index[index * 3 + 2];
+    rx = this->tmp_R_index[index].x;
+    ry = this->tmp_R_index[index].y;
+    rz = this->tmp_R_index[index].z;
     return;
 }
 
@@ -597,7 +595,7 @@ size_t HContainer<T>::get_memory_size() const
         memory += this->sparse_ap_index[i].capacity() * sizeof(int);
     }
     memory += this->tmp_atom_pairs.capacity() * sizeof(AtomPair<T>*);
-    memory += this->tmp_R_index.capacity() * sizeof(int);
+    memory += this->tmp_R_index.capacity() * sizeof(ModuleBase::Vector3<int>);
     if(this->allocated)
     {
         memory += this->get_nnr() * sizeof(T);
@@ -630,15 +628,15 @@ void HContainer<T>::shape_synchron( const HContainer<T>& other)
         {
             for(int ir = 0;ir < other.atom_pairs[i].get_R_size();++ir)
             {
-                int* R_pointer = other.atom_pairs[i].get_R_index(ir);
-                if(tmp_pointer->find_R(R_pointer[0], R_pointer[1], R_pointer[2]) != -1)
+                ModuleBase::Vector3<int> R_vec = other.atom_pairs[i].get_R_index(ir);
+                if(tmp_pointer->find_R(R_vec.x, R_vec.y, R_vec.z) != -1)
                 {
                     // do nothing
                 }
                 else
                 {
                     // insert the new BaseMatrix
-                    tmp_pointer->get_HR_values(R_pointer[0], R_pointer[1], R_pointer[2]);
+                    tmp_pointer->get_HR_values(R_vec.x, R_vec.y, R_vec.z);
                 }
             }
         }
@@ -667,10 +665,10 @@ std::vector<int> HContainer<T>::get_ijr_info() const
         // loop R
         for (int ir = 0; ir < number_R; ++ir)
         {
-            int* R_pointer = this->atom_pairs[i].get_R_index(ir);
-            ijr_info.push_back(R_pointer[0]);
-            ijr_info.push_back(R_pointer[1]);
-            ijr_info.push_back(R_pointer[2]);
+            ModuleBase::Vector3<int> R_vec = this->atom_pairs[i].get_R_index(ir);
+            ijr_info.push_back(R_vec.x);
+            ijr_info.push_back(R_vec.y);
+            ijr_info.push_back(R_vec.z);
         }
     }
     return ijr_info;

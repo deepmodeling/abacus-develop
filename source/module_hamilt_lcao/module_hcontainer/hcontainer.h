@@ -5,6 +5,7 @@
 #include <set>
 
 #include "atom_pair.h"
+#include "module_base/vector3.h"
 #include "module_cell/unitcell.h"
 
 namespace hamilt
@@ -115,8 +116,8 @@ namespace hamilt
  *           // loop R-index
  *           for (int iR = 0; iR < atom_ij.size_R(); iR++)
  *           {
- *               const int* r_index = atom_ij.get_R_index(iR);
- *               auto tmp_matrix = atom_ij.get_HR_values(r_index[0], r_index[1], r_index[2]);              
+ *               const ModuleBase::Vector3<int> r_index = atom_ij.get_R_index(iR);
+ *               auto tmp_matrix = atom_ij.get_HR_values(r_index.x, r_index.y, r_index.z);              
  *               // do something with tmp_matrix
  *               ...
  *           }
@@ -420,7 +421,7 @@ class HContainer
      */
     mutable std::vector<const AtomPair<T>*> tmp_atom_pairs;
     // it contains 3 index of cell, size of R_index is three times of values.
-    mutable std::vector<int> tmp_R_index;
+    mutable std::vector<ModuleBase::Vector3<int>> tmp_R_index;
     // current index of R in tmp_atom_pairs, -1 means not initialized
     mutable int current_R = -1;
     /**
