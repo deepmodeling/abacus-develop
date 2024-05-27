@@ -252,5 +252,4 @@ __global__ void dot_product_force(double* psir_lx,
         tid += blockDim.x * gridDim.x;
     }
 }
-
 } // namespace GintKernel
