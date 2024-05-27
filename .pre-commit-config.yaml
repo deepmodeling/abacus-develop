@@ -4,9 +4,9 @@ repos:
     rev: v1.3.5
     hooks:
       - id: clang-format
-        # args: [--style=Google]
+        args: [-i]
       - id: clang-tidy
-        args: [-p=build]
+        args: [-p=build, --fix-errors]
       # - id: oclint
       # - id: uncrustify
       # - id: cppcheck
