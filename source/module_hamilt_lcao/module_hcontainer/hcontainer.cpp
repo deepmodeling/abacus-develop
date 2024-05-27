@@ -433,7 +433,7 @@ size_t HContainer<T>::size_R_loop() const
             int it_tmp = this->find_R(r_vec.x, r_vec.y, r_vec.z);
             if (it_tmp == -1)
             {
-                this->tmp_R_index.push_back(ModuleBase::Vector3<int>(r_vec))
+                this->tmp_R_index.push_back(ModuleBase::Vector3<int>(r_vec));
             }
         }
     }
