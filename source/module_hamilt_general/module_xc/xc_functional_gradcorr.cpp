@@ -92,7 +92,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 	if(!is_stress)	h1 = new ModuleBase::Vector3<double>[rhopw->nrxx];
 	
 	size_t record_num = sizeof(ModuleBase::Vector3<double>)*rhopw->nrxx + sizeof(std::complex<double>)*rhopw->npw + sizeof(double)*rhopw->nrxx;
-	if(!is_stress) record_num += sizeof(ModuleBase::Vector3<double>)*rhopw->nrxx;
+	if(!is_stress) record_num = sizeof(ModuleBase::Vector3<double>)*rhopw->nrxx + sizeof(std::complex<double>)*rhopw->npw + sizeof(double)*rhopw->nrxx + sizeof(ModuleBase::Vector3<double>)*rhopw->nrxx; 
 	ModuleBase::Memory::record("XC_Functional::gradcorr", record_num);
 
 	XC_Functional::grad_rho( rhogsum1 , gdr1, rhopw, ucell->tpiba);
