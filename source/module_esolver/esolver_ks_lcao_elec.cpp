@@ -66,7 +66,8 @@ void ESolver_KS_LCAO<TK, TR>::set_matrix_grid(Record_adj& ra)
                              this->pw_rho->nplane,
                              this->pw_rho->startz_current,
                              GlobalC::ucell,
-                             GlobalC::ORB);
+                             GlobalC::ORB,
+                             GlobalV::NUM_STREAM);
 
     // (2)For each atom, calculate the adjacent atoms in different cells
     // and allocate the space for H(R) and S(R).
