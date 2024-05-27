@@ -1205,8 +1205,6 @@ void K_Vectors::print_klists(std::ofstream &ofs)
 //LiuXh add a new function here,
 //20180515
 void K_Vectors::set_after_vc(
-        const ModuleSymmetry::Symmetry &symm,
-        const std::string &k_file_name,
         const int& nspin_in,
         const ModuleBase::Matrix3 &reciprocal_vec,
         const ModuleBase::Matrix3 &latvec)
@@ -1217,96 +1215,6 @@ void K_Vectors::set_after_vc(
     this->nspin = nspin_in;
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nspin",nspin);
 
-    this->set_both_kvec_after_vc(reciprocal_vec, latvec);
-    //this->set_both_kvec(reciprocal_vec, latvec);
-
-    //Since the number of kpoints is not changed, we do not need to do the following.
-    // this->mpi_k_after_vc(); 
-
-    // this->set_kup_and_kdw_after_vc();
-
-    this->print_klists(GlobalV::ofs_running);
-
-    return;
-}
-
-//LiuXh add a new function here,
-//20180515
-//Useless now, it has bugs in it.
-void K_Vectors::mpi_k_after_vc(void)
-{
-#ifdef __MPI
-    ModuleBase::TITLE("K_Vectors","mpi_k_after_vc");
-
-    Parallel_Common::bcast_bool(kc_done);
-    Parallel_Common::bcast_bool(kd_done);
-    Parallel_Common::bcast_int(nspin);
-    Parallel_Common::bcast_int(nkstot);
-    Parallel_Common::bcast_int(nmp, 3);
-    kl_segids.resize(nkstot);
-    Parallel_Common::bcast_int(kl_segids.data(), nkstot);
-    Parallel_Common::bcast_double(koffset, 3);
-
-    this->nks = GlobalC::Pkpoints.nks_pool[GlobalV::MY_POOL];
-    GlobalV::ofs_running << std::endl;
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"k-point number in this process",nks);
-    int nks_minimum = this->nks;
-
-    Parallel_Reduce::gather_min_int_all( nks_minimum );
-
-    if (nks_minimum == 0)
-    {
-        ModuleBase::WARNING_QUIT("K_Vectors::mpi_k()"," nks == 0, some processor have no k point!");
-    }
-    else
-    {
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"minimum distributed K point number",nks_minimum);
-    }
-
-    std::vector<int> isk_aux(nkstot);
-    std::vector<double> wk_aux(nkstot);
-    std::vector<double> kvec_c_aux(nkstot*3);
-    std::vector<double> kvec_d_aux(nkstot*3);
-
-    if (GlobalV::MY_RANK == 0)
-    {
-        // It is wrong! kvec_c and kvec_d are local variables.
-        for (int ik = 0;ik < nkstot;ik++)
-        {
-            isk_aux[ik] = isk[ik];
-            wk_aux[ik] = wk[ik];
-            kvec_c_aux[3*ik]   = kvec_c[ik].x;
-            kvec_c_aux[3*ik+1] = kvec_c[ik].y;
-            kvec_c_aux[3*ik+2] = kvec_c[ik].z;
-            kvec_d_aux[3*ik]   = kvec_d[ik].x;
-            kvec_d_aux[3*ik+1] = kvec_d[ik].y;
-            kvec_d_aux[3*ik+2] = kvec_d[ik].z;
-        }
-    }
-
-    Parallel_Common::bcast_int(isk_aux.data(), nkstot);
-    Parallel_Common::bcast_double(wk_aux.data(), nkstot);
-    Parallel_Common::bcast_double(kvec_c_aux.data(), nkstot*3);
-    Parallel_Common::bcast_double(kvec_d_aux.data(), nkstot*3);
-
-    int k_index = 0;
-    for (int i = 0;i < nks;i++)
-    {
-        k_index = i + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL] ;
-        kvec_c[i].x = kvec_c_aux[k_index*3];
-        kvec_c[i].y = kvec_c_aux[k_index*3+1];
-        kvec_c[i].z = kvec_c_aux[k_index*3+2];
-        kvec_d[i].x = kvec_d_aux[k_index*3];
-        kvec_d[i].y = kvec_d_aux[k_index*3+1];
-        kvec_d[i].z = kvec_d_aux[k_index*3+2];
-        wk[i] = wk_aux[k_index];
-        isk[i] = isk_aux[k_index];
-    }
-#endif
-}
-
-void K_Vectors::set_both_kvec_after_vc(const ModuleBase::Matrix3 &G, const ModuleBase::Matrix3 &R)
-{
     // set cartesian k vectors.
     kd_done = true;
     kc_done = false;
@@ -1320,7 +1228,7 @@ void K_Vectors::set_both_kvec_after_vc(const ModuleBase::Matrix3 &G, const Modul
 			if( std::abs(kvec_d[i].y) < 1.0e-10 ) kvec_d[i].y = 0.0;
 			if( std::abs(kvec_d[i].z) < 1.0e-10 ) kvec_d[i].z = 0.0;
 
-			kvec_c[i] = kvec_d[i] * G;
+			kvec_c[i] = kvec_d[i] * reciprocal_vec;
 
 			// mohan add2012-06-10
 			if( std::abs(kvec_c[i].x) < 1.0e-10 ) kvec_c[i].x = 0.0;
@@ -1333,7 +1241,7 @@ void K_Vectors::set_both_kvec_after_vc(const ModuleBase::Matrix3 &G, const Modul
     // set direct k vectors
     else if (kc_done && !kd_done)
     {
-        ModuleBase::Matrix3 RT = R.Transpose();
+        ModuleBase::Matrix3 RT = latvec.Transpose();
         for (int i = 0;i < nks;i++)
         {
 //			std::cout << " ik=" << i
@@ -1356,59 +1264,10 @@ void K_Vectors::set_both_kvec_after_vc(const ModuleBase::Matrix3 &G, const Modul
                                  i+1, this->kvec_d[i].x, this->kvec_d[i].y, this->kvec_d[i].z, this->wk[i]);
 	}
     GlobalV::ofs_running << table << std::endl;
+    //this->set_both_kvec(reciprocal_vec, latvec);
+
+    this->print_klists(GlobalV::ofs_running);
+
     return;
 }
 
-//Useless now
-void K_Vectors::set_kup_and_kdw_after_vc(void)
-{
-    ModuleBase::TITLE("K_Vectors", "setup_kup_and_kdw_after_vc");
-
-    //=========================================================================
-    // on output: the number of points is doubled and xk and wk in the
-    // first (nks/2) positions correspond to up spin
-    // those in the second (nks/2) ones correspond to down spin
-    //=========================================================================
-    switch (nspin)
-    {
-    case 1:
-
-        for (int ik = 0; ik < nks; ik++)
-        {
-            this->isk[ik] = 0;
-        }
-
-        break;
-
-    case 2:
-
-        for (int ik = 0; ik < nks; ik++)
-        {
-            this->kvec_c[ik+nks] = kvec_c[ik];
-            this->kvec_d[ik+nks] = kvec_d[ik];
-            this->wk[ik+nks]     = wk[ik];
-            this->isk[ik]        = 0;
-            this->isk[ik+nks]    = 1;
-        }
-
-        this->nks *= 2;
-        //this->nkstot *= 2; //This makes the code difficult to read.
-
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nks(nspin=2)",nks);
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nkstot(nspin=2)",nkstot);
-
-        break;
-
-    case 4:
-
-        for (int ik = 0; ik < nks; ik++)
-        {
-            this->isk[ik] = 0;
-        }
-
-        break;
-
-    }
-
-    return;
-} // end subroutine set_kup_and_kdw
