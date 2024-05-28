@@ -121,12 +121,16 @@ void K_Vectors::set(
         }
         if (ModuleSymmetry::Symmetry::symm_flag || is_mp)
         {
+            // resize the kpoint container according to nkstot_ibz 
             this->update_use_ibz();
             this->nks = this->nkstot = this->nkstot_ibz;
         }
     }
 
-    // (3)
+    // (3) 
+    // Improve k point information
+
+    // Complement the coordinates of k point
     this->set_both_kvec(reciprocal_vec, latvec, skpt2);
 
 	if(GlobalV::MY_RANK==0)
@@ -152,16 +156,19 @@ void K_Vectors::set(
 	{
         ModuleBase::WARNING_QUIT("K_Vectors::set", "Only available for nspin = 1 or 2 or 4");
     }
+    //normalize k points weights according to nspin
 	this->normalize_wk(deg);
 
     // It's very important in parallel case,
     // firstly do the mpi_k() and then
     // do set_kup_and_kdw()
-	GlobalC::Pkpoints.kinfo(nkstot);
+	GlobalC::Pkpoints.kinfo(nkstot);    //assign k points to several process pools
 #ifdef __MPI
+    // distribute K point data to the corresponding process
     this->mpi_k();//2008-4-29
 #endif
 
+    // set the k vectors for the up and down spin
     this->set_kup_and_kdw();
 
     this->print_klists(GlobalV::ofs_running);
@@ -822,7 +829,7 @@ void K_Vectors::ibz_kpoint(
             {
                 // rotate the kvec_d within all operations.
                 // here use direct coordinates.
-//                kvec_rot = kgmatrix[j] * kvec_d[i];
+                // kvec_rot = kgmatrix[j] * kvec_d[i];
 				// mohan modify 2010-01-30.
 				// mohan modify again 2010-01-31
 				// fix the bug like kvec_d * G; is wrong
@@ -941,25 +948,27 @@ void K_Vectors::ibz_kpoint(
     return;
 }
 
-
+// complement coordinates of k-points according to existing coordinates
+// if cartesian coordinates are given, then direct coordinates are calculated
+// if direct coordinates are given, then cartesian coordinates are calculated
 void K_Vectors::set_both_kvec(const ModuleBase::Matrix3 &G, const ModuleBase::Matrix3 &R,std::string& skpt)
 {
 
     if(GlobalV::FINAL_SCF) //LiuXh add 20180606
     {
-        if(k_nkstot == 0)
+        if(k_nkstot == 0)   // need to set cartesian k vectors
         {
             kd_done = true;
             kc_done = false;
         }
         else
         {
-            if(k_kword == "Cartesian" || k_kword == "C")
+            if(k_kword == "Cartesian" || k_kword == "C") // need to set direct k vectors
 	    {
 	        kc_done = true;
 	        kd_done = false;
 	    }
-	    else if (k_kword == "Direct" || k_kword == "D")
+	    else if (k_kword == "Direct" || k_kword == "D") // need to set cartesian k vectors
 	    {
 	        kd_done = true;
 	        kc_done = false;
@@ -1097,6 +1106,7 @@ void K_Vectors::mpi_k(void)
     std::vector<double> kvec_c_aux(nkstot*3);
     std::vector<double> kvec_d_aux(nkstot*3);
 
+    // collect and process in rank 0
     if (GlobalV::MY_RANK == 0)
     {
         for (int ik = 0;ik < nkstot;ik++)
@@ -1112,12 +1122,14 @@ void K_Vectors::mpi_k(void)
         }
     }
 
+    // broadcast k point data to all processors
     Parallel_Common::bcast_int(isk_aux.data(), nkstot);
 
     Parallel_Common::bcast_double(wk_aux.data(), nkstot);
     Parallel_Common::bcast_double(kvec_c_aux.data(), nkstot*3);
     Parallel_Common::bcast_double(kvec_d_aux.data(), nkstot*3);
 
+    //process k point data in each processor
     this->renew(this->nks * this->nspin);
 
     // distribute
