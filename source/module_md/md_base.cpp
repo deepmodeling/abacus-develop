@@ -29,7 +29,7 @@ MD_base::MD_base(MD_para& MD_para_in, UnitCell& unit_in)
     assert(ModuleBase::AU_to_FS!=0.0);
     assert(ModuleBase::Hartree_to_K!=0.0);
 
-    /// convert to a.u. unit
+    /// convert time and temperatrue to a.u. unit
     mdp.md_dt /= ModuleBase::AU_to_FS;
     mdp.md_tfirst /= ModuleBase::Hartree_to_K;
     mdp.md_tlast /= ModuleBase::Hartree_to_K;
