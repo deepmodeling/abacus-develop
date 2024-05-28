@@ -63,6 +63,7 @@ private:
 
     // step 1 : generate kpoints
     bool read_kpoints(const std::string &fn); // return 0: something wrong.
+    void auto_gen_gamma_KPT(const std::string &fn, const int& nk1, const int& nk2, const int& nk3);
     void Linely_add_k_between(std::ifstream& ifk, std::vector<ModuleBase::Vector3<double>>& kvec);
     void Monkhorst_Pack(const int *nmp_in,const double *koffset_in,const int tipo);
     double Monkhorst_Pack_formula( const int &k_type, const double &offset,
@@ -70,6 +71,7 @@ private:
 
     // step 2 : set both kvec and kved; normalize weight
     void update_use_ibz( void );
+    bool check_symmetry(const ModuleSymmetry::Symmetry &symm, const UnitCell &ucell, bool& match, ModuleBase::Matrix3& gk);
     void set_both_kvec(const ModuleBase::Matrix3 &G,const ModuleBase::Matrix3 &R, std::string& skpt);
     void normalize_wk( const int &degspin );
 
