@@ -530,9 +530,18 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
 
     // k-lattice: "pricell" of reciprocal space
     // CAUTION: should fit into all k-input method, not only MP  !!!
-    
+    ModuleBase::Vector3<double> gb1(ucell.G.e11, ucell.G.e12, ucell.G.e13);
+    ModuleBase::Vector3<double> gb2(ucell.G.e21, ucell.G.e22, ucell.G.e23);
+    ModuleBase::Vector3<double> gb3(ucell.G.e31, ucell.G.e32, ucell.G.e33);
+    ModuleBase::Vector3<double> gk1, gk2, gk3;
     ModuleBase::Matrix3 gk;
-    
+    if (this->is_mp)
+    {
+        gk1 = ModuleBase::Vector3<double>(gb1.x / nmp[0], gb1.y / nmp[0], gb1.z / nmp[0]);
+        gk2 = ModuleBase::Vector3<double>(gb2.x / nmp[1], gb2.y / nmp[1], gb2.z / nmp[1]);
+        gk3 = ModuleBase::Vector3<double>(gb3.x / nmp[2], gb3.y / nmp[2], gb3.z / nmp[2]);
+        gk = ModuleBase::Matrix3(gk1.x, gk1.y, gk1.z, gk2.x, gk2.y, gk2.z, gk3.x, gk3.y, gk3.z);
+    }
 
 
     //===============================================
@@ -548,8 +557,78 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
     int nrotkm=0;
     if(use_symm)
     {
-        if(!check_symmetry(symm, ucell, match, gk)) {
+        // bravais type of reciprocal lattice and k-lattice
+        double b_const[6];
+        double b0_const[6];
+        double bk_const[6];
+        double bk0_const[6];
+        int bbrav=15;
+        int bkbrav=15;
+        std::string bbrav_name;
+        std::string bkbrav_name;
+        ModuleBase::Vector3<double>gk01 = gk1, gk02 = gk2, gk03 = gk3;
+
+        ModuleBase::Matrix3 b_optlat = symm.optlat.Inverse().Transpose();
+        //search optlat after using reciprocity relation
+        ModuleBase::Vector3<double> gb01(b_optlat.e11, b_optlat.e12, b_optlat.e13);
+        ModuleBase::Vector3<double> gb02(b_optlat.e21, b_optlat.e22, b_optlat.e23);
+        ModuleBase::Vector3<double> gb03(b_optlat.e31, b_optlat.e32, b_optlat.e33);
+        symm.lattice_type(gb1, gb2, gb3, gb01, gb02, gb03, b_const, b0_const, bbrav, bbrav_name, ucell.atoms, false, nullptr);
+        GlobalV::ofs_running<<"(for reciprocal lattice: )"<<std::endl;
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS TYPE", bbrav);
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS LATTICE NAME", bbrav_name);
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ibrav", bbrav);
+        
+        // the map of bravis lattice from real to reciprocal space
+        // for example, 3(fcc) in real space matches 2(bcc) in reciprocal space
+        std::vector<int> ibrav_a2b{ 1, 3, 2, 4, 5, 6, 7, 8, 10, 9, 11, 12, 13, 14 };
+        auto ibrav_match = [&](int ibrav_b) -> bool
+        {
+            const int& ibrav_a = symm.real_brav;
+            if (ibrav_a < 1 || ibrav_a > 14) return false;
+            return (ibrav_b == ibrav_a2b[ibrav_a - 1]);
+        };
+        if (!ibrav_match(bbrav))
+        {
+            GlobalV::ofs_running << "Error: Bravais lattice type of reciprocal lattice is not compatible with that of real space lattice:" << std::endl;
+            GlobalV::ofs_running << "ibrav of real space lattice: " << symm.ilattname << std::endl;
+            GlobalV::ofs_running << "ibrav of reciprocal lattice: " << bbrav_name << std::endl;
+            GlobalV::ofs_running << "(which should be " << ibrav_a2b[symm.real_brav - 1] << ")." << std::endl;
+            match = false;
             return;
+        }
+        if (this->is_mp)
+        {
+            symm.lattice_type(gk1, gk2, gk3, gk01, gk02, gk03, bk_const, bk0_const, bkbrav, bkbrav_name, ucell.atoms, false, nullptr);
+            GlobalV::ofs_running << "(for k-lattice: )" << std::endl;
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "BRAVAIS TYPE", bkbrav);
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "BRAVAIS LATTICE NAME", bkbrav_name);
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ibrav", bkbrav);
+        }
+        // point-group analysis of reciprocal lattice
+        ModuleBase::Matrix3 bsymop[48];
+        int bnop = 0;
+        // search again
+        symm.lattice_type(gb1, gb2, gb3, gb1, gb2, gb3, b_const, b0_const, bbrav, bbrav_name, ucell.atoms, false, nullptr);
+        ModuleBase::Matrix3 b_optlat_new(gb1.x, gb1.y, gb1.z, gb2.x, gb2.y, gb2.z, gb3.x, gb3.y, gb3.z);
+        symm.setgroup(bsymop, bnop, bbrav);
+        symm.gmatrix_convert(bsymop, bsymop, bnop, b_optlat_new, ucell.G);
+        
+        //check if all the kgmatrix are in bsymop
+        auto matequal = [&symm] (ModuleBase::Matrix3 a, ModuleBase::Matrix3 b)
+        {
+            return (symm.equal(a.e11, b.e11) && symm.equal(a.e12, b.e12) && symm.equal(a.e13, b.e13) &&
+            symm.equal(a.e21, b.e21) && symm.equal(a.e22, b.e22) && symm.equal(a.e23, b.e23) &&
+            symm.equal(a.e31, b.e31) && symm.equal(a.e32, b.e32) && symm.equal(a.e33, b.e33));
+        };
+        for(int i=0;i<symm.nrotk;++i)
+        {
+            match = false;
+            for(int j=0;j<bnop;++j) 
+            {
+                if (matequal(symm.kgmatrix[i], bsymop[j])) {match=true; break;}
+            }
+            if (!match) return;
         }
         nrotkm = symm.nrotk;// change if inv not included
         for (int i = 0; i < nrotkm; ++i)
@@ -745,7 +824,7 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry &symm, bool use_symm,s
     ss << table << std::endl;
     skpt = ss.str();
 	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "nkstot_ibz", nkstot_ibz);
-
+    
     table.clear();
     table += "K-POINTS REDUCTION ACCORDING TO SYMMETRY\n";
     table += FmtCore::format("%8s%12s%12s%12s%8s%8s\n",
