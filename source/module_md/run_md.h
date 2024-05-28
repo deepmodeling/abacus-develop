@@ -7,6 +7,7 @@
 /**
  * @brief the md loop line
  *
+ * Determine different classes and methods based on md_type.
  */
 namespace Run_MD
 {
