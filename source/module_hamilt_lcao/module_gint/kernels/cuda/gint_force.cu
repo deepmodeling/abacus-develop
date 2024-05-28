@@ -253,7 +253,7 @@ __global__ void dot_product_force(double* psir_lx,
     }
 }
 void calculateInit(DensityMat& denstiy_mat,
-                   ForceStressIatGlobal& f_s_iat_dev,
+                   frc_strs_iat_gbl& f_s_iat_dev,
                    hamilt::HContainer<double>* dm,
                    const Grid_Technique& gridt,
                    const UnitCell& ucell,
@@ -300,7 +300,7 @@ void calculateInit(DensityMat& denstiy_mat,
  * @param nbz int,stand for the number of Z-axis
  * @param gridt Grid_Technique,stored the major method in the the gint.
  */
-void para_init(SGridParameter& para,
+void para_init(grid_para& para,
                        int iter_num,
                        int nbz,
                        const Grid_Technique& gridt)
@@ -377,23 +377,23 @@ void para_init(SGridParameter& para,
         = &gridt.ap_output_gbl_g[gridt.atom_pair_nbz * para.stream_num];
 }
 /**
- * @brief ForceStressIat on host and device Init
+ * @brief frc_strs_iat on host and device Init
  *
  * GridParameter init
  *
- * @param ForceStressIat ForceStressIat,contains the Force Stree Iat on Host
+ * @param frc_strs_iat frc_strs_iat,contains the Force Stree Iat on Host
  * @param stream_num int , record the stream in GPU
  * @param cuda_block in stress compute,used for Block nums
  * @param atom_num_grid in force calculate,used for Block nums
  * @param max_size Maximum size of atoms on a grid.
- * @param ForceStressIatGlobal ForceStressIatGlobal,contains the Force Stree Iat on Host
+ * @param frc_strs_iat_gbl frc_strs_iat_gbl,contains the Force Stree Iat on Host
  */
-void cal_init(ForceStressIat& f_s_iat,
+void cal_init(frc_strs_iat& f_s_iat,
                         const int stream_num,
                         const int cuda_block,
                         const int atom_num_grid,
                         const int max_size,
-                        const ForceStressIatGlobal& f_s_iat_dev)
+                        frc_strs_iat_gbl& f_s_iat_dev)
 {
     const int iat_min = -max_size - 1;
     f_s_iat.stress_host = new double[6 * cuda_block];
@@ -423,7 +423,7 @@ void cal_init(ForceStressIat& f_s_iat,
  * @param nbz int,stand for the number of Z-axis
  * @param atom_num_grid in force calculate,used for Block nums
  */
-void para_mem_copy(SGridParameter& para,
+void para_mem_copy(grid_para& para,
                          const Grid_Technique& gridt,
                          const int nbz,
                          const int atom_num_grid)
@@ -536,14 +536,14 @@ void para_mem_copy(SGridParameter& para,
 /**
  * @brief Force Stress Force Iat memCpy,from Host to Device
  *
- *  @param ForceStressIat ForceStressIat,contains the Force Stree Iat on Device
+ *  @param frc_strs_iat frc_strs_iat,contains the Force Stree Iat on Device
  * and Host
  *  @param gridt Grid_Technique,stored the major method in the the gint.
  *  @param atom_num_grid in force calculate,used for Block nums
  *  @param cuda_block in stress compute,used for Block nums
  *  @param stream_num int , record the stream in GPU
  */
-void cal_mem_cpy(ForceStressIat& f_s_iat,
+void cal_mem_cpy(frc_strs_iat& f_s_iat,
                           const Grid_Technique& gridt,
                           const int atom_num_grid,
                           const int cuda_block,
@@ -566,13 +566,13 @@ void cal_mem_cpy(ForceStressIat& f_s_iat,
 /*
  * @brief Force Calculate on Host
  *
- * @param ForceStressIat ForceStressIat,contains the Force Stree Iat on Device
+ * @param frc_strs_iat frc_strs_iat,contains the Force Stree Iat on Device
  * and Host
  * @param force stored the force for each atom on each directions
  * @param atom_num_grid in force calculate,used for Block nums
  */
-void cal_force_add(ForceStressIat& f_s_iat,
-                     double* force,
+void cal_force_add(frc_strs_iat& f_s_iat,
+                     std::vector<double>& force,
                     const int atom_num_grid)
 {
     checkCuda(cudaMemcpy(f_s_iat.force_host,
@@ -595,13 +595,13 @@ void cal_force_add(ForceStressIat& f_s_iat,
 /**
  * @brief Stress Calculate on Host
  *
- * @param ForceStressIat ForceStressIat,contains the Force Stree Iat on Device
+ * @param frc_strs_iat frc_strs_iat,contains the Force Stree Iat on Device
  * and Host
  * @param stress stored the stress for each directions
  * @param cuda_block in stress compute,used for Block nums
  */
-void cal_stress_add(ForceStressIat& f_s_iat,
-                     double* stress,
+void cal_stress_add(frc_strs_iat& f_s_iat,
+                     std::vector<double>& stress,
                      const int cuda_block)
 {
     checkCuda(cudaMemcpy(f_s_iat.stress_host,
@@ -612,7 +612,6 @@ void cal_stress_add(ForceStressIat& f_s_iat,
     {
         for (int index = 0; index < cuda_block; index++)
         {
-            // printf("the stress is %f\n",stress[i]);
             stress[i] += f_s_iat.stress_host[i * cuda_block + index];
         }
     }
