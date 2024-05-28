@@ -56,7 +56,7 @@ void gpu_task_generator_force(const Grid_Technique& gridt,
                               int& max_m,
                               int& max_n,
                               int& atom_pair_num,
-                              SGridParameter& para)
+                              grid_para& para)
 {
     const int grid_index_ij = i * gridt.nby * gridt.nbzp + j * gridt.nbzp;
     const int nwmax = ucell.nwmax;

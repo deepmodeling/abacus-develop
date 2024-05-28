@@ -6,12 +6,15 @@
 #include "diago_cg.h"
 #include "diago_david.h"
 #include "diago_dav_subspace.h"
+#include "module_base/global_variable.h"
+#include "module_base/parallel_global.h" // for MPI
 #include "module_base/timer.h"
 #include "module_base/tool_quit.h"
 #include "module_elecstate/elecstate_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
+#include "module_hsolver/diagh.h"
 #include "module_hsolver/diago_iter_assist.h"
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
@@ -81,19 +84,37 @@ void HSolverPW<T, Device>::initDiagh(const psi::Psi<T, Device>& psi)
     }
     else if (this->method == "dav")
     {
-        DiagoDavid<T>::PW_DIAG_NDIM = GlobalV::PW_DIAG_NDIM;
+#ifdef __MPI 
+        const diag_comm_info comm_info = {POOL_WORLD, GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL};
+#else
+        const diag_comm_info comm_info = {GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL};
+#endif
+
         if (this->pdiagh != nullptr)
         {
             if (this->pdiagh->method != this->method)
             {
                 delete (DiagoDavid<T, Device>*)this->pdiagh;
-                this->pdiagh = new DiagoDavid<T, Device>(precondition.data());
+
+                this->pdiagh = new DiagoDavid<T, Device>(
+                                precondition.data(),
+                                GlobalV::PW_DIAG_NDIM,
+                                GlobalV::use_paw,
+                                comm_info
+                                );
+
                 this->pdiagh->method = this->method;
             }
         }
         else
         {
-            this->pdiagh = new DiagoDavid<T, Device>(precondition.data());
+            this->pdiagh = new DiagoDavid<T, Device>(
+                                precondition.data(),
+                                GlobalV::PW_DIAG_NDIM,
+                                GlobalV::use_paw,
+                                comm_info
+                                );
+
             this->pdiagh->method = this->method;
         }
     }
@@ -629,17 +650,17 @@ void HSolverPW<T, Device>::endDiagh()
     }
     if (this->method == "dav")
     {
-        delete (DiagoDavid<T, Device>*)this->pdiagh;
+        delete reinterpret_cast<DiagoDavid<T, Device>*>(this->pdiagh);
         this->pdiagh = nullptr;
     }
     if (this->method == "dav_subspace")
     {
-        delete (Diago_DavSubspace<T, Device>*)this->pdiagh;
+        delete reinterpret_cast<Diago_DavSubspace<T, Device>*>(this->pdiagh);
         this->pdiagh = nullptr;
     }
     if (this->method == "bpcg")
     {
-        delete (DiagoBPCG<T, Device>*)this->pdiagh;
+        delete reinterpret_cast<DiagoBPCG<T, Device>*>(this->pdiagh);
         this->pdiagh = nullptr;
     }
 
