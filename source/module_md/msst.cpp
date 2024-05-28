@@ -333,8 +333,18 @@ void MSST::propagate_vel(void)
             }
         }
     }
+
+    for(int i = 0;i < size; i++){
+        int each_ucell_nat = ucell.nat / size;
+        int ucell_nat_begin = (each_ucell_nat) * i;
+        int ucell_nat_end = ucell_nat_begin + each_ucell_nat;
+        if(i == size - 1)
+        {
+            ucell_nat_end = ucell.nat;
+        }
+        MPI_Bcast(vel + ucell_nat_begin, each_uncell_nat * 3, MPI_DOUBLE, i, MPI_COMM_WORLD);
+    }
     
-    MPI_Bcast(vel + ucell_nat_begin, (ucell_nat_end - ucell_nat_begin) * 3, MPI_DOUBLE, mdp.my_rank, MPI_COMM_WORLD);
 #endif
 
     return;
