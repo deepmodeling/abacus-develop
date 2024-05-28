@@ -21,7 +21,7 @@ public:
 
     std::vector<int> ngk;						// ngk, number of plane waves for each k point
     std::vector<int> isk;						// distinguish spin up and down k points
-    std::vector<int> ibz2bz;					// mohan added 2009-05-18
+
 
     int nks;						// number of k points in this pool(processor, up+dw)
     int nkstot;						/// total number of k points, equal to nkstot_ibz after reducing k points
@@ -58,6 +58,8 @@ private:
     std::string k_kword; //LiuXh add 20180619
     int k_nkstot; //LiuXh add 20180619
     bool is_mp = false; //Monkhorst-Pack
+
+    std::vector<int> ibz2bz;					// mohan added 2009-05-18
     
     void renew( const int &kpoint_number );
 
