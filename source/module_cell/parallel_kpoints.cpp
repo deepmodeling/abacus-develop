@@ -164,104 +164,8 @@ void Parallel_Kpoints::pool_collection(double *valuea, double *valueb, const Mod
     assert( a.getBound3() == b.getBound3() );
     assert( a.getBound4() == b.getBound4() );
     const int dim = dim2 * dim3 * dim4;
-#ifdef __MPI
-    const int ik_now = ik - this->startk_pool[GlobalV::MY_POOL];
-    const int begin = ik_now * dim2 * dim3 * dim4;
-    double* pa = &a.ptr[begin];
-    double* pb = &b.ptr[begin];
-
-    const int pool = this->whichpool[ik];
-
-	GlobalV::ofs_running << "\n ik=" << ik;
-
-    if (GlobalV::RANK_IN_POOL==0)
-    {
-        if (GlobalV::MY_POOL==0)
-        {
-            if (pool==0)
-            {
-                for (int i=0; i<dim ; i++)
-                {
-                    valuea[i] = *pa;
-                    valueb[i] = *pb;
-                    ++pa;
-                    ++pb;
-                }
-            }
-            else
-            {
-				GlobalV::ofs_running << " receive data.";
-                MPI_Status ierror;
-                MPI_Recv(valuea, dim, MPI_DOUBLE, this->startpro_pool[pool], ik*2+0, MPI_COMM_WORLD,&ierror);
-                MPI_Recv(valueb, dim, MPI_DOUBLE, this->startpro_pool[pool], ik*2+1, MPI_COMM_WORLD,&ierror);
-            }
-        }
-        else
-        {
-            if (GlobalV::MY_POOL == pool)
-            {
-				GlobalV::ofs_running << " send data.";
-                MPI_Send(pa, dim, MPI_DOUBLE, 0, ik*2+0, MPI_COMM_WORLD);
-                MPI_Send(pb, dim, MPI_DOUBLE, 0, ik*2+1, MPI_COMM_WORLD);
-            }
-        }
-    }
-	else
-	{
-		GlobalV::ofs_running << "\n do nothing.";
-	}
-    MPI_Barrier(MPI_COMM_WORLD);
-
-    /*
-
-
-    	if(this->whichpool[ik] == GlobalV::MY_POOL)
-    	{
-    		if(GlobalV::MY_POOL > 0 && GlobalV::RANK_IN_POOL == 0)
-    		{
-    			// data transfer ends.
-    			MPI_Send(pa, dim, MPI_DOUBLE, 0, ik*2,   MPI_COMM_WORLD);
-    			MPI_Send(pb, dim, MPI_DOUBLE, 0, ik*2+1, MPI_COMM_WORLD);
-    		}
-    		else if(GlobalV::MY_POOL == 0 && GlobalV::MY_RANK == 0)
-    		{
-    //			std::cout << "\n ik = " << ik << std::endl;
-    			// data transfer begin.
-    			for(int i=0; i<dim; i++)
-    			{
-    				valuea[i] = *pa;
-    				valueb[i] = *pb;
-    				++pa;
-    				++pb;
-    			}
-    			// data transfer ends.
-    		}
-    	}
-    	else
-    	{
-    		if(GlobalV::MY_RANK==0)
-    		{
-    			MPI_Status* ierror;
-    			const int iproc = this->startpro_pool[ this->whichpool[ik] ];
-    			MPI_Recv(valuea, dim, MPI_DOUBLE, iproc, ik*2,   MPI_COMM_WORLD,ierror);
-    			MPI_Recv(valueb, dim, MPI_DOUBLE, iproc, ik*2+1, MPI_COMM_WORLD,ierror);
-    		}
-    	}
-    	*/
-#else
-    // data transfer ends.
-    const int begin = ik * dim2 * dim3 * dim4;
-    double* pa = &a.ptr[begin];
-    double* pb = &b.ptr[begin];
-    for (int i=0; i<dim; i++)
-    {
-        valuea[i] = *pa;
-        valueb[i] = *pb;
-        ++pa;
-        ++pb;
-    }
-    // data transfer ends.
-#endif
+    pool_collection_aux(valuea, a, dim, ik);
+    pool_collection_aux(valueb, b, dim, ik);
     return;
 }
 
@@ -272,12 +176,17 @@ void Parallel_Kpoints::pool_collection(std::complex<double> *value, const Module
     const int dim3 = w.getBound3();
     const int dim4 = w.getBound4();
     const int dim = dim2 * dim3 * dim4;
+    pool_collection_aux(value, w, dim, ik);
+}
+
+template <class T, class V> void Parallel_Kpoints::pool_collection_aux(T *value, const V &w, const int& dim, const int &ik)
+{
 #ifdef __MPI
     const int ik_now = ik - this->startk_pool[GlobalV::MY_POOL];
-    const int begin = ik_now * dim2 * dim3 * dim4;
-    std::complex<double>* p = &w.ptr[begin];
+    const int begin = ik_now * dim;
+    T* p = &w.ptr[begin];
     //temprary restrict kpar=1 for NSPIN=2 case for generating_orbitals
-    int pool = 0; 
+    int pool = 0;
     if(GlobalV::NSPIN != 2) pool = this->whichpool[ik];
 
 	GlobalV::ofs_running << "\n ik=" << ik;
@@ -318,8 +227,8 @@ void Parallel_Kpoints::pool_collection(std::complex<double> *value, const Module
 
 #else
     // data transfer ends.
-    const int begin = ik * dim2 * dim3 * dim4;
-    std::complex<double> * p = &w.ptr[begin];
+    const int begin = ik * dim;
+    T * p = &w.ptr[begin];
     for (int i=0; i<dim; i++)
     {
         value[i] = *p;
