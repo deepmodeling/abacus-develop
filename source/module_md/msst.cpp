@@ -342,7 +342,7 @@ void MSST::propagate_vel(void)
         {
             ucell_nat_end = ucell.nat;
         }
-        MPI_Bcast(vel + ucell_nat_begin, each_uncell_nat * 3, MPI_DOUBLE, i, MPI_COMM_WORLD);
+        MPI_Bcast(vel + ucell_nat_begin, each_ucell_nat * 3, MPI_DOUBLE, i, MPI_COMM_WORLD);
     }
     
 #endif
