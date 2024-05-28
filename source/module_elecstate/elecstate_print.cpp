@@ -48,17 +48,17 @@ namespace elecstate
 		std::vector<std::string> th_fmt = {" %-" + std::to_string(witer) + "s"}; 		 // table header: th: ITER
 		std::vector<std::string> td_fmt = {" " + iter_header_dict[ks_solver] + "%-" + std::to_string(witer - 2) + ".0f"}; // table data: td: GE10086
 		// magnetization column, might be non-exist, but size of mag can only be 0, 2 or 4
-		for(int i = 0; i < mag.size(); i++) {th_fmt.emplace_back("%" + std::to_string(wmag) + "s");}
-		for(int i = 0; i < mag.size(); i++) {td_fmt.emplace_back("%" + std::to_string(wmag) + ".4e");} // hard-code precision here
+		for(int i = 0; i < mag.size(); i++) {th_fmt.emplace_back(" %" + std::to_string(wmag) + "s");}
+		for(int i = 0; i < mag.size(); i++) {td_fmt.emplace_back(" %" + std::to_string(wmag) + ".4e");} // hard-code precision here
 		// energies
-		for(int i = 0; i < 2; i++) {th_fmt.emplace_back("%" + std::to_string(wener) + "s");}
-		for(int i = 0; i < 2; i++) {td_fmt.emplace_back("%" + std::to_string(wener) + ".8e");}
+		for(int i = 0; i < 2; i++) {th_fmt.emplace_back(" %" + std::to_string(wener) + "s");}
+		for(int i = 0; i < 2; i++) {td_fmt.emplace_back(" %" + std::to_string(wener) + ".8e");}
 		// densities column, size can be 1 or 2, DRHO or DRHO, DKIN
-		for(int i = 0; i < drho.size(); i++) {th_fmt.emplace_back("%" + std::to_string(wrho) + "s");}
-		for(int i = 0; i < drho.size(); i++) {td_fmt.emplace_back("%" + std::to_string(wrho) + ".8e");}
+		for(int i = 0; i < drho.size(); i++) {th_fmt.emplace_back(" %" + std::to_string(wrho) + "s");}
+		for(int i = 0; i < drho.size(); i++) {td_fmt.emplace_back(" %" + std::to_string(wrho) + ".8e");}
 		// time column, trivial
-		th_fmt.emplace_back("%" + std::to_string(wtime) + "s\n");
-		td_fmt.emplace_back("%" + std::to_string(wtime) + ".2f\n");
+		th_fmt.emplace_back(" %" + std::to_string(wtime) + "s\n");
+		td_fmt.emplace_back(" %" + std::to_string(wtime) + ".2f\n");
 		// contents
 		std::vector<std::string> titles; std::vector<double> values;
 		switch (mag.size())
