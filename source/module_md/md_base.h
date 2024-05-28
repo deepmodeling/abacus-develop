@@ -8,7 +8,7 @@
  * @brief base class of md
  *
  * This class implements the velocity-Verlet method.
- * The system is assumed to be isolated in the sense that it cannot exchange energy or particles with its environment,
+ * The corresponding system(nve) is assumed to be isolated in the sense that it cannot exchange energy or particles with its environment,
  * so that the energy of the system does not change with time.
  */
 class MD_base
