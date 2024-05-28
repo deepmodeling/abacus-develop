@@ -37,5 +37,9 @@ class Verlet : public MD_base
      */
     void thermalize(const int& nraise, const double& current_temp, const double& target_temp);
 };
-
+    /**
+    * @brief set verlert when themostat is anderson
+    *
+    */
+    void anderson_set_vel();
 #endif
