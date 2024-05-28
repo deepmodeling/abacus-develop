@@ -6,7 +6,7 @@
 /**
  * @brief the md methods based on the velocity-Verlet equation
  *
- * This method corresponds to the NVE ensemble。
+ * This method corresponds to the NVE and the NVT ensemble。
  */
 class Verlet : public MD_base
 {
