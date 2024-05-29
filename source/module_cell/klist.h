@@ -306,7 +306,7 @@ class K_Vectors
      */
     void mpi_k();
 
-    // step 4 : *2 or *4 kpoints.
+    // step 4 : *2 kpoints.
 
     /**
      * @brief Sets up the k-points for spin-up and spin-down calculations.
