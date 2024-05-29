@@ -85,11 +85,9 @@ class Force_Stress_LCAO
         ModuleBase::matrix& soverlap,
         ModuleBase::matrix& stvnl_dphi,
         ModuleBase::matrix& svnl_dbeta,
+        ModuleBase::matrix& svl_dphi,
 #if __DEEPKS
-        ModuleBase::matrix& svl_dphi,
         ModuleBase::matrix& svnl_dalpha,
-#else
-        ModuleBase::matrix& svl_dphi,
 #endif
         LCAO_gen_fixedH &gen_h, // mohan add 2024-04-02
 		Gint_Gamma &gint_gamma,

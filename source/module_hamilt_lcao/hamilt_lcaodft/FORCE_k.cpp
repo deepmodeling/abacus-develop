@@ -366,8 +366,8 @@ void Force_LCAO<std::complex<double>>::test(
                 GlobalC::ucell,
                 GlobalC::ORB,
                 GlobalC::GridD,
-                kv.get_nks(),
-                kv.kvec_d,
+                kv->get_nks(),
+                kv->kvec_d,
                 isstress,
                 svnl_dalpha);
 #ifdef __MPI

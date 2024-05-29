@@ -141,30 +141,28 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
     // implement four terms which needs integration
     //--------------------------------------------------------
     this->integral_part(GlobalV::GAMMA_ONLY_LOCAL,
-                                     isforce,
-                                     isstress,
-                                     loc,
-                                     pelec,
-                                     psi,
-                                     foverlap,
-                                     ftvnl_dphi,
-                                     fvnl_dbeta,
-                                     fvl_dphi,
-                                     soverlap,
-                                     stvnl_dphi,
-                                     svnl_dbeta,
+        isforce,
+        isstress,
+        loc,
+        pelec,
+        psi,
+        foverlap,
+        ftvnl_dphi,
+        fvnl_dbeta,
+        fvl_dphi,
+        soverlap,
+        stvnl_dphi,
+        svnl_dbeta,
+        svl_dphi,
 #ifdef __DEEPKS
-                                     svl_dphi,
-                                     svnl_dalpha,
-#else
-                                     svl_dphi,
+        svnl_dalpha,
 #endif
-                                     gen_h, // mohan add 2024-04-02
-									 gint_gamma,
-									 gint_k,
-									 pv,
-									 lm,
-                                     kv);
+        gen_h, // mohan add 2024-04-02
+        gint_gamma,
+        gint_k,
+        pv,
+        lm,
+        kv);
 
     // implement vdw force or stress here
     //  Peize Lin add 2014-04-04, update 2021-03-09
@@ -742,11 +740,9 @@ void Force_Stress_LCAO<double>::integral_part(
     ModuleBase::matrix& soverlap,
     ModuleBase::matrix& stvnl_dphi,
     ModuleBase::matrix& svnl_dbeta,
+    ModuleBase::matrix& svl_dphi,
 #if __DEEPKS
-    ModuleBase::matrix& svl_dphi,
     ModuleBase::matrix& svnl_dalpha,
-#else
-    ModuleBase::matrix& svl_dphi,
 #endif
     LCAO_gen_fixedH &gen_h, // mohan add 2024-04-02
 	Gint_Gamma &gint_gamma, // mohan add 2024-04-01
@@ -794,11 +790,9 @@ void Force_Stress_LCAO<std::complex<double>>::integral_part(
     ModuleBase::matrix& soverlap,
     ModuleBase::matrix& stvnl_dphi,
     ModuleBase::matrix& svnl_dbeta,
+    ModuleBase::matrix& svl_dphi,
 #if __DEEPKS
-    ModuleBase::matrix& svl_dphi,
     ModuleBase::matrix& svnl_dalpha,
-#else
-    ModuleBase::matrix& svl_dphi,
 #endif
     LCAO_gen_fixedH &gen_h, // mohan add 2024-04-02
 	Gint_Gamma &gint_gamma,
