@@ -50,7 +50,8 @@ TEST_F(IstateInfoTest,OutIstateInfoS1)
 	//mpi setting
 	Parallel_Global::init_pools();
 	kv->set_nkstot(100);
-	Pkpoints->kinfo(kv->get_nkstot());
+	int nkstot = kv->get_nkstot(); 
+	Pkpoints->kinfo(nkstot);
 	//std::cout<<"my_rank "<<GlobalV::MY_RANK<<" pool rank/size: "
 	//	<<GlobalV::RANK_IN_POOL<<"/"<<GlobalV::NPROC_IN_POOL<<std::endl;
 	//std::cout<<"MY_POOL "<<GlobalV::MY_POOL<<std::endl;
@@ -87,7 +88,8 @@ TEST_F(IstateInfoTest,OutIstateInfoS2)
 	//mpi setting
 	Parallel_Global::init_pools();
 	kv->set_nkstot(100);
-	Pkpoints->kinfo(kv->get_nkstot());
+	int nkstot = kv->get_nkstot(); 
+	Pkpoints->kinfo(nkstot);
 	//std::cout<<"my_rank "<<GlobalV::MY_RANK<<" pool rank/size: "
 	//	<<GlobalV::RANK_IN_POOL<<"/"<<GlobalV::NPROC_IN_POOL<<std::endl;
 	//std::cout<<"MY_POOL "<<GlobalV::MY_POOL<<std::endl;
