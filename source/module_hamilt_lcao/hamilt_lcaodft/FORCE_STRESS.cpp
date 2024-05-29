@@ -255,7 +255,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
 
     if (!GlobalV::GAMMA_ONLY_LOCAL)
     {
-        this->flk.finish_k(lm);
+        this->flk.finish_ftable(lm);
     }
 
 #ifdef __EXX
@@ -751,15 +751,14 @@ void Force_Stress_LCAO<double>::integral_part(
     LCAO_gen_fixedH &gen_h, // mohan add 2024-04-02
 	Gint_Gamma &gint_gamma, // mohan add 2024-04-01
 	Gint_k &gint_k, // mohan add 2024-04-01
-	Parallel_Orbitals &pv,
+    const Parallel_Orbitals& pv,
     LCAO_Matrix &lm,
     const K_Vectors& kv)
 {
 
-    flk.ftable_gamma(isforce,
+    flk.ftable(isforce,
         isstress,
         psi,
-        loc,
         pelec,
         foverlap,
         ftvnl_dphi,
@@ -768,14 +767,13 @@ void Force_Stress_LCAO<double>::integral_part(
         soverlap,
         stvnl_dphi,
         svnl_dbeta,
+        svl_dphi,
 #if __DEEPKS
-        svl_dphi,
         svnl_dalpha,
-#else
-        svl_dphi,
 #endif
         gen_h,
         gint_gamma,
+        pv,
         lm);
     return;
 }
@@ -805,34 +803,31 @@ void Force_Stress_LCAO<std::complex<double>>::integral_part(
     LCAO_gen_fixedH &gen_h, // mohan add 2024-04-02
 	Gint_Gamma &gint_gamma,
 	Gint_k &gint_k,
-	Parallel_Orbitals &pv,
+    const Parallel_Orbitals& pv,
 	LCAO_Matrix &lm,
 	const K_Vectors& kv)
 {
-        flk.ftable_k(isforce,
-                     isstress,
-                     *this->RA,
-                     psi,
-                     loc,
-                     pelec,
-                     foverlap,
-                     ftvnl_dphi,
-                     fvnl_dbeta,
-                     fvl_dphi,
-                     soverlap,
-                     stvnl_dphi,
-                     svnl_dbeta,
+    flk.ftable(isforce,
+        isstress,
+        psi,
+        pelec,
+        foverlap,
+        ftvnl_dphi,
+        fvnl_dbeta,
+        fvl_dphi,
+        soverlap,
+        stvnl_dphi,
+        svnl_dbeta,
+        svl_dphi,
 #if __DEEPKS
-                     svl_dphi,
-                     svnl_dalpha,
-#else
-                     svl_dphi,
+        svnl_dalpha,
 #endif
-					 gen_h,
-                     gint_k,
-					 pv,
-					 lm,
-                     kv);
+        gen_h,
+        gint_k,
+        pv,
+        lm,
+        & kv,
+        this->RA);
     return;
 }
 
