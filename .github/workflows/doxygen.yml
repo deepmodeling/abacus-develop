@@ -38,7 +38,7 @@ jobs:
 
       - name: Generate Doxygen Documentation
         working-directory: ./doxygen
-        run: doxygen Doxyfile
+        run: doxygen
         shell: bash
         
       - name: Setup Pages
@@ -47,7 +47,6 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Upload entire repository
           path: './doxygen/html'
           
       - name: Deploy to GitHub Pages
