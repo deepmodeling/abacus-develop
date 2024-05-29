@@ -1,5 +1,5 @@
 # Simple workflow for deploying static content to GitHub Pages
-name: Deploy static content to Pages
+name: Deploy Doxygen to Github Pages
 
 on:
   # Runs on pushes targeting the default branch
@@ -37,6 +37,7 @@ jobs:
         shell: bash
 
       - name: Generate Doxygen Documentation
+        working-directory: ./doxygen
         run: doxygen Doxyfile
         shell: bash
         
@@ -47,7 +48,7 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           # Upload entire repository
-          path: './doxygen-html'
+          path: './doxygen'
           
       - name: Deploy to GitHub Pages
         id: deployment
