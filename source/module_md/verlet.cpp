@@ -132,7 +132,7 @@ void Verlet::restart(const std::string& global_readin_dir)
     return;
 }
 
-void Verlert::anderson_set_vel(void)
+void Verlet::anderson_set_vel(void)
 {
     double deviation;
     for (int i = 0; i < ucell.nat; ++i)
