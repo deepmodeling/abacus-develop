@@ -15,7 +15,7 @@ std::string wfc_lcao_gen_fname(const int& out_type,
                                const int& ik,
                                const int& istep)
 {
-    // fn_out = "{GlobalV::global_out_dir}/LCAO_{K|GAMMA}{K index}{_ION} + {".txt"/".dat"}""
+    // fn_out = "{GlobalV::global_out_dir}/WFC_LCAO_{K|GAMMA}{K index}{_ION} + {".txt"/".dat"}""
     std::string kgamma_block = (gamma_only) ? "_GAMMA" : "_K";
     std::string istep_block = (istep >=0 && (! out_app_flag)) ? "_ION" + std::to_string(istep+1): ""; // only when istep >= 0 and out_app_flag is true will write each wfc to a separate file
     std::string suffix_block = "";
