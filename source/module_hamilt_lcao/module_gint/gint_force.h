@@ -192,6 +192,7 @@ void allocateDm(double* matrix_host,
 void para_init(grid_para& para,
                        const int iter_num,
                        const int nbz,
+                       const int pipeline_index,
                        const Grid_Technique& gridt);
 /**
  * @brief frc_strs_iat on host and device Init
@@ -224,6 +225,7 @@ void cal_init(frc_strs_iat& f_s_iat,
 void para_mem_copy(grid_para& para,
                          const Grid_Technique& gridt,
                          const int nbz,
+                         const int pipeline_index,
                          const int atom_num_grid);
 /**
  * @brief Force Stress Force Iat memCpy,from Host to Device
