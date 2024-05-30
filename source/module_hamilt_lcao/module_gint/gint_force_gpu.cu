@@ -77,7 +77,7 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
     const int cuda_block
         = std::min(64, (gridt.psir_size + cuda_threads - 1) / cuda_threads);
     int iter_num = 0;
-    int pipeline_index = 0;
+    
     DensityMat denstiy_mat;
     frc_strs_iat_gbl f_s_iat_dev;
     grid_para para;
@@ -98,22 +98,27 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
     }
 
     /*compute the psi*/
+    #pragma omp parallel for num_threads(gridt.nstreams) private(para, f_s_iat) collapse(2)
     for (int i = 0; i < gridt.nbx; i++)
     {
         for (int j = 0; j < gridt.nby; j++)
         {
+            
 
             int max_m = 0;
             int max_n = 0;
             int atom_pair_num = 0;
+            const int grid_index_ij = i * gridt.nby * gridt.nbzp 
+                                        + j * gridt.nbzp;
             dim3 grid_psi(nbz, 32);
             dim3 block_psi(64);
             dim3 grid_dot_force(cuda_block);
             dim3 block_dot_force(cuda_threads);
             dim3 grid_dot(cuda_block);
             dim3 block_dot(cuda_threads);
-            
-            pipeline_index = iter_num % gridt.nstreams;
+            int pipeline_index = omp_get_thread_num();
+
+            std::vector<bool> gpu_mat_cal_flag(max_size * gridt.nbzp, false);
             para_init(para, iter_num, nbz, pipeline_index,gridt);
             cal_init(f_s_iat,
                                pipeline_index,
@@ -124,8 +129,7 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
             /*gpu task compute in CPU */
             gpu_task_generator_force(gridt,
                                      ucell,
-                                     i,
-                                     j,
+                                     grid_index_ij,
                                      gridt.psi_size_max_z,
                                      max_size,
                                      nczp,
@@ -133,12 +137,20 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
                                      rcut,
                                      vlocal,
                                      f_s_iat.iat_host,
-                                     lgd,
-                                     denstiy_mat.density_mat_d,
-                                     max_m,
-                                     max_n,
                                      atom_pair_num,
+                                     gpu_mat_cal_flag,
                                      para);
+            alloc_multinom_mult(gridt,
+                                ucell, 
+                                grid_index_ij,
+                                max_size,
+                                lgd,
+                                denstiy_mat.density_mat_d,
+                                max_m,
+                                max_n, 
+                                atom_pair_num, 
+                                gpu_mat_cal_flag,
+                                para);
             /*variables memcpy to gpu host*/
             para_mem_copy(para, 
                                  gridt, 

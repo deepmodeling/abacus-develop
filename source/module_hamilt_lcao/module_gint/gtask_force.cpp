@@ -42,30 +42,20 @@ namespace GintKernel
  */
 void gpu_task_generator_force(const Grid_Technique& gridt,
                               const UnitCell& ucell,
-                              const int i,
-                              const int j,
+                              const int grid_index_ij,
                               const int psiSizeMax,
                               const int max_size,
                               const int nczp,
                               const double vfactor,
-                              double* rcut,
+                              const double* rcut,
                               const double* vlocal_global_value,
                               int* iat_per_nbz,
-                              const int lgd,
-                              double* dm_matrix_g,
-                              int& max_m,
-                              int& max_n,
                               int& atom_pair_num,
+                              std::vector<bool>& gpu_mat_cal_flag,
                               grid_para& para)
 {
-    const int grid_index_ij = i * gridt.nby * gridt.nbzp + j * gridt.nbzp;
+    
     const int nwmax = ucell.nwmax;
-    bool* gpu_mat_cal_flag = new bool[max_size * gridt.nbzp];
-
-    for (int i = 0; i < max_size * gridt.nbzp; i++)
-    {
-        gpu_mat_cal_flag[i] = false;
-    }
     // psir generate
     for (int z_index = 0; z_index < gridt.nbzp; z_index++)
     {
@@ -142,12 +132,25 @@ void gpu_task_generator_force(const Grid_Technique& gridt,
         }
         para.num_psir[z_index] = num_get_psi;
     }
+}
 
-    /* allocate the Multiplication of multinomial matrices */
+/* allocate the Multiplication of multinomial matrices */
+void alloc_multinom_mult(const Grid_Technique& gridt,
+                                    const UnitCell& ucell,
+                                    const int grid_index_ij,
+                                    const int max_size,
+                                    const int lgd,
+                                    double* dm_matrix_g,
+                                    int& max_m,
+                                    int& max_n,
+                                    int& atom_pair_num,
+                                    std::vector<bool>& gpu_mat_cal_flag,
+                                    grid_para& para)
+{
     int tid = 0;
     max_m = 0;
     max_n = 0;
-
+    const int nwmax=ucell.nwmax;
     for (int z_index = 0; z_index < gridt.nbzp; z_index++)
     {
         int grid_index = grid_index_ij + z_index;
@@ -168,8 +171,7 @@ void gpu_task_generator_force(const Grid_Technique& gridt,
                 = gridt.trace_lo[ucell.itiaiw2iwt(it1, ucell.iat2ia[iat1], 0)];
             int nw1 = ucell.atoms[it1].nw;
 
-            for (int atom2 = 0; atom2 < gridt.how_many_atoms[grid_index];
-                 atom2++)
+            for (int atom2 = 0; atom2 < gridt.how_many_atoms[grid_index];atom2++)
             {
                 if (!gpu_mat_cal_flag[calc_flag_index + atom2])
                 {
@@ -179,8 +181,8 @@ void gpu_task_generator_force(const Grid_Technique& gridt,
                 int iat2 = gridt.which_atom[mcell_index2];
                 int it2 = ucell.iat2it[iat2];
                 int lo2 = gridt.trace_lo[ucell.itiaiw2iwt(it2,
-                                                          ucell.iat2ia[iat2],
-                                                          0)];
+                                                            ucell.iat2ia[iat2],
+                                                            0)];
                 int nw2 = ucell.atoms[it2].nw;
 
                 int mat_A_idx = bcell_start_psir + atom2 * nwmax;
@@ -211,9 +213,9 @@ void gpu_task_generator_force(const Grid_Technique& gridt,
         }
     }
     atom_pair_num = tid;
-
-    delete[] gpu_mat_cal_flag;
+    gpu_mat_cal_flag.clear();
 }
+
 
 void allocateDm(double* matrixHost,
                 hamilt::HContainer<double>* dm,
@@ -259,6 +261,7 @@ void allocateDm(double* matrixHost,
     }
     return;
 }
+
 void calculateInit(DensityMat& denstiy_mat,
                    frc_strs_iat_gbl& f_s_iat_dev,
                    hamilt::HContainer<double>* dm,

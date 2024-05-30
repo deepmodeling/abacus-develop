@@ -102,9 +102,9 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
  *
  * This function generates GPU tasks for force calculations.
  *
- * @param gridt Reference to Grid_Technique object.
- * @param i Value of i,stand for the x-axis gird.
- * @param j Value of j.stand for the y-axis grid.
+ * @param gridt Reference to Grid_Technique .
+ * @param ucell Reference to UnitCell .
+ * @param grid_index_ij Index of the grid.
  * @param psi_size_max Maximum size of psi.
  * @param max_size Maximum size of atoms on a grid.
  * @param nczp Size parameter,stand for the current z-axis grids.
@@ -112,33 +112,52 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
  * @param rcut distance for each atom orbits
  * @param vlocal_global_value Global values of local potential.
  * @param iat_per_nbz save the number of the iat on per nbz grids.
- * @param lgd Value of lgd,stand for the local grid dimension.
- * @param num_psir Array for num_psir values,contained the each number of the
- * atom psir on a grid.
- * @param dm_matrix_g GPU array for dm_matrix,send as the denstiy matrix.
- * @param max_m Maximum value of m,stand for the max number of mat_m.
- * @param max_n Maximum value of n,stand for the max number of mat_n.
  * @param atom_pair_num Number of atom pairs,stand for the max number of mat_n.
+ * @param gpu_mat_cal_flag Establish whether to perform calculations between
+ * atoms and grid points.
  * @param para Grid parameter in task generator,
  */
 
 void gpu_task_generator_force(const Grid_Technique& gridt,
                               const UnitCell& ucell,
-                              const int i,
-                              const int j,
+                              const int grid_index_ij,
                               const int psi_size_max,
                               const int max_size,
                               const int nczp,
                               const double vfactor,
-                              double* ruct,
+                              const double* ruct,
                               const double* vlocal_global_value,
                               int* iat_per_nbz,
-                              const int lgd,
-                              double* dm_matrix_g,
-                              int& max_m,
-                              int& max_n,
                               int& atom_pair_num,
+                              std::vector<bool>& gpu_mat_cal_flag,
                               grid_para& para);
+/**
+ * @brief Calculate atom pair parameters.
+ *
+ * This function calculates the parameters for atom pairs.
+ * @param gridt Reference to Grid_Technique.
+ * @param ucell Reference to UnitCell.
+ * @param grid_index_ij Index of the grid.
+ * @param max_size Maximum size of atoms on a grid.
+ * @param lgd Value of local grid dimension.
+ * @param dm_matrix_g GPU array for dm_matrix.
+ * @param max_m The maximum length of matrix A.
+ * @param max_n The maximum length of matrix B.
+ * @param gpu_mat_cal_flag Establish whether to perform calculations between
+ *  atoms and grid points
+ * @param para Grid parameter in multi matrix multiplication.
+ */
+void alloc_multinom_mult(const Grid_Technique& gridt,
+                                    const UnitCell& ucell,
+                                    const int grid_index_ij,
+                                    const int max_size,
+                                    const int lgd,
+                                    double* dm_matrix_g,
+                                    int& max_m,
+                                    int& max_n,
+                                    int& atom_pair_num,
+                                    std::vector<bool>& gpu_mat_cal_flag,
+                                    grid_para& para);
 /**
  * @brief Density Matrix,force Stress Iat Init
  *
