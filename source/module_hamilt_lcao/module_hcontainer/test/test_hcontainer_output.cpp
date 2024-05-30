@@ -76,7 +76,7 @@ TEST_F(OutputHContainerTest, Write)
     ParaV.nrow = 4;
     ParaV.ncol = 4;
     std::ofstream ofs("output_hcontainer.log");
-    ParaV.set_global2local(4, 4, false, ofs);
+    ParaV.set_serial(4, 4);
     // std::cout << "ParaV.global2local_row = " << ParaV.global2local_row(0) << " " << ParaV.global2local_row(1) << " "
     //           << ParaV.global2local_row(2) << " " << ParaV.global2local_row(3) << std::endl;
     // std::cout << "ParaV.global2local_col = " << ParaV.global2local_col(0) << " " << ParaV.global2local_col(1) << " "

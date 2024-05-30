@@ -1,6 +1,7 @@
 #ifndef _PARALLEL_ORBITALS_H_
 #define _PARALLEL_ORBITALS_H_
 #include "parallel_2d.h"
+#include <fstream>
 
 /// This class packs the information of 2D-block-cyclic for LCAO code:
 /// parallel distribution of basis, wavefunction and matrix.

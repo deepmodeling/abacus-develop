@@ -45,15 +45,6 @@ void ESolver_KS_LCAO<TK, TR>::read_mat_npz(std::string& zipname, hamilt::HContai
         return;
     }
 
-/*
-    hamilt::HContainer<double>* HR_serial;
-    Parallel_Orbitals serialV;
-    serialV.set_proc_dim(1,0);
-    serialV.mpi_create_cart(MPI_COMM_WORLD);
-    serialV.set_local2global(GlobalV::NLOCAL, GlobalV::NLOCAL, GlobalV::ofs_running, GlobalV::ofs_warning);
-    serialV.set_global2local(GlobalV::NLOCAL, GlobalV::NLOCAL, false, GlobalV::ofs_running);
-    serialV.set_atomic_trace(GlobalC::ucell.get_iat2iwt(), GlobalC::ucell.nat, GlobalV::NLOCAL);
-*/
     if(GlobalV::MY_RANK == 0)
     {
         //HR_serial = new hamilt::HContainer<double>(&serialV);
@@ -435,7 +426,7 @@ void ESolver_KS_LCAO<TK, TR>::output_mat_npz(std::string& zipname, const hamilt:
 #ifdef __MPI
     hamilt::HContainer<double>* HR_serial;
     Parallel_Orbitals serialV;
-    serialV.set_global2local(GlobalV::NLOCAL, GlobalV::NLOCAL, false, GlobalV::ofs_running);
+    serialV.set_serial(GlobalV::NLOCAL, GlobalV::NLOCAL);
     serialV.set_atomic_trace(GlobalC::ucell.get_iat2iwt(), GlobalC::ucell.nat, GlobalV::NLOCAL);
     if(GlobalV::MY_RANK == 0)
     {
