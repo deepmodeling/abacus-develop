@@ -239,7 +239,7 @@ void Local_Orbital_wfc::wfc_2d_to_grid(const double* wfc_2d,
     long maxnloc; // maximum number of elements in local matrix
     info=MPI_Reduce(&pv->nloc_wfc, &maxnloc, 1, MPI_LONG, MPI_MAX, 0, pv->comm_2D);
     info=MPI_Bcast(&maxnloc, 1, MPI_LONG, 0, pv->comm_2D);
-    double *work=new double[maxnloc]; // work/buffer matrix
+    std::vector<double> work(maxnloc); // work/buffer matrix
 
     int naroc[2]; // maximum number of row or column
     for(int iprow=0; iprow<pv->dim0; ++iprow)
@@ -251,21 +251,20 @@ void Local_Orbital_wfc::wfc_2d_to_grid(const double* wfc_2d,
             info=MPI_Cart_rank(pv->comm_2D, coord, &src_rank);
             if(myid==src_rank)
             {
-                BlasConnector::copy(pv->nloc_wfc, wfc_2d, inc, work, inc);
+                BlasConnector::copy(pv->nloc_wfc, wfc_2d, inc, work.data(), inc);
                 naroc[0]=pv->nrow;
                 naroc[1]=pv->ncol_bands;
             }
             info=MPI_Bcast(naroc, 2, MPI_INT, src_rank, pv->comm_2D);
-            info=MPI_Bcast(work, maxnloc, MPI_DOUBLE, src_rank, pv->comm_2D);
+            info=MPI_Bcast(work.data(), maxnloc, MPI_DOUBLE, src_rank, pv->comm_2D);
 
 			info = this->set_wfc_grid(naroc, pv->nb,
 						pv->dim0, pv->dim1, iprow, ipcol,
-						work, wfc_grid);
+						work.data(), wfc_grid);
 
         }//loop ipcol
     }//loop iprow
 
-    delete[] work;
     ModuleBase::timer::tick("Local_Orbital_wfc","wfc_2d_to_grid");
 }
 
@@ -289,7 +288,7 @@ void Local_Orbital_wfc::wfc_2d_to_grid(const std::complex<double>* wfc_2d,
     long maxnloc=0; // maximum number of elements in local matrix
     info=MPI_Reduce(&pv->nloc_wfc, &maxnloc, 1, MPI_LONG, MPI_MAX, 0, pv->comm_2D);
     info=MPI_Bcast(&maxnloc, 1, MPI_LONG, 0, pv->comm_2D);
-    std::complex<double> *work=new std::complex<double>[maxnloc]; // work/buffer matrix
+    std::vector<std::complex<double>> work(maxnloc); // work/buffer matrix
     
     int naroc[2] = {0}; // maximum number of row or column
     for(int iprow=0; iprow<pv->dim0; ++iprow)
@@ -301,20 +300,19 @@ void Local_Orbital_wfc::wfc_2d_to_grid(const std::complex<double>* wfc_2d,
             info=MPI_Cart_rank(pv->comm_2D, coord, &src_rank);
             if(myid==src_rank)
             {
-                BlasConnector::copy(pv->nloc_wfc, wfc_2d, inc, work, inc);
+                BlasConnector::copy(pv->nloc_wfc, wfc_2d, inc, work.data(), inc);
                 naroc[0]=pv->nrow;
                 naroc[1]=pv->ncol_bands;
             }
             info=MPI_Bcast(naroc, 2, MPI_INT, src_rank, pv->comm_2D);
-            info = MPI_Bcast(work, maxnloc, MPI_DOUBLE_COMPLEX, src_rank, pv->comm_2D);
+            info = MPI_Bcast(work.data(), maxnloc, MPI_DOUBLE_COMPLEX, src_rank, pv->comm_2D);
 				// mohan update 2021-02-12, delte BFIELD option
 			info = this->set_wfc_grid(naroc, pv->nb,
 					pv->dim0, pv->dim1, iprow, ipcol,
-					work, wfc_grid);
+					work.data(), wfc_grid);
         }//loop ipcol
     }//loop iprow
 
-    delete[] work;
     ModuleBase::timer::tick("Local_Orbital_wfc","wfc_2d_to_grid");
 }
 #endif

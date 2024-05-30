@@ -68,7 +68,7 @@ void wfc_lcao_collect_wfc2d(const psi::Psi<T>& psi,
                    const int& myid,
                    std::vector<std::vector<T>>& ctot)
 {
-    static_assert(std::is_same<T, double>::value || std::is_same<T, std::complex<double>>::value, "T must be double or std::complex<double>");
+    static_assert(std::is_same<T, double>::value || std::is_same<T, std::complex<double>>::value, "wfc_lcao_collect_wfc2d: type of psi must be double or std::complex<double>");
     const int inc = 1;
     int total_processes = 1;
 #ifdef __MPI
@@ -99,7 +99,7 @@ void wfc_lcao_collect_wfc2d(const psi::Psi<T>& psi,
         // get the maximum number of elements in local matrix
         info = MPI_Reduce(&pv->nloc_wfc, &maxnloc, 1, MPI_LONG, MPI_MAX, 0, pv->comm_2D);
         info = MPI_Bcast(&maxnloc, 1, MPI_LONG, 0, pv->comm_2D);
-        T* work = new T[maxnloc]; // work/buffer matrix
+        std::vector<T> work(maxnloc);
         ModuleBase::Memory::record("ModuleIO::write_wfc_lcao::work", sizeof(T) * maxnloc);
 
         int naroc[2] = {pv->nrow, pv->ncol_bands}; // maximum number of row or column
@@ -112,12 +112,12 @@ void wfc_lcao_collect_wfc2d(const psi::Psi<T>& psi,
                 info = MPI_Cart_rank(pv->comm_2D, coord, &src_rank);
                 if (myid == src_rank)
                 {
-                    BlasConnector::copy(pv->nloc_wfc, psi.get_pointer(), inc, work, inc);
+                    BlasConnector::copy(pv->nloc_wfc, psi.get_pointer(), inc, work.data(), inc);
                     naroc[0] = pv->nrow;
                     naroc[1] = pv->ncol_bands;
                 }
                 info = MPI_Bcast(naroc, 2, MPI_INT, src_rank, pv->comm_2D);
-                wfc_lcao_bcast_work(maxnloc, src_rank, work, pv);
+                wfc_lcao_bcast_work(maxnloc, src_rank, work.data(), pv);
 
                 // info = MPI_Bcast(work, maxnloc, MPI_DOUBLE, src_rank, pv->comm_2D);
 
@@ -139,7 +139,6 @@ void wfc_lcao_collect_wfc2d(const psi::Psi<T>& psi,
                 }
             } // loop ipcol
         } // loop iprow
-        delete[] work;
 #endif
     }
 }
@@ -194,7 +193,7 @@ void write_wfc_lcao(const int out_type,
         if (myid == 0)
         {
             std::string fn = wfc_lcao_gen_fname(out_type, gamma_only, GlobalV::out_app_flag, ik, istep);
-            bool writeBinary = (out_type == 2) ? true : false;
+            bool writeBinary = (out_type == 2);
             wfc_lcao_write2file(fn, ctot, ik, kvec_c[ik], ekb, wg, writeBinary);
         }
     }

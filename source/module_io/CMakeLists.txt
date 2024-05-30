@@ -19,7 +19,6 @@ list(APPEND objects
     restart.cpp
     binstream.cpp
     write_wfc_pw.cpp
-    write_wfc_lcao.cpp
     write_input.cpp
     write_cube.cpp
     write_rho.cpp
@@ -55,6 +54,7 @@ if(ENABLE_LCAO)
       istate_envelope.cpp
       read_dm.cpp
       read_wfc_nao.cpp
+      write_wfc_lcao.cpp
       write_wfc_nao.cpp
       write_dm.cpp
       dos_nao.cpp
