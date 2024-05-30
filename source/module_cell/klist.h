@@ -52,15 +52,42 @@ public:
     //get global index for ik
     inline int getik_global(const int& ik) const;
 
-    int get_nks() const;
-    int get_nkstot() const;
-    int get_nkstot_ibz() const;
-    int get_nkstot_full() const;
+    
+    int get_nks() const
+    {
+        return this->nks;
+    }
 
-    void set_nks(int value);
-    void set_nkstot(int value);
-    void set_nkstot_ibz(int value);
-    void set_nkstot_full(int value);
+    int get_nkstot() const
+    {
+        return this->nkstot;
+    }
+
+    int get_nkstot_ibz() const
+    {
+        return this->nkstot_ibz;
+    }
+
+    int get_nkstot_full() const
+    {
+        return this->nkstot_full;
+    }
+
+    void set_nks(int value) {
+        this->nks = value;
+    }
+
+    void set_nkstot(int value) {
+        this->nkstot = value;
+    }
+
+    void set_nkstot_ibz(int value) {
+        this->nkstot_ibz = value;
+    }
+
+    void set_nkstot_full(int value) {
+        this->nkstot_full = value;
+    }
 
 private:
     int nks;						// number of k points in this pool(processor, up+dw)
