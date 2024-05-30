@@ -26,6 +26,9 @@
 //====================================8<----------------------------------------
 // blacs
     // Initialization
+#ifndef BLACS_CONNECTOR_H
+#define BLACS_CONNECTOR_H
+
 extern "C"
 {
 	void Cblacs_pinfo(int *myid, int *nprocs);
@@ -34,7 +37,18 @@ extern "C"
 		// Informational and Miscellaneous
 	void Cblacs_gridinfo(int icontxt, int* nprow, int *npcol, int *myprow, int *mypcol);
     void Cblacs_gridinit(int* icontxt, char* layout, int nprow, int npcol);
+    void Cblacs_gridexit(int* icontxt);
     int Cblacs_pnum(int icontxt, int prow, int pcol);
     void Cblacs_pcoord(int icontxt, int pnum, int *prow, int *pcol);
 	void Cblacs_exit(int icontxt);
 }
+
+#ifdef __MPI
+#include <mpi.h>
+extern "C"
+{
+    int Csys2blacs_handle(MPI_Comm SysCtxt);
+}
+#endif // __MPI
+
+#endif

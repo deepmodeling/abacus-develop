@@ -8,6 +8,9 @@
 #include "module_base/blas_connector.h"
 #include "module_base/timer.h"
 #include "gint_tools.h"
+#include "module_base/memory.h"
+#include "module_hamilt_lcao/module_gint/grid_technique.h"
+
 
 void Gint::gint_kernel_tau(
 	const int na_grid,
@@ -15,7 +18,8 @@ void Gint::gint_kernel_tau(
 	const double delta_r,
 	int* vindex,
 	const int LD_pool,
-	Gint_inout *inout)
+	Gint_inout *inout,
+	const UnitCell &ucell)
 {
 	//prepare block information
 	int * block_iw, * block_index, * block_size;
@@ -35,8 +39,7 @@ void Gint::gint_kernel_tau(
 		psir_ylm.ptr_2D,
 		dpsir_ylm_x.ptr_2D,
 		dpsir_ylm_y.ptr_2D,
-		dpsir_ylm_z.ptr_2D
-	);
+		dpsir_ylm_z.ptr_2D);
 
 	for(int is=0; is<GlobalV::NSPIN; ++is)
 	{
@@ -102,8 +105,7 @@ void Gint::gint_kernel_tau(
 				block_index, block_size,
 				cal_flag, 
 				dpsir_ylm_x.ptr_2D,
-				dpsix_DM.ptr_2D,
-				inout->DM_R[is],
+                dpsix_DM.ptr_2D,
 				this->DMRGint[is],
 				1);
 			Gint_Tools::mult_psi_DMR(
@@ -111,8 +113,7 @@ void Gint::gint_kernel_tau(
 				block_index, block_size,
 				cal_flag,
 				dpsir_ylm_y.ptr_2D,
-				dpsiy_DM.ptr_2D,
-				inout->DM_R[is], 
+                dpsiy_DM.ptr_2D,
 				this->DMRGint[is],
 				1);
 			Gint_Tools::mult_psi_DMR(
@@ -120,8 +121,7 @@ void Gint::gint_kernel_tau(
 				block_index, block_size,
 				cal_flag, 
 				dpsir_ylm_z.ptr_2D,
-				dpsiz_DM.ptr_2D,
-				inout->DM_R[is], 
+                dpsiz_DM.ptr_2D,
 				this->DMRGint[is],
 				1);
 		}

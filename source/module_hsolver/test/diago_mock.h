@@ -388,11 +388,11 @@ template class HPsi<std::complex<float>>;
 
 //totally same as the original function
 template <>
-void hamilt::HamiltPW<double, psi::DEVICE_CPU>::sPsi(const double* psi_in,
-                                                     double* spsi,
-                                                     const int nrow,
-                                                     const int npw,
-                                                     const int nbands) const
+void hamilt::HamiltPW<double, base_device::DEVICE_CPU>::sPsi(const double* psi_in,
+                                                             double* spsi,
+                                                             const int nrow,
+                                                             const int npw,
+                                                             const int nbands) const
 {
     for (size_t i = 0; i < static_cast<size_t>(nbands * nrow); i++)
     {
@@ -401,11 +401,11 @@ void hamilt::HamiltPW<double, psi::DEVICE_CPU>::sPsi(const double* psi_in,
     return;
 }
 template <>
-void hamilt::HamiltPW<std::complex<double>, psi::DEVICE_CPU>::sPsi(const std::complex<double>* psi_in,
-                                                                   std::complex<double>* spsi,
-                                                                   const int nrow,
-                                                                   const int npw,
-                                                                   const int nbands) const
+void hamilt::HamiltPW<std::complex<double>, base_device::DEVICE_CPU>::sPsi(const std::complex<double>* psi_in,
+                                                                           std::complex<double>* spsi,
+                                                                           const int nrow,
+                                                                           const int npw,
+                                                                           const int nbands) const
 {
     for (size_t i = 0; i < static_cast<size_t>(nbands * nrow); i++)
     {
@@ -414,11 +414,11 @@ void hamilt::HamiltPW<std::complex<double>, psi::DEVICE_CPU>::sPsi(const std::co
     return;
 }
 template <>
-void hamilt::HamiltPW<std::complex<float>, psi::DEVICE_CPU>::sPsi(const std::complex<float>* psi_in,
-                                                                  std::complex<float>* spsi,
-                                                                  const int nrow,
-                                                                  const int npw,
-                                                                  const int nbands) const
+void hamilt::HamiltPW<std::complex<float>, base_device::DEVICE_CPU>::sPsi(const std::complex<float>* psi_in,
+                                                                          std::complex<float>* spsi,
+                                                                          const int nrow,
+                                                                          const int npw,
+                                                                          const int nbands) const
 {
     for (size_t i = 0; i < static_cast<size_t>(nbands * nrow); i++)
     {

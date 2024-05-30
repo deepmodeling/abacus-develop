@@ -203,5 +203,5 @@ void SpinConstrain<FPTYPE, Device>::bcast_ScData(std::string sc_file, int nat, i
 #endif
 }
 
-template class SpinConstrain<std::complex<double>, psi::DEVICE_CPU>;
-template class SpinConstrain<double, psi::DEVICE_CPU>;
+template class SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>;
+template class SpinConstrain<double, base_device::DEVICE_CPU>;

@@ -302,7 +302,7 @@ TEST_F(YlmRealTest,YlmReal)
 
 TEST_F(YlmRealTest,YlmRealTemplate)
 {
-    psi::DEVICE_CPU * cpu_ctx = {};
+    base_device::DEVICE_CPU* cpu_ctx = {};
     ModuleBase::YlmReal::Ylm_Real(cpu_ctx, nylm, ng, reinterpret_cast<double*>(g), ylm.c);
     for(int i=0;i<nylm;++i)
     {
@@ -499,8 +499,8 @@ TEST_F(YlmRealTest,YlmRealTemplatefloat)
     gg[3].set(-1.0,-1.0,-1.0);
     float*ccc;
     ccc=new float[nylm*ng];
-    psi::DEVICE_CPU * cpu_ctx = {};
-    ModuleBase::YlmReal::Ylm_Real<float, psi::DEVICE_CPU>(cpu_ctx, nylm, ng, reinterpret_cast<float*>(gg), ccc);
+    base_device::DEVICE_CPU* cpu_ctx = {};
+    ModuleBase::YlmReal::Ylm_Real<float, base_device::DEVICE_CPU>(cpu_ctx, nylm, ng, reinterpret_cast<float*>(gg), ccc);
     for(int i=0;i<nylm;++i)
     {
         for(int j=0;j<ng;++j)

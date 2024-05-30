@@ -10,6 +10,78 @@
 #include "module_base/formatter.h"
 namespace elecstate
 {
+	/**
+	 * Notes on refactor of ESolver's functions
+	 * 
+	 * the print of SCF iteration on-the-fly information.
+	 * 1. Previously it is expected for nspin 1, 2, and 4, also with xc_type 3/5 or not, the information will organized in different ways.
+	 * This brings inconsistencies between patterns of print and make it hard to vectorize information.
+	 * 2. the function print_etot actually do two kinds of things, 1) print information into running_*.log, 2) print information onto 
+	 * screen. These two tasks are, in no way should be placed/implemented in one function directly
+	 * 3. there are information redundance: the istep of SCF can provide information determing whether print out the SCF iteration info.
+	 * table header or not, rather than dividing into two functions and hard code the format.
+	 * 
+	 * For nspin 1, print: ITER, ETOT, EDIFF, DRHO, TIME
+	 * 	   nspin 2, print: ITER, TMAG, AMAG, ETOT, EDIFF, DRHO, TIME
+	 * 	   nspin 4 with nlcc, print: ITER, TMAGX, TMAGY, TMAGZ, AMAG, ETOT, EDIFF, DRHO, TIME
+	 * xc type_id 3/5: DKIN 
+	 * 
+	 * Based on summary above, there are several groups of info:
+	 * 1. counting: ITER
+	 * 2. (optional) magnetization: TMAG or TMAGX-TMAGY-TMAGZ, AMAG
+	 * 3. energies: ETOT, EDIFF
+	 * 4. densities: DRHO, DKIN(optional)
+	 * 5. time: TIME
+	 */
+	void print_scf_iterinfo(const std::string& ks_solver, const int& istep, const int& witer,
+							const std::vector<double>& mag, const int& wmag,
+							const double& etot, const double& ediff, const int& wener,
+							const std::vector<double>& drho, const int& wrho,
+							const double& time, const int& wtime)
+	{
+		std::map<std::string, std::string> iter_header_dict = {
+			{"cg", "CG"}, {"cg_in_lcao", "CG"}, {"lapack", "LA"}, {"genelpa", "GE"},
+			{"dav", "DA"}, {"dav_subspace", "DS"}, {"scalapack_gvx", "GV"}, {"cusolver", "CU"},
+			{"bpcg", "BP"}, {"pexsi", "PE"}
+		}; // I change the key of "cg_in_lcao" to "CG" because all the other are only two letters
+		// ITER column
+		std::vector<std::string> th_fmt = {" %-" + std::to_string(witer) + "s"}; 		 // table header: th: ITER
+		std::vector<std::string> td_fmt = {" " + iter_header_dict[ks_solver] + "%-" + std::to_string(witer - 2) + ".0f"}; // table data: td: GE10086
+		// magnetization column, might be non-exist, but size of mag can only be 0, 2 or 4
+		for(int i = 0; i < mag.size(); i++) {th_fmt.emplace_back(" %" + std::to_string(wmag) + "s");}
+		for(int i = 0; i < mag.size(); i++) {td_fmt.emplace_back(" %" + std::to_string(wmag) + ".4e");} // hard-code precision here
+		// energies
+		for(int i = 0; i < 2; i++) {th_fmt.emplace_back(" %" + std::to_string(wener) + "s");}
+		for(int i = 0; i < 2; i++) {td_fmt.emplace_back(" %" + std::to_string(wener) + ".8e");}
+		// densities column, size can be 1 or 2, DRHO or DRHO, DKIN
+		for(int i = 0; i < drho.size(); i++) {th_fmt.emplace_back(" %" + std::to_string(wrho) + "s");}
+		for(int i = 0; i < drho.size(); i++) {td_fmt.emplace_back(" %" + std::to_string(wrho) + ".8e");}
+		// time column, trivial
+		th_fmt.emplace_back(" %" + std::to_string(wtime) + "s\n");
+		td_fmt.emplace_back(" %" + std::to_string(wtime) + ".2f\n");
+		// contents
+		std::vector<std::string> titles; std::vector<double> values;
+		switch (mag.size())
+		{
+			case 2: 
+			titles = {"ITER", FmtCore::center("TMAG", wmag), FmtCore::center("AMAG", wmag), 
+                      FmtCore::center("ETOT/eV", wener), FmtCore::center("EDIFF/eV", wener), FmtCore::center("DRHO", wrho)}; 
+			values = {double(istep), mag[0], mag[1], etot, ediff, drho[0]}; break;
+			case 4:
+			titles = {"ITER", FmtCore::center("TMAGX", wmag), FmtCore::center("TMAGY", wmag), FmtCore::center("TMAGZ", wmag), 
+                      FmtCore::center("AMAG", wmag), FmtCore::center("ETOT/eV", wener), FmtCore::center("EDIFF/eV", wener), FmtCore::center("DRHO", wrho)}; 
+			values = {double(istep), mag[0], mag[1], mag[2], mag[3], etot, ediff, drho[0]}; break;
+			default:
+			titles = {"ITER", FmtCore::center("ETOT/eV", wener), FmtCore::center("EDIFF/eV", wener), FmtCore::center("DRHO", wrho)};
+			values = {double(istep), etot, ediff, drho[0]}; break;
+		}
+		if(drho.size() > 1) {titles.push_back(FmtCore::center("DKIN", wrho)); values.push_back(drho[1]);}
+		titles.push_back(FmtCore::center("TIME/s", wtime)); values.push_back(time);
+		std::string buf;
+		if(istep == 1) { for(int i = 0; i < titles.size(); i++) {buf += FmtCore::format(th_fmt[i].c_str(), titles[i]);} }
+		for(int i = 0; i < values.size(); i++) {buf += FmtCore::format(td_fmt[i].c_str(), values[i]);}
+		std::cout << buf;
+	}
 /// @brief print and check for band energy and occupations
 /// @param ofs
 void ElecState::print_eigenvalue(std::ofstream& ofs)
@@ -177,7 +249,6 @@ void ElecState::print_etot(const bool converged,
     std::vector<std::string> titles;
     std::vector<double> energies_Ry;
     std::vector<double> energies_eV;
-    context.set_context({"title", "energy", "energy"});
     if (printe > 0 && ((iter + 1) % printe == 0 || converged || iter == GlobalV::SCF_NMAX))
     {
         int n_order = std::max(0, Occupy::gaussian_type);
@@ -249,153 +320,32 @@ void ElecState::print_etot(const bool converged,
             titles.push_back("E_bandgap_dw"); energies_Ry.push_back(this->bandgap_dw);
         }
     }
-    for (int i = 0; i < titles.size(); ++i)
-    {
-        energies_eV.push_back(energies_Ry[i] * ModuleBase::Ry_to_eV);
-    }
-    context.enable_title();
-    context << "Energy" << titles << "Rydberg" << energies_Ry << "eV" << energies_eV;
-    context.center_title();
-    GlobalV::ofs_running << context.str() << std::endl;
+    energies_eV.resize(energies_Ry.size());
+    std::transform(energies_Ry.begin(), energies_Ry.end(), energies_eV.begin(), [](double ener) { return ener * ModuleBase::Ry_to_eV; });
+    FmtTable table({"Energy", "Rydberg", "eV"}, 
+    titles.size(), {"%-14s",   "%20.10f", "%20.10f"}, {FmtTable::Align::LEFT, FmtTable::Align::CENTER});
+    table << titles << energies_Ry << energies_eV;
+    GlobalV::ofs_running << table.str() << std::endl;
     if (iter_in == 1) // pengfei Li added 2015-1-31
     {
         this->f_en.etot_old = this->f_en.etot;
     }
     this->f_en.etot_delta = this->f_en.etot - this->f_en.etot_old;
-
-    // mohan update 2011-02-26
-    std::stringstream ss;
-
-    // xiaohui add 2013-09-02, Peize Lin update 2020.11.14
-    std::string label;
-    std::string ks_solver_type = get_ks_solver_type();
-    if (ks_solver_type == "cg")
-    {
-        label = "CG";
-    }
-    else if (ks_solver_type == "cg_in_lcao")
-    {
-        label = "CGAO";
-    }
-    else if (ks_solver_type == "lapack")
-    {
-        label = "LA";
-    }
-    else if (ks_solver_type == "genelpa")
-    {
-        label = "GE";
-    }
-    else if (ks_solver_type == "dav")
-    {
-        label = "DA";
-    }
-    else if (ks_solver_type == "dav_subspace")
-    {
-        label = "DS";
-    }
-    else if (ks_solver_type == "scalapack_gvx")
-    {
-        label = "GV";
-    }
-    else if (ks_solver_type == "cusolver")
-    {
-        label = "CU";
-    }
-    else if (ks_solver_type == "bpcg")
-    {
-        label = "BP";
-    }
-    else
-    {
-        ModuleBase::WARNING_QUIT("Energy", "print_etot found unknown ks_solver_type");
-    }
-    ss << label << iter;
-    // xiaohui add 2013-09-02
-
-    bool scientific = true;
-    int prec = 6;
-
-    if (!print)
-        return;
-
     if (GlobalV::OUT_LEVEL == "ie" || GlobalV::OUT_LEVEL == "m") // xiaohui add 'm' option, 2015-09-16
     {
-        std::cout << " " << std::setw(7) << ss.str();
-        // std::cout << std::setiosflags(ios::fixed);
-        // std::cout << std::setiosflags(ios::showpos);
-        if (scientific)
+        std::vector<double> mag; 
+        switch (GlobalV::NSPIN)
         {
-            std::cout << std::scientific;
+        case 2: mag = {get_ucell_tot_magnetization(), get_ucell_abs_magnetization()}; break;
+        case 4: mag = {get_ucell_tot_magnetization_nc_x(), get_ucell_tot_magnetization_nc_y(),
+        get_ucell_tot_magnetization_nc_z(), get_ucell_abs_magnetization()}; break;
+        default: mag = {}; break;
         }
-
-        if (GlobalV::COLOUR)
-        {
-            if (GlobalV::MY_RANK == 0)
-            {
-                printf("\e[36m%-15f\e[0m", this->f_en.etot);
-                if (GlobalV::NSPIN == 2)
-                {
-                    std::cout << std::setprecision(2);
-                    std::cout << std::setw(10) << get_ucell_tot_magnetization();
-                    std::cout << std::setw(10) << get_ucell_abs_magnetization();
-                }
-                else if (GlobalV::NSPIN == 4 && GlobalV::NONCOLIN)
-                {
-                    std::cout << std::setprecision(2);
-                    std::cout << std::setw(10) << get_ucell_tot_magnetization_nc_x() << std::setw(10)
-                              << get_ucell_tot_magnetization_nc_y() << std::setw(10)
-                              << get_ucell_tot_magnetization_nc_z();
-                    std::cout << std::setw(10) << get_ucell_abs_magnetization();
-                }
-                if (scf_thr > 1.0)
-                {
-                    // 31 is red
-                    printf("\e[31m%-14e\e[0m", scf_thr);
-                    // printf( "[31m%-14e[0m", scf_thr);
-                }
-                else
-                {
-                    // 32 is green
-                    printf("\e[32m%-14e\e[0m", scf_thr);
-                    // printf( "[32m%-14e[0m", scf_thr);
-                }
-                // 34 is blue
-                printf("\e[36m%-15f\e[0m", this->f_en.etot * ModuleBase::Ry_to_eV);
-                std::cout << std::setprecision(3);
-                std::cout << std::resetiosflags(std::ios::scientific);
-
-                std::cout << std::setw(11) << duration;
-                std::cout << std::endl;
-            }
-        }
-        else
-        {
-            std::cout << std::setprecision(prec);
-            if (GlobalV::NSPIN == 2)
-            {
-                std::cout << std::setprecision(2);
-                std::cout << std::setw(10) << get_ucell_tot_magnetization();
-                std::cout << std::setw(10) << get_ucell_abs_magnetization();
-            }
-            std::cout << std::setprecision(6);
-            std::cout << std::setw(15) << this->f_en.etot * ModuleBase::Ry_to_eV;
-            std::cout << std::setw(15) << this->f_en.etot_delta * ModuleBase::Ry_to_eV;
-            std::cout << std::setprecision(3);
-            std::cout << std::setw(11) << scf_thr;
-            if (elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5)
-            {
-                std::cout << std::setprecision(3);
-                std::cout << std::setw(11) << scf_thr_kin;
-            }
-            std::cout << std::setprecision(3);
-            std::cout << std::setw(11) << duration;
-            std::cout << std::endl;
-        }
+        std::vector<double> drho = {scf_thr};
+        if(elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5) {drho.push_back(scf_thr_kin);}
+        elecstate::print_scf_iterinfo(get_ks_solver_type(), iter, 6, mag, 12, this->f_en.etot * ModuleBase::Ry_to_eV,
+        this->f_en.etot_delta * ModuleBase::Ry_to_eV, 16, drho, 16, duration, 6);
     }
-    else
-    {
-    }
-
     this->f_en.etot_old = this->f_en.etot;
     return;
 }
@@ -413,5 +363,4 @@ void ElecState::print_format(const std::string& name, const double& value)
     GlobalV::ofs_running << std::resetiosflags(std::ios::showpos);
     return;
 }
-
 } // namespace elecstate

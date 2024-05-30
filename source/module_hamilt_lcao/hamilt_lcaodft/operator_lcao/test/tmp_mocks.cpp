@@ -74,19 +74,19 @@ template<typename FPTYPE, typename Device>
 hamilt::Operator<FPTYPE, Device>::~Operator(){}
 
 template<typename FPTYPE, typename Device>
-typename hamilt::Operator<FPTYPE, Device>::hpsi_info hamilt::Operator<FPTYPE, Device>::hPsi(hpsi_info&) const 
+typename hamilt::Operator<FPTYPE, Device>::hpsi_info hamilt::Operator<FPTYPE, Device>::hPsi(hpsi_info&) const
 {
     return hpsi_info(nullptr, 0, nullptr);
 }
 
 template<typename FPTYPE, typename Device>
-void hamilt::Operator<FPTYPE, Device>::init(const int ik_in) 
+void hamilt::Operator<FPTYPE, Device>::init(const int ik_in)
 {
     return;
 }
 
 template<typename FPTYPE, typename Device>
-void hamilt::Operator<FPTYPE, Device>::add(Operator* next) 
+void hamilt::Operator<FPTYPE, Device>::add(Operator* next)
 {
     return;
 }
@@ -97,8 +97,8 @@ FPTYPE* hamilt::Operator<FPTYPE, Device>::get_hpsi(const hpsi_info& info) const
     return nullptr;
 }
 
-template class hamilt::Operator<double, psi::DEVICE_CPU>;
-template class hamilt::Operator<std::complex<double>, psi::DEVICE_CPU>;*/
+template class hamilt::Operator<double, base_device::DEVICE_CPU>;
+template class hamilt::Operator<std::complex<double>, base_device::DEVICE_CPU>;*/
 
 // mock of OperatorLCAO
 template<typename TK, typename TR>

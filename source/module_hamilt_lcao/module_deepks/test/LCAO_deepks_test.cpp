@@ -129,9 +129,7 @@ void test_deepks::check_pdm(void)
 		this->ld.cal_projected_DM_k(dm_k_new,
 			ucell,
 			ORB,
-            Test_Deepks::GridD,
-			kv.nkstot,
-			kv.kvec_d);		
+            Test_Deepks::GridD);		
 	}
 	this->ld.check_projected_dm();
 	this->compare_with_ref("pdm.dat","pdm_ref.dat");
@@ -187,7 +185,7 @@ void test_deepks::check_gdmx(void)
 
 void test_deepks::check_descriptor(void)
 {
-	this->ld.cal_descriptor();
+	this->ld.cal_descriptor(ucell.nat);
 	this->ld.check_descriptor(ucell);
 	this->compare_with_ref("descriptor.dat","descriptor_ref.dat");
 }
@@ -259,29 +257,6 @@ void test_deepks::check_e_deltabands(void)
 	ofs << std::setprecision(10) << this->ld.e_delta_band << std::endl;
 	ofs.close();
 	this->compare_with_ref("E_delta_bands.dat","E_delta_bands_ref.dat");
-}
-
-void test_deepks::check_v_delta()
-{
-	if(GlobalV::GAMMA_ONLY_LOCAL)
-	{
-		this->ld.add_v_delta(ucell,
-            ORB,
-            Test_Deepks::GridD);
-        this->ld.check_v_delta();
-		this->compare_with_ref("H_V_delta.dat","H_V_delta_ref.dat");
-	}
-	else
-	{
-		this->cal_nnr();
-		this->ld.allocate_V_deltaR(nnr);
-		this->ld.add_v_delta_k(ucell,
-        	ORB,
-            Test_Deepks::GridD,
-			nnr);
-		this->ld.check_v_delta_k(nnr);
-		this->compare_with_ref("H_V_deltaR.dat","H_V_deltaR_ref.dat");
-	}
 }
 
 void test_deepks::check_f_delta()

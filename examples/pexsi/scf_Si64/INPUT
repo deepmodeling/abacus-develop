@@ -1,0 +1,20 @@
+INPUT_PARAMETERS
+suffix      test
+ntype       1
+nbands      200
+pseudo_dir          ../../../tests/PP_ORB
+orbital_dir         ../../../tests/PP_ORB
+
+calculation scf
+mixing_beta 0.4
+basis_type  lcao
+gamma_only  1
+symmetry    0
+
+ecutwfc     60
+lcao_dr         1e-3
+scf_nmax	      20
+
+ks_solver   pexsi
+
+pexsi_npole  40

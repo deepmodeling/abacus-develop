@@ -5,7 +5,6 @@
 #include "module_base/timer.h"
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-
 namespace elecstate
 {
 

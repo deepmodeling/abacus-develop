@@ -241,7 +241,7 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
     ModuleBase::TITLE("MD_func", "force_virial");
     ModuleBase::timer::tick("MD_func", "force_virial");
 
-    p_esolver->run(istep, unit_in);
+    p_esolver->runner(istep, unit_in);
 
     potential = p_esolver->cal_energy();
 
@@ -463,7 +463,7 @@ void temp_vector(const int& natom,
             }
         }
     }
-   
+
     return;
 }
 
@@ -491,7 +491,7 @@ void current_md_info(const int& my_rank, const std::string& file_dir, int& md_st
     }
 
 #ifdef __MPI
-    MPI_Bcast(&ok, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&ok, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
 #endif
 
     if (!ok)

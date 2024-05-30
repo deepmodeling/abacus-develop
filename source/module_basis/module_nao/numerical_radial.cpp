@@ -131,8 +131,6 @@ void NumericalRadial::build(const int l,
     izeta_ = izeta;
     l_ = l;
 
-    if (init_sbt) sbt_.init();
-
     if (for_r_space)
     {
         nr_ = ngrid;
@@ -237,8 +235,7 @@ void NumericalRadial::set_grid(const bool for_r_space, const int ngrid, const do
 #endif
 
         // cubic spline interpolation
-        ModuleBase::CubicSpline cubspl;
-        cubspl.build(ngrid_tbu, grid_tbu, value_tbu); // not-a-knot boundary condition
+        ModuleBase::CubicSpline cubspl(ngrid_tbu, grid_tbu, value_tbu); // not-a-knot boundary condition
 
         double* grid_new = new double[ngrid];
         double* value_new = new double[ngrid];
@@ -360,7 +357,6 @@ void NumericalRadial::radtab(const char op,
     // radtab requires that two NumericalRadial objects have exactly the same (non-null) kgrid_
     assert(nk_ > 0 && nk_ == ket.nk_);
     assert(std::equal(kgrid_, kgrid_ + nk_, ket.kgrid_));
-    assert(sbt_.is_ready());
 #endif
 
     double* rgrid_tab = new double[nr_tab];
@@ -390,11 +386,11 @@ void NumericalRadial::radtab(const char op,
 
     if (use_radrfft)
     {
-        sbt_.radrfft(l, nk_, kmax(), fk, table, pk_ + ket.pk_ + op_pk, deriv);
+        sbt_.radrfft(l, nk_, kmax(), fk, table, pk_ + ket.pk_ + op_pk);
     }
     else
     {
-        sbt_.direct(l, nk_, kgrid_, fk, nr_tab, rgrid_tab, table, pk_ + ket.pk_ + op_pk, deriv);
+        sbt_.direct(l, nk_, kgrid_, fk, nr_tab, rgrid_tab, table, pk_ + ket.pk_ + op_pk);
     }
 
     delete[] fk;
@@ -443,8 +439,6 @@ void NumericalRadial::transform(const bool forward)
     {
         return;
     }
-
-    if (!sbt_.is_ready()) sbt_.init();
 
     if (forward)
     { // r -> k

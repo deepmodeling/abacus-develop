@@ -215,13 +215,16 @@ fi
 
 if ! test -z "$has_xc"  && [  $has_xc == 1 ]; then
 	if ! test -z "$gamma_only"  && [ $gamma_only == 1 ]; then
-                xcref=k-0-Vxc.ref
-                xccal=OUT.autotest/k-0-Vxc
-        else
-                xcref=k-1-Vxc.ref
-                xccal=OUT.autotest/k-1-Vxc
-        fi
-        python3 ../tools/CompareFile.py $xcref $xccal 4
+			xcref=k-0-Vxc.ref
+			xccal=OUT.autotest/k-0-Vxc
+	else
+			xcref=k-1-Vxc.ref
+			xccal=OUT.autotest/k-1-Vxc
+	fi
+	oeref=vxc_out.ref
+	oecal=OUT.autotest/vxc_out
+	python3 ../tools/CompareFile.py $xcref $xccal 4
+	python3 ../tools/CompareFile.py $oeref $oecal 6
     echo "CompareXC_pass $?" >>$1
 fi
 

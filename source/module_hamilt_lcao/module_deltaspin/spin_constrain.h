@@ -16,7 +16,7 @@
 
 struct ScAtomData;
 
-template<typename FPTYPE, typename Device = psi::DEVICE_CPU>
+template <typename FPTYPE, typename Device = base_device::DEVICE_CPU>
 class SpinConstrain
 {
 public:
@@ -86,6 +86,9 @@ public:
 
   /// print mi
   void print_Mi(bool print = false);
+
+  /// print magnetic force, defined as \frac{\delta{L}}/{\delta{Mi}} = -lambda[iat])
+  void print_Mag_Force();
 
   /// collect_mw from matrix multiplication result
   void collect_MW(ModuleBase::matrix& MecMulP, const ModuleBase::ComplexMatrix& mud, int nw, int isk);

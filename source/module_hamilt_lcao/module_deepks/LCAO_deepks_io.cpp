@@ -59,25 +59,82 @@ void LCAO_Deepks::print_dm_k(const int nks, const std::vector<std::vector<std::c
     }
 }
 
+void LCAO_Deepks::load_npy_gedm(const int nat)
+{
+    ModuleBase::TITLE("LCAO_Deepks", "load_npy_gedm");
+
+    if(GlobalV::MY_RANK==0)
+    {
+        //load gedm.npy
+        std::vector<double> npy_gedm;
+        std::vector<unsigned long> dshape = {static_cast<unsigned long>(nat), static_cast<unsigned long>(this->des_per_atom)};
+        std::string gedm_file = "gedm.npy";
+        npy::LoadArrayFromNumpy(gedm_file, dshape, npy_gedm);
+
+        for (int iat = 0; iat < nat; iat++)
+        {
+            for(int ides = 0; ides < this->des_per_atom; ides++)
+            {
+                this->gedm[iat][ides] = npy_gedm[iat*this->des_per_atom + ides] * 2.0; //Ha to Ry
+            }
+        }
+
+        //load ec.npy
+        std::vector<double> npy_ec;
+        std::vector<unsigned long> eshape = { 1ul };
+        std::string ec_file = "ec.npy";
+        npy::LoadArrayFromNumpy(ec_file, eshape, npy_ec);
+        this->E_delta = npy_ec[0] * 2.0; //Ha to Ry
+    }
+
+#ifdef __MPI
+    for(int iat = 0; iat < nat; iat++)
+    {
+        MPI_Bcast(this->gedm[iat], this->des_per_atom, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    }
+    MPI_Bcast(&this->E_delta, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+#endif
+}
+
 //saves descriptor into dm_eig.npy
 void LCAO_Deepks::save_npy_d(const int nat)
 {
     ModuleBase::TITLE("LCAO_Deepks", "save_npy_d");
     if(GlobalV::MY_RANK!=0) return;
     //save descriptor in .npy format
-    vector<double> npy_des;
-    for (int inl = 0;inl < inlmax;++inl)
+    if(!GlobalV::deepks_equiv)
     {
-        int nm = 2*inl_l[inl] + 1;
-        for(int im=0;im<nm;im++)
+        vector<double> npy_des;
+        for (int inl = 0;inl < inlmax;++inl)
         {
-            npy_des.push_back(this->d_tensor[inl].index({im}).item().toDouble());
+            int nm = 2*inl_l[inl] + 1;
+            for(int im=0;im<nm;im++)
+            {
+                npy_des.push_back(this->d_tensor[inl].index({im}).item().toDouble());
+            }
+        }
+        const long unsigned dshape[] = {static_cast<unsigned long>(nat), static_cast<unsigned long>(this->des_per_atom)};
+        if (GlobalV::MY_RANK == 0)
+        {
+            npy::SaveArrayAsNumpy("dm_eig.npy", false, 2, dshape, npy_des);
         }
     }
-    const long unsigned dshape[] = {static_cast<unsigned long>(nat), static_cast<unsigned long>(this->des_per_atom)};
-    if (GlobalV::MY_RANK == 0)
+    else
     {
-        npy::SaveArrayAsNumpy("dm_eig.npy", false, 2, dshape, npy_des);
+        // a rather unnecessary way of writing this, but I'll do it for now
+        std::vector<double> npy_des;
+        for(int iat = 0; iat < nat; iat ++)
+        {
+            for(int i = 0; i < this->des_per_atom; i++)
+            {
+                npy_des.push_back(this->d_tensor[iat].index({i}).item().toDouble());
+            }
+        }
+        const long unsigned dshape[] = {static_cast<unsigned long>(nat), static_cast<unsigned long>(this->des_per_atom)};
+        if (GlobalV::MY_RANK == 0)
+        {
+            npy::SaveArrayAsNumpy("dm_eig.npy", false, 2, dshape, npy_des);
+        }        
     }
     return;
 }

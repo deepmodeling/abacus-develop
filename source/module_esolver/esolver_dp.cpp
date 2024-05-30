@@ -25,7 +25,7 @@
 namespace ModuleESolver
 {
 
-    void ESolver_DP::init(Input& inp, UnitCell& ucell)
+    void ESolver_DP::before_all_runners(Input& inp, UnitCell& ucell)
     {
         ucell_ = &ucell;
         dp_potential = 0;
@@ -59,10 +59,10 @@ namespace ModuleESolver
         assert(ucell.nat == iat);
     }
 
-    void ESolver_DP::run(const int istep, UnitCell& ucell)
+    void ESolver_DP::runner(const int istep, UnitCell& ucell)
     {
-        ModuleBase::TITLE("ESolver_DP", "Run");
-        ModuleBase::timer::tick("ESolver_DP", "Run");
+        ModuleBase::TITLE("ESolver_DP", "runner");
+        ModuleBase::timer::tick("ESolver_DP", "runner");
 
         cell[0] = ucell.latvec.e11 * ucell.lat0_angstrom;
         cell[1] = ucell.latvec.e12 * ucell.lat0_angstrom;
@@ -119,7 +119,7 @@ namespace ModuleESolver
 #else
         ModuleBase::WARNING_QUIT("ESolver_DP", "Please recompile with -D__DPMD");
 #endif
-        ModuleBase::timer::tick("ESolver_DP", "Run");
+        ModuleBase::timer::tick("ESolver_DP", "runner");
     }
 
     double ESolver_DP::cal_energy()
@@ -148,7 +148,7 @@ namespace ModuleESolver
         ModuleIO::print_stress("TOTAL-STRESS", stress, true, false);
     }
 
-    void ESolver_DP::post_process(void)
+    void ESolver_DP::after_all_runners(void)
     {
         GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
         GlobalV::ofs_running << std::setprecision(16);
@@ -166,7 +166,7 @@ namespace ModuleESolver
             std::ifstream ifs(dp_file);
             std::string word;
             int ntype_dp = 0;
-            std::string* label = nullptr;
+            //std::string* label = nullptr;
 
             if (ifs)
             {
@@ -200,7 +200,9 @@ namespace ModuleESolver
                     GlobalV::ofs_running << "Determine the type map from DP model" << std::endl;
                     GlobalV::ofs_running << "ntype read from DP model: " << ntype_dp << std::endl;
 
-                    label = new std::string[ntype_dp];
+                    //label = new std::string[ntype_dp];
+                    std::vector<std::string> label_vec(ntype_dp);
+                    std::string* label = label_vec.data();
                     for (int it = 0; it < ntype_dp; ++it)
                     {
                         ss >> label[it];
@@ -224,7 +226,6 @@ namespace ModuleESolver
                             ModuleBase::WARNING_QUIT("ESolver_DP", "Unsupported atom types for the DP model");
                         }
                     }
-                    delete[] label;
                 }
             }
             ifs.close();

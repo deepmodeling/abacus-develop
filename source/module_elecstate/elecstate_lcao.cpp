@@ -1,4 +1,5 @@
 #include "elecstate_lcao.h"
+#include <vector>
 
 #include "cal_dm.h"
 #include "module_base/timer.h"
@@ -93,6 +94,12 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
     ModuleBase::timer::tick("ElecStateLCAO", "psiToRho");
 
     this->calculate_weights();
+
+// the calculations of dm, and dm -> rho are, technically, two separate functionalities, as we cannot
+// rule out the possibility that we may have a dm from other sources, such as read from file.
+// However, since we are not separating them now, I opt to add a flag to control how dm is obtained as of now
+if(!GlobalV::dm_to_rho)
+{
     this->calEBand();
 
     ModuleBase::GlobalFunc::NOTE("Calculate the density matrix.");
@@ -122,7 +129,7 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
 
     }
     if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "scalapack_gvx" || GlobalV::KS_SOLVER == "lapack"
-        || GlobalV::KS_SOLVER == "cusolver" || GlobalV::KS_SOLVER == "cg_in_lcao")
+        || GlobalV::KS_SOLVER == "cusolver" || GlobalV::KS_SOLVER == "cg_in_lcao"  ||  GlobalV::KS_SOLVER == "pexsi")
     {
         for (int ik = 0; ik < psi.get_nk(); ik++)
         {
@@ -130,6 +137,7 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
             this->print_psi(psi);
         }
     }
+}
     // old 2D-to-Grid conversion has been replaced by new Gint Refactor 2023/09/25
     //this->loc->cal_dk_k(*this->lowf->gridt, this->wg, (*this->klist));
     for (int is = 0; is < GlobalV::NSPIN; is++)
@@ -176,6 +184,7 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
         || GlobalV::KS_SOLVER == "cusolver" || GlobalV::KS_SOLVER == "cg_in_lcao")
     {
         ModuleBase::timer::tick("ElecStateLCAO", "cal_dm_2d");
+
         // get DMK in 2d-block format
         //cal_dm(this->loc->ParaV, this->wg, psi, this->loc->dm_gamma);
         elecstate::cal_dm_psi(this->DM->get_paraV_pointer(), this->wg, psi, *(this->DM));
@@ -189,7 +198,6 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
             }
         }
         ModuleBase::timer::tick("ElecStateLCAO", "cal_dm_2d");
-
         for (int ik = 0; ik < psi.get_nk(); ++ik)
         {
             // for gamma_only case, no convertion occured, just for print.
@@ -248,16 +256,80 @@ void ElecStateLCAO<TK>::init_DM(const K_Vectors* kv, const Parallel_Orbitals* pa
 template<>
 double ElecStateLCAO<double>::get_spin_constrain_energy()
 {
-    SpinConstrain<double, psi::DEVICE_CPU>& sc = SpinConstrain<double>::getScInstance();
+    SpinConstrain<double, base_device::DEVICE_CPU>& sc = SpinConstrain<double>::getScInstance();
     return sc.cal_escon();
 }
 
 template<>
 double ElecStateLCAO<std::complex<double>>::get_spin_constrain_energy()
 {
-    SpinConstrain<std::complex<double>, psi::DEVICE_CPU>& sc = SpinConstrain<std::complex<double>>::getScInstance();
+    SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>& sc
+        = SpinConstrain<std::complex<double>>::getScInstance();
     return sc.cal_escon();
 }
+
+#ifdef __PEXSI
+template<>
+void ElecStateLCAO<double>::dmToRho(std::vector<double*> pexsi_DM, std::vector<double*> pexsi_EDM)
+{
+    ModuleBase::timer::tick("ElecStateLCAO", "dmToRho");
+
+    int nspin = GlobalV::NSPIN;
+    if (GlobalV::NSPIN == 4)
+    {
+        nspin = 1;
+    }
+
+    // old 2D-to-Grid conversion has been replaced by new Gint Refactor 2023/09/25
+    if (this->loc->out_dm) // keep interface for old Output_DM until new one is ready
+    {
+        for (int is = 0; is < nspin; ++is)
+        {
+            this->loc->set_dm_gamma(is, pexsi_DM[is]);
+        }
+        this->loc->cal_dk_gamma_from_2D_pub();
+    }
+
+    this->get_DM()->pexsi_EDM = pexsi_EDM;
+    
+    for (int is = 0; is < nspin; is++)
+    {
+        this->DM->set_DMK_pointer(is, pexsi_DM[is]);
+    }
+    DM->cal_DMR();
+    
+    for (int is = 0; is < GlobalV::NSPIN; is++)
+    {
+        ModuleBase::GlobalFunc::ZEROS(this->charge->rho[is], this->charge->nrxx); // mohan 2009-11-10
+    }
+
+    ModuleBase::GlobalFunc::NOTE("Calculate the charge on real space grid!");
+    this->gint_gamma->transfer_DM2DtoGrid(this->DM->get_DMR_vector()); // transfer DM2D to DM_grid in gint
+    Gint_inout inout(this->loc->DM, this->charge->rho, Gint_Tools::job_type::rho);
+    this->gint_gamma->cal_gint(&inout);
+    if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+    {
+        for (int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[0], this->charge->nrxx);
+        }
+        Gint_inout inout1(this->loc->DM, this->charge->kin_r, Gint_Tools::job_type::tau);
+        this->gint_gamma->cal_gint(&inout1);
+    }
+
+    this->charge->renormalize_rho();
+
+    ModuleBase::timer::tick("ElecStateLCAO", "dmToRho");
+    return;
+}
+
+template<>
+void ElecStateLCAO<std::complex<double>>::dmToRho(std::vector<std::complex<double>*> pexsi_DM, std::vector<std::complex<double>*> pexsi_EDM)
+{
+    ModuleBase::WARNING_QUIT("ElecStateLCAO", "pexsi is not completed for multi-k case");
+}
+
+#endif
 
 template class ElecStateLCAO<double>; // Gamma_only case
 template class ElecStateLCAO<std::complex<double>>; // multi-k case

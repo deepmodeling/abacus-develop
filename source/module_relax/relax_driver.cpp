@@ -8,9 +8,7 @@
 #include "module_io/json_output/output_info.h"
 
 
-
-template<typename FPTYPE, typename Device>
-void Relax_Driver<FPTYPE, Device>::relax_driver(ModuleESolver::ESolver *p_esolver)
+void Relax_Driver::relax_driver(ModuleESolver::ESolver *p_esolver)
 {
     ModuleBase::TITLE("Ions", "opt_ions");
     ModuleBase::timer::tick("Ions", "opt_ions");
@@ -48,7 +46,7 @@ void Relax_Driver<FPTYPE, Device>::relax_driver(ModuleESolver::ESolver *p_esolve
 #endif //__RAPIDJSON 
 
         // mohan added eiter to count for the electron iteration number, 2021-01-28
-        p_esolver->run(istep - 1, GlobalC::ucell);
+        p_esolver->runner(istep - 1, GlobalC::ucell);
 
         time_t eend = time(NULL);
         time_t fstart = time(NULL);
@@ -92,25 +90,33 @@ void Relax_Driver<FPTYPE, Device>::relax_driver(ModuleESolver::ESolver *p_esolve
                                              stress_step); // pengfei Li 2018-05-14
                 }
                 // print structure
+                // changelog 20240509
+                // because I move out the dependence on GlobalV from UnitCell::print_stru_file
+                // so its parameter is calculated here
+                bool need_orb = GlobalV::BASIS_TYPE=="pw";
+                need_orb = need_orb && GlobalV::psi_initializer;
+                need_orb = need_orb && GlobalV::init_wfc.substr(0, 3)=="nao";
+                need_orb = need_orb || GlobalV::BASIS_TYPE=="lcao";
+                need_orb = need_orb || GlobalV::BASIS_TYPE=="lcao_in_pw";
                 std::stringstream ss, ss1;
                 ss << GlobalV::global_out_dir << "STRU_ION_D";
-                GlobalC::ucell.print_stru_file(ss.str(), 2, 0);
+                GlobalC::ucell.print_stru_file(ss.str(), GlobalV::NSPIN, true, GlobalV::CALCULATION == "md",
+                    GlobalV::out_mul, need_orb, GlobalV::deepks_setorb, GlobalV::MY_RANK);
 
                 if (Ions_Move_Basic::out_stru)
                 {
                     ss1 << GlobalV::global_out_dir << "STRU_ION";
                     ss1 << istep << "_D";
-                    GlobalC::ucell.print_stru_file(ss1.str(), 2, 0);
+                    GlobalC::ucell.print_stru_file(ss.str(), GlobalV::NSPIN, true, GlobalV::CALCULATION == "md",
+                        GlobalV::out_mul, need_orb, GlobalV::deepks_setorb, GlobalV::MY_RANK);
 
                     GlobalC::ucell.print_cell_cif("STRU_NOW.cif");
                 }
 
-                ModuleESolver::ESolver_KS<FPTYPE, Device>* p_esolver_ks 
-                = dynamic_cast<ModuleESolver::ESolver_KS<FPTYPE, Device>*>(p_esolver);
-                if (p_esolver_ks 
+                if (p_esolver
                     && stop 
-                    && p_esolver_ks->maxniter == p_esolver_ks->niter 
-                    && !(p_esolver_ks->conv_elec))
+                    && p_esolver->get_maxniter() == p_esolver->get_niter()
+                    && !(p_esolver->get_conv_elec()))
                 {
                     std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
                     std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
@@ -155,6 +161,3 @@ void Relax_Driver<FPTYPE, Device>::relax_driver(ModuleESolver::ESolver *p_esolve
     ModuleBase::timer::tick("Ions", "opt_ions");
     return;
 }
-
-template class Relax_Driver<float, psi::DEVICE_CPU>;
-template class Relax_Driver<double, psi::DEVICE_CPU>;

@@ -189,10 +189,10 @@ TEST(PrintForce, PrintForce)
                 testing::HasSubstr("---------------------------------------------------------------------------"));
     getline(ifs, output_str);
     EXPECT_THAT(output_str,
-                testing::HasSubstr("Al1               25.7110532015        51.4221064030        77.1331596044"));
+                testing::HasSubstr("Al1        25.7110532015        51.4221064030        77.1331596044"));
     getline(ifs, output_str);
     EXPECT_THAT(output_str,
-                testing::HasSubstr("Al2                0.0000000000         0.0000000000         0.0000000000"));
+                testing::HasSubstr("Al2         0.0000000000         0.0000000000         0.0000000000"));
     getline(ifs, output_str);
     EXPECT_THAT(output_str,
                 testing::HasSubstr("---------------------------------------------------------------------------"));

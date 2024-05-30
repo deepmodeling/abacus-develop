@@ -36,7 +36,7 @@
 #include "module_io/to_wannier90_pw.h"
 #include "module_io/winput.h"
 #include "module_io/write_wfc_r.h"
-#include "module_psi/kernels/device.h"
+#include "module_base/module_device/device.h"
 //---------------------------------------------------
 #include "module_psi/psi_initializer_atomic.h"
 #include "module_psi/psi_initializer_nao.h"
@@ -58,9 +58,9 @@ ESolver_KS_PW<T, Device>::ESolver_KS_PW()
 {
     this->classname = "ESolver_KS_PW";
     this->basisname = "PW";
-    this->device = psi::device::get_device_type<Device>(this->ctx);
+    this->device = base_device::get_device_type<Device>(this->ctx);
 #if ((defined __CUDA) || (defined __ROCM))
-    if (this->device == psi::GpuDevice)
+    if (this->device == base_device::GpuDevice)
     {
         hsolver::createGpuBlasHandle();
         hsolver::createGpuSolverHandle();
@@ -90,7 +90,7 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
         delete reinterpret_cast<hamilt::HamiltPW<T, Device>*>(this->p_hamilt);
         this->p_hamilt = nullptr;
     }
-    if (this->device == psi::GpuDevice)
+    if (this->device == base_device::GpuDevice)
     {
 #if defined(__CUDA) || defined(__ROCM)
         hsolver::destoryBLAShandle();
@@ -220,17 +220,18 @@ void ESolver_KS_PW<T, Device>::Init_GlobalC(Input& inp, UnitCell& cell)
 
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::init(Input& inp, UnitCell& ucell)
+void ESolver_KS_PW<T, Device>::before_all_runners(Input& inp, UnitCell& ucell)
 {
-    ESolver_KS<T, Device>::init(inp, ucell);
+    // 1) call before_all_runners() of ESolver_KS
+    ESolver_KS<T, Device>::before_all_runners(inp, ucell);
 
-    // init HSolver
+    // 2) initialize HSolver
     if (this->phsol == nullptr)
     {
         this->phsol = new hsolver::HSolverPW<T, Device>(this->pw_wfc, &this->wf);
     }
 
-    // init ElecState,
+    // 3) initialize ElecState,
     if (this->pelec == nullptr)
     {
         this->pelec = new elecstate::ElecStatePW<T, Device>(this->pw_wfc,
@@ -1015,7 +1016,7 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep)
         this->pelec->print_eigenvalue(GlobalV::ofs_running);
     }
 
-    if (this->device == psi::GpuDevice)
+    if (this->device == base_device::GpuDevice)
     {
         castmem_2d_d2h_op()(this->psi[0].get_device(),
                             this->kspw_psi[0].get_device(),
@@ -1196,7 +1197,7 @@ void ESolver_KS_PW<T, Device>::cal_stress(ModuleBase::matrix& stress)
 
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::post_process(void)
+void ESolver_KS_PW<T, Device>::after_all_runners(void)
 {
 
     GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
@@ -1257,15 +1258,6 @@ void ESolver_KS_PW<T, Device>::post_process(void)
 
     if (INPUT.out_band[0]) // pengfei 2014-10-13
     {
-        int nks = 0;
-        if (nspin0 == 1)
-        {
-            nks = this->kv.nkstot;
-        }
-        else if (nspin0 == 2)
-        {
-            nks = this->kv.nkstot / 2;
-        }
         for (int is = 0; is < nspin0; is++)
         {
             std::stringstream ss2;
@@ -1273,7 +1265,6 @@ void ESolver_KS_PW<T, Device>::post_process(void)
             GlobalV::ofs_running << "\n Output bands in file: " << ss2.str() << std::endl;
             ModuleIO::nscf_band(is,
                                 ss2.str(),
-                                nks,
                                 GlobalV::NBANDS,
                                 0.0,
                                 INPUT.out_band[1],
@@ -1323,7 +1314,7 @@ void ESolver_KS_PW<T, Device>::post_process(void)
             if(INPUT.bessel_nao_rcuts.size() == 1)
             {
                 Numerical_Basis numerical_basis;
-                numerical_basis.output_overlap(this->psi[0], this->sf, this->kv, this->pw_wfc);
+                numerical_basis.output_overlap(this->psi[0], this->sf, this->kv, this->pw_wfc, GlobalC::ucell);
             }
             else
             {
@@ -1348,7 +1339,7 @@ void ESolver_KS_PW<T, Device>::post_process(void)
                         Will be refactored in the future.
                     */
                     Numerical_Basis numerical_basis;
-                    numerical_basis.output_overlap(this->psi[0], this->sf, this->kv, this->pw_wfc);
+                    numerical_basis.output_overlap(this->psi[0], this->sf, this->kv, this->pw_wfc, GlobalC::ucell);
 					std::string old_fname_header = winput::spillage_outdir 
 						+ "/" 
 						+ "orb_matrix.";
@@ -1536,10 +1527,10 @@ void ESolver_KS_PW<T, Device>::nscf(void)
     return;
 }
 
-template class ESolver_KS_PW<std::complex<float>, psi::DEVICE_CPU>;
-template class ESolver_KS_PW<std::complex<double>, psi::DEVICE_CPU>;
+template class ESolver_KS_PW<std::complex<float>, base_device::DEVICE_CPU>;
+template class ESolver_KS_PW<std::complex<double>, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class ESolver_KS_PW<std::complex<float>, psi::DEVICE_GPU>;
-template class ESolver_KS_PW<std::complex<double>, psi::DEVICE_GPU>;
+template class ESolver_KS_PW<std::complex<float>, base_device::DEVICE_GPU>;
+template class ESolver_KS_PW<std::complex<double>, base_device::DEVICE_GPU>;
 #endif
 } // namespace ModuleESolver

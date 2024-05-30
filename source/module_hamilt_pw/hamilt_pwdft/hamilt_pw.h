@@ -11,7 +11,7 @@
 namespace hamilt
 {
 
-template<typename T, typename Device = psi::DEVICE_CPU>
+template <typename T, typename Device = base_device::DEVICE_CPU>
 class HamiltPW : public Hamilt<T, Device>
 {
   private:
@@ -46,10 +46,10 @@ class HamiltPW : public Hamilt<T, Device>
     Device* ctx = {};
     using gemv_op = hsolver::gemv_op<T, Device>;
     using gemm_op = hsolver::gemm_op<T, Device>;
-    using setmem_complex_op = psi::memory::set_memory_op<T, Device>;
-    using resmem_complex_op = psi::memory::resize_memory_op<T, Device>;
-    using delmem_complex_op = psi::memory::delete_memory_op<T, Device>;
-    using syncmem_op = psi::memory::synchronize_memory_op<T, Device, Device>;
+    using setmem_complex_op = base_device::memory::set_memory_op<T, Device>;
+    using resmem_complex_op = base_device::memory::resize_memory_op<T, Device>;
+    using delmem_complex_op = base_device::memory::delete_memory_op<T, Device>;
+    using syncmem_op = base_device::memory::synchronize_memory_op<T, Device, Device>;
 };
 
 } // namespace hamilt

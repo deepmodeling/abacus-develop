@@ -10,7 +10,7 @@ concurrency:
 jobs:
   test:
     name: Test
-    runs-on: self-hosted
+    runs-on: X64
     if: github.repository_owner == 'deepmodeling'
     container:
       image: ghcr.io/deepmodeling/abacus-gnu
@@ -39,4 +39,4 @@ jobs:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          cmake --build build --target test ARGS="-V --timeout 1600"
+          cmake --build build --target test ARGS="-V --timeout 1700"

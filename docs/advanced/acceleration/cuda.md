@@ -1,7 +1,6 @@
 # CUDA GPU Implementations
 
-In ABACUS, we provide the option to use the GPU devices to accelerate the performance.
-And it has the following general features:
+In ABACUS, we provide the option to use GPU devices to accelerate performance. The implementation of GPU acceleration differs between PW basis and LCAO basis. Specifically, under PW basis, it has the following features:
 
 - **Full gpu implementations**: During the SCF progress, `Psi`, `Hamilt`, `Hsolver`, `DiagCG`, and `DiagoDavid` classes are stored or calculated by the GPU devices.
 
@@ -12,6 +11,8 @@ And it has the following general features:
 - **Multi GPU supprted**: Using multiple MPI tasks will often give the best performance. Note each MPI task will be bind to a GPU device with automatically computing load balancing.
 
 - **Parallel strategy**: K point parallel.
+
+Unlike PW basis, only the grid integration module (module_gint) and the diagonalization of the Hamiltonian matrix (module_hsolver) have been implemented with GPU acceleration under LCAO basis, and the acceleration is limited to gamma only calculation. Additionally, LCAO basis does not support multi-GPU acceleration. Both the grid integration module and the Hamiltonian matrix solver only support acceleration on a single GPU.
 
 ## Required hardware/software
 
@@ -36,14 +37,11 @@ In `INPUT` file we need to set the value keyword [device](../input_files/input-m
 We provides [examples](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/gpu) of gpu calculations.
 
 ## Known limitations
-
-- CG, BPCG and Davidson methods are supported, so the input keyword `ks_solver` can take the values `cg`, `bpcg` or `dav`,
-- Only PW basis is supported, so the input keyword `basis_type` can only take the value `pw`,
+PW basis:
+- CG, BPCG and Davidson methods are supported, so the input keyword `ks_solver` can take the values `cg`, `bpcg` or `dav`.
 - Only k point parallelization is supported, so the input keyword `kpar` will be set to match the number of MPI tasks automatically.
 - By default, CUDA architectures 60, 70, 75, 80, 86, and 89 are compiled (if supported). It can be overriden using the CMake variable [`CMAKE_CUDA_ARCHITECTURES`](https://cmake.org/cmake/help/latest/variable/CMAKE_CUDA_ARCHITECTURES.html) or the environmental variable [`CUDAARCHS`](https://cmake.org/cmake/help/latest/envvar/CUDAARCHS.html).
 
-## FAQ
-```
-Q: Does the GPU implementations support atomic orbital basis sets?
-A: Currently no.
-```
+LCAO basis:
+- Does not support multi-k calculation, so if the input keyword `device` is set to `gpu`, the input keyword `gamma_only` can only take the value `1`.
+- Does not support multi-GPU acceleration.
