@@ -179,12 +179,18 @@ namespace hsolver
             distributePsi(this->ParaV->desc_wfc, psi.get_pointer(), psi_g.data());
         }
         else
-        {
-            this->dc.Dngvd(h_mat.row, h_mat.col, h_mat.p, s_mat.p, eigen.data(), psi.get_pointer());
+        {   
+            // Be careful that h_mat.row * h_mat.col != psi.get_nbands() * psi.get_nbasis() under multi-k situation
+            std::vector<T> eigenvectors(h_mat.row * h_mat.col);
+            this->dc.Dngvd(h_mat.row, h_mat.col, h_mat.p, s_mat.p, eigen.data(), eigenvectors.data());
+            const int size = psi.get_nbands() * psi.get_nbasis();
+            BlasConnector::copy(size, eigenvectors.data(), 1, psi.get_pointer(), 1);
         }
 #else
-        // Call the dense diagonalization routine
-        this->dc.Dngvd(h_mat.row, h_mat.col, h_mat.p, s_mat.p, eigen.data(), psi.get_pointer());
+            std::vector<T> eigenvectors(h_mat.row * h_mat.col);
+            this->dc.Dngvd(h_mat.row, h_mat.col, h_mat.p, s_mat.p, eigen.data(), eigenvectors.data());
+            const int size = psi.get_nbands() * psi.get_nbasis();
+            BlasConnector::copy(size, eigenvectors.data(), 1, psi.get_pointer(), 1);
 #endif
         // Stop the timer for the cusolver operation
         ModuleBase::timer::tick("DiagoCusolver", "cusolver");
