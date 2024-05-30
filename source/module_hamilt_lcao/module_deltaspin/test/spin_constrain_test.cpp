@@ -386,7 +386,7 @@ TYPED_TEST(SpinConstrainTest, SetParaV)
     int nrow = 4;
     int ncol = 4;
     std::ofstream ofs("test.log");
-    paraV.set_global2local(nrow, ncol, false, ofs);
+    paraV.set_serial(nrow, ncol);
     this->sc.set_ParaV(&paraV);
     EXPECT_EQ(this->sc.ParaV->nloc, nrow * ncol);
     remove("test.log");

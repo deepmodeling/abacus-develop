@@ -33,3 +33,17 @@ add_test(NAME base_parallel_reduce_test
       COMMAND ${BASH} parallel_reduce_test.sh
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
+
+if(ENABLE_LCAO)
+AddTest(
+  TARGET blacs_connector
+  LIBS MPI::MPI_CXX ScaLAPACK::ScaLAPACK
+  SOURCES blacs_connector_test.cpp
+)
+install(FILES blacs_connector_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+add_test(NAME blacs_connector_test
+      COMMAND ${BASH} blacs_connector_test.sh
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+endif()
+

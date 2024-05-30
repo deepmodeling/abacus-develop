@@ -77,7 +77,7 @@ TEST_F(SpinConstrainTest, CollectMW)
     int nrow = 2;
     int ncol = 2;
     std::ofstream ofs("test.log");
-    paraV.set_global2local(nrow, ncol, false, ofs);
+    paraV.set_serial(nrow, ncol);
     sc.set_ParaV(&paraV);
     // Prepare the input data
     int nw = sc.get_nw();
@@ -153,7 +153,7 @@ TEST_F(SpinConstrainTest, CollectMWS2)
     int nrow = 1;
     int ncol = 1;
     std::ofstream ofs("test.log");
-    paraV.set_global2local(nrow, ncol, false, ofs);
+    paraV.set_serial(nrow, ncol);
     sc.set_ParaV(&paraV);
     // Prepare the input data
     int nw = sc.get_nw();
