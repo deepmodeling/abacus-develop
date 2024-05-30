@@ -41,6 +41,8 @@
 
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 
+#include "module_io/write_wfc_lcao.h"
+
 namespace ModuleESolver
 {
 
@@ -959,25 +961,17 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
     }
 
     // 2) print wavefunctions
-    if (this->conv_elec)
+    if (elecstate::ElecStateLCAO<TK>::out_wfc_lcao && 
+        (this->conv_elec || iter == GlobalV::SCF_NMAX) &&
+        (istep % GlobalV::out_interval == 0))
     {
-        if (elecstate::ElecStateLCAO<TK>::out_wfc_lcao)
-        {
-            elecstate::ElecStateLCAO<TK>::out_wfc_flag = elecstate::ElecStateLCAO<TK>::out_wfc_lcao;
-        }
-
-        for (int ik = 0; ik < this->kv.nks; ik++)
-        {
-            if (istep % GlobalV::out_interval == 0)
-            {
-                this->psi[0].fix_k(ik);
-                this->pelec->print_psi(this->psi[0], istep);
-            }
-        }
-        if (elecstate::ElecStateLCAO<TK>::out_wfc_lcao)
-        {
-            elecstate::ElecStateLCAO<TK>::out_wfc_flag = 0;
-        }
+            ModuleIO::write_wfc_lcao(elecstate::ElecStateLCAO<TK>::out_wfc_lcao,
+                           this->psi[0],
+                           this->pelec->ekb,
+                           this->pelec->wg,
+                           this->pelec->klist->kvec_c,
+                           this->LOWF.ParaV,
+                           istep);
     }
 
     // 3) print potential

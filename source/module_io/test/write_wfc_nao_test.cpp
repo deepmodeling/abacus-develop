@@ -25,13 +25,7 @@ TEST(ModuleIOTest, WriteWfcNao)
 
     // Set up test data
     std::string filename = "test_wfc_nao.txt";
-    double** ctot = new double*[2];
-    ctot[0] = new double[2];
-    ctot[1] = new double[2];
-    ctot[0][0] = 0.1;
-    ctot[0][1] = 0.2;
-    ctot[1][0] = 0.3;
-    ctot[1][1] = 0.4;
+    std::vector<std::vector<double>> ctot = {{0.1, 0.2}, {0.3, 0.4}};
     ModuleBase::matrix ekb(2, 2);
     ekb(0, 0) = 0.5;
     ekb(1, 0) = 0.6;
@@ -62,9 +56,6 @@ TEST(ModuleIOTest, WriteWfcNao)
     ifs.close();
 
     //clean up
-    delete[] ctot[0];
-    delete[] ctot[1];
-    delete[] ctot;
     std::remove(filename.c_str()); // remove the test file
 }
 
@@ -79,13 +70,7 @@ TEST(ModuleIOTest, WriteWfcNaoBinary)
 
     // Set up test data
     std::string filename = "test_wfc_nao.dat";
-    double** ctot = new double*[2];
-    ctot[0] = new double[2];
-    ctot[1] = new double[2];
-    ctot[0][0] = 0.1;
-    ctot[0][1] = 0.2;
-    ctot[1][0] = 0.3;
-    ctot[1][1] = 0.4;
+    std::vector<std::vector<double>> ctot = {{0.1, 0.2}, {0.3, 0.4}};
     ModuleBase::matrix ekb(2, 2);
     ekb(0, 0) = 0.5;
     ekb(1, 0) = 0.6;
@@ -127,9 +112,6 @@ TEST(ModuleIOTest, WriteWfcNaoBinary)
     wfc.close();
 
     //clean up
-    delete[] ctot[0];
-    delete[] ctot[1];
-    delete[] ctot;
     std::remove(filename.c_str()); // remove the test file
 }
 
@@ -151,11 +133,8 @@ TEST(ModuleIOTest, WriteWfcNaoComplex)
     ModuleBase::matrix wg(1, 2);
     wg(0, 0) = 0.11;
     wg(0, 1) = 0.22;
-    std::complex<double> **ctot = new std::complex<double>*[2];
-    ctot[0] = new std::complex<double>[3];
-    ctot[1] = new std::complex<double>[3];
-    ctot[0][0] = {1.0, 0.0}; ctot[0][1] = {2.0, 0.0}; ctot[0][2] = {3.0, 0.0};
-    ctot[1][0] = {0.0, 1.0}; ctot[1][1] = {0.0, 2.0}; ctot[1][2] = {0.0, 3.0};
+    std::vector<std::vector<std::complex<double>>> ctot = {{std::complex<double>(1.0, 0.0), std::complex<double>(2.0, 0.0), std::complex<double>(3.0, 0.0)},
+                                                            {std::complex<double>(0.0, 1.0), std::complex<double>(0.0, 2.0), std::complex<double>(0.0, 3.0)}};
 
     // Call the function
     ModuleIO::write_wfc_nao_complex(name, ctot, ik, kvec_c, ekb, wg);
@@ -172,9 +151,6 @@ TEST(ModuleIOTest, WriteWfcNaoComplex)
     EXPECT_THAT(str, testing::HasSubstr("2 (band)"));
     //ifs.close();
     // Clean up
-    delete[] ctot[0];
-    delete[] ctot[1];
-    delete[] ctot;
     std::remove(name.c_str());
 }
 
@@ -196,11 +172,8 @@ TEST(ModuleIOTest, WriteWfcNaoComplexBinary)
     ModuleBase::matrix wg(1, 2);
     wg(0, 0) = 0.11;
     wg(0, 1) = 0.22;
-    std::complex<double> **ctot = new std::complex<double>*[2];
-    ctot[0] = new std::complex<double>[3];
-    ctot[1] = new std::complex<double>[3];
-    ctot[0][0] = {1.0, 0.0}; ctot[0][1] = {2.0, 2.0}; ctot[0][2] = {3.0, 4.0};
-    ctot[1][0] = {4.0, 4.0}; ctot[1][1] = {5.0, 6.0}; ctot[1][2] = {6.0, 8.0};
+    std::vector<std::vector<std::complex<double>>> ctot = {{std::complex<double>(1.0, 0.0), std::complex<double>(2.0, 2.0), std::complex<double>(3.0, 4.0)},
+                                                            {std::complex<double>(4.0, 4.0), std::complex<double>(5.0, 6.0), std::complex<double>(6.0, 8.0)}};
 
     // Call the function
     ModuleIO::write_wfc_nao_complex(name, ctot, ik, kvec_c, ekb, wg, true);
@@ -241,8 +214,5 @@ TEST(ModuleIOTest, WriteWfcNaoComplexBinary)
     }
     wfc.close();
     // Clean up
-    delete[] ctot[0];
-    delete[] ctot[1];
-    delete[] ctot;
     std::remove(name.c_str());
 }

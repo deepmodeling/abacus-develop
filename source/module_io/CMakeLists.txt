@@ -19,6 +19,7 @@ list(APPEND objects
     restart.cpp
     binstream.cpp
     write_wfc_pw.cpp
+    write_wfc_lcao.cpp
     write_input.cpp
     write_cube.cpp
     write_rho.cpp

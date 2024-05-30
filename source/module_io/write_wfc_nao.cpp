@@ -5,7 +5,7 @@
 #include "module_base/global_variable.h"
 #include "module_base/timer.h"
 
-void ModuleIO::write_wfc_nao(const std::string &name, double **ctot, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg, bool writeBinary)
+void ModuleIO::write_wfc_nao(const std::string &name, std::vector<std::vector<double>>& ctot, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg, bool writeBinary)
 {
     ModuleBase::TITLE("ModuleIO", "write_wfc_nao");
     ModuleBase::timer::tick("ModuleIO", "write_wfc_nao");
@@ -78,7 +78,7 @@ void ModuleIO::write_wfc_nao(const std::string &name, double **ctot, const Modul
     return;
 }
 
-void ModuleIO::write_wfc_nao_complex(const std::string &name, std::complex<double> **ctot, const int &ik, const ModuleBase::Vector3<double> &kvec_c, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg, bool writeBinary)
+void ModuleIO::write_wfc_nao_complex(const std::string &name, std::vector<std::vector<std::complex<double>>>& ctot, const int &ik, const ModuleBase::Vector3<double> &kvec_c, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg, bool writeBinary)
 {
     ModuleBase::TITLE("ModuleIO","write_wfc_nao_complex");
     ModuleBase::timer::tick("ModuleIO","write_wfc_nao_complex");
