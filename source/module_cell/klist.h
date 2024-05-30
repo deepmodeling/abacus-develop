@@ -23,11 +23,6 @@ public:
     std::vector<int> isk;						// distinguish spin up and down k points
     std::vector<int> ibz2bz;					// mohan added 2009-05-18
 
-    //int nks;						// number of k points in this pool(processor, up+dw)
-    //int nkstot;						/// total number of k points, equal to nkstot_ibz after reducing k points
-    //int nkstot_ibz;             /// number of k points in IBZ
-    //int nkstot_full;    /// number of k points in full k mesh
-
     int nmp[3];						// Number of Monhorst-Pack
     std::vector<int> kl_segids;	// index of kline segment
 
