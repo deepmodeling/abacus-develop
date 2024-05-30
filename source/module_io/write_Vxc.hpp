@@ -41,19 +41,9 @@ namespace ModuleIO
     {
         std::ofstream ofs;
 #ifdef __MPI
-        int dsize=0;
-        MPI_Comm_size(MPI_COMM_WORLD, &dsize);
-        p2d.set_block_size(pv.nb);
-        p2d.set_proc_dim(dsize);
-        p2d.comm_2D = pv.comm_2D;
-        p2d.blacs_ctxt = pv.blacs_ctxt;
-        p2d.set_local2global(nbands, nbands, ofs, ofs);
-        p2d.set_desc(nbands, nbands, p2d.get_row_size(), false);
-        p2d.set_global2local(nbands, nbands, true, ofs);
+        p2d.set(nbands, nbands, pv.nb, pv.comm_2D, pv.blacs_ctxt);
 #else
-        p2d.set_proc_dim(1);
         p2d.set_serial(nbands, nbands);
-        p2d.set_global2local(nbands, nbands, false, ofs);
 #endif
     }
 
