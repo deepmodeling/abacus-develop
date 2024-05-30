@@ -77,6 +77,7 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
     const int cuda_block
         = std::min(64, (gridt.psir_size + cuda_threads - 1) / cuda_threads);
     int iter_num = 0;
+    int pipeline_index = 0;
     DensityMat denstiy_mat;
     frc_strs_iat_gbl f_s_iat_dev;
     grid_para para;
@@ -112,9 +113,10 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
             dim3 grid_dot(cuda_block);
             dim3 block_dot(cuda_threads);
             
-            para_init(para, iter_num, nbz, gridt);
+            pipeline_index = iter_num % gridt.nstreams;
+            para_init(para, iter_num, nbz, pipeline_index,gridt);
             cal_init(f_s_iat,
-                               para.stream_num,
+                               pipeline_index,
                                cuda_block,
                                atom_num_grid,
                                max_size,
@@ -141,19 +143,20 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
             para_mem_copy(para, 
                                  gridt, 
                                  nbz, 
+                                 pipeline_index,
                                  atom_num_grid);
             cal_mem_cpy(f_s_iat,
                                  gridt,
                                  atom_num_grid,
                                  cuda_block,
-                                 para.stream_num);
-            checkCuda(cudaStreamSynchronize(gridt.streams[para.stream_num]));
+                                 pipeline_index);
+            checkCuda(cudaStreamSynchronize(gridt.streams[pipeline_index]));
             /* cuda stream compute and Multiplication of multinomial matrices */
             
             get_psi_force<<<grid_psi,
                             block_psi,
                             0,
-                            gridt.streams[para.stream_num]>>>(
+                            gridt.streams[pipeline_index]>>>(
                 gridt.ylmcoef_g,
                 dr,
                 gridt.bxyz,
@@ -192,14 +195,14 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
                                      para.matrix_C_device,
                                      para.ldc_device,
                                      atom_pair_num,
-                                     gridt.streams[para.stream_num],
+                                     gridt.streams[pipeline_index],
                                      nullptr);
             /* force compute in GPU */
             if (isforce){
             dot_product_force<<<grid_dot_force,
                                 block_dot_force,
                                 0,
-                                gridt.streams[para.stream_num]>>>(
+                                gridt.streams[pipeline_index]>>>(
                 para.psir_lx_device,
                 para.psir_ly_device,
                 para.psir_lz_device,
@@ -215,7 +218,7 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
             dot_product_stress<<<grid_dot,
                                  block_dot,
                                  0,
-                                 gridt.streams[para.stream_num]>>>(
+                                 gridt.streams[pipeline_index]>>>(
                 para.psir_lxx_device,
                 para.psir_lxy_device,
                 para.psir_lxz_device,
