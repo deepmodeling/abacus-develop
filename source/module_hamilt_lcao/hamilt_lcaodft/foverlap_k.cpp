@@ -49,19 +49,19 @@ void Force_LCAO<std::complex<double>>::cal_foverlap(const bool isforce,
     ModuleBase::timer::tick("Force_LCAO_k", "cal_edm_2d");
 
     ModuleBase::matrix wgEkb;
-    wgEkb.create(kv->nks, GlobalV::NBANDS);
-    ModuleBase::Memory::record("Force::wgEkb", sizeof(double) * kv->nks * GlobalV::NBANDS);
+    wgEkb.create(kv->get_nks(), GlobalV::NBANDS);
+    ModuleBase::Memory::record("Force::wgEkb", sizeof(double) * kv->get_nks() * GlobalV::NBANDS);
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 1024)
 #endif
-    for (int ik = 0; ik < kv->nks; ik++)
+    for (int ik = 0; ik < kv->get_nks(); ik++)
     {
         for (int ib = 0; ib < GlobalV::NBANDS; ib++)
         {
             wgEkb(ik, ib) = pelec->wg(ik, ib) * pelec->ekb(ik, ib);
         }
     }
-    std::vector<ModuleBase::ComplexMatrix> edm_k(kv->nks);
+    std::vector<ModuleBase::ComplexMatrix> edm_k(kv->get_nks());
 
     // use the original formula (Hamiltonian matrix) to calculate energy density matrix
     if (DM->EDMK.size())
@@ -69,7 +69,7 @@ void Force_LCAO<std::complex<double>>::cal_foverlap(const bool isforce,
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 1024)
 #endif
-        for (int ik = 0; ik < kv->nks; ++ik)
+        for (int ik = 0; ik < kv->get_nks(); ++ik)
         {
             //edm_k[ik] = loc.edm_k_tddft[ik];
             EDM.set_DMK_pointer(ik,DM->EDMK[ik].c);
