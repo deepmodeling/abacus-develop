@@ -249,7 +249,7 @@ __global__ void dot_product_force(double* psir_lx,
         
         for (int i = 0; i < 3; i++)
         {
-            atomicAdd(&force_dot[iat_on_nbz + i], tmp[i]);
+            atomicAdd(&force_dot[iat_on_nbz*3 + i], tmp[i]);
         }
         tid += blockDim.x * gridDim.x;
     }
