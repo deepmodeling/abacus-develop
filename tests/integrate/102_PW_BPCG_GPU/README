@@ -1,0 +1,9 @@
+This test for:
+*GaAs-deformation
+*PW
+*kpoints 2*2*2
+*sg15 pseudopotential
+*smearing_method gauss
+*ks_solver bpcg
+*mixing_type broyden-kerker
+*mixing_beta 0.4
