@@ -3,6 +3,7 @@
 #include "module_hamilt_lcao/module_gint/gint_rho.h"
 #include "module_hamilt_lcao/module_gint/gint_tools.h"
 #include "module_hamilt_lcao/module_gint/kernels/cuda/gint_rho.cuh"
+#include "omp.h"
 
 namespace GintKernel
 {
@@ -69,12 +70,13 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
 
     // calculate the rho for every nbz bigcells
     int iter_num = 0;
+    #pragma omp parallel for num_threads(gridt.nstreams) collapse(2)
     for (int i = 0; i < gridt.nbx; i++)
     {
         for (int j = 0; j < gridt.nby; j++)
         {
             // get stream id
-            int stream_num = iter_num % gridt.nstreams;
+            int stream_num = omp_get_thread_num();
 
             // psi_input contains data used to generate the psi values.
             // The suffix "_g" indicates that the data is stored in the GPU,

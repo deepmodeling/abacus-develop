@@ -181,6 +181,7 @@ void calculateInit(DensityMat& denstiy_mat,
                    const UnitCell& ucell,
                    const int lgd,
                    const int cuda_block,
+                   const int nat,
                    const int atom_num_grid);
 
 /**
@@ -229,6 +230,7 @@ void cal_init(frc_strs_iat& f_s_iat,
                         const int stream_num,
                         const int cuda_block,
                         const int atom_num_grid,
+                        const int nat,
                         const int max_size,
                         frc_strs_iat_gbl& f_s_iatg);
 /**
@@ -260,6 +262,7 @@ void cal_mem_cpy(frc_strs_iat& f_s_iat,
                           const Grid_Technique& gridt,
                           const int atom_num_grid,
                           const int cuda_block,
+                          const int nat,
                           const int stream_num);
 /**
  * @brief Force Calculate on Host

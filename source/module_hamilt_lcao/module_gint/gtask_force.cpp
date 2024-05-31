@@ -266,9 +266,10 @@ void calculateInit(DensityMat& denstiy_mat,
                    hamilt::HContainer<double>* dm,
                    const Grid_Technique& gridt,
                    const UnitCell& ucell,
-                   int lgd,
-                   int cuda_block,
-                   int atom_num_grid)
+                   const int lgd,
+                   const int cuda_block,
+                   const int nat,
+                   const int atom_num_grid)
 {
     denstiy_mat.density_mat_h = new double[lgd * lgd];
     allocateDm(denstiy_mat.density_mat_h, dm, gridt, ucell);
@@ -281,16 +282,16 @@ void calculateInit(DensityMat& denstiy_mat,
                          cudaMemcpyHostToDevice));
 
     checkCuda(cudaMalloc((void**)&f_s_iat_dev.stress_global,
-                         6 * cuda_block * gridt.nstreams * sizeof(double)));
+                         6  * gridt.nstreams * sizeof(double)));
     checkCuda(cudaMemset(f_s_iat_dev.stress_global,
                          0,
-                         6 * cuda_block * gridt.nstreams * sizeof(double)));
+                         6  * gridt.nstreams * sizeof(double)));
 
     checkCuda(cudaMalloc((void**)&f_s_iat_dev.force_global,
-                         3 * atom_num_grid * gridt.nstreams * sizeof(double)));
+                         3 * nat * gridt.nstreams * sizeof(double)));
     checkCuda(cudaMemset(f_s_iat_dev.force_global,
                          0,
-                         3 * atom_num_grid * gridt.nstreams * sizeof(double)));
+                         3 * nat * gridt.nstreams * sizeof(double)));
 
     checkCuda(cudaMalloc((void**)&f_s_iat_dev.iat_global,
                          atom_num_grid * gridt.nstreams * sizeof(int)));
@@ -402,15 +403,16 @@ void cal_init(frc_strs_iat& f_s_iat,
                         const int stream_num,
                         const int cuda_block,
                         const int atom_num_grid,
+                        const int nat,
                         const int max_size,
                         frc_strs_iat_gbl& f_s_iat_dev)
 {
     const int iat_min = -max_size - 1;
     f_s_iat.stress_host = new double[6 * cuda_block];
     f_s_iat.stress_device
-        = &f_s_iat_dev.stress_global[6 * cuda_block * stream_num];
+        = &f_s_iat_dev.stress_global[6 * stream_num];
     f_s_iat.force_device
-        = &f_s_iat_dev.force_global[3 * atom_num_grid * stream_num];
+        = &f_s_iat_dev.force_global[3 * nat * stream_num];
     f_s_iat.iat_device
         = &f_s_iat_dev.iat_global[atom_num_grid * stream_num];
     f_s_iat.iat_host = new int[atom_num_grid];
@@ -562,6 +564,7 @@ void cal_mem_cpy(frc_strs_iat& f_s_iat,
                           const Grid_Technique& gridt,
                           const int atom_num_grid,
                           const int cuda_block,
+                          const int nat,
                           const int stream_num)
 {
     checkCuda(cudaMemcpyAsync(f_s_iat.iat_device,
@@ -569,14 +572,14 @@ void cal_mem_cpy(frc_strs_iat& f_s_iat,
                               atom_num_grid * sizeof(int),
                               cudaMemcpyHostToDevice,
                               gridt.streams[stream_num]));
-    checkCuda(cudaMemsetAsync(f_s_iat.stress_device,
-                              0,
-                              6 * cuda_block * sizeof(double),
-                              gridt.streams[stream_num]));
-    checkCuda(cudaMemsetAsync(f_s_iat.force_device,
-                              0,
-                              3 * atom_num_grid * sizeof(double),
-                              gridt.streams[stream_num]));
+    // checkCuda(cudaMemsetAsync(f_s_iat.stress_device,
+    //                           0,
+    //                           6  * sizeof(double),
+    //                           gridt.streams[stream_num]));
+    // checkCuda(cudaMemsetAsync(f_s_iat.force_device,
+    //                           0,
+    //                           3 * nat * sizeof(double),
+    //                           gridt.streams[stream_num]));
 }
 /*
  * @brief Force Calculate on Host
@@ -621,14 +624,14 @@ void cal_stress_add(frc_strs_iat& f_s_iat,
 {
     checkCuda(cudaMemcpy(f_s_iat.stress_host,
                          f_s_iat.stress_device,
-                         6 * cuda_block * sizeof(double),
+                         6  * sizeof(double),
                          cudaMemcpyDeviceToHost));
     for (int i = 0; i < 6; i++)
     {
-        for (int index = 0; index < cuda_block; index++)
-        {
-            stress[i] += f_s_iat.stress_host[i * cuda_block + index];
-        }
+        // for (int index = 0; index < cuda_block; index++)
+        // {
+            stress[i] += f_s_iat.stress_host[ i];
+        // }
     }
 }
 } // namespace GintKernel
