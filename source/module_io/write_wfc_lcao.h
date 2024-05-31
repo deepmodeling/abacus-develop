@@ -4,6 +4,7 @@
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_psi/psi.h"
 #include "module_base/vector3.h"
+#include <vector>
 
 namespace ModuleIO
 {
@@ -18,24 +19,11 @@ namespace ModuleIO
  * @param istep The index of the step, and starting from 0.
  * @return The generated filename.
  */
-std::string wfc_lcao_gen_fname(const int& out_type,
-                               const bool& gamma_only,
-                               const bool& out_app_flag,
-                               const int& ik,
-                               const int& istep);
-
-#ifdef __MPI
-void wfc_lcao_bcast_work(const int& maxnloc, const int& src_rank, double* work, const Parallel_Orbitals* pv);
-
-void wfc_lcao_bcast_work(const int& maxnloc,
-                         const int& src_rank,
-                         std::complex<double>* work,
-                         const Parallel_Orbitals* pv);
-#endif
-
-void wfc_lcao_write2file(const std::string &name, std::vector<std::vector<double>>& ctot, const int &ik, const ModuleBase::Vector3<double> &kvec_c, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg, bool writeBinary);
-void wfc_lcao_write2file(const std::string &name, std::vector<std::vector<std::complex<double>>>& ctot, const int &ik, const ModuleBase::Vector3<double> &kvec_c, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg, bool writeBinary);
-
+std::string wfc_lcao_gen_fname(const int out_type,
+                               const bool gamma_only,
+                               const bool out_app_flag,
+                               const int ik,
+                               const int istep);
 
 /**
  * Writes the wavefunction coefficients for the LCAO method to a file.
@@ -58,7 +46,7 @@ void write_wfc_lcao(const int out_type,
                     const ModuleBase::matrix& wg,
                     const std::vector<ModuleBase::Vector3<double>>& kvec_c,
                     const Parallel_Orbitals* pv,
-                    const int& istep) ;
+                    const int istep) ;
 
 
 }// namespace ModuleIO

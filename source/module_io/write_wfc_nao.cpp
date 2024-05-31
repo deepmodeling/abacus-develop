@@ -5,13 +5,15 @@
 #include "module_base/global_variable.h"
 #include "module_base/timer.h"
 
-void ModuleIO::write_wfc_nao(const std::string &name, std::vector<std::vector<double>>& ctot, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg, bool writeBinary)
+void ModuleIO::write_wfc_nao(const std::string &name, const double* ctot, const int nlocal, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg, bool writeBinary)
 {
     ModuleBase::TITLE("ModuleIO", "write_wfc_nao");
     ModuleBase::timer::tick("ModuleIO", "write_wfc_nao");
 
     if (GlobalV::DRANK == 0)
     {
+        int nbands = ekb.nc;
+        
         if (writeBinary)
         {
             Binstream ofs(name, "a");
@@ -20,18 +22,18 @@ void ModuleIO::write_wfc_nao(const std::string &name, std::vector<std::vector<do
                 ModuleBase::WARNING("ModuleIO::write_wfc_nao", "Can't write local orbital wave functions.");
             }
 
-            ofs << GlobalV::NBANDS;
-            ofs << GlobalV::NLOCAL;
+            ofs << nbands;
+            ofs << nlocal;
 
-            for (int i = 0; i < GlobalV::NBANDS; i++)
+            for (int i = 0; i < nbands; i++)
             {
                 ofs << i+1;
                 ofs << ekb(GlobalV::CURRENT_SPIN, i);
                 ofs << wg(GlobalV::CURRENT_SPIN, i);
 
-                for (int j = 0; j < GlobalV::NLOCAL; j++)
+                for (int j = 0; j < nlocal; j++)
                 {
-                    ofs << ctot[i][j];
+                    ofs << ctot[i*nlocal + j];
                 }
             }
             ofs.close();
@@ -51,22 +53,22 @@ void ModuleIO::write_wfc_nao(const std::string &name, std::vector<std::vector<do
             {
                 ModuleBase::WARNING("ModuleIO::write_wfc_nao", "Can't write local orbital wave functions.");
             }
-            ofs << GlobalV::NBANDS << " (number of bands)" << std::endl;
-            ofs << GlobalV::NLOCAL << " (number of orbitals)";
+            ofs << nbands << " (number of bands)" << std::endl;
+            ofs << nlocal << " (number of orbitals)";
             ofs << std::setprecision(8);
             ofs << std::scientific;
 
-            for (int i=0; i<GlobalV::NBANDS; i++)
+            for (int i=0; i<nbands; i++)
             {
                 // +1 to mean more clearly.
                 // band index start from 1.
                 ofs << "\n" << i+1 << " (band)";
 		    	ofs << "\n" << ekb(GlobalV::CURRENT_SPIN, i) << " (Ry)";
 		    	ofs << "\n" << wg(GlobalV::CURRENT_SPIN,i) << " (Occupations)";
-                for (int j=0; j<GlobalV::NLOCAL; j++)
+                for (int j=0; j<nlocal; j++)
                 {
                     if (j % 5 == 0) ofs << "\n";
-                    ofs << ctot[i][j] << " ";
+                    ofs << ctot[i*nlocal + j] << " ";
                 }
             }
             ofs << std::endl;
@@ -78,7 +80,7 @@ void ModuleIO::write_wfc_nao(const std::string &name, std::vector<std::vector<do
     return;
 }
 
-void ModuleIO::write_wfc_nao_complex(const std::string &name, std::vector<std::vector<std::complex<double>>>& ctot, const int &ik, const ModuleBase::Vector3<double> &kvec_c, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg, bool writeBinary)
+void ModuleIO::write_wfc_nao_complex(const std::string &name, const std::complex<double>* ctot, const int nlocal,const int &ik, const ModuleBase::Vector3<double> &kvec_c, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg, bool writeBinary)
 {
     ModuleBase::TITLE("ModuleIO","write_wfc_nao_complex");
     ModuleBase::timer::tick("ModuleIO","write_wfc_nao_complex");
@@ -86,6 +88,8 @@ void ModuleIO::write_wfc_nao_complex(const std::string &name, std::vector<std::v
     
     if (GlobalV::DRANK==0)
     {
+        int nbands = ekb.nc;
+
         if (writeBinary)
         {
             Binstream ofs(name, "a");
@@ -97,18 +101,18 @@ void ModuleIO::write_wfc_nao_complex(const std::string &name, std::vector<std::v
             ofs << kvec_c.x;
             ofs << kvec_c.y;
             ofs << kvec_c.z;
-            ofs << GlobalV::NBANDS;
-            ofs << GlobalV::NLOCAL;
+            ofs << nbands;
+            ofs << nlocal;
 
-            for (int i = 0; i < GlobalV::NBANDS; i++)
+            for (int i = 0; i < nbands; i++)
             {
                 ofs << i+1;
                 ofs << ekb(ik, i);
                 ofs << wg(ik, i);
 
-                for (int j = 0; j < GlobalV::NLOCAL; j++)
+                for (int j = 0; j < nlocal; j++)
                 {
-                    ofs << ctot[i][j].real() << ctot[i][j].imag();
+                    ofs << ctot[i*nlocal + j].real() << ctot[i*nlocal + j].imag();
                 }
             }
             ofs.close();
@@ -131,21 +135,21 @@ void ModuleIO::write_wfc_nao_complex(const std::string &name, std::vector<std::v
             ofs << std::setprecision(25);
 		    ofs << ik+1 << " (index of k points)" << std::endl;
 		    ofs << kvec_c.x << " " << kvec_c.y << " " << kvec_c.z << std::endl;
-            ofs << GlobalV::NBANDS << " (number of bands)" << std::endl;
-            ofs << GlobalV::NLOCAL << " (number of orbitals)";
+            ofs << nbands << " (number of bands)" << std::endl;
+            ofs << nlocal << " (number of orbitals)";
             ofs << std::scientific;
 
-            for (int i=0; i<GlobalV::NBANDS; i++)
+            for (int i=0; i<nbands; i++)
             {
                 // +1 to mean more clearly.
                 // band index start from 1.
                 ofs << "\n" << i+1 << " (band)";
 		    	ofs << "\n" << ekb(ik, i) << " (Ry)";
 		    	ofs << "\n" << wg(ik,i) << " (Occupations)";
-                for (int j=0; j<GlobalV::NLOCAL; j++)
+                for (int j=0; j<nlocal; j++)
                 {
                     if (j % 5 == 0) ofs << "\n";
-                    ofs << ctot[i][j].real() << " " << ctot[i][j].imag() << " ";
+                    ofs << ctot[i*nlocal + j].real() << " " << ctot[i*nlocal + j].imag() << " ";
                 }
             }
             ofs << std::endl;
