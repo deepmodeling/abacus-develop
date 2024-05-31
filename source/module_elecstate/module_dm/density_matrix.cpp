@@ -4,6 +4,7 @@
 #include "module_base/tool_title.h"
 #include "module_base/memory.h"
 #include "module_base/timer.h"
+#include "module_cell/klist.h"
 
 namespace elecstate
 {
@@ -38,7 +39,7 @@ DensityMatrix<TK, TR>::DensityMatrix(const K_Vectors* kv_in, const Parallel_Orbi
     {
         this->_nspin = 2;
 #ifdef __DEBUG
-        assert(kv_in->nks % 2 == 0);
+        assert(kv_in->get_nks() % 2 == 0);
 #endif
     }
     else
@@ -46,10 +47,10 @@ DensityMatrix<TK, TR>::DensityMatrix(const K_Vectors* kv_in, const Parallel_Orbi
         throw std::string("nspin must be 1, 2 or 4");
     }
     // set this->_nks, which is real number of k-points
-    this->_nks = kv_in->nks / this->_nspin;
+    this->_nks = kv_in->get_nks() / this->_nspin;
     // allocate memory for _DMK
-    this->_DMK.resize(this->_kv->nks);
-    for (int ik = 0; ik < this->_kv->nks; ik++)
+    this->_DMK.resize(this->_kv->get_nks());
+    for (int ik = 0; ik < this->_kv->get_nks(); ik++)
     {
         this->_DMK[ik].resize(this->_paraV->get_row_size() * this->_paraV->get_col_size());
     }
@@ -323,7 +324,7 @@ int DensityMatrix<TK, TR>::get_DMK_nks() const
     assert(this->_DMK.size() != 0);
     assert(this->_kv != nullptr);
 #endif
-    return this->_kv->nks;
+    return this->_kv->get_nks();
 }
 
 template <typename TK, typename TR>

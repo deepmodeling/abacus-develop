@@ -135,7 +135,7 @@ ModuleBase::matrix ModuleIO::cal_mulliken(const std::vector<std::vector<std::com
     MecMulP.create(GlobalV::NSPIN, nlocal, true);
     orbMulP.create(GlobalV::NSPIN, nlocal, true);
 
-    for(size_t ik = 0; ik != kv.nks; ++ik)
+    for(size_t ik = 0; ik != kv.get_nks(); ++ik)
     {
         // calculate SK for current k point
         // the target matrix is LM->Sloc2 with collumn-major

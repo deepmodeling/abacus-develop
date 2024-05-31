@@ -275,7 +275,7 @@ namespace ModuleIO
         // double total_energy = 0.0;
         // double exx_energy = 0.0;
         // ======test=======
-        for (int ik = 0;ik < kv.nks;++ik)
+        for (int ik = 0;ik < kv.get_nks();++ik)
         {
             ModuleBase::GlobalFunc::ZEROS(vxc_k_ao.data(), pv->nloc);
             int is = GlobalV::CURRENT_SPIN = kv.isk[ik];
@@ -327,8 +327,8 @@ namespace ModuleIO
         auto write_orb_energy = [&kv, &nspin0, &nbands](const std::vector<std::vector<double>>& e_orb,
             const std::string& label, const bool app = false)
             {
-                assert(e_orb.size() == kv.nks);
-                const int nk = kv.nks / nspin0;
+                assert(e_orb.size() == kv.get_nks());
+                const int nk = kv.get_nks() / nspin0;
                 std::ofstream ofs;
                 ofs.open(GlobalV::global_out_dir + "vxc_" + (label == "" ? "out" : label + "_out"),
                     app ? std::ios::app : std::ios::out);

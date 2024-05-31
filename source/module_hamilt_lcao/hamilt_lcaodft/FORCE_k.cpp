@@ -66,7 +66,7 @@ void Force_LCAO_k::ftable_k(const bool isforce,
 			pv, 
 			lm, 
             gen_h,
-			kv.nks, 
+			kv.get_nks(), 
 			kv.kvec_d);
 
     // calculate the energy density matrix
@@ -83,7 +83,7 @@ void Force_LCAO_k::ftable_k(const bool isforce,
 			foverlap, 
 			soverlap, 
 			pelec, 
-			kv.nks, 
+			kv.get_nks(), 
 			kv);
 
 	this->cal_ftvnl_dphi_k(
@@ -132,7 +132,7 @@ void Force_LCAO_k::ftable_k(const bool isforce,
                                   GlobalC::ucell,
                                   GlobalC::ORB,
                                   GlobalC::GridD,
-                                  kv.nks,
+                                  kv.get_nks(),
                                   kv.kvec_d,
                                   isstress,
                                   svnl_dalpha);
