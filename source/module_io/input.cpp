@@ -4108,13 +4108,6 @@ void Input::Check(void)
         }
     }
 
-    if (chg_extrap == "dm" && basis_type == "pw") // xiaohui add 2013-09-01, xiaohui modify 2015-02-01
-    {
-        ModuleBase::WARNING_QUIT(
-            "Input",
-            "wrong 'chg_extrap=dm' is only available for local orbitals."); // xiaohui modify 2015-02-01
-    }
-
     if ((init_wfc != "atomic") && (init_wfc != "random") && (init_wfc != "atomic+random") && (init_wfc != "nao")
         && (init_wfc != "nao+random") && (init_wfc != "file"))
     {
