@@ -119,8 +119,8 @@ if(!GlobalV::dm_to_rho)
         if (GlobalC::exx_info.info_global.cal_exx)
         {
             const K_Vectors* kv = this->DM->get_kv_pointer();
-            this->loc->dm_k.resize(kv->nks);
-            for (int ik = 0; ik < kv->nks; ++ik)
+            this->loc->dm_k.resize(kv->get_nks());
+            for (int ik = 0; ik < kv->get_nks(); ++ik)
             {
                 this->loc->set_dm_k(ik, this->DM->get_DMK_pointer(ik));         
             }

@@ -79,7 +79,7 @@ void DFTU::force_stress(const elecstate::ElecState* pelec,
 
         std::vector<double> rho_VU(this->LM->ParaV->nloc);
 
-        for (int ik = 0; ik < kv.nks; ik++)
+        for (int ik = 0; ik < kv.get_nks(); ik++)
         {
 
             const int spin = kv.isk[ik];
@@ -114,7 +114,7 @@ void DFTU::force_stress(const elecstate::ElecState* pelec,
 
         std::vector<std::complex<double>> rho_VU(this->LM->ParaV->nloc);
 
-        for (int ik = 0; ik < kv.nks; ik++)
+        for (int ik = 0; ik < kv.get_nks(); ik++)
         {
             const int spin = kv.isk[ik];
 

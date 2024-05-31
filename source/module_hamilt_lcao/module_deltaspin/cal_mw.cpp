@@ -17,7 +17,7 @@ ModuleBase::matrix SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>:
     int nw = this->get_nw();
     const int nlocal = (this->nspin_ == 4) ? nw / 2 : nw;
     ModuleBase::matrix MecMulP(this->nspin_, nlocal, true), orbMulP(this->nspin_, nlocal, true);
-    for(size_t ik = 0; ik != this->kv_.nks; ++ik)
+    for(size_t ik = 0; ik != this->kv_.get_nks(); ++ik)
     {
         if (this->nspin_ == 4)
         {

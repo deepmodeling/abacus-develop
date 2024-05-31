@@ -35,7 +35,7 @@
  *  - SpinConstrain::get_iwt()
  *     get the index of orbital with spin component from (itype, iat, orbital_index)
  */
-
+#include "module_cell/klist.h"
 K_Vectors::K_Vectors(){}
 K_Vectors::~K_Vectors(){}
 

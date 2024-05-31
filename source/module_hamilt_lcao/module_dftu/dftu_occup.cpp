@@ -156,7 +156,7 @@ void DFTU::cal_occup_m_k(const int iter,
 
     std::vector<std::complex<double>> srho(this->LM->ParaV->nloc);
 
-    for (int ik = 0; ik < kv.nks; ik++)
+    for (int ik = 0; ik < kv.get_nks(); ik++)
     {
         // srho(mu,nu) = \sum_{iw} S(mu,iw)*dm_k(iw,nu)
         this->folding_matrix_k_new(ik, p_ham);

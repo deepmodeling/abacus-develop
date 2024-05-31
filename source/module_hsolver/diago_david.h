@@ -40,6 +40,7 @@ class DiagoDavid : public DiagH<T, Device>
     int n_band = 0;
     /// non-zero col size for inputted psi matrix
     int dim = 0;
+    int dmx = 0;
     // maximum dimension of the reduced basis set
     int nbase_x = 0;
 
