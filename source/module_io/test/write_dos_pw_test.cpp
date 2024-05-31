@@ -51,11 +51,11 @@ TEST_F(DosPWTest,Dos1)
 	INPUT.dos_setemax = true;
 	INPUT.dos_emin_ev = dosp.emin_ev;
 	INPUT.dos_setemin = true;
-	kv->nks = dosp.nks;
-	kv->nkstot = dosp.nkstot;
-	kv->isk.reserve(kv->nks);
-	kv->wk.reserve(kv->nks);
-	for(int ik=0; ik<kv->nks; ++ik)
+	kv->set_nks(dosp.nks);
+	kv->set_nkstot(dosp.nkstot);
+	kv->isk.reserve(kv->get_nks());
+	kv->wk.reserve(kv->get_nks());
+	for(int ik=0; ik<kv->get_nks(); ++ik)
 	{
 		kv->isk[ik] = dosp.isk[ik];
 		kv->wk[ik] = dosp.wk[ik];
@@ -101,11 +101,11 @@ TEST_F(DosPWTest,Dos2)
 	INPUT.dos_setemax = false;
 	INPUT.dos_emin_ev = dosp.emin_ev;
 	INPUT.dos_setemin = false;
-	kv->nks = dosp.nks;
-	kv->nkstot = dosp.nkstot;
-	kv->isk.reserve(kv->nks);
-	kv->wk.reserve(kv->nks);
-	for(int ik=0; ik<kv->nks; ++ik)
+	kv->set_nks(dosp.nks);
+	kv->set_nkstot(dosp.nkstot);
+	kv->isk.reserve(kv->get_nks());
+	kv->wk.reserve(kv->get_nks());
+	for(int ik=0; ik<kv->get_nks(); ++ik)
 	{
 		kv->isk[ik] = dosp.isk[ik];
 		kv->wk[ik] = dosp.wk[ik];

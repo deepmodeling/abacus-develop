@@ -165,7 +165,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const K_Vectors& kv, const Charg
 		// set initial parameter for mix_DMk_2D
 		if(GlobalC::exx_info.info_global.cal_exx)
 		{
-			this->mix_DMk_2D.set_nks(kv.nks, GlobalV::GAMMA_ONLY_LOCAL);
+			this->mix_DMk_2D.set_nks(kv.get_nks(), GlobalV::GAMMA_ONLY_LOCAL);
 			if(GlobalC::exx_info.info_global.separate_loop)
                 this->mix_DMk_2D.set_mixing(nullptr);
 			else

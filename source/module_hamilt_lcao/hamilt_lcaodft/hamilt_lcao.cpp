@@ -204,7 +204,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
                                                                         &(this->getHk(LM_in)),
                                                                         &GlobalC::ucell,
                                                                         &GlobalC::GridD,
-                                                                        this->kv->nks,
+                                                                        this->kv->get_nks(),
                                                                         DM_in);
             this->getOperator()->add(deepks);
         }
@@ -349,7 +349,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
                                                     &(this->getHk(LM_in)),
                                                     &GlobalC::ucell,
                                                     &GlobalC::GridD,
-                                                    this->kv->nks,
+                                                    this->kv->get_nks(),
                                                     DM_in);
             this->getOperator()->add(deepks);
         }

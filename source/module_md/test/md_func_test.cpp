@@ -6,7 +6,6 @@
 #include "setcell.h"
 
 #define doublethreshold 1e-12
-
 /************************************************
  *  unit test of functions in md_func.h
  ***********************************************/

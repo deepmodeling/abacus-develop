@@ -79,7 +79,7 @@ inline void cal_DM_ATOM(const Grid_Technique &gt,
     const std::complex<double> alpha = 1;
     const std::complex<double> beta = 1;
 
-    for (int ik = 0; ik < kv.nks; ik++)
+    for (int ik = 0; ik < kv.get_nks(); ik++)
     {
         std::complex<double> **wfc = wfc_k_grid[ik];
         const int ispin = kv.isk[ik];
@@ -172,7 +172,7 @@ inline void cal_DM_ATOM_nc(const Grid_Technique &gt,
     {
         for (int is2 = 0; is2 < 2; is2++)
         {
-            for (int ik = 0; ik < kv.nks; ik++)
+            for (int ik = 0; ik < kv.get_nks(); ik++)
             {
                 std::complex<double> **wfc = wfc_k_grid[ik];
                 int atom2start = 0;
@@ -382,7 +382,7 @@ void Local_Orbital_Charge::cal_dk_k(const Grid_Technique &gt, const ModuleBase::
     /*  std::cout << std::setprecision(3);
         for(int i=0; i<nnrg_now; i++)
 
-        for(int ik=0; ik<kv.nkstot; ++ik)
+        for(int ik=0; ik<kv.get_nkstot(); ++ik)
         {
             for(int ib=0; ib<GlobalV::NBANDS; ++ib)
             {

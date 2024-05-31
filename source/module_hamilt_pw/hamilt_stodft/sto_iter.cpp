@@ -287,7 +287,7 @@ void Stochastic_Iter::itermu(const int iter, elecstate::ElecState* pes)
     //Set wf.wg 
     if(GlobalV::NBANDS > 0)
     {
-        for (int ikk = 0; ikk < this->pkv->nks; ++ikk)
+        for (int ikk = 0; ikk < this->pkv->get_nks(); ++ikk)
         {
             double* en = &pes->ekb(ikk, 0);
             for (int iksb = 0; iksb < GlobalV::NBANDS; ++iksb)
@@ -373,7 +373,7 @@ double Stochastic_Iter::calne(elecstate::ElecState* pes)
     }
     if(GlobalV::NBANDS > 0)
     {
-        for (int ikk = 0; ikk < this->pkv->nks; ++ikk)
+        for (int ikk = 0; ikk < this->pkv->get_nks(); ++ikk)
         {
             double* en = &pes->ekb(ikk, 0);
             for (int iksb = 0; iksb < GlobalV::NBANDS; ++iksb)
@@ -396,10 +396,10 @@ double Stochastic_Iter::calne(elecstate::ElecState* pes)
 void Stochastic_Iter::calHsqrtchi(Stochastic_WF& stowf)
 {
     p_che->calcoef_real(&stofunc,&Sto_Func<double>::nroot_fd);
-    for(int ik = 0; ik < this->pkv->nks; ++ik)
+    for(int ik = 0; ik < this->pkv->get_nks(); ++ik)
     {
         //init k
-        if(this->pkv->nks > 1)
+        if(this->pkv->get_nks() > 1)
         {
 
             if(GlobalV::NSPIN==2)
@@ -444,7 +444,7 @@ void Stochastic_Iter::sum_stoband(Stochastic_WF& stowf, elecstate::ElecState* pe
 
     if (GlobalV::NBANDS > 0)
     {
-        for (int ikk = 0; ikk < this->pkv->nks; ++ikk)
+        for (int ikk = 0; ikk < this->pkv->get_nks(); ++ikk)
         {
             double* enb = &pes->ekb(ikk, 0);
             // number of electrons in KS orbitals
@@ -472,10 +472,10 @@ void Stochastic_Iter::sum_stoband(Stochastic_WF& stowf, elecstate::ElecState* pe
     }
     else
     {
-        for(int ik = 0; ik < this->pkv->nks; ++ik)
+        for(int ik = 0; ik < this->pkv->get_nks(); ++ik)
         {
             const int nchip_ik = nchip[ik];
-            if(this->pkv->nks > 1) 
+            if(this->pkv->get_nks() > 1) 
             {
                 pHamilt->updateHk(ik);
                 stowf.shchi->fix_k(ik);
@@ -520,7 +520,7 @@ void Stochastic_Iter::sum_stoband(Stochastic_WF& stowf, elecstate::ElecState* pe
         ModuleBase::GlobalFunc::ZEROS(pes->charge->rho[0], nrxx);
     }
 
-    for (int ik = 0; ik < this->pkv->nks; ++ik)
+    for (int ik = 0; ik < this->pkv->get_nks(); ++ik)
     {
         const int nchip_ik = nchip[ik];
         stowf.shchi->fix_k(ik);

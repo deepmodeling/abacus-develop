@@ -227,7 +227,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
 
     if (out_wf || out_wf_r)
     {
-        pw_wfc_g.resize(kv.nks, nbands, wfcpw->npwk_max);
+        pw_wfc_g.resize(kv.get_nks(), nbands, wfcpw->npwk_max);
     }
 
     for (int ib = 0; ib < nbands; ib++)
@@ -235,7 +235,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
         if (bands_picked[ib])
         {
             const int nspin0 = (nspin == 2) ? 2 : 1;
-            for (int ik = 0; ik < kv.nks; ++ik)    //the loop of nspin0 is included
+            for (int ik = 0; ik < kv.get_nks(); ++ik)    //the loop of nspin0 is included
             {
                 const int ispin = kv.isk[ik];
                 ModuleBase::GlobalFunc::ZEROS(pes->charge->rho[ispin], wfcpw->nrxx);

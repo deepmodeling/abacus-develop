@@ -7,6 +7,13 @@
 #include "module_elecstate/potentials/efield.h"
 #include "module_elecstate/potentials/gatefield.h"
 #include "module_elecstate/module_charge/charge.h"
+#include "module_cell/klist.h"
+K_Vectors::K_Vectors()
+{
+}
+K_Vectors::~K_Vectors()
+{
+}
 
 /***************************************************************
  *  mock functions
@@ -55,12 +62,6 @@ std::string get_ks_solver_type()
 }
 } // namespace elecstate
 
-K_Vectors::K_Vectors()
-{
-}
-K_Vectors::~K_Vectors()
-{
-}
 Charge::Charge()
 {
 }
@@ -93,7 +94,7 @@ class ElecStatePrintTest : public ::testing::Test
     void SetUp()
     {
         p_klist = new K_Vectors;
-        p_klist->nks = 2;
+        p_klist->set_nks(2);
         p_klist->isk = {0, 1};
         p_klist->ngk = {100, 101};
         p_klist->kvec_c.resize(2);
