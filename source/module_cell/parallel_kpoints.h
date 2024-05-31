@@ -47,7 +47,7 @@ class Parallel_Kpoints
 
     // information about which pool each k-point belongs to,
     int* whichpool = nullptr; // whichpool[k] : the pool which k belongs to, dim: nkstot_np
-    int nkstot_np = 0;        // number of k-points without spin, kv.nkstot = nkstot_np * nspin(1 or 2)
+    int nkstot_np = 0;        // number of k-points without spin, kv.set_nkstot(nkstot_np) * nspin(1 or 2)
     int nks_np = 0;           // number of k-points without spin in the present pool
 
   private:

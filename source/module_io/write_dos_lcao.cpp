@@ -52,7 +52,7 @@ void ModuleIO::write_dos_lcao(
     // find the maximal and minimal band energy.
     double emax = ekb(0, 0);
     double emin = ekb(0, 0);
-    for (int ik = 0; ik < kv.nks; ++ik)
+    for (int ik = 0; ik < kv.get_nks(); ++ik)
     {
         for (int ib = 0; ib < GlobalV::NBANDS; ++ib)
         {
@@ -329,8 +329,8 @@ void ModuleIO::write_dos_lcao(
             emax,
             emin,
             bcoeff,
-            kv.nks,
-            kv.nkstot,
+            kv.get_nks(),
+            kv.get_nkstot(),
             kv.wk,
             kv.isk,
             GlobalV::NBANDS,
@@ -366,7 +366,7 @@ void ModuleIO::write_dos_lcao(
     // find the maximal and minimal band energy.
     double emax = ekb(0, 0);
     double emin = ekb(0, 0);
-    for (int ik = 0; ik < kv.nks; ++ik)
+    for (int ik = 0; ik < kv.get_nks(); ++ik)
     {
         for (int ib = 0; ib < GlobalV::NBANDS; ++ib)
         {
@@ -441,7 +441,7 @@ void ModuleIO::write_dos_lcao(
             Mulk.resize(1);
             Mulk[0].create(pv.ncol, pv.nrow);
 
-            for (int ik = 0; ik < kv.nks; ik++)
+            for (int ik = 0; ik < kv.get_nks(); ik++)
             {
 
                 if (is == kv.isk[ik])
@@ -679,8 +679,8 @@ void ModuleIO::write_dos_lcao(
             emax,
             emin,
             bcoeff,
-            kv.nks,
-            kv.nkstot,
+            kv.get_nks(),
+            kv.get_nkstot(),
             kv.wk,
             kv.isk,
             GlobalV::NBANDS,

@@ -118,7 +118,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
         }
         else
         {
-            nsk = this->kv.nks;
+            nsk = this->kv.get_nks();
 #ifdef __MPI
             ncol = this->LOWF.ParaV->ncol_bands;
 #else
@@ -608,7 +608,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf(void)
     GlobalV::ofs_running << " end of band structure calculation " << std::endl;
     GlobalV::ofs_running << " band eigenvalue in this processor (eV) :" << std::endl;
 
-    for (int ik = 0; ik < this->kv.nks; ik++)
+    for (int ik = 0; ik < this->kv.get_nks(); ik++)
     {
         if (GlobalV::NSPIN == 2)
         {
@@ -616,20 +616,20 @@ void ESolver_KS_LCAO<TK, TR>::nscf(void)
             {
                 GlobalV::ofs_running << " spin up :" << std::endl;
             }
-            if (ik == (this->kv.nks / 2))
+            if (ik == (this->kv.get_nks() / 2))
             {
                 GlobalV::ofs_running << " spin down :" << std::endl;
             }
         }
 
-        GlobalV::ofs_running << " k-points" << ik + 1 << "(" << this->kv.nkstot << "): " << this->kv.kvec_c[ik].x << " "
+        GlobalV::ofs_running << " k-points" << ik + 1 << "(" << this->kv.get_nkstot() << "): " << this->kv.kvec_c[ik].x << " "
                              << this->kv.kvec_c[ik].y << " " << this->kv.kvec_c[ik].z << std::endl;
 
         for (int ib = 0; ib < GlobalV::NBANDS; ib++)
         {
             GlobalV::ofs_running << " spin" << this->kv.isk[ik] + 1 << "final_state " << ib + 1 << " "
                                  << this->pelec->ekb(ik, ib) * ModuleBase::Ry_to_eV << " "
-                                 << this->pelec->wg(ik, ib) * this->kv.nks << std::endl;
+                                 << this->pelec->wg(ik, ib) * this->kv.get_nks() << std::endl;
         }
         GlobalV::ofs_running << std::endl;
     }

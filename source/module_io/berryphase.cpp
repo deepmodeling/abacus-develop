@@ -43,7 +43,7 @@ void berryphase::get_occupation_bands()
 void berryphase::lcao_init(const K_Vectors& kv)
 {
 	ModuleBase::TITLE("berryphase","lcao_init");
-	lcao_method.init(*this->lowf->gridt, this->lowf->wfc_k_grid, kv.nkstot);
+	lcao_method.init(*this->lowf->gridt, this->lowf->wfc_k_grid, kv.get_nkstot());
 	lcao_method.cal_R_number();
 	lcao_method.cal_orb_overlap();
 	return;
@@ -58,7 +58,7 @@ void berryphase::set_kpoints(const K_Vectors& kv, const int direction)
 	const int mp_x = kv.nmp[0]; // no. of kpoints along x
 	const int mp_y = kv.nmp[1]; // no. of kpoints along y
 	const int mp_z = kv.nmp[2]; // no. of kpoints along z
-	const int num_k = int(kv.nkstot/2);	
+	const int num_k = int(kv.get_nkstot()/2);	
 
 	if( direction == 1 ) // x direction calculation
 	{

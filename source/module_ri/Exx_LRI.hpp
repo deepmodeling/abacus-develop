@@ -73,7 +73,7 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in, const K_Vectors &kv_in)
 			{
 				// 4/3 * pi * Rcut^3 = V_{supercell} = V_{unitcell} * Nk
 				const int nspin0 = (GlobalV::NSPIN==2) ? 2 : 1;
-				const double hf_Rcut = std::pow(0.75 * this->p_kv->nkstot_full/nspin0 * GlobalC::ucell.omega / (ModuleBase::PI), 1.0/3.0);
+				const double hf_Rcut = std::pow(0.75 * this->p_kv->get_nkstot_full()/nspin0 * GlobalC::ucell.omega / (ModuleBase::PI), 1.0/3.0);
 				return {{"hf_Rcut", hf_Rcut}};
 			}
 			case Conv_Coulomb_Pot_K::Ccp_Type::Hse:

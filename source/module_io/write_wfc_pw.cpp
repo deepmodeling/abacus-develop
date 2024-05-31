@@ -16,8 +16,8 @@ void ModuleIO::write_wfc_pw(const std::string& fn,
                             const ModulePW::PW_Basis_K* wfcpw)
 {
     ModuleBase::TITLE("ModuleIO","write_wfc_pw");
-    const int nkstot = kv.nkstot;
-    const int nks = kv.nks;
+    const int nkstot = kv.get_nkstot();
+    const int nks = kv.get_nks();
 
     std::string * wfilename;
     wfilename = new std::string[nkstot];
