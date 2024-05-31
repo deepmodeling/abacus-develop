@@ -135,7 +135,7 @@ void gpu_task_generator_force(const Grid_Technique& gridt,
 }
 
 /* allocate the Multiplication of multinomial matrices */
-void alloc_multinom_mult(const Grid_Technique& gridt,
+void alloc_mult_force(const Grid_Technique& gridt,
                                     const UnitCell& ucell,
                                     const int grid_index_ij,
                                     const int max_size,

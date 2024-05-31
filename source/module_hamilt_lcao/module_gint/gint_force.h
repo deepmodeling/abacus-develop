@@ -147,7 +147,7 @@ void gpu_task_generator_force(const Grid_Technique& gridt,
  *  atoms and grid points
  * @param para Grid parameter in multi matrix multiplication.
  */
-void alloc_multinom_mult(const Grid_Technique& gridt,
+void alloc_mult_force(const Grid_Technique& gridt,
                                     const UnitCell& ucell,
                                     const int grid_index_ij,
                                     const int max_size,

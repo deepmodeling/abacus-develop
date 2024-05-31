@@ -141,7 +141,7 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
                                      atom_pair_num,
                                      gpu_mat_cal_flag,
                                      para);
-            alloc_multinom_mult(gridt,
+            alloc_mult_force(gridt,
                                 ucell, 
                                 grid_index_ij,
                                 max_size,
