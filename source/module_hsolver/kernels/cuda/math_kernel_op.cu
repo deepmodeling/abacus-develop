@@ -511,7 +511,7 @@ void vector_div_constant_op<double, base_device::DEVICE_GPU>::operator()(const b
                                                                          const double* vector,
                                                                          const double constant)
 {
-    int thread = 1024;
+    int thread = THREAD_PER_BLOCK;
     int block = (dim + thread - 1) / thread;
     vector_div_constant_kernel<double> << <block, thread >> > (dim, result, vector, constant);
 
@@ -530,7 +530,7 @@ inline void vector_div_constant_complex_wrapper(const base_device::DEVICE_GPU* d
     thrust::complex<FPTYPE>* result_tmp = reinterpret_cast<thrust::complex<FPTYPE>*>(result);
     const thrust::complex<FPTYPE>* vector_tmp = reinterpret_cast<const thrust::complex<FPTYPE>*>(vector);
 
-    int thread = 1024;
+    int thread = THREAD_PER_BLOCK;
     int block = (dim + thread - 1) / thread;
     vector_div_constant_kernel<thrust::complex<FPTYPE>> << <block, thread >> > (dim, result_tmp, vector_tmp, constant);
 
@@ -564,7 +564,7 @@ void vector_mul_vector_op<double, base_device::DEVICE_GPU>::operator()(const bas
                                                                        const double* vector1,
                                                                        const double* vector2)
 {
-    int thread = 1024;
+    int thread = THREAD_PER_BLOCK;
     int block = (dim + thread - 1) / thread;
     vector_mul_vector_kernel<double> << <block, thread >> > (dim, result, vector1, vector2);
 
@@ -581,7 +581,7 @@ inline void vector_mul_vector_complex_wrapper(const base_device::DEVICE_GPU* d,
 {
     thrust::complex<FPTYPE>* result_tmp = reinterpret_cast<thrust::complex<FPTYPE>*>(result);
     const thrust::complex<FPTYPE>* vector1_tmp = reinterpret_cast<const thrust::complex<FPTYPE>*>(vector1);
-    int thread = 1024;
+    int thread = THREAD_PER_BLOCK;
     int block = (dim + thread - 1) / thread;
     vector_mul_vector_kernel<thrust::complex<FPTYPE>> << <block, thread >> > (dim, result_tmp, vector1_tmp, vector2);
 
@@ -616,7 +616,7 @@ void vector_div_vector_op<double, base_device::DEVICE_GPU>::operator()(const bas
                                                                        const double* vector1,
                                                                        const double* vector2)
 {
-    int thread = 1024;
+    int thread = THREAD_PER_BLOCK;
     int block = (dim + thread - 1) / thread;
     vector_div_vector_kernel<double> << <block, thread >> > (dim, result, vector1, vector2);
 
@@ -633,7 +633,7 @@ inline void vector_div_vector_complex_wrapper(const base_device::DEVICE_GPU* d,
 {
     thrust::complex<FPTYPE>* result_tmp = reinterpret_cast<thrust::complex<FPTYPE>*>(result);
     const thrust::complex<FPTYPE>* vector1_tmp = reinterpret_cast<const thrust::complex<FPTYPE>*>(vector1);
-    int thread = 1024;
+    int thread = THREAD_PER_BLOCK;
     int block = (dim + thread - 1) / thread;
     vector_div_vector_kernel<thrust::complex<FPTYPE>> << <block, thread >> > (dim, result_tmp, vector1_tmp, vector2);
 
@@ -676,7 +676,7 @@ void constantvector_addORsub_constantVector_op<T, base_device::DEVICE_GPU>::oper
     auto vector1_tmp = reinterpret_cast<const Type*>(vector1);
     auto vector2_tmp = reinterpret_cast<const Type*>(vector2);
 
-    int thread = 1024;
+    int thread = THREAD_PER_BLOCK;
     int block = (dim + thread - 1) / thread;
     constantvector_addORsub_constantVector_kernel<Type, Real> <<<block, thread >>>(dim, result_tmp, vector1_tmp, constant1, vector2_tmp, constant2);
 
