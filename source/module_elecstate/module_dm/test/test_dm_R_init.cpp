@@ -5,7 +5,15 @@
 #define private public
 #include "module_elecstate/module_dm/density_matrix.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
+#include "module_cell/klist.h"
 
+K_Vectors::K_Vectors()
+{
+}
+
+K_Vectors::~K_Vectors()
+{
+}
 /************************************************
  *  unit test of DensityMatrix constructor
  ***********************************************/
@@ -104,7 +112,7 @@ TEST_F(DMTest, DMInit1)
     int nspin = 1;
     int nks = 2; // since nspin = 1
     kv = new K_Vectors;
-    kv->nks = nks;
+    kv->set_nks(nks);
     kv->kvec_d.resize(nks);
     kv->kvec_d[1].x = 0.5;
     // construct DM
@@ -131,7 +139,7 @@ TEST_F(DMTest, DMInit2)
     int nspin = 1;
     int nks = 2; // since nspin = 1
     kv = new K_Vectors;
-    kv->nks = nks;
+    kv->set_nks(nks);
     kv->kvec_d.resize(nks);
     kv->kvec_d[1].x = 0.5;
     // construct DM
@@ -195,7 +203,7 @@ TEST_F(DMTest, DMInit3)
     int nspin = 2;
     int nks = 4; // since nspin = 2
     kv = new K_Vectors;
-    kv->nks = nks;
+    kv->set_nks(nks);
     kv->kvec_d.resize(nks);
     kv->kvec_d[1].x = 0.5;
     kv->kvec_d[3].x = 0.5;
@@ -225,7 +233,7 @@ TEST_F(DMTest, DMInit4)
     int nspin = 2;
     int nks = 4; // since nspin = 2
     kv = new K_Vectors;
-    kv->nks = nks;
+    kv->set_nks(nks);
     kv->kvec_d.resize(nks);
     kv->kvec_d[1].x = 0.5;
     kv->kvec_d[3].x = 0.5;
@@ -279,7 +287,7 @@ TEST_F(DMTest, saveDMR)
     int nspin = 2;
     int nks = 4; // since nspin = 2
     kv = new K_Vectors;
-    kv->nks = nks;
+    kv->set_nks(nks);
     kv->kvec_d.resize(nks);
     kv->kvec_d[1].x = 0.5;
     kv->kvec_d[3].x = 0.5;

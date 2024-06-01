@@ -144,7 +144,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
         this->pelec = new elecstate::ElecStateLCAO<TK>(
             &(this->chr), // use which parameter?
             &(this->kv),
-            this->kv.nks,
+            this->kv.get_nks(),
             &(this->LOC), // use which parameter?
             &(this->GG), // mohan add 2024-04-01
             &(this->GK), // mohan add 2024-04-01
@@ -194,7 +194,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
     // 6) initialize Hamilt in LCAO
     // * allocate H and S matrices according to computational resources
     // * set the 'trace' between local H/S and global H/S
-    this->LM.divide_HS_in_frag(GlobalV::GAMMA_ONLY_LOCAL, orb_con.ParaV, this->kv.nks);
+    this->LM.divide_HS_in_frag(GlobalV::GAMMA_ONLY_LOCAL, orb_con.ParaV, this->kv.get_nks());
 
 #ifdef __EXX
     // 7) initialize exx
@@ -236,7 +236,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
     // 8) Quxin added for DFT+U
     if (GlobalV::dft_plus_u)
     {
-        GlobalC::dftu.init(ucell, this->LM, this->kv.nks);
+        GlobalC::dftu.init(ucell, this->LM, this->kv.get_nks());
     }
 
     // 9) ppcell
@@ -315,7 +315,7 @@ void ESolver_KS_LCAO<TK, TR>::init_after_vc(Input& inp, UnitCell& ucell)
 		delete this->pelec;
 		this->pelec = new elecstate::ElecStateLCAO<TK>(&(this->chr),
 				&(this->kv),
-				this->kv.nks,
+				this->kv.get_nks(),
 				&(this->LOC),
                 &(this->GG), // mohan add 2024-04-01
                 &(this->GK), // mohan add 2024-04-01
@@ -845,7 +845,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density(int istep, int iter, double ethr)
 
 
     // 4) print bands for each k-point and each band 
-    for (int ik = 0; ik < this->kv.nks; ++ik)
+    for (int ik = 0; ik < this->kv.get_nks(); ++ik)
     {
         this->pelec->print_band(ik, INPUT.printe, iter);
     }
@@ -938,7 +938,7 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
         {
             this->GK.renew(true);
         }
-        for (int ik = 0; ik < this->kv.nks; ++ik)
+        for (int ik = 0; ik < this->kv.get_nks(); ++ik)
         {
             if (hsolver::HSolverLCAO<TK>::out_mat_hs[0])
             {
@@ -987,7 +987,7 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
             elecstate::ElecStateLCAO<TK>::out_wfc_flag = elecstate::ElecStateLCAO<TK>::out_wfc_lcao;
         }
 
-        for (int ik = 0; ik < this->kv.nks; ik++)
+        for (int ik = 0; ik < this->kv.get_nks(); ik++)
         {
             if (istep % GlobalV::out_interval == 0)
             {
@@ -1069,8 +1069,8 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int iter)
     if (GlobalC::restart.info_save.save_H && two_level_step > 0 &&
         (!GlobalC::exx_info.info_global.separate_loop || iter == 1)) // to avoid saving the same value repeatedly
     {
-        std::vector<TK> Hexxk_save(this->orb_con.ParaV.get_local_size());
-        for (int ik = 0;ik < this->kv.nks;++ik)
+        std::vector<TK> Hexxk_save(this->orb_con.ParaV->get_local_size());
+        for (int ik = 0; ik < this->kv.get_nks(); ++ik)
         {
             ModuleBase::GlobalFunc::ZEROS(Hexxk_save.data(), Hexxk_save.size());
 
@@ -1248,7 +1248,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     LCAO_Deepks_Interface LDI = LCAO_Deepks_Interface(ld_shared_ptr);
     ModuleBase::timer::tick("ESolver_KS_LCAO", "out_deepks_labels");
     LDI.out_deepks_labels(this->pelec->f_en.etot,
-            this->pelec->klist->nks,
+            this->pelec->klist->get_nks(),
             GlobalC::ucell.nat,
             this->pelec->ekb,
             this->pelec->klist->kvec_d,
@@ -1287,7 +1287,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
 
         if(GlobalV::NSPIN==2)
         {
-            this->p_hamilt->updateHk(this->kv.nks/2); // the other half of k points, down spin
+            this->p_hamilt->updateHk(this->kv.get_nks()/2); // the other half of k points, down spin
             hamilt::HamiltLCAO<std::complex<double>, double>* p_ham_lcao 
                 = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(this->p_hamilt);
             zipname = "output_HR1.npz";

@@ -202,7 +202,7 @@ bool toWannier90::try_read_nnkp(const K_Vectors& kv)
 
     if (ModuleBase::GlobalFunc::SCAN_BEGIN(nnkp_read, "kpoints"))
     {
-        num_kpts = kv.nkstot;
+        num_kpts = kv.get_nkstot();
         if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
         {
             cal_num_kpts = num_kpts;
@@ -423,9 +423,9 @@ bool toWannier90::try_read_nnkp(const K_Vectors& kv)
         if (ModuleBase::GlobalFunc::SCAN_BEGIN(nnkp_read, "nnkpts"))
         {
             ModuleBase::GlobalFunc::READ_VALUE(nnkp_read, nntot);
-            nnlist.resize(kv.nkstot);
-            nncell.resize(kv.nkstot);
-            for (int ik = 0; ik < kv.nkstot; ik++)
+            nnlist.resize(kv.get_nkstot());
+            nncell.resize(kv.get_nkstot());
+            for (int ik = 0; ik < kv.get_nkstot(); ik++)
             {
                 nnlist[ik].resize(nntot);
                 nncell[ik].resize(nntot);
@@ -434,11 +434,11 @@ bool toWannier90::try_read_nnkp(const K_Vectors& kv)
             int numkpt_nnkp;
             if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
             {
-                numkpt_nnkp = kv.nkstot;
+                numkpt_nnkp = kv.get_nkstot();
             }
             else if (GlobalV::NSPIN == 2)
             {
-                numkpt_nnkp = kv.nkstot / 2;
+                numkpt_nnkp = kv.get_nkstot() / 2;
             }
             else
             {

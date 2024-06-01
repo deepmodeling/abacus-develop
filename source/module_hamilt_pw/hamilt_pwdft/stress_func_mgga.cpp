@@ -41,7 +41,7 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma,
     crosstaus.zero(); // Must be zeroed out 
 
     auto cal_stress_mgga_solver = hamilt::cal_stress_mgga_op<std::complex<FPTYPE>, Device>();
-    for (int ik = 0; ik < p_kv->nks; ik++)
+    for (int ik = 0; ik < p_kv->get_nks(); ik++)
     {
         if (GlobalV::NSPIN == 2)
             current_spin = p_kv->isk[ik];

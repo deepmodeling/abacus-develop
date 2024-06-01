@@ -1,12 +1,4 @@
-#include "module_cell/klist.h"
 
-K_Vectors::K_Vectors()
-{
-}
-
-K_Vectors::~K_Vectors()
-{
-}
 
 #include "module_cell/unitcell.h"
 
