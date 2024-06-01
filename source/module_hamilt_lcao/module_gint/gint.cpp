@@ -310,23 +310,13 @@ void Gint::cal_gint(Gint_inout* inout)
                     double* vldr3 = Gint_Tools::get_vldr3(inout->vl, this->bxyz, this->bx, this->by, this->bz,
                         this->nplane, this->gridt->start_ind[grid_index], ncyz, dv);
 
-                    double** DM_in;
-					if(GlobalV::GAMMA_ONLY_LOCAL)
-					{
-						DM_in = inout->DM[GlobalV::CURRENT_SPIN];
-					}
-					else if(!GlobalV::GAMMA_ONLY_LOCAL)
-					{
-						DM_in = inout->DM_R;
-					}
-
 #ifdef _OPENMP
-						this->gint_kernel_force(na_grid, grid_index, delta_r, vldr3, LD_pool,
-							DM_in, inout->ispin, inout->isforce, inout->isstress,
-							&fvl_dphi_thread, &svl_dphi_thread,ucell);
+                    this->gint_kernel_force(na_grid, grid_index, delta_r, vldr3, LD_pool,
+                        inout->ispin, inout->isforce, inout->isstress,
+                        &fvl_dphi_thread, &svl_dphi_thread, ucell);
 #else
-						this->gint_kernel_force(na_grid, grid_index, delta_r, vldr3, LD_pool,
-							DM_in, inout->ispin, inout->isforce, inout->isstress,
+                    this->gint_kernel_force(na_grid, grid_index, delta_r, vldr3, LD_pool,
+                        inout->ispin, inout->isforce, inout->isstress,
 							inout->fvl_dphi, inout->svl_dphi,ucell);
 #endif
 					delete[] vldr3;
@@ -404,24 +394,14 @@ void Gint::cal_gint(Gint_inout* inout)
                     double* vkdr3 = Gint_Tools::get_vldr3(inout->vofk, this->bxyz, this->bx, this->by, this->bz,
                         this->nplane, this->gridt->start_ind[grid_index], ncyz, dv);
 
-					double** DM_in;
-
-					if(GlobalV::GAMMA_ONLY_LOCAL)
-					{
-						DM_in = inout->DM[GlobalV::CURRENT_SPIN];
-					}
-					else if(!GlobalV::GAMMA_ONLY_LOCAL)
-					{
-						DM_in = inout->DM_R;
-					}
 #ifdef _OPENMP
-					this->gint_kernel_force_meta(na_grid, grid_index, delta_r, vldr3, vkdr3, LD_pool,
-							DM_in, inout->ispin, inout->isforce, inout->isstress,
-							&fvl_dphi_thread, &svl_dphi_thread,ucell);
+                    this->gint_kernel_force_meta(na_grid, grid_index, delta_r, vldr3, vkdr3, LD_pool,
+                        inout->ispin, inout->isforce, inout->isstress,
+                        &fvl_dphi_thread, &svl_dphi_thread, ucell);
 #else
-					this->gint_kernel_force_meta(na_grid, grid_index, delta_r, vldr3, vkdr3, LD_pool,
-							DM_in, inout->ispin, inout->isforce, inout->isstress,
-							inout->fvl_dphi, inout->svl_dphi,ucell);
+                    this->gint_kernel_force_meta(na_grid, grid_index, delta_r, vldr3, vkdr3, LD_pool,
+                        inout->ispin, inout->isforce, inout->isstress,
+                        inout->fvl_dphi, inout->svl_dphi, ucell);
 #endif
 					delete[] vldr3;
 					delete[] vkdr3;

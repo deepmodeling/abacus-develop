@@ -46,12 +46,11 @@ class Gint_inout
             if_symm = if_symm_in;
         }
 
-	// force, multi-k
-        Gint_inout(double** DM_R_in, const int ispin_in, const double* vl_in, bool isforce_in, bool isstress_in,
+        // force
+        Gint_inout(const int ispin_in, const double* vl_in, bool isforce_in, bool isstress_in,
             ModuleBase::matrix* fvl_dphi_in, ModuleBase::matrix* svl_dphi_in,
             Gint_Tools::job_type job_in)
         {
-            DM_R = DM_R_in;
             vl = vl_in;
             isforce = isforce_in;
             isstress = isstress_in;
@@ -61,12 +60,11 @@ class Gint_inout
             ispin = ispin_in;
         }
 
-	// force (mGGA), multi-k
-        Gint_inout(double** DM_R_in, const int ispin_in, const double* vl_in, const double* vofk_in, const bool isforce_in, const bool isstress_in,
+        // force (mGGA)
+        Gint_inout(const int ispin_in, const double* vl_in, const double* vofk_in, const bool isforce_in, const bool isstress_in,
             ModuleBase::matrix* fvl_dphi_in, ModuleBase::matrix* svl_dphi_in,
             Gint_Tools::job_type job_in)
         {
-            DM_R = DM_R_in;
             vl = vl_in;
 			vofk = vofk_in;
             isforce = isforce_in;
@@ -101,37 +99,6 @@ class Gint_inout
             rho = rho_in;
             job = job_in;
             if_symm = if_symm_in;
-        }
-
-	// force, gamma point
-        Gint_inout(double*** DM_in, const int ispin_in, const double* vl_in, const bool isforce_in, const bool isstress_in,
-            ModuleBase::matrix* fvl_dphi_in, ModuleBase::matrix* svl_dphi_in,
-            Gint_Tools::job_type job_in)
-        {
-            DM = DM_in;
-            vl = vl_in;
-            isforce = isforce_in;
-            isstress = isstress_in;
-            fvl_dphi = fvl_dphi_in;
-            svl_dphi = svl_dphi_in;
-            job = job_in;
-            ispin = ispin_in;
-        }
-
-	// force (mGGA), gamma point
-        Gint_inout(double*** DM_in, const int ispin_in, const double* vl_in, const double* vofk_in, const bool isforce_in, const bool isstress_in,
-            ModuleBase::matrix* fvl_dphi_in, ModuleBase::matrix* svl_dphi_in,
-            Gint_Tools::job_type job_in)
-        {
-            DM = DM_in;
-            vl = vl_in;
-			vofk = vofk_in;
-            isforce = isforce_in;
-            isstress = isstress_in;
-            fvl_dphi = fvl_dphi_in;
-            svl_dphi = svl_dphi_in;
-            job = job_in;
-            ispin = ispin_in;
         }
 
 	// vlocal, gamma point

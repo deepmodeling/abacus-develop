@@ -1,4 +1,4 @@
-#include "FORCE_k.h"
+#include "FORCE.h"
 
 #include <map>
 #include <unordered_map>
@@ -22,157 +22,12 @@
 #include <omp.h>
 #endif
 
-Force_LCAO_k::Force_LCAO_k()
-{
-}
-
-Force_LCAO_k::~Force_LCAO_k()
-{
-}
-
-// be called in Force_LCAO::start_force_calculation
-void Force_LCAO_k::ftable_k(const bool isforce,
-                            const bool isstress,
-                            Record_adj& ra,
-                            const psi::Psi<std::complex<double>>* psi,
-                            Local_Orbital_Charge& loc,
-                            const elecstate::ElecState* pelec,
-                            ModuleBase::matrix& foverlap,
-                            ModuleBase::matrix& ftvnl_dphi,
-                            ModuleBase::matrix& fvnl_dbeta,
-                            ModuleBase::matrix& fvl_dphi,
-                            ModuleBase::matrix& soverlap,
-                            ModuleBase::matrix& stvnl_dphi,
-                            ModuleBase::matrix& svnl_dbeta,
-#ifdef __DEEPKS
-                            ModuleBase::matrix& svl_dphi,
-                            ModuleBase::matrix& svnl_dalpha,
-#else
-                            ModuleBase::matrix& svl_dphi,
-#endif
-                            LCAO_gen_fixedH &gen_h,
-                            Gint_k &gint_k,
-                            Parallel_Orbitals &pv,
-                            LCAO_Matrix &lm,
-                            const K_Vectors& kv)
-{
-    ModuleBase::TITLE("Force_LCAO_k", "ftable_k");
-    ModuleBase::timer::tick("Force_LCAO_k", "ftable_k");
-
-    elecstate::DensityMatrix<complex<double>,double>* DM
-    = dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(pelec)->get_DM();
-
-	this->allocate_k(
-			pv, 
-			lm, 
-            gen_h,
-			kv.get_nks(), 
-			kv.kvec_d);
-
-    // calculate the energy density matrix
-    // and the force related to overlap matrix and energy density matrix.
-	this->cal_foverlap_k(
-			isforce, 
-			isstress, 
-			ra, 
-			psi, 
-			loc, 
-			pv, 
-			lm, 
-			DM, 
-			foverlap, 
-			soverlap, 
-			pelec, 
-			kv.get_nks(), 
-			kv);
-
-	this->cal_ftvnl_dphi_k(
-			DM, 
-			pv,
-            GlobalC::ucell,
-			lm, 
-			isforce, 
-			isstress, 
-			ra, 
-			ftvnl_dphi, 
-			stvnl_dphi);
-
-	// doing on the real space grid.
-	this->cal_fvl_dphi_k(
-			isforce, 
-			isstress, 
-			lm, 
-			gint_k, 
-			pelec->pot, 
-			fvl_dphi, 
-			svl_dphi, 
-			loc.DM_R);
-
-	this->cal_fvnl_dbeta_k(
-			DM, 
-			isforce, 
-			isstress, 
-			pv,
-            GlobalC::ucell,
-            GlobalC::ORB,
-            GlobalC::UOT,
-            &(GlobalC::GridD),
-			fvnl_dbeta, 
-			svnl_dbeta);
-
-#ifdef __DEEPKS
-    if (GlobalV::deepks_scf)
-    {
-        const std::vector<std::vector<std::complex<double>>>& dm_k = DM->get_DMK_vector();
-        GlobalC::ld.cal_projected_DM_k(DM, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD);
-        GlobalC::ld.cal_descriptor(GlobalC::ucell.nat);
-        GlobalC::ld.cal_gedm(GlobalC::ucell.nat);
-
-        GlobalC::ld.cal_f_delta_k(dm_k,
-                                  GlobalC::ucell,
-                                  GlobalC::ORB,
-                                  GlobalC::GridD,
-                                  kv.get_nks(),
-                                  kv.kvec_d,
-                                  isstress,
-                                  svnl_dalpha);
-#ifdef __MPI
-        Parallel_Reduce::reduce_all(GlobalC::ld.F_delta.c, GlobalC::ld.F_delta.nr * GlobalC::ld.F_delta.nc);
-        if (isstress)
-        {
-            Parallel_Reduce::reduce_pool(svnl_dalpha.c, svnl_dalpha.nr * svnl_dalpha.nc);
-        }
-#endif
-    }
-#endif
-
-    //----------------------------------------------------------------
-    // reduce the force according to 2D distribution of H & S matrix.
-    //----------------------------------------------------------------
-    if (isforce)
-    {
-        Parallel_Reduce::reduce_pool(foverlap.c, foverlap.nr * foverlap.nc);
-        Parallel_Reduce::reduce_pool(ftvnl_dphi.c, ftvnl_dphi.nr * ftvnl_dphi.nc);
-        Parallel_Reduce::reduce_pool(fvnl_dbeta.c, fvnl_dbeta.nr * fvnl_dbeta.nc);
-        Parallel_Reduce::reduce_pool(fvl_dphi.c, fvl_dphi.nr * fvl_dphi.nc);
-    }
-    if (isstress)
-    {
-        Parallel_Reduce::reduce_pool(soverlap.c, soverlap.nr * soverlap.nc);
-        Parallel_Reduce::reduce_pool(stvnl_dphi.c, stvnl_dphi.nr * stvnl_dphi.nc);
-        Parallel_Reduce::reduce_pool(svnl_dbeta.c, svnl_dbeta.nr * svnl_dbeta.nc);
-        Parallel_Reduce::reduce_pool(svl_dphi.c, svl_dphi.nr * svl_dphi.nc);
-    }
-
-    ModuleBase::timer::tick("Force_LCAO_k", "ftable_k");
-    return;
-}
-
-void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv,
-                              LCAO_Matrix &lm,
-                              LCAO_gen_fixedH &gen_h,
-                              const int& nks,
-                              const std::vector<ModuleBase::Vector3<double>>& kvec_d)
+template<>
+void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
+    LCAO_Matrix& lm,
+    LCAO_gen_fixedH& gen_h,
+    const int& nks,
+    const std::vector<ModuleBase::Vector3<double>>& kvec_d)
 {
     ModuleBase::TITLE("Force_LCAO_k", "allocate_k");
     ModuleBase::timer::tick("Force_LCAO_k", "allocate_k");
@@ -312,8 +167,8 @@ void Force_LCAO_k::allocate_k(const Parallel_Orbitals& pv,
     return;
 }
 
-
-void Force_LCAO_k::finish_k(LCAO_Matrix &lm)
+template<>
+void Force_LCAO<std::complex<double>>::finish_ftable(LCAO_Matrix& lm)
 {
     delete[] lm.DSloc_Rx;
     delete[] lm.DSloc_Ry;
@@ -335,11 +190,11 @@ void Force_LCAO_k::finish_k(LCAO_Matrix &lm)
     return;
 }
 
-
-void Force_LCAO_k::test(
-		Parallel_Orbitals &pv,
-		double* mmm, 
-		const std::string& name)
+template<>
+void Force_LCAO<std::complex<double>>::test(
+    Parallel_Orbitals& pv,
+    double* mmm,
+    const std::string& name)
 {
     // mohan remove 'const' for pv, 2024-03-31
     if (GlobalV::NPROC != 1)
@@ -415,5 +270,134 @@ void Force_LCAO_k::test(
     return;
 }
 
+    // be called in Force_LCAO::start_force_calculation
+    template<>
+    void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
+        const bool isstress,
+        const psi::Psi<std::complex<double>>* psi,
+        const elecstate::ElecState* pelec,
+        ModuleBase::matrix& foverlap,
+        ModuleBase::matrix& ftvnl_dphi,
+        ModuleBase::matrix& fvnl_dbeta,
+        ModuleBase::matrix& fvl_dphi,
+        ModuleBase::matrix& soverlap,
+        ModuleBase::matrix& stvnl_dphi,
+        ModuleBase::matrix& svnl_dbeta,
+        ModuleBase::matrix& svl_dphi,
+#ifdef __DEEPKS
+        ModuleBase::matrix& svnl_dalpha,
+#endif
+        LCAO_gen_fixedH& gen_h,
+        TGint<std::complex<double>>::type& gint,
+        const Parallel_Orbitals& pv,
+        LCAO_Matrix& lm,
+        const K_Vectors* kv,
+        Record_adj* ra)
+    {
+        ModuleBase::TITLE("Force_LCAO_k", "ftable_k");
+        ModuleBase::timer::tick("Force_LCAO_k", "ftable_k");
 
+        elecstate::DensityMatrix<complex<double>, double>* DM
+            = dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(pelec)->get_DM();
 
+        this->allocate(
+            pv,
+            lm,
+            gen_h,
+            kv->get_nks(),
+            kv->kvec_d);
+
+        // calculate the energy density matrix
+        // and the force related to overlap matrix and energy density matrix.
+        this->cal_foverlap(
+            isforce,
+            isstress,
+            psi,
+            pv,
+            pelec,
+            lm,
+            foverlap,
+            soverlap,
+            kv,
+            ra,
+            DM);
+
+        this->cal_ftvnl_dphi(
+            DM,
+            pv,
+            GlobalC::ucell,
+            lm,
+            isforce,
+            isstress,
+            ftvnl_dphi,
+            stvnl_dphi,
+            ra);
+
+        // doing on the real space grid.
+        this->cal_fvl_dphi(
+            isforce,
+            isstress,
+            pelec->pot,
+            gint,
+            fvl_dphi,
+            svl_dphi);
+
+        this->cal_fvnl_dbeta(
+            DM,
+            pv,
+            GlobalC::ucell,
+            GlobalC::ORB,
+            GlobalC::UOT,
+            GlobalC::GridD,
+            isforce,
+            isstress,
+            fvnl_dbeta,
+            svnl_dbeta);
+
+#ifdef __DEEPKS
+        if (GlobalV::deepks_scf)
+        {
+            const std::vector<std::vector<std::complex<double>>>& dm_k = DM->get_DMK_vector();
+            GlobalC::ld.cal_projected_DM_k(DM, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD);
+            GlobalC::ld.cal_descriptor(GlobalC::ucell.nat);
+            GlobalC::ld.cal_gedm(GlobalC::ucell.nat);
+
+            GlobalC::ld.cal_f_delta_k(dm_k,
+                GlobalC::ucell,
+                GlobalC::ORB,
+                GlobalC::GridD,
+                kv->get_nks(),
+                kv->kvec_d,
+                isstress,
+                svnl_dalpha);
+#ifdef __MPI
+            Parallel_Reduce::reduce_all(GlobalC::ld.F_delta.c, GlobalC::ld.F_delta.nr * GlobalC::ld.F_delta.nc);
+            if (isstress)
+            {
+                Parallel_Reduce::reduce_pool(svnl_dalpha.c, svnl_dalpha.nr * svnl_dalpha.nc);
+            }
+#endif
+        }
+#endif
+
+    //----------------------------------------------------------------
+    // reduce the force according to 2D distribution of H & S matrix.
+    //----------------------------------------------------------------
+    if (isforce)
+    {
+        Parallel_Reduce::reduce_pool(foverlap.c, foverlap.nr * foverlap.nc);
+        Parallel_Reduce::reduce_pool(ftvnl_dphi.c, ftvnl_dphi.nr * ftvnl_dphi.nc);
+        Parallel_Reduce::reduce_pool(fvnl_dbeta.c, fvnl_dbeta.nr * fvnl_dbeta.nc);
+        Parallel_Reduce::reduce_pool(fvl_dphi.c, fvl_dphi.nr * fvl_dphi.nc);
+    }
+    if (isstress)
+    {
+        Parallel_Reduce::reduce_pool(soverlap.c, soverlap.nr * soverlap.nc);
+        Parallel_Reduce::reduce_pool(stvnl_dphi.c, stvnl_dphi.nr * stvnl_dphi.nc);
+        Parallel_Reduce::reduce_pool(svnl_dbeta.c, svnl_dbeta.nr * svnl_dbeta.nc);
+        Parallel_Reduce::reduce_pool(svl_dphi.c, svl_dphi.nr * svl_dphi.nc);
+    }
+
+    ModuleBase::timer::tick("Force_LCAO_k", "ftable_k");
+    return;
+}

@@ -17,3 +17,4 @@
 934_NO_Si2_tzdp_neq_GPU
 934_NO_Si2_tzdp_neq_ns2_GPU
 934_NO_Si2_tzdp_ns2_GPU
+935_NO_Si2_tzdp_ns2_k_GPU
