@@ -10,9 +10,9 @@
 #include <thrust/execution_policy.h>
 #include <thrust/inner_product.h>
 
-#define WARP_SIZE 32
-#define FULL_MASK 0xffffffff
-#define THREAD_PER_BLOCK 256
+const int WARP_SIZE = 32;
+const unsigned int FULL_MASK = 0xffffffff;
+const int THREAD_PER_BLOCK = 256;
 
 template <>
 struct GetTypeReal<thrust::complex<float>> {
@@ -93,12 +93,23 @@ __global__ void line_minimize_with_block(
     }
     __syncthreads();
     // just do some parallel reduction in shared memory
-    for (int ii = THREAD_PER_BLOCK >> 1; ii > 0; ii >>= 1) {
+    for (int ii = THREAD_PER_BLOCK >> 1; ii > WARP_SIZE; ii >>= 1) {
         if (tid < ii) {
             data[tid] += data[tid + ii];
         }
         __syncthreads();
     }
+
+    if (tid < WARP_SIZE) {
+        data[tid] += data[tid + 32];
+        data[tid] += data[tid + 16];
+        data[tid] += data[tid + 8];
+        data[tid] += data[tid + 4];
+        data[tid] += data[tid + 2];
+        data[tid] += data[tid + 1];
+    }
+
+    __syncthreads();
 
     Real norm = 1.0 / sqrt(data[0]);
     __syncthreads();
@@ -117,7 +128,7 @@ __global__ void line_minimize_with_block(
     __syncthreads();
 
     // just do some parallel reduction in shared memory
-    for (int ii = THREAD_PER_BLOCK >> 1; ii > 0; ii >>= 1) {
+    for (int ii = THREAD_PER_BLOCK >> 1; ii > WARP_SIZE; ii >>= 1) {
         if (tid < ii) {
             data[tid] += data[tid + ii];
             data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + ii];
@@ -125,6 +136,27 @@ __global__ void line_minimize_with_block(
         }
         __syncthreads();
     }
+    if (tid < WARP_SIZE) {
+        data[tid] += data[tid + 32];
+        data[tid] += data[tid + 16];
+        data[tid] += data[tid + 8];
+        data[tid] += data[tid + 4];
+        data[tid] += data[tid + 2];
+        data[tid] += data[tid + 1];
+        data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + 32];
+        data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + 16];
+        data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + 8];
+        data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + 4];
+        data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + 2];
+        data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + 1];
+        data[2 * THREAD_PER_BLOCK + tid] += data[2 * THREAD_PER_BLOCK + tid + 32];
+        data[2 * THREAD_PER_BLOCK + tid] += data[2 * THREAD_PER_BLOCK + tid + 16];
+        data[2 * THREAD_PER_BLOCK + tid] += data[2 * THREAD_PER_BLOCK + tid + 8];
+        data[2 * THREAD_PER_BLOCK + tid] += data[2 * THREAD_PER_BLOCK + tid + 4];
+        data[2 * THREAD_PER_BLOCK + tid] += data[2 * THREAD_PER_BLOCK + tid + 2];
+        data[2 * THREAD_PER_BLOCK + tid] += data[2 * THREAD_PER_BLOCK + tid + 1];
+    }
+    __syncthreads();
     epsilo_0 = data[0];
     epsilo_1 = data[THREAD_PER_BLOCK];
     epsilo_2 = data[2 * THREAD_PER_BLOCK];
@@ -170,12 +202,23 @@ __global__ void calc_grad_with_block(
     }
     __syncthreads();
     // just do some parallel reduction in shared memory
-    for (int ii = THREAD_PER_BLOCK >> 1; ii > 0; ii >>= 1) {
+    for (int ii = THREAD_PER_BLOCK >> 1; ii > WARP_SIZE; ii >>= 1) {
         if (tid < ii) {
             data[tid] += data[tid + ii];
         }
         __syncthreads();
     }
+
+    if (tid < WARP_SIZE) {
+        data[tid] += data[tid + 32];
+        data[tid] += data[tid + 16];
+        data[tid] += data[tid + 8];
+        data[tid] += data[tid + 4];
+        data[tid] += data[tid + 2];
+        data[tid] += data[tid + 1];
+    }
+
+    __syncthreads();
 
     Real norm = 1.0 / sqrt(data[0]);
     __syncthreads();
@@ -190,12 +233,23 @@ __global__ void calc_grad_with_block(
     __syncthreads();
 
     // just do some parallel reduction in shared memory
-    for (int ii = THREAD_PER_BLOCK >> 1; ii > 0; ii >>= 1) {
+    for (int ii = THREAD_PER_BLOCK >> 1; ii > WARP_SIZE; ii >>= 1) {
         if (tid < ii) {
             data[tid] += data[tid + ii];
         }
         __syncthreads();
     }
+
+    if (tid < WARP_SIZE) {
+        data[tid] += data[tid + 32];
+        data[tid] += data[tid + 16];
+        data[tid] += data[tid + 8];
+        data[tid] += data[tid + 4];
+        data[tid] += data[tid + 2];
+        data[tid] += data[tid + 1];
+    }
+
+    __syncthreads();
     epsilo = data[0];
     __syncthreads();
 
@@ -211,13 +265,30 @@ __global__ void calc_grad_with_block(
     __syncthreads();
 
     // just do some parallel reduction in shared memory
-    for (int ii = THREAD_PER_BLOCK >> 1; ii > 0; ii >>= 1) {
+    for (int ii = THREAD_PER_BLOCK >> 1; ii > WARP_SIZE; ii >>= 1) {
         if (tid < ii) {
             data[tid] += data[tid + ii];
             data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + ii];
         }
         __syncthreads();
     }
+
+    if (tid < WARP_SIZE) {
+        data[tid] += data[tid + 32];
+        data[tid] += data[tid + 16];
+        data[tid] += data[tid + 8];
+        data[tid] += data[tid + 4];
+        data[tid] += data[tid + 2];
+        data[tid] += data[tid + 1];
+        data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + 32];
+        data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + 16];
+        data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + 8];
+        data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + 4];
+        data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + 2];
+        data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + 1];
+    }
+
+    __syncthreads();
     err_st = data[0];
     beta_st = data[THREAD_PER_BLOCK];
     for (int basis_idx = tid; basis_idx < n_basis; basis_idx += THREAD_PER_BLOCK) {
