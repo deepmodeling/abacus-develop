@@ -49,11 +49,9 @@ typedef struct
 typedef struct
 {
     double* stress_device;
-    double* stress_host;
     double* force_device;
-    double* force_host;
     int* iat_device;
-    int* iat_host;
+    std::vector<int> iat_host;
 
 } frc_strs_iat;
 
@@ -66,7 +64,7 @@ typedef struct
 
 typedef struct
 {
-    double* density_mat_h;
+    std::vector<double> density_mat_h;
     double* density_mat_d;
 } DensityMat;
 
@@ -127,7 +125,7 @@ void gpu_task_generator_force(const Grid_Technique& gridt,
                               const double vfactor,
                               const double* ruct,
                               const double* vlocal_global_value,
-                              int* iat_per_nbz,
+                              std::vector<int>& iat_per_nbz,
                               int& atom_pair_num,
                               std::vector<bool>& gpu_mat_cal_flag,
                               grid_para& para);
@@ -194,7 +192,7 @@ void calculateInit(DensityMat& denstiy_mat,
  * @param gridt Grid_Technique,stored the major method in the the gint.
  * @param lgd Value of lgd,stand for the local grid dimension.
  */
-void allocateDm(double* matrix_host,
+void allocateDm(std::vector<double>* matrix_host,
                 hamilt::HContainer<double>* dm,
                 const Grid_Technique& gridt,
                 const UnitCell& ucell);
@@ -238,53 +236,17 @@ void cal_init(frc_strs_iat& f_s_iat,
  *
  * parameter init,which contains the gpu task and multi matrix multiplication
  *
- * @param para Grid parameter in task generator,
+ * @param para Grid parameter in task generator.
  * @param gridt Grid_Technique,stored the major method in the the gint.
- * @param nbz int,stand for the number of Z-axis
- * @param atom_num_grid in force calculate,used for Block nums
+ * @param nbz int,stand for the number of Z-axis.
+ * @param atom_num_grid in force calculate,used for Block nums.
  */
-void para_mem_copy(grid_para& para,
-                         const Grid_Technique& gridt,
-                         const int nbz,
-                         const int pipeline_index,
-                         const int atom_num_grid);
-/**
- * @brief Force Stress Force Iat memCpy,from Host to Device
- *
- *  @param frc_strs_iat frc_strs_iat,contains the Force Stree Iat on Device
- * and Host
- *  @param gridt Grid_Technique,stored the major method in the the gint.
- *  @param atom_num_grid in force calculate,used for Block nums
- *  @param cuda_block in stress compute,used for Block nums
- *  @param stream_num int , record the stream in GPU
- */
-void cal_mem_cpy(frc_strs_iat& f_s_iat,
-                          const Grid_Technique& gridt,
-                          const int atom_num_grid,
-                          const int cuda_block,
-                          const int nat,
-                          const int stream_num);
-/**
- * @brief Force Calculate on Host
- *
- * @param frc_strs_iat frc_strs_iat,contains the Force Stree Iat on Device
- * and Host
- * @param force stored the force for each atom on each directions
- * @param atom_num_grid in force calculate,used for Block nums
- */
-void cal_force_add(frc_strs_iat& f_s_iat,
-                    std::vector<double>& force,
+void mem_copy(grid_para& para,
+                    frc_strs_iat& f_s_iat,
+                    const Grid_Technique& gridt,
+                    const int nbz,
+                    const int pipeline_index,
                     const int atom_num_grid);
-/**
- * @brief Stress Calculate on Host
- *
- * @param frc_strs_iat frc_strs_iat,contains the Force Stree Iat on Device
- * and Host
- * @param stress stored the stress for each directions
- * @param cuda_block in stress compute,used for Block nums
- */
-void cal_stress_add(frc_strs_iat& f_s_iat,
-                     std::vector<double>& stress,
-                     const int cuda_block);
+
 } // namespace GintKernel
 #endif
