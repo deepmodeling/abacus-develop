@@ -572,7 +572,7 @@ TEST_F(HContainerTest, atompair_funcs)
     // get_matrix_value will use global2local_row and global2local_col in Parallel_Orbitals
     // so we need to set them
     std::ofstream ofs("test_hcontainer.log");
-    PO.set_global2local(4, 4, false, ofs);
+    PO.set_serial(4, 4);
     // joint 4 2*2 BaseMatrix to whole 4*4 matrix
     // lambda function for check data
     auto checkdata = [&](hamilt::AtomPair<double>& ap_in) {

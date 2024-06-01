@@ -49,18 +49,19 @@ TEST_F(IstateInfoTest,OutIstateInfoS1)
 	GlobalV::global_out_dir = "./";
 	//mpi setting
 	Parallel_Global::init_pools();
-	kv->nkstot = 100;
-	Pkpoints->kinfo(kv->nkstot);
+	kv->set_nkstot(100);
+	int nkstot = kv->get_nkstot(); 
+	Pkpoints->kinfo(nkstot);
 	//std::cout<<"my_rank "<<GlobalV::MY_RANK<<" pool rank/size: "
 	//	<<GlobalV::RANK_IN_POOL<<"/"<<GlobalV::NPROC_IN_POOL<<std::endl;
 	//std::cout<<"MY_POOL "<<GlobalV::MY_POOL<<std::endl;
-	kv->nks = Pkpoints->nks_pool[GlobalV::MY_POOL];
-	//std::cout<<"nks "<<kv->nks<<std::endl;
-	ekb.create(kv->nks,GlobalV::NBANDS);
-	wg.create(kv->nks,GlobalV::NBANDS);
+	kv->set_nks(Pkpoints->nks_pool[GlobalV::MY_POOL]);
+	//std::cout<<"nks "<<kv->get_nks()<<std::endl;
+	ekb.create(kv->get_nks(),GlobalV::NBANDS);
+	wg.create(kv->get_nks(),GlobalV::NBANDS);
 	ekb.fill_out(0.15);
 	wg.fill_out(0.0);
-	kv->kvec_d.resize(kv->nkstot);
+	kv->kvec_d.resize(kv->get_nkstot());
 	int i=0;
 	for(auto& kd : kv->kvec_d){
 		kd.set(0.01*i,0.01*i,0.01*i);
@@ -86,18 +87,19 @@ TEST_F(IstateInfoTest,OutIstateInfoS2)
 	GlobalV::global_out_dir = "./";
 	//mpi setting
 	Parallel_Global::init_pools();
-	kv->nkstot = 100;
-	Pkpoints->kinfo(kv->nkstot);
+	kv->set_nkstot(100);
+	int nkstot = kv->get_nkstot(); 
+	Pkpoints->kinfo(nkstot);
 	//std::cout<<"my_rank "<<GlobalV::MY_RANK<<" pool rank/size: "
 	//	<<GlobalV::RANK_IN_POOL<<"/"<<GlobalV::NPROC_IN_POOL<<std::endl;
 	//std::cout<<"MY_POOL "<<GlobalV::MY_POOL<<std::endl;
-	kv->nks = Pkpoints->nks_pool[GlobalV::MY_POOL];
-	//std::cout<<"nks "<<kv->nks<<std::endl;
-	ekb.create(kv->nks,GlobalV::NBANDS);
-	wg.create(kv->nks,GlobalV::NBANDS);
+	kv->set_nks(Pkpoints->nks_pool[GlobalV::MY_POOL]);
+	//std::cout<<"nks "<<kv->get_nks()<<std::endl;
+	ekb.create(kv->get_nks(),GlobalV::NBANDS);
+	wg.create(kv->get_nks(),GlobalV::NBANDS);
 	ekb.fill_out(0.15);
 	wg.fill_out(0.0);
-	kv->kvec_d.resize(kv->nkstot);
+	kv->kvec_d.resize(kv->get_nkstot());
 	int i=0;
 	for(auto& kd : kv->kvec_d){
 		kd.set(0.01*i,0.01*i,0.01*i);

@@ -27,7 +27,7 @@ void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma,
 	}
 		
 	int npwx=0;
-    for (int ik = 0; ik < p_kv->nks; ik++)
+    for (int ik = 0; ik < p_kv->get_nks(); ik++)
     {
         if (npwx < p_kv->ngk[ik])
             npwx = p_kv->ngk[ik];
@@ -40,7 +40,7 @@ void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma,
     FPTYPE twobysqrtpi = 2.0 / std::sqrt(ModuleBase::PI);
     FPTYPE* kfac = new FPTYPE[npwx];
 
-    for (int ik = 0; ik < p_kv->nks; ik++)
+    for (int ik = 0; ik < p_kv->get_nks(); ik++)
     {
         npw = p_kv->ngk[ik];
 #ifdef _OPENMP

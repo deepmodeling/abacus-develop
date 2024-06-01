@@ -68,7 +68,7 @@ void Local_Orbital_Charge::allocate_dm_wfc(const Grid_Technique& gt,
     this->LOWF = &lowf;
     this->LOWF->gridt = &gt;
     // here we reset the density matrix dimension.
-    this->allocate_gamma(gt.lgd, psi, pelec, kv.nks, istep);
+    this->allocate_gamma(gt.lgd, psi, pelec, kv.get_nks(), istep);
     return;
 }
 
@@ -84,8 +84,8 @@ void Local_Orbital_Charge::allocate_dm_wfc(const Grid_Technique &gt,
     this->LOWF = &lowf;
     this->LOWF->gridt = &gt;
     // here we reset the density matrix dimension.
-    lowf.allocate_k(gt.lgd, psi, pelec, kv.nks, kv.nkstot, kv.kvec_c, istep);
-    this->allocate_DM_k(kv.nks, gt.nnrg);
+    lowf.allocate_k(gt.lgd, psi, pelec, kv.get_nks(), kv.get_nkstot(), kv.kvec_c, istep);
+    this->allocate_DM_k(kv.get_nks(), gt.nnrg);
     return;
 }
 

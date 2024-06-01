@@ -7,6 +7,8 @@
 #include "module_basis/module_ao/parallel_orbitals.h"
 
 #include <vector>
+#include <complex>
+#include <tuple>
 
 namespace hamilt
 {

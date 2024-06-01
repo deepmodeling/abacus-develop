@@ -210,12 +210,8 @@ void ORB_control::setup_2d_division(std::ofstream& ofs_running,
     else
     {
         std::cout << " Parallel Orbial, DIAGO_TYPE = " << ks_solver << std::endl;
-        ModuleBase::WARNING_QUIT("Parallel_Orbitals::set_global2local", "Check ks_solver.");
+        ModuleBase::WARNING_QUIT("Parallel_Orbitals::setup_2d_division", "Check ks_solver.");
     }
-    // (2) set the trace, then we can calculate the nnr.
-    // for 2d: calculate po.nloc first, then global2local_row and global2local_col
-    // for O(N): calculate the three together.
-    this->ParaV.set_global2local(nlocal, nlocal, div_2d, ofs_running);
 }
 
 
@@ -336,12 +332,6 @@ void ORB_control::divide_HS_2d(
     if (dcolor != 0)
         return; // mohan add 2012-01-13
 
-    // get the 2D index of computer.
-    pv->dim0 = (int)sqrt((double)dsize); // mohan update 2012/01/13
-    // while (GlobalV::NPROC_IN_POOL%dim0!=0)
-
-    pv->set_proc_dim(dsize);
-
     if (pv->testpb)
         ModuleBase::GlobalFunc::OUT(ofs_running, "dim0", pv->dim0);
     if (pv->testpb)
@@ -352,32 +342,27 @@ void ORB_control::divide_HS_2d(
 #ifdef __DEBUG
 assert(nb2d > 0);
 #endif
-    pv->set_block_size(nb2d); // mohan add 2010-06-28
 
     ModuleBase::GlobalFunc::OUT(ofs_running, "nb2d", pv->get_block_size());
 
     this->set_parameters(ofs_running, ofs_warning);
 
-    // call mpi_creat_cart
-    pv->mpi_create_cart(DIAG_WORLD);
-
-    int try_nb = pv->set_local2global(nlocal, nlocal, ofs_running, ofs_warning);
-    try_nb = pv->set_nloc_wfc_Eij(nbands, ofs_running, ofs_warning);
-    if (try_nb == 1)
+    int try_nb = pv->init(nlocal, nlocal, nb2d, DIAG_WORLD);
+    try_nb += pv->set_nloc_wfc_Eij(nbands, ofs_running, ofs_warning);
+    if (try_nb != 0)
     {
         ofs_running << " parameter nb2d is too large: nb2d = " << pv->get_block_size() << std::endl;
         ofs_running << " reset nb2d to value 1, this set would make the program keep working but maybe get slower "
                        "during diagonalization."
                     << std::endl;
-        pv->set_block_size(1);
-        try_nb = pv->set_local2global(nlocal, nlocal, ofs_running, ofs_warning);
+
+        pv->set(nlocal, nlocal, 1, pv->comm_2D, pv->blacs_ctxt);
         try_nb = pv->set_nloc_wfc_Eij(nbands, ofs_running, ofs_warning);
     }
 
     // init blacs context for genelpa
     if (ks_solver == "genelpa" || ks_solver == "scalapack_gvx" || ks_solver == "cusolver" || ks_solver == "cg_in_lcao" || ks_solver == "pexsi")
     {
-        pv->set_desc(nlocal, nlocal, pv->nrow);
         pv->set_desc_wfc_Eij(nlocal, nbands, pv->nrow);
     }
 #else // single processor used.

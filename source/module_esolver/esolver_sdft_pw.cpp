@@ -97,13 +97,13 @@ void ESolver_SDFT_PW::before_all_runners(Input& inp, UnitCell& ucell)
 
     size_t size = stowf.chi0->size();
 
-    this->stowf.shchi = new psi::Psi<std::complex<double>>(kv.nks, stowf.nchip_max, wf.npwx, kv.ngk.data());
+    this->stowf.shchi = new psi::Psi<std::complex<double>>(kv.get_nks(), stowf.nchip_max, wf.npwx, kv.ngk.data());
 
     ModuleBase::Memory::record("SDFT::shchi", size * sizeof(std::complex<double>));
 
     if (GlobalV::NBANDS > 0)
     {
-        this->stowf.chiortho = new psi::Psi<std::complex<double>>(kv.nks, stowf.nchip_max, wf.npwx, kv.ngk.data());
+        this->stowf.chiortho = new psi::Psi<std::complex<double>>(kv.get_nks(), stowf.nchip_max, wf.npwx, kv.ngk.data());
         ModuleBase::Memory::record("SDFT::chiortho", size * sizeof(std::complex<double>));
     }
 

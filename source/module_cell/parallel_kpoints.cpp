@@ -22,12 +22,12 @@ void Parallel_Kpoints::kinfo(int &nkstot)
 {
 #ifdef __MPI
     Parallel_Common::bcast_int(nkstot);
-    this->get_nks_pool(nkstot);
-    this->get_startk_pool(nkstot);
-    this->get_whichpool(nkstot);
-    this->kpar = GlobalV::KPAR;
-    this->nkstot_np = nkstot;
-    this->nks_np = this->nks_pool[GlobalV::MY_POOL];
+    this->get_nks_pool(nkstot);     // assign k-points to each pool
+    this->get_startk_pool(nkstot);  // get the start k-point index for each pool
+    this->get_whichpool(nkstot);    // get the pool index for each k-point
+    this->kpar = GlobalV::KPAR;    // number of pools
+    this->nkstot_np = nkstot;       
+    this->nks_np = this->nks_pool[GlobalV::MY_POOL]; // number of k-points in this pool
 #else
     this->kpar = 1;
     this->nkstot_np = nkstot;

@@ -243,7 +243,7 @@ void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma,
     }
     ModuleBase::ComplexMatrix vkb2(nkb, npwx);
 
-    for (int ik = 0; ik < p_kv->nks; ik++)
+    for (int ik = 0; ik < p_kv->get_nks(); ik++)
     {
         const int nstobands = stowf.nchip[ik];
         const int nbandstot = nstobands + nksbands;

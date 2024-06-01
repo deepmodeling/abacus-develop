@@ -33,8 +33,8 @@ void ElecStateLCAO_TDDFT::psiToRho_td(const psi::Psi<std::complex<double>>& psi)
         if (GlobalC::exx_info.info_global.cal_exx)
         {
             const K_Vectors* kv = this->DM->get_kv_pointer();
-            this->loc->dm_k.resize(kv->nks);
-            for (int ik = 0; ik < kv->nks; ++ik)
+            this->loc->dm_k.resize(kv->get_nks());
+            for (int ik = 0; ik < kv->get_nks(); ++ik)
             {
                 this->loc->set_dm_k(ik, this->DM->get_DMK_pointer(ik));         
             }
@@ -79,7 +79,7 @@ void ElecStateLCAO_TDDFT::calculate_weights_td()
     if (GlobalV::ocp == 1)
     {
         int num = 0;
-        num = this->klist->nks * GlobalV::NBANDS;
+        num = this->klist->get_nks() * GlobalV::NBANDS;
         if (num != GlobalV::ocp_kb.size())
         {
             ModuleBase::WARNING_QUIT("ElecStateLCAO_TDDFT::calculate_weights_td",
@@ -97,7 +97,7 @@ void ElecStateLCAO_TDDFT::calculate_weights_td()
                                      "total number of occupations is wrong , please check ocp_set");
         }
 
-        for (int ik = 0; ik < this->klist->nks; ik++)
+        for (int ik = 0; ik < this->klist->get_nks(); ik++)
         {
             for (int ib = 0; ib < GlobalV::NBANDS; ib++)
             {

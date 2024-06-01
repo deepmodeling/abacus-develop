@@ -87,7 +87,7 @@ namespace elecstate
 void ElecState::print_eigenvalue(std::ofstream& ofs)
 {
     bool wrong = false;
-    for (int ik = 0; ik < this->klist->nks; ++ik)
+    for (int ik = 0; ik < this->klist->get_nks(); ++ik)
     {
         for (int ib = 0; ib < this->ekb.nc; ++ib)
         {
@@ -112,7 +112,7 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
     ModuleBase::TITLE("ESolver_KS_PW", "print_eigenvalue");
 
     ofs << "\n STATE ENERGY(eV) AND OCCUPATIONS ";
-    for (int ik = 0; ik < this->klist->nks; ik++)
+    for (int ik = 0; ik < this->klist->get_nks(); ik++)
     {
         ofs << std::setprecision(5);
         ofs << std::setiosflags(std::ios::showpoint);
@@ -124,7 +124,7 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
                 ofs << "SPIN UP : " << std::endl;
             }
         }
-        else if (ik == this->klist->nks / 2)
+        else if (ik == this->klist->get_nks() / 2)
         {
             if (GlobalV::NSPIN == 2)
             {
@@ -136,14 +136,14 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
         {
             if (this->klist->isk[ik] == 0)
             {
-                ofs << " " << ik + 1 << "/" << this->klist->nks / 2 
+                ofs << " " << ik + 1 << "/" << this->klist->get_nks() / 2 
                 << " kpoint (Cartesian) = " << this->klist->kvec_c[ik].x << " " << this->klist->kvec_c[ik].y << " " << this->klist->kvec_c[ik].z << " (" << this->klist->ngk[ik] << " pws)" << std::endl;
 
                 ofs << std::setprecision(6);
             }
             if (this->klist->isk[ik] == 1)
             {
-                ofs << " " << ik + 1 - this->klist->nks / 2 << "/" << this->klist->nks / 2
+                ofs << " " << ik + 1 - this->klist->get_nks() / 2 << "/" << this->klist->get_nks() / 2
                     << " kpoint (Cartesian) = " << this->klist->kvec_c[ik].x << " " << this->klist->kvec_c[ik].y << " "
                     << this->klist->kvec_c[ik].z << " (" << this->klist->ngk[ik] << " pws)" << std::endl;
 
@@ -152,7 +152,7 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
         } // Pengfei Li  added  14-9-9
         else
         {
-            ofs << " " << ik + 1 << "/" << this->klist->nks << " kpoint (Cartesian) = " << this->klist->kvec_c[ik].x
+            ofs << " " << ik + 1 << "/" << this->klist->get_nks() << " kpoint (Cartesian) = " << this->klist->kvec_c[ik].x
                 << " " << this->klist->kvec_c[ik].y << " " << this->klist->kvec_c[ik].z << " (" << this->klist->ngk[ik]
                 << " pws)" << std::endl;
 
