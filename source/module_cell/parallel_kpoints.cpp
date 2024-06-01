@@ -105,7 +105,11 @@ void Parallel_Kpoints::gatherkvec(const std::vector<ModuleBase::Vector3<double>>
     vec_global.resize(this->nkstot_np, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     for (int i = 0; i < this->nks_np; ++i)
     {
-        vec_global[i + startk_pool[GlobalV::MY_POOL]] = vec_local[i] / double(GlobalV::NPROC_IN_POOL);
+        if (GlobalV::RANK_IN_POOL==0)
+        {
+            vec_global[i + startk_pool[GlobalV::MY_POOL]] = vec_local[i];
+        }
+        //vec_global[i + startk_pool[GlobalV::MY_POOL]] = vec_local[i] / double(GlobalV::NPROC_IN_POOL);
     }
 
     MPI_Allreduce(MPI_IN_PLACE, &vec_global[0], 3 * this->nkstot_np, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
@@ -117,36 +121,40 @@ void Parallel_Kpoints::gatherkvec(const std::vector<ModuleBase::Vector3<double>>
 void Parallel_Kpoints::pool_collection(double &value, const double *wk, const int &ik)
 {
 #ifdef __MPI
+     const int ik_now = ik - this->startk_pool[GlobalV::MY_POOL];
+    //GlobalV::ofs_running << "\n\n ik=" << ik << " ik_now=" << ik_now;
 
+    const int pool = this->whichpool[ik];
+    
     if (GlobalV::RANK_IN_POOL==0)
     {
-        const int ik_now = ik - this->startk_pool[GlobalV::MY_POOL];
-        //GlobalV::ofs_running << "\n\n ik=" << ik << " ik_now=" << ik_now;
-        if (this->whichpool[ik] == GlobalV::MY_POOL)
+        if (GlobalV::MY_POOL==0)
         {
-            if (GlobalV::MY_POOL > 0)
+            if (pool==0)
             {
                 value = wk[ik_now];
-                MPI_Send(&value, 1, MPI_DOUBLE, 0, ik, MPI_COMM_WORLD);
-                //GlobalV::ofs_running << "\n send wk[" << ik << "]=" << value;
             }
             else
             {
-                value = wk[ik_now];
-                //GlobalV::ofs_running << "\n wk[" << ik << "]=" << value;
+                GlobalV::ofs_running << " receive data.";
+                MPI_Status ierror;
+                MPI_Recv(&value, 1, MPI_DOUBLE, this->startpro_pool[pool], ik, MPI_COMM_WORLD,&ierror);
             }
         }
         else
         {
-            if (GlobalV::MY_RANK==0)
+            if (GlobalV::MY_POOL == pool)
             {
-                MPI_Status ierror;
-                const int iproc = this->startpro_pool[ this->whichpool[ik] ];
-                MPI_Recv(&value, 1, MPI_DOUBLE, iproc, ik, MPI_COMM_WORLD,&ierror);
-                //GlobalV::ofs_running << "\n receive wk[" << ik << "]=" << value << " from proc=" << iproc;
+                GlobalV::ofs_running << " send data.";
+                MPI_Send(&wk[ik_now], 1, MPI_DOUBLE, 0, ik, MPI_COMM_WORLD);
             }
         }
     }
+    else
+    {
+        GlobalV::ofs_running << "\n do nothing.";
+    }
+
     MPI_Barrier(MPI_COMM_WORLD);
 #else
     value = wk[ik];
