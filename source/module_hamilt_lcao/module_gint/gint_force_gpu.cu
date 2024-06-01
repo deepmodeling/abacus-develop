@@ -79,7 +79,6 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
         = std::min(64, (gridt.psir_size + cuda_threads - 1) / cuda_threads);
     int iter_num = 0;
     int pipeline_index = 0;
-    
     DensityMat denstiy_mat;
     frc_strs_iat_gbl f_s_iat_dev;
     grid_para para;
@@ -119,8 +118,8 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
             dim3 block_dot_force(cuda_threads);
             dim3 grid_dot(cuda_block);
             dim3 block_dot(cuda_threads);
-            int pipeline_index = omp_get_thread_num();
 
+            int pipeline_index = omp_get_thread_num();
             std::vector<bool> gpu_mat_cal_flag(max_size * gridt.nbzp, false);
             para_init(para, iter_num, nbz, pipeline_index,gridt);
             cal_init(f_s_iat,
