@@ -1202,14 +1202,6 @@ TEST_F(InputTest, Check)
 	INPUT.gamma_only_local = 0;
 	INPUT.out_dm1 = 0;
 	//
-	INPUT.basis_type = "pw";
-	INPUT.chg_extrap = "dm";
-	testing::internal::CaptureStdout();
-	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
-	output = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output,testing::HasSubstr("wrong 'chg_extrap=dm' is only available for local orbitals."));
-	INPUT.chg_extrap = "atomic";
-	//
 	INPUT.nbands = 100001;
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");

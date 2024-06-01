@@ -44,12 +44,15 @@ double ElecState::get_dftu_energy()
 }
 #endif
 } // namespace elecstate
+
+#include "module_cell/klist.h"
 K_Vectors::K_Vectors()
 {
 }
 K_Vectors::~K_Vectors()
 {
 }
+
 
 /***************************************************************
  *  unit test of functions in elecstate_energy.cpp
@@ -184,10 +187,10 @@ TEST_F(ElecStateEnergyTest, CalBandgapTrivial)
 TEST_F(ElecStateEnergyTest, CalBandgap)
 {
     K_Vectors* klist = new K_Vectors;
-    klist->nks = 5;
+    klist->set_nks(5);
     elecstate->klist = klist;
-    elecstate->ekb.create(klist->nks, GlobalV::NBANDS);
-    for (int ik = 0; ik < klist->nks; ik++)
+    elecstate->ekb.create(klist->get_nks(), GlobalV::NBANDS);
+    for (int ik = 0; ik < klist->get_nks(); ik++)
     {
         for (int ib = 0; ib < GlobalV::NBANDS; ib++)
         {
@@ -209,9 +212,9 @@ TEST_F(ElecStateEnergyTest, CalBandgapUpDwTrivial)
 TEST_F(ElecStateEnergyTest, CalBandgapUpDw)
 {
     K_Vectors* klist = new K_Vectors;
-    klist->nks = 6;
+    klist->set_nks(6);
     klist->isk.resize(6);
-    for (int ik = 0; ik < klist->nks; ik++)
+    for (int ik = 0; ik < klist->get_nks(); ik++)
     {
         if (ik < 3)
         {
@@ -223,8 +226,8 @@ TEST_F(ElecStateEnergyTest, CalBandgapUpDw)
         } 
     }
     elecstate->klist = klist;
-    elecstate->ekb.create(klist->nks, GlobalV::NBANDS);
-    for (int ik = 0; ik < klist->nks; ik++)
+    elecstate->ekb.create(klist->get_nks(), GlobalV::NBANDS);
+    for (int ik = 0; ik < klist->get_nks(); ik++)
     {
         for (int ib = 0; ib < GlobalV::NBANDS; ib++)
         {

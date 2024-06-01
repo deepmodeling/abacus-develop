@@ -9,7 +9,7 @@ unkOverlap_lcao::unkOverlap_lcao()
 {
     allocate_flag = false;
     /*
-    const int kpoints_number = kv.nkstot;
+    const int kpoints_number = kv.get_nkstot();
     lcao_wfc_global = new std::complex<double>**[kpoints_number];
     for(int ik = 0; ik < kpoints_number; ik++)
     {
@@ -801,7 +801,7 @@ std::complex<double> unkOverlap_lcao::det_berryphase(const int ik_L,
 
 void unkOverlap_lcao::test(const Grid_Technique& gt, std::complex<double>*** wfc_k_grid, const K_Vectors& kv)
 {
-	this->init(gt, wfc_k_grid, kv.nkstot);
+	this->init(gt, wfc_k_grid, kv.get_nkstot());
 	this->cal_R_number();
 	this->cal_orb_overlap();
 

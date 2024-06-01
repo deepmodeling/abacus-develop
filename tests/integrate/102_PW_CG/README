@@ -1,0 +1,8 @@
+This test for:
+*Si-diamond
+*just gamma point
+*old upf pseudopotential
+*smearing_method default
+*ks_solver dav
+
+!!!!!!!WRONG!!!!!!!

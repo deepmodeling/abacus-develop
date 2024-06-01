@@ -89,6 +89,7 @@ void Stochastic_WF::init(K_Vectors* p_kv, const int npwx_in)
     this->nks = nks_in;*/
 }
 
+#include "module_cell/klist.h"
 K_Vectors::K_Vectors(){}
 K_Vectors::~K_Vectors(){}
 wavefunc::wavefunc()
