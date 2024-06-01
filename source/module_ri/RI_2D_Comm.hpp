@@ -56,7 +56,7 @@ auto RI_2D_Comm::split_m2D_ktoR(const K_Vectors &kv, const std::vector<const Tma
                     else
                         mR_2D = mR_2D + RI::Global_Func::convert<Tdata>(mk_frac);
                     };
-                if (static_cast<int>(std::round(SPIN_multiple * kv.wk[ik] * kv.nkstot_full)) == 2)
+                if (static_cast<int>(std::round(SPIN_multiple * kv.wk[ik] * kv.get_nkstot_full())) == 2)
                     set_mR_2D(mk_2D * (frac * 0.5) + tensor_conj(mk_2D * (frac * 0.5)));
                 else set_mR_2D(mk_2D * frac);
 			}

@@ -1,4 +1,4 @@
-#include "FORCE_k.h"
+#include "FORCE.h"
 
 #include <map>
 #include <unordered_map>
@@ -24,14 +24,13 @@
 
 
 // calculate the force due to < phi | Vlocal | dphi >
-void Force_LCAO_k::cal_fvl_dphi_k(const bool isforce,
-		const bool isstress,
-		LCAO_Matrix &lm,
-        Gint_k &gint_k,
-		const elecstate::Potential* pot_in,
-		ModuleBase::matrix& fvl_dphi,
-		ModuleBase::matrix& svl_dphi,
-		double** DM_R)
+template<>
+void Force_LCAO<std::complex<double>>::cal_fvl_dphi(const bool isforce,
+    const bool isstress,
+    const elecstate::Potential* pot_in,
+    TGint<std::complex<double>>::type& gint,
+    ModuleBase::matrix& fvl_dphi,
+    ModuleBase::matrix& svl_dphi)
 {
     ModuleBase::TITLE("Force_LCAO_k", "cal_fvl_dphi_k");
     ModuleBase::timer::tick("Force_LCAO_k", "cal_fvl_dphi_k");
@@ -41,10 +40,6 @@ void Force_LCAO_k::cal_fvl_dphi_k(const bool isforce,
         ModuleBase::timer::tick("Force_LCAO_k", "cal_fvl_dphi_k");
         return;
     }
-
-    assert(lm.DHloc_fixedR_x != NULL);
-    assert(lm.DHloc_fixedR_y != NULL);
-    assert(lm.DHloc_fixedR_z != NULL);
 
     int istep = 1;
 
@@ -67,8 +62,7 @@ void Force_LCAO_k::cal_fvl_dphi_k(const bool isforce,
         {
             if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
             {
-                Gint_inout inout(DM_R,
-                                 is,
+                Gint_inout inout(is,
                                  vr_eff1,
                                  vofk_eff1,
                                  isforce,
@@ -76,12 +70,12 @@ void Force_LCAO_k::cal_fvl_dphi_k(const bool isforce,
                                  &fvl_dphi,
                                  &svl_dphi,
                                  Gint_Tools::job_type::force_meta);
-                gint_k.cal_gint(&inout);
+                gint.cal_gint(&inout);
             }
             else
             {
-                Gint_inout inout(DM_R, is, vr_eff1, isforce, isstress, &fvl_dphi, &svl_dphi, Gint_Tools::job_type::force);
-                gint_k.cal_gint(&inout);
+                Gint_inout inout(is, vr_eff1, isforce, isstress, &fvl_dphi, &svl_dphi, Gint_Tools::job_type::force);
+                gint.cal_gint(&inout);
             }
         }
     }

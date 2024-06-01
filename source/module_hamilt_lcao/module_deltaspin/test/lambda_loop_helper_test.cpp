@@ -2,13 +2,13 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+#include "module_cell/klist.h"
 K_Vectors::K_Vectors()
 {
 }
 K_Vectors::~K_Vectors()
 {
 }
-
 /************************************************
  *  unit test of the functions in lambda_loop_helper.cpp
  ***********************************************/

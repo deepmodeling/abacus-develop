@@ -80,14 +80,14 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
     {
         resmem_var_op()(this->ctx, d_wg, wg.nr * wg.nc);
         resmem_var_op()(this->ctx, d_ekb, ekb.nr * ekb.nc);
-        resmem_var_op()(this->ctx, gcar, 3 * p_kv->nks * wfc_basis->npwk_max);
+        resmem_var_op()(this->ctx, gcar, 3 * p_kv->get_nks() * wfc_basis->npwk_max);
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_wg, wg.c, wg.nr * wg.nc);
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_ekb, ekb.c, ekb.nr * ekb.nc);
         syncmem_var_h2d_op()(this->ctx,
                              this->cpu_ctx,
                              gcar,
                              &wfc_basis->gcar[0][0],
-                             3 * p_kv->nks * wfc_basis->npwk_max);
+                             3 * p_kv->get_nks() * wfc_basis->npwk_max);
         resmem_complex_op()(this->ctx, pvkb2, nkb * npwx);
         resmem_complex_op()(this->ctx, pvkb0, 3 * nkb * npwx);
         for (int ii = 0; ii < 3; ii++)
@@ -112,7 +112,7 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
         }
     }
 
-    for (int ik = 0; ik < p_kv->nks; ik++)
+    for (int ik = 0; ik < p_kv->get_nks(); ik++)
     {
         if (GlobalV::NSPIN == 2)
             GlobalV::CURRENT_SPIN = p_kv->isk[ik];

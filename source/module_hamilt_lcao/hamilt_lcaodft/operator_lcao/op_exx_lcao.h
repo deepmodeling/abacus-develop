@@ -43,8 +43,8 @@ public:
             /// read in Hexx
             if (std::is_same<TK, double>::value)
             {
-                this->LM->Hexxd_k_load.resize(this->kv.nks);
-                for (int ik = 0; ik < this->kv.nks; ik++)
+                this->LM->Hexxd_k_load.resize(this->kv.get_nks());
+                for (int ik = 0; ik < this->kv.get_nks(); ik++)
                 {
                     this->LM->Hexxd_k_load[ik].resize(this->LM->ParaV->get_local_size(), 0.0);
                     restart = GlobalC::restart.load_disk("Hexx", ik,
@@ -54,8 +54,8 @@ public:
             }
             else
             {
-                this->LM->Hexxc_k_load.resize(this->kv.nks);
-                for (int ik = 0; ik < this->kv.nks; ik++)
+                this->LM->Hexxc_k_load.resize(this->kv.get_nks());
+                for (int ik = 0; ik < this->kv.get_nks(); ik++)
                 {
                     this->LM->Hexxc_k_load[ik].resize(this->LM->ParaV->get_local_size(), 0.0);
                     restart = GlobalC::restart.load_disk("Hexx", ik,
