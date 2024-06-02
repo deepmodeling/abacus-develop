@@ -44,7 +44,7 @@ void gtask_rho(const Grid_Technique& gridt,
     const int psi_size_max = max_size * gridt.bxyz;
 
     // record whether mat_psir is a zero matrix or not.
-    bool* gpu_mat_cal_flag = new bool[max_size * gridt.nbzp];
+    std::vector<bool> gpu_mat_cal_flag(max_size * gridt.nbzp);
 
     for (int i = 0; i < max_size * gridt.nbzp; i++)
     {
@@ -212,8 +212,6 @@ void gtask_rho(const Grid_Technique& gridt,
         }
     }
     atom_pair_num = tid;
-
-    delete[] gpu_mat_cal_flag;
 }
 
 } // namespace GintKernel
