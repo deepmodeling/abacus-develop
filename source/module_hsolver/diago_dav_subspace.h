@@ -16,23 +16,30 @@ class Diago_DavSubspace : public DiagH<T, Device>
     using Real = typename GetTypeReal<T>::type;
 
   public:
-    Diago_DavSubspace(const Real* precondition_in);
-    ~Diago_DavSubspace();
+    Diago_DavSubspace(const Real* precondition_in,
+                      const int david_ndim_in,
+                      const double diag_thr_in,
+                      const int diag_nmax_in,
+                      const bool need_subspace_in,
+                      const diag_comm_info& diag_comm_in);
 
-    // this is the override function diag() for CG method
-    void diag(hamilt::Hamilt<T, Device>* phm_in,
+    virtual ~Diago_DavSubspace() override;
+
+    int diag(hamilt::Hamilt<T, Device>* phm_in,
               psi::Psi<T, Device>& phi,
               Real* eigenvalue_in,
-              std::vector<bool>& is_occupied);
-
-    static int PW_DIAG_NDIM;
-
-    static double dav_large_thr;
+              const std::vector<bool>& is_occupied,
+              const bool& scf_type);
 
   private:
-    bool is_subspace = false;
+    const diag_comm_info diag_comm;
+    const double dav_large_thr = 1e-5;
 
-    int test_david = 0;
+    const int david_ndim_ = 4;
+    const double diag_thr_;
+    const int diag_nmax_;
+
+    const bool is_subspace;
 
     /// record for how many bands not have convergence eigenvalues
     int notconv = 0;
@@ -102,10 +109,12 @@ class Diago_DavSubspace : public DiagH<T, Device>
                      bool init,
                      bool is_subspace);
 
-    void diag_once(hamilt::Hamilt<T, Device>* phm_in,
+    int diag_once(hamilt::Hamilt<T, Device>* phm_in,
                    psi::Psi<T, Device>& psi,
                    Real* eigenvalue_in,
-                   std::vector<bool>& is_occupied);
+                   const std::vector<bool>& is_occupied);
+    
+    bool test_exit_cond(const int& ntry, const int& notconv, const bool& scf);
 
     using resmem_complex_op = base_device::memory::resize_memory_op<T, Device>;
     using delmem_complex_op = base_device::memory::delete_memory_op<T, Device>;
@@ -131,12 +140,6 @@ class Diago_DavSubspace : public DiagH<T, Device>
     consts<T> cs;
     const T *one = nullptr, *zero = nullptr, *neg_one = nullptr;
 };
-
-template <typename Real, typename Device>
-int Diago_DavSubspace<Real, Device>::PW_DIAG_NDIM = 4;
-
-template <typename Real, typename Device>
-double Diago_DavSubspace<Real, Device>::dav_large_thr = 1e-5;
 
 } // namespace hsolver
 
