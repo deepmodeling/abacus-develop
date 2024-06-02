@@ -38,7 +38,7 @@ class Parallel_Kpoints
 
     // information about pool, dim: GlobalV::KPAR
     //int* nproc_pool = nullptr;
-    int* startpro_pool = nullptr;
+    //int* startpro_pool = nullptr;
 
     // inforamation about kpoints, dim: GlobalV::KPAR
     int* nks_pool = nullptr;    // number of k-points in each pool
