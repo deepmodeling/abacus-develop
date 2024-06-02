@@ -16,6 +16,9 @@ void Parallel_Kpoints::kinfo(int &nkstot)
 {
 #ifdef __MPI
     this->kpar = GlobalV::KPAR;    // number of pools
+    this->my_pool = GlobalV::MY_POOL;
+    this->rank_in_pool = GlobalV::RANK_IN_POOL;
+    this->nspin = GlobalV::NSPIN;
 
     Parallel_Common::bcast_int(nkstot);
     this->get_nks_pool(nkstot);     // assign k-points to each pool
@@ -23,9 +26,12 @@ void Parallel_Kpoints::kinfo(int &nkstot)
     this->get_whichpool(nkstot);    // get the pool index for each k-point
     
     this->nkstot_np = nkstot;       
-    this->nks_np = this->nks_pool[GlobalV::MY_POOL]; // number of k-points in this pool
+    this->nks_np = this->nks_pool[this->my_pool]; // number of k-points in this pool
 #else
     this->kpar = 1;
+    this->my_pool = 0;
+    this->rank_in_pool = 0;
+    this->nspin = GloobalV::NSPIN;
     this->nkstot_np = nkstot;
     this->nks_np = nkstot;
 #endif
@@ -96,9 +102,9 @@ void Parallel_Kpoints::gatherkvec(const std::vector<ModuleBase::Vector3<double>>
     vec_global.resize(this->nkstot_np, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     for (int i = 0; i < this->nks_np; ++i)
     {
-        if (GlobalV::RANK_IN_POOL==0)
+        if (this->rank_in_pool==0)
         {
-            vec_global[i + startk_pool[GlobalV::MY_POOL]] = vec_local[i];
+            vec_global[i + startk_pool[this->my_pool]] = vec_local[i];
         }
         //vec_global[i + startk_pool[GlobalV::MY_POOL]] = vec_local[i] / double(GlobalV::NPROC_IN_POOL);
     }
@@ -112,14 +118,14 @@ void Parallel_Kpoints::gatherkvec(const std::vector<ModuleBase::Vector3<double>>
 void Parallel_Kpoints::pool_collection(double &value, const double *wk, const int &ik)
 {
 #ifdef __MPI
-     const int ik_now = ik - this->startk_pool[GlobalV::MY_POOL];
+     const int ik_now = ik - this->startk_pool[this->my_pool];
     //GlobalV::ofs_running << "\n\n ik=" << ik << " ik_now=" << ik_now;
 
     const int pool = this->whichpool[ik];
     
-    if (GlobalV::RANK_IN_POOL==0)
+    if (this->rank_in_pool==0)
     {
-        if (GlobalV::MY_POOL==0)
+        if (this->my_pool==0)
         {
             if (pool==0)
             {
@@ -134,7 +140,7 @@ void Parallel_Kpoints::pool_collection(double &value, const double *wk, const in
         }
         else
         {
-            if (GlobalV::MY_POOL == pool)
+            if (this->my_pool == pool)
             {
                 GlobalV::ofs_running << " send data.";
                 MPI_Send(&wk[ik_now], 1, MPI_DOUBLE, 0, ik, MPI_COMM_WORLD);
@@ -164,7 +170,7 @@ void Parallel_Kpoints::pool_collection(double *valuea, double *valueb, const Mod
     assert( a.getBound4() == b.getBound4() );
     const int dim = dim2 * dim3 * dim4;
 #ifdef __MPI
-    const int ik_now = ik - this->startk_pool[GlobalV::MY_POOL];
+    const int ik_now = ik - this->startk_pool[this->my_pool];
     const int begin = ik_now * dim2 * dim3 * dim4;
     double* pa = &a.ptr[begin];
     double* pb = &b.ptr[begin];
@@ -173,9 +179,9 @@ void Parallel_Kpoints::pool_collection(double *valuea, double *valueb, const Mod
 
 	GlobalV::ofs_running << "\n ik=" << ik;
 
-    if (GlobalV::RANK_IN_POOL==0)
+    if (this->rank_in_pool==0)
     {
-        if (GlobalV::MY_POOL==0)
+        if (this->my_pool==0)
         {
             if (pool==0)
             {
@@ -197,7 +203,7 @@ void Parallel_Kpoints::pool_collection(double *valuea, double *valueb, const Mod
         }
         else
         {
-            if (GlobalV::MY_POOL == pool)
+            if (this->my_pool == pool)
             {
 				GlobalV::ofs_running << " send data.";
                 MPI_Send(pa, dim, MPI_DOUBLE, 0, ik*2+0, MPI_COMM_WORLD);
@@ -272,18 +278,18 @@ void Parallel_Kpoints::pool_collection(std::complex<double> *value, const Module
     const int dim4 = w.getBound4();
     const int dim = dim2 * dim3 * dim4;
 #ifdef __MPI
-    const int ik_now = ik - this->startk_pool[GlobalV::MY_POOL];
+    const int ik_now = ik - this->startk_pool[this->my_pool];
     const int begin = ik_now * dim2 * dim3 * dim4;
     std::complex<double>* p = &w.ptr[begin];
     //temprary restrict kpar=1 for NSPIN=2 case for generating_orbitals
     int pool = 0; 
-    if(GlobalV::NSPIN != 2) pool = this->whichpool[ik];
+    if(this->nspin != 2) pool = this->whichpool[ik];
 
 	GlobalV::ofs_running << "\n ik=" << ik;
 
-    if (GlobalV::RANK_IN_POOL==0)
+    if (this->rank_in_pool==0)
     {
-        if (GlobalV::MY_POOL==0)
+        if (this->my_pool==0)
         {
             if (pool==0)
             {
@@ -302,7 +308,7 @@ void Parallel_Kpoints::pool_collection(std::complex<double> *value, const Module
         }
         else
         {
-            if (GlobalV::MY_POOL == pool)
+            if (this->my_pool == pool)
             {
 				GlobalV::ofs_running << " send data.";
                 MPI_Send(p, dim, MPI_DOUBLE, 0, ik*2+0, MPI_COMM_WORLD);
