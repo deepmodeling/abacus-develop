@@ -1069,7 +1069,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int iter)
     if (GlobalC::restart.info_save.save_H && two_level_step > 0 &&
         (!GlobalC::exx_info.info_global.separate_loop || iter == 1)) // to avoid saving the same value repeatedly
     {
-        std::vector<TK> Hexxk_save(this->orb_con.ParaV->get_local_size());
+        std::vector<TK> Hexxk_save(this->orb_con.ParaV.get_local_size());
         for (int ik = 0; ik < this->kv.get_nks(); ++ik)
         {
             ModuleBase::GlobalFunc::ZEROS(Hexxk_save.data(), Hexxk_save.size());
