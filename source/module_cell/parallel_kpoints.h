@@ -55,6 +55,7 @@ class Parallel_Kpoints
 
     int my_pool = 0;          // the pool index of the present processor
     int rank_in_pool = 0;       // the rank in the present pool
+    int nproc = 1;            // number of processors
 
     int nspin = 1;            // number of spins
 
@@ -63,6 +64,8 @@ class Parallel_Kpoints
     void get_nks_pool(const int& nkstot);
     void get_startk_pool(const int& nkstot);
     void get_whichpool(const int& nkstot);
+    
+    void get_startpro_pool(void);
 #endif
 };
 

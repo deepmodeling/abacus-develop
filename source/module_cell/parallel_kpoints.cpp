@@ -18,12 +18,15 @@ void Parallel_Kpoints::kinfo(int &nkstot)
     this->kpar = GlobalV::KPAR;    // number of pools
     this->my_pool = GlobalV::MY_POOL;
     this->rank_in_pool = GlobalV::RANK_IN_POOL;
+    this->nproc = GlobalV::NPROC;
     this->nspin = GlobalV::NSPIN;
 
     Parallel_Common::bcast_int(nkstot);
     this->get_nks_pool(nkstot);     // assign k-points to each pool
     this->get_startk_pool(nkstot);  // get the start k-point index for each pool
     this->get_whichpool(nkstot);    // get the pool index for each k-point
+
+    this->get_startpro_pool();      // get the start processor index for each pool
     
     this->nkstot_np = nkstot;       
     this->nks_np = this->nks_pool[this->my_pool]; // number of k-points in this pool
@@ -31,6 +34,7 @@ void Parallel_Kpoints::kinfo(int &nkstot)
     this->kpar = 1;
     this->my_pool = 0;
     this->rank_in_pool = 0;
+    this->nproc = 1;
     this->nspin = GlobalV::NSPIN;
     this->nkstot_np = nkstot;
     this->nks_np = nkstot;
@@ -92,6 +96,26 @@ void Parallel_Kpoints::get_startk_pool(const int &nkstot)
     {
         startk_pool[i] = startk_pool[i-1] + nks_pool[i-1];
         //GlobalV::ofs_running << "\n startk_pool[i] = " << startk_pool[i];
+    }
+    return;
+}
+
+void Parallel_Kpoints::get_startpro_pool(void)
+{
+    startpro_pool.resize(this->kpar, 0);
+
+    const int nproc_ave = this->nproc/this->kpar;
+    const int remain = this->nproc%this->kpar;
+
+    startpro_pool[0] = 0;
+    for (int i=1; i<this->kpar; i++)
+    {
+        startpro_pool[i] = startpro_pool[i-1] + nproc_ave;
+        if (i-1<remain)
+        {
+            startpro_pool[i]++;
+        }
+        //GlobalV::ofs_running << "\n startpro_pool[i] = " << startpro_pool[i];
     }
     return;
 }
