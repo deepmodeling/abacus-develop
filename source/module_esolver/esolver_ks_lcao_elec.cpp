@@ -109,7 +109,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
         if (GlobalV::GAMMA_ONLY_LOCAL)
         {
             nsk = GlobalV::NSPIN;
-            ncol = this->orb_con.ParaV->ncol_bands;
+            ncol = this->orb_con.ParaV.ncol_bands;
             if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "lapack_gvx" || GlobalV::KS_SOLVER == "pexsi"
                 || GlobalV::KS_SOLVER == "cusolver")
             {
