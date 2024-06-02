@@ -31,7 +31,7 @@ void Parallel_Kpoints::kinfo(int &nkstot)
     this->kpar = 1;
     this->my_pool = 0;
     this->rank_in_pool = 0;
-    this->nspin = GloobalV::NSPIN;
+    this->nspin = GlobalV::NSPIN;
     this->nkstot_np = nkstot;
     this->nks_np = nkstot;
 #endif
