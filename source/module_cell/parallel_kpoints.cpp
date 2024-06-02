@@ -21,11 +21,13 @@ Parallel_Kpoints::~Parallel_Kpoints()
 void Parallel_Kpoints::kinfo(int &nkstot)
 {
 #ifdef __MPI
+    this->kpar = GlobalV::KPAR;    // number of pools
+
     Parallel_Common::bcast_int(nkstot);
     this->get_nks_pool(nkstot);     // assign k-points to each pool
     this->get_startk_pool(nkstot);  // get the start k-point index for each pool
     this->get_whichpool(nkstot);    // get the pool index for each k-point
-    this->kpar = GlobalV::KPAR;    // number of pools
+    
     this->nkstot_np = nkstot;       
     this->nks_np = this->nks_pool[GlobalV::MY_POOL]; // number of k-points in this pool
 #else
@@ -46,7 +48,7 @@ void Parallel_Kpoints::get_whichpool(const int &nkstot)
 	//std::cout << " calculate : whichpool" << std::endl;
 	//std::cout << " nkstot is " << nkstot << std::endl;
 
-    for (int i=0; i<GlobalV::KPAR; i++)
+    for (int i=0; i<this->kpar; i++)
     {
         for (int ik=0; ik< this->nks_pool[i]; ik++)
         {
@@ -62,17 +64,17 @@ void Parallel_Kpoints::get_whichpool(const int &nkstot)
 void Parallel_Kpoints::get_nks_pool(const int &nkstot)
 {
     delete[] nks_pool;
-    this->nks_pool = new int[GlobalV::KPAR];
-    ModuleBase::GlobalFunc::ZEROS(nks_pool, GlobalV::KPAR);
+    this->nks_pool = new int[this->kpar];
+    ModuleBase::GlobalFunc::ZEROS(nks_pool, this->kpar);
 
-    const int nks_ave = nkstot/GlobalV::KPAR;
-    const int remain = nkstot%GlobalV::KPAR;
+    const int nks_ave = nkstot/this->kpar;
+    const int remain = nkstot%this->kpar;
 
     //GlobalV::ofs_running << "\n nkstot = " << nkstot;
-    //GlobalV::ofs_running << "\n GlobalV::KPAR = " << GlobalV::KPAR;
+    //GlobalV::ofs_running << "\n this->kpar = " << this->kpar;
     //GlobalV::ofs_running << "\n nks_ave = " << nks_ave;
 
-    for (int i=0; i<GlobalV::KPAR; i++)
+    for (int i=0; i<this->kpar; i++)
     {
         this->nks_pool[i] = nks_ave;
         if (i<remain)
@@ -87,11 +89,11 @@ void Parallel_Kpoints::get_nks_pool(const int &nkstot)
 void Parallel_Kpoints::get_startk_pool(const int &nkstot)
 {
     delete[] startk_pool;
-    startk_pool = new int[GlobalV::KPAR];
-    //const int remain = nkstot%GlobalV::KPAR;
+    startk_pool = new int[this->kpar];
+    //const int remain = nkstot%this->kpar;
 
     startk_pool[0] = 0;
-    for (int i=1; i<GlobalV::KPAR; i++)
+    for (int i=1; i<this->kpar; i++)
     {
         startk_pool[i] = startk_pool[i-1] + nks_pool[i-1];
         //GlobalV::ofs_running << "\n startk_pool[i] = " << startk_pool[i];
