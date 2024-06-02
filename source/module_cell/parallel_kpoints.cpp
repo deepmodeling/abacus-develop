@@ -4,16 +4,10 @@
 
 Parallel_Kpoints::Parallel_Kpoints()
 {
-    nks_pool = nullptr;
-    startk_pool = nullptr;
-    whichpool = nullptr;
 }
 
 Parallel_Kpoints::~Parallel_Kpoints()
 {
-    delete[] nks_pool;
-    delete[] startk_pool;
-    delete[] whichpool;
 }
 
 
@@ -41,9 +35,7 @@ void Parallel_Kpoints::kinfo(int &nkstot)
 #ifdef __MPI
 void Parallel_Kpoints::get_whichpool(const int &nkstot)
 {
-    delete[] whichpool;
-    this->whichpool = new int[nkstot];
-    ModuleBase::GlobalFunc::ZEROS(whichpool, nkstot);
+    this->whichpool.resize(nkstot, 0);
 
 	//std::cout << " calculate : whichpool" << std::endl;
 	//std::cout << " nkstot is " << nkstot << std::endl;
@@ -63,9 +55,7 @@ void Parallel_Kpoints::get_whichpool(const int &nkstot)
 
 void Parallel_Kpoints::get_nks_pool(const int &nkstot)
 {
-    delete[] nks_pool;
-    this->nks_pool = new int[this->kpar];
-    ModuleBase::GlobalFunc::ZEROS(nks_pool, this->kpar);
+    nks_pool.resize(this->kpar, 0);
 
     const int nks_ave = nkstot/this->kpar;
     const int remain = nkstot%this->kpar;
@@ -88,8 +78,7 @@ void Parallel_Kpoints::get_nks_pool(const int &nkstot)
 
 void Parallel_Kpoints::get_startk_pool(const int &nkstot)
 {
-    delete[] startk_pool;
-    startk_pool = new int[this->kpar];
+    startk_pool.resize(this->kpar, 0);
     //const int remain = nkstot%this->kpar;
 
     startk_pool[0] = 0;

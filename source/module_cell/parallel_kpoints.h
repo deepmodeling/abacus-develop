@@ -41,12 +41,14 @@ class Parallel_Kpoints
     int* startpro_pool = nullptr;
 
     // inforamation about kpoints, dim: GlobalV::KPAR
-    int* nks_pool = nullptr;    // number of k-points in each pool
-    int* startk_pool = nullptr; // the first k-point in each pool
+    std::vector<int> nks_pool;    // number of k-points in each pool
+    std::vector<int> startk_pool; // the first k-point in each pool
+    
     int kpar = 0;               // number of pools
 
     // information about which pool each k-point belongs to,
-    int* whichpool = nullptr; // whichpool[k] : the pool which k belongs to, dim: nkstot_np
+    std::vector<int> whichpool; // whichpool[k] : the pool which k belongs to, dim: nkstot_np
+    
     int nkstot_np = 0;        // number of k-points without spin, kv.set_nkstot(nkstot_np) * nspin(1 or 2)
     int nks_np = 0;           // number of k-points without spin in the present pool
 
