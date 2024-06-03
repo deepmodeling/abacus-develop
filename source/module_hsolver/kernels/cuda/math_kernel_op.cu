@@ -101,12 +101,12 @@ __global__ void line_minimize_with_block(
     }
 
     if (tid < WARP_SIZE) {
-        data[tid] += data[tid + 32];
-        data[tid] += data[tid + 16];
-        data[tid] += data[tid + 8];
-        data[tid] += data[tid + 4];
-        data[tid] += data[tid + 2];
-        data[tid] += data[tid + 1];
+        data[tid] += data[tid + 32]; __syncwarp();
+        data[tid] += data[tid + 16]; __syncwarp();
+        data[tid] += data[tid + 8]; __syncwarp();
+        data[tid] += data[tid + 4]; __syncwarp();
+        data[tid] += data[tid + 2]; __syncwarp();
+        data[tid] += data[tid + 1]; __syncwarp();
     }
 
     __syncthreads();
@@ -137,24 +137,24 @@ __global__ void line_minimize_with_block(
         __syncthreads();
     }
     if (tid < WARP_SIZE) {
-        data[tid] += data[tid + 32];
-        data[tid] += data[tid + 16];
-        data[tid] += data[tid + 8];
-        data[tid] += data[tid + 4];
-        data[tid] += data[tid + 2];
-        data[tid] += data[tid + 1];
-        data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + 32];
-        data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + 16];
-        data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + 8];
-        data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + 4];
-        data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + 2];
-        data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + 1];
-        data[2 * THREAD_PER_BLOCK + tid] += data[2 * THREAD_PER_BLOCK + tid + 32];
-        data[2 * THREAD_PER_BLOCK + tid] += data[2 * THREAD_PER_BLOCK + tid + 16];
-        data[2 * THREAD_PER_BLOCK + tid] += data[2 * THREAD_PER_BLOCK + tid + 8];
-        data[2 * THREAD_PER_BLOCK + tid] += data[2 * THREAD_PER_BLOCK + tid + 4];
-        data[2 * THREAD_PER_BLOCK + tid] += data[2 * THREAD_PER_BLOCK + tid + 2];
-        data[2 * THREAD_PER_BLOCK + tid] += data[2 * THREAD_PER_BLOCK + tid + 1];
+        data[tid] += data[tid + 32]; __syncwarp();
+        data[tid] += data[tid + 16]; __syncwarp();
+        data[tid] += data[tid + 8]; __syncwarp();
+        data[tid] += data[tid + 4]; __syncwarp();
+        data[tid] += data[tid + 2]; __syncwarp();
+        data[tid] += data[tid + 1]; __syncwarp();
+        data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + 32]; __syncwarp();
+        data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + 16]; __syncwarp();
+        data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + 8]; __syncwarp();
+        data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + 4]; __syncwarp();
+        data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + 2]; __syncwarp();
+        data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + 1]; __syncwarp();
+        data[2 * THREAD_PER_BLOCK + tid] += data[2 * THREAD_PER_BLOCK + tid + 32]; __syncwarp();
+        data[2 * THREAD_PER_BLOCK + tid] += data[2 * THREAD_PER_BLOCK + tid + 16]; __syncwarp();
+        data[2 * THREAD_PER_BLOCK + tid] += data[2 * THREAD_PER_BLOCK + tid + 8]; __syncwarp();
+        data[2 * THREAD_PER_BLOCK + tid] += data[2 * THREAD_PER_BLOCK + tid + 4]; __syncwarp();
+        data[2 * THREAD_PER_BLOCK + tid] += data[2 * THREAD_PER_BLOCK + tid + 2]; __syncwarp();
+        data[2 * THREAD_PER_BLOCK + tid] += data[2 * THREAD_PER_BLOCK + tid + 1]; __syncwarp();
     }
     __syncthreads();
     epsilo_0 = data[0];
@@ -210,12 +210,12 @@ __global__ void calc_grad_with_block(
     }
 
     if (tid < WARP_SIZE) {
-        data[tid] += data[tid + 32];
-        data[tid] += data[tid + 16];
-        data[tid] += data[tid + 8];
-        data[tid] += data[tid + 4];
-        data[tid] += data[tid + 2];
-        data[tid] += data[tid + 1];
+        data[tid] += data[tid + 32]; __syncwarp();
+        data[tid] += data[tid + 16]; __syncwarp();
+        data[tid] += data[tid + 8]; __syncwarp();
+        data[tid] += data[tid + 4]; __syncwarp();
+        data[tid] += data[tid + 2]; __syncwarp();
+        data[tid] += data[tid + 1]; __syncwarp();
     }
 
     __syncthreads();
@@ -241,12 +241,12 @@ __global__ void calc_grad_with_block(
     }
 
     if (tid < WARP_SIZE) {
-        data[tid] += data[tid + 32];
-        data[tid] += data[tid + 16];
-        data[tid] += data[tid + 8];
-        data[tid] += data[tid + 4];
-        data[tid] += data[tid + 2];
-        data[tid] += data[tid + 1];
+        data[tid] += data[tid + 32]; __syncwarp();
+        data[tid] += data[tid + 16]; __syncwarp();
+        data[tid] += data[tid + 8]; __syncwarp();
+        data[tid] += data[tid + 4]; __syncwarp();
+        data[tid] += data[tid + 2]; __syncwarp();
+        data[tid] += data[tid + 1]; __syncwarp();
     }
 
     __syncthreads();
@@ -274,18 +274,18 @@ __global__ void calc_grad_with_block(
     }
 
     if (tid < WARP_SIZE) {
-        data[tid] += data[tid + 32];
-        data[tid] += data[tid + 16];
-        data[tid] += data[tid + 8];
-        data[tid] += data[tid + 4];
-        data[tid] += data[tid + 2];
-        data[tid] += data[tid + 1];
-        data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + 32];
-        data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + 16];
-        data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + 8];
-        data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + 4];
-        data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + 2];
-        data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + 1];
+        data[tid] += data[tid + 32]; __syncwarp();
+        data[tid] += data[tid + 16]; __syncwarp();
+        data[tid] += data[tid + 8]; __syncwarp();
+        data[tid] += data[tid + 4]; __syncwarp();
+        data[tid] += data[tid + 2]; __syncwarp();
+        data[tid] += data[tid + 1]; __syncwarp();
+        data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + 32]; __syncwarp();
+        data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + 16]; __syncwarp();
+        data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + 8]; __syncwarp();
+        data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + 4]; __syncwarp();
+        data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + 2]; __syncwarp();
+        data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + 1]; __syncwarp();
     }
 
     __syncthreads();
