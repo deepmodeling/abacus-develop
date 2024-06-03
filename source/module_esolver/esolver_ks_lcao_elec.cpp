@@ -109,23 +109,23 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
         if (GlobalV::GAMMA_ONLY_LOCAL)
         {
             nsk = GlobalV::NSPIN;
-            ncol = this->LOWF.ParaV->ncol_bands;
+            ncol = this->orb_con.ParaV.ncol_bands;
             if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "lapack_gvx" || GlobalV::KS_SOLVER == "pexsi"
                 || GlobalV::KS_SOLVER == "cusolver")
             {
-                ncol = this->LOWF.ParaV->ncol;
+                ncol = this->orb_con.ParaV.ncol;
             }
         }
         else
         {
             nsk = this->kv.get_nks();
 #ifdef __MPI
-            ncol = this->LOWF.ParaV->ncol_bands;
+            ncol = this->orb_con.ParaV.ncol_bands;
 #else
             ncol = GlobalV::NBANDS;
 #endif
         }
-        this->psi = new psi::Psi<TK>(nsk, ncol, this->LOWF.ParaV->nrow, nullptr);
+        this->psi = new psi::Psi<TK>(nsk, ncol, this->orb_con.ParaV.nrow, nullptr);
     }
 
     // prepare grid in Gint
@@ -504,7 +504,6 @@ void ESolver_KS_LCAO<TK, TR>::nscf(void)
     // Peize Lin add 2018-08-14
     if (GlobalC::exx_info.info_global.cal_exx)
     {
-        // GlobalC::exx_lcao.cal_exx_elec_nscf(this->LOWF.ParaV[0]);
         const std::string file_name_exx = GlobalV::global_out_dir + "HexxR" + std::to_string(GlobalV::MY_RANK);
         if (GlobalC::exx_info.info_ri.real_number)
         {
@@ -600,7 +599,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf(void)
                                 this->sf,
                                 this->kv,
                                 this->psi,
-                                this->LOWF.ParaV);
+                                &(this->orb_con.ParaV));
         }
         else if (INPUT.wannier_method == 2)
         {
@@ -612,7 +611,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf(void)
                                        INPUT.nnkpfile,
                                        INPUT.wannier_spin);
 
-            myWannier.calculate(this->pelec->ekb, this->kv, *(this->psi), this->LOWF.ParaV);
+            myWannier.calculate(this->pelec->ekb, this->kv, *(this->psi), &(this->orb_con.ParaV));
         }
 #endif
     }
@@ -626,7 +625,6 @@ void ESolver_KS_LCAO<TK, TR>::nscf(void)
 
     // below is for DeePKS NSCF calculation
 #ifdef __DEEPKS
-    const Parallel_Orbitals* pv = this->LOWF.ParaV;
     if (GlobalV::deepks_out_labels || GlobalV::deepks_scf)
     {
         const elecstate::DensityMatrix<TK, double>* dm
