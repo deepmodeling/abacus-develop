@@ -101,7 +101,7 @@ namespace ModuleESolver
 #endif
         for (int iat = 0; iat < ucell.nat; ++iat)
         {   
-            auto tau = ucell->get_tau(iat);
+            auto tau = ucell.get_tau(iat);
             for (int ia = 0; ia < ucell.ntype; ++ia)
             {
                 coord[3 * iat] = tau.x * ucell.lat0_angstrom;
