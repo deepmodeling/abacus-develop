@@ -61,10 +61,12 @@ void write_wfc_lcao(const int out_type,
     int myid = 0;
     int nbands;
     int nlocal;
+    // If using MPI, the nbasis and nbands in psi is the value on local rank, 
+    // so get nlocal and nbands from pv->desc_wfc[2] and pv->desc_wfc[3]
 #ifdef __MPI
     MPI_Comm_rank(pv->comm_2D, &myid);
-    nbands = pv->desc_wfc[3];
     nlocal = pv->desc_wfc[2];
+    nbands = pv->desc_wfc[3];
 #else
     nlocal = psi.get_nbasis();
     nbands = psi.get_nbands();
@@ -80,6 +82,7 @@ void write_wfc_lcao(const int out_type,
     for (int ik = 0; ik < psi.get_nk(); ik++)
     {
         psi.fix_k(ik);
+#ifdef __MPI        
         pv_glb.set(nlocal, nbands, blk_glb, pv->comm_2D, pv->blacs_ctxt);
         Cpxgemr2d(nlocal,
                   nbands,
@@ -92,6 +95,15 @@ void write_wfc_lcao(const int out_type,
                   1,
                   pv_glb.desc,
                   pv_glb.blacs_ctxt);
+#else
+        for (int ib = 0; ib < nbands; ib++)
+        {
+            for (int i = 0; i < nlocal; i++)
+            {
+                ctot[ib * nlocal + i] = psi(ib,i);
+            }
+        }    
+#endif              
 
         if (myid == 0)
         {

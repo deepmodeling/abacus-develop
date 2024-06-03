@@ -25,7 +25,7 @@ TEST(ModuleIOTest, WriteWfcNao)
 
     // Set up test data
     std::string filename = "test_wfc_nao.txt";
-    std::vector<std::vector<double>> ctot = {{0.1, 0.2}, {0.3, 0.4}};
+    std::vector<double> ctot = {0.1, 0.2, 0.3, 0.4};
     ModuleBase::matrix ekb(2, 2);
     ekb(0, 0) = 0.5;
     ekb(1, 0) = 0.6;
@@ -38,7 +38,7 @@ TEST(ModuleIOTest, WriteWfcNao)
     wg(1, 1) = 1.2;
 
     // Call the function to be tested
-    ModuleIO::write_wfc_nao(filename, ctot, ekb, wg);
+    ModuleIO::write_wfc_nao(filename, ctot.data(),GlobalV::NLOCAL, ekb, wg,false);
 
     // Check the output file
     std::ifstream ifs(filename);
@@ -70,7 +70,7 @@ TEST(ModuleIOTest, WriteWfcNaoBinary)
 
     // Set up test data
     std::string filename = "test_wfc_nao.dat";
-    std::vector<std::vector<double>> ctot = {{0.1, 0.2}, {0.3, 0.4}};
+    std::vector<double> ctot = {0.1, 0.2, 0.3, 0.4};
     ModuleBase::matrix ekb(2, 2);
     ekb(0, 0) = 0.5;
     ekb(1, 0) = 0.6;
@@ -83,7 +83,7 @@ TEST(ModuleIOTest, WriteWfcNaoBinary)
     wg(1, 1) = 1.2;
 
     // Call the function to be tested
-    ModuleIO::write_wfc_nao(filename, ctot, ekb, wg, true);
+    ModuleIO::write_wfc_nao(filename, ctot.data(),GlobalV::NLOCAL, ekb, wg, true);
 
     // Check the output file
     Binstream wfc(filename,"r");
@@ -133,11 +133,11 @@ TEST(ModuleIOTest, WriteWfcNaoComplex)
     ModuleBase::matrix wg(1, 2);
     wg(0, 0) = 0.11;
     wg(0, 1) = 0.22;
-    std::vector<std::vector<std::complex<double>>> ctot = {{std::complex<double>(1.0, 0.0), std::complex<double>(2.0, 0.0), std::complex<double>(3.0, 0.0)},
-                                                            {std::complex<double>(0.0, 1.0), std::complex<double>(0.0, 2.0), std::complex<double>(0.0, 3.0)}};
+    std::vector<std::complex<double>> ctot = {std::complex<double>(1.0, 0.0), std::complex<double>(2.0, 0.0), std::complex<double>(3.0, 0.0),
+                                                            std::complex<double>(0.0, 1.0), std::complex<double>(0.0, 2.0), std::complex<double>(0.0, 3.0)};
 
     // Call the function
-    ModuleIO::write_wfc_nao_complex(name, ctot, ik, kvec_c, ekb, wg);
+    ModuleIO::write_wfc_nao_complex(name, ctot.data(),  GlobalV::NLOCAL,ik,kvec_c, ekb, wg);
     // Check the output file
     std::ifstream ifs(name);
     std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
@@ -172,11 +172,11 @@ TEST(ModuleIOTest, WriteWfcNaoComplexBinary)
     ModuleBase::matrix wg(1, 2);
     wg(0, 0) = 0.11;
     wg(0, 1) = 0.22;
-    std::vector<std::vector<std::complex<double>>> ctot = {{std::complex<double>(1.0, 0.0), std::complex<double>(2.0, 2.0), std::complex<double>(3.0, 4.0)},
-                                                            {std::complex<double>(4.0, 4.0), std::complex<double>(5.0, 6.0), std::complex<double>(6.0, 8.0)}};
+    std::vector<std::complex<double>> ctot = {std::complex<double>(1.0, 0.0), std::complex<double>(2.0, 2.0), std::complex<double>(3.0, 4.0),
+                                                            std::complex<double>(4.0, 4.0), std::complex<double>(5.0, 6.0), std::complex<double>(6.0, 8.0)};
 
     // Call the function
-    ModuleIO::write_wfc_nao_complex(name, ctot, ik, kvec_c, ekb, wg, true);
+    ModuleIO::write_wfc_nao_complex(name, ctot.data(), GlobalV::NLOCAL, ik, kvec_c, ekb, wg, true);
     // Check the output file
 
     Binstream wfc(name,"r");

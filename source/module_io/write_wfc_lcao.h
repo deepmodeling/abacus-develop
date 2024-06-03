@@ -46,7 +46,7 @@ void write_wfc_lcao(const int out_type,
                     const ModuleBase::matrix& wg,
                     const std::vector<ModuleBase::Vector3<double>>& kvec_c,
                     const Parallel_Orbitals* pv,
-                    const int istep) ;
+                    const int istep=-1) ;
 
 
 }// namespace ModuleIO

@@ -92,7 +92,7 @@ AddTest(
 AddTest(
   TARGET io_write_wfc_lcao
   LIBS ${math_libs} base device psi 
-  SOURCES write_wfc_lcao_test.cpp ../write_wfc_lcao.cpp ../write_wfc_nao.cpp ../binstream.cpp
+  SOURCES write_wfc_lcao_test.cpp ../write_wfc_lcao.cpp ../write_wfc_nao.cpp ../binstream.cpp ../../module_basis/module_ao/parallel_2d.cpp
 )
 
 AddTest(
