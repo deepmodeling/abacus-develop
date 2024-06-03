@@ -70,7 +70,7 @@ namespace hsolver
                              matg& mat_g)
     {
         auto a = mat_l.p;
-        const int* desca = mat_l.desc;
+        int* desca = mat_l.desc;
         int ctxt = desca[1];
         int nrows = desca[2];
         int ncols = desca[3];
