@@ -52,14 +52,13 @@ class Parallel_Kpoints
     
     int nkstot_np = 0;        // number of k-points without spin, kv.set_nkstot(nkstot_np) * nspin(1 or 2)
     int nks_np = 0;           // number of k-points without spin in the present pool
+    
 
+  private:
     int my_pool = 0;          // the pool index of the present processor
     int rank_in_pool = 0;       // the rank in the present pool
     int nproc = 1;            // number of processors
-
     int nspin = 1;            // number of spins
-
-  private:
 #ifdef __MPI
     void get_nks_pool(const int& nkstot);
     void get_startk_pool(const int& nkstot);
