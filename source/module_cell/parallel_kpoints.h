@@ -44,8 +44,6 @@ class Parallel_Kpoints
     // inforamation about kpoints, dim: GlobalV::KPAR
     std::vector<int> nks_pool;    // number of k-points in each pool
     std::vector<int> startk_pool; // the first k-point in each pool
-    
-    int kpar = 0;               // number of pools
 
     // information about which pool each k-point belongs to,
     std::vector<int> whichpool; // whichpool[k] : the pool which k belongs to, dim: nkstot_np
@@ -55,6 +53,7 @@ class Parallel_Kpoints
     
 
   private:
+    int kpar = 0;               // number of pools
     int my_pool = 0;          // the pool index of the present processor
     int rank_in_pool = 0;       // the rank in the present pool
     int nproc = 1;            // number of processors
