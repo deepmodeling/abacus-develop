@@ -51,15 +51,18 @@ namespace ModuleESolver
 #endif
         for (int iat = 0; iat < ucell.nat; ++iat)
         {
-            for (int ia = 0; ia < ucell.ntype; ++ia)
+            for (int it = 0; ia < ucell.ntype; ++it)
             {
-                if (find_type)
+                for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
                 {
-                    atype[iat] = dp_type[ia];
-                }
-                else
-                {
-                    atype[iat] = ia;
+                    if (find_type)
+                    {
+                        atype[iat] = dp_type[it];
+                    }
+                    else
+                    {
+                        atype[iat] = it;
+                    }
                 }
             }
         }
