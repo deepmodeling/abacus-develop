@@ -91,10 +91,11 @@ void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, 
         std::stringstream ss;
         // the parameter 'winput::spillage_outdir' is read from INPUTw.
         ss << winput::spillage_outdir << "/";
-        // to make it compatible with old version of orbital generation
+        
         if(INPUT.bessel_nao_rcuts.size() > 1) { ss << "orb_matrix_rcut" << INPUT.bessel_nao_rcut << "deriv"; }
-        else { ss << "orb_matrix."; }
+        else { ss << "orb_matrix."; } // to make it compatible with old version of orbital generation
         ss << derivative_order << ".dat";
+        
         if (GlobalV::MY_RANK==0) { ofs.open(ss.str().c_str()); }
 
         // ALLOCATE MEMORY FOR THE OVERLAP MATRIX
