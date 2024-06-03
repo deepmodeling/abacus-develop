@@ -53,16 +53,13 @@ namespace ModuleESolver
         {
             for (int it = 0; it < ucell.ntype; ++it)
             {
-                for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
+                if (find_type)
                 {
-                    if (find_type)
-                    {
-                        atype[iat] = dp_type[it];
-                    }
-                    else
-                    {
-                        atype[iat] = it;
-                    }
+                    atype[iat] = dp_type[it];
+                }
+                else
+                {
+                    atype[iat] = it;
                 }
             }
         }
