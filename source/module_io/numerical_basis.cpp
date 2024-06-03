@@ -658,11 +658,12 @@ void Numerical_Basis::output_k(std::ofstream& ofs, const K_Vectors& kv)
                 }
                 else
                 {
+                    int startpro_pool=GlobalC::Pkpoints.get_startpro_pool(pool);
                     MPI_Status ierror;
-                    MPI_Recv(&kx, 1, MPI_DOUBLE, GlobalC::Pkpoints.startpro_pool[pool], ik*4, MPI_COMM_WORLD,&ierror);
-                    MPI_Recv(&ky, 1, MPI_DOUBLE, GlobalC::Pkpoints.startpro_pool[pool], ik*4+1, MPI_COMM_WORLD,&ierror);
-                    MPI_Recv(&kz, 1, MPI_DOUBLE, GlobalC::Pkpoints.startpro_pool[pool], ik*4+2, MPI_COMM_WORLD,&ierror);
-                    MPI_Recv(&wknow, 1, MPI_DOUBLE, GlobalC::Pkpoints.startpro_pool[pool], ik*4+3, MPI_COMM_WORLD,&ierror);
+                    MPI_Recv(&kx, 1, MPI_DOUBLE, startpro_pool, ik*4, MPI_COMM_WORLD,&ierror);
+                    MPI_Recv(&ky, 1, MPI_DOUBLE, startpro_pool, ik*4+1, MPI_COMM_WORLD,&ierror);
+                    MPI_Recv(&kz, 1, MPI_DOUBLE, startpro_pool, ik*4+2, MPI_COMM_WORLD,&ierror);
+                    MPI_Recv(&wknow, 1, MPI_DOUBLE, startpro_pool, ik*4+3, MPI_COMM_WORLD,&ierror);
                 }
             }
             else

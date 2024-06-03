@@ -26,7 +26,7 @@ void Parallel_Kpoints::kinfo(int &nkstot)
     this->get_startk_pool(nkstot);  // get the start k-point index for each pool
     this->get_whichpool(nkstot);    // get the pool index for each k-point
 
-    this->get_startpro_pool();      // get the start processor index for each pool
+    this->set_startpro_pool();      // get the start processor index for each pool
     
     this->nkstot_np = nkstot;       
     this->nks_np = this->nks_pool[this->my_pool]; // number of k-points in this pool
@@ -100,7 +100,7 @@ void Parallel_Kpoints::get_startk_pool(const int &nkstot)
     return;
 }
 
-void Parallel_Kpoints::get_startpro_pool(void)
+void Parallel_Kpoints::set_startpro_pool(void)
 {
     startpro_pool.resize(this->kpar, 0);
 

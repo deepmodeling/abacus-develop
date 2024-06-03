@@ -39,7 +39,6 @@ class Parallel_Kpoints
     // information about pool, dim: GlobalV::KPAR
     //int* nproc_pool = nullptr;    it is not used
     //int* startpro_pool = nullptr;
-    std::vector<int> startpro_pool;
 
     // inforamation about kpoints, dim: GlobalV::KPAR
     std::vector<int> nks_pool;    // number of k-points in each pool
@@ -51,6 +50,10 @@ class Parallel_Kpoints
     int nkstot_np = 0;        // number of k-points without spin, kv.set_nkstot(nkstot_np) * nspin(1 or 2)
     int nks_np = 0;           // number of k-points without spin in the present pool
     
+    int get_startpro_pool(const int& pool) const
+    {
+        return startpro_pool[pool];
+    }
 
   private:
     int kpar = 0;               // number of pools
@@ -58,12 +61,14 @@ class Parallel_Kpoints
     int rank_in_pool = 0;       // the rank in the present pool
     int nproc = 1;            // number of processors
     int nspin = 1;            // number of spins
+
+    std::vector<int> startpro_pool;
 #ifdef __MPI
     void get_nks_pool(const int& nkstot);
     void get_startk_pool(const int& nkstot);
     void get_whichpool(const int& nkstot);
     
-    void get_startpro_pool(void);
+    void set_startpro_pool(void);
 #endif
 };
 
