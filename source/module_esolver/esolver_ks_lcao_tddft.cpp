@@ -102,7 +102,8 @@ void ESolver_KS_LCAO_TDDFT::before_all_runners(Input& inp, UnitCell& ucell)
     // pass Hamilt-pointer to Operator
     this->gen_h.LM = &this->LM;
     // pass basis-pointer to EState and Psi
-    this->LOC.ParaV = this->LOWF.ParaV = this->LM.ParaV;
+    this->LOC.ParaV = this->LM.ParaV;;
+    this->LOWF.ParaV = this->LM.ParaV;
 
     // init DensityMatrix
     dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)
@@ -111,7 +112,7 @@ void ESolver_KS_LCAO_TDDFT::before_all_runners(Input& inp, UnitCell& ucell)
     // init Psi, HSolver, ElecState, Hamilt
     if (this->phsol == nullptr)
     {
-        this->phsol = new hsolver::HSolverLCAO<std::complex<double>>(this->LOWF.ParaV);
+        this->phsol = new hsolver::HSolverLCAO<std::complex<double>>(this->LM.ParaV);
         this->phsol->method = GlobalV::KS_SOLVER;
     }
 
@@ -274,7 +275,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
                                        GlobalV::out_app_flag,
                                        "H",
                                        "data-" + std::to_string(ik),
-                                       *this->LOWF.ParaV,
+                                       *this->LM.ParaV,
                                        GlobalV::DRANK);
 
                     ModuleIO::save_mat(istep,
@@ -286,7 +287,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
                                        GlobalV::out_app_flag,
                                        "S",
                                        "data-" + std::to_string(ik),
-                                       *this->LOWF.ParaV,
+                                       *this->LM.ParaV,
                                        GlobalV::DRANK);
                 }
             }
@@ -333,8 +334,8 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
         {
 #ifdef __MPI
             this->psi_laststep = new psi::Psi<std::complex<double>>(kv.get_nks(),
-                                                                    this->LOWF.ParaV->ncol_bands,
-                                                                    this->LOWF.ParaV->nrow,
+                                                                    this->LM.ParaV->ncol_bands,
+                                                                    this->LM.ParaV->nrow,
                                                                     nullptr);
 #else
             this->psi_laststep = new psi::Psi<std::complex<double>>(kv.get_nks(), GlobalV::NBANDS, GlobalV::NLOCAL, nullptr);
