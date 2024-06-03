@@ -51,7 +51,7 @@ namespace ModuleESolver
 #endif
         for (int iat = 0; iat < ucell.nat; ++iat)
         {
-            for (int it = 0; ia < ucell.ntype; ++it)
+            for (int it = 0; it < ucell.ntype; ++it)
             {
                 for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
                 {
