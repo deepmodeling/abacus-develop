@@ -1,5 +1,5 @@
-#ifndef GINT_VL_H
-#define GINT_VL_H
+#ifndef GINT_VL_GPU_H
+#define GINT_VL_GPU_H
 #include <cublas_v2.h>
 #include <cuda.h> // for CUDA_VERSION
 #include <cuda_runtime.h>

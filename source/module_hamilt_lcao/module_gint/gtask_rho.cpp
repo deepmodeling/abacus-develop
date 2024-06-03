@@ -1,4 +1,4 @@
-#include "gint_rho.h"
+#include "gint_rho_gpu.h"
 #include "module_base/ylm.h"
 #include "module_hamilt_lcao/module_gint/gint_tools.h"
 #include "omp.h"

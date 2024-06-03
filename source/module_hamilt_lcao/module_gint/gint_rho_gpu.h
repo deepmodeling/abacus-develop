@@ -1,5 +1,5 @@
-#ifndef GINT_RHO_H
-#define GINT_RHO_H
+#ifndef GINT_RHO_GPU_H
+#define GINT_RHO_GPU_H
 #include <cublas_v2.h>
 #include <cuda.h> // for CUDA_VERSION
 #include <cuda_runtime.h>

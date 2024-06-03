@@ -1,5 +1,5 @@
-#ifndef GINT_FORCE_H
-#define GINT_FORCE_H
+#ifndef GINT_FORCE_GPU_H
+#define GINT_FORCE_GPU_H
 
 #include "module_hamilt_lcao/module_gint/gint.h"
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
