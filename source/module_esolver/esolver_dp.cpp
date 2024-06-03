@@ -44,27 +44,29 @@ namespace ModuleESolver
         bool find_type = type_map(ucell);
 
         /// determine the type map from STRU to DP model
-        int iat = 0;
-
-        for (int it = 0; it < ucell.ntype; ++it)
+        // int iat = 0; //removed by Haocheng 2024/6/
+// added by Haocheng 2024/6/3 //
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+        for (int iat = 0; iat < ucell.nat; ++iat)
         {
-            // added by Haocheng 2024/6/2 //
-            #pragma omp parallel for schedule(static)
-            for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
+            for (int ia = 0; ia < ucell.ntype; ++ia)
             {
-                int index = iat + ia;
-
                 if (find_type)
                 {
-                    atype[index] = dp_type[it];
+                    atype[iat] = dp_type[ia];
                 }
                 else
                 {
-                    atype[index] = it;
+                    atype[iat] = ia;
                 }
-            // ------------------------ //
+            }
+        }
+    }
+// ------------------------ //
 
-            // removed by Haocheng 2024/6/2 //
+// removed by Haocheng 2024/6/2 //
                 // if (find_type)
                 // {
                 //     atype[iat] = dp_type[it];
@@ -74,12 +76,9 @@ namespace ModuleESolver
                 //     atype[iat] = it;
                 // }
                 // iat++;
-            // ------------------------ //
-            }
-            iat = iat + ucell.atoms[it].na;
-        }
-        assert(ucell.nat == iat);
-    }
+        // assert(ucell.nat == iat); 
+// ------------------------ //
+
 
     void ESolver_DP::runner(const int istep, UnitCell& ucell)
     {
@@ -96,22 +95,21 @@ namespace ModuleESolver
         cell[7] = ucell.latvec.e32 * ucell.lat0_angstrom;
         cell[8] = ucell.latvec.e33 * ucell.lat0_angstrom;
 
-        int iat = 0;
-
-        // added by Haocheng 2024/6/2 //
-        for (int it = 0; it < ucell.ntype; ++it)
+// added by Haocheng 2024/6/3 //
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+        for (int iat = 0; iat < ucell.nat; ++iat)
         {   
-            #pragma omp parallel for schedule(static)
-            for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
+            auto tau = ucell->get_tau(iat);
+            for (int ia = 0; ia < ucell.ntype; ++ia)
             {
-                int index = iat + ia;
-                coord[3 * index] = ucell.atoms[it].tau[ia].x * ucell.lat0_angstrom;
-                coord[3 * index + 1] = ucell.atoms[it].tau[ia].y * ucell.lat0_angstrom;
-                coord[3 * index + 2] = ucell.atoms[it].tau[ia].z * ucell.lat0_angstrom;
+                coord[3 * iat] = tau.x * ucell.lat0_angstrom;
+                coord[3 * iat + 1] = tau.y * ucell.lat0_angstrom;
+                coord[3 * iat + 2] = tau.z * ucell.lat0_angstrom;
             }
-            iat = iat + ucell.atoms[it].na;
         }
-        // ------------------------ //
+// removed by Haocheng 2024/6/2 //
         // for (int it = 0; it < ucell.ntype; ++it)
         // {
         //     for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
@@ -122,7 +120,8 @@ namespace ModuleESolver
         //         iat++;
         //     }
         // }
-        assert(ucell.nat == iat);
+        //assert(ucell.nat == iat);
+// ------------------------ //
 
 #ifdef __DPMD
         std::vector<double> f, v;
@@ -139,7 +138,9 @@ namespace ModuleESolver
         const double fact_f = ModuleBase::Ry_to_eV * ModuleBase::ANGSTROM_AU;
         const double fact_v = ucell.omega * ModuleBase::Ry_to_eV;
 
-        #pragma omp parallel for schedule(static) // added by Haocheng 2024/6/2
+#ifdef _OPENMP
+#pragma omp parallel for // added by Haocheng 2024/6/3
+#endif 
         for (int i = 0; i < ucell.nat; ++i)
         {
             dp_force(i, 0) = f[3 * i] / fact_f;
