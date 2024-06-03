@@ -128,42 +128,35 @@ void Local_Orbital_wfc::allocate_k(const int& lgd,
 		delete[] this->wfc_k_grid2;
 		this->complex_flag = false;
 	}
-	// allocate the second part.
-	//if(lgd != 0) xiaohui modify 2015-02-04, fixed memory bug
+	// allocate the second part and initialize value as zero.
+	// if(lgd != 0) xiaohui modify 2015-02-04, fixed memory bug
 	if(lgd != 0)
 	{
-		const int page=GlobalV::NBANDS*lgd;
-		this->wfc_k_grid2=new std::complex<double> [nks*page];
-		ModuleBase::GlobalFunc::ZEROS(wfc_k_grid2, nks*page);
+		const int page = GlobalV::NBANDS * lgd; // lgd: local grid dimension
+		this->wfc_k_grid2 = new std::complex<double> [nks * page]; // wfc_k_grid2 stores nks * nbands * lgd number of basis coefficients
+		ModuleBase::GlobalFunc::ZEROS(wfc_k_grid2, nks * page);
 		for(int ik=0; ik<nks; ik++)
 		{
 			for(int ib=0; ib<GlobalV::NBANDS; ib++)
 			{
-				this->wfc_k_grid[ik][ib] = &wfc_k_grid2[ik*page+ib*lgd];
+				this->wfc_k_grid[ik][ib] = &wfc_k_grid2[ik*page + ib*lgd + 0]; // then wfc_k_grid stores the starting address of each band
+                // but now there are less number of coefficients stored, if lgd < nbasis.
+                // this is because in grid intergration, for each grid point, only few grid points (near some neighboring atoms)
+                // would be involved in calculation, therefore only few basis coefficients are needed.
 			}
 			ModuleBase::Memory::record("LOWF::wfc_k_grid", sizeof(std::complex<double>) * GlobalV::NBANDS*GlobalV::NLOCAL);
 			this->complex_flag = true;
 		}
 	}
 
-    if (INPUT.init_wfc == "atomic")
+    // read wavefunction from file, then divide, distribute and broadcast
+    if (INPUT.init_wfc == "file") // init_wfc can also be "atomic" but actually do nothing.
     {
-    }
-    else if (INPUT.init_wfc == "file")
-    {
-		if (istep > 0)
-		{
-			return;
-		}
+        // confusing, seems istep to be the index of scf step. if not the first scf, why call this function?
+		if (istep > 0) { return; }
         std::cout << " Read in wave functions files: " << nkstot << std::endl;
-        if (psi == nullptr)
-        {
-            ModuleBase::WARNING_QUIT("allocate_k", "psi should be allocated first!");
-        }
-        else
-        {
-            psi->resize(nkstot, this->ParaV->ncol_bands, this->ParaV->nrow);
-        }
+        if (psi == nullptr) { ModuleBase::WARNING_QUIT("allocate_k", "psi should be allocated first!"); }
+        else { psi->resize(nkstot, this->ParaV->ncol_bands, this->ParaV->nrow); }
         for (int ik = 0; ik < nkstot; ++ik)
         {
             std::complex<double>** ctot;
@@ -196,10 +189,6 @@ void Local_Orbital_wfc::allocate_k(const int& lgd,
             }
         }
     }
-    else
-    {
-		ModuleBase::WARNING_QUIT("Local_Orbital_wfc","check the parameter: init_wfc");
-	}
 
 	return;
 }
