@@ -42,9 +42,9 @@ void ModuleIO::output_HSR(const int& istep,
 	}
     else if(nspin==2)
     {
-        const int spin_now = GlobalV::CURRENT_SPIN;
+        int spin_now = 1;
 
-        // save HR of current_spin first
+        // save HR of spin down first (the current spin always be down)
 		sparse_format::cal_HSR(
 				pv,
 				lm,
@@ -54,29 +54,20 @@ void ModuleIO::output_HSR(const int& istep,
 				kv.nmp, 
 				p_ham);
 
-        // cal HR of the other spin
+        // cal HR of the spin up
         if(GlobalV::VL_IN_H)
         {
-            int ik = 0;
-            if(GlobalV::CURRENT_SPIN == 1)
-            {
-                ik = 0;
-                GlobalV::CURRENT_SPIN = 0;
-            } 
-            else
-            {
-                ik = kv.get_nks() / 2;
-                GlobalV::CURRENT_SPIN = 1;
-            }
+            const int ik = 0;
             p_ham->refresh();
             p_ham->updateHk(ik);
+            spin_now = 0;
         }
 
 		sparse_format::cal_HSR(
 				pv,
 				lm,
 				grid,
-				GlobalV::CURRENT_SPIN, 
+				spin_now, 
 				sparse_thr, 
 				kv.nmp, 
 				p_ham);
@@ -120,7 +111,7 @@ void ModuleIO::output_dHR(const int &istep,
     if(nspin==1||nspin==4)
     {
         // mohan add 2024-04-01
-        const int cspin = GlobalV::CURRENT_SPIN; 
+        const int cspin = 0; 
 
 		sparse_format::cal_dH(
                 lm,
@@ -132,41 +123,30 @@ void ModuleIO::output_dHR(const int &istep,
 	}
     else if(nspin==2)
     {
-        for (int ik = 0; ik < kv.get_nks(); ik++)
+        for(int cspin=0; cspin<2; cspin++)
         {
-            if (ik == 0 || ik == kv.get_nks() / 2)
+            // note: some MPI process will not have grids when MPI cores are too many, 
+            // v_eff in these processes are empty
+            const double* vr_eff1 = v_eff.nc * v_eff.nr > 0? &(v_eff(cspin, 0)):nullptr;
+                
+            if(!GlobalV::GAMMA_ONLY_LOCAL)
             {
-                if(nspin == 2)
+                if(GlobalV::VL_IN_H)
                 {
-                    GlobalV::CURRENT_SPIN = kv.isk[ik];
+                    Gint_inout inout(vr_eff1, cspin, Gint_Tools::job_type::dvlocal);
+                    gint_k.cal_gint(&inout);
                 }
+            }
 
-                // note: some MPI process will not have grids when MPI cores are too many, 
-                // v_eff in these processes are empty
-                const double* vr_eff1 = v_eff.nc * v_eff.nr > 0? &(v_eff(GlobalV::CURRENT_SPIN, 0)):nullptr;
-                    
-                if(!GlobalV::GAMMA_ONLY_LOCAL)
-                {
-                    if(GlobalV::VL_IN_H)
-                    {
-                        Gint_inout inout(vr_eff1, GlobalV::CURRENT_SPIN, Gint_Tools::job_type::dvlocal);
-                        gint_k.cal_gint(&inout);
-                    }
-                }
-
-                const int cspin = GlobalV::CURRENT_SPIN;
-
-				sparse_format::cal_dH(
-                        lm,
-                        grid,
-						gen_h,
-						cspin, 
-						sparse_thr, 
-						gint_k);
-			}
+            sparse_format::cal_dH(
+                    lm,
+                    grid,
+                    gen_h,
+                    cspin, 
+                    sparse_thr, 
+                    gint_k);
         }
     }
-
     // mohan update 2024-04-01
     ModuleIO::save_dH_sparse(istep, lm, sparse_thr, binary);
 

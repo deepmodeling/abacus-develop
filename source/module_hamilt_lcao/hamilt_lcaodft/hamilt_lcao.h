@@ -91,6 +91,9 @@ class HamiltLCAO : public Hamilt<TK>
     std::vector<TR> hRS2;
     int refresh_times = 1;
 
+    /// current_spin for NSPIN=2, 0: hamiltonian for spin up, 1: hamiltonian for spin down
+    int current_spin = 0;
+
     // sk and hk will be refactored to HamiltLCAO later
     //std::vector<TK> sk;
     //std::vector<TK> hk;

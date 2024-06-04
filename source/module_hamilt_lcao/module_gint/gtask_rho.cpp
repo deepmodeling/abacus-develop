@@ -6,51 +6,21 @@ namespace GintKernel
 {
 
 void gtask_rho(const Grid_Technique& gridt,
-               const int i,
-               const int j,
+               const int grid_index_ij,
+               std::vector<bool>& gpu_mat_cal_flag,
                const int max_size,
                const int nczp,
                const UnitCell& ucell,
                const double* rcut,
                double* input_double,
                int* input_int,
-               int* num_psir,
-               const int lgd,
-               double* const psir_ylm_g,
-               double* const psir_dm_g,
-               double* const dm_matrix_g,
-               double* mat_alpha,
-               int* mat_m,
-               int* mat_n,
-               int* mat_k,
-               int* mat_lda,
-               int* mat_ldb,
-               int* mat_ldc,
-               double** mat_A,
-               double** mat_B,
-               double** mat_C,
-               int& max_m,
-               int& max_n,
-               int& atom_pair_num,
-               double* rho_g,
-               double** vec_l,
-               double** vec_r,
-               double** dot_product,
-               int* vec_len,
-               int& dot_count)
+               int* num_psir)
+              
 {
-    const int grid_index_ij = i * gridt.nby * gridt.nbzp + j * gridt.nbzp;
     const int nwmax = ucell.nwmax;
     const int psi_size_max = max_size * gridt.bxyz;
 
     // record whether mat_psir is a zero matrix or not.
-    bool* gpu_mat_cal_flag = new bool[max_size * gridt.nbzp];
-
-    for (int i = 0; i < max_size * gridt.nbzp; i++)
-    {
-        gpu_mat_cal_flag[i] = false;
-    }
-    dot_count = 0;
 
     // generate data for calculating psir
     for (int z_index = 0; z_index < gridt.nbzp; z_index++)
@@ -122,11 +92,42 @@ void gtask_rho(const Grid_Technique& gridt,
         }
         num_psir[z_index] = num_get_psi;
     }
+}
 
+void alloc_mult_dot_rho(const Grid_Technique& gridt,
+                        const UnitCell& ucell,
+                        std::vector<bool>& gpu_mat_cal_flag,
+                        const int grid_index_ij,
+                        const int max_size,
+                        const int lgd,
+                        const int nczp,
+                        double* const psir_ylm_g,
+                        double* const psir_dm_g,
+                        double* const dm_matrix_g,
+                        double* mat_alpha,
+                        int* mat_m,
+                        int* mat_n,
+                        int* mat_k,
+                        int* mat_lda,
+                        int* mat_ldb,
+                        int* mat_ldc,
+                        double** mat_A,
+                        double** mat_B,
+                        double** mat_C,
+                        int& max_m,
+                        int& max_n,
+                        int& atom_pair_num,
+                        double* rho_g,
+                        double** vec_l,
+                        double** vec_r,
+                        double** dot_product,
+                        int* vec_len,
+                        int& dot_count)
+{
     int tid = 0;
     max_m = 0;
     max_n = 0;
-
+    const int nwmax=ucell.nwmax;
     // generate matrix multiplication tasks
     for (int z_index = 0; z_index < gridt.nbzp; z_index++)
     {
@@ -213,7 +214,7 @@ void gtask_rho(const Grid_Technique& gridt,
     }
     atom_pair_num = tid;
 
-    delete[] gpu_mat_cal_flag;
+    gpu_mat_cal_flag.clear();
 }
 
 } // namespace GintKernel
