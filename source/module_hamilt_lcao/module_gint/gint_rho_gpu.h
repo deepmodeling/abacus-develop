@@ -104,11 +104,7 @@ void gtask_rho(const Grid_Technique& gridt,
                int& max_n,
                int& atom_pair_num,
                double* rho_g,
-               double** vec_l,
-               double** vec_r,
-               double** dot_product,
-               int* vec_len,
-               int& dot_count);
+               double** dot_product);
 
 } // namespace GintKernel
 #endif

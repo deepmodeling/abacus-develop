@@ -33,11 +33,7 @@ void gtask_rho(const Grid_Technique& gridt,
                int& max_n,
                int& atom_pair_num,
                double* rho_g,
-               double** vec_l,
-               double** vec_r,
-               double** dot_product,
-               int* vec_len,
-               int& dot_count)
+               double** dot_product)
 {
     const int grid_index_ij = i * gridt.nby * gridt.nbzp + j * gridt.nbzp;
     const int nwmax = ucell.nwmax;
@@ -50,7 +46,7 @@ void gtask_rho(const Grid_Technique& gridt,
     {
         gpu_mat_cal_flag[i] = false;
     }
-    dot_count = 0;
+    int dot_count = 0;
 
     // generate data for calculating psir
     for (int z_index = 0; z_index < gridt.nbzp; z_index++)
@@ -200,14 +196,10 @@ void gtask_rho(const Grid_Technique& gridt,
                                              nczp,
                                              gridt.start_ind[grid_index],
                                              gridt.ncy * nczp);
+        
         for (int i = 0; i < gridt.bxyz; i++)
         {
-            vec_l[dot_count]
-                = psir_ylm_g + (bcell_start_psir + i * max_size * nwmax);
-            vec_r[dot_count]
-                = psir_dm_g + (bcell_start_psir + i * max_size * nwmax);
             dot_product[dot_count] = rho_g + vindex[i];
-            vec_len[dot_count] = nwmax * max_size;
             dot_count++;
         }
     }
