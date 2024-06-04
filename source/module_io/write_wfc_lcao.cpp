@@ -2,10 +2,11 @@
 
 #include "module_base/memory.h"
 #include "module_base/timer.h"
+#include "module_base/tool_title.h"
 #include "module_basis/module_ao/parallel_2d.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_wfc.h"
 #include "write_wfc_nao.h"
 #include "module_base/scalapack_connector.h"
+#include "module_base/global_variable.h"
 
 namespace ModuleIO
 {
@@ -49,7 +50,7 @@ void write_wfc_lcao(const int out_type,
                     const ModuleBase::matrix& ekb,
                     const ModuleBase::matrix& wg,
                     const std::vector<ModuleBase::Vector3<double>>& kvec_c,
-                    const Parallel_Orbitals* pv,
+                    const Parallel_Orbitals& pv,
                     const int istep)
 {
     if (!out_type)
@@ -64,9 +65,9 @@ void write_wfc_lcao(const int out_type,
     // If using MPI, the nbasis and nbands in psi is the value on local rank, 
     // so get nlocal and nbands from pv->desc_wfc[2] and pv->desc_wfc[3]
 #ifdef __MPI
-    MPI_Comm_rank(pv->comm_2D, &myid);
-    nlocal = pv->desc_wfc[2];
-    nbands = pv->desc_wfc[3];
+    MPI_Comm_rank(pv.comm_2D, &myid);
+    nlocal = pv.desc_wfc[2];
+    nbands = pv.desc_wfc[3];
 #else
     nlocal = psi.get_nbasis();
     nbands = psi.get_nbands();
@@ -83,13 +84,13 @@ void write_wfc_lcao(const int out_type,
     {
         psi.fix_k(ik);
 #ifdef __MPI        
-        pv_glb.set(nlocal, nbands, blk_glb, pv->comm_2D, pv->blacs_ctxt);
+        pv_glb.set(nlocal, nbands, blk_glb, pv.comm_2D, pv.blacs_ctxt);   
         Cpxgemr2d(nlocal,
                   nbands,
                   psi.get_pointer(),
                   1,
                   1,
-                  const_cast<Parallel_Orbitals*>(pv)->desc_wfc,
+                  const_cast<int*>(pv.desc_wfc),
                   ctot.data(),
                   1,
                   1,
@@ -103,7 +104,7 @@ void write_wfc_lcao(const int out_type,
                 ctot[ib * nlocal + i] = psi(ib,i);
             }
         }    
-#endif              
+#endif
 
         if (myid == 0)
         {
@@ -133,7 +134,7 @@ template void write_wfc_lcao<double>(const int out_type,
                                      const ModuleBase::matrix& ekb,
                                      const ModuleBase::matrix& wg,
                                      const std::vector<ModuleBase::Vector3<double>>& kvec_c,
-                                     const Parallel_Orbitals* pv,
+                                     const Parallel_Orbitals& pv,
                                      const int istep);
 
 template void write_wfc_lcao<std::complex<double>>(const int out_type,
@@ -141,7 +142,7 @@ template void write_wfc_lcao<std::complex<double>>(const int out_type,
                                                    const ModuleBase::matrix& ekb,
                                                    const ModuleBase::matrix& wg,
                                                    const std::vector<ModuleBase::Vector3<double>>& kvec_c,
-                                                   const Parallel_Orbitals* pv,
+                                                   const Parallel_Orbitals& pv,
                                                    const int istep);
 
 } // namespace ModuleIO

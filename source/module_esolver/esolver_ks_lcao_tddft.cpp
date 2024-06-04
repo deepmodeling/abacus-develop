@@ -303,7 +303,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
                            this->pelec->ekb,
                            this->pelec->wg,
                            this->pelec->klist->kvec_c,
-                           this->LOWF.ParaV,
+                           this->orb_con.ParaV,
                            istep);
     }
 
