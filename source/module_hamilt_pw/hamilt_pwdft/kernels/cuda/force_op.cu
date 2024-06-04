@@ -72,7 +72,7 @@ __global__ void cal_force_nl(
     FPTYPE ekb_now = d_ekb[ik * wg_nc + ib];
     for (int ia = 0; ia < atom_na[it]; ia++) {
         for (int ip = threadIdx.x; ip < Nprojs; ip += blockDim.x) {
-            // FPTYPE ps = GlobalC::ppcell.deeq[GlobalV::CURRENT_SPIN, iat, ip, ip];
+            // FPTYPE ps = GlobalC::ppcell.deeq[spin, iat, ip, ip];
             FPTYPE ps = deeq[((spin * deeq_2 + iat) * deeq_3 + ip) * deeq_4 + ip]
                         - ekb_now * qq_nt[it * deeq_3 * deeq_4 + ip * deeq_4 + ip];
             const int inkb = sum + ip;

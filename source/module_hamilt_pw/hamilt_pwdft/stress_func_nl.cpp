@@ -114,8 +114,7 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
 
     for (int ik = 0; ik < p_kv->get_nks(); ik++)
     {
-        if (GlobalV::NSPIN == 2)
-            GlobalV::CURRENT_SPIN = p_kv->isk[ik];
+        const int current_spin = p_kv->isk[ik];
         const int npw = p_kv->ngk[ik];
         // generate vkb
         if (GlobalC::ppcell.nkb > 0)
@@ -246,7 +245,7 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
                                    nkb,
                                    nbands_occ,
                                    GlobalC::ucell.ntype,
-                                   GlobalV::CURRENT_SPIN,
+                                   current_spin,
                                    wg_nc,
                                    ik,
                                    GlobalC::ppcell.deeq.getBound2(),

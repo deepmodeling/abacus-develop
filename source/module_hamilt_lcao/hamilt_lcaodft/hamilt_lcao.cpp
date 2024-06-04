@@ -471,7 +471,7 @@ void HamiltLCAO<TK, TR>::updateHk(const int ik)
     if (GlobalV::NSPIN == 2)
     {
         // if Veff is added and current_spin is changed, refresh HR
-        if(GlobalV::VL_IN_H && this->kv->isk[ik] != GlobalV::CURRENT_SPIN)
+        if(GlobalV::VL_IN_H && this->kv->isk[ik] != this->current_spin)
         {
             // change data pointer of HR
             this->hR->allocate(this->hRS2.data()+this->hRS2.size()/2*this->kv->isk[ik], 0);
@@ -481,7 +481,7 @@ void HamiltLCAO<TK, TR>::updateHk(const int ik)
                 dynamic_cast<hamilt::OperatorLCAO<TK, TR>*>(this->ops)->set_hr_done(false);
             }
         }
-        GlobalV::CURRENT_SPIN = this->kv->isk[ik];
+        this->current_spin = this->kv->isk[ik];
     }
     this->getOperator()->init(ik);
     ModuleBase::timer::tick("HamiltLCAO", "updateHk");
@@ -495,7 +495,7 @@ void HamiltLCAO<TK, TR>::refresh()
     if(GlobalV::NSPIN == 2)
     {
         this->refresh_times = 1;
-        GlobalV::CURRENT_SPIN = 0;
+        this->current_spin = 0;
         if(this->hR->get_nnr() != this->hRS2.size()/2)
         {
             // operator has changed, resize hRS2
