@@ -82,6 +82,7 @@ public:
                         const int out_wfc_lcao,
                         const double* wfc_2d,
                         double** wfc_grid,
+                        const int ik,
                         const ModuleBase::matrix& ekb,
                         const ModuleBase::matrix& wg);
     void wfc_2d_to_grid(const int istep,

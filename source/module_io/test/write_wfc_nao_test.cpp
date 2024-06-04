@@ -20,7 +20,6 @@ TEST(ModuleIOTest, WriteWfcNao)
     GlobalV::DRANK = 0;
     GlobalV::NBANDS = 2;
     GlobalV::NLOCAL = 2;
-    GlobalV::CURRENT_SPIN = 0;
     GlobalV::out_app_flag = 1;
 
     // Set up test data
@@ -44,7 +43,7 @@ TEST(ModuleIOTest, WriteWfcNao)
     wg(1, 1) = 1.2;
 
     // Call the function to be tested
-    ModuleIO::write_wfc_nao(filename, ctot, ekb, wg);
+    ModuleIO::write_wfc_nao(filename, ctot, 0, ekb, wg);
 
     // Check the output file
     std::ifstream ifs(filename);
@@ -74,7 +73,6 @@ TEST(ModuleIOTest, WriteWfcNaoBinary)
     GlobalV::DRANK = 0;
     GlobalV::NBANDS = 2;
     GlobalV::NLOCAL = 2;
-    GlobalV::CURRENT_SPIN = 0;
     GlobalV::out_app_flag = 1;
 
     // Set up test data
@@ -98,7 +96,7 @@ TEST(ModuleIOTest, WriteWfcNaoBinary)
     wg(1, 1) = 1.2;
 
     // Call the function to be tested
-    ModuleIO::write_wfc_nao(filename, ctot, ekb, wg, true);
+    ModuleIO::write_wfc_nao(filename, ctot, 0, ekb, wg, true);
 
     // Check the output file
     Binstream wfc(filename,"r");
@@ -139,7 +137,6 @@ TEST(ModuleIOTest, WriteWfcNaoComplex)
     GlobalV::DRANK = 0;
     GlobalV::NBANDS = 2;
     GlobalV::NLOCAL = 3;
-    GlobalV::CURRENT_SPIN = 0;
     GlobalV::out_app_flag = 1;
     //set up test data
     std::string name = "test_wfc_nao_complex.txt";
@@ -184,7 +181,6 @@ TEST(ModuleIOTest, WriteWfcNaoComplexBinary)
     GlobalV::DRANK = 0;
     GlobalV::NBANDS = 2;
     GlobalV::NLOCAL = 3;
-    GlobalV::CURRENT_SPIN = 0;
     GlobalV::out_app_flag = 1;
     //set up test data
     std::string name = "test_wfc_nao_complex.dat";

@@ -402,11 +402,6 @@ void Stochastic_Iter::calHsqrtchi(Stochastic_WF& stowf)
         if(this->pkv->get_nks() > 1)
         {
 
-            if(GlobalV::NSPIN==2)
-            {
-                GlobalV::CURRENT_SPIN = this->pkv->isk[ik];
-            }
-
             if(GlobalC::ppcell.nkb > 0 && (GlobalV::BASIS_TYPE=="pw" || GlobalV::BASIS_TYPE=="lcao_in_pw")) //xiaohui add 2013-09-02. Attention...
             {
                 GlobalC::ppcell.getvnl(ik, GlobalC::ppcell.vkb);

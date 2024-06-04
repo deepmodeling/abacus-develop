@@ -133,8 +133,6 @@ void Gint::cal_gint(Gint_inout* inout)
                 int nat = ucell.nat;
                 const int isforce = inout->isforce;
                 const int isstress =inout->isstress;
-                ModuleBase::TITLE("Gint_interface","cal_force_gpu");
-                ModuleBase::timer::tick("Gint_interface","cal_force_gpu");
                 if (isforce || isstress){
                     std::vector<double> force(nat * 3, 0.0);
                     std::vector<double> stress(6, 0.0);
@@ -168,10 +166,7 @@ void Gint::cal_gint(Gint_inout* inout)
                     inout->svl_dphi[0](1, 2) += stress[4];
                     inout->svl_dphi[0](2, 2) += stress[5];
                 }
-                force.clear();
-                stress.clear();
                 }
-                ModuleBase::timer::tick("Gint_interface","cal_force_gpu");   
             }
         }
         else
