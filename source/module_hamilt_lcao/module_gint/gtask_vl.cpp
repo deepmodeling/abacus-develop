@@ -9,37 +9,20 @@ namespace GintKernel
 void gtask_vlocal(const Grid_Technique& gridt,
                   const double* rcut,
                   const UnitCell& ucell,
-                  const int i,
-                  const int j,
+                  std::vector<bool>& gpu_matrix_calc_flag,
+                  const int grid_index_ij,
                   const int max_size,
                   const int nczp,
                   const double vfactor,
                   const double* vlocal_global_value,
-                  double* psir_ylm_left,
-                  double* psir_r,
                   double* input_double,
                   int* input_int,
-                  int* num_psir,
-                  int* atom_pair_A_m,
-                  int* atom_pair_B_n,
-                  int* atom_pair_lda,
-                  int* atom_pair_ldb,
-                  int* atom_pair_ldc,
-                  double** atom_pair_mat_A,
-                  double** atom_pair_mat_B,
-                  double** atom_pair_mat_C,
-                  int& atom_pair_num,
-                  int& max_m,
-                  int& max_n)
+                  int* num_psir)
+
 {
 
-    const int grid_index_ij = i * gridt.nby * gridt.nbzp + j * gridt.nbzp;
+   
     const int nwmax = ucell.nwmax;
-    bool* gpu_matrix_calc_flag = new bool[max_size * gridt.nbzp];
-    for (int i = 0; i < max_size * gridt.nbzp; i++)
-    {
-        gpu_matrix_calc_flag[i] = false;
-    }
     for (int z_index = 0; z_index < gridt.nbzp; z_index++)
     {
         int num_get_psi = 0;
@@ -114,10 +97,30 @@ void gtask_vlocal(const Grid_Technique& gridt,
         }
         num_psir[z_index] = num_get_psi;
     }
-
+}
+void alloc_mult_vlocal(const Grid_Technique& gridt,
+                        const UnitCell& ucell,
+                        std::vector<bool>& gpu_matrix_calc_flag,
+                        const int grid_index_ij,
+                        const int max_size,
+                        double* psir_ylm_left,
+                        double* psir_r,
+                        int* atom_pair_A_m,
+                        int* atom_pair_B_n,
+                        int* atom_pair_lda,
+                        int* atom_pair_ldb,
+                        int* atom_pair_ldc,
+                        double** atom_pair_mat_A,
+                        double** atom_pair_mat_B,
+                        double** atom_pair_mat_C,
+                        int& atom_pair_num,
+                        int& max_m,
+                        int& max_n)
+{
     atom_pair_num = 0;
     max_m = 0;
     max_n = 0;
+    const int nwmax = ucell.nwmax;
     for (int z_index = 0; z_index < gridt.nbzp; z_index++)
     {
         int grid_index = grid_index_ij + z_index;
@@ -195,7 +198,7 @@ void gtask_vlocal(const Grid_Technique& gridt,
         }
     }
 
-    delete[] gpu_matrix_calc_flag;
+    gpu_matrix_calc_flag.clear();
 }
 
 } // namespace GintKernel
