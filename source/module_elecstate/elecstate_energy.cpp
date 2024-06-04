@@ -20,7 +20,7 @@ void ElecState::cal_bandgap()
         return;
     }
     int nbands = GlobalV::NBANDS;
-    int nks = this->klist->nks;
+    int nks = this->klist->get_nks();
     double homo = this->ekb(0, 0);
     double lumo = this->ekb(0, nbands - 1);
     for (int ib = 0; ib < nbands; ib++)
@@ -51,7 +51,7 @@ void ElecState::cal_bandgap_updw()
         return;
     }
     int nbands = GlobalV::NBANDS;
-    int nks = this->klist->nks;
+    int nks = this->klist->get_nks();
     double homo_up = this->ekb(0, 0);
     double lumo_up = this->ekb(0, nbands - 1);
     double homo_dw = this->ekb(0, 0);

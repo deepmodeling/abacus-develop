@@ -8,7 +8,6 @@
 #include "module_md/nhchain.h"
 
 #define doublethreshold 1e-12
-
 /************************************************
  *  unit test of functions in nhchain.h
  ***********************************************/

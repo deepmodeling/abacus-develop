@@ -118,7 +118,49 @@ class K_Vectors
      */
     inline int getik_global(const int& ik) const;
 
-  private:
+    
+    int get_nks() const
+    {
+        return this->nks;
+    }
+
+    int get_nkstot() const
+    {
+        return this->nkstot;
+    }
+
+    int get_nkstot_ibz() const
+    {
+        return this->nkstot_ibz;
+    }
+
+    int get_nkstot_full() const
+    {
+        return this->nkstot_full;
+    }
+
+    void set_nks(int value) {
+        this->nks = value;
+    }
+
+    void set_nkstot(int value) {
+        this->nkstot = value;
+    }
+
+    void set_nkstot_ibz(int value) {
+        this->nkstot_ibz = value;
+    }
+
+    void set_nkstot_full(int value) {
+        this->nkstot_full = value;
+    }
+
+private:
+    int nks;						// number of k points in this pool(processor, up+dw)
+    int nkstot;						/// total number of k points, equal to nkstot_ibz after reducing k points
+    int nkstot_ibz;             /// number of k points in IBZ
+    int nkstot_full;    /// number of k points in full k mesh
+    
     int nspin;
     bool kc_done;
     bool kd_done;

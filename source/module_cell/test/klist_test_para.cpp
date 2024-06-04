@@ -185,15 +185,15 @@ TEST_F(KlistParaTest,Set)
 	Parallel_Global::init_pools();
 	ModuleSymmetry::Symmetry::symm_flag=1;
 	kv->set(symm,k_file,kv->nspin,GlobalC::ucell.G,GlobalC::ucell.latvec);
-	EXPECT_EQ(kv->nkstot,35);
+	EXPECT_EQ(kv->get_nkstot(),35);
 	EXPECT_TRUE(kv->kc_done);
 	EXPECT_TRUE(kv->kd_done);
 	if(GlobalV::NPROC == 4)
 	{
-		if(GlobalV::MY_RANK==0) EXPECT_EQ(kv->nks,18);
-		if(GlobalV::MY_RANK==1) EXPECT_EQ(kv->nks,18);
-		if(GlobalV::MY_RANK==2) EXPECT_EQ(kv->nks,17);
-		if(GlobalV::MY_RANK==3) EXPECT_EQ(kv->nks,17);
+		if(GlobalV::MY_RANK==0) EXPECT_EQ(kv->get_nks(),18);
+		if(GlobalV::MY_RANK==1) EXPECT_EQ(kv->get_nks(),18);
+		if(GlobalV::MY_RANK==2) EXPECT_EQ(kv->get_nks(),17);
+		if(GlobalV::MY_RANK==3) EXPECT_EQ(kv->get_nks(),17);
 	}
 	ClearUcell();
 	if(GlobalV::MY_RANK==0)
@@ -220,15 +220,15 @@ TEST_F(KlistParaTest,SetAfterVC)
 	Parallel_Global::init_pools();
 	ModuleSymmetry::Symmetry::symm_flag=1;
 	kv->set(symm,k_file,kv->nspin,GlobalC::ucell.G,GlobalC::ucell.latvec);
-	EXPECT_EQ(kv->nkstot,35);
+	EXPECT_EQ(kv->get_nkstot(),35);
 	EXPECT_TRUE(kv->kc_done);
 	EXPECT_TRUE(kv->kd_done);
 	if(GlobalV::NPROC == 4)
 	{
-		if(GlobalV::MY_RANK==0) EXPECT_EQ(kv->nks,35);
-		if(GlobalV::MY_RANK==1) EXPECT_EQ(kv->nks,35);
-		if(GlobalV::MY_RANK==2) EXPECT_EQ(kv->nks,35);
-		if(GlobalV::MY_RANK==3) EXPECT_EQ(kv->nks,35);
+		if(GlobalV::MY_RANK==0) EXPECT_EQ(kv->get_nks(),35);
+		if(GlobalV::MY_RANK==1) EXPECT_EQ(kv->get_nks(),35);
+		if(GlobalV::MY_RANK==2) EXPECT_EQ(kv->get_nks(),35);
+		if(GlobalV::MY_RANK==3) EXPECT_EQ(kv->get_nks(),35);
 	}
 	//call set_after_vc here
 	kv->kc_done = 0;

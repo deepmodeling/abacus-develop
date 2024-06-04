@@ -21,6 +21,8 @@
 101_PW_Coulomb
 102_PW_DA_davidson
 102_PW_BPCG
+102_PW_CG
+102_PW_DS_davsubspace
 102_PW_PINT_RKS
 102_PW_PINT_UKS
 103_PW_15_CF_CS_S1_smallg

@@ -65,7 +65,7 @@ void ModuleIO::output_HSR(const int& istep,
             } 
             else
             {
-                ik = kv.nks / 2;
+                ik = kv.get_nks() / 2;
                 GlobalV::CURRENT_SPIN = 1;
             }
             p_ham->refresh();
@@ -132,9 +132,9 @@ void ModuleIO::output_dHR(const int &istep,
 	}
     else if(nspin==2)
     {
-        for (int ik = 0; ik < kv.nks; ik++)
+        for (int ik = 0; ik < kv.get_nks(); ik++)
         {
-            if (ik == 0 || ik == kv.nks / 2)
+            if (ik == 0 || ik == kv.get_nks() / 2)
             {
                 if(nspin == 2)
                 {

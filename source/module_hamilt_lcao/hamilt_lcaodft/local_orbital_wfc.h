@@ -12,9 +12,20 @@ class Local_Orbital_wfc
 {
 public:
 
-	Local_Orbital_wfc();
+	Local_Orbital_wfc();    
 	~Local_Orbital_wfc();
-
+    // refactor new implementation: RAII
+    // a more look-looking name would be LocalOrbitalWfc, I suppose...
+    Local_Orbital_wfc(const int& nspin,
+                      const int& nks,
+                      const int& nbands,
+                      const int& nlocal,
+                      const int& gamma_only,
+                      const int& nb2d,
+                      const std::string& ks_solver,
+                      const std::string& readin_dir);
+    //
+    void initialize();
     ///=========================================
     /// grid wfc
     /// used to generate density matrix: LOC.DM_R,
@@ -25,7 +36,10 @@ public:
     std::complex<double>*** wfc_k_grid; // [NK, GlobalV::NBANDS, GlobalV::NLOCAL]
     std::complex<double>* wfc_k_grid2;  // [NK*GlobalV::NBANDS*GlobalV::NLOCAL]
 
+    // pointer to const Parallel_Orbitals object
     const Parallel_Orbitals* ParaV;
+    // pointer to const Grid_Technique object, although have no idea about what it is...
+    // the name of Grid_Technique should be changed to be more informative
     const Grid_Technique* gridt;
 
     /// read wavefunction coefficients: LOWF_*.txt
@@ -102,7 +116,7 @@ public:
     int nks;
 };
 
-#ifdef __MPI
+
 // the function should not be defined here!! mohan 2024-03-28
 template <typename T>
 int Local_Orbital_wfc::set_wfc_grid(int naroc[2],
@@ -116,6 +130,7 @@ int Local_Orbital_wfc::set_wfc_grid(int naroc[2],
                                     int myid,
                                     T** ctot)
 {
+#ifdef __MPI
     ModuleBase::TITLE(" Local_Orbital_wfc", "set_wfc_grid");
     if (!wfc && !ctot)
     {
@@ -142,8 +157,7 @@ int Local_Orbital_wfc::set_wfc_grid(int naroc[2],
 			}
         }
     }
+#endif
     return 0;
 }
-#endif
-
 #endif
