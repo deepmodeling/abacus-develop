@@ -77,7 +77,6 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
     const int cuda_block
         = std::min(64, (gridt.psir_size + cuda_threads - 1) / cuda_threads);
     int iter_num = 0;
-    int pipeline_index = 0;
     DensityMat denstiy_mat;
     frc_strs_iat_gbl f_s_iat_dev;
     grid_para para;
@@ -98,6 +97,7 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
     }
 
     /*compute the psi*/
+    #pragma omp parallel for num_threads(gridt.nstreams) private(para,f_s_iat) collapse(2)
     for (int i = 0; i < gridt.nbx; i++)
     {
         for (int j = 0; j < gridt.nby; j++)
@@ -113,7 +113,7 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
             dim3 grid_dot(cuda_block);
             dim3 block_dot(cuda_threads);
             
-            pipeline_index = iter_num % gridt.nstreams;
+            int pipeline_index = omp_get_thread_num();
             para_init(para, iter_num, nbz, pipeline_index,gridt);
             cal_init(f_s_iat,
                                pipeline_index,
