@@ -28,7 +28,7 @@ void ModuleIO::write_istate_info(const ModuleBase::matrix &ekb,const ModuleBase:
             std::ofstream ofsi2(ss.str().c_str(), std::ios::app);
             if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
             {
-                for (int ik = 0; ik < kv.nks; ik++)
+                for (int ik = 0; ik < kv.get_nks(); ik++)
                 {
 #ifdef __MPI
                     int ik_global = Pkpoints->startk_pool[ip] + ik + 1;
@@ -51,7 +51,7 @@ void ModuleIO::write_istate_info(const ModuleBase::matrix &ekb,const ModuleBase:
             }
             else
             {
-                for (int ik = 0; ik < kv.nks / 2; ik++)
+                for (int ik = 0; ik < kv.get_nks() / 2; ik++)
                 {
 #ifdef __MPI
                     int ik_global = Pkpoints->startk_pool[ip] + ik + 1;
@@ -68,8 +68,8 @@ void ModuleIO::write_istate_info(const ModuleBase::matrix &ekb,const ModuleBase:
                     {
                         ofsi2 << std::setw(6) << ib + 1 << std::setw(25)
                               << ekb(ik, ib) * ModuleBase::Ry_to_eV << std::setw(25) << wg(ik, ib)
-                              << std::setw(25) << ekb((ik + kv.nks / 2), ib) * ModuleBase::Ry_to_eV
-                              << std::setw(25) << wg(ik + kv.nks / 2, ib) << std::endl;
+                              << std::setw(25) << ekb((ik + kv.get_nks() / 2), ib) * ModuleBase::Ry_to_eV
+                              << std::setw(25) << wg(ik + kv.get_nks() / 2, ib) << std::endl;
                     }
                     ofsi2 << std::endl;
                     ofsi2 << std::endl;

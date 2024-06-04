@@ -1,5 +1,5 @@
 #include "spin_constrain.h"
-#include "module_base/formatter_fmt.h"
+#include "module_base/formatter.h"
 
 #include <cmath>
 
@@ -542,23 +542,16 @@ void SpinConstrain<FPTYPE, Device>::print_Mi(bool print)
     int nat = this->get_nat();
     if (print)
     {
-        formatter::Fmt fmt;
-        fmt.set_width(20);
-        fmt.set_precision(10);
-        fmt.set_fillChar(' ');
-        fmt.set_fixed(false);
-        fmt.set_right(true);
-        fmt.set_error(false);
         std::cout << "Total Magnetism (uB): " << std::endl;
         for (int iat = 0; iat < nat; ++iat)
         {
             if (this->nspin_ == 2)
             {
-                std::cout << "ATOM " << std::left << std::setw(6) << iat << fmt.format(Mi_[iat].z) << std::endl;
+                std::cout << FmtCore::format("ATOM %6d %20.10f\n", iat, Mi_[iat].z);
             }
             else if (this->nspin_ ==4)
             {
-                std::cout << "ATOM " << std::left << std::setw(6) << iat << fmt.format(Mi_[iat].x) << fmt.format(Mi_[iat].y) << fmt.format(Mi_[iat].z) << std::endl;
+                std::cout << FmtCore::format("ATOM %6d %20.10f %20.10f %20.10f\n", iat, Mi_[iat].x, Mi_[iat].y, Mi_[iat].z);
             }
         }
     }
@@ -570,23 +563,16 @@ void SpinConstrain<FPTYPE, Device>::print_Mag_Force()
 {
     this->check_atomCounts();
     int nat = this->get_nat();
-    formatter::Fmt fmt;
-    fmt.set_width(20);
-    fmt.set_precision(10);
-    fmt.set_fillChar(' ');
-    fmt.set_fixed(false);
-    fmt.set_right(true);
-    fmt.set_error(false);
     std::cout << "Final optimal lambda (Ry/uB): " << std::endl;
     for (int iat = 0; iat < nat; ++iat)
     {
         if (this->nspin_ == 2)
         {
-            std::cout << "ATOM " << std::left << std::setw(6) << iat << fmt.format(lambda_[iat].z) << std::endl;
+            std::cout << FmtCore::format("ATOM %6d %20.10f\n", iat, lambda_[iat].z);
         }
         else if (this->nspin_ ==4)
         {
-            std::cout << "ATOM " << std::left << std::setw(6) << iat << fmt.format(lambda_[iat].x) << fmt.format(lambda_[iat].y) << fmt.format(lambda_[iat].z) << std::endl;
+            std::cout << FmtCore::format("ATOM %6d %20.10f %20.10f %20.10f\n", iat, lambda_[iat].x, lambda_[iat].y, lambda_[iat].z);
         }
     }
     std::cout << "Magnetic force (Ry/uB): " << std::endl;
@@ -594,14 +580,14 @@ void SpinConstrain<FPTYPE, Device>::print_Mag_Force()
     {
         if (this->nspin_ == 2)
         {
-            std::cout << "ATOM " << std::left << std::setw(6) << iat << fmt.format(-lambda_[iat].z) << std::endl;
+            std::cout << FmtCore::format("ATOM %6d %20.10f\n", iat, -lambda_[iat].z);
         }
         else if (this->nspin_ ==4)
         {
-            std::cout << "ATOM " << std::left << std::setw(6) << iat << fmt.format(-lambda_[iat].x) << fmt.format(-lambda_[iat].y) << fmt.format(-lambda_[iat].z) << std::endl;
+            std::cout << FmtCore::format("ATOM %6d %20.10f %20.10f %20.10f\n", iat, -lambda_[iat].x, -lambda_[iat].y, -lambda_[iat].z);
         }
     }
 }
 
-template class SpinConstrain<std::complex<double>, psi::DEVICE_CPU>;
-template class SpinConstrain<double, psi::DEVICE_CPU>;
+template class SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>;
+template class SpinConstrain<double, base_device::DEVICE_CPU>;

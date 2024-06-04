@@ -53,25 +53,24 @@ struct elecstate_pw_op {
 };
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
-template <typename FPTYPE> 
-struct elecstate_pw_op<FPTYPE, psi::DEVICE_GPU> {
-  void operator()(
-    const psi::DEVICE_GPU* ctx,
-    const int& spin,
-    const int& nrxx,
-    const FPTYPE& w1,
-    FPTYPE** rho,
-    const std::complex<FPTYPE>* wfcr);
+template <typename FPTYPE>
+struct elecstate_pw_op<FPTYPE, base_device::DEVICE_GPU>
+{
+    void operator()(const base_device::DEVICE_GPU* ctx,
+                    const int& spin,
+                    const int& nrxx,
+                    const FPTYPE& w1,
+                    FPTYPE** rho,
+                    const std::complex<FPTYPE>* wfcr);
 
-  void operator()(
-    const psi::DEVICE_GPU* ctx,
-    const bool& DOMAG,
-    const bool& DOMAG_Z,
-    const int& nrxx,
-    const FPTYPE& w1,
-    FPTYPE** rho,
-    const std::complex<FPTYPE>* wfcr,
-    const std::complex<FPTYPE>* wfcr_another_spin);
+    void operator()(const base_device::DEVICE_GPU* ctx,
+                    const bool& DOMAG,
+                    const bool& DOMAG_Z,
+                    const int& nrxx,
+                    const FPTYPE& w1,
+                    FPTYPE** rho,
+                    const std::complex<FPTYPE>* wfcr,
+                    const std::complex<FPTYPE>* wfcr_another_spin);
 };
 #endif
 } // namespace elecstate

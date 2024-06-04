@@ -19,8 +19,6 @@
 
 Input INPUT;
 #define doublethreshold 1e-8
-Parallel_2D::Parallel_2D(){}
-Parallel_2D::~Parallel_2D(){}
 Parallel_Orbitals::Parallel_Orbitals()
 {
 }

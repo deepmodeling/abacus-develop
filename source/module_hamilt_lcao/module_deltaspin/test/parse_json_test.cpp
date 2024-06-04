@@ -14,7 +14,7 @@
  *  - SpinConstrain::get_ScData()
  *     get the map from element index to ScAtomData
  */
-
+#include "module_cell/klist.h"
 K_Vectors::K_Vectors(){}
 K_Vectors::~K_Vectors(){}
 
@@ -22,7 +22,7 @@ template <typename T>
 class SpinConstrainTest : public testing::Test
 {
   protected:
-    SpinConstrain<T, psi::DEVICE_CPU>& sc = SpinConstrain<T, psi::DEVICE_CPU>::getScInstance();
+    SpinConstrain<T, base_device::DEVICE_CPU>& sc = SpinConstrain<T, base_device::DEVICE_CPU>::getScInstance();
 };
 
 using MyTypes = ::testing::Types<double, std::complex<double>>;

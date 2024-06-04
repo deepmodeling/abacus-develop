@@ -74,22 +74,21 @@ __global__ void nonlocal_pw(
   }
 }
 
-template <typename FPTYPE> 
-void hamilt::nonlocal_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
-    const psi::DEVICE_GPU* dev,
-    const int& l1,
-    const int& l2,
-    const int& l3,
-    int& sum,
-    int& iat,
-    const int& spin,
-    const int& nkb,
-    const int& deeq_x,
-    const int& deeq_y,
-    const int& deeq_z,
-    const FPTYPE* deeq,
-    std::complex<FPTYPE>* ps,
-    const std::complex<FPTYPE>* becp)
+template <typename FPTYPE>
+void hamilt::nonlocal_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* dev,
+                                                                         const int& l1,
+                                                                         const int& l2,
+                                                                         const int& l3,
+                                                                         int& sum,
+                                                                         int& iat,
+                                                                         const int& spin,
+                                                                         const int& nkb,
+                                                                         const int& deeq_x,
+                                                                         const int& deeq_y,
+                                                                         const int& deeq_z,
+                                                                         const FPTYPE* deeq,
+                                                                         std::complex<FPTYPE>* ps,
+                                                                         const std::complex<FPTYPE>* becp)
 {
   // denghui implement 20221019
   // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -106,21 +105,20 @@ void hamilt::nonlocal_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
   sum += l1 * l3;
 }
 
-template <typename FPTYPE> 
-void hamilt::nonlocal_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
-    const psi::DEVICE_GPU* dev,
-    const int& l1,
-    const int& l2,
-    const int& l3,
-    int& sum,
-    int& iat,
-    const int& nkb,
-    const int& deeq_x,
-    const int& deeq_y,
-    const int& deeq_z,
-    const std::complex<FPTYPE>* deeq_nc,
-    std::complex<FPTYPE>* ps,
-    const std::complex<FPTYPE>* becp)
+template <typename FPTYPE>
+void hamilt::nonlocal_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* dev,
+                                                                         const int& l1,
+                                                                         const int& l2,
+                                                                         const int& l3,
+                                                                         int& sum,
+                                                                         int& iat,
+                                                                         const int& nkb,
+                                                                         const int& deeq_x,
+                                                                         const int& deeq_y,
+                                                                         const int& deeq_z,
+                                                                         const std::complex<FPTYPE>* deeq_nc,
+                                                                         std::complex<FPTYPE>* ps,
+                                                                         const std::complex<FPTYPE>* becp)
 {
   // denghui implement 20221109
   // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -139,7 +137,7 @@ void hamilt::nonlocal_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
   // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 }
 
-template struct nonlocal_pw_op<float, psi::DEVICE_GPU>;
-template struct nonlocal_pw_op<double, psi::DEVICE_GPU>;
+template struct nonlocal_pw_op<float, base_device::DEVICE_GPU>;
+template struct nonlocal_pw_op<double, base_device::DEVICE_GPU>;
 
 }  // namespace hamilt

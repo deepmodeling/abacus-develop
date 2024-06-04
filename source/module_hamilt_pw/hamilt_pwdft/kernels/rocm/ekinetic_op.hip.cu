@@ -26,16 +26,15 @@ __global__ void ekinetic_pw(
   }
 }
 
-template <typename FPTYPE> 
-void hamilt::ekinetic_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
-      const psi::DEVICE_GPU* dev,
-      const int& nband,
-      const int& npw,
-      const int& max_npw,
-      const FPTYPE& tpiba2,
-      const FPTYPE* gk2_ik,
-      std::complex<FPTYPE>* tmhpsi,
-      const std::complex<FPTYPE>* tmpsi_in)
+template <typename FPTYPE>
+void hamilt::ekinetic_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* dev,
+                                                                         const int& nband,
+                                                                         const int& npw,
+                                                                         const int& max_npw,
+                                                                         const FPTYPE& tpiba2,
+                                                                         const FPTYPE* gk2_ik,
+                                                                         std::complex<FPTYPE>* tmhpsi,
+                                                                         const std::complex<FPTYPE>* tmpsi_in)
 {
   // denghui implement 20221019
   // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -50,6 +49,6 @@ void hamilt::ekinetic_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
 }
 
 namespace hamilt{
-template struct ekinetic_pw_op<float, psi::DEVICE_GPU>;
-template struct ekinetic_pw_op<double, psi::DEVICE_GPU>;
+template struct ekinetic_pw_op<float, base_device::DEVICE_GPU>;
+template struct ekinetic_pw_op<double, base_device::DEVICE_GPU>;
 }

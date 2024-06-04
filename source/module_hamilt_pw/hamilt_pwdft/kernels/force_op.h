@@ -70,7 +70,7 @@ struct cal_force_nl_op {
     ///
     /// Output Parameters
     /// @param force - output forces
-    void operator()(const psi::DEVICE_CPU* ctx,
+    void operator()(const base_device::DEVICE_CPU* ctx,
                     const bool& nondiagonal,
                     const int& nbands_occ,
                     const int& wg_nc,
@@ -97,25 +97,26 @@ struct cal_force_nl_op {
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 template <typename FPTYPE>
-struct cal_vkb1_nl_op<FPTYPE, psi::DEVICE_GPU> {
-    void operator() (
-        const psi::DEVICE_GPU *ctx,
-        const int &nkb,
-        const int &npwx,
-        const int &npwk_max,
-        const int &vkb_nc,
-        const int &nbasis,
-        const int &ik,
-        const int &ipol,
-        const std::complex<FPTYPE> &NEG_IMAG_UNIT,
-        const std::complex<FPTYPE> *vkb,
-        const FPTYPE *gcar,
-        std::complex<FPTYPE> *vkb1);
+struct cal_vkb1_nl_op<FPTYPE, base_device::DEVICE_GPU>
+{
+    void operator()(const base_device::DEVICE_GPU* ctx,
+                    const int& nkb,
+                    const int& npwx,
+                    const int& npwk_max,
+                    const int& vkb_nc,
+                    const int& nbasis,
+                    const int& ik,
+                    const int& ipol,
+                    const std::complex<FPTYPE>& NEG_IMAG_UNIT,
+                    const std::complex<FPTYPE>* vkb,
+                    const FPTYPE* gcar,
+                    std::complex<FPTYPE>* vkb1);
 };
 
 template <typename FPTYPE>
-struct cal_force_nl_op<FPTYPE, psi::DEVICE_GPU> {
-    void operator()(const psi::DEVICE_GPU* ctx,
+struct cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>
+{
+    void operator()(const base_device::DEVICE_GPU* ctx,
                     const bool& nondiagonal,
                     const int& nbands_occ,
                     const int& wg_nc,

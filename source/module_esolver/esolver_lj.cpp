@@ -7,7 +7,7 @@
 namespace ModuleESolver
 {
 
-    void ESolver_LJ::init(Input& inp, UnitCell& ucell)
+    void ESolver_LJ::before_all_runners(Input& inp, UnitCell& ucell)
     {
         ucell_ = &ucell;
         lj_potential = 0;
@@ -24,7 +24,7 @@ namespace ModuleESolver
         lj_sigma *= ModuleBase::ANGSTROM_AU;
     }
 
-    void ESolver_LJ::run(const int istep, UnitCell& ucell)
+    void ESolver_LJ::runner(const int istep, UnitCell& ucell)
     {
         Grid_Driver grid_neigh(GlobalV::test_deconstructor, GlobalV::test_grid_driver, GlobalV::test_grid);
         atom_arrange::search(
@@ -35,7 +35,7 @@ namespace ModuleESolver
             GlobalV::SEARCH_RADIUS,
             GlobalV::test_atom_input);
 
-        double distance;
+        double distance=0.0;
         int index = 0;
 
         // Important! potential, force, virial must be zero per step
@@ -119,7 +119,7 @@ namespace ModuleESolver
         ModuleIO::print_stress("TOTAL-STRESS", stress, true, false);
     }
 
-    void ESolver_LJ::post_process(void)
+    void ESolver_LJ::after_all_runners(void)
     {
         GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
         GlobalV::ofs_running << std::setprecision(16);

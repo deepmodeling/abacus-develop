@@ -9,7 +9,7 @@
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_cell/module_neighbor/sltk_atom_arrange.h"
 #include "klist.h"
-#include "parallel_orbitals.h"
+//#include "parallel_orbitals.h"
 
 #include "../LCAO_deepks.h"
 
@@ -95,8 +95,6 @@ public:
 	void check_gvx(void);
 
 	void check_edelta(void);
-
-	void check_v_delta(void);
 
 	void check_e_deltabands(void);
 	void check_f_delta(void);

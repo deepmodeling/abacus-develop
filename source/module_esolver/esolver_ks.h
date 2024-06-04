@@ -16,11 +16,10 @@
 #include "module_io/cal_test.h"
 #include "module_io/output_potential.h"
 #include "module_io/output_rho.h"
-
 namespace ModuleESolver
 {
 
-template<typename T, typename Device = psi::DEVICE_CPU>
+template <typename T, typename Device = base_device::DEVICE_CPU>
 class ESolver_KS : public ESolver_FP
 {
 	public:
@@ -43,11 +42,11 @@ class ESolver_KS : public ESolver_FP
 
 		int out_freq_elec;// frequency for output
 
-		virtual void init(Input& inp, UnitCell& cell) override;
+		virtual void before_all_runners(Input& inp, UnitCell& cell) override;
 
 		virtual void init_after_vc(Input& inp, UnitCell& cell) override;    // liuyu add 2023-03-09
 
-		virtual void run(const int istep, UnitCell& cell) override;
+		virtual void runner(const int istep, UnitCell& cell) override;
 
 		// calculate electron density from a specific Hamiltonian
 		virtual void hamilt2density(const int istep, const int iter, const double ethr);
@@ -56,7 +55,13 @@ class ESolver_KS : public ESolver_FP
 		virtual void hamilt2estates(const double ethr){};
 
 		// get current step of Ionic simulation
-		virtual int getniter() override;
+		virtual int get_niter() override;
+
+		// get maxniter used in current scf
+		virtual int get_maxniter() override;
+
+		// get conv_elec used in current scf
+		virtual bool get_conv_elec() override;
 
 	protected:
 		//! Something to do before SCF iterations.
@@ -94,7 +99,6 @@ class ESolver_KS : public ESolver_FP
 				const double dkin, 
 				const double duration, 
 				const double ethr);
-
 
 		// Write the headline in the running_log file
 		// "PW/LCAO" ALGORITHM --------------- ION=   1  ELEC=   1--------------------------------
@@ -134,7 +138,6 @@ class ESolver_KS : public ESolver_FP
 		std::string basisname; //PW or LCAO
 
 		void print_wfcfft(Input& inp, std::ofstream &ofs);
-};
-
+};	
 } // end of namespace
 #endif

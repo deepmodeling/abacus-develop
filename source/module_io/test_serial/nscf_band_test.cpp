@@ -26,6 +26,7 @@ K_Vectors::~K_Vectors()
 {
 }
 
+
 /************************************************
  *  unit test of nscf_band
  ***********************************************/
@@ -98,6 +99,6 @@ TEST_F(BandTest, nscf_band)
     std::ifstream ifs(out_band_dir);
     std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
     ASSERT_TRUE(ifs.is_open());
-    EXPECT_THAT(str, testing::HasSubstr("1   0.00000000 -27.21139600 -13.60569800   0.00000000"));
+    EXPECT_THAT(str, testing::HasSubstr("   1 0.00000000 -27.21139600 -13.60569800 0.00000000"));
     ifs.close();
 }

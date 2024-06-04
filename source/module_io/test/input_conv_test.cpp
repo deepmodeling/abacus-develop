@@ -2,6 +2,7 @@
 #include "gmock/gmock.h"
 #include "module_io/input_conv.h"
 #include "module_base/global_variable.h"
+#include "module_hsolver/hsolver_pw.h"
 #include "for_testing_input_conv.h"
 
 /************************************************
@@ -88,7 +89,9 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_EQ(GlobalV::DIAGO_PROC,4);
 	EXPECT_EQ(GlobalV::PW_DIAG_NMAX,50);
 	EXPECT_EQ(GlobalV::DIAGO_CG_PREC,1);
-	EXPECT_EQ(GlobalV::PW_DIAG_NDIM,4);
+    EXPECT_EQ(GlobalV::PW_DIAG_NDIM, 4);
+    EXPECT_EQ(hsolver::HSolverPW<std::complex<float>>::diago_full_acc, false);
+    EXPECT_EQ(hsolver::HSolverPW<std::complex<double>>::diago_full_acc, false);
 	EXPECT_DOUBLE_EQ(GlobalV::PW_DIAG_THR,0.01);
 	EXPECT_EQ(GlobalV::NB2D,0);
 	EXPECT_EQ(GlobalV::NURSE,0);
@@ -154,6 +157,9 @@ TEST_F(InputConvTest, Conv)
     EXPECT_EQ(hsolver::HSolverLCAO<double>::out_mat_dh, INPUT.out_mat_dh);
     EXPECT_EQ(hsolver::HSolverLCAO<std::complex<double>>::out_mat_dh, INPUT.out_mat_dh);
     EXPECT_EQ(GlobalV::out_mat_xc, false);
+	EXPECT_EQ(GlobalV::out_hr_npz, false);
+	EXPECT_EQ(GlobalV::out_dm_npz, false);
+	EXPECT_EQ(GlobalV::dm_to_rho, false);
     EXPECT_EQ(GlobalV::out_interval, 1);
     EXPECT_EQ(elecstate::ElecStateLCAO<double>::out_wfc_lcao, false);
     EXPECT_EQ(berryphase::berry_phase_flag, false);
@@ -186,6 +192,8 @@ TEST_F(InputConvTest, Conv)
     EXPECT_EQ(GlobalV::sc_file, "sc.json");
 	EXPECT_EQ(GlobalV::MIXING_RESTART,0.0);
 	EXPECT_EQ(GlobalV::MIXING_DMR,false);
+
+	EXPECT_EQ(GlobalV::NUM_STREAM,4);
 }
 
 TEST_F(InputConvTest, ConvRelax)
@@ -261,13 +269,7 @@ TEST_F(InputConvTest, ConvRelax)
 		testing::internal::CaptureStdout();
 		EXPECT_EXIT(Input_Conv::Convert(), ::testing::ExitedWithCode(0),"");
 		output2 = testing::internal::GetCapturedStdout();
-		EXPECT_THAT(output2,testing::HasSubstr("INPUT device setting does not match the request!"
-			"\n Input device = gpu"
-			"\n Input basis_type = pw"
-			"\n Input ks_solver = cg"
-			"\n Compile setting = host"
-			"\n Environment device_num = -1"
-			"\n"));
+		EXPECT_THAT(output2,testing::HasSubstr("The GPU is not supported in this build!"));
   }
 
 TEST_F(InputConvTest, dftplus)
@@ -521,6 +523,40 @@ TEST_F(InputConvTest, ReadTdEfieldTest)
     EXPECT_EQ(elecstate::H_TDDFT_pw::heavi_t0[0], 100);
     EXPECT_NEAR(elecstate::H_TDDFT_pw::heavi_amp[0], 1.00 * ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV, 1e-8);
 }
+
+#ifdef __PEXSI
+TEST_F(InputConvTest, PEXSI)
+{
+	INPUT.Default();
+	std::string input_file = "./support/INPUT";
+	INPUT.Read(input_file);
+	Input_Conv::Convert();
+	EXPECT_EQ(pexsi::PEXSI_Solver::pexsi_npole, 40);
+	EXPECT_TRUE(pexsi::PEXSI_Solver::pexsi_inertia);
+	EXPECT_EQ(pexsi::PEXSI_Solver::pexsi_nmax, 80);
+	EXPECT_TRUE(pexsi::PEXSI_Solver::pexsi_comm);
+	EXPECT_TRUE(pexsi::PEXSI_Solver::pexsi_storage);
+	EXPECT_EQ(pexsi::PEXSI_Solver::pexsi_ordering, 0);
+	EXPECT_EQ(pexsi::PEXSI_Solver::pexsi_row_ordering, 1);
+	EXPECT_EQ(pexsi::PEXSI_Solver::pexsi_nproc, 1);
+	EXPECT_TRUE(pexsi::PEXSI_Solver::pexsi_symm);
+	EXPECT_FALSE(pexsi::PEXSI_Solver::pexsi_trans);
+	EXPECT_EQ(pexsi::PEXSI_Solver::pexsi_method, 1);
+	EXPECT_EQ(pexsi::PEXSI_Solver::pexsi_nproc_pole, 1);
+	EXPECT_DOUBLE_EQ(pexsi::PEXSI_Solver::pexsi_temp, 0.015);
+	EXPECT_DOUBLE_EQ(pexsi::PEXSI_Solver::pexsi_gap, 0);
+	EXPECT_DOUBLE_EQ(pexsi::PEXSI_Solver::pexsi_delta_e, 20);
+	EXPECT_DOUBLE_EQ(pexsi::PEXSI_Solver::pexsi_mu_lower, -10);
+	EXPECT_DOUBLE_EQ(pexsi::PEXSI_Solver::pexsi_mu_upper, 10);
+	EXPECT_DOUBLE_EQ(pexsi::PEXSI_Solver::pexsi_mu, 0);
+	EXPECT_DOUBLE_EQ(pexsi::PEXSI_Solver::pexsi_mu_thr, 0.05);
+	EXPECT_DOUBLE_EQ(pexsi::PEXSI_Solver::pexsi_mu_expand, 0.3);
+	EXPECT_DOUBLE_EQ(pexsi::PEXSI_Solver::pexsi_mu_guard, 0.2);
+	EXPECT_DOUBLE_EQ(pexsi::PEXSI_Solver::pexsi_elec_thr, 0.001);
+	EXPECT_DOUBLE_EQ(pexsi::PEXSI_Solver::pexsi_zero_thr, 1e-10);
+}
+#endif
+
 #endif
 
 #undef private

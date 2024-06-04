@@ -14,7 +14,7 @@
 namespace hsolver
 {
 
-template<typename T, typename Device = psi::DEVICE_CPU>
+template <typename T, typename Device = base_device::DEVICE_CPU>
 class HSolver
 {
   private:

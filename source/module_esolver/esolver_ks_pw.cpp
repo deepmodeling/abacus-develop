@@ -36,7 +36,7 @@
 #include "module_io/to_wannier90_pw.h"
 #include "module_io/winput.h"
 #include "module_io/write_wfc_r.h"
-#include "module_psi/kernels/device.h"
+#include "module_base/module_device/device.h"
 //---------------------------------------------------
 #include "module_psi/psi_initializer_atomic.h"
 #include "module_psi/psi_initializer_nao.h"
@@ -58,9 +58,9 @@ ESolver_KS_PW<T, Device>::ESolver_KS_PW()
 {
     this->classname = "ESolver_KS_PW";
     this->basisname = "PW";
-    this->device = psi::device::get_device_type<Device>(this->ctx);
+    this->device = base_device::get_device_type<Device>(this->ctx);
 #if ((defined __CUDA) || (defined __ROCM))
-    if (this->device == psi::GpuDevice)
+    if (this->device == base_device::GpuDevice)
     {
         hsolver::createGpuBlasHandle();
         hsolver::createGpuSolverHandle();
@@ -90,7 +90,7 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
         delete reinterpret_cast<hamilt::HamiltPW<T, Device>*>(this->p_hamilt);
         this->p_hamilt = nullptr;
     }
-    if (this->device == psi::GpuDevice)
+    if (this->device == base_device::GpuDevice)
     {
 #if defined(__CUDA) || defined(__ROCM)
         hsolver::destoryBLAShandle();
@@ -157,7 +157,7 @@ void ESolver_KS_PW<T, Device>::Init_GlobalC(Input& inp, UnitCell& cell)
         // old method explicitly requires variables such as total number of kpoints, number
         // of bands, number of G-vectors, and so on. Comparatively in new method, these 
         // variables are imported in function called initialize.
-        this->psi = this->wf.allocate(this->kv.nkstot, this->kv.nks, this->kv.ngk.data(), this->pw_wfc->npwk_max);
+        this->psi = this->wf.allocate(this->kv.get_nkstot(), this->kv.get_nks(), this->kv.ngk.data(), this->pw_wfc->npwk_max);
     }
     // ---------------------------------------------------------------------------------
 
@@ -220,17 +220,18 @@ void ESolver_KS_PW<T, Device>::Init_GlobalC(Input& inp, UnitCell& cell)
 
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::init(Input& inp, UnitCell& ucell)
+void ESolver_KS_PW<T, Device>::before_all_runners(Input& inp, UnitCell& ucell)
 {
-    ESolver_KS<T, Device>::init(inp, ucell);
+    // 1) call before_all_runners() of ESolver_KS
+    ESolver_KS<T, Device>::before_all_runners(inp, ucell);
 
-    // init HSolver
+    // 2) initialize HSolver
     if (this->phsol == nullptr)
     {
         this->phsol = new hsolver::HSolverPW<T, Device>(this->pw_wfc, &this->wf);
     }
 
-    // init ElecState,
+    // 3) initialize ElecState,
     if (this->pelec == nullptr)
     {
         this->pelec = new elecstate::ElecStatePW<T, Device>(this->pw_wfc,
@@ -298,7 +299,7 @@ void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
 		this->pw_wfc->initparameters(
 				false, 
 				inp.ecutwfc, 
-				this->kv.nks, 
+				this->kv.get_nks(), 
 				this->kv.kvec_d.data());
 
 #ifdef __MPI
@@ -311,7 +312,7 @@ void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
 
         this->pw_wfc->setuptransform();
 
-        for (int ik = 0; ik < this->kv.nks; ++ik)
+        for (int ik = 0; ik < this->kv.get_nks(); ++ik)
         {
             this->kv.ngk[ik] = this->pw_wfc->npwk[ik];
         }
@@ -360,7 +361,7 @@ void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
                                 this->pw_wfc->ny,
                                 this->pw_wfc->nz);
 
-        this->pw_wfc->initparameters(false, INPUT.ecutwfc, this->kv.nks, this->kv.kvec_d.data());
+        this->pw_wfc->initparameters(false, INPUT.ecutwfc, this->kv.get_nks(), this->kv.kvec_d.data());
 
         this->pw_wfc->collect_local_pw(inp.erf_ecut, inp.erf_height, inp.erf_sigma);
         
@@ -378,7 +379,7 @@ void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
 		}
         else // old initialization method, used in EXX calculation
         {
-            this->wf.init_after_vc(this->kv.nks); // reallocate wanf2, the planewave expansion of lcao
+            this->wf.init_after_vc(this->kv.get_nks()); // reallocate wanf2, the planewave expansion of lcao
             this->wf.init_at_1(&this->sf); // re-calculate tab_at, the overlap matrix between atomic pswfc and jlq
         }
     }
@@ -563,7 +564,7 @@ void ESolver_KS_PW<T, Device>::others(const int istep)
                              INPUT.bessel_descriptor_lmax,
                              INPUT.bessel_descriptor_rcut,
                              INPUT.bessel_descriptor_tolerence,
-                             this->kv.nks);
+                             this->kv.get_nks());
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "GENERATE DESCRIPTOR FOR DEEPKS");
         return;
     }
@@ -1015,7 +1016,7 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep)
         this->pelec->print_eigenvalue(GlobalV::ofs_running);
     }
 
-    if (this->device == psi::GpuDevice)
+    if (this->device == base_device::GpuDevice)
     {
         castmem_2d_d2h_op()(this->psi[0].get_device(),
                             this->kspw_psi[0].get_device(),
@@ -1082,7 +1083,7 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep)
                 rho_band[i] = 0.0;
             }
 
-            for (int ik = 0; ik < this->kv.nks; ik++)
+            for (int ik = 0; ik < this->kv.get_nks(); ik++)
             {
                 this->psi->fix_k(ik);
                 this->pw_wfc->recip_to_real(this->ctx, &psi[0](ib, 0), wfcr, ik);
@@ -1196,7 +1197,7 @@ void ESolver_KS_PW<T, Device>::cal_stress(ModuleBase::matrix& stress)
 
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::post_process(void)
+void ESolver_KS_PW<T, Device>::after_all_runners(void)
 {
 
     GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
@@ -1288,7 +1289,7 @@ void ESolver_KS_PW<T, Device>::post_process(void)
                 GlobalV::BASIS_TYPE="pw";
                 std::cout << " NLOCAL = " << GlobalV::NLOCAL << std::endl;
 
-                for (int ik=0; ik<this->kv.nks; ik++)
+                for (int ik=0; ik<this->kv.get_nks(); ik++)
                 {
                     this->wf.wanf2[ik].create(GlobalV::NLOCAL, this->wf.npwx);
                     if(GlobalV::BASIS_TYPE=="pw")
@@ -1313,7 +1314,7 @@ void ESolver_KS_PW<T, Device>::post_process(void)
             if(INPUT.bessel_nao_rcuts.size() == 1)
             {
                 Numerical_Basis numerical_basis;
-                numerical_basis.output_overlap(this->psi[0], this->sf, this->kv, this->pw_wfc);
+                numerical_basis.output_overlap(this->psi[0], this->sf, this->kv, this->pw_wfc, GlobalC::ucell);
             }
             else
             {
@@ -1338,7 +1339,7 @@ void ESolver_KS_PW<T, Device>::post_process(void)
                         Will be refactored in the future.
                     */
                     Numerical_Basis numerical_basis;
-                    numerical_basis.output_overlap(this->psi[0], this->sf, this->kv, this->pw_wfc);
+                    numerical_basis.output_overlap(this->psi[0], this->sf, this->kv, this->pw_wfc, GlobalC::ucell);
 					std::string old_fname_header = winput::spillage_outdir 
 						+ "/" 
 						+ "orb_matrix.";
@@ -1428,7 +1429,7 @@ void ESolver_KS_PW<T, Device>::nscf(void)
     GlobalV::ofs_running << "\n End of Band Structure Calculation \n" << std::endl;
 
     //! Print out band energies and weights
-    for (int ik = 0; ik < this->kv.nks; ik++)
+    for (int ik = 0; ik < this->kv.get_nks(); ik++)
     {
         if (GlobalV::NSPIN == 2)
         {
@@ -1436,14 +1437,14 @@ void ESolver_KS_PW<T, Device>::nscf(void)
 			{
 				GlobalV::ofs_running << " spin up :" << std::endl;
 			}
-			if (ik == (this->kv.nks / 2))
+			if (ik == (this->kv.get_nks() / 2))
 			{
 				GlobalV::ofs_running << " spin down :" << std::endl;
 			}
         }
 
 		GlobalV::ofs_running << " k-points" << ik + 1 
-			<< "(" << this->kv.nkstot 
+			<< "(" << this->kv.get_nkstot() 
 			<< "): " << this->kv.kvec_c[ik].x 
 			<< " "
 			<< this->kv.kvec_c[ik].y 
@@ -1456,7 +1457,7 @@ void ESolver_KS_PW<T, Device>::nscf(void)
 				<< "_final_band " 
 				<< ib + 1 << " "
 				<< this->pelec->ekb(ik, ib) * ModuleBase::Ry_to_eV << " "
-				<< this->pelec->wg(ik, ib) * this->kv.nks 
+				<< this->pelec->wg(ik, ib) * this->kv.get_nks() 
 				<< std::endl;
 		}
         GlobalV::ofs_running << std::endl;
@@ -1526,10 +1527,10 @@ void ESolver_KS_PW<T, Device>::nscf(void)
     return;
 }
 
-template class ESolver_KS_PW<std::complex<float>, psi::DEVICE_CPU>;
-template class ESolver_KS_PW<std::complex<double>, psi::DEVICE_CPU>;
+template class ESolver_KS_PW<std::complex<float>, base_device::DEVICE_CPU>;
+template class ESolver_KS_PW<std::complex<double>, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class ESolver_KS_PW<std::complex<float>, psi::DEVICE_GPU>;
-template class ESolver_KS_PW<std::complex<double>, psi::DEVICE_GPU>;
+template class ESolver_KS_PW<std::complex<float>, base_device::DEVICE_GPU>;
+template class ESolver_KS_PW<std::complex<double>, base_device::DEVICE_GPU>;
 #endif
 } // namespace ModuleESolver

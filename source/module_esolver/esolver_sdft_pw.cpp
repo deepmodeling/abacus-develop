@@ -36,12 +36,12 @@ ESolver_SDFT_PW::~ESolver_SDFT_PW()
 {
 }
 
-void ESolver_SDFT_PW::init(Input& inp, UnitCell& ucell)
+void ESolver_SDFT_PW::before_all_runners(Input& inp, UnitCell& ucell)
 {
     this->nche_sto = inp.nche_sto;
     this->method_sto = inp.method_sto;
 
-    ESolver_KS::init(inp, ucell);
+    ESolver_KS::before_all_runners(inp, ucell);
 
     this->pelec = new elecstate::ElecStatePW_SDFT(pw_wfc,
                                                   &(chr),
@@ -97,13 +97,13 @@ void ESolver_SDFT_PW::init(Input& inp, UnitCell& ucell)
 
     size_t size = stowf.chi0->size();
 
-    this->stowf.shchi = new psi::Psi<std::complex<double>>(kv.nks, stowf.nchip_max, wf.npwx, kv.ngk.data());
+    this->stowf.shchi = new psi::Psi<std::complex<double>>(kv.get_nks(), stowf.nchip_max, wf.npwx, kv.ngk.data());
 
     ModuleBase::Memory::record("SDFT::shchi", size * sizeof(std::complex<double>));
 
     if (GlobalV::NBANDS > 0)
     {
-        this->stowf.chiortho = new psi::Psi<std::complex<double>>(kv.nks, stowf.nchip_max, wf.npwx, kv.ngk.data());
+        this->stowf.chiortho = new psi::Psi<std::complex<double>>(kv.get_nks(), stowf.nchip_max, wf.npwx, kv.ngk.data());
         ModuleBase::Memory::record("SDFT::chiortho", size * sizeof(std::complex<double>));
     }
 
@@ -260,7 +260,7 @@ void ESolver_SDFT_PW::cal_stress(ModuleBase::matrix& stress)
 }
 
 
-void ESolver_SDFT_PW::post_process(void)
+void ESolver_SDFT_PW::after_all_runners(void)
 {
 
     GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;

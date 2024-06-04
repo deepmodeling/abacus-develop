@@ -116,7 +116,7 @@ void ESolver_SDFT_PW::check_che(const int nche_in, const double try_emin, const 
     //      Convergence test
     //------------------------------
     bool change = false;
-    const int nk = kv.nks;
+    const int nk = kv.get_nks();
     ModuleBase::Chebyshev<double> chetest(nche_in);
     Stochastic_Iter& stoiter = ((hsolver::HSolverPW_SDFT*)phsol)->stoiter;
     Stochastic_hchi& stohchi = stoiter.stohchi;
@@ -672,7 +672,7 @@ void ESolver_SDFT_PW::sKG(const int nche_KG,
     assert(nw >= 1);
     assert(nt >= 1);
     const int ndim = 3;
-    const int nk = kv.nks;
+    const int nk = kv.get_nks();
     const int npwx = wf.npwx;
     const double tpiba = GlobalC::ucell.tpiba;
     psi::Psi<std::complex<double>>* stopsi;
@@ -1233,7 +1233,7 @@ void ESolver_SDFT_PW::caldos(const int nche_dos,
     std::cout << "###Calculating Dos....###" << std::endl;
     std::cout << "=========================" << std::endl;
     ModuleBase::Chebyshev<double> che(nche_dos);
-    const int nk = kv.nks;
+    const int nk = kv.get_nks();
     Stochastic_Iter& stoiter = ((hsolver::HSolverPW_SDFT*)phsol)->stoiter;
     Stochastic_hchi& stohchi = stoiter.stohchi;
     const int npwx = wf.npwx;

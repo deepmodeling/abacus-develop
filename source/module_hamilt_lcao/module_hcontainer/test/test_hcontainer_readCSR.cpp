@@ -73,7 +73,7 @@ TEST_F(ReadHContainerTest, ReadAndOutputHContainer)
     // construct paraV
     Parallel_Orbitals paraV;
     std::ofstream ofs("test.log");
-    paraV.set_global2local(nlocal, nlocal, false, ofs);
+    paraV.set_serial(nlocal, nlocal);
     ofs.close();
     remove("test.log");
     paraV.set_atomic_trace(ucell->get_iat2iwt(), ucell->nat, nlocal);

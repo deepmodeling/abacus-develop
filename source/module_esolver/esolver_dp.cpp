@@ -25,7 +25,7 @@
 namespace ModuleESolver
 {
 
-    void ESolver_DP::init(Input& inp, UnitCell& ucell)
+    void ESolver_DP::before_all_runners(Input& inp, UnitCell& ucell)
     {
         ucell_ = &ucell;
         dp_potential = 0;
@@ -59,10 +59,10 @@ namespace ModuleESolver
         assert(ucell.nat == iat);
     }
 
-    void ESolver_DP::run(const int istep, UnitCell& ucell)
+    void ESolver_DP::runner(const int istep, UnitCell& ucell)
     {
-        ModuleBase::TITLE("ESolver_DP", "Run");
-        ModuleBase::timer::tick("ESolver_DP", "Run");
+        ModuleBase::TITLE("ESolver_DP", "runner");
+        ModuleBase::timer::tick("ESolver_DP", "runner");
 
         cell[0] = ucell.latvec.e11 * ucell.lat0_angstrom;
         cell[1] = ucell.latvec.e12 * ucell.lat0_angstrom;
@@ -119,7 +119,7 @@ namespace ModuleESolver
 #else
         ModuleBase::WARNING_QUIT("ESolver_DP", "Please recompile with -D__DPMD");
 #endif
-        ModuleBase::timer::tick("ESolver_DP", "Run");
+        ModuleBase::timer::tick("ESolver_DP", "runner");
     }
 
     double ESolver_DP::cal_energy()
@@ -148,7 +148,7 @@ namespace ModuleESolver
         ModuleIO::print_stress("TOTAL-STRESS", stress, true, false);
     }
 
-    void ESolver_DP::post_process(void)
+    void ESolver_DP::after_all_runners(void)
     {
         GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
         GlobalV::ofs_running << std::setprecision(16);

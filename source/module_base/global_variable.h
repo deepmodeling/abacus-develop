@@ -47,6 +47,9 @@ extern int CURRENT_K; // 8
 extern int CAL_FORCE; // 8.1
 extern double FORCE_THR; // 8.2
 extern bool CAL_STRESS; // 8.25 calcualte the stress
+
+extern int NUM_STREAM;
+
 extern double PRESS1;
 extern double PRESS2;
 extern double PRESS3;
@@ -228,6 +231,8 @@ extern bool
     deepks_scf; //(need libnpy and libtorch) if set 1, a trained model would be needed to cal V_delta and F_delta
 extern bool deepks_bandgap; // for bandgap label. QO added 2021-12-15
 
+extern bool deepks_equiv; //whether to use equviariant version of DeePKS
+
 extern bool deepks_setorb;
 
 extern bool deepks_out_unittest; // if set 1, prints intermediate quantities that shall be used for making unit test
@@ -313,6 +318,9 @@ extern bool out_bandgap;
 extern int out_interval;
 
 extern bool out_mat_xc; // output Vxc in KS-wfc representation for GW calculation
+extern bool out_hr_npz; //writes h(r) in npz format
+extern bool out_dm_npz; //writes dm(r) in npz format
+extern bool dm_to_rho; //reads in dm(r) and creates density
 
 // Deltaspin related
 extern bool sc_mag_switch; // 0: no deltaspin; 1: constrain atomic magnetic moments;
