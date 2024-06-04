@@ -16,6 +16,62 @@ typedef hamilt::MatrixBlock<std::complex<double>> matcd;
 
 namespace hsolver
 {
+    #ifdef __MPI
+    template<>
+    void DiagoElpa<double>::set_comm_num(int cnum){
+        ifsetcomm=cnum;
+    }
+    template<>
+    void DiagoElpa<std::complex<double>>::set_comm_num(int cnum){
+        ifsetcomm=cnum;
+    }
+    template<>
+    MPI_Comm DiagoElpa<double>::setmpicomm(){
+        if(this->ifsetcomm==-1) return MPI_COMM_WORLD;
+        else{
+            int _num;
+            MPI_Comm_size(MPI_COMM_WORLD,&_num);
+            if(ifsetcomm>_num||ifsetcomm<=0) return MPI_COMM_WORLD;
+            else{
+                lastmpinum++;
+                int *_ranks=new int[ifsetcomm];
+                for(int i=0;i<ifsetcomm;i++){
+                    _ranks[i]=(lastmpinum+i)%_num;
+                }
+                MPI_Group _tempgroup,_oldgroup;
+                MPI_Comm_group(MPI_COMM_WORLD,&_oldgroup);
+                MPI_Group_incl(_oldgroup,ifsetcomm,_ranks,&_tempgroup);
+                MPI_Comm _new_comm;
+                MPI_Comm_create(MPI_COMM_WORLD,_tempgroup,&_new_comm);
+                delete[] _ranks;
+                return _new_comm;
+            }
+        }
+    }
+    template<>
+    MPI_Comm DiagoElpa<std::complex<double>>::setmpicomm(){
+        if(this->ifsetcomm==-1) return MPI_COMM_WORLD;
+        else{
+            int _num;
+            MPI_Comm_size(MPI_COMM_WORLD,&_num);
+            if(ifsetcomm>_num||ifsetcomm<=0) return MPI_COMM_WORLD;
+            else{
+                lastmpinum++;
+                int *_ranks=new int[ifsetcomm];
+                for(int i=0;i<ifsetcomm;i++){
+                    _ranks[i]=(lastmpinum+i)%_num;
+                }
+                MPI_Group _tempgroup,_oldgroup;
+                MPI_Comm_group(MPI_COMM_WORLD,&_oldgroup);
+                MPI_Group_incl(_oldgroup,ifsetcomm,_ranks,&_tempgroup);
+                MPI_Comm _new_comm;
+                MPI_Comm_create(MPI_COMM_WORLD,_tempgroup,&_new_comm);
+                delete[] _ranks;
+                return _new_comm;
+            }
+        }
+    }
+    #endif
     template<>
     void DiagoElpa<std::complex<double>>::diag(hamilt::Hamilt<std::complex<double>>* phm_in, psi::Psi<std::complex<double>>& psi, Real* eigenvalue_in)
 {
@@ -27,7 +83,7 @@ namespace hsolver
     std::vector<double> eigen(GlobalV::NLOCAL, 0.0);
 
     bool isReal=false;
-    const MPI_Comm COMM_DIAG=MPI_COMM_WORLD; // use all processes
+    const MPI_Comm COMM_DIAG=setmpicomm(); // set mpi_comm needed
     ELPA_Solver es((const bool)isReal, COMM_DIAG, (const int)GlobalV::NBANDS, (const int)h_mat.row, (const int)h_mat.col, (const int*)h_mat.desc);
     this->DecomposedState=0; // for k pointer, the decomposed s_mat can not be reused
     ModuleBase::timer::tick("DiagoElpa", "elpa_solve");
@@ -53,7 +109,7 @@ namespace hsolver
     std::vector<double> eigen(GlobalV::NLOCAL, 0.0);
 
     bool isReal=true;
-    MPI_Comm COMM_DIAG=MPI_COMM_WORLD; // use all processes
+    MPI_Comm COMM_DIAG=setmpicomm(); // set mpi needed;
     //ELPA_Solver es(isReal, COMM_DIAG, GlobalV::NBANDS, h_mat.row, h_mat.col, h_mat.desc);
     ELPA_Solver es((const bool)isReal, COMM_DIAG, (const int)GlobalV::NBANDS, (const int)h_mat.row, (const int)h_mat.col, (const int*)h_mat.desc);
     ModuleBase::timer::tick("DiagoElpa", "elpa_solve");
