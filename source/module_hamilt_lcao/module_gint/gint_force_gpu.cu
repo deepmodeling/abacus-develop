@@ -241,10 +241,8 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
                                 gridt.psir_size);
             }
             iter_num++;
-            f_s_iat.iat_host.clear();
         }
     }
-    denstiy_mat.density_mat_h.clear();
     /*free variables in CPU host*/
     for (int i = 0; i < gridt.nstreams; i++)
     {
@@ -263,7 +261,6 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
                 stress[i] += stress_host[j * 6 + i];
             }
         }
-        stress_host.clear();
     }
     if (isforce){
         std::vector<double> force_host(3 * nat*gridt.nstreams, 0.0);
@@ -279,7 +276,6 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
                 force[i] += force_host[j * 3 * nat + i];
             }
         }
-        force_host.clear();
     }
     checkCuda(cudaFree(f_s_iat_dev.stress_global));
     checkCuda(cudaFree(f_s_iat_dev.force_global));
