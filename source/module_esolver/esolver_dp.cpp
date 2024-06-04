@@ -30,7 +30,6 @@ namespace ModuleESolver
 */ 
     void ESolver_DP::before_all_runners(Input& inp, UnitCell& ucell)
     {
-
         ucell_ = &ucell;
         dp_potential = 0;
         dp_force.create(ucell.nat, 3);
@@ -51,16 +50,14 @@ namespace ModuleESolver
 #endif
         for (int iat = 0; iat < ucell.nat; ++iat)
         {
-            for (int it = 0; it < ucell.ntype; ++it)
+            auto it = ucell.iat2it[iat];
+            if (find_type)
             {
-                if (find_type)
-                {
-                    atype[iat] = dp_type[it];
-                }
-                else
-                {
-                    atype[iat] = it;
-                }
+                atype[iat] = dp_type[it];
+            }
+            else
+            {
+                atype[iat] = it;
             }
         }
     }
@@ -102,12 +99,9 @@ namespace ModuleESolver
         for (int iat = 0; iat < ucell.nat; ++iat)
         {   
             auto tau = ucell.get_tau(iat);
-            for (int ia = 0; ia < ucell.ntype; ++ia)
-            {
-                coord[3 * iat] = tau.x * ucell.lat0_angstrom;
-                coord[3 * iat + 1] = tau.y * ucell.lat0_angstrom;
-                coord[3 * iat + 2] = tau.z * ucell.lat0_angstrom;
-            }
+            coord[3 * iat] = tau.x * ucell.lat0_angstrom;
+            coord[3 * iat + 1] = tau.y * ucell.lat0_angstrom;
+            coord[3 * iat + 2] = tau.z * ucell.lat0_angstrom;
         }
 // removed by Haocheng 2024/6/2 //
         // for (int it = 0; it < ucell.ntype; ++it)
