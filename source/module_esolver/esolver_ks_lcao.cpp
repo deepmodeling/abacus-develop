@@ -163,10 +163,26 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
     this->gen_h.LM = &this->LM;
 
     //! pass basis-pointer to EState and Psi
-    this->LOC.ParaV = this->LOWF.ParaV = this->LM.ParaV = &(this->orb_con.ParaV);
+    /*
+    Inform: on getting rid of ORB_control and Parallel_Orbitals
+
+    Have to say it is all the stories start, the ORB_control instance pass its Parallel_Orbitals instance to
+    Local_Orbital_Charge, Local_Orbital_Wfc and LCAO_Matrix, which is actually for getting information
+    of 2D block-cyclic distribution.
+
+    To remove LOC, LOWF and LM use in functions, one must make sure there is no more information imported
+    to those classes. Then places where to get information from them can be substituted to orb_con
+    
+    Plan:
+    1. Specifically for paraV, the thing to do first is to replace the use of ParaV to the oen of ORB_control.
+    Then remove ORB_control and place paraV somewhere.
+    */
+    this->LOC.ParaV = &(this->orb_con.ParaV);
+    this->LOWF.ParaV = &(this->orb_con.ParaV);
+    this->LM.ParaV = &(this->orb_con.ParaV);
 
     // 5) initialize Density Matrix
-    dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->init_DM(&this->kv, this->LM.ParaV, GlobalV::NSPIN);
+    dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->init_DM(&this->kv, &(this->orb_con.ParaV), GlobalV::NSPIN);
 
 
     if (GlobalV::CALCULATION == "get_S")
@@ -232,7 +248,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
     // 10) init HSolver
     if (this->phsol == nullptr)
     {
-        this->phsol = new hsolver::HSolverLCAO<TK>(this->LOWF.ParaV);
+        this->phsol = new hsolver::HSolverLCAO<TK>(&(this->orb_con.ParaV));
         this->phsol->method = GlobalV::KS_SOLVER;
     }
 
@@ -286,7 +302,14 @@ void ESolver_KS_LCAO<TK, TR>::init_after_vc(Input& inp, UnitCell& ucell)
     ModuleBase::timer::tick("ESolver_KS_LCAO", "init_after_vc");
 
 	ESolver_KS<TK>::init_after_vc(inp, ucell);
-
+    /*
+    Notes: on the removal of LOWF
+    Following constructor of ElecStateLCAO requires LOWF. However, ElecState only need
+    LOWF to do wavefunction 2dbcd (2D BlockCyclicDistribution) gathering. So, a free
+    function is needed to replace the use of LOWF. The function indeed needs the information
+    about 2dbcd, therefore another instance storing the information is needed instead.
+    Then that instance will be the input of "the free function to gather".
+    */
     if (GlobalV::md_prec_level == 2)
 	{
 		delete this->pelec;
@@ -296,7 +319,7 @@ void ESolver_KS_LCAO<TK, TR>::init_after_vc(Input& inp, UnitCell& ucell)
 				&(this->LOC),
                 &(this->GG), // mohan add 2024-04-01
                 &(this->GK), // mohan add 2024-04-01
-				&(this->LOWF),
+				&(this->LOWF), // should be replaced by a 2dbcd handle, if insist the "print_psi" must be in ElecState class
 				this->pw_rho,
 				this->pw_big);
 
@@ -657,10 +680,10 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
     // first need to calculate the weight according to
     // electrons number.
     if (istep == 0 
-        && this->wf.init_wfc == "file" 
-        && this->LOWF.error == 0)
-    {
-        if (iter == 1)
+        && this->wf.init_wfc == "file" // Note: on the removal of LOWF
+        && this->LOWF.error == 0)      // this means the wavefunction is read without any error.
+    {                                  // However the I/O of wavefunction are nonsence to be implmented in different places.
+        if (iter == 1)                 // once the reading of wavefunction has any error, should exit immediately.
         {
             std::cout << " WAVEFUN -> CHARGE " << std::endl;
 
@@ -831,11 +854,11 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density(int istep, int iter, double ethr)
 #ifdef __EXX
     if (GlobalC::exx_info.info_ri.real_number)
     {
-        this->exd->exx_hamilt2density(*this->pelec, *this->LOWF.ParaV, iter);
+        this->exd->exx_hamilt2density(*this->pelec, this->orb_con.ParaV, iter);
     }
     else
     {
-        this->exc->exx_hamilt2density(*this->pelec, *this->LOWF.ParaV, iter);
+        this->exc->exx_hamilt2density(*this->pelec, this->orb_con.ParaV, iter);
     }
 #endif
 
@@ -861,8 +884,6 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density(int istep, int iter, double ethr)
 #ifdef __DEEPKS
     if (GlobalV::deepks_scf)
     {
-        const Parallel_Orbitals* pv = this->LOWF.ParaV;
-
         const std::vector<std::vector<TK>>& dm = 
         dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMK_vector();
 
@@ -940,7 +961,7 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
                                        GlobalV::out_app_flag, 
                                        "H", 
                                        "data-" + std::to_string(ik), 
-                                       *this->LOWF.ParaV, 
+                                       this->orb_con.ParaV, 
                                        GlobalV::DRANK);
                     ModuleIO::save_mat(istep, 
                                        s_mat.p, 
@@ -951,7 +972,7 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
                                        GlobalV::out_app_flag, 
                                        "S", 
                                        "data-" + std::to_string(ik), 
-                                       *this->LOWF.ParaV, 
+                                       this->orb_con.ParaV, 
                                        GlobalV::DRANK);
                 }
             }
@@ -1048,8 +1069,8 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int iter)
     if (GlobalC::restart.info_save.save_H && two_level_step > 0 &&
         (!GlobalC::exx_info.info_global.separate_loop || iter == 1)) // to avoid saving the same value repeatedly
     {
-        std::vector<TK> Hexxk_save(this->LOWF.ParaV->get_local_size());
-        for (int ik = 0;ik < this->kv.get_nks();++ik)
+        std::vector<TK> Hexxk_save(this->orb_con.ParaV.get_local_size());
+        for (int ik = 0; ik < this->kv.get_nks(); ++ik)
         {
             ModuleBase::GlobalFunc::ZEROS(Hexxk_save.data(), Hexxk_save.size());
 
@@ -1057,7 +1078,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int iter)
 
             opexx_save.contributeHk(ik);
 
-            GlobalC::restart.save_disk("Hexx", ik, this->LOWF.ParaV->get_local_size(), Hexxk_save.data());
+            GlobalC::restart.save_disk("Hexx", ik, this->orb_con.ParaV.get_local_size(), Hexxk_save.data());
         }
 		if (GlobalV::MY_RANK == 0)
 		{
@@ -1234,7 +1255,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
             GlobalC::ucell,
             GlobalC::ORB,
             GlobalC::GridD,
-            this->LOWF.ParaV,
+            &(this->orb_con.ParaV),
             *(this->psi),
             dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM());
 
@@ -1251,7 +1272,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
         RPA_LRI<TK, double> rpa_lri_double(GlobalC::exx_info.info_ri);
         rpa_lri_double.cal_postSCF_exx(*dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(), MPI_COMM_WORLD, this->kv);
         rpa_lri_double.init(MPI_COMM_WORLD, this->kv);
-        rpa_lri_double.out_for_RPA(*(this->LOWF.ParaV), *(this->psi), this->pelec);
+        rpa_lri_double.out_for_RPA(this->orb_con.ParaV, *(this->psi), this->pelec);
     }
 #endif
 
@@ -1418,7 +1439,7 @@ ModuleIO::Output_Mat_Sparse<TK> ESolver_KS_LCAO<TK, TR>::create_Output_Mat_Spars
 			INPUT.out_mat_r,
 			istep,
 			this->pelec->pot->get_effective_v(),
-			*this->LOWF.ParaV,
+			this->orb_con.ParaV,
             this->gen_h, // mohan add 2024-04-06
             this->GK, // mohan add 2024-04-01
 			this->LM,

@@ -51,7 +51,6 @@ void ElecStateLCAO_TDDFT::psiToRho_td(const psi::Psi<std::complex<double>>& psi)
         }
     }
 
-    //this->loc->cal_dk_k(*this->lowf->gridt, this->wg, *(this->klist));
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
         ModuleBase::GlobalFunc::ZEROS(this->charge->rho[is], this->charge->nrxx); // mohan 2009-11-10
