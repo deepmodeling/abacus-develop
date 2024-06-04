@@ -21,7 +21,7 @@ void Gint_k::distribute_pvpR_sparseMatrix(
 {
     ModuleBase::TITLE("Gint_k","distribute_pvpR_sparseMatrix");
 
-    int total_R_num = LM->all_R_coor.size();
+    const int total_R_num = LM->all_R_coor.size();
     int *nonzero_num = new int[total_R_num];
     int *minus_nonzero_num = new int[total_R_num];
     ModuleBase::GlobalFunc::ZEROS(nonzero_num, total_R_num);
@@ -157,7 +157,7 @@ void Gint_k::distribute_pvpR_soc_sparseMatrix(
 {
     ModuleBase::TITLE("Gint_k","distribute_pvpR_soc_sparseMatrix");
 
-    int total_R_num = LM->all_R_coor.size();
+    const int total_R_num = LM->all_R_coor.size();
     int *nonzero_num = new int[total_R_num];
     int *minus_nonzero_num = new int[total_R_num];
     ModuleBase::GlobalFunc::ZEROS(nonzero_num, total_R_num);

@@ -98,8 +98,8 @@ void Gint_k::folding_vl_k(const int &ik,
         pvp[i] = pvp_base + i * lgd;
     }
 
-    std::complex<double>*** pvp_nc;
-    std::complex<double>* pvp_nc_base;
+    std::complex<double>*** pvp_nc=nullptr;
+    std::complex<double>* pvp_nc_base=nullptr;
     if(GlobalV::NSPIN==4)
     {
         pvp_nc_base = new std::complex<double>[4 * lgd * lgd];
@@ -128,12 +128,15 @@ void Gint_k::folding_vl_k(const int &ik,
     ModuleBase::OMP_PARALLEL(init_pvp);
 
 #ifdef _OPENMP
+int num_threads =omp_get_num_threads();
+int chunk_size =std::max(1,ucell.nat / (num_threads * 4));
 #pragma omp parallel
 {
 #endif
     ModuleBase::Vector3<double> tau1, dtau, dR;
+    AdjacentAtomInfo adjs;
 #ifdef _OPENMP
-#pragma omp for schedule(dynamic)
+#pragma omp for schedule(dynamic,chunk_size)
 #endif
     for(int iat=0; iat<ucell.nat; ++iat)
     {
@@ -152,7 +155,7 @@ void Gint_k::folding_vl_k(const int &ik,
                 // get the coordinates of adjacent atoms.
                 tau1 = ucell.atoms[T1].tau[I1];
                 //GridD.Find_atom(tau1);	
-                AdjacentAtomInfo adjs;
+               // AdjacentAtomInfo adjs;
                 gd.Find_atom(ucell, tau1, T1, I1, &adjs);	
                 // search for the adjacent atoms.
                 int nad = 0;
