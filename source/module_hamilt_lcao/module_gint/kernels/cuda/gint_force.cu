@@ -4,6 +4,7 @@
 #include "module_hamilt_lcao/module_gint/kernels/cuda/cuda_tools.cuh"
 #include "module_hamilt_lcao/module_gint/kernels/cuda/gint_force.cuh"
 #include "module_hamilt_lcao/module_gint/kernels/cuda/sph.cuh"
+#include "cuda_runtime.h"
 // CUDA kernel to calculate psi and force
 namespace GintKernel
 {
@@ -153,7 +154,7 @@ __global__ void dot_product_stress(double* psir_lxx,
                                    int elements_num)
 {
 
-    __shared__ double cache[256][6]; // == threadsPerBlock
+    __shared__ double cache[256][6]; 
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
     int cacheIndex = threadIdx.x;
     double tmp[6] = {0.0};
@@ -191,7 +192,8 @@ __global__ void dot_product_stress(double* psir_lxx,
     if (cacheIndex == 0){
         for (int index = 0; index < 6; index++)
         {
-            stress_dot[blockIdx.x + gridDim.x * index] = cache[0][index];
+            atomicAdd(&stress_dot[index], cache[0][index]); // Use atomicAdd() instead of atomic_add().
+            // stress_dot[blockIdx.x + gridDim.x * index] = cache[0][index];
         }
     }
 }
@@ -244,10 +246,10 @@ __global__ void dot_product_force(double* psir_lx,
             tmp[1] += psir_ly[dist + i] * psir_ylm_dm[dist + i] * 2;
             tmp[2] += psir_lz[dist + i] * psir_ylm_dm[dist + i] * 2;
         }
-
+        
         for (int i = 0; i < 3; i++)
         {
-            force_dot[iat_index + i] = tmp[i];
+            atomicAdd(&force_dot[iat_on_nbz*3 + i], tmp[i]);
         }
         tid += blockDim.x * gridDim.x;
     }
