@@ -21,11 +21,6 @@ class K_Vectors
     std::vector<int> ngk; /// ngk, number of plane waves for each k point
     std::vector<int> isk; /// distinguish spin up and down k points
 
-    int nks;         /// number of k points in this pool(processor, up+dw)
-    int nkstot;      /// total number of k points, equal to nkstot_ibz after reducing k points
-    int nkstot_ibz;  /// number of k points in IBZ
-    int nkstot_full; /// number of k points in full k mesh
-
     int nmp[3];                 /// Number of Monhorst-Pack
     std::vector<int> kl_segids; /// index of kline segment
 
