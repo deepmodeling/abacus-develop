@@ -55,7 +55,6 @@ if(ENABLE_LCAO)
       read_dm.cpp
       read_wfc_nao.cpp
       write_wfc_lcao.cpp
-      write_wfc_nao.cpp
       write_dm.cpp
       dos_nao.cpp
       output_dm.cpp

@@ -16,14 +16,14 @@ namespace ModuleIO
  * @param gamma_only Whether gamma_only job.
  * @param out_app_flag Flag indicating whether to append to existing file.
  * @param ik The index of the k-point, and starting from 0.
- * @param istep The index of the step, and starting from 0.
+ * @param istep The index of the ION step, and starting from 0. If < 0, the step number is not included in the file name.
  * @return The generated filename.
  */
 std::string wfc_lcao_gen_fname(const int out_type,
                                const bool gamma_only,
                                const bool out_app_flag,
                                const int ik,
-                               const int istep);
+                               const int istep=-1);
 
 /**
  * Writes the wavefunction coefficients for the LCAO method to a file.
@@ -48,6 +48,7 @@ void write_wfc_lcao(const int out_type,
                     const Parallel_Orbitals& pv,
                     const int istep=-1) ;
 
-
+void write_wfc_nao(const std::string &name, const double* ctot, const int nlocal, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg, bool writeBinary);
+void write_wfc_nao_complex(const std::string &name, const std::complex<double>* ctot, const int nlocal,const int &ik, const ModuleBase::Vector3<double> &kvec_c, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg, bool writeBinary=false);
 }// namespace ModuleIO
 #endif

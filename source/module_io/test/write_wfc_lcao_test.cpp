@@ -1,8 +1,13 @@
 #include "gtest/gtest.h"
+#include "gmock/gmock.h"
 #include "../write_wfc_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_wfc.h"
-#include "../write_wfc_nao.h"
 #include "module_base/scalapack_connector.h"
+#include "../binstream.h"
+
+#ifdef __MPI
+#include "mpi.h"
+#endif
 
 TEST(GenWfcLcaoFnameTest, OutType1GammaOnlyOutAppFlagTrue)
 {
@@ -11,9 +16,8 @@ TEST(GenWfcLcaoFnameTest, OutType1GammaOnlyOutAppFlagTrue)
     bool out_app_flag = true;
     int ik = 0;
     int istep = 0;
-    GlobalV::global_out_dir = "/path/to/global_out_dir/";
 
-    std::string expected_output = "/path/to/global_out_dir/WFC_LCAO_GAMMA1.txt";
+    std::string expected_output = "WFC_LCAO_GAMMA1.txt";
     std::string result = ModuleIO::wfc_lcao_gen_fname(out_type, gamma_only, out_app_flag, ik, istep);
 
     EXPECT_EQ(result, expected_output);
@@ -26,9 +30,8 @@ TEST(GenWfcLcaoFnameTest, OutType2GammaOnlyOutAppFlagFalse)
     bool out_app_flag = false;
     int ik = 1;
     int istep = 2;
-    GlobalV::global_out_dir = "/path/to/global_out_dir/";
 
-    std::string expected_output = "/path/to/global_out_dir/WFC_LCAO_GAMMA2_ION3.dat";
+    std::string expected_output = "WFC_LCAO_GAMMA2_ION3.dat";
     std::string result = ModuleIO::wfc_lcao_gen_fname(out_type, gamma_only, out_app_flag, ik, istep);
 
     EXPECT_EQ(result, expected_output);
@@ -41,9 +44,8 @@ TEST(GenWfcLcaoFnameTest, OutTypeInvalid)
     bool out_app_flag = true;
     int ik = 2;
     int istep = 3;
-    GlobalV::global_out_dir = "/path/to/global_out_dir/";
 
-    std::string expected_output = "/path/to/global_out_dir/WFC_LCAO_K3.txt";
+    std::string expected_output = "WFC_LCAO_K3.txt";
     // catch the screen output
     testing::internal::CaptureStdout();
     std::string result = ModuleIO::wfc_lcao_gen_fname(out_type, gamma_only, out_app_flag, ik, istep);
@@ -53,47 +55,30 @@ TEST(GenWfcLcaoFnameTest, OutTypeInvalid)
     EXPECT_EQ(result, expected_output);
 }
 
-
-// mock write_wfc_nao as this function is implemented in another file
-void ModuleIO::write_wfc_nao(const std::string &name, const double* ctot, const int nlocal, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg, bool writeBinary)
-{
-    int myrank = 0;
-#ifdef __MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-#endif
-
-    if (myrank == 0)
-    {
-        std::ofstream ofs(name, std::ios::binary);
-        ofs.write((char*)ctot, nlocal * ekb.nc * sizeof(double));
-        ofs.close();
-    }
-}
-
-void ModuleIO::write_wfc_nao_complex(const std::string &name, const std::complex<double>* ctot, const int nlocal,const int &ik, const ModuleBase::Vector3<double> &kvec_c, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg, bool writeBinary)
-{
-    int myrank = 0;
-#ifdef __MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-#endif
-    if (myrank == 0)
-    {
-        std::ofstream ofs(name, std::ios::binary);
-        ofs.write((char*)ctot, nlocal * ekb.nc * sizeof(std::complex<double>));
-        ofs.close();
-    }
-}
-
 template <typename T>
 void read_bin(const std::string &name, std::vector<T> &data)
 {
     std::ifstream ifs(name, std::ios::binary);
-    ifs.seekg(0, std::ios::end);
-    std::streamsize size = ifs.tellg();
     ifs.seekg(0, std::ios::beg);
-    size_t count = size / sizeof(T);
-    data.resize(count);
-    ifs.read(reinterpret_cast<char*>(data.data()), size);
+    int nbands, nbasis;
+    if (std::is_same<T, std::complex<double>>::value)
+    {
+        ifs.ignore(sizeof(int));
+        ifs.ignore(sizeof(double)*3);
+    }
+    ifs.read(reinterpret_cast<char*>(&nbands), sizeof(int));
+    ifs.read(reinterpret_cast<char*>(&nbasis), sizeof(int));
+    data.resize(nbands * nbasis);
+
+    for (int i=0;i<nbands;i++)
+    {
+        ifs.ignore(sizeof(int));
+        ifs.ignore(sizeof(double)*2);
+        for (int j=0;j<nbasis;j++)
+        {
+            ifs.read(reinterpret_cast<char*>(&data[i*nbasis+j]), sizeof(T));
+        }
+    }
     ifs.close();   
 }
 
@@ -113,13 +98,13 @@ protected:
     int nbasis = 4;
     int nbands_local;
     int nbasis_local;
-    int my_rank = 0;
 
     void SetUp() override
     {
         GlobalV::out_app_flag = 1;
-        ekb.create(1, nbands); // in this test the value of ekb and wg is not important and not used.
-        wg.create(1, nbands);
+        ekb.create(nk, nbands); // in this test the value of ekb and wg is not important and not used.
+        wg.create(nk, nbands);
+        kvec_c.resize(nk, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
         psi_init_double.resize(nk * nbands * nbasis);
         psi_init_complex.resize(nk * nbands * nbasis);
         for (int i = 0; i < nk * nbands * nbasis; i++)
@@ -128,7 +113,6 @@ protected:
             psi_init_complex[i] = std::complex<double>(i * 0.2, i * 0.3);
         }
 #ifdef __MPI
-        MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
         pv.init(nbasis,nbands,1,MPI_COMM_WORLD);
         for (int i = 0; i < 9; i++)
         {
@@ -164,7 +148,7 @@ TEST_F(WriteWfcLcaoTest, WriteWfcLcao)
     ModuleIO::write_wfc_lcao(2,my_psi,ekb,wg,kvec_c,pv,-1) ;
 
     // check the output
-    if (my_rank == 0)
+    if (GlobalV::MY_RANK == 0)
     {
         for(int ik=0; ik < nk;ik++)
         {
@@ -194,7 +178,7 @@ TEST_F(WriteWfcLcaoTest, WriteWfcLcaoComplex)
     ModuleIO::write_wfc_lcao(2,my_psi,ekb,wg,kvec_c,pv,-1) ;
 
     // check the output file
-    if (my_rank == 0)
+    if (GlobalV::MY_RANK == 0)
     {
         for(int ik=0; ik < nk;ik++)
         {
@@ -216,20 +200,236 @@ TEST_F(WriteWfcLcaoTest, WriteWfcLcaoComplex)
     }
 }
 
-#ifdef __MPI
-#include "mpi.h"
+TEST(ModuleIOTest, WriteWfcNao)
+{
+    if (GlobalV::MY_RANK == 0)
+    {
+        // Set up GlobalV
+        GlobalV::DRANK = 0;
+        GlobalV::NBANDS = 2;
+        GlobalV::NLOCAL = 2;
+        GlobalV::CURRENT_SPIN = 0;
+        GlobalV::out_app_flag = 1;
+
+        // Set up test data
+        std::string filename = "test_wfc_nao.txt";
+        std::vector<double> ctot = {0.1, 0.2, 0.3, 0.4};
+        ModuleBase::matrix ekb(2, 2);
+        ekb(0, 0) = 0.5;
+        ekb(1, 0) = 0.6;
+        ekb(0, 1) = 0.7;
+        ekb(1, 1) = 0.8;
+        ModuleBase::matrix wg(2, 2);
+        wg(0, 0) = 0.9;
+        wg(1, 0) = 1.0;
+        wg(0, 1) = 1.1;
+        wg(1, 1) = 1.2;
+
+        // Call the function to be tested
+        ModuleIO::write_wfc_nao(filename, ctot.data(),GlobalV::NLOCAL, ekb, wg,false);
+
+        // Check the output file
+        std::ifstream ifs(filename);
+        std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
+        EXPECT_THAT(str, testing::HasSubstr("2 (number of bands)"));
+        EXPECT_THAT(str, testing::HasSubstr("2 (number of orbitals)"));
+        EXPECT_THAT(str, testing::HasSubstr("1 (band)"));
+        EXPECT_THAT(str, testing::HasSubstr("5.00000000e-01 (Ry)"));
+        EXPECT_THAT(str, testing::HasSubstr("9.00000000e-01 (Occupations)"));
+        EXPECT_THAT(str, testing::HasSubstr("1.00000000e-01 2.00000000e-01"));
+        EXPECT_THAT(str, testing::HasSubstr("2 (band)"));
+        EXPECT_THAT(str, testing::HasSubstr("7.00000000e-01 (Ry)"));
+        EXPECT_THAT(str, testing::HasSubstr("1.10000000e+00 (Occupations)"));
+        EXPECT_THAT(str, testing::HasSubstr("3.00000000e-01 4.00000000e-01"));
+        ifs.close();
+
+        //clean up
+        std::remove(filename.c_str()); // remove the test file
+    }
+}
+
+TEST(ModuleIOTest, WriteWfcNaoBinary)
+{
+    if (GlobalV::MY_RANK == 0)
+    {
+        // Set up GlobalV
+        GlobalV::DRANK = 0;
+        GlobalV::NBANDS = 2;
+        GlobalV::NLOCAL = 2;
+        GlobalV::CURRENT_SPIN = 0;
+        GlobalV::out_app_flag = 1;
+
+        // Set up test data
+        std::string filename = "test_wfc_nao.dat";
+        std::vector<double> ctot = {0.1, 0.2, 0.3, 0.4};
+        ModuleBase::matrix ekb(2, 2);
+        ekb(0, 0) = 0.5;
+        ekb(1, 0) = 0.6;
+        ekb(0, 1) = 0.7;
+        ekb(1, 1) = 0.8;
+        ModuleBase::matrix wg(2, 2);
+        wg(0, 0) = 0.9;
+        wg(1, 0) = 1.0;
+        wg(0, 1) = 1.1;
+        wg(1, 1) = 1.2;
+
+        // Call the function to be tested
+        ModuleIO::write_wfc_nao(filename, ctot.data(),GlobalV::NLOCAL, ekb, wg, true);
+
+        // Check the output file
+        Binstream wfc(filename,"r");
+        int nbands, nlocal;
+        wfc >> nbands;
+        wfc >> nlocal;
+        EXPECT_EQ(nbands, 2);
+        EXPECT_EQ(nlocal, 2);
+        for (int i = 0; i < nbands; i++)
+        {
+            int band_index;
+            double ekb, wg;
+            wfc >> band_index;
+            wfc >> ekb;
+            wfc >> wg;
+            EXPECT_EQ(band_index, i+1);
+            EXPECT_DOUBLE_EQ(ekb, 0.5 + i*0.2);
+            EXPECT_DOUBLE_EQ(wg, 0.9 + i*0.2);
+            for (int j = 0; j < nlocal; j++)
+            {
+                double ctot;
+                wfc >> ctot;
+                EXPECT_DOUBLE_EQ(ctot, 0.1 + i*0.2 + j*0.1);
+            }
+        }
+        wfc.close();
+
+        //clean up
+        std::remove(filename.c_str()); // remove the test file
+    }
+}
+
+TEST(ModuleIOTest, WriteWfcNaoComplex)
+{
+    if (GlobalV::MY_RANK == 0)
+    {
+        // Set up GlobalV
+        GlobalV::NBANDS = 2;
+        GlobalV::NLOCAL = 3;
+        GlobalV::CURRENT_SPIN = 0;
+        GlobalV::out_app_flag = 1;
+        //set up test data
+        std::string name = "test_wfc_nao_complex.txt";
+        int ik = 0;
+        ModuleBase::Vector3<double> kvec_c {0.0, 0.0, 0.0};
+        ModuleBase::matrix ekb(1, 2);
+        ekb(0, 0) = 0.9;
+        ekb(0, 1) = 1.1;
+        ModuleBase::matrix wg(1, 2);
+        wg(0, 0) = 0.11;
+        wg(0, 1) = 0.22;
+        std::vector<std::complex<double>> ctot = {std::complex<double>(1.0, 0.0), std::complex<double>(2.0, 0.0), std::complex<double>(3.0, 0.0),
+                                                                std::complex<double>(0.0, 1.0), std::complex<double>(0.0, 2.0), std::complex<double>(0.0, 3.0)};
+
+        // Call the function
+        ModuleIO::write_wfc_nao_complex(name, ctot.data(),  GlobalV::NLOCAL,ik,kvec_c, ekb, wg);
+        // Check the output file
+        std::ifstream ifs(name);
+        std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
+        EXPECT_THAT(str, testing::HasSubstr("1 (index of k points)"));
+        EXPECT_THAT(str, testing::HasSubstr("0 0 0"));
+        EXPECT_THAT(str, testing::HasSubstr("2 (number of bands)"));
+        EXPECT_THAT(str, testing::HasSubstr("3 (number of orbitals)"));
+        EXPECT_THAT(str, testing::HasSubstr("1 (band)"));
+        EXPECT_THAT(str, testing::HasSubstr("(Ry)"));
+        EXPECT_THAT(str, testing::HasSubstr("(Occupations)"));
+        EXPECT_THAT(str, testing::HasSubstr("2 (band)"));
+        //ifs.close();
+        // Clean up
+        std::remove(name.c_str());
+    }
+}
+
+TEST(ModuleIOTest, WriteWfcNaoComplexBinary)
+{
+    if (GlobalV::MY_RANK == 0)
+    {
+        // Set up GlobalV
+        GlobalV::NBANDS = 2;
+        GlobalV::NLOCAL = 3;
+        GlobalV::CURRENT_SPIN = 0;
+        GlobalV::out_app_flag = 1;
+        //set up test data
+        std::string name = "test_wfc_nao_complex.dat";
+        int ik = 0;
+        ModuleBase::Vector3<double> kvec_c {0.0, 0.0, 0.0};
+        ModuleBase::matrix ekb(1, 2);
+        ekb(0, 0) = 0.9;
+        ekb(0, 1) = 1.1;
+        ModuleBase::matrix wg(1, 2);
+        wg(0, 0) = 0.11;
+        wg(0, 1) = 0.22;
+        std::vector<std::complex<double>> ctot = {std::complex<double>(1.0, 0.0), std::complex<double>(2.0, 2.0), std::complex<double>(3.0, 4.0),
+                                                                std::complex<double>(4.0, 4.0), std::complex<double>(5.0, 6.0), std::complex<double>(6.0, 8.0)};
+
+        // Call the function
+        ModuleIO::write_wfc_nao_complex(name, ctot.data(), GlobalV::NLOCAL, ik, kvec_c, ekb, wg, true);
+        // Check the output file
+
+        Binstream wfc(name,"r");
+        int ik1, nbands, nlocal;
+        double kx, ky, kz;
+        wfc >> ik1;
+        wfc >> kx;
+        wfc >> ky;
+        wfc >> kz;
+        wfc >> nbands;
+        wfc >> nlocal;
+        EXPECT_EQ(ik1, 1);
+        EXPECT_DOUBLE_EQ(kx, 0.0);
+        EXPECT_DOUBLE_EQ(ky, 0.0);
+        EXPECT_DOUBLE_EQ(kz, 0.0);
+        EXPECT_EQ(nbands, 2);
+        EXPECT_EQ(nlocal, 3);
+        for (int i = 0; i < nbands; i++)
+        {
+            int band_index;
+            double ekb, wg;
+            wfc >> band_index;
+            wfc >> ekb;
+            wfc >> wg;
+            EXPECT_EQ(band_index, i+1);
+            EXPECT_DOUBLE_EQ(ekb, 0.9 + i*0.2);
+            EXPECT_DOUBLE_EQ(wg, 0.11 + i*0.11);
+            for (int j = 0; j < nlocal; j++)
+            {
+                std::complex<double> ctot;
+                wfc >> ctot;
+                EXPECT_DOUBLE_EQ(ctot.real(), 1.0 + i*3.0 + j*1.0);
+                EXPECT_DOUBLE_EQ(ctot.imag(), 0.0 + i*4.0 + j*2.0);
+            }
+        }
+        wfc.close();
+        // Clean up
+        std::remove(name.c_str());
+    }
+}
+
+
+
 int main(int argc, char **argv)
 {
+    GlobalV::MY_RANK = 0;
+#ifdef __MPI    
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD,&GlobalV::NPROC);
     MPI_Comm_rank(MPI_COMM_WORLD,&GlobalV::MY_RANK);
+#endif
 
     testing::InitGoogleTest(&argc, argv);
     int result = RUN_ALL_TESTS();
-
+#ifdef __MPI 
     MPI_Finalize();
-
+#endif
     return result;
 }
-#endif
+
 

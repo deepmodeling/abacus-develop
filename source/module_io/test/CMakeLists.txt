@@ -92,7 +92,7 @@ AddTest(
 AddTest(
   TARGET io_write_wfc_lcao
   LIBS ${math_libs} base psi device
-  SOURCES write_wfc_lcao_test.cpp ../write_wfc_lcao.cpp ../../module_basis/module_ao/parallel_2d.cpp ../../module_basis/module_ao/parallel_orbitals.cpp
+  SOURCES write_wfc_lcao_test.cpp ../write_wfc_lcao.cpp ../../module_basis/module_ao/parallel_2d.cpp ../../module_basis/module_ao/parallel_orbitals.cpp ../binstream.cpp
 )
 
 install(FILES write_wfc_lcao_para.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
@@ -100,12 +100,6 @@ find_program(BASH bash)
 add_test(NAME io_write_wfc_lcao_para
       COMMAND ${BASH} write_wfc_lcao_para.sh
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
-
-AddTest(
-  TARGET io_write_wfc_nao
-  LIBS ${math_libs} base device
-  SOURCES write_wfc_nao_test.cpp ../write_wfc_nao.cpp ../binstream.cpp
 )
 
 AddTest(
