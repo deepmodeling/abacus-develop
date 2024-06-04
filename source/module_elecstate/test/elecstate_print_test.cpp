@@ -180,7 +180,6 @@ TEST_F(ElecStatePrintTest, PrintEigenvalueS4)
 TEST_F(ElecStatePrintTest, PrintBand)
 {
     GlobalV::NSPIN = 1;
-    GlobalV::CURRENT_SPIN = 0;
     GlobalV::NBANDS = 2;
     GlobalV::MY_RANK = 0;
     GlobalV::ofs_running.open("test.dat", std::ios::out);

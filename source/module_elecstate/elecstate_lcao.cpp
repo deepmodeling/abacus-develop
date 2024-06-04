@@ -22,8 +22,9 @@ void ElecStateLCAO<double>::print_psi(const psi::Psi<double>& psi_in, const int 
 
     // output but not do  "2d-to-grid" conversion
     double** wfc_grid = nullptr;
+    const int ik = psi_in.get_current_k();
 #ifdef __MPI
-    this->lowf->wfc_2d_to_grid(istep, out_wfc_flag, psi_in.get_pointer(), wfc_grid, this->ekb, this->wg);
+    this->lowf->wfc_2d_to_grid(istep, out_wfc_flag, psi_in.get_pointer(), wfc_grid, ik, this->ekb, this->wg);
 #endif
     return;
 }

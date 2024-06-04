@@ -18,12 +18,11 @@ void Force_LCAO<double>::cal_fvl_dphi(
     svl_dphi.zero_out();
     for(int is=0; is<GlobalV::NSPIN; ++is)
     {
-        GlobalV::CURRENT_SPIN = is;
-        const double* vr_eff1 = pot_in->get_effective_v(GlobalV::CURRENT_SPIN);
+        const double* vr_eff1 = pot_in->get_effective_v(is);
         const double* vofk_eff1 = nullptr;
         if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
         {
-            vofk_eff1 = pot_in->get_effective_vofk(GlobalV::CURRENT_SPIN);
+            vofk_eff1 = pot_in->get_effective_vofk(is);
         }
 
         if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)

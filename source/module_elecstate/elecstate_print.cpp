@@ -198,7 +198,7 @@ void ElecState::print_band(const int& ik, const int& printe, const int& iter)
         if (printe > 0 && ((iter + 1) % printe == 0))
         {
             GlobalV::ofs_running << std::setprecision(6);
-            GlobalV::ofs_running << " Energy (eV) & Occupations  for spin=" << GlobalV::CURRENT_SPIN + 1
+            GlobalV::ofs_running << " Energy (eV) & Occupations  for spin=" << this->klist->isk[ik]+1
                                  << " K-point=" << ik + 1 << std::endl;
             GlobalV::ofs_running << std::setiosflags(std::ios::showpoint);
             for (int ib = 0; ib < GlobalV::NBANDS; ib++)
