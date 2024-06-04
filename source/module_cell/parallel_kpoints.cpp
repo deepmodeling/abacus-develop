@@ -120,6 +120,7 @@ void Parallel_Kpoints::set_startpro_pool(void)
     return;
 }
 
+// gather kpoints from all processor pools, only need to be called by the first processor of each pool.
 void Parallel_Kpoints::gatherkvec(const std::vector<ModuleBase::Vector3<double>>& vec_local,
                                   std::vector<ModuleBase::Vector3<double>>& vec_global) const
 {
