@@ -121,7 +121,7 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
             const ModuleBase::Vector3<int>& R_index2 = adjs.box[ad];
             ModuleBase::Vector3<double> dtau = this->ucell->cal_dtau(iat1, iat2, R_index2);
 
-            hamilt::BaseMatrix<TR>* tmp = this->HR_fixed->find_matrix(iat1, iat2, R_index2.x, R_index2.y, R_index2.z);
+            hamilt::BaseMatrix<TR>* tmp = this->HR_fixed->find_matrix(iat1, iat2, R_index2);
             if (tmp != nullptr)
             {
                 this->cal_HR_IJR(iat1, iat2, paraV, dtau, tmp->get_pointer());

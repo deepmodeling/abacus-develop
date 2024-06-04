@@ -220,6 +220,8 @@ class HContainer
     */
     BaseMatrix<T>* find_matrix(int i, int j, int rx, int ry, int rz);
     const BaseMatrix<T>* find_matrix(int i, int j, int rx, int ry, int rz) const;
+    BaseMatrix<T>* find_matrix(int i, int j, const ModuleBase::Vector3<int>& R_index);
+    const BaseMatrix<T>* find_matrix(int i, int j, const ModuleBase::Vector3<int>& R_index) const;
 
     /**
      * @brief return a reference of AtomPair with index of atom I and J in atom_pairs
@@ -433,6 +435,7 @@ class HContainer
      * @return int index of R in tmp_R_index
      */
     int find_R(const int& rx_in, const int& ry_in, const int& rz_in) const;
+    int find_R(const ModuleBase::Vector3<int>& R_in) const;
 
     bool gamma_only = false;
 

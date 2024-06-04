@@ -414,6 +414,21 @@ int AtomPair<T>::find_R(const int& rx_in, const int& ry_in, const int& rz_in) co
     return (-1);
 }
 
+// find_R
+template <typename T>
+int AtomPair<T>::find_R(const ModuleBase::Vector3<int>& R_in) const
+{
+    for (int i = 0; i < this->R_index.size(); i++)
+    {
+        if (R_index[i] == R_in)
+        {
+            this->current_R = i;
+            return i;
+        }
+    }
+    return (-1);
+}
+
 // find_matrix
 template <typename T>
 const BaseMatrix<T>* AtomPair<T>::find_matrix(const int& rx_in, const int& ry_in, const int& rz_in) const
@@ -434,6 +449,33 @@ template <typename T>
 BaseMatrix<T>* AtomPair<T>::find_matrix(const int& rx_in, const int& ry_in, const int& rz_in)
 {
     const int r_index = this->find_R(rx_in, ry_in, rz_in);
+    if(r_index == -1)
+    {
+        return nullptr;
+    }
+    else
+    {
+        return &(this->values[r_index]);
+    }
+}
+
+// find_matrix
+template <typename T>
+const BaseMatrix<T>* AtomPair<T>::find_matrix(const ModuleBase::Vector3<int>& R_in) const {
+    const int r_index = this->find_R(R_in);
+    if(r_index == -1)
+    {
+        return nullptr;
+    }
+    else
+    {
+        return &(this->values[r_index]);
+    }
+}
+
+template <typename T>
+BaseMatrix<T>* AtomPair<T>::find_matrix(const ModuleBase::Vector3<int>& R_in){
+    const int r_index = this->find_R(R_in);
     if(r_index == -1)
     {
         return nullptr;

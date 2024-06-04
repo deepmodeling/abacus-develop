@@ -418,7 +418,7 @@ void DensityMatrix<TK,TR>::cal_DMR_test()
             for (int ir = 0; ir < tmp_ap.get_R_size(); ++ir)
             {
                 const ModuleBase::Vector3<int> r_index = tmp_ap.get_R_index(ir);
-                hamilt::BaseMatrix<TR>* tmp_matrix = tmp_ap.find_matrix(r_index.x, r_index.y, r_index.z);
+                hamilt::BaseMatrix<TR>* tmp_matrix = tmp_ap.find_matrix(r_index);
 #ifdef __DEBUG
 				if (tmp_matrix == nullptr)
 				{
@@ -485,7 +485,7 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR()
             for (int ir = 0; ir < tmp_ap.get_R_size(); ++ir)
             {
                 const ModuleBase::Vector3<int> r_index = tmp_ap.get_R_index(ir);
-                hamilt::BaseMatrix<double>* tmp_matrix = tmp_ap.find_matrix(r_index.x, r_index.y, r_index.z);
+                hamilt::BaseMatrix<double>* tmp_matrix = tmp_ap.find_matrix(r_index);
 #ifdef __DEBUG
                 if (tmp_matrix == nullptr)
                 {
@@ -649,7 +649,7 @@ void DensityMatrix<double, double>::cal_DMR()
             assert(tmp_ap.get_R_size() == 1);
             assert(r_index.x == 0 && r_index.y == 0 && r_index.z == 0);
 #endif
-            hamilt::BaseMatrix<double>* tmp_matrix = tmp_ap.find_matrix(r_index.x, r_index.y, r_index.z);
+            hamilt::BaseMatrix<double>* tmp_matrix = tmp_ap.find_matrix(r_index);
 #ifdef __DEBUG
             if (tmp_matrix == nullptr)
             {
@@ -696,8 +696,8 @@ void DensityMatrix<TK, TR>::sum_DMR_spin()
             for (int ir = 0; ir < tmp_ap_up.get_R_size(); ++ir)
             {
                 const ModuleBase::Vector3<int> r_index = tmp_ap_up.get_R_index(ir);
-                hamilt::BaseMatrix<double>* tmp_matrix_up = tmp_ap_up.find_matrix(r_index.x, r_index.y, r_index.z);
-                hamilt::BaseMatrix<double>* tmp_matrix_down = tmp_ap_down.find_matrix(r_index.x, r_index.y, r_index.z);
+                hamilt::BaseMatrix<double>* tmp_matrix_up = tmp_ap_up.find_matrix(r_index);
+                hamilt::BaseMatrix<double>* tmp_matrix_down = tmp_ap_down.find_matrix(r_index);
                 TR* ptr_up = tmp_matrix_up->get_pointer();
                 TR* ptr_down = tmp_matrix_down->get_pointer();
                 for (int i = 0; i < tmp_ap_up.get_size(); ++i)

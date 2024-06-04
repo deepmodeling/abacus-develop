@@ -252,6 +252,49 @@ BaseMatrix<T>* HContainer<T>::find_matrix(int atom_i, int atom_j, int rx, int ry
     }
 }
 
+template <typename T>
+BaseMatrix<T>* HContainer<T>::find_matrix(int atom_i, int atom_j, const ModuleBase::Vector3<int>& R_index) 
+{
+    AtomPair<T>* tmp = this->find_pair(atom_i, atom_j);
+    if(tmp == nullptr)
+    {
+        return nullptr;
+    }
+    else
+    {
+        if(this->gamma_only)
+        {
+            return tmp->find_matrix(0, 0, 0);
+        }
+        else
+        {
+            return tmp->find_matrix(R_index);
+        }
+    }
+}
+
+template <typename T>
+const BaseMatrix<T>* HContainer<T>::find_matrix(int atom_i, int atom_j,const ModuleBase::Vector3<int>& R_index) const
+{
+    AtomPair<T>* tmp = this->find_pair(atom_i, atom_j);
+    if(tmp == nullptr)
+    {
+        return nullptr;
+    }
+    else
+    {
+        if(this->gamma_only)
+        {
+            return tmp->find_matrix(0, 0, 0);
+        }
+        else
+        {
+            return tmp->find_matrix(R_index);
+        }
+    }
+}
+
+
 // get_atom_pair with atom_ij
 template <typename T>
 AtomPair<T>& HContainer<T>::get_atom_pair(int atom_i, int atom_j) const
@@ -404,6 +447,24 @@ int HContainer<T>::find_R(const int& rx_in, const int& ry_in, const int& rz_in) 
     return -1;
 }
 
+template <typename T>
+int HContainer<T>::find_R(const ModuleBase::Vector3<int>& R_in) const
+{
+    // search R_in in this->tmp_R_index
+    if (this->tmp_R_index.empty())
+    {
+        return -1;
+    }
+    for (int i = 0; i < this->tmp_R_index.size(); i++)
+    {
+        if (this->tmp_R_index[i] == R_in)
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+
 // size_R_loop, return the number of different cells in this->atom_pairs
 template <typename T>
 size_t HContainer<T>::size_R_loop() const
@@ -430,7 +491,7 @@ size_t HContainer<T>::size_R_loop() const
         for (int iR = 0; iR < it->get_R_size(); iR++)
         {
             ModuleBase::Vector3<int> r_vec = it->get_R_index(iR);
-            int it_tmp = this->find_R(r_vec.x, r_vec.y, r_vec.z);
+            int it_tmp = this->find_R(r_vec);
             if (it_tmp == -1)
             {
                 this->tmp_R_index.push_back(ModuleBase::Vector3<int>(r_vec));
@@ -629,7 +690,7 @@ void HContainer<T>::shape_synchron( const HContainer<T>& other)
             for(int ir = 0;ir < other.atom_pairs[i].get_R_size();++ir)
             {
                 ModuleBase::Vector3<int> R_vec = other.atom_pairs[i].get_R_index(ir);
-                if(tmp_pointer->find_R(R_vec.x, R_vec.y, R_vec.z) != -1)
+                if(tmp_pointer->find_R(R_vec) != -1)
                 {
                     // do nothing
                 }

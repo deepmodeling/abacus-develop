@@ -170,10 +170,13 @@ class AtomPair
     ModuleBase::Vector3<int> get_R_index() const;
     // interface for search (rx, ry, rz) in this->R_index, if found, current_R would be set to index
     int find_R(const int& rx_in, const int& ry_in, const int& rz_in) const;
+    int find_R(const ModuleBase::Vector3<int>& R_in) const;
     // interface for search (rx, ry, rz) in this->R_index, if found, current_R would be set to index
     // and return BaseMatrix<T>* of this->values[index]
     const BaseMatrix<T>* find_matrix(const int& rx_in, const int& ry_in, const int& rz_in) const;
     BaseMatrix<T>* find_matrix(const int& rx_in, const int& ry_in, const int& rz_in);
+    const BaseMatrix<T>* find_matrix(const ModuleBase::Vector3<int>& R_in) const;
+    BaseMatrix<T>* find_matrix(const ModuleBase::Vector3<int>& R_in);
 
     // this interface will call get_value in this->values
     // these four interface can be used only when R-index has been choosed (current_R >= 0)

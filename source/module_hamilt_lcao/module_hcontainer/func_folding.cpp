@@ -35,7 +35,7 @@ void folding_HR(const hamilt::HContainer<TR>& hR,
             ModuleBase::libm::sincos(arg, &sinp, &cosp);
             std::complex<double> kphase = std::complex<double>(cosp, sinp);
 
-            tmp.find_R(r_index.x, r_index.y, r_index.z);
+            tmp.find_R(r_index);
             tmp.add_to_matrix(hk, ncol, kphase, hk_type);
         }
     }
