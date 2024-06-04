@@ -50,7 +50,7 @@ namespace ModuleESolver
 #endif
         for (int iat = 0; iat < ucell.nat; ++iat)
         {
-            auto it = ucell.iat2it[iat];
+            int it = ucell.iat2it[iat];
             if (find_type)
             {
                 atype[iat] = dp_type[it];
