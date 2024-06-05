@@ -45,7 +45,7 @@ std::string wfc_lcao_gen_fname(const int out_type,
     return fn_out;
 }
 
-void write_wfc_nao(const std::string &name, const double* ctot, const int nlocal, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg, bool writeBinary)
+void write_wfc_nao(const std::string &name, const double* ctot, const int nlocal, const int ik, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg, bool writeBinary)
 {
     ModuleBase::TITLE("ModuleIO", "write_wfc_nao");
     ModuleBase::timer::tick("ModuleIO", "write_wfc_nao");
@@ -68,8 +68,8 @@ void write_wfc_nao(const std::string &name, const double* ctot, const int nlocal
             for (int i = 0; i < nbands; i++)
             {
                 ofs << i+1;
-                ofs << ekb(GlobalV::CURRENT_SPIN, i);
-                ofs << wg(GlobalV::CURRENT_SPIN, i);
+                ofs << ekb(ik, i);
+                ofs << wg(ik, i);
 
                 for (int j = 0; j < nlocal; j++)
                 {
@@ -103,8 +103,8 @@ void write_wfc_nao(const std::string &name, const double* ctot, const int nlocal
                 // +1 to mean more clearly.
                 // band index start from 1.
                 ofs << "\n" << i+1 << " (band)";
-		    	ofs << "\n" << ekb(GlobalV::CURRENT_SPIN, i) << " (Ry)";
-		    	ofs << "\n" << wg(GlobalV::CURRENT_SPIN,i) << " (Occupations)";
+		    	ofs << "\n" << ekb(ik, i) << " (Ry)";
+		    	ofs << "\n" << wg(ik,i) << " (Occupations)";
                 for (int j=0; j<nlocal; j++)
                 {
                     if (j % 5 == 0) ofs << "\n";
@@ -268,7 +268,7 @@ void write_wfc_lcao(const int out_type,
             std::string fn = GlobalV::global_out_dir + wfc_lcao_gen_fname(out_type, gamma_only, GlobalV::out_app_flag, ik, istep);
             if (std::is_same<double, T>::value)
             {
-                write_wfc_nao(fn, reinterpret_cast<double*>(ctot.data()), nlocal, ekb, wg, writeBinary);
+                write_wfc_nao(fn, reinterpret_cast<double*>(ctot.data()), nlocal, ik, ekb, wg, writeBinary);
             }
             else
             {
