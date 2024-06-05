@@ -42,30 +42,20 @@ namespace GintKernel
  */
 void gpu_task_generator_force(const Grid_Technique& gridt,
                               const UnitCell& ucell,
-                              const int i,
-                              const int j,
+                              const int grid_index_ij,
                               const int psiSizeMax,
                               const int max_size,
                               const int nczp,
                               const double vfactor,
-                              double* rcut,
+                              const double* rcut,
                               const double* vlocal_global_value,
-                              int* iat_per_nbz,
-                              const int lgd,
-                              double* dm_matrix_g,
-                              int& max_m,
-                              int& max_n,
+                              std::vector<int>& iat_per_nbz,
                               int& atom_pair_num,
+                              std::vector<bool>& gpu_mat_cal_flag,
                               grid_para& para)
 {
-    const int grid_index_ij = i * gridt.nby * gridt.nbzp + j * gridt.nbzp;
+    
     const int nwmax = ucell.nwmax;
-    bool* gpu_mat_cal_flag = new bool[max_size * gridt.nbzp];
-
-    for (int i = 0; i < max_size * gridt.nbzp; i++)
-    {
-        gpu_mat_cal_flag[i] = false;
-    }
     // psir generate
     for (int z_index = 0; z_index < gridt.nbzp; z_index++)
     {
@@ -142,12 +132,25 @@ void gpu_task_generator_force(const Grid_Technique& gridt,
         }
         para.num_psir[z_index] = num_get_psi;
     }
+}
 
-    /* allocate the Multiplication of multinomial matrices */
+/* allocate the Multiplication of multinomial matrices */
+void alloc_mult_force(const Grid_Technique& gridt,
+                                    const UnitCell& ucell,
+                                    const int grid_index_ij,
+                                    const int max_size,
+                                    const int lgd,
+                                    double* dm_matrix_g,
+                                    int& max_m,
+                                    int& max_n,
+                                    int& atom_pair_num,
+                                    std::vector<bool>& gpu_mat_cal_flag,
+                                    grid_para& para)
+{
     int tid = 0;
     max_m = 0;
     max_n = 0;
-
+    const int nwmax=ucell.nwmax;
     for (int z_index = 0; z_index < gridt.nbzp; z_index++)
     {
         int grid_index = grid_index_ij + z_index;
@@ -168,8 +171,7 @@ void gpu_task_generator_force(const Grid_Technique& gridt,
                 = gridt.trace_lo[ucell.itiaiw2iwt(it1, ucell.iat2ia[iat1], 0)];
             int nw1 = ucell.atoms[it1].nw;
 
-            for (int atom2 = 0; atom2 < gridt.how_many_atoms[grid_index];
-                 atom2++)
+            for (int atom2 = 0; atom2 < gridt.how_many_atoms[grid_index];atom2++)
             {
                 if (!gpu_mat_cal_flag[calc_flag_index + atom2])
                 {
@@ -179,8 +181,8 @@ void gpu_task_generator_force(const Grid_Technique& gridt,
                 int iat2 = gridt.which_atom[mcell_index2];
                 int it2 = ucell.iat2it[iat2];
                 int lo2 = gridt.trace_lo[ucell.itiaiw2iwt(it2,
-                                                          ucell.iat2ia[iat2],
-                                                          0)];
+                                                            ucell.iat2ia[iat2],
+                                                            0)];
                 int nw2 = ucell.atoms[it2].nw;
 
                 int mat_A_idx = bcell_start_psir + atom2 * nwmax;
@@ -211,16 +213,16 @@ void gpu_task_generator_force(const Grid_Technique& gridt,
         }
     }
     atom_pair_num = tid;
-
-    delete[] gpu_mat_cal_flag;
+    gpu_mat_cal_flag.clear();
 }
 
-void allocateDm(double* matrixHost,
+
+void allocateDm(std::vector<double> &matrixHost,
                 hamilt::HContainer<double>* dm,
                 const Grid_Technique& gridt,
                 const UnitCell& ucell)
 {
-    ModuleBase::GlobalFunc::ZEROS(matrixHost, gridt.lgd * gridt.lgd);
+    matrixHost = std::vector<double>(gridt.lgd * gridt.lgd, 0);
     for (int iatRow = 0; iatRow < ucell.nat; iatRow++)
     {
         for (int iatColumn = 0; iatColumn < ucell.nat; iatColumn++)
@@ -264,31 +266,32 @@ void calculateInit(DensityMat& denstiy_mat,
                    hamilt::HContainer<double>* dm,
                    const Grid_Technique& gridt,
                    const UnitCell& ucell,
-                   int lgd,
-                   int cuda_block,
-                   int atom_num_grid)
+                   const int lgd,
+                   const int cuda_block,
+                   const int nat,
+                   const int atom_num_grid)
 {
-    denstiy_mat.density_mat_h = new double[lgd * lgd];
+    denstiy_mat.density_mat_h = std::vector<double>(lgd * lgd, 0);
     allocateDm(denstiy_mat.density_mat_h, dm, gridt, ucell);
 
     checkCuda(cudaMalloc((void**)&denstiy_mat.density_mat_d,
                          lgd * lgd * sizeof(double)));
     checkCuda(cudaMemcpy(denstiy_mat.density_mat_d,
-                         denstiy_mat.density_mat_h,
+                         denstiy_mat.density_mat_h.data(),
                          lgd * lgd * sizeof(double),
                          cudaMemcpyHostToDevice));
 
     checkCuda(cudaMalloc((void**)&f_s_iat_dev.stress_global,
-                         6 * cuda_block * gridt.nstreams * sizeof(double)));
+                         6  * gridt.nstreams * sizeof(double)));
     checkCuda(cudaMemset(f_s_iat_dev.stress_global,
                          0,
-                         6 * cuda_block * gridt.nstreams * sizeof(double)));
+                         6  * gridt.nstreams * sizeof(double)));
 
     checkCuda(cudaMalloc((void**)&f_s_iat_dev.force_global,
-                         3 * atom_num_grid * gridt.nstreams * sizeof(double)));
+                         3 * nat * gridt.nstreams * sizeof(double)));
     checkCuda(cudaMemset(f_s_iat_dev.force_global,
                          0,
-                         3 * atom_num_grid * gridt.nstreams * sizeof(double)));
+                         3 * nat * gridt.nstreams * sizeof(double)));
 
     checkCuda(cudaMalloc((void**)&f_s_iat_dev.iat_global,
                          atom_num_grid * gridt.nstreams * sizeof(int)));
@@ -314,7 +317,7 @@ void para_init(grid_para& para,
                        const Grid_Technique& gridt)
 {
 
-    // stream_num stand for nstreams
+    // pipeline_index stand for nstreams
     
     //input_dou and input _int used for the Spherical Harmonics
     para.input_dou
@@ -390,52 +393,51 @@ void para_init(grid_para& para,
  * GridParameter init
  *
  * @param frc_strs_iat frc_strs_iat,contains the Force Stree Iat on Host
- * @param stream_num int , record the stream in GPU
+ * @param pipeline_index int , record the stream in GPU
  * @param cuda_block in stress compute,used for Block nums
  * @param atom_num_grid in force calculate,used for Block nums
  * @param max_size Maximum size of atoms on a grid.
  * @param frc_strs_iat_gbl frc_strs_iat_gbl,contains the Force Stree Iat on Host
  */
 void cal_init(frc_strs_iat& f_s_iat,
-                        const int stream_num,
-                        const int cuda_block,
-                        const int atom_num_grid,
-                        const int max_size,
-                        frc_strs_iat_gbl& f_s_iat_dev)
+                const int pipeline_index,
+                const int cuda_block,
+                const int atom_num_grid,
+                const int nat,
+                const int max_size,
+                frc_strs_iat_gbl& f_s_iat_dev)
 {
     const int iat_min = -max_size - 1;
-    f_s_iat.stress_host = new double[6 * cuda_block];
     f_s_iat.stress_device
-        = &f_s_iat_dev.stress_global[6 * cuda_block * stream_num];
+        = &f_s_iat_dev.stress_global[6 * pipeline_index];
     f_s_iat.force_device
-        = &f_s_iat_dev.force_global[3 * atom_num_grid * stream_num];
+        = &f_s_iat_dev.force_global[3 * nat * pipeline_index];
     f_s_iat.iat_device
-        = &f_s_iat_dev.iat_global[atom_num_grid * stream_num];
-    f_s_iat.iat_host = new int[atom_num_grid];
-    for (int index = 0; index < atom_num_grid; index++)
-    {
-        f_s_iat.iat_host[index] = iat_min;
-    }
-    f_s_iat.force_host = new double[3 * atom_num_grid];
-    ModuleBase::GlobalFunc::ZEROS(f_s_iat.force_host,
-                                  3 * atom_num_grid);
+        = &f_s_iat_dev.iat_global[atom_num_grid * pipeline_index];
+    f_s_iat.iat_host = vector<int>(atom_num_grid, iat_min);
 }
+
+
+
+
 
 /**
  * @brief GridParameter memCpy,from Host to Device
  *
  * parameter init,which contains the gpu task and multi matrix multiplication
  *
- * @param para Grid parameter in task generator,
+ * @param para Grid parameter in task generator.
+ * @param f_s_iat frc_strs_iat,contains the Force Stree Iat.
  * @param gridt Grid_Technique,stored the major method in the the gint.
  * @param nbz int,stand for the number of Z-axis
  * @param atom_num_grid in force calculate,used for Block nums
  */
-void para_mem_copy(grid_para& para,
-                         const Grid_Technique& gridt,
-                         const int nbz,
-                         const int pipeline_index,
-                         const int atom_num_grid)
+void mem_copy(grid_para& para,
+                    frc_strs_iat& f_s_iat,
+                    const Grid_Technique& gridt,
+                    const int nbz,
+                    const int pipeline_index,
+                    const int atom_num_grid)
 {
     checkCuda(cudaMemcpyAsync(para.input_double_g,
                               para.input_dou,
@@ -541,88 +543,11 @@ void para_mem_copy(grid_para& para,
                               0,
                               gridt.psir_size * sizeof(double),
                               gridt.streams[pipeline_index]));
-}
-/**
- * @brief Force Stress Force Iat memCpy,from Host to Device
- *
- *  @param frc_strs_iat frc_strs_iat,contains the Force Stree Iat on Device
- * and Host
- *  @param gridt Grid_Technique,stored the major method in the the gint.
- *  @param atom_num_grid in force calculate,used for Block nums
- *  @param cuda_block in stress compute,used for Block nums
- *  @param stream_num int , record the stream in GPU
- */
-void cal_mem_cpy(frc_strs_iat& f_s_iat,
-                          const Grid_Technique& gridt,
-                          const int atom_num_grid,
-                          const int cuda_block,
-                          const int stream_num)
-{
     checkCuda(cudaMemcpyAsync(f_s_iat.iat_device,
-                              f_s_iat.iat_host,
+                              f_s_iat.iat_host.data(),
                               atom_num_grid * sizeof(int),
                               cudaMemcpyHostToDevice,
-                              gridt.streams[stream_num]));
-    checkCuda(cudaMemsetAsync(f_s_iat.stress_device,
-                              0,
-                              6 * cuda_block * sizeof(double),
-                              gridt.streams[stream_num]));
-    checkCuda(cudaMemsetAsync(f_s_iat.force_device,
-                              0,
-                              3 * atom_num_grid * sizeof(double),
-                              gridt.streams[stream_num]));
+                              gridt.streams[pipeline_index]));
 }
-/*
- * @brief Force Calculate on Host
- *
- * @param frc_strs_iat frc_strs_iat,contains the Force Stree Iat on Device
- * and Host
- * @param force stored the force for each atom on each directions
- * @param atom_num_grid in force calculate,used for Block nums
- */
-void cal_force_add(frc_strs_iat& f_s_iat,
-                     std::vector<double>& force,
-                    const int atom_num_grid)
-{
-    checkCuda(cudaMemcpy(f_s_iat.force_host,
-                         f_s_iat.force_device,
-                         3 * atom_num_grid * sizeof(double),
-                         cudaMemcpyDeviceToHost));
-    for (int index1 = 0; index1 < atom_num_grid; index1++)
-    {
-        int iat1 = f_s_iat.iat_host[index1];
-        if (iat1 >= 0)
-        {
-            for (int index2 = 0; index2 < 3; index2++)
-            {
-                force[iat1 * 3 + index2]
-                    += f_s_iat.force_host[index1 * 3 + index2];
-            }
-        }
-    }
-}
-/**
- * @brief Stress Calculate on Host
- *
- * @param frc_strs_iat frc_strs_iat,contains the Force Stree Iat on Device
- * and Host
- * @param stress stored the stress for each directions
- * @param cuda_block in stress compute,used for Block nums
- */
-void cal_stress_add(frc_strs_iat& f_s_iat,
-                     std::vector<double>& stress,
-                     const int cuda_block)
-{
-    checkCuda(cudaMemcpy(f_s_iat.stress_host,
-                         f_s_iat.stress_device,
-                         6 * cuda_block * sizeof(double),
-                         cudaMemcpyDeviceToHost));
-    for (int i = 0; i < 6; i++)
-    {
-        for (int index = 0; index < cuda_block; index++)
-        {
-            stress[i] += f_s_iat.stress_host[i * cuda_block + index];
-        }
-    }
-}
+
 } // namespace GintKernel

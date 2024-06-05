@@ -5,7 +5,7 @@
 #include "module_base/global_variable.h"
 #include "module_base/timer.h"
 
-void ModuleIO::write_wfc_nao(const std::string &name, double **ctot, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg, bool writeBinary)
+void ModuleIO::write_wfc_nao(const std::string &name, double **ctot, const int ik, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg, bool writeBinary)
 {
     ModuleBase::TITLE("ModuleIO", "write_wfc_nao");
     ModuleBase::timer::tick("ModuleIO", "write_wfc_nao");
@@ -26,8 +26,8 @@ void ModuleIO::write_wfc_nao(const std::string &name, double **ctot, const Modul
             for (int i = 0; i < GlobalV::NBANDS; i++)
             {
                 ofs << i+1;
-                ofs << ekb(GlobalV::CURRENT_SPIN, i);
-                ofs << wg(GlobalV::CURRENT_SPIN, i);
+                ofs << ekb(ik, i);
+                ofs << wg(ik, i);
 
                 for (int j = 0; j < GlobalV::NLOCAL; j++)
                 {
@@ -61,8 +61,8 @@ void ModuleIO::write_wfc_nao(const std::string &name, double **ctot, const Modul
                 // +1 to mean more clearly.
                 // band index start from 1.
                 ofs << "\n" << i+1 << " (band)";
-		    	ofs << "\n" << ekb(GlobalV::CURRENT_SPIN, i) << " (Ry)";
-		    	ofs << "\n" << wg(GlobalV::CURRENT_SPIN,i) << " (Occupations)";
+		    	ofs << "\n" << ekb(ik, i) << " (Ry)";
+		    	ofs << "\n" << wg(ik,i) << " (Occupations)";
                 for (int j=0; j<GlobalV::NLOCAL; j++)
                 {
                     if (j % 5 == 0) ofs << "\n";

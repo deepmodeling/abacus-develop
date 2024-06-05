@@ -225,6 +225,7 @@ void Local_Orbital_wfc::wfc_2d_to_grid(const int istep,
                                        const int out_wfc_lcao,
                                        const double* wfc_2d,
                                        double** wfc_grid,
+                                       const int ik,
                                        const ModuleBase::matrix& ekb,
                                        const ModuleBase::matrix& wg)
 {
@@ -294,11 +295,11 @@ void Local_Orbital_wfc::wfc_2d_to_grid(const int istep,
         {
             if (out_wfc_lcao == 1)
             {
-                ss << GlobalV::global_out_dir << "LOWF_GAMMA_S" << GlobalV::CURRENT_SPIN + 1 << ".txt";
+                ss << GlobalV::global_out_dir << "LOWF_GAMMA_S" << ik + 1 << ".txt";
             }
             else if (out_wfc_lcao == 2)
             {
-                ss << GlobalV::global_out_dir << "LOWF_GAMMA_S" << GlobalV::CURRENT_SPIN + 1 << ".dat";
+                ss << GlobalV::global_out_dir << "LOWF_GAMMA_S" << ik + 1 << ".dat";
             }
         }
         else
@@ -306,21 +307,21 @@ void Local_Orbital_wfc::wfc_2d_to_grid(const int istep,
             if (out_wfc_lcao == 1)
             {
                 ss << GlobalV::global_out_dir << istep << "_"
-                    << "LOWF_GAMMA_S" << GlobalV::CURRENT_SPIN + 1 << ".txt";
+                    << "LOWF_GAMMA_S" << ik + 1 << ".txt";
             }
             else if (out_wfc_lcao == 2)
             {
                 ss << GlobalV::global_out_dir << istep << "_"
-                    << "LOWF_GAMMA_S" << GlobalV::CURRENT_SPIN + 1 << ".dat";
+                    << "LOWF_GAMMA_S" << ik + 1 << ".dat";
             }
         }
         if (out_wfc_lcao == 1)
         {
-            ModuleIO::write_wfc_nao(ss.str(), ctot, ekb, wg);
+            ModuleIO::write_wfc_nao(ss.str(), ctot, ik, ekb, wg);
         }
         else if (out_wfc_lcao == 2)
         {
-            ModuleIO::write_wfc_nao(ss.str(), ctot, ekb, wg, true);
+            ModuleIO::write_wfc_nao(ss.str(), ctot, ik, ekb, wg, true);
         }
         for (int i = 0; i < GlobalV::NBANDS; i++)
         {

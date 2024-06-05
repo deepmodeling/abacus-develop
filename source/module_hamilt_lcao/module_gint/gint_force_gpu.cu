@@ -74,9 +74,11 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
     const int bxyz = gridt.bxyz;
     const int atom_num_grid = nbz * bxyz * max_size;
     const int cuda_threads = 256;
+    const int nat=ucell.nat;
     const int cuda_block
         = std::min(64, (gridt.psir_size + cuda_threads - 1) / cuda_threads);
     int iter_num = 0;
+    int pipeline_index = 0;
     DensityMat denstiy_mat;
     frc_strs_iat_gbl f_s_iat_dev;
     grid_para para;
@@ -89,6 +91,7 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
                   ucell,
                   lgd,
                   cuda_block,
+                  nat,
                   atom_num_grid);
     /*cuda stream allocate */
     for (int i = 0; i < gridt.nstreams; i++)
@@ -97,35 +100,39 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
     }
 
     /*compute the psi*/
-    #pragma omp parallel for num_threads(gridt.nstreams) private(para,f_s_iat) collapse(2)
+    #pragma omp parallel for num_threads(gridt.nstreams) private(para, f_s_iat) collapse(2)
     for (int i = 0; i < gridt.nbx; i++)
     {
         for (int j = 0; j < gridt.nby; j++)
         {
+            
 
             int max_m = 0;
             int max_n = 0;
             int atom_pair_num = 0;
+            const int grid_index_ij = i * gridt.nby * gridt.nbzp 
+                                        + j * gridt.nbzp;
             dim3 grid_psi(nbz, 32);
             dim3 block_psi(64);
             dim3 grid_dot_force(cuda_block);
             dim3 block_dot_force(cuda_threads);
             dim3 grid_dot(cuda_block);
             dim3 block_dot(cuda_threads);
-            
+
             int pipeline_index = omp_get_thread_num();
+            std::vector<bool> gpu_mat_cal_flag(max_size * gridt.nbzp, false);
             para_init(para, iter_num, nbz, pipeline_index,gridt);
             cal_init(f_s_iat,
                                pipeline_index,
                                cuda_block,
                                atom_num_grid,
+                               nat,
                                max_size,
                                f_s_iat_dev);
             /*gpu task compute in CPU */
             gpu_task_generator_force(gridt,
                                      ucell,
-                                     i,
-                                     j,
+                                     grid_index_ij,
                                      gridt.psi_size_max_z,
                                      max_size,
                                      nczp,
@@ -133,23 +140,27 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
                                      rcut,
                                      vlocal,
                                      f_s_iat.iat_host,
-                                     lgd,
-                                     denstiy_mat.density_mat_d,
-                                     max_m,
-                                     max_n,
                                      atom_pair_num,
+                                     gpu_mat_cal_flag,
                                      para);
+            alloc_mult_force(gridt,
+                                ucell, 
+                                grid_index_ij,
+                                max_size,
+                                lgd,
+                                denstiy_mat.density_mat_d,
+                                max_m,
+                                max_n, 
+                                atom_pair_num, 
+                                gpu_mat_cal_flag,
+                                para);
             /*variables memcpy to gpu host*/
-            para_mem_copy(para, 
-                                 gridt, 
-                                 nbz, 
-                                 pipeline_index,
-                                 atom_num_grid);
-            cal_mem_cpy(f_s_iat,
-                                 gridt,
-                                 atom_num_grid,
-                                 cuda_block,
-                                 pipeline_index);
+            mem_copy(para, 
+                            f_s_iat,
+                            gridt, 
+                            nbz, 
+                            pipeline_index,
+                            atom_num_grid);
             checkCuda(cudaStreamSynchronize(gridt.streams[pipeline_index]));
             /* cuda stream compute and Multiplication of multinomial matrices */
             
@@ -203,15 +214,15 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
                                 block_dot_force,
                                 0,
                                 gridt.streams[pipeline_index]>>>(
-                para.psir_lx_device,
-                para.psir_ly_device,
-                para.psir_lz_device,
-                para.psir_dm_device,
-                f_s_iat.force_device,
-                f_s_iat.iat_device,
-                nwmax,
-                max_size,
-                gridt.psir_size / nwmax);
+                                    para.psir_lx_device,
+                                    para.psir_ly_device,
+                                    para.psir_lz_device,
+                                    para.psir_dm_device,
+                                    f_s_iat.force_device,
+                                    f_s_iat.iat_device,
+                                    nwmax,
+                                    max_size,
+                                    gridt.psir_size / nwmax);
             }
             /*stress compute in GPU*/
             if (isstress){
@@ -219,35 +230,56 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
                                  block_dot,
                                  0,
                                  gridt.streams[pipeline_index]>>>(
-                para.psir_lxx_device,
-                para.psir_lxy_device,
-                para.psir_lxz_device,
-                para.psir_lyy_device,
-                para.psir_lyz_device,
-                para.psir_lzz_device,
-                para.psir_dm_device,
-                f_s_iat.stress_device,
-                gridt.psir_size);
-            }
-            /* stress compute in CPU*/
-            if (isstress){
-                cal_stress_add(f_s_iat, stress, cuda_block);
-            }
-            if (isforce){
-                cal_force_add(f_s_iat, force, atom_num_grid);
+                                para.psir_lxx_device,
+                                para.psir_lxy_device,
+                                para.psir_lxz_device,
+                                para.psir_lyy_device,
+                                para.psir_lyz_device,
+                                para.psir_lzz_device,
+                                para.psir_dm_device,
+                                f_s_iat.stress_device,
+                                gridt.psir_size);
             }
             iter_num++;
-            delete[] f_s_iat.stress_host;
-            delete[] f_s_iat.force_host;
-            delete[] f_s_iat.iat_host;
         }
     }
-    delete[] denstiy_mat.density_mat_h;
     /*free variables in CPU host*/
     for (int i = 0; i < gridt.nstreams; i++)
     {
         checkCuda(cudaStreamSynchronize(gridt.streams[i]));
     }
+    if (isstress){
+        std::vector<double> stress_host(6 * gridt.nstreams, 0.0);
+        checkCuda(cudaMemcpy(stress_host.data(),
+                            f_s_iat_dev.stress_global,
+                            sizeof(double) * 6 * gridt.nstreams,
+                            cudaMemcpyDeviceToHost));
+        for (int i = 0; i < 6; i++)
+        {
+            for (int j = 0; j < gridt.nstreams; j++)
+            {
+                stress[i] += stress_host[j * 6 + i];
+            }
+        }
+    }
+    if (isforce){
+        std::vector<double> force_host(3 * nat*gridt.nstreams, 0.0);
+        checkCuda(cudaMemcpy(force_host.data(),
+                            f_s_iat_dev.force_global,
+                            sizeof(double) * 3 * nat * gridt.nstreams,
+                            cudaMemcpyDeviceToHost));
+        for (int i = 0; i < 3 * nat; i++)
+        {
+            force[i] = 0.0;
+            for (int j = 0; j < gridt.nstreams; j++)
+            {
+                force[i] += force_host[j * 3 * nat + i];
+            }
+        }
+    }
+    checkCuda(cudaFree(f_s_iat_dev.stress_global));
+    checkCuda(cudaFree(f_s_iat_dev.force_global));
+    checkCuda(cudaFree(f_s_iat_dev.iat_global));
 }
 
 } // namespace GintKernel

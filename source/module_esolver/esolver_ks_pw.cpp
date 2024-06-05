@@ -1311,52 +1311,15 @@ void ESolver_KS_PW<T, Device>::after_all_runners(void)
         // ! Print out overlap before spillage optimization to generate atomic orbitals
         if (winput::out_spillage <= 2)
         {
-            if(INPUT.bessel_nao_rcuts.size() == 1)
+            for(int i = 0; i < INPUT.bessel_nao_rcuts.size(); i++)
             {
+                if(GlobalV::MY_RANK == 0) 
+                {
+                    std::cout << "update value: bessel_nao_rcut <- " << std::fixed << INPUT.bessel_nao_rcuts[i] << " a.u." << std::endl;
+                }
+                INPUT.bessel_nao_rcut = INPUT.bessel_nao_rcuts[i];
                 Numerical_Basis numerical_basis;
                 numerical_basis.output_overlap(this->psi[0], this->sf, this->kv, this->pw_wfc, GlobalC::ucell);
-            }
-            else
-            {
-                for(int i = 0; i < INPUT.bessel_nao_rcuts.size(); i++)
-                {
-					if(GlobalV::MY_RANK == 0) 
-					{
-						std::cout << "update value: bessel_nao_rcut <- " 
-							<< std::fixed 
-							<< INPUT.bessel_nao_rcuts[i] 
-							<< " a.u." 
-							<< std::endl;
-					}
-					INPUT.bessel_nao_rcut = INPUT.bessel_nao_rcuts[i];
-                    /*
-                        SEVERE BUG
-                        the memory management of numerical_basis class is NOT SAFE, 
-                        data cleaning before overwriting is absent.
-                        instance created from present implementation of numerical_basis 
-                        SHOULD NOT BE USED FOR MORE THAN ONE TIME.
-                        will cause data unexpected overwriting, file truncation and data loss. 
-                        Will be refactored in the future.
-                    */
-                    Numerical_Basis numerical_basis;
-                    numerical_basis.output_overlap(this->psi[0], this->sf, this->kv, this->pw_wfc, GlobalC::ucell);
-					std::string old_fname_header = winput::spillage_outdir 
-						+ "/" 
-						+ "orb_matrix.";
-					std::string new_fname_header = winput::spillage_outdir 
-						+ "/" 
-						+ "orb_matrix_rcut" 
-						+ std::to_string(int(INPUT.bessel_nao_rcut)) 
-						+ "deriv";
-
-                    for(int derivative_order = 0; derivative_order <= 1; derivative_order++)
-                    {
-                        // rename generated files
-                        std::string old_fname = old_fname_header + std::to_string(derivative_order) + ".dat";
-                        std::string new_fname = new_fname_header + std::to_string(derivative_order) + ".dat";
-                        std::rename(old_fname.c_str(), new_fname.c_str());
-                    }
-                }
             }
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "BASIS OVERLAP (Q and S) GENERATION.");
         }
