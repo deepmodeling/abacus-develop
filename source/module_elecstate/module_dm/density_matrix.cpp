@@ -121,7 +121,7 @@ void DensityMatrix<TK, TR>::init_DMR(Grid_Driver* GridD_in, const UnitCell* ucel
             }
             ModuleBase::Vector3<int>& R_index = adjs.box[ad];
             // std::cout << "R_index: " << R_index.x << " " << R_index.y << " " << R_index.z << std::endl;
-            hamilt::AtomPair<TR> tmp_ap(iat1, iat2, R_index.x, R_index.y, R_index.z, this->_paraV);
+            hamilt::AtomPair<TR> tmp_ap(iat1, iat2, R_index, this->_paraV);
             tmp_DMR->insert_pair(tmp_ap);
         }
     }
@@ -238,7 +238,7 @@ void DensityMatrix<TK, TR>::init_DMR(const hamilt::HContainer<TRShift>& DMR_in)
             for(int ir = 0;ir<DMR_in.get_atom_pair(iap).get_R_size();ir++)
             {
                 const ModuleBase::Vector3<int> R_index = DMR_in.get_atom_pair(iap).get_R_index(ir);
-                hamilt::AtomPair<TR> tmp_ap(iat1, iat2, R_index.x, R_index.y, R_index.z, paraV_);
+                hamilt::AtomPair<TR> tmp_ap(iat1, iat2, R_index, paraV_);
                 tmp_DMR->insert_pair(tmp_ap);
             }
         }

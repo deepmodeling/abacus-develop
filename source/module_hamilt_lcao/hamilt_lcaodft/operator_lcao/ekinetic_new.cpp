@@ -83,7 +83,7 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Drive
             const int I2 = adjs.natom[ad];
             int iat2 = ucell->itia2iat(T2, I2);
             ModuleBase::Vector3<int>& R_index = adjs.box[ad];
-            hamilt::AtomPair<TR> tmp(iat1, iat2, R_index.x, R_index.y, R_index.z, paraV);
+            hamilt::AtomPair<TR> tmp(iat1, iat2, R_index, paraV);
             this->hR->insert_pair(tmp);
         }
     }

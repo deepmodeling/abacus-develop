@@ -78,6 +78,39 @@ AtomPair<T>::AtomPair(const int& atom_i_,
         this->values.push_back(tmp);
     }
 }
+
+template <typename T>
+AtomPair<T>::AtomPair(const int& atom_i_,
+                      const int& atom_j_,
+                      const ModuleBase::Vector3<int> &R_index,
+                      const Parallel_Orbitals* paraV_,
+                      T* existed_matrix)
+    : atom_i(atom_i_), atom_j(atom_j_), paraV(paraV_)
+{
+    assert(this->paraV != nullptr);
+    this->row_ap = this->paraV->atom_begin_row[atom_i];
+    this->col_ap = this->paraV->atom_begin_col[atom_j];
+    if (this->row_ap == -1 || this->col_ap == -1)
+    {
+        throw std::string("Atom-pair not belong this process");
+    }
+    this->row_size = this->paraV->get_row_size(atom_i);
+    this->col_size = this->paraV->get_col_size(atom_j);
+    this->R_index.resize(0);
+    this->R_index.push_back(ModuleBase::Vector3<int>(R_index));
+    this->current_R = 0;
+    if (existed_matrix != nullptr)
+    {
+        BaseMatrix<T> tmp(row_size, col_size, existed_matrix);
+        this->values.push_back(tmp);
+    }
+    else
+    {
+        BaseMatrix<T> tmp(row_size, col_size);
+        this->values.push_back(tmp);
+    }
+}
+
 // direct save whole matrix of atom-pair
 template <typename T>
 AtomPair<T>::AtomPair(const int& atom_i_,

@@ -63,6 +63,17 @@ class AtomPair
              T* existed_array
              = nullptr // if nullptr, new memory will be allocated, otherwise this class is a data wrapper
     );
+    // Constructor of class AtomPair
+    // Only for 2d-block MPI parallel case
+    // This constructor used for initialize a atom-pair local Hamiltonian with non-zero cell indexes,
+    // which is used for constructing HR (real space Hamiltonian) objects.
+    AtomPair(const int& atom_i_,              // atomic index of atom i, used to identify atom
+             const int& atom_j_,              // atomic index of atom j, used to identify atom
+             const ModuleBase::Vector3<int>& R_index,  // xyz coordinates of cell
+             const Parallel_Orbitals* paraV_, // information for 2d-block parallel
+             T* existed_array
+             = nullptr // if nullptr, new memory will be allocated, otherwise this class is a data wrapper
+    );
     // This constructor used for initialize a atom-pair local Hamiltonian with only center cell
     // which is used for constructing HK (k space Hamiltonian) objects, (gamma_only case)
     AtomPair(const int& atom_i,         // atomic index of atom i, used to identify atom

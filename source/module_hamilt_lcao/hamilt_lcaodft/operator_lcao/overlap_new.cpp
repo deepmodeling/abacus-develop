@@ -65,7 +65,7 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::initialize_SR(Grid_Driver
             {
                 continue;
             }
-            hamilt::AtomPair<TR> tmp(iat1, iat2, R_index.x, R_index.y, R_index.z, paraV);
+            hamilt::AtomPair<TR> tmp(iat1, iat2, R_index, paraV);
             SR->insert_pair(tmp);
         }
     }
