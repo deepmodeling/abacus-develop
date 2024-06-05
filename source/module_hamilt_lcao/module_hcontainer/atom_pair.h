@@ -176,9 +176,9 @@ class AtomPair
     BaseMatrix<T>& get_HR_values(const int& index) const;
 
     // interface for get (rx, ry, rz) of index-th R-index in this->R_index, the return should be ModuleBase::Vector3<int>
-    ModuleBase::Vector3<int> & get_R_index(const int& index) const;
+    ModuleBase::Vector3<int> get_R_index(const int& index) const;
     // interface for get (rx, ry, rz) of current_R, the return should be ModuleBase::Vector3<int>
-    ModuleBase::Vector3<int> & get_R_index() const;
+    ModuleBase::Vector3<int> get_R_index() const;
     // interface for search (rx, ry, rz) in this->R_index, if found, current_R would be set to index
     int find_R(const int& rx_in, const int& ry_in, const int& rz_in) const;
     int find_R(const ModuleBase::Vector3<int>& R_in) const;

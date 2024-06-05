@@ -84,7 +84,7 @@ void ModuleIO::cal_tmp_DM(elecstate::DensityMatrix<std::complex<double>, double>
             }
             for (int ir = 0; ir < tmp_ap.get_R_size(); ++ir)
             {
-                const ModuleBase::Vector3<int>& r_index = tmp_ap.get_R_index(ir);
+                const ModuleBase::Vector3<int> r_index = tmp_ap.get_R_index(ir);
                 hamilt::BaseMatrix<double>* tmp_matrix = tmp_ap.find_matrix(r_index);
 #ifdef __DEBUG
                 if (tmp_matrix == nullptr)

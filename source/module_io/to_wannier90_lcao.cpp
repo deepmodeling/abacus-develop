@@ -381,7 +381,7 @@ void toWannier90_LCAO::unkdotkb(
         for(int iR = 0; iR < tmp_FR_container->get_atom_pair(iap).get_R_size(); ++iR)
         {
             auto& matrix = tmp_FR_container->get_atom_pair(iap).get_HR_values(iR);
-            const ModuleBase::Vector3<int>& r_index = tmp_FR_container->get_atom_pair(iap).get_R_index(iR);
+            const ModuleBase::Vector3<int> r_index = tmp_FR_container->get_atom_pair(iap).get_R_index(iR);
             ModuleBase::Vector3<double> dR = ModuleBase::Vector3<double>(r_index.x, r_index.y, r_index.z) * GlobalC::ucell.latvec;
             double phase = ikb_car * dR * ModuleBase::TWO_PI;
             std::complex<double> kRn_phase = std::exp(ModuleBase::IMAG_UNIT * phase);

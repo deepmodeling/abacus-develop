@@ -237,7 +237,7 @@ void DensityMatrix<TK, TR>::init_DMR(const hamilt::HContainer<TRShift>& DMR_in)
             const int iat2 = DMR_in.get_atom_pair(iap).get_atom_j();
             for(int ir = 0;ir<DMR_in.get_atom_pair(iap).get_R_size();ir++)
             {
-                const ModuleBase::Vector3<int>& R_index = DMR_in.get_atom_pair(iap).get_R_index(ir);
+                const ModuleBase::Vector3<int> R_index = DMR_in.get_atom_pair(iap).get_R_index(ir);
                 hamilt::AtomPair<TR> tmp_ap(iat1, iat2, R_index, paraV_);
                 tmp_DMR->insert_pair(tmp_ap);
             }
@@ -417,7 +417,7 @@ void DensityMatrix<TK,TR>::cal_DMR_test()
             }
             for (int ir = 0; ir < tmp_ap.get_R_size(); ++ir)
             {
-                const ModuleBase::Vector3<int>& r_index = tmp_ap.get_R_index(ir);
+                const ModuleBase::Vector3<int> r_index = tmp_ap.get_R_index(ir);
                 hamilt::BaseMatrix<TR>* tmp_matrix = tmp_ap.find_matrix(r_index);
 #ifdef __DEBUG
 				if (tmp_matrix == nullptr)
@@ -484,7 +484,7 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR()
             }
             for (int ir = 0; ir < tmp_ap.get_R_size(); ++ir)
             {
-                const ModuleBase::Vector3<int>& r_index = tmp_ap.get_R_index(ir);
+                const ModuleBase::Vector3<int> r_index = tmp_ap.get_R_index(ir);
                 hamilt::BaseMatrix<double>* tmp_matrix = tmp_ap.find_matrix(r_index);
 #ifdef __DEBUG
                 if (tmp_matrix == nullptr)
@@ -644,7 +644,7 @@ void DensityMatrix<double, double>::cal_DMR()
                 throw std::string("Atom-pair not belong this process");
             }
             // R index
-            const ModuleBase::Vector3<int>& r_index = tmp_ap.get_R_index(0);
+            const ModuleBase::Vector3<int> r_index = tmp_ap.get_R_index(0);
 #ifdef __DEBUG
             assert(tmp_ap.get_R_size() == 1);
             assert(r_index.x == 0 && r_index.y == 0 && r_index.z == 0);
@@ -695,7 +695,7 @@ void DensityMatrix<TK, TR>::sum_DMR_spin()
             hamilt::AtomPair<TR>& tmp_ap_down = tmp_DMR_down->get_atom_pair(i);
             for (int ir = 0; ir < tmp_ap_up.get_R_size(); ++ir)
             {
-                const ModuleBase::Vector3<int>& r_index = tmp_ap_up.get_R_index(ir);
+                const ModuleBase::Vector3<int> r_index = tmp_ap_up.get_R_index(ir);
                 hamilt::BaseMatrix<double>* tmp_matrix_up = tmp_ap_up.find_matrix(r_index);
                 hamilt::BaseMatrix<double>* tmp_matrix_down = tmp_ap_down.find_matrix(r_index);
                 TR* ptr_up = tmp_matrix_up->get_pointer();

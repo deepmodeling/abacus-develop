@@ -26,7 +26,7 @@ void folding_HR(const hamilt::HContainer<TR>& hR,
         hamilt::AtomPair<TR>& tmp = hR.get_atom_pair(i);
         for(int ir = 0;ir < tmp.get_R_size(); ++ir )
         {
-            const ModuleBase::Vector3<int>& r_index = tmp.get_R_index(ir);
+            const ModuleBase::Vector3<int> r_index = tmp.get_R_index(ir);
             // cal k_phase
             // if TK==std::complex<double>, kphase is e^{ikR}
             const ModuleBase::Vector3<double> dR(r_index.x, r_index.y, r_index.z);

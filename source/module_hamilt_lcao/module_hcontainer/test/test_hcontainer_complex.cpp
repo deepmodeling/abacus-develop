@@ -310,7 +310,7 @@ TEST_F(HContainerTest, size_atom_pairs)
     EXPECT_EQ(HR->get_atom_pair(0).get_atom_j(), 1);
     EXPECT_EQ(HR->get_atom_pair(0).get_row_size(), 2);
     EXPECT_EQ(HR->get_atom_pair(0).get_col_size(), 2);
-    const ModuleBase::Vector3<int>& R_ptr = HR->get_atom_pair(0).get_R_index();
+    const ModuleBase::Vector3<int> R_ptr = HR->get_atom_pair(0).get_R_index();
     EXPECT_EQ(R_ptr.x, 1);
     EXPECT_EQ(R_ptr.y, 0);
     EXPECT_EQ(R_ptr.z, 0);

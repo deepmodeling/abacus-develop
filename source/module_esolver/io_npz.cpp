@@ -448,7 +448,7 @@ void ESolver_KS_LCAO<TK, TR>::output_mat_npz(std::string& zipname, const hamilt:
             for(int iR=0;iR<HR_serial[0].get_atom_pair(iap).get_R_size();++iR)
             {
                 auto& matrix = HR_serial[0].get_atom_pair(iap).get_HR_values(iR);
-                const ModuleBase::Vector3<int>& r_index = HR_serial[0].get_atom_pair(iap).get_R_index(iR);
+                const ModuleBase::Vector3<int> r_index = HR_serial[0].get_atom_pair(iap).get_R_index(iR);
                 filename = "mat_"+std::to_string(atom_i)+"_"+std::to_string(atom_j)+"_"
                     +std::to_string(r_index.x)+"_"+std::to_string(r_index.y)+"_"+std::to_string(r_index.z);
                 std::vector<size_t> shape = {(size_t)row_size,(size_t)col_size};
@@ -472,7 +472,7 @@ void ESolver_KS_LCAO<TK, TR>::output_mat_npz(std::string& zipname, const hamilt:
         for(int iR=0;iR<hR.get_atom_pair(iap).get_R_size();++iR)
         {
             auto& matrix = hR.get_atom_pair(iap).get_HR_values(iR);
-            const ModuleBase::Vector3<int>& r_index = hR.get_atom_pair(iap).get_R_index(iR);
+            const ModuleBase::Vector3<int> r_index = hR.get_atom_pair(iap).get_R_index(iR);
 
             filename = "mat_"+std::to_string(atom_i)+"_"+std::to_string(atom_j)+"_"
                 +std::to_string(r_index.x)+"_"+std::to_string(r_index.y)+"_"+std::to_string(r_index.z);

@@ -788,7 +788,7 @@ std::tuple<std::vector<int>, T*> AtomPair<T>::get_matrix_values(int ir) const
 
 // interface for get (rx, ry, rz) of index-th R-index in this->R_index, the return should be ModuleBase::Vector3<int>
 template <typename T>
-ModuleBase::Vector3<int> & AtomPair<T>::get_R_index(const int& index) const
+ModuleBase::Vector3<int> AtomPair<T>::get_R_index(const int& index) const
 {
     if (index >= R_index.size() || index < 0)
     {
@@ -803,7 +803,7 @@ ModuleBase::Vector3<int> & AtomPair<T>::get_R_index(const int& index) const
 }
 
 template <typename T>
-ModuleBase::Vector3<int> & AtomPair<T>::get_R_index() const
+ModuleBase::Vector3<int> AtomPair<T>::get_R_index() const
 {
     // return the ModuleBase::Vector3<int> of R_index[index]
     return R_index[current_R];
