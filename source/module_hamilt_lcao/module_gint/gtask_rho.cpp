@@ -203,6 +203,8 @@ void alloc_mult_dot_rho(const Grid_Technique& gridt,
             dot_product[dot_count] = rho_g + vindex[i];
             dot_count++;
         }
+        
+        delete[] vindex;
     }
     atom_pair_num = tid;
 }
