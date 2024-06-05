@@ -49,11 +49,9 @@ typedef struct
 typedef struct
 {
     double* stress_device;
-    double* stress_host;
     double* force_device;
-    double* force_host;
     int* iat_device;
-    int* iat_host;
+    std::vector<int> iat_host;
 
 } frc_strs_iat;
 
@@ -66,7 +64,7 @@ typedef struct
 
 typedef struct
 {
-    double* density_mat_h;
+    std::vector<double> density_mat_h;
     double* density_mat_d;
 } DensityMat;
 
@@ -102,9 +100,9 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
  *
  * This function generates GPU tasks for force calculations.
  *
- * @param gridt Reference to Grid_Technique object.
- * @param i Value of i,stand for the x-axis gird.
- * @param j Value of j.stand for the y-axis grid.
+ * @param gridt Reference to Grid_Technique .
+ * @param ucell Reference to UnitCell .
+ * @param grid_index_ij Index of the grid.
  * @param psi_size_max Maximum size of psi.
  * @param max_size Maximum size of atoms on a grid.
  * @param nczp Size parameter,stand for the current z-axis grids.
@@ -112,33 +110,52 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
  * @param rcut distance for each atom orbits
  * @param vlocal_global_value Global values of local potential.
  * @param iat_per_nbz save the number of the iat on per nbz grids.
- * @param lgd Value of lgd,stand for the local grid dimension.
- * @param num_psir Array for num_psir values,contained the each number of the
- * atom psir on a grid.
- * @param dm_matrix_g GPU array for dm_matrix,send as the denstiy matrix.
- * @param max_m Maximum value of m,stand for the max number of mat_m.
- * @param max_n Maximum value of n,stand for the max number of mat_n.
  * @param atom_pair_num Number of atom pairs,stand for the max number of mat_n.
+ * @param gpu_mat_cal_flag Establish whether to perform calculations between
+ * atoms and grid points.
  * @param para Grid parameter in task generator,
  */
 
 void gpu_task_generator_force(const Grid_Technique& gridt,
                               const UnitCell& ucell,
-                              const int i,
-                              const int j,
+                              const int grid_index_ij,
                               const int psi_size_max,
                               const int max_size,
                               const int nczp,
                               const double vfactor,
-                              double* ruct,
+                              const double* ruct,
                               const double* vlocal_global_value,
-                              int* iat_per_nbz,
-                              const int lgd,
-                              double* dm_matrix_g,
-                              int& max_m,
-                              int& max_n,
+                              std::vector<int>& iat_per_nbz,
                               int& atom_pair_num,
+                              std::vector<bool>& gpu_mat_cal_flag,
                               grid_para& para);
+/**
+ * @brief Calculate atom pair parameters.
+ *
+ * This function calculates the parameters for atom pairs.
+ * @param gridt Reference to Grid_Technique.
+ * @param ucell Reference to UnitCell.
+ * @param grid_index_ij Index of the grid.
+ * @param max_size Maximum size of atoms on a grid.
+ * @param lgd Value of local grid dimension.
+ * @param dm_matrix_g GPU array for dm_matrix.
+ * @param max_m The maximum length of matrix A.
+ * @param max_n The maximum length of matrix B.
+ * @param gpu_mat_cal_flag Establish whether to perform calculations between
+ *  atoms and grid points
+ * @param para Grid parameter in multi matrix multiplication.
+ */
+void alloc_mult_force(const Grid_Technique& gridt,
+                                    const UnitCell& ucell,
+                                    const int grid_index_ij,
+                                    const int max_size,
+                                    const int lgd,
+                                    double* dm_matrix_g,
+                                    int& max_m,
+                                    int& max_n,
+                                    int& atom_pair_num,
+                                    std::vector<bool>& gpu_mat_cal_flag,
+                                    grid_para& para);
 /**
  * @brief Density Matrix,force Stress Iat Init
  *
@@ -162,6 +179,7 @@ void calculateInit(DensityMat& denstiy_mat,
                    const UnitCell& ucell,
                    const int lgd,
                    const int cuda_block,
+                   const int nat,
                    const int atom_num_grid);
 
 /**
@@ -174,7 +192,7 @@ void calculateInit(DensityMat& denstiy_mat,
  * @param gridt Grid_Technique,stored the major method in the the gint.
  * @param lgd Value of lgd,stand for the local grid dimension.
  */
-void allocateDm(double* matrix_host,
+void allocateDm(std::vector<double>* matrix_host,
                 hamilt::HContainer<double>* dm,
                 const Grid_Technique& gridt,
                 const UnitCell& ucell);
@@ -210,6 +228,7 @@ void cal_init(frc_strs_iat& f_s_iat,
                         const int stream_num,
                         const int cuda_block,
                         const int atom_num_grid,
+                        const int nat,
                         const int max_size,
                         frc_strs_iat_gbl& f_s_iatg);
 /**
@@ -217,52 +236,17 @@ void cal_init(frc_strs_iat& f_s_iat,
  *
  * parameter init,which contains the gpu task and multi matrix multiplication
  *
- * @param para Grid parameter in task generator,
+ * @param para Grid parameter in task generator.
  * @param gridt Grid_Technique,stored the major method in the the gint.
- * @param nbz int,stand for the number of Z-axis
- * @param atom_num_grid in force calculate,used for Block nums
+ * @param nbz int,stand for the number of Z-axis.
+ * @param atom_num_grid in force calculate,used for Block nums.
  */
-void para_mem_copy(grid_para& para,
-                         const Grid_Technique& gridt,
-                         const int nbz,
-                         const int pipeline_index,
-                         const int atom_num_grid);
-/**
- * @brief Force Stress Force Iat memCpy,from Host to Device
- *
- *  @param frc_strs_iat frc_strs_iat,contains the Force Stree Iat on Device
- * and Host
- *  @param gridt Grid_Technique,stored the major method in the the gint.
- *  @param atom_num_grid in force calculate,used for Block nums
- *  @param cuda_block in stress compute,used for Block nums
- *  @param stream_num int , record the stream in GPU
- */
-void cal_mem_cpy(frc_strs_iat& f_s_iat,
-                          const Grid_Technique& gridt,
-                          const int atom_num_grid,
-                          const int cuda_block,
-                          const int stream_num);
-/**
- * @brief Force Calculate on Host
- *
- * @param frc_strs_iat frc_strs_iat,contains the Force Stree Iat on Device
- * and Host
- * @param force stored the force for each atom on each directions
- * @param atom_num_grid in force calculate,used for Block nums
- */
-void cal_force_add(frc_strs_iat& f_s_iat,
-                    std::vector<double>& force,
+void mem_copy(grid_para& para,
+                    frc_strs_iat& f_s_iat,
+                    const Grid_Technique& gridt,
+                    const int nbz,
+                    const int pipeline_index,
                     const int atom_num_grid);
-/**
- * @brief Stress Calculate on Host
- *
- * @param frc_strs_iat frc_strs_iat,contains the Force Stree Iat on Device
- * and Host
- * @param stress stored the stress for each directions
- * @param cuda_block in stress compute,used for Block nums
- */
-void cal_stress_add(frc_strs_iat& f_s_iat,
-                     std::vector<double>& stress,
-                     const int cuda_block);
+
 } // namespace GintKernel
 #endif

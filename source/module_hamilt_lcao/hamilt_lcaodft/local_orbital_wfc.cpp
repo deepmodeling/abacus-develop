@@ -222,6 +222,7 @@ int Local_Orbital_wfc::localIndex(int globalindex, int nblk, int nprocs, int& my
 #ifdef __MPI
 void Local_Orbital_wfc::wfc_2d_to_grid(const double* wfc_2d,
                                        double** wfc_grid,
+                                       const int ik,
                                        const ModuleBase::matrix& ekb,
                                        const ModuleBase::matrix& wg)
 {
@@ -263,7 +264,6 @@ void Local_Orbital_wfc::wfc_2d_to_grid(const double* wfc_2d,
 
         }//loop ipcol
     }//loop iprow
-
     ModuleBase::timer::tick("Local_Orbital_wfc","wfc_2d_to_grid");
 }
 

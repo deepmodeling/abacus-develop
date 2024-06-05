@@ -16,6 +16,8 @@ void Veff<OperatorLCAO<TK, TR>>::initialize_HR(const UnitCell* ucell_in,
     ModuleBase::TITLE("Veff", "initialize_HR");
     ModuleBase::timer::tick("Veff", "initialize_HR");
 
+    this->nspin = GlobalV::NSPIN;
+
     for (int iat1 = 0; iat1 < ucell_in->nat; iat1++)
     {
         auto tau1 = ucell_in->get_tau(iat1);
@@ -64,15 +66,15 @@ void Veff<OperatorLCAO<TK, TR>>::contributeHR()
     //(1) prepare data for this k point.
     // copy the local potential from array.
     //-----------------------------------------
-    double* vr_eff1 = this->pot->get_effective_v(GlobalV::CURRENT_SPIN);
-    double* vofk_eff1 = this->pot->get_effective_vofk(GlobalV::CURRENT_SPIN);
+    double* vr_eff1 = this->pot->get_effective_v(this->current_spin);
+    double* vofk_eff1 = this->pot->get_effective_vofk(this->current_spin);
 
     //--------------------------------------------
     //(2) check if we need to calculate
     // pvpR = < phi0 | v(spin) | phiR> for a new spin.
     //--------------------------------------------
     // GlobalV::ofs_running << " (spin change)" << std::endl;
-    this->GK->reset_spin(GlobalV::CURRENT_SPIN);
+    this->GK->reset_spin(this->current_spin);
 
     // if you change the place of the following code,
     // rememeber to delete the #include
@@ -90,7 +92,7 @@ void Veff<OperatorLCAO<TK, TR>>::contributeHR()
 
     // added by zhengdy-soc, for non-collinear case
     // integral 4 times, is there any method to simplify?
-    if (GlobalV::NSPIN == 4)
+    if (this->nspin == 4)
     {
         for (int is = 1; is < 4; is++)
         {
@@ -114,6 +116,8 @@ void Veff<OperatorLCAO<TK, TR>>::contributeHR()
     }
     this->GK->transfer_pvpR(this->hR,this->ucell,GlobalC::ORB,this->gd);
 
+    if(this->nspin == 2) this->current_spin = 1 - this->current_spin;
+
     ModuleBase::timer::tick("Veff", "contributeHR");
     return;
 }
@@ -129,8 +133,8 @@ void Veff<OperatorLCAO<double, double>>::contributeHR(void)
     //(1) prepare data for this k point.
     // copy the local potential from array.
     //-----------------------------------------
-    const double* vr_eff1 = this->pot->get_effective_v(GlobalV::CURRENT_SPIN);
-    const double* vofk_eff1 = this->pot->get_effective_vofk(GlobalV::CURRENT_SPIN);
+    const double* vr_eff1 = this->pot->get_effective_v(this->current_spin);
+    const double* vofk_eff1 = this->pot->get_effective_vofk(this->current_spin);
 
     //--------------------------------------------
     // (3) folding matrix,
@@ -150,6 +154,9 @@ void Veff<OperatorLCAO<double, double>>::contributeHR(void)
     this->GG->transfer_pvpR(this->hR,this->ucell,GlobalC::ORB);
 
     this->new_e_iteration = false;
+
+    if(this->nspin == 2) this->current_spin = 1 - this->current_spin;
+
     ModuleBase::timer::tick("Veff", "contributeHR");
 }
 

@@ -165,7 +165,7 @@ TEST(Parallel_KpointsTest, GatherkvecTest) {
 		parallel_kpoints.nks_np = 1;
 	}
 
-	parallel_kpoints.startk_pool = new int[npool];
+	parallel_kpoints.startk_pool.resize(npool);
 	parallel_kpoints.nkstot_np = 1;
 	parallel_kpoints.startk_pool[0] = 0;
 	if (npool >= 2)

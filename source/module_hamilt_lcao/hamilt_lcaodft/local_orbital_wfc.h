@@ -80,6 +80,7 @@ public:
     // which will cause lots of "not defined" if included in a header file.
     void wfc_2d_to_grid(const double* wfc_2d,
                         double** wfc_grid,
+                        const int ik,
                         const ModuleBase::matrix& ekb,
                         const ModuleBase::matrix& wg);
     void wfc_2d_to_grid(const std::complex<double>* wfc_2d,
