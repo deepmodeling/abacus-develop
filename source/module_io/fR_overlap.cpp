@@ -126,7 +126,7 @@ void FR_overlap<T>::calculate_FR()
 
         for (int iR = 0; iR < tmp.get_R_size(); ++iR)
         {
-            const ModuleBase::Vector3<int> R_index = tmp.get_R_index(iR);
+            const ModuleBase::Vector3<int>& R_index = tmp.get_R_index(iR);
             ModuleBase::Vector3<int> R_vector(R_index);
             auto dtau = ucell->cal_dtau(iat1, iat2, R_vector) * ucell->lat0;
             T* data_pointer = tmp.get_pointer(iR);

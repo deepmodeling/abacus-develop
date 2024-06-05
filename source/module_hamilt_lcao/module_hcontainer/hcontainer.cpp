@@ -490,7 +490,7 @@ size_t HContainer<T>::size_R_loop() const
          */
         for (int iR = 0; iR < it->get_R_size(); iR++)
         {
-            ModuleBase::Vector3<int> r_vec = it->get_R_index(iR);
+            const ModuleBase::Vector3<int>& r_vec = it->get_R_index(iR);
             int it_tmp = this->find_R(r_vec);
             if (it_tmp == -1)
             {
@@ -689,7 +689,7 @@ void HContainer<T>::shape_synchron( const HContainer<T>& other)
         {
             for(int ir = 0;ir < other.atom_pairs[i].get_R_size();++ir)
             {
-                ModuleBase::Vector3<int> R_vec = other.atom_pairs[i].get_R_index(ir);
+                const ModuleBase::Vector3<int>& R_vec = other.atom_pairs[i].get_R_index(ir);
                 if(tmp_pointer->find_R(R_vec) != -1)
                 {
                     // do nothing
@@ -726,7 +726,7 @@ std::vector<int> HContainer<T>::get_ijr_info() const
         // loop R
         for (int ir = 0; ir < number_R; ++ir)
         {
-            ModuleBase::Vector3<int> R_vec = this->atom_pairs[i].get_R_index(ir);
+            const ModuleBase::Vector3<int>& R_vec = this->atom_pairs[i].get_R_index(ir);
             ijr_info.push_back(R_vec.x);
             ijr_info.push_back(R_vec.y);
             ijr_info.push_back(R_vec.z);

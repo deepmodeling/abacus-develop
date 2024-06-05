@@ -116,7 +116,7 @@ namespace hamilt
  *           // loop R-index
  *           for (int iR = 0; iR < atom_ij.size_R(); iR++)
  *           {
- *               const ModuleBase::Vector3<int> r_index = atom_ij.get_R_index(iR);
+ *               const ModuleBase::Vector3<int>& r_index = atom_ij.get_R_index(iR);
  *               auto tmp_matrix = atom_ij.get_HR_values(r_index.x, r_index.y, r_index.z);              
  *               // do something with tmp_matrix
  *               ...

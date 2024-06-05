@@ -150,7 +150,7 @@ void sparse_format::cal_HContainer_d(
         for(int iR=0;iR<hR.get_atom_pair(iap).get_R_size();++iR)
         {
             auto& matrix = hR.get_atom_pair(iap).get_HR_values(iR);
-            ModuleBase::Vector3<int> r_index = hR.get_atom_pair(iap).get_R_index(iR);
+            const ModuleBase::Vector3<int>& r_index = hR.get_atom_pair(iap).get_R_index(iR);
             Abfs::Vector3_Order<int> dR(r_index.x, r_index.y, r_index.z);
             for(int i=0;i<row_size;++i)
             {
@@ -194,7 +194,7 @@ void sparse_format::cal_HContainer_cd(
         for(int iR=0;iR<hR.get_atom_pair(iap).get_R_size();++iR)
         {
             auto& matrix = hR.get_atom_pair(iap).get_HR_values(iR);
-            ModuleBase::Vector3<int> r_index = hR.get_atom_pair(iap).get_R_index(iR);
+            const ModuleBase::Vector3<int>& r_index = hR.get_atom_pair(iap).get_R_index(iR);
             Abfs::Vector3_Order<int> dR(r_index.x, r_index.y, r_index.z);
             for(int i=0;i<row_size;++i)
             {
@@ -238,7 +238,7 @@ void sparse_format::cal_HContainer_td(
         for(int iR=0;iR<hR.get_atom_pair(iap).get_R_size();++iR)
         {
             auto& matrix = hR.get_atom_pair(iap).get_HR_values(iR);
-            ModuleBase::Vector3<int> r_index = hR.get_atom_pair(iap).get_R_index(iR);
+            const ModuleBase::Vector3<int>& r_index = hR.get_atom_pair(iap).get_R_index(iR);
             Abfs::Vector3_Order<int> dR(r_index.x, r_index.y, r_index.z);
             for(int i=0;i<row_size;++i)
             {
