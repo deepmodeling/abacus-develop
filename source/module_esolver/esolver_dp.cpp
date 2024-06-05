@@ -45,28 +45,12 @@ namespace ModuleESolver
         /// determine the type map from STRU to DP model
         // int iat = 0; //removed by Haocheng 2024/6/
 // added by Haocheng 2024/6/3 //
-// #ifdef _OPENMP
-// #pragma omp parallel for
-// #endif
-//         for (int iat = 0; iat < ucell.nat; ++iat)
-//         {
-//             int it = ucell.iat2it[iat];
-//             if (find_type)
-//             {
-//                 atype[iat] = dp_type[it];
-//             }
-//             else
-//             {
-//                 atype[iat] = it;
-//             }
-//         }
-//     }
-// ------------------------ //
-
-// removed by Haocheng 2024/6/2 //
         int iat = 0;
         for (int it = 0; it < ucell.ntype; ++it)
         {
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
             for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
             {
                 if (find_type)
@@ -77,10 +61,30 @@ namespace ModuleESolver
                 {
                     atype[iat] = it;
                 }
-                iat++;
             }
+            iat = iat + ucell.atoms[it].na;
         }
         assert(ucell.nat == iat); 
+// ------------------------ //
+
+// removed by Haocheng 2024/6/2 //
+        // int iat = 0;
+        // for (int it = 0; it < ucell.ntype; ++it)
+        // {
+        //     for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
+        //     {
+        //         if (find_type)
+        //         {
+        //             atype[iat] = dp_type[it];
+        //         }
+        //         else
+        //         {
+        //             atype[iat] = it;
+        //         }
+        //         iat++;
+        //     }
+        // }
+        // assert(ucell.nat == iat); 
     }
 // ------------------------ //
 
