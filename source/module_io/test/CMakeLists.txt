@@ -179,3 +179,11 @@ AddTest(
   LIBS base ${math_libs} device numerical_atomic_orbitals container orb
   SOURCES numerical_basis_test.cpp ../numerical_basis_jyjy.cpp
 )
+
+if(ENABLE_LCAO)
+AddTest(
+  TARGET read_wfc_lcao_test
+  LIBS base ${math_libs} device
+  SOURCES read_wfc_lcao_test.cpp ../read_wfc_lcao.cpp ../../module_basis/module_ao/parallel_2d.cpp
+)
+endif()

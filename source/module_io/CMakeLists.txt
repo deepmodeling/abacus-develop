@@ -54,6 +54,7 @@ if(ENABLE_LCAO)
       istate_envelope.cpp
       read_dm.cpp
       read_wfc_nao.cpp
+      read_wfc_lcao.cpp
       write_wfc_nao.cpp
       write_dm.cpp
       dos_nao.cpp
