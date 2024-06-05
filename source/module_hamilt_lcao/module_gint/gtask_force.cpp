@@ -213,7 +213,6 @@ void alloc_mult_force(const Grid_Technique& gridt,
         }
     }
     atom_pair_num = tid;
-    gpu_mat_cal_flag.clear();
 }
 
 

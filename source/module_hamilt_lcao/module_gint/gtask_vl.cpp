@@ -197,8 +197,6 @@ void alloc_mult_vlocal(const Grid_Technique& gridt,
             }
         }
     }
-
-    gpu_matrix_calc_flag.clear();
 }
 
 } // namespace GintKernel
