@@ -950,7 +950,10 @@ void Grid_Technique::free_gpu_gint_variables(int nat)
         return;
     }
     for (int i = 0; i < nstreams; ++i)
+    {
         checkCudaErrors(cudaStreamDestroy(streams[i]));
+    }
+    delete[] streams;
 
     checkCudaErrors(cudaFree(ylmcoef_g));
     checkCudaErrors(cudaFree(atom_nwl_g));
