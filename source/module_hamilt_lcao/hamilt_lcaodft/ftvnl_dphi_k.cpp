@@ -1,4 +1,4 @@
-#include "FORCE_k.h"
+#include "FORCE.h"
 
 #include <map>
 #include <unordered_map>
@@ -23,15 +23,16 @@
 #endif
 
 
-void Force_LCAO_k::cal_ftvnl_dphi_k(const elecstate::DensityMatrix<std::complex<double>, double>* DM,
-                                    const Parallel_Orbitals &pv,
-                                    const UnitCell& ucell,
-                                    LCAO_Matrix &lm,
-                                    const bool isforce,
-                                    const bool isstress,
-                                    Record_adj& ra,
-                                    ModuleBase::matrix& ftvnl_dphi,
-                                    ModuleBase::matrix& stvnl_dphi)
+template<>
+void Force_LCAO<std::complex<double>>::cal_ftvnl_dphi(const elecstate::DensityMatrix<std::complex<double>, double>* DM,
+    const Parallel_Orbitals& pv,
+    const UnitCell& ucell,
+    LCAO_Matrix& lm,
+    const bool isforce,
+    const bool isstress,
+    ModuleBase::matrix& ftvnl_dphi,
+    ModuleBase::matrix& stvnl_dphi,
+    Record_adj* ra)
 {
     ModuleBase::TITLE("Force_LCAO_k", "cal_ftvnl_dphi_k");
     ModuleBase::timer::tick("Force_LCAO_k", "cal_ftvnl_dphi_k");
@@ -76,17 +77,17 @@ void Force_LCAO_k::cal_ftvnl_dphi_k(const elecstate::DensityMatrix<std::complex<
                 ftvnl_dphi_iat = ftvnl_dphi_temp;
             }
 #endif
-            for (int cb = 0; cb < ra.na_each[iat]; ++cb)
+            for (int cb = 0; cb < ra->na_each[iat]; ++cb)
             {
-                const int T2 = ra.info[iat][cb][3];
-                const int I2 = ra.info[iat][cb][4];
+                const int T2 = ra->info[iat][cb][3];
+                const int I2 = ra->info[iat][cb][4];
                 const int start2 = ucell.itiaiw2iwt(T2, I2, 0);
                 Atom* atom2 = &ucell.atoms[T2];
                 // get iat2
                 int iat2 = ucell.itia2iat(T2, I2);
-                double Rx = ra.info[iat][cb][0];
-                double Ry = ra.info[iat][cb][1];
-                double Rz = ra.info[iat][cb][2];
+                double Rx = ra->info[iat][cb][0];
+                double Ry = ra->info[iat][cb][1];
+                double Rz = ra->info[iat][cb][2];
                 // get BaseMatrix
                 if (pv.get_row_size(iat1) <= 0 || pv.get_col_size(iat2) <= 0)
                 {

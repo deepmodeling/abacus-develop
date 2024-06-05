@@ -10,11 +10,6 @@ AddTest(
   SOURCES atom_in_test.cpp
 )
 AddTest(
-  TARGET base_blacs_connector
-  LIBS ${math_libs}
-  SOURCES blacs_connector_test.cpp
-)
-AddTest(
   TARGET base_timer
   SOURCES timer_test.cpp ../timer.cpp  ../global_variable.cpp
 )

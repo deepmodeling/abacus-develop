@@ -64,7 +64,7 @@ std::vector<int>
 RI_2D_Comm::get_ik_list(const K_Vectors &kv, const int is_k)
 {
 	std::vector<int> ik_list;
-	for(int ik=0; ik<kv.nks; ++ik)
+	for(int ik=0; ik<kv.get_nks(); ++ik)
 		if(kv.isk[ik]==is_k)
 			ik_list.push_back(ik);
 	return ik_list;

@@ -22,8 +22,9 @@ void ElecStateLCAO<double>::print_psi(const psi::Psi<double>& psi_in, const int 
 
     // output but not do  "2d-to-grid" conversion
     double** wfc_grid = nullptr;
+    const int ik = psi_in.get_current_k();
 #ifdef __MPI
-    this->lowf->wfc_2d_to_grid(istep, out_wfc_flag, psi_in.get_pointer(), wfc_grid, this->ekb, this->wg);
+    this->lowf->wfc_2d_to_grid(istep, out_wfc_flag, psi_in.get_pointer(), wfc_grid, ik, this->ekb, this->wg);
 #endif
     return;
 }
@@ -119,8 +120,8 @@ if(!GlobalV::dm_to_rho)
         if (GlobalC::exx_info.info_global.cal_exx)
         {
             const K_Vectors* kv = this->DM->get_kv_pointer();
-            this->loc->dm_k.resize(kv->nks);
-            for (int ik = 0; ik < kv->nks; ++ik)
+            this->loc->dm_k.resize(kv->get_nks());
+            for (int ik = 0; ik < kv->get_nks(); ++ik)
             {
                 this->loc->set_dm_k(ik, this->DM->get_DMK_pointer(ik));         
             }

@@ -76,7 +76,7 @@ void Exx_Opt_Orb::print_matrix(
 
 		ofs << Exx_Abfs::Jle::Lmax << " lmax" << std::endl;
 
-		ofs << kv.nkstot << " nks" << std::endl;
+		ofs << kv.get_nkstot() << " nks" << std::endl;
 		assert( matrix_V.shape[0] == matrix_V.shape[1] );
 		ofs	<< matrix_V.shape[0] << " nbands" << std::endl;
 		
@@ -98,7 +98,7 @@ void Exx_Opt_Orb::print_matrix(
 			ofs	<< ecut_numberA << " " << ecut_numberB << " ne" << std::endl;
 		
 		ofs << "<WEIGHT_OF_KPOINTS>" << std::endl;
-		for( int ik=0; ik!=kv.nkstot; ++ik )		
+		for( int ik=0; ik!=kv.get_nkstot(); ++ik )		
 		{
 			ofs << kv.kvec_c[ik].x << " " << kv.kvec_c[ik].y << " " << kv.kvec_c[ik].z;
 			ofs << " " << kv.wk[ik] * 0.5 << std::endl;

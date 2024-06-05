@@ -127,12 +127,14 @@ Soc::~Soc()
 Fcoef::~Fcoef()
 {
 }
+#include "module_cell/klist.h"
 K_Vectors::K_Vectors()
 {
 }
 K_Vectors::~K_Vectors()
 {
 }
+
 void Charge::set_rho_core(ModuleBase::ComplexMatrix const&)
 {
 }
@@ -207,7 +209,7 @@ class ElecStatePWTest : public ::testing::Test
         wfcpw = new ModulePW::PW_Basis_K;
         chg = new Charge;
         klist = new K_Vectors;
-        klist->nks = 5;
+        klist->set_nks(5);
         ucell = new UnitCell;
         ppcell = new pseudopot_cell_vnl;
         rhodpw = new ModulePW::PW_Basis;

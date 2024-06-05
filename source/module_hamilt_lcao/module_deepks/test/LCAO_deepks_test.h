@@ -9,7 +9,7 @@
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_cell/module_neighbor/sltk_atom_arrange.h"
 #include "klist.h"
-#include "parallel_orbitals.h"
+//#include "parallel_orbitals.h"
 
 #include "../LCAO_deepks.h"
 

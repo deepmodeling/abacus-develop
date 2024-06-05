@@ -2,6 +2,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+#include "module_cell/klist.h"
 K_Vectors::K_Vectors(){}
 K_Vectors::~K_Vectors(){}
 
@@ -29,7 +30,7 @@ TEST_F(SpinConstrainTest, CalHLambda)
     int nrow = 2;
     int ncol = 2;
     sc.set_nspin(4);
-    paraV.set_global2local(nrow, ncol, false, ofs);
+    paraV.set_serial(nrow, ncol);
     sc.set_ParaV(&paraV);
     EXPECT_EQ(sc.ParaV->nloc, 4);
     std::map<int, int> atomCounts = {
@@ -98,7 +99,7 @@ TEST_F(SpinConstrainTest, CalHLambdaS2)
     int nrow = 1;
     int ncol = 1;
     sc.set_nspin(2);
-    paraV.set_global2local(nrow, ncol, false, ofs);
+    paraV.set_serial(nrow, ncol);
     sc.set_ParaV(&paraV);
     EXPECT_EQ(sc.ParaV->nloc, 1);
     std::map<int, int> atomCounts = {

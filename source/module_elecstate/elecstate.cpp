@@ -20,7 +20,7 @@ void ElecState::fixed_weights(const std::vector<double>& ocp_kb)
 {
 
     int num = 0;
-    num = this->klist->nks * GlobalV::NBANDS;
+    num = this->klist->get_nks() * GlobalV::NBANDS;
     if (num != ocp_kb.size())
     {
         ModuleBase::WARNING_QUIT("ElecState::fixed_weights",

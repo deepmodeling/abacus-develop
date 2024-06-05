@@ -1,9 +1,12 @@
+#pragma once
 #include "module_psi/psi.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/veff_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_dftu_lcao.h"
 #include "module_base/scalapack_connector.h"
 #include "module_base/parallel_reduce.h"
 
+#ifndef TGINT_H
+#define TGINT_H
 template <typename T> struct TGint;
 
 template <>
@@ -15,7 +18,7 @@ template <>
 struct TGint<std::complex<double>> {
     using type = Gint_k;
 };
-
+#endif
 
 namespace ModuleIO
 {
@@ -41,19 +44,9 @@ namespace ModuleIO
     {
         std::ofstream ofs;
 #ifdef __MPI
-        int dsize=0;
-        MPI_Comm_size(MPI_COMM_WORLD, &dsize);
-        p2d.set_block_size(pv.nb);
-        p2d.set_proc_dim(dsize);
-        p2d.comm_2D = pv.comm_2D;
-        p2d.blacs_ctxt = pv.blacs_ctxt;
-        p2d.set_local2global(nbands, nbands, ofs, ofs);
-        p2d.set_desc(nbands, nbands, p2d.get_row_size(), false);
-        p2d.set_global2local(nbands, nbands, true, ofs);
+        p2d.set(nbands, nbands, pv.nb, pv.comm_2D, pv.blacs_ctxt);
 #else
-        p2d.set_proc_dim(1);
         p2d.set_serial(nbands, nbands);
-        p2d.set_global2local(nbands, nbands, false, ofs);
 #endif
     }
 
@@ -264,7 +257,6 @@ namespace ModuleIO
 					&gd, 
 					pv);
 
-            GlobalV::CURRENT_SPIN = is; //caution: Veff::contributeHR depends on GlobalV::CURRENT_SPIN
             vxcs_op_ao[is]->contributeHR();
         }
         std::vector<std::vector<double>> e_orb_locxc; // orbital energy (local XC)
@@ -285,10 +277,10 @@ namespace ModuleIO
         // double total_energy = 0.0;
         // double exx_energy = 0.0;
         // ======test=======
-        for (int ik = 0;ik < kv.nks;++ik)
+        for (int ik = 0;ik < kv.get_nks();++ik)
         {
             ModuleBase::GlobalFunc::ZEROS(vxc_k_ao.data(), pv->nloc);
-            int is = GlobalV::CURRENT_SPIN = kv.isk[ik];
+            int is = kv.isk[ik];
             dynamic_cast<hamilt::OperatorLCAO<TK, TR>*>(vxcs_op_ao[is])->contributeHk(ik);
             const std::vector<TK>& vlocxc_k_mo = cVc(vxc_k_ao.data(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d);
 
@@ -337,8 +329,8 @@ namespace ModuleIO
         auto write_orb_energy = [&kv, &nspin0, &nbands](const std::vector<std::vector<double>>& e_orb,
             const std::string& label, const bool app = false)
             {
-                assert(e_orb.size() == kv.nks);
-                const int nk = kv.nks / nspin0;
+                assert(e_orb.size() == kv.get_nks());
+                const int nk = kv.get_nks() / nspin0;
                 std::ofstream ofs;
                 ofs.open(GlobalV::global_out_dir + "vxc_" + (label == "" ? "out" : label + "_out"),
                     app ? std::ios::app : std::ios::out);

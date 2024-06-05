@@ -34,7 +34,7 @@ void Local_Orbital_Charge::cal_dm_R(
     ModuleBase::timer::tick("Local_Orbital_Charge", "cal_dm_R");
     assert(dm_k[0].nr > 0 && dm_k[0].nc > 0); //must call cal_dm first
 
-    for (int ik = 0;ik < kv.nks;++ik)
+    for (int ik = 0;ik < kv.get_nks();++ik)
     {
         // allocate memory and pointer for each ispin
         int ispin = 0;
