@@ -212,18 +212,18 @@ void Parallel_Kpoints::pool_collection(std::complex<double> *value, const Module
 template <class T, class V> void Parallel_Kpoints::pool_collection_aux(T *value, const V &w, const int& dim, const int &ik)
 {
 #ifdef __MPI
-    const int ik_now = ik - this->startk_pool[GlobalV::MY_POOL];
+    const int ik_now = ik - this->startk_pool[this->my_pool];
     const int begin = ik_now * dim;
     T* p = &w.ptr[begin];
     //temprary restrict kpar=1 for NSPIN=2 case for generating_orbitals
     int pool = 0;
-    if(GlobalV::NSPIN != 2) pool = this->whichpool[ik];
+    if(this->nspin != 2) pool = this->whichpool[ik];
 
 	GlobalV::ofs_running << "\n ik=" << ik;
 
-    if (GlobalV::RANK_IN_POOL==0)
+    if (this->rank_in_pool==0)
     {
-        if (GlobalV::MY_POOL==0)
+        if (this->my_pool==0)
         {
             if (pool==0)
             {
@@ -242,7 +242,7 @@ template <class T, class V> void Parallel_Kpoints::pool_collection_aux(T *value,
         }
         else
         {
-            if (GlobalV::MY_POOL == pool)
+            if (this->my_pool == pool)
             {
 				GlobalV::ofs_running << " send data.";
                 MPI_Send(p, dim, MPI_DOUBLE, 0, ik*2+0, MPI_COMM_WORLD);
