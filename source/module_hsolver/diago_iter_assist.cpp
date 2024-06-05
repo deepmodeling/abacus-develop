@@ -52,57 +52,43 @@ void DiagoIterAssist<T, Device>::diagH_subspace(
     // qianrui improve this part 2021-3-14
     const T* ppsi = psi.get_pointer();
 
-    // hphi and sphi share the temp space
-    T* temp = nullptr;
-    resmem_complex_op()(ctx, temp, psi.get_nbasis(), "DiagSub::hpsi");
-    setmem_complex_op()(ctx, temp, 0, psi.get_nbasis());
+    // allocated hpsi
+    // std::vector<T> hpsi(psi.get_nbands() * psi.get_nbasis());
+    T* hphi = nullptr;
+    resmem_complex_op()(ctx, hphi, psi.get_nbands() * psi.get_nbasis(), "DiagSub::hpsi");
+    setmem_complex_op()(ctx, hphi, 0, psi.get_nbands() * psi.get_nbasis());
+    // do hPsi for all bands
+    psi::Range all_bands_range(1, psi.get_current_k(), 0, psi.get_nbands()-1);
+    hpsi_info hpsi_in(&psi, all_bands_range, hphi);
+    pHamilt->ops->hPsi(hpsi_in);
 
-    T* hphi = temp;
-    // do hPsi band by band
-    for (int i = 0; i < psi.get_nbands(); i++)
-    {
-        psi::Range band_by_band_range(1, psi.get_current_k(), i, i);
-        hpsi_info hpsi_in(&psi, band_by_band_range, hphi);
-        pHamilt->ops->hPsi(hpsi_in);
+    gemm_op<T, Device>()(
+        ctx,
+        'C',
+        'N',
+        nstart,
+        nstart,
+        dmin,
+        &one,
+        ppsi,
+        dmax,
+        hphi,
+        dmax,
+        &zero,
+        hcc,
+        nstart
+    );
+    delmem_complex_op()(ctx, hphi);
 
-        gemv_op<T, Device>()(
-            ctx,
-            'C',
-            dmax,
-            nstart,
-            &one,
-            ppsi,
-            dmax,
-            hphi,
-            1,
-            &zero,
-            hcc + i * nstart,
-            1
-        );
-    }
+    // allocated spsi
+    T* sphi = nullptr;
+    resmem_complex_op()(ctx, sphi, nstart * dmax, "DiagSub::spsi");
+    setmem_complex_op()(ctx, sphi, 0, nstart * dmax);
+    // do sPsi for all bands
+    pHamilt->sPsi(ppsi, sphi, dmax, dmin, nstart);
 
-    T* sphi = temp;
-    // do sPsi band by band
-    for(int i = 0; i < nstart; i++)
-    {
-        pHamilt->sPsi(ppsi+i*dmax, sphi, dmax, dmin, 1);
-        
-        gemv_op<T, Device>()(
-              ctx,
-              'C',
-              dmax,  
-              nstart,  
-              &one,
-              ppsi,
-              dmax,  // nbasis
-              sphi,
-              1,
-              &zero,
-              scc + i*nstart,
-              1
-            );
-    }
-    delmem_complex_op()(ctx, temp);
+    gemm_op<T, Device>()(ctx, 'C', 'N', nstart, nstart, dmin, &one, ppsi, dmax, sphi, dmax, &zero, scc, nstart);
+    delmem_complex_op()(ctx, sphi);
 
     if (GlobalV::NPROC_IN_POOL > 1)
     {
