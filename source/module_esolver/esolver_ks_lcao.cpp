@@ -20,6 +20,7 @@
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/print_info.h"
+#include <memory>
 #ifdef __EXX
 #include "module_ri/RPA_LRI.h"
 #endif
@@ -81,7 +82,7 @@ template <typename TK, typename TR>
 ESolver_KS_LCAO<TK, TR>::~ESolver_KS_LCAO()
 {
 #ifndef USE_NEW_TWO_CENTER
-	this->orb_con.clear_after_ions(GlobalC::UOT, GlobalC::ORB, GlobalV::deepks_setorb, GlobalC::ucell.infoNL.nproj);
+	this->orb_con.clear_after_ions(*uot_, GlobalC::ORB, GlobalV::deepks_setorb, GlobalC::ucell.infoNL.nproj);
 #endif
 }
 
@@ -564,6 +565,14 @@ void ESolver_KS_LCAO<TK, TR>::init_basis_lcao(
     // * reading the localized orbitals/projectors
     // * construct the interpolation tables.
 
+
+    // NOTE: This is a temporary step in the elimination of GlobalC::UOT.
+    // Once the direct usage of UOT via GlobalC is eliminated, this step
+    // uot_ will be replaced by a shared_ptr to ORB_gen_tables, which is
+    // the only owner of the UOT object.
+    uot_ = &GlobalC::UOT;
+    auto& two_center_bundle = uot_->two_center_bundle;
+
     two_center_bundle.reset(new TwoCenterBundle);
     two_center_bundle->build_orb(ucell.ntype, ucell.orbital_fn);
     two_center_bundle->build_alpha(GlobalV::deepks_setorb, &ucell.descriptor_file);
@@ -586,7 +595,7 @@ void ESolver_KS_LCAO<TK, TR>::init_basis_lcao(
 
 #ifndef USE_NEW_TWO_CENTER
     this->orb_con.set_orb_tables(GlobalV::ofs_running,
-                                 GlobalC::UOT,
+                                 *uot_,
                                  GlobalC::ORB,
                                  ucell.lat0,
                                  GlobalV::deepks_setorb,
@@ -596,12 +605,6 @@ void ESolver_KS_LCAO<TK, TR>::init_basis_lcao(
                                  ucell.infoNL.Beta);
 #else
     two_center_bundle->tabulate();
-
-    // transfer the ownership to UOT
-    // this is a temporary solution during refactoring
-    // the final version will get rid of UOT
-    // and transfer individual ownership of TwoCenterIntegrator to corresponding operator
-    GlobalC::UOT.two_center_bundle = std::move(two_center_bundle);
 #endif
 
     if (this->orb_con.setup_2d)
