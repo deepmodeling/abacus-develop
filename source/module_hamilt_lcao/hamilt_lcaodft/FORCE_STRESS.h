@@ -93,6 +93,7 @@ class Force_Stress_LCAO
         LCAO_gen_fixedH &gen_h, // mohan add 2024-04-02
 		Gint_Gamma &gint_gamma,
 		Gint_k &gint_k,
+        const ORB_gen_tables* uot,
 	    const Parallel_Orbitals &pv,
 		LCAO_Matrix &lm,
 		const K_Vectors& kv);
