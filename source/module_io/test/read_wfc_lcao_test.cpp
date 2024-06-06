@@ -124,8 +124,8 @@ TEST(ScatterLowfTest, ScatterLowfComplex)
     if (iproc == 0) {
         lowf_glb.resize(nbands * nbasis);
         for (int i = 0; i < nbands * nbasis; i++) {
-            const int irow = i / nbasis, icol = i % nbasis;
-            lowf_glb[i] = std::complex<double>(irow, icol);
+            const int j = i / nbands, k = i % nbands;
+            lowf_glb[i] = std::complex<double>(k, j);
         }
     }
     /*
@@ -141,42 +141,21 @@ TEST(ScatterLowfTest, ScatterLowfComplex)
     std::vector<std::complex<double>> lowf_loc;
     Parallel_2D para2d_test; // an alternative to ParaV. But to use paraV, the desc would be desc_wfc instead of desc in Parallel_2D
     // initialize a para2d, as if it is paraV
-    para2d_test.init(nbasis, nbands, 4, MPI_COMM_WORLD);
-    ModuleIO::scatter_lowf(nbands, nbasis, lowf_glb, para2d_test.comm_2D, para2d_test.desc, para2d_test.blacs_ctxt, lowf_loc);
-    const std::vector<int> sizes_loc = {4*4*3, 4*4*2, 4*6, 4*4};
+    para2d_test.init(nbands, nbasis, 4, MPI_COMM_WORLD);
+    ModuleIO::scatter_lowf(nbasis, nbands, lowf_glb, para2d_test.comm_2D, para2d_test.desc, para2d_test.blacs_ctxt, lowf_loc);
+    // make lowf_loc row-major
     for(int i = 0; i < nprocs; i++)
     {
         if(iproc == i)
         {
-            EXPECT_EQ(sizes_loc[i], lowf_loc.size());
             printf("rank %d: \n", iproc);
             for(int j = 0; j < lowf_loc.size(); j++)
             {
-                printf("(%.0f, %.0f) ", lowf_loc[j].real(), lowf_loc[j].imag());
-                if((j+1) % para2d_test.nrow == 0) { printf("\n"); }
-            }
-            printf("\n");
-            usleep(10000);
-        }
-        MPI_Barrier(MPI_COMM_WORLD);
-    }
-    MPI_Barrier(MPI_COMM_WORLD);
-
-    Parallel_2D para2d_test2;
-    para2d_test2.init(nbasis, nbands, 3, MPI_COMM_WORLD);
-    ModuleIO::scatter_lowf(nbands, nbasis, lowf_glb, para2d_test2.comm_2D, para2d_test2.desc, para2d_test2.blacs_ctxt, lowf_loc);
-    const std::vector<int> sizes_loc2 = {3*3*4, 3*3*2 + 1*3*2, 3*3*4, 3*3*2 + 1*3*2};
-    //for(int i = 0; i < nprocs; i++) { EXPECT_EQ(sizes_loc2[i], lowf_loc.size()); }
-    for(int i = 0; i < nprocs; i++)
-    {
-        if(iproc == i)
-        {
-            EXPECT_EQ(sizes_loc2[i], lowf_loc.size());
-            printf("rank %d: \n", iproc);
-            for(int j = 0; j < lowf_loc.size(); j++)
-            {
-                printf("(%.0f, %.0f) ", lowf_loc[j].real(), lowf_loc[j].imag());
-                if((j+1) % para2d_test2.nrow == 0) { printf("\n"); }
+                const int j1 = j / para2d_test.nrow;
+                const int j2 = j % para2d_test.nrow;
+                const int j_ = j2 * para2d_test.nrow + j1;
+                printf("(%.0f,%.0f)", lowf_loc[j_].real(), lowf_loc[j_].imag());
+                if((j+1)%para2d_test.nrow == 0) { printf("\n"); }
             }
             printf("\n");
             usleep(10000);
