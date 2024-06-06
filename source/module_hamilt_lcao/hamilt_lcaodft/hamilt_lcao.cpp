@@ -209,6 +209,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
                                                                         &(this->getHk(LM_in)),
                                                                         &GlobalC::ucell,
                                                                         &GlobalC::GridD,
+                                                                        uot,
                                                                         this->kv->get_nks(),
                                                                         DM_in);
             this->getOperator()->add(deepks);
@@ -238,6 +239,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
                     &(this->getHk(LM_in)),
                     GlobalC::ucell,
                     &GlobalC::GridD,
+                    uot,
                     &GlobalC::dftu,
                     *(LM_in->ParaV)
                 );
@@ -357,6 +359,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
                                                     &(this->getHk(LM_in)),
                                                     &GlobalC::ucell,
                                                     &GlobalC::GridD,
+                                                    uot,
                                                     this->kv->get_nks(),
                                                     DM_in);
             this->getOperator()->add(deepks);
@@ -386,6 +389,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
                     &(this->getHk(LM_in)),
                     &GlobalC::ucell, 
                     &GlobalC::GridD,
+                    uot,
                     LM_in->ParaV
                 );
             this->getOperator()->add(td_nonlocal);
@@ -412,6 +416,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
                     &(this->getHk(LM_in)),
                     GlobalC::ucell,
                     &GlobalC::GridD,
+                    uot,
                     &GlobalC::dftu,
                     *(LM_in->ParaV)
                 );

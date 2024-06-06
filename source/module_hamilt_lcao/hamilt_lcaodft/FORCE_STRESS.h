@@ -40,6 +40,7 @@ class Force_Stress_LCAO
         LCAO_gen_fixedH &gen_h, // mohan add 2024-04-02
 		Gint_Gamma &gint_gamma, // mohan add 2024-04-01
 		Gint_k &gint_k, // mohan add 2024-04-01
+        const ORB_gen_tables* uot,
         ModuleBase::matrix& fcs,
         ModuleBase::matrix& scs,
         const Structure_Factor& sf,

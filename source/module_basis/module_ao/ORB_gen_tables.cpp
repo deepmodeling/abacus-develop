@@ -15,11 +15,6 @@ ORB_gen_tables UOT;
 ORB_gen_tables::ORB_gen_tables() {}
 ORB_gen_tables::~ORB_gen_tables() {}
 
-const ORB_gen_tables& ORB_gen_tables::get_const_instance()
-{
-	return GlobalC::UOT;
-}
-
 /// call in hamilt_linear::init_before_ions.
 void ORB_gen_tables::gen_tables(
 	std::ofstream &ofs_in,

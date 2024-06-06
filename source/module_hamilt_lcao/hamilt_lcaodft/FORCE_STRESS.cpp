@@ -37,6 +37,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                                           LCAO_gen_fixedH &gen_h, // mohan add 2024-04-02
 										  Gint_Gamma &gint_gamma, // mohan add 2024-04-01
 										  Gint_k &gint_k, // mohan add 2024-04-01
+                                          const ORB_gen_tables* uot,
 										  ModuleBase::matrix& fcs,
                                           ModuleBase::matrix& scs,
                                           const Structure_Factor& sf,
@@ -245,6 +246,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
 					nullptr,
 					GlobalC::ucell,
 					&GlobalC::GridD,
+                    uot,
 					&GlobalC::dftu,
 					*(lm.ParaV));
             tmp_dftu.cal_force_stress(isforce, isstress, force_dftu, stress_dftu);

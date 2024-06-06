@@ -387,6 +387,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(ModuleBase::matrix& force)
             this->gen_h, // mohan add 2024-04-02
             this->GG, // mohan add 2024-04-01
             this->GK, // mohan add 2024-04-01
+            uot_,
 			force,
 			this->scs,
 			this->sf,
