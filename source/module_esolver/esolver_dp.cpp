@@ -53,13 +53,14 @@ namespace ModuleESolver
 #endif
             for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
             {
+                int index = iat + ia;
                 if (find_type)
                 {
-                    atype[iat] = dp_type[it];
+                    atype[index] = dp_type[it];
                 }
                 else
                 {
-                    atype[iat] = it;
+                    atype[index] = it;
                 }
             }
             iat = iat + ucell.atoms[it].na;
@@ -105,16 +106,35 @@ namespace ModuleESolver
         cell[8] = ucell.latvec.e33 * ucell.lat0_angstrom;
 
 // added by Haocheng 2024/6/3 //
+// #ifdef _OPENMP
+// #pragma omp parallel for
+// #endif
+//         for (int iat = 0; iat < ucell.nat; ++iat)
+//         {   
+//             auto tau = ucell.get_tau(iat);
+//             coord[3 * iat] = tau.x * ucell.lat0_angstrom;
+//             coord[3 * iat + 1] = tau.y * ucell.lat0_angstrom;
+//             coord[3 * iat + 2] = tau.z * ucell.lat0_angstrom;
+//         }
+// removed by Haocheng 2024/6/6 //
+        int iat = 0;
+        for (int it = 0; it < ucell.ntype; ++it)
+        {
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-        for (int iat = 0; iat < ucell.nat; ++iat)
-        {   
-            auto tau = ucell.get_tau(iat);
-            coord[3 * iat] = tau.x * ucell.lat0_angstrom;
-            coord[3 * iat + 1] = tau.y * ucell.lat0_angstrom;
-            coord[3 * iat + 2] = tau.z * ucell.lat0_angstrom;
+            for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
+            {
+                int index = iat + ia;
+                auto tau = ucell.get_tau(index);
+                coord[3 * index] = tau.x * ucell.lat0_angstrom;
+                coord[3 * index + 1] = tau.y * ucell.lat0_angstrom;
+                coord[3 * index + 2] = tau.z * ucell.lat0_angstrom;
+            }
+            iat = iat + ucell.atoms[it].na;
         }
+        assert(ucell.nat == iat);
+// ------------------------ //
 // removed by Haocheng 2024/6/2 //
         // for (int it = 0; it < ucell.ntype; ++it)
         // {
