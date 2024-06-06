@@ -204,7 +204,7 @@ void alloc_mult_dot_rho(const Grid_Technique& gridt,
             dot_count++;
         }
         
-        delete[] vindex;
+        // delete[] vindex;
     }
     atom_pair_num = tid;
 }
