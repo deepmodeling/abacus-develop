@@ -14,6 +14,7 @@ void write_current(const int istep,
                     const psi::Psi<std::complex<double>>* psi,
                     const elecstate::ElecState* pelec,
                     const K_Vectors& kv,
+                    const ORB_gen_tables* uot,
                     const Parallel_Orbitals* pv,
 					Record_adj& ra,
 					LCAO_Matrix &lm, // mohan add 2024-04-02
@@ -26,7 +27,8 @@ void cal_tmp_DM(elecstate::DensityMatrix<std::complex<double>, double>& DM, cons
 void Init_DS_tmp(
 		const Parallel_Orbitals& pv,
 		LCAO_Matrix &lm,
-		LCAO_gen_fixedH &gen_h);
+		LCAO_gen_fixedH &gen_h,
+        const ORB_gen_tables* uot);
 
 /// @brief DS_locR will be initialized again in force calculation, so it must be destoryed here.
 void destory_DS_tmp(LCAO_Matrix &lm);
