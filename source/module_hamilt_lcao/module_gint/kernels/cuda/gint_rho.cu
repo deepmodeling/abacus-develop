@@ -1,5 +1,5 @@
 #include "interp.cuh"
-#include "module_hamilt_lcao/module_gint/kernels/cuda/gint_rho.cuh"
+#include "gint_rho.cuh"
 #include "sph.cuh"
 
 namespace GintKernel

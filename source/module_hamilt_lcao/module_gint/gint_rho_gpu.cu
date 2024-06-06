@@ -1,8 +1,8 @@
 #include "kernels/cuda/cuda_tools.cuh"
 #include "module_base/ylm.h"
-#include "module_hamilt_lcao/module_gint/gint_rho_gpu.h"
-#include "module_hamilt_lcao/module_gint/gint_tools.h"
-#include "module_hamilt_lcao/module_gint/kernels/cuda/gint_rho.cuh"
+#include "gint_rho_gpu.h"
+#include "gint_tools.h"
+#include "kernels/cuda/gint_rho.cuh"
 #include "omp.h"
 
 #include <omp.h>
@@ -326,6 +326,7 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
                                      atom_pair_num,
                                      gridt.streams[stream_num],
                                      ap_alpha_g);
+            checkCudaLastError();
 
             // Launching kernel to calculate dot product psir * psir_dm
             dim3 grid_dot(16, 64);

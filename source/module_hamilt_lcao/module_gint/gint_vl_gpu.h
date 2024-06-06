@@ -7,8 +7,6 @@
 #include "module_hamilt_lcao/module_gint/gint.h"
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
 
-cudaError_t checkCuda(cudaError_t result);
-
 namespace GintKernel
 {
 
