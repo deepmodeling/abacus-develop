@@ -84,6 +84,7 @@ ESolver_KS_LCAO<TK, TR>::~ESolver_KS_LCAO()
 #ifndef USE_NEW_TWO_CENTER
 	this->orb_con.clear_after_ions(*uot_, GlobalC::ORB, GlobalV::deepks_setorb, GlobalC::ucell.infoNL.nproj);
 #endif
+    delete uot_;
 }
 
 
@@ -567,11 +568,11 @@ void ESolver_KS_LCAO<TK, TR>::init_basis_lcao(
     // * construct the interpolation tables.
 
 
-    // NOTE: This is a temporary step in the elimination of GlobalC::UOT.
-    // Once the direct usage of UOT via GlobalC is eliminated, this step
-    // uot_ will be replaced by a shared_ptr to ORB_gen_tables, which is
-    // the only owner of the UOT object.
-    uot_ = &GlobalC::UOT;
+    // NOTE: This following raw pointer serves as a temporary step in
+    // LCAO refactoring. Eventually, it will be replaced by a shared_ptr,
+    // which is the only owner of the ORB_gen_tables object. All other
+    // usages will take a weak_ptr.
+    uot_ = new ORB_gen_tables;
     auto& two_center_bundle = uot_->two_center_bundle;
 
     two_center_bundle.reset(new TwoCenterBundle);

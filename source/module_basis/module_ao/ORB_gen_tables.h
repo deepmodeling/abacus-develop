@@ -119,11 +119,4 @@ class ORB_gen_tables
 
 };
 
-/// PLEASE try to get rid of GlobalC::UOT, which is a global variable
-/// mohan add 2021-03-30
-namespace GlobalC
-{
-extern ORB_gen_tables UOT;
-}
-
 #endif

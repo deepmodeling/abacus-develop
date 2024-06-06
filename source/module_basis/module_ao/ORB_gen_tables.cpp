@@ -6,11 +6,6 @@
 #include "module_base/math_integral.h"
 #include "module_base/constants.h"
 
-namespace GlobalC
-{
-///here is a member of ORB_gen_tables class
-ORB_gen_tables UOT;
-}
 
 ORB_gen_tables::ORB_gen_tables() {}
 ORB_gen_tables::~ORB_gen_tables() {}
