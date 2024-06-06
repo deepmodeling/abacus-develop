@@ -78,6 +78,7 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
         {
             // get stream id
             int stream_num = omp_get_thread_num();
+            checkCuda(cudaStreamSynchronize(gridt.streams[stream_num]));
 
             // psi_input contains data used to generate the psi values.
             // The suffix "_g" indicates that the data is stored in the GPU,
@@ -165,7 +166,6 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
             int atom_pair_num = 0;
             const int grid_index_ij = i * gridt.nby * gridt.nbzp + j * gridt.nbzp;
             std::vector<bool> gpu_matrix_cal_flag(max_size * gridt.nbzp,false);
-            checkCuda(cudaStreamSynchronize(gridt.streams[stream_num]));
 
             // generate GPU tasks, including the calculation of psir, matrix
             // multiplication, and dot product
