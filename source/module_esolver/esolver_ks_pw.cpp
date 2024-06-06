@@ -1490,20 +1490,8 @@ void ESolver_KS_PW<T, Device>::nscf(void)
         {
             ModuleBase::WARNING_QUIT("ESolver_KS_PW<T, Device>::nscf"," Please set symmetry to -1 when performing berry phase calculation! ");
         }
+    
     }
-    if (berryphase::berry_phase_flag 
-        && ModuleSymmetry::Symmetry::symm_flag != 1)
-    {
-        berryphase bp;
-		bp.Macroscopic_polarization(
-				this->pw_wfc->npwk_max, 
-				this->psi, 
-				this->pw_rho, 
-				this->pw_wfc, 
-				this->kv);
-	}
-
-    ModuleBase::timer::tick("ESolver_KS_PW", "nscf");
     return;
 }
 
