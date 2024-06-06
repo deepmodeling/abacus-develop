@@ -126,10 +126,9 @@ namespace ModuleESolver
             for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
             {
                 int index = iat + ia;
-                auto tau = ucell.get_tau(index);
-                coord[3 * index] = tau.x * ucell.lat0_angstrom;
-                coord[3 * index + 1] = tau.y * ucell.lat0_angstrom;
-                coord[3 * index + 2] = tau.z * ucell.lat0_angstrom;
+                coord[3 * index] = ucell.atoms[it].tau[ia].x * ucell.lat0_angstrom;
+                coord[3 * index + 1] = ucell.atoms[it].tau[ia].y * ucell.lat0_angstrom;
+                coord[3 * index + 2] = ucell.atoms[it].tau[ia].z * ucell.lat0_angstrom;
             }
             iat = iat + ucell.atoms[it].na;
         }
