@@ -96,9 +96,14 @@ void HSolverPW<T, Device>::initDiagh(const psi::Psi<T, Device>& psi)
             {
                 delete (DiagoDavid<T, Device>*)this->pdiagh;
 
+                bool scf_type = (GlobalV::CALCULATION == "nscf") ? false : true;
+
                 this->pdiagh = new DiagoDavid<T, Device>(
                                 precondition.data(),
                                 GlobalV::PW_DIAG_NDIM,
+                                DiagoIterAssist<T, Device>::PW_DIAG_THR,
+                                DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
+                                scf_type,
                                 GlobalV::use_paw,
                                 comm_info
                                 );
@@ -108,9 +113,13 @@ void HSolverPW<T, Device>::initDiagh(const psi::Psi<T, Device>& psi)
         }
         else
         {
+            bool scf_type = (GlobalV::CALCULATION == "nscf") ? false : true;
             this->pdiagh = new DiagoDavid<T, Device>(
                                 precondition.data(),
                                 GlobalV::PW_DIAG_NDIM,
+                                DiagoIterAssist<T, Device>::PW_DIAG_THR,
+                                DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
+                                scf_type,
                                 GlobalV::use_paw,
                                 comm_info
                                 );

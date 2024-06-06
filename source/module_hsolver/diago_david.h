@@ -20,6 +20,9 @@ class DiagoDavid : public DiagH<T, Device>
 
     DiagoDavid(const Real* precondition_in, 
                const int david_ndim_in,
+               const double david_diag_thr_in,
+               const int david_maxiter_in,
+               const bool david_scf_type,
                const bool use_paw_in,
                const diag_comm_info& diag_comm_in);
 
@@ -31,6 +34,9 @@ class DiagoDavid : public DiagH<T, Device>
 
   private:
     int david_ndim = 4;
+    const double david_diag_thr;
+    const int david_maxiter;
+    const bool scf_type;
     bool use_paw = false;
     int test_david = 0;
 
@@ -125,6 +131,8 @@ class DiagoDavid : public DiagH<T, Device>
     void diag_mock(hamilt::Hamilt<T, Device>* phm_in,
                    psi::Psi<T, Device>& psi,
                    Real* eigenvalue_in);
+    
+    bool test_exit_cond(const int& ntry, const int& notconv, const bool& scf) const;
 
     using resmem_complex_op = base_device::memory::resize_memory_op<T, Device>;
     using delmem_complex_op = base_device::memory::delete_memory_op<T, Device>;

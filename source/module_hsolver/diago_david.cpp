@@ -19,9 +19,12 @@ using namespace hsolver;
 template <typename T, typename Device>
 DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in, 
                                   const int david_ndim_in,
+                                  const double david_diag_thr_in,
+                                  const int david_maxiter_in,
+                                  const bool david_scf_type,
                                   const bool use_paw_in,
                                   const diag_comm_info& diag_comm_in)
-    : david_ndim(david_ndim_in), use_paw(use_paw_in), diag_comm(diag_comm_in)
+    : david_ndim(david_ndim_in), david_diag_thr(david_diag_thr_in), david_maxiter(david_maxiter_in), scf_type(david_scf_type), use_paw(use_paw_in), diag_comm(diag_comm_in)
 {
     this->device = base_device::get_device_type<Device>(this->ctx);
     this->precondition = precondition_in;
@@ -237,7 +240,7 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
         this->notconv = 0;
         for (int m = 0; m < this->n_band; m++)
         {
-            convflag[m] = (std::abs(this->eigenvalue[m] - eigenvalue_in[m]) < DiagoIterAssist<T, Device>::PW_DIAG_THR);
+            convflag[m] = (std::abs(this->eigenvalue[m] - eigenvalue_in[m]) < this->david_diag_thr);
 
             if (!convflag[m])
             {
@@ -250,7 +253,7 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
 
         ModuleBase::timer::tick("DiagoDavid", "check_update");
         if (!this->notconv || (nbase + this->notconv > this->nbase_x)
-            || (dav_iter == DiagoIterAssist<T, Device>::PW_DIAG_NMAX))
+            || (dav_iter == this->david_maxiter))
         {
             ModuleBase::timer::tick("DiagoDavid", "last");
 
@@ -276,7 +279,7 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
                                       this->dmx
             );
 
-            if (!this->notconv || (dav_iter == DiagoIterAssist<T, Device>::PW_DIAG_NMAX))
+            if (!this->notconv || (dav_iter == this->david_maxiter))
             {
                 // overall convergence or last iteration: exit the iteration
 
@@ -1057,7 +1060,7 @@ void DiagoDavid<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
     {
         this->diag_mock(phm_in, psi, eigenvalue_in);
         ++ntry;
-    } while (DiagoIterAssist<T, Device>::test_exit_cond(ntry, this->notconv));
+    } while (this->test_exit_cond(ntry, this->notconv, this->scf_type));
 
     if (notconv > std::max(5, psi.get_nbands() / 4))
     {
@@ -1065,6 +1068,19 @@ void DiagoDavid<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
         std::cout << "\n DiagoDavid::diag', too many bands are not converged! \n";
     }
     return;
+}
+
+template <typename T, typename Device>
+bool DiagoDavid<T, Device>::test_exit_cond(const int& ntry, const int& notconv, const bool& scf) const
+{
+    // If ntry <=5, try to do it better, if ntry > 5, exit.
+    const bool f1 = ntry <= 5;
+    // In non-self consistent calculation, do until totally converged.
+    const bool f2 = !scf && notconv > 0;
+    // if self consistent calculation, if not converged > 5,
+    // using diagH_subspace and cg method again. ntry++
+    const bool f3 = scf && notconv > 5;
+    return f1 && (f2 || f3);
 }
 
 namespace hsolver {
