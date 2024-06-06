@@ -23,7 +23,7 @@ pseudo_dir      ../../../tests/PP_ORB  //the path to locate the pesudopotential 
 orbital_dir     ../../../tests/PP_ORB  //the path to locate the numerical orbital files
 ntype         3
 ecutwfc       50 // Ry
-symmetry      0 // turn off symmetry
+symmetry      -1 // turn off symmetry
 calculation   nscf // non-self-consistent calculation
 basis_type    lcao // atomic basis
 init_chg  file // read charge from files
@@ -59,15 +59,14 @@ The results are shown as follows:
  VALUES OF POLARIZATION
 
   The Ionic Phase:   -0.10600
- Electronic Phase:    0.92508
+ Electronic Phase:    0.91950
 
  The calculated polarization direction is in R3 direction
+ P =    7.3590432  (mod   18.0922373)  (   0.0000000,   0.0000000,   7.3590432) (e/Omega).bohr
 
- P =    7.4095194  (mod   18.0922373)  (   0.0000000,   0.0000000,   7.4095194) (e/Omega).bohr
+ P =    0.0154731  (mod    0.0380407)  (   0.0000000,   0.0000000,   0.0154731) e/bohr^2
 
- P =    0.0155792  (mod    0.0380407)  (   0.0000000,   0.0000000,   0.0155792) e/bohr^2
-
- P =    0.8906925  (mod    2.1748536)  (   0.0000000,   0.0000000,   0.8906925) C/m^2
+ P =    0.8846248  (mod    2.1748536)  (   0.0000000,   0.0000000,   0.8846248) C/m^2
 ```
 
 The electric polarization **P** is multivalued, which modulo a quantum e**R**/V~cell~. Note: the values in parentheses are the components of the **P** along the c axis in the x, y, z Cartesian coordinates when set gdir = 3 in INPUT file.
