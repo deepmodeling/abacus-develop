@@ -16,54 +16,63 @@ class Diago_DavSubspace : public DiagH<T, Device>
     using Real = typename GetTypeReal<T>::type;
 
   public:
-    Diago_DavSubspace(const Real* precondition_in,
-                      const int david_ndim_in,
-                      const double diag_thr_in,
-                      const int diag_nmax_in,
-                      const bool need_subspace_in,
+    Diago_DavSubspace(const std::vector<Real>& precondition_in,
+                      const int& nband_in,
+                      const int& nbasis_in,
+                      const int& david_ndim_in,
+                      const double& diag_thr_in,
+                      const int& diag_nmax_in,
+                      const bool& need_subspace_in,
                       const diag_comm_info& diag_comm_in);
 
     virtual ~Diago_DavSubspace() override;
 
     int diag(hamilt::Hamilt<T, Device>* phm_in,
-              psi::Psi<T, Device>& phi,
-              Real* eigenvalue_in,
-              const std::vector<bool>& is_occupied,
-              const bool& scf_type);
+             psi::Psi<T, Device>& phi,
+             Real* eigenvalue_in,
+             const std::vector<bool>& is_occupied,
+             const bool& scf_type);
 
   private:
+    /// for MPI communication
     const diag_comm_info diag_comm;
-    const double dav_large_thr = 1e-5;
 
-    const int david_ndim_ = 4;
-    const double diag_thr_;
-    const int diag_nmax_;
+    /// the threshold for this electronic iteration
+    const double diag_thr;
 
+    /// maximal iteration number
+    const int iter_nmax;
+
+    /// is diagH_subspace needed?
     const bool is_subspace;
+
+    /// the first dimension of the matrix to be diagonalized
+    const int n_band = 0;
+
+    /// the second dimension of the matrix to be diagonalized
+    const int dim = 0;
+
+    /// the maximum dimension of the reduced basis set
+    const int nbase_x = 0;
+
+    /// precondition for diag
+    const std::vector<Real>& precondition;
+    Real* d_precondition = nullptr;
 
     /// record for how many bands not have convergence eigenvalues
     int notconv = 0;
 
-    /// row size for input psi matrix
-    int n_band = 0;
-    /// non-zero col size for inputted psi matrix
-    int dim = 0;
-    // maximum dimension of the reduced basis set
-    int nbase_x = 0;
-    /// precondition for cg diag
-    const Real* precondition = nullptr;
-    Real* d_precondition = nullptr;
+    /// the product of H and psi in the reduced basis set
+    T* hphi = nullptr;
 
-    /// eigenvalue results
-    Real* eigenvalue_in_dav = nullptr;
+    /// Hamiltonian on the reduced basis
+    T* hcc = nullptr;
 
-    T* hphi = nullptr; // the product of H and psi in the reduced basis set
+    /// Overlap on the reduced basis
+    T* scc = nullptr;
 
-    T* hcc = nullptr; // Hamiltonian on the reduced basis
-
-    T* scc = nullptr; // Overlap on the reduced basis
-
-    T* vcc = nullptr; // Eigenvectors on the reduced basis
+    /// Eigenvectors on the reduced basis
+    T* vcc = nullptr;
 
     /// device type of psi
     Device* ctx = {};
@@ -78,7 +87,7 @@ class Diago_DavSubspace : public DiagH<T, Device>
                   T* hphi,
                   T* vcc,
                   const int* unconv,
-                  Real* eigenvalue);
+                  std::vector<Real>* eigenvalue_iter);
 
     void cal_elem(const int& dim,
                   int& nbase,
@@ -104,16 +113,16 @@ class Diago_DavSubspace : public DiagH<T, Device>
                      T* hcc,
                      T* scc,
                      const int& nbase_x,
-                     Real* eigenvalue,
+                     std::vector<Real>* eigenvalue_iter,
                      T* vcc,
                      bool init,
                      bool is_subspace);
 
     int diag_once(hamilt::Hamilt<T, Device>* phm_in,
-                   psi::Psi<T, Device>& psi,
-                   Real* eigenvalue_in,
-                   const std::vector<bool>& is_occupied);
-    
+                  psi::Psi<T, Device>& psi,
+                  Real* eigenvalue_in,
+                  const std::vector<bool>& is_occupied);
+
     bool test_exit_cond(const int& ntry, const int& notconv, const bool& scf);
 
     using resmem_complex_op = base_device::memory::resize_memory_op<T, Device>;

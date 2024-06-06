@@ -726,7 +726,12 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::P
             const diag_comm_info comm_info = {GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL};
 #endif
 
-            this->pdiagh = new Diago_DavSubspace<T, Device>(this->precondition.data(),
+            this->pdiagh = new Diago_DavSubspace<T, Device>(this->precondition,
+
+                                            
+                                    psi.get_nbands(),
+                                    psi.get_k_first() ? psi.get_current_nbas() : psi.get_nk() * psi.get_nbasis(),
+
                                                             GlobalV::PW_DIAG_NDIM,
                                                             DiagoIterAssist<T, Device>::PW_DIAG_THR,
                                                             DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
@@ -746,7 +751,12 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::P
             }
             DiagoIterAssist<T, Device>::avg_iter
                 += static_cast<double>((reinterpret_cast<Diago_DavSubspace<T, Device>*>(this->pdiagh))
-                                           ->diag(hm, psi, eigenvalue, is_occupied, scf));
+                                           ->diag(
+                                                hm, 
+                                                psi, 
+                                                eigenvalue,
+                                                is_occupied, 
+                                                scf));
 
             delete reinterpret_cast<Diago_DavSubspace<T, Device>*>(this->pdiagh);
             this->pdiagh = nullptr;
