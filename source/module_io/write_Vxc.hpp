@@ -1,9 +1,12 @@
+#pragma once
 #include "module_psi/psi.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/veff_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_dftu_lcao.h"
 #include "module_base/scalapack_connector.h"
 #include "module_base/parallel_reduce.h"
 
+#ifndef TGINT_H
+#define TGINT_H
 template <typename T> struct TGint;
 
 template <>
@@ -15,7 +18,7 @@ template <>
 struct TGint<std::complex<double>> {
     using type = Gint_k;
 };
-
+#endif
 
 namespace ModuleIO
 {
@@ -254,7 +257,6 @@ namespace ModuleIO
 					&gd, 
 					pv);
 
-            GlobalV::CURRENT_SPIN = is; //caution: Veff::contributeHR depends on GlobalV::CURRENT_SPIN
             vxcs_op_ao[is]->contributeHR();
         }
         std::vector<std::vector<double>> e_orb_locxc; // orbital energy (local XC)
@@ -278,7 +280,7 @@ namespace ModuleIO
         for (int ik = 0;ik < kv.get_nks();++ik)
         {
             ModuleBase::GlobalFunc::ZEROS(vxc_k_ao.data(), pv->nloc);
-            int is = GlobalV::CURRENT_SPIN = kv.isk[ik];
+            int is = kv.isk[ik];
             dynamic_cast<hamilt::OperatorLCAO<TK, TR>*>(vxcs_op_ao[is])->contributeHk(ik);
             const std::vector<TK>& vlocxc_k_mo = cVc(vxc_k_ao.data(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d);
 

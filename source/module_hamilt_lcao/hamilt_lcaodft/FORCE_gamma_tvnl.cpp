@@ -1,11 +1,17 @@
-#include "FORCE_gamma.h"
+#include "FORCE.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include <unordered_map>
 #include "module_base/timer.h"
 
-void Force_LCAO_gamma::cal_fvnl_dbeta(
+template<>
+void Force_LCAO<double>::cal_fvnl_dbeta(
     const elecstate::DensityMatrix<double, double>* DM,
+    const Parallel_Orbitals& pv,
+    const UnitCell& ucell,
+    const LCAO_Orbitals& orb,
+    const ORB_gen_tables& uot,
+    Grid_Driver& gd,
 	const bool isforce, 
 	const bool isstress, 
 	ModuleBase::matrix& fvnl_dbeta, 
@@ -17,45 +23,45 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
     double r0[3];
 	double r1[3];
 
-    for(int iat=0; iat<GlobalC::ucell.nat; iat++)
+    for (int iat = 0; iat < ucell.nat; iat++)
     {
-        const int it = GlobalC::ucell.iat2it[iat];
-        const int ia = GlobalC::ucell.iat2ia[iat];
+        const int it = ucell.iat2it[iat];
+        const int ia = ucell.iat2ia[iat];
         const int T0 = it;
         const int I0 = ia;
         
-        const ModuleBase::Vector3<double> tau0 = GlobalC::ucell.atoms[it].tau[ia];
+        const ModuleBase::Vector3<double> tau0 = ucell.atoms[it].tau[ia];
         //find ajacent atom of atom ia
-        //GlobalC::GridD.Find_atom( GlobalC::ucell.atoms[it].tau[ia] );
-		GlobalC::GridD.Find_atom(GlobalC::ucell, tau0 ,it, ia);
-		const double Rcut_Beta = GlobalC::ucell.infoNL.Beta[it].get_rcut_max();
+        //gd.Find_atom( ucell.atoms[it].tau[ia] );
+        gd.Find_atom(ucell, tau0, it, ia);
+        const double Rcut_Beta = ucell.infoNL.Beta[it].get_rcut_max();
 
         std::vector<std::unordered_map<int,std::vector<std::vector<double>>>> nlm_tot;
-		nlm_tot.resize(GlobalC::GridD.getAdjacentNum()+1); //this saves <psi_i|beta> and <psi_i|\nabla|beta>
+        nlm_tot.resize(gd.getAdjacentNum() + 1); //this saves <psi_i|beta> and <psi_i|\nabla|beta>
 
 //Step 1 : Calculate and save <psi_i|beta> and <psi_i|\nabla|beta>
-        for (int ad1 =0 ; ad1 < GlobalC::GridD.getAdjacentNum()+1; ad1++)
+        for (int ad1 = 0; ad1 < gd.getAdjacentNum() + 1; ad1++)
         {
-            const int T1 = GlobalC::GridD.getType (ad1);
-            const Atom* atom1 = &GlobalC::ucell.atoms[T1];
-            const int I1 = GlobalC::GridD.getNatom (ad1);
-            const int start1 = GlobalC::ucell.itiaiw2iwt(T1, I1, 0);
-			const ModuleBase::Vector3<double> tau1 = GlobalC::GridD.getAdjacentTau (ad1);
-			const double Rcut_AO1 = GlobalC::ORB.Phi[T1].getRcut();
+            const int T1 = gd.getType(ad1);
+            const Atom* atom1 = &ucell.atoms[T1];
+            const int I1 = gd.getNatom(ad1);
+            const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
+            const ModuleBase::Vector3<double> tau1 = gd.getAdjacentTau(ad1);
+            const double Rcut_AO1 = orb.Phi[T1].getRcut();
 
             nlm_tot[ad1].clear();
 
-            const double dist1 = (tau1-tau0).norm() * GlobalC::ucell.lat0;
+            const double dist1 = (tau1 - tau0).norm() * ucell.lat0;
             if (dist1 > Rcut_Beta + Rcut_AO1)
             {
                 continue;
             }
 
-			for (int iw1=0; iw1<GlobalC::ucell.atoms[T1].nw; ++iw1)
+            for (int iw1 = 0; iw1 < ucell.atoms[T1].nw; ++iw1)
 			{
 				const int iw1_all = start1 + iw1;
-                const int iw1_local = this->ParaV->global2local_row(iw1_all);
-                const int iw2_local = this->ParaV->global2local_col(iw1_all);
+                const int iw1_local = pv.global2local_row(iw1_all);
+                const int iw2_local = pv.global2local_col(iw1_all);
 				if(iw1_local < 0 && iw2_local < 0) continue;
                 
                 std::vector<std::vector<double>> nlm;
@@ -71,19 +77,19 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
                 // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
                 int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
 
-                ModuleBase::Vector3<double> dtau = GlobalC::ucell.atoms[T0].tau[I0] - tau1;
+                ModuleBase::Vector3<double> dtau = ucell.atoms[T0].tau[I0] - tau1;
 
-                GlobalC::UOT.two_center_bundle->overlap_orb_beta->snap(
-                        T1, L1, N1, M1, T0, dtau * GlobalC::ucell.lat0, true, nlm);
+                uot.two_center_bundle->overlap_orb_beta->snap(
+                    T1, L1, N1, M1, T0, dtau * ucell.lat0, true, nlm);
 #else
-                GlobalC::UOT.snap_psibeta_half(
-                    GlobalC::ORB,
-                    GlobalC::ucell.infoNL,
+                uot.snap_psibeta_half(
+                    orb,
+                    ucell.infoNL,
                     nlm, tau1, T1,
                     atom1->iw2l[ iw1 ], // L1
                     atom1->iw2m[ iw1 ], // m1
                     atom1->iw2n[ iw1 ], // N1
-                    GlobalC::ucell.atoms[T0].tau[I0], T0, 1); //R0,T0
+                    ucell.atoms[T0].tau[I0], T0, 1); //R0,T0
 #endif
 
                 assert(nlm.size()==4);
@@ -92,26 +98,26 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
         }//ad
 
 //Step 2 : sum to get beta<psi_i|beta><beta|\nabla|psi_j>
-		for (int ad1=0; ad1<GlobalC::GridD.getAdjacentNum()+1 ; ++ad1)
+        for (int ad1 = 0; ad1 < gd.getAdjacentNum() + 1; ++ad1)
         {
-            const int T1 = GlobalC::GridD.getType (ad1);
-            const Atom* atom1 = &GlobalC::ucell.atoms[T1];
-            const int I1 = GlobalC::GridD.getNatom (ad1);
-            const int start1 = GlobalC::ucell.itiaiw2iwt(T1, I1, 0);
-			const ModuleBase::Vector3<double> tau1 = GlobalC::GridD.getAdjacentTau (ad1);
-			const double Rcut_AO1 = GlobalC::ORB.Phi[T1].getRcut();
+            const int T1 = gd.getType(ad1);
+            const Atom* atom1 = &ucell.atoms[T1];
+            const int I1 = gd.getNatom(ad1);
+            const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
+            const ModuleBase::Vector3<double> tau1 = gd.getAdjacentTau(ad1);
+            const double Rcut_AO1 = orb.Phi[T1].getRcut();
 
-            for (int ad2=0; ad2 < GlobalC::GridD.getAdjacentNum()+1 ; ad2++)
+            for (int ad2 = 0; ad2 < gd.getAdjacentNum() + 1; ad2++)
             {
-                const int T2 = GlobalC::GridD.getType (ad2);
-                const Atom* atom2 = &GlobalC::ucell.atoms[T2];
-                const int I2 = GlobalC::GridD.getNatom (ad2);
-                const int start2 = GlobalC::ucell.itiaiw2iwt(T2, I2, 0);
-                const ModuleBase::Vector3<double> tau2 = GlobalC::GridD.getAdjacentTau (ad2);
-                const double Rcut_AO2 = GlobalC::ORB.Phi[T2].getRcut();
+                const int T2 = gd.getType(ad2);
+                const Atom* atom2 = &ucell.atoms[T2];
+                const int I2 = gd.getNatom(ad2);
+                const int start2 = ucell.itiaiw2iwt(T2, I2, 0);
+                const ModuleBase::Vector3<double> tau2 = gd.getAdjacentTau(ad2);
+                const double Rcut_AO2 = orb.Phi[T2].getRcut();
 
-                const double dist1 = (tau1-tau0).norm() * GlobalC::ucell.lat0;
-                const double dist2 = (tau2-tau0).norm() * GlobalC::ucell.lat0;
+                const double dist1 = (tau1 - tau0).norm() * ucell.lat0;
+                const double dist2 = (tau2 - tau0).norm() * ucell.lat0;
 				if(isstress)
                 {
                     r1[0] = ( tau1.x - tau0.x) ;
@@ -128,15 +134,15 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
                     continue;
                 }
                 
-                for (int iw1=0; iw1<GlobalC::ucell.atoms[T1].nw; ++iw1)
+                for (int iw1 = 0; iw1 < ucell.atoms[T1].nw; ++iw1)
                 {
                     const int iw1_all = start1 + iw1;
-                    const int iw1_local = this->ParaV->global2local_row(iw1_all);
+                    const int iw1_local = pv.global2local_row(iw1_all);
                     if(iw1_local < 0)continue;
-                    for (int iw2=0; iw2<GlobalC::ucell.atoms[T2].nw; ++iw2)
+                    for (int iw2 = 0; iw2 < ucell.atoms[T2].nw; ++iw2)
                     {
                         const int iw2_all = start2 + iw2;
-                        const int iw2_local = this->ParaV->global2local_col(iw2_all);
+                        const int iw2_local = pv.global2local_col(iw2_all);
                         if(iw2_local < 0)continue;
 
                         double nlm[3] = {0,0,0};
@@ -152,16 +158,16 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
 
                         assert(nlm1.size()==nlm2[0].size());
 
-						const int nproj = GlobalC::ucell.infoNL.nproj[T0];
+                        const int nproj = ucell.infoNL.nproj[T0];
 						int ib = 0;
 						for (int nb = 0; nb < nproj; nb++)
 						{
-							const int L0 = GlobalC::ucell.infoNL.Beta[T0].Proj[nb].getL();
+                            const int L0 = ucell.infoNL.Beta[T0].Proj[nb].getL();
 							for(int m=0;m<2*L0+1;m++)
 							{
                                 for(int ir=0;ir<3;ir++)
                                 {
-                                    nlm[ir] += nlm2[ir][ib]*nlm1[ib]*GlobalC::ucell.atoms[T0].ncpp.dion(nb,nb);
+                                    nlm[ir] += nlm2[ir][ib] * nlm1[ib] * ucell.atoms[T0].ncpp.dion(nb, nb);
                                 }
 								ib+=1;
 							}
@@ -178,16 +184,16 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
 
                             assert(nlm1.size()==nlm2[0].size());
                             
-    						const int nproj = GlobalC::ucell.infoNL.nproj[T0];
+                            const int nproj = ucell.infoNL.nproj[T0];
 	    					int ib = 0;
 		    				for (int nb = 0; nb < nproj; nb++)
 				    		{
-		      					const int L0 = GlobalC::ucell.infoNL.Beta[T0].Proj[nb].getL();
+                                const int L0 = ucell.infoNL.Beta[T0].Proj[nb].getL();
 		    					for(int m=0;m<2*L0+1;m++)
 				    			{
                                    for(int ir=0;ir<3;ir++)
                                     {
-                                        nlm_t[ir] += nlm2[ir][ib]*nlm1[ib]*GlobalC::ucell.atoms[T0].ncpp.dion(nb,nb);
+                                       nlm_t[ir] += nlm2[ir][ib] * nlm1[ib] * ucell.atoms[T0].ncpp.dion(nb, nb);
                                     }
 					    			ib+=1;
 					    		}
@@ -230,33 +236,37 @@ void Force_LCAO_gamma::cal_fvnl_dbeta(
     }//iat
     if(isstress)
     {
-        StressTools::stress_fill(GlobalC::ucell.lat0, GlobalC::ucell.omega, svnl_dbeta);
+        StressTools::stress_fill(ucell.lat0, ucell.omega, svnl_dbeta);
     }
     ModuleBase::timer::tick("Force_LCAO_gamma","cal_fvnl_dbeta_new");
 }
 
-void Force_LCAO_gamma::cal_ftvnl_dphi(
+template<>
+void Force_LCAO<double>::cal_ftvnl_dphi(
     const elecstate::DensityMatrix<double, double>* DM,
-    LCAO_Matrix &lm,
+    const Parallel_Orbitals& pv,
+    const UnitCell& ucell,
+    LCAO_Matrix& lm,
     const bool isforce, 
 	const bool isstress, 
 	ModuleBase::matrix& ftvnl_dphi, 
-	ModuleBase::matrix& stvnl_dphi)
+    ModuleBase::matrix& stvnl_dphi,
+    Record_adj* ra)
 {
     ModuleBase::TITLE("Force_LCAO_gamma","cal_ftvnl_dphi");
     ModuleBase::timer::tick("Force_LCAO_gamma","cal_ftvnl_dphi");
 
     for(int i=0; i<GlobalV::NLOCAL; i++)
     {
-        const int iat = GlobalC::ucell.iwt2iat[i];
+        const int iat = ucell.iwt2iat[i];
         for(int j=0; j<GlobalV::NLOCAL; j++)
         {
-            const int mu = this->ParaV->global2local_row(j);
-            const int nu = this->ParaV->global2local_col(i);
+            const int mu = pv.global2local_row(j);
+            const int nu = pv.global2local_col(i);
 
             if (mu >= 0 && nu >= 0 )
             {
-                const int index = mu * this->ParaV->ncol + nu;
+                const int index = mu * pv.ncol + nu;
                 //contribution from deriv of AO's in T+VNL term
 
                 double sum = 0.0;
@@ -287,7 +297,7 @@ void Force_LCAO_gamma::cal_ftvnl_dphi(
     }
 	if(isstress)
 	{
-		StressTools::stress_fill(GlobalC::ucell.lat0, GlobalC::ucell.omega, stvnl_dphi);
+        StressTools::stress_fill(ucell.lat0, ucell.omega, stvnl_dphi);
 	}
     ModuleBase::timer::tick("Force_LCAO_gamma","cal_ftvnl_dphi");
     return;

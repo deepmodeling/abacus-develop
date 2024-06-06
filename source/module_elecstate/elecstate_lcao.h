@@ -16,13 +16,23 @@ class ElecStateLCAO : public ElecState
 {
   public:
     ElecStateLCAO(){} // will be called by ElecStateLCAO_TDDFT
+    /*
+    Note: on the removal of LOWF
+    The entire instance of Local_Orbital_wfc is not really necessary, because
+    this class only need it to do 2dbcd wavefunction gathering. Therefore, 
+    what is critical is the 2dbcd handle which stores information about the
+    wavefunction, and another free function to do the 2dbcd gathering.
+
+    A future work would be replace the Local_Orbital_wfc with a 2dbcd handle.
+    A free gathering function will also be needed.
+    */
     ElecStateLCAO(Charge* chg_in ,
                   const K_Vectors* klist_in ,
                   int nks_in,
                   Local_Orbital_Charge* loc_in ,
                   Gint_Gamma* gint_gamma_in,  //mohan add 2024-04-01
                   Gint_k* gint_k_in, //mohan add 2024-04-01
-                  Local_Orbital_wfc* lowf_in ,
+                  Local_Orbital_wfc* lowf_in,
                   ModulePW::PW_Basis* rhopw_in ,
                   ModulePW::PW_Basis_Big* bigpw_in )
     {

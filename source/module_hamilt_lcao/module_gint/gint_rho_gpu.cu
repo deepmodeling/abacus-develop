@@ -3,6 +3,9 @@
 #include "module_hamilt_lcao/module_gint/gint_rho.h"
 #include "module_hamilt_lcao/module_gint/gint_tools.h"
 #include "module_hamilt_lcao/module_gint/kernels/cuda/gint_rho.cuh"
+#include "omp.h"
+
+#include <omp.h>
 
 namespace GintKernel
 {
@@ -19,12 +22,11 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
     const int nbz = gridt.nbzp;
     const int lgd = gridt.lgd;
     const int max_size = gridt.max_atom;
-    double* dm_matrix_h = new double[lgd * lgd];
+    std::vector<double> dm_matrix_h(lgd * lgd, 0);
 
     checkCuda(cudaMemset(gridt.rho_g, 0, gridt.ncxyz * sizeof(double)));
 
     // retrieve the density matrix on the host
-    ModuleBase::GlobalFunc::ZEROS(dm_matrix_h, lgd * lgd);
     for (int iat1 = 0; iat1 < ucell.nat; iat1++)
     {
         for (int iat2 = 0; iat2 < ucell.nat; iat2++)
@@ -58,7 +60,7 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
     double* dm_matrix_g;
     checkCuda(cudaMalloc((void**)&dm_matrix_g, lgd * lgd * sizeof(double)));
     checkCuda(cudaMemcpy(dm_matrix_g,
-                         dm_matrix_h,
+                         dm_matrix_h.data(),
                          lgd * lgd * sizeof(double),
                          cudaMemcpyHostToDevice));
 
@@ -68,13 +70,14 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
     }
 
     // calculate the rho for every nbz bigcells
-    int iter_num = 0;
+
+#pragma omp parallel for num_threads(gridt.nstreams) collapse(2)
     for (int i = 0; i < gridt.nbx; i++)
     {
         for (int j = 0; j < gridt.nby; j++)
         {
             // get stream id
-            int stream_num = iter_num % gridt.nstreams;
+            int stream_num = omp_get_thread_num();
 
             // psi_input contains data used to generate the psi values.
             // The suffix "_g" indicates that the data is stored in the GPU,
@@ -167,44 +170,52 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
             int max_m = 0;
             int max_n = 0;
             int atom_pair_num = 0;
-
+            const int grid_index_ij = i * gridt.nby * gridt.nbzp + j * gridt.nbzp;
+            std::vector<bool> gpu_matrix_cal_flag(max_size * gridt.nbzp,false);
             checkCuda(cudaStreamSynchronize(gridt.streams[stream_num]));
 
             // generate GPU tasks, including the calculation of psir, matrix
             // multiplication, and dot product
             gtask_rho(gridt,
-                      i,
-                      j,
+                      grid_index_ij,
+                      gpu_matrix_cal_flag,
                       max_size,
                       nczp,
                       ucell,
                       rcut,
                       input_double,
                       input_int,
-                      num_psir,
-                      lgd,
-                      psir_ylm_left_g,
-                      psir_r_g,
-                      dm_matrix_g,
-                      ap_alpha,
-                      atom_pair_A_m,
-                      atom_pair_B_n,
-                      atom_pair_k,
-                      atom_pair_lda,
-                      atom_pair_ldb,
-                      atom_pair_ldc,
-                      matrix_A,
-                      matrix_B,
-                      matrix_C,
-                      max_m,
-                      max_n,
-                      atom_pair_num,
-                      rho_g,
-                      vec_l,
-                      vec_r,
-                      dot_product,
-                      vec_len,
-                      dot_count);
+                      num_psir);
+            
+            alloc_mult_dot_rho(gridt,
+                            ucell,
+                            gpu_matrix_cal_flag,
+                            grid_index_ij,
+                            max_size,
+                            lgd,
+                            nczp,
+                            psir_ylm_left_g,
+                            psir_r_g,
+                            dm_matrix_g,
+                            ap_alpha,
+                            atom_pair_A_m,
+                            atom_pair_B_n,
+                            atom_pair_k,
+                            atom_pair_lda,
+                            atom_pair_ldb,
+                            atom_pair_ldc,
+                            matrix_A,
+                            matrix_B,
+                            matrix_C,
+                            max_m,
+                            max_n,
+                            atom_pair_num,
+                            rho_g,
+                            vec_l,
+                            vec_r,
+                            dot_product,
+                            vec_len,
+                            dot_count);
 
             // Copying data from host to device
             checkCuda(cudaMemcpyAsync(input_double_g,
@@ -355,8 +366,6 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
                 incy,
                 dot_product_g,
                 dot_count);
-
-            iter_num++;
         }
     }
 
@@ -374,7 +383,6 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
 
     // free the memory
     checkCuda(cudaFree(dm_matrix_g));
-    delete[] dm_matrix_h;
 }
 
 } // namespace GintKernel
