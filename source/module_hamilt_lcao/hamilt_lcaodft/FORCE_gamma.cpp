@@ -15,6 +15,7 @@ template<>
 void Force_LCAO<double>::allocate(const Parallel_Orbitals& pv,
     LCAO_Matrix& lm,
     LCAO_gen_fixedH& gen_h,
+    const ORB_gen_tables* uot,
     const int& nks,
     const std::vector<ModuleBase::Vector3<double>>& kvec_d)
 {
@@ -67,7 +68,7 @@ void Force_LCAO<double>::allocate(const Parallel_Orbitals& pv,
     }
     // calculate dS in LCAO basis
     // ModuleBase::timer::tick("Force_LCAO_gamma","build_S_new");
-    gen_h.build_ST_new('S', cal_deri, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD), lm.Sloc.data());
+    gen_h.build_ST_new('S', cal_deri, GlobalC::ucell, GlobalC::ORB, *uot, &(GlobalC::GridD), lm.Sloc.data());
     // ModuleBase::timer::tick("Force_LCAO_gamma","build_S_new");
 
     // calculate dT in LCAP
@@ -84,12 +85,12 @@ void Force_LCAO<double>::allocate(const Parallel_Orbitals& pv,
     // calculate dT
     // calculate T + VNL(P1) in LCAO basis
     // ModuleBase::timer::tick("Force_LCAO_gamma","build_T_new");
-    gen_h.build_ST_new('T', cal_deri, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD), lm.Hloc_fixed.data());
+    gen_h.build_ST_new('T', cal_deri, GlobalC::ucell, GlobalC::ORB, *uot, &(GlobalC::GridD), lm.Hloc_fixed.data());
     // ModuleBase::timer::tick("Force_LCAO_gamma","build_T_new");
     // test_gamma(lm.DHloc_fixed_x, "dHloc_fixed_x T part");
 
     // ModuleBase::timer::tick("Force_LCAO_gamma","build_Nonlocal_mu");
-    gen_h.build_Nonlocal_mu_new(lm.Hloc_fixed.data(), cal_deri, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD));
+    gen_h.build_Nonlocal_mu_new(lm.Hloc_fixed.data(), cal_deri, GlobalC::ucell, GlobalC::ORB, *uot, &(GlobalC::GridD));
     // ModuleBase::timer::tick("Force_LCAO_gamma","build_Nonlocal_mu");
     // test_gamma(lm.DHloc_fixed_x, "dHloc_fixed_x Vnl part");
 
@@ -100,7 +101,7 @@ void Force_LCAO<double>::allocate(const Parallel_Orbitals& pv,
 
         lm.zeros_HSgamma('S');
 
-        gen_h.build_ST_new('S', cal_deri, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD), lm.Sloc.data(), INPUT.cal_syns, INPUT.dmax);
+        gen_h.build_ST_new('S', cal_deri, GlobalC::ucell, GlobalC::ORB, *uot, &(GlobalC::GridD), lm.Sloc.data(), INPUT.cal_syns, INPUT.dmax);
 
         bool bit = false; // LiuXh, 2017-03-21
 
@@ -202,6 +203,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
 #endif
     LCAO_gen_fixedH& gen_h, // mohan add 2024-04-02
     TGint<double>::type& gint,
+    const ORB_gen_tables* uot,
     const Parallel_Orbitals& pv,
     LCAO_Matrix& lm,
     const K_Vectors* kv,
@@ -219,7 +221,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
 
     // allocate DSloc_x, DSloc_y, DSloc_z
     // allocate DHloc_fixed_x, DHloc_fixed_y, DHloc_fixed_z
-    this->allocate(pv, lm, gen_h);
+    this->allocate(pv, lm, gen_h, uot);
 
     // calculate the 'energy density matrix' here.
     this->cal_foverlap(isforce, isstress, psi, pv, pelec, lm, foverlap, soverlap);
@@ -229,7 +231,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
 
     this->cal_ftvnl_dphi(DM, pv, GlobalC::ucell, lm, isforce, isstress, ftvnl_dphi, stvnl_dphi);
 
-    this->cal_fvnl_dbeta(DM, pv, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, GlobalC::GridD, isforce, isstress, fvnl_dbeta, svnl_dbeta);
+    this->cal_fvnl_dbeta(DM, pv, GlobalC::ucell, GlobalC::ORB, *uot, GlobalC::GridD, isforce, isstress, fvnl_dbeta, svnl_dbeta);
 
     this->cal_fvl_dphi(isforce, isstress, pelec->pot, gint, fvl_dphi, svl_dphi);
 

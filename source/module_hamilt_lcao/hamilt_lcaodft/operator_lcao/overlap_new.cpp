@@ -16,8 +16,9 @@ hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::OverlapNew(LCAO_Matrix* LM_in,
                                                              std::vector<TK>* SK_pointer_in,
                                                              const UnitCell* ucell_in,
                                                              Grid_Driver* GridD_in,
+                                                             const ORB_gen_tables* uot,
                                                              const Parallel_Orbitals* paraV)
-    : hamilt::OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in)
+    : hamilt::OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in), uot_(uot)
 {
     this->cal_type = lcao_overlap;
     this->ucell = ucell_in;
@@ -115,7 +116,6 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::cal_SR_IJR(const int& iat
                                                                   const ModuleBase::Vector3<double>& dtau,
                                                                   TR* data_pointer)
 {
-    const ORB_gen_tables& uot = ORB_gen_tables::get_const_instance();
     const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
     // ---------------------------------------------
     // get info of orbitals of atom1 and atom2 from ucell
@@ -175,10 +175,10 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::cal_SR_IJR(const int& iat
             //=================================================================
             // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
             int M2 = (m2 % 2 == 0) ? -m2/2 : (m2+1)/2;
-            uot.two_center_bundle->overlap_orb->calculate(T1, L1, N1, M1,
+            uot_->two_center_bundle->overlap_orb->calculate(T1, L1, N1, M1,
                     T2, L2, N2, M2, dtau * this->ucell->lat0, olm);
 #else
-            uot.snap_psipsi(orb, // orbitals
+            uot_->snap_psipsi(orb, // orbitals
                             olm,
                             0,
                             'S', // olm, job of derivation, dtype of Operator

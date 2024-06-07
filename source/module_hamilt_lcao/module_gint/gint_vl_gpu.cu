@@ -2,9 +2,9 @@
 
 #include "kernels/cuda/cuda_tools.cuh"
 #include "module_base/ylm.h"
-#include "module_hamilt_lcao/module_gint/gint_tools.h"
-#include "module_hamilt_lcao/module_gint/gint_vl.h"
-#include "module_hamilt_lcao/module_gint/kernels/cuda/gint_vl.cuh"
+#include "gint_tools.h"
+#include "gint_vl_gpu.h"
+#include "kernels/cuda/gint_vl.cuh"
 
 namespace GintKernel
 {

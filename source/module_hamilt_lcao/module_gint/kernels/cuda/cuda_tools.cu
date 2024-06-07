@@ -1,21 +1,22 @@
 #include <iostream>
 
-#include "module_hamilt_lcao/module_gint/kernels/cuda/cuda_tools.cuh"
-cudaError_t checkCuda(cudaError_t result)
+#include "cuda_tools.cuh"
+
+cudaError_t check(cudaError_t result, const char *const func, const char *const file, const int line)
 {
     if (result != cudaSuccess)
     {
-        fprintf(stderr, "CUDA Runtime Error: %s\n", cudaGetErrorString(result));
-        assert(result == cudaSuccess);
+        fprintf(stderr, "CUDA Runtime Error at %s:%d code=%s \"%s\" \n", file, line, cudaGetErrorString(result), func);
+        exit(EXIT_FAILURE);
     }
     return result;
 }
-cudaError_t checkCudaLastError()
+cudaError_t __checkCudaLastError(const char *file, const int line)
 {
     cudaError_t result = cudaGetLastError();
     if (result != cudaSuccess)
     {
-        fprintf(stderr, "CUDA Runtime Error: %s\n", cudaGetErrorString(result));
+        fprintf(stderr, "%s(%i) : getLastCudaError():%s\n", file, line, cudaGetErrorString(result));
         assert(result == cudaSuccess);
     }
     return result;

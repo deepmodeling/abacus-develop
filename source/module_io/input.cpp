@@ -1393,7 +1393,7 @@ bool Input::Read(const std::string& fn)
         }
         else if (strcmp("out_chg", word) == 0)
         {
-            read_bool(ifs, out_chg);
+            read_value(ifs, out_chg);
         }
         else if (strcmp("out_dm", word) == 0)
         {
@@ -3583,7 +3583,7 @@ void Input::Bcast()
     Parallel_Common::bcast_string(chg_extrap); // xiaohui modify 2015-02-01
     Parallel_Common::bcast_int(out_freq_elec);
     Parallel_Common::bcast_int(out_freq_ion);
-    Parallel_Common::bcast_bool(out_chg);
+    Parallel_Common::bcast_int(out_chg);
     Parallel_Common::bcast_bool(out_dm);
     Parallel_Common::bcast_bool(out_dm1);
     Parallel_Common::bcast_bool(out_bandgap); // for bandgap printing

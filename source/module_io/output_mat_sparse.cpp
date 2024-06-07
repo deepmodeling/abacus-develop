@@ -17,6 +17,7 @@ namespace ModuleIO
         const Parallel_Orbitals &pv,
         LCAO_gen_fixedH &gen_h, // mohan add 2024-04-02
         Gint_k &gint_k, // mohan add 2024-04-01
+        const ORB_gen_tables* uot,
         LCAO_Matrix &lm,
         Grid_Driver &grid, // mohan add 2024-04-06
         const K_Vectors& kv,
@@ -30,6 +31,7 @@ namespace ModuleIO
       _pv(pv),
       _gen_h(gen_h), // mohan add 2024-04-02
       _gint_k(gint_k), // mohan add 2024-04-01
+      uot_(uot),
       _lm(lm),
       _grid(grid), // mohan add 2024-04-06
       _kv(kv),
@@ -68,6 +70,7 @@ void Output_Mat_Sparse<std::complex<double>>::write(void)
                 this->_pv, 
 				this->_lm, 
 				this->_grid,
+                uot_,
 				this->_gen_h); // LiuXh add 2019-07-15
     }
 
@@ -81,6 +84,7 @@ void Output_Mat_Sparse<std::complex<double>>::write(void)
 				this->_gint_k, // mohan add 2024-04-01
 				this->_lm,
                 this->_grid, // mohan add 2024-04-06
+                uot_,
 				_kv); // LiuXh add 2019-07-15
 	}
 
