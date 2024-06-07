@@ -685,7 +685,7 @@ void Exx_Lip::read_q_pack(const ModuleSymmetry::Symmetry& symm,
 
 	q_pack->kv_ptr = new K_Vectors();
 	const std::string exx_kpoint_card = GlobalV::global_out_dir + exx_q_pack + GlobalV::global_kpoint_card;
-	q_pack->kv_ptr->set( symm, exx_kpoint_card, GlobalV::NSPIN, ucell_ptr->G, ucell_ptr->latvec );
+	q_pack->kv_ptr->set( symm, exx_kpoint_card, GlobalV::NSPIN, ucell_ptr->G, ucell_ptr->latvec, GlobalV::ofs_running );
 //	q_pack->kv_ptr->set( symm, exx_kpoint_card, GlobalV::NSPIN, ucell_ptr->G, ucell_ptr->latvec, &Pkpoints );
 
 

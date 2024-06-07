@@ -50,7 +50,8 @@ class K_Vectors
              const std::string& k_file_name,
              const int& nspin,
              const ModuleBase::Matrix3& reciprocal_vec,
-             const ModuleBase::Matrix3& latvec);
+             const ModuleBase::Matrix3& latvec,
+             std::ofstream& ofs_running);
 
     /**
      * @brief Generates irreducible k-points in the Brillouin zone considering symmetry operations.

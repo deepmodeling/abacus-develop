@@ -52,26 +52,28 @@ void K_Vectors::set(const ModuleSymmetry::Symmetry& symm,
                     const std::string& k_file_name,
                     const int& nspin_in,
                     const ModuleBase::Matrix3& reciprocal_vec,
-                    const ModuleBase::Matrix3& latvec)
+                    const ModuleBase::Matrix3& latvec,
+                    std::ofstream& ofs
+                    )
 {
     ModuleBase::TITLE("K_Vectors", "set");
 
-    GlobalV::ofs_running << "\n\n\n\n";
-    GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
-    GlobalV::ofs_running << " |                                                                    |" << std::endl;
-    GlobalV::ofs_running << " | Setup K-points                                                     |" << std::endl;
-    GlobalV::ofs_running << " | We setup the k-points according to input parameters.               |" << std::endl;
-    GlobalV::ofs_running << " | The reduced k-points are set according to symmetry operations.     |" << std::endl;
-    GlobalV::ofs_running << " | We treat the spin as another set of k-points.                      |" << std::endl;
-    GlobalV::ofs_running << " |                                                                    |" << std::endl;
-    GlobalV::ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
-    GlobalV::ofs_running << "\n\n\n\n";
+    ofs << "\n\n\n\n";
+    ofs << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+    ofs << " |                                                                    |" << std::endl;
+    ofs << " | Setup K-points                                                     |" << std::endl;
+    ofs << " | We setup the k-points according to input parameters.               |" << std::endl;
+    ofs << " | The reduced k-points are set according to symmetry operations.     |" << std::endl;
+    ofs << " | We treat the spin as another set of k-points.                      |" << std::endl;
+    ofs << " |                                                                    |" << std::endl;
+    ofs << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
+    ofs << "\n\n\n\n";
 
-    GlobalV::ofs_running << "\n SETUP K-POINTS" << std::endl;
+    ofs << "\n SETUP K-POINTS" << std::endl;
 
     // (1) set nspin, read kpoints.
     this->nspin = nspin_in;
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "nspin", nspin);
+    ModuleBase::GlobalFunc::OUT(ofs, "nspin", nspin);
 
     if(this->nspin != 1 && this->nspin != 2 && this->nspin != 4)
     {
@@ -165,7 +167,7 @@ void K_Vectors::set(const ModuleSymmetry::Symmetry& symm,
     // set the k vectors for the up and down spin
     this->set_kup_and_kdw();
 
-    this->print_klists(GlobalV::ofs_running);
+    this->print_klists(ofs);
 
     // std::cout << " NUMBER OF K-POINTS   : " << nkstot << std::endl;
 
