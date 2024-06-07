@@ -170,7 +170,7 @@ void Grid_Technique::set_pbc_grid(const int& ncx_in,
     this->init_grid_expansion(ucell,rcut);
 
     // (3) calculate the extended grid.
-    this->cal_extended_cell(this->dxe, this->dye, this->dze);
+    this->cal_extended_cell(this->dxe, this->dye, this->dze,this->nbx, this->nby, this->nbz);
 
     this->init_tau_in_bigcell(ucell);
 
