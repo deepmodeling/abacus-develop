@@ -58,8 +58,7 @@ __global__ void get_psi(const double* const ylmcoef,
     }
 }
 
-__global__ void psir_dot(const int nbzp,
-                         const int bxyz,
+__global__ void psir_dot(const int bxyz,
                          const int vec_size,
                          double* vec_a_g,
                          double* vec_b_g,

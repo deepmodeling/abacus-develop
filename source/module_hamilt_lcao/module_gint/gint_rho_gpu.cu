@@ -331,7 +331,6 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
             dim3 block_dot(block_size);
             dim3 grid_dot(gridt.nbzp, gridt.bxyz);
             psir_dot<<<grid_dot, block_dot, sizeof(double) * block_size, gridt.streams[stream_num]>>>(
-                gridt.nbzp,
                 gridt.bxyz,
                 max_size * ucell.nwmax,
                 psir_ylm_left_g,
