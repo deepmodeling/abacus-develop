@@ -184,7 +184,7 @@ TEST_F(KlistParaTest,Set)
 	if(GlobalV::NPROC == 4) {GlobalV::KPAR = 2;}
 	Parallel_Global::init_pools();
 	ModuleSymmetry::Symmetry::symm_flag=1;
-	kv->set(symm,k_file,kv->nspin,GlobalC::ucell.G,GlobalC::ucell.latvec);
+	kv->set(symm,k_file,kv->nspin,GlobalC::ucell.G,GlobalC::ucell.latvec, GlobalV::ofs_running);
 	EXPECT_EQ(kv->get_nkstot(),35);
 	EXPECT_TRUE(kv->kc_done);
 	EXPECT_TRUE(kv->kd_done);
@@ -219,7 +219,7 @@ TEST_F(KlistParaTest,SetAfterVC)
 	if(GlobalV::NPROC == 4) {GlobalV::KPAR = 1;}
 	Parallel_Global::init_pools();
 	ModuleSymmetry::Symmetry::symm_flag=1;
-	kv->set(symm,k_file,kv->nspin,GlobalC::ucell.G,GlobalC::ucell.latvec);
+	kv->set(symm,k_file,kv->nspin,GlobalC::ucell.G,GlobalC::ucell.latvec, GlobalV::ofs_running);
 	EXPECT_EQ(kv->get_nkstot(),35);
 	EXPECT_TRUE(kv->kc_done);
 	EXPECT_TRUE(kv->kd_done);
