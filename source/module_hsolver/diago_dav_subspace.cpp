@@ -32,6 +32,8 @@ Diago_DavSubspace<T, Device>::Diago_DavSubspace(const std::vector<Real>& precond
     assert(david_ndim_in > 1);
     assert(david_ndim_in * nband_in < nbasis_in * this->diag_comm.nproc);
 
+    // TODO: Added memory usage statistics
+
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // the product of H and psi in the reduced basis set
     resmem_complex_op()(this->ctx, this->hphi, this->nbase_x * this->dim, "DAV::hphi");
@@ -87,6 +89,7 @@ int Diago_DavSubspace<T, Device>::diag_once(hamilt::Hamilt<T, Device>* phm_in,
 {
     ModuleBase::timer::tick("Diago_DavSubspace", "diag_once");
 
+    // TODO: Allocate memory in the constructor 
     psi::Psi<T, Device> basis(1, this->nbase_x, this->dim, &(psi.get_ngk(0)));
     ModuleBase::Memory::record("DAV::basis", this->nbase_x * this->dim * sizeof(T));
 
