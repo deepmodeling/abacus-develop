@@ -57,7 +57,6 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_EQ(GlobalV::DFT_FUNCTIONAL,"hse");
 	EXPECT_DOUBLE_EQ(GlobalV::XC_TEMPERATURE,0.0);
 	EXPECT_EQ(GlobalV::NSPIN,1);
-	EXPECT_EQ(GlobalV::CURRENT_SPIN,0);
 	EXPECT_EQ(GlobalV::CAL_FORCE,0);
 	EXPECT_NEAR(GlobalV::FORCE_THR,0.001,0.0000001);
     EXPECT_DOUBLE_EQ(GlobalV::STRESS_THR, 0.01);
@@ -142,7 +141,7 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_EQ(GlobalV::OUT_FREQ_ION,0);
 	EXPECT_EQ(GlobalV::init_chg,"atomic");
 	EXPECT_EQ(GlobalV::chg_extrap,"atomic");
-	EXPECT_EQ(GlobalV::out_chg,false);
+	EXPECT_EQ(GlobalV::out_chg, 0);
     EXPECT_EQ(GlobalV::out_pot, 2);
     EXPECT_EQ(GlobalV::out_app_flag, false);
     EXPECT_EQ(GlobalV::out_bandgap, false);

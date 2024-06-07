@@ -32,12 +32,13 @@ class HamiltLCAO : public Hamilt<TK>
         Local_Orbital_Charge* loc_in,
         elecstate::Potential* pot_in,
         const K_Vectors& kv_in,
+        const ORB_gen_tables* uot,
         elecstate::DensityMatrix<TK, double>* DM_in,
         int* exx_two_level_step = nullptr);
     /**
      * @brief Constructor of vacuum Operators, only HR and SR will be initialed as empty HContainer
     */
-    HamiltLCAO(LCAO_Matrix* LM_in, const K_Vectors& kv_in);
+    HamiltLCAO(LCAO_Matrix* LM_in, const K_Vectors& kv_in, const ORB_gen_tables* uot);
 
     ~HamiltLCAO()
     {
@@ -90,6 +91,9 @@ class HamiltLCAO : public Hamilt<TK>
     // save them in this->hRS2;
     std::vector<TR> hRS2;
     int refresh_times = 1;
+
+    /// current_spin for NSPIN=2, 0: hamiltonian for spin up, 1: hamiltonian for spin down
+    int current_spin = 0;
 
     // sk and hk will be refactored to HamiltLCAO later
     //std::vector<TK> sk;

@@ -668,14 +668,11 @@ void K_Vectors::ibz_kpoint(
         std::string bkbrav_name;
         ModuleBase::Vector3<double>gk01 = gk1, gk02 = gk2, gk03 = gk3;
 
-        ModuleBase::Matrix3 b_optlat = symm.optlat.Inverse().Transpose();
-        //search optlat after using reciprocity relation
-        ModuleBase::Vector3<double> gb01(b_optlat.e11, b_optlat.e12, b_optlat.e13);
-        ModuleBase::Vector3<double> gb02(b_optlat.e21, b_optlat.e22, b_optlat.e23);
-        ModuleBase::Vector3<double> gb03(b_optlat.e31, b_optlat.e32, b_optlat.e33);
+        // it's not necessary to calculate gb01, gb02, gb03, 
+        // because they are only used as a vector, no need to be assigned values
         
         //determine the Bravais type and related parameters of the lattice
-        symm.lattice_type(gb1, gb2, gb3, gb01, gb02, gb03, b_const, b0_const, bbrav, bbrav_name, ucell.atoms, false, nullptr);
+        symm.lattice_type(gb1, gb2, gb3, gb1, gb2, gb3, b_const, b0_const, bbrav, bbrav_name, ucell.atoms, false, nullptr);
         GlobalV::ofs_running<<"(for reciprocal lattice: )"<<std::endl;
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS TYPE", bbrav);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS LATTICE NAME", bbrav_name);

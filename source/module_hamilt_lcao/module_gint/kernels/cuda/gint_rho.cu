@@ -1,5 +1,5 @@
 #include "interp.cuh"
-#include "module_hamilt_lcao/module_gint/kernels/cuda/gint_rho.cuh"
+#include "gint_rho.cuh"
 #include "sph.cuh"
 
 namespace GintKernel
@@ -58,27 +58,38 @@ __global__ void get_psi(const double* const ylmcoef,
     }
 }
 
-__global__ void psir_dot(const int* n,
-                         double** vec_l_g,
-                         int incl,
-                         double** vec_r_g,
-                         int incr,
-                         double** results_g,
-                         int batchcount)
+__global__ void psir_dot(const int nbzp,
+                         const int bxyz,
+                         const int vec_size,
+                         double* vec_a_g,
+                         double* vec_b_g,
+                         double** results_g)
 {
-    int id = blockIdx.x * blockDim.x + threadIdx.x;
-    int stride = blockDim.x * gridDim.x;
-    for (int i = id; i < batchcount; i += stride)
-    {
-        double* sum = results_g[i];
-        double* x = vec_l_g[i];
-        double* y = vec_r_g[i];
+    extern __shared__ double s_data[];
+    int tid = threadIdx.x;
+    int offset = blockIdx.x * bxyz * vec_size + blockIdx.y * vec_size;
+    double* vec_a_mcell = vec_a_g + offset;
+    double* vec_b_mcell = vec_b_g + offset;
 
-        for (int j = 0; j < n[i]; j++)
-        {
-            sum[0] += x[j * incl] * y[j * incr];
+    s_data[tid] = 0.0;
+
+    for(unsigned int k = tid; k < vec_size; k += blockDim.x)
+    {
+        s_data[tid] += vec_a_mcell[k] * vec_b_mcell[k];
+    }
+
+    __syncthreads();
+
+    for (unsigned int s = blockDim.x / 2; s > 0; s >>= 1)
+    {
+        if (tid < s) {
+            s_data[tid] += s_data[tid + s];
         }
+        __syncthreads();
+    }
+
+    if (tid == 0) {
+        *results_g[blockIdx.x*bxyz + blockIdx.y] = s_data[0];
     }
 }
-
 } // namespace GintKernel
