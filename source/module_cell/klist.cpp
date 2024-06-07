@@ -568,18 +568,18 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry& symm,
 
     // k-lattice: "pricell" of reciprocal space
     // CAUTION: should fit into all k-input method, not only MP  !!!
-    // the basis vector of reciprocal lattice: gb1, gb2, gb3
-    ModuleBase::Vector3<double> gb1(ucell.G.e11, ucell.G.e12, ucell.G.e13); 
-    ModuleBase::Vector3<double> gb2(ucell.G.e21, ucell.G.e22, ucell.G.e23);
-    ModuleBase::Vector3<double> gb3(ucell.G.e31, ucell.G.e32, ucell.G.e33);
-    ModuleBase::Vector3<double> gk1, gk2, gk3;
-    ModuleBase::Matrix3 gk;
+    // the basis vector of reciprocal lattice: recip_vec1, recip_vec2, recip_vec3
+    ModuleBase::Vector3<double> recip_vec1(ucell.G.e11, ucell.G.e12, ucell.G.e13); 
+    ModuleBase::Vector3<double> recip_vec2(ucell.G.e21, ucell.G.e22, ucell.G.e23);
+    ModuleBase::Vector3<double> recip_vec3(ucell.G.e31, ucell.G.e32, ucell.G.e33);
+    ModuleBase::Vector3<double> k_vec1, k_vec2, k_vec3;
+    ModuleBase::Matrix3 k_vec;
     if (this->is_mp)
     {
-        gk1 = ModuleBase::Vector3<double>(gb1.x / nmp[0], gb1.y / nmp[0], gb1.z / nmp[0]);
-        gk2 = ModuleBase::Vector3<double>(gb2.x / nmp[1], gb2.y / nmp[1], gb2.z / nmp[1]);
-        gk3 = ModuleBase::Vector3<double>(gb3.x / nmp[2], gb3.y / nmp[2], gb3.z / nmp[2]);
-        gk = ModuleBase::Matrix3(gk1.x, gk1.y, gk1.z, gk2.x, gk2.y, gk2.z, gk3.x, gk3.y, gk3.z);
+        k_vec1 = ModuleBase::Vector3<double>(recip_vec1.x / nmp[0], recip_vec1.y / nmp[0], recip_vec1.z / nmp[0]);
+        k_vec2 = ModuleBase::Vector3<double>(recip_vec2.x / nmp[1], recip_vec2.y / nmp[1], recip_vec2.z / nmp[1]);
+        k_vec3 = ModuleBase::Vector3<double>(recip_vec3.x / nmp[2], recip_vec3.y / nmp[2], recip_vec3.z / nmp[2]);
+        k_vec = ModuleBase::Matrix3(k_vec1.x, k_vec1.y, k_vec1.z, k_vec2.x, k_vec2.y, k_vec2.z, k_vec3.x, k_vec3.y, k_vec3.z);
     }
 
     //===============================================
@@ -596,25 +596,25 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry& symm,
     if (use_symm)
     {
         // bravais type of reciprocal lattice and k-lattice
-        double b_const[6];
-        double b0_const[6];
-        double bk_const[6];
-        double bk0_const[6];
-        int bbrav_type = 15;
-        int bkbrav_type = 15;
-        std::string bbrav_name;
-        std::string bkbrav_name;
-        ModuleBase::Vector3<double> gk01 = gk1, gk02 = gk2, gk03 = gk3;
+        double recip_vec_const[6];
+        double recip_vec0_const[6];
+        double k_vec_const[6];
+        double k_vec0_const[6];
+        int recip_brav_type = 15;
+        int k_brav_type = 15;
+        std::string recip_brav_name;
+        std::string k_brav_name;
+        ModuleBase::Vector3<double> k_vec01 = k_vec1, k_vec02 = k_vec2, k_vec03 = k_vec3;
 
         // it's not necessary to calculate gb01, gb02, gb03, 
         // because they are only used as a vector, no need to be assigned values
         
         //determine the Bravais type and related parameters of the lattice
-        symm.lattice_type(gb1, gb2, gb3, gb1, gb2, gb3, b_const, b0_const, bbrav_type, bbrav_name, ucell.atoms, false, nullptr);
+        symm.lattice_type(recip_vec1, recip_vec2, recip_vec3, recip_vec1, recip_vec2, recip_vec3, recip_vec_const, recip_vec0_const, recip_brav_type, recip_brav_name, ucell.atoms, false, nullptr);
         GlobalV::ofs_running<<"(for reciprocal lattice: )"<<std::endl;
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS TYPE", bbrav_type);
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS LATTICE NAME", bbrav_name);
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ibrav", bbrav_type);
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS TYPE", recip_brav_type);
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS LATTICE NAME", recip_brav_name);
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ibrav", recip_brav_type);
 
         // the map of bravis lattice from real to reciprocal space
         // for example, 3(fcc) in real space matches 2(bcc) in reciprocal space
@@ -627,13 +627,13 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry& symm,
                 return false;
             return (ibrav_b == ibrav_a2b[ibrav_a - 1]);
         };
-        if (!ibrav_match(bbrav_type)) // if not match, exit and return
+        if (!ibrav_match(recip_brav_type)) // if not match, exit and return
         {
             GlobalV::ofs_running << "Error: Bravais lattice type of reciprocal lattice is not compatible with that of "
                                     "real space lattice:"
                                  << std::endl;
             GlobalV::ofs_running << "ibrav of real space lattice: " << symm.ilattname << std::endl;
-            GlobalV::ofs_running << "ibrav of reciprocal lattice: " << bbrav_name << std::endl;
+            GlobalV::ofs_running << "ibrav of reciprocal lattice: " << recip_brav_name << std::endl;
             GlobalV::ofs_running << "(which should be " << ibrav_a2b[symm.real_brav - 1] << ")." << std::endl;
             match = false;
             return;
@@ -642,44 +642,44 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry& symm,
         //if match, continue
         if (this->is_mp)
         {
-            symm.lattice_type(gk1,
-                              gk2,
-                              gk3,
-                              gk01,
-                              gk02,
-                              gk03,
-                              bk_const,
-                              bk0_const,
-                              bkbrav_type,
-                              bkbrav_name,
+            symm.lattice_type(k_vec1,
+                              k_vec2,
+                              k_vec3,
+                              k_vec01,
+                              k_vec02,
+                              k_vec03,
+                              k_vec_const,
+                              k_vec0_const,
+                              k_brav_type,
+                              k_brav_name,
                               ucell.atoms,
                               false,
                               nullptr);
             GlobalV::ofs_running << "(for k-lattice: )" << std::endl;
-            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "BRAVAIS TYPE", bkbrav_type);
-            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "BRAVAIS LATTICE NAME", bkbrav_name);
-            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ibrav", bkbrav_type);
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "BRAVAIS TYPE", k_brav_type);
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "BRAVAIS LATTICE NAME", k_brav_name);
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ibrav", k_brav_type);
         }
         // point-group analysis of reciprocal lattice
         ModuleBase::Matrix3 bsymop[48];
         int bnop = 0;
         // search again
-        symm.lattice_type(gb1,
-                          gb2,
-                          gb3,
-                          gb1,
-                          gb2,
-                          gb3,
-                          b_const,
-                          b0_const,
-                          bbrav_type,
-                          bbrav_name,
+        symm.lattice_type(recip_vec1,
+                          recip_vec2,
+                          recip_vec3,
+                          recip_vec1,
+                          recip_vec2,
+                          recip_vec3,
+                          recip_vec_const,
+                          recip_vec0_const,
+                          recip_brav_type,
+                          recip_brav_name,
                           ucell.atoms,
                           false,
                           nullptr);
-        ModuleBase::Matrix3 b_optlat_new(gb1.x, gb1.y, gb1.z, gb2.x, gb2.y, gb2.z, gb3.x, gb3.y, gb3.z);
+        ModuleBase::Matrix3 b_optlat_new(recip_vec1.x, recip_vec1.y, recip_vec1.z, recip_vec2.x, recip_vec2.y, recip_vec2.z, recip_vec3.x, recip_vec3.y, recip_vec3.z);
         // set the crystal point-group symmetry operation
-        symm.setgroup(bsymop, bnop, bbrav_type);
+        symm.setgroup(bsymop, bnop, recip_brav_type);
         // transform the above symmetric operation matrices between different coordinate 
         symm.gmatrix_convert(bsymop, bsymop, bnop, b_optlat_new, ucell.G);
 
@@ -736,12 +736,12 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry& symm,
     // convert kgmatrix to k-lattice
     ModuleBase::Matrix3* kkmatrix = new ModuleBase::Matrix3[nrotkm];
     if (this->is_mp)
-        symm.gmatrix_convert(kgmatrix.data(), kkmatrix, nrotkm, ucell.G, gk);
+        symm.gmatrix_convert(kgmatrix.data(), kkmatrix, nrotkm, ucell.G, k_vec);
     // direct coordinates of k-points in k-lattice
     std::vector<ModuleBase::Vector3<double>> kvec_d_k(nkstot);
     if (this->is_mp)
         for (int i = 0; i < nkstot; ++i)
-            kvec_d_k[i] = kvec_d[i] * ucell.G * gk.Inverse();
+            kvec_d_k[i] = kvec_d[i] * ucell.G * k_vec.Inverse();
 
     // use operation : kgmatrix to find
     // the new set kvec_d : ir_kpt
@@ -808,7 +808,7 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry& symm,
                 if (this->is_mp)
                 {
                     kvec_rot_k = kvec_d_k[i] * kkmatrix[j];           // k-lattice rotation
-                    kvec_rot_k = kvec_rot_k * gk * ucell.G.Inverse(); // convert to recip lattice
+                    kvec_rot_k = kvec_rot_k * k_vec * ucell.G.Inverse(); // convert to recip lattice
                     restrict_kpt(kvec_rot_k);
 
                     assert(symm.equal(kvec_rot.x, kvec_rot_k.x));
@@ -817,7 +817,7 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry& symm,
                     // std::cout << "\n kvec_rot (in recip) = " << kvec_rot.x << " " << kvec_rot.y << " " << kvec_rot.z;
                     // std::cout << "\n kvec_rot(k to recip)= " << kvec_rot_k.x << " " << kvec_rot_k.y << " " <<
                     // kvec_rot_k.z;
-                    kvec_rot_k = kvec_rot_k * ucell.G * gk.Inverse(); // convert back to k-latice
+                    kvec_rot_k = kvec_rot_k * ucell.G * k_vec.Inverse(); // convert back to k-latice
                 }
                 for (int k = 0; k < this->nkstot_ibz; ++k)
                 {
