@@ -73,7 +73,7 @@ __global__ void psir_dot(const int nbzp,
 
     s_data[tid] = 0.0;
 
-    for(int k = tid; k < vec_size; k += blockDim.x)
+    for(unsigned int k = tid; k < vec_size; k += blockDim.x)
     {
         s_data[tid] += vec_a_mcell[k] * vec_b_mcell[k];
     }
