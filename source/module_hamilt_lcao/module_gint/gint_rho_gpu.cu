@@ -3,7 +3,6 @@
 #include "gint_rho_gpu.h"
 #include "gint_tools.h"
 #include "kernels/cuda/gint_rho.cuh"
-#include "omp.h"
 
 #include <omp.h>
 
