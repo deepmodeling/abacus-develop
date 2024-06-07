@@ -36,6 +36,7 @@ class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                             std::vector<TK>* hK_in,
                             const UnitCell* ucell_in,
                             Grid_Driver* GridD_in,
+                            const ORB_gen_tables* uot,
                             const int& nks_in,
                             elecstate::DensityMatrix<TK,double>* DM_in);
     ~DeePKS();
@@ -62,6 +63,10 @@ class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     const UnitCell* ucell = nullptr;
 
     HContainer<TR>* H_V_delta = nullptr;
+
+    // the following variable is introduced temporarily during LCAO refactoring
+    const ORB_gen_tables* uot_ = nullptr;
+
 #ifdef __DEEPKS
 
     /**

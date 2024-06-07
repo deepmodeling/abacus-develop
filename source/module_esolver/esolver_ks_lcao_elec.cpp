@@ -23,6 +23,8 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include "module_io/dm_io.h"
+#include "module_io/rho_io.h"
+#include "module_io/potential_io.h"
 
 namespace ModuleESolver
 {
@@ -148,6 +150,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
             &(this->LOC),
             this->pelec->pot,
             this->kv,
+            uot_,
 #ifdef __EXX
             DM,
             GlobalC::exx_info.info_ri.real_number ? &this->exd->two_level_step : &this->exc->two_level_step);
@@ -165,11 +168,11 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
     {
         const Parallel_Orbitals* pv = this->LM.ParaV;
         // build and save <psi(0)|alpha(R)> at beginning
-        GlobalC::ld.build_psialpha(GlobalV::CAL_FORCE, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD, GlobalC::UOT);
+        GlobalC::ld.build_psialpha(GlobalV::CAL_FORCE, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD, *uot_);
 
         if (GlobalV::deepks_out_unittest)
         {
-            GlobalC::ld.check_psialpha(GlobalV::CAL_FORCE, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD, GlobalC::UOT);
+            GlobalC::ld.check_psialpha(GlobalV::CAL_FORCE, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD, *uot_);
         }
     }
 #endif
@@ -251,6 +254,41 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(int istep)
 #endif // __EXX
 
     this->pelec->init_scf(istep, this->sf.strucFac);
+    if(GlobalV::out_chg == 2)
+    {
+        for(int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            std::stringstream ss;
+            ss << GlobalV::global_out_dir << "SPIN" << is+1 << "_CHG_INI.cube";
+            ModuleIO::write_rho(
+#ifdef __MPI
+                this->pw_big->nbz, this->pw_big->bz,
+                this->pw_rho->nplane, this->pw_rho->startz_current,
+#endif
+                this->pelec->charge->rho[is], is,
+                GlobalV::NSPIN, 0,
+                ss.str(),
+                this->pw_rho->nx, this->pw_rho->ny, this->pw_rho->nz,
+                this->pelec->eferm.ef, &(GlobalC::ucell) , 11);
+        }
+    }
+
+    if(GlobalV::out_pot == 3)
+    {
+        for(int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            std::stringstream ss;
+            ss << GlobalV::global_out_dir << "SPIN" << is+1 << "_POT_INI.cube";
+            ModuleIO::write_potential(
+#ifdef __MPI
+                this->pw_big->nbz, this->pw_big->bz,
+                this->pw_rho->nplane, this->pw_rho->startz_current,
+#endif
+                is,0,ss.str(),
+                this->pw_rho->nx, this->pw_rho->ny, this->pw_rho->nz,
+                this->pelec->pot->get_effective_v(), 11);
+        }
+    }
     // initalize DMR
     // DMR should be same size with Hamiltonian(R)
     dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)
@@ -449,7 +487,7 @@ void ESolver_KS_LCAO<std::complex<double>, double>::get_S(void)
 
     if (this->p_hamilt == nullptr)
     {
-        this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(&this->LM, this->kv);
+        this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(&this->LM, this->kv, uot_);
         dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, double>*>(this->p_hamilt->ops)->contributeHR();
     }
 
@@ -480,7 +518,7 @@ void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S(void)
     this->LM.ParaV = &this->orb_con.ParaV;
     if (this->p_hamilt == nullptr)
     {
-        this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>(&this->LM, this->kv);
+        this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>(&this->LM, this->kv, uot_);
         dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>*>(this->p_hamilt->ops)
             ->contributeHR();
     }

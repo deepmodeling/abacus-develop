@@ -185,7 +185,7 @@ void Grid_Technique::set_pbc_grid(const int& ncx_in,
 #if ((defined __CUDA) /* || (defined __ROCM) */)
     if(GlobalV::device_flag == "gpu")
     {
-        this->init_gpu_gint_variables(ucell,orb,num_stream);
+        this->init_gpu_gint_variables(ucell, orb, num_stream);
     }
 #endif
 
@@ -923,22 +923,11 @@ void Grid_Technique::init_gpu_gint_variables(const UnitCell& ucell,const LCAO_Or
     num_mcell = nbzp * bxyz;
     checkCudaErrors(cudaMalloc((void**)&rho_g, this->ncxyz * sizeof(double)));
     checkCudaErrors(cudaMemset(rho_g, 0, this->ncxyz * sizeof(double)));
-    checkCudaErrors(
-        cudaMallocHost((void**)&vec_l, num_mcell * nstreams * sizeof(double*)));
-    checkCudaErrors(
-        cudaMalloc((void**)&vec_l_g, num_mcell * nstreams * sizeof(double*)));
-    checkCudaErrors(
-        cudaMallocHost((void**)&vec_r, num_mcell * nstreams * sizeof(double*)));
-    checkCudaErrors(
-        cudaMalloc((void**)&vec_r_g, num_mcell * nstreams * sizeof(double*)));
     checkCudaErrors(cudaMallocHost((void**)&dot_product,
                                    num_mcell * nstreams * sizeof(double*)));
     checkCudaErrors(cudaMalloc((void**)&dot_product_g,
                                num_mcell * nstreams * sizeof(double*)));
-    checkCudaErrors(
-        cudaMallocHost((void**)&vec_len, num_mcell * nstreams * sizeof(int)));
-    checkCudaErrors(
-        cudaMalloc((void**)&vec_len_g, num_mcell * nstreams * sizeof(int)));
+
 
     for (int i = 0; i < nstreams; ++i)
     {
@@ -961,7 +950,10 @@ void Grid_Technique::free_gpu_gint_variables(int nat)
         return;
     }
     for (int i = 0; i < nstreams; ++i)
+    {
         checkCudaErrors(cudaStreamDestroy(streams[i]));
+    }
+    delete[] streams;
 
     checkCudaErrors(cudaFree(ylmcoef_g));
     checkCudaErrors(cudaFree(atom_nwl_g));
@@ -1020,14 +1012,8 @@ void Grid_Technique::free_gpu_gint_variables(int nat)
     checkCudaErrors(cudaFree(dm_global_g));
     checkCudaErrors(cudaFree(ap_output_gbl_g));
 
-    checkCudaErrors(cudaFreeHost(vec_len));
-    checkCudaErrors(cudaFreeHost(vec_l));
-    checkCudaErrors(cudaFreeHost(vec_r));
     checkCudaErrors(cudaFreeHost(dot_product));
 
-    checkCudaErrors(cudaFree(vec_len_g));
-    checkCudaErrors(cudaFree(vec_l_g));
-    checkCudaErrors(cudaFree(vec_r_g));
     checkCudaErrors(cudaFree(dot_product_g));
     checkCudaErrors(cudaFree(rho_g));
 

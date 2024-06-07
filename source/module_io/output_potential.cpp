@@ -36,7 +36,7 @@ Output_Potential::Output_Potential(const ModulePW::PW_Basis_Big* pw_big,
 
 void Output_Potential::write()
 {
-    if (_out_pot == 1)
+    if (_out_pot == 1 || _out_pot == 3)
     {
         for (int is = 0; is < _nspin; is++)
         {

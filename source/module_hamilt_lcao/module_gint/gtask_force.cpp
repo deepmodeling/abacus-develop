@@ -1,6 +1,6 @@
 #include <omp.h>
 
-#include "gint_force.h"
+#include "gint_force_gpu.h"
 #include "module_base/ylm.h"
 #include "module_hamilt_lcao/module_gint/gint_tools.h"
 namespace GintKernel
@@ -213,7 +213,6 @@ void alloc_mult_force(const Grid_Technique& gridt,
         }
     }
     atom_pair_num = tid;
-    gpu_mat_cal_flag.clear();
 }
 
 
