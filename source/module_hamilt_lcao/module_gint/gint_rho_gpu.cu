@@ -68,7 +68,6 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
     {
         checkCuda(cudaStreamSynchronize(gridt.streams[i]));
     }
-
     // calculate the rho for every nbz bigcells
 
 #pragma omp parallel for num_threads(gridt.nstreams) collapse(2)
@@ -329,9 +328,10 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
             checkCudaLastError();
 
             // Launching kernel to calculate dot product psir * psir_dm
-            dim3 grid_dot(16, 64);
-            dim3 block_dot(64);
-            psir_dot<<<grid_dot, block_dot, 0, gridt.streams[stream_num]>>>(
+            const int block_size = 128;
+            dim3 block_dot(block_size);
+            dim3 grid_dot(gridt.nbzp, gridt.bxyz);
+            psir_dot<<<grid_dot, block_dot, sizeof(double) * block_size, gridt.streams[stream_num]>>>(
                 gridt.nbzp,
                 gridt.bxyz,
                 max_size * ucell.nwmax,

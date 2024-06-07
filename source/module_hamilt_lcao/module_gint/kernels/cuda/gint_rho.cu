@@ -67,38 +67,29 @@ __global__ void psir_dot(const int nbzp,
 {
     extern __shared__ double s_data[];
     int tid = threadIdx.x;
-    for(int i = blockIdx.y; i < nbzp; i += gridDim.y)
+    int offset = blockIdx.x * bxyz * vec_size + blockIdx.y * vec_size;
+    double* vec_a_mcell = vec_a_g + offset;
+    double* vec_b_mcell = vec_b_g + offset;
+
+    s_data[tid] = 0.0;
+
+    for(int k = tid; k < vec_size; k += blockDim.x)
     {
-        int offset_bcell = i * bxyz * vec_size;
-        double* vec_a_bcell = vec_a_g + offset_bcell;
-        double* vec_b_bcell = vec_b_g + offset_bcell;
-        
-        for(int j = blockIdx.x; j < bxyz; j += gridDim.x)
-        {
-            int offset_mcell = j * vec_size;
-            double* vec_a_mcell = vec_a_bcell + offset_mcell;
-            double* vec_b_mcell = vec_b_bcell + offset_mcell;
-            s_data[tid] = 0.0;
+        s_data[tid] += vec_a_mcell[k] * vec_b_mcell[k];
+    }
 
-            for(int k = tid; k < vec_size; k += blockDim.x)
-            {
-                s_data[tid] += vec_a_mcell[k] * vec_b_mcell[k];
-            }
+    __syncthreads();
 
-            __syncthreads();
-
-            for (unsigned int s = blockDim.x / 2; s > 0; s >>= 1)
-            {
-                if (tid < s) {
-                    s_data[tid] += s_data[tid + s];
-                }
-                __syncthreads();
-            }
-
-            if (tid == 0) {
-                *results_g[i*bxyz + j] = s_data[0];
-            }
+    for (unsigned int s = blockDim.x / 2; s > 0; s >>= 1)
+    {
+        if (tid < s) {
+            s_data[tid] += s_data[tid + s];
         }
+        __syncthreads();
+    }
+
+    if (tid == 0) {
+        *results_g[blockIdx.x*bxyz + blockIdx.y] = s_data[0];
     }
 }
 } // namespace GintKernel
