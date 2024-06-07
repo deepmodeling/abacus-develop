@@ -46,6 +46,8 @@ K_Vectors::~K_Vectors()
 #endif
 }
 
+
+
 void K_Vectors::set(const ModuleSymmetry::Symmetry& symm,
                     const std::string& k_file_name,
                     const int& nspin_in,
@@ -70,10 +72,13 @@ void K_Vectors::set(const ModuleSymmetry::Symmetry& symm,
     // (1) set nspin, read kpoints.
     this->nspin = nspin_in;
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "nspin", nspin);
-    if (this->nspin == 4)
+
+    if(this->nspin != 1 && this->nspin != 2 && this->nspin != 4)
     {
-        this->nspin = 1; // zhengdy-soc
+        ModuleBase::WARNING_QUIT("K_Vectors::set", "Only available for nspin = 1 or 2 or 4");
     }
+
+    this->nspin = (this->nspin == 4)? 1: this->nspin;
 
     // read KPT file and generate K-point grid
 	bool read_succesfully = this->read_kpoints(k_file_name);
@@ -86,8 +91,8 @@ void K_Vectors::set(const ModuleSymmetry::Symmetry& symm,
     }
 
     // output kpoints file
-    std::string skpt1 = "";
-    std::string skpt2 = "";
+    std::string skpt1;
+    std::string skpt2;
 
     // (2)
     // only berry phase need all kpoints including time-reversal symmetry!
@@ -144,19 +149,7 @@ void K_Vectors::set(const ModuleSymmetry::Symmetry& symm,
         ofkpt.close();
     }
 
-    int deg = 0;
-    if (GlobalV::NSPIN == 1)
-    {
-        deg = 2;
-    }
-    else if (GlobalV::NSPIN == 2 || GlobalV::NSPIN == 4)
-    {
-        deg = 1;
-    }
-    else
-    {
-        ModuleBase::WARNING_QUIT("K_Vectors::set", "Only available for nspin = 1 or 2 or 4");
-    }
+    int deg = (this->nspin == 1)? 2: 1;
     //normalize k points weights according to nspin
 	this->normalize_wk(deg);
 
