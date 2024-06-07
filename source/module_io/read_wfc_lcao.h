@@ -16,9 +16,12 @@
 #include <vector>
 #include <complex>
 #include "module_base/vector3.h"
+#ifdef __MPI
 // parallelization
 #include "module_basis/module_ao/parallel_2d.h"
 #include "module_base/scalapack_connector.h"
+#endif
+
 /**
  * @brief This class has two functions: restart psi from the previous calculation, and write psi to the disk.
  * 
@@ -30,22 +33,23 @@ namespace ModuleIO
 // out: lowf(lowf_glb), ekb, occ, kvec_c, wk
 // only rank 0 will do this, but for larger wavefunction, it is needed to seperately
 // read the file
-
+template<typename T>
 void read_abacus_lowf(const std::string& flowf, 
                       int& ik,
                       ModuleBase::Vector3<double>& kvec_c, 
                       int& nbands, 
                       int& nbasis, 
-                      std::vector<std::complex<double>>& lowf, 
+                      std::vector<std::complex<T>>& lowf, 
                       std::vector<double>& ekb, 
                       std::vector<double>& occ,
                       double& wk);
+template<typename T>
 void read_abacus_lowf(const std::string& flowf, 
                       int& ik,
                       ModuleBase::Vector3<double>& kvec_c, 
                       int& nbands, 
                       int& nbasis, 
-                      std::vector<double>& lowf, 
+                      std::vector<T>& lowf, 
                       std::vector<double>& ekb, 
                       std::vector<double>& occ,
                       double& wk);
@@ -55,35 +59,28 @@ void read_abacus_lowf(const std::string& flowf,
 
 // only-MPI-visible function, because the use of comm_world
 #ifdef __MPI
-// the following function will be used to restart/assign the value of psi_2d
-void scatter_lowf(const int& nbands, 
-                  const int& nbasis, 
-                  std::vector<std::complex<double>>& lowf_glb,
-                  const MPI_Comm& comm,  // MPI comm world for 2d bcd
-                  const int desc[9],
-                  const int& blacs_ctxt, // the one of orb_con.ParaV
-                  std::vector<std::complex<double>>& lowf_loc);
-#endif
-// then will construct psi like:
-// psi::Psi psi_loc(lowf_loc.data(), nks, nbands, nbasis, ...);
-
-#ifdef __MPI
-// call the following function by
-// restart_from_file(GlobalV::global_out_dir,
-//                   GlobalC::orb_con.ParaV.comm_2d,
-//                   GlobalC::orb_con.ParaV.nb,)
+template <typename T>
 void restart_from_file(const std::string& out_dir, // hard-code the file name to be LOWF_K_*.txt?
-                       const MPI_Comm& comm,  // MPI comm world for 2d bcd
-                       const int desc[9],
-                       const int& blacs_ctxt, // the one of orb_con.ParaV
+                       const Parallel_2D& p2d,
                        const int& nks,
                        int& nbands,
                        int& nbasis,
-                       std::vector<std::complex<double>>& lowf_loc,
+                       std::vector<T>& lowf_loc,
                        std::vector<double>& ekb,
                        std::vector<double>& occ,
                        std::vector<ModuleBase::Vector3<double>>& kvec_c,
                        std::vector<double>& wk);
 #endif
+// serial version, can always present
+template <typename T>
+void restart_from_file(const std::string& out_dir, // hard-code the file name to be LOWF_K_*.txt?
+                       const int& nks,
+                       int& nbands,
+                       int& nbasis,
+                       std::vector<T>& lowf,
+                       std::vector<double>& ekb,
+                       std::vector<double>& occ,
+                       std::vector<ModuleBase::Vector3<double>>& kvec_c,
+                       std::vector<double>& wk);
 } // namespace ModuleIO
 #endif
