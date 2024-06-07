@@ -226,7 +226,7 @@ private:
      * k-points.
      * @note The function checks that the size of the segment ID vector matches the total number of k-points.
      */
-    void Linely_add_k_between(std::ifstream& ifk, std::vector<ModuleBase::Vector3<double>>& kvec);
+    void interpolate_k_between(std::ifstream& ifk, std::vector<ModuleBase::Vector3<double>>& kvec);
 
     /**
      * @brief Generates k-points using the Monkhorst-Pack scheme.

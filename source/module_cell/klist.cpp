@@ -201,7 +201,9 @@ bool K_Vectors::read_kpoints(const std::string &fn)
 {
     ModuleBase::TITLE("K_Vectors", "read_kpoints");
     if (GlobalV::MY_RANK != 0)
+    {
         return 1;
+    }
 
     // 1. Overwrite the KPT file and default K-point information if needed
 	// mohan add 2010-09-04
@@ -219,7 +221,7 @@ bool K_Vectors::read_kpoints(const std::string &fn)
     {
         if (GlobalV::KSPACING[1] <= 0 || GlobalV::KSPACING[2] <= 0)
         {
-            ModuleBase::WARNING_QUIT("K_Vectors", "kspacing shold > 0");
+            ModuleBase::WARNING_QUIT("K_Vectors", "kspacing should > 0");
         };
         // number of K points = max(1,int(|bi|/KSPACING+1))
         ModuleBase::Matrix3 btmp = GlobalC::ucell.G;
@@ -366,7 +368,7 @@ bool K_Vectors::read_kpoints(const std::string &fn)
                 return 0;
             }
 
-            Linely_add_k_between(ifk, kvec_c);
+            interpolate_k_between(ifk, kvec_c);
 
             std::for_each(wk.begin(), wk.end(), [](double& d) { d = 1.0; });
 
@@ -382,7 +384,7 @@ bool K_Vectors::read_kpoints(const std::string &fn)
                 return 0;
             }
 
-            Linely_add_k_between(ifk, kvec_d);
+            interpolate_k_between(ifk, kvec_d);
 
             std::for_each(wk.begin(), wk.end(), [](double& d) { d = 1.0; });
 
@@ -402,7 +404,7 @@ bool K_Vectors::read_kpoints(const std::string &fn)
     return 1;
 } // END SUBROUTINE
 
-void K_Vectors::Linely_add_k_between(std::ifstream& ifk, std::vector<ModuleBase::Vector3<double>>& kvec)
+void K_Vectors::interpolate_k_between(std::ifstream& ifk, std::vector<ModuleBase::Vector3<double>>& kvec)
 {
     // how many special points.
     int nks_special = this->nkstot;
@@ -470,9 +472,13 @@ double K_Vectors::Monkhorst_Pack_formula(const int& k_type, const double& offset
 {
     double coordinate;
     if (k_type == 1)
+    {
         coordinate = (offset + 2.0 * (double)n - (double)dim - 1.0) / (2.0 * (double)dim);
+    }
     else
+    {
         coordinate = (offset + (double)n - 1.0) / (double)dim;
+    }
     return coordinate;
 }
 
@@ -592,8 +598,8 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry& symm,
         double b0_const[6];
         double bk_const[6];
         double bk0_const[6];
-        int bbrav = 15;
-        int bkbrav = 15;
+        int bbrav_type = 15;
+        int bkbrav_type = 15;
         std::string bbrav_name;
         std::string bkbrav_name;
         ModuleBase::Vector3<double> gk01 = gk1, gk02 = gk2, gk03 = gk3;
@@ -602,11 +608,11 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry& symm,
         // because they are only used as a vector, no need to be assigned values
         
         //determine the Bravais type and related parameters of the lattice
-        symm.lattice_type(gb1, gb2, gb3, gb1, gb2, gb3, b_const, b0_const, bbrav, bbrav_name, ucell.atoms, false, nullptr);
+        symm.lattice_type(gb1, gb2, gb3, gb1, gb2, gb3, b_const, b0_const, bbrav_type, bbrav_name, ucell.atoms, false, nullptr);
         GlobalV::ofs_running<<"(for reciprocal lattice: )"<<std::endl;
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS TYPE", bbrav);
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS TYPE", bbrav_type);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"BRAVAIS LATTICE NAME", bbrav_name);
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ibrav", bbrav);
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ibrav", bbrav_type);
 
         // the map of bravis lattice from real to reciprocal space
         // for example, 3(fcc) in real space matches 2(bcc) in reciprocal space
@@ -619,7 +625,7 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry& symm,
                 return false;
             return (ibrav_b == ibrav_a2b[ibrav_a - 1]);
         };
-        if (!ibrav_match(bbrav)) // if not match, exit and return
+        if (!ibrav_match(bbrav_type)) // if not match, exit and return
         {
             GlobalV::ofs_running << "Error: Bravais lattice type of reciprocal lattice is not compatible with that of "
                                     "real space lattice:"
@@ -642,15 +648,15 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry& symm,
                               gk03,
                               bk_const,
                               bk0_const,
-                              bkbrav,
+                              bkbrav_type,
                               bkbrav_name,
                               ucell.atoms,
                               false,
                               nullptr);
             GlobalV::ofs_running << "(for k-lattice: )" << std::endl;
-            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "BRAVAIS TYPE", bkbrav);
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "BRAVAIS TYPE", bkbrav_type);
             ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "BRAVAIS LATTICE NAME", bkbrav_name);
-            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ibrav", bkbrav);
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ibrav", bkbrav_type);
         }
         // point-group analysis of reciprocal lattice
         ModuleBase::Matrix3 bsymop[48];
@@ -664,14 +670,14 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry& symm,
                           gb3,
                           b_const,
                           b0_const,
-                          bbrav,
+                          bbrav_type,
                           bbrav_name,
                           ucell.atoms,
                           false,
                           nullptr);
         ModuleBase::Matrix3 b_optlat_new(gb1.x, gb1.y, gb1.z, gb2.x, gb2.y, gb2.z, gb3.x, gb3.y, gb3.z);
         // set the crystal point-group symmetry operation
-        symm.setgroup(bsymop, bnop, bbrav);
+        symm.setgroup(bsymop, bnop, bbrav_type);
         // transform the above symmetric operation matrices between different coordinate 
         symm.gmatrix_convert(bsymop, bsymop, bnop, b_optlat_new, ucell.G);
 

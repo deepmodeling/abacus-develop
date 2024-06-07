@@ -185,17 +185,17 @@ void Parallel_Kpoints::pool_collection(double &value, const double *wk, const in
 }
 
 
-void Parallel_Kpoints::pool_collection(double *valuea, double *valueb, const ModuleBase::realArray &a, const ModuleBase::realArray &b, const int &ik)
+void Parallel_Kpoints::pool_collection(double *value_re, double *value_im, const ModuleBase::realArray &re, const ModuleBase::realArray &im, const int &ik)
 {
-    const int dim2 = a.getBound2();
-    const int dim3 = a.getBound3();
-    const int dim4 = a.getBound4();
-    assert( a.getBound2() == b.getBound2() );
-    assert( a.getBound3() == b.getBound3() );
-    assert( a.getBound4() == b.getBound4() );
+    const int dim2 = re.getBound2();
+    const int dim3 = re.getBound3();
+    const int dim4 = re.getBound4();
+    assert( re.getBound2() == im.getBound2() );
+    assert( re.getBound3() == im.getBound3() );
+    assert( re.getBound4() == im.getBound4() );
     const int dim = dim2 * dim3 * dim4;
-    pool_collection_aux(valuea, a, dim, ik);
-    pool_collection_aux(valueb, b, dim, ik);
+    pool_collection_aux(value_re, re, dim, ik);
+    pool_collection_aux(value_im, im, dim, ik);
     return;
 }
 
