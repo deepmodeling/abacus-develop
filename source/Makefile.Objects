@@ -478,6 +478,7 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       read_dm.o\
       unk_overlap_lcao.o\
       read_wfc_nao.o\
+      read_wfc_lcao.o\
       write_wfc_nao.o\
       write_HS_sparse.o\
       single_R_io.o\
