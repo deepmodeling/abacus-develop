@@ -1,6 +1,6 @@
 #include "gint_vl.cuh"
 #include "interp.cuh"
-#include "module_hamilt_lcao/module_gint/kernels/cuda/cuda_tools.cuh"
+#include "cuda_tools.cuh"
 #include "sph.cuh"
 namespace GintKernel
 {

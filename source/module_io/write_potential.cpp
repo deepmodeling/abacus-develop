@@ -28,7 +28,7 @@ void write_potential(
     const int& hartree)
 {
     ModuleBase::TITLE("potential", "write_potential");
-    if (GlobalV::out_pot != 1)
+    if (GlobalV::out_pot != 1 && GlobalV::out_pot != 3)
     {
         return;
     }

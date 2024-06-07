@@ -93,6 +93,7 @@ class EkineticNewTest : public ::testing::Test
     UnitCell ucell;
     hamilt::HContainer<double>* HR;
     Parallel_Orbitals *paraV;
+    ORB_gen_tables uot_;
 
     int dsize;
     int my_rank = 0;
@@ -111,6 +112,7 @@ TEST_F(EkineticNewTest, constructHRd2d)
         &hk, 
         &ucell, 
         &gd,
+        &uot_,
         paraV
     );
     op.contributeHR();
@@ -166,6 +168,7 @@ TEST_F(EkineticNewTest, constructHRd2cd)
         &hk, 
         &ucell, 
         &gd,
+        &uot_,
         paraV
     );
     op.contributeHR();

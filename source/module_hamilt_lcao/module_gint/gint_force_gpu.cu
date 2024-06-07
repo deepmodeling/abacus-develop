@@ -3,11 +3,12 @@
 #include <fstream>
 #include <sstream>
 
-#include "gint_force.h"
+#include "gint_force_gpu.h"
 #include "kernels/cuda/cuda_tools.cuh"
 #include "kernels/cuda/gint_force.cuh"
 #include "module_base/ylm.h"
-#include "module_hamilt_lcao/module_gint/gint_tools.h"
+#include "gint_tools.h"
+
 namespace GintKernel
 {
 

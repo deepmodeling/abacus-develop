@@ -1,6 +1,6 @@
 #include <omp.h>
 
-#include "gint_vl.h"
+#include "gint_vl_gpu.h"
 #include "module_base/ylm.h"
 #include "module_hamilt_lcao/module_gint/gint_tools.h"
 namespace GintKernel
@@ -197,8 +197,6 @@ void alloc_mult_vlocal(const Grid_Technique& gridt,
             }
         }
     }
-
-    gpu_matrix_calc_flag.clear();
 }
 
 } // namespace GintKernel

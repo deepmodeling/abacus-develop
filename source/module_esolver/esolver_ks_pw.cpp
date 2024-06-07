@@ -504,6 +504,41 @@ void ESolver_KS_PW<T, Device>::before_scf(int istep)
 
     //! calculate the total local pseudopotential in real space
     this->pelec->init_scf(istep, this->sf.strucFac);
+    if(GlobalV::out_chg == 2)
+    {
+        for(int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            std::stringstream ss;
+            ss << GlobalV::global_out_dir << "SPIN" << is+1 << "_CHG_INI.cube";
+            ModuleIO::write_rho(
+#ifdef __MPI
+                this->pw_big->nbz, this->pw_big->bz,
+                this->pw_rho->nplane, this->pw_rho->startz_current,
+#endif
+                this->pelec->charge->rho[is], is,
+                GlobalV::NSPIN, 0,
+                ss.str(),
+                this->pw_rho->nx, this->pw_rho->ny, this->pw_rho->nz,
+                this->pelec->eferm.ef, &(GlobalC::ucell) , 11);
+        }
+    }
+
+    if(GlobalV::out_pot == 3)
+    {
+        for(int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            std::stringstream ss;
+            ss << GlobalV::global_out_dir << "SPIN" << is+1 << "_POT_INI.cube";
+            ModuleIO::write_potential(
+#ifdef __MPI
+                this->pw_big->nbz, this->pw_big->bz,
+                this->pw_rho->nplane, this->pw_rho->startz_current,
+#endif
+                is,0,ss.str(),
+                this->pw_rho->nx, this->pw_rho->ny, this->pw_rho->nz,
+                this->pelec->pot->get_effective_v(), 11);
+        }
+    }
 
     //! Symmetry_rho should behind init_scf, because charge should be initialized first.
     //! liuyu comment: Symmetry_rho should be located between init_rho and v_of_rho?
