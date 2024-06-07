@@ -19,9 +19,10 @@ hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::DFTU(
     std::vector<TK>* hK_in,
     const UnitCell& ucell_in,
     Grid_Driver* GridD_in,
+    const ORB_gen_tables* uot,
     ModuleDFTU::DFTU* dftu_in,
     const Parallel_Orbitals& paraV)
-    : hamilt::OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in)
+    : hamilt::OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in), uot_(uot)
 {
     this->cal_type = lcao_dftu;
     this->ucell = &ucell_in;
@@ -117,7 +118,6 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_nlm_all(const Parallel_Orbi
             const ModuleBase::Vector3<double>& tau1 = adjs.adjacent_tau[ad];
             const Atom* atom1 = &ucell->atoms[T1];
 
-            const ORB_gen_tables& uot = ORB_gen_tables::get_const_instance();
             const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
             auto all_indexes = paraV->get_indexes_row(iat1);
             auto col_indexes = paraV->get_indexes_col(iat1);
@@ -147,7 +147,7 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_nlm_all(const Parallel_Orbi
                 const int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
 
                 ModuleBase::Vector3<double> dtau = tau0 - tau1;
-                uot.two_center_bundle->overlap_orb_onsite->snap(
+                uot_->two_center_bundle->overlap_orb_onsite->snap(
                         T1, L1, N1, M1, T0, dtau * this->ucell->lat0, 0 /*cal_deri*/, nlm);
                 // select the elements of nlm with target_L
                 for(int iw =0;iw < this->ucell->atoms[T0].nw; iw++)
@@ -172,7 +172,7 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_nlm_all(const Parallel_Orbi
                     {
                         for(int m = 0; m < tlp1; m++)
                         {
-                            uot.snap_psipsi(orb, // orbitals
+                            uot_->snap_psipsi(orb, // orbitals
                                 olm,
                                 0,
                                 'S', // olm, job of derivation, dtype of Operator

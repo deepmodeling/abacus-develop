@@ -50,7 +50,7 @@ scf_thr_type                   2 #type of the criterion of scf_thr, 1: reci drho
 init_wfc                       atomic #start wave functions are from 'atomic', 'atomic+random', 'random' or 'file'
 init_chg                       atomic #start charge is from 'atomic' or file
 chg_extrap                     atomic #atomic; first-order; second-order; dm:coefficients of SIA
-out_chg                        FALSE #>0 output charge density for selected electron steps
+out_chg                        0 #>0 output charge density for selected electron steps
 out_pot                        2 #output realspace potential
 out_wfc_pw                     0 #output wave functions
 out_wfc_r                      0 #output wave functions in realspace

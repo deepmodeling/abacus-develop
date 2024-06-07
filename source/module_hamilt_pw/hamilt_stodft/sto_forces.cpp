@@ -199,8 +199,7 @@ void Sto_Forces::cal_sto_force_nl(ModuleBase::matrix& forcenl,
 		// dbecp: conj( -iG * <Beta(nkb,npw)|psi(nbnd,npw)> )
 		ModuleBase::ComplexArray dbecp( 3, nbandstot, nkb);
     	ModuleBase::ComplexMatrix becp( nbandstot, nkb);
-        if (GlobalV::NSPIN == 2)
-            GlobalV::CURRENT_SPIN = p_kv->isk[ik];
+        const int current_spin = p_kv->isk[ik];
 
         // generate vkb
         if (GlobalC::ppcell.nkb > 0)
@@ -292,7 +291,7 @@ void Sto_Forces::cal_sto_force_nl(ModuleBase::matrix& forcenl,
 				{
 					for (int ip=0; ip<Nprojs; ip++)
 					{
-						double ps =  GlobalC::ppcell.deeq( GlobalV::CURRENT_SPIN, iat, ip, ip) ;
+						double ps =  GlobalC::ppcell.deeq( current_spin, iat, ip, ip) ;
 						const int inkb = sum + ip; 
 						//out<<"\n ps = "<<ps;
 
@@ -316,7 +315,7 @@ void Sto_Forces::cal_sto_force_nl(ModuleBase::matrix& forcenl,
 						//if ( ip != ip2 )
 						//{
 							const int jnkb = sum + ip2;
-							double ps =  GlobalC::ppcell.deeq( GlobalV::CURRENT_SPIN, iat, ip2, ip) ;
+							double ps =  GlobalC::ppcell.deeq( current_spin, iat, ip2, ip) ;
 							for (int ipol=0; ipol<3; ipol++)
 							{
 								const double dbb = 2.0 * ( conj( dbecp( ipol, ib, inkb) ) * becp( ib, jnkb) ).real();

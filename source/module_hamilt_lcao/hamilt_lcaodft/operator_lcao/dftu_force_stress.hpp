@@ -60,7 +60,6 @@ void DFTU<OperatorLCAO<TK, TR>>::cal_force_stress(
             const ModuleBase::Vector3<double>& tau1 = adjs.adjacent_tau[ad];
             const Atom* atom1 = &ucell->atoms[T1];
 
-            const ORB_gen_tables& uot = ORB_gen_tables::get_const_instance();
             const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
             auto all_indexes = paraV->get_indexes_row(iat1);
             auto col_indexes = paraV->get_indexes_col(iat1);
@@ -88,7 +87,7 @@ void DFTU<OperatorLCAO<TK, TR>>::cal_force_stress(
                 int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
 
                 ModuleBase::Vector3<double> dtau = tau0 - tau1;
-                uot.two_center_bundle->overlap_orb_onsite->snap(
+                uot_->two_center_bundle->overlap_orb_onsite->snap(
                         T1, L1, N1, M1, T0, dtau * this->ucell->lat0, 1 /*cal_deri*/, nlm);
 #else
                 ModuleBase::WARNING_QUIT("DFTU", "old two center integral method not implemented");

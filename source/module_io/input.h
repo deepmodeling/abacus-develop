@@ -262,7 +262,7 @@ class Input
     int printe; // mohan add 2011-03-16
     int out_freq_elec;  // the frequency ( >= 0) of electronic iter to output charge density and wavefunction. 0: output only when converged
     int out_freq_ion;  // the frequency ( >= 0 ) of ionic step to output charge density and wavefunction. 0: output only when ion steps are finished
-    bool out_chg; // output charge density. 0: no; 1: yes
+    int out_chg; // output charge density. 0: no; 1: yes
     bool out_dm; // output density matrix.
     bool out_dm1;
     int out_pot; // yes or no

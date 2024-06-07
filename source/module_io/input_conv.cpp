@@ -356,7 +356,6 @@ void Input_Conv::Convert(void)
     GlobalV::DFT_FUNCTIONAL = INPUT.dft_functional;
     GlobalV::XC_TEMPERATURE = INPUT.xc_temperature;
     GlobalV::NSPIN = INPUT.nspin;
-    GlobalV::CURRENT_SPIN = 0;
 
     GlobalV::CAL_FORCE = INPUT.cal_force;
     GlobalV::FORCE_THR = INPUT.force_thr;

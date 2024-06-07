@@ -90,11 +90,13 @@ void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, 
         std::ofstream ofs;
         std::stringstream ss;
         // the parameter 'winput::spillage_outdir' is read from INPUTw.
-        ss << winput::spillage_outdir << "/" <<  "orb_matrix." << derivative_order << ".dat";
-        if (GlobalV::MY_RANK==0)
-        {
-            ofs.open(ss.str().c_str());
-        }
+        ss << winput::spillage_outdir << "/";
+        
+        if(INPUT.bessel_nao_rcuts.size() > 1) { ss << "orb_matrix_rcut" << INPUT.bessel_nao_rcut << "deriv"; }
+        else { ss << "orb_matrix."; } // to make it compatible with old version of orbital generation
+        ss << derivative_order << ".dat";
+        
+        if (GlobalV::MY_RANK==0) { ofs.open(ss.str().c_str()); }
 
         // ALLOCATE MEMORY FOR THE OVERLAP MATRIX
         // OVERLAP : < J_mu | Psi >
@@ -658,11 +660,12 @@ void Numerical_Basis::output_k(std::ofstream& ofs, const K_Vectors& kv)
                 }
                 else
                 {
+                    int startpro_pool=GlobalC::Pkpoints.get_startpro_pool(pool);
                     MPI_Status ierror;
-                    MPI_Recv(&kx, 1, MPI_DOUBLE, GlobalC::Pkpoints.startpro_pool[pool], ik*4, MPI_COMM_WORLD,&ierror);
-                    MPI_Recv(&ky, 1, MPI_DOUBLE, GlobalC::Pkpoints.startpro_pool[pool], ik*4+1, MPI_COMM_WORLD,&ierror);
-                    MPI_Recv(&kz, 1, MPI_DOUBLE, GlobalC::Pkpoints.startpro_pool[pool], ik*4+2, MPI_COMM_WORLD,&ierror);
-                    MPI_Recv(&wknow, 1, MPI_DOUBLE, GlobalC::Pkpoints.startpro_pool[pool], ik*4+3, MPI_COMM_WORLD,&ierror);
+                    MPI_Recv(&kx, 1, MPI_DOUBLE, startpro_pool, ik*4, MPI_COMM_WORLD,&ierror);
+                    MPI_Recv(&ky, 1, MPI_DOUBLE, startpro_pool, ik*4+1, MPI_COMM_WORLD,&ierror);
+                    MPI_Recv(&kz, 1, MPI_DOUBLE, startpro_pool, ik*4+2, MPI_COMM_WORLD,&ierror);
+                    MPI_Recv(&wknow, 1, MPI_DOUBLE, startpro_pool, ik*4+3, MPI_COMM_WORLD,&ierror);
                 }
             }
             else

@@ -3,6 +3,7 @@
 #include <unordered_map>
 
 #include "module_basis/module_ao/parallel_orbitals.h"
+#include "module_basis/module_ao/ORB_gen_tables.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_cell/unitcell.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
@@ -40,6 +41,7 @@ class TDNonlocal<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                                       std::vector<TK>* hK_in,
                                       const UnitCell* ucell_in,
                                       Grid_Driver* GridD_in,
+                                      const ORB_gen_tables* uot,
                                       const Parallel_Orbitals* paraV);
     ~TDNonlocal<OperatorLCAO<TK, TR>>();
 
@@ -59,6 +61,9 @@ class TDNonlocal<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     /// @brief Store real space hamiltonian. TD term should include imaginary part, thus it has to be complex type. Only shared between TD operators.
     HContainer<std::complex<double>>* hR_tmp = nullptr;
     Grid_Driver* Grid = nullptr;
+
+    // this variable is introduced temporarily during LCAO refactoring
+    const ORB_gen_tables* uot_;
 
     bool allocated = false;
 

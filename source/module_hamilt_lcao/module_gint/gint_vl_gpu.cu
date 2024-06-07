@@ -2,9 +2,9 @@
 
 #include "kernels/cuda/cuda_tools.cuh"
 #include "module_base/ylm.h"
-#include "module_hamilt_lcao/module_gint/gint_tools.h"
-#include "module_hamilt_lcao/module_gint/gint_vl.h"
-#include "module_hamilt_lcao/module_gint/kernels/cuda/gint_vl.cuh"
+#include "gint_tools.h"
+#include "gint_vl_gpu.h"
+#include "kernels/cuda/gint_vl.cuh"
 
 namespace GintKernel
 {
@@ -165,32 +165,39 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
             int atom_pair_num = 0;
             int max_m = 0;
             int max_n = 0;
-
+            const int grid_index_ij = i * gridt.nby * gridt.nbzp + j * gridt.nbzp;
+            std::vector<bool> gpu_matrix_calc_flag(max_size * gridt.nbzp,false);
             gtask_vlocal(gridt,
                          rcut,
                          ucell,
-                         i,
-                         j,
+                         gpu_matrix_calc_flag,
+                         grid_index_ij,
                          max_size,
                          nczp,
                          vfactor,
                          vlocal,
-                         psir_ylm_left_g,
-                         psir_r_g,
                          input_double,
                          input_int,
-                         num_psir,
-                         atom_pair_A_m,
-                         atom_pair_B_n,
-                         atom_pair_lda,
-                         atom_pair_ldb,
-                         atom_pair_ldc,
-                         matrix_A,
-                         matrix_B,
-                         matrix_C,
-                         atom_pair_num,
-                         max_m,
-                         max_n);
+                         num_psir);
+        
+            alloc_mult_vlocal(gridt,
+                                ucell,
+                                gpu_matrix_calc_flag,
+                                grid_index_ij,
+                                max_size,
+                                psir_ylm_left_g,
+                                psir_r_g,
+                                atom_pair_A_m,
+                                atom_pair_B_n,
+                                atom_pair_lda,
+                                atom_pair_ldb,
+                                atom_pair_ldc,
+                                matrix_A,
+                                matrix_B,
+                                matrix_C,
+                                atom_pair_num,
+                                max_m,
+                                max_n);
 
             for (int z = 0; z < gridt.atom_pair_nbz; z++)
             {

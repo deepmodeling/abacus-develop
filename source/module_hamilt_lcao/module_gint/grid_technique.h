@@ -218,12 +218,6 @@ class Grid_Technique : public Grid_MeshBall
     // additional variables for rho calculating
     int num_mcell;
     double* rho_g;
-    int* vec_len;
-    int* vec_len_g;
-    double** vec_l;
-    double** vec_l_g;
-    double** vec_r;
-    double** vec_r_g;
     double** dot_product;
     double** dot_product_g;
 

@@ -20,11 +20,11 @@ class LCAO_gen_fixedH
     LCAO_gen_fixedH();
     ~LCAO_gen_fixedH();
 
-    void calculate_NL_no(double* HlocR);
+    //void calculate_NL_no(double* HlocR);
     // void calculate_NL_no(std::complex<double>* HlocR);
-    void calculate_T_no(double* HlocR);
+    //void calculate_T_no(double* HlocR);
     // void calculate_T_no(std::complex<double>* HlocR);
-    void calculate_S_no(double* SlocR);
+    //void calculate_S_no(double* SlocR);
     // void calculate_S_no(std::complex<double>* SlocR);
     void build_ST_new(const char& dtype,
                       const bool& cal_deri,

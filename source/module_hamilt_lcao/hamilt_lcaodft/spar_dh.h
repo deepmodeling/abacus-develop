@@ -11,6 +11,7 @@ namespace sparse_format
 	void cal_dH(
 			LCAO_Matrix &lm,
 			Grid_Driver &grid,
+            const ORB_gen_tables* uot,
 			LCAO_gen_fixedH &gen_h, 
 			const int &current_spin, 
 			const double &sparse_thr,

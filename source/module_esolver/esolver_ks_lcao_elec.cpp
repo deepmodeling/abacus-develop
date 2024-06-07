@@ -23,6 +23,8 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include "module_io/dm_io.h"
+#include "module_io/rho_io.h"
+#include "module_io/potential_io.h"
 
 namespace ModuleESolver
 {
@@ -109,23 +111,23 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
         if (GlobalV::GAMMA_ONLY_LOCAL)
         {
             nsk = GlobalV::NSPIN;
-            ncol = this->LOWF.ParaV->ncol_bands;
+            ncol = this->orb_con.ParaV.ncol_bands;
             if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "lapack_gvx" || GlobalV::KS_SOLVER == "pexsi"
                 || GlobalV::KS_SOLVER == "cusolver")
             {
-                ncol = this->LOWF.ParaV->ncol;
+                ncol = this->orb_con.ParaV.ncol;
             }
         }
         else
         {
             nsk = this->kv.get_nks();
 #ifdef __MPI
-            ncol = this->LOWF.ParaV->ncol_bands;
+            ncol = this->orb_con.ParaV.ncol_bands;
 #else
             ncol = GlobalV::NBANDS;
 #endif
         }
-        this->psi = new psi::Psi<TK>(nsk, ncol, this->LOWF.ParaV->nrow, nullptr);
+        this->psi = new psi::Psi<TK>(nsk, ncol, this->orb_con.ParaV.nrow, nullptr);
     }
 
     // prepare grid in Gint
@@ -148,6 +150,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
             &(this->LOC),
             this->pelec->pot,
             this->kv,
+            uot_,
 #ifdef __EXX
             DM,
             GlobalC::exx_info.info_ri.real_number ? &this->exd->two_level_step : &this->exc->two_level_step);
@@ -165,11 +168,11 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
     {
         const Parallel_Orbitals* pv = this->LM.ParaV;
         // build and save <psi(0)|alpha(R)> at beginning
-        GlobalC::ld.build_psialpha(GlobalV::CAL_FORCE, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD, GlobalC::UOT);
+        GlobalC::ld.build_psialpha(GlobalV::CAL_FORCE, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD, *uot_);
 
         if (GlobalV::deepks_out_unittest)
         {
-            GlobalC::ld.check_psialpha(GlobalV::CAL_FORCE, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD, GlobalC::UOT);
+            GlobalC::ld.check_psialpha(GlobalV::CAL_FORCE, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD, *uot_);
         }
     }
 #endif
@@ -251,6 +254,41 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(int istep)
 #endif // __EXX
 
     this->pelec->init_scf(istep, this->sf.strucFac);
+    if(GlobalV::out_chg == 2)
+    {
+        for(int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            std::stringstream ss;
+            ss << GlobalV::global_out_dir << "SPIN" << is+1 << "_CHG_INI.cube";
+            ModuleIO::write_rho(
+#ifdef __MPI
+                this->pw_big->nbz, this->pw_big->bz,
+                this->pw_rho->nplane, this->pw_rho->startz_current,
+#endif
+                this->pelec->charge->rho[is], is,
+                GlobalV::NSPIN, 0,
+                ss.str(),
+                this->pw_rho->nx, this->pw_rho->ny, this->pw_rho->nz,
+                this->pelec->eferm.ef, &(GlobalC::ucell) , 11);
+        }
+    }
+
+    if(GlobalV::out_pot == 3)
+    {
+        for(int is = 0; is < GlobalV::NSPIN; is++)
+        {
+            std::stringstream ss;
+            ss << GlobalV::global_out_dir << "SPIN" << is+1 << "_POT_INI.cube";
+            ModuleIO::write_potential(
+#ifdef __MPI
+                this->pw_big->nbz, this->pw_big->bz,
+                this->pw_rho->nplane, this->pw_rho->startz_current,
+#endif
+                is,0,ss.str(),
+                this->pw_rho->nx, this->pw_rho->ny, this->pw_rho->nz,
+                this->pelec->pot->get_effective_v(), 11);
+        }
+    }
     // initalize DMR
     // DMR should be same size with Hamiltonian(R)
     dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)
@@ -449,7 +487,7 @@ void ESolver_KS_LCAO<std::complex<double>, double>::get_S(void)
 
     if (this->p_hamilt == nullptr)
     {
-        this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(&this->LM, this->kv);
+        this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(&this->LM, this->kv, uot_);
         dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, double>*>(this->p_hamilt->ops)->contributeHR();
     }
 
@@ -480,7 +518,7 @@ void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S(void)
     this->LM.ParaV = &this->orb_con.ParaV;
     if (this->p_hamilt == nullptr)
     {
-        this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>(&this->LM, this->kv);
+        this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>(&this->LM, this->kv, uot_);
         dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>*>(this->p_hamilt->ops)
             ->contributeHR();
     }
@@ -504,7 +542,6 @@ void ESolver_KS_LCAO<TK, TR>::nscf(void)
     // Peize Lin add 2018-08-14
     if (GlobalC::exx_info.info_global.cal_exx)
     {
-        // GlobalC::exx_lcao.cal_exx_elec_nscf(this->LOWF.ParaV[0]);
         const std::string file_name_exx = GlobalV::global_out_dir + "HexxR" + std::to_string(GlobalV::MY_RANK);
         if (GlobalC::exx_info.info_ri.real_number)
         {
@@ -600,7 +637,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf(void)
                                 this->sf,
                                 this->kv,
                                 this->psi,
-                                this->LOWF.ParaV);
+                                &(this->orb_con.ParaV));
         }
         else if (INPUT.wannier_method == 2)
         {
@@ -612,7 +649,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf(void)
                                        INPUT.nnkpfile,
                                        INPUT.wannier_spin);
 
-            myWannier.calculate(this->pelec->ekb, this->kv, *(this->psi), this->LOWF.ParaV);
+            myWannier.calculate(this->pelec->ekb, this->kv, *(this->psi), &(this->orb_con.ParaV));
         }
 #endif
     }
@@ -626,7 +663,6 @@ void ESolver_KS_LCAO<TK, TR>::nscf(void)
 
     // below is for DeePKS NSCF calculation
 #ifdef __DEEPKS
-    const Parallel_Orbitals* pv = this->LOWF.ParaV;
     if (GlobalV::deepks_out_labels || GlobalV::deepks_scf)
     {
         const elecstate::DensityMatrix<TK, double>* dm
