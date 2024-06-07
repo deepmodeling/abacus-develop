@@ -31,6 +31,8 @@ class DiagoDavid : public DiagH<T, Device>
     virtual void diag(hamilt::Hamilt<T, Device>* phm_in,
                       psi::Psi<T, Device>& phi,
                       Real* eigenvalue_in) override ;
+    
+    int get_sum_iter() const;
 
   private:
     int david_ndim = 4;
@@ -39,6 +41,8 @@ class DiagoDavid : public DiagH<T, Device>
     const bool scf_type;
     bool use_paw = false;
     int test_david = 0;
+
+    int sum_iter = 0; // for adding up to external DiagoIterAssist<T, Device>::avg_iter
 
     diag_comm_info diag_comm;
 
@@ -128,7 +132,7 @@ class DiagoDavid : public DiagH<T, Device>
                      Real* eigenvalue,
                      T* vcc);
 
-    void diag_mock(hamilt::Hamilt<T, Device>* phm_in,
+    int diag_mock(hamilt::Hamilt<T, Device>* phm_in,
                    psi::Psi<T, Device>& psi,
                    Real* eigenvalue_in);
     

@@ -60,7 +60,7 @@ DiagoDavid<T, Device>::~DiagoDavid()
 }
 
 template <typename T, typename Device>
-void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
+int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
                                            psi::Psi<T, Device>& psi,
                                            Real* eigenvalue_in)
 {
@@ -310,11 +310,9 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
 
     } while (1);
 
-    DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(dav_iter);
-
     ModuleBase::timer::tick("DiagoDavid", "diag_mock");
 
-    return;
+    return dav_iter;
 }
 
 template <typename T, typename Device>
@@ -1056,9 +1054,10 @@ void DiagoDavid<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
     }
 #endif
 
+    this->sum_iter = 0; // for adding up to external DiagoIterAssist<T, Device>::avg_iter by return value
     do
     {
-        this->diag_mock(phm_in, psi, eigenvalue_in);
+        this->sum_iter += this->diag_mock(phm_in, psi, eigenvalue_in); // add up dav_iter
         ++ntry;
     } while (this->test_exit_cond(ntry, this->notconv, this->scf_type));
 
@@ -1073,6 +1072,7 @@ void DiagoDavid<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
 template <typename T, typename Device>
 bool DiagoDavid<T, Device>::test_exit_cond(const int& ntry, const int& notconv, const bool& scf) const
 {
+    // scf is false if GlobalV::CALCULATION == "nscf"
     // If ntry <=5, try to do it better, if ntry > 5, exit.
     const bool f1 = ntry <= 5;
     // In non-self consistent calculation, do until totally converged.
@@ -1081,6 +1081,12 @@ bool DiagoDavid<T, Device>::test_exit_cond(const int& ntry, const int& notconv, 
     // using diagH_subspace and cg method again. ntry++
     const bool f3 = scf && notconv > 5;
     return f1 && (f2 || f3);
+}
+
+template <typename T, typename Device>
+int hsolver::DiagoDavid<T, Device>::get_sum_iter() const
+{
+    return sum_iter;
 }
 
 namespace hsolver {

@@ -724,7 +724,9 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::P
         }
         else
         {
-            this->pdiagh->diag(hm, psi, eigenvalue);
+            reinterpret_cast<DiagoDavid<T, Device>*>(this->pdiagh)->diag(hm, psi, eigenvalue);
+            DiagoIterAssist<T, Device>::avg_iter
+                += static_cast<double>(reinterpret_cast<DiagoDavid<T, Device>*>(this->pdiagh)->get_sum_iter());
         }
         return;
     }
