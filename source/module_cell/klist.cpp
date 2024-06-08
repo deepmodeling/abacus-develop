@@ -297,8 +297,8 @@ bool K_Vectors::read_kpoints(const std::string &fn)
     this->k_kword = kword; // LiuXh add 20180619
 
     // mohan update 2021-02-22
-    const int max_kpoints = 100000;
-    if (nkstot > max_kpoints)
+    int max_kpoints = 100000;
+    if (nkstot > 100000)
     {
         GlobalV::ofs_warning << " nkstot > MAX_KPOINTS" << std::endl;
         return 0;
