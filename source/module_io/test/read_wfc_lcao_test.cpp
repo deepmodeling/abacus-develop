@@ -7,7 +7,8 @@ TEST(ReadWfcLcaoTest, ReadAbacusLowfComplex) {
 #ifdef __MPI
     MPI_Barrier(MPI_COMM_WORLD);
     // printf("MPI environment detected, will use only rank 0\n");
-    int iproc = 0, nprocs = 0;
+    int iproc = 0;
+    int nprocs = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &iproc);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
     if (iproc != 0) { GTEST_SKIP(); }
@@ -25,7 +26,7 @@ TEST(ReadWfcLcaoTest, ReadAbacusLowfComplex) {
     std::string flowf = "./support/LOWF_K_1.txt";
     ModuleIO::read_abacus_lowf(flowf, ik, kvec_c, nbands, nbasis, lowf, ekb, occ, wk);
     EXPECT_EQ(1, ik);
-    EXPECT_EQ(19, nbands);
+    EXPECT_EQ(3, nbands);
     EXPECT_EQ(63, nbasis);
     EXPECT_EQ(-1.0, wk); // this is not read
     // kvec_c
@@ -55,7 +56,7 @@ TEST(ReadWfcLcaoTest, ReadAbacusLowfComplex) {
     flowf = "./support/LOWF_K_2.txt";
     ModuleIO::read_abacus_lowf(flowf, ik, kvec_c, nbands, nbasis, lowf, ekb, occ, wk);
     EXPECT_EQ(2, ik);
-    EXPECT_EQ(19, nbands);
+    EXPECT_EQ(3, nbands);
     EXPECT_EQ(63, nbasis);
     EXPECT_EQ(-1.0, wk); // this is not read
     // kvec_c
@@ -85,7 +86,7 @@ TEST(ReadWfcLcaoTest, ReadAbacusLowfComplex) {
     flowf = "./support/LOWF_K_3.txt";
     ModuleIO::read_abacus_lowf(flowf, ik, kvec_c, nbands, nbasis, lowf, ekb, occ, wk);
     EXPECT_EQ(3, ik);
-    EXPECT_EQ(19, nbands);
+    EXPECT_EQ(3, nbands);
     EXPECT_EQ(63, nbasis);
     EXPECT_EQ(-1.0, wk); // this is not read
     // kvec_c
@@ -121,7 +122,8 @@ TEST(ReadWfcLcaoTest, Pzgemr2dUseTest)
 */
 #ifdef __MPI
     // this test should be run on all ranks
-    int iproc = 0, nprocs = 0;
+    int iproc = 0;
+    int nprocs = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &iproc);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
     if(nprocs != 4)
@@ -304,7 +306,8 @@ TEST(ReadWfcLcaoTest, ReadAbacusLowfReal)
 #ifdef __MPI
     MPI_Barrier(MPI_COMM_WORLD);
     // printf("MPI environment detected, will use only rank 0\n");
-    int iproc = 0, nprocs = 0;
+    int iproc = 0;
+    int nprocs = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &iproc);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
     if (iproc != 0) { GTEST_SKIP(); }
@@ -355,7 +358,8 @@ TEST(ReadWfcLcaoTest, Pdgemr2dUseTest)
     // works identically to the previous one, but with real numbers.
 #ifdef __MPI
     // this test should be run on all ranks
-    int iproc = 0, nprocs = 0;
+    int iproc = 0;
+    int nprocs = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &iproc);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
     if(nprocs != 4)
@@ -426,7 +430,8 @@ TEST(ReadWfcLcaoTest, RestartFromFileParallel)
 #ifdef __MPI
     MPI_Barrier(MPI_COMM_WORLD);
     // printf("MPI environment detected, will use only rank 0\n");
-    int iproc = 0, nprocs = 0;
+    int iproc = 0;
+    int nprocs = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &iproc);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
     if(iproc == 0)
@@ -449,13 +454,15 @@ TEST(ReadWfcLcaoTest, RestartFromFileSerial)
 #ifdef __MPI
     MPI_Barrier(MPI_COMM_WORLD);
     // printf("MPI environment detected, will use only rank 0\n");
-    int iproc = 0, nprocs = 0;
+    int iproc = 0;
+    int nprocs = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &iproc);
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
     if (iproc != 0) { GTEST_SKIP(); }
 #endif
     const int nks = 4;
-    int nbands = -1, nbasis = -1;
+    int nbands = -1;
+    int nbasis = -1;
     std::vector<std::complex<double>> lowf;
     std::vector<double> ekb;
     std::vector<double> occ;
@@ -463,7 +470,7 @@ TEST(ReadWfcLcaoTest, RestartFromFileSerial)
     std::vector<double> wk;
     const std::string out_dir = "./support";
     ModuleIO::restart_from_file(out_dir, nks, nbands, nbasis, lowf, ekb, occ, kvec_c, wk);
-    EXPECT_EQ(19, nbands);
+    EXPECT_EQ(3, nbands);
     EXPECT_EQ(63, nbasis);
     EXPECT_EQ(nks*nbands*nbasis, lowf.size());
     EXPECT_EQ(nks*nbands, ekb.size());
@@ -472,7 +479,8 @@ TEST(ReadWfcLcaoTest, RestartFromFileSerial)
     EXPECT_EQ(nks, wk.size());
     
     // test the first k-point
-    int nbands_k0 = -1, nbasis_k0 = -1;
+    int nbands_k0 = -1;
+    int nbasis_k0 = -1;
     int ik_k0;
     std::vector<std::complex<double>> lowf_k0;
     std::vector<double> ekb_k0;
@@ -482,7 +490,7 @@ TEST(ReadWfcLcaoTest, RestartFromFileSerial)
     ModuleIO::read_abacus_lowf("./support/LOWF_K_1.txt", ik_k0, kvec_c_k0, nbands_k0, nbasis_k0, lowf_k0, ekb_k0, occ_k0, wk_k0);
 
     EXPECT_EQ(1, ik_k0);
-    EXPECT_EQ(19, nbands_k0);
+    EXPECT_EQ(3, nbands_k0);
     EXPECT_EQ(63, nbasis_k0);
     EXPECT_EQ(-1.0, wk_k0); // this is not read
     // kvec_c
@@ -497,7 +505,8 @@ TEST(ReadWfcLcaoTest, RestartFromFileSerial)
     for(int i = 0; i < nbands_k0*nbasis_k0; i++) { EXPECT_EQ(lowf_k0[i], lowf[i]); }
 
     // test the second k-point
-    int nbands_k1 = -1, nbasis_k1 = -1;
+    int nbands_k1 = -1;
+    int nbasis_k1 = -1;
     int ik_k1;
     std::vector<std::complex<double>> lowf_k1;
     std::vector<double> ekb_k1;
@@ -507,7 +516,7 @@ TEST(ReadWfcLcaoTest, RestartFromFileSerial)
     ModuleIO::read_abacus_lowf("./support/LOWF_K_2.txt", ik_k1, kvec_c_k1, nbands_k1, nbasis_k1, lowf_k1, ekb_k1, occ_k1, wk_k1);
 
     EXPECT_EQ(2, ik_k1);
-    EXPECT_EQ(19, nbands_k1);
+    EXPECT_EQ(3, nbands_k1);
     EXPECT_EQ(63, nbasis_k1);
     EXPECT_EQ(-1.0, wk_k1); // this is not read
     // kvec_c

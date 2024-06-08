@@ -1,13 +1,3 @@
-/**
- * @file read_wfc_lcao.cpp
- * @author kirk0830
- * @brief this file is part of the project of removal of class Local_Orbital_Wfc (LOWF)
- * @version 0.1
- * @date 2024-06-07
- * 
- * @copyright Copyright (c) 2024
- * 
- */
 #include "module_io/read_wfc_lcao.h"
 #include "module_base/formatter.h"
 #include "module_base/tool_quit.h"
@@ -229,7 +219,8 @@ void ModuleIO::restart_from_file(const std::string& out_dir, // hard-code the fi
 
         std::vector<T> lowf_glb;
         std::vector<T> lowf_loc_k;
-        std::vector<double> ekb_, occ_;
+        std::vector<double> ekb_;
+        std::vector<double> occ_;
         ModuleBase::Vector3<double> kvec;
         double wk_;
         read_abacus_lowf(flowf, ik, kvec, nbands, nbasis, lowf_glb, ekb_, occ_, wk_);
@@ -288,7 +279,8 @@ void ModuleIO::restart_from_file(const std::string& out_dir, // hard-code the fi
         if(!ifs) ModuleBase::WARNING_QUIT("restart_from_file", "open file failed: " + flowf);
 
         std::vector<T> lowf_;
-        std::vector<double> ekb_, occ_;
+        std::vector<double> ekb_;
+        std::vector<double> occ_;
         ModuleBase::Vector3<double> kvec_;
         double wk_;
         int ik_;

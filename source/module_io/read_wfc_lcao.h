@@ -1,13 +1,3 @@
-/**
- * @file read_wfc_lcao.h
- * @author kirk0830
- * @brief This file belongs to the project of removal of class Local_Orbital_Wfc (LOWF)
- * @version 0.1
- * @date 2024-06-04
- * 
- * @copyright Copyright (c) 2024
- * 
- */
 #ifndef READ_WFC_LCAO_H
 #define READ_WFC_LCAO_H
 
