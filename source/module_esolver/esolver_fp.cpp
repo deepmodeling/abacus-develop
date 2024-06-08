@@ -44,11 +44,13 @@ void ESolver_FP::before_all_runners(Input& inp, UnitCell& cell)
 {
 	ModuleBase::TITLE("ESolver_FP", "before_all_runners");
 
+    //! 1) read pseudopotentials
 	if(!GlobalV::use_paw)
 	{
 		cell.read_pseudo(GlobalV::ofs_running);
 	}
 
+    //! 2) initialie the plane wave basis for rho
 #ifdef __MPI
 	this->pw_rho->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
 #endif
@@ -57,7 +59,6 @@ void ESolver_FP::before_all_runners(Input& inp, UnitCell& cell)
 		this->pw_rho->setfullpw(inp.of_full_pw, inp.of_full_pw_dim);
     }
 
-	//! Initalize the plane wave basis set
 	if (inp.nx * inp.ny * inp.nz == 0)
     {
 		this->pw_rho->initgrids(inp.ref_cell_factor * cell.lat0, cell.latvec, 4.0 * inp.ecutwfc);
@@ -66,12 +67,14 @@ void ESolver_FP::before_all_runners(Input& inp, UnitCell& cell)
     {
 		this->pw_rho->initgrids(inp.ref_cell_factor * cell.lat0, cell.latvec, inp.nx, inp.ny, inp.nz);
     }
+
 	this->pw_rho->initparameters(false, 4.0 * inp.ecutwfc);
 	this->pw_rho->ft.fft_mode = inp.fft_mode;
 	this->pw_rho->setuptransform();
 	this->pw_rho->collect_local_pw();
 	this->pw_rho->collect_uniqgg();
 
+    //! 3) initialize the double grid (for uspp) if necessary
 	if (GlobalV::double_grid)
 	{
 		ModulePW::PW_Basis_Sup* pw_rhod_sup = static_cast<ModulePW::PW_Basis_Sup*>(pw_rhod);
@@ -97,6 +100,7 @@ void ESolver_FP::before_all_runners(Input& inp, UnitCell& cell)
 		this->pw_rhod->collect_uniqgg();
 	}
 
+    //! 4) print some information
 	this->print_rhofft(inp, GlobalV::ofs_running);
 
     return;

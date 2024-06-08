@@ -233,13 +233,13 @@ void ESolver_KS_PW<T, Device>::before_all_runners(Input& inp, UnitCell& ucell)
                                                             this->pw_big);
     }
 
-    //! Inititlize the charge density.
+    //! 4) inititlize the charge density.
     this->pelec->charge->allocate(GlobalV::NSPIN);
 
-    //! set the cell volume variable in pelec
+    //! 5) set the cell volume variable in pelec
     this->pelec->omega = ucell.omega;
 
-    // Initialize the potential.
+    //! 6) initialize the potential.
     if (this->pelec->pot == nullptr)
     {
         this->pelec->pot = new elecstate::Potential(this->pw_rhod,
@@ -250,20 +250,23 @@ void ESolver_KS_PW<T, Device>::before_all_runners(Input& inp, UnitCell& ucell)
                                                     &(this->pelec->f_en.etxc),
                                                     &(this->pelec->f_en.vtxc));
     }
+
+
+    //! 7) initialize the electronic wave functions
     if (GlobalV::psi_initializer)
     {
-        // update 20240320
-        // use std::unique_ptr to manage the lifetime of psi_initializer under
-        // restriction of C++11. Based on refactor of psi_initializer, the number
-        // of member functions decrease significantly. 
         this->allocate_psi_init();
     }
-    // temporary
+
+
+    //! 8) setup global classes
     this->Init_GlobalC(inp, ucell, GlobalC::ppcell);
-    // Fix pelec->wg by ocp_kb
+
+
+    //! 9) setup occupations
     if (GlobalV::ocp)
     {
-        this->pelec->fixed_weights(GlobalV::ocp_kb);
+        this->pelec->fixed_weights(GlobalV::ocp_kb, GlobalV::NBANDS, GlobalV::nelec);
     }
 }
 

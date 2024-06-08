@@ -93,9 +93,10 @@ void ESolver_KS<T, Device>::before_all_runners(Input& inp, UnitCell& ucell)
 {
 	ModuleBase::TITLE("ESolver_KS", "before_all_runners");
 
+    //! 1) initialize "before_all_runniers" in ESolver_FP
 	ESolver_FP::before_all_runners(inp,ucell);
 
-	//------------------Charge Mixing------------------
+    //! 2) setup the charge mixing parameters
 	p_chgmix->set_mixing(GlobalV::MIXING_MODE,
 			GlobalV::MIXING_BETA,
 			GlobalV::MIXING_NDIM,
@@ -108,7 +109,6 @@ void ESolver_KS<T, Device>::before_all_runners(Input& inp, UnitCell& ucell)
 			GlobalV::MIXING_DMR);
 
 	/// PAW Section
-
 #ifdef USE_PAW
 	if(GlobalV::use_paw)
 	{
@@ -180,11 +180,12 @@ void ESolver_KS<T, Device>::before_all_runners(Input& inp, UnitCell& ucell)
 #endif
 	/// End PAW
 
+    //! 3) calculate the electron number
 	ucell.cal_nelec(GlobalV::nelec);
 
-	/* it has been established that 
-	   xc_func is same for all elements, therefore
-	   only the first one if used*/
+	//! 4) it has been established that 
+    // xc_func is same for all elements, therefore
+    // only the first one if used
 	if(GlobalV::use_paw)
 	{
 		XC_Functional::set_xc_type(GlobalV::DFT_FUNCTIONAL);
@@ -195,7 +196,7 @@ void ESolver_KS<T, Device>::before_all_runners(Input& inp, UnitCell& ucell)
 	}
 	ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
 
-    // ESolver depends on the Symmetry module
+    //! 5) ESolver depends on the Symmetry module
 	// symmetry analysis should be performed every time the cell is changed
 	if (ModuleSymmetry::Symmetry::symm_flag == 1)
 	{
@@ -203,15 +204,14 @@ void ESolver_KS<T, Device>::before_all_runners(Input& inp, UnitCell& ucell)
 		ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
 	}
 
-	// Setup the k points according to symmetry.
+	//! 6) Setup the k points according to symmetry.
 	this->kv.set(ucell.symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, ucell.G, ucell.latvec);
 	ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
-	// print information
-	// mohan add 2021-01-30
+	//! 7) print information
 	Print_Info::setup_parameters(ucell, this->kv);
 
-	//new plane wave basis
+	//! 8) new plane wave basis, fft grids, etc.
 #ifdef __MPI
 	this->pw_wfc->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
 #endif
@@ -221,6 +221,7 @@ void ESolver_KS<T, Device>::before_all_runners(Input& inp, UnitCell& ucell)
 			this->pw_rho->nx,
 			this->pw_rho->ny,
 			this->pw_rho->nz);
+
 	this->pw_wfc->initparameters(false, inp.ecutwfc, this->kv.get_nks(), this->kv.kvec_d.data());
 
     // the MPI allreduce should not be here, mohan 2024-05-12
@@ -236,6 +237,7 @@ void ESolver_KS<T, Device>::before_all_runners(Input& inp, UnitCell& ucell)
 
 	this->pw_wfc->setuptransform();
 
+    //! 9) initialize the number of plane waves for each k point
 	for (int ik = 0; ik < this->kv.get_nks(); ++ik)
 	{
 		this->kv.ngk[ik] = this->pw_wfc->npwk[ik];
@@ -245,7 +247,7 @@ void ESolver_KS<T, Device>::before_all_runners(Input& inp, UnitCell& ucell)
 
 	this->print_wfcfft(inp, GlobalV::ofs_running);
 
-	//! initialize the real-space uniform grid for FFT and parallel
+	//! 10) initialize the real-space uniform grid for FFT and parallel
 	//! distribution of plane waves
 	GlobalC::Pgrid.init(this->pw_rhod->nx,
 			this->pw_rhod->ny,
@@ -253,12 +255,12 @@ void ESolver_KS<T, Device>::before_all_runners(Input& inp, UnitCell& ucell)
 			this->pw_rhod->nplane,
 			this->pw_rhod->nrxx,
 			pw_big->nbz,
-			pw_big->bz); // mohan add 2010-07-22, update 2011-05-04
+			pw_big->bz);
 
-	// Calculate Structure factor
+	//! 11) calculate the structure factor
 	this->sf.setup_structure_factor(&ucell, this->pw_rhod);
 
-	// Initialize charge extrapolation
+	//! 12) initialize the charge extrapolation method if necessary
 	CE.Init_CE(ucell.nat);
 
 #ifdef USE_PAW
