@@ -10,9 +10,12 @@
 #include <thrust/execution_policy.h>
 #include <thrust/inner_product.h>
 
-#define WARP_SIZE 32
-#define FULL_MASK 0xffffffff
-#define THREAD_PER_BLOCK 256
+namespace hsolver
+{
+const int warp_size = 32;
+const unsigned int full_mask = 0xffffffff;
+const int thread_per_block = 256;
+}
 
 template <>
 struct GetTypeReal<thrust::complex<float>> {
@@ -66,7 +69,7 @@ void destoryBLAShandle(){
 template <typename FPTYPE>
 __forceinline__ __device__ void warp_reduce(FPTYPE& val) {
     for (int offset = 16; offset > 0; offset >>= 1)
-        val += __shfl_down_sync(FULL_MASK, val, offset);
+        val += __shfl_down_sync(full_mask, val, offset);
 }
 
 template <typename Real>
@@ -83,56 +86,91 @@ __global__ void line_minimize_with_block(
     int item = 0;
     Real epsilo_0 = 0.0, epsilo_1 = 0.0, epsilo_2 = 0.0;
     Real theta = 0.0, cos_theta = 0.0, sin_theta = 0.0;
-    __shared__ Real data[THREAD_PER_BLOCK * 3];
+    __shared__ Real data[thread_per_block * 3];
 
     data[tid] = 0;
 
-    for (int basis_idx = tid; basis_idx < n_basis; basis_idx += THREAD_PER_BLOCK) {
+    for (int basis_idx = tid; basis_idx < n_basis; basis_idx += thread_per_block) {
         item = band_idx * n_basis_max + basis_idx;
         data[tid] += (grad[item] * thrust::conj(grad[item])).real();
     }
     __syncthreads();
     // just do some parallel reduction in shared memory
-    for (int ii = THREAD_PER_BLOCK >> 1; ii > 0; ii >>= 1) {
+    for (int ii = thread_per_block >> 1; ii > warp_size; ii >>= 1) {
         if (tid < ii) {
             data[tid] += data[tid + ii];
         }
         __syncthreads();
     }
+
+    // For threads in the same warp, it is better that they process the same work
+    // Also, __syncwarp() should be used instead of __syncthreads()
+    // Therefore we unroll the loop and ensure that the threads does the same work
+    if (tid < warp_size) {
+        data[tid] += data[tid + 32]; __syncwarp();
+        data[tid] += data[tid + 16]; __syncwarp();
+        data[tid] += data[tid + 8]; __syncwarp();
+        data[tid] += data[tid + 4]; __syncwarp();
+        data[tid] += data[tid + 2]; __syncwarp();
+        data[tid] += data[tid + 1]; __syncwarp();
+    }
+
+    __syncthreads();
 
     Real norm = 1.0 / sqrt(data[0]);
     __syncthreads();
 
     data[tid] = 0;
-    data[THREAD_PER_BLOCK + tid] = 0;
-    data[2 * THREAD_PER_BLOCK + tid] = 0;
-    for (int basis_idx = tid; basis_idx < n_basis; basis_idx += THREAD_PER_BLOCK) {
+    data[thread_per_block + tid] = 0;
+    data[2 * thread_per_block + tid] = 0;
+    for (int basis_idx = tid; basis_idx < n_basis; basis_idx += thread_per_block) {
         item = band_idx * n_basis_max + basis_idx;
         grad[item] *= norm;
         hgrad[item] *= norm;
         data[tid] += (hpsi[item] * thrust::conj(psi[item])).real();
-        data[THREAD_PER_BLOCK + tid] += (grad[item] * thrust::conj(hpsi[item])).real();
-        data[2 * THREAD_PER_BLOCK + tid] += (grad[item] * thrust::conj(hgrad[item])).real();
+        data[thread_per_block + tid] += (grad[item] * thrust::conj(hpsi[item])).real();
+        data[2 * thread_per_block + tid] += (grad[item] * thrust::conj(hgrad[item])).real();
     }
     __syncthreads();
 
     // just do some parallel reduction in shared memory
-    for (int ii = THREAD_PER_BLOCK >> 1; ii > 0; ii >>= 1) {
+    for (int ii = thread_per_block >> 1; ii > warp_size; ii >>= 1) {
         if (tid < ii) {
             data[tid] += data[tid + ii];
-            data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + ii];
-            data[2 * THREAD_PER_BLOCK + tid] += data[2 * THREAD_PER_BLOCK + tid + ii];
+            data[thread_per_block + tid] += data[thread_per_block + tid + ii];
+            data[2 * thread_per_block + tid] += data[2 * thread_per_block + tid + ii];
         }
         __syncthreads();
     }
+    if (tid < warp_size) {
+        data[tid] += data[tid + 32]; __syncwarp();
+        data[tid] += data[tid + 16]; __syncwarp();
+        data[tid] += data[tid + 8]; __syncwarp();
+        data[tid] += data[tid + 4]; __syncwarp();
+        data[tid] += data[tid + 2]; __syncwarp();
+        data[tid] += data[tid + 1]; __syncwarp();
+        data[thread_per_block + tid] += data[thread_per_block + tid + 32]; __syncwarp();
+        data[thread_per_block + tid] += data[thread_per_block + tid + 16]; __syncwarp();
+        data[thread_per_block + tid] += data[thread_per_block + tid + 8]; __syncwarp();
+        data[thread_per_block + tid] += data[thread_per_block + tid + 4]; __syncwarp();
+        data[thread_per_block + tid] += data[thread_per_block + tid + 2]; __syncwarp();
+        data[thread_per_block + tid] += data[thread_per_block + tid + 1]; __syncwarp();
+        data[2 * thread_per_block + tid] += data[2 * thread_per_block + tid + 32]; __syncwarp();
+        data[2 * thread_per_block + tid] += data[2 * thread_per_block + tid + 16]; __syncwarp();
+        data[2 * thread_per_block + tid] += data[2 * thread_per_block + tid + 8]; __syncwarp();
+        data[2 * thread_per_block + tid] += data[2 * thread_per_block + tid + 4]; __syncwarp();
+        data[2 * thread_per_block + tid] += data[2 * thread_per_block + tid + 2]; __syncwarp();
+        data[2 * thread_per_block + tid] += data[2 * thread_per_block + tid + 1]; __syncwarp();
+    }
+    __syncthreads();
     epsilo_0 = data[0];
-    epsilo_1 = data[THREAD_PER_BLOCK];
-    epsilo_2 = data[2 * THREAD_PER_BLOCK];
+    epsilo_1 = data[thread_per_block];
+    epsilo_2 = data[2 * thread_per_block];
 
     theta = 0.5 * abs(atan(2 * epsilo_1/(epsilo_0 - epsilo_2)));
     cos_theta = cos(theta);
     sin_theta = sin(theta);
-    for (int basis_idx = tid; basis_idx < n_basis; basis_idx += THREAD_PER_BLOCK) {
+    for (int basis_idx = tid; basis_idx < n_basis; basis_idx += thread_per_block) {
         item = band_idx * n_basis_max + basis_idx;
         psi [item] = psi [item] * cos_theta + grad [item] * sin_theta;
         hpsi[item] = hpsi[item] * cos_theta + hgrad[item] * sin_theta;
@@ -159,29 +197,40 @@ __global__ void calc_grad_with_block(
     Real epsilo = 0.0;
     Real grad_2 = 0.0;
     thrust::complex<Real> grad_1 = {0, 0};
-    __shared__ Real data[THREAD_PER_BLOCK * 2];
+    __shared__ Real data[thread_per_block * 2];
 
     // Init shared memory
     data[tid] = 0;
 
-    for (int basis_idx = tid; basis_idx < n_basis; basis_idx += THREAD_PER_BLOCK) {
+    for (int basis_idx = tid; basis_idx < n_basis; basis_idx += thread_per_block) {
         item = band_idx * n_basis_max + basis_idx;
         data[tid] += (psi[item] * thrust::conj(psi[item])).real();
     }
     __syncthreads();
     // just do some parallel reduction in shared memory
-    for (int ii = THREAD_PER_BLOCK >> 1; ii > 0; ii >>= 1) {
+    for (int ii = thread_per_block >> 1; ii > warp_size; ii >>= 1) {
         if (tid < ii) {
             data[tid] += data[tid + ii];
         }
         __syncthreads();
     }
 
+    if (tid < warp_size) {
+        data[tid] += data[tid + 32]; __syncwarp();
+        data[tid] += data[tid + 16]; __syncwarp();
+        data[tid] += data[tid + 8]; __syncwarp();
+        data[tid] += data[tid + 4]; __syncwarp();
+        data[tid] += data[tid + 2]; __syncwarp();
+        data[tid] += data[tid + 1]; __syncwarp();
+    }
+
+    __syncthreads();
+
     Real norm = 1.0 / sqrt(data[0]);
     __syncthreads();
 
     data[tid] = 0;
-    for (int basis_idx = tid; basis_idx < n_basis; basis_idx += THREAD_PER_BLOCK) {
+    for (int basis_idx = tid; basis_idx < n_basis; basis_idx += thread_per_block) {
         item = band_idx * n_basis_max + basis_idx;
         psi[item] *= norm;
         hpsi[item] *= norm;
@@ -190,37 +239,65 @@ __global__ void calc_grad_with_block(
     __syncthreads();
 
     // just do some parallel reduction in shared memory
-    for (int ii = THREAD_PER_BLOCK >> 1; ii > 0; ii >>= 1) {
+    for (int ii = thread_per_block >> 1; ii > warp_size; ii >>= 1) {
         if (tid < ii) {
             data[tid] += data[tid + ii];
         }
         __syncthreads();
     }
+
+    if (tid < warp_size) {
+        data[tid] += data[tid + 32]; __syncwarp();
+        data[tid] += data[tid + 16]; __syncwarp();
+        data[tid] += data[tid + 8]; __syncwarp();
+        data[tid] += data[tid + 4]; __syncwarp();
+        data[tid] += data[tid + 2]; __syncwarp();
+        data[tid] += data[tid + 1]; __syncwarp();
+    }
+
+    __syncthreads();
     epsilo = data[0];
     __syncthreads();
 
     data[tid] = 0;
-    data[THREAD_PER_BLOCK + tid] = 0;
-    for (int basis_idx = tid; basis_idx < n_basis; basis_idx += THREAD_PER_BLOCK) {
+    data[thread_per_block + tid] = 0;
+    for (int basis_idx = tid; basis_idx < n_basis; basis_idx += thread_per_block) {
         item = band_idx * n_basis_max + basis_idx;
         grad_1 = hpsi[item] - epsilo * psi[item];
         grad_2 = thrust::norm(grad_1);
         data[tid] += grad_2;
-        data[THREAD_PER_BLOCK + tid] += grad_2 / prec[basis_idx];
+        data[thread_per_block + tid] += grad_2 / prec[basis_idx];
     }
     __syncthreads();
 
     // just do some parallel reduction in shared memory
-    for (int ii = THREAD_PER_BLOCK >> 1; ii > 0; ii >>= 1) {
+    for (int ii = thread_per_block >> 1; ii > warp_size; ii >>= 1) {
         if (tid < ii) {
             data[tid] += data[tid + ii];
-            data[THREAD_PER_BLOCK + tid] += data[THREAD_PER_BLOCK + tid + ii];
+            data[thread_per_block + tid] += data[thread_per_block + tid + ii];
         }
         __syncthreads();
     }
+
+    if (tid < warp_size) {
+        data[tid] += data[tid + 32]; __syncwarp();
+        data[tid] += data[tid + 16]; __syncwarp();
+        data[tid] += data[tid + 8]; __syncwarp();
+        data[tid] += data[tid + 4]; __syncwarp();
+        data[tid] += data[tid + 2]; __syncwarp();
+        data[tid] += data[tid + 1]; __syncwarp();
+        data[thread_per_block + tid] += data[thread_per_block + tid + 32]; __syncwarp();
+        data[thread_per_block + tid] += data[thread_per_block + tid + 16]; __syncwarp();
+        data[thread_per_block + tid] += data[thread_per_block + tid + 8]; __syncwarp();
+        data[thread_per_block + tid] += data[thread_per_block + tid + 4]; __syncwarp();
+        data[thread_per_block + tid] += data[thread_per_block + tid + 2]; __syncwarp();
+        data[thread_per_block + tid] += data[thread_per_block + tid + 1]; __syncwarp();
+    }
+
+    __syncthreads();
     err_st = data[0];
-    beta_st = data[THREAD_PER_BLOCK];
-    for (int basis_idx = tid; basis_idx < n_basis; basis_idx += THREAD_PER_BLOCK) {
+    beta_st = data[thread_per_block];
+    for (int basis_idx = tid; basis_idx < n_basis; basis_idx += thread_per_block) {
         item = band_idx * n_basis_max + basis_idx;
         grad_1 = hpsi[item] - epsilo * psi[item];
         grad[item] = -grad_1 / prec[basis_idx] + beta_st / beta[band_idx] * grad_old[item];
@@ -342,7 +419,7 @@ void line_minimize_with_block_op<T, base_device::DEVICE_GPU>::operator()(T* grad
     auto C = reinterpret_cast<thrust::complex<Real>*>(psi_out);
     auto D = reinterpret_cast<thrust::complex<Real>*>(hpsi_out);
 
-    line_minimize_with_block<Real><<<n_band, THREAD_PER_BLOCK>>>(
+    line_minimize_with_block<Real><<<n_band, thread_per_block>>>(
             A, B, C, D,
             n_basis, n_basis_max);
     
@@ -367,7 +444,7 @@ void calc_grad_with_block_op<T, base_device::DEVICE_GPU>::operator()(const Real*
     auto C = reinterpret_cast<thrust::complex<Real>*>(grad_out);
     auto D = reinterpret_cast<thrust::complex<Real>*>(grad_old_out);
 
-    calc_grad_with_block<Real><<<n_band, THREAD_PER_BLOCK>>>(
+    calc_grad_with_block<Real><<<n_band, thread_per_block>>>(
             prec_in, err_out, beta_out,
             A, B, C, D,
             n_basis, n_basis_max);
@@ -440,7 +517,8 @@ void vector_div_constant_op<double, base_device::DEVICE_GPU>::operator()(const b
                                                                          const double* vector,
                                                                          const double constant)
 {
-    int thread = 1024;
+    // In small cases, 1024 threads per block will only utilize 17 blocks, much less than 40
+    int thread = thread_per_block;
     int block = (dim + thread - 1) / thread;
     vector_div_constant_kernel<double> << <block, thread >> > (dim, result, vector, constant);
 
@@ -459,7 +537,7 @@ inline void vector_div_constant_complex_wrapper(const base_device::DEVICE_GPU* d
     thrust::complex<FPTYPE>* result_tmp = reinterpret_cast<thrust::complex<FPTYPE>*>(result);
     const thrust::complex<FPTYPE>* vector_tmp = reinterpret_cast<const thrust::complex<FPTYPE>*>(vector);
 
-    int thread = 1024;
+    int thread = thread_per_block;
     int block = (dim + thread - 1) / thread;
     vector_div_constant_kernel<thrust::complex<FPTYPE>> << <block, thread >> > (dim, result_tmp, vector_tmp, constant);
 
@@ -493,7 +571,7 @@ void vector_mul_vector_op<double, base_device::DEVICE_GPU>::operator()(const bas
                                                                        const double* vector1,
                                                                        const double* vector2)
 {
-    int thread = 1024;
+    int thread = thread_per_block;
     int block = (dim + thread - 1) / thread;
     vector_mul_vector_kernel<double> << <block, thread >> > (dim, result, vector1, vector2);
 
@@ -510,7 +588,7 @@ inline void vector_mul_vector_complex_wrapper(const base_device::DEVICE_GPU* d,
 {
     thrust::complex<FPTYPE>* result_tmp = reinterpret_cast<thrust::complex<FPTYPE>*>(result);
     const thrust::complex<FPTYPE>* vector1_tmp = reinterpret_cast<const thrust::complex<FPTYPE>*>(vector1);
-    int thread = 1024;
+    int thread = thread_per_block;
     int block = (dim + thread - 1) / thread;
     vector_mul_vector_kernel<thrust::complex<FPTYPE>> << <block, thread >> > (dim, result_tmp, vector1_tmp, vector2);
 
@@ -545,7 +623,7 @@ void vector_div_vector_op<double, base_device::DEVICE_GPU>::operator()(const bas
                                                                        const double* vector1,
                                                                        const double* vector2)
 {
-    int thread = 1024;
+    int thread = thread_per_block;
     int block = (dim + thread - 1) / thread;
     vector_div_vector_kernel<double> << <block, thread >> > (dim, result, vector1, vector2);
 
@@ -562,7 +640,7 @@ inline void vector_div_vector_complex_wrapper(const base_device::DEVICE_GPU* d,
 {
     thrust::complex<FPTYPE>* result_tmp = reinterpret_cast<thrust::complex<FPTYPE>*>(result);
     const thrust::complex<FPTYPE>* vector1_tmp = reinterpret_cast<const thrust::complex<FPTYPE>*>(vector1);
-    int thread = 1024;
+    int thread = thread_per_block;
     int block = (dim + thread - 1) / thread;
     vector_div_vector_kernel<thrust::complex<FPTYPE>> << <block, thread >> > (dim, result_tmp, vector1_tmp, vector2);
 
@@ -605,7 +683,7 @@ void constantvector_addORsub_constantVector_op<T, base_device::DEVICE_GPU>::oper
     auto vector1_tmp = reinterpret_cast<const Type*>(vector1);
     auto vector2_tmp = reinterpret_cast<const Type*>(vector2);
 
-    int thread = 1024;
+    int thread = thread_per_block;
     int block = (dim + thread - 1) / thread;
     constantvector_addORsub_constantVector_kernel<Type, Real> <<<block, thread >>>(dim, result_tmp, vector1_tmp, constant1, vector2_tmp, constant2);
 
