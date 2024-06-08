@@ -43,24 +43,12 @@ __global__ void get_psi(const double* const ylmcoef,
                         const double* const psi_u,
                         double* psir_ylm);
 
-/**
- * @brief Kernel function to calculate batch vector dot products.
- *
- * @param n             vector length.
- * @param vec_l_g       pointers to left vec.
- * @param incl          stride between consecutive elements in the `vec_l_g`.
- * @param vec_r_g       pointers to right vec.
- * @param incr          stride between consecutive elements in the `vec_r_g`.
- * @param results_g     dot product results.
- * @param batchcount    total count of dot products to compute.
- */
-__global__ void psir_dot(const int* n,
-                         double** vec_l_g,
-                         int incl,
-                         double** vec_r_g,
-                         int incr,
-                         double** results_g,
-                         int batchcount);
+__global__ void psir_dot(const int nbzp,
+                         const int bxyz,
+                         const int vec_size,
+                         double* vec_a_g,
+                         double* vec_b_g,
+                         double** results_g);
 
 } // namespace GintKernel
 #endif // GINT_RHO_CUH

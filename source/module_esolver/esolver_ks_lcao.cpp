@@ -20,6 +20,7 @@
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/print_info.h"
+#include <memory>
 #ifdef __EXX
 #include "module_ri/RPA_LRI.h"
 #endif
@@ -81,8 +82,9 @@ template <typename TK, typename TR>
 ESolver_KS_LCAO<TK, TR>::~ESolver_KS_LCAO()
 {
 #ifndef USE_NEW_TWO_CENTER
-	this->orb_con.clear_after_ions(GlobalC::UOT, GlobalC::ORB, GlobalV::deepks_setorb, GlobalC::ucell.infoNL.nproj);
+	this->orb_con.clear_after_ions(*uot_, GlobalC::ORB, GlobalV::deepks_setorb, GlobalC::ucell.infoNL.nproj);
 #endif
+    delete uot_;
 }
 
 
@@ -386,6 +388,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(ModuleBase::matrix& force)
             this->gen_h, // mohan add 2024-04-02
             this->GG, // mohan add 2024-04-01
             this->GK, // mohan add 2024-04-01
+            uot_,
 			force,
 			this->scs,
 			this->sf,
@@ -564,6 +567,14 @@ void ESolver_KS_LCAO<TK, TR>::init_basis_lcao(
     // * reading the localized orbitals/projectors
     // * construct the interpolation tables.
 
+
+    // NOTE: This following raw pointer serves as a temporary step in
+    // LCAO refactoring. Eventually, it will be replaced by a shared_ptr,
+    // which is the only owner of the ORB_gen_tables object. All other
+    // usages will take a weak_ptr.
+    uot_ = new ORB_gen_tables;
+    auto& two_center_bundle = uot_->two_center_bundle;
+
     two_center_bundle.reset(new TwoCenterBundle);
     two_center_bundle->build_orb(ucell.ntype, ucell.orbital_fn);
     two_center_bundle->build_alpha(GlobalV::deepks_setorb, &ucell.descriptor_file);
@@ -586,7 +597,7 @@ void ESolver_KS_LCAO<TK, TR>::init_basis_lcao(
 
 #ifndef USE_NEW_TWO_CENTER
     this->orb_con.set_orb_tables(GlobalV::ofs_running,
-                                 GlobalC::UOT,
+                                 *uot_,
                                  GlobalC::ORB,
                                  ucell.lat0,
                                  GlobalV::deepks_setorb,
@@ -596,12 +607,6 @@ void ESolver_KS_LCAO<TK, TR>::init_basis_lcao(
                                  ucell.infoNL.Beta);
 #else
     two_center_bundle->tabulate();
-
-    // transfer the ownership to UOT
-    // this is a temporary solution during refactoring
-    // the final version will get rid of UOT
-    // and transfer individual ownership of TwoCenterIntegrator to corresponding operator
-    GlobalC::UOT.two_center_bundle = std::move(two_center_bundle);
 #endif
 
     if (this->orb_con.setup_2d)
@@ -1442,6 +1447,7 @@ ModuleIO::Output_Mat_Sparse<TK> ESolver_KS_LCAO<TK, TR>::create_Output_Mat_Spars
 			this->orb_con.ParaV,
             this->gen_h, // mohan add 2024-04-06
             this->GK, // mohan add 2024-04-01
+            uot_,
 			this->LM,
             GlobalC::GridD, // mohan add 2024-04-06
 			this->kv,

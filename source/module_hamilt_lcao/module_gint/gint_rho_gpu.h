@@ -7,7 +7,6 @@
 #include "module_hamilt_lcao/module_gint/gint.h"
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
 
-cudaError_t checkCuda(cudaError_t result);
 namespace GintKernel
 {
 
@@ -90,11 +89,7 @@ void gtask_rho(const Grid_Technique& gridt,
  * @param max_n Maximum value of n.
  * @param atom_pair_num Total count of atom pairs, which is also the number of matrix multiplication operations.
  * @param rho_g Rho.
- * @param vec_l Pointers to psir_ylm for vector dot product.
- * @param vec_r Pointers to psir_dm for vector dot product.
  * @param dot_product Pointers to the results of dot products.
- * @param vec_len Vector lengths for each dot product.
- * @param dot_count Total count of dot products.
  */
 void alloc_mult_dot_rho(const Grid_Technique& gridt,
                         const UnitCell& ucell,
@@ -120,11 +115,7 @@ void alloc_mult_dot_rho(const Grid_Technique& gridt,
                         int& max_n,
                         int& atom_pair_num,
                         double* rho_g,
-                        double** vec_l,
-                        double** vec_r,
-                        double** dot_product,
-                        int* vec_len,
-                        int& dot_count);
+                        double** dot_product);
 
 } // namespace GintKernel
 #endif

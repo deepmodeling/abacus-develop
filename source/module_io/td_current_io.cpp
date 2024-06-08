@@ -15,7 +15,8 @@
 void ModuleIO::Init_DS_tmp(
 		const Parallel_Orbitals& pv,
 		LCAO_Matrix &lm,
-		LCAO_gen_fixedH &gen_h)
+		LCAO_gen_fixedH &gen_h,
+        const ORB_gen_tables* uot)
 {    
     ModuleBase::TITLE("ModuleIO", "Init_DS_tmp");
     ModuleBase::timer::tick("ModuleIO", "Init_DS_tmp");
@@ -34,7 +35,7 @@ void ModuleIO::Init_DS_tmp(
 
     ModuleBase::OMP_PARALLEL(init_DSloc_Rxyz);
     bool cal_deri = true;
-    gen_h.build_ST_new('S', cal_deri, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD), lm.SlocR.data());
+    gen_h.build_ST_new('S', cal_deri, GlobalC::ucell, GlobalC::ORB, *uot, &(GlobalC::GridD), lm.SlocR.data());
 
     ModuleBase::timer::tick("ModuleIO", "Init_DS_tmp");
     return;
@@ -141,6 +142,7 @@ void ModuleIO::write_current(const int istep,
                                 const psi::Psi<std::complex<double>>* psi,
                                 const elecstate::ElecState* pelec,
                                 const K_Vectors& kv,
+                                const ORB_gen_tables* uot,
                                 const Parallel_Orbitals* pv,
 								Record_adj& ra,
 								LCAO_Matrix &lm, // mohan add 2024-04-02
@@ -150,7 +152,7 @@ void ModuleIO::write_current(const int istep,
     ModuleBase::TITLE("ModuleIO", "write_current");
     ModuleBase::timer::tick("ModuleIO", "write_current");
     //Init_DS_tmp
-    Init_DS_tmp(*pv, lm, gen_h);
+    Init_DS_tmp(*pv, lm, gen_h, uot);
     // construct a DensityMatrix object
     elecstate::DensityMatrix<std::complex<double>, double> DM(&kv,pv,GlobalV::NSPIN);
     
