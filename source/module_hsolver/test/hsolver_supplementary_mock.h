@@ -12,7 +12,7 @@ const double* ElecState::getRho(int spin) const
 
 void ElecState::fixed_weights(const std::vector<double>& ocp_kb,
 			const int &nbands,
-			const double &nelec);
+			const double &nelec)
 {
     return;
 }
