@@ -71,12 +71,17 @@ psi::Psi<std::complex<double>>* wavefunc::allocate(const int nkstot, const int n
     {
         if ((GlobalV::BASIS_TYPE == "lcao" || GlobalV::BASIS_TYPE == "lcao_in_pw") || winput::out_spillage == 2)
         { // for lcao_in_pw
-            if(this->wanf2 != nullptr) delete[] this->wanf2;
+			if(this->wanf2 != nullptr) 
+			{
+				delete[] this->wanf2;
+			}
             this->wanf2 = new ModuleBase::ComplexMatrix [nks2];
+
 			for (int ik = 0; ik < nks2; ik++)
 			{
 				this->wanf2[ik].create(GlobalV::NLOCAL, npwx * GlobalV::NPOL);
 			}
+
 			const size_t memory_cost = nks2 * GlobalV::NLOCAL*(npwx * GlobalV::NPOL) * sizeof(std::complex<double>);
 			std::cout << " Memory for wanf2 (MB): " << double(memory_cost)/1024.0/1024.0 << std::endl;
 			ModuleBase::Memory::record("WF::wanf2", memory_cost) ;
@@ -132,7 +137,10 @@ int wavefunc::get_starting_nw(void)const
     {
         if (GlobalC::ucell.natomwfc >= GlobalV::NBANDS)
         {
-            if(GlobalV::test_wf)GlobalV::ofs_running << " Start wave functions are all pseudo atomic wave functions." << std::endl;
+			if(GlobalV::test_wf)
+			{
+				GlobalV::ofs_running << " Start wave functions are all pseudo atomic wave functions." << std::endl;
+			}
         }
         else
         {

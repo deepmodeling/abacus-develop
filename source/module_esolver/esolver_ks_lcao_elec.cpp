@@ -347,7 +347,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
     ModuleBase::TITLE("ESolver_KS_LCAO", "others");
     ModuleBase::timer::tick("ESolver_KS_LCAO", "others");
 
-    const string cal_type = GlobalV::CALCULATION;
+    const std::string cal_type = GlobalV::CALCULATION;
 
     if (cal_type == "get_S")
     {
