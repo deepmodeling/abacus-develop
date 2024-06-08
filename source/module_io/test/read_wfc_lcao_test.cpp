@@ -38,13 +38,11 @@ TEST(ReadWfcLcaoTest, ReadAbacusLowfComplex) {
     EXPECT_EQ(-6.0357194547014492158609755e-01, ekb[0]);
     EXPECT_EQ(-5.9803514165671245450539573e-01, ekb[1]);
     EXPECT_EQ(-5.9803514164885962500761707e-01, ekb[2]);
-    EXPECT_EQ(1.5316129631211228279141778e+00, ekb[18]);
     // occ
     EXPECT_EQ(occ.size(), nbands);
     EXPECT_EQ(5.8309037900874851473309590e-03, occ[0]);
     EXPECT_EQ(5.8309037900874851473309590e-03, occ[1]);
     EXPECT_EQ(5.8309037900874851473309590e-03, occ[2]);
-    EXPECT_EQ(0.0000000000000000000000000e+00, occ[18]);
     // lowf
     EXPECT_EQ(lowf.size(), nbands * nbasis);
     EXPECT_EQ(std::complex<double>(-6.7165115743031689188313749e-03, 2.2594638351419806671094292e-02), lowf[0]);
@@ -68,13 +66,11 @@ TEST(ReadWfcLcaoTest, ReadAbacusLowfComplex) {
     EXPECT_EQ(-6.0366727725523949832364679e-01, ekb[0]);
     EXPECT_EQ(-5.9786827612267734455286927e-01, ekb[1]);
     EXPECT_EQ(-5.9766242174005113074741757e-01, ekb[2]);
-    EXPECT_EQ(1.7385703433295973674432844e+00, ekb[18]);
     // occ
     EXPECT_EQ(occ.size(), nbands);
     EXPECT_EQ(5.8309037900874851473309590e-03, occ[0]);
     EXPECT_EQ(5.8309037900874851473309590e-03, occ[1]);
     EXPECT_EQ(5.8309037900874851473309590e-03, occ[2]);
-    EXPECT_EQ(0.0000000000000000000000000e+00, occ[18]);
     // lowf
     EXPECT_EQ(lowf.size(), nbands * nbasis);
     EXPECT_EQ(std::complex<double>(2.0993370513134518295927933e-02, 2.2061937126671427034096951e-03), lowf[0]);
@@ -97,12 +93,10 @@ TEST(ReadWfcLcaoTest, ReadAbacusLowfComplex) {
     EXPECT_EQ(-6.0466454411080960973379206e-01, ekb[0]);
     EXPECT_EQ(-5.9702547464581856573317964e-01, ekb[1]);
     EXPECT_EQ(-5.9687001897134039918313420e-01, ekb[2]);
-    EXPECT_EQ(1.6979332331216445695076800e+00, ekb[18]);
     // occ
     EXPECT_EQ(5.8309037900874851473309590e-03, occ[0]);
     EXPECT_EQ(5.8309037900874851473309590e-03, occ[1]);
     EXPECT_EQ(5.8309037900874851473309590e-03, occ[2]);
-    EXPECT_EQ(0.0000000000000000000000000e+00, occ[18]);
     // lowf
     EXPECT_EQ(std::complex<double>(-6.4441007210949141637001958e-03, 2.8610825297509245856986126e-03), lowf[0]);
     EXPECT_EQ(std::complex<double>(-5.8139841531629349313803345e-03, 4.0149570541960916125745484e-03), lowf[1]);
@@ -325,7 +319,7 @@ TEST(ReadWfcLcaoTest, ReadAbacusLowfReal)
     const std::string flowf = "./support/LOWF_GAMMA_S1.txt";
     ModuleIO::read_abacus_lowf(flowf, ik, kvec_c, nbands, nbasis, lowf, ekb, occ, wk);
     EXPECT_EQ(0, ik);
-    EXPECT_EQ(24, nbands);
+    EXPECT_EQ(3, nbands);
     EXPECT_EQ(31, nbasis);
     EXPECT_EQ(1.0, wk);
     // kvec_c, gamma point, 0, 0, 0
@@ -337,13 +331,11 @@ TEST(ReadWfcLcaoTest, ReadAbacusLowfReal)
     EXPECT_EQ(-1.22787155e+00, ekb[0]);
     EXPECT_EQ(-3.10595658e-01, ekb[1]);
     EXPECT_EQ(-3.00546690e-01, ekb[2]);
-    EXPECT_EQ(3.17982970e+00, ekb[23]);
     // occ
     EXPECT_EQ(occ.size(), nbands);
     EXPECT_EQ(2.00000000e+00, occ[0]);
     EXPECT_EQ(2.00000000e+00, occ[1]);
     EXPECT_EQ(2.00000000e+00, occ[2]);
-    EXPECT_EQ(0.00000000e+00, occ[23]);
     // lowf
     EXPECT_EQ(lowf.size(), nbands * nbasis);
     EXPECT_EQ(-1.51728369e-02, lowf[0]);

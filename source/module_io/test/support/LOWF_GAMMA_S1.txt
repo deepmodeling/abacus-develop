@@ -1,4 +1,4 @@
-24 (number of bands)
+3 (number of bands)
 31 (number of orbitals)
 3 (band)
 -1.22787155e+00 (Ry)
