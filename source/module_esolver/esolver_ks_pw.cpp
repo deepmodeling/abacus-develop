@@ -162,14 +162,14 @@ void ESolver_KS_PW<T, Device>::Init_GlobalC(Input& inp, UnitCell& cell)
     // ---------------------------------------------------------------------------------
 
     //! init pseudopotential
-    GlobalC::ppcell.init(GlobalC::ucell.ntype, &this->sf, this->pw_wfc);
+    GlobalC::ppcell.init(ucell.ntype, &this->sf, this->pw_wfc);
 
     //! initalize local pseudopotential
     GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, this->pw_rhod);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
 
     //! Initalize non-local pseudopotential
-    GlobalC::ppcell.init_vnl(GlobalC::ucell, this->pw_rhod);
+    GlobalC::ppcell.init_vnl(ucell, this->pw_rhod);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
 
     // ---------------------------------------------------------------------------------
@@ -194,21 +194,6 @@ void ESolver_KS_PW<T, Device>::Init_GlobalC(Input& inp, UnitCell& cell)
                          || GlobalV::precision_flag == "single"
                          ? new psi::Psi<T, Device>(this->psi[0])
                          : reinterpret_cast<psi::Psi<T, Device>*>(this->psi);
-
-    // I would like to change the above sentence to the following, 
-    // but I am not sure what the code is doing, so I leave it as a comment
-    // mohan by 2024-03-27
-/*
-	if (GlobalV::device_flag == "gpu" || GlobalV::precision_flag == "single") 
-	{
-        // psi[0] means gamma_only?
-		this->kspw_psi = new psi::Psi<T, Device>(this->psi[0]);
-	} 
-	else 
-	{
-		this->kspw_psi = reinterpret_cast<psi::Psi<T, Device>*>(this->psi);
-	}
-*/
 
     if (GlobalV::precision_flag == "single")
     {
@@ -248,14 +233,14 @@ void ESolver_KS_PW<T, Device>::before_all_runners(Input& inp, UnitCell& ucell)
     this->pelec->charge->allocate(GlobalV::NSPIN);
 
     //! set the cell volume variable in pelec
-    this->pelec->omega = GlobalC::ucell.omega;
+    this->pelec->omega = ucell.omega;
 
     // Initialize the potential.
     if (this->pelec->pot == nullptr)
     {
         this->pelec->pot = new elecstate::Potential(this->pw_rhod,
                                                     this->pw_rho,
-                                                    &GlobalC::ucell,
+                                                    &ucell,
                                                     &(GlobalC::ppcell.vloc),
                                                     &(this->sf),
                                                     &(this->pelec->f_en.etxc),
@@ -335,13 +320,13 @@ void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
         this->pelec->charge->allocate(GlobalV::NSPIN);
 
         //! setup cell volume
-        this->pelec->omega = GlobalC::ucell.omega;
+        this->pelec->omega = ucell.omega;
 
         delete this->pelec->pot;
 
         this->pelec->pot = new elecstate::Potential(this->pw_rhod,
                                                     this->pw_rho,
-                                                    &GlobalC::ucell,
+                                                    &ucell,
                                                     &(GlobalC::ppcell.vloc),
                                                     &(this->sf),
                                                     &(this->pelec->f_en.etxc),
@@ -352,11 +337,11 @@ void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
     }
     else
     {
-        GlobalC::ppcell.init_vnl(GlobalC::ucell, this->pw_rhod);
+        GlobalC::ppcell.init_vnl(ucell, this->pw_rhod);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
 
-        this->pw_wfc->initgrids(GlobalC::ucell.lat0,
-                                GlobalC::ucell.latvec,
+        this->pw_wfc->initgrids(ucell.lat0,
+                                ucell.latvec,
                                 this->pw_wfc->nx,
                                 this->pw_wfc->ny,
                                 this->pw_wfc->nz);
@@ -410,7 +395,7 @@ void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
         {
             GlobalC::paw_cell.get_rhoijp(rhoijp, rhoijselect, nrhoijsel);
 
-            for(int iat = 0; iat < GlobalC::ucell.nat; iat ++)
+            for(int iat = 0; iat < ucell.nat; iat ++)
             {
                 GlobalC::paw_cell.set_rhoij(iat,
 						nrhoijsel[iat],
@@ -422,7 +407,7 @@ void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
 #else
         GlobalC::paw_cell.get_rhoijp(rhoijp, rhoijselect, nrhoijsel);
 
-        for(int iat = 0; iat < GlobalC::ucell.nat; iat ++)
+        for(int iat = 0; iat < ucell.nat; iat ++)
         {
 			GlobalC::paw_cell.set_rhoij(iat,
 					nrhoijsel[iat],
