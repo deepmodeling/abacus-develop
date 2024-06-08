@@ -6,18 +6,11 @@
 class Grid_MeshBall : public Grid_BigCell
 {
 	public:
-	
-	// the radius of meshball.
-	double meshball_radius;
-
 	// number of meshcells in meshball.
-	// generally, meshball_radius = orbital_rmax;
 	int meshball_ncells;
 
 	// cartesian coordinates of meshball.
-	double** meshball_positions;
-
-	bool flag_mp;
+	std::vector<std::vector<double>> meshball_positions;	
 	
 	protected:
 
@@ -25,17 +18,19 @@ class Grid_MeshBall : public Grid_BigCell
 	~Grid_MeshBall();	
 
 	// used in index2normal
-	int* index_ball;
+	std::vector<int> index_ball;
 
 	// init the meshball radius,
 	// search each meshcell of this meshball.
 	void init_meshball(void);
 
-	void delete_meshball_positions(void); //LiuXh add 2018-12-14
-
 	private:
 
 	double deal_with_atom_spillage(const double* pos);
 
+	bool flag_mp;
+
+	double meshball_radius;
+	
 };
 #endif

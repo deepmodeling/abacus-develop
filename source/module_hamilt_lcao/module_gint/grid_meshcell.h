@@ -16,7 +16,7 @@ class Grid_MeshCell: public Grid_MeshK
 	ModuleBase::Matrix3 meshcell_latvec0;
 	ModuleBase::Matrix3 meshcell_GT;
 	
-	double** meshcell_pos;
+	std::vector<std::vector<double>> meshcell_pos;
 	bool allocate_pos;
 	
 	protected:

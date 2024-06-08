@@ -8,7 +8,6 @@ Grid_MeshBall::Grid_MeshBall()
 
 	this->flag_mp = false;
 
-	this->index_ball = nullptr;
 }
 
 Grid_MeshBall::~Grid_MeshBall()
@@ -16,13 +15,10 @@ Grid_MeshBall::~Grid_MeshBall()
 	// delete meshball positions.
 	if(flag_mp)
 	{
-		for(int i=0; i<meshball_ncells; i++)
-		{
-			delete[] meshball_positions[i];
-		}
-		delete[] meshball_positions;
+		meshball_positions.clear();
+		flag_mp = false;
 	}
-	delete[] index_ball;
+	index_ball.clear();
 }
 
 void Grid_MeshBall::init_meshball(void)
@@ -34,6 +30,11 @@ void Grid_MeshBall::init_meshball(void)
 	// incrase meshball_radius, but there will be
 	// no atoms in the added bigcells.
 	// (in case subcell are too many).
+	if(flag_mp)
+	{
+		meshball_positions.clear();
+		flag_mp = false;
+	}
 
 	this->meshball_radius = this->orbital_rmax;
 
@@ -86,19 +87,14 @@ void Grid_MeshBall::init_meshball(void)
 	// prepare for the second calculation.
 	if(!flag_mp)
 	{
-		this->meshball_positions = new double*[meshball_ncells];
-		for(int i=0; i<meshball_ncells; i++)
-		{
-			this->meshball_positions[i] = new double[3];
-		}
+		this->meshball_positions = std::vector<std::vector<double>>(meshball_ncells, std::vector<double>(3, 0.0));
 		this->flag_mp = true;
 
 		ModuleBase::Memory::record("meshball_pos", sizeof(double) * meshball_ncells*3);
 	}
 
-	delete[] index_ball;
-	this->index_ball = new int[meshball_ncells];
-	ModuleBase::GlobalFunc::ZEROS(index_ball, meshball_ncells);
+	this->index_ball.clear();
+	this->index_ball = std::vector<int>(meshball_ncells); 
 
 	// second time.
 	int count = 0;
@@ -165,18 +161,4 @@ double Grid_MeshBall::deal_with_atom_spillage(const double *pos)
 	return r2;
 }
 
-//LiuXh add 2018-12-14
-void Grid_MeshBall::delete_meshball_positions(void)
-{	
-	ModuleBase::TITLE("Grid_MeshBall","delete_meshball_positions");
-	if(flag_mp)
-	{
-		for(int i=0; i<meshball_ncells; i++)
-		{
-			delete[] meshball_positions[i];
-		}
-		delete[] meshball_positions;
-		flag_mp = false;
-	}
-	return;
-}
+

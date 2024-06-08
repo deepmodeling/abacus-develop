@@ -174,9 +174,6 @@ void Grid_Technique::set_pbc_grid(const int& ncx_in,
 
     this->init_tau_in_bigcell(ucell);
 
-    // init meshball
-    this->delete_meshball_positions(); // LiuXh add 2018-12-14
-
     this->init_meshball();
 
     this->init_atoms_on_grid(ny, nplane, startz_current,ucell);

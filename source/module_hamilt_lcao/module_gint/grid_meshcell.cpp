@@ -11,11 +11,8 @@ Grid_MeshCell::~Grid_MeshCell()
 {
 	if(allocate_pos)
 	{
-		for(int ib=0; ib<bxyz; ib++)
-		{
-			delete[] meshcell_pos[ib];
-		}
-		delete[] meshcell_pos;
+		meshcell_pos.clear();
+		allocate_pos = false;
 	}
 }
 
@@ -150,11 +147,7 @@ void Grid_MeshCell::init_meshcell_pos(void)
 
 	if(!allocate_pos)
 	{
-		meshcell_pos = new double*[bxyz];
-		for(int ib=0; ib<bxyz; ib++)
-		{
-			meshcell_pos[ib] = new double[3];
-		}
+		meshcell_pos = std::vector<std::vector<double>>(bxyz,std::vector<double>(3,0.0));
 	}
 
 	int index=0;
