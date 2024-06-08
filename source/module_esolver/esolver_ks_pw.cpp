@@ -111,7 +111,7 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::Init_GlobalC(
     Input &inp, 
-    UnitCell &cell,
+    UnitCell &ucell,
     pseudopot_cell_vnl &ppcell)
 {
     // GlobalC is a historically left-over namespace, it is used to store global classes,
@@ -316,7 +316,7 @@ void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
                                                             &(this->chr),
                                                             (K_Vectors*)(&(this->kv)),
                                                             &ucell,
-                                                            &ppcell,
+                                                            &GlobalC::ppcell,
                                                             this->pw_rhod,
                                                             this->pw_rho,
                                                             this->pw_big);
@@ -331,7 +331,7 @@ void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
         this->pelec->pot = new elecstate::Potential(this->pw_rhod,
                                                     this->pw_rho,
                                                     &ucell,
-                                                    &ppcell.vloc,
+                                                    &GlobalC::ppcell.vloc,
                                                     &(this->sf),
                                                     &(this->pelec->f_en.etxc),
                                                     &(this->pelec->f_en.vtxc));
@@ -341,7 +341,7 @@ void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
     }
     else
     {
-        ppcell.init_vnl(ucell, this->pw_rhod);
+        GlobalC::ppcell.init_vnl(ucell, this->pw_rhod);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
 
         this->pw_wfc->initgrids(ucell.lat0,
@@ -428,7 +428,7 @@ void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
 
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::before_scf(int istep)
+void ESolver_KS_PW<T, Device>::before_scf(const int istep)
 {
     ModuleBase::TITLE("ESolver_KS_PW", "before_scf");
 

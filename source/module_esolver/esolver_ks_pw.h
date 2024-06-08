@@ -104,7 +104,7 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
         //Init Global class
 		void Init_GlobalC(
 				Input &inp, 
-				UnitCell &cell,
+				UnitCell &ucell,
 				pseudopot_cell_vnl &ppcell);
 
         /// @brief calculate conductivities from j-j correlation function
