@@ -687,7 +687,7 @@ void K_Vectors::ibz_kpoint(const ModuleSymmetry::Symmetry& symm,
         auto matequal = [&symm](ModuleBase::Matrix3 a, ModuleBase::Matrix3 b) {
             return (symm.equal(a.e11, b.e11) && symm.equal(a.e12, b.e12) && symm.equal(a.e13, b.e13)
                     && symm.equal(a.e21, b.e21) && symm.equal(a.e22, b.e22) && symm.equal(a.e23, b.e23)
-                    && symm.equal(a.e31, b.e31) && symm.equal(a.e32, b.e32) && symm.equal(a.e33, b.e33));
+                    && symm.equal(a.e31, b.e31) && symm.equal(a.e23, b.e23) && symm.equal(a.e33, b.e33));
         };
         for (int i = 0; i < symm.nrotk; ++i)
         {
