@@ -76,7 +76,7 @@ void ESolver_SDFT_PW::before_all_runners(Input& inp, UnitCell& ucell)
         this->pelec->fixed_weights(GlobalV::ocp_kb);
     }
 
-    this->Init_GlobalC(inp, ucell); // temporary
+    this->Init_GlobalC(inp, ucell, GlobalC::ppcell); // temporary
 
     stowf.init(&kv, pw_wfc->npwk_max);
     if (inp.nbands_sto != 0)
