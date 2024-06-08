@@ -1,6 +1,6 @@
 3 (number of bands)
 31 (number of orbitals)
-3 (band)
+1 (band)
 -1.22787155e+00 (Ry)
 2.00000000e+00 (Occupations)
 -1.51728369e-02 -2.07808444e-03 1.21298954e-17 -7.13941907e-08 2.16402589e-07 
