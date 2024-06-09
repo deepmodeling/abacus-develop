@@ -11,9 +11,6 @@ Grid_BigCell::Grid_BigCell()
 	this->index_atom.clear();
 	this->orbital_rmax = 0.0;
 	this->nxe = this->nye = this->nze = 0;	
-	this->bigcell_dx = 0.0;
-	this->bigcell_dy = 0.0;
-	this->bigcell_dz = 0.0;
 	this->dxe = 0;
 	this->dye = 0;
 	this->dze = 0;
@@ -43,14 +40,17 @@ void Grid_BigCell::init_big_latvec(const UnitCell& ucell)
 
 	this->nat=ucell.nat;
 	//size of each big room (same shape with unitcell)
+	this->bigcell_vec1.resize(3);
 	this->bigcell_vec1[0]= ucell.a1.x / (double)nbx * ucell.lat0;
 	this->bigcell_vec1[1]= ucell.a1.y / (double)nbx * ucell.lat0;
 	this->bigcell_vec1[2]= ucell.a1.z / (double)nbx * ucell.lat0;
 
+	this->bigcell_vec2.resize(3);
 	this->bigcell_vec2[0]= ucell.a2.x / (double)nby * ucell.lat0;
 	this->bigcell_vec2[1]= ucell.a2.y / (double)nby * ucell.lat0;
 	this->bigcell_vec2[2]= ucell.a2.z / (double)nby * ucell.lat0;
 
+	this->bigcell_vec3.resize(3);
 	this->bigcell_vec3[0]= ucell.a3.x / (double)nbz * ucell.lat0;
 	this->bigcell_vec3[1]= ucell.a3.y / (double)nbz * ucell.lat0;
 	this->bigcell_vec3[2]= ucell.a3.z / (double)nbz * ucell.lat0;

@@ -8,21 +8,25 @@
 class Grid_MeshCell: public Grid_MeshK
 {
 	public:
-
-	// vectors of meshcell.
-	double meshcell_vec1[3];
-	double meshcell_vec2[3];
-	double meshcell_vec3[3];
+	Grid_MeshCell();
+	~Grid_MeshCell();
+	
+	int ncx,ncy,ncz,ncxyz;
+	int bx,by,bz,bxyz;
+	int nbx,nby,nbz,nbxyz;
+	int nbxx;
+	int nbzp_start,nbzp;
+	// save the position of each meshcell.
+	std::vector<std::vector<double>> meshcell_pos;
 	ModuleBase::Matrix3 meshcell_latvec0;
 	ModuleBase::Matrix3 meshcell_GT;
 	
-	std::vector<std::vector<double>> meshcell_pos;
-	bool allocate_pos;
-	
 	protected:
 
-	Grid_MeshCell();
-	~Grid_MeshCell();
+	bool allocate_pos;
+	std::vector<double> meshcell_vec1;
+	std::vector<double> meshcell_vec2;
+	std::vector<double> meshcell_vec3;
 
 	void set_grid_dim(
 			const int &ncx_in,
@@ -38,18 +42,8 @@ class Grid_MeshCell: public Grid_MeshK
 			const int &nbzp_start_in,
 			const int &nbzp_in);
 
-
 	void init_latvec(const UnitCell &ucell);
     void init_meshcell_pos(void);
-
-
-	public:
-
-	int ncx,ncy,ncz,ncxyz;
-	int bx,by,bz,bxyz;
-	int nbx,nby,nbz,nbxyz;
-	int nbxx;
-	int nbzp_start,nbzp;
 
 };
 

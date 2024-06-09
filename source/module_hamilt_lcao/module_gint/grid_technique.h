@@ -80,11 +80,8 @@ class Grid_Technique : public Grid_MeshBall
     // indexes for nnrg -> orbital index + R index
     std::vector<gridIntegral::gridIndex> nnrg_index;
 
-    // public functions
-  public:
     Grid_Technique();
     ~Grid_Technique();
-
     void set_pbc_grid(const int& ncx_in,
                       const int& ncy_in,
                       const int& ncz_in,

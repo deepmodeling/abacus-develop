@@ -6,7 +6,8 @@
 class Grid_MeshK
 {
 	public:
-
+	Grid_MeshK();
+	~Grid_MeshK();
 	// from 1D index to unitcell.
 	std::vector<int> ucell_index2x;
 	std::vector<int> ucell_index2y;
@@ -19,17 +20,8 @@ class Grid_MeshK
 
 	// calculate the index of unitcell.
 	int cal_Rindex(const int &u1, const int &u2, const int &u3)const;
-	
-	// initialize the unitcell parameters.
-	void init_ucell_para(void);
 
-	// calculate the extended unitcell.
-	void cal_extended_cell(const int &dxe, const int &dye, const int &dze,
-							const int& nbx, const int& nby, const int& nbz);
 	protected:
-
-	Grid_MeshK();
-	~Grid_MeshK();
 	// the max and the min unitcell.
 	int maxu1;
     int maxu2;
@@ -43,8 +35,13 @@ class Grid_MeshK
 	int nu1;
     int nu2;
     int nu3;
-
 	int nutot;
+
+	// calculate the extended unitcell.
+	void cal_extended_cell(const int &dxe, const int &dye, const int &dze,
+							const int& nbx, const int& nby, const int& nbz);
+	// initialize the unitcell parameters.
+	void init_ucell_para(void);
 };
 
 #endif

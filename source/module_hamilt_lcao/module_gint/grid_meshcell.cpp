@@ -79,14 +79,17 @@ void Grid_MeshCell::init_latvec(const UnitCell &ucell)
 	assert(ncz>0);
 
 	//size of each room (same shape with unitcell)
+	this->meshcell_vec1.resize(3);
 	this->meshcell_vec1[0]= ucell.a1.x / (double)ncx * ucell.lat0;
 	this->meshcell_vec1[1]= ucell.a1.y / (double)ncx * ucell.lat0;
 	this->meshcell_vec1[2]= ucell.a1.z / (double)ncx * ucell.lat0;
 
+	this->meshcell_vec2.resize(3);
 	this->meshcell_vec2[0]= ucell.a2.x / (double)ncy * ucell.lat0;
 	this->meshcell_vec2[1]= ucell.a2.y / (double)ncy * ucell.lat0;
 	this->meshcell_vec2[2]= ucell.a2.z / (double)ncy * ucell.lat0;
 
+	this->meshcell_vec3.resize(3);
 	this->meshcell_vec3[0]= ucell.a3.x / (double)ncz * ucell.lat0;
 	this->meshcell_vec3[1]= ucell.a3.y / (double)ncz * ucell.lat0;
 	this->meshcell_vec3[2]= ucell.a3.z / (double)ncz * ucell.lat0;
