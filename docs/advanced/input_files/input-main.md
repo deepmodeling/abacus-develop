@@ -1470,16 +1470,21 @@ These variables are used to control the output of properties.
 
 ### out_chg
 
-- **Type**: Boolean
-- **Description**: Whether to output the charge density (in Bohr^-3) on real space grids into the density files in the folder `OUT.${suffix}`. The files are named as:
-  - npsin = 1: SPIN1_CHG.cube;
-  - npsin = 2: SPIN1_CHG.cube, and SPIN2_CHG.cube;
-  - npsin = 4: SPIN1_CHG.cube, SPIN2_CHG.cube, SPIN3_CHG.cube, and SPIN4_CHG.cube.
+- **Type**: Integer
+- **Description**: 
+  - 1. Output the charge density (in Bohr^-3) on real space grids into the density files in the folder `OUT.${suffix}`. The files are named as:
+    - npsin = 1: SPIN1_CHG.cube;
+    - npsin = 2: SPIN1_CHG.cube, and SPIN2_CHG.cube;
+    - npsin = 4: SPIN1_CHG.cube, SPIN2_CHG.cube, SPIN3_CHG.cube, and SPIN4_CHG.cube.
+  - 2. On top of 1, also output the initial charge density. The files are named as:
+    - nspin = 1: SPIN1_CHG_INI.cube
+    - npsin = 2: SPIN1_CHG_INI.cube, and SPIN2_CHG_INI.cube;
+    - npsin = 4: SPIN1_CHG_INI.cube, SPIN2_CHG_INI.cube, SPIN3_CHG_INI.cube, and SPIN4_CHG_INI.cube.
 
   The circle order of the charge density on real space grids is: x is the outer loop, then y and finally z (z is moving fastest).
 
   If EXX(exact exchange) is calculated, (i.e. *[dft_fuctional](#dft_functional)==hse/hf/pbe0/scan0/opt_orb* or *[rpa](#rpa)==True*), the Hexx(R) files will be output in the folder `OUT.${suffix}` too, which can be read in NSCF calculation.
-- **Default**: False
+- **Default**: 0
 
 ### out_pot
 
@@ -1492,6 +1497,10 @@ These variables are used to control the output of properties.
   - 2: Output the **electrostatic potential** on real space grids into `OUT.${suffix}/ElecStaticPot.cube`. The Python script named `tools/average_pot/aveElecStatPot.py` can be used to calculate the average electrostatic potential along the z-axis and outputs it into ElecStaticPot_AVE.
 
     Please note that the total local potential refers to the local component of the self-consistent potential, excluding the non-local pseudopotential. The distinction between the local potential and the electrostatic potential is as follows: local potential = electrostatic potential + XC potential.
+  - 3: Apart from 1, also output the **total local potential** of the initial charge density. The files are named as:
+    - npsin = 1: SPIN1_POT_INI.cube;
+    - npsin = 2: SPIN1_POT_INI.cube, and SPIN2_POT_INI.cube;
+    - npsin = 4: SPIN1_POT_INI.cube, SPIN2_POT_INI.cube, SPIN3_POT_INI.cube, and SPIN4_POT_INI.cube.
 - **Default**: 0
 
 ### out_dm

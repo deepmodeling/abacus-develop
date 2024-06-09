@@ -88,7 +88,7 @@ void ESolver_OF::before_all_runners(Input& inp, UnitCell& ucell)
     }
 
     // Setup the k points according to symmetry.
-    kv.set(ucell.symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, ucell.G, ucell.latvec);
+    kv.set(ucell.symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, ucell.G, ucell.latvec, GlobalV::ofs_running);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"INIT K-POINTS");
 
     // print information
@@ -544,7 +544,7 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell)
                 3);
         }
 
-        if (GlobalV::out_pot == 1) // output the effective potential, sunliang 2023-03-16
+        if (GlobalV::out_pot == 1 || GlobalV::out_pot == 3) // output the effective potential, sunliang 2023-03-16
         {
             int precision = 3; // be consistent with esolver_ks_lcao.cpp
             std::stringstream ssp;

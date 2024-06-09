@@ -21,37 +21,37 @@ LCAO_gen_fixedH::LCAO_gen_fixedH()
 LCAO_gen_fixedH::~LCAO_gen_fixedH()
 {}
 
-void LCAO_gen_fixedH::calculate_NL_no(double* HlocR)
-{
-    ModuleBase::TITLE("LCAO_gen_fixedH","calculate_NL_no");
-	if(GlobalV::GAMMA_ONLY_LOCAL)
-	{
-	  	//for gamma only.
-		this->build_Nonlocal_beta_new(HlocR, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD));
-	}
-	else
-	{
-		this->build_Nonlocal_mu_new(HlocR, false, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD));
-	}
-
-    return;
-}
-
-void LCAO_gen_fixedH::calculate_T_no(double* HlocR)
-{
-    ModuleBase::TITLE("LCAO_gen_fixedH","calculate_T_no");
-    this->build_ST_new('T', false, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD), HlocR);
-    return;
-}
-
-void LCAO_gen_fixedH::calculate_S_no(double* SlocR)
-{
-    ModuleBase::TITLE("LCAO_gen_fixedH", "calculate_S_no");
-    ModuleBase::timer::tick("LCAO_gen_fixedH","calculate_S_no");
-	this->build_ST_new('S', false, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD), SlocR);
-    ModuleBase::timer::tick("LCAO_gen_fixedH","calculate_S_no");
-    return;
-}
+//void LCAO_gen_fixedH::calculate_NL_no(double* HlocR)
+//{
+//    ModuleBase::TITLE("LCAO_gen_fixedH","calculate_NL_no");
+//	if(GlobalV::GAMMA_ONLY_LOCAL)
+//	{
+//	  	//for gamma only.
+//		this->build_Nonlocal_beta_new(HlocR, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD));
+//	}
+//	else
+//	{
+//		this->build_Nonlocal_mu_new(HlocR, false, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD));
+//	}
+//
+//    return;
+//}
+//
+//void LCAO_gen_fixedH::calculate_T_no(double* HlocR)
+//{
+//    ModuleBase::TITLE("LCAO_gen_fixedH","calculate_T_no");
+//    this->build_ST_new('T', false, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD), HlocR);
+//    return;
+//}
+//
+//void LCAO_gen_fixedH::calculate_S_no(double* SlocR)
+//{
+//    ModuleBase::TITLE("LCAO_gen_fixedH", "calculate_S_no");
+//    ModuleBase::timer::tick("LCAO_gen_fixedH","calculate_S_no");
+//	this->build_ST_new('S', false, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD), SlocR);
+//    ModuleBase::timer::tick("LCAO_gen_fixedH","calculate_S_no");
+//    return;
+//}
 
 
 //liaochen modify interface 2010-3-22
@@ -157,7 +157,6 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype,
 
 							if(!calc_deri)
 							{
-								// PLEASE use UOT as an input parameter of this subroutine
 								// mohan add 2021-03-30
 #ifdef USE_NEW_TWO_CENTER
                                 //=================================================================

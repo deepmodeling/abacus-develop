@@ -5,6 +5,7 @@
 #include "module_cell/unitcell.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
+#include "module_basis/module_ao/ORB_gen_tables.h"
 
 namespace hamilt
 {
@@ -43,6 +44,7 @@ class OverlapNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                                      std::vector<TK>* SK_pointer_in,
                                      const UnitCell* ucell_in,
                                      Grid_Driver* GridD_in,
+                                     const ORB_gen_tables* uot,
                                      const Parallel_Orbitals* paraV);
 
     virtual void contributeHR() override;
@@ -57,6 +59,9 @@ class OverlapNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     hamilt::HContainer<TR>* SR = nullptr;
 
     std::vector<TK>* SK_pointer = nullptr;
+
+    // the following variable is introduced temporarily during LCAO refactoring
+    const ORB_gen_tables* uot_ = nullptr;
 
     bool SR_fixed_done = false;
 
