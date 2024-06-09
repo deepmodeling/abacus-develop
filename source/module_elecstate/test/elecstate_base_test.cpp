@@ -407,7 +407,7 @@ TEST_F(ElecStateTest,FixedWeights)
     {
         ocp_kb[i] = 1.0;
     }
-    elecstate->fixed_weights(ocp_kb);
+    elecstate->fixed_weights(ocp_kb, GlobalV::NBANDS, GlobalV::nelec);
     EXPECT_EQ(elecstate->wg(0, 0), 1.0);
     EXPECT_EQ(elecstate->wg(klist->get_nks()-1, GlobalV::NBANDS-1), 1.0);
     EXPECT_TRUE(elecstate->skip_weights);
@@ -428,7 +428,7 @@ TEST_F(ElecStateDeathTest,FixedWeightsWarning1)
         ocp_kb[i] = 1.0;
     }
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(elecstate->fixed_weights(ocp_kb), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(elecstate->fixed_weights(ocp_kb, GlobalV::NBANDS, GlobalV::nelec), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("size of occupation array is wrong , please check ocp_set"));
 }
@@ -448,7 +448,7 @@ TEST_F(ElecStateDeathTest,FixedWeightsWarning2)
         ocp_kb[i] = 1.0;
     }
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(elecstate->fixed_weights(ocp_kb), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(elecstate->fixed_weights(ocp_kb, GlobalV::NBANDS, GlobalV::nelec), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("total number of occupations is wrong , please check ocp_set"));
 }

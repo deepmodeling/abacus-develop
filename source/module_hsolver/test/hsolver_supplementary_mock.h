@@ -10,7 +10,9 @@ const double* ElecState::getRho(int spin) const
     return &(this->charge->rho[spin][0]);
 }
 
-void ElecState::fixed_weights(const std::vector<double>& ocp_kb)
+void ElecState::fixed_weights(const std::vector<double>& ocp_kb,
+			const int &nbands,
+			const double &nelec)
 {
     return;
 }

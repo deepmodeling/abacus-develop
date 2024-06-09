@@ -1,13 +1,11 @@
-#ifndef GINT_VL_H
-#define GINT_VL_H
+#ifndef GINT_VL_GPU_H
+#define GINT_VL_GPU_H
 #include <cublas_v2.h>
 #include <cuda.h> // for CUDA_VERSION
 #include <cuda_runtime.h>
 
 #include "module_hamilt_lcao/module_gint/gint.h"
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
-
-cudaError_t checkCuda(cudaError_t result);
 
 namespace GintKernel
 {
