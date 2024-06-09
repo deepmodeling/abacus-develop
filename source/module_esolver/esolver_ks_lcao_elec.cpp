@@ -24,7 +24,7 @@
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include "module_io/dm_io.h"
 #include "module_io/rho_io.h"
-#include "module_io/potential_io.h"
+#include "module_io/write_pot.h"
 
 namespace ModuleESolver
 {

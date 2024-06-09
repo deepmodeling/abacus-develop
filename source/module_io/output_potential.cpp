@@ -1,5 +1,5 @@
 #include "output_potential.h"
-#include "potential_io.h"
+#include "write_pot.h"
 
 namespace ModuleIO
 {

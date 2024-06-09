@@ -1,7 +1,7 @@
 #include "esolver_of.h"
 
 #include "module_io/output_log.h"
-#include "module_io/potential_io.h"
+#include "module_io/write_pot.h"
 #include "module_io/rho_io.h"
 //-----------temporary-------------------------
 #include "module_base/global_function.h"

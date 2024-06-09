@@ -1,4 +1,4 @@
-#include "potential_io.h"
+#include "write_pot.h"
 
 #include "module_base/element_name.h"
 #include "module_base/timer.h"
