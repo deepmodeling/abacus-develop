@@ -183,10 +183,11 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
     this->LOWF.ParaV = &(this->orb_con.ParaV);
     this->LM.ParaV = &(this->orb_con.ParaV);
 
-    // 5) initialize Density Matrix
+    // 5) initialize density matrix
     dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->init_DM(&this->kv, &(this->orb_con.ParaV), GlobalV::NSPIN);
 
 
+    // this function should be removed outside of the function
     if (GlobalV::CALCULATION == "get_S")
     {
         ModuleBase::timer::tick("ESolver_KS_LCAO", "init");
@@ -235,30 +236,27 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
     }
 #endif
 
-    // 8) Quxin added for DFT+U
+    // 8) initialize DFT+U
     if (GlobalV::dft_plus_u)
     {
         GlobalC::dftu.init(ucell, this->LM, this->kv.get_nks());
     }
 
-    // 9) ppcell
-    // output is GlobalC::ppcell.vloc 3D local pseudopotentials
-    // without structure factors
-    // this function belongs to cell LOOP
+    // 9) initialize ppcell
     GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, this->pw_rho);
 
-    // 10) init HSolver
+    // 10) initialize the HSolver
     if (this->phsol == nullptr)
     {
         this->phsol = new hsolver::HSolverLCAO<TK>(&(this->orb_con.ParaV));
         this->phsol->method = GlobalV::KS_SOLVER;
     }
 
-    // 11) inititlize the charge density.
+    // 11) inititlize the charge density
     this->pelec->charge->allocate(GlobalV::NSPIN);
     this->pelec->omega = GlobalC::ucell.omega;
 
-    // 12) initialize the potential.
+    // 12) initialize the potential
     if (this->pelec->pot == nullptr)
     {
         this->pelec->pot = new elecstate::Potential(this->pw_rhod,
@@ -272,8 +270,6 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
 
 #ifdef __DEEPKS
     // 13) initialize deepks
-    // wenfei 2021-12-19
-    // if we are performing DeePKS calculations, we need to load a model
     if (GlobalV::deepks_scf)
     {
         // load the DeePKS model from deep neural network
@@ -281,11 +277,10 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
     }
 #endif
 
-    // 14) set occupations?
-    // Fix this->pelec->wg by ocp_kb
+    // 14) set occupations
     if (GlobalV::ocp)
     {
-        this->pelec->fixed_weights(GlobalV::ocp_kb);
+        this->pelec->fixed_weights(GlobalV::ocp_kb, GlobalV::NBANDS, GlobalV::nelec);
 	}
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "before_all_runners");

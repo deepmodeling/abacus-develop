@@ -109,7 +109,10 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
 
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::Init_GlobalC(Input& inp, UnitCell& cell)
+void ESolver_KS_PW<T, Device>::Init_GlobalC(
+    Input &inp, 
+    UnitCell &ucell,
+    pseudopot_cell_vnl &ppcell)
 {
     // GlobalC is a historically left-over namespace, it is used to store global classes,
     // including:
@@ -162,14 +165,14 @@ void ESolver_KS_PW<T, Device>::Init_GlobalC(Input& inp, UnitCell& cell)
     // ---------------------------------------------------------------------------------
 
     //! init pseudopotential
-    GlobalC::ppcell.init(GlobalC::ucell.ntype, &this->sf, this->pw_wfc);
+    ppcell.init(ucell.ntype, &this->sf, this->pw_wfc);
 
     //! initalize local pseudopotential
-    GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, this->pw_rhod);
+    ppcell.init_vloc(ppcell.vloc, this->pw_rhod);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
 
     //! Initalize non-local pseudopotential
-    GlobalC::ppcell.init_vnl(GlobalC::ucell, this->pw_rhod);
+    ppcell.init_vnl(ucell, this->pw_rhod);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
 
     // ---------------------------------------------------------------------------------
@@ -195,21 +198,6 @@ void ESolver_KS_PW<T, Device>::Init_GlobalC(Input& inp, UnitCell& cell)
                          ? new psi::Psi<T, Device>(this->psi[0])
                          : reinterpret_cast<psi::Psi<T, Device>*>(this->psi);
 
-    // I would like to change the above sentence to the following, 
-    // but I am not sure what the code is doing, so I leave it as a comment
-    // mohan by 2024-03-27
-/*
-	if (GlobalV::device_flag == "gpu" || GlobalV::precision_flag == "single") 
-	{
-        // psi[0] means gamma_only?
-		this->kspw_psi = new psi::Psi<T, Device>(this->psi[0]);
-	} 
-	else 
-	{
-		this->kspw_psi = reinterpret_cast<psi::Psi<T, Device>*>(this->psi);
-	}
-*/
-
     if (GlobalV::precision_flag == "single")
     {
         ModuleBase::Memory::record("Psi_single", sizeof(T) * this->psi[0].size());
@@ -225,6 +213,7 @@ void ESolver_KS_PW<T, Device>::before_all_runners(Input& inp, UnitCell& ucell)
     // 1) call before_all_runners() of ESolver_KS
     ESolver_KS<T, Device>::before_all_runners(inp, ucell);
 
+
     // 2) initialize HSolver
     if (this->phsol == nullptr)
     {
@@ -238,43 +227,46 @@ void ESolver_KS_PW<T, Device>::before_all_runners(Input& inp, UnitCell& ucell)
                                                             &(this->chr),
                                                             &(this->kv),
                                                             &ucell,
-                                                            &(GlobalC::ppcell),
+                                                            &GlobalC::ppcell,
                                                             this->pw_rhod,
                                                             this->pw_rho,
                                                             this->pw_big);
     }
 
-    //! Inititlize the charge density.
+    //! 4) inititlize the charge density.
     this->pelec->charge->allocate(GlobalV::NSPIN);
 
-    //! set the cell volume variable in pelec
-    this->pelec->omega = GlobalC::ucell.omega;
+    //! 5) set the cell volume variable in pelec
+    this->pelec->omega = ucell.omega;
 
-    // Initialize the potential.
+    //! 6) initialize the potential.
     if (this->pelec->pot == nullptr)
     {
         this->pelec->pot = new elecstate::Potential(this->pw_rhod,
                                                     this->pw_rho,
-                                                    &GlobalC::ucell,
-                                                    &(GlobalC::ppcell.vloc),
+                                                    &ucell,
+                                                    &GlobalC::ppcell.vloc,
                                                     &(this->sf),
                                                     &(this->pelec->f_en.etxc),
                                                     &(this->pelec->f_en.vtxc));
     }
+
+
+    //! 7) initialize the electronic wave functions
     if (GlobalV::psi_initializer)
     {
-        // update 20240320
-        // use std::unique_ptr to manage the lifetime of psi_initializer under
-        // restriction of C++11. Based on refactor of psi_initializer, the number
-        // of member functions decrease significantly. 
         this->allocate_psi_init();
     }
-    // temporary
-    this->Init_GlobalC(inp, ucell);
-    // Fix pelec->wg by ocp_kb
+
+
+    //! 8) setup global classes
+    this->Init_GlobalC(inp, ucell, GlobalC::ppcell);
+
+
+    //! 9) setup occupations
     if (GlobalV::ocp)
     {
-        this->pelec->fixed_weights(GlobalV::ocp_kb);
+        this->pelec->fixed_weights(GlobalV::ocp_kb, GlobalV::NBANDS, GlobalV::nelec);
     }
 }
 
@@ -327,7 +319,7 @@ void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
                                                             &(this->chr),
                                                             (K_Vectors*)(&(this->kv)),
                                                             &ucell,
-                                                            &(GlobalC::ppcell),
+                                                            &GlobalC::ppcell,
                                                             this->pw_rhod,
                                                             this->pw_rho,
                                                             this->pw_big);
@@ -335,28 +327,28 @@ void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
         this->pelec->charge->allocate(GlobalV::NSPIN);
 
         //! setup cell volume
-        this->pelec->omega = GlobalC::ucell.omega;
+        this->pelec->omega = ucell.omega;
 
         delete this->pelec->pot;
 
         this->pelec->pot = new elecstate::Potential(this->pw_rhod,
                                                     this->pw_rho,
-                                                    &GlobalC::ucell,
-                                                    &(GlobalC::ppcell.vloc),
+                                                    &ucell,
+                                                    &GlobalC::ppcell.vloc,
                                                     &(this->sf),
                                                     &(this->pelec->f_en.etxc),
                                                     &(this->pelec->f_en.vtxc));
 
         // temporary
-        this->Init_GlobalC(inp, ucell);
+        this->Init_GlobalC(inp, ucell, GlobalC::ppcell);
     }
     else
     {
-        GlobalC::ppcell.init_vnl(GlobalC::ucell, this->pw_rhod);
+        GlobalC::ppcell.init_vnl(ucell, this->pw_rhod);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
 
-        this->pw_wfc->initgrids(GlobalC::ucell.lat0,
-                                GlobalC::ucell.latvec,
+        this->pw_wfc->initgrids(ucell.lat0,
+                                ucell.latvec,
                                 this->pw_wfc->nx,
                                 this->pw_wfc->ny,
                                 this->pw_wfc->nz);
@@ -410,7 +402,7 @@ void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
         {
             GlobalC::paw_cell.get_rhoijp(rhoijp, rhoijselect, nrhoijsel);
 
-            for(int iat = 0; iat < GlobalC::ucell.nat; iat ++)
+            for(int iat = 0; iat < ucell.nat; iat ++)
             {
                 GlobalC::paw_cell.set_rhoij(iat,
 						nrhoijsel[iat],
@@ -422,7 +414,7 @@ void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
 #else
         GlobalC::paw_cell.get_rhoijp(rhoijp, rhoijselect, nrhoijsel);
 
-        for(int iat = 0; iat < GlobalC::ucell.nat; iat ++)
+        for(int iat = 0; iat < ucell.nat; iat ++)
         {
 			GlobalC::paw_cell.set_rhoij(iat,
 					nrhoijsel[iat],
@@ -439,7 +431,7 @@ void ESolver_KS_PW<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
 
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::before_scf(int istep)
+void ESolver_KS_PW<T, Device>::before_scf(const int istep)
 {
     ModuleBase::TITLE("ESolver_KS_PW", "before_scf");
 
