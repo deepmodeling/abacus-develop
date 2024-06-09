@@ -1,7 +1,5 @@
 #include "diago_david.h"
 
-#include "diago_iter_assist.h"
-
 #include "module_base/memory.h"
 #include "module_base/timer.h"
 #include "module_base/module_device/device.h"
@@ -57,9 +55,11 @@ DiagoDavid<T, Device>::~DiagoDavid()
 }
 
 template <typename T, typename Device>
-void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
+int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
                                            psi::Psi<T, Device>& psi,
-                                           Real* eigenvalue_in)
+                                           Real* eigenvalue_in,
+                                           const int david_diag_thr,
+                                           const int david_diag_maxiter)
 {
     if (test_david == 1)
     {
@@ -237,7 +237,7 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
         this->notconv = 0;
         for (int m = 0; m < this->n_band; m++)
         {
-            convflag[m] = (std::abs(this->eigenvalue[m] - eigenvalue_in[m]) < DiagoIterAssist<T, Device>::PW_DIAG_THR);
+            convflag[m] = (std::abs(this->eigenvalue[m] - eigenvalue_in[m]) < david_diag_thr);
 
             if (!convflag[m])
             {
@@ -250,7 +250,7 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
 
         ModuleBase::timer::tick("DiagoDavid", "check_update");
         if (!this->notconv || (nbase + this->notconv > this->nbase_x)
-            || (dav_iter == DiagoIterAssist<T, Device>::PW_DIAG_NMAX))
+            || (dav_iter == david_diag_maxiter))
         {
             ModuleBase::timer::tick("DiagoDavid", "last");
 
@@ -276,7 +276,7 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
                                       this->dmx
             );
 
-            if (!this->notconv || (dav_iter == DiagoIterAssist<T, Device>::PW_DIAG_NMAX))
+            if (!this->notconv || (dav_iter == david_diag_maxiter))
             {
                 // overall convergence or last iteration: exit the iteration
 
@@ -307,11 +307,9 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
 
     } while (1);
 
-    DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(dav_iter);
-
     ModuleBase::timer::tick("DiagoDavid", "diag_mock");
 
-    return;
+    return dav_iter;
 }
 
 template <typename T, typename Device>
@@ -1036,10 +1034,15 @@ void DiagoDavid<T, Device>::planSchmitOrth(const int nband, int* pre_matrix_mm_m
     }
 }
 
+// ntry_max is an empirical parameter that should be specified in external routine, default 5
+// notconv_max is determined by the accuracy required for the calculation, default 5
+// notconv_max should be set to 0 for accurate nscf calculation
 template <typename T, typename Device>
-void DiagoDavid<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
-                                      psi::Psi<T, Device>& psi,
-                                      Real* eigenvalue_in)
+int DiagoDavid<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
+                                    psi::Psi<T, Device>& psi,
+                                    Real* eigenvalue_in,
+                                    const int ntry_max,
+                                    const int notconv_max)
 {
     /// record the times of trying iterative diagonalization
     int ntry = 0;
@@ -1053,18 +1056,42 @@ void DiagoDavid<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
     }
 #endif
 
+    int sum_dav_iter = 0;
     do
     {
-        this->diag_mock(phm_in, psi, eigenvalue_in);
+        sum_dav_iter += this->diag_mock(phm_in, psi, eigenvalue_in, ntry_max, notconv_max);
         ++ntry;
-    } while (DiagoIterAssist<T, Device>::test_exit_cond(ntry, this->notconv));
+    } while (!check_block_conv(ntry, this->notconv, ntry_max, notconv_max)); // while not converged
 
     if (notconv > std::max(5, psi.get_nbands() / 4))
     {
         std::cout << "\n notconv = " << this->notconv;
         std::cout << "\n DiagoDavid::diag', too many bands are not converged! \n";
     }
-    return;
+    return sum_dav_iter;
+}
+
+// check whether block eigenvectors reach convergence, true for converged
+// ntry_max sets max tries allowed to do diagonalization
+// notconv_max determines how many eigenvectors are allowed to fail to converge when judging global convergence
+template <typename T, typename Device>
+inline bool DiagoDavid<T, Device>::check_block_conv(const int &ntry,
+                                                  const int &notconv,
+                                                  const int &ntry_max,
+                                                  const int &notconv_max)
+{
+    // Allow at most 5 tries at diag. If more than 5 then stop loop.
+    if(ntry > ntry_max)
+    {
+        return true;
+    }
+    // If notconv <= notconv_max allowed, set convergence to true and exit loop.
+    if(notconv <= notconv_max)
+    {
+        return true;
+    }
+    // else return false, continue loop until either condition above is met.
+    return false;
 }
 
 namespace hsolver {

@@ -763,7 +763,14 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::P
         }
         else
         {
-            this->pdiagh->diag(hm, psi, eigenvalue);
+            // Allow 5 tries at most. If ntry > ntry_max = 5, exit diag loop.
+            int ntry_max = 5;
+            // In non-self consistent calculation, do until totally converged. Else allow 5 eigenvecs to be NOT converged.
+            int notconv_max = ("nscf" == GlobalV::CALCULATION)? 0: 5;
+            // do diag and add davidson iteration counts up to avg_iter
+            DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
+                reinterpret_cast<DiagoDavid<T, Device>*>(this->pdiagh)->diag(hm, psi, eigenvalue, ntry_max, notconv_max)
+            );
         }
         return;
     }
