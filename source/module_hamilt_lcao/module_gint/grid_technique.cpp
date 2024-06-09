@@ -920,14 +920,6 @@ void Grid_Technique::init_gpu_gint_variables(const UnitCell& ucell,const LCAO_Or
     checkCudaErrors(
         cudaMalloc((void**)&num_psir_gbl_g, nbzp * nstreams * sizeof(int)));
 
-    num_mcell = nbzp * bxyz;
-    checkCudaErrors(cudaMalloc((void**)&rho_g, this->ncxyz * sizeof(double)));
-    checkCudaErrors(cudaMemset(rho_g, 0, this->ncxyz * sizeof(double)));
-    checkCudaErrors(cudaMallocHost((void**)&dot_product,
-                                   num_mcell * nstreams * sizeof(double*)));
-    checkCudaErrors(cudaMalloc((void**)&dot_product_g,
-                               num_mcell * nstreams * sizeof(double*)));
-
 
     for (int i = 0; i < nstreams; ++i)
     {
@@ -1011,11 +1003,6 @@ void Grid_Technique::free_gpu_gint_variables(int nat)
     checkCudaErrors(cudaFree(ap_right_gbl_g));
     checkCudaErrors(cudaFree(dm_global_g));
     checkCudaErrors(cudaFree(ap_output_gbl_g));
-
-    checkCudaErrors(cudaFreeHost(dot_product));
-
-    checkCudaErrors(cudaFree(dot_product_g));
-    checkCudaErrors(cudaFree(rho_g));
 
     const int max_atom_pair_number = nat * nat;
     for (int i = 0; i < max_atom_pair_number; i++)

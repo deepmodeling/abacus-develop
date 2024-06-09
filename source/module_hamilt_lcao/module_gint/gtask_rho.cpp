@@ -9,7 +9,6 @@ void gtask_rho(const Grid_Technique& gridt,
                const int grid_index_ij,
                std::vector<bool>& gpu_mat_cal_flag,
                const int max_size,
-               const int nczp,
                const UnitCell& ucell,
                const double* rcut,
                double* input_double,
@@ -66,7 +65,7 @@ void gtask_rho(const Grid_Technique& gridt,
                             gpu_mat_cal_flag[calc_flag_index + id] = true;
                             int pos_temp_double = num_psi_pos + num_get_psi;
                             int pos_temp_int = pos_temp_double * 2;
-                            pos_temp_double *= 5;
+                            pos_temp_double *= 4;
                             if (distance < 1.0E-9)
                             {
                                 distance += 1.0E-9;

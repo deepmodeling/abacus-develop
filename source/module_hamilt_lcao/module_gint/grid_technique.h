@@ -215,12 +215,6 @@ class Grid_Technique : public Grid_MeshBall
     int* num_psir_gbl;
     int* num_psir_gbl_g;
 
-    // additional variables for rho calculating
-    int num_mcell;
-    double* rho_g;
-    double** dot_product;
-    double** dot_product_g;
-
     matrix_multiple_func_type fastest_matrix_mul;
 
   private:

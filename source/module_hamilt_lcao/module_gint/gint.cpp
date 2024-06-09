@@ -118,7 +118,6 @@ void Gint::cal_gint(Gint_inout* inout)
                 {
                     ModuleBase::GlobalFunc::ZEROS(inout->rho[is], nrxx);
                     GintKernel::gint_gamma_rho_gpu(this->DMRGint[is],
-                                                   this->nplane,
                                                    ylmcoef,
                                                    dr,
                                                    rcut,

@@ -14,7 +14,6 @@ namespace GintKernel
  * calculate the rho by GPU
  *
  * @param dm density matrix.
- * @param nczp number of meshcells along the z-axis on this processor.
  * @param ylmcoef_now coefficients for the spherical harmonics expansion.
  * @param dr The grid spacing.
  * @param rcut Pointer to the cutoff radius array.
@@ -23,7 +22,6 @@ namespace GintKernel
  * @param rho rho.
  */
 void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
-                        const int nczp,
                         const double* ylmcoef_now,
                         const double dr,
                         const double* rcut,
@@ -43,7 +41,6 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
  * @param grid_index_ij Combined X and Y indices of the bigcell.
  * @param gpu_matrix_calc_flag Flags indicating which parts of the calculation will use the GPU.
  * @param max_size Maximum number of atoms in a meshcell.
- * @param nczp Number of meshcells along the z-axis on this processor.
  * @param ucell UnitCell object containing unit cell information.
  * @param rcut Pointer to the cutoff radius array.
  * @param input_double `double` type data used for calculating psir.
@@ -54,7 +51,6 @@ void gtask_rho(const Grid_Technique& gridt,
                const int grid_index_ij,
                std::vector<bool>& gpu_matrix_calc_flag,
                const int max_size,
-               const int nczp,
                const UnitCell& ucell,
                const double* rcut,
                double* input_double,

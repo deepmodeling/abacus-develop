@@ -29,7 +29,7 @@ __global__ void get_psi(const double* const ylmcoef,
          index += blockDim.x * gridDim.y)
     {
         double dr[3];
-        int index_double = index * 5;
+        int index_double = index * 4;
         dr[0] = input_double[index_double];
         dr[1] = input_double[index_double + 1];
         dr[2] = input_double[index_double + 2];
