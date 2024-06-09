@@ -38,7 +38,7 @@ void Output_DM::write()
 {
     ModuleIO::write_dm(
 #ifdef __MPI
-        _GridT.trace_lo,
+        _GridT.trace_lo.data(),
 #endif
         _is,
         _iter,

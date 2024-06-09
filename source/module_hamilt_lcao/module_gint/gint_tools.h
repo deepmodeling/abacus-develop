@@ -34,7 +34,6 @@ class Gint_inout
         double** rho;
         ModuleBase::matrix* fvl_dphi;
         ModuleBase::matrix* svl_dphi;
-
         Gint_Tools::job_type job;
 
 	// electron density and kin_r, multi-k

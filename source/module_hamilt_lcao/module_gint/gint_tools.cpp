@@ -1190,14 +1190,14 @@ namespace Gint_Tools
 			const double* tmp_matrix = DM->find_matrix(iat, iat, 0, 0, 0)->get_pointer();
             if (if_symm) //density
 			{
-				const int idx1=block_index[ia1];
-				int* find_start = gt.find_R2[iat];
-				int* find_end = gt.find_R2[iat] + gt.nad[iat];
+				const int idx1 = block_index[ia1];
+				std::vector<int> find_start = gt.find_R2[iat];
+				std::vector<int>::const_iterator find_end = std::next(gt.find_R2[iat].begin(), gt.nad[iat]);
 				//ia2==ia1
-				int cal_num=0;
-				for(int ib=0; ib<bxyz; ++ib)
+				int cal_num = 0;
+				for (int ib = 0; ib < bxyz; ++ib)
 				{
-					if(cal_flag[ib][ia1])
+					if (cal_flag[ib][ia1])
 					{
 						++cal_num;
 					}
@@ -1209,14 +1209,14 @@ namespace Gint_Tools
 					//find offset
 					const int index = gt.cal_RindexAtom(0, 0, 0, iat);
 					offset = -1;
-					for(int* find=find_start; find < find_end; find++)
+					for(auto find=find_start.begin(); find < find_start.end(); find++)
 					{
 						//--------------------------------------------------------------
 						// start positions of adjacent atom of 'iat'
 						//--------------------------------------------------------------
-						if( find[0] == index )
+						if( *find == index )
 						{
-							offset = find - find_start; // start positions of adjacent atom of 'iat'
+							offset = find - find_start.begin(); // start positions of adjacent atom of 'iat'
 							break;
 						}
 					}
@@ -1308,21 +1308,19 @@ namespace Gint_Tools
 				const double* tmp_matrix = DM->find_matrix(iat, iat2, dRx, dRy, dRz)->get_pointer();
 				int offset = -1;
 
-				int* find_start = gt.find_R2[iat];
-				int* findend = gt.find_R2[iat] + gt.nad[iat];
+				std::vector<int> find_start(gt.find_R2[iat].begin(), gt.find_R2[iat].begin() + gt.nad[iat]);
 
-				// the nad should be a large expense of time.
-				for(int* find=find_start; find < findend; find++)
+				for (std::vector<int>::iterator find = find_start.begin(); find != find_start.end(); ++find)
 				{
-					if( find[0] == index )
+					if (*find == index)
 					{
-						offset = find - find_start;
+						offset = std::distance(find_start.begin(), find);
 						break;
 					}
 				}
-				if(offset == -1 )
+				if (offset == -1)
 				{
-					ModuleBase::WARNING_QUIT("gint_k","mult_psi_DMR wrong");
+					ModuleBase::WARNING_QUIT("gint_k", "mult_psi_DMR wrong");
 				}
 				assert(offset < gt.nad[iat]);
 

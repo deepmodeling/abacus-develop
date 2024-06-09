@@ -24,39 +24,39 @@ class Grid_Technique : public Grid_MeshBall
     // 1: Info about atom number on grid.
     //------------------------------------
     // record how many atoms on each grid.
-    int* how_many_atoms;
+    std::vector<int> how_many_atoms;
     // max atom on grid
     int max_atom;
     // sum of how_many_atoms
     int total_atoms_on_grid;
 
-    int* start_ind;
+    std::vector<int> start_ind;
 
     //------------------------------------
     // 2: Info about which atom on grid.
     //------------------------------------
     // save the start position of each big cell's adjacent
     // atoms in 1D grid.
-    int* bcell_start;
+    std::vector<int> bcell_start;
     // save the 'iat' atom.
     // dim: total_atoms_on_grid.
-    int* which_atom;
+    std::vector<int> which_atom;
 
     //--------------------------------------
     // save the bigcell index in meshball.
     // dim: total_atoms_on_grid.
     //--------------------------------------
-    int* which_bigcell;
-    int* which_unitcell;
+    std::vector<int> which_bigcell;
+    std::vector<int> which_unitcell;
 
     //------------------------------------
     // 3: which atom on local grid.
     //------------------------------------
-    bool* in_this_processor;
+    std::vector<bool> in_this_processor;
     std::vector<int> trace_iat;
     int lnat;      // local nat.
     int lgd;       // local grid dimension.  lgd * lgd symmetry matrix.
-    int* trace_lo; // trace local orbital.
+    std::vector<int> trace_lo; // trace local orbital.
 
     //---------------------------------------
     // nnrg: number of matrix elements on
@@ -64,13 +64,12 @@ class Grid_Technique : public Grid_MeshBall
     // use: GridT.in_this_processor
     //---------------------------------------
     int nnrg;
-    int* nlocdimg;
-    int* nlocstartg;
-
-    int* nad; // number of adjacent atoms for each atom.
-    int** find_R2;
-    int** find_R2_sorted_index;
-    int** find_R2st;
+    std::vector<int> nlocdimg;
+    std::vector<int> nlocstartg;
+    std::vector<int> nad; // number of adjacent atoms for each atom.
+    std::vector<std::vector<int>> find_R2;
+    std::vector<std::vector<int>> find_R2_sorted_index;
+    std::vector<std::vector<int>> find_R2st;
     bool allocate_find_R2;
     int binary_search_find_R2_offset(int val, int iat) const;
 
