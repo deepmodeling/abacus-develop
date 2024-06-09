@@ -582,19 +582,18 @@ template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::others(const int istep)
 {
     ModuleBase::TITLE("ESolver_KS_PW", "others");
-    ModuleBase::timer::tick("ESolver_KS_PW", "others");
-    if (GlobalV::CALCULATION == "test_memory")
+
+    const std::string cal_type = GlobalV::CALCULATION;
+
+    if (cal_type == "test_memory")
     {
         Cal_Test::test_memory(this->pw_rho,
                               this->pw_wfc,
                               this->p_chgmix->get_mixing_mode(),
                               this->p_chgmix->get_mixing_ndim());
-        return;
     }
-
-    if (GlobalV::CALCULATION == "gen_bessel")
+    else if (cal_type == "gen_bessel")
     {
-        // caoyu add 2020-11-24, mohan updat 2021-01-03
         Numerical_Descriptor nc;
         nc.output_descriptor(this->psi[0],
                              INPUT.bessel_descriptor_lmax,
@@ -602,11 +601,8 @@ void ESolver_KS_PW<T, Device>::others(const int istep)
                              INPUT.bessel_descriptor_tolerence,
                              this->kv.get_nks());
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "GENERATE DESCRIPTOR FOR DEEPKS");
-        return;
     }
-
-    // self consistent calculations for electronic ground state
-    if (GlobalV::CALCULATION == "nscf")
+    else if (cal_type == "nscf")
     {
         this->nscf();
     }
@@ -615,7 +611,6 @@ void ESolver_KS_PW<T, Device>::others(const int istep)
         ModuleBase::WARNING_QUIT("ESolver_KS_PW::others", "CALCULATION type not supported");
     }
 
-    ModuleBase::timer::tick("ESolver_KS_PW", "others");
     return;
 }
 
