@@ -170,7 +170,7 @@ void ESolver_FP::init_after_vc(Input& inp, UnitCell& cell)
 		ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
 	}
 
-	kv.set_after_vc(cell.symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, cell.G, cell.latvec);
+	kv.set_after_vc(GlobalV::NSPIN, cell.G, cell.latvec);
 	ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
     return;
