@@ -351,8 +351,15 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
 
     if (cal_type == "get_S")
     {
+        std::cout << "\n * * * * * *" << std::endl;
+        std::cout << " << Start writing the overlap matrix." << std::endl;
         this->get_S();
+        std::cout << " >> Finish writing the overlap matrix." << std::endl;
+        std::cout << " * * * * * *\n" << std::endl;
+
         ModuleBase::QUIT();
+
+        // return; // use 'return' will cause segmentation fault. by mohan 2024-06-09
     }
     else if (cal_type == "test_memory")
     {
@@ -499,7 +506,12 @@ void ESolver_KS_LCAO<std::complex<double>, double>::get_S(void)
         dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, double>*>(this->p_hamilt->ops)->contributeHR();
     }
 
-    ModuleIO::output_SR(orb_con.ParaV, this->LM, GlobalC::GridD, this->p_hamilt, "SR.csr");
+    // mohan add 2024-06-09
+    const std::string fn = GlobalV::global_out_dir + "SR.csr";
+
+    std::cout << " The file is saved in " << fn << std::endl;
+
+    ModuleIO::output_SR(orb_con.ParaV, this->LM, GlobalC::GridD, this->p_hamilt, fn);
 
     return;
 }
@@ -531,7 +543,12 @@ void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S(void)
             ->contributeHR();
     }
 
-    ModuleIO::output_SR(orb_con.ParaV, this->LM, GlobalC::GridD, this->p_hamilt, "SR.csr");
+    // mohan add 2024-06-09
+    const std::string fn = GlobalV::global_out_dir + "SR.csr";
+
+    std::cout << " The file is saved in " << fn << std::endl;
+
+    ModuleIO::output_SR(orb_con.ParaV, this->LM, GlobalC::GridD, this->p_hamilt, fn);
 
     return;
 }

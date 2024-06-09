@@ -413,9 +413,8 @@ void ESolver_KS<T, Device>::print_wfcfft(Input& inp, std::ofstream &ofs)
 //------------------------------------------------------------------------------
 //! the 7th function of ESolver_KS: run
 //! mohan add 2024-05-11
-//! 1) run others except scf, md, relax, cell-relax
 //! 2) before_scf (electronic iteration loops)
-//! 3) print head
+//! 3) run charge density
 //! 4) SCF iterations
 //! 5) write head
 //! 6) initialization of SCF iterations
@@ -440,13 +439,14 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
 	// 2) before_scf (electronic iteration loops)
 	this->before_scf(istep); 
 
+    // 3) write charge density
 	if(GlobalV::dm_to_rho) 
 	{
+	    ModuleBase::timer::tick(this->classname, "runner");
 		return; //nothing further is needed
 	}
 
 	ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT SCF");
-
 
 	bool firstscf = true;
 	this->conv_elec = false;
