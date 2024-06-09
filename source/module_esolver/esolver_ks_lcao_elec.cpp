@@ -263,7 +263,8 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
             ss << GlobalV::global_out_dir << "SPIN" << is+1 << "_CHG_INI.cube";
             ModuleIO::write_rho(
 #ifdef __MPI
-                this->pw_big->nbz, this->pw_big->bz,
+                this->pw_big->bz, // bz first, then nbz
+                this->pw_big->nbz,
                 this->pw_rho->nplane, this->pw_rho->startz_current,
 #endif
                 this->pelec->charge->rho[is], is,
