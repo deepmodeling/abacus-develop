@@ -10,7 +10,55 @@
 namespace ModuleIO
 {
 
-void write_potential(
+void write_pot(
+    const int &out_pot,
+    const int &nspin, 
+    const std::string &global_out_dir,
+#ifdef __MPI
+    const int& bz,
+    const int& nbz,
+    const int& nplane,
+    const int& startz_current,
+#endif
+    const int& nx,
+    const int& ny,
+    const int& nz,
+    const ModuleBase::matrix& v)
+{
+    ModuleBase::TITLE("ModuleIO", "write_pot");
+    if(out_pot == 3)
+    {
+        for(int is = 0; is < nspin; is++)
+        {
+            std::stringstream ss;
+            ss << global_out_dir << "SPIN" << is+1 << "_POT_INI.cube";
+            ModuleIO::write_pot_spin(
+                    out_pot,
+#ifdef __MPI
+					bz,
+					nbz,
+					nplane,
+					startz_current,
+#endif
+                    is,
+                    0, // iter
+                    ss.str(),
+                    nx,
+                    ny,
+                    nz,
+                    v,
+                    11); // precsion
+        }
+    }
+
+    ModuleBase::TITLE("ModuleIO", "write_pot");
+    return;
+}
+
+
+
+void write_pot_spin(
+    const int& out_pot,
 #ifdef __MPI
     const int& bz,
     const int& nbz,
@@ -27,12 +75,12 @@ void write_potential(
     const int& precision,
     const int& hartree)
 {
-    ModuleBase::TITLE("potential", "write_potential");
-    if (GlobalV::out_pot != 1 && GlobalV::out_pot != 3)
+    ModuleBase::TITLE("ModuleIO", "write_pot_spin");
+    if (out_pot != 1 && out_pot != 3)
     {
         return;
     }
-    ModuleBase::timer::tick("Potential", "write_potential");
+    ModuleBase::timer::tick("ModuleIO", "write_pot_spin");
 
     double* temp_v = nullptr;
     if (is == 0)
@@ -46,6 +94,7 @@ void write_potential(
 
     double ef_tmp = 0.;
     int out_fermi = 0;
+
     ModuleIO::write_cube(
 #ifdef __MPI
         bz,
@@ -66,7 +115,7 @@ void write_potential(
         precision,
         out_fermi);
 
-    ModuleBase::timer::tick("Potential", "write_potential");
+    ModuleBase::timer::tick("ModuleIO", "write_pot_spin");
     return;
 }
 

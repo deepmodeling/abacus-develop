@@ -496,6 +496,9 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
 
     //! calculate the total local pseudopotential in real space
     this->pelec->init_scf(istep, this->sf.strucFac);
+
+
+
     if(GlobalV::out_chg == 2)
     {
         for(int is = 0; is < GlobalV::NSPIN; is++)
@@ -504,33 +507,39 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
             ss << GlobalV::global_out_dir << "SPIN" << is+1 << "_CHG_INI.cube";
             ModuleIO::write_rho(
 #ifdef __MPI
-                this->pw_big->nbz, this->pw_big->bz,
-                this->pw_rho->nplane, this->pw_rho->startz_current,
+					this->pw_big->bz,
+					this->pw_big->nbz, 
+					this->pw_rho->nplane, 
+					this->pw_rho->startz_current,
 #endif
-                this->pelec->charge->rho[is], is,
-                GlobalV::NSPIN, 0,
-                ss.str(),
-                this->pw_rho->nx, this->pw_rho->ny, this->pw_rho->nz,
-                this->pelec->eferm.ef, &(GlobalC::ucell) , 11);
+					this->pelec->charge->rho[is], 
+                    is,
+					GlobalV::NSPIN, 
+                    0,
+					ss.str(),
+					this->pw_rho->nx, 
+                    this->pw_rho->ny, 
+                    this->pw_rho->nz,
+					this->pelec->eferm.ef, 
+                    &(GlobalC::ucell), 
+                    11);
         }
     }
 
-    if(GlobalV::out_pot == 3)
-    {
-        for(int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            std::stringstream ss;
-            ss << GlobalV::global_out_dir << "SPIN" << is+1 << "_POT_INI.cube";
-            ModuleIO::write_potential(
+	ModuleIO::write_pot(
+			GlobalV::out_pot, 
+			GlobalV::NSPIN, 
+			GlobalV::global_out_dir,
 #ifdef __MPI
-                this->pw_big->nbz, this->pw_big->bz,
-                this->pw_rho->nplane, this->pw_rho->startz_current,
+			this->pw_big->bz,
+			this->pw_big->nbz, 
+			this->pw_rho->nplane, 
+			this->pw_rho->startz_current,
 #endif
-                is,0,ss.str(),
-                this->pw_rho->nx, this->pw_rho->ny, this->pw_rho->nz,
-                this->pelec->pot->get_effective_v(), 11);
-        }
-    }
+            this->pw_rho->nx,
+            this->pw_rho->ny,
+            this->pw_rho->nz,
+            this->pelec->pot->get_effective_v());
 
     //! Symmetry_rho should behind init_scf, because charge should be initialized first.
     //! liuyu comment: Symmetry_rho should be located between init_rho and v_of_rho?
@@ -1226,7 +1235,6 @@ void ESolver_KS_PW<T, Device>::cal_stress(ModuleBase::matrix& stress)
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::after_all_runners(void)
 {
-
     GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
     GlobalV::ofs_running << std::setprecision(16);
     GlobalV::ofs_running << " !FINAL_ETOT_IS " << this->pelec->f_en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
@@ -1304,36 +1312,7 @@ void ESolver_KS_PW<T, Device>::after_all_runners(void)
 
     if (GlobalV::BASIS_TYPE == "pw" && winput::out_spillage) // xiaohui add 2013-09-01
     {
-        // std::cout << "\n Output Spillage Information : " << std::endl;
         //  calculate spillage value.
-#ifdef __LCAO
-// We are not goint to support lcao_in_paw until
-// the obsolete GlobalC::hm is replaced by the
-// refactored moeules (psi, hamilt, etc.)
-/*
-            if ( winput::out_spillage == 3)
-            {
-                GlobalV::BASIS_TYPE="pw";
-                std::cout << " NLOCAL = " << GlobalV::NLOCAL << std::endl;
-
-                for (int ik=0; ik<this->kv.get_nks(); ik++)
-                {
-                    this->wf.wanf2[ik].create(GlobalV::NLOCAL, this->wf.npwx);
-                    if(GlobalV::BASIS_TYPE=="pw")
-                    {
-                        std::cout << " ik=" << ik + 1 << std::endl;
-
-                        GlobalV::BASIS_TYPE="lcao_in_pw";
-                        this->wf.LCAO_in_pw_k(ik, this->wf.wanf2[ik]);
-                        GlobalV::BASIS_TYPE="pw";
-                    }
-                }
-
-                //Spillage sp;
-                //sp.get_both(GlobalV::NBANDS, GlobalV::NLOCAL, this->wf.wanf2, this->wf.evc);
-            }
-*/
-#endif
 
         // ! Print out overlap before spillage optimization to generate atomic orbitals
         if (winput::out_spillage <= 2)
@@ -1342,7 +1321,8 @@ void ESolver_KS_PW<T, Device>::after_all_runners(void)
             {
                 if(GlobalV::MY_RANK == 0) 
                 {
-                    std::cout << "update value: bessel_nao_rcut <- " << std::fixed << INPUT.bessel_nao_rcuts[i] << " a.u." << std::endl;
+                    std::cout << "update value: bessel_nao_rcut <- " 
+                    << std::fixed << INPUT.bessel_nao_rcuts[i] << " a.u." << std::endl;
                 }
                 INPUT.bessel_nao_rcut = INPUT.bessel_nao_rcuts[i];
                 Numerical_Basis numerical_basis;
@@ -1397,11 +1377,11 @@ void ESolver_KS_PW<T, Device>::nscf(void)
     ModuleBase::TITLE("ESolver_KS_PW", "nscf");
     ModuleBase::timer::tick("ESolver_KS_PW", "nscf");
 
-    // mohan add istep_tmp 2024-03-31
+    //! 1) before_scf
     const int istep_tmp = 0;
     this->before_scf(istep_tmp);
 
-    //! Setup the parameters for diagonalization
+    //! 2) setup the parameters for diagonalization
     double diag_ethr = GlobalV::PW_DIAG_THR;
     if (diag_ethr - 1e-2 > -1e-5)
     {
@@ -1409,19 +1389,19 @@ void ESolver_KS_PW<T, Device>::nscf(void)
     }
     GlobalV::ofs_running << " PW_DIAG_THR  = " << diag_ethr << std::endl;
 
-    //! Diagonalize Hamiltonian
     this->hamilt2estates(diag_ethr);
 
-    //! Calculate weights/Fermi energies
+    //! 3) calculate weights/Fermi energies
     this->pelec->calculate_weights();
-
 
     GlobalV::ofs_running << "\n End of Band Structure Calculation \n" << std::endl;
 
-    //! Print out band energies and weights
+    //! 4) print out band energies and weights
+    const int nspin = GlobalV::NSPIN;
+    const int nbands = GlobalV::NBANDS;
     for (int ik = 0; ik < this->kv.get_nks(); ik++)
     {
-        if (GlobalV::NSPIN == 2)
+        if (nspin == 2)
         {
             if (ik == 0)
 			{
@@ -1440,7 +1420,7 @@ void ESolver_KS_PW<T, Device>::nscf(void)
 			<< this->kv.kvec_c[ik].y 
 			<< " " << this->kv.kvec_c[ik].z << std::endl;
 
-        for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+        for (int ib = 0; ib < nbands; ib++)
         {
 			GlobalV::ofs_running << " spin" 
 				<< this->kv.isk[ik] + 1 
@@ -1453,7 +1433,7 @@ void ESolver_KS_PW<T, Device>::nscf(void)
         GlobalV::ofs_running << std::endl;
     }
 
-    //! Print out band gaps
+    //! 5) print out band gaps
     if (GlobalV::out_bandgap)
     {
         if (!GlobalV::TWO_EFERMI)
@@ -1477,11 +1457,10 @@ void ESolver_KS_PW<T, Device>::nscf(void)
 		}
     }
 
-    //! Calculate Wannier functions
-    // add by jingan in 2018.11.7
+    //! 6) calculate Wannier functions
     if (INPUT.towannier90)
     {
-        toWannier90_PW myWannier(
+        toWannier90_PW wan(
             INPUT.out_wannier_mmn,
             INPUT.out_wannier_amn,
             INPUT.out_wannier_unk, 
@@ -1491,7 +1470,7 @@ void ESolver_KS_PW<T, Device>::nscf(void)
             INPUT.wannier_spin
         );
 
-		myWannier.calculate(
+		wan.calculate(
 				this->pelec->ekb, 
 				this->pw_wfc, 
 				this->pw_big, 
@@ -1500,7 +1479,7 @@ void ESolver_KS_PW<T, Device>::nscf(void)
 	}
 
 
-    //! Calculate Berry phase polarization 
+    //! 7) calculate Berry phase polarization 
     if (berryphase::berry_phase_flag 
         && ModuleSymmetry::Symmetry::symm_flag != 1)
     {

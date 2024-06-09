@@ -48,7 +48,8 @@ void Output_Potential::write()
             {
                 _fn_Pot = _directory + "/SPIN" + std::to_string(is + 1) + "_" + _tag + ".cube";
             }
-            ModuleIO::write_potential(
+            ModuleIO::write_pot_spin(
+                _out_pot, // mohan add 2024-06-09
 #ifdef __MPI
                 _pw_big->bz,
                 _pw_big->nbz,

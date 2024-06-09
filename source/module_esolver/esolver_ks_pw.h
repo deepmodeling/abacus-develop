@@ -6,11 +6,6 @@
 #include <memory>
 #include <module_base/macros.h>
 
-// #include "Basis_PW.h"
-// #include "Estate_PW.h"
-// #include "Hamilton_PW.h"
-// #include "H2E_pw.h"
-
 
 namespace ModuleESolver
 {

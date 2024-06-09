@@ -274,22 +274,21 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
         }
     }
 
-    if(GlobalV::out_pot == 3)
-    {
-        for(int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            std::stringstream ss;
-            ss << GlobalV::global_out_dir << "SPIN" << is+1 << "_POT_INI.cube";
-            ModuleIO::write_potential(
+
+	ModuleIO::write_pot(
+			GlobalV::out_pot, 
+			GlobalV::NSPIN, 
+			GlobalV::global_out_dir,
 #ifdef __MPI
-                this->pw_big->nbz, this->pw_big->bz,
-                this->pw_rho->nplane, this->pw_rho->startz_current,
+			this->pw_big->bz,
+			this->pw_big->nbz, 
+			this->pw_rho->nplane, 
+			this->pw_rho->startz_current,
 #endif
-                is,0,ss.str(),
-                this->pw_rho->nx, this->pw_rho->ny, this->pw_rho->nz,
-                this->pelec->pot->get_effective_v(), 11);
-        }
-    }
+            this->pw_rho->nx,
+            this->pw_rho->ny,
+            this->pw_rho->nz,
+            this->pelec->pot->get_effective_v());
 
     // initalize DMR
     // DMR should be same size with Hamiltonian(R)
