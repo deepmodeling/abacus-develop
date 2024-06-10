@@ -193,7 +193,7 @@ void write_elecstat_pot(
         rho_basis->nplane,
         rho_basis->startz_current,
 #endif
-        v_elecstat,
+        v_elecstat.data(),
         is,
         nspin,
         0,

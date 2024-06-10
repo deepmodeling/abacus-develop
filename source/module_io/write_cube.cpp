@@ -183,7 +183,7 @@ void ModuleIO::write_cube(
 		// save the rho one z by one z.
 		for(int iz=0; iz<nz; iz++)
 		{
-            zpiece.assign(nxy, 0.0)
+            zpiece.assign(nxy, 0.0);
 
 			// tag must be different for different iz.
 			const int tag = iz;
