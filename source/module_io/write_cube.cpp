@@ -24,11 +24,13 @@ void ModuleIO::write_cube(
 {
 	ModuleBase::TITLE("ModuleIO","write_cube");
 
+    const int my_rank = GlobalV::MY_RANK;
+
 	time_t start;
     time_t end;
 	std::ofstream ofs_cube;
   
-	if(GlobalV::MY_RANK==0)
+	if(my_rank==0)
 	{
 		start = time(NULL);
 
@@ -40,8 +42,7 @@ void ModuleIO::write_cube(
 		}	
 
 		/// output header for cube file
-		ofs_cube << "Cubefile created from ABACUS SCF calculation. The inner loop is z index, followed by y index, x index in turn." << std::endl;
-		// ofs_cube << "Contains the selected quantity on a FFT grid" << std::endl;
+		ofs_cube << "Cubefile created from ABACUS. Inner loop is z, followed by y and x" << std::endl;
 		ofs_cube << nspin << " (nspin) ";
 		
 		ofs_cube << std::fixed;
@@ -127,7 +128,6 @@ void ModuleIO::write_cube(
 
 #ifdef __MPI
 
-    const int my_rank = GlobalV::MY_RANK;
     const int my_pool = GlobalV::MY_POOL;
     const int rank_in_pool = GlobalV::RANK_IN_POOL;
     const int nproc_in_pool = GlobalV::NPROC_IN_POOL;
