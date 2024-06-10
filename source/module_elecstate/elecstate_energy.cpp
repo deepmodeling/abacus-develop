@@ -195,6 +195,7 @@ double ElecState::cal_delta_escf() const
     const double* v_eff = this->pot->get_effective_v(0);
     const double* v_fixed = this->pot->get_fixed_v();
     const double* v_ofk = nullptr;
+
     if (get_xc_func_type() == 3 || get_xc_func_type() == 5)
     {
         v_ofk = this->pot->get_effective_vofk(0);
@@ -241,6 +242,8 @@ double ElecState::cal_delta_escf() const
     Parallel_Reduce::reduce_pool(descf);
 #endif
 
+    assert(this->charge->rhopw->nxyz > 0);
+
     descf *= this->omega / this->charge->rhopw->nxyz;
     return descf;
 }
@@ -266,37 +269,55 @@ void ElecState::cal_converged()
  */
 void ElecState::cal_energies(const int type)
 {
+    //! Hartree energy
     this->f_en.hartree_energy = get_hartree_energy();
+
+    //! energy from E-field
     this->f_en.efield = get_etot_efield();
+
+    //! energy from gate-field
     this->f_en.gatefield = get_etot_gatefield();
+
+    //! energy from implicit solvation model 
     if (GlobalV::imp_sol)
     {
         this->f_en.esol_el = get_solvent_model_Ael();
         this->f_en.esol_cav = get_solvent_model_Acav();
     }
+
+    //! spin constrained energy
 #ifdef __LCAO
     if (GlobalV::sc_mag_switch)
     {
         this->f_en.escon = get_spin_constrain_energy();
     }
+
+     // energy from DFT+U
     if (GlobalV::dft_plus_u)
     {
         this->f_en.edftu = get_dftu_energy();
     }
 #endif
+
 #ifdef __DEEPKS
+    // energy from deepks
     if (GlobalV::deepks_scf)
     {
         this->f_en.edeepks_scf = get_deepks_E_delta() - get_deepks_E_delta_band();
     }
 #endif
-    if (type == 1) // harris
+
+    if (type == 1) // Harris-Foulkes functional
     {
         this->f_en.calculate_harris();
     }
-    else // etot
+    else if (type == 2)// Kohn-Sham functional
     {
         this->f_en.calculate_etot();
+    }
+    else
+    {
+        ModuleBase::WARNING_QUIT("cal_energies", "The form of total energy functional is unknown!");
     }
 }
 
