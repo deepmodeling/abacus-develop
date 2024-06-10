@@ -87,7 +87,7 @@ void Gint::cal_gint(Gint_inout* inout)
             }
 
             const int ntype = orb.get_ntype();
-            double* rcut = new double[ntype];
+            std::vector<double> rcut(ntype);
             for (int it = 0; it < ntype; it++)
             {
                 rcut[it] = orb.Phi[it].getRcut();
@@ -98,16 +98,10 @@ void Gint::cal_gint(Gint_inout* inout)
             if (inout->job == Gint_Tools::job_type::vlocal)
             {
                 GintKernel::gint_gamma_vl_gpu(this->hRGint,
-                                              lgd,
-                                              max_size,
-                                              ucell.omega
-                                                  / this->ncxyz,
                                               inout->vl,
                                               ylmcoef,
-                                              this->nplane,
-                                              this->nbxx,
                                               dr,
-                                              rcut,
+                                              rcut.data(),
                                               *this->gridt,
                                               ucell);
             }
@@ -120,7 +114,7 @@ void Gint::cal_gint(Gint_inout* inout)
                     GintKernel::gint_gamma_rho_gpu(this->DMRGint[is],
                                                    ylmcoef,
                                                    dr,
-                                                   rcut,
+                                                   rcut.data(),
                                                    *this->gridt,
                                                    ucell,
                                                    inout->rho[is]);
@@ -143,7 +137,7 @@ void Gint::cal_gint(Gint_inout* inout)
                                                     stress,
                                                     this->nplane,
                                                     dr,
-                                                    rcut,
+                                                    rcut.data(),
                                                     isforce,
                                                     isstress,
                                                     *this->gridt,

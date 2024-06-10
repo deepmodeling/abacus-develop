@@ -20,8 +20,6 @@ void gtask_vlocal(const Grid_Technique& gridt,
                   int* num_psir)
 
 {
-
-   
     const int nwmax = ucell.nwmax;
     for (int z_index = 0; z_index < gridt.nbzp; z_index++)
     {
@@ -105,8 +103,10 @@ void alloc_mult_vlocal(const Grid_Technique& gridt,
                         const int max_size,
                         double* psir_ylm_left,
                         double* psir_r,
+                        std::vector<Cuda_Mem_Wrapper<double>>& grid_vlocal_g,
                         int* atom_pair_A_m,
                         int* atom_pair_B_n,
+                        int* atom_pair_k,
                         int* atom_pair_lda,
                         int* atom_pair_ldb,
                         int* atom_pair_ldc,
@@ -153,7 +153,7 @@ void alloc_mult_vlocal(const Grid_Technique& gridt,
                 {
                     int atom_pair_nw
                         = ucell.atoms[it1].nw * ucell.atoms[it2].nw;
-                    if (gridt.grid_vlocal_g[iat1 * ucell.nat + iat2] == nullptr)
+                    if (grid_vlocal_g[iat1 * ucell.nat + iat2].get_device_pointer() == nullptr)
                     {
                         // Note that this situation occurs here because the
                         // logic in hcontainer and
@@ -176,7 +176,7 @@ void alloc_mult_vlocal(const Grid_Technique& gridt,
                     atom_pair_mat_B[atom_pair_num]
                         = psir_r + calc_index2;
                     atom_pair_mat_C[atom_pair_num]
-                        = gridt.grid_vlocal_g[iat1 * ucell.nat + iat2];
+                        = grid_vlocal_g[iat1 * ucell.nat + iat2].get_device_pointer();
 
                     atom_pair_lda[atom_pair_num] = gridt.bxyz;
                     atom_pair_ldb[atom_pair_num] = gridt.bxyz;
@@ -184,6 +184,8 @@ void alloc_mult_vlocal(const Grid_Technique& gridt,
 
                     atom_pair_A_m[atom_pair_num] = ucell.atoms[it1].nw;
                     atom_pair_B_n[atom_pair_num] = ucell.atoms[it2].nw;
+                    atom_pair_k[atom_pair_num] = gridt.bxyz;
+                    
                     if (atom_pair_A_m[atom_pair_num] > max_m)
                     {
                         max_m = atom_pair_A_m[atom_pair_num];
