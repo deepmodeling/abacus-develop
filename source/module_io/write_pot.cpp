@@ -92,7 +92,7 @@ void write_pot_spin(
         temp_v = &(v.c[nx * ny * nz]);
     }
 
-    double ef_tmp = 0.;
+    double ef_tmp = 0.0;
     int out_fermi = 0;
 
     ModuleIO::write_cube(
@@ -127,59 +127,65 @@ void write_elecstat_pot(
     const std::string& fn,
     ModulePW::PW_Basis* rho_basis,
     const Charge* const chr,
-    const UnitCell* ucell_,
-    const double* v_effective_fixed)
+    const UnitCell* ucell,
+    const double* v_eff)
 {
-    ModuleBase::TITLE("Potential", "write_elecstat_pot");
-    ModuleBase::timer::tick("Potential", "write_elecstat_pot");
+    ModuleBase::TITLE("ModuleIO", "write_elecstat_pot");
+    ModuleBase::timer::tick("ModuleIO", "write_elecstat_pot");
 
-    double* v_elecstat = new double[rho_basis->nrxx];
-    ModuleBase::GlobalFunc::ZEROS(v_elecstat, rho_basis->nrxx);
+    std::vector<double> v_elecstat(rho_basis->nrxx, 0.0);
+
+    const int nspin = GlobalV::NSPIN;
+    const int efield = GlobalV::EFIELD_FLAG;
+    const int dip_corr = GlobalV::DIP_COR_FLAG;
+    const bool imp_sol = GlobalV::imp_sol;
 
     //==========================================
     // Hartree potential
     //==========================================
-    ModuleBase::matrix vh(GlobalV::NSPIN, rho_basis->nrxx);
-    vh = elecstate::H_Hartree_pw::v_hartree(*ucell_, rho_basis, GlobalV::NSPIN, chr->rho);
+    ModuleBase::matrix vh(nspin, rho_basis->nrxx);
+    vh = elecstate::H_Hartree_pw::v_hartree(*ucell, rho_basis, nspin, chr->rho);
 
     //==========================================
-    // Dipole correction
+    //! Dipole correction
     //==========================================
     ModuleBase::matrix v_efield;
-    if (GlobalV::EFIELD_FLAG && GlobalV::DIP_COR_FLAG)
+    if (efield>0 && dip_corr>0)
     {
-        v_efield.create(GlobalV::NSPIN, rho_basis->nrxx);
-        v_efield = elecstate::Efield::add_efield(*(ucell_),
+        v_efield.create(nspin, rho_basis->nrxx);
+        v_efield = elecstate::Efield::add_efield(*ucell,
                                                  const_cast<ModulePW::PW_Basis*>(rho_basis),
-                                                 GlobalV::NSPIN,
+                                                 nspin,
                                                  chr->rho,
                                                  GlobalC::solvent_model);
     }
 
     //==========================================
-    // Add hartree potential and local pseudopot
+    //! Add hartree potential and local pseudopot
     //==========================================
     for (int ir = 0; ir < rho_basis->nrxx; ir++)
     {
-        v_elecstat[ir] = vh(0, ir) + v_effective_fixed[ir];
+        // the spin index is 0
+        v_elecstat[ir] = vh(0, ir) + v_eff[ir];
 
-        if (GlobalV::EFIELD_FLAG && GlobalV::DIP_COR_FLAG)
+        if (efield>0 && dip_corr>0)
         {
             v_elecstat[ir] += v_efield(0, ir);
         }
-        if (GlobalV::imp_sol)
+        if(imp_sol == true)
         {
             v_elecstat[ir] += GlobalC::solvent_model.delta_phi[ir];
         }
     }
 
     //-------------------------------------------
-    // output the electrostatic potential into a file.
+    //! Write down the electrostatic potential
     //-------------------------------------------
     int precision = 9;
     int is = -1;
-    double ef_tmp = 0.;
+    double ef_tmp = 0.0;
     int out_fermi = 0;
+
     ModuleIO::write_cube(
 #ifdef __MPI
         bz,
@@ -189,7 +195,7 @@ void write_elecstat_pot(
 #endif
         v_elecstat,
         is,
-        GlobalV::NSPIN,
+        nspin,
         0,
         fn,
         rho_basis->nx,
@@ -200,9 +206,7 @@ void write_elecstat_pot(
         precision,
         out_fermi);
 
-    delete[] v_elecstat;
-
-    ModuleBase::timer::tick("Potential", "write_elecstat_pot");
+    ModuleBase::timer::tick("ModuleIO", "write_elecstat_pot");
     return;
 }
 
