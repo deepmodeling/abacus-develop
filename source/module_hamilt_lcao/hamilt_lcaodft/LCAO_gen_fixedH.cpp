@@ -288,12 +288,12 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype,
 											this->LM->DSloc_z,
 											this->LM->DHloc_fixed_x,
 											this->LM->DHloc_fixed_y,
-											this->LM->DHloc_fixed_z
-											);
+											this->LM->DHloc_fixed_z);
 
 									if(cal_stress) 
 									{
 										this->LM->set_stress(
+                                                pv,
 												iw1_all, 
 												iw2_all,
 												olm[0],
@@ -312,8 +312,7 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype,
 												this->LM->DHloc_fixed_13,
 												this->LM->DHloc_fixed_22,
 												this->LM->DHloc_fixed_23,
-												this->LM->DHloc_fixed_33
-												);
+												this->LM->DHloc_fixed_33);
 									}
 								}
 								else // k point algorithm
@@ -969,7 +968,22 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc,
 												}
 											}
 											assert(ib==nlm_1.size());
-											this->LM->set_force (iw1_all, iw2_all, nlm[0], nlm[1], nlm[2], 'N');
+
+											this->LM->set_force(
+													*this->LM->ParaV,
+													iw1_all,
+													iw2_all,
+													nlm[0],
+													nlm[1],
+													nlm[2],
+													'N',
+													this->LM->DSloc_x,
+													this->LM->DSloc_y,
+													this->LM->DSloc_z,
+													this->LM->DHloc_fixed_x,
+													this->LM->DHloc_fixed_y,
+													this->LM->DHloc_fixed_z);
+
 										}
 										else
 										{
