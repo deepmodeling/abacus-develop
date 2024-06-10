@@ -9,39 +9,6 @@
 namespace GintKernel
 {
 
-/*!
- * \file
- * \brief CUDA kernel to calculate psi and force
- *
- * CUDA kernel that performs calculations on psi and force.
- *
- * \param ylmcoef Pointer to the Ylm coefficients
- * \param delta_r_g Delta r value
- * \param bxyz_g Bxyz value
- * \param nwmax_g Nwmax value
- * \param input_double Array of double input values
- * \param input_int Array of int input values
- * \param num_psir Array containing the number of psi for each block
- * \param psi_size_max Maximum size of psi
- * \param ucell_atom_nwl Array containing Ucell atom nwl values
- * \param atom_iw2_new Array indicating whether atom_iw2 is new
- * \param atom_iw2_ylm Array of atom_iw2 Ylm values
- * \param atom_iw2_l Array of atom_iw2 l values
- * \param atom_nw Array of atom_nw values
- * \param nr_max Maximum nr value
- * \param psi_u Array for psi_u values,recording the Spherical Harmonics from psi
- * \param psir_r Array for psir_r values,recored the distance from psi
- * \param psir_lx Array for psir_lx values,recored the force left in x
- * \param psir_ly Array for psir_ly values,recored the force left in y
- * \param psir_lz Array for psir_lz values,recored the force left in z
- * \param psir_lxx Array for psir_lxx values,recored the stress left in xx
- * \param psir_lxy Array for psir_lxy values,recored the stress left in xy
- * \param psir_lxz Array for psir_lxz values,recored the stress left in xz
- * \param psir_lyy Array for psir_lyy values,recored the stress left in yy
- * \param psir_lyz Array for psir_lyz values,recored the stress left in yz
- * \param psir_lzz Array for psir_lzz values,recored the stress left in zz
- */
-
 __global__ void get_psi_force(double* ylmcoef,
                               double delta_r_g,
                               int bxyz_g,
@@ -68,25 +35,20 @@ __global__ void get_psi_force(double* ylmcoef,
                               double* psir_lyz,
                               double* psir_lzz)
 {
-    // Get the size of psi for the current block
     int size = num_psir[blockIdx.x];
     int start_index = psi_size_max * blockIdx.x;
     int end_index = start_index + size;
     start_index += threadIdx.x + blockDim.x * blockIdx.y;
-    // Loop over the psi indices for the current block
     for (int index = start_index; index < end_index;
          index += blockDim.x * gridDim.y)
     {
-        // Extract information from input arrays
         double dr[3];
         int index_double = index * 5;
         dr[0] = input_double[index_double];
         dr[1] = input_double[index_double + 1];
         dr[2] = input_double[index_double + 2];
         double distance = input_double[index_double + 3];
-        distance = distance * distance;
         double vlbr3_value = input_double[index_double + 4];
-        // begin calculation
         double ylma[49]; // Attention!!! At present, we only use L=5 at
                          // most. So (L+1) * (L+1)=36
         double grly[49][3];
@@ -95,7 +57,7 @@ __global__ void get_psi_force(double* ylmcoef,
         int dist_tmp = input_int[index_int + 1];
 
         int nwl = ucell_atom_nwl[it];
-        spherical_harmonics_d(dr, distance, grly, nwl, ylma, ylmcoef);
+        spherical_harmonics_d(dr, distance*distance, grly, nwl, ylma, ylmcoef);
 
         interpolate_f(distance,
                       delta_r_g,
@@ -131,16 +93,6 @@ __global__ void get_psi_force(double* ylmcoef,
  *
  * This CUDA kernel computes the dot product of stress components and partial
  * derivatives based on the input arrays.
- *
- * \param psir_lxx Array of psir_lxx values.
- * \param psir_lxy Array of psir_lxy values.
- * \param psir_lxz Array of psir_lxz values.
- * \param psir_lyy Array of psir_lyy values.
- * \param psir_lyz Array of psir_lyz values.
- * \param psir_lzz Array of psir_lzz values.
- * \param psir_ylm_dm Array of psir_ylm_dm values.
- * \param stress_dot Output array for the dot product of stress components.
- * \param elements_num Number of elements in the input arrays.
  */
 
 __global__ void dot_product_stress(double* psir_lxx,
@@ -153,7 +105,6 @@ __global__ void dot_product_stress(double* psir_lxx,
                                    double* stress_dot,
                                    int elements_num)
 {
-
     __shared__ double cache[256][6]; 
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
     int cacheIndex = threadIdx.x;
@@ -223,7 +174,6 @@ __global__ void dot_product_force(double* psir_lx,
                                   double* force_dot,
                                   int* iat,
                                   int nwmax,
-                                  int max_size,
                                   int elements_num)
 {
     int tid = threadIdx.x + blockIdx.x * blockDim.x;

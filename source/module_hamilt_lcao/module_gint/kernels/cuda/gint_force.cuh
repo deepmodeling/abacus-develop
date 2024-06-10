@@ -113,7 +113,6 @@ __global__ void dot_product_force(double* psir_lx,
                                   double* force_dot,
                                   int* iat,
                                   int nwmax,
-                                  int max_size,
                                   int elements_num);
 
 } // namespace GintKernel

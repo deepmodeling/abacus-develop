@@ -130,12 +130,9 @@ void Gint::cal_gint(Gint_inout* inout)
                     std::vector<double> force(nat * 3, 0.0);
                     std::vector<double> stress(6, 0.0);
                     GintKernel::gint_fvl_gamma_gpu(this->DMRGint[inout->ispin],
-                                                    ucell.omega
-                                                        / this->ncxyz,
                                                     inout->vl,
-                                                    force,
-                                                    stress,
-                                                    this->nplane,
+                                                    force.data(),
+                                                    stress.data(),
                                                     dr,
                                                     rcut.data(),
                                                     isforce,

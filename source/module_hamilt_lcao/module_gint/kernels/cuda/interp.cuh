@@ -76,7 +76,6 @@ static __device__ void interpolate_f(double distance,
                                      double* psir_lzz)
 {
     // Calculate normalized position for interpolation
-    distance = sqrt(distance);
     const double postion = distance / delta_r_g;
     // Extract integer part and fractional part of the position
     const double ip = static_cast<int>(postion);
@@ -107,7 +106,6 @@ static __device__ void interpolate_f(double distance,
         const int ll = atom_iw2_l[it_nw_iw];
 
         const int idx_lm = atom_iw2_ylm[it_nw_iw];
-
         const double rl = pow(distance, ll);
 
         // Compute right-hand side of the equation
