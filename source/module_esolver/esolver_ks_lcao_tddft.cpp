@@ -512,8 +512,8 @@ void ESolver_KS_LCAO_TDDFT::cal_edm_tddft(void)
                  ipiv.data(), 
                  &info);
 
-        const int lwork = -1;
-        const int liwork = -1;
+        int lwork = -1;
+        int liwork = -1;
        
         // if lwork == -1, then the size of work is (at least) of length 1.
         std::vector<std::complex<double>> work(1, 0);
