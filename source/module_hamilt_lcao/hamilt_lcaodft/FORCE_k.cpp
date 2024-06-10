@@ -89,7 +89,15 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
     // calculate dS = <phi | dphi>
     //-----------------------------
     bool cal_deri = true;
-    gen_h.build_ST_new('S', cal_deri, GlobalC::ucell, GlobalC::ORB, *uot, &(GlobalC::GridD), gen_h.LM->SlocR.data());
+    gen_h.build_ST_new(
+         'S', 
+          cal_deri, 
+          GlobalC::ucell, 
+          GlobalC::ORB, 
+          pv,
+          *uot, 
+          &GlobalC::GridD, 
+          gen_h.LM->SlocR.data());
 
     //-----------------------------------------
     // (2) allocate for <phi | T + Vnl | dphi>
@@ -112,7 +120,15 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
 
     // calculate dT=<phi|kin|dphi> in LCAO
     // calculate T + VNL(P1) in LCAO basis
-    gen_h.build_ST_new('T', cal_deri, GlobalC::ucell, GlobalC::ORB, *uot, &(GlobalC::GridD), gen_h.LM->Hloc_fixedR.data());
+	gen_h.build_ST_new(
+			'T', 
+			cal_deri, 
+			GlobalC::ucell, 
+			GlobalC::ORB, 
+			pv,
+			*uot, 
+			&GlobalC::GridD, 
+			gen_h.LM->Hloc_fixedR.data());
 
     // calculate dVnl=<phi|dVnl|dphi> in LCAO
     gen_h.build_Nonlocal_mu_new(gen_h.LM->Hloc_fixed.data(), cal_deri, GlobalC::ucell, GlobalC::ORB, *uot, &(GlobalC::GridD));
@@ -121,13 +137,13 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
     if (INPUT.cal_syns)
     {
         cal_deri = false;
-        // gen_h.build_ST_new('S', cal_deri, GlobalC::ucell, gen_h.LM->SlocR.data(),
-		// INPUT.cal_syns);
+
 		gen_h.build_ST_new('S', 
 				cal_deri, 
 				GlobalC::ucell,
-                GlobalC::ORB,
-                *uot,
+				GlobalC::ORB,
+				pv,
+				*uot,
                 &(GlobalC::GridD),
 				lm.SlocR.data(), 
 				INPUT.cal_syns, 
