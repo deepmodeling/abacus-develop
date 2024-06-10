@@ -261,7 +261,8 @@ void ElecState::cal_converged()
 /**
  * @brief calculate energies
  *
- * @param type: 1 means harris energy; 2 means etot
+ * @param type: 1 means Harris-Foulkes functinoal; 
+ * @param type: 2 means Kohn-Sham functional;
  */
 void ElecState::cal_energies(const int type)
 {

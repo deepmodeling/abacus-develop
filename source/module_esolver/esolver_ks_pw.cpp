@@ -965,16 +965,19 @@ void ESolver_KS_PW<T, Device>::iter_finish(const int iter)
         GlobalC::ppcell.cal_effective_D(veff, this->pw_rhod, GlobalC::ucell);
     }
 
+    // 1 means Harris-Foulkes functional 
+    // 2 means Kohn-Sham functional
+    const int energy_type = 2; 
     this->pelec->cal_energies(2);
 
-    // We output it for restarting the scf.
     bool print = false;
-    if (this->out_freq_elec && iter % this->out_freq_elec == 0)
+    if (this->out_freq_elec && 
+        iter % this->out_freq_elec == 0)
     {
         print = true;
     }
 
-    if (print)
+    if (print == true)
     {
         if (GlobalV::out_chg > 0)
         {
