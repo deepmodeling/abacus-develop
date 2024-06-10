@@ -275,8 +275,46 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype,
 
 								if(gamma_only_local)
 								{
-									this->LM->set_force (iw1_all, iw2_all,	olm[0], olm[1], olm[2], dtype);
-									if(cal_stress) this->LM->set_stress (iw1_all, iw2_all, olm[0], olm[1], olm[2], dtype, dtau);
+									this->LM->set_force(
+											pv,
+											iw1_all,
+											iw2_all,
+											olm[0],
+											olm[1],
+											olm[2],
+											dtype,
+											this->LM->DSloc_x,
+											this->LM->DSloc_y,
+											this->LM->DSloc_z,
+											this->LM->DHloc_fixed_x,
+											this->LM->DHloc_fixed_y,
+											this->LM->DHloc_fixed_z
+											);
+
+									if(cal_stress) 
+									{
+										this->LM->set_stress(
+												iw1_all, 
+												iw2_all,
+												olm[0],
+												olm[1],
+												olm[2],
+												dtype,
+												dtau,
+												this->LM->DSloc_11,
+												this->LM->DSloc_12,
+												this->LM->DSloc_13,
+												this->LM->DSloc_22,
+												this->LM->DSloc_23,
+												this->LM->DSloc_33,
+												this->LM->DHloc_fixed_11,
+												this->LM->DHloc_fixed_12,
+												this->LM->DHloc_fixed_13,
+												this->LM->DHloc_fixed_22,
+												this->LM->DHloc_fixed_23,
+												this->LM->DHloc_fixed_33
+												);
+									}
 								}
 								else // k point algorithm
 								{
