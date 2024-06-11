@@ -63,9 +63,6 @@ class ElecStateLCAO : public ElecState
     // update charge density for next scf step
     // void getNewRho() override;
 
-    virtual void print_psi(const psi::Psi<TK>& psi_in, const int istep = -1) override;
-    //virtual void print_psi(const psi::Psi<std::complex<double>>& psi_in, const int istep = -1) override;
-
     // initial density matrix
     void init_DM(const K_Vectors* kv, const Parallel_Orbitals* paraV, const int nspin);
     DensityMatrix<TK,double>* get_DM() const { return const_cast<DensityMatrix<TK,double>*>(this->DM); } 

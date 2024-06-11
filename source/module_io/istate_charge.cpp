@@ -76,7 +76,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
     ModuleBase::GlobalFunc::ZEROS(bands_picked_.data(), nbands);
 
     // (1)
-    // (1.2) read in LOWF_GAMMA.dat
+    // (1.2) read in WFC_NAO_GAMMA1.dat
     std::cout << " number of electrons = " << nelec << std::endl;
 
     // mohan update 2011-03-21
