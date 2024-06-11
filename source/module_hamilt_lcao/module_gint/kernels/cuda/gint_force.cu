@@ -34,28 +34,28 @@ __global__ void get_psi_force(double* ylmcoef,
                               double* d2psi_dyz,
                               double* d2psi_dzz)
 {
-    int size = atom_num_per_bcell[blockIdx.x];
-    int start_index = max_atom_per_bcell * blockIdx.x;
-    int end_index = start_index + size;
-    start_index += threadIdx.x + blockDim.x * blockIdx.y;
+    const int size = atom_num_per_bcell[blockIdx.x];
+    const int bcell_start = max_atom_per_bcell * blockIdx.x;
+    const int end_index = bcell_start + size;
+    const int start_index = bcell_start + threadIdx.x + blockDim.x * blockIdx.y;
     for (int index = start_index; index < end_index;
          index += blockDim.x * gridDim.y)
     {
         double dr[3];
-        int index_double = index * 5;
+        const int index_double = index * 5;
         dr[0] = psi_input_double[index_double];
         dr[1] = psi_input_double[index_double + 1];
         dr[2] = psi_input_double[index_double + 2];
-        double distance = psi_input_double[index_double + 3];
-        double vlbr3_value = psi_input_double[index_double + 4];
+        const double distance = psi_input_double[index_double + 3];
+        const double vlbr3_value = psi_input_double[index_double + 4];
         double ylma[49]; // Attention!!! At present, we only use L=5 at
                          // most. So (L+1) * (L+1)=36
         double grly[49][3];
-        int index_int = index * 2;
-        int it = psi_input_int[index_int];
+        const int index_int = index * 2;
+        const int it = psi_input_int[index_int];
         int dist_tmp = psi_input_int[index_int + 1];
 
-        int nwl = ucell_atom_nwl[it];
+        const int nwl = ucell_atom_nwl[it];
         spherical_harmonics_d(dr, distance*distance, grly, nwl, ylma, ylmcoef);
 
         interpolate_f(distance,

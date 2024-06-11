@@ -29,8 +29,8 @@ __global__ void get_psi(const double* const ylmcoef,
 
 __global__ void psir_dot(const int bxyz,
                          const int vec_size,
-                         double* vec_a_g,
-                         double* vec_b_g,
+                         const double* __restrict__ vec_a_g,
+                         const double* __restrict__  vec_b_g,
                          double** results_g);
 
 } // namespace GintKernel

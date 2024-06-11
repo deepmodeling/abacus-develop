@@ -61,10 +61,10 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
     {
         for (int iat2 = 0; iat2 < ucell.nat; iat2++)
         {
-            int it1 = ucell.iat2it[iat1];
-            int it2 = ucell.iat2it[iat2];
-            int lo1 = gridt.trace_lo[ucell.itiaiw2iwt(it1, ucell.iat2ia[iat1], 0)];
-            int lo2 = gridt.trace_lo[ucell.itiaiw2iwt(it2, ucell.iat2ia[iat2], 0)];
+            const int it1 = ucell.iat2it[iat1];
+            const int it2 = ucell.iat2it[iat2];
+            const int lo1 = gridt.trace_lo[ucell.itiaiw2iwt(it1, ucell.iat2ia[iat1], 0)];
+            const int lo2 = gridt.trace_lo[ucell.itiaiw2iwt(it2, ucell.iat2ia[iat2], 0)];
 
             hamilt::AtomPair<double>* tmp_ap = dm->find_pair(iat1, iat2);
             int orb_index = 0;
@@ -92,7 +92,7 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
         for (int j = 0; j < gridt.nby; j++)
         {
             // get stream id
-            int sid = omp_get_thread_num();
+            const int sid = omp_get_thread_num();
             checkCuda(cudaStreamSynchronize(streams[sid]));
 
             int max_m = 0;
@@ -138,7 +138,6 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
                             atom_pair_num,
                             rho_g.get_device_pointer(),
                             dot_product.get_host_pointer(sid));
-
            
             psi_input_double.copy_host_to_device_async(streams[sid], sid);
             psi_input_int.copy_host_to_device_async(streams[sid], sid);

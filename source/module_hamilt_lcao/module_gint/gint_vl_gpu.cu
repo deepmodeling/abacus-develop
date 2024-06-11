@@ -66,25 +66,25 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
     {
         for (int iat2 = 0; iat2 < ucell.nat; iat2++)
         {
-            int it1 = ucell.iat2it[iat1];
-            int lo1 = gridt.trace_lo[ucell.itiaiw2iwt(it1,
+            const int it1 = ucell.iat2it[iat1];
+            const int lo1 = gridt.trace_lo[ucell.itiaiw2iwt(it1,
                                                         ucell.iat2ia[iat1],
                                                         0)];
 
-            int it2 = ucell.iat2it[iat2];
-            int lo2 = gridt.trace_lo[ucell.itiaiw2iwt(it2,
+            const int it2 = ucell.iat2it[iat2];
+            const int lo2 = gridt.trace_lo[ucell.itiaiw2iwt(it2,
                                                         ucell.iat2ia[iat2],
                                                         0)];
 
             if (lo1 <= lo2)
             {
-                hamilt::AtomPair<double>* tmp_ap
+                const hamilt::AtomPair<double>* tmp_ap
                     = hRGint->find_pair(iat1, iat2);
                 if (tmp_ap == nullptr)
                 {
                     continue;
                 }
-                int atom_pair_nw
+                const int atom_pair_nw
                     = ucell.atoms[it1].nw * ucell.atoms[it2].nw;
                 grid_vlocal_g[iat1 * ucell.nat + iat2] = 
                     Cuda_Mem_Wrapper<double>(atom_pair_nw, 1, false);
@@ -115,7 +115,7 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
     {
         for (int j = 0; j < gridt.nby; j++)
         {
-            int sid = omp_get_thread_num();
+            const int sid = omp_get_thread_num();
             checkCuda(cudaStreamSynchronize(streams[sid]));
 
             int atom_pair_num = 0;
@@ -225,19 +225,19 @@ void gint_gamma_vl_gpu(hamilt::HContainer<double>* hRGint,
         {
             for (int iat2 = 0; iat2 < ucell.nat; iat2++)
             {
-                int sid = iter_num % num_streams;
-                int it1 = ucell.iat2it[iat1];
-                int lo1 = gridt.trace_lo[ucell.itiaiw2iwt(it1,
+                const int sid = iter_num % num_streams;
+                const int it1 = ucell.iat2it[iat1];
+                const int lo1 = gridt.trace_lo[ucell.itiaiw2iwt(it1,
                                                           ucell.iat2ia[iat1],
                                                           0)];
 
-                int it2 = ucell.iat2it[iat2];
-                int lo2 = gridt.trace_lo[ucell.itiaiw2iwt(it2,
+                const int it2 = ucell.iat2it[iat2];
+                const int lo2 = gridt.trace_lo[ucell.itiaiw2iwt(it2,
                                                           ucell.iat2ia[iat2],
                                                           0)];
                 if (lo1 <= lo2)
                 {
-                    int atom_pair_nw
+                    const int atom_pair_nw
                         = ucell.atoms[it1].nw * ucell.atoms[it2].nw;
                     hamilt::AtomPair<double>* tmp_ap
                         = hRGint->find_pair(iat1, iat2);

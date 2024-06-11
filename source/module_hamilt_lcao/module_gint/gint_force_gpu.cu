@@ -94,11 +94,11 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
     {
         for (int iat2 = 0; iat2 < ucell.nat; iat2++)
         {
-            int it1 = ucell.iat2it[iat1];
-            int it2 = ucell.iat2it[iat2];
-            int lo1
+            const int it1 = ucell.iat2it[iat1];
+            const int it2 = ucell.iat2it[iat2];
+            const int lo1
                 = gridt.trace_lo[ucell.itiaiw2iwt(it1, ucell.iat2ia[iat1], 0)];
-            int lo2
+            const int lo2
                 = gridt.trace_lo[ucell.itiaiw2iwt(it2, ucell.iat2ia[iat2], 0)];
 
             hamilt::AtomPair<double>* tmp_ap = dm->find_pair(iat1, iat2);
@@ -125,7 +125,7 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
     {
         for (int j = 0; j < gridt.nby; j++)
         {
-            int sid = omp_get_thread_num();
+            const int sid = omp_get_thread_num();
             checkCuda(cudaStreamSynchronize(streams[sid]));
 
             int max_m = 0;
@@ -248,7 +248,7 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
                                      nullptr);
 
             if (isforce){
-            int block_size = std::min(256, ceil_div(nwmax, 32) * 32);
+            const int block_size = std::min(256, ceil_div(nwmax, 32) * 32);
             dim3 grid_force(max_atom_per_z);
             dim3 block_force(block_size);
             dot_product_force<<<grid_force,
@@ -300,7 +300,7 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
     if (isstress){
         for (int i = 0; i < num_streams; i++)
         {
-            int offset = 6 * i;
+            const int offset = 6 * i;
             for (int j = 0; j < 6; j++)
             {
                 stress_in[j] += stress.get_host_pointer()[offset + j];
@@ -310,7 +310,7 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
     if (isforce){
         for (int i = 0; i < num_streams; i++)
         {
-            int offset = 3 * i * nat;
+            const int offset = 3 * i * nat;
             for (int j = 0; j < 3 * nat; j++)
             {
                 force_in[j] += force.get_host_pointer()[offset + j];
