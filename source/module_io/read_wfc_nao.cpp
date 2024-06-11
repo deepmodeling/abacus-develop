@@ -2,7 +2,7 @@
 
 #include "module_base/parallel_common.h"
 #include "module_base/timer.h"
-#include "module_io/write_wfc_lcao.h"
+#include "module_io/write_wfc_nao.h"
 
 /**
  * @brief Extracts a submatrix from a global orbital coefficient matrix and stores it in a linear array.
@@ -113,7 +113,7 @@ int ModuleIO::read_wfc_nao_complex(std::complex<double>** ctot,
     ModuleBase::TITLE("ModuleIO", "read_wfc_nao_complex");
     ModuleBase::timer::tick("ModuleIO", "read_wfc_nao_complex");
 
-    std::string ss = global_readin_dir + ModuleIO::wfc_lcao_gen_fname(1,false,true,ik);
+    std::string ss = global_readin_dir + ModuleIO::wfc_nao_gen_fname(1,false,true,ik);
     std::ifstream ifs;
     int error = 0;
 
@@ -271,7 +271,7 @@ int ModuleIO::read_wfc_nao(double** ctot,
     ModuleBase::TITLE("ModuleIO", "read_wfc_nao");
     ModuleBase::timer::tick("ModuleIO", "read_wfc_nao");
 
-    std::string ss = global_readin_dir + ModuleIO::wfc_lcao_gen_fname(1, GlobalV::GAMMA_ONLY_LOCAL, false, is);
+    std::string ss = global_readin_dir + ModuleIO::wfc_nao_gen_fname(1, GlobalV::GAMMA_ONLY_LOCAL, false, is);
     std::ifstream ifs;
 
     int error = 0;

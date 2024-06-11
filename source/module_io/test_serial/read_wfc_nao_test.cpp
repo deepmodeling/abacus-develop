@@ -2,7 +2,7 @@
 #include "gmock/gmock.h"
 #include "module_io/read_wfc_nao.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
-#include "module_io/write_wfc_lcao.h"
+#include "module_io/write_wfc_nao.h"
 
 //write mock function for Parallel_Orbitals
 Parallel_Orbitals::Parallel_Orbitals() {}
@@ -16,13 +16,13 @@ namespace elecstate
 }
 
 // mock wfc_lcao_gen_fname
-std::string ModuleIO::wfc_lcao_gen_fname(const int out_type,
+std::string ModuleIO::wfc_nao_gen_fname(const int out_type,
                                          const bool gamma_only,
                                          const bool out_app_flag,
                                          const int ik,
                                          const int istep)
 {
-      return "WFC_LCAO_GAMMA1.txt";
+      return "WFC_NAO_GAMMA1.txt";
 }
 
 /************************************************

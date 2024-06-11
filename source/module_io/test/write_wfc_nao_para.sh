@@ -8,6 +8,6 @@ for i in 4;do
         continue
     fi
     echo "TEST in parallel, nprocs=$i"
-    mpirun -np $i ./io_write_wfc_lcao
+    mpirun -np $i ./io_write_wfc_nao
     break    
 done

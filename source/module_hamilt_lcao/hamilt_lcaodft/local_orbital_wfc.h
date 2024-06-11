@@ -42,7 +42,7 @@ public:
     // the name of Grid_Technique should be changed to be more informative
     const Grid_Technique* gridt;
 
-    /// read wavefunction coefficients: WFC_LCAO_K/GAMMA*.txt
+    /// read wavefunction coefficients: WFC_NAO_K/GAMMA*.txt
     void gamma_file(psi::Psi<double>* psid, elecstate::ElecState* pelec);
     void allocate_k(const int& lgd,
         psi::Psi<std::complex<double>>* psi,

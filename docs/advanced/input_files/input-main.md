@@ -1535,11 +1535,11 @@ These variables are used to control the output of properties.
 - **Description**: Whether to output the wavefunction coefficients into files in the folder `OUT.${suffix}`. The files are named as `WFC_{GAMMA|K}{index of K point}`, and if [out_app_flag](#out_app_flag) is false, the file name will also contains `_ION{ION step}`, where `ION step` is the index of ionic step:
   - 0: no output
   - 1: (txt format) 
-    - gamma-only: `WFC_LCAO_GAMMA1_ION1.txt` or `WFC_LCAO_GAMMA1.txt`, ...;
-    - non-gamma-only: `WFC_LCAO_K1_ION1.txt` or `WFC_LCAO_K1.txt`, ...;
+    - gamma-only: `WFC_NAO_GAMMA1_ION1.txt` or `WFC_NAO_GAMMA1.txt`, ...;
+    - non-gamma-only: `WFC_NAO_K1_ION1.txt` or `WFC_NAO_K1.txt`, ...;
   - 2: (binary format)
-    - gamma-only: `WFC_LCAO_GAMMA1_ION1.dat` or `WFC_LCAO_GAMMA1.dat`, ...;
-    - non-gamma-only: `WFC_LCAO_K1_ION1.dat` or `WFC_LCAO_K1.dat`, ....
+    - gamma-only: `WFC_NAO_GAMMA1_ION1.dat` or `WFC_NAO_GAMMA1.dat`, ...;
+    - non-gamma-only: `WFC_NAO_K1_ION1.dat` or `WFC_NAO_K1.dat`, ....
 
   The corresponding sequence of the orbitals can be seen in [Basis Set](../pp_orb.md#basis-set).
 
@@ -2405,7 +2405,7 @@ These variables are used to control molecular dynamics calculations. For more in
 
 - **Type**: Boolean
 - **Description**: Control whether to restart molecular dynamics calculations and time-dependent density functional theory calculations.
-  - True: ABACUS will read in `${read_file_dir}/Restart_md.dat` to determine the current step `${md_step}`, then read in the corresponding `STRU_MD_${md_step}` in the folder `OUT.$suffix/STRU/` automatically. For tddft, ABACUS will also read in `WFC_LCAO_K${kpoint}` of the last step (You need to set out_wfc_lcao=1 and out_app_flag=0 to obtain this file).
+  - True: ABACUS will read in `${read_file_dir}/Restart_md.dat` to determine the current step `${md_step}`, then read in the corresponding `STRU_MD_${md_step}` in the folder `OUT.$suffix/STRU/` automatically. For tddft, ABACUS will also read in `WFC_NAO_K${kpoint}` of the last step (You need to set out_wfc_lcao=1 and out_app_flag=0 to obtain this file).
   - False: ABACUS will start molecular dynamics calculations normally from the first step.
 - **Default**: False
 

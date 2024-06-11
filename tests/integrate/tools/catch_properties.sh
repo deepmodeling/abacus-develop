@@ -312,13 +312,13 @@ fi
 # echo "$has_lowf" ## test out_wfc_lcao > 0
 if ! test -z "$has_lowf"  && [ $has_lowf == 1 ]; then
 	if ! test -z "$gamma_only"  && [ $gamma_only == 1 ]; then
-		wfc_cal=OUT.autotest/WFC_LCAO_GAMMA1.txt
-		wfc_ref=WFC_LCAO_GAMMA1.txt.ref	
+		wfc_cal=OUT.autotest/WFC_NAO_GAMMA1.txt
+		wfc_ref=WFC_NAO_GAMMA1.txt.ref	
 	else
 		if ! test -z "$out_app_flag"  && [ $out_app_flag == 0 ]; then
-			wfc_name=WFC_LCAO_K1_ION11
+			wfc_name=WFC_NAO_K1_ION11
 		else
-			wfc_name=WFC_LCAO_K2
+			wfc_name=WFC_NAO_K2
 		fi
 		awk 'BEGIN {flag=999}
     	{

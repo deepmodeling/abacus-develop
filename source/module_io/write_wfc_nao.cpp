@@ -1,4 +1,4 @@
-#include "write_wfc_lcao.h"
+#include "write_wfc_nao.h"
 
 #include "module_base/memory.h"
 #include "module_base/timer.h"
@@ -12,13 +12,13 @@
 namespace ModuleIO
 {
 
-std::string wfc_lcao_gen_fname(const int out_type,
+std::string wfc_nao_gen_fname(const int out_type,
                                const bool gamma_only,
                                const bool out_app_flag,
                                const int ik,
                                const int istep)
 {
-    // fn_out = "{GlobalV::global_out_dir}/WFC_LCAO_{K|GAMMA}{K index}{_ION} + {".txt"/".dat"}""
+    // fn_out = "{GlobalV::global_out_dir}/WFC_NAO_{K|GAMMA}{K index}{_ION} + {".txt"/".dat"}""
     std::string kgamma_block = (gamma_only) ? "_GAMMA" : "_K";
     std::string istep_block
         = (istep >= 0 && (!out_app_flag))
@@ -41,11 +41,11 @@ std::string wfc_lcao_gen_fname(const int out_type,
     }
 
     std::string fn_out
-        = "WFC_LCAO" + kgamma_block + std::to_string(ik + 1) + istep_block + suffix_block;
+        = "WFC_NAO" + kgamma_block + std::to_string(ik + 1) + istep_block + suffix_block;
     return fn_out;
 }
 
-void write_wfc_nao(const std::string &name, const double* ctot, const int nlocal, const int ik, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg, bool writeBinary)
+void wfc_nao_write2file(const std::string &name, const double* ctot, const int nlocal, const int ik, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg, bool writeBinary)
 {
     ModuleBase::TITLE("ModuleIO", "write_wfc_nao");
     ModuleBase::timer::tick("ModuleIO", "write_wfc_nao");
@@ -120,7 +120,7 @@ void write_wfc_nao(const std::string &name, const double* ctot, const int nlocal
     return;
 }
 
-void write_wfc_nao_complex(const std::string &name, const std::complex<double>* ctot, const int nlocal,const int &ik, const ModuleBase::Vector3<double> &kvec_c, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg, bool writeBinary)
+void wfc_nao_write2file_complex(const std::string &name, const std::complex<double>* ctot, const int nlocal,const int &ik, const ModuleBase::Vector3<double> &kvec_c, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg, bool writeBinary)
 {
     ModuleBase::TITLE("ModuleIO","write_wfc_nao_complex");
     ModuleBase::timer::tick("ModuleIO","write_wfc_nao_complex");
@@ -202,7 +202,7 @@ void write_wfc_nao_complex(const std::string &name, const std::complex<double>* 
 }
 
 template <typename T>
-void write_wfc_lcao(const int out_type,
+void write_wfc_nao(const int out_type,
                     const psi::Psi<T>& psi,
                     const ModuleBase::matrix& ekb,
                     const ModuleBase::matrix& wg,
@@ -214,8 +214,8 @@ void write_wfc_lcao(const int out_type,
     {
         return;
     }
-    ModuleBase::TITLE("ModuleIO", "write_wfc_lcao");
-    ModuleBase::timer::tick("ModuleIO", "write_wfc_lcao");
+    ModuleBase::TITLE("ModuleIO", "write_wfc_nao");
+    ModuleBase::timer::tick("ModuleIO", "write_wfc_nao");
     int myid = 0;
     int nbands;
     int nlocal;
@@ -235,7 +235,7 @@ void write_wfc_lcao(const int out_type,
     Parallel_2D pv_glb;
     int blk_glb = std::max(nlocal, nbands);
     std::vector<T> ctot(myid == 0 ? nbands * nlocal : 0);
-    ModuleBase::Memory::record("ModuleIO::write_wfc_lcao::glb", sizeof(T) * nlocal * nbands);
+    ModuleBase::Memory::record("ModuleIO::write_wfc_nao::glb", sizeof(T) * nlocal * nbands);
 
     for (int ik = 0; ik < psi.get_nk(); ik++)
     {
@@ -265,14 +265,14 @@ void write_wfc_lcao(const int out_type,
 
         if (myid == 0)
         {
-            std::string fn = GlobalV::global_out_dir + wfc_lcao_gen_fname(out_type, gamma_only, GlobalV::out_app_flag, ik, istep);
+            std::string fn = GlobalV::global_out_dir + wfc_nao_gen_fname(out_type, gamma_only, GlobalV::out_app_flag, ik, istep);
             if (std::is_same<double, T>::value)
             {
-                write_wfc_nao(fn, reinterpret_cast<double*>(ctot.data()), nlocal, ik, ekb, wg, writeBinary);
+                wfc_nao_write2file(fn, reinterpret_cast<double*>(ctot.data()), nlocal, ik, ekb, wg, writeBinary);
             }
             else
             {
-                write_wfc_nao_complex(fn,
+                wfc_nao_write2file_complex(fn,
                                       reinterpret_cast<std::complex<double>*>(ctot.data()),
                                       nlocal,
                                       ik,
@@ -283,10 +283,10 @@ void write_wfc_lcao(const int out_type,
             }
         }
     }
-    ModuleBase::timer::tick("ModuleIO", "write_wfc_lcao");
+    ModuleBase::timer::tick("ModuleIO", "write_wfc_nao");
 }
 
-template void write_wfc_lcao<double>(const int out_type,
+template void write_wfc_nao<double>(const int out_type,
                                      const psi::Psi<double>& psi,
                                      const ModuleBase::matrix& ekb,
                                      const ModuleBase::matrix& wg,
@@ -294,7 +294,7 @@ template void write_wfc_lcao<double>(const int out_type,
                                      const Parallel_Orbitals& pv,
                                      const int istep);
 
-template void write_wfc_lcao<std::complex<double>>(const int out_type,
+template void write_wfc_nao<std::complex<double>>(const int out_type,
                                                    const psi::Psi<std::complex<double>>& psi,
                                                    const ModuleBase::matrix& ekb,
                                                    const ModuleBase::matrix& wg,

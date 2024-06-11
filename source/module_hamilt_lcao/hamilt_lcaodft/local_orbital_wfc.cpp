@@ -72,7 +72,7 @@ void Local_Orbital_wfc::gamma_file(psi::Psi<double>* psid, elecstate::ElecState*
         switch (this->error)
         {
         case 1:
-            std::cout << "Can't find the wave function file: WFC_LCAO_GAMMA" << is + 1 << ".txt" << std::endl;
+            std::cout << "Can't find the wave function file: WFC_NAO_GAMMA" << is + 1 << ".txt" << std::endl;
             break;
         case 2:
             std::cout << "In wave function file, band number doesn't match" << std::endl;
@@ -174,7 +174,7 @@ void Local_Orbital_wfc::allocate_k(const int& lgd,
             switch (this->error)
             {
             case 1:
-                std::cout << "Can't find the wave function file: WFC_LCAO_K" << ik + 1 << ".txt" << std::endl;
+                std::cout << "Can't find the wave function file: WFC_NAO_K" << ik + 1 << ".txt" << std::endl;
                 break;
             case 2:
                 std::cout << "In wave function file, band number doesn't match" << std::endl;
