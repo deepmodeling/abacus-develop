@@ -60,7 +60,7 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
 
     Cuda_Mem_Wrapper<double> psi_input_double(5 * max_atom_per_z, num_streams, true);
     Cuda_Mem_Wrapper<int> psi_input_int(2 * max_atom_per_z, num_streams, true);
-    Cuda_Mem_Wrapper<int> phi_num_per_bcell(nbzp, num_streams, true);
+    Cuda_Mem_Wrapper<int> atom_num_per_bcell(nbzp, num_streams, true);
 
     Cuda_Mem_Wrapper<double> psi(max_phi_per_z, num_streams, false);
     Cuda_Mem_Wrapper<double> psi_dm(max_phi_per_z, num_streams, false);
@@ -147,7 +147,7 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
                                      vlocal,
                                      psi_input_double.get_host_pointer(sid),
                                      psi_input_int.get_host_pointer(sid),
-                                     phi_num_per_bcell.get_host_pointer(sid),
+                                     atom_num_per_bcell.get_host_pointer(sid),
                                      iat_per_z.get_host_pointer(sid),
                                      atom_pair_num,
                                      gpu_mat_cal_flag);
@@ -175,7 +175,7 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
 
             psi_input_double.copy_host_to_device_async(streams[sid], sid);
             psi_input_int.copy_host_to_device_async(streams[sid], sid);
-            phi_num_per_bcell.copy_host_to_device_async(streams[sid], sid);
+            atom_num_per_bcell.copy_host_to_device_async(streams[sid], sid);
             iat_per_z.copy_host_to_device_async(streams[sid], sid);
             gemm_m.copy_host_to_device_async(streams[sid], sid);
             gemm_n.copy_host_to_device_async(streams[sid], sid);
@@ -211,7 +211,7 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
                 nwmax,
                 psi_input_double.get_device_pointer(sid),
                 psi_input_int.get_device_pointer(sid),
-                phi_num_per_bcell.get_device_pointer(sid),
+                atom_num_per_bcell.get_device_pointer(sid),
                 max_atom_per_bcell,
                 gridt.atom_nwl_g,
                 gridt.atom_new_g,

@@ -9,7 +9,7 @@ namespace GintKernel
 void gpu_task_generator_force(const Grid_Technique& gridt,
                               const UnitCell& ucell,
                               const int grid_index_ij,
-                              const int psiSizeMax,
+                              const int max_atom_per_bcell,
                               const int max_atom,
                               const int nczp,
                               const double vfactor,
@@ -17,7 +17,7 @@ void gpu_task_generator_force(const Grid_Technique& gridt,
                               const double* vlocal_global_value,
                               double* psi_input_double,
                               int* psi_input_int,
-                              int* phi_num_per_bcell,
+                              int* atom_num_per_bcell,
                               int* iat_per_z,
                               int& atom_pair_num,
                               std::vector<bool>& gpu_mat_cal_flag)
@@ -28,7 +28,7 @@ void gpu_task_generator_force(const Grid_Technique& gridt,
     {
         int num_get_psi = 0;
         int grid_index = grid_index_ij + z_index;
-        int num_psi_pos = psiSizeMax * z_index;
+        int num_psi_pos = max_atom_per_bcell * z_index;
         int calc_flag_index = max_atom * z_index;
         int bcell_start_index = gridt.bcell_start[grid_index];
         int na_grid = gridt.how_many_atoms[grid_index];
@@ -97,7 +97,7 @@ void gpu_task_generator_force(const Grid_Technique& gridt,
                 }
             }
         }
-        phi_num_per_bcell[z_index] = num_get_psi;
+        atom_num_per_bcell[z_index] = num_get_psi;
     }
 }
 

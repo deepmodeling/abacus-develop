@@ -36,7 +36,7 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
     
     Cuda_Mem_Wrapper<double> psi_input_double(4 * max_atom_per_z, num_streams, true);
     Cuda_Mem_Wrapper<int> psi_input_int(2 * max_atom_per_z, num_streams, true);
-    Cuda_Mem_Wrapper<int> phi_num_per_bcell(nbzp, num_streams, true);
+    Cuda_Mem_Wrapper<int> atom_num_per_bcell(nbzp, num_streams, true);
 
     Cuda_Mem_Wrapper<double> psi(max_phi_per_z, num_streams, false);
     Cuda_Mem_Wrapper<double> psi_dm(max_phi_per_z, num_streams, false);
@@ -56,7 +56,6 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
     Cuda_Mem_Wrapper<double*> dot_product(nbzp * gridt.bxyz, num_streams, true);
 
     Cuda_Mem_Wrapper<double> dm_matrix(lgd * lgd, 1, true);
-
     // retrieve the density matrix on the host
     for (int iat1 = 0; iat1 < ucell.nat; iat1++)
     {
@@ -64,10 +63,8 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
         {
             int it1 = ucell.iat2it[iat1];
             int it2 = ucell.iat2it[iat2];
-            int lo1
-                = gridt.trace_lo[ucell.itiaiw2iwt(it1, ucell.iat2ia[iat1], 0)];
-            int lo2
-                = gridt.trace_lo[ucell.itiaiw2iwt(it2, ucell.iat2ia[iat2], 0)];
+            int lo1 = gridt.trace_lo[ucell.itiaiw2iwt(it1, ucell.iat2ia[iat1], 0)];
+            int lo2 = gridt.trace_lo[ucell.itiaiw2iwt(it2, ucell.iat2ia[iat2], 0)];
 
             hamilt::AtomPair<double>* tmp_ap = dm->find_pair(iat1, iat2);
             int orb_index = 0;
@@ -114,7 +111,7 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
                       rcut,
                       psi_input_double.get_host_pointer(sid),
                       psi_input_int.get_host_pointer(sid),
-                      phi_num_per_bcell.get_host_pointer(sid));
+                      atom_num_per_bcell.get_host_pointer(sid));
             
             alloc_mult_dot_rho(gridt,
                             ucell,
@@ -145,7 +142,7 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
            
             psi_input_double.copy_host_to_device_async(streams[sid], sid);
             psi_input_int.copy_host_to_device_async(streams[sid], sid);
-            phi_num_per_bcell.copy_host_to_device_async(streams[sid], sid);
+            atom_num_per_bcell.copy_host_to_device_async(streams[sid], sid);
             gemm_alpha.copy_host_to_device_async(streams[sid], sid);
             gemm_m.copy_host_to_device_async(streams[sid], sid);
             gemm_n.copy_host_to_device_async(streams[sid], sid);
@@ -171,7 +168,7 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
                 ucell.nwmax,
                 psi_input_double.get_device_pointer(sid),
                 psi_input_int.get_device_pointer(sid),
-                phi_num_per_bcell.get_device_pointer(sid),
+                atom_num_per_bcell.get_device_pointer(sid),
                 max_atom_per_bcell,
                 gridt.atom_nwl_g,
                 gridt.atom_new_g,

@@ -20,27 +20,12 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
  * @brief GPU task generator for forces.
  *
  * This function generates GPU tasks for force calculations.
- *
- * @param gridt Reference to Grid_Technique .
- * @param ucell Reference to UnitCell .
- * @param grid_index_ij Index of the grid.
- * @param psi_size_max Maximum size of psi.
- * @param max_size Maximum size of atoms on a grid.
- * @param nczp Size parameter,stand for the current z-axis grids.
- * @param vfactor Scaling factor,stand for the Local potential.
- * @param rcut distance for each atom orbits
- * @param vlocal_global_value Global values of local potential.
- * @param iat_per_nbz save the number of the iat on per nbz grids.
- * @param atom_pair_num Number of atom pairs,stand for the max number of mat_n.
- * @param gpu_mat_cal_flag Establish whether to perform calculations between
- * atoms and grid points.
- * @param para Grid parameter in task generator,
  */
 
 void gpu_task_generator_force(const Grid_Technique& gridt,
                               const UnitCell& ucell,
                               const int grid_index_ij,
-                              const int psiSizeMax,
+                              const int max_atom_per_bcell,
                               const int max_atom,
                               const int nczp,
                               const double vfactor,
@@ -48,7 +33,7 @@ void gpu_task_generator_force(const Grid_Technique& gridt,
                               const double* vlocal_global_value,
                               double* psi_input_double,
                               int* psi_input_int,
-                              int* phi_num_per_bcell,
+                              int* atom_num_per_bcell,
                               int* iat_per_z,
                               int& atom_pair_num,
                               std::vector<bool>& gpu_mat_cal_flag);
