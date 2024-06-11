@@ -26,7 +26,7 @@ class DiagoDavid : public DiagH<T, Device>
     virtual ~DiagoDavid() override;
 
     int diag(hamilt::Hamilt<T, Device>* phm_in,
-                      psi::Psi<T, Device>& phi,
+                      psi::Psi<T, Device>& psi,
                       Real* eigenvalue_in,
                       const Real david_diag_thr,
                       const int david_maxiter,

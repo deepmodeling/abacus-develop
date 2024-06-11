@@ -1034,9 +1034,28 @@ void DiagoDavid<T, Device>::planSchmitOrth(const int nband, int* pre_matrix_mm_m
     }
 }
 
-// ntry_max is an empirical parameter that should be specified in external routine, default 5
-// notconv_max is determined by the accuracy required for the calculation, default 0
-// notconv_max should be set to 0 for accurate nscf calculation
+/**
+ * @brief Perform iterative diagonalization using the Davidson method.
+ *
+ * This function implements the iterative Davidson algorithm to solve the
+ * eigenvalue problem for a given Hamiltonian. It is a member function of the
+ * template class DiagoDavid, which is designed to work with various data types
+ * and device backends (CPU, GPU, etc.).
+ *
+ * @tparam T The data type (e.g., float, double, std::complex<float/double>).
+ * @tparam Device The device type (e.g., base_device::DEVICE_CPU).
+ * @param phm_in Pointer to the Hamiltonian object.
+ * @param psi The wavefunction to be diagonalized.
+ * @param eigenvalue_in Pointer to the array storing the eigenvalues.
+ * @param david_diag_thr Convergence threshold for the Davidson iteration.
+ * @param david_maxiter Maximum number of iterations allowed for the Davidson method.
+ * @param ntry_max Maximum number of tries for the iterative diagonalization.
+ * @param notconv_max Maximum number of allowed non-converged bands.
+ * @return The sum of Davidson iterations performed during the diagonalization.
+ * 
+ * @note ntry_max is an empirical parameter that should be specified in external routine, default 5
+ *       notconv_max is determined by the accuracy required for the calculation, default 0
+ */
 template <typename T, typename Device>
 int DiagoDavid<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
                                     psi::Psi<T, Device>& psi,
@@ -1073,9 +1092,26 @@ int DiagoDavid<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
     return sum_dav_iter;
 }
 
-// check whether block eigenvectors reach convergence, true for converged
-// ntry_max sets max tries allowed to do diagonalization
-// notconv_max determines how many eigenvectors are allowed to fail to converge when judging global convergence
+/**
+ * @brief Check the convergence of block eigenvectors in the Davidson iteration.
+ *
+ * This function determines whether the block eigenvectors have reached convergence
+ * during the iterative diagonalization process. Convergence is judged based on
+ * the number of eigenvectors that have not converged and the maximum allowed
+ * number of such eigenvectors.
+ *
+ * @tparam T The data type for the eigenvalues and eigenvectors (e.g., float, double).
+ * @tparam Device The device type (e.g., base_device::DEVICE_CPU).
+ * @param ntry The current number of tries for diagonalization.
+ * @param notconv The current number of eigenvectors that have not converged.
+ * @param ntry_max The maximum allowed number of tries for diagonalization.
+ * @param notconv_max The maximum allowed number of eigenvectors that can fail to converge.
+ * @return true if the eigenvectors are considered converged or the maximum number
+ *         of tries has been reached, false otherwise.
+ *
+ * @note Exits the diagonalization loop if either the convergence criteria
+ *       are met or the maximum number of tries is exceeded.
+ */
 template <typename T, typename Device>
 inline bool DiagoDavid<T, Device>::check_block_conv(const int& ntry,
                                                     const int& notconv,
