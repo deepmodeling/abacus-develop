@@ -761,7 +761,11 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::P
             delete reinterpret_cast<Diago_DavSubspace<T, Device>*>(this->pdiagh);
             this->pdiagh = nullptr;
         }
-        else
+        else if (this->method == "bpcg")
+        {
+            this->pdiagh->diag(hm, psi, eigenvalue);
+        }
+        else // method == "dav"
         {
              // Allow 5 tries at most. If ntry > ntry_max = 5, exit diag loop.
             const int ntry_max = 5;
