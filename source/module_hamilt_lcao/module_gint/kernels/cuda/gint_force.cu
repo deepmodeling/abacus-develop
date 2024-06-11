@@ -8,22 +8,21 @@
 // CUDA kernel to calculate psi and force
 namespace GintKernel
 {
-
 __global__ void get_psi_force(double* ylmcoef,
                               double delta_r_g,
                               int bxyz_g,
                               double nwmax_g,
-                              double* input_double,
-                              int* input_int,
-                              int* num_psir,
+                              double* __restrict__ input_double,
+                              int* __restrict__ input_int,
+                              int* __restrict__ num_psir,
                               int psi_size_max,
-                              int* ucell_atom_nwl,
-                              bool* atom_iw2_new,
-                              int* atom_iw2_ylm,
-                              int* atom_iw2_l,
-                              int* atom_nw,
+                              const int* __restrict__ ucell_atom_nwl,
+                              const bool* __restrict__ atom_iw2_new,
+                              const int* __restrict__ atom_iw2_ylm,
+                              const int* __restrict__ atom_iw2_l,
+                              const int* __restrict__ atom_nw,
                               int nr_max,
-                              double* psi_u,
+                              const double* __restrict__ psi_u,
                               double* psir_r,
                               double* psir_lx,
                               double* psir_ly,
@@ -110,13 +109,14 @@ __global__ void dot_product_stress(double* psir_lxx,
     int cacheIndex = threadIdx.x;
     double tmp[6] = {0.0};
     while (tid < elements_num)
-    {
-        tmp[0] += psir_lxx[tid] * psir_ylm_dm[tid] * 2;
-        tmp[1] += psir_lxy[tid] * psir_ylm_dm[tid] * 2;
-        tmp[2] += psir_lxz[tid] * psir_ylm_dm[tid] * 2;
-        tmp[3] += psir_lyy[tid] * psir_ylm_dm[tid] * 2;
-        tmp[4] += psir_lyz[tid] * psir_ylm_dm[tid] * 2;
-        tmp[5] += psir_lzz[tid] * psir_ylm_dm[tid] * 2;
+    {   
+        double psi_dm_2 = psir_ylm_dm[tid] * 2;
+        tmp[0] += psir_lxx[tid] * psi_dm_2;
+        tmp[1] += psir_lxy[tid] * psi_dm_2;
+        tmp[2] += psir_lxz[tid] * psi_dm_2;
+        tmp[3] += psir_lyy[tid] * psi_dm_2;
+        tmp[4] += psir_lyz[tid] * psi_dm_2;
+        tmp[5] += psir_lzz[tid] * psi_dm_2;
         tid += blockDim.x * gridDim.x;
     }
 
@@ -163,45 +163,56 @@ __global__ void dot_product_stress(double* psir_lxx,
  * stored.
  * @param iat Pointer to the array of iat values.
  * @param nwmax Maximum value for nwmax.
- * @param max_size Maximum size for arrays.
- * @param elements_num Number of elements to process.
  */
 
-__global__ void dot_product_force(double* psir_lx,
-                                  double* psir_ly,
-                                  double* psir_lz,
-                                  double* psir_ylm_dm,
+__global__ void dot_product_force(double* __restrict__ psir_lx,
+                                  double* __restrict__ psir_ly,
+                                  double* __restrict__ psir_lz,
+                                  double* __restrict__ psir_ylm_dm,
                                   double* force_dot,
                                   int* iat,
-                                  int nwmax,
-                                  int elements_num)
+                                  int nwmax)
 {
-    int tid = threadIdx.x + blockIdx.x * blockDim.x;
-    while (tid < elements_num)
+    extern __shared__ double localsum[];
+    int tid = threadIdx.x;
+    int bid = blockIdx.x;
+    int iat_on_nbz = iat[bid];
+    if(iat_on_nbz <= -1)
     {
-        int iat_on_nbz = iat[tid];
-        if (iat_on_nbz <= -1)
-        {
-            tid += blockDim.x * gridDim.x;
-            continue;
-        }
+        return;
+    }
 
-        int iat_index = tid * 3;
-        int dist = tid * nwmax;
-        double tmp[3] = {0.0};
+    int offset = bid * nwmax;
 
-        for (int i = 0; i < nwmax; i++)
+    for (int i = tid; i < nwmax; i += blockDim.x)
+    {
+        int ls_offset = tid * 3;
+        int psi_offset = offset + i;
+        double psi_dm_2 = psir_ylm_dm[psi_offset] * 2;
+        localsum[ls_offset] += psir_lx[psi_offset] * psi_dm_2;
+        localsum[ls_offset + 1] += psir_ly[psi_offset] * psi_dm_2;
+        localsum[ls_offset + 2] += psir_lz[psi_offset] * psi_dm_2;
+    }
+    __syncthreads();
+    
+    for (int i = blockDim.x / 2; i > 0; i >>= 1)
+    {
+        if (tid < i)
         {
-            tmp[0] += psir_lx[dist + i] * psir_ylm_dm[dist + i] * 2;
-            tmp[1] += psir_ly[dist + i] * psir_ylm_dm[dist + i] * 2;
-            tmp[2] += psir_lz[dist + i] * psir_ylm_dm[dist + i] * 2;
+            int ls_offset = tid * 3;
+            localsum[ls_offset] += localsum[ls_offset + i * 3];
+            localsum[ls_offset + 1] += localsum[ls_offset + i * 3 + 1];
+            localsum[ls_offset + 2] += localsum[ls_offset + i * 3 + 2];
         }
-        
+        __syncthreads();
+    }
+
+    if(tid == 0)
+    {
         for (int i = 0; i < 3; i++)
         {
-            atomicAdd(&force_dot[iat_on_nbz*3 + i], tmp[i]);
+            atomicAdd(&force_dot[iat_on_nbz*3 + i], localsum[i]);
         }
-        tid += blockDim.x * gridDim.x;
     }
 }
 } // namespace GintKernel

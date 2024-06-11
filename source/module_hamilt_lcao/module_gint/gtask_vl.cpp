@@ -11,7 +11,7 @@ void gtask_vlocal(const Grid_Technique& gridt,
                   const UnitCell& ucell,
                   std::vector<bool>& gpu_matrix_calc_flag,
                   const int grid_index_ij,
-                  const int max_size,
+                  const int max_atom,
                   const int nczp,
                   const double vfactor,
                   const double* vlocal_global_value,
@@ -21,12 +21,13 @@ void gtask_vlocal(const Grid_Technique& gridt,
 
 {
     const int nwmax = ucell.nwmax;
+    const int max_atom_per_bcell = max_atom * gridt.bxyz;
     for (int z_index = 0; z_index < gridt.nbzp; z_index++)
     {
         int num_get_psi = 0;
         int grid_index = grid_index_ij + z_index;
-        int num_psi_pos = gridt.psi_size_max_z * z_index;
-        int calc_flag_index = max_size * z_index;
+        int num_psi_pos = max_atom_per_bcell * z_index;
+        int calc_flag_index = max_atom * z_index;
         int bcell_start_index = gridt.bcell_start[grid_index];
 
         for (int id = 0; id < gridt.how_many_atoms[grid_index]; id++)
@@ -83,7 +84,7 @@ void gtask_vlocal(const Grid_Technique& gridt,
 
                             input_int[pos_temp_int] = it_temp;
                             input_int[pos_temp_int + 1]
-                                = ((z_index * max_size + id) * gridt.bxyz)
+                                = ((z_index * max_atom + id) * gridt.bxyz)
                                       * nwmax
                                   + ib;
                             num_get_psi++;
@@ -100,7 +101,7 @@ void alloc_mult_vlocal(const Grid_Technique& gridt,
                         const UnitCell& ucell,
                         std::vector<bool>& gpu_matrix_calc_flag,
                         const int grid_index_ij,
-                        const int max_size,
+                        const int max_atom,
                         double* psir_ylm_left,
                         double* psir_r,
                         std::vector<Cuda_Mem_Wrapper<double>>& grid_vlocal_g,
@@ -125,9 +126,9 @@ void alloc_mult_vlocal(const Grid_Technique& gridt,
     {
         int grid_index = grid_index_ij + z_index;
         int atom_num = gridt.how_many_atoms[grid_index];
-        int vldr3_index = z_index * max_size * nwmax * gridt.bxyz;
+        int vldr3_index = z_index * max_atom * nwmax * gridt.bxyz;
         int bcell_start_index = gridt.bcell_start[grid_index];
-        int calc_flag_index = max_size * z_index;
+        int calc_flag_index = max_atom * z_index;
         for (int atom1 = 0; atom1 < atom_num; atom1++)
         {
 

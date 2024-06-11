@@ -10,11 +10,11 @@ static __device__ void interpolate(double distance,
                                    int it,
                                    double nwmax_g,
                                    int nr_max,
-                                   const int* const atom_nw,
-                                   const bool* const atom_iw2_new,
-                                   const double* const psi_u,
+                                   const int* __restrict__ atom_nw,
+                                   const bool* __restrict__ atom_iw2_new,
+                                   const double* __restrict__ psi_u,
                                    const double ylma[49],
-                                   const int* const atom_iw2_ylm,
+                                   const int* __restrict__ atom_iw2_ylm,
                                    double* psir_ylm_left,
                                    int dist_tmp,
                                    int stride)
@@ -54,17 +54,17 @@ static __device__ void interpolate_f(double distance,
                                      int it,
                                      double nwmax_g,
                                      int nr_max,
-                                     const int* const atom_nw,
-                                     const bool* const atom_iw2_new,
-                                     const double* const psi_u,
-                                     const int* const atom_iw2_l,
-                                     const int* const atom_iw2_ylm,
+                                     const int* __restrict__ atom_nw,
+                                     const bool* __restrict__ atom_iw2_new,
+                                     const double* __restrict__ psi_u,
+                                     const int* __restrict__ atom_iw2_l,
+                                     const int* __restrict__ atom_iw2_ylm,
                                      double* psir_r,
                                      int dist_tmp,
                                      const double ylma[49],
                                      double vlbr3_value,
                                      double* psir_lx,
-                                     const double dr[3],
+                                     const double * __restrict__ dr,
                                      const double grly[49][3],
                                      double* psir_ly,
                                      double* psir_lz,
@@ -86,7 +86,8 @@ static __device__ void interpolate_f(double distance,
     const double x12 = x1 * x2 / 6;
     const double x03 = x0 * x3 / 2;
     // Temporary variables for interpolation
-    double tmp, dtmp;
+    double tmp = 0.0;
+    double dtmp = 0.0;
     // Loop over non-zero elements in atom_nw array
     int it_nw = it * nwmax_g;
     int iw_nr = (it_nw * nr_max + ip) * 2;
@@ -107,14 +108,16 @@ static __device__ void interpolate_f(double distance,
 
         const int idx_lm = atom_iw2_ylm[it_nw_iw];
         const double rl = pow(distance, ll);
+        const double rl_r = 1.0 / rl;
+        const double dist_r = 1 / distance;
 
         // Compute right-hand side of the equation
-        psir_r[dist_tmp] = tmp * ylma[idx_lm] / rl * vlbr3_value;
+        psir_r[dist_tmp] = tmp * ylma[idx_lm] * rl_r * vlbr3_value;
         // Compute derivatives with respect to spatial
         // coordinates
         const double tmpdphi_rly
-            = (dtmp - tmp * ll / distance) / rl * ylma[idx_lm] / distance;
-        const double tmprl = tmp / rl;
+            = (dtmp - tmp * ll * dist_r) * rl_r * ylma[idx_lm] * dist_r;
+        const double tmprl = tmp * rl_r;
         psir_lx[dist_tmp]
             = tmpdphi_rly * dr[0] + tmprl * grly[idx_lm][0];
 

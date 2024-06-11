@@ -41,7 +41,7 @@ __global__ void get_psi_and_vldr3(double* ylmcoef,
         int it = input_int[index_int];
         int dist_tmp = input_int[index_int + 1];
         int nwl = ucell_atom_nwl[it];
-        spherical_harmonics(dr, distance, nwl, ylma, ylmcoef);
+        spherical_harmonics(dr, nwl, ylma, ylmcoef);
 
         interpolate(distance,
                     delta_r_g,

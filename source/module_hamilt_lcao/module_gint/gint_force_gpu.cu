@@ -33,7 +33,7 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
                           const int isstress,
                           const Grid_Technique& gridt,
                           const UnitCell& ucell)
-{
+{   
     const int nbzp = gridt.nbzp;
     const int lgd = gridt.lgd;
     const int max_atom = gridt.max_atom;
@@ -48,7 +48,7 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
     const int cuda_threads = 256;
     const int nat=ucell.nat;
     const int cuda_block
-        = std::min(64, (max_phi_per_z + cuda_threads - 1) / cuda_threads);
+        = std::min(64, ceil_div(max_phi_per_z, cuda_threads));
 
     const int num_streams = gridt.nstreams;
 
@@ -133,11 +133,6 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
             int atom_pair_num = 0;
             const int grid_index_ij = i * gridt.nby * nbzp 
                                         + j * nbzp;
-
-            dim3 grid_dot_force(cuda_block);
-            dim3 block_dot_force(cuda_threads);
-            dim3 grid_dot(cuda_block);
-            dim3 block_dot(cuda_threads);
 
             std::vector<bool> gpu_mat_cal_flag(max_atom * nbzp, false);
 
@@ -253,9 +248,12 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
                                      nullptr);
 
             if (isforce){
-            dot_product_force<<<grid_dot_force,
-                                block_dot_force,
-                                0,
+            int block_size = std::min(256, ceil_div(nwmax, 32) * 32);
+            dim3 grid_force(max_atom_per_z);
+            dim3 block_force(block_size);
+            dot_product_force<<<grid_force,
+                                block_force,
+                                block_size * 3 * sizeof(double),
                                 streams[sid]>>>(
                                     dpsi_dx.get_device_pointer(sid),
                                     dpsi_dy.get_device_pointer(sid),
@@ -263,13 +261,14 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
                                     psi_dm.get_device_pointer(sid),
                                     force.get_device_pointer(sid),
                                     iat_per_z.get_device_pointer(sid),
-                                    nwmax,
-                                    max_atom_per_z);
+                                    nwmax);
             }
 
-            if (isstress){
-            dot_product_stress<<<grid_dot,
-                                 block_dot,
+            if (isstress){ 
+            dim3 grid_stress(cuda_block);
+            dim3 block_stress(cuda_threads);
+            dot_product_stress<<<grid_stress,
+                                 block_stress,
                                  0,
                                  streams[sid]>>>(
                                 d2psi_dxx.get_device_pointer(sid),

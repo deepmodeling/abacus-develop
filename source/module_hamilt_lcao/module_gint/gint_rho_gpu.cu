@@ -23,7 +23,8 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
     const int lgd = gridt.lgd;
     const int max_atom = gridt.max_atom;
     const int num_streams = gridt.nstreams;
-    const int max_atom_per_z = max_atom * gridt.bxyz * nbzp;
+    const int max_atom_per_bcell = max_atom * gridt.bxyz;
+    const int max_atom_per_z = max_atom_per_bcell * nbzp;
     const int max_phi_per_z = max_atom_per_z * ucell.nwmax;
     const int max_atompair_per_z = max_atom * max_atom * nbzp;
 
@@ -85,8 +86,6 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
             }
         }
     }
-
-    // transfer the density matrix to the device
     dm_matrix.copy_host_to_device_sync();
 
 // calculate the rho for every nbzp bigcells
@@ -173,7 +172,7 @@ void gint_gamma_rho_gpu(const hamilt::HContainer<double>* dm,
                 psi_input_double.get_device_pointer(sid),
                 psi_input_int.get_device_pointer(sid),
                 phi_num_per_bcell.get_device_pointer(sid),
-                gridt.psi_size_max_z,
+                max_atom_per_bcell,
                 gridt.atom_nwl_g,
                 gridt.atom_new_g,
                 gridt.atom_ylm_g,
