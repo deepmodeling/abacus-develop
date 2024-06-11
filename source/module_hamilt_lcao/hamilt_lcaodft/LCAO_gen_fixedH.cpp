@@ -21,44 +21,12 @@ LCAO_gen_fixedH::LCAO_gen_fixedH()
 LCAO_gen_fixedH::~LCAO_gen_fixedH()
 {}
 
-//void LCAO_gen_fixedH::calculate_NL_no(double* HlocR)
-//{
-//    ModuleBase::TITLE("LCAO_gen_fixedH","calculate_NL_no");
-//	if(GlobalV::GAMMA_ONLY_LOCAL)
-//	{
-//	  	//for gamma only.
-//		this->build_Nonlocal_beta_new(HlocR, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD));
-//	}
-//	else
-//	{
-//		this->build_Nonlocal_mu_new(HlocR, false, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD));
-//	}
-//
-//    return;
-//}
-//
-//void LCAO_gen_fixedH::calculate_T_no(double* HlocR)
-//{
-//    ModuleBase::TITLE("LCAO_gen_fixedH","calculate_T_no");
-//    this->build_ST_new('T', false, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD), HlocR);
-//    return;
-//}
-//
-//void LCAO_gen_fixedH::calculate_S_no(double* SlocR)
-//{
-//    ModuleBase::TITLE("LCAO_gen_fixedH", "calculate_S_no");
-//    ModuleBase::timer::tick("LCAO_gen_fixedH","calculate_S_no");
-//	this->build_ST_new('S', false, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD), SlocR);
-//    ModuleBase::timer::tick("LCAO_gen_fixedH","calculate_S_no");
-//    return;
-//}
 
-
-//liaochen modify interface 2010-3-22
 void LCAO_gen_fixedH::build_ST_new(const char& dtype,
 	const bool& calc_deri,
 	const UnitCell &ucell,
 	const LCAO_Orbitals& orb,
+    const Parallel_Orbitals& pv,
 	const ORB_gen_tables& uot,
 	Grid_Driver* GridD,
 	double* HSloc,
@@ -74,7 +42,6 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype,
 	const bool gamma_only_local = GlobalV::GAMMA_ONLY_LOCAL;
 
 	int total_nnr = 0;
-	const Parallel_Orbitals* pv = this->LM->ParaV;
 #ifdef _OPENMP
 #pragma omp parallel reduction(+:total_nnr)
 {
@@ -101,7 +68,7 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype,
 			AdjacentAtomInfo adjs;
             GridD->Find_atom(ucell, tau1, T1, I1, &adjs);
 			// Record_adj.for_2d() may not called in some case
-			int nnr = pv->nlocstart ? pv->nlocstart[iat1] : 0;
+			int nnr = pv.nlocstart ? pv.nlocstart[iat1] : 0;
 
 			if (cal_syns)
             {
@@ -147,7 +114,7 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype,
 							// so, here we use ParaO::in_this_processor,
 							// in build_Non... use global2local_row
                             // and global2local_col directly,
-                            if (!pv->in_this_processor(iw1_all, iw2_all))
+                            if (!pv.in_this_processor(iw1_all, iw2_all))
 							{
 								++iw2_all;
 								continue;
@@ -308,8 +275,45 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype,
 
 								if(gamma_only_local)
 								{
-									this->LM->set_force (iw1_all, iw2_all,	olm[0], olm[1], olm[2], dtype);
-									if(cal_stress) this->LM->set_stress (iw1_all, iw2_all, olm[0], olm[1], olm[2], dtype, dtau);
+									this->LM->set_force(
+											pv,
+											iw1_all,
+											iw2_all,
+											olm[0],
+											olm[1],
+											olm[2],
+											dtype,
+											this->LM->DSloc_x,
+											this->LM->DSloc_y,
+											this->LM->DSloc_z,
+											this->LM->DHloc_fixed_x,
+											this->LM->DHloc_fixed_y,
+											this->LM->DHloc_fixed_z);
+
+									if(cal_stress) 
+									{
+										this->LM->set_stress(
+                                                pv,
+												iw1_all, 
+												iw2_all,
+												olm[0],
+												olm[1],
+												olm[2],
+												dtype,
+												dtau,
+												this->LM->DSloc_11,
+												this->LM->DSloc_12,
+												this->LM->DSloc_13,
+												this->LM->DSloc_22,
+												this->LM->DSloc_23,
+												this->LM->DSloc_33,
+												this->LM->DHloc_fixed_11,
+												this->LM->DHloc_fixed_12,
+												this->LM->DHloc_fixed_13,
+												this->LM->DHloc_fixed_22,
+												this->LM->DHloc_fixed_23,
+												this->LM->DHloc_fixed_33);
+									}
 								}
 								else // k point algorithm
 								{
@@ -449,11 +453,11 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype,
 					{
 						for(int jj=0; jj<atom1->nw * npol; ++jj)
 						{
-                            const int mu = pv->global2local_row(start1 + jj);
+                            const int mu = pv.global2local_row(start1 + jj);
 							if(mu<0)continue; 
 							for(int kk=0; kk<atom2->nw * npol; ++kk)
 							{
-                                const int nu = pv->global2local_col(start2 + kk);
+                                const int nu = pv.global2local_col(start2 + kk);
 								if(nu<0)continue;
 								++total_nnr;
 								++nnr;
@@ -470,10 +474,10 @@ void LCAO_gen_fixedH::build_ST_new(const char& dtype,
 
 	if(!gamma_only_local)
 	{
-		if(total_nnr != pv->nnr)
+		if(total_nnr != pv.nnr)
 		{
-			std::cout << " nnr=" << total_nnr << " LNNR.nnr=" << pv->nnr << std::endl;
-			GlobalV::ofs_running << " nnr=" << total_nnr << " LNNR.nnr=" << pv->nnr << std::endl;
+			std::cout << " nnr=" << total_nnr << " LNNR.nnr=" << pv.nnr << std::endl;
+			GlobalV::ofs_running << " nnr=" << total_nnr << " LNNR.nnr=" << pv.nnr << std::endl;
 			ModuleBase::WARNING_QUIT("LCAO_gen_fixedH::build_ST_new","nnr != LNNR.nnr");
 		}
 	}
@@ -964,7 +968,22 @@ void LCAO_gen_fixedH::build_Nonlocal_mu_new(double* NLloc,
 												}
 											}
 											assert(ib==nlm_1.size());
-											this->LM->set_force (iw1_all, iw2_all, nlm[0], nlm[1], nlm[2], 'N');
+
+											this->LM->set_force(
+													*this->LM->ParaV,
+													iw1_all,
+													iw2_all,
+													nlm[0],
+													nlm[1],
+													nlm[2],
+													'N',
+													this->LM->DSloc_x,
+													this->LM->DSloc_y,
+													this->LM->DSloc_z,
+													this->LM->DHloc_fixed_x,
+													this->LM->DHloc_fixed_y,
+													this->LM->DHloc_fixed_z);
+
 										}
 										else
 										{

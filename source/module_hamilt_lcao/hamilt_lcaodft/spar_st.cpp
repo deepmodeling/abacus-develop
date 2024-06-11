@@ -53,7 +53,7 @@ void sparse_format::cal_TR(
     lm.Hloc_fixedR.resize(lm.ParaV->nnr);
     lm.zeros_HSR('T');
 
-    gen_h.build_ST_new('T', 0, ucell, GlobalC::ORB, *uot, &(GlobalC::GridD), lm.Hloc_fixedR.data());
+    gen_h.build_ST_new('T', 0, ucell, GlobalC::ORB, pv, *uot, &(GlobalC::GridD), lm.Hloc_fixedR.data());
 
     sparse_format::set_R_range(lm.all_R_coor, grid);
 
