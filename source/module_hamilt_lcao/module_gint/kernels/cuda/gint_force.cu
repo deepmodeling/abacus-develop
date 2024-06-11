@@ -183,6 +183,9 @@ __global__ void dot_product_force(double* __restrict__ psir_lx,
     }
 
     int offset = bid * nwmax;
+    localsum[tid * 3] = 0.0;
+    localsum[tid * 3 + 1] = 0.0;
+    localsum[tid * 3 + 2] = 0.0;
 
     for (int i = tid; i < nwmax; i += blockDim.x)
     {
