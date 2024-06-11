@@ -9,20 +9,20 @@ __global__ void get_psi(const double* const ylmcoef,
                         double delta_r_g,
                         int bxyz_g,
                         double nwmax_g,
-                        const double* const input_double,
-                        const int* const input_int,
-                        const int* const num_psir,
-                        int psi_size_max,
+                        const double* const psi_input_double,
+                        const int* const psi_input_int,
+                        const int* const atom_num_per_bcell,
+                        int max_atom_per_bcell,
                         const int* const ucell_atom_nwl,
                         const bool* const atom_iw2_new,
                         const int* const atom_iw2_ylm,
                         const int* const atom_nw,
                         int nr_max,
                         const double* const psi_u,
-                        double* psir_ylm)
+                        double* psi)
 {
-    int size = num_psir[blockIdx.x];
-    int start_index = psi_size_max * blockIdx.x;
+    int size = atom_num_per_bcell[blockIdx.x];
+    int start_index = max_atom_per_bcell * blockIdx.x;
     int end_index = start_index + size;
     start_index += threadIdx.x + blockDim.x * blockIdx.y;
     for (int index = start_index; index < end_index;
@@ -30,14 +30,14 @@ __global__ void get_psi(const double* const ylmcoef,
     {
         double dr[3];
         int index_double = index * 4;
-        dr[0] = input_double[index_double];
-        dr[1] = input_double[index_double + 1];
-        dr[2] = input_double[index_double + 2];
-        double distance = input_double[index_double + 3];
+        dr[0] = psi_input_double[index_double];
+        dr[1] = psi_input_double[index_double + 1];
+        dr[2] = psi_input_double[index_double + 2];
+        double distance = psi_input_double[index_double + 3];
         double ylma[49];
         int index_int = index * 2;
-        int it = input_int[index_int];
-        int dist_tmp = input_int[index_int + 1];
+        int it = psi_input_int[index_int];
+        int dist_tmp = psi_input_int[index_int + 1];
         int nwl = ucell_atom_nwl[it];
 
         spherical_harmonics(dr, nwl, ylma, ylmcoef);
@@ -52,7 +52,7 @@ __global__ void get_psi(const double* const ylmcoef,
                     psi_u,
                     ylma,
                     atom_iw2_ylm,
-                    psir_ylm,
+                    psi,
                     dist_tmp,
                     1);
     }
