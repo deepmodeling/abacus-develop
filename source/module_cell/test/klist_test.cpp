@@ -79,15 +79,9 @@ namespace GlobalC
  *   - set_kup_and_kdw()
  *     - SetKupKdown: set basic kpoints info: kvec_c, kvec_d, wk, isk, nks, nkstot
  *       according to different spin case
- *   - set_kup_and_kdw_after_vc()
- *     - SetKupKdownAfterVC: set basic kpoints info: kvec_c, kvec_d, wk, isk, nks, nkstot
- *       according to different spin case after variable-cell optimization
  *   - set_both_kvec()
  *     - SetBothKvec: set kvec_c (cartesian coor.) and kvec_d (direct coor.)
  *     - SetBothKvecFinalSCF: same as above, with GlobalV::FINAL_SCF=1
- *   - set_both_kvec_after_vc()
- *     - SetBothKvecAfterVC: set kvec_c (cartesian coor.) and kvec_d (direct coor.)
- *       after variable-cell relaxation
  *   - print_klists()
  *     - PrintKlists: print kpoints coordinates
  *     - PrintKlistsWarningQuit: for nkstot < nks error
@@ -549,37 +543,8 @@ TEST_F(KlistTest, SetKupKdown)
 	}
 }
 
-TEST_F(KlistTest, SetKupKdownAfterVC)
-{
-	std::string k_file = "./support/KPT4";
-	kv->nspin = 1;
-	kv->read_kpoints(k_file);
-	kv->set_kup_and_kdw_after_vc();
-	for (int ik=0;ik<5;ik++)
-	{
-		EXPECT_EQ(kv->isk[ik],0);
-	}
-	kv->nspin = 4;
-	kv->read_kpoints(k_file);
-	kv->set_kup_and_kdw_after_vc();
-	for (int ik=0;ik<5;ik++)
-	{
-		EXPECT_EQ(kv->isk[ik],0);
-		EXPECT_EQ(kv->isk[ik+5],0);
-		EXPECT_EQ(kv->isk[ik+10],0);
-		EXPECT_EQ(kv->isk[ik+15],0);
-	}
-	kv->nspin = 2;
-	kv->read_kpoints(k_file);
-	kv->set_kup_and_kdw_after_vc();
-	for (int ik=0;ik<5;ik++)
-	{
-		EXPECT_EQ(kv->isk[ik],0);
-		EXPECT_EQ(kv->isk[ik+5],1);
-	}
-}
 
-TEST_F(KlistTest, SetBothKvecAfterVC)
+TEST_F(KlistTest, SetAfterVC)
 {
 	kv->nspin = 1;
 	kv->set_nkstot(1);
@@ -588,7 +553,7 @@ TEST_F(KlistTest, SetBothKvecAfterVC)
 	kv->kvec_c[0].x = 0;
 	kv->kvec_c[0].y = 0;
 	kv->kvec_c[0].z = 0;
-	kv->set_both_kvec_after_vc(GlobalC::ucell.G,GlobalC::ucell.latvec);
+	kv->set_after_vc(GlobalV::NSPIN, GlobalC::ucell.G,GlobalC::ucell.latvec);
 	EXPECT_TRUE(kv->kd_done);
 	EXPECT_TRUE(kv->kc_done);
 	EXPECT_DOUBLE_EQ(kv->kvec_d[0].x,0);
@@ -608,7 +573,7 @@ TEST_F(KlistTest, PrintKlists)
 	kv->kvec_c[0].x = 0;
 	kv->kvec_c[0].y = 0;
 	kv->kvec_c[0].z = 0;
-	kv->set_both_kvec_after_vc(GlobalC::ucell.G,GlobalC::ucell.latvec);
+	kv->set_after_vc(GlobalV::NSPIN, GlobalC::ucell.G,GlobalC::ucell.latvec);
 	EXPECT_TRUE(kv->kd_done);
 	kv->print_klists(GlobalV::ofs_running);
 	GlobalV::ofs_running.close();

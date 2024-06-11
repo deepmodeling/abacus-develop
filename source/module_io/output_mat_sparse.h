@@ -25,6 +25,7 @@ namespace ModuleIO
         const Parallel_Orbitals &pv,
         LCAO_gen_fixedH &gen_h, // mohan add 2024-04-02
         Gint_k &gint_k, // mohan add 2024-04-01
+        const ORB_gen_tables* uot,
         LCAO_Matrix &lm,
         Grid_Driver &grid, // mohan add 2024-04-06
         const K_Vectors &kv,
@@ -55,6 +56,9 @@ namespace ModuleIO
     LCAO_gen_fixedH& _gen_h; // mohan add 2024-04-02
 
     Gint_k& _gint_k; // mohan add 2024-04-01
+
+    // introduced temporarily for LCAO refactoring
+    const ORB_gen_tables* uot_;
 
     LCAO_Matrix& _lm;
 

@@ -22,7 +22,7 @@ list(APPEND objects
     write_input.cpp
     write_cube.cpp
     write_rho.cpp
-    write_potential.cpp
+    write_pot.cpp
     write_dipole.cpp
     td_current_io.cpp
     write_wfc_r.cpp

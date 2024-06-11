@@ -150,7 +150,7 @@ fi
 #echo $get_s
 if ! test -z "$get_s"  && [  $get_s == "get_S" ]; then
 	sref=refSR.csr
-	scal=SR.csr
+	scal=OUT.autotest/SR.csr
 	python3 ../tools/CompareFile.py $sref $scal 8
 	echo "CompareS_pass $?" >>$1
 fi

@@ -8,8 +8,12 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
-cudaError_t checkCuda(cudaError_t result);
-cudaError_t checkCudaLastError();
+
+#define checkCuda(val) check(val, #val, __FILE__, __LINE__)
+#define checkCudaLastError() __checkCudaLastError(__FILE__, __LINE__)
+
+cudaError_t check(cudaError_t result, const char *const func, const char *const file, const int line);
+cudaError_t __checkCudaLastError(const char *file, const int line);
 
 void dump_cuda_array_to_file(double* cuda_array,
                              int width,

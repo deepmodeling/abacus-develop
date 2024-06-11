@@ -16,11 +16,18 @@ const double* ElecState::getRho(int spin) const
     return &(this->charge->rho[spin][0]);
 }
 
-void ElecState::fixed_weights(const std::vector<double>& ocp_kb)
+void ElecState::fixed_weights(
+   const std::vector<double>& ocp_kb,
+   const int &nbands,
+   const double &nelec)
 {
 
-    int num = 0;
-    num = this->klist->get_nks() * GlobalV::NBANDS;
+    assert(nbands>0);
+    assert(nelec>0.0);
+
+    const double ne_thr = 1.0e-5;
+
+    const int num = this->klist->get_nks() * nbands;
     if (num != ocp_kb.size())
     {
         ModuleBase::WARNING_QUIT("ElecState::fixed_weights",
@@ -28,25 +35,29 @@ void ElecState::fixed_weights(const std::vector<double>& ocp_kb)
     }
 
     double num_elec = 0.0;
-    for (int i = 0; i < ocp_kb.size(); i++)
+    for (int i = 0; i < ocp_kb.size(); ++i)
     {
         num_elec += ocp_kb[i];
     }
-    if (std::abs(num_elec - GlobalV::nelec) > 1.0e-5)
+
+    if (std::abs(num_elec - nelec) > ne_thr)
     {
         ModuleBase::WARNING_QUIT("ElecState::fixed_weights",
                                  "total number of occupations is wrong , please check ocp_set");
     }
 
-    for (int ik = 0; ik < this->wg.nr; ik++)
+    for (int ik = 0; ik < this->wg.nr; ++ik)
     {
-        for (int ib = 0; ib < this->wg.nc; ib++)
+        for (int ib = 0; ib < this->wg.nc; ++ib)
         {
             this->wg(ik, ib) = ocp_kb[ik * this->wg.nc + ib];
         }
     }
     this->skip_weights = true;
+
+    return;
 }
+
 
 void ElecState::init_nelec_spin()
 {

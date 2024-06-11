@@ -116,7 +116,6 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1,
                                                               std::complex<double>* data_pointer,
                                                               TR* s_pointer)
 {
-    const ORB_gen_tables& uot = ORB_gen_tables::get_const_instance();
     const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
     // ---------------------------------------------
     // get info of orbitals of atom1 and atom2 from ucell
