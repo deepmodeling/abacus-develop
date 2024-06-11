@@ -27,15 +27,38 @@ void sparse_format::cal_dH(
 	{
         GlobalV::CAL_STRESS = false;
 
-        gen_h.build_ST_new('T', true, GlobalC::ucell, GlobalC::ORB, *uot, &(GlobalC::GridD), lm.Hloc_fixedR.data());
+		gen_h.build_ST_new(
+				'T', 
+				true, 
+				GlobalC::ucell, 
+				GlobalC::ORB, 
+                *lm.ParaV,
+				*uot, 
+				&GlobalC::GridD, 
+				lm.Hloc_fixedR.data());
 
         GlobalV::CAL_STRESS = true;
     }
     else
     {
-        gen_h.build_ST_new('T', true, GlobalC::ucell, GlobalC::ORB, *uot, &(GlobalC::GridD), lm.Hloc_fixedR.data());
+		gen_h.build_ST_new(
+				'T', 
+				true, 
+				GlobalC::ucell, 
+				GlobalC::ORB, 
+				*lm.ParaV,
+				*uot, 
+				&GlobalC::GridD, 
+				lm.Hloc_fixedR.data());
     }
-    gen_h.build_Nonlocal_mu_new (lm.Hloc_fixed.data(), true, GlobalC::ucell, GlobalC::ORB, *uot, &(GlobalC::GridD));
+
+	gen_h.build_Nonlocal_mu_new(
+			lm.Hloc_fixed.data(), 
+			true, 
+			GlobalC::ucell, 
+			GlobalC::ORB, 
+			*uot, 
+			&GlobalC::GridD);
     
     sparse_format::cal_dSTN_R(lm, grid, current_spin, sparse_thr);
 
@@ -43,7 +66,14 @@ void sparse_format::cal_dH(
     delete[] lm.DHloc_fixedR_y;
     delete[] lm.DHloc_fixedR_z;
 
-    gint_k.cal_dvlocal_R_sparseMatrix(current_spin, sparse_thr, &lm, lm.ParaV,GlobalC::ORB,GlobalC::ucell,GlobalC::GridD);
+	gint_k.cal_dvlocal_R_sparseMatrix(
+			current_spin, 
+			sparse_thr, 
+			&lm, 
+			lm.ParaV,
+			GlobalC::ORB,
+			GlobalC::ucell,
+			GlobalC::GridD);
 
     return;
 }
