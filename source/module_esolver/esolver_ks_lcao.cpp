@@ -42,6 +42,8 @@
 
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 
+#include "module_io/write_wfc_nao.h"
+
 namespace ModuleESolver
 {
 
@@ -126,7 +128,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
         }
 
         // 1.3) Setup k-points according to symmetry.
-        this->kv.set(ucell.symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, ucell.G, ucell.latvec);
+        this->kv.set(ucell.symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, ucell.G, ucell.latvec, GlobalV::ofs_running);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
         Print_Info::setup_parameters(ucell, this->kv);
@@ -183,10 +185,11 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
     this->LOWF.ParaV = &(this->orb_con.ParaV);
     this->LM.ParaV = &(this->orb_con.ParaV);
 
-    // 5) initialize Density Matrix
+    // 5) initialize density matrix
     dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->init_DM(&this->kv, &(this->orb_con.ParaV), GlobalV::NSPIN);
 
 
+    // this function should be removed outside of the function
     if (GlobalV::CALCULATION == "get_S")
     {
         ModuleBase::timer::tick("ESolver_KS_LCAO", "init");
@@ -235,30 +238,27 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
     }
 #endif
 
-    // 8) Quxin added for DFT+U
+    // 8) initialize DFT+U
     if (GlobalV::dft_plus_u)
     {
         GlobalC::dftu.init(ucell, this->LM, this->kv.get_nks());
     }
 
-    // 9) ppcell
-    // output is GlobalC::ppcell.vloc 3D local pseudopotentials
-    // without structure factors
-    // this function belongs to cell LOOP
+    // 9) initialize ppcell
     GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, this->pw_rho);
 
-    // 10) init HSolver
+    // 10) initialize the HSolver
     if (this->phsol == nullptr)
     {
         this->phsol = new hsolver::HSolverLCAO<TK>(&(this->orb_con.ParaV));
         this->phsol->method = GlobalV::KS_SOLVER;
     }
 
-    // 11) inititlize the charge density.
+    // 11) inititlize the charge density
     this->pelec->charge->allocate(GlobalV::NSPIN);
     this->pelec->omega = GlobalC::ucell.omega;
 
-    // 12) initialize the potential.
+    // 12) initialize the potential
     if (this->pelec->pot == nullptr)
     {
         this->pelec->pot = new elecstate::Potential(this->pw_rhod,
@@ -272,8 +272,6 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
 
 #ifdef __DEEPKS
     // 13) initialize deepks
-    // wenfei 2021-12-19
-    // if we are performing DeePKS calculations, we need to load a model
     if (GlobalV::deepks_scf)
     {
         // load the DeePKS model from deep neural network
@@ -281,11 +279,10 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
     }
 #endif
 
-    // 14) set occupations?
-    // Fix this->pelec->wg by ocp_kb
+    // 14) set occupations
     if (GlobalV::ocp)
     {
-        this->pelec->fixed_weights(GlobalV::ocp_kb);
+        this->pelec->fixed_weights(GlobalV::ocp_kb, GlobalV::NBANDS, GlobalV::nelec);
 	}
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "before_all_runners");
@@ -985,25 +982,17 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
     }
 
     // 2) print wavefunctions
-    if (this->conv_elec)
+    if (elecstate::ElecStateLCAO<TK>::out_wfc_lcao && 
+        (this->conv_elec || iter == GlobalV::SCF_NMAX) &&
+        (istep % GlobalV::out_interval == 0))
     {
-        if (elecstate::ElecStateLCAO<TK>::out_wfc_lcao)
-        {
-            elecstate::ElecStateLCAO<TK>::out_wfc_flag = elecstate::ElecStateLCAO<TK>::out_wfc_lcao;
-        }
-
-        for (int ik = 0; ik < this->kv.get_nks(); ik++)
-        {
-            if (istep % GlobalV::out_interval == 0)
-            {
-                this->psi[0].fix_k(ik);
-                this->pelec->print_psi(this->psi[0], istep);
-            }
-        }
-        if (elecstate::ElecStateLCAO<TK>::out_wfc_lcao)
-        {
-            elecstate::ElecStateLCAO<TK>::out_wfc_flag = 0;
-        }
+            ModuleIO::write_wfc_nao(elecstate::ElecStateLCAO<TK>::out_wfc_lcao,
+                           this->psi[0],
+                           this->pelec->ekb,
+                           this->pelec->wg,
+                           this->pelec->klist->kvec_c,
+                           this->orb_con.ParaV,
+                           istep);
     }
 
     // 3) print potential

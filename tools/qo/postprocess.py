@@ -157,7 +157,7 @@ def read(path: str,
             ss_k.append(read_mat_hs(fs))
     if read_LOWF:
         for ik in range(nk):
-            flowf = os.path.join(path, f"LOWF_K_{ik+1}.txt")
+            flowf = os.path.join(path, f"WFC_NAO_K{ik+1}.txt")
             lowf_k, kvec_c = read_lowf(flowf)
             lowfs_k.append(lowf_k)
             kvecs_c.append(kvec_c)
@@ -494,7 +494,7 @@ class QOUnittest(unittest.TestCase):
     def test_read_lowf_k(self):
         for ik in range(ndim**3):
             print("Unittest test_read_lowf_k on kpoint", ik)
-            flowf = path + f"/LOWF_K_{ik+1}.txt"
+            flowf = path + f"/WFC_NAO_K{ik+1}.txt"
             lowf_k, kvec_d = read_lowf(flowf)
             nlocal, nband = lowf_k.shape
             # check number of bands
@@ -533,7 +533,7 @@ class QOUnittest(unittest.TestCase):
     def test_cal_denmat(self):
         for ik in range(ndim**3):
             print("Unittest test_cal_denmat on kpoint", ik)
-            flowf = path + f"/LOWF_K_{ik+1}.txt"
+            flowf = path + f"/WFC_NAO_K{ik+1}.txt"
             lowf_k, kvec_d = read_lowf(flowf)
             denmat_k = cal_denmat(lowf_k)
             
@@ -564,7 +564,7 @@ class QOUnittest(unittest.TestCase):
         for ik in range(ndim**3):
             print("Unittest test_lowdin_onW on kpoint", ik)
             ndim_test = 2
-            flowf = path + f"/LOWF_K_{ik+1}.txt"
+            flowf = path + f"/WFC_NAO_K{ik+1}.txt"
             lowf_k, kvec_d = read_lowf(flowf)
             denmat_k = cal_denmat(lowf_k)
             fs = path + f'/data-{ik}-S'
