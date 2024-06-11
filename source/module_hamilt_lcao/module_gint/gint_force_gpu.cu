@@ -262,6 +262,7 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
                                     force.get_device_pointer(sid),
                                     iat_per_z.get_device_pointer(sid),
                                     nwmax);
+            checkCudaLastError();
             }
 
             if (isstress){ 
@@ -280,6 +281,7 @@ void gint_fvl_gamma_gpu(hamilt::HContainer<double>* dm,
                                 psi_dm.get_device_pointer(sid),
                                 stress.get_device_pointer(sid),
                                 max_phi_per_z);
+            checkCudaLastError();
             }
         }
     }
