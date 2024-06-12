@@ -11,7 +11,7 @@
 namespace hamilt
 {
 
-template<typename T, typename Device = psi::DEVICE_CPU>
+template <typename T, typename Device = base_device::DEVICE_CPU>
 class Hamilt
 {
   public:
@@ -61,7 +61,7 @@ class Hamilt
 protected:
 
     Device* ctx = {};
-    using syncmem_op = psi::memory::synchronize_memory_op<T, Device, Device>;
+    using syncmem_op = base_device::memory::synchronize_memory_op<T, Device, Device>;
 };
 
 } // namespace hamilt

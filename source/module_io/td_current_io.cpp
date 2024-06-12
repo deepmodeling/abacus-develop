@@ -8,13 +8,15 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_elecstate/module_dm/cal_dm_psi.h"
 #include "module_base/parallel_reduce.h"
+#include "module_elecstate/potentials/H_TDDFT_pw.h"
 
 #ifdef __LCAO
 //init DSloc_R for current calculation
 void ModuleIO::Init_DS_tmp(
 		const Parallel_Orbitals& pv,
 		LCAO_Matrix &lm,
-		LCAO_gen_fixedH &gen_h)
+		LCAO_gen_fixedH &gen_h,
+        const ORB_gen_tables* uot)
 {    
     ModuleBase::TITLE("ModuleIO", "Init_DS_tmp");
     ModuleBase::timer::tick("ModuleIO", "Init_DS_tmp");
@@ -33,7 +35,7 @@ void ModuleIO::Init_DS_tmp(
 
     ModuleBase::OMP_PARALLEL(init_DSloc_Rxyz);
     bool cal_deri = true;
-    gen_h.build_ST_new('S', cal_deri, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD), lm.SlocR.data());
+    gen_h.build_ST_new('S', cal_deri, GlobalC::ucell, GlobalC::ORB, *uot, &(GlobalC::GridD), lm.SlocR.data());
 
     ModuleBase::timer::tick("ModuleIO", "Init_DS_tmp");
     return;
@@ -103,7 +105,7 @@ void ModuleIO::cal_tmp_DM(elecstate::DensityMatrix<std::complex<double>, double>
                 std::complex<double> kphase = std::complex<double>(cosp, sinp);
                 // set DMR element
                 double* tmp_DMR_pointer = tmp_matrix->get_pointer();
-                std::complex<double>* tmp_DMK_pointer = DM.get_DMK_vector()[ik + ik_begin].data();
+                std::complex<double>* tmp_DMK_pointer = DM.get_DMK_pointer(ik + ik_begin);
                 double* DMK_real_pointer = nullptr;
                 double* DMK_imag_pointer = nullptr;
                 // jump DMK to fill DMR
@@ -140,6 +142,7 @@ void ModuleIO::write_current(const int istep,
                                 const psi::Psi<std::complex<double>>* psi,
                                 const elecstate::ElecState* pelec,
                                 const K_Vectors& kv,
+                                const ORB_gen_tables* uot,
                                 const Parallel_Orbitals* pv,
 								Record_adj& ra,
 								LCAO_Matrix &lm, // mohan add 2024-04-02
@@ -149,7 +152,7 @@ void ModuleIO::write_current(const int istep,
     ModuleBase::TITLE("ModuleIO", "write_current");
     ModuleBase::timer::tick("ModuleIO", "write_current");
     //Init_DS_tmp
-    Init_DS_tmp(*pv, lm, gen_h);
+    Init_DS_tmp(*pv, lm, gen_h, uot);
     // construct a DensityMatrix object
     elecstate::DensityMatrix<std::complex<double>, double> DM(&kv,pv,GlobalV::NSPIN);
     

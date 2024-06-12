@@ -9,7 +9,7 @@
 #include "spin_constrain.h"
 
 template <>
-ModuleBase::matrix SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_MW_k(
+ModuleBase::matrix SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::cal_MW_k(
     LCAO_Matrix* LM,
     const std::vector<std::vector<std::complex<double>>>& dm)
 {
@@ -17,7 +17,7 @@ ModuleBase::matrix SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_MW_
     int nw = this->get_nw();
     const int nlocal = (this->nspin_ == 4) ? nw / 2 : nw;
     ModuleBase::matrix MecMulP(this->nspin_, nlocal, true), orbMulP(this->nspin_, nlocal, true);
-    for(size_t ik = 0; ik != this->kv_.nks; ++ik)
+    for(size_t ik = 0; ik != this->kv_.get_nks(); ++ik)
     {
         if (this->nspin_ == 4)
         {
@@ -63,9 +63,7 @@ ModuleBase::matrix SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_MW_
 }
 
 template <>
-void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_MW(const int& step,
-                                                                  LCAO_Matrix* LM,
-                                                                  bool print)
+void SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::cal_MW(const int& step, LCAO_Matrix* LM, bool print)
 {
     ModuleBase::TITLE("module_deltaspin", "cal_MW");
     const std::vector<std::vector<std::complex<double>>>& dm

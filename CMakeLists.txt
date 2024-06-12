@@ -13,9 +13,8 @@ project(
 option(ENABLE_LCAO "Enable LCAO calculation." ON)
 option(ENABLE_DEEPKS "Enable DeePKS functionality" OFF)
 option(ENABLE_LIBXC "Enable LibXC functionality" OFF)
-option(USE_CUDA "Enable support to CUDA for PW." OFF)
+option(USE_CUDA "Enable support to CUDA for ABACUS." OFF)
 option(ENABLE_FLOAT_FFTW "Enable support to single precision FFTW library." OFF)
-# option(USE_CUSOLVER_LCAO "Enable support to CUSOLVER for LCAO." OFF)
 option(USE_ROCM "Enable support to ROCm." OFF)
 option(USE_OPENMP "Enable OpenMP in ABACUS." ON)
 option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
@@ -37,6 +36,8 @@ option(COMMIT_INFO "Print commit information in log" ON)
 option(ENABLE_FFT_TWO_CENTER "Enable FFT-based two-center integral method." ON)
 option(ENABLE_GOOGLEBENCH "Enable GOOGLE-benchmark usage." OFF)
 option(ENABLE_RAPIDJSON "Enable rapid-json usage." OFF)
+option(ENABLE_CNPY "Enable cnpy usage." OFF)
+option(ENABLE_PEXSI "Enable support for PEXSI." OFF)
 
 # enable json support
 if(ENABLE_RAPIDJSON)
@@ -67,11 +68,6 @@ if(ENABLE_RAPIDJSON)
   include_directories(${RapidJSON_INCLUDE_PATH})
 endif()
 
-if(USE_CUDA)
-  set(USE_CUSOLVER_LCAO ON)
-else()
-  set(USE_CUSOLVER_LCAO OFF)
-endif()
 # get commit info
 if(COMMIT_INFO)
   find_package(Git)
@@ -216,6 +212,14 @@ if(ENABLE_LCAO)
   if(ENABLE_FFT_TWO_CENTER)
     add_compile_definitions(USE_NEW_TWO_CENTER)
   endif()
+  
+  if(ENABLE_PEXSI)
+    find_package(PEXSI REQUIRED)
+    target_link_libraries(${ABACUS_BIN_NAME} ${PEXSI_LIBRARY} ${SuperLU_DIST_LIBRARY} ${ParMETIS_LIBRARY} ${METIS_LIBRARY} pexsi)
+    include_directories(${PEXSI_INCLUDE_DIR} ${ParMETIS_INCLUDE_DIR})
+    add_compile_definitions(__PEXSI)
+    set(CMAKE_CXX_STANDARD 14)
+  endif()
 else()
   set(ENABLE_DEEPKS OFF)
   set(ENABLE_LIBRI OFF)
@@ -246,37 +250,28 @@ endif()
 include(CheckLanguage)
 check_language(CUDA)
 if(CMAKE_CUDA_COMPILER)
-  if(NOT DEFINED USE_CUDA OR NOT DEFINED USE_CUSOLVER_LCAO)
-    if(NOT DEFINED USE_CUDA AND NOT DEFINED USE_CUSOLVER_LCAO)
-      message(
-        "CUDA components detected. \nWill build the CUDA for PW version of ABACUS by default."
-      )
-      set(USE_CUDA ON)
-      set(USE_CUSOLVER_LCAO OFF)
-    elseif(NOT DEFINED USE_CUDA)
-      set(USE_CUDA OFF)
-    else()
-      set(USE_CUSOLVER_LCAO OFF)
-    endif()
+  if(NOT DEFINED USE_CUDA)
+    message(
+      "CUDA components detected. \nWill build the CUDA version of ABACUS by default."
+    )
+    set(USE_CUDA ON)
   else()
-    if(NOT USE_CUDA AND NOT USE_CUSOLVER_LCAO)
+    if(NOT USE_CUDA)
       message(
         STATUS
-          "CUDA components detected, but both USE_CUDA and USE_CUSOLVER_LCAO set to OFF. NOT building CUDA version of ABACUS."
+          "CUDA components detected, but USE_CUDA is set to OFF. NOT building CUDA version of ABACUS."
       )
     endif()
   endif()
 else() # CUDA not found
-  if(USE_CUDA OR USE_CUSOLVER_LCAO)
+  if(USE_CUDA)
     message(
       FATAL_ERROR
-        "USE_CUDA or USE_CUSOLVER_LCAO set but no CUDA components found.")
-    set(USE_CUDA OFF)
-    set(USE_CUSOLVER_LCAO OFF)
+        "USE_CUDA is set but no CUDA components found.")
   endif()
 endif()
 
-if(USE_CUDA OR USE_CUSOLVER_LCAO)
+if(USE_CUDA)
   cmake_minimum_required(VERSION 3.18) # required by `CUDA_ARCHITECTURES` below
   set_if_higher(CMAKE_CXX_STANDARD 14)
   set(CMAKE_CXX_EXTENSIONS ON)
@@ -316,12 +311,12 @@ if(USE_CUDA OR USE_CUSOLVER_LCAO)
   if(USE_CUDA)
     add_compile_definitions(__CUDA)
     add_compile_definitions(__UT_USE_CUDA)
-    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-      set(CMAKE_CUDA_FLAGS ${CMAKE_CUDA_FLAGS} "-g -G")
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+      set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG} -g -G" CACHE STRING "CUDA flags for debug build" FORCE)
     endif()
-  endif()
-  if(USE_CUSOLVER_LCAO)
-    add_compile_definitions(__CUSOLVER_LCAO)
+    if (USE_OPENMP AND OpenMP_CXX_FOUND)
+      set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler=${OpenMP_CXX_FLAGS}" CACHE STRING "CUDA flags" FORCE)
+    endif()
   endif()
 endif()
 
@@ -329,6 +324,7 @@ endif()
 # version. Use cmake with AMD-ROCm:
 # https://rocmdocs.amd.com/en/latest/Installation_Guide/Using-CMake-with-AMD-ROCm.html
 if(USE_ROCM)
+  cmake_minimum_required(VERSION 3.18)
   if(NOT DEFINED ROCM_PATH)
     set(ROCM_PATH
         "/opt/rocm"
@@ -465,6 +461,27 @@ if(ENABLE_DEEPKS)
   endif()
   include_directories(${libnpy_SOURCE_DIR}/include)
   add_compile_definitions(__DEEPKS)
+endif()
+
+if (ENABLE_CNPY)
+  find_path(cnpy_SOURCE_DIR
+    cnpy.h
+    HINTS ${libnpy_INCLUDE_DIR}
+  )
+  if(NOT cnpy_SOURCE_DIR)
+    include(FetchContent)
+    FetchContent_Declare(
+      cnpy
+      GIT_REPOSITORY https://github.com/rogersce/cnpy.git
+      GIT_PROGRESS TRUE
+    )
+    FetchContent_MakeAvailable(cnpy)
+  else()
+    include_directories(${cnpy_INCLUDE_DIR})
+  endif()
+  include_directories(${cnpy_SOURCE_DIR})
+  target_link_libraries(${ABACUS_BIN_NAME} cnpy)
+  add_compile_definitions(__USECNPY)
 endif()
 
 function(git_submodule_update)
@@ -693,7 +710,7 @@ if(ENABLE_LCAO)
   if(USE_ELPA)
     target_link_libraries(${ABACUS_BIN_NAME} genelpa)
   endif()
-  if(USE_CUSOLVER_LCAO)
+  if(USE_CUDA)
     target_link_libraries(diag_cusolver)
   endif()
 endif()

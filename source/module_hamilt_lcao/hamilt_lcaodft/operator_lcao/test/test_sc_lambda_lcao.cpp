@@ -84,7 +84,7 @@ TEST_F(ScLambdaLCAOTest, ContributeHk)
     std::ofstream ofs("test.log");
     int nrow = 2;
     int ncol = 2;
-    paraV.set_global2local(nrow, ncol, false, ofs);
+    paraV.set_serial(nrow, ncol);
     EXPECT_EQ(paraV.nloc, 4);
     // set LM
     LCAO_Matrix LM;
@@ -98,8 +98,8 @@ TEST_F(ScLambdaLCAOTest, ContributeHk)
     };
     LM.Hloc2.resize(LM.ParaV->nloc, 0.0);
     // set sc
-    SpinConstrain<std::complex<double>, psi::DEVICE_CPU>& sc
-        = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::getScInstance();
+    SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>& sc
+        = SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::getScInstance();
     sc.set_ParaV(&paraV);
     EXPECT_EQ(sc.ParaV->nloc, 4);
     std::map<int, int> atomCounts = {
@@ -151,7 +151,7 @@ TEST_F(ScLambdaLCAOTest, ContributeHkS2)
     std::ofstream ofs("test.log");
     int nrow = 1;
     int ncol = 1;
-    paraV.set_global2local(nrow, ncol, false, ofs);
+    paraV.set_serial(nrow, ncol);
     EXPECT_EQ(paraV.nloc, 1);
     // set LM
     LCAO_Matrix LM;
@@ -162,8 +162,8 @@ TEST_F(ScLambdaLCAOTest, ContributeHkS2)
     };
     LM.Hloc2.resize(LM.ParaV->nloc, 0.0);
     // set sc
-    SpinConstrain<std::complex<double>, psi::DEVICE_CPU>& sc
-        = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::getScInstance();
+    SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>& sc
+        = SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::getScInstance();
     sc.set_ParaV(&paraV);
     EXPECT_EQ(sc.ParaV->nloc, 1);
     std::map<int, int> atomCounts = {

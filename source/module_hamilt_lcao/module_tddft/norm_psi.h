@@ -7,6 +7,7 @@
 #define NORM_PSI_H
 
 #include "module_basis/module_ao/parallel_orbitals.h"
+#include <complex>
 
 namespace module_tddft
 {

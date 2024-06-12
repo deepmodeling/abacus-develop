@@ -8,7 +8,6 @@
 #include "module_md/nhchain.h"
 
 #define doublethreshold 1e-12
-
 /************************************************
  *  unit test of functions in nhchain.h
  ***********************************************/
@@ -46,7 +45,7 @@ class NHC_test : public testing::Test
         Setcell::parameters();
 
         ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
-        p_esolver->init(INPUT, ucell);
+        p_esolver->before_all_runners(INPUT, ucell);
 
         INPUT.mdp.md_type = "npt";
         INPUT.mdp.md_pmode = "tri";

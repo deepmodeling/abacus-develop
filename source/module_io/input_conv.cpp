@@ -13,9 +13,11 @@
 #include "module_io/input.h"
 #include "module_relax/relax_old/ions_move_basic.h"
 #include "module_relax/relax_old/lattice_change_basic.h"
+
 #ifdef __EXX
 #include "module_ri/exx_abfs-jle.h"
 #endif
+
 #ifdef __LCAO
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_elecstate/potentials/H_TDDFT_pw.h"
@@ -23,6 +25,10 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_lcao/module_tddft/evolve_elec.h"
+#include "module_hamilt_lcao/module_tddft/td_velocity.h"
+#endif
+#ifdef __PEXSI
+#include "module_hsolver/module_pexsi/pexsi_solver.h"
 #endif
 
 #include "module_base/timer.h"
@@ -30,8 +36,9 @@
 #include "module_elecstate/potentials/efield.h"
 #include "module_elecstate/potentials/gatefield.h"
 #include "module_hsolver/hsolver_lcao.h"
+#include "module_hsolver/hsolver_pw.h"
 #include "module_md/md_func.h"
-#include "module_psi/kernels/device.h"
+#include "module_base/module_device/device.h"
 
 template <typename T>
 void Input_Conv::parse_expression(const std::string &fn, std::vector<T> &vec)
@@ -129,7 +136,22 @@ std::vector<double> Input_Conv::convert_units(std::string params, double c)
 void Input_Conv::read_td_efield()
 {
     elecstate::H_TDDFT_pw::stype = INPUT.td_stype;
-
+    if(INPUT.esolver_type == "tddft" && elecstate::H_TDDFT_pw::stype == 1)
+    {
+        TD_Velocity::tddft_velocity = true;
+    }
+    else
+    {
+        TD_Velocity::tddft_velocity = false;
+    }
+    if(INPUT.out_mat_hs2==1)
+    {
+        TD_Velocity::out_mat_R = true;
+    }
+    else
+    {
+        TD_Velocity::out_mat_R = false;
+    }
     parse_expression(INPUT.td_ttype, elecstate::H_TDDFT_pw::ttype);
 
     elecstate::H_TDDFT_pw::tstart = INPUT.td_tstart;
@@ -305,12 +327,12 @@ void Input_Conv::Convert(void)
     GlobalV::MIN_DIST_COEF = INPUT.min_dist_coef;
     GlobalV::NBANDS = INPUT.nbands;
     GlobalV::NBANDS_ISTATE = INPUT.nbands_istate;
+    
+    GlobalV::device_flag = base_device::information::get_device_flag(INPUT.device, INPUT.ks_solver, INPUT.basis_type, INPUT.gamma_only_local);
 
-    GlobalV::device_flag = psi::device::get_device_flag(INPUT.device, INPUT.ks_solver, INPUT.basis_type);
-
-    if (GlobalV::device_flag == "gpu")
+    if (GlobalV::device_flag == "gpu" && INPUT.basis_type == "pw")
     {
-        GlobalV::KPAR = psi::device::get_device_kpar(INPUT.kpar);
+        GlobalV::KPAR = base_device::information::get_device_kpar(INPUT.kpar);
     }
     else
     {
@@ -334,7 +356,6 @@ void Input_Conv::Convert(void)
     GlobalV::DFT_FUNCTIONAL = INPUT.dft_functional;
     GlobalV::XC_TEMPERATURE = INPUT.xc_temperature;
     GlobalV::NSPIN = INPUT.nspin;
-    GlobalV::CURRENT_SPIN = 0;
 
     GlobalV::CAL_FORCE = INPUT.cal_force;
     GlobalV::FORCE_THR = INPUT.force_thr;
@@ -359,6 +380,8 @@ void Input_Conv::Convert(void)
     Lattice_Change_Basic::fixed_axes = INPUT.fixed_axes;
 
     GlobalV::CAL_STRESS = INPUT.cal_stress;
+
+    GlobalV::NUM_STREAM = INPUT.nstream;
 
     GlobalV::RELAX_METHOD = INPUT.relax_method;
     GlobalV::relax_scale_force = INPUT.relax_scale_force;
@@ -388,6 +411,15 @@ void Input_Conv::Convert(void)
     GlobalV::PW_DIAG_NMAX = INPUT.pw_diag_nmax;
     GlobalV::DIAGO_CG_PREC = INPUT.diago_cg_prec;
     GlobalV::PW_DIAG_NDIM = INPUT.pw_diag_ndim;
+
+    hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_CPU>::diago_full_acc = INPUT.diago_full_acc;
+    hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU>::diago_full_acc = INPUT.diago_full_acc;
+
+#if ((defined __CUDA) || (defined __ROCM))
+    hsolver::HSolverPW<std::complex<float>, base_device::DEVICE_GPU>::diago_full_acc = INPUT.diago_full_acc;
+    hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_GPU>::diago_full_acc = INPUT.diago_full_acc;
+#endif
+
     GlobalV::PW_DIAG_THR = INPUT.pw_diag_thr;
     GlobalV::NB2D = INPUT.nb2d;
     GlobalV::NURSE = INPUT.nurse;
@@ -474,6 +506,10 @@ void Input_Conv::Convert(void)
     elecstate::Efield::efield_pos_dec = INPUT.efield_pos_dec;
     elecstate::Efield::efield_amp = INPUT.efield_amp;
 
+    // efield does not support symmetry=1
+    if (INPUT.efield_flag && INPUT.symmetry == "1")
+        ModuleSymmetry::Symmetry::symm_flag = 0;
+
     //----------------------------------------------------------
     // Yu Liu add 2022-09-13
     //----------------------------------------------------------
@@ -513,6 +549,8 @@ void Input_Conv::Convert(void)
     module_tddft::Evolve_elec::out_current = INPUT.out_current;
     module_tddft::Evolve_elec::td_print_eij = INPUT.td_print_eij;
     module_tddft::Evolve_elec::td_edm = INPUT.td_edm;
+    TD_Velocity::out_vecpot = INPUT.out_vecpot;
+    TD_Velocity::init_vecpot_file = INPUT.init_vecpot_file;
     read_td_efield();
 #endif
 
@@ -684,6 +722,9 @@ void Input_Conv::Convert(void)
     hsolver::HSolverLCAO<std::complex<double>>::out_mat_t = INPUT.out_mat_t;
     hsolver::HSolverLCAO<std::complex<double>>::out_mat_dh = INPUT.out_mat_dh;
     GlobalV::out_mat_xc = INPUT.out_mat_xc;
+    GlobalV::out_hr_npz = INPUT.out_hr_npz;
+    GlobalV::out_dm_npz = INPUT.out_dm_npz;
+    GlobalV::dm_to_rho = INPUT.dm_to_rho;
     if (GlobalV::GAMMA_ONLY_LOCAL)
     {
         elecstate::ElecStateLCAO<double>::out_wfc_lcao = INPUT.out_wfc_lcao;
@@ -729,6 +770,12 @@ void Input_Conv::Convert(void)
     GlobalV::deepks_bandgap = INPUT.deepks_bandgap; // QO added for bandgap label 2021-12-15
     GlobalV::deepks_out_unittest = INPUT.deepks_out_unittest;
     GlobalV::deepks_out_labels = INPUT.deepks_out_labels;
+    GlobalV::deepks_equiv = INPUT.deepks_equiv;
+
+    if(GlobalV::deepks_equiv && GlobalV::deepks_bandgap)
+    {
+        ModuleBase::WARNING_QUIT("Input_conv", "deepks_equiv and deepks_bandgap cannot be used together");
+    }
     if (GlobalV::deepks_out_unittest)
     {
         GlobalV::deepks_out_labels = 1;
@@ -811,6 +858,37 @@ void Input_Conv::Convert(void)
     GlobalV::qo_strategy = INPUT.qo_strategy;
     GlobalV::qo_thr = INPUT.qo_thr;
     GlobalV::qo_screening_coeff = INPUT.qo_screening_coeff;
+
+    //-----------------------------------------------
+    // PEXSI related parameters
+    //-----------------------------------------------
+#ifdef __PEXSI
+    pexsi::PEXSI_Solver::pexsi_npole = INPUT.pexsi_npole;
+    pexsi::PEXSI_Solver::pexsi_inertia = INPUT.pexsi_inertia;
+    pexsi::PEXSI_Solver::pexsi_nmax = INPUT.pexsi_nmax;
+    // pexsi::PEXSI_Solver::pexsi_symbolic = INPUT.pexsi_symbolic;
+    pexsi::PEXSI_Solver::pexsi_comm = INPUT.pexsi_comm;
+    pexsi::PEXSI_Solver::pexsi_storage = INPUT.pexsi_storage;
+    pexsi::PEXSI_Solver::pexsi_ordering = INPUT.pexsi_ordering;
+    pexsi::PEXSI_Solver::pexsi_row_ordering = INPUT.pexsi_row_ordering;
+    pexsi::PEXSI_Solver::pexsi_nproc = INPUT.pexsi_nproc;
+    pexsi::PEXSI_Solver::pexsi_symm = INPUT.pexsi_symm;
+    pexsi::PEXSI_Solver::pexsi_trans = INPUT.pexsi_trans;
+    pexsi::PEXSI_Solver::pexsi_method = INPUT.pexsi_method;
+    pexsi::PEXSI_Solver::pexsi_nproc_pole = INPUT.pexsi_nproc_pole;
+    // pexsi::PEXSI_Solver::pexsi_spin = INPUT.pexsi_spin;
+    pexsi::PEXSI_Solver::pexsi_temp = INPUT.pexsi_temp;
+    pexsi::PEXSI_Solver::pexsi_gap = INPUT.pexsi_gap;
+    pexsi::PEXSI_Solver::pexsi_delta_e = INPUT.pexsi_delta_e;
+    pexsi::PEXSI_Solver::pexsi_mu_lower = INPUT.pexsi_mu_lower;
+    pexsi::PEXSI_Solver::pexsi_mu_upper = INPUT.pexsi_mu_upper;
+    pexsi::PEXSI_Solver::pexsi_mu = INPUT.pexsi_mu;
+    pexsi::PEXSI_Solver::pexsi_mu_thr = INPUT.pexsi_mu_thr;
+    pexsi::PEXSI_Solver::pexsi_mu_expand = INPUT.pexsi_mu_expand;
+    pexsi::PEXSI_Solver::pexsi_mu_guard = INPUT.pexsi_mu_guard;
+    pexsi::PEXSI_Solver::pexsi_elec_thr = INPUT.pexsi_elec_thr;
+    pexsi::PEXSI_Solver::pexsi_zero_thr = INPUT.pexsi_zero_thr;
+#endif
     ModuleBase::timer::tick("Input_Conv", "Convert");
     return;
 }

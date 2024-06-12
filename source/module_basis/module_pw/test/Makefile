@@ -102,7 +102,7 @@ GTESTOPTS = -I${GTEST_DIR}/include -L${GTEST_DIR}/lib -lgtest -lpthread
 # Objects
 #==========================
 VPATH=../../../module_base\
-:../../../module_psi/kernels\
+../../../module_base/module_device\
 :../
 
 MATH_OBJS0=matrix.o\
@@ -110,10 +110,6 @@ matrix3.o\
 tool_quit.o\
 mymath.o\
 timer.o\
-formatter_fmt.o\
-formatter_physfmt.o\
-formatter_table.o\
-formatter_contextfmt.o\
 pw_basis.o\
 pw_distributer.o\
 pw_init.o\
@@ -126,7 +122,7 @@ pw_basis_k.o\
 pw_basis_sup.o\
 pw_transform_k.o\
 memory.o\
-psi_memory_op.o\
+memory_op.o\
 depend_mock.o
 
 OTHER_OBJS0=

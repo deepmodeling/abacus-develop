@@ -59,7 +59,7 @@ void ESolver_KS_PW<T, Device>::KG(const int& smear_type,
     std::cout << "nt: " << nt << " ; dt: " << dt << " a.u.(ry^-1)" << std::endl;
     assert(nw >= 1);
     assert(nt >= 1);
-    const int nk = this->kv.nks;
+    const int nk = this->kv.get_nks();
 
     double* ct11 = new double[nt];
     double* ct12 = new double[nt];
@@ -153,7 +153,7 @@ void ESolver_KS_PW<T, Device>::jjcorr_ks(const int ik,
 
     if (GlobalV::RANK_IN_POOL == 0)
     {
-        int nkstot = this->kv.nkstot;
+        int nkstot = this->kv.get_nkstot();
         int ikglobal = this->kv.getik_global(ik);
         std::stringstream ss;
         ss << GlobalV::global_out_dir << "vmatrix" << ikglobal + 1 << ".dat";
@@ -297,10 +297,10 @@ void ESolver_KS_PW<T, Device>::calcondw(const int nt,
     delete[] kappa;
 }
 
-template class ESolver_KS_PW<std::complex<float>, psi::DEVICE_CPU>;
-template class ESolver_KS_PW<std::complex<double>, psi::DEVICE_CPU>;
+template class ESolver_KS_PW<std::complex<float>, base_device::DEVICE_CPU>;
+template class ESolver_KS_PW<std::complex<double>, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class ESolver_KS_PW<std::complex<float>, psi::DEVICE_GPU>;
-template class ESolver_KS_PW<std::complex<double>, psi::DEVICE_GPU>;
+template class ESolver_KS_PW<std::complex<float>, base_device::DEVICE_GPU>;
+template class ESolver_KS_PW<std::complex<double>, base_device::DEVICE_GPU>;
 #endif
 } // namespace ModuleESolver

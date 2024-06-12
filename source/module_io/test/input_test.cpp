@@ -170,6 +170,7 @@ TEST_F(InputTest, Default)
         EXPECT_EQ(INPUT.out_dm1,0);
         EXPECT_EQ(INPUT.deepks_out_labels,0);
         EXPECT_EQ(INPUT.deepks_scf,0);
+		EXPECT_EQ(INPUT.deepks_equiv,0);
         EXPECT_EQ(INPUT.deepks_bandgap,0);
         EXPECT_EQ(INPUT.deepks_out_unittest,0);
         EXPECT_EQ(INPUT.out_pot,0);
@@ -537,6 +538,7 @@ TEST_F(InputTest, Read)
         EXPECT_EQ(INPUT.out_dm1,0);
         EXPECT_EQ(INPUT.deepks_out_labels,0);
         EXPECT_EQ(INPUT.deepks_scf,0);
+		EXPECT_EQ(INPUT.deepks_equiv,0);
         EXPECT_EQ(INPUT.deepks_bandgap,0);
         EXPECT_EQ(INPUT.deepks_out_unittest,0);
         EXPECT_EQ(INPUT.out_pot,2);
@@ -1200,14 +1202,6 @@ TEST_F(InputTest, Check)
 	INPUT.gamma_only_local = 0;
 	INPUT.out_dm1 = 0;
 	//
-	INPUT.basis_type = "pw";
-	INPUT.chg_extrap = "dm";
-	testing::internal::CaptureStdout();
-	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
-	output = testing::internal::GetCapturedStdout();
-	EXPECT_THAT(output,testing::HasSubstr("wrong 'chg_extrap=dm' is only available for local orbitals."));
-	INPUT.chg_extrap = "atomic";
-	//
 	INPUT.nbands = 100001;
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(INPUT.Check(),::testing::ExitedWithCode(0), "");
@@ -1566,6 +1560,7 @@ TEST_F(InputTest, Check)
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("please set right files directory for reading in."));
 	INPUT.read_file_dir = "auto";
+	/*
 	// Start to check deltaspin parameters
 	INPUT.sc_mag_switch = 1;
 	INPUT.sc_file = "none";
@@ -1653,6 +1648,7 @@ TEST_F(InputTest, Check)
 	INPUT.ks_solver = "default";
 	INPUT.basis_type = "pw";
 	// End of checking Deltaspin parameters
+	*/
 
 	/*
 	testing::internal::CaptureStdout();

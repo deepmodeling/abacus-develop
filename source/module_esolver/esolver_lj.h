@@ -14,9 +14,9 @@ namespace ModuleESolver
             classname = "ESolver_LJ";
         }
 
-        void init(Input& inp, UnitCell& cell) override;
+        void before_all_runners(Input& inp, UnitCell& cell) override;
 
-        void run(const int istep, UnitCell& cell) override;
+        void runner(const int istep, UnitCell& cell) override;
 
         double cal_energy() override;
 
@@ -24,7 +24,7 @@ namespace ModuleESolver
 
         void cal_stress(ModuleBase::matrix& stress) override;
 
-        void post_process() override;
+        void after_all_runners() override;
 
       private:
 

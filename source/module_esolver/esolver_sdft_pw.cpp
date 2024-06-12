@@ -36,13 +36,16 @@ ESolver_SDFT_PW::~ESolver_SDFT_PW()
 {
 }
 
-void ESolver_SDFT_PW::init(Input& inp, UnitCell& ucell)
+void ESolver_SDFT_PW::before_all_runners(Input& inp, UnitCell& ucell)
 {
+    // 1) initialize parameters from int Input class
     this->nche_sto = inp.nche_sto;
     this->method_sto = inp.method_sto;
 
-    ESolver_KS::init(inp, ucell);
+    // 2) run "before_all_runners" in ESolver_KS
+    ESolver_KS::before_all_runners(inp, ucell);
 
+    // 3) initialize the pointer for electronic states of SDFT
     this->pelec = new elecstate::ElecStatePW_SDFT(pw_wfc,
                                                   &(chr),
                                                   (K_Vectors*)(&(kv)),
@@ -52,11 +55,11 @@ void ESolver_SDFT_PW::init(Input& inp, UnitCell& ucell)
                                                   this->pw_rho,
                                                   pw_big);
 
-    // Inititlize the charge density.
+    // 4) inititlize the charge density.
     this->pelec->charge->allocate(GlobalV::NSPIN);
     this->pelec->omega = ucell.omega;
 
-    // Initializee the potential.
+    // 5) initialize the potential.
     if (this->pelec->pot == nullptr)
     {
         this->pelec->pot = new elecstate::Potential(pw_rhod,
@@ -69,16 +72,18 @@ void ESolver_SDFT_PW::init(Input& inp, UnitCell& ucell)
         GlobalTemp::veff = &(this->pelec->pot->get_effective_v());
     }
 
-    // Maybe NSPIN=2 is not considered in this ESolver, but FYI
-    // Fix pelec->wg by ocp_kb
+    // 6) set occupatio, redundant?
     if (GlobalV::ocp)
     {
-        this->pelec->fixed_weights(GlobalV::ocp_kb);
+        this->pelec->fixed_weights(GlobalV::ocp_kb, GlobalV::NBANDS, GlobalV::nelec);
     }
 
-    this->Init_GlobalC(inp, ucell); // temporary
+    // 7) initialize the global classes
+    this->Init_GlobalC(inp, ucell, GlobalC::ppcell); // temporary
 
+    // 8) initialize the stochastic wave functions
     stowf.init(&kv, pw_wfc->npwk_max);
+
     if (inp.nbands_sto != 0)
     {
         if (inp.initsto_ecut < inp.ecutwfc)
@@ -97,17 +102,20 @@ void ESolver_SDFT_PW::init(Input& inp, UnitCell& ucell)
 
     size_t size = stowf.chi0->size();
 
-    this->stowf.shchi = new psi::Psi<std::complex<double>>(kv.nks, stowf.nchip_max, wf.npwx, kv.ngk.data());
+    this->stowf.shchi = new psi::Psi<std::complex<double>>(kv.get_nks(), stowf.nchip_max, wf.npwx, kv.ngk.data());
 
     ModuleBase::Memory::record("SDFT::shchi", size * sizeof(std::complex<double>));
 
     if (GlobalV::NBANDS > 0)
     {
-        this->stowf.chiortho = new psi::Psi<std::complex<double>>(kv.nks, stowf.nchip_max, wf.npwx, kv.ngk.data());
+        this->stowf.chiortho = new psi::Psi<std::complex<double>>(kv.get_nks(), stowf.nchip_max, wf.npwx, kv.ngk.data());
         ModuleBase::Memory::record("SDFT::chiortho", size * sizeof(std::complex<double>));
     }
 
+    // 9) initialize the hsolver
     this->phsol = new hsolver::HSolverPW_SDFT(&kv, pw_wfc, &wf, this->stowf, inp.method_sto);
+
+    return;
 }
 
 
@@ -260,7 +268,7 @@ void ESolver_SDFT_PW::cal_stress(ModuleBase::matrix& stress)
 }
 
 
-void ESolver_SDFT_PW::post_process(void)
+void ESolver_SDFT_PW::after_all_runners(void)
 {
 
     GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;

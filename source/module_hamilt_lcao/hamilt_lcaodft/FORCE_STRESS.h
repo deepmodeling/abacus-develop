@@ -1,7 +1,7 @@
 #ifndef FORCE_STRESS_LCAO_H
 #define FORCE_STRESS_LCAO_H
 
-#include "FORCE_k.h"
+#include "FORCE.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/matrix.h"
@@ -40,6 +40,7 @@ class Force_Stress_LCAO
         LCAO_gen_fixedH &gen_h, // mohan add 2024-04-02
 		Gint_Gamma &gint_gamma, // mohan add 2024-04-01
 		Gint_k &gint_k, // mohan add 2024-04-01
+        const ORB_gen_tables* uot,
         ModuleBase::matrix& fcs,
         ModuleBase::matrix& scs,
         const Structure_Factor& sf,
@@ -54,8 +55,7 @@ class Force_Stress_LCAO
   private:
     int nat;
     Record_adj* RA;
-    Force_LCAO_k flk;
-    //	Force_LCAO_gamma flg;
+    Force_LCAO<T> flk;
     Stress_Func<double> sc_pw;
     Forces<double> f_pw;
 
@@ -86,16 +86,15 @@ class Force_Stress_LCAO
         ModuleBase::matrix& soverlap,
         ModuleBase::matrix& stvnl_dphi,
         ModuleBase::matrix& svnl_dbeta,
+        ModuleBase::matrix& svl_dphi,
 #if __DEEPKS
-        ModuleBase::matrix& svl_dphi,
         ModuleBase::matrix& svnl_dalpha,
-#else
-        ModuleBase::matrix& svl_dphi,
 #endif
         LCAO_gen_fixedH &gen_h, // mohan add 2024-04-02
 		Gint_Gamma &gint_gamma,
 		Gint_k &gint_k,
-	    Parallel_Orbitals &pv,
+        const ORB_gen_tables* uot,
+	    const Parallel_Orbitals &pv,
 		LCAO_Matrix &lm,
 		const K_Vectors& kv);
 

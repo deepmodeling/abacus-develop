@@ -4,8 +4,6 @@
 #include "module_basis/module_ao/parallel_orbitals.h"
 
 //write mock function for Parallel_Orbitals
-Parallel_2D::Parallel_2D(){}
-Parallel_2D::~Parallel_2D(){}
 Parallel_Orbitals::Parallel_Orbitals() {}
 Parallel_Orbitals::~Parallel_Orbitals(){}
 //define a mock derived class of class ElecState

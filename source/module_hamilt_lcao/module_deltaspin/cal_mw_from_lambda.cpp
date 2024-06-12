@@ -6,7 +6,7 @@
 #include "spin_constrain.h"
 
 template <>
-void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_mw_from_lambda(int i_step)
+void SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::cal_mw_from_lambda(int i_step)
 {
     ModuleBase::TITLE("SpinConstrain","cal_mw_from_lambda");
     ModuleBase::timer::tick("SpinConstrain", "cal_mw_from_lambda");

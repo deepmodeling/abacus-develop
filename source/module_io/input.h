@@ -9,6 +9,7 @@
 
 #include "module_base/vector3.h"
 #include "module_md/md_para.h"
+#include "input_conv.h"
 
 class Input
 {
@@ -136,7 +137,7 @@ class Input
     double press2;
     double press3;
     bool cal_stress; // calculate the stress
-
+    int nstream;
     std::string fixed_axes; // which axes are fixed
     bool fixed_ibrav; //whether to keep type of lattice; must be used along with latname
     bool fixed_atoms; //whether to fix atoms during vc-relax
@@ -186,6 +187,7 @@ class Input
     int pw_diag_nmax;
     int diago_cg_prec; // mohan add 2012-03-31
     int pw_diag_ndim;
+    bool diago_full_acc;
     double pw_diag_thr; // used in cg method
 
     int nb2d; // matrix 2d division.
@@ -260,7 +262,7 @@ class Input
     int printe; // mohan add 2011-03-16
     int out_freq_elec;  // the frequency ( >= 0) of electronic iter to output charge density and wavefunction. 0: output only when converged
     int out_freq_ion;  // the frequency ( >= 0 ) of ionic step to output charge density and wavefunction. 0: output only when ion steps are finished
-    bool out_chg; // output charge density. 0: no; 1: yes
+    int out_chg; // output charge density. 0: no; 1: yes
     bool out_dm; // output density matrix.
     bool out_dm1;
     int out_pot; // yes or no
@@ -271,6 +273,9 @@ class Input
     bool out_proj_band; // projected band structure calculation jiyy add 2022-05-11
     std::vector<int> out_mat_hs; // output H matrix and S matrix in local basis.
     bool out_mat_xc; // output exchange-correlation matrix in KS-orbital representation.
+    bool out_hr_npz;// output exchange-correlation matrix in KS-orbital representation.
+    bool out_dm_npz;
+    bool dm_to_rho;
     bool cal_syns; // calculate asynchronous S matrix to output
     double dmax; // maximum displacement of all atoms in one step (bohr)
     bool out_mat_hs2; // LiuXh add 2019-07-16, output H(R) matrix and S(R) matrix in local basis.
@@ -411,6 +416,8 @@ class Input
     bool out_dipole; // output the dipole or not
     bool out_efield; // output the efield or not
     bool out_current; //output the current or not
+    bool out_vecpot; // output the vector potential or not
+    bool init_vecpot_file; // initialize the vector potential, though file or integral
 
     double td_print_eij; // threshold to output Eij elements
     int td_edm; //0: new edm method   1: old edm method
@@ -512,7 +519,7 @@ class Input
                             // 2022-1-12
     bool deepks_scf; //(need libnpy and libtorch) if set 1, a trained model would be needed to cal V_delta and F_delta
     bool deepks_bandgap; // for bandgap label. QO added 2021-12-15
-
+    bool deepks_equiv;
     bool deepks_out_unittest; // if set 1, prints intermediate quantities that shall be used for making unit test
 
     std::string deepks_model; // needed when deepks_scf=1
@@ -607,6 +614,34 @@ class Input
     double qo_thr = 1e-6;
     std::vector<std::string> qo_strategy = {};
     std::vector<double> qo_screening_coeff = {};
+    //==========================================================
+    // variables for PEXSI
+    //==========================================================
+    int pexsi_npole = 40;
+    bool pexsi_inertia = true;
+    int pexsi_nmax = 80;
+    // int pexsi_symbolic = 1;
+    bool pexsi_comm = true;
+    bool pexsi_storage = true;
+    int pexsi_ordering = 0;
+    int pexsi_row_ordering = 1;
+    int pexsi_nproc = 1;
+    bool pexsi_symm = true;
+    bool pexsi_trans = false;
+    int pexsi_method = 1;
+    int pexsi_nproc_pole = 1;
+    // double pexsi_spin = 2;
+    double pexsi_temp = 0.015;
+    double pexsi_gap = 0;
+    double pexsi_delta_e = 20.0;
+    double pexsi_mu_lower = -10;
+    double pexsi_mu_upper = 10;
+    double pexsi_mu = 0.0;
+    double pexsi_mu_thr = 0.05;
+    double pexsi_mu_expand = 0.3;
+    double pexsi_mu_guard = 0.2;
+    double pexsi_elec_thr = 0.001;
+    double pexsi_zero_thr = 1e-10;
     
     std::time_t get_start_time(void) const
     {
@@ -701,9 +736,17 @@ class Input
     void read_bool(std::ifstream &ifs, bool &var);
 
     // Return the const string pointer of private member bands_to_print_
+    // Not recommended to use this function directly, use get_out_band_kb() instead
     const std::string* get_bands_to_print() const
     {
         return &bands_to_print_;
+    }
+    // Return parsed bands_to_print_ as a vector of integers
+    std::vector<int> get_out_band_kb() const
+    {
+        std::vector<int> out_band_kb;
+        Input_Conv::parse_expression(bands_to_print_, out_band_kb);
+        return out_band_kb;
     }
 };
 

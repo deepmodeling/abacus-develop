@@ -2,15 +2,11 @@
 #define DIAGO_NEW_DAV_H
 
 #include "diagh.h"
-#include "module_base/complexmatrix.h"
-#include "module_base/macros.h"
-#include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
-#include "module_psi/kernels/device.h"
 
 namespace hsolver
 {
 
-template <typename T = std::complex<double>, typename Device = psi::DEVICE_CPU>
+template <typename T = std::complex<double>, typename Device = base_device::DEVICE_CPU>
 class Diago_DavSubspace : public DiagH<T, Device>
 {
   private:
@@ -20,50 +16,68 @@ class Diago_DavSubspace : public DiagH<T, Device>
     using Real = typename GetTypeReal<T>::type;
 
   public:
-    Diago_DavSubspace(const Real* precondition_in);
-    ~Diago_DavSubspace();
+    Diago_DavSubspace(const std::vector<Real>& precondition_in,
+                      const int& nband_in,
+                      const int& nbasis_in,
+                      const int& david_ndim_in,
+                      const double& diag_thr_in,
+                      const int& diag_nmax_in,
+                      const bool& need_subspace_in,
+                      const diag_comm_info& diag_comm_in);
 
-    // this is the override function diag() for CG method
-    void diag(hamilt::Hamilt<T, Device>* phm_in,
-              psi::Psi<T, Device>& phi,
-              Real* eigenvalue_in,
-              std::vector<bool>& is_occupied);
+    virtual ~Diago_DavSubspace() override;
 
-    static int PW_DIAG_NDIM;
+    int diag(hamilt::Hamilt<T, Device>* phm_in,
+             psi::Psi<T, Device>& phi,
+             Real* eigenvalue_in,
+             const std::vector<bool>& is_occupied,
+             const bool& scf_type);
 
   private:
-    bool is_subspace = false;
+    /// for MPI communication
+    const diag_comm_info diag_comm;
 
-    int test_david = 0;
+    /// the threshold for this electronic iteration
+    const double diag_thr;
+
+    /// maximal iteration number
+    const int iter_nmax;
+
+    /// is diagH_subspace needed?
+    const bool is_subspace;
+
+    /// the first dimension of the matrix to be diagonalized
+    const int n_band = 0;
+
+    /// the second dimension of the matrix to be diagonalized
+    const int dim = 0;
+
+    /// the maximum dimension of the reduced basis set
+    const int nbase_x = 0;
+
+    /// precondition for diag
+    const std::vector<Real>& precondition;
+    Real* d_precondition = nullptr;
 
     /// record for how many bands not have convergence eigenvalues
     int notconv = 0;
 
-    /// row size for input psi matrix
-    int n_band = 0;
-    /// non-zero col size for inputted psi matrix
-    int dim = 0;
-    // maximum dimension of the reduced basis set
-    int nbase_x = 0;
-    /// precondition for cg diag
-    const Real* precondition = nullptr;
-    Real* d_precondition = nullptr;
+    /// the product of H and psi in the reduced basis set
+    T* hphi = nullptr;
 
-    /// eigenvalue results
-    Real* eigenvalue_in_dav = nullptr;
+    /// Hamiltonian on the reduced basis
+    T* hcc = nullptr;
 
-    T* hphi = nullptr; // the product of H and psi in the reduced basis set
+    /// Overlap on the reduced basis
+    T* scc = nullptr;
 
-    T* hcc = nullptr; // Hamiltonian on the reduced basis
-
-    T* scc = nullptr; // Overlap on the reduced basis
-
-    T* vcc = nullptr; // Eigenvectors on the reduced basis
+    /// Eigenvectors on the reduced basis
+    T* vcc = nullptr;
 
     /// device type of psi
     Device* ctx = {};
-    psi::DEVICE_CPU* cpu_ctx = {};
-    psi::AbacusDevice_t device = {};
+    base_device::DEVICE_CPU* cpu_ctx = {};
+    base_device::AbacusDevice_t device = {};
 
     void cal_grad(hamilt::Hamilt<T, Device>* phm_in,
                   const int& dim,
@@ -73,7 +87,7 @@ class Diago_DavSubspace : public DiagH<T, Device>
                   T* hphi,
                   T* vcc,
                   const int* unconv,
-                  Real* eigenvalue);
+                  std::vector<Real>* eigenvalue_iter);
 
     void cal_elem(const int& dim,
                   int& nbase,
@@ -99,43 +113,42 @@ class Diago_DavSubspace : public DiagH<T, Device>
                      T* hcc,
                      T* scc,
                      const int& nbase_x,
-                     Real* eigenvalue,
+                     std::vector<Real>* eigenvalue_iter,
                      T* vcc,
                      bool init,
                      bool is_subspace);
 
-    void diag_once(hamilt::Hamilt<T, Device>* phm_in,
-                   psi::Psi<T, Device>& psi,
-                   Real* eigenvalue_in,
-                   std::vector<bool>& is_occupied);
+    int diag_once(hamilt::Hamilt<T, Device>* phm_in,
+                  psi::Psi<T, Device>& psi,
+                  Real* eigenvalue_in,
+                  const std::vector<bool>& is_occupied);
 
-    using resmem_complex_op = psi::memory::resize_memory_op<T, Device>;
-    using delmem_complex_op = psi::memory::delete_memory_op<T, Device>;
-    using setmem_complex_op = psi::memory::set_memory_op<T, Device>;
+    bool test_exit_cond(const int& ntry, const int& notconv, const bool& scf);
 
-    using resmem_real_op = psi::memory::resize_memory_op<Real, Device>;
-    using delmem_real_op = psi::memory::delete_memory_op<Real, Device>;
-    using setmem_real_op = psi::memory::set_memory_op<Real, Device>;
+    using resmem_complex_op = base_device::memory::resize_memory_op<T, Device>;
+    using delmem_complex_op = base_device::memory::delete_memory_op<T, Device>;
+    using setmem_complex_op = base_device::memory::set_memory_op<T, Device>;
 
-    using resmem_real_h_op = psi::memory::resize_memory_op<Real, psi::DEVICE_CPU>;
-    using delmem_real_h_op = psi::memory::delete_memory_op<Real, psi::DEVICE_CPU>;
-    using setmem_real_h_op = psi::memory::set_memory_op<Real, psi::DEVICE_CPU>;
+    using resmem_real_op = base_device::memory::resize_memory_op<Real, Device>;
+    using delmem_real_op = base_device::memory::delete_memory_op<Real, Device>;
+    using setmem_real_op = base_device::memory::set_memory_op<Real, Device>;
 
-    using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<Real, Device, psi::DEVICE_CPU>;
-    using syncmem_var_d2h_op = psi::memory::synchronize_memory_op<Real, psi::DEVICE_CPU, Device>;
-    using syncmem_complex_op = psi::memory::synchronize_memory_op<T, Device, Device>;
-    using castmem_complex_op = psi::memory::cast_memory_op<std::complex<double>, T, Device, Device>;
-    using syncmem_h2d_op = psi::memory::synchronize_memory_op<T, Device, psi::DEVICE_CPU>;
-    using syncmem_d2h_op = psi::memory::synchronize_memory_op<T, psi::DEVICE_CPU, Device>;
+    using resmem_real_h_op = base_device::memory::resize_memory_op<Real, base_device::DEVICE_CPU>;
+    using delmem_real_h_op = base_device::memory::delete_memory_op<Real, base_device::DEVICE_CPU>;
+    using setmem_real_h_op = base_device::memory::set_memory_op<Real, base_device::DEVICE_CPU>;
+
+    using syncmem_var_h2d_op = base_device::memory::synchronize_memory_op<Real, Device, base_device::DEVICE_CPU>;
+    using syncmem_var_d2h_op = base_device::memory::synchronize_memory_op<Real, base_device::DEVICE_CPU, Device>;
+    using syncmem_complex_op = base_device::memory::synchronize_memory_op<T, Device, Device>;
+    using castmem_complex_op = base_device::memory::cast_memory_op<std::complex<double>, T, Device, Device>;
+    using syncmem_h2d_op = base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>;
+    using syncmem_d2h_op = base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>;
 
     using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
 
     consts<T> cs;
     const T *one = nullptr, *zero = nullptr, *neg_one = nullptr;
 };
-
-template <typename Real, typename Device>
-int Diago_DavSubspace<Real, Device>::PW_DIAG_NDIM = 4;
 
 } // namespace hsolver
 

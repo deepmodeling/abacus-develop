@@ -176,6 +176,13 @@ ifdef DeePMD_DIR
     INCLUDES += -I${TensorFlow_INCLUDE_DIR}
 endif
 
+ifdef PEXSI_DIR
+    OBJS_ABACUS += ${OBJS_HSOLVER_PEXSI}
+    INCLUDES += -I${PEXSI_DIR}/include -I${PARMETIS_DIR}/include -I${DSUPERLU_DIR}/include
+    LIBS += -L${PEXSI_DIR}/lib -lpexsi -L${DSUPERLU_DIR}/lib -lsuperlu_dist -L${PARMETIS_DIR}/lib -lparmetis -lmetis
+    HONG += -D__PEXSI
+endif
+
 include Makefile.Objects
 
 #==========================

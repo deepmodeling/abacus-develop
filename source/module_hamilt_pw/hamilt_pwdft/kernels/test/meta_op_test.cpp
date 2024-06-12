@@ -1,8 +1,11 @@
-#include <vector>
+#include "module_hamilt_pw/hamilt_pwdft/kernels/meta_op.h"
+
+#include "module_base/module_device/memory_op.h"
+// #include "module_psi/kernels/memory_op.h"
+
 #include <complex>
 #include <gtest/gtest.h>
-#include "module_psi/kernels/memory_op.h"
-#include "module_hamilt_pw/hamilt_pwdft/kernels/meta_op.h"
+#include <vector>
 
 class TestModuleHamiltMeta : public ::testing::Test
 {
@@ -17,20 +20,23 @@ protected:
     const std::vector<std::complex<double> > in = {{0.073755, 0.215648}, {-0.661877, 0.517527}, {0.0586699, -0.186777}, {0.00957812, -0.0832565}, {-0.0523913, -0.0184799}, {-0.0259417, -0.124468}, {-0.090873, -0.00766968}, {-0.0277014, -0.0220417}, {0.000145658, 0.00325686}, {-0.0254601, 0.018268}, {0.0251554, 0.0204952}, {-0.126029, -0.0193828}, {0.0681057, -0.108652}, {0.0164339, -0.130657}, {0.0972758, -0.0168042}};
     const std::vector<std::complex<double> > expected_out = {{-0.132839, 0.045433}, {-0, 0}, {-0.115054, -0.0361406}, {0.0512859, 0.00590011}, {0, -0}, {0, -0}, {-0.00472451, 0.0559777}, {0.0135776, -0.0170641}, {0, 0}, {-0.0225061, -0.0313667}, {-0.012625, 0.0154957}, {0, -0}, {-0.0669297, -0.041953}, {-0.0804844, -0.0101233}, {-0.0207027, -0.119844}};
 
-    const psi::DEVICE_CPU * cpu_ctx = {};
-    const psi::DEVICE_GPU * gpu_ctx = {};
+    const base_device::DEVICE_CPU* cpu_ctx = {};
+    const base_device::DEVICE_GPU* gpu_ctx = {};
 
-    using meta_cpu_op = hamilt::meta_pw_op<double, psi::DEVICE_CPU>;
-    using meta_gpu_op = hamilt::meta_pw_op<double, psi::DEVICE_GPU>;
+    using meta_cpu_op = hamilt::meta_pw_op<double, base_device::DEVICE_CPU>;
+    using meta_gpu_op = hamilt::meta_pw_op<double, base_device::DEVICE_GPU>;
 
-    using delmem_complex_op = psi::memory::delete_memory_op<std::complex<double>, psi::DEVICE_GPU>;
-    using resmem_complex_op = psi::memory::resize_memory_op<std::complex<double>, psi::DEVICE_GPU>;
-    using syncmem_complex_h2d_op = psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_GPU, psi::DEVICE_CPU>;
-    using syncmem_complex_d2h_op = psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_CPU, psi::DEVICE_GPU>;
+    using delmem_complex_op = base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
+    using resmem_complex_op = base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
+    using syncmem_complex_h2d_op = base_device::memory::
+        synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+    using syncmem_complex_d2h_op = base_device::memory::
+        synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
 
-    using delmem_var_op = psi::memory::delete_memory_op<double, psi::DEVICE_GPU>;
-    using resmem_var_op = psi::memory::resize_memory_op<double, psi::DEVICE_GPU>;
-    using syncmem_var_h2d_op = psi::memory::synchronize_memory_op<double, psi::DEVICE_GPU, psi::DEVICE_CPU>;
+    using delmem_var_op = base_device::memory::delete_memory_op<double, base_device::DEVICE_GPU>;
+    using resmem_var_op = base_device::memory::resize_memory_op<double, base_device::DEVICE_GPU>;
+    using syncmem_var_h2d_op
+        = base_device::memory::synchronize_memory_op<double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
 
     void SetUp() override {
     }

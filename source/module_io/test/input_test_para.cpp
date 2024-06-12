@@ -177,6 +177,7 @@ TEST_F(InputParaTest, Bcast)
     EXPECT_EQ(INPUT.out_dm1, 0);
     EXPECT_EQ(INPUT.deepks_out_labels, 0);
     EXPECT_EQ(INPUT.deepks_scf, 0);
+    EXPECT_EQ(INPUT.deepks_equiv, 0);
     EXPECT_EQ(INPUT.deepks_bandgap, 0);
     EXPECT_EQ(INPUT.deepks_out_unittest, 0);
     EXPECT_EQ(INPUT.out_pot, 0);
@@ -389,6 +390,7 @@ TEST_F(InputParaTest, Bcast)
     EXPECT_EQ(INPUT.mixing_dmr,false);
     EXPECT_EQ(INPUT.out_bandgap, 0);
     EXPECT_EQ(INPUT.out_mat_t, 0);
+    EXPECT_EQ(INPUT.nstream,4);
 
     /* I need to test qo_switch, qo_strategy, qo_screening_coeff, qo_thr and qo_basis */
     EXPECT_EQ(INPUT.qo_switch, 0);
@@ -396,6 +398,30 @@ TEST_F(InputParaTest, Bcast)
     EXPECT_EQ(INPUT.qo_screening_coeff.size(), 0);
     EXPECT_EQ(INPUT.qo_thr, 1e-6);
     EXPECT_EQ(INPUT.qo_basis, "szv");
+
+    EXPECT_EQ(INPUT.pexsi_npole, 40);
+    EXPECT_TRUE(INPUT.pexsi_inertia);
+    EXPECT_EQ(INPUT.pexsi_nmax, 80);
+    EXPECT_TRUE(INPUT.pexsi_comm);
+    EXPECT_TRUE(INPUT.pexsi_storage);
+    EXPECT_EQ(INPUT.pexsi_ordering, 0);
+    EXPECT_EQ(INPUT.pexsi_row_ordering, 1);
+    EXPECT_EQ(INPUT.pexsi_nproc, 1);
+    EXPECT_TRUE(INPUT.pexsi_symm);
+    EXPECT_FALSE(INPUT.pexsi_trans);
+    EXPECT_EQ(INPUT.pexsi_method, 1);
+    EXPECT_EQ(INPUT.pexsi_nproc_pole, 1);
+    EXPECT_DOUBLE_EQ(INPUT.pexsi_temp, 0.015);
+    EXPECT_DOUBLE_EQ(INPUT.pexsi_gap, 0);
+    EXPECT_DOUBLE_EQ(INPUT.pexsi_delta_e, 20);
+    EXPECT_DOUBLE_EQ(INPUT.pexsi_mu_lower, -10);
+    EXPECT_DOUBLE_EQ(INPUT.pexsi_mu_upper, 10);
+    EXPECT_DOUBLE_EQ(INPUT.pexsi_mu, 0);
+    EXPECT_DOUBLE_EQ(INPUT.pexsi_mu_thr, 0.05);
+    EXPECT_DOUBLE_EQ(INPUT.pexsi_mu_expand, 0.3);
+    EXPECT_DOUBLE_EQ(INPUT.pexsi_mu_guard, 0.2);
+    EXPECT_DOUBLE_EQ(INPUT.pexsi_elec_thr, 0.001);
+    EXPECT_DOUBLE_EQ(INPUT.pexsi_zero_thr, 1e-10);
 }
 
 TEST_F(InputParaTest, Init)

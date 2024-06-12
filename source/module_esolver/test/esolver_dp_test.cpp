@@ -39,7 +39,7 @@ class ESolverDPTest : public ::testing::Test
     {
         // Initialize variables before each test
         esolver = new ModuleESolver::ESolver_DP("./support/case_1.pb");
-        esolver->init(inp, ucell);
+        esolver->before_all_runners(inp, ucell);
     }
 
     void TearDown() override
@@ -85,7 +85,7 @@ TEST_F(ESolverDPTest, InitCase2)
     esolver->dp_type[0] = 0;
     esolver->dp_type[1] = 0;
     esolver->dp_file = "./support/case_2.pb";
-    esolver->init(inp, ucell);
+    esolver->before_all_runners(inp, ucell);
 
     // Check the initialized variables
     EXPECT_EQ(esolver->dp_type[0], 0);
@@ -100,7 +100,7 @@ TEST_F(ESolverDPTest, RunWarningQuit)
     int istep = 0;
 
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(esolver->run(istep, ucell), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(esolver->runner(istep, ucell), ::testing::ExitedWithCode(0), "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Please recompile with -D__DPMD"));
 }
@@ -171,7 +171,7 @@ TEST_F(ESolverDPTest, Postprocess)
 
     // Check the results
     GlobalV::ofs_running.open("log");
-    esolver->post_process();
+    esolver->after_all_runners();
     GlobalV::ofs_running.close();
 
     std::string expected_output = "\n\n --------------------------------------------\n !FINAL_ETOT_IS 133.3358404 eV\n "

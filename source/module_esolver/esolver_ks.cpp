@@ -24,21 +24,35 @@
 namespace ModuleESolver
 {
 
+//------------------------------------------------------------------------------
+//! the 1st function of ESolver_KS: constructor
+//! mohan add 2024-05-11
+// in future, the initialize of ESolver_KS should not be based on the 
+// assumption that INPUT has been initialized, mohan 2024-05-12
+//------------------------------------------------------------------------------
 template<typename T, typename Device>
 ESolver_KS<T, Device>::ESolver_KS()
 {
 	classname = "ESolver_KS";
 	basisname = "PLEASE ADD BASISNAME FOR CURRENT ESOLVER.";
+
+    // should not use GlobalV here, mohan 2024-05-12
 	scf_thr = GlobalV::SCF_THR;
 	drho = 0.0;
+
+    // should not use GlobalV here, mohan 2024-05-12
 	maxniter = GlobalV::SCF_NMAX;
 	niter = maxniter;
+
+    // should not use GlobalV here, mohan 2024-05-12
 	out_freq_elec = GlobalV::OUT_FREQ_ELEC;
 
 	// pw_rho = new ModuleBase::PW_Basis();
 	//temporary, it will be removed
 	pw_wfc = new ModulePW::PW_Basis_K_Big(GlobalV::device_flag, GlobalV::precision_flag);
 	ModulePW::PW_Basis_K_Big* tmp = static_cast<ModulePW::PW_Basis_K_Big*>(pw_wfc);
+
+    // should not use INPUT here, mohan 2024-05-12
 	tmp->setbxyz(INPUT.bx,INPUT.by,INPUT.bz);
 
 	///----------------------------------------------------------
@@ -56,6 +70,10 @@ ESolver_KS<T, Device>::ESolver_KS()
 	this->wf.out_wfc_r = INPUT.out_wfc_r;
 }
 
+//------------------------------------------------------------------------------
+//! the 2nd function of ESolver_KS: deconstructor
+//! mohan add 2024-05-11
+//------------------------------------------------------------------------------
 template<typename T, typename Device>
 ESolver_KS<T, Device>::~ESolver_KS()
 {
@@ -66,14 +84,19 @@ ESolver_KS<T, Device>::~ESolver_KS()
     delete this->p_chgmix;
 }
 
+//------------------------------------------------------------------------------
+//! the 3rd function of ESolver_KS: before_all_runners
+//! mohan add 2024-05-11
+//------------------------------------------------------------------------------
 template<typename T, typename Device>
-void ESolver_KS<T, Device>::init(Input& inp, UnitCell& ucell)
+void ESolver_KS<T, Device>::before_all_runners(Input& inp, UnitCell& ucell)
 {
-	ModuleBase::TITLE("ESolver_KS", "init");
+	ModuleBase::TITLE("ESolver_KS", "before_all_runners");
 
-	ESolver_FP::init(inp,ucell);
+    //! 1) initialize "before_all_runniers" in ESolver_FP
+	ESolver_FP::before_all_runners(inp,ucell);
 
-	//------------------Charge Mixing------------------
+    //! 2) setup the charge mixing parameters
 	p_chgmix->set_mixing(GlobalV::MIXING_MODE,
 			GlobalV::MIXING_BETA,
 			GlobalV::MIXING_NDIM,
@@ -86,7 +109,6 @@ void ESolver_KS<T, Device>::init(Input& inp, UnitCell& ucell)
 			GlobalV::MIXING_DMR);
 
 	/// PAW Section
-
 #ifdef USE_PAW
 	if(GlobalV::use_paw)
 	{
@@ -143,7 +165,7 @@ void ESolver_KS<T, Device>::init(Input& inp, UnitCell& ucell)
 		}
 #endif
 
-		GlobalC::paw_cell.init_paw_cell(INPUT.ecutwfc, INPUT.cell_factor,
+		GlobalC::paw_cell.init_paw_cell(inp.ecutwfc, inp.cell_factor,
 				ucell.omega,ucell.nat,ucell.ntype,
 				atom_type,(const double **) atom_coord,
 				filename_list);
@@ -158,11 +180,12 @@ void ESolver_KS<T, Device>::init(Input& inp, UnitCell& ucell)
 #endif
 	/// End PAW
 
+    //! 3) calculate the electron number
 	ucell.cal_nelec(GlobalV::nelec);
 
-	/* it has been established that that
-	   xc_func is same for all elements, therefore
-	   only the first one if used*/
+	//! 4) it has been established that 
+    // xc_func is same for all elements, therefore
+    // only the first one if used
 	if(GlobalV::use_paw)
 	{
 		XC_Functional::set_xc_type(GlobalV::DFT_FUNCTIONAL);
@@ -173,6 +196,7 @@ void ESolver_KS<T, Device>::init(Input& inp, UnitCell& ucell)
 	}
 	ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
 
+    //! 5) ESolver depends on the Symmetry module
 	// symmetry analysis should be performed every time the cell is changed
 	if (ModuleSymmetry::Symmetry::symm_flag == 1)
 	{
@@ -180,18 +204,15 @@ void ESolver_KS<T, Device>::init(Input& inp, UnitCell& ucell)
 		ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
 	}
 
-	// Setup the k points according to symmetry.
-	this->kv.set(ucell.symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, ucell.G, ucell.latvec);
+	//! 6) Setup the k points according to symmetry.
+	this->kv.set(ucell.symm, GlobalV::global_kpoint_card, GlobalV::NSPIN, ucell.G, ucell.latvec,GlobalV::ofs_running);
+
 	ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
-	// print information
-	// mohan add 2021-01-30
+	//! 7) print information
 	Print_Info::setup_parameters(ucell, this->kv);
 
-	//if(GlobalV::BASIS_TYPE=="pw" || GlobalV::CALCULATION=="get_wf")
-	//{
-	//Envelope function is calculated as lcao_in_pw
-	//new plane wave basis
+	//! 8) new plane wave basis, fft grids, etc.
 #ifdef __MPI
 	this->pw_wfc->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
 #endif
@@ -201,10 +222,12 @@ void ESolver_KS<T, Device>::init(Input& inp, UnitCell& ucell)
 			this->pw_rho->nx,
 			this->pw_rho->ny,
 			this->pw_rho->nz);
-	this->pw_wfc->initparameters(false, inp.ecutwfc, this->kv.nks, this->kv.kvec_d.data());
 
+	this->pw_wfc->initparameters(false, inp.ecutwfc, this->kv.get_nks(), this->kv.kvec_d.data());
+
+    // the MPI allreduce should not be here, mohan 2024-05-12
 #ifdef __MPI
-	if (INPUT.pw_seed > 0)
+	if (inp.pw_seed > 0)
 	{
 		MPI_Allreduce(MPI_IN_PLACE, &this->pw_wfc->ggecut, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
 	}
@@ -215,7 +238,8 @@ void ESolver_KS<T, Device>::init(Input& inp, UnitCell& ucell)
 
 	this->pw_wfc->setuptransform();
 
-	for (int ik = 0; ik < this->kv.nks; ++ik)
+    //! 9) initialize the number of plane waves for each k point
+	for (int ik = 0; ik < this->kv.get_nks(); ++ik)
 	{
 		this->kv.ngk[ik] = this->pw_wfc->npwk[ik];
 	}
@@ -224,7 +248,7 @@ void ESolver_KS<T, Device>::init(Input& inp, UnitCell& ucell)
 
 	this->print_wfcfft(inp, GlobalV::ofs_running);
 
-	//! initialize the real-space uniform grid for FFT and parallel
+	//! 10) initialize the real-space uniform grid for FFT and parallel
 	//! distribution of plane waves
 	GlobalC::Pgrid.init(this->pw_rhod->nx,
 			this->pw_rhod->ny,
@@ -232,18 +256,18 @@ void ESolver_KS<T, Device>::init(Input& inp, UnitCell& ucell)
 			this->pw_rhod->nplane,
 			this->pw_rhod->nrxx,
 			pw_big->nbz,
-			pw_big->bz); // mohan add 2010-07-22, update 2011-05-04
+			pw_big->bz);
 
-	// Calculate Structure factor
+	//! 11) calculate the structure factor
 	this->sf.setup_structure_factor(&ucell, this->pw_rhod);
 
-	// Initialize charge extrapolation
+	//! 12) initialize the charge extrapolation method if necessary
 	CE.Init_CE(ucell.nat);
 
 #ifdef USE_PAW
 	if(GlobalV::use_paw)
 	{
-		GlobalC::paw_cell.set_libpaw_ecut(INPUT.ecutwfc/2.0,INPUT.ecutwfc/2.0); //in Hartree
+		GlobalC::paw_cell.set_libpaw_ecut(inp.ecutwfc/2.0, inp.ecutwfc/2.0); //in Hartree
 		GlobalC::paw_cell.set_libpaw_fft(this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz,
 				this->pw_wfc->nx,this->pw_wfc->ny,this->pw_wfc->nz,
 				this->pw_wfc->startz,this->pw_wfc->numz);
@@ -287,6 +311,10 @@ void ESolver_KS<T, Device>::init(Input& inp, UnitCell& ucell)
 }
 
 
+//------------------------------------------------------------------------------
+//! the 4th function of ESolver_KS: init_after_vc
+//! mohan add 2024-05-11
+//------------------------------------------------------------------------------
 template<typename T, typename Device>
 void ESolver_KS<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
 {
@@ -312,6 +340,10 @@ void ESolver_KS<T, Device>::init_after_vc(Input& inp, UnitCell& ucell)
 }
 
 
+//------------------------------------------------------------------------------
+//! the 5th function of ESolver_KS: hamilt2density
+//! mohan add 2024-05-11
+//------------------------------------------------------------------------------
 template<typename T, typename Device>
 void ESolver_KS<T, Device>::hamilt2density(const int istep, const int iter, const double ethr)
 {
@@ -325,6 +357,10 @@ void ESolver_KS<T, Device>::hamilt2density(const int istep, const int iter, cons
 }
 
 
+//------------------------------------------------------------------------------
+//! the 6th function of ESolver_KS: print_wfcfft
+//! mohan add 2024-05-11
+//------------------------------------------------------------------------------
 template<typename T, typename Device>
 void ESolver_KS<T, Device>::print_wfcfft(Input& inp, std::ofstream &ofs)
 {
@@ -341,7 +377,8 @@ void ESolver_KS<T, Device>::print_wfcfft(Input& inp, std::ofstream &ofs)
 	ofs << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
 	ofs << "\n\n\n\n";
 	ofs << "\n SETUP PLANE WAVES FOR WAVE FUNCTIONS" << std::endl;
-	double ecut = INPUT.ecutwfc;
+
+	double ecut = inp.ecutwfc;
 	if(std::abs(ecut-this->pw_wfc->gk_ecut * this->pw_wfc->tpiba2) > 1e-6)
 	{
 		ecut = this->pw_wfc->gk_ecut * this->pw_wfc->tpiba2;
@@ -356,7 +393,7 @@ void ESolver_KS<T, Device>::print_wfcfft(Input& inp, std::ofstream &ofs)
 	ofs << "\n PARALLEL PW FOR WAVE FUNCTIONS" << std::endl;
 	ofs <<" "<< std::setw(8)  << "PROC"<< std::setw(15) << "COLUMNS(POT)"<< std::setw(15) << "PW" << std::endl;
 
-	for (int i = 0; i < GlobalV::NPROC_IN_POOL ; ++i)
+	for (int i = 0; i < GlobalV::NPROC_IN_POOL; ++i)
 	{
 		ofs <<" "<<std::setw(8)<< i+1 << std::setw(15) 
             << this->pw_wfc->nst_per[i] 
@@ -373,11 +410,32 @@ void ESolver_KS<T, Device>::print_wfcfft(Input& inp, std::ofstream &ofs)
 }
 
 
+//------------------------------------------------------------------------------
+//! the 7th function of ESolver_KS: run
+//! mohan add 2024-05-11
+//! 1) run others except scf, md, relax, cell-relax
+//! 2) before_scf (electronic iteration loops)
+//! 3) print head
+//! 4) SCF iterations
+//! 5) write head
+//! 6) initialization of SCF iterations
+//! 7) use Hamiltonian to obtain charge density
+//! 8) for MPI: STOGROUP? need to rewrite
+//! 9) update potential
+//! 10) finish scf iterations
+//! 11) get mtaGGA related parameters
+//! 12) Json, need to be moved to somewhere else
+//! 13) check convergence
+//! 14) add Json of efermi energy converge
+//! 15) after scf
+//! 16) Json again
+//------------------------------------------------------------------------------
 template<typename T, typename Device>
-void ESolver_KS<T, Device>::run(const int istep, UnitCell& ucell)
+void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
 {
-	ModuleBase::TITLE("ESolver_KS", "run");
+	ModuleBase::TITLE("ESolver_KS", "runner");
     
+    // 1) run others except scf, md, relax, cell-relax
 	if (!(GlobalV::CALCULATION == "scf" 
        || GlobalV::CALCULATION == "md"
        || GlobalV::CALCULATION == "relax" 
@@ -387,23 +445,35 @@ void ESolver_KS<T, Device>::run(const int istep, UnitCell& ucell)
 	}
 	else
 	{
-		ModuleBase::timer::tick(this->classname, "run");
+		ModuleBase::timer::tick(this->classname, "runner");
 
-		this->before_scf(istep); //Something else to do before the iter loop
+        // 2) before_scf (electronic iteration loops)
+		this->before_scf(istep); 
+
+		if(GlobalV::dm_to_rho) 
+		{
+			return; //nothing further is needed
+		}
 
 		ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT SCF");
 
-		if(this->maxniter > 0)  
-		{
-			this->print_head(); //print the headline on the screen.
-		}
+        // 3) print head
+		// if(this->maxniter > 0)  
+		// {
+		// 	this->print_head(); //print the headline on the screen.
+		// }
 
 		bool firstscf = true;
 		this->conv_elec = false;
 		this->niter = this->maxniter;
+
+        // 4) SCF iterations
+		std::cout << " * * * * * *\n << Start SCF iteration." << std::endl;
 		for (int iter = 1; iter <= this->maxniter; ++iter)
 		{
+            // 5) write head
 			this->write_head(GlobalV::ofs_running, istep, iter);
+
 #ifdef __MPI
 			auto iterstart = MPI_Wtime();
 #else
@@ -411,10 +481,13 @@ void ESolver_KS<T, Device>::run(const int istep, UnitCell& ucell)
 #endif
 			double diag_ethr = this->phsol->set_diagethr(istep, iter, drho);
 
+            // 6) initialization of SCF iterations
 			this->iter_init(istep, iter);
 
+            // 7) use Hamiltonian to obtain charge density
 			this->hamilt2density(istep, iter, diag_ethr);
 
+            // 8) for MPI: STOGROUP? need to rewrite
 			//<Temporary> It may be changed when more clever parallel algorithm is put forward.
 			//When parallel algorithm for bands are adopted. Density will only be treated in the first group.
 			//(Different ranks should have abtained the same, but small differences always exist in practice.)
@@ -455,9 +528,12 @@ void ESolver_KS<T, Device>::run(const int istep, UnitCell& ucell)
 				bool is_U_converged = true;
 				// to avoid unnecessary dependence on dft+u, refactor is needed
 #ifdef __LCAO
-				if (GlobalV::dft_plus_u) is_U_converged = GlobalC::dftu.u_converged();
+				if (GlobalV::dft_plus_u) 
+				{
+					is_U_converged = GlobalC::dftu.u_converged();
+				}
 #endif
-				//
+				
 				this->conv_elec = (drho < this->scf_thr 
                     && not_restart_step
 					&& is_U_converged);
@@ -496,9 +572,12 @@ void ESolver_KS<T, Device>::run(const int istep, UnitCell& ucell)
 			MPI_Bcast(pelec->charge->rho[0], this->pw_rhod->nrxx, MPI_DOUBLE, 0, PARAPW_WORLD);
 #endif
 
+            // 9) update potential
 			// Hamilt should be used after it is constructed.
 			// this->phamilt->update(conv_elec);
 			this->update_pot(istep, iter);
+
+            // 10) finish scf iterations
 			this->iter_finish(iter);
 #ifdef __MPI
 			double duration = (double)(MPI_Wtime() - iterstart);
@@ -508,6 +587,7 @@ void ESolver_KS<T, Device>::run(const int istep, UnitCell& ucell)
                 - iterstart)).count() / static_cast<double>(1e6);
 #endif
 
+            // 11) get mtaGGA related parameters
 			double dkin = 0.0; // for meta-GGA
 			if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
 			{
@@ -515,6 +595,7 @@ void ESolver_KS<T, Device>::run(const int istep, UnitCell& ucell)
 			}
 			this->print_iter(iter, drho, dkin, duration, diag_ethr);
 
+            // 12) Json, need to be moved to somewhere else
 #ifdef __RAPIDJSON
 			//add Json of scf mag
 			Json::add_output_scf_mag(
@@ -526,6 +607,7 @@ void ESolver_KS<T, Device>::run(const int istep, UnitCell& ucell)
 					);
 #endif //__RAPIDJSON 
 
+            // 13) check convergence
 			if (this->conv_elec)
 			{
 				this->niter = iter;
@@ -543,9 +625,11 @@ void ESolver_KS<T, Device>::run(const int istep, UnitCell& ucell)
 			{
 				std::cout<<" SCF restart after this step!"<<std::endl;
 			}
-		}
+		}// end scf iterations
+		std::cout << " >> Leave SCF iteration.\n * * * * * *" << std::endl;
+
 #ifdef __RAPIDJSON
-		//add Json of efermi energy converge
+		// 14) add Json of efermi energy converge
 		Json::add_output_efermi_energy_converge(
 				this->pelec->eferm.ef * ModuleBase::Ry_to_eV,
 				this->pelec->f_en.etot * ModuleBase::Ry_to_eV,
@@ -553,21 +637,28 @@ void ESolver_KS<T, Device>::run(const int istep, UnitCell& ucell)
 				);
 #endif //__RAPIDJSON 
 
+        // 15) after scf
 		this->after_scf(istep);
 
-		ModuleBase::timer::tick(this->classname, "run");
-	} 
+		ModuleBase::timer::tick(this->classname, "runner");
+	}// end scf, md, relax, cell-relax
 
+
+    // 16) Json again
 #ifdef __RAPIDJSON
 	// add nkstot,nkstot_ibz to output json
-	int Jnkstot = this->pelec->klist->nkstot;
-	int Jnkstot_ibz = this->pelec->klist->nkstot_ibz;
+	int Jnkstot = this->pelec->klist->get_nkstot();
+	int Jnkstot_ibz = this->pelec->klist->get_nkstot_ibz();
 	Json::add_nkstot(Jnkstot,Jnkstot_ibz);
 #endif //__RAPIDJSON          
 	return;
 };
 
 
+//------------------------------------------------------------------------------
+//! the 8th function of ESolver_KS: print_head
+//! mohan add 2024-05-12
+//------------------------------------------------------------------------------
 template<typename T, typename Device>
 void ESolver_KS<T, Device>::print_head(void)
 {
@@ -592,6 +683,10 @@ void ESolver_KS<T, Device>::print_head(void)
 }
 
 
+//------------------------------------------------------------------------------
+//! the 8th function of ESolver_KS: print_iter
+//! mohan add 2024-05-12
+//------------------------------------------------------------------------------
 template<typename T, typename Device>
 void ESolver_KS<T, Device>::print_iter(
 		const int iter, 
@@ -604,6 +699,10 @@ void ESolver_KS<T, Device>::print_iter(
 }
 
 
+//------------------------------------------------------------------------------
+//! the 9th function of ESolver_KS: write_head
+//! mohan add 2024-05-12
+//------------------------------------------------------------------------------
 template<typename T, typename Device>
 void ESolver_KS<T, Device>::write_head(std::ofstream& ofs_running, const int istep, const int iter)
 {
@@ -616,13 +715,40 @@ void ESolver_KS<T, Device>::write_head(std::ofstream& ofs_running, const int ist
 }
 
 
+//------------------------------------------------------------------------------
+//! the 10th function of ESolver_KS: getnieter
+//! mohan add 2024-05-12
+//------------------------------------------------------------------------------
 template<typename T, typename Device>
-int ESolver_KS<T, Device>::getniter()
+int ESolver_KS<T, Device>::get_niter()
 {
 	return this->niter;
 }
 
+//------------------------------------------------------------------------------
+//! the 11th function of ESolver_KS: get_maxniter
+//! tqzhao add 2024-05-15
+//------------------------------------------------------------------------------
+template<typename T, typename Device>
+int ESolver_KS<T, Device>::get_maxniter()
+{
+	return this->maxniter;
+}
 
+//------------------------------------------------------------------------------
+//! the 12th function of ESolver_KS: get_conv_elec
+//! tqzhao add 2024-05-15
+//------------------------------------------------------------------------------
+template<typename T, typename Device>
+bool ESolver_KS<T, Device>::get_conv_elec()
+{
+	return this->conv_elec;
+}
+
+//------------------------------------------------------------------------------
+//! the 13th function of ESolver_KS: create_Output_Rho
+//! mohan add 2024-05-12
+//------------------------------------------------------------------------------
 template<typename T, typename Device>
 ModuleIO::Output_Rho ESolver_KS<T, Device>::create_Output_Rho(
 		int is, 
@@ -631,6 +757,21 @@ ModuleIO::Output_Rho ESolver_KS<T, Device>::create_Output_Rho(
 {
 	const int precision = 3;
 	std::string tag = "CHG";
+	if(GlobalV::dm_to_rho)
+	{
+		return ModuleIO::Output_Rho(this->pw_big,
+								this->pw_rhod,
+								is,
+								GlobalV::NSPIN,
+								pelec->charge->rho[is],
+								iter,
+								this->pelec->eferm.get_efval(is),
+								&(GlobalC::ucell),
+								GlobalV::global_out_dir,
+								precision,
+								tag,
+								prefix);
+	}
 	return ModuleIO::Output_Rho(this->pw_big,
 			this->pw_rhod,
 			is,
@@ -645,6 +786,11 @@ ModuleIO::Output_Rho ESolver_KS<T, Device>::create_Output_Rho(
 			prefix);
 }
 
+
+//------------------------------------------------------------------------------
+//! the 14th function of ESolver_KS: create_Output_Kin
+//! mohan add 2024-05-12
+//------------------------------------------------------------------------------
 template<typename T, typename Device>
 ModuleIO::Output_Rho ESolver_KS<T, Device>::create_Output_Kin(int is, int iter, const std::string& prefix)
 {
@@ -665,6 +811,10 @@ ModuleIO::Output_Rho ESolver_KS<T, Device>::create_Output_Kin(int is, int iter, 
 }
 
 
+//------------------------------------------------------------------------------
+//! the 15th function of ESolver_KS: create_Output_Potential
+//! mohan add 2024-05-12
+//------------------------------------------------------------------------------
 template<typename T, typename Device>
 ModuleIO::Output_Potential ESolver_KS<T, Device>::create_Output_Potential(int iter, const std::string& prefix)
 {
@@ -686,18 +836,22 @@ ModuleIO::Output_Potential ESolver_KS<T, Device>::create_Output_Potential(int it
 }
 
 
+//------------------------------------------------------------------------------
+//! the 16th-20th functions of ESolver_KS
+//! mohan add 2024-05-12
+//------------------------------------------------------------------------------
 //! This is for mixed-precision pw/LCAO basis sets.
-template class ESolver_KS<std::complex<float>, psi::DEVICE_CPU>;
-template class ESolver_KS<std::complex<double>, psi::DEVICE_CPU>;
+template class ESolver_KS<std::complex<float>, base_device::DEVICE_CPU>;
+template class ESolver_KS<std::complex<double>, base_device::DEVICE_CPU>;
 
 //! This is for GPU codes.
 #if ((defined __CUDA) || (defined __ROCM))
-template class ESolver_KS<std::complex<float>, psi::DEVICE_GPU>;
-template class ESolver_KS<std::complex<double>, psi::DEVICE_GPU>;
+template class ESolver_KS<std::complex<float>, base_device::DEVICE_GPU>;
+template class ESolver_KS<std::complex<double>, base_device::DEVICE_GPU>;
 #endif
 
 //! This is for LCAO basis set.
 #ifdef __LCAO
-template class ESolver_KS<double, psi::DEVICE_CPU>;
+template class ESolver_KS<double, base_device::DEVICE_CPU>;
 #endif
 }

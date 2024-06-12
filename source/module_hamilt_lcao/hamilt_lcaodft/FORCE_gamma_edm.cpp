@@ -1,4 +1,5 @@
-#include "FORCE_gamma.h"
+#include "FORCE.h"
+#include "module_elecstate/elecstate_lcao.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
@@ -8,14 +9,19 @@
 
 // force due to the overlap matrix.
 // need energy density matrix here.
-void Force_LCAO_gamma::cal_foverlap(
+template<>
+void Force_LCAO<double>::cal_foverlap(
 	const bool isforce, 
     const bool isstress,
-    const psi::Psi<double> *psid,
+    const psi::Psi<double>* psi,
+    const Parallel_Orbitals& pv,
     const elecstate::ElecState *pelec,
     LCAO_Matrix &lm,
     ModuleBase::matrix &foverlap,
-	ModuleBase::matrix &soverlap)
+    ModuleBase::matrix& soverlap,
+    const K_Vectors* kv,
+    Record_adj* ra,
+    const elecstate::DensityMatrix<double, double>* DM)
 {
     ModuleBase::TITLE("Force_LCAO_gamma","cal_foverlap");
     ModuleBase::timer::tick("Force_LCAO_gamma","cal_foverlap");
@@ -34,10 +40,23 @@ void Force_LCAO_gamma::cal_foverlap(
     }
 
     // construct a DensityMatrix for Gamma-Only
-    const Parallel_Orbitals* pv = this->ParaV;
-    elecstate::DensityMatrix<double, double> EDM(pv,GlobalV::NSPIN);
-
-    elecstate::cal_dm_psi(EDM.get_paraV_pointer(), wgEkb, psid[0], EDM);
+    elecstate::DensityMatrix<double, double> EDM(&pv, GlobalV::NSPIN);
+    
+#ifdef __PEXSI
+    if (GlobalV::KS_SOLVER == "pexsi")
+    {
+        auto pes = dynamic_cast<const elecstate::ElecStateLCAO<double>*>(pelec);
+        for (int ik = 0; ik < GlobalV::NSPIN; ik++)
+        {
+            EDM.set_DMK_pointer(ik, pes->get_DM()->pexsi_EDM[ik]);
+        }
+        
+    }
+    else
+#endif
+    {
+        elecstate::cal_dm_psi(EDM.get_paraV_pointer(), wgEkb, psi[0], EDM);
+    }
 
     ModuleBase::timer::tick("Force_LCAO_gamma","cal_edm_2d");
 
@@ -46,12 +65,12 @@ void Force_LCAO_gamma::cal_foverlap(
         const int iat = GlobalC::ucell.iwt2iat[i];
         for(int j=0; j<GlobalV::NLOCAL; j++)
         {
-            const int mu = pv->global2local_row(j);
-            const int nu = pv->global2local_col(i);
+            const int mu = pv.global2local_row(j);
+            const int nu = pv.global2local_col(i);
 
             if(mu>=0 && nu>=0)
             {
-                const int index = mu * pv->ncol + nu;
+                const int index = mu * pv.ncol + nu;
                 double sum = 0.0;
                 for(int is=0; is<GlobalV::NSPIN; ++is)
                 {

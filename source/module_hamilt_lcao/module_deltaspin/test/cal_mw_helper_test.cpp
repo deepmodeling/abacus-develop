@@ -2,6 +2,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+#include "module_cell/klist.h"
 K_Vectors::K_Vectors()
 {
 }
@@ -24,8 +25,8 @@ K_Vectors::~K_Vectors()
 class SpinConstrainTest : public testing::Test
 {
   protected:
-    SpinConstrain<std::complex<double>, psi::DEVICE_CPU>& sc
-        = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::getScInstance();
+    SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>& sc
+        = SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::getScInstance();
 };
 
 TEST_F(SpinConstrainTest, CalculateMW)
@@ -67,7 +68,7 @@ TEST_F(SpinConstrainTest, CalculateMW)
     sc.print_Mi(true);
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Total Magnetism (uB):"));
-    EXPECT_THAT(output, testing::HasSubstr("ATOM 0         2.0000000000e+00    3.0000000000e+00    4.0000000000e+00"));
+    EXPECT_THAT(output, testing::HasSubstr("ATOM      0         2.0000000000         3.0000000000         4.0000000000"));
 }
 
 TEST_F(SpinConstrainTest, CollectMW)
@@ -77,7 +78,7 @@ TEST_F(SpinConstrainTest, CollectMW)
     int nrow = 2;
     int ncol = 2;
     std::ofstream ofs("test.log");
-    paraV.set_global2local(nrow, ncol, false, ofs);
+    paraV.set_serial(nrow, ncol);
     sc.set_ParaV(&paraV);
     // Prepare the input data
     int nw = sc.get_nw();
@@ -143,7 +144,7 @@ TEST_F(SpinConstrainTest, CalculateMWS2)
     sc.print_Mi(true);
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Total Magnetism (uB):"));
-    EXPECT_THAT(output, testing::HasSubstr("ATOM 0        -1.0000000000e+00"));
+    EXPECT_THAT(output, testing::HasSubstr("ATOM      0        -1.0000000000"));
 }
 
 TEST_F(SpinConstrainTest, CollectMWS2)
@@ -153,7 +154,7 @@ TEST_F(SpinConstrainTest, CollectMWS2)
     int nrow = 1;
     int ncol = 1;
     std::ofstream ofs("test.log");
-    paraV.set_global2local(nrow, ncol, false, ofs);
+    paraV.set_serial(nrow, ncol);
     sc.set_ParaV(&paraV);
     // Prepare the input data
     int nw = sc.get_nw();
