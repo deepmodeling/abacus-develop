@@ -36,7 +36,7 @@ namespace hamilt
 {
 
 template<typename TK, typename TR>
-HamiltLCAO<TK, TR>::HamiltLCAO(LCAO_Matrix* LM_in, const K_Vectors& kv_in)
+HamiltLCAO<TK, TR>::HamiltLCAO(LCAO_Matrix* LM_in, const K_Vectors& kv_in, const ORB_gen_tables* uot)
 {
     this->classname = "HamiltLCAO";
 
@@ -55,6 +55,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(LCAO_Matrix* LM_in, const K_Vectors& kv_in)
         &(this->getSk(LM_in)),
         &GlobalC::ucell,
         &GlobalC::GridD,
+        uot,
         LM_in->ParaV
     );
 }
@@ -68,6 +69,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
     Local_Orbital_Charge* loc_in,
     elecstate::Potential* pot_in,
     const K_Vectors& kv_in,
+    const ORB_gen_tables* uot,
     elecstate::DensityMatrix<TK, double>* DM_in,
     int* exx_two_level_step)
 {
@@ -132,6 +134,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
             &(this->getSk(LM_in)),
             &GlobalC::ucell,
             &GlobalC::GridD,
+            uot,
             LM_in->ParaV
         );
 
@@ -147,6 +150,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
                 &(this->getHk(LM_in)),
                 &GlobalC::ucell, 
                 &GlobalC::GridD,
+                uot,
                 LM_in->ParaV
             );
             this->getOperator()->add(ekinetic);
@@ -163,6 +167,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
                 &(this->getHk(LM_in)),
                 &GlobalC::ucell, 
                 &GlobalC::GridD,
+                uot,
                 LM_in->ParaV
             );
             this->getOperator()->add(nonlocal);
@@ -204,7 +209,8 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
                                                                         &(this->getHk(LM_in)),
                                                                         &GlobalC::ucell,
                                                                         &GlobalC::GridD,
-                                                                        this->kv->nks,
+                                                                        uot,
+                                                                        this->kv->get_nks(),
                                                                         DM_in);
             this->getOperator()->add(deepks);
         }
@@ -233,6 +239,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
                     &(this->getHk(LM_in)),
                     GlobalC::ucell,
                     &GlobalC::GridD,
+                    uot,
                     &GlobalC::dftu,
                     *(LM_in->ParaV)
                 );
@@ -285,6 +292,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
             &(this->getSk(LM_in)),
             &GlobalC::ucell,
             &GlobalC::GridD,
+            uot,
             LM_in->ParaV
         );
         if(this->getOperator() == nullptr)
@@ -307,6 +315,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
                 &(this->getHk(LM_in)),
                 &GlobalC::ucell,
                 &GlobalC::GridD,
+                uot,
                 LM_in->ParaV
             );
             this->getOperator()->add(ekinetic);
@@ -323,6 +332,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
                 &(this->getHk(LM_in)),
                 &GlobalC::ucell,
                 &GlobalC::GridD,
+                uot,
                 LM_in->ParaV
             );
             //TDDFT velocity gague will calculate full non-local potential including the original one and the correction on its own.
@@ -349,7 +359,8 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
                                                     &(this->getHk(LM_in)),
                                                     &GlobalC::ucell,
                                                     &GlobalC::GridD,
-                                                    this->kv->nks,
+                                                    uot,
+                                                    this->kv->get_nks(),
                                                     DM_in);
             this->getOperator()->add(deepks);
         }
@@ -378,6 +389,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
                     &(this->getHk(LM_in)),
                     &GlobalC::ucell, 
                     &GlobalC::GridD,
+                    uot,
                     LM_in->ParaV
                 );
             this->getOperator()->add(td_nonlocal);
@@ -404,6 +416,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(
                     &(this->getHk(LM_in)),
                     GlobalC::ucell,
                     &GlobalC::GridD,
+                    uot,
                     &GlobalC::dftu,
                     *(LM_in->ParaV)
                 );
@@ -471,7 +484,7 @@ void HamiltLCAO<TK, TR>::updateHk(const int ik)
     if (GlobalV::NSPIN == 2)
     {
         // if Veff is added and current_spin is changed, refresh HR
-        if(GlobalV::VL_IN_H && this->kv->isk[ik] != GlobalV::CURRENT_SPIN)
+        if(GlobalV::VL_IN_H && this->kv->isk[ik] != this->current_spin)
         {
             // change data pointer of HR
             this->hR->allocate(this->hRS2.data()+this->hRS2.size()/2*this->kv->isk[ik], 0);
@@ -481,7 +494,7 @@ void HamiltLCAO<TK, TR>::updateHk(const int ik)
                 dynamic_cast<hamilt::OperatorLCAO<TK, TR>*>(this->ops)->set_hr_done(false);
             }
         }
-        GlobalV::CURRENT_SPIN = this->kv->isk[ik];
+        this->current_spin = this->kv->isk[ik];
     }
     this->getOperator()->init(ik);
     ModuleBase::timer::tick("HamiltLCAO", "updateHk");
@@ -495,7 +508,7 @@ void HamiltLCAO<TK, TR>::refresh()
     if(GlobalV::NSPIN == 2)
     {
         this->refresh_times = 1;
-        GlobalV::CURRENT_SPIN = 0;
+        this->current_spin = 0;
         if(this->hR->get_nnr() != this->hRS2.size()/2)
         {
             // operator has changed, resize hRS2

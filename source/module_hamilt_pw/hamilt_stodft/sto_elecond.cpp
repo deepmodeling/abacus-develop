@@ -506,7 +506,7 @@ void Sto_EleCond::sKG(const int& smear_type,
     assert(nw >= 1);
     assert(nt >= 1);
     const int ndim = 3;
-    const int nk = p_kv->nks;
+    const int nk = p_kv->get_nks();
     const int npwx = p_wfcpw->npwk_max;
     const double tpiba = p_wfcpw->tpiba;
     psi::Psi<std::complex<double>>* stopsi;

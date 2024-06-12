@@ -186,10 +186,16 @@ public:
 
   private:
     bool memory_released = false;
-    float *s_nhtol = nullptr, *s_nhtolm = nullptr, *s_indv = nullptr, *s_tab = nullptr;
+    float *s_nhtol = nullptr;
+    float *s_nhtolm = nullptr;
+    float *s_indv = nullptr;
+    float *s_tab = nullptr;
     std::complex<float>* c_vkb = nullptr;
 
-    double *d_nhtol = nullptr, *d_nhtolm = nullptr, *d_indv = nullptr, *d_tab = nullptr;
+    double *d_nhtol = nullptr;
+    double *d_nhtolm = nullptr;
+    double *d_indv = nullptr;
+    double *d_tab = nullptr;
     std::complex<double>* z_vkb = nullptr;
 
     const ModulePW::PW_Basis_K* wfcpw = nullptr;

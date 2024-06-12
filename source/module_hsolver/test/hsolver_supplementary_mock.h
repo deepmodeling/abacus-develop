@@ -10,7 +10,9 @@ const double* ElecState::getRho(int spin) const
     return &(this->charge->rho[spin][0]);
 }
 
-void ElecState::fixed_weights(const std::vector<double>& ocp_kb)
+void ElecState::fixed_weights(const std::vector<double>& ocp_kb,
+			const int &nbands,
+			const double &nelec)
 {
     return;
 }
@@ -89,6 +91,7 @@ void Stochastic_WF::init(K_Vectors* p_kv, const int npwx_in)
     this->nks = nks_in;*/
 }
 
+#include "module_cell/klist.h"
 K_Vectors::K_Vectors(){}
 K_Vectors::~K_Vectors(){}
 wavefunc::wavefunc()

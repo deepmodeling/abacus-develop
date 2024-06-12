@@ -90,26 +90,28 @@ void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, 
         std::ofstream ofs;
         std::stringstream ss;
         // the parameter 'winput::spillage_outdir' is read from INPUTw.
-        ss << winput::spillage_outdir << "/" <<  "orb_matrix." << derivative_order << ".dat";
-        if (GlobalV::MY_RANK==0)
-        {
-            ofs.open(ss.str().c_str());
-        }
+        ss << winput::spillage_outdir << "/";
+        
+        if(INPUT.bessel_nao_rcuts.size() > 1) { ss << "orb_matrix_rcut" << INPUT.bessel_nao_rcut << "deriv"; }
+        else { ss << "orb_matrix."; } // to make it compatible with old version of orbital generation
+        ss << derivative_order << ".dat";
+        
+        if (GlobalV::MY_RANK==0) { ofs.open(ss.str().c_str()); }
 
         // ALLOCATE MEMORY FOR THE OVERLAP MATRIX
         // OVERLAP : < J_mu | Psi >
-        std::vector<ModuleBase::ComplexArray> overlap_Q(kv.nks);
+        std::vector<ModuleBase::ComplexArray> overlap_Q(kv.get_nks());
         // OVERLAP : < J_mu | J_nu >
-        std::vector<ModuleBase::ComplexArray> overlap_Sq(kv.nks);
+        std::vector<ModuleBase::ComplexArray> overlap_Sq(kv.get_nks());
 
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "number of k points", kv.nks);
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "number of k points", kv.get_nks());
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"number of bands", GlobalV::NBANDS);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"number of local orbitals", GlobalV::NLOCAL);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"number of eigenvalues of Jl(x)", this->bessel_basis.get_ecut_number());
         
         // CALCULATE THE OVERLAP MATRIX
         // nks now is the reduced k-points.
-        for (int ik = 0; ik < kv.nks; ik++)
+        for (int ik = 0; ik < kv.get_nks(); ik++)
         {
             const int npw = kv.ngk[ik];
             GlobalV::ofs_running << " --------------------------------------------------------" << std::endl;
@@ -169,7 +171,7 @@ void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, 
 
         // ALTHOUGH THIS FUNCTION NAMES output_overlap, IT ACTUALLY OUTPUTS THE OVERLAP MATRIX HERE
 #ifdef __MPI
-        for (int ik = 0; ik < kv.nks; ik++)
+        for (int ik = 0; ik < kv.get_nks(); ik++)
         {
             Parallel_Reduce::reduce_pool(overlap_Q[ik].ptr, overlap_Q[ik].getSize());
             //Parallel_Reduce::reduce_pool(overlap_Sq[ik].ptr, overlap_Sq[ik].getSize());
@@ -413,8 +415,8 @@ ModuleBase::matrix Numerical_Basis::cal_overlap_V(const ModulePW::PW_Basis_K* wf
                                                   const K_Vectors& kv,
                                                   const double tpiba)
 {
-    ModuleBase::matrix overlap_V(kv.nks, GlobalV::NBANDS);
-    for (int ik = 0; ik < kv.nks; ++ik)
+    ModuleBase::matrix overlap_V(kv.get_nks(), GlobalV::NBANDS);
+    for (int ik = 0; ik < kv.get_nks(); ++ik)
     {
         std::vector<ModuleBase::Vector3<double>> gk(kv.ngk[ik]);
         for (int ig=0; ig<gk.size(); ig++)
@@ -618,7 +620,7 @@ void Numerical_Basis::output_info(std::ofstream& ofs, const Bessel_Basis& bessel
 
     if (GlobalV::MY_RANK==0)
     {
-        ofs << kv.nkstot << " nks" << std::endl;
+        ofs << kv.get_nkstot() << " nks" << std::endl;
         ofs << GlobalV::NBANDS << " nbands" << std::endl;
         ofs << GlobalV::NLOCAL << " nwfc" << std::endl;
         ofs << bessel_basis.get_ecut_number() << " ne " << std::endl;
@@ -634,7 +636,7 @@ void Numerical_Basis::output_k(std::ofstream& ofs, const K_Vectors& kv)
     }
 
     // only half of nkstot should be output in "NSPIN == 2" case, k_up and k_down has same k infomation
-    int nkstot = kv.nkstot;
+    int nkstot = kv.get_nkstot();
 
     // (2)
     for (int ik=0; ik<nkstot; ik++)
@@ -658,11 +660,12 @@ void Numerical_Basis::output_k(std::ofstream& ofs, const K_Vectors& kv)
                 }
                 else
                 {
+                    int startpro_pool=GlobalC::Pkpoints.get_startpro_pool(pool);
                     MPI_Status ierror;
-                    MPI_Recv(&kx, 1, MPI_DOUBLE, GlobalC::Pkpoints.startpro_pool[pool], ik*4, MPI_COMM_WORLD,&ierror);
-                    MPI_Recv(&ky, 1, MPI_DOUBLE, GlobalC::Pkpoints.startpro_pool[pool], ik*4+1, MPI_COMM_WORLD,&ierror);
-                    MPI_Recv(&kz, 1, MPI_DOUBLE, GlobalC::Pkpoints.startpro_pool[pool], ik*4+2, MPI_COMM_WORLD,&ierror);
-                    MPI_Recv(&wknow, 1, MPI_DOUBLE, GlobalC::Pkpoints.startpro_pool[pool], ik*4+3, MPI_COMM_WORLD,&ierror);
+                    MPI_Recv(&kx, 1, MPI_DOUBLE, startpro_pool, ik*4, MPI_COMM_WORLD,&ierror);
+                    MPI_Recv(&ky, 1, MPI_DOUBLE, startpro_pool, ik*4+1, MPI_COMM_WORLD,&ierror);
+                    MPI_Recv(&kz, 1, MPI_DOUBLE, startpro_pool, ik*4+2, MPI_COMM_WORLD,&ierror);
+                    MPI_Recv(&wknow, 1, MPI_DOUBLE, startpro_pool, ik*4+3, MPI_COMM_WORLD,&ierror);
                 }
             }
             else
@@ -726,12 +729,12 @@ void Numerical_Basis::output_overlap_Q(std::ofstream& ofs,
     // Copy to overlap_Q_k for Pkpoints.pool_collection temporaly.
     // It's better to refactor to Pkpoints.pool_collection(overlap_Q) in the future.
     // Peize Lin comments 2021.07.25
-    assert(kv.nks > 0);
-    ModuleBase::ComplexArray overlap_Q_k(kv.nks,
+    assert(kv.get_nks() > 0);
+    ModuleBase::ComplexArray overlap_Q_k(kv.get_nks(),
                                          overlap_Q[0].getBound1(),
                                          overlap_Q[0].getBound2(),
                                          overlap_Q[0].getBound3());
-    for (int ik = 0; ik < kv.nks; ++ik)
+    for (int ik = 0; ik < kv.get_nks(); ++ik)
     {
         std::memcpy(
             overlap_Q_k.ptr + ik*overlap_Q[ik].getSize(),
@@ -740,7 +743,7 @@ void Numerical_Basis::output_overlap_Q(std::ofstream& ofs,
     }
 
     // only half of nkstot should be output in "NSPIN == 2" case, k_up and k_down has same k infomation
-    int nkstot = kv.nkstot;
+    int nkstot = kv.get_nkstot();
     int count = 0;
     for (int ik=0; ik<nkstot; ik++)
     {
@@ -786,7 +789,7 @@ void Numerical_Basis::output_overlap_Sq(const std::string& name,
     // only half of nkstot should be output in "NSPIN == 2" case, k_up and k_down has same k infomation
     int ispin = 1;
     if(GlobalV::NSPIN == 2) ispin = 2;
-    int nkstot = kv.nkstot / ispin;
+    int nkstot = kv.get_nkstot() / ispin;
     int count = 0;
     for(int is = 0; is<ispin; is++)
     {

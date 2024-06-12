@@ -1024,8 +1024,7 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
 
     for (int ik = 0; ik < wfc_basis->nks; ik++)
     {
-        if (GlobalV::NSPIN == 2)
-            GlobalV::CURRENT_SPIN = p_kv->isk[ik];
+        const int current_spin = p_kv->isk[ik];
         const int nbasis = wfc_basis->npwk[ik];
         // generate vkb
         if (GlobalC::ppcell.nkb > 0)
@@ -1125,7 +1124,7 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
                           nbands_occ,
                           wg_nc,
                           GlobalC::ucell.ntype,
-                          GlobalV::CURRENT_SPIN,
+                          current_spin,
                           GlobalC::ppcell.deeq.getBound2(),
                           GlobalC::ppcell.deeq.getBound3(),
                           GlobalC::ppcell.deeq.getBound4(),

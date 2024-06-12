@@ -71,7 +71,7 @@ void EleCond::KG(const int& smear_type,
     std::cout << "nt: " << nt << " ; dt: " << dt << " a.u.(ry^-1)" << std::endl;
     assert(nw >= 1);
     assert(nt >= 1);
-    const int nk = this->p_kv->nks;
+    const int nk = this->p_kv->get_nks();
 
     double* ct11 = new double[nt];
     double* ct12 = new double[nt];
@@ -164,7 +164,7 @@ void EleCond::jjresponse_ks(const int ik,
 
     if (GlobalV::RANK_IN_POOL == 0)
     {
-        int nkstot = this->p_kv->nkstot;
+        int nkstot = this->p_kv->get_nkstot();
         int ikglobal = this->p_kv->getik_global(ik);
         std::stringstream ss;
         ss << GlobalV::global_out_dir << "vmatrix" << ikglobal + 1 << ".dat";

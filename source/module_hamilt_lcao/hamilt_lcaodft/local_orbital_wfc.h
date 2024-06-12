@@ -12,9 +12,20 @@ class Local_Orbital_wfc
 {
 public:
 
-	Local_Orbital_wfc();
+	Local_Orbital_wfc();    
 	~Local_Orbital_wfc();
-
+    // refactor new implementation: RAII
+    // a more look-looking name would be LocalOrbitalWfc, I suppose...
+    Local_Orbital_wfc(const int& nspin,
+                      const int& nks,
+                      const int& nbands,
+                      const int& nlocal,
+                      const int& gamma_only,
+                      const int& nb2d,
+                      const std::string& ks_solver,
+                      const std::string& readin_dir);
+    //
+    void initialize();
     ///=========================================
     /// grid wfc
     /// used to generate density matrix: LOC.DM_R,
@@ -25,10 +36,13 @@ public:
     std::complex<double>*** wfc_k_grid; // [NK, GlobalV::NBANDS, GlobalV::NLOCAL]
     std::complex<double>* wfc_k_grid2;  // [NK*GlobalV::NBANDS*GlobalV::NLOCAL]
 
+    // pointer to const Parallel_Orbitals object
     const Parallel_Orbitals* ParaV;
+    // pointer to const Grid_Technique object, although have no idea about what it is...
+    // the name of Grid_Technique should be changed to be more informative
     const Grid_Technique* gridt;
 
-    /// read wavefunction coefficients: LOWF_*.txt
+    /// read wavefunction coefficients: WFC_NAO_K/GAMMA*.txt
     void gamma_file(psi::Psi<double>* psid, elecstate::ElecState* pelec);
     void allocate_k(const int& lgd,
         psi::Psi<std::complex<double>>* psi,
@@ -64,15 +78,12 @@ public:
     // (in which the implementation should be put in header file )
     // because sub-function `write_wfc_nao_complex`contains GlobalC declared in `global.h`
     // which will cause lots of "not defined" if included in a header file.
-    void wfc_2d_to_grid(const int istep,
-                        const int out_wfc_lcao,
-                        const double* wfc_2d,
+    void wfc_2d_to_grid(const double* wfc_2d,
                         double** wfc_grid,
+                        const int ik,
                         const ModuleBase::matrix& ekb,
                         const ModuleBase::matrix& wg);
-    void wfc_2d_to_grid(const int istep,
-                        const int out_wfc_lcao,
-                        const std::complex<double>* wfc_2d,
+    void wfc_2d_to_grid(const std::complex<double>* wfc_2d,
                         std::complex<double>** wfc_grid,
                         int ik,
                         const ModuleBase::matrix& ekb,
@@ -102,7 +113,7 @@ public:
     int nks;
 };
 
-#ifdef __MPI
+
 // the function should not be defined here!! mohan 2024-03-28
 template <typename T>
 int Local_Orbital_wfc::set_wfc_grid(int naroc[2],
@@ -116,6 +127,7 @@ int Local_Orbital_wfc::set_wfc_grid(int naroc[2],
                                     int myid,
                                     T** ctot)
 {
+#ifdef __MPI
     ModuleBase::TITLE(" Local_Orbital_wfc", "set_wfc_grid");
     if (!wfc && !ctot)
     {
@@ -142,8 +154,7 @@ int Local_Orbital_wfc::set_wfc_grid(int naroc[2],
 			}
         }
     }
+#endif
     return 0;
 }
-#endif
-
 #endif

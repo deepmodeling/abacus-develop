@@ -11,8 +11,7 @@ void ModuleIO::write_dm1(
 		const int &istep, 
 		double** dm2d, 
 		const Parallel_Orbitals* ParaV,
-		std::map<Abfs::Vector3_Order<int>, 
-		std::map<size_t, std::map<size_t, double>>> &DMR_sparse)
+		std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> &DMR_sparse)
 {
     ModuleBase::timer::tick("ModuleIO","write_dm");
     ModuleBase::TITLE("ModuleIO","write_dm");

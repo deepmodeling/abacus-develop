@@ -10,7 +10,7 @@
 #include <functional>
 #include "module_cell/unitcell.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include <module_base/module_device/device.h>
+#include "module_base/module_device/device.h"
 
 
 #define sA(i, j) sA[(j)*slda + (i)]

@@ -54,7 +54,7 @@ bool winput::plot_wanq;//add 2008-01-26
 std::string winput::plot_option;//(110),[110] etc.
 int winput::n_unitcell;//number of unitcell to plot
 bool winput::out_all;
-bool winput::out_chg;
+int winput::out_chg;
 std::string winput::charge_type;
 bool winput::cal_bands; //for wan  	   wan basis + wan charge
 bool winput::cal_bands2;//for semi-wan ;pw basis + wan charge add 2008-4-11
@@ -700,7 +700,7 @@ void winput::Bcast(void)
 	Parallel_Common::bcast_string( plot_option );
 	Parallel_Common::bcast_int( n_unitcell );
 	Parallel_Common::bcast_bool( out_all );
-	Parallel_Common::bcast_bool( out_chg );
+	Parallel_Common::bcast_int( out_chg );
 
 	Parallel_Common::bcast_string( charge_type );
 	Parallel_Common::bcast_bool( cal_bands );

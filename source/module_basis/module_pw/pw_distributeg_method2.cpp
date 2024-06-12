@@ -5,20 +5,23 @@
 
 namespace ModulePW
 {
-///
-/// Distribute planewaves in reciprocal space to cores.
-/// Firstly, divide the sphere in reciprocal space into sticks, which are vertical to x-y plane.
-/// Secondly, distribute these sticks to coreors.
-/// 
-/// Example
-///                                ---- ixy increasing --->
-/// index of sticks 0, 1, 2, ..., nst_per[0]-1, nst_per[0], ..., nst_per[1]-1, ...
-///                |___________________________|______________________________|___
-/// ip                           0                            1              ...
-///                                 nst_per[i] approxiamte equal to nst_per[j]
-/// Known: G, GT, GGT, fftny, fftnx, nz, poolnproc, poolrank, ggecut
-/// output: ig2isz[ig], istot2ixy[is], is2fftixy[is], fftixy2ip[ixy], startnsz_per[ip], nst_per[ip], nst
-///
+/**
+ * @brief Distribute planewaves in reciprocal space to cores
+ *
+ * Firstly, divide the sphere in reciprocal space into sticks, which are vertical to x-y plane.
+ * Secondly, distribute these sticks to coreors.
+ *
+ * @example
+ *                 |  ---- ixy increasing ---> |   ---- ixy increasing --->   |...
+ *  index of sticks 0, 1, 2, ..., nst_per[0]-1, nst_per[0], ..., nst_per[1]-1, ...
+ *                 |___________________________|______________________________|___
+ *  ip                           0                            1              ...
+ *                              npw    approximate equal to  npw   approximate equal to...
+ *
+ * @param in: G, GT, GGT, fftny, fftnx, nz, poolnproc, poolrank, ggecut
+ * @param out: ig2isz[ig], istot2ixy[is], is2fftixy[is], fftixy2ip[ixy], startnsz_per[ip], nst_per[ip], nst
+ */
+
 void PW_Basis::distribution_method2()
 {
 
@@ -32,12 +35,15 @@ void PW_Basis::distribution_method2()
         this->fftixy2ip[ixy] = -1;                 // meaning this stick has not been distributed or there is no stick on (x, y).
     if (poolrank == 0)
     {
-        // (1) Count the total number of planewaves (tot_npw) and sticks (this->nstot).                  
-        
-        // Actually we will scan [(2 * ibox[0] + 1) * (2 * ibox[1] + 1)] points on x-y plane,
-        // but we define st_length2D with (fftny * fftnx) points here, because we assume that the diameter
-        // of the sphere is shorter than the sides of the cube.
-        // calculate this->nstot and this->npwtot, liy, riy
+        /**
+        *  @brief  (1) Count the total number of planewaves (tot_npw) and sticks (this->nstot).
+        *
+        *  @note   the funcion here is defined in pw_distributeg.cpp
+        *  Actually we will scan [(2 * ibox[0] + 1) * (2 * ibox[1] + 1)] points on x-y plane,
+        *  but we define st_length2D with (fftny * fftnx) points here, because the diameter
+        *  of the sphere should be shorter than the sides of the cube.
+        *  calculate this->nstot and this->npwtot, liy, riy
+        */
         this->count_pw_st(st_length2D, st_bottom2D);
     }
 #ifdef __MPI
@@ -94,7 +100,7 @@ void PW_Basis::distribution_method2()
     this->nst = this->nst_per[this->poolrank];
     this->nstnz = this->nst * this->nz;
 
-    // (5) Construct ig2isz and is2fftixy. 
+    // (5) Construct ig2isz and is2fftixy.
     this->get_ig2isz_is2fftixy(st_bottom2D, st_length2D);
 
     delete[] st_bottom2D;
@@ -102,33 +108,35 @@ void PW_Basis::distribution_method2()
     return;
 }
 
-/// 
-/// (2) Devide the sticks to each core according to the number of sticks
-/// Sticks are in the order of ixy increasing.
-/// known: this->nstot, this->poolnproc
-/// output: nst_per, this->startnsz_per
-/// 
+/**
+ * @brief (2) Devide the sticks to each core according to the number of sticks
+ * Sticks are in the order of ixy increasing.
+ * @param in: this->nstot, this->poolnproc
+ * @param out: nst_per, this->startnsz_per
+ */
+
 void PW_Basis::divide_sticks_2()
 {
     ModuleBase::GlobalFunc::ZEROS(nst_per, this->poolnproc);
-    
+
     int average_nst = this->nstot / this->poolnproc;
     int mods = this->nstot % this->poolnproc;
-    
+
     this->startnsz_per[0] = 0;
     for (int ip = 0; ip < this->poolnproc; ++ip)
     {
         nst_per[ip] = average_nst;
         if (ip < mods) nst_per[ip]++;
-        if (ip >= 1) this->startnsz_per[ip] = this->startnsz_per[ip-1] + this->nst_per[ip-1] * this->nz; 
+        if (ip >= 1) this->startnsz_per[ip] = this->startnsz_per[ip-1] + this->nst_per[ip-1] * this->nz;
     }
 }
 
-// 
-// (3) Create the maps from ixy to ip, istot, and from istot to ixy, and construt npw_per simultaneously.
-// known: st_length2D
-// output: this->fftixy2ip, this->istot2ixy, npw_per
-// 
+/**
+ * @brief (3) Create the maps from ixy to ip, istot, and from istot to ixy, and construt npw_per simultaneously.
+ * @param in: st_length2D
+ * @param out: this->fftixy2ip, this->istot2ixy, npw_per
+ */
+
 void PW_Basis::create_maps(
     int* st_length2D  // the number of planewaves that belong to the stick located on (x, y), stored in 2d x-y plane.
 )
@@ -148,7 +156,7 @@ void PW_Basis::create_maps(
             if (ip < this->poolnproc - 1)
             {
                 // all of sticks on current core are found, skip to next core
-                if (st_move * this->nz >= this->startnsz_per[ip + 1]) ip++; 
+                if (st_move * this->nz >= this->startnsz_per[ip + 1]) ip++;
             }
         }
     }

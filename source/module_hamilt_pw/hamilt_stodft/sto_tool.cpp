@@ -16,7 +16,7 @@ void check_che(const int& nche_in,
     //      Convergence test
     //------------------------------
     bool change = false;
-    const int nk = p_kv->nks;
+    const int nk = p_kv->get_nks();
     ModuleBase::Chebyshev<double> chetest(nche_in);
     Stochastic_Iter& stoiter = p_hsol->stoiter;
     Stochastic_hchi& stohchi = stoiter.stohchi;

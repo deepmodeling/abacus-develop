@@ -18,8 +18,9 @@ hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::NonlocalNew(
     std::vector<TK>* hK_in,
     const UnitCell* ucell_in,
     Grid_Driver* GridD_in,
+    const ORB_gen_tables* uot,
     const Parallel_Orbitals* paraV)
-    : hamilt::OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in)
+    : hamilt::OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in), uot_(uot)
 {
     this->cal_type = lcao_fixed;
     this->ucell = ucell_in;
@@ -147,7 +148,6 @@ void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
             const ModuleBase::Vector3<double>& tau1 = adjs.adjacent_tau[ad];
             const Atom* atom1 = &ucell->atoms[T1];
 
-            const ORB_gen_tables& uot = ORB_gen_tables::get_const_instance();
             const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
             auto all_indexes = paraV->get_indexes_row(iat1);
 #ifdef _OPENMP
@@ -181,10 +181,10 @@ void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                 int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
 
                 ModuleBase::Vector3<double> dtau = tau0 - tau1;
-                uot.two_center_bundle->overlap_orb_beta->snap(
+                uot_->two_center_bundle->overlap_orb_beta->snap(
                         T1, L1, N1, M1, T0, dtau * this->ucell->lat0, 0 /*cal_deri*/, nlm);
 #else
-                uot.snap_psibeta_half(orb,
+                uot_->snap_psibeta_half(orb,
                                       this->ucell->infoNL,
                                       nlm,
                                       tau1,

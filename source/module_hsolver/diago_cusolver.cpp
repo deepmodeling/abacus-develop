@@ -38,29 +38,29 @@ namespace hsolver
     }
     
     // Wrapper for pdgemr2d and pzgemr2d
-    static inline void Cpxgemr2d(
-        const int M, const int N,
-        double *a, const int ia, const int ja, const int *desca,
-        double *b, const int ib, const int jb, const int *descb,
-        const int blacs_ctxt) 
-    {
-        pdgemr2d_(&M, &N,
-                  a, &ia, &ja, desca,
-                  b, &ib, &jb, descb,
-                  &blacs_ctxt);
-    }
-
-    static inline void Cpxgemr2d(
-        const int M, const int N,
-        complex *a, const int ia, const int ja, const int *desca,
-        complex *b, const int ib, const int jb, const int *descb,
-        const int blacs_ctxt) 
-    {
-        pzgemr2d_(&M, &N,
-                  a, &ia, &ja, desca,
-                  b, &ib, &jb, descb,
-                  &blacs_ctxt);
-    }
+    //static inline void Cpxgemr2d(
+    //    const int M, const int N,
+    //    double *a, const int ia, const int ja, const int *desca,
+    //    double *b, const int ib, const int jb, const int *descb,
+    //    const int blacs_ctxt) 
+    //{
+    //    pdgemr2d_(&M, &N,
+    //              a, &ia, &ja, desca,
+    //              b, &ib, &jb, descb,
+    //              &blacs_ctxt);
+    //}
+//
+    //static inline void Cpxgemr2d(
+    //    const int M, const int N,
+    //    complex *a, const int ia, const int ja, const int *desca,
+    //    complex *b, const int ib, const int jb, const int *descb,
+    //    const int blacs_ctxt) 
+    //{
+    //    pzgemr2d_(&M, &N,
+    //              a, &ia, &ja, desca,
+    //              b, &ib, &jb, descb,
+    //              &blacs_ctxt);
+    //}
 
     // Use Cpxgemr2d to collect matrices from all processes to root process
     template <typename mat, typename matg>
@@ -70,7 +70,7 @@ namespace hsolver
                              matg& mat_g)
     {
         auto a = mat_l.p;
-        const int* desca = mat_l.desc;
+        int* desca = mat_l.desc;
         int ctxt = desca[1];
         int nrows = desca[2];
         int ncols = desca[3];
@@ -179,12 +179,18 @@ namespace hsolver
             distributePsi(this->ParaV->desc_wfc, psi.get_pointer(), psi_g.data());
         }
         else
-        {
-            this->dc.Dngvd(h_mat.row, h_mat.col, h_mat.p, s_mat.p, eigen.data(), psi.get_pointer());
+        {   
+            // Be careful that h_mat.row * h_mat.col != psi.get_nbands() * psi.get_nbasis() under multi-k situation
+            std::vector<T> eigenvectors(h_mat.row * h_mat.col);
+            this->dc.Dngvd(h_mat.row, h_mat.col, h_mat.p, s_mat.p, eigen.data(), eigenvectors.data());
+            const int size = psi.get_nbands() * psi.get_nbasis();
+            BlasConnector::copy(size, eigenvectors.data(), 1, psi.get_pointer(), 1);
         }
 #else
-        // Call the dense diagonalization routine
-        this->dc.Dngvd(h_mat.row, h_mat.col, h_mat.p, s_mat.p, eigen.data(), psi.get_pointer());
+            std::vector<T> eigenvectors(h_mat.row * h_mat.col);
+            this->dc.Dngvd(h_mat.row, h_mat.col, h_mat.p, s_mat.p, eigen.data(), eigenvectors.data());
+            const int size = psi.get_nbands() * psi.get_nbasis();
+            BlasConnector::copy(size, eigenvectors.data(), 1, psi.get_pointer(), 1);
 #endif
         // Stop the timer for the cusolver operation
         ModuleBase::timer::tick("DiagoCusolver", "cusolver");
