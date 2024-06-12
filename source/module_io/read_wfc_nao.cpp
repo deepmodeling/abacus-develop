@@ -2,6 +2,7 @@
 
 #include "module_base/parallel_common.h"
 #include "module_base/timer.h"
+#include "module_io/write_wfc_nao.h"
 
 /**
  * @brief Extracts a submatrix from a global orbital coefficient matrix and stores it in a linear array.
@@ -112,20 +113,16 @@ int ModuleIO::read_wfc_nao_complex(std::complex<double>** ctot,
     ModuleBase::TITLE("ModuleIO", "read_wfc_nao_complex");
     ModuleBase::timer::tick("ModuleIO", "read_wfc_nao_complex");
 
-    std::stringstream ss;
-    // read wave functions
-    ss << global_readin_dir << "LOWF_K_" << ik + 1 << ".txt";
-    //	std::cout << " name is = " << ss.str() << std::endl;
-
+    std::string ss = global_readin_dir + ModuleIO::wfc_nao_gen_fname(1,false,true,ik);
     std::ifstream ifs;
     int error = 0;
 
     if (GlobalV::DRANK == 0)
     {
-        ifs.open(ss.str().c_str());
+        ifs.open(ss.c_str());
         if (!ifs)
         {
-            GlobalV::ofs_warning << " Can't open file:" << ss.str() << std::endl;
+            GlobalV::ofs_warning << " Can't open file:" << ss << std::endl;
             error = 1;
         }
     }
@@ -274,28 +271,17 @@ int ModuleIO::read_wfc_nao(double** ctot,
     ModuleBase::TITLE("ModuleIO", "read_wfc_nao");
     ModuleBase::timer::tick("ModuleIO", "read_wfc_nao");
 
-    std::stringstream ss;
-    if (GlobalV::GAMMA_ONLY_LOCAL)
-    {
-        // read wave functions
-        ss << global_readin_dir << "LOWF_GAMMA_S" << is + 1 << ".txt";
-        std::cout << " name is = " << ss.str() << std::endl;
-    }
-    else
-    {
-        ss << global_readin_dir << "LOWF_K.txt";
-    }
-
+    std::string ss = global_readin_dir + ModuleIO::wfc_nao_gen_fname(1, GlobalV::GAMMA_ONLY_LOCAL, false, is);
     std::ifstream ifs;
 
     int error = 0;
 
     if (GlobalV::DRANK == 0)
     {
-        ifs.open(ss.str().c_str());
+        ifs.open(ss.c_str());
         if (!ifs)
         {
-            GlobalV::ofs_warning << " Can't open file:" << ss.str() << std::endl;
+            GlobalV::ofs_warning << " Can't open file:" << ss << std::endl;
             error = 1;
         }
     }

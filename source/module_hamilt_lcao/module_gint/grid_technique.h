@@ -155,72 +155,12 @@ class Grid_Technique : public Grid_MeshBall
     bool* atom_new_g;
     int* atom_ylm_g;
     int* atom_l_g;
-    double** grid_vlocal_g;
     int nr_max;
-    int psi_size_max;
-    int psi_size_max_z;
-    int psir_size;
-    int atom_pair_mesh;
-    int atom_pair_nbz;
 
-    int nstreams=4 ;
-    cudaStream_t* streams;
+
+    int nstreams=4;
     // streams[nstreams]
     // TODO it needs to be implemented through configuration files
-
-    double* left_global_g;
-    double* d_left_x_g;
-    double* d_left_y_g;
-    double* d_left_z_g;
-
-    double* dd_left_xx_g;
-    double* dd_left_xy_g;
-    double* dd_left_xz_g;
-    double* dd_left_yy_g;
-    double* dd_left_yz_g;
-    double* dd_left_zz_g;
-    double* right_global_g;
-    double* dm_global_g;
-
-    double* alpha_global;
-    double* alpha_global_g;
-    int* l_info_global;
-    int* l_info_global_g;
-    int* r_info_global;
-    int* r_info_global_g;
-    int* k_info_global;
-    int* k_info_global_g;
-
-    int* lda_info_global;
-    int* lda_info_gbl_g;
-    int* ldb_info_global;
-    int* ldb_info_gbl_g;
-    int* ldc_info_global;
-    int* ldc_info_gbl_g;
-
-    double** ap_left_gbl;
-    double** ap_right_gbl;
-    double** ap_output_gbl;
-
-    double** ap_left_gbl_g;
-    double** ap_right_gbl_g;
-    double** ap_output_gbl_g;
-
-    double* psi_dbl_gbl;
-    double* psi_dbl_gbl_g;
-
-    int* psi_int_gbl;
-    int* psi_int_gbl_g;
-
-    int* num_psir_gbl;
-    int* num_psir_gbl_g;
-
-    // additional variables for rho calculating
-    int num_mcell;
-    double* rho_g;
-    double** dot_product;
-    double** dot_product_g;
-
     matrix_multiple_func_type fastest_matrix_mul;
 
   private:
