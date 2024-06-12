@@ -22,8 +22,6 @@ void gtask_rho(const Grid_Technique& gridt,
     const int psi_size_max = max_atom * gridt.bxyz;
     atom_per_z = 0;
 
-    // record whether mat_psir is a zero matrix or not.
-
     // generate data for calculating psir
     for (int z_index = 0; z_index < gridt.nbzp; z_index++)
     {
