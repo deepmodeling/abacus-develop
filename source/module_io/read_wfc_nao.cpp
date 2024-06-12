@@ -206,6 +206,7 @@ int ModuleIO::read_wfc_nao_complex(std::complex<double>** ctot,
 
 #ifdef __MPI
     Parallel_Common::bcast_int(error);
+    // then broadcast the "weigths" of present k-point, with length pelec->wg.nc
     Parallel_Common::bcast_double(&pelec->wg.c[ik * pelec->wg.nc], pelec->wg.nc);
 #endif
 

@@ -5,6 +5,10 @@
 #include <regex>
 #include <cassert>
 
+#ifdef __MPI
+#include "module_base/parallel_common.h"
+#endif
+
 template<typename T>
 void ModuleIO::read_abacus_lowf(const std::string& flowf, 
                                 int& ik,
@@ -24,6 +28,8 @@ void ModuleIO::read_abacus_lowf(const std::string& flowf,
     bool read_kvec = false;
     int iband = 0;
     int ilocal = 0;
+
+    wk = 1.0;
     while (std::getline(ifs, line))
     {
         // remove leading and trailing whitespaces
@@ -198,7 +204,7 @@ int& nbands, int& nbasis, std::vector<float>& lowf, std::vector<double>& ekb, st
 
 #ifdef __MPI
 template<typename T>
-void ModuleIO::restart_from_file(const std::string& out_dir, // hard-code the file name to be LOWF_K_*.txt?
+void ModuleIO::restart_from_file(const std::string& out_dir, // hard-code the file name to be WFC_NAO_K*.txt?
                                  const Parallel_2D& p2d,
                                  const int& nks,
                                  int& nbands,
@@ -209,11 +215,17 @@ void ModuleIO::restart_from_file(const std::string& out_dir, // hard-code the fi
                                  std::vector<ModuleBase::Vector3<double>>& kvec_c,
                                  std::vector<double>& wk)
 {
+    // reset vectors
+    lowf_loc.clear(); ekb.clear(); occ.clear(); kvec_c.clear(); wk.clear();
+    // MPI-related variables init
+    int iproc;
+    MPI_Comm_rank(p2d.comm_2D, &iproc);
+    // then start
     int nbands_ = -1, nbasis_ = -1;
     for(int ik = 0; ik < nks; ik++)
     {
         // check existence of file
-        const std::string flowf = out_dir + "/LOWF_K_" + std::to_string(ik + 1) + ".txt";
+        const std::string flowf = out_dir + "/WFC_NAO_K" + std::to_string(ik + 1) + ".txt";
         std::ifstream ifs(flowf);
         if(!ifs) ModuleBase::WARNING_QUIT("restart_from_file", "open file failed: " + flowf);
 
@@ -223,30 +235,53 @@ void ModuleIO::restart_from_file(const std::string& out_dir, // hard-code the fi
         std::vector<double> occ_;
         ModuleBase::Vector3<double> kvec;
         double wk_;
-        read_abacus_lowf(flowf, ik, kvec, nbands, nbasis, lowf_glb, ekb_, occ_, wk_);
-        assert(nbands == nbands_ || nbands_ == -1); // check the consistency of nbands
-        assert(nbasis == nbasis_ || nbasis_ == -1); // check the consistency of nbasis
-        nbands_ = (nbands_ == -1) ? nbands : nbands_;
-        nbasis_ = (nbasis_ == -1) ? nbasis : nbasis_;
+        if(iproc == 0) // only one rank is needed to read the global lowf, ekb, ...
+        {
+            int ik_;
+            read_abacus_lowf(flowf, ik_, kvec, nbands, nbasis, lowf_glb, ekb_, occ_, wk_);
+            assert(ik_ == ik + 1); // check the consistency of ik
+            assert(nbands == nbands_ || nbands_ == -1); // check the consistency of nbands
+            assert(nbasis == nbasis_ || nbasis_ == -1); // check the consistency of nbasis
+            nbands_ = (nbands_ == -1) ? nbands : nbands_;
+            nbasis_ = (nbasis_ == -1) ? nbasis : nbasis_;
+            ekb.insert(ekb.end(), ekb_.begin(), ekb_.end());
+            occ.insert(occ.end(), occ_.begin(), occ_.end());
+            wk.push_back(wk_);
+            kvec_c.push_back(kvec);
+        }
+        MPI_Barrier(p2d.comm_2D); // wait for finishing the reading task
         // scatter the lowf_glb to lowf_loc
         Parallel_2D p2d_glb;
-        p2d_glb.init(nbasis, nbands, std::max(nbasis, nbands), p2d.comm_2D);
+        Parallel_Common::bcast_int(nbands);
+        Parallel_Common::bcast_int(nbasis);
+        p2d_glb.init(nbasis, nbands, std::max(nbasis, nbands), p2d.comm_2D); // in the same comm world
         lowf_loc_k.resize(p2d.nrow * p2d.ncol);
-        // after PR#4268, Cpxgemr2d can be called to scatter from lowf_glb to lowf_loc_k
-        // Cpxgemr2d(nbasis, nbands,
-        //           lowf_glb.data(), 1, 1, p2d_glb.desc,
-        //           lowf_loc_k.data(), 1, 1, p2d.desc,
-        //           &(p2d_glb.blacs_ctxt));
-        // now raise not implemented error directly
-        ModuleBase::WARNING_QUIT("restart_from_file", "Cpxgemr2d not implemented yet");
+        Cpxgemr2d(nbasis, nbands,
+                  lowf_glb.data(), 1, 1, const_cast<int*>(p2d_glb.desc),
+                  lowf_loc_k.data(), 1, 1, const_cast<int*>(p2d.desc),
+                  p2d_glb.blacs_ctxt);
         // append to the global lowf_loc
         lowf_loc.insert(lowf_loc.end(), lowf_loc_k.begin(), lowf_loc_k.end());
-        ekb.insert(ekb.end(), ekb_.begin(), ekb_.end());
-        occ.insert(occ.end(), occ_.begin(), occ_.end());
-        wk.push_back(wk_);
-        kvec_c.push_back(kvec);
     }
     assert(lowf_loc.size() == nks * p2d.nrow * p2d.ncol);
+    // still something to broadcast: ekb, occ, wk and kvec.
+    if(iproc != 0)
+    {
+        ekb.resize(nks*nbands, 0.0);
+        occ.resize(nks*nbands, 0.0);
+        wk.resize(nks, 0.0);
+        kvec_c.resize(nks);
+    }
+    Parallel_Common::bcast_double(ekb.data(), nks*nbands);
+    Parallel_Common::bcast_double(occ.data(), nks*nbands);
+    Parallel_Common::bcast_double(wk.data(), nks);
+    // Vector3 is not a trivial datatype, need to be broadcasted element by element
+    for(int ik = 0; ik < nks; ik++)
+    {
+        Parallel_Common::bcast_double(kvec_c[ik].x);
+        Parallel_Common::bcast_double(kvec_c[ik].y);
+        Parallel_Common::bcast_double(kvec_c[ik].z);
+    }
 }
 // instantiate the template function
 template void ModuleIO::restart_from_file(const std::string& out_dir, const Parallel_2D& p2d, const int& nks, int& nbands, int& nbasis,
@@ -260,7 +295,7 @@ std::vector<std::complex<float>>& lowf_loc, std::vector<double>& ekb, std::vecto
 #endif
 
 template <typename T>
-void ModuleIO::restart_from_file(const std::string& out_dir, // hard-code the file name to be LOWF_K_*.txt?
+void ModuleIO::restart_from_file(const std::string& out_dir, // hard-code the file name to be WFC_NAO_K*.txt?
                                  const int& nks,
                                  int& nbands,
                                  int& nbasis,
@@ -270,11 +305,13 @@ void ModuleIO::restart_from_file(const std::string& out_dir, // hard-code the fi
                                  std::vector<ModuleBase::Vector3<double>>& kvec_c,
                                  std::vector<double>& wk)
 {
+    // reset vectors
+    lowf.clear(); ekb.clear(); occ.clear(); kvec_c.clear(); wk.clear();
     int nbands_ = -1, nbasis_ = -1;
     for(int ik = 0; ik < nks; ik++)
     {
         // check existence of file
-        const std::string flowf = out_dir + "/LOWF_K_" + std::to_string(ik + 1) + ".txt";
+        const std::string flowf = out_dir + "/WFC_NAO_K" + std::to_string(ik + 1) + ".txt";
         const std::ifstream ifs(flowf);
         if(!ifs) ModuleBase::WARNING_QUIT("restart_from_file", "open file failed: " + flowf);
 
