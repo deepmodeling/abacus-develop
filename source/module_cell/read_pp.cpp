@@ -145,8 +145,7 @@ int Pseudopot_upf::average_p(const double& lambda)
 {
     int error = 0;
     double lambda_ = lambda;
-    if (!GlobalV::LSPINORB)
-        lambda_ = 0.0;
+    if(!GlobalV::LSPINORB) { lambda_ = 0.0; }
     if (this->has_so && this->tvanp)
     {
         error++;
