@@ -72,6 +72,7 @@ class Cuda_Mem_Wrapper
     ~Cuda_Mem_Wrapper();
     void copy_host_to_device_sync(int stream_id = 0);
     void copy_host_to_device_async(cudaStream_t stream, int stream_id);
+    void copy_host_to_device_async(cudaStream_t stream, int stream_id, int size);
     void copy_device_to_host_sync(int stream_id = 0);
     void copy_device_to_host_async(cudaStream_t stream, int stream_id);
     void memset_device_sync(int stream_id = 0, int value = 0);

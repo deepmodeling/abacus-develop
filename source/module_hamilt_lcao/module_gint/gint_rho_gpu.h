@@ -55,7 +55,9 @@ void gtask_rho(const Grid_Technique& gridt,
                const double* rcut,
                double* psi_input_double,
                int* psi_input_int,
-               int* atom_num_per_bcell);
+               int* atom_num_per_bcell,
+               int* start_idx_per_bcell,
+               int& atom_per_z);
 
 /**
  * Allocate resources and perform matrix multiplication and vector dot products 
