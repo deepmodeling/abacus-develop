@@ -73,7 +73,7 @@ void Sto_DOS::caldos(const double sigmain, const double de, const int npart)
     std::cout << "###Calculating Dos....###" << std::endl;
     std::cout << "=========================" << std::endl;
     ModuleBase::Chebyshev<double> che(dos_nche);
-    const int nk = p_kv->nks;
+    const int nk = p_kv->get_nks();
     Stochastic_Iter& stoiter = p_hsol->stoiter;
     Stochastic_hchi& stohchi = stoiter.stohchi;
     const int npwx = p_wfcpw->npwk_max;
