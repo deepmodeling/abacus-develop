@@ -36,7 +36,8 @@ int DiagoElpa<T>::DecomposedState = 0;
 template <typename T>
 int DiagoElpa<T>::lastmpinum=-1;
 template <typename T>
-int DiagoElpa<T>::ifsetcomm=-1;
+//int DiagoElpa<T>::ifsetcomm=-1;
+int DiagoElpa<T>::ifsetcomm=5;//modify only for check
 } // namespace hsolver
 
 #endif
