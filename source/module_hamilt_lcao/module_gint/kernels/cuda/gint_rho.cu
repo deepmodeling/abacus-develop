@@ -9,38 +9,38 @@ __global__ void get_psi(const double* const ylmcoef,
                         double delta_r_g,
                         int bxyz_g,
                         double nwmax_g,
-                        const double* const input_double,
-                        const int* const input_int,
-                        const int* const num_psir,
-                        int psi_size_max,
+                        const double* const psi_input_double,
+                        const int* const psi_input_int,
+                        const int* const atom_num_per_bcell,
+                        int max_atom_per_bcell,
                         const int* const ucell_atom_nwl,
                         const bool* const atom_iw2_new,
                         const int* const atom_iw2_ylm,
                         const int* const atom_nw,
                         int nr_max,
                         const double* const psi_u,
-                        double* psir_ylm)
+                        double* psi)
 {
-    int size = num_psir[blockIdx.x];
-    int start_index = psi_size_max * blockIdx.x;
-    int end_index = start_index + size;
-    start_index += threadIdx.x + blockDim.x * blockIdx.y;
+    const int size = atom_num_per_bcell[blockIdx.x];
+    const int bcell_start = max_atom_per_bcell * blockIdx.x;
+    const int end_index = bcell_start + size;
+    const int start_index = bcell_start + threadIdx.x + blockDim.x * blockIdx.y;
     for (int index = start_index; index < end_index;
          index += blockDim.x * gridDim.y)
     {
         double dr[3];
-        int index_double = index * 5;
-        dr[0] = input_double[index_double];
-        dr[1] = input_double[index_double + 1];
-        dr[2] = input_double[index_double + 2];
-        double distance = input_double[index_double + 3];
+        const int index_double = index * 4;
+        dr[0] = psi_input_double[index_double];
+        dr[1] = psi_input_double[index_double + 1];
+        dr[2] = psi_input_double[index_double + 2];
+        const double distance = psi_input_double[index_double + 3];
         double ylma[49];
-        int index_int = index * 2;
-        int it = input_int[index_int];
-        int dist_tmp = input_int[index_int + 1];
-        int nwl = ucell_atom_nwl[it];
+        const int index_int = index * 2;
+        const int it = psi_input_int[index_int];
+        int dist_tmp = psi_input_int[index_int + 1];
+        const int nwl = ucell_atom_nwl[it];
 
-        spherical_harmonics(dr, distance, nwl, ylma, ylmcoef);
+        spherical_harmonics(dr, nwl, ylma, ylmcoef);
 
         interpolate(distance,
                     delta_r_g,
@@ -52,24 +52,23 @@ __global__ void get_psi(const double* const ylmcoef,
                     psi_u,
                     ylma,
                     atom_iw2_ylm,
-                    psir_ylm,
+                    psi,
                     dist_tmp,
                     1);
     }
 }
 
-__global__ void psir_dot(const int nbzp,
-                         const int bxyz,
+__global__ void psir_dot(const int bxyz,
                          const int vec_size,
-                         double* vec_a_g,
-                         double* vec_b_g,
+                         const double* __restrict__ vec_a_g,
+                         const double* __restrict__  vec_b_g,
                          double** results_g)
 {
     extern __shared__ double s_data[];
-    int tid = threadIdx.x;
-    int offset = blockIdx.x * bxyz * vec_size + blockIdx.y * vec_size;
-    double* vec_a_mcell = vec_a_g + offset;
-    double* vec_b_mcell = vec_b_g + offset;
+    const int tid = threadIdx.x;
+    const int offset = blockIdx.x * bxyz * vec_size + blockIdx.y * vec_size;
+    const double* vec_a_mcell = vec_a_g + offset;
+    const double* vec_b_mcell = vec_b_g + offset;
 
     s_data[tid] = 0.0;
 

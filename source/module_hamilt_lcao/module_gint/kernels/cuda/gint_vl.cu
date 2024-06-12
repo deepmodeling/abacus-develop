@@ -9,39 +9,39 @@ __global__ void get_psi_and_vldr3(double* ylmcoef,
                                   double delta_r_g,
                                   int bxyz_g,
                                   double nwmax_g,
-                                  double* input_double,
-                                  int* input_int,
-                                  int* num_psir,
-                                  int psi_size_max,
+                                  double* psi_input_double,
+                                  int* psi_input_int,
+                                  int* atom_num_per_bcell,
+                                  int max_atom_per_bcell,
                                   int* ucell_atom_nwl,
                                   bool* atom_iw2_new,
                                   int* atom_iw2_ylm,
                                   int* atom_nw,
                                   int nr_max,
                                   double* psi_u,
-                                  double* psir_ylm_left,
-                                  double* psir_r)
+                                  double* psi,
+                                  double* psi_vldr3)
 {
-    int size = num_psir[blockIdx.x];
-    int start_index = psi_size_max * blockIdx.x;
-    int end_index = start_index + size;
-    start_index += threadIdx.x + blockDim.x * blockIdx.y;
+    const int size = atom_num_per_bcell[blockIdx.x];
+    const int bcell_start = max_atom_per_bcell * blockIdx.x;
+    const int end_index = bcell_start + size;
+    const int start_index = bcell_start + threadIdx.x + blockDim.x * blockIdx.y;
     for (int index = start_index; index < end_index;
          index += blockDim.x * gridDim.y)
     {
         double dr[3];
-        int index_double = index * 5;
-        dr[0] = input_double[index_double];
-        dr[1] = input_double[index_double + 1];
-        dr[2] = input_double[index_double + 2];
-        double distance = input_double[index_double + 3];
-        double vlbr3_value = input_double[index_double + 4];
+        const int index_double = index * 5;
+        dr[0] = psi_input_double[index_double];
+        dr[1] = psi_input_double[index_double + 1];
+        dr[2] = psi_input_double[index_double + 2];
+        const double distance = psi_input_double[index_double + 3];
+        const double vlbr3_value = psi_input_double[index_double + 4];
         double ylma[49];
         int index_int = index * 2;
-        int it = input_int[index_int];
-        int dist_tmp = input_int[index_int + 1];
-        int nwl = ucell_atom_nwl[it];
-        spherical_harmonics(dr, distance, nwl, ylma, ylmcoef);
+        const int it = psi_input_int[index_int];
+        int dist_tmp = psi_input_int[index_int + 1];
+        const int nwl = ucell_atom_nwl[it];
+        spherical_harmonics(dr, nwl, ylma, ylmcoef);
 
         interpolate(distance,
                     delta_r_g,
@@ -53,13 +53,13 @@ __global__ void get_psi_and_vldr3(double* ylmcoef,
                     psi_u,
                     ylma,
                     atom_iw2_ylm,
-                    psir_ylm_left,
+                    psi,
                     dist_tmp,
                     bxyz_g);
 
         for (int iw = 0; iw < atom_nw[it]; ++iw)
         {
-            psir_r[dist_tmp] = psir_ylm_left[dist_tmp] * vlbr3_value;
+            psi_vldr3[dist_tmp] = psi[dist_tmp] * vlbr3_value;
             dist_tmp += bxyz_g;
         }
     }

@@ -377,7 +377,6 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(ModuleBase::matrix& force)
 			GlobalV::CAL_STRESS,
 			GlobalV::TEST_FORCE,
 			GlobalV::TEST_STRESS,
-			this->LOC,
             this->orb_con.ParaV, 
 			this->pelec,
 			this->psi,
