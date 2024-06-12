@@ -46,46 +46,6 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
 
         void after_all_runners() override;
 
-        /**
-         * @brief calculate Onsager coefficients Lmn(\omega) and conductivities with Kubo-Greenwood formula
-         * 
-         * @param fwhmin FWHM for delta function
-         * @param smear_type 1: Gaussian, 2: Lorentzian
-         * @param wcut cutoff \omega for Lmn(\omega)
-         * @param dw_in \omega step
-         * @param dt_in time step
-         * @param wg wg(ik,ib) occupation for the ib-th band in the ik-th kpoint
-         */
-        void KG(const int& smear_type,
-                const double fwhmin,
-                const double wcut,
-                const double dw_in,
-                const double dt_in,
-                ModuleBase::matrix& wg);
-
-        /**
-         * @brief calculate the response function Cmn(t) for currents
-         * 
-         * @param ik k point
-         * @param nt number of steps of time
-         * @param dt time step
-         * @param decut ignore dE which is larger than decut
-         * @param wg wg(ik,ib) occupation for the ib-th band in the ik-th kpoint
-         * @param velop velocity operator
-         * @param ct11 C11(t)
-         * @param ct12 C12(t)
-         * @param ct22 C22(t)
-         */
-        void jjcorr_ks(const int ik,
-                       const int nt,
-                       const double dt,
-                       const double decut,
-                       ModuleBase::matrix& wg,
-                       hamilt::Velocity& velop,
-                       double* ct11,
-                       double* ct12,
-                       double* ct22);
-
       protected:
 
         virtual void before_scf(const int istep) override;
@@ -103,17 +63,6 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
         //temporary, this will be removed in the future;
         //Init Global class
         void Init_GlobalC(Input& inp, UnitCell& cell);
-
-        /// @brief calculate conductivities from j-j correlation function
-        void calcondw(const int nt,
-                      const double dt,
-                      const int& smear_type,
-                      const double fwhmin,
-                      const double wcut,
-                      const double dw_in,
-                      double* ct11,
-                      double* ct12,
-                      double* ct22);
 
         /// @brief allocate psi_init the new psi_initializer
         void allocate_psi_init();

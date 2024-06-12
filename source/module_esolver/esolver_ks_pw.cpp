@@ -8,6 +8,7 @@
 #include "module_io/write_wfc_pw.h"
 #include "module_io/output_log.h"
 #include "module_io/input_conv.h"
+#include "module_hamilt_pw/hamilt_pwdft/elecond.h"
 
 //--------------temporary----------------------------
 #include "module_elecstate/module_charge/symmetry_rho.h"
@@ -1376,13 +1377,14 @@ void ESolver_KS_PW<T, Device>::after_all_runners(void)
     //! Use Kubo-Greenwood method to compute conductivities
     if (INPUT.cal_cond)
     {
-		this->KG(
-				INPUT.cond_smear, 
-				INPUT.cond_fwhm, 
-				INPUT.cond_wcut, 
-				INPUT.cond_dw, 
-				INPUT.cond_dt, 
-				this->pelec->wg);
+		EleCond elec_cond(&GlobalC::ucell, &this->kv, this->pelec, this->pw_wfc, this->psi, &GlobalC::ppcell);
+        elec_cond.KG(INPUT.cond_smear,
+                     INPUT.cond_fwhm,
+                     INPUT.cond_wcut,
+                     INPUT.cond_dw,
+                     INPUT.cond_dt,
+                     INPUT.cond_nonlocal,
+                     this->pelec->wg);
 	}
 }
 
