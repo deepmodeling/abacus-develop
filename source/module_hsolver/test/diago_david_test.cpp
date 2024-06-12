@@ -105,7 +105,7 @@ public:
 		start = clock();
 #endif	
 
-		dav.diag(phm,phi,en);
+		dav.diag(phm,phi,en,eps, maxiter);
 
 #ifdef __MPI		
 		end = MPI_Wtime();
