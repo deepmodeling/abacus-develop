@@ -12,81 +12,6 @@
 namespace elecstate
 {
 
-template <>
-void ElecStateLCAO<double>::print_psi(const psi::Psi<double>& psi_in, const int istep)
-{
-	if (!ElecStateLCAO<double>::out_wfc_lcao)
-	{
-		return;
-	}
-
-    // output but not do  "2d-to-grid" conversion
-    double** wfc_grid = nullptr;
-    const int ik = psi_in.get_current_k();
-#ifdef __MPI
-    this->lowf->wfc_2d_to_grid(istep, out_wfc_flag, psi_in.get_pointer(), wfc_grid, ik, this->ekb, this->wg);
-#endif
-    return;
-}
-
-template <>
-void ElecStateLCAO<std::complex<double>>::print_psi(const psi::Psi<std::complex<double>>& psi_in, const int istep)
-{
-	if (!ElecStateLCAO<std::complex<double>>::out_wfc_lcao 
-			&& !ElecStateLCAO<std::complex<double>>::need_psi_grid)
-	{
-		return;
-	}
-
-    // output but not do "2d-to-grid" conversion
-    std::complex<double>** wfc_grid = nullptr;
-    int ik = psi_in.get_current_k();
-    if (ElecStateLCAO<std::complex<double>>::need_psi_grid)
-    {
-        wfc_grid = this->lowf->wfc_k_grid[ik];
-    }
-
-#ifdef __MPI
-    this->lowf->wfc_2d_to_grid(istep,
-                               ElecStateLCAO<std::complex<double>>::out_wfc_flag,
-                               psi_in.get_pointer(),
-                               wfc_grid,
-                               ik,
-                               this->ekb,
-                               this->wg,
-                               this->klist->kvec_c);
-#else
-    for (int ib = 0; ib < GlobalV::NBANDS; ib++)
-    {
-        for (int iw = 0; iw < GlobalV::NLOCAL; iw++)
-        {
-            this->lowf->wfc_k_grid[ik][ib][iw] = psi_in(ib, iw);
-        }
-    }
-#endif
-
-    // added by zhengdy-soc, rearrange the wfc_k_grid from [up,down,up,down...] to [up,up...down,down...],
-    if (ElecStateLCAO<std::complex<double>>::need_psi_grid && GlobalV::NSPIN == 4)
-    {
-        int row = this->lowf->gridt->lgd;
-        std::vector<std::complex<double>> tmp(row);
-        for (int ib = 0; ib < GlobalV::NBANDS; ib++)
-        {
-            for (int iw = 0; iw < row / GlobalV::NPOL; iw++)
-            {
-                tmp[iw] = this->lowf->wfc_k_grid[ik][ib][iw * GlobalV::NPOL];
-                tmp[iw + row / GlobalV::NPOL] = this->lowf->wfc_k_grid[ik][ib][iw * GlobalV::NPOL + 1];
-            }
-            for (int iw = 0; iw < row; iw++)
-            {
-                this->lowf->wfc_k_grid[ik][ib][iw] = tmp[iw];
-            }
-        }
-    }
-
-    return;
-}
-
 // multi-k case
 template <>
 void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<double>>& psi)
@@ -128,15 +53,6 @@ if(!GlobalV::dm_to_rho)
         }
 #endif
 
-    }
-    if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "scalapack_gvx" || GlobalV::KS_SOLVER == "lapack"
-        || GlobalV::KS_SOLVER == "cusolver" || GlobalV::KS_SOLVER == "cg_in_lcao"  ||  GlobalV::KS_SOLVER == "pexsi")
-    {
-        for (int ik = 0; ik < psi.get_nk(); ik++)
-        {
-            psi.fix_k(ik);
-            this->print_psi(psi);
-        }
     }
 }
     // old 2D-to-Grid conversion has been replaced by new Gint Refactor 2023/09/25
@@ -202,12 +118,6 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
         for (int ik = 0; ik < psi.get_nk(); ++ik)
         {
             // for gamma_only case, no convertion occured, just for print.
-            if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "scalapack_gvx"
-                || GlobalV::KS_SOLVER == "cusolver" || GlobalV::KS_SOLVER == "cg_in_lcao")
-            {
-                psi.fix_k(ik);
-                this->print_psi(psi);
-            }
             // old 2D-to-Grid conversion has been replaced by new Gint Refactor 2023/09/25
             if (this->loc->out_dm) // keep interface for old Output_DM until new one is ready
             {

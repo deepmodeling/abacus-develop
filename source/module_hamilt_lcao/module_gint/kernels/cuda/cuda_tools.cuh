@@ -20,6 +20,11 @@ void dump_cuda_array_to_file(double* cuda_array,
                              int hight,
                              const std::string& filename);
 
+static inline int ceil_div(int a, int b)
+{
+    return (a + b - 1) / b;
+}
+
 /*
  * @brief: A simple wrapper for cudaMalloc and cudaFree, sync and async CUDA
  * memory copy
@@ -49,6 +54,8 @@ template <typename T>
 class Cuda_Mem_Wrapper
 {
   public:
+
+    Cuda_Mem_Wrapper();
     Cuda_Mem_Wrapper(int one_stream_size,
                      int one_stream_size_aligned,
                      int stream_number = 1,
@@ -56,6 +63,12 @@ class Cuda_Mem_Wrapper
     Cuda_Mem_Wrapper(int one_stream_size,
                      int stream_number = 1,
                      bool malloc_host = true);
+
+    Cuda_Mem_Wrapper(const Cuda_Mem_Wrapper& other) = delete;
+    Cuda_Mem_Wrapper& operator=(const Cuda_Mem_Wrapper& other) = delete;
+    Cuda_Mem_Wrapper(Cuda_Mem_Wrapper&& other) noexcept;
+    Cuda_Mem_Wrapper& operator=(Cuda_Mem_Wrapper&& other) noexcept;
+    
     ~Cuda_Mem_Wrapper();
     void copy_host_to_device_sync(int stream_id = 0);
     void copy_host_to_device_async(cudaStream_t stream, int stream_id);
@@ -79,4 +92,4 @@ class Cuda_Mem_Wrapper
     int total_size_aligned;
 };
 
-#endif // CUDA_TOOLS_CUH#ifndef CUDA_TOOLS_CUH
+#endif // CUDA_TOOLS_CUH

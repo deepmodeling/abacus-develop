@@ -87,7 +87,7 @@ void Gint::cal_gint(Gint_inout* inout)
             }
 
             const int ntype = orb.get_ntype();
-            double* rcut = new double[ntype];
+            std::vector<double> rcut(ntype);
             for (int it = 0; it < ntype; it++)
             {
                 rcut[it] = orb.Phi[it].getRcut();
@@ -98,16 +98,10 @@ void Gint::cal_gint(Gint_inout* inout)
             if (inout->job == Gint_Tools::job_type::vlocal)
             {
                 GintKernel::gint_gamma_vl_gpu(this->hRGint,
-                                              lgd,
-                                              max_size,
-                                              ucell.omega
-                                                  / this->ncxyz,
                                               inout->vl,
                                               ylmcoef,
-                                              this->nplane,
-                                              this->nbxx,
                                               dr,
-                                              rcut,
+                                              rcut.data(),
                                               *this->gridt,
                                               ucell);
             }
@@ -118,10 +112,9 @@ void Gint::cal_gint(Gint_inout* inout)
                 {
                     ModuleBase::GlobalFunc::ZEROS(inout->rho[is], nrxx);
                     GintKernel::gint_gamma_rho_gpu(this->DMRGint[is],
-                                                   this->nplane,
                                                    ylmcoef,
                                                    dr,
-                                                   rcut,
+                                                   rcut.data(),
                                                    *this->gridt,
                                                    ucell,
                                                    inout->rho[is]);
@@ -137,14 +130,11 @@ void Gint::cal_gint(Gint_inout* inout)
                     std::vector<double> force(nat * 3, 0.0);
                     std::vector<double> stress(6, 0.0);
                     GintKernel::gint_fvl_gamma_gpu(this->DMRGint[inout->ispin],
-                                                    ucell.omega
-                                                        / this->ncxyz,
                                                     inout->vl,
-                                                    force,
-                                                    stress,
-                                                    this->nplane,
+                                                    force.data(),
+                                                    stress.data(),
                                                     dr,
-                                                    rcut,
+                                                    rcut.data(),
                                                     isforce,
                                                     isstress,
                                                     *this->gridt,

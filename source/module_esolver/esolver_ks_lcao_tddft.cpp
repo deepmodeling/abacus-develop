@@ -7,6 +7,7 @@
 #include "module_io/td_current_io.h"
 #include "module_io/write_HS.h"
 #include "module_io/write_HS_R.h"
+#include "module_io/write_wfc_nao.h"
 
 //--------------temporary----------------------------
 #include "module_base/blas_connector.h"
@@ -284,22 +285,17 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
         }
     }
 
-    if (this->conv_elec)
+    if (elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_lcao &&
+        (this->conv_elec || iter == GlobalV::SCF_NMAX) &&
+        (istep % GlobalV::out_interval == 0) )
     {
-        if (elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_lcao)
-        {
-            elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_flag
-                = elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_lcao;
-        }
-        for (int ik = 0; ik < kv.get_nks(); ik++)
-        {
-            if (istep % GlobalV::out_interval == 0)
-            {
-                this->psi[0].fix_k(ik);
-                this->pelec->print_psi(this->psi[0], istep);
-            }
-        }
-        elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_flag = 0;
+            ModuleIO::write_wfc_nao(elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_lcao,
+                           this->psi[0],
+                           this->pelec->ekb,
+                           this->pelec->wg,
+                           this->pelec->klist->kvec_c,
+                           this->orb_con.ParaV,
+                           istep);
     }
 
     // Calculate new potential according to new Charge Density
