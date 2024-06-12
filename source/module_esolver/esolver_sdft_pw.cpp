@@ -298,8 +298,8 @@ void ESolver_SDFT_PW::after_all_runners(void)
                         INPUT.cond_wcut,
                         INPUT.cond_dw,
                         INPUT.cond_dt,
-                        INPUT.cond_dtbatch,
                         INPUT.cond_nonlocal,
+                        INPUT.cond_dtbatch,
                         INPUT.npart_sto);
     }
 }
