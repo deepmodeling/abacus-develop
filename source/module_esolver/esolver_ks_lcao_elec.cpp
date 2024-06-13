@@ -24,7 +24,7 @@
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include "module_io/dm_io.h"
 #include "module_io/rho_io.h"
-#include "module_io/potential_io.h"
+#include "module_io/write_pot.h"
 
 namespace ModuleESolver
 {
@@ -263,7 +263,8 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
             ss << GlobalV::global_out_dir << "SPIN" << is+1 << "_CHG_INI.cube";
             ModuleIO::write_rho(
 #ifdef __MPI
-                this->pw_big->nbz, this->pw_big->bz,
+                this->pw_big->bz, // bz first, then nbz
+                this->pw_big->nbz,
                 this->pw_rho->nplane, this->pw_rho->startz_current,
 #endif
                 this->pelec->charge->rho[is], is,
@@ -274,22 +275,21 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
         }
     }
 
-    if(GlobalV::out_pot == 3)
-    {
-        for(int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            std::stringstream ss;
-            ss << GlobalV::global_out_dir << "SPIN" << is+1 << "_POT_INI.cube";
-            ModuleIO::write_potential(
+
+	ModuleIO::write_pot(
+			GlobalV::out_pot, 
+			GlobalV::NSPIN, 
+			GlobalV::global_out_dir,
 #ifdef __MPI
-                this->pw_big->nbz, this->pw_big->bz,
-                this->pw_rho->nplane, this->pw_rho->startz_current,
+			this->pw_big->bz,
+			this->pw_big->nbz, 
+			this->pw_rho->nplane, 
+			this->pw_rho->startz_current,
 #endif
-                is,0,ss.str(),
-                this->pw_rho->nx, this->pw_rho->ny, this->pw_rho->nz,
-                this->pelec->pot->get_effective_v(), 11);
-        }
-    }
+            this->pw_rho->nx,
+            this->pw_rho->ny,
+            this->pw_rho->nz,
+            this->pelec->pot->get_effective_v());
 
     // initalize DMR
     // DMR should be same size with Hamiltonian(R)
@@ -351,8 +351,15 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
 
     if (cal_type == "get_S")
     {
+        std::cout << "\n * * * * * *" << std::endl;
+        std::cout << " << Start writing the overlap matrix." << std::endl;
         this->get_S();
+        std::cout << " >> Finish writing the overlap matrix." << std::endl;
+        std::cout << " * * * * * *\n" << std::endl;
+
         ModuleBase::QUIT();
+
+        // return; // use 'return' will cause segmentation fault. by mohan 2024-06-09
     }
     else if (cal_type == "test_memory")
     {
@@ -499,7 +506,12 @@ void ESolver_KS_LCAO<std::complex<double>, double>::get_S(void)
         dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, double>*>(this->p_hamilt->ops)->contributeHR();
     }
 
-    ModuleIO::output_SR(orb_con.ParaV, this->LM, GlobalC::GridD, this->p_hamilt, "SR.csr");
+    // mohan add 2024-06-09
+    const std::string fn = GlobalV::global_out_dir + "SR.csr";
+
+    std::cout << " The file is saved in " << fn << std::endl;
+
+    ModuleIO::output_SR(orb_con.ParaV, this->LM, GlobalC::GridD, this->p_hamilt, fn);
 
     return;
 }
@@ -531,7 +543,12 @@ void ESolver_KS_LCAO<std::complex<double>, std::complex<double>>::get_S(void)
             ->contributeHR();
     }
 
-    ModuleIO::output_SR(orb_con.ParaV, this->LM, GlobalC::GridD, this->p_hamilt, "SR.csr");
+    // mohan add 2024-06-09
+    const std::string fn = GlobalV::global_out_dir + "SR.csr";
+
+    std::cout << " The file is saved in " << fn << std::endl;
+
+    ModuleIO::output_SR(orb_con.ParaV, this->LM, GlobalC::GridD, this->p_hamilt, fn);
 
     return;
 }

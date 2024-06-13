@@ -4,11 +4,8 @@
 #include "module_base/lapack_connector.h"
 #include "module_base/timer.h"
 #include "module_base/tool_quit.h"
-extern "C"
-{
 #include "module_base/blacs_connector.h"
 #include "module_base/scalapack_connector.h"
-}
 #include "genelpa/elpa_solver.h"
 
 typedef hamilt::MatrixBlock<double> matd;

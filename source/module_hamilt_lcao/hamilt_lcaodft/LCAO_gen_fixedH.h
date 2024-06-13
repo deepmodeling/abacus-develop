@@ -1,6 +1,3 @@
-/************************************
-//LiaoChen Modify on 2010-3-22
-***********************************/
 #ifndef LCAO_gen_fixedH_H
 #define LCAO_gen_fixedH_H
 
@@ -30,6 +27,7 @@ class LCAO_gen_fixedH
                       const bool& cal_deri,
                       const UnitCell& ucell,
                       const LCAO_Orbitals& orb,
+                      const Parallel_Orbitals& pv,
                       const ORB_gen_tables& uot,
                       Grid_Driver* GridD,
                       double* SHlocR,

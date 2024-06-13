@@ -115,7 +115,55 @@ extern "C"
 	    std::complex<double> *A, const int *IA, const int *JA, const int *DESCA, 
 		std::complex<double> *B, const int *IB, const int *JB, const int *DESCB,
 		const int *ICTXT);
+
+	// Scalapack wrappers to copy 2D blocks of data
+	// more info: 
+	// https://netlib.org/scalapack/explore-html/da/db5/pigemr_8c.html
+	// https://netlib.org/scalapack/explore-html/dd/dcd/pdgemr_8c.html
+	// https://netlib.org/scalapack/explore-html/d5/dd4/pzgemr_8c.html
+	// https://netlib.org/scalapack/explore-html/d5/deb/psgemr_8c.html
+	// https://netlib.org/scalapack/explore-html/d4/dad/pcgemr_8c.html
+	void Cpigemr2d (int m, int n, int *ptrmyblock, int ia, int ja, int *ma, int *ptrmynewblock, int ib, int jb, int *mb, int globcontext);
+	void Cpdgemr2d (int m, int n, double *ptrmyblock, int ia, int ja, int *ma, double *ptrmynewblock, int ib, int jb, int *mb, int globcontext);
+	void Cpzgemr2d (int m, int n, std::complex<double> *ptrmyblock, int ia, int ja, int *ma, std::complex<double> *ptrmynewblock, int ib, int jb, int *mb, int globcontext);
+	void Cpsgemr2d (int m, int n, float *ptrmyblock, int ia, int ja, int *ma, float *ptrmynewblock, int ib, int jb, int *mb, int globcontext);
+	void Cpcgemr2d (int m, int n, std::complex<float> *ptrmyblock, int ia, int ja, int *ma, std::complex<float> *ptrmynewblock, int ib, int jb, int *mb, int globcontext);
 }
+
+	template <typename T>
+	struct block2d_data_type
+	{
+		constexpr static bool value = std::is_same<T, double>::value || std::is_same<T, std::complex<double>>::value || std::is_same<T, float>::value || std::is_same<T, std::complex<float>>::value || std::is_same<T, int>::value;
+	};
+
+
+	/**
+	 * Copies a 2D block of data from matrix A to matrix B using the Scalapack library.
+	 * This function supports different data types: double, std::complex<double>, float, std::complex<float>, and int.
+	 *
+	 * @tparam T The data type of the matrices A and B.
+	 * @param M The number of rows of matrix A.
+	 * @param N The number of columns of matrix A.
+	 * @param A Pointer to the source matrix A.
+	 * @param IA The starting row index of the block in matrix A.
+	 * @param JA The starting column index of the block in matrix A.
+	 * @param DESCA Descriptor array for matrix A.
+	 * @param B Pointer to the destination matrix B.
+	 * @param IB The starting row index of the block in matrix B.
+	 * @param JB The starting column index of the block in matrix B.
+	 * @param DESCB Descriptor array for matrix B.
+	 * @param ICTXT The context identifier.
+	 */
+	template <typename T>
+	typename std::enable_if<block2d_data_type<T>::value,void>::type Cpxgemr2d(int M, int N, T *A, int IA, int JA, int *DESCA, T *B, int IB, int JB, int *DESCB, int ICTXT)
+	{
+		if (std::is_same<T,double>::value) Cpdgemr2d(M, N, reinterpret_cast<double*>(A),IA, JA, DESCA,reinterpret_cast<double*>(B),IB,JB, DESCB,ICTXT);
+		if (std::is_same<T,std::complex<double>>::value) Cpzgemr2d(M, N, reinterpret_cast<std::complex<double>*>(A),IA, JA, DESCA,reinterpret_cast<std::complex<double>*>(B),IB,JB, DESCB,ICTXT);
+		if (std::is_same<T,float>::value) Cpsgemr2d(M, N, reinterpret_cast<float*>(A),IA, JA, DESCA,reinterpret_cast<float*>(B),IB,JB, DESCB,ICTXT);
+		if (std::is_same<T,std::complex<float>>::value) Cpcgemr2d(M, N, reinterpret_cast<std::complex<float>*>(A),IA, JA, DESCA,reinterpret_cast<std::complex<float>*>(B),IB,JB, DESCB,ICTXT);
+		if (std::is_same<T,int>::value) Cpigemr2d(M, N, reinterpret_cast<int*>(A),IA, JA, DESCA,reinterpret_cast<int*>(B),IB,JB, DESCB,ICTXT);
+	};
+	
 
 class ScalapackConnector
 {

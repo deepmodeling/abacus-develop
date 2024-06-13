@@ -214,21 +214,41 @@ private:
 			const int spin = 0);
 
 	void set_force (
+            const Parallel_Orbitals &pv,
 			const int& iw1_all, 
 			const int& iw2_all, 
 			const double& vx, 
 			const double& vy, 
 			const double& vz, 
-			const char &dtype);
+			const char &dtype,
+			double* dsloc_x,
+			double* dsloc_y,
+			double* dsloc_z,
+			double* dhloc_fixed_x,
+			double* dhloc_fixed_y,
+			double* dhloc_fixed_z);
 
 	void set_stress (
+            const Parallel_Orbitals &pv,
 			const int& iw1_all, 
 			const int& iw2_all, 
 			const double& vx, 
 			const double& vy,
 			const double& vz, 
 			const char &dtype, 
-			const ModuleBase::Vector3<double> &dtau);
+			const ModuleBase::Vector3<double> &dtau,
+			double* dsloc_11,
+			double* dsloc_12,
+			double* dsloc_13,
+			double* dsloc_22,
+			double* dsloc_23,
+			double* dsloc_33,
+			double* dhloc_fixed_11,
+			double* dhloc_fixed_12,
+			double* dhloc_fixed_13,
+			double* dhloc_fixed_22,
+			double* dhloc_fixed_23,
+			double* dhloc_fixed_33);
 
 	void set_HR_tr(
 			const int &Rx, 

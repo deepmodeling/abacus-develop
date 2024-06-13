@@ -42,7 +42,7 @@ public:
     // the name of Grid_Technique should be changed to be more informative
     const Grid_Technique* gridt;
 
-    /// read wavefunction coefficients: LOWF_*.txt
+    /// read wavefunction coefficients: WFC_NAO_K/GAMMA*.txt
     void gamma_file(psi::Psi<double>* psid, elecstate::ElecState* pelec);
     void allocate_k(const int& lgd,
         psi::Psi<std::complex<double>>* psi,
@@ -78,16 +78,12 @@ public:
     // (in which the implementation should be put in header file )
     // because sub-function `write_wfc_nao_complex`contains GlobalC declared in `global.h`
     // which will cause lots of "not defined" if included in a header file.
-    void wfc_2d_to_grid(const int istep,
-                        const int out_wfc_lcao,
-                        const double* wfc_2d,
+    void wfc_2d_to_grid(const double* wfc_2d,
                         double** wfc_grid,
                         const int ik,
                         const ModuleBase::matrix& ekb,
                         const ModuleBase::matrix& wg);
-    void wfc_2d_to_grid(const int istep,
-                        const int out_wfc_lcao,
-                        const std::complex<double>* wfc_2d,
+    void wfc_2d_to_grid(const std::complex<double>* wfc_2d,
                         std::complex<double>** wfc_grid,
                         int ik,
                         const ModuleBase::matrix& ekb,
