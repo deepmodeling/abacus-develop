@@ -62,12 +62,7 @@ for directory in `ls | grep $module`; do
 	# delete Onsager.txt (if it exists)
 	#--------------------------------------------
 	onsager_file="$directory/Onsager.txt"
-	jeje_file="$directory/je-je.txt"
-	Cheby_file="$directory/Chebycoef"
 	test -e "$onsager_file" && rm -rf $onsager_file
-	test -e "$jeje_file" && rm -rf $jeje_file
-	test -e "$Cheby_file" && rm -rf $Cheby_file
-
 
 	#--------------------------------------------
 	# delete kpoints (if it exists)
