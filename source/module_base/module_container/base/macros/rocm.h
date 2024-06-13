@@ -207,4 +207,10 @@ inline void hipblasAssert(hipblasStatus_t code, const char *file, int line, bool
     }                                                                   \
 }
 
+#ifdef __DEBUG
+#define hipCheckOnDebug() hipErrcheck(hipDeviceSynchronize())
+#else
+#define hipCheckOnDebug()
+#endif
+
 #endif // BASE_MACROS_ROCM_H_
