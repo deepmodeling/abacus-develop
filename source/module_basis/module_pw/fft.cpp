@@ -58,7 +58,7 @@ void FFT:: initfft(int nx_in, int ny_in, int nz_in, int lixy_in, int rixy_in, in
 	{
 		if(xprime) 	this->fftnx = int(nx/2) +1;
 		else		this->fftny = int(ny/2) +1;
-	} 
+	}
 	this->nz = nz_in;
 	this->ns = ns_in;
 	this->lixy = lixy_in;
@@ -97,9 +97,9 @@ void FFT:: initfft(int nx_in, int ny_in, int nz_in, int lixy_in, int rixy_in, in
 	}
 	else
 	{
-		
+
 	}
-	
+
 }
 
 void FFT:: setupFFT()
@@ -142,7 +142,7 @@ void FFT:: setupFFT()
 #endif
 	return;
 }
-	
+
 void FFT :: initplan(const unsigned int& flag)
 {
 	//---------------------------------------------------------
@@ -150,14 +150,14 @@ void FFT :: initplan(const unsigned int& flag)
 	//---------------------------------------------------------
 
 	//               fftw_plan_many_dft(int rank,          const int *n,       int howmany,
-	//					                fftw_complex *in,  const int *inembed, int istride, int idist, 
+	//					                fftw_complex *in,  const int *inembed, int istride, int idist,
 	//					                fftw_complex *out, const int *onembed, int ostride, int odist, int sign, unsigned flags);
-	
-	this->planzfor = fftw_plan_many_dft(     1,    &this->nz,  this->ns,  
+
+	this->planzfor = fftw_plan_many_dft(     1,    &this->nz,  this->ns,
 					    (fftw_complex*) z_auxg,  &this->nz,  1,  this->nz,
 					    (fftw_complex*) z_auxg,  &this->nz,  1,  this->nz,  FFTW_FORWARD,  flag);
-	
-	this->planzbac = fftw_plan_many_dft(     1,    &this->nz,  this->ns,  
+
+	this->planzbac = fftw_plan_many_dft(     1,    &this->nz,  this->ns,
 						(fftw_complex*) z_auxg,  &this->nz,  1,  this->nz,
 						(fftw_complex*) z_auxg,  &this->nz,  1,  this->nz,  FFTW_BACKWARD,  flag);
 
@@ -188,7 +188,7 @@ void FFT :: initplan(const unsigned int& flag)
 			this->planxbac1  = fftw_plan_many_dft(  1, &this->nx,	npy,	 (fftw_complex *)z_auxr, 		  embed, npy,     1,
 				(fftw_complex *)z_auxr, 	 embed, npy,		1,		 FFTW_BACKWARD,	flag   );
 		}
-		
+
 	}
 	else
 	{
@@ -254,20 +254,20 @@ void FFT :: initplanf(const unsigned int& flag)
 	//---------------------------------------------------------
 
 	//               fftw_plan_many_dft(int rank,          const int *n,       int howmany,
-	//					                fftw_complex *in,  const int *inembed, int istride, int idist, 
+	//					                fftw_complex *in,  const int *inembed, int istride, int idist,
 	//					                fftw_complex *out, const int *onembed, int ostride, int odist, int sign, unsigned flags);
-	
-	this->planfzfor = fftwf_plan_many_dft(     1,    &this->nz,  this->ns,  
+
+	this->planfzfor = fftwf_plan_many_dft(     1,    &this->nz,  this->ns,
 					    (fftwf_complex*) c_auxg,  &this->nz,  1,  this->nz,
 					    (fftwf_complex*) c_auxg,  &this->nz,  1,  this->nz,  FFTW_FORWARD,  flag);
-	
-	this->planfzbac = fftwf_plan_many_dft(     1,    &this->nz,  this->ns,  
+
+	this->planfzbac = fftwf_plan_many_dft(     1,    &this->nz,  this->ns,
 						(fftwf_complex*) c_auxg,  &this->nz,  1,  this->nz,
 						(fftwf_complex*) c_auxg,  &this->nz,  1,  this->nz,  FFTW_BACKWARD,  flag);
 	//---------------------------------------------------------
 	//                              2 D
 	//---------------------------------------------------------
-	
+
 	int *embed = nullptr;
 	int npy = this->nplane * this->ny;
 	if(this->xprime)
@@ -290,7 +290,7 @@ void FFT :: initplanf(const unsigned int& flag)
 			this->planfxbac1  = fftwf_plan_many_dft(  1, &this->nx,	npy,	 (fftwf_complex *)c_auxr, 		  embed, npy,     1,
 				(fftwf_complex *)c_auxr, 	 embed, npy,		1,		 FFTW_BACKWARD,	flag   );
 		}
-		
+
 	}
 	else
 	{
@@ -326,7 +326,7 @@ void FFT :: initplanf(const unsigned int& flag)
 
 // void FFT :: initplanf_mpi()
 // {
-	
+
 // }
 
 void FFT:: cleanFFT()
@@ -647,13 +647,11 @@ void FFT::fft3D_forward(const base_device::DEVICE_GPU* /*ctx*/, std::complex<flo
           reinterpret_cast<cufftComplex*>(in),
           reinterpret_cast<cufftComplex*>(out),
           CUFFT_FORWARD);
-    cudaDeviceSynchronize();
 #elif defined(__ROCM)
     hipfftExecC2C(this->c_handle,
           reinterpret_cast<hipfftComplex*>(in),
           reinterpret_cast<hipfftComplex*>(out),
           HIPFFT_FORWARD);
-    hipDeviceSynchronize();
 #endif
 }
 template <>
@@ -666,13 +664,11 @@ void FFT::fft3D_forward(const base_device::DEVICE_GPU* /*ctx*/,
           reinterpret_cast<cufftDoubleComplex*>(in),
           reinterpret_cast<cufftDoubleComplex*>(out),
           CUFFT_FORWARD);
-    cudaDeviceSynchronize();
 #elif defined(__ROCM)
     hipfftExecZ2Z(this->z_handle,
           reinterpret_cast<hipfftDoubleComplex*>(in),
           reinterpret_cast<hipfftDoubleComplex*>(out),
           HIPFFT_FORWARD);
-    hipDeviceSynchronize();
 #endif
 }
 
@@ -686,13 +682,11 @@ void FFT::fft3D_backward(const base_device::DEVICE_GPU* /*ctx*/,
              reinterpret_cast<cufftComplex*>(in),
              reinterpret_cast<cufftComplex*>(out),
              CUFFT_INVERSE);
-    cudaDeviceSynchronize();
 #elif defined(__ROCM)
     hipfftExecC2C(this->c_handle,
              reinterpret_cast<hipfftComplex*>(in),
              reinterpret_cast<hipfftComplex*>(out),
              HIPFFT_BACKWARD);
-    hipDeviceSynchronize();
 #endif
 }
 template <>
@@ -705,13 +699,11 @@ void FFT::fft3D_backward(const base_device::DEVICE_GPU* /*ctx*/,
              reinterpret_cast<cufftDoubleComplex*>(in),
              reinterpret_cast<cufftDoubleComplex*>(out),
              CUFFT_INVERSE);
-    cudaDeviceSynchronize();
 #elif defined(__ROCM)
     hipfftExecZ2Z(this->z_handle,
              reinterpret_cast<hipfftDoubleComplex*>(in),
              reinterpret_cast<hipfftDoubleComplex*>(out),
              HIPFFT_BACKWARD);
-    hipDeviceSynchronize();
 #endif
 }
 #endif
