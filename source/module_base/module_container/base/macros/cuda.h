@@ -23,7 +23,7 @@ struct GetTypeThrust<std::complex<double>> {
     using type = thrust::complex<double>; /**< The return type specialization for std::complex<float>. */
 };
 
-static inline 
+static inline
 cublasOperation_t GetCublasOperation(const char& trans) {
     cublasOperation_t cutrans = {};
     if (trans == 'N') {
@@ -189,5 +189,12 @@ inline void cublasAssert(cublasStatus_t res, const char *file, int line) {
         exit(res);                                                      \
     }                                                                   \
 }
+
+#ifdef __DEBUG
+#define cudaCheckOnDebug() cudaErrcheck(cudaDeviceSynchronize())
+#else
+#define cudaCheckOnDebug()
+#endif
+
 
 #endif // BASE_MACROS_CUDA_H_
