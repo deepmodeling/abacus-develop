@@ -63,6 +63,7 @@ namespace GlobalC
  *   - read_kpoints()
  *     - ReadKpointsGammaOnlyLocal: GlobalV::GAMMA_ONLY_LOCAL = 1
  *     - ReadKpointsKspacing: generate KPT from kspacing parameter 
+ *     - ReadKpointsKspacing1kpoint: automatically set GlobalV::GAMMA_ONLY_LOCAL = 1 when there is only one kpoint generating KPT from kspacing parameter 
  *     - ReadKpointsGamma: "Gamma" mode of `KPT` file
  *     - ReadKpointsMP: "MP" mode of `KPT` file
  *     - ReadKpointsLine: "Line" mode of `KPT` file
@@ -283,6 +284,26 @@ TEST_F(KlistTest, ReadKpointsKspacing)
 	GlobalV::KSPACING[2]=0.0;
 }
 
+TEST_F(KlistTest, ReadKpointsKpacing1kpoint)
+{
+        kv->nspin = 1;
+        GlobalV::KSPACING[0] = 0.52918; // 0.52918/Bohr = 1/A
+        GlobalV::KSPACING[1] = 0.52918; // 0.52918/Bohr = 1/A
+        GlobalV::KSPACING[2] = 0.52918; // 0.52918/Bohr = 1/A
+        std::string kfile = "KPT_GO";
+        kv->read_kpoints(kfile);
+        EXPECT_EQ(GlobalV::GAMMA_ONLY_LOCAL,1);
+        ifs.open("KPT_GO");
+        std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
+        EXPECT_THAT(str,testing::HasSubstr("Gamma"));
+        EXPECT_THAT(str,testing::HasSubstr("1 1 1 0 0 0"));
+        ifs.close();
+        GlobalV::KSPACING[0]=0.0;
+        GlobalV::KSPACING[1]=0.0;
+        GlobalV::KSPACING[2]=0.0;
+        GlobalV::GAMMA_ONLY_LOCAL = 0; //this is important for the following tests because it is global
+}
+
 TEST_F(KlistTest, ReadKpointsKspacing3values)
 {
 	kv->nspin = 1;
@@ -488,7 +509,7 @@ TEST_F(KlistTest, ReadKpointsWarning6)
 	GlobalV::ofs_warning.close();
 	ifs.open("klist_tmp_warning_6");
 	std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
-	EXPECT_THAT(str, testing::HasSubstr("Line mode of k-points is open, please set symmetry to 0 or -1"));
+        EXPECT_THAT(str, testing::HasSubstr("Line mode of k-points is open, automatically set symmetry to 0 to continue ..."));
 	ifs.close();
 	remove("klist_tmp_warning_6");
 	remove("arbitrary_6");
@@ -510,7 +531,7 @@ TEST_F(KlistTest, ReadKpointsWarning7)
 	GlobalV::ofs_warning.close();
 	ifs.open("klist_tmp_warning_7");
 	std::string str((std::istreambuf_iterator<char>(ifs)),std::istreambuf_iterator<char>());
-	EXPECT_THAT(str, testing::HasSubstr("Line mode of k-points is open, please set symmetry to 0 or -1"));
+        EXPECT_THAT(str, testing::HasSubstr("Line mode of k-points is open, automatically set symmetry to 0 to continue ..."));
 	ifs.close();
 	remove("klist_tmp_warning_7");
 	remove("arbitrary_7");
