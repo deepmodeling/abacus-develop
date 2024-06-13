@@ -737,6 +737,14 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::P
                                                             DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
                                                             DiagoIterAssist<T, Device>::need_subspace,
                                                             comm_info);
+            // Diago_DavSubspace<T, Device> dav_subspace(this->precondition,    
+            //                                 psi.get_nbands(),
+            //                                 psi.get_k_first() ? psi.get_current_nbas() : psi.get_nk() * psi.get_nbasis(),
+            //                                 GlobalV::PW_DIAG_NDIM,
+            //                                 DiagoIterAssist<T, Device>::PW_DIAG_THR,
+            //                                 DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
+            //                                 DiagoIterAssist<T, Device>::need_subspace,
+            //                                 comm_info);
 
             this->pdiagh->method = this->method;
 
@@ -752,13 +760,14 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::P
             DiagoIterAssist<T, Device>::avg_iter
                 += static_cast<double>((reinterpret_cast<Diago_DavSubspace<T, Device>*>(this->pdiagh))
                                            ->diag(
+                // += static_cast<double>(dav_subspace.diag(
                                                 hm, 
                                                 psi, 
                                                 eigenvalue,
                                                 is_occupied, 
                                                 scf));
 
-            delete reinterpret_cast<Diago_DavSubspace<T, Device>*>(this->pdiagh);
+            // delete reinterpret_cast<Diago_DavSubspace<T, Device>*>(this->pdiagh);
             this->pdiagh = nullptr;
         }
         else if (this->method == "bpcg")
