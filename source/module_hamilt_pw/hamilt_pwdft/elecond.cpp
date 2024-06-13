@@ -5,6 +5,8 @@
 #include "module_elecstate/occupy.h"
 #include "module_io/binstream.h"
 
+#include <vector>
+
 //------------------------------------------------------------------
 // hbar = 6.62607015e-34/2pi
 // e    = 1.6021766208e-19
@@ -73,12 +75,9 @@ void EleCond::KG(const int& smear_type,
     assert(nt >= 1);
     const int nk = this->p_kv->get_nks();
 
-    double* ct11 = new double[nt];
-    double* ct12 = new double[nt];
-    double* ct22 = new double[nt];
-    ModuleBase::GlobalFunc::ZEROS(ct11, nt);
-    ModuleBase::GlobalFunc::ZEROS(ct12, nt);
-    ModuleBase::GlobalFunc::ZEROS(ct22, nt);
+    std::vector<double> ct11(nt, 0);
+    std::vector<double> ct12(nt, 0);
+    std::vector<double> ct22(nt, 0);
 
     hamilt::Velocity velop(this->p_wfcpw, this->p_kv->isk.data(), this->p_ppcell, this->p_ucell, nonlocal);
     double decut = (wcut + fwhmin) / ModuleBase::Ry_to_eV;
@@ -86,23 +85,20 @@ void EleCond::KG(const int& smear_type,
     for (int ik = 0; ik < nk; ++ik)
     {
         velop.init(ik);
-        jjresponse_ks(ik, nt, dt, decut, wg, velop, ct11, ct12, ct22);
+        jjresponse_ks(ik, nt, dt, decut, wg, velop, ct11.data(), ct12.data(), ct22.data());
     }
 #ifdef __MPI
-    MPI_Allreduce(MPI_IN_PLACE, ct11, nt, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-    MPI_Allreduce(MPI_IN_PLACE, ct12, nt, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-    MPI_Allreduce(MPI_IN_PLACE, ct22, nt, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, ct11.data(), nt, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, ct12.data(), nt, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, ct22.data(), nt, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 #endif
     //------------------------------------------------------------------
     //                    Output
     //------------------------------------------------------------------
     if (GlobalV::MY_RANK == 0)
     {
-        calcondw(nt, dt, smear_type, fwhmin, wcut, dw_in, ct11, ct12, ct22);
+        calcondw(nt, dt, smear_type, fwhmin, wcut, dw_in, ct11.data(), ct12.data(), ct22.data());
     }
-    delete[] ct11;
-    delete[] ct12;
-    delete[] ct22;
 }
 
 void EleCond::jjresponse_ks(const int ik,
@@ -127,12 +123,11 @@ void EleCond::jjresponse_ks(const int ik,
     const int reducenb2 = (nbands - 1) * nbands / 2;
     const bool gamma_only = false; // ABACUS do not support gamma_only yet.
     std::complex<double>* levc = &(this->p_psi[0](ik, 0, 0));
-    std::complex<double>* prevc = new std::complex<double>[3 * npwx * nbands];
-    std::complex<double>* pij = new std::complex<double>[nbands * nbands];
-    double* pij2 = new double[reducenb2];
-    ModuleBase::GlobalFunc::ZEROS(pij2, reducenb2);
+    std::vector<std::complex<double>> prevc(ndim * npwx * nbands);
+    std::vector<std::complex<double>> pij(nbands * nbands);
+    std::vector<double> pij2(reducenb2, 0);
     // px|right>
-    velop.act(this->p_psi, nbands * GlobalV::NPOL, levc, prevc);
+    velop.act(this->p_psi, nbands * GlobalV::NPOL, levc, prevc.data());
     for (int id = 0; id < ndim; ++id)
     {
 
@@ -144,13 +139,13 @@ void EleCond::jjresponse_ks(const int ik,
                &ModuleBase::ONE,
                levc,
                &npwx,
-               prevc + id * npwx * nbands,
+               prevc.data() + id * npwx * nbands,
                &npwx,
                &ModuleBase::ZERO,
-               pij,
+               pij.data(),
                &nbands);
 #ifdef __MPI
-        MPI_Allreduce(MPI_IN_PLACE, pij, nbands * nbands, MPI_DOUBLE_COMPLEX, MPI_SUM, POOL_WORLD);
+        MPI_Allreduce(MPI_IN_PLACE, pij.data(), nbands * nbands, MPI_DOUBLE_COMPLEX, MPI_SUM, POOL_WORLD);
 #endif
         if (!gamma_only)
             for (int ib = 0, ijb = 0; ib < nbands; ++ib)
@@ -170,7 +165,7 @@ void EleCond::jjresponse_ks(const int ik,
         ss << GlobalV::global_out_dir << "vmatrix" << ikglobal + 1 << ".dat";
         Binstream binpij(ss.str(), "w");
         binpij << 8 * reducenb2;
-        binpij.write(pij2, reducenb2);
+        binpij.write(pij2.data(), reducenb2);
         binpij << 8 * reducenb2;
     }
 
@@ -212,9 +207,6 @@ void EleCond::jjresponse_ks(const int ik,
         ct12[it] += tmct12 / 2.0;
         ct22[it] += tmct22 / 2.0;
     }
-    delete[] pij;
-    delete[] prevc;
-    delete[] pij2;
     return;
 }
 
@@ -234,7 +226,7 @@ void EleCond::calcondw(const int nt,
     double dw = dw_in / ModuleBase::Ry_to_eV; // converge unit in eV to Ry
     const double sigma = fwhmin / TWOSQRT2LN2 / ModuleBase::Ry_to_eV;
     const double gamma = fwhmin / 2.0 / ModuleBase::Ry_to_eV;
-    double* winfunc = new double[nt];
+    std::vector<double> winfunc(nt);
     // 1: Gaussian, 2: Lorentzian
     if (smear_type == 1)
     {
@@ -260,13 +252,10 @@ void EleCond::calcondw(const int nt,
                 << std::setw(15) << -2 * ct22[it] << std::setw(15) << winfunc[it] << std::endl;
     }
     ofscond.close();
-    double* cw11 = new double[nw];
-    double* cw12 = new double[nw];
-    double* cw22 = new double[nw];
-    double* kappa = new double[nw];
-    ModuleBase::GlobalFunc::ZEROS(cw11, nw);
-    ModuleBase::GlobalFunc::ZEROS(cw12, nw);
-    ModuleBase::GlobalFunc::ZEROS(cw22, nw);
+    std::vector<double> cw11(nw, 0);
+    std::vector<double> cw12(nw, 0);
+    std::vector<double> cw22(nw, 0);
+    std::vector<double> kappa(nw);
     for (int iw = 0; iw < nw; ++iw)
     {
         for (int it = 0; it < nt; ++it)
@@ -299,10 +288,4 @@ void EleCond::calcondw(const int nt,
     std::cout << std::setprecision(6) << "Thermal conductivity: " << kappa0 << " W(mK)^-1" << std::endl;
     std::cout << std::setprecision(6) << "Lorenz number: " << Lorent0 << " k_B^2/e^2" << std::endl;
     ofscond.close();
-
-    delete[] cw11;
-    delete[] cw12;
-    delete[] cw22;
-    delete[] winfunc;
-    delete[] kappa;
 }

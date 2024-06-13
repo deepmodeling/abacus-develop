@@ -183,7 +183,8 @@ void Sto_EleCond::cal_jmatrix(const psi::Psi<std::complex<float>>& kspsi_all,
 
     psi::Psi<std::complex<float>>* rightchi_all = &f_rightchi;
     psi::Psi<std::complex<float>>* righthchi_all = &f_right_hchi;
-    std::complex<double>*tmprightf_all = nullptr, *rightf_all = rightfact;
+    std::vector<std::complex<double>> vec_rightf_all;
+    std::complex<double>* rightf_all = rightfact;
 #ifdef __MPI
     info_gatherv* ks_fact = static_cast<info_gatherv*>(gatherinfo_ks);
     info_gatherv* sto_npwx = static_cast<info_gatherv*>(gatherinfo_sto);
@@ -191,8 +192,8 @@ void Sto_EleCond::cal_jmatrix(const psi::Psi<std::complex<float>>& kspsi_all,
     righthchi_all = gatherchi(f_right_hchi, hchi_all, npwx, sto_npwx->nrecv, sto_npwx->displs, perbands_sto);
     if (GlobalV::NSTOGROUP > 1 && rightfact != nullptr)
     {
-        tmprightf_all = new std::complex<double>[allbands_ks];
-        rightf_all = tmprightf_all;
+        vec_rightf_all.resize(allbands_ks);
+        rightf_all = vec_rightf_all.data();
         MPI_Allgatherv(rightfact,
                        perbands_ks,
                        MPI_DOUBLE_COMPLEX,
@@ -454,7 +455,6 @@ void Sto_EleCond::cal_jmatrix(const psi::Psi<std::complex<float>>& kspsi_all,
     MPI_Allreduce(MPI_IN_PLACE, j1.data(), ndim * dim_jmatrix, MPI_COMPLEX, MPI_SUM, POOL_WORLD);
     MPI_Allreduce(MPI_IN_PLACE, j2.data(), ndim * dim_jmatrix, MPI_COMPLEX, MPI_SUM, POOL_WORLD);
 #endif
-    delete[] tmprightf_all;
 
     ModuleBase::timer::tick("Sto_EleCond", "cal_jmatrix");
 
@@ -525,12 +525,9 @@ void Sto_EleCond::sKG(const int& smear_type,
     const double dEcut = (wcut + fwhmin) / ModuleBase::Ry_to_eV;
 
     // response funtion
-    double* ct11 = new double[nt];
-    double* ct12 = new double[nt];
-    double* ct22 = new double[nt];
-    ModuleBase::GlobalFunc::ZEROS(ct11, nt);
-    ModuleBase::GlobalFunc::ZEROS(ct12, nt);
-    ModuleBase::GlobalFunc::ZEROS(ct22, nt);
+    std::vector<double> ct11(nt, 0);
+    std::vector<double> ct12(nt, 0);
+    std::vector<double> ct22(nt, 0);
 
     // Init Chebyshev
     ModuleBase::Chebyshev<double> che(fd_nche);
@@ -549,13 +546,13 @@ void Sto_EleCond::sKG(const int& smear_type,
     stoiter.stofunc.t = 0.5 * dt * nbatch;
     chet.calcoef_pair(&stoiter.stofunc, &Sto_Func<double>::ncos, &Sto_Func<double>::nsin);
     chemt.calcoef_pair(&stoiter.stofunc, &Sto_Func<double>::ncos, &Sto_Func<double>::n_sin);
-    std::complex<double>*batchcoef = nullptr, *batchmcoef = nullptr;
+    std::vector<std::complex<double>> batchcoef, batchmcoef;
     if (nbatch > 1)
     {
-        batchcoef = new std::complex<double>[cond_nche * nbatch];
-        std::complex<double>* tmpcoef = batchcoef + (nbatch - 1) * cond_nche;
-        batchmcoef = new std::complex<double>[cond_nche * nbatch];
-        std::complex<double>* tmpmcoef = batchmcoef + (nbatch - 1) * cond_nche;
+        batchcoef.resize(cond_nche * nbatch);
+        std::complex<double>* tmpcoef = batchcoef.data() + (nbatch - 1) * cond_nche;
+        batchmcoef.resize(cond_nche * nbatch);
+        std::complex<double>* tmpmcoef = batchmcoef.data() + (nbatch - 1) * cond_nche;
         for (int i = 0; i < cond_nche; ++i)
         {
             tmpcoef[i] = chet.coef_complex[i];
@@ -563,8 +560,8 @@ void Sto_EleCond::sKG(const int& smear_type,
         }
         for (int ib = 0; ib < nbatch - 1; ++ib)
         {
-            tmpcoef = batchcoef + ib * cond_nche;
-            tmpmcoef = batchmcoef + ib * cond_nche;
+            tmpcoef = batchcoef.data() + ib * cond_nche;
+            tmpmcoef = batchmcoef.data() + ib * cond_nche;
             stoiter.stofunc.t = 0.5 * dt * (ib + 1);
             chet.calcoef_pair(&stoiter.stofunc, &Sto_Func<double>::ncos, &Sto_Func<double>::nsin);
             chemt.calcoef_pair(&stoiter.stofunc, &Sto_Func<double>::ncos, &Sto_Func<double>::n_sin);
@@ -635,14 +632,15 @@ void Sto_EleCond::sKG(const int& smear_type,
         info_gatherv sto_npwx(perbands_sto, GlobalV::NSTOGROUP, npwx, PARAPW_WORLD);
 #endif
         const int bandsinfo[6]{perbands_ks, perbands_sto, perbands, allbands_ks, allbands_sto, allbands};
-        double *en = nullptr, *en_all = nullptr;
+        double* en_all = nullptr;
+        std::vector<double> en;
         if (allbands_ks > 0)
         {
             en_all = &(this->p_elec->ekb(ik, this->nbands_ks - allbands_ks));
         }
         if (perbands_ks > 0)
         {
-            en = new double[perbands_ks];
+            en.resize(perbands_ks);
             for (int ib = 0; ib < perbands_ks; ++ib)
             {
                 en[ib] = this->p_elec->ekb(ik, ib0_ks + ib);
@@ -654,7 +652,7 @@ void Sto_EleCond::sKG(const int& smear_type,
         //-----------------------------------------------------------
         if (GlobalV::MY_STOGROUP == 0 && allbands_ks > 0)
         {
-            jjresponse_ks(ik, nt, dt, dEcut, this->p_elec->wg, velop, ct11, ct12, ct22);
+            jjresponse_ks(ik, nt, dt, dEcut, this->p_elec->wg, velop, ct11.data(), ct12.data(), ct22.data());
         }
 
         //-----------------------------------------------------------
@@ -897,8 +895,8 @@ void Sto_EleCond::sKG(const int& smear_type,
                                              perbands_sto);
                 }
 
-                std::complex<double>* tmpcoef = batchcoef + (it - 1) % nbatch * cond_nche;
-                std::complex<double>* tmpmcoef = batchmcoef + (it - 1) % nbatch * cond_nche;
+                std::complex<double>* tmpcoef = batchcoef.data() + (it - 1) % nbatch * cond_nche;
+                std::complex<double>* tmpmcoef = batchmcoef.data() + (it - 1) % nbatch * cond_nche;
                 const char transa = 'N';
                 const int LDA = perbands_sto * npwx;
                 const int M = perbands_sto * npwx;
@@ -955,7 +953,7 @@ void Sto_EleCond::sKG(const int& smear_type,
             //         = i<\psi|sqrt(1-f) exp(-iHt/2)*J*exp(iHt/2) sqrt(f)|\psi>
             cal_jmatrix(*kspsi_all,
                         f_vkspsi,
-                        en,
+                        en.data(),
                         en_all,
                         nullptr,
                         nullptr,
@@ -981,7 +979,7 @@ void Sto_EleCond::sKG(const int& smear_type,
             // calculate <\psi|sqrt(1-f) exp(iHt/2)*J*exp(-iHt/2) sqrt(f)|\psi>
             cal_jmatrix(*kspsi_all,
                         f_vkspsi,
-                        en,
+                        en.data(),
                         en_all,
                         expmtmf_fact.data(),
                         expmtf_fact.data(),
@@ -1012,8 +1010,8 @@ void Sto_EleCond::sKG(const int& smear_type,
             // ddot_real = real(A_i^* * B_i)
             ModuleBase::timer::tick("Sto_EleCond", "ddot_real");
             ct11[it] += static_cast<double>(
-                ModuleBase::GlobalFunc::ddot_real(num_per, j1l.data() + st_per, j1r.data() + st_per, false) * p_kv->wk[ik]
-                / 2.0);
+                ModuleBase::GlobalFunc::ddot_real(num_per, j1l.data() + st_per, j1r.data() + st_per, false)
+                * p_kv->wk[ik] / 2.0);
             double tmp12 = static_cast<double>(
                 ModuleBase::GlobalFunc::ddot_real(num_per, j1l.data() + st_per, j2r.data() + st_per, false));
 
@@ -1023,22 +1021,18 @@ void Sto_EleCond::sKG(const int& smear_type,
             ct12[it] -= 0.5 * (tmp12 + tmp21) * p_kv->wk[ik] / 2.0;
 
             ct22[it] += static_cast<double>(
-                ModuleBase::GlobalFunc::ddot_real(num_per, j2l.data() + st_per, j2r.data() + st_per, false) * p_kv->wk[ik]
-                / 2.0);
+                ModuleBase::GlobalFunc::ddot_real(num_per, j2l.data() + st_per, j2r.data() + st_per, false)
+                * p_kv->wk[ik] / 2.0);
 
             ModuleBase::timer::tick("Sto_EleCond", "ddot_real");
         }
         std::cout << std::endl;
-        delete[] en;
     } // ik loop
     ModuleBase::timer::tick("Sto_EleCond", "kloop");
-    delete[] batchcoef;
-    delete[] batchmcoef;
-
 #ifdef __MPI
-    MPI_Allreduce(MPI_IN_PLACE, ct11, nt, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-    MPI_Allreduce(MPI_IN_PLACE, ct12, nt, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-    MPI_Allreduce(MPI_IN_PLACE, ct22, nt, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, ct11.data(), nt, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, ct12.data(), nt, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, ct22.data(), nt, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 #endif
 
     //------------------------------------------------------------------
@@ -1046,11 +1040,8 @@ void Sto_EleCond::sKG(const int& smear_type,
     //------------------------------------------------------------------
     if (GlobalV::MY_RANK == 0)
     {
-        calcondw(nt, dt, smear_type, fwhmin, wcut, dw_in, ct11, ct12, ct22);
+        calcondw(nt, dt, smear_type, fwhmin, wcut, dw_in, ct11.data(), ct12.data(), ct22.data());
     }
-    delete[] ct11;
-    delete[] ct12;
-    delete[] ct22;
     ModuleBase::timer::tick("Sto_EleCond", "sKG");
 }
 

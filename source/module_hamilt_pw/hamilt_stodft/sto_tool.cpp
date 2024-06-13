@@ -3,6 +3,8 @@
 #include "module_base/timer.h"
 #include "mpi.h"
 
+#include <vector>
+
 void check_che(const int& nche_in,
                const double& try_emin,
                const double& try_emax,
@@ -42,12 +44,14 @@ void check_che(const int& nche_in,
         stoiter.stohchi.current_ik = ik;
         const int npw = p_kv->ngk[ik];
         std::complex<double>* pchi = nullptr;
+        std::vector<std::complex<double>> randchi;
         int ntest = std::min(ntest0, p_stowf->nchip[ik]);
         for (int i = 0; i < ntest; ++i)
         {
             if (nbands_sto == 0)
             {
-                pchi = new std::complex<double>[npw];
+                randchi.resize(npw);
+                pchi = &randchi[0];
                 for (int ig = 0; ig < npw; ++ig)
                 {
                     double rr = std::rand() / double(RAND_MAX);
@@ -82,10 +86,6 @@ void check_che(const int& nche_in,
                 {
                     break;
                 }
-            }
-            if (nbands_sto == 0)
-            {
-                delete[] pchi;
             }
         }
 

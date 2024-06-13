@@ -78,19 +78,17 @@ void Sto_DOS::caldos(const double sigmain, const double de, const int npart)
     Stochastic_hchi& stohchi = stoiter.stohchi;
     const int npwx = p_wfcpw->npwk_max;
 
-    double* spolyv = nullptr;
-    std::complex<double>* allorderchi = nullptr;
+    std::vector<double> spolyv;
+    std::vector<std::complex<double>> allorderchi;
     if (stoiter.method == 1)
     {
-        spolyv = new double[dos_nche];
-        ModuleBase::GlobalFunc::ZEROS(spolyv, dos_nche);
+        spolyv.resize(dos_nche, 0);
     }
     else
     {
-        spolyv = new double[dos_nche * dos_nche];
-        ModuleBase::GlobalFunc::ZEROS(spolyv, dos_nche * dos_nche);
+        spolyv.resize(dos_nche * dos_nche, 0);
         int nchip_new = ceil((double)this->p_stowf->nchip_max / npart);
-        allorderchi = new std::complex<double>[nchip_new * npwx * dos_nche];
+        allorderchi.resize(nchip_new * npwx * dos_nche);
     }
     ModuleBase::timer::tick("Sto_DOS", "Tracepoly");
     std::cout << "1. TracepolyA:" << std::endl;
@@ -140,27 +138,25 @@ void Sto_DOS::caldos(const double sigmain, const double de, const int npart)
                     nchipk_new++;
                     start_nchipk = ipart * nchipk_new;
                 }
-                ModuleBase::GlobalFunc::ZEROS(allorderchi, nchipk_new * npwx * dos_nche);
+                ModuleBase::GlobalFunc::ZEROS(allorderchi.data(), nchipk_new * npwx * dos_nche);
                 std::complex<double>* tmpchi = pchi + start_nchipk * npwx;
                 che.calpolyvec_complex(&stohchi,
                                        &Stochastic_hchi::hchi_norm,
                                        tmpchi,
-                                       allorderchi,
+                                       allorderchi.data(),
                                        npw,
                                        npwx,
                                        nchipk_new);
-                double* vec_all = (double*)allorderchi;
+                double* vec_all = (double*)allorderchi.data();
                 int LDA = npwx * nchipk_new * 2;
                 int M = npwx * nchipk_new * 2;
-                dgemm_(&trans, &normal, &N, &N, &M, &kweight, vec_all, &LDA, vec_all, &LDA, &one, spolyv, &N);
+                dgemm_(&trans, &normal, &N, &N, &M, &kweight, vec_all, &LDA, vec_all, &LDA, &one, spolyv.data(), &N);
             }
         }
     }
 
-    if (stoiter.method == 2)
-    {
-        delete[] allorderchi;
-    }
+    allorderchi.clear();
+    allorderchi.shrink_to_fit();
 
     std::ofstream ofsdos;
     int ndos = int((emax - emin) / de) + 1;
@@ -171,9 +167,9 @@ void Sto_DOS::caldos(const double sigmain, const double de, const int npart)
     ModuleBase::timer::tick("Sto_DOS", "DOS Loop");
     int n10 = ndos / 10;
     int percent = 10;
-    double* sto_dos = new double[ndos];
-    double* ks_dos = new double[ndos];
-    double* error = new double[ndos];
+    std::vector<double> sto_dos(ndos);
+    std::vector<double> ks_dos(ndos);
+    std::vector<double> error(ndos);
     for (int ie = 0; ie < ndos; ++ie)
     {
         double tmpks = 0;
@@ -182,12 +178,12 @@ void Sto_DOS::caldos(const double sigmain, const double de, const int npart)
         if (stoiter.method == 1)
         {
             che.calcoef_real(&stoiter.stofunc, &Sto_Func<double>::ngauss);
-            tmpsto = BlasConnector::dot(dos_nche, che.coef_real, 1, spolyv, 1);
+            tmpsto = BlasConnector::dot(dos_nche, che.coef_real, 1, spolyv.data(), 1);
         }
         else
         {
             che.calcoef_real(&stoiter.stofunc, &Sto_Func<double>::nroot_gauss);
-            tmpsto = stoiter.vTMv(che.coef_real, spolyv, dos_nche);
+            tmpsto = stoiter.vTMv(che.coef_real, spolyv.data(), dos_nche);
         }
         if (GlobalV::NBANDS > 0)
         {
@@ -213,14 +209,15 @@ void Sto_DOS::caldos(const double sigmain, const double de, const int npart)
             double last_coef = che.coef_real[norder - 1];
             double last_spolyv = spolyv[norder * norder - 1];
             tmperror = last_coef
-                       * (BlasConnector::dot(norder, che.coef_real, 1, spolyv + norder * (norder - 1), 1)
-                          + BlasConnector::dot(norder, che.coef_real, 1, spolyv + norder - 1, norder)
+                       * (BlasConnector::dot(norder, che.coef_real, 1, spolyv.data() + norder * (norder - 1), 1)
+                          + BlasConnector::dot(norder, che.coef_real, 1, spolyv.data() + norder - 1, norder)
                           - last_coef * last_spolyv);
         }
 
         if (ie % n10 == n10 - 1)
         {
-            std::cout << percent << "%" << " ";
+            std::cout << percent << "%"
+                      << " ";
             percent += 10;
         }
         sto_dos[ie] = tmpsto;
@@ -228,9 +225,9 @@ void Sto_DOS::caldos(const double sigmain, const double de, const int npart)
         error[ie] = tmperror;
     }
 #ifdef __MPI
-    MPI_Allreduce(MPI_IN_PLACE, ks_dos, ndos, MPI_DOUBLE, MPI_SUM, STO_WORLD);
-    MPI_Allreduce(MPI_IN_PLACE, sto_dos, ndos, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-    MPI_Allreduce(MPI_IN_PLACE, error, ndos, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, ks_dos.data(), ndos, MPI_DOUBLE, MPI_SUM, STO_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, sto_dos.data(), ndos, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, error.data(), ndos, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 #endif
     if (GlobalV::MY_RANK == 0)
     {
@@ -255,10 +252,6 @@ void Sto_DOS::caldos(const double sigmain, const double de, const int npart)
         std::cout << std::scientific << "DOS max absolute Chebyshev Error: " << maxerror << std::endl;
         ofsdos.close();
     }
-    delete[] sto_dos;
-    delete[] ks_dos;
-    delete[] error;
-    delete[] spolyv;
     ModuleBase::timer::tick("Sto_DOS", "DOS Loop");
     ModuleBase::timer::tick("Sto_DOS", "caldos");
     return;

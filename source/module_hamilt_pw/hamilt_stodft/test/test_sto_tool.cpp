@@ -1,9 +1,15 @@
 #include "../sto_tool.h"
 #include "mpi.h"
+#include <gtest/gtest.h>
 
 /************************************************
  *  unit test of sto_tool.cpp
  ***********************************************/
+
+void Stochastic_hchi:: hchi_norm(std::complex<double> *chig, std::complex<double> *hchig, const int m)
+{
+    return;
+}
 
 /**
  * - Tested Functions:
@@ -11,6 +17,8 @@
  *   - void convert_psi(psi_in, psi_out)
  *   - psi::Psi<std::complex<float>>* gatherchi(chi, chi_all, npwx, nrecv_sto, displs_sto, perbands_sto)
  */
+class TestStoTool : public ::testing::Test
+{};
 
 TEST_F(TestStoTool, parallel_distribution)
 {
