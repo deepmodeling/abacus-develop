@@ -11,7 +11,8 @@ basis_type		lcao
 cal_force           1
 
 #Parameters (Accuracy)
-ecutwfc			20
+ecutwfc			10
+scf_thr			1e-7
 scf_nmax	    50
 
 #Parameters (Solvation Model)

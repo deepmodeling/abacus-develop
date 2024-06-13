@@ -4,7 +4,7 @@ pseudo_dir	../../PP_ORB
 orbital_dir	../../PP_ORB
 basis_type      lcao
 
-ecutwfc         60
+ecutwfc         20
 scf_nmax        50
 scf_thr         1e-6
 
