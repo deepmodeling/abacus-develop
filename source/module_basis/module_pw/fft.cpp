@@ -643,15 +643,16 @@ template <>
 void FFT::fft3D_forward(const base_device::DEVICE_GPU* /*ctx*/, std::complex<float>* in, std::complex<float>* out) const
 {
 #if defined(__CUDA)
-    cufftExecC2C(this->c_handle,
-          reinterpret_cast<cufftComplex*>(in),
-          reinterpret_cast<cufftComplex*>(out),
-          CUFFT_FORWARD);
+    CHECK_CUFFT(cufftExecC2C(
+        this->c_handle,
+        reinterpret_cast<cufftComplex*>(in),
+        reinterpret_cast<cufftComplex*>(out),
+        CUFFT_FORWARD));
 #elif defined(__ROCM)
-    hipfftExecC2C(this->c_handle,
-          reinterpret_cast<hipfftComplex*>(in),
-          reinterpret_cast<hipfftComplex*>(out),
-          HIPFFT_FORWARD);
+    CHECK_CUFFT(hipfftExecC2C(this->c_handle,
+        reinterpret_cast<hipfftComplex*>(in),
+        reinterpret_cast<hipfftComplex*>(out),
+        HIPFFT_FORWARD));
 #endif
 }
 template <>
@@ -660,15 +661,17 @@ void FFT::fft3D_forward(const base_device::DEVICE_GPU* /*ctx*/,
                         std::complex<double>* out) const
 {
 #if defined(__CUDA)
-    cufftExecZ2Z(this->z_handle,
-          reinterpret_cast<cufftDoubleComplex*>(in),
-          reinterpret_cast<cufftDoubleComplex*>(out),
-          CUFFT_FORWARD);
+    CHECK_CUFFT(cufftExecZ2Z(
+        this->z_handle,
+        reinterpret_cast<cufftDoubleComplex*>(in),
+        reinterpret_cast<cufftDoubleComplex*>(out),
+        CUFFT_FORWARD));
 #elif defined(__ROCM)
-    hipfftExecZ2Z(this->z_handle,
-          reinterpret_cast<hipfftDoubleComplex*>(in),
-          reinterpret_cast<hipfftDoubleComplex*>(out),
-          HIPFFT_FORWARD);
+    CHECK_CUFFT(hipfftExecZ2Z(
+        this->z_handle,
+        reinterpret_cast<hipfftDoubleComplex*>(in),
+        reinterpret_cast<hipfftDoubleComplex*>(out),
+        HIPFFT_FORWARD));
 #endif
 }
 
@@ -678,15 +681,17 @@ void FFT::fft3D_backward(const base_device::DEVICE_GPU* /*ctx*/,
                          std::complex<float>* out) const
 {
 #if defined(__CUDA)
-    cufftExecC2C(this->c_handle,
-             reinterpret_cast<cufftComplex*>(in),
-             reinterpret_cast<cufftComplex*>(out),
-             CUFFT_INVERSE);
+    CHECK_CUFFT(cufftExecC2C(
+        this->c_handle,
+        reinterpret_cast<cufftComplex*>(in),
+        reinterpret_cast<cufftComplex*>(out),
+        CUFFT_INVERSE));
 #elif defined(__ROCM)
-    hipfftExecC2C(this->c_handle,
-             reinterpret_cast<hipfftComplex*>(in),
-             reinterpret_cast<hipfftComplex*>(out),
-             HIPFFT_BACKWARD);
+    CHECK_CUFFT(hipfftExecC2C(
+        this->c_handle,
+        reinterpret_cast<hipfftComplex*>(in),
+        reinterpret_cast<hipfftComplex*>(out),
+        HIPFFT_BACKWARD));
 #endif
 }
 template <>
@@ -695,15 +700,17 @@ void FFT::fft3D_backward(const base_device::DEVICE_GPU* /*ctx*/,
                          std::complex<double>* out) const
 {
 #if defined(__CUDA)
-    cufftExecZ2Z(this->z_handle,
-             reinterpret_cast<cufftDoubleComplex*>(in),
-             reinterpret_cast<cufftDoubleComplex*>(out),
-             CUFFT_INVERSE);
+    CHECK_CUFFT(cufftExecZ2Z(
+        this->z_handle,
+        reinterpret_cast<cufftDoubleComplex*>(in),
+        reinterpret_cast<cufftDoubleComplex*>(out),
+        CUFFT_INVERSE));
 #elif defined(__ROCM)
-    hipfftExecZ2Z(this->z_handle,
-             reinterpret_cast<hipfftDoubleComplex*>(in),
-             reinterpret_cast<hipfftDoubleComplex*>(out),
-             HIPFFT_BACKWARD);
+    CHECK_CUFFT(hipfftExecZ2Z(
+        this->z_handle,
+        reinterpret_cast<hipfftDoubleComplex*>(in),
+        reinterpret_cast<hipfftDoubleComplex*>(out),
+        HIPFFT_BACKWARD));
 #endif
 }
 #endif

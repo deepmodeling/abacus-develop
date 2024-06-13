@@ -135,7 +135,7 @@ static const char *_cufftGetErrorString(cufftResult_t error)
 		}                                                                            \
 	}
 } // namespace CudaCheck
-#endif
+#endif // __CUDA
 
 #ifdef __ROCM
 #include <hipfft/hipfft.h>
@@ -272,7 +272,7 @@ static const char *_hipfftGetErrorString(hipfftResult_t error)
 		}                                                                             \
 	}
 } // namespace HipCheck
-#endif
+#endif // __ROCM
 
 //==========================================================
 // EXPLAIN : define "GLOBAL CLASS"
