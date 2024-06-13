@@ -1,8 +1,9 @@
 #include "sto_tool.h"
 
 #include "module_base/timer.h"
+#ifdef __MPI
 #include "mpi.h"
-
+#endif
 #include <vector>
 
 void check_che(const int& nche_in,
