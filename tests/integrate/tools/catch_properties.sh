@@ -118,7 +118,7 @@ fi
 if ! test -z "$has_cond"  && [  $has_cond == 1 ]; then
 	onref=refOnsager.txt
 	oncal=Onsager.txt
-	python3 ../tools/CompareFile.py $onref $oncal 2
+	python3 ../tools/CompareFile.py $onref $oncal 3 -com_type 0
     echo "CompareH_Failed $?" >>$1
 	rm -f je-je.txt Chebycoef
 fi
