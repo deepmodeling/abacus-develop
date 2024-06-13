@@ -25,9 +25,13 @@ class DiagoDavid : public DiagH<T, Device>
 
     virtual ~DiagoDavid() override;
 
-    virtual void diag(hamilt::Hamilt<T, Device>* phm_in,
-                      psi::Psi<T, Device>& phi,
-                      Real* eigenvalue_in) override ;
+    int diag(hamilt::Hamilt<T, Device>* phm_in,
+                      psi::Psi<T, Device>& psi,
+                      Real* eigenvalue_in,
+                      const Real david_diag_thr,
+                      const int david_maxiter,
+                      const int ntry_max = 5,
+                      const int notconv_max = 0);
 
   private:
     int david_ndim = 4;
@@ -122,9 +126,13 @@ class DiagoDavid : public DiagH<T, Device>
                      Real* eigenvalue,
                      T* vcc);
 
-    void diag_mock(hamilt::Hamilt<T, Device>* phm_in,
+    int diag_mock(hamilt::Hamilt<T, Device>* phm_in,
                    psi::Psi<T, Device>& psi,
-                   Real* eigenvalue_in);
+                   Real* eigenvalue_in,
+                   const Real david_diag_thr,
+                   const int david_maxiter);
+
+    bool check_block_conv(const int &ntry, const int &notconv, const int &ntry_max, const int &notconv_max);
 
     using resmem_complex_op = base_device::memory::resize_memory_op<T, Device>;
     using delmem_complex_op = base_device::memory::delete_memory_op<T, Device>;

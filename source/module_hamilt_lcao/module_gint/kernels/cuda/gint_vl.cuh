@@ -20,18 +20,18 @@ __global__ void get_psi_and_vldr3(double* ylmcoef,
                                   double delta_r_g,
                                   int bxyz_g,
                                   double nwmax_g,
-                                  double* input_double,
-                                  int* input_int,
-                                  int* num_psir,
-                                  int psi_size_max,
+                                  double* psi_input_double,
+                                  int* psi_input_int,
+                                  int* atom_num_per_bcell,
+                                  int max_atom_per_bcell,
                                   int* ucell_atom_nwl,
                                   bool* atom_iw2_new,
                                   int* atom_iw2_ylm,
                                   int* atom_nw,
                                   int nr_max,
                                   double* psi_u,
-                                  double* psir_ylm_left,
-                                  double* psir_r);
+                                  double* psi,
+                                  double* psi_vldr3);
 
 } // namespace GintKernel
 #endif // GINT_VL_CUH
