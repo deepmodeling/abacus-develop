@@ -9,19 +9,19 @@ pseudo_dir	../../PP_ORB
 
 #Parameters (2.Iteration)
 ecutwfc			20
-scf_thr				1e-8
-scf_nmax			100
+scf_thr			1e-8
+scf_nmax		100
 
-out_chg      1
-dft_functional			scan
-pw_diag_thr                0.00001
+out_chg         1
+dft_functional  scan	
+pw_diag_thr     0.00001
 
 #Parameters (3.Basis)
 basis_type		pw
 
 #Parameters (4.Smearing)
-smearing_method		gauss
-smearing_sigma			0.002
+smearing_method	gauss
+smearing_sigma	0.002
 
 #Parameters (5.Mixing)
 mixing_type		plain

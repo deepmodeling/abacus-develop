@@ -42,14 +42,6 @@ void ElecStateLCAO_TDDFT::psiToRho_td(const psi::Psi<std::complex<double>>& psi)
 #endif
     }
 
-    if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "scalapack_gvx" || GlobalV::KS_SOLVER == "lapack")
-    {
-        for (int ik = 0; ik < psi.get_nk(); ik++)
-        {
-            psi.fix_k(ik);
-            this->print_psi(psi);
-        }
-    }
 
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {

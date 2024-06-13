@@ -350,7 +350,6 @@ void ESolver_SDFT_PW::after_all_runners(void)
 void ESolver_SDFT_PW::others(const int istep)
 {
     ModuleBase::TITLE("ESolver_SDFT_PW", "others");
-    ModuleBase::timer::tick("ESolver_SDFT_PW", "others");
 
     if (GlobalV::CALCULATION == "nscf")
     {
@@ -360,7 +359,7 @@ void ESolver_SDFT_PW::others(const int istep)
     {
         ModuleBase::WARNING_QUIT("ESolver_SDFT_PW::others", "CALCULATION type not supported");
     }
-    ModuleBase::timer::tick("ESolver_SDFT_PW", "others");
+
     return;
 }
 

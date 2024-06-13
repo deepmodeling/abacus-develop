@@ -761,9 +761,23 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::P
             delete reinterpret_cast<Diago_DavSubspace<T, Device>*>(this->pdiagh);
             this->pdiagh = nullptr;
         }
-        else
+        else if (this->method == "bpcg")
         {
             this->pdiagh->diag(hm, psi, eigenvalue);
+        }
+        else // method == "dav"
+        {
+             // Allow 5 tries at most. If ntry > ntry_max = 5, exit diag loop.
+            const int ntry_max = 5;
+            // In non-self consistent calculation, do until totally converged. Else allow 5 eigenvecs to be NOT converged.
+            const int notconv_max = ("nscf" == GlobalV::CALCULATION)? 0: 5;
+            // do diag and add davidson iteration counts up to avg_iter
+            const Real david_diag_thr = DiagoIterAssist<T, Device>::PW_DIAG_THR;
+            const int david_maxiter = DiagoIterAssist<T, Device>::PW_DIAG_NMAX;
+            auto david = (reinterpret_cast<DiagoDavid<T, Device>*>(this->pdiagh));
+            DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(
+                david->diag(hm, psi, eigenvalue, david_diag_thr, david_maxiter, ntry_max, notconv_max)
+            );
         }
         return;
     }

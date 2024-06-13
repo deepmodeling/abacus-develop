@@ -1,7 +1,5 @@
 #include "diago_david.h"
 
-#include "diago_iter_assist.h"
-
 #include "module_base/memory.h"
 #include "module_base/timer.h"
 #include "module_base/module_device/device.h"
@@ -57,9 +55,11 @@ DiagoDavid<T, Device>::~DiagoDavid()
 }
 
 template <typename T, typename Device>
-void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
+int DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
                                            psi::Psi<T, Device>& psi,
-                                           Real* eigenvalue_in)
+                                           Real* eigenvalue_in,
+                                           const Real david_diag_thr,
+                                           const int david_maxiter)
 {
     if (test_david == 1)
     {
@@ -237,7 +237,7 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
         this->notconv = 0;
         for (int m = 0; m < this->n_band; m++)
         {
-            convflag[m] = (std::abs(this->eigenvalue[m] - eigenvalue_in[m]) < DiagoIterAssist<T, Device>::PW_DIAG_THR);
+            convflag[m] = (std::abs(this->eigenvalue[m] - eigenvalue_in[m]) < david_diag_thr);
 
             if (!convflag[m])
             {
@@ -250,7 +250,7 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
 
         ModuleBase::timer::tick("DiagoDavid", "check_update");
         if (!this->notconv || (nbase + this->notconv > this->nbase_x)
-            || (dav_iter == DiagoIterAssist<T, Device>::PW_DIAG_NMAX))
+            || (dav_iter == david_maxiter))
         {
             ModuleBase::timer::tick("DiagoDavid", "last");
 
@@ -276,7 +276,7 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
                                       this->dmx
             );
 
-            if (!this->notconv || (dav_iter == DiagoIterAssist<T, Device>::PW_DIAG_NMAX))
+            if (!this->notconv || (dav_iter == david_maxiter))
             {
                 // overall convergence or last iteration: exit the iteration
 
@@ -307,11 +307,9 @@ void DiagoDavid<T, Device>::diag_mock(hamilt::Hamilt<T, Device>* phm_in,
 
     } while (1);
 
-    DiagoIterAssist<T, Device>::avg_iter += static_cast<double>(dav_iter);
-
     ModuleBase::timer::tick("DiagoDavid", "diag_mock");
 
-    return;
+    return dav_iter;
 }
 
 template <typename T, typename Device>
@@ -1036,10 +1034,36 @@ void DiagoDavid<T, Device>::planSchmitOrth(const int nband, int* pre_matrix_mm_m
     }
 }
 
+/**
+ * @brief Perform iterative diagonalization using the Davidson method.
+ *
+ * This function implements the iterative Davidson algorithm to solve the
+ * eigenvalue problem for a given Hamiltonian. It is a member function of the
+ * template class DiagoDavid, which is designed to work with various data types
+ * and device backends (CPU, GPU, etc.).
+ *
+ * @tparam T The data type (e.g., float, double, std::complex<float/double>).
+ * @tparam Device The device type (e.g., base_device::DEVICE_CPU).
+ * @param phm_in Pointer to the Hamiltonian object.
+ * @param psi The wavefunction to be diagonalized.
+ * @param eigenvalue_in Pointer to the array storing the eigenvalues.
+ * @param david_diag_thr Convergence threshold for the Davidson iteration.
+ * @param david_maxiter Maximum number of iterations allowed for the Davidson method.
+ * @param ntry_max Maximum number of tries for the iterative diagonalization.
+ * @param notconv_max Maximum number of allowed non-converged bands.
+ * @return The sum of Davidson iterations performed during the diagonalization.
+ * 
+ * @note ntry_max is an empirical parameter that should be specified in external routine, default 5
+ *       notconv_max is determined by the accuracy required for the calculation, default 0
+ */
 template <typename T, typename Device>
-void DiagoDavid<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
-                                      psi::Psi<T, Device>& psi,
-                                      Real* eigenvalue_in)
+int DiagoDavid<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
+                                    psi::Psi<T, Device>& psi,
+                                    Real* eigenvalue_in,
+                                    const Real david_diag_thr,
+                                    const int david_maxiter,
+                                    const int ntry_max,
+                                    const int notconv_max)
 {
     /// record the times of trying iterative diagonalization
     int ntry = 0;
@@ -1053,18 +1077,59 @@ void DiagoDavid<T, Device>::diag(hamilt::Hamilt<T, Device>* phm_in,
     }
 #endif
 
+    int sum_dav_iter = 0;
     do
     {
-        this->diag_mock(phm_in, psi, eigenvalue_in);
+        sum_dav_iter += this->diag_mock(phm_in, psi, eigenvalue_in, david_diag_thr, david_maxiter);
         ++ntry;
-    } while (DiagoIterAssist<T, Device>::test_exit_cond(ntry, this->notconv));
+    } while (!check_block_conv(ntry, this->notconv, ntry_max, notconv_max));
 
     if (notconv > std::max(5, psi.get_nbands() / 4))
     {
         std::cout << "\n notconv = " << this->notconv;
         std::cout << "\n DiagoDavid::diag', too many bands are not converged! \n";
     }
-    return;
+    return sum_dav_iter;
+}
+
+/**
+ * @brief Check the convergence of block eigenvectors in the Davidson iteration.
+ *
+ * This function determines whether the block eigenvectors have reached convergence
+ * during the iterative diagonalization process. Convergence is judged based on
+ * the number of eigenvectors that have not converged and the maximum allowed
+ * number of such eigenvectors.
+ *
+ * @tparam T The data type for the eigenvalues and eigenvectors (e.g., float, double).
+ * @tparam Device The device type (e.g., base_device::DEVICE_CPU).
+ * @param ntry The current number of tries for diagonalization.
+ * @param notconv The current number of eigenvectors that have not converged.
+ * @param ntry_max The maximum allowed number of tries for diagonalization.
+ * @param notconv_max The maximum allowed number of eigenvectors that can fail to converge.
+ * @return true if the eigenvectors are considered converged or the maximum number
+ *         of tries has been reached, false otherwise.
+ *
+ * @note Exits the diagonalization loop if either the convergence criteria
+ *       are met or the maximum number of tries is exceeded.
+ */
+template <typename T, typename Device>
+inline bool DiagoDavid<T, Device>::check_block_conv(const int& ntry,
+                                                    const int& notconv,
+                                                    const int& ntry_max,
+                                                    const int& notconv_max)
+{
+    // Allow at most 5 tries at diag. If more than 5 then exit loop.
+    if(ntry > ntry_max)
+    {
+        return true;
+    }
+    // If notconv <= notconv_max allowed, set convergence to true and exit loop.
+    if(notconv <= notconv_max)
+    {
+        return true;
+    }
+    // else return false, continue loop until either condition above is met.
+    return false;
 }
 
 namespace hsolver {

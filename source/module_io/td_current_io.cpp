@@ -35,7 +35,15 @@ void ModuleIO::Init_DS_tmp(
 
     ModuleBase::OMP_PARALLEL(init_DSloc_Rxyz);
     bool cal_deri = true;
-    gen_h.build_ST_new('S', cal_deri, GlobalC::ucell, GlobalC::ORB, *uot, &(GlobalC::GridD), lm.SlocR.data());
+	gen_h.build_ST_new(
+			'S', 
+			cal_deri, 
+			GlobalC::ucell, 
+			GlobalC::ORB, 
+			pv,
+			*uot, 
+			&GlobalC::GridD, 
+			lm.SlocR.data());
 
     ModuleBase::timer::tick("ModuleIO", "Init_DS_tmp");
     return;

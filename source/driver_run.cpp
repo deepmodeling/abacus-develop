@@ -50,17 +50,32 @@ void Driver::driver_run(void)
     Json::gen_stru_wrapper(&GlobalC::ucell);
 #endif
 
-    //! 4: md or relax calculations 
-    if(GlobalV::CALCULATION == "md")
+    const std::string cal_type = GlobalV::CALCULATION;
+
+    //! 4: different types of calculations 
+    if(cal_type == "md")
     {
         Run_MD::md_line(GlobalC::ucell, p_esolver, INPUT.mdp);
     }
-    else //! scf; cell relaxation; nscf; etc
+    else if(cal_type == "scf" 
+         || cal_type == "relax" 
+         || cal_type == "cell-relax")
     {
         Relax_Driver rl_driver;
         rl_driver.relax_driver(p_esolver);
     }
-    // "others" in ESolver should be here.
+    else
+    {
+        //! supported "other" functions:
+        //! nscf(PW,LCAO), 
+        //! get_pchg(LCAO), 
+        //! test_memory(PW,LCAO), 
+        //! test_neighbour(LCAO),
+        //! get_S(LCAO), 
+        //! gen_bessel(PW), et al.
+        const int istep = 0;
+        p_esolver->others(istep);
+    }
 
 
     //! 5: clean up esolver
