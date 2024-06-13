@@ -14,13 +14,11 @@ namespace hamilt
 template <typename T>
 Output_HContainer<T>::Output_HContainer(hamilt::HContainer<T>* hcontainer,
                                         const Parallel_Orbitals* ParaV,
-                                        const UnitCell& ucell,
                                         std::ostream& ofs,
                                         double sparse_threshold,
                                         int precision)
     : _hcontainer(hcontainer),
       _ParaV(ParaV),
-      _ucell(ucell),
       _ofs(ofs),
       _sparse_threshold(sparse_threshold),
       _precision(precision)

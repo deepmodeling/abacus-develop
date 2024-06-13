@@ -1,7 +1,6 @@
 #ifndef OUTPUT_HCONTAINER_H
 #define OUTPUT_HCONTAINER_H
 
-#include "module_cell/unitcell.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 
 namespace hamilt
@@ -16,7 +15,6 @@ class Output_HContainer
   public:
     Output_HContainer(hamilt::HContainer<T>* hcontainer,
                       const Parallel_Orbitals* ParaV,
-                      const UnitCell& ucell,
                       std::ostream& ofs,
                       double sparse_threshold,
                       int precision);
@@ -37,7 +35,6 @@ class Output_HContainer
 
   private:
     hamilt::HContainer<T>* _hcontainer;
-    const UnitCell& _ucell;
     const Parallel_Orbitals* _ParaV;
     std::ostream& _ofs;
     double _sparse_threshold;

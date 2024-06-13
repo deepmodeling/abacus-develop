@@ -56,9 +56,9 @@ if(ENABLE_LCAO)
       read_wfc_nao.cpp
       write_wfc_nao.cpp
       write_dm.cpp
+      write_dmr.cpp
       dos_nao.cpp
       output_dm.cpp
-      output_dm1.cpp
       sparse_matrix.cpp
       file_reader.cpp
       csr_reader.cpp
@@ -72,7 +72,6 @@ if(ENABLE_LCAO)
       write_HS_R.cpp
       write_HS_sparse.cpp
       single_R_io.cpp
-      write_dm_sparse.cpp
       cal_r_overlap_R.cpp
       output_mat_sparse.cpp
   )

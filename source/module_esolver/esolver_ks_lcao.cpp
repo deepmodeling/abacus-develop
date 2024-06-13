@@ -43,6 +43,7 @@
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 
 #include "module_io/write_wfc_nao.h"
+#include "module_io/write_dmr.h"
 
 namespace ModuleESolver
 {
@@ -1153,9 +1154,14 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     }
 
     // 2) write density matrix for sparse matrix
-    if (this->LOC.out_dm1 == 1)
+    if (INPUT.out_dm1 == 1)
     {
-        this->create_Output_DM1(istep).write();
+        for (int ispin = 0; ispin < GlobalV::NSPIN; ispin++)
+        {
+            ModuleIO::write_dmr(
+                *(dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMR_pointer(ispin + 1)),
+                1, true, ispin, GlobalV::out_app_flag, istep, this->orb_con.ParaV);
+        }
     }
 
     // 3) write charge density
@@ -1409,13 +1415,6 @@ ModuleIO::Output_DM ESolver_KS_LCAO<TK, TR>::create_Output_DM(int is, int iter)
 //! the 17th function of ESolver_KS_LCAO: create_Output_DM1
 //! mohan add 2024-05-11
 //------------------------------------------------------------------------------
-template <typename TK, typename TR>
-ModuleIO::Output_DM1 ESolver_KS_LCAO<TK, TR>::create_Output_DM1(int istep)
-{
-    const elecstate::DensityMatrix<complex<double>,double>* DM
-            = dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->get_DM();
-    return ModuleIO::Output_DM1(GlobalV::NSPIN, istep, this->LOC, this->RA, this->kv, DM);
-}
 
 
 //------------------------------------------------------------------------------

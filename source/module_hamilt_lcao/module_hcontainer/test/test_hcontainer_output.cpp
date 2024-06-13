@@ -131,7 +131,7 @@ TEST_F(OutputHContainerTest, Write)
         HR.unfix_R();
     }
     double sparse_threshold = 0.1;
-    hamilt::Output_HContainer<double> output_HR(&HR, &ParaV, ucell, std::cout, sparse_threshold, 2);
+    hamilt::Output_HContainer<double> output_HR(&HR, &ParaV, std::cout, sparse_threshold, 2);
     // the first R
     testing::internal::CaptureStdout();
     output_HR.write(0, 1, 1);

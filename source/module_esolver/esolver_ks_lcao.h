@@ -15,7 +15,6 @@
 #include "module_ri/Exx_LRI_interface.h"
 #endif
 #include "module_io/output_dm.h"
-#include "module_io/output_dm1.h"
 #include "module_io/output_mat_sparse.h"
 #include "module_basis/module_nao/two_center_bundle.h"
 #include <memory>
@@ -116,9 +115,6 @@ namespace ModuleESolver
 
         /// @brief create ModuleIO::Output_DM object to output density matrix
         ModuleIO::Output_DM create_Output_DM(int is, int iter);
-
-        /// @brief create ModuleIO::Output_DM1 object to output sparse density matrix
-        ModuleIO::Output_DM1 create_Output_DM1(int istep);
 
         /// @brief create ModuleIO::Output_Mat_Sparse object to output sparse density matrix of H, S, T, r
         ModuleIO::Output_Mat_Sparse<TK> create_Output_Mat_Sparse(int istep);
