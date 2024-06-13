@@ -6,13 +6,9 @@
 class Sto_DOS
 {
   public:
-    Sto_DOS(ModulePW::PW_Basis_K* p_wfcpw_in,
-            K_Vectors* p_kv_in,
-            elecstate::ElecState* p_elec_in,
-            psi::Psi<std::complex<double>>* p_psi_in,
-            hamilt::Hamilt<std::complex<double>>* p_hamilt_in,
-            hsolver::HSolverPW_SDFT* p_hsol_in,
-            Stochastic_WF* p_stowf_in);
+    Sto_DOS(ModulePW::PW_Basis_K* p_wfcpw_in, K_Vectors* p_kv_in, elecstate::ElecState* p_elec_in,
+            psi::Psi<std::complex<double>>* p_psi_in, hamilt::Hamilt<std::complex<double>>* p_hamilt_in,
+            hsolver::HSolverPW_SDFT* p_hsol_in, Stochastic_WF* p_stowf_in);
     /**
      * @brief decide the parameters for the DOS calculation
      *
@@ -25,13 +21,8 @@ class Sto_DOS
      * @param dos_emax_ev Emax input for DOS
      * @param dos_scale dos_scale input for DOS
      */
-    void decide_param(const int& dos_nche,
-                      const double& emin_sto,
-                      const double& emax_sto,
-                      const bool& dos_setemin,
-                      const bool& dos_setemax,
-                      const double& dos_emin_ev,
-                      const double& dos_emax_ev,
+    void decide_param(const int& dos_nche, const double& emin_sto, const double& emax_sto, const bool& dos_setemin,
+                      const bool& dos_setemax, const double& dos_emin_ev, const double& dos_emax_ev,
                       const double& dos_scale);
     /**
      * @brief Calculate DOS using stochastic wavefunctions
