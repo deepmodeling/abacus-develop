@@ -259,6 +259,7 @@ bool K_Vectors::read_kpoints(const std::string &fn)
             ofs << nk1 << " " << nk2 << " " << nk3 << " 0 0 0" << std::endl;
             ofs.close();
         }
+    }
 
     // 2. Generate the K-point grid automatically according to the KPT file
     // 2.1 read the KPT file
@@ -382,7 +383,6 @@ bool K_Vectors::read_kpoints(const std::string &fn)
                 ModuleBase::WARNING("K_Vectors::read_kpoints",
                                     "Line mode of k-points is open, automatically set symmetry to 0 to continue ...");
                 ModuleSymmetry::Symmetry::symm_flag = 0;
-                return 0;
             }
 
             interpolate_k_between(ifk, kvec_c);
@@ -398,7 +398,6 @@ bool K_Vectors::read_kpoints(const std::string &fn)
                 ModuleBase::WARNING("K_Vectors::read_kpoints",
                                     "Line mode of k-points is open, automatically set symmetry to 0 to continue ...");
                 ModuleSymmetry::Symmetry::symm_flag = 0;
-                return 0;
             }
 
             interpolate_k_between(ifk, kvec_d);
