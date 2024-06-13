@@ -484,8 +484,7 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       write_HS_R.o\
       write_dm.o\
       output_dm.o\
-      output_dm1.o\
-      write_dm_sparse.o\
+      write_dmr.o\
       sparse_matrix.o\
 
 OBJS_LCAO=DM_gamma.o\
