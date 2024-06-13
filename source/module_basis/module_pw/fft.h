@@ -40,13 +40,13 @@ public:
 	FFT();
 	~FFT();
 	void clear(); //reset fft
-	
+
 	// init parameters of fft
-	void initfft(int nx_in, int ny_in, int nz_in, int lixy_in, int rixy_in, int ns_in, int nplane_in, 
+	void initfft(int nx_in, int ny_in, int nz_in, int lixy_in, int rixy_in, int ns_in, int nplane_in,
 				 int nproc_in, bool gamma_only_in, bool xprime_in = true, bool mpifft_in = false);
 
 	//init fftw_plans
-	void setupFFT(); 
+	void setupFFT();
 
 	//destroy fftw_plans
 	void cleanFFT();
@@ -105,7 +105,7 @@ public:
     template <typename FPTYPE>
     std::complex<FPTYPE>* get_auxr_3d_data() const;
 
-	int fft_mode = 0; ///< fftw mode 0: estimate, 1: measure, 2: patient, 3: exhaustive 
+	int fft_mode = 0; ///< fftw mode 0: estimate, 1: measure, 2: patient, 3: exhaustive
 
   private:
     bool gamma_only = false;
