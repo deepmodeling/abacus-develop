@@ -382,6 +382,7 @@ bool K_Vectors::read_kpoints(const std::string &fn)
                 ModuleBase::WARNING("K_Vectors::read_kpoints",
                                     "Line mode of k-points is open, automatically set symmetry to 0 to continue ...");
                 ModuleSymmetry::Symmetry::symm_flag = 0;
+		reutrn 1;
             }
 
             interpolate_k_between(ifk, kvec_c);
@@ -397,6 +398,7 @@ bool K_Vectors::read_kpoints(const std::string &fn)
                 ModuleBase::WARNING("K_Vectors::read_kpoints",
                                     "Line mode of k-points is open, automatically set symmetry to 0 to continue ...");
                 ModuleSymmetry::Symmetry::symm_flag = 0;
+		return 1;
             }
 
             interpolate_k_between(ifk, kvec_d);
