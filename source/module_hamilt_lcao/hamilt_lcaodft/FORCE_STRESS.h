@@ -32,7 +32,6 @@ class Force_Stress_LCAO
         const bool isstress,
         const bool istestf,
         const bool istests,
-		Local_Orbital_Charge& loc,
 		Parallel_Orbitals &pv,
 		const elecstate::ElecState* pelec,
         const psi::Psi<T>* psi,
@@ -40,6 +39,7 @@ class Force_Stress_LCAO
         LCAO_gen_fixedH &gen_h, // mohan add 2024-04-02
 		Gint_Gamma &gint_gamma, // mohan add 2024-04-01
 		Gint_k &gint_k, // mohan add 2024-04-01
+        const ORB_gen_tables* uot,
         ModuleBase::matrix& fcs,
         ModuleBase::matrix& scs,
         const Structure_Factor& sf,
@@ -75,7 +75,6 @@ class Force_Stress_LCAO
         const bool isGammaOnly,
         const bool isforce,
         const bool isstress,
-        Local_Orbital_Charge& loc,
         const elecstate::ElecState* pelec,
         const psi::Psi<T>* psi,
         ModuleBase::matrix& foverlap,
@@ -92,6 +91,7 @@ class Force_Stress_LCAO
         LCAO_gen_fixedH &gen_h, // mohan add 2024-04-02
 		Gint_Gamma &gint_gamma,
 		Gint_k &gint_k,
+        const ORB_gen_tables* uot,
 	    const Parallel_Orbitals &pv,
 		LCAO_Matrix &lm,
 		const K_Vectors& kv);

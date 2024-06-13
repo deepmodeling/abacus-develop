@@ -4,10 +4,10 @@ BasedOnStyle: Microsoft
 
 AlwaysBreakTemplateDeclarations: Yes
 
-AllowAllArgumentsOnNextLine: false
-AllowAllParametersOfDeclarationOnNextLine: false
-BinPackArguments: false
-BinPackParameters: false
+AllowAllArgumentsOnNextLine: true
+AllowAllParametersOfDeclarationOnNextLine: true
+BinPackArguments: true
+BinPackParameters: true
 
 BreakBeforeBinaryOperators: All
 BreakBeforeTernaryOperators: true

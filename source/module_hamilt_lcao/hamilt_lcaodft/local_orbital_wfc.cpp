@@ -1,6 +1,5 @@
 #include "local_orbital_wfc.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_io/write_wfc_nao.h"
 #include "module_io/read_wfc_nao.h"
 #include "module_base/memory.h"
 #include "module_base/timer.h"
@@ -73,7 +72,7 @@ void Local_Orbital_wfc::gamma_file(psi::Psi<double>* psid, elecstate::ElecState*
         switch (this->error)
         {
         case 1:
-            std::cout << "Can't find the wave function file: LOWF_GAMMA_S" << is + 1 << ".txt" << std::endl;
+            std::cout << "Can't find the wave function file: WFC_NAO_GAMMA" << is + 1 << ".txt" << std::endl;
             break;
         case 2:
             std::cout << "In wave function file, band number doesn't match" << std::endl;
@@ -175,7 +174,7 @@ void Local_Orbital_wfc::allocate_k(const int& lgd,
             switch (this->error)
             {
             case 1:
-                std::cout << "Can't find the wave function file: LOWF_K_" << ik + 1 << ".txt" << std::endl;
+                std::cout << "Can't find the wave function file: WFC_NAO_K" << ik + 1 << ".txt" << std::endl;
                 break;
             case 2:
                 std::cout << "In wave function file, band number doesn't match" << std::endl;
@@ -221,9 +220,7 @@ int Local_Orbital_wfc::localIndex(int globalindex, int nblk, int nprocs, int& my
 }
 
 #ifdef __MPI
-void Local_Orbital_wfc::wfc_2d_to_grid(const int istep,
-                                       const int out_wfc_lcao,
-                                       const double* wfc_2d,
+void Local_Orbital_wfc::wfc_2d_to_grid(const double* wfc_2d,
                                        double** wfc_grid,
                                        const int ik,
                                        const ModuleBase::matrix& ekb,
@@ -242,19 +239,7 @@ void Local_Orbital_wfc::wfc_2d_to_grid(const int istep,
     long maxnloc; // maximum number of elements in local matrix
     info=MPI_Reduce(&pv->nloc_wfc, &maxnloc, 1, MPI_LONG, MPI_MAX, 0, pv->comm_2D);
     info=MPI_Bcast(&maxnloc, 1, MPI_LONG, 0, pv->comm_2D);
-    double *work=new double[maxnloc]; // work/buffer matrix
-
-    double** ctot;
-    if (out_wfc_lcao && myid == 0)
-    {
-        ctot = new double* [GlobalV::NBANDS];
-        for (int i=0; i<GlobalV::NBANDS; i++)
-        {
-            ctot[i] = new double[GlobalV::NLOCAL];
-            ModuleBase::GlobalFunc::ZEROS(ctot[i], GlobalV::NLOCAL);
-        }
-        ModuleBase::Memory::record("LOWF::ctot", sizeof(double) * GlobalV::NBANDS * GlobalV::NLOCAL);
-    }
+    std::vector<double> work(maxnloc); // work/buffer matrix
 
     int naroc[2]; // maximum number of row or column
     for(int iprow=0; iprow<pv->dim0; ++iprow)
@@ -266,76 +251,23 @@ void Local_Orbital_wfc::wfc_2d_to_grid(const int istep,
             info=MPI_Cart_rank(pv->comm_2D, coord, &src_rank);
             if(myid==src_rank)
             {
-                BlasConnector::copy(pv->nloc_wfc, wfc_2d, inc, work, inc);
+                BlasConnector::copy(pv->nloc_wfc, wfc_2d, inc, work.data(), inc);
                 naroc[0]=pv->nrow;
                 naroc[1]=pv->ncol_bands;
             }
             info=MPI_Bcast(naroc, 2, MPI_INT, src_rank, pv->comm_2D);
-            info=MPI_Bcast(work, maxnloc, MPI_DOUBLE, src_rank, pv->comm_2D);
+            info=MPI_Bcast(work.data(), maxnloc, MPI_DOUBLE, src_rank, pv->comm_2D);
 
-			if (out_wfc_lcao)
-			{
-				info = this->set_wfc_grid(naroc, pv->nb,
+			info = this->set_wfc_grid(naroc, pv->nb,
 						pv->dim0, pv->dim1, iprow, ipcol,
-						work, wfc_grid, myid, ctot);
-			}
-			else
-			{
-				info = this->set_wfc_grid(naroc, pv->nb,
-						pv->dim0, pv->dim1, iprow, ipcol,
-						work, wfc_grid);
-			}
+						work.data(), wfc_grid);
 
         }//loop ipcol
     }//loop iprow
-    if(out_wfc_lcao && myid == 0)
-    {
-        std::stringstream ss;
-        if (GlobalV::out_app_flag)
-        {
-            if (out_wfc_lcao == 1)
-            {
-                ss << GlobalV::global_out_dir << "LOWF_GAMMA_S" << ik + 1 << ".txt";
-            }
-            else if (out_wfc_lcao == 2)
-            {
-                ss << GlobalV::global_out_dir << "LOWF_GAMMA_S" << ik + 1 << ".dat";
-            }
-        }
-        else
-        {
-            if (out_wfc_lcao == 1)
-            {
-                ss << GlobalV::global_out_dir << istep << "_"
-                    << "LOWF_GAMMA_S" << ik + 1 << ".txt";
-            }
-            else if (out_wfc_lcao == 2)
-            {
-                ss << GlobalV::global_out_dir << istep << "_"
-                    << "LOWF_GAMMA_S" << ik + 1 << ".dat";
-            }
-        }
-        if (out_wfc_lcao == 1)
-        {
-            ModuleIO::write_wfc_nao(ss.str(), ctot, ik, ekb, wg);
-        }
-        else if (out_wfc_lcao == 2)
-        {
-            ModuleIO::write_wfc_nao(ss.str(), ctot, ik, ekb, wg, true);
-        }
-        for (int i = 0; i < GlobalV::NBANDS; i++)
-        {
-            delete[] ctot[i];
-        }
-        delete[] ctot;
-    }
-    delete[] work;
     ModuleBase::timer::tick("Local_Orbital_wfc","wfc_2d_to_grid");
 }
 
-void Local_Orbital_wfc::wfc_2d_to_grid(const int istep,
-                                       const int out_wfc_lcao,
-                                       const std::complex<double>* wfc_2d,
+void Local_Orbital_wfc::wfc_2d_to_grid(const std::complex<double>* wfc_2d,
                                        std::complex<double>** wfc_grid,
                                        int ik,
                                        const ModuleBase::matrix& ekb,
@@ -355,19 +287,7 @@ void Local_Orbital_wfc::wfc_2d_to_grid(const int istep,
     long maxnloc=0; // maximum number of elements in local matrix
     info=MPI_Reduce(&pv->nloc_wfc, &maxnloc, 1, MPI_LONG, MPI_MAX, 0, pv->comm_2D);
     info=MPI_Bcast(&maxnloc, 1, MPI_LONG, 0, pv->comm_2D);
-    std::complex<double> *work=new std::complex<double>[maxnloc]; // work/buffer matrix
-
-    std::complex<double> **ctot;
-    if (out_wfc_lcao && myid == 0)
-    {
-        ctot = new std::complex<double>*[GlobalV::NBANDS];
-        for (int i=0; i<GlobalV::NBANDS; i++)
-        {
-            ctot[i] = new std::complex<double>[GlobalV::NLOCAL];
-            ModuleBase::GlobalFunc::ZEROS(ctot[i], GlobalV::NLOCAL);
-        }
-        ModuleBase::Memory::record("LOWF::ctot", sizeof(std::complex<double>) * GlobalV::NBANDS * GlobalV::NLOCAL);
-    }
+    std::vector<std::complex<double>> work(maxnloc); // work/buffer matrix
     
     int naroc[2] = {0}; // maximum number of row or column
     for(int iprow=0; iprow<pv->dim0; ++iprow)
@@ -379,72 +299,19 @@ void Local_Orbital_wfc::wfc_2d_to_grid(const int istep,
             info=MPI_Cart_rank(pv->comm_2D, coord, &src_rank);
             if(myid==src_rank)
             {
-                BlasConnector::copy(pv->nloc_wfc, wfc_2d, inc, work, inc);
+                BlasConnector::copy(pv->nloc_wfc, wfc_2d, inc, work.data(), inc);
                 naroc[0]=pv->nrow;
                 naroc[1]=pv->ncol_bands;
             }
             info=MPI_Bcast(naroc, 2, MPI_INT, src_rank, pv->comm_2D);
-            info = MPI_Bcast(work, maxnloc, MPI_DOUBLE_COMPLEX, src_rank, pv->comm_2D);
-            
-			if (out_wfc_lcao)
-			{
-				info = this->set_wfc_grid(naroc, pv->nb,
-						pv->dim0, pv->dim1, iprow, ipcol,
-						work, wfc_grid, myid, ctot);
-			}
-			else
-			{
+            info = MPI_Bcast(work.data(), maxnloc, MPI_DOUBLE_COMPLEX, src_rank, pv->comm_2D);
 				// mohan update 2021-02-12, delte BFIELD option
-				info = this->set_wfc_grid(naroc, pv->nb,
-						pv->dim0, pv->dim1, iprow, ipcol,
-						work, wfc_grid);
-			}
+			info = this->set_wfc_grid(naroc, pv->nb,
+					pv->dim0, pv->dim1, iprow, ipcol,
+					work.data(), wfc_grid);
         }//loop ipcol
     }//loop iprow
 
-    if (out_wfc_lcao && myid == 0)
-    {
-        std::stringstream ss;
-        if (GlobalV::out_app_flag)
-        {
-            if (out_wfc_lcao == 1)
-            {
-                ss << GlobalV::global_out_dir << "LOWF_K_" << ik + 1 << ".txt";
-            }
-            else if (out_wfc_lcao == 2)
-            {
-                ss << GlobalV::global_out_dir << "LOWF_K_" << ik + 1 << ".dat";
-            }
-        }
-        else
-        {
-            if (out_wfc_lcao == 1)
-            {
-                ss << GlobalV::global_out_dir << istep << "_"
-                   << "LOWF_K_" << ik + 1 << ".txt";
-            }
-            else if (out_wfc_lcao == 2)
-            {
-                ss << GlobalV::global_out_dir << istep << "_"
-                   << "LOWF_K_" << ik + 1 << ".dat";
-                   std::cout << __LINE__ << " " << ss.str() << std::endl;
-            }
-        }
-        if (out_wfc_lcao == 1)
-        {
-            ModuleIO::write_wfc_nao_complex(ss.str(), ctot, ik, kvec_c[ik], ekb, wg);
-        }
-        else if (out_wfc_lcao == 2)
-        {
-            ModuleIO::write_wfc_nao_complex(ss.str(), ctot, ik, kvec_c[ik], ekb, wg, true);
-        }
-        for (int i = 0; i < GlobalV::NBANDS; i++)
-        {
-            delete[] ctot[i];
-        }
-        delete[] ctot;
-    }
-    delete[] work;
     ModuleBase::timer::tick("Local_Orbital_wfc","wfc_2d_to_grid");
 }
 #endif

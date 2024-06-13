@@ -6,11 +6,6 @@
 #include <memory>
 #include <module_base/macros.h>
 
-// #include "Basis_PW.h"
-// #include "Estate_PW.h"
-// #include "Hamilton_PW.h"
-// #include "H2E_pw.h"
-
 
 namespace ModuleESolver
 {
@@ -102,7 +97,10 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
 
         //temporary, this will be removed in the future;
         //Init Global class
-        void Init_GlobalC(Input& inp, UnitCell& cell);
+		void Init_GlobalC(
+				Input &inp, 
+				UnitCell &ucell,
+				pseudopot_cell_vnl &ppcell);
 
         /// @brief calculate conductivities from j-j correlation function
         void calcondw(const int nt,

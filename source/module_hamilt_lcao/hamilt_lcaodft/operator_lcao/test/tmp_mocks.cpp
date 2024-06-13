@@ -141,11 +141,6 @@ template class hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>;
 
 // mock of ORB_gen_tables and LCAO_Orbitals
 #include "module_basis/module_ao/ORB_gen_tables.h"
-const ORB_gen_tables& ORB_gen_tables::get_const_instance()
-{
-    static ORB_gen_tables instance;
-    return instance;
-}
 ORB_gen_tables::ORB_gen_tables() {}
 ORB_gen_tables::~ORB_gen_tables() {}
 ORB_gaunt_table::ORB_gaunt_table() {}

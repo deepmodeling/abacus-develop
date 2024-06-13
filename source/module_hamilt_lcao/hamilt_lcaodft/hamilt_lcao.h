@@ -32,12 +32,13 @@ class HamiltLCAO : public Hamilt<TK>
         Local_Orbital_Charge* loc_in,
         elecstate::Potential* pot_in,
         const K_Vectors& kv_in,
+        const ORB_gen_tables* uot,
         elecstate::DensityMatrix<TK, double>* DM_in,
         int* exx_two_level_step = nullptr);
     /**
      * @brief Constructor of vacuum Operators, only HR and SR will be initialed as empty HContainer
     */
-    HamiltLCAO(LCAO_Matrix* LM_in, const K_Vectors& kv_in);
+    HamiltLCAO(LCAO_Matrix* LM_in, const K_Vectors& kv_in, const ORB_gen_tables* uot);
 
     ~HamiltLCAO()
     {

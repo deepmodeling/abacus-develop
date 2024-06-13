@@ -38,29 +38,29 @@ namespace hsolver
     }
     
     // Wrapper for pdgemr2d and pzgemr2d
-    static inline void Cpxgemr2d(
-        const int M, const int N,
-        double *a, const int ia, const int ja, const int *desca,
-        double *b, const int ib, const int jb, const int *descb,
-        const int blacs_ctxt) 
-    {
-        pdgemr2d_(&M, &N,
-                  a, &ia, &ja, desca,
-                  b, &ib, &jb, descb,
-                  &blacs_ctxt);
-    }
-
-    static inline void Cpxgemr2d(
-        const int M, const int N,
-        complex *a, const int ia, const int ja, const int *desca,
-        complex *b, const int ib, const int jb, const int *descb,
-        const int blacs_ctxt) 
-    {
-        pzgemr2d_(&M, &N,
-                  a, &ia, &ja, desca,
-                  b, &ib, &jb, descb,
-                  &blacs_ctxt);
-    }
+    //static inline void Cpxgemr2d(
+    //    const int M, const int N,
+    //    double *a, const int ia, const int ja, const int *desca,
+    //    double *b, const int ib, const int jb, const int *descb,
+    //    const int blacs_ctxt) 
+    //{
+    //    pdgemr2d_(&M, &N,
+    //              a, &ia, &ja, desca,
+    //              b, &ib, &jb, descb,
+    //              &blacs_ctxt);
+    //}
+//
+    //static inline void Cpxgemr2d(
+    //    const int M, const int N,
+    //    complex *a, const int ia, const int ja, const int *desca,
+    //    complex *b, const int ib, const int jb, const int *descb,
+    //    const int blacs_ctxt) 
+    //{
+    //    pzgemr2d_(&M, &N,
+    //              a, &ia, &ja, desca,
+    //              b, &ib, &jb, descb,
+    //              &blacs_ctxt);
+    //}
 
     // Use Cpxgemr2d to collect matrices from all processes to root process
     template <typename mat, typename matg>
@@ -70,7 +70,7 @@ namespace hsolver
                              matg& mat_g)
     {
         auto a = mat_l.p;
-        const int* desca = mat_l.desc;
+        int* desca = mat_l.desc;
         int ctxt = desca[1];
         int nrows = desca[2];
         int ncols = desca[3];

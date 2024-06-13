@@ -95,6 +95,7 @@ void ModuleIO::output_dHR(const int &istep,
                            Gint_k &gint_k,  // mohan add 2024-04-01
                            LCAO_Matrix &lm,  // mohan add 2024-04-01
                            Grid_Driver &grid, // mohan add 2024-04-06
+                           const ORB_gen_tables* uot,
                            const K_Vectors& kv,
                            const bool &binary,
                            const double &sparse_thr)
@@ -116,6 +117,7 @@ void ModuleIO::output_dHR(const int &istep,
 		sparse_format::cal_dH(
                 lm,
                 grid,
+                uot,
 				gen_h,
 				cspin, 
 				sparse_thr, 
@@ -141,6 +143,7 @@ void ModuleIO::output_dHR(const int &istep,
             sparse_format::cal_dH(
                     lm,
                     grid,
+                    uot,
                     gen_h,
                     cspin, 
                     sparse_thr, 
@@ -204,6 +207,7 @@ void ModuleIO::output_TR(
     const Parallel_Orbitals &pv,
     LCAO_Matrix &lm,
     Grid_Driver &grid,
+    const ORB_gen_tables* uot,
     LCAO_gen_fixedH &gen_h, // mohan add 2024-04-02
     const std::string &TR_filename,
     const bool &binary,
@@ -228,6 +232,7 @@ void ModuleIO::output_TR(
 			pv,
 			lm,
 			grid,
+            uot,
 			gen_h, 
 			sparse_thr);
 

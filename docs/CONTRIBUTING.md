@@ -164,6 +164,23 @@ We use `clang-format` as our code formatter. The `.clang-format` file in root di
 For Visual Studio Code developers, the [official extension of C/C++](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools) provided by Microsoft can help you format your codes following the rules. With this extension installed, format your code with `shift+command/alt+f`.
 Configure your VS Code settings as `"C_Cpp.clang_format_style": "file"` (you can look up this option by pasting it into the search box of VS Code settings page), and all this stuff will take into effect. You may also set `"editor.formatOnSave": true` to avoid formatting files everytime manually.
 
+We use <https://pre-commit.ci/> to format the code.
+It is performed after pushing new commits to a PR. You might need to pull the changes before adding new commits.
+
+To use pre-commit locally (**generally not required**):
+Please install the pre-commit tool by running the following command:
+
+```bash
+pip install pre-commit
+pip install clang-tidy clang-format # if you haven't installed them
+```
+
+Then, run the following command to install the pre-commit hooks:
+
+```bash
+pre-commit install
+```
+
 ## Adding a unit test
 
 We use [GoogleTest](https://github.com/google/googletest) as our test framework. Write your test under the corresponding module folder at `abacus-develop/tests`, then append the test to `tests/CMakeLists.txt`. If there are currently no unit tests provided for the module, do as follows. `module_base` provides a simple demonstration.
@@ -386,33 +403,35 @@ To run a subset of unit test, use `ctest -R <test-match-pattern>` to perform tes
     git push origin my-fix-branch
     ```
 
-6. In GitHub, send a pull request (PR) with `deepmodeling/abacus-develop:develop` as the base repository. It is required to document your PR following [our guidelines](#commit-message-guidelines).
+6. In GitHub, send a pull request (PR) with `deepmodeling/abacus-develop:develop` as the base repository. It is **required** to document your PR following [our guidelines](#commit-message-guidelines).
 
-7. After your pull request is merged, you can safely delete your branch and sync the changes from the main (upstream) repository:
+7. If more changes are needed, you can add more commits to your branch and push them to GitHub. Your PR will be updated automatically.
 
-- Delete the remote branch on GitHub either [through the GitHub web UI](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-branches-in-your-repository/deleting-and-restoring-branches-in-a-pull-request#deleting-a-branch-used-for-a-pull-request) or your local shell as follows:
+8. After your pull request is merged, you can safely delete your branch and sync the changes from the main (upstream) repository:
 
-    ```shell
-    git push origin --delete my-fix-branch
-    ```
+    - Delete the remote branch on GitHub either [through the GitHub web UI](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-branches-in-your-repository/deleting-and-restoring-branches-in-a-pull-request#deleting-a-branch-used-for-a-pull-request) or your local shell as follows:
 
-- Check out the master branch:
+        ```shell
+        git push origin --delete my-fix-branch
+        ```
 
-    ```shell
-    git checkout develop -f
-    ```
+    - Check out the master branch:
 
-- Delete the local branch:
+        ```shell
+        git checkout develop -f
+        ```
 
-    ```shell
-    git branch -D my-fix-branch
-    ```
+    - Delete the local branch:
 
-- Update your master with the latest upstream version:
+        ```shell
+        git branch -D my-fix-branch
+        ```
 
-    ```shell
-    git pull --ff upstream develop
-    ```
+    - Update your master with the latest upstream version:
+
+        ```shell
+        git pull --ff upstream develop
+        ```
 
 ## Commit message guidelines
 

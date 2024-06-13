@@ -15,10 +15,10 @@ class gintTest : public ::testing::Test
   public:
 };
 
-__global__ void cuda_test(double* dr, double distance, int nwl, double* ylma_g, double* ylmcoef)
+__global__ void cuda_test(double* dr, int nwl, double* ylma_g, double* ylmcoef)
 {
     double ylma[49] = {0.0};
-    GintKernel::spherical_harmonics(dr, distance, nwl, ylma, ylmcoef);
+    GintKernel::spherical_harmonics(dr, nwl, ylma, ylmcoef);
     for (int i = 0; i < 49; i++)
     {
         ylma_g[i] = ylma[i];
@@ -94,7 +94,7 @@ TEST_F(gintTest, test)
     cudaMemset(ylma_g, 0, 49 * sizeof(double));
     cudaMemset(dylma_g, 0, 49 * sizeof(double));
 
-    cuda_test<<<1, 1>>>(dr_g, distance, nwl, ylma_g, ylmcoef_g);
+    cuda_test<<<1, 1>>>(dr_g, nwl, ylma_g, ylmcoef_g);
     cuda_test2<<<1, 1>>>(dr_g, distance, nwl, dylma_g, ylmcoef_g);
     sph_harm(nwl, dr[0], dr[1], dr[2], ylma_cpu, ylmcoef);
     grad_rl_sph_harm(nwl, dr[0], dr[1], dr[2], ylma_cpu_dpsir, ylma_cpu_ddpsir, ylmcoef);
