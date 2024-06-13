@@ -2,6 +2,7 @@
 
 #include "module_base/memory.h"
 #include "module_base/tool_quit.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 namespace ModulePW
 {
