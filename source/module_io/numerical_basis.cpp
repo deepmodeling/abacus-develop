@@ -17,7 +17,6 @@
 Numerical_Basis::Numerical_Basis() {}
 Numerical_Basis::~Numerical_Basis() {}
 
-#define __LCAO
 //============================================================
 // MEMBER FUNCTION :
 // NAME : init

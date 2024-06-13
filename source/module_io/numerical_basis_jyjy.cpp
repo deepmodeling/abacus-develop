@@ -3,8 +3,6 @@
 #include "module_base/vector3.h"
 #include "module_basis/module_nao/two_center_integrator.h"
 
-#define __LCAO
-
 namespace NumericalBasis
 {
 #ifdef __LCAO
