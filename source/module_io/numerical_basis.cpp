@@ -17,6 +17,7 @@
 Numerical_Basis::Numerical_Basis() {}
 Numerical_Basis::~Numerical_Basis() {}
 
+#define __LCAO
 //============================================================
 // MEMBER FUNCTION :
 // NAME : init
@@ -157,6 +158,7 @@ void Numerical_Basis::output_overlap(const psi::Psi<std::complex<double>>& psi, 
                                                    this->bessel_basis.get_ecut_number(),
                                                    INPUT.bessel_nao_rcut,
                                                    tau_cart,
+                                                   ucell.lat0 * ucell.latvec,
                                                    NumericalBasis::indexgen(natom, lmax));
 #endif
                 ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"cal_overlap_Sq");
