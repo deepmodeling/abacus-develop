@@ -15,12 +15,9 @@ template <typename T>
 void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
 {
     ModuleBase::timer::tick(this->classname, "gatherp_scatters");
-    
-    if(this->poolnproc == 1) //In this case nst=nstot, nz = nplane, 
+
+    if(this->poolnproc == 1) //In this case nst=nstot, nz = nplane,
     {
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
         for(int is = 0 ; is < this->nst ; ++is)
         {
             int ixy = this->istot2ixy[is];
@@ -78,7 +75,7 @@ void PW_Basis::gatherp_scatters(std::complex<T>* in, std::complex<T>* out) const
 			}
 		}
 	}
-   
+
 #endif
     ModuleBase::timer::tick(this->classname, "gatherp_scatters");
     return;
@@ -95,20 +92,14 @@ template <typename T>
 void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
 {
     ModuleBase::timer::tick(this->classname, "gathers_scatterp");
-    
-    if(this->poolnproc == 1) //In this case nrxx=fftnx*fftny*nz, nst = nstot, 
+
+    if(this->poolnproc == 1) //In this case nrxx=fftnx*fftny*nz, nst = nstot,
     {
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096/sizeof(T))
-#endif
         for(int i = 0; i < this->nrxx; ++i)
         {
             out[i] = std::complex<T>(0, 0);
         }
 
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
         for(int is = 0 ; is < this->nst ; ++is)
         {
             int ixy = istot2ixy[is];
@@ -125,7 +116,7 @@ void PW_Basis::gathers_scatterp(std::complex<T>* in, std::complex<T>* out) const
     }
 #ifdef __MPI
     // change (nz,ns) to (numz[ip],ns, poolnproc)
-    // Hence, we can send them at one time. 
+    // Hence, we can send them at one time.
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2)
 #endif
