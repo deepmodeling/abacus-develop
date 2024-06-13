@@ -1,20 +1,21 @@
-#include <iostream>
-
 #include "write_dmr.h"
-#include "module_hamilt_lcao/module_hcontainer/output_hcontainer.h"
+
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
+#include "module_hamilt_lcao/module_hcontainer/output_hcontainer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+
+#include <iostream>
 
 namespace ModuleIO
 {
 std::string dmr_gen_fname(const int out_type, const bool sparse, const int ispin, const bool append, const int istep)
 {
-    std::string fname="dmr.csr";
+    std::string fname = "dmr.csr";
     if (out_type == 1)
     {
         if (sparse)
         {
-            if (!append && istep >=0)
+            if (!append && istep >= 0)
             {
                 fname = std::to_string(istep + 1) + "_data-DMR-sparse_SPIN" + std::to_string(ispin) + ".csr";
             }
@@ -28,7 +29,7 @@ std::string dmr_gen_fname(const int out_type, const bool sparse, const int ispin
             fname = "SPIN" + std::to_string(ispin + 1) + "_DM";
         }
     }
-    else if (out_type == 2 && ! sparse)
+    else if (out_type == 2 && !sparse)
     {
         if (sparse)
         {
@@ -36,16 +37,15 @@ std::string dmr_gen_fname(const int out_type, const bool sparse, const int ispin
         }
         else
         {
-            ModuleBase::WARNING("write_dmr","do not support the output of dense DMR in npz type.");
+            ModuleBase::WARNING("write_dmr", "do not support the output of dense DMR in npz type.");
         }
     }
     else
     {
-        ModuleBase::WARNING("write_dmr","the output type of DMR should be npz or csr.");
+        ModuleBase::WARNING("write_dmr", "the output type of DMR should be npz or csr.");
     }
     return fname;
 }
-
 
 void write_dmr_csr(std::string& fname, const hamilt::HContainer<double>& dm, const int istep)
 {
@@ -53,8 +53,8 @@ void write_dmr_csr(std::string& fname, const hamilt::HContainer<double>& dm, con
     Parallel_Orbitals serialV;
     serialV.set_serial(GlobalV::NLOCAL, GlobalV::NLOCAL);
     serialV.set_atomic_trace(GlobalC::ucell.get_iat2iwt(), GlobalC::ucell.nat, GlobalV::NLOCAL);
-    hamilt::HContainer<double>* dm_serial; 
-#ifdef __MPI    
+    hamilt::HContainer<double>* dm_serial;
+#ifdef __MPI
     if (GlobalV::MY_RANK == 0)
     {
         dm_serial = new hamilt::HContainer<double>(&serialV);
@@ -79,19 +79,12 @@ void write_dmr_csr(std::string& fname, const hamilt::HContainer<double>& dm, con
     delete dm_serial;
 }
 
-void write_dmr(
-    const hamilt::HContainer<double>& dm,
-    const int out_type,
-    const bool sparse,
-    const int ispin,
-    const bool append,
-    const int istep, 
-    const Parallel_Orbitals& pv
-    )
+void write_dmr(const hamilt::HContainer<double>& dm, const int out_type, const bool sparse, const int ispin,
+               const bool append, const int istep, const Parallel_Orbitals& pv)
 {
     if (out_type != 1 && out_type != 2)
     {
-        ModuleBase::WARNING("write_dmr","Only support output npz or csr type now.");
+        ModuleBase::WARNING("write_dmr", "Only support output npz or csr type now.");
         return;
     }
 
@@ -103,13 +96,13 @@ void write_dmr(
     }
     else if (out_type == 2 && sparse) // for out_dm_npz
     {
-        //output_mat_npz(fname,dm);
+        // output_mat_npz(fname,dm);
     }
     else
     {
-        ModuleBase::WARNING("write_dmr","Only support to output the sparse DMR in npz or csr type now.");
+        ModuleBase::WARNING("write_dmr", "Only support to output the sparse DMR in npz or csr type now.");
         return;
     }
 }
 
-}
+} // namespace ModuleIO

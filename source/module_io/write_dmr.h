@@ -1,9 +1,9 @@
 #ifndef MODULE_IO_WRITE_DMR_H
 #define MODULE_IO_WRITE_DMR_H
-#include <string>
-
-#include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
+#include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
+
+#include <string>
 
 namespace ModuleIO
 {
@@ -18,7 +18,8 @@ namespace ModuleIO
  * @param istep    The ION step (default: -1), starting from 0.
  * @return         The generated filename as a string.
  */
-std::string dmr_gen_fname(const int out_type, const bool sparse, const int ispin, const bool append=true, const int istep=-1);
+std::string dmr_gen_fname(const int out_type, const bool sparse, const int ispin, const bool append = true,
+                          const int istep = -1);
 
 /**
  * Writes DMR to a file in CSR format
@@ -36,18 +37,15 @@ void write_dmr_csr(std::string& fname, const hamilt::HContainer<double>& dm, con
  * @param out_type The output file type. 1: csr, 2: npz.
  * @param sparse Whether output the sparse DM.
  * @param ispin The spin index, starting from 0.
- * @param append Whether to append the data to an existing file or create a new file. The file name is related to this flag.
+ * @param append Whether to append the data to an existing file or create a new file. The file name is related to this
+ * flag.
  * @param istep The ION step, starting from 0.
  * @param pv The Parallel_Orbitals object.
  */
-void write_dmr(
-    const hamilt::HContainer<double>& dm,
-    const int out_type,
-    const bool sparse,
-    const int ispin,
-    const bool append,
-    const int istep, // start from 0
-    const Parallel_Orbitals& pv);
-}
+void write_dmr(const hamilt::HContainer<double>& dm, const int out_type, const bool sparse, const int ispin,
+               const bool append,
+               const int istep, // start from 0
+               const Parallel_Orbitals& pv);
+} // namespace ModuleIO
 
 #endif
