@@ -1476,9 +1476,7 @@ void ESolver_KS_PW<T, Device>::nscf(void)
 				this->psi);
 	}
 
-
-<<<<<<< HEAD
-    //! Calculate Berry phase polarization 
+    //! 7) calculate Berry phase polarization 
     if (berryphase::berry_phase_flag)
     {
         if (ModuleSymmetry::Symmetry::symm_flag == -1)

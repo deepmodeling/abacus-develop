@@ -62,6 +62,7 @@ The results are shown as follows:
  Electronic Phase:    0.91950
 
  The calculated polarization direction is in R3 direction
+
  P =    7.3590432  (mod   18.0922373)  (   0.0000000,   0.0000000,   7.3590432) (e/Omega).bohr
 
  P =    0.0154731  (mod    0.0380407)  (   0.0000000,   0.0000000,   0.0154731) e/bohr^2
