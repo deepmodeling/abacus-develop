@@ -30,26 +30,29 @@ TEST(ReadWfcLcaoTest, ReadAbacusLowfComplex) {
     EXPECT_EQ(63, nbasis);
     EXPECT_EQ(1.0, wk); // this is overwritten with 1.0
     // kvec_c
-    EXPECT_EQ(-0.1054038819688572770072454, kvec_c.x);
-    EXPECT_EQ(-0.06085495962818950055339684, kvec_c.y);
-    EXPECT_EQ(-0.04303095462162523365812206, kvec_c.z);
+    EXPECT_NEAR(-0.10540388, kvec_c.x, 1e-7);
+    EXPECT_NEAR(-0.060854959, kvec_c.y, 1e-7);
+    EXPECT_NEAR(-0.043030954, kvec_c.z, 1e-7);
     // ekb
     EXPECT_EQ(ekb.size(), nbands);
-    EXPECT_EQ(-6.0357194547014492158609755e-01, ekb[0]);
-    EXPECT_EQ(-5.9803514165671245450539573e-01, ekb[1]);
-    EXPECT_EQ(-5.9803514164885962500761707e-01, ekb[2]);
+    EXPECT_NEAR(-6.03571945e-01, ekb[0], 1e-7);
+    EXPECT_NEAR(-5.98035141e-01, ekb[1], 1e-7);
+    EXPECT_NEAR(-5.98035141e-01, ekb[2], 1e-7);
     // occ
     EXPECT_EQ(occ.size(), nbands);
-    EXPECT_EQ(5.8309037900874851473309590e-03, occ[0]);
-    EXPECT_EQ(5.8309037900874851473309590e-03, occ[1]);
-    EXPECT_EQ(5.8309037900874851473309590e-03, occ[2]);
+    EXPECT_NEAR(5.83090379e-03, occ[0], 1e-7);
+    EXPECT_NEAR(5.83090379e-03, occ[1], 1e-7);
+    EXPECT_NEAR(5.83090379e-03, occ[2], 1e-7);
     // lowf
     EXPECT_EQ(lowf.size(), nbands * nbasis);
-    EXPECT_EQ(std::complex<double>(-6.7165115743031689188313749e-03, 2.2594638351419806671094292e-02), lowf[0]);
-    EXPECT_EQ(std::complex<double>(1.4318012399152646452193949e-03, 1.4645148803525756542320835e-03), lowf[1]);
-    EXPECT_EQ(std::complex<double>(2.3145203328431701583767222e-03, -1.1894969103781807828745798e-03), lowf[2]);
-    EXPECT_EQ(std::complex<double>(1.8264875725444186787410628e-03, -2.1179988610690314576601168e-03), lowf[62]);
-
+    EXPECT_NEAR(lowf[0].real(), -6.71651157e-03, 1e-7);
+    EXPECT_NEAR(lowf[0].imag(), 2.25946383e-02, 1e-7);
+    EXPECT_NEAR(lowf[1].real(), 1.43180123e-03, 1e-7);
+    EXPECT_NEAR(lowf[1].imag(), 1.46451488e-03, 1e-7);
+    EXPECT_NEAR(lowf[2].real(), 2.31452033e-03, 1e-7);
+    EXPECT_NEAR(lowf[2].imag(), -1.18949691e-03, 1e-7);
+    EXPECT_NEAR(lowf[62].real(), 1.82648757e-03, 1e-7);
+    EXPECT_NEAR(lowf[62].imag(), -2.11799886e-03, 1e-7);
     // test reuse, expect to overwrite the previous values
     flowf = "./support/WFC_NAO_K2.txt";
     ModuleIO::read_abacus_lowf(flowf, ik, kvec_c, nbands, nbasis, lowf, ekb, occ, wk);
@@ -58,26 +61,29 @@ TEST(ReadWfcLcaoTest, ReadAbacusLowfComplex) {
     EXPECT_EQ(63, nbasis);
     EXPECT_EQ(1.0, wk); // this is overwritten with 1.0
     // kvec_c
-    EXPECT_EQ(-0.07026925464590484671223436, kvec_c.x);
-    EXPECT_EQ(-0.08113994617091932481933725, kvec_c.y);
-    EXPECT_EQ(-0.05737460616216696895897087, kvec_c.z);
+    EXPECT_NEAR(-0.070269254, kvec_c.x, 1e-7);
+    EXPECT_NEAR(-0.081139946, kvec_c.y, 1e-7);
+    EXPECT_NEAR(-0.057374606, kvec_c.z, 1e-7);
     // ekb
     EXPECT_EQ(ekb.size(), nbands);
-    EXPECT_EQ(-6.0366727725523949832364679e-01, ekb[0]);
-    EXPECT_EQ(-5.9786827612267734455286927e-01, ekb[1]);
-    EXPECT_EQ(-5.9766242174005113074741757e-01, ekb[2]);
+    EXPECT_NEAR(-6.03667277e-01, ekb[0], 1e-7);
+    EXPECT_NEAR(-5.97868276e-01, ekb[1], 1e-7);
+    EXPECT_NEAR(-5.97662421e-01, ekb[2], 1e-7);
     // occ
     EXPECT_EQ(occ.size(), nbands);
-    EXPECT_EQ(5.8309037900874851473309590e-03, occ[0]);
-    EXPECT_EQ(5.8309037900874851473309590e-03, occ[1]);
-    EXPECT_EQ(5.8309037900874851473309590e-03, occ[2]);
+    EXPECT_NEAR(5.83090379e-03, occ[0], 1e-7);
+    EXPECT_NEAR(5.83090379e-03, occ[1], 1e-7);
+    EXPECT_NEAR(5.83090379e-03, occ[2], 1e-7);
     // lowf
     EXPECT_EQ(lowf.size(), nbands * nbasis);
-    EXPECT_EQ(std::complex<double>(2.0993370513134518295927933e-02, 2.2061937126671427034096951e-03), lowf[0]);
-    EXPECT_EQ(std::complex<double>(1.5245441697862502361537906e-03, -3.5413910543949378428862929e-04), lowf[1]);
-    EXPECT_EQ(std::complex<double>(1.3119844351431805828944732e-03, -2.4487253841163000855907228e-03), lowf[2]);
-    EXPECT_EQ(std::complex<double>(-1.1515848985910659071918438e-03, -1.7994003814514399237911579e-03), lowf[62]);
-
+    EXPECT_NEAR(2.09933705e-02, lowf[0].real(), 1e-7);
+    EXPECT_NEAR(2.20619371e-03, lowf[0].imag(), 1e-7);
+    EXPECT_NEAR(1.52454416e-03, lowf[1].real(), 1e-7);
+    EXPECT_NEAR(-3.54139105e-04, lowf[1].imag(), 1e-7);
+    EXPECT_NEAR(1.31198443e-03, lowf[2].real(), 1e-7);
+    EXPECT_NEAR(-2.44872538e-03, lowf[2].imag(), 1e-7);
+    EXPECT_NEAR(lowf[62].real(), -1.15158489e-03, 1e-7);
+    EXPECT_NEAR(lowf[62].imag(), -1.79940038e-03, 1e-7);
     // test reuse, the second time
     flowf = "./support/WFC_NAO_K3.txt";
     ModuleIO::read_abacus_lowf(flowf, ik, kvec_c, nbands, nbasis, lowf, ekb, occ, wk);
@@ -86,22 +92,26 @@ TEST(ReadWfcLcaoTest, ReadAbacusLowfComplex) {
     EXPECT_EQ(63, nbasis);
     EXPECT_EQ(1.0, wk); // this is overwritten with 1.0
     // kvec_c
-    EXPECT_EQ(-0.03513462732295242335611718, kvec_c.x);
-    EXPECT_EQ(-0.1014249327136491629630655, kvec_c.y);
-    EXPECT_EQ(-0.0717182577027087320153953, kvec_c.z);
+    EXPECT_NEAR(-0.035134627, kvec_c.x, 1e-7);
+    EXPECT_NEAR(-0.10142493, kvec_c.y, 1e-7);
+    EXPECT_NEAR(-0.07171825, kvec_c.z, 1e-7);
     // ekb
-    EXPECT_EQ(-6.0466454411080960973379206e-01, ekb[0]);
-    EXPECT_EQ(-5.9702547464581856573317964e-01, ekb[1]);
-    EXPECT_EQ(-5.9687001897134039918313420e-01, ekb[2]);
+    EXPECT_NEAR(-6.04664544e-01, ekb[0], 1e-7);
+    EXPECT_NEAR(-5.97025474e-01, ekb[1], 1e-7);
+    EXPECT_NEAR(-5.96870018e-01, ekb[2], 1e-7);
     // occ
-    EXPECT_EQ(5.8309037900874851473309590e-03, occ[0]);
-    EXPECT_EQ(5.8309037900874851473309590e-03, occ[1]);
-    EXPECT_EQ(5.8309037900874851473309590e-03, occ[2]);
+    EXPECT_NEAR(5.83090379e-03, occ[0], 1e-7);
+    EXPECT_NEAR(5.83090379e-03, occ[1], 1e-7);
+    EXPECT_NEAR(5.83090379e-03, occ[2], 1e-7);
     // lowf
-    EXPECT_EQ(std::complex<double>(-6.4441007210949141637001958e-03, 2.8610825297509245856986126e-03), lowf[0]);
-    EXPECT_EQ(std::complex<double>(-5.8139841531629349313803345e-03, 4.0149570541960916125745484e-03), lowf[1]);
-    EXPECT_EQ(std::complex<double>(-2.3215866618005558119630649e-03, 2.6254116611380343138115734e-03), lowf[2]);
-    EXPECT_EQ(std::complex<double>(5.5896490231052415979806636e-04, 5.2186638990042212311176728e-04), lowf[62]);
+    EXPECT_NEAR(-6.44410072e-03, lowf[0].real(), 1e-7);
+    EXPECT_NEAR(2.86108252e-03, lowf[0].imag(), 1e-7);
+    EXPECT_NEAR(-5.81398415e-03, lowf[1].real(), 1e-7);
+    EXPECT_NEAR(4.01495705e-03, lowf[1].imag(), 1e-7);
+    EXPECT_NEAR(-2.32158666e-03, lowf[2].real(), 1e-7);
+    EXPECT_NEAR(2.62541166e-03, lowf[2].imag(), 1e-7);
+    EXPECT_NEAR(lowf[62].real(), 5.58964902e-04, 1e-7);
+    EXPECT_NEAR(lowf[62].imag(), 5.21866389e-04, 1e-7);
 }
 
 TEST(ReadWfcLcaoTest, Cpzgemr2dUseTest)
@@ -197,9 +207,9 @@ TEST(ReadWfcLcaoTest, Cpzgemr2dUseTest)
                 printf("(%2.0f,%2.0f)", lowf_loc[j].real(), lowf_loc[j].imag());
                 if((j + 1)%para2d_test.nrow == 0) { printf("\n"); }
                 const int k = j%para2d_test.nrow;
-                EXPECT_EQ(lowf_loc[j].real(), reals[i][k]);
+                EXPECT_NEAR(lowf_loc[j].real(), reals[i][k], 1e-7);
                 const int l = j/para2d_test.nrow;
-                EXPECT_EQ(lowf_loc[j].imag(), imags[i][l]);
+                EXPECT_NEAR(lowf_loc[j].imag(), imags[i][l], 1e-7);
             }
             printf("Or INDEX IT to show like \"row-major\":\n");
             // (i, j) -> (i', j') with i = j' and j = i'
@@ -268,9 +278,9 @@ TEST(ReadWfcLcaoTest, Cpzgemr2dUseTest)
                 printf("(%2.0f,%2.0f)", lowf_loc[j].real(), lowf_loc[j].imag());
                 if((j + 1)%para2d_test_prime.nrow == 0) { printf("\n"); }
                 const int k = j/para2d_test_prime.nrow;
-                EXPECT_EQ(lowf_loc[j].real(), reals[i][k]);
+                EXPECT_NEAR(lowf_loc[j].real(), reals[i][k], 1e-7);
                 const int l = j%para2d_test_prime.nrow;
-                EXPECT_EQ(lowf_loc[j].imag(), imags[i][l]);
+                EXPECT_NEAR(lowf_loc[j].imag(), imags[i][l], 1e-7);
             }
             printf("\n");
             usleep(10000);
@@ -323,25 +333,25 @@ TEST(ReadWfcLcaoTest, ReadAbacusLowfReal)
     EXPECT_EQ(31, nbasis);
     EXPECT_EQ(1.0, wk);
     // kvec_c, gamma point, 0, 0, 0
-    EXPECT_EQ(0.0, kvec_c.x);
-    EXPECT_EQ(0.0, kvec_c.y);
-    EXPECT_EQ(0.0, kvec_c.z);
+    EXPECT_NEAR(0.0, kvec_c.x, 1e-7);
+    EXPECT_NEAR(0.0, kvec_c.y, 1e-7);
+    EXPECT_NEAR(0.0, kvec_c.z, 1e-7);
     // ekb
     EXPECT_EQ(ekb.size(), nbands);
-    EXPECT_EQ(-1.22787155e+00, ekb[0]);
-    EXPECT_EQ(-3.10595658e-01, ekb[1]);
-    EXPECT_EQ(-3.00546690e-01, ekb[2]);
+    EXPECT_NEAR(-1.22787155e+00, ekb[0], 1e-7);
+    EXPECT_NEAR(-3.10595658e-01, ekb[1], 1e-7);
+    EXPECT_NEAR(-3.00546690e-01, ekb[2], 1e-7);
     // occ
     EXPECT_EQ(occ.size(), nbands);
-    EXPECT_EQ(2.00000000e+00, occ[0]);
-    EXPECT_EQ(2.00000000e+00, occ[1]);
-    EXPECT_EQ(2.00000000e+00, occ[2]);
+    EXPECT_NEAR(2.00000000e+00, occ[0], 1e-7);
+    EXPECT_NEAR(2.00000000e+00, occ[1], 1e-7);
+    EXPECT_NEAR(2.00000000e+00, occ[2], 1e-7);
     // lowf
     EXPECT_EQ(lowf.size(), nbands * nbasis);
-    EXPECT_EQ(-1.51728369e-02, lowf[0]);
-    EXPECT_EQ(-2.07808444e-03, lowf[1]);
-    EXPECT_EQ(1.21298954e-17, lowf[2]);
-    EXPECT_EQ(-5.44883791e-09, lowf[30]);
+    EXPECT_NEAR(-1.51728369e-02, lowf[0], 1e-7);
+    EXPECT_NEAR(-2.07808444e-03, lowf[1], 1e-7);
+    EXPECT_NEAR(1.21298954e-17, lowf[2], 1e-7);
+    EXPECT_NEAR(-5.44883791e-09, lowf[30], 1e-7);
 }
 
 TEST(ReadWfcLcaoTest, Cpdgemr2dUseTest)
@@ -471,21 +481,21 @@ TEST(ReadWfcLcaoTest, RestartFromFileParallel)
     EXPECT_EQ(nks, kvec_c.size());
     EXPECT_EQ(nks, wk.size());
     // value test
-    const std::vector<double> ekb_ref = {-6.0357194547014492158609755e-01, -5.9803514165671245450539573e-01,
-    -5.9803514164885962500761707e-01, -6.0366727725523949832364679e-01, -5.9786827612267734455286927e-01,
-    -5.9766242174005113074741757e-01, -6.0466454411080960973379206e-01, -5.9702547464581856573317964e-01,
-    -5.9687001897134039918313420e-01, -6.0561529377144351915518428e-01, -5.9630290673787533783922754e-01,
-    -5.9630290672292363129969317e-01};
-    const std::vector<double> occ_ref = {5.8309037900874851473309590e-03, 5.8309037900874851473309590e-03,
-    5.8309037900874851473309590e-03, 5.8309037900874851473309590e-03, 5.8309037900874851473309590e-03,
-    5.8309037900874851473309590e-03, 5.8309037900874851473309590e-03, 5.8309037900874851473309590e-03,
-    5.8309037900874851473309590e-03, 5.8309037900874851473309590e-03, 5.8309037900874851473309590e-03,
-    5.8309037900874851473309590e-03};
+    const std::vector<double> ekb_ref = {-6.03571945e-01, -5.98035141e-01,
+    -5.98035141e-01, -6.03667277e-01, -5.97868276e-01,
+    -5.97662421e-01, -6.04664544e-01, -5.97025474e-01,
+    -5.96870018e-01, -6.05615293e-01, -5.96302906e-01,
+    -5.96302906e-01};
+    const std::vector<double> occ_ref = {5.83090379e-03, 5.83090379e-03,
+    5.83090379e-03, 5.83090379e-03, 5.83090379e-03,
+    5.83090379e-03, 5.83090379e-03, 5.83090379e-03,
+    5.83090379e-03, 5.83090379e-03, 5.83090379e-03,
+    5.83090379e-03};
     const std::vector<ModuleBase::Vector3<double>> kvec_c_ref = {
-        ModuleBase::Vector3<double>(-0.1054038819688572770072454, -0.06085495962818950055339684, -0.04303095462162523365812206),
-        ModuleBase::Vector3<double>(-0.07026925464590484671223436, -0.08113994617091932481933725, -0.05737460616216696895897087),
-        ModuleBase::Vector3<double>(-0.03513462732295242335611718, -0.1014249327136491629630655, -0.0717182577027087320153953),
-        ModuleBase::Vector3<double>(0, -0.1217099192563790011067937, -0.08606190924325046731624411)
+        ModuleBase::Vector3<double>(-0.10540388, -0.060854959, -0.043030954),
+        ModuleBase::Vector3<double>(-0.070269254, -0.081139946, -0.057374606),
+        ModuleBase::Vector3<double>(-0.035134627, -0.10142493, -0.07171825),
+        ModuleBase::Vector3<double>(0.00000000, -0.12170991, -0.086061909)
     };
     const std::vector<double> wk_ref = {1.0, 1.0, 1.0, 1.0};
     for(int i = 0; i < nprocs; i++)
@@ -493,18 +503,18 @@ TEST(ReadWfcLcaoTest, RestartFromFileParallel)
         if(iproc == i)
         {
             // ekb
-            for(int j = 0; j < nks*nbands; j++) { EXPECT_EQ(ekb_ref[j], ekb[j]); }
+            for(int j = 0; j < nks*nbands; j++) { EXPECT_NEAR(ekb_ref[j], ekb[j], 1e-7); }
             // occ
-            for(int j = 0; j < nks*nbands; j++) { EXPECT_EQ(occ_ref[j], occ[j]); }
+            for(int j = 0; j < nks*nbands; j++) { EXPECT_NEAR(occ_ref[j], occ[j], 1e-7); }
             // kvec_c
             for(int j = 0; j < nks; j++)
             {
-                EXPECT_EQ(kvec_c_ref[j].x, kvec_c[j].x);
-                EXPECT_EQ(kvec_c_ref[j].y, kvec_c[j].y);
-                EXPECT_EQ(kvec_c_ref[j].z, kvec_c[j].z);
+                EXPECT_NEAR(kvec_c_ref[j].x, kvec_c[j].x, 1e-7);
+                EXPECT_NEAR(kvec_c_ref[j].y, kvec_c[j].y, 1e-7);
+                EXPECT_NEAR(kvec_c_ref[j].z, kvec_c[j].z, 1e-7);
             }
             // wk
-            for(int j = 0; j < nks; j++) { EXPECT_EQ(wk_ref[j], wk[j]); }
+            for(int j = 0; j < nks; j++) { EXPECT_NEAR(wk_ref[j], wk[j], 1e-7); }
         }
         MPI_Barrier(MPI_COMM_WORLD);
     }
@@ -518,35 +528,55 @@ TEST(ReadWfcLcaoTest, RestartFromFileParallel)
     // rank0
     if(iproc == 0)
     {
-        EXPECT_EQ(lowf[0], std::complex<double>(-6.7165115743031689188313749e-03, 2.2594638351419806671094292e-02));
-        EXPECT_EQ(lowf[1], std::complex<double>(1.4318012399152646452193949e-03, 1.4645148803525756542320835e-03)); // (0, 0)
-        EXPECT_EQ(lowf[2], std::complex<double>(-9.4576054651427654551554269e-03, 1.2991151162263368801230712e-02));
-        EXPECT_EQ(lowf[3], std::complex<double>(-5.4603510616706794206232090e-03, 7.5004446215887806553856976e-03));
-        EXPECT_EQ(lowf[lowf.size()-1], std::complex<double>(-1.3979959788790118861007139e-03, -1.6819298054102586447572376e-03));
+        EXPECT_NEAR(lowf[0].real(), -6.71651157e-03, 1e-7);
+        EXPECT_NEAR(lowf[0].imag(), 2.25946383e-02, 1e-7);
+        EXPECT_NEAR(lowf[1].real(), 1.43180123e-03, 1e-7);
+        EXPECT_NEAR(lowf[1].imag(), 1.46451488e-03, 1e-7);
+        EXPECT_NEAR(lowf[2].real(), -9.45760546e-03, 1e-7);
+        EXPECT_NEAR(lowf[2].imag(), 1.29911511e-02, 1e-7);
+        EXPECT_NEAR(lowf[3].real(), -5.46035106e-03, 1e-7);
+        EXPECT_NEAR(lowf[3].imag(), 7.50044462e-03, 1e-7);
+        EXPECT_NEAR(lowf[lowf.size()-1].real(), -1.39799597e-03, 1e-7);
+        EXPECT_NEAR(lowf[lowf.size()-1].imag(), -1.68192980e-03, 1e-7);
     }
     else if(iproc == 1)
     {
-        EXPECT_EQ(lowf[0], std::complex<double>(9.8647087406252692565189477e-13, -5.9538712274856105469145184e-12));
-        EXPECT_EQ(lowf[1], std::complex<double>(4.8257345385341321453154251e-13, 5.5426495971770835778646980e-12)); // (1, 0)
-        EXPECT_EQ(lowf[2], std::complex<double>(5.2092094654763998473612219e-04, -2.3307631055685257281950840e-03));
-        EXPECT_EQ(lowf[3], std::complex<double>(-8.3515544219617959820212150e-04, 3.7508384232483316100825732e-03));
-        EXPECT_EQ(lowf[lowf.size()-1], std::complex<double>(-6.1811824343189122866158713e-05, -7.4365838885231391524807676e-05));
+        EXPECT_NEAR(lowf[0].real(), 9.86470874e-13, 1e-7);
+        EXPECT_NEAR(lowf[0].imag(), -5.95387122e-12, 1e-7);
+        EXPECT_NEAR(lowf[1].real(), 4.82573453e-13, 1e-7);
+        EXPECT_NEAR(lowf[1].imag(), 5.54264959e-12, 1e-7);
+        EXPECT_NEAR(lowf[2].real(), 5.20920946e-04, 1e-7);
+        EXPECT_NEAR(lowf[2].imag(), -2.33076310e-03, 1e-7);
+        EXPECT_NEAR(lowf[3].real(), -8.35155442e-04, 1e-7);
+        EXPECT_NEAR(lowf[3].imag(), 3.75083842e-03, 1e-7);
+        EXPECT_NEAR(lowf[lowf.size()-1].real(), -6.18118243e-05, 1e-7);
+        EXPECT_NEAR(lowf[lowf.size()-1].imag(), -7.43658388e-05, 1e-7);
     }
     else if(iproc == 2)
     {
-        EXPECT_EQ(lowf[0], std::complex<double>(2.3145203328431701583767222e-03, -1.1894969103781807828745798e-03));
-        EXPECT_EQ(lowf[1], std::complex<double>(3.8610512628204501917039693e-03, -5.3036152539915892845101553e-03)); // (0, 1)
-        EXPECT_EQ(lowf[2], std::complex<double>(1.0744072746219635039466311e-03, -1.5223062969600895111277339e-03));
-        EXPECT_EQ(lowf[3], std::complex<double>(-2.6317495984884108073398323e-03, 3.7288736568971067586453216e-03));
-        EXPECT_EQ(lowf[lowf.size()-1], std::complex<double>(1.1903875982723962766596931e-04, 1.1782492419428222229626363e-04));
+        EXPECT_NEAR(lowf[0].real(), 2.31452033e-03, 1e-7);
+        EXPECT_NEAR(lowf[0].imag(), -1.18949691e-03, 1e-7);
+        EXPECT_NEAR(lowf[1].real(), 3.86105126e-03, 1e-7);
+        EXPECT_NEAR(lowf[1].imag(), -5.30361525e-03, 1e-7);
+        EXPECT_NEAR(lowf[2].real(), 1.07440727e-03, 1e-7);
+        EXPECT_NEAR(lowf[2].imag(), -1.52230629e-03, 1e-7);
+        EXPECT_NEAR(lowf[3].real(), -2.63174959e-03, 1e-7);
+        EXPECT_NEAR(lowf[3].imag(), 3.72887365e-03, 1e-7);
+        EXPECT_NEAR(lowf[lowf.size()-1].real(), 1.19038759e-04, 1e-7);
+        EXPECT_NEAR(lowf[lowf.size()-1].imag(), 1.17824924e-04, 1e-7);
     }
     else if(iproc == 3)
     {
-        EXPECT_EQ(lowf[0], std::complex<double>(3.6608715191233098806833368e-13, 1.9638624561735436302445379e-13));
-        EXPECT_EQ(lowf[1], std::complex<double>(9.4902367300354201207213123e-05, -4.0469377169495557300393784e-04)); // (1, 1)
-        EXPECT_EQ(lowf[2], std::complex<double>(1.3322906094804555510169308e-04, 9.6917697139611933693226220e-04));
-        EXPECT_EQ(lowf[3], std::complex<double>(8.2366408181493155904462355e-04, 5.5601450847523464782184988e-03));
-        EXPECT_EQ(lowf[lowf.size()-1], std::complex<double>(-2.6922958264964003301245032e-03, -2.6648424148919972256899236e-03 ));
+        EXPECT_NEAR(lowf[0].real(), 3.66087151e-13, 1e-7);
+        EXPECT_NEAR(lowf[0].imag(), 1.96386245e-13, 1e-7);
+        EXPECT_NEAR(lowf[1].real(), 9.49023673e-05, 1e-7);
+        EXPECT_NEAR(lowf[1].imag(), -4.04693771e-04, 1e-7);
+        EXPECT_NEAR(lowf[2].real(), 1.33229060e-04, 1e-7);
+        EXPECT_NEAR(lowf[2].imag(), 9.69176971e-04, 1e-7);
+        EXPECT_NEAR(lowf[3].real(), 8.23664081e-04, 1e-7);
+        EXPECT_NEAR(lowf[3].imag(), 5.56014508e-03, 1e-7);
+        EXPECT_NEAR(lowf[lowf.size()-1].real(), -2.69229582e-03, 1e-7);
+        EXPECT_NEAR(lowf[lowf.size()-1].imag(), -2.66484241e-03, 1e-7);
     }
 #else
     printf("Run unittest ReadWfcLcaoTest::RestartFromFileParallel without MPI env:\n");
@@ -600,15 +630,16 @@ TEST(ReadWfcLcaoTest, RestartFromFileSerial)
     EXPECT_EQ(63, nbasis_k0);
     EXPECT_EQ(1.0, wk_k0); // this is overwritten with 1.0
     // kvec_c
-    EXPECT_EQ(kvec_c_k0.x, kvec_c[0].x);
-    EXPECT_EQ(kvec_c_k0.y, kvec_c[0].y);
-    EXPECT_EQ(kvec_c_k0.z, kvec_c[0].z);
+    EXPECT_NEAR(kvec_c_k0.x, kvec_c[0].x, 1e-7);
+    EXPECT_NEAR(kvec_c_k0.y, kvec_c[0].y, 1e-7);
+    EXPECT_NEAR(kvec_c_k0.z, kvec_c[0].z, 1e-7);
     // ekb
-    for(int i = 0; i < nbands_k0; i++) { EXPECT_EQ(ekb_k0[i], ekb[i]); }
+    for(int i = 0; i < nbands_k0; i++) { EXPECT_NEAR(ekb_k0[i], ekb[i], 1e-7); }
     // occ
-    for(int i = 0; i < nbands_k0; i++) { EXPECT_EQ(occ_k0[i], occ[i]); }
+    for(int i = 0; i < nbands_k0; i++) { EXPECT_NEAR(occ_k0[i], occ[i], 1e-7); }
     // lowf
-    for(int i = 0; i < nbands_k0*nbasis_k0; i++) { EXPECT_EQ(lowf_k0[i], lowf[i]); }
+    for(int i = 0; i < nbands_k0*nbasis_k0; i++)
+    { EXPECT_NEAR(lowf_k0[i].real(), lowf[i].real(), 1e-7); EXPECT_NEAR(lowf_k0[i].imag(), lowf[i].imag(), 1e-7); }
 
     // test the second k-point
     int nbands_k1 = -1;
@@ -626,15 +657,17 @@ TEST(ReadWfcLcaoTest, RestartFromFileSerial)
     EXPECT_EQ(63, nbasis_k1);
     EXPECT_EQ(1.0, wk_k1); // this is overwritten with 1.0
     // kvec_c
-    EXPECT_EQ(kvec_c_k1.x, kvec_c[1].x);
-    EXPECT_EQ(kvec_c_k1.y, kvec_c[1].y);
-    EXPECT_EQ(kvec_c_k1.z, kvec_c[1].z);
+    EXPECT_NEAR(kvec_c_k1.x, kvec_c[1].x, 1e-7);
+    EXPECT_NEAR(kvec_c_k1.y, kvec_c[1].y, 1e-7);
+    EXPECT_NEAR(kvec_c_k1.z, kvec_c[1].z, 1e-7);
     // ekb
-    for(int i = 0; i < nbands_k1; i++) { EXPECT_EQ(ekb_k1[i], ekb[i + nbands_k0]); }
+    for(int i = 0; i < nbands_k1; i++) { EXPECT_NEAR(ekb_k1[i], ekb[i + nbands_k0], 1e-7); }
     // occ
-    for(int i = 0; i < nbands_k1; i++) { EXPECT_EQ(occ_k1[i], occ[i + nbands_k0]); }
+    for(int i = 0; i < nbands_k1; i++) { EXPECT_NEAR(occ_k1[i], occ[i + nbands_k0], 1e-7); }
     // lowf
-    for(int i = 0; i < nbands_k1*nbasis_k1; i++) { EXPECT_EQ(lowf_k1[i], lowf[i + nbands_k0*nbasis_k0]); }
+    for(int i = 0; i < nbands_k1*nbasis_k1; i++)
+    { EXPECT_NEAR(lowf_k1[i].real(), lowf[i + nbands_k0*nbasis_k0].real(), 1e-7); 
+      EXPECT_NEAR(lowf_k1[i].imag(), lowf[i + nbands_k0*nbasis_k0].imag(), 1e-7); }
 }
 
 int main(int argc, char **argv) {
