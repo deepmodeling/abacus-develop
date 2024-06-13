@@ -15,8 +15,6 @@
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #ifdef __CUDA
 #include "cublas_v2.h"
-namespace CudaCheck
-{
 static const char *_cublasGetErrorString(cublasStatus_t error)
 {
 	switch (error)
@@ -134,15 +132,13 @@ static const char *_cufftGetErrorString(cufftResult_t error)
 				   status);                                                          \
 		}                                                                            \
 	}
-} // namespace CudaCheck
 #endif // __CUDA
 
 #ifdef __ROCM
 #include <hipfft/hipfft.h>
 #include <hipblas/hipblas.h>
 #include <hip/hip_runtime.h>
-namespace HipCheck
-{
+
 static const char *_hipblasGetErrorString(hipblasStatus_t error)
 {
 	switch (error)
@@ -271,7 +267,6 @@ static const char *_hipfftGetErrorString(hipfftResult_t error)
 				   status);                                                           \
 		}                                                                             \
 	}
-} // namespace HipCheck
 #endif // __ROCM
 
 //==========================================================
