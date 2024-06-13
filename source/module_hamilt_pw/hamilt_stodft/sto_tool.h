@@ -11,24 +11,18 @@
  * @param try_emax trial Emax
  * @param nbands_sto number of stochastic bands
  */
-void check_che(const int& nche_in,
-               const double& try_emin,
-               const double& try_emax,
-               const int& nbands_sto,
-               K_Vectors* p_kv,
-               Stochastic_WF* p_stowf,
-               hamilt::Hamilt<std::complex<double>>* p_hamilt,
+void check_che(const int& nche_in, const double& try_emin, const double& try_emax, const int& nbands_sto,
+               K_Vectors* p_kv, Stochastic_WF* p_stowf, hamilt::Hamilt<std::complex<double>>* p_hamilt,
                hsolver::HSolverPW_SDFT* p_hsol_in);
-
 
 #ifndef PARALLEL_DISTRIBUTION
 #define PARALLEL_DISTRIBUTION
 /**
  * @brief structure to distribute calculation among processors
- * 
+ *
  * @param start start index of this processor
  * @param num_per number of elements for this processor
- * 
+ *
  */
 struct parallel_distribution
 {
@@ -59,7 +53,7 @@ struct parallel_distribution
 #define INFO_GATHERV
 /**
  * @brief gather information from all processors
- * 
+ *
  */
 struct info_gatherv
 {
@@ -100,7 +94,7 @@ void convert_psi(const psi::Psi<std::complex<double>>& psi_in, psi::Psi<std::com
 
 /**
  * @brief gather chi from all processors
- * 
+ *
  * @param chi stochasitc wave function of this processor
  * @param chi_all gathered stochastic wave function
  * @param npwx maximum number of plane waves on all processors
@@ -108,11 +102,7 @@ void convert_psi(const psi::Psi<std::complex<double>>& psi_in, psi::Psi<std::com
  * @param displs_sto displacement of stochastic orbitals on each processor
  * @param perbands_sto number of stochastic bands of this processor
  * @return psi::Psi<std::complex<float>> pointer to gathered stochastic wave function
- * 
+ *
  */
-psi::Psi<std::complex<float>>* gatherchi(psi::Psi<std::complex<float>>& chi,
-                                         psi::Psi<std::complex<float>>& chi_all,
-                                         const int& npwx,
-                                         int* nrecv_sto,
-                                         int* displs_sto,
-                                         const int perbands_sto);
+psi::Psi<std::complex<float>>* gatherchi(psi::Psi<std::complex<float>>& chi, psi::Psi<std::complex<float>>& chi_all,
+                                         const int& npwx, int* nrecv_sto, int* displs_sto, const int perbands_sto);

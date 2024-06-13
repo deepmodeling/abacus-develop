@@ -4,13 +4,9 @@
 #include "module_base/tool_title.h"
 #include "sto_tool.h"
 
-Sto_DOS::Sto_DOS(ModulePW::PW_Basis_K* p_wfcpw_in,
-                 K_Vectors* p_kv_in,
-                 elecstate::ElecState* p_elec_in,
-                 psi::Psi<std::complex<double>>* p_psi_in,
-                 hamilt::Hamilt<std::complex<double>>* p_hamilt_in,
-                 hsolver::HSolverPW_SDFT* p_hsol_in,
-                 Stochastic_WF* p_stowf_in)
+Sto_DOS::Sto_DOS(ModulePW::PW_Basis_K* p_wfcpw_in, K_Vectors* p_kv_in, elecstate::ElecState* p_elec_in,
+                 psi::Psi<std::complex<double>>* p_psi_in, hamilt::Hamilt<std::complex<double>>* p_hamilt_in,
+                 hsolver::HSolverPW_SDFT* p_hsol_in, Stochastic_WF* p_stowf_in)
 {
     this->p_wfcpw = p_wfcpw_in;
     this->p_kv = p_kv_in;
@@ -22,23 +18,12 @@ Sto_DOS::Sto_DOS(ModulePW::PW_Basis_K* p_wfcpw_in,
     this->nbands_ks = p_psi_in->get_nbands();
     this->nbands_sto = p_stowf_in->nchi;
 }
-void Sto_DOS::decide_param(const int& dos_nche,
-                           const double& emin_sto,
-                           const double& emax_sto,
-                           const bool& dos_setemin,
-                           const bool& dos_setemax,
-                           const double& dos_emin_ev,
-                           const double& dos_emax_ev,
+void Sto_DOS::decide_param(const int& dos_nche, const double& emin_sto, const double& emax_sto, const bool& dos_setemin,
+                           const bool& dos_setemax, const double& dos_emin_ev, const double& dos_emax_ev,
                            const double& dos_scale)
 {
     this->dos_nche = dos_nche;
-    check_che(this->dos_nche,
-              emin_sto,
-              emax_sto,
-              this->nbands_sto,
-              this->p_kv,
-              this->p_stowf,
-              this->p_hamilt,
+    check_che(this->dos_nche, emin_sto, emax_sto, this->nbands_sto, this->p_kv, this->p_stowf, this->p_hamilt,
               this->p_hsol);
     if (dos_setemax)
     {
@@ -140,12 +125,7 @@ void Sto_DOS::caldos(const double sigmain, const double de, const int npart)
                 }
                 ModuleBase::GlobalFunc::ZEROS(allorderchi.data(), nchipk_new * npwx * dos_nche);
                 std::complex<double>* tmpchi = pchi + start_nchipk * npwx;
-                che.calpolyvec_complex(&stohchi,
-                                       &Stochastic_hchi::hchi_norm,
-                                       tmpchi,
-                                       allorderchi.data(),
-                                       npw,
-                                       npwx,
+                che.calpolyvec_complex(&stohchi, &Stochastic_hchi::hchi_norm, tmpchi, allorderchi.data(), npw, npwx,
                                        nchipk_new);
                 double* vec_all = (double*)allorderchi.data();
                 int LDA = npwx * nchipk_new * 2;

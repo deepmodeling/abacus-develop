@@ -23,11 +23,8 @@
 #define TWOSQRT2LN2 2.354820045030949 // FWHM = 2sqrt(2ln2) * \sigma
 #define FACTOR 1.839939223835727e7
 
-EleCond::EleCond(UnitCell* p_ucell_in,
-                 K_Vectors* p_kv_in,
-                 elecstate::ElecState* p_elec_in,
-                 ModulePW::PW_Basis_K* p_wfcpw_in,
-                 psi::Psi<std::complex<double>>* p_psi_in,
+EleCond::EleCond(UnitCell* p_ucell_in, K_Vectors* p_kv_in, elecstate::ElecState* p_elec_in,
+                 ModulePW::PW_Basis_K* p_wfcpw_in, psi::Psi<std::complex<double>>* p_psi_in,
                  pseudopot_cell_vnl* p_ppcell_in)
 {
     this->p_ppcell = p_ppcell_in;
@@ -38,13 +35,8 @@ EleCond::EleCond(UnitCell* p_ucell_in,
     this->p_psi = p_psi_in;
 }
 
-void EleCond::KG(const int& smear_type,
-                 const double& fwhmin,
-                 const double& wcut,
-                 const double& dw_in,
-                 const double& dt_in,
-                 const bool& nonlocal,
-                 ModuleBase::matrix& wg)
+void EleCond::KG(const int& smear_type, const double& fwhmin, const double& wcut, const double& dw_in,
+                 const double& dt_in, const bool& nonlocal, ModuleBase::matrix& wg)
 {
     //-----------------------------------------------------------
     //               KS conductivity
@@ -101,15 +93,8 @@ void EleCond::KG(const int& smear_type,
     }
 }
 
-void EleCond::jjresponse_ks(const int ik,
-                            const int nt,
-                            const double dt,
-                            const double decut,
-                            ModuleBase::matrix& wg,
-                            hamilt::Velocity& velop,
-                            double* ct11,
-                            double* ct12,
-                            double* ct22)
+void EleCond::jjresponse_ks(const int ik, const int nt, const double dt, const double decut, ModuleBase::matrix& wg,
+                            hamilt::Velocity& velop, double* ct11, double* ct12, double* ct22)
 {
     const int nbands = GlobalV::NBANDS;
     if (wg(ik, 0) - wg(ik, nbands - 1) < 1e-8 || nbands == 0)
@@ -131,19 +116,8 @@ void EleCond::jjresponse_ks(const int ik,
     for (int id = 0; id < ndim; ++id)
     {
 
-        zgemm_(&transc,
-               &transn,
-               &nbands,
-               &nbands,
-               &npw,
-               &ModuleBase::ONE,
-               levc,
-               &npwx,
-               prevc.data() + id * npwx * nbands,
-               &npwx,
-               &ModuleBase::ZERO,
-               pij.data(),
-               &nbands);
+        zgemm_(&transc, &transn, &nbands, &nbands, &npw, &ModuleBase::ONE, levc, &npwx,
+               prevc.data() + id * npwx * nbands, &npwx, &ModuleBase::ZERO, pij.data(), &nbands);
 #ifdef __MPI
         MPI_Allreduce(MPI_IN_PLACE, pij.data(), nbands * nbands, MPI_DOUBLE_COMPLEX, MPI_SUM, POOL_WORLD);
 #endif
@@ -210,15 +184,8 @@ void EleCond::jjresponse_ks(const int ik,
     return;
 }
 
-void EleCond::calcondw(const int nt,
-                       const double dt,
-                       const int& smear_type,
-                       const double fwhmin,
-                       const double wcut,
-                       const double dw_in,
-                       double* ct11,
-                       double* ct12,
-                       double* ct22)
+void EleCond::calcondw(const int nt, const double dt, const int& smear_type, const double fwhmin, const double wcut,
+                       const double dw_in, double* ct11, double* ct12, double* ct22)
 {
     double factor = FACTOR;
     const int ndim = 3;

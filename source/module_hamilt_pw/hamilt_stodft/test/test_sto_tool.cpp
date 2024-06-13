@@ -1,12 +1,13 @@
 #include "../sto_tool.h"
 #include "mpi.h"
+
 #include <gtest/gtest.h>
 
 /************************************************
  *  unit test of sto_tool.cpp
  ***********************************************/
 
-void Stochastic_hchi:: hchi_norm(std::complex<double> *chig, std::complex<double> *hchig, const int m)
+void Stochastic_hchi::hchi_norm(std::complex<double>* chig, std::complex<double>* hchig, const int m)
 {
     return;
 }
@@ -18,7 +19,8 @@ void Stochastic_hchi:: hchi_norm(std::complex<double> *chig, std::complex<double
  *   - psi::Psi<std::complex<float>>* gatherchi(chi, chi_all, npwx, nrecv_sto, displs_sto, perbands_sto)
  */
 class TestStoTool : public ::testing::Test
-{};
+{
+};
 
 TEST_F(TestStoTool, parallel_distribution)
 {
@@ -47,8 +49,8 @@ TEST_F(TestStoTool, parallel_distribution)
 
 TEST_F(TestStoTool, convert_psi)
 {
-    psi::Psi<std::complex<double>> psi_in(1,1,10);
-    psi::Psi<std::complex<float>> psi_out(1,1,10);
+    psi::Psi<std::complex<double>> psi_in(1, 1, 10);
+    psi::Psi<std::complex<float>> psi_out(1, 1, 10);
     for (int i = 0; i < 10; ++i)
     {
         psi_in.get_pointer()[i] = std::complex<double>(i, i);
@@ -62,8 +64,8 @@ TEST_F(TestStoTool, convert_psi)
 
 TEST_F(TestStoTool, gatherchi)
 {
-    psi::Psi<std::complex<float>> chi(1,1,10);
-    psi::Psi<std::complex<float>> chi_all(1,1,10);
+    psi::Psi<std::complex<float>> chi(1, 1, 10);
+    psi::Psi<std::complex<float>> chi_all(1, 1, 10);
     int npwx = 10;
     int nrecv_sto[4] = {1, 2, 3, 4};
     int displs_sto[4] = {0, 1, 3, 6};

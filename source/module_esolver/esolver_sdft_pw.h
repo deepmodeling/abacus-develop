@@ -24,7 +24,6 @@ class ESolver_SDFT_PW : public ESolver_KS_PW<std::complex<double>>
     void cal_stress(ModuleBase::matrix& stress) override;
 
   public:
-
     Stochastic_WF stowf;
 
   protected:
@@ -46,7 +45,6 @@ class ESolver_SDFT_PW : public ESolver_KS_PW<std::complex<double>>
     int nche_sto;   ///< norder of Chebyshev
     int method_sto; ///< method of SDFT
 };
-    
 
 } // namespace ModuleESolver
 
