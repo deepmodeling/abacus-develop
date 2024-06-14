@@ -126,7 +126,7 @@ void cal_vnl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::
                                                              std::complex<FPTYPE>* vkb_in)
 {
     int block = (npw + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(cal_vnl<FPTYPE>), dim3(block), dim3(THREADS_PER_BLOCK), 0, 0, 
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(cal_vnl<FPTYPE>), dim3(block), dim3(THREADS_PER_BLOCK), 0, 0,
             ntype, npw, npwx, nhm, NQX, tab_2, tab_3,
             atom_na, atom_nb, atom_nh,
             DQ, tpiba,
@@ -134,9 +134,8 @@ void cal_vnl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::
             gk, ylm, indv, nhtol, nhtolm, tab, vkb1,
             reinterpret_cast<const thrust::complex<FPTYPE>*>(sk),
             reinterpret_cast<thrust::complex<FPTYPE>*>(vkb_in));
-    
-    hipErrcheck(hipGetLastError());
-    hipErrcheck(hipDeviceSynchronize());
+
+    hipCheckOnDebug();
 }
 
 template struct cal_vnl_op<float, base_device::DEVICE_GPU>;

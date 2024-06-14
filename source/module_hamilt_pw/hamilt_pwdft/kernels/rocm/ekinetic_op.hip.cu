@@ -6,7 +6,7 @@
 #include <hip/hip_runtime.h>
 #include <base/macros/macros.h>
 
-using namespace hamilt; 
+using namespace hamilt;
 #define THREADS_PER_BLOCK 256
 
 template <typename FPTYPE>
@@ -21,7 +21,7 @@ __global__ void ekinetic_pw(
   const int block_idx = blockIdx.x;
   const int thread_idx = threadIdx.x;
   for (int ii = thread_idx; ii < npw; ii+= blockDim.x) {
-    hpsi[block_idx * max_npw + ii] 
+    hpsi[block_idx * max_npw + ii]
       += gk2[ii] * tpiba2 * psi[block_idx * max_npw + ii];
   }
 }
@@ -38,14 +38,13 @@ void hamilt::ekinetic_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const b
 {
   // denghui implement 20221019
   // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-  hipLaunchKernelGGL(HIP_KERNEL_NAME(ekinetic_pw<FPTYPE>), dim3(nband), dim3(THREADS_PER_BLOCK), 0, 0, 
+  hipLaunchKernelGGL(HIP_KERNEL_NAME(ekinetic_pw<FPTYPE>), dim3(nband), dim3(THREADS_PER_BLOCK), 0, 0,
     npw, max_npw, tpiba2, // control params
     gk2_ik, // array of data
     reinterpret_cast<thrust::complex<FPTYPE>*>(tmhpsi), // array of data
     reinterpret_cast<const thrust::complex<FPTYPE>*>(tmpsi_in)); // array of data
 
-  hipErrcheck(hipGetLastError());
-  hipErrcheck(hipDeviceSynchronize());
+   hipCheckOnDebug();
 }
 
 namespace hamilt{

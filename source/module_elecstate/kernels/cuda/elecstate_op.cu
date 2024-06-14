@@ -67,12 +67,11 @@ void elecstate_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
 {
   const int block = (nrxx + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
   elecstate_pw<FPTYPE><<<block, THREADS_PER_BLOCK>>>(
-    spin, nrxx, w1, rho[0], 
+    spin, nrxx, w1, rho[0],
     reinterpret_cast<const thrust::complex<FPTYPE>*>(wfcr)
   );
 
-  cudaErrcheck(cudaGetLastError());
-  cudaErrcheck(cudaDeviceSynchronize());
+  cudaCheckOnDebug();
 }
 
 template <typename FPTYPE>
@@ -87,13 +86,12 @@ void elecstate_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
 {
   const int block = (nrxx + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
   elecstate_pw<FPTYPE><<<block, THREADS_PER_BLOCK>>>(
-    DOMAG, DOMAG_Z, nrxx, w1, rho[0], 
-    reinterpret_cast<const thrust::complex<FPTYPE>*>(wfcr), 
+    DOMAG, DOMAG_Z, nrxx, w1, rho[0],
+    reinterpret_cast<const thrust::complex<FPTYPE>*>(wfcr),
     reinterpret_cast<const thrust::complex<FPTYPE>*>(wfcr_another_spin)
   );
 
-  cudaErrcheck(cudaGetLastError());
-  cudaErrcheck(cudaDeviceSynchronize());
+  cudaCheckOnDebug();
 }
 
 template struct elecstate_pw_op<float, base_device::DEVICE_GPU>;

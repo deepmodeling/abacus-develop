@@ -28,8 +28,8 @@ void destroyGpuSolverHandle() {
 template <typename T>
 __global__ void set_matrix_kernel(
     const char uplo,
-    T* A, 
-    const int dim) 
+    T* A,
+    const int dim)
 {
     int bid = blockIdx.x;
     int tid = threadIdx.x;
@@ -54,9 +54,8 @@ struct set_matrix<T, DEVICE_GPU> {
     {
         set_matrix_kernel<Type><<<dim - 1, THREADS_PER_BLOCK>>>(
             uplo, reinterpret_cast<Type*>(A), dim);
-        
-        cudaErrcheck(cudaGetLastError());
-        cudaErrcheck(cudaDeviceSynchronize());
+
+        cudaCheckOnDebug();
     }
 };
 
@@ -67,7 +66,7 @@ struct lapack_trtri<T, DEVICE_GPU> {
         const char& diag,
         const int& dim,
         T* Mat,
-        const int& lda) 
+        const int& lda)
     {
         // TODO: trtri is not implemented in this method yet
         // Cause the trtri in cuSolver is not stable for ABACUS!
@@ -81,8 +80,8 @@ struct lapack_potrf<T, DEVICE_GPU> {
     void operator()(
         const char& uplo,
         const int& dim,
-        T* Mat, 
-        const int& lda) 
+        T* Mat,
+        const int& lda)
     {
         cuSolverConnector::potrf(cusolver_handle, uplo, dim, Mat, dim);
     }
