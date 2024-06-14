@@ -1,12 +1,12 @@
 #add_subdirectory(kernels/cuda)
 
 list(APPEND objects
-    gint_tools/cal_psir_ylm.cpp
-    gint_tools/cal_dpsir_ylm.cpp
-    gint_tools/cal_ddpsir_ylm.cpp
-    gint_tools/mult_psi_dm.cpp
-    gint_tools/mult_psi_dm_new.cpp
-    gint_tools/mult_psi_dmr.cpp
+    cal_psir_ylm.cpp
+    cal_dpsir_ylm.cpp
+    cal_ddpsir_ylm.cpp
+    mult_psi_dm.cpp
+    mult_psi_dm_new.cpp
+    mult_psi_dmr.cpp
     gint.cpp
     gint_gamma_env.cpp
     gint_gamma_vl.cpp

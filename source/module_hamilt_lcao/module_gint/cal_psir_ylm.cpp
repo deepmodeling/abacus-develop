@@ -1,4 +1,4 @@
-#include "../gint_tools.h"
+#include "gint_tools.h"
 #include "module_base/timer.h"
 #include "module_base/ylm.h"
 namespace Gint_Tools
