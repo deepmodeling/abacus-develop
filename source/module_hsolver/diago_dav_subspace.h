@@ -89,37 +89,23 @@ class Diago_DavSubspace : public DiagH<T, Device>
     base_device::DEVICE_CPU* cpu_ctx = {};
     base_device::AbacusDevice_t device = {};
 
-    void cal_grad(
-
-        const Func& hpsi_func,
-
-        // hamilt::Hamilt<T, Device>* phm_in,
-
-        const int& dim,
-        const int& nbase,
-        const int& notconv,
-        // psi::Psi<T, Device>& basis,
-        T* psi_iter,
-        T* hphi,
-        T* vcc,
-        const int* unconv,
-        std::vector<Real>* eigenvalue_iter);
-
-    void cal_elem(const int& dim,
-                  int& nbase,
+    void cal_grad(const Func& hpsi_func,
+                  const int& dim,
+                  const int& nbase,
                   const int& notconv,
-                  // const psi::Psi<T, Device>& basis,
-                  const T* psi_iter,
-                  const T* hphi,
-                  T* hcc,
-                  T* scc);
+                  T* psi_iter,
+                  T* hphi,
+                  T* vcc,
+                  const int* unconv,
+                  std::vector<Real>* eigenvalue_iter);
+
+    void cal_elem(const int& dim, int& nbase, const int& notconv, const T* psi_iter, const T* hphi, T* hcc, T* scc);
 
     void refresh(const int& dim,
                  const int& nband,
                  int& nbase,
                  const Real* eigenvalue,
                  const psi::Psi<T, Device>& psi,
-                 //  psi::Psi<T, Device>& basis,
                  T* psi_iter,
                  T* hphi,
                  T* hcc,
@@ -138,10 +124,7 @@ class Diago_DavSubspace : public DiagH<T, Device>
 
     int diag_once(const Func& hpsi_func,
                   T* psi_in,
-
-                  // hamilt::Hamilt<T, Device>* phm_in,
                   psi::Psi<T, Device>& psi,
-
                   Real* eigenvalue_in,
                   const std::vector<bool>& is_occupied);
 
