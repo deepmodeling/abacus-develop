@@ -420,7 +420,9 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                   GlobalV::NLOCAL,
                   GlobalV::global_out_dir,
                   GlobalV::MY_RANK,
-                  GlobalV::ofs_warning);
+                  GlobalV::ofs_warning,
+                  &GlobalC::ucell,
+                  &GlobalC::GridD);
     }
     else if (cal_type == "get_wf")
     {

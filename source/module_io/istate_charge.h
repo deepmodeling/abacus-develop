@@ -52,7 +52,9 @@ class IState_Charge
                const int nlocal,
                const std::string& global_out_dir,
                const int my_rank,
-               std::ofstream& ofs_warning);
+               std::ofstream& ofs_warning,
+               const UnitCell* ucell_in,
+               Grid_Driver* GridD_in);
 
   private:
     std::vector<int> bands_picked_;
@@ -74,7 +76,7 @@ class IState_Charge
      */
     void idmatrix(const int& ib,
                   const int nspin,
-                  const double nelec,
+                  const double& nelec,
                   const int nlocal,
                   const ModuleBase::matrix& wg,
                   elecstate::DensityMatrix<double, double>& DM);

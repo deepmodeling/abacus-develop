@@ -41,7 +41,9 @@ void IState_Charge::begin(Gint_Gamma& gg,
                           const int nlocal,
                           const std::string& global_out_dir,
                           const int my_rank,
-                          std::ofstream& ofs_warning)
+                          std::ofstream& ofs_warning,
+                          const UnitCell* ucell_in,
+                          Grid_Driver* GridD_in)
 {
     ModuleBase::TITLE("IState_Charge", "begin");
 
@@ -205,6 +207,8 @@ void IState_Charge::begin(Gint_Gamma& gg,
 
 #ifdef __MPI
             this->idmatrix(ib, nspin, nelec, nlocal, wg, DM);
+#else
+            ModuleBase::WARNING_QUIT("IState_Charge::begin", "The `pchg` calculation is only available for MPI now!");
 #endif
 
             // (2) zero out of charge density array.
@@ -215,11 +219,11 @@ void IState_Charge::begin(Gint_Gamma& gg,
 
             // (3) calculate charge density for a particular band.
 
-            DM.init_DMR(&GlobalC::GridD, &GlobalC::ucell);
+            DM.init_DMR(GridD_in, ucell_in);
             DM.cal_DMR();
 
             // gg.DMRGint.resize(nspin);
-            gg.initialize_pvpR(GlobalC::ucell, &GlobalC::GridD);
+            gg.initialize_pvpR(*ucell_in, GridD_in);
 
             gg.transfer_DM2DtoGrid(DM.get_DMR_vector());
 
@@ -263,7 +267,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
                     rhopw_ny,
                     rhopw_nz,
                     ef_spin,
-                    &(GlobalC::ucell));
+                    ucell_in);
             }
 
             // Release memory of rho_save
@@ -281,7 +285,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
 #ifdef __MPI
 void IState_Charge::idmatrix(const int& ib,
                              const int nspin,
-                             const double nelec,
+                             const double& nelec,
                              const int nlocal,
                              const ModuleBase::matrix& wg,
                              elecstate::DensityMatrix<double, double>& DM)
@@ -317,7 +321,6 @@ void IState_Charge::idmatrix(const int& ib,
         const char N_char = 'N', T_char = 'T';
 
         this->loc->dm_gamma.at(is).create(wg_wfc.get_nbands(), wg_wfc.get_nbasis());
-
 
         // Print dm_gamma
         // std::cout << "Before: " << std::endl;
@@ -394,7 +397,6 @@ void IState_Charge::idmatrix(const int& ib,
         //     std::cout << std::endl;
         // }
 
-        
         // std::cout << "Ratio new_DM/old_dm_gamma for spin " << is << ":" << std::endl;
         // for (int i = 0; i < DM.get_DMK_nrow(); ++i)
         // {
