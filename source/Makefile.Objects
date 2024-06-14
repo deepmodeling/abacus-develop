@@ -210,9 +210,7 @@ OBJS_ESOLVER=esolver.o\
     esolver_ks.o\
     esolver_fp.o\
     esolver_ks_pw.o\
-    esolver_ks_pw_tool.o\
     esolver_sdft_pw.o\
-    esolver_sdft_pw_tool.o\
     esolver_lj.o\
     esolver_dp.o\
     esolver_of.o\
@@ -595,6 +593,10 @@ OBJS_SRCPW=H_Ewald_pw.o\
     symmetry_rhog.o\
     wavefunc.o\
     wf_atomic.o\
+    elecond.o\
+    sto_tool.o\
+    sto_elecond.o\
+    sto_dos.o
 
 OBJS_VDW=vdw.o\
     vdwd2_parameters.o\

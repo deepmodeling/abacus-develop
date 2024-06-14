@@ -58,9 +58,8 @@ void xc_functional_grad_wfc_op<T, Device>::operator()(
     const int block = (npw + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     xc_functional_grad_wfc<Real><<<block, THREADS_PER_BLOCK>>>(
         ik, pol, npw, npwx, tpiba, gcar, kvec_c, rhog_, porter_);
-    
-    cudaErrcheck(cudaGetLastError());
-    cudaErrcheck(cudaDeviceSynchronize());
+
+    cudaCheckOnDebug();
 }
 
 template <typename T, typename Device>
@@ -75,12 +74,11 @@ void xc_functional_grad_wfc_op<T, Device>::operator()(
     const int block = (nrxx + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     xc_functional_grad_wfc<<<block, THREADS_PER_BLOCK>>>(
         ipol, nrxx, porter_, grad_);
-    
-    cudaErrcheck(cudaGetLastError());
-    cudaErrcheck(cudaDeviceSynchronize());
+
+    cudaCheckOnDebug();
 }
 
 template struct xc_functional_grad_wfc_op<std::complex<float>, base_device::DEVICE_GPU>;
 template struct xc_functional_grad_wfc_op<std::complex<double>, base_device::DEVICE_GPU>;
 
-} // namespace hamilt   
+} // namespace hamilt

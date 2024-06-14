@@ -51,16 +51,15 @@ void meta_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::
                                                              const bool add)
 {
     const int block = (npw + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(meta_pw<FPTYPE>), dim3(block), dim3(THREADS_PER_BLOCK), 0, 0, 
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(meta_pw<FPTYPE>), dim3(block), dim3(THREADS_PER_BLOCK), 0, 0,
         ik, pol, npw, npwx,
         tpiba,
         gcar, kvec_c,
         reinterpret_cast<const thrust::complex<FPTYPE> * >(in),
         reinterpret_cast<thrust::complex<FPTYPE> * >(out),
         add);
-    
-    hipErrcheck(hipGetLastError());
-    hipErrcheck(hipDeviceSynchronize());
+
+    hipCheckOnDebug();
 }
 
 template struct meta_pw_op<float, base_device::DEVICE_GPU>;
