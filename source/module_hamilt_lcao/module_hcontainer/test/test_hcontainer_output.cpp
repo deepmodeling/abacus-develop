@@ -1,9 +1,9 @@
-#include "../output_hcontainer.h"
-
 #include "../hcontainer.h"
+#include "../output_hcontainer.h"
+#include "module_cell/unitcell.h"
+
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "module_cell/unitcell.h"
 
 /************************************************
  *  unit test of output_hcontainer.cpp

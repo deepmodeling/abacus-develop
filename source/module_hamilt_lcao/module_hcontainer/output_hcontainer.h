@@ -13,11 +13,8 @@ template <typename T>
 class Output_HContainer
 {
   public:
-    Output_HContainer(hamilt::HContainer<T>* hcontainer,
-                      const Parallel_Orbitals* ParaV,
-                      std::ostream& ofs,
-                      double sparse_threshold,
-                      int precision);
+    Output_HContainer(hamilt::HContainer<T>* hcontainer, const Parallel_Orbitals* ParaV, std::ostream& ofs,
+                      double sparse_threshold, int precision);
     // write the matrices of all R vectors to the output stream
     void write();
 
@@ -41,6 +38,6 @@ class Output_HContainer
     int _precision;
 };
 
-} // namespace ModuleIO
+} // namespace hamilt
 
 #endif // OUTPUT_HCONTAINER_H
