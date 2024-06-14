@@ -9,6 +9,7 @@ Grid_BigCell::Grid_BigCell()
 {
     this->flag_tib = false;
     this->index_atom.clear();
+    this->index_atom.shrink_to_fit();
     this->orbital_rmax = 0.0;
     this->nxe = this->nye = this->nze = 0;
     this->dxe = 0;
@@ -22,12 +23,6 @@ Grid_BigCell::Grid_BigCell()
 
 Grid_BigCell::~Grid_BigCell()
 {
-    // delete tau positions.
-    if (this->flag_tib)
-    {
-        tau_in_bigcell.clear();
-    }
-    index_atom.clear();
 }
 
 void Grid_BigCell::init_big_latvec(const UnitCell& ucell)
@@ -161,7 +156,6 @@ void Grid_BigCell::init_tau_in_bigcell(const UnitCell& ucell)
 
         // allocate space, these arrays record which meshcell
         // the atom is in.
-        index_atom.clear();
         this->index_atom = std::vector<int>(ucell.nat, 0);
 
         ModuleBase::Memory::record("tau_in_bigcell", sizeof(double) * ucell.nat * 3);

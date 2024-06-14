@@ -14,12 +14,7 @@ Grid_MeshK::Grid_MeshK()
 
 Grid_MeshK::~Grid_MeshK()
 {
-    ucell_index2x.clear();
-    ucell_index2y.clear();
-    ucell_index2z.clear();
-    max_ucell_para.clear();
-    min_ucell_para.clear();
-    num_ucell_para.clear();
+
 }
 
 int Grid_MeshK::cal_Rindex(const int& u1, const int& u2, const int& u3) const
@@ -45,15 +40,12 @@ int Grid_MeshK::cal_Rindex(const int& u1, const int& u2, const int& u3) const
 
 void Grid_MeshK::init_ucell_para(void)
 {
-    this->max_ucell_para.clear();
     this->max_ucell_para.push_back(this->maxu1);
     this->max_ucell_para.push_back(this->maxu2);
     this->max_ucell_para.push_back(this->maxu3);
-    this->min_ucell_para.clear();
     this->min_ucell_para.push_back(this->minu1);
     this->min_ucell_para.push_back(this->minu2);
     this->min_ucell_para.push_back(this->minu3);
-    this->num_ucell_para.clear();
     this->num_ucell_para.push_back(this->nu1);
     this->num_ucell_para.push_back(this->nu2);
     this->num_ucell_para.push_back(this->nu3);
@@ -96,9 +88,6 @@ void Grid_MeshK::cal_extended_cell(const int& dxe, const int& dye, const int& dz
     if (GlobalV::OUT_LEVEL != "m")
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "UnitCellTotal", nutot);
 
-    ucell_index2x.clear();
-    ucell_index2y.clear();
-    ucell_index2z.clear();
     this->ucell_index2x = std::vector<int>(nutot, 0);
     this->ucell_index2y = std::vector<int>(nutot, 0);
     this->ucell_index2z = std::vector<int>(nutot, 0);

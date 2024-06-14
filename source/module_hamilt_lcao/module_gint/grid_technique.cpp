@@ -8,18 +8,6 @@
 
 Grid_Technique::Grid_Technique()
 {
-    this->nlocdimg.clear();
-    this->nlocstartg.clear();
-    this->nad.clear();
-    this->how_many_atoms.clear();
-    this->start_ind.clear();
-    this->which_atom.clear();
-    this->which_bigcell.clear();
-    this->which_unitcell.clear();
-    this->bcell_start.clear();
-    this->in_this_processor.clear();
-    this->trace_lo.clear();
-    this->total_atoms_on_grid = 0;
     allocate_find_R2 = false;
 #if ((defined __CUDA) /* || (defined __ROCM) */)
     if (GlobalV::device_flag == "gpu")
@@ -31,34 +19,6 @@ Grid_Technique::Grid_Technique()
 
 Grid_Technique::~Grid_Technique()
 {
-    nlocdimg.clear();
-
-    nlocstartg.clear();
-
-    nad.clear();
-
-    how_many_atoms.clear();
-
-    start_ind.clear();
-
-    which_atom.clear();
-
-    which_bigcell.clear();
-
-    which_unitcell.clear();
-
-    bcell_start.clear();
-
-    in_this_processor.clear();
-
-    trace_lo.clear();
-
-    if (allocate_find_R2)
-    {
-        find_R2.clear();
-        find_R2st.clear();
-        find_R2_sorted_index.clear();
-    }
 
 #if ((defined __CUDA) /* || (defined __ROCM) */)
     if (GlobalV::device_flag == "gpu")
@@ -134,7 +94,6 @@ void Grid_Technique::get_startind(const int& ny, const int& nplane, const int& s
     // calculates start_ind, which stores the
     // starting index of each bigcell
 
-    this->start_ind.clear();
     if (nbxx > 0)
     {
         this->start_ind = std::vector<int>(nbxx, 0);
@@ -143,6 +102,7 @@ void Grid_Technique::get_startind(const int& ny, const int& nplane, const int& s
     else
     {
         this->start_ind.clear();
+        this->start_ind.shrink_to_fit();
         return;
     }
 
@@ -186,7 +146,6 @@ void Grid_Technique::init_atoms_on_grid(const int& ny, const int& nplane, const 
     // (1) prepare data.
     // counting the number of atoms whose orbitals have
     // values on the bigcell.
-    this->how_many_atoms.clear();
     if (nbxx > 0)
     {
         this->how_many_atoms = std::vector<int>(nbxx, 0);
@@ -195,6 +154,7 @@ void Grid_Technique::init_atoms_on_grid(const int& ny, const int& nplane, const 
     else
     {
         this->how_many_atoms.clear();
+        this->how_many_atoms.shrink_to_fit();
     }
 
     // (2) information about gloabl grid
@@ -206,7 +166,6 @@ void Grid_Technique::init_atoms_on_grid(const int& ny, const int& nplane, const 
 
     // (3) Find the atoms using
     // when doing grid integration.
-    in_this_processor.clear();
     this->in_this_processor = std::vector<bool>(ucell.nat, false);
 
     // init atoms on grid
@@ -360,17 +319,14 @@ void Grid_Technique::init_atoms_on_grid2(const int* index2normal, const UnitCell
     //--------------------------------------
     // save which atom is in the bigcell.
     //--------------------------------------
-    which_atom.clear();
     this->which_atom = std::vector<int>(total_atoms_on_grid, 0);
     assert(which_atom.size() != 0);
     ModuleBase::Memory::record("GT::which_atom", sizeof(int) * total_atoms_on_grid);
 
-    which_bigcell.clear();
     this->which_bigcell = std::vector<int>(total_atoms_on_grid, 0);
     assert(which_bigcell.size() != 0);
     ModuleBase::Memory::record("GT::which_bigcell", sizeof(int) * total_atoms_on_grid);
 
-    which_unitcell.clear();
     this->which_unitcell = std::vector<int>(total_atoms_on_grid, 0);
     assert(which_unitcell.size() != 0);
     ModuleBase::Memory::record("GT::which_unitcell", sizeof(int) * total_atoms_on_grid);
@@ -431,7 +387,6 @@ void Grid_Technique::init_atoms_on_grid2(const int* index2normal, const UnitCell
 void Grid_Technique::cal_grid_integration_index(void)
 {
     // save the start
-    this->bcell_start.clear();
     if (nbxx > 0)
     {
         this->bcell_start = std::vector<int>(nbxx, 0);
@@ -445,6 +400,7 @@ void Grid_Technique::cal_grid_integration_index(void)
     else
     {
         this->bcell_start.clear();
+        this->bcell_start.shrink_to_fit();
     }
     // calculate which grid has the largest number of atoms,
     // and how many atoms.
@@ -483,7 +439,6 @@ void Grid_Technique::cal_trace_lo(const UnitCell& ucell)
     // save the atom information in trace_lo,
     // in fact the trace_lo dimension can be reduced
     // to ucell.nat, but I think this is another way.
-    trace_lo.clear();
     this->trace_lo = std::vector<int>(GlobalV::NLOCAL, -1);
     ModuleBase::Memory::record("GT::trace_lo", sizeof(int) * GlobalV::NLOCAL);
 

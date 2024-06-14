@@ -6,19 +6,11 @@ Grid_MeshBall::Grid_MeshBall()
 {
     this->meshball_radius = 0.0;
     this->meshball_ncells = 0;
-
     this->flag_mp = false;
 }
 
 Grid_MeshBall::~Grid_MeshBall()
 {
-    // delete meshball positions.
-    if (flag_mp)
-    {
-        meshball_positions.clear();
-        flag_mp = false;
-    }
-    index_ball.clear();
 }
 
 void Grid_MeshBall::init_meshball(void)
@@ -33,6 +25,7 @@ void Grid_MeshBall::init_meshball(void)
     if (flag_mp)
     {
         meshball_positions.clear();
+        meshball_positions.shrink_to_fit();
         flag_mp = false;
     }
 
@@ -94,7 +87,6 @@ void Grid_MeshBall::init_meshball(void)
         ModuleBase::Memory::record("meshball_pos", sizeof(double) * meshball_ncells * 3);
     }
 
-    this->index_ball.clear();
     this->index_ball = std::vector<int>(meshball_ncells);
 
     // second time.

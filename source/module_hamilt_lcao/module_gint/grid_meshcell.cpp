@@ -13,6 +13,7 @@ Grid_MeshCell::~Grid_MeshCell()
     if (allocate_pos)
     {
         meshcell_pos.clear();
+        meshcell_pos.shrink_to_fit();
         allocate_pos = false;
     }
 }
