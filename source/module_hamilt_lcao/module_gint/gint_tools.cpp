@@ -1137,7 +1137,7 @@ void mult_psi_DMR(const Grid_Technique& gt, const int bxyz, const int& grid_inde
             //	for (int j = 0; j < block_size[ia1]; j++)
             //	{
             //		std::cout << i <<" "<<j<<" " << DMR[DM_start+i*block_size[ia1]+j]<<" " <<
-            //tmp_matrix[i*block_size[ia1]+j] << std::endl;
+            // tmp_matrix[i*block_size[ia1]+j] << std::endl;
             //	}
             // }
             // ModuleBase::WARNING_QUIT("cal_psi_dm","test");
@@ -1248,7 +1248,7 @@ void mult_psi_DMR(const Grid_Technique& gt, const int bxyz, const int& grid_inde
             //	for (int j = 0; j < block_size[ia1]; j++)
             //	{
             //		std::cout << i <<" "<<j<<" " << DMR[DM_start+i*block_size[ia1]+j]<<" " <<
-            //tmp_matrix[i*block_size[ia1]+j] << std::endl;
+            // tmp_matrix[i*block_size[ia1]+j] << std::endl;
             //	}
             // }
             // ModuleBase::WARNING_QUIT("cal_psi_dm","test");
