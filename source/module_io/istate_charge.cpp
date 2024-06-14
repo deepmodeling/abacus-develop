@@ -198,34 +198,34 @@ void IState_Charge::begin(Gint_Gamma& gg,
         {
             std::cout << " Perform band decomposed charge density for band " << ib + 1 << std::endl;
 
-            // (1) calculate the density matrix for a partuclar
-            // band, whenever it is occupied or not.
+            // (1) calculate the density matrix for a partuclar band, whenever it is occupied or not.
 
+            // Using new density matrix inplementation
             elecstate::DensityMatrix<double, double> DM(this->loc->ParaV, nspin);
 
 #ifdef __MPI
-            this->idmatrix(ib, nspin, nelec, nlocal, wg, DM, gg);
+            this->idmatrix(ib, nspin, nelec, nlocal, wg, DM);
 #endif
+
             // (2) zero out of charge density array.
             for (int is = 0; is < nspin; ++is)
             {
                 ModuleBase::GlobalFunc::ZEROS(rho[is], rhopw_nrxx);
             }
 
-            // (3) calculate charge density for a particular
-            // band.
+            // (3) calculate charge density for a particular band.
+
             DM.init_DMR(&GlobalC::GridD, &GlobalC::ucell);
             DM.cal_DMR();
-            // 转换密度矩阵到 2D 网格
+
             // gg.DMRGint.resize(nspin);
             gg.initialize_pvpR(GlobalC::ucell, &GlobalC::GridD);
 
             gg.transfer_DM2DtoGrid(DM.get_DMR_vector());
-            // Gint_inout inout(this->loc->DM_R, rho, Gint_Tools::job_type::rho);
 
+            // keep interface for old Output_DM until new one is ready
             Gint_inout inout(this->loc->DM, rho, Gint_Tools::job_type::rho);
             gg.cal_gint(&inout);
-            // gint_gamma->cal_gint(&inout);
 
             // A solution to replace the original implementation of the following code:
             // pelec->charge->save_rho_before_sum_band();
@@ -284,13 +284,10 @@ void IState_Charge::idmatrix(const int& ib,
                              const double nelec,
                              const int nlocal,
                              const ModuleBase::matrix& wg,
-                             elecstate::DensityMatrix<double, double>& DM,
-                             Gint_Gamma& gg)
+                             elecstate::DensityMatrix<double, double>& DM)
 {
     ModuleBase::TITLE("IState_Charge", "idmatrix");
     assert(wg.nr == nspin);
-
-    // elecstate::DensityMatrix<double, double> DM(this->loc->ParaV, nspin);
 
     int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
 
@@ -298,9 +295,6 @@ void IState_Charge::idmatrix(const int& ib,
     {
         std::vector<double> wg_local(this->loc->ParaV->ncol, 0.0);
         const int ib_local = this->loc->ParaV->global2local_col(ib);
-
-        std::cout << "idmatrix: ib = " << ib << std::endl;
-        std::cout << "idmatrix: ib_local = " << ib_local << std::endl;
 
         if (ib_local >= 0)
         {
@@ -324,10 +318,8 @@ void IState_Charge::idmatrix(const int& ib,
 
         this->loc->dm_gamma.at(is).create(wg_wfc.get_nbands(), wg_wfc.get_nbasis());
 
-        std::cout << "idmatrix: wg_wfc.get_nbands() = " << wg_wfc.get_nbands() << std::endl;
-        std::cout << "idmatrix: wg_wfc.get_nbasis() = " << wg_wfc.get_nbasis() << std::endl;
 
-        // 打印dm_gamma的数据
+        // Print dm_gamma
         // std::cout << "Before: " << std::endl;
         // for (size_t i = 0; i < this->loc->dm_gamma.size(); ++i)
         // {
@@ -344,10 +336,6 @@ void IState_Charge::idmatrix(const int& ib,
         //     std::cout << std::endl;
         // }
 
-        // 使用新的 DensityMatrix 类
-        // elecstate::DensityMatrix<double, double> DM(this->loc->ParaV, nspin);
-        // 使用新的 cal_dm_psi 函数替代 pdgemm_
-        // elecstate::cal_dm_psi(this->loc->ParaV, wg, wg_wfc, DM);
         const int ik = 0; // Gamma point only
         elecstate::psiMulPsiMpi(wg_wfc,
                                 wg_wfc,
@@ -358,22 +346,17 @@ void IState_Charge::idmatrix(const int& ib,
         // C++: dm(iw1,iw2) = wfc(ib,iw1).T * wg_wfc(ib,iw2)
         // elecstate::psiMulPsiMpi(wg, wg_wfc, &DM, this->loc->ParaV->desc_wfc, this->loc->ParaV->desc);
 
-        // 将计算结果保存到 dm_gamma
-        std::cout << "idmatrix: DM.get_DMK_nrow() = " << DM.get_DMK_nrow() << std::endl;
-        std::cout << "idmatrix: DM.get_DMK_ncol() = " << DM.get_DMK_ncol() << std::endl;
-        // this->loc->dm_gamma.at(is).create(DM.get_DMK_nrow(), DM.get_DMK_ncol());
-
-        std::cout << "New DM implementation: " << std::endl;
-        // 打印DM中的值
-        std::cout << "DensityMatrix values for spin " << is << ":" << std::endl;
-        for (int i = 0; i < DM.get_DMK_nrow(); ++i)
-        {
-            for (int j = 0; j < DM.get_DMK_ncol(); ++j)
-            {
-                std::cout << DM.get_DMK(1, 0, i, j) << " ";
-            }
-            std::cout << std::endl;
-        }
+        // std::cout << "New DM implementation: " << std::endl;
+        // // Print DM
+        // std::cout << "DensityMatrix values for spin " << is << ":" << std::endl;
+        // for (int i = 0; i < DM.get_DMK_nrow(); ++i)
+        // {
+        //     for (int j = 0; j < DM.get_DMK_ncol(); ++j)
+        //     {
+        //         std::cout << DM.get_DMK(1, 0, i, j) << " ";
+        //     }
+        //     std::cout << std::endl;
+        // }
 
         pdgemm_(&N_char,
                 &T_char,
@@ -395,63 +378,37 @@ void IState_Charge::idmatrix(const int& ib,
                 &one_int,
                 this->loc->ParaV->desc);
 
-        std::cout << "Old loc->dm implementation: " << std::endl;
-        for (size_t i = 0; i < this->loc->dm_gamma.size(); ++i)
-        {
-            std::cout << "dm_gamma[" << i << "]:" << std::endl;
-            const auto& matrix = this->loc->dm_gamma[i];
-            for (size_t row = 0; row < matrix.nr; ++row)
-            {
-                for (size_t col = 0; col < matrix.nc; ++col)
-                {
-                    std::cout << matrix(row, col) << " ";
-                }
-                std::cout << std::endl;
-            }
-            std::cout << std::endl;
-        }
+        // std::cout << "Old loc->dm implementation: " << std::endl;
+        // for (size_t i = 0; i < this->loc->dm_gamma.size(); ++i)
+        // {
+        //     std::cout << "dm_gamma[" << i << "]:" << std::endl;
+        //     const auto& matrix = this->loc->dm_gamma[i];
+        //     for (size_t row = 0; row < matrix.nr; ++row)
+        //     {
+        //         for (size_t col = 0; col < matrix.nc; ++col)
+        //         {
+        //             std::cout << matrix(row, col) << " ";
+        //         }
+        //         std::cout << std::endl;
+        //     }
+        //     std::cout << std::endl;
+        // }
 
-        // 打印After之后dm和Middle时新DM的元素比值
-        std::cout << "Ratio new_DM/old_dm_gamma for spin " << is << ":" << std::endl;
-        for (int i = 0; i < DM.get_DMK_nrow(); ++i)
-        {
-            const auto& matrix = this->loc->dm_gamma[0];
-            for (int j = 0; j < DM.get_DMK_ncol(); ++j)
-            {
-                double ratio = static_cast<double>(DM.get_DMK(1, 0, i, j)) / static_cast<double>(matrix(i, j));
-                std::cout << ratio << " ";
-            }
-            std::cout << std::endl;
-        }
-
-        // this->gint_gamma->transfer_DM2DtoGrid(DM.get_DMR_vector());
+        
+        // std::cout << "Ratio new_DM/old_dm_gamma for spin " << is << ":" << std::endl;
+        // for (int i = 0; i < DM.get_DMK_nrow(); ++i)
+        // {
+        //     const auto& matrix = this->loc->dm_gamma[0];
+        //     for (int j = 0; j < DM.get_DMK_ncol(); ++j)
+        //     {
+        //         double ratio = static_cast<double>(DM.get_DMK(1, 0, i, j)) / static_cast<double>(matrix(i, j));
+        //         std::cout << ratio << " ";
+        //     }
+        //     std::cout << std::endl;
+        // }
     }
 
     std::cout << " Finished calculating dm_2d." << std::endl;
-
-    // 检查 DM.get_DMR_vector() 的内容
-    std::cout << "Checking DM.get_DMR_vector(): " << std::endl;
-    for (const auto& container: DM.get_DMR_vector())
-    {
-        if (container)
-        {
-            std::cout << "Okay." << std::endl;
-        }
-        else
-        {
-            std::cout << "Null container detected." << std::endl;
-        }
-    }
-
-    // 确认 gint_gamma 已初始化
-    if (!this->gint_gamma)
-    {
-        std::cerr << "gint_gamma is not initialized!" << std::endl;
-        return;
-    }
-
-    // this->gint_gamma->transfer_DM2DtoGrid(DM.get_DMR_vector());
-    // gg.transfer_DM2DtoGrid(DM.get_DMR_vector());
 
     this->loc->cal_dk_gamma_from_2D_pub();
     std::cout << " Finished converting dm_2d to dk_gamma." << std::endl;

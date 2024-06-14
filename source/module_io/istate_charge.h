@@ -28,12 +28,6 @@ class IState_Charge
     {
         throw std::logic_error("IState_Charge for multi-k is not implemented.");
     };
-    // IState_Charge(psi::Psi<double>* psi_gamma_in, Local_Orbital_Charge& loc_in);
-    // IState_Charge(psi::Psi<std::complex<double>>* psi_k_in, Local_Orbital_Charge& loc_in)
-    //     : loc(&loc_in), DM(loc_in.ParaV, 1) // 初始化 DM
-    // {
-    //     throw std::logic_error("IState_Charge for multi-k is not implemented.");
-    // }
 
     ~IState_Charge();
 
@@ -76,19 +70,16 @@ class IState_Charge
      * @param nelec Total number of electrons.
      * @param nlocal Number of local orbitals.
      * @param wg Weight matrix for bands and spins.
+     * @param DM Density matrix to be calculated.
      */
     void idmatrix(const int& ib,
                   const int nspin,
                   const double nelec,
                   const int nlocal,
                   const ModuleBase::matrix& wg,
-                  elecstate::DensityMatrix<double, double>& DM,
-                  Gint_Gamma& gg);
+                  elecstate::DensityMatrix<double, double>& DM);
 #endif
     psi::Psi<double>* psi_gamma;
     Local_Orbital_Charge* loc;
-    Gint* gint_gamma;
-    // Charge* charge = nullptr;
-    // elecstate::DensityMatrix<double, double> DM;
 };
 #endif
