@@ -693,7 +693,6 @@ void Gint::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D)
         for (int is = 0; is < this->DMRGint.size(); is++)
         {
 #ifdef __MPI
-            std::cout << "---transfer DMR to grid---" << std::endl;
             hamilt::transferParallels2Serials(*DM2D[is], DMRGint[is]);
 #else
 			this->DMRGint[is]->set_zero();

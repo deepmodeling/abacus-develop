@@ -21,14 +21,8 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
     const int nbands_local = wfc.get_nbands();
     const int nbasis_local = wfc.get_nbasis();
 
-    std::cout << "cal_dm_psi: nbands_local = " << nbands_local << std::endl;
-    std::cout << "cal_dm_psi: nbasis_local = " << nbasis_local << std::endl;
-    std::cout << "cal_dm_psi: wfc.get_nk() = " << wfc.get_nk() << std::endl;
-
     // dm = wfc.T * wg * wfc.conj()
     // dm[is](iw1,iw2) = \sum_{ib} wfc[is](ib,iw1).T * wg(is,ib) * wfc[is](ib,iw2).conj()
-
-    std::cout << "cal_dm_psi: wfc.get_nk() = " << wfc.get_nk() << std::endl;
 
     for (int ik = 0; ik < wfc.get_nk(); ++ik)
     {
@@ -42,9 +36,6 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
         int ib_global = 0;
         for (int ib_local = 0; ib_local < nbands_local; ++ib_local)
         {
-
-            std::cout << "cal_dm_psi: nbands_local = " << nbands_local << std::endl;
-
             while (ib_local != ParaV->global2local_col(ib_global))
             {
                 ++ib_global;
@@ -60,12 +51,8 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
 			}
             const double wg_local = wg(ik, ib_global);
 
-            std::cout << "cal_dm_psi: wg_local = " << wg_local << std::endl;
-            
             double* wg_wfc_pointer = &(wg_wfc(0, ib_local, 0));
             BlasConnector::scal(nbasis_local, wg_local, wg_wfc_pointer, 1);
-
-            std::cout << "cal_dm_psi: BlasConnector::scal: wg_local = " << wg_local << std::endl;
         }
 
         // C++: dm(iw1,iw2) = wfc(ib,iw1).T * wg_wfc(ib,iw2)
@@ -165,9 +152,6 @@ void psiMulPsiMpi(const psi::Psi<double>& psi1,
     const char N_char = 'N', T_char = 'T';
     const int nlocal = desc_dm[2];
     const int nbands = desc_psi[3];
-
-    std::cout << "psiMulPsiMpi: nlocal = " << nlocal << std::endl;
-    std::cout << "psiMulPsiMpi: nbands = " << nbands << std::endl;
 
     pdgemm_(&N_char,
             &T_char,
