@@ -12,23 +12,23 @@ namespace ModuleIO
  * Generates a filename for the DMR output based on the given parameters.
  *
  * @param out_type The output type. 1: csr, 2: npz.
- * @param sparse   A boolean indicating whether the output is sparse.
  * @param ispin    The spin value, starting from 0.
  * @param append   A boolean indicating whether append the data to one file or create a new file.
  * @param istep    The ION step (default: -1), starting from 0.
  * @return         The generated filename as a string.
  */
-std::string dmr_gen_fname(const int out_type, const bool sparse, const int ispin, const bool append = true,
+std::string dmr_gen_fname(const int out_type, const int ispin, const bool append = true,
                           const int istep = -1);
 
+
 /**
- * Writes DMR to a file in CSR format
+ * Writes HContainer to a csr file.
  *
- * @param fname The output stream to write the CSR data to.
- * @param dm The Hamiltonian container to write.
- * @param istep The ION step, starting from 0.
+ * @param fname The name of the file to write the CSR representation to.
+ * @param dm_serial A pointer to the Hamiltonian container.
+ * @param istep The current step number.
  */
-void write_dmr_csr(std::string& fname, const hamilt::HContainer<double>& dm, const int istep);
+void write_dmr_csr(std::string& fname, hamilt::HContainer<double>* dm_serial, const int istep);
 
 /**
  * Writes DMR to a file.
@@ -42,10 +42,9 @@ void write_dmr_csr(std::string& fname, const hamilt::HContainer<double>& dm, con
  * @param istep The ION step, starting from 0.
  * @param pv The Parallel_Orbitals object.
  */
-void write_dmr(const hamilt::HContainer<double>& dm, const int out_type, const bool sparse, const int ispin,
+void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr, const bool out_csr, const bool out_npz,
                const bool append,
-               const int istep, // start from 0
-               const Parallel_Orbitals& pv);
+               const int istep);
 } // namespace ModuleIO
 
 #endif

@@ -12,9 +12,9 @@ namespace hamilt
  * @attention ofs should be open outside of this interface
  */
 template <typename T>
-Output_HContainer<T>::Output_HContainer(hamilt::HContainer<T>* hcontainer, const Parallel_Orbitals* ParaV,
+Output_HContainer<T>::Output_HContainer(hamilt::HContainer<T>* hcontainer, const int nrow, const int ncol,
                                         std::ostream& ofs, double sparse_threshold, int precision)
-    : _hcontainer(hcontainer), _ParaV(ParaV), _ofs(ofs), _sparse_threshold(sparse_threshold), _precision(precision)
+    : _hcontainer(hcontainer), _nrow(nrow), _ncol(ncol), _ofs(ofs), _sparse_threshold(sparse_threshold), _precision(precision)
 {
 }
 
@@ -56,7 +56,7 @@ template <typename T>
 void Output_HContainer<T>::write_single_R(int rx, int ry, int rz)
 {
     this->_hcontainer->fix_R(rx, ry, rz);
-    ModuleIO::SparseMatrix<T> sparse_matrix = ModuleIO::SparseMatrix<T>(this->_ParaV->nrow, this->_ParaV->ncol);
+    ModuleIO::SparseMatrix<T> sparse_matrix = ModuleIO::SparseMatrix<T>(_nrow, _ncol);
     sparse_matrix.setSparseThreshold(this->_sparse_threshold);
     for (int iap = 0; iap < this->_hcontainer->size_atom_pairs(); ++iap)
     {
