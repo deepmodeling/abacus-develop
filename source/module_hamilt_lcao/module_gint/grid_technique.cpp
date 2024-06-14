@@ -32,11 +32,12 @@ Grid_Technique::~Grid_Technique()
 // after the orbital information has been read,
 // this function control the routinue to generate
 // grid technique parameters.
-void Grid_Technique::set_pbc_grid(const int& ncx_in, const int& ncy_in, const int& ncz_in, const int& bx_in,
-                                  const int& by_in, const int& bz_in, const int& nbx_in, const int& nby_in,
-                                  const int& nbz_in, const int& nbxx_in, const int& nbzp_start_in, const int& nbzp_in,
-                                  const int& ny, const int& nplane, const int& startz_current, const UnitCell& ucell,
-                                  const LCAO_Orbitals& orb, const int num_stream)
+void Grid_Technique::set_pbc_grid(const int& ncx_in, const int& ncy_in, const int& ncz_in, const int& bx_in, const int& by_in,
+                      const int& bz_in, const int& nbx_in, const int& nby_in, const int& nbz_in, const int& nbxx_in,
+                      const int& nbzp_start_in, const int& nbzp_in, const int& ny, const int& nplane,
+                      const int& startz_current, const UnitCell& ucell, const double dr_uniform, 
+                      std::vector<double> rcuts,std::vector<std::vector<double>> psi_u,std::vector<std::vector<double>> dpsi_u,
+                      std::vector<std::vector<double>> d2psi_u,const int num_stream)
 {
     ModuleBase::TITLE("Grid_Technique", "init");
     ModuleBase::timer::tick("Grid_Technique", "init");
@@ -46,11 +47,24 @@ void Grid_Technique::set_pbc_grid(const int& ncx_in, const int& ncy_in, const in
         GlobalV::ofs_running << "\n SETUP EXTENDED REAL SPACE GRID FOR GRID INTEGRATION" << std::endl;
     }
 
+    
+    // copy ucell and orb parameters
+    this->ucell = &ucell;
+    this->dr_uniform=dr_uniform;
+    
+    this->nwmax=ucell.nwmax;
+    this->ntype=ucell.ntype;
+    
+    this->rcuts=rcuts;
+    double max_cut = *std::max_element(this->rcuts.begin(), this->rcuts.end());
+    this->nr_max = static_cast<int>(1/this->dr_uniform * max_cut) + 10;
+    this->psi_u=psi_u;
+    this->dpsi_u=dpsi_u;
+    this->d2psi_u=d2psi_u;
+
     // (1) init_meshcell cell and big cell.
     this->set_grid_dim(ncx_in, ncy_in, ncz_in, bx_in, by_in, bz_in, nbx_in, nby_in, nbz_in, nbxx_in, nbzp_start_in,
-                       nbzp_in);
-    this->ucell = &ucell;
-    this->orb = &orb;
+                    nbzp_in);
     this->init_latvec(ucell);
 
     this->init_big_latvec(ucell);
@@ -58,12 +72,8 @@ void Grid_Technique::set_pbc_grid(const int& ncx_in, const int& ncy_in, const in
     this->init_meshcell_pos();
 
     // (2) expand the grid
-    double* rcut = new double[ucell.ntype];
-    for (int T = 0; T < ucell.ntype; T++)
-    {
-        rcut[T] = orb.Phi[T].getRcut();
-    }
-    this->init_grid_expansion(ucell, rcut);
+
+    this->init_grid_expansion(ucell, this->rcuts.data());
 
     // (3) calculate the extended grid.
     this->cal_extended_cell(this->dxe, this->dye, this->dze, this->nbx, this->nby, this->nbz);
@@ -78,7 +88,7 @@ void Grid_Technique::set_pbc_grid(const int& ncx_in, const int& ncy_in, const in
 #if ((defined __CUDA) /* || (defined __ROCM) */)
     if (GlobalV::device_flag == "gpu")
     {
-        this->init_gpu_gint_variables(ucell, orb, num_stream);
+        this->init_gpu_gint_variables(ucell, num_stream);
     }
 #endif
 
@@ -497,7 +507,7 @@ void Grid_Technique::cal_trace_lo(const UnitCell& ucell)
 
 #if ((defined __CUDA) /* || (defined __ROCM) */)
 
-void Grid_Technique::init_gpu_gint_variables(const UnitCell& ucell, const LCAO_Orbitals& orb, const int num_stream)
+void Grid_Technique::init_gpu_gint_variables(const UnitCell& ucell,const int num_stream)
 {
     if (is_malloced)
     {
@@ -513,15 +523,7 @@ void Grid_Technique::init_gpu_gint_variables(const UnitCell& ucell, const LCAO_O
     checkCudaErrors(cudaMalloc((void**)&ylmcoef_g, 100 * sizeof(double)));
     checkCudaErrors(cudaMemcpy(ylmcoef_g, ylmcoef, 100 * sizeof(double), cudaMemcpyHostToDevice));
 
-    const Numerical_Orbital_Lm* pointer;
-    double max_cut = 0;
-    for (int i = 0; i < ucell.ntype; i++)
-    {
-        if (orb.Phi[i].getRcut() > max_cut)
-        {
-            max_cut = orb.Phi[i].getRcut();
-        }
-    }
+    double max_cut = *std::max_element(this->rcuts.begin(), this->rcuts.end());
 
     int atom_nw_now[ucell.ntype];
     int ucell_atom_nwl_now[ucell.ntype];
@@ -554,14 +556,13 @@ void Grid_Technique::init_gpu_gint_variables(const UnitCell& ucell, const LCAO_O
                 atom_iw2_new_now[i * ucell.nwmax + j] = atomx->iw2_new[j];
                 atom_iw2_ylm_now[i * ucell.nwmax + j] = atomx->iw2_ylm[j];
                 atom_iw2_l_now[i * ucell.nwmax + j] = atomx->iw2l[j];
-                pointer = &orb.Phi[i].PhiLN(atomx->iw2l[j], atomx->iw2n[j]);
-                for (int k = 0; k < nr_max; k++)
+                for (int k = 0; k < this->nr_max; k++)
                 {
-                    int index_temp = (i * ucell.nwmax * nr_max + j * nr_max + k) * 2;
-                    if (k < pointer->nr_uniform)
+                    int index_temp = (i * ucell.nwmax * this->nr_max + j * this->nr_max + k) * 2;
+                    if (k < this->psi_u[i * this->nwmax + j].size())
                     {
-                        psi_u_now[index_temp] = pointer->psi_uniform[k];
-                        psi_u_now[index_temp + 1] = pointer->dpsi_uniform[k];
+                        psi_u_now[index_temp] = this->psi_u[i*this->nwmax + j].data()[k];
+                        psi_u_now[index_temp + 1] = this->dpsi_u[i*this->nwmax + j].data()[k];
                     }
                 }
             }

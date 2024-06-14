@@ -48,7 +48,7 @@ void Gint_Gamma::cal_vlocal(Gint_inout* inout,bool new_e_iteration)
 #ifdef __MPI
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
 #endif
-void Gint_Gamma::transfer_pvpR(hamilt::HContainer<double>* hR,const UnitCell* ucell,const LCAO_Orbitals& orb)
+void Gint_Gamma::transfer_pvpR(hamilt::HContainer<double>* hR,const UnitCell* ucell)
 {
     ModuleBase::TITLE("Gint_Gamma","transfer_pvpR");
     ModuleBase::timer::tick("Gint_Gamma","transfer_pvpR");

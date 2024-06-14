@@ -7,13 +7,13 @@
 
 void Gint_k::cal_env_k(int ik, const std::complex<double>* psi_k, double* rho,
                        const std::vector<ModuleBase::Vector3<double>>& kvec_c,
-                       const std::vector<ModuleBase::Vector3<double>>& kvec_d, LCAO_Orbitals& orb, UnitCell& ucell)
+                       const std::vector<ModuleBase::Vector3<double>>& kvec_d, UnitCell& ucell)
 {
     ModuleBase::TITLE("Gint_k", "cal_env_k");
     ModuleBase::timer::tick("Gint_k", "cal_env_k");
 
     // it's a uniform grid to save orbital values, so the delta_r is a constant.
-    const double delta_r = orb.dr_uniform;
+    const double delta_r = this->dr_uniform;
     const int max_size = this->gridt->max_atom;
     const int LD_pool = max_size * ucell.nwmax;
 

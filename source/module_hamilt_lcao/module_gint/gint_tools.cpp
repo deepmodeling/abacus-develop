@@ -102,7 +102,6 @@ void get_block_info(const Grid_Technique& gt, const int bxyz, const int na_grid,
         cal_flag[ib] = new bool[na_grid];
     }
     const UnitCell& ucell = *gt.ucell;
-    const LCAO_Orbitals& orb = *gt.orb;
     block_index[0] = 0;
     for (int id = 0; id < na_grid; id++)
     {
@@ -128,7 +127,7 @@ void get_block_info(const Grid_Technique& gt, const int bxyz, const int na_grid,
             const double distance
                 = std::sqrt(dr[0] * dr[0] + dr[1] * dr[1] + dr[2] * dr[2]); // distance between atom and grid
 
-            if (distance > orb.Phi[it].getRcut() - 1.0e-10)
+            if (distance > gt.rcuts[it] - 1.0e-10)
                 cal_flag[ib][id] = false;
             else
                 cal_flag[ib][id] = true;
@@ -149,7 +148,9 @@ void cal_psir_ylm(
     ModuleBase::timer::tick("Gint_Tools", "cal_psir_ylm");
     std::vector<double> ylma;
     const UnitCell& ucell = *gt.ucell;
-    const LCAO_Orbitals& orb = *gt.orb;
+    std::vector<const double*> it_psi_uniform(gt.nwmax);
+    std::vector<const double*> it_dpsi_uniform(gt.nwmax);
+
     for (int id = 0; id < na_grid; id++)
     {
         // there are two parameters we want to know here:
@@ -160,7 +161,6 @@ void cal_psir_ylm(
         const int iat = gt.which_atom[mcell_index]; // index of atom
         const int it = ucell.iat2it[iat];           // index of atom type
         const Atom* const atom = &ucell.atoms[it];
-        auto& OrbPhi = orb.Phi[it];
         std::vector<const double*> it_psi_uniform(atom->nw);
         std::vector<const double*> it_dpsi_uniform(atom->nw);
         // preprocess index
@@ -168,9 +168,8 @@ void cal_psir_ylm(
         {
             if (atom->iw2_new[iw])
             {
-                auto philn = &OrbPhi.PhiLN(atom->iw2l[iw], atom->iw2n[iw]);
-                it_psi_uniform[iw] = &philn->psi_uniform[0];
-                it_dpsi_uniform[iw] = &philn->dpsi_uniform[0];
+                it_psi_uniform[iw]= gt.psi_u[it*gt.nwmax + iw].data();
+                it_dpsi_uniform[iw] = gt.dpsi_u[it*gt.nwmax + iw].data();
             }
         }
 
@@ -237,7 +236,7 @@ void cal_psir_ylm(
                     }
                     p[iw] = phi * ylma[atom->iw2_ylm[iw]];
                 } // end iw
-            }     // end distance<=(orb.Phi[it].getRcut()-1.0e-15)
+            }     // end distance<=(rcuts[it]-1.0e-15)
         }         // end ib
     }             // end id
     ModuleBase::timer::tick("Gint_Tools", "cal_psir_ylm");
@@ -257,7 +256,10 @@ void cal_dpsir_ylm(
 {
     ModuleBase::timer::tick("Gint_Tools", "cal_dpsir_ylm");
     const UnitCell& ucell = *gt.ucell;
-    const LCAO_Orbitals& orb = *gt.orb;
+    std::vector<const double*> it_psi_uniform(gt.nwmax);
+    std::vector<const double*> it_dpsi_uniform(gt.nwmax);
+    std::vector<int> it_psi_nr_uniform(gt.nwmax);
+
     for (int id = 0; id < na_grid; id++)
     {
         const int mcell_index = gt.bcell_start[grid_index] + id;
@@ -270,6 +272,16 @@ void cal_dpsir_ylm(
         const double mt[3] = {gt.meshball_positions[imcell][0] - gt.tau_in_bigcell[iat][0],
                               gt.meshball_positions[imcell][1] - gt.tau_in_bigcell[iat][1],
                               gt.meshball_positions[imcell][2] - gt.tau_in_bigcell[iat][2]};
+        // preprocess index
+        for (int iw=0; iw< atom->nw; ++iw)
+        {
+            if ( atom->iw2_new[iw] )
+            {
+                it_psi_uniform[iw]= gt.psi_u[it*gt.nwmax + iw].data();
+                it_dpsi_uniform[iw] = gt.dpsi_u[it*gt.nwmax + iw].data();
+                it_psi_nr_uniform[iw]= gt.psi_u[it*gt.nwmax + iw].size();
+            }
+        }
 
         for (int ib = 0; ib < bxyz; ib++)
         {
@@ -301,6 +313,7 @@ void cal_dpsir_ylm(
                 const double position = distance / delta_r;
 
                 const double iq = static_cast<int>(position);
+                const int ip = static_cast<int>(position);
                 const double x0 = position - iq;
                 const double x1 = 1.0 - x0;
                 const double x2 = 2.0 - x0;
@@ -312,14 +325,15 @@ void cal_dpsir_ylm(
 
                 for (int iw = 0; iw < atom->nw; ++iw)
                 {
+		
                     // this is a new 'l', we need 1D orbital wave
                     // function from interpolation method.
                     if (atom->iw2_new[iw])
                     {
-                        const Numerical_Orbital_Lm& philn = orb.Phi[it].PhiLN(atom->iw2l[iw], atom->iw2n[iw]);
-
+                        auto psi_uniform = it_psi_uniform[iw];
+                        auto dpsi_uniform = it_dpsi_uniform[iw];
                         // if ( iq[id] >= philn.nr_uniform-4)
-                        if (iq >= philn.nr_uniform - 4)
+                        if (iq >= it_psi_nr_uniform[iw] - 4)
                         {
                             tmp = dtmp = 0.0;
                         }
@@ -328,11 +342,11 @@ void cal_dpsir_ylm(
                             // use Polynomia Interpolation method to get the
                             // wave functions
 
-                            tmp = x12 * (philn.psi_uniform[iq] * x3 + philn.psi_uniform[iq + 3] * x0)
-                                  + x03 * (philn.psi_uniform[iq + 1] * x2 - philn.psi_uniform[iq + 2] * x1);
+                            tmp = x12 * (psi_uniform[ip] * x3 + psi_uniform[ip + 3] * x0)
+                                  + x03 * (psi_uniform[ip + 1] * x2 - psi_uniform[ip + 2] * x1);
 
-                            dtmp = x12 * (philn.dpsi_uniform[iq] * x3 + philn.dpsi_uniform[iq + 3] * x0)
-                                   + x03 * (philn.dpsi_uniform[iq + 1] * x2 - philn.dpsi_uniform[iq + 2] * x1);
+                            dtmp = x12 * (dpsi_uniform[ip] * x3 + dpsi_uniform[ip + 3] * x0)
+                                   + x03 * (dpsi_uniform[ip + 1] * x2 - dpsi_uniform[ip + 2] * x1);
                         }
                     } // new l is used.
 
@@ -373,7 +387,11 @@ void cal_ddpsir_ylm(
 {
     ModuleBase::timer::tick("Gint_Tools", "cal_ddpsir_ylm");
     const UnitCell& ucell = *gt.ucell;
-    const LCAO_Orbitals& orb = *gt.orb;
+    std::vector<const double*> it_psi_uniform(gt.nwmax);
+    std::vector<const double*> it_dpsi_uniform(gt.nwmax);
+    std::vector<const double*> it_d2psi_uniform(gt.nwmax);
+    std::vector<int> it_psi_nr_uniform(gt.nwmax);
+
     for (int id = 0; id < na_grid; id++)
     {
         const int mcell_index = gt.bcell_start[grid_index] + id;
@@ -386,6 +404,16 @@ void cal_ddpsir_ylm(
         const double mt[3] = {gt.meshball_positions[imcell][0] - gt.tau_in_bigcell[iat][0],
                               gt.meshball_positions[imcell][1] - gt.tau_in_bigcell[iat][1],
                               gt.meshball_positions[imcell][2] - gt.tau_in_bigcell[iat][2]};
+
+        for (int iw=0; iw< atom->nw; ++iw)
+        {
+            if ( atom->iw2_new[iw] )
+            {
+                it_psi_uniform[iw]= gt.psi_u[it*gt.nwmax + iw].data();
+                it_dpsi_uniform[iw] = gt.dpsi_u[it*gt.nwmax + iw].data();
+                it_psi_nr_uniform[iw]= gt.psi_u[it*gt.nwmax + iw].size();
+            }
+        }
 
         for (int ib = 0; ib < bxyz; ib++)
         {
@@ -460,6 +488,7 @@ void cal_ddpsir_ylm(
 
                         const double position = distance1 / delta_r;
 
+                        const int ip = static_cast<int>(position);
                         const double iq = static_cast<int>(position);
                         const double x0 = position - iq;
                         const double x1 = 1.0 - x0;
@@ -476,10 +505,11 @@ void cal_ddpsir_ylm(
                             // function from interpolation method.
                             if (atom->iw2_new[iw])
                             {
-                                const Numerical_Orbital_Lm& philn = orb.Phi[it].PhiLN(atom->iw2l[iw], atom->iw2n[iw]);
+                                auto psi_uniform = it_psi_uniform[iw];
+                                auto dpsi_uniform = it_dpsi_uniform[iw];
 
                                 // if ( iq[id] >= philn.nr_uniform-4)
-                                if (iq >= philn.nr_uniform - 4)
+                                if (iq >= it_psi_nr_uniform[iw]-4)
                                 {
                                     tmp = dtmp = 0.0;
                                 }
@@ -488,11 +518,11 @@ void cal_ddpsir_ylm(
                                     // use Polynomia Interpolation method to get the
                                     // wave functions
 
-                                    tmp = x12 * (philn.psi_uniform[iq] * x3 + philn.psi_uniform[iq + 3] * x0)
-                                          + x03 * (philn.psi_uniform[iq + 1] * x2 - philn.psi_uniform[iq + 2] * x1);
+                                    tmp = x12 * (psi_uniform[ip] * x3 + psi_uniform[ip + 3] * x0)
+                                          + x03 * (psi_uniform[ip + 1] * x2 - psi_uniform[ip + 2] * x1);
 
-                                    dtmp = x12 * (philn.dpsi_uniform[iq] * x3 + philn.dpsi_uniform[iq + 3] * x0)
-                                           + x03 * (philn.dpsi_uniform[iq + 1] * x2 - philn.dpsi_uniform[iq + 2] * x1);
+                                    dtmp = x12 * (dpsi_uniform[ip] * x3 + dpsi_uniform[ip + 3] * x0)
+                                           + x03 * (dpsi_uniform[ip + 1] * x2 - dpsi_uniform[ip + 2] * x1);
                                 }
                             } // new l is used.
 
@@ -546,6 +576,17 @@ void cal_ddpsir_ylm(
                 // the analytical method for evaluating 2nd derivatives
                 // it is not used currently
                 {
+                    // Add it here, but do not run it. If there is a need to run this code 
+                    // in the future, include it in the previous initialization process.
+                    for (int iw=0; iw< atom->nw; ++iw)
+                    {
+                        if ( atom->iw2_new[iw] )
+                        {
+                            it_d2psi_uniform[iw] = gt.d2psi_u[it*gt.nwmax + iw].data();
+                        }
+                    }
+                    // End of code addition section.
+
                     // array to store spherical harmonics and its derivatives
                     std::vector<double> rly;
                     std::vector<std::vector<double>> grly;
@@ -555,6 +596,7 @@ void cal_ddpsir_ylm(
                     const double position = distance / delta_r;
 
                     const double iq = static_cast<int>(position);
+                    const int ip = static_cast<int>(position);
                     const double x0 = position - iq;
                     const double x1 = 1.0 - x0;
                     const double x2 = 2.0 - x0;
@@ -570,10 +612,12 @@ void cal_ddpsir_ylm(
                         // function from interpolation method.
                         if (atom->iw2_new[iw])
                         {
-                            const Numerical_Orbital_Lm& philn = orb.Phi[it].PhiLN(atom->iw2l[iw], atom->iw2n[iw]);
+                            auto psi_uniform = it_psi_uniform[iw];
+                            auto dpsi_uniform = it_dpsi_uniform[iw];
+                            auto ddpsi_uniform = it_d2psi_uniform[iw];
 
                             // if ( iq[id] >= philn.nr_uniform-4)
-                            if (iq >= philn.nr_uniform - 4)
+                            if (iq >= it_psi_nr_uniform[iw]-4)
                             {
                                 tmp = dtmp = ddtmp = 0.0;
                             }
@@ -582,14 +626,14 @@ void cal_ddpsir_ylm(
                                 // use Polynomia Interpolation method to get the
                                 // wave functions
 
-                                tmp = x12 * (philn.psi_uniform[iq] * x3 + philn.psi_uniform[iq + 3] * x0)
-                                      + x03 * (philn.psi_uniform[iq + 1] * x2 - philn.psi_uniform[iq + 2] * x1);
+                                tmp = x12 * (psi_uniform[ip] * x3 + psi_uniform[ip + 3] * x0)
+                                      + x03 * (psi_uniform[ip + 1] * x2 - psi_uniform[ip + 2] * x1);
 
-                                dtmp = x12 * (philn.dpsi_uniform[iq] * x3 + philn.dpsi_uniform[iq + 3] * x0)
-                                       + x03 * (philn.dpsi_uniform[iq + 1] * x2 - philn.dpsi_uniform[iq + 2] * x1);
+                                dtmp = x12 * (dpsi_uniform[ip] * x3 + dpsi_uniform[ip + 3] * x0)
+                                       + x03 * (dpsi_uniform[ip + 1] * x2 - dpsi_uniform[ip + 2] * x1);
 
-                                ddtmp = x12 * (philn.ddpsi_uniform[iq] * x3 + philn.ddpsi_uniform[iq + 3] * x0)
-                                        + x03 * (philn.ddpsi_uniform[iq + 1] * x2 - philn.ddpsi_uniform[iq + 2] * x1);
+                                ddtmp = x12 * (ddpsi_uniform[ip] * x3 + ddpsi_uniform[ip + 3] * x0)
+                                        + x03 * (ddpsi_uniform[ip + 1] * x2 - ddpsi_uniform[ip + 2] * x1);
                             }
                         } // new l is used.
 
@@ -656,7 +700,6 @@ void cal_dpsirr_ylm(
 {
     ModuleBase::timer::tick("Gint_Tools", "cal_dpsirr_ylm");
     const UnitCell& ucell = *gt.ucell;
-    const LCAO_Orbitals& orb = *gt.orb;
     for (int id = 0; id < na_grid; id++)
     {
         const int mcell_index = gt.bcell_start[grid_index] + id;
@@ -1052,7 +1095,6 @@ void mult_psi_DMR(const Grid_Technique& gt, const int bxyz, const int& grid_inde
     double *psi2, *psi2_dmr;
     int iwi, iww;
     const UnitCell& ucell = *gt.ucell;
-    const LCAO_Orbitals& orb = *gt.orb;
     const int LD_pool = gt.max_atom * ucell.nwmax;
     bool* all_out_of_range = new bool[na_grid];
     for (int ia = 0; ia < na_grid; ++ia) // number of atoms

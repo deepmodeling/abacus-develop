@@ -79,13 +79,28 @@ class Grid_Technique : public Grid_MeshBall
     const UnitCell* ucell;
     const LCAO_Orbitals* orb;
 
+    // UnitCell parameters
+    int nwmax;
+    int nr_max;
+    int ntype;
+
+    // LCAO Orbitals
+    double dr_uniform;
+		std::vector<double> rcuts;
+    std::vector<std::vector<double>> psi_u;
+    std::vector<std::vector<double>> dpsi_u;
+    std::vector<std::vector<double>> d2psi_u;
+
     // indexes for nnrg -> orbital index + R index
     std::vector<gridIntegral::gridIndex> nnrg_index;
 
     void set_pbc_grid(const int& ncx_in, const int& ncy_in, const int& ncz_in, const int& bx_in, const int& by_in,
                       const int& bz_in, const int& nbx_in, const int& nby_in, const int& nbz_in, const int& nbxx_in,
                       const int& nbzp_start_in, const int& nbzp_in, const int& ny, const int& nplane,
-                      const int& startz_current, const UnitCell& ucell, const LCAO_Orbitals& orb, const int num_stream);
+                      const int& startz_current, const UnitCell& ucell, const double dr_uniform, 
+                      std::vector<double> rcuts,std::vector<std::vector<double>> psi_u,
+                      std::vector<std::vector<double>> dpsi_u,std::vector<std::vector<double>> d2psi_u
+                      ,const int num_stream);
 
     /// number of elements(basis-pairs) in this processon
     /// on all adjacent atoms-pairs(Grid division)
@@ -128,7 +143,6 @@ class Grid_Technique : public Grid_MeshBall
     bool* atom_new_g;
     int* atom_ylm_g;
     int* atom_l_g;
-    int nr_max;
 
     int nstreams = 4;
     // streams[nstreams]
@@ -136,7 +150,7 @@ class Grid_Technique : public Grid_MeshBall
     matrix_multiple_func_type fastest_matrix_mul;
 
   private:
-    void init_gpu_gint_variables(const UnitCell& ucell, const LCAO_Orbitals& orb, const int num_stream);
+    void init_gpu_gint_variables(const UnitCell& ucell, const int num_stream);
     void free_gpu_gint_variables(int nat);
 
 #endif

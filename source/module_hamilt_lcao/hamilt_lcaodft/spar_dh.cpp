@@ -71,7 +71,6 @@ void sparse_format::cal_dH(
 			sparse_thr, 
 			&lm, 
 			lm.ParaV,
-			GlobalC::ORB,
 			GlobalC::ucell,
 			GlobalC::GridD);
 

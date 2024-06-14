@@ -13,7 +13,7 @@
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
-class Gint
+class Gint :public Grid_Technique
 {
     public:
 
@@ -57,7 +57,6 @@ class Gint
 
     const Grid_Technique* gridt = nullptr;
     const UnitCell* ucell;
-    const LCAO_Orbitals* orb ;
     protected:
 
     // variables related to FFT grid
