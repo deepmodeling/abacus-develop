@@ -5,8 +5,8 @@ repos:
     hooks:
       - id: clang-format
         args: [-i]
-      # - id: clang-tidy
-      #   args: [-p=build, --fix-errors]
+      - id: clang-tidy
+        args: [-p=build, --fix-errors]
       # - id: oclint
       # - id: uncrustify
       # - id: cppcheck
