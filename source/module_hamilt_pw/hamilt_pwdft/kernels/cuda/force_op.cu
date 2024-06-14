@@ -132,9 +132,8 @@ void cal_vkb1_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_devi
             reinterpret_cast<const thrust::complex<FPTYPE>*>(vkb),
             gcar,// array of data
             reinterpret_cast<thrust::complex<FPTYPE>*>(vkb1)); // array of data
-    
-    cudaErrcheck(cudaGetLastError());
-    cudaErrcheck(cudaDeviceSynchronize());
+
+    cudaCheckOnDebug();
 }
 
 template <typename FPTYPE>
@@ -173,9 +172,8 @@ void cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
             reinterpret_cast<const thrust::complex<FPTYPE>*>(becp),
             reinterpret_cast<const thrust::complex<FPTYPE>*>(dbecp),
             force);// array of data
-    
-    cudaErrcheck(cudaGetLastError());
-    cudaErrcheck(cudaDeviceSynchronize());
+
+    cudaCheckOnDebug();
 }
 
 template struct cal_vkb1_nl_op<float, base_device::DEVICE_GPU>;

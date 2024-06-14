@@ -64,7 +64,7 @@ with open(output_file, 'w') as output:
     
     output.write("iz\t\t Average(Ry)\t\t z(Angstrom)\t\t Average(eV)\n")
     for iz in range(nz):
-        output.write("{:<7d}\t{:>16.9e}\t{:>16.9e}\t{:>16.9e}\n".format(iz, z_Ang[iz], average[iz], average_eV[iz]))
+        output.write("{:<7d}\t{:>16.9e}\t{:>16.9e}\t{:>16.9e}\n".format(iz, average[iz], z_Ang[iz], average_eV[iz]))
 
 
 z_values = z_Ang

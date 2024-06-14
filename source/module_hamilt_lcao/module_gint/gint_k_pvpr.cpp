@@ -492,7 +492,7 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<double> *hR,const UnitCell* ucell_
 
                             int ixxx = DM_start + this->gridt->find_R2st[iat][nad];
                             
-                            hamilt::BaseMatrix<double>* tmp_matrix = this->hRGint->find_matrix(iat, iat2, dR.x, dR.y, dR.z);
+                            hamilt::BaseMatrix<double>* tmp_matrix = this->hRGint->find_matrix(iat, iat2, dR);
 #ifdef __DEBUG
                             assert(tmp_matrix != nullptr);
 #endif
@@ -508,7 +508,7 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<double> *hR,const UnitCell* ucell_
                             // save the lower triangle.
                             if(iat < iat2)//skip iat == iat2
                             {
-                                hamilt::BaseMatrix<double>* conj_matrix = this->hRGint->find_matrix(iat2, iat, -dR.x, -dR.y, -dR.z);
+                                hamilt::BaseMatrix<double>* conj_matrix = this->hRGint->find_matrix(iat2, iat, -dR);
 #ifdef __DEBUG
                                 assert(conj_matrix != nullptr);
 #endif
@@ -617,7 +617,7 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>> *hR,const Un
 
                             int ixxx = DM_start + this->gridt->find_R2st[iat][nad];
                             
-                            hamilt::BaseMatrix<std::complex<double>>* tmp_matrix = this->hRGintCd->find_matrix(iat, iat2, dR.x, dR.y, dR.z);
+                            hamilt::BaseMatrix<std::complex<double>>* tmp_matrix = this->hRGintCd->find_matrix(iat, iat2, dR);
 #ifdef __DEBUG
                             assert(tmp_matrix != nullptr);
 #endif
@@ -666,7 +666,7 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>> *hR,const Un
                             // save the lower triangle.
                             if(iat < iat2)
                             {
-                                hamilt::BaseMatrix<std::complex<double>>* conj_matrix = this->hRGintCd->find_matrix(iat2, iat, -dR.x, -dR.y, -dR.z);
+                                hamilt::BaseMatrix<std::complex<double>>* conj_matrix = this->hRGintCd->find_matrix(iat2, iat, -dR);
 #ifdef __DEBUG
                                 assert(conj_matrix != nullptr);
 #endif

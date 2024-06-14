@@ -20,16 +20,8 @@
  * @param CTOT Global matrix from which the submatrix is extracted.
  * @return int Always returns 0 as a success indicator.
  */
-inline int CTOT2q(const int myid,
-                  const int naroc[2],
-                  const int nb,
-                  const int dim0,
-                  const int dim1,
-                  const int iprow,
-                  const int ipcol,
-                  const int nbands,
-                  double* work,
-                  double** const CTOT)
+inline int CTOT2q(const int myid, const int naroc[2], const int nb, const int dim0, const int dim1, const int iprow,
+                  const int ipcol, const int nbands, double* work, double** const CTOT)
 {
     for (int j = 0; j < naroc[1]; ++j)
     {
@@ -67,16 +59,8 @@ inline int CTOT2q(const int myid,
  * @param CTOT Global matrix from which the submatrix is extracted.
  * @return int Always returns 0 as a success indicator.
  */
-inline int CTOT2q_c(const int myid,
-                    const int naroc[2],
-                    const int nb,
-                    const int dim0,
-                    const int dim1,
-                    const int iprow,
-                    const int ipcol,
-                    const int nbands,
-                    std::complex<double>* work,
-                    std::complex<double>** const CTOT)
+inline int CTOT2q_c(const int myid, const int naroc[2], const int nb, const int dim0, const int dim1, const int iprow,
+                    const int ipcol, const int nbands, std::complex<double>* work, std::complex<double>** const CTOT)
 {
     for (int j = 0; j < naroc[1]; ++j)
     {
@@ -99,21 +83,15 @@ inline int CTOT2q_c(const int myid,
 }
 
 // be called in local_orbital_wfc::allocate_k
-int ModuleIO::read_wfc_nao_complex(std::complex<double>** ctot,
-                                   const int& ik,
-                                   const int& nb2d,
-                                   const int& nbands_g,
-                                   const int& nlocal_g,
-                                   const std::string& global_readin_dir,
-                                   const ModuleBase::Vector3<double> kvec_c,
-                                   const Parallel_Orbitals* ParaV,
-                                   psi::Psi<std::complex<double>>* psi,
-                                   elecstate::ElecState* pelec)
+int ModuleIO::read_wfc_nao_complex(std::complex<double>** ctot, const int& ik, const int& nb2d, const int& nbands_g,
+                                   const int& nlocal_g, const std::string& global_readin_dir,
+                                   const ModuleBase::Vector3<double> kvec_c, const Parallel_Orbitals* ParaV,
+                                   psi::Psi<std::complex<double>>* psi, elecstate::ElecState* pelec)
 {
     ModuleBase::TITLE("ModuleIO", "read_wfc_nao_complex");
     ModuleBase::timer::tick("ModuleIO", "read_wfc_nao_complex");
 
-    std::string ss = global_readin_dir + ModuleIO::wfc_nao_gen_fname(1,false,true,ik);
+    std::string ss = global_readin_dir + ModuleIO::wfc_nao_gen_fname(1, false, true, ik);
     std::ifstream ifs;
     int error = 0;
 
@@ -206,6 +184,7 @@ int ModuleIO::read_wfc_nao_complex(std::complex<double>** ctot,
 
 #ifdef __MPI
     Parallel_Common::bcast_int(error);
+    // then broadcast the "weigths" of present k-point, with length pelec->wg.nc
     Parallel_Common::bcast_double(&pelec->wg.c[ik * pelec->wg.nc], pelec->wg.nc);
 #endif
 
@@ -257,16 +236,9 @@ int ModuleIO::read_wfc_nao_complex(std::complex<double>** ctot,
     return 0;
 }
 
-int ModuleIO::read_wfc_nao(double** ctot,
-                           const int& is,
-                           const bool& gamma_only_local,
-                           const int& nb2d,
-                           const int& nbands_g,
-                           const int& nlocal_g,
-                           const std::string& global_readin_dir,
-                           const Parallel_Orbitals* ParaV,
-                           psi::Psi<double>* psid,
-                           elecstate::ElecState* pelec)
+int ModuleIO::read_wfc_nao(double** ctot, const int& is, const bool& gamma_only_local, const int& nb2d,
+                           const int& nbands_g, const int& nlocal_g, const std::string& global_readin_dir,
+                           const Parallel_Orbitals* ParaV, psi::Psi<double>* psid, elecstate::ElecState* pelec)
 {
     ModuleBase::TITLE("ModuleIO", "read_wfc_nao");
     ModuleBase::timer::tick("ModuleIO", "read_wfc_nao");
@@ -378,13 +350,8 @@ int ModuleIO::read_wfc_nao(double** ctot,
     return 0;
 }
 
-void ModuleIO::distri_wfc_nao(double** ctot,
-                              const int& is,
-                              const int& nb2d,
-                              const int& nbands_g,
-                              const int& nlocal_g,
-                              const Parallel_Orbitals* ParaV,
-                              psi::Psi<double>* psid)
+void ModuleIO::distri_wfc_nao(double** ctot, const int& is, const int& nb2d, const int& nbands_g, const int& nlocal_g,
+                              const Parallel_Orbitals* ParaV, psi::Psi<double>* psid)
 {
     ModuleBase::TITLE("ModuleIO", "distri_wfc_nao");
 #ifdef __MPI
@@ -455,12 +422,8 @@ void ModuleIO::distri_wfc_nao(double** ctot,
     return;
 }
 
-void ModuleIO::distri_wfc_nao_complex(std::complex<double>** ctot,
-                                      const int& ik,
-                                      const int& nb2d,
-                                      const int& nbands_g,
-                                      const Parallel_Orbitals* ParaV,
-                                      psi::Psi<std::complex<double>>* psi)
+void ModuleIO::distri_wfc_nao_complex(std::complex<double>** ctot, const int& ik, const int& nb2d, const int& nbands_g,
+                                      const Parallel_Orbitals* ParaV, psi::Psi<std::complex<double>>* psi)
 {
     ModuleBase::TITLE("ModuleIO", "distri_wfc_nao_complex");
 #ifdef __MPI
