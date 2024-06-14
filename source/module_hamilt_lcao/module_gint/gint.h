@@ -235,11 +235,14 @@ class Gint
     double** pvpR_reduced = nullptr; //stores Hamiltonian in reduced format, for multi-l
     hamilt::HContainer<double>* hRGint = nullptr; //stores Hamiltonian in sparse format
     hamilt::HContainer<std::complex<double>>* hRGintCd = nullptr; //stores Hamiltonian in sparse format
-    std::vector<hamilt::HContainer<double>*> DMRGint; //stores DMR in sparse format
+    // std::vector<hamilt::HContainer<double>*> DMRGint; //stores DMR in sparse format
     hamilt::HContainer<double>* DMRGint_full = nullptr; //tmp tools used in transfer_DM2DtoGrid
     double** pvdpRx_reduced = nullptr;
     double** pvdpRy_reduced = nullptr;
     double** pvdpRz_reduced = nullptr;
+
+    public:
+        std::vector<hamilt::HContainer<double>*> DMRGint; //stores DMR in sparse format
 };
 
 #endif

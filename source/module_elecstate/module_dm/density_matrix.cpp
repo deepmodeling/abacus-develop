@@ -619,8 +619,14 @@ void DensityMatrix<double, double>::cal_DMR()
     int ld_hk = this->_paraV->nrow;
     for (int is = 1; is <= this->_nspin; ++is)
     {
+            std::cout << "---DensityMatrix<double, double>::cal_DMR()---" << std::endl;
+
         int ik_begin = this->_nks * (is - 1); // jump this->_nks for spin_down if nspin==2
+            std::cout << "---DensityMatrix<double, double>::cal_DMR()---" << std::endl;
+
         hamilt::HContainer<double>* tmp_DMR = this->_DMR[is - 1];
+            std::cout << "---DensityMatrix<double, double>::cal_DMR()---" << std::endl;
+
         // set zero since this function is called in every scf step
         tmp_DMR->set_zero();
         
