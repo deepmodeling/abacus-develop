@@ -866,9 +866,9 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::P
     {
         this->pdiagh->diag(hm, psi, eigenvalue);
     }
-    else // method == "dav"
+    else if (this->method == "dav")
     {
-            // Allow 5 tries at most. If ntry > ntry_max = 5, exit diag loop.
+        // Allow 5 tries at most. If ntry > ntry_max = 5, exit diag loop.
         const int ntry_max = 5;
         // In non-self consistent calculation, do until totally converged. Else allow 5 eigenvecs to be NOT converged.
         const int notconv_max = ("nscf" == GlobalV::CALCULATION)? 0: 5;

@@ -90,21 +90,20 @@ class Diago_DavSubspace : public DiagH<T, Device>
     base_device::AbacusDevice_t device = {};
 
     void cal_grad(
-      
-      
-      const Func& hpsi_func,
-      
-      hamilt::Hamilt<T, Device>* phm_in,
 
-                  const int& dim,
-                  const int& nbase,
-                  const int& notconv,
-                  // psi::Psi<T, Device>& basis,
-                  T* psi_iter,
-                  T* hphi,
-                  T* vcc,
-                  const int* unconv,
-                  std::vector<Real>* eigenvalue_iter);
+        const Func& hpsi_func,
+
+        // hamilt::Hamilt<T, Device>* phm_in,
+
+        const int& dim,
+        const int& nbase,
+        const int& notconv,
+        // psi::Psi<T, Device>& basis,
+        T* psi_iter,
+        T* hphi,
+        T* vcc,
+        const int* unconv,
+        std::vector<Real>* eigenvalue_iter);
 
     void cal_elem(const int& dim,
                   int& nbase,
@@ -137,11 +136,10 @@ class Diago_DavSubspace : public DiagH<T, Device>
                      bool init,
                      bool is_subspace);
 
-    int diag_once(
-          const Func& hpsi_func,
+    int diag_once(const Func& hpsi_func,
                   T* psi_in,
-      
-      hamilt::Hamilt<T, Device>* phm_in,
+
+                  // hamilt::Hamilt<T, Device>* phm_in,
                   psi::Psi<T, Device>& psi,
 
                   Real* eigenvalue_in,

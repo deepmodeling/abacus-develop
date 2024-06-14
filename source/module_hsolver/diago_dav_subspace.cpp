@@ -88,7 +88,7 @@ int Diago_DavSubspace<T, Device>::diag_once(
     const Func& hpsi_func,
     T* psi_in,
 
-    hamilt::Hamilt<T, Device>* phm_in,
+    // hamilt::Hamilt<T, Device>* phm_in,
     psi::Psi<T, Device>& psi,
 
     Real* eigenvalue_in_hsolver,
@@ -172,7 +172,7 @@ int Diago_DavSubspace<T, Device>::diag_once(
 
             hpsi_func,
 
-            phm_in,
+            // phm_in,
             this->dim,
             nbase,
             this->notconv,
@@ -298,7 +298,7 @@ void Diago_DavSubspace<T, Device>::cal_grad(
 
     const Func& hpsi_func,
 
-    hamilt::Hamilt<T, Device>* phm_in,
+    // hamilt::Hamilt<T, Device>* phm_in,
 
     const int& dim,
     const int& nbase,
@@ -877,7 +877,7 @@ int Diago_DavSubspace<T, Device>::diag(const Func& hpsi_func,
             hpsi_func,
             psi_in,
 
-            phm_in,
+            // phm_in,
             psi,
 
             eigenvalue_in_hsolver,
