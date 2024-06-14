@@ -1,7 +1,7 @@
 #include "gint_tools.h"
 #include "module_base/timer.h"
 #include "module_base/ylm.h"
-namespace Gint_Tools
+inline namespace Gint_Tools
 {
 void mult_psi_DMR(const Grid_Technique& gt, const int bxyz, const int& grid_index, const int& na_grid,
                   const int* const block_index, const int* const block_size, bool** cal_flag, double** psi,

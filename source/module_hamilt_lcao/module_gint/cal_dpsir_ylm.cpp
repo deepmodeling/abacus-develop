@@ -1,7 +1,7 @@
 #include "gint_tools.h"
 #include "module_base/timer.h"
 #include "module_base/ylm.h"
-namespace Gint_Tools
+inline namespace Gint_Tools
 {
 void cal_dpsir_ylm(
     const Grid_Technique& gt, const int bxyz,
