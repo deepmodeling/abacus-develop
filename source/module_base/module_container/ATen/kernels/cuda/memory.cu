@@ -57,13 +57,12 @@ void resize_memory<T, Device>::operator()(
 template <typename T, typename Device>
 void set_memory<T, Device>::operator()(
     T* arr,
-    const T& var, 
-    const size_t& size) 
+    const T& var,
+    const size_t& size)
 {
     const int block = static_cast<int>((size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK);
     do_set_memory<<<block, THREADS_PER_BLOCK>>>(arr, var, size);
-    cudaErrcheck(cudaGetLastError());
-    cudaErrcheck(cudaDeviceSynchronize());
+    cudaCheckOnDebug();
 }
 
 template <typename T>
@@ -109,8 +108,7 @@ struct cast_memory<T_out, T_in, container::DEVICE_GPU, container::DEVICE_GPU> {
     {
         const int block = static_cast<int>((size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK);
         do_cast_memory<<<block, THREADS_PER_BLOCK>>>(arr_out, arr_in, size);
-        cudaErrcheck(cudaGetLastError());
-        cudaErrcheck(cudaDeviceSynchronize());
+        cudaCheckOnDebug();
     }
 };
 
@@ -127,8 +125,7 @@ struct cast_memory<T_out, T_in, container::DEVICE_GPU, container::DEVICE_CPU> {
         cudaErrcheck(cudaMemcpy(arr, arr_in, sizeof(T_in) * size, cudaMemcpyHostToDevice));
         const int block = static_cast<int>((size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK);
         do_cast_memory<<<block, THREADS_PER_BLOCK>>>(arr_out, arr, size);
-        cudaErrcheck(cudaGetLastError());
-        cudaErrcheck(cudaDeviceSynchronize());
+        cudaCheckOnDebug();
         cudaErrcheck(cudaFree(arr));
     }
 };
