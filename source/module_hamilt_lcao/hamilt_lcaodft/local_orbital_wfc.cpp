@@ -87,8 +87,7 @@ void Local_Orbital_wfc::gamma_file(psi::Psi<double>* psid, elecstate::ElecState*
         }
         if (this->error)
         {
-            std::cout << "WARNING: Failed to read in wavefunction, use default initialization instead." << std::endl;
-            break;
+            ModuleBase::WARNING_QUIT("Local_Orbital_wfc::gamma_file", "Failed to read in wavefunction.");
         }
     } // loop ispin
 }
@@ -194,9 +193,7 @@ void Local_Orbital_wfc::allocate_k(const int& lgd, psi::Psi<std::complex<double>
             }
             if (this->error)
             {
-                std::cout << "WARNING: Failed to read in wavefunction, use default initialization instead."
-                          << std::endl;
-                break;
+                ModuleBase::WARNING_QUIT("Local_Orbital_wfc::allocate_k","Failed to read in wavefunction.");
             }
         }
     }
