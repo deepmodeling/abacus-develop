@@ -314,7 +314,9 @@ void HTransPara<T>::unpack_data(int irank, const T* values)
             size_begin += size_row * size_col * number_R;
 #endif
             ap_data_tmp += number_R * 3;
+        }
     }
+
 
 #ifdef _OPENMP
 #pragma omp parallel for 
