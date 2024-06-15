@@ -892,8 +892,8 @@ void Input_Conv::Convert(void)
 
     //elpa related
 #ifdef __MPI
-    template <typename T>
-    hsolver::DiagoElpa<T>::elpa_num_thread = INPUT.elpa_num_thread;
+    hsolver::DiagoElpa<std::complex<double>>::elpa_num_thread = INPUT.elpa_num_thread;
+    hsolver::DiagoElpa<double>::elpa_num_thread = INPUT.elpa_num_thread;
 #endif
     ModuleBase::timer::tick("Input_Conv", "Convert");
     return;
