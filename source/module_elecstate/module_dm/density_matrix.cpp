@@ -460,11 +460,9 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR()
     ModuleBase::TITLE("DensityMatrix", "cal_DMR");
 
     // To check whether DMR has been initialized
-    if (this->_DMR.empty())
-    {
-        ModuleBase::WARNING_QUIT("DensityMatrix::cal_DMR", "DMR has not been initialized!");
-        return;
-    }
+#ifdef __DEBUG
+    assert(!this->_DMR.empty() && "DMR has not been initialized!");
+#endif
     
     ModuleBase::timer::tick("DensityMatrix", "cal_DMR");
     int ld_hk = this->_paraV->nrow;
@@ -625,11 +623,9 @@ void DensityMatrix<double, double>::cal_DMR()
     ModuleBase::TITLE("DensityMatrix", "cal_DMR");
 
     // To check whether DMR has been initialized
-    if (this->_DMR.empty())
-    {
-        ModuleBase::WARNING_QUIT("DensityMatrix::cal_DMR", "DMR has not been initialized!");
-        return;
-    }
+#ifdef __DEBUG
+    assert(!this->_DMR.empty() && "DMR has not been initialized!");
+#endif
 
     ModuleBase::timer::tick("DensityMatrix", "cal_DMR");
     int ld_hk = this->_paraV->nrow;
