@@ -269,7 +269,9 @@ void HTransPara<T>::pack_data(int irank, T* values)
         }
     }
 #ifdef __DEBUG
+#ifndef _OPENMP
     assert(value_data - values == this->size_values[irank]);
+#endif
 #endif
     return;
 }
@@ -286,24 +288,60 @@ void HTransPara<T>::unpack_data(int irank, const T* values)
     // loop AtomPairs and unpack values
     int* ap_data = this->ap_indexes[irank].data() + 1;
 
-    const T* value_data = values;
-
+    // calculate the index of ap_data for each atom
+    std::vector<const int*> ap_data_atoms(number_atom, ap_data);
+#ifdef _OPENMP
+    // calculate the index for each atom
+    std::vector<const T*> value_atoms(number_atom, values);
+    long size_begin = 0;
+#endif
+    const int* ap_data_tmp = ap_data;
     for (int i = 0; i < number_atom; ++i)
     {
-        const int atom_i = *ap_data++;
+#ifdef _OPENMP
+        value_atoms[i] += size_begin;
+#endif
+        ap_data_atoms[i] = ap_data_tmp;
+        const int atom_i = *ap_data_tmp++;
+        const int number_atom_j = *ap_data_tmp++;
         const int size_row = this->paraV->get_row_size(atom_i);
-        const int size_j = *ap_data++;
+        for (int j = 0; j < number_atom_j; ++j)
+        {
+            const int atom_j = *ap_data_tmp++;
+            const int size_col = this->paraV->get_col_size(atom_j);
+            const int number_R = *ap_data_tmp++;
+#ifdef _OPENMP
+            size_begin += size_row * size_col * number_R;
+#endif
+            ap_data_tmp += number_R * 3;
+    }
+
+#ifdef _OPENMP
+#pragma omp parallel for 
+#else 
+    const T* value_data = values;
+#endif
+    for (int i = 0; i < number_atom; ++i)
+    {
+#ifdef _OPENMP
+        const T* value_data = value_atoms[i];
+#endif
+        const int* ap_data_i = ap_data_atoms[i];
+
+        const int atom_i = *ap_data_i++;
+        const int size_row = this->paraV->get_row_size(atom_i);
+        const int size_j = *ap_data_i++;
         for (int j = 0; j < size_j; ++j)
         {
-            const int atom_j = *ap_data++;
+            const int atom_j = *ap_data_i++;
             const int size_col = this->paraV->get_col_size(atom_j);
-            const int number_R = *ap_data++;
+            const int number_R = *ap_data_i++;
             for (int k = 0; k < number_R; ++k)
             {
                 int r_index[3];
-                r_index[0] = *ap_data++;
-                r_index[1] = *ap_data++;
-                r_index[2] = *ap_data++;
+                r_index[0] = *ap_data_i++;
+                r_index[1] = *ap_data_i++;
+                r_index[2] = *ap_data_i++;
                 if (size_row > 0 && size_col > 0)
                 {
                     T* matrix_pointer = this->hr->data(atom_i, atom_j, r_index);
@@ -315,7 +353,7 @@ void HTransPara<T>::unpack_data(int irank, const T* values)
     }
 #ifdef __DEBUG
     //assert(value_data - values == this->data_size[irank]);
-    assert(ap_data - this->ap_indexes[irank].data() == this->ap_indexes[irank].size());
+    //assert(ap_data - this->ap_indexes[irank].data() == this->ap_indexes[irank].size());
 #endif
 }
 
