@@ -26,7 +26,6 @@
 template<>
 void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
     LCAO_Matrix& lm,
-    LCAO_gen_fixedH& gen_h,
     const ORB_gen_tables* uot,
     const int& nks,
     const std::vector<ModuleBase::Vector3<double>>& kvec_d)
@@ -99,7 +98,7 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
           pv,
           *uot, 
           &GlobalC::GridD, 
-          gen_h.LM->SlocR.data());
+          lm.SlocR.data());
 
     //-----------------------------------------
     // (2) allocate for <phi | T + Vnl | dphi>
@@ -131,7 +130,7 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
 			pv,
 			*uot, 
 			&GlobalC::GridD, 
-			gen_h.LM->Hloc_fixedR.data());
+			lm.Hloc_fixedR.data());
 
     // calculate dVnl=<phi|dVnl|dphi> in LCAO
 	LCAO_domain::build_Nonlocal_mu_new(
@@ -316,7 +315,6 @@ void Force_LCAO<std::complex<double>>::test(
 #ifdef __DEEPKS
         ModuleBase::matrix& svnl_dalpha,
 #endif
-        LCAO_gen_fixedH& gen_h,
         TGint<std::complex<double>>::type& gint,
         const ORB_gen_tables* uot,
         const Parallel_Orbitals& pv,
@@ -333,7 +331,6 @@ void Force_LCAO<std::complex<double>>::test(
         this->allocate(
             pv,
             lm,
-            gen_h,
             uot,
             kv->get_nks(),
             kv->kvec_d);

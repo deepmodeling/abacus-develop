@@ -46,7 +46,6 @@ void sparse_format::cal_TR(
         LCAO_Matrix &lm,
 	    Grid_Driver &grid,
         const ORB_gen_tables* uot,
-		LCAO_gen_fixedH &gen_h,
 		const double &sparse_thr)
 {
     ModuleBase::TITLE("sparse_format","cal_TR");

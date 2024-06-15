@@ -78,7 +78,7 @@ void single_derivative(
 					olm);
 			break;
 		default:  // not supposed to happen
-			ModuleBase::WARNING_QUIT("LCAO_gen_fixedH::build_ST_new","dtype must be S or T");
+			ModuleBase::WARNING_QUIT("LCAO_domain::build_ST_new","dtype must be S or T");
 	}
 #else
 	uot.snap_psipsi( orb, olm, 1, dtype,
@@ -164,7 +164,7 @@ void single_derivative(
 			}
 			else
 			{
-				ModuleBase::WARNING_QUIT("LCAO_gen_fixedH::build_ST_new","nspin must be 1, 2 or 4");
+				ModuleBase::WARNING_QUIT("LCAO_domain::build_ST_new","nspin must be 1, 2 or 4");
 			}// end condition 9, nspin
 
 			if(cal_stress)
@@ -228,12 +228,12 @@ void single_derivative(
 				}
 				else
 				{
-					ModuleBase::WARNING_QUIT("LCAO_gen_fixedH::build_ST_new","is must be 0, 1, 2, 3");
+					ModuleBase::WARNING_QUIT("LCAO_domain::build_ST_new","is must be 0, 1, 2, 3");
 				}// end condition 10, details of spin 4
 			}
 			else
 			{
-				ModuleBase::WARNING_QUIT("LCAO_gen_fixedH::build_ST_new","nspin must be 1, 2 or 4");
+				ModuleBase::WARNING_QUIT("LCAO_domain::build_ST_new","nspin must be 1, 2 or 4");
 			}// end condition 9, nspin
 		}// end condition 8, S or T
 		++total_nnr;
@@ -296,7 +296,7 @@ void single_overlap(
 					T2, L2, N2, M2, dtau * ucell.lat0, olm);
 			break;
 		default:  // not supposed to happen
-			ModuleBase::WARNING_QUIT("LCAO_gen_fixedH::build_ST_new","dtype must be S or T");
+			ModuleBase::WARNING_QUIT("LCAO_domain::build_ST_new","dtype must be S or T");
 	}
 #else
 	uot.snap_psipsi( orb, olm, 0, dtype,
@@ -350,7 +350,7 @@ void single_overlap(
 			}
 			else
 			{
-				ModuleBase::WARNING_QUIT("LCAO_gen_fixedH::build_ST_new","nspin must be 1, 2 or 4");
+				ModuleBase::WARNING_QUIT("LCAO_domain::build_ST_new","nspin must be 1, 2 or 4");
 			}
 		}
 		else if(dtype=='T') // condition 8, S or T
@@ -367,7 +367,7 @@ void single_overlap(
 			}
 			else
 			{
-				ModuleBase::WARNING_QUIT("LCAO_gen_fixedH::build_ST_new","nspin must be 1, 2 or 4");
+				ModuleBase::WARNING_QUIT("LCAO_domain::build_ST_new","nspin must be 1, 2 or 4");
 			}
 		}// end condition 8, S or T
 		++total_nnr;
@@ -389,8 +389,8 @@ void build_ST_new(
 	bool cal_syns,
 	double dmax)
 {
-    ModuleBase::TITLE("LCAO_gen_fixedH","build_ST_new");
-    ModuleBase::timer::tick("LCAO_gen_fixedH","build_ST_new");
+    ModuleBase::TITLE("LCAO_domain","build_ST_new");
+    ModuleBase::timer::tick("LCAO_domain","build_ST_new");
 
 	const int nspin = GlobalV::NSPIN;
 	const int npol = GlobalV::NPOL;
@@ -616,11 +616,11 @@ void build_ST_new(
 		{
 			std::cout << " nnr=" << total_nnr << " LNNR.nnr=" << pv.nnr << std::endl;
 			GlobalV::ofs_running << " nnr=" << total_nnr << " LNNR.nnr=" << pv.nnr << std::endl;
-			ModuleBase::WARNING_QUIT("LCAO_gen_fixedH::build_ST_new","nnr != LNNR.nnr");
+			ModuleBase::WARNING_QUIT("LCAO_domain::build_ST_new","nnr != LNNR.nnr");
 		}
 	}
 
-    ModuleBase::timer::tick("LCAO_gen_fixedH","build_ST_new");
+    ModuleBase::timer::tick("LCAO_domain","build_ST_new");
     return;
 }
 

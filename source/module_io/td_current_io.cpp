@@ -17,7 +17,6 @@
 void ModuleIO::Init_DS_tmp(
 		const Parallel_Orbitals& pv,
 		LCAO_Matrix &lm,
-		LCAO_gen_fixedH &gen_h,
         const ORB_gen_tables* uot)
 {    
     ModuleBase::TITLE("ModuleIO", "Init_DS_tmp");
@@ -156,14 +155,13 @@ void ModuleIO::write_current(const int istep,
                                 const ORB_gen_tables* uot,
                                 const Parallel_Orbitals* pv,
 								Record_adj& ra,
-								LCAO_Matrix &lm, // mohan add 2024-04-02
-								LCAO_gen_fixedH &gen_h) // mohan add 2024-04-02
+								LCAO_Matrix &lm) // mohan add 2024-04-02
 {
 
     ModuleBase::TITLE("ModuleIO", "write_current");
     ModuleBase::timer::tick("ModuleIO", "write_current");
     //Init_DS_tmp
-    Init_DS_tmp(*pv, lm, gen_h, uot);
+    Init_DS_tmp(*pv, lm, uot);
     // construct a DensityMatrix object
     elecstate::DensityMatrix<std::complex<double>, double> DM(&kv,pv,GlobalV::NSPIN);
     

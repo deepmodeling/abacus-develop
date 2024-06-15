@@ -163,9 +163,6 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(Input& inp, UnitCell& ucell)
     this->init_basis_lcao(this->orb_con, inp, ucell);
     //------------------init Basis_lcao----------------------
 
-    // 4) redundant ParaV and LM pointers
-    this->gen_h.LM = &this->LM;
-
     //! pass basis-pointer to EState and Psi
     /*
     Inform: on getting rid of ORB_control and Parallel_Orbitals
@@ -381,7 +378,6 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(ModuleBase::matrix& force)
 			this->pelec,
 			this->psi,
             this->LM,
-            this->gen_h, // mohan add 2024-04-02
             this->GG, // mohan add 2024-04-01
             this->GK, // mohan add 2024-04-01
             uot_,
@@ -1433,7 +1429,6 @@ ModuleIO::Output_Mat_Sparse<TK> ESolver_KS_LCAO<TK, TR>::create_Output_Mat_Spars
 			istep,
 			this->pelec->pot->get_effective_v(),
 			this->orb_con.ParaV,
-            this->gen_h, // mohan add 2024-04-06
             this->GK, // mohan add 2024-04-01
             uot_,
 			this->LM,

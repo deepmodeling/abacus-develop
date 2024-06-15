@@ -33,7 +33,6 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                                           const elecstate::ElecState* pelec,
                                           const psi::Psi<T>* psi,
 										  LCAO_Matrix& lm,
-                                          LCAO_gen_fixedH &gen_h, // mohan add 2024-04-02
 										  Gint_Gamma &gint_gamma, // mohan add 2024-04-01
 										  Gint_k &gint_k, // mohan add 2024-04-01
                                           const ORB_gen_tables* uot,
@@ -156,7 +155,6 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
 #ifdef __DEEPKS
         svnl_dalpha,
 #endif
-        gen_h, // mohan add 2024-04-02
         gint_gamma,
         gint_k,
         uot,
@@ -744,7 +742,6 @@ void Force_Stress_LCAO<double>::integral_part(
 #if __DEEPKS
     ModuleBase::matrix& svnl_dalpha,
 #endif
-    LCAO_gen_fixedH &gen_h, // mohan add 2024-04-02
 	Gint_Gamma &gint_gamma, // mohan add 2024-04-01
 	Gint_k &gint_k, // mohan add 2024-04-01
     const ORB_gen_tables* uot,
@@ -768,7 +765,6 @@ void Force_Stress_LCAO<double>::integral_part(
 #if __DEEPKS
         svnl_dalpha,
 #endif
-        gen_h,
         gint_gamma,
         uot,
         pv,
@@ -795,7 +791,6 @@ void Force_Stress_LCAO<std::complex<double>>::integral_part(
 #if __DEEPKS
     ModuleBase::matrix& svnl_dalpha,
 #endif
-    LCAO_gen_fixedH &gen_h, // mohan add 2024-04-02
 	Gint_Gamma &gint_gamma,
 	Gint_k &gint_k,
     const ORB_gen_tables* uot,
@@ -818,7 +813,6 @@ void Force_Stress_LCAO<std::complex<double>>::integral_part(
 #if __DEEPKS
         svnl_dalpha,
 #endif
-        gen_h,
         gint_k,
         uot,
         pv,

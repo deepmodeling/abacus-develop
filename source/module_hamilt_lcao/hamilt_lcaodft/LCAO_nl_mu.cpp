@@ -543,7 +543,7 @@ void build_Nonlocal_mu_new(
 									}
 									else
 									{
-										ModuleBase::WARNING_QUIT("LCAO_gen_fixedH::build_Nonlocal_mu_new","nspin must be 1, 2 or 4");
+										ModuleBase::WARNING_QUIT("LCAO_domain::build_Nonlocal_mu_new","nspin must be 1, 2 or 4");
 									}
 								}//!calc_deri
 								nnr_inner++;

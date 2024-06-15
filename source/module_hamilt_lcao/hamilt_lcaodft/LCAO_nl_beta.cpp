@@ -17,8 +17,8 @@ void build_Nonlocal_beta_new(
 	const ORB_gen_tables& uot,
 	Grid_Driver* GridD) //update by liuyu 2021-04-07
 {
-    ModuleBase::TITLE("LCAO_gen_fixedH","b_NL_beta_new");
-    ModuleBase::timer::tick ("LCAO_gen_fixedH","b_NL_beta_new");
+    ModuleBase::TITLE("LCAO_domain","b_NL_beta_new");
+    ModuleBase::timer::tick ("LCAO_domain","b_NL_beta_new");
 
 	const Parallel_Orbitals* pv = lm.ParaV;
 	const int npol = GlobalV::NPOL;
@@ -252,7 +252,7 @@ void build_Nonlocal_beta_new(
     mkl_set_num_threads(mkl_threads);
 #endif
 	
-    ModuleBase::timer::tick ("LCAO_gen_fixedH","b_NL_beta_new");
+    ModuleBase::timer::tick ("LCAO_domain","b_NL_beta_new");
 	return;
 }
 

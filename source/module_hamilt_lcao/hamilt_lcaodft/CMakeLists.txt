@@ -32,7 +32,6 @@ if(ENABLE_LCAO)
         spar_st.cpp
         spar_u.cpp
         LCAO_matrix.cpp
-        LCAO_gen_fixedH.cpp
         LCAO_nnr.cpp
 		LCAO_set_fs.cpp
 		LCAO_set_st.cpp

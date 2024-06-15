@@ -15,7 +15,6 @@
 template<>
 void Force_LCAO<double>::allocate(const Parallel_Orbitals& pv,
     LCAO_Matrix& lm,
-    LCAO_gen_fixedH& gen_h,
     const ORB_gen_tables* uot,
     const int& nks,
     const std::vector<ModuleBase::Vector3<double>>& kvec_d)
@@ -231,7 +230,6 @@ void Force_LCAO<double>::ftable(const bool isforce,
 #ifdef __DEEPKS
     ModuleBase::matrix& svnl_dalpha,
 #endif
-    LCAO_gen_fixedH& gen_h, // mohan add 2024-04-02
     TGint<double>::type& gint,
     const ORB_gen_tables* uot,
     const Parallel_Orbitals& pv,
@@ -251,7 +249,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
 
     // allocate DSloc_x, DSloc_y, DSloc_z
     // allocate DHloc_fixed_x, DHloc_fixed_y, DHloc_fixed_z
-    this->allocate(pv, lm, gen_h, uot);
+    this->allocate(pv, lm, uot);
 
     // calculate the 'energy density matrix' here.
     this->cal_foverlap(isforce, isstress, psi, pv, pelec, lm, foverlap, soverlap);
