@@ -147,13 +147,11 @@ void cal_ylm_real_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
         g,
         p,
         ylm);
-    
-    cudaErrcheck(cudaGetLastError());
-    cudaErrcheck(cudaDeviceSynchronize());
+
+    cudaCheckOnDebug();
 }
 
 template struct cal_ylm_real_op<float, base_device::DEVICE_GPU>;
 template struct cal_ylm_real_op<double, base_device::DEVICE_GPU>;
 
 }  // namespace ModuleBase
-

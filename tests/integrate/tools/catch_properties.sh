@@ -118,7 +118,7 @@ fi
 if ! test -z "$has_cond"  && [  $has_cond == 1 ]; then
 	onref=refOnsager.txt
 	oncal=Onsager.txt
-	python3 ../tools/CompareFile.py $onref $oncal 2
+	python3 ../tools/CompareFile.py $onref $oncal 3 -com_type 0
     echo "CompareH_Failed $?" >>$1
 	rm -f je-je.txt Chebycoef
 fi
@@ -316,7 +316,7 @@ if ! test -z "$has_lowf"  && [ $has_lowf == 1 ]; then
 		wfc_ref=WFC_NAO_GAMMA1.txt.ref	
 	else
 		if ! test -z "$out_app_flag"  && [ $out_app_flag == 0 ]; then
-			wfc_name=WFC_NAO_K1_ION11
+			wfc_name=WFC_NAO_K1_ION3
 		else
 			wfc_name=WFC_NAO_K2
 		fi

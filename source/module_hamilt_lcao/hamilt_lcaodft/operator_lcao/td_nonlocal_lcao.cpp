@@ -113,11 +113,11 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::initialize_HR_tmp(const P
         hamilt::AtomPair<TR>& tmp = this->hR->get_atom_pair(i);
         for(int ir = 0;ir < tmp.get_R_size(); ++ir )
         {
-            const int* R_index = tmp.get_R_index(ir);
+            const ModuleBase::Vector3<int> R_index = tmp.get_R_index(ir);
             const int iat1 = tmp.get_atom_i();
             const int iat2 = tmp.get_atom_j(); 
 
-            hamilt::AtomPair<std::complex<double>> tmp1(iat1, iat2, R_index[0], R_index[1], R_index[2], paraV);
+            hamilt::AtomPair<std::complex<double>> tmp1(iat1, iat2, R_index, paraV);
             this->hR_tmp->insert_pair(tmp1);
         }
     }

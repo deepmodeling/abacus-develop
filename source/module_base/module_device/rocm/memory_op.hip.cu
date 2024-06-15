@@ -100,12 +100,11 @@ struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_GPU, base_devic
                     FPTYPE_out* arr_out,
                     const FPTYPE_in* arr_in,
                     const size_t size) {
-        
+
         if (size == 0) {return;}
         const int block = (size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
         hipLaunchKernelGGL(cast_memory, dim3(block), dim3(THREADS_PER_BLOCK), 0, 0, arr_out, arr_in, size);
-        hipErrcheck(hipGetLastError());
-        hipErrcheck(hipDeviceSynchronize());
+        hipCheckOnDebug();
     }
 };
 
@@ -119,7 +118,7 @@ struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_GPU, base_devic
 
         if (size == 0) {return;}
         // No need to cast the memory if the data types are the same.
-        if (std::is_same<FPTYPE_out, FPTYPE_in>::value) 
+        if (std::is_same<FPTYPE_out, FPTYPE_in>::value)
         {
             synchronize_memory_op<FPTYPE_out, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(dev_out,
                                                                                                   dev_in,
@@ -133,8 +132,7 @@ struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_GPU, base_devic
         hipErrcheck(hipMemcpy(arr, arr_in, sizeof(FPTYPE_in) * size, hipMemcpyHostToDevice));
         const int block = (size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
         hipLaunchKernelGGL(cast_memory, dim3(block), dim3(THREADS_PER_BLOCK), 0, 0, arr_out, arr, size);
-        hipErrcheck(hipGetLastError());
-        hipErrcheck(hipDeviceSynchronize());
+        hipCheckOnDebug();
         hipErrcheck(hipFree(arr));
     }
 };
@@ -146,10 +144,10 @@ struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_CPU, base_devic
                     FPTYPE_out* arr_out,
                     const FPTYPE_in* arr_in,
                     const size_t size) {
-        
+
         if (size == 0) {return;}
         // No need to cast the memory if the data types are the same.
-        if (std::is_same<FPTYPE_out, FPTYPE_in>::value) 
+        if (std::is_same<FPTYPE_out, FPTYPE_in>::value)
         {
             synchronize_memory_op<FPTYPE_out, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(dev_out,
                                                                                                   dev_in,

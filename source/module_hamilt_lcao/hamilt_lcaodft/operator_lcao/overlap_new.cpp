@@ -66,7 +66,7 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::initialize_SR(Grid_Driver
             {
                 continue;
             }
-            hamilt::AtomPair<TR> tmp(iat1, iat2, R_index.x, R_index.y, R_index.z, paraV);
+            hamilt::AtomPair<TR> tmp(iat1, iat2, R_index, paraV);
             SR->insert_pair(tmp);
         }
     }
@@ -92,9 +92,8 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::calculate_SR()
 
         for (int iR = 0; iR < tmp.get_R_size(); ++iR)
         {
-            const int* R_index = tmp.get_R_index(iR);
-            ModuleBase::Vector3<int> R_vector(R_index[0], R_index[1], R_index[2]);
-            auto dtau = ucell->cal_dtau(iat1, iat2, R_vector);
+            const ModuleBase::Vector3<int> R_index = tmp.get_R_index(iR);
+            auto dtau = ucell->cal_dtau(iat1, iat2, R_index);
             TR* data_pointer = tmp.get_pointer(iR);
             this->cal_SR_IJR(iat1, iat2, paraV, dtau, data_pointer);
         }
