@@ -89,6 +89,7 @@ void Input::Print(const std::string &fn) const
     ModuleBase::GlobalFunc::OUTP(ofs,"elpa_num_thread",elpa_num_thread,"Number of threads need to use in elpa");
     ModuleBase::GlobalFunc::OUTP(ofs, "device", device, "the computing device for ABACUS");
     ModuleBase::GlobalFunc::OUTP(ofs, "precision", precision, "the computing precision for ABACUS");
+    
 
     ofs << "\n#Parameters (2.PW)" << std::endl;
     ModuleBase::GlobalFunc::OUTP(ofs, "ecutwfc", ecutwfc, "#energy cutoff for wave functions");
