@@ -14,7 +14,7 @@ scf_thr				1e-3
 
 #Parameters (4.Relaxation)
 scf_nmax			100
-relax_nmax			3
+relax_nmax			2
 
 #Parameters (5.LCAO)
 basis_type			lcao
@@ -33,4 +33,4 @@ dft_functional		hse
 exx_pca_threshold	1E-1
 exx_ccp_rmesh_times	1
 exx_separate_loop	1
-exx_hybrid_step		3
+exx_hybrid_step		2
