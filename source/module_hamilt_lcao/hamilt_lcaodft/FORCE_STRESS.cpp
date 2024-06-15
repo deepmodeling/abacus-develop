@@ -752,6 +752,7 @@ void Force_Stress_LCAO<double>::integral_part(
 
     flk.ftable(isforce,
         isstress,
+        GlobalC::ucell,
         psi,
         pelec,
         foverlap,
@@ -800,6 +801,7 @@ void Force_Stress_LCAO<std::complex<double>>::integral_part(
 {
     flk.ftable(isforce,
         isstress,
+        GlobalC::ucell,
         psi,
         pelec,
         foverlap,

@@ -215,8 +215,10 @@ void Force_LCAO<double>::test(Parallel_Orbitals& pv, double* mm, const std::stri
 
 // be called in force_lo.cpp
 template<>
-void Force_LCAO<double>::ftable(const bool isforce,
+void Force_LCAO<double>::ftable(
+    const bool isforce,
     const bool isstress,
+    const UnitCell& ucell,
     const psi::Psi<double>* psi,
     const elecstate::ElecState* pelec,
     ModuleBase::matrix& foverlap,
@@ -257,6 +259,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
 	this->cal_fedm(
 			isforce, 
 			isstress, 
+            ucell,
             dm,
 			psi, 
 			pv, 
@@ -268,7 +271,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
 	this->cal_ftvnl_dphi(
 			dm, 
 			pv, 
-			GlobalC::ucell, 
+			ucell, 
 			lm, 
 			isforce, 
 			isstress, 
@@ -278,7 +281,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
 	this->cal_fvnl_dbeta(
 			dm, 
 			pv, 
-			GlobalC::ucell, 
+			ucell, 
 			GlobalC::ORB, 
 			*uot, 
 			GlobalC::GridD, 
@@ -303,17 +306,17 @@ void Force_LCAO<double>::ftable(const bool isforce,
 
 		GlobalC::ld.cal_projected_DM(
 				dm, 
-				GlobalC::ucell, 
+				ucell, 
 				GlobalC::ORB, 
 				GlobalC::GridD);
 
-        GlobalC::ld.cal_descriptor(GlobalC::ucell.nat);
+        GlobalC::ld.cal_descriptor(ucell.nat);
 
-        GlobalC::ld.cal_gedm(GlobalC::ucell.nat);
+        GlobalC::ld.cal_gedm(ucell.nat);
 
         GlobalC::ld.cal_f_delta_gamma(
             dm_gamma,
-            GlobalC::ucell,
+            ucell,
             GlobalC::ORB,
             GlobalC::GridD,
             isstress,
@@ -332,7 +335,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
         {
             GlobalC::ld.print_dm(dm_gamma[0]);
             GlobalC::ld.check_projected_dm();
-            GlobalC::ld.check_descriptor(GlobalC::ucell);
+            GlobalC::ld.check_descriptor(ucell);
             GlobalC::ld.check_gedm();
 
             GlobalC::ld.cal_e_delta_band(dm_gamma);
@@ -340,7 +343,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
             ofs << std::setprecision(10) << GlobalC::ld.e_delta_band;
             std::ofstream ofs1("E_delta.dat");
             ofs1 << std::setprecision(10) << GlobalC::ld.E_delta;
-            GlobalC::ld.check_f_delta(GlobalC::ucell.nat, svnl_dalpha);
+            GlobalC::ld.check_f_delta(ucell.nat, svnl_dalpha);
         }
     }
 #endif

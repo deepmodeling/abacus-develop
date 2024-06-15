@@ -43,8 +43,10 @@ private:
     elecstate::Potential* pot;
 
     // orthonormal force + contribution from T and VNL
-    void ftable(const bool isforce,
+    void ftable(
+        const bool isforce,
         const bool isstress,
+        const UnitCell& ucell,
         const psi::Psi<T>* psi,
         const elecstate::ElecState* pelec,
         ModuleBase::matrix& foverlap,

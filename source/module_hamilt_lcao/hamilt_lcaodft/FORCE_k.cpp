@@ -302,6 +302,7 @@ void Force_LCAO<std::complex<double>>::test(
     template<>
     void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
         const bool isstress,
+        const UnitCell& ucell,
         const psi::Psi<std::complex<double>>* psi,
         const elecstate::ElecState* pelec,
         ModuleBase::matrix& foverlap,
@@ -340,6 +341,7 @@ void Force_LCAO<std::complex<double>>::test(
         this->cal_fedm(
             isforce,
             isstress,
+            ucell,
             dm,
             psi,
             pv,
@@ -353,7 +355,7 @@ void Force_LCAO<std::complex<double>>::test(
         this->cal_ftvnl_dphi(
             dm,
             pv,
-            GlobalC::ucell,
+            ucell,
             lm,
             isforce,
             isstress,
@@ -373,7 +375,7 @@ void Force_LCAO<std::complex<double>>::test(
         this->cal_fvnl_dbeta(
             dm,
             pv,
-            GlobalC::ucell,
+            ucell,
             GlobalC::ORB,
             *uot,
             GlobalC::GridD,
@@ -387,14 +389,14 @@ void Force_LCAO<std::complex<double>>::test(
         {
             const std::vector<std::vector<std::complex<double>>>& dm_k = dm->get_DMK_vector();
 
-            GlobalC::ld.cal_projected_DM_k(dm, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD);
+            GlobalC::ld.cal_projected_DM_k(dm, ucell, GlobalC::ORB, GlobalC::GridD);
 
-            GlobalC::ld.cal_descriptor(GlobalC::ucell.nat);
+            GlobalC::ld.cal_descriptor(ucell.nat);
 
-            GlobalC::ld.cal_gedm(GlobalC::ucell.nat);
+            GlobalC::ld.cal_gedm(ucell.nat);
 
             GlobalC::ld.cal_f_delta_k(dm_k,
-                GlobalC::ucell,
+                ucell,
                 GlobalC::ORB,
                 GlobalC::GridD,
                 kv->get_nks(),
