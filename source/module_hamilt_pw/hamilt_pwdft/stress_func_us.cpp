@@ -29,7 +29,7 @@ void Stress_PW<FPTYPE, Device>::stress_us(ModuleBase::matrix& sigma,
     // fourier transform of the total effective potential
     for (int is = 0; is < GlobalV::NSPIN; is++)
     {
-        rho_basis->real2recip(&veff(is, 0), &vg(is, 0));
+        rho_basis->real2recip(&veff.c[is * veff.nc], &vg(is, 0));
     }
 
     ModuleBase::matrix ylmk0(ppcell_in->lmaxq * ppcell_in->lmaxq, npw);

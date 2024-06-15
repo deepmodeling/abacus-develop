@@ -1,6 +1,6 @@
 INPUT_PARAMETERS
 
-ecutwfc                       20
+ecutwfc                       10
 scf_thr                           1e-06
 scf_nmax                         400
 basis_type                    lcao
@@ -9,7 +9,7 @@ smearing_method                      gaussian
 relax_nmax                         1
 smearing_sigma                         0.02
 mixing_type                   broyden
-mixing_beta                   0.4
+mixing_beta                   0.7
 vdw_method                    d3_bj
 fixed_axes                    c
 force_thr_ev                  0.005
