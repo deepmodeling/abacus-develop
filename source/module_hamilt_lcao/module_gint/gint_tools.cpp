@@ -10,8 +10,7 @@
 
 #include <cmath>
 
-inline namespace Gint_Tools
-{
+namespace Gint_Tools{
 int* get_vindex(const int bxyz, const int bx, const int by, const int bz, const int nplane, const int start_ind,
                 const int ncyz)
 {

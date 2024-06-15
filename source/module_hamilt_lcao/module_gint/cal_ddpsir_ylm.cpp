@@ -1,8 +1,7 @@
 #include "gint_tools.h"
 #include "module_base/timer.h"
 #include "module_base/ylm.h"
-inline namespace Gint_Tools
-{
+namespace Gint_Tools{
 void cal_ddpsir_ylm(
     const Grid_Technique& gt, const int bxyz,
     const int na_grid,                 // number of atoms on this grid

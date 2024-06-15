@@ -1,8 +1,7 @@
 #include "gint_tools.h"
 #include "module_base/timer.h"
 #include "module_base/ylm.h"
-inline namespace Gint_Tools
-{
+namespace Gint_Tools{
 void mult_psi_DM_new(
     const Grid_Technique& gt, const int bxyz, const int& grid_index,
     const int na_grid, // how many atoms on this (i,j,k) grid
