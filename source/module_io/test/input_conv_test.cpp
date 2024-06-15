@@ -155,6 +155,7 @@ TEST_F(InputConvTest, Conv)
     EXPECT_EQ(hsolver::HSolverLCAO<std::complex<double>>::out_mat_t, false);
     EXPECT_EQ(hsolver::HSolverLCAO<double>::out_mat_dh, INPUT.out_mat_dh);
     EXPECT_EQ(hsolver::HSolverLCAO<std::complex<double>>::out_mat_dh, INPUT.out_mat_dh);
+	EXPECT_EQ(hsolver::DiagoElpa<>)
     EXPECT_EQ(GlobalV::out_mat_xc, false);
 	EXPECT_EQ(GlobalV::out_hr_npz, false);
 	EXPECT_EQ(GlobalV::out_dm_npz, false);

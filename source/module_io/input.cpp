@@ -681,6 +681,10 @@ void Input::Default(void)
     pexsi_mu_guard = 0.2;
     pexsi_elec_thr = 0.001;
     pexsi_zero_thr = 1e-10;
+    //==========================================================
+    // variables for elpa
+    //==========================================================
+    ifsetcomm=-1;
     return;
 }
 
@@ -2519,6 +2523,12 @@ bool Input::Read(const std::string& fn)
         {
             read_value(ifs, pexsi_zero_thr);
         }
+        //==========================================================
+        // variables for elpa
+        //==========================================================
+        else if(strcmp("elpa_num_thread",word) == 0){
+            read_value(ifs,elpa_num_thread);
+        }
         else
         {
             // xiaohui add 2015-09-15
@@ -3937,6 +3947,10 @@ void Input::Bcast()
     Parallel_Common::bcast_double(pexsi_elec_thr);
     Parallel_Common::bcast_double(pexsi_zero_thr);
     /* broadcasting std::vector is sometime a annorying task... */
+    //==========================================================
+    // variables for elpa
+    //==========================================================
+    Parallel_Common::bcast_int(elpa_num_thread);
     if (ntype != 0) /* ntype has been broadcasted before */
     {
         qo_strategy.resize(ntype); 

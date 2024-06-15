@@ -889,6 +889,12 @@ void Input_Conv::Convert(void)
     pexsi::PEXSI_Solver::pexsi_elec_thr = INPUT.pexsi_elec_thr;
     pexsi::PEXSI_Solver::pexsi_zero_thr = INPUT.pexsi_zero_thr;
 #endif
+
+    //elpa related
+#ifdef __MPI
+    template <typename T>
+    hsolver::DiagoElpa<T>::elpa_num_thread = INPUT.elpa_num_thread;
+#endif
     ModuleBase::timer::tick("Input_Conv", "Convert");
     return;
 }

@@ -15,37 +15,27 @@ namespace hsolver
 {
 #ifdef __MPI
 template <>
-void DiagoElpa<double>::set_comm_num(int cnum)
-{
-    ifsetcomm = cnum;
-}
-template <>
-void DiagoElpa<std::complex<double>>::set_comm_num(int cnum)
-{
-    ifsetcomm = cnum;
-}
-template <>
 MPI_Comm DiagoElpa<double>::setmpicomm()
 {
-    if (this->ifsetcomm == -1)
+    if (this->elpa_num_thread == -1)
         return MPI_COMM_WORLD;
     else
     {
         int _num;
         MPI_Comm_size(MPI_COMM_WORLD, &_num);
-        if (ifsetcomm > _num || ifsetcomm <= 0)
+        if (elpa_num_thread > _num || elpa_num_thread <= 0)
             return MPI_COMM_WORLD;
         else
         {
             lastmpinum++;
-            int* _ranks = new int[ifsetcomm];
-            for (int i = 0; i < ifsetcomm; i++)
+            int* _ranks = new int[elpa_num_thread];
+            for (int i = 0; i < elpa_num_thread; i++)
             {
                 _ranks[i] = (lastmpinum + i) % _num;
             }
             MPI_Group _tempgroup, _oldgroup;
             MPI_Comm_group(MPI_COMM_WORLD, &_oldgroup);
-            MPI_Group_incl(_oldgroup, ifsetcomm, _ranks, &_tempgroup);
+            MPI_Group_incl(_oldgroup, elpa_num_thread, _ranks, &_tempgroup);
             MPI_Comm _new_comm;
             MPI_Comm_create(MPI_COMM_WORLD, _tempgroup, &_new_comm);
             delete[] _ranks;
@@ -56,25 +46,25 @@ MPI_Comm DiagoElpa<double>::setmpicomm()
 template <>
 MPI_Comm DiagoElpa<std::complex<double>>::setmpicomm()
 {
-    if (this->ifsetcomm == -1)
+    if (this->elpa_num_thread == -1)
         return MPI_COMM_WORLD;
     else
     {
         int _num;
         MPI_Comm_size(MPI_COMM_WORLD, &_num);
-        if (ifsetcomm > _num || ifsetcomm <= 0)
+        if (elpa_num_thread > _num || elpa_num_thread <= 0)
             return MPI_COMM_WORLD;
         else
         {
             lastmpinum++;
-            int* _ranks = new int[ifsetcomm];
-            for (int i = 0; i < ifsetcomm; i++)
+            int* _ranks = new int[elpa_num_thread];
+            for (int i = 0; i < elpa_num_thread; i++)
             {
                 _ranks[i] = (lastmpinum + i) % _num;
             }
             MPI_Group _tempgroup, _oldgroup;
             MPI_Comm_group(MPI_COMM_WORLD, &_oldgroup);
-            MPI_Group_incl(_oldgroup, ifsetcomm, _ranks, &_tempgroup);
+            MPI_Group_incl(_oldgroup, elpa_num_thread, _ranks, &_tempgroup);
             MPI_Comm _new_comm;
             MPI_Comm_create(MPI_COMM_WORLD, _tempgroup, &_new_comm);
             delete[] _ranks;

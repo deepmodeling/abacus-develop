@@ -17,7 +17,6 @@ class DiagoElpa : public DiagH<T>
     void diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in) override;
 #ifdef __MPI
     MPI_Comm setmpicomm(); // set mpi comm;
-    void set_comm_num(int cnum);
 #endif
 
     static int DecomposedState;
@@ -25,7 +24,7 @@ class DiagoElpa : public DiagH<T>
   private:
 #ifdef __MPI
     bool ifElpaHandle(const bool& newIteration, const bool& ifNSCF);
-    static int ifsetcomm;  // need to set mpi_comm or not,-1 not,else the number of mpi needed
+    static int elpa_num_thread;  // need to set mpi_comm or not,-1 not,else the number of mpi needed
     static int lastmpinum; // last using mpi;
 #endif
 };
@@ -35,8 +34,7 @@ int DiagoElpa<T>::DecomposedState = 0;
 template <typename T>
 int DiagoElpa<T>::lastmpinum = -1;
 template <typename T>
-// int DiagoElpa<T>::ifsetcomm=-1;
-int DiagoElpa<T>::ifsetcomm = 5; // modify only for check
+int DiagoElpa<T>::elpa_num_thread = -1;
 } // namespace hsolver
 
 #endif
