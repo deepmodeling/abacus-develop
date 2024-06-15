@@ -222,6 +222,7 @@ OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
       esolver_ks_lcao_tddft.o\
       esolver_ks_lcao_tmpfunc.o\
       io_npz.o\
+      orb_paramter_init.o\
 
 OBJS_GINT=gint.o\
       gint_gamma_env.o\

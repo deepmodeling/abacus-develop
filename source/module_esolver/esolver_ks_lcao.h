@@ -111,6 +111,13 @@ namespace ModuleESolver
         // set matrix and grid integral
         void set_matrix_grid(Record_adj& ra);
 
+        void orb_paramter_init(double& dr_uniform, 
+                                std::vector<double>& rcuts,
+                                UnitCell& ucell,
+                                std::vector<std::vector<double>>& psi_u,
+                                std::vector<std::vector<double>>& dpsi_u,
+                                std::vector<std::vector<double>>& d2psi_u);
+
         void beforesolver(const int istep);
         //----------------------------------------------------------------------
 

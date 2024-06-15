@@ -58,40 +58,8 @@ void ESolver_KS_LCAO<TK, TR>::set_matrix_grid(Record_adj& ra)
     std::vector<std::vector<double>> dpsi_u;
     std::vector<std::vector<double>> d2psi_u;
 
-    dr_uniform=GlobalC::ORB.dr_uniform;
-    
-    int nwmax=GlobalC::ucell.nwmax;
-    int ntype=GlobalC::ucell.ntype;
-    
-    rcuts.resize(ntype);
-    for(int T=0; T<ntype; T++)
-	{
-		rcuts[T]=GlobalC::ORB.Phi[T].getRcut();
-	}
-
-    double max_cut = *std::max_element(rcuts.begin(), rcuts.end());
-    int nr_max = static_cast<int>(1/dr_uniform * max_cut) + 10;
-    psi_u.resize(ntype * nwmax);
-    dpsi_u.resize(ntype * nwmax);
-    d2psi_u.resize(ntype * nwmax);
-    
-    Atom* atomx;
-    const Numerical_Orbital_Lm* pointer;
-    
-    for (int i = 0; i < ntype; i++)
-    {
-        atomx = &GlobalC::ucell.atoms[i];
-        for (int j = 0; j < nwmax; j++)
-        {
-            if (j < atomx->nw)
-            {
-                pointer = &GlobalC::ORB.Phi[i].PhiLN(atomx->iw2l[j],atomx->iw2n[j]);
-                psi_u[i*nwmax+j]=pointer->psi_uniform;
-                dpsi_u[i*nwmax+j]=pointer->dpsi_uniform;
-                d2psi_u[i*nwmax+j]=pointer->ddpsi_uniform;
-            }
-        }
-    }
+    this->orb_paramter_init(dr_uniform, rcuts, GlobalC::ucell, 
+                            psi_u, dpsi_u, d2psi_u);
 
     this->GridT.set_pbc_grid(this->pw_rho->nx,
                              this->pw_rho->ny,

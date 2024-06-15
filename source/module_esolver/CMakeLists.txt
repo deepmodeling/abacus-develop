@@ -13,6 +13,7 @@ list(APPEND objects
 if(ENABLE_LCAO)
   list(APPEND objects
       esolver_ks_lcao.cpp
+      orb_paramter_init.cpp
       esolver_ks_lcao_elec.cpp
       esolver_ks_lcao_tddft.cpp
       esolver_ks_lcao_tmpfunc.cpp
