@@ -17,6 +17,7 @@ class DiagoElpa : public DiagH<T>
     void diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in) override;
 #ifdef __MPI
     MPI_Comm setmpicomm(); // set mpi comm;
+    static int elpa_num_thread;  // need to set mpi_comm or not,-1 not,else the number of mpi needed
 #endif
 
     static int DecomposedState;
@@ -24,7 +25,6 @@ class DiagoElpa : public DiagH<T>
   private:
 #ifdef __MPI
     bool ifElpaHandle(const bool& newIteration, const bool& ifNSCF);
-    static int elpa_num_thread;  // need to set mpi_comm or not,-1 not,else the number of mpi needed
     static int lastmpinum; // last using mpi;
 #endif
 };
