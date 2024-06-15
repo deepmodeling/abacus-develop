@@ -242,8 +242,7 @@ class PsiIntializerUnitTest : public ::testing::Test {
             this->p_pspot_vnl->lmaxkb = 0;
 
             #ifdef __MPI
-            if(this->p_parakpts->startk_pool != nullptr) delete[] this->p_parakpts->startk_pool;
-            this->p_parakpts->startk_pool = new int[1];
+            this->p_parakpts->startk_pool.resize(1);
             this->p_parakpts->startk_pool[0] = 0;
             #endif
 

@@ -6,19 +6,9 @@
 #include "module_base/math_integral.h"
 #include "module_base/constants.h"
 
-namespace GlobalC
-{
-///here is a member of ORB_gen_tables class
-ORB_gen_tables UOT;
-}
 
 ORB_gen_tables::ORB_gen_tables() {}
 ORB_gen_tables::~ORB_gen_tables() {}
-
-const ORB_gen_tables& ORB_gen_tables::get_const_instance()
-{
-	return GlobalC::UOT;
-}
 
 /// call in hamilt_linear::init_before_ions.
 void ORB_gen_tables::gen_tables(

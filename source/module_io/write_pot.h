@@ -8,7 +8,23 @@
 namespace ModuleIO
 {
 
+void write_pot(
+    const int &out_pot,
+    const int &nspin, 
+    const std::string &global_out_dir,
+#ifdef __MPI
+    const int& bz,
+    const int& nbz,
+    const int& nplane,
+    const int& startz_current,
+#endif
+    const int& nx,
+    const int& ny,
+    const int& nz,
+    const ModuleBase::matrix& v);
+
 /// @brief write potential to file
+/// @param[in] out_pot 
 /// @param[in] bz 
 /// @param[in] nbz 
 /// @param[in] nplane 
@@ -22,7 +38,8 @@ namespace ModuleIO
 /// @param[in] v 
 /// @param[in] precision 
 /// @param[in] hartree 
-void write_potential(
+void write_pot_spin(
+    const int& out_pot,
 #ifdef __MPI
     const int& bz,
     const int& nbz,

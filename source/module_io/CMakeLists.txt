@@ -22,7 +22,7 @@ list(APPEND objects
     write_input.cpp
     write_cube.cpp
     write_rho.cpp
-    write_potential.cpp
+    write_pot.cpp
     write_dipole.cpp
     td_current_io.cpp
     write_wfc_r.cpp
@@ -54,6 +54,7 @@ if(ENABLE_LCAO)
       istate_envelope.cpp
       read_dm.cpp
       read_wfc_nao.cpp
+      read_wfc_lcao.cpp
       write_wfc_nao.cpp
       write_dm.cpp
       dos_nao.cpp

@@ -66,13 +66,12 @@ void elecstate_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
                                                                   const std::complex<FPTYPE>* wfcr)
 {
   const int block = (nrxx + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-  hipLaunchKernelGGL(HIP_KERNEL_NAME(elecstate_pw<FPTYPE>), dim3(block), dim3(THREADS_PER_BLOCK), 0, 0, 
-    spin, nrxx, w1, rho[0], 
+  hipLaunchKernelGGL(HIP_KERNEL_NAME(elecstate_pw<FPTYPE>), dim3(block), dim3(THREADS_PER_BLOCK), 0, 0,
+    spin, nrxx, w1, rho[0],
     reinterpret_cast<const thrust::complex<FPTYPE>*>(wfcr)
   );
 
-  hipErrcheck(hipGetLastError());
-  hipErrcheck(hipDeviceSynchronize());
+   hipCheckOnDebug();
 }
 
 template <typename FPTYPE>
@@ -86,14 +85,13 @@ void elecstate_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
                                                                   const std::complex<FPTYPE>* wfcr_another_spin)
 {
   const int block = (nrxx + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-  hipLaunchKernelGGL(HIP_KERNEL_NAME(elecstate_pw<FPTYPE>), dim3(block), dim3(THREADS_PER_BLOCK), 0, 0, 
-    DOMAG, DOMAG_Z, nrxx, w1, rho[0], 
-    reinterpret_cast<const thrust::complex<FPTYPE>*>(wfcr), 
+  hipLaunchKernelGGL(HIP_KERNEL_NAME(elecstate_pw<FPTYPE>), dim3(block), dim3(THREADS_PER_BLOCK), 0, 0,
+    DOMAG, DOMAG_Z, nrxx, w1, rho[0],
+    reinterpret_cast<const thrust::complex<FPTYPE>*>(wfcr),
     reinterpret_cast<const thrust::complex<FPTYPE>*>(wfcr_another_spin)
   );
 
-  hipErrcheck(hipGetLastError());
-  hipErrcheck(hipDeviceSynchronize());
+   hipCheckOnDebug();
 }
 
 template struct elecstate_pw_op<float, base_device::DEVICE_GPU>;

@@ -2,6 +2,7 @@
 
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
+#include "module_base/vector3.h"
 #include "module_base/timer.h"
 #include "module_base/libm/libm.h"
 #include "module_base/tool_threading.h"
@@ -15,7 +16,8 @@
 void ModuleIO::Init_DS_tmp(
 		const Parallel_Orbitals& pv,
 		LCAO_Matrix &lm,
-		LCAO_gen_fixedH &gen_h)
+		LCAO_gen_fixedH &gen_h,
+        const ORB_gen_tables* uot)
 {    
     ModuleBase::TITLE("ModuleIO", "Init_DS_tmp");
     ModuleBase::timer::tick("ModuleIO", "Init_DS_tmp");
@@ -34,7 +36,15 @@ void ModuleIO::Init_DS_tmp(
 
     ModuleBase::OMP_PARALLEL(init_DSloc_Rxyz);
     bool cal_deri = true;
-    gen_h.build_ST_new('S', cal_deri, GlobalC::ucell, GlobalC::ORB, GlobalC::UOT, &(GlobalC::GridD), lm.SlocR.data());
+	gen_h.build_ST_new(
+			'S', 
+			cal_deri, 
+			GlobalC::ucell, 
+			GlobalC::ORB, 
+			pv,
+			*uot, 
+			&GlobalC::GridD, 
+			lm.SlocR.data());
 
     ModuleBase::timer::tick("ModuleIO", "Init_DS_tmp");
     return;
@@ -83,8 +93,8 @@ void ModuleIO::cal_tmp_DM(elecstate::DensityMatrix<std::complex<double>, double>
             }
             for (int ir = 0; ir < tmp_ap.get_R_size(); ++ir)
             {
-                const int* r_index = tmp_ap.get_R_index(ir);
-                hamilt::BaseMatrix<double>* tmp_matrix = tmp_ap.find_matrix(r_index[0], r_index[1], r_index[2]);
+                const ModuleBase::Vector3<int> r_index = tmp_ap.get_R_index(ir);
+                hamilt::BaseMatrix<double>* tmp_matrix = tmp_ap.find_matrix(r_index);
 #ifdef __DEBUG
                 if (tmp_matrix == nullptr)
                 {
@@ -97,7 +107,7 @@ void ModuleIO::cal_tmp_DM(elecstate::DensityMatrix<std::complex<double>, double>
                 {
                 // cal k_phase
                 // if TK==std::complex<double>, kphase is e^{ikR}
-                const ModuleBase::Vector3<double> dR(r_index[0], r_index[1], r_index[2]);
+                const ModuleBase::Vector3<double> dR(r_index.x, r_index.y, r_index.z);
                 const double arg = (DM.get_kv_pointer()->kvec_d[ik] * dR) * ModuleBase::TWO_PI;
                 double sinp, cosp;
                 ModuleBase::libm::sincos(arg, &sinp, &cosp);
@@ -141,6 +151,7 @@ void ModuleIO::write_current(const int istep,
                                 const psi::Psi<std::complex<double>>* psi,
                                 const elecstate::ElecState* pelec,
                                 const K_Vectors& kv,
+                                const ORB_gen_tables* uot,
                                 const Parallel_Orbitals* pv,
 								Record_adj& ra,
 								LCAO_Matrix &lm, // mohan add 2024-04-02
@@ -150,7 +161,7 @@ void ModuleIO::write_current(const int istep,
     ModuleBase::TITLE("ModuleIO", "write_current");
     ModuleBase::timer::tick("ModuleIO", "write_current");
     //Init_DS_tmp
-    Init_DS_tmp(*pv, lm, gen_h);
+    Init_DS_tmp(*pv, lm, gen_h, uot);
     // construct a DensityMatrix object
     elecstate::DensityMatrix<std::complex<double>, double> DM(&kv,pv,GlobalV::NSPIN);
     

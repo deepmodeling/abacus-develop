@@ -8,5 +8,5 @@ ecutwfc         60
 scf_thr         1e-7
 scf_nmax        100
 device          cpu
-ks_solver       cg
+ks_solver       dav_subspace
 precision       double

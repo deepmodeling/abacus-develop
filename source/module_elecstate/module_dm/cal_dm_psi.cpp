@@ -23,6 +23,7 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
 
     // dm = wfc.T * wg * wfc.conj()
     // dm[is](iw1,iw2) = \sum_{ib} wfc[is](ib,iw1).T * wg(is,ib) * wfc[is](ib,iw2).conj()
+
     for (int ik = 0; ik < wfc.get_nk(); ++ik)
     {
         double* dmk_pointer = DM.get_DMK_pointer(ik);
@@ -49,6 +50,7 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
 				continue;
 			}
             const double wg_local = wg(ik, ib_global);
+
             double* wg_wfc_pointer = &(wg_wfc(0, ib_local, 0));
             BlasConnector::scal(nbasis_local, wg_local, wg_wfc_pointer, 1);
         }
@@ -150,6 +152,7 @@ void psiMulPsiMpi(const psi::Psi<double>& psi1,
     const char N_char = 'N', T_char = 'T';
     const int nlocal = desc_dm[2];
     const int nbands = desc_psi[3];
+
     pdgemm_(&N_char,
             &T_char,
             &nlocal,

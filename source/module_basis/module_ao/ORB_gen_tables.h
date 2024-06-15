@@ -25,9 +25,6 @@ class ORB_gen_tables
 	ORB_gen_tables();
 	~ORB_gen_tables();
 
-	// static function to get global instance
-	static const ORB_gen_tables& get_const_instance();
-
 	void gen_tables(
 		std::ofstream &ofs_in, // mohan add 2021-05-07
 		LCAO_Orbitals &orb,
@@ -121,12 +118,5 @@ class ORB_gen_tables
 	double lat0;
 
 };
-
-/// PLEASE try to get rid of GlobalC::UOT, which is a global variable
-/// mohan add 2021-03-30
-namespace GlobalC
-{
-extern ORB_gen_tables UOT;
-}
 
 #endif

@@ -13,7 +13,7 @@
 namespace hamilt {
 
 template <typename FPTYPE>
-__forceinline__ 
+__forceinline__
 __device__
 void warp_reduce(FPTYPE & val) {
     for (int offset = 32; offset > 0; offset >>= 1) {
@@ -35,8 +35,8 @@ __global__ void cal_stress_mgga(
     int ipol = 0;
     for (int ix = 0; ix < 3; ix++) {
         for (int iy = 0; iy < ix + 1; iy++) {
-            crosstaus[spin * nrxx * 6 + ipol * nrxx + idx] 
-                += 2.0 * w1 
+            crosstaus[spin * nrxx * 6 + ipol * nrxx + idx]
+                += 2.0 * w1
                 * (gradwfc[ix * nrxx + idx].real() * gradwfc[iy*nrxx + idx].real()
                 +  gradwfc[ix * nrxx + idx].imag() * gradwfc[iy*nrxx + idx].imag());
             ipol += 1;
@@ -169,7 +169,7 @@ void cal_dbecp_noevc_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const ba
                                                                         std::complex<FPTYPE>* vkb2,
                                                                         std::complex<FPTYPE>* dbecp_noevc)
 {
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(cal_dbecp_noevc_nl<FPTYPE>), dim3(nkb), dim3(THREADS_PER_BLOCK), 0, 0, 
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(cal_dbecp_noevc_nl<FPTYPE>), dim3(nkb), dim3(THREADS_PER_BLOCK), 0, 0,
             ipol,
             jpol,
             npw,
@@ -184,9 +184,8 @@ void cal_dbecp_noevc_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const ba
             reinterpret_cast<thrust::complex<FPTYPE>*>(vkb1),
             reinterpret_cast<thrust::complex<FPTYPE>*>(vkb2),
             reinterpret_cast<thrust::complex<FPTYPE>*>(dbecp_noevc));
-    
-    hipErrcheck(hipGetLastError());
-    hipErrcheck(hipDeviceSynchronize());
+
+    hipCheckOnDebug();
 }
 
 template <typename FPTYPE>
@@ -213,7 +212,7 @@ void cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_de
                                                                    const std::complex<FPTYPE>* dbecp,
                                                                    FPTYPE* stress)
 {
-     hipLaunchKernelGGL(HIP_KERNEL_NAME(cal_stress_nl<FPTYPE>), dim3(nbands_occ * ntype), dim3(THREADS_PER_BLOCK), 0, 0, 
+     hipLaunchKernelGGL(HIP_KERNEL_NAME(cal_stress_nl<FPTYPE>), dim3(nbands_occ * ntype), dim3(THREADS_PER_BLOCK), 0, 0,
              nondiagonal,
              ipol,
              jpol,
@@ -234,9 +233,8 @@ void cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_de
              reinterpret_cast<const thrust::complex<FPTYPE>*>(becp),
              reinterpret_cast<const thrust::complex<FPTYPE>*>(dbecp),
              stress);// array of data
-    
-    hipErrcheck(hipGetLastError());
-    hipErrcheck(hipDeviceSynchronize());
+
+    hipCheckOnDebug();
 }
 
 template <typename T, typename Device>
@@ -252,8 +250,7 @@ void cal_stress_mgga_op<T, Device>::operator()(
     cal_stress_mgga<Real><<<block, THREADS_PER_BLOCK>>>(
         spin, nrxx, w1, gradwfc_, crosstaus);
 
-    hipErrcheck(hipGetLastError());
-    hipErrcheck(hipDeviceSynchronize());
+    hipCheckOnDebug();
 }
 
 template struct cal_stress_mgga_op<std::complex<float>, base_device::DEVICE_GPU>;

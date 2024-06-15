@@ -362,8 +362,6 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
         delmem_complex_op()(this->ctx, ps);
         delmem_complex_op()(this->ctx, becp);
     }
-
-    ModuleBase::TITLE("HamiltPW", "sPsi");
 }
 
 template class HamiltPW<std::complex<float>, base_device::DEVICE_CPU>;

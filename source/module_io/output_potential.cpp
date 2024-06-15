@@ -1,5 +1,5 @@
 #include "output_potential.h"
-#include "potential_io.h"
+#include "write_pot.h"
 
 namespace ModuleIO
 {
@@ -36,7 +36,7 @@ Output_Potential::Output_Potential(const ModulePW::PW_Basis_Big* pw_big,
 
 void Output_Potential::write()
 {
-    if (_out_pot == 1)
+    if (_out_pot == 1 || _out_pot == 3)
     {
         for (int is = 0; is < _nspin; is++)
         {
@@ -48,7 +48,8 @@ void Output_Potential::write()
             {
                 _fn_Pot = _directory + "/SPIN" + std::to_string(is + 1) + "_" + _tag + ".cube";
             }
-            ModuleIO::write_potential(
+            ModuleIO::write_pot_spin(
+                _out_pot, // mohan add 2024-06-09
 #ifdef __MPI
                 _pw_big->bz,
                 _pw_big->nbz,

@@ -72,7 +72,7 @@ __global__ void cal_force_nl(
     FPTYPE ekb_now = d_ekb[ik * wg_nc + ib];
     for (int ia = 0; ia < atom_na[it]; ia++) {
         for (int ip = threadIdx.x; ip < Nprojs; ip += blockDim.x) {
-            // FPTYPE ps = GlobalC::ppcell.deeq[GlobalV::CURRENT_SPIN, iat, ip, ip];
+            // FPTYPE ps = GlobalC::ppcell.deeq[spin, iat, ip, ip];
             FPTYPE ps = deeq[((spin * deeq_2 + iat) * deeq_3 + ip) * deeq_4 + ip]
                         - ekb_now * qq_nt[it * deeq_3 * deeq_4 + ip * deeq_4 + ip];
             const int inkb = sum + ip;
@@ -132,9 +132,8 @@ void cal_vkb1_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_devi
             reinterpret_cast<const thrust::complex<FPTYPE>*>(vkb),
             gcar,// array of data
             reinterpret_cast<thrust::complex<FPTYPE>*>(vkb1)); // array of data
-    
-    cudaErrcheck(cudaGetLastError());
-    cudaErrcheck(cudaDeviceSynchronize());
+
+    cudaCheckOnDebug();
 }
 
 template <typename FPTYPE>
@@ -173,9 +172,8 @@ void cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
             reinterpret_cast<const thrust::complex<FPTYPE>*>(becp),
             reinterpret_cast<const thrust::complex<FPTYPE>*>(dbecp),
             force);// array of data
-    
-    cudaErrcheck(cudaGetLastError());
-    cudaErrcheck(cudaDeviceSynchronize());
+
+    cudaCheckOnDebug();
 }
 
 template struct cal_vkb1_nl_op<float, base_device::DEVICE_GPU>;

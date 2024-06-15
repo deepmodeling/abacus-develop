@@ -194,11 +194,6 @@ void HSolverLCAO<T, Device>::solveTemplate(hamilt::Hamilt<T>* pHamilt,
 
         // solve eigenvector and eigenvalue for H(k)
         this->hamiltSolvePsiK(pHamilt, psi, &(pes->ekb(ik, 0)));
-
-        if (skip_charge)
-        {
-            pes->print_psi(psi);
-        }
     }
 
     if (this->method == "cg_in_lcao")

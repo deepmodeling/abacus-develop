@@ -97,7 +97,7 @@ void cal_sk_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::D
                                                             std::complex<FPTYPE>* sk)
 {
     int block = (npw + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(cal_sk<FPTYPE>), dim3(block), dim3(THREADS_PER_BLOCK), 0, 0, 
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(cal_sk<FPTYPE>), dim3(block), dim3(THREADS_PER_BLOCK), 0, 0,
          ik, ntype,
          nx, ny, nz,
          rho_nx, rho_ny, rho_nz,
@@ -112,9 +112,8 @@ void cal_sk_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::D
          reinterpret_cast<thrust::complex<FPTYPE>*>(eigts2),
          reinterpret_cast<thrust::complex<FPTYPE>*>(eigts3),
          reinterpret_cast<thrust::complex<FPTYPE>*>(sk));
-    
-    hipErrcheck(hipGetLastError());
-    hipErrcheck(hipDeviceSynchronize());
+
+    hipCheckOnDebug();
 }
 
 template struct cal_sk_op<float, base_device::DEVICE_GPU>;
