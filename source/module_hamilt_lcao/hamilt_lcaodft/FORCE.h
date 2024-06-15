@@ -85,8 +85,10 @@ private:
     // forces related to energy density matrix
     //-------------------------------------------------------------
 
-    void cal_foverlap(const bool isforce,
+    void cal_fedm(
+        const bool isforce,
         const bool isstress,
+        const elecstate::DensityMatrix<T, double>* dm,
         const psi::Psi<T>* psi,
         const Parallel_Orbitals& pv,
         const elecstate::ElecState* pelec,
@@ -94,13 +96,12 @@ private:
         ModuleBase::matrix& foverlap,
         ModuleBase::matrix& soverlap,
         const K_Vectors* kv = nullptr,
-        Record_adj* ra = nullptr,
-        const elecstate::DensityMatrix<T, double>* DM = nullptr);
+        Record_adj* ra = nullptr);
 
     //-------------------------------------------------------------
     // forces related to kinetic and non-local pseudopotentials
     //--------------------------------------------------------------
-    void cal_ftvnl_dphi(const elecstate::DensityMatrix<T, double>* DM,
+    void cal_ftvnl_dphi(const elecstate::DensityMatrix<T, double>* dm,
         const Parallel_Orbitals& pv,
         const UnitCell& ucell,
         LCAO_Matrix& lm,
@@ -110,7 +111,7 @@ private:
         ModuleBase::matrix& stvnl_dphi,
         Record_adj* ra = nullptr);
 
-    void cal_fvnl_dbeta(const elecstate::DensityMatrix<T, double>* DM,
+    void cal_fvnl_dbeta(const elecstate::DensityMatrix<T, double>* dm,
         const Parallel_Orbitals& pv,
         const UnitCell& ucell,
         const LCAO_Orbitals& orb,

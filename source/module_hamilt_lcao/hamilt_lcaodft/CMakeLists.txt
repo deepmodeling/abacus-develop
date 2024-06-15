@@ -17,13 +17,14 @@ if(ENABLE_LCAO)
         operator_lcao/dftu_lcao.cpp
         FORCE_STRESS.cpp
         FORCE_gamma.cpp
-        FORCE_gamma_edm.cpp
-        FORCE_gamma_tvnl.cpp
-        FORCE_gamma_vl.cpp
         FORCE_k.cpp
-        foverlap_k.cpp
-        ftvnl_dphi_k.cpp
+        fvl_dphi_gamma.cpp
         fvl_dphi_k.cpp
+        fedm_gamma.cpp
+        fedm_k.cpp
+        ftvnl_dphi_gamma.cpp
+        ftvnl_dphi_k.cpp
+        fvnl_dbeta_gamma.cpp
         fvnl_dbeta_k.cpp
         grid_init.cpp
         spar_dh.cpp

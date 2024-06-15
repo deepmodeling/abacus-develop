@@ -568,9 +568,6 @@ void build_ST_new(
 				for (int ad0=0; ad0 < adjs.adj_num+1; ++ad0)
 				{
 					const int T0 = adjs.ntype[ad0];
-					//const int I0 = GridD->getNatom(ad0);
-					//const int iat0 = ucell.itia2iat(T0, I0);
-					//const int start0 = ucell.itiaiw2iwt(T0, I0, 0);
 					tau0 = adjs.adjacent_tau[ad0];
 					dtau1 = tau0 - tau1;
 					double distance1 = dtau1.norm() * ucell.lat0;

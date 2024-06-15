@@ -24,7 +24,8 @@
 
 
 template<>
-void Force_LCAO<std::complex<double>>::cal_ftvnl_dphi(const elecstate::DensityMatrix<std::complex<double>, double>* DM,
+void Force_LCAO<std::complex<double>>::cal_ftvnl_dphi(
+    const elecstate::DensityMatrix<std::complex<double>, double>* dm,
     const Parallel_Orbitals& pv,
     const UnitCell& ucell,
     LCAO_Matrix& lm,
@@ -34,15 +35,14 @@ void Force_LCAO<std::complex<double>>::cal_ftvnl_dphi(const elecstate::DensityMa
     ModuleBase::matrix& stvnl_dphi,
     Record_adj* ra)
 {
-    ModuleBase::TITLE("Force_LCAO_k", "cal_ftvnl_dphi_k");
-    ModuleBase::timer::tick("Force_LCAO_k", "cal_ftvnl_dphi_k");
+    ModuleBase::TITLE("Force_LCAO", "cal_ftvnl_dphi");
+    ModuleBase::timer::tick("Force_LCAO", "cal_ftvnl_dphi");
 
     const int nspin_DMR = (GlobalV::NSPIN == 2) ? 2 : 1;
 
     int total_irr = 0;
     // get the adjacent atom's information.
 
-    //	GlobalV::ofs_running << " calculate the ftvnl_dphi_k force" << std::endl;
 #ifdef _OPENMP
 #pragma omp parallel
     {
@@ -96,14 +96,14 @@ void Force_LCAO<std::complex<double>>::cal_ftvnl_dphi(const elecstate::DensityMa
                 std::vector<hamilt::BaseMatrix<double>*> tmp_matrix;
                 for (int is = 0; is < nspin_DMR; ++is)
                 {
-                    tmp_matrix.push_back(DM->get_DMR_pointer(is+1)->find_matrix(iat1, iat2, Rx, Ry, Rz));
+                    tmp_matrix.push_back(dm->get_DMR_pointer(is+1)->find_matrix(iat1, iat2, Rx, Ry, Rz));
                 }
-                //hamilt::BaseMatrix<double>* tmp_matrix = DM->get_DMR_pointer(1)->find_matrix(iat1, iat2, Rx, Ry, Rz);
+
                 for (int mu = 0; mu < pv.get_row_size(iat1); ++mu)
                 {
                     for (int nu = 0; nu < pv.get_col_size(iat2); ++nu)
                     {
-                        // get value from DM
+                        // get value from dm
                         double dm2d1 = 0.0;
                         for (int is = 0; is < nspin_DMR; ++is)
                         {
@@ -164,6 +164,6 @@ void Force_LCAO<std::complex<double>>::cal_ftvnl_dphi(const elecstate::DensityMa
         StressTools::stress_fill(ucell.lat0, ucell.omega, stvnl_dphi);
     }
 
-    ModuleBase::timer::tick("Force_LCAO_k", "cal_ftvnl_dphi_k");
+    ModuleBase::timer::tick("Force_LCAO", "cal_ftvnl_dphi");
     return;
 }

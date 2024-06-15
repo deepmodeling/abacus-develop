@@ -325,7 +325,7 @@ void Force_LCAO<std::complex<double>>::test(
         ModuleBase::TITLE("Force_LCAO_k", "ftable_k");
         ModuleBase::timer::tick("Force_LCAO_k", "ftable_k");
 
-        elecstate::DensityMatrix<complex<double>, double>* DM
+        elecstate::DensityMatrix<complex<double>, double>* dm
             = dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(pelec)->get_DM();
 
         this->allocate(
@@ -337,9 +337,10 @@ void Force_LCAO<std::complex<double>>::test(
 
         // calculate the energy density matrix
         // and the force related to overlap matrix and energy density matrix.
-        this->cal_foverlap(
+        this->cal_fedm(
             isforce,
             isstress,
+            dm,
             psi,
             pv,
             pelec,
@@ -347,11 +348,10 @@ void Force_LCAO<std::complex<double>>::test(
             foverlap,
             soverlap,
             kv,
-            ra,
-            DM);
+            ra);
 
         this->cal_ftvnl_dphi(
-            DM,
+            dm,
             pv,
             GlobalC::ucell,
             lm,
@@ -371,7 +371,7 @@ void Force_LCAO<std::complex<double>>::test(
             svl_dphi);
 
         this->cal_fvnl_dbeta(
-            DM,
+            dm,
             pv,
             GlobalC::ucell,
             GlobalC::ORB,
@@ -385,9 +385,12 @@ void Force_LCAO<std::complex<double>>::test(
 #ifdef __DEEPKS
         if (GlobalV::deepks_scf)
         {
-            const std::vector<std::vector<std::complex<double>>>& dm_k = DM->get_DMK_vector();
-            GlobalC::ld.cal_projected_DM_k(DM, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD);
+            const std::vector<std::vector<std::complex<double>>>& dm_k = dm->get_DMK_vector();
+
+            GlobalC::ld.cal_projected_DM_k(dm, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD);
+
             GlobalC::ld.cal_descriptor(GlobalC::ucell.nat);
+
             GlobalC::ld.cal_gedm(GlobalC::ucell.nat);
 
             GlobalC::ld.cal_f_delta_k(dm_k,
