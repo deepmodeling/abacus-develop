@@ -90,7 +90,8 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
     // calculate dS = <phi | dphi>
     //-----------------------------
     bool cal_deri = true;
-    gen_h.build_ST_new(
+    LCAO_domain::build_ST_new(
+          lm,
          'S', 
           cal_deri, 
           GlobalC::ucell, 
@@ -121,7 +122,8 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
 
     // calculate dT=<phi|kin|dphi> in LCAO
     // calculate T + VNL(P1) in LCAO basis
-	gen_h.build_ST_new(
+	LCAO_domain::build_ST_new(
+            lm,
 			'T', 
 			cal_deri, 
 			GlobalC::ucell, 
@@ -133,20 +135,22 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
 
     // calculate dVnl=<phi|dVnl|dphi> in LCAO
 	LCAO_domain::build_Nonlocal_mu_new(
-			*gen_h.LM, 
-			gen_h.LM->Hloc_fixed.data(), 
+			lm,
+			lm.Hloc_fixed.data(), 
 			cal_deri, 
 			GlobalC::ucell, 
 			GlobalC::ORB, 
 			*uot, 
 			&GlobalC::GridD);
 
-    // calculate asynchronous S matrix to output for Hefei-NAMD
-    if (INPUT.cal_syns)
-    {
-        cal_deri = false;
+	// calculate asynchronous S matrix to output for Hefei-NAMD
+	if (INPUT.cal_syns)
+	{
+		cal_deri = false;
 
-		gen_h.build_ST_new('S', 
+		LCAO_domain::build_ST_new(
+				lm,
+				'S', 
 				cal_deri, 
 				GlobalC::ucell,
 				GlobalC::ORB,

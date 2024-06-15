@@ -28,7 +28,8 @@ void sparse_format::cal_dH(
 	{
         GlobalV::CAL_STRESS = false;
 
-		gen_h.build_ST_new(
+		LCAO_domain::build_ST_new(
+                lm,
 				'T', 
 				true, 
 				GlobalC::ucell, 
@@ -42,7 +43,8 @@ void sparse_format::cal_dH(
     }
     else
     {
-		gen_h.build_ST_new(
+		LCAO_domain::build_ST_new(
+				lm,
 				'T', 
 				true, 
 				GlobalC::ucell, 

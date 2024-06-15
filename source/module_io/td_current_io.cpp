@@ -1,4 +1,5 @@
 #include "td_current_io.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
 
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
@@ -36,7 +37,8 @@ void ModuleIO::Init_DS_tmp(
 
     ModuleBase::OMP_PARALLEL(init_DSloc_Rxyz);
     bool cal_deri = true;
-	gen_h.build_ST_new(
+	LCAO_domain::build_ST_new(
+            lm,
 			'S', 
 			cal_deri, 
 			GlobalC::ucell, 

@@ -35,6 +35,7 @@ if(ENABLE_LCAO)
         LCAO_gen_fixedH.cpp
         LCAO_nnr.cpp
 		LCAO_set_fs.cpp
+		LCAO_set_st.cpp
 		LCAO_nl_mu.cpp
 		LCAO_nl_beta.cpp
 		record_adj.cpp

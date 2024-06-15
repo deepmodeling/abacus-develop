@@ -68,7 +68,8 @@ void Force_LCAO<double>::allocate(const Parallel_Orbitals& pv,
         ModuleBase::Memory::record("Stress::dSH_GO", sizeof(double) * pv.nloc * 12);
     }
     // calculate dS in LCAO basis
-	gen_h.build_ST_new(
+	LCAO_domain::build_ST_new(
+            lm,
 			'S', 
 			cal_deri, 
 			GlobalC::ucell, 
@@ -91,7 +92,8 @@ void Force_LCAO<double>::allocate(const Parallel_Orbitals& pv,
 
     // calculate dT
     // calculate T + VNL(P1) in LCAO basis
-	gen_h.build_ST_new(
+	LCAO_domain::build_ST_new(
+            lm,
 			'T', 
 			cal_deri, 
 			GlobalC::ucell, 
@@ -117,7 +119,8 @@ void Force_LCAO<double>::allocate(const Parallel_Orbitals& pv,
 
         lm.zeros_HSgamma('S');
 
-		gen_h.build_ST_new(
+		LCAO_domain::build_ST_new(
+                lm,
 				'S', 
 				cal_deri, 
 				GlobalC::ucell, 
