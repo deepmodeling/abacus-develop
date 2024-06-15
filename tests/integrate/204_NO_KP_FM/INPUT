@@ -3,7 +3,7 @@ INPUT_PARAMETERS
 suffix			autotest
 calculation     scf
 
-nbands			8
+nbands			20
 symmetry		1
 pseudo_dir	../../PP_ORB
 orbital_dir	../../PP_ORB
@@ -11,7 +11,7 @@ gamma_only      0
 
 #Parameters (2.Iteration)
 ecutwfc			20
-scf_thr				1e-8
+scf_thr				1e-7
 scf_nmax			100
 
 nspin           2
@@ -25,7 +25,5 @@ smearing_sigma			0.002
 #Parameters (5.Mixing)
 mixing_type		broyden
 mixing_beta		0.4
-mixing_gg0      0.0
-mixing_beta_mag 1.6
-mixing_gg0_mag  0.0
+mixing_beta_mag 0.4
 
