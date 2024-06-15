@@ -25,7 +25,6 @@ if(ENABLE_LCAO)
         ftvnl_dphi_k.cpp
         fvl_dphi_k.cpp
         fvnl_dbeta_k.cpp
-        LCAO_gen_fixedH.cpp
         grid_init.cpp
         spar_dh.cpp
         spar_exx.cpp
@@ -33,7 +32,9 @@ if(ENABLE_LCAO)
         spar_st.cpp
         spar_u.cpp
         LCAO_matrix.cpp
+        LCAO_gen_fixedH.cpp
         LCAO_nnr.cpp
+        LCAO_set_fs.cpp
         record_adj.cpp
         center2_orb-orb11.cpp
         center2_orb-orb21.cpp
