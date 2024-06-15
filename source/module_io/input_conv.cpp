@@ -30,6 +30,9 @@
 #ifdef __PEXSI
 #include "module_hsolver/module_pexsi/pexsi_solver.h"
 #endif
+#ifdef __MPI
+#include "module_hsolver/diago_elpa.h"
+#endif
 
 #include "module_base/timer.h"
 #include "module_elecstate/elecstate_lcao.h"
