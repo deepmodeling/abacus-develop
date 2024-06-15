@@ -13,6 +13,7 @@ template<>
 void Force_LCAO<double>::cal_fedm(
 	const bool isforce, 
     const bool isstress,
+    const UnitCell& ucell,
     const elecstate::DensityMatrix<double, double>* dm,
     const psi::Psi<double>* psi,
     const Parallel_Orbitals& pv,
@@ -63,7 +64,7 @@ void Force_LCAO<double>::cal_fedm(
 
     for(int i=0; i<nlocal; i++)
     {
-        const int iat = GlobalC::ucell.iwt2iat[i];
+        const int iat = ucell.iwt2iat[i];
         for(int j=0; j<nlocal; j++)
         {
             const int mu = pv.global2local_row(j);
@@ -103,7 +104,7 @@ void Force_LCAO<double>::cal_fedm(
 
     if(isstress)
     {
-		StressTools::stress_fill(GlobalC::ucell.lat0, GlobalC::ucell.omega, soverlap);
+		StressTools::stress_fill(ucell.lat0, ucell.omega, soverlap);
     }
     ModuleBase::timer::tick("Force_LCAO","cal_fedm");
     return;

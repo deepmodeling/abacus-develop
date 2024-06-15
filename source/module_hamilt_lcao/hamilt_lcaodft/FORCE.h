@@ -88,6 +88,7 @@ private:
     void cal_fedm(
         const bool isforce,
         const bool isstress,
+        const UnitCell& ucell,
         const elecstate::DensityMatrix<T, double>* dm,
         const psi::Psi<T>* psi,
         const Parallel_Orbitals& pv,
