@@ -6,7 +6,7 @@
 #include <hip/hip_runtime.h>
 #include <base/macros/macros.h>
 
-using namespace hamilt; 
+using namespace hamilt;
 
 #define THREADS_PER_BLOCK 256
 
@@ -32,7 +32,7 @@ __global__ void nonlocal_pw(
     thrust::complex<FPTYPE> res(0.0, 0.0);
     for (int xx = 0; xx < l3; xx++) {
       res
-        += deeq[((spin * deeq_x + iat + ii) * deeq_y + xx) * deeq_z + kk] 
+        += deeq[((spin * deeq_x + iat + ii) * deeq_y + xx) * deeq_z + kk]
         *  becp[jj * nkb + sum + ii * l3 + xx];
     }
     ps[(sum + ii * l3 + kk) * l2 + jj] += res;
@@ -92,15 +92,14 @@ void hamilt::nonlocal_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const b
 {
   // denghui implement 20221019
   // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-  hipLaunchKernelGGL(HIP_KERNEL_NAME(nonlocal_pw<FPTYPE>), dim3(l1 * l2), dim3(THREADS_PER_BLOCK), 0, 0, 
+  hipLaunchKernelGGL(HIP_KERNEL_NAME(nonlocal_pw<FPTYPE>), dim3(l1 * l2), dim3(THREADS_PER_BLOCK), 0, 0,
     l1, l2, l3, // loop size
     sum, iat, spin, nkb,   // control params
     deeq_x, deeq_y, deeq_z, deeq,  // deeq realArray operator()
     reinterpret_cast<thrust::complex<FPTYPE>*>(ps), // array of data
     reinterpret_cast<const thrust::complex<FPTYPE>*>(becp)); // array of data
-  
-  hipErrcheck(hipGetLastError());
-  hipErrcheck(hipDeviceSynchronize());
+
+   hipCheckOnDebug();
 
   iat += l1;
   sum += l1 * l3;
@@ -123,16 +122,15 @@ void hamilt::nonlocal_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const b
 {
   // denghui implement 20221109
   // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-  hipLaunchKernelGGL(HIP_KERNEL_NAME(nonlocal_pw<FPTYPE>), dim3(l1 * l2), dim3(THREADS_PER_BLOCK), 0, 0, 
+  hipLaunchKernelGGL(HIP_KERNEL_NAME(nonlocal_pw<FPTYPE>), dim3(l1 * l2), dim3(THREADS_PER_BLOCK), 0, 0,
     l1, l2, l3, // loop size
     sum, iat, nkb,   // control params
-    deeq_x, deeq_y, deeq_z, 
+    deeq_x, deeq_y, deeq_z,
     reinterpret_cast<const thrust::complex<FPTYPE>*>(deeq_nc),  // deeq realArray operator()
     reinterpret_cast<thrust::complex<FPTYPE>*>(ps), // array of data
     reinterpret_cast<const thrust::complex<FPTYPE>*>(becp)); // array of data
-  
-  hipErrcheck(hipGetLastError());
-  hipErrcheck(hipDeviceSynchronize());
+
+   hipCheckOnDebug();
 
   iat += l1;
   sum += l1 * l3;

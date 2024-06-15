@@ -117,7 +117,7 @@ void cal_vkb1_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_devi
                                                                  const FPTYPE* gcar,
                                                                  std::complex<FPTYPE>* vkb1)
 {
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(cal_vkb1_nl<FPTYPE>), dim3(nkb), dim3(THREADS_PER_BLOCK), 0, 0, 
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(cal_vkb1_nl<FPTYPE>), dim3(nkb), dim3(THREADS_PER_BLOCK), 0, 0,
             npwx,
             npwk_max,
             vkb_nc,
@@ -128,9 +128,8 @@ void cal_vkb1_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_devi
             reinterpret_cast<const thrust::complex<FPTYPE>*>(vkb),
             gcar,// array of data
             reinterpret_cast<thrust::complex<FPTYPE>*>(vkb1)); // array of data
-    
-    hipErrcheck(hipGetLastError());
-    hipErrcheck(hipDeviceSynchronize());
+
+    hipCheckOnDebug();
 }
 
 template <typename FPTYPE>
@@ -158,7 +157,7 @@ void cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
                                                                   const std::complex<FPTYPE>* dbecp,
                                                                   FPTYPE* force)
 {
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(cal_force_nl<FPTYPE>), dim3(nbands_occ * ntype), dim3(THREADS_PER_BLOCK), 0, 0, 
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(cal_force_nl<FPTYPE>), dim3(nbands_occ * ntype), dim3(THREADS_PER_BLOCK), 0, 0,
             nondiagonal,
             wg_nc, ntype, spin,
             deeq_2, deeq_3, deeq_4,
@@ -169,9 +168,8 @@ void cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
             reinterpret_cast<const thrust::complex<FPTYPE>*>(becp),
             reinterpret_cast<const thrust::complex<FPTYPE>*>(dbecp),
             force);// array of data
-    
-    hipErrcheck(hipGetLastError());
-    hipErrcheck(hipDeviceSynchronize());
+
+    hipCheckOnDebug();
 }
 
 template struct cal_vkb1_nl_op<float, base_device::DEVICE_GPU>;

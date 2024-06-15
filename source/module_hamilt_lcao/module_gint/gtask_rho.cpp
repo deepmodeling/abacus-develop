@@ -1,4 +1,4 @@
-#include "gint_rho.h"
+#include "gint_rho_gpu.h"
 #include "module_base/ylm.h"
 #include "module_hamilt_lcao/module_gint/gint_tools.h"
 #include "omp.h"
@@ -8,17 +8,16 @@ namespace GintKernel
 void gtask_rho(const Grid_Technique& gridt,
                const int grid_index_ij,
                std::vector<bool>& gpu_mat_cal_flag,
-               const int max_size,
-               const int nczp,
+               const int max_atom,
                const UnitCell& ucell,
                const double* rcut,
-               double* input_double,
-               int* input_int,
-               int* num_psir)
+               double* psi_input_double,
+               int* psi_input_int,
+               int* atom_num_per_bcell)
               
 {
     const int nwmax = ucell.nwmax;
-    const int psi_size_max = max_size * gridt.bxyz;
+    const int psi_size_max = max_atom * gridt.bxyz;
 
     // record whether mat_psir is a zero matrix or not.
 
@@ -28,7 +27,7 @@ void gtask_rho(const Grid_Technique& gridt,
         int num_get_psi = 0;
         int grid_index = grid_index_ij + z_index;
         int num_psi_pos = psi_size_max * z_index;
-        int calc_flag_index = max_size * z_index;
+        int calc_flag_index = max_atom * z_index;
         int bcell_start_index = gridt.bcell_start[grid_index];
         int na_grid = gridt.how_many_atoms[grid_index];
 
@@ -66,22 +65,22 @@ void gtask_rho(const Grid_Technique& gridt,
                             gpu_mat_cal_flag[calc_flag_index + id] = true;
                             int pos_temp_double = num_psi_pos + num_get_psi;
                             int pos_temp_int = pos_temp_double * 2;
-                            pos_temp_double *= 5;
+                            pos_temp_double *= 4;
                             if (distance < 1.0E-9)
                             {
                                 distance += 1.0E-9;
                             }
-                            input_double[pos_temp_double]
+                            psi_input_double[pos_temp_double]
                                 = dr_temp[0] / distance;
-                            input_double[pos_temp_double + 1]
+                            psi_input_double[pos_temp_double + 1]
                                 = dr_temp[1] / distance;
-                            input_double[pos_temp_double + 2]
+                            psi_input_double[pos_temp_double + 2]
                                 = dr_temp[2] / distance;
-                            input_double[pos_temp_double + 3] = distance;
+                            psi_input_double[pos_temp_double + 3] = distance;
 
-                            input_int[pos_temp_int] = it_temp; // atom type
-                            input_int[pos_temp_int + 1]
-                                = (z_index * gridt.bxyz + ib) * max_size * nwmax
+                            psi_input_int[pos_temp_int] = it_temp; // atom type
+                            psi_input_int[pos_temp_int + 1]
+                                = (z_index * gridt.bxyz + ib) * max_atom * nwmax
                                   + id * nwmax; // psir index in psir_ylm
                             num_get_psi++;
                         }
@@ -90,7 +89,7 @@ void gtask_rho(const Grid_Technique& gridt,
                 }
             }
         }
-        num_psir[z_index] = num_get_psi;
+        atom_num_per_bcell[z_index] = num_get_psi;
     }
 }
 
@@ -98,7 +97,7 @@ void alloc_mult_dot_rho(const Grid_Technique& gridt,
                         const UnitCell& ucell,
                         std::vector<bool>& gpu_mat_cal_flag,
                         const int grid_index_ij,
-                        const int max_size,
+                        const int max_atom,
                         const int lgd,
                         const int nczp,
                         double* const psir_ylm_g,
@@ -118,13 +117,10 @@ void alloc_mult_dot_rho(const Grid_Technique& gridt,
                         int& max_n,
                         int& atom_pair_num,
                         double* rho_g,
-                        double** vec_l,
-                        double** vec_r,
-                        double** dot_product,
-                        int* vec_len,
-                        int& dot_count)
+                        double** dot_product)
 {
     int tid = 0;
+    int dot_count = 0;
     max_m = 0;
     max_n = 0;
     const int nwmax=ucell.nwmax;
@@ -132,9 +128,9 @@ void alloc_mult_dot_rho(const Grid_Technique& gridt,
     for (int z_index = 0; z_index < gridt.nbzp; z_index++)
     {
         int grid_index = grid_index_ij + z_index;
-        int calc_flag_index = max_size * z_index;
+        int calc_flag_index = max_atom * z_index;
         int bcell_start_index = gridt.bcell_start[grid_index];
-        int bcell_start_psir = z_index * gridt.bxyz * max_size * nwmax;
+        int bcell_start_psir = z_index * gridt.bxyz * max_atom * nwmax;
 
         for (int atom1 = 0; atom1 < gridt.how_many_atoms[grid_index]; atom1++)
         {
@@ -172,9 +168,9 @@ void alloc_mult_dot_rho(const Grid_Technique& gridt,
                 mat_m[tid] = gridt.bxyz;
                 mat_n[tid] = nw1;
                 mat_k[tid] = nw2;
-                mat_lda[tid] = nwmax * max_size;
+                mat_lda[tid] = nwmax * max_atom;
                 mat_ldb[tid] = lgd;
-                mat_ldc[tid] = nwmax * max_size;
+                mat_ldc[tid] = nwmax * max_atom;
                 mat_A[tid] = psir_ylm_g + mat_A_idx;
                 mat_B[tid] = dm_matrix_g + mat_B_idx;
                 mat_C[tid] = psir_dm_g + mat_C_idx;
@@ -203,18 +199,13 @@ void alloc_mult_dot_rho(const Grid_Technique& gridt,
                                              gridt.ncy * nczp);
         for (int i = 0; i < gridt.bxyz; i++)
         {
-            vec_l[dot_count]
-                = psir_ylm_g + (bcell_start_psir + i * max_size * nwmax);
-            vec_r[dot_count]
-                = psir_dm_g + (bcell_start_psir + i * max_size * nwmax);
             dot_product[dot_count] = rho_g + vindex[i];
-            vec_len[dot_count] = nwmax * max_size;
             dot_count++;
         }
+        
+        delete[] vindex;
     }
     atom_pair_num = tid;
-
-    gpu_mat_cal_flag.clear();
 }
 
 } // namespace GintKernel

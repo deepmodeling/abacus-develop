@@ -29,7 +29,6 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                                           const bool isstress,
                                           const bool istestf,
                                           const bool istests,
-										  Local_Orbital_Charge &loc,
 										  Parallel_Orbitals &pv,
                                           const elecstate::ElecState* pelec,
                                           const psi::Psi<T>* psi,
@@ -37,6 +36,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                                           LCAO_gen_fixedH &gen_h, // mohan add 2024-04-02
 										  Gint_Gamma &gint_gamma, // mohan add 2024-04-01
 										  Gint_k &gint_k, // mohan add 2024-04-01
+                                          const ORB_gen_tables* uot,
 										  ModuleBase::matrix& fcs,
                                           ModuleBase::matrix& scs,
                                           const Structure_Factor& sf,
@@ -143,7 +143,6 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
     this->integral_part(GlobalV::GAMMA_ONLY_LOCAL,
         isforce,
         isstress,
-        loc,
         pelec,
         psi,
         foverlap,
@@ -160,6 +159,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
         gen_h, // mohan add 2024-04-02
         gint_gamma,
         gint_k,
+        uot,
         pv,
         lm,
         kv);
@@ -245,6 +245,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
 					nullptr,
 					GlobalC::ucell,
 					&GlobalC::GridD,
+                    uot,
 					&GlobalC::dftu,
 					*(lm.ParaV));
             tmp_dftu.cal_force_stress(isforce, isstress, force_dftu, stress_dftu);
@@ -730,7 +731,6 @@ void Force_Stress_LCAO<double>::integral_part(
     const bool isGammaOnly,
     const bool isforce,
     const bool isstress,
-    Local_Orbital_Charge& loc,
     const elecstate::ElecState* pelec,
     const psi::Psi<double>* psi,
     ModuleBase::matrix& foverlap,
@@ -747,6 +747,7 @@ void Force_Stress_LCAO<double>::integral_part(
     LCAO_gen_fixedH &gen_h, // mohan add 2024-04-02
 	Gint_Gamma &gint_gamma, // mohan add 2024-04-01
 	Gint_k &gint_k, // mohan add 2024-04-01
+    const ORB_gen_tables* uot,
     const Parallel_Orbitals& pv,
     LCAO_Matrix &lm,
     const K_Vectors& kv)
@@ -769,6 +770,7 @@ void Force_Stress_LCAO<double>::integral_part(
 #endif
         gen_h,
         gint_gamma,
+        uot,
         pv,
         lm);
     return;
@@ -780,7 +782,6 @@ void Force_Stress_LCAO<std::complex<double>>::integral_part(
     const bool isGammaOnly,
     const bool isforce,
     const bool isstress,
-    Local_Orbital_Charge& loc,
     const elecstate::ElecState* pelec,
     const psi::Psi<std::complex<double>>* psi,
     ModuleBase::matrix& foverlap,
@@ -797,6 +798,7 @@ void Force_Stress_LCAO<std::complex<double>>::integral_part(
     LCAO_gen_fixedH &gen_h, // mohan add 2024-04-02
 	Gint_Gamma &gint_gamma,
 	Gint_k &gint_k,
+    const ORB_gen_tables* uot,
     const Parallel_Orbitals& pv,
 	LCAO_Matrix &lm,
 	const K_Vectors& kv)
@@ -818,6 +820,7 @@ void Force_Stress_LCAO<std::complex<double>>::integral_part(
 #endif
         gen_h,
         gint_k,
+        uot,
         pv,
         lm,
         & kv,

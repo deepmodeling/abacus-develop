@@ -141,7 +141,7 @@ TEST_F(InputConvTest, Conv)
 	EXPECT_EQ(GlobalV::OUT_FREQ_ION,0);
 	EXPECT_EQ(GlobalV::init_chg,"atomic");
 	EXPECT_EQ(GlobalV::chg_extrap,"atomic");
-	EXPECT_EQ(GlobalV::out_chg,false);
+	EXPECT_EQ(GlobalV::out_chg, 0);
     EXPECT_EQ(GlobalV::out_pot, 2);
     EXPECT_EQ(GlobalV::out_app_flag, false);
     EXPECT_EQ(GlobalV::out_bandgap, false);
