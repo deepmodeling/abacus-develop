@@ -13,158 +13,27 @@
 void Gint_k::distribute_pvdpR_sparseMatrix(
     const int current_spin,
     const int dim,
-    const double &sparse_threshold, 
-    const std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>> &pvdpR_sparseMatrix,
-    LCAO_Matrix *LM,
-    Parallel_Orbitals *pv)
+    const double& sparse_threshold,
+    const std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>>& pvdpR_sparseMatrix,
+    LCAO_Matrix* LM,
+    Parallel_Orbitals* pv)
 {
-    ModuleBase::TITLE("Gint_k","distribute_pvdpR_sparseMatrix");
-
-    int total_R_num = LM->all_R_coor.size();
-    int *nonzero_num = new int[total_R_num];
-    int *minus_nonzero_num = new int[total_R_num];
-    ModuleBase::GlobalFunc::ZEROS(nonzero_num, total_R_num);
-    ModuleBase::GlobalFunc::ZEROS(minus_nonzero_num, total_R_num);
-    int count = 0;
-    for (auto &R_coor : LM->all_R_coor)
-    {
-        auto iter = pvdpR_sparseMatrix.find(R_coor);
-        if (iter != pvdpR_sparseMatrix.end())
-        {
-            for (auto &row_loop : iter->second)
-            {
-                nonzero_num[count] += row_loop.second.size();
+    distribute_sparse_matrix<double>(
+        current_spin,
+        sparse_threshold,
+        pvdpR_sparseMatrix,
+        (dim == 0) ? LM->dHRx_sparse[current_spin] :
+        (dim == 1) ? LM->dHRy_sparse[current_spin] :
+                     LM->dHRz_sparse[current_spin],
+        LM,
+        pv,
+        [dim](auto& matrix, const auto& R_coor, int row, int col, double value) {
+            matrix[R_coor][row][col] += value;
+            if (std::abs(matrix[R_coor][row][col]) <= sparse_threshold) {
+                matrix[R_coor][row].erase(col);
             }
         }
-
-        auto minus_R_coor = -1 * R_coor;
-
-        iter = pvdpR_sparseMatrix.find(minus_R_coor);
-        if (iter != pvdpR_sparseMatrix.end())
-        {
-            for (auto &row_loop : iter->second)
-            {
-                minus_nonzero_num[count] += row_loop.second.size();
-            }
-        }
-        
-        count++;
-    }
-
-    Parallel_Reduce::reduce_all(nonzero_num, total_R_num);
-    Parallel_Reduce::reduce_all(minus_nonzero_num, total_R_num);
-    // Parallel_Reduce::reduce_pool(nonzero_num, total_R_num);
-    // Parallel_Reduce::reduce_pool(minus_nonzero_num, total_R_num);
-
-    double* tmp = nullptr;
-    tmp = new double[GlobalV::NLOCAL];
-
-    count = 0;
-    for (auto &R_coor : LM->all_R_coor)
-    {
-        if (nonzero_num[count] != 0 || minus_nonzero_num[count] != 0)
-        {
-            auto minus_R_coor = -1 * R_coor;
-
-            for(int row = 0; row < GlobalV::NLOCAL; ++row)
-            {        
-                ModuleBase::GlobalFunc::ZEROS(tmp, GlobalV::NLOCAL);
-                
-                auto iter = pvdpR_sparseMatrix.find(R_coor);
-                if (iter != pvdpR_sparseMatrix.end())
-                {
-                    
-                    if(this->gridt->trace_lo[row] >= 0)
-                    {
-                        auto row_iter = iter->second.find(row);
-                        if (row_iter != iter->second.end())
-                        {
-                            for (auto &value : row_iter->second)
-                            {
-                                tmp[value.first] = value.second;
-                            }
-                        }
-                    }
-                }
-
-                auto minus_R_iter = pvdpR_sparseMatrix.find(minus_R_coor);
-                if (minus_R_iter != pvdpR_sparseMatrix.end())
-                {
-                    for (int col = 0; col < row; ++col)
-                    {
-                        if(this->gridt->trace_lo[col] >= 0)
-                        {
-                            auto row_iter = minus_R_iter->second.find(col);
-                            if (row_iter != minus_R_iter->second.end())
-                            {
-                                auto col_iter = row_iter->second.find(row);
-                                if (col_iter != row_iter->second.end())
-                                {
-                                    tmp[col] = col_iter->second;
-                                }
-
-                            }
-                        }
-                    }
-                }
-                
-                Parallel_Reduce::reduce_pool(tmp, GlobalV::NLOCAL);
-
-                if (pv->global2local_row(row) >= 0)
-                {
-                    for(int col = 0; col < GlobalV::NLOCAL; ++col)
-                    {
-                        if(pv->global2local_col(col) >= 0)
-                        {
-                            if (std::abs(tmp[col]) > sparse_threshold)
-                            {
-                                if(dim==0)
-                                {
-                                    double &value= LM->dHRx_sparse[current_spin][R_coor][row][col];
-                                    value += tmp[col];
-                                    if (std::abs(value) <= sparse_threshold)
-                                    {
-                                        LM->dHRx_sparse[current_spin][R_coor][row].erase(col);
-                                    }
-                                }
-                                if(dim==1)
-                                {
-                                    double &value= LM->dHRy_sparse[current_spin][R_coor][row][col];
-                                    value += tmp[col];
-                                    if (std::abs(value) <= sparse_threshold)
-                                    {
-                                        LM->dHRy_sparse[current_spin][R_coor][row].erase(col);
-                                    }
-                                }
-                                if(dim==2)
-                                {
-                                    double &value= LM->dHRz_sparse[current_spin][R_coor][row][col];
-                                    value += tmp[col];
-                                    if (std::abs(value) <= sparse_threshold)
-                                    {
-                                        LM->dHRz_sparse[current_spin][R_coor][row].erase(col);
-                                    }
-                                }                                
-                            }
-                        }
-                    }
-                }
-
-            }
-        }
-
-        count++;
-    }
-
-    delete[] nonzero_num;
-    delete[] minus_nonzero_num;
-    delete[] tmp;
-    nonzero_num = nullptr;
-    minus_nonzero_num = nullptr;
-    tmp = nullptr;
-
-    return;
-
+    );
 }
 
 void Gint_k::distribute_pvdpR_soc_sparseMatrix(

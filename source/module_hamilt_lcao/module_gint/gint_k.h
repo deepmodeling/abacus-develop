@@ -6,9 +6,13 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_elecstate/module_charge/charge.h"
 #include "gint.h"
+#include "module_base/parallel_reduce.h"
+#include "module_basis/module_ao/ORB_read.h"
 
 // add by jingan for map<> in 2021-12-2, will be deleted in the future
 #include "module_base/abfs-vector3_order.h"
+#include <functional>
+
 
 class Gint_k : public Gint
 {
@@ -139,6 +143,120 @@ class Gint_k : public Gint
         Parallel_Orbitals *pv,
         LCAO_Orbitals &orb,UnitCell &ucell,
         Grid_Driver &gdriver);
+
+    // 
+    template <typename T>
+    void distribute_sparse_matrix(const int current_spin,
+                                  const double& sparse_threshold,
+                                  const std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, T>>>& sparseMatrix,
+                                  std::map<Abfs::Vector3_Order<int>, std::map<int, std::map<int, T>>>& matrix,
+                                  LCAO_Matrix* LM,
+                                  Parallel_Orbitals* pv,
+                                  const std::function<void(std::map<Abfs::Vector3_Order<int>, std::map<int, std::map<int, T>>>&, const Abfs::Vector3_Order<int>&, int, int, T)>& update_function)
+    {
+        int total_R_num = LM->all_R_coor.size();
+        int* nonzero_num = new int[total_R_num];
+        int* minus_nonzero_num = new int[total_R_num];
+        ModuleBase::GlobalFunc::ZEROS(nonzero_num, total_R_num);
+        ModuleBase::GlobalFunc::ZEROS(minus_nonzero_num, total_R_num);
+
+        int count = 0;
+        for (const auto& R_coor : LM->all_R_coor)
+        {
+            auto iter = sparseMatrix.find(R_coor);
+            if (iter != sparseMatrix.end())
+            {
+                for (const auto& row_loop : iter->second)
+                {
+                    nonzero_num[count] += row_loop.second.size();
+                }
+            }
+
+            auto minus_R_coor = -1 * R_coor;
+            iter = sparseMatrix.find(minus_R_coor);
+            if (iter != sparseMatrix.end())
+            {
+                for (const auto& row_loop : iter->second)
+                {
+                    minus_nonzero_num[count] += row_loop.second.size();
+                }
+            }
+            count++;
+        }
+
+        Parallel_Reduce::reduce_all(nonzero_num, total_R_num);
+        Parallel_Reduce::reduce_all(minus_nonzero_num, total_R_num);
+
+        T* tmp = new T[GlobalV::NLOCAL];
+
+        count = 0;
+        for (const auto& R_coor : LM->all_R_coor)
+        {
+            if (nonzero_num[count] != 0 || minus_nonzero_num[count] != 0)
+            {
+                auto minus_R_coor = -1 * R_coor;
+
+                for (int row = 0; row < GlobalV::NLOCAL; ++row)
+                {
+                    ModuleBase::GlobalFunc::ZEROS(tmp, GlobalV::NLOCAL);
+
+                    auto iter = sparseMatrix.find(R_coor);
+                    if (iter != sparseMatrix.end() && this->gridt->trace_lo[row] >= 0)
+                    {
+                        auto row_iter = iter->second.find(row);
+                        if (row_iter != iter->second.end())
+                        {
+                            for (const auto& value : row_iter->second)
+                            {
+                                tmp[value.first] = value.second;
+                            }
+                        }
+                    }
+
+                    auto minus_R_iter = sparseMatrix.find(minus_R_coor);
+                    if (minus_R_iter != sparseMatrix.end())
+                    {
+                        for (int col = 0; col < row; ++col)
+                        {
+                            if (this->gridt->trace_lo[col] >= 0)
+                            {
+                                auto row_iter = minus_R_iter->second.find(col);
+                                if (row_iter != minus_R_iter->second.end())
+                                {
+                                    auto col_iter = row_iter->second.find(row);
+                                    if (col_iter != row_iter->second.end())
+                                    {
+                                        tmp[col] = col_iter->second;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Parallel_Reduce::reduce_pool(tmp, GlobalV::NLOCAL);
+
+                    if (pv->global2local_row(row) >= 0)
+                    {
+                        for (int col = 0; col < GlobalV::NLOCAL; ++col)
+                        {
+                            if (pv->global2local_col(col) >= 0)
+                            {
+                                if (std::abs(tmp[col]) > sparse_threshold)
+                                {
+                                    update_function(matrix, R_coor, row, col, tmp[col]);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            count++;
+        }
+
+        delete[] nonzero_num;
+        delete[] minus_nonzero_num;
+        delete[] tmp;
+    }
 
     private:
 
