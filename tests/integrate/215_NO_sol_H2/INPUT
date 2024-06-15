@@ -7,9 +7,10 @@ orbital_dir	../../PP_ORB
 nbands			2
 calculation 	scf
 basis_type		lcao
+scf_thr				1e-7
 
 #Parameters (Accuracy)
-ecutwfc			20
+ecutwfc			10
 scf_nmax	    50
 
 #Parameters (Solvation Model)
