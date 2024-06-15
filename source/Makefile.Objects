@@ -507,7 +507,7 @@ OBJS_LCAO=DM_gamma.o\
 	  fedm_k.o\
 	  ftvnl_dphi_gamma.o\
 	  ftvnl_dphi_k.o\
-	  fvnl_dbeta_gamma.o]
+	  fvnl_dbeta_gamma.o\
 	  fvnl_dbeta_k.o\
 	  grid_init.o\
       spar_dh.o\
