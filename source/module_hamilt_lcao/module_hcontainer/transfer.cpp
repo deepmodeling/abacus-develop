@@ -351,10 +351,10 @@ void HTransPara<T>::unpack_data(int irank, const T* values)
             }
         }
     }
-#ifdef __DEBUG
-    //assert(value_data - values == this->data_size[irank]);
-    //assert(ap_data - this->ap_indexes[irank].data() == this->ap_indexes[irank].size());
-#endif
+// #ifdef __DEBUG
+    // assert(value_data - values == this->data_size[irank]);
+    // assert(ap_data - this->ap_indexes[irank].data() == this->ap_indexes[irank].size());
+// #endif
 }
 
 template <typename T>
