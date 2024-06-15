@@ -1,18 +1,17 @@
 #ifndef OUTPUT_POTENTIAL_H
 #define OUTPUT_POTENTIAL_H
 
-#include <string>
-
-#include "module_io/output_interface.h"
 #include "module_basis/module_pw/pw_basis.h"
 #include "module_cell/unitcell.h"
 #include "module_elecstate/module_charge/charge.h"
+
+#include <string>
 
 namespace ModuleIO
 {
 
 /// @brief the output interface to write the potential
-class Output_Potential : public Output_Interface
+class Output_Potential
 {
   public:
     Output_Potential(const ModulePW::PW_Basis_Big* pw_big,
@@ -28,7 +27,7 @@ class Output_Potential : public Output_Interface
                      const std::string directory,
                      const std::string tag,
                      const std::string prefix = "None");
-    void write() override;
+    void write();
 
   private:
     const ModulePW::PW_Basis_Big* _pw_big;

@@ -3,6 +3,7 @@
 
 // #include "module_cell/atom_spec.h"
 #include "base_matrix.h"
+#include "module_base/vector3.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
 
 #include <vector>
@@ -58,6 +59,17 @@ class AtomPair
              const int& rx,                   // x coordinate of cell
              const int& ry,                   // y coordinate of cell
              const int& rz,                   // z coordinate of cell
+             const Parallel_Orbitals* paraV_, // information for 2d-block parallel
+             T* existed_array
+             = nullptr // if nullptr, new memory will be allocated, otherwise this class is a data wrapper
+    );
+    // Constructor of class AtomPair
+    // Only for 2d-block MPI parallel case
+    // This constructor used for initialize a atom-pair local Hamiltonian with non-zero cell indexes,
+    // which is used for constructing HR (real space Hamiltonian) objects.
+    AtomPair(const int& atom_i_,              // atomic index of atom i, used to identify atom
+             const int& atom_j_,              // atomic index of atom j, used to identify atom
+             const ModuleBase::Vector3<int>& R_index,  // xyz coordinates of cell
              const Parallel_Orbitals* paraV_, // information for 2d-block parallel
              T* existed_array
              = nullptr // if nullptr, new memory will be allocated, otherwise this class is a data wrapper
@@ -163,16 +175,19 @@ class AtomPair
      */
     BaseMatrix<T>& get_HR_values(const int& index) const;
 
-    // interface for get (rx, ry, rz) of index-th R-index in this->R_index, the return should be int[3]
-    int* get_R_index(const int& index) const;
-    // interface for get (rx, ry, rz) of current_R, the return should be int[3]
-    int* get_R_index() const;
+    // interface for get (rx, ry, rz) of index-th R-index in this->R_index, the return should be ModuleBase::Vector3<int>
+    ModuleBase::Vector3<int> get_R_index(const int& index) const;
+    // interface for get (rx, ry, rz) of current_R, the return should be ModuleBase::Vector3<int>
+    ModuleBase::Vector3<int> get_R_index() const;
     // interface for search (rx, ry, rz) in this->R_index, if found, current_R would be set to index
     int find_R(const int& rx_in, const int& ry_in, const int& rz_in) const;
+    int find_R(const ModuleBase::Vector3<int>& R_in) const;
     // interface for search (rx, ry, rz) in this->R_index, if found, current_R would be set to index
     // and return BaseMatrix<T>* of this->values[index]
     const BaseMatrix<T>* find_matrix(const int& rx_in, const int& ry_in, const int& rz_in) const;
     BaseMatrix<T>* find_matrix(const int& rx_in, const int& ry_in, const int& rz_in);
+    const BaseMatrix<T>* find_matrix(const ModuleBase::Vector3<int>& R_in) const;
+    BaseMatrix<T>* find_matrix(const ModuleBase::Vector3<int>& R_in);
 
     // this interface will call get_value in this->values
     // these four interface can be used only when R-index has been choosed (current_R >= 0)
@@ -261,10 +276,10 @@ class AtomPair
     size_t get_R_size() const
     {
 #ifdef __DEBUG
-        assert(this->R_index.size() / 3 == this->values.size());
-        assert(this->R_index.size() % 3 == 0);
+        assert(this->R_index.size() == this->values.size());
+        // assert(this->R_index.size() % 3 == 0);
 #endif
-        return this->R_index.size() / 3;
+        return this->R_index.size();
     }
 
     /**
@@ -274,7 +289,7 @@ class AtomPair
 
   private:
     // it contains 3 index of cell, size of R_index is three times of values.
-    std::vector<int> R_index;
+    std::vector<ModuleBase::Vector3<int>> R_index;
 
     // it contains containers for accessing matrix of this atom-pair
     std::vector<BaseMatrix<T>> values;

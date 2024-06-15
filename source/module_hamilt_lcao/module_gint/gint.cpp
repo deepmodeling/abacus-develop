@@ -715,10 +715,10 @@ void Gint::transfer_DM2DtoGrid(std::vector<hamilt::HContainer<double>*> DM2D)
 			int iat2 = ap.get_atom_j();
 			for(int ir = 0;ir<ap.get_R_size();++ir)
 			{
-				int* r_index = ap.get_R_index(ir);
+				const ModuleBase::Vector3<int> r_index = ap.get_R_index(ir);
 				for (int is = 0; is < 4; is++)
 				{
-					tmp_pointer[is] = this->DMRGint[is]->find_matrix(iat1, iat2, r_index[0], r_index[1], r_index[2])->get_pointer();
+					tmp_pointer[is] = this->DMRGint[is]->find_matrix(iat1, iat2, r_index)->get_pointer();
 				}
 				double* data_full = ap.get_pointer(ir);
 				for(int irow=0;irow<ap.get_row_size();irow += 2)

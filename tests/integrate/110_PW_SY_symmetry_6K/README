@@ -1,6 +1,6 @@
 This test for:
 *C-diamond
-*k-points 12*12*12
+*k-points 6*6*6
 *old upf pseudopotential
 *smearing_method default
 *ks_solver cg
