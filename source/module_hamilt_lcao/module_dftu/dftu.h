@@ -14,6 +14,7 @@
 #include "module_elecstate/elecstate.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "module_elecstate/module_dm/density_matrix.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/force_stress_arrays.h" // mohan add 2024-06-15
 
 #include <string>
 
@@ -121,7 +122,18 @@ private:
     // Subroutines for folding S and dS matrix
     //=============================================================
 
-    void fold_dSR_gamma(const int dim1, const int dim2, double* dSR_gamma);
+	void fold_dSR_gamma(
+			const UnitCell &ucell,
+			Parallel_Orbitals &pv,
+			Grid_Driver* gd,
+			double* dsloc_x,
+			double* dsloc_y,
+			double* dsloc_z,
+			double* dh_r,
+			const int dim1, 
+			const int dim2, 
+			double* dSR_gamma)
+
     // dim = 0 : S, for Hamiltonian
     // dim = 1-3 : dS, for force
     // dim = 4-6 : dS * dR, for stress
@@ -142,22 +154,35 @@ private:
     // For calculating force and stress fomr DFT+U
     //=============================================================
   public:
-    void force_stress(const elecstate::ElecState* pelec,
-                      LCAO_Matrix& lm,
-                      ModuleBase::matrix& force_dftu,
-                      ModuleBase::matrix& stress_dftu,
-                      const K_Vectors& kv);
+
+   void force_stress(const elecstate::ElecState* pelec,
+		   LCAO_Matrix& lm,
+		   const Parallel_Orbitals& pv,
+		   ForceStressArrays& fsr,
+		   ModuleBase::matrix& force_dftu,
+		   ModuleBase::matrix& stress_dftu,
+		   const K_Vectors& kv);
 
   private:
+
     void cal_force_k(const int ik,
                     const std::complex<double>* rho_VU,
                     ModuleBase::matrix& force_dftu,
                     const std::vector<ModuleBase::Vector3<double>>& kvec_d);
+
     void cal_stress_k(const int ik,
                       const std::complex<double>* rho_VU,
                       ModuleBase::matrix& stress_dftu,
                       const std::vector<ModuleBase::Vector3<double>>& kvec_d);
-    void cal_force_gamma(const double* rho_VU, ModuleBase::matrix& force_dftu);
+
+	void cal_force_gamma(
+			const double* rho_VU, 
+			const Parallel_Orbitals &pv,
+			double* dsloc_x,
+			double* dsloc_y,
+			double* dsloc_z,
+			ModuleBase::matrix& force_dftu);
+
     void cal_stress_gamma(const double* rho_VU, ModuleBase::matrix& stress_dftu);
 
     //=============================================================
@@ -211,10 +236,11 @@ private:
     const elecstate::DensityMatrix<double, double>* dm_in_dftu_d = nullptr;
     const elecstate::DensityMatrix<std::complex<double>, double>* dm_in_dftu_cd = nullptr;
 };
+
 } // namespace ModuleDFTU
 
 namespace GlobalC
 {
-extern ModuleDFTU::DFTU dftu;
+	extern ModuleDFTU::DFTU dftu;
 }
 #endif

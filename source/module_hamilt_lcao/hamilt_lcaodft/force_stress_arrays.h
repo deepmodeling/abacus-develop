@@ -5,8 +5,8 @@ class ForceStressArrays
 {
     public:
 
-    ForceArrays();
-    ~ForceArrays();
+    ForceStressArrays(){};
+    ~ForceStressArrays(){};
 
     //-----------------------------------------
     // force in LCAO
@@ -67,6 +67,6 @@ class ForceStressArrays
     double* DHloc_fixed_23;
     double* DHloc_fixed_33;
 
-}
+};
 
 #endif

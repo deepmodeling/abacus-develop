@@ -53,12 +53,16 @@ namespace ModuleDFTU
 
 void DFTU::force_stress(const elecstate::ElecState* pelec,
                         LCAO_Matrix& lm,
+                        const Parallel_Orbitals& pv,
+                        ForceStressArrays& fsr,
                         ModuleBase::matrix& force_dftu,
                         ModuleBase::matrix& stress_dftu,
                         const K_Vectors& kv)
 {
     ModuleBase::TITLE("DFTU", "force_stress");
     ModuleBase::timer::tick("DFTU", "force_stress");
+  
+    const int nlocal = GlobalV::NLOCAL;
 
     this->LM = &lm;
 
@@ -73,72 +77,120 @@ void DFTU::force_stress(const elecstate::ElecState* pelec,
 
     if (GlobalV::GAMMA_ONLY_LOCAL)
     {
-        const char transN = 'N', transT = 'T';
+        const char transN = 'N';
+        const char transT = 'T';
         const int one_int = 1;
-        const double alpha = 1.0, beta = 0.0;
+        const double alpha = 1.0;
+        const double beta = 0.0;
 
-        std::vector<double> rho_VU(this->LM->ParaV->nloc);
+        std::vector<double> rho_VU(pv.nloc);
 
         for (int ik = 0; ik < kv.get_nks(); ik++)
         {
 
             const int spin = kv.isk[ik];
 
-            double* VU = new double[this->LM->ParaV->nloc];
+            double* VU = new double[pv.nloc];
+
             this->cal_VU_pot_mat_real(spin, false, VU);
+
             const std::vector<std::vector<double>>& dmk = 
                 dynamic_cast<const elecstate::ElecStateLCAO<double>*> (pelec)->get_DM()->get_DMK_vector();
-            ModuleBase::timer::tick("DFTU", "cal_rho_VU");
 
 #ifdef __MPI
-            pdgemm_(&transT, &transN,
-                    &GlobalV::NLOCAL, &GlobalV::NLOCAL, &GlobalV::NLOCAL,
-                    &alpha, 
-                    dmk[spin].data(), &one_int, &one_int, this->LM->ParaV->desc, 
-                    VU, &one_int, &one_int, this->LM->ParaV->desc,
+			pdgemm_(&transT, 
+					&transN,
+					&nlocal, 
+					&nlocal, 
+					&nlocal,
+					&alpha, 
+					dmk[spin].data(), 
+					&one_int, 
+					&one_int, 
+					pv.desc, 
+					VU, 
+					&one_int, 
+					&one_int, 
+					pv.desc,
                     &beta,
-                    &rho_VU[0], &one_int, &one_int, this->LM->ParaV->desc);
+					&rho_VU[0], 
+					&one_int, 
+					&one_int, 
+					pv.desc);
 #endif
 
             delete[] VU;
-            ModuleBase::timer::tick("DFTU", "cal_rho_VU");
-            if (GlobalV::CAL_FORCE)  this->cal_force_gamma(&rho_VU[0], force_dftu);
-            if (GlobalV::CAL_STRESS) this->cal_stress_gamma(&rho_VU[0], stress_dftu);
+
+			if (GlobalV::CAL_FORCE)  
+			{
+				this->cal_force_gamma(
+						&rho_VU[0], 
+						pv,
+						fsr.DSloc_x,
+						fsr.DSloc_y,
+						fsr.DSloc_z,
+						force_dftu);
+			}
+
+			if (GlobalV::CAL_STRESS) 
+			{
+				this->cal_stress_gamma(&rho_VU[0], stress_dftu);
+			}
         } // ik
     }
     else
     {
-        const char transN = 'N', transT = 'T';
+        const char transN = 'N';
+        const char transT = 'T';
         const int one_int = 1;
-			const std::complex<double> alpha(1.0,0.0), beta(0.0,0.0);
+		const std::complex<double> alpha(1.0,0.0);
+        const std::complex<double> beta(0.0,0.0);
 
-        std::vector<std::complex<double>> rho_VU(this->LM->ParaV->nloc);
+        std::vector<std::complex<double>> rho_VU(pv.nloc);
 
         for (int ik = 0; ik < kv.get_nks(); ik++)
         {
             const int spin = kv.isk[ik];
 
-            std::complex<double>* VU = new std::complex<double>[this->LM->ParaV->nloc];
+            std::complex<double>* VU = new std::complex<double>[pv.nloc];
+
             this->cal_VU_pot_mat_complex(spin, false, VU);
+
             const std::vector<std::vector<std::complex<double>>>& dmk = 
                 dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*> (pelec)->get_DM()->get_DMK_vector();
-            ModuleBase::timer::tick("DFTU", "cal_rho_VU");
 
 #ifdef __MPI
-            pzgemm_(&transT, &transN,
-                    &GlobalV::NLOCAL, &GlobalV::NLOCAL, &GlobalV::NLOCAL,
-                    &alpha, 
-                    dmk[ik].data(), &one_int, &one_int, this->LM->ParaV->desc, 
-                    VU, &one_int, &one_int, this->LM->ParaV->desc,
-                    &beta,
-                    &rho_VU[0], &one_int, &one_int, this->LM->ParaV->desc);
+			pzgemm_(&transT, 
+					&transN,
+					&nlocal, 
+					&nlocal, 
+					&nlocal,
+					&alpha, 
+					dmk[ik].data(), 
+					&one_int, 
+					&one_int, 
+					pv.desc, 
+					VU, 
+					&one_int, 
+					&one_int, 
+					pv.desc,
+					&beta,
+					&rho_VU[0], 
+					&one_int, 
+					&one_int, 
+					pv.desc);
 #endif
 
             delete[] VU;
-            ModuleBase::timer::tick("DFTU", "cal_rho_VU");
 
-            if (GlobalV::CAL_FORCE)  cal_force_k (ik, &rho_VU[0], force_dftu, kv.kvec_d);
-            if (GlobalV::CAL_STRESS) cal_stress_k(ik, &rho_VU[0], stress_dftu, kv.kvec_d);
+			if (GlobalV::CAL_FORCE)  
+			{
+				cal_force_k (ik, &rho_VU[0], force_dftu, kv.kvec_d);
+			}
+			if (GlobalV::CAL_STRESS) 
+			{
+				cal_stress_k(ik, &rho_VU[0], stress_dftu, kv.kvec_d);
+			}
         } // ik
     }
 
@@ -320,7 +372,13 @@ void DFTU::cal_stress_k(const int ik,
     return;
 }
 
-void DFTU::cal_force_gamma(const double* rho_VU, ModuleBase::matrix& force_dftu)
+void DFTU::cal_force_gamma(
+		const double* rho_VU, 
+        const Parallel_Orbitals &pv,
+        double* dsloc_x,
+        double* dsloc_y,
+        double* dsloc_z,
+		ModuleBase::matrix& force_dftu)
 {
     ModuleBase::TITLE("DFTU", "cal_force_gamma");
     ModuleBase::timer::tick("DFTU", "cal_force_gamma");
@@ -328,34 +386,43 @@ void DFTU::cal_force_gamma(const double* rho_VU, ModuleBase::matrix& force_dftu)
     const int one_int = 1;
     const double one = 1.0, zero = 0.0, minus_one = -1.0;
 
-    std::vector<double> dm_VU_dSm(this->LM->ParaV->nloc);
+    std::vector<double> dm_VU_dSm(pv.nloc);
 
     for (int dim = 0; dim < 3; dim++)
     {
         double* tmp_ptr;
-        if (dim == 0)      tmp_ptr = this->LM->DSloc_x;
-        else if (dim == 1) tmp_ptr = this->LM->DSloc_y;
-        else if (dim == 2) tmp_ptr = this->LM->DSloc_z;
+		if (dim == 0)    
+		{
+			tmp_ptr = dsloc_x;
+		}
+		else if (dim == 1) 
+		{
+			tmp_ptr = dsloc_y;
+		}
+		else if (dim == 2) 
+		{
+			tmp_ptr = dsloc_z;
+		}
 
 #ifdef __MPI
         pdgemm_(&transN, &transT,
 				&GlobalV::NLOCAL, &GlobalV::NLOCAL, &GlobalV::NLOCAL,
 				&one, 
-				tmp_ptr, &one_int, &one_int, this->LM->ParaV->desc, 
-				rho_VU, &one_int, &one_int, this->LM->ParaV->desc,
+				tmp_ptr, &one_int, &one_int, pv.desc, 
+				rho_VU, &one_int, &one_int, pv.desc,
 				&zero,
-				&dm_VU_dSm[0], &one_int, &one_int, this->LM->ParaV->desc);
+				&dm_VU_dSm[0], &one_int, &one_int, pv.desc);
 #endif
 
-        for (int ir = 0; ir < this->LM->ParaV->nrow; ir++)
+        for (int ir = 0; ir < pv.nrow; ir++)
         {
-            const int iwt1 = this->LM->ParaV->local2global_row(ir);
+            const int iwt1 = pv.local2global_row(ir);
             const int iat1 = GlobalC::ucell.iwt2iat[iwt1];
 
-            for (int ic = 0; ic < this->LM->ParaV->ncol; ic++)
+            for (int ic = 0; ic < pv.ncol; ic++)
             {
-                const int iwt2 = this->LM->ParaV->local2global_col(ic);
-                const int irc = ic * this->LM->ParaV->nrow + ir;
+                const int iwt2 = pv.local2global_col(ic);
+                const int irc = ic * pv.nrow + ir;
 
                 if (iwt1 == iwt2) force_dftu(iat1, dim) += dm_VU_dSm[irc];
 
@@ -366,10 +433,10 @@ void DFTU::cal_force_gamma(const double* rho_VU, ModuleBase::matrix& force_dftu)
         pdgemm_(&transN, &transT,
 				&GlobalV::NLOCAL, &GlobalV::NLOCAL, &GlobalV::NLOCAL,
 				&one, 
-				tmp_ptr, &one_int, &one_int, this->LM->ParaV->desc, 
-				rho_VU, &one_int, &one_int, this->LM->ParaV->desc,
+				tmp_ptr, &one_int, &one_int, pv.desc, 
+				rho_VU, &one_int, &one_int, pv.desc,
 				&zero,
-				&dm_VU_dSm[0], &one_int, &one_int, this->LM->ParaV->desc);
+				&dm_VU_dSm[0], &one_int, &one_int, pv.desc);
 #endif
 
         for (int it = 0; it < GlobalC::ucell.ntype; it++)
@@ -398,11 +465,11 @@ void DFTU::cal_force_gamma(const double* rho_VU, ModuleBase::matrix& force_dftu)
                             for (int ipol = 0; ipol < GlobalV::NPOL; ipol++)
                             {
                                 const int iwt = this->iatlnmipol2iwt[iat][l][n][m][ipol];
-                                const int mu = this->LM->ParaV->global2local_row(iwt);
-                                const int nu = this->LM->ParaV->global2local_col(iwt);
+                                const int mu = pv.global2local_row(iwt);
+                                const int nu = pv.global2local_col(iwt);
                                 if (mu < 0 || nu < 0) continue;
 
-                                force_dftu(iat, dim) += dm_VU_dSm[nu * this->LM->ParaV->nrow + mu];
+                                force_dftu(iat, dim) += dm_VU_dSm[nu * pv.nrow + mu];
                             }
                         } //
                     } // n
@@ -416,31 +483,67 @@ void DFTU::cal_force_gamma(const double* rho_VU, ModuleBase::matrix& force_dftu)
     return;
 }
 
-void DFTU::cal_stress_gamma(const double* rho_VU, ModuleBase::matrix& stress_dftu)
+void DFTU::cal_stress_gamma(
+    const UnitCell &ucell,
+    Parallel_Orbitals &pv,
+    Grid_Driver* gd,
+    double* dsloc_x,
+    double* dsloc_y,
+    double* dsloc_z,
+    double* dh_r,
+    const double* rho_VU, 
+    ModuleBase::matrix& stress_dftu)
 {
     ModuleBase::TITLE("DFTU", "cal_stress_gamma");
     ModuleBase::timer::tick("DFTU", "cal_stress_gamma");
+
     const char transN = 'N';
     const int one_int = 1;
-    const double zero = 0.0, minus_half = -0.5, one = 1.0;
+    const double zero = 0.0;
+    const double minus_half = -0.5;
+    const double one = 1.0;
 
-    std::vector<double> dSR_gamma(this->LM->ParaV->nloc);
-    std::vector<double> dm_VU_sover(this->LM->ParaV->nloc);
+    std::vector<double> dSR_gamma(pv.nloc);
+    std::vector<double> dm_VU_sover(pv.nloc);
+
+    const int nlocal = GlobalV::NLOCAL;
 
     for (int dim1 = 0; dim1 < 3; dim1++)
     {
         for (int dim2 = dim1; dim2 < 3; dim2++)
         {
-            this->fold_dSR_gamma(dim1, dim2, &dSR_gamma[0]);
+			this->fold_dSR_gamma(
+					ucell,
+					pv,
+					gd,
+					dsloc_x,
+					dsloc_y,
+					dsloc_z,
+					dh_r,
+					dim1, 
+					dim2, 
+					&dSR_gamma[0]);
 
 #ifdef __MPI
-            pdgemm_(&transN, &transN,
-					&GlobalV::NLOCAL, &GlobalV::NLOCAL, &GlobalV::NLOCAL,
+			pdgemm_(&transN, 
+					&transN,
+					&nlocal, 
+					&nlocal, 
+					&nlocal,
 					&minus_half, 
-					rho_VU, &one_int, &one_int, this->LM->ParaV->desc, 
-					&dSR_gamma[0], &one_int, &one_int, this->LM->ParaV->desc,
+					rho_VU, 
+					&one_int, 
+					&one_int, 
+					pv.desc, 
+					&dSR_gamma[0], 
+					&one_int, 
+					&one_int, 
+					pv.desc,
 					&zero,
-					&dm_VU_sover[0], &one_int, &one_int, this->LM->ParaV->desc);
+					&dm_VU_sover[0], 
+					&one_int, 
+					&one_int, 
+					pv.desc);
 #endif
 
             for (int ir = 0; ir < this->LM->ParaV->nrow; ir++)
