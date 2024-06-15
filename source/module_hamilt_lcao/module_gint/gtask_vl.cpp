@@ -105,7 +105,7 @@ void gtask_vlocal(const Grid_Technique& gridt,
 
 void alloc_mult_vlocal(const Grid_Technique& gridt,
                         const UnitCell& ucell,
-                        std::vector<bool>& gpu_matrix_calc_flag,
+                        const std::vector<bool>& gpu_matrix_calc_flag,
                         const int grid_index_ij,
                         const int max_atom,
                         double* psi,

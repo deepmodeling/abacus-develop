@@ -98,7 +98,7 @@ void gtask_rho(const Grid_Technique& gridt,
 
 void alloc_mult_dot_rho(const Grid_Technique& gridt,
                         const UnitCell& ucell,
-                        std::vector<bool>& gpu_mat_cal_flag,
+                        const std::vector<bool>& gpu_mat_cal_flag,
                         const int grid_index_ij,
                         const int max_atom,
                         const int lgd,

@@ -58,7 +58,7 @@ void alloc_mult_force(const Grid_Technique& gridt,
                       double** mat_A,
                       double** mat_B,
                       double** mat_C,
-                      std::vector<bool>& gpu_mat_cal_flag);
+                      const std::vector<bool>& gpu_mat_cal_flag);
 
 } // namespace GintKernel
 #endif
