@@ -1,4 +1,5 @@
 #include "spar_dh.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
 
 void sparse_format::cal_dH(
 		LCAO_Matrix &lm,
@@ -52,7 +53,8 @@ void sparse_format::cal_dH(
 				lm.Hloc_fixedR.data());
     }
 
-	gen_h.build_Nonlocal_mu_new(
+	LCAO_domain::build_Nonlocal_mu_new(
+            lm,
 			lm.Hloc_fixed.data(), 
 			true, 
 			GlobalC::ucell, 

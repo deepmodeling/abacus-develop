@@ -517,6 +517,8 @@ OBJS_LCAO=DM_gamma.o\
       LCAO_matrix.o\
       LCAO_gen_fixedH.o\
       LCAO_set_fs.o\
+      LCAO_nl_mu.o\
+      LCAO_nl_beta.o\
       LCAO_nnr.o\
       center2_orb-orb11.o\
       center2_orb-orb21.o\

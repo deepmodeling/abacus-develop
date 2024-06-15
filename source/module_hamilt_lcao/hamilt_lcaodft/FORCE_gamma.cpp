@@ -9,7 +9,8 @@
 #endif
 #include "module_io/write_HS.h"
 #include "module_elecstate/elecstate_lcao.h"
-#include "module_cell/module_neighbor/sltk_grid_driver.h"   //GridD
+#include "module_cell/module_neighbor/sltk_grid_driver.h"  //GridD
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h" 
 
 template<>
 void Force_LCAO<double>::allocate(const Parallel_Orbitals& pv,
@@ -100,10 +101,14 @@ void Force_LCAO<double>::allocate(const Parallel_Orbitals& pv,
 			&GlobalC::GridD, 
 			lm.Hloc_fixed.data());
 
-    // ModuleBase::timer::tick("Force_LCAO_gamma","build_Nonlocal_mu");
-    gen_h.build_Nonlocal_mu_new(lm.Hloc_fixed.data(), cal_deri, GlobalC::ucell, GlobalC::ORB, *uot, &(GlobalC::GridD));
-    // ModuleBase::timer::tick("Force_LCAO_gamma","build_Nonlocal_mu");
-    // test_gamma(lm.DHloc_fixed_x, "dHloc_fixed_x Vnl part");
+    LCAO_domain::build_Nonlocal_mu_new(
+			lm, 
+			lm.Hloc_fixed.data(), 
+			cal_deri, 
+			GlobalC::ucell, 
+			GlobalC::ORB, 
+			*uot, 
+			&GlobalC::GridD);
 
     // calculate asynchronous S matrix to output for Hefei-NAMD
     if (INPUT.cal_syns)

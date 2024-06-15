@@ -5,8 +5,35 @@
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
 
+#include "module_base/global_function.h"
+#include "module_base/global_variable.h"
+#include "module_basis/module_ao/ORB_gen_tables.h"
+#include "module_cell/module_neighbor/sltk_grid_driver.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
+#include "module_basis/module_ao/ORB_gen_tables.h"
+#include "module_base/vector3.h"
+
 namespace LCAO_domain
 {
+
+    // can used in gamma algorithm.
+	void build_Nonlocal_beta_new(
+			LCAO_Matrix &lm,
+			double* Hloc,
+			const UnitCell& ucell,
+			const LCAO_Orbitals& orb,
+			const ORB_gen_tables& uot,
+			Grid_Driver* GridD);
+
+
+    void build_Nonlocal_mu_new(
+			LCAO_Matrix &lm,
+			double* HlocR,
+			const bool& calc_deri,
+			const UnitCell& ucell,
+			const LCAO_Orbitals& orb,
+			const ORB_gen_tables& uot,
+			Grid_Driver* GridD);
 
     /**
      * @brief prepare gird integration

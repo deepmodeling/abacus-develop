@@ -13,6 +13,7 @@
 #include "module_elecstate/elecstate_lcao.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/write_HS.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
 
 #ifdef __DEEPKS
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
@@ -131,7 +132,14 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
 			gen_h.LM->Hloc_fixedR.data());
 
     // calculate dVnl=<phi|dVnl|dphi> in LCAO
-    gen_h.build_Nonlocal_mu_new(gen_h.LM->Hloc_fixed.data(), cal_deri, GlobalC::ucell, GlobalC::ORB, *uot, &(GlobalC::GridD));
+	LCAO_domain::build_Nonlocal_mu_new(
+			*gen_h.LM, 
+			gen_h.LM->Hloc_fixed.data(), 
+			cal_deri, 
+			GlobalC::ucell, 
+			GlobalC::ORB, 
+			*uot, 
+			&GlobalC::GridD);
 
     // calculate asynchronous S matrix to output for Hefei-NAMD
     if (INPUT.cal_syns)

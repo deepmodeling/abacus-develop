@@ -34,8 +34,10 @@ if(ENABLE_LCAO)
         LCAO_matrix.cpp
         LCAO_gen_fixedH.cpp
         LCAO_nnr.cpp
-        LCAO_set_fs.cpp
-        record_adj.cpp
+		LCAO_set_fs.cpp
+		LCAO_nl_mu.cpp
+		LCAO_nl_beta.cpp
+		record_adj.cpp
         center2_orb-orb11.cpp
         center2_orb-orb21.cpp
         center2_orb-orb22.cpp
