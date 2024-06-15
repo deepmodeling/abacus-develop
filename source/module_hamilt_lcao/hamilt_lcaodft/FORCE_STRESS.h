@@ -15,6 +15,7 @@
 #endif
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
+#include "force_stress_arrays.h"
 
 template<typename T>
 class Force_Stress_LCAO
@@ -74,6 +75,7 @@ class Force_Stress_LCAO
         const bool isGammaOnly,
         const bool isforce,
         const bool isstress,
+        ForceStressArrays &fsr, // mohan add 2024-06-15
         const elecstate::ElecState* pelec,
         const psi::Psi<T>* psi,
         ModuleBase::matrix& foverlap,

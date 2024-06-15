@@ -58,6 +58,8 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
 
     const int nat = GlobalC::ucell.nat;
 
+    ForceStressArrays fsr; // mohan add 2024-06-15
+
     // total force : ModuleBase::matrix fcs;
 
     // part of total force
@@ -139,9 +141,11 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
     //--------------------------------------------------------
     // implement four terms which needs integration
     //--------------------------------------------------------
-    this->integral_part(GlobalV::GAMMA_ONLY_LOCAL,
+    this->integral_part(
+        GlobalV::GAMMA_ONLY_LOCAL,
         isforce,
         isstress,
+        fsr,
         pelec,
         psi,
         foverlap,
@@ -729,6 +733,7 @@ void Force_Stress_LCAO<double>::integral_part(
     const bool isGammaOnly,
     const bool isforce,
     const bool isstress,
+    ForceStressArrays &fsr, // mohan add 2024-06-15
     const elecstate::ElecState* pelec,
     const psi::Psi<double>* psi,
     ModuleBase::matrix& foverlap,
@@ -750,8 +755,10 @@ void Force_Stress_LCAO<double>::integral_part(
     const K_Vectors& kv)
 {
 
-    flk.ftable(isforce,
+    flk.ftable(
+        isforce,
         isstress,
+        fsr, // mohan add 2024-06-15
         GlobalC::ucell,
         psi,
         pelec,
@@ -779,6 +786,7 @@ void Force_Stress_LCAO<std::complex<double>>::integral_part(
     const bool isGammaOnly,
     const bool isforce,
     const bool isstress,
+    ForceStressArrays &fsr, // mohan add 2024-06-15
     const elecstate::ElecState* pelec,
     const psi::Psi<std::complex<double>>* psi,
     ModuleBase::matrix& foverlap,

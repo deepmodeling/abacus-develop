@@ -14,9 +14,12 @@ void sparse_format::cal_dH(
     sparse_format::set_R_range(lm.all_R_coor, grid);
 
     const int nnr = lm.ParaV->nnr;
-    lm.DHloc_fixedR_x = new double[nnr];
-    lm.DHloc_fixedR_y = new double[nnr];
-    lm.DHloc_fixedR_z = new double[nnr];
+
+    ForceStressArrays fsr_dh;
+
+    fsr_dh.DHloc_fixedR_x = new double[nnr];
+    fsr_dh.DHloc_fixedR_y = new double[nnr];
+    fsr_dh.DHloc_fixedR_z = new double[nnr];
 
     ModuleBase::GlobalFunc::ZEROS(lm.DHloc_fixedR_x, lm.ParaV->nloc);
     ModuleBase::GlobalFunc::ZEROS(lm.DHloc_fixedR_y, lm.ParaV->nloc);
@@ -29,6 +32,7 @@ void sparse_format::cal_dH(
 
 		LCAO_domain::build_ST_new(
                 lm,
+                fsr_dh,
 				'T', 
 				true, 
 				GlobalC::ucell, 
@@ -44,6 +48,7 @@ void sparse_format::cal_dH(
     {
 		LCAO_domain::build_ST_new(
 				lm,
+                fsr_dh,
 				'T', 
 				true, 
 				GlobalC::ucell, 
@@ -65,9 +70,9 @@ void sparse_format::cal_dH(
     
     sparse_format::cal_dSTN_R(lm, grid, current_spin, sparse_thr);
 
-    delete[] lm.DHloc_fixedR_x;
-    delete[] lm.DHloc_fixedR_y;
-    delete[] lm.DHloc_fixedR_z;
+    delete[] fsr_dh.DHloc_fixedR_x;
+    delete[] fsr_dh.DHloc_fixedR_y;
+    delete[] fsr_dh.DHloc_fixedR_z;
 
 	gint_k.cal_dvlocal_R_sparseMatrix(
 			current_spin, 

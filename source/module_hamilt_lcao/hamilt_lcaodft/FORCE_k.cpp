@@ -24,14 +24,16 @@
 #endif
 
 template<>
-void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
+void Force_LCAO<std::complex<double>>::allocate(
+    const Parallel_Orbitals& pv,
     LCAO_Matrix& lm,
+    ForceStressArrays& fsr, // mohan add 2024-06-15
     const ORB_gen_tables* uot,
     const int& nks,
     const std::vector<ModuleBase::Vector3<double>>& kvec_d)
 {
-    ModuleBase::TITLE("Force_LCAO_k", "allocate_k");
-    ModuleBase::timer::tick("Force_LCAO_k", "allocate_k");
+    ModuleBase::TITLE("Force_LCAO", "allocate");
+    ModuleBase::timer::tick("Force_LCAO", "allocate");
 
     const int nnr = pv.nnr;
 
@@ -40,19 +42,18 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
     //--------------------------------
     // (1) allocate for dSx dSy & dSz
     //--------------------------------
-    lm.DSloc_Rx = new double[nnr];
-    lm.DSloc_Ry = new double[nnr];
-    lm.DSloc_Rz = new double[nnr];
+    fsr.DSloc_Rx = new double[nnr];
+    fsr.DSloc_Ry = new double[nnr];
+    fsr.DSloc_Rz = new double[nnr];
 
-    // mohan add lm on 2024-03-31
-	const auto init_DSloc_Rxyz = [this, nnr, &lm](int num_threads, int thread_id) 
+	const auto init_DSloc_Rxyz = [this, nnr, &fsr](int num_threads, int thread_id) 
 	{
 		int beg=0;
 		int len=0;
 		ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, nnr, 1024, beg, len);
-		ModuleBase::GlobalFunc::ZEROS(lm.DSloc_Rx + beg, len);
-		ModuleBase::GlobalFunc::ZEROS(lm.DSloc_Ry + beg, len);
-		ModuleBase::GlobalFunc::ZEROS(lm.DSloc_Rz + beg, len);
+		ModuleBase::GlobalFunc::ZEROS(fsr.DSloc_Rx + beg, len);
+		ModuleBase::GlobalFunc::ZEROS(fsr.DSloc_Ry + beg, len);
+		ModuleBase::GlobalFunc::ZEROS(fsr.DSloc_Rz + beg, len);
 	};
 
     ModuleBase::OMP_PARALLEL(init_DSloc_Rxyz);
@@ -60,24 +61,23 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
 
     if (GlobalV::CAL_STRESS)
     {
-        lm.DH_r = new double[3 * nnr];
-        lm.stvnl11 = new double[nnr];
-        lm.stvnl12 = new double[nnr];
-        lm.stvnl13 = new double[nnr];
-        lm.stvnl22 = new double[nnr];
-        lm.stvnl23 = new double[nnr];
-        lm.stvnl33 = new double[nnr];
-        // mohan add lm on 2024-03-31
-        const auto init_DH_r_stvnl = [this, nnr, &lm](int num_threads, int thread_id) {
+        fsr.DH_r = new double[3 * nnr];
+        fsr.stvnl11 = new double[nnr];
+        fsr.stvnl12 = new double[nnr];
+        fsr.stvnl13 = new double[nnr];
+        fsr.stvnl22 = new double[nnr];
+        fsr.stvnl23 = new double[nnr];
+        fsr.stvnl33 = new double[nnr];
+        const auto init_DH_r_stvnl = [this, nnr, &fsr](int num_threads, int thread_id) {
             int beg, len;
             ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, nnr, 1024, beg, len);
-            ModuleBase::GlobalFunc::ZEROS(lm.DH_r + 3 * beg, 3 * len);
-            ModuleBase::GlobalFunc::ZEROS(lm.stvnl11 + beg, len);
-            ModuleBase::GlobalFunc::ZEROS(lm.stvnl12 + beg, len);
-            ModuleBase::GlobalFunc::ZEROS(lm.stvnl13 + beg, len);
-            ModuleBase::GlobalFunc::ZEROS(lm.stvnl22 + beg, len);
-            ModuleBase::GlobalFunc::ZEROS(lm.stvnl23 + beg, len);
-            ModuleBase::GlobalFunc::ZEROS(lm.stvnl33 + beg, len);
+            ModuleBase::GlobalFunc::ZEROS(fsr.DH_r + 3 * beg, 3 * len);
+            ModuleBase::GlobalFunc::ZEROS(fsr.stvnl11 + beg, len);
+            ModuleBase::GlobalFunc::ZEROS(fsr.stvnl12 + beg, len);
+            ModuleBase::GlobalFunc::ZEROS(fsr.stvnl13 + beg, len);
+            ModuleBase::GlobalFunc::ZEROS(fsr.stvnl22 + beg, len);
+            ModuleBase::GlobalFunc::ZEROS(fsr.stvnl23 + beg, len);
+            ModuleBase::GlobalFunc::ZEROS(fsr.stvnl33 + beg, len);
         };
         ModuleBase::OMP_PARALLEL(init_DH_r_stvnl);
 
@@ -91,6 +91,7 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
     bool cal_deri = true;
     LCAO_domain::build_ST_new(
           lm,
+          fsr,
          'S', 
           cal_deri, 
           GlobalC::ucell, 
@@ -103,18 +104,17 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
     //-----------------------------------------
     // (2) allocate for <phi | T + Vnl | dphi>
     //-----------------------------------------
-    lm.DHloc_fixedR_x = new double[nnr];
-    lm.DHloc_fixedR_y = new double[nnr];
-    lm.DHloc_fixedR_z = new double[nnr];
+    fsr.DHloc_fixedR_x = new double[nnr];
+    fsr.DHloc_fixedR_y = new double[nnr];
+    fsr.DHloc_fixedR_z = new double[nnr];
 
-    // mohan add lm on 2024-03-31
-    const auto init_DHloc_fixedR_xyz = [this, nnr, &lm](int num_threads, int thread_id) {
+    const auto init_DHloc_fixedR_xyz = [this, nnr, &fsr](int num_threads, int thread_id) {
         int beg=0;
         int len=0;
         ModuleBase::BLOCK_TASK_DIST_1D(num_threads, thread_id, nnr, 1024, beg, len);
-        ModuleBase::GlobalFunc::ZEROS(lm.DHloc_fixedR_x + beg, len);
-        ModuleBase::GlobalFunc::ZEROS(lm.DHloc_fixedR_y + beg, len);
-        ModuleBase::GlobalFunc::ZEROS(lm.DHloc_fixedR_z + beg, len);
+        ModuleBase::GlobalFunc::ZEROS(fsr.DHloc_fixedR_x + beg, len);
+        ModuleBase::GlobalFunc::ZEROS(fsr.DHloc_fixedR_y + beg, len);
+        ModuleBase::GlobalFunc::ZEROS(fsr.DHloc_fixedR_z + beg, len);
     };
     ModuleBase::OMP_PARALLEL(init_DHloc_fixedR_xyz);
     ModuleBase::Memory::record("Force::dTVNL", sizeof(double) * nnr * 3);
@@ -123,6 +123,7 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
     // calculate T + VNL(P1) in LCAO basis
 	LCAO_domain::build_ST_new(
             lm,
+            fsr,
 			'T', 
 			cal_deri, 
 			GlobalC::ucell, 
@@ -149,6 +150,7 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
 
 		LCAO_domain::build_ST_new(
 				lm,
+                fsr,
 				'S', 
 				cal_deri, 
 				GlobalC::ucell,
@@ -196,24 +198,24 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
 }
 
 template<>
-void Force_LCAO<std::complex<double>>::finish_ftable(LCAO_Matrix& lm)
+void Force_LCAO<std::complex<double>>::finish_ftable(ForceStressArrays &fsr)
 {
-    delete[] lm.DSloc_Rx;
-    delete[] lm.DSloc_Ry;
-    delete[] lm.DSloc_Rz;
-    delete[] lm.DHloc_fixedR_x;
-    delete[] lm.DHloc_fixedR_y;
-    delete[] lm.DHloc_fixedR_z;
+    delete[] fsr.DSloc_Rx;
+    delete[] fsr.DSloc_Ry;
+    delete[] fsr.DSloc_Rz;
+    delete[] fsr.DHloc_fixedR_x;
+    delete[] fsr.DHloc_fixedR_y;
+    delete[] fsr.DHloc_fixedR_z;
 
     if (GlobalV::CAL_STRESS)
     {
-        delete[] lm.DH_r;
-        delete[] lm.stvnl11;
-        delete[] lm.stvnl12;
-        delete[] lm.stvnl13;
-        delete[] lm.stvnl22;
-        delete[] lm.stvnl23;
-        delete[] lm.stvnl33;
+        delete[] fsr.DH_r;
+        delete[] fsr.stvnl11;
+        delete[] fsr.stvnl12;
+        delete[] fsr.stvnl13;
+        delete[] fsr.stvnl22;
+        delete[] fsr.stvnl23;
+        delete[] fsr.stvnl33;
     }
     return;
 }
