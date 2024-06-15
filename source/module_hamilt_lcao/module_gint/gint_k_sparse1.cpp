@@ -18,21 +18,13 @@ void Gint_k::distribute_pvdpR_sparseMatrix(
     LCAO_Matrix* LM,
     Parallel_Orbitals* pv)
 {
-    distribute_sparse_matrix<double>(
+    process_sparse_matrix(
         current_spin,
         sparse_threshold,
         pvdpR_sparseMatrix,
-        (dim == 0) ? LM->dHRx_sparse[current_spin] :
-        (dim == 1) ? LM->dHRy_sparse[current_spin] :
-                     LM->dHRz_sparse[current_spin],
         LM,
         pv,
-        [dim](auto& matrix, const auto& R_coor, int row, int col, double value) {
-            matrix[R_coor][row][col] += value;
-            if (std::abs(matrix[R_coor][row][col]) <= sparse_threshold) {
-                matrix[R_coor][row].erase(col);
-            }
-        }
+        dim
     );
 }
 

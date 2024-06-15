@@ -145,63 +145,86 @@ class Gint_k : public Gint
         Grid_Driver &gdriver);
 
     // 
-    template <typename T>
-    void distribute_sparse_matrix(const int current_spin,
-                                  const double& sparse_threshold,
-                                  const std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, T>>>& sparseMatrix,
-                                  std::map<Abfs::Vector3_Order<int>, std::map<int, std::map<int, T>>>& matrix,
-                                  LCAO_Matrix* LM,
-                                  Parallel_Orbitals* pv,
-                                  const std::function<void(std::map<Abfs::Vector3_Order<int>, std::map<int, std::map<int, T>>>&, const Abfs::Vector3_Order<int>&, int, int, T)>& update_function)
+void process_sparse_matrix(
+        int current_spin,
+        double sparse_threshold,
+        const std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>>& sparseMatrix,
+        LCAO_Matrix* LM,
+        Parallel_Orbitals* pv,
+        int dim = -1);
+    private:
+
+    //----------------------------
+    // key variable 
+    //----------------------------  
+
+    // used only in vlocal.
+    int spin_now = -1;
+
+
+    std::vector<int> trace_lo;
+    
+};
+
+
+inline void Gint_k::process_sparse_matrix(
+    int current_spin,
+    double sparse_threshold,
+    const std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>>& sparseMatrix,
+    LCAO_Matrix* LM,
+    Parallel_Orbitals* pv,
+    int dim)
+{
+    size_t total_R_num = LM->all_R_coor.size();
+    int* nonzero_num = new int[total_R_num];
+    int* minus_nonzero_num = new int[total_R_num];
+    ModuleBase::GlobalFunc::ZEROS(nonzero_num, total_R_num);
+    ModuleBase::GlobalFunc::ZEROS(minus_nonzero_num, total_R_num);
+
+    size_t count = 0;
+    for (const auto& R_coor : LM->all_R_coor)
     {
-        int total_R_num = LM->all_R_coor.size();
-        int* nonzero_num = new int[total_R_num];
-        int* minus_nonzero_num = new int[total_R_num];
-        ModuleBase::GlobalFunc::ZEROS(nonzero_num, total_R_num);
-        ModuleBase::GlobalFunc::ZEROS(minus_nonzero_num, total_R_num);
-
-        int count = 0;
-        for (const auto& R_coor : LM->all_R_coor)
+        auto iter = sparseMatrix.find(R_coor);
+        if (iter != sparseMatrix.end())
         {
-            auto iter = sparseMatrix.find(R_coor);
-            if (iter != sparseMatrix.end())
+            for (const auto& row_loop : iter->second)
             {
-                for (const auto& row_loop : iter->second)
-                {
-                    nonzero_num[count] += row_loop.second.size();
-                }
+                nonzero_num[count] += row_loop.second.size();
             }
-
-            auto minus_R_coor = -1 * R_coor;
-            iter = sparseMatrix.find(minus_R_coor);
-            if (iter != sparseMatrix.end())
-            {
-                for (const auto& row_loop : iter->second)
-                {
-                    minus_nonzero_num[count] += row_loop.second.size();
-                }
-            }
-            count++;
         }
 
-        Parallel_Reduce::reduce_all(nonzero_num, total_R_num);
-        Parallel_Reduce::reduce_all(minus_nonzero_num, total_R_num);
-
-        T* tmp = new T[GlobalV::NLOCAL];
-
-        count = 0;
-        for (const auto& R_coor : LM->all_R_coor)
+        auto minus_R_coor = -1 * R_coor;
+        iter = sparseMatrix.find(minus_R_coor);
+        if (iter != sparseMatrix.end())
         {
-            if (nonzero_num[count] != 0 || minus_nonzero_num[count] != 0)
+            for (const auto& row_loop : iter->second)
             {
-                auto minus_R_coor = -1 * R_coor;
+                minus_nonzero_num[count] += row_loop.second.size();
+            }
+        }
+        count++;
+    }
 
-                for (int row = 0; row < GlobalV::NLOCAL; ++row)
+    Parallel_Reduce::reduce_all(nonzero_num, total_R_num);
+    Parallel_Reduce::reduce_all(minus_nonzero_num, total_R_num);
+
+    double* tmp = new double[GlobalV::NLOCAL];
+    count = 0;
+
+    for (const auto& R_coor : LM->all_R_coor)
+    {
+        if (nonzero_num[count] != 0 || minus_nonzero_num[count] != 0)
+        {
+            auto minus_R_coor = -1 * R_coor;
+
+            for (size_t row = 0; row < GlobalV::NLOCAL; ++row)
+            {
+                ModuleBase::GlobalFunc::ZEROS(tmp, GlobalV::NLOCAL);
+
+                auto iter = sparseMatrix.find(R_coor);
+                if (iter != sparseMatrix.end())
                 {
-                    ModuleBase::GlobalFunc::ZEROS(tmp, GlobalV::NLOCAL);
-
-                    auto iter = sparseMatrix.find(R_coor);
-                    if (iter != sparseMatrix.end() && this->gridt->trace_lo[row] >= 0)
+                    if (trace_lo[row] >= 0)  // 使用类成员变量 trace_lo
                     {
                         auto row_iter = iter->second.find(row);
                         if (row_iter != iter->second.end())
@@ -212,61 +235,93 @@ class Gint_k : public Gint
                             }
                         }
                     }
+                }
 
-                    auto minus_R_iter = sparseMatrix.find(minus_R_coor);
-                    if (minus_R_iter != sparseMatrix.end())
+                auto minus_R_iter = sparseMatrix.find(minus_R_coor);
+                if (minus_R_iter != sparseMatrix.end())
+                {
+                    for (size_t col = 0; col < row; ++col)
                     {
-                        for (int col = 0; col < row; ++col)
+                        if (trace_lo[col] >= 0)  // 使用类成员变量 trace_lo
                         {
-                            if (this->gridt->trace_lo[col] >= 0)
+                            auto row_iter = minus_R_iter->second.find(col);
+                            if (row_iter != minus_R_iter->second.end())
                             {
-                                auto row_iter = minus_R_iter->second.find(col);
-                                if (row_iter != minus_R_iter->second.end())
+                                auto col_iter = row_iter->second.find(row);
+                                if (col_iter != row_iter->second.end())
                                 {
-                                    auto col_iter = row_iter->second.find(row);
-                                    if (col_iter != row_iter->second.end())
-                                    {
-                                        tmp[col] = col_iter->second;
-                                    }
+                                    tmp[col] = col_iter->second;
                                 }
                             }
                         }
                     }
+                }
 
-                    Parallel_Reduce::reduce_pool(tmp, GlobalV::NLOCAL);
+                Parallel_Reduce::reduce_pool(tmp, GlobalV::NLOCAL);
 
-                    if (pv->global2local_row(row) >= 0)
+                if (pv->global2local_row(row) >= 0)
+                {
+                    for (size_t col = 0; col < GlobalV::NLOCAL; ++col)
                     {
-                        for (int col = 0; col < GlobalV::NLOCAL; ++col)
+                        if (pv->global2local_col(col) >= 0)
                         {
-                            if (pv->global2local_col(col) >= 0)
+                            if (std::abs(tmp[col]) > sparse_threshold)
                             {
-                                if (std::abs(tmp[col]) > sparse_threshold)
+                                if (dim == -1)
                                 {
-                                    update_function(matrix, R_coor, row, col, tmp[col]);
+                                    double& matrix_value = LM->HR_sparse[current_spin][R_coor][row][col];
+                                    matrix_value += tmp[col];
+                                    if (std::abs(matrix_value) <= sparse_threshold)
+                                    {
+                                        LM->HR_sparse[current_spin][R_coor][row].erase(col);
+                                    }
+                                }
+                                else
+                                {
+                                    double* matrix_value = nullptr;
+                                    if (dim == 0)
+                                    {
+                                        matrix_value = &LM->dHRx_sparse[current_spin][R_coor][row][col];
+                                    }
+                                    else if (dim == 1)
+                                    {
+                                        matrix_value = &LM->dHRy_sparse[current_spin][R_coor][row][col];
+                                    }
+                                    else if (dim == 2)
+                                    {
+                                        matrix_value = &LM->dHRz_sparse[current_spin][R_coor][row][col];
+                                    }
+
+                                    *matrix_value += tmp[col];
+                                    if (std::abs(*matrix_value) <= sparse_threshold)
+                                    {
+                                        if (dim == 0)
+                                        {
+                                            LM->dHRx_sparse[current_spin][R_coor][row].erase(col);
+                                        }
+                                        else if (dim == 1)
+                                        {
+                                            LM->dHRy_sparse[current_spin][R_coor][row].erase(col);
+                                        }
+                                        else if (dim == 2)
+                                        {
+                                            LM->dHRz_sparse[current_spin][R_coor][row].erase(col);
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
-            count++;
         }
-
-        delete[] nonzero_num;
-        delete[] minus_nonzero_num;
-        delete[] tmp;
+        count++;
     }
 
-    private:
+    delete[] nonzero_num;
+    delete[] minus_nonzero_num;
+    delete[] tmp;
+}
 
-    //----------------------------
-    // key variable 
-    //----------------------------  
-
-    // used only in vlocal.
-    int spin_now = -1;
-    
-};
 
 #endif
