@@ -3,7 +3,7 @@ suffix    autotest
 nbands    40
 
 calculation    scf
-ecutwfc    50
+ecutwfc    20
 scf_thr    1.0e-4
 scf_nmax    3
 out_chg    0

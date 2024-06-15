@@ -3,13 +3,12 @@
 #include "module_basis/module_pw/pw_basis.h"
 #include "module_basis/module_pw/pw_basis_big.h"
 #include "module_cell/unitcell.h"
-#include "module_io/output_interface.h"
 
 namespace ModuleIO
 {
 
 /// @brief the output interface to write the charge density
-class Output_Rho : public Output_Interface
+class Output_Rho
 {
   public:
     Output_Rho(const ModulePW::PW_Basis_Big* pw_big,
@@ -24,7 +23,7 @@ class Output_Rho : public Output_Interface
                int precision,
                const std::string tag,
                const std::string prefix);
-    void write() override;
+    void write();
 
   private:
     const ModulePW::PW_Basis_Big* _pw_big;

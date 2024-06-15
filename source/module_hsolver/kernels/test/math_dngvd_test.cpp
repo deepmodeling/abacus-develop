@@ -3,7 +3,6 @@
 #include "module_base/module_device/memory_op.h"
 #include "module_hsolver/kernels/dngvd_op.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
-#include "module_psi/kernels/memory_op.h"
 
 #include <algorithm>
 #include <complex>
