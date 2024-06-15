@@ -70,14 +70,13 @@ void set_3d_fft_box_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_d
                                                                     std::complex<FPTYPE>* out)
 {
     const int block = (npwk + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(set_3d_fft_box<FPTYPE>), dim3(block), dim3(THREADS_PER_BLOCK), 0, 0, 
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(set_3d_fft_box<FPTYPE>), dim3(block), dim3(THREADS_PER_BLOCK), 0, 0,
         npwk,
         box_index,
         reinterpret_cast<const thrust::complex<FPTYPE>*>(in),
         reinterpret_cast<thrust::complex<FPTYPE>*>(out));
-    
-    hipErrcheck(hipGetLastError());
-    hipErrcheck(hipDeviceSynchronize());
+
+    hipCheckOnDebug();
 }
 
 template <typename FPTYPE>
@@ -89,15 +88,14 @@ void set_recip_to_real_output_op<FPTYPE, base_device::DEVICE_GPU>::operator()(co
                                                                               std::complex<FPTYPE>* out)
 {
     const int block = (nrxx + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(set_recip_to_real_output<FPTYPE>), dim3(block), dim3(THREADS_PER_BLOCK), 0, 0, 
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(set_recip_to_real_output<FPTYPE>), dim3(block), dim3(THREADS_PER_BLOCK), 0, 0,
         nrxx,
         add,
         factor,
         reinterpret_cast<const thrust::complex<FPTYPE>*>(in),
         reinterpret_cast<thrust::complex<FPTYPE>*>(out));
-    
-    hipErrcheck(hipGetLastError());
-    hipErrcheck(hipDeviceSynchronize());
+
+    hipCheckOnDebug();
 }
 
 template <typename FPTYPE>
@@ -111,7 +109,7 @@ void set_real_to_recip_output_op<FPTYPE, base_device::DEVICE_GPU>::operator()(co
                                                                               std::complex<FPTYPE>* out)
 {
     const int block = (npwk + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-    hipLaunchKernelGGL(HIP_KERNEL_NAME(set_real_to_recip_output<FPTYPE>), dim3(block), dim3(THREADS_PER_BLOCK), 0, 0, 
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(set_real_to_recip_output<FPTYPE>), dim3(block), dim3(THREADS_PER_BLOCK), 0, 0,
         npwk,
         nxyz,
         add,
@@ -119,9 +117,8 @@ void set_real_to_recip_output_op<FPTYPE, base_device::DEVICE_GPU>::operator()(co
         box_index,
         reinterpret_cast<const thrust::complex<FPTYPE>*>(in),
         reinterpret_cast<thrust::complex<FPTYPE>*>(out));
-    
-    hipErrcheck(hipGetLastError());
-    hipErrcheck(hipDeviceSynchronize());
+
+    hipCheckOnDebug();
 }
 
 template struct set_3d_fft_box_op<float, base_device::DEVICE_GPU>;
@@ -133,4 +130,3 @@ template struct set_recip_to_real_output_op<double, base_device::DEVICE_GPU>;
 template struct set_real_to_recip_output_op<double, base_device::DEVICE_GPU>;
 
 }  // namespace ModulePW
-

@@ -26,16 +26,16 @@ void folding_HR(const hamilt::HContainer<TR>& hR,
         hamilt::AtomPair<TR>& tmp = hR.get_atom_pair(i);
         for(int ir = 0;ir < tmp.get_R_size(); ++ir )
         {
-            const int* r_index = tmp.get_R_index(ir);
+            const ModuleBase::Vector3<int> r_index = tmp.get_R_index(ir);
             // cal k_phase
             // if TK==std::complex<double>, kphase is e^{ikR}
-            const ModuleBase::Vector3<double> dR(r_index[0], r_index[1], r_index[2]);
+            const ModuleBase::Vector3<double> dR(r_index.x, r_index.y, r_index.z);
             const double arg = (kvec_d_in * dR) * ModuleBase::TWO_PI;
             double sinp, cosp;
             ModuleBase::libm::sincos(arg, &sinp, &cosp);
             std::complex<double> kphase = std::complex<double>(cosp, sinp);
 
-            tmp.find_R(r_index[0], r_index[1], r_index[2]);
+            tmp.find_R(r_index);
             tmp.add_to_matrix(hk, ncol, kphase, hk_type);
         }
     }

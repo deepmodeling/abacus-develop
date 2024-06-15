@@ -44,7 +44,7 @@ void Veff<OperatorLCAO<TK, TR>>::initialize_HR(const UnitCell* ucell_in,
             if (ucell_in->cal_dtau(iat1, iat2, R_index2).norm() * ucell_in->lat0
                 < orb.Phi[T1].getRcut() + orb.Phi[T2].getRcut())
             {
-                hamilt::AtomPair<TR> tmp(iat1, iat2, R_index2.x, R_index2.y, R_index2.z, paraV);
+                hamilt::AtomPair<TR> tmp(iat1, iat2, R_index2, paraV);
                 this->hR->insert_pair(tmp);
             }
         }
