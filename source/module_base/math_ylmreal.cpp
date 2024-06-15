@@ -4,7 +4,6 @@
 #include "module_base/kernels/math_op.h"
 #include "module_base/libm/libm.h"
 #include "module_base/module_device/memory_op.h"
-// #include "module_psi/kernels/memory_op.h"
 #include "realarray.h"
 #include "timer.h"
 #include "tool_quit.h"

@@ -5,6 +5,9 @@
 #include "module_base/global_variable.h"
 #include "module_base/parallel_common.h"
 #include "module_base/scalapack_connector.h"
+#include "module_elecstate/module_dm/cal_dm_psi.h"
+#include "module_elecstate/module_dm/density_matrix.h"
+#include "module_hamilt_lcao/module_gint/gint.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/rho_io.h"
 
@@ -38,7 +41,9 @@ void IState_Charge::begin(Gint_Gamma& gg,
                           const int nlocal,
                           const std::string& global_out_dir,
                           const int my_rank,
-                          std::ofstream& ofs_warning)
+                          std::ofstream& ofs_warning,
+                          const UnitCell* ucell_in,
+                          Grid_Driver* GridD_in)
 {
     ModuleBase::TITLE("IState_Charge", "begin");
 
@@ -195,20 +200,34 @@ void IState_Charge::begin(Gint_Gamma& gg,
         {
             std::cout << " Perform band decomposed charge density for band " << ib + 1 << std::endl;
 
-            // (1) calculate the density matrix for a partuclar
-            // band, whenever it is occupied or not.
+            // (1) calculate the density matrix for a partuclar band, whenever it is occupied or not.
+
+            // Using new density matrix inplementation
+            elecstate::DensityMatrix<double, double> DM(this->loc->ParaV, nspin);
 
 #ifdef __MPI
-            this->idmatrix(ib, nspin, nelec, nlocal, wg);
+            this->idmatrix(ib, nspin, nelec, nlocal, wg, DM);
+#else
+            ModuleBase::WARNING_QUIT("IState_Charge::begin", "The `pchg` calculation is only available for MPI now!");
 #endif
+
             // (2) zero out of charge density array.
             for (int is = 0; is < nspin; ++is)
             {
                 ModuleBase::GlobalFunc::ZEROS(rho[is], rhopw_nrxx);
             }
 
-            // (3) calculate charge density for a particular
-            // band.
+            // (3) calculate charge density for a particular band.
+
+            DM.init_DMR(GridD_in, ucell_in);
+            DM.cal_DMR();
+
+            // gg.DMRGint.resize(nspin);
+            gg.initialize_pvpR(*ucell_in, GridD_in);
+
+            gg.transfer_DM2DtoGrid(DM.get_DMR_vector());
+
+            // keep interface for old Output_DM until new one is ready
             Gint_inout inout(this->loc->DM, rho, Gint_Tools::job_type::rho);
             gg.cal_gint(&inout);
 
@@ -248,7 +267,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
                     rhopw_ny,
                     rhopw_nz,
                     ef_spin,
-                    &(GlobalC::ucell));
+                    ucell_in);
             }
 
             // Release memory of rho_save
@@ -266,9 +285,10 @@ void IState_Charge::begin(Gint_Gamma& gg,
 #ifdef __MPI
 void IState_Charge::idmatrix(const int& ib,
                              const int nspin,
-                             const double nelec,
+                             const double& nelec,
                              const int nlocal,
-                             const ModuleBase::matrix& wg)
+                             const ModuleBase::matrix& wg,
+                             elecstate::DensityMatrix<double, double>& DM)
 {
     ModuleBase::TITLE("IState_Charge", "idmatrix");
     assert(wg.nr == nspin);
@@ -302,6 +322,45 @@ void IState_Charge::idmatrix(const int& ib,
 
         this->loc->dm_gamma.at(is).create(wg_wfc.get_nbands(), wg_wfc.get_nbasis());
 
+        // Print dm_gamma
+        // std::cout << "Before: " << std::endl;
+        // for (size_t i = 0; i < this->loc->dm_gamma.size(); ++i)
+        // {
+        //     std::cout << "dm_gamma[" << i << "]:" << std::endl;
+        //     const auto& matrix = this->loc->dm_gamma[i];
+        //     for (size_t row = 0; row < matrix.nr; ++row)
+        //     {
+        //         for (size_t col = 0; col < matrix.nc; ++col)
+        //         {
+        //             std::cout << matrix(row, col) << " ";
+        //         }
+        //         std::cout << std::endl;
+        //     }
+        //     std::cout << std::endl;
+        // }
+
+        const int ik = 0; // Gamma point only
+        elecstate::psiMulPsiMpi(wg_wfc,
+                                wg_wfc,
+                                DM.get_DMK_pointer(ik),
+                                this->loc->ParaV->desc_wfc,
+                                this->loc->ParaV->desc);
+
+        // C++: dm(iw1,iw2) = wfc(ib,iw1).T * wg_wfc(ib,iw2)
+        // elecstate::psiMulPsiMpi(wg, wg_wfc, &DM, this->loc->ParaV->desc_wfc, this->loc->ParaV->desc);
+
+        // std::cout << "New DM implementation: " << std::endl;
+        // // Print DM
+        // std::cout << "DensityMatrix values for spin " << is << ":" << std::endl;
+        // for (int i = 0; i < DM.get_DMK_nrow(); ++i)
+        // {
+        //     for (int j = 0; j < DM.get_DMK_ncol(); ++j)
+        //     {
+        //         std::cout << DM.get_DMK(1, 0, i, j) << " ";
+        //     }
+        //     std::cout << std::endl;
+        // }
+
         pdgemm_(&N_char,
                 &T_char,
                 &nlocal,
@@ -321,9 +380,38 @@ void IState_Charge::idmatrix(const int& ib,
                 &one_int,
                 &one_int,
                 this->loc->ParaV->desc);
+
+        // std::cout << "Old loc->dm implementation: " << std::endl;
+        // for (size_t i = 0; i < this->loc->dm_gamma.size(); ++i)
+        // {
+        //     std::cout << "dm_gamma[" << i << "]:" << std::endl;
+        //     const auto& matrix = this->loc->dm_gamma[i];
+        //     for (size_t row = 0; row < matrix.nr; ++row)
+        //     {
+        //         for (size_t col = 0; col < matrix.nc; ++col)
+        //         {
+        //             std::cout << matrix(row, col) << " ";
+        //         }
+        //         std::cout << std::endl;
+        //     }
+        //     std::cout << std::endl;
+        // }
+
+        // std::cout << "Ratio new_DM/old_dm_gamma for spin " << is << ":" << std::endl;
+        // for (int i = 0; i < DM.get_DMK_nrow(); ++i)
+        // {
+        //     const auto& matrix = this->loc->dm_gamma[0];
+        //     for (int j = 0; j < DM.get_DMK_ncol(); ++j)
+        //     {
+        //         double ratio = static_cast<double>(DM.get_DMK(1, 0, i, j)) / static_cast<double>(matrix(i, j));
+        //         std::cout << ratio << " ";
+        //     }
+        //     std::cout << std::endl;
+        // }
     }
 
     std::cout << " Finished calculating dm_2d." << std::endl;
+
     this->loc->cal_dk_gamma_from_2D_pub();
     std::cout << " Finished converting dm_2d to dk_gamma." << std::endl;
 }
