@@ -124,7 +124,7 @@ private:
 
 	void fold_dSR_gamma(
 			const UnitCell &ucell,
-			Parallel_Orbitals &pv,
+			const Parallel_Orbitals &pv,
 			Grid_Driver* gd,
 			double* dsloc_x,
 			double* dsloc_y,
@@ -132,7 +132,7 @@ private:
 			double* dh_r,
 			const int dim1, 
 			const int dim2, 
-			double* dSR_gamma)
+			double* dSR_gamma);
 
     // dim = 0 : S, for Hamiltonian
     // dim = 1-3 : dS, for force
@@ -183,7 +183,16 @@ private:
 			double* dsloc_z,
 			ModuleBase::matrix& force_dftu);
 
-    void cal_stress_gamma(const double* rho_VU, ModuleBase::matrix& stress_dftu);
+	void cal_stress_gamma(
+			const UnitCell &ucell,
+			const Parallel_Orbitals &pv,
+			Grid_Driver* gd,
+			double* dsloc_x,
+			double* dsloc_y,
+			double* dsloc_z,
+			double* dh_r,
+			const double* rho_VU, 
+			ModuleBase::matrix& stress_dftu);
 
     //=============================================================
     // In dftu_io.cpp

@@ -54,7 +54,7 @@ namespace ModuleDFTU
 void DFTU::force_stress(const elecstate::ElecState* pelec,
                         LCAO_Matrix& lm,
                         const Parallel_Orbitals& pv,
-                        ForceStressArrays& fsr,
+                        ForceStressArrays& fsr, // mohan add 2024-06-16
                         ModuleBase::matrix& force_dftu,
                         ModuleBase::matrix& stress_dftu,
                         const K_Vectors& kv)
@@ -134,7 +134,16 @@ void DFTU::force_stress(const elecstate::ElecState* pelec,
 
 			if (GlobalV::CAL_STRESS) 
 			{
-				this->cal_stress_gamma(&rho_VU[0], stress_dftu);
+				this->cal_stress_gamma(
+						GlobalC::ucell,
+						pv,
+						&GlobalC::GridD,
+						fsr.DSloc_x,
+						fsr.DSloc_y,
+						fsr.DSloc_z,
+						fsr.DH_r,
+						&rho_VU[0], 
+						stress_dftu);
 			}
         } // ik
     }
@@ -485,7 +494,7 @@ void DFTU::cal_force_gamma(
 
 void DFTU::cal_stress_gamma(
     const UnitCell &ucell,
-    Parallel_Orbitals &pv,
+    const Parallel_Orbitals &pv,
     Grid_Driver* gd,
     double* dsloc_x,
     double* dsloc_y,

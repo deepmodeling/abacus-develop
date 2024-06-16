@@ -11,7 +11,7 @@ namespace ModuleDFTU
 
 void DFTU::fold_dSR_gamma(
     const UnitCell &ucell,
-    Parallel_Orbitals &pv,
+    const Parallel_Orbitals &pv,
     Grid_Driver* gd,
     double* dsloc_x,
     double* dsloc_y,
@@ -50,14 +50,14 @@ void DFTU::fold_dSR_gamma(
         {
             tau1 = atom1->tau[I1];
             const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
-            gd.Find_atom(ucell, tau1, T1, I1);
-            for (int ad = 0; ad < gd.getAdjacentNum() + 1; ++ad)
+            gd->Find_atom(ucell, tau1, T1, I1);
+            for (int ad = 0; ad < gd->getAdjacentNum() + 1; ++ad)
             {
-                const int T2 = gd.getType(ad);
-                const int I2 = gd.getNatom(ad);
+                const int T2 = gd->getType(ad);
+                const int I2 = gd->getNatom(ad);
                 const int start2 = ucell.itiaiw2iwt(T2, I2, 0);
                 Atom* atom2 = &ucell.atoms[T2];
-                tau2 = gd.getAdjacentTau(ad);
+                tau2 = gd->getAdjacentTau(ad);
                 dtau = tau2 - tau1;
                 double distance = dtau.norm() * ucell.lat0;
                 double rcut = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Phi[T2].getRcut();
@@ -68,13 +68,13 @@ void DFTU::fold_dSR_gamma(
 				}
                 else if (distance >= rcut)
                 {
-                    for (int ad0 = 0; ad0 < gd.getAdjacentNum() + 1; ++ad0)
+                    for (int ad0 = 0; ad0 < gd->getAdjacentNum() + 1; ++ad0)
                     {
-                        const int T0 = gd.getType(ad0);
-                        const int I0 = gd.getNatom(ad0);
+                        const int T0 = gd->getType(ad0);
+                        const int I0 = gd->getNatom(ad0);
                         const int iat0 = ucell.itia2iat(T0, I0);
                         const int start0 = ucell.itiaiw2iwt(T0, I0, 0);
-                        tau0 = gd.getAdjacentTau(ad0);
+                        tau0 = gd->getAdjacentTau(ad0);
                         dtau1 = tau0 - tau1;
                         dtau2 = tau0 - tau2;
                         double distance1 = dtau1.norm() * ucell.lat0;

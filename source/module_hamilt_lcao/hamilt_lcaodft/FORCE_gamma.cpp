@@ -223,6 +223,7 @@ template<>
 void Force_LCAO<double>::ftable(
     const bool isforce,
     const bool isstress,
+    ForceStressArrays &fsr, // mohan add 2024-06-16
     const UnitCell& ucell,
     const psi::Psi<double>* psi,
     const elecstate::ElecState* pelec,
@@ -258,7 +259,7 @@ void Force_LCAO<double>::ftable(
     // allocate DHloc_fixed_x, DHloc_fixed_y, DHloc_fixed_z
 	this->allocate(
 			pv, 
-			lm, 
+			lm,
             fsr,
 			uot);
 

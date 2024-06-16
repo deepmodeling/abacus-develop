@@ -236,7 +236,14 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
         }
         if(GlobalV::dft_plus_u == 2)
         {
-            GlobalC::dftu.force_stress(pelec, lm, force_dftu, stress_dftu, kv);
+            GlobalC::dftu.force_stress(
+					pelec, 
+					lm, 
+					pv,
+					fsr, //mohan 2024-06-16
+					force_dftu, 
+					stress_dftu, 
+					kv);
         }
         else
         {
@@ -809,6 +816,7 @@ void Force_Stress_LCAO<std::complex<double>>::integral_part(
 {
     flk.ftable(isforce,
         isstress,
+        fsr, // mohan add 2024-06-16
         GlobalC::ucell,
         psi,
         pelec,

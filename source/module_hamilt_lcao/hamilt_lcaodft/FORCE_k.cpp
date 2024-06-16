@@ -301,118 +301,120 @@ void Force_LCAO<std::complex<double>>::test(
 }
 
     // be called in Force_LCAO::start_force_calculation
-    template<>
-    void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
-        const bool isstress,
-        const UnitCell& ucell,
-        const psi::Psi<std::complex<double>>* psi,
-        const elecstate::ElecState* pelec,
-        ModuleBase::matrix& foverlap,
-        ModuleBase::matrix& ftvnl_dphi,
-        ModuleBase::matrix& fvnl_dbeta,
-        ModuleBase::matrix& fvl_dphi,
-        ModuleBase::matrix& soverlap,
-        ModuleBase::matrix& stvnl_dphi,
-        ModuleBase::matrix& svnl_dbeta,
-        ModuleBase::matrix& svl_dphi,
+template<>
+void Force_LCAO<std::complex<double>>::ftable(
+	const bool isforce,
+	const bool isstress,
+	ForceStressArrays &fsr, // mohan add 2024-06-15
+	const UnitCell& ucell,
+	const psi::Psi<std::complex<double>>* psi,
+	const elecstate::ElecState* pelec,
+	ModuleBase::matrix& foverlap,
+	ModuleBase::matrix& ftvnl_dphi,
+	ModuleBase::matrix& fvnl_dbeta,
+	ModuleBase::matrix& fvl_dphi,
+	ModuleBase::matrix& soverlap,
+	ModuleBase::matrix& stvnl_dphi,
+	ModuleBase::matrix& svnl_dbeta,
+	ModuleBase::matrix& svl_dphi,
 #ifdef __DEEPKS
-        ModuleBase::matrix& svnl_dalpha,
+	ModuleBase::matrix& svnl_dalpha,
 #endif
-        TGint<std::complex<double>>::type& gint,
-        const ORB_gen_tables* uot,
-        const Parallel_Orbitals& pv,
-        LCAO_Matrix& lm,
-        const K_Vectors* kv,
-        Record_adj* ra)
-    {
-        ModuleBase::TITLE("Force_LCAO_k", "ftable_k");
-        ModuleBase::timer::tick("Force_LCAO_k", "ftable_k");
+	TGint<std::complex<double>>::type& gint,
+	const ORB_gen_tables* uot,
+	const Parallel_Orbitals& pv,
+	LCAO_Matrix& lm,
+	const K_Vectors* kv,
+	Record_adj* ra)
+{
+	ModuleBase::TITLE("Force_LCAO", "ftable");
+	ModuleBase::timer::tick("Force_LCAO", "ftable");
 
-        elecstate::DensityMatrix<complex<double>, double>* dm
-            = dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(pelec)->get_DM();
+	elecstate::DensityMatrix<complex<double>, double>* dm
+		= dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(pelec)->get_DM();
 
-        this->allocate(
-            pv,
-            lm,
-            uot,
-            kv->get_nks(),
-            kv->kvec_d);
+	this->allocate(
+			pv,
+			lm,
+			uot,
+			kv->get_nks(),
+			kv->kvec_d);
 
-        // calculate the energy density matrix
-        // and the force related to overlap matrix and energy density matrix.
-        this->cal_fedm(
-            isforce,
-            isstress,
-            ucell,
-            dm,
-            psi,
-            pv,
-            pelec,
-            lm,
-            foverlap,
-            soverlap,
-            kv,
-            ra);
+	// calculate the energy density matrix
+	// and the force related to overlap matrix and energy density matrix.
+	this->cal_fedm(
+			isforce,
+			isstress,
+			ucell,
+			dm,
+			psi,
+			pv,
+			pelec,
+			lm,
+			foverlap,
+			soverlap,
+			kv,
+			ra);
 
-        this->cal_ftvnl_dphi(
-            dm,
-            pv,
-            ucell,
-            lm,
-            isforce,
-            isstress,
-            ftvnl_dphi,
-            stvnl_dphi,
-            ra);
+	this->cal_ftvnl_dphi(
+			dm,
+			pv,
+			ucell,
+			lm,
+			isforce,
+			isstress,
+			ftvnl_dphi,
+			stvnl_dphi,
+			ra);
 
-        // doing on the real space grid.
-        this->cal_fvl_dphi(
-            isforce,
-            isstress,
-            pelec->pot,
-            gint,
-            fvl_dphi,
-            svl_dphi);
+	// doing on the real space grid.
+	this->cal_fvl_dphi(
+			isforce,
+			isstress,
+			pelec->pot,
+			gint,
+			fvl_dphi,
+			svl_dphi);
 
-        this->cal_fvnl_dbeta(
-            dm,
-            pv,
-            ucell,
-            GlobalC::ORB,
-            *uot,
-            GlobalC::GridD,
-            isforce,
-            isstress,
-            fvnl_dbeta,
-            svnl_dbeta);
+	this->cal_fvnl_dbeta(
+			dm,
+			pv,
+			ucell,
+			GlobalC::ORB,
+			*uot,
+			GlobalC::GridD,
+			isforce,
+			isstress,
+			fvnl_dbeta,
+			svnl_dbeta);
 
 #ifdef __DEEPKS
-        if (GlobalV::deepks_scf)
-        {
-            const std::vector<std::vector<std::complex<double>>>& dm_k = dm->get_DMK_vector();
+	if (GlobalV::deepks_scf)
+	{
+		const std::vector<std::vector<std::complex<double>>>& dm_k = dm->get_DMK_vector();
 
-            GlobalC::ld.cal_projected_DM_k(dm, ucell, GlobalC::ORB, GlobalC::GridD);
+		GlobalC::ld.cal_projected_DM_k(dm, ucell, GlobalC::ORB, GlobalC::GridD);
 
-            GlobalC::ld.cal_descriptor(ucell.nat);
+		GlobalC::ld.cal_descriptor(ucell.nat);
 
-            GlobalC::ld.cal_gedm(ucell.nat);
+		GlobalC::ld.cal_gedm(ucell.nat);
 
-            GlobalC::ld.cal_f_delta_k(dm_k,
-                ucell,
-                GlobalC::ORB,
-                GlobalC::GridD,
-                kv->get_nks(),
-                kv->kvec_d,
-                isstress,
-                svnl_dalpha);
+		GlobalC::ld.cal_f_delta_k(dm_k,
+				ucell,
+				GlobalC::ORB,
+				GlobalC::GridD,
+				kv->get_nks(),
+				kv->kvec_d,
+				isstress,
+				svnl_dalpha);
 #ifdef __MPI
-            Parallel_Reduce::reduce_all(GlobalC::ld.F_delta.c, GlobalC::ld.F_delta.nr * GlobalC::ld.F_delta.nc);
-            if (isstress)
-            {
-                Parallel_Reduce::reduce_pool(svnl_dalpha.c, svnl_dalpha.nr * svnl_dalpha.nc);
-            }
+		Parallel_Reduce::reduce_all(GlobalC::ld.F_delta.c, GlobalC::ld.F_delta.nr * GlobalC::ld.F_delta.nc);
+		if (isstress)
+		{
+			Parallel_Reduce::reduce_pool(svnl_dalpha.c, svnl_dalpha.nr * svnl_dalpha.nc);
+		}
 #endif
-        }
+	}
 #endif
 
     //----------------------------------------------------------------
@@ -433,6 +435,6 @@ void Force_LCAO<std::complex<double>>::test(
         Parallel_Reduce::reduce_pool(svl_dphi.c, svl_dphi.nr * svl_dphi.nc);
     }
 
-    ModuleBase::timer::tick("Force_LCAO_k", "ftable_k");
+    ModuleBase::timer::tick("Force_LCAO", "ftable");
     return;
 }

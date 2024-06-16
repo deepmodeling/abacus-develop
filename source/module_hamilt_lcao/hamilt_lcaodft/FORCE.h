@@ -47,6 +47,7 @@ private:
     void ftable(
         const bool isforce,
         const bool isstress,
+        ForceStressArrays &fsr, // mohan add 2024-06-16
         const UnitCell& ucell,
         const psi::Psi<T>* psi,
         const elecstate::ElecState* pelec,
