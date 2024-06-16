@@ -89,14 +89,14 @@ private:
 	int fftnxy=0;
 	int ny=0, nx=0, nz=0;
 	int nxy=0;
-
+public :
 	bool xprime = true; // true: when do recip2real, x-fft will be done last and when doing real2recip, x-fft will be done first; false: y-fft
                          // For gamma_only, true: we use half x; false: we use half y
 	int lixy=0,rixy=0;// lixy: the left edge of the pw ball in the y direction; rixy: the right edge of the pw ball in the x or y direction
 	int ns=0; //number of sticks
 	int nplane=0; //number of x-y planes
 	int nproc=1; // number of proc.
-public :
+
     template <typename FPTYPE>
     FPTYPE* get_rspace_data() const;
     template <typename FPTYPE>
