@@ -499,23 +499,27 @@ OBJS_LCAO=DM_gamma.o\
       td_velocity.o\
       upsi.o\
       FORCE_STRESS.o\
-      FORCE_gamma.o\
-      FORCE_gamma_edm.o\
-      FORCE_gamma_tvnl.o\
-      FORCE_gamma_vl.o\
-      FORCE_k.o\
-      foverlap_k.o\
-      ftvnl_dphi_k.o\
-      fvl_dphi_k.o\
-      fvnl_dbeta_k.o\
-      LCAO_gen_fixedH.o\
-      grid_init.o\
+	  FORCE_gamma.o\
+	  FORCE_k.o\
+	  fvl_dphi_gamma.o\
+	  fvl_dphi_k.o\
+	  fedm_gamma.o\
+	  fedm_k.o\
+	  ftvnl_dphi_gamma.o\
+	  ftvnl_dphi_k.o\
+	  fvnl_dbeta_gamma.o\
+	  fvnl_dbeta_k.o\
+	  grid_init.o\
       spar_dh.o\
       spar_exx.o\
       spar_hsr.o\
       spar_st.o\
       spar_u.o\
       LCAO_matrix.o\
+      LCAO_set_fs.o\
+      LCAO_set_st.o\
+      LCAO_nl_mu.o\
+      LCAO_nl_beta.o\
       LCAO_nnr.o\
       center2_orb-orb11.o\
       center2_orb-orb21.o\

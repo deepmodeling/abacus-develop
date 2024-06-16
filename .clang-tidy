@@ -6,8 +6,8 @@ Checks: '
     modernize-use-bool-literals,
     modernize-use-nullptr,
     readability-avoid-return-with-void-value
+    readability-braces-around-statements
     
-
     # bugprone-*,
     # clang-analyzer-*,
     # clang-diagnostic-*,

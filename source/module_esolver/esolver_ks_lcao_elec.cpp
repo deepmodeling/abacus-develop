@@ -145,7 +145,6 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
         this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(
             GlobalV::GAMMA_ONLY_LOCAL ? &(this->GG) : nullptr,
             GlobalV::GAMMA_ONLY_LOCAL ? nullptr : &(this->GK),
-            &(this->gen_h),
             &(this->LM),
             &(this->LOC),
             this->pelec->pot,
@@ -420,7 +419,9 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                   GlobalV::NLOCAL,
                   GlobalV::global_out_dir,
                   GlobalV::MY_RANK,
-                  GlobalV::ofs_warning);
+                  GlobalV::ofs_warning,
+                  &GlobalC::ucell,
+                  &GlobalC::GridD);
     }
     else if (cal_type == "get_wf")
     {

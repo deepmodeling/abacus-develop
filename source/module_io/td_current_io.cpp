@@ -1,4 +1,5 @@
 #include "td_current_io.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
 
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
@@ -16,7 +17,6 @@
 void ModuleIO::Init_DS_tmp(
 		const Parallel_Orbitals& pv,
 		LCAO_Matrix &lm,
-		LCAO_gen_fixedH &gen_h,
         const ORB_gen_tables* uot)
 {    
     ModuleBase::TITLE("ModuleIO", "Init_DS_tmp");
@@ -36,7 +36,8 @@ void ModuleIO::Init_DS_tmp(
 
     ModuleBase::OMP_PARALLEL(init_DSloc_Rxyz);
     bool cal_deri = true;
-	gen_h.build_ST_new(
+	LCAO_domain::build_ST_new(
+            lm,
 			'S', 
 			cal_deri, 
 			GlobalC::ucell, 
@@ -154,14 +155,13 @@ void ModuleIO::write_current(const int istep,
                                 const ORB_gen_tables* uot,
                                 const Parallel_Orbitals* pv,
 								Record_adj& ra,
-								LCAO_Matrix &lm, // mohan add 2024-04-02
-								LCAO_gen_fixedH &gen_h) // mohan add 2024-04-02
+								LCAO_Matrix &lm) // mohan add 2024-04-02
 {
 
     ModuleBase::TITLE("ModuleIO", "write_current");
     ModuleBase::timer::tick("ModuleIO", "write_current");
     //Init_DS_tmp
-    Init_DS_tmp(*pv, lm, gen_h, uot);
+    Init_DS_tmp(*pv, lm, uot);
     // construct a DensityMatrix object
     elecstate::DensityMatrix<std::complex<double>, double> DM(&kv,pv,GlobalV::NSPIN);
     

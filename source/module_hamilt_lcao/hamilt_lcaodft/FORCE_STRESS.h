@@ -36,7 +36,6 @@ class Force_Stress_LCAO
 		const elecstate::ElecState* pelec,
         const psi::Psi<T>* psi,
 		LCAO_Matrix &lm,
-        LCAO_gen_fixedH &gen_h, // mohan add 2024-04-02
 		Gint_Gamma &gint_gamma, // mohan add 2024-04-01
 		Gint_k &gint_k, // mohan add 2024-04-01
         const ORB_gen_tables* uot,
@@ -88,7 +87,6 @@ class Force_Stress_LCAO
 #if __DEEPKS
         ModuleBase::matrix& svnl_dalpha,
 #endif
-        LCAO_gen_fixedH &gen_h, // mohan add 2024-04-02
 		Gint_Gamma &gint_gamma,
 		Gint_k &gint_k,
         const ORB_gen_tables* uot,
