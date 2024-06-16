@@ -25,8 +25,11 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/record_adj.h"
 
 template<>
-void Force_LCAO<std::complex<double>>::cal_foverlap(const bool isforce,
+void Force_LCAO<std::complex<double>>::cal_fedm(
+    const bool isforce,
     const bool isstress,
+    const UnitCell& ucell,
+    const elecstate::DensityMatrix<std::complex<double>, double>* dm,
     const psi::Psi<std::complex<double>>* psi,
     const Parallel_Orbitals& pv,
     const elecstate::ElecState* pelec,
@@ -34,60 +37,58 @@ void Force_LCAO<std::complex<double>>::cal_foverlap(const bool isforce,
     ModuleBase::matrix& foverlap,
     ModuleBase::matrix& soverlap,
     const K_Vectors* kv,
-    Record_adj* ra,
-    const elecstate::DensityMatrix<std::complex<double>, double>* DM)
+    Record_adj* ra)
 {
-    ModuleBase::TITLE("Force_LCAO_k", "cal_foverlap_k");
-    ModuleBase::timer::tick("Force_LCAO_k", "cal_foverlap_k");
+    ModuleBase::TITLE("Force_LCAO","cal_fedm");
+    ModuleBase::timer::tick("Force_LCAO","cal_fedm");
+
+    const int nspin = GlobalV::NSPIN;
+    const int nbands = GlobalV::NBANDS;
 
     // construct a DensityMatrix object
-    elecstate::DensityMatrix<std::complex<double>, double> EDM(kv, &pv, GlobalV::NSPIN);
+    elecstate::DensityMatrix<std::complex<double>, double> edm(kv, &pv, nspin);
     
     //--------------------------------------------
     // calculate the energy density matrix here.
     //--------------------------------------------
-    ModuleBase::timer::tick("Force_LCAO_k", "cal_edm_2d");
 
-    ModuleBase::matrix wgEkb;
-    wgEkb.create(kv->get_nks(), GlobalV::NBANDS);
-    ModuleBase::Memory::record("Force::wgEkb", sizeof(double) * kv->get_nks() * GlobalV::NBANDS);
+    ModuleBase::matrix wg_ekb;
+    wg_ekb.create(kv->get_nks(), nbands);
+    ModuleBase::Memory::record("Force::wg_ekb", sizeof(double) * kv->get_nks() * nbands);
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 1024)
 #endif
     for (int ik = 0; ik < kv->get_nks(); ik++)
     {
-        for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+        for (int ib = 0; ib < nbands; ib++)
         {
-            wgEkb(ik, ib) = pelec->wg(ik, ib) * pelec->ekb(ik, ib);
+            wg_ekb(ik, ib) = pelec->wg(ik, ib) * pelec->ekb(ik, ib);
         }
     }
     std::vector<ModuleBase::ComplexMatrix> edm_k(kv->get_nks());
 
     // use the original formula (Hamiltonian matrix) to calculate energy density matrix
-    if (DM->EDMK.size())
+    if (dm->EDMK.size())
     {
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static, 1024)
+#pragma omp parallel for schedule(static)
 #endif
         for (int ik = 0; ik < kv->get_nks(); ++ik)
         {
-            //edm_k[ik] = loc.edm_k_tddft[ik];
-            EDM.set_DMK_pointer(ik,DM->EDMK[ik].c);
+            edm.set_DMK_pointer(ik,dm->EDMK[ik].c);
         }
     }
     else
     {
-        //elecstate::cal_dm(pv, wgEkb, psi[0], edm_k);
         // cal_dm_psi
-        elecstate::cal_dm_psi(EDM.get_paraV_pointer(), wgEkb, psi[0], EDM);
+        elecstate::cal_dm_psi(edm.get_paraV_pointer(), wg_ekb, psi[0], edm);
     }
     
-    //loc.cal_dm_R(edm_k, ra, edm2d, kv);
 
     // cal_dm_2d
-    EDM.init_DMR(*ra, &GlobalC::ucell);
-    EDM.cal_DMR();
-    EDM.sum_DMR_spin();
+    edm.init_DMR(*ra, &ucell);
+    edm.cal_DMR();
+    edm.sum_DMR_spin();
     //
     ModuleBase::timer::tick("Force_LCAO_k", "cal_edm_2d");
     //--------------------------------------------
@@ -111,13 +112,13 @@ void Force_LCAO<std::complex<double>>::cal_foverlap(const bool isforce,
 #ifdef _OPENMP
 #pragma omp for schedule(dynamic)
 #endif
-        for (int iat = 0; iat < GlobalC::ucell.nat; iat++)
+        for (int iat = 0; iat < ucell.nat; iat++)
         {
-            const int T1 = GlobalC::ucell.iat2it[iat];
-            Atom* atom1 = &GlobalC::ucell.atoms[T1];
-            const int I1 = GlobalC::ucell.iat2ia[iat];
+            const int T1 = ucell.iat2it[iat];
+            Atom* atom1 = &ucell.atoms[T1];
+            const int I1 = ucell.iat2ia[iat];
             // get iat1
-            int iat1 = GlobalC::ucell.itia2iat(T1, I1);
+            int iat1 = ucell.itia2iat(T1, I1);
             double* foverlap_iat;
 			if (isforce)
 			{
@@ -133,23 +134,23 @@ void Force_LCAO<std::complex<double>>::cal_foverlap(const bool isforce,
             }
 #endif
             int irr = pv.nlocstart[iat];
-            const int start1 = GlobalC::ucell.itiaiw2iwt(T1, I1, 0);
+            const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
             for (int cb = 0; cb < ra->na_each[iat]; ++cb)
             {
                 const int T2 = ra->info[iat][cb][3];
                 const int I2 = ra->info[iat][cb][4];
 
-                const int start2 = GlobalC::ucell.itiaiw2iwt(T2, I2, 0);
+                const int start2 = ucell.itiaiw2iwt(T2, I2, 0);
 
-                Atom* atom2 = &GlobalC::ucell.atoms[T2];
+                Atom* atom2 = &ucell.atoms[T2];
 
                 // get iat2
-                int iat2 = GlobalC::ucell.itia2iat(T2, I2);
+                int iat2 = ucell.itia2iat(T2, I2);
                 double Rx = ra->info[iat][cb][0];
                 double Ry = ra->info[iat][cb][1];
                 double Rz = ra->info[iat][cb][2];
                 // get BaseMatrix
-                hamilt::BaseMatrix<double>* tmp_matrix = EDM.get_DMR_pointer(1)->find_matrix(iat1, iat2, Rx, Ry, Rz);
+                hamilt::BaseMatrix<double>* tmp_matrix = edm.get_DMR_pointer(1)->find_matrix(iat1, iat2, Rx, Ry, Rz);
 				if(tmp_matrix == nullptr) 
 				{
 					continue;
@@ -161,7 +162,7 @@ void Force_LCAO<std::complex<double>>::cal_foverlap(const bool isforce,
                 {
                     for (int nu = 0; nu < pv.get_col_size(iat2); ++nu)
                     {
-                        // here do not sum over spin due to EDM.sum_DMR_spin();
+                        // here do not sum over spin due to edm.sum_DMR_spin();
                         double edm2d1 = tmp_matrix->get_value(mu,nu);
                         double edm2d2 = 2.0 * edm2d1;
 
@@ -233,16 +234,16 @@ void Force_LCAO<std::complex<double>>::cal_foverlap(const bool isforce,
 
     if (isstress)
     {
-        StressTools::stress_fill(GlobalC::ucell.lat0, GlobalC::ucell.omega, soverlap);
+        StressTools::stress_fill(ucell.lat0, ucell.omega, soverlap);
     }
 
     if (total_irr != pv.nnr)
     {
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "wrong irr", total_irr);
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "wrong LNNR.nnr", pv.nnr);
-        ModuleBase::WARNING_QUIT("Force_LCAO_k::cal_foverlap_k", "irr!=LNNR.nnr");
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "wrong pv.nnr", pv.nnr);
+        ModuleBase::WARNING_QUIT("Force_LCAO::fedm_k", "irr!=pv.nnr");
     }
 
-    ModuleBase::timer::tick("Force_LCAO_k", "cal_foverlap_k");
+    ModuleBase::timer::tick("Force_LCAO","cal_fedm");
     return;
 }

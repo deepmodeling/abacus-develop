@@ -2,7 +2,6 @@
 #define OUTPUT_MAT_SPARSE_H
 
 #include "module_basis/module_ao/parallel_orbitals.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_gen_fixedH.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
 #include "module_hsolver/hsolver_lcao.h"
@@ -21,7 +20,6 @@ class Output_Mat_Sparse
                       int istep,
                       const ModuleBase::matrix& v_eff,
                       const Parallel_Orbitals& pv,
-                      LCAO_gen_fixedH& gen_h, // mohan add 2024-04-02
                       Gint_k& gint_k,         // mohan add 2024-04-01
                       const ORB_gen_tables* uot,
                       LCAO_Matrix& lm,
@@ -49,8 +47,6 @@ class Output_Mat_Sparse
     const ModuleBase::matrix& _v_eff;
 
     const Parallel_Orbitals& _pv;
-
-    LCAO_gen_fixedH& _gen_h; // mohan add 2024-04-02
 
     Gint_k& _gint_k; // mohan add 2024-04-01
 

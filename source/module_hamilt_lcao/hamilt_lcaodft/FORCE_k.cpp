@@ -13,6 +13,7 @@
 #include "module_elecstate/elecstate_lcao.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/write_HS.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
 
 #ifdef __DEEPKS
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
@@ -25,7 +26,6 @@
 template<>
 void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
     LCAO_Matrix& lm,
-    LCAO_gen_fixedH& gen_h,
     const ORB_gen_tables* uot,
     const int& nks,
     const std::vector<ModuleBase::Vector3<double>>& kvec_d)
@@ -89,7 +89,8 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
     // calculate dS = <phi | dphi>
     //-----------------------------
     bool cal_deri = true;
-    gen_h.build_ST_new(
+    LCAO_domain::build_ST_new(
+          lm,
          'S', 
           cal_deri, 
           GlobalC::ucell, 
@@ -97,7 +98,7 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
           pv,
           *uot, 
           &GlobalC::GridD, 
-          gen_h.LM->SlocR.data());
+          lm.SlocR.data());
 
     //-----------------------------------------
     // (2) allocate for <phi | T + Vnl | dphi>
@@ -120,7 +121,8 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
 
     // calculate dT=<phi|kin|dphi> in LCAO
     // calculate T + VNL(P1) in LCAO basis
-	gen_h.build_ST_new(
+	LCAO_domain::build_ST_new(
+            lm,
 			'T', 
 			cal_deri, 
 			GlobalC::ucell, 
@@ -128,17 +130,26 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
 			pv,
 			*uot, 
 			&GlobalC::GridD, 
-			gen_h.LM->Hloc_fixedR.data());
+			lm.Hloc_fixedR.data());
 
     // calculate dVnl=<phi|dVnl|dphi> in LCAO
-    gen_h.build_Nonlocal_mu_new(gen_h.LM->Hloc_fixed.data(), cal_deri, GlobalC::ucell, GlobalC::ORB, *uot, &(GlobalC::GridD));
+	LCAO_domain::build_Nonlocal_mu_new(
+			lm,
+			lm.Hloc_fixed.data(), 
+			cal_deri, 
+			GlobalC::ucell, 
+			GlobalC::ORB, 
+			*uot, 
+			&GlobalC::GridD);
 
-    // calculate asynchronous S matrix to output for Hefei-NAMD
-    if (INPUT.cal_syns)
-    {
-        cal_deri = false;
+	// calculate asynchronous S matrix to output for Hefei-NAMD
+	if (INPUT.cal_syns)
+	{
+		cal_deri = false;
 
-		gen_h.build_ST_new('S', 
+		LCAO_domain::build_ST_new(
+				lm,
+				'S', 
 				cal_deri, 
 				GlobalC::ucell,
 				GlobalC::ORB,
@@ -291,6 +302,7 @@ void Force_LCAO<std::complex<double>>::test(
     template<>
     void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
         const bool isstress,
+        const UnitCell& ucell,
         const psi::Psi<std::complex<double>>* psi,
         const elecstate::ElecState* pelec,
         ModuleBase::matrix& foverlap,
@@ -304,7 +316,6 @@ void Force_LCAO<std::complex<double>>::test(
 #ifdef __DEEPKS
         ModuleBase::matrix& svnl_dalpha,
 #endif
-        LCAO_gen_fixedH& gen_h,
         TGint<std::complex<double>>::type& gint,
         const ORB_gen_tables* uot,
         const Parallel_Orbitals& pv,
@@ -315,22 +326,23 @@ void Force_LCAO<std::complex<double>>::test(
         ModuleBase::TITLE("Force_LCAO_k", "ftable_k");
         ModuleBase::timer::tick("Force_LCAO_k", "ftable_k");
 
-        elecstate::DensityMatrix<complex<double>, double>* DM
+        elecstate::DensityMatrix<complex<double>, double>* dm
             = dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(pelec)->get_DM();
 
         this->allocate(
             pv,
             lm,
-            gen_h,
             uot,
             kv->get_nks(),
             kv->kvec_d);
 
         // calculate the energy density matrix
         // and the force related to overlap matrix and energy density matrix.
-        this->cal_foverlap(
+        this->cal_fedm(
             isforce,
             isstress,
+            ucell,
+            dm,
             psi,
             pv,
             pelec,
@@ -338,13 +350,12 @@ void Force_LCAO<std::complex<double>>::test(
             foverlap,
             soverlap,
             kv,
-            ra,
-            DM);
+            ra);
 
         this->cal_ftvnl_dphi(
-            DM,
+            dm,
             pv,
-            GlobalC::ucell,
+            ucell,
             lm,
             isforce,
             isstress,
@@ -362,9 +373,9 @@ void Force_LCAO<std::complex<double>>::test(
             svl_dphi);
 
         this->cal_fvnl_dbeta(
-            DM,
+            dm,
             pv,
-            GlobalC::ucell,
+            ucell,
             GlobalC::ORB,
             *uot,
             GlobalC::GridD,
@@ -376,13 +387,16 @@ void Force_LCAO<std::complex<double>>::test(
 #ifdef __DEEPKS
         if (GlobalV::deepks_scf)
         {
-            const std::vector<std::vector<std::complex<double>>>& dm_k = DM->get_DMK_vector();
-            GlobalC::ld.cal_projected_DM_k(DM, GlobalC::ucell, GlobalC::ORB, GlobalC::GridD);
-            GlobalC::ld.cal_descriptor(GlobalC::ucell.nat);
-            GlobalC::ld.cal_gedm(GlobalC::ucell.nat);
+            const std::vector<std::vector<std::complex<double>>>& dm_k = dm->get_DMK_vector();
+
+            GlobalC::ld.cal_projected_DM_k(dm, ucell, GlobalC::ORB, GlobalC::GridD);
+
+            GlobalC::ld.cal_descriptor(ucell.nat);
+
+            GlobalC::ld.cal_gedm(ucell.nat);
 
             GlobalC::ld.cal_f_delta_k(dm_k,
-                GlobalC::ucell,
+                ucell,
                 GlobalC::ORB,
                 GlobalC::GridD,
                 kv->get_nks(),

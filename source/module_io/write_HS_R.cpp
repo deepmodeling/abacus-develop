@@ -91,7 +91,6 @@ void ModuleIO::output_HSR(const int& istep,
 
 void ModuleIO::output_dHR(const int &istep,
                            const ModuleBase::matrix &v_eff,
-                           LCAO_gen_fixedH &gen_h, // mohan add 2024-04-02
                            Gint_k &gint_k,  // mohan add 2024-04-01
                            LCAO_Matrix &lm,  // mohan add 2024-04-01
                            Grid_Driver &grid, // mohan add 2024-04-06
@@ -118,7 +117,6 @@ void ModuleIO::output_dHR(const int &istep,
                 lm,
                 grid,
                 uot,
-				gen_h,
 				cspin, 
 				sparse_thr, 
 				gint_k);
@@ -144,7 +142,6 @@ void ModuleIO::output_dHR(const int &istep,
                     lm,
                     grid,
                     uot,
-                    gen_h,
                     cspin, 
                     sparse_thr, 
                     gint_k);
@@ -208,7 +205,6 @@ void ModuleIO::output_TR(
     LCAO_Matrix &lm,
     Grid_Driver &grid,
     const ORB_gen_tables* uot,
-    LCAO_gen_fixedH &gen_h, // mohan add 2024-04-02
     const std::string &TR_filename,
     const bool &binary,
     const double &sparse_thr
@@ -233,7 +229,6 @@ void ModuleIO::output_TR(
 			lm,
 			grid,
             uot,
-			gen_h, 
 			sparse_thr);
 
 	ModuleIO::save_sparse(

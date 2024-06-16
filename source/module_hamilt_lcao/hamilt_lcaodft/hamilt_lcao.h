@@ -3,7 +3,6 @@
 
 #include "module_elecstate/potentials/potential_new.h"
 #include "module_hamilt_general/hamilt.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_gen_fixedH.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_wfc.h"
@@ -27,7 +26,6 @@ class HamiltLCAO : public Hamilt<TK>
     */
     HamiltLCAO(Gint_Gamma* GG_in,
         Gint_k* GK_in,
-        LCAO_gen_fixedH* genH_in,
         LCAO_Matrix* LM_in,
         Local_Orbital_Charge* loc_in,
         elecstate::Potential* pot_in,
