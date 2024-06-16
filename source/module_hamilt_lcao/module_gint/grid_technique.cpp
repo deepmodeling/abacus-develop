@@ -10,7 +10,7 @@ Grid_Technique::Grid_Technique()
 {
     allocate_find_R2 = false;
 #if ((defined __CUDA) /* || (defined __ROCM) */)
-    if (GlobalV::device_flag == "gpu")
+    if(GlobalV::device_flag == "gpu")
     {
         is_malloced = false;
     }
@@ -21,7 +21,7 @@ Grid_Technique::~Grid_Technique()
 {
 
 #if ((defined __CUDA) /* || (defined __ROCM) */)
-    if (GlobalV::device_flag == "gpu")
+    if(GlobalV::device_flag == "gpu")
     {
         free_gpu_gint_variables(this->nat);
     }
@@ -44,7 +44,9 @@ void Grid_Technique::set_pbc_grid(const int& ncx_in, const int& ncy_in, const in
 
     if (GlobalV::OUT_LEVEL != "m")
     {
-        GlobalV::ofs_running << "\n SETUP EXTENDED REAL SPACE GRID FOR GRID INTEGRATION" << std::endl;
+        GlobalV::ofs_running
+            << "\n SETUP EXTENDED REAL SPACE GRID FOR GRID INTEGRATION"
+            << std::endl;
     }
 
     
@@ -76,17 +78,17 @@ void Grid_Technique::set_pbc_grid(const int& ncx_in, const int& ncy_in, const in
     this->init_grid_expansion(ucell, this->rcuts.data());
 
     // (3) calculate the extended grid.
-    this->cal_extended_cell(this->dxe, this->dye, this->dze, this->nbx, this->nby, this->nbz);
+    this->cal_extended_cell(this->dxe, this->dye, this->dze,this->nbx, this->nby, this->nbz);
 
     this->init_tau_in_bigcell(ucell);
 
     this->init_meshball();
 
-    this->init_atoms_on_grid(ny, nplane, startz_current, ucell);
+    this->init_atoms_on_grid(ny, nplane, startz_current,ucell);
 
     this->cal_trace_lo(ucell);
 #if ((defined __CUDA) /* || (defined __ROCM) */)
-    if (GlobalV::device_flag == "gpu")
+    if(GlobalV::device_flag == "gpu")
     {
         this->init_gpu_gint_variables(ucell, num_stream);
     }
@@ -96,7 +98,9 @@ void Grid_Technique::set_pbc_grid(const int& ncx_in, const int& ncy_in, const in
     return;
 }
 
-void Grid_Technique::get_startind(const int& ny, const int& nplane, const int& startz_current)
+void Grid_Technique::get_startind(const int& ny,
+                                  const int& nplane,
+                                  const int& startz_current)
 {
     ModuleBase::TITLE("Grid_Technique", "get_startind");
 
@@ -116,15 +120,15 @@ void Grid_Technique::get_startind(const int& ny, const int& nplane, const int& s
         return;
     }
 
-    for (int i = 0; i < nbxx; i++)
-    {
-        int ibx = 0;
-        int iby = 0;
-        int ibz = 0;
+	for(int i=0;i<nbxx;i++)
+	{
+		int ibx=0;
+        int iby=0;
+        int ibz=0;
 
-        int ix = 0;
-        int iy = 0;
-        int iz = 0;
+		int ix=0;
+        int iy=0;
+        int iz=0;
 
         ibx = i / (nby * nbzp);
         iby = (i - ibx * nby * nbzp) / nbzp;
@@ -145,7 +149,9 @@ void Grid_Technique::get_startind(const int& ny, const int& nplane, const int& s
 // PLEASE update this 'init_atoms_on_grid' to make
 // it adapted to 'cuboid' shape of grid
 // mohan add 2021-04-06
-void Grid_Technique::init_atoms_on_grid(const int& ny, const int& nplane, const int& startz_current,
+void Grid_Technique::init_atoms_on_grid(const int& ny,
+                                        const int& nplane,
+                                        const int& startz_current,
                                         const UnitCell& ucell)
 {
     ModuleBase::TITLE("Grid_Technique", "init_atoms_on_grid");
@@ -158,7 +164,7 @@ void Grid_Technique::init_atoms_on_grid(const int& ny, const int& nplane, const 
     // values on the bigcell.
     if (nbxx > 0)
     {
-        this->how_many_atoms = std::vector<int>(nbxx, 0);
+        this->how_many_atoms = std::vector<int>(nbxx,0);
         ModuleBase::Memory::record("GT::how_many_atoms", sizeof(int) * nbxx);
     }
     else
@@ -185,21 +191,21 @@ void Grid_Technique::init_atoms_on_grid(const int& ny, const int& nplane, const 
     ModuleBase::Memory::record("GT::index2normal", sizeof(int) * this->nxyze);
     this->grid_expansion_index(1, index2normal);
 
-    // (5) record how many atoms on
-    // each local grid point (ix,iy,iz)
-    int iat = 0;
-    int normal = 0;
-    this->total_atoms_on_grid = 0;
-    int nat_local = 0;
-    for (int it = 0; it < ucell.ntype; it++)
-    {
-        for (int ia = 0; ia < ucell.atoms[it].na; ia++)
-        {
-            for (int im = 0; im < this->meshball_ncells; im++)
-            {
-                // bcell[iat]: which bcell iat atom is in.
-                // ball[im]: relative position of adjacent bcell.
-                normal = index2normal[this->index_atom[iat] + this->index_ball[im]];
+	// (5) record how many atoms on
+	// each local grid point (ix,iy,iz)
+	int iat=0;
+	int normal=0;
+	this->total_atoms_on_grid = 0;
+	int nat_local = 0;
+	for(int it=0; it<ucell.ntype; it++)
+	{
+		for(int ia=0; ia<ucell.atoms[it].na; ia++)
+		{
+			for(int im=0; im< this->meshball_ncells; im++)
+			{
+				// bcell[iat]: which bcell iat atom is in.
+				// ball[im]: relative position of adjacent bcell.
+				normal = index2normal[ this->index_atom[iat] + this->index_ball[im] ];
 
                 if (normal >= nbxyz)
                 {
@@ -207,7 +213,9 @@ void Grid_Technique::init_atoms_on_grid(const int& ny, const int& nplane, const 
                     std::cout << " index_ball=" << index_ball[im] << std::endl;
                     std::cout << " normal=" << normal << std::endl;
                     std::cout << " nbxyz=" << nbxyz << std::endl;
-                    ModuleBase::WARNING_QUIT("Grid_Technique::init_atoms_on_grid", "normal >= nbxyz");
+                    ModuleBase::WARNING_QUIT(
+                        "Grid_Technique::init_atoms_on_grid",
+                        "normal >= nbxyz");
                 }
 
                 assert(normal >= 0);
@@ -231,7 +239,9 @@ void Grid_Technique::init_atoms_on_grid(const int& ny, const int& nplane, const 
     delete[] bigcell_on_processor;
 
     if (GlobalV::test_gridt)
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Total_atoms_on_grid", total_atoms_on_grid);
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
+                                    "Total_atoms_on_grid",
+                                    total_atoms_on_grid);
 
     int stop = 0;
     if (total_atoms_on_grid == 0)
@@ -242,7 +252,8 @@ void Grid_Technique::init_atoms_on_grid(const int& ny, const int& nplane, const 
     Parallel_Reduce::reduce_all(stop);
     if (stop)
     {
-        ModuleBase::WARNING("Grid_Technique::init_atoms_on_grid", "No atom on this sub-FFT-mesh.");
+        ModuleBase::WARNING("Grid_Technique::init_atoms_on_grid",
+                            "No atom on this sub-FFT-mesh.");
     }
 
     // calculate the trach of local ia to global iat
@@ -261,12 +272,13 @@ void Grid_Technique::init_atoms_on_grid(const int& ny, const int& nplane, const 
     // need how_many_atoms first.
     this->cal_grid_integration_index();
     // bcell_start is needed.
-    this->init_atoms_on_grid2(index2normal, ucell);
+    this->init_atoms_on_grid2(index2normal,ucell);
     delete[] index2normal;
     return;
 }
 
-void Grid_Technique::check_bigcell(int*& ind_bigcell, bool*& bigcell_on_processor)
+void Grid_Technique::check_bigcell(int*& ind_bigcell,
+                                   bool*& bigcell_on_processor)
 {
     // check if a given bigcell is treated on this processor
     const int zstart = nbzp_start;
@@ -274,12 +286,12 @@ void Grid_Technique::check_bigcell(int*& ind_bigcell, bool*& bigcell_on_processo
     const int nbyz = nby * nbz;
     const int nz = nbzp;
 
-    int iz_now = 0;
-    int ix = 0;
-    int iy = 0;
-    int iz = 0;
-    int ind = 0;
-    bool flag = false;
+	int iz_now=0;
+    int ix=0;
+    int iy=0;
+    int iz=0;
+    int ind=0;
+	bool flag=false;
 
     ind_bigcell = new int[nbxyz];
     bigcell_on_processor = new bool[nbxyz];
@@ -307,35 +319,38 @@ void Grid_Technique::check_bigcell(int*& ind_bigcell, bool*& bigcell_on_processo
     return;
 }
 
-void Grid_Technique::init_atoms_on_grid2(const int* index2normal, const UnitCell& ucell)
+void Grid_Technique::init_atoms_on_grid2(const int* index2normal,const UnitCell& ucell)
 {
     ModuleBase::TITLE("Grid_Techinique", "init_atoms_on_grid2");
 
     if (total_atoms_on_grid == 0)
     {
-        ModuleBase::WARNING("Grid_Technique::init_atoms_on_grid2", "no atom on this sub FFT grid.");
+        ModuleBase::WARNING("Grid_Technique::init_atoms_on_grid2",
+                            "no atom on this sub FFT grid.");
         return;
     }
 
-    int* index2ucell = new int[this->nxyze];
-    assert(index2ucell != NULL);
-    ModuleBase::Memory::record("GT::index2ucell", sizeof(int) * this->nxyze);
-    this->grid_expansion_index(0, index2ucell);
-
-    int* ind_bigcell = nullptr;
-    bool* bigcell_on_processor; // normal local form.
-    this->check_bigcell(ind_bigcell, bigcell_on_processor);
+	int* index2ucell = new int[this->nxyze];
+	assert( index2ucell != NULL );
+	ModuleBase::Memory::record("GT::index2ucell", sizeof(int) * this->nxyze);	
+	this->grid_expansion_index(0,index2ucell);
+	
+	int *ind_bigcell=nullptr;
+	bool *bigcell_on_processor; // normal local form.
+	this->check_bigcell(ind_bigcell, bigcell_on_processor);
 
     //--------------------------------------
     // save which atom is in the bigcell.
     //--------------------------------------
     this->which_atom = std::vector<int>(total_atoms_on_grid, 0);
     assert(which_atom.size() != 0);
-    ModuleBase::Memory::record("GT::which_atom", sizeof(int) * total_atoms_on_grid);
+    ModuleBase::Memory::record("GT::which_atom",
+                               sizeof(int) * total_atoms_on_grid);
 
     this->which_bigcell = std::vector<int>(total_atoms_on_grid, 0);
     assert(which_bigcell.size() != 0);
-    ModuleBase::Memory::record("GT::which_bigcell", sizeof(int) * total_atoms_on_grid);
+    ModuleBase::Memory::record("GT::which_bigcell",
+                               sizeof(int) * total_atoms_on_grid);
 
     this->which_unitcell = std::vector<int>(total_atoms_on_grid, 0);
     assert(which_unitcell.size() != 0);
@@ -346,52 +361,52 @@ void Grid_Technique::init_atoms_on_grid2(const int* index2normal, const UnitCell
     int count = 0;
     int iat = 0;
     this->how_many_atoms = std::vector<int>(nbxx, 0);
-    for (int it = 0; it < ucell.ntype; it++)
-    {
-        for (int ia = 0; ia < ucell.atoms[it].na; ia++)
-        {
-            // zero bigcell of meshball indicate ?
-            for (int im = 0; im < this->meshball_ncells; im++)
-            {
-                const int extgrid = this->index_atom[iat] + this->index_ball[im];
-                const int normal = index2normal[extgrid];
-
-                // mohan add 2010-07-01
-                int f = ind_bigcell[normal];
-                if (!bigcell_on_processor[normal])
-                {
-                    continue;
-                }
-
-                // it's not the normal order to calculate which_atom
-                // and which_bigcell, especailly in 1D array.
-                // Each grid's adjacent atom number is different,
-                // so, first we need to locate which grid, using
-                // bcell_start, then we need to count which adjacent atom.
-                // using how_many_atoms.
-                int index = this->bcell_start[f] + this->how_many_atoms[f];
-
-                // we save which_atom and which_bigcell in 1D array,
-                // once you want to use this in grid integration,
-                // the only information you got is the 'normal' index,
-                // so you need to use bcell_start
-                // to get the 'mesh_index', then you can you this mesh_index
-                // to use which_atom or which_bigcell.
-                this->which_atom[index] = iat;
-                this->which_bigcell[index] = im;
-                this->which_unitcell[index] = index2ucell[extgrid];
-
-                ++how_many_atoms[f];
-                ++count;
-            }
-            ++iat;
-        }
-    }
-    assert(count == total_atoms_on_grid);
-    delete[] index2ucell;
-    delete[] ind_bigcell;
-    delete[] bigcell_on_processor;
-    return;
+	for(int it=0; it<ucell.ntype; it++)
+	{
+		for(int ia=0; ia<ucell.atoms[it].na; ia++)
+		{
+			// zero bigcell of meshball indicate ?
+			for(int im=0; im< this->meshball_ncells; im++)
+			{
+				const int extgrid = this->index_atom[iat] + this->index_ball[im];
+				const int normal = index2normal[ extgrid ];
+			
+				// mohan add 2010-07-01
+				int f = ind_bigcell[normal];
+				if(!bigcell_on_processor[normal]) 
+				{
+					continue;
+				}
+				
+				// it's not the normal order to calculate which_atom
+				// and which_bigcell, especailly in 1D array. 
+				// Each grid's adjacent atom number is different,
+				// so, first we need to locate which grid, using
+				// bcell_start, then we need to count which adjacent atom.
+				// using how_many_atoms.
+				int index = this->bcell_start[f] + this->how_many_atoms[f];
+				
+				// we save which_atom and which_bigcell in 1D array,
+				// once you want to use this in grid integration, 
+				// the only information you got is the 'normal' index, 
+				// so you need to use bcell_start
+				// to get the 'mesh_index', then you can you this mesh_index
+				// to use which_atom or which_bigcell.
+				this->which_atom[ index ] = iat;
+				this->which_bigcell[ index ] = im;
+				this->which_unitcell[ index ] = index2ucell[extgrid];
+				 
+				++how_many_atoms[f];
+				++count;
+			}
+			++iat;
+		}
+	}
+	assert( count == total_atoms_on_grid );
+	delete[] index2ucell;
+	delete[] ind_bigcell;
+	delete[] bigcell_on_processor;
+	return;
 }
 
 void Grid_Technique::cal_grid_integration_index(void)
@@ -404,7 +419,8 @@ void Grid_Technique::cal_grid_integration_index(void)
         this->bcell_start[0] = 0;
         for (int i = 1; i < nbxx; i++)
         {
-            this->bcell_start[i] = this->bcell_start[i - 1] + this->how_many_atoms[i - 1];
+            this->bcell_start[i]
+                = this->bcell_start[i - 1] + this->how_many_atoms[i - 1];
         }
     }
     else
@@ -426,20 +442,22 @@ void Grid_Technique::cal_grid_integration_index(void)
     Parallel_Reduce::gather_int_all(max_atom, all);
     if (GlobalV::MY_RANK == 0)
     {
-        GlobalV::ofs_warning << std::setw(15) << "Processor" << std::setw(15) << "Atom" << std::endl;
+        GlobalV::ofs_warning << std::setw(15) << "Processor" << std::setw(15)
+                             << "Atom" << std::endl;
         for (int i = 0; i < GlobalV::NPROC; i++)
         {
-            GlobalV::ofs_warning << std::setw(15) << i + 1 << std::setw(15) << all[i] << std::endl;
+            GlobalV::ofs_warning << std::setw(15) << i + 1 << std::setw(15)
+                                 << all[i] << std::endl;
         }
     }
     delete[] all;
 #endif
 
-    if (GlobalV::test_gridt)
-    {
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Max atom on bigcell", max_atom);
-    }
-    return;
+	if(GlobalV::test_gridt)
+	{
+		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"Max atom on bigcell",max_atom);
+	}
+	return;
 }
 
 // set 'lgd' variable
@@ -458,46 +476,50 @@ void Grid_Technique::cal_trace_lo(const UnitCell& ucell)
     int iw_all = 0;
     int iw_local = 0;
 
-    for (int it = 0; it < ucell.ntype; it++)
-    {
-        for (int ia = 0; ia < ucell.atoms[it].na; ia++)
-        {
-            if (this->in_this_processor[iat])
-            {
-                ++lnat;
-                int nw0 = ucell.atoms[it].nw;
-                if (GlobalV::NSPIN == 4)
-                { // added by zhengdy-soc, need to be double in soc
-                    nw0 *= 2;
-                    this->lgd += nw0;
-                }
-                else
-                {
-                    this->lgd += ucell.atoms[it].nw;
-                }
-
-                for (int iw = 0; iw < nw0; iw++)
-                {
-                    this->trace_lo[iw_all] = iw_local;
-                    ++iw_local;
-                    ++iw_all;
-                }
-            }
-            else
-            {
-                // global index of atomic orbitals
-                iw_all += ucell.atoms[it].nw;
-                if (GlobalV::NSPIN == 4)
-                    iw_all += ucell.atoms[it].nw;
-            }
-            ++iat;
-        }
-    }
+	for(int it=0; it<ucell.ntype; it++)
+	{
+		for(int ia=0; ia<ucell.atoms[it].na; ia++)
+		{
+			if(this->in_this_processor[iat])
+			{
+				++lnat;
+				int nw0 = ucell.atoms[it].nw;
+				if(GlobalV::NSPIN==4)
+				{//added by zhengdy-soc, need to be double in soc
+					nw0 *= 2;
+					this->lgd += nw0;
+				}
+				else
+				{
+					this->lgd += ucell.atoms[it].nw;
+				}
+				
+				for(int iw=0; iw<nw0; iw++)
+				{
+					this->trace_lo[iw_all] = iw_local;
+					++iw_local; 
+					++iw_all;
+				}
+			}
+			else
+			{
+				// global index of atomic orbitals
+				iw_all += ucell.atoms[it].nw;
+				if(GlobalV::NSPIN==4) iw_all += ucell.atoms[it].nw;
+			}
+			++iat;
+		}
+	}
+	
 
     if (GlobalV::OUT_LEVEL != "m")
     {
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Atom number in sub-FFT-grid", lnat);
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Local orbitals number in sub-FFT-grid", lgd);
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
+                                    "Atom number in sub-FFT-grid",
+                                    lnat);
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
+                                    "Local orbitals number in sub-FFT-grid",
+                                    lgd);
     }
 
     assert(iw_local == lgd);
@@ -521,7 +543,10 @@ void Grid_Technique::init_gpu_gint_variables(const UnitCell& ucell,const int num
         ylmcoef[i] = ModuleBase::Ylm::ylmcoef[i];
     }
     checkCudaErrors(cudaMalloc((void**)&ylmcoef_g, 100 * sizeof(double)));
-    checkCudaErrors(cudaMemcpy(ylmcoef_g, ylmcoef, 100 * sizeof(double), cudaMemcpyHostToDevice));
+    checkCudaErrors(cudaMemcpy(ylmcoef_g,
+                               ylmcoef,
+                               100 * sizeof(double),
+                               cudaMemcpyHostToDevice));
 
     double max_cut = *std::max_element(this->rcuts.begin(), this->rcuts.end());
 
@@ -536,14 +561,28 @@ void Grid_Technique::init_gpu_gint_variables(const UnitCell& ucell,const int num
     nr_max = static_cast<int>(1000 * max_cut) + 10;
     // double psi_u_now[ucell.ntype * ucell.nwmax * nr_max *
     // 2];
-    double* psi_u_now = (double*)malloc(ucell.ntype * ucell.nwmax * nr_max * 2 * sizeof(double));
-    memset(psi_u_now, 0, ucell.ntype * ucell.nwmax * nr_max * 2 * sizeof(double));
-    bool* atom_iw2_new_now = (bool*)malloc(ucell.ntype * ucell.nwmax * sizeof(bool));
-    memset(atom_iw2_new_now, 0, ucell.ntype * ucell.nwmax * sizeof(bool));
-    int* atom_iw2_ylm_now = (int*)malloc(ucell.ntype * ucell.nwmax * sizeof(int));
-    memset(atom_iw2_ylm_now, 0, ucell.ntype * ucell.nwmax * sizeof(int));
-    int* atom_iw2_l_now = (int*)malloc(ucell.ntype * ucell.nwmax * sizeof(int));
-    memset(atom_iw2_l_now, 0, ucell.ntype * ucell.nwmax * sizeof(int));
+    double* psi_u_now
+        = (double*)malloc(ucell.ntype * ucell.nwmax * nr_max
+                          * 2 * sizeof(double));
+    memset(psi_u_now,
+           0,
+           ucell.ntype * ucell.nwmax * nr_max * 2
+               * sizeof(double));
+    bool* atom_iw2_new_now = (bool*)malloc(
+        ucell.ntype * ucell.nwmax * sizeof(bool));
+    memset(atom_iw2_new_now,
+           0,
+           ucell.ntype * ucell.nwmax * sizeof(bool));
+    int* atom_iw2_ylm_now = (int*)malloc(ucell.ntype
+                                         * ucell.nwmax * sizeof(int));
+    memset(atom_iw2_ylm_now,
+           0,
+           ucell.ntype * ucell.nwmax * sizeof(int));
+    int* atom_iw2_l_now = (int*)malloc(ucell.ntype
+                                       * ucell.nwmax * sizeof(int));
+    memset(atom_iw2_l_now,
+           0,
+           ucell.ntype * ucell.nwmax * sizeof(int));
 
     Atom* atomx;
     for (int i = 0; i < ucell.ntype; i++)
@@ -553,8 +592,10 @@ void Grid_Technique::init_gpu_gint_variables(const UnitCell& ucell,const int num
         {
             if (j < atomx->nw)
             {
-                atom_iw2_new_now[i * ucell.nwmax + j] = atomx->iw2_new[j];
-                atom_iw2_ylm_now[i * ucell.nwmax + j] = atomx->iw2_ylm[j];
+                atom_iw2_new_now[i * ucell.nwmax + j]
+                    = atomx->iw2_new[j];
+                atom_iw2_ylm_now[i * ucell.nwmax + j]
+                    = atomx->iw2_ylm[j];
                 atom_iw2_l_now[i * ucell.nwmax + j] = atomx->iw2l[j];
                 for (int k = 0; k < this->nr_max; k++)
                 {
@@ -569,26 +610,55 @@ void Grid_Technique::init_gpu_gint_variables(const UnitCell& ucell,const int num
         }
     }
 
-    checkCudaErrors(cudaMalloc((void**)&atom_nw_g, ucell.ntype * sizeof(int)));
-    checkCudaErrors(cudaMemcpy(atom_nw_g, atom_nw_now, ucell.ntype * sizeof(int), cudaMemcpyHostToDevice));
-
-    checkCudaErrors(cudaMalloc((void**)&atom_nwl_g, ucell.ntype * sizeof(int)));
-    checkCudaErrors(cudaMemcpy(atom_nwl_g, ucell_atom_nwl_now, ucell.ntype * sizeof(int), cudaMemcpyHostToDevice));
-
-    checkCudaErrors(cudaMalloc((void**)&psi_u_g, ucell.ntype * ucell.nwmax * nr_max * sizeof(double) * 2));
-    checkCudaErrors(cudaMemcpy(psi_u_g, psi_u_now, ucell.ntype * ucell.nwmax * nr_max * sizeof(double) * 2,
+    checkCudaErrors(
+        cudaMalloc((void**)&atom_nw_g, ucell.ntype * sizeof(int)));
+    checkCudaErrors(cudaMemcpy(atom_nw_g,
+                               atom_nw_now,
+                               ucell.ntype * sizeof(int),
                                cudaMemcpyHostToDevice));
 
-    checkCudaErrors(cudaMalloc((void**)&atom_new_g, ucell.ntype * ucell.nwmax * sizeof(bool)));
-    checkCudaErrors(cudaMalloc((void**)&atom_ylm_g, ucell.ntype * ucell.nwmax * sizeof(int)));
-    checkCudaErrors(cudaMalloc((void**)&atom_l_g, ucell.ntype * ucell.nwmax * sizeof(int)));
+    checkCudaErrors(cudaMalloc((void**)&atom_nwl_g,
+                               ucell.ntype * sizeof(int)));
+    checkCudaErrors(cudaMemcpy(atom_nwl_g,
+                               ucell_atom_nwl_now,
+                               ucell.ntype * sizeof(int),
+                               cudaMemcpyHostToDevice));
+
+    checkCudaErrors(cudaMalloc((void**)&psi_u_g,
+                               ucell.ntype * ucell.nwmax
+                                   * nr_max * sizeof(double) * 2));
+    checkCudaErrors(cudaMemcpy(psi_u_g,
+                               psi_u_now,
+                               ucell.ntype * ucell.nwmax
+                                   * nr_max * sizeof(double) * 2,
+                               cudaMemcpyHostToDevice));
 
     checkCudaErrors(
-        cudaMemcpy(atom_new_g, atom_iw2_new_now, ucell.ntype * ucell.nwmax * sizeof(bool), cudaMemcpyHostToDevice));
+        cudaMalloc((void**)&atom_new_g,
+                   ucell.ntype * ucell.nwmax * sizeof(bool)));
     checkCudaErrors(
-        cudaMemcpy(atom_ylm_g, atom_iw2_ylm_now, ucell.ntype * ucell.nwmax * sizeof(int), cudaMemcpyHostToDevice));
+        cudaMalloc((void**)&atom_ylm_g,
+                   ucell.ntype * ucell.nwmax * sizeof(int)));
     checkCudaErrors(
-        cudaMemcpy(atom_l_g, atom_iw2_l_now, ucell.ntype * ucell.nwmax * sizeof(int), cudaMemcpyHostToDevice));
+        cudaMalloc((void**)&atom_l_g,
+                   ucell.ntype * ucell.nwmax * sizeof(int)));
+
+    checkCudaErrors(
+        cudaMemcpy(atom_new_g,
+                   atom_iw2_new_now,
+                   ucell.ntype * ucell.nwmax * sizeof(bool),
+                   cudaMemcpyHostToDevice));
+    checkCudaErrors(
+        cudaMemcpy(atom_ylm_g,
+                   atom_iw2_ylm_now,
+                   ucell.ntype * ucell.nwmax * sizeof(int),
+                   cudaMemcpyHostToDevice));
+    checkCudaErrors(
+        cudaMemcpy(atom_l_g,
+                   atom_iw2_l_now,
+                   ucell.ntype * ucell.nwmax * sizeof(int),
+                   cudaMemcpyHostToDevice));
+
 
     gemm_algo_selector(bxyz, fastest_matrix_mul, ucell);
 

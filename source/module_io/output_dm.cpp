@@ -1,14 +1,29 @@
 #include "module_io/output_dm.h"
-
 #include "module_io/dm_io.h"
 
 namespace ModuleIO
 {
 
-Output_DM::Output_DM(const Grid_Technique& GridT, int is, int iter, int precision, int out_dm, double*** DM,
-                     const double& ef, const UnitCell* ucell, const std::string& directory, bool gamma_only_local)
-    : _GridT(GridT), _is(is), _iter(iter), _precision(precision), _out_dm(out_dm), _DM(DM), _ef(ef), _ucell(ucell),
-      _directory(directory), _gamma_only_local(gamma_only_local)
+Output_DM::Output_DM(const Grid_Technique& GridT,
+                     int is,
+                     int iter,
+                     int precision,
+                     int out_dm,
+                     double*** DM,
+                     const double& ef,
+                     const UnitCell* ucell,
+                     const std::string& directory,
+                     bool gamma_only_local)
+    : _GridT(GridT),
+      _is(is),
+      _iter(iter),
+      _precision(precision),
+      _out_dm(out_dm),
+      _DM(DM),
+      _ef(ef),
+      _ucell(ucell),
+      _directory(directory),
+      _gamma_only_local(gamma_only_local)
 {
     if (gamma_only_local)
     {
@@ -25,6 +40,16 @@ void Output_DM::write()
 #ifdef __MPI
         _GridT.trace_lo.data(),
 #endif
-        _is, _iter, _fn, _precision, _out_dm, _DM, _ef, _ucell, GlobalV::MY_RANK, GlobalV::NSPIN, GlobalV::NLOCAL);
+        _is,
+        _iter,
+        _fn,
+        _precision,
+        _out_dm,
+        _DM,
+        _ef,
+        _ucell,
+        GlobalV::MY_RANK,
+        GlobalV::NSPIN,
+        GlobalV::NLOCAL);
 }
 } // namespace ModuleIO
