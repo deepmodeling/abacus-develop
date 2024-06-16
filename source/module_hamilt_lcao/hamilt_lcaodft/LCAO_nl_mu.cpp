@@ -501,6 +501,7 @@ void build_Nonlocal_mu_new(
 													fsr.DHloc_fixed_x,
 													fsr.DHloc_fixed_y,
 													fsr.DHloc_fixed_z);
+
 										}
 										else
 										{
