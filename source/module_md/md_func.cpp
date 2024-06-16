@@ -258,12 +258,33 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
     force_temp *= 0.5;
     virial *= 0.5;
 
-    for (int i = 0; i < unit_in.nat; ++i)
+int size = 1;
+#ifdef __MPI
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+#endif
+    int each_ucell_nat = unit_in.nat / size;
+    int last_ucell = unit_in.nat - each_ucell_nat * size;
+    int ucell_nat_begin = (each_ucell_nat) * mdp.my_rank + last_ucell;
+    int ucell_nat_end = ucell_nat_begin + each_ucell_nat;
+    if(mdp.my_rank == 0)
+    {
+        ucell_nat_begin = 0;
+        ucell_nat_end += last_ucell;
+    }
+    for (int i = ucell_nat_begin; i < ucell_nat_end; ++i)
     {
         for (int j = 0; j < 3; ++j)
         {
             force[i][j] = force_temp(i, j);
         }
+    }
+
+#ifdef __MPI
+    MPI_Bcast(force, (each_ucell_nat + last_ucell) * 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    for(int i = 1; i < size; i++)
+    {   
+        ucell_nat_begin = (each_ucell_nat) * mdp.my_rank + last_ucell;
+        MPI_Bcast(force + ucell_nat_begin, each_ucell_nat * 3, MPI_DOUBLE, i, MPI_COMM_WORLD);
     }
 
     ModuleBase::timer::tick("MD_func", "force_virial");
