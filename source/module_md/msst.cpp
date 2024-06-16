@@ -269,55 +269,29 @@ void MSST::rescale(std::ofstream& ofs, const double& volume)
 
 void MSST::propagate_vel(void)
 {
-#ifndef __MPI
-    const int sd = mdp.msst_direction;
-    const double dthalf = 0.5 * mdp.md_dt;
-    const double fac = mdp.msst_vis * pow(omega[sd], 2) / (vsum * ucell.omega);
-
-    for (int i = 0; i < ucell.nat; ++i)
-    {
-        ModuleBase::Vector3<double> const_C = force[i] / allmass[i];
-        ModuleBase::Vector3<double> const_D;
-        const_D.set(fac / allmass[i], fac / allmass[i], fac / allmass[i]);
-        const_D[sd] -= 2 * omega[sd] / ucell.omega;
-
-        for (int k = 0; k < 3; ++k)
-        {
-            if (fabs(dthalf * const_D[k]) > 1e-6)
-            {
-                double expd = exp(dthalf * const_D[k]);
-                vel[i][k] = expd * (const_C[k] + const_D[k] * vel[i][k] - const_C[k] / expd) / const_D[k];
-            }
-            else
-            {
-                vel[i][k]
-                    += (const_C[k] + const_D[k] * vel[i][k]) * dthalf
-                        + 0.5 * (const_D[k] * const_D[k] * vel[i][k] + const_C[k] * const_D[k]) * dthalf * dthalf;
-            }
-        }
-    }
-#endif
-    
+int size = 1;
 #ifdef __MPI
-    int size;
     MPI_Comm_size(MPI_COMM_WORLD, &size);
+#endif
     const int sd = mdp.msst_direction;
     const double dthalf = 0.5 * mdp.md_dt;
     const double fac = mdp.msst_vis * pow(omega[sd], 2) / (vsum * ucell.omega);
+
     int each_ucell_nat = ucell.nat / size;
-    int ucell_nat_begin = (each_ucell_nat) * mdp.my_rank;
+    int last_ucell = ucell.nat - each_ucell_nat * size;
+    int ucell_nat_begin = (each_ucell_nat) * mdp.my_rank + last_ucell;
     int ucell_nat_end = ucell_nat_begin + each_ucell_nat;
-    if(mdp.my_rank == size - 1)
-    {
-        ucell_nat_end = ucell.nat;
+    if(mdp.my_rank == 0){
+        ucell_nat_begin = 0;
+        ucell_nat_end += last_ucell;
     }
-    for(int i = ucell_nat_begin; i < ucell_nat_end; i++)
-    { 
+    for (int i = ucell_nat_begin; i < ucell_nat_end; ++i)
+    {
         ModuleBase::Vector3<double> const_C = force[i] / allmass[i];
         ModuleBase::Vector3<double> const_D;
         const_D.set(fac / allmass[i], fac / allmass[i], fac / allmass[i]);
         const_D[sd] -= 2 * omega[sd] / ucell.omega;
-        
+
         for (int k = 0; k < 3; ++k)
         {
             if (fabs(dthalf * const_D[k]) > 1e-6)
@@ -329,24 +303,19 @@ void MSST::propagate_vel(void)
             {
                 vel[i][k]
                     += (const_C[k] + const_D[k] * vel[i][k]) * dthalf
-                        + 0.5 * (const_D[k] * const_D[k] * vel[i][k] + const_C[k] * const_D[k]) * dthalf * dthalf;
+                       + 0.5 * (const_D[k] * const_D[k] * vel[i][k] + const_C[k] * const_D[k]) * dthalf * dthalf;
             }
         }
     }
 
-    for(int i = 0;i < size; i++){
-        int each_ucell_nat = ucell.nat / size;
-        int ucell_nat_begin = (each_ucell_nat) * i;
-        int ucell_nat_end = ucell_nat_begin + each_ucell_nat;
-        if(i == size - 1)
-        {
-            ucell_nat_end = ucell.nat;
-        }
-        MPI_Bcast(vel + ucell_nat_begin, (ucell_nat_end - ucell_nat_begin) * 3, MPI_DOUBLE, i, MPI_COMM_WORLD);
+#ifdef __MPI
+    MPI_Bcast(vel, (each_ucell_nat + last_ucell) * 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    for(int i = 1; i < size; i++)
+    {   
+        ucell_nat_begin = (each_ucell_nat) * mdp.my_rank + last_ucell;
+        MPI_Bcast(vel + ucell_nat_begin, each_ucell_nat * 3, MPI_DOUBLE, i, MPI_COMM_WORLD);
     }
-    
 #endif
-
     return;
 }
 
