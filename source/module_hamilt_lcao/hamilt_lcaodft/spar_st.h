@@ -23,7 +23,6 @@ namespace sparse_format
 			LCAO_Matrix &lm,
 			Grid_Driver &grid,
             const ORB_gen_tables* uot,
-			LCAO_gen_fixedH &gen_h,
 			const double &sparse_thr);
 
     //! cal_STN_R_for_T is only called by cal_TR

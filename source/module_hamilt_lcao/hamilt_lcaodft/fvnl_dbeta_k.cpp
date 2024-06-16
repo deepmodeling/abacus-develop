@@ -27,7 +27,8 @@ typedef std::tuple<int, int, int, int> key_tuple;
 
 // must consider three-center H matrix.
 template<>
-void Force_LCAO<std::complex<double>>::cal_fvnl_dbeta(const elecstate::DensityMatrix<std::complex<double>, double>* DM,
+void Force_LCAO<std::complex<double>>::cal_fvnl_dbeta(
+    const elecstate::DensityMatrix<std::complex<double>, double>* dm,
     const Parallel_Orbitals& pv,
     const UnitCell& ucell,
     const LCAO_Orbitals& orb,
@@ -38,8 +39,8 @@ void Force_LCAO<std::complex<double>>::cal_fvnl_dbeta(const elecstate::DensityMa
     ModuleBase::matrix& fvnl_dbeta,
     ModuleBase::matrix& svnl_dbeta)
 {
-    ModuleBase::TITLE("Force_LCAO_k", "cal_fvnl_dbeta_k_new");
-    ModuleBase::timer::tick("Force_LCAO_k", "cal_fvnl_dbeta_k_new");
+    ModuleBase::TITLE("Force_LCAO","cal_fvnl_dbeta");
+    ModuleBase::timer::tick("Force_LCAO","cal_fvnl_dbeta");
 
     const int nspin = GlobalV::NSPIN;
     const int nspin_DMR = (nspin == 2) ? 2 : 1;
@@ -227,8 +228,10 @@ void Force_LCAO<std::complex<double>>::cal_fvnl_dbeta(const elecstate::DensityMa
 
                     // check if this a adjacent atoms.
                     bool is_adj = false;
-                    if (distance < rcut)
-                        is_adj = true;
+					if (distance < rcut)
+					{
+						is_adj = true;
+					}
                     else if (distance >= rcut)
                     {
                         for (int ad0 = 0; ad0 < adjs.adj_num + 1; ++ad0)
@@ -269,22 +272,25 @@ void Force_LCAO<std::complex<double>>::cal_fvnl_dbeta(const elecstate::DensityMa
                         std::vector<double*> tmp_matrix_ptr;
                         for (int is = 0; is < nspin_DMR; ++is)
                         {
-                            auto* tmp_base_matrix = DM->get_DMR_pointer(is+1)->find_matrix(iat1, iat2, rx2, ry2, rz2);
+                            auto* tmp_base_matrix = dm->get_DMR_pointer(is+1)->find_matrix(iat1, iat2, rx2, ry2, rz2);
                             tmp_matrix_ptr.push_back(tmp_base_matrix->get_pointer());
                         }
-                        //hamilt::BaseMatrix<double>* tmp_matrix = DM->get_DMR_pointer(1)->find_matrix(iat1, iat2, rx2, ry2, rz2);
-                        //double* tmp_matrix_ptr = tmp_matrix->get_pointer();
+
                         for (int ad0 = 0; ad0 < adjs.adj_num + 1; ++ad0)
                         {
                             const int T0 = adjs.ntype[ad0];
                             const int I0 = adjs.natom[ad0];
                             const int iat = ucell.itia2iat(T0, I0);
-                            if (!iat_recorded && isforce)
-                                adj_iat[ad0] = iat;
+							if (!iat_recorded && isforce)
+							{
+								adj_iat[ad0] = iat;
+							}
 
                             // mohan add 2010-12-19
-                            if (ucell.infoNL.nproj[T0] == 0)
-                                continue;
+							if (ucell.infoNL.nproj[T0] == 0)
+							{
+								continue;
+							}
 
                             // const int I0 = gd.getNatom(ad0);
                             // const int start0 = ucell.itiaiw2iwt(T0, I0, 0);
@@ -645,7 +651,7 @@ void Force_LCAO<std::complex<double>>::cal_fvnl_dbeta(const elecstate::DensityMa
         StressTools::stress_fill(ucell.lat0, ucell.omega, svnl_dbeta);
     }
 
-    ModuleBase::timer::tick("Force_LCAO_k", "cal_fvnl_dbeta_k_new");
+    ModuleBase::timer::tick("Force_LCAO","cal_fvnl_dbeta");
     return;
 }
 
