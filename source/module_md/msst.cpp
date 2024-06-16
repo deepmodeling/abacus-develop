@@ -269,7 +269,7 @@ void MSST::rescale(std::ofstream& ofs, const double& volume)
 
 void MSST::propagate_vel(void)
 {
-int size = 1;
+    int size = 1;
 #ifdef __MPI
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 #endif
