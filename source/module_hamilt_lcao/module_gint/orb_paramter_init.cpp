@@ -1,14 +1,13 @@
-#include "esolver_ks_lcao.h"
+#include "gint_tools.h"
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_cell/unitcell.h"
-namespace ModuleESolver{
-template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::orb_paramter_init(double& dr_uniform, 
-                                std::vector<double>& rcuts,
-                                UnitCell& ucell,
-                                std::vector<std::vector<double>>& psi_u,
-                                std::vector<std::vector<double>>& dpsi_u,
-                                std::vector<std::vector<double>>& d2psi_u)
+namespace Gint_Tools{
+void orb_paramter_init(double& dr_uniform, 
+                                        std::vector<double>& rcuts,
+                                        UnitCell& ucell,
+                                        std::vector<std::vector<double>>& psi_u,
+                                        std::vector<std::vector<double>>& dpsi_u,
+                                        std::vector<std::vector<double>>& d2psi_u)
 {
     // set the grid parameters
     dr_uniform=GlobalC::ORB.dr_uniform;
@@ -46,7 +45,4 @@ void ESolver_KS_LCAO<TK, TR>::orb_paramter_init(double& dr_uniform,
         }
     }
 }
-template class ESolver_KS_LCAO<double, double>;
-template class ESolver_KS_LCAO<std::complex<double>, double>;
-template class ESolver_KS_LCAO<std::complex<double>, std::complex<double>>;
-}// namespace ModuleESolver
+}// Gint_Tools

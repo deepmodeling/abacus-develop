@@ -222,7 +222,6 @@ OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
       esolver_ks_lcao_tddft.o\
       esolver_ks_lcao_tmpfunc.o\
       io_npz.o\
-      orb_paramter_init.o\
 
 OBJS_GINT=gint.o\
       gint_gamma_env.o\
@@ -248,6 +247,7 @@ OBJS_GINT=gint.o\
       mult_psi_dm.o\
       mult_psi_dm_new.o\
       mult_psi_dmr.o\
+      orb_paramter_init.o\
 
 OBJS_HAMILT=hamilt_pw.o\
     operator.o\

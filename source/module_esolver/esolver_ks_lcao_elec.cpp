@@ -58,9 +58,9 @@ void ESolver_KS_LCAO<TK, TR>::set_matrix_grid(Record_adj& ra)
     std::vector<std::vector<double>> dpsi_u;
     std::vector<std::vector<double>> d2psi_u;
 
-    this->orb_paramter_init(dr_uniform, rcuts, GlobalC::ucell, 
+    Gint_Tools::orb_paramter_init(dr_uniform, rcuts, GlobalC::ucell, 
                             psi_u, dpsi_u, d2psi_u);
-
+    printf("the dr_uniform is %f\n", dr_uniform);
     this->GridT.set_pbc_grid(this->pw_rho->nx,
                              this->pw_rho->ny,
                              this->pw_rho->nz,
