@@ -94,11 +94,11 @@ void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv)
                         }
                     } // end iat2
                 }     // end ad
-                      //				GlobalV::ofs_running << " iat=" << iat << " nlocstartg=" << nlocstartg[iat] << "
-                  //nad=" << nad[iat] << std::endl;
-            } // end iat
-        }     // end I1
-    }         // end T1
+                      //				GlobalV::ofs_running << " iat=" << iat << " nlocstartg=" << nlocstartg[iat] << " nad=" <<
+                      //nad[iat] << std::endl;
+            }         // end iat
+        }             // end I1
+    }                 // end T1
 
     if (GlobalV::OUT_LEVEL != "m")
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "nnrg", this->nnrg);
